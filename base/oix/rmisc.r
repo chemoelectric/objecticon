@@ -246,7 +246,7 @@ dptr dp;
           */
 	 case T_Lrgint:
 	    {
-	    struct b_bignum *b = &BlkLoc(*dp)->bignum;
+	    struct b_bignum *b = &BignumBlk(*dp);
 
 	    i = ((b->lsd - b->msd) << 16) ^ 
 		(b->digits[b->msd] << 8) ^ b->digits[b->lsd];
@@ -262,7 +262,7 @@ dptr dp;
 	  *  and was observed to work well in empirical testing.
           */
          case T_Real:
-            GetReal(BlkLoc(*dp)->real,r);
+            GetReal(RealBlk(*dp),r);
             i = r * 1129.27586206896558;
             break;
 
@@ -272,10 +272,10 @@ dptr dp;
           */
          case T_Cset:
             i = 0;
-            for (j = 0; j < BlkLoc(*dp)->cset.n_ranges; j++) {
-                i += BlkLoc(*dp)->cset.range[j].from;
+            for (j = 0; j < CsetBlk(*dp).n_ranges; j++) {
+                i += CsetBlk(*dp).range[j].from;
                 i *= 37;			/* better distribution */
-                i += BlkLoc(*dp)->cset.range[j].to;
+                i += CsetBlk(*dp).range[j].to;
                 i *= 37;			/* better distribution */
                }
             i %= 1048583;		/* scramble the bits */
@@ -286,47 +286,47 @@ dptr dp;
           *   hashed like an integer.
           */
          case T_List:
-            i = (13255 * BlkLoc(*dp)->list.id) >> 10;
+            i = (13255 * ListBlk(*dp).id) >> 10;
             break;
 
          case T_Set:
-            i = (13255 * BlkLoc(*dp)->set.id) >> 10;
+            i = (13255 * SetBlk(*dp).id) >> 10;
             break;
 
          case T_Table:
-            i = (13255 * BlkLoc(*dp)->table.id) >> 10;
+            i = (13255 * TableBlk(*dp).id) >> 10;
             break;
 
          case T_Record:
-            i = (13255 * BlkLoc(*dp)->record.id) >> 10;
+            i = (13255 * RecordBlk(*dp).id) >> 10;
             break;
 
          case T_Object:
-            i = (13255 * BlkLoc(*dp)->object.id) >> 10;
+            i = (13255 * ObjectBlk(*dp).id) >> 10;
             break;
 
          case T_Class:
-	    dp = BlkLoc(*dp)->class.name;
+	    dp = ClassBlk(*dp).name;
 	    goto hashstring;
 
          case T_Constructor:
-	    dp = BlkLoc(*dp)->constructor.name;
+	    dp = ConstructorBlk(*dp).name;
 	    goto hashstring;
 
          case T_Cast:
-            i = (13255 * BlkLoc(*dp)->cast.object->id) >> 10;
+            i = (13255 * CastBlk(*dp).object->id) >> 10;
             break;
  
          case T_Methp:
-            i = (13255 * BlkLoc(*dp)->methp.object->id) >> 10;
+            i = (13255 * MethpBlk(*dp).object->id) >> 10;
             break;
 
 	 case T_Ucs:
-	    dp = &(BlkLoc(*dp)->ucs.utf8);
+	    dp = &(UcsBlk(*dp).utf8);
 	    goto hashstring;
 
 	 case T_Proc:
-	    dp = BlkLoc(*dp)->proc.name;
+	    dp = ProcBlk(*dp).name;
 	    goto hashstring;
 
          default:
@@ -518,8 +518,8 @@ int noimage;
          }
 
       ucs: {
-         i = BlkLoc(*dp)->ucs.length;
-         s = StrLoc(BlkLoc(*dp)->ucs.utf8);
+         i = UcsBlk(*dp).length;
+         s = StrLoc(UcsBlk(*dp).utf8);
          j = Min(i, StringLimit);
          fprintf(f, "u\"");
          while (j-- > 0) {
@@ -547,7 +547,7 @@ int noimage;
          char s[30];
          struct descrip rd;
 
-         GetReal(BlkLoc(*dp)->real,rresult);
+         GetReal(RealBlk(*dp),rresult);
          rtos(rresult, &rd, s);
          fprintf(f, "%s", StrLoc(rd));
          }
@@ -562,14 +562,14 @@ int noimage;
 	    }
          putc('\'', f);
          j = StringLimit;
-         for (i = 0; i < BlkLoc(*dp)->cset.n_ranges; ++i) {
+         for (i = 0; i < CsetBlk(*dp).n_ranges; ++i) {
              int from, to, n;
-             from = BlkLoc(*dp)->cset.range[i].from;
-             to = BlkLoc(*dp)->cset.range[i].to;
+             from = CsetBlk(*dp).range[i].from;
+             to = CsetBlk(*dp).range[i].to;
              if (cset_do_range(from, to)) {
                  if (j <= 0) {
                      fprintf(f, "...");
-                     i = BlkLoc(*dp)->cset.n_ranges;
+                     i = CsetBlk(*dp).n_ranges;
                      break;
                  }
                  n = cset_charstr(from, cbuf);
@@ -583,7 +583,7 @@ int noimage;
                  for (k = from; k <= to; ++k) {
                      if (j-- <= 0) {
                          fprintf(f, "...");
-                         i = BlkLoc(*dp)->cset.n_ranges;
+                         i = CsetBlk(*dp).n_ranges;
                          break;
                      }
                      n = cset_charstr(k, cbuf);
@@ -598,17 +598,17 @@ int noimage;
      class: {
            /* produce "class " + the class name */
          fprintf(f, "class ");
-         putstr(f, BlkLoc(*dp)->class.name);
+         putstr(f, ClassBlk(*dp).name);
          }
 
      constructor: {
            /* produce "constructor " + the type name */
          fprintf(f, "constructor ");
-         putstr(f, BlkLoc(*dp)->constructor.name);
+         putstr(f, ConstructorBlk(*dp).name);
          }
 
       proc: {
-         struct class_field *field = BlkLoc(*dp)->proc.field;
+         struct class_field *field = ProcBlk(*dp).field;
          if (field) {
              /*
               * Produce "method classname.fieldname"
@@ -617,34 +617,34 @@ int noimage;
              putstr(f, field->defining_class->name);
              fprintf(f, ".");
              putstr(f, field->defining_class->program->Fnames[field->fnum]);
-         } else if (&BlkLoc(*dp)->proc == &Bdeferred_method_stub)
+         } else if (&ProcBlk(*dp) == &Bdeferred_method_stub)
              fprintf(f, "deferred method");
          else {
-             fprintf(f, "%s ", proc_kinds[BlkLoc(*dp)->proc.kind]);
-             putstr(f, BlkLoc(*dp)->proc.name);
+             fprintf(f, "%s ", proc_kinds[ProcBlk(*dp).kind]);
+             putstr(f, ProcBlk(*dp).name);
          }
       }
       list: {
          /*
           * listimage does the work for lists.
           */
-         listimage(f, (struct b_list *)BlkLoc(*dp), noimage);
+         listimage(f, &ListBlk(*dp), noimage);
          }
 
       table: {
          /*
           * Print "table#m(n)" where n is the size of the table.
           */
-         fprintf(f, "table#%ld(%ld)", (long)BlkLoc(*dp)->table.id,
-            (long)BlkLoc(*dp)->table.size);
+         fprintf(f, "table#%ld(%ld)", (long)TableBlk(*dp).id,
+            (long)TableBlk(*dp).size);
          }
 
       set: {
 	/*
          * print "set#m(n)" where n is the cardinality of the set
          */
-	fprintf(f,"set#%ld(%ld)",(long)BlkLoc(*dp)->set.id,
-           (long)BlkLoc(*dp)->set.size);
+	fprintf(f,"set#%ld(%ld)",(long)SetBlk(*dp).id,
+           (long)SetBlk(*dp).size);
         }
 
      cast: {
@@ -736,8 +736,8 @@ int noimage;
 
       coexpr: {
          fprintf(f, "co-expression#%ld(%ld)",
-            (long)((struct b_coexpr *)BlkLoc(*dp))->id,
-            (long)((struct b_coexpr *)BlkLoc(*dp))->size);
+            (long)CoexprBlk(*dp).id,
+            (long)CoexprBlk(*dp).size);
          }
 
       tvsubs: {
@@ -772,9 +772,9 @@ int noimage;
 
          if (is:ucs(*dp)) {
              struct descrip utf8_subs;
-             if (bp->tvsubs.sspos + bp->tvsubs.sslen - 1 > BlkLoc(*dp)->ucs.length)
+             if (bp->tvsubs.sspos + bp->tvsubs.sslen - 1 > UcsBlk(*dp).length)
                  return;
-             utf8_substr(&BlkLoc(*dp)->ucs,
+             utf8_substr(&UcsBlk(*dp),
                          bp->tvsubs.sspos,
                          bp->tvsubs.sslen,
                          &utf8_subs);
@@ -864,7 +864,7 @@ int noimage;
                  outimage(f, &tdp, noimage + 1);
                  /* Print the element key */
                  putc('[', f);
-                 outimage(f, &BlkLoc(*dp)->tvtbl.tref, noimage);
+                 outimage(f, &TvtblBlk(*dp).tref, noimage);
                  putc(']', f);
                  break;
              }
@@ -1096,8 +1096,8 @@ dptr dp1, dp2;
          }
 
       ucs: {
-         s = StrLoc(BlkLoc(source)->ucs.utf8);
-         i = BlkLoc(source)->ucs.length;
+         s = StrLoc(UcsBlk(source).utf8);
+         i = UcsBlk(source).length;
          len = 3;  /* u"" */
          while (i-- > 0) {
              j = utf8_iter(&s);
@@ -1108,8 +1108,8 @@ dptr dp1, dp2;
 
          alcstr("u\"", 2);
              
-         s = StrLoc(BlkLoc(source)->ucs.utf8);
-         i = BlkLoc(source)->ucs.length;
+         s = StrLoc(UcsBlk(source).utf8);
+         i = UcsBlk(source).length;
          while (i-- > 0) {
              int n;
              j = utf8_iter(&s);
@@ -1127,27 +1127,27 @@ dptr dp1, dp2;
 
      class: {
            /* produce "class " + the class name */
-         len = 6 + StrLen(*BlkLoc(source)->class.name);
+         len = 6 + StrLen(*ClassBlk(source).name);
 	 MemProtect (StrLoc(*dp2) = reserve(Strings, len));
          StrLen(*dp2) = len;
          alcstr("class ", 6);
-         alcstr(StrLoc(*BlkLoc(source)->class.name), StrLen(*BlkLoc(source)->class.name));
+         alcstr(StrLoc(*ClassBlk(source).name), StrLen(*ClassBlk(source).name));
        }
 
      constructor: {
           /* produce "constructor " + the type name */
-         len = 12 + StrLen(*BlkLoc(source)->constructor.name);
+         len = 12 + StrLen(*ConstructorBlk(source).name);
 	 MemProtect (StrLoc(*dp2) = reserve(Strings, len));
          StrLen(*dp2) = len;
          alcstr("constructor ", 12);
-         alcstr(StrLoc(*BlkLoc(source)->constructor.name), StrLen(*BlkLoc(source)->constructor.name));
+         alcstr(StrLoc(*ConstructorBlk(source).name), StrLen(*ConstructorBlk(source).name));
        }
 
       integer: {
          if (Type(source) == T_Lrgint) {
             word slen;
             word dlen;
-            struct b_bignum *blk = &BlkLoc(source)->bignum;
+            struct b_bignum *blk = &BignumBlk(source);
 
             slen = blk->lsd - blk->msd;
             dlen = slen * NB * 0.3010299956639812 	/* 1 / log2(10) */
@@ -1186,9 +1186,9 @@ dptr dp1, dp2;
 	  * Otherwise, describe it in terms of the character membership.
 	  */
          len = 2;   /* 2 quotes */
-         for (i = 0; i < BlkLoc(source)->cset.n_ranges; ++i) {
-             from = BlkLoc(source)->cset.range[i].from;
-             to = BlkLoc(source)->cset.range[i].to;
+         for (i = 0; i < CsetBlk(source).n_ranges; ++i) {
+             from = CsetBlk(source).range[i].from;
+             to = CsetBlk(source).range[i].to;
              if (cset_do_range(from, to))
                  len += cset_charstr(from, 0) + 1 + cset_charstr(to, 0);
              else {
@@ -1200,10 +1200,10 @@ dptr dp1, dp2;
 	 MemProtect (StrLoc(*dp2) = reserve(Strings, len));
          StrLen(*dp2) = len;
          alcstr("'", 1);
-         for (i = 0; i < BlkLoc(source)->cset.n_ranges; ++i) {
+         for (i = 0; i < CsetBlk(source).n_ranges; ++i) {
              int n;
-             from = BlkLoc(source)->cset.range[i].from;
-             to = BlkLoc(source)->cset.range[i].to;
+             from = CsetBlk(source).range[i].from;
+             to = CsetBlk(source).range[i].to;
              if (cset_do_range(from, to)) {
                  n = cset_charstr(from, cbuf);
                  alcstr(cbuf, n);
@@ -1222,7 +1222,7 @@ dptr dp1, dp2;
 
 
       proc: {
-         struct class_field *field = BlkLoc(source)->proc.field;
+         struct class_field *field = ProcBlk(source).field;
          if (field) {
              /*
               * Produce "method classname.fieldname"
@@ -1237,16 +1237,16 @@ dptr dp1, dp2;
              alcstr(StrLoc(*field_class->name),StrLen(*field_class->name));
              alcstr(".", 1);
              alcstr(StrLoc(*field_name),StrLen(*field_name));
-         } else if (&BlkLoc(source)->proc == &Bdeferred_method_stub)
+         } else if (&ProcBlk(source) == &Bdeferred_method_stub)
              LitStr("deferred method", dp2);
          else {
-             char *type0 = proc_kinds[BlkLoc(source)->proc.kind];
-             len = strlen(type0) + 1 + StrLen(*BlkLoc(source)->proc.name);
+             char *type0 = proc_kinds[ProcBlk(source).kind];
+             len = strlen(type0) + 1 + StrLen(*ProcBlk(source).name);
              MemProtect (StrLoc(*dp2) = reserve(Strings, len));
              StrLen(*dp2) = len;
              alcstr(type0, strlen(type0));
              alcstr(" ", 1);
-             alcstr(StrLoc(*BlkLoc(source)->proc.name), StrLen(*BlkLoc(source)->proc.name));
+             alcstr(StrLoc(*ProcBlk(source).name), StrLen(*ProcBlk(source).name));
          }
       }
 
@@ -1405,8 +1405,8 @@ dptr dp1, dp2;
           *  number of results that have been produced.
           */
 
-         sprintf(sbuf, "#%ld(%ld)", (long)BlkLoc(source)->coexpr.id,
-            (long)BlkLoc(source)->coexpr.size);
+         sprintf(sbuf, "#%ld(%ld)", (long)CoexprBlk(source).id,
+            (long)CoexprBlk(source).size);
          len = strlen(sbuf) + 13;
 	 MemProtect (StrLoc(*dp2) = reserve(Strings, len));
          StrLen(*dp2) = len;
@@ -1425,8 +1425,8 @@ dptr dp1, dp2;
 static char *csname(dp)
 dptr dp;
 {
-    int n = BlkLoc(*dp)->cset.size;
-    struct b_cset_range *r = &BlkLoc(*dp)->cset.range[0];
+    int n = CsetBlk(*dp).size;
+    struct b_cset_range *r = &CsetBlk(*dp).range[0];
     
     if (n == 0)
         return NULL;
@@ -1594,7 +1594,7 @@ void retderef(dptr valp, struct frame_vars *fvars)
    word *loc;
 
    if (is:tvsubs(*valp)) {
-      tvb = (struct b_tvsubs *)BlkLoc(*valp);
+      tvb = &TvsubsBlk(*valp);
       /* 
        * Check to see what the ssvar holds - it may contain a ucs
        * descriptor (not a variable at all) as a result of, eg, return

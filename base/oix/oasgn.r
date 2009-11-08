@@ -56,7 +56,7 @@ static int subs_asgn	(dptr dest, const dptr src);
             if (is:string(*sub))
                 i = cvpos((long)i, StrLen(*sub));
             else
-                i = cvpos((long)i, BlkLoc(*sub)->ucs.length);
+                i = cvpos((long)i, UcsBlk(*sub).length);
 
             if (i == CvtFail)
                fail;
@@ -307,7 +307,7 @@ const dptr src;
    word postlen;  /* length of portion of string following substring */
    word newsslen;
 
-   tvsub = (struct b_tvsubs *)BlkLoc(*dest);
+   tvsub = &TvsubsBlk(*dest);
    deref(&tvsub->ssvar, &deststr);
 
    if (!is:string(deststr) && !is:ucs(deststr))
@@ -325,43 +325,43 @@ const dptr src;
        if (!cnv:ucs(srcstr, srcstr))
            ReturnErrVal(128, srcstr, Error);
        
-       if (tvsub->sspos + tvsub->sslen - 1 > BlkLoc(deststr)->ucs.length)
+       if (tvsub->sspos + tvsub->sslen - 1 > UcsBlk(deststr).length)
            ReturnErrNum(205, Error);
 
        if (tvsub->sslen == 0) {
-           poststrt = prelen = ucs_utf8_ptr(&BlkLoc(deststr)->ucs, tvsub->sspos) - 
-               StrLoc(BlkLoc(deststr)->ucs.utf8);
+           poststrt = prelen = ucs_utf8_ptr(&UcsBlk(deststr), tvsub->sspos) - 
+               StrLoc(UcsBlk(deststr).utf8);
        } else {
            struct descrip utf8_mid;
-           utf8_substr(&BlkLoc(deststr)->ucs,
+           utf8_substr(&UcsBlk(deststr),
                        tvsub->sspos,
                        tvsub->sslen,
                        &utf8_mid);
-           prelen = StrLoc(utf8_mid) - StrLoc(BlkLoc(deststr)->ucs.utf8);
+           prelen = StrLoc(utf8_mid) - StrLoc(UcsBlk(deststr).utf8);
            poststrt = prelen + StrLen(utf8_mid);
        }
-       postlen = StrLen(BlkLoc(deststr)->ucs.utf8) - poststrt;
+       postlen = StrLen(UcsBlk(deststr).utf8) - poststrt;
        /*
         * Form the result string.
         *  Start by allocating space for the entire result.
         */
-       len = prelen + StrLen(BlkLoc(srcstr)->ucs.utf8) + postlen;
+       len = prelen + StrLen(UcsBlk(srcstr).utf8) + postlen;
        MemProtect(StrLoc(utf8_new) = reserve(Strings, len));
        StrLen(utf8_new) = len;
 
        /*
         * Copy the three sections into the reserved space.
         */
-       alcstr(StrLoc(BlkLoc(deststr)->ucs.utf8), prelen);
-       alcstr(StrLoc(BlkLoc(srcstr)->ucs.utf8), StrLen(BlkLoc(srcstr)->ucs.utf8));
-       alcstr(StrLoc(BlkLoc(deststr)->ucs.utf8) + poststrt, postlen);
+       alcstr(StrLoc(UcsBlk(deststr).utf8), prelen);
+       alcstr(StrLoc(UcsBlk(srcstr).utf8), StrLen(UcsBlk(srcstr).utf8));
+       alcstr(StrLoc(UcsBlk(deststr).utf8) + poststrt, postlen);
 
        rsltstr.dword = D_Ucs;
        BlkLoc(rsltstr) = (union block *)
            make_ucs_block(&utf8_new,
-                          BlkLoc(deststr)->ucs.length - tvsub->sslen + BlkLoc(srcstr)->ucs.length);
+                          UcsBlk(deststr).length - tvsub->sslen + UcsBlk(srcstr).length);
 
-       newsslen = BlkLoc(srcstr)->ucs.length;
+       newsslen = UcsBlk(srcstr).length;
    } else {
        /* Both deststr, srcstr must be strings */
 
@@ -472,7 +472,7 @@ const dptr src;
     * Allocate te now (even if we may not need it)
     * because slot cannot be tended.
     */
-   bp = (struct b_tvtbl *) BlkLoc(*dest);	/* Save params to tended vars */
+   bp = &TvtblBlk(*dest);	/* Save params to tended vars */
    tval = *src;
    MemProtect(te = alctelem());
 

@@ -93,7 +93,7 @@ static char ** list2stringptrs(dptr l)
      * and counting the string array size required (total).
      */
     total = 0;
-    for (pb = BlkLoc(*l)->list.listhead;
+    for (pb = ListBlk(*l).listhead;
          pb && (BlkType(pb) == T_Lelem);
          pb = pb->lelem.listnext) {
         for (j = 0; j < pb->lelem.nused; j++) {
@@ -111,13 +111,13 @@ static char ** list2stringptrs(dptr l)
      * Allocate the required memory for string and pointers, and go through
      * again filling the space.
      */
-    MemProtect(a = malloc((BlkLoc(*l)->list.size + 1) * sizeof(char *)));
+    MemProtect(a = malloc((ListBlk(*l).size + 1) * sizeof(char *)));
     if (total > 0) {
         MemProtect(data = malloc(total));
         p = data;
     }
     i = 0;
-    for (pb = BlkLoc(*l)->list.listhead;
+    for (pb = ListBlk(*l).listhead;
          pb && (BlkType(pb) == T_Lelem);
          pb = pb->lelem.listnext) {
         for (j = 0; j < pb->lelem.nused; j++) {
@@ -130,7 +130,7 @@ static char ** list2stringptrs(dptr l)
           *p++ = 0;
         }
     }
-    if (i != BlkLoc(*l)->list.size)
+    if (i != ListBlk(*l).size)
         syserr("Inconsistent list/element size in list2stringptrs");
     a[i] = 0;
     return a;
@@ -148,7 +148,7 @@ function posix_System_execve(f, argv, envp)
 
    body {
       char **c_argv, **c_envp;
-      if (BlkLoc(argv)->list.size < 1)
+      if (ListBlk(argv).size < 1)
           runerr(176, argv);
       if (!(c_argv = list2stringptrs(&argv)))
           runerr(0);

@@ -25,7 +25,7 @@ static int ston (dptr sp, union numeric *result);
 
 static int cset2str(dptr src, dptr dest)
 {
-    struct b_cset *c = &BlkLoc(*src)->cset;  /* Doesn't need to be tended */
+    struct b_cset *c = &CsetBlk(*src);  /* Doesn't need to be tended */
     if (c->n_ranges == 0 || c->range[c->n_ranges - 1].to < 256) {
         cset_to_str(c, 1, c->size, dest);
         return 1;
@@ -46,7 +46,7 @@ double *d;
 
    type_case *s of {
       real: {
-         GetReal(BlkLoc(*s)->real, *d);
+         GetReal(RealBlk(*s), *d);
          return 1;
          }
       integer: {
@@ -63,7 +63,7 @@ double *d;
          /* fall through */
          }
       ucs: {
-          s = &BlkLoc(*s)->ucs.utf8;
+          s = &UcsBlk(*s).utf8;
          }
       cset: {
         if (!cset2str(s, &cnvstr))
@@ -120,7 +120,7 @@ C_integer *d;
          }
       real: {
          double dbl;
-         GetReal(BlkLoc(*s)->real,dbl);
+         GetReal(RealBlk(*s),dbl);
          if (dbl > MaxWord || dbl < MinWord) {
             return 0;
             }
@@ -131,7 +131,7 @@ C_integer *d;
          /* fall through */
          }
       ucs: {
-          s = &BlkLoc(*s)->ucs.utf8;
+          s = &UcsBlk(*s).utf8;
          }
       cset: {
         if (!cset2str(s, &cnvstr))
@@ -228,9 +228,9 @@ int f(dptr s, dptr d)
    if (is:ucs(*s)) {
        char *s1;
        struct rangeset *rs;
-       int l = BlkLoc(*s)->ucs.length;
+       int l = UcsBlk(*s).length;
        MemProtect(rs = init_rangeset());
-       s1 = StrLoc(BlkLoc(*s)->ucs.utf8);
+       s1 = StrLoc(UcsBlk(*s).utf8);
        while (l-- > 0) {
            int i = utf8_iter(&s1);
            MemProtect(add_range(rs, i, i));
@@ -280,7 +280,7 @@ int f(dptr s, dptr d)
     }
     if (is:cset(*s)) {
         tended struct b_ucs *p;
-        p = cset_to_ucs_block(&BlkLoc(*s)->cset, 1, BlkLoc(*s)->cset.size);
+        p = cset_to_ucs_block(&CsetBlk(*s), 1, CsetBlk(*s).size);
         d->dword = D_Ucs;
         BlkLoc(*d) = (union block *)p;
         return 1;
@@ -362,7 +362,7 @@ C_integer *d;
          /* fall through */
          }
       ucs: {
-          s = &BlkLoc(*s)->ucs.utf8;
+          s = &UcsBlk(*s).utf8;
          }
       cset: {
         if (!cset2str(s, &cnvstr))
@@ -404,7 +404,7 @@ dptr s, d;
          /* fall through */
          }
       ucs: {
-          s = &BlkLoc(*s)->ucs.utf8;
+          s = &UcsBlk(*s).utf8;
          }
       cset: {
        if (!cset2str(s, &cnvstr))
@@ -455,7 +455,7 @@ dptr s, d;
          }
       real: {
          double dbl;
-         GetReal(BlkLoc(*s)->real,dbl);
+         GetReal(RealBlk(*s),dbl);
          if (dbl > MaxWord || dbl < MinWord) {
 
             if (realtobig(s, d) == Succeeded) {
@@ -475,7 +475,7 @@ dptr s, d;
          /* fall through */
          }
       ucs: {
-          s = &BlkLoc(*s)->ucs.utf8;
+          s = &UcsBlk(*s).utf8;
          }
       cset: {
         if (!cset2str(s, &cnvstr))
@@ -575,7 +575,7 @@ int f(dptr s, dptr d)
          return 1;
          }
      ucs: {
-           *d = BlkLoc(*s)->ucs.utf8;
+           *d = UcsBlk(*s).utf8;
            return 1;
        }
       integer: {
@@ -583,7 +583,7 @@ int f(dptr s, dptr d)
          if (Type(*s) == T_Lrgint) {
             word slen;
             word dlen;
-            slen = (BlkLoc(*s)->bignum.lsd - BlkLoc(*s)->bignum.msd +1);
+            slen = (BignumBlk(*s).lsd - BignumBlk(*s).msd +1);
             dlen = slen * NB * 0.3010299956639812;	/* 1 / log2(10) */
 	    bigtos(s,d);
             return 1;
@@ -593,7 +593,7 @@ int f(dptr s, dptr d)
        }
       real: {
          double res;
-         GetReal(BlkLoc(*s)->real, res);
+         GetReal(RealBlk(*s), res);
          rtos(res, d, sbuf);
          }
      cset: {
@@ -625,13 +625,13 @@ int f(char *sbuf, dptr s, dptr d)
       string:
          *d = *s;
       ucs:
-         *d = BlkLoc(*s)->ucs.utf8;
+         *d = UcsBlk(*s).utf8;
       integer: {
          if (Type(*s) == T_Lrgint) {
             word slen;
             word dlen;
 
-            slen = (BlkLoc(*s)->bignum.lsd - BlkLoc(*s)->bignum.msd +1);
+            slen = (BignumBlk(*s).lsd - BignumBlk(*s).msd +1);
             dlen = slen * NB * 0.3010299956639812;	/* 1 / log2(10) */
 	    bigtos(s,d);
            }
@@ -640,7 +640,7 @@ int f(char *sbuf, dptr s, dptr d)
       }
       real: {
          double res;
-         GetReal(BlkLoc(*s)->real, res);
+         GetReal(RealBlk(*s), res);
          rtos(res, d, sbuf);
          }
      cset: {
@@ -678,10 +678,10 @@ static void deref_tvsubs(dptr s, dptr d)
             StrLoc(*d) = StrLoc(v) + bp->tvsubs.sspos - 1;
         }
       ucs: {
-            if (bp->tvsubs.sspos + bp->tvsubs.sslen - 1 > BlkLoc(v)->ucs.length)
+            if (bp->tvsubs.sspos + bp->tvsubs.sslen - 1 > UcsBlk(v).length)
                 fatalerr(205, NULL);
             d->dword = D_Ucs;
-            BlkLoc(*d) = (union block *)make_ucs_substring(&BlkLoc(v)->ucs, 
+            BlkLoc(*d) = (union block *)make_ucs_substring(&UcsBlk(v), 
                                                            bp->tvsubs.sspos, 
                                                            bp->tvsubs.sslen);
         }
@@ -761,7 +761,7 @@ double getdbl(dp)
 dptr dp;
    {
    double d;
-   GetReal(BlkLoc(*dp)->real, d);
+   GetReal(RealBlk(*dp), d);
    return d;
    }
 
@@ -831,7 +831,7 @@ struct b_proc *strprc(dptr s, C_integer arity, struct progstate *p)
     */
    if ((t = lookup_global(s, p))) {
        if (is:proc(*t))
-           return (struct b_proc *)BlkLoc(*t);
+           return &ProcBlk(*t);
        else
            return 0;
    }

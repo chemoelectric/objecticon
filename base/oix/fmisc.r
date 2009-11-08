@@ -68,11 +68,11 @@ function copy(x)
             /*
              * Pass the buck to cplist to copy a list.
              */
-            cplist(&x, &result, (word)1, BlkLoc(x)->list.size + 1);
+            cplist(&x, &result, (word)1, ListBlk(x).size + 1);
             return result;
             }
       table: {
-            cptable(&x, &result, BlkLoc(x)->table.size);
+            cptable(&x, &result, TableBlk(x).size);
 	    return result;
          }
 
@@ -80,7 +80,7 @@ function copy(x)
             /*
              * Pass the buck to cpset to copy a set.
              */
-            cpset(&x, &result, BlkLoc(x)->set.size);
+            cpset(&x, &result, SetBlk(x).size);
 	    return result;
          }
 
@@ -98,7 +98,7 @@ function copy(x)
              * Allocate space for the new record and copy the old
              *	one into it.
              */
-            old_rec = (struct b_record *)BlkLoc(x);
+            old_rec = &RecordBlk(x);
             i = old_rec->constructor->n_fields;
 
             /* #%#% param changed ? */
@@ -133,7 +133,7 @@ function display(i,c)
       if (!is:null(c)) {
          if (!is:coexpr(c)) runerr(118,c);
          else if (BlkLoc(c) != (union block *)k_current)
-            ce = (struct b_coexpr *)BlkLoc(c);
+            ce = &CoexprBlk(c);
       }
 
        /*
@@ -511,12 +511,12 @@ end
 function serial(x)
  body {
    type_case x of {
-      list:     return C_integer BlkLoc(x)->list.id;
-      set:      return C_integer BlkLoc(x)->set.id;
-      table:    return C_integer BlkLoc(x)->table.id;
-      record:   return C_integer BlkLoc(x)->record.id;
-      object:   return C_integer BlkLoc(x)->object.id;
-      coexpr:   return C_integer BlkLoc(x)->coexpr.id;
+      list:     return C_integer ListBlk(x).id;
+      set:      return C_integer SetBlk(x).id;
+      table:    return C_integer TableBlk(x).id;
+      record:   return C_integer RecordBlk(x).id;
+      object:   return C_integer ObjectBlk(x).id;
+      coexpr:   return C_integer CoexprBlk(x).id;
       default:  runerr(123,x);
     }
   }
@@ -534,9 +534,9 @@ function sort(t, i)
              * Sort the list by copying it into a new list and then using
              *  qsort to sort the descriptors.  (That was easy!)
              */
-            size = BlkLoc(t)->list.size;
+            size = ListBlk(t).size;
             cplist(&t, &result, (word)1, size + 1);
-            qsort((char *)BlkLoc(result)->list.listhead->lelem.lslots,
+            qsort((char *)ListBlk(result).listhead->lelem.lslots,
                (int)size, sizeof(struct descrip),(QSortFncCast) anycmp);
 
             Desc_EVValD(BlkLoc(result), E_Lcreate, D_List);
@@ -556,7 +556,7 @@ function sort(t, i)
              * the list, and then sort the list using qsort as in list
              * sorting and return the sorted list.
              */
-            size = BlkLoc(t)->record.constructor->n_fields;
+            size = RecordBlk(t).constructor->n_fields;
 
             MemProtect(lp = alclist_raw(size, size));
 
@@ -588,7 +588,7 @@ function sort(t, i)
              * the list, and then sort the list using qsort as in list
              * sorting and return the sorted list.
              */
-            size = BlkLoc(t)->set.size;
+            size = SetBlk(t).size;
 
             MemProtect(lp = alclist(size, size));
 
@@ -634,7 +634,7 @@ function sort(t, i)
                 *  as the table has, so get that value and also make a valid
                 *  list block size out of it.
                 */
-               size = BlkLoc(t)->table.size;
+               size = TableBlk(t).size;
 
 	       /*
 		* Make sure, now, that there's enough room for all the
@@ -650,7 +650,7 @@ function sort(t, i)
                 *  and point lp at a newly allocated list
                 *  that will hold the the result of sorting the table.
                 */
-               bp = (struct b_table *)BlkLoc(t);
+               bp = &TableBlk(t);
                MemProtect(lp = alclist(size, size));
 
                /*
@@ -703,14 +703,14 @@ function sort(t, i)
              *  elements as the table has, so get that value and also make
              *  a valid list block size out of it.
              */
-            size = BlkLoc(t)->table.size * 2;
+            size = TableBlk(t).size * 2;
 
             /*
              * Point bp at the table header block of the table to be sorted
              *  and point lp at a newly allocated list
              *  that will hold the the result of sorting the table.
              */
-            bp = (struct b_table *)BlkLoc(t);
+            bp = &TableBlk(t);
             MemProtect(lp = alclist(size, size));
 
             /*
@@ -786,8 +786,8 @@ static int trefcmp(dptr d1, dptr d2)
       syserr("trefcmp: internal consistency check fails.");
 #endif					/* DeBug */
 
-   return (anycmp(&(BlkLoc(*d1)->list.listhead->lelem.lslots[0]),
-                  &(BlkLoc(*d2)->list.listhead->lelem.lslots[0])));
+   return (anycmp(&(ListBlk(*d1).listhead->lelem.lslots[0]),
+                  &(ListBlk(*d2).listhead->lelem.lslots[0])));
    }
 
 /*
@@ -802,8 +802,8 @@ static int tvalcmp(dptr d1, dptr d2)
       syserr("tvalcmp: internal consistency check fails.");
 #endif					/* DeBug */
 
-   return (anycmp(&(BlkLoc(*d1)->list.listhead->lelem.lslots[1]),
-      &(BlkLoc(*d2)->list.listhead->lelem.lslots[1])));
+   return (anycmp(&(ListBlk(*d1).listhead->lelem.lslots[1]),
+      &(ListBlk(*d2).listhead->lelem.lslots[1])));
    }
 
 /*
@@ -846,10 +846,10 @@ function sortf(t, i)
           * Sort the list by copying it into a new list and then using
           *  qsort to sort the descriptors.  (That was easy!)
           */
-         size = BlkLoc(t)->list.size;
+         size = ListBlk(t).size;
          cplist(&t, &result, (word)1, size + 1);
          sort_field = i;
-         qsort((char *)BlkLoc(result)->list.listhead->lelem.lslots,
+         qsort((char *)ListBlk(result).listhead->lelem.lslots,
                (int)size, sizeof(struct descrip),(QSortFncCast) nthcmp);
 
          Desc_EVValD(BlkLoc(result), E_Lcreate, D_List);
@@ -868,7 +868,7 @@ function sortf(t, i)
           * the list, and then sort the list using qsort as in list
           * sorting and return the sorted list.
           */
-         size = BlkLoc(t)->record.constructor->n_fields;
+         size = RecordBlk(t).constructor->n_fields;
 
          MemProtect(lp = alclist_raw(size, size));
 
@@ -900,7 +900,7 @@ function sortf(t, i)
           * the list, and then sort the list using qsort as in list
           * sorting and return the sorted list.
           */
-         size = BlkLoc(t)->set.size;
+         size = SetBlk(t).size;
 
          MemProtect(lp = alclist(size, size));
 
@@ -987,7 +987,7 @@ static dptr nth(dptr d)
         /*
          * Find the nth element of a list.
          */
-        lp = (struct b_list *)BlkLoc(*d);
+        lp = &ListBlk(*d);
         i = cvpos ((long)sort_field, (long)lp->size);
         if (i != CvtFail && i <= lp->size) {
             struct b_lelem *le;
@@ -1047,11 +1047,11 @@ function cast(o,c)
        * Check the cast makes sense, ie it is to a class the object
        * implements 
        */
-      if (!class_is(BlkLoc(o)->object.class, &BlkLoc(c)->class))
+      if (!class_is(ObjectBlk(o).class, &ClassBlk(c)))
           runerr(604, c);
       MemProtect(p = alccast());
-      p->object = &BlkLoc(o)->object;
-      p->class = &BlkLoc(c)->class;
+      p->object = &ObjectBlk(o);
+      p->class = &ClassBlk(c);
       return cast(p);
       }
 end
@@ -1533,9 +1533,9 @@ function lang_Text_get_ord_range(c)
       runerr(120, c)
    body {
        int i;
-       for (i = 0; i < BlkLoc(c)->cset.n_ranges; ++i) {
-           suspend C_integer BlkLoc(c)->cset.range[i].from;
-           suspend C_integer BlkLoc(c)->cset.range[i].to;
+       for (i = 0; i < CsetBlk(c).n_ranges; ++i) {
+           suspend C_integer CsetBlk(c).range[i].from;
+           suspend C_integer CsetBlk(c).range[i].to;
        }
        fail;
    }
@@ -1554,10 +1554,10 @@ function lang_Text_slice(c, i, j)
        tended struct b_cset *blk;
        word len;
 
-       i = cvpos(i, BlkLoc(c)->cset.size);
+       i = cvpos(i, CsetBlk(c).size);
        if (i == CvtFail)
            fail;
-       j = cvpos(j, BlkLoc(c)->cset.size);
+       j = cvpos(j, CsetBlk(c).size);
        if (j == CvtFail)
            fail;
        if (i > j) {
@@ -1571,11 +1571,11 @@ function lang_Text_slice(c, i, j)
        MemProtect(rs = init_rangeset());
        if (len > 0) {
            int a, pos, from, to, l0;
-           a = cset_range_of_pos(&BlkLoc(c)->cset, i);    /* First range of interest */
-           pos = i - 1 - BlkLoc(c)->cset.range[a].index;  /* Offset into that range */
-           for (; len > 0 && a < BlkLoc(c)->cset.n_ranges; ++a) {
-               from = BlkLoc(c)->cset.range[a].from;
-               to = BlkLoc(c)->cset.range[a].to;
+           a = cset_range_of_pos(&CsetBlk(c), i);    /* First range of interest */
+           pos = i - 1 - CsetBlk(c).range[a].index;  /* Offset into that range */
+           for (; len > 0 && a < CsetBlk(c).n_ranges; ++a) {
+               from = CsetBlk(c).range[a].from;
+               to = CsetBlk(c).range[a].to;
                l0 = to - from - pos + 1;
                if (l0 <= len) {
                    MemProtect(add_range(rs, from + pos, to));
@@ -1603,7 +1603,7 @@ function lang_Text_has_ord(c, x)
       runerr(101, x)
    body {
     int l, r, m;
-    struct b_cset *b = &BlkLoc(c)->cset;
+    struct b_cset *b = &CsetBlk(c);
     l = 0;
     r = b->n_ranges - 1;
     while (l <= r) {
@@ -1634,10 +1634,10 @@ function ord(x, i, j)
          cset: {
             int a, b, pos, from, to;
 
-            i = cvpos(i, BlkLoc(x)->cset.size);
+            i = cvpos(i, CsetBlk(x).size);
             if (i == CvtFail)
                 fail;
-            j = cvpos(j, BlkLoc(x)->cset.size);
+            j = cvpos(j, CsetBlk(x).size);
             if (j == CvtFail)
                 fail;
             if (i > j) {
@@ -1650,11 +1650,11 @@ function ord(x, i, j)
             if (len == 0)
                 fail;
 
-            a = cset_range_of_pos(&BlkLoc(x)->cset, i);    /* First range of interest */
-            pos = i - 1 - BlkLoc(x)->cset.range[a].index;  /* Offset into that range */
-            for (; len > 0 && a < BlkLoc(x)->cset.n_ranges; ++a) {
-                from = BlkLoc(x)->cset.range[a].from;
-                to = BlkLoc(x)->cset.range[a].to;
+            a = cset_range_of_pos(&CsetBlk(x), i);    /* First range of interest */
+            pos = i - 1 - CsetBlk(x).range[a].index;  /* Offset into that range */
+            for (; len > 0 && a < CsetBlk(x).n_ranges; ++a) {
+                from = CsetBlk(x).range[a].from;
+                to = CsetBlk(x).range[a].to;
                 for (b = pos + from; len > 0 && b <= to; ++b) {
                     suspend C_integer b;
                     --len;
@@ -1669,10 +1669,10 @@ function ord(x, i, j)
          ucs : {
             tended char *p;
 
-            i = cvpos(i, BlkLoc(x)->ucs.length);
+            i = cvpos(i, UcsBlk(x).length);
             if (i == CvtFail)
                 fail;
-            j = cvpos(j, BlkLoc(x)->ucs.length);
+            j = cvpos(j, UcsBlk(x).length);
             if (j == CvtFail)
                 fail;
             if (i > j) {
@@ -1685,7 +1685,7 @@ function ord(x, i, j)
             if (len == 0)
                 fail;
 
-            p = ucs_utf8_ptr(&BlkLoc(x)->ucs, i);
+            p = ucs_utf8_ptr(&UcsBlk(x), i);
             while (len-- > 0)
                 suspend C_integer utf8_iter(&p);
 

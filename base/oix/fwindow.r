@@ -782,8 +782,8 @@ function graphics_Window_draw_string(self, argv[argc])
           if (!cnv:string_or_ucs(argv[base + 2],argv[base + 2]))
               runerr(129, argv[base + 2]);
           if (is:ucs(argv[base + 2])) {
-              s = StrLoc(BlkLoc(argv[base + 2])->ucs.utf8);
-              len = StrLen(BlkLoc(argv[base + 2])->ucs.utf8);
+              s = StrLoc(UcsBlk(argv[base + 2]).utf8);
+              len = StrLen(UcsBlk(argv[base + 2]).utf8);
               drawutf8(self_w, x, y, s, len);
           } else {
               s = StrLoc(argv[base + 2]);
@@ -1377,7 +1377,7 @@ function graphics_Window_text_width(self, s)
       C_integer i;
       GetSelfW();
       if (is:ucs(s))
-          i = UTF8WIDTH(self_w, StrLoc(BlkLoc(s)->ucs.utf8), StrLen(BlkLoc(s)->ucs.utf8));
+          i = UTF8WIDTH(self_w, StrLoc(UcsBlk(s).utf8), StrLen(UcsBlk(s).utf8));
       else
           i = TEXTWIDTH(self_w, StrLoc(s), StrLen(s));
       return C_integer i;

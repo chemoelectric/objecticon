@@ -28,8 +28,8 @@ int wgetevent2(wbp w, dptr res, word timeout)
     int retval;
 
     if (wstates != NULL && wstates->next != NULL		/* if multiple windows*/
-        && (BlkLoc(w->window->listp)->list.size == 0)) {	/* & queue is empty */
-        while (BlkLoc(w->window->listp)->list.size == 0) {
+        && (ListBlk(w->window->listp).size == 0)) {	/* & queue is empty */
+        while (ListBlk(w->window->listp).size == 0) {
 #ifdef XWindows
             if (ISCLOSED(w)) {
                 return -1;
@@ -56,7 +56,7 @@ int wgetevent2(wbp w, dptr res, word timeout)
         case SELECTIONREQUEST: {
             int i;
             /* Five items follow; copy them to the result */
-            if (BlkLoc(w->window->listp)->list.size < 5)
+            if (ListBlk(w->window->listp).size < 5)
                 return -2;					/* malformed queue */
 
             for (i = 0; i < 5; ++i) {
@@ -66,7 +66,7 @@ int wgetevent2(wbp w, dptr res, word timeout)
             break;
         }
         case SELECTIONCLEAR: {
-            if (BlkLoc(w->window->listp)->list.size < 1)
+            if (ListBlk(w->window->listp).size < 1)
                 return -2;					/* malformed queue */
 
             /* One item follows */
@@ -75,7 +75,7 @@ int wgetevent2(wbp w, dptr res, word timeout)
             break;
         }
         case SELECTIONRESPONSE: {
-            if (BlkLoc(w->window->listp)->list.size < 2)
+            if (ListBlk(w->window->listp).size < 2)
                 return -2;					/* malformed queue */
 
             /* Three items follow */
@@ -86,7 +86,7 @@ int wgetevent2(wbp w, dptr res, word timeout)
             break;
         }
         default: {
-            if (BlkLoc(w->window->listp)->list.size < 2)
+            if (ListBlk(w->window->listp).size < 2)
                 return -2;					/* malformed queue */
 
             wgetq(w, &xdesc, -1);

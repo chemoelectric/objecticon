@@ -48,8 +48,8 @@ operator ! bang(underef x -> dx)
 
             EVValD(&dx, E_Lbang);
 
-            for (le = lgfirst(&BlkLoc(dx)->list, &state); le;
-                 le = lgnext(&BlkLoc(dx)->list, &state, le)) {
+            for (le = lgfirst(&ListBlk(dx), &state); le;
+                 le = lgnext(&ListBlk(dx), &state, le)) {
                 EVVal(state.listindex, E_Lsub);
                 suspend struct_var(&le->lslots[state.result], le);
             }
@@ -87,10 +87,10 @@ operator ! bang(underef x -> dx)
 
       cset: {
             EVValD(&dx, E_Csetbang);
-            for (i = 0; i < BlkLoc(dx)->cset.n_ranges; i++) {
+            for (i = 0; i < CsetBlk(dx).n_ranges; i++) {
                int from, to;
-               from = BlkLoc(dx)->cset.range[i].from;
-               to = BlkLoc(dx)->cset.range[i].to;
+               from = CsetBlk(dx).range[i].from;
+               to = CsetBlk(dx).range[i].to;
                for (j = from; j <= to; ++j) {
                    if (j < 256)
                        suspend string(1, &allchars[j]);
@@ -104,14 +104,14 @@ operator ! bang(underef x -> dx)
           EVValD(&dx, E_Ucsbang);
           if (is:variable(x)) {
               if (frame->rval) {
-                  for (i = 1; i <= BlkLoc(dx)->ucs.length; i++) {
-                      suspend ucs(make_ucs_substring(&BlkLoc(dx)->ucs, i, 1));
+                  for (i = 1; i <= UcsBlk(dx).length; i++) {
+                      suspend ucs(make_ucs_substring(&UcsBlk(dx), i, 1));
                       deref(&x, &dx);
                       if (!is:ucs(dx)) 
                           runerr(128, dx);
                   }
               } else {
-                  for (i = 1; i <= BlkLoc(dx)->ucs.length; i++) {
+                  for (i = 1; i <= UcsBlk(dx).length; i++) {
                       suspend tvsubs(&x, i, (word)1);
                       deref(&x, &dx);
                       if (!is:ucs(dx)) 
@@ -119,8 +119,8 @@ operator ! bang(underef x -> dx)
                   }
               }
           } else {
-              tended char *p = StrLoc(BlkLoc(dx)->ucs.utf8);
-              for (i = 1; i <= BlkLoc(dx)->ucs.length; i++) {
+              tended char *p = StrLoc(UcsBlk(dx).utf8);
+              for (i = 1; i <= UcsBlk(dx).length; i++) {
                   tended struct descrip utf8;
                   StrLoc(utf8) = p;
                   StrLen(utf8) = UTF8_SEQ_LEN(*p);
@@ -138,11 +138,11 @@ operator ! bang(underef x -> dx)
 
             EVValD(&dx, E_Rbang);
 
-            j = BlkLoc(dx)->record.constructor->n_fields;
+            j = RecordBlk(dx).constructor->n_fields;
             for (i = 0; i < j; i++) {
 	       EVVal(i+1, E_Rsub);
-               suspend struct_var(&BlkLoc(dx)->record.fields[i], 
-                  (struct b_record *)BlkLoc(dx));
+               suspend struct_var(&RecordBlk(dx).fields[i], 
+                  &RecordBlk(dx));
                }
             }
 
@@ -205,7 +205,7 @@ operator ? random(underef x -> dx)
             double rval;
             word i;
 
-            if ((val = BlkLoc(dx)->ucs.length) == 0)
+            if ((val = UcsBlk(dx).length) == 0)
                fail;
             rval = RandVal;
             rval *= val;
@@ -213,7 +213,7 @@ operator ? random(underef x -> dx)
             if (is:variable(x) && !frame->rval)
                return tvsubs(&x, i, (word)1);
             else
-                return ucs(make_ucs_substring(&BlkLoc(dx)->ucs, i, 1));
+                return ucs(make_ucs_substring(&UcsBlk(dx), i, 1));
        }
 
       cset: {
@@ -221,13 +221,13 @@ operator ? random(underef x -> dx)
              double rval;
              word i;
              int k, ch;
-             if ((val = BlkLoc(dx)->cset.size) == 0)
+             if ((val = CsetBlk(dx).size) == 0)
                  fail;
              rval = RandVal;
              rval *= val;
              i = (word)rval + 1;
-             k = cset_range_of_pos(&BlkLoc(dx)->cset, i);
-             ch = BlkLoc(dx)->cset.range[k].from + i - 1 - BlkLoc(dx)->cset.range[k].index;
+             k = cset_range_of_pos(&CsetBlk(dx), i);
+             ch = CsetBlk(dx).range[k].from + i - 1 - CsetBlk(dx).range[k].index;
              if (ch < 256)
                  return string(1, &allchars[ch]);
              else
@@ -243,7 +243,7 @@ operator ? random(underef x -> dx)
             double rval;
             word i, j;
             struct b_lelem *le;     /* doesn't need to be tended */
-            if ((val = BlkLoc(dx)->list.size) == 0)
+            if ((val = ListBlk(dx).size) == 0)
                fail;
             rval = RandVal;
             rval *= val;
@@ -252,7 +252,7 @@ operator ? random(underef x -> dx)
             EVValD(&dx, E_Lrand);
             EVVal(i, E_Lsub);
 
-            le = get_lelem_for_index(&BlkLoc(dx)->list, i, &j);
+            le = get_lelem_for_index(&ListBlk(dx), i, &j);
             if (!le)
                 syserr("list reference out of bounds in random");
             /* j is the logical index in the element block; convert to
@@ -342,7 +342,7 @@ operator ? random(underef x -> dx)
             double rval;
             struct b_record *rec;  /* doesn't need to be tended */
 
-            rec = (struct b_record *)BlkLoc(dx);
+            rec = &RecordBlk(dx);
             if ((val = rec->constructor->n_fields) == 0)
                fail;
             /*
@@ -417,10 +417,10 @@ operator [:] sect(underef x -> dx, i, j)
       list: {
          C_integer t;
 
-         i = cvpos(i, BlkLoc(dx)->list.size);
+         i = cvpos(i, ListBlk(dx).size);
          if (i == CvtFail)
             fail;
-         j = cvpos(j, BlkLoc(dx)->list.size);
+         j = cvpos(j, ListBlk(dx).size);
          if (j == CvtFail)
             fail;
          if (i > j) {
@@ -437,10 +437,10 @@ operator [:] sect(underef x -> dx, i, j)
          if (is:variable(x) && !frame->rval)
                use_trap = 1;
 
-         i = cvpos(i, BlkLoc(dx)->ucs.length);
+         i = cvpos(i, UcsBlk(dx).length);
          if (i == CvtFail)
              fail;
-         j = cvpos(j, BlkLoc(dx)->ucs.length);
+         j = cvpos(j, UcsBlk(dx).length);
          if (j == CvtFail)
              fail;
          if (i > j) { 			/* convert section to substring */
@@ -454,7 +454,7 @@ operator [:] sect(underef x -> dx, i, j)
          if (use_trap) 
              return tvsubs(&x, i, j);
          else 
-             return ucs(make_ucs_substring(&BlkLoc(dx)->ucs, i, j));
+             return ucs(make_ucs_substring(&UcsBlk(dx), i, j));
 
       }       
 
@@ -462,10 +462,10 @@ operator [:] sect(underef x -> dx, i, j)
          C_integer t;
          int k, last;
 
-         i = cvpos(i, BlkLoc(dx)->cset.size);
+         i = cvpos(i, CsetBlk(dx).size);
          if (i == CvtFail)
              fail;
-         j = cvpos(j, BlkLoc(dx)->cset.size);
+         j = cvpos(j, CsetBlk(dx).size);
          if (j == CvtFail)
              fail;
          if (i > j) { 			/* convert section to substring */
@@ -481,12 +481,12 @@ operator [:] sect(underef x -> dx, i, j)
 
          /* Search for the last char, see if it's < 256 */
          last = i + j - 1;
-         k = cset_range_of_pos(&BlkLoc(dx)->cset, last);
-         if (BlkLoc(dx)->cset.range[k].from + last - 1 - BlkLoc(dx)->cset.range[k].index < 256) {
-             cset_to_str(&BlkLoc(dx)->cset, i, j, &result);
+         k = cset_range_of_pos(&CsetBlk(dx), last);
+         if (CsetBlk(dx).range[k].from + last - 1 - CsetBlk(dx).range[k].index < 256) {
+             cset_to_str(&CsetBlk(dx), i, j, &result);
              return result;
          } else
-             return ucs(cset_to_ucs_block(&BlkLoc(dx)->cset, i, j));
+             return ucs(cset_to_ucs_block(&CsetBlk(dx), i, j));
       }       
 
     default: {
@@ -552,7 +552,7 @@ operator [] subsc(underef x -> dx,y)
           /*
            * Make sure that subscript y is in range.
            */
-          lp = (struct b_list *)BlkLoc(dx);
+          lp = &ListBlk(dx);
           i = cvpos(yi, (long)lp->size);
           if (i == CvtFail || i > lp->size)
               fail;
@@ -591,7 +591,7 @@ operator [] subsc(underef x -> dx,y)
                return struct_var(&bp->telem.tval, bp);
             }
             if (frame->rval)
-                return BlkLoc(dx)->table.defvalue;
+                return TableBlk(dx).defvalue;
             else {
                /*
                 * dx[y] is not in the table, make a table element trapped
@@ -616,7 +616,7 @@ operator [] subsc(underef x -> dx,y)
                runerr(101,y);
 
             bp = BlkLoc(dx);
-            bp2 = BlkLoc(dx)->record.constructor;
+            bp2 = RecordBlk(dx).constructor;
             i = lookup_record_field_by_name(bp2, &y);
             if (i < 0)
                fail;
@@ -668,8 +668,8 @@ operator [] subsc(underef x -> dx,y)
          * Convert y to a position in x and fail if the position
          *  is out of bounds.
          */
-        i = cvpos(yi, BlkLoc(dx)->ucs.length);
-        if (i == CvtFail || i > BlkLoc(dx)->ucs.length)
+        i = cvpos(yi, UcsBlk(dx).length);
+        if (i == CvtFail || i > UcsBlk(dx).length)
             fail;
         if (use_trap)
             /*
@@ -678,7 +678,7 @@ operator [] subsc(underef x -> dx,y)
              */
             return tvsubs(&x, i, (word)1);
         else
-            return ucs(make_ucs_substring(&BlkLoc(dx)->ucs, i, 1));
+            return ucs(make_ucs_substring(&UcsBlk(dx), i, 1));
       }
 
       cset: {
@@ -697,11 +697,11 @@ operator [] subsc(underef x -> dx,y)
             runerr(101, y);
          }
 
-         i = cvpos(yi, BlkLoc(dx)->cset.size);
-         if (i == CvtFail || i > BlkLoc(dx)->cset.size)
+         i = cvpos(yi, CsetBlk(dx).size);
+         if (i == CvtFail || i > CsetBlk(dx).size)
              fail;
-         k = cset_range_of_pos(&BlkLoc(dx)->cset, i);
-         ch = BlkLoc(dx)->cset.range[k].from + i - 1 - BlkLoc(dx)->cset.range[k].index;
+         k = cset_range_of_pos(&CsetBlk(dx), i);
+         ch = CsetBlk(dx).range[k].from + i - 1 - CsetBlk(dx).range[k].index;
          if (ch < 256)
              return string(1, &allchars[ch]);
          else
@@ -813,8 +813,8 @@ function back(underef x -> dx)
 
             EVValD(&dx, E_Lbang);
 
-            for (le = lglast(&BlkLoc(dx)->list, &state); le;
-                 le = lgprev(&BlkLoc(dx)->list, &state, le)) {
+            for (le = lglast(&ListBlk(dx), &state); le;
+                 le = lgprev(&ListBlk(dx), &state, le)) {
                 EVVal(state.listindex, E_Lsub);
                 suspend struct_var(&le->lslots[state.result], le);
             }
@@ -822,10 +822,10 @@ function back(underef x -> dx)
 
       cset: {
             EVValD(&dx, E_Csetbang);
-            for (i = BlkLoc(dx)->cset.n_ranges - 1; i >= 0; i--) {
+            for (i = CsetBlk(dx).n_ranges - 1; i >= 0; i--) {
                int from, to;
-               from = BlkLoc(dx)->cset.range[i].from;
-               to = BlkLoc(dx)->cset.range[i].to;
+               from = CsetBlk(dx).range[i].from;
+               to = CsetBlk(dx).range[i].to;
                for (j = to; j >= from; --j) {
                    if (j < 256)
                        suspend string(1, &allchars[j]);
@@ -839,21 +839,21 @@ function back(underef x -> dx)
           EVValD(&dx, E_Ucsbang);
           if (is:variable(x)) {
               if (frame->rval) {
-                  for (i = BlkLoc(dx)->ucs.length; i > 0; i--) {
-                      if (i > BlkLoc(dx)->ucs.length) {
-                          i = BlkLoc(dx)->ucs.length;
+                  for (i = UcsBlk(dx).length; i > 0; i--) {
+                      if (i > UcsBlk(dx).length) {
+                          i = UcsBlk(dx).length;
                           if (i == 0)
                               break;
                       }
-                      suspend ucs(make_ucs_substring(&BlkLoc(dx)->ucs, i, 1));
+                      suspend ucs(make_ucs_substring(&UcsBlk(dx), i, 1));
                       deref(&x, &dx);
                       if (!is:ucs(dx)) 
                           runerr(128, dx);
                   }
               } else {
-                  for (i = BlkLoc(dx)->ucs.length; i > 0; i--) {
-                      if (i > BlkLoc(dx)->ucs.length) {
-                          i = BlkLoc(dx)->ucs.length;
+                  for (i = UcsBlk(dx).length; i > 0; i--) {
+                      if (i > UcsBlk(dx).length) {
+                          i = UcsBlk(dx).length;
                           if (i == 0)
                               break;
                       }
@@ -864,9 +864,9 @@ function back(underef x -> dx)
                   }
               }
           } else {
-              tended char *p = StrLoc(BlkLoc(dx)->ucs.utf8) +
-                  StrLen(BlkLoc(dx)->ucs.utf8);
-              for (i = BlkLoc(dx)->ucs.length; i > 0; i--) {
+              tended char *p = StrLoc(UcsBlk(dx).utf8) +
+                  StrLen(UcsBlk(dx).utf8);
+              for (i = UcsBlk(dx).length; i > 0; i--) {
                   tended struct descrip utf8;
                   utf8_rev_iter(&p);
                   StrLoc(utf8) = p;
@@ -884,10 +884,10 @@ function back(underef x -> dx)
 
             EVValD(&dx, E_Rbang);
 
-            for (i = BlkLoc(dx)->record.constructor->n_fields - 1; i >= 0; i--) {
+            for (i = RecordBlk(dx).constructor->n_fields - 1; i >= 0; i--) {
 	       EVVal(i+1, E_Rsub);
-               suspend struct_var(&BlkLoc(dx)->record.fields[i], 
-                  (struct b_record *)BlkLoc(dx));
+               suspend struct_var(&RecordBlk(dx).fields[i], 
+                  &RecordBlk(dx));
                }
             }
 

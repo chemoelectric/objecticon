@@ -37,7 +37,7 @@ function delete(s,x)
                     fail;
                 runerr(101, x);
             }
-            size = BlkLoc(s)->list.size;
+            size = ListBlk(s).size;
             i = cvpos((long)cnv_x, size);
             if (i == CvtFail || i > size)
                 fail;
@@ -145,7 +145,7 @@ function insert(s, x, y)
                     fail;
                 runerr(101, x);
             }
-            size = BlkLoc(s)->list.size;
+            size = ListBlk(s).size;
             i = cvpos((long)cnv_x, size);
             if (i == CvtFail || i > size + 1)
                 fail;
@@ -382,8 +382,8 @@ function keyof(s,x)
         list: {
             struct lgstate state;
             tended struct b_lelem *le;
-            for (le = lgfirst(&BlkLoc(s)->list, &state); le;
-                 le = lgnext(&BlkLoc(s)->list, &state, le)) {
+            for (le = lgfirst(&ListBlk(s), &state); le;
+                 le = lgnext(&ListBlk(s), &state, le)) {
                 if (equiv(&le->lslots[state.result], &x))
                   suspend C_integer state.listindex;
             }

@@ -3896,7 +3896,7 @@ int nativemenubar(wbp w, int total, int argc, dptr argv, int warg, dptr d)
       /*
        * each argument must be a list of strings
        */
-      hp = (struct b_list *)BlkLoc(argv[warg]);
+      hp = &ListBlk(argv[warg]);
       r = hp->size;
       /*
        * Construct a Windows menu corresponding to the Icon list

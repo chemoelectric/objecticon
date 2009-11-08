@@ -35,7 +35,7 @@ word i, j;
     * Get pointers to the list and list elements for the source list
     *  (bp1, lp1).
     */
-   lp1 = (struct b_list *) BlkLoc(*dp1);
+   lp1 = &ListBlk(*dp1);
    size = j - i;
 
    bp1 = get_lelem_for_index(lp1, i, &pos);
@@ -111,7 +111,7 @@ cpset_macro(cpset_1, E_Screate)
 void f(dptr dp1, dptr dp2, word n)
    {
    cphash(dp1, dp2, n, T_Table);
-   BlkLoc(*dp2)->table.defvalue = BlkLoc(*dp1)->table.defvalue;
+   TableBlk(*dp2).defvalue = TableBlk(*dp1).defvalue;
    EVValD(dp2, e);
    }
 #enddef
@@ -132,7 +132,7 @@ static void cphash(dptr dp1, dptr dp2, word n, int tcode)
    /*
     * Make a new set organized like dp1, with room for n elements.
     */
-   MemProtect(dst = hmake(tcode, BlkLoc(*dp1)->set.mask + 1, n));
+   MemProtect(dst = hmake(tcode, SetBlk(*dp1).mask + 1, n));
 
    /*
     * Copy the header and slot blocks.

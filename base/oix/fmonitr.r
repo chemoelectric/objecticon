@@ -19,7 +19,7 @@
 
 void assign_event_functions(struct progstate *p, struct descrip cs)
 {
-   word *bits = BlkLoc(cs)->cset.bits;
+   word *bits = CsetBlk(cs).bits;
    p->eventmask = cs;
 #ifdef EventMon
    /*

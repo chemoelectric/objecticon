@@ -101,8 +101,8 @@ operator icon_op func_name(x,y)
          /*
           * lexcmp does the work.
           */
-         if (special_test_ucs (lexcmp(&BlkLoc(x)->ucs.utf8, 
-                                      &BlkLoc(y)->ucs.utf8) c_comp comp_value))
+         if (special_test_ucs (lexcmp(&UcsBlk(x).utf8, 
+                                      &UcsBlk(y).utf8) c_comp comp_value))
              return y;
          else
              fail;
@@ -123,9 +123,9 @@ end
 #enddef
 
 StrComp(==,  lexeq, (StrLen(x) == StrLen(y)) &&, 
-        (StrLen(BlkLoc(x)->ucs.utf8) == StrLen(BlkLoc(y)->ucs.utf8)) &&,==, Equal, equal to) 
+        (StrLen(UcsBlk(x).utf8) == StrLen(UcsBlk(y).utf8)) &&,==, Equal, equal to) 
 StrComp(~==, lexne, (StrLen(x) != StrLen(y)) ||, 
-        (StrLen(BlkLoc(x)->ucs.utf8) != StrLen(BlkLoc(y)->ucs.utf8)) ||, !=, Equal, not equal to)
+        (StrLen(UcsBlk(x).utf8) != StrLen(UcsBlk(y).utf8)) ||, !=, Equal, not equal to)
 StrComp(>>=, lexge, , , !=, Less,    greater than or equal to) 
 StrComp(>>,  lexgt, , , ==, Greater, greater than)
 StrComp(<<=, lexle, , , !=, Greater, less than or equal to)

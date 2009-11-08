@@ -13,7 +13,7 @@ operator ^ refresh(x)
    body {
        tended struct b_coexpr *curr, *coex;
 
-       curr = (struct b_coexpr *)BlkLoc(x);
+       curr = &CoexprBlk(x);
 
        if (curr->main_of)	/* &main cannot be refreshed */
            runerr(215, x);
@@ -39,7 +39,7 @@ function cocopy(x)
        tended struct b_coexpr *curr, *coex;
        dptr dp1, dp2;
 
-       curr = (struct b_coexpr *)BlkLoc(x);
+       curr = &CoexprBlk(x);
 
        if (curr->main_of)	/* &main cannot be copied */
            runerr(216, x);
@@ -70,13 +70,13 @@ operator * size(x)
   body {
    type_case x of {
       string: return C_integer StrLen(x);
-      ucs:    return C_integer BlkLoc(x)->ucs.length;
-      list:   return C_integer BlkLoc(x)->list.size;
-      table:  return C_integer BlkLoc(x)->table.size;
-      set:    return C_integer BlkLoc(x)->set.size;
-      cset:   return C_integer BlkLoc(x)->cset.size;
-      record: return C_integer BlkLoc(x)->record.constructor->n_fields;
-      coexpr: return C_integer BlkLoc(x)->coexpr.size;
+      ucs:    return C_integer UcsBlk(x).length;
+      list:   return C_integer ListBlk(x).size;
+      table:  return C_integer TableBlk(x).size;
+      set:    return C_integer SetBlk(x).size;
+      cset:   return C_integer CsetBlk(x).size;
+      record: return C_integer RecordBlk(x).constructor->n_fields;
+      coexpr: return C_integer CoexprBlk(x).size;
       default: {
          /*
           * Try to convert it to a string.
@@ -112,17 +112,17 @@ operator = tabmat(x)
           /*
            * Fail if &subject[&pos:0] is not of sufficient length to contain x.
            */
-          j = BlkLoc(k_subject)->ucs.length - i + 1;
-          if (j < BlkLoc(x)->ucs.length)
+          j = UcsBlk(k_subject).length - i + 1;
+          if (j < UcsBlk(x).length)
               fail;
 
           /*
            * Get pointers to x (s1) and &subject (s2).  Compare them on a byte-wise
            *  basis and fail if s1 doesn't match s2 for *s1 characters.
            */
-          s1 = StrLoc(BlkLoc(x)->ucs.utf8);
-          s2 = ucs_utf8_ptr(&BlkLoc(k_subject)->ucs, i);
-          l = BlkLoc(x)->ucs.length;
+          s1 = StrLoc(UcsBlk(x).utf8);
+          s2 = ucs_utf8_ptr(&UcsBlk(k_subject), i);
+          l = UcsBlk(x).length;
           while (l-- > 0) {
               if (utf8_iter(&s1) != utf8_iter(&s2))
                   fail;
@@ -132,7 +132,7 @@ operator = tabmat(x)
            * Increment &pos to tab over the matched string and suspend the
            *  matched string.
            */
-          l = BlkLoc(x)->ucs.length;
+          l = UcsBlk(x).length;
           k_pos += l;
 
           EVVal(k_pos, E_Spos);
@@ -142,7 +142,7 @@ operator = tabmat(x)
           /*
            * tabmat has been resumed, restore &pos and fail.
            */
-          if (i > BlkLoc(k_subject)->ucs.length + 1)
+          if (i > UcsBlk(k_subject).length + 1)
               runerr(205, kywd_pos);
           else {
               k_pos = i;

@@ -60,19 +60,19 @@ dptr dp1, dp2;
          /*
           * Collate on co-expression id.
           */
-         lresult = (BlkLoc(*dp1)->coexpr.id - BlkLoc(*dp2)->coexpr.id);
+         lresult = (CoexprBlk(*dp1).id - CoexprBlk(*dp2).id);
          if (lresult == 0)
             return Equal;
          return ((lresult > 0) ? Greater : Less);
 
       case T_Cset: {
           int i = 0, j = 0;
-          while (i < BlkLoc(*dp1)->cset.n_ranges &&
-                 j < BlkLoc(*dp2)->cset.n_ranges) {
-              int from1 = BlkLoc(*dp1)->cset.range[i].from;
-              int to1 = BlkLoc(*dp1)->cset.range[i].to;
-              int from2 = BlkLoc(*dp2)->cset.range[j].from;
-              int to2 = BlkLoc(*dp2)->cset.range[j].to;
+          while (i < CsetBlk(*dp1).n_ranges &&
+                 j < CsetBlk(*dp2).n_ranges) {
+              int from1 = CsetBlk(*dp1).range[i].from;
+              int to1 = CsetBlk(*dp1).range[i].to;
+              int from2 = CsetBlk(*dp2).range[j].from;
+              int to2 = CsetBlk(*dp2).range[j].to;
               if (from1 < from2)
                   return Less;
               if (from2 < from1)
@@ -86,9 +86,9 @@ dptr dp1, dp2;
                   ++j;
               }
           }
-          if (i < BlkLoc(*dp1)->cset.n_ranges)
+          if (i < CsetBlk(*dp1).n_ranges)
               return Greater;
-          if (j < BlkLoc(*dp2)->cset.n_ranges)
+          if (j < CsetBlk(*dp2).n_ranges)
               return Less;
           return Equal;
       }
@@ -97,7 +97,7 @@ dptr dp1, dp2;
          /*
           * Collate on list id.
           */
-         lresult = (BlkLoc(*dp1)->list.id - BlkLoc(*dp2)->list.id);
+         lresult = (ListBlk(*dp1).id - ListBlk(*dp2).id);
          if (lresult == 0)
             return Equal;
          return ((lresult > 0) ? Greater : Less);
@@ -109,19 +109,19 @@ dptr dp1, dp2;
          /*
           * Collate on procedure name.
           */
-         return lexcmp(BlkLoc(*dp1)->proc.name,
-                       BlkLoc(*dp2)->proc.name);
+         return lexcmp(ProcBlk(*dp1).name,
+                       ProcBlk(*dp2).name);
 
       case T_Ucs:
          /*
           * Collate on utf8 data.
           */
-         return lexcmp(&(BlkLoc(*dp1)->ucs.utf8),
-            &(BlkLoc(*dp2)->ucs.utf8));
+         return lexcmp(&(UcsBlk(*dp1).utf8),
+            &(UcsBlk(*dp2).utf8));
 
       case T_Real:
-         GetReal(BlkLoc(*dp1)->real,rres1);
-         GetReal(BlkLoc(*dp2)->real,rres2);
+         GetReal(RealBlk(*dp1),rres1);
+         GetReal(RealBlk(*dp2),rres2);
          rresult = rres1 - rres2;
 	 if (rresult == 0.0)
 	    return Equal;
@@ -131,22 +131,22 @@ dptr dp1, dp2;
           /*
            * Collate on class name.
            */
-         return lexcmp(BlkLoc(*dp1)->class.name, BlkLoc(*dp2)->class.name);
+         return lexcmp(ClassBlk(*dp1).name, ClassBlk(*dp2).name);
 
       case T_Constructor:
           /*
            * Collate on type name.
            */
-         return lexcmp(BlkLoc(*dp1)->constructor.name, BlkLoc(*dp2)->constructor.name);
+         return lexcmp(ConstructorBlk(*dp1).name, ConstructorBlk(*dp2).name);
 
       case T_Record:
          /*
           * Collate on record id within record name.
           */
-         iresult = lexcmp(BlkLoc(*dp1)->record.constructor->name,
-                          BlkLoc(*dp2)->record.constructor->name);
+         iresult = lexcmp(RecordBlk(*dp1).constructor->name,
+                          RecordBlk(*dp2).constructor->name);
          if (iresult == Equal) {
-            lresult = (BlkLoc(*dp1)->record.id - BlkLoc(*dp2)->record.id);
+            lresult = (RecordBlk(*dp1).id - RecordBlk(*dp2).id);
             if (lresult > 0)	/* coded this way because of code-generation */
                return Greater;  /* bug in MSC++ 7.0A;  do not change. */
             else if (lresult < 0)
@@ -160,10 +160,10 @@ dptr dp1, dp2;
          /*
           * Collate on object id within class name.
           */
-         iresult = lexcmp(BlkLoc(*dp1)->object.class->name,
-                          BlkLoc(*dp2)->object.class->name);
+         iresult = lexcmp(ObjectBlk(*dp1).class->name,
+                          ObjectBlk(*dp2).class->name);
          if (iresult == Equal) {
-            lresult = (BlkLoc(*dp1)->object.id - BlkLoc(*dp2)->object.id);
+            lresult = (ObjectBlk(*dp1).id - ObjectBlk(*dp2).id);
             if (lresult > 0)	/* coded this way because of code-generation */
                return Greater;  /* bug in MSC++ 7.0A;  do not change. */
             else if (lresult < 0)
@@ -177,10 +177,10 @@ dptr dp1, dp2;
          /*
           * Collate on cast class name within cast object id within cast object class name.
           */
-          iresult = lexcmp(BlkLoc(*dp1)->cast.object->class->name,
-                           BlkLoc(*dp2)->cast.object->class->name);
+          iresult = lexcmp(CastBlk(*dp1).object->class->name,
+                           CastBlk(*dp2).object->class->name);
           if (iresult == Equal) {
-              lresult = (BlkLoc(*dp1)->cast.object->id - BlkLoc(*dp2)->cast.object->id);
+              lresult = (CastBlk(*dp1).object->id - CastBlk(*dp2).object->id);
               if (lresult > 0)	/* coded this way because of code-generation */
                   iresult = Greater;  /* bug in MSC++ 7.0A;  do not change. */
               else if (lresult < 0)
@@ -188,8 +188,8 @@ dptr dp1, dp2;
               else
                   iresult = Equal;
               if (iresult == Equal) {
-                  return lexcmp(BlkLoc(*dp1)->cast.class->name,
-                                BlkLoc(*dp2)->cast.class->name);
+                  return lexcmp(CastBlk(*dp1).class->name,
+                                CastBlk(*dp2).class->name);
               }
           }
           return iresult;
@@ -198,10 +198,10 @@ dptr dp1, dp2;
          /*
           * Collate on methp proc name within methp object id within methp object class name.
           */
-          iresult = lexcmp(BlkLoc(*dp1)->methp.object->class->name,
-                           BlkLoc(*dp2)->methp.object->class->name);
+          iresult = lexcmp(MethpBlk(*dp1).object->class->name,
+                           MethpBlk(*dp2).object->class->name);
           if (iresult == Equal) {
-              lresult = (BlkLoc(*dp1)->methp.object->id - BlkLoc(*dp2)->methp.object->id);
+              lresult = (MethpBlk(*dp1).object->id - MethpBlk(*dp2).object->id);
               if (lresult > 0)	/* coded this way because of code-generation */
                   iresult = Greater;  /* bug in MSC++ 7.0A;  do not change. */
               else if (lresult < 0)
@@ -209,8 +209,8 @@ dptr dp1, dp2;
               else
                   iresult = Equal;
               if (iresult == Equal) {
-                  return lexcmp(BlkLoc(*dp1)->methp.proc->name,
-                                BlkLoc(*dp2)->methp.proc->name);
+                  return lexcmp(MethpBlk(*dp1).proc->name,
+                                MethpBlk(*dp2).proc->name);
               }
           }
           return iresult;
@@ -219,7 +219,7 @@ dptr dp1, dp2;
          /*
           * Collate on set id.
           */
-         lresult = (BlkLoc(*dp1)->set.id - BlkLoc(*dp2)->set.id);
+         lresult = (SetBlk(*dp1).id - SetBlk(*dp2).id);
          if (lresult == 0)
             return Equal;
          return ((lresult > 0) ? Greater : Less);
@@ -228,7 +228,7 @@ dptr dp1, dp2;
          /*
           * Collate on table id.
           */
-         lresult = (BlkLoc(*dp1)->table.id - BlkLoc(*dp2)->table.id);
+         lresult = (TableBlk(*dp1).id - TableBlk(*dp2).id);
          if (lresult == 0)
             return Equal;
          return ((lresult > 0) ? Greater : Less);
@@ -350,25 +350,25 @@ dptr dp1, dp2;
 
 
 	 case T_Real:
-            GetReal(BlkLoc(*dp1)->real, rres1);
-            GetReal(BlkLoc(*dp2)->real, rres2);
+            GetReal(RealBlk(*dp1), rres1);
+            GetReal(RealBlk(*dp2), rres2);
             result = (rres1 == rres2);
 	    break;
 
           case T_Ucs:
               /* Compare the utf8 strings */
-              result = equiv(&BlkLoc(*dp1)->ucs.utf8, &BlkLoc(*dp2)->ucs.utf8);
+              result = equiv(&UcsBlk(*dp1).utf8, &UcsBlk(*dp2).utf8);
               break;
 
           case T_Cset: {
 	    /*
 	     * Compare the ranges.
 	     */
-             result = (BlkLoc(*dp1)->cset.n_ranges == BlkLoc(*dp2)->cset.n_ranges);
+             result = (CsetBlk(*dp1).n_ranges == CsetBlk(*dp2).n_ranges);
              if (result) {
-                 for (i = 0; i < BlkLoc(*dp1)->cset.n_ranges; i++) {
-                     if (BlkLoc(*dp1)->cset.range[i].from != BlkLoc(*dp2)->cset.range[i].from ||
-                         BlkLoc(*dp1)->cset.range[i].to != BlkLoc(*dp2)->cset.range[i].to) {
+                 for (i = 0; i < CsetBlk(*dp1).n_ranges; i++) {
+                     if (CsetBlk(*dp1).range[i].from != CsetBlk(*dp2).range[i].from ||
+                         CsetBlk(*dp1).range[i].to != CsetBlk(*dp2).range[i].to) {
                          result = 0;
                          break;
                      }

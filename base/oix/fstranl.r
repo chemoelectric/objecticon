@@ -30,7 +30,7 @@
 
    type_case s of {
       string: slen = StrLen(s);
-      ucs: slen = BlkLoc(s)->ucs.length;
+      ucs: slen = UcsBlk(s).length;
       default: runerr(129,s);
    }
       
@@ -74,10 +74,10 @@ function any(c,s,i,j)
       if (cnv_i == cnv_j)
          fail;
       if (is:string(s)) {
-         if (!Testb(StrLoc(s)[cnv_i-1], BlkLoc(c)->cset.bits))
+         if (!Testb(StrLoc(s)[cnv_i-1], CsetBlk(c).bits))
             fail;
       } else {
-          if (!in_cset(&BlkLoc(c)->cset, ucs_char(&BlkLoc(s)->ucs, cnv_i)))
+          if (!in_cset(&CsetBlk(c), ucs_char(&UcsBlk(s), cnv_i)))
             fail;
       }
       return C_integer cnv_i+1;
@@ -115,26 +115,26 @@ function bal(c1,c2,c3,s,i,j)
       if (is:string(s)) {
           while (cnv_i < cnv_j) {
               char c = StrLoc(s)[cnv_i-1];
-              if (cnt == 0 && Testb(c, BlkLoc(c1)->cset.bits)) {
+              if (cnt == 0 && Testb(c, CsetBlk(c1).bits)) {
                   suspend C_integer cnv_i;
               }
-              if (Testb(c, BlkLoc(c2)->cset.bits))
+              if (Testb(c, CsetBlk(c2).bits))
                   cnt++;
-              else if (Testb(c, BlkLoc(c3)->cset.bits))
+              else if (Testb(c, CsetBlk(c3).bits))
                   cnt--;
               if (cnt < 0)
                   fail;
               cnv_i++;
           }
       } else {
-          tended char *p = ucs_utf8_ptr(&BlkLoc(s)->ucs, cnv_i);
+          tended char *p = ucs_utf8_ptr(&UcsBlk(s), cnv_i);
           while (cnv_i < cnv_j) {
               int c = utf8_iter(&p);
-              if (cnt == 0 && in_cset(&BlkLoc(c1)->cset, c))
+              if (cnt == 0 && in_cset(&CsetBlk(c1), c))
                   suspend C_integer cnv_i;
-              if (in_cset(&BlkLoc(c2)->cset, c))
+              if (in_cset(&CsetBlk(c2), c))
                   cnt++;
-              else if (in_cset(&BlkLoc(c3)->cset, c))
+              else if (in_cset(&CsetBlk(c3), c))
                   cnt--;
               if (cnt < 0)
                   fail;
@@ -198,11 +198,11 @@ function find(s1,s2,i,j)
            * when the remaining portion s2[i:j] is too short to contain s1.
            * Optimize me!
            */
-          s1_len = BlkLoc(s1)->ucs.length;
+          s1_len = UcsBlk(s1).length;
           term = cnv_j - s1_len;
           while (cnv_i <= term) {
-              str1 = StrLoc(BlkLoc(s1)->ucs.utf8);
-              str2 = ucs_utf8_ptr(&BlkLoc(s2)->ucs, cnv_i);
+              str1 = StrLoc(UcsBlk(s1).utf8);
+              str2 = ucs_utf8_ptr(&UcsBlk(s2), cnv_i);
               l    = s1_len;
 
               /*
@@ -240,15 +240,15 @@ function many(c,s,i,j)
        */
       if (is:string(s)) {
           while (cnv_i < cnv_j) {
-              if (!Testb(StrLoc(s)[cnv_i-1], BlkLoc(c)->cset.bits))
+              if (!Testb(StrLoc(s)[cnv_i-1], CsetBlk(c).bits))
                   break;
               cnv_i++;
           }
       } else {
-          char *p = ucs_utf8_ptr(&BlkLoc(s)->ucs, cnv_i);
+          char *p = ucs_utf8_ptr(&UcsBlk(s), cnv_i);
           while (cnv_i < cnv_j) {
               int ch = utf8_iter(&p);
-              if (!in_cset(&BlkLoc(c)->cset, ch))
+              if (!in_cset(&CsetBlk(c), ch))
                   break;
               cnv_i++;
           }
@@ -303,23 +303,23 @@ function match(s1,s2,i,j)
           /*
            * Cannot match unless s2[i:j] is as long as s1.
            */
-          if (cnv_j - cnv_i < BlkLoc(s1)->ucs.length)
+          if (cnv_j - cnv_i < UcsBlk(s1).length)
               fail;
 
           /*
            * Compare s1 with s2[i:j] for *s1 characters; fail if an
            *  inequality is found.
            */
-          str1 = StrLoc(BlkLoc(s1)->ucs.utf8);
-          str2 = ucs_utf8_ptr(&BlkLoc(s2)->ucs, cnv_i);
-          for (cnv_j = BlkLoc(s1)->ucs.length; cnv_j > 0; cnv_j--)
+          str1 = StrLoc(UcsBlk(s1).utf8);
+          str2 = ucs_utf8_ptr(&UcsBlk(s2), cnv_i);
+          for (cnv_j = UcsBlk(s1).length; cnv_j > 0; cnv_j--)
               if (utf8_iter(&str1) != utf8_iter(&str2))
                   fail;
 
           /*
            * Return position of end of matched string in s2.
            */
-          return C_integer cnv_i + BlkLoc(s1)->ucs.length;
+          return C_integer cnv_i + UcsBlk(s1).length;
       }
    }
 end
@@ -340,20 +340,20 @@ function upto(c,s,i,j)
            */
           while (cnv_i < cnv_j) {
               char ch = StrLoc(s)[cnv_i-1];
-              if (Testb(ch, BlkLoc(c)->cset.bits)) 
+              if (Testb(ch, CsetBlk(c).bits)) 
                   suspend C_integer cnv_i;
 
               cnv_i++;
           }
       } else {
-          tended char *p = ucs_utf8_ptr(&BlkLoc(s)->ucs, cnv_i);
+          tended char *p = ucs_utf8_ptr(&UcsBlk(s), cnv_i);
           /*
            * Look through s[i:j] and suspend position of each occurrence of
            * of a character in c.
            */
           while (cnv_i < cnv_j) {
               int ch = utf8_iter(&p);
-              if (in_cset(&BlkLoc(c)->cset, ch))
+              if (in_cset(&CsetBlk(c), ch))
                   suspend C_integer cnv_i;
 
               cnv_i++;

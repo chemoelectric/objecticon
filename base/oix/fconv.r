@@ -31,7 +31,7 @@ function abs(n)
 
    else if cnv:(exact)integer(n) then {
       body {
-	 if (BlkLoc(n)->bignum.sign == 0)
+	 if (BignumBlk(n).sign == 0)
 	    result = n;
 	 else {
              bigneg(&n, &result);
@@ -155,7 +155,7 @@ function proc(x,i,c)
          if (is:null(c))
              prog = curpstate;
          else if (is:coexpr(c))
-             prog = get_current_program_of(&BlkLoc(c)->coexpr);
+             prog = get_current_program_of(&CoexprBlk(c));
          else
              runerr(118, c);
 

@@ -349,6 +349,31 @@
 #define MaxType		27	/* maximum type number */
 
 /*
+ * Convenient macros for access to a block from a descriptor
+ */
+#define RealBlk(x) BlkLoc(x)->real
+#define CsetBlk(x) BlkLoc(x)->cset
+#define ProcBlk(x) BlkLoc(x)->proc
+#define ListBlk(x) BlkLoc(x)->list
+#define LelemBlk(x) BlkLoc(x)->lelem
+#define TableBlk(x) BlkLoc(x)->table
+#define TelemBlk(x) BlkLoc(x)->telem
+#define SetBlk(x) BlkLoc(x)->set
+#define SelemBlk(x) BlkLoc(x)->selem
+#define RecordBlk(x) BlkLoc(x)->record
+#define TvsubsBlk(x) BlkLoc(x)->tvsubs
+#define TvtblBlk(x) BlkLoc(x)->tvtbl
+#define CoexprBlk(x) BlkLoc(x)->coexpr
+#define SlotsBlk(x) BlkLoc(x)->slots
+#define ClassBlk(x) BlkLoc(x)->class
+#define ObjectBlk(x) BlkLoc(x)->object
+#define CastBlk(x) BlkLoc(x)->cast
+#define MethpBlk(x) BlkLoc(x)->methp
+#define ConstructorBlk(x) BlkLoc(x)->constructor
+#define UcsBlk(x) BlkLoc(x)->ucs
+#define BignumBlk(x) BlkLoc(x)->bignum
+
+/*
  * Definitions for keywords.
  */
 

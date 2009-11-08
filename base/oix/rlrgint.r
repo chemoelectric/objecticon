@@ -63,7 +63,7 @@ union word_b_bignum {
 
 /* LrgInt(dptr dp) : the struct b_bignum pointed to by dp */
 
-#define LrgInt(dp)   ((struct b_bignum *)&BlkLoc(*dp)->bignum)
+#define LrgInt(dp)   ((struct b_bignum *)&BignumBlk(*dp))
 
 /* LEN(struct b_bignum *b) : number of significant digits */
 
@@ -261,7 +261,7 @@ word bigradix(sign, r, s, end_s, result)
     { struct descrip dx;
         mkdesc(b, &dx);
         if (Type(dx) == T_Lrgint)
-            result->big = (struct b_bignum *)BlkLoc(dx);
+            result->big = &BignumBlk(dx);
         else
             result->integer = IntVal(dx);
         return Type(dx);
@@ -276,7 +276,7 @@ int bigtoreal(dptr da, double *d)
 {
     word i;
     double r = 0;
-    struct b_bignum *b = &BlkLoc(*da)->bignum;
+    struct b_bignum *b = &BignumBlk(*da);
 
     for (i = b->msd; i <= b->lsd; i++)
         r = r * B + b->digits[i];
@@ -305,7 +305,7 @@ int realtobig(da, dx)
     word d;
     int sgn;
 
-    GetReal(BlkLoc(*da)->real, x);
+    GetReal(RealBlk(*da), x);
 
 
     /* Try to catch the case of x being +/-"inf" - these values produce a spurious value of
@@ -386,7 +386,7 @@ void bigprint(f, da)
     struct b_bignum *a, *temp;
     word alen = LEN(LrgInt(da));
     word slen, dlen;
-    struct b_bignum *blk = &BlkLoc(*da)->bignum;
+    struct b_bignum *blk = &BignumBlk(*da);
 
     slen = blk->lsd - blk->msd;
     dlen = slen * NB * 0.3010299956639812	/* 1 / log2(10) */

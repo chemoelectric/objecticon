@@ -59,7 +59,7 @@ function move(i)
           /*
            * If attempted move is past either end of the string, fail.
            */
-          if (i + j <= 0 || i + j > BlkLoc(k_subject)->ucs.length + 1)
+          if (i + j <= 0 || i + j > UcsBlk(k_subject).length + 1)
               fail;
 
           /*
@@ -95,7 +95,7 @@ function move(i)
           /*
            * If move is resumed, restore the old position and fail.
            */
-          if (oldpos > BlkLoc(k_subject)->ucs.length + 1)
+          if (oldpos > UcsBlk(k_subject).length + 1)
               runerr(205, kywd_pos);
           else {
               k_pos = oldpos;
@@ -126,7 +126,7 @@ function pos(i)
           /*
            * Fail if &pos is not equivalent to i, return i otherwise.
            */
-          if ((i = cvpos(i, BlkLoc(k_subject)->ucs.length)) != k_pos)
+          if ((i = cvpos(i, UcsBlk(k_subject).length)) != k_pos)
               fail;
       }
 
@@ -194,7 +194,7 @@ function tab(i)
           /*
            * Convert i to an absolute position.
            */
-          i = cvpos(i, BlkLoc(k_subject)->ucs.length);
+          i = cvpos(i, UcsBlk(k_subject).length);
           if (i == CvtFail)
               fail;
 
@@ -229,7 +229,7 @@ function tab(i)
           /*
            * If tab is resumed, restore the old position and fail.
            */
-          if (oldpos > BlkLoc(k_subject)->ucs.length + 1)
+          if (oldpos > UcsBlk(k_subject).length + 1)
               runerr(205, kywd_pos);
           else {
               k_pos = oldpos;

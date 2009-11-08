@@ -40,8 +40,8 @@ function detab(s,i[n])
           endlst = &i[n];
           col = 1;
           in_count = out_count = utf8_size = 0;
-          in_p = StrLoc(BlkLoc(s)->ucs.utf8);
-          for (in_count = 0; in_count < BlkLoc(s)->ucs.length; ++in_count) {
+          in_p = StrLoc(UcsBlk(s).utf8);
+          for (in_count = 0; in_count < UcsBlk(s).length; ++in_count) {
               char *pp = in_p;
               int ch = utf8_iter(&in_p);
               if (ch == '\t') {
@@ -97,8 +97,8 @@ function detab(s,i[n])
           endlst = &i[n];
           col = 1;
           in_count = 0;
-          in_p = StrLoc(BlkLoc(s)->ucs.utf8);
-          for (in_count = 0; in_count < BlkLoc(s)->ucs.length; ++in_count) {
+          in_p = StrLoc(UcsBlk(s).utf8);
+          for (in_count = 0; in_count < UcsBlk(s).length; ++in_count) {
               char *pp = in_p;
               int ch = utf8_iter(&in_p);
               if (ch == '\t') {
@@ -243,13 +243,13 @@ function entab(s,i[n])
           col = 1;
           target = 0;
           in_count = out_count = utf8_size = 0;
-          in_p = StrLoc(BlkLoc(s)->ucs.utf8);
-          for (in_count = 0; in_count < BlkLoc(s)->ucs.length; ++in_count) {
+          in_p = StrLoc(UcsBlk(s).utf8);
+          for (in_count = 0; in_count < UcsBlk(s).length; ++in_count) {
               char *pp = in_p;
               int ch = utf8_iter(&in_p);
               if (ch == ' ') {
                   target = col + 1;
-                  while (in_count < BlkLoc(s)->ucs.length - 1 && *in_p == ' ')
+                  while (in_count < UcsBlk(s).length - 1 && *in_p == ' ')
                       in_count++, target++, in_p++;
                   if (target - col > 1) { /* never tab just 1; already copied space */
                       nt = col;
@@ -334,13 +334,13 @@ function entab(s,i[n])
           col = 1;
           target = 0;
           in_count = 0;
-          in_p = StrLoc(BlkLoc(s)->ucs.utf8);
-          for (in_count = 0; in_count < BlkLoc(s)->ucs.length; ++in_count) {
+          in_p = StrLoc(UcsBlk(s).utf8);
+          for (in_count = 0; in_count < UcsBlk(s).length; ++in_count) {
               char *pp = in_p;
               int ch = utf8_iter(&in_p);
               if (ch == ' ') {
                   target = col + 1;
-                  while (in_count < BlkLoc(s)->ucs.length - 1 && *in_p == ' ')
+                  while (in_count < UcsBlk(s).length - 1 && *in_p == ' ')
                       in_count++, target++, in_p++;
                   if (target - col > 1) { /* never tab just 1; already copied space */
                       nt = col;
@@ -583,17 +583,17 @@ function map(s1,s2,s3)
               /*
                * s2 and s3 must be of the same length
                */
-              maptab_len = BlkLoc(s2)->ucs.length;
-              if (maptab_len != BlkLoc(s3)->ucs.length) {
+              maptab_len = UcsBlk(s2).length;
+              if (maptab_len != UcsBlk(s3).length) {
                   maps2u = nulldesc;
                   maps3u = nulldesc;
                   runerr(208);
               }
               
               MemProtect(maptab = realloc(maptab, maptab_len * sizeof(struct mappair)));
-              p2 = StrLoc(BlkLoc(s2)->ucs.utf8);
-              p3 = StrLoc(BlkLoc(s3)->ucs.utf8);
-              for (i = 0; i < BlkLoc(s2)->ucs.length; ++i) {
+              p2 = StrLoc(UcsBlk(s2).utf8);
+              p3 = StrLoc(UcsBlk(s3).utf8);
+              for (i = 0; i < UcsBlk(s2).length; ++i) {
                   char *t = p3;
                   maptab[i].pos = i;
                   maptab[i].from = utf8_iter(&p2);
@@ -610,15 +610,15 @@ function map(s1,s2,s3)
               }
           }
 
-          if (BlkLoc(s1)->ucs.length == 0)
+          if (UcsBlk(s1).length == 0)
               return ucs(emptystr_ucs);
 
           /*
            * Calculate the result's size
            */
           utf8_size = 0;
-          p1 = StrLoc(BlkLoc(s1)->ucs.utf8);
-          for (i = 0; i < BlkLoc(s1)->ucs.length; ++i) {
+          p1 = StrLoc(UcsBlk(s1).utf8);
+          for (i = 0; i < UcsBlk(s1).length; ++i) {
               char *t = p1;
               int ch = utf8_iter(&p1);
               struct mappair *mp = bsearch(&ch, maptab, maptab_len, 
@@ -639,8 +639,8 @@ function map(s1,s2,s3)
           /*
            * Build the result
            */
-          p1 = StrLoc(BlkLoc(s1)->ucs.utf8);
-          for (i = 0; i < BlkLoc(s1)->ucs.length; ++i) {
+          p1 = StrLoc(UcsBlk(s1).utf8);
+          for (i = 0; i < UcsBlk(s1).length; ++i) {
               char *t = p1;
               int ch = utf8_iter(&p1);
               struct mappair *mp = bsearch(&ch, maptab, maptab_len, 
@@ -652,7 +652,7 @@ function map(s1,s2,s3)
                   alcstr(t, p1 - t);
           }
 
-          return ucs(make_ucs_block(&utf8, BlkLoc(s1)->ucs.length));
+          return ucs(make_ucs_block(&utf8, UcsBlk(s1).length));
       } else {
           register int i;
           register word slen;
@@ -755,7 +755,7 @@ function repl(s,n)
           tended struct descrip utf8;
           word utf8_size, i;
 
-          slen = BlkLoc(s)->ucs.length;
+          slen = UcsBlk(s).length;
           /*
            * Return an empty string if n is 0 or if s is the empty string.
            */
@@ -765,7 +765,7 @@ function repl(s,n)
           /*
            * Make sure the resulting string will not be too long.
            */
-          utf8_size = n * StrLen(BlkLoc(s)->ucs.utf8);
+          utf8_size = n * StrLen(UcsBlk(s).utf8);
           if (utf8_size > MaxStrLen) {
               irunerr(205,n);
               errorfail;
@@ -782,7 +782,7 @@ function repl(s,n)
            * Fill the allocated area with copies of s.
            */
           for (i = 0; i < n; ++i)
-              alcstr(StrLoc(BlkLoc(s)->ucs.utf8), StrLen(BlkLoc(s)->ucs.utf8));
+              alcstr(StrLoc(UcsBlk(s).utf8), StrLen(UcsBlk(s).utf8));
 
           return ucs(make_ucs_block(&utf8, n * slen));
       } else {
@@ -837,11 +837,11 @@ end
 function reverse(x)
    if is:list(x) then {
       body {
-         int i=0, size = BlkLoc(x)->list.size;
+         int i=0, size = ListBlk(x).size;
          struct descrip temp;
          dptr dp;
          cplist(&x, &result, 1, size+1);
-         dp = BlkLoc(result)->list.listhead->lelem.lslots;
+         dp = ListBlk(result).listhead->lelem.lslots;
          while (i<size-1) {
             temp = dp[i]; dp[i] = dp[size-1]; dp[size-1] = temp;
             i++; size--;
@@ -859,12 +859,12 @@ function reverse(x)
                tended struct descrip utf8;
                char *p, *q;   /* Don't need to be tended */
                word i;
-               MemProtect(StrLoc(utf8) = alcstr(NULL, StrLen(BlkLoc(x)->ucs.utf8)));
-               StrLen(utf8) = StrLen(BlkLoc(x)->ucs.utf8);
+               MemProtect(StrLoc(utf8) = alcstr(NULL, StrLen(UcsBlk(x).utf8)));
+               StrLen(utf8) = StrLen(UcsBlk(x).utf8);
 
-               p = StrLoc(BlkLoc(x)->ucs.utf8);
+               p = StrLoc(UcsBlk(x).utf8);
                q = StrLoc(utf8) + StrLen(utf8);
-               i = BlkLoc(x)->ucs.length;
+               i = UcsBlk(x).length;
                while (i-- > 0) {
                    int n = UTF8_SEQ_LEN(*p);
                    q -= n;
@@ -872,7 +872,7 @@ function reverse(x)
                    p += n;
                }
 
-               return ucs(make_ucs_block(&utf8, BlkLoc(x)->ucs.length));
+               return ucs(make_ucs_block(&utf8, UcsBlk(x).length));
            } else {
                register char c, *floc, *lloc;
                register word slen;
@@ -937,13 +937,13 @@ function left(s1,n,s2)
           /*
            * Simple case if s1 fits exactly.
            */
-          if (BlkLoc(s1)->ucs.length == n)
+          if (UcsBlk(s1).length == n)
               return s1;
 
           /*
            * The padding string is null; make it a blank.
            */
-          if (BlkLoc(s2)->ucs.length == 0) {
+          if (UcsBlk(s2).length == 0) {
               s2.dword = D_Ucs;
               BlkLoc(s2) = (union block *)blank_ucs;
           }
@@ -952,20 +952,20 @@ function left(s1,n,s2)
            * If we are extracting the left part of a large string (not padding)
            * just construct a substring.
            */
-          if (BlkLoc(s1)->ucs.length > n) 
-              return ucs(make_ucs_substring(&BlkLoc(s1)->ucs, 1, n));
+          if (UcsBlk(s1).length > n) 
+              return ucs(make_ucs_substring(&UcsBlk(s1), 1, n));
 
-          whole_len = (n - BlkLoc(s1)->ucs.length) / BlkLoc(s2)->ucs.length;
-          odd_len = (n - BlkLoc(s1)->ucs.length) % BlkLoc(s2)->ucs.length;
+          whole_len = (n - UcsBlk(s1).length) / UcsBlk(s2).length;
+          odd_len = (n - UcsBlk(s1).length) % UcsBlk(s2).length;
           /* Last odd_len chars of s2, may be empty string */
-          utf8_substr(&BlkLoc(s2)->ucs, 
-                      BlkLoc(s2)->ucs.length - odd_len + 1,
+          utf8_substr(&UcsBlk(s2), 
+                      UcsBlk(s2).length - odd_len + 1,
                       odd_len,
                       &odd_utf8);
 
-          utf8_size = StrLen(BlkLoc(s1)->ucs.utf8) + 
+          utf8_size = StrLen(UcsBlk(s1).utf8) + 
               StrLen(odd_utf8) +
-              StrLen(BlkLoc(s2)->ucs.utf8) * whole_len;
+              StrLen(UcsBlk(s2).utf8) * whole_len;
 
           /*
            * Make a descriptor for the result's utf8 string.
@@ -973,15 +973,15 @@ function left(s1,n,s2)
           MemProtect(StrLoc(utf8) = reserve(Strings, utf8_size));
           StrLen(utf8) = utf8_size;
 
-          alcstr(StrLoc(BlkLoc(s1)->ucs.utf8), StrLen(BlkLoc(s1)->ucs.utf8));
+          alcstr(StrLoc(UcsBlk(s1).utf8), StrLen(UcsBlk(s1).utf8));
           alcstr(StrLoc(odd_utf8), StrLen(odd_utf8));
           for (i = 0; i < whole_len; ++i)
-              alcstr(StrLoc(BlkLoc(s2)->ucs.utf8), StrLen(BlkLoc(s2)->ucs.utf8));
+              alcstr(StrLoc(UcsBlk(s2).utf8), StrLen(UcsBlk(s2).utf8));
 
           /*
            * The result must have n chars since 
-           *  BlkLoc(s1)->ucs.length + (whole_len * BlkLoc(s2)->ucs.length + odd_len)
-           *  = BlkLoc(s1)->ucs.length + (n - BlkLoc(s1)->ucs.length) (see mod calcs above)
+           *  UcsBlk(s1).length + (whole_len * UcsBlk(s2).length + odd_len)
+           *  = UcsBlk(s1).length + (n - UcsBlk(s1).length) (see mod calcs above)
            *  = n
            */
 
@@ -1076,13 +1076,13 @@ function right(s1,n,s2)
           /*
            * Simple case if s1 fits exactly.
            */
-          if (BlkLoc(s1)->ucs.length == n)
+          if (UcsBlk(s1).length == n)
               return s1;
 
           /*
            * The padding string is null; make it a blank.
            */
-          if (BlkLoc(s2)->ucs.length == 0) {
+          if (UcsBlk(s2).length == 0) {
               s2.dword = D_Ucs;
               BlkLoc(s2) = (union block *)blank_ucs;
           }
@@ -1091,22 +1091,22 @@ function right(s1,n,s2)
            * If we are extracting the right part of a large string (not padding)
            * just construct a substring.
            */
-          if (BlkLoc(s1)->ucs.length > n) 
-              return ucs(make_ucs_substring(&BlkLoc(s1)->ucs, 
-                                            BlkLoc(s1)->ucs.length + 1 - n,
+          if (UcsBlk(s1).length > n) 
+              return ucs(make_ucs_substring(&UcsBlk(s1), 
+                                            UcsBlk(s1).length + 1 - n,
                                             n));
 
-          whole_len = (n - BlkLoc(s1)->ucs.length) / BlkLoc(s2)->ucs.length;
-          odd_len = (n - BlkLoc(s1)->ucs.length) % BlkLoc(s2)->ucs.length;
+          whole_len = (n - UcsBlk(s1).length) / UcsBlk(s2).length;
+          odd_len = (n - UcsBlk(s1).length) % UcsBlk(s2).length;
           /* First odd_len chars of s2, may be empty string */
-          utf8_substr(&BlkLoc(s2)->ucs, 
+          utf8_substr(&UcsBlk(s2), 
                       1,
                       odd_len,
                       &odd_utf8);
 
-          utf8_size = StrLen(BlkLoc(s1)->ucs.utf8) + 
+          utf8_size = StrLen(UcsBlk(s1).utf8) + 
               StrLen(odd_utf8) +
-              StrLen(BlkLoc(s2)->ucs.utf8) * whole_len;
+              StrLen(UcsBlk(s2).utf8) * whole_len;
 
           /*
            * Make a descriptor for the result's utf8 string.
@@ -1115,14 +1115,14 @@ function right(s1,n,s2)
           StrLen(utf8) = utf8_size;
 
           for (i = 0; i < whole_len; ++i)
-              alcstr(StrLoc(BlkLoc(s2)->ucs.utf8), StrLen(BlkLoc(s2)->ucs.utf8));
+              alcstr(StrLoc(UcsBlk(s2).utf8), StrLen(UcsBlk(s2).utf8));
           alcstr(StrLoc(odd_utf8), StrLen(odd_utf8));
-          alcstr(StrLoc(BlkLoc(s1)->ucs.utf8), StrLen(BlkLoc(s1)->ucs.utf8));
+          alcstr(StrLoc(UcsBlk(s1).utf8), StrLen(UcsBlk(s1).utf8));
 
           /*
            * The result must have n chars since 
-           *  BlkLoc(s1)->ucs.length + (whole_len * BlkLoc(s2)->ucs.length + odd_len)
-           *  = BlkLoc(s1)->ucs.length + (n - BlkLoc(s1)->ucs.length) (see mod calcs above)
+           *  UcsBlk(s1).length + (whole_len * UcsBlk(s2).length + odd_len)
+           *  = UcsBlk(s1).length + (n - UcsBlk(s1).length) (see mod calcs above)
            *  = n
            */
 
@@ -1217,13 +1217,13 @@ function center(s1,n,s2)
           /*
            * Simple case if s1 fits exactly.
            */
-          if (BlkLoc(s1)->ucs.length == n)
+          if (UcsBlk(s1).length == n)
               return s1;
 
           /*
            * The padding string is null; make it a blank.
            */
-          if (BlkLoc(s2)->ucs.length == 0) {
+          if (UcsBlk(s2).length == 0) {
               s2.dword = D_Ucs;
               BlkLoc(s2) = (union block *)blank_ucs;
           }
@@ -1235,34 +1235,34 @@ function center(s1,n,s2)
            * since len-n+1>1, (len-n+1)/2<(len-n+1), so pos<=(len-n+1),
            * which is a valid start point for a substring of length n.
            */
-          if (BlkLoc(s1)->ucs.length > n)
-              return ucs(make_ucs_substring(&BlkLoc(s1)->ucs, 
-                                            1 + (BlkLoc(s1)->ucs.length - n + 1) / 2,
+          if (UcsBlk(s1).length > n)
+              return ucs(make_ucs_substring(&UcsBlk(s1), 
+                                            1 + (UcsBlk(s1).length - n + 1) / 2,
                                             n));
 
-          left = (n - BlkLoc(s1)->ucs.length) / 2;
-          right = n - BlkLoc(s1)->ucs.length - left;
+          left = (n - UcsBlk(s1).length) / 2;
+          right = n - UcsBlk(s1).length - left;
 
-          whole_left_len = left / BlkLoc(s2)->ucs.length;
-          odd_left_len = left % BlkLoc(s2)->ucs.length;
+          whole_left_len = left / UcsBlk(s2).length;
+          odd_left_len = left % UcsBlk(s2).length;
 
           /* First odd_left_len chars of s2, may be empty string */
-          utf8_substr(&BlkLoc(s2)->ucs, 
+          utf8_substr(&UcsBlk(s2), 
                       1,
                       odd_left_len,
                       &odd_left_utf8);
 
-          whole_right_len = right / BlkLoc(s2)->ucs.length;
-          odd_right_len = right % BlkLoc(s2)->ucs.length;
+          whole_right_len = right / UcsBlk(s2).length;
+          odd_right_len = right % UcsBlk(s2).length;
           /* Last odd_right_len chars of s2, may be empty string */
-          utf8_substr(&BlkLoc(s2)->ucs, 
-                      BlkLoc(s2)->ucs.length - odd_right_len + 1,
+          utf8_substr(&UcsBlk(s2), 
+                      UcsBlk(s2).length - odd_right_len + 1,
                       odd_right_len,
                       &odd_right_utf8);
 
-          utf8_size = StrLen(BlkLoc(s1)->ucs.utf8) + 
+          utf8_size = StrLen(UcsBlk(s1).utf8) + 
               StrLen(odd_left_utf8) + StrLen(odd_right_utf8) +
-              StrLen(BlkLoc(s2)->ucs.utf8) * (whole_left_len + whole_right_len);
+              StrLen(UcsBlk(s2).utf8) * (whole_left_len + whole_right_len);
 
           /*
            * Make a descriptor for the result's utf8 string.
@@ -1271,19 +1271,19 @@ function center(s1,n,s2)
           StrLen(utf8) = utf8_size;
 
           for (i = 0; i < whole_left_len; ++i)
-              alcstr(StrLoc(BlkLoc(s2)->ucs.utf8), StrLen(BlkLoc(s2)->ucs.utf8));
+              alcstr(StrLoc(UcsBlk(s2).utf8), StrLen(UcsBlk(s2).utf8));
           alcstr(StrLoc(odd_left_utf8), StrLen(odd_left_utf8));
-          alcstr(StrLoc(BlkLoc(s1)->ucs.utf8), StrLen(BlkLoc(s1)->ucs.utf8));
+          alcstr(StrLoc(UcsBlk(s1).utf8), StrLen(UcsBlk(s1).utf8));
           alcstr(StrLoc(odd_right_utf8), StrLen(odd_right_utf8));
           for (i = 0; i < whole_right_len; ++i)
-              alcstr(StrLoc(BlkLoc(s2)->ucs.utf8), StrLen(BlkLoc(s2)->ucs.utf8));
+              alcstr(StrLoc(UcsBlk(s2).utf8), StrLen(UcsBlk(s2).utf8));
 
           /*
            * The result must have n chars since 
-           *  BlkLoc(s1)->ucs.length + (whole_right_len * + BlkLoc(s2)->ucs.length + odd_right_len) +
-           *                           (whole_left_len * BlkLoc(s2)->ucs.length + odd_left_len) 
-           *  = BlkLoc(s1)->ucs.length + right + left (by mod calcs above)
-           *  = n  (since right = n - BlkLoc(s1)->ucs.length - left by assignment above.)
+           *  UcsBlk(s1).length + (whole_right_len * + UcsBlk(s2).length + odd_right_len) +
+           *                           (whole_left_len * UcsBlk(s2).length + odd_left_len) 
+           *  = UcsBlk(s1).length + right + left (by mod calcs above)
+           *  = n  (since right = n - UcsBlk(s1).length - left by assignment above.)
            */
 
           return ucs(make_ucs_block(&utf8, n));
@@ -1396,9 +1396,9 @@ function trim(s,c,ends)
           int ch;
           tended struct descrip utf8;
 
-          slen = BlkLoc(s)->ucs.length;
+          slen = UcsBlk(s).length;
 
-          utf8_start = p = StrLoc(BlkLoc(s)->ucs.utf8);
+          utf8_start = p = StrLoc(UcsBlk(s).utf8);
 
           /*
            * Left trimming: Start at the beginning of s and then advance StrLoc(s)
@@ -1408,7 +1408,7 @@ function trim(s,c,ends)
               while (slen > 0) {
                   utf8_start = p;
                   ch = utf8_iter(&p);
-                  if (!in_cset(&BlkLoc(c)->cset, ch))
+                  if (!in_cset(&CsetBlk(c), ch))
                       break;
                   --slen;
               }
@@ -1418,12 +1418,12 @@ function trim(s,c,ends)
            * Regular (right) trimming: Start at the end of s and then back up
            * until a character that is not in c is found.
            */
-          utf8_end = p = StrLoc(BlkLoc(s)->ucs.utf8) + StrLen(BlkLoc(s)->ucs.utf8);
+          utf8_end = p = StrLoc(UcsBlk(s).utf8) + StrLen(UcsBlk(s).utf8);
           if (ends < 1) {
               while (slen > 0) {
                   utf8_end = p;
                   ch = utf8_rev_iter(&p);
-                  if (!in_cset(&BlkLoc(c)->cset, ch))
+                  if (!in_cset(&CsetBlk(c), ch))
                       break;
                   --slen;
               }
@@ -1446,7 +1446,7 @@ function trim(s,c,ends)
            */
           if (ends > -1) {
               sloc = StrLoc(s);
-              while (slen > 0 && Testb(*sloc, BlkLoc(c)->cset.bits)) {
+              while (slen > 0 && Testb(*sloc, CsetBlk(c).bits)) {
                   sloc++;
                   slen--;
               }
@@ -1458,7 +1458,7 @@ function trim(s,c,ends)
            */
           if (ends < 1) {
               sloc = StrLoc(s) + slen - 1;
-              while (sloc >= StrLoc(s) && Testb(*sloc, BlkLoc(c)->cset.bits)) {
+              while (sloc >= StrLoc(s) && Testb(*sloc, CsetBlk(c).bits)) {
                   sloc--;
                   slen--;
               }

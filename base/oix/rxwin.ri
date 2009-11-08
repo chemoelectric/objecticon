@@ -1402,8 +1402,8 @@ int send_selection_response(wbp w, word requestor, char *property, char *target,
         if (!is:list(*data))
             ReturnErrVal(108, *data, Error);
         target_list[0] = XA_TARGETS;
-        for (le = lgfirst(&BlkLoc(*data)->list, &state); le;
-             le = lgnext(&BlkLoc(*data)->list, &state, le)) {
+        for (le = lgfirst(&ListBlk(*data), &state); le;
+             le = lgnext(&ListBlk(*data), &state, le)) {
             if (!cnv:C_string(le->lslots[state.result], cstr_target))
                 ReturnErrVal(148, le->lslots[state.result], Error);
             target_list[target_cnt++] = XInternAtom(ws->display->display, cstr_target, False);

@@ -23,7 +23,7 @@
 static void listdump(dptr d, int all)
 {
     union block *b;
-    struct b_list *l = (struct b_list *)BlkLoc(*d);
+    struct b_list *l = &ListBlk(*d);
     word i, j;
 
     fprintf(stderr, "list at %p size=%ld head=%p tail=%p\n", l, (long)l->size, l->listhead, l->listtail);
@@ -61,7 +61,7 @@ static void listdump(dptr d, int all)
 
 static void setdump(dptr d)
 {
-    struct b_set *x = (struct b_set *)BlkLoc(*d);
+    struct b_set *x = &SetBlk(*d);
     int i, j;
     fprintf(stderr, "set at %p size=%ld mask=%lx\n", x, (long)x->size, (long)x->mask);
     for (i = 0; i < HSegs; ++i) {
@@ -112,7 +112,7 @@ int set_del(dptr s, dptr key)
          * The element is there so delete it.
          */
         *pd = (*pd)->selem.clink;
-        (BlkLoc(*s)->set.size)--;
+        (SetBlk(*s).size)--;
     }
     return res;
 }
@@ -130,7 +130,7 @@ int table_del(dptr t, dptr key)
          * The element is there so delete it.
          */
         *pd = (*pd)->telem.clink;
-        (BlkLoc(*t)->table.size)--;
+        (TableBlk(*t).size)--;
     }
     return res;
 }
@@ -143,7 +143,7 @@ int table_del(dptr t, dptr key)
 int list_get(dptr l, dptr res)
 {
    word i;
-   struct b_list *hp = (struct b_list *)BlkLoc(*l);
+   struct b_list *hp = &ListBlk(*l);
    struct b_lelem *bp;
 
    /*
@@ -202,7 +202,7 @@ void table_insert(dptr t, dptr key, dptr val)
         /*
          * The element is not in the table - insert it.
          */
-        BlkLoc(*t)->table.size++;
+        TableBlk(*t).size++;
         te->clink = *pd;
         *pd = (union block *)te;
         te->hashnum = hn;
@@ -250,7 +250,7 @@ void set_insert(dptr s, dptr entry)
          */
         se->setmem = *entry;
         se->hashnum = hn;
-        addmem((struct b_set *)BlkLoc(*s), se, pd);
+        addmem(&SetBlk(*s), se, pd);
         if (TooCrowded(BlkLoc(*s)))
             hgrow(BlkLoc(*s));
     }
@@ -261,7 +261,7 @@ void set_insert(dptr s, dptr entry)
 int list_pull(dptr l, dptr res)
 {
     word i;
-    struct b_list *hp = (struct b_list *) BlkLoc(*l);
+    struct b_list *hp = &ListBlk(*l);
     struct b_lelem *bp;
 
     /*
@@ -307,7 +307,7 @@ void list_push(dptr l, dptr val)
    /*
     * Point bp at the first list-element block.
     */
-   bp = (struct b_lelem *) BlkLoc(*l)->list.listhead;
+   bp = (struct b_lelem *) ListBlk(*l).listhead;
 
    /*
     * If the first list-element block is full, allocate a new
@@ -319,7 +319,7 @@ void list_push(dptr l, dptr val)
       /*
        * Set i to the size of block to allocate.
        */
-      i = BlkLoc(*l)->list.size / 2;
+      i = ListBlk(*l).size / 2;
       if (i < MinListSlots)
          i = MinListSlots;
 
@@ -333,10 +333,10 @@ void list_push(dptr l, dptr val)
             fatalerr(0, NULL);
          }
 
-      BlkLoc(*l)->list.listhead->lelem.listprev = (union block *) bp;
+      ListBlk(*l).listhead->lelem.listprev = (union block *) bp;
       bp->listprev = BlkLoc(*l);
-      bp->listnext = BlkLoc(*l)->list.listhead;
-      BlkLoc(*l)->list.listhead = (union block *) bp;
+      bp->listnext = ListBlk(*l).listhead;
+      ListBlk(*l).listhead = (union block *) bp;
       }
 
    /*
@@ -353,8 +353,8 @@ void list_push(dptr l, dptr val)
     */
    bp->first = i;
    bp->nused++;
-   BlkLoc(*l)->list.size++;
-   BlkLoc(*l)->list.changecount++;
+   ListBlk(*l).size++;
+   ListBlk(*l).changecount++;
    }
 
 
@@ -364,7 +364,7 @@ void list_insert(dptr l, word index, dptr val)
     tended struct b_list *lb;
     tended struct b_lelem *le, *le2;
 
-    lb = (struct b_list *)BlkLoc(*l);
+    lb = &ListBlk(*l);
 
     le = get_lelem_for_index(lb, index, &pos);
     if (!le)
@@ -426,7 +426,7 @@ void list_del(dptr l, word index)
     struct b_list *lb;
     struct b_lelem *le;
 
-    lb = (struct b_list *)BlkLoc(*l);
+    lb = &ListBlk(*l);
     le = get_lelem_for_index(lb, index, &pos);
     if (!le)
         syserr("Invalid index to list_del");
@@ -474,7 +474,7 @@ void list_put(dptr l, dptr val)
     * Point hp at the list-header block and bp at the last
     *  list-element block.
     */
-   bp = (struct b_lelem *) BlkLoc(*l)->list.listtail;
+   bp = (struct b_lelem *) ListBlk(*l).listtail;
    
    /*
     * If the last list-element block is full, allocate a new
@@ -486,7 +486,7 @@ void list_put(dptr l, dptr val)
       /*
        * Set i to the size of block to allocate.
        */
-      i = ((struct b_list *)BlkLoc(*l))->size / 2;
+      i = ListBlk(*l).size / 2;
       if (i < MinListSlots)
          i = MinListSlots;
 
@@ -500,11 +500,11 @@ void list_put(dptr l, dptr val)
             fatalerr(0, NULL);
          }
 
-      ((struct b_list *)BlkLoc(*l))->listtail->lelem.listnext =
+      ListBlk(*l).listtail->lelem.listnext =
 	(union block *) bp;
-      bp->listprev = ((struct b_list *)BlkLoc(*l))->listtail;
+      bp->listprev = ListBlk(*l).listtail;
       bp->listnext = BlkLoc(*l);
-      ((struct b_list *)BlkLoc(*l))->listtail = (union block *) bp;
+      ListBlk(*l).listtail = (union block *) bp;
       }
 
    /*
@@ -520,8 +520,8 @@ void list_put(dptr l, dptr val)
     * Adjust block usage count and current list size.
     */
    bp->nused++;
-   ((struct b_list *)BlkLoc(*l))->size++;
-   ((struct b_list *)BlkLoc(*l))->changecount++;
+   ListBlk(*l).size++;
+   ListBlk(*l).changecount++;
 }
 
 /*
@@ -536,7 +536,7 @@ dptr get_element(dptr d, word i)
          struct b_lelem *le;        /* doesn't need to be tended */
          struct b_list *lp;        /* doesn't need to be tended */
          word j;
-         lp = (struct b_list *)BlkLoc(*d);
+         lp = &ListBlk(*d);
          i = cvpos(i, (long)lp->size);
          if (i == CvtFail || i > lp->size)
              return 0;
@@ -556,7 +556,7 @@ dptr get_element(dptr d, word i)
 
       record: {
          struct b_record *bp;        /* doesn't need to be tended */
-         bp = (struct b_record *)BlkLoc(*d);
+         bp = &RecordBlk(*d);
          i = cvpos(i, (word)(bp->constructor->n_fields));
          if (i == CvtFail || i > bp->constructor->n_fields)
              return 0;

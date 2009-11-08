@@ -729,7 +729,7 @@ function lang_Prog_load(s, arglist, blocksize, stringsize)
       if (!pstate->MainProc)
          fatalerr(117, NULL);
 
-       main_bp = (struct b_proc *)BlkLoc(*pstate->MainProc);
+       main_bp = &ProcBlk(*pstate->MainProc);
        MemProtect(new_pf = alc_p_frame((struct b_proc *)&Bmain_wrapper, 0));
        new_pf->fvars->desc[0] = *pstate->MainProc;
        coex->sp = (struct frame *)new_pf;
@@ -806,8 +806,8 @@ void resolve(struct progstate *p)
                     /* It must be a large int; copy the block from the block region to the heap
                      * since constants are not swept during collection.
                      */
-                    MemProtect(BlkLoc(p->Constants[j]) = malloc(BlkLoc(id)->bignum.blksize));
-                    memcpy(BlkLoc(p->Constants[j]), BlkLoc(id), BlkLoc(id)->bignum.blksize);
+                    MemProtect(BlkLoc(p->Constants[j]) = malloc(BignumBlk(id).blksize));
+                    memcpy(BlkLoc(p->Constants[j]), BlkLoc(id), BignumBlk(id).blksize);
                 }
             }
         }
@@ -1205,7 +1205,6 @@ int main(int argc, char **argv)
     d = 0.0;
     SetReal(d, realzero);
     BlkLoc(rzerodesc) = (union block *)&realzero;
-
     maps2 = nulldesc;
     maps3 = nulldesc;
     maps2u = nulldesc;
@@ -1350,7 +1349,7 @@ int main(int argc, char **argv)
     if (!main_proc)
         fatalerr(117, NULL);
 
-    main_bp = (struct b_proc *)BlkLoc(*main_proc);
+    main_bp = &ProcBlk(*main_proc);
 
     MemProtect(frame = alc_p_frame((struct b_proc *)&Bmain_wrapper, 0));
     frame->fvars->desc[0] = *main_proc;
@@ -1449,14 +1448,14 @@ void print_vword(FILE *f, dptr d) {
                 break;
             }
             case D_Tvsubs : {
-                struct b_tvsubs *p = (struct b_tvsubs *)BlkLoc(*d);
+                struct b_tvsubs *p = &TvsubsBlk(*d);
                 fprintf(f, "%p -> sub=%ld+:%ld ssvar=", p, (long)p->sspos, (long)p->sslen);
                 print_desc(f, &p->ssvar);
                 break;
             }
 
             case D_Tvtbl : {
-                struct b_tvtbl *p = (struct b_tvtbl *)BlkLoc(*d);
+                struct b_tvtbl *p = &TvtblBlk(*d);
                 fprintf(f, "%p -> tref=", p);
                 print_desc(f, &p->tref);
                 break;
@@ -1492,21 +1491,21 @@ void print_vword(FILE *f, dptr d) {
             case D_Telem :
             case D_Slots :
             case D_Proc : {
-                struct b_proc *p = (struct b_proc*)BlkLoc(*d);
+                struct b_proc *p = &ProcBlk(*d);
                 fprintf(f, "%p -> prog:%p=", p, p->program);
                 outimage(f, d, 1);
                 break;
             }
 
             case D_Class : {
-                struct b_class *p = (struct b_class*)BlkLoc(*d);
+                struct b_class *p = &ClassBlk(*d);
                 fprintf(f, "%p -> prog:%p=", p, p->program);
                 outimage(f, d, 1);
                 break;
             }
 
             case D_Constructor : {
-                struct b_constructor *p = (struct b_constructor*)BlkLoc(*d);
+                struct b_constructor *p = &ConstructorBlk(*d);
                 fprintf(f, "%p -> prog:%p=", p, p->program);
                 outimage(f, d, 1);
                 break;

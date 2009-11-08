@@ -19,8 +19,8 @@ operator || cater(x, y)
          if (!cnv:ucs(y,y))
              runerr(128, y);
 
-         utf8_x = BlkLoc(x)->ucs.utf8;
-         utf8_y = BlkLoc(y)->ucs.utf8;
+         utf8_x = UcsBlk(x).utf8;
+         utf8_y = UcsBlk(y).utf8;
 
          /*
           *  Optimization 0:  Check for zero-length operands.
@@ -64,7 +64,7 @@ operator || cater(x, y)
              memcpy(StrLoc(utf8) + StrLen(utf8_x), StrLoc(utf8_y), StrLen(utf8_y));
              StrLen(utf8) = StrLen(utf8_x) + StrLen(utf8_y);
          }
-         return ucs(make_ucs_block(&utf8, BlkLoc(x)->ucs.length + BlkLoc(y)->ucs.length));
+         return ucs(make_ucs_block(&utf8, UcsBlk(x).length + UcsBlk(y).length));
      } else {
          /* Neither ucs, so both args must be strings */
 
@@ -144,8 +144,8 @@ operator ||| lconcat(x, y)
       /*
        * Get the size of both lists.
        */
-      size1 = BlkLoc(x)->list.size;
-      size2 = BlkLoc(y)->list.size;
+      size1 = ListBlk(x).size;
+      size2 = ListBlk(y).size;
       size3 = size1 + size2;
 
       MemProtect(bp1 = (struct b_list *)alclist_raw(size3, size3));

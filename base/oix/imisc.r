@@ -322,7 +322,7 @@ int lookup_record_field(struct b_constructor *recdef, dptr query, struct inline_
 
 dptr c_get_instance_data(dptr x, dptr fname, struct inline_field_cache *ic)
 {
-    struct b_object *obj = &BlkLoc(*x)->object;
+    struct b_object *obj = &ObjectBlk(*x);
     struct b_class *class0 = obj->class;
     int i;
 
@@ -358,7 +358,7 @@ int c_is(dptr x, dptr cname, struct inline_global_cache *ic)
     if (!is:object(*x))
         return 0;
 
-    class0 = BlkLoc(*x)->object.class;
+    class0 = ObjectBlk(*x).class;
 
     if (ic) {
         if (class0->program == ic->program)
@@ -371,5 +371,5 @@ int c_is(dptr x, dptr cname, struct inline_global_cache *ic)
     } else
         p = lookup_global(cname, class0->program);
 
-    return p && is:class(*p) && class_is(class0, &BlkLoc(*p)->class);
+    return p && is:class(*p) && class_is(class0, &ClassBlk(*p));
 }

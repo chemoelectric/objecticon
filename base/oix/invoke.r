@@ -141,10 +141,10 @@ void do_applyf()
 
     type_case args of {
       list: {
-            argc = BlkLoc(args)->list.size;
+            argc = ListBlk(args).size;
         }
       record: {
-            argc = BlkLoc(args)->record.constructor->n_fields;
+            argc = RecordBlk(args).constructor->n_fields;
         }
       default: {
             xexpr = &expr;
@@ -208,10 +208,10 @@ void do_apply()
 
     type_case args of {
       list: {
-            argc = BlkLoc(args)->list.size;
+            argc = ListBlk(args).size;
         }
       record: {
-            argc = BlkLoc(args)->record.constructor->n_fields;
+            argc = RecordBlk(args).constructor->n_fields;
         }
       default: {
             xexpr = &expr;
@@ -239,7 +239,7 @@ static void check_if_uninitialized()
 {
     dptr class0 = get_dptr();  /* Class */
     word *a = GetAddr;
-    if (BlkLoc(*class0)->class.init_state != Uninitialized)
+    if (ClassBlk(*class0).init_state != Uninitialized)
         ipc = a;
 }
 
@@ -248,7 +248,7 @@ static void set_class_state()
     dptr class0 = get_dptr();  /* Class */
     struct descrip val;
     get_deref(&val);      /* Value */
-    BlkLoc(*class0)->class.init_state = IntVal(val);
+    ClassBlk(*class0).init_state = IntVal(val);
 }
 
 static void set_object_state()
@@ -256,7 +256,7 @@ static void set_object_state()
     dptr obj = get_dptr();  /* Object */
     struct descrip val;
     get_deref(&val);      /* Value */
-    BlkLoc(*obj)->object.init_state = IntVal(val);
+    ObjectBlk(*obj).init_state = IntVal(val);
 }
 
 static void for_class_supers()
@@ -266,9 +266,9 @@ static void for_class_supers()
     dptr res = get_dptr();     /* Result */
     word *a = GetAddr;      /* Branch when done */
 
-    if (IntVal(*i) < BlkLoc(*class0)->class.n_supers) {
+    if (IntVal(*i) < ClassBlk(*class0).n_supers) {
         res->dword = D_Class;
-        BlkLoc(*res) = (union block *)BlkLoc(*class0)->class.supers[IntVal(*i)];
+        BlkLoc(*res) = (union block *)ClassBlk(*class0).supers[IntVal(*i)];
         IntVal(*i)++;
     } else
         ipc = a;
@@ -278,7 +278,7 @@ static void invoke_class_init()
 {
     dptr d = get_dptr();  /* Class */
     word *failure_label = GetAddr; /* Failure label */
-    struct b_class *class0 = (struct b_class *)BlkLoc(*d);
+    struct b_class *class0 = &ClassBlk(*d);
     struct class_field *init_field;
 
     init_field = class0->init_field;
@@ -290,7 +290,7 @@ static void invoke_class_init()
          */
         if ((init_field->flags & (M_Method | M_Static)) != (M_Method | M_Static))
             syserr("init field not a static method");
-        bp = (struct b_proc *)BlkLoc(*init_field->field_descriptor);
+        bp = &ProcBlk(*init_field->field_descriptor);
         f = push_frame_for_proc(bp, 0, 0, 0);
         f->failure_label = failure_label;
         tail_invoke_frame(f);
@@ -303,7 +303,7 @@ static void ensure_class_initialized()
     struct p_frame *pf;
     dptr d = get_dptr();
     /* Avoid creating a frame if we don't need to */
-    if (BlkLoc(*d)->class.init_state != Uninitialized)
+    if (ClassBlk(*d).init_state != Uninitialized)
         return;
     MemProtect(pf = alc_p_frame((struct b_proc *)&Bensure_class_initialized, 0));
     push_frame((struct frame *)pf);
@@ -348,13 +348,13 @@ void general_call(word clo, dptr expr, int argc, dptr args, word rval, word *fai
 void construct_object(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label)
 {
     struct class_field *new_field;
-    struct b_class *class0 = (struct b_class*)BlkLoc(*expr);
+    struct b_class *class0 = &ClassBlk(*expr);
     struct p_frame *pf;
 
     new_field = class0->new_field;
     if (new_field) {
         struct frame *new_f;
-        struct b_proc *bp = (struct b_proc *)BlkLoc(*new_field->field_descriptor);
+        struct b_proc *bp = &ProcBlk(*new_field->field_descriptor);
 
         /*
          * Check the constructor function is a non-static method.
@@ -378,7 +378,7 @@ void construct_object(word clo, dptr expr, int argc, dptr args, word rval, word 
         /* Arg1 is the allocated new object object */
         MemProtect(BlkLoc(pf->fvars->desc[1]) = (union block *)alcobject(class0));
         pf->fvars->desc[1].dword = D_Object; 
-        BlkLoc(pf->fvars->desc[1])->object.init_state = Initializing;
+        ObjectBlk(pf->fvars->desc[1]).init_state = Initializing;
 
         /* Allocate a frame for the "new" method.  It is invoked from
          * within construct_object */
@@ -409,7 +409,7 @@ void construct_object(word clo, dptr expr, int argc, dptr args, word rval, word 
 static void construct_record(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label) 
 {
     struct p_frame *pf;
-    struct b_constructor *con = (struct b_constructor *)BlkLoc(*expr);
+    struct b_constructor *con = &ConstructorBlk(*expr);
     int i;
     tended struct descrip tmp;
 
@@ -422,7 +422,7 @@ static void construct_record(word clo, dptr expr, int argc, dptr args, word rval
     if (args) {
         for (i = 0; i < argc; ++i) {
             if (i < con->n_fields)
-                BlkLoc(pf->fvars->desc[0])->record.fields[i] = *get_element(args, i + 1);
+                RecordBlk(pf->fvars->desc[0]).fields[i] = *get_element(args, i + 1);
             else
                 break;
         }
@@ -431,7 +431,7 @@ static void construct_record(word clo, dptr expr, int argc, dptr args, word rval
             if (i < con->n_fields) {
                 /* Must be in two steps since get_deref can trigger a gc */
                 get_deref(&tmp);
-                BlkLoc(pf->fvars->desc[0])->record.fields[i] = tmp;
+                RecordBlk(pf->fvars->desc[0]).fields[i] = tmp;
             } else
                 get_deref(&trashcan);
         }
@@ -445,7 +445,7 @@ static void construct_record(word clo, dptr expr, int argc, dptr args, word rval
 
 static void invoke_proc(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label) 
 {
-    struct b_proc *bp = (struct b_proc *)BlkLoc(*expr);
+    struct b_proc *bp = &ProcBlk(*expr);
     struct frame *f;
     f = push_frame_for_proc(bp, argc, args, 0);
     curr_pf->clo[clo] = f;
@@ -457,11 +457,11 @@ static void invoke_proc(word clo, dptr expr, int argc, dptr args, word rval, wor
 
 static void invoke_methp(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label) 
 {
-    struct b_proc *bp = BlkLoc(*expr)->methp.proc;
+    struct b_proc *bp = MethpBlk(*expr).proc;
     tended struct descrip tmp;
     struct frame *f;
     tmp.dword = D_Object;
-    BlkLoc(tmp) = (union block *)BlkLoc(*expr)->methp.object;
+    BlkLoc(tmp) = (union block *)MethpBlk(*expr).object;
     f = push_frame_for_proc(bp, argc, args, &tmp);
     curr_pf->clo[clo] = f;
     f->failure_label = failure_label;
@@ -639,8 +639,8 @@ static void cast_access(dptr lhs, dptr expr, dptr query, struct inline_field_cac
     struct class_field *cf;
     int i, ac;
 
-    cast_class = BlkLoc(*expr)->cast.class;
-    obj_class = BlkLoc(*expr)->cast.object->class;
+    cast_class = CastBlk(*expr).class;
+    obj_class = CastBlk(*expr).object->class;
 
     /* Lookup in the cast's class */
     i = lookup_class_field(cast_class, query, ic);
@@ -656,7 +656,7 @@ static void cast_access(dptr lhs, dptr expr, dptr query, struct inline_field_cac
         AccessErr(628);
 
     /* Can't access new except whilst initializing */
-    if ((cf->flags & M_Special) && BlkLoc(*expr)->cast.object->init_state != Initializing) 
+    if ((cf->flags & M_Special) && CastBlk(*expr).object->init_state != Initializing) 
         AccessErr(622);
 
     ac = check_access(cf, obj_class);
@@ -667,8 +667,8 @@ static void cast_access(dptr lhs, dptr expr, dptr query, struct inline_field_cac
      * Instance method.
      */
     MemProtect(mp = alcmethp());
-    mp->object = BlkLoc(*expr)->cast.object;
-    mp->proc = &BlkLoc(*cf->field_descriptor)->proc;
+    mp->object = CastBlk(*expr).object;
+    mp->proc = &ProcBlk(*cf->field_descriptor);
     lhs->dword = D_Methp;
     BlkLoc(*lhs) = (union block *)mp;
 
@@ -679,7 +679,7 @@ static void cast_access(dptr lhs, dptr expr, dptr query, struct inline_field_cac
 static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
                          int just_fail, word *failure_label)
 {
-    struct b_class *class0 = &BlkLoc(*expr)->class;
+    struct b_class *class0 = &ClassBlk(*expr);
     struct class_field *cf;
     dptr dp;
     int i, ac;
@@ -717,7 +717,7 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
               (class0->init_state == Initializing &&
                ic &&                      /* No Class.get(..) := ... */
                class0->init_field &&       /* .. and must be in init() method */
-               get_current_user_proc() == &BlkLoc(*class0->init_field->field_descriptor)->proc)))
+               get_current_user_proc() == &ProcBlk(*class0->init_field->field_descriptor))))
     {
         lhs->dword = D_NamedVar;
         VarLoc(*lhs) = dp;
@@ -738,7 +738,7 @@ static void instance_access(dptr lhs, dptr expr, dptr query, struct inline_field
     struct class_field *cf;
     int i, ac;
 
-    class0 = BlkLoc(*expr)->object.class;
+    class0 = ObjectBlk(*expr).class;
 
     i = lookup_class_field(class0, query, ic);
     if (i < 0) 
@@ -752,7 +752,7 @@ static void instance_access(dptr lhs, dptr expr, dptr query, struct inline_field
 
     if (cf->flags & M_Method) {
         /* Can't access new except whilst initializing */
-        if ((cf->flags & M_Special) && BlkLoc(*expr)->object.init_state != Initializing) 
+        if ((cf->flags & M_Special) && ObjectBlk(*expr).init_state != Initializing) 
             AccessErr(622);
 
         ac = check_access(cf, class0);
@@ -763,21 +763,21 @@ static void instance_access(dptr lhs, dptr expr, dptr query, struct inline_field
          * Instance method.  Return a method pointer.
          */
         MemProtect(mp = alcmethp());
-        mp->object = &BlkLoc(*expr)->object;
-        mp->proc = &BlkLoc(*cf->field_descriptor)->proc;
+        mp->object = &ObjectBlk(*expr);
+        mp->proc = &ProcBlk(*cf->field_descriptor);
         lhs->dword = D_Methp;
         BlkLoc(*lhs) = (union block *)mp;
     } else {
         ac = check_access(cf, class0);
         if (ac == Succeeded &&
-            (!(cf->flags & M_Const) || BlkLoc(*expr)->object.init_state == Initializing))
+            (!(cf->flags & M_Const) || ObjectBlk(*expr).init_state == Initializing))
         {
             /* Return a pointer to the field */
             lhs->dword = D_StructVar + 
-                          ((word *)(&BlkLoc(*expr)->object.fields[i]) - (word *)BlkLoc(*expr));
+                          ((word *)(&ObjectBlk(*expr).fields[i]) - (word *)BlkLoc(*expr));
             BlkLoc(*lhs) = BlkLoc(*expr);
         } else if (ac == Succeeded || (cf->flags & M_Readable))
-            *lhs = BlkLoc(*expr)->object.fields[i];
+            *lhs = ObjectBlk(*expr).fields[i];
         else 
             AccessErr(0);
     }
@@ -789,7 +789,7 @@ static void instance_access(dptr lhs, dptr expr, dptr query, struct inline_field
 static void record_access(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic,
                           int just_fail, word *failure_label)
 {
-    struct b_constructor *recdef = BlkLoc(*expr)->record.constructor;
+    struct b_constructor *recdef = RecordBlk(*expr).constructor;
 
     int i = lookup_record_field(recdef, query, ic);
     if (i < 0) 
@@ -798,7 +798,7 @@ static void record_access(dptr lhs, dptr expr, dptr query, struct inline_field_c
     /*
      * Return a pointer to the descriptor for the appropriate field.
      */
-    lhs->dword = D_StructVar + ((word *)(&BlkLoc(*expr)->record.fields[i]) - (word *)BlkLoc(*expr));
+    lhs->dword = D_StructVar + ((word *)(&RecordBlk(*expr).fields[i]) - (word *)BlkLoc(*expr));
     BlkLoc(*lhs) = BlkLoc(*expr);
 
     EVValD(expr, e_rref);
@@ -867,7 +867,7 @@ void general_invokef(word clo, dptr expr, dptr query, struct inline_field_cache 
 static void class_invokef(word clo, dptr expr, dptr query, struct inline_field_cache *ic, 
                           int argc, dptr args, word rval, word *failure_label)
 {
-    struct b_class *class0 = &BlkLoc(*expr)->class;
+    struct b_class *class0 = &ClassBlk(*expr);
     struct class_field *cf;
     int i, ac;
 
@@ -909,7 +909,7 @@ static void class_invokef(word clo, dptr expr, dptr query, struct inline_field_c
 static void record_invokef(word clo, dptr expr, dptr query, struct inline_field_cache *ic, 
                            int argc, dptr args, word rval, word *failure_label)
 {
-    struct b_constructor *recdef = BlkLoc(*expr)->record.constructor;
+    struct b_constructor *recdef = RecordBlk(*expr).constructor;
     tended struct descrip tmp;
     int i;
 
@@ -921,7 +921,7 @@ static void record_invokef(word clo, dptr expr, dptr query, struct inline_field_
     EVVal(i + 1, e_rsub);
 
     /* Copy field to a tended descriptor */
-    tmp = BlkLoc(*expr)->record.fields[i];
+    tmp = RecordBlk(*expr).fields[i];
     curr_op = Op_Invoke; /* In case of error, ttrace acts like Op_Invoke */
     general_call(clo, &tmp, argc, args, rval, failure_label);
 }
@@ -936,8 +936,8 @@ static void cast_invokef(word clo, dptr expr, dptr query, struct inline_field_ca
     struct frame *f;
     tended struct descrip tmp;
 
-    cast_class = BlkLoc(*expr)->cast.class;
-    obj_class = BlkLoc(*expr)->cast.object->class;
+    cast_class = CastBlk(*expr).class;
+    obj_class = CastBlk(*expr).object->class;
 
     /* Lookup in the cast's class */
     i = lookup_class_field(cast_class, query, ic);
@@ -953,7 +953,7 @@ static void cast_invokef(word clo, dptr expr, dptr query, struct inline_field_ca
         InvokefErr(628);
 
     /* Can't access new except whilst initializing */
-    if ((cf->flags & M_Special) && BlkLoc(*expr)->cast.object->init_state != Initializing) 
+    if ((cf->flags & M_Special) && CastBlk(*expr).object->init_state != Initializing) 
         InvokefErr(622);
 
     ac = check_access(cf, obj_class);
@@ -965,8 +965,8 @@ static void cast_invokef(word clo, dptr expr, dptr query, struct inline_field_ca
 
     /* Create the "self" parameter in a tended descriptor */
     tmp.dword = D_Object;
-    BlkLoc(tmp) = (union block *)BlkLoc(*expr)->cast.object;
-    f = push_frame_for_proc(&BlkLoc(*cf->field_descriptor)->proc, 
+    BlkLoc(tmp) = (union block *)CastBlk(*expr).object;
+    f = push_frame_for_proc(&ProcBlk(*cf->field_descriptor), 
                             argc, args, &tmp);
     curr_pf->clo[clo] = f;
     f->failure_label = failure_label;
@@ -982,7 +982,7 @@ static void instance_invokef(word clo, dptr expr, dptr query, struct inline_fiel
     int i, ac;
     tended struct descrip tmp;
 
-    class0 = BlkLoc(*expr)->object.class;
+    class0 = ObjectBlk(*expr).class;
 
     i = lookup_class_field(class0, query, ic);
     if (i < 0) 
@@ -998,7 +998,7 @@ static void instance_invokef(word clo, dptr expr, dptr query, struct inline_fiel
         struct frame *f;
 
         /* Can't access new except whilst initializing */
-        if ((cf->flags & M_Special) && BlkLoc(*expr)->object.init_state != Initializing) 
+        if ((cf->flags & M_Special) && ObjectBlk(*expr).init_state != Initializing) 
             InvokefErr(622);
 
         ac = check_access(cf, class0);
@@ -1010,8 +1010,8 @@ static void instance_invokef(word clo, dptr expr, dptr query, struct inline_fiel
 
         /* Create the "self" param in a tended descriptor */
         tmp.dword = D_Object;
-        BlkLoc(tmp) = (union block *)&BlkLoc(*expr)->object;
-        f = push_frame_for_proc(&BlkLoc(*cf->field_descriptor)->proc, 
+        BlkLoc(tmp) = (union block *)&ObjectBlk(*expr);
+        f = push_frame_for_proc(&ProcBlk(*cf->field_descriptor), 
                                 argc, args, &tmp);
         curr_pf->clo[clo] = f;
         f->failure_label = failure_label;
@@ -1026,7 +1026,7 @@ static void instance_invokef(word clo, dptr expr, dptr query, struct inline_fiel
         EVVal(i + 1, e_objectsub);
 
         /* Copy field to a tended descriptor */
-        tmp = BlkLoc(*expr)->object.fields[i];
+        tmp = ObjectBlk(*expr).fields[i];
         curr_op = Op_Invoke; /* In case of error, ttrace acts like Op_Invoke */
         general_call(clo, &tmp, argc, args, rval, failure_label);
     }
@@ -1095,7 +1095,7 @@ static void create_raw_object()
     tended struct b_object *obj;
     lhs = get_dptr();
     c = get_dptr();
-    MemProtect(obj = alcobject(&BlkLoc(*c)->class));
+    MemProtect(obj = alcobject(&ClassBlk(*c)));
     obj->init_state = Initializing;
     lhs->dword = D_Object;
     BlkLoc(*lhs) = (union block *)obj;
@@ -1118,7 +1118,7 @@ function lang_Class_complete_raw(o)
    if !is:object(o) then
        runerr(602, o)
     body {
-       BlkLoc(o)->object.init_state = Initialized;
+       ObjectBlk(o).init_state = Initialized;
        fail;
     }
 end
@@ -1129,7 +1129,7 @@ function lang_Class_ensure_initialized(c)
     body {
       struct p_frame *pf;
       /* Avoid creating a frame if we don't need to */
-      if (BlkLoc(c)->class.init_state != Uninitialized)
+      if (ClassBlk(c).init_state != Uninitialized)
           return c;
       MemProtect(pf = alc_p_frame((struct b_proc *)&Blang_Class_ensure_initialized_impl, 0));
       push_frame((struct frame *)pf);

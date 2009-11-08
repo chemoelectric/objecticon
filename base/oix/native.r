@@ -11,13 +11,13 @@ static struct b_class *get_class_for(dptr x)
 {
     type_case *x of {
       class: 
-            return &BlkLoc(*x)->class;
+            return &ClassBlk(*x);
         
       object: 
-            return BlkLoc(*x)->object.class;
+            return ObjectBlk(*x).class;
 
       cast:
-            return BlkLoc(*x)->cast.class;
+            return CastBlk(*x).class;
                     
      default: 
             ReturnErrVal(620, *x, 0);
@@ -28,10 +28,10 @@ static struct b_constructor *get_constructor_for(dptr x)
 {
     type_case *x of {
       constructor: 
-            return &BlkLoc(*x)->constructor;
+            return &ConstructorBlk(*x);
         
       record: 
-            return BlkLoc(*x)->record.constructor;
+            return RecordBlk(*x).constructor;
         
      default: 
             ReturnErrVal(625, *x, 0);
@@ -42,10 +42,10 @@ static struct b_proc *get_proc_for(dptr x)
 {
     type_case *x of {
       proc: 
-            return &BlkLoc(*x)->proc;
+            return &ProcBlk(*x);
         
       methp: 
-            return BlkLoc(*x)->methp.proc;
+            return MethpBlk(*x).proc;
         
      default: 
             ReturnErrVal(631, *x, 0);
@@ -58,8 +58,8 @@ static struct progstate *get_program_for(dptr x)
         null:
              return curpstate;
         coexpr: {
-             if (BlkLoc(*x)->coexpr.main_of)
-                return BlkLoc(*x)->coexpr.main_of;
+             if (CoexprBlk(*x).main_of)
+                return CoexprBlk(*x).main_of;
              else
                 ReturnErrVal(632, *x, 0);
         }
@@ -81,7 +81,7 @@ function classof(o)
    if !is:object(o) then
        runerr(602, o)
     body {
-       return class(BlkLoc(o)->object.class);
+       return class(ObjectBlk(o).class);
     }
 end
 
@@ -242,7 +242,7 @@ function is(o, target)
    if !is:class(target) then
        runerr(603, target)
     body {
-        if (is:object(o) && class_is(BlkLoc(o)->object.class, &BlkLoc(target)->class))
+        if (is:object(o) && class_is(ObjectBlk(o).class, &ClassBlk(target)))
             return target;
         else
             fail;
@@ -546,7 +546,7 @@ function lang_Prog_get_coexpression_program(c)
    if !is:coexpr(c) then
       runerr(118,c)
    body {
-       return coexpr(get_current_program_of(&BlkLoc(c)->coexpr)->K_main);
+       return coexpr(get_current_program_of(&CoexprBlk(c))->K_main);
    }
 end
 
@@ -787,7 +787,7 @@ function lang_Class_implements(c, target)
         struct b_class *class0;
         if (!(class0 = get_class_for(&c)))
             runerr(0);
-        if (class_is(class0, &BlkLoc(target)->class))
+        if (class_is(class0, &ClassBlk(target)))
             return target;
         else
             fail;
@@ -798,7 +798,7 @@ function lang_Class_get_methp_object(mp)
    if !is:methp(mp) then
        runerr(613, mp)
     body {
-       return object(BlkLoc(mp)->methp.object);
+       return object(MethpBlk(mp).object);
     }
 end
 
@@ -806,7 +806,7 @@ function lang_Class_get_methp_proc(mp)
    if !is:methp(mp) then
        runerr(613, mp)
     body {
-        return proc(BlkLoc(mp)->methp.proc);
+        return proc(MethpBlk(mp).proc);
     }
 end
 
@@ -814,7 +814,7 @@ function lang_Class_get_cast_object(c)
    if !is:cast(c) then
        runerr(614, c)
     body {
-       return object(BlkLoc(c)->cast.object);
+       return object(CastBlk(c).object);
     }
 end
 
@@ -822,7 +822,7 @@ function lang_Class_get_cast_class(c)
    if !is:cast(c) then
        runerr(614, c)
     body {
-       return class(BlkLoc(c)->cast.class);
+       return class(CastBlk(c).class);
     }
 end
 
@@ -1030,7 +1030,7 @@ function lang_Class_set_method(field, pr)
         if (!(cf->flags & M_Method))
             runerr(617, field);
 
-        new_proc = &BlkLoc(pr)->proc;
+        new_proc = &ProcBlk(pr);
         if (new_proc->field)
             runerr(618, pr);
 
@@ -1716,7 +1716,7 @@ end
     if (!is:null(l)) {
         if (!is:list(l))
             runerr(108, l);
-        create_list(BlkLoc(l)->list.size, &tmpl);
+        create_list(ListBlk(l).size, &tmpl);
         while (list_get(&l, &e)) {
             FdStaticParam(e, fd);
             list_put(&tmpl, &e);
@@ -2571,7 +2571,7 @@ function util_Connectable_is_methp_with_object(mp, o)
    if !is:object(o) then
        runerr(602, o)
     body {
-       if (is:methp(mp) && BlkLoc(mp)->methp.object == &BlkLoc(o)->object)
+       if (is:methp(mp) && MethpBlk(mp).object == &ObjectBlk(o))
            return nulldesc;
        else
            fail;

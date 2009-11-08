@@ -482,20 +482,20 @@ static void do_coact()
         return;
     }
 
-    if (get_current_user_frame_of(&BlkLoc(arg2)->coexpr)->fvars != curr_pf->fvars)
+    if (get_current_user_frame_of(&CoexprBlk(arg2))->fvars != curr_pf->fvars)
         retderef(&arg1, curr_pf->fvars);
 
     if (k_trace) {
         --k_trace;
-        trace_coact(k_current, &BlkLoc(arg2)->coexpr, &arg1);
+        trace_coact(k_current, &CoexprBlk(arg2), &arg1);
     }
 
     k_current->tvalloc = lhs;
     k_current->failure_label = failure_label;
 
     /* Set the target's activator, switch to the target and set its transmitted value */
-    BlkLoc(arg2)->coexpr.activator = k_current;
-    switch_to(&BlkLoc(arg2)->coexpr);
+    CoexprBlk(arg2).activator = k_current;
+    switch_to(&CoexprBlk(arg2));
     if (k_current->tvalloc)
         *k_current->tvalloc = arg1;
 }
@@ -557,15 +557,15 @@ static void transmit_failure()
 
     if (k_trace) {
         --k_trace;
-        trace_cofail(k_current, &BlkLoc(t)->coexpr);
+        trace_cofail(k_current, &CoexprBlk(t));
     }
 
     k_current->tvalloc = lhs;
     k_current->failure_label = failure_label;
 
     /* Switch to the target and go to its failure label */
-    BlkLoc(t)->coexpr.activator = k_current;
-    switch_to(&BlkLoc(t)->coexpr);
+    CoexprBlk(t).activator = k_current;
+    switch_to(&CoexprBlk(t));
     ipc = k_current->failure_label;
 }
 
@@ -580,7 +580,7 @@ function cofail(ce)
       } else if (!is:coexpr(ce))
          runerr(118, ce);
 
-      if (!BlkLoc(ce)->coexpr.failure_label)
+      if (!CoexprBlk(ce).failure_label)
          runerr(135, ce);
 
       MemProtect(pf = alc_p_frame((struct b_proc *)&Bcofail_impl, 0));
@@ -1000,16 +1000,16 @@ void interp()
 static void activate_child_prog()
 {
     dptr ce = get_dptr();
-    struct progstate *prog = BlkLoc(*ce)->coexpr.main_of;
+    struct progstate *prog = CoexprBlk(*ce).main_of;
     prog->monitor = curpstate;
     set_curpstate(prog);
 }
 
 static void pop_from_prog_event_queue(struct progstate *prog, dptr res)
 {
-    BlkLoc(*res)->object.fields[0] = prog->event_queue_head->eventcode;
-    BlkLoc(*res)->object.fields[1] = prog->event_queue_head->eventval;
-    Deref(BlkLoc(*res)->object.fields[1]);
+    ObjectBlk(*res).fields[0] = prog->event_queue_head->eventcode;
+    ObjectBlk(*res).fields[1] = prog->event_queue_head->eventval;
+    Deref(ObjectBlk(*res).fields[1]);
     if (prog->event_queue_head == prog->event_queue_tail) {
         free(prog->event_queue_head);
         prog->event_queue_head = prog->event_queue_tail = 0;
@@ -1027,7 +1027,7 @@ static void get_child_prog_result()
     dptr res = get_dptr();
     word *failure_label = GetAddr;
 
-    prog = BlkLoc(*ce)->coexpr.main_of;
+    prog = CoexprBlk(*ce).main_of;
     prog->monitor = 0;
     if (prog->exited) {
        ipc = failure_label;
@@ -1043,7 +1043,7 @@ function lang_Prog_get_event_impl(c, res)
    if !is:coexpr(c) then
       runerr(118,c)
    body {
-       struct progstate *prog = BlkLoc(c)->coexpr.main_of;
+       struct progstate *prog = CoexprBlk(c).main_of;
        struct p_frame *pf;
        if (!prog)
            runerr(632, c);

@@ -17,9 +17,9 @@ operator ~ compl(x)
        struct b_cset *blk;
        word i, prev = 0;
        MemProtect(rs = init_rangeset());
-       for (i = 0; i < BlkLoc(x)->cset.n_ranges; ++i) {
-           word from = BlkLoc(x)->cset.range[i].from;
-           word to = BlkLoc(x)->cset.range[i].to;
+       for (i = 0; i < CsetBlk(x).n_ranges; ++i) {
+           word from = CsetBlk(x).range[i].from;
+           word to = CsetBlk(x).range[i].to;
            if (from > prev)
                MemProtect(add_range(rs, prev, from - 1));
            prev = to + 1;
@@ -50,7 +50,7 @@ operator -- diff(x,y)
          /*
           * Make a new set based on the size of x.
           */
-         MemProtect(dstp = hmake(T_Set, (word)0, BlkLoc(x)->set.size));
+         MemProtect(dstp = hmake(T_Set, (word)0, SetBlk(x).size));
 
          /*
           * For each element in set x if it is not in set y
@@ -100,9 +100,9 @@ operator -- diff(x,y)
           /*
            * Calculate ~y
            */
-          for (i_y = 0; i_y < BlkLoc(y)->cset.n_ranges; ++i_y) {
-              word from = BlkLoc(y)->cset.range[i_y].from;
-              word to = BlkLoc(y)->cset.range[i_y].to;
+          for (i_y = 0; i_y < CsetBlk(y).n_ranges; ++i_y) {
+              word from = CsetBlk(y).range[i_y].from;
+              word to = CsetBlk(y).range[i_y].to;
               if (from > prev)
                   MemProtect(add_range(y_comp, prev, from - 1));
               prev = to + 1;
@@ -114,10 +114,10 @@ operator -- diff(x,y)
            * Calculate x ** ~y
            */
           i_x = i_y = 0;
-          while (i_x < BlkLoc(x)->cset.n_ranges &&
+          while (i_x < CsetBlk(x).n_ranges &&
                  i_y < y_comp->n_ranges) {
-              word from_x = BlkLoc(x)->cset.range[i_x].from;
-              word to_x = BlkLoc(x)->cset.range[i_x].to;
+              word from_x = CsetBlk(x).range[i_x].from;
+              word to_x = CsetBlk(x).range[i_x].to;
               word from_y = y_comp->range[i_y].from;
               word to_y = y_comp->range[i_y].to;
               if (to_x < to_y) {
@@ -156,7 +156,7 @@ operator ** inter(x,y)
           * Make a new set the size of the smaller argument set.
           */
          MemProtect(dstp = hmake(T_Set, (word)0,
-                                 Min(BlkLoc(x)->set.size, BlkLoc(y)->set.size)));
+                                 Min(SetBlk(x).size, SetBlk(y).size)));
          /*
           * Using the smaller of the two sets as the source
           *  copy directly into the result each of its elements
@@ -165,7 +165,7 @@ operator ** inter(x,y)
 	  * np always has a new element ready for use.  We get one in advance,
 	  *  and stay one ahead, because hook can't be tended.
           */
-         if (BlkLoc(x)->set.size <= BlkLoc(y)->set.size) {
+         if (SetBlk(x).size <= SetBlk(y).size) {
             srcp = BlkLoc(x);
             tstp = BlkLoc(y);
             }
@@ -209,12 +209,12 @@ operator ** inter(x,y)
           word i_x, i_y;
           MemProtect(rs = init_rangeset());
           i_x = i_y = 0;
-          while (i_x < BlkLoc(x)->cset.n_ranges &&
-                 i_y < BlkLoc(y)->cset.n_ranges) {
-              word from_x = BlkLoc(x)->cset.range[i_x].from;
-              word to_x = BlkLoc(x)->cset.range[i_x].to;
-              word from_y = BlkLoc(y)->cset.range[i_y].from;
-              word to_y = BlkLoc(y)->cset.range[i_y].to;
+          while (i_x < CsetBlk(x).n_ranges &&
+                 i_y < CsetBlk(y).n_ranges) {
+              word from_x = CsetBlk(x).range[i_x].from;
+              word to_x = CsetBlk(x).range[i_x].to;
+              word from_y = CsetBlk(y).range[i_y].from;
+              word to_y = CsetBlk(y).range[i_y].to;
               if (to_x < to_y) {
                   MemProtect(add_range(rs, Max(from_x, from_y), to_x));
                   ++i_x;
@@ -250,7 +250,7 @@ operator ++ union(x,y)
          /*
           * Ensure that x is the larger set; if not, swap.
           */
-         if (BlkLoc(y)->set.size > BlkLoc(x)->set.size) {
+         if (SetBlk(y).size > SetBlk(x).size) {
 	    d = x;
 	    x = y;
 	    y = d;
@@ -258,9 +258,9 @@ operator ++ union(x,y)
          /*
           * Copy x and ensure there's room for *x + *y elements.
           */
-         cpset(&x, &result, BlkLoc(x)->set.size + BlkLoc(y)->set.size);
+         cpset(&x, &result, SetBlk(x).size + SetBlk(y).size);
 
-         MemProtect(reserve(Blocks,BlkLoc(y)->set.size*(2*sizeof(struct b_selem))));
+         MemProtect(reserve(Blocks,SetBlk(y).size*(2*sizeof(struct b_selem))));
 
          /*
           * Copy each element from y into the result, if not already there.
@@ -270,7 +270,7 @@ operator ++ union(x,y)
           */
          dstp = BlkLoc(result);
          MemProtect(np = alcselem());
-         for (i = 0; i < HSegs && (seg = BlkLoc(y)->set.hdir[i]) != NULL; i++)
+         for (i = 0; i < HSegs && (seg = SetBlk(y).hdir[i]) != NULL; i++)
             for (slotnum = segsize[i] - 1; slotnum >= 0; slotnum--) {
                ep = (struct b_selem *)seg->hslots[slotnum];
                while (ep != NULL) {
@@ -302,11 +302,11 @@ operator ++ union(x,y)
           struct b_cset *blk;
           int i;
           MemProtect(rs = init_rangeset());
-          for (i = 0; i < BlkLoc(x)->cset.n_ranges; ++i) 
-              MemProtect(add_range(rs, BlkLoc(x)->cset.range[i].from, BlkLoc(x)->cset.range[i].to));
+          for (i = 0; i < CsetBlk(x).n_ranges; ++i) 
+              MemProtect(add_range(rs, CsetBlk(x).range[i].from, CsetBlk(x).range[i].to));
           
-          for (i = 0; i < BlkLoc(y)->cset.n_ranges; ++i) 
-              MemProtect(add_range(rs, BlkLoc(y)->cset.range[i].from, BlkLoc(y)->cset.range[i].to));
+          for (i = 0; i < CsetBlk(y).n_ranges; ++i) 
+              MemProtect(add_range(rs, CsetBlk(y).range[i].from, CsetBlk(y).range[i].to));
           
           blk = rangeset_to_block(rs);
           free_rangeset(rs);
