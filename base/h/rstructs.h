@@ -377,7 +377,7 @@ struct progstate {
     struct progstate *next;
 
     struct progstate *monitor;
-    struct descrip eventmask;
+    struct b_cset *eventmask;
     struct prog_event *event_queue_head, *event_queue_tail;
 
     /*

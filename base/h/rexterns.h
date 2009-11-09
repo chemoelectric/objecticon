@@ -28,6 +28,7 @@ extern uword segsize[];		/* size of hash bucket segment */
 extern int k_level;		/* value of &level */
 
 extern struct progstate *progs; /* list of progstates */
+extern struct b_cset *emptycs;   /* '' */
 extern struct b_cset *blankcs;   /* ' ' */
 extern struct b_cset *lparcs;    /* '(' */
 extern struct b_cset *rparcs;    /* ')' */

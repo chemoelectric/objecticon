@@ -420,13 +420,12 @@ static void unmark_region(struct region *br)
  * markprogram - traverse pointers out of a program state structure
  */
 
-static void markprogram(pstate)
-struct progstate *pstate;
+static void markprogram(struct progstate *pstate)
    {
    struct descrip *dp;
    struct prog_event *pe;
 
-   PostDescrip(pstate->eventmask);
+   markptr((union block **)&pstate->eventmask);
    for (pe = pstate->event_queue_head; pe; pe = pe->next) {
        PostDescrip(pe->eventcode);
        PostDescrip(pe->eventval);

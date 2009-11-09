@@ -292,4 +292,4 @@ Deliberate Syntax Error
 #define Wsizeof(x)	((sizeof(x) + sizeof(word) - 1) / sizeof(word))
 #define Vwsizeof(x)	((sizeof(x) - sizeof(struct descrip) +\
 			   sizeof(word) - 1) / sizeof(word))
-#define EventMon 1
+

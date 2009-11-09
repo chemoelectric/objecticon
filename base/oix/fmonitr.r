@@ -17,11 +17,14 @@
 
 
 
-void assign_event_functions(struct progstate *p, struct descrip cs)
+void set_event_mask(struct progstate *p, struct b_cset *cs)
 {
-   word *bits = CsetBlk(cs).bits;
-   p->eventmask = cs;
-#ifdef EventMon
+    word *bits;
+    if (p->eventmask == cs)
+        return;
+    p->eventmask = cs;
+    bits = p->eventmask->bits;
+
    /*
     * Most instrumentation functions depend on a single event.
     */
@@ -152,8 +155,6 @@ void assign_event_functions(struct progstate *p, struct descrip cs)
    } else {
        p->GeneralCall = general_call_0;
    }
-
-#endif
 }
 
 
@@ -196,7 +197,6 @@ void EVInit()
    for (i = 0; i <= MaxType; i++)
       typech[i] = '?';	/* initialize with error character */
 
-#ifdef EventMon
    typech[T_Lrgint]  = E_Lrgint;	/* long integer */
    typech[T_Real]    = E_Real;		/* real number */
    typech[T_Cset]    = E_Cset;		/* cset */
@@ -215,7 +215,6 @@ void EVInit()
    typech[T_Cast ]   = E_Cast;          /* cast */
    typech[T_Methp]   = E_Methp;         /* method pointer */
    typech[T_Ucs]     = E_Ucs;	        /* ucs block */
-#endif
 
    /*
     * codes used elsewhere but not shown here:

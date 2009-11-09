@@ -43,9 +43,7 @@
 
    Feature(1, "", "environment variables")
 
-#ifdef EventMon
    Feature(1, "_EVENT_MONITOR", "event monitoring")
-#endif					/* EventMon */
 
    Feature(1, "_KEYBOARD_FUNCTIONS", "keyboard functions")
 

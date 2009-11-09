@@ -254,7 +254,7 @@ function lang_Prog_get_event_mask(ce)
        struct progstate *prog;
        if (!(prog = get_program_for(&ce)))
           runerr(0);
-       return prog->eventmask;
+       return cset(prog->eventmask);
    }
 end
 
@@ -265,10 +265,7 @@ function lang_Prog_set_event_mask(cs, ce)
        struct progstate *prog;
        if (!(prog = get_program_for(&ce)))
           runerr(0);
-       if (BlkLoc(cs) != BlkLoc(prog->eventmask)) {
-           prog->eventmask = cs;
-           assign_event_functions(prog, cs);
-       }
+       set_event_mask(prog, &CsetBlk(cs));
        return cs;
    }
 end

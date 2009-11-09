@@ -11,7 +11,6 @@
 /*
  * Allocation events use lowercase codes.
  */
-#ifdef EventMon
 
 #define E_Lrgint	'\114'		/* Large integer allocation */
 #define E_Real		'\144'		/* Real allocation */
@@ -201,7 +200,6 @@
 #define E_Literal	'\364'          /* literal */
 
 
-#endif
 
 
 /* unused pool.  how many event codes are unused?

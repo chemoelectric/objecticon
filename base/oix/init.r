@@ -101,6 +101,7 @@ struct descrip minusonedesc;           	/* integer -1 */
 struct descrip thousanddesc;	        /* 1000 */
 struct descrip milliondesc;	        /* 1000000 */
 
+struct b_cset *emptycs;   /* '' */
 struct b_cset *blankcs;   /* ' ' */
 struct b_cset *lparcs;    /* '(' */
 struct b_cset *rparcs;    /* ')' */
@@ -516,7 +517,7 @@ static void initalloc(struct progstate *p)
 static void initprogstate(struct progstate *p)
 {
     p->monitor = 0;
-    p->eventmask= nulldesc;
+    p->eventmask= emptycs;
     p->event_queue_head = p->event_queue_tail = 0;
     p->Kywd_err = zerodesc;
     p->Kywd_pos = onedesc;
@@ -1220,6 +1221,7 @@ int main(int argc, char **argv)
     lparcs = make_static_cset_block(1, '(', '(');
     rparcs = make_static_cset_block(1, ')', ')');
     blankcs = make_static_cset_block(1, ' ', ' ');
+    emptycs = make_static_cset_block(0);
 
     Protect(emptystr_ucs = calloc(sizeof(struct b_ucs), 1), startuperr("Insufficient memory"));
     emptystr_ucs->utf8 = emptystr;
