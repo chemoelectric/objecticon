@@ -1482,7 +1482,7 @@ void print_vword(FILE *f, dptr d) {
             }
 
             case D_Integer : {
-                fprintf(f, "%ld", (long)d->vword.integer); 
+                fprintf(f, "%ld", (long)IntVal(*d)); 
                 break;
             }
 

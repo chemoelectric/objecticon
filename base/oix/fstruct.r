@@ -338,7 +338,7 @@ function set(x[n])
       */
      MemProtect(ps = hmake(T_Set, 0, n));
      result.dword = D_Set;
-     result.vword.bptr = ps;
+     BlkLoc(result) = ps;
 
      for (argc = 0; argc < n; argc++)
          set_insert(&result, &x[argc]);
@@ -360,7 +360,7 @@ function table(x, v[n])
       MemProtect(bp = hmake(T_Table, 0, n/2));
       bp->table.defvalue = x;
       result.dword = D_Table;
-      result.vword.bptr = bp;
+      BlkLoc(result) = bp;
 
       if (n % 2 != 0)
           runerr(134);

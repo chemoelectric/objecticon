@@ -96,7 +96,7 @@ void create_list(uword nslots, dptr d)
    MemProtect(hp = alclist(0, nslots));
  
    d->dword = D_List;
-   d->vword.bptr = (union  block *)hp;
+   BlkLoc(*d) = (union  block *)hp;
 }
 
 int set_del(dptr s, dptr key)
