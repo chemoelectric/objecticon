@@ -123,23 +123,23 @@ end
 class ULocal()
    public static const
       # variable declared local dynamic 
-      F_Dynamic,
+      Dynamic,
       # variable declared local static 
-      F_Static,
+      Static,
       # variable is a formal parameter 
-      F_Argument,
+      Argument,
       # argument is a vararg
-      F_Vararg
+      Vararg
 
    public const
       flags,
       id
 
    private static init()
-      F_Dynamic := 8r020
-      F_Static := 8r040
-      F_Argument := 8r01000
-      F_Vararg := 8r0200
+      Dynamic := 8r020
+      Static := 8r040
+      Argument := 8r01000
+      Vararg := 8r0200
    end
 
    package new(id, flags)
@@ -156,25 +156,25 @@ class UConst()
 
    public static const
       # literal is an integer 
-      F_IntLit,
+      IntLit,
       # literal is a real 
-      F_RealLit,
+      RealLit,
       # literal is a string 
-      F_StrLit,
+      StrLit,
       # literal is a cset 
-      F_CsetLit,
+      CsetLit,
       # literal is a ucs 
-      F_UcsLit,
+      UcsLit,
       # literal is a large int
-      F_LrgintLit
+      LrgintLit
 
    private static init()
-      F_IntLit := 8r02000
-      F_RealLit := 8r04000
-      F_StrLit := 8r010000
-      F_CsetLit := 8r020000
-      F_UcsLit := 8r040000
-      F_LrgintLit := 8r0100000
+      IntLit := 8r02000
+      RealLit := 8r04000
+      StrLit := 8r010000
+      CsetLit := 8r020000
+      UcsLit := 8r040000
+      LrgintLit := 8r0100000
    end
 
    package new(val, flags)

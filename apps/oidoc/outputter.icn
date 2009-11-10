@@ -88,7 +88,7 @@ class Outputter()
          if is(obj, UMethod) & iand(obj.flags, Class.Static) = 0 then
             has_self := 1
          every a := obj.get_locals() do {
-            if iand(a.flags, ULocal.F_Argument) ~= 0 then {
+            if iand(a.flags, ULocal.Argument) ~= 0 then {
                if \has_self then
                   has_self := &null
                else
@@ -96,7 +96,7 @@ class Outputter()
             }
          }
          s[-2:0] := ""
-         if iand(obj.locals[-1].flags, ULocal.F_Vararg) ~= 0 then
+         if iand(obj.locals[-1].flags, ULocal.Vararg) ~= 0 then
             s ||:= "[]"
       }
       return s
