@@ -85,6 +85,26 @@ function classof(o)
     }
 end
 
+function is(o, target)
+    body {
+       type_case target of {
+         class: {
+            if (is:object(o) && class_is(ObjectBlk(o).class, &ClassBlk(target)))
+                return target;
+            else
+                fail;
+         }
+         constructor: {
+            if (is:record(o) && RecordBlk(o).constructor == &ConstructorBlk(target))
+                return target;
+            else
+                fail;
+         }
+         default: runerr(634, target);
+      }
+   }
+end
+
 /*
  * Evaluate whether target is an implemented class of class.
  */
@@ -237,17 +257,6 @@ convert_from_macro(ino_t)
 convert_from_macro(blkcnt_t)
 #endif
 convert_from_macro(ulonglong)
-
-function is(o, target)
-   if !is:class(target) then
-       runerr(603, target)
-    body {
-        if (is:object(o) && class_is(ObjectBlk(o).class, &ClassBlk(target)))
-            return target;
-        else
-            fail;
-    }
-end
 
 function lang_Prog_get_event_mask(ce)
    body {

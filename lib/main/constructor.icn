@@ -69,14 +69,6 @@ class Constructor()
 
    private static defer get_field_location_impl(c, field)
 
-   #
-   # Test whether {o} is (i) a record and (ii) an instance of
-   # constructor {target}.  Fails if either is false.
-   #
-   public static is(o, target)
-      return type(o) == "record" & get_constructor(o) === target
-   end
-
    # Lookup a constructor by name
    # 
    # @param s a constructor name
