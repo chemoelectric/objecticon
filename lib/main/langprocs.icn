@@ -504,7 +504,7 @@ procedure clone(o, seen)
       }
 
       "record" : {
-         res := Constructor.get_constructor(o)()
+         res := classof(o)()
          seen[o] := res
          every i := 1 to *o do
             res[i] := clone(o[i], seen)
@@ -677,7 +677,7 @@ procedure equals_impl(x, y, seen)
 
       "record" : {
          *x = *y | fail
-         Constructor.get_constructor(x) === Constructor.get_constructor(y) | fail
+         classof(x) === classof(y) | fail
          every i := 1 to *x do
             equals(x[i], y[i], seen) | fail
          return

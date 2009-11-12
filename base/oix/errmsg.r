@@ -118,6 +118,7 @@ struct errtab errtab[] = {
     {632, "co-expression which is a program's &main expected"},
     {633, "given program not a child of this program"},
     {634, "class or constructor expected"},
+    {635, "object or record expected"},
    };
 
 

@@ -78,10 +78,12 @@ static void loc_to_list(struct loc *p, dptr res)
 }
 
 function classof(o)
-   if !is:object(o) then
-       runerr(602, o)
     body {
-       return class(ObjectBlk(o).class);
+       type_case o of {
+         object: return class(ObjectBlk(o).class);
+         record: return constructor(RecordBlk(o).constructor);
+         default: runerr(635, o);
+       }       
     }
 end
 
