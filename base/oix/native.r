@@ -81,7 +81,10 @@ function classof(o)
     body {
        type_case o of {
          object: return class(ObjectBlk(o).class);
+         class: return o; 
+         cast: return class(CastBlk(o).class);
          record: return constructor(RecordBlk(o).constructor);
+         constructor: return o;
          default: runerr(635, o);
        }       
     }
