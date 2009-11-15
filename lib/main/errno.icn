@@ -11,7 +11,7 @@ import ipl.scan(past)
 # parses the string and extracts the value.
 #
 procedure errno()
-   \&why ? {
+   &why ? {
       tab(past("(errno=")) | fail
       return integer(tab(many(&digits)))
    }
