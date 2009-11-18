@@ -131,8 +131,8 @@ class Image(Component)
 
    public close_image()
       if \win & /dont_close then {
-         win.close()
          Gui.style.dispose(win)
+         win.close()
       }
       (\zoom_win).close()
       dont_close := win := zoom_win := &null
