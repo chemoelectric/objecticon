@@ -112,7 +112,12 @@ class MenuButton(Component)
    end
 
    public match_accel(e)
-      return self.menu.accel === e & not(menu.is_shaded())
+      return self.menu.accel === e & menu.is_unshaded()
+   end
+
+   public get_tooltip(e)
+      return \self.tooltip | 
+         (menu.is_unshaded() & menu.in_label_region(e) & menu.get_tooltip(e))
    end
 
    public dialog_event(e)

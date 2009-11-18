@@ -204,6 +204,10 @@ class MenuBar(Component)
       return find_key(e)
    end
 
+   public get_tooltip(e)
+      return \self.tooltip | which_item(e).get_tooltip(e)
+   end
+
    public handle_default(e)
       local m
       if /self.which_open & \self.which_highlight then {
@@ -217,7 +221,7 @@ class MenuBar(Component)
    public find_key(k)
       local m
       every m := !menus do {
-         if m.accel === k & not(m.is_shaded()) then
+         if m.accel === k & m.is_unshaded() then
             return m
       }
    end
@@ -225,7 +229,7 @@ class MenuBar(Component)
    public go_right()
       local m, t, first
       every m := !menus do {
-         if not(m.is_shaded()) then {
+         if m.is_unshaded() then {
             if /self.which_highlight | \t then {
                first := m
                break
@@ -402,6 +406,7 @@ class MenuBar(Component)
    public new(a[])
       cast(self,Component).new()
       self.set_border(RaisedBorder())
+      set_tooltip_follows_mouse(&yes)
       self.menus := []
       set_fields(a)
       return

@@ -60,18 +60,6 @@ class Menu(TextMenuItem)
       every (!self.children).label_w := tw
    end
 
-   #
-   # Deduce which label is under pointer, if any, given we're in the region.
-   #
-   # @p
-   public which_item(e)
-      local m
-      every m := !self.children do {
-         if /m.is_shaded_flag & /m.is_decorative_flag & m.in_label_region(e) then
-            return m
-      }
-   end
-
    public display(cw, r)
       local c, rw, fw
 

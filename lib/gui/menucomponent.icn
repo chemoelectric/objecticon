@@ -20,6 +20,7 @@ import util
 # conventional submenu, which does contain children, is in the
 # {Menu} class.
 #
+# @field tooltip=val: see {set_tooltip}
 # @field accel=string : see {set_accel}
 # @field border={ABorder} : see {set_border}
 # @field is_shaded=flag : see {set_is_shaded}
@@ -36,6 +37,7 @@ class MenuComponent(Rect,SetFields,Connectable)
       parent_component,                               
       is_shaded_flag,                                
       parent,                  
+      tooltip,         
       accel,
       children,
       border,
@@ -184,6 +186,20 @@ class MenuComponent(Rect,SetFields,Connectable)
    end
 
    #
+   # Set the tooltip.
+   #
+   public set_tooltip(x)
+      self.tooltip := x
+   end
+
+   #
+   # Return the tooltip, if any.
+   #
+   public get_tooltip()
+      return \self.tooltip
+   end
+
+   #
    # Set the mnemonic key, which will be used with the Alt key to provide keyboard
    # shortcuts.
    #
@@ -242,6 +258,17 @@ class MenuComponent(Rect,SetFields,Connectable)
    #
 
    #
+   # Deduce which child label is under pointer, if any, given we're in the region.
+   #
+   public which_item(e)
+      local m
+      every m := !self.children do {
+         if /m.is_shaded_flag & /m.is_decorative_flag & m.in_label_region(e) then
+            return m
+      }
+   end
+
+   #
    # Invoked after the x,y co-ordinates are set, this method should be implemented
    # so that the submenu may initialize its size.  The method should leave the
    # instance variables w and h initialized.
@@ -283,6 +310,10 @@ class MenuComponent(Rect,SetFields,Connectable)
       }
    end
 
+   protected create_proxy()
+      return SubMenuProxyComponent(self)
+   end
+
    #
    # Display the submenu.
    #
@@ -292,7 +323,7 @@ class MenuComponent(Rect,SetFields,Connectable)
       #
       # Open a temporary area for the menu and copy.
       #
-      self.temp_win := SubMenuProxyComponent(self)
+      self.temp_win := create_proxy()
       self.temp_win.set_pos(self.x, 
                             self.y)
       self.temp_win.set_size(self.w, self.h)
@@ -354,6 +385,7 @@ class MenuComponent(Rect,SetFields,Connectable)
 
    public set_one(f)
       case f.attr of {
+         "tooltip" : set_tooltip(f.val)
          "accel" : set_accel(f.string_val())
          "border" : set_border(f.object_val(gui.ABorder))
          "is_shaded" :  set_is_shaded(f.flag_val())
@@ -379,9 +411,14 @@ class SubMenuProxyComponent(Component)
       menu.display(self.cbwin, r)
    end
 
+   public get_tooltip(e)
+      return menu.which_item(e).get_tooltip(e)
+   end
+
    public new(m)
       cast(self,Component).new()
       self.menu := m
+      set_tooltip_follows_mouse(&yes)
       return
    end
 end
