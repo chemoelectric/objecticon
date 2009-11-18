@@ -23,6 +23,11 @@ class CanvasMenuComponent(CanvasObject)
       if \self.is_shaded_flag then
          c.line(name || ".set_is_shaded(&yes)")
 
+      if \self.tooltip then {
+         self.tooltip.gen_code(c)
+         c.line(name || ".set_tooltip(" || self.tooltip.name || ")")
+      }
+
       if \self.accel then
          c.line(name || ".set_accel(" || image(self.accel) || ")")
 
@@ -56,6 +61,7 @@ class CanvasMenuComponent(CanvasObject)
       suspend ["Name", "name"] |
               ["Class Name", "class_name"] |
               ["Import Name", "import_name"] |
+              ["Tooltip", "tooltip"] |
               ["Accel", "accel"] |
               ["Is shaded", "is_shaded_flag"] |
               ["Event Method", "event_method"] |

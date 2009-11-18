@@ -18,10 +18,18 @@ class MenuComponentEdit(Dialog)
       label,                   # Dialog title
       tabset,
       code_tab,
-      event_tab,
+      other_tab,
       event_flag,
       event_method,
+      shaded,                  #
+      accel_flag,              # Accel on/off
+      accel_tf,
+      tooltip_field,           # PaintField - tooltip
       okay_result
+
+   public on_accel_flag()
+      accel_tf.toggle_is_shaded()
+   end
 
    #
    # Get result flag
@@ -81,18 +89,18 @@ class MenuComponentEdit(Dialog)
       code_tab := CodeTab(c)
       tabset.add(code_tab)
 
-      event_tab := TabItem("label=Events")
-      event_tab.set_layout(GridLayout("extra=borders"))
-      tabset.add(event_tab)
+      other_tab := TabItem("label=Other")
+      other_tab.set_layout(GridLayout("extra=borders"))
+      tabset.add(other_tab)
 
       event_flag := CheckBox()
       event_flag.connect(self.on_event_flag, Event.ACTION)
       event_flag.set_label("Event handler")
-      event_tab.add(event_flag)
+      other_tab.add(event_flag)
 
       event_method := TextField("c:eol")
       event_method.set_size(120)
-      event_tab.add(event_method)
+      other_tab.add(event_method)
 
       if /c.event_method then
          event_method.set_is_shaded(&yes)
@@ -100,6 +108,32 @@ class MenuComponentEdit(Dialog)
          event_flag.set_is_checked(&yes)
          event_method.set_contents(c.event_method)
       }
+
+      shaded := CheckBox("c:eol")
+      shaded.set_label("Is shaded")
+      if \c.is_shaded_flag then
+         shaded.set_is_checked(&yes)
+      other_tab.add(shaded)
+
+      accel_flag := CheckBox()
+      accel_flag.connect(self.on_accel_flag, Event.ACTION)
+      accel_flag.set_label("Set Accelerator")
+      other_tab.add(accel_flag)
+
+      accel_tf := TextField("c:eol")
+      accel_tf.set_size(100)
+      other_tab.add(accel_tf)
+
+      if /c.accel then
+         accel_tf.set_is_shaded(&yes)
+      else  {
+         accel_flag.set_is_checked(&yes)
+         accel_tf.set_contents(c.accel)
+      }
+
+      tooltip_field := PaintField("c:eol", "c:w=2", "title=",Label("label=Tooltip"))
+      other_tab.add(tooltip_field)
+      tooltip_field.set_contents(c.tooltip)
 
       oc := OkCancel()
       oc.listen(self)
@@ -109,6 +143,9 @@ class MenuComponentEdit(Dialog)
    public set_vals()
       code_tab.set_vals()
       c.event_method := if event_flag.is_checked() then event_method.get_contents() else &null
+      c.is_shaded_flag := shaded.get_status()
+      c.accel := if accel_flag.is_checked() then accel_tf.get_contents() else &null
+      c.tooltip := tooltip_field.get_contents()
    end
 
    public new(c)

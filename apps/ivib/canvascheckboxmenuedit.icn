@@ -19,7 +19,6 @@ class CanvasCheckBoxMenuEdit(MenuComponentEdit)
       tab_images,
       paint_field,
       paint_field_r,
-      shaded,                  #              
       browse_custom,           #                     
       group_list,              #                  
       in_checkbox_group,       #                          
@@ -40,7 +39,6 @@ class CanvasCheckBoxMenuEdit(MenuComponentEdit)
 
    public set_vals()
       cast(self,MenuComponentEdit).set_vals()
-      c.is_shaded_flag := shaded.get_status()
 
       #
       # If in cbg and on, turn off, since may go out of cbg or into
@@ -106,12 +104,6 @@ class CanvasCheckBoxMenuEdit(MenuComponentEdit)
       initially_checked := CheckBox("c:eol")
       initially_checked.set_label("Initially checked")
       main_panel.add(initially_checked)
-
-      shaded := CheckBox()
-      shaded.set_label("Is shaded")
-      if \c.is_shaded_flag then
-         shaded.set_is_checked(&yes)
-      main_panel.add(shaded)
 
       if *c.parent_component.parent_Canvas.checkbox_groups = 0 then {
          in_checkbox_group.set_is_shaded(&yes)
