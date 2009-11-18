@@ -221,7 +221,7 @@ class Component(Rect,Align,SetFields,Connectable)
    public create_tooltip_component(tip)
       local c, s
       c := Gui.style.create_tooltip_label()
-      if s := string(tip) then
+      if s := text(tip) then
          c.set_label(s)
       else
          c.set_paint(tip)
