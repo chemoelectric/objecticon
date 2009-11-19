@@ -44,6 +44,7 @@ NativeDef(graphics.Window,generic_palette_key,graphics_Window_generic_palette_ke
 NativeDef(graphics.Window,lower,graphics_Window_lower)
 NativeDef(graphics.Window,new_color,graphics_Window_new_color)
 NativeDef(graphics.Window,open_impl,graphics_Window_open_impl)
+NativeDef(graphics.Window,open_child_impl,graphics_Window_open_child_impl)
 NativeDef(graphics.Window,own_selection,graphics_Window_own_selection)
 NativeDef(graphics.Window,request_selection,graphics_Window_request_selection)
 NativeDef(graphics.Window,send_selection_response,graphics_Window_send_selection_response)

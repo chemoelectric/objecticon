@@ -316,9 +316,10 @@ class Dialog(Component)
       local pw
       ensure_size()
       ensure_pos()
-      pw := (\owning_dialog).win
-      self.win := (Window.open_child ! ([pw, "inputmask=mk"] ||| 
-                            wattribs_to_list(self.wattribs))) | runerr("couldn't open window")
+      self.win := 
+         (if pw := (\owning_dialog).win then pw.open_child else Window.open)!
+         (["inputmask=mk"] ||| wattribs_to_list(self.wattribs)) | runerr("couldn't open window")
+
       # Make the buffer the same size as the visible win.
       self.buffer_win.attrib("size=" || self.win.attrib("size"))
       if \self.only_enlarge_width_flag then

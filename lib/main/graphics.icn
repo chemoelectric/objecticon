@@ -8,12 +8,11 @@ class Window(NoCopy)
       wbp
 
    public static open(a[])
-      push(a, &null)
       return Window(open_impl!a)
    end
 
-   public static open_child(a[])
-      return Window(open_impl!a)
+   public open_child(a[])
+      return Window(open_child_impl!a)
    end
 
    public clone(a[])
@@ -25,6 +24,7 @@ class Window(NoCopy)
    end
 
    private static defer open_impl(a[])
+   private defer open_child_impl(a[])
    private defer clone_impl(a[])
    private static defer couple_impl(w1, w2)
 
