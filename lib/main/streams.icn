@@ -798,15 +798,30 @@ class FileStream(DescStream)
    # @param flags the flags, selected from {FileOpt}
    # @param perm the create permissions to use if a file is
    # @      created, selected from {Mode}.
+   # @param mode the resulting {Stream}'s mode; if omitted
+   # @      this is deduced from {flags} parameter and the
+   # @      type of file being opened.
    #
-   public static open(name, flags, perm)
-      local mode
-      if iand(flags, FileOpt.WRONLY) ~= 0 then
-         mode := WRITE + SEEK + TRUNCATE
-      else if iand(flags, FileOpt.RDWR) ~= 0 then
-         mode := ALL
-      else
-         mode := READ + SEEK
+   public static open(name, flags, perm, mode)
+      local t
+      if /mode then {
+         if iand(flags, FileOpt.WRONLY) ~= 0 then
+            mode := WRITE
+         else if iand(flags, FileOpt.RDWR) ~= 0 then
+            mode := READ_WRITE
+         else
+            mode := READ
+         #
+         # Get the type of the file from stat().  If it doesn't exist, or is
+         # a regular file, add TRUNCATE and/or SEEK capability.
+         #
+         t := Files.stat(name).mode[1]
+         if /t | t  == "-" then {
+            if iand(mode, WRITE) ~= 0 then
+               mode +:= TRUNCATE
+            mode +:= SEEK
+         }
+      }
       return FileStream(open_impl(name, flags, perm), mode)
    end
 
