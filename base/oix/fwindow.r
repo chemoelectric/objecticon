@@ -14,38 +14,6 @@
 static char attr_buff[4096];     /* Buff for attribute values */
 
 
-function graphics_Window_open_impl(attr[n])
-   body {
-      int j, err_index = -1;
-      tended struct b_list *hp;
-      wbp f;
-
-      /*
-       * allocate an empty event queue for the window
-       */
-      MemProtect(hp = alclist(0, MinListSlots));
-
-      /*
-       * loop through attributes, checking validity
-       */
-      for (j = 0; j < n; j++) {
-          if (is:null(attr[j]))
-              attr[j] = emptystr;
-          if (!is:string(attr[j]))
-              runerr(109, attr[j]);
-      }
-
-      f = wopen("Object Icon", hp, attr, n, &err_index);
-
-      if (f == NULL) {
-          if (err_index >= 0) runerr(145, attr[err_index]);
-          else if (err_index == -1) fail;
-          else runerr(305);
-      }
-
-      return C_integer((word)f);
-   }
-end
 
 static struct sdescrip wclassname = {15, "graphics.Window"};
 
@@ -78,6 +46,45 @@ if (!self_w || ISCLOSED(self_w))
     runerr(142, self);
 #enddef
 
+function graphics_Window_open_impl(parent, attr[n])
+   body {
+      int j, err_index = -1;
+      tended struct b_list *hp;
+      wbp f, pw;
+
+      if (is:null(parent))
+          pw = 0;
+      else {
+          WindowStaticParam(parent, tmp);
+          pw = tmp;
+      }
+
+      /*
+       * allocate an empty event queue for the window
+       */
+      MemProtect(hp = alclist(0, MinListSlots));
+
+      /*
+       * loop through attributes, checking validity
+       */
+      for (j = 0; j < n; j++) {
+          if (is:null(attr[j]))
+              attr[j] = emptystr;
+          if (!is:string(attr[j]))
+              runerr(109, attr[j]);
+      }
+
+      f = wopen(pw, "Object Icon", hp, attr, n, &err_index);
+
+      if (f == NULL) {
+          if (err_index >= 0) runerr(145, attr[err_index]);
+          else if (err_index == -1) fail;
+          else runerr(305);
+      }
+
+      return C_integer((word)f);
+   }
+end
 
 function graphics_Window_alert(self, volume)
    if !def:C_integer(volume, 0) then

@@ -311,7 +311,7 @@ void	qevent		(wsp ws, dptr e, int x, int y, uword t, long f, int krel);
    void	wflush		(wbp w);
 #endif
    int	wgetq		(wbp w, dptr res, word t);
-   wbp  wopen		(char *nm, struct b_list *hp, dptr attr, int n, int *e);
+   wbp  wopen		(wbp parent, char *nm, struct b_list *hp, dptr attr, int n, int *e);
 #ifndef MSWindows
    void	wsync		(wbp w);
 #endif					/* MSWindows */
@@ -323,8 +323,6 @@ void	qevent		(wsp ws, dptr e, int x, int y, uword t, long f, int krel);
        * Implementation routines specific to X-Windows
        */
       void	unsetclip		(wbp w);
-      void	moveWindow		(wbp w, int x, int y);
-      int	moveResizeWindow	(wbp w, int x, int y, int wd, int h);
       int	resetfg			(wbp w);
       int	setfgrgb		(wbp w, int r, int g, int b);
       int	setbgrgb		(wbp w, int r, int g, int b);
@@ -335,7 +333,6 @@ void	qevent		(wsp ws, dptr e, int x, int y, uword t, long f, int krel);
       int	pixmap_init		(wbp w);
       int	remap			(wbp w, int x, int y);
       int	seticonimage		(wbp w, dptr dp);
-      void	makeIcon		(wbp w, int x, int y);
       int	translate_key_event	(XKeyEvent *k1, char *s, KeySym *k2);
       wdp	alc_display		(char *s);
       void	free_display		(wdp wd);

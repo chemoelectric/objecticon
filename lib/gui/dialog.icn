@@ -313,10 +313,11 @@ class Dialog(Component)
    end
 
    public open_visible_win()
+      local pw
       ensure_size()
       ensure_pos()
-
-      self.win := (Window.open ! (["inputmask=mk"] ||| 
+      pw := (\owning_dialog).win
+      self.win := (Window.open_child ! ([pw, "inputmask=mk"] ||| 
                             wattribs_to_list(self.wattribs))) | runerr("couldn't open window")
       # Make the buffer the same size as the visible win.
       self.buffer_win.attrib("size=" || self.win.attrib("size"))

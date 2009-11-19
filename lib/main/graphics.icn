@@ -8,6 +8,11 @@ class Window(NoCopy)
       wbp
 
    public static open(a[])
+      push(a, &null)
+      return Window(open_impl!a)
+   end
+
+   public static open_child(a[])
       return Window(open_impl!a)
    end
 

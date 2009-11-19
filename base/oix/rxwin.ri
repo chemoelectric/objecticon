@@ -14,21 +14,19 @@ XSizeHints size_hints;
 /*
  * function prototypes
  */
-int                  seticonicstate   (wbp w, char *s);
-int		     seticonpos       (wbp w, char *s);
 static int	     handle_misc      (wdp display, wbp w);
 static int	     handle_config    (wbp w, XConfigureEvent *event);
 static int           handle_exposures (wbp w, XExposeEvent *event);
-static void       handle_mouse     (wbp w, XButtonEvent *event);
-static void       handle_keypress  (wbp w, XKeyEvent *event);
+static void          handle_mouse     (wbp w, XButtonEvent *event);
+static void          handle_keypress  (wbp w, XKeyEvent *event);
 static XImage *	     getximage	      (wbp w, int x, int y,
                                        int width, int height, int init);
-void              moveWindow       (wbp w, int x, int y);
-int                  setdisplay       (wbp w, char *s);
-void              makeIcon         (wbp w, int x, int y);
-int		     wmap	      (wbp w);
-Pixmap		     loadimage	      (wbp w, char *filename, unsigned int *height, unsigned int *width, int atorigin, int *status);
-void unsetclip (wbp w);
+static void          moveWindow       (wbp w, int x, int y);
+static int           moveResizeWindow	(wbp w, int x, int y, int wd, int h);
+static void          makeIcon         (wbp w, int x, int y);
+static int	     wmap	      (wbp w, wbp parent);
+static Pixmap        loadimage	      (wbp w, char *filename, unsigned int *height, 
+                                       unsigned int *width, int atorigin, int *status);
 static int convert_KeySym_to_code_point(KeySym k);
 
 #ifdef HAVE_LIBXFT
@@ -856,7 +854,7 @@ void wsync(w)
  *  -1  : ordinary failure
  *  -2  : out of memory
  */
-wbp wopen(char *name, struct b_list *lp, dptr attr, int n, int *err_index)
+wbp wopen(wbp parent, char *name, struct b_list *lp, dptr attr, int n, int *err_index)
 {
     wbp w;
     wsp ws;
@@ -938,7 +936,7 @@ wbp wopen(char *name, struct b_list *lp, dptr attr, int n, int *err_index)
     if (ws->windowlabel == NULL) {
         ws->windowlabel = salloc(name);
     }
-    if ((i = wmap(w)) != Succeeded) {
+    if ((i = wmap(w, parent)) != Succeeded) {
         if (i == Failed) *err_index = -1;
         else *err_index = 0;
         return NULL;
@@ -955,7 +953,7 @@ wbp wopen(char *name, struct b_list *lp, dptr attr, int n, int *err_index)
 /*
  * make an icon for a window
  */
-void makeIcon(w, x, y)
+static void makeIcon(w, x, y)
     wbp w;
     int x, y;		/* current mouse position */
 {
@@ -1012,7 +1010,7 @@ void makeIcon(w, x, y)
  *  If a window, cause the window to actually become visible on the screen.
  *  returns Succeeded, Failed, or Error
  */
-int wmap(wbp w)
+static int wmap(wbp w, wbp parent)
 {
     XWindowAttributes attrs;
     XGCValues gcv;
@@ -1053,33 +1051,34 @@ int wmap(wbp w)
      * create the X window (or use the DefaultRootWindow if requested)
      */
     if (ws->iconic != HiddenState) {
-
         XSetWindowAttributes attr;
         attr.background_pixmap = None;
         attr.background_pixel = wd->colors[wc->bg].c;
         attr.border_pixel = wd->colors[wc->fg].c;
         attr.event_mask = StructureNotifyMask | ExposureMask;
  
-        {
-            ws->win = ((ws->iconic == RootState) ? DefaultRootWindow(stddpy) :
-
-		       XCreateSimpleWindow(stddpy, DefaultRootWindow(stddpy),
-                                           ws->posx < 0 ? 0 : ws->posx,
-                                           ws->posy < 0 ? 0 : ws->posy, ws->width,
-                                           ws->height, 1,
-					   wd->colors[wc->fg].c,
-					   wd->colors[wc->bg].c));
-            /* Turn off background; this prevents X filling the background on an expose
-               and hence prevents unsightly flicker on a resize. */
-            if (ws->win)
-                XSetWindowBackgroundPixmap(stddpy, ws->win, None);
-        }
+        ws->win = ((ws->iconic == RootState) ? DefaultRootWindow(stddpy) :
+                   XCreateSimpleWindow(stddpy, DefaultRootWindow(stddpy),
+                                       ws->posx < 0 ? 0 : ws->posx,
+                                       ws->posy < 0 ? 0 : ws->posy, ws->width,
+                                       ws->height, 1,
+                                       wd->colors[wc->fg].c,
+                                       wd->colors[wc->bg].c));
 
         if (ws->win == (Window) NULL)
             return Failed;
+
+        /* If the window has a parent, set the WM_TRANSIENT_FOR hint. */
+        if (parent && parent->window->win)
+            XSetTransientForHint(stddpy, ws->win, parent->window->win);
+
+        /* Turn off background; this prevents X filling the background on an expose
+           and hence prevents unsightly flicker on a resize. */
+        if (ws->win)
+            XSetWindowBackgroundPixmap(stddpy, ws->win, None);
+
         stdwin = ws->win;
         XClearWindow(stddpy, stdwin);
-
     }
 
     /*
@@ -1745,7 +1744,7 @@ int setcanvas(w,s)
         else {
             if (ws->iconic != IconicState) {
                 if (ws->win == (Window) NULL) {
-                    wmap(w);
+                    wmap(w, 0);
                 }
                 XIconifyWindow(ws->display->display, ws->win, ws->display->screen);
                 XSync(stddpy, False);
@@ -1766,7 +1765,7 @@ int setcanvas(w,s)
                 ws->iconic = NormalState;
                 ws->initialPix = ws->pix;
                 ws->pix = (Window) NULL;
-                wmap(w);
+                wmap(w, 0);
 	    }
             else if (ws->iconic == IconicState) {
                 XMapWindow(stddpy, stdwin);
@@ -1796,7 +1795,7 @@ int setcanvas(w,s)
                     ws->iconic = MaximizedState;
                     ws->initialPix = ws->pix;
                     ws->pix = (Window) NULL;
-                    wmap(w);
+                    wmap(w, 0);
                 }
                 else if (ws->iconic == IconicState) {
                     XMapWindow(stddpy, stdwin);
@@ -1924,7 +1923,7 @@ int geticonpos(w, s)
 /*
  * if the window exists and is visible, set its position to (x,y)
  */
-void moveWindow(w,x,y)
+static void moveWindow(w,x,y)
     wbp w;
     int x, y;
 {
@@ -1937,7 +1936,7 @@ void moveWindow(w,x,y)
     }
 }
 
-int moveResizeWindow(w, x, y, width, height)
+static int moveResizeWindow(w, x, y, width, height)
     wbp w;
     int x, y, width, height;
 {
@@ -3983,7 +3982,7 @@ int dumpimage(w,filename,x,y,width,height)
 /*
  * Load an image, in any format we can figure out.
  */
-Pixmap loadimage(w, filename, height, width, atorigin, status)
+static Pixmap loadimage(w, filename, height, width, atorigin, status)
     wbp w;
     char *filename;
     unsigned int *height, *width;
