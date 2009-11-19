@@ -62,10 +62,6 @@ int ceq(dptr dp, char *s)
 int getvar(dptr s, dptr vp, struct progstate *p)
 {
     dptr dp;
-    dptr *np;
-    register int i;
-    struct b_proc *bp;
-    struct p_frame *pf;
 
     if (StrLen(*s) == 0)
         return Failed;
@@ -150,42 +146,53 @@ int getvar(dptr s, dptr vp, struct progstate *p)
      *  If a variable with name is found, variable() returns a variable
      *  descriptor that points to the corresponding value descriptor. 
      *  If no such variable exits, it fails.
+     * 
+     *  The first if test here checks whether or not the curr_pf is the root
+     *  p_frame, ie the main_wrapper.  This will be the case if this is
+     *  a newly loaded program that hasn't been started yet.  In that case,
+     *  we have no local variables yet.
      */
-    pf = p->K_current->curr_pf;
-    bp = pf->proc;
-   
-    np = bp->lnames;		/* Check the formal parameter names. */
+    if (p->K_current->curr_pf->caller) {
+        struct b_proc *bp;
+        struct p_frame *pf;
+        dptr *np;
+        int i;
 
-    dp = pf->fvars->desc;
-    for (i = bp->nparam; i > 0; i--) {
-        if (eq(s, *np)) {
-            vp->dword = D_NamedVar;
-            VarLoc(*vp) = (dptr)dp;
-            return ParamName;
-        }
-        dp++;
-        np++;
-    }
+        pf = get_current_user_frame_of(p->K_current);
+        bp = pf->proc;
+        np = bp->lnames;		/* Check the formal parameter names. */
 
-    for (i = bp->ndynam; i > 0; i--) { /* Check the local dynamic names. */
-        if (eq(s, *np)) {
-            vp->dword = D_NamedVar;
-            VarLoc(*vp) = (dptr)dp;
-            return LocalName;
+        dp = pf->fvars->desc;
+        for (i = bp->nparam; i > 0; i--) {
+            if (eq(s, *np)) {
+                vp->dword = D_NamedVar;
+                VarLoc(*vp) = (dptr)dp;
+                return ParamName;
+            }
+            dp++;
+            np++;
         }
-        np++;
-        dp++;
-    }
 
-    dp = bp->fstatic; /* Check the local static names. */
-    for (i = bp->nstatic; i > 0; i--) {
-        if (eq(s, *np)) {
-            vp->dword = D_NamedVar;
-            VarLoc(*vp) = (dptr)dp;
-            return StaticName;
+        for (i = bp->ndynam; i > 0; i--) { /* Check the local dynamic names. */
+            if (eq(s, *np)) {
+                vp->dword = D_NamedVar;
+                VarLoc(*vp) = (dptr)dp;
+                return LocalName;
+            }
+            np++;
+            dp++;
         }
-        np++;
-        dp++;
+
+        dp = bp->fstatic; /* Check the local static names. */
+        for (i = bp->nstatic; i > 0; i--) {
+            if (eq(s, *np)) {
+                vp->dword = D_NamedVar;
+                VarLoc(*vp) = (dptr)dp;
+                return StaticName;
+            }
+            np++;
+            dp++;
+        }
     }
 
     /* Check the global variable names. */

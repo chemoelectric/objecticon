@@ -762,7 +762,7 @@ class Main(Dialog)
       } else {
          component_tree_dialog := ComponentTreeDialog(self)
          component_tree_dialog.connect(self.on_component_tree_dialog_close, Event.DIALOG_CLOSED)
-         component_tree_dialog.show_modeless()
+         component_tree_dialog.show_modeless(self)
       }
    end
 
@@ -1249,7 +1249,7 @@ class Main(Dialog)
          if f[2].mode[1] == "-" & upto('x', f[2].mode) then {
             fn := pp.child(f[1]).str()
             ce := Prog.load(fn) | stop("Failed to load plugin:", fn)
-            plugin := Prog.get_variable("main", ce)() | stop("Plugin didn't return a Plugin from main")
+            plugin := Prog.get_global("main", ce)() | stop("Plugin didn't return a Plugin from main")
             insert(plugins, plugin.get_unique_id(), plugin)
             ui := PluginUI(plugin)
             listener := ObjectActionListener(self, ui)
