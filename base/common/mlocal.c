@@ -283,7 +283,7 @@ char *canonicalize(char *path)
  */
 char *pathfind(char *cd, char *path, char *name, char *extn)
 {
-    char *p;
+    char *p, *name_dir;
 
     /* Don't search the path if we have an absolute file */
     if (isabsolute(name))
@@ -291,11 +291,12 @@ char *pathfind(char *cd, char *path, char *name, char *extn)
 
     /* Also don't search if we have a relative name; it is relative to
      * the cd */
-    if (strchr(name, FILESEP)) {
+    name_dir = getdir(name);
+    if (*name_dir) {
         static char buf[MaxPath];
         if (!cd)
             return tryfile(0, name, extn);
-        snprintf(buf, sizeof(buf), "%s%s", cd, getdir(name));
+        snprintf(buf, sizeof(buf), "%s%s", cd, name_dir);
         return tryfile(buf, name, extn);
     }
 
