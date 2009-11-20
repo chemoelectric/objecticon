@@ -621,10 +621,11 @@ class DescStream(Stream, NoCopy)
    # Invokes the system function dup2(oldfd, newfd), with oldfd set to
    # this instance's {fd}, and newfd set to the given parameter's {fd}.
    #
-   # On error this method fails and sets {&why}.
+   # On error this method fails and sets {&why}.  On success, it sets
+   # the mode of the target to this instances's mode (since they both
+   # now point to the same file), and returns {&null}.
    #
    # @param other - a {DescStream}
-   # @return the fd of other
    # @example
    # @ f := FileStream.open("/tmp/xyz", 
    # @     ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
@@ -633,7 +634,9 @@ class DescStream(Stream, NoCopy)
    # @ write("hello world")  # writes to /tmp/xyz
    #
    public dup2(other)
-      return dup2_impl(other.fd)
+      dup2_impl(other.fd) | fail
+      other.mode := self.mode
+      return
    end
 
    private defer dup2_impl()
