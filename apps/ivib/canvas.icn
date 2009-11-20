@@ -1107,10 +1107,10 @@ class Canvas(Component,SelectiveObjectCodec)
       if \moving then
          show_moving()
 
-      Window.copy_area(item_buff_win, self.cbwin, 
-                       self.x, self.y, 
-                       self.w, self.h, 
-                       self.x, self.y)
+      item_buff_win.copy_to(self.cbwin, 
+                            self.x, self.y, 
+                            self.w, self.h, 
+                            self.x, self.y)
 
       (\layout_delegate).display()
    end

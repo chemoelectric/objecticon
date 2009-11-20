@@ -153,15 +153,15 @@ procedure wcatenate(win1, win2, dir)
          win3 := Window.open("canvas=hidden", "width=" || (width1 + width2),
             "height=" || max(height1, height2)) |
                stop("*** cannot open window for concatenation")
-         Window.copy_area(win1, win3)
-         Window.copy_area(win2, win3, 0, 0, width2, height2, width1, 0)
+         win1.copy_to(win3)
+         win2.copy_to(win3, 0, 0, width2, height2, width1, 0)
          }
       "v":  {
          win3 := Window.open("canvas=hidden", "width=" || max(width1, width2),
             "height=" || (height1 + height2)) |
                stop("*** cannot open window for concatenation")
-         Window.copy_area(win1, win3)
-         Window.copy_area(win2, win3, 0, 0, width2, height2, 0, height1)
+         win1.copy_to(win3)
+         win2.copy_to(win3, 0, 0, width2, height2, 0, height1)
          }
       default:  stop("*** invalid specification for catenate()")
       }

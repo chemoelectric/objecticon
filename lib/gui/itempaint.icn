@@ -1,7 +1,5 @@
 package gui
 
-import graphics
-
 class ItemPaint()
    public initially(c)
    end
@@ -103,7 +101,7 @@ class ImageWindowItemPaint(ItemPaint)
    end
 
    public draw(W, data, x, y)
-      Window.copy_area(data, W,,,,, x, y)
+      data.copy_to(W,,,,, x, y)
    end
 end
 

@@ -69,7 +69,7 @@ class ImageWindowPaint(Paint)
    end
 
    public draw(W, x, y)
-      Window.copy_area(\win, W,,,,, x, y)
+      (\win).copy_to(W,,,,, x, y)
    end
 
    public new(w)
@@ -97,7 +97,7 @@ class GridPaint(Paint)
       accel
 
    public draw(W, x, y)
-      Window.copy_area(\win, W,,,,, x, y)
+      (\win).copy_to(W,,,,, x, y)
    end
 
    public initially(c, accel)
@@ -316,7 +316,7 @@ class GridPaint(Paint)
             Align.C : y + (curr_cell.obj[lno].h - W.attrib("height")) / 2
             Align.B : y + curr_cell.obj[lno].h - W.attrib("height")
          }
-         Window.copy_area(W, win,,,,, x, y1)
+         W.copy_to(win,,,,, x, y1)
          x +:= W.attrib("width")
       }
    end
@@ -547,7 +547,7 @@ class ImagePaint(Paint,SetFields)
    end
 
    public draw(W, x, y)
-      Window.copy_area(\win, W,,,,, x, y)
+      (\win).copy_to(W,,,,, x, y)
    end
 
    public set_one(f)

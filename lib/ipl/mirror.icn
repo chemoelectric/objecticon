@@ -56,13 +56,13 @@ procedure mirror(win, x, y, w, h)
 
    sym := Window.open("canvas=hidden", "size=" || width || "," || height) | fail
 
-   Window.copy_area(win, sym, x, y, w, h)
+   win.copy_to(sym, x, y, w, h)
 
    every x := 0 to w - 1 do 
-      Window.copy_area(sym, sym, x, 0, 1, h, width - x - 1, 0)
+      sym.copy_to(sym, x, 0, 1, h, width - x - 1, 0)
 
    every y := 0 to h - 1 do
-      Window.copy_area(sym, sym, 0, y, width, 1, 0, height - y - 1)
+      sym.copy_to(sym, 0, y, width, 1, 0, height - y - 1)
 
    return sym
 

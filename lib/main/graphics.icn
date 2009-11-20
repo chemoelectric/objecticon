@@ -91,9 +91,9 @@ class Window(NoCopy)
    public defer draw_image(x, y, s)
 
    #
-   # Copy an area between two windows
+   # Copy an area from this window to another window.
    #
-   public static defer copy_area(src, dest, x1, y1, w, h, x2, y2)
+   public defer copy_to(dest, x1, y1, w, h, x2, y2)
 
    #
    # draw_line(x1,y1,...xN,yN)

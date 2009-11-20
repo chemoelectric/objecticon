@@ -293,18 +293,16 @@ function graphics_Window_color_value(self, k)
    }
 end
 
-function graphics_Window_copy_area(src, dest, argv[argc])
+function graphics_Window_copy_to(self, dest, argv[argc])
    body {
       int n, r;
       C_integer x, y, width, height, x2, y2, width2, height2;
-      wbp w, w2;
+      wbp w2;
 
-      {
-          WindowStaticParam(src, tmp);
-          w = tmp;
-      }
+      GetSelfW();
+
       if (is:null(dest))
-          w2 = w;
+          w2 = self_w;
       else {
           WindowStaticParam(dest, tmp);
           w2 = tmp;
@@ -313,7 +311,7 @@ function graphics_Window_copy_area(src, dest, argv[argc])
       /*
        * x1, y1, width, and height follow standard conventions.
        */
-      r = rectargs(w, argc, argv, 0, &x, &y, &width, &height);
+      r = rectargs(self_w, argc, argv, 0, &x, &y, &width, &height);
       if (r >= 0)
           runerr(101, argv[r]);
 
@@ -327,7 +325,7 @@ function graphics_Window_copy_area(src, dest, argv[argc])
       if (r >= 0)
           runerr(101, argv[r]);
 
-      if (copyArea(w, w2, x, y, width, height, x2, y2) == Failed)
+      if (copyArea(self_w, w2, x, y, width, height, x2, y2) == Failed)
           fail;
 
       return nulldesc;

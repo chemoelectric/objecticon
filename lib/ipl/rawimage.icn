@@ -132,7 +132,7 @@ procedure ReadRaw(win, s, x, y)
          }
       }
 
-   Window.copy_area(temp, win, 0, 0, width, height, x, y)
+   temp.copy_to(win, 0, 0, width, height, x, y)
 
    return
            

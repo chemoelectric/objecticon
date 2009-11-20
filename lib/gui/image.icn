@@ -168,10 +168,9 @@ class Image(Component)
       img_h := win.attrib("height")
 
       if img_w = ir.w & img_h = ir.h then {
-         Window.copy_area(win, 
-                          self.cbwin,,,,, 
-                          self.x + border.get_l_inset(),
-                          self.y + border.get_l_inset())
+         win.copy_to(self.cbwin,,,,, 
+                     self.x + border.get_l_inset(),
+                     self.y + border.get_l_inset())
       } else {
          #
          # Scale the image to the desired size
@@ -201,13 +200,13 @@ class Image(Component)
          if \zoom_win &
             zoom_win.attrib("width") = zoom_w & 
             zoom_win.attrib("height") = zoom_h then
-               Window.copy_area(zoom_win, self.cbwin, , , , , pt.x, pt.y)
+               zoom_win.copy_to(self.cbwin, , , , , pt.x, pt.y)
          else {
             (\zoom_win).close()
             zoom_win := Window.open("size=" || zoom_w || "," || zoom_h, 
                               "canvas=hidden") | syserr("Couldn't open temp window")
             Zoom(win, zoom_win, 0, 0, img_w, img_h, 0, 0, zoom_w, zoom_h)
-            Window.copy_area(zoom_win, self.cbwin, , , , , pt.x, pt.y)
+            zoom_win.copy_to(self.cbwin, , , , , pt.x, pt.y)
          }
       }
    end

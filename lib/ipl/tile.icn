@@ -51,15 +51,15 @@ procedure tile(win1, win2, x1, y1, w1, h1)
       y1 -:= h1
       }
 
-   Window.copy_area(win1, win2, x1, y1, w1, h1)		# initial copy 
+   win1.copy_to(win2, x1, y1, w1, h1)		# initial copy 
 
    while w1 < wmax do {				# copy and double
-      Window.copy_area(win2, win2, 0, 0, w1, h1, w1, 0)
+      win2.copy_to(win2, 0, 0, w1, h1, w1, 0)
       w1 *:= 2
       }
 
    while h1 < hmax do {				# copy and double
-      Window.copy_area(win2, win2, 0, 0, w1, h1, 0, h1)
+      win2.copy_to(win2, 0, 0, w1, h1, 0, h1)
       h1 *:= 2
       }
 

@@ -107,7 +107,7 @@ procedure ZDone(win)
    w := win.attrib( "width")
    h := win.attrib( "height")
    org := Window.open("width=" || w, "height=" || h, "canvas=hidden") | WDone()
-   Window.copy_area(org, x0, y0)
+   win.copy_to(org, x0, y0)
    win.attrib( "resize=on")
    while e := win.event()[1] do case e of {
       QuitEvents():
