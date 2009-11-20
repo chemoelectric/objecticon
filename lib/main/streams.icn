@@ -634,7 +634,7 @@ class DescStream(Stream, NoCopy)
    # @ write("hello world")  # writes to /tmp/xyz
    #
    public dup2(other)
-      dup2_impl(other.fd) | fail
+      dup2_impl(other) | fail
       other.mode := self.mode
       return
    end

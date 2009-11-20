@@ -1753,16 +1753,17 @@ end
 }
 #enddef
 
-function io_DescStream_dup2_impl(self, n)
-   if !cnv:C_integer(n) then
-      runerr(101, n)
+function io_DescStream_dup2_impl(self, other)
    body {
        GetSelfFd();
-       if (dup2(self_fd, n) < 0) {
-           errno2why();
-           fail;
+       {
+           FdStaticParam(other, other_fd);
+           if (dup2(self_fd, other_fd) < 0) {
+               errno2why();
+               fail;
+           }
+           return nulldesc;
        }
-       return C_integer n;
    }
 end
 
