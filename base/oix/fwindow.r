@@ -48,7 +48,7 @@ if (!self_w || ISCLOSED(self_w))
 
 function graphics_Window_open_impl(attr[n])
    body {
-      int j, err_index = -1;
+      int j, err_index;
       tended struct b_list *hp;
       wbp f;
 
@@ -67,6 +67,7 @@ function graphics_Window_open_impl(attr[n])
               runerr(109, attr[j]);
       }
 
+      err_index = -1;
       f = wopen(0, "Object Icon", hp, attr, n, &err_index);
 
       if (f == NULL) {
@@ -81,7 +82,7 @@ end
 
 function graphics_Window_open_child_impl(self, attr[n])
    body {
-      int j, err_index = -1;
+      int j, err_index;
       tended struct b_list *hp;
       wbp f;
       GetSelfW();
@@ -101,6 +102,7 @@ function graphics_Window_open_child_impl(self, attr[n])
               runerr(109, attr[j]);
       }
 
+      err_index = -1;
       f = wopen(self_w, "Object Icon", hp, attr, n, &err_index);
 
       if (f == NULL) {
