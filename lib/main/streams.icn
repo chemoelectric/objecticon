@@ -803,26 +803,34 @@ class FileStream(DescStream)
    # @      type of file being opened.
    #
    public static open(name, flags, perm, mode)
-      local t
-      if /mode then {
-         if iand(flags, FileOpt.WRONLY) ~= 0 then
-            mode := WRITE
-         else if iand(flags, FileOpt.RDWR) ~= 0 then
-            mode := READ_WRITE
-         else
-            mode := READ
-         #
-         # Get the type of the file from stat().  If it doesn't exist, or is
-         # a regular file, add TRUNCATE and/or SEEK capability.
-         #
-         t := Files.stat(name).mode[1]
-         if /t | t  == "-" then {
-            if iand(mode, WRITE) ~= 0 then
-               mode +:= TRUNCATE
-            mode +:= SEEK
-         }
+      local f
+      if \mode then
+         return FileStream(open_impl(name, flags, perm), mode)
+
+      #
+      # Set the READ/WRITE mode flags based on the FileOpt flags.
+      #
+      if iand(flags, FileOpt.WRONLY) ~= 0 then
+         mode := WRITE
+      else if iand(flags, FileOpt.RDWR) ~= 0 then
+         mode := READ_WRITE
+      else
+         mode := READ
+
+      f := FileStream(open_impl(name, flags, perm), mode) | fail
+
+      #
+      # Get the type of the file from stat().  If it is
+      # a regular file, add TRUNCATE and/or SEEK capability.
+      #
+      if f.stat().mode[1] == "-" then {
+         if f.can(WRITE) then
+            mode := ior(mode, TRUNCATE)
+         mode := ior(mode, SEEK)
+         f := FileStream(f.fd, mode)
       }
-      return FileStream(open_impl(name, flags, perm), mode)
+
+      return f
    end
 
    private static defer open_impl(path, flags, perm)
