@@ -263,9 +263,6 @@ void	qevent		(wsp ws, dptr e, int x, int y, uword t, long f, int krel);
 
    /* Exclude those functions defined as macros */
    void pollevent	(void);
-#ifndef MSWindows
-   void wflush	(wbp w);
-#endif
 
    int	query_pointer	(wbp w, XPoint *pp);
    int	query_rootpointer (XPoint *pp);
@@ -307,12 +304,10 @@ void	qevent		(wsp ws, dptr e, int x, int y, uword t, long f, int krel);
    int	walert		(wbp w, int volume);
    void	warpPointer	(wbp w, int x, int y);
    int	wclose		(wbp w);
-#ifndef MSWindows
-   void	wflush		(wbp w);
-#endif
    int	wgetq		(wbp w, dptr res, word t);
    wbp  wopen		(wbp parent, char *nm, struct b_list *hp, dptr attr, int n, int *e);
 #ifndef MSWindows
+   void	wflush		(wbp w);
    void	wsync		(wbp w);
 #endif					/* MSWindows */
    void	xdis		(wbp w, char *s, int n);

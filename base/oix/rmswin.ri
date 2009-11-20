@@ -260,7 +260,7 @@ int mswinsystem(char *s)
 /*
  * wopen
  */
-wbp wopen(char *name, struct b_list *lp, dptr attr, int n, int *err_idx)
+wbp wopen(wbp parent, char *name, struct b_list *lp, dptr attr, int n, int *err_idx)
    {
    wbp w;
    wsp ws;
