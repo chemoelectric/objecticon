@@ -3133,6 +3133,16 @@ struct node *n;
    free_tree(n);
    }
 
+static void count_ntend()
+{
+    struct init_tend *t = tend_lst;
+    ntend = 0;
+    while (t) {
+        ++ntend;
+        t = t->next;
+    }
+}
+
 /*
  * fncout - output code for a C function.
  */
@@ -3149,10 +3159,7 @@ struct node *block;
    nxt_sbuf = 0;    /* clear number of string buffers */
    nxt_cbuf = 0;    /* clear number of cset buffers */
 
-   if (tend_lst == NULL)
-      ntend = 0;
-   else
-      ntend = tend_lst->t_indx + 1;
+   count_ntend();
 
    /*
     * Output the function header and the parameter declarations.
@@ -3299,10 +3306,7 @@ struct node *n;
            vararg = 1;
    }
 
-   if (tend_lst == NULL)
-      ntend = 0;
-   else
-      ntend = tend_lst->t_indx + 1;
+   count_ntend();
 
    fnc_ret = RetSig;  /* interpreter routine always returns a signal */
    name = op_name;

@@ -272,7 +272,7 @@ int typ;
 struct node *init;
 int lvl;
    {
-   register struct init_tend *tnd;
+       struct init_tend *tnd;
 
    if (lvl > 2) {
      /*
@@ -295,11 +295,18 @@ int lvl;
     *  set initialization and other information.
     */
    tnd = Alloc(struct init_tend);
-
-   if (tend_lst == NULL)
+   if (tend_lst) {
+       struct init_tend *last = tend_lst;
+       while (last->next)
+           last = last->next;
+      tnd->t_indx = last->t_indx + 1;
+      last->next = tnd;
+   } else {
       tnd->t_indx = 0;
-   else
-      tnd->t_indx = tend_lst->t_indx + 1;
+      tend_lst = tnd;
+   }
+   tnd->next = 0;
+
    tnd->init_typ = typ;
    /*
     * The initialization from the declaration will only be used to 
@@ -314,8 +321,6 @@ int lvl;
       tnd->init = NULL;
    tnd->in_use = 1;
    tnd->nest_lvl = lvl;
-   tnd->next = tend_lst;
-   tend_lst = tnd;
    return tnd->t_indx;
    }
 
@@ -402,8 +407,6 @@ struct node *dcltor;
          case PrimryNd:
             t = dcltor->tok;
             if (t->tok_id == Identifier || t->tok_id == TypeDefName) {
-                /*printf("add tok %s kind %d\n",t->image,dcl_stk->kind_dcl);*/
-
                /*
                 * We have found the identifier, add an entry to the
                 *  symbol table based on information in the declaration
@@ -487,8 +490,16 @@ struct node *init;
          sym->u.tnd_var.blk_name = dcl_stk->blk_name;
          sym->u.tnd_var.init = init;
          sym->t_indx = alloc_tnd(dcl_stk->kind_dcl, init, dcl_stk->nest_lvl);
-         sym->u.tnd_var.next = dcl_stk->tended;
-         dcl_stk->tended = sym;
+
+         /* Add to the end of the list */
+         if (dcl_stk->tended) {
+             struct sym_entry *last = dcl_stk->tended;
+             while (last->u.tnd_var.next)
+                 last = last->u.tnd_var.next;
+             last->u.tnd_var.next = sym;
+         } else
+             dcl_stk->tended = sym;
+         sym->u.tnd_var.next = 0;
          ++sym->ref_cnt;
          return;
       default:
