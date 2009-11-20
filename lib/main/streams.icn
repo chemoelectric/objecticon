@@ -806,7 +806,6 @@ class FileStream(DescStream)
    # @      type of file being opened.
    #
    public static open(name, flags, perm, mode)
-      local f
       if \mode then
          return FileStream(open_impl(name, flags, perm), mode)
 
@@ -820,32 +819,31 @@ class FileStream(DescStream)
       else
          mode := READ
 
-      f := FileStream(open_impl(name, flags, perm), mode) | fail
-      f.deduce_mode()
-      return f
+      return create_and_set_mode(open_impl(name, flags, perm), mode)
    end
 
    #
-   # Get the type of the file from stat().  If it is
-   # a regular file, add TRUNCATE and/or SEEK capability.
+   # Create a new FileStream instance, and then adjust its mode based
+   # on the file type returned by stat().  If it is a regular file,
+   # add SEEK capability, and TRUNCATE too for a writable file.
    #
-   private deduce_mode()
-      if stat().mode[1] == "-" then {
-         if can(WRITE) then
-            mode := ior(mode, TRUNCATE)
-         mode := ior(mode, SEEK)
+   private static create_and_set_mode(fd, mode)
+      local f
+      f := FileStream(fd, mode)
+      if f.stat().mode[1] == "-" then {
+         if f.can(WRITE) then
+            f.mode := ior(f.mode, TRUNCATE)
+         f.mode := ior(f.mode, SEEK)
       }
+      return f
    end
 
    private static defer open_impl(path, flags, perm)
 
    private static init()
-      stdin := FileStream(0, READ)
-      stdin.deduce_mode()
-      stdout := FileStream(1, WRITE)
-      stdout.deduce_mode()
-      stderr := FileStream(2, WRITE)
-      stderr.deduce_mode()
+      stdin := create_and_set_mode(0, READ)
+      stdout := create_and_set_mode(1, WRITE)
+      stderr := create_and_set_mode(2, WRITE)
    end
 
    #
