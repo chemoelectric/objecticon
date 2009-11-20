@@ -821,27 +821,31 @@ class FileStream(DescStream)
          mode := READ
 
       f := FileStream(open_impl(name, flags, perm), mode) | fail
+      f.deduce_mode()
+      return f
+   end
 
-      #
-      # Get the type of the file from stat().  If it is
-      # a regular file, add TRUNCATE and/or SEEK capability.
-      #
-      if f.stat().mode[1] == "-" then {
-         if f.can(WRITE) then
+   #
+   # Get the type of the file from stat().  If it is
+   # a regular file, add TRUNCATE and/or SEEK capability.
+   #
+   private deduce_mode()
+      if stat().mode[1] == "-" then {
+         if can(WRITE) then
             mode := ior(mode, TRUNCATE)
          mode := ior(mode, SEEK)
-         f := FileStream(f.fd, mode)
       }
-
-      return f
    end
 
    private static defer open_impl(path, flags, perm)
 
    private static init()
       stdin := FileStream(0, READ)
+      stdin.deduce_mode()
       stdout := FileStream(1, WRITE)
+      stdout.deduce_mode()
       stderr := FileStream(2, WRITE)
+      stderr.deduce_mode()
    end
 
    #

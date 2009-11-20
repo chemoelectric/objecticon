@@ -36,7 +36,7 @@ procedure ferr (err, func, args)
    local val, msg
 
    val := ""
-   every val ||:= image(!args) || ","
+   every val ||:= imagex(!args) || ","
    val := val[1:-1]
    msg := "oops -- " || image(func) || "(" || val || ") "
    &error := 1
