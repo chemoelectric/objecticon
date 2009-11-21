@@ -92,14 +92,10 @@ class Proc()
    # @param n the arity of an operator
    # @param ce a coexpression, representing a loaded program, defaults
    # @ to the main program
-   # @return a class
-   # @fail if the class is unknown
+   # @return a procedure
+   # @fail if the name is unknown as a proc
    #
    public static for_name(s, n, ce)
-      local t
-      if t := Prog.get_global(s, ce) & type(t) == "procedure" then
-         return t
-      /n := 1
-      return Prog.get_function(s) | Prog.get_operator(s, n) | Prog.get_keyword(s)
+      return proc(s, n, ce)
    end
 end
