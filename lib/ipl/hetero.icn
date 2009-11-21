@@ -21,13 +21,14 @@
 package ipl.hetero
 
 import
-   io(stop)
+   io(stop),
+   lang(Prog)
 
 # types of structure elements
 procedure stypes(X, ref)		
    local op, types, t, k
 
-   op := proc("!", 1)
+   op := Prog.get_operator("!", 1)
    t := type(X)
    op := if (t == "table") & (ref === 1) then "key" 
 

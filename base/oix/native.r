@@ -761,10 +761,58 @@ function lang_Prog_get_stack_used(c)
    }
 end
 
-"proc(x,i) - convert x to a procedure if possible; use i to resolve "
-"ambiguous string names."
+struct b_proc *string_to_proc(dptr s, int arity, struct progstate *prog)
+{
+    int i;
+    dptr t;
+    struct b_proc **pp;
 
-function proc(x,i,c)
+    if (!StrLen(*s))
+        return NULL;
+
+   /*
+    * See if the string is the name of a global variable in prog.
+    */
+    if (prog && (t = lookup_global(s, prog))) {
+       if (is:proc(*t))
+           return &ProcBlk(*t);
+       else
+           return 0;
+   }
+
+    /*
+     * See if the string represents an operator. In this case the arity
+     *  of the operator must match the one given.
+     */
+    if (!isalpha((unsigned char)*StrLoc(*s)) && *StrLoc(*s) != '&') {
+        for (i = 0; i < op_tbl_sz; ++i)
+            if (eq(s, op_tbl[i]->name) && arity == op_tbl[i]->nparam)
+                return op_tbl[i];
+        return 0;
+    }
+
+    /*
+     * See if the string represents a built-in function.
+     */
+    pp = (struct b_proc **)bsearch(s, fnc_tbl, fnc_tbl_sz,
+                                   sizeof(struct b_proc *), 
+                                   (BSearchFncCast)dp_pnmcmp);
+    if (pp)
+        return *pp;
+
+    /*
+     * See if the string represents a keyword function.
+     */
+    pp = (struct b_proc **)bsearch(s, keyword_tbl, keyword_tbl_sz,
+                                   sizeof(struct b_proc *), 
+                                   (BSearchFncCast)dp_pnmcmp);
+    if (pp)
+        return *pp;
+
+    return 0;
+}
+
+function proc(x, n, c)
 
    if is:proc(x) then {
       body {
@@ -774,44 +822,34 @@ function proc(x,i,c)
 
    else if cnv:tmp_string(x) then {
       /*
-       * i must be 0, 1, 2, or 3; it defaults to 1.
+       * n must be 1, 2, or 3; it defaults to 1.
        */
-      if !def:C_integer(i, 1) then
-         runerr(101, i)
+      if !def:C_integer(n, 1) then
+         runerr(101, n)
       body {
-         struct b_proc *prc;
+         struct b_proc *p;
 	 struct progstate *prog;
 
-         if (i < 0 || i > 3) {
-            irunerr(205, i);
+         if (n < 1 || n > 3) {
+            irunerr(205, n);
             errorfail;
-            }
+         }
 
          if (!(prog = get_program_for(&c)))
              runerr(0);
 
-         /*
-          * Attempt to convert Arg0 to a procedure descriptor using i to
-          *  discriminate between procedures with the same names.  If i
-          *  is zero, only check builtins and ignore user procedures.
-          *  Fail if the conversion isn't successful.
-          */
-	 if (i == 0)
-            prc = bi_strprc(&x, 0);
-	 else 
-            prc = strprc(&x, i, prog);
-
-         if (prc == NULL)
-            fail;
+         p = string_to_proc(&x, n, prog);
+         if (p)
+             return proc(p);
          else
-            return proc(prc);
-         }
+             fail;
       }
+   }
    else {
       body {
          fail;
-         }
       }
+   }
 end
 
 function lang_Class_get_name(c)

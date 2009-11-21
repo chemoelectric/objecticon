@@ -118,9 +118,6 @@ end
 # generate sequence of colors
 procedure Blend(args[])			
    local win, n, s, a, i, f1, f2, r1, g1, b1, r2, g2, b2, r3, g3, b3
-   static type
-
-   initial type := proc("type", 0)	# protect attractive name
 
    n := 4
    win := get(args)
@@ -157,10 +154,9 @@ end
 
 # choose contrasting color
 procedure Contrast(win, color)		
-   static l, type
+   static l
    initial {
       l := ["white", "black"]
-      type := proc("type", 0)	# protect attractive name
       }
        
       return l[1 + win.palettekey("g2", color)]
@@ -172,11 +168,10 @@ end
 # dither shade using pattern
 procedure Shade(win, color)		
    local r, g, b
-   static dmat, env, type
+   static dmat, env
 
    initial {
       env := ("" ~== map(System.getenv("XSHADE")))
-      type := proc("type", 0)	# protect attractive name
       }
 
    if win.attrib( "depth") ~== "1" & /env then {
@@ -243,9 +238,6 @@ end
 
 # grayscale entries from palette
 procedure PaletteGrays(win, palette)	
-   static type
-
-   initial type := proc("type", 0)	# protect attractive name
    if (type(win) ~== "window") then
       palette := win				# window not needed
 
@@ -286,9 +278,7 @@ end
 # nearest key from HSV specification
 procedure HSVKey(win, palette, h, s, v)	
    local i, f, p, q, t, r, g, b
-   static type
 
-   initial type := proc("type", 0)	# protect attractive name
    if type(win) ~== "window" then	# allow unused window argument
       win :=: palette :=: h :=: s :=: v
 

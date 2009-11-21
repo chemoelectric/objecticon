@@ -111,12 +111,12 @@
 #	lmaxlen(L, p)	returns the size of the largest value in L.
 #			If p is given, it is applied to each string as
 #			as a "length" procedure.  The default for p is
-#			proc("*", 1).
+#			Prog.get_operator("*", 1).
 #
 #	lminlen(L, p)	returns the size of the smallest value in L.
 #			If p is given, it is applied to each string as
 #			as a "length" procedure.  The default for p is
-#			proc("*", 1).
+#			Prog.get_operator("*", 1).
 #
 #	sortkeys(L)	returns list of keys from L, where L is the
 #			result of sorting a table with option 3 or 4.
@@ -188,7 +188,8 @@ import
    ipl.equiv(equiv),
    ipl.indices(indices),
    ipl.numbers(residue),
-   ipl.sets(elementset)
+   ipl.sets(elementset),
+   lang(Prog)
 
 # create list from lines in file
 procedure file2lst(s)			
@@ -777,7 +778,7 @@ end
 procedure lmaxlen(L, p)			
    local i
 
-   /p := proc("*", 1)
+   /p := Prog.get_operator("*", 1)
 
    i := p(L[1]) | fail
 
@@ -791,7 +792,7 @@ end
 procedure lminlen(L, p)			
    local i
 
-   /p := proc("*", 1)
+   /p := Prog.get_operator("*", 1)
 
    i := p(L[1]) | fail
 

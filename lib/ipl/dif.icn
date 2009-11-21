@@ -92,7 +92,8 @@
 package ipl.dif
 
 import
-   io(read)
+   io(read),
+   lang(Prog)
 
 invocable all
 
@@ -107,7 +108,7 @@ procedure dif(stream,compare,eof,group)
   #
   #  Provide default arguments and initialize data.
   #
-  /compare := proc("===",2)
+  /compare := Prog.get_operator("===",2)
   /group := groupfactor
   f := []
   every put(f,diff_file(!stream,[]))

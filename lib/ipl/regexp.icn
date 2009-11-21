@@ -289,7 +289,8 @@ package ipl.regexp
 
 import
    ipl.noncase(c_any, c_find, c_many, c_match,
-               c_upto)
+               c_upto),
+   lang(Prog)
 
 record Re_Tok(proc,args)
 
@@ -830,7 +831,7 @@ procedure ReCaseDependent()
   Re__any := any
   Re__many := many
   Re__upto := upto
-  Re__tabmatch := proc("=",1)
+  Re__tabmatch := Prog.get_operator("=",1)
   return
 end
 

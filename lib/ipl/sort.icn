@@ -60,10 +60,12 @@
 
 package ipl.sort
 
+import lang(Prog)
+
 procedure isort(x,keyproc,y)
    local items,item,key,result
    if y := integer(keyproc) then
-	 keyproc := proc("[]",2)
+	 keyproc := Prog.get_operator("[]",2)
    else /keyproc := 1
    items := table()
    every item := !x do {

@@ -101,11 +101,10 @@ end
 # return scratch canvas
 procedure ScratchCanvas(win, w, h, id)		
    local d, s
-   static dpytab, type
+   static dpytab
 
    initial {
       dpytab := table()
-      type := proc("type", 0)	# protect attractive name
       }
 
    /w := win.attrib("width")

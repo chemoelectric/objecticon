@@ -74,7 +74,7 @@
 #	maxlen(L, p)	   returns the length of the longest string in L.
 #			   If p is given, it is applied to each string as
 #			   as a "length" procedure.  The default for p is
-#			   proc("*", 1).
+#			   Prog.get_operator("*", 1).
 #
 #	meander(s, n)      produces a "meandering" string that contains all
 #                          n-tuples of characters of s.
@@ -171,6 +171,8 @@
 ############################################################################
 
 package ipl.strings
+
+import lang(Prog)
 
 # concatenate strings
 procedure cat(args[])			
@@ -419,7 +421,7 @@ procedure maxlen(L, p)
 
    if *L = 0 then fail
 
-   /p := proc("*", 1)
+   /p := Prog.get_operator("*", 1)
 
    i := 0
 

@@ -522,7 +522,7 @@ static void invoke_misc(word clo, dptr expr, int argc, dptr args, word rval, wor
             /*
              * Is it a builtin or an operator?
              */
-            if ((bp = bi_strprc(&sexpr, argc))) {
+            if ((bp = string_to_proc(&sexpr, argc, 0))) {
                 struct frame *f;
                 f = push_frame_for_proc(bp, argc, args, 0);
                 curr_pf->clo[clo] = f;

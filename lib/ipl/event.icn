@@ -30,18 +30,11 @@
 package ipl.event
 
 import
-   io(stop),
    ipl.evplay(evplay)
 
 procedure NextEvent(win)
-   static NextEvent_
-
-   initial {
-      NextEvent_ := proc("NextEvent", 0) | stop("*** cannot get built-in NextEvent()")
-      }
-
    evplay(win) | exit()
 
-   return NextEvent_(win)
+   return win.event()
 
 end

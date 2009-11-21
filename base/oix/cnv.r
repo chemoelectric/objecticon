@@ -1,11 +1,6 @@
 /*
  * cnv.r -- Conversion routines:
  *
- * cnv_c_dbl, cnv_c_int, cnv_c_str, cnv_cset, cnv_ec_int,
- * cnv_eint, cnv_int, cnv_real, cnv_str, cnv_tcset, cnv_tstr, deref,
- * getdbl, strprc, bi_strprc
- *
- * Service routines: itos, ston, radix, cvpos
  *
  * Philosophy: certain redundancy is present which could be avoided,
  * and nested conversion calls are avoided due to the importance of
@@ -764,81 +759,8 @@ dptr dp;
    GetReal(RealBlk(*dp), d);
    return d;
    }
-
-/*
- * dp_pnmcmp - do a string comparison of a descriptor to the procedure 
- *   name in a pstrnm struct; used in call to bsearch().
- */
-static int dp_pnmcmp(dptr dp, struct b_proc **e)
-{
-    return lexcmp(dp, (*e)->name);
-}
-
-/*
- * bi_strprc - convert a string to a (built-in) function or operator.
- */
-struct b_proc *bi_strprc(s, arity)
-dptr s;
-C_integer arity;
-   {
-   C_integer i;
-   struct b_proc **pp;
 
-   if (!StrLen(*s))
-      return NULL;
 
-   /*
-    * See if the string represents an operator. In this case the arity
-    *  of the operator must match the one given.
-    */
-   if (!isalpha((unsigned char)*StrLoc(*s)) && *StrLoc(*s) != '&') {
-      for (i = 0; i < op_tbl_sz; ++i)
-          if (eq(s, op_tbl[i]->name) && arity == op_tbl[i]->nparam)
-	    return op_tbl[i];
-      return NULL;
-      }
-
-   /*
-    * See if the string represents a built-in function.
-    */
-   pp = (struct b_proc **)bsearch(s, fnc_tbl, fnc_tbl_sz,
-                                  sizeof(struct b_proc *), 
-                                  (BSearchFncCast)dp_pnmcmp);
-   if (pp)
-       return *pp;
-
-   /*
-    * See if the string represents a keyword function.
-    */
-   pp = (struct b_proc **)bsearch(s, keyword_tbl, keyword_tbl_sz,
-                                  sizeof(struct b_proc *), 
-                                  (BSearchFncCast)dp_pnmcmp);
-   if (pp)
-       return *pp;
-
-   return NULL;
-   }
-
-/*
- * strprc - convert a string to a procedure.
- */
-struct b_proc *strprc(dptr s, C_integer arity, struct progstate *p)
-   {
-   dptr t;
-
-   /*
-    * See if the string is the name of a global variable.
-    */
-   if ((t = lookup_global(s, p))) {
-       if (is:proc(*t))
-           return &ProcBlk(*t);
-       else
-           return 0;
-   }
-
-   return bi_strprc(s,arity);
-   }
-
 /*
  * Service routines
  */

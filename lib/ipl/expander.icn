@@ -42,7 +42,8 @@ import
    ipl.strings(collate, deletec, replacem, rotate),
    ipl.weaving(Block, DownUp, Downto, Extend,
                Interleave, Palindrome, Pbox, Permute,
-               Template, UpDown, Upto)
+               Template, UpDown, Upto),
+   lang(Prog)
 
 # pattern-form to plain string
 procedure pfl2str(pattern)		
@@ -70,7 +71,7 @@ procedure pfl2str(pattern)
       optbl["><"] := DownUp
       optbl["#"] := rotate
       optbl["`"] := reverse
-      optbl[","] := proc("||", 2)
+      optbl[","] := Prog.get_operator("||", 2)
       }
 
    result := ""

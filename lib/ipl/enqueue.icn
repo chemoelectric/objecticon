@@ -145,10 +145,6 @@ end
 
 # enqueue event
 procedure Enqueue(win, eventcode, x, y, modkeys, interval)	
-   static type
-
-   initial type := proc("type", 0)	# protect attractive name
-
    /x := 0
    /y := 0
    x +:= win.attrib( "dx")

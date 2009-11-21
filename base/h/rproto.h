@@ -38,7 +38,8 @@ struct b_tvtbl	*alctvtbl_1	(dptr tbl,dptr ref,uword hashnum);
 void set_event_mask(struct progstate *p, struct b_cset *cs);
 int		anycmp		(dptr dp1,dptr dp2);
 int		bfunc		(void);
-struct b_proc	*bi_strprc	(dptr s, C_integer arity);
+struct b_proc *string_to_proc(dptr s, int arity, struct progstate *prog);
+
 void		c_exit		(int i);
 
 int		list_get	(dptr l, dptr res);
@@ -464,7 +465,6 @@ int	printable	(int c);
 int	ripow		(double r, C_integer n, dptr rslt);
 void	rtos		(double n,dptr dp,char *s);
 int	sig_rsm		(void);
-struct b_proc *strprc	(dptr s, C_integer arity, struct progstate *p);
 void	varargs		(dptr argp, int nargs, dptr rslt);
 
 struct progstate *alcprog(long icodesize);

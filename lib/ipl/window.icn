@@ -107,9 +107,6 @@ global wdw_debug			# non-null if to trace open call
 
 procedure OpenWindow(args[])
    local cs, pname, att, omit1, omit2, name, val, a, win
-   static type
-
-   initial type := proc("type", 0)	# protect attractive name
 
    wdw_debug := &null
    att := table()
@@ -343,9 +340,6 @@ end
 
 procedure wdw_open(att, omit)
    local args, name
-   static image
-
-   initial image := proc("image", 0)	# protect attractive name
 
    args := []
    every name := key(att) do
@@ -370,9 +364,6 @@ end
 
 procedure wdw_attrib(win, att, name)
    local val, s
-   static image
-
-   initial image := proc("image", 0)	# protect attractive name
 
    val := ("" ~== \att[name]) | return
    s := name || "=" || val

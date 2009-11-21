@@ -648,7 +648,7 @@ end
 procedure Proc(a1, a2)
    static __fnc_proc
    initial __fnc_proc := Prog.get_function("proc")
-   suspend __fnc_Prog.get_function(a1, a2)
+   suspend __fnc_proc(a1, a2)
 end
 
 procedure Pull(a1)

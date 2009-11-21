@@ -54,13 +54,6 @@ import
    graphics(Mouse, Window)
 
 procedure WDelay(window, n)
-   static delay, type
-
-   initial {
-      delay := proc("delay", 0)		# protect attractive names
-      type := proc("type", 0)
-      }
-
    /n := 1
    integer(n) | runerr(101, n)
    window.flush()
@@ -124,9 +117,6 @@ procedure ZDone(win)
 end
 
 procedure SubWindow(win, x, y, w, h)
-   static type
-   initial type := proc("type", 0)	# protect attractive name
-
    /x := -win.attrib( "dx")
    /y := -win.attrib( "dy")
    /w := win.attrib( "width") - (x + win.attrib( "dx"))

@@ -58,14 +58,13 @@
 package ipl.ximage
 
 import
-   io(ewrite)
+   io(ewrite),
+   lang(Prog)
 
 # string image of value
 procedure ximage(x,indent,done)		
    local i,s,ss,state,t,xtag,tp,sn,sz
-   static tr, name
-
-   initial name := proc("name", 0)	# REG: in case name is a global
+   static tr
 
    #
    #  If this is the outer invocation, do some initialization.
@@ -185,7 +184,7 @@ procedure ximage(x,indent,done)
 	    }
 	 done[x] := xtag := "R_" || t ||  "_" || sn
 	 every i := 1 to *x do {
-	    name(x[i]) ? (tab(find(".")),sn := tab(0))
+	    Prog.get_variable_name(x[i]) ? (tab(find(".")),sn := tab(0))
 	    ss ||:= indent || xtag || sn || " := " ||
 		  ximage(\x[i],indent,done)
 	    }
