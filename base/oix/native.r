@@ -523,10 +523,10 @@ function lang_Prog_get_keywords()
 end
 
 /*
- * dp_pnmcmp - do a string comparison of a descriptor to the procedure 
- *   name in a pstrnm struct; used in call to bsearch().
+ * proc_name_cmp - do a string comparison of a descriptor to the procedure 
+ *   name in a b_proc struct; used in call to bsearch().
  */
-static int dp_pnmcmp(dptr dp, struct b_proc **e)
+static int proc_name_cmp(dptr dp, struct b_proc **e)
 {
     return lexcmp(dp, (*e)->name);
 }
@@ -538,7 +538,7 @@ function lang_Prog_get_function(s)
       struct b_proc **p;
       p = (struct b_proc **)bsearch(&s, fnc_tbl, fnc_tbl_sz,
                                     sizeof(struct b_proc *), 
-                                    (BSearchFncCast)dp_pnmcmp);
+                                    (BSearchFncCast)proc_name_cmp);
       if (p)
           return proc(*p);
       fail;
@@ -552,6 +552,10 @@ function lang_Prog_get_operator(s, n)
       runerr(101, n)
    body {
        int i;
+       if (n < 1 || n > 3) {
+           irunerr(205, n);
+           errorfail;
+       }
        for (i = 0; i < op_tbl_sz; ++i)
            if (eq(&s, op_tbl[i]->name) && n == op_tbl[i]->nparam)
                return proc(op_tbl[i]);
@@ -566,7 +570,7 @@ function lang_Prog_get_keyword(s)
       struct b_proc **p;
       p = (struct b_proc **)bsearch(&s, keyword_tbl, keyword_tbl_sz,
                                     sizeof(struct b_proc *), 
-                                    (BSearchFncCast)dp_pnmcmp);
+                                    (BSearchFncCast)proc_name_cmp);
       if (p)
           return proc(*p);
       fail;
@@ -796,7 +800,7 @@ struct b_proc *string_to_proc(dptr s, int arity, struct progstate *prog)
      */
     pp = (struct b_proc **)bsearch(s, fnc_tbl, fnc_tbl_sz,
                                    sizeof(struct b_proc *), 
-                                   (BSearchFncCast)dp_pnmcmp);
+                                   (BSearchFncCast)proc_name_cmp);
     if (pp)
         return *pp;
 
@@ -805,7 +809,7 @@ struct b_proc *string_to_proc(dptr s, int arity, struct progstate *prog)
      */
     pp = (struct b_proc **)bsearch(s, keyword_tbl, keyword_tbl_sz,
                                    sizeof(struct b_proc *), 
-                                   (BSearchFncCast)dp_pnmcmp);
+                                   (BSearchFncCast)proc_name_cmp);
     if (pp)
         return *pp;
 

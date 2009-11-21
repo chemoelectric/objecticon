@@ -43,7 +43,7 @@ char *ibanner[] =
     "### This file created by IYACC 1.0",
     "### Please send bug reports to raypereda@hotmail.com",
     "@ICON_PACKAGE@%s\n",
-    "import io(), lang()\n",
+    "import io()\n",
     0
 };
 
@@ -249,7 +249,7 @@ char *iheader[] =
   "  yyval  := 0 ",
   "  yylval := 0 ",
   "  action := list(1000, action_null)  # remove hard coded 1000 later",
-  "@ICON_ACTIONS@  every i := 1 to 1000 do action[i] := lang.Prog.get_global(\"%s\" || i)\n",
+  "@ICON_ACTIONS@  every i := 1 to 1000 do action[i] := proc(\"%s\" || i)\n",
   "end",
   "",
 /*
