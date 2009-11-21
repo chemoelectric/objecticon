@@ -129,16 +129,18 @@ class Encode(SetFields)
       }	 
    end
 
-   # Get a code for a procedure value; the first char is "0" for a
-   # builtin function like upto, "1","2" or "3" for a builtin operator
-   # like "+" or "||", "P" for a procedure and "M" for a (static)
-   # method.
+   # Get a code for a procedure value; the first char is "F" for a
+   # builtin function like upto, "K" for a keyword function, "1","2"
+   # or "3" for a builtin operator like "+" or "||", "P" for a
+   # procedure and "M" for a (static) method.
    #
    private get_proc_code(f)
       local s, j
       image(f) ? {
-         if =("function " | "keyword ") then
-            s := 0
+         if ="function " then
+            s := "F"
+         else if ="keyword " then
+            s := "K"
          else if ="operator " then 
             s := string(Proc.get_n_arguments(f))
          else if ="procedure " then 
@@ -206,7 +208,7 @@ class Encode(SetFields)
 
          "procedure" : {
             chars_out(Codec.PROCEDURE_CODE) | fail
-            # Need to encode string since can have eg proc("||",2)
+            # Need to encode string since can have eg binary operator "||"
             line_out(encode_string(get_proc_code(o))) | fail
          }
 
@@ -381,8 +383,12 @@ class Decode()
       fn ? {
          c := move(1)
          s := tab(0)
+         if c == "F" then
+            return Prog.get_function(s) | error("No such function " || s)
+         if c == "K" then
+            return Prog.get_keyword(s) | error("No such keyword " || s)
          if i := integer(c) then
-            return proc(s, i) | error("No such function " || s || " arity " || i)
+            return Prog.get_operator(s, i) | error("No such function " || s || " arity " || i)
          if c == "P" then {
             if g := Prog.get_global(s) &
                match("procedure ", image(g)) then

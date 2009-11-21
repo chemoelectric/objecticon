@@ -4,7 +4,7 @@
 
 package util
 
-import lang(Class)
+import lang
 
 class Field()
    public const 
@@ -93,7 +93,7 @@ class Field()
       local l, t, e, p
       if /val then
          return val
-      p := proc(\type_name)
+      p := Prog.get_function(\type_name)
 
       if type(val) == "list" then {
          if *val < \n then

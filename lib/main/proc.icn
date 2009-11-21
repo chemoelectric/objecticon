@@ -54,8 +54,8 @@ class Proc()
    # Return the kind of this procedure, which is one of the constants :-
    #  {Procedure} for a procedure or method defined in an icon source file
    #  {Function} a builtin function like {upto}
-   #  {Keyword} a keyword function, obtained via proc, eg, proc("&why")
-   #  {Operator} an operator function, obtained via proc, eg, proc(":=")
+   #  {Keyword} a keyword function, obtained via {Prog.get_keyword()}
+   #  {Operator} an operator function, obtained via {Prog.get_operator()}
    #  {Internal} an internally used block of VM instructions.
    #
    public static defer get_kind(p)
@@ -84,4 +84,22 @@ class Proc()
    # load C function dynamically.
    public static defer load(filename, funcname)
 
+   # Lookup a procedure (or function) by name.  First the globals are
+   # searched for a matching procedure or function.  Failing that, the
+   # builtin function, operator and keyword tables are searched.
+   # 
+   # @param s a name to search for
+   # @param n the arity of an operator
+   # @param ce a coexpression, representing a loaded program, defaults
+   # @ to the main program
+   # @return a class
+   # @fail if the class is unknown
+   #
+   public static for_name(s, n, ce)
+      local t
+      if t := Prog.get_global(s, ce) & type(t) == "procedure" then
+         return t
+      /n := 1
+      return Prog.get_function(s) | Prog.get_operator(s, n) | Prog.get_keyword(s)
+   end
 end

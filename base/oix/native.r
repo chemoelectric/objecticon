@@ -320,7 +320,7 @@ function lang_Prog_get_variable(s,c)
 end
 
 
-function lang_Prog_get_keyword(s,c)
+function lang_Prog_eval_keyword(s,c)
    if !cnv:string(s) then 
       runerr(103, s)
 
@@ -520,6 +520,57 @@ function lang_Prog_get_keywords()
 
       fail;
       }
+end
+
+/*
+ * dp_pnmcmp - do a string comparison of a descriptor to the procedure 
+ *   name in a pstrnm struct; used in call to bsearch().
+ */
+static int dp_pnmcmp(dptr dp, struct b_proc **e)
+{
+    return lexcmp(dp, (*e)->name);
+}
+
+function lang_Prog_get_function(s)
+   if !cnv:string(s) then
+      runerr(103, s)
+   body {
+      struct b_proc **p;
+      p = (struct b_proc **)bsearch(&s, fnc_tbl, fnc_tbl_sz,
+                                    sizeof(struct b_proc *), 
+                                    (BSearchFncCast)dp_pnmcmp);
+      if (p)
+          return proc(*p);
+      fail;
+   }
+end
+
+function lang_Prog_get_operator(s, n)
+   if !cnv:string(s) then
+      runerr(103, s)
+   if !cnv:C_integer(n) then
+      runerr(101, n)
+   body {
+       int i;
+       for (i = 0; i < op_tbl_sz; ++i)
+           if (eq(&s, op_tbl[i]->name) && n == op_tbl[i]->nparam)
+               return proc(op_tbl[i]);
+       fail;
+   }
+end
+
+function lang_Prog_get_keyword(s)
+   if !cnv:string(s) then
+      runerr(103, s)
+   body {
+      struct b_proc **p;
+      p = (struct b_proc **)bsearch(&s, keyword_tbl, keyword_tbl_sz,
+                                    sizeof(struct b_proc *), 
+                                    (BSearchFncCast)dp_pnmcmp);
+      if (p)
+          return proc(*p);
+      fail;
+   }
 end
 
 

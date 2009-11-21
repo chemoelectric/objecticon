@@ -142,5 +142,7 @@ procedure main()
    l := [t,u]
    test(l)
    test(rec1)
+   test([upto,main,Prog.get_keyword("&yes"),Prog.get_operator("||",2),Prog.get_operator("*",1),
+         Prog.get_operator("*",2)])
    write("Ok")
 end

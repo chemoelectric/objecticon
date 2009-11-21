@@ -41,6 +41,23 @@ class Prog()
    public static defer get_keywords()
 
    #
+   # Get the builtin function named {s}, or fail if it doesn't exist.
+   #
+   public static defer get_function(s)
+
+   #
+   # Get the builtin operator named {s}, with arity {n}, or fail if
+   # it doesn't exist.
+   #
+   public static defer get_operator(s, n)
+
+   #
+   # Get the builtin keyword named {s} (as invocable functions), or fail
+   # if it doesn't exist.
+   #
+   public static defer get_keyword(s)
+
+   #
    # Get the location of global {s} in program P, if that data is
    # available.
    # @return a {Location} instance
@@ -54,7 +71,7 @@ class Prog()
    #
    # Return the value of the keyword {s} in program P.
    #
-   public static defer get_keyword(s, P)
+   public static defer eval_keyword(s, P)
 
    #
    # Find the variable with name s in program P and return a variable
