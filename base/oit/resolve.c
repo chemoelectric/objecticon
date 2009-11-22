@@ -59,9 +59,9 @@ static struct gentry *rres_found, *rres_ambig;
 
 static void print_clash()
 {
-    fprintf(stderr, "\t%s (%s; Line %d)\n", 
+    fprintf(stderr, "\t%s (File %s; Line %d)\n", 
             rres_found->name, abbreviate(rres_found->pos.file), rres_found->pos.line);
-    fprintf(stderr, "\t%s (%s; Line %d)\n", 
+    fprintf(stderr, "\t%s (File %s; Line %d)\n", 
             rres_ambig->name, abbreviate(rres_ambig->pos.file), rres_ambig->pos.line);
 }
 
@@ -372,7 +372,7 @@ static void merge(struct lclass *cl, struct lclass *super)
                        && ((f->flag & (M_Method | M_Static)) == M_Method)))
                 lfatal(fr->field->class->global->defined,
                        &fr->field->pos,
-                       "Inheritance clash: field '%s' encountered in class %s and class %s (%s; Line %d)",
+                       "Inheritance clash: field '%s' encountered in class %s and class %s (File %s; Line %d)",
                        f->name,
                        fr->field->class->global->name,
                        f->class->global->name,
@@ -386,7 +386,7 @@ static void merge(struct lclass *cl, struct lclass *super)
             else if (f->flag & M_Final)
                 lfatal(fr->field->class->global->defined,
                        &fr->field->pos,
-                       "Field %s encountered in class %s overrides a final field in class %s (%s; Line %d)",
+                       "Field %s encountered in class %s overrides a final field in class %s (File %s; Line %d)",
                        f->name,
                        fr->field->class->global->name,
                        f->class->global->name,
