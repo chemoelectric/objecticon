@@ -137,26 +137,22 @@ class Encode(SetFields)
    private get_proc_code(f)
       local s, j
       image(f) ? {
-         if ="function " then
-            s := "F"
-         else if ="keyword " then
-            s := "K"
-         else if ="operator " then 
-            s := string(Proc.get_n_arguments(f))
-         else if ="procedure " then 
-            s := "P"
-         else if ="method " then {
-            j := Class.get_field_flags(Proc.get_defining_class(f), Proc.get_field_name(f))
-            iand(j, PUBLIC_STATIC_METHOD) = PUBLIC_STATIC_METHOD |
-               return error("Can only encode a public static method")
-            s := "M"
+         s := case tab(upto(' ')) of {
+            "function": "F"
+            "keyword": "K"
+            "operator": string(Proc.get_n_arguments(f))
+            "procedure": "P"
+            "method": {
+               j := Class.get_field_flags(Proc.get_defining_class(f), Proc.get_field_name(f))
+               iand(j, PUBLIC_STATIC_METHOD) = PUBLIC_STATIC_METHOD |
+                  return error("Can only encode a public static method")
+               "M"
+            }
+            "deferred": return error("Can't encode a deferred method")
+            "internal": return error("Can't encode an internal procedure")
+            default: syserr("Not a proc")
          }
-         else if ="deferred" then
-            return error("Can't encode a deferred method")
-         else if ="internal" then
-            return error("Can't encode an internal procedure")
-         else 
-            syserr("Not a proc")
+         move(1)
          return s || tab(0)
       }
    end
@@ -383,28 +379,27 @@ class Decode()
       fn ? {
          c := move(1)
          s := tab(0)
-         if c == "F" then
-            return Prog.get_function(s) | error("No such function " || s)
-         if c == "K" then
-            return Prog.get_keyword(s) | error("No such keyword " || s)
-         if i := integer(c) then
-            return Prog.get_operator(s, i) | error("No such function " || s || " arity " || i)
-         if c == "P" then {
-            if g := Prog.get_global(s) &
-               match("procedure ", image(g)) then
-               return g
-            return error("No such procedure " || s)
+         case c of {
+            "F": return Prog.get_function(s) | error("No such function " || s)
+            "K": return Prog.get_keyword(s) | error("No such keyword " || s)
+            !"123": return Prog.get_operator(s, c) | error("No such function " || s || " arity " || c)
+            "P": {
+               if g := Prog.get_global(s) &
+                  match("procedure ", image(g)) then
+                  return g
+               return error("No such procedure " || s)
+            }
+            "M": {
+               every i := find(".", s)
+               if cl := Class.for_name(s[1:i]) &
+                  j := Class.get_field_flags(cl, s[i+1:0]) &
+                  iand(j, PUBLIC_STATIC_METHOD) = PUBLIC_STATIC_METHOD 
+               then
+                  return Class.get(cl, s[i+1:0]) 
+               return error("No such public static method " || s)
+            }
+            default: return error("Unknown proc code")
          }
-         if c == "M" then {
-            every i := find(".", s)
-            if cl := Class.for_name(s[1:i]) &
-               j := Class.get_field_flags(cl, s[i+1:0]) &
-               iand(j, PUBLIC_STATIC_METHOD) = PUBLIC_STATIC_METHOD 
-            then
-               return Class.get(cl, s[i+1:0]) 
-            return error("No such public static method " || s)
-         }
-         return error("Unknown proc code")
       }
    end
 
