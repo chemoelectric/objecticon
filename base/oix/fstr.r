@@ -832,75 +832,57 @@ function repl(s,n)
 end
 
 
-"reverse(x) - reverse ucs, string or list x."
+"reverse(x) - reverse ucs or string x."
 
-function reverse(x)
-   if is:list(x) then {
-      body {
-         int i=0, size = ListBlk(x).size;
-         struct descrip temp;
-         dptr dp;
-         cplist(&x, &result, 1, size+1);
-         dp = ListBlk(result).listhead->lelem.lslots;
-         while (i<size-1) {
-            temp = dp[i]; dp[i] = dp[size-1]; dp[size-1] = temp;
-            i++; size--;
-            }
-         return result;
-         }
-      }
-   else {
+function reverse(s)
+   if !cnv:string_or_ucs(s) then
+      runerr(129,s)
 
-      if !cnv:string_or_ucs(x) then
-         runerr(129,x)
+   body {
+       if (is:ucs(s)) {
+           tended struct descrip utf8;
+           char *p, *q;   /* Don't need to be tended */
+           word i;
+           MemProtect(StrLoc(utf8) = alcstr(NULL, StrLen(UcsBlk(s).utf8)));
+           StrLen(utf8) = StrLen(UcsBlk(s).utf8);
 
-      body {
-           if (is:ucs(x)) {
-               tended struct descrip utf8;
-               char *p, *q;   /* Don't need to be tended */
-               word i;
-               MemProtect(StrLoc(utf8) = alcstr(NULL, StrLen(UcsBlk(x).utf8)));
-               StrLen(utf8) = StrLen(UcsBlk(x).utf8);
-
-               p = StrLoc(UcsBlk(x).utf8);
-               q = StrLoc(utf8) + StrLen(utf8);
-               i = UcsBlk(x).length;
-               while (i-- > 0) {
-                   int n = UTF8_SEQ_LEN(*p);
-                   q -= n;
-                   memcpy(q, p, n);
-                   p += n;
-               }
-
-               return ucs(make_ucs_block(&utf8, UcsBlk(x).length));
-           } else {
-               register char c, *floc, *lloc;
-               register word slen;
-
-               /*
-                * Allocate a copy of x.
-                */
-               slen = StrLen(x);
-               MemProtect(StrLoc(result) = alcstr(StrLoc(x), slen));
-               StrLen(result) = slen;
-
-               /*
-                * Point floc at the start of s and lloc at the end of s.  Work floc
-                *  and sloc along s in opposite directions, swapping the characters
-                *  at floc and lloc.
-                */
-               floc = StrLoc(result);
-               lloc = floc + --slen;
-               while (floc < lloc) {
-                   c = *floc;
-                   *floc++ = *lloc;
-                   *lloc-- = c;
-               }
-               return result;
+           p = StrLoc(UcsBlk(s).utf8);
+           q = StrLoc(utf8) + StrLen(utf8);
+           i = UcsBlk(s).length;
+           while (i-- > 0) {
+               int n = UTF8_SEQ_LEN(*p);
+               q -= n;
+               memcpy(q, p, n);
+               p += n;
            }
-       }
-    }
 
+           return ucs(make_ucs_block(&utf8, UcsBlk(s).length));
+       } else {
+           register char c, *floc, *lloc;
+           register word slen;
+
+           /*
+            * Allocate a copy of s.
+            */
+           slen = StrLen(s);
+           MemProtect(StrLoc(result) = alcstr(StrLoc(s), slen));
+           StrLen(result) = slen;
+
+           /*
+            * Point floc at the start of s and lloc at the end of s.  Work floc
+            *  and sloc along s in opposite directions, swapping the characters
+            *  at floc and lloc.
+            */
+           floc = StrLoc(result);
+           lloc = floc + --slen;
+           while (floc < lloc) {
+               c = *floc;
+               *floc++ = *lloc;
+               *lloc-- = c;
+           }
+           return result;
+       }
+   }
 end
 
 
