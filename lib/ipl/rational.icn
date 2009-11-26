@@ -353,7 +353,7 @@ procedure gennorm(a)
 end
 
 procedure genneg(a)
-   return if is(a,rational) then gennorm(negrat(a)) else -a
+   return if is(a,rational) then negrat(a) else -a
 end
 
 procedure genrecip(a)
@@ -413,9 +413,10 @@ procedure gensub(a, b)
 end
 
 procedure gendiv(a, b)
-   if type(a) == type(b) == "integer" then
-      return gennorm(ratred(rational(a, b, 1)))
-   return binop(a, b, proc("/",2), divrat)
+   return if type(a) == type(b) == "integer" then
+      gennorm(ratred(rational(a, b, 1)))
+   else
+      binop(a, b, proc("/",2), divrat)
 end
 
 procedure genless(a, b)
