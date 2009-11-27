@@ -738,6 +738,7 @@ function lang_Prog_load(s, arglist, blocksize, stringsize)
        coex->start_label = new_pf->ipc = Bmain_wrapper.icode;
        coex->failure_label = 0;
        coex->tvalloc = 0;
+       coex->size = 0;
 
        if (main_bp->nparam) {
            if (is:null(arglist))

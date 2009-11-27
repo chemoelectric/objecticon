@@ -1,7 +1,22 @@
-$start cofail_impl
+$start fail_to_impl
     Op_Custom c:transmit_failure
-         Op_FrameVar arg:0
          Op_Tmp tmp:0
+         Op_FrameVar arg:0
+         Op_FrameVar arg:1
+         FailureTransmitted
+    Op_CReturn
+         Op_Tmp tmp:0
+
+FailureTransmitted:
+    Op_CFail
+$end
+
+$start activate_impl
+    Op_Custom c:activate_ex
+         Op_Tmp tmp:0
+         Op_FrameVar arg:0
+         Op_FrameVar arg:1
+         Op_FrameVar arg:2
          FailureTransmitted
     Op_CReturn
          Op_Tmp tmp:0

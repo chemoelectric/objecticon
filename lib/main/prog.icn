@@ -114,12 +114,6 @@ class Prog()
    private static defer get_event_impl(P, res)
 
    #
-   # Return the program holding the current execution point
-   # of the given co-expression.
-   #
-   public static defer get_coexpression_program(ce)
-
-   #
    # Get the number of milliseconds since the startup time of the given
    # program.
    #
@@ -174,6 +168,77 @@ class Prog()
    # @return an integer
    #
    public static defer get_stack_used(P)
+end
+
+#
+# This class contains some useful methods for manipulating coexpressions.
+#
+class Coexpression()
+   #
+   # Return the given coexpression's activator (ie the value of
+   # {&source} when it was last active); fails if the coexpression has
+   # never been activated.
+   #
+   # @param ce - the coexpression, by default &current
+   #
+   public static defer get_activator(ce)
+
+   #
+   # Set a coexpression's activator
+   #
+   # @param act - the new activator
+   # @param ce - the coexpression to change, by default &current
+   #
+   public static defer set_activator(act, ce)
+
+   #
+   # Transmit failure to the given coexpression, setting its
+   # activator.
+   #
+   # @param target - the coexpression
+   # @param activator - the coexpression to set as the target's
+   #   activator, by default this coexpression.
+   #
+   public static defer fail_to(target, activator)
+
+   #
+   # Activate the given coexpression, setting its activator.  The only
+   # difference between this function and the builtin "@" operator is
+   # the ability to set the activator.
+   #
+   # @value the value to transmit
+   # @param target - the coexpression
+   # @param activator - the coexpression to set as the target's
+   #   activator, by default this coexpression.
+   #
+   public static defer activate(value, target, activator)
+
+   #
+   # Activate the given target coexpression, but without disturbing its
+   # activator.
+   #
+   # @value the value to transmit
+   # @param target - the coexpression
+   #
+   public static quietly_activate(value, target)
+      return activate(value, target, get_activator(target)) 
+   end
+
+   #
+   # Return the program holding the current execution point
+   # of the given co-expression.
+   #
+   # @param ce - the coexpression, by default &current
+   #
+   public static defer get_program(ce)
+
+   #
+   # Succeed iff this coexpression is the main coexpression of a
+   # program.
+   #
+   # @param ce - the coexpression, by default &current
+   #
+   public static defer is_main(ce)
 end
 
 #

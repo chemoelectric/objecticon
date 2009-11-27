@@ -68,6 +68,18 @@ static struct progstate *get_program_for(dptr x)
     }
 }
 
+static struct b_coexpr *get_coexpr_for(dptr x)
+{
+    type_case *x of {
+        null:
+             return k_current;
+        coexpr:
+             return &CoexprBlk(*x);
+        default:
+             ReturnErrVal(118, *x, 0);
+    }
+}
+
 static void loc_to_list(struct loc *p, dptr res)
 {
     struct descrip t;
@@ -608,11 +620,56 @@ function lang_Prog_get_global_location_impl(s, c)
    }
 end
 
-function lang_Prog_get_coexpression_program(c)
-   if !is:coexpr(c) then
-      runerr(118,c)
+function lang_Coexpression_get_program(ce)
    body {
-       return coexpr(get_current_program_of(&CoexprBlk(c))->K_main);
+       tended struct b_coexpr *b;
+       if (!(b = get_coexpr_for(&ce)))
+          runerr(0);
+       return coexpr(get_current_program_of(b)->K_main);
+   }
+end
+
+function lang_Coexpression_get_activator(ce)
+    body {
+       struct b_coexpr *b;
+       if (!(b = get_coexpr_for(&ce)))
+          runerr(0);
+        if (!b->activator)
+            fail;
+        return coexpr(b->activator);
+    }
+end
+
+function lang_Coexpression_set_activator(act, ce)
+    if !is:coexpr(act) then
+         runerr(118, act)
+    body {
+        struct b_coexpr *b;
+        if (!(b = get_coexpr_for(&ce)))
+            runerr(0);
+        /* 
+         * The activator must have an activator, since returning or
+         * failing to it (rather than activating it) won't set its
+         * activator.
+         */
+        if (!CoexprBlk(act).activator)
+            runerr(136, act);
+
+        b->activator = &CoexprBlk(act);
+        return nulldesc;
+    }
+end
+
+
+function lang_Coexpression_is_main(ce)
+   body {
+       struct b_coexpr *b;
+       if (!(b = get_coexpr_for(&ce)))
+          runerr(0);
+       if (b->main_of)
+           return ce;
+       else
+           fail;
    }
 end
 

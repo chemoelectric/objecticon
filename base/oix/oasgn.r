@@ -31,11 +31,7 @@ static int subs_asgn	(dptr dest, const dptr src);
       kywdany: {
 	    *VarLoc(x) = y;
          }
-
       kywdint:  {
-         /*
-          * No side effect in the type realm - keyword x is still an int.
-          */
             C_integer i;
 
             if (!cnv:C_integer(y, i))
@@ -43,9 +39,6 @@ static int subs_asgn	(dptr dest, const dptr src);
             IntVal(*VarLoc(x)) = i;
 	}
       kywdpos: {
-         /*
-          * No side effect in the type realm - &pos is still an int.
-          */
             C_integer i;
             dptr sub;
 
@@ -65,19 +58,12 @@ static int subs_asgn	(dptr dest, const dptr src);
             EVVal(k_pos, E_Spos);
          }
       kywdsubj: {
-         /*
-          * No side effect in the type realm - &subject is still a string
-          *  and &pos is still an int.
-          */
             if (!cnv:string_or_ucs(y, *VarLoc(x)))
                runerr(129, y);
 	    IntVal(*(VarLoc(x)-1)) = 1;
             EVVal(k_pos, E_Spos);
          }
       kywdstr: {
-         /*
-          *  No side effect in the type realm.
-          */
          if (!cnv:string_or_ucs(y, *VarLoc(x)))
             runerr(129, y);
       }

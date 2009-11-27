@@ -2,6 +2,7 @@
 #include "../h/opnames.h"
 
 static void transmit_failure();
+static void activate_ex();
 static void get_child_prog_result();
 static void activate_child_prog();
 static void do_cofail();
@@ -456,6 +457,7 @@ static void do_create()
     MemProtect(coex->base_pf = alc_p_frame(curr_pf->proc, curr_pf->fvars));
     coex->main_of = 0;
     coex->tvalloc = 0;
+    coex->size = 0;
     coex->failure_label = coex->start_label = coex->base_pf->ipc = start_label;
     coex->curr_pf = coex->base_pf;
     coex->sp = (struct frame *)coex->base_pf;
@@ -548,11 +550,12 @@ static void do_cofail()
 
 static void transmit_failure()
 {
-    tended struct descrip t;
+    tended struct descrip t, act;
     dptr lhs;
     word *failure_label;
-    get_deref(&t);
     lhs = get_dptr();
+    get_deref(&t);    /* Target */
+    get_deref(&act);  /* Activator */
     failure_label = GetAddr;
 
     if (k_trace) {
@@ -564,34 +567,89 @@ static void transmit_failure()
     k_current->failure_label = failure_label;
 
     /* Switch to the target and go to its failure label */
-    CoexprBlk(t).activator = k_current;
+    CoexprBlk(t).activator = &CoexprBlk(act);
     switch_to(&CoexprBlk(t));
     ipc = k_current->failure_label;
 }
 
-"cofail(ce) - transmit a co-expression failure to ce"
-
-function cofail(ce)
+/* transmit a co-expression failure to ce */
+function lang_Coexpression_fail_to(ce, activator)
+    if !is:coexpr(ce) then
+         runerr(118, ce)
     body {
-      struct p_frame *pf;
-      if (is:null(ce)) {
-          ce.dword = D_Coexpr;
-          BlkLoc(ce) = (union block *)k_current->activator;
-      } else if (!is:coexpr(ce))
-         runerr(118, ce);
+        struct p_frame *pf;
+        if (is:null(activator)) {
+            activator.dword = D_Coexpr;
+            BlkLoc(activator) = (union block *)k_current;
+        } else {
+            if (!is:coexpr(activator))
+                runerr(118, activator);
+        }
 
-      if (!CoexprBlk(ce).failure_label)
-         runerr(135, ce);
+        if (!CoexprBlk(ce).failure_label)
+            runerr(135, ce);
 
-      MemProtect(pf = alc_p_frame((struct b_proc *)&Bcofail_impl, 0));
-      push_frame((struct frame *)pf);
-      pf->fvars->desc[0] = ce;
-      tail_invoke_frame((struct frame *)pf);
-      return nulldesc;
+        MemProtect(pf = alc_p_frame((struct b_proc *)&Bfail_to_impl, 0));
+        push_frame((struct frame *)pf);
+        pf->fvars->desc[0] = ce;
+        pf->fvars->desc[1] = activator;
+        tail_invoke_frame((struct frame *)pf);
+        return nulldesc;
    }
 end
 
+static void activate_ex()
+{
+    dptr lhs;
+    tended struct descrip arg1, arg2, arg3;
+    word *failure_label;
 
+    lhs = get_dptr();
+
+    get_descrip(&arg1);   /* Value */
+    get_deref(&arg2);     /* Coexp */
+    get_deref(&arg3);     /* Activator */
+    failure_label = GetAddr;
+
+    if (get_current_user_frame_of(&CoexprBlk(arg2))->fvars != curr_pf->fvars)
+        retderef(&arg1, curr_pf->fvars);
+
+    if (k_trace) {
+        --k_trace;
+        trace_coact(k_current, &CoexprBlk(arg2), &arg1);
+    }
+
+    k_current->tvalloc = lhs;
+    k_current->failure_label = failure_label;
+
+    /* Set the target's activator, switch to the target and set its transmitted value */
+    CoexprBlk(arg2).activator = &CoexprBlk(arg3);
+    switch_to(&CoexprBlk(arg2));
+    if (k_current->tvalloc)
+        *k_current->tvalloc = arg1;
+}
+
+function lang_Coexpression_activate(val, ce, activator)
+    if !is:coexpr(ce) then
+         runerr(118, ce)
+    body {
+        struct p_frame *pf;
+        if (is:null(activator)) {
+            activator.dword = D_Coexpr;
+            BlkLoc(activator) = (union block *)k_current;
+        } else {
+            if (!is:coexpr(activator))
+                runerr(118, activator);
+        }
+        MemProtect(pf = alc_p_frame((struct b_proc *)&Bactivate_impl, 0));
+        push_frame((struct frame *)pf);
+        pf->fvars->desc[0] = val;
+        pf->fvars->desc[1] = ce;
+        pf->fvars->desc[2] = activator;
+        tail_invoke_frame((struct frame *)pf);
+        return nulldesc;
+    }
+end
 static void do_limit()
 {
     dptr limit;

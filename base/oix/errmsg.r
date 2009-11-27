@@ -49,6 +49,7 @@ struct errtab errtab[] = {
     {133, "set or table expected"},
     {134, "odd number of parameters expected"},
     {135, "cannot transmit failure to this co-expression"},
+    {136, "cannot set activator to this co-expression"},
 
 #ifdef Graphics
     {140, "window expected"},
