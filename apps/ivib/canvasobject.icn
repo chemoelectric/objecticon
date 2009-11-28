@@ -118,7 +118,7 @@ class CanvasObject(SelectiveObjectCodec)
    # Traverse the tree of CanvasObjects rooted at this one.
    #
    public traverse_tree()
-      self @ &source
+      coact(self)
       every gen_cos().traverse_tree()
    end
 

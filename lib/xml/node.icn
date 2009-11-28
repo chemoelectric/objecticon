@@ -80,7 +80,7 @@ class Node()
    #
    public traverse_nodes_preorder()
       local e
-      self @ &source
+      coact(self)
       every e := !children do
          text(e) | e.traverse_nodes_preorder()
    end
@@ -92,7 +92,7 @@ class Node()
       local e
       every e := !children do
          text(e) | e.traverse_nodes_postorder()
-      self @ &source
+      coact(self)
    end
 
    #

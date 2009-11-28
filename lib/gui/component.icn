@@ -937,7 +937,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public traverse_components_postorder()
       every (!self.children).traverse_components_postorder()
-      self @ &source
+      coact(self)
    end
 
    #
@@ -945,7 +945,7 @@ class Component(Rect,Align,SetFields,Connectable)
    # pre-order traversal.
    #
    public traverse_components_preorder()
-      self @ &source
+      coact(self)
       every (!self.children).traverse_components_preorder()
    end
 
@@ -992,7 +992,7 @@ class Component(Rect,Align,SetFields,Connectable)
    # tab focus should iterate over them.
    #
    public traverse_tab_order()
-      self @ &source
+      coact(self)
       every (!self.tab_children).traverse_tab_order()
    end
 

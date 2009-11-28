@@ -640,27 +640,6 @@ function lang_Coexpression_get_activator(ce)
     }
 end
 
-function lang_Coexpression_set_activator(act, ce)
-    if !is:coexpr(act) then
-         runerr(118, act)
-    body {
-        struct b_coexpr *b;
-        if (!(b = get_coexpr_for(&ce)))
-            runerr(0);
-        /* 
-         * The activator must have an activator, since returning or
-         * failing to it (rather than activating it) won't set its
-         * activator.
-         */
-        if (!CoexprBlk(act).activator)
-            runerr(136, act);
-
-        b->activator = &CoexprBlk(act);
-        return nulldesc;
-    }
-end
-
-
 function lang_Coexpression_is_main(ce)
    body {
        struct b_coexpr *b;

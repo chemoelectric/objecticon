@@ -34,7 +34,7 @@ class TreeNode(SetFields)
    # {TreeNode}, in preorder ordering.
    #
    public traverse_all_preorder()
-      self @ &source
+      coact(self)
       every (!children).traverse_all_preorder()
    end
 
@@ -44,7 +44,7 @@ class TreeNode(SetFields)
    #
    public traverse_all_postorder()
       every (!children).traverse_all_postorder()
-      self @ &source
+      coact(self)
    end
 
    #
@@ -52,7 +52,7 @@ class TreeNode(SetFields)
    # {TreeNode}, in preorder ordering.
    #
    public traverse_open_preorder()
-      self @ &source
+      coact(self)
       if \self.is_expanded_flag then
          every (!children).traverse_open_preorder()
    end
@@ -64,7 +64,7 @@ class TreeNode(SetFields)
    public traverse_open_postorder()
       if \self.is_expanded_flag then
          every (!children).traverse_open_postorder()
-      self @ &source
+      coact(self)
    end
 
    #
