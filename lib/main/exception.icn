@@ -1,0 +1,23 @@
+package exception
+
+global throw_handler, throw_signal, thrown
+
+procedure throw(x)
+   thrown := \x
+   coact(throw_signal, throw_handler)
+   runerr("throw(): code co-expression reactivated unexpectedly")
+end
+
+procedure try(code)
+   local v, t
+   initial throw_signal := []
+
+   t := throw_handler
+   throw_handler := &current
+   v := @code
+   throw_handler := t
+   if v === throw_signal then
+      &why := string(thrown) | ("Exception thrown:" || image(thrown))
+   else
+      return v
+end
