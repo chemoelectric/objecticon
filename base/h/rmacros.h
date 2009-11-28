@@ -382,7 +382,7 @@
 #define k_trace kywd_trace.vword.integer	/* value of &trace */
 #define k_dump kywd_dump.vword.integer	/* value of &dump */
 #define k_maxlevel kywd_maxlevel.vword.integer	/* value of &trace */
-
+#define k_level k_current->level        /* value of &level */
 /*
  * Descriptor types and flags.
  */

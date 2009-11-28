@@ -168,7 +168,6 @@ char *allchars =
  * A number of important variables follow.
  */
 
-int k_level = 0;			/* &level */
 int set_up = 0;				/* set-up switch */
 char *currend = NULL;			/* current end of memory region */
 word qualsize = QualLstSize;		/* size of quallist for fixed regions */
@@ -738,6 +737,7 @@ function lang_Prog_load(s, arglist, blocksize, stringsize)
        coex->start_label = new_pf->ipc = Bmain_wrapper.icode;
        coex->failure_label = 0;
        coex->tvalloc = 0;
+       coex->level = 0;
        coex->size = 0;
 
        if (main_bp->nparam) {
@@ -1313,6 +1313,7 @@ int main(int argc, char **argv)
     Protect(k_current = alccoexp(), fatalerr(303, NULL));
     rootpstate.K_current = rootpstate.K_main = k_current;
     k_current->size = 1;			/* pretend main() does an activation */
+    k_current->level = 0;
     k_current->main_of = &rootpstate;
     k_current->activator = k_current;
     k_current->failure_label = 0;

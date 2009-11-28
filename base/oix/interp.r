@@ -457,6 +457,7 @@ static void do_create()
     coex->main_of = 0;
     coex->tvalloc = 0;
     coex->size = 0;
+    coex->level = 1;
     coex->failure_label = coex->start_label = coex->base_pf->ipc = start_label;
     coex->curr_pf = coex->base_pf;
     coex->sp = (struct frame *)coex->base_pf;

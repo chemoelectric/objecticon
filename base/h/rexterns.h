@@ -25,7 +25,6 @@ extern char *currend;		/* current end of memory region */
 extern int bsizes[];		/* sizes of blocks */
 extern int firstd[];		/* offset (words) of first descrip. */
 extern uword segsize[];		/* size of hash bucket segment */
-extern int k_level;		/* value of &level */
 
 extern struct progstate *progs; /* list of progstates */
 extern struct b_cset *emptycs;   /* '' */

@@ -508,6 +508,7 @@ struct b_coexpr {		/* co-expression block */
     struct p_frame *curr_pf;    /*   current procedure frame */
     struct frame *sp;           /*   top of stack */
     struct p_frame *base_pf;    /*   base of stack */
+    word level;                 /*   depth of user recursion (&level) */
 };
 
 
