@@ -1,8 +1,7 @@
 #include "../h/opdefs.h"
 #include "../h/opnames.h"
 
-static void transmit_failure();
-static void activate_ex();
+static void coact_ex();
 static void get_child_prog_result();
 static void activate_child_prog();
 static void do_cofail();
@@ -548,67 +547,17 @@ static void do_cofail()
     ipc = k_current->failure_label;
 }
 
-static void transmit_failure()
-{
-    tended struct descrip t, act;
-    dptr lhs;
-    word *failure_label;
-    lhs = get_dptr();
-    get_deref(&t);    /* Target */
-    get_deref(&act);  /* Activator */
-    failure_label = GetAddr;
-
-    if (k_trace) {
-        --k_trace;
-        trace_cofail(k_current, &CoexprBlk(t));
-    }
-
-    k_current->tvalloc = lhs;
-    k_current->failure_label = failure_label;
-
-    /* Switch to the target and go to its failure label */
-    CoexprBlk(t).activator = &CoexprBlk(act);
-    switch_to(&CoexprBlk(t));
-    ipc = k_current->failure_label;
-}
-
-/* transmit a co-expression failure to ce */
-function lang_Coexpression_fail_to(ce, activator)
-    if !is:coexpr(ce) then
-         runerr(118, ce)
-    body {
-        struct p_frame *pf;
-        if (is:null(activator)) {
-            activator.dword = D_Coexpr;
-            BlkLoc(activator) = (union block *)k_current;
-        } else {
-            if (!is:coexpr(activator))
-                runerr(118, activator);
-        }
-
-        if (!CoexprBlk(ce).failure_label)
-            runerr(135, ce);
-
-        MemProtect(pf = alc_p_frame((struct b_proc *)&Bfail_to_impl, 0));
-        push_frame((struct frame *)pf);
-        pf->fvars->desc[0] = ce;
-        pf->fvars->desc[1] = activator;
-        tail_invoke_frame((struct frame *)pf);
-        return nulldesc;
-   }
-end
-
-static void activate_ex()
+static void coact_ex()
 {
     dptr lhs;
-    tended struct descrip arg1, arg2, arg3;
+    tended struct descrip arg1, arg2, arg3, arg4;
     word *failure_label;
 
     lhs = get_dptr();
-
     get_descrip(&arg1);   /* Value */
     get_deref(&arg2);     /* Coexp */
     get_deref(&arg3);     /* Activator */
+    get_deref(&arg4);     /* Fail-to flag */
     failure_label = GetAddr;
 
     if (get_current_user_frame_of(&CoexprBlk(arg2))->fvars != curr_pf->fvars)
@@ -616,40 +565,74 @@ static void activate_ex()
 
     if (k_trace) {
         --k_trace;
-        trace_coact(k_current, &CoexprBlk(arg2), &arg1);
+        if (is:null(arg4))
+            trace_coact(k_current, &CoexprBlk(arg2), &arg1);
+        else
+            trace_cofail(k_current, &CoexprBlk(arg2));
     }
 
     k_current->tvalloc = lhs;
     k_current->failure_label = failure_label;
 
-    /* Set the target's activator, switch to the target and set its transmitted value */
-    CoexprBlk(arg2).activator = &CoexprBlk(arg3);
+    /* Perform the switch with the various option possibilities */
+    if (!is:null(arg3))
+        CoexprBlk(arg2).activator = &CoexprBlk(arg3);
     switch_to(&CoexprBlk(arg2));
-    if (k_current->tvalloc)
-        *k_current->tvalloc = arg1;
+    if (is:null(arg4)) {
+        if (k_current->tvalloc)
+            *k_current->tvalloc = arg1;
+    } else {
+        ipc = k_current->failure_label;
+    }
 }
 
-function lang_Coexpression_activate(val, ce, activator)
-    if !is:coexpr(ce) then
-         runerr(118, ce)
+function coact(val, ce, activator, failto)
     body {
         struct p_frame *pf;
+
+        /*
+         * Target defaults to &source.
+         */
+        if (is:null(ce)) {
+            ce.dword = D_Coexpr;
+            BlkLoc(ce) = (union block *)k_current->activator;
+        } else if (!is:coexpr(ce))
+            runerr(118, ce);
+
         if (is:null(activator)) {
-            activator.dword = D_Coexpr;
-            BlkLoc(activator) = (union block *)k_current;
+            /* 
+             * The target must already have an activator if we won't set it.
+             */
+            if (!CoexprBlk(ce).activator)
+                runerr(137, ce);
         } else {
             if (!is:coexpr(activator))
                 runerr(118, activator);
+            /*
+             * The activator must itself have an activator, since the target may return
+             * to it.
+             */
+            if (!CoexprBlk(activator).activator)
+                runerr(136, activator);
         }
-        MemProtect(pf = alc_p_frame((struct b_proc *)&Bactivate_impl, 0));
+
+        /*
+         * If we're failing, the target must have a failure label.
+         */
+        if (!is:null(failto) && !CoexprBlk(ce).failure_label)
+            runerr(135, ce);
+
+        MemProtect(pf = alc_p_frame((struct b_proc *)&Bcoact_impl, 0));
         push_frame((struct frame *)pf);
         pf->fvars->desc[0] = val;
         pf->fvars->desc[1] = ce;
         pf->fvars->desc[2] = activator;
+        pf->fvars->desc[3] = failto;
         tail_invoke_frame((struct frame *)pf);
         return nulldesc;
     }
 end
+
 static void do_limit()
 {
     dptr limit;
