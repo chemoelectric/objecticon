@@ -402,6 +402,9 @@ function lang_Prog_eval_keyword(s,c)
               if (strncmp(t,"error",5) == 0) {
                   return kywdint(&(p->Kywd_err));
               }
+              if (strncmp(t,"level",5) == 0) {
+                  return C_integer p->K_current->level;
+              }
               break;
           }
           case 7 : {
@@ -637,6 +640,15 @@ function lang_Coexpression_get_activator(ce)
         if (!b->activator)
             fail;
         return coexpr(b->activator);
+    }
+end
+
+function lang_Coexpression_get_level(ce)
+    body {
+       struct b_coexpr *b;
+       if (!(b = get_coexpr_for(&ce)))
+          runerr(0);
+       return C_integer b->level;
     }
 end
 

@@ -198,6 +198,14 @@ class Coexpression()
    # @param ce - the coexpression, by default &current
    #
    public static defer is_main(ce)
+
+   #
+   # Return the current procedure depth level of the given
+   # coexpression (ie the value of &level for that coexpression).
+   #
+   # @param ce - the coexpression, by default &current
+   #
+   public static defer get_level(ce)
 end
 
 #
