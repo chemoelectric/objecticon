@@ -368,13 +368,13 @@ Produces `&pos` if `&pos` = `i1`, but fails otherwise.
 See also: `&pos` and `&subject`
 
 == proc ==
-`proc (x,i) : p` -- convert to procedure
+`proc (x,i,c) : p` -- convert to procedure
 
-Produces a procedure corresponding to the value of `x`, but fails if `x` does not correspond to a procedure. If `x` is the string name of an operator, i specifies the number of arguments: 1 for unary (prefix), 2 for binary (infix), and 3 for ternary. `proc(x,0)` produces the built-in function named `x` even if the global identifier having that name has been assigned another value. `proc(x,0)` fails if `x` is not the name of a function.
+Produces a procedure corresponding to the value of `x`, but fails if `x` does not correspond to a procedure. Firstly the global variables of the program `c` are searched.  If a match is found then it is returned if it is a procedure, otherwise the call fails.  If no global match is found, then an operator of arity `i` is searched for and returned if found.  Failing that, built-in functions and keyword functions are searched.  If no match is found there either, the call fails.
 
 Default:
  * `i`       `1`
-
+ * `c`       `&main`
 == pull ==
 `pull (L) : x` -- pull from list
 
