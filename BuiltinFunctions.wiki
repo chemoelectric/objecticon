@@ -61,7 +61,7 @@ See also: `left()` and `right()`
 == char ==
 `char (i) : s` -- produce character
 
-Produces a string of length `1` consisting of the character whose internal representation is `i`.
+Produces a string of length `1` consisting of the character whose internal representation is `i`.  Fails if `i` is not a valid character number.
 
 See also: `ord()`
 
@@ -516,7 +516,7 @@ Produces a string corresponding to the type of `x`.
 == uchar ==
 `uchar (i) : u` -- ucs char
 
-Produce a ucs consisting of character `i`
+Produce a ucs consisting of character `i`.  Fails if `i` is not a valid unicode codepoint.
 
 == ucs ==
 `ucs (x) : u` -- convert to ucs
