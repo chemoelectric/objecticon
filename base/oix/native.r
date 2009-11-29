@@ -412,10 +412,7 @@ function lang_Prog_eval_keyword(s,c)
                   return kywdint(&(p->Kywd_ran));
               }
               if (strncmp(t,"source",6) == 0) {
-                  struct b_coexpr *a = p->K_current->activator;
-                  if (!a)  /* It will be 0 for a just-loaded program */
-                     fail;
-                  return coexpr(a);
+                  return coexpr(p->K_current->activator);
               }
               break;
           }
