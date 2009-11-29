@@ -68,15 +68,18 @@ See also: `ord()`
 == classof ==
 `classof (o) : cl` -- return the class of object `o`
 
+== coact ==
+`coact (value,ce,activator,failto) : x` -- general co-expression transmission
+
+This function is like the `@` operator, but more flexible.  It transmits `value` to `ce`, optionally setting `ce`'s activator.  If `failto` is not `&null`, `value` is ignored, and failure is transmitted to `ce` instead.  If `activator` is `&null`, then the activator of `ce` is left unchanged.
+
+Defaults:
+ * `ce`        `&source`
+
 == cocopy ==
 `cocopy (ce) : ce` -- refresh with copy
 
 Return a refreshed copy of `ce`, but with a copied set of local variables.
-
-== cofail ==
-`cofail (ce) : x` -- transmit failure
-
-Transmit failure to the given co-expression.
 
 == collect ==
 `collect () : n` -- perform garbage collection
