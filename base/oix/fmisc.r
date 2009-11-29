@@ -17,10 +17,8 @@ function char(i)
    if !cnv:C_integer(i) then
       runerr(101,i)
    body {
-      if (i < 0 || i > 255) {
-         irunerr(205, i);
-         errorfail;
-         }
+      if (i < 0 || i > 255)
+          fail;
       return string(1, &allchars[i & 0xFF]);
    }
 end
@@ -1426,10 +1424,8 @@ function uchar(i)
    if !cnv:C_integer(i) then
       runerr(101,i)
    body {
-      if (i < 0 || i > MAX_CODE_POINT) {
-         irunerr(205, i);
-         errorfail;
-      }
+      if (i < 0 || i > MAX_CODE_POINT)
+          fail;
       return ucs(make_one_char_ucs_block(i));
    }
 end
@@ -1442,10 +1438,8 @@ function lang_Text_utf8_seq(i)
    body {
       int n;
       char utf8[MAX_UTF8_SEQ_LEN], *a;
-      if (i < 0 || i > MAX_CODE_POINT) {
-         irunerr(205, i);
-         errorfail;
-      }
+      if (i < 0 || i > MAX_CODE_POINT)
+          fail;
       n = utf8_seq(i, utf8);
       MemProtect(a = alcstr(utf8, n));
       return string(n, a);
@@ -1482,9 +1476,9 @@ function lang_Text_create_cset(x[n])
                          runerr(101, pb->lelem.lslots[k]);
                      }
                      if (to < 0 || to > MAX_CODE_POINT) {
+                         whyf("Invalid codepoint:%ld", (long)to);
                          free_rangeset(rs);
-                         irunerr(205, to);
-                         errorfail;
+                         fail;
                      }
                      if (from == -1)
                          from = to;
@@ -1503,9 +1497,9 @@ function lang_Text_create_cset(x[n])
                  runerr(101, x[i]);
              }
              if (from < 0 || from > MAX_CODE_POINT) {
+                 whyf("Invalid codepoint:%ld", (long)from);
                  free_rangeset(rs);
-                 irunerr(205, from);
-                 errorfail;
+                 fail;
              }
              ++i;
              if (i < n) {
@@ -1514,9 +1508,9 @@ function lang_Text_create_cset(x[n])
                      runerr(101, x[i]);
                  }
                  if (to < 0 || to > MAX_CODE_POINT) {
+                     whyf("Invalid codepoint:%ld", (long)to);
                      free_rangeset(rs);
-                     irunerr(205, to);
-                     errorfail;
+                     fail;
                  }
                  MemProtect(add_range(rs, from, to));
                  ++i;
