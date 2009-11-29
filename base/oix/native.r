@@ -359,21 +359,13 @@ function lang_Prog_eval_keyword(s,c)
           }
           case 5 : {
               if (strncmp(t,"file",4) == 0) {
-                  struct ipc_fname *t;
-                  /* If the prog's &current isn't in this program, we can't look up
-                   * the file in this program's table */
-                  if (get_current_program_of(p->K_current) != p)
-                      fail;
-                  t = frame_ipc_fname(p->K_current->curr_pf, 0);
+                  struct ipc_fname *t = frame_ipc_fname(p->K_current->curr_pf, 0);
                   if (!t)
                       fail;
                   return *t->fname;
               }
               if (strncmp(t,"line",4) == 0) {
-                  struct ipc_line *t;
-                  if (get_current_program_of(p->K_current) != p)
-                      fail;
-                  t = frame_ipc_line(p->K_current->curr_pf, 0);
+                  struct ipc_line *t = frame_ipc_line(p->K_current->curr_pf, 0);
                   if (!t)
                       fail;
                   return C_integer t->line;
