@@ -225,3 +225,41 @@ class SetFields()
       return
    end
 end
+
+#
+# This class collects the fields from a list and stores them in a
+# table.  This allows fields to be used in a normal procedure, rather
+# than a constructor.
+#
+# @example
+# @ procedure p(a[])
+# @   local t
+# @   t := CollectFields(a)
+# @   write(t.param("first").int_val())
+# @   write(to_string(t.param("second").list_val()))
+# @   write(image(t.param("third").flag_val()))
+# @ end
+# @
+# @ p("first=100","second=1,2,3,,4","third=yes")
+#
+#
+class CollectFields(SetFields)
+   public const t
+
+   protected set_one(f)
+      return t[f.attr] := f
+   end
+
+   #
+   # Succeed and return the named field; fail otherwise.
+   #
+   public param(s)
+      return \t[s]
+   end
+
+   public new(a)
+      t := table()
+      set_fields(a)
+      return
+   end
+end
