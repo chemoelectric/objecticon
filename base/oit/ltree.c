@@ -279,9 +279,10 @@ static struct lnode *buildtree()
         case Uop_To:
         case Uop_Limit:
         case Uop_Everydo: {
+            struct loc t = curr_loc;
             struct lnode *c1 = buildtree();
             struct lnode *c2 = buildtree();
-            return (struct lnode *)lnode_2(op, &curr_loc, c1, c2);
+            return (struct lnode *)lnode_2(op, &t, c1, c2);
         }
 
         case Uop_Value:
@@ -306,8 +307,9 @@ static struct lnode *buildtree()
         case Uop_Until: 
         case Uop_Return: 
         case Uop_Break: {
+            struct loc t = curr_loc;
             struct lnode *c = buildtree();
-            return (struct lnode *)lnode_1(op, &curr_loc, c);
+            return (struct lnode *)lnode_1(op, &t, c);
         }
 
         case Uop_Sect:
@@ -315,22 +317,25 @@ static struct lnode *buildtree()
         case Uop_Sectm:
         case Uop_Toby:
         case Uop_Ifelse: {
+            struct loc t = curr_loc;
             struct lnode *c1 = buildtree();
             struct lnode *c2 = buildtree();
             struct lnode *c3 = buildtree();
-            return (struct lnode *)lnode_3(op, &curr_loc, c1, c2, c3);
+            return (struct lnode *)lnode_3(op, &t, c1, c2, c3);
         }
 
         case Uop_Field: {			/* field reference */
+            struct loc t = curr_loc;
             char *s = uin_str();
             struct lnode *c = buildtree();
-            return (struct lnode *)lnode_field(&curr_loc, c, s);
+            return (struct lnode *)lnode_field(&t, c, s);
         }
 
         case Uop_Invoke: {                      /* e(x1, x2.., xn) */
             int i, n = uin_16();
+            struct loc t = curr_loc;
             struct lnode *e = buildtree();
-            struct lnode_invoke *x = lnode_invoke(&curr_loc, e, n);
+            struct lnode_invoke *x = lnode_invoke(&t, e, n);
             for (i = 0; i < n; ++i) {
                 struct lnode *y = buildtree();
                 x->child[i] = y;
@@ -352,9 +357,10 @@ static struct lnode *buildtree()
         }
 
         case Uop_Apply: {			/* application e!l */
+            struct loc t = curr_loc;
             struct lnode *c1 = buildtree();
             struct lnode *c2 = buildtree();
-            return (struct lnode *)lnode_apply(&curr_loc, c1, c2);
+            return (struct lnode *)lnode_apply(&t, c1, c2);
         }
 
         case Uop_Keyword: {			/* keyword reference */
@@ -365,8 +371,9 @@ static struct lnode *buildtree()
         case Uop_Case:			/* case expression */
         case Uop_Casedef: {
             int n = uin_16(), i;
+            struct loc t = curr_loc;
             struct lnode *expr = buildtree();
-            struct lnode_case *x = lnode_case(op, &curr_loc, expr, n);
+            struct lnode_case *x = lnode_case(op, &t, expr, n);
             for (i = 0; i < n; ++i) {
                 struct lnode *y = buildtree();
                 struct lnode *z = buildtree();
