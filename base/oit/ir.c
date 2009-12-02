@@ -2364,7 +2364,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             break;
         }
 
-        case Uop_Activate: {                    /* co-expression activation */
+        case Uop_Uactivate: {                    /* co-expression activation */
             struct lnode_1 *x = (struct lnode_1 *)n;
             struct ir_info *expr;
             struct ir_var *e;

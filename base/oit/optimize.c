@@ -239,7 +239,7 @@ static int fold_consts(struct lnode *n)
             break;
         }
 
-        case Uop_Activate:
+        case Uop_Uactivate:
         case Uop_Every:
         case Uop_Suspend:
         case Uop_While:

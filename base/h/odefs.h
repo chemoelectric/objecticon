@@ -1,11 +1,5 @@
 /*
  * Operator definitions.
- *  
- * Fields are:
- *    name
- *    number of arguments
- *    string representation
- *    dereference arguments flag: -1 = don't, 0 = do
  */
 
 OpDef(asgn)
@@ -51,3 +45,5 @@ OpDef(tabmat)
 OpDef(toby)
 OpDef(union)
 OpDef(value)
+OpDef(bactivate)
+OpDef(uactivate)

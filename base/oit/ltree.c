@@ -301,7 +301,7 @@ static struct lnode *buildtree()
         case Uop_Repeat: 
         case Uop_While:
         case Uop_Every:
-        case Uop_Activate:
+        case Uop_Uactivate:
         case Uop_Create:
         case Uop_Suspend:
         case Uop_Until: 
@@ -542,7 +542,7 @@ static void visitnode_pre(struct lnode *n, visitf v)
         case Uop_Return: 
         case Uop_Break: 
         case Uop_Create: 
-        case Uop_Activate: 
+        case Uop_Uactivate: 
         case Uop_Rptalt: 
         case Uop_Not: {		
             struct lnode_1 *x = (struct lnode_1 *)n;
@@ -723,7 +723,7 @@ static void visitnode_post(struct lnode *n, visitf v)
         case Uop_Return: 
         case Uop_Break: 
         case Uop_Create: 
-        case Uop_Activate: 
+        case Uop_Uactivate: 
         case Uop_Rptalt: 
         case Uop_Not: {		
             struct lnode_1 *x = (struct lnode_1 *)n;
@@ -977,7 +977,7 @@ void replace_node(struct lnode *old, struct lnode *new)
         case Uop_Return: 
         case Uop_Break: 
         case Uop_Create: 
-        case Uop_Activate: 
+        case Uop_Uactivate: 
         case Uop_Rptalt: 
         case Uop_Not: {		
             struct lnode_1 *x = (struct lnode_1 *)n;

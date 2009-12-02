@@ -252,7 +252,7 @@ struct ucode_op ucode_op_table[] = {
     /* 244 */         { Uop_Suspenddo, "suspenddo", { 0,0 }, "\t%-12s" },                  
     /* 245 */         { Uop_Untildo, "untildo", { 0,0 }, "\t%-12s" },                  
     /* 246 */         { Uop_Everydo, "everydo", { 0,0 }, "\t%-12s" },                  
-    /* 247 */         { Uop_Activate, "activate", { 0,0 }, "\t%-12s" },                  
+    /* 247 */         { Uop_Uactivate, "uactivate", { 0,0 }, "\t%-12s" },                  
     /* 248 */         { Uop_Bactivate, "bactivate", { 0,0 }, "\t%-12s" },                  
     /* 249 */         { Uop_Augactivate, "augactivate", { 0,0 }, "\t%-12s" },                  
     /* 250 */         { Uop_Rptalt, "rptalt", { 0,0 }, "\t%-12s" },                  

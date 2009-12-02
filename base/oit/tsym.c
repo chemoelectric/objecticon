@@ -1039,7 +1039,7 @@ static void unop(int op)
             break;
 
         case AT:
-            uout_op(Uop_Activate);
+            uout_op(Uop_Uactivate);
             break;
 
         case BAR:

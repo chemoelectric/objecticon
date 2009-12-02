@@ -5,6 +5,7 @@ static void coact_ex();
 static void get_child_prog_result();
 static void activate_child_prog();
 static void do_cofail();
+static void do_coact();
 
 #include "interpiasm.ri"
 
@@ -629,6 +630,35 @@ function coact(val, ce, activator, failto)
         pf->fvars->desc[1] = ce;
         pf->fvars->desc[2] = activator;
         pf->fvars->desc[3] = failto;
+        tail_invoke_frame((struct frame *)pf);
+        return nulldesc;
+    }
+end
+
+/*
+ * These two operators allow binary and unary activation operations via
+ * string invocation.
+ */
+
+operator @ bactivate(val, ce)
+    body {
+        struct p_frame *pf;
+        MemProtect(pf = alc_p_frame((struct b_proc *)&Bactivate_impl, 0));
+        push_frame((struct frame *)pf);
+        pf->fvars->desc[0] = val;
+        pf->fvars->desc[1] = ce;
+        tail_invoke_frame((struct frame *)pf);
+        return nulldesc;
+    }
+end
+
+operator @ uactivate(ce)
+    body {
+        struct p_frame *pf;
+        MemProtect(pf = alc_p_frame((struct b_proc *)&Bactivate_impl, 0));
+        push_frame((struct frame *)pf);
+        pf->fvars->desc[0] = nulldesc;
+        pf->fvars->desc[1] = ce;
         tail_invoke_frame((struct frame *)pf);
         return nulldesc;
     }

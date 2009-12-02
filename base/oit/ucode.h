@@ -216,7 +216,7 @@ extern struct ucode_op ucode_op_table[];
 #define Uop_Suspenddo   244
 #define Uop_Untildo     245
 #define Uop_Everydo     246
-#define Uop_Activate    247
+#define Uop_Uactivate   247
 #define Uop_Bactivate   248
 #define Uop_Augactivate 249
 #define Uop_Rptalt      250

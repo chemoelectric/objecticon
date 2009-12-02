@@ -50,11 +50,10 @@
 #define Op_Toby		 41
 #define Op_Unions	 42
 #define Op_Value	 43
+#define Op_Coact         44
 /*
  * Other instructions.
  */
-#define Op_Coact         44
-#define Op_Cofail        45
 #define Op_Coret         46
 #define Op_Create        47
 #define Op_Field         48
@@ -64,6 +63,7 @@
 #define Op_Limit         52
 #define Op_Mark          53
 #define Op_Unmark        54
+#define Op_Cofail        55
 #define Op_Static        56
 #define Op_Global        57
 #define Op_Apply         58
