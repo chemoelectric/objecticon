@@ -641,6 +641,8 @@ end
  */
 
 operator @ bactivate(val, ce)
+    if !is:coexpr(ce) then
+       runerr(118, ce)
     body {
         struct p_frame *pf;
         MemProtect(pf = alc_p_frame((struct b_proc *)&Bactivate_impl, 0));
@@ -653,6 +655,8 @@ operator @ bactivate(val, ce)
 end
 
 operator @ uactivate(ce)
+    if !is:coexpr(ce) then
+       runerr(118, ce)
     body {
         struct p_frame *pf;
         MemProtect(pf = alc_p_frame((struct b_proc *)&Bactivate_impl, 0));
