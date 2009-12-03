@@ -546,10 +546,17 @@ static void nodegen(nodeptr t)
             break;
         }
 
-        case N_Ret: {
+        case N_Return: {
             if (in_create)
                 tfatal_at(t, "invalid context for return");
             uout_op(Uop_Return);
+            break;
+        }
+
+        case N_Returnexpr: {
+            if (in_create)
+                tfatal_at(t, "invalid context for return");
+            uout_op(Uop_Returnexpr);
             nodegen(Tree1(t));
             break;
         }
@@ -574,10 +581,17 @@ static void nodegen(nodeptr t)
             break;
         }
 
-        case N_Break: {			/* break expression */
+        case N_Break: {			/* break */
             if (!in_loop)
                 tfatal_at(t, "invalid context for break");
             uout_op(Uop_Break);
+            break;
+        }
+
+        case N_Breakexpr: {			/* break expression */
+            if (!in_loop)
+                tfatal_at(t, "invalid context for break");
+            uout_op(Uop_Breakexpr);
             nodegen(Tree0(t));
             break;
         }
@@ -661,6 +675,15 @@ static void nodegen(nodeptr t)
                 tfatal_at(t, "invalid context for suspend");
             ++in_loop;
             uout_op(Uop_Suspend);
+            --in_loop;
+            break;
+        }
+
+        case N_Suspendexpr: {
+            if (in_create)
+                tfatal_at(t, "invalid context for suspend");
+            ++in_loop;
+            uout_op(Uop_Suspendexpr);
             nodegen(Tree1(t));
             --in_loop;
             break;

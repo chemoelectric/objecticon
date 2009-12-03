@@ -376,7 +376,8 @@ expr11	: literal ;
 	| repeat ;
 	| CREATE expr { $$ := Node("create", $1,$2);} ;
 	| NEXT { $$ := Node("Next", $1);} ;
-	| BREAK nexpr { $$ := Node("Break", $1,$2);} ;
+	| BREAK { $$ := Node("Break0", $1);} ;
+	| BREAK expr { $$ := Node("Break1", $1,$2);} ;
 	| LPAREN exprlist RPAREN { $$ := Node("Paren", $1,$2,$3);} ;
 	| LBRACE compound RBRACE { $$ := Node("Brace", $1,$2,$3);} ;
 	| LBRACK exprlist RBRACK { $$ := Node("Brack", $1,$2,$3);} ;
@@ -400,9 +401,11 @@ every	: EVERY expr { $$ := Node("every", $1,$2);} ;
 repeat	: REPEAT expr { $$ := Node("repeat", $1,$2);} ;
 
 return	: FAIL ;
-	| RETURN nexpr { $$ := Node("return", $1, $2);} ;
-	| SUSPEND nexpr { $$ := Node("Suspend0", $1,$2);} ;
-        | SUSPEND expr DO expr { $$ := Node("Suspend1", $1,$2,$3,$4);};
+	| RETURN { $$ := Node("return0", $1);} ;
+	| RETURN expr { $$ := Node("return1", $1, $2);} ;
+	| SUSPEND { $$ := Node("Suspend0", $1);} ;
+	| SUSPEND expr { $$ := Node("Suspend1", $1,$2);} ;
+        | SUSPEND expr DO expr { $$ := Node("Suspend2", $1,$2,$3,$4);};
 
 if	: IF expr THEN expr { $$ := Node("If0", $1,$2,$3,$4);} ;
 	| IF expr THEN expr ELSE expr { $$ := Node("If1", $1,$2,$3,$4,$5,$6);} ;

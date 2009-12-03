@@ -242,7 +242,8 @@ expr11	: literal ;
 	| repeat ;
 	| CREATE expr {Create($1,$2);} ;
 	| NEXT {Next($1);} ;
-	| BREAK nexpr {Break($1,$2);} ;
+	| BREAK {Break0($1);} ;
+	| BREAK expr {Break1($1,$2);} ;
 	| LPAREN exprlist RPAREN {Paren($1,$2,$3);} ;
 	| LBRACE compound RBRACE {Brace($1,$2,$3);} ;
 	| LBRACK exprlist RBRACK {Brack($1,$2,$3);} ;
@@ -266,9 +267,11 @@ every	: EVERY expr {Every0($1,$2);} ;
 repeat	: REPEAT expr {Repeat($1,$2);} ;
 
 return	: FAIL {Fail($1);} ;
-	| RETURN nexpr {Return($1,$2);} ;
-	| SUSPEND nexpr {Suspend0($1,$2);} ;
-        | SUSPEND expr DO expr {Suspend1($1,$2,$3,$4);};
+	| RETURN {Return0($1);} ;
+	| RETURN expr {Return1($1,$2);} ;
+	| SUSPEND {Suspend0($1);} ;
+	| SUSPEND expr {Suspend1($1,$2);} ;
+        | SUSPEND expr DO expr {Suspend2($1,$2,$3,$4);};
 
 if	: IF expr THEN expr {If0($1,$2,$3,$4);} ;
 	| IF expr THEN expr ELSE expr {If1($1,$2,$3,$4,$5,$6);} ;

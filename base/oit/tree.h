@@ -60,7 +60,7 @@ extern struct node tok_loc;     /* "model" token holding current location */
 #define N_Augop		 3		/* augmented operator */
 #define N_Bar		 4		/* generator control structure */
 #define N_Binop		 5		/* other binary operator */
-#define N_Break		 6		/* break statement */
+#define N_Break		 6		/* break */
 #define N_Case		 7		/* case statement */
 #define N_Ccls		 8		/* case clause */
 #define N_Clist		 9		/* list of case clauses */
@@ -83,17 +83,19 @@ extern struct node tok_loc;     /* "model" token holding current location */
 #define N_Proc		28		/* procedure */
 #define N_Real		29		/* real literal */
 #define N_Res		30		/* reserved word token */
-#define N_Ret		31		/* return */
+#define N_Return	31		/* return */
+#define N_Returnexpr	32		/* return expr */
 #define N_Sect		33		/* s[i:j] (section) */
 #define N_Slist		34		/* list of statements */
 #define N_Str		35		/* string literal */
-#define N_Susp		36		/* suspend statement */
+#define N_Breakexpr	36		/* break expr */
 #define N_To		37		/* TO operator */
 #define N_ToBy		38		/* TO-BY operator */
 #define N_Unop		39		/* unary operator */
 #define N_Apply		40		/* procedure application */
 #define N_Dottedid      41              /* dotted identifier structure */
 #define N_Lrgint	42		/* large integer literal */
+#define N_Suspendexpr	43		/* suspend expr */
 #define N_Repeat        44              /* repeat loop */
 #define N_While         45              /* while loop */
 #define N_Whiledo       46              /* while do loop */

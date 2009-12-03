@@ -195,6 +195,9 @@ static struct lnode *buildtree()
     switch (op) {
         case Uop_Empty:
         case Uop_End:
+        case Uop_Return:
+        case Uop_Suspend:
+        case Uop_Break:
         case Uop_Fail:
         case Uop_Next:
             return (struct lnode *)lnode_0(op, &curr_loc);
@@ -303,10 +306,10 @@ static struct lnode *buildtree()
         case Uop_Every:
         case Uop_Uactivate:
         case Uop_Create:
-        case Uop_Suspend:
+        case Uop_Suspendexpr:
         case Uop_Until: 
-        case Uop_Return: 
-        case Uop_Break: {
+        case Uop_Returnexpr: 
+        case Uop_Breakexpr: {
             struct loc t = curr_loc;
             struct lnode *c = buildtree();
             return (struct lnode *)lnode_1(op, &t, c);
@@ -510,6 +513,9 @@ static void visitnode_pre(struct lnode *n, visitf v)
         case Uop_Next:
         case Uop_Empty:
         case Uop_End:
+        case Uop_Return:
+        case Uop_Break:
+        case Uop_Suspend:
         case Uop_Fail:
             break;
 
@@ -538,9 +544,9 @@ static void visitnode_pre(struct lnode *n, visitf v)
         case Uop_Null: 
         case Uop_Until: 
         case Uop_Every: 
-        case Uop_Suspend: 
-        case Uop_Return: 
-        case Uop_Break: 
+        case Uop_Suspendexpr: 
+        case Uop_Returnexpr: 
+        case Uop_Breakexpr: 
         case Uop_Create: 
         case Uop_Uactivate: 
         case Uop_Rptalt: 
@@ -691,6 +697,9 @@ static void visitnode_post(struct lnode *n, visitf v)
         case Uop_Next:
         case Uop_Empty:
         case Uop_End:
+        case Uop_Break:
+        case Uop_Suspend:
+        case Uop_Return:
         case Uop_Fail:
             break;
 
@@ -719,9 +728,9 @@ static void visitnode_post(struct lnode *n, visitf v)
         case Uop_Null: 
         case Uop_Until: 
         case Uop_Every: 
-        case Uop_Suspend: 
-        case Uop_Return: 
-        case Uop_Break: 
+        case Uop_Suspendexpr: 
+        case Uop_Returnexpr: 
+        case Uop_Breakexpr: 
         case Uop_Create: 
         case Uop_Uactivate: 
         case Uop_Rptalt: 
@@ -941,6 +950,9 @@ void replace_node(struct lnode *old, struct lnode *new)
         case Uop_Next:
         case Uop_Empty:
         case Uop_End:
+        case Uop_Break:
+        case Uop_Suspend:
+        case Uop_Return:
         case Uop_Fail:
             break;
 
@@ -973,9 +985,9 @@ void replace_node(struct lnode *old, struct lnode *new)
         case Uop_Null: 
         case Uop_Until: 
         case Uop_Every: 
-        case Uop_Suspend: 
-        case Uop_Return: 
-        case Uop_Break: 
+        case Uop_Suspendexpr: 
+        case Uop_Returnexpr: 
+        case Uop_Breakexpr: 
         case Uop_Create: 
         case Uop_Uactivate: 
         case Uop_Rptalt: 

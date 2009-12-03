@@ -1480,6 +1480,28 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         }
 
         case Uop_Suspend: {
+            if (!bounded)
+                chunk1(res->resume, ir_igoto(n, res->failure));
+
+            if (scan_stack) {
+                struct ir_info *t = scan_stack;
+                /* Get bottom of scan stack */
+                while (t->scan->next)
+                    t = t->scan->next;
+                chunk4(res->start, 
+                       ir_scanswap(n, t->scan->old_subject, t->scan->old_pos),
+                       ir_suspend(n, make_knull()),
+                       ir_scanswap(n, t->scan->old_subject, t->scan->old_pos),
+                       ir_goto(n, res->failure));
+            } else {
+                chunk2(res->start, 
+                       ir_suspend(n, make_knull()),
+                       ir_goto(n, res->failure));
+            }
+            break;
+        }
+
+        case Uop_Suspendexpr: {
             struct lnode_1 *x = (struct lnode_1 *)n;
             struct ir_stack *expr_st;
             struct ir_info *expr;
@@ -1551,9 +1573,69 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         }
 
         case Uop_Break: {
+            if (loop_stack == 0) {
+                lfatal(0, &n->loc, "break without corresponding loop");
+                chunk1(res->start, ir_goto(n, res->failure));
+                chunk1(res->resume, ir_goto(n, res->failure));
+                break;
+            }
+
+            if (scan_stack != loop_stack->loop->scan_stack) {
+                /* A scan is within the loop, and the break is within the scan.  Find the
+                 * first scan within the loop, ie the one above loop_stack->loop->scan_stack in the stack */
+                struct ir_info *t = scan_stack;
+                while (t->scan->next != loop_stack->loop->scan_stack)
+                    t = t->scan->next;
+
+                if (loop_stack->loop->bounded) {
+                    chunk4(res->start, 
+                           ir_unmark(n, loop_stack->loop->loop_mk),
+                           ir_scanrestore(n, t->scan->old_subject, 
+                                         t->scan->old_pos),
+                           ir_move(n, loop_stack->loop->target, make_knull(), 0),
+                           ir_goto(n, loop_stack->success));
+                } else {
+                    chunk5(res->start, 
+                           ir_unmark(n, loop_stack->loop->loop_mk),
+                           ir_scanrestore(n, t->scan->old_subject, 
+                                         t->scan->old_pos),
+                           ir_movelabel(n, loop_stack->loop->continue_tmploc, res->resume),
+                           ir_move(n, loop_stack->loop->target, make_knull(), 0),
+                           ir_goto(n, loop_stack->success));
+                }
+
+            } else {
+                if (loop_stack->loop->bounded) {
+                    chunk3(res->start, 
+                           ir_unmark(n, loop_stack->loop->loop_mk),
+                           ir_move(n, loop_stack->loop->target, make_knull(), 0),
+                           ir_goto(n, loop_stack->success));
+                } else {
+                    chunk4(res->start, 
+                           ir_unmark(n, loop_stack->loop->loop_mk),
+                           ir_movelabel(n, loop_stack->loop->continue_tmploc, res->resume),
+                           ir_move(n, loop_stack->loop->target, make_knull(), 0),
+                           ir_goto(n, loop_stack->success));
+                }
+            }
+            if (!loop_stack->loop->bounded || !bounded)
+                chunk1(res->resume, ir_goto(n, loop_stack->failure));
+
+            loop_stack->loop->has_break = 1;
+            break;
+        }
+
+        case Uop_Breakexpr: {
             struct lnode_1 *x = (struct lnode_1 *)n;
             struct ir_info *cur_loop, *saved_scan_stack, *expr;
             struct ir_stack *expr_st;
+
+            if (loop_stack == 0) {
+                lfatal(0, &n->loc, "break without corresponding loop");
+                chunk1(res->start, ir_goto(n, res->failure));
+                chunk1(res->resume, ir_goto(n, res->failure));
+                break;
+            }
 
             cur_loop = pop_loop();
             saved_scan_stack = scan_stack;
@@ -1615,6 +1697,13 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         }
 
         case Uop_Next: {                        /* next expression */
+            if (loop_stack == 0) {
+                lfatal(0, &n->loc, "next without corresponding loop");
+                chunk1(res->start, ir_goto(n, res->failure));
+                chunk1(res->resume, ir_goto(n, res->failure));
+                break;
+            }
+
             if (scan_stack != loop_stack->loop->scan_stack) {
                 /* A scan is within the loop, and the next is within the scan.  Find the
                  * first scan within the loop, ie the one above loop_stack->loop->scan_stack in the stack */
@@ -1634,7 +1723,29 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             break;
         }
 
-        case Uop_Return: {                      /* return expression */
+        case Uop_Return: {                      /* return */
+            if (!bounded)
+                chunk1(res->resume, ir_goto(n, res->failure));
+
+            if (scan_stack) {
+                struct ir_info *t = scan_stack;
+                /* Get bottom of scan stack */
+                while (t->scan->next)
+                    t = t->scan->next;
+                chunk3(res->start, 
+                       ir_scanrestore(n, t->scan->old_subject, t->scan->old_pos),
+                       ir_return(n, make_knull()),
+                       ir_fail(n));
+            } else {
+                chunk2(res->start, 
+                       ir_return(n, make_knull()),
+                       ir_fail(n));
+            }
+
+            break;
+        }
+
+        case Uop_Returnexpr: {                      /* return expression */
             struct lnode_1 *x = (struct lnode_1 *)n;
             struct ir_info *expr;
             struct ir_var *v;

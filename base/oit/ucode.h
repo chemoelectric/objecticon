@@ -162,6 +162,9 @@ extern struct ucode_op ucode_op_table[];
 #define Uop_List        175
 #define Uop_Next        176
 #define Uop_Break       177
+#define Uop_Returnexpr  178
+#define Uop_Suspendexpr 179
+#define Uop_Breakexpr   180
 #define Uop_Fail        181
 #define Uop_Return      182
 #define Uop_Create      183

@@ -241,7 +241,7 @@ static int fold_consts(struct lnode *n)
 
         case Uop_Uactivate:
         case Uop_Every:
-        case Uop_Suspend:
+        case Uop_Suspendexpr:
         case Uop_While:
         case Uop_Bang:
         case Uop_Random:
@@ -578,10 +578,10 @@ static int changes(struct lnode *n)
                 return x->child1 == n;
             }
 
-            case Uop_Break: 
+            case Uop_Breakexpr: 
             case Uop_Create: 
-            case Uop_Suspend: 
-            case Uop_Return: {
+            case Uop_Suspendexpr: 
+            case Uop_Returnexpr: {
                 struct lnode_1 *x = (struct lnode_1 *)n->parent;
                 return x->child == n;
             }
