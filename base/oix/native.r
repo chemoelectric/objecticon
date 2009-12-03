@@ -324,7 +324,9 @@ function lang_Prog_get_variable(s,c)
        if (rv == Failed)
            fail;
 
-       if (is:coexpr(c) && ((rv == LocalName) || (rv == StaticName)))
+       /* Dereference frame vars unless they're in the frame of the
+        * caller of this func */
+       if (prog != curpstate && ((rv == LocalName) || (rv == ParamName)))
            Deref(result);
 
        return result;

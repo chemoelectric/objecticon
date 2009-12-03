@@ -140,13 +140,6 @@ int getvar(dptr s, dptr vp, struct progstate *p)
     }
 
     /*
-     * Look for the variable the name with the local identifiers,
-     *  parameters, and static names in each Icon procedure frame on the
-     *  stack. If not found among the locals, check the global variables.
-     *  If a variable with name is found, variable() returns a variable
-     *  descriptor that points to the corresponding value descriptor. 
-     *  If no such variable exits, it fails.
-     * 
      *  The first if test here checks whether or not the curr_pf is the root
      *  p_frame, ie the main_wrapper.  This will be the case if this is
      *  a newly loaded program that hasn't been started yet.  In that case,
