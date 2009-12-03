@@ -1732,14 +1732,12 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 /* Get bottom of scan stack */
                 while (t->scan->next)
                     t = t->scan->next;
-                chunk3(res->start, 
-                       ir_scanrestore(n, t->scan->old_subject, t->scan->old_pos),
-                       ir_return(n, make_knull()),
-                       ir_fail(n));
-            } else {
                 chunk2(res->start, 
-                       ir_return(n, make_knull()),
-                       ir_fail(n));
+                       ir_scanrestore(n, t->scan->old_subject, t->scan->old_pos),
+                       ir_return(n, make_knull()));
+            } else {
+                chunk1(res->start, 
+                       ir_return(n, make_knull()));
             }
 
             break;
@@ -1769,19 +1767,17 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 /* Get bottom of scan stack */
                 while (t->scan->next)
                     t = t->scan->next;
-                chunk4(expr->success, 
+                chunk3(expr->success, 
                        cond_ir_unmark(expr->uses_stack, n, mk), 
                        ir_scanrestore(n, t->scan->old_subject, t->scan->old_pos),
-                       ir_return(n, v),
-                       ir_fail(n));
+                       ir_return(n, v));
                 chunk2(expr->failure, 
                        ir_scanrestore(n, t->scan->old_subject, t->scan->old_pos),
                        ir_fail(n));
             } else {
-                chunk3(expr->success, 
+                chunk2(expr->success, 
                        cond_ir_unmark(expr->uses_stack, n, mk), 
-                       ir_return(n, v),
-                       ir_fail(n));
+                       ir_return(n, v));
                 chunk1(expr->failure, 
                        ir_fail(n));
             }
