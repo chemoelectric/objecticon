@@ -1189,8 +1189,6 @@ function lang_Class_get_class_field_names(c)
     }
 end
 
-#include "../h/opdefs.h"
-
 struct b_proc *clone_b_proc(struct b_proc *bp)
 {
     struct b_proc *new0;
