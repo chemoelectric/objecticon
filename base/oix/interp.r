@@ -444,6 +444,7 @@ static void do_makelist()
         get_deref(&tmp);
         list_put(dest, &tmp);
     }
+    EVValD(dest, E_Lcreate);
 }
 
 static void do_create()
@@ -464,6 +465,7 @@ static void do_create()
     coex->sp = (struct frame *)coex->base_pf;
     lhs->dword = D_Coexpr;
     BlkLoc(*lhs) = (union block *)coex;
+    EVValD(lhs, E_Cocreate);
 }
 
 static void do_coact()

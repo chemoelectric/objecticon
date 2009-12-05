@@ -165,6 +165,7 @@
 #define E_Coact		'\101'		/* Co-expression activation */
 #define E_Coret		'\102'		/* Co-expression return */
 #define E_Cofail	'\104'		/* Co-expression failure */
+#define E_Cocreate	'\110'		/* Co-expression create operation */
 
    /*
     * Procedure events
@@ -213,7 +214,7 @@
 060 061 062 063 064 065 066 067
 070 071 072 073 074 075 076 077
 
-110 115 120
+115 120
 124 127 131 133 134 135
 137 140 141 142 143 146
 152 154
