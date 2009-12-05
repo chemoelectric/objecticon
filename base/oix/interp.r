@@ -488,6 +488,8 @@ static void do_coact()
     if (get_current_user_frame_of(&CoexprBlk(arg2))->fvars != curr_pf->fvars)
         retderef(&arg1, curr_pf->fvars);
 
+    EVValD(&arg2, E_Coact);
+
     if (k_trace) {
         --k_trace;
         trace_coact(k_current, &CoexprBlk(arg2), &arg1);
@@ -511,6 +513,8 @@ static void do_coret()
     if (get_current_user_frame_of(k_current->activator)->fvars != curr_pf->fvars)
         retderef(&val, curr_pf->fvars);
 
+    Desc_EVValD(k_current->activator, E_Coret, D_Coexpr);
+
     if (k_trace) {
         --k_trace;
         trace_coret(k_current, k_current->activator, &val);
@@ -533,6 +537,8 @@ static void do_coret()
 
 static void do_cofail()
 {
+    Desc_EVValD(k_current->activator, E_Cofail, D_Coexpr);
+
     if (k_trace) {
         --k_trace;
         trace_cofail(k_current, k_current->activator);
@@ -564,6 +570,13 @@ static void coact_ex()
 
     if (get_current_user_frame_of(&CoexprBlk(arg2))->fvars != curr_pf->fvars)
         retderef(&arg1, curr_pf->fvars);
+
+    if (curpstate->monitor) {
+        if (is:null(arg4))
+            EVValD(&arg2, E_Coact);
+        else
+            EVValD(&arg2, E_Cofail);
+    }
 
     if (k_trace) {
         --k_trace;
