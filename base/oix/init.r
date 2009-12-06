@@ -430,16 +430,8 @@ void syserr(char *fmt, ...)
 /*
  * c_exit(i) - flush all buffers and exit with status i.
  */
-void c_exit(i)
-    int i;
+void c_exit(int i)
 {
-
-
-#if E_Exit
-    if (curpstate != NULL)
-        EVVal((word)i, E_Exit);
-#endif					/* E_Exit */
-
     if (k_dump && set_up) {
         fprintf(stderr,"\nTermination dump:\n\n");
         fflush(stderr);
