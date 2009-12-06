@@ -62,6 +62,7 @@ int ceq(dptr dp, char *s)
 int getvar(dptr s, dptr vp, struct progstate *p)
 {
     dptr dp;
+    struct p_frame *pf;
 
     if (StrLen(*s) == 0)
         return Failed;
@@ -140,18 +141,17 @@ int getvar(dptr s, dptr vp, struct progstate *p)
     }
 
     /*
-     *  The first if test here checks whether or not the curr_pf is the root
-     *  p_frame, ie the main_wrapper.  This will be the case if this is
-     *  a newly loaded program that hasn't been started yet.  In that case,
-     *  we have no local variables yet.
+     *  The first if test here checks whether or not we have a
+     *  user_pf.  We won't if this is a newly loaded program that
+     *  hasn't been started yet.  In that case, we have no local
+     *  variables yet.
      */
-    if (p->K_current->curr_pf->caller) {
+    pf = p->K_current->user_pf;
+    if (pf) {
         struct b_proc *bp;
-        struct p_frame *pf;
         dptr *np;
         int i;
 
-        pf = get_current_user_frame_of(p->K_current);
         bp = pf->proc;
         np = bp->lnames;		/* Check the formal parameter names. */
 

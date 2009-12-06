@@ -505,7 +505,8 @@ struct b_coexpr {		/* co-expression block */
                                  *   null for all others */
     word *start_label;          /*   where to start this coexpression */
     word *failure_label;        /*   where to go on a cofail */
-    struct p_frame *curr_pf;    /*   current procedure frame */
+    struct p_frame *curr_pf;    /*   current p_frame */
+    struct p_frame *user_pf;    /*   current user procedure frame */
     struct frame *sp;           /*   top of stack */
     struct p_frame *base_pf;    /*   base of stack */
     word level;                 /*   depth of user recursion (&level) */

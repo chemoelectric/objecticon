@@ -41,7 +41,7 @@ void set_curpstate(struct progstate *p)
 void switch_to(struct b_coexpr *ce)
 {
     curr_pf->ipc = ipc;
-    curpstate = get_current_program_of(ce);
+    curpstate = ce->user_pf->proc->program;
     k_current = curpstate->K_current = ce;
     curr_pf = k_current->curr_pf;
     ipc = curr_pf->ipc;
@@ -59,6 +59,8 @@ void set_curr_pf(struct p_frame *pf)
         p->K_current = k_current;
         curpstate = p;
     }
+    if (p)
+        k_current->user_pf = pf;
     curr_pf = k_current->curr_pf = pf;
     ipc = curr_pf->ipc;
 }
@@ -461,7 +463,7 @@ static void do_create()
     coex->size = 0;
     coex->level = 1;
     coex->failure_label = coex->start_label = coex->base_pf->ipc = start_label;
-    coex->curr_pf = coex->base_pf;
+    coex->curr_pf = coex->user_pf = coex->base_pf;
     coex->sp = (struct frame *)coex->base_pf;
     lhs->dword = D_Coexpr;
     BlkLoc(*lhs) = (union block *)coex;
@@ -486,8 +488,15 @@ static void do_coact()
         ipc = failure_label;
         return;
     }
+    if (!CoexprBlk(arg2).user_pf) {
+        xargp = &arg1;
+        xexpr = &arg2;
+        err_msg(138, &arg2);
+        ipc = failure_label;
+        return;
+    }
 
-    if (get_current_user_frame_of(&CoexprBlk(arg2))->fvars != curr_pf->fvars)
+    if (CoexprBlk(arg2).user_pf->fvars != curr_pf->fvars)
         retderef(&arg1, curr_pf->fvars);
 
     EVValD(&arg2, E_Coact);
@@ -512,7 +521,7 @@ static void do_coret()
     tended struct descrip val;
     get_descrip(&val);
 
-    if (get_current_user_frame_of(k_current->activator)->fvars != curr_pf->fvars)
+    if (k_current->activator->user_pf->fvars != curr_pf->fvars)
         retderef(&val, curr_pf->fvars);
 
     Desc_EVValD(k_current->activator, E_Coret, D_Coexpr);
@@ -570,7 +579,7 @@ static void coact_ex()
     get_deref(&arg4);     /* Fail-to flag */
     failure_label = GetAddr;
 
-    if (get_current_user_frame_of(&CoexprBlk(arg2))->fvars != curr_pf->fvars)
+    if (CoexprBlk(arg2).user_pf->fvars != curr_pf->fvars)
         retderef(&arg1, curr_pf->fvars);
 
     if (curpstate->monitor) {
@@ -616,6 +625,14 @@ function coact(val, ce, activator, failto)
         } else if (!is:coexpr(ce))
             runerr(118, ce);
 
+        /*
+         * As in all activations, the target must have a user pframe,
+         * which it will have unless it's a freshly loaded (or exited)
+         * prog.
+         */
+        if (!CoexprBlk(ce).user_pf)
+            runerr(138, ce);
+
         if (is:null(activator)) {
             /* 
              * The target must already have an activator if we won't set it.
@@ -651,8 +668,8 @@ function coact(val, ce, activator, failto)
 end
 
 /*
- * These two operators allow binary and unary activation operations via
- * string invocation.
+ * These two operators allow binary and unary activation operations
+ * via string invocation.
  */
 
 operator @ bactivate(val, ce)
@@ -660,10 +677,14 @@ operator @ bactivate(val, ce)
        runerr(118, ce)
     body {
         struct p_frame *pf;
-        MemProtect(pf = alc_p_frame((struct b_proc *)&Bactivate_impl, 0));
+        if (!CoexprBlk(ce).user_pf)
+            runerr(138, ce);
+        MemProtect(pf = alc_p_frame((struct b_proc *)&Bcoact_impl, 0));
         push_frame((struct frame *)pf);
         pf->fvars->desc[0] = val;
         pf->fvars->desc[1] = ce;
+        pf->fvars->desc[2].dword = D_Coexpr;;
+        BlkLoc(pf->fvars->desc[2]) = (union block *)k_current;
         tail_invoke_frame((struct frame *)pf);
         return nulldesc;
     }
@@ -674,10 +695,14 @@ operator @ uactivate(ce)
        runerr(118, ce)
     body {
         struct p_frame *pf;
-        MemProtect(pf = alc_p_frame((struct b_proc *)&Bactivate_impl, 0));
+        if (!CoexprBlk(ce).user_pf)
+            runerr(138, ce);
+        MemProtect(pf = alc_p_frame((struct b_proc *)&Bcoact_impl, 0));
         push_frame((struct frame *)pf);
         pf->fvars->desc[0] = nulldesc;
         pf->fvars->desc[1] = ce;
+        pf->fvars->desc[2].dword = D_Coexpr;;
+        BlkLoc(pf->fvars->desc[2]) = (union block *)k_current;
         tail_invoke_frame((struct frame *)pf);
         return nulldesc;
     }

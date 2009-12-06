@@ -25,7 +25,7 @@ operator ^ refresh(x)
        coex->size = 0;
        coex->level = 1;
        coex->failure_label = coex->start_label = coex->base_pf->ipc = curr->start_label;
-       coex->curr_pf = coex->base_pf;
+       coex->curr_pf = coex->user_pf = coex->base_pf;
        coex->sp = (struct frame *)coex->base_pf;
        return coexpr(coex);
       }
@@ -53,7 +53,7 @@ function cocopy(x)
        coex->size = 0;
        coex->level = 1;
        coex->failure_label = coex->start_label = coex->base_pf->ipc = curr->start_label;
-       coex->curr_pf = coex->base_pf;
+       coex->curr_pf = coex->user_pf = coex->base_pf;
        coex->sp = (struct frame *)coex->base_pf;
        if (curr->base_pf->fvars) {
            dp1 = curr->base_pf->fvars->desc;

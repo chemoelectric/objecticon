@@ -717,7 +717,7 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
               (class0->init_state == Initializing &&
                ic &&                      /* No Class.get(..) := ... */
                class0->init_field &&       /* .. and must be in init() method */
-               get_current_user_proc() == &ProcBlk(*class0->init_field->field_descriptor))))
+               k_current->user_pf->proc == &ProcBlk(*class0->init_field->field_descriptor))))
     {
         lhs->dword = D_NamedVar;
         VarLoc(*lhs) = dp;

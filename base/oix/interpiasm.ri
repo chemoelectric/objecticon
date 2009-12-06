@@ -18,22 +18,6 @@ static word coact_impl_code[] = {
    Op_CFail,
 };
 CustomProc(coact_impl,coact_impl_code,4,0,0,1,0,0,"coact_impl")
-static word activate_impl_code[] = {
-   Op_Custom,
-   (word)do_coact,
-   Op_Tmp,
-   0,
-   Op_FrameVar,
-   0,
-   Op_FrameVar,
-   1,
-   (word)&activate_impl_code[12],
-   Op_CReturn,
-   Op_Tmp,
-   0,
-   Op_CFail,
-};
-CustomProc(activate_impl,activate_impl_code,2,0,0,1,0,0,"activate_impl")
 static word lang_Prog_get_event_impl_impl_code[] = {
    Op_Custom,
    (word)activate_child_prog,

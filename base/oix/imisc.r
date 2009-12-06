@@ -1,32 +1,5 @@
 #include "../h/modflags.h"
 
-    
-struct p_frame *get_current_user_frame()
-{
-    struct p_frame *pf = curr_pf;
-    while (pf->proc->program == 0)
-        pf = pf->caller;
-    return pf;
-}
-
-struct p_frame *get_current_user_frame_of(struct b_coexpr *ce)
-{
-    struct p_frame *pf = ce->curr_pf;
-    while (pf->proc->program == 0)
-        pf = pf->caller;
-    return pf;
-}
-
-struct b_proc *get_current_user_proc()
-{
-    return get_current_user_frame()->proc;
-}
-
-struct progstate *get_current_program_of(struct b_coexpr *ce)
-{
-    return get_current_user_frame_of(ce)->proc->program;
-}
-
 /*
  * Check whether the calling procedure (deduced from the stack) has
  * access to the given field of the given instance class (which is
@@ -42,7 +15,7 @@ int check_access(struct class_field *cf, struct b_class *instance_class)
     if (cf->flags & M_Public)
         return Succeeded;
 
-    caller_proc = get_current_user_proc();
+    caller_proc = k_current->user_pf->proc;
 
     if (caller_proc->package_id == 1)  /* Is the caller in lang? */
         return Succeeded;

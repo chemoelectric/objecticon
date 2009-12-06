@@ -734,6 +734,7 @@ function lang_Prog_load(s, arglist, blocksize, stringsize)
        new_pf->fvars->desc[0] = *pstate->MainProc;
        coex->sp = (struct frame *)new_pf;
        coex->base_pf = coex->curr_pf = new_pf;
+       coex->user_pf = 0;
        coex->start_label = new_pf->ipc = Bmain_wrapper.icode;
        coex->failure_label = 0;
        coex->tvalloc = 0;
@@ -1373,6 +1374,7 @@ int main(int argc, char **argv)
     }
     k_current->sp = (struct frame *)frame;
     curr_pf = k_current->curr_pf = k_current->base_pf = frame;
+    k_current->user_pf = 0;
     ipc = k_current->start_label = frame->ipc = frame->proc->icode;
 
     set_up = 1;			/* post fact that iconx is initialized */

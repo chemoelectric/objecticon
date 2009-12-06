@@ -51,6 +51,7 @@ struct errtab errtab[] = {
     {135, "cannot transmit failure to this co-expression"},
     {136, "cannot set activator to a unactivated co-expression"},
     {137, "must specify activator for an unactivated co-expression"},
+    {138, "cannot activate this co-expression"},
 
 #ifdef Graphics
     {140, "window expected"},

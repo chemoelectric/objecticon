@@ -291,7 +291,7 @@ int get_name(dptr dp1, dptr dp0)
     struct progstate *prog;
     struct p_frame *uf;
 
-    uf = get_current_user_frame();
+    uf = k_current->user_pf;
     arg1 = uf->fvars->desc;
     proc0 = uf->proc;
     /* The locals follow the args in the locals block */
@@ -540,7 +540,7 @@ static void keyref(bp, dp)
 
 static void cotrace_line(struct b_coexpr *from)
 {
-    struct p_frame *pf = get_current_user_frame_of(from);
+    struct p_frame *pf = from->user_pf;
     showline(pf);
     showlevel(k_level);
     procname(stderr, pf->proc);

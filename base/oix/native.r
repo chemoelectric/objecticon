@@ -619,7 +619,10 @@ function lang_Coexpression_get_program(ce)
        tended struct b_coexpr *b;
        if (!(b = get_coexpr_for(&ce)))
           runerr(0);
-       return coexpr(get_current_program_of(b)->K_main);
+       if (b->user_pf)
+           return coexpr(b->user_pf->proc->program->K_main);
+       else
+           fail;
    }
 end
 
@@ -1208,7 +1211,7 @@ function lang_Class_set_method(field, pr)
         if (!is:proc(pr))
             runerr(615, pr);
 
-        caller_proc = get_current_user_proc();
+        caller_proc = k_current->user_pf->proc;
         if (!caller_proc->field)
             runerr(616);
         class0 = caller_proc->field->defining_class;
@@ -1283,7 +1286,7 @@ function lang_Class_load_library(lib)
         word i;
         void *handle;
 
-        caller_proc = get_current_user_proc();
+        caller_proc = k_current->user_pf->proc;
         if (!caller_proc->field)
             runerr(616);
         class0 = caller_proc->field->defining_class;
