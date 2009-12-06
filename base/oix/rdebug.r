@@ -58,7 +58,7 @@ struct ipc_fname *frame_ipc_fname(struct p_frame *pf, int prior)
 /*
  * traceback - print a trace of procedure calls.
  */
-void traceback()
+void traceback0()
 {
     int i, depth;
     struct p_frame *f;
@@ -97,6 +97,85 @@ void traceback()
         tmp.dword = D_Proc;
         BlkLoc(tmp) = (union block *)fa[i]->proc;
         trace_frame(fa[i]);
+    }
+
+    ttrace();
+}
+
+struct frame_chain {
+   struct p_frame *frame;
+   struct frame_chain *next;
+};
+
+struct act_chain {
+   struct b_coexpr *coex;
+   struct frame_chain *frames;
+   int nframes;
+   struct act_chain *next;
+};
+
+static int in_act_chain(struct act_chain *head, struct b_coexpr *ce)
+{
+    while (head) {
+        if (head->coex == ce)
+            return 1;
+        head = head->next;
+    }
+    return 0;
+}
+
+void traceback()
+{
+    struct act_chain *head = 0, *ae;
+    struct frame_chain *fe;
+    struct b_coexpr *ce = k_current;
+    int depth = 0;
+
+    while (!in_act_chain(head, ce)) {
+        struct p_frame *pf;
+        MemProtect(ae = malloc(sizeof(struct act_chain)));
+        ae->coex = ce;
+        ae->frames = 0;
+        ae->next = head;
+        ae->nframes = 0;
+        head = ae;
+        for (pf = ce->curr_pf; pf; pf = pf->caller) {
+            if (pf->proc->program) {
+                MemProtect(fe = malloc(sizeof(struct frame_chain)));
+                fe->frame = pf;
+                fe->next = ae->frames;
+                ae->frames = fe;
+                ++ae->nframes;
+                ++depth;
+            }
+        }
+        ce = ce->activator;
+    }
+
+    if (depth == 0)
+        return;
+
+    for (ae = head; ae; ae = ae->next) {
+        if (depth - LIMIT >= ae->nframes) {
+            /* Skip entirely */
+            depth -= ae->nframes;
+        } else {
+            /* Print full or partial */
+            fprintf(stderr,"co-expression#%ld activated by co-expression#%ld\n", 
+                    (long)ae->coex->id, (long)ae->coex->activator->id);
+            if (depth > LIMIT) {
+                if (depth == LIMIT + 1)
+                    depth = LIMIT;  /* Avoid printing "1 call omitted" */
+                else
+                    fprintf(stderr, "   ... %d calls omitted\n", depth - LIMIT);
+            }
+
+            for (fe = ae->frames; fe; fe = fe->next) {
+                if (depth <= LIMIT)
+                    trace_frame(fe->frame);
+                depth--;
+            }
+        }
     }
 
     ttrace();
