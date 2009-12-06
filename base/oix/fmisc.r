@@ -117,46 +117,6 @@ function copy(x)
 end
 
 
-"display(i) - display local variables of i most recent"
-" procedure activations, plus global variables."
-
-function display(i,c)
-
-   if !def:C_integer(i,(C_integer)k_level) then
-      runerr(101, i)
-
-   body {
-      struct b_coexpr *ce = NULL;
-
-      if (!is:null(c)) {
-         if (!is:coexpr(c)) runerr(118,c);
-         else if (&CoexprBlk(c) != k_current)
-            ce = &CoexprBlk(c);
-      }
-
-       /*
-        * Produce error if i is negative; constrain i to be <= &level.
-        */
-       if (i < 0) {
-           irunerr(205, i);
-           errorfail;
-       }
-       else if (i > k_level)
-           i = k_level;
-
-       fprintf(stderr,"co-expression#%ld(%ld)\n\n",
-               (long)k_current->id,
-               (long)k_current->size);
-       fflush(stderr);
-       if (ce)
-           xdisp(ce->curr_pf, i, stderr, ce->user_pf->proc->program);
-       else
-           xdisp(k_current->curr_pf, i, stderr, curpstate);
-       return nulldesc;
-   }
-end
-
-
 "errorclear() - clear error condition."
 
 function errorclear()

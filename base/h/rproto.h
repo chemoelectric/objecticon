@@ -513,8 +513,7 @@ void trace_cofail(struct b_coexpr *from, struct b_coexpr *to);
    int	invoke_0		(int nargs, dptr *cargs, int *n);
    int	invoke_1		(int nargs, dptr *cargs, int *n);
 
-void xdisp(struct p_frame *pf, int count, FILE *f, struct progstate *p);
-
+void xdisp(struct b_coexpr *ce, int count, FILE *f);
 
 void create_list(uword nslots, dptr d);
 struct b_lelem *get_lelem_for_index(struct b_list *bp, word i, word *pos);

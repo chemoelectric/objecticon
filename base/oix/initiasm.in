@@ -15,6 +15,6 @@ $start main_wrapper
 # the exited flag, or fall through and exit.
 #
 MainExit:
-    Op_Custom c:handle_monitored_prog_exit
+    Op_Custom c:handle_prog_exit
     Op_Exit
 $end

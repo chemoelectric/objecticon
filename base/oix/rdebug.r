@@ -965,20 +965,33 @@ void return_trace(struct p_frame *pf)
  *  procedure calls to file f.
  */
 
-void xdisp(struct p_frame *pf,
-           int count,
-           FILE *f,
-           struct progstate *p)
+void xdisp(struct b_coexpr *ce, int count, FILE *f)
 {
     dptr *np;
     int n;
     struct b_proc *bp;
     word nglobals;
     dptr dp;
+    struct p_frame *pf;
+    struct progstate *p;
 
-    while (count--) {		/* go back through 'count' frames */
-        if (pf == NULL)
-            break;       /* needed because &level is wrong in co-expressions */
+    fprintf(f,"co-expression#%ld(%ld)\n\n", (long)ce->id, (long)ce->size);
+    pf = ce->curr_pf;
+
+    /* The user_pf will be null on a termination dump (see init.r) */
+    if (ce->user_pf)
+        p = ce->user_pf->proc->program;
+    else if (ce->main_of)
+        p = ce->main_of;
+    else
+        p = curpstate;
+
+    while (count && pf) {
+        if (!pf->proc->program) {
+            /* Skip any non-user procedures on the stack */
+            pf = pf->caller;
+            continue;
+        }
 
         bp = pf->proc;   /* get addr of procedure block */
 
@@ -1027,6 +1040,7 @@ void xdisp(struct p_frame *pf,
             np++;
         }
 
+        --count;
         pf = pf->caller;
     }
 

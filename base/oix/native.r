@@ -658,6 +658,19 @@ function lang_Coexpression_is_main(ce)
    }
 end
 
+function display(i, ce)
+   if !def:C_integer(i, -1) then
+      runerr(101, i)
+   body {
+      struct b_coexpr *b;
+      if (!(b = get_coexpr_for(&ce)))
+          runerr(0);
+       xdisp(b, i, stderr);
+       return nulldesc;
+   }
+end
+
+
 function lang_Prog_get_runtime_millis(c)
    body {
        struct progstate *prog;

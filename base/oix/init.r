@@ -12,7 +12,7 @@ static FILE    *readhdr	(char *name, struct header *hdr);
 static void    initptrs (struct progstate *p, struct header *h);
 static void    initprogstate(struct progstate *p);
 static void    initalloc(struct progstate *p);
-static void    handle_monitored_prog_exit();
+static void    handle_prog_exit();
 static void    relocate_code(struct progstate *ps, word *c);
 
 /*
@@ -443,11 +443,7 @@ void c_exit(i)
     if (k_dump && set_up) {
         fprintf(stderr,"\nTermination dump:\n\n");
         fflush(stderr);
-        fprintf(stderr,"co-expression #%ld(%ld)\n",
-                (long)k_current->id,
-                (long)k_current->size);
-        fflush(stderr);
-        xdisp(k_current->curr_pf,k_level,stderr, curpstate);
+        xdisp(k_current, -1, stderr);
     }
 
 #ifdef MSWindows
@@ -619,13 +615,12 @@ static void initptrs(struct progstate *p, struct header *h)
 
 #include "initiasm.ri"
 
-static void handle_monitored_prog_exit()
+static void handle_prog_exit()
 {
     curpstate->exited = 1;
-    /* 
-     * Decide whether the prog was run via activating its main coexpression,
-     * or via the get_event function.
-     */
+    /* We no longer have a user frame, so clear the user_pf field */
+    k_current->user_pf = 0;
+    /* If we have a monitor, switch back to it */
     if (curpstate->monitor)
         set_curpstate(curpstate->monitor);
 }

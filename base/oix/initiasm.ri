@@ -9,7 +9,7 @@ static word main_wrapper_code[] = {
    Op_FrameVar,
    1,
    Op_Custom,
-   (word)handle_monitored_prog_exit,
+   (word)handle_prog_exit,
    Op_Exit,
 };
 CustomProc(main_wrapper,main_wrapper_code,2,0,1,0,0,0,"main_wrapper")
