@@ -23,10 +23,10 @@ static struct ir_info *loop_stack;
 
 static int augop(int n);
 static void print_ir_var(struct ir_var *v);
-static void optimize_goto();
+static void optimize_goto(void);
 static void optimize_goto1(int i);
-static void renumber_ir();
-static int get_extra_chunk();
+static void renumber_ir(void);
+static int get_extra_chunk(void);
 static struct ir_var *make_tmp(struct ir_stack *st);
 static int make_tmploc(struct ir_stack *st);
 static int make_mark(struct ir_stack *st);

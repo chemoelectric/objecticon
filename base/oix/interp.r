@@ -1,11 +1,23 @@
 #include "../h/opdefs.h"
 #include "../h/opnames.h"
 
-static void coact_ex();
-static void get_child_prog_result();
-static void activate_child_prog();
-static void do_cofail();
-static void do_coact();
+static void coact_ex(void);
+static void get_child_prog_result(void);
+static void activate_child_prog(void);
+static void do_cofail(void);
+static void do_coact(void);
+static void do_op(int nargs);
+static void do_opclo(int nargs);
+static void do_keyop(void);
+static void do_keyclo(void);
+static void do_makelist(void);
+static void do_create(void);
+static void do_coret(void);
+static void coact_ex(void);
+static void do_limit(void);
+static void do_scansave(void);
+static void pop_from_prog_event_queue(struct progstate *prog, dptr res);
+
 
 #include "interpiasm.ri"
 

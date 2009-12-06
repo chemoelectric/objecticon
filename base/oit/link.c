@@ -19,7 +19,7 @@
  * Prototype.
  */
 
-static void check_unused_imports();
+static void check_unused_imports(void);
 
 
 /*

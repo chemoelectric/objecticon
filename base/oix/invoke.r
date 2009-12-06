@@ -6,17 +6,17 @@
 #include "../h/modflags.h"
 
 static struct frame *push_frame_for_proc(struct b_proc *bp, int argc, dptr args, dptr self);
-static void ensure_class_initialized();
+static void ensure_class_initialized(void);
 
-static void simple_access();
-static void create_raw_object();
-static void handle_access_failure();
+static void simple_access(void);
+static void create_raw_object(void);
+static void handle_access_failure(void);
 static void skip_args(int argc, dptr args);
-static void set_class_state();
-static void check_if_uninitialized();
-static void for_class_supers();
-static void set_object_state();
-static void invoke_class_init();
+static void set_class_state(void);
+static void check_if_uninitialized(void);
+static void for_class_supers(void);
+static void set_object_state(void);
+static void invoke_class_init(void);
 
 
 #include "invokeiasm.ri"

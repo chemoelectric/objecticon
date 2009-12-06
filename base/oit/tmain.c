@@ -141,7 +141,7 @@ static void report_errors(int f)
 }
 
 static int ldbg(int argc, char **argv);
-static void init_strings();
+static void init_strings(void);
 
 
 /*

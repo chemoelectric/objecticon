@@ -130,7 +130,7 @@ word		mul		(word a,word b);
 word		neg		(word a);
 int		numcmp		(dptr dp1,dptr dp2,dptr dp3);
 void		outimage	(FILE *f,dptr dp,int noimage);
-longlong        physicalmemorysize();
+longlong        physicalmemorysize(void);
 word		prescan		(dptr d);
 int		putstr		(FILE *f,dptr d);
 int    		 radix		(int sign, register int r, register char *s,
@@ -144,7 +144,7 @@ void		syserr		(char *fmt, ...);
 void		xmfree		(void);
 
 void	resolve			(struct progstate *pstate);
-void showcurrstack();
+void showcurrstack(void);
 void showstack(struct b_coexpr *c);
 
 char *cstr(struct descrip *sd);
@@ -380,7 +380,7 @@ int writeJPEG(wbp w, char *filename, int x, int y, int width, int height);
       HDC CreatePixDC		(wbp, HDC);
       HBITMAP loadimage	(wbp wb, char *filename, unsigned int *width,
       			unsigned int *height, int atorigin, int *status);
-      void wfreersc();
+      void wfreersc(void);
       int getdepth(wbp w);
       HBITMAP CreateBitmapFromData(char *data);
       int resizePixmap(wbp w, int width, int height);
@@ -410,10 +410,10 @@ struct b_record *alcrecd_0	(struct b_constructor *con);
 struct b_record *alcrecd_1	(struct b_constructor *con);
 struct b_object *alcobject_0	(struct b_class *class);
 struct b_object *alcobject_1	(struct b_class *class);
-struct b_cast   *alccast_0      ();
-struct b_cast   *alccast_1      ();
-struct b_methp  *alcmethp_0     ();
-struct b_methp  *alcmethp_1     ();
+struct b_cast   *alccast_0      (void);
+struct b_cast   *alccast_1      (void);
+struct b_methp  *alcmethp_0     (void);
+struct b_methp  *alcmethp_1     (void);
 struct b_ucs    *alcucs_0     (int n);
 struct b_ucs    *alcucs_1     (int n);
 struct b_tvsubs *alcsubs_0	(word len,word pos,dptr var);
@@ -531,7 +531,7 @@ int stringint_str2int(stringint * sip, char *s);
 char *stringint_int2str(stringint * sip, int i);
 stringint *stringint_lookup(stringint *sip, char *s);
 char *lookup_err_msg(int n);
-void errno2why();
+void errno2why(void);
 dptr c_get_instance_data(dptr x, dptr fname, struct inline_field_cache *ic);
 int c_is(dptr x, dptr cname, struct inline_global_cache *ic);
 void why(char *s);
@@ -556,9 +556,9 @@ long	millisec	(void);
 /* Debug func. */
 char* dword2str(dptr d);
 char *binstr(unsigned int n);
-void show_regions();
-void *get_csp();
-void checkstack();
+void show_regions(void);
+void *get_csp(void);
+void checkstack(void);
 
 struct p_frame *alc_p_frame(struct b_proc *pb, struct frame_vars *dynamics);
 struct c_frame *alc_c_frame(struct b_proc *pb, int nargs);
@@ -567,23 +567,23 @@ void free_frame(struct frame *f);
 
 void push_frame(struct frame *f);
 void push_p_frame(struct p_frame *f);
-void interp();
-dptr get_dptr();
+void interp(void);
+dptr get_dptr(void);
 void get_descrip(dptr dest);
 void get_deref(dptr dest);
 void get_variable(dptr dest);
 void pop_to(struct frame *f);
-void do_apply();
-void do_invoke();
-void do_applyf();
-void do_invokef();
+void do_apply(void);
+void do_invoke(void);
+void do_applyf(void);
+void do_invokef(void);
 word get_offset(word *w);
-void do_ensure_class_init();
+void do_ensure_class_init(void);
 void tail_invoke_frame(struct frame *f);
 dptr get_element(dptr d, word i);
-void do_field();
-struct inline_field_cache *get_inline_field_cache();
-void traceback();
+void do_field(void);
+struct inline_field_cache *get_inline_field_cache(void);
+void traceback(void);
 struct ipc_line *frame_ipc_line(struct p_frame *pf, int prior);
 struct ipc_fname *frame_ipc_fname(struct p_frame *pf, int prior);
 void switch_to(struct b_coexpr *ce);
@@ -606,7 +606,7 @@ struct b_proc *clone_b_proc(struct b_proc *bp);
 
 void set_curpstate(struct progstate *p);
 void set_curr_pf(struct p_frame *x);
-void synch_ipc();
+void synch_ipc(void);
 
 
 

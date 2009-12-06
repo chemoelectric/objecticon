@@ -12,7 +12,7 @@ static FILE    *readhdr	(char *name, struct header *hdr);
 static void    initptrs (struct progstate *p, struct header *h);
 static void    initprogstate(struct progstate *p);
 static void    initalloc(struct progstate *p);
-static void    handle_prog_exit();
+static void    handle_prog_exit(void);
 static void    relocate_code(struct progstate *ps, word *c);
 
 /*

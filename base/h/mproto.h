@@ -28,9 +28,9 @@ void    append_n        (struct str_buf *sbuf, char *s, int n);
 char    *intern(char *s);
 char    *intern_n(char *s, int n);
 char    *join(char *s, ...);
-struct str_buf *get_sbuf();
+struct str_buf *get_sbuf(void);
 void    rel_sbuf(struct str_buf *sbuf);
-void    clear_local_sbufs();
+void    clear_local_sbufs(void);
 
 int	getopt		(int argc, char * const argv[], const char *optstring);
 

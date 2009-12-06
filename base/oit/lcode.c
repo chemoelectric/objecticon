@@ -53,9 +53,9 @@ static int      nalign(int n);
 static void	align		(void);
 static void labout(int i, char *desc);
 static void	flushcode	(void);
-static void	lemitproc       ();
-static void	lemitcode       ();
-static void	patchrefs       ();
+static void	lemitproc       (void);
+static void	lemitcode       (void);
+static void	patchrefs       (void);
 static void     lemitcon(struct centry *ce);
 static void outword(word oword);
 static struct centry *inst_sdescrip(char *s);
@@ -69,11 +69,11 @@ codeb = (char *) expand_table(codeb, &codep, &maxcode, 1,                   \
                           (n), "code buffer");
 
 
-static void writescript();
+static void writescript(void);
 static word cnv_op(int n);
 static void gentables(void);
-static void synch_file();
-static void synch_line();
+static void synch_file(void);
+static void synch_line(void);
 static void *expand_table(void * table,      /* table to be realloc()ed */
                           void * tblfree,    /* reference to table free pointer if there is one */
                           size_t *size, /* size of table */
@@ -284,7 +284,7 @@ static struct strconst *inst_strconst(char *s, int len)
 }
 
 static void gencode_func(struct lfunction *f);
-static void gencode();
+static void gencode(void);
 
 void generate_code()
 {

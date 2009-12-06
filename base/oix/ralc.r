@@ -8,7 +8,7 @@
  */
 static struct region *findgap	(struct region *curr, word nbytes);
 static struct region *newregion	(word nbytes, word stdsize);
-static void check_stack_usage();
+static void check_stack_usage(void);
 
 
 /*

@@ -10,7 +10,7 @@
  */
 static void postqual		(dptr dp);
 static void markptr		(union block **ptr);
-static void sweep_tended	();
+static void sweep_tended	(void);
 static void reclaim		(void);
 static void scollect		(void);
 static int  qlcmp		(dptr  *q1,dptr  *q2);

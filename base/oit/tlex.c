@@ -12,7 +12,7 @@
 #include "ipp.h"
 
 /* Used by auto-generated func in ../common/lextab.h */
-static  int nextchar();
+static  int nextchar(void);
 static void lexfatal(char *fmt, ...);
 
 #include "lexdef.h"
