@@ -489,7 +489,7 @@ static void do_coact()
 
     lhs = get_dptr();
 
-    get_descrip(&arg1);   /* Value */
+    get_variable(&arg1);   /* Value */
     get_deref(&arg2);     /* Coexp */
     failure_label = GetAddr;
     if (!is:coexpr(arg2)) {
@@ -531,7 +531,7 @@ static void do_coact()
 static void do_coret()
 {
     tended struct descrip val;
-    get_descrip(&val);
+    get_variable(&val);
 
     if (get_current_user_frame_of(k_current->activator)->fvars != curr_pf->fvars)
         retderef(&val, curr_pf->fvars);
@@ -583,16 +583,22 @@ static void coact_ex()
     dptr lhs;
     tended struct descrip arg1, arg2, arg3, arg4;
     word *failure_label;
+    struct p_frame *upf;
 
     lhs = get_dptr();
-    get_descrip(&arg1);   /* Value */
+    get_descrip(&arg1);   /* Value - may already be a variable in a framevar, so use
+                           * get_descrip() instead of get_variable(). */
     get_deref(&arg2);     /* Coexp */
     get_deref(&arg3);     /* Activator */
     get_deref(&arg4);     /* Fail-to flag */
     failure_label = GetAddr;
 
-    if (get_current_user_frame_of(&CoexprBlk(arg2))->fvars != curr_pf->fvars)
-        retderef(&arg1, curr_pf->fvars);
+    /* Dereference against the calling user frame, since arg1 is potentially a variable
+     * from that frame, rather than curr_pf
+     */
+    upf = get_current_user_frame();
+    if (get_current_user_frame_of(&CoexprBlk(arg2))->fvars != upf->fvars)
+        retderef(&arg1, upf->fvars);
 
     if (curpstate->monitor) {
         if (is:null(arg4))
@@ -624,7 +630,7 @@ static void coact_ex()
     }
 }
 
-function coact(val, ce, activator, failto)
+function coact(underef val, ce, activator, failto)
     body {
         struct p_frame *pf;
 
@@ -684,7 +690,7 @@ end
  * via string invocation.
  */
 
-operator @ bactivate(val, ce)
+operator @ bactivate(underef val, ce)
     if !is:coexpr(ce) then
        runerr(118, ce)
     body {
@@ -774,7 +780,7 @@ void interp()
         }
         curr_pf->curr_inst = ipc;
         curr_op = GetWord;
-        /*printf("ipc=%p(%d) curr_op=%d (%s)\n", ipc,get_offset(ipc),(int)curr_op, op_names[curr_op]);fflush(stdout);*/
+
         switch (curr_op) {
             case Op_Goto: {
                 word *w = GetAddr;
