@@ -54,54 +54,6 @@ struct ipc_fname *frame_ipc_fname(struct p_frame *pf, int prior)
         return find_ipc_fname(pf->ipc, pf->proc->program);
 }
 
-
-/*
- * traceback - print a trace of procedure calls.
- */
-void traceback0()
-{
-    int i, depth;
-    struct p_frame *f;
-    struct p_frame **fa;
-
-    depth = 0;
-    for (f = curr_pf; f; f = f->caller) {
-        if (f->proc->program)
-            ++depth;
-    }
-
-    if (depth == 0)
-        return;
-
-    /* 
-     * We test for LIMIT + 1 calls to avoid printing "1 calls omitted".
-     */
-    if (depth > LIMIT + 1) {
-        fprintf(stderr, "   ... %d calls omitted\n", depth-LIMIT);
-        depth = LIMIT;
-    }
-
-    MemProtect(fa = malloc(depth * sizeof(struct p_frame *)));
-
-    i = depth - 1;
-    for (f = curr_pf; f; f = f->caller) {
-        if (f->proc->program) {
-            fa[i--] = f;
-            if (i < 0)
-                break;
-        }
-    }
-
-    for (i = 0; i < depth; ++i) {
-        struct descrip tmp;
-        tmp.dword = D_Proc;
-        BlkLoc(tmp) = (union block *)fa[i]->proc;
-        trace_frame(fa[i]);
-    }
-
-    ttrace();
-}
-
 struct frame_chain {
    struct p_frame *frame;
    struct frame_chain *next;
@@ -291,7 +243,7 @@ int get_name(dptr dp1, dptr dp0)
     struct progstate *prog;
     struct p_frame *uf;
 
-    uf = k_current->user_pf;
+    uf = get_current_user_frame();
     arg1 = uf->fvars->desc;
     proc0 = uf->proc;
     /* The locals follow the args in the locals block */
@@ -540,7 +492,7 @@ static void keyref(bp, dp)
 
 static void cotrace_line(struct b_coexpr *from)
 {
-    struct p_frame *pf = from->user_pf;
+    struct p_frame *pf = get_current_user_frame_of(from);
     showline(pf);
     showlevel(k_level);
     procname(stderr, pf->proc);
@@ -972,15 +924,16 @@ void xdisp(struct b_coexpr *ce, int count, FILE *f)
     struct b_proc *bp;
     word nglobals;
     dptr dp;
-    struct p_frame *pf;
+    struct p_frame *pf, *upf;
     struct progstate *p;
 
     fprintf(f,"co-expression#%ld(%ld)\n\n", (long)ce->id, (long)ce->size);
     pf = ce->curr_pf;
 
-    /* The user_pf will be null on a termination dump (see init.r) */
-    if (ce->user_pf)
-        p = ce->user_pf->proc->program;
+    /* The user pf will be null on a termination dump */
+    upf = get_current_user_frame_of(ce);
+    if (upf)
+        p = upf->proc->program;
     else if (ce->main_of)
         p = ce->main_of;
     else

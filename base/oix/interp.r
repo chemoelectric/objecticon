@@ -53,7 +53,7 @@ void set_curpstate(struct progstate *p)
 void switch_to(struct b_coexpr *ce)
 {
     curr_pf->ipc = ipc;
-    curpstate = ce->user_pf->proc->program;
+    curpstate = get_current_program_of(ce);
     k_current = curpstate->K_current = ce;
     curr_pf = k_current->curr_pf;
     ipc = curr_pf->ipc;
@@ -72,18 +72,6 @@ void set_curr_pf(struct p_frame *pf)
         curpstate = p;
     }
     curr_pf = k_current->curr_pf = pf;
-    for (;;) {
-        if (p) {
-            k_current->user_pf = pf;
-            break;
-        }
-        pf = pf->caller;
-        if (!pf) {
-            k_current->user_pf = 0;
-            break;
-        }
-        p = pf->proc->program;
-    }
     ipc = curr_pf->ipc;
 }
 
@@ -485,7 +473,7 @@ static void do_create()
     coex->size = 0;
     coex->level = 1;
     coex->failure_label = coex->start_label = coex->base_pf->ipc = start_label;
-    coex->curr_pf = coex->user_pf = coex->base_pf;
+    coex->curr_pf = coex->base_pf;
     coex->sp = (struct frame *)coex->base_pf;
     lhs->dword = D_Coexpr;
     BlkLoc(*lhs) = (union block *)coex;
@@ -497,6 +485,7 @@ static void do_coact()
     dptr lhs;
     tended struct descrip arg1, arg2;
     word *failure_label;
+    struct p_frame *pf;
 
     lhs = get_dptr();
 
@@ -510,7 +499,8 @@ static void do_coact()
         ipc = failure_label;
         return;
     }
-    if (!CoexprBlk(arg2).user_pf) {
+    pf = get_current_user_frame_of(&CoexprBlk(arg2));
+    if (!pf) {
         xargp = &arg1;
         xexpr = &arg2;
         err_msg(138, &arg2);
@@ -518,7 +508,7 @@ static void do_coact()
         return;
     }
 
-    if (CoexprBlk(arg2).user_pf->fvars != curr_pf->fvars)
+    if (pf->fvars != curr_pf->fvars)
         retderef(&arg1, curr_pf->fvars);
 
     EVValD(&arg2, E_Coact);
@@ -543,7 +533,7 @@ static void do_coret()
     tended struct descrip val;
     get_descrip(&val);
 
-    if (k_current->activator->user_pf->fvars != curr_pf->fvars)
+    if (get_current_user_frame_of(k_current->activator)->fvars != curr_pf->fvars)
         retderef(&val, curr_pf->fvars);
 
     Desc_EVValD(k_current->activator, E_Coret, D_Coexpr);
@@ -601,7 +591,7 @@ static void coact_ex()
     get_deref(&arg4);     /* Fail-to flag */
     failure_label = GetAddr;
 
-    if (CoexprBlk(arg2).user_pf->fvars != curr_pf->fvars)
+    if (get_current_user_frame_of(&CoexprBlk(arg2))->fvars != curr_pf->fvars)
         retderef(&arg1, curr_pf->fvars);
 
     if (curpstate->monitor) {
@@ -652,7 +642,7 @@ function coact(val, ce, activator, failto)
          * which it will have unless it's a freshly loaded (or exited)
          * prog.
          */
-        if (!CoexprBlk(ce).user_pf)
+        if (!get_current_user_frame_of(&CoexprBlk(ce)))
             runerr(138, ce);
 
         if (is:null(activator)) {
@@ -699,7 +689,7 @@ operator @ bactivate(val, ce)
        runerr(118, ce)
     body {
         struct p_frame *pf;
-        if (!CoexprBlk(ce).user_pf)
+        if (!get_current_user_frame_of(&CoexprBlk(ce)))
             runerr(138, ce);
         MemProtect(pf = alc_p_frame((struct b_proc *)&Bcoact_impl, 0));
         push_frame((struct frame *)pf);
@@ -717,7 +707,7 @@ operator @ uactivate(ce)
        runerr(118, ce)
     body {
         struct p_frame *pf;
-        if (!CoexprBlk(ce).user_pf)
+        if (!get_current_user_frame_of(&CoexprBlk(ce)))
             runerr(138, ce);
         MemProtect(pf = alc_p_frame((struct b_proc *)&Bcoact_impl, 0));
         push_frame((struct frame *)pf);

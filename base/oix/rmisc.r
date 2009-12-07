@@ -142,11 +142,11 @@ int getvar(dptr s, dptr vp, struct progstate *p)
 
     /*
      *  The first if test here checks whether or not we have a
-     *  user_pf.  We won't if this is a newly loaded program that
+     *  user pframe.  We won't if this is a newly loaded program that
      *  hasn't been started yet.  In that case, we have no local
      *  variables yet.
      */
-    pf = p->K_current->user_pf;
+    pf = get_current_user_frame_of(p->K_current);
     if (pf) {
         struct b_proc *bp;
         dptr *np;
