@@ -71,9 +71,19 @@ void set_curr_pf(struct p_frame *pf)
         p->K_current = k_current;
         curpstate = p;
     }
-    if (p)
-        k_current->user_pf = pf;
     curr_pf = k_current->curr_pf = pf;
+    for (;;) {
+        if (p) {
+            k_current->user_pf = pf;
+            break;
+        }
+        pf = pf->caller;
+        if (!pf) {
+            k_current->user_pf = 0;
+            break;
+        }
+        p = pf->proc->program;
+    }
     ipc = curr_pf->ipc;
 }
 

@@ -610,8 +610,6 @@ static void initptrs(struct progstate *p, struct header *h)
 static void handle_prog_exit()
 {
     curpstate->exited = 1;
-    /* We no longer have a user frame, so clear the user_pf field */
-    k_current->user_pf = 0;
     /* If we have a monitor, switch back to it */
     if (curpstate->monitor)
         set_curpstate(curpstate->monitor);
