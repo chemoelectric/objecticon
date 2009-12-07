@@ -256,7 +256,7 @@ void get_deref(dptr dest)
         }
 
         default: {
-            syserr("Invalid opcode in get_descrip: %d (%s)\n", op, op_names[op]);
+            syserr("Invalid opcode in get_deref: %d (%s)\n", op, op_names[op]);
         }
     }
 }
