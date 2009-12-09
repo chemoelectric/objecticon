@@ -85,87 +85,87 @@ struct toktab *restab[] = {
  */
 
 struct optab optab[] = {
-   {{"!",      BANG,       Beginner}, Unary,          NULL, NULL}, /* 0 */
-   {{"%",      MOD,        0},        Binary,         NULL, NULL}, /* 1 */
-   {{"%:=",    AUGMOD,     0},        0,              NULL, NULL}, /* 2 */
-   {{"&",      AND,        Beginner}, Binary,         NULL, NULL}, /* 3 */
-   {{"&:=",    AUGAND,     0},        0,              NULL, NULL}, /* 4 */
-   {{"*",      STAR,       Beginner}, Unary | Binary, NULL, NULL}, /* 5 */
-   {{"*:=",    AUGSTAR,    0},        0,              NULL, NULL}, /* 6 */
-   {{"**",     INTER,      Beginner}, Binary,         NULL, NULL}, /* 7 */
-   {{"**:=",   AUGINTER,   0},        0,              NULL, NULL}, /* 8 */
-   {{"+",      PLUS,       Beginner}, Unary | Binary, NULL, NULL}, /* 9 */
-   {{"+:=",    AUGPLUS,    0},        0,              NULL, NULL}, /* 10 */
-   {{"++",     UNION,      Beginner}, Binary,         NULL, NULL}, /* 11 */
-   {{"++:=",   AUGUNION,   0},        0,              NULL, NULL}, /* 12 */
-   {{"-",      MINUS,      Beginner}, Unary | Binary, NULL, NULL}, /* 13 */
-   {{"-:=",    AUGMINUS,   0},        0,              NULL, NULL}, /* 14 */
-   {{"--",     DIFF,       Beginner}, Binary,         NULL, NULL}, /* 15 */
-   {{"--:=",   AUGDIFF,    0},        0,              NULL, NULL}, /* 16 */
-   {{".",      DOT,        Beginner}, Unary,          NULL, NULL}, /* 17 */
-   {{"/",      SLASH,      Beginner}, Unary | Binary, NULL, NULL}, /* 18 */
-   {{"/:=",    AUGSLASH,   0},        0,              NULL, NULL}, /* 19 */
-   {{":=",     ASSIGN,     0},        Binary,         NULL, NULL}, /* 20 */
-   {{":=:",    SWAP,       0},        Binary,         NULL, NULL}, /* 21 */
-   {{"<",      NMLT,       0},        Binary,         NULL, NULL}, /* 22 */
-   {{"<:=",    AUGNMLT,    0},        0,              NULL, NULL}, /* 23 */
-   {{"<-",     REVASSIGN,  0},        Binary,         NULL, NULL}, /* 24 */
-   {{"<->",    REVSWAP,    0},        Binary,         NULL, NULL}, /* 25 */
-   {{"<<",     SLT,        0},        Binary,         NULL, NULL}, /* 26 */
-   {{"<<:=",   AUGSLT,     0},        0,              NULL, NULL}, /* 27 */
-   {{"<<=",    SLE,        0},        Binary,         NULL, NULL}, /* 28 */
-   {{"<<=:=",  AUGSLE,     0},        0,              NULL, NULL}, /* 29 */
-   {{"<=",     NMLE,       0},        Binary,         NULL, NULL}, /* 30 */
-   {{"<=:=",   AUGNMLE,    0},        0,              NULL, NULL}, /* 31 */
-   {{"=",      NMEQ,       Beginner}, Unary | Binary, NULL, NULL}, /* 32 */
-   {{"=:=",    AUGNMEQ,    0},        0,              NULL, NULL}, /* 33 */
-   {{"==",     SEQ,        Beginner}, Binary,         NULL, NULL}, /* 34 */
-   {{"==:=",   AUGSEQ,     0},        0,              NULL, NULL}, /* 35 */
-   {{"===",    EQUIV,      Beginner}, Binary,         NULL, NULL}, /* 36 */
-   {{"===:=",  AUGEQUIV,   0},        0,              NULL, NULL}, /* 37 */
-   {{">",      NMGT,       0},        Binary,         NULL, NULL}, /* 38 */
-   {{">:=",    AUGNMGT,    0},        0,              NULL, NULL}, /* 39 */
-   {{">=",     NMGE,       0},        Binary,         NULL, NULL}, /* 40 */
-   {{">=:=",   AUGNMGE,    0},        0,              NULL, NULL}, /* 41 */
-   {{">>",     SGT,        0},        Binary,         NULL, NULL}, /* 42 */
-   {{">>:=",   AUGSGT,     0},        0,              NULL, NULL}, /* 43 */
-   {{">>=",    SGE,        0},        Binary,         NULL, NULL}, /* 44 */
-   {{">>=:=",  AUGSGE,     0},        0,              NULL, NULL}, /* 45 */
-   {{"?",      QMARK,      Beginner}, Unary,          NULL, NULL}, /* 46 */
-   {{"?:=",    AUGQMARK,   0},        0,              NULL, NULL}, /* 47 */
-   {{"@",      AT,         Beginner}, 0,              NULL, NULL}, /* 48 */
-   {{"@:=",    AUGAT,      0},        0,              NULL, NULL}, /* 49 */
-   {{"\\",     BACKSLASH,  Beginner}, Unary,          NULL, NULL}, /* 50 */
-   {{"^",      CARET,      Beginner}, Unary | Binary, NULL, NULL}, /* 51 */
-   {{"^:=",    AUGCARET,   0},        0,              NULL, NULL}, /* 52 */
-   {{"|",      BAR,        Beginner}, 0,              NULL, NULL}, /* 53 */
-   {{"||",     CONCAT,     Beginner}, Binary,         NULL, NULL}, /* 54 */
-   {{"||:=",   AUGCONCAT,  0},        0,              NULL, NULL}, /* 55 */
-   {{"|||",    LCONCAT,    Beginner}, Binary,         NULL, NULL}, /* 56 */
-   {{"|||:=",  AUGLCONCAT, 0},        0,              NULL, NULL}, /* 57 */
-   {{"~",      TILDE,      Beginner}, Unary,          NULL, NULL}, /* 58 */
-   {{"~=",     NMNE,       Beginner}, Binary,         NULL, NULL}, /* 59 */
-   {{"~=:=",   AUGNMNE,    0},        0,              NULL, NULL}, /* 60 */
-   {{"~==",    SNE,        Beginner}, Binary,         NULL, NULL}, /* 61 */
-   {{"~==:=",  AUGSNE,     0},        0,              NULL, NULL}, /* 62 */
-   {{"~===",   NEQUIV,     Beginner}, Binary,         NULL, NULL}, /* 63 */
-   {{"~===:=", AUGNEQUIV,  0},        0,              NULL, NULL}, /* 64 */
-   {{"(",      LPAREN,     Beginner}, 0,              NULL, NULL}, /* 65 */
-   {{")",      RPAREN,     Ender},    0,              NULL, NULL}, /* 66 */
-   {{"+:",     PCOLON,     0},        0,              NULL, NULL}, /* 67 */
-   {{",",      COMMA,      0},        0,              NULL, NULL}, /* 68 */
-   {{"-:",     MCOLON,     0},        0,              NULL, NULL}, /* 69 */
-   {{":",      COLON,      0},        0,              NULL, NULL}, /* 70 */
-   {{";",      SEMICOL,    0},        0,              NULL, NULL}, /* 71 */
-   {{"[",      LBRACK,     Beginner}, 0,              NULL, NULL}, /* 72 */
-   {{"]",      RBRACK,     Ender},    0,              NULL, NULL}, /* 73 */
-   {{"{",      LBRACE,     Beginner}, 0,              NULL, NULL}, /* 74 */
-   {{"}",      RBRACE,     Ender},    0,              NULL, NULL}, /* 75 */
-   {{"$(",     LBRACE,     Beginner}, 0,              NULL, NULL}, /* 76 */
-   {{"$)",     RBRACE,     Ender},    0,              NULL, NULL}, /* 77 */
-   {{"$<",     LBRACK,     Beginner}, 0,              NULL, NULL}, /* 78 */
-   {{"$>",     RBRACK,     Ender},    0,              NULL, NULL}, /* 79 */
-   {{NULL,          0,     0},        0,              NULL, NULL}
+   {{"!",      BANG,       Beginner}, Unary},         /* 0 */
+   {{"%",      MOD,        0},        Binary},        /* 1 */
+   {{"%:=",    AUGMOD,     0},        0},             /* 2 */
+   {{"&",      AND,        Beginner}, Binary},        /* 3 */
+   {{"&:=",    AUGAND,     0},        0},             /* 4 */
+   {{"*",      STAR,       Beginner}, Unary | Binary},/* 5 */
+   {{"*:=",    AUGSTAR,    0},        0},             /* 6 */
+   {{"**",     INTER,      Beginner}, Binary},        /* 7 */
+   {{"**:=",   AUGINTER,   0},        0},             /* 8 */
+   {{"+",      PLUS,       Beginner}, Unary | Binary},/* 9 */
+   {{"+:=",    AUGPLUS,    0},        0},             /* 10 */
+   {{"++",     UNION,      Beginner}, Binary},        /* 11 */
+   {{"++:=",   AUGUNION,   0},        0},             /* 12 */
+   {{"-",      MINUS,      Beginner}, Unary | Binary},/* 13 */
+   {{"-:=",    AUGMINUS,   0},        0},             /* 14 */
+   {{"--",     DIFF,       Beginner}, Binary},        /* 15 */
+   {{"--:=",   AUGDIFF,    0},        0},             /* 16 */
+   {{".",      DOT,        Beginner}, Unary},         /* 17 */
+   {{"/",      SLASH,      Beginner}, Unary | Binary},/* 18 */
+   {{"/:=",    AUGSLASH,   0},        0},             /* 19 */
+   {{":=",     ASSIGN,     0},        Binary},        /* 20 */
+   {{":=:",    SWAP,       0},        Binary},        /* 21 */
+   {{"<",      NMLT,       0},        Binary},        /* 22 */
+   {{"<:=",    AUGNMLT,    0},        0},             /* 23 */
+   {{"<-",     REVASSIGN,  0},        Binary},        /* 24 */
+   {{"<->",    REVSWAP,    0},        Binary},        /* 25 */
+   {{"<<",     SLT,        0},        Binary},        /* 26 */
+   {{"<<:=",   AUGSLT,     0},        0},             /* 27 */
+   {{"<<=",    SLE,        0},        Binary},        /* 28 */
+   {{"<<=:=",  AUGSLE,     0},        0},             /* 29 */
+   {{"<=",     NMLE,       0},        Binary},        /* 30 */
+   {{"<=:=",   AUGNMLE,    0},        0},             /* 31 */
+   {{"=",      NMEQ,       Beginner}, Unary | Binary},/* 32 */
+   {{"=:=",    AUGNMEQ,    0},        0},             /* 33 */
+   {{"==",     SEQ,        Beginner}, Binary},        /* 34 */
+   {{"==:=",   AUGSEQ,     0},        0},             /* 35 */
+   {{"===",    EQUIV,      Beginner}, Binary},        /* 36 */
+   {{"===:=",  AUGEQUIV,   0},        0},             /* 37 */
+   {{">",      NMGT,       0},        Binary},        /* 38 */
+   {{">:=",    AUGNMGT,    0},        0},             /* 39 */
+   {{">=",     NMGE,       0},        Binary},        /* 40 */
+   {{">=:=",   AUGNMGE,    0},        0},             /* 41 */
+   {{">>",     SGT,        0},        Binary},        /* 42 */
+   {{">>:=",   AUGSGT,     0},        0},             /* 43 */
+   {{">>=",    SGE,        0},        Binary},        /* 44 */
+   {{">>=:=",  AUGSGE,     0},        0},             /* 45 */
+   {{"?",      QMARK,      Beginner}, Unary},         /* 46 */
+   {{"?:=",    AUGQMARK,   0},        0},             /* 47 */
+   {{"@",      AT,         Beginner}, 0},             /* 48 */
+   {{"@:=",    AUGAT,      0},        0},             /* 49 */
+   {{"\\",     BACKSLASH,  Beginner}, Unary},         /* 50 */
+   {{"^",      CARET,      Beginner}, Unary | Binary},/* 51 */
+   {{"^:=",    AUGCARET,   0},        0},             /* 52 */
+   {{"|",      BAR,        Beginner}, 0},             /* 53 */
+   {{"||",     CONCAT,     Beginner}, Binary},        /* 54 */
+   {{"||:=",   AUGCONCAT,  0},        0},             /* 55 */
+   {{"|||",    LCONCAT,    Beginner}, Binary},        /* 56 */
+   {{"|||:=",  AUGLCONCAT, 0},        0},             /* 57 */
+   {{"~",      TILDE,      Beginner}, Unary},         /* 58 */
+   {{"~=",     NMNE,       Beginner}, Binary},        /* 59 */
+   {{"~=:=",   AUGNMNE,    0},        0},             /* 60 */
+   {{"~==",    SNE,        Beginner}, Binary},        /* 61 */
+   {{"~==:=",  AUGSNE,     0},        0},             /* 62 */
+   {{"~===",   NEQUIV,     Beginner}, Binary},        /* 63 */
+   {{"~===:=", AUGNEQUIV,  0},        0},             /* 64 */
+   {{"(",      LPAREN,     Beginner}, 0},             /* 65 */
+   {{")",      RPAREN,     Ender},    0},             /* 66 */
+   {{"+:",     PCOLON,     0},        0},             /* 67 */
+   {{",",      COMMA,      0},        0},             /* 68 */
+   {{"-:",     MCOLON,     0},        0},             /* 69 */
+   {{":",      COLON,      0},        0},             /* 70 */
+   {{";",      SEMICOL,    0},        0},             /* 71 */
+   {{"[",      LBRACK,     Beginner}, 0},             /* 72 */
+   {{"]",      RBRACK,     Ender},    0},             /* 73 */
+   {{"{",      LBRACE,     Beginner}, 0},             /* 74 */
+   {{"}",      RBRACE,     Ender},    0},             /* 75 */
+   {{"$(",     LBRACE,     Beginner}, 0},             /* 76 */
+   {{"$)",     RBRACE,     Ender},    0},             /* 77 */
+   {{"$<",     LBRACK,     Beginner}, 0},             /* 78 */
+   {{"$>",     RBRACK,     Ender},    0},             /* 79 */
+   {{NULL,          0,     0},        0}
    };
 
 int asgn_loc = 20;

@@ -226,7 +226,7 @@ repeat {
    line ? tokpat() | break
    }
    write(toktab,
-      "   {{NULL,          0,     0},        0,              NULL, NULL}")
+      "   {{NULL,          0,     0},        0}")
    write(toktab, "   };")
 
    write(toktab)
@@ -348,8 +348,8 @@ procedure wrt_op(op, tokval, flag, arity, define)
    writes(toktab, "   {{\"", left(esc(op) || "\",", 9))
    writes(toktab, left(tokval || ",", 12))
    writes(toktab, left(flag || "},", 11))
-   writes(toktab, left(arity|| ",", 16))
-   write(toktab, "NULL, NULL}, /* ", cnt, " */")
+   writes(toktab, left(arity|| "},", 16))
+   write(toktab, "/* ", cnt, " */")
    if \define then
       wrt_tok_def(tokval, op)
    if op == ":=" then

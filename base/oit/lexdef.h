@@ -54,8 +54,6 @@ extern struct toktab *restab[];	/* reserved word index */
 struct optab {
    struct toktab tok;        /* token information for the operator symbol */
    int expected;	     /* what is expected in data base: Unary/Binary */
-   struct implement *unary;  /* data base entry for unary version */
-   struct implement *binary; /* data base entry for binary version */
    };
 
 extern struct optab optab[]; /* operator table */
