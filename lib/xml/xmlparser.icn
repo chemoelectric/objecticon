@@ -1779,7 +1779,7 @@ class XmlParser(Connectable,SetFields)
       dtd_opt_spaces()
       tab(dtd_match(">")) | return err("'>' expected")
 
-      member(doc.notation_declarations, name) | insert(doc.notation_declarations, name, res)
+      /doc.notation_declarations[name] := res
 
       return res
    end
