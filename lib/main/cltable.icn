@@ -11,27 +11,63 @@ import ipl.tables
 #
 class ClTable()
    private 
+      def,
       lookup,
       names
 
+   #
+   # Insert a new entry
+   #
    public insert(key, val)
-      default.insert(lookup, map(key), val)
-      default.insert(names, map(key), key)
+      local k1
+      k1 := map(key)
+      default.insert(lookup, k1, val)
+      default.insert(names, k1, key)
    end
 
+   #
+   # Return the value for the given key (as a variable) if it is in
+   # the table, or fail if it is not present.
+   #
    public member(key)
       return default.member(lookup, map(key))
    end
 
+   #
+   # Delete the entry with the given key
+   #
    public delete(key)
-      default.delete(lookup, map(key))
-      default.delete(names, map(key))
-   end
-   
-   public get(key)
-      return lookup[map(key)]
+      local k1
+      k1 := map(key)
+      default.delete(lookup, k1)
+      default.delete(names, k1)
    end
 
+   #
+   # Return the value with the given key, or the default value if
+   # the key is not present.
+   #
+   public get(key)
+      return .lookup[map(key)]
+   end
+
+   #
+   # Like {get}, but if the key is not present a new entry is added (with
+   # the default value).  In any case a variable is returned.
+   #
+   public add(key)
+      local k1
+      k1 := map(key)
+      return default.member(lookup, k1) | {
+         default.insert(lookup, k1, def)
+         default.insert(names, k1, key)
+         lookup[k1]
+      }
+   end
+
+   #
+   # Return a sorted list of key-value pairs.
+   #
    public sort()
       local l, e
       l := default.sort(lookup)
@@ -129,6 +165,7 @@ class ClTable()
    end
 
    public new(def, entries[])
+      self.def := def
       lookup := table(def)
       names := table()
       if *entries % 2 ~= 0 then
