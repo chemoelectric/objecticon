@@ -4,25 +4,19 @@
 
 package util
 
-import ipl.tables
-
 #
 # This class represents a caseless table()
 #
 class ClTable()
    private 
       def,
-      lookup,
-      names
+      t
 
    #
    # Insert a new entry
    #
    public insert(key, val)
-      local k1
-      k1 := map(key)
-      default.insert(lookup, k1, val)
-      default.insert(names, k1, key)
+      default.insert(t, map(key), [key, val])
    end
 
    #
@@ -30,25 +24,22 @@ class ClTable()
    # the table, or fail if it is not present.
    #
    public member(key)
-      return default.member(lookup, map(key))
+      return default.member(t, map(key))[2]
    end
 
    #
    # Delete the entry with the given key
    #
    public delete(key)
-      local k1
-      k1 := map(key)
-      default.delete(lookup, k1)
-      default.delete(names, k1)
+      default.delete(t, map(key))
    end
 
    #
    # Return the value with the given key, or the default value if
-   # the key is not present.
+   # the key is not present.  Equivalent to {.t[k]} for a table.
    #
    public get(key)
-      return .lookup[map(key)]
+      return .(default.member(t, map(key))[2] | def)
    end
 
    #
@@ -56,12 +47,11 @@ class ClTable()
    # the default value).  In any case a variable is returned.
    #
    public add(key)
-      local k1
+      local k1, n
       k1 := map(key)
-      return default.member(lookup, k1) | {
-         default.insert(lookup, k1, def)
-         default.insert(names, k1, key)
-         lookup[k1]
+      return default.member(t, k1)[2] | {
+         default.insert(t, k1, n := [key, def])
+         n[2]
       }
    end
 
@@ -69,32 +59,33 @@ class ClTable()
    # Return a sorted list of key-value pairs.
    #
    public sort()
-      local l, e
-      l := default.sort(lookup)
-      every e := !l do
-         e[1] := names[e[1]]
+      local l
+      l := []
+      every put(l, (!default.sort(t))[2])
       return l
    end
 
    #
    # Generate the keys (cf the builtin key() function.)
-   # @vals - a flag, if non-null then suspend the entries (as variables) too
    #
-   public key(vals)
-      local t
-      if /vals then
-         suspend .!names
-      else {
-         every t := !names do
-            suspend t | lookup[map(t)]
-      }
+   public key()
+      suspend .(!t)[1]
+   end
+
+   #
+   # Generate alternating key/values (cf the builtin keyval() function.)
+   #
+   public keyval()
+      local e
+      every e := !t do
+         suspend .e[1] | e[2]
    end
 
    #
    # Generate the values (cf !t for a table).
    #
    public gen()
-      suspend !lookup
+      suspend (!t)[2]
    end
 
    #
@@ -102,10 +93,12 @@ class ClTable()
    # invocation, the same list is returned every time, with the values replaced.
    #
    public entries()
-      local e
-      every e := ipl.tables.entries(lookup) do {
-         e[1] := names[e[1]]
-         suspend e
+      local e, l
+      l := list(2)
+      every e := !t do {
+         l[1] := e[1]
+         l[2] := e[2]
+         suspend l
       }
    end
 
@@ -113,7 +106,7 @@ class ClTable()
    # Return the size of the table.
    #
    public size()
-      return *lookup
+      return *t
    end
 
    #
@@ -121,12 +114,12 @@ class ClTable()
    #
    private object_output(oo)
       local pairs, e, sep
-      pairs := sort(names)
-      if oo.simple{!!pairs | lookup[[]]} then {
+      pairs := sort()
+      if oo.simple{!!pairs | def} then {
          oo.object_start(self) | fail
-         if \lookup[[]] then {
+         if \def then {
             oo.writes("default=") | fail
-            oo.traverse(lookup[[]]) | fail
+            oo.traverse(def) | fail
             sep := 1
          }
          every e := !pairs do {
@@ -142,11 +135,11 @@ class ClTable()
          oo.nl() | fail
          oo.object_start(self) | fail
          oo.iplus()
-         if \lookup[[]] then {
+         if \def then {
             oo.nl() | fail
             oo.writes("default=") | fail
             oo.iplus()
-            oo.traverse(lookup[[]]) | fail
+            oo.traverse(def) | fail
             oo.iminus()
          }
          every e := !pairs do {
@@ -166,8 +159,7 @@ class ClTable()
 
    public new(def, entries[])
       self.def := def
-      lookup := table(def)
-      names := table()
+      t := table(def)
       if *entries % 2 ~= 0 then
           runerr(134)
       while *entries > 0 do
