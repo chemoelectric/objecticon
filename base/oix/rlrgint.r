@@ -127,6 +127,17 @@ static word cmpi1	(DIGIT *u, word k, word n);
 
 #define bdzero(dest,l)  memset(dest, '\0', (l) * sizeof(DIGIT))
 #define bdcopy(src, dest, l)  memcpy(dest, src, (l) * sizeof(DIGIT))
+
+
+/* Debug function */
+void showbig(FILE *f, struct b_bignum *x)
+{
+    int i;
+    fprintf(f, "Sign=%d\n", x->sign);
+    for (i = 0; i < LEN(x); ++i)
+        fprintf(f, "   Dig %d = %.*lx\n", i, NB/4, (long)*DIG(x, i));
+}
+
 
 /*
  * mkdesc -- put value into a descriptor

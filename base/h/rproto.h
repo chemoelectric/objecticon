@@ -146,6 +146,7 @@ void		xmfree		(void);
 void	resolve			(struct progstate *pstate);
 void showcurrstack(void);
 void showstack(struct b_coexpr *c);
+void showbig(FILE *f, struct b_bignum *x);
 
 char *cstr(struct descrip *sd);
 void print_desc(FILE *f, dptr d);
