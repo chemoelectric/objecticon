@@ -274,6 +274,7 @@ convert_from_macro(ino_t)
 convert_from_macro(blkcnt_t)
 #endif
 convert_from_macro(ulonglong)
+convert_from_macro(uword)
 
 function lang_Prog_get_event_mask(ce)
    body {
@@ -3211,4 +3212,17 @@ function lang_Proc_get_field_name(c)
         else
             fail;
      }
+end
+
+function lang_Order_compare(x, y)
+   body {
+      return C_integer anycmp(&x, &y);
+   }
+end
+
+function lang_Order_hash(x)
+   body {
+       convert_from_uword(hash(&x), &result);
+       return result;
+   }
 end
