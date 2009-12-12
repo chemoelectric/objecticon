@@ -544,17 +544,6 @@ procedure clone(o, seen)
 end
 
 #
-# Compute a hash value for a string
-#
-procedure hash_string(s)
-   local n, i
-   n := *s
-   every i := ord(!s \ 10) do
-      n := 13 * n + i
-   return n
-end
-
-#
 # Return a hash code for this object.  For any two objects for which {equals} indicates
 # equality, the returned hash code should be the same.
 #
@@ -601,34 +590,6 @@ procedure hash(x, depth)
          }
          return n
       }
-      
-      "string" :
-         return hash_string(x)
-      
-      "ucs" :
-         return hash_string(string(x))
-
-      "cset" : {
-         n := *x
-         every i := Text.get_ord_range(x) do
-            n := 13 * n + i
-         return n
-      }
-
-      "integer" :
-         return abs(x)
-
-      "real" :
-         return hash_string(string(x))
-
-      "procedure" :
-         return hash_string(Proc.get_name(x))
-
-      "class" :
-         return hash_string(Class.get_name(x))
-
-      "constructor" :
-         return hash_string(Constructor.get_name(x))
 
       "cast" :
          return hash(Class.get_cast_object(x), depth - 1) +
@@ -639,7 +600,7 @@ procedure hash(x, depth)
                       hash(Class.get_methp_proc(x), depth - 1)
 
       default :
-         return 0
+         return return Internal.hash(x)
    }
 end
 
@@ -752,6 +713,10 @@ procedure in_bucket(e, l, seen)
    }
 end
 
+#
+# This class has some static methods that give access to some useful internal
+# interpreter functions.
+#
 class Internal()
    #
    # This method gives access to the internal ordering method used by
