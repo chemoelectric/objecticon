@@ -1127,6 +1127,10 @@ Const(SEEK_END)
     start_class("UcodeOp", "Uop_", 1, 0);
     scan_file("../../base/oit/ucode.h");
     end_class();
+    start_class("Limit", 0, 0, 0);
+    Const(MaxWord)
+    Const(MinWord)
+    end_class();
 
     start_file("evmonconsts.icn", "lang");
 
