@@ -367,7 +367,7 @@ static struct toktab *getnum(ac, cc)
                 if (isdigit(c))	    { 
                     if (!over) {
                         rval = rval * 10 + (c - '0');
-                        if (rval > MaxWord)
+                        if (rval >= MaxWord)
                             over = 1;			/* flag overflow */
                         else
                             wval = wval * 10 + (c - '0');
@@ -412,7 +412,7 @@ static struct toktab *getnum(ac, cc)
                     if (d < radix) {
                         if (!over) {
                             rval = rval * radix + d;
-                            if (rval > MaxWord)
+                            if (rval >= MaxWord)
                                 over = 1;			/* flag overflow */
                             else
                                 wval = wval * radix + d;
