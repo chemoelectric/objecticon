@@ -3214,13 +3214,13 @@ function lang_Proc_get_field_name(c)
      }
 end
 
-function lang_Order_compare(x, y)
+function lang_Internal_compare(x, y)
    body {
       return C_integer anycmp(&x, &y);
    }
 end
 
-function lang_Order_hash(x)
+function lang_Internal_hash(x)
    body {
        convert_from_uword(hash(&x), &result);
        return result;

@@ -348,7 +348,7 @@ class SortTable(Table)
 
    public new(def, cmp, entries[])
       cast(self,Table).new(def)
-      /cmp := Order.compare
+      /cmp := Internal.compare
       self.cmp := cmp
       self.sz := 0
       init_entries(entries)
