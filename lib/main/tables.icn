@@ -13,7 +13,8 @@ class Table()
    public const def
 
    #
-   # Insert a new entry
+   # Insert a new entry.  The value of the new entry is returned (as a
+   # variable).
    #
    public defer insert(key, val)
 
@@ -228,15 +229,25 @@ class SortTableNode()
    public val
    private l, r
 
-   public insert(k, v, cmp)
+   public insert(k, v, cmp, tbl)
       local i
       i := cmp(k, key)
-      return if i = 0 then
-         self
-      else if i < 0 then
-         (/l := SortTableNode(k, v)) | l.insert(k, v, cmp)
-      else
-         (/r := SortTableNode(k, v)) | r.insert(k, v, cmp)
+      if i = 0 then {
+         self.val := v
+         return self
+      } else if i < 0 then {
+         if /l := SortTableNode(k, v) then {
+            (\tbl).sz +:= 1
+            return l
+         } else
+            return l.insert(k, v, cmp, tbl)
+      } else {
+         if /r := SortTableNode(k, v) then {
+            (\tbl).sz +:= 1
+            return r
+         } else 
+            return r.insert(k, v, cmp, tbl)
+      }
    end
 
    public find(k, cmp)
@@ -244,18 +255,17 @@ class SortTableNode()
       i := cmp(k, key)
       return if i = 0 then
          self
-      if i < 0 then
+      else if i < 0 then
          (\l).find(k, cmp)
       else
          (\r).find(k, cmp)
    end
 
-   public delete(k, cmp)
+   public delete(k, cmp, tbl)
       local i, e
       i := cmp(k, key)
       if i = 0 then {
-         if /l & /r then
-            return &null
+         tbl.sz -:= 1
          if /l then
             return r
          if /r then
@@ -265,10 +275,10 @@ class SortTableNode()
             r.insert(e.key, e.val, cmp)
          return r
       } else if i < 0 then {
-         \l := l.delete(k, cmp)
+         \l := l.delete(k, cmp, tbl)
          return self
       } else {
-         \r := r.delete(k, cmp)
+         \r := r.delete(k, cmp, tbl)
          return self
       }
    end
@@ -292,9 +302,14 @@ end
 #
 class SortTable(Table)
    private root, cmp
+   package readable sz
 
    public insert(key, val)
-      return ((/root := SortTableNode(key, val)) | root.insert(key, val, cmp)).val
+      if /root := SortTableNode(key, val) then {
+         sz := 1
+         return root.val
+      }
+      return root.insert(key, val, cmp, self).val
    end
 
    public member(key)
@@ -302,7 +317,7 @@ class SortTable(Table)
    end
 
    public delete(key)
-      \root := root.delete(key, cmp)
+      \root := root.delete(key, cmp, self)
    end
 
    public sort()
@@ -328,17 +343,14 @@ class SortTable(Table)
    end
 
    public size()
-      local i
-      i := 0
-      every Seq{(\root).traverse()} do
-         i +:= 1
-      return i
+      return sz
    end
 
    public new(def, cmp, entries[])
       cast(self,Table).new(def)
       /cmp := Order.compare
       self.cmp := cmp
+      self.sz := 0
       init_entries(entries)
       return
    end
@@ -355,9 +367,8 @@ class EqTable(Table)
       local h, e, n
       h := hash(key)
       every e := !\t[h] do {
-         if equals(e[1], key) then {
+         if equals(e[1], key) then
             return e[2] := val
-         }
       }
       sz +:= 1
       (/t[h] := [n := [key, val]]) | put(t[h], n := [key, val])
