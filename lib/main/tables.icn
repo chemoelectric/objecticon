@@ -110,6 +110,28 @@ class Table()
    end
 
    #
+   # Custom equals mirrors the {equals()} behaviour for builtin tables.
+   #
+   private object_equals(other, seen)
+      other.size() = self.size() | fail
+      equals(other.def, self.def, seen) | fail
+      return hash_and_check(other.entrylist(), self.entrylist(), seen)
+   end
+
+   #
+   # Custom hash mirrors the {hash()} behaviour for builtin tables.
+   #
+   private object_hash(depth)
+      local n
+      n := size()
+      if depth > 1 then {
+         n +:= hash(def, depth - 1)
+         every n +:= hash(key(), depth - 1)
+      }
+      return n
+   end
+
+   #
    # Output object
    #
    private object_output(oo)
