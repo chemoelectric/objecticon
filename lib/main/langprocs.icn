@@ -731,8 +731,7 @@ procedure hash_and_check(s1, s2, seen)
    t := table()
    every e := !s1 do {
       i := hash(e)
-      /t[i] := []
-      put(t[i], e)
+      (/t[i] := [e]) | put(t[i], e)
    }
    every e := !s2 do
       in_bucket(e, \t[hash(e)], seen) | fail
