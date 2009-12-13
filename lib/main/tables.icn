@@ -251,56 +251,55 @@ class SortTableNode()
    public val
    private l, r
 
-   public insert(k, v, cmp, tbl)
+   public insert(k, v, tbl)
       local i
-      i := cmp(k, key)
+      i := tbl.cmp(k, key)
       if i = 0 then {
          self.val := v
          return self
       } else if i < 0 then {
          if /l := SortTableNode(k, v) then {
-            (\tbl).sz +:= 1
+            tbl.sz +:= 1
             return l
          } else
-            return l.insert(k, v, cmp, tbl)
+            return l.insert(k, v, tbl)
       } else {
          if /r := SortTableNode(k, v) then {
-            (\tbl).sz +:= 1
+            tbl.sz +:= 1
             return r
          } else 
-            return r.insert(k, v, cmp, tbl)
+            return r.insert(k, v, tbl)
       }
    end
 
-   public find(k, cmp)
+   public find(k, tbl)
       local i
-      i := cmp(k, key)
+      i := tbl.cmp(k, key)
       return if i = 0 then
          self
       else if i < 0 then
-         (\l).find(k, cmp)
+         (\l).find(k, tbl)
       else
-         (\r).find(k, cmp)
+         (\r).find(k, tbl)
    end
 
-   public delete(k, cmp, tbl)
-      local i, e
-      i := cmp(k, key)
+   public delete(k, tbl)
+      local i
+      i := tbl.cmp(k, key)
       if i = 0 then {
          tbl.sz -:= 1
          if /l then
             return r
          if /r then
             return l
-         # Add all the elements in l into r, then get rid of l.
-         every e := Seq{l.traverse()} do
-            r.insert(e.key, e.val, cmp)
+         # Make l the left child of the smallest node in r.
+         Seq{r.traverse()}.l := l
          return r
       } else if i < 0 then {
-         \l := l.delete(k, cmp, tbl)
+         \l := l.delete(k, tbl)
          return self
       } else {
-         \r := r.delete(k, cmp, tbl)
+         \r := r.delete(k, tbl)
          return self
       }
    end
@@ -323,7 +322,8 @@ end
 # in sorted order.
 #
 class SortTable(Table)
-   private root, cmp
+   private root
+   public const cmp
    package readable sz
 
    public insert(key, val)
@@ -331,15 +331,15 @@ class SortTable(Table)
          sz := 1
          return root.val
       }
-      return root.insert(key, val, cmp, self).val
+      return root.insert(key, val, self).val
    end
 
    public member(key)
-      return (\root).find(key, cmp).val
+      return (\root).find(key, self).val
    end
 
    public delete(key)
-      \root := root.delete(key, cmp, self)
+      \root := root.delete(key, self)
    end
 
    public sort()
