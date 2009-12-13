@@ -841,7 +841,10 @@ static int cnv_eint(struct literal *s)
                 return 0;
             if (!*s->u.str.s)  /* Empty string */
                 return 0;
+            errno = 0;
             t = strtol(s->u.str.s, &e, 10);
+            if (errno)
+                return 0;       /* overflow */
             if (*e)             /* End not reached, so reject */
                 return 0;
             if (t < MinWord || t > MaxWord)
@@ -862,7 +865,7 @@ static int cnv_int(struct literal *s)
             return 1;
         }
         case REAL: {
-            if (s->u.d <= MinWord || s->u.d <= MaxWord)
+            if (abs(s->u.d) >= Big || s->u.d < MinWord || s->u.d > MaxWord)
                 return 0;
             s->type = INTEGER;
             s->u.i = (word)s->u.d;
@@ -875,7 +878,10 @@ static int cnv_int(struct literal *s)
                 return 0;
             if (!*s->u.str.s)  /* Empty string */
                 return 0;
+            errno = 0;
             t = strtol(s->u.str.s, &e, 10);
+            if (errno)
+                return 0;       /* overflow */
             if (*e)             /* End not reached, so reject */
                 return 0;
             if (t < MinWord || t > MaxWord)
@@ -902,6 +908,16 @@ static int cnv_real(struct literal *s)
                 return 0;
             if (!*s->u.str.s)  /* Empty string */
                 return 0;
+            /*
+             * We only convert strings with a "." in them to avoid
+             * converting long integer strings, rejected by cnv_eint
+             * as too big, to reals.  They must be left as strings to
+             * be handled at runtime.  If we handled large ints this
+             * wouldn't arise of course.
+             */
+            if (index(s->u.str.s, '.') == 0)
+                return 0;
+
             errno = 0;
             t = strtod(s->u.str.s, &e);
             if (errno)
