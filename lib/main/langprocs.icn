@@ -557,29 +557,28 @@ procedure hash(x, depth)
    case type(x) of {
       "object" : {
          if mp := Class.getf(x, "object_hash", 1) then
-            return mp(depth)
-         l := n := Class.get_n_instance_fields(x)
-         if depth > 1 then {
-            every i := hash(Class.get(x, 1 to l) \ 10, depth - 1) do
-               n := iand(37 * n + i, 16rffffff)
+            n := mp(depth)
+         else {
+            l := n := Class.get_n_instance_fields(x)
+            if depth > 1 then {
+               every i := hash(Class.get(x, 1 to l) \ 10, depth - 1) do
+                  n := 37 * iand(n, 16rffffff)  + i
+            }
          }
-         return n
       }
 
       "record" | "list" : {
          n := *x
          if depth > 1 then {
             every i := hash(!x \ 10, depth - 1) do
-               n := iand(37 * n + i, 16rffffff)
+               n := 37 * iand(n, 16rffffff)  + i
          }
-         return n
       }
 
       "set" : {
          n := *x
          if depth > 1 then
             every n +:= hash(!x, depth - 1)
-         return iand(n, 16r7fffffff)
       }
 
       "table" : {
@@ -588,20 +587,20 @@ procedure hash(x, depth)
             n +:= hash(x[[]], depth - 1)
             every n +:= hash(key(x), depth - 1)
          }
-         return iand(n, 16r7fffffff)
       }
 
       "cast" :
-         return iand(hash(Class.get_cast_object(x), depth - 1) +
-                     hash(Class.get_cast_class(x), depth - 1), 16r7fffffff)
+         n := hash(Class.get_cast_object(x), depth - 1) +
+                   hash(Class.get_cast_class(x), depth - 1)
 
       "methp" :
-         return iand(hash(Class.get_methp_object(x), depth - 1) +
-                     hash(Class.get_methp_proc(x), depth - 1), 16r7fffffff)
+         n := hash(Class.get_methp_object(x), depth - 1) +
+                   hash(Class.get_methp_proc(x), depth - 1)
 
       default :
-         return iand(Internal.hash(x), 16r7fffffff)
+         n := Internal.hash(x)
    }
+   return iand(n, 16r7fffffff)
 end
 
 #
