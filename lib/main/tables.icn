@@ -2,7 +2,7 @@
 # $Id$
 #
 
-package tables
+package datastructure
 
 import ipl.pdco(Seq), lang
 
@@ -87,7 +87,7 @@ class Table()
    end
 
    # Return a flat list, with alternating key-value entries.
-   public flatten(t)
+   public flatten()
       local l
       l := []
       every put(l, keyval())
@@ -238,6 +238,12 @@ class ClTable(Table)
       return *t
    end
 
+   #
+   # Create a new instance.
+   #
+   # @param def the default value
+   # @param entries initial key-value entries.
+   #
    public new(def, entries[])
       cast(self,Table).new(def)
       t := table(def)
@@ -368,6 +374,15 @@ class SortTable(Table)
       return sz
    end
 
+   #
+   # Create a new instance.
+   #
+   # @param def the default value
+   # @param cmp a comparator function taking two arbitrary values and
+   # @   returning {-1}, {0} or {+1} by way of comparison.  The default
+   # @   value is {Internal.compare}.
+   # @param entries initial key-value entries.
+   #
    public new(def, cmp, entries[])
       cast(self,Table).new(def)
       /cmp := Internal.compare
@@ -444,6 +459,12 @@ class EqTable(Table)
       return sz
    end
 
+   #
+   # Create a new instance.
+   #
+   # @param def the default value
+   # @param entries initial key-value entries.
+   #
    public new(def, entries[])
       cast(self,Table).new(def)
       t := table()
@@ -492,6 +513,13 @@ class BuiltinTable(Table)
       return *t
    end
 
+   #
+   # Create a new instance.
+   #
+   # @param t the table to wrap; if omitted then a new table is
+   # @     created.
+   # @param entries initial key-value entries.
+   #
    public new(t, entries[])
       /t := table()
       self.t := t

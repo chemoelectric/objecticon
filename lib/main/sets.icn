@@ -2,7 +2,7 @@
 # $Id$
 #
 
-package sets
+package datastructure
 
 import lang
 
@@ -137,6 +137,14 @@ class TableSet(Set)
       return t.size()
    end
 
+   #
+   # Create a new instance.
+   #
+   # @param t either the {Table} to wrap, or a class indicating the class of
+   # @   a new {Table}, which will be instantiated by calling its
+   # @   constructor with no parameters.
+   # @param entries initial entries to insert.
+   #
    public new(t, entries[])
       if type(t) == "class" then
          t := t()
@@ -176,6 +184,12 @@ class BuiltinSet(Set)
       return *s
    end
 
+   #
+   # Create a new instance.
+   #
+   # @param s the set to wrap; if omitted a new set is created.
+   # @param entries initial entries to insert.
+   #
    public new(s, entries[])
       /s := set()
       self.s := s

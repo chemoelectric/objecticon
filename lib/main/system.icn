@@ -13,7 +13,8 @@ class System()
    # @param arg the arg list, excluding the command name.  Defaults to []
    # @param env the env list, defaults to the current environment
    # @           if omitted
-   # @example System.exec("ls", ["-l", "/home"])
+   # @example
+   # @   System.exec("ls", ["-l", "/home"])
    #
    public static exec(f, arg, env)
       f := Files.find_exe(f) | return error("Not found on PATH:" || f)
@@ -29,7 +30,8 @@ class System()
    # strings, which provide the environment variables - if omitted then
    # the current program's environment is passed (obtained via the 
    # environ variable).
-   # @example System.execve("/bin/ls", ["/bin/ls", "-l", "/home"],
+   # @example 
+   # @        System.execve("/bin/ls", ["/bin/ls", "-l", "/home"],
    # @                                 ["ABC=DEF", "NUM=123"])
    #
    public static defer execve(f, arg, env)
