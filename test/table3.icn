@@ -1,8 +1,8 @@
-import io, lang, tables, ipl.random
+import io, lang, tables, sets, ipl.random
 
 procedure test_ord(t1,t2)
    local i, l, e
-   write(">>>test_ord()")
+   write(">>>test_ord(",image(classof(t1)),")")
    l := []
    every i := 1 to 50 do {
       every put(l, [i, i]|[table(i),i]|[[i], i]|[set(i), i])
@@ -10,20 +10,27 @@ procedure test_ord(t1,t2)
    shuffle(l)
    every e := !l do
       t1.insert(e[1], e[2])
+   t1.add("ONE") +:= 1
+   t1.add("TWO")
+   t1.add("THREE") := 100
 
    shuffle(l)
    every e := !l do
       t2.insert(e[1], e[2])
+   t2.add("THREE") := 100
+   t2.add("TWO")
+   t2.add("ONE") +:= 1
 
    yes_no{"equals(t1,t2)", equals(t1,t2)}
    yes_no{"t1.size() = t2.size()", t1.size()=t2.size()}
    yes_no{"hash(t1) = hash(t2)", hash(t1)=hash(t2)}
    yes_no{"equals(t1,clone(t1))", equals(t1,clone(t1))}
    yes_no{"equals(t2,clone(t2))", equals(t2,clone(t2))}
-
+   yes_no{"equals(TableSet(t1),TableSet(t2))", equals(TableSet(t1),TableSet(t2))}
+   yes_no{"hash(TableSet(t1))=hash(TableSet(t2))", hash(TableSet(t1))=hash(TableSet(t2))}
    shuffle(l)
-   every t1.delete((!l)[1])
-   every t2.delete((!l)[1])
+   every t1.delete((!l)[1] | "ONE" | "TWO" | "THREE")
+   every t2.delete((!l)[1] | "ONE" | "TWO" | "THREE")
 
    yes_no{"t1.size()=0", t1.size()=0}
    yes_no{"t2.size()=0", t2.size()=0}
@@ -46,6 +53,8 @@ procedure test_cl()
    yes_no{"hash(t1) = hash(t2)", hash(t1)=hash(t2)}
    yes_no{"equals(t1,clone(t1))", equals(t1,clone(t1))}
    yes_no{"equals(t2,clone(t2))", equals(t2,clone(t2))}
+   yes_no{"equals(TableSet(t1),TableSet(t2))", equals(TableSet(t1),TableSet(t2))}
+   yes_no{"hash(TableSet(t1))=hash(TableSet(t2))", hash(TableSet(t1))=hash(TableSet(t2))}
    every t1.delete(!l)
    every t2.delete(map(!l))
    yes_no{"t1.size()=0", t1.size()=0}
@@ -69,9 +78,26 @@ procedure test_eq()
    yes_no{"t1.size()=0", t1.size()=0}
 end
 
+procedure test_set()
+   local s, b
+   write(">>>test_set()")
+   s := set()
+   every 1 to 20 do insert(s, ?100)
+   b := BuiltinSet(s, 1,100,2,200)
+   b.insert(300)
+   b.delete(2)
+   cmp_seq{"m1", member(s,1), b.member(1)}
+   cmp_seq{"m2", member(s,999), b.member(999)}
+   cmp_seq{"gen", !s, b.gen()}
+   yes_no{"sort=", equals(sort(s), b.sort())}
+   cmp_seq{"size", *s, b.size()}
+end
+
 procedure main()
    test_ord(EqTable(0),EqTable(0))
    test_ord(SortTable(0),SortTable(0))
+   test_ord(BuiltinTable(table(0)),BuiltinTable(table(0)))
    test_cl()
    test_eq()
+   test_set()
 end

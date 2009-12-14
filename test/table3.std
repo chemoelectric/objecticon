@@ -1,17 +1,31 @@
->>>test_ord()
+>>>test_ord(class tables.EqTable)
 equals(t1,t2): yes
 t1.size() = t2.size(): yes
 hash(t1) = hash(t2): yes
 equals(t1,clone(t1)): yes
 equals(t2,clone(t2)): yes
+equals(TableSet(t1),TableSet(t2)): yes
+hash(TableSet(t1))=hash(TableSet(t2)): yes
 t1.size()=0: yes
 t2.size()=0: yes
->>>test_ord()
+>>>test_ord(class tables.SortTable)
 equals(t1,t2): yes
 t1.size() = t2.size(): yes
 hash(t1) = hash(t2): yes
 equals(t1,clone(t1)): yes
 equals(t2,clone(t2)): yes
+equals(TableSet(t1),TableSet(t2)): yes
+hash(TableSet(t1))=hash(TableSet(t2)): yes
+t1.size()=0: yes
+t2.size()=0: yes
+>>>test_ord(class tables.BuiltinTable)
+equals(t1,t2): yes
+t1.size() = t2.size(): yes
+hash(t1) = hash(t2): yes
+equals(t1,clone(t1)): yes
+equals(t2,clone(t2)): yes
+equals(TableSet(t1),TableSet(t2)): yes
+hash(TableSet(t1))=hash(TableSet(t2)): yes
 t1.size()=0: yes
 t2.size()=0: yes
 >>>test_cl()
@@ -24,6 +38,8 @@ t1.size() = t2.size(): yes
 hash(t1) = hash(t2): yes
 equals(t1,clone(t1)): yes
 equals(t2,clone(t2)): yes
+equals(TableSet(t1),TableSet(t2)): yes
+hash(TableSet(t1))=hash(TableSet(t2)): yes
 t1.size()=0: yes
 t2.size()=0: yes
 >>>test_eq()
@@ -39,3 +55,9 @@ get(set#*(3)): 2
 get(object tables.ClTable#*(2)): 2
 equals(t1,clone(t1)): yes
 t1.size()=0: yes
+>>>test_set()
+m1: same
+m2: same
+gen: same
+sort=: yes
+size: same

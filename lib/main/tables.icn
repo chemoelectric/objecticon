@@ -95,11 +95,11 @@ class Table()
    end
 
    # Return an (unsorted) list of pairs of key-values.
-   public entrylist(t)
+   public entry_list()
       local l, e, r
       r := []
       l := []
-      every e := keyval(t) do {
+      every e := keyval() do {
          put(l, e)
          if *l = 2 then {
             put(r, l)
@@ -115,7 +115,7 @@ class Table()
    private object_equals(other, seen)
       other.size() = self.size() | fail
       equals(other.def, self.def, seen) | fail
-      return hash_and_check(other.entrylist(), self.entrylist(), seen)
+      return hash_and_check(other.entry_list(), self.entry_list(), seen)
    end
 
    #
@@ -448,6 +448,54 @@ class EqTable(Table)
       cast(self,Table).new(def)
       t := table()
       sz := 0
+      init_entries(entries)
+      return
+   end
+end
+
+#
+# A {Table} which is just a wrapper around a builtin table.
+#
+class BuiltinTable(Table)
+   private t
+
+   public insert(key, val)
+      default.insert(t, key, val)
+      return t[key]
+   end
+
+   public member(key)
+      return default.member(t, key)
+   end
+
+   public delete(key)
+      default.delete(t, key)
+   end
+
+   public sort()
+      return default.sort(t)
+   end
+
+   public key()
+      suspend default.key(t)
+   end
+
+   public keyval()
+      suspend default.keyval(t)
+   end
+
+   public gen()
+      suspend !t
+   end
+
+   public size()
+      return *t
+   end
+
+   public new(t, entries[])
+      /t := table()
+      self.t := t
+      cast(self,Table).new(t[[]])
       init_entries(entries)
       return
    end
