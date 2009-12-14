@@ -591,14 +591,14 @@ Clone check: Nothing here
 	type(a)==type(b): yes
 	subtype(a)==subtype(b): Succeeded with "Five"
 	classof(a)===classof(b): yes
-Clone check: object datastructure.ClTable#*(1->id=22;2->ref object Two#*)
+Clone check: object datastruct.ClTable#*(1->id=22;2->ref object Two#*)
 	equals(a,a): yes
 	equals(b,b): yes
 	equals(a,b): yes
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): Succeeded with "datastructure.ClTable"
+	subtype(a)==subtype(b): Succeeded with "datastruct.ClTable"
 	classof(a)===classof(b): yes
 Clone check: object Six#*(x=100;y=ref object Six#*)
 	equals(a,a): yes
@@ -609,14 +609,14 @@ Clone check: object Six#*(x=100;y=ref object Six#*)
 	type(a)==type(b): yes
 	subtype(a)==subtype(b): Succeeded with "Six"
 	classof(a)===classof(b): yes
-Clone check: object datastructure.ClTable#*(10->list#*[])
+Clone check: object datastruct.ClTable#*(10->list#*[])
 	equals(a,a): yes
 	equals(b,b): yes
 	equals(a,b): yes
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): Succeeded with "datastructure.ClTable"
+	subtype(a)==subtype(b): Succeeded with "datastruct.ClTable"
 	classof(a)===classof(b): yes
 Equals check: table#*{1->2;3->4;ref table#*->ref table#*} -v- table#*{1->2;3->4;ref table#*->ref table#*}
 	equals(a,a): yes

@@ -1,4 +1,4 @@
->>>test_ord(class datastructure.EqTable)
+>>>test_ord(class datastruct.EqTable)
 equals(t1,t2): yes
 t1.size() = t2.size(): yes
 hash(t1) = hash(t2): yes
@@ -8,7 +8,7 @@ equals(TableSet(t1),TableSet(t2)): yes
 hash(TableSet(t1))=hash(TableSet(t2)): yes
 t1.size()=0: yes
 t2.size()=0: yes
->>>test_ord(class datastructure.SortTable)
+>>>test_ord(class datastruct.SortTable)
 equals(t1,t2): yes
 t1.size() = t2.size(): yes
 hash(t1) = hash(t2): yes
@@ -18,7 +18,7 @@ equals(TableSet(t1),TableSet(t2)): yes
 hash(TableSet(t1))=hash(TableSet(t2)): yes
 t1.size()=0: yes
 t2.size()=0: yes
->>>test_ord(class datastructure.BuiltinTable)
+>>>test_ord(class datastruct.BuiltinTable)
 equals(t1,t2): yes
 t1.size() = t2.size(): yes
 hash(t1) = hash(t2): yes
@@ -52,7 +52,7 @@ get(list#*(3)): 2
 get(table#*(2)): 2
 get(list#*(2)): 2
 get(set#*(3)): 2
-get(object datastructure.ClTable#*(2)): 2
+get(object datastruct.ClTable#*(2)): 2
 equals(t1,clone(t1)): yes
 t1.size()=0: yes
 >>>test_set()
