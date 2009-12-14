@@ -128,9 +128,6 @@
 #define	E_Castref	'\214'		/* Cast reference */
 #define E_Castsub	'\215'		/* Cast subscript */
 #define	E_Objectcreate	'\216'		/* Object creation */
-#define	E_Stringbang	'\217'		/* String generation */
-#define	E_Ucsbang	'\220'		/* Ucs generation */
-#define	E_Csetbang	'\221'		/* Cset generation */
 
    /*
     * Scanning events
@@ -166,6 +163,7 @@
 #define E_Coret		'\102'		/* Co-expression return */
 #define E_Cofail	'\104'		/* Co-expression failure */
 #define E_Cocreate	'\110'		/* Co-expression create operation */
+#define	E_Cobang	'\222'		/* Co-expression generation */
 
    /*
     * Procedure events
@@ -219,8 +217,8 @@
 152 154
 162 165 166
 173 174 175 
-204 205 206 207
-222 223 224 225 226 227
+204 205 206 207 217 220 221
+223 224 225 226 227
 230 231 232 233 234 235 236 237
 240 241 242 243 244 245 246 247
 250 251 252 253 254 255 256 257

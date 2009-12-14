@@ -16,7 +16,6 @@ operator ! bang(underef x -> dx)
    type_case dx of {
      string : {
             char ch;
-            EVValD(&dx, E_Stringbang);
             if (is:variable(x)) {
                 if (frame->rval) {
                     for (i = 1; i <= StrLen(dx); i++) {
@@ -86,7 +85,6 @@ operator ! bang(underef x -> dx)
 	    }
 
       cset: {
-            EVValD(&dx, E_Csetbang);
             for (i = 0; i < CsetBlk(dx).n_ranges; i++) {
                int from, to;
                from = CsetBlk(dx).range[i].from;
@@ -101,7 +99,6 @@ operator ! bang(underef x -> dx)
          }
 
      ucs: {
-          EVValD(&dx, E_Ucsbang);
           if (is:variable(x)) {
               if (frame->rval) {
                   for (i = 1; i <= UcsBlk(dx).length; i++) {
@@ -148,6 +145,8 @@ operator ! bang(underef x -> dx)
 
      coexpr: {
            struct p_frame *pf;
+           EVValD(&dx, E_Cobang);
+
            MemProtect(pf = alc_p_frame((struct b_proc *)&Bcoexp_bang_impl, 0));
            push_frame((struct frame *)pf);
            pf->fvars->desc[0] = dx;
@@ -771,7 +770,6 @@ function back(underef x -> dx)
    type_case dx of {
      string : {
             char ch;
-            EVValD(&dx, E_Stringbang);
             if (is:variable(x)) {
                 if (frame->rval) {
                     for (i = StrLen(dx); i > 0; i--) {
@@ -821,7 +819,6 @@ function back(underef x -> dx)
          }
 
       cset: {
-            EVValD(&dx, E_Csetbang);
             for (i = CsetBlk(dx).n_ranges - 1; i >= 0; i--) {
                int from, to;
                from = CsetBlk(dx).range[i].from;
@@ -836,7 +833,6 @@ function back(underef x -> dx)
          }
 
      ucs: {
-          EVValD(&dx, E_Ucsbang);
           if (is:variable(x)) {
               if (frame->rval) {
                   for (i = UcsBlk(dx).length; i > 0; i--) {
