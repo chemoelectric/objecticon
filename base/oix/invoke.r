@@ -40,14 +40,34 @@ static struct frame *push_frame_for_proc(struct b_proc *bp, int argc, dptr args,
             tended struct descrip tmp, l;
             create_list(Max(0, argc - bp->nparam + 1 + i), &l);
             if (args) {
-                for (j = 1; j <= argc; ++j) {
-                    if (i < bp->nparam - 1)
-                        pf->fvars->desc[i++] = *get_element(args, j);
-                    else {
-                        /* This must be done via a tended temporary */
-                        tmp = *get_element(args, j);
-                        list_put(&l, &tmp);
+                type_case *args of {
+                  list: {
+                    struct lgstate state;
+                    tended struct b_lelem *le;
+                    le = lgfirst(&ListBlk(*args), &state);
+                    for (j = 0; j < argc; ++j) {
+                        if (i < bp->nparam - 1)
+                            pf->fvars->desc[i++] = le->lslots[state.result];
+                        else {
+                            /* This must be done via a tended temporary */
+                            tmp = le->lslots[state.result];
+                            list_put(&l, &tmp);
+                        }
+                        le = lgnext(&ListBlk(*args), &state, le);
                     }
+                  }
+                  record: {
+                    for (j = 0; j < argc; ++j) {
+                        if (i < bp->nparam - 1)
+                            pf->fvars->desc[i++] = RecordBlk(*args).fields[j];
+                        else {
+                            /* This must be done via a tended temporary */
+                            tmp = RecordBlk(*args).fields[j];
+                            list_put(&l, &tmp);
+                        }
+                    }
+                  }
+                  default: syserr("Unexpected type");
                 }
             } else {
                 for (j = 0; j < argc; ++j) {
@@ -63,11 +83,28 @@ static struct frame *push_frame_for_proc(struct b_proc *bp, int argc, dptr args,
             pf->fvars->desc[bp->nparam - 1] = l;
         } else {
             if (args) {
-                for (j = 1; j <= argc; ++j) {
-                    if (i < bp->nparam)
-                        pf->fvars->desc[i++] = *get_element(args, j);
-                    else
-                        break;
+                type_case *args of {
+                   list: {
+                      struct lgstate state;
+                      tended struct b_lelem *le;
+                      le = lgfirst(&ListBlk(*args), &state);
+                      for (j = 0; j < argc; ++j) {
+                          if (i < bp->nparam)
+                              pf->fvars->desc[i++] = le->lslots[state.result];
+                          else
+                              break;
+                          le = lgnext(&ListBlk(*args), &state, le);
+                      }
+                   }
+                   record: {
+                      for (j = 0; j < argc; ++j) {
+                          if (i < bp->nparam)
+                              pf->fvars->desc[i++] = RecordBlk(*args).fields[j];
+                          else
+                              break;
+                      }
+                   }
+                   default: syserr("Unexpected type");
                 }
             } else {
                 for (j = 0; j < argc; ++j) {
@@ -102,8 +139,21 @@ static struct frame *push_frame_for_proc(struct b_proc *bp, int argc, dptr args,
             cf->args[0] = *self;
 
         if (args) {
-            for (j = 1; j <= argc; ++j) {
-                cf->args[i++] = *get_element(args, j);
+            type_case *args of {
+               list: {
+                  struct lgstate state;
+                  tended struct b_lelem *le;
+                  le = lgfirst(&ListBlk(*args), &state);
+                  for (j = 0; j < argc; ++j) {
+                      cf->args[i++] = le->lslots[state.result];
+                      le = lgnext(&ListBlk(*args), &state, le);
+                  }
+               }
+               record: {
+                  for (j = 0; j < argc; ++j)
+                      cf->args[i++] = RecordBlk(*args).fields[j];
+               }
+               default: syserr("Unexpected type");
             }
         } else {
             if (bp->underef) {
@@ -420,12 +470,29 @@ static void construct_record(word clo, dptr expr, int argc, dptr args, word rval
     pf->fvars->desc[0].dword = D_Record;
 
     if (args) {
-        for (i = 0; i < argc; ++i) {
-            if (i < con->n_fields)
-                RecordBlk(pf->fvars->desc[0]).fields[i] = *get_element(args, i + 1);
-            else
-                break;
-        }
+       type_case *args of {
+          list: {
+               struct lgstate state;
+               tended struct b_lelem *le;
+               le = lgfirst(&ListBlk(*args), &state);
+               for (i = 0; i < argc; ++i) {
+                   if (i < con->n_fields)
+                       RecordBlk(pf->fvars->desc[0]).fields[i] = le->lslots[state.result];
+                   else
+                       break;
+                   le = lgnext(&ListBlk(*args), &state, le);
+               }
+          }
+          record: {
+             for (i = 0; i < argc; ++i) {
+                 if (i < con->n_fields)
+                     RecordBlk(pf->fvars->desc[0]).fields[i] = RecordBlk(*args).fields[i];
+                 else
+                     break;
+             }
+          }
+          default: syserr("Unexpected type");
+       }
     } else {
         for (i = 0; i < argc; ++i) {
             if (i < con->n_fields) {
