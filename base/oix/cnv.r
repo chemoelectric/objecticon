@@ -269,8 +269,12 @@ int f(dptr s, dptr d)
 {
     tended struct descrip str;
 
+    EVValD(s, e_aconv);
+    Desc_EVValD(emptystr_ucs, e_tconv, D_Ucs);
+
     if (is:ucs(*s)) {
         *d = *s;
+        EVValD(s, e_nconv);
         return 1;
     }
     if (is:cset(*s)) {
@@ -278,6 +282,7 @@ int f(dptr s, dptr d)
         p = cset_to_ucs_block(&CsetBlk(*s), 1, CsetBlk(*s).size);
         d->dword = D_Ucs;
         BlkLoc(*d) = (union block *)p;
+        EVValD(d, e_sconv);
         return 1;
     }
 
@@ -295,15 +300,18 @@ int f(dptr s, dptr d)
             ++n;
             if (i < 0 || i > MAX_CODE_POINT) {
                 whyf("Invalid utf-8 at sequence beginning at char %d", 1 + (t - StrLoc(str)));
+                EVValD(s, e_fconv);
                 return 0;
             }
         }
         p = make_ucs_block(&str, n);
         d->dword = D_Ucs;
         BlkLoc(*d) = (union block *)p;
+        EVValD(d, e_sconv);
         return 1;
     }
 
+    EVValD(s, e_fconv);
     return 0;
 }
 #enddef
