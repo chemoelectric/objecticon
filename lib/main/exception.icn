@@ -3,6 +3,7 @@ package exception
 global throw_handler, throw_signal, thrown
 
 procedure throw(x)
+   \throw_handler | runerr("throw(): no handler set")
    thrown := \x
    coact(throw_signal, throw_handler)
    runerr("throw(): code co-expression reactivated unexpectedly")
