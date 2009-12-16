@@ -12,9 +12,9 @@
 static void keyref    (union block *bp, dptr dp);
 static void showline(struct p_frame *pf);
 static void showlevel (register int n);
-static void ttrace	(void);
+static void xtrace	(void);
 static void procname(FILE *f, struct b_proc *p);
-
+static void trace_at(struct p_frame *pf);
 static void trace_frame(struct p_frame *pf);
 
 #define LIMIT 100
@@ -70,23 +70,22 @@ static int in_act_chain(struct act_chain *head, struct b_coexpr *ce)
     return 0;
 }
 
-void traceback(struct b_coexpr *ce, int with_ttrace)
+void traceback(struct b_coexpr *ce, int with_xtrace)
 {
     struct act_chain *head = 0, *ae;
     struct frame_chain *fe;
     int depth = 0;
-    struct b_coexpr *ce1 = ce;
 
     fprintf(stderr, "Traceback:\n");
-    while (ce1 && !in_act_chain(head, ce1)) {
+    while (ce && !in_act_chain(head, ce)) {
         struct p_frame *pf;
         MemProtect(ae = malloc(sizeof(struct act_chain)));
-        ae->coex = ce1;
+        ae->coex = ce;
         ae->frames = 0;
         ae->next = head;
         ae->nframes = 0;
         head = ae;
-        for (pf = ce1->curr_pf; pf; pf = pf->caller) {
+        for (pf = ce->curr_pf; pf; pf = pf->caller) {
             if (pf->proc->program) {
                 MemProtect(fe = malloc(sizeof(struct frame_chain)));
                 fe->frame = pf;
@@ -96,7 +95,7 @@ void traceback(struct b_coexpr *ce, int with_ttrace)
                 ++depth;
             }
         }
-        ce1 = ce1->activator;
+        ce = ce->activator;
     }
 
     if (depth == 0) {
@@ -106,7 +105,15 @@ void traceback(struct b_coexpr *ce, int with_ttrace)
 
     for (ae = head; ae;) {
         struct act_chain *t;
-        if (depth - LIMIT < ae->nframes) {
+        if (depth - LIMIT >= ae->nframes) {
+            /* Skip entirely */
+            depth -= ae->nframes;
+            for (fe = ae->frames; fe;) {
+                struct frame_chain *t = fe->next;
+                free(fe);
+                fe = t;
+            }
+        } else {
             /* Will print some of this coexpression's calls, so print header */
             if (ae->coex->activator)
                 fprintf(stderr,"co-expression#%ld activated by co-expression#%ld\n", 
@@ -120,39 +127,48 @@ void traceback(struct b_coexpr *ce, int with_ttrace)
                 else
                     fprintf(stderr, "   ... %d calls omitted\n", depth - LIMIT);
             }
+            for (fe = ae->frames; fe;) {
+                struct frame_chain *t;
+                if (depth <= LIMIT)
+                    trace_frame(fe->frame);
+                depth--;
+                if (!fe->next) {
+                    /* Last frame in the coexpression gets an extra line showing the position
+                     * or an xtrace showing the current operation and its parameters. */
+                    if (ae->next) 
+                        trace_at(fe->frame);
+                    else {
+                        if (with_xtrace)
+                            xtrace();
+                        else if (ce->activator)
+                            trace_at(fe->frame);
+                    }
+                }
+                t = fe->next;
+                free(fe);
+                fe = t;
+            }
         }
-        for (fe = ae->frames; fe;) {
-            struct frame_chain *t;
-            if (depth <= LIMIT)
-                trace_frame(fe->frame);
-            depth--;
-            t = fe->next;
-            free(fe);
-            fe = t;
-        }
-
         t = ae->next;
         free(ae);
         ae = t;
     }
-
-    if (with_ttrace)
-        ttrace();
-    else if (ce->activator) {
-        struct ipc_line *pline;
-        struct ipc_fname *pfile;
-        pline = frame_ipc_line(ce->curr_pf);
-        pfile = frame_ipc_fname(ce->curr_pf);
-        if (pfile && pline) {
-            struct descrip t;
-            abbr_fname(pfile->fname, &t);
-            fprintf(stderr, "   at line %d in %.*s", (int)pline->line, (int)StrLen(t), StrLoc(t));
-        } else
-            fprintf(stderr, "   at ?");
-        putc('\n', stderr);
-    }
-
     fflush(stderr);
+}
+
+static void trace_at(struct p_frame *pf)
+{
+    struct ipc_line *pline;
+    struct ipc_fname *pfile;
+    pline = frame_ipc_line(pf);
+    pfile = frame_ipc_fname(pf);
+    if (pfile && pline) {
+        struct descrip t;
+        abbr_fname(pfile->fname, &t);
+        fprintf(stderr, "   at line %d in %.*s", (int)pline->line, (int)StrLen(t), StrLoc(t));
+    } else
+        fprintf(stderr, "   at ?");
+    putc('\n', stderr);
 }
 
 static void trace_frame(struct p_frame *pf)
@@ -181,7 +197,6 @@ static void trace_frame(struct p_frame *pf)
         fprintf(stderr, " from line %d in %.*s", (int)pline->line, (int)StrLen(t), StrLoc(t));
     }
     putc('\n', stderr);
-    fflush(stderr);
 }
 
 
@@ -619,9 +634,9 @@ static int is_op(struct b_proc *bp)
 }
 
 /*
- * ttrace - show offending expression.
+ * xtrace - show offending expression.
  */
-static void ttrace()
+static void xtrace()
 {
     struct ipc_line *pline;
     struct ipc_fname *pfile;
@@ -856,8 +871,6 @@ static void ttrace()
         fprintf(stderr, " from ?");
 
     putc('\n', stderr);
-
-    fflush(stderr);
 }
 
 
