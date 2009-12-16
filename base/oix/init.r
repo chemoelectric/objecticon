@@ -392,8 +392,8 @@ void syserr(char *fmt, ...)
         struct ipc_line *pline;
         struct ipc_fname *pfile;
 
-        pline = frame_ipc_line(curr_pf, 1);
-        pfile = frame_ipc_fname(curr_pf, 1);
+        pline = frame_ipc_line(curr_pf);
+        pfile = frame_ipc_fname(curr_pf);
 
         if (pline && pfile) {
             struct descrip t;
@@ -411,18 +411,11 @@ void syserr(char *fmt, ...)
     fflush(stderr);
     va_end(ap);
 
-    if (!set_up) {		/* skip if start-up problem */
-        if (dodump)
-            abort();
-        c_exit(EXIT_FAILURE);
-    }
-    fprintf(stderr, "Traceback:\n");
-    traceback();
-    fflush(stderr);
+    if (set_up) 		/* skip if start-up problem */
+        traceback(k_current, 1);
 
     if (dodump)
         abort();
-
     c_exit(EXIT_FAILURE);
 }
 

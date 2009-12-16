@@ -321,9 +321,7 @@ end
         putc('\n', stderr);
     }
 
-    fprintf(stderr, "Traceback:\n");
-    traceback();
-    fflush(stderr);
+    traceback(k_current, 1);
 
     if (dodump > 1)
         abort();
@@ -361,8 +359,8 @@ function syserr(msg)
       struct ipc_line *pline;
       struct ipc_fname *pfile;
 
-      pline = frame_ipc_line(curr_pf, 1);
-      pfile = frame_ipc_fname(curr_pf, 1);
+      pline = frame_ipc_line(curr_pf);
+      pfile = frame_ipc_fname(curr_pf);
 
       fprintf(stderr, "\nIcon-level internal error: ");
       while (i-- > 0)
@@ -375,9 +373,7 @@ function syserr(msg)
       } else
           fprintf(stderr, "File ?; Line ?\n");
 
-      fprintf(stderr, "Traceback:\n");
-      traceback();
-      fflush(stderr);
+      traceback(k_current, 1);
 
       if (dodump > 1)
           abort();

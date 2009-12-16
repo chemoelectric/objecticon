@@ -206,6 +206,54 @@ class Coexpression()
    # @param ce - the coexpression, by default &current
    #
    public static defer get_level(ce)
+
+   #
+   # Output (to stderr) a traceback in the same format as that produced by
+   # a runtime error.
+   #
+   # @param ce - the coexpression, by default &current
+   #
+   public static defer traceback(ce)
+
+   #
+   # Return a list containing information about the stack of frames in the given
+   # co-expression.  Each element is a {FrameInfo} instance.
+   #
+   # @param lim - the maximum number of frames to put in the list, by default 
+   # @            all frames
+   # @param ce - the coexpression, by default &current
+   #
+   public static get_stack_info(lim, ce)
+      local l
+      l := []
+      every put(l, FrameInfo!get_stack_info_impl(lim, ce))
+      return l
+   end
+
+   private static defer get_stack_info_impl()
+end
+
+#
+# Contains some information about a frame in a stack.
+#
+class FrameInfo()
+   public const
+      # The name of the procedure
+      proc, 
+      # The args the procedure was called with, as image strings
+      args,
+      # The name of the file of the current execution point
+      file,
+      # The line number of the current execution point
+      line
+
+   package new(proc, args, file, line)
+      self.proc := proc
+      self.args := args
+      self.file := file
+      self.line := line
+      return
+   end
 end
 
 #

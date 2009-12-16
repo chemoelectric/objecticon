@@ -145,7 +145,7 @@ end
 keyword file
    body {
       struct ipc_fname *pfile;
-      pfile = frame_ipc_fname(curr_pf, 1);
+      pfile = frame_ipc_fname(curr_pf);
       if (!pfile)
           fail;
       return *pfile->fname;
@@ -201,7 +201,7 @@ keyword line
    body {
       struct ipc_line *pline;
 
-      pline = frame_ipc_line(curr_pf, 1);
+      pline = frame_ipc_line(curr_pf);
       if (!pline)
           fail;
 

@@ -361,13 +361,13 @@ function lang_Prog_eval_keyword(s,c)
           }
           case 5 : {
               if (strncmp(t,"file",4) == 0) {
-                  struct ipc_fname *t = frame_ipc_fname(p->K_current->curr_pf, 0);
+                  struct ipc_fname *t = frame_ipc_fname(p->K_current->curr_pf);
                   if (!t)
                       fail;
                   return *t->fname;
               }
               if (strncmp(t,"line",4) == 0) {
-                  struct ipc_line *t = frame_ipc_line(p->K_current->curr_pf, 0);
+                  struct ipc_line *t = frame_ipc_line(p->K_current->curr_pf);
                   if (!t)
                       fail;
                   return C_integer t->line;
@@ -3223,5 +3223,67 @@ function lang_Internal_hash(x)
    body {
        MakeInt(hash(&x) & MaxWord, &result);
        return result;
+   }
+end
+
+function lang_Coexpression_traceback(ce)
+   body {
+       tended struct b_coexpr *b;
+       if (!(b = get_coexpr_for(&ce)))
+          runerr(0);
+       traceback(b, 0);
+       return nulldesc;
+   }
+end
+
+function lang_Coexpression_get_stack_info_impl(lim, ce)
+   if !def:C_integer(lim, -1) then
+      runerr(101, lim)
+   body {
+       struct p_frame *pf;
+       tended struct b_coexpr *b;
+       struct ipc_line *pline;
+       struct ipc_fname *pfile;
+
+       if (!(b = get_coexpr_for(&ce)))
+          runerr(0);
+
+       for (pf = b->curr_pf; lim && pf; pf = pf->caller) {
+            if (pf->proc->program) {
+                struct descrip prc;
+                tended struct descrip img, args;
+                dptr arg;
+                word nargs;
+
+                create_list(3, &result);
+                prc.dword = D_Proc;
+                BlkLoc(prc) = (union block*)pf->proc;
+                getimage(&prc, &img);
+                list_put(&result, &img);
+                
+                nargs = pf->proc->nparam;
+                create_list(nargs, &args);
+                arg = pf->fvars->desc;
+                while (nargs--) {
+                    getimage(arg++, &img);
+                    list_put(&args, &img);
+                }
+
+                list_put(&result, &args);
+
+                pline = frame_ipc_line(pf);
+                pfile = frame_ipc_fname(pf);
+                if (pline && pfile) {
+                    struct descrip lno;
+                    MakeInt(pline->line, &lno);
+                    list_put(&result, pfile->fname);
+                    list_put(&result, &lno);
+                }
+                suspend result;
+                --lim;
+            }
+       }
+
+       fail;
    }
 end

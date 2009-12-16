@@ -194,8 +194,8 @@ void err_msg(int n, dptr v)
                 while (i-- > 0)
                     fputc(*s++, stderr);
                 fputc('\n', stderr);
-                pline = frame_ipc_line(curr_pf, 1);
-                pfile = frame_ipc_fname(curr_pf, 1);
+                pline = frame_ipc_line(curr_pf);
+                pfile = frame_ipc_fname(curr_pf);
                 if (pline && pfile) {
                     struct descrip t;
                     abbr_fname(pfile->fname, &t);
@@ -204,8 +204,8 @@ void err_msg(int n, dptr v)
                     fprintf(stderr, "File ?; Line ?\n");
             } else {
                 fprintf(stderr, "\nRun-time error %d\n", k_errornumber);
-                pline = frame_ipc_line(curr_pf, 1);
-                pfile = frame_ipc_fname(curr_pf, 1);
+                pline = frame_ipc_line(curr_pf);
+                pfile = frame_ipc_fname(curr_pf);
                 if (pline && pfile) {
                     struct descrip t;
                     abbr_fname(pfile->fname, &t);
@@ -247,11 +247,8 @@ void err_msg(int n, dptr v)
             abort();
         c_exit(EXIT_FAILURE);
     }
-    if (!collecting) {
-        fprintf(stderr, "Traceback:\n");
-        traceback();
-        fflush(stderr);
-    }
+    if (!collecting)
+        traceback(k_current, 1);
 
     if (dodump > 1)
         abort();
