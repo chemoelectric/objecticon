@@ -3226,12 +3226,12 @@ function lang_Internal_hash(x)
    }
 end
 
-function lang_Coexpression_traceback(ce)
+function lang_Coexpression_traceback(act_chain, ce)
    body {
        tended struct b_coexpr *b;
        if (!(b = get_coexpr_for(&ce)))
           runerr(0);
-       traceback(b, 0);
+       traceback(b, 0, !is:null(act_chain));
        return nulldesc;
    }
 end

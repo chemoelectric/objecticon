@@ -70,7 +70,7 @@ static int in_act_chain(struct act_chain *head, struct b_coexpr *ce)
     return 0;
 }
 
-void traceback(struct b_coexpr *ce, int with_xtrace)
+void traceback(struct b_coexpr *ce, int with_xtrace, int act_chain)
 {
     struct act_chain *head = 0, *ae;
     struct frame_chain *fe;
@@ -96,6 +96,8 @@ void traceback(struct b_coexpr *ce, int with_xtrace)
             }
         }
         ce = ce->activator;
+        if (!act_chain)
+            break;
     }
 
     if (depth == 0) {

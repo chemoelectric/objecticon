@@ -248,7 +248,7 @@ void err_msg(int n, dptr v)
         c_exit(EXIT_FAILURE);
     }
     if (!collecting)
-        traceback(k_current, 1);
+        traceback(k_current, 1, 1);
 
     if (dodump > 1)
         abort();

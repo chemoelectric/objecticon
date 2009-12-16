@@ -321,7 +321,7 @@ end
         putc('\n', stderr);
     }
 
-    traceback(k_current, 1);
+    traceback(k_current, 1, 1);
 
     if (dodump > 1)
         abort();
@@ -373,7 +373,7 @@ function syserr(msg)
       } else
           fprintf(stderr, "File ?; Line ?\n");
 
-      traceback(k_current, 1);
+      traceback(k_current, 1, 1);
 
       if (dodump > 1)
           abort();

@@ -584,7 +584,7 @@ void tail_invoke_frame(struct frame *f);
 dptr get_element(dptr d, word i);
 void do_field(void);
 struct inline_field_cache *get_inline_field_cache(void);
-void traceback(struct b_coexpr *ce, int with_ttrace);
+void traceback(struct b_coexpr *ce, int with_xtrace, int act_chain);
 struct ipc_line *frame_ipc_line(struct p_frame *pf);
 struct ipc_fname *frame_ipc_fname(struct p_frame *pf);
 struct b_proc *get_current_user_proc(void);

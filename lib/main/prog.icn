@@ -211,9 +211,11 @@ class Coexpression()
    # Output (to stderr) a traceback in the same format as that produced by
    # a runtime error.
    #
+   # @param act_chain - if non-null, show the traceback for the activator chain, otherwise
+   #            just show the traceback for this coexpression.
    # @param ce - the coexpression, by default &current
    #
-   public static defer traceback(ce)
+   public static defer traceback(act_chain, ce)
 
    #
    # Return a list containing information about the stack of frames in the given

@@ -412,7 +412,7 @@ void syserr(char *fmt, ...)
     va_end(ap);
 
     if (set_up) 		/* skip if start-up problem */
-        traceback(k_current, 1);
+        traceback(k_current, 1, 1);
 
     if (dodump)
         abort();
