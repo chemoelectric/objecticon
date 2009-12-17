@@ -3226,7 +3226,7 @@ function lang_Internal_hash(x)
    }
 end
 
-function lang_Coexpression_traceback(act_chain, ce)
+function lang_Coexpression_traceback(ce, act_chain)
    body {
        tended struct b_coexpr *b;
        if (!(b = get_coexpr_for(&ce)))
@@ -3236,7 +3236,7 @@ function lang_Coexpression_traceback(act_chain, ce)
    }
 end
 
-function lang_Coexpression_get_stack_info_impl(lim, ce)
+function lang_Coexpression_get_stack_info_impl(ce, lim)
    if !def:C_integer(lim, -1) then
       runerr(101, lim)
    body {

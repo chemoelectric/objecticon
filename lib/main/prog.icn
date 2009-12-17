@@ -211,24 +211,24 @@ class Coexpression()
    # Output (to stderr) a traceback in the same format as that produced by
    # a runtime error.
    #
+   # @param ce - the coexpression, by default &current
    # @param act_chain - if non-null, show the traceback for the activator chain, otherwise
    #            just show the traceback for this coexpression.
-   # @param ce - the coexpression, by default &current
    #
-   public static defer traceback(act_chain, ce)
+   public static defer traceback(ce, act_chain)
 
    #
    # Return a list containing information about the stack of frames in the given
    # co-expression.  Each element is a {FrameInfo} instance.
    #
+   # @param ce - the coexpression, by default &current
    # @param lim - the maximum number of frames to put in the list, by default 
    # @            all frames
-   # @param ce - the coexpression, by default &current
    #
-   public static get_stack_info(lim, ce)
+   public static get_stack_info(ce, lim)
       local l
       l := []
-      every put(l, FrameInfo!get_stack_info_impl(lim, ce))
+      every put(l, FrameInfo!get_stack_info_impl(ce, lim))
       return l
    end
 

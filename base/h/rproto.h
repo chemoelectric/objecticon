@@ -6,7 +6,6 @@
  * Prototypes common to the compiler and interpreter.
  */
 void		EVInit		(void);
-int		activate	(dptr val, struct b_coexpr *ncp, dptr result);
 word		add		(word a,word b);
 void		addmem 	(struct b_set *ps,struct b_selem *pe, union block **pl);
 struct b_cset	*alccset_0	(word n);
