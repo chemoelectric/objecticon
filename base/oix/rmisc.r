@@ -388,11 +388,10 @@ static int charstr(int c, char *b)
             case '\f':			/* form feed */
                 if (b) strncpy(b, "\\f", 2);
                 return 2;
-            case LineFeed:			/* new line */
+            case '\n':			/* new line */
                 if (b) strncpy(b, "\\n", 2);
                 return 2;
-
-            case CarriageReturn:		/* carriage return b */
+            case '\r':     		/* carriage return b */
                 if (b) strncpy(b, "\\r", 2);
                 return 2;
             case '\t':			/* horizontal tab */

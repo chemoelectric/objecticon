@@ -62,8 +62,8 @@ function detab(s,i[n])
                           tablst = i;  /* reset the list of remaining tab stops */
                           last = 1;
                           break;
-                      case LineFeed:
-                      case CarriageReturn:
+                      case '\n':
+                      case '\r':
                           col = 1;
                           tablst = i;  /* reset the list of remaining tab stops */
                           last = 1;
@@ -116,8 +116,8 @@ function detab(s,i[n])
                           tablst = i;  /* reset the list of remaining tab stops */
                           last = 1;
                           break;
-                      case LineFeed:
-                      case CarriageReturn:
+                      case '\n':
+                      case '\r':
                           col = 1;
                           tablst = i;  /* reset the list of remaining tab stops */
                           last = 1;
@@ -162,8 +162,8 @@ function detab(s,i[n])
                       tablst = i;  /* reset the list of remaining tab stops */
                       last = 1;
                       break;
-                  case LineFeed:
-                  case CarriageReturn:
+                  case '\n':
+                  case '\r':
                       col = 1;
                       tablst = i;  /* reset the list of remaining tab stops */
                       last = 1;
@@ -293,8 +293,8 @@ function entab(s,i[n])
                           tablst = i;  /* reset the list of remaining tab stops */
                           last = 1;
                           break;
-                      case LineFeed:
-                      case CarriageReturn:
+                      case '\n':
+                      case '\r':
                           col = 1;
                           tablst = i;  /* reset the list of remaining tab stops */
                           last = 1;
@@ -379,8 +379,8 @@ function entab(s,i[n])
                           tablst = i;  /* reset the list of remaining tab stops */
                           last = 1;
                           break;
-                      case LineFeed:
-                      case CarriageReturn:
+                      case '\n':
+                      case '\r':
                           col = 1;
                           tablst = i;  /* reset the list of remaining tab stops */
                           last = 1;
@@ -427,8 +427,8 @@ function entab(s,i[n])
                       tablst = i;  /* reset the list of remaining tab stops */
                       last = 1;
                       break;
-                  case LineFeed:
-                  case CarriageReturn:
+                  case '\n':
+                  case '\r':
                       col = 1;
                       tablst = i;  /* reset the list of remaining tab stops */
                       last = 1;

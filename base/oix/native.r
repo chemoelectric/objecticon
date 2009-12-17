@@ -3255,7 +3255,7 @@ function lang_Coexpression_get_stack_info_impl(ce, lim)
                 dptr arg;
                 word nargs;
 
-                create_list(3, &result);
+                create_list(4, &result);
                 prc.dword = D_Proc;
                 BlkLoc(prc) = (union block*)pf->proc;
                 getimage(&prc, &img);

@@ -163,13 +163,6 @@
 
 
 /*
- * Some C compilers take '\n' and '\r' to be the same, so the
- *  following definitions are used.
- */
-   #define LineFeed  10
-   #define CarriageReturn 13
-
-/*
  * Construct an integer descriptor.
  */
 #define MakeInt(i,dp)		do { \
