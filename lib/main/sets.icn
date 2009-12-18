@@ -36,6 +36,12 @@ class Set()
    public defer gen()
 
    #
+   # Generate the members in reverse order.  Only implemented for sets which store their
+   # members in sorted order.
+   #
+   public defer back()
+
+   #
    # Return the size of the set.
    #
    public defer size()
@@ -131,6 +137,10 @@ class TableSet(Set)
 
    public gen()
       suspend t.key()
+   end
+
+   public back()
+      suspend t.back_key()
    end
 
    public size()

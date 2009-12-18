@@ -61,6 +61,20 @@ class Table()
    public defer keyval()
 
    #
+   # Generate the keys (cf the builtin key() function.) in reverse
+   # order.  Only implemented for tables which store their keys in
+   # sorted order.
+   #
+   public defer back_key()
+
+   #
+   # Generate alternating key/values (cf the builtin keyval()
+   # function.) in reverse order.  Only implemented for tables which
+   # store their keys in sorted order.
+   #
+   public defer back_keyval()
+
+   #
    # Generate the values (cf !t for a table).
    #
    public defer gen()
@@ -316,6 +330,12 @@ class SortTableNode()
       (\r).traverse()
    end
 
+   public back_traverse()
+      (\r).back_traverse()
+      coact(self)
+      (\l).back_traverse()
+   end
+
    public new(k, v)
       self.key := k
       self.val := v
@@ -363,6 +383,16 @@ class SortTable(Table)
    public keyval()
       local e
       every e := Seq{(\root).traverse()} do
+         suspend e.key | e.val
+   end
+
+   public back_key()
+      suspend Seq{(\root).back_traverse()}.key
+   end
+
+   public back_keyval()
+      local e
+      every e := Seq{(\root).back_traverse()} do
          suspend e.key | e.val
    end
 
