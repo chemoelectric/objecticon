@@ -632,9 +632,51 @@ procedure test_set_method()
       write(e.file[-21:0],",",e.line)
 end
 
+class E1()
+   private x
+
+   private object_equals(other)
+      return other.x === x
+   end
+
+   public new(x)
+      self.x := x
+      return
+   end
+end
+
+class E2(E1)
+end
+
+class E3(E1)
+   private object_equals(other)
+      return other.x === x
+   end
+end
+
+procedure test_inherit_equals()
+   local x1,x2
+
+   x1 := SortTable(100,,"abc",1,  "dog",2,  "cat", 3)
+   x2 := BuiltinTable(table(100,"abc",1,  "dog",2,  "cat", 3))
+   yes_no{"equals(x1,x2)", equals(x1,x2)}
+
+   x1 := TableSet(x1)
+   x2 := BuiltinSet(set("cat","dog","abc"))
+   yes_no{"equals(x1,x2)", equals(x1,x2)}
+
+   x1 := E1(10)
+   x2 := E2(10)
+   yes_no{"equals(x1,x2)", equals(x1,x2)}
+
+   x2 := E3(10)
+   yes_no{"equals(x1,x2)", equals(x1,x2)}
+end
+
 procedure main()
    test_Class()
    test_langprocs()
    test_set_method()
    test_rand_objects()
+   test_inherit_equals()
 end
