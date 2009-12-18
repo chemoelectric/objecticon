@@ -627,9 +627,14 @@ procedure equals_impl(x, y, seen)
    local i, mp
    case type(x) of {
       "object" : {
+         if mp := Class.getf(x, "object_equals", 1) then {
+            # x has an object_equals method, so y must be of the same class, or inherit the
+            # same object_equals method as x.
+            return ((classof(x) === classof(y)) |
+                    Proc.get_defining_class(mp) === Class.get_field_defining_class(y, "object_equals")) &
+               mp(y, seen)
+         }
          classof(x) === classof(y) | fail
-         if mp := Class.getf(x, "object_equals", 1) then
-            return mp(y, seen)
          every i := 1 to Class.get_n_instance_fields(x) do 
             equals(Class.get(x, i), Class.get(y, i), seen) | fail
          return
