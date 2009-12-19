@@ -3189,6 +3189,18 @@ function lang_Proc_get_kind(c)
      }
 end
 
+function lang_Proc_is_defined(c)
+   body {
+        struct b_proc *proc0;
+        if (!(proc0 = get_proc_for(&c)))
+            runerr(0);
+        if (proc0 == &Bdeferred_method_stub)
+            fail;
+        else
+            return nulldesc;
+     }
+end
+
 function lang_Proc_get_defining_class(c)
    body {
         struct b_proc *proc0;
