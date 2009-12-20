@@ -169,7 +169,7 @@ One would expect this program to simply write "100" as output; in fact it doesn'
   # Since `black_hole` has already failed, #2 fails to #1.
   # The above two steps repeat forever.
 
-The infinite loop is caused by the fact that the two co-expressions end up having each other as activators, whereas we want #1 to be the activator of #2, but `&main` to remain the activator of #1.  The solution is to use the `coact` function in the `black_hole` procedure, replacing `100@&source` with `coact(100)`.
+The infinite loop is caused by the fact that the two co-expressions end up having each other as activators, whereas we want #1 to be the activator of #2, but `&main` to remain the activator of #1.  The solution is to use the `coact` function in the `black_hole` procedure, replacing `100@&source` with `coact(100)`.  In this simple example, we could also have just returned 100 from `black_hole`; however this wouldn't have helped if `black_hole` had been a deeply nested procedure.
 == Uses of co-expressions ==
 
 === As an expression type ===
@@ -313,4 +313,40 @@ is just syntactic shorthand for
 P(create e1, create e2, ... create en)
 }}}
 The ability of V2 co-expressions to refer to local variables (rather than copies of them) is a big advantage here.  In conventional Icon, the above code would require that `p`, `q` and `r` be global or static variables in order that their values could be changed by the co-expressions.
+=== Exception handling ===
+Since co-expressions provide a way of doing what amounts to a non-local goto, they can easily be used for exception handling.  The package `exception` contains procedures `try` and `throw`, which are used as follows :-
+{{{
+import io, lang, exception
+
+procedure p2()
+   throw("something")
+end
+
+procedure p1()
+   p2()
+end
+
+procedure main()
+   try {
+      p1()
+   } | {
+      write("Caught:", image(thrown))
+      Coexpression.traceback(thrower)
+   }
+end
+}}}
+This outputs :-
+{{{
+Caught:"something"
+Traceback:
+co-expression#2 activated by co-expression#1
+   main()
+   p1() from line 13 in test9.icn
+   p2() from line 8 in test9.icn
+   exception.throw("something") from line 4 in test9.icn
+   at line 9 in exception.icn
+}}}
+The `try` procedure works as a PDCO.  It runs its body (`p1()` in this case) in a separate co-expression, but before doing so sets a global variable, `exception.throw_handler` to `&current`, ie the co-expression to re-activate on a throw.  In fact, all the procedure `throw` does is store its parameter in the global variable `exception.thrown`, `&current` in the global variable `exception.thrower`, and activates `exception.throw_handler`.  Having been activated again, `try` then simply succeeds or fails depending on whether or not it was activated by a `throw`.
+
+Note that this way of handling exceptions does not "unwind" any stack.  The stack of `exception.thrower` remains fully intact, and can be printed.
  
