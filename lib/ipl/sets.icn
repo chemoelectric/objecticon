@@ -132,3 +132,22 @@ procedure simage(set)
    return "{ " || result[1:-2] || " }"
 
 end
+
+#
+# A useful procedure for constructing a set.  The first expression
+# {e1} controls a loop; for each iteration, the sequence {e2} is added
+# to the resulting set.
+#
+# A similar function {ipl.lists.mklist} produces a list instead of a set.
+#
+# @example
+# @   # Results in the set {0, 1, 4, 9, 16, 25, 36, 49, 64, 81}
+# @   mkset{e := 0 to 9, e * e}
+#
+procedure mkset(e1, e2)
+   local t
+   t := set()
+   while @e1 do
+      every insert(t, !e2)
+   return t
+end
