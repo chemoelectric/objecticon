@@ -121,10 +121,10 @@ See also: `entab()`
 == display ==
 `display (i,c) : n` -- display variables
 
-Writes the image of the given co-expression and the values of the local variables in the current procedure call. If `i > 0`, the local variables in the `i` preceding procedure calls are displayed as well. After all local variables are displayed, the values of global variables are displayed. Output is written to standard error.
+Writes the image of the given co-expression and the values of the local variables in the current procedure call. If `i` is given, the local variables in the `i` preceding procedure calls are displayed as well. After all local variables are displayed, the values of global variables are displayed. Output is written to standard error.
 
 Defaults:
- * `i`       `&level`
+ * `i`       `-1`, meaning display all levels
  * `c`       `&current`
 
 == entab ==
