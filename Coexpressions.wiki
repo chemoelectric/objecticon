@@ -137,6 +137,39 @@ procedure p(e)
 end
 }}}
 Note that evaluating `!e` does not affect `e`, nor generate any results from it.
+
+== Co-expression "black holes" ==
+Consider the following program :-
+{{{
+import io
+
+procedure black_hole()
+   100@&source
+end
+
+procedure p()
+   local e2
+   e2 := create black_hole()
+   return @e2
+end
+
+procedure main()
+   local e1
+   e1 := create p()
+   write(@e1)
+end
+}}}
+One would expect this program to simply write "100" as output; in fact it doesn't output anything, and enters an infinite loop.  To understand why, here is the sequence of events which take place when it is run:-
+  # `main` creates a co-expression (call it #1) and invokes it.
+  # `p` creates another co-expression (#2) and invokes it.
+  # `black_hole` transmits 100 to its `&source`, ie #1.
+  # `p` now returns 100.  This has the effect of resuming `&source`, which is now #2, since #2 just activated #1 by transmitting 100 to it.
+  # `black_hole` is resumed and fails.  Failure is transmitted to `&source`, which is now #1.
+  # Since `p` has already returned, #1 fails to #2.
+  # Since `black_hole` has already failed, #2 fails to #1.
+  # The above two steps repeat forever.
+
+The infinite loop is caused by the fact that the two co-expressions end up having each other as activators, whereas we want #1 to be the activator of #2, but `&main` to remain the activator of #1.  The solution is to use the `coact` function in the `black_hole` procedure, replacing `100@&source` with `coact(100)`.
 == Uses of co-expressions ==
 
 === As an expression type ===
