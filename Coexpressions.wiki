@@ -56,7 +56,7 @@ outputs
 3
 }}}
 == The cocopy() function ==
-Sometimes the way co-expressions share local variables is prohibitive.
+Sometimes the way co-expressions share local variables is awkward.
 
 Consider for example the problem of creating a list of ten co-expressions, each of which will generate a squared integer; 1 for the first, 4 for the second, 9 for the third and so on.  The following obvious attempt (which would work in Icon), unfortunately doesn't work in Object Icon :-
 {{{
@@ -96,7 +96,7 @@ end
 }}}
 Now each co-expression has its own copy of `i`, since each of the 10 calls to `p` creates its own set of local variables for that procedure.
 
-This is rather awkward however, and to provide a tidier solution, a builtin function `cocopy` is provided.  This does exactly the same as the refresh operator `^`, but instead of returning a new co-expression which also shares the local variables, a new set of local variables is allocated with values copied from the original.  Here is another version of the above program :-
+This is rather clumsy however, and to provide a tidier solution, a builtin function `cocopy` is provided.  This does exactly the same as the refresh operator `^`, but instead of returning a new co-expression which also shares the local variables, a new set of local variables is allocated with values copied from the original.  Here is another version of the above program :-
 {{{
 import io
 
@@ -112,6 +112,16 @@ procedure main()
 end
 }}}
 Note we have used `cocopy{i * i}`, which is just syntactic shorthand for `cocopy(create i * i)`.
+
+== The coact() function ==
+This builtin function is like the `@` operator, but more flexible. It takes four parameters as follows:
+`coact(value, ce, activator, failto)`
+
+It transmits `value` to `ce`, optionally setting `ce`'s activator. If `failto` is not `&null`, `value` is ignored, and failure is transmitted to `ce` instead. If `activator` is `&null`, then the activator of `ce` is left unchanged. 
+
+Note that `coact(val, ce, &current)` has the same effect as `val@ce`.
+
+The default of `ce` is `&source`, so `coact(val)` is like `val@&source`, with the important difference that the activator of `&source` is unchanged.  This use of `coact` is helpful in avoiding co-expression "black holes", described below.
 
 == Refreshing ==
 In Icon, refreshing a co-expression reset the local variables to their values when the co-expression was created.   This doesn't happen in the V2 Object Icon implementation of co-expressions.  Refreshing a co-expression simply creates a new co-expression which shares the local variables of the co-expression being refreshed.  `cocopy` does the same, but creates copies of the local variables instead.
@@ -177,7 +187,7 @@ class Node()
 
    public traverse()
       (\l).traverse()
-      self@&source
+      coact(self)
       (\r).traverse()
    end
 
