@@ -132,19 +132,3 @@ procedure simage(set)
    return "{ " || result[1:-2] || " }"
 
 end
-
-#
-# Create a set from the result sequence of the given co-expression.
-#
-# A similar function {ipl.lists.mklist} produces a list instead of a set.
-#
-# @example
-# @   # Results in the set {0, 1, 4, 9, 16, 25, 36, 49, 64, 81}
-# @   mkset{(e := 0 to 9, e * e)}
-#
-procedure mkset(e)
-   local t
-   t := set()
-   while insert(t, @e)
-   return t
-end

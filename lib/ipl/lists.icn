@@ -899,19 +899,3 @@ procedure push_n(l, a[])
    every push(l, !a)
    return l
 end
-
-#
-# Create a list from the result sequence of the given co-expression.
-#
-# A similar function {ipl.sets.mkset} produces a set instead of a list.
-#
-# @example
-# @   # Results in the list [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
-# @   mklist{(e := 0 to 9, e * e)}
-#
-procedure mklist(e)
-   local t
-   t := []
-   while put(t, @e)
-   return t
-end

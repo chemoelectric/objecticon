@@ -679,20 +679,49 @@ procedure Limit(e1, e2)
 
 end
 
-# list from sequence
+#
+# Create a list from the result sequence of the given co-expression.
+#
+# @example
+# @   # Results in the list [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
+# @   List{(e := 0 to 9, e * e)}
+#
 procedure List(e)		
-   local result
-   result := []
-   while put(result, @e)
-   return result
+   local t
+   t := []
+   while put(t, @e)
+   return t
 end
 
-# set from sequence
+#
+# Create a set from the result sequence of the given co-expression.
+#
+# @example
+# @   # Results in the set {0, 1, 4, 9, 16, 25, 36, 49, 64, 81}
+# @   Set{(e := 0 to 9, e * e)}
+#
 procedure Set(e)		
-   local result
-   result := set()
-   while insert(result, @e)
-   return result
+   local t
+   t := set()
+   while insert(t, @e)
+   return t
+end
+
+
+# Construct a table from a result sequence.  The expression {e} should
+# produce 2-element lists representing key-value pairs to add to the
+# table.
+#
+# @example
+# @   # Results in the table {1->1, 2->4, 3->9, 4->16}
+# @   Table{(i := 1 to 4, [i, i * i])}
+#
+procedure Table(e)
+   local t, x
+   t := table()
+   while x := @e do
+      insert(t, x[1], x[2])
+   return t
 end
 
 # lower trimming
