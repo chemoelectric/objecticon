@@ -901,20 +901,17 @@ procedure push_n(l, a[])
 end
 
 #
-# A useful procedure for constructing a list.  The first expression
-# {e1} controls a loop; for each iteration, the sequence {e2} is added
-# to the resulting list.
+# Create a list from the result sequence of the given co-expression.
 #
 # A similar function {ipl.sets.mkset} produces a set instead of a list.
 #
 # @example
 # @   # Results in the list [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
-# @   mklist{e := 0 to 9, e * e}
+# @   mklist{(e := 0 to 9, e * e)}
 #
-procedure mklist(e1, e2)
+procedure mklist(e)
    local t
    t := []
-   while @e1 do
-      every put(t, !e2)
+   while put(t, @e)
    return t
 end
