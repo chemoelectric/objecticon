@@ -106,13 +106,17 @@ end
 "max(x,y,...) - return the maximum of the arguments"
 
 function max(argv[argc])
-body {
-   int i;
-   struct descrip dtmp;
-   if (argc == 0) fail;
-   dtmp = argv[0];
-   for(i=1;i<argc;i++) if (anycmp(&dtmp, argv+i) < 0) dtmp = argv[i];
-   return dtmp;
+   body {
+      int i;
+      struct descrip dtmp;
+      if (argc == 0) 
+          fail;
+      dtmp = argv[0];
+      for(i = 1; i < argc; i++) {
+          if (anycmp(&dtmp, argv+i) < 0) 
+              dtmp = argv[i];
+      }
+      return dtmp;
    }
 end
 
@@ -120,12 +124,16 @@ end
 "min(x,y,...) - return the minimum of the arguments"
 
 function min(argv[argc])
-body {
-   int i;
-   struct descrip dtmp;
-   if (argc == 0) fail;
-   dtmp = argv[0];
-   for(i=1;i<argc;i++) if (anycmp(&dtmp, argv+i) > 0) dtmp = argv[i];
-   return dtmp;
+   body {
+      int i;
+      struct descrip dtmp;
+      if (argc == 0) 
+          fail;
+      dtmp = argv[0];
+      for(i = 1; i < argc; i++) {
+          if (anycmp(&dtmp, argv+i) > 0) 
+              dtmp = argv[i];
+      }
+      return dtmp;
    }
 end
