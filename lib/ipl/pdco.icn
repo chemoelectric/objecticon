@@ -82,7 +82,7 @@
 #   technique for modeling conjunction via recursive generative
 #   procedures.
 #
-#   Histo{e,i}	generates histogram for e limited to i terms;
+#   Histo{e}	        generates histogram for e
 #			default 100.
 #
 #   Increasing{e}	filters out non-increasing values in integer
@@ -102,7 +102,7 @@
 #
 #   Limit{e1,e2}	models e1 \ e2
 #
-#   List{e,i}	produces a list of the first i results from e
+#   List{e}	        produces a list of the results from e
 #
 #   LowerTrim{e}	lower trim
 #
@@ -119,9 +119,8 @@
 #			parallel evaluation terminating on
 #			shortest sequence
 #
-#   PatternPalin{e, i}
-#			produces pattern palindrome.  If i is given,
-#			e is truncated to length i.
+#   PatternPalin{e}
+#			produces pattern palindrome.
 #
 #   Period{e, i}	generates the periodic part of e; i values are
 #			used to find the period
@@ -158,8 +157,7 @@
 #   Resume{e1,e2,e3}
 #			models every e1 \ e2 do e3
 #
-#   Reverse{e, i}  	produces the results of e in reverse order. If i
-#			is given, e is truncated to i values.
+#   Reverse{e}  	produces the results of e in reverse order.
 #  
 #   Rotate(e, i)	rotates the sequence for e left by i; negative
 #   		   	i rotates to the right
@@ -561,15 +559,12 @@ procedure Gconj_(L,i,v)
 end
 
 # histogram
-procedure Histo(e1, e2)		
-   local limit, results, seq
-
-   limit := @\e2 | 100
+procedure Histo(e1)		
+   local results, seq
 
    seq := []
 
-   every 1 to limit do
-      put(seq, @e1) | break
+   while put(seq, @e1)
 
    results := list(max ! seq, 0)
 
@@ -685,31 +680,19 @@ procedure Limit(e1, e2)
 end
 
 # list from sequence
-procedure List(e1, e2)		
-   local limit, result
-
-   limit := @\e2 | 100
-
+procedure List(e)		
+   local result
    result := []
-
-   every put(result, |@e1) \ limit
-
+   while put(result, @e)
    return result
-
 end
 
 # set from sequence
-procedure Set(e1, e2)		
-   local limit, result
-
-   limit := @\e2 | 100
-
+procedure Set(e)		
+   local result
    result := set()
-
-   every insert(result, |@e1) \ limit
-
+   while insert(result, @e)
    return result
-
 end
 
 # lower trimming
@@ -780,18 +763,14 @@ procedure Parallel(L[])
 end
 
 # PDCO to produce pattern palindrome
-procedure PatternPalin(e1, e2)	
-   local tail, x, limit
+procedure PatternPalin(e)	
+   local tail, x
 
    tail := []
-
-   limit := @\e2 | (2 ^ 15)	# good enough
-
-   every 1 to limit do {
-      x := @e1 | break
+   while x := @e do {
       suspend x
       push(tail, x)
-      } 
+   }
 
    get(tail)
 
@@ -992,18 +971,11 @@ procedure Resume(e1, e2, e3)
 end
 
 # PDCO to reverse sequence
-procedure Reverse(e1, e2)	
-   local result, limit
-
+procedure Reverse(e)
+   local result
    result := []
-
-   limit := @\e2 | 2 ^ 15		# enough
-
-   every 1 to limit do
-       push(result, @e1) | break
-
+   while push(result, @e)
    suspend !result
-
 end
 
 # PDCO to rotate sequence
