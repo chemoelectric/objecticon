@@ -316,23 +316,22 @@ The ability of V2 co-expressions to refer to local variables (rather than copies
 
 Another nice example of the use of PDCOs is the function `mklist` in the package `ipl.lists`, which is as follows :-
 {{{
-procedure mklist(e1, e2)
+procedure mklist(e)
    local t
    t := []
-   while @e1 do
-      every put(t, !e2)
+   while put(t, @e)
    return t
 end
 }}}
-The first expression controls the while loop, whilst the second expression is evaluated repeatedly to add to the result list.  This gives a feature very similar to Python's list comprehensions.  For example :-
+Using `mklist` together with mutual evaluation gives a feature very similar to Python's list comprehensions.  For example :-
 {{{
-mklist{e := 0 to 9, e * e}
+mklist{(e := 0 to 9, e * e)}
 }}}
 gives the list `[0, 1, 4, 9, 16, 25, 36, 49, 64, 81]`.
 
 `mklist` can also be used to perform mapping and filtering on a list.  For example, given one list `x`, the following produces another list with just the even elements of `x` :- 
 {{{
-mklist{e := !x, if e%2 = 0 then e}
+mklist{(e := !x, if e%2 = 0 then e)}
 }}}
 === Exception handling ===
 Since co-expressions provide a way of doing what amounts to a non-local goto, they can easily be used for exception handling.  The package `exception` contains procedures `try` and `throw`, which are used as follows :-
