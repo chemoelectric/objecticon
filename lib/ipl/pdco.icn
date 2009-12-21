@@ -166,9 +166,6 @@
 #
 #   Selfrepl{e1,i}	produces e1 * j copies of e1
 #
-#   Seqlist{e1, i}	produce list with first i values of e1; i
-#			defaults to all values
-#  
 #   Simple{e1,e2, ...}
 #			simple evaluation with only success or
 #			failure
@@ -571,7 +568,8 @@ procedure Histo(e1, e2)
 
    seq := []
 
-   while put(seq, @e1)
+   every 1 to limit do
+      put(seq, @e1) | break
 
    results := list(max ! seq, 0)
 
@@ -695,6 +693,20 @@ procedure List(e1, e2)
    result := []
 
    every put(result, |@e1) \ limit
+
+   return result
+
+end
+
+# set from sequence
+procedure Set(e1, e2)		
+   local limit, result
+
+   limit := @\e2 | 100
+
+   result := set()
+
+   every insert(result, |@e1) \ limit
 
    return result
 
@@ -1028,21 +1040,6 @@ procedure Selfrepl(e1, e2)
       i := integer(i) | runerr("*** invalid value in Selfrepl{}")
       suspend (1 to i * j) & i
       }
-
-end
-
-# PDCO to return list of values
-procedure Seqlist(e1, e2)	
-   local result, limit
-
-   result := []
-
-   limit := @\e2 | 2 ^ 15	# crude ...
-
-   every 1 to limit do
-      put(result, @e1) | break
-
-   return result
 
 end
 
