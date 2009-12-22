@@ -701,7 +701,7 @@ operator @ bactivate(underef val, ce)
         push_frame((struct frame *)pf);
         pf->fvars->desc[0] = val;
         pf->fvars->desc[1] = ce;
-        pf->fvars->desc[2].dword = D_Coexpr;;
+        pf->fvars->desc[2].dword = D_Coexpr;
         BlkLoc(pf->fvars->desc[2]) = (union block *)k_current;
         tail_invoke_frame((struct frame *)pf);
         return nulldesc;
@@ -719,7 +719,7 @@ operator @ uactivate(ce)
         push_frame((struct frame *)pf);
         pf->fvars->desc[0] = nulldesc;
         pf->fvars->desc[1] = ce;
-        pf->fvars->desc[2].dword = D_Coexpr;;
+        pf->fvars->desc[2].dword = D_Coexpr;
         BlkLoc(pf->fvars->desc[2]) = (union block *)k_current;
         tail_invoke_frame((struct frame *)pf);
         return nulldesc;
