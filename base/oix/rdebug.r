@@ -1060,3 +1060,265 @@ static void procname(FILE *f, struct b_proc *p)
     } else
         putstr(f, p->name);
 }
+
+void print_desc(FILE *f, dptr d) {
+    putc('{', f);
+    print_dword(f, d);
+    fputs(", ", f); 
+    print_vword(f, d);
+    putc('}', f);
+    fflush(f);
+}
+
+void print_vword(FILE *f, dptr d) {
+    if (Qual(*d)) {
+        fprintf(f, "%p -> ", StrLoc(*d));
+        outimage(f, d, 1);
+    } else if (is:struct_var(*d)) {
+        /* D_StructVar (with an offset) */
+        fprintf(f, "%p+%lu -> ", BlkLoc(*d), (unsigned long)(WordSize*Offset(*d)));
+        print_desc(f, OffsetVarLoc(*d));
+    } else {
+        switch (d->dword) {
+            case D_NamedVar : {
+                /* D_NamedVar (pointer to another descriptor) */
+                fprintf(f, "%p -> ", VarLoc(*d));
+                print_desc(f, VarLoc(*d));
+                break;
+            }
+            case D_Tvsubs : {
+                struct b_tvsubs *p = &TvsubsBlk(*d);
+                fprintf(f, "%p -> sub=%ld+:%ld ssvar=", p, (long)p->sspos, (long)p->sslen);
+                print_desc(f, &p->ssvar);
+                break;
+            }
+
+            case D_Tvtbl : {
+                struct b_tvtbl *p = &TvtblBlk(*d);
+                fprintf(f, "%p -> tref=", p);
+                print_desc(f, &p->tref);
+                break;
+            }
+
+            case D_Kywdint :
+            case D_Kywdpos :
+            case D_Kywdsubj :
+            case D_Kywdstr :
+            case D_Kywdany : {
+                fprintf(f, "%p -> ", VarLoc(*d));
+                print_desc(f, VarLoc(*d));
+                break;
+            }
+
+            case D_TendPtr : {
+                fprintf(f, "%p", BlkLoc(*d));
+                break;
+            }
+
+            case D_Null : {
+                fputs("0", f); 
+                break;
+            }
+
+            case D_Integer : {
+                fprintf(f, "%ld", (long)IntVal(*d)); 
+                break;
+            }
+
+            case D_Lelem :
+            case D_Selem :
+            case D_Telem :
+            case D_Slots :
+            case D_Proc : {
+                struct b_proc *p = &ProcBlk(*d);
+                fprintf(f, "%p -> prog:%p=", p, p->program);
+                outimage(f, d, 1);
+                break;
+            }
+
+            case D_Class : {
+                struct b_class *p = &ClassBlk(*d);
+                fprintf(f, "%p -> prog:%p=", p, p->program);
+                outimage(f, d, 1);
+                break;
+            }
+
+            case D_Constructor : {
+                struct b_constructor *p = &ConstructorBlk(*d);
+                fprintf(f, "%p -> prog:%p=", p, p->program);
+                outimage(f, d, 1);
+                break;
+            }
+
+            case D_List :
+            case D_Set : 
+            case D_Table :
+            case D_Record :
+            case D_Coexpr :
+            case D_Lrgint :
+            case D_Real :
+            case D_Cset :
+            case D_Methp :
+            case D_Ucs :
+            case D_Cast :
+            case D_Object : {
+                fprintf(f, "%p -> ", BlkLoc(*d));
+                outimage(f, d, 1);
+                break;
+            }
+
+            default : fputs("?", f); 
+        }
+    }
+}
+
+void print_dword(FILE *f, dptr d) {
+    if (Qual(*d)) {
+        /* String */
+        fprintf(f, "%ld", (long)d->dword);
+    } else if (is:struct_var(*d)) {
+        /* D_StructVar (with an offset) */
+        fprintf(f, "D_StructVar off:%lu", (unsigned long)Offset(*d));
+    } else {
+        switch (d->dword) {
+            case D_TendPtr : fputs("D_TendPtr", f); break;
+            case D_NamedVar : fputs("D_NamedVar", f); break;
+            case D_Tvsubs : fputs("D_Tvsubs", f); break;
+            case D_Tvtbl : fputs("D_Tvtbl", f); break;
+            case D_Kywdint : fputs("D_Kywdint", f); break;
+            case D_Kywdpos : fputs("D_Kywdpos", f); break;
+            case D_Kywdsubj : fputs("D_Kywdsubj", f); break;
+            case D_Kywdstr : fputs("D_Kywdstr", f); break;
+            case D_Kywdany : fputs("D_Kywdany", f); break;
+            case D_Null : fputs("D_Null", f); break;
+            case D_Integer : fputs("D_Integer", f); break;
+            case D_Lrgint : fputs("D_Lrgint", f); break;
+            case D_Real : fputs("D_Real", f); break;
+            case D_Cset : fputs("D_Cset", f); break;
+            case D_Proc : fputs("D_Proc", f); break;
+            case D_Record : fputs("D_Record", f); break;
+            case D_List : fputs("D_List", f); break;
+            case D_Lelem : fputs("D_Lelem", f); break;
+            case D_Set : fputs("D_Set", f); break;
+            case D_Selem : fputs("D_Selem", f); break;
+            case D_Table : fputs("D_Table", f); break;
+            case D_Telem : fputs("D_Telem", f); break;
+            case D_Slots : fputs("D_Slots", f); break;
+            case D_Coexpr : fputs("D_Coexpr", f); break;
+            case D_Class : fputs("D_Class", f); break;
+            case D_Object : fputs("D_Object", f); break;
+            case D_Cast : fputs("D_Cast", f); break;
+            case D_Constructor : fputs("D_Constructor", f); break;
+            case D_Methp : fputs("D_Methp", f); break;
+            case D_Ucs : fputs("D_Ucs", f); break;
+            default : fputs("?", f);
+        }
+    }
+}
+
+void showcurrstack()
+{
+    if (!k_current) {
+        fprintf(stderr, "curpstate=%p k_current is 0\n",curpstate);
+        return;
+    }    
+    fprintf(stderr, "ipc=%p k_current= %p k_current->sp=%p k_current->curr_pf=%p\n",
+           ipc, k_current, k_current->sp, k_current->curr_pf);
+    showstack(stderr, k_current);
+}
+
+void showstack(FILE *f, struct b_coexpr *c)
+{
+    struct frame *x;
+    fprintf(f, "Stack trace for coexpression %p\n", c);
+    x = c->sp;
+    while (x) {
+        struct descrip tmp;
+        int i;
+        if (x == c->sp)
+            fprintf(f, "SP-> ");
+        if (x == (struct frame *)c->curr_pf)
+            fprintf(f, "PF-> ");
+        fprintf(f, "Frame %p type=%c, size=%d\n", x, 
+               x->type == C_FRAME_TYPE ? 'C':'P', 
+               x->size);
+        fprintf(f, "\tvalue="); print_desc(f, &x->value); fprintf(f, "\n");
+        fprintf(f, "\tfailure_label=%p\n", x->failure_label);
+        tmp.dword = D_Proc;
+        BlkLoc(tmp) = (union block *)x->proc;
+        fprintf(f, "\tproc="); print_vword(f, &tmp); fprintf(f, "\n");
+        fprintf(f, "\tparent_sp=%p\n", x->parent_sp);
+        fprintf(f, "\texhausted=%d\n", x->exhausted);
+        fprintf(f, "\trval=%d\n", x->rval);
+        switch (x->type) {
+            case C_FRAME_TYPE: {
+                struct c_frame *cf = (struct c_frame *)x;
+                fprintf(f, "\tpc=0x%lx\n", (long)cf->pc);
+                fprintf(f, "\tnargs=%d\n", cf->nargs);
+                for (i = 0; i < cf->nargs; ++i) {
+                    fprintf(f, "\targs[%d]=", i); print_desc(f, &cf->args[i]); fprintf(f, "\n");
+                }
+                for (i = 0; i < x->proc->ntend; ++i) {
+                    fprintf(f, "\ttend[%d]=", i); print_desc(f, &cf->tend[i]); fprintf(f, "\n");
+                }
+                break;
+            }
+            case P_FRAME_TYPE: {
+                struct p_frame *pf = (struct p_frame *)x;
+                dptr *np, dp;
+                int j;
+                fprintf(f, "\tipc=%p\n", pf->ipc);
+                fprintf(f, "\tcurr_inst=%p\n", pf->curr_inst);
+                fprintf(f, "\tcaller=%p\n", pf->caller);
+                for (i = 0; i < x->proc->nclo; ++i) {
+                    fprintf(f, "\tclo[%d]=%p\n", i, pf->clo[i]);
+                }
+                for (i = 0; i < x->proc->ntmp; ++i) {
+                    fprintf(f, "\ttmp[%d]=", i); print_desc(f, &pf->tmp[i]); fprintf(f, "\n");
+                }
+                for (i = 0; i < x->proc->nlab; ++i) {
+                    fprintf(f, "\tlab[%d]=%p\n", i, pf->lab[i]);
+                }
+                for (i = 0; i < x->proc->nmark; ++i) {
+                    fprintf(f, "\tmark[%d]=%p\n", i, pf->mark[i]);
+                }
+                if (pf->fvars) {
+                    fprintf(f, "\tfvars=%p, size=%d\n", pf->fvars, pf->fvars->size);
+                    i = 0;
+                    np = x->proc->lnames;
+                    dp = pf->fvars->desc;
+                    for (j = 0; j < x->proc->nparam; ++j) {
+                        if (np) {
+                            fprintf(f, "\t   fvars.desc[%d] (arg %.*s)=", i, (int)StrLen(**np), StrLoc(**np)); 
+                            ++np;
+                        } else
+                            fprintf(f, "\t   fvars.desc[%d] (arg %d)=", i, j);
+                        print_desc(f, dp++); fprintf(f, "\n");
+                        ++i;
+                    }
+                    for (j = 0; j < x->proc->ndynam; ++j) {
+                        if (np) {
+                            fprintf(f, "\t   fvars.desc[%d] (local %.*s)=", i, (int)StrLen(**np), StrLoc(**np)); 
+                            ++np;
+                        } else
+                            fprintf(f, "\t   fvars.desc[%d] (local %d)=", i, j);
+                        print_desc(f, dp++); fprintf(f, "\n");
+                        ++i;
+                    }
+                    fprintf(f, "\t   fvars.desc-desc_end=%p-%p\n", pf->fvars->desc, pf->fvars->desc_end);
+                    fprintf(f, "\t   fvars.refcnt=%d\n", pf->fvars->refcnt);
+                    fprintf(f, "\t   fvars.seen=%d\n", pf->fvars->seen);
+                } else
+                    fprintf(f, "\tfvars=%p\n", pf->fvars);
+                break;
+            }
+            default:
+                syserr("Unknown frame type");
+        }
+        x = x->parent_sp;
+
+    }
+    fprintf(f, "------bottom of stack--------\n");
+    fflush(f);
+}
+

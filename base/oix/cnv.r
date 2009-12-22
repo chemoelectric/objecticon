@@ -758,18 +758,6 @@ deref_macro(deref_0,0)
 deref_macro(deref_1,E_Deref)
 
 /*
- * getdbl - return as a double the value inside a real block.
- */
-double getdbl(dp) 
-dptr dp;
-   {
-   double d;
-   GetReal(RealBlk(*dp), d);
-   return d;
-   }
-
-
-/*
  * Service routines
  */
 
