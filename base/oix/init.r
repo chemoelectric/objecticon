@@ -438,18 +438,6 @@ void c_exit(int i)
 
 }
 
-
-/*
- * err() is called if an erroneous situation occurs in the virtual
- *  machine code.  It is typed as int to avoid declaration problems
- *  elsewhere.
- */
-int err()
-{
-    syserr("call to 'err'\n");
-    return 1;		/* unreachable; make compilers happy */
-}
-
 /*
  * fatalerr - disable error conversion and call run-time error routine.
  */
