@@ -54,14 +54,11 @@ static int subs_asgn	(dptr dest, const dptr src);
             if (i == CvtFail)
                fail;
 	    IntVal(*VarLoc(x)) = i;
-
-            EVVal(k_pos, E_Spos);
          }
       kywdsubj: {
             if (!cnv:string_or_ucs(y, *VarLoc(x)))
                runerr(129, y);
 	    IntVal(*(VarLoc(x)-1)) = 1;
-            EVVal(k_pos, E_Spos);
          }
       kywdstr: {
          if (!cnv:string_or_ucs(y, *VarLoc(x)))

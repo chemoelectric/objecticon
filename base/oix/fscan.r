@@ -31,7 +31,6 @@ function move(i)
            * Set new &pos.
            */
           k_pos += i;
-          EVVal(k_pos, E_Spos);
 
           /*
            * Make sure i >= 0.
@@ -51,10 +50,8 @@ function move(i)
            */
           if (oldpos > StrLen(k_subject) + 1)
               runerr(205, kywd_pos);
-          else {
+          else
               k_pos = oldpos;
-              EVVal(k_pos, E_Spos);
-          }
       } else {
           /*
            * If attempted move is past either end of the string, fail.
@@ -66,7 +63,6 @@ function move(i)
            * Set new &pos.
            */
           k_pos += i;
-          EVVal(k_pos, E_Spos);
 
           /*
            * Make sure i >= 0.
@@ -97,10 +93,8 @@ function move(i)
            */
           if (oldpos > UcsBlk(k_subject).length + 1)
               runerr(205, kywd_pos);
-          else {
+          else
               k_pos = oldpos;
-              EVVal(k_pos, E_Spos);
-          }
       }
 
       fail;
@@ -163,7 +157,6 @@ function tab(i)
            * Set new &pos.
            */
           k_pos = i;
-          EVVal(k_pos, E_Spos);
 
           /*
            *  Make i the length of the substring &subject[i:j]
@@ -186,10 +179,8 @@ function tab(i)
            */
           if (oldpos > StrLen(k_subject) + 1)
               runerr(205, kywd_pos);
-          else {
+          else
               k_pos = oldpos;
-              EVVal(k_pos, E_Spos);
-          }
       } else {
           /*
            * Convert i to an absolute position.
@@ -207,7 +198,6 @@ function tab(i)
            * Set new &pos.
            */
           k_pos = i;
-          EVVal(k_pos, E_Spos);
 
           /*
            *  Make i the length of the substring &subject[i:j]
@@ -231,10 +221,8 @@ function tab(i)
            */
           if (oldpos > UcsBlk(k_subject).length + 1)
               runerr(205, kywd_pos);
-          else {
+          else
               k_pos = oldpos;
-              EVVal(k_pos, E_Spos);
-          }
       }
 
       fail;

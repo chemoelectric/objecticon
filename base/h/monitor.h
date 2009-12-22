@@ -130,17 +130,6 @@
 #define	E_Objectcreate	'\216'		/* Object creation */
 
    /*
-    * Scanning events
-    */
-
-#define E_Snew		'\340'		/* Scanning environment creation */
-#define E_Sfail		'\341'		/* Scanning failure */
-#define E_Ssusp		'\342'		/* Scanning suspension */
-#define E_Sresum	'\343'		/* Scanning resumption */
-#define E_Srem		'\344'		/* Scanning environment removal */
-#define E_Spos		'\346'		/* Scanning position */
-
-   /*
     * Assignment
     */
 

@@ -139,8 +139,6 @@ operator = tabmat(x)
           l = UcsBlk(x).length;
           k_pos += l;
 
-          EVVal(k_pos, E_Spos);
-
           suspend x;
 
           /*
@@ -150,7 +148,6 @@ operator = tabmat(x)
               runerr(205, kywd_pos);
           else {
               k_pos = i;
-              EVVal(k_pos, E_Spos);
           }
           fail;
       } else {
@@ -186,8 +183,6 @@ operator = tabmat(x)
           l = StrLen(x);
           k_pos += l;
 
-          EVVal(k_pos, E_Spos);
-
           suspend x;
 
           /*
@@ -195,10 +190,9 @@ operator = tabmat(x)
            */
           if (i > StrLen(k_subject) + 1)
               runerr(205, kywd_pos);
-          else {
+          else 
               k_pos = i;
-              EVVal(k_pos, E_Spos);
-          }
+
           fail;
       }
    }
