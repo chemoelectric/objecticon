@@ -42,38 +42,10 @@
  */
 #define	E_BlkDeAlc	'\055'		/* Block deallocation */
 #define	E_StrDeAlc	'\176'		/* String deallocation */
-
-/*
- * These are not "events"; they are provided for uniformity in tools
- *  that deal with types.
- */
-#define E_Integer	'\100'		/* Integer value pseudo-event */
-#define E_Null		'\044'		/* Null value pseudo-event */
-#define E_Proc		'\045'		/* Procedure value pseudo-event */
-#define E_Kywdint	'\136'		/* Integer keyword value pseudo-event */
-#define E_Kywdpos	'\046'		/* Position value pseudo-event */
-#define E_Kywdsubj	'\052'		/* Subject value pseudo-event */
-
-/*
- * Codes for main sequence events
- */
-
-   /*
-    * Timing events
-    */
-#define E_Tick		'\056'		/* Clock tick */
+#define E_Scan		'\300'		/* String scanning operation */
+#define E_Limit		'\303'		/* Limitation operation */
 
 
-   /*
-    * Code-location event
-    */
-#define E_Line		'\355'		/* Line change */
-#define E_Fname		'\147'		/* Filename change */
-
-   /*
-    * Virtual-machine instructions
-    */
-#define E_Opcode	'\117'		/* Virtual-machine instruction */
 
    /*
     * Type-conversion events
@@ -180,11 +152,6 @@
  */
 #define E_Error		'\105'		/* Run-time error */
 
-   /*
-    * I/O events
-    */
-#define E_MXevent	'\370'		/* monitor input event */
-#define E_Literal	'\364'          /* literal */
 
 
 
@@ -195,14 +162,15 @@
 010 011 012 013 014 015 016 017
 020 021 022 023 024 025 026 027
 030 031 032 033 034 035 036 037
-040 041 042 043 047
-050 051 053 054 057
+040 041 042 043 044 045 046 047
+050 051 052 053 054 056 057
 060 061 062 063 064 065 066 067
 070 071 072 073 074 075 076 077
 
-115 120
-124 127 130 131 133 134 135
-137 140 141 142 143 146
+
+100 115 117 120
+124 127 130 131 133 134 135 136
+137 140 141 142 143 146 147
 152 154
 162 165 166
 173 174 175 
@@ -214,9 +182,9 @@
 260 261 262 263 264 265 266 267
 270 271 272 273 274 275 276 277
 
-300 303
-345 351 352 353
-365 366
+340 341 342 343 344 345 346
+351 352 353 355
+364 365 366 370
 371 372 373 374 375 376 377
 
  

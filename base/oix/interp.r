@@ -748,6 +748,7 @@ static void do_limit()
         ipc = failure_label;
         return;
     }
+    EVValD(limit, E_Limit);
 }
 
 static void do_scansave()
@@ -769,6 +770,7 @@ static void do_scansave()
     curr_pf->tmp[p] = curpstate->Kywd_pos;
     curpstate->Kywd_subject = new_subject;
     MakeInt(1, &curpstate->Kywd_pos);
+    EVValD(&new_subject, E_Scan);
 }
 
 void interp()
