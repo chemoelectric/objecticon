@@ -646,15 +646,14 @@ static void xtrace()
     if (curr_op == 0)
         return;
 
-    fprintf(stderr, "   ");
-
     switch ((int)curr_op) {
 
         case Op_Keywd:
-            fprintf(stderr,"bad keyword reference");
+            fprintf(stderr,"   bad keyword reference");
             break;
 
         case Op_Invokef:
+            fprintf(stderr, "   ");
             if (curr_cf) {
                 /* Will happen if a builtin proc calls runnerr */
                 procname(stderr, curr_cf->proc);
@@ -677,6 +676,7 @@ static void xtrace()
             break;
 
         case Op_Applyf:
+            fprintf(stderr, "   ");
             if (curr_cf) {
                 /* Will happen if a builtin proc calls runnerr */
                 procname(stderr, curr_cf->proc);
@@ -703,6 +703,7 @@ static void xtrace()
             break;
 
         case Op_Apply:
+            fprintf(stderr, "   ");
             if (curr_cf) {
                 /* Will happen if a builtin proc calls runnerr */
                 procname(stderr, curr_cf->proc);
@@ -727,6 +728,7 @@ static void xtrace()
             break;
 
         case Op_Invoke:
+            fprintf(stderr, "   ");
             if (curr_cf) {
                 /* Will happen if a builtin proc calls runnerr */
                 procname(stderr, curr_cf->proc);
@@ -748,7 +750,7 @@ static void xtrace()
 
         case Op_Toby:
             xargp = curr_cf->args;
-            putc('{', stderr);
+            fprintf(stderr, "   {");
             outimage(stderr, xargp++, 0);
             fprintf(stderr, " to ");
             outimage(stderr, xargp++, 0);
@@ -759,7 +761,7 @@ static void xtrace()
 
         case Op_Subsc:
             xargp = curr_cf->args;
-            putc('{', stderr);
+            fprintf(stderr, "   {");
             outimage(stderr, xargp++, 0);
             putc('[', stderr);
             outimage(stderr, xargp, 0);
@@ -770,7 +772,7 @@ static void xtrace()
 
         case Op_Sect:
             xargp = curr_cf->args;
-            putc('{', stderr);
+            fprintf(stderr, "   {");
             outimage(stderr, xargp++, 0);
 
             putc('[', stderr);
@@ -785,13 +787,13 @@ static void xtrace()
             break;
 
         case Op_ScanSave:
-            putc('{', stderr);
+            fprintf(stderr, "   {");
             outimage(stderr, xargp, 0);
             fputs(" ? ..}", stderr);
             break;
 
         case Op_Coact:
-            putc('{', stderr);
+            fprintf(stderr, "   {");
             outimage(stderr, xargp, 0);
             fprintf(stderr, " @ ");
             outimage(stderr, xexpr, 0);
@@ -799,11 +801,11 @@ static void xtrace()
             break;
 
         case Op_Create:
-            fprintf(stderr,"{create ..}");
+            fprintf(stderr,"   {create ..}");
             break;
 
         case Op_Field:
-            putc('{', stderr);
+            fprintf(stderr, "   {");
             outimage(stderr, xexpr, 0);
             fprintf(stderr, " . ");
             outfield();
@@ -811,7 +813,7 @@ static void xtrace()
             break;
 
         case Op_Limit:
-            fprintf(stderr, "limit counter: ");
+            fprintf(stderr, "   limit counter: ");
             outimage(stderr, xargp, 0);
             break;
 
@@ -821,8 +823,10 @@ static void xtrace()
             /*
              * Have we come here from a C operator/function?
              */
-            if (!curr_cf)
-                break;
+            if (!curr_cf) {
+                trace_at(curr_pf);
+                return;
+            }
 
             bp = curr_cf->proc;
 
@@ -832,7 +836,7 @@ static void xtrace()
             if (is_op(bp)) {
                 xnargs = curr_cf->nargs;
                 xargp = curr_cf->args;
-                putc('{', stderr);
+                fprintf(stderr, "   {");
                 if (xnargs == 0)
                     putstr(stderr, bp->name);
                 else if (xnargs == 1) {
@@ -849,6 +853,7 @@ static void xtrace()
                 putc('}', stderr);
             } else {
                 /* Not an operator, perhaps a function being resumed. */
+                fprintf(stderr, "   ");
                 procname(stderr, bp);
                 xnargs = curr_cf->nargs;
                 xargp = curr_cf->args;
