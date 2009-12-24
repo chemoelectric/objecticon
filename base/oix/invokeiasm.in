@@ -97,10 +97,8 @@ $start get_impl
          Op_Tmp tmp:0
 
 FailAccess:
-    # Will only get here if &error != 0.  Call handle_access_failure
-    # with quiet = 1.
-    Op_Custom c:handle_access_failure
-         Op_Int 1
+    # Will only get here if &error != 0.
+    Op_CFail
 $end
 
 $start getf_impl

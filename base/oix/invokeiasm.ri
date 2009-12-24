@@ -123,10 +123,7 @@ static word get_impl_code[] = {
    Op_CReturn,
    Op_Tmp,
    0,
-   Op_Custom,
-   (word)handle_access_failure,
-   Op_Int,
-   1,
+   Op_CFail,
 };
 CustomProc(get_impl,get_impl_code,2,0,0,1,0,0,"get_impl")
 static word getf_impl_code[] = {
