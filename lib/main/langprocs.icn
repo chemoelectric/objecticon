@@ -177,7 +177,7 @@ class ObjectOutputStream(Stream, SetFields)
             seen[o] := s
             if /desc then
                writes(s) | fail
-            else if /ignore_object_output_flag & (mp := Class.getf(o, "object_output", 1)) then
+            else if /ignore_object_output_flag & (mp := Class.getq(o, "object_output")) then
                mp(self) | fail
             else if simple{Class.getf(o, 1 to Class.get_n_instance_fields(o))} then {
                writes(s, "(") | fail
@@ -486,7 +486,7 @@ procedure clone(o, seen)
 
    case ty of {
       "object" : {
-         if mp := Class.getf(o, "object_clone", 1) then {
+         if mp := Class.getq(o, "object_clone") then {
             res := mp(seen)
             seen[o] := res
          } else {
@@ -556,7 +556,7 @@ procedure hash(x, depth)
    
    case type(x) of {
       "object" : {
-         if mp := Class.getf(x, "object_hash", 1) then
+         if mp := Class.getq(x, "object_hash") then
             n := mp(depth)
          else {
             l := n := Class.get_n_instance_fields(x)
@@ -627,7 +627,7 @@ procedure equals_impl(x, y, seen)
    local i, mp
    case type(x) of {
       "object" : {
-         if mp := Class.getf(x, "object_equals", 1) then {
+         if mp := Class.getq(x, "object_equals") then {
             # x has an object_equals method, so y must inherit the
             # same object_equals method as x.
             return (Proc.get_defining_class(mp) === Class.get_field_defining_class(y, "object_equals")) &

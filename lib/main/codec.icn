@@ -173,7 +173,7 @@ class Encode(SetFields)
             cname := Class.get_name(o)
             line_out(cname) | fail
             note_seen(o)
-            if p := Class.getf(o, "object_encode", 1) then
+            if p := Class.getq(o, "object_encode") then
                p(self) | fail
             else {
                n := Class.get_n_instance_fields(o)
@@ -464,7 +464,7 @@ class Decode()
             cl := Class.for_name(cname) | return error("No such class " || cname)
             res := Class.create_raw(cl)
             note_seen(res)
-            if p := Class.getf(res, "object_decode", 1) then
+            if p := Class.getq(res, "object_decode") then
                p(self) | fail
             else {
                if \fast_flag then {
@@ -478,7 +478,7 @@ class Decode()
                   every 1 to n do {
                      (t := decode() &
                       v := decode()) | fail
-                     Class.getf(res, t, 1) := v
+                     Class.getq(res, t) := v
                   }
                }
             }

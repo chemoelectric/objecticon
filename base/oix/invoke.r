@@ -617,8 +617,6 @@ invoke_macro(general_call_0, invoke_methp_0,invoke_misc_0,invoke_proc_0,construc
 invoke_macro(general_call_1, invoke_methp_1,invoke_misc_1,invoke_proc_1,construct_object_1,construct_record_1,E_Objectcreate,E_Rcreate)
 
 
-
-
 void do_field()
 {
     dptr lhs;
@@ -641,9 +639,11 @@ void do_field()
 #begdef AccessErr(err_num)
    do {
        if (just_fail) {
-           t_errornumber = err_num;
-           t_errorvalue = nulldesc;
-           t_have_val = 0;
+           if (err_num) {
+               t_errornumber = err_num;
+               t_errorvalue = nulldesc;
+               t_have_val = 0;
+           }
        } else {
            xexpr = expr;
            xargp = 0;
@@ -969,7 +969,7 @@ static void class_invokef(word clo, dptr expr, dptr query, struct inline_field_c
     EVValD(expr, e_classref);
     EVVal(i + 1, e_classsub);
 
-    curr_op = Op_Invoke; /* In case of error, ttrace acts like Op_Invoke */
+    curr_op = Op_Invoke; /* In case of error, xtrace acts like Op_Invoke */
     general_call(clo, cf->field_descriptor, argc, args, rval, failure_label);
 }
 
@@ -989,7 +989,7 @@ static void record_invokef(word clo, dptr expr, dptr query, struct inline_field_
 
     /* Copy field to a tended descriptor */
     tmp = RecordBlk(*expr).fields[i];
-    curr_op = Op_Invoke; /* In case of error, ttrace acts like Op_Invoke */
+    curr_op = Op_Invoke; /* In case of error, xtrace acts like Op_Invoke */
     general_call(clo, &tmp, argc, args, rval, failure_label);
 }
 
@@ -1094,7 +1094,7 @@ static void instance_invokef(word clo, dptr expr, dptr query, struct inline_fiel
 
         /* Copy field to a tended descriptor */
         tmp = ObjectBlk(*expr).fields[i];
-        curr_op = Op_Invoke; /* In case of error, ttrace acts like Op_Invoke */
+        curr_op = Op_Invoke; /* In case of error, xtrace acts like Op_Invoke */
         general_call(clo, &tmp, argc, args, rval, failure_label);
     }
 }
@@ -1121,10 +1121,7 @@ static void simple_access()
 static void handle_access_failure()
 {
     struct p_frame *t = curr_pf;
-    struct descrip quiet;
-    get_deref(&quiet);
-    if (is:null(quiet))
-        whyf("%s (error %d)", lookup_err_msg(t_errornumber), t_errornumber);
+    whyf("%s (error %d)", lookup_err_msg(t_errornumber), t_errornumber);
     /* Act as though this frame AND the parent c_frame (ie the getf call) have failed */
     set_curr_pf(curr_pf->caller);
     ipc = t->parent_sp->failure_label;
@@ -1143,14 +1140,25 @@ function lang_Class_get(obj, field)
    }
 end
 
-function lang_Class_getf(obj, field, quiet)
+function lang_Class_getf(obj, field)
    body {
       struct p_frame *pf;
       MemProtect(pf = alc_p_frame((struct b_proc *)&Bgetf_impl, 0));
       push_frame((struct frame *)pf);
       pf->fvars->desc[0] = obj;
       pf->fvars->desc[1] = field;
-      pf->fvars->desc[2] = quiet;
+      tail_invoke_frame((struct frame *)pf);
+      return nulldesc;
+  }
+end
+
+function lang_Class_getq(obj, field)
+   body {
+      struct p_frame *pf;
+      MemProtect(pf = alc_p_frame((struct b_proc *)&Bgetq_impl, 0));
+      push_frame((struct frame *)pf);
+      pf->fvars->desc[0] = obj;
+      pf->fvars->desc[1] = field;
       tail_invoke_frame((struct frame *)pf);
       return nulldesc;
   }

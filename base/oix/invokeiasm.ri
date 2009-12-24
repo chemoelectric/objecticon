@@ -143,10 +143,26 @@ static word getf_impl_code[] = {
    0,
    Op_Custom,
    (word)handle_access_failure,
-   Op_FrameVar,
-   2,
 };
-CustomProc(getf_impl,getf_impl_code,3,0,0,1,0,0,"getf_impl")
+CustomProc(getf_impl,getf_impl_code,2,0,0,1,0,0,"getf_impl")
+static word getq_impl_code[] = {
+   Op_Custom,
+   (word)simple_access,
+   Op_Tmp,
+   0,
+   Op_FrameVar,
+   0,
+   Op_FrameVar,
+   1,
+   Op_Int,
+   1,
+   (word)&getq_impl_code[14],
+   Op_CReturn,
+   Op_Tmp,
+   0,
+   Op_CFail,
+};
+CustomProc(getq_impl,getq_impl_code,2,0,0,1,0,0,"getq_impl")
 static word lang_Class_ensure_initialized_impl_code[] = {
    Op_Custom,
    (word)ensure_class_initialized,
