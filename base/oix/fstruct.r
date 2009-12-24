@@ -1,7 +1,5 @@
 /*
  * File: fstruct.r
- *  Contents: delete, get, key, insert, list, member, pop, pull, push, put,
- *  set, table
  */
 
 

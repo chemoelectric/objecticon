@@ -1,6 +1,5 @@
 /*
  * File: rcomp.r
- *  Contents: anycmp, equiv, lexcmp
  */
 
 /*

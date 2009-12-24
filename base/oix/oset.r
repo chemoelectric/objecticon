@@ -1,6 +1,5 @@
 /*
  * File: oset.r
- *  Contents: compl, diff, inter, union
  */
 
 "~x - complement cset x."

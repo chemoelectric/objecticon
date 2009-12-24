@@ -1,6 +1,5 @@
 /*
  * File: ovalue.r
- *  Contents: nonnull, null, value, conj
  */
 
 "\\x - test x for nonnull value."

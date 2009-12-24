@@ -1,7 +1,5 @@
 /*
  * File: oarith.r
- *  Contents: arithmetic operators + - * / % ^.  Auxiliary routines
- *   iipow, ripow.
  *
  * The arithmetic operators all follow a canonical conversion
  * protocol encapsulated in the macro ArithOp.

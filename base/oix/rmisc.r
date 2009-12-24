@@ -1,11 +1,5 @@
 /*
  * File: rmisc.r
- *  Contents: deref, eq, getvar, hash, outimage,
- *  qtos, 
- *  findline, findfile, getimage
- *  sig_rsm, cmd_line, varargs.
- *
- *  Integer overflow checking.
  */
 
 #include "../h/opdefs.h"

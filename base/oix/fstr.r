@@ -1,6 +1,5 @@
 /*
  * File: fstr.r
- *  Contents: center, detab, entab, left, map, repl, reverse, right, trim
  */
 
 

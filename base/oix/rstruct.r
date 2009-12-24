@@ -1,7 +1,5 @@
 /*
  * File: rstruct.r
- *  Contents: addmem, cpslots, cplist, cpset, hmake, hchain, hfirst, hnext,
- *  hgrow, hshrink, memb
  */
 
 static void cphash(dptr dp1, dptr dp2, word n, int tcode);

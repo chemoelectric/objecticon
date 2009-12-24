@@ -1,6 +1,5 @@
 /*
  * File: rsys.r
- *  Contents: [flushrec], [getrec], getstrg, host, longread, [putrec], putstr
  */
 
 

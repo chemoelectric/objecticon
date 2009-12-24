@@ -1,6 +1,5 @@
 /*
  * File: fscan.r
- *  Contents: move, pos, tab.
  */
 
 "move(i) - move &pos by i, return substring of &subject spanned."

@@ -2,7 +2,7 @@
  * File: keyword.r
  *  Contents: all keywords
  *
- *  After adding keywords, be sure to rerun ../icont/mkkwd.
+ *  After adding keywords, be sure to rerun make GRAM=Y in the oit directory.
  */
 
 

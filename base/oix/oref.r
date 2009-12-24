@@ -1,6 +1,5 @@
 /*
  * File: oref.r
- *  Contents: bang, random, sect, subsc
  */
 
 #include "../h/opdefs.h"

@@ -1,30 +1,7 @@
 /*
  * File: fsys.r
- *  Contents: close, chdir, exit, getenv, open, read, reads, remove, rename,
- *  [save], seek, stop, system, where, write, writes, [getch, getche, kbhit]
  */
 
-/*
- * The following code is operating-system dependent [@fsys.01]. Include
- *  system-dependent files and declarations.
- */
-
-#if PORT
-   /* nothing to do */
-Deliberate Syntax Error
-#endif					/* PORT */
-
-#if MSWIN32 || UNIX
-   /* nothing to do */
-#endif			
-
-/*
- * End of operating-system specific code.
- */
-
-
-#undef exit
-#passthru #undef exit
 
 "exit(i) - exit process with status i, which defaults to 0."
 
@@ -36,7 +13,7 @@ function exit(status)
       fail;
       }
 end
-
+
 
 
 "getch() - return a character from console."
@@ -50,7 +27,7 @@ function io_Keyboard_getch()
       return string(1, &allchars[i & 0xFF]);
       }
 end
-
+
 "getche() -- return a character from console with echo."
 
 function io_Keyboard_getche()
@@ -62,7 +39,7 @@ function io_Keyboard_getche()
       return string(1, &allchars[i & 0xFF]);
       }
 end
-
+
 
 "kbhit() -- Check to see if there is a keyboard character waiting to be read."
 
@@ -117,7 +94,7 @@ function io_Files_getcwd()
    }
 end
 
-
+
 "delay(i) - delay for i milliseconds."
 
 function delay(n)
@@ -131,7 +108,7 @@ function delay(n)
       return nulldesc;
       }
 end
-
+
 
 "system(s) - execute string s as a system command."
 

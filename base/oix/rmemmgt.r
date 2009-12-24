@@ -1,25 +1,23 @@
 /*
  * File: rmemmgt.r
- *  Contents: block description arrays, memory initialization,
- *   garbage collection, dump routines
  */
 
 
 /*
  * Prototypes
  */
-static void postqual		(dptr dp);
-static void markptr		(union block **ptr);
-static void sweep_tended	(void);
-static void reclaim		(void);
-static void scollect		(void);
-static int  qlcmp		(dptr  *q1,dptr  *q2);
-static void adjust		(void);
-static void compact		(void);
-static void markprogram	(struct progstate *pstate);
-static void sweep_stack(struct frame *f);
+static void postqual     (dptr dp);
+static void markptr      (union block **ptr);
+static void sweep_tended (void);
+static void reclaim      (void);
+static void scollect     (void);
+static int  qlcmp        (dptr  *q1,dptr  *q2);
+static void adjust       (void);
+static void compact      (void);
+static void markprogram  (struct progstate *pstate);
+static void sweep_stack  (struct frame *f);
 static void unmark_region(struct region *br);
-static void free_stack(struct b_coexpr *c);
+static void free_stack   (struct b_coexpr *c);
 
 /*
  * Variables
@@ -32,7 +30,7 @@ static dptr *equallist;                /* end of qualifier list */
 int collecting;                        /* flag indicating whether collection in progress */
 static int current_collection;         /* collection id for checking whether local blocks marked yet */
 
-
+
 /*
  * Allocated block size table (sizes given in bytes).  A size of -1 is used
  *  for types that have no blocks; a size of 0 indicates that the
@@ -70,7 +68,7 @@ int bsizes[] = {
      0,                       /* T_Object (26), object */
      sizeof(struct b_cast),   /* T_Cast (27), cast */
     };
-
+
 /*
  * Table of offsets (in bytes) to first descriptor in blocks.  -1 is for
  *  types not allocated, 0 for blocks with no descriptors.
@@ -105,7 +103,7 @@ int firstd[] = {
      5*WordSize,              /* T_Object (26), object */
      0,                       /* T_Cast (27), cast */
     };
-
+
 /*
  * Table of offsets (in bytes) to first pointer in blocks.  -1 is for
  *  types not allocated, 0 for blocks with no pointers.
@@ -140,7 +138,7 @@ int firstp[] = {
      0,                       /* T_Object (26), object, just a pointer to the class, which is static */
      1*WordSize,              /* T_Cast (27), cast */
     };
-
+
 /*
  * Table of number of pointers in blocks.  -1 is for types not allocated and
  *  types without pointers, 0 for pointers through the end of the block.
@@ -175,7 +173,7 @@ int ptrno[] = {
     -1,                       /* T_Object (26), object */
      1,                       /* T_Cast (27), cast */
     };
-
+
 /*
  * Table of number of descriptors in blocks.  -1 is for types not allocated and
  *  types without descriptors, 0 for descriptors through the end of the block.
@@ -244,7 +242,7 @@ char *blkname[] = {
    "object",                            /* T_Object (26) */
    "cast",                              /* T_Cast (27) */
    };
-
+
 /*
  * Sizes of hash chain segments.
  *  Table size must equal or exceed HSegs.
@@ -275,10 +273,10 @@ uword segsize[] = {
  */
 
 void collect(int region)
-   {
+{
    struct progstate *prog;
    struct region *br;
-/*   showcurrstack();*/
+
 #if defined(HAVE_GETRLIMIT) && defined(HAVE_SETRLIMIT)
    {
        struct rlimit rl;
@@ -364,11 +362,6 @@ void collect(int region)
    }
 #endif					/* Graphics */
 
-   /*
-    * Mark the globals and the statics.
-    */
-
-
    reclaim();
 
    /*
@@ -385,7 +378,7 @@ void collect(int region)
 
    EVValD(&nulldesc, E_EndCollect);
 
-   }
+}
 
 static void free_stack(struct b_coexpr *c)
 {
@@ -421,96 +414,75 @@ static void unmark_region(struct region *br)
  */
 
 static void markprogram(struct progstate *pstate)
-   {
-   struct descrip *dp;
-   struct prog_event *pe;
+{
+    struct descrip *dp;
+    struct prog_event *pe;
 
-   markptr((union block **)&pstate->eventmask);
-   for (pe = pstate->event_queue_head; pe; pe = pe->next) {
-       PostDescrip(pe->eventcode);
-       PostDescrip(pe->eventval);
-   }
+    markptr((union block **)&pstate->eventmask);
+    for (pe = pstate->event_queue_head; pe; pe = pe->next) {
+        PostDescrip(pe->eventcode);
+        PostDescrip(pe->eventval);
+    }
 
-   /* Kywd_err, &error, always an integer */
-   /* Kywd_pos, &pos, always an integer */
-   PostDescrip(pstate->Kywd_subject);
-   PostDescrip(pstate->Kywd_prog);
-   PostDescrip(pstate->Kywd_why);
-   /* Kywd_ran, &random, always an integer */
-   /* Kywd_trace, &trace, always an integer */
+    /* Kywd_err, &error, always an integer */
+    /* Kywd_pos, &pos, always an integer */
+    PostDescrip(pstate->Kywd_subject);
+    PostDescrip(pstate->Kywd_prog);
+    PostDescrip(pstate->Kywd_why);
+    /* Kywd_ran, &random, always an integer */
+    /* Kywd_trace, &trace, always an integer */
 
-   /*
-    * Mark the globals and the statics.
-    */
-   for (dp = pstate->Globals; dp < pstate->Eglobals; dp++)
-      PostDescrip(*dp);
+    /*
+     * Mark the globals and the statics.
+     */
+    for (dp = pstate->Globals; dp < pstate->Eglobals; dp++)
+        PostDescrip(*dp);
 
-   for (dp = pstate->Statics; dp < pstate->Estatics; dp++)
-      PostDescrip(*dp);
+    for (dp = pstate->Statics; dp < pstate->Estatics; dp++)
+        PostDescrip(*dp);
 
-   for (dp = pstate->ClassStatics; dp < pstate->EClassStatics; dp++)
-      PostDescrip(*dp);
+    for (dp = pstate->ClassStatics; dp < pstate->EClassStatics; dp++)
+        PostDescrip(*dp);
 
-   PostDescrip(pstate->K_errorvalue);
-   PostDescrip(pstate->K_errortext);
-   PostDescrip(pstate->T_errorvalue);
-   PostDescrip(pstate->T_errortext);
+    PostDescrip(pstate->K_errorvalue);
+    PostDescrip(pstate->K_errortext);
+    PostDescrip(pstate->T_errorvalue);
+    PostDescrip(pstate->T_errortext);
 
-   markptr((union block **)&pstate->K_main);
-   markptr((union block **)&pstate->K_current);
+    markptr((union block **)&pstate->K_main);
+    markptr((union block **)&pstate->K_current);
 }
 
-
+
 /*
  * postqual - mark a string qualifier.  Strings outside the string space
  *  are ignored.
  */
 
-static void postqual(dp)
-dptr dp;
-   {
-   char *newqual;
-
-   if (InRange(strbase,StrLoc(*dp),strfree + 1)) { 
-
-      /*
-       * The string is in the string space.  Add it to the string qualifier
-       *  list, but before adding it, expand the string qualifier list if
-       *  necessary.
-       */
-      if (qualfree >= equallist) {
-	 /* reallocate a new qualifier list that's twice as large */
-         Protect(newqual = realloc(quallist, 2 * qualsize), fatalerr(304, NULL));
-         quallist = (dptr *)newqual;
-         qualfree = (dptr *)(newqual + qualsize);
-         qualsize *= 2;
-         equallist = (dptr *)(newqual + qualsize);
-
-         }
-      *qualfree++ = dp;
-      }
-   }
-
-
-/**
-static void print_block(FILE *f, union block *b)
+static void postqual(dptr dp)
 {
-    word t;
-    if (b == 0) {
-        fprintf(f, "Block %p\n", b);
-        return;
+    char *newqual;
+
+    if (InRange(strbase,StrLoc(*dp),strfree + 1)) { 
+
+        /*
+         * The string is in the string space.  Add it to the string qualifier
+         *  list, but before adding it, expand the string qualifier list if
+         *  necessary.
+         */
+        if (qualfree >= equallist) {
+            /* reallocate a new qualifier list that's twice as large */
+            Protect(newqual = realloc(quallist, 2 * qualsize), fatalerr(304, NULL));
+            quallist = (dptr *)newqual;
+            qualfree = (dptr *)(newqual + qualsize);
+            qualsize *= 2;
+            equallist = (dptr *)(newqual + qualsize);
+
+        }
+        *qualfree++ = dp;
     }
-
-    t = *((word *)b);
-
-    if (t >= 0 && t < ElemCount(blkname))
-        fprintf(f, "Block %p title=%d(%s)\n", b, t, blkname[t]);
-    else
-        fprintf(f, "Block %p title=%d\n", b, t);
-    
-    fflush(f);
 }
-**/
+
 
 static void markptr(union block **ptr)
 {
@@ -524,8 +496,6 @@ static void markptr(union block **ptr)
      * Get the block to which ptr points.
      */
     block = (char *)*ptr;
-
-/*    print_block(stderr,*ptr);*/
 
     if (InRange(blkbase,block,blkfree)) {
         type0 = BlkType(block);
@@ -714,7 +684,7 @@ static void sweep_stack(struct frame *f)
     }
 }
 
-
+
 /*
  * sweep - sweep the chain of tended descriptors
  */
@@ -737,7 +707,7 @@ static void sweep_tended()
  */
 
 static void reclaim()
-   {
+{
    /*
     * Collect the string space leaving it where it is.
     */
@@ -752,9 +722,9 @@ static void reclaim()
     * Compact the block region.
     */
    compact();
-   }
+}
 
-
+
 /*
  * scollect - collect the string space.  quallist is a list of pointers to
  *  descriptors for all the reachable strings in the string space.  For
@@ -763,236 +733,171 @@ static void reclaim()
  */
 
 static void scollect()
-   {
-   register char *source, *dest;
-   register dptr *qptr;
-   char *cend;
+{
+    register char *source, *dest;
+    register dptr *qptr;
+    char *cend;
 
-   if (qualfree <= quallist) {
-      /*
-       * There are no accessible strings.  Thus, there are none to
-       *  collect and the whole string space is free.
-       */
-      strfree = strbase;
-      return;
-      }
-   /*
-    * Sort the pointers on quallist in ascending order of string
-    *  locations.
-    */
-   qsort((char *)quallist, (int)(DiffPtrs((char *)qualfree,(char *)quallist)) /
-     sizeof(dptr *), sizeof(dptr), (QSortFncCast)qlcmp);
-   /*
-    * The string qualifiers are now ordered by starting location.
-    */
-   dest = strbase;
-   source = cend = StrLoc(**quallist);
+    if (qualfree <= quallist) {
+        /*
+         * There are no accessible strings.  Thus, there are none to
+         *  collect and the whole string space is free.
+         */
+        strfree = strbase;
+        return;
+    }
+    /*
+     * Sort the pointers on quallist in ascending order of string
+     *  locations.
+     */
+    qsort((char *)quallist, (int)(DiffPtrs((char *)qualfree,(char *)quallist)) /
+          sizeof(dptr *), sizeof(dptr), (QSortFncCast)qlcmp);
+    /*
+     * The string qualifiers are now ordered by starting location.
+     */
+    dest = strbase;
+    source = cend = StrLoc(**quallist);
 
-   /*
-    * Loop through qualifiers for accessible strings.
-    */
-   for (qptr = quallist; qptr < qualfree; qptr++) {
-      if (StrLoc(**qptr) > cend) {
+    /*
+     * Loop through qualifiers for accessible strings.
+     */
+    for (qptr = quallist; qptr < qualfree; qptr++) {
+        if (StrLoc(**qptr) > cend) {
 
-         /*
-          * qptr points to a qualifier for a string in the next clump.
-          *  The last clump is moved, and source and cend are set for
-          *  the next clump.
-          */
-         while (source < cend)
-            *dest++ = *source++;
-         source = cend = StrLoc(**qptr);
-         }
-      if ((StrLoc(**qptr) + StrLen(**qptr)) > cend)
-         /*
-          * qptr is a qualifier for a string in this clump; extend
-          *  the clump.
-          */
-         cend = StrLoc(**qptr) + StrLen(**qptr);
-      /*
-       * Relocate the string qualifier.
-       */
-      StrLoc(**qptr) = StrLoc(**qptr) + DiffPtrs(dest,source);
-      }
+            /*
+             * qptr points to a qualifier for a string in the next clump.
+             *  The last clump is moved, and source and cend are set for
+             *  the next clump.
+             */
+            while (source < cend)
+                *dest++ = *source++;
+            source = cend = StrLoc(**qptr);
+        }
+        if ((StrLoc(**qptr) + StrLen(**qptr)) > cend)
+            /*
+             * qptr is a qualifier for a string in this clump; extend
+             *  the clump.
+             */
+            cend = StrLoc(**qptr) + StrLen(**qptr);
+        /*
+         * Relocate the string qualifier.
+         */
+        StrLoc(**qptr) = StrLoc(**qptr) + DiffPtrs(dest,source);
+    }
 
-   /*
-    * Move the last clump.
-    */
-   while (source < cend)
-      *dest++ = *source++;
-   strfree = dest;
-   }
-
+    /*
+     * Move the last clump.
+     */
+    while (source < cend)
+        *dest++ = *source++;
+    strfree = dest;
+}
+
 /*
  * qlcmp - compare the location fields of two string qualifiers for qsort.
  */
 
 static int qlcmp(dptr *q1, dptr *q2)
-   {
+{
 #if IntBits == WordBits
-   return (int)DiffPtrs(StrLoc(**q1),StrLoc(**q2));
+    return (int)DiffPtrs(StrLoc(**q1),StrLoc(**q2));
 #else
-   long l = (long)DiffPtrs(StrLoc(**q1),StrLoc(**q2));
-   if (l < 0)
-      return -1;
-   else if (l > 0)
-      return 1;
-   else
-      return 0;
+    long l = (long)DiffPtrs(StrLoc(**q1),StrLoc(**q2));
+    if (l < 0)
+        return -1;
+    else if (l > 0)
+        return 1;
+    else
+        return 0;
 #endif
+}
 
-   }
-
 /*
  * adjust - adjust pointers into the block region.  (Phase II of
  * garbage collection.)
  */
 
 static void adjust()
-   {
-   register union block **nxtptr, **tptr;
-   register char *source = blkbase, *dest;
+{
+    register union block **nxtptr, **tptr;
+    register char *source = blkbase, *dest;
 
-   /*
-    * Start dest at source.
-    */
-   dest = source;
+    /*
+     * Start dest at source.
+     */
+    dest = source;
 
-   /*
-    * Loop through to the end of allocated block region, moving source
-    *  to each block in turn and using the size of a block to find the
-    *  next block.
-    */
-   while (source < blkfree) {
-      if ((uword)(nxtptr = (union block **)BlkType(source)) > MaxType) {
+    /*
+     * Loop through to the end of allocated block region, moving source
+     *  to each block in turn and using the size of a block to find the
+     *  next block.
+     */
+    while (source < blkfree) {
+        if ((uword)(nxtptr = (union block **)BlkType(source)) > MaxType) {
 
-         /*
-          * The type field of source is a back pointer.  Traverse the
-          *  chain of back pointers, changing each block location from
-          *  source to dest.
-          */
-         while ((uword)nxtptr > MaxType) {
-            tptr = nxtptr;
-            nxtptr = (union block **) *nxtptr;
-            *tptr = (union block *)dest;
+            /*
+             * The type field of source is a back pointer.  Traverse the
+             *  chain of back pointers, changing each block location from
+             *  source to dest.
+             */
+            while ((uword)nxtptr > MaxType) {
+                tptr = nxtptr;
+                nxtptr = (union block **) *nxtptr;
+                *tptr = (union block *)dest;
             }
-         BlkType(source) = (uword)nxtptr | F_Mark;
-         dest += BlkSize(source);
-         }
-      source += BlkSize(source);
-      }
-   }
-
+            BlkType(source) = (uword)nxtptr | F_Mark;
+            dest += BlkSize(source);
+        }
+        source += BlkSize(source);
+    }
+}
+
 /*
  * compact - compact good blocks in the block region. (Phase III of garbage
  *  collection.)
  */
 
 static void compact()
-   {
-   register word size;
-   register char *source = blkbase, *dest;
+{
+    register word size;
+    register char *source = blkbase, *dest;
 
-   /*
-    * Start dest at source.
-    */
-   dest = source;
+    /*
+     * Start dest at source.
+     */
+    dest = source;
 
-   /*
-    * Loop through to end of allocated block space, moving source
-    *  to each block in turn, using the size of a block to find the next
-    *  block.  If a block has been marked, it is copied to the
-    *  location pointed to by dest and dest is pointed past the end
-    *  of the block, which is the location to place the next saved
-    *  block.  Marks are removed from the saved blocks.
-    */
-   while (source < blkfree) {
-       size = BlkSize(source);
-       if (BlkType(source) & F_Mark) {
-           BlkType(source) &= ~F_Mark;
-           if (source != dest)
-               memmove(dest, source, size);
-           dest += size;
-       } else {
-           if (BlkType(source) == T_Coexpr) {
-               /* Free the coexpression's stack */
-               free_stack((struct b_coexpr *)source);
-           }
-       }
-       source += size;
-   }
-
-   /*
-    * dest is the location of the next free block.  Now that compaction
-    *  is complete, point blkfree to that location.
-    */
-   blkfree = dest;
-   }
-
-
-
-/*
- * descr - dump a descriptor.  Used only for debugging.
- */
-
-void descr(dp)
-dptr dp;
-   {
-   int i;
-
-   fprintf(stderr,"%08lx: ",(long)dp);
-   if (Qual(*dp))
-      fprintf(stderr,"%15s","qualifier");
-
-   else if (Var(*dp))
-      fprintf(stderr,"%15s","variable");
-   else {
-      i =  Type(*dp);
-      switch (i) {
-         case T_Null:
-            fprintf(stderr,"%15s","null");
-            break;
-         case T_Integer:
-            fprintf(stderr,"%15s","integer");
-            break;
-         default:
-            fprintf(stderr,"%15s",blkname[i]);
-         }
-      }
-   fprintf(stderr," %08lx %08lx\n",(long)dp->dword,(long)IntVal(*dp));
-   }
-
-/*
- * blkdump - dump the allocated block region.  Used only for debugging.
- *   NOTE:  Not adapted for multiple regions.
- */
-
-void blkdump()
-   {
-   register char *blk;
-   register word type0, size, fdesc;
-   register dptr ndesc;
-
-   fprintf(stderr,
-      "\nDump of allocated block region.  base:%08lx free:%08lx max:%08lx\n",
-         (long)blkbase,(long)blkfree,(long)blkend);
-   fprintf(stderr,"  loc     type              size  contents\n");
-
-   for (blk = blkbase; blk < blkfree; blk += BlkSize(blk)) {
-      type0 = BlkType(blk);
-      size = BlkSize(blk);
-      fprintf(stderr," %08lx   %15s   %4ld\n",(long)blk,blkname[type0],
-         (long)size);
-      if ((fdesc = firstd[type0]) > 0)
-         for (ndesc = (dptr)(blk + fdesc);
-               ndesc < (dptr)(blk + size); ndesc++) {
-            fprintf(stderr,"                                 ");
-            descr(ndesc);
+    /*
+     * Loop through to end of allocated block space, moving source
+     *  to each block in turn, using the size of a block to find the next
+     *  block.  If a block has been marked, it is copied to the
+     *  location pointed to by dest and dest is pointed past the end
+     *  of the block, which is the location to place the next saved
+     *  block.  Marks are removed from the saved blocks.
+     */
+    while (source < blkfree) {
+        size = BlkSize(source);
+        if (BlkType(source) & F_Mark) {
+            BlkType(source) &= ~F_Mark;
+            if (source != dest)
+                memmove(dest, source, size);
+            dest += size;
+        } else {
+            if (BlkType(source) == T_Coexpr) {
+                /* Free the coexpression's stack */
+                free_stack((struct b_coexpr *)source);
             }
-      fprintf(stderr,"\n");
-      }
-   fprintf(stderr,"end of block region.\n");
-   }
+        }
+        source += size;
+    }
+
+    /*
+     * dest is the location of the next free block.  Now that compaction
+     *  is complete, point blkfree to that location.
+     */
+    blkfree = dest;
+}
+
 
 void show_regions()
 {

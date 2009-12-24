@@ -1,6 +1,5 @@
 /*
  * File: fload.r
- *  Contents: loadfunc.
  *
  *  This file contains Proc.load(), the dynamic loading function for
  *  Unix systems having the <dlfcn.h> interface.

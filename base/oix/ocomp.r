@@ -1,7 +1,5 @@
 /*
  * File: ocomp.r
- *  Contents: lexeq, lexge, lexgt, lexle, lexlt, lexne, numeq, numge,
- *		numgt, numle, numlt, numne, eqv, neqv
  */
 
 /*
