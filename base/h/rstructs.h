@@ -487,11 +487,11 @@ struct progstate {
     void (*Dealcstr)(char *);
     char * (*Reserve)(int, word);
 
-    void (*GeneralCall)(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label);
+    void (*GeneralCall)(word clo, dptr lhs, dptr expr, int argc, dptr args, word rval, word *failure_label);
 
     void (*GeneralAccess)(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
                           int just_fail, word *failure_label);
-    void (*GeneralInvokef)(word clo, dptr expr, dptr query, struct inline_field_cache *ic, 
+    void (*GeneralInvokef)(word clo, dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
                            int argc, dptr args, word rval, word *failure_label);
 };
 
@@ -559,7 +559,7 @@ enum FRAME_TYPE { C_FRAME_TYPE, P_FRAME_TYPE };
      int type; \
      int size;          /* Size and creator of this allocation */ \
      struct progstate *creator; \
-     struct descrip value;   /* Return/suspend value */ \
+     dptr lhs;               /* Place to put result */ \
      word *failure_label;    /* Caller's failure label */  \
      struct b_proc *proc;    /* Corresponding procedure block */  \
      struct frame *parent_sp;  /* Parent in the stack chain */ \

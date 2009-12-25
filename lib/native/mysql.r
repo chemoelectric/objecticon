@@ -163,6 +163,7 @@ function mysql_MySql_esc(self, str)
        runerr(103, str)
    body {
       char *to;
+      tended struct descrip result;
       unsigned long to_len;
       GetSelfMySql();
       MemProtect(to = malloc(2 * StrLen(str) + 1));
@@ -237,6 +238,7 @@ end
 
 function mysql_MySql_get_character_set_name(self)
    body {
+      tended struct descrip result;
       GetSelfMySql();
       cstr2string((char*)mysql_character_set_name(self_mysql), &result);
       return result;
@@ -256,6 +258,7 @@ end
 
 function mysql_MySql_get_client_info()
    body {
+    tended struct descrip result;
     cstr2string((char*)mysql_get_client_info(), &result);
     return result;
    }
@@ -269,6 +272,7 @@ end
 
 function mysql_MySql_get_host_info(self)
    body {
+      tended struct descrip result;
       GetSelfMySql();
       cstr2string((char*)mysql_get_host_info(self_mysql), &result);
       return result;
@@ -277,6 +281,7 @@ end
 
 function mysql_MySql_get_sqlstate(self)
    body {
+      tended struct descrip result;
       GetSelfMySql();
       cstr2string((char*)mysql_sqlstate(self_mysql), &result);
       return result;
@@ -292,6 +297,7 @@ end
 
 function mysql_MySql_get_server_info(self)
    body {
+      tended struct descrip result;
       GetSelfMySql();
       cstr2string((char*)mysql_get_server_info(self_mysql), &result);
       return result;
@@ -307,6 +313,7 @@ end
 
 function mysql_MySql_get_info(self)
    body {
+      tended struct descrip result;
       GetSelfMySql();
       cstr2string((char*)mysql_info(self_mysql), &result);
       return result;
@@ -316,6 +323,7 @@ end
 function mysql_MySql_get_stat(self)
    body {
       char *s;
+      tended struct descrip result;
       GetSelfMySql();
       s = (char*)mysql_stat(self_mysql);
       if (s == NULL) {
@@ -501,6 +509,7 @@ end
 
 function mysql_MySql_get_error(self)
    body {
+      tended struct descrip result;
       GetSelfMySql();
       cstr2string((char*)mysql_error(self_mysql), &result);
       return result;
@@ -741,6 +750,7 @@ end
 
 function mysql_MySqlRes_fetch_fields_impl(self)
    body {
+       tended struct descrip result;
        MYSQL_FIELD *fields;
        int i, n;
        GetSelfMySqlRes();
@@ -780,6 +790,7 @@ end
 function mysql_MySqlRes_fetch_lengths(self)
    body {
        int i, n;
+       tended struct descrip result;
        unsigned long *lengths;
        GetSelfMySqlRes();
        lengths = mysql_fetch_lengths(self_mysql_res);
@@ -802,6 +813,7 @@ function mysql_MySqlRes_fetch_row(self)
    body {
        int i, n;
        unsigned long *lengths;
+       tended struct descrip result;
        MYSQL_ROW row;
        GetSelfMySqlRes();
        row = mysql_fetch_row(self_mysql_res);

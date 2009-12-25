@@ -179,8 +179,10 @@ void do_applyf()
     struct inline_field_cache *ic;
     word *failure_label;
     struct descrip query;
+    dptr lhs;
 
     clo = GetWord;
+    lhs = get_wo_dptr();
     get_deref(&expr);
     fno = GetWord;
     ic = get_inline_field_cache();
@@ -206,7 +208,7 @@ void do_applyf()
       }
     }
 
-    general_invokef(clo, &expr, &query, ic, argc, &args, rval, failure_label);
+    general_invokef(clo, lhs, &expr, &query, ic, argc, &args, rval, failure_label);
 }
 
 void do_invokef()
@@ -217,8 +219,10 @@ void do_invokef()
     struct inline_field_cache *ic;
     word *failure_label;
     struct descrip query;
+    dptr lhs;
 
     clo = GetWord;
+    lhs = get_wo_dptr();
     get_deref(&expr);
     fno = GetWord;
     ic = get_inline_field_cache();
@@ -227,7 +231,7 @@ void do_invokef()
     failure_label = GetAddr;
     MakeInt(fno, &query);
 
-    general_invokef(clo, &expr, &query, ic, argc, 0, rval, failure_label);
+    general_invokef(clo, lhs, &expr, &query, ic, argc, 0, rval, failure_label);
 }
 
 void do_invoke()
@@ -235,13 +239,16 @@ void do_invoke()
     word clo, argc, rval;
     tended struct descrip expr;
     word *failure_label;
+    dptr lhs;
+
     clo = GetWord;
+    lhs = get_wo_dptr();
     get_deref(&expr);
     argc = GetWord;
     rval = GetWord;
     failure_label = GetAddr;
 
-    general_call(clo, &expr, argc, 0, rval, failure_label);
+    general_call(clo, lhs, &expr, argc, 0, rval, failure_label);
 }
 
 void do_apply()
@@ -249,8 +256,10 @@ void do_apply()
     word clo, argc, rval;
     tended struct descrip expr, args;
     word *failure_label;
+    dptr lhs;
 
     clo = GetWord;
+    lhs = get_wo_dptr();
     get_deref(&expr);
     get_deref(&args);
     rval = GetWord;
@@ -272,7 +281,7 @@ void do_apply()
       }
     }
 
-    general_call(clo, &expr, argc, &args, rval, failure_label);
+    general_call(clo, lhs, &expr, argc, &args, rval, failure_label);
 }
 
 /* Skip unwanted params */
@@ -287,7 +296,7 @@ static void skip_args(int argc, dptr args)
 
 static void check_if_uninitialized()
 {
-    dptr class0 = get_dptr();  /* Class */
+    dptr class0 = get_rw_dptr();  /* Class */
     word *a = GetAddr;
     if (ClassBlk(*class0).init_state != Uninitialized)
         ipc = a;
@@ -295,7 +304,7 @@ static void check_if_uninitialized()
 
 static void set_class_state()
 {
-    dptr class0 = get_dptr();  /* Class */
+    dptr class0 = get_rw_dptr();  /* Class */
     struct descrip val;
     get_deref(&val);      /* Value */
     ClassBlk(*class0).init_state = IntVal(val);
@@ -303,7 +312,7 @@ static void set_class_state()
 
 static void set_object_state()
 {
-    dptr obj = get_dptr();  /* Object */
+    dptr obj = get_rw_dptr();  /* Object */
     struct descrip val;
     get_deref(&val);      /* Value */
     ObjectBlk(*obj).init_state = IntVal(val);
@@ -311,9 +320,9 @@ static void set_object_state()
 
 static void for_class_supers()
 {
-    dptr class0 = get_dptr();  /* Class */
-    dptr i = get_dptr();       /* Index */
-    dptr res = get_dptr();     /* Result */
+    dptr class0 = get_rw_dptr();  /* Class */
+    dptr i = get_rw_dptr();       /* Index */
+    dptr res = get_rw_dptr();     /* Result */
     word *a = GetAddr;      /* Branch when done */
 
     if (IntVal(*i) < ClassBlk(*class0).n_supers) {
@@ -326,7 +335,7 @@ static void for_class_supers()
 
 static void invoke_class_init()
 {
-    dptr d = get_dptr();  /* Class */
+    dptr d = get_rw_dptr();  /* Class */
     word *failure_label = GetAddr; /* Failure label */
     struct b_class *class0 = &ClassBlk(*d);
     struct class_field *init_field;
@@ -351,7 +360,7 @@ static void invoke_class_init()
 static void ensure_class_initialized()
 {
     struct p_frame *pf;
-    dptr d = get_dptr();
+    dptr d = get_rw_dptr();
     /* Avoid creating a frame if we don't need to */
     if (ClassBlk(*d).init_state != Uninitialized)
         return;
@@ -364,38 +373,38 @@ static void ensure_class_initialized()
 
 #begdef invoke_macro(general_call,invoke_methp,invoke_misc,invoke_proc,construct_object,construct_record,e_objectcreate,e_rcreate)
 
-static void construct_record(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label);
-static void construct_object(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label);
-static void invoke_methp(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label);
-static void invoke_proc(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label);
-static void invoke_misc(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label);
+static void construct_record(word clo, dptr lhs, dptr expr, int argc, dptr args, word rval, word *failure_label);
+static void construct_object(word clo, dptr lhs, dptr expr, int argc, dptr args, word rval, word *failure_label);
+static void invoke_methp(word clo, dptr lhs, dptr expr, int argc, dptr args, word rval, word *failure_label);
+static void invoke_proc(word clo, dptr lhs, dptr expr, int argc, dptr args, word rval, word *failure_label);
+static void invoke_misc(word clo, dptr lhs, dptr expr, int argc, dptr args, word rval, word *failure_label);
 
-void general_call(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label)
+void general_call(word clo, dptr lhs, dptr expr, int argc, dptr args, word rval, word *failure_label)
 {
     type_case *expr of {
       class: {
-            construct_object(clo, expr, argc, args, rval, failure_label);
+            construct_object(clo, lhs, expr, argc, args, rval, failure_label);
         }
 
       constructor: {
-            construct_record(clo, expr, argc, args, rval, failure_label);
+            construct_record(clo, lhs, expr, argc, args, rval, failure_label);
         }
 
       methp: {
-            invoke_methp(clo, expr, argc, args, rval, failure_label);
+            invoke_methp(clo, lhs, expr, argc, args, rval, failure_label);
         }
 
       proc: {
-            invoke_proc(clo, expr, argc, args, rval, failure_label);
+            invoke_proc(clo, lhs, expr, argc, args, rval, failure_label);
         }
 
      default: {
-            invoke_misc(clo, expr, argc, args, rval, failure_label);
+         invoke_misc(clo, lhs, expr, argc, args, rval, failure_label);
         }
     }
 }
 
-void construct_object(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label)
+void construct_object(word clo, dptr lhs, dptr expr, int argc, dptr args, word rval, word *failure_label)
 {
     struct class_field *new_field;
     struct b_class *class0 = &ClassBlk(*expr);
@@ -423,6 +432,7 @@ void construct_object(word clo, dptr expr, int argc, dptr args, word rval, word 
 
         MemProtect(pf = alc_p_frame((struct b_proc *)&Bconstruct_object, 0));
         push_frame((struct frame *)pf);
+        pf->lhs = lhs;
         /* Arg0 is the class */
         pf->fvars->desc[0] = *expr;
         /* Arg1 is the allocated new object object */
@@ -431,11 +441,15 @@ void construct_object(word clo, dptr expr, int argc, dptr args, word rval, word 
         ObjectBlk(pf->fvars->desc[1]).init_state = Initializing;
 
         /* Allocate a frame for the "new" method.  It is invoked from
-         * within construct_object */
+         * within construct_object.  The failure label is exported from
+         * construct_object.
+         */
         new_f = push_frame_for_proc(bp, argc, args, &pf->fvars->desc[1]);
+        new_f->failure_label = construct_object_NewFail;
 
-        /* Set up a mark and closure for the new method.  They are used with Op_Resume and Op_Unmark
-         * in construct_object's code to invoke the new method.
+        /* Set up a mark and closure for the new method.  They are
+         * used with Op_Resume and Op_Unmark in construct_object's
+         * code to invoke the new method.
          */
         pf->mark[0] = (struct frame *)pf;
         pf->clo[0] = new_f;
@@ -443,6 +457,7 @@ void construct_object(word clo, dptr expr, int argc, dptr args, word rval, word 
         skip_args(argc, args);
         MemProtect(pf = alc_p_frame((struct b_proc *)&Bconstruct_object0, 0));
         push_frame((struct frame *)pf);
+        pf->lhs = lhs;
         /* Arg0 is the class */
         pf->fvars->desc[0] = *expr;
         /* Arg 1 is a new object */
@@ -456,7 +471,7 @@ void construct_object(word clo, dptr expr, int argc, dptr args, word rval, word 
     tail_invoke_frame((struct frame *)pf);
 }
 
-static void construct_record(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label) 
+static void construct_record(word clo, dptr lhs, dptr expr, int argc, dptr args, word rval, word *failure_label) 
 {
     struct p_frame *pf;
     struct b_constructor *con = &ConstructorBlk(*expr);
@@ -465,6 +480,7 @@ static void construct_record(word clo, dptr expr, int argc, dptr args, word rval
 
     MemProtect(pf = alc_p_frame((struct b_proc *)&Bgenerate_arg, 0));
     push_frame((struct frame *)pf);
+    pf->lhs = lhs;
 
     MemProtect(BlkLoc(pf->fvars->desc[0]) = (union block *)alcrecd(con));
     pf->fvars->desc[0].dword = D_Record;
@@ -510,19 +526,20 @@ static void construct_record(word clo, dptr expr, int argc, dptr args, word rval
     tail_invoke_frame((struct frame *)pf);
 }
 
-static void invoke_proc(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label) 
+static void invoke_proc(word clo, dptr lhs, dptr expr, int argc, dptr args, word rval, word *failure_label) 
 {
     struct b_proc *bp = &ProcBlk(*expr);
     struct frame *f;
     f = push_frame_for_proc(bp, argc, args, 0);
     curr_pf->clo[clo] = f;
+    f->lhs = lhs;
     f->failure_label = failure_label;
     f->rval = rval;
     tail_invoke_frame(f);
 }
 
 
-static void invoke_methp(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label) 
+static void invoke_methp(word clo, dptr lhs, dptr expr, int argc, dptr args, word rval, word *failure_label) 
 {
     struct b_proc *bp = MethpBlk(*expr).proc;
     tended struct descrip tmp;
@@ -531,12 +548,13 @@ static void invoke_methp(word clo, dptr expr, int argc, dptr args, word rval, wo
     BlkLoc(tmp) = (union block *)MethpBlk(*expr).object;
     f = push_frame_for_proc(bp, argc, args, &tmp);
     curr_pf->clo[clo] = f;
+    f->lhs = lhs;
     f->failure_label = failure_label;
     f->rval = rval;
     tail_invoke_frame(f);
 }
 
-static void invoke_misc(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label)
+static void invoke_misc(word clo, dptr lhs, dptr expr, int argc, dptr args, word rval, word *failure_label)
 {
     word iexpr;
     tended struct descrip sexpr;
@@ -553,6 +571,7 @@ static void invoke_misc(word clo, dptr expr, int argc, dptr args, word rval, wor
         }
         MemProtect(pf = alc_p_frame((struct b_proc *)&Bgenerate_arg, 0));
         push_frame((struct frame *)pf);
+        pf->lhs = lhs;
         if (args)
             pf->fvars->desc[0] = *get_element(args, i);
         else {
@@ -580,7 +599,7 @@ static void invoke_misc(word clo, dptr expr, int argc, dptr args, word rval, wor
               proc:
               constructor:
               class: {
-                    general_call(clo, p, argc, args, rval, failure_label);
+                    general_call(clo, lhs, p, argc, args, rval, failure_label);
                     return;
                 }
             }
@@ -593,6 +612,7 @@ static void invoke_misc(word clo, dptr expr, int argc, dptr args, word rval, wor
                 struct frame *f;
                 f = push_frame_for_proc(bp, argc, args, 0);
                 curr_pf->clo[clo] = f;
+                f->lhs = lhs;
                 f->failure_label = failure_label;
                 f->rval = rval;
                 tail_invoke_frame(f);
@@ -626,7 +646,7 @@ void do_field()
     word *failure_label;
     struct descrip query;
 
-    lhs = get_dptr();
+    lhs = get_rw_dptr();
     get_deref(&expr);
     fno = GetWord;
     ic = get_inline_field_cache();
@@ -893,31 +913,31 @@ access_macro(general_access_1, cast_access_1,instance_access_1,class_access_1,re
 
 #begdef invokef_macro(general_invokef, cast_invokef,instance_invokef,class_invokef,record_invokef,e_objectref,e_objectsub,e_castref,e_castsub,e_classref,e_classsub,e_rref,e_rsub)
 
-static void class_invokef(word clo, dptr expr, dptr query, struct inline_field_cache *ic, 
+static void class_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
                              int argc, dptr args, word rval, word *failure_label);
-static void cast_invokef(word clo, dptr expr, dptr query, struct inline_field_cache *ic, 
+static void cast_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
                              int argc, dptr args, word rval, word *failure_label);
-static void instance_invokef(word clo, dptr expr, dptr query, struct inline_field_cache *ic, 
+static void instance_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
                              int argc, dptr args, word rval, word *failure_label);
-static void record_invokef(word clo, dptr expr, dptr query, struct inline_field_cache *ic, 
+static void record_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
                              int argc, dptr args, word rval, word *failure_label);
 
 
-void general_invokef(word clo, dptr expr, dptr query, struct inline_field_cache *ic, 
+void general_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
                      int argc, dptr args, word rval, word *failure_label)
 {
     type_case *expr of {
       object: {
-            instance_invokef(clo, expr, query, ic, argc, args, rval, failure_label);
+            instance_invokef(clo, lhs, expr, query, ic, argc, args, rval, failure_label);
       }
       class: {
-            class_invokef(clo, expr, query, ic, argc, args, rval, failure_label);
+            class_invokef(clo, lhs, expr, query, ic, argc, args, rval, failure_label);
         }
       cast: {
-            cast_invokef(clo, expr, query, ic, argc, args, rval, failure_label);
+            cast_invokef(clo, lhs, expr, query, ic, argc, args, rval, failure_label);
         }
       record: {
-            record_invokef(clo, expr, query, ic, argc, args, rval, failure_label);
+            record_invokef(clo, lhs, expr, query, ic, argc, args, rval, failure_label);
         }
       default: {
           skip_args(argc, args);
@@ -931,7 +951,7 @@ void general_invokef(word clo, dptr expr, dptr query, struct inline_field_cache 
     }
 }
 
-static void class_invokef(word clo, dptr expr, dptr query, struct inline_field_cache *ic, 
+static void class_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
                           int argc, dptr args, word rval, word *failure_label)
 {
     struct b_class *class0 = &ClassBlk(*expr);
@@ -970,10 +990,10 @@ static void class_invokef(word clo, dptr expr, dptr query, struct inline_field_c
     EVVal(i + 1, e_classsub);
 
     curr_op = Op_Invoke; /* In case of error, xtrace acts like Op_Invoke */
-    general_call(clo, cf->field_descriptor, argc, args, rval, failure_label);
+    general_call(clo, lhs, cf->field_descriptor, argc, args, rval, failure_label);
 }
 
-static void record_invokef(word clo, dptr expr, dptr query, struct inline_field_cache *ic, 
+static void record_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
                            int argc, dptr args, word rval, word *failure_label)
 {
     struct b_constructor *recdef = RecordBlk(*expr).constructor;
@@ -990,11 +1010,11 @@ static void record_invokef(word clo, dptr expr, dptr query, struct inline_field_
     /* Copy field to a tended descriptor */
     tmp = RecordBlk(*expr).fields[i];
     curr_op = Op_Invoke; /* In case of error, xtrace acts like Op_Invoke */
-    general_call(clo, &tmp, argc, args, rval, failure_label);
+    general_call(clo, lhs, &tmp, argc, args, rval, failure_label);
 }
 
 
-static void cast_invokef(word clo, dptr expr, dptr query, struct inline_field_cache *ic, 
+static void cast_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
                          int argc, dptr args, word rval, word *failure_label)
 {
     struct b_class *obj_class, *cast_class;
@@ -1036,12 +1056,13 @@ static void cast_invokef(word clo, dptr expr, dptr query, struct inline_field_ca
     f = push_frame_for_proc(&ProcBlk(*cf->field_descriptor), 
                             argc, args, &tmp);
     curr_pf->clo[clo] = f;
+    f->lhs = lhs;
     f->failure_label = failure_label;
     f->rval = rval;
     tail_invoke_frame(f);
 }
 
-static void instance_invokef(word clo, dptr expr, dptr query, struct inline_field_cache *ic, 
+static void instance_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
                              int argc, dptr args, word rval, word *failure_label)
 {
     struct b_class *class0;
@@ -1081,6 +1102,7 @@ static void instance_invokef(word clo, dptr expr, dptr query, struct inline_fiel
         f = push_frame_for_proc(&ProcBlk(*cf->field_descriptor), 
                                 argc, args, &tmp);
         curr_pf->clo[clo] = f;
+        f->lhs = lhs;
         f->failure_label = failure_label;
         f->rval = rval;
         tail_invoke_frame(f);
@@ -1095,7 +1117,7 @@ static void instance_invokef(word clo, dptr expr, dptr query, struct inline_fiel
         /* Copy field to a tended descriptor */
         tmp = ObjectBlk(*expr).fields[i];
         curr_op = Op_Invoke; /* In case of error, xtrace acts like Op_Invoke */
-        general_call(clo, &tmp, argc, args, rval, failure_label);
+        general_call(clo, lhs, &tmp, argc, args, rval, failure_label);
     }
 }
 #enddef
@@ -1110,9 +1132,9 @@ static void simple_access()
     dptr lhs, expr, query;
     struct descrip just_fail;
     word *a;
-    lhs = get_dptr();
-    expr = get_dptr();
-    query = get_dptr();
+    lhs = get_rw_dptr();
+    expr = get_rw_dptr();
+    query = get_rw_dptr();
     get_deref(&just_fail);
     a = GetAddr;
     general_access(lhs, expr, query, 0, IntVal(just_fail), a);
@@ -1168,8 +1190,8 @@ static void create_raw_object()
 {
     dptr lhs, c;
     tended struct b_object *obj;
-    lhs = get_dptr();
-    c = get_dptr();
+    lhs = get_rw_dptr();
+    c = get_rw_dptr();
     MemProtect(obj = alcobject(&ClassBlk(*c)));
     obj->init_state = Initializing;
     lhs->dword = D_Object;

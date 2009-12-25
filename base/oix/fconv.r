@@ -18,6 +18,7 @@ function abs(n)
 	 else {
 	    i = neg(n);
 	    if (over_flow) {
+               tended struct descrip result;
 	       struct descrip tmp;
 	       MakeInt(n,&tmp);
 	       bigneg(&tmp, &result);
@@ -31,6 +32,7 @@ function abs(n)
 
    else if cnv:(exact)integer(n) then {
       body {
+         tended struct descrip result;
 	 if (BignumBlk(n).sign == 0)
 	    result = n;
 	 else {

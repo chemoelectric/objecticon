@@ -63,7 +63,7 @@ struct ir_stack {
 };
 
 
-enum ir_vartype { CONST, LOCAL, GLOBAL, TMP, CLOSURE, WORD, KNULL };
+enum ir_vartype { CONST, LOCAL, GLOBAL, TMP, WORD, KNULL };
 
 struct ir_var {
     int type;
@@ -138,6 +138,7 @@ struct ir_op {
 struct ir_opclo {
     IR_SUB
     int clo;
+    struct ir_var *lhs;
     int operation;
     struct ir_var *arg1;
     struct ir_var *arg2;
@@ -157,6 +158,7 @@ struct ir_keyop {
 struct ir_keyclo {
     IR_SUB
     int clo;
+    struct ir_var *lhs;
     int keyword;
     int rval;
     int fail_label;
@@ -165,6 +167,7 @@ struct ir_keyclo {
 struct ir_invoke {
     IR_SUB
     int clo;
+    struct ir_var *lhs;
     struct ir_var *expr;
     int argc;
     struct ir_var **args;
@@ -175,6 +178,7 @@ struct ir_invoke {
 struct ir_apply {
     IR_SUB
     int clo;
+    struct ir_var *lhs;
     struct ir_var *arg1;
     struct ir_var *arg2;
     int rval;
@@ -184,6 +188,7 @@ struct ir_apply {
 struct ir_invokef {
     IR_SUB
     int clo;
+    struct ir_var *lhs;
     struct ir_var *expr;
     char *fname;
     int argc;
@@ -195,6 +200,7 @@ struct ir_invokef {
 struct ir_applyf {
     IR_SUB
     int clo;
+    struct ir_var *lhs;
     struct ir_var *arg1;
     char *fname;
     struct ir_var *arg2;
@@ -215,24 +221,6 @@ struct ir_makelist {
     struct ir_var *lhs;
     int argc;
     struct ir_var **args;
-};
-
-struct ir_unop {
-    IR_SUB
-    struct ir_var *lhs;
-    int operation;
-    struct ir_var *arg;
-    int rval;
-    int fail_label;
-};
-
-struct ir_unclo {
-    IR_SUB
-    int clo;
-    int operation;
-    struct ir_var *arg;
-    int rval;
-    int fail_label;
 };
 
 struct ir_mark {
@@ -265,7 +253,6 @@ struct ir_move {
 struct ir_resume {
     IR_SUB
     int clo;
-    int fail_label;
 };
 
 struct ir_create {

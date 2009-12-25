@@ -130,6 +130,7 @@ function detab(s,i[n])
           return ucs(make_ucs_block(&utf8, out_count));
       } else {
           tended char *in, *out, *iend;
+          tended struct descrip result;
           char c;
           int expand;
 
@@ -398,6 +399,7 @@ function entab(s,i[n])
           return ucs(make_ucs_block(&utf8, out_count));
       } else {
           char *in, *out, *iend, c;
+          tended struct descrip result;
 
           /*
            * Get memory for result at end of string space.  We may give some back
@@ -653,6 +655,7 @@ function map(s1,s2,s3)
 
           return ucs(make_ucs_block(&utf8, UcsBlk(s1).length));
       } else {
+          tended struct descrip result;
           register int i;
           register word slen;
           register char *str1, *str2, *str3;
@@ -785,6 +788,7 @@ function repl(s,n)
 
           return ucs(make_ucs_block(&utf8, n * slen));
       } else {
+          tended struct descrip result;
           slen = StrLen(s);
           /*
            * Return an empty string if n is 0 or if s is the empty string.
@@ -857,6 +861,7 @@ function reverse(s)
 
            return ucs(make_ucs_block(&utf8, UcsBlk(s).length));
        } else {
+           tended struct descrip result;
            register char c, *floc, *lloc;
            register word slen;
 

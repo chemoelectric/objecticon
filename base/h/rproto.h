@@ -453,8 +453,8 @@ struct sockaddr *parse_sockaddr(char *s, int *size);
 
 void call_trace(struct p_frame *pf);
 void fail_trace(struct p_frame *pf);
-void suspend_trace(struct p_frame *pf);
-void return_trace(struct p_frame *pf);
+void suspend_trace(struct p_frame *pf, dptr val);
+void return_trace(struct p_frame *pf, dptr val);
 
 void trace_coact(struct b_coexpr *from, struct b_coexpr *to, dptr val);
 void trace_coret(struct b_coexpr *from, struct b_coexpr *to, dptr val);
@@ -511,7 +511,8 @@ void free_frame(struct frame *f);
 void push_frame(struct frame *f);
 void push_p_frame(struct p_frame *f);
 void interp(void);
-dptr get_dptr(void);
+dptr get_rw_dptr(void);
+dptr get_wo_dptr(void);
 void get_descrip(dptr dest);
 void get_deref(dptr dest);
 void get_variable(dptr dest);
@@ -535,16 +536,16 @@ struct p_frame *get_current_user_frame_of(struct b_coexpr *ce);
 struct progstate *get_current_program_of(struct b_coexpr *ce);
 void switch_to(struct b_coexpr *ce);
 void add_to_prog_event_queue(dptr value, int event);
-void general_call_0(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label);
-void general_call_1(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label);
+void general_call_0(word clo, dptr lhs, dptr expr, int argc, dptr args, word rval, word *failure_label);
+void general_call_1(word clo, dptr lhs, dptr expr, int argc, dptr args, word rval, word *failure_label);
 void general_access_0(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
                       int just_fail, word *failure_label);
 void general_access_1(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
                       int just_fail, word *failure_label);
 
-void general_invokef_0(word clo, dptr expr, dptr query, struct inline_field_cache *ic, 
+void general_invokef_0(word clo, dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
                        int argc, dptr args, word rval, word *failure_label);
-void general_invokef_1(word clo, dptr expr, dptr query, struct inline_field_cache *ic, 
+void general_invokef_1(word clo, dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
                        int argc, dptr args, word rval, word *failure_label);
 void test_collect(int time_interval, long call_interval, int quiet);
 struct b_coexpr *alccoexp_0 (void);

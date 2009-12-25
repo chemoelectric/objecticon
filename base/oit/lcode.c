@@ -196,13 +196,8 @@ static void emit_ir_var(struct ir_var *v, char *desc)
             outwordx(v->index, "      %d", v->index);
             break;
         }
-        case CLOSURE: {
-            outwordx(Op_Closure, "   %s=closure", desc);
-            outwordx(v->index, "      %d", v->index);
-            break;
-        }
         default: {
-            quit("make_varword:Unknown type");
+            quit("emit_ir_var:Unknown type");
         }
     }
 }
@@ -733,6 +728,7 @@ static void lemitcode()
                     word op = cnv_op(x->operation);
                     out_op(op);
                     word_field(x->clo, "clo");
+                    emit_ir_var(x->lhs, "lhs");
                     emit_ir_var(x->arg1, "arg1");
                     if (x->arg2)
                         emit_ir_var(x->arg2, "arg2");
@@ -755,6 +751,7 @@ static void lemitcode()
                     out_op(Op_Keyclo);
                     word_field(x->keyword, "keyword");
                     word_field(x->clo, "clo");
+                    emit_ir_var(x->lhs, "lhs");
                     labout(x->fail_label, "fail");
                     break;
                 }
@@ -763,6 +760,7 @@ static void lemitcode()
                     int i;
                     out_op(Op_Invoke);
                     word_field(x->clo, "clo");
+                    emit_ir_var(x->lhs, "lhs");
                     emit_ir_var(x->expr, "expr");
                     word_field(x->argc, "argc");
                     word_field(x->rval, "rval");
@@ -777,6 +775,7 @@ static void lemitcode()
                     int i;
                     out_op(Op_Invokef);
                     word_field(x->clo, "clo");
+                    emit_ir_var(x->lhs, "lhs");
                     emit_ir_var(x->expr, "expr");
                     fp = flocate(x->fname);
                     if (fp)
@@ -799,6 +798,7 @@ static void lemitcode()
                     struct ir_apply *x = (struct ir_apply *)ir;
                     out_op(Op_Apply);
                     word_field(x->clo, "clo");
+                    emit_ir_var(x->lhs, "lhs");
                     emit_ir_var(x->arg1, "arg1");
                     emit_ir_var(x->arg2, "arg2");
                     word_field(x->rval, "rval");
@@ -810,6 +810,7 @@ static void lemitcode()
                     struct fentry *fp;
                     out_op(Op_Applyf);
                     word_field(x->clo, "clo");
+                    emit_ir_var(x->lhs, "lhs");
                     emit_ir_var(x->arg1, "arg1");
                     fp = flocate(x->fname);
                     if (fp)
@@ -849,7 +850,6 @@ static void lemitcode()
                     struct ir_resume *x = (struct ir_resume *)ir;
                     out_op(Op_Resume);
                     word_field(x->clo, "clo");
-                    labout(x->fail_label, "fail");
                     break;
                 }
                 case Ir_ScanSwap: {

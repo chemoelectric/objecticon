@@ -362,6 +362,7 @@ operator ? random(underef x -> dx)
               runerr(113, dx);
 
           if (Type(dx) == T_Lrgint) {
+              tended struct descrip result;
               bigrand(&dx, &result);
               return result;
           }
@@ -414,6 +415,7 @@ operator [:] sect(underef x -> dx, i, j)
       type_case dx of {
       list: {
          C_integer t;
+         tended struct descrip result;
 
          i = cvpos(i, ListBlk(dx).size);
          if (i == CvtFail)
@@ -481,6 +483,7 @@ operator [:] sect(underef x -> dx, i, j)
          last = i + j - 1;
          k = cset_range_of_pos(&CsetBlk(dx), last);
          if (CsetBlk(dx).range[k].from + last - 1 - CsetBlk(dx).range[k].index < 256) {
+             tended struct descrip result;
              cset_to_str(&CsetBlk(dx), i, j, &result);
              return result;
          } else

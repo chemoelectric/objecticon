@@ -304,6 +304,7 @@ function lang_Prog_get_variable_name(underef v)
       runerr(111, v);
 
    body {
+      tended struct descrip result;
       C_integer i = get_name(&v, &result);
       if (i == Error)
          runerr(0);
@@ -318,6 +319,7 @@ function lang_Prog_get_variable(s,c)
    body {
        int rv;
        struct progstate *prog;
+       tended struct descrip result;
        if (!(prog = get_program_for(&c)))
           runerr(0);
        rv = getvar(&s, &result, prog);
@@ -590,6 +592,7 @@ function lang_Prog_get_global_location_impl(s, c)
    body {
        struct progstate *prog;
        struct loc *p;
+       tended struct descrip result;
        if (!(prog = get_program_for(&c)))
           runerr(0);
 
@@ -678,7 +681,7 @@ function lang_Prog_get_runtime_millis(c)
        struct progstate *prog;
        struct timeval tp;
        struct descrip ls, lm;
-       tended struct descrip lt1, lt2;
+       tended struct descrip lt1, lt2, result;
 
        if (!(prog = get_program_for(&c)))
           runerr(0);
@@ -705,7 +708,7 @@ function lang_Prog_get_startup_micros(c)
    body {
        struct progstate *prog;
        struct descrip ls, lm;
-       tended struct descrip lt1;
+       tended struct descrip lt1, result;
 
        if (!(prog = get_program_for(&c)))
           runerr(0);
@@ -722,6 +725,7 @@ function lang_Prog_get_collection_info_impl(c)
    body {
        struct progstate *prog;
        struct descrip tmp;
+       tended struct descrip result;
 
        if (!(prog = get_program_for(&c)))
           runerr(0);
@@ -742,7 +746,7 @@ end
 function lang_Prog_get_allocation_info_impl(c)
    body {
        struct progstate *prog;
-       tended struct descrip tmp;
+       tended struct descrip tmp, result;
 
        if (!(prog = get_program_for(&c)))
           runerr(0);
@@ -761,7 +765,7 @@ function lang_Prog_get_region_info_impl(c)
        struct progstate *prog;
        struct region *rp;
        struct descrip tmp;
-       tended struct descrip l;
+       tended struct descrip l, result;
        int n;
 
        if (!(prog = get_program_for(&c)))
@@ -934,6 +938,7 @@ end
 function lang_Class_get_package(c)
     body {
         struct b_class *class0;
+        tended struct descrip result;
         if (!(class0 = get_class_for(&c)))
             runerr(0);
         if (class0->package_id == 0)
@@ -956,6 +961,7 @@ function lang_Class_get_location_impl(c)
     body {
         struct b_class *class0;
         struct loc *p;
+        tended struct descrip result;
         if (!(class0 = get_class_for(&c)))
             runerr(0);
         if (class0->program->Glocs == class0->program->Eglocs) {
@@ -1105,6 +1111,7 @@ function lang_Class_get_field_location_impl(c, field)
    body {
         struct b_class *class0;
         int i;
+        tended struct descrip result;
         if (!(class0 = get_class_for(&c)))
             runerr(0);
         CheckField(field);
@@ -1370,6 +1377,7 @@ end
 #if MSWIN32
 function io_WindowsFileSystem_get_roots()
     body {
+        tended struct descrip result;
         DWORD n = GetLogicalDrives();
         char t[4], c = 'A';
 	strcpy(t, "?:\\");
@@ -1390,6 +1398,7 @@ function io_WindowsFilePath_getdcwd(d)
    if !cnv:string(d) then
       runerr(103, d)
    body {
+      tended struct descrip result;
       char *p;
       int dir;
       if (StrLen(d) != 1)
@@ -1591,7 +1600,7 @@ function io_FileStream_seek(self, offset)
    body {
        int whence;
        off_t c_offset, rc;
-       tended struct descrip t;
+       tended struct descrip t, result;
        GetSelfFd();
 
        if (bigcmp(&offset, &zerodesc) > 0) {
@@ -1617,7 +1626,7 @@ end
 function io_FileStream_tell(self)
    body {
        off_t rc;
-       tended struct descrip t;
+       tended struct descrip t, result;
 
        GetSelfFd();
        if ((rc = lseek(self_fd, 0, SEEK_CUR)) < 0) {
@@ -1635,6 +1644,7 @@ function io_FileStream_pipe_impl()
 #if UNIX
        int fds[2];
        struct descrip t;
+       tended struct descrip result;
 
        if (pipe(fds) < 0) {
            errno2why();
@@ -1762,6 +1772,7 @@ function io_SocketStream_socketpair_impl(typ)
 #if UNIX
        int fds[2];
        struct descrip t;
+       tended struct descrip result;
 
        if (socketpair(AF_UNIX, typ, 0, fds) < 0) {
            errno2why();
@@ -2034,6 +2045,7 @@ function io_DescStream_poll(a[n])
        unsigned int nfds;
        word timeout;
        int i, rc;
+       tended struct descrip result;
 
        nfds = n / 2;
        if (n % 2 == 0 || is:null(a[n - 1]))
@@ -2140,6 +2152,7 @@ end
 function io_DirStream_read_impl(self)
    body {
        struct dirent *de;
+       tended struct descrip result;
        GetSelfDir();
        errno = 0;
        de = readdir(self_dir);
@@ -2244,6 +2257,7 @@ end
 
 function io_DirStream_read_impl(self)
    body {
+       tended struct descrip result;
        GetSelfDir();
        if (self_dir->status == EMPTY) {
            GetSelfEofFlag();
@@ -2595,7 +2609,7 @@ function util_Timezone_get_system_timezone()
    body {
       time_t t;
       struct tm *ct;
-      tended struct descrip tmp;
+      tended struct descrip tmp, result;
 
       tzset();
       time(&t);
@@ -2667,6 +2681,7 @@ function io_RamStream_in(self, i)
    if !cnv:C_integer(i) then
       runerr(101, i)
    body {
+       tended struct descrip result;
        GetSelfRs();
 
        if (i <= 0) {
@@ -2774,6 +2789,7 @@ end
 
 function io_RamStream_str(self)
    body {
+       tended struct descrip result;
        GetSelfRs();
        bytes2string(self_rs->data, self_rs->size, &result);
        return result;
@@ -2812,6 +2828,7 @@ end
 function lang_Constructor_get_package(c)
     body {
         struct b_constructor *constructor0;
+        tended struct descrip result;
         if (!(constructor0 = get_constructor_for(&c)))
             runerr(0);
         if (constructor0->package_id == 0)
@@ -2838,6 +2855,7 @@ function lang_Constructor_get_location_impl(c)
     body {
         struct b_constructor *constructor0;
         struct loc *p;
+        tended struct descrip result;
         if (!(constructor0 = get_constructor_for(&c)))
             runerr(0);
         if (constructor0->program->Glocs == constructor0->program->Eglocs) {
@@ -2893,6 +2911,7 @@ function lang_Constructor_get_field_location_impl(c, field)
    body {
         struct b_constructor *constructor0;
         int i;
+        tended struct descrip result;
         if (!(constructor0 = get_constructor_for(&c)))
             runerr(0);
         CheckField(field);
@@ -3042,6 +3061,7 @@ function lang_Proc_get_local_location_impl(c, id)
    body {
         int i;
         struct b_proc *proc0;
+        tended struct descrip result;
         if (!(proc0 = get_proc_for(&c)))
             runerr(0);
         CheckField(id);
@@ -3097,6 +3117,7 @@ function lang_Proc_get_name(c, flag)
         if (!(proc0 = get_proc_for(&c)))
            runerr(0);
         if (proc0->field && is:null(flag)) {
+            tended struct descrip result;
             int len;
             struct b_class *class0 = proc0->field->defining_class;
             dptr fname = class0->program->Fnames[proc0->field->fnum];
@@ -3115,6 +3136,7 @@ end
 function lang_Proc_get_package(c, flag)
    body {
         struct b_proc *proc0;
+        tended struct descrip result;
         if (!(proc0 = get_proc_for(&c)))
             runerr(0);
         if (proc0->field && is:null(flag)) {
@@ -3148,6 +3170,7 @@ end
 
 function lang_Proc_get_location_impl(c, flag)
    body {
+        tended struct descrip result;
         struct b_proc *proc0;
         struct loc *p;
         if (!(proc0 = get_proc_for(&c)))
@@ -3233,6 +3256,7 @@ end
 
 function lang_Internal_hash(x)
    body {
+       struct descrip result;
        MakeInt(hash(&x) & MaxWord, &result);
        return result;
    }
@@ -3263,7 +3287,7 @@ function lang_Coexpression_get_stack_info_impl(ce, lim)
        for (pf = b->curr_pf; lim && pf; pf = pf->caller) {
             if (pf->proc->program) {
                 struct descrip prc;
-                tended struct descrip img, args;
+                tended struct descrip img, args, result;
                 dptr arg;
                 word nargs;
 

@@ -609,6 +609,7 @@ function lang_Prog_load(s, arglist, blocksize, stringsize)
       runerr(101,stringsize)
     body {
        struct progstate *pstate;
+       tended struct descrip result;
        tended struct b_coexpr *coex;
        struct header hdr;
        FILE *ifile;
@@ -700,7 +701,7 @@ function lang_Prog_load(s, arglist, blocksize, stringsize)
        coex->base_pf = coex->curr_pf = new_pf;
        coex->start_label = new_pf->ipc = Bmain_wrapper.icode;
        coex->failure_label = 0;
-       coex->tvalloc = 0;
+       coex->tvalloc = &trashcan;
        coex->level = 0;
        coex->size = 0;
 
@@ -1281,7 +1282,7 @@ int main(int argc, char **argv)
     k_current->main_of = &rootpstate;
     k_current->activator = k_current;
     k_current->failure_label = 0;
-    k_current->tvalloc = 0;
+    k_current->tvalloc = &trashcan;
 
     check_version(&hdr, name, ifile);
     read_icode(&hdr, name, ifile, code);
@@ -1382,7 +1383,6 @@ static void conv_var()
 
         case Op_Int:
         case Op_FrameVar:
-        case Op_Closure:
         case Op_Tmp: {
             ++pc;
             break;
@@ -1483,6 +1483,7 @@ static void relocate_code(struct progstate *ps, word *c)
             case Op_Tabmat:
             case Op_Bang: {
                 ++pc;            /* clo */
+                conv_var();  /* lhs */
                 conv_var();  /* arg1 */
                 ++pc;            /* rval */
                 conv_addr(); /* failure label */
@@ -1493,6 +1494,7 @@ static void relocate_code(struct progstate *ps, word *c)
             case Op_Rasgn:
             case Op_Rswap:{
                 ++pc;            /* clo */
+                conv_var();  /* lhs */
                 conv_var();  /* arg1 */
                 conv_var();  /* arg2 */
                 ++pc;            /* rval */
@@ -1502,6 +1504,7 @@ static void relocate_code(struct progstate *ps, word *c)
 
             case Op_Toby: {
                 ++pc;            /* clo */
+                conv_var();  /* lhs */
                 conv_var();  /* arg1 */
                 conv_var();  /* arg2 */
                 conv_var();  /* arg3 */
@@ -1529,13 +1532,13 @@ static void relocate_code(struct progstate *ps, word *c)
 
             case Op_Keyclo: {
                 pc += 2;         /* keyword, clo */
+                conv_var();  /* lhs */
                 conv_addr(); /* failure label */
                 break;
             }
 
             case Op_Resume: {
                 ++pc;            /* clo */
-                conv_addr(); /* failure label */
                 break;
             }
 
@@ -1583,6 +1586,7 @@ static void relocate_code(struct progstate *ps, word *c)
             case Op_Invoke: {
                 word n;
                 ++pc;            /* clo */
+                conv_var();  /* lhs */
                 conv_var();  /* expr */
                 n = *pc++;       /* argc */
                 ++pc;            /* rval */
@@ -1594,6 +1598,7 @@ static void relocate_code(struct progstate *ps, word *c)
 
             case Op_Apply: {
                 ++pc;            /* clo */
+                conv_var();  /* lhs */
                 conv_var();  /* arg1 */
                 conv_var();  /* arg2 */
                 ++pc;            /* rval */
@@ -1604,6 +1609,7 @@ static void relocate_code(struct progstate *ps, word *c)
             case Op_Invokef: {
                 word n;
                 ++pc;            /* clo */
+                conv_var();  /* lhs */
                 conv_var();  /* expr */
                 pc += 3;         /* fnum, inline cache */
                 n = *pc++;       /* argc */
@@ -1616,6 +1622,7 @@ static void relocate_code(struct progstate *ps, word *c)
 
             case Op_Applyf: {
                 ++pc;            /* clo */
+                conv_var();  /* lhs */
                 conv_var();  /* arg1 */
                 pc += 3;         /* fnum, inline cache */
                 conv_var();  /* arg2 */

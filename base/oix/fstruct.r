@@ -63,6 +63,7 @@ function get_or_pop(x)
    if !is:list(x) then
       runerr(108, x)
    body {
+     tended struct descrip result;
      EVValD(&x, E_Lget);
      if (!list_get(&x, &result)) 
          fail;
@@ -276,7 +277,8 @@ function pull(x)
       runerr(108, x)
 
    body {
-      EVValD(&x, E_Lpull);
+     tended struct descrip result;
+     EVValD(&x, E_Lpull);
      if (!list_pull(&x, &result)) 
          fail;
      return result;
@@ -328,6 +330,7 @@ end
 
 function set(x[n])
    body {
+     tended struct descrip result;
      tended union block *ps;
      int argc;
 
@@ -352,6 +355,7 @@ end
 "                          v[0]->v[1], v[2]->v[3] etc."
 function table(x, v[n])
    body {
+      tended struct descrip result;
       tended union block *bp;
       int argc;
    

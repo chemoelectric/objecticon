@@ -1,11 +1,12 @@
 static word main_wrapper_code[] = {
    Op_Invoke,
    0,
+   Op_Nil,
    Op_FrameVar,
    0,
    1,
    0,
-   (word)&main_wrapper_code[9],
+   (word)&main_wrapper_code[10],
    Op_FrameVar,
    1,
    Op_Custom,

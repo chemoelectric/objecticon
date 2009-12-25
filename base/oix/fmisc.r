@@ -38,6 +38,7 @@ end
 
 function copy(x)
  body {
+   tended struct descrip result;
    type_case x of {
       null:
       string:
@@ -148,6 +149,7 @@ function func_name(i, j, a[n])
 
    body {
       int k ;
+      tended struct descrip result;
       if ((Type(i)==T_Lrgint) || (Type(j)==T_Lrgint)) {
          big_ ## c_op(i, j);
       }
@@ -207,6 +209,7 @@ function icom(i)
 
    body {
       if (Type(i) == T_Lrgint) {
+         tended struct descrip result;
          bigsub(&minusonedesc, &i, &result);
          return result;
          }
@@ -222,6 +225,7 @@ end
  */
 function image(x)
    body {
+      tended struct descrip result;
       getimage(&x,&result);
       return result;
       }
@@ -245,6 +249,7 @@ function ishift(i,j)
       cj = IntVal(j);
       if (Type(i) == T_Lrgint || cj >= WordBits
       || ((ci=(uword)IntVal(i))!=0 && cj>0 && (ci >= (1<<(WordBits-cj-1))))) {
+         tended struct descrip result;
          bigshift(&i, &j, &result);
          return result;
          }
@@ -483,6 +488,7 @@ function sort(t, i)
       list: {
          body {
             register word size;
+            tended struct descrip result;
 
             /*
              * Sort the list by copying it into a new list and then using
@@ -796,6 +802,7 @@ function sortf(t, i)
    type_case t of {
       list: {
          word size;
+         tended struct descrip result;
 
          /*
           * Sort the list by copying it into a new list and then using
@@ -965,6 +972,7 @@ static dptr nth(dptr d)
 
 function type(x)
   body {
+   struct descrip result;
    type_case x of {
       string:      LitStr("string", &result);    
       null:        LitStr("null", &result);      

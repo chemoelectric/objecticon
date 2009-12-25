@@ -155,6 +155,7 @@ end
 "&host - a string that identifies the host computer Icon is running on."
 keyword host
    body {
+       tended struct descrip result;
 #ifdef HAVE_UNAME
        struct utsname utsn;
        if (uname(&utsn) < 0) {
@@ -299,6 +300,7 @@ end
 "&version - a string indentifying this version of Icon."
 keyword version
    body {
+    struct descrip result;
     LitStr(Version, &result);
     return result;
    }

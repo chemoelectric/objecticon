@@ -16,7 +16,6 @@ static void dcltor_typ (struct node *dcltor, struct node *tqual, int in_declare)
 word lbl_num = 0;                   /* next unused label number */
 struct lvl_entry *dcl_stk;          /* stack of declaration contexts */
 
-char *str_rslt;                     /* string "result" in string table */
 struct init_tend *tend_lst = NULL;  /* list of tended descriptors */
 struct sym_entry *decl_lst = NULL;  /* declarations from "declare {...}" */
 struct sym_entry *v_len = NULL;     /* entry for length of varargs */
@@ -370,11 +369,7 @@ struct node *var;
  */
 void strt_def()
    {
-   struct sym_entry *sym;
-
    push_cntxt(1);
-   sym = sym_add(Identifier, str_rslt, RsltLoc, dcl_stk->nest_lvl);
-   sym->u.referenced = 0;
    }
 
 /*

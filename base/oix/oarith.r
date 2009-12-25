@@ -11,7 +11,7 @@ int over_flow = 0;
 
    operator icon_op func_name(x, y)
       declare {
-         tended struct descrip lx, ly;
+         tended struct descrip lx, ly, result;
 	 C_integer irslt;
          }
       arith_case (x, y) of {
@@ -198,6 +198,7 @@ operator - neg(x)
 
 	    i = neg(x);
 	    if (over_flow) {
+               tended struct descrip result;
 	       struct descrip tmp;
 	       MakeInt(x,&tmp);
 	       bigneg(&tmp, &result);
@@ -208,6 +209,7 @@ operator - neg(x)
       }
    else if cnv:(exact) integer(x) then {
       body {
+         tended struct descrip result;
          bigneg(&x, &result);
 	 return result;
          }
@@ -282,7 +284,7 @@ operator ^ powr(x, y)
    if cnv:(exact)C_integer(y) then {
       if cnv:(exact)integer(x) then {
 	 body {
-	    tended struct descrip ly;
+            tended struct descrip ly, result;
 	    MakeInt ( y, &ly );
 	    if (bigpow(&x, &ly, &result) == Error)
 	       runerr(0);
@@ -293,6 +295,7 @@ operator ^ powr(x, y)
 	 if !cnv:C_double(x) then
 	    runerr(102, x)
 	 body {
+            tended struct descrip result;
 	    if (ripow( x, y, &result) ==  Error)
 	       runerr(0);
 	    return result;
@@ -302,6 +305,7 @@ operator ^ powr(x, y)
    else if cnv:(exact)integer(y) then {
       if cnv:(exact)integer(x) then {
 	 body {
+            tended struct descrip result;
 	    if (bigpow(&x, &y, &result) == Error)
 	       runerr(0);
 	    return result;
@@ -311,6 +315,7 @@ operator ^ powr(x, y)
 	 if !cnv:C_double(x) then
 	    runerr(102, x)
 	 body {
+            tended struct descrip result;
 	    if ( bigpowri ( x, &y, &result ) == Error )
 	       runerr(0);
 	    return result;

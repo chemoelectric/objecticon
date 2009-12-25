@@ -927,13 +927,13 @@ void fail_trace(struct p_frame *pf)
  * procedure frame pf is suspending; produce a trace message.
  */
 
-void suspend_trace(struct p_frame *pf)
+void suspend_trace(struct p_frame *pf, dptr val)
 {
     showline(pf);
     showlevel(k_level);
     procname(stderr, pf->proc);
     fprintf(stderr, " suspended ");
-    outimage(stderr, &pf->value, 0);
+    outimage(stderr, val, 0);
     putc('\n', stderr);
     fflush(stderr);
 }
@@ -943,13 +943,13 @@ void suspend_trace(struct p_frame *pf)
  * procedure frame pf is returning; produce a trace message.
  */
 
-void return_trace(struct p_frame *pf)
+void return_trace(struct p_frame *pf, dptr val)
 {
     showline(pf);
     showlevel(k_level);
     procname(stderr, pf->proc);
     fprintf(stderr, " returned ");
-    outimage(stderr, &pf->value, 0);
+    outimage(stderr, val, 0);
     putc('\n', stderr);
     fflush(stderr);
 }
@@ -1067,11 +1067,15 @@ static void procname(FILE *f, struct b_proc *p)
 }
 
 void print_desc(FILE *f, dptr d) {
-    putc('{', f);
-    print_dword(f, d);
-    fputs(", ", f); 
-    print_vword(f, d);
-    putc('}', f);
+    if (d == &trashcan)
+        fprintf(f, "{trashcan}");
+    else {
+        putc('{', f);
+        print_dword(f, d);
+        fputs(", ", f); 
+        print_vword(f, d);
+        putc('}', f);
+    }
     fflush(f);
 }
 
@@ -1247,7 +1251,7 @@ void showstack(FILE *f, struct b_coexpr *c)
         fprintf(f, "Frame %p type=%c, size=%d\n", x, 
                x->type == C_FRAME_TYPE ? 'C':'P', 
                x->size);
-        fprintf(f, "\tvalue="); print_desc(f, &x->value); fprintf(f, "\n");
+        fprintf(f, "\tlhs="); print_desc(f, x->lhs); fprintf(f, "\n");
         fprintf(f, "\tfailure_label=%p\n", x->failure_label);
         tmp.dword = D_Proc;
         BlkLoc(tmp) = (union block *)x->proc;

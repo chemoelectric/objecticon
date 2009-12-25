@@ -244,6 +244,7 @@ operator ++ union(x,y)
          tended struct b_slots *seg;
          tended struct b_selem *ep;
          tended struct b_selem *np;
+         tended struct descrip result;
          union block **hook;
 
          /*

@@ -133,7 +133,6 @@ void init_lex()
       sym_add(New,           spec_str("new"),           OtherDcl, 0);
       sym_add(Of,            spec_str("of"),            OtherDcl, 0);
       sym_add(Operator,      spec_str("operator"),      OtherDcl, 0);
-      str_rslt = spec_str("result");
       sym_add(Runerr,        spec_str("runerr"),        OtherDcl, 0);
       sym_add(Struct_var,    spec_str("struct_var"),    OtherDcl, 0);
       sym_add(Suspend,       spec_str("suspend"),       OtherDcl, 0);

@@ -285,6 +285,8 @@ function ipc_Shm_get_value_impl(self)
        shm_top *tp;
        char *data;
        struct sembuf p_buf;
+       tended struct descrip result;
+
        GetSelfId();
 
        tp = (shm_top*)shmat(self_id, 0, 0);
@@ -650,6 +652,7 @@ function ipc_Msg_receive_impl(self)
    body {
        msg_top *tp;
        int size, blocks, residue, i;
+       tended struct descrip result;
        struct sembuf p_buf;
        msghead mh;
        msgblock mb;
@@ -707,6 +710,7 @@ function ipc_Msg_attempt_impl(self)
        msg_top *tp;
        int size, blocks, residue, i;
        struct sembuf p_buf;
+       tended struct descrip result;
        msghead mh;
        msgblock mb;
        char *data, *p;

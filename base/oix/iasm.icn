@@ -1,7 +1,7 @@
 import io, ipl.strings(words)
 
 procedure main(a)
-   local l, i, s, r, title, t, 
+   local l, i, s, r, title, t, export, e,
       nparam,ndynam,nclo,ntmp,nlab,nmark
    while r := read() do {
       if i := find("#", r) then
@@ -12,6 +12,7 @@ procedure main(a)
             title := tab(0)
             l := []
             t := table()
+            export := set()
             nparam := ndynam := nclo := ntmp := nlab := nmark := 0
             repeat {
                r := read() | stop("unexpected eof")
@@ -19,6 +20,10 @@ procedure main(a)
                   r := r[1:i]
                if r == "$end" then
                   break
+               r ? if ="$export " then {
+                  insert(export, tab(0))
+                  next
+               }
                every s := words(r) do {
                   if s[-1] == ":" then
                      t[s[1:-1]] := *l
@@ -54,7 +59,6 @@ procedure main(a)
             }
             # Resolve labels and output
             every i := 1 to *l do
-               #l[i] := (\t[l[i]] - i + 1) || "*WordSize"
                l[i] := "(word)&" || title || "_code[" || \t[l[i]] || "]"
             write("static word ", title, "_code[] = {")
             every write("   ", !l, ",")
@@ -69,6 +73,9 @@ procedure main(a)
                   nlab, ",", 
                   nmark, ",", 
                   "\"", title, "\")")
+            every e := !export do {
+               write("static word *", title, "_", e, " = &", title, "_code[", \t[e], "];")
+            }
          }
       }
    }

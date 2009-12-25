@@ -56,7 +56,7 @@ struct sym_entry {
    int tok_id;	       /* Ident, TokType, or identification of reserved word */
    char *image;		/* image of symbol */
    int id_type;		/* OtherDcl, TndDesc, TndStr, TndBlk, Label, RtParm,
-                           DrfPrm, RsltLoc */
+                           DrfPrm */
    union {
       struct {			/* RtParm: */
          int param_num;		/*   parameter number */
@@ -78,7 +78,6 @@ struct sym_entry {
          } declare_var;
       int typ_indx;             /* index into arrays of type information */
       word lbl_num;             /* label number used in in-line code */
-      int referenced;		/* RsltLoc: is referenced */
       } u;
    int t_indx;		/* index into tended array */
    int il_indx;		/* index used in in-line code */
@@ -129,7 +128,6 @@ extern int nxt_cbuf;               /* index of next cset buffer */
 extern struct sym_entry *params;   /* current list of parameters */
 extern struct sym_entry *decl_lst; /* declarations from "declare {...}" */
 extern struct init_tend *tend_lst; /* list of allocated tended slots */
-extern char *str_rslt;             /* string "result" in string table */
 extern word lbl_num;               /* next unused label number */
 extern struct sym_entry *v_len;    /* symbol entry for size of varargs */
 extern int il_indx;                /* next index into data base symbol table */
@@ -213,7 +211,6 @@ struct node {
 #define OtherDcl  4  /* a declaration that is not special */
 #define IsTypedef 5  /* a typedef */
 #define VArgLen   6  /* identifier for length of variable parm list */
-#define RsltLoc   7  /* the special result location of an operation */
 #define Label     8  /* label */
 
 #define RtParm   16  /* undereferenced parameter of run-time routine */

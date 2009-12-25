@@ -69,7 +69,7 @@ static char *op_names[] = {
     /*  66 */         "const",
     /*  67 */         "framevar",
     /*  68 */         "tmp",
-    /*  69 */         "closure",
+    /*  69 */         INVALID,
     /*  70 */         "move",
     /*  71 */         "movelabel",
     /*  72 */         "deref",

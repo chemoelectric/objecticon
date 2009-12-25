@@ -113,12 +113,6 @@ struct token *tok;
       n->tok = tok;
       n->u[0].sym = sym;
       ++sym->ref_cnt;
-      /*
-       * If this is the result location of an operation, note that it
-       *  is explicitly referenced.
-       */
-      if (sym->id_type == RsltLoc)
-         sym->u.referenced = 1;
       return n;
       }
    else

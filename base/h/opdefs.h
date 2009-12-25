@@ -77,7 +77,6 @@
 #define Op_Const         66
 #define Op_FrameVar      67
 #define Op_Tmp           68
-#define Op_Closure       69
 #define Op_Move          70
 #define Op_MoveLabel     71
 #define Op_Deref         72

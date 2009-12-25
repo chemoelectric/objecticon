@@ -149,14 +149,41 @@ struct inline_field_cache *get_inline_field_cache()
 }
 
 /*
- * Return a pointer to the read descriptor.
+ * Return a pointer to the read descriptor.  The pointer may be written to and read from, and
+ * will never be null.
  */
-dptr get_dptr()
+dptr get_rw_dptr()
+{
+    word op = GetWord;
+    switch (op) {
+        case Op_Static:
+        case Op_Global: {
+            return (dptr)GetAddr;
+        }
+        case Op_FrameVar: {
+            return &curr_pf->fvars->desc[GetWord];
+        }
+        case Op_Tmp: {
+            return &curr_pf->tmp[GetWord];
+        }
+
+        default: {
+            syserr("Invalid opcode in get_rw_dptr: %d (%s)\n", op, op_names[op]);
+            return 0;
+        }
+    }
+}
+
+/*
+ * Like get_rw_dptr(), but the returned pointer should only be written to (never read).  The
+ * input may be Op_Nil, in which case the write-only trashcan is returned.
+ */
+dptr get_wo_dptr()
 {
     word op = GetWord;
     switch (op) {
         case Op_Nil: {
-            return 0;
+            return &trashcan;
         }
         case Op_Static:
         case Op_Global: {
@@ -168,12 +195,9 @@ dptr get_dptr()
         case Op_Tmp: {
             return &curr_pf->tmp[GetWord];
         }
-        case Op_Closure: {
-            return &curr_pf->clo[GetWord]->value;
-        }
 
         default: {
-            syserr("Invalid opcode in get_dptr: %d (%s)\n", op, op_names[op]);
+            syserr("Invalid opcode in get_wo_dptr: %d (%s)\n", op, op_names[op]);
             return 0;
         }
     }
@@ -207,10 +231,6 @@ void get_descrip(dptr dest)
         }
         case Op_Tmp: {
             *dest = curr_pf->tmp[GetWord];
-            break;
-        }
-        case Op_Closure: {
-            *dest = curr_pf->clo[GetWord]->value;
             break;
         }
 
@@ -248,10 +268,6 @@ void get_deref(dptr dest)
         }
         case Op_Tmp: {
             deref(&curr_pf->tmp[GetWord], dest);
-            break;
-        }
-        case Op_Closure: {
-            deref(&curr_pf->clo[GetWord]->value, dest);
             break;
         }
 
@@ -294,10 +310,6 @@ void get_variable(dptr dest)
             *dest = curr_pf->tmp[GetWord];
             break;
         }
-        case Op_Closure: {
-            *dest = curr_pf->clo[GetWord]->value;
-            break;
-        }
 
         default: {
             syserr("Invalid opcode in get_variable: %d (%s)\n", op, op_names[op]);
@@ -325,7 +337,7 @@ void get_variable(dptr dest)
     p->size = size;
     p->creator = 0;
     p->type = C_FRAME_TYPE;
-    p->value = nulldesc;
+    p->lhs = &trashcan;
     p->proc = pb;
     p->parent_sp = 0;
     p->failure_label = 0;
@@ -358,13 +370,12 @@ void get_variable(dptr dest)
 
 static void do_op(int nargs)
 {
-    dptr lhs;
     struct c_frame *cf;
     struct b_proc *bp = opblks[curr_op];
     int i;
-    lhs = get_dptr();
     quick_alc_c_frame(cf, bp, nargs);
     push_frame((struct frame *)cf);
+    cf->lhs = get_wo_dptr();
     if (bp->underef) {
         for (i = 0; i < nargs; ++i)
             get_variable(&cf->args[i]);
@@ -376,10 +387,7 @@ static void do_op(int nargs)
     cf->failure_label = GetAddr;
     Desc_EVValD(bp, E_Pcall, D_Proc);
     curr_cf = cf;
-    if (bp->ccode(cf)) {
-        if (lhs)
-            *lhs = cf->value;
-    } else
+    if (!bp->ccode(cf))
         ipc = cf->failure_label;
     curr_cf = 0;
     /* Pop the C frame */
@@ -396,6 +404,7 @@ static void do_opclo(int nargs)
     clo = GetWord;
     MemProtect(cf = alc_c_frame(bp, nargs));
     push_frame((struct frame *)cf);
+    cf->lhs = get_wo_dptr();
     if (bp->underef) {
         for (i = 0; i < nargs; ++i)
             get_variable(&cf->args[i]);
@@ -411,19 +420,15 @@ static void do_opclo(int nargs)
 
 static void do_keyop()
 {
-    dptr lhs;
     struct c_frame *cf;
     struct b_proc *bp = keyblks[GetWord];
-    lhs = get_dptr();
     quick_alc_c_frame(cf, bp, 0);
     push_frame((struct frame *)cf);
+    cf->lhs = get_wo_dptr();
     cf->failure_label = GetAddr;
     Desc_EVValD(bp, E_Pcall, D_Proc);
     curr_cf = cf;
-    if (bp->ccode(cf)) {
-        if (lhs)
-            *lhs = cf->value;
-    } else
+    if (!bp->ccode(cf))
         ipc = cf->failure_label;
     curr_cf = 0;
     /* Pop the C frame */
@@ -440,6 +445,7 @@ static void do_keyclo()
     clo = GetWord;
     MemProtect(cf = alc_c_frame(bp, 0));
     push_frame((struct frame *)cf);
+    cf->lhs = get_wo_dptr();
     cf->failure_label = GetAddr;
     curr_pf->clo[clo] = (struct frame *)cf;
     tail_invoke_frame((struct frame *)cf);
@@ -447,7 +453,7 @@ static void do_keyclo()
 
 static void do_makelist()
 {
-    dptr dest = get_dptr();
+    dptr dest = get_rw_dptr();
     word argc = GetWord;
     int i;
     create_list(argc, dest);
@@ -464,12 +470,12 @@ static void do_create()
     dptr lhs;
     word *start_label;
     tended struct b_coexpr *coex;
-    lhs = get_dptr();
+    lhs = get_rw_dptr();
     start_label = GetAddr;
     MemProtect(coex = alccoexp());
     MemProtect(coex->base_pf = alc_p_frame(curr_pf->proc, curr_pf->fvars));
     coex->main_of = 0;
-    coex->tvalloc = 0;
+    coex->tvalloc = &trashcan;
     coex->size = 0;
     coex->level = 1;
     coex->failure_label = coex->start_label = coex->base_pf->ipc = start_label;
@@ -487,7 +493,7 @@ static void do_coact()
     word *failure_label;
     struct p_frame *pf;
 
-    lhs = get_dptr();
+    lhs = get_wo_dptr();
 
     get_variable(&arg1);   /* Value */
     get_deref(&arg2);     /* Coexp */
@@ -524,8 +530,7 @@ static void do_coact()
     /* Set the target's activator, switch to the target and set its transmitted value */
     CoexprBlk(arg2).activator = k_current;
     switch_to(&CoexprBlk(arg2));
-    if (k_current->tvalloc)
-        *k_current->tvalloc = arg1;
+    *k_current->tvalloc = arg1;
 }
 
 static void do_coret()
@@ -547,15 +552,14 @@ static void do_coret()
     k_current->failure_label = ipc;
 
     /* Any transmitted value is discarded */
-    k_current->tvalloc = 0;
+    k_current->tvalloc = &trashcan;
 
     /* Increment the results counter */
     ++k_current->size;
 
     /* Switch to the target and set the transmitted value */
     switch_to(k_current->activator);
-    if (k_current->tvalloc)
-        *k_current->tvalloc = val;
+    *k_current->tvalloc = val;
 }
 
 static void do_cofail()
@@ -571,7 +575,7 @@ static void do_cofail()
     k_current->failure_label = ipc;
 
     /* Any transmitted value is discarded */
-    k_current->tvalloc = 0;
+    k_current->tvalloc = &trashcan;
 
     /* Switch to the target and jump to its failure label */
     switch_to(k_current->activator);
@@ -585,7 +589,7 @@ static void coact_ex()
     word *failure_label;
     struct p_frame *upf;
 
-    lhs = get_dptr();
+    lhs = get_wo_dptr();
     get_descrip(&arg1);   /* Value - may already be a variable in a framevar, so use
                            * get_descrip() instead of get_variable(). */
     get_deref(&arg2);     /* Coexp */
@@ -623,8 +627,7 @@ static void coact_ex()
         CoexprBlk(arg2).activator = &CoexprBlk(arg3);
     switch_to(&CoexprBlk(arg2));
     if (is:null(arg4)) {
-        if (k_current->tvalloc)
-            *k_current->tvalloc = arg1;
+        *k_current->tvalloc = arg1;
     } else {
         ipc = k_current->failure_label;
     }
@@ -732,7 +735,7 @@ static void do_limit()
     word *failure_label;
     word tmp;
 
-    limit = get_dptr();
+    limit = get_rw_dptr();
     Deref(*limit);
     failure_label = GetAddr;
     if (!cnv:C_integer(*limit, tmp)) {
@@ -782,7 +785,7 @@ void interp()
         }
         curr_pf->curr_inst = ipc;
         curr_op = GetWord;
-
+        /*printf("ipc=%p(%d) curr_op=%d (%s)\n", ipc,get_offset(ipc),(int)curr_op, op_names[curr_op]);fflush(stdout);*/
         switch (curr_op) {
             case Op_Goto: {
                 word *w = GetAddr;
@@ -802,11 +805,11 @@ void interp()
                 break;
             }
             case Op_Move: {
-                get_descrip(get_dptr());
+                get_descrip(get_rw_dptr());
                 break;
             }
             case Op_MoveVar: {
-                get_variable(get_dptr());
+                get_variable(get_rw_dptr());
                 break;
             }
             case Op_MoveLabel: {
@@ -901,7 +904,6 @@ void interp()
                 struct frame *f;
                 clo = GetWord;
                 f = curr_pf->clo[clo];
-                f->failure_label = GetAddr;
                 if (f->exhausted) {
                     /* Just go to failure label and dispose of the frame */
                     ipc = f->failure_label;
@@ -932,7 +934,7 @@ void interp()
             case Op_CReturn: {
                 struct p_frame *t = curr_pf;
                 /* Set the value in the C frame */
-                get_descrip(&t->parent_sp->value);
+                get_descrip(t->parent_sp->lhs);
                 set_curr_pf(curr_pf->caller);
                 /* Pop off this frame, leaving the C frame */
                 pop_to(t->parent_sp);
@@ -946,7 +948,7 @@ void interp()
             case Op_CSuspend: {
                 struct p_frame *t = curr_pf;
                 /* Set the value in the C frame */
-                get_descrip(&t->parent_sp->value);
+                get_descrip(t->parent_sp->lhs);
                 set_curr_pf(curr_pf->caller);
                 break;
             }
@@ -981,14 +983,16 @@ void interp()
             }
 
             case Op_Suspend: {
+                tended struct descrip tmp;
                 Desc_EVValD(curr_pf->proc, E_Psusp, D_Proc);
-                get_descrip(&curr_pf->value);
-                retderef(&curr_pf->value, curr_pf->fvars);
+                get_descrip(&tmp);
+                retderef(&tmp, curr_pf->fvars);
+                *curr_pf->lhs = tmp;
                 if (curr_pf->proc->program) {
                     --k_level;
                     if (k_trace) {
                         k_trace--;
-                        suspend_trace(curr_pf);
+                        suspend_trace(curr_pf, &tmp);
                     }
                 }
                 set_curr_pf(curr_pf->caller);
@@ -996,15 +1000,17 @@ void interp()
             }
 
             case Op_Return: {
+                tended struct descrip tmp;
                 Desc_EVValD(curr_pf->proc, E_Pret, D_Proc);
-                get_descrip(&curr_pf->value);
-                retderef(&curr_pf->value, curr_pf->fvars);
+                get_descrip(&tmp);
+                retderef(&tmp, curr_pf->fvars);
+                *curr_pf->lhs = tmp;
                 curr_pf->exhausted = 1;
                 if (curr_pf->proc->program) {
                     --k_level;
                     if (k_trace) {
                         k_trace--;
-                        return_trace(curr_pf);
+                        return_trace(curr_pf, &tmp);
                     }
                 }
                 set_curr_pf(curr_pf->caller);
@@ -1135,7 +1141,7 @@ void interp()
 
 static void activate_child_prog()
 {
-    dptr ce = get_dptr();
+    dptr ce = get_rw_dptr();
     struct progstate *prog = CoexprBlk(*ce).main_of;
     prog->monitor = curpstate;
     set_curpstate(prog);
@@ -1159,8 +1165,8 @@ static void pop_from_prog_event_queue(struct progstate *prog, dptr res)
 static void get_child_prog_result()
 {
     struct progstate *prog;
-    dptr ce = get_dptr();
-    dptr res = get_dptr();
+    dptr ce = get_rw_dptr();
+    dptr res = get_rw_dptr();
     word *failure_label = GetAddr;
 
     prog = CoexprBlk(*ce).main_of;

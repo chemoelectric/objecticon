@@ -4,12 +4,10 @@ class MonitorCodeSet()
    public static const
       AllocMask,
       AssignMask,
-      TypeMask,
       ConvMask,
       CallMask,
       ListMask,
       RecordMask,
-      ScanMask,
       SetMask,
       TableMask,
       OOMask,
@@ -29,8 +27,6 @@ class MonitorCodeSet()
 
       AssignMask := cset(MonitorCode.Assign || MonitorCode.Value)
 
-      TypeMask := AllocMask ++ (MonitorCode.Integer || MonitorCode.Null || MonitorCode.Proc)
-
       ConvMask := cset(MonitorCode.Aconv || MonitorCode.Tconv || MonitorCode.Sconv || 
                        MonitorCode.Nconv || MonitorCode.Fconv)
 
@@ -43,9 +39,6 @@ class MonitorCodeSet()
 
       RecordMask := cset(MonitorCode.Rbang || MonitorCode.Rcreate || MonitorCode.Rrand ||
                          MonitorCode.Rref || MonitorCode.Rsub)
-
-      ScanMask := cset(MonitorCode.Snew || MonitorCode.Sfail || MonitorCode.Spos || 
-                       MonitorCode.Ssusp || MonitorCode.Sresum || MonitorCode.Srem)
 
       SetMask := cset(MonitorCode.Sbang || MonitorCode.Screate || MonitorCode.Sdelete ||
                       MonitorCode.Sinsert || MonitorCode.Smember || MonitorCode.Sval)

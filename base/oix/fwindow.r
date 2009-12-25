@@ -127,6 +127,7 @@ end
 
 function graphics_Window_bg(self, colr)
    body {
+      tended struct descrip result;
       tended char *tmp;
       GetSelfW();
 
@@ -223,6 +224,7 @@ function graphics_Window_color(self, argv[argc])
       if (argc == 0) runerr(101);
 
       if (argc == 1) {			/* if this is a query */
+          tended struct descrip result;
           CnvCInteger(argv[0], n)
           if ((colorname = get_mutable_name(self_w, n)) == NULL)
               fail;
@@ -282,6 +284,7 @@ function graphics_Window_color_value(self, k)
           runerr(103, k);
 
       if (parsecolor(self_w, s, &r, &g, &b, &a) == Succeeded) {
+          tended struct descrip result;
           if (a < 65535)
               sprintf(tmp,"%ld,%ld,%ld,%ld", r, g, b, a);
           else
@@ -904,6 +907,7 @@ end
 
 function graphics_Window_fg(self, colr)
    body {
+      tended struct descrip result;
       tended char *tmp;
       GetSelfW();
 
@@ -1082,6 +1086,7 @@ end
 
 function graphics_Window_font(self, f)
    body {
+      tended struct descrip result;
       tended char *tmp;
       GetSelfW();
 
@@ -1177,7 +1182,7 @@ function graphics_Window_palette_color(s1, s2)
       int p;
       char tmp[32];
       struct palentry *e;
-      tended struct descrip d;
+      tended struct descrip d, result;
 
       p = palnum(&s1);
       if (p == -1)
@@ -1252,7 +1257,7 @@ function graphics_Window_pixel(self, argv[argc])
       struct imgmem imem;
       C_integer x, y, width, height;
       int slen, r;
-      tended struct descrip lastval;
+      tended struct descrip lastval, result;
       char strout[50];
       int i, j;
       word rv;
@@ -1304,6 +1309,7 @@ end
 function graphics_Window_query_root_pointer()
    body {
       XPoint xp;
+      tended struct descrip result;
       struct descrip t;
       pollevent();
       query_rootpointer(&xp);
@@ -1566,6 +1572,7 @@ function graphics_Window_wdefault(self, prog, opt)
    if !cnv:C_string(opt) then
        runerr(103, opt)
    body {
+      tended struct descrip result; 
       GetSelfW();
 
       if (getdefault(self_w, prog, opt, attr_buff) == Failed) 
@@ -1734,6 +1741,7 @@ function graphics_Window_generic_color_value(k)
           runerr(103, k);
 
       if (parsecolor(0, s, &r, &g, &b, &a) == Succeeded) {
+          tended struct descrip result;
           if (a < 65535)
               sprintf(tmp,"%ld,%ld,%ld,%ld", r, g, b, a);
           else

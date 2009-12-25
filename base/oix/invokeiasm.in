@@ -37,9 +37,10 @@ $end
 $start construct_object
     Op_Custom c:ensure_class_initialized
        Op_FrameVar arg:0
+    # Resume closure 0, which has been setup to call the new method and
+    # goto NewFail on failure (see construct_object() in invoke.r)
     Op_Resume
        clo:0
-       NewFail
     Op_Unmark
        mark:0
     Op_Custom c:set_object_state
@@ -54,6 +55,7 @@ NewFail:
        Op_FrameVar arg:1
        Op_Int Initialized
     Op_Fail
+$export NewFail
 $end
 
 #
@@ -67,13 +69,11 @@ $start construct_object0
        Op_Int Initialized
     Op_Return
        Op_FrameVar arg:1
-    Op_Fail
 $end
 
 $start generate_arg
     Op_Return
        Op_FrameVar arg:0
-    Op_Fail
 $end
 
 #

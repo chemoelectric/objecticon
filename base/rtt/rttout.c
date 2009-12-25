@@ -410,12 +410,6 @@ int indent;
          chk_nl(indent);
          fprintf(out_file, "(%s - %d)", n_args, params->u.param_info.param_num);
          break;
-      case RsltLoc:
-         /*
-          * "result" the result location of the operation.
-          */
-         prt_str(rslt_loc, indent);
-         break;
       case Label:
          /*
           * Statement label.
@@ -886,15 +880,6 @@ int indent;
 
    if (n == NULL)
       errt1(t, "there is no default return value for run-time operations");
-
-   if (n->nd_id == SymNd && n->u[0].sym->id_type == RsltLoc) {
-      /*
-       * return/suspend result;
-       *
-       *   result already where it needs to be.
-       */
-      return;
-      }
 
    if (n->nd_id == PrefxNd && n->tok != NULL) {
       switch (n->tok->tok_id) {
@@ -2698,7 +2683,6 @@ int brace;
                      case OtherDcl:
                      case TndDesc:
                      case TndStr:
-                     case RsltLoc:
                         if (sym->nest_lvl > 1) {
                            /*
                             * The thing being tested is either a
@@ -3278,7 +3262,7 @@ struct node *n;
    /*
     * Note how result location is accessed in generated code.
     */
-   rslt_loc = "frame->value";
+   rslt_loc = "(*frame->lhs)";
    tend_struct_loc = "???";
    tend_loc = "frame->tend";
    args_loc = "frame->args";

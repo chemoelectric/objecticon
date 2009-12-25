@@ -55,7 +55,6 @@ static word construct_object_code[] = {
    0,
    Op_Resume,
    0,
-   (word)&construct_object_code[18],
    Op_Unmark,
    0,
    Op_Custom,
@@ -76,6 +75,7 @@ static word construct_object_code[] = {
    Op_Fail,
 };
 CustomProc(construct_object,construct_object_code,2,0,1,0,0,1,"construct_object")
+static word *construct_object_NewFail = &construct_object_code[17];
 static word construct_object0_code[] = {
    Op_Custom,
    (word)ensure_class_initialized,
@@ -90,14 +90,12 @@ static word construct_object0_code[] = {
    Op_Return,
    Op_FrameVar,
    1,
-   Op_Fail,
 };
 CustomProc(construct_object0,construct_object0_code,2,0,0,0,0,0,"construct_object0")
 static word generate_arg_code[] = {
    Op_Return,
    Op_FrameVar,
    0,
-   Op_Fail,
 };
 CustomProc(generate_arg,generate_arg_code,1,0,0,0,0,0,"generate_arg")
 static word initialize_class_and_repeat_code[] = {

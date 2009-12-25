@@ -66,6 +66,7 @@ operator || cater(x, y)
          }
          return ucs(make_ucs_block(&utf8, UcsBlk(x).length + UcsBlk(y).length));
      } else {
+         tended struct descrip result;
          /* Neither ucs, so both args must be strings */
 
          /*

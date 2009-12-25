@@ -74,6 +74,7 @@ function posix_System_environ()
   body {
     char **p = environ;
     while (*p) {
+        tended struct descrip result;
         cstr2string(*p, &result);
         suspend result;
         ++p;
@@ -187,6 +188,7 @@ function posix_System_wait(pid, options)
    if !def:C_integer(options, 0) then 
       runerr(103, options)
    body {
+      tended struct descrip result;
       char retval[64];
       int status = 0, wpid;
 #if !MSWIN32
@@ -266,7 +268,7 @@ function util_Time_get_system_millis()
    body {
       struct timeval tp;
       struct descrip ls, lm;
-      tended struct descrip lt1, lt2;
+      tended struct descrip lt1, lt2, result;
       if (gettimeofday(&tp, 0) < 0) {
 	 errno2why();
 	 fail;
@@ -285,7 +287,7 @@ function util_Time_get_system_micros()
    body {
       struct timeval tp;
       struct descrip ls, lm;
-      tended struct descrip lt1;
+      tended struct descrip lt1, result;
       if (gettimeofday(&tp, 0) < 0) {
 	 errno2why();
 	 fail;
@@ -341,6 +343,7 @@ function posix_System_getenv(s)
    body {
       char *p;
       if ((p = getenv(s)) != NULL) {	/* get environment variable */
+          tended struct descrip result;
           cstr2string(p, &result);
           return result;
       }
@@ -353,7 +356,7 @@ end
 function posix_System_uname_impl()
     body {
 #ifdef HAVE_UNAME
-       tended struct descrip tmp;
+       tended struct descrip tmp, result;
        struct utsname utsn;
        if (uname(&utsn) < 0) {
            errno2why();

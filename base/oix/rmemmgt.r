@@ -653,7 +653,6 @@ static void sweep_stack(struct frame *f)
     int i;
     while (f) {
         /*printf("sweep stack frame %p\n",f);*/
-        PostDescrip(f->value);
         switch (f->type) {
             case C_FRAME_TYPE: {
                 struct c_frame *cf = (struct c_frame *)f;
