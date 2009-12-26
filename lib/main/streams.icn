@@ -681,7 +681,7 @@ procedure open(name, mode)
       "crw"|"w+" : ior(FileOpt.RDWR, FileOpt.TRUNC, FileOpt.CREAT)
       "a" : ior(FileOpt.WRONLY, FileOpt.APPEND, FileOpt.CREAT)
       "a+" : ior(FileOpt.RDWR, FileOpt.APPEND, FileOpt.CREAT)
-      default: return error("Invalid mode flag: " || mode)
+      default: runerr("Invalid mode flag: " || mode)
    }
    return BufferStream(FileStream.open(name, i))
 end
