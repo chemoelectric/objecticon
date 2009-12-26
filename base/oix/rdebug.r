@@ -1067,8 +1067,8 @@ static void procname(FILE *f, struct b_proc *p)
 }
 
 void print_desc(FILE *f, dptr d) {
-    if (d == &trashcan)
-        fprintf(f, "{trashcan}");
+    if (!d)
+        fprintf(f, "{nil}");
     else {
         putc('{', f);
         print_dword(f, d);

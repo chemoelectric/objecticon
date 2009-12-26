@@ -4,7 +4,7 @@
 include ../../Makedefs
 
 ROBJS = rttparse.o rttmain.o rttlex.o rttsym.o rttnode.o rttout.o rttmisc.o\
-	icontype.o rttdb.o rttilc.o yyerror.o \
+	icontype.o rttdb.o yyerror.o \
 	pout.o pchars.o  perr.o pmem.o  bldtok.o macro.o \
 	preproc.o evaluate.o files.o gettok.o pinit.o
 

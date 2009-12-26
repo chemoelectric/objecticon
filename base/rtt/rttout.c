@@ -38,6 +38,8 @@ static void prt_tok       (struct token *t, int indent);
 static void prt_var       (struct node *n, int indent);
 static int     real_def      (struct node *n);
 static int     retval_dcltor (struct node *dcltor, int indent);
+static void ret_value1     (struct token *t, struct node *n,
+                               int indent);
 static void ret_value     (struct token *t, struct node *n,
                                int indent);
 static void ret_1_arg     (struct token *t, struct node *args,
@@ -57,6 +59,7 @@ static int     typ_case      (struct node *var, struct node *slct_lst,
                                struct node *dflt,
                                int (*walk)(struct node *n, int xindent,
                                  int brace), int maybe_var, int indent);
+static void just_type(struct node *typ, int indent, int ilc);
 static void untend        (int indent);
 static int use_frame = 0;
 static int in_struct = 0;
@@ -83,7 +86,6 @@ static int no_nl = 0;   /* flag to suppress line directives */
 static int ntend;       /* number of tended descriptor needed */
 static char *tend_struct_loc; /* expression to access struct of tended descriptors */
 static char *tend_loc; /* expression to access array tended descriptors */
-static char *rslt_loc;  /* expression to access result location */
 static char *args_loc;  /* expression to access args array */
 static char *n_args;    /* expression for num args */
 static int args_off;  /* index in args_loc of first arg (0 or 1) */
@@ -869,17 +871,22 @@ int *dflt_to_ptr;
  * ret_value - produce code to set the result location of an operation
  *  using the expression on a return or suspend.
  */
-static void ret_value(t, n, indent)
-struct token *t;
-struct node *n;
-int indent;
+static void ret_value(struct token *t, struct node *n, int indent)
+{
+   if (n == NULL)
+      errt1(t, "there is no default return value for run-time operations");
+    prt_str("struct descrip result;", indent);
+    ForceNl();
+    ret_value1(t, n, indent);
+    ForceNl();
+    prt_str("if (frame->lhs) *frame->lhs = result;", indent);
+}
+
+static void ret_value1(struct token *t, struct node *n, int indent)
    {
    struct node *caller;
    struct node *args;
    int typcd;
-
-   if (n == NULL)
-      errt1(t, "there is no default return value for run-time operations");
 
    if (n->nd_id == PrefxNd && n->tok != NULL) {
       switch (n->tok->tok_id) {
@@ -887,46 +894,35 @@ int indent;
             /*
              * return/suspend C_integer <expr>;
              */
-            prt_str(rslt_loc, indent);
-            prt_str(".vword.integer = ", indent);
+            prt_str("result.vword.integer = ", indent);
             c_walk(n->u[0].child, indent + IndentInc, 0);
             prt_str(";", indent);
             ForceNl();
-            prt_str(rslt_loc, indent);
-            prt_str(".dword = D_Integer;", indent);
-            chkabsret(t, int_typ);  /* compare return with abstract return */
+            prt_str("result.dword = D_Integer;", indent);
             return;
          case C_Double:
             /*
              * return/suspend C_double <expr>;
              */
-            prt_str(rslt_loc, indent);
-            prt_str(".vword.bptr = (union block *)alcreal(", indent);
+            prt_str("result.vword.bptr = (union block *)alcreal(", indent);
             c_walk(n->u[0].child, indent + IndentInc, 0);
             prt_str(");", indent + IndentInc);
             ForceNl();
-            prt_str(rslt_loc, indent);
-            prt_str(".dword = D_Real;", indent);
+            prt_str("result.dword = D_Real;", indent);
             /*
              * The allocation of the real block may fail.
              */
             chk_rsltblk(indent);
-            chkabsret(t, real_typ); /* compare return with abstract return */
             return;
          case C_String:
             /*
              * return/suspend C_string <expr>;
              */
-            prt_str(rslt_loc, indent);
-            prt_str(".vword.sptr = ", indent);
+            prt_str("result.vword.sptr = ", indent);
             c_walk(n->u[0].child, indent + IndentInc, 0);
             prt_str(";", indent);
             ForceNl();
-            prt_str(rslt_loc, indent);
-            prt_str(".dword = strlen(", indent);
-            prt_str(rslt_loc, indent);
-            prt_str(".vword.sptr);", indent);
-            chkabsret(t, str_typ); /* compare return with abstract return */
+            prt_str("result.dword = strlen(result.vword.sptr);", indent);
             return;
          }
       }
@@ -978,13 +974,11 @@ int indent;
                         if (args == NULL || args->nd_id != CommaNd ||
                            args->u[0].child->nd_id == CommaNd)
                            errt1(t, "wrong no. of args for string(n, s)");
-                        prt_str(rslt_loc, indent);
-                        prt_str(".vword.sptr = ", indent);
+                        prt_str("result.vword.sptr = ", indent);
                         c_walk(args->u[1].child, indent + IndentInc, 0);
                         prt_str(";", indent);
                         ForceNl();
-                        prt_str(rslt_loc, indent);
-                        prt_str(".dword = ", indent);
+                        prt_str("result.dword = ", indent);
                         c_walk(args->u[0].child, indent + IndentInc, 0);
                         prt_str(";", indent);
                         }
@@ -997,9 +991,7 @@ int indent;
                            args->u[0].child->u[0].child->nd_id == CommaNd)
                            errt1(t, "wrong no. of args for tvsubs(dp, i, j)");
                         no_nl = 1;
-                        prt_str("SubStr(&", indent);
-                        prt_str(rslt_loc, indent);
-                        prt_str(", ", indent);
+                        prt_str("SubStr(&result, ", indent);
                         c_walk(args->u[0].child->u[0].child, indent + IndentInc,
                            0);
                         prt_str(", ", indent + IndentInc);
@@ -1014,11 +1006,9 @@ int indent;
                          *   block may fail.
                          */
                         chk_rsltblk(indent);
-                        chkabsret(t, stv_typ); /* compare to abstract return */
                         }
                      break;
                   }
-               chkabsret(t, typcd); /* compare return with abstract return */
                return;
             case Named_var:
                /*
@@ -1026,14 +1016,11 @@ int indent;
                 */
                if (args == NULL || args->nd_id == CommaNd)
                   errt1(t, "wrong no. of args for named_var(dp)");
-               prt_str(rslt_loc, indent);
-               prt_str(".vword.descptr = ", indent);
+               prt_str("result.vword.descptr = ", indent);
                c_walk(args, indent + IndentInc, 0);
                prt_str(";", indent);
                ForceNl();
-               prt_str(rslt_loc, indent);
-               prt_str(".dword = D_NamedVar;", indent);
-               chkabsret(t, TypVar); /* compare return with abstract return */
+               prt_str("result.dword = D_NamedVar;", indent);
                return;
             case Struct_var:
                /*
@@ -1042,19 +1029,15 @@ int indent;
                if (args == NULL || args->nd_id != CommaNd ||
                   args->u[0].child->nd_id == CommaNd)
                   errt1(t, "wrong no. of args for struct_var(dp, bp)");
-               prt_str(rslt_loc, indent);
-               prt_str(".vword.descptr = (dptr)", indent);
+               prt_str("result.vword.descptr = (dptr)", indent);
                c_walk(args->u[1].child, indent + IndentInc, 0);
                prt_str(";", indent);
                ForceNl();
-               prt_str(rslt_loc, indent);
-               prt_str(".dword = D_StructVar + ((word *)", indent);
+               prt_str("result.dword = D_StructVar + ((word *)", indent);
                c_walk(args->u[0].child, indent + IndentInc, 0);
                prt_str(" - (word *)", indent+IndentInc);
-               prt_str(rslt_loc, indent);
-               prt_str(".vword.descptr);", indent+IndentInc);
+               prt_str("result.vword.descptr);", indent+IndentInc);
                ForceNl();
-               chkabsret(t, TypVar); /* compare return with abstract return */
                return;
             }
          }
@@ -1064,11 +1047,9 @@ int indent;
     * If it is not one of the special returns, it is just a return of
     *  a descriptor.
     */
-   prt_str(rslt_loc, indent);
-   prt_str(" = ", indent);
+   prt_str("result = ", indent);
    c_walk(n, indent + IndentInc, 0);
    prt_str(";", indent);
-   chkabsret(t, SomeType); /* check for preceding abstract return */
    }
 
 /*
@@ -1088,7 +1069,7 @@ int indent;
    /*
     * Assignment to vword of result descriptor.
     */
-   prt_str(rslt_loc, indent);
+   prt_str("result", indent);
    prt_str(vwrd_asgn, indent);
    c_walk(args, indent + IndentInc, 0);
    prt_str(";", indent);
@@ -1097,8 +1078,7 @@ int indent;
    /*
     * Assignment to dword of result descriptor.
     */
-   prt_str(rslt_loc, indent);
-   prt_str(".dword = D_", indent);
+   prt_str("result.dword = D_", indent);
    prt_str(icontypes[typcd].cap_id, indent);
    prt_str(";", indent);
    }
@@ -1111,9 +1091,7 @@ static void chk_rsltblk(indent)
 int indent;
    {
    ForceNl();
-   prt_str("if (", indent);
-   prt_str(rslt_loc, indent);
-   prt_str(".vword.bptr == NULL) {", indent);
+   prt_str("if (!result.vword.bptr) {", indent);
    ForceNl();
    prt_str("fatalerr(309, NULL);", indent + IndentInc);
    ForceNl();
@@ -1283,7 +1261,6 @@ int brace;
                if (op_type == OrdFunc)
                   errt1(t, "'fail' may not be used in an ordinary C function");
                failure(indent, brace);
-	       chkabsret(t, SomeType);  /* check preceding abstract return */
 	       return 0;
 	    case Errorfail:
 	       if (op_type == OrdFunc)
@@ -1435,14 +1412,6 @@ int brace;
 		     prt_str(";", indent);
 		     }
 
-                  /*
-                   * If this is a body function, check the return against
-                   *  preceding abstract returns.
-                   */
-		  if (fnc_ret == RetInt)
-		     chkabsret(n->tok, int_typ);
-                  else if (fnc_ret == RetDbl)
-                     chkabsret(n->tok, real_typ);
                   }
                else {
                   /*
@@ -3262,7 +3231,6 @@ struct node *n;
    /*
     * Note how result location is accessed in generated code.
     */
-   rslt_loc = "(*frame->lhs)";
    tend_struct_loc = "???";
    tend_loc = "frame->tend";
    args_loc = "frame->args";
@@ -3517,3 +3485,35 @@ void prologue()
     id_comment(out_file);
     fprintf(out_file, "#include \"%s\"\n\n", inclname);
 }
+
+/*
+ * just_type - strip non-type information from a type-qualifier list. Print
+ *   it in the output file and if ilc is set, produce in-line C code.
+ */
+static void just_type(struct node *typ, int indent, int ilc)
+   {
+   if (typ->nd_id == LstNd) {
+      /*
+       * Simple list of type-qualifier elements - concatenate them.
+       */
+      just_type(typ->u[0].child, indent, ilc); 
+      just_type(typ->u[1].child, indent, ilc);
+      }
+   else if (typ->nd_id == PrimryNd) {
+      switch (typ->tok->tok_id) {
+         case Typedef:
+         case Extern:
+         case Static:
+         case Auto:
+         case TokRegister:
+         case Const:
+         case Volatile:
+            return;         /* Don't output these declaration elements */
+         default:
+            c_walk(typ, indent, 0);
+         }
+      }
+   else {
+      c_walk(typ, indent, 0);
+      }
+   }

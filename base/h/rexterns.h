@@ -34,7 +34,6 @@ extern struct b_cset *rparcs;    /* ')' */
 
 extern struct descrip blank;	/* blank */
 extern struct descrip emptystr;	/* empty string */
-extern struct descrip trashcan; /* for any unwanted value */
 
 extern struct descrip nullptr;	/* descriptor with null block pointer */
 extern struct descrip lcase;	/* lowercase string */

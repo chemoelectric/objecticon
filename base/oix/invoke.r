@@ -111,7 +111,7 @@ static struct frame *push_frame_for_proc(struct b_proc *bp, int argc, dptr args,
                     if (i < bp->nparam)
                         get_deref(&pf->fvars->desc[i++]);
                     else
-                        get_deref(&trashcan);
+                        skip_descrip();
                 }
             }
             /* Remaining args (i ... bp->nparam-1) are already set to nulldesc */
@@ -182,7 +182,7 @@ void do_applyf()
     dptr lhs;
 
     clo = GetWord;
-    lhs = get_wo_dptr();
+    lhs = get_dptr();
     get_deref(&expr);
     fno = GetWord;
     ic = get_inline_field_cache();
@@ -222,7 +222,7 @@ void do_invokef()
     dptr lhs;
 
     clo = GetWord;
-    lhs = get_wo_dptr();
+    lhs = get_dptr();
     get_deref(&expr);
     fno = GetWord;
     ic = get_inline_field_cache();
@@ -242,7 +242,7 @@ void do_invoke()
     dptr lhs;
 
     clo = GetWord;
-    lhs = get_wo_dptr();
+    lhs = get_dptr();
     get_deref(&expr);
     argc = GetWord;
     rval = GetWord;
@@ -259,7 +259,7 @@ void do_apply()
     dptr lhs;
 
     clo = GetWord;
-    lhs = get_wo_dptr();
+    lhs = get_dptr();
     get_deref(&expr);
     get_deref(&args);
     rval = GetWord;
@@ -290,13 +290,13 @@ static void skip_args(int argc, dptr args)
     int i; 
     if (!args) {
         for (i = 0; i < argc; ++i)
-            get_deref(&trashcan);
+            skip_descrip();
     }
 }
 
 static void check_if_uninitialized()
 {
-    dptr class0 = get_rw_dptr();  /* Class */
+    dptr class0 = get_dptr();  /* Class */
     word *a = GetAddr;
     if (ClassBlk(*class0).init_state != Uninitialized)
         ipc = a;
@@ -304,7 +304,7 @@ static void check_if_uninitialized()
 
 static void set_class_state()
 {
-    dptr class0 = get_rw_dptr();  /* Class */
+    dptr class0 = get_dptr();  /* Class */
     struct descrip val;
     get_deref(&val);      /* Value */
     ClassBlk(*class0).init_state = IntVal(val);
@@ -312,7 +312,7 @@ static void set_class_state()
 
 static void set_object_state()
 {
-    dptr obj = get_rw_dptr();  /* Object */
+    dptr obj = get_dptr();  /* Object */
     struct descrip val;
     get_deref(&val);      /* Value */
     ObjectBlk(*obj).init_state = IntVal(val);
@@ -320,9 +320,9 @@ static void set_object_state()
 
 static void for_class_supers()
 {
-    dptr class0 = get_rw_dptr();  /* Class */
-    dptr i = get_rw_dptr();       /* Index */
-    dptr res = get_rw_dptr();     /* Result */
+    dptr class0 = get_dptr();  /* Class */
+    dptr i = get_dptr();       /* Index */
+    dptr res = get_dptr();     /* Result */
     word *a = GetAddr;      /* Branch when done */
 
     if (IntVal(*i) < ClassBlk(*class0).n_supers) {
@@ -335,7 +335,7 @@ static void for_class_supers()
 
 static void invoke_class_init()
 {
-    dptr d = get_rw_dptr();  /* Class */
+    dptr d = get_dptr();  /* Class */
     word *failure_label = GetAddr; /* Failure label */
     struct b_class *class0 = &ClassBlk(*d);
     struct class_field *init_field;
@@ -360,7 +360,7 @@ static void invoke_class_init()
 static void ensure_class_initialized()
 {
     struct p_frame *pf;
-    dptr d = get_rw_dptr();
+    dptr d = get_dptr();
     /* Avoid creating a frame if we don't need to */
     if (ClassBlk(*d).init_state != Uninitialized)
         return;
@@ -516,7 +516,7 @@ static void construct_record(word clo, dptr lhs, dptr expr, int argc, dptr args,
                 get_deref(&tmp);
                 RecordBlk(pf->fvars->desc[0]).fields[i] = tmp;
             } else
-                get_deref(&trashcan);
+                skip_descrip();
         }
     }
 
@@ -580,7 +580,7 @@ static void invoke_misc(word clo, dptr lhs, dptr expr, int argc, dptr args, word
                 if (i == j)
                     get_deref(&pf->fvars->desc[0]);
                 else
-                    get_deref(&trashcan);
+                    skip_descrip();
             }
         }
         curr_pf->clo[clo] = (struct frame *)pf;
@@ -646,7 +646,7 @@ void do_field()
     word *failure_label;
     struct descrip query;
 
-    lhs = get_rw_dptr();
+    lhs = get_dptr();
     get_deref(&expr);
     fno = GetWord;
     ic = get_inline_field_cache();
@@ -1132,9 +1132,9 @@ static void simple_access()
     dptr lhs, expr, query;
     struct descrip just_fail;
     word *a;
-    lhs = get_rw_dptr();
-    expr = get_rw_dptr();
-    query = get_rw_dptr();
+    lhs = get_dptr();
+    expr = get_dptr();
+    query = get_dptr();
     get_deref(&just_fail);
     a = GetAddr;
     general_access(lhs, expr, query, 0, IntVal(just_fail), a);
@@ -1190,8 +1190,8 @@ static void create_raw_object()
 {
     dptr lhs, c;
     tended struct b_object *obj;
-    lhs = get_rw_dptr();
-    c = get_rw_dptr();
+    lhs = get_dptr();
+    c = get_dptr();
     MemProtect(obj = alcobject(&ClassBlk(*c)));
     obj->init_state = Initializing;
     lhs->dword = D_Object;

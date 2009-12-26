@@ -21,7 +21,7 @@ operator ^ refresh(x)
        MemProtect(coex = alccoexp());
        MemProtect(coex->base_pf = alc_p_frame(curr->base_pf->proc, curr->base_pf->fvars));
        coex->main_of = 0;
-       coex->tvalloc = &trashcan;
+       coex->tvalloc = 0;
        coex->size = 0;
        coex->level = 1;
        coex->failure_label = coex->start_label = coex->base_pf->ipc = curr->start_label;
@@ -49,7 +49,7 @@ function cocopy(x)
        MemProtect(coex = alccoexp());
        MemProtect(coex->base_pf = alc_p_frame(curr->base_pf->proc, 0));
        coex->main_of = 0;
-       coex->tvalloc = &trashcan;
+       coex->tvalloc = 0;
        coex->size = 0;
        coex->level = 1;
        coex->failure_label = coex->start_label = coex->base_pf->ipc = curr->start_label;

@@ -7,7 +7,6 @@ struct node      *arith_nd (struct token *tok, struct node *p1,
 int               c_walk    (struct node *n, int indent, int brace);
 int               call_ret  (struct node *n);
 struct token     *chk_exct  (struct token *tok);
-void           chkabsret (struct token *tok, int ret_typ);
 void           clr_def   (void);
 void           clr_prmloc (void);
 struct token     *cnv_to_id (struct token *t);
@@ -35,7 +34,6 @@ void           impl_op   (struct token *op_sym, struct token *name);
 void           init_lex  (void);
 void           init_sym  (void);
 void           in_line   (struct node *n);
-void           just_type (struct node *typ, int indent, int ilc);
 struct node      *lbl       (struct token *t);
 void           ld_prmloc (struct parminfo *parminfo);
 void           mrg_prmloc (struct parminfo *parminfo);

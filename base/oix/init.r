@@ -91,7 +91,6 @@ end
  */
 
 struct descrip nullptr;                 /* descriptor with null block pointer */
-struct descrip trashcan;		/* descriptor that is never read */
 struct descrip blank; 			/* one-character blank string */
 struct descrip emptystr; 		/* zero-length empty string */
 struct descrip lcase;			/* string of lowercase letters */
@@ -701,7 +700,7 @@ function lang_Prog_load(s, arglist, blocksize, stringsize)
        coex->base_pf = coex->curr_pf = new_pf;
        coex->start_label = new_pf->ipc = Bmain_wrapper.icode;
        coex->failure_label = 0;
-       coex->tvalloc = &trashcan;
+       coex->tvalloc = 0;
        coex->level = 0;
        coex->size = 0;
 
@@ -1282,7 +1281,7 @@ int main(int argc, char **argv)
     k_current->main_of = &rootpstate;
     k_current->activator = k_current;
     k_current->failure_label = 0;
-    k_current->tvalloc = &trashcan;
+    k_current->tvalloc = 0;
 
     check_version(&hdr, name, ifile);
     read_icode(&hdr, name, ifile, code);

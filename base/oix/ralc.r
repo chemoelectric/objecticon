@@ -916,7 +916,7 @@ struct p_frame *alc_p_frame(struct b_proc *pb, struct frame_vars *fvars)
     } else
         p->mark = 0;
     p->type = P_FRAME_TYPE;
-    p->lhs = &trashcan;
+    p->lhs = 0;
     p->failure_label = 0;
     p->rval = 0;
     p->proc = pb;
@@ -966,7 +966,7 @@ struct c_frame *alc_c_frame(struct b_proc *pb, int nargs)
     p->size = size;
     p->creator = curpstate;
     p->type = C_FRAME_TYPE;
-    p->lhs = &trashcan;
+    p->lhs = 0;
     p->proc = pb;
     p->parent_sp = 0;
     p->failure_label = 0;
