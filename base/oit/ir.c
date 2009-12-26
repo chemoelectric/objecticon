@@ -933,9 +933,10 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             clo = make_closure(st);
 
             chunk1(res->start, ir_goto(n, from->start));
-            chunk2(res->resume, 
-                  ir_resume(n, clo),
-                  ir_goto(n, res->success));
+            if (!bounded)
+                chunk2(res->resume, 
+                       ir_resume(n, clo),
+                       ir_goto(n, res->success));
 
             chunk1(from->success, ir_goto(n, to->start));
             chunk1(from->failure, ir_goto(n, res->failure));
@@ -969,9 +970,10 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             clo = make_closure(st);
 
             chunk1(res->start, ir_goto(n, from->start));
-            chunk2(res->resume, 
-                   ir_resume(n, clo),
-                   ir_goto(n, res->success));
+            if (!bounded)
+                chunk2(res->resume, 
+                       ir_resume(n, clo),
+                       ir_goto(n, res->success));
 
             chunk1(from->success, ir_goto(n, to->start));
             chunk1(from->failure, ir_goto(n, res->failure));
@@ -1103,9 +1105,10 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             chunk1(left->failure, ir_goto(n, res->failure));
             chunk1(right->failure, ir_goto(n, left->resume));
 
-            chunk2(res->resume, 
-                  ir_resume(n, clo),
-                  ir_goto(n, res->success));
+            if (!bounded)
+                chunk2(res->resume, 
+                       ir_resume(n, clo),
+                       ir_goto(n, res->success));
 
             if (fname)
                 chunk2(right->success, 
@@ -1138,9 +1141,10 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             chunk1(left->failure, ir_goto(n, res->failure));
             chunk1(right->failure, ir_goto(n, left->resume));
 
-            chunk2(res->resume, 
-                  ir_resume(n, clo),
-                  ir_goto(n, res->success));
+            if (!bounded)
+                chunk2(res->resume, 
+                       ir_resume(n, clo),
+                       ir_goto(n, res->success));
 
             chunk2(right->success, 
                    ir_opclo(n, clo, target, n->op, lv, rv, 0, rval, right->resume),
@@ -1993,9 +1997,10 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             chunk1(expr->failure, ir_goto(n, res->failure));
 
             if (x->n == 0) {
-                chunk2(res->resume,
-                       ir_resume(n, clo),
-                       ir_goto(n, res->success));
+                if (!bounded)
+                    chunk2(res->resume,
+                           ir_resume(n, clo),
+                           ir_goto(n, res->success));
                 if (fname)
                     chunk2(expr->success,
                            ir_invokef(n, clo, target, fn, fname, x->n, args, rval, expr->resume),
@@ -2006,9 +2011,10 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                            ir_goto(n, res->success));
 
             } else if (x->n == 1) {
-                chunk2(res->resume,
-                       ir_resume(n, clo),
-                       ir_goto(n, res->success));
+                if (!bounded)
+                    chunk2(res->resume,
+                           ir_resume(n, clo),
+                           ir_goto(n, res->success));
                 chunk1(expr->success,
                        ir_goto(n, info[0]->start));
                 if (fname)
@@ -2022,9 +2028,10 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 chunk1(info[0]->failure,
                        ir_goto(n, expr->resume));
             } else { /* x->n > 1 */
-                chunk2(res->resume,
-                       ir_resume(n, clo),
-                       ir_goto(n, res->success));
+                if (!bounded)
+                    chunk2(res->resume,
+                           ir_resume(n, clo),
+                           ir_goto(n, res->success));
                 chunk1(expr->success,
                        ir_goto(n, info[0]->start));
 
