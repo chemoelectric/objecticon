@@ -69,7 +69,6 @@ extern char *progname;
 int op_type = OrdFunc;  /* type of operation */
 char *op_name;
 char *op_sym;
-int fnc_ret;         /* RetInt, RetDbl, RetNoVal, or RetSig for current func */
 char lc_letter;         /* f = function, o = operator, k = keyword */
 char uc_letter;         /* F = function, O = operator, K = keyword */
 char prfx1;             /* 1st char of unique prefix for operation */
@@ -1115,17 +1114,14 @@ int brace;
       if (!brace)
          prt_str("{", indent);
       ForceNl();
-      prt_str("FAIL(frame);", indent);
+      prt_str("return 0;", indent);
       if (!brace) {
          ForceNl();
          prt_str("}", indent);
          }
       }
    else {
-       if (fnc_ret == RetSig)
-         prt_str("FAIL(frame);", indent);
-       else
-         prt_str("return;", indent);
+       prt_str("return 0;", indent);
    }
    ForceNl();
    }
@@ -1323,8 +1319,7 @@ int brace;
 	       if (n->u[0].child != NULL)
 		  no_ret_val = 0;  /* note that return statement has no value */
 
-	       if (op_type == OrdFunc || fnc_ret == RetInt ||
-		  fnc_ret == RetDbl) {
+	       if (op_type == OrdFunc) {
 		  /*
 		   * ordinary C return: ignore C_integer, C_double, and
 		   *  C_string qualifiers on return expression (the first
@@ -1357,18 +1352,14 @@ int brace;
                          */
 			ForceNl();
 			prt_str("register ", indent);
-			if (op_type == OrdFunc) {
-			   no_nl = 1;
-			   just_type(fnc_head->u[0].child, indent, 0);
-			   prt_str(" ", indent);
-			   retval_dcltor(fnc_head->u[1].child, indent);
-			   prt_str(";", indent);
-			   no_nl = 0;
-			   }
-			else if (fnc_ret == RetInt)
-			   prt_str("C_integer r_retval;", indent);
-			else    /* fnc_ret == RetDbl */
-			   prt_str("double r_retval;", indent);
+
+                        no_nl = 1;
+                        just_type(fnc_head->u[0].child, indent, 0);
+                        prt_str(" ", indent);
+                        retval_dcltor(fnc_head->u[1].child, indent);
+                        prt_str(";", indent);
+                        no_nl = 0;
+
 			ForceNl();
 
                         /*
@@ -1429,10 +1420,9 @@ int brace;
                   if (ntend != 0)
                      untend(indent);
                   ForceNl();
-                  if (fnc_ret == RetSig)
-                     prt_str("RETURN(frame);", indent);
-                  else if (fnc_ret == RetNoVal)
-                     prt_str("return;", indent);
+                  prt_str("frame->exhausted = 1;", indent);
+                  ForceNl();
+                  prt_str("return 1;", indent);
                   ForceNl();
                   if (!brace) {
                      prt_str("}", indent);
@@ -1452,8 +1442,15 @@ int brace;
                ForceNl();
                ret_value(t, n->u[0].child, indent);
                ForceNl();
-               prt_str("SUSPEND(frame", indent);
-               fprintf(out_file, ", %d);", ++lab_seq);
+#ifdef HAVE_COMPUTED_GOTO
+               prt_str("frame->pc = (word)&&Lab", indent);
+#else
+               prt_str("frame->pc = ", indent);
+#endif
+               fprintf(out_file, "%d;", ++lab_seq);
+               ForceNl();
+               prt_str("return 1;", indent);
+               fprintf(out_file, "\nLab%d:;", lab_seq);
                ForceNl();
                if (!brace) {
                   prt_str("}", indent);
@@ -3260,7 +3257,6 @@ struct node *n;
 
    count_ntend();
 
-   fnc_ret = RetSig;  /* interpreter routine always returns a signal */
    name = op_name;
 
    /*
@@ -3412,7 +3408,8 @@ struct node *n;
 
    if (lab_seq > 0) {
 #ifdef HAVE_COMPUTED_GOTO
-       fprintf(out_file, "   RESTORE(frame);\n");
+       fprintf(out_file, "       if (frame->pc)\n");
+       fprintf(out_file, "          goto *((void *)(frame->pc));\n");
 #else
        int i;
        fprintf(out_file, "   switch (frame->pc) {\n");

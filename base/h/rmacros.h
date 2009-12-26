@@ -625,45 +625,6 @@
 #endif					/* no S_ISDIR */
 #endif					/* MSWIN32 */
 
-#ifdef HAVE_COMPUTED_GOTO
-
-#define SUSPEND(G,N)                             \
-do {\
-    ((struct c_frame *)(G))->pc = (word)&&Lab##N;       \
-    return 1;                                   \
- Lab##N:; \
-} while(0)
-
-#define RESTORE(G)    \
-do {                   \
-    if (((struct c_frame *)(G))->pc) {            \
-        goto *((void *)(((struct c_frame *)(G))->pc));  \
-    }\
-} while(0)
-
-#else
-
-#define SUSPEND(G,N)                             \
-do {\
-    ((struct c_frame *)(G))->pc = N;       \
-    return 1;                                   \
- Lab##N:; \
-} while(0)
-
-#endif   /* HAVE_COMPUTED_GOTO */
-
-#define FAIL(G)                                \
-do {\
-  return 0;                                   \
-} while(0)
-
-#define RETURN(G)                              \
-do {\
-  (G)->exhausted = 1;                         \
-  return 1;                                   \
-} while(0)
-
-
 #define GetWord (*ipc++)
 #define GetAddr ((word *)GetWord)
 
