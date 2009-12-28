@@ -648,7 +648,7 @@ procedure Re_skip(plist,i)
 end
 
 
-procedure Re_result_merge(L)
+procedure Re_result_merge(e1, e2)
 #
 #  Programmer-defined control operation to merge the result sequences of
 #  two integer-producing generators.  Both generators must produce their
@@ -656,8 +656,7 @@ procedure Re_result_merge(L)
 #  and the output sequence will be in increasing order with no
 #  duplicates.
 #
-   local e1,e2,r1,r2
-   e1 := L[1] ; e2 := L[2]
+   local r1,r2
    r1 := @e1 ; r2 := @e2
    while \(r1 | r2) do
          if /r2 | \r1 < r2 then
