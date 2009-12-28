@@ -483,10 +483,10 @@ procedure Re_cset()
    c ? {
       e := (="-" | "")
       while chars := tab(upto('\-\\')) do {
-         e ++:= case move(1) of {
+         e ++:= case string(move(1)) of {
             "-": chars[1:-1] ++
-                  &cset[ord(chars[-1]) + 1:ord(move(1)) + 2] | return &null
-            "\\": case ch := move(1) of {
+                  &uset[ord(chars[-1]) + 1:ord(move(1)) + 2] | return &null
+            "\\": case string(ch := move(1)) of {
                "w": Re_WordChars
                "W": Re_NonWordChars
                "s": Re_Space
