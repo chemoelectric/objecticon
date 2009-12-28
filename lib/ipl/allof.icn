@@ -31,7 +31,7 @@
 #
 #     For example:
 #
-#       global c
+#       local c
 #       ...
 #       pattern := "ab*"
 #       "abcdef" ? {
@@ -48,10 +48,6 @@
 #  expr2; the expression will ultimately succeed (as its conjunctive
 #  equivalent would).
 #
-#     Note that, due to the scope of variables in co-expressions,
-#  variables shared between expr1 and expr2 must have global scope,
-#  hence c in the above example must be global.
-#
 #     The allof{} procedure models Icon's expression evaluation
 #  mechanism in that it explicitly performs backtracking.  The author of
 #  this procedure knows of no way to invoke Icon's built-in goal
@@ -66,7 +62,7 @@
 
 package ipl.allof
 
-procedure allof(expr)
+procedure allof(expr1, expr2)
    local elist,i,x,v
    #
    #  Initialize
@@ -75,7 +71,7 @@ procedure allof(expr)
    i := 1               # expression list index
    
    #
-   #  Loop until backtracking over all expr[2]s has failed.
+   #  Loop until backtracking over all expr2s has failed.
    #
    while i > 0 do {
       if not (x := elist[i]) then
@@ -83,15 +79,15 @@ procedure allof(expr)
          #  If we're at the end of the list of expressions, attempt an
          #  iteration to produce another expression.
          #
-         if @expr[1] then
-            put(elist,x := ^expr[2])
+         if @expr1 then
+            put(elist,x := ^expr2)
          else {
             #
             #  If no further iterations, suspend a result.
             #
             suspend v
             #
-            #  We've been backed into -- reset to last expr[2].
+            #  We've been backed into -- reset to last expr2.
             #
             i -:= 1
             }
