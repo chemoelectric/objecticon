@@ -60,6 +60,9 @@ default: ivib
 all: $(COMMONU) ivib
 	$(MAKE) -C plugins
 
+etags:
+	etags $(ICNTAGS) $(COMMONSRC) $(PROGSRC)
+
 clean:
 	rm -f *.u packages.txt $(PROGS)
 	$(MAKE) -C plugins clean

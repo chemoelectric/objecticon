@@ -33,3 +33,6 @@ ipc.o : ipc.r
 
 clean :
 	rm -f *.u *.o *.so *.a mysql.c ipc.c
+
+etags:
+	etags --lang=c *.r *.h

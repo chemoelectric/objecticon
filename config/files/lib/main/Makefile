@@ -8,6 +8,9 @@ AUTOU=$(AUTOSRC:.icn=.u)
 
 all: mkconsts $(LIBU) $(AUTOU)
 
+etags:
+	etags $(ICNTAGS) $(LIBSRC)
+
 clean:
 	$(RM) mkconsts $(AUTOSRC) *.u packages.txt
 

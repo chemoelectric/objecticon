@@ -1,23 +1,24 @@
 include ../../Makedefs
 
-TRANS=		trans.o tlex.o tparse.o tsym.o tmem.o \
-		 tree.o ucode.o ipp.o membuff.o ir.o
-
-LINKR=		link.o lglob.o lcode.o lmem.o lsym.o ltree.o optimize.o
+OITOBJS=		trans.o tlex.o tparse.o tsym.o tmem.o \
+		tree.o ucode.o ipp.o membuff.o ir.o \
+		package.o resolve.o tmain.o \
+		link.o lglob.o lcode.o lmem.o lsym.o ltree.o optimize.o
 
 COBJS=		../common/getopt.o ../common/alloc.o \
 		../common/strtbl.o ../common/mlocal.o
 
-OBJS=		package.o resolve.o tmain.o $(TRANS) $(LINKR) $(COBJS)
+OBJS=		$(OITOBJS) $(COBJS)
+
+OITC=$(OITOBJS:.o=.c)
 
 all:		oit
 
 clean:		
 		rm -f *.o tgram.g y.tab.c y.tab.h y.output oit mkkwd fixgram mktoktab
 
-pure:		
-		rm -f *.o tparse.c tgram.g ttoken.h y.tab.c y.tab.h yacctok.h \
-			lextab.h y.output oit mkkwd fixgram mktoktab
+etags:
+		etags $(OITC) tgrammar.c *.h
 
 oit:		$(OBJS)
 		$(CC) $(CFLAGS) $(LDFLAGS) -o oit $(OBJS) $(LIBS)
@@ -42,10 +43,6 @@ tmem.o:		tsym.h tree.h
 tree.o:		tree.h
 tsym.o:		tsym.h ttoken.h keyword.h ../h/kdefs.h
 ucode.o:	tsym.h ttoken.h keyword.h ../h/kdefs.h
-# linker files
-$(LINKR):	link.h ../h/rt.h ../h/sys.h ../h/monitor.h \
-		   ../h/rstructs.h ../h/rmacros.h ../h/rexterns.h
-
 link.o:		../h/header.h
 lcode.o:	keyword.h ../h/header.h \
 			../h/opdefs.h ../h/version.h ../h/nativedefs.h

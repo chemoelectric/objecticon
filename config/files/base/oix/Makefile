@@ -22,6 +22,7 @@ XOBJS=	cnv.o def.o errmsg.o fconv.o fload.o fmath.o\
 	rwinrsc.o rwinsys.o rwindow.o posix.o cstruct.o
 
 RTTC=$(XOBJS:.o=.c)
+RFILES=$(XOBJS:.o=.r)
 RTTTMP=$(XOBJS:.o=.tmp)
 
 COBJS=	../common/mlocal.o
@@ -51,6 +52,9 @@ oix:	$(OBJS)
 
 clean:		
 	rm -f *.o $(RTTC) $(RTTTMP) rt.db rt.a rttcur.lst rttfull.lst oix keysymtocodepoint iasm
+
+etags:
+	etags --lang=c $(RFILES) rmswin.ri rxrsc.ri  rxwin.ri
 
 # Compile with make IASM=Y
 ifeq ($(IASM),Y)

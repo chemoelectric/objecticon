@@ -19,3 +19,12 @@ clean :
 	$(MAKE) -C xml clean
 	$(MAKE) -C parser clean
 	$(MAKE) -C native clean
+
+etags :
+	$(MAKE) -C incl etags
+	$(MAKE) -C ipl etags
+	$(MAKE) -C main etags
+	$(MAKE) -C gui etags
+	$(MAKE) -C xml etags
+	$(MAKE) -C parser etags
+	$(MAKE) -C native etags

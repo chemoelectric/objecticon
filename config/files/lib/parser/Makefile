@@ -6,6 +6,9 @@ LIBU=$(LIBSRC:.icn=.u)
 
 all:  $(LIBU)
 
+etags:
+	etags $(ICNTAGS) $(LIBSRC)
+
 clean:
 	$(RM) *.u ../incl/oigram_tab.icn oigram.icn packages.txt
 

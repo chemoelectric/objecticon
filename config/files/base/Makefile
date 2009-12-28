@@ -11,3 +11,10 @@ clean :
 	$(MAKE) -C rtt clean
 	$(MAKE) -C oix clean
 	$(MAKE) -C oit clean
+
+etags :
+	$(MAKE) -C common etags
+	$(MAKE) -C h etags
+	$(MAKE) -C rtt etags
+	$(MAKE) -C oix etags
+	$(MAKE) -C oit etags

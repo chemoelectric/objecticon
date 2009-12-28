@@ -13,11 +13,15 @@ COBJS = ../common/getopt.o ../common/alloc.o \
 	  ../common/mlocal.o ../common/literals.o
 
 OBJS = $(ROBJS) $(COBJS)
+RSRC=$(ROBJS:.o=.c)
 
 all:	rtt
 
 clean:		
 	rm -f *.o rtt typespec y.output
+
+etags:
+	etags $(RSRC) *.h
 
 rtt:	$(OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o rtt $(OBJS) $(LIBS)

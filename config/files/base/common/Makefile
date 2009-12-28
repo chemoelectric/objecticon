@@ -3,10 +3,15 @@ include ../../Makedefs
 OBJS=	getopt.o identify.o strtbl.o \
 	mlocal.o literals.o alloc.o
 
+CSRC=$(OBJS:.o=.c)
+
 all:		$(OBJS)
 
 clean:		
 		rm -f *.o
+
+etags:
+		etags $(CSRC)
 
 $(OBJS): ../h/define.h ../h/config.h ../h/cstructs.h ../h/mproto.h \
 	  ../h/typedefs.h ../h/cpuconf.h

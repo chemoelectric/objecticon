@@ -10,6 +10,11 @@ clean :
 	$(MAKE) -C lib clean
 	$(MAKE) -C apps clean
 
+etags :
+	$(MAKE) -C base etags
+	$(MAKE) -C lib etags
+	$(MAKE) -C apps etags
+
 test :
 	$(MAKE) -C test all
 
