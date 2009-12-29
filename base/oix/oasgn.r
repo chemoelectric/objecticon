@@ -2,8 +2,8 @@
  * File: oasgn.r
  */
 
-static void tvtbl_asgn	(dptr dest, const dptr src);
-static int subs_asgn	(dptr dest, const dptr src);
+static void tvtbl_asgn	(dptr dest, dptr src);
+static int subs_asgn	(dptr dest, dptr src);
 
 
 /*
@@ -22,11 +22,11 @@ static int subs_asgn	(dptr dest, const dptr src);
            *OffsetVarLoc(x) = y;
        }
       tvsubs: {
-           if (subs_asgn(&x, (const dptr)&y) == Error)
+           if (subs_asgn(&x, &y) == Error)
               runerr(0);
         }
       tvtbl: {
-           tvtbl_asgn(&x, (const dptr)&y);
+           tvtbl_asgn(&x, &y);
          }
       kywdany: {
 	    *VarLoc(x) = y;
@@ -274,13 +274,9 @@ end
  * subs_asgn - perform assignment to a substring. Leave the updated substring
  *  in dest in case it is needed as the result of the assignment.
  */
-int subs_asgn(dest, src)
-dptr dest;
-const dptr src;
+int subs_asgn(dptr dest, dptr src)
    {
-   tended struct descrip deststr;
-   tended struct descrip srcstr;
-   tended struct descrip rsltstr;
+   tended struct descrip deststr, srcstr, rsltstr;
    tended struct b_tvsubs *tvsub;
 
    char *s;
@@ -296,7 +292,7 @@ const dptr src;
    if (!is:string(deststr) && !is:ucs(deststr))
       ReturnErrVal(129, deststr, Error);
 
-   if (!cnv:string_or_ucs(*src,srcstr))
+   if (!cnv:string_or_ucs(*src, srcstr))
       ReturnErrVal(129, *src, Error);
 
    if (is:ucs(deststr) || is:ucs(srcstr)) {
@@ -305,8 +301,8 @@ const dptr src;
        if (!cnv:ucs(deststr, deststr))
            ReturnErrVal(128, deststr, Error);
 
-       if (!cnv:ucs(srcstr, srcstr))
-           ReturnErrVal(128, srcstr, Error);
+       if (!is:ucs(srcstr) && !cnv:ucs(*src, srcstr))
+           ReturnErrVal(128, *src, Error);
        
        if (tvsub->sspos + tvsub->sslen - 1 > UcsBlk(deststr).length)
            ReturnErrNum(205, Error);
@@ -423,7 +419,7 @@ const dptr src;
          k_pos = 1;
          }
       tvtbl: {
-         tvtbl_asgn(&tvsub->ssvar, (const dptr)&rsltstr);
+         tvtbl_asgn(&tvsub->ssvar, &rsltstr);
          }
       default: {
          syserr("Unknown variable type");
@@ -440,9 +436,7 @@ const dptr src;
  * tvtbl_asgn - perform an assignment to a table element trapped variable,
  *  inserting the element in the table if needed.
  */
-void tvtbl_asgn(dest, src)
-dptr dest;
-const dptr src;
+void tvtbl_asgn(dptr dest, dptr src)
    {
    tended struct b_tvtbl *bp;
    tended struct descrip tval;

@@ -84,17 +84,23 @@ NumComp( ~=, numne, NumNe, not equal to)
  */
 #begdef StrComp(icon_op, func_name, special_test_str, special_test_ucs, c_comp, comp_value, descript)
 "x " #icon_op " y - test if x is lexically " #descript " y."
-operator icon_op func_name(x,y)
-   if !cnv:string_or_ucs(x) then
-      runerr(129,x)
-   if !cnv:string_or_ucs(y) then
-      runerr(129,y)
+operator icon_op func_name(x0,y0)
    body {
+     tended struct descrip x, y;
+
+     if (!cnv:string_or_ucs(x0, x))
+         runerr(129, x0);
+     if (!cnv:string_or_ucs(y0, y))
+         runerr(129, y0);
+
      if (is:ucs(x) || is:ucs(y)) {
-         if (!cnv:ucs(x,x))
-             runerr(128, x);
-         if (!cnv:ucs(y,y))
-             runerr(128, y);
+         /*
+          * See comment in ocat.r
+          */
+         if (!is:ucs(x) && !cnv:ucs(x0, x))
+             runerr(128, x0);
+         if (!is:ucs(y) && !cnv:ucs(y0, y))
+             runerr(128, y0);
 
          /*
           * lexcmp does the work.

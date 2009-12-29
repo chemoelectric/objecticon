@@ -3,21 +3,28 @@
  */
 "x || y - concatenate strings x and y." 
 
-operator || cater(x, y)
-   if !cnv:string_or_ucs(x) then
-      runerr(129,x)
-   if !cnv:string_or_ucs(y) then
-      runerr(129,y)
+operator || cater(x0, y0)
    body {
-     if (is:ucs(x) || is:ucs(y)) {
-         tended struct descrip utf8_x;
-         tended struct descrip utf8_y;
-         tended struct descrip utf8;
+     tended struct descrip x, y;
 
-         if (!cnv:ucs(x,x))
-             runerr(128, x);
-         if (!cnv:ucs(y,y))
-             runerr(128, y);
+     if (!cnv:string_or_ucs(x0, x))
+         runerr(129, x0);
+     if (!cnv:string_or_ucs(y0, y))
+         runerr(129, y0);
+
+     if (is:ucs(x) || is:ucs(y)) {
+         tended struct descrip utf8_x, utf8_y, utf8;
+
+         /*
+          * Ensure both x and y are ucs.  Note that a simple
+          * cnv:ucs(x) is not sufficient, since x0 may be for example
+          * '\xff', and hence x is "\xff".  The former is convertible
+          * to ucs, whilst the latter is not.
+          */
+         if (!is:ucs(x) && !cnv:ucs(x0, x))
+             runerr(128, x0);
+         if (!is:ucs(y) && !cnv:ucs(y0, y))
+             runerr(128, y0);
 
          utf8_x = UcsBlk(x).utf8;
          utf8_y = UcsBlk(y).utf8;

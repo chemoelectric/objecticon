@@ -917,8 +917,7 @@ function left(s1,n,s2)
 
       if (is:ucs(s1)) {
           word odd_len, whole_len, utf8_size, i;
-          tended struct descrip utf8;
-          tended struct descrip odd_utf8;
+          tended struct descrip utf8, odd_utf8;
 
           /*
            * Simple case if s1 fits exactly.
@@ -1056,8 +1055,7 @@ function right(s1,n,s2)
 
       if (is:ucs(s1)) {
           word odd_len, whole_len, utf8_size, i;
-          tended struct descrip utf8;
-          tended struct descrip odd_utf8;
+          tended struct descrip utf8, odd_utf8;
 
           /*
            * Simple case if s1 fits exactly.
@@ -1196,9 +1194,7 @@ function center(s1,n,s2)
       if (is:ucs(s1)) {
           word left, right, whole_left_len, odd_left_len,
               whole_right_len, odd_right_len, utf8_size, i;
-          tended struct descrip utf8;
-          tended struct descrip odd_left_utf8;
-          tended struct descrip odd_right_utf8;
+          tended struct descrip utf8, odd_left_utf8, odd_right_utf8;
 
           /*
            * Simple case if s1 fits exactly.
