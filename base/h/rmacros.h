@@ -12,7 +12,6 @@
 
 #define MaxCvtLen	    32	/* sufficient for holding result of real to string (rtos)
                                  * and integer to string (itos) in cnv.r */
-#define MaxIn		  32767	/* largest number of bytes to read() at once */
 #define RandA        1103515245	/* random seed multiplier */
 #define RandC	      453816694	/* random seed additive constant */
 #define RanScale 4.65661286e-10	/* random scale factor = 1/(2^31-1) */
@@ -157,9 +156,9 @@
 /*
  * Absolute value, maximum, and minimum.
  */
-   #define Abs(x) (((x) < 0) ? (-(x)) : (x))
-   #define Max(x,y)        ((x)>(y)?(x):(y))
-   #define Min(x,y)        ((x)<(y)?(x):(y))
+#define Abs(x) (((x) < 0) ? (-(x)) : (x))
+#define Max(x,y)        ((x)>(y)?(x):(y))
+#define Min(x,y)        ((x)<(y)?(x):(y))
 
 
 /*
@@ -444,14 +443,14 @@
 #define blkfree  (curblock->free)
 
    
-   /*
-    * Macros related to function and operator definition.
-    */
+/*
+ * Macros related to function and operator definition.
+ */
    
-   /*
-    * Procedure block for a function.
-    */
-   #define FncBlock(f,nargs,vararg,ntend,underef)           \
+/*
+ * Procedure block for a function.
+ */
+#define FncBlock(f,nargs,vararg,ntend,underef)                          \
         static struct sdescrip Cat(f,_name_desc) = {sizeof(Lit(f))-1,Lit(f)}; \
       	struct b_proc Cat(B,f) = {\
       	T_Proc,\
@@ -469,10 +468,10 @@
         Function,\
         0,0};
 
-   /*
-    * Procedure block for an operator.
-    */
-   #define OpBlock(f,nargs,ntend,sname,underef)\
+/*
+ * Procedure block for an operator.
+ */
+#define OpBlock(f,nargs,ntend,sname,underef)                            \
         static struct sdescrip Cat(f,_name_desc) = {sizeof(sname)-1,sname}; \
    	struct b_proc Cat(B,f) = {\
    	T_Proc,\
@@ -490,7 +489,7 @@
         0,0};
 
 
-   #define KeywordBlock(f,ntend) \
+#define KeywordBlock(f,ntend)                                           \
         static struct sdescrip Cat(f,_name_desc) = {sizeof("&" Lit(f))-1, "&" Lit(f)}; \
    	struct b_proc Cat(L,f) = {\
    	T_Proc,\
@@ -504,120 +503,120 @@
         Keyword,\
         0,0};
 
-   /*
-    * Miscellaneous macro definitions.
-    */
+/*
+ * Miscellaneous macro definitions.
+ */
    
-      #define kywd_err  (curpstate->Kywd_err)
-      #define kywd_pos  (curpstate->Kywd_pos)
-      #define kywd_prog  (curpstate->Kywd_prog)
-      #define kywd_why  (curpstate->Kywd_why)
-      #define kywd_ran  (curpstate->Kywd_ran)
-      #define k_eventcode (curpstate->eventcode)
-      #define k_eventsource (curpstate->eventsource)
-      #define k_eventvalue (curpstate->eventval)
-      #define k_subject (curpstate->Kywd_subject)
-      #define kywd_trace  (curpstate->Kywd_trace)
-      #define kywd_dump  (curpstate->Kywd_dump)
-      #define kywd_maxlevel  (curpstate->Kywd_maxlevel)
-      #define code (curpstate->Code)
-      #define ecode (curpstate->Ecode)
-      #define classstatics (curpstate->ClassStatics)
-      #define eclassstatics (curpstate->EClassStatics)
-      #define classmethods (curpstate->ClassMethods)
-      #define eclassmethods (curpstate->EClassMethods)
-      #define classfields (curpstate->ClassFields)
-      #define eclassfields (curpstate->EClassFields)
-      #define classfieldlocs (curpstate->ClassFieldLocs)
-      #define eclassfieldlocs (curpstate->EClassFieldLocs)
-      #define classes (curpstate->Classes)
-      #define records (curpstate->Records)
-      #define fnames (curpstate->Fnames)
-      #define efnames (curpstate->Efnames)
-      #define globals (curpstate->Globals)
-      #define eglobals (curpstate->Eglobals)
-      #define gnames (curpstate->Gnames)
-      #define egnames (curpstate->Egnames)
-      #define glocs (curpstate->Glocs)
-      #define eglocs (curpstate->Eglocs)
-      #define statics (curpstate->Statics)
-      #define estatics (curpstate->Estatics)
-      #define constants (curpstate->Constants)
-      #define econstants (curpstate->Econstants)
-      #define n_globals (curpstate->NGlobals)
-      #define n_statics (curpstate->NStatics)
-      #define n_constants (curpstate->NConstants)
-      #define strcons (curpstate->Strcons)
-      #define estrcons (curpstate->Estrcons)
-      #define filenms (curpstate->Filenms)
-      #define efilenms (curpstate->Efilenms)
-      #define ilines (curpstate->Ilines)
-      #define elines (curpstate->Elines)
-      #define current_line_ptr (curpstate->Current_line_ptr)
-      #define current_fname_ptr (curpstate->Current_fname_ptr)
-      #define main_proc (curpstate->MainProc)
+#define kywd_err  (curpstate->Kywd_err)
+#define kywd_pos  (curpstate->Kywd_pos)
+#define kywd_prog  (curpstate->Kywd_prog)
+#define kywd_why  (curpstate->Kywd_why)
+#define kywd_ran  (curpstate->Kywd_ran)
+#define k_eventcode (curpstate->eventcode)
+#define k_eventsource (curpstate->eventsource)
+#define k_eventvalue (curpstate->eventval)
+#define k_subject (curpstate->Kywd_subject)
+#define kywd_trace  (curpstate->Kywd_trace)
+#define kywd_dump  (curpstate->Kywd_dump)
+#define kywd_maxlevel  (curpstate->Kywd_maxlevel)
+#define code (curpstate->Code)
+#define ecode (curpstate->Ecode)
+#define classstatics (curpstate->ClassStatics)
+#define eclassstatics (curpstate->EClassStatics)
+#define classmethods (curpstate->ClassMethods)
+#define eclassmethods (curpstate->EClassMethods)
+#define classfields (curpstate->ClassFields)
+#define eclassfields (curpstate->EClassFields)
+#define classfieldlocs (curpstate->ClassFieldLocs)
+#define eclassfieldlocs (curpstate->EClassFieldLocs)
+#define classes (curpstate->Classes)
+#define records (curpstate->Records)
+#define fnames (curpstate->Fnames)
+#define efnames (curpstate->Efnames)
+#define globals (curpstate->Globals)
+#define eglobals (curpstate->Eglobals)
+#define gnames (curpstate->Gnames)
+#define egnames (curpstate->Egnames)
+#define glocs (curpstate->Glocs)
+#define eglocs (curpstate->Eglocs)
+#define statics (curpstate->Statics)
+#define estatics (curpstate->Estatics)
+#define constants (curpstate->Constants)
+#define econstants (curpstate->Econstants)
+#define n_globals (curpstate->NGlobals)
+#define n_statics (curpstate->NStatics)
+#define n_constants (curpstate->NConstants)
+#define strcons (curpstate->Strcons)
+#define estrcons (curpstate->Estrcons)
+#define filenms (curpstate->Filenms)
+#define efilenms (curpstate->Efilenms)
+#define ilines (curpstate->Ilines)
+#define elines (curpstate->Elines)
+#define current_line_ptr (curpstate->Current_line_ptr)
+#define current_fname_ptr (curpstate->Current_fname_ptr)
+#define main_proc (curpstate->MainProc)
 
-      #define coexp_ser (curpstate->Coexp_ser)
-      #define list_ser  (curpstate->List_ser)
-      #define set_ser   (curpstate->Set_ser)
-      #define table_ser (curpstate->Table_ser)
+#define coexp_ser (curpstate->Coexp_ser)
+#define list_ser  (curpstate->List_ser)
+#define set_ser   (curpstate->Set_ser)
+#define table_ser (curpstate->Table_ser)
       
-      #define curstring (curpstate->stringregion)
-      #define curblock  (curpstate->blockregion)
-      #define strtotal  (curpstate->stringtotal)
-      #define blktotal  (curpstate->blocktotal)
+#define curstring (curpstate->stringregion)
+#define curblock  (curpstate->blockregion)
+#define strtotal  (curpstate->stringtotal)
+#define blktotal  (curpstate->blocktotal)
       
-      #define coll_user (curpstate->colluser)
-      #define coll_stack (curpstate->collstack)
-      #define coll_str  (curpstate->collstr)
-      #define coll_blk  (curpstate->collblk)
+#define coll_user (curpstate->colluser)
+#define coll_stack (curpstate->collstack)
+#define coll_str  (curpstate->collstr)
+#define coll_blk  (curpstate->collblk)
       
-      #define k_errornumber (curpstate->K_errornumber)
-      #define k_errortext   (curpstate->K_errortext)
-      #define k_errorvalue  (curpstate->K_errorvalue)
-      #define have_errval   (curpstate->Have_errval)
-      #define t_errornumber (curpstate->T_errornumber)
-      #define t_have_val    (curpstate->T_have_val)
-      #define t_errorvalue  (curpstate->T_errorvalue)
-      #define t_errortext   (curpstate->T_errortext)
+#define k_errornumber (curpstate->K_errornumber)
+#define k_errortext   (curpstate->K_errortext)
+#define k_errorvalue  (curpstate->K_errorvalue)
+#define have_errval   (curpstate->Have_errval)
+#define t_errornumber (curpstate->T_errornumber)
+#define t_have_val    (curpstate->T_have_val)
+#define t_errorvalue  (curpstate->T_errorvalue)
+#define t_errortext   (curpstate->T_errortext)
       
-      #define k_main        (curpstate->K_main)
+#define k_main        (curpstate->K_main)
       
-      #define cplist	    (curpstate->Cplist)
-      #define cpset	    (curpstate->Cpset)
-      #define cptable	    (curpstate->Cptable)
-      #define cnv_cset	    (curpstate->Cnvcset)
-      #define cnv_ucs	    (curpstate->Cnvucs)
-      #define cnv_int	    (curpstate->Cnvint)
-      #define cnv_real	    (curpstate->Cnvreal)
-      #define cnv_str	    (curpstate->Cnvstr)
-      #define cnv_tstr	    (curpstate->Cnvtstr)
-      #define deref	    (curpstate->Deref)
-      #define alcbignum	    (curpstate->Alcbignum)
-      #define alccoexp	    (curpstate->Alccoexp)
-      #define alccset	    (curpstate->Alccset)
-      #define alchash	    (curpstate->Alchash)
-      #define alcsegment    (curpstate->Alcsegment)
-      #define alclist_raw   (curpstate->Alclist_raw)
-      #define alclist	    (curpstate->Alclist)
-      #define alclstb	    (curpstate->Alclstb)
-      #define alcreal	    (curpstate->Alcreal)
-      #define alcrecd	    (curpstate->Alcrecd)
-      #define alcobject	    (curpstate->Alcobject)
-      #define alccast  	    (curpstate->Alccast)
-      #define alcmethp      (curpstate->Alcmethp)
-      #define alcucs        (curpstate->Alcucs)
-      #define alcselem      (curpstate->Alcselem)
-      #define alcstr        (curpstate->Alcstr)
-      #define alcsubs       (curpstate->Alcsubs)
-      #define alctelem      (curpstate->Alctelem)
-      #define alctvtbl      (curpstate->Alctvtbl)
-      #define dealcblk      (curpstate->Dealcblk)
-      #define dealcstr      (curpstate->Dealcstr)
-      #define reserve       (curpstate->Reserve)
-      #define general_call  (curpstate->GeneralCall)
-      #define general_access (curpstate->GeneralAccess)
-      #define general_invokef (curpstate->GeneralInvokef)
+#define cplist	    (curpstate->Cplist)
+#define cpset	    (curpstate->Cpset)
+#define cptable	    (curpstate->Cptable)
+#define cnv_cset	    (curpstate->Cnvcset)
+#define cnv_ucs	    (curpstate->Cnvucs)
+#define cnv_int	    (curpstate->Cnvint)
+#define cnv_real	    (curpstate->Cnvreal)
+#define cnv_str	    (curpstate->Cnvstr)
+#define cnv_tstr	    (curpstate->Cnvtstr)
+#define deref	    (curpstate->Deref)
+#define alcbignum	    (curpstate->Alcbignum)
+#define alccoexp	    (curpstate->Alccoexp)
+#define alccset	    (curpstate->Alccset)
+#define alchash	    (curpstate->Alchash)
+#define alcsegment    (curpstate->Alcsegment)
+#define alclist_raw   (curpstate->Alclist_raw)
+#define alclist	    (curpstate->Alclist)
+#define alclstb	    (curpstate->Alclstb)
+#define alcreal	    (curpstate->Alcreal)
+#define alcrecd	    (curpstate->Alcrecd)
+#define alcobject	    (curpstate->Alcobject)
+#define alccast  	    (curpstate->Alccast)
+#define alcmethp      (curpstate->Alcmethp)
+#define alcucs        (curpstate->Alcucs)
+#define alcselem      (curpstate->Alcselem)
+#define alcstr        (curpstate->Alcstr)
+#define alcsubs       (curpstate->Alcsubs)
+#define alctelem      (curpstate->Alctelem)
+#define alctvtbl      (curpstate->Alctvtbl)
+#define dealcblk      (curpstate->Dealcblk)
+#define dealcstr      (curpstate->Dealcstr)
+#define reserve       (curpstate->Reserve)
+#define general_call  (curpstate->GeneralCall)
+#define general_access (curpstate->GeneralAccess)
+#define general_invokef (curpstate->GeneralInvokef)
 
 #if MSWIN32
 #ifndef S_ISDIR
