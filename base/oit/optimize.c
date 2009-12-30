@@ -28,6 +28,7 @@ struct literal {
 #define Less           -1
 #define Equal           0
 #define Greater         1
+#define MaxCvtLen      32
 
 static word cvpos(long pos, long len);
 static int changes(struct lnode *n);
@@ -964,7 +965,7 @@ static int cnv_string(struct literal *s)
             break;
         }
         case INTEGER: {
-            char buf[32];
+            char buf[MaxCvtLen];
             sprintf(buf, "%ld", (long)s->u.i);
             s->type = STRING;
             s->u.str.len = strlen(buf);
@@ -3209,7 +3210,7 @@ static double dblZero = 0.0;
  */
 static char *rtos(double n)
 {
-    static char buf[64];
+    static char buf[MaxCvtLen];
     char *p, *s = buf;
     s++; 				/* leave room for leading zero */
     sprintf(s, "%.*g", Precision, n + dblZero);   /* format, avoiding -0 */
