@@ -31,9 +31,7 @@ static int cset2str(dptr src, dptr dest)
 /*
  * cnv_c_dbl - cnv:C_double(*s, *d), convert a value directly into a C double
  */
-int cnv_c_dbl(s, d)
-dptr s;
-double *d;
+int cnv_c_dbl(dptr s, double *d)
    {
    tended struct descrip result, cnvstr;
 
@@ -96,9 +94,7 @@ double *d;
 /*
  * cnv_c_int - cnv:C_integer(*s, *d), convert a value directly into a C_integer
  */
-int cnv_c_int(s, d)
-dptr s;
-C_integer *d;
+int cnv_c_int(dptr s, C_integer *d)
    {
    tended struct descrip cnvstr, result;
    union numeric numrc;
@@ -162,9 +158,7 @@ C_integer *d;
 /*
  * cnv_c_str - cnv:C_string(*s, *d), convert a value into a C (and Icon) string
  */
-int cnv_c_str(s, d)
-dptr s;
-dptr d;
+int cnv_c_str(dptr s, dptr d)
    {
    /*
     * Get the string to the end of the string region and append a '\0'.
@@ -368,9 +362,7 @@ int need_ucs(dptr s)
 /*
  * cnv_ec_int - cnv:(exact)C_integer(*s, *d), convert to an exact C integer
  */
-int cnv_ec_int(s, d)
-dptr s;
-C_integer *d;
+int cnv_ec_int(dptr s, C_integer *d)
    {
    tended struct descrip cnvstr; /* tended since ston allocates blocks */
    union numeric numrc;
@@ -415,8 +407,7 @@ C_integer *d;
 /*
  * cnv_eint - cnv:(exact)integer(*s, *d), convert to an exact integer
  */
-int cnv_eint(s, d)
-dptr s, d;
+int cnv_eint(dptr s, dptr d)
    {
    tended struct descrip cnvstr; /* tended since ston allocates blocks */
    union numeric numrc;
@@ -464,8 +455,7 @@ dptr s, d;
 /*
  * cnv_int - cnv:integer(*s, *d), convert to integer
  */
-int f(s, d)
-dptr s, d;
+int f(dptr s, dptr d)
    {
    tended struct descrip cnvstr; /* tended since ston allocates blocks */
    union numeric numrc;
@@ -789,10 +779,7 @@ deref_macro(deref_1,E_Deref)
  *  making q a descriptor for the resulting string.
  */
 
-static void itos(num, dp, s)
-C_integer num;
-dptr dp;
-char *s;
+static void itos(C_integer num, dptr dp, char *s)
    {
    register char *p;
 
@@ -831,9 +818,7 @@ char *s;
  * (we do this to avoid allocating a block for a real
  * that will later be used directly as a C_double).
  */
-static int ston(sp, result)
-dptr sp;
-union numeric *result;
+static int ston(dptr sp, union numeric *result)
    {
    register char *s = StrLoc(*sp), *end_s;
    register int c;
@@ -1030,9 +1015,7 @@ union numeric *result;
  *  given length.
  */
 
-word cvpos(pos, len)
-long pos;
-register long len;
+word cvpos(long pos, long len)
    {
    register word p;
 
@@ -1054,8 +1037,8 @@ register long len;
       return p;
    return (len + p + 1);
    }
-
-double dblZero = 0.0;
+
+static double dblZero = 0.0;
 
 /*
  * rtos - convert the real number n into a string using s as a buffer and
