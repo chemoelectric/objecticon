@@ -3,28 +3,15 @@
  */
 "x || y - concatenate strings x and y." 
 
-operator || cater(x0, y0)
+operator || cater(x, y)
    body {
-     tended struct descrip x, y;
-
-     if (!cnv:string_or_ucs(x0, x))
-         runerr(129, x0);
-     if (!cnv:string_or_ucs(y0, y))
-         runerr(129, y0);
-
-     if (is:ucs(x) || is:ucs(y)) {
+     if (need_ucs(&x) || need_ucs(&y)) {
          tended struct descrip utf8_x, utf8_y, utf8;
 
-         /*
-          * Ensure both x and y are ucs.  Note that a simple
-          * cnv:ucs(x) is not sufficient, since x0 may be for example
-          * '\xff', and hence x is "\xff".  The former is convertible
-          * to ucs, whilst the latter is not.
-          */
-         if (!is:ucs(x) && !cnv:ucs(x0, x))
-             runerr(128, x0);
-         if (!is:ucs(y) && !cnv:ucs(y0, y))
-             runerr(128, y0);
+         if (!cnv:ucs(x, x))
+             runerr(128, x);
+         if (!cnv:ucs(y, y))
+             runerr(128, y);
 
          utf8_x = UcsBlk(x).utf8;
          utf8_y = UcsBlk(y).utf8;
@@ -74,7 +61,13 @@ operator || cater(x0, y0)
          return ucs(make_ucs_block(&utf8, UcsBlk(x).length + UcsBlk(y).length));
      } else {
          tended struct descrip result;
+
          /* Neither ucs, so both args must be strings */
+
+         if (!cnv:string(x, x))
+             runerr(129, x);
+         if (!cnv:string(y, y))
+             runerr(129, y);
 
          /*
           *  Optimization 0:  Check for zero-length operands.

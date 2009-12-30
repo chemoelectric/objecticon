@@ -292,16 +292,13 @@ int subs_asgn(dptr dest, dptr src)
    if (!is:string(deststr) && !is:ucs(deststr))
       ReturnErrVal(129, deststr, Error);
 
-   if (!cnv:string_or_ucs(*src, srcstr))
-      ReturnErrVal(129, *src, Error);
-
-   if (is:ucs(deststr) || is:ucs(srcstr)) {
+   if (is:ucs(deststr) || need_ucs(src)) {
        tended struct descrip utf8_new;
 
        if (!cnv:ucs(deststr, deststr))
            ReturnErrVal(128, deststr, Error);
 
-       if (!is:ucs(srcstr) && !cnv:ucs(*src, srcstr))
+       if (!cnv:ucs(*src, srcstr))
            ReturnErrVal(128, *src, Error);
        
        if (tvsub->sspos + tvsub->sslen - 1 > UcsBlk(deststr).length)
@@ -342,7 +339,9 @@ int subs_asgn(dptr dest, dptr src)
 
        newsslen = UcsBlk(srcstr).length;
    } else {
-       /* Both deststr, srcstr must be strings */
+       /* deststr must be a string, so ensure src is too */
+       if (!cnv:string(*src, srcstr))
+           ReturnErrVal(129, *src, Error);
 
        /*
         * Be sure that the variable in the trapped variable points

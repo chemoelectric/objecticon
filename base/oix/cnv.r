@@ -343,6 +343,29 @@ int cnv_str_or_ucs(dptr s, dptr d)
 }
 
 /*
+ * Return 1 if cnv_str_or_ucs above would result in a ucs; return 0
+ * otherwise.
+ */
+int need_ucs(dptr s)
+{
+   type_case *s of {
+     ucs: {
+        return 1;
+       }
+     cset: {
+           struct b_cset *c = &CsetBlk(*s);  /* Doesn't need to be tended */
+           if (c->n_ranges == 0 || c->range[c->n_ranges - 1].to < 256)
+               return 0;
+           else
+               return 1;
+      }
+     default: {
+         return 0;
+      }
+   }
+}
+
+/*
  * cnv_ec_int - cnv:(exact)C_integer(*s, *d), convert to an exact C integer
  */
 int cnv_ec_int(s, d)

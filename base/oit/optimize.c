@@ -35,11 +35,9 @@ static int lexcmp(struct literal *x, struct literal *y);
 static int equiv(struct literal *x, struct literal *y);
 
 static int cnv_ucs(struct literal *s);
+static int need_ucs(struct literal *s);
 static int cnv_cset(struct literal *s);
-static int cnv_string_or_ucs(struct literal *s);
 static int cnv_string(struct literal *s);
-static int get_literal_string_or_ucs(struct lnode *n, struct literal *l);
-static int get_literal_ucs(struct lnode *n, struct literal *l);
 static int get_literal_cset(struct lnode *n, struct literal *l);
 static int cnv_eint(struct literal *s);
 static int cnv_int(struct literal *s);
@@ -1064,21 +1062,23 @@ static int cnv_cset(struct literal *s)
     return 0;
 }
 
-static int cnv_string_or_ucs(struct literal *s)
+static int need_ucs(struct literal *s)
 {
     switch (s->type) {
-        case STRING:
         case UCS: {
             return 1;
         }
         case CSET: {
-            return cnv_string(s) || cnv_ucs(s);
+            int npair = s->u.rs->n_ranges;
+            if (npair == 0 || s->u.rs->range[npair - 1].to < 256)
+                return 0;
+            else
+                return 1;
         }
         default: {
-            return cnv_string(s);
+            return 0;
         }
     }
-    return 0;
 }
 
 static struct rangeset *rangeset_diff(struct rangeset *x, struct rangeset *y)
@@ -1374,50 +1374,23 @@ static int get_literal_cset(struct lnode *n, struct literal *l)
     return 1;
 }
 
-static int get_literal_string_or_ucs(struct lnode *n, struct literal *l)
-{
-    if (!get_literal(n, l))
-        return 0;
-    if (l->type == FAIL)
-        return 1;
-    if (!cnv_string_or_ucs(l)) {
-        free_literal(l);
-        return 0;
-    }
-    return 1;
-}
-
-static int get_literal_ucs(struct lnode *n, struct literal *l)
-{
-    if (!get_literal(n, l))
-        return 0;
-    if (l->type == FAIL)
-        return 1;
-    if (!cnv_ucs(l)) {
-        free_literal(l);
-        return 0;
-    }
-    return 1;
-}
-
 static void fold_cat(struct lnode *n)
 {
     struct lnode_2 *x = (struct lnode_2 *)n;
     struct literal l1, l2;
     int i;
 
-    if (!get_literal_string_or_ucs(x->child1, &l1))
+    if (!get_literal(x->child1, &l1))
         return;
     if (l1.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         return;
     }
-    if (!get_literal_string_or_ucs(x->child2, &l2)) {
+    if (!get_literal(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
-
     if (l2.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
@@ -1425,20 +1398,17 @@ static void fold_cat(struct lnode *n)
         return;
     }
 
-    if (l1.type == UCS || l2.type == UCS) {
-        if (l1.type != UCS) {
+    if (need_ucs(&l1) || need_ucs(&l2)) {
+        if (!cnv_ucs(&l1) || !cnv_ucs(&l2)) {
             free_literal(&l1);
-            if (!get_literal_ucs(x->child1, &l1)) {
-                free_literal(&l2);
-                return;
-            }
-        }
-        if (l2.type != UCS) {
             free_literal(&l2);
-            if (!get_literal_ucs(x->child2, &l2)) {
-                free_literal(&l1);
-                return;
-            }
+            return;
+        }
+    } else {
+        if (!cnv_string(&l1) || !cnv_string(&l2)) {
+            free_literal(&l1);
+            free_literal(&l2);
+            return;
         }
     }
 
@@ -1756,14 +1726,15 @@ static void fold_lexeq(struct lnode *n)
 {
     struct lnode_2 *x = (struct lnode_2 *)n;
     struct literal l1, l2;
-    if (!get_literal_string_or_ucs(x->child1, &l1))
+
+    if (!get_literal(x->child1, &l1))
         return;
     if (l1.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         return;
     }
-    if (!get_literal_string_or_ucs(x->child2, &l2)) {
+    if (!get_literal(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
@@ -1773,22 +1744,21 @@ static void fold_lexeq(struct lnode *n)
         free_literal(&l2);
         return;
     }
-    if (l1.type == UCS || l2.type == UCS) {
-        if (l1.type != UCS) {
+
+    if (need_ucs(&l1) || need_ucs(&l2)) {
+        if (!cnv_ucs(&l1) || !cnv_ucs(&l2)) {
             free_literal(&l1);
-            if (!get_literal_ucs(x->child1, &l1)) {
-                free_literal(&l2);
-                return;
-            }
-        }
-        if (l2.type != UCS) {
             free_literal(&l2);
-            if (!get_literal_ucs(x->child2, &l2)) {
-                free_literal(&l1);
-                return;
-            }
+            return;
+        }
+    } else {
+        if (!cnv_string(&l1) || !cnv_string(&l2)) {
+            free_literal(&l1);
+            free_literal(&l2);
+            return;
         }
     }
+
     if (lexcmp(&l1, &l2) == Equal) {
         replace_node(n, (struct lnode*)
                      lnode_const(&x->child2->loc,
@@ -1806,14 +1776,15 @@ static void fold_lexne(struct lnode *n)
 {
     struct lnode_2 *x = (struct lnode_2 *)n;
     struct literal l1, l2;
-    if (!get_literal_string_or_ucs(x->child1, &l1))
+
+    if (!get_literal(x->child1, &l1))
         return;
     if (l1.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         return;
     }
-    if (!get_literal_string_or_ucs(x->child2, &l2)) {
+    if (!get_literal(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
@@ -1823,22 +1794,21 @@ static void fold_lexne(struct lnode *n)
         free_literal(&l2);
         return;
     }
-    if (l1.type == UCS || l2.type == UCS) {
-        if (l1.type != UCS) {
+
+    if (need_ucs(&l1) || need_ucs(&l2)) {
+        if (!cnv_ucs(&l1) || !cnv_ucs(&l2)) {
             free_literal(&l1);
-            if (!get_literal_ucs(x->child1, &l1)) {
-                free_literal(&l2);
-                return;
-            }
-        }
-        if (l2.type != UCS) {
             free_literal(&l2);
-            if (!get_literal_ucs(x->child2, &l2)) {
-                free_literal(&l1);
-                return;
-            }
+            return;
+        }
+    } else {
+        if (!cnv_string(&l1) || !cnv_string(&l2)) {
+            free_literal(&l1);
+            free_literal(&l2);
+            return;
         }
     }
+
     if (lexcmp(&l1, &l2) != Equal) {
         replace_node(n, (struct lnode*)
                      lnode_const(&x->child2->loc,
@@ -1856,14 +1826,15 @@ static void fold_lexge(struct lnode *n)
 {
     struct lnode_2 *x = (struct lnode_2 *)n;
     struct literal l1, l2;
-    if (!get_literal_string_or_ucs(x->child1, &l1))
+
+    if (!get_literal(x->child1, &l1))
         return;
     if (l1.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         return;
     }
-    if (!get_literal_string_or_ucs(x->child2, &l2)) {
+    if (!get_literal(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
@@ -1873,22 +1844,21 @@ static void fold_lexge(struct lnode *n)
         free_literal(&l2);
         return;
     }
-    if (l1.type == UCS || l2.type == UCS) {
-        if (l1.type != UCS) {
+
+    if (need_ucs(&l1) || need_ucs(&l2)) {
+        if (!cnv_ucs(&l1) || !cnv_ucs(&l2)) {
             free_literal(&l1);
-            if (!get_literal_ucs(x->child1, &l1)) {
-                free_literal(&l2);
-                return;
-            }
-        }
-        if (l2.type != UCS) {
             free_literal(&l2);
-            if (!get_literal_ucs(x->child2, &l2)) {
-                free_literal(&l1);
-                return;
-            }
+            return;
+        }
+    } else {
+        if (!cnv_string(&l1) || !cnv_string(&l2)) {
+            free_literal(&l1);
+            free_literal(&l2);
+            return;
         }
     }
+
     if (lexcmp(&l1, &l2) != Less) {
         replace_node(n, (struct lnode*)
                      lnode_const(&x->child2->loc,
@@ -1906,14 +1876,15 @@ static void fold_lexgt(struct lnode *n)
 {
     struct lnode_2 *x = (struct lnode_2 *)n;
     struct literal l1, l2;
-    if (!get_literal_string_or_ucs(x->child1, &l1))
+
+    if (!get_literal(x->child1, &l1))
         return;
     if (l1.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         return;
     }
-    if (!get_literal_string_or_ucs(x->child2, &l2)) {
+    if (!get_literal(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
@@ -1923,22 +1894,21 @@ static void fold_lexgt(struct lnode *n)
         free_literal(&l2);
         return;
     }
-    if (l1.type == UCS || l2.type == UCS) {
-        if (l1.type != UCS) {
+
+    if (need_ucs(&l1) || need_ucs(&l2)) {
+        if (!cnv_ucs(&l1) || !cnv_ucs(&l2)) {
             free_literal(&l1);
-            if (!get_literal_ucs(x->child1, &l1)) {
-                free_literal(&l2);
-                return;
-            }
-        }
-        if (l2.type != UCS) {
             free_literal(&l2);
-            if (!get_literal_ucs(x->child2, &l2)) {
-                free_literal(&l1);
-                return;
-            }
+            return;
+        }
+    } else {
+        if (!cnv_string(&l1) || !cnv_string(&l2)) {
+            free_literal(&l1);
+            free_literal(&l2);
+            return;
         }
     }
+
     if (lexcmp(&l1, &l2) == Greater) {
         replace_node(n, (struct lnode*)
                      lnode_const(&x->child2->loc,
@@ -1956,14 +1926,15 @@ static void fold_lexle(struct lnode *n)
 {
     struct lnode_2 *x = (struct lnode_2 *)n;
     struct literal l1, l2;
-    if (!get_literal_string_or_ucs(x->child1, &l1))
+
+    if (!get_literal(x->child1, &l1))
         return;
     if (l1.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         return;
     }
-    if (!get_literal_string_or_ucs(x->child2, &l2)) {
+    if (!get_literal(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
@@ -1973,22 +1944,21 @@ static void fold_lexle(struct lnode *n)
         free_literal(&l2);
         return;
     }
-    if (l1.type == UCS || l2.type == UCS) {
-        if (l1.type != UCS) {
+
+    if (need_ucs(&l1) || need_ucs(&l2)) {
+        if (!cnv_ucs(&l1) || !cnv_ucs(&l2)) {
             free_literal(&l1);
-            if (!get_literal_ucs(x->child1, &l1)) {
-                free_literal(&l2);
-                return;
-            }
-        }
-        if (l2.type != UCS) {
             free_literal(&l2);
-            if (!get_literal_ucs(x->child2, &l2)) {
-                free_literal(&l1);
-                return;
-            }
+            return;
+        }
+    } else {
+        if (!cnv_string(&l1) || !cnv_string(&l2)) {
+            free_literal(&l1);
+            free_literal(&l2);
+            return;
         }
     }
+
     if (lexcmp(&l1, &l2) != Greater) {
         replace_node(n, (struct lnode*)
                      lnode_const(&x->child2->loc,
@@ -2006,14 +1976,14 @@ static void fold_lexlt(struct lnode *n)
 {
     struct lnode_2 *x = (struct lnode_2 *)n;
     struct literal l1, l2;
-    if (!get_literal_string_or_ucs(x->child1, &l1))
+    if (!get_literal(x->child1, &l1))
         return;
     if (l1.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         return;
     }
-    if (!get_literal_string_or_ucs(x->child2, &l2)) {
+    if (!get_literal(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
@@ -2023,22 +1993,21 @@ static void fold_lexlt(struct lnode *n)
         free_literal(&l2);
         return;
     }
-    if (l1.type == UCS || l2.type == UCS) {
-        if (l1.type != UCS) {
+
+    if (need_ucs(&l1) || need_ucs(&l2)) {
+        if (!cnv_ucs(&l1) || !cnv_ucs(&l2)) {
             free_literal(&l1);
-            if (!get_literal_ucs(x->child1, &l1)) {
-                free_literal(&l2);
-                return;
-            }
-        }
-        if (l2.type != UCS) {
             free_literal(&l2);
-            if (!get_literal_ucs(x->child2, &l2)) {
-                free_literal(&l1);
-                return;
-            }
+            return;
+        }
+    } else {
+        if (!cnv_string(&l1) || !cnv_string(&l2)) {
+            free_literal(&l1);
+            free_literal(&l2);
+            return;
         }
     }
+
     if (lexcmp(&l1, &l2) == Less) {
         replace_node(n, (struct lnode*)
                      lnode_const(&x->child2->loc,
