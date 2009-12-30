@@ -441,8 +441,6 @@ void    hshrink         (union block *bp);
 C_integer iipow         (C_integer n1, C_integer n2);
 void    init            (char *name, int *argcp, char *argv[], int trc_init);
 int     kbhit           (void);
-void    nxttab          (C_integer *col, dptr *tablst, dptr endlst,
-                           C_integer *last, C_integer *interval);
 int     order           (dptr dp);
 int     ripow           (double r, C_integer n, dptr rslt);
 void    rtos            (double n,dptr dp,char *s);
@@ -496,6 +494,7 @@ struct b_ucs *cset_to_ucs_block(struct b_cset *b0, word pos, word len);
 void cset_to_str(struct b_cset *b, word pos, word len, dptr res);
 struct b_ucs *make_ucs_substring(struct b_ucs *b, word pos, word len);
 int cset_range_of_pos(struct b_cset *b, word pos);
+int need_ucs(dptr s);
 
 int iselect(int fd, word t);
 long    millisec        (void);

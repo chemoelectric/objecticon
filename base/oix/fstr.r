@@ -2,6 +2,8 @@
  * File: fstr.r
  */
 
+static void nxttab(C_integer *col, dptr *tablst, dptr endlst, C_integer *last, C_integer *interval);
+
 
 "detab(s,i,...) - replace tabs with spaces, with stops at columns indicated."
 
@@ -496,12 +498,7 @@ end
  *   beyond col
  */
 
-void nxttab(col, tablst, endlst, last, interval)
-C_integer *col;
-dptr *tablst;
-dptr endlst;
-C_integer *last;
-C_integer *interval;
+static void nxttab(C_integer *col, dptr *tablst, dptr endlst, C_integer *last, C_integer *interval)
    {
    /*
     * Look for the right tab stop.
@@ -899,13 +896,6 @@ function left(s1,n,s2)
     */
    if !cnv:string_or_ucs(s1) then
          runerr(129,s1)
-   if is:ucs(s1) then {
-      if !def:ucs(s2, *blank_ucs) then
-         runerr(128, s2)
-   } else {
-      if !def:tmp_string(s2,blank) then
-         runerr(103, s2)
-   }
    if !def:C_integer(n,1) then
       runerr(101, n)
 
@@ -918,6 +908,9 @@ function left(s1,n,s2)
       if (is:ucs(s1)) {
           word odd_len, whole_len, utf8_size, i;
           tended struct descrip utf8, odd_utf8;
+
+          if (!def:ucs(s2, *blank_ucs, s2))
+              runerr(128, s2);
 
           /*
            * Simple case if s1 fits exactly.
@@ -975,6 +968,9 @@ function left(s1,n,s2)
           register char *s, *st;
           word slen;
           char *sbuf, *s3;
+
+          if (!def:tmp_string(s2, blank, s2))
+              runerr(103, s2);
 
           /*
            * The padding string is null; make it a blank.
@@ -1037,13 +1033,7 @@ function right(s1,n,s2)
     */
    if !cnv:string_or_ucs(s1) then
       runerr(129,s1)
-   if is:ucs(s1) then {
-      if !def:ucs(s2, *blank_ucs) then
-         runerr(128, s2)
-   } else {
-      if !def:tmp_string(s2,blank) then
-         runerr(103, s2)
-   }
+
    if !def:C_integer(n,1) then
       runerr(101, n)
 
@@ -1056,6 +1046,9 @@ function right(s1,n,s2)
       if (is:ucs(s1)) {
           word odd_len, whole_len, utf8_size, i;
           tended struct descrip utf8, odd_utf8;
+
+          if (!def:ucs(s2, *blank_ucs, s2))
+              runerr(128, s2);
 
           /*
            * Simple case if s1 fits exactly.
@@ -1116,6 +1109,9 @@ function right(s1,n,s2)
           word slen;
           char *sbuf, *s3;
 
+          if (!def:tmp_string(s2, blank, s2))
+              runerr(103, s2);
+
           /*
            * The padding string is null; make it a blank.
            */
@@ -1175,13 +1171,7 @@ function center(s1,n,s2)
     */
    if !cnv:string_or_ucs(s1) then
       runerr(129,s1)
-   if is:ucs(s1) then {
-      if !def:ucs(s2, *blank_ucs) then
-         runerr(128, s2)
-   } else {
-      if !def:tmp_string(s2,blank) then
-         runerr(103, s2)
-   }
+
    if !def:C_integer(n,1) then
       runerr(101, n)
 
@@ -1195,6 +1185,9 @@ function center(s1,n,s2)
           word left, right, whole_left_len, odd_left_len,
               whole_right_len, odd_right_len, utf8_size, i;
           tended struct descrip utf8, odd_left_utf8, odd_right_utf8;
+
+          if (!def:ucs(s2, *blank_ucs, s2))
+              runerr(128, s2);
 
           /*
            * Simple case if s1 fits exactly.
@@ -1274,6 +1267,9 @@ function center(s1,n,s2)
           word slen;
           char *sbuf, *s3;
           word hcnt;
+
+          if (!def:tmp_string(s2,blank,s2))
+              runerr(103, s2);
 
           /*
            * The padding string is null; make it a blank.
