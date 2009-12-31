@@ -10,7 +10,7 @@ static struct region *findgap	(struct region *curr, word nbytes);
 static struct region *newregion	(word nbytes, word stdsize);
 static void check_stack_usage(void);
 
-
+
 /*
  * AlcBlk - allocate a block.
  */
@@ -58,7 +58,7 @@ static void check_stack_usage(void);
    var->blksize = size;
    }
 #enddef
-
+
 
 /*
  * Alc2Blks - allocate two blocks together.
@@ -174,7 +174,7 @@ struct progstate *alcprog(long icodesize)
    return prog;
 }
 
-
+
 #begdef alccset_macro(f, e_cset)
 /*
  * alccset - allocate a cset in the block region.
@@ -227,7 +227,7 @@ union block *f(int tcode)
 
 alchash_macro(alchash_0,0,0)
 alchash_macro(alchash_1,E_Table,E_Set)
-
+
 #begdef alcsegment_macro(f,e_slots)
 /*
  * alcsegment - allocate a slot block in the block region.
@@ -249,7 +249,7 @@ struct b_slots *f(word nslots)
 
 alcsegment_macro(alcsegment_0,0)
 alcsegment_macro(alcsegment_1,E_Slots)
-
+
 #begdef alclist_raw_macro(f,e_list,e_lelem)
 /*
  * alclist - allocate a list header block in the block region.
@@ -322,7 +322,7 @@ struct b_list *f(uword size, uword nslots)
 
 alclist_macro(alclist_0,0,0)
 alclist_macro(alclist_1,E_List,E_Lelem)
-
+
 #begdef alclstb_macro(f,e_lelem)
 /*
  * alclstb - allocate a list element block in the block region.
@@ -350,7 +350,7 @@ struct b_lelem *f(uword nslots)
 
 alclstb_macro(alclstb_0,0)
 alclstb_macro(alclstb_1,E_Lelem)
-
+
 #begdef alcreal_macro(f,e_real)
 /*
  * alcreal - allocate a real value in the block region.
@@ -369,7 +369,7 @@ struct b_real *f(double val)
 
 alcreal_macro(alcreal_0,0)
 alcreal_macro(alcreal_1,E_Real)
-
+
 #begdef alcrecd_macro(f,e_record)
 /*
  * alcrecd - allocate record with nflds fields in the block region.
@@ -394,7 +394,7 @@ struct b_record *f(struct b_constructor *con)
 
 alcrecd_macro(alcrecd_0,0)
 alcrecd_macro(alcrecd_1,E_Record)
-
+
 
 #begdef alcobject_macro(f,e_object)
 /*
@@ -420,7 +420,7 @@ struct b_object *f(struct b_class *class)
 
 alcobject_macro(alcobject_0,0)
 alcobject_macro(alcobject_1,E_Object)
-
+
 
 #begdef alccast_macro(f,e_cast)
 /*
@@ -479,7 +479,7 @@ alcucs_macro(alcucs_0,0)
 alcucs_macro(alcucs_1,E_Ucs)
 
 
-
+
 #begdef alcselem_macro(f,e_selem)
 /*
  * alcselem - allocate a set element block.
@@ -498,7 +498,7 @@ struct b_selem *f()
 
 alcselem_macro(alcselem_0,0)
 alcselem_macro(alcselem_1,E_Selem)
-
+
 #begdef alcstr_macro(f,e_string)
 /*
  * alcstr - allocate a string in the string space.
@@ -552,7 +552,7 @@ char *f(register char *s, register word slen)
 
 alcstr_macro(alcstr_0,0)
 alcstr_macro(alcstr_1,E_String)
-
+
 #begdef alcsubs_macro(f, e_tvsubs)
 /*
  * alcsubs - allocate a substring trapped variable in the block region.
@@ -573,7 +573,7 @@ struct b_tvsubs *f(word len, word pos, dptr var)
 
 alcsubs_macro(alcsubs_0,0)
 alcsubs_macro(alcsubs_1,E_Tvsubs)
-
+
 #begdef alctelem_macro(f, e_telem)
 /*
  * alctelem - allocate a table element block in the block region.
@@ -593,7 +593,7 @@ struct b_telem *f()
 
 alctelem_macro(alctelem_0,0)
 alctelem_macro(alctelem_1,E_Telem)
-
+
 #begdef alctvtbl_macro(f,e_tvtbl)
 /*
  * alctvtbl - allocate a table element trapped variable block in the block
@@ -616,7 +616,7 @@ struct b_tvtbl *f(register dptr tbl, register dptr ref, uword hashnum)
 
 alctvtbl_macro(alctvtbl_0,0)
 alctvtbl_macro(alctvtbl_1,E_Tvtbl)
-
+
 #begdef dealcblk_macro(f,e_blkdealc)
 /*
  * dealcblk - return a block to the heap.
@@ -638,7 +638,7 @@ void f (union block *bp)
 
 dealcblk_macro(dealcblk_0,0)
 dealcblk_macro(dealcblk_1,E_BlkDeAlc)
-
+
 
 
 #begdef dealcstr_macro(f,e_strdealc)
@@ -660,7 +660,7 @@ void f (char *p)
 
 dealcstr_macro(dealcstr_0,0)
 dealcstr_macro(dealcstr_1,E_StrDeAlc)
-
+
 
 
 #begdef reserve_macro(f,e_tenurestring,e_tenureblock)
@@ -782,13 +782,11 @@ char *f(int region, word nbytes)
 
 reserve_macro(reserve_0,0,0)
 reserve_macro(reserve_1,E_TenureString,E_TenureBlock)
-
+
 /*
  * findgap - search region chain for a region having at least nbytes available
  */
-static struct region *findgap(curr, nbytes)
-struct region *curr;
-word nbytes;
+static struct region *findgap(struct region *curr, word nbytes)
    {
    struct region *rp;
 
@@ -800,13 +798,12 @@ word nbytes;
          return rp;
    return NULL;
    }
-
+
 /*
  * newregion - try to malloc a new region and tenure the old one,
  *  backing off if the requested size fails.
  */
-static struct region *newregion(nbytes,stdsize)
-word nbytes,stdsize;
+static struct region *newregion(word nbytes, word stdsize)
 {
    uword minSize = MinAbrSize;
    struct region *rp;

@@ -500,14 +500,12 @@ int get_name(dptr dp1, dptr dp0)
     }
     return Succeeded;
 }
-
-
+
+
 /*
  * keyref(bp,dp) -- print name of subscripted table
  */
-static void keyref(bp, dp)
-    union block *bp;
-    dptr dp;
+static void keyref(union block *bp, dptr dp)
 {
     tended struct descrip td;
     char sbuf[64];
@@ -596,12 +594,11 @@ static void showline(struct p_frame *pf)
     
 }
 
-    
+    
 /*
  * showlevel - print "| " n times.
  */
-static void showlevel(n)
-    register int n;
+static void showlevel(int n)
 {
     while (n-- > 0) {
         putc('|', stderr);
@@ -879,7 +876,7 @@ static void xtrace()
 
     putc('\n', stderr);
 }
-
+
 
 /*
  * ctrace - a procedure p being called; produce a trace message.
@@ -922,7 +919,7 @@ void fail_trace(struct p_frame *pf)
     putc('\n', stderr);
     fflush(stderr);
 }
-
+
 /*
  * procedure frame pf is suspending; produce a trace message.
  */

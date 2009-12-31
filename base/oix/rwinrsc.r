@@ -15,7 +15,7 @@ wcp wcntxts = NULL;
 wsp wstates = NULL;
 wbp wbndngs = NULL;
 int win_highwater = -1;
-
+
 
 #ifdef XWindows
 #include "rxrsc.ri"
@@ -32,12 +32,11 @@ wbp alc_wbinding()
    GRFX_LINK(w, wbndngs);
    return w;
    }
-
+
 /*
  * free a window binding.
  */
-void free_binding(w)
-wbp w;
+void free_binding(wbp w)
    {
    w->refcount--;
    if(w->refcount == 0) {

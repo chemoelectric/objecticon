@@ -8,9 +8,7 @@
  *   a garbage collection.
  */
 
-int putstr(f, d)
-register FILE *f;
-dptr d;
+int putstr(FILE *f, dptr d)
    {
    register char *s;
    register word l;
@@ -47,8 +45,7 @@ int iselect(int fd, word t)
 /*
  * idelay(n) - delay for n milliseconds
  */
-int idelay(n)
-int n;
+int idelay(int n)
    {
    if (n <= 0) return Succeeded; /* delay < 0 = no delay */
 

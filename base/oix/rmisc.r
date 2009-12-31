@@ -18,7 +18,7 @@ static char *proc_kinds[] = { "procedure",
                               "operator",
                               "internal"};
 
-
+
 /* 
  * eq - compare two Icon strings for equality
  */
@@ -47,7 +47,7 @@ int ceq(dptr dp, char *s)
     return eq(&t, dp);
 }
 
-
+
 /*
  * Get variable descriptor from name.  Returns the (integer-encoded) scope
  *  of the variable (Succeeded for keywords), or Failed if the variable
@@ -190,13 +190,12 @@ int getvar(dptr s, dptr vp, struct progstate *p)
     }
     return Failed;
 }
-
+
 /*
  * hash - compute hash value of arbitrary object for table and set accessing.
  */
 
-uword hash(dp)
-dptr dp;
+uword hash(dptr dp)
    {
    register char *s;
    register uword i;
@@ -476,10 +475,7 @@ static int cset_do_range(int from, int to)
  *  fields of records will not be imaged.
  */
 
-void outimage(f, dp, noimage)
-FILE *f;
-dptr dp;
-int noimage;
+void outimage(FILE *f, dptr dp, int noimage)
    {
    word i, j, k;
    char *s;
@@ -921,16 +917,13 @@ int noimage;
          }
       }
    }
-
+
 
 /*
  * listimage - print an image of a list.
  */
 
-static void listimage(f, lp, noimage)
-FILE *f;
-struct b_list *lp;
-int noimage;
+static void listimage(FILE *f, struct b_list *lp, int noimage)
    {
    register word i, j;
    register struct b_lelem *bp;
@@ -983,7 +976,7 @@ int noimage;
    }
 
 
-
+
 /*
  * findline - find the source line number associated with the ipc
  */
@@ -1058,8 +1051,7 @@ void abbr_fname(dptr s, dptr d)
  * getimage(dp1,dp2) - return string image of object dp1 in dp2.
  */
 
-void getimage(dp1,dp2)
-dptr dp1, dp2;
+void getimage(dptr dp1, dptr dp2)
    {
    register word len;
    int i, j;
@@ -1411,12 +1403,11 @@ dptr dp1, dp2;
          syserr("Invalid type to getimage");
       }
    }
-
+
 /*
  * csname(dp) -- return the name of a predefined cset matching dp.
  */
-static char *csname(dp)
-dptr dp;
+static char *csname(dptr dp)
 {
     int n = CsetBlk(*dp).size;
     struct b_cset_range *r = &CsetBlk(*dp).range[0];
@@ -1452,7 +1443,7 @@ dptr dp;
     return NULL;
 
 }
-
+
 
 #ifndef AsmOver
 /*
@@ -1469,8 +1460,7 @@ dptr dp;
  *  file.
  */
 
-word add(a, b)
-word a, b;
+word add(word a, word b)
 {
    if ((a ^ b) >= 0 && (a >= 0 ? b > MaxWord - a : b < MinWord - a)) {
       over_flow = 1;
@@ -1482,8 +1472,7 @@ word a, b;
      }
 }
 
-word sub(a, b)
-word a, b;
+word sub(word a, word b)
 {
    if ((a ^ b) < 0 && (a >= 0 ? b < a - MaxWord : b > a - MinWord)) {
       over_flow = 1;
@@ -1495,8 +1484,7 @@ word a, b;
       }
 }
 
-word mul(a, b)
-word a, b;
+word mul(word a, word b)
 {
    if (b != 0) {
       if ((a ^ b) >= 0) {
@@ -1517,8 +1505,7 @@ word a, b;
 
 /* MinWord / -1 overflows; need div3 too */
 
-word mod3(a, b)
-word a, b;
+word mod3(word a, word b)
 {
    word retval;
 
@@ -1548,8 +1535,7 @@ word a, b;
    return retval;
 }
 
-word div3(a, b)
-word a, b;
+word div3(word a, word b)
 {
    if ( ( b == 0 ) ||	/* Not really an overflow, but definitely an error */
         ( b == -1 && a == MinWord ) ) {
@@ -1563,8 +1549,7 @@ word a, b;
 
 /* MinWord / -1 overflows; need div3 too */
 
-word neg(a)
-word a;
+word neg(word a)
 {
    if (a == MinWord) {
       over_flow = 1;
@@ -1574,8 +1559,8 @@ word a;
    return -a;
 }
 #endif					/* AsmOver */
-
-
+
+
 /*
  * retderef - Dereference local variables and substrings of local
  *  string-valued variables. This is used for return, suspend, and

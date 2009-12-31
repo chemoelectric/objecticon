@@ -6,8 +6,7 @@
  * anycmp - compare any two objects.
  */
 
-int anycmp(dp1,dp2)
-dptr dp1, dp2;
+int anycmp(dptr dp1, dptr dp2)
    {
    register int o1, o2;
    register long v1, v2, lresult;
@@ -238,13 +237,12 @@ dptr dp1, dp2;
 	 return 0;  /* avoid gcc warning */
       }
    }
-
+
 /*
  * order(x) - return collating number for object x.
  */
 
-int order(dp)
-dptr dp;
+int order(dptr dp)
    {
    if (Qual(*dp))
       return 3; 	     /* string */
@@ -294,13 +292,12 @@ dptr dp;
 	 return 0;  /* avoid gcc warning */
       }
    }
-
+
 /*
  * equiv - test equivalence of two objects.
  */
 
-int equiv(dp1, dp2)
-dptr dp1, dp2;
+int equiv(dptr dp1, dptr dp2)
    {
    register int result;
    register word i;
@@ -384,13 +381,12 @@ dptr dp1, dp2;
 
    return result;
    }
-
+
 /*
  * lexcmp - lexically compare two strings.
  */
 
-int lexcmp(dp1, dp2)
-dptr dp1, dp2;
+int lexcmp(dptr dp1, dptr dp2)
    {
 
 

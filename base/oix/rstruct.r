@@ -16,15 +16,13 @@ void addmem(struct b_set *ps,struct b_selem *pe,union block **pl)
       pe->clink = *pl;
    *pl = (union block *) pe;
    }
-
+
 /*
  * cpslots(dp1, slotptr, i, j) - copy elements of sublist dp1[i:j]
  *  into an array of descriptors.
  */
 
-void cpslots(dp1, slotptr, i, j)
-dptr dp1, slotptr;
-word i, j;
+void cpslots(dptr dp1, dptr slotptr, word i, word j)
    {
    word size, pos;
    tended struct b_list *lp1;
@@ -90,7 +88,7 @@ void f(dptr dp1, dptr dp2, word i, word j)
 cplist_macro(cplist_0, 0)
 cplist_macro(cplist_1, E_Lcreate)
 
-
+
 #begdef cpset_macro(f, e)
 /*
  * cpset(dp1,dp2,n) - copy set dp1 to dp2, reserving memory for n entries.
@@ -175,15 +173,13 @@ static void cphash(dptr dp1, dptr dp2, word n, int tcode)
    if (TooSparse(dst))
       hshrink(dst);
    }
-
+
 /*
  * hmake - make a hash structure (Set or Table) with a given number of slots.
  *  If *nslots* is zero, a value appropriate for *nelem* elements is chosen.
  *  A return of NULL indicates allocation failure.
  */
-union block *hmake(tcode, nslots, nelem)
-int tcode;
-word nslots, nelem;
+union block *hmake(int tcode, word nslots, word nelem)
    {
    word seg, t, blksize, elemsize;
    tended union block *blk;
@@ -218,7 +214,7 @@ word nslots, nelem;
    blk->set.mask = nslots - 1;
    return blk;
    }
-
+
 /*
  * hchain - return a pointer to the word that points to the head of the hash
  *  chain for hash number hn in hashed structure s.
@@ -231,9 +227,7 @@ static unsigned char log2h[] = {
    0,1,2,2, 3,3,3,3, 4,4,4,4, 4,4,4,4, 5,5,5,5, 5,5,5,5, 5,5,5,5, 5,5,5,5,
    };
 
-union block **hchain(pb, hn)
-union block *pb;
-register uword hn;
+union block **hchain(union block *pb, uword hn)
    {
    register struct b_set *ps;
    register word slotnum, segnum, segslot;
@@ -247,14 +241,12 @@ register uword hn;
    segslot = hn & (segsize[segnum] - 1);
    return &ps->hdir[segnum]->hslots[segslot];
    }
-
+
 /*
  * hgfirst - initialize for generating set or table, and return first element.
  */
 
-union block *hgfirst(bp, s)
-union block *bp;
-struct hgstate *s;
+union block *hgfirst(union block *bp, struct hgstate *s)
    {
    int i;
 
@@ -280,10 +272,7 @@ struct hgstate *s;
  *  can only *grow*.
  */
 
-union block *hgnext(bp, s, ep)
-union block *bp;
-struct hgstate *s;
-union block *ep;
+union block *hgnext(union block *bp, struct hgstate *s, union block *ep)
    {
    int i;
    word d, m;
@@ -376,13 +365,12 @@ union block *ep;
    if (ep && BlkType(ep) == T_Table) ep = NULL;
    return ep;
    }
-
+
 /*
  * hgrow - split a hashed structure (doubling the buckets) for faster access.
  */
 
-void hgrow(bp)
-union block *bp;
+void hgrow(union block *bp)
    {
    register union block **tp0, **tp1, *ep;
    register word newslots, slotnum, segnum;
@@ -425,15 +413,14 @@ union block *bp;
    ps->hdir[segnum] = newseg;
    ps->mask = (ps->mask << 1) | 1;
    }
-
+
 /*
  * hshrink - combine buckets in a set or table that is too sparse.
  *
  *  Call this only for newly created structures.  Shrinking an active structure
  *  can wreak havoc on suspended generators.
  */
-void hshrink(bp)
-union block *bp;
+void hshrink(union block *bp)
    {
    register union block **tp, *ep0, *ep1;
    int topseg, curseg;
@@ -481,7 +468,7 @@ union block *bp;
       ps->mask >>= 1;
       }
    }
-
+
 /*
  * memb - sets res flag to 1 if x is a member of a set or table, 0 if not.
  *  Returns a pointer to the word which points to the element, or which
