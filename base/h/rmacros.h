@@ -10,8 +10,6 @@
 #define MinListSlots	    8	/* number of elements in an expansion
 				 * list element block  */
 
-#define MaxCvtLen	    32	/* sufficient for holding result of real to string (rtos)
-                                 * and integer to string (itos) in cnv.r */
 #define RandA        1103515245	/* random seed multiplier */
 #define RandC	      453816694	/* random seed additive constant */
 #define RanScale 4.65661286e-10	/* random scale factor = 1/(2^31-1) */

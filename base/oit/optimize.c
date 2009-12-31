@@ -28,7 +28,6 @@ struct literal {
 #define Less           -1
 #define Equal           0
 #define Greater         1
-#define MaxCvtLen      32
 
 static word cvpos(long pos, long len);
 static int changes(struct lnode *n);

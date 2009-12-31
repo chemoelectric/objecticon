@@ -1170,9 +1170,9 @@ static int wmap(wbp w, wbp parent)
         size_hints.flags = PSize | PMinSize | PMaxSize;
         size_hints.width = ws->width;
         size_hints.height= ws->height;
-        if (ws->posx == -(MaxInt)) ws->posx = 0;
+        if (ws->posx == -(INT_MAX)) ws->posx = 0;
         else size_hints.flags |= USPosition;
-        if (ws->posy == -(MaxInt)) ws->posy = 0;
+        if (ws->posy == -(INT_MAX)) ws->posy = 0;
         else size_hints.flags |= USPosition;
         size_hints.x = ws->posx;
         size_hints.y = ws->posy;
@@ -1280,7 +1280,7 @@ int do_config(w, status)
             moveWindow(w, posx, posy);
         else {
             if (status == 2)
-                posx = posy = -MaxInt;
+                posx = posy = -INT_MAX;
             if (moveResizeWindow(w, posx, posy, wid, ht) == Failed)
                 return Failed;
         }
@@ -1961,7 +1961,7 @@ static int moveResizeWindow(w, x, y, width, height)
     if (resizePixmap(w, width, height) == 0) return Failed;
 
     if (ws->win != (Window) NULL) {
-        if (x == -MaxInt && y == -MaxInt)
+        if (x == -INT_MAX && y == -INT_MAX)
             XResizeWindow(wd->display, ws->win, width, height);
         else
             XMoveResizeWindow(wd->display, ws->win, x, y, width, height);

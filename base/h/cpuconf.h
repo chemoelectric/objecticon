@@ -2,15 +2,8 @@
  *  Configuration parameters that depend on computer architecture.
  *  Some depend on values defined in config.h, which is always
  *  included before this file.
- */
-
-
-/*
- * The following definitions depend on the sizes of ints and pointers.
- */
-
-/*
- * Most of the present implementations use 32-bit "words".  Note that
+ *
+ *  Most of the present implementations use 32-bit "words".  Note that
  *  WordBits is the number of bits in an Icon integer, not necessarily
  *  the number of bits in an int (given by IntBits).  For example,
  *  in MS-DOS an Icon integer is a long, not an int.
@@ -55,19 +48,6 @@
    #define F_Typecode	0x20000000	/* set if dword includes type code */
 #endif					/* WordBits == 32 */
 
-/*
- * Values that depend on the number of bits in an int (not necessarily
- * the same as the number of bits in a word).
- */
-
-#if IntBits == 64
-   #define MaxInt	0777777777777777777777L /* largest int */
-#endif					/* IntBits == 64 */
-
-#if IntBits == 32
-   #define MaxInt	        0x7fffffff	/* largest int */
-#endif					/* IntBits == 32 */
-
 #ifndef LogHuge
    #define LogHuge 309			/* maximum base-10 exp+1 of real */
 #endif					/* LogHuge */
@@ -79,6 +59,10 @@
 #ifndef Precision
    #define Precision 10			/* digits in string from real */
 #endif					/* Precision */
+
+#ifndef MaxCvtLen
+   #define MaxCvtLen	    32	        /* sufficient for holding result of real to string (using  */
+#endif                                  /* printf("%.*g", Precision, n)) and int to string conversions */
 
 /*
  * Parameters that configure tables and sets:

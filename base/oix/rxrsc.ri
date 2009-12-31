@@ -1047,7 +1047,7 @@ wsp alc_winstate()
         ButtonPressMask | ButtonReleaseMask | ButtonMotionMask |
         StructureNotifyMask;
     ws->iconic = NormalState;
-    ws->posx = ws->posy = -(MaxInt);
+    ws->posx = ws->posy = -(INT_MAX);
     ws->minwidth = ws->minheight = 0;
 #ifdef HAVE_LIBXFT
     ws->pixDraw = ws->winDraw = NULL;
