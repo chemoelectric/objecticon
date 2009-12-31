@@ -247,9 +247,7 @@ int yylex()
  *  following identifier goes in cc.
  */
 
-static struct toktab *getident(ac, cc)
-    int ac;
-    int *cc;
+static struct toktab *getident(int ac, int *cc)
 {
     register int c;
     register struct toktab *t;
@@ -314,8 +312,7 @@ static struct toktab *findres()
 /*
  * bufcmp - compare a null terminated string to what is in the string buffer.
  */
-static int bufcmp(s)
-    char *s;
+static int bufcmp(char *s)
 {
     register char *s1;
     s1 = lex_sbuf.strtimage;
@@ -337,9 +334,7 @@ static int bufcmp(s)
  *  a numeric literal by what follows it.
  */
 
-static struct toktab *getnum(ac, cc)
-    int ac;
-    int *cc;
+static struct toktab *getnum(int ac, int *cc)
 {
     register int c, state;
     int i, realflag, n, dummy;
@@ -481,9 +476,7 @@ static struct toktab *getnum(ac, cc)
  * getstring - gather a string literal starting with ac and place the
  *  character following the literal in *cc.
  */
-static struct toktab *getstring(ac, cc)
-    int ac;
-    int *cc;
+static struct toktab *getstring(int ac, int *cc)
 {
     int c, i, n;
     int len;
@@ -556,9 +549,7 @@ static struct toktab *getstring(ac, cc)
  * getstring - gather a ucs string literal starting with ac and place the
  *  character following the literal in *cc.
  */
-static struct toktab *getucs(ac, cc)
-    int ac;
-    int *cc;
+static struct toktab *getucs(int ac, int *cc)
 {
     int c, i, n;
     int len;
@@ -653,9 +644,7 @@ static struct toktab *getucs(ac, cc)
  * getcset - gather a cset literal starting with ac and place the
  *  character following the literal in *cc.
  */
-static struct toktab *getcset(ac, cc)
-    int ac;
-    int *cc;
+static struct toktab *getcset(int ac, int *cc)
 {
     register int c, prev = 0, i, len;
     struct rangeset *cs;
@@ -767,8 +756,7 @@ static int ctlesc()
  *  one, two, or three octal digits.
  */
 
-static int octesc(ac)
-    int ac;
+static int octesc(int ac)
 {
     register int c, nc, i;
 

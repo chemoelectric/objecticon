@@ -3187,15 +3187,7 @@ void genCurve(w, p, n, helper)
          * calculate the forward differences for the function using
          * intervals of size 0.1
          */
-#ifndef abs
-#define abs(x) ((x)<0?-(x):(x))
-#endif
-#ifndef max
-#define max(x,y) ((x>y)?x:y)
-#endif
-
-
-        steps = max(abs(p[i-1].x - p[i-2].x), abs(p[i-1].y - p[i-2].y)) + 10;
+        steps = Max(Abs(p[i-1].x - p[i-2].x), Abs(p[i-1].y - p[i-2].y)) + 10;
 
         if (steps+4 > npoints) {
             if (thepoints != NULL) free(thepoints);

@@ -4,9 +4,6 @@
 #define IndentInc 3
 #define MaxCol 80
 
-#define Max(x,y)        ((x)>(y)?(x):(y))
-
-
 /*
  * cfile is used to create a list of cfiles created from a source file.
  */

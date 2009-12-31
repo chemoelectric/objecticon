@@ -7,7 +7,6 @@ int	cmp_pre		(char *pre1, char *pre2);
 char *getdir(char *s);
 struct fileparts *fparse(char *s);
 void	free_stbl	(void);
-void	id_comment	(FILE *f);
 void	init_sbuf	(struct str_buf *sbuf);
 void	init_str	(void);
 char	*makename	(char *d,char *name,char *e);

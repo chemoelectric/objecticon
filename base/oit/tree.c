@@ -17,8 +17,7 @@
  *   for each node size is used for speed and simplicity.
  */
 
-nodeptr tree1(type)
-int type;
+nodeptr tree1(int type)
    {
    register nodeptr t;
 
@@ -30,9 +29,7 @@ int type;
    return t;
    }
 
-nodeptr tree2(type, loc_model)
-int type;
-nodeptr loc_model;
+nodeptr tree2(int type, nodeptr loc_model)
    {
    register nodeptr t;
 
@@ -44,10 +41,7 @@ nodeptr loc_model;
    return t;
    }
 
-nodeptr tree3(type, loc_model, c)
-int type;
-nodeptr loc_model;
-nodeptr c;
+nodeptr tree3(int type, nodeptr loc_model, nodeptr c)
    {
    register nodeptr t;
 
@@ -60,10 +54,7 @@ nodeptr c;
    return t;
    }
 
-nodeptr tree4(type, loc_model, c, d)
-int type;
-nodeptr loc_model;
-nodeptr c, d;
+nodeptr tree4(int type, nodeptr loc_model, nodeptr c, nodeptr d)
    {
    register nodeptr t;
 
@@ -77,10 +68,7 @@ nodeptr c, d;
    return t;
    }
 
-nodeptr tree5(type, loc_model, c, d, e)
-int type;
-nodeptr loc_model;
-nodeptr c, d, e;
+nodeptr tree5(int type, nodeptr loc_model, nodeptr c, nodeptr d, nodeptr e)
    {
    register nodeptr t;
 
@@ -95,10 +83,7 @@ nodeptr c, d, e;
    return t;
    }
 
-nodeptr tree6(type, loc_model, c, d, e, f)
-int type;
-nodeptr loc_model;
-nodeptr c, d, e, f;
+nodeptr tree6(int type, nodeptr loc_model, nodeptr c, nodeptr d, nodeptr e, nodeptr f)
    {
    register nodeptr t;
 
@@ -114,8 +99,7 @@ nodeptr c, d, e, f;
    return t;
    }
 
-nodeptr buildarray(a,lb,e,rb)
-nodeptr a, lb, e, rb;
+nodeptr buildarray(nodeptr a, nodeptr lb, nodeptr e,nodeptr rb)
    {
    register nodeptr t, t2;
    if (e->n_type == N_Elist) {
@@ -129,10 +113,7 @@ nodeptr a, lb, e, rb;
    return t;
    }
 
-nodeptr int_leaf(type, loc_model, c)
-int type;
-nodeptr loc_model;
-int c;
+nodeptr int_leaf(int type, nodeptr loc_model, int c)
    {
    register nodeptr t;
 
@@ -145,10 +126,7 @@ int c;
    return t;
    }
 
-nodeptr c_str_leaf(type, loc_model, c)
-int type;
-nodeptr loc_model;
-char *c;
+nodeptr c_str_leaf(int type, nodeptr loc_model, char *c)
    {
    register nodeptr t;
 
@@ -161,11 +139,7 @@ char *c;
    return t;
    }
 
-nodeptr i_str_leaf(type, loc_model, c, d)
-int type;
-nodeptr loc_model;
-char *c;
-int d;
+nodeptr i_str_leaf(int type, nodeptr loc_model, char *c, int d)
    {
    register nodeptr t;
 

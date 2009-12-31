@@ -9,7 +9,7 @@ ROBJS = rttparse.o rttmain.o rttlex.o rttsym.o rttnode.o rttout.o rttmisc.o\
 	preproc.o evaluate.o files.o gettok.o pinit.o
 
 COBJS = ../common/getopt.o ../common/alloc.o \
-	  ../common/identify.o ../common/strtbl.o\
+	  ../common/strtbl.o\
 	  ../common/mlocal.o ../common/literals.o
 
 OBJS = $(ROBJS) $(COBJS)

@@ -130,12 +130,11 @@ void new_sbuf(struct str_buf *sbuf)
     sbuf->endimage = s2;
     sbuf->end = sbuf->strtimage + sbuf->size;
 }
-
+
 /*
  * spec_str - install a special string (null terminated) in the string table.
  */
-char *spec_str(s)
-    char *s;
+char *spec_str(char *s)
 {
     struct str_entry *se;
     register char *s1;
@@ -164,7 +163,7 @@ char *spec_str(s)
     str_tbl[h] = se;
     return s;
 }
-
+
 /*
  * str_install - find out if the string at the end of the buffer is in
  *   the string table. If not, put it there. Return a pointer to the

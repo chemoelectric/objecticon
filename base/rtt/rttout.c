@@ -1,4 +1,5 @@
 #include "rtt.h"
+#include "../h/version.h"
 
 #define NotId 0  /* declarator is not simple identifier */
 #define IsId  1  /* declarator is simple identifier */
@@ -3479,8 +3480,21 @@ struct token *t;
  */
 void prologue()
 {
-    id_comment(out_file);
-    fprintf(out_file, "#include \"%s\"\n\n", inclname);
+   static char sbuf[26];
+   static int first_time = 1;
+   time_t ct;
+
+   if (first_time) {
+      time(&ct);
+      strcpy(sbuf, ctime(&ct));
+      first_time = 0;
+      }
+   fprintf(out_file, "/*\n");
+   fprintf(out_file, " * %s", sbuf);
+   fprintf(out_file, " * This file was produced by\n");
+   fprintf(out_file, " *   %s: %s\n", progname, Version);
+   fprintf(out_file, " */\n");
+   fprintf(out_file, "#include \"%s\"\n\n", inclname);
 }
 
 /*
@@ -3514,3 +3528,4 @@ static void just_type(struct node *typ, int indent, int ilc)
       c_walk(typ, indent, 0);
       }
    }
+

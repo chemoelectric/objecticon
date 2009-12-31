@@ -20,9 +20,7 @@ static int escape               (char **str_ptr,int *nchars_ptr);
  * escape - translate the character sequence following a '\' into the
  *   single character it represents.
  */
-static int escape(str_ptr, nchars_ptr)
-char **str_ptr;
-int *nchars_ptr;
+static int escape(char **str_ptr, int *nchars_ptr)
    {
    register int c, nc, i;
 
@@ -80,10 +78,7 @@ int *nchars_ptr;
 /*
  * prtstr - print an Icon string literal as a C string literal.
  */
-int prt_i_str(f, s, len)
-FILE *f;
-char *s;
-int len;
+int prt_i_str(FILE *f, char *s, int len)
    {
    int c;
    int n_chars;
