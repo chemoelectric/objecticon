@@ -143,9 +143,7 @@ void showbig(FILE *f, struct b_bignum *x)
  * mkdesc -- put value into a descriptor
  */
 
-static void mkdesc(x, dx)
-    struct b_bignum *x;
-    dptr dx;
+static void mkdesc(struct b_bignum *x, dptr dx)
 {
     word xlen, cmp;
     static DIGIT maxword[WORDLEN] = { (DIGIT)1 << ((WordBits - 1) % NB) };
@@ -184,10 +182,7 @@ static void mkdesc(x, dx)
  *  i -> big
  */
 
-static void itobig(i, x, dx)
-    word i;
-    struct b_bignum *x;
-    dptr dx;
+static void itobig(word i, struct b_bignum *x, dptr dx)
 {
     x->lsd = WORDLEN - 1;
     x->msd = WORDLEN;
@@ -224,11 +219,11 @@ static void itobig(i, x, dx)
  *  string -> bignum 
  */
 
-word bigradix(sign, r, s, end_s, result)
-    int sign;                      /* '-' or not */
-    int r;                          /* radix 2 .. 36 */
-    char *s, *end_s;                        /* input string */
-    union numeric *result;          /* output T_Integer or T_Lrgint */
+word bigradix(int sign,                      /* '-' or not */
+              int r,                         /* radix 2 .. 36 */
+              char *s,                       /* input string */
+              char *end_s,
+              union numeric *result)         /* output T_Integer or T_Lrgint */
 {
     struct b_bignum *b;
     DIGIT *bd;
@@ -306,8 +301,7 @@ int bigtoreal(dptr da, double *d)
  *  real -> bignum
  */
 
-int realtobig(da, dx)
-    dptr da, dx;
+int realtobig(dptr da, dptr dx)
 {
 
     double x;
@@ -356,8 +350,7 @@ int realtobig(da, dx)
  *  bignum -> string
  */
 
-void bigtos(da, dx)
-    dptr da, dx;
+void bigtos(dptr da, dptr dx)
 {
     tended struct b_bignum *a, *temp;
     word alen = LEN(LrgInt(da));
@@ -390,9 +383,7 @@ void bigtos(da, dx)
  *  bignum -> file 
  */
 
-void bigprint(f, da)
-    FILE *f;
-    dptr da;
+void bigprint(FILE *f, dptr da)
 {
     struct b_bignum *a, *temp;
     word alen = LEN(LrgInt(da));
@@ -425,10 +416,7 @@ void bigprint(f, da)
 /*
  * decout - given a base B digit string, print the number in base 10.
  */
-static void decout(f, n, l)
-    FILE *f;
-    DIGIT *n;
-    word l;
+static void decout(FILE *f, DIGIT *n, word l)
 {
     DIGIT i = divi1(n, (word)10, n, l);
 
@@ -441,8 +429,7 @@ static void decout(f, n, l)
  *  da -> dx
  */
 
-void cpbignum(da, dx)
-    dptr da, dx;
+void cpbignum(dptr da, dptr dx)
 {
     struct b_bignum *a, *x;
     word alen = LEN(LrgInt(da));
@@ -460,9 +447,7 @@ void cpbignum(da, dx)
  *  da + db -> dx
  */
 
-void bigadd(da, db, dx)
-    dptr da, db;
-    dptr dx;
+void bigadd(dptr da, dptr db, dptr dx)
 {
     tended struct b_bignum *a, *b;
     struct b_bignum *x;
@@ -573,8 +558,7 @@ void bigadd(da, db, dx)
  *  da - db -> dx
  */ 
 
-void bigsub(da, db, dx)
-    dptr da, db, dx;
+void bigsub(dptr da, dptr db, dptr dx)
 {
     struct descrip td;
     union word_b_bignum tdigits;
@@ -747,8 +731,7 @@ void bigsub(da, db, dx)
  *  da * db -> dx
  */
 
-void bigmul(da, db, dx)
-    dptr da, db, dx;
+void bigmul(dptr da, dptr db, dptr dx)
 {
     tended struct b_bignum *a, *b;
     struct b_bignum *x;
@@ -784,8 +767,7 @@ void bigmul(da, db, dx)
  *  da / db -> dx
  */
  
-void bigdiv(da, db, dx)
-    dptr da, db, dx;
+void bigdiv(dptr da, dptr db, dptr dx)
 {
     tended struct b_bignum *a, *b, *x, *tu, *tv;
     word alen, blen;
@@ -832,8 +814,7 @@ void bigdiv(da, db, dx)
  *  da % db -> dx
  */
 
-void bigmod(da, db, dx)
-    dptr da, db, dx;
+void bigmod(dptr da, dptr db, dptr dx)
 {
     tended struct b_bignum *a, *b, *x, *temp, *tu, *tv;
     word alen, blen;
@@ -884,8 +865,7 @@ void bigmod(da, db, dx)
  *  -i -> dx
  */
 
-void bigneg(da, dx)
-    dptr da, dx;
+void bigneg(dptr da, dptr dx)
 {
     struct descrip td;
     union word_b_bignum tdigits;
@@ -904,8 +884,7 @@ void bigneg(da, dx)
  *  da ^ db -> dx
  */
 
-int bigpow(da, db, dx)
-    dptr da, db, dx;
+int bigpow(dptr da, dptr db, dptr dx)
 {
 
     if (Type(*db) == T_Lrgint) {
@@ -978,9 +957,7 @@ int bigpow(da, db, dx)
         return bigpowii(IntVal(*da), IntVal(*db), dx);
 }
 
-int bigpowri( a, db, drslt )
-    double a;
-    dptr   db, drslt;
+int bigpowri(double a, dptr db, dptr drslt)
 {
     register double retval;
     register word n;
@@ -1024,8 +1001,7 @@ int bigpowri( a, db, drslt )
  *  iand(da, db) -> dx
  */
 
-void bigand(da, db, dx)
-    dptr da, db, dx;
+void bigand(dptr da, dptr db, dptr dx)
 {
     tended struct b_bignum *a, *b, *x, *tad, *tbd;
     word alen, blen, xlen;
@@ -1177,8 +1153,7 @@ void bigand(da, db, dx)
  *  ior(da, db) -> dx
  */
 
-void bigor(da, db, dx)
-    dptr da, db, dx;
+void bigor(dptr da, dptr db, dptr dx)
 {
     tended struct b_bignum *a, *b, *x, *tad, *tbd;
     word alen, blen, xlen;
@@ -1330,8 +1305,7 @@ void bigor(da, db, dx)
  *  xor(da, db) -> dx
  */
 
-void bigxor(da, db, dx)
-    dptr da, db, dx;
+void bigxor(dptr da, dptr db, dptr dx)
 {
     tended struct b_bignum *a, *b, *x, *tad, *tbd;
     word alen, blen, xlen;
@@ -1483,8 +1457,7 @@ void bigxor(da, db, dx)
  *  bigshift(da, db) -> dx
  */
 
-void bigshift(da, db, dx)
-    dptr da, db, dx;
+void bigshift(dptr da, dptr db, dptr dx)
 {
     tended struct b_bignum *a, *x, *tad;
     word alen;
@@ -1551,8 +1524,7 @@ void bigshift(da, db, dx)
  *  positive if da > db
  */
 
-word bigcmp(da, db)
-    dptr da, db;
+word bigcmp(dptr da, dptr db)
 {
     struct b_bignum *a = LrgInt(da);
     struct b_bignum *b = LrgInt(db);
@@ -1592,8 +1564,7 @@ word bigcmp(da, db)
  *  ?da -> dx
  */  
 
-void bigrand(da, dx)
-    dptr da, dx;
+void bigrand(dptr da, dptr dx)
 {
     tended struct b_bignum *x, *a, *td, *tu, *tv;
     word alen = LEN(LrgInt(da));
@@ -1628,9 +1599,7 @@ void bigrand(da, dx)
  *  da + i -> dx
  */
 
-static void bigaddi(da, i, dx)
-    dptr da, dx;
-    word i;
+static void bigaddi(dptr da, word i, dptr dx)
 {
     tended struct b_bignum *a; 
     struct b_bignum *x; 
@@ -1672,9 +1641,7 @@ static void bigaddi(da, i, dx)
  *  da - i -> dx
  */
 
-static void bigsubi(da, i, dx)
-    dptr da, dx;
-    word i;
+static void bigsubi(dptr da, word i, dptr dx)
 {
     tended struct b_bignum *a; 
     struct b_bignum *x; 
@@ -1716,9 +1683,7 @@ static void bigsubi(da, i, dx)
  *  da * i -> dx
  */
 
-static void bigmuli(da, i, dx)
-    dptr da, dx;
-    word i;
+static void bigmuli(dptr da, word i, dptr dx)
 {
     tended struct b_bignum *a; 
     struct b_bignum *x; 
@@ -1754,9 +1719,7 @@ static void bigmuli(da, i, dx)
  *  da / i -> dx
  */
 
-static void bigdivi(da, i, dx)
-    dptr da, dx;
-    word i;
+static void bigdivi(dptr da, word i, dptr dx)
 {
     tended struct b_bignum *a; 
     struct b_bignum *x; 
@@ -1791,9 +1754,7 @@ static void bigdivi(da, i, dx)
  *  da % i -> dx
  */
 
-static void bigmodi(da, i, dx)
-    dptr da, dx;
-    word i;
+static void bigmodi(dptr da, word i, dptr dx)
 {
     tended struct b_bignum *a, *temp;
     word alen;
@@ -1825,9 +1786,7 @@ static void bigmodi(da, i, dx)
  *  da ^ i -> dx
  */
 
-static int bigpowi(da, i, dx)
-    dptr da, dx;
-    word i;
+static int bigpowi(dptr da, word i, dptr dx)
 {
     int n = WordBits;
    
@@ -1860,9 +1819,7 @@ static int bigpowi(da, i, dx)
  *  a ^ i -> dx
  */
 
-static int bigpowii(a, i, dx)
-    word a, i;
-    dptr dx;
+static int bigpowii(word a, word i, dptr dx)
 {
     word x, y;
     int n = WordBits;
@@ -1938,9 +1895,7 @@ static int bigpowii(a, i, dx)
  *  positive if da > i
  */  
   
-static word bigcmpi(da, i)
-    dptr da;
-    word i;
+static word bigcmpi(dptr da, word i)
 {
     struct b_bignum *a = LrgInt(da);
     word alen = LEN(a);
@@ -1977,9 +1932,7 @@ static word bigcmpi(da, i)
  *  returns carry, 0 or 1
  */
 
-static DIGIT add1(u, v, w, n)
-    DIGIT *u, *v, *w;
-    word n;
+static DIGIT add1(DIGIT *u, DIGIT *v, DIGIT *w, word n)
 {
     uword dig, carry; 
     word i;
@@ -1999,9 +1952,7 @@ static DIGIT add1(u, v, w, n)
  *  returns carry, 0 or -1
  */
 
-static word sub1(u, v, w, n)
-    DIGIT *u, *v, *w;
-    word n;
+static word sub1(DIGIT *u, DIGIT *v, DIGIT *w, word n)
 {
     uword dig, carry; 
     word i;
@@ -2019,9 +1970,7 @@ static word sub1(u, v, w, n)
  *  (u,n) * (v,m) -> (w,m+n)
  */
 
-static void mul1(u, v, w, n, m)
-    DIGIT *u, *v, *w;
-    word n, m;
+static void mul1(DIGIT *u, DIGIT *v, DIGIT *w, word n, word m)
 {
     word i, j;
     uword dig, carry;
@@ -2045,10 +1994,9 @@ static void mul1(u, v, w, n, m)
  *  if q or r is NULL, the quotient or remainder is discarded
  */
 
-static void div1(a, b, q, r, m, n, tu, tv)
-    DIGIT *a, *b, *q, *r;
-    word m, n;
-    struct b_bignum *tu, *tv;
+static void div1(DIGIT *a, DIGIT *b, DIGIT *q, DIGIT *r,
+                 word m, word n,
+                 struct b_bignum *tu, struct b_bignum*tv)
 {
     uword qhat, rhat;
     uword dig, carry;
@@ -2126,9 +2074,7 @@ static void div1(a, b, q, r, m, n, tu, tv)
  *
  */
 
-static void compl1(u, w, n)
-    DIGIT *u, *w;
-    word n;
+static void compl1(DIGIT *u, DIGIT *w, word n)
 {
     uword dig, carry = 0;
     word i;
@@ -2144,9 +2090,7 @@ static void compl1(u, w, n)
  *  (u,n) : (v,n)
  */
 
-static word cmp1(u, v, n)
-    DIGIT *u, *v;
-    word n;
+static word cmp1(DIGIT *u, DIGIT *v, word n)
 {
     word i;
 
@@ -2163,10 +2107,7 @@ static word cmp1(u, v, n)
  *  returns carry, 0 or 1
  */
 
-static DIGIT addi1(u, k, w, n)
-    DIGIT *u, *w;
-    word k;
-    word n;
+static DIGIT addi1(DIGIT *u, word k, DIGIT *w, word n)
 {
     uword dig, carry;
     word i;
@@ -2187,10 +2128,7 @@ static DIGIT addi1(u, k, w, n)
  *  u must be greater than k
  */
 
-static void subi1(u, k, w, n)
-    DIGIT *u, *w;
-    word k;
-    word n;
+static void subi1(DIGIT *u, word k, DIGIT *w, word n)
 {
     uword dig, carry;
     word i;
@@ -2210,11 +2148,7 @@ static void subi1(u, k, w, n)
  *  returns carry, 0 .. B-1
  */
 
-static DIGIT muli1(u, k, c, w, n)
-    DIGIT *u, *w;
-    word k;
-    int c;
-    word n;
+static DIGIT muli1(DIGIT *u, word k, int c, DIGIT *w, word n)
 {
     uword dig, carry;
     word i;
@@ -2235,10 +2169,7 @@ static DIGIT muli1(u, k, c, w, n)
  *  returns remainder, 0 .. B-1
  */
 
-static DIGIT divi1(u, k, w, n)
-    DIGIT *u, *w;
-    word k;
-    word n;
+static DIGIT divi1(DIGIT *u, word k, DIGIT *w, word n)
 {
     uword dig, remain;
     word i;
@@ -2260,10 +2191,7 @@ static DIGIT divi1(u, k, w, n)
  *  returns carry, 0 .. B-1
  */
 
-static DIGIT shifti1(u, k, c, w, n)
-    DIGIT *u, c, *w;
-    word k;
-    word n;
+static DIGIT shifti1(DIGIT *u, word k, DIGIT c, DIGIT *w, word n)
 {
     uword dig;
     word i;
@@ -2287,10 +2215,7 @@ static DIGIT shifti1(u, k, c, w, n)
  *  k in 0 .. B-1
  */
 
-static word cmpi1(u, k, n)
-    DIGIT *u;
-    word k;
-    word n;
+static word cmpi1(DIGIT *u, word k, word n)
 {
     word i;
 

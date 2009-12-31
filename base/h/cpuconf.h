@@ -19,8 +19,6 @@
    #define LogWordBits	6			/* log of WordBits */
    #define MinWord  ((word)0x8000000000000000) /* smallest word */
    #define MaxWord  ((word)0x7fffffffffffffff) /* largest word */
-   #define MaxStrLen 017777777777L		/* maximum string length */
-
    #define MinWordStr "-9223372036854775808"
 
    #define F_Nqual      0x8000000000000000	/* set if NOT string qualifier*/
@@ -37,11 +35,8 @@
    #define LogWordBits	        5		/* log of WordBits */
    #define MaxWord  ((word)0x7fffffff)   /* largest word */
    #define MinWord  ((word)0x80000000)   /* smallest word */
-   
    #define MinWordStr "-2147483648"
    
-   #define MaxStrLen    0x7fffffff	/* maximum string length */
-
    #define F_Nqual	0x80000000	/* set if NOT string qualifier */
    #define F_Var	0x40000000	/* set if variable */
    #define F_Ptr	0x10000000	/* set if value field is pointer */

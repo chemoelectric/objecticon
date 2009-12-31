@@ -2,7 +2,7 @@
  * File: fstr.r
  */
 
-static void nxttab(C_integer *col, dptr *tablst, dptr endlst, C_integer *last, C_integer *interval);
+static void nxttab(word *col, dptr *tablst, dptr endlst, word *last, word *interval);
 
 
 "detab(s,i,...) - replace tabs with spaces, with stops at columns indicated."
@@ -12,7 +12,7 @@ function detab(s,i[n])
       runerr(129,s)
 
    body {
-      C_integer last, interval, col, target, j;
+      word last, interval, col, target, j;
       dptr tablst;
       dptr endlst;
       int is_expanded = 0;
@@ -215,7 +215,7 @@ function entab(s,i[n])
       runerr(129,s)
 
    body {
-      C_integer last, interval, col, target, nt, nt1, j;
+      word last, interval, col, target, nt, nt1, j;
       dptr tablst;
       dptr endlst;
       int inserted = 0;
@@ -498,7 +498,7 @@ end
  *   beyond col
  */
 
-static void nxttab(C_integer *col, dptr *tablst, dptr endlst, C_integer *last, C_integer *interval)
+static void nxttab(word *col, dptr *tablst, dptr endlst, word *last, word *interval)
    {
    /*
     * Look for the right tab stop.
@@ -740,10 +740,7 @@ function repl(s,n)
       runerr(101,n)
 
    body {
-      register C_integer cnt;
-      register C_integer slen;
-      register C_integer size;
-      register char * resloc, * sloc, *floc;
+      word slen;
 
       if (n < 0) {
          irunerr(205,n);
@@ -765,7 +762,7 @@ function repl(s,n)
            * Make sure the resulting string will not be too long.
            */
           utf8_size = n * StrLen(UcsBlk(s).utf8);
-          if (utf8_size > MaxStrLen) {
+          if (utf8_size <= 0) {
               irunerr(205,n);
               errorfail;
           }
@@ -785,7 +782,10 @@ function repl(s,n)
 
           return ucs(make_ucs_block(&utf8, n * slen));
       } else {
+          word cnt, size;
+          char * resloc, * sloc, *floc;
           tended struct descrip result;
+
           slen = StrLen(s);
           /*
            * Return an empty string if n is 0 or if s is the empty string.
@@ -797,7 +797,7 @@ function repl(s,n)
            * Make sure the resulting string will not be too long.
            */
           size = n * slen;
-          if (size > MaxStrLen) {
+          if (size <= 0) {
               irunerr(205,n);
               errorfail;
           }
@@ -827,8 +827,7 @@ function repl(s,n)
 
           return result;
       }
-
-      }
+   }
 end
 
 
@@ -1367,7 +1366,7 @@ function trim(s,c,ends)
       runerr(101, ends)
 
    body {
-      C_integer slen;
+      word slen;
 
       if (is:ucs(s)) {
           char *p, *utf8_start, *utf8_end;
