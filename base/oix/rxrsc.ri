@@ -7,27 +7,27 @@
 
 wdp wdsplys;
 
-wfp findfont(wbp w, char *fam, int size, int flags);
-int okfont(char *spec, int size, int flags);
-int fontcmp(char *font1, char *font2, int size, int flags);
-wfp loadfont(wdp wd, char *s);
-
 #ifdef HAVE_LIBXFT
 static char *convert_spec(char *s);
+#else
+static wfp findfont(wbp w, char *fam, int size, int flags);
+static int okfont(char *spec, int size, int flags);
+static int fontcmp(char *font1, char *font2, int size, int flags);
+static int fieldcmp(char *font1, char *font2, char *value, int field);
+static char *xlfd_field(char *s, int i);
+static int xlfd_size(char *s, int n);
 #endif
+static wfp loadfont(wdp wd, char *s);
+
 #define DEFAULTFONTNAME "fixed"
 
-
 /*
  * Allocate a color given linear r, g, b. Colors are shared on a
  * per-display basis, but they are often freed on a per-window basis,
  * so they are remembered in two structures.
  */
-wclrp alc_rgb(w,s,r,g,b,is_iconcolor)
-    wbp w;
-    char *s;
-    unsigned int r,g,b;
-    int is_iconcolor;
+wclrp alc_rgb(wbp w, char *s, unsigned int r, unsigned int g,
+              unsigned int b, int is_iconcolor)
 {
     LinearColor lc;
     XColor color;
@@ -142,8 +142,7 @@ wclrp alc_rgb(w,s,r,g,b,is_iconcolor)
 /*
  * allocate a color entry, return index (or 0 if table is full)
  */
-int alc_centry(wd)
-    wdp wd;
+int alc_centry(wdp wd)
 {
     int i, j;
 
@@ -173,9 +172,7 @@ int alc_centry(wd)
  * allocate by named color and return Icon color pointer.
  *  This is used by setfg and setbg.
  */
-wclrp alc_color(w,s)
-    wbp w;
-    char *s;
+wclrp alc_color(wbp w, char *s)
 {
     wclrp rv;
     long r, g, b, a;
@@ -192,13 +189,12 @@ wclrp alc_color(w,s)
     Protect(rv = alc_rgb(w, s, r, g, b, 0), return 0);
     return rv;
 }
-
+
 /*
  * copy color entries to reflect pixel transmission via CopyArea()
  * (assumes w1 and w2 are on the same display)
  */
-void copy_colors(w1, w2)
-    wbp w1, w2;
+void copy_colors(wbp w1, wbp w2)
 {
     wsp ws1 = w1->window, ws2 = w2 -> window;
     wdp wd = ws1->display;
@@ -225,13 +221,11 @@ void copy_colors(w1, w2)
         }
     }
 }
-
+
 /*
  * free a single color allocated by a given window
  */
-void free_xcolor(w,c)
-    wbp w;
-    unsigned long c;
+void free_xcolor(wbp w, unsigned long c)
 {
     int i;
     STDLOCALS(w);
@@ -251,16 +245,14 @@ void free_xcolor(w,c)
         }
     }
 }
-
+
 /*
  * free the colors allocated by a given window.  extent indicates how much
  * to free.  extent == 0 implies window colors except black, white,
  * fg, bg, wbg, and mutable colors.  extent == 1 implies free icon colors.
  * extent == 2 implies free window AND fg/bg/wbg (window is closed)
  */
-void free_xcolors(w, extent)
-    wbp w;
-    int extent;
+void free_xcolors(wbp w, int extent)
 {
     int i;
     unsigned long toFree[DMAXCOLORS];
@@ -319,14 +311,13 @@ void free_xcolors(w, extent)
         XFreeColors(stddpy, wd->cmap, toFree, freed,0);
     *numColors = numSaved;
 }
-
+
 /*
  * Allocate a virtual colormap with all colors used by the client copied from
  * the default colormap to new colormap, and set all windows to use this new
  * colormap.  Returns 0 on failure.
  */
-int go_virtual(w)
-    wbp w;
+int go_virtual(wbp w)
 {
     wsp win;
     STDLOCALS(w);
@@ -344,12 +335,11 @@ int go_virtual(w)
 
     return 1;
 }
-
+
 /*
  * allocate a display on machine s
  */
-wdp alc_display(s)
-    char *s;
+wdp alc_display(char *s)
 {
     double g;
     wdp wd;
@@ -460,7 +450,7 @@ wdp alc_display(s)
     GRFX_LINK(wd, wdsplys);
     return wd;
 }
-
+
 
 #ifdef HAVE_LIBXFT
 
@@ -471,7 +461,7 @@ wdp alc_display(s)
  * To avoid ambiguity, a spec can start with "fc:" to indicate it's in fontconfig
  * format; otherwise parsefont is called to decide the format.
  */
-char *convert_spec(char *s)
+static char *convert_spec(char *s)
 {
     static char res[256];
     int flags, size;
@@ -550,11 +540,8 @@ char *convert_spec(char *s)
 /*
  * allocate font s in the display attached to w
  */
-wfp alc_font(w,s)
-    wbp w;
-    char **s;
+wfp alc_font(wbp w, char **s)
 {
-    /*printf("convert spec %s -> %s\n",*s,convert_spec(*s));*/
     return tryfont(w,convert_spec(*s));
 }
 
@@ -564,9 +551,7 @@ wfp alc_font(w,s)
 /*
  * allocate font s in the display attached to w
  */
-wfp alc_font(w,s)
-    wbp w;
-    char **s;
+wfp alc_font(wbp w, char **s)
 {
     int flags, size;
     wfp rv = NULL;
@@ -623,9 +608,7 @@ wfp alc_font(w,s)
 /*
  * return pointer to field i inside XLFD (X Logical Font Description) s.
  */
-char *xlfd_field(s, i)
-    char *s;
-    int i;
+static char *xlfd_field(char *s, int i)
 {
     int j = 0;
     while (j < i) {
@@ -638,9 +621,7 @@ char *xlfd_field(s, i)
 /*
  * return size of font, treating a scalable font as having size n
  */
-int xlfd_size(s, n)
-    char *s;
-    int n;
+static int xlfd_size(char *s, int n)
 {
     char *f;
     int z;
@@ -658,10 +639,7 @@ int xlfd_size(s, n)
 /*
  * Find the best font matching a set of specifications.
  */
-wfp findfont(w, family, size, flags)
-    wbp w;
-    char *family;
-    int size, flags;
+static wfp findfont(wbp w, char *family, int size, int flags)
 {
     char fontspec[MAXFONTWORD+100];
     char *p, *weight, *slant, *width, *spacing, **fontlist;
@@ -754,9 +732,7 @@ wfp findfont(w, family, size, flags)
  * -- size wrong (there's a bug in OpenWindows 3.3 else X could do it)
  * -- not monospaced (can't set pattern to match m or c but not p)
  */
-int okfont(spec, size, flags)
-    char *spec;
-    int size, flags;
+static int okfont(char *spec, int size, int flags)
 {
     if (size > 0 && xlfd_size(spec, size) != size)
         return 0;			/* can't match explicit size request */
@@ -769,9 +745,7 @@ int okfont(spec, size, flags)
  * rank two fonts based on whether XLFD field n matches a preferred value.
  * returns <0 if font1 is better, >0 if font2 is better, else 0.
  */
-int fieldcmp(font1, font2, value, field)
-    char *font1, *font2, *value;
-    int field;
+static int fieldcmp(char *font1, char *font2, char *value, int field)
 {
     int len, r1, r2;
 
@@ -789,9 +763,7 @@ int fieldcmp(font1, font2, value, field)
  * earlier filtering in findfont(), so all those flags aren't checked
  * again here; normal values are just favored in case nothing was specified.
  */
-int fontcmp(font1, font2, size, flags)
-    char *font1, *font2;
-    int size, flags;
+static int fontcmp(char *font1, char *font2, int size, int flags)
 {
     int n;
 
@@ -846,9 +818,7 @@ int fontcmp(font1, font2, size, flags)
  * load a font and return a font structure.
  */
 
-wfp tryfont(w,s)
-    wbp w;
-    char *s;
+wfp tryfont(wbp w, char *s)
 {
     wdp wd = w->window->display;
     wfp rv;
@@ -882,9 +852,7 @@ wfp tryfont(w,s)
     return rv;
 }
 
-wfp loadfont(wd,s)
-    wdp wd;
-    char *s;
+static wfp loadfont(wdp wd, char *s)
 {
     wfp rv;
     GRFX_ALLOC(rv, _wfont);
@@ -932,12 +900,11 @@ wfp loadfont(wd,s)
     return rv;
 }
 
-
+
 /*
  * allocate a context.  Can't be called until w has a display and window.
  */
-wcp alc_context(w)
-    wbp w;
+wcp alc_context(wbp w)
 {
     wcp wc;
     wdp wd = w->window->display;
@@ -961,12 +928,11 @@ wcp alc_context(w)
     GRFX_LINK(wc, wcntxts);
     return wc;
 }
-
+
 /*
  * allocate a context, cloning attributes from an existing context
  */
-wcp clone_context(w)
-    wbp w;
+wcp clone_context(wbp w)
 {
     wcp wc, rv;
     wdp wd;
@@ -1030,7 +996,7 @@ wcp clone_context(w)
     }
     return rv;
 }
-
+
 /*
  * allocate a window state structure
  */
@@ -1060,8 +1026,7 @@ wsp alc_winstate()
 /*
  * free a window state
  */
-int free_window(ws)
-    wsp ws;
+int free_window(wsp ws)
 {
     ws->refcount--;
     if(ws->refcount == 0) {
@@ -1108,8 +1073,7 @@ int free_window(ws)
 /*
  * free a window context
  */
-void free_context(wc)
-    wcp wc;
+void free_context(wcp wc)
 {
     wc->refcount--;
     if(wc->refcount == 0) {
@@ -1124,8 +1088,7 @@ void free_context(wc)
 /*
  * free a display
  */
-void free_display(wd)
-    wdp wd;
+void free_display(wdp wd)
 {
     wd->refcount--;
     if(wd->refcount == 0) {
@@ -1137,9 +1100,4 @@ void free_display(wd)
         if (wd->next) wd->next->previous = wd->previous;
         free(wd);
     }
-}
-
-int playmedia(wbp w, char *s)
-{
-    return Failed;
 }
