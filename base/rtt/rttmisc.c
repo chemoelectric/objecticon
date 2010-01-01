@@ -22,7 +22,6 @@ void clr_def()
    v_len = NULL;
    il_indx = 0;
    lbl_num = 0;
-   abs_ret = SomeType;
    }
 
 struct token *chk_exct(tok)

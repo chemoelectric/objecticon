@@ -21,8 +21,6 @@ struct srcfile {
    struct srcfile *next;
    };
 
-#define ForceNl() nl = 1;
-extern int nl;  /* flag: a new-line is needed in the output */
 
 /*
  * The lexical analyzer recognizes 3 states. Operators are treated differently
@@ -112,16 +110,11 @@ extern int op_type;                /* Function, Keyword, Operator, or OrdFunc */
 extern char *op_name;              /* Name of curr func/keyword/op */
 extern char *op_sym;               /* For an op, its symbol (eg ">=") */
 extern int op_generator;           /* Does this op generate a sequence */
-extern char lc_letter;             /* f = function, o = operator, k = keyword */
-extern char uc_letter;             /* F = function, O = operator, K = keyword */
-extern char prfx1;                 /* 1st char of unique prefix for operation */
-extern char prfx2;                 /* 2nd char of unique prefix for operation */
 extern char *fname;                /* current source file name */
 extern int line;                   /* current source line number */
 extern struct token *comment;      /* descriptive comment for current oper */
 extern int n_tmp_str;              /* total number of string buffers needed */
-extern int nxt_sbuf;               /* index of next string buffer */
-extern int nxt_cbuf;               /* index of next cset buffer */
+extern char *progname;
 extern struct sym_entry *params;   /* current list of parameters */
 extern struct sym_entry *decl_lst; /* declarations from "declare {...}" */
 extern struct init_tend *tend_lst; /* list of allocated tended slots */
@@ -144,12 +137,6 @@ struct lvl_entry {
    };
 
 extern struct lvl_entry *dcl_stk; /* stack of declaration contexts */
-
-extern int fnc_ret;  /* RetInt, RetDbl, RetNoVal, or RetSig for current func */
-
-#define NoAbstr  -1001 /* no abstract return statement has been encountered */
-#define SomeType -1002 /* assume returned value is consistent with abstr ret */
-extern int abs_ret; /* type from abstract return statement */
 
 /*
  * Definitions for use in parse tree nodes.
@@ -215,18 +202,6 @@ struct node {
 #define VarPrm   64  /* variable part of parm list (with RtParm or DrfPrm) */
 #define PrmMark 128  /* flag - used while recognizing params of body fnc */
 #define ByRef   256  /* flag - parameter to body function passed by reference */
-
-/*
- * Flags to indicate what types are returned from the function implementing
- *  a body. These are unsed in determining the calling conventions 
- *  of the function.
- */
-#define RetInt   1  /* body/function returns a C_integer */
-#define RetDbl   2  /* body/function returns a C_double */
-#define RetOther 4  /* body (not function itself) returns something else */
-#define RetNoVal 8  /* function returns no value */
-#define RetSig  16  /* function returns a signal */
-
 
 /*
  * The following manifest constants are used to describe types, conversions,

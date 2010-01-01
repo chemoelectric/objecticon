@@ -65,22 +65,17 @@ static void untend        (int indent);
 static int use_frame = 0;
 static int in_struct = 0;
 static int lab_seq = 0;
-extern char *progname;
  
 int op_type = OrdFunc;  /* type of operation */
 char *op_name;
 char *op_sym;
-char lc_letter;         /* f = function, o = operator, k = keyword */
-char uc_letter;         /* F = function, O = operator, K = keyword */
-char prfx1;             /* 1st char of unique prefix for operation */
-char prfx2;             /* 2nd char of unique prefix for operation */
 char *fname = "";       /* current source file name */
 int line = 0;           /* current source line number */
-int nxt_sbuf;           /* next string buffer index */
-int nxt_cbuf;           /* next cset buffer index */
-int abs_ret = SomeType; /* type from abstract return(s) */
+static int nxt_sbuf;           /* next string buffer index */
+static int nxt_cbuf;           /* next cset buffer index */
 
-int nl = 0;             /* flag indicating the a new-line should be output */
+#define ForceNl() nl = 1;
+static int nl = 0;             /* flag indicating the a new-line should be output */
 static int no_nl = 0;   /* flag to suppress line directives */
 
 static int ntend;       /* number of tended descriptor needed */
