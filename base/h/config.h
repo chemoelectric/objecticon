@@ -144,11 +144,6 @@
    #define LongBits (ByteBits * SIZEOF_LONG)
 #endif					/* LongBits */
 
-/*
- * The number of bits in a large integer DIGIT.
- */
-#define DigitBits           (WordBits / 2)
-
 #ifndef SourceSuffix
    #define SourceSuffix ".icn"
 #endif					/* SourceSuffix */

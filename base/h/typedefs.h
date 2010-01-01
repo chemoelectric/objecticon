@@ -19,6 +19,7 @@
  * Select a size for large int DIGIT type; DigitBits is defined as
  * WordBits/2.
  */
+#define DigitBits           (WordBits / 2)
 #if DigitBits == ShortBits
    typedef unsigned short DIGIT;
 #elif DigitBits == IntBits
