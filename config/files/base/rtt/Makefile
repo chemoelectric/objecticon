@@ -10,7 +10,7 @@ ROBJS = rttparse.o rttmain.o rttlex.o rttsym.o rttnode.o rttout.o rttmisc.o\
 
 COBJS = ../common/getopt.o ../common/alloc.o \
 	  ../common/strtbl.o\
-	  ../common/mlocal.o ../common/literals.o
+	  ../common/mlocal.o
 
 OBJS = $(ROBJS) $(COBJS)
 RSRC=$(ROBJS:.o=.c)
