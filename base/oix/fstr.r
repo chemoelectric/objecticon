@@ -761,8 +761,8 @@ function repl(s,n)
           /*
            * Make sure the resulting string will not be too long.
            */
-          utf8_size = n * StrLen(UcsBlk(s).utf8);
-          if (utf8_size <= 0) {
+          utf8_size = mul(n, StrLen(UcsBlk(s).utf8));
+          if (over_flow) {
               irunerr(205,n);
               errorfail;
           }
@@ -796,8 +796,8 @@ function repl(s,n)
           /*
            * Make sure the resulting string will not be too long.
            */
-          size = n * slen;
-          if (size <= 0) {
+          size = mul(n, slen);
+          if (over_flow) {
               irunerr(205,n);
               errorfail;
           }

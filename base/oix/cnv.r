@@ -600,7 +600,7 @@ int f(dptr s, dptr d)
             word slen;
             word dlen;
             slen = (BignumBlk(*s).lsd - BignumBlk(*s).msd +1);
-            dlen = slen * NB * 0.3010299956639812;	/* 1 / log2(10) */
+            dlen = slen * DigitBits * 0.3010299956639812;	/* 1 / log2(10) */
 	    bigtos(s,d);
             return 1;
           }
@@ -648,7 +648,7 @@ int f(char *sbuf, dptr s, dptr d)
             word dlen;
 
             slen = (BignumBlk(*s).lsd - BignumBlk(*s).msd +1);
-            dlen = slen * NB * 0.3010299956639812;	/* 1 / log2(10) */
+            dlen = slen * DigitBits * 0.3010299956639812;	/* 1 / log2(10) */
 	    bigtos(s,d);
            }
          else

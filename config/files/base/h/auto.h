@@ -85,6 +85,7 @@
 #undef HAVE_COMPUTED_GOTO
 
 /* sizes of various fundamental types */
+#undef SIZEOF_SHORT
 #undef SIZEOF_INT
 #undef SIZEOF_LONG
 #undef SIZEOF_VOIDP

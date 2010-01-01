@@ -32,11 +32,12 @@
 
 /* The bignum radix, B */
 
-#define B            ((word)1 << NB)
+#define B            ((word)1 << DigitBits)
 
-/* Lrgint digits in a word */
+/* Lrgint digits in a word, always 2 since a DIGIT contains half the number
+ * of bits in a word. */
 
-#define WORDLEN  (WordBits / NB + (WordBits % NB != 0))
+#define WORDLEN  2
 
 
 /* lo(uword d) :            the low digit of a uword
@@ -45,8 +46,8 @@
    dbl(DIGIT a, DIGIT b) : the two-digit uword [a,b] */
 
 #define lo(d)        ((d) & (B - 1))
-#define hi(d)        ((uword)(d) >> NB)
-#define dbl(a,b)     (((uword)(a) << NB) + (b))
+#define hi(d)        ((uword)(d) >> DigitBits)
+#define dbl(a,b)     (((uword)(a) << DigitBits) + (b))
 
 /* structure for a temporary bignum block that will hold an integer */
 union word_b_bignum {
@@ -55,10 +56,10 @@ union word_b_bignum {
 };
 
 #if ((-1) >> 1) < 0
-#define signed_hi(d) ((word)(d) >> NB)
+#define signed_hi(d) ((word)(d) >> DigitBits)
 #else
-#define signbit      ((uword)1 << (WordBits - NB - 1))
-#define signed_hi(d) ((word)((((uword)(d) >> NB) ^ signbit) - signbit))
+#define signbit      ((uword)1 << (WordBits - DigitBits - 1))
+#define signed_hi(d) ((word)((((uword)(d) >> DigitBits) ^ signbit) - signbit))
 #endif
 
 /* LrgInt(dptr dp) : the struct b_bignum pointed to by dp */
@@ -135,10 +136,10 @@ void showbig(FILE *f, struct b_bignum *x)
     int i;
     fprintf(f, "Sign=%d\n", x->sign);
     for (i = 0; i < LEN(x); ++i)
-        fprintf(f, "   Dig %d = %.*lx\n", i, NB/4, (long)*DIG(x, i));
+        fprintf(f, "   Dig %d = %.*lx\n", i, DigitBits/4, (long)*DIG(x, i));
 }
 
-
+
 /*
  * mkdesc -- put value into a descriptor
  */
@@ -146,7 +147,7 @@ void showbig(FILE *f, struct b_bignum *x)
 static void mkdesc(struct b_bignum *x, dptr dx)
 {
     word xlen, cmp;
-    static DIGIT maxword[WORDLEN] = { (DIGIT)1 << ((WordBits - 1) % NB) };
+    static DIGIT maxword[WORDLEN] = { (DIGIT)1 << ((WordBits - 1) % DigitBits) };
 
     /* suppress leading zero digits */
 
@@ -166,7 +167,7 @@ static void mkdesc(struct b_bignum *x, dptr dx)
         word i;
 
         for (i = x->msd; ++i <= x->lsd; )
-            val = (val << NB) - x->digits[i];
+            val = (val << DigitBits) - x->digits[i];
         if (!x->sign)
             val = -val;
         dx->dword = D_Integer;
@@ -214,7 +215,7 @@ static void itobig(word i, struct b_bignum *x, dptr dx)
     dx->dword = D_Lrgint;
     BlkLoc(*dx) = (union block *)x;
 }
-
+
 /*
  *  string -> bignum 
  */
@@ -296,7 +297,7 @@ int bigtoreal(dptr da, double *d)
     *d = r;
     return Succeeded;
 }
-
+
 /*
  *  real -> bignum
  */
@@ -345,7 +346,7 @@ int realtobig(dptr da, dptr dx)
     mkdesc(b, dx);
     return Succeeded;
 }
-
+
 /*
  *  bignum -> string
  */
@@ -391,7 +392,7 @@ void bigprint(FILE *f, dptr da)
     struct b_bignum *blk = &BignumBlk(*da);
 
     slen = blk->lsd - blk->msd;
-    dlen = slen * NB * 0.3010299956639812	/* 1 / log2(10) */
+    dlen = slen * DigitBits * 0.3010299956639812	/* 1 / log2(10) */
         + log((double)blk->digits[blk->msd]) * 0.4342944819032518 + 0.5;
     /* 1 / ln(10) */
     if (dlen >= MaxDigits) {
@@ -442,7 +443,7 @@ void cpbignum(dptr da, dptr dx)
     x->sign = a->sign;
     mkdesc(x, dx);
 }
-
+
 /*
  *  da + db -> dx
  */
@@ -942,7 +943,7 @@ int bigpow(dptr da, dptr db, dptr dx)
             *dx = onedesc;
             for ( n = 0; n < blen; ++n ) {
                 nth_dig = *DIG ( b, n );
-                for ( mask = 1 << ( NB - 1 ); mask; mask >>= 1 ) {
+                for ( mask = 1 << ( DigitBits - 1 ); mask; mask >>= 1 ) {
                     bigmul( dx, dx, dx);
                     if ( nth_dig & mask )
                         bigmul ( dx, da, dx );
@@ -985,7 +986,7 @@ int bigpowri(double a, dptr db, dptr drslt)
     retval = 1.0;
     for ( n = 0; n < blen; ++n ) {
         nth_dig = *DIG ( b, n );
-        for ( mask = 1 << ( NB - 1 ); mask; mask >>= 1 ) {
+        for ( mask = 1 << ( DigitBits - 1 ); mask; mask >>= 1 ) {
             retval *= retval;
             if ( nth_dig & mask )
                 retval *= a;
@@ -1461,8 +1462,8 @@ void bigshift(dptr da, dptr db, dptr dx)
 {
     tended struct b_bignum *a, *x, *tad;
     word alen;
-    word r = IntVal(*db) % NB;
-    word q = (r >= 0 ? IntVal(*db) : (IntVal(*db) - (r += NB))) / NB;
+    word r = IntVal(*db) % DigitBits;
+    word q = (r >= 0 ? IntVal(*db) : (IntVal(*db) - (r += DigitBits))) / DigitBits;
     word xlen;
     DIGIT *ad;
     struct descrip td;
@@ -1503,7 +1504,7 @@ void bigshift(dptr da, dptr db, dptr dx)
         }
         else
             *DIG(x,0) =
-                shifti1(ad, r, ad[alen+q] >> (NB-r),
+                shifti1(ad, r, ad[alen+q] >> (DigitBits-r),
                         DIG(x,1), alen+q);
 
         if (a->sign) {
@@ -1594,7 +1595,7 @@ void bigrand(dptr da, dptr dx)
           alen);
     mkdesc(x, dx);
 }
-
+
 /*
  *  da + i -> dx
  */
@@ -1923,7 +1924,7 @@ static word bigcmpi(dptr da, word i)
     }
 }
 
-
+
 /* These are all straight out of Knuth vol. 2, Sec. 4.3.1. */
 
 /*
@@ -2008,8 +2009,8 @@ static void div1(DIGIT *a, DIGIT *b, DIGIT *q, DIGIT *r,
     v = DIG(tv,0);
 
     /* D1 */
-    for (d = 0; d < NB; d++)
-        if (b[0] & (1 << (NB - 1 - d)))
+    for (d = 0; d < DigitBits; d++)
+        if (b[0] & (1 << (DigitBits - 1 - d)))
             break;
 
     u[0] = shifti1(a, d, (DIGIT)0, &u[1], m+n);
@@ -2065,7 +2066,7 @@ static void div1(DIGIT *a, DIGIT *b, DIGIT *q, DIGIT *r,
         if (d == 0)
             shifti1(&u[m+1], (word)d, (DIGIT)0, r, n);
         else
-            r[0] = shifti1(&u[m+1], (word)(NB - d), u[m+n]>>d, &r[1], n - 1);
+            r[0] = shifti1(&u[m+1], (word)(DigitBits - d), u[m+n]>>d, &r[1], n - 1);
     }
 }
 
@@ -2186,7 +2187,7 @@ static DIGIT divi1(DIGIT *u, word k, DIGIT *w, word n)
 /*
  *  ((u,n) << k) + c -> (w,n)
  *
- *  k in 0 .. NB-1
+ *  k in 0 .. DigitBits-1
  *  c in 0 .. B-1 
  *  returns carry, 0 .. B-1
  */
@@ -2226,4 +2227,4 @@ static word cmpi1(DIGIT *u, word k, word n)
         return 0;
     return u[n - 1] > (DIGIT)k ? 1 : -1;
 }
-
+

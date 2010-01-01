@@ -1135,7 +1135,7 @@ void getimage(dptr dp1, dptr dp2)
             struct b_bignum *blk = &BignumBlk(source);
 
             slen = blk->lsd - blk->msd;
-            dlen = slen * NB * 0.3010299956639812 	/* 1 / log2(10) */
+            dlen = slen * DigitBits * 0.3010299956639812 	/* 1 / log2(10) */
                + log((double)blk->digits[blk->msd]) * 0.4342944819032518 + 0.5;
 							/* 1 / ln(10) */
             if (dlen >= MaxDigits) {

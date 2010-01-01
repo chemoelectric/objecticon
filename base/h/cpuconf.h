@@ -103,13 +103,6 @@
 #endif					/* MaxHLoad */
 
 /*
- * The number of bits in each base-B digit; the type DIGIT (unsigned int)
- *  in rt.h must be large enough to hold this many bits.
- *  It must be at least 2 and at most WordBits / 2.
- */
-#define NB           (WordBits / 2)
-
-/*
  * The number of decimal digits at which the image lf a large integer
  * goes from exact to approximate (to avoid possible long delays in
  * conversion from large integer to string because of its quadratic

@@ -128,6 +128,10 @@
    #define ByteBits 8
 #endif					/* ByteBits */
 
+#ifndef ShortBits
+   #define ShortBits (ByteBits * SIZEOF_SHORT)
+#endif					/* ShortBits */
+
 #ifndef WordBits
    #define WordBits (ByteBits * SIZEOF_VOIDP)
 #endif					/* WordBits */
@@ -139,6 +143,11 @@
 #ifndef LongBits
    #define LongBits (ByteBits * SIZEOF_LONG)
 #endif					/* LongBits */
+
+/*
+ * The number of bits in a large integer DIGIT.
+ */
+#define DigitBits           (WordBits / 2)
 
 #ifndef SourceSuffix
    #define SourceSuffix ".icn"

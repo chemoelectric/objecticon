@@ -1,18 +1,4 @@
 /*
- * Type for an externally findable & setable integer, used by "setsize". CS
- */
-
-/*
- * typdefs for the run-time system.
- */
-
-typedef unsigned int DIGIT;
-
-/*
- * Default sizing and such.
- */
-
-/*
  * Set up typedefs and related definitions depending on whether or not
  * pointers are the same size as ints or longs (WordBits is by default
  * the number of bits in a void*).  After this, word should be an
@@ -27,6 +13,18 @@ typedef unsigned int DIGIT;
    typedef unsigned long uword;
 #else
    #error "WordBits must equal either IntBits or LongBits"
+#endif
+
+/*
+ * Select a size for large int DIGIT type; DigitBits is defined as
+ * WordBits/2.
+ */
+#if DigitBits == ShortBits
+   typedef unsigned short DIGIT;
+#elif DigitBits == IntBits
+   typedef unsigned int DIGIT;
+#else
+   #error "DigitBits must equal either ShortBits or IntBits"
 #endif
 
 /*
