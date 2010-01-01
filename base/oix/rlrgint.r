@@ -62,10 +62,6 @@ union word_b_bignum {
 #define signed_hi(d) ((word)((((uword)(d) >> DigitBits) ^ signbit) - signbit))
 #endif
 
-/* LrgInt(dptr dp) : the struct b_bignum pointed to by dp */
-
-#define LrgInt(dp)   ((struct b_bignum *)&BignumBlk(*dp))
-
 /* LEN(struct b_bignum *b) : number of significant digits */
 
 #define LEN(b)       ((b)->lsd - (b)->msd + 1)
@@ -345,11 +341,11 @@ int realtobig(dptr da, dptr dx)
 void bigtos(dptr da, dptr dx)
 {
     tended struct b_bignum *a, *temp;
-    word alen = LEN(LrgInt(da));
+    word alen = LEN(&BignumBlk(*da));
     word slen = ceil(alen * ln(B) / ln(10));
     char *p, *q;
 
-    a = LrgInt(da);
+    a = &BignumBlk(*da);
     MemProtect(temp = alcbignum(alen));
     if (a->sign)
         slen++;
@@ -378,7 +374,7 @@ void bigtos(dptr da, dptr dx)
 void bigprint(FILE *f, dptr da)
 {
     struct b_bignum *a, *temp;
-    word alen = LEN(LrgInt(da));
+    word alen = LEN(&BignumBlk(*da));
     word slen, dlen;
     struct b_bignum *blk = &BignumBlk(*da);
 
@@ -394,7 +390,7 @@ void bigprint(FILE *f, dptr da)
     /* not worth passing this one back */
     MemProtect(temp = alcbignum(alen));
 
-    a = LrgInt(da);
+    a = &BignumBlk(*da);
     bdcopy(DIG(a,0),
            DIG(temp,0),
            alen);
@@ -424,10 +420,10 @@ static void decout(FILE *f, DIGIT *n, word l)
 void cpbignum(dptr da, dptr dx)
 {
     struct b_bignum *a, *x;
-    word alen = LEN(LrgInt(da));
+    word alen = LEN(&BignumBlk(*da));
 
     MemProtect(x = alcbignum(alen));
-    a = LrgInt(da);
+    a = &BignumBlk(*da);
     bdcopy(DIG(a,0),
            DIG(x,0),
            alen);
@@ -447,10 +443,10 @@ void bigadd(dptr da, dptr db, dptr dx)
     word c;
 
     if (Type(*da) == T_Lrgint && Type(*db) == T_Lrgint) {
-        alen = LEN(LrgInt(da));
-        blen = LEN(LrgInt(db));
-        a = LrgInt(da);
-        b = LrgInt(db);
+        alen = LEN(&BignumBlk(*da));
+        blen = LEN(&BignumBlk(*db));
+        a = &BignumBlk(*da);
+        b = &BignumBlk(*db);
         if (a->sign == b->sign) {
             if (alen > blen) {
                 MemProtect(x = alcbignum(alen + 1));
@@ -560,10 +556,10 @@ void bigsub(dptr da, dptr db, dptr dx)
     word c;
 
     if (Type(*da) == T_Lrgint && Type(*db) == T_Lrgint) {
-        alen = LEN(LrgInt(da));
-        blen = LEN(LrgInt(db));
-        a = LrgInt(da);
-        b = LrgInt(db);
+        alen = LEN(&BignumBlk(*da));
+        blen = LEN(&BignumBlk(*db));
+        a = &BignumBlk(*da);
+        b = &BignumBlk(*db);
         if (a->sign != b->sign) {
             if (alen > blen) {
                 MemProtect(x = alcbignum(alen + 1));
@@ -650,10 +646,10 @@ void bigsub(dptr da, dptr db, dptr dx)
         bigsubi(da, IntVal(*db), dx);
     else if (Type(*db) == T_Lrgint) {   /* integer - bignum */
         itobig(IntVal(*da), &tdigits.blk, &td);
-        alen = LEN(LrgInt(&td));
-        blen = LEN(LrgInt(db));
-        a = LrgInt(&td);
-        b = LrgInt(db);
+        alen = LEN(&BignumBlk(td));
+        blen = LEN(&BignumBlk(*db));
+        a = &BignumBlk(td);
+        b = &BignumBlk(*db);
         if (a->sign != b->sign) {
             if (alen == blen) {
                 MemProtect(x = alcbignum(alen + 1));
@@ -730,10 +726,10 @@ void bigmul(dptr da, dptr db, dptr dx)
     word alen, blen;
 
     if (Type(*da) == T_Lrgint && Type(*db) == T_Lrgint) {
-        alen = LEN(LrgInt(da));
-        blen = LEN(LrgInt(db));
-        a = LrgInt(da);
-        b = LrgInt(db);
+        alen = LEN(&BignumBlk(*da));
+        blen = LEN(&BignumBlk(*db));
+        a = &BignumBlk(*da);
+        b = &BignumBlk(*db);
         MemProtect(x = alcbignum(alen + blen));
         mul1(DIG(a,0),
              DIG(b,0),
@@ -773,14 +769,14 @@ void bigdiv(dptr da, dptr db, dptr dx)
     }
 
     if (Type(*db) == T_Lrgint) {         /* bignum / bignum */
-        alen = LEN(LrgInt(da));
-        blen = LEN(LrgInt(db));
+        alen = LEN(&BignumBlk(*da));
+        blen = LEN(&BignumBlk(*db));
         if (alen < blen) {
             *dx = zerodesc;
             return;
         }
-        a = LrgInt(da);
-        b = LrgInt(db);
+        a = &BignumBlk(*da);
+        b = &BignumBlk(*db);
         MemProtect(x = alcbignum(alen - blen + 1));
         if (blen == 1)
             divi1(DIG(a,0),
@@ -820,14 +816,14 @@ void bigmod(dptr da, dptr db, dptr dx)
     }
 
     if (Type(*db) == T_Lrgint) {        /* bignum % bignum */
-        alen = LEN(LrgInt(da));
-        blen = LEN(LrgInt(db));
+        alen = LEN(&BignumBlk(*da));
+        blen = LEN(&BignumBlk(*db));
         if (alen < blen) {
             cpbignum(da, dx);
             return;
         }
-        a = LrgInt(da);
-        b = LrgInt(db);
+        a = &BignumBlk(*da);
+        b = &BignumBlk(*db);
         MemProtect(x = alcbignum(blen));
         if (blen == 1) {
             MemProtect(temp = alcbignum(alen));
@@ -867,9 +863,9 @@ void bigneg(dptr da, dptr dx)
         itobig(IntVal(*da), &tdigits.blk, &td);
         da = &td;
     }
-    LrgInt(da)->sign ^= 1;       /* Temporarily change the sign */
+    BignumBlk(*da).sign ^= 1;       /* Temporarily change the sign */
     cpbignum(da, dx);
-    LrgInt(da)->sign ^= 1;       /* Change it back */
+    BignumBlk(*da).sign ^= 1;       /* Change it back */
 }
 
 /*
@@ -882,8 +878,7 @@ int bigpow(dptr da, dptr db, dptr dx)
     if (Type(*db) == T_Lrgint) {
         struct b_bignum *b;
 
-        b = LrgInt ( db );
-
+        b = &BignumBlk(*db);
 
         if (Type(*da) == T_Lrgint) {
             if ( b->sign ) {
@@ -920,8 +915,8 @@ int bigpow(dptr da, dptr db, dptr dx)
             word n, blen;
             register DIGIT nth_dig, mask;
 
-            b = LrgInt ( db );
-            blen = LEN ( b );
+            b = &BignumBlk(*db);
+            blen = LEN(b);
 
             /* We scan the bits of b from the most to least significant.
              * The bit position in b is represented by the pair ( n, mask )
@@ -957,8 +952,8 @@ int bigpowri(double a, dptr db, dptr drslt)
     struct b_bignum *b;
     word blen;
 
-    b = LrgInt ( db );
-    blen = LEN ( b );
+    b = &BignumBlk(*db);
+    blen = LEN(b);
     if ( b->sign ) {
         if ( a == 0.0 )
             ReturnErrNum(204, Error);
@@ -1003,11 +998,11 @@ void bigand(dptr da, dptr db, dptr dx)
     union word_b_bignum tdigits;
 
     if (Type(*da) == T_Lrgint && Type(*db) == T_Lrgint) {
-        alen = LEN(LrgInt(da));
-        blen = LEN(LrgInt(db));
+        alen = LEN(&BignumBlk(*da));
+        blen = LEN(&BignumBlk(*db));
         xlen = alen > blen ? alen : blen;
-        a = LrgInt(da);
-        b = LrgInt(db);
+        a = &BignumBlk(*da);
+        b = &BignumBlk(*db);
         MemProtect(x = alcbignum(xlen));
 
         if (alen == xlen && !a->sign)
@@ -1047,11 +1042,11 @@ void bigand(dptr da, dptr db, dptr dx)
     }
     else if (Type(*da) == T_Lrgint) {   /* iand(bignum,integer) */
         itobig(IntVal(*db), &tdigits.blk, &td);
-        alen = LEN(LrgInt(da));
-        blen = LEN(LrgInt(&td));
+        alen = LEN(&BignumBlk(*da));
+        blen = LEN(&BignumBlk(td));
         xlen = alen > blen ? alen : blen;
-        a = LrgInt(da);
-        b = LrgInt(&td);
+        a = &BignumBlk(*da);
+        b = &BignumBlk(td);
         MemProtect(x = alcbignum(alen));
 
         if (alen == xlen && !a->sign)
@@ -1091,11 +1086,11 @@ void bigand(dptr da, dptr db, dptr dx)
     }
     else if (Type(*db) == T_Lrgint) {   /* iand(integer,bignum) */
         itobig(IntVal(*da), &tdigits.blk, &td);
-        alen = LEN(LrgInt(&td));
-        blen = LEN(LrgInt(db));
+        alen = LEN(&BignumBlk(td));
+        blen = LEN(&BignumBlk(*db));
         xlen = alen > blen ? alen : blen;
-        a = LrgInt(&td);
-        b = LrgInt(db);
+        a = &BignumBlk(td);
+        b = &BignumBlk(*db);
         MemProtect(x = alcbignum(blen));
 
         if (alen == xlen && !a->sign)
@@ -1155,11 +1150,11 @@ void bigor(dptr da, dptr db, dptr dx)
     union word_b_bignum tdigits;
 
     if (Type(*da) == T_Lrgint && Type(*db) == T_Lrgint) {
-        alen = LEN(LrgInt(da));
-        blen = LEN(LrgInt(db));
+        alen = LEN(&BignumBlk(*da));
+        blen = LEN(&BignumBlk(*db));
         xlen = alen > blen ? alen : blen;
-        a = LrgInt(da);
-        b = LrgInt(db);
+        a = &BignumBlk(*da);
+        b = &BignumBlk(*db);
         MemProtect(x = alcbignum(xlen));
 
         if (alen == xlen && !a->sign)
@@ -1199,11 +1194,11 @@ void bigor(dptr da, dptr db, dptr dx)
     }
     else if (Type(*da) == T_Lrgint) {   /* ior(bignum,integer) */
         itobig(IntVal(*db), &tdigits.blk, &td);
-        alen = LEN(LrgInt(da));
-        blen = LEN(LrgInt(&td));
+        alen = LEN(&BignumBlk(*da));
+        blen = LEN(&BignumBlk(td));
         xlen = alen > blen ? alen : blen;
-        a = LrgInt(da);
-        b = LrgInt(&td);
+        a = &BignumBlk(*da);
+        b = &BignumBlk(td);
         MemProtect(x = alcbignum(alen));
 
         if (alen == xlen && !a->sign)
@@ -1243,11 +1238,11 @@ void bigor(dptr da, dptr db, dptr dx)
     }
     else if (Type(*db) == T_Lrgint) {   /* ior(integer,bignym) */
         itobig(IntVal(*da), &tdigits.blk, &td);
-        alen = LEN(LrgInt(&td));
-        blen = LEN(LrgInt(db));
+        alen = LEN(&BignumBlk(td));
+        blen = LEN(&BignumBlk(*db));
         xlen = alen > blen ? alen : blen;
-        a = LrgInt(&td);
-        b = LrgInt(db);
+        a = &BignumBlk(td);
+        b = &BignumBlk(*db);
         MemProtect(x = alcbignum(blen));
 
         if (alen == xlen && !a->sign)
@@ -1307,11 +1302,11 @@ void bigxor(dptr da, dptr db, dptr dx)
     union word_b_bignum tdigits;
 
     if (Type(*da) == T_Lrgint && Type(*db) == T_Lrgint) {
-        alen = LEN(LrgInt(da));
-        blen = LEN(LrgInt(db));
+        alen = LEN(&BignumBlk(*da));
+        blen = LEN(&BignumBlk(*db));
         xlen = alen > blen ? alen : blen;
-        a = LrgInt(da);
-        b = LrgInt(db);
+        a = &BignumBlk(*da);
+        b = &BignumBlk(*db);
         MemProtect(x = alcbignum(xlen));
 
         if (alen == xlen && !a->sign)
@@ -1351,11 +1346,11 @@ void bigxor(dptr da, dptr db, dptr dx)
     }
     else if (Type(*da) == T_Lrgint) {   /* ixor(bignum,integer) */
         itobig(IntVal(*db), &tdigits.blk, &td);
-        alen = LEN(LrgInt(da));
-        blen = LEN(LrgInt(&td));
+        alen = LEN(&BignumBlk(*da));
+        blen = LEN(&BignumBlk(td));
         xlen = alen > blen ? alen : blen;
-        a = LrgInt(da);
-        b = LrgInt(&td);
+        a = &BignumBlk(*da);
+        b = &BignumBlk(td);
         MemProtect(x = alcbignum(alen));
 
         if (alen == xlen && !a->sign)
@@ -1395,11 +1390,11 @@ void bigxor(dptr da, dptr db, dptr dx)
     }
     else if (Type(*db) == T_Lrgint) {   /* ixor(integer,bignum) */
         itobig(IntVal(*da), &tdigits.blk, &td);
-        alen = LEN(LrgInt(&td));
-        blen = LEN(LrgInt(db));
+        alen = LEN(&BignumBlk(td));
+        blen = LEN(&BignumBlk(*db));
         xlen = alen > blen ? alen : blen;
-        a = LrgInt(&td);
-        b = LrgInt(db);
+        a = &BignumBlk(td);
+        b = &BignumBlk(*db);
         MemProtect(x = alcbignum(blen));
 
         if (alen == xlen && !a->sign)
@@ -1465,14 +1460,14 @@ void bigshift(dptr da, dptr db, dptr dx)
         da = &td;
     }
 
-    alen = LEN(LrgInt(da));
+    alen = LEN(&BignumBlk(*da));
     xlen = alen + q + 1;
     if (xlen <= 0) {
-        MakeInt(-LrgInt(da)->sign, dx);
+        MakeInt(-BignumBlk(*da).sign, dx);
         return;
     }
     else {
-        a = LrgInt(da);
+        a = &BignumBlk(*da);
         MemProtect(x = alcbignum(xlen));
 
         if (a->sign) {
@@ -1518,8 +1513,8 @@ void bigshift(dptr da, dptr db, dptr dx)
 
 word bigcmp(dptr da, dptr db)
 {
-    struct b_bignum *a = LrgInt(da);
-    struct b_bignum *b = LrgInt(db);
+    struct b_bignum *a = &BignumBlk(*da);
+    struct b_bignum *b = &BignumBlk(*db);
     word alen, blen; 
 
     if (Type(*da) == T_Lrgint && Type(*db) == T_Lrgint) {
@@ -1559,7 +1554,7 @@ word bigcmp(dptr da, dptr db)
 void bigrand(dptr da, dptr dx)
 {
     tended struct b_bignum *x, *a, *td, *tu, *tv;
-    word alen = LEN(LrgInt(da));
+    word alen = LEN(&BignumBlk(*da));
     DIGIT *d;
     word i;
     double rval;
@@ -1567,7 +1562,7 @@ void bigrand(dptr da, dptr dx)
     MemProtect(x = alcbignum(alen));
     MemProtect(td = alcbignum(alen + 1));
     d = DIG(td,0);
-    a = LrgInt(da);
+    a = &BignumBlk(*da);
 
     for (i = alen; i >= 0; i--) {
         rval = RandVal;
@@ -1607,8 +1602,8 @@ static void bigaddi(dptr da, word i, dptr dx)
         bigadd(da, &td, dx);
     }
     else {
-        alen = LEN(LrgInt(da));
-        a = LrgInt(da);
+        alen = LEN(&BignumBlk(*da));
+        a = &BignumBlk(*da);
         if (a->sign) {
             MemProtect(x = alcbignum(alen));
             subi1(DIG(a,0),
@@ -1649,8 +1644,8 @@ static void bigsubi(dptr da, word i, dptr dx)
         bigsub(da, &td, dx);
     }
     else {
-        alen = LEN(LrgInt(da));
-        a = LrgInt(da);
+        alen = LEN(&BignumBlk(*da));
+        a = &BignumBlk(*da);
         if (a->sign) {
             MemProtect(x = alcbignum(alen + 1));
             *DIG(x,0) =
@@ -1689,8 +1684,8 @@ static void bigmuli(dptr da, word i, dptr dx)
         bigmul(da, &td, dx);
     }
     else {
-        alen = LEN(LrgInt(da));
-        a = LrgInt(da);
+        alen = LEN(&BignumBlk(*da));
+        a = &BignumBlk(*da);
         MemProtect(x = alcbignum(alen + 1));
         if (i >= 0)
             x->sign = a->sign;
@@ -1725,8 +1720,8 @@ static void bigdivi(dptr da, word i, dptr dx)
         bigdiv(da, &td, dx);
     }
     else {
-        alen = LEN(LrgInt(da));
-        a = LrgInt(da);
+        alen = LEN(&BignumBlk(*da));
+        a = &BignumBlk(*da);
         MemProtect(x = alcbignum(alen));
         if (i >= 0)
             x->sign = a->sign;
@@ -1760,8 +1755,8 @@ static void bigmodi(dptr da, word i, dptr dx)
         bigmod(da, &td, dx);
     }
     else {
-        alen = LEN(LrgInt(da));
-        a = LrgInt(da);
+        alen = LEN(&BignumBlk(*da));
+        a = &BignumBlk(*da);
         temp = a;			/* avoid trash pointer */
         MemProtect(temp = alcbignum(alen));
         x = divi1(DIG(a,0),
@@ -1889,7 +1884,7 @@ static int bigpowii(word a, word i, dptr dx)
   
 static word bigcmpi(dptr da, word i)
 {
-    struct b_bignum *a = LrgInt(da);
+    struct b_bignum *a = &BignumBlk(*da);
     word alen = LEN(a);
 
     if (i > -B && i < B) {
