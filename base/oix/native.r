@@ -236,7 +236,7 @@ static void convert_from_##TYPE(TYPE src, dptr dest)
     TYPE j = src;
     int k;
     struct descrip pos = zerodesc, digs;
-    tended struct descrip res, t, chunk, pwr;
+    tended struct descrip res, chunk, pwr;
 
     /* See if it fits in a word */
     if (src <= MaxWord && src >= MinWord) {
@@ -252,8 +252,8 @@ static void convert_from_##TYPE(TYPE src, dptr dest)
     for (k = 0; k < sizeof(TYPE) / 2; ++k) {
         int bits = j & 0xffff;
         j = j >> 16;
-        MakeInt(bits, &t);
-        bigshift(&t, &pos, &chunk);
+        MakeInt(bits, &chunk);
+        bigshift(&chunk, &pos, &chunk);
         bigadd(&res, &chunk, &res);
         IntVal(pos) += 16;
     }
