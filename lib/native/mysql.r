@@ -51,7 +51,7 @@ function mysql_MySql_new_impl()
            why("mysql_init returned null");
            fail;
        }
-       return C_integer (long int)res;
+       return C_integer (word)res;
    }
 end
 
@@ -593,7 +593,7 @@ function mysql_MySql_list_dbs_impl(self, wild)
           on_mysql_error(self_mysql);
           fail;
       }
-      return C_integer((long int)res);
+      return C_integer (word)res;
    }
 end
 
@@ -617,7 +617,7 @@ function mysql_MySql_list_fields_impl(self, table, wild)
           on_mysql_error(self_mysql);
           fail;
       }
-      return C_integer((long int)res);
+      return C_integer (word)res;
    }
 end
 
@@ -630,7 +630,7 @@ function mysql_MySql_list_processes_impl(self)
           on_mysql_error(self_mysql);
           fail;
       }
-      return C_integer((long int)res);
+      return C_integer (word)res;
    }
 end
 
@@ -650,7 +650,7 @@ function mysql_MySql_list_tables_impl(self, wild)
           on_mysql_error(self_mysql);
           fail;
       }
-      return C_integer((long int)res);
+      return C_integer (word)res;
    }
 end
 
@@ -664,7 +664,7 @@ function mysql_MySql_use_result_impl(self)
           on_mysql_error(self_mysql);
           fail;
       }
-      return C_integer((long int)res);
+      return C_integer (word)res;
    }
 end
 
@@ -678,7 +678,7 @@ function mysql_MySql_store_result_impl(self)
           on_mysql_error(self_mysql);
           fail;
       }
-      return C_integer((long int)res);
+      return C_integer (word)res;
    }
 end
 
@@ -843,14 +843,14 @@ function mysql_MySqlRes_row_seek(self, offset)
        runerr(101, offset)
    body {
        GetSelfMySqlRes();
-       return C_integer((long int)mysql_row_seek(self_mysql_res, (MYSQL_ROW_OFFSET)offset));
+       return C_integer (word)mysql_row_seek(self_mysql_res, (MYSQL_ROW_OFFSET)offset);
    }
 end
 
 function mysql_MySqlRes_row_tell(self)
    body {
        GetSelfMySqlRes();
-       return C_integer((long int)mysql_row_tell(self_mysql_res));
+       return C_integer (word)mysql_row_tell(self_mysql_res);
    }
 end
 
