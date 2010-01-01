@@ -175,9 +175,7 @@ operator ! bang(underef x -> dx)
    fail;
    }
 end      
-
 
-#define RandVal (RanScale*(k_random=(RandA*k_random+RandC)&0x7FFFFFFFL))
 
 "?x - produce a randomly selected element of x."
 
@@ -392,7 +390,7 @@ operator ? random(underef x -> dx)
    }
 }
 end
-
+
 "x[i:j] - form a substring or list section of x."
 
 operator [:] sect(underef x -> dx, i, j)
@@ -524,7 +522,7 @@ operator [:] sect(underef x -> dx, i, j)
      }
    }
 end
-
+
 "x[y] - access yth character or element of x."
 
 operator [] subsc(underef x -> dx,y)

@@ -89,15 +89,6 @@ union word_b_bignum {
 #define LrgNeed(n)   ( ((sizeof(struct b_bignum) + ((n) - 1) * sizeof(DIGIT)) \
                         + WordSize - 1) & -WordSize )
 
-
-/* copied from oref.c */
-
-#define RandVal (RanScale*(k_random=(RandA*(long)k_random+RandC)&0x7fffffffL))
-
-/*
- * Prototypes.
- */
-
 static void mkdesc	(struct b_bignum *x, dptr dx);
 static void itobig	(word i, struct b_bignum *x, dptr dx);
 
