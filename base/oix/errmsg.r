@@ -257,10 +257,10 @@ void err_msg(int n, dptr v)
 }
 
 /*
- * irunerr - print an error message when the offending value is a C_integer
+ * irunerr - print an error message when the offending value is a word
  *  rather than a descriptor.
  */
-void irunerr(int n, C_integer v)
+void irunerr(int n, word v)
 {
     t_errornumber = n;
     IntVal(t_errorvalue) = v;

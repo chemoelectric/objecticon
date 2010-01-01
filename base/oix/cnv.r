@@ -15,7 +15,7 @@
 /*
  * Prototypes for static functions.
  */
-static void itos (C_integer num, dptr dp, char *s);
+static void itos (word num, dptr dp, char *s);
 static int ston (dptr sp, union numeric *result);
 
 static int cset2str(dptr src, dptr dest)
@@ -92,9 +92,9 @@ int cnv_c_dbl(dptr s, double *d)
   }
 
 /*
- * cnv_c_int - cnv:C_integer(*s, *d), convert a value directly into a C_integer
+ * cnv_c_int - cnv:C_integer(*s, *d), convert a value directly into a word
  */
-int cnv_c_int(dptr s, C_integer *d)
+int cnv_c_int(dptr s, word *d)
    {
    tended struct descrip cnvstr, result;
    union numeric numrc;
@@ -231,7 +231,7 @@ int f(dptr s, dptr d)
    }
 
    if (cnv:string(*s, str)) {
-       C_integer l;
+       word l;
        char *s1;        /* does not need to be tended */
        struct rangeset *rs;
        MemProtect(rs = init_rangeset());
@@ -362,7 +362,7 @@ int need_ucs(dptr s)
 /*
  * cnv_ec_int - cnv:(exact)C_integer(*s, *d), convert to an exact C integer
  */
-int cnv_ec_int(dptr s, C_integer *d)
+int cnv_ec_int(dptr s, word *d)
    {
    tended struct descrip cnvstr; /* tended since ston allocates blocks */
    union numeric numrc;
@@ -779,7 +779,7 @@ deref_macro(deref_1,E_Deref)
  *  making q a descriptor for the resulting string.
  */
 
-static void itos(C_integer num, dptr dp, char *s)
+static void itos(word num, dptr dp, char *s)
    {
    register char *p;
 

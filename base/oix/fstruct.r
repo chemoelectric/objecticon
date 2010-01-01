@@ -24,8 +24,7 @@ function delete(s,x)
             return s;
          }
      list: {
-            C_integer cnv_x;
-	    word i, size;
+            word cnv_x, i, size;
 
             /*
              * Make sure that subscript x is in range.
@@ -133,8 +132,7 @@ function insert(s, x, y)
          }
 
       list: {
-            C_integer cnv_x;
-            word i, size;
+            word cnv_x, i, size;
 
             /*
              * Make sure that subscript x is in range.
@@ -181,9 +179,8 @@ function list(n, x)
 
    body {
       tended struct b_list *hp;
-      register word i, size;
-      word nslots;
-      register struct b_lelem *bp; /* does not need to be tended */
+      word i, size, nslots;
+      struct b_lelem *bp; /* does not need to be tended */
 
       nslots = size = n;
 

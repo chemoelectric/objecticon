@@ -66,7 +66,7 @@ function cocopy(x)
 
 end
 
-
+
 
 "*x - return size of string or object x."
 
@@ -92,7 +92,7 @@ operator * size(x)
    }
  }
 end
-
+
 
 "=x - tab(match(x)).  Reverses effects if resumed."
 
@@ -100,7 +100,7 @@ operator = tabmat(x)
    body {
       register word l;
       char *s1, *s2;
-      C_integer i, j;
+      word i, j;
       /*
        * Make a copy of &pos.
        */
@@ -197,7 +197,7 @@ operator = tabmat(x)
       }
    }
 end
-
+
 
 "i to j by k - generate successive values."
 
@@ -287,6 +287,6 @@ operator ... toby(from, to, by)
    else runerr(102);
   }
 end
-
+
 
 

@@ -54,14 +54,14 @@ void            table_insert(dptr t, dptr key, dptr val);
 void            set_insert(dptr s, dptr entry);
 
 int             cnv_c_dbl       (dptr s, double *d);
-int             cnv_c_int       (dptr s, C_integer *d);
+int             cnv_c_int       (dptr s, word *d);
 int             cnv_c_str       (dptr s, dptr d);
 int             cnv_cset_0      (dptr s, dptr d);
 int             cnv_cset_1      (dptr s, dptr d);
 int             cnv_ucs_0       (dptr s, dptr d);
 int             cnv_ucs_1       (dptr s, dptr d);
 int             cnv_str_or_ucs  (dptr s, dptr d);
-int             cnv_ec_int      (dptr s, C_integer *d);
+int             cnv_ec_int      (dptr s, word *d);
 int             cnv_eint        (dptr s, dptr d);
 int             cnv_int_0       (dptr s, dptr d);
 int             cnv_int_1       (dptr s, dptr d);
@@ -86,13 +86,13 @@ void            dealcblk_1      (union block *bp);
 void            dealcstr_0      (char *p);
 void            dealcstr_1      (char *p);
 int             def_c_dbl       (dptr s, double df, double * d);
-int             def_c_int       (dptr s, C_integer df, C_integer * d);
+int             def_c_int       (dptr s, word df, word * d);
 int             def_c_str       (dptr s, char * df, dptr d);
 int             def_cset        (dptr s, struct b_cset * df, dptr d);
 int             def_ucs         (dptr s, struct b_ucs * df, dptr d);
-int             def_ec_int      (dptr s, C_integer df, C_integer * d);
-int             def_eint        (dptr s, C_integer df, dptr d);
-int             def_int         (dptr s, C_integer df, dptr d);
+int             def_ec_int      (dptr s, word df, word * d);
+int             def_eint        (dptr s, word df, dptr d);
+int             def_int         (dptr s, word df, dptr d);
 int             def_real        (dptr s, double df, dptr d);
 int             def_str         (dptr s, dptr df, dptr d);
 int             def_tstr        (char *sbuf, dptr s, dptr df, dptr d);
@@ -116,7 +116,7 @@ union block     *hgfirst        (union block *bp, struct hgstate *state);
 union block     *hgnext         (union block*b,struct hgstate*s,union block *e);
 union block     *hmake          (int tcode,word nslots,word nelem);
 int             idelay          (int n);
-void            irunerr         (int n, C_integer v);
+void            irunerr         (int n, word v);
 int             lexcmp          (dptr dp1,dptr dp2);
 union block     **memb          (union block *pb,dptr x,uword hn, int *res);
 void            mksubs          (dptr var,dptr val,word i,word j, dptr result);
@@ -188,7 +188,7 @@ void  bigrand         (dptr da, dptr dx);
    int  parsecolor      (wbp w, char *s, long *r, long *g, long *b, long *a);
    int  parsefont       (char *s, char *fam, int *sty, int *sz);
    int  parsegeometry   (char *buf, SHORT *x, SHORT *y, SHORT *w, SHORT *h);
-   int  parsepattern    (char *s, int len, int *w, int *nbits, C_integer *bits);
+   int  parsepattern    (char *s, int len, int *w, int *nbits, word *bits);
 void    qevent          (wsp ws, dptr e, int x, int y, uword t, long f, int krel);
    int  readGIF         (char *fname, int p, struct imgdata *d);
 #ifdef HAVE_LIBJPEG
@@ -212,7 +212,7 @@ void    qevent          (wsp ws, dptr e, int x, int y, uword t, long f, int krel
     * (excluding those defined as macros for X-windows)
     */
    int  SetPattern      (wbp w, char *name, int len);
-   int  SetPatternBits  (wbp w, int width, C_integer *bits, int nbits);
+   int  SetPatternBits  (wbp w, int width, word *bits, int nbits);
    int  allowresize     (wbp w, int on);
    int  blimage         (wbp w, int x, int y, int wd, int h,
                           int ch, unsigned char *s, word len);
@@ -438,11 +438,11 @@ void    getimage        (dptr dp1, dptr dp2);
 
 void    hgrow           (union block *bp);
 void    hshrink         (union block *bp);
-C_integer iipow         (C_integer n1, C_integer n2);
+word iipow         (word n1, word n2);
 void    init            (char *name, int *argcp, char *argv[], int trc_init);
 int     kbhit           (void);
 int     order           (dptr dp);
-int     ripow           (double r, C_integer n, dptr rslt);
+int     ripow           (double r, word n, dptr rslt);
 void    rtos            (double n,dptr dp,char *s);
 
 struct progstate *alcprog(long icodesize);

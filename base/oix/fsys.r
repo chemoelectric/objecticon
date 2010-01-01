@@ -121,14 +121,6 @@ function system(s)
 
 
    body {
-      /*
-       * Pass the C string to the system() function and return
-       * the exit code of the command as the result of system().
-       * Note, the expression on a "return" may not have side effects,
-       * so the exit code must be returned via a variable.
-       */
-      C_integer i;
-      i = (C_integer)system(s);
-      return C_integer i;
+       return C_integer (word)system(s);
       }
 end

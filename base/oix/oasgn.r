@@ -32,14 +32,14 @@ static int subs_asgn	(dptr dest, dptr src);
 	    *VarLoc(x) = y;
          }
       kywdint:  {
-            C_integer i;
+            word i;
 
             if (!cnv:C_integer(y, i))
                runerr(101, y);
             IntVal(*VarLoc(x)) = i;
 	}
       kywdpos: {
-            C_integer i;
+            word i;
             dptr sub;
 
             if (!cnv:C_integer(y, i))

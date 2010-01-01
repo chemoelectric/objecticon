@@ -9,7 +9,7 @@
 
 operator ! bang(underef x -> dx)
    body {
-      register C_integer i, j;
+      register word i, j;
       tended union block *ep;
 
    type_case dx of {
@@ -183,7 +183,7 @@ operator ? random(underef x -> dx)
    body{
    type_case dx of {
       string: {
-            C_integer val;
+            word val;
             double rval;
 
             if ((val = StrLen(dx)) == 0)
@@ -197,7 +197,7 @@ operator ? random(underef x -> dx)
          }
 
       ucs: {
-            C_integer val;
+            word val;
             double rval;
             word i;
 
@@ -213,7 +213,7 @@ operator ? random(underef x -> dx)
        }
 
       cset: {
-             C_integer val;
+             word val;
              double rval;
              word i;
              int k, ch;
@@ -235,7 +235,7 @@ operator ? random(underef x -> dx)
           * x is a list.  Set i to a random number in the range [1,*x],
           *  failing if the list is empty.
           */
-            C_integer val;
+            word val;
             double rval;
             word i, j;
             struct b_lelem *le;     /* doesn't need to be tended */
@@ -264,9 +264,8 @@ operator ? random(underef x -> dx)
            * x is a table.  Set n to a random number in the range [1,*x],
            *  failing if the table is empty.
            */
-            C_integer val;
             double rval;
-            register C_integer i, j, n;
+            word val, i, j, n;
             union block *ep, *bp;   /* doesn't need to be tended */
 	    struct b_slots *seg;
 
@@ -300,9 +299,8 @@ operator ? random(underef x -> dx)
           * x is a set.  Set n to a random number in the range [1,*x],
           *  failing if the set is empty.
           */
-            C_integer val;
             double rval;
-            register C_integer i, j, n;
+            word val, i, j, n;
             union block *bp, *ep;  /* doesn't need to be tended */
 	    struct b_slots *seg;
 
@@ -334,7 +332,7 @@ operator ? random(underef x -> dx)
           *  [1,*x] (*x is the number of fields), failing if the
           *  record has no fields.
           */
-            C_integer val;
+            word val;
             double rval;
             struct b_record *rec;  /* doesn't need to be tended */
 
@@ -354,7 +352,7 @@ operator ? random(underef x -> dx)
 
       default: {
           double rval;
-          C_integer v;
+          word v;
 
           if (!cnv:integer(dx,dx))
               runerr(113, dx);
@@ -412,7 +410,7 @@ operator [:] sect(underef x -> dx, i, j)
 
       type_case dx of {
       list: {
-         C_integer t;
+         word t;
          tended struct descrip result;
 
          i = cvpos(i, ListBlk(dx).size);
@@ -431,7 +429,7 @@ operator [:] sect(underef x -> dx, i, j)
       }
 
      ucs: {
-         C_integer t;
+         word t;
          if (is:variable(x) && !frame->rval)
                use_trap = 1;
 
@@ -457,7 +455,7 @@ operator [:] sect(underef x -> dx, i, j)
       }       
 
      cset: {
-         C_integer t;
+         word t;
          int k, last;
 
          i = cvpos(i, CsetBlk(dx).size);
@@ -489,7 +487,7 @@ operator [:] sect(underef x -> dx, i, j)
       }       
 
     default: {
-         C_integer t;
+         word t;
 
         /*
          * x should be a string. If x is a variable, we must create a
@@ -528,7 +526,7 @@ end
 operator [] subsc(underef x -> dx,y)
  body {
    int use_trap = 0;
-   C_integer yi;
+   word yi;
 
    type_case dx of {
       list: {

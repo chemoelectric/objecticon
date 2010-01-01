@@ -305,7 +305,7 @@ function lang_Prog_get_variable_name(underef v)
 
    body {
       tended struct descrip result;
-      C_integer i = get_name(&v, &result);
+      word i = get_name(&v, &result);
       if (i == Error)
          runerr(0);
       return result;
@@ -2005,7 +2005,7 @@ function io_DescStream_select(rl, wl, el, timeout)
        if (is:null(timeout))
            ptv = 0;
        else {
-           C_integer t;
+           word t;
            if (!cnv:C_integer(timeout, t))
                runerr(101, timeout);
            tv.tv_sec = t / 1000;

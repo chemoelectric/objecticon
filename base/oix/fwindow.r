@@ -160,7 +160,7 @@ end
 function graphics_Window_clip(self, argv[argc])
    body {
       int r;
-      C_integer x, y, width, height;
+      word x, y, width, height;
       wcp wc;
       GetSelfW();
 
@@ -216,7 +216,7 @@ end
 function graphics_Window_color(self, argv[argc])
    body {
       int i;
-      C_integer n;
+      word n;
       char *colorname, *srcname;
       tended char *tmp;
       GetSelfW();
@@ -264,7 +264,7 @@ end
 
 function graphics_Window_color_value(self, k)
    body {
-      C_integer n;
+      word n;
       long r, g, b, a;
       tended char *s;
       char tmp[32], *t;
@@ -299,7 +299,7 @@ end
 function graphics_Window_copy_to(self, dest, argv[argc])
    body {
       int n, r;
-      C_integer x, y, width, height, x2, y2, width2, height2;
+      word x, y, width, height, x2, y2, width2, height2;
       wbp w2;
 
       GetSelfW();
@@ -376,7 +376,7 @@ function graphics_Window_draw_arc(self, argv[argc])
    body {
       int i, j, r;
       XArc arcs[MAXXOBJS];
-      C_integer x, y, width, height;
+      word x, y, width, height;
       double a1, a2;
 
       GetSelfW();
@@ -464,7 +464,7 @@ end
 function graphics_Window_draw_curve(self, argv[argc])
    body {
       int i, n, closed;
-      C_integer dx, dy, x0, y0, xN, yN;
+      word dx, dy, x0, y0, xN, yN;
       XPoint *points;
       GetSelfW();
 
@@ -524,7 +524,7 @@ end
 function graphics_Window_draw_image(self, argv[argc])
    body {
       int c, i, width, height, row, p;
-      C_integer x, y;
+      word x, y;
       word nchars;
       unsigned char *s, *t, *z;
       struct descrip d;
@@ -743,7 +743,7 @@ function graphics_Window_draw_rectangle(self, argv[argc])
    body {
       int i, j, r;
       XRectangle recs[MAXXOBJS];
-      C_integer x, y, width, height;
+      word x, y, width, height;
 
       GetSelfW();
 
@@ -810,7 +810,7 @@ function graphics_Window_draw_string(self, argv[argc])
       CheckArgMultipleOf(3);
 
       for(i=0; i < n; i++) {
-          C_integer x, y;
+          word x, y;
           int base = i * 3;
           CnvCInteger(argv[base], x);
           CnvCInteger(argv[base + 1], y);
@@ -836,7 +836,7 @@ end
 function graphics_Window_erase_area(self, argv[argc])
    body {
       int i, r;
-      C_integer x, y, width, height;
+      word x, y, width, height;
       GetSelfW();
 
       for (i = 0; i < argc || i == 0; i += 4) {
@@ -855,7 +855,7 @@ function graphics_Window_event(self, timeout)
    if !def:C_integer(timeout, -1) then
       runerr(101, timeout)
    body {
-      C_integer i;
+      word i;
       tended struct descrip d;
       GetSelfW();
 
@@ -943,7 +943,7 @@ function graphics_Window_fill_arc(self, argv[argc])
    body {
       int i, j, r;
       XArc arcs[MAXXOBJS];
-      C_integer x, y, width, height;
+      word x, y, width, height;
       double a1, a2;
 
       GetSelfW();
@@ -1057,7 +1057,7 @@ function graphics_Window_fill_rectangle(self, argv[argc])
    body {
       int i, j, r;
       XRectangle recs[MAXXOBJS];
-      C_integer x, y, width, height;
+      word x, y, width, height;
 
       GetSelfW();
 
@@ -1105,7 +1105,7 @@ end
 function graphics_Window_free_color(self, argv[argc])
    body {
       int i;
-      C_integer n;
+      word n;
       tended char *s;
       GetSelfW();
 
@@ -1209,7 +1209,7 @@ end
 function graphics_Window_palette_key(self, s1, s2)
    body {
       int p;
-      C_integer n;
+      word n;
       tended char *s;
       long r, g, b, a;
 
@@ -1255,7 +1255,7 @@ end
 function graphics_Window_pixel(self, argv[argc])
    body {
       struct imgmem imem;
-      C_integer x, y, width, height;
+      word x, y, width, height;
       int slen, r;
       tended struct descrip lastval, result;
       char strout[50];
@@ -1335,7 +1335,7 @@ function graphics_Window_read_image(self, argv[argc])
       char filename[MaxPath + 1];
       tended char *tmp;
       int status;
-      C_integer x, y;
+      word x, y;
       int p, r;
       struct imgdata imd;
       GetSelfW();
@@ -1414,7 +1414,7 @@ function graphics_Window_text_width(self, s)
    if !cnv:string_or_ucs(s) then
       runerr(129, s)
    body {
-      C_integer i;
+      word i;
       GetSelfW();
       if (is:ucs(s))
           i = UTF8WIDTH(self_w, StrLoc(UcsBlk(s).utf8), StrLen(UcsBlk(s).utf8));
@@ -1595,7 +1595,7 @@ function graphics_Window_write_image(self, s, argv[argc])
        runerr(103, s)
    body {
       int r;
-      C_integer x, y, width, height;
+      word x, y, width, height;
       GetSelfW();
 
       r = rectargs(self_w, argc, argv, 0, &x, &y, &width, &height);
@@ -1703,7 +1703,7 @@ end
 function graphics_Window_generic_palette_key(s1, s2)
    body {
       int p;
-      C_integer n;
+      word n;
       tended char *s;
       long r, g, b, a;
 
@@ -1727,7 +1727,7 @@ end
 
 function graphics_Window_generic_color_value(k)
    body {
-      C_integer n;
+      word n;
       long r, g, b, a = 65535;
       tended char *s;
       char tmp[32];

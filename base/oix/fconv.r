@@ -11,7 +11,7 @@ function abs(n)
     */
    if cnv:(exact)C_integer(n) then {
       body {
-	 C_integer i;
+	 word i;
 
 	 if (n >= 0)
 	    i = n;

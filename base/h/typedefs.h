@@ -33,7 +33,7 @@
  */
 
 typedef struct descrip *dptr;
-typedef word C_integer;
+/*typedef word C_integer;*/
 #if SIZEOF_LONG_LONG != 0
 typedef long long longlong;
 typedef unsigned long long ulonglong;

@@ -12,7 +12,7 @@ int over_flow = 0;
    operator icon_op func_name(x, y)
       declare {
          tended struct descrip lx, ly, result;
-	 C_integer irslt;
+	 word irslt;
          }
       arith_case (x, y) of {
          C_integer: {
@@ -194,7 +194,7 @@ ArithOp( * , mult , Mpy , RealMpy, list_add /* bogus */ )
 operator - neg(x)
    if cnv:(exact)C_integer(x) then {
       body {
-	    C_integer i;
+	    word i;
 
 	    i = neg(x);
 	    if (over_flow) {
@@ -340,10 +340,7 @@ end
 /*
  * ripow - raise a real number to an integral power.
  */
-int ripow(r, n, drslt)
-double r;
-C_integer n;
-dptr drslt;
+int ripow(double r, word n, dptr drslt)
    {
    double retval;
 

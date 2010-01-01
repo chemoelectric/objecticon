@@ -3528,7 +3528,7 @@ int SetPattern(wbp w, char *name, int len)
     int width, nbits;
     int i;
     int symbol;
-    C_integer v, bits[MAXXOBJS];
+    word v, bits[MAXXOBJS];
     Pixmap p;
     char data[MAXXOBJS];
     char *buf = data;
@@ -3571,9 +3571,9 @@ int SetPattern(wbp w, char *name, int len)
     return Failed;
 }
 
-int SetPatternBits(wbp w, int width, C_integer *bits, int nbits)
+int SetPatternBits(wbp w, int width, word *bits, int nbits)
 {
-    C_integer v;
+    word v;
     int i, j;
     Pixmap p;
     char data[MAXXOBJS];

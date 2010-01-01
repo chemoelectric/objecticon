@@ -175,7 +175,7 @@ typedef int siptr, stringint, inst;
     */
    #begdef CnvShortInt(desc, s, max, min, type)
 	{
-	C_integer tmp;
+	word tmp;
 	if (!cnv:C_integer(desc,tmp) || tmp > max || tmp < min)
 	   runerr(101,desc);
 	s = (type) tmp;

@@ -3297,7 +3297,7 @@ struct node *n;
    t = params;
    while (t) {
        if (t->u.param_info.non_tend & PrmInt) {
-           fprintf(out_file, "   C_integer r_i%d;\n", t->u.param_info.param_num); ++line;
+           fprintf(out_file, "   word r_i%d;\n", t->u.param_info.param_num); ++line;
        }
        if (t->u.param_info.non_tend & PrmDbl) {
            fprintf(out_file, "   double r_d%d;\n", t->u.param_info.param_num); ++line;

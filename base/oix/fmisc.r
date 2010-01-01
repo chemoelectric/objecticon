@@ -243,7 +243,7 @@ function ishift(i,j)
 
    body {
       uword ci;			 /* shift in 0s, even if negative */
-      C_integer cj;
+      word cj;
       if (Type(j) == T_Lrgint)
          runerr(101,j);
       cj = IntVal(j);
@@ -1636,7 +1636,7 @@ function ord(x, i, j)
             if (j == CvtFail)
                 fail;
             if (i > j) {
-                C_integer t = i;
+                word t = i;
                 i = j;
                 len = t - j;
             } else
@@ -1665,7 +1665,7 @@ function ord(x, i, j)
             if (j == CvtFail)
                 fail;
             if (i > j) {
-                C_integer t = i;
+                word t = i;
                 i = j;
                 len = t - j;
             } else

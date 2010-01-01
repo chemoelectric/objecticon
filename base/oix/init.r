@@ -598,7 +598,7 @@ static void handle_prog_exit()
 function lang_Prog_load(s, arglist, blocksize, stringsize)
    declare {
       tended char *loadstring;
-      C_integer bs, ss;
+      word bs, ss;
       }
    if !cnv:C_string(s,loadstring) then
       runerr(103,s)

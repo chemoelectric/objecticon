@@ -10,8 +10,8 @@
  */
 #begdef str_anal(s, i, j)
    declare {
-      C_integer cnv_ ## i;
-      C_integer cnv_ ## j;
+      word cnv_ ## i;
+      word cnv_ ## j;
       int slen;
       }
 
@@ -49,7 +49,7 @@
        if ((cnv_ ## j = cvpos(cnv_ ## j, slen)) == CvtFail)
           fail;
        if (cnv_ ## i > cnv_ ## j) {
-          register C_integer tmp;
+          register word tmp;
           tmp = cnv_ ## i;
           cnv_ ## i = cnv_ ## j;
           cnv_ ## j = tmp;
@@ -61,7 +61,7 @@
 
    }
 #enddef
-
+
 
 "any(c,s,i1,i2) - produces min(i1,i2)+1 if s[min(i1,i2)] is contained "
 "in c and i1 ~= i2, but fails otherwise."
@@ -83,7 +83,7 @@ function any(c,s,i,j)
       return C_integer cnv_i+1;
       }
 end
-
+
 
 "bal(c1,c2,c3,s,i1,i2) - generates the sequence of integer positions in s up to"
 " a character of c1 in s[i1:i2] that is balanced with respect to characters in"
@@ -99,7 +99,7 @@ function bal(c1,c2,c3,s,i,j)
       runerr(104,c3)
 
    body {
-      C_integer cnt;
+      word cnt;
 
       /*
        * Loop through characters in s[i:j].  When a character in c2
@@ -148,7 +148,7 @@ function bal(c1,c2,c3,s,i,j)
       fail;
       }
 end
-
+
 
 "find(s1,s2,i1,i2) - generates the sequence of positions in s2 at which "
 "s1 occurs as a substring in s2[i1:i2], but fails if there is no such position."
@@ -158,7 +158,7 @@ function find(s1,s2,i,j)
 
    body {
       char *str1, *str2;
-      C_integer s1_len, l, term;
+      word s1_len, l, term;
 
       if (is:string(s2)) {
           if (!cnv:string(s1,s1))
@@ -223,7 +223,7 @@ function find(s1,s2,i,j)
       fail;
    }
 end
-
+
 
 "many(c,s,i1,i2) - produces the position in s after the longest initial "
 "sequence of characters in c in s[i1:i2] but fails if there is none."
@@ -233,7 +233,7 @@ function many(c,s,i,j)
    if !cnv:cset(c) then
       runerr(104,c)
    body {
-      C_integer start_i = cnv_i;
+      word start_i = cnv_i;
       /*
        * Move i along s[i:j] until a character that is not in c is found
        *  or the end of the string is reached.
@@ -263,7 +263,7 @@ function many(c,s,i,j)
       return C_integer cnv_i;
       }
 end
-
+
 
 "match(s1,s2,i1,i2) - produces i1+*s1 if s1==s2[i1+:*s1], but fails otherwise."
 
@@ -323,7 +323,7 @@ function match(s1,s2,i,j)
       }
    }
 end
-
+
 
 "upto(c,s,i1,i2) - generates the sequence of integer positions in s up to a "
 "character in c in s[i2:i2], but fails if there is no such position."

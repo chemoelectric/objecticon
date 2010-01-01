@@ -30,15 +30,15 @@ int default(dptr s, dftype df, destype d)
 DefConvert(def_c_dbl, double, double *, cnv_c_dbl, C_DblAsgn)
 
 /*
- * def_c_int - def:C_integer(*s, df, *d), convert to C_integer with a
- *  default value. Default type C_integer; if used, just copy to
+ * def_c_int - def:C_integer(*s, df, *d), convert to word with a
+ *  default value. Default type word; if used, just copy to
  *  destination.
  */
 #begdef C_IntAsgn
    *d = df;
 #enddef
 
-DefConvert(def_c_int, C_integer, C_integer *, cnv_c_int, C_IntAsgn)
+DefConvert(def_c_int, word, word *, cnv_c_int, C_IntAsgn)
 
 /*
  * def_c_str - def:C_string(*s, df, *d), convert to (tended) C string with
@@ -89,10 +89,10 @@ DefConvert(def_ucs, struct b_ucs *, dptr, cnv_ucs, UcsAsgn)
    *d = df;
 #enddef
 
-DefConvert(def_ec_int, C_integer, C_integer *, cnv_ec_int, EC_IntAsgn)
+DefConvert(def_ec_int, word, word *, cnv_ec_int, EC_IntAsgn)
 
 /*
- * def_eint - def:(exact)integer(*s, df, *d), convert to C_integer
+ * def_eint - def:(exact)integer(*s, df, *d), convert to word
  *  with a default value, but disallow conversions from reals. Default
  *  is of type C_Integer; if used, assign it to the destination descriptor.
  */
@@ -102,11 +102,11 @@ DefConvert(def_ec_int, C_integer, C_integer *, cnv_ec_int, EC_IntAsgn)
    IntVal(*d) = df;
 #enddef
 
-DefConvert(def_eint, C_integer, dptr, cnv_eint, EintAsgn)
+DefConvert(def_eint, word, dptr, cnv_eint, EintAsgn)
 
 /*
  * def_int - def:integer(*s, df, *d), convert to integer with a default
- *  value. Default is of type C_integer; if used, assign it to the
+ *  value. Default is of type word; if used, assign it to the
  *  destination descriptor.
  */
 
@@ -115,7 +115,7 @@ DefConvert(def_eint, C_integer, dptr, cnv_eint, EintAsgn)
    IntVal(*d) = df;
 #enddef
 
-DefConvert(def_int, C_integer, dptr, cnv_int, IntAsgn)
+DefConvert(def_int, word, dptr, cnv_int, IntAsgn)
 
 /*
  * def_real - def:real(*s, df, *d), convert to real with a default value.

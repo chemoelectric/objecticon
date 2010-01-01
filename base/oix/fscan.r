@@ -11,8 +11,7 @@ function move(i)
       runerr(101,i)
 
    body {
-      register C_integer j;
-      C_integer oldpos;
+       word j, oldpos;
 
       /*
        * Save old &pos.  Local variable j holds &pos before the move.
@@ -99,7 +98,7 @@ function move(i)
       fail;
       }
 end
-
+
 
 "pos(i) - test if &pos is at position i in &subject."
 
@@ -126,7 +125,7 @@ function pos(i)
       return C_integer i;
       }
 end
-
+
 
 "tab(i) - set &pos to i, return substring of &subject spanned."
 "Reverses effects if resumed."
@@ -137,7 +136,7 @@ function tab(i)
       runerr(101, i);
 
    body {
-      C_integer j, t, oldpos;
+      word j, t, oldpos;
 
       if (is:string(k_subject)) {
           /*
