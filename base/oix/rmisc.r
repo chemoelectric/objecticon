@@ -1574,10 +1574,8 @@ void retderef(dptr valp, struct frame_vars *fvars)
    if (is:tvsubs(*valp)) {
       tvb = &TvsubsBlk(*valp);
       /* 
-       * Check to see what the ssvar holds - it may contain a ucs
-       * descriptor (not a variable at all) as a result of, eg, return
-       * (ucs("abc") ? move(2)).  It may also contain a var which
-       * isn't a D_NamedVar, eg return &why[2].  In such cases it
+       * Check to see what the ssvar holds.  It may contain a var
+       * which isn't a named var, eg return &why[2].  In such cases it
        * cannot be a local var.
        */
       if (is:named_var(tvb->ssvar)) {

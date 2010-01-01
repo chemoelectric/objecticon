@@ -71,20 +71,15 @@ function move(i)
           }
 
           /*
-           * Suspend substring of &subject that was moved over.  Note
-           * we suspend a tvsubs, but one with a value rather than a
-           * variable in the tvsubs ssvar field - a D_Ucs descriptor.
-           * This is to avoid the expense of creating a ucs substring;
-           * that will only be done if and when the tvsubs is
-           * dereferenced.  An attempt to assign to the tvsubs gives a
-           * runtime error (see oasgn.r).
-           * 
-           * Note that we can't store a variable pointint to k_subject
-           * in ssvar because k_subject might change before we
-           * dereference it, notably when scanning ends - for example
-           * in write(ucs("abcd") ? move(5)).
+           * Suspend substring of &subject that was moved over.  Since
+           * make_ucs_substring is potentially expensive, we check
+           * whether we actually need to calculate it, or can return a
+           * dummy value instead (which is just discarded).
            */
-          suspend tvsubs(&k_subject, j, i);
+          if (frame->lhs)
+              suspend ucs(make_ucs_substring(&UcsBlk(k_subject), j, i));
+          else
+              suspend nulldesc;
 
           /*
            * If move is resumed, restore the old position and fail.
@@ -209,10 +204,13 @@ function tab(i)
               i = i - j;
 
           /*
-           * Suspend the portion of &subject that was tabbed over.  See comment
-           * in move() above
+           * Suspend the portion of &subject that was tabbed over (see
+           * comment in move above).
            */
-          suspend tvsubs(&k_subject, j, i);
+          if (frame->lhs)
+              suspend ucs(make_ucs_substring(&UcsBlk(k_subject), j, i));
+          else
+              suspend nulldesc;
 
           /*
            * If tab is resumed, restore the old position and fail.

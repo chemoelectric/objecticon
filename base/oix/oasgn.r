@@ -390,9 +390,7 @@ int subs_asgn(dptr dest, dptr src)
    }
 
    /*
-    * Perform the assignment and update the trapped variable.  Note that the ssvar can
-    * actually be a ucs value - see move and tab for the ucs case in fscan.r.  The string
-    * case is just for completeness' sake.
+    * Perform the assignment and update the trapped variable.
     */
    type_case tvsub->ssvar of {
       named_var: {
@@ -400,12 +398,6 @@ int subs_asgn(dptr dest, dptr src)
       }
       struct_var: {
           *OffsetVarLoc(tvsub->ssvar) = rsltstr;
-      }
-      string: {
-          ReturnErrVal(205, tvsub->ssvar, Error);
-      }
-      ucs: {
-          ReturnErrVal(205, tvsub->ssvar, Error);
       }
       kywdany: {
          *VarLoc(tvsub->ssvar) = rsltstr;
