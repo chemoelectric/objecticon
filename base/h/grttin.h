@@ -37,6 +37,23 @@
    } while (0)
 #enddef					/* ReturnErrNum */
 
+#begdef LazySuspend(expr)
+   do {
+       if (frame->lhs)
+           suspend expr;
+       else
+           suspend nulldesc;
+   } while (0)
+#enddef
+
+#begdef LazyReturn(expr)
+   do {
+       if (frame->lhs)
+           return expr;
+       else
+           return nulldesc;
+   } while (0)
+#enddef
 
 /*
  * Protection macro.

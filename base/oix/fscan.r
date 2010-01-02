@@ -71,15 +71,9 @@ function move(i)
           }
 
           /*
-           * Suspend substring of &subject that was moved over.  Since
-           * make_ucs_substring is potentially expensive, we check
-           * whether we actually need to calculate it, or can return a
-           * dummy value instead (which is just discarded).
+           * Suspend substring of &subject that was moved over.
            */
-          if (frame->lhs)
-              suspend ucs(make_ucs_substring(&UcsBlk(k_subject), j, i));
-          else
-              suspend nulldesc;
+          LazySuspend(ucs(make_ucs_substring(&UcsBlk(k_subject), j, i)));
 
           /*
            * If move is resumed, restore the old position and fail.
@@ -204,13 +198,9 @@ function tab(i)
               i = i - j;
 
           /*
-           * Suspend the portion of &subject that was tabbed over (see
-           * comment in move above).
+           * Suspend the portion of &subject that was tabbed over.
            */
-          if (frame->lhs)
-              suspend ucs(make_ucs_substring(&UcsBlk(k_subject), j, i));
-          else
-              suspend nulldesc;
+          LazySuspend(ucs(make_ucs_substring(&UcsBlk(k_subject), j, i)));
 
           /*
            * If tab is resumed, restore the old position and fail.
