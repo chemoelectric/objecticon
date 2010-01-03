@@ -3148,10 +3148,10 @@ function lang_Proc_get_local_kind(c, id)
         if (i < 0)
             fail;
         if (i < pp->nparam)
-            return C_integer 0;
+            return C_integer Argument;
         if (i < pp->nparam + pp->ndynam)
-            return C_integer 1;
-        return C_integer 2;
+            return C_integer Dynamic;
+        return C_integer Static;
      }
 end
 

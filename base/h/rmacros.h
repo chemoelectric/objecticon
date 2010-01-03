@@ -269,13 +269,21 @@
 #define P_Proc 1
 
 /*
- * procedure block kinds (b_proc.kind)
+ * procedure block kinds (Proc.get_kind)
  */
 #define Procedure  0
 #define Function   1
 #define Keyword    2
 #define Operator   3
 #define Internal   4
+
+/*
+ * Kinds of locals (Proc.get_local_kind)
+ */
+#define Argument   0
+#define Dynamic    1
+#define Static     2
+
 
 /*
  * Get type of block pointed at by x.
