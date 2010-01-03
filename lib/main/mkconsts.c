@@ -112,10 +112,10 @@ void end_class()
     fprintf(out, "end\n\n");
 }
 
-void add_ientry(char *name, int val)
+void add_ientry(char *name, word val)
 {
     char buff[32];
-    sprintf(buff, "%d", val);
+    sprintf(buff, "%ld", (long)val);
     add_entry(name, strdup(buff), 0);
 }
 
