@@ -1,0 +1,220 @@
+package gui
+
+#
+# This class encapsulates a single text item in a Menu.
+#
+# @field label=text : see {set_label}
+# @field label_left=text : see {set_label_left}
+# @field label_right=text : see {set_label_right}
+# @field paint or paint_mid={Paint} : see {set_paint_mid}
+# @field paint_left={Paint} : see {set_paint_left}
+# @field paint_right={Paint} : see {set_paint_right}
+# @field border_mid={ABorder} : see {set_border_mid}
+# @field border_left={ABorder} : see {set_border_left}
+# @field border_right={ABorder} : see {set_border_right}
+# @field see also {MenuComponent}
+#
+class TextMenuItem(MenuComponent)
+   public 
+      paint_mid,
+      paint_left,
+      paint_right,
+      border_mid,
+      border_left,
+      border_right
+
+   public initially()
+      cast(self,MenuComponent).initially()
+      # Note that having no paints is the case for a PopupMenu
+      (\paint_mid).initially(parent_component, self.accel)
+      (\paint_left).initially(parent_component)
+      (\paint_right).initially(parent_component)
+      border_mid.initially(parent_component)
+      border_left.initially(parent_component)
+      border_right.initially(parent_component)
+   end
+
+   public finally()
+      cast(self,MenuComponent).finally()
+      (\paint_mid).finally()
+      (\paint_left).finally()
+      (\paint_right).finally()
+      border_mid.finally()
+      border_left.finally()
+      border_right.finally()
+   end
+
+   #
+   # Set the centre label to the given string.
+   #
+   public set_label(x)
+      set_paint_mid(paint_for_string(x))
+   end
+
+   #
+   # Set the middle {Paint} instance.
+   #
+   public set_paint(p)
+      set_paint_mid(p)      
+   end
+
+   #
+   # Set the middle {Paint} instance.
+   #
+   public set_paint_mid(p)
+      (\self.paint_mid).finally()
+      self.paint_mid := p
+      if is_initialized() then {
+         (\self.paint_mid).initially(parent_component, self.accel)
+         possibly_invalidate()
+      }
+   end
+
+   #
+   # Set the optional left label to the given string.
+   #
+   public set_label_left(x)
+      set_paint_left(paint_for_string(x))
+   end
+
+   public set_paint_left(p)
+      (\self.paint_left).finally()
+      self.paint_left := p
+      if is_initialized() then {
+         (\self.paint_left).initially(parent_component)
+         possibly_invalidate()
+      }
+   end
+
+   #
+   # Set the optional right label to the given string.
+   #
+   public set_label_right(x)
+      set_paint_right(paint_for_string(x))
+   end
+
+   public set_paint_right(p)
+      (\self.paint_right).finally()
+      self.paint_right := p
+      if is_initialized() then {
+         (\self.paint_right).initially(parent_component)
+         possibly_invalidate()
+      }
+   end
+
+   public set_image_left(x)
+      set_paint_left(ImageStringPaint(x))
+   end
+
+   public set_image_right(x)
+      set_paint_right(ImageStringPaint(x))
+   end
+
+   public set_border_left(x)
+      self.border_left.finally()
+      self.border_left := x
+      if is_initialized() then {
+         self.border_left.initially(parent_component)
+         possibly_invalidate()
+      }
+   end
+
+   public set_border_right(x)
+      self.border_right.finally()
+      self.border_right := x
+      if is_initialized() then {
+         self.border_right.initially(parent_component)
+         possibly_invalidate()
+      }
+   end
+
+   public set_border_mid(x)
+      self.border_mid.finally()
+      self.border_mid := x
+      if is_initialized() then {
+         self.border_mid.initially(parent_component)
+         possibly_invalidate()
+      }
+   end
+
+   public get_label_left_width()
+      return (\paint_left).w + border_left.get_total_width()
+   end
+
+   public get_label_left_height()
+      return (\paint_left).h + border_left.get_total_height()
+   end
+
+   public get_label_mid_width()
+      return (\paint_mid).w + border_mid.get_total_width()
+   end
+
+   public get_label_mid_height()
+      return (\paint_mid).h + border_mid.get_total_height()
+   end
+
+   public get_label_right_width()
+      return (\paint_right).w + border_right.get_total_width()
+   end
+
+   public get_label_right_height()
+      return (\paint_right).h + border_left.get_total_height()
+   end
+
+   public draw_label(W, lw, mw, rw)
+      local r
+
+      r := Rect(label_x, label_y, lw, label_h)
+      if lw > 0 & \paint_left then {
+         border_left.draw(W, r.x, r.y, r.w, r.h)
+         paint_left.draw_point(W, border_left.float(r, paint_left))
+      }
+      r.x +:= lw
+
+      if mw > 0 & \paint_mid then {
+         r.w := mw
+         border_mid.draw(W, r.x, r.y, r.w, r.h)
+         paint_mid.draw_point(W, border_mid.float(r, paint_mid))
+      }
+      r.x +:= mw
+
+      if rw > 0 & \paint_right then {
+         r.w := rw
+         border_right.draw(W, r.x, r.y, r.w, r.h)
+         paint_right.draw_point(W, border_right.float(r, paint_right))
+      }
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "label" : set_label(f.text_val())
+         "label_left" : set_label_left(f.text_val())
+         "label_right" : set_label_right(f.text_val())
+         "paint"|"paint_mid" : set_paint_mid(f.object_val(gui.Paint))
+         "paint_left" : set_paint_left(f.object_val(gui.Paint))
+         "paint_right" : set_paint_right(f.object_val(gui.Paint))
+         "border_mid" : set_border_mid(f.object_val(gui.ABorder))
+         "border_left" : set_border_left(f.object_val(gui.ABorder))
+         "border_right" : set_border_right(f.object_val(gui.ABorder))
+         default : return cast(self,MenuComponent).set_one(f)
+      }
+      return
+   end
+
+   public new(a[])
+      cast(self,MenuComponent).new()
+      #
+      # The three labels use the following X insets by default :-
+      #      XllllXcccXrrrrX
+      #      <-l-><-m-><-r->
+      # where X is Gui.X_INSET
+      #
+      self.border_mid := EmptyBorder("x_align=l")
+      self.border_left := EmptyBorder("r_inset=0", "x_align=l")
+      self.border_right := EmptyBorder("l_inset=0", "x_align=l")
+      set_fields(a)
+      return
+   end
+end
+
+

@@ -1,0 +1,226 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package xml
+
+import lang, io, ipl.pdco
+
+#
+# This is the base class for all objects in the document, including
+# the document itself.
+#
+class Node()
+   public
+      parent,
+      children
+
+   #
+   # Return the parent Node of this Node
+   #
+   public get_parent()
+      return parent
+   end
+
+   #
+   # Return the children of this node.
+   #
+   public get_children()
+      return children
+   end
+
+   #
+   # Add a child at the given pos.  If pos is not specified, the
+   # child is appended to the end.
+   #
+   # @param obj - either a string/ucs or a Node subclass
+   # @param pos - the pos to insert
+   #
+   public add(obj, pos)
+      /pos := 0
+      insert(children, pos, obj)
+      if not text(obj) then
+         obj.parent := self
+      return obj
+   end
+
+   #
+   # Add a string at the given pos.  If pos is not specified, the
+   # child is appended to the end.
+   #
+   # This differs from the above {add()} method in that adjacent
+   # strings will be compacted together to form one longer string.
+   #
+   # @param s - a string/ucs
+   # @param pos - the pos to insert
+   #
+   public add_string(s, pos)
+      if /pos then {
+         if text(children[-1]) then
+            children[-1] ||:= s
+         else
+            put(children, s)
+      } else {
+         if text(children[pos - 1]) then
+            children[pos - 1] ||:= s
+         else if text(children[pos]) then
+            children[pos] := s || children[pos]
+         else
+            insert(children, pos, s)
+      }
+      return s
+   end
+
+   #
+   # Traverse all the nodes in this {Node} with a preorder traversal.
+   #
+   public traverse_nodes_preorder()
+      local e
+      coact(self)
+      every e := !children do
+         text(e) | e.traverse_nodes_preorder()
+   end
+
+   #
+   # Traverse all the nodes in this {Node} with a preorder traversal.
+   #
+   public traverse_nodes_postorder()
+      local e
+      every e := !children do
+         text(e) | e.traverse_nodes_postorder()
+      coact(self)
+   end
+
+   #
+   # Clean out any whitespace-only strings from the children list.
+   #
+   public remove_whitespace_children()
+      self.children := get_children_no_whitespace()
+   end
+
+   #
+   # Get a copy list of the children elements, but with any whitespace strings elements
+   # removed.  This leaves the children list intact.
+   #
+   public get_children_no_whitespace()
+      local l, e
+      l := []
+      every e := !children do {
+         if not(text(e) & (many(XmlParser.XML_SPACE, e) = *e + 1)) then
+            put(l, e)
+      }
+      return l
+   end
+
+   #
+   # Just like {get_children_no_whitespace()}, but this trims any string children
+   # left in the list.
+   #
+   public get_trimmed_children()
+      local l, e
+      l := []
+      every e := !get_children_no_whitespace() do {
+         if text(e) then
+            e := xml_trim(e)
+         put(l, e)
+      }
+      return l
+   end
+
+   #
+   # Get the string content of the node, which is the catenation of
+   # all the string children.
+   #
+   public get_string_content()
+      local s, e
+      s := ""
+      every e := !self.children do
+         s ||:= text(e)
+      return s
+   end
+
+   #
+   # Get the trimmed string content of the node, which is the catenation of
+   # all the trimmed string children.
+   #
+   public get_trimmed_string_content()
+      local s, e
+      s := ""
+      every e := !self.children do
+         s ||:= xml_trim(text(e))
+      return s
+   end
+
+   #
+   # Succeed if this node has string s as a child.
+   #
+   public has_string(s)
+      return text(!self.children) == s
+   end
+
+   #
+   # As has_string() above, but trims the child strings before
+   # comparison.
+   #
+   public has_trimmed_string(s)
+      return xml_trim(text(!self.children)) == s
+   end
+
+   #
+   # Search recursively for the given string in the node tree.  Any
+   # nodes with the string as a child are produced.
+   #
+   public find_string(s)
+      local n
+      every n := Seq{traverse_nodes_preorder()} do
+         if n.has_string(s) then
+            suspend n
+   end
+
+   #
+   # As above, but uses trimmed child strings for comparison.
+   #
+   public find_trimmed_string(s)
+      local n
+      every n := Seq{traverse_nodes_preorder()} do
+         if n.has_trimmed_string(s) then
+            suspend n
+   end
+
+   #
+   # Print the structure to the given file, for debugging.
+   #
+   public print_structure(f, indent, flags)
+      local i, j, e
+      /indent := 0
+      i := repl(" ", indent * 5)
+      write(f, i || to_string(self, 3))
+      every j := 1 to *children do {
+         writes(i || j || ":")
+         e := children[j]
+         if text(e) then
+            write(f, image(e))
+         else {
+            write(f)
+            e.print_structure(f, indent + 1, flags)
+         }
+      }
+   end
+
+   #
+   # Trim xml.xml_space chars from both ends of the given string
+   #
+   public static xml_trim(s)
+      return trim(s, XmlParser.XML_SPACE)
+   end
+
+   public new()
+      self.children := []
+      return
+   end
+end
+

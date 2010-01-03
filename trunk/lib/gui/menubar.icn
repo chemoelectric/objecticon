@@ -1,0 +1,418 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import graphics
+
+#
+# This class is the base from which menu systems are created,
+# other than popup menus.
+#
+# Menus are added to the menu bar with the {add()} method.
+#
+class MenuBar(Component)
+   public 
+      which_highlight,      # Currently highlighted menu
+      which_open,           # Currently open menu
+      menus,                # List of menus.
+      accel_skip
+
+   public close_all()
+      set_which_highlight()
+   end
+
+   #
+   # Add the {Menu} c to the {MenuBar}.  This will be one drop down
+   # menu.  Items are then added to the {Menu}.
+   # @param c  The {Menu} to add.
+   # @param i   The index to add at; if omitted then the new component
+   # @          is appended to the end.
+   #
+   public add(c, i)
+      /i := 0
+      insert(self.menus, i, c)
+   end
+
+   #
+   # Get the index of the given {Menu}
+   #
+   public get_index(c)
+      return keyof(self.menus, c)
+   end
+
+   #
+   # Remove the {Menu} from the menu list.
+   # @param c   The {Menu} to remove.
+   #
+   public remove(c)
+      remove_index(get_index(c))
+   end
+
+   #
+   # Remove the {Menu} at the given index from the menu list.
+   # @param i    The index
+   #
+   public remove_index(i)
+      delete(self.menus, i)
+   end
+
+   public initially()
+      local m
+      cast(self,Component).initially()
+      self.parent_dialog.connect(self.dialog_event, Event.ICON)
+      every m := !self.menus do {
+         m.set_parent_component(self)         
+         m.initially()
+      }
+   end
+
+   public finally()
+      self.parent_dialog.disconnect_object(self)
+      self.set_which_highlight()
+      
+      every (!self.menus).finally()
+
+      cast(self,Component).finally()
+   end
+
+   public display(r)
+      local m, cw, rw
+
+      border.draw_rect(self.cbwin, self)
+
+      # We just paint the ones which intersect with the clip rectangle.
+      every m := !menus do {
+         if r.intersect(m.get_label_rect()) then {
+            m.draw_label(self.cbwin, 0, m.label_w, 0)
+            if m === \self.which_highlight then {
+               rw := Gui.style.get_down_clone(self.cbwin)
+               rw.fill_rectangle(m.label_x, m.label_y, m.label_w, m.label_h)
+               rw.uncouple()
+            }
+            if m.is_shaded() then {
+               cw := Gui.style.get_filter_clone(self.cbwin)
+               cw.fill_rectangle(m.label_x, m.label_y, m.label_w, m.label_h)
+               cw.uncouple()
+            }
+         }
+      }
+   end
+
+   #
+   # Determine which of the menu labels is selected, if any, given we're in region.
+   #
+   # @p
+   public which_item(e)
+      local m
+      every m := !self.menus do {
+         if /m.is_shaded_flag & m.in_label_region(e) then
+            return m
+      }
+   end
+
+   #
+   # Set which_open and which_highlight to (non-null) x.
+   #
+   # @p
+   public set_which_open(x)
+      #
+      # Do nothing if x presently open
+      #
+      if self.which_open === x then
+         return
+
+      set_which_highlight(x)
+      self.which_open := x
+      self.which_open.position_nicely(max(0, self.which_open.label_x - 
+                                          self.which_open.border.get_l_inset()),
+                                          self.y + self.h,, self.y)
+      self.which_open.show()
+   end
+
+   #
+   # Set the which_highlight to x, which_open to null
+   #
+   # @p
+   public set_which_highlight(x)
+      #
+      # Do nothing if already in desired state.
+      #
+      if (self.which_highlight === x) & /self.which_open then
+         return
+
+      if /self.which_highlight then
+         self.parent_dialog.enter_menu_mode(self)
+
+      # Hide any existing visible submenu
+      (\self.which_open).hide()
+
+      # Just invalidate the bits that have changed.
+      self.invalidate((\self.which_highlight).get_label_rect())
+      self.which_highlight := x
+      self.invalidate((\self.which_highlight).get_label_rect())
+
+      self.which_open := &null
+
+      if /self.which_highlight then
+         self.parent_dialog.exit_menu_mode()
+   end
+
+   public handle_key_left(e)
+      if \self.which_highlight then
+         go_left()
+   end
+
+   public handle_key_right(e)
+      if \self.which_highlight then
+         go_right()
+   end
+
+   public handle_key_down(e)
+      if \self.which_highlight then {
+         set_which_open(self.which_highlight)
+         self.which_highlight.cursor_on()
+      }
+   end
+
+   public make_partial()
+      set_which_highlight(self.which_highlight)
+   end
+
+   public handle_key_escape(e)
+      if \self.which_highlight then
+         self.set_which_highlight()
+   end
+
+   public handle_accel(e)
+      local m
+      m := find_key(e.code) | fail
+      # The accelerator event will be passed to handle_key below; we don't want
+      # to pass this on to the menu in case it matches one of its menus - that would
+      # be two "accelerations" on one keypress.
+      accel_skip := e
+      set_which_open(m)
+      m.cursor_on()
+   end
+
+   public match_accel(e)
+      return find_key(e)
+   end
+
+   public get_tooltip(e)
+      return \self.tooltip | which_item(e).get_tooltip(e)
+   end
+
+   public handle_default(e)
+      local m
+      if /self.which_open & \self.which_highlight then {
+         if m := find_key(e.code) then {
+            set_which_open(m)
+            m.cursor_on()
+         }
+      }
+   end
+
+   public find_key(k)
+      local m
+      every m := !menus do {
+         if m.accel === k & m.is_unshaded() then
+            return m
+      }
+   end
+
+   public go_right()
+      local m, t, first
+      every m := !menus do {
+         if m.is_unshaded() then {
+            if /self.which_highlight | \t then {
+               first := m
+               break
+            }
+            /first := m
+         }
+         if m === which_highlight then
+            t := m
+      }
+      if \first then {
+         if \self.which_open then {
+            set_which_open(first)
+            self.which_open.cursor_on()
+         } else
+            set_which_highlight(first)
+      }
+   end
+
+   public go_left()
+      local m, last
+
+      every m := !menus do {
+         if \last & m === which_highlight then
+            break
+         m.is_shaded() | (last := m)
+      }
+      if \last then {
+         if \self.which_open then {
+            set_which_open(last)
+            self.which_open.cursor_on()
+         } else
+            set_which_highlight(last)
+      }
+   end
+
+   public handle_press(e)
+      local t
+      if in_region(e) then {
+         if t := which_item(e) then {
+            if t === self.which_open then
+               set_which_highlight(t)
+            else
+               set_which_open(t)
+         } else
+            self.set_which_highlight()
+      } else {
+         if \self.which_open then
+            which_open.handle_event(e)
+         else
+            #
+            # Clicked outside the region with no submenu - close.
+            #
+            self.set_which_highlight()
+      }
+   end
+
+   public handle_move(e)
+      local t
+      \self.which_highlight | fail
+
+      #
+      # Try any open sub-menu.  This ensures quickly dragging off
+      # a submenu onto the bar doesn't leave one of its items selected.
+      #
+      (\self.which_open).handle_event(e)
+
+      if in_region(e) then {
+         if t := which_item(e) then {
+            #
+            # Over a (different) item - highlight or open it, depending on whether the
+            # current one is open or just highlighted.
+            #
+            if /self.which_open then
+               self.set_which_highlight(t)
+            else
+               self.set_which_open(t)
+         }
+      } else if /self.which_open & e.code = Mouse.MOVEMENT then
+         #
+         # Submenu not open (just highlighted), and a mouse move outside of the
+         # bar - this clears the highlight (and leaves menu mode).
+         #
+         self.set_which_highlight()
+   end
+
+   public handle_release(e) 
+      if in_region(e) & \self.which_highlight then {
+         #
+         # Released with menu open.  If not on a label then close
+         #
+         which_item(e) | self.set_which_highlight()
+      } else {
+         if \self.which_open then
+            #
+            # Try open sub-menu.
+            #
+            self.which_open.handle_event(e)
+         else
+            #
+            # Close
+            #
+            self.set_which_highlight()
+      }
+   end
+
+   public handle_key(e)
+      if \self.which_open then {
+         self.which_open.handle_event(e)
+         return
+      }
+      case /e.release & e.code of {
+         Key.DOWN | " " | "\r": handle_key_down(e)
+         Key.RIGHT: handle_key_right(e)
+         Key.LEFT: handle_key_left(e)
+         "\e" : handle_key_escape(e)
+         default: handle_default(e)
+      }
+   end
+
+   public dialog_event(e)
+      local ec
+
+      (self.is_unshaded() & self.is_unhidden() &
+            \self.cbwin & \self.parent_dialog.is_open_flag) | fail
+
+      ec := e.code
+
+      if e === accel_skip then
+         accel_skip := &null
+      else if integer(ec) < 0 then {
+         if member(Mouse.PRESS, ec) then 
+            handle_press(e)
+         else if member(Mouse.RELEASE, ec) then 
+            handle_release(e)
+         else if member(Mouse.DRAG_OR_MOVEMENT, ec) then 
+            handle_move(e)
+         else
+            (\self.which_open).handle_event(e)
+      } else
+         handle_key(e)
+   end
+
+   public get_default_height()
+      local mh, m
+      mh := 0
+      every m := !self.menus do
+         mh <:= m.get_label_mid_height()
+      return mh + border.get_total_height()
+   end
+
+   public get_default_width()
+      local tw, m
+      tw := 0
+      every m := !self.menus do
+         tw +:= m.get_label_mid_width()
+      return tw + border.get_total_width()
+   end
+
+   public layout()
+      local px, m
+      #
+      # Compute x, y for each sub-menu
+      #
+      px := self.x + border.get_l_inset()
+      every m := !self.menus do {
+         m.label_x := px
+         m.label_y := self.y + border.get_t_inset()
+         m.label_w := m.get_label_mid_width()
+         m.label_h := self.h - border.get_total_height()
+         px +:= m.label_w
+      }
+   end
+
+   public new(a[])
+      cast(self,Component).new()
+      self.set_border(RaisedBorder())
+      set_tooltip_follows_mouse(&yes)
+      self.menus := []
+      set_fields(a)
+      return
+   end
+end
+
+
+
+

@@ -1,0 +1,957 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import undo, util, graphics
+
+#
+# A class for a single input line of text.  The text can
+# scroll within the area specified.  By default, a border
+# surrounds the text area; this can be turned off by using
+# {toggle_draw_border()}.
+#
+# The horizontal size must be set by the {set_size()} method:
+# there is no default (the vertical size will default, however).
+#
+# An Event.ACTION is generated when return is pressed,
+# a Event.CONTENT_CHANGED whenever the contents are changed,
+# a Event.CURSOR_MOVED when the cursor moves, and a
+# Event.SELECTION_CHANGED whenver the selection changes.
+#
+# @field filter=cset : see {set_filter}
+# @field displaychar=text : see {set_displaychar}
+# @field contents=text : see {set_contents}
+# @field is_editable=flag : see {set_is_editable}
+# @field move_on_rpress=flag : see {set_move_on_rpress}
+# @field see also {Component}
+#
+# @example
+# @ t := TextField()
+# @ t.set_pos(50, 250)
+# @ # Vertical size will default
+# @ t.set_size(100)
+# @ t.set_contents("Initial string")
+# @ self.add(t)
+#
+class TextField(Component)
+   public 
+      filter,                  # Cset for filtering characters
+      is_editable_flag,        # Are we editable?
+      move_on_rpress_flag,     # Move on mouse right press event?
+      contents,                #                
+      going_left,
+      cursor,                  #              
+      mark,
+      tx,                      #          
+      tw,                      #
+      displaychar,             # char to print on screen
+      undo_manager,
+      remembered_region,
+      clipboard,
+      old_cursor,
+      old_mark,
+      old_region,
+      changed,
+      loff,
+      primary_selection_owner,
+      clipboard_selection_owner
+
+   #
+   # Set the displaychar attribute
+   #
+   public set_displaychar(c)
+      displaychar := c
+   end
+
+   #
+   # Set a filter on the characters allowed to be input to the text field.
+   # @param c  The cset of permissible characters.
+   # @example
+   # @ # Permit only hexadecimal characters as input
+   # @ set_filter('0987654321abcdefABCDEF')
+   #
+   public set_filter(c)
+      return self.filter := c ** Gui.PRINTABLE_1
+   end
+
+   #
+   # Set the editable status of the component.
+   #
+   public set_is_editable(s)
+      self.is_editable_flag := check_flag(s)
+   end
+
+   #
+   # Move the cursor on mouse right press?
+   #
+   public set_move_on_rpress(s)
+      self.move_on_rpress_flag := check_flag(s)
+   end
+
+   #
+   # Return the present contents of the text field.
+   #
+   public get_contents()
+      return self.contents
+   end
+
+   public get_default_height()
+      return self.cbwin.attrib("fheight") + border.get_total_height()
+   end
+
+   public get_default_width()
+      return self.cbwin.text_width(get_view()) + border.get_total_width()
+   end
+
+   public layout()
+      self.tx := self.x + border.get_l_inset()
+      self.tw := self.w - border.get_total_width()
+      constrain_line()
+   end
+
+   #
+   # Set the contents of the field.  If not invoked then
+   # the initial content is the empty string.
+   # @param x   The contents
+   #
+   public set_contents(x)
+      self.contents := text(x)
+      self.cursor := *self.contents + 1
+      self.loff := 0
+      clear_mark()
+      if is_live() then {
+         self.invalidate()
+         constrain_line()
+         undo_manager.clear()
+      }
+   end
+
+   public start_handle(e)
+      old_cursor := cursor
+      old_mark := mark
+      old_region := get_region() | &null
+      changed := &null
+   end
+
+   public end_handle(e)
+      local r
+
+      if r := get_region() then {
+         parent_dialog.own_selection(Selection.PRIMARY, self.primary_selection_owner)
+         self.remembered_region := r
+      }
+      if \changed then {
+         self.constrain_line()
+         self.invalidate()
+         fire(Event.CONTENT_CHANGED, e)
+      }
+      if old_cursor ~= cursor then {
+         self.constrain_line()
+         self.invalidate()
+         fire(Event.CURSOR_MOVED, e)
+      }
+      if old_mark ~=== mark then {
+         self.invalidate()
+      }
+      if old_region ~=== r then {
+         fire(Event.SELECTION_CHANGED, e)
+      }
+   end
+
+   #
+   # Convenient function to move the cursor to the given position.
+   #
+   public move_cursor(x, shift, e)
+      start_handle(e)
+
+      # Same as keyboard mark...
+      if \shift then
+         /mark := cursor
+      else
+         mark := &null
+
+      x <:= 1
+      x >:= *self.contents + 1
+      self.cursor := x
+
+      end_handle(e)
+   end
+
+   public handle_lpress(e)
+      start_handle(e)
+
+      if \e.shift then {
+         /self.mark := self.cursor
+         self.cursor := whereis_x(e)
+      } else {
+         case (parent_dialog.get_click_count() - 1) % 3 of {
+            0 : {
+               self.cursor := whereis_x(e)
+               self.mark := self.cursor
+            }
+            1 : {
+               self.cursor := self.mark := whereis_x(e)
+               while any(~' ', self.contents, self.cursor) do
+                  self.cursor +:= 1
+               while any(~' ', self.contents, self.mark - 1) do
+                  self.mark -:= 1
+            }
+            2 : {
+               self.cursor := *self.contents + 1
+               self.mark := 1
+            }
+         }
+      }
+      end_handle(e)
+   end
+
+   public handle_rpress(e)
+      \self.move_on_rpress_flag | fail
+      start_handle(e)
+      self.cursor := whereis_x(e)
+      clear_mark()
+      end_handle(e)
+   end
+
+   private handle_mpress_response(target_type, data, e)
+      local s, ed
+      \data | fail
+      \self.is_editable_flag | fail
+      start_handle(e)
+      self.cursor := whereis_x(e)
+      clear_mark()
+      if s := apply_filter(text_convert(selection_convert(target_type, data), 
+                                        type(self.contents))) then {
+         ed := TextFieldPasteEdit(self, s)
+         ed.doit()
+         undo_manager.add_edit(ed)
+      }
+      end_handle(e)
+   end
+
+   public handle_mpress(e)
+      parent_dialog.request_selection(Selection.PRIMARY, 
+                                      [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
+                                      handle_mpress_response, 
+                                      e)
+   end
+
+   public whereis_x(e)
+      local i, s, d
+
+      s := get_view()
+      d := e.x - self.tx + loff
+      i := 1
+      while (self.cbwin.text_width(s[1+:i]) <= d) & (i < *s) do 
+         i +:= 1
+
+      return i
+   end
+
+   public handle_ldrag(e)
+      local p
+
+      start_handle(e)
+      p := self.cursor
+
+      # Start ticking if to the left/right, otherwise stop ticking
+      if e.x < self.tx then {
+         self.going_left := 1
+         check_ticker(self.tx - e.x)
+      } else if e.x >= self.tx + self.tw then {
+         self.going_left := &null
+         check_ticker(e.x - (self.tx + self.tw))
+      } else {
+         self.cursor := whereis_x(e)
+         stop_ticker()
+      }
+      end_handle(e)
+   end
+
+   public check_ticker(d)
+      local r
+      r := Gui.style.distance2ticker_rate(d)
+      if is_ticking() then
+         retime_ticker(r)
+      else
+         start_ticker(r)
+   end
+
+   #
+   # Move the text area displayed so that the cursor is on the screen.
+   #
+   # @p
+   public constrain_line()
+      local s, i, j
+
+      s := get_view()
+      i := self.cbwin.text_width(s[1:self.cursor])
+      j := i + char_width(self.cbwin, s[self.cursor])
+      if loff > i then
+         loff := i
+      else if loff + self.tw < j then
+         loff := j - self.tw
+      else if self.cbwin.text_width(s) - self.tw < loff then
+         loff := max(0, self.cbwin.text_width(s) - self.tw)
+   end
+
+   public tick()
+      local s
+      start_handle()
+      s := get_view()
+      if \going_left then {
+         while self.cursor > 1 &
+            self.cbwin.text_width(s[1:self.cursor]) >= loff do
+            self.cursor -:= 1
+      } else {
+         while self.cursor < *s &
+            self.cbwin.text_width(s[1:self.cursor]) < loff + self.tw do
+            self.cursor +:= 1
+      }
+      end_handle()
+   end
+
+   public handle_lrelease(e)
+      start_handle(e)
+      #
+      # Mouse released after being held down.  Clear flag
+      #
+      # For consistency with editabletextlist we clear_mark if no region.
+      has_region() | clear_mark()
+      stop_ticker()
+      end_handle(e)
+   end
+
+   public clear_mark()
+      self.mark := &null
+   end
+
+   #
+   # Delete
+   #
+   # @p
+   public handle_delete_left(e)
+      local ed
+
+      \self.is_editable_flag | fail
+
+      start_handle(e)
+      if has_region() then
+         delete_region(e)
+      else if self.cursor > 1 then {
+         ed := TextFieldDeleteLeftEdit(self)
+         ed.doit()
+         undo_manager.add_edit(ed)
+      }
+      end_handle(e)
+   end
+
+   public handle_return(e)
+      fire(Event.ACTION, e)
+   end
+
+   public keyboard_mark(e)
+      if \e.shift then
+         /mark := cursor
+      else
+         mark := &null
+   end
+
+   public handle_key_right(e)
+      start_handle(e)
+      keyboard_mark(e)
+      self.cursor := (*self.contents + 1 >= self.cursor + 1)
+      end_handle(e)
+   end
+
+   public handle_key_left(e)
+      start_handle(e)
+      keyboard_mark(e)
+      self.cursor := (0 < self.cursor - 1)
+      end_handle(e)
+   end
+
+   public handle_key_home(e)
+      start_handle(e)
+      keyboard_mark(e)
+      self.cursor := 1
+      end_handle(e)
+   end
+
+   public handle_key_end(e)
+      start_handle(e)
+      keyboard_mark(e)
+      self.cursor := *self.contents + 1
+      end_handle(e)
+   end
+
+   public handle_delete_line(e)
+      local ed
+
+      \self.is_editable_flag | fail
+
+      start_handle(e)
+      if *self.contents > 0 then {
+         ed := TextFieldDeleteLineEdit(self)
+         ed.doit()
+         undo_manager.add_edit(ed)
+      }
+      end_handle(e)
+   end
+
+   public handle_delete_right(e)
+      local ed
+
+      \self.is_editable_flag | fail
+
+      start_handle(e)
+      if has_region() then
+         delete_region(e)
+      else if self.cursor <= *self.contents then {
+         ed := TextFieldDeleteRightEdit(self)
+         ed.doit()
+         undo_manager.add_edit(ed)
+      }
+      end_handle(e)
+   end
+
+   public handle_select_all(e)
+      start_handle(e)
+      if *self.contents > 0 then {
+         self.cursor := *self.contents + 1
+         self.mark := 1
+      }
+      end_handle(e)
+   end
+
+   public handle_end_of_line(e)
+      start_handle(e)
+      keyboard_mark(e)
+      self.cursor := *self.contents + 1
+      end_handle(e)
+   end
+
+   public handle_start_of_line(e)
+      start_handle(e)
+      keyboard_mark(e)
+      self.cursor := 1
+      end_handle(e)
+   end
+
+   public handle_cut(e)
+      \self.is_editable_flag | fail
+
+      start_handle(e)
+      if has_region() then {
+         self.clipboard := get_region()
+         parent_dialog.own_selection(Selection.CLIPBOARD, self.clipboard_selection_owner)
+         delete_region(e)
+      }
+      end_handle(e)
+   end
+
+   public handle_copy(e)
+      start_handle(e)
+      if has_region() then {
+         self.clipboard := get_region()
+         parent_dialog.own_selection(Selection.CLIPBOARD, self.clipboard_selection_owner)
+      }
+      end_handle(e)
+   end
+
+   public keeps(e)
+      return member(Key.CURSOR_H, e.code)
+   end
+
+   public apply_filter(t)
+      local s
+      # Apply the filter to the string to paste
+      s := ""
+      t ? {
+         while tab(upto(filter)) do
+            s ||:= tab(many(filter))
+      }
+      if *s > 0 then
+         return s
+   end
+
+   private handle_paste_response(target_type, data, e)
+      insert_string(selection_convert(target_type, \data), e)
+   end
+
+   public handle_paste(e)
+      parent_dialog.request_selection(Selection.CLIPBOARD, 
+                                      [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
+                                      handle_paste_response, 
+                                      e)
+   end
+
+   #
+   # Insert a string as though it had been pasted via the clipboard.
+   #
+   public insert_string(s, e)
+      local ce, ed
+
+      \self.is_editable_flag | fail
+      s := text_convert(s, type(self.contents)) | fail
+
+      start_handle(e)
+      if s := apply_filter(s) then {
+         ce := CompoundEdit()
+         if has_region() then {
+            ed := TextFieldDeleteRegionEdit(self)
+            ed.doit()
+            ce.add_edit(ed)
+         }
+         ed := TextFieldPasteEdit(self, s)
+         ed.doit()
+         ce.add_edit(ed)
+         ce.close()
+         undo_manager.add_edit(ce)
+      }
+      end_handle(e)
+   end
+
+   public handle_default(e)
+      local ce, ed, ec
+
+      ec := e.code
+      if /self.is_editable_flag | not(type(ec) == ("string" | "ucs")) |
+         \e.ctrl | \e.meta | not(any(filter, ec)) then
+         fail
+
+      ec := text_convert(ec, type(self.contents))
+
+      start_handle(e)
+      # 
+      # Add the printable character at cursor position
+      #
+      if has_region() then {
+         ce := CompoundEdit("liberal=y")
+         ed := TextFieldDeleteRegionEdit(self)
+         ed.doit()
+         ce.add_edit(ed)
+         ed := TextFieldDefaultEdit(self, ec)
+         ed.doit()
+         ce.add_edit(ed)
+         ce.close()
+         undo_manager.add_edit(ce)
+      } else {
+         ed := TextFieldDefaultEdit(self, ec)
+         ed.doit()
+         undo_manager.add_edit(ed)
+      }
+      end_handle(e)
+   end
+
+   public handle_undo(e)
+      \self.is_editable_flag | fail
+
+      start_handle(e)
+      if undo_manager.can_undo() then
+         undo_manager.undo()
+      end_handle(e)
+   end
+
+   public handle_redo(e)
+      \self.is_editable_flag | fail
+
+      start_handle(e)
+      if undo_manager.can_redo() then
+         undo_manager.redo()
+      end_handle(e)
+   end
+
+   public handle_key(e)
+      case e.code of {
+         "\b" : handle_delete_left(e)
+         "\r" | "\l": handle_return(e)
+         "\^k" : handle_delete_line(e)
+         Key.HOME : handle_key_home(e)
+         Key.END : handle_key_end(e)
+         Key.RIGHT : handle_key_right(e)
+         Key.LEFT : handle_key_left(e)
+         "\^a" : handle_select_all(e)
+         "\^e" : handle_end_of_line(e)
+         "\d" | "\^d" : handle_delete_right(e)
+         "\^x" :  handle_cut(e)
+         (\e.ctrl & Key.INSERT) | "\^c" :  handle_copy(e)
+         (\e.shift & Key.INSERT) | "\^v" :  handle_paste(e)
+         "\^z" :  handle_undo(e)
+         "\^y" :  handle_redo(e)
+         default : handle_default(e)
+      }
+   end
+
+   public get_region() 
+      has_region() | fail
+      return if self.mark < self.cursor then
+         self.contents[self.mark:self.cursor]
+      else
+         self.contents[self.cursor:self.mark]
+   end
+
+   public delete_region(e)
+      local ed
+      ed := TextFieldDeleteRegionEdit(self)
+      ed.doit()
+      undo_manager.add_edit(ed)
+   end
+
+   public has_region()
+      return \self.mark ~= self.cursor
+   end
+
+   public get_view()
+      #
+      # Space at end for cursor at end of string
+      #
+      if \displaychar then
+         return repl(displaychar, *(self.contents)) || " "
+      else
+         return self.contents || " "
+   end
+
+   public display()
+      local fh, s, cw, mp, np, off1, off2, y1
+
+      fh := self.cbwin.attrib("fheight")
+      y1 := self.y + (self.h - fh) / 2
+      s := get_view()
+
+      draw_string_ex(self.cbwin, self.tx - loff, y1, s)
+
+      border.draw_rect(self.cbwin, self)
+
+      #
+      # If has focus display box cursor, else display outline cursor
+      #
+      if self.has_focus() & self.is_unshaded() then {
+         if \self.is_editable_flag then {
+            cw := Gui.style.get_cursor_clone(self.cbwin)
+            erase_rectangle(cw, self.tx - loff + self.cbwin.text_width(s[1:cursor]), 
+                               y1, self.cbwin.text_width(s[cursor]), fh)
+            draw_string_ex(cw, self.tx - loff + cw.text_width(s[1:cursor]), y1, s[cursor])
+            cw.uncouple()
+         } else {
+            cw := Gui.style.get_focus_clone(self.cbwin)
+            rectangle(cw, 
+                      self.tx - loff + self.cbwin.text_width(s[1:cursor]), 
+                      y1, self.cbwin.text_width(s[cursor]), fh)
+            cw.uncouple()
+         }
+      } else if \self.is_editable_flag | has_region() then {
+         cw := Gui.style.get_dashed_clone(self.cbwin)
+         rectangle(cw, self.tx - loff + self.cbwin.text_width(s[1:cursor]), 
+                   y1, self.cbwin.text_width(s[cursor]), fh)
+         cw.uncouple()
+      }
+
+      if has_region() then {
+         mp := self.mark
+         if mp > cursor then {
+            np := mp
+            mp := cursor + 1
+         } else {
+            np := cursor
+         }
+
+         if (off1 := self.cbwin.text_width(s[1:mp])) &
+            (off2 := self.cbwin.text_width(s[1:np])) then 
+         {
+               cw := Gui.style.get_selection_clone(self.cbwin)
+               cw.fill_rectangle(self.tx - loff + off1, 
+                                 y1, 
+                                 off2 - off1,
+                                 fh)
+               cw.uncouple()
+         }
+      }
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "filter" : set_filter(f.cset_val())
+         "displaychar" : set_displaychar(f.text_val())
+         "contents" : set_contents(f.text_val())
+         "is_editable" :  set_is_editable(f.flag_val()) 
+         "move_on_rpress" :  set_move_on_rpress(f.flag_val()) 
+         default: return cast(self,Component).set_one(f)
+      }
+      return
+   end
+
+   public new(a[])
+      cast(self,Component).new()
+      undo_manager := UndoManager()
+      filter := Gui.PRINTABLE_1
+      self.accepts_focus_flag := 1
+      self.set_contents("")
+      self.set_border(CompoundBorder("outer=",SunkenBorder(),
+                                     "inner=",EmptyBorder()))
+      self.border.inner.set_l_inset(Gui.TEXT_INSET)
+      self.border.inner.set_r_inset(Gui.TEXT_INSET)
+      self.is_editable_flag := 1
+      self.move_on_rpress_flag := 1
+      self.set_constraint("x_fill", &yes)
+      self.set_constraint("x_align", Align.L)
+      self.set_constraint("x_weight", "1")
+      set_pointer("xterm")
+      self.loff := 0
+      self.primary_selection_owner := TextFieldPrimarySelectionOwner(self)
+      self.clipboard_selection_owner := TextFieldClipboardSelectionOwner(self)
+
+      connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
+      connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS)
+      connect(self.handle_mpress, Event.MOUSE_MIDDLE_PRESS)
+      connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
+      connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+      connect(self.handle_key, Event.KEY_PRESS)
+
+      set_fields(a)
+      return
+   end
+end
+
+class TextFieldPrimarySelectionOwner(TextSelectionOwner)
+   private parent
+
+   protected get_text()
+      return parent.get_region() | \parent.remembered_region
+   end
+
+   public lost_ownership()
+      parent.start_handle()
+      parent.clear_mark()
+      parent.end_handle()
+   end
+
+   public new(parent)
+      self.parent := parent
+      return
+   end
+end
+
+
+class TextFieldClipboardSelectionOwner(TextSelectionOwner)
+   private parent
+
+   protected get_text()
+      return \parent.clipboard
+   end
+
+   public lost_ownership()
+   end
+
+   public new(parent)
+      self.parent := parent
+      return
+   end
+end
+
+
+class TextFieldEdit(UndoableEdit)
+   public 
+      parent,
+      cursor, 
+      mark
+
+   public doit()
+      save()
+      self.redo_impl()
+      parent.changed := 1
+   end
+
+   public redo()
+      restore()
+      self.redo_impl()
+      parent.changed := 1
+   end
+
+   public undo()
+      self.undo_impl()
+      restore()
+      parent.changed := 1
+   end
+
+   public defer redo_impl()
+   public defer undo_impl()
+
+   public save()
+      self.cursor := parent.cursor
+      self.mark := parent.mark
+   end
+
+   public restore()
+      parent.cursor := self.cursor
+      parent.mark := self.mark
+   end
+
+   public new(parent)
+      self.parent := parent
+      return
+   end
+end
+
+
+class TextFieldDeleteRightEdit(TextFieldEdit)
+   public ch
+
+   public redo_impl()
+      ch := parent.contents[parent.cursor]
+      parent.contents[parent.cursor] := ""
+      parent.clear_mark()
+   end
+
+   public undo_impl()
+      if self.cursor > *parent.contents then
+         parent.contents ||:= ch
+      else
+         parent.contents[self.cursor] := ch || parent.contents[self.cursor]
+   end
+
+   public new(parent)
+      cast(self,TextFieldEdit).new(parent)
+      return
+   end
+end
+
+
+class TextFieldDeleteLeftEdit(TextFieldEdit)
+   public ch
+
+   public redo_impl()
+      ch := parent.contents[parent.cursor - 1]
+      parent.contents[parent.cursor - 1] := ""
+      parent.cursor -:= 1
+      parent.clear_mark()
+   end
+
+   public undo_impl()
+      if self.cursor - 1 > *parent.contents then
+         parent.contents ||:= ch
+      else
+         parent.contents[self.cursor - 1] := ch || parent.contents[self.cursor - 1]
+   end
+
+   public new(parent)
+      cast(self,TextFieldEdit).new(parent)
+      return
+   end
+end
+
+
+class TextFieldDeleteRegionEdit(TextFieldEdit)
+   public pre
+
+   public redo_impl()
+      if parent.mark < parent.cursor then {
+         pre := parent.contents[parent.mark:parent.cursor]
+         parent.contents[parent.mark:parent.cursor] := ""
+         parent.cursor := parent.mark
+      } else {
+         pre := parent.contents[parent.cursor:parent.mark]
+         parent.contents[parent.cursor:parent.mark] := ""
+      }
+      parent.clear_mark()
+   end
+
+   public undo_impl()
+      if self.mark < self.cursor then {
+         parent.contents := parent.contents[1:self.mark] || pre || parent.contents[self.mark:0]
+      } else {
+         parent.contents := parent.contents[1:self.cursor] || pre || parent.contents[self.cursor:0]
+      }
+   end
+
+   public new(parent)
+      cast(self,TextFieldEdit).new(parent)
+      return
+   end
+end
+
+
+class TextFieldPasteEdit(TextFieldEdit)
+   public s
+
+   public redo_impl()
+      parent.contents := parent.contents[1:parent.cursor] || s || parent.contents[parent.cursor:0]
+      parent.cursor +:= *s
+   end
+
+   public undo_impl()
+      parent.contents[self.cursor +: *s] := ""
+   end
+
+   public new(parent, s)
+      cast(self,TextFieldEdit).new(parent)
+      self.s := s
+      return
+   end
+end
+
+
+class TextFieldDefaultEdit(TextFieldEdit)
+   public s
+
+   public add_edit(other)
+      if is(other, gui.TextFieldDefaultEdit) &
+         (other.cursor = self.cursor + *s) then {
+            s ||:= other.s
+            return
+      }
+   end
+
+   public redo_impl()
+      if parent.cursor = 1 then
+         parent.contents := s || parent.contents
+      else
+         parent.contents[parent.cursor - 1] ||:= s
+      parent.cursor +:= *s
+      parent.clear_mark()
+   end
+
+   public undo_impl()
+      parent.contents[self.cursor +: *s] := ""
+   end
+
+   public new(parent, e)
+      cast(self,TextFieldEdit).new(parent)
+      s := e
+      return
+   end
+end
+
+
+class TextFieldDeleteLineEdit(TextFieldEdit)
+   public pre
+
+   public redo_impl()
+      pre := parent.contents
+      parent.contents := ""
+      parent.cursor := 1
+      parent.clear_mark()
+   end
+
+   public undo_impl()
+      parent.contents := pre
+   end
+
+   public new(parent)
+      cast(self,TextFieldEdit).new(parent)
+      return
+   end
+end
+
+
+
+
+
+
+

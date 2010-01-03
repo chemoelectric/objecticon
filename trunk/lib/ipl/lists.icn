@@ -1,0 +1,901 @@
+############################################################################
+#
+#	File:     lists.icn
+#
+#	Subject:  Procedures to manipulate lists
+#
+#	Author:   Ralph E. Griswold
+#
+#	Date:     June 11, 2001
+#
+############################################################################
+#
+#   This file is in the public domain.
+#
+############################################################################
+#
+#	Contributor:  Richard L. Goerwitz
+#
+############################################################################
+#
+#	file2lst(s)	create list from lines in file
+#
+#	imag2lst(s)	convert limage() output to list
+#
+#	lclose(L)	close open palindrome
+#
+#	lcomb(L,i)	list combinations
+#
+#	lcompact(L)	compact list, mapping out missing values
+#
+#	ldecollate(I, L)
+#			list decollation
+#       ldel(L, x)
+#                       list deletion of a all instances of x
+#
+#	ldelelements(L, spec)
+#			list deletion of specified indices
+#
+#	ldupl(L, i)	list term duplication
+#
+#	lequiv(L1, L2)	list equivalence
+#
+#	levate(L, m, n)	list elevation
+#
+#	lextend(L, i)	list extension
+#
+#	lfliph(L)	list horizontal flip (reversal)
+#
+#	lflipv(L)	list vertical flip
+#
+#	limage(L)	unadorned list image
+#
+#	lcollate(L1, L2, ...)
+#			list collation; like linterl() except stops on
+#			short list
+#
+#	lconstant(L)	succeeds and returns element if all are the same
+#
+#	linterl(L1, L2)	list interleaving
+#
+#	llayer(L1, L2, ...)
+#			layer and interleave L1, L2, ... 
+#
+#	llpad(L, i, x)	list padding at left
+#
+#	lltrim(L, S)	list left trimming
+#
+#	lmap(L1,L2,L3)	list mapping
+#
+#	lpalin(L, x)	list palindrome
+#
+#	lpermute(L)	list permutations
+#
+#	lreflect(L, i)  returns L concatenated with its reversal to produce
+#			palindrome; the values of i determine "end
+#			conditions" for the reversal:
+#
+#				0	omit first and last elements; default
+#				1	omit first element
+#				2	omit last element
+#				3	don't omit element
+#
+#	lremvals(L, x1, x2, ...)
+#			remove values from list
+#
+#	lrepl(L, i)	list replication
+#
+#	lresidue(L, m, i)
+#			list residue
+#
+#	lreverse(L)	list reverse
+#
+#	lrotate(L, i)	list rotation
+#
+#	lrpad(L, i, x)	list right padding
+#
+#	lrundown(L1, L2, L3)
+#			list run down
+#
+#	lrunup(L1, L2, L3)
+#			list run up
+#
+#	lrtrim(L, S)	list right trimming
+#
+#	lshift(L, i)	shift list terms
+#
+#	lswap(L)	list element swap
+#
+#	lunique(L)	keep only unique list elements
+#
+#	lmaxlen(L, p)	returns the size of the largest value in L.
+#			If p is given, it is applied to each string as
+#			as a "length" procedure.  The default for p is
+#			Prog.get_operator("*", 1).
+#
+#	lminlen(L, p)	returns the size of the smallest value in L.
+#			If p is given, it is applied to each string as
+#			as a "length" procedure.  The default for p is
+#			Prog.get_operator("*", 1).
+#
+#	sortkeys(L)	returns list of keys from L, where L is the
+#			result of sorting a table with option 3 or 4.
+#
+#	sortvalues(L)	return list of values from L, where L is the
+#			result of sorting a table with option 3 or 4.
+#
+#	splitstring(s, i)	creates list with i-character lines from s.  The
+#			default for i is 1.
+#
+#       str2list(s, sep)  string to list; elements separated by single chars in
+#                       cset sep.
+#
+#       list2str(l, sep) list to string; separator string sep.
+#
+############################################################################
+#
+#		About List Mapping
+#
+#  The procedure lmap(L1,L2,L3) maps elements of L1 according to L2
+#  and L3.  This procedure is the analog for lists of the built-in
+#  string-mapping function map(s1,s2,s3). Elements in L1 that are
+#  the same as elements in L2 are mapped into the corresponding ele-
+#  ments of L3. For example, given the lists
+#  
+#     L1 := [1,2,3,4]
+#     L2 := [4,3,2,1]
+#     L3 := ["a","b","c","d"]
+#  
+#  then
+#  
+#     lmap(L1,L2,L3)
+#  
+#  produces a new list
+#  
+#     ["d","c","b","a"]
+#  
+#     Lists that are mapped can have any kinds of elements. The
+#  operation
+#  
+#     x === y
+#  
+#  is used to determine if elements x and y are equivalent.
+#  
+#     All cases in lmap are handled as they are in map, except that
+#  no defaults are provided for omitted arguments. As with map, lmap
+#  can be used for transposition as well as substitution.
+#  
+#  Warning:
+#
+#     If lmap is called with the same lists L2 and L3 as in
+#  the immediately preceding call, the same mapping is performed,
+#  even if the values in L2 and L3 have been changed. This improves
+#  performance, but it may cause unexpected effects.
+#  
+#     This ``caching'' of the mapping table based on L2 and L3
+#  can be easily removed to avoid this potential problem.
+#  
+############################################################################
+#
+#  Links:  equiv, indices, numbers
+#
+############################################################################
+
+package ipl.lists
+
+import
+   io(open),
+   ipl.equiv(equiv),
+   ipl.indices(indices),
+   ipl.numbers(residue),
+   ipl.sets(elementset),
+   lang(Prog)
+
+# create list from lines in file
+procedure file2lst(s)			
+   local input, result, x
+
+   input := open(s) | fail
+
+   result := []
+
+   every x := |input.read() do {
+      x := numeric(x)			# kludge
+      put(result, x)
+      }
+
+   input.close()
+
+   return result
+
+end
+
+# convert limage() output to list
+procedure imag2lst(seqimage)		
+   local seq, term
+
+   seq := []
+
+   seqimage[2:-1] ? {
+      while term := tab(upto(',') | 0) do {
+         term := numeric(term)			# special interest
+         put(seq, term)
+         move(1) | break
+         }
+      }
+
+   return seq
+
+end
+
+procedure lblock(L1, L2)
+   local L3, i, j
+
+   if *L1 < *L2 then L1 := lextend(L1, *L2) | fail
+   else if *L2 < *L1 then L2 := lextend(L2, *L1) | fail
+
+   L3 := []
+
+    every i := 1 to *L1 do
+       every j := 1 to L2[i] do
+          put(L3, L2[i])
+
+      return L3
+
+end
+
+# interleave lists with layering
+procedure llayer(args[])		
+   local offsets, offset, seq, arg, lists, k
+
+   lists := []
+
+   every put(lists, lcompact(!args))
+
+   offsets := []
+
+   offset := 0
+
+   every arg := !lists do {
+      put(offsets, offset)
+      offset +:= max ! arg
+      }
+
+   seq := []
+
+   repeat {
+      every k := 1 to *lists do {
+         arg := lists[k]
+         put(seq, get(arg) + offsets[k]) | break break
+         }
+      }
+
+   return seq
+
+end
+
+# compact sequence
+procedure lcompact(seq)			
+   local unique, target
+
+   unique := elementset(seq)
+
+   target := []
+
+   every put(target, 1 to *unique)
+
+   return lmap(seq, sort(unique), target)
+
+end
+
+# close open palindrome
+procedure lclose(L)			
+
+   if equiv(L, lreverse(L)) then return L
+   else {
+      L := copy(L)
+      put(L, L[1])
+      return L
+      }
+
+end
+
+# list combinations
+procedure lcomb(L,i)			
+   local j
+
+   if i < 1 then fail
+   suspend if i = 1 then [!L]
+      else [L[j := 1 to *L - i + 1]] ||| lcomb(L[j + 1:0],i - 1)
+
+end
+
+# list decollation
+procedure ldecollate(indices, L)	
+   local result, i, x
+
+   indices := copy(indices)
+
+   result := list(max ! indices)	# list of lists to return
+   every !result := []			# initially empty
+
+   every x := !L do {
+      i := get(indices)	| fail
+      put(indices, i)
+      put(result[i], x)
+      }
+
+   return result
+
+end
+
+# delete all instances of x from the list l.
+procedure ldel(l, x)
+   local t
+   t := []
+   while put(t, pop(l))
+   every put(l, x ~=== !t)
+   return l
+end
+
+# delete specified list elements; returns a new list
+procedure ldelelements(L, spec)		
+   local i, tmp
+
+   tmp := indices(spec, *L) | fail		# bad specification
+
+   while i := pull(tmp) do
+      L := L[1+:i - 1] ||| L[i + 1:0]
+
+   return L
+
+end
+
+# list term duplication
+procedure ldupl(L1, L2)			
+   local L3, i, j
+
+   if integer(L2) then L2 := [L2]
+
+   L3 := []
+
+   every i := !L2 do
+      every j := !L1 do
+        every 1 to i do
+           put(L3, j)
+
+   return L3
+
+end
+
+# compare lists for equivalence
+procedure lequiv(x,y)			
+   local i
+
+   if x === y then return y
+   if type(x) == type(y) == "list" then {
+      if *x ~= *y then fail
+      every i := 1 to *x do
+         if not lequiv(x[i],y[i]) then fail
+      return y
+     }
+
+end
+
+# elevate values
+procedure levate(seq, m, n)		
+   local shafts, reseq, i, j, k
+
+   shafts := list(m)
+
+   every !shafts := []
+
+   every i := 1 to m do
+      every put(shafts[i], i to n by m)
+
+   reseq := []
+
+   while j := get(seq) do {
+      i := j % m + 1
+      k := get(shafts[i])
+      put(reseq, k)
+      put(shafts[i], k)
+      }
+
+   return reseq
+
+end
+	
+# list extension
+procedure lextend(L, i)			
+   local result
+
+   if *L = 0 then fail
+
+   result := copy(L)
+
+   until *result >= i do
+      result |||:= L
+
+   result := result[1+:i]
+
+   return result
+ 
+end
+
+# list horizontal flip (reversal)
+procedure lfliph(L)			
+
+   lfliph := lreverse
+
+   return lfliph(L)
+
+end
+
+# list vertical flip
+procedure lflipv(L)			
+   local L1, m, i
+
+   m := max ! L
+
+   L1 := []
+
+   every i := !L do
+      put(L1, residue(-i + 1, m, 1))
+
+   return L1
+
+end
+
+# list image
+procedure limage(L)			
+   local result
+
+   if type(L) ~== "list" then fail
+
+   result := ""
+
+   every result ||:= image(!L) || ","
+
+   return ("[" || result[1:-1] || "]") | "[]"
+
+end
+
+# generalized list collation
+procedure lcollate(args[])		
+   local seq, arg, lists, k
+
+   lists := []
+
+   every put(lists, copy(!args))
+
+   seq := []
+
+   repeat {
+      every k := 1 to *lists do {
+         arg := lists[k]
+         put(seq, get(arg)) | break break
+         }
+      }
+
+   return seq
+
+end
+
+# test list for all terms equal
+procedure lconstant(L)			
+
+   if *elementset(L) = 1 then return L[1]
+   else fail
+
+end
+
+# generate indices for items matching x
+procedure lindex(lst, x)
+   local i
+
+   every i := 1 to *lst do
+      if lst[i] === x then suspend i
+
+end
+
+# list interleaving
+procedure linterl(L1, L2)		
+   local L3, i
+
+   if *L1 < *L2 then L1 := lextend(L1, *L2) | fail
+   else if *L2 < *L1 then L2 := lextend(L2, *L1) | fail
+
+   L3 := []
+
+   every i := 1 to *L1 do
+      every put(L3, L1[i] | L2[i])
+
+   return L3
+
+end
+
+# list padding at left
+procedure llpad(L, i, x)		
+
+   L := copy(L)
+
+   while *L < i do push(L, x)
+
+   return L
+
+end
+
+# list run up
+procedure lrunup(L1, L2, L3)		
+   local L4
+
+   /L3 := [1]		# could be /L3 := 1 ...
+
+   L4 := []
+
+   every put(L4, !L1 to !L2 by !L3)
+
+   return L4
+
+end
+
+# list run up
+procedure lrundown(L1, L2, L3)		
+   local L4
+
+   /L3 := [1]		# could be /L3 := 1 ...
+
+   L4 := []
+
+   every put(L4, !L1 to !L2 by -!L3)
+
+   return L4
+
+end
+
+
+# list left trimming
+procedure lltrim(L, S)			
+
+   L := copy(L)
+
+   while member(S, L[1]) do
+      get(L)
+
+    return L
+
+end
+
+# list mapping
+procedure lmap(L1,L2,L3)		
+   static lmem2, lmem3, lmaptbl, tdefault
+   local i, a
+
+   initial tdefault := []
+
+   if type(a := L1 | L2 | L3) ~== "list" then runerr(108,a)
+   if *L2 ~= *L3 then runerr(208,L2)
+
+   L1 := copy(L1)
+
+   if not(lmem2 === L2 & lmem3 === L3) then {	# if an argument is new, rebuild
+      lmem2 := L2				# save for future reference
+      lmem3 := L3
+      lmaptbl := table(tdefault)		# new mapping table
+      every i := 1 to *L2 do			# build the map
+         lmaptbl[L2[i]] := L3[i]
+      }
+   every i := 1 to *L1 do			# map the values
+      L1[i] := (tdefault ~=== lmaptbl[L1[i]])
+   return L1
+
+end
+
+# list residue
+procedure lresidue(L, m, i)		
+   local result
+
+   /i := 0
+
+   result := []
+
+   every put(result, residue(!L, m, i))
+
+   return result
+
+end
+
+# list palindrome
+procedure lpalin(L, x)			
+
+   L |||:= lreverse(L)
+
+   if /x then pull(L)
+
+   return L
+
+end
+
+# list permutations
+procedure lpermute(L)			
+   local i
+
+   if *L = 0 then return []
+   suspend [L[i := 1 to *L]] ||| lpermute(L[1:i] ||| L[i+1:0])
+
+end
+
+# list reflection
+procedure lreflect(L, i)		
+   local L1
+
+   /i := 0
+
+   if i > 3 then runerr("*** invalid argument to lreflect()")
+
+   if i < 3 then L1 := copy(L)
+
+   return L ||| lreverse(
+      case i of {
+         0:   {get(L1); pull(L1); L1}
+         1:   {get(L1); L1}
+         2:   {pull(L1); L1}
+         3:   L
+         }
+      )
+
+end
+
+# remove values from list
+procedure lremvals(L, x[])		
+   local result, y
+
+   result := []
+
+   every y := !L do
+      if y === !x then next
+      else put(result, y)
+
+   return result
+
+end
+
+# list replication
+procedure lrepl(L, i)			
+   local j, k
+
+   i := (0 < integer(i)) | runerr("*** invalid replication factor in lrepl()")
+
+   L := copy(L)
+
+   j := *L
+
+   every 1 to i - 1 do
+      every k := 1 to j do
+         put(L, L[k])
+
+   return L
+
+end
+
+# list reverse
+procedure lreverse(L)			
+   local i
+
+   L := copy(L)
+
+   every i := 1 to *L / 2 do
+      L[i] :=: L[-i]
+
+   return L
+
+end
+
+# list rotation
+procedure lrotate(L, i)			
+
+   /i := 1
+
+   L := copy(L)
+
+   if i > 0 then
+      every 1 to i do
+         put(L, get(L))
+   else
+      every 1 to -i do
+         push(L, pull(L))
+
+   return L
+
+end
+
+# list right padding
+procedure lrpad(L, i, x)		
+
+   L := copy(L)
+
+   while *L < i do put(L, x)
+
+   return L
+
+end
+
+# list right trimming
+procedure lrtrim(L, S)			
+
+   L := copy(L)
+
+   while member(S, L[-1]) do
+      pull(L)
+
+    return L
+
+end
+
+# shift list terms
+procedure lshift(L, i)			
+
+   L := copy(L)
+
+   every !L +:= i
+
+   return L
+
+end
+
+# list element swap
+procedure lswap(L)			
+   local i
+
+   L := copy(L)
+
+   every i := 1 to *L by 2 do
+      L[i] :=: L[i + 1]
+
+   return L
+
+end
+
+# keep only unique list elements
+procedure lunique(L)			
+   local result, culls, x
+
+   result := []
+   culls := elementset(L)
+
+   every x := !L do
+      if member(culls, x) then {
+         delete(culls, x)
+         put(result, x)
+         }
+
+   return result
+
+end
+
+# size of largest list entry
+procedure lmaxlen(L, p)			
+   local i
+
+   /p := Prog.get_operator("*", 1)
+
+   i := p(L[1]) | fail
+
+   every i <:= p(!L)
+
+   return i
+
+end
+
+# size of smallest list entry
+procedure lminlen(L, p)			
+   local i
+
+   /p := Prog.get_operator("*", 1)
+
+   i := p(L[1]) | fail
+
+   every i >:= p(!L)
+
+   return i
+
+end
+
+# extract keys from sorted list
+procedure sortkeys(L)			
+   local result
+
+   result := []
+
+   every put(result, L[1 to *L by 2])
+
+   return result
+
+end
+
+# extract values from sorted list
+procedure sortvalues(L)			
+   local result
+
+   result := []
+
+   every put(result, L[2 to *L by 2])
+
+   return result
+
+end
+
+# list from string
+procedure splitstring(s, i)			
+   local L
+
+   /i := 1
+
+   L := []
+
+   s ? {
+      while put(L, move(i))
+      if not pos(0) then put(L, tab(0))
+      }
+
+   return L
+
+end
+
+#
+# Convert a string to a list.
+#
+# @param s the string to convert
+# @param sep cset of the separator chars, default ','
+# @param f func to apply to each element before adding to list
+#
+procedure str2list(s, sep, f)
+   local l, t
+   /sep := ','
+   /f := string
+   l := []
+   s ? repeat {
+      t := tab(upto(sep) | 0)
+      put(l, f(t)) | runerr("str2list: conversion proc failed")
+      if pos(0) then
+         break
+      move(1)
+   }
+   return l
+end
+
+#
+# Convert a list to a string.  Note: to be compatible for re-input to str2list above,
+# the separator must be one character long.
+#
+# @param l the list
+# @param sep the separator char, default ","
+# @param f func to apply to each element before appending to result
+#
+procedure list2str(l, sep, f)
+   local s, e
+   /sep := ","
+   /f := string
+   s := ""
+   every e := !l do
+      s ||:= f(e) || sep | runerr("list2str: conversion proc failed")
+   s[-*sep:0] := ""
+   return s
+end
+
+#
+# Put all the parameters on the given list
+#
+procedure put_n(l, a[])
+   every put(l, !a)
+   return l
+end
+
+#
+# Push all the parameters on the given list
+#
+procedure push_n(l, a[])
+   every push(l, !a)
+   return l
+end

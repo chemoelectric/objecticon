@@ -1,0 +1,78 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+
+
+
+############################################################################
+#
+# Class for representing Buttons.
+# 
+class CanvasButton(CanvasComponent)
+   #
+   # Generate code into Code object c.
+   #
+   public gen_code(c)
+      #
+      # Extend superclass method
+      #
+      cast(self,CanvasComponent).gen_code(c)
+      #
+      # Add the code
+      #
+      if /self.accepts_focus_flag then
+         c.line(name || ".set_accepts_focus(&no)")
+
+      if \self.no_click_focus_flag then
+         c.line(name || ".set_no_click_focus(&yes)")
+
+      if \self.toggles_flag then
+         c.line(name || ".set_toggles(&yes)")
+      else
+         c.line(name || ".set_toggles(&no)")
+         
+      if \self.parent_button_group then
+         c.line(self.parent_button_group.name || ".add(" || name || ")")
+
+      if \self.parent_check_box_group then
+         c.line(self.parent_check_box_group.name || ".add(" || name || ")")
+
+      if \self.is_checked_flag then
+         c.line(name || ".set_is_checked(&yes)")
+   end
+
+   #
+   # Return the I/O template.
+   #
+   public static get_template()
+      suspend CanvasComponent.get_template() |
+          ["No click focus", "no_click_focus_flag"] |
+          ["Accepts focus Flag", "accepts_focus_flag"] |
+          ["Is Checked Flag", "is_checked_flag"] |
+          ["Is Checkbox Flag", "toggles_flag"] |
+          ["Parent CheckBoxGroup", "parent_check_box_group"] |
+          ["Parent Button Group", "parent_button_group"]
+   end
+
+   public dup_fields(c)
+      cast(self,CanvasComponent).dup_fields(c)
+      c.accepts_focus_flag := self.accepts_focus_flag
+      c.no_click_focus_flag := self.no_click_focus_flag
+      c.toggles_flag := self.toggles_flag
+      c.is_checked_flag := self.is_checked_flag
+   end
+
+   public allows_null_width()
+      return 1
+   end
+
+   public allows_null_height()
+      return 1
+   end
+end
+

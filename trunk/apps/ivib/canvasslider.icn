@@ -1,0 +1,88 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+
+############################################################################
+#
+# Class for representing a Slider on the canvas.
+#
+class CanvasSlider(CanvasComponent,Slider)
+   #
+   # Generate code into Code object c.
+   #
+   public gen_code(c)
+      cast(self,CanvasComponent).gen_code(c)
+      c.line(name || ".set_range(" || self.lo || ", " || self.hi || ")")
+      c.line(name || ".set_value(" || self.value || ")")
+      c.line(name || ".set_increment_size(" || self.increment_size || ")")
+      c.line(name || ".set_ticks(" || \self.ticks || ")")
+      c.line(name || ".set_labels(" || \self.labels || ")")
+      c.line(name || ".set_snaps(" || \self.snaps || ")")
+      if \self.is_horizontal_flag then
+         c.line(name || ".set_is_horizontal(&yes)")
+   end
+
+   #
+   # Duplicate object.
+   #
+   public dup()
+      local c
+      c := CanvasSlider()
+      cast(self,CanvasComponent).dup_fields(c)
+      c.set_range(self.lo, self.hi)
+      c.set_value(self.value)
+      c.set_increment_size(self.increment_size)
+      c.set_ticks(self.ticks)
+      c.set_labels(self.labels)
+      c.set_snaps(self.snaps)
+      c.is_horizontal_flag := self.is_horizontal_flag
+      return c
+   end
+
+   #
+   # Return the I/O template.
+   #
+   public static get_template()
+      suspend CanvasComponent.get_template() |
+          ["Hi", "hi"] |
+          ["Lo", "lo"] |
+          ["Value", "value"] |
+          ["Ticks", "ticks"] |
+          ["Labels", "labels"] |
+          ["Increment Size", "increment_size"] |
+          ["Snaps", "snaps"] |
+          ["Is Horizontal Flag", "is_horizontal_flag"]
+   end
+
+   #
+   # Open the configuration dialog box.
+   #
+   public dialog()
+      return CanvasSliderDialog(self)
+   end
+
+   public allows_null_width()
+      return /self.is_horizontal_flag
+   end
+
+   public allows_null_height()
+      return \self.is_horizontal_flag
+   end
+
+   public new()
+      cast(self,Slider).new()
+      cast(self,CanvasComponent).new()
+      self.class_name := "Slider"
+      self.import_name := "gui"
+      self.name := "slider"
+      return
+   end
+end
+

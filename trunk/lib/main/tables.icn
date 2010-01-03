@@ -1,0 +1,560 @@
+#
+# $Id$
+#
+
+package datastruct
+
+import ipl.pdco(Seq), lang
+
+#
+# This is a common superclass for several table-like data structures.
+#
+class Table()
+   public const def
+
+   #
+   # Insert a new entry.  The value of the new entry is returned (as a
+   # variable).
+   #
+   public defer insert(key, val)
+
+   #
+   # Return the value for the given key (as a variable) if it is in
+   # the table, or fail if it is not present.
+   #
+   public defer member(key)
+
+   #
+   # Delete the entry with the given key
+   #
+   public defer delete(key)
+
+   #
+   # Return the value with the given key, or the default value if
+   # the key is not present.  Equivalent to {.t[k]} for a table.
+   #
+   public get(key)
+      return .member(key) | def
+   end
+
+   #
+   # Like {get}, but if the key is not present a new entry is added (with
+   # the default value).  In any case a variable is returned.
+   #
+   public add(key)
+      return member(key) | insert(key, def)
+   end
+
+   #
+   # Return a sorted list of key-value pairs.
+   #
+   public defer sort()
+
+   #
+   # Generate the keys (cf the builtin key() function.)
+   #
+   public defer key()
+
+   #
+   # Generate alternating key/values (cf the builtin keyval() function.)
+   #
+   public defer keyval()
+
+   #
+   # Generate the keys (cf the builtin key() function.) in reverse
+   # order.  Only implemented for tables which store their keys in
+   # sorted order.
+   #
+   public defer back_key()
+
+   #
+   # Generate alternating key/values (cf the builtin keyval()
+   # function.) in reverse order.  Only implemented for tables which
+   # store their keys in sorted order.
+   #
+   public defer back_keyval()
+
+   #
+   # Generate the values (cf !t for a table).
+   #
+   public defer gen()
+
+   #
+   # Return the size of the table.
+   #
+   public defer size()
+
+   #
+   # Generate key-value pairs as a sequence of 2-element lists.  NB - for each
+   # invocation, the same list is returned every time, with the values replaced.
+   #
+   public entries()
+      local l, e
+      l := []
+      every e := keyval() do {
+         put(l, e)
+         if *l = 2 then {
+            suspend l
+            while pop(l)
+         }
+      }
+   end
+
+   # Return a flat list, with alternating key-value entries.
+   public flatten()
+      local l
+      l := []
+      every put(l, keyval())
+      return l
+   end
+
+   # Return an (unsorted) list of pairs of key-values.
+   public entry_list()
+      local l, e, r
+      r := []
+      l := []
+      every e := keyval() do {
+         put(l, e)
+         if *l = 2 then {
+            put(r, l)
+            l := []
+         }
+      }
+      return r
+   end
+
+   #
+   # Custom equals mirrors the {equals()} behaviour for builtin tables.
+   #
+   private object_equals(other, seen)
+      other.size() = self.size() | fail
+      equals(other.def, self.def, seen) | fail
+      return hash_and_check(other.entry_list(), self.entry_list(), seen)
+   end
+
+   #
+   # Custom hash mirrors the {hash()} behaviour for builtin tables.
+   #
+   private object_hash(depth)
+      local n
+      n := size()
+      if depth > 1 then {
+         n +:= hash(def, depth - 1)
+         every n +:= hash(key(), depth - 1)
+      }
+      return n
+   end
+
+   #
+   # Output object
+   #
+   private object_output(oo)
+      local pairs, e, sep
+      pairs := sort()
+      if oo.simple{!!pairs | def} then {
+         oo.object_start(self) | fail
+         if \def then {
+            oo.writes("default=") | fail
+            oo.traverse(def) | fail
+            sep := 1
+         }
+         every e := !pairs do {
+            if \sep then
+               oo.writes(";") | fail
+            oo.traverse(e[1]) | fail
+            oo.writes("->") | fail
+            oo.traverse(e[2]) | fail
+            sep := 1
+         }
+         oo.object_end(self) | fail
+      } else {
+         oo.nl() | fail
+         oo.object_start(self) | fail
+         oo.iplus()
+         if \def then {
+            oo.nl() | fail
+            oo.writes("default=") | fail
+            oo.iplus()
+            oo.traverse(def) | fail
+            oo.iminus()
+         }
+         every e := !pairs do {
+            oo.nl() | fail
+            oo.traverse(e[1]) | fail
+            oo.writes("->") | fail
+            oo.iplus()
+            oo.traverse(e[2]) | fail
+            oo.iminus()
+         }
+         oo.iminus()
+         oo.nl() | fail
+         oo.object_end(self) | fail
+      }
+      return
+   end
+
+   protected init_entries(entries)
+      if *entries % 2 ~= 0 then
+          runerr(134)
+      while *entries > 0 do
+         insert(default.get(entries), default.get(entries))
+   end
+
+   public new(def)
+      self.def := def
+      return
+   end
+end
+
+#
+# A {Table} that ignores case in its keys.
+#
+class ClTable(Table)
+   private 
+      t
+
+   public insert(key, val)
+      local n
+      default.insert(t, map(key), n := [key, val])
+      return n[2]
+   end
+
+   public member(key)
+      return default.member(t, map(key))[2]
+   end
+
+   public delete(key)
+      default.delete(t, map(key))
+   end
+
+   public sort()
+      local l
+      l := []
+      every put(l, (!default.sort(t))[2])
+      return l
+   end
+
+   public key()
+      suspend .(!t)[1]
+   end
+
+   public keyval()
+      local e
+      every e := !t do
+         suspend .e[1] | e[2]
+   end
+
+   public gen()
+      suspend (!t)[2]
+   end
+
+   public size()
+      return *t
+   end
+
+   #
+   # Create a new instance.
+   #
+   # @param def the default value
+   # @param entries initial key-value entries.
+   #
+   public new(def, entries[])
+      cast(self,Table).new(def)
+      t := table(def)
+      init_entries(entries)
+      return
+   end
+end
+
+class SortTableNode()
+   public const key
+   public val
+   private l, r
+
+   public insert(k, v, tbl)
+      local i
+      i := tbl.cmp(k, key)
+      if i = 0 then {
+         self.val := v
+         return self
+      } else if i < 0 then {
+         if /l := SortTableNode(k, v) then {
+            tbl.sz +:= 1
+            return l
+         } else
+            return l.insert(k, v, tbl)
+      } else {
+         if /r := SortTableNode(k, v) then {
+            tbl.sz +:= 1
+            return r
+         } else 
+            return r.insert(k, v, tbl)
+      }
+   end
+
+   public find(k, tbl)
+      local i
+      i := tbl.cmp(k, key)
+      return if i = 0 then
+         self
+      else if i < 0 then
+         (\l).find(k, tbl)
+      else
+         (\r).find(k, tbl)
+   end
+
+   public delete(k, tbl)
+      local i
+      i := tbl.cmp(k, key)
+      if i = 0 then {
+         tbl.sz -:= 1
+         if /l then
+            return r
+         if /r then
+            return l
+         # Make l the left child of the smallest node in r.
+         Seq{r.traverse()}.l := l
+         return r
+      } else if i < 0 then {
+         \l := l.delete(k, tbl)
+         return self
+      } else {
+         \r := r.delete(k, tbl)
+         return self
+      }
+   end
+
+   public traverse()
+      (\l).traverse()
+      coact(self)
+      (\r).traverse()
+   end
+
+   public back_traverse()
+      (\r).back_traverse()
+      coact(self)
+      (\l).back_traverse()
+   end
+
+   public new(k, v)
+      self.key := k
+      self.val := v
+      return
+   end
+end
+
+#
+# A {Table} which uses a binary tree so that its members are always
+# in sorted order.
+#
+class SortTable(Table)
+   private root
+   public const cmp
+   package readable sz
+
+   public insert(key, val)
+      if /root := SortTableNode(key, val) then {
+         sz := 1
+         return root.val
+      }
+      return root.insert(key, val, self).val
+   end
+
+   public member(key)
+      return (\root).find(key, self).val
+   end
+
+   public delete(key)
+      \root := root.delete(key, self)
+   end
+
+   public sort()
+      local e, l
+      l := []
+      every e := Seq{(\root).traverse()} do
+         put(l, [e.key, e.val])
+      return l
+   end
+
+   public key()
+      suspend Seq{(\root).traverse()}.key
+   end
+
+   public keyval()
+      local e
+      every e := Seq{(\root).traverse()} do
+         suspend e.key | e.val
+   end
+
+   public back_key()
+      suspend Seq{(\root).back_traverse()}.key
+   end
+
+   public back_keyval()
+      local e
+      every e := Seq{(\root).back_traverse()} do
+         suspend e.key | e.val
+   end
+
+   public gen()
+      suspend Seq{(\root).traverse()}.val
+   end
+
+   public size()
+      return sz
+   end
+
+   #
+   # Create a new instance.
+   #
+   # @param def the default value
+   # @param cmp a comparator function taking two arbitrary values and
+   # @   returning {-1}, {0} or {+1} by way of comparison.  The default
+   # @   value is {Internal.compare}.
+   # @param entries initial key-value entries.
+   #
+   public new(def, cmp, entries[])
+      cast(self,Table).new(def)
+      /cmp := Internal.compare
+      self.cmp := cmp
+      self.sz := 0
+      init_entries(entries)
+      return
+   end
+end
+
+#
+# A {Table} which uses the {lang.equals} procedure for key comparison,
+# rather than the builtin {===} operator.
+#
+class EqTable(Table)
+   private t, sz
+
+   public insert(key, val)
+      local h, e, n
+      h := hash(key)
+      every e := !\t[h] do {
+         if equals(e[1], key) then
+            return e[2] := val
+      }
+      sz +:= 1
+      (/t[h] := [n := [key, val]]) | put(t[h], n := [key, val])
+      return n[2]
+   end
+
+   public member(key)
+      local e
+      every e := !\t[hash(key)] do {
+         if equals(e[1], key) then
+            return e[2]
+      }
+   end
+
+   public delete(key)
+      local h, e, i
+      h := hash(key)
+      i := 1
+      every e := !\t[h] do {
+         if equals(e[1], key) then {
+            default.delete(t[h], i)
+            sz -:= 1
+            break
+         }
+         i +:= 1
+      }
+   end
+
+   public sort()
+      local l
+      l := []
+      every put(l, copy(!!t))
+      return default.sortf(l, 1)
+   end
+
+   public key()
+      suspend .(!!t)[1]
+   end
+
+   public keyval()
+      local e
+      every e := !!t do
+         suspend .e[1] | e[2]
+   end
+
+   public gen()
+      suspend (!!t)[2]
+   end
+
+   public size()
+      return sz
+   end
+
+   #
+   # Create a new instance.
+   #
+   # @param def the default value
+   # @param entries initial key-value entries.
+   #
+   public new(def, entries[])
+      cast(self,Table).new(def)
+      t := table()
+      sz := 0
+      init_entries(entries)
+      return
+   end
+end
+
+#
+# A {Table} which is just a wrapper around a builtin table.
+#
+class BuiltinTable(Table)
+   private t
+
+   public insert(key, val)
+      default.insert(t, key, val)
+      return t[key]
+   end
+
+   public member(key)
+      return default.member(t, key)
+   end
+
+   public delete(key)
+      default.delete(t, key)
+   end
+
+   public sort()
+      return default.sort(t)
+   end
+
+   public key()
+      suspend default.key(t)
+   end
+
+   public keyval()
+      suspend default.keyval(t)
+   end
+
+   public gen()
+      suspend !t
+   end
+
+   public size()
+      return *t
+   end
+
+   #
+   # Create a new instance.
+   #
+   # @param t the table to wrap; if omitted then a new table is
+   # @     created.
+   # @param entries initial key-value entries.
+   #
+   public new(t, entries[])
+      /t := table()
+      self.t := t
+      cast(self,Table).new(t[[]])
+      init_entries(entries)
+      return
+   end
+end

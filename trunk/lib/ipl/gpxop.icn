@@ -1,0 +1,236 @@
+############################################################################
+#
+#	File:     gpxop.icn
+#
+#	Subject:  Procedures for graphics operations
+#
+#	Author:   Gregg M. Townsend
+#
+#	Date:     May 26, 1999
+#
+############################################################################
+#
+#   This file is in the public domain.
+#
+############################################################################
+#
+#	This file contains some graphics procedures.
+#
+#	LeftString(x, y, s)	  draws a string left-aligned at (x, y).
+#
+#	CenterString(x, y, s)	  draws a string centered at (x, y).
+#
+#	RightString(x, y, s)	  draws a string right-aligned at (x, y).
+#
+#	ClearOutline(x, y, w, h)  draws a rectangle, erasing its interior.
+#
+#	Translate(dx, dy, w, h)	  moves the window origin and optionally
+#				  sets the clipping region.
+#
+#	Zoom(x1, y1, w1, h1, x2, y2, w2, h2)
+#				  copies and distorts a rectangle.
+#
+#	Capture(p, x, y, w, h)	  converts a window area to an image string.
+#
+#	Sweep()			  lets the user select a rectangular area.
+#
+############################################################################
+#
+#  LeftString(x, y, s), CenterString(x, y, s), and RightString(x, y, s)
+#  draw a string centered vertically about y and left-justified,
+#  centered, or right-justified about x.
+#
+#  ClearOutline(x, y, w, h) draws a rectangle in the foreground color
+#  and fills it with the background color.
+#
+#  Translate(dx, dy, w, h) adjusts a window's dx and dy attributes by
+#  the values given.  Note that the resulting attribute values are the
+#  sums of the existing values with the parameters, so that successive
+#  translations accumulate.  If w and h are supplied, the clipping
+#  region is set to a rectangle of size (w, h) at the new origin.
+#
+#  Zoom(x1, y1, w1, h1, x2, y2, w2, h2) is a distorting variation of
+#  CopyArea that can be used to shrink or enlarge a rectangular area.
+#  Zero, one, or two window arguments can be supplied.  Rectangle 1 is
+#  copied to fill rectangle 2 using simple pixel sampling and replication.
+#  The rectangles can overlap.  The usual defaults apply for both rectangles.
+#
+#  Sweep() lets the user select a rectangular area using the mouse.
+#  Called when a mouse button is pressed, Sweep handles all subsequent
+#  events until a mouse button is released.  As the mouse moves, a
+#  reverse-mode outline rectangle indicates the selected area.  The
+#  pixels underneath the rectangle outline are considered part of this
+#  rectangle, implying a minimum width/height of 1, and the rectangle
+#  is clipped to the window  boundary.  Sweep returns a list of four
+#  integers [x,y,w,h] giving the rectangle bounds in canonical form
+#  (w and h always positive).  Note that w and h give the width as
+#  measured in FillRectangle terms (number of pixels included) rather
+#  than DrawRectangle terms (coordinate difference).
+#
+#  Capture(palette, x, y, w, h) converts a window region into an
+#  image string using the specified palette, and returns the string.
+#
+#  These procedures all accept an optional initial window argument.
+#
+############################################################################
+#
+#  Links: gpxlib
+#
+############################################################################
+#
+#  Requires:  Version 9 graphics
+#
+############################################################################
+
+package ipl.graphics
+
+#   LeftString(x, y, s) -- draw string left-justified at (x,y).
+
+# draw left-justified string
+procedure LeftString(win, x, y, s)		
+   y +:= (win.attrib( "ascent") - win.attrib( "descent")) / 2 + 1
+   return win.draw_string(x, y, s)
+end
+
+
+#   CenterString(x, y, s) -- draw string centered about (x,y).
+
+# draw centered string
+procedure CenterString(win, x, y, s)		
+   x -:= win.text_width( s) / 2
+   y +:= (win.attrib( "ascent") - win.attrib( "descent")) / 2 + 1
+   return win.draw_string(x, y, s)
+end
+
+
+#   RightString(x, y, s) -- draw string right-justified at (x,y).
+
+# draw right-justified string
+procedure RightString(win, x, y, s)		
+   x -:= win.text_width( s)
+   y +:= (win.attrib( "ascent") - win.attrib( "descent")) / 2 + 1
+   return win.draw_string(x, y, s)
+end
+
+
+#   ClearOutline(x, y, w, h) -- draw rectangle and fill background.
+
+# draw and clear rectangle
+procedure ClearOutline(win, x, y, w, h)		
+   /x := -win.attrib( "dx")
+   /y := -win.attrib( "dy")
+   /w := win.attrib( "width") - (x + win.attrib( "dx"))
+   /h := win.attrib( "height") - (y + win.attrib( "dy"))
+
+   if w < 0 then
+      x -:= (w := -w)
+   if h < 0 then
+      y -:= (h := -h)
+
+   win.draw_rectangle( x, y, w, h)
+   win.erase_area( x+1, y+1, w-1, h-1)
+   return win
+end
+
+
+#   Translate(dx, dy, w, h) -- add translation and possibly clipping.
+
+# add translation
+procedure Translate(win, dx, dy, w, h)		
+   win.attrib( "dx=" || win.attrib("dx")+dx, "dy=" || win.attrib("dy")+dy)
+   win.clip( 0, 0, \w, \h)
+   return win
+end
+
+
+#  Sweep() -- sweep out area with mouse, return bounds
+
+# sweep area with mouse
+procedure Sweep(win)				
+end
+
+
+#  Zoom(win1, win2, x1, y1, w1, h1, x2, y2, w2, h2) -- copy and distort.
+
+# zoom image
+procedure Zoom(args[])				
+   local win1, x1, y1, w1, h1
+   local win2, x2, y2, w2, h2
+   local x, y, scr
+
+   win1 := get(args)
+   win2 := get(args)
+
+   x1 := \get(args) | -win1.attrib("dx")
+   y1 := \get(args) | -win1.attrib("dy")
+   w1 := \get(args) | win1.attrib("width") - (x1 + win1.attrib("dx"))
+   h1 := \get(args) | win1.attrib("height") - (y1 + win1.attrib("dy"))
+   if w1 < 0 then
+      x1 -:= (w1 := -w1)
+   if h1 < 0 then
+      y1 -:= (h1 := -h1)
+
+   x2 := \get(args) | -win2.attrib("dx")
+   y2 := \get(args) | -win2.attrib("dy")
+   w2 := \get(args) | win2.attrib("width") - (x2 + win2.attrib("dx"))
+   h2 := \get(args) | win2.attrib("height") - (y2 + win2.attrib("dy"))
+   if w2 < 0 then
+      x2 -:= (w2 := -w2)
+   if h2 < 0 then
+      y2 -:= (h2 := -h2)
+
+   if w1 = 0 | w2 = 0 | h1 = 0 | h2 = 0 then
+      return
+
+   scr := ScratchCanvas(win2, w2, h1, "__Zoom__") | fail
+   every x := 0 to w2 - 1 do
+      win1.copy_to(scr, x1 + w1 * ((x + 0.5) / w2), y1, 1, h1, x, 0)
+   every y := 0 to h2 - 1 do
+      scr.copy_to(win2, 0, h1 * ((y + 0.5) / h2), w2, 1, x2, y2 + y)
+
+   scr.erase_area()		# release colors
+   return win1
+end
+
+
+#  Capture(win, pal, x, y, w, h) -- capture screen region as image string
+
+$define CaptureChunk 100
+
+# capture image as string
+procedure Capture(win, pal, x, y, w, h)		
+   local a, c, k, s, cmap
+
+   /pal := "c1"
+
+   /x := -win.attrib( "dx")
+   /y := -win.attrib( "dy")
+   /w := win.attrib( "width") - (x + win.attrib( "dx"))
+   /h := win.attrib( "height") - (y + win.attrib( "dy"))
+
+   if w < 0 then
+      x -:= (w := -w)
+   if h < 0 then
+      y -:= (h := -h)
+
+   win.palette_chars(pal) | runerr(205, pal)
+
+   cmap := table()
+
+   # accumulate the image in chunks and then concatenate
+   # (much faster than concatenating single chars on a very long string)
+   s := ""
+   a := []
+   every k := win.pixel(x, y, w, h) do {
+      c := \cmap[k] | (cmap[k] := win.palette_key(pal, k))
+      if *(s ||:= c) >= CaptureChunk then {
+         put(a, s)
+         s := ""
+         }
+      }
+   put(a, s)
+
+   s := w || "," || pal || ","
+   while s ||:= get(a)
+   return s
+end

@@ -1,0 +1,166 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+#
+# This class provides decorative borders.  Optionally, a
+# single other component can be the title of the Border.  This
+# would normally be a Label object, but it could also be a
+# CheckBox or an Icon, or whatever is desired.
+#
+# @field title={Component} : see {set_title}
+# @field content={Component} : see {set_content}
+# @field internal_align=string : see {set_internal_align}
+# @field see also {Component}
+#
+# @example
+# @ b := Border()
+# @
+# @ # Add a Label as the title
+# @
+# @ l := Label()
+# @ l.set_label("Title String")
+# @ b.set_title(l)
+# @ self.add(b)
+#
+class Border(Component)
+   public 
+      internal_align, 
+      title,
+      content,
+      y0,
+      h0
+
+   public static
+      TITLE_SPACING,
+      TITLE_OFFSET
+
+   private static init()
+      TITLE_SPACING := 2
+      TITLE_OFFSET := 6
+   end
+
+   #
+   # Set the alignment of the title object.  The input string should be
+   # ``l'', ``c'' or ``r''.
+   #
+   public set_internal_align(x)
+      return self.internal_align := x
+   end
+
+   #
+   # Set the title object to c.
+   #
+   public set_title(c)
+      remove(\self.title)
+      self.title := c
+      add(\self.title)
+   end
+   
+   #
+   # Set the content object to c.
+   #
+   public set_content(c)
+      remove(\self.content)
+      self.content := c
+      add(self.content)
+   end
+
+   public initially()
+      \self.content | runerr("no content component specified")
+      cast(self,Component).initially()
+   end
+
+   public display(r)
+      border.draw(self.cbwin, self.x, y0, self.w, h0)
+      if \title then {
+         # A little space to the left and right of the title.
+         erase_rectangle(self.cbwin, 
+                        title.x - TITLE_SPACING, y0,
+                        title.w + 2 * TITLE_SPACING, border.get_t_inset())
+      }
+      self.display_children(r)
+   end
+
+   public get_default_width()
+      return border.get_total_width() + content.get_preferred_width()
+   end
+
+   public get_default_height()
+      if \title then
+         return title.get_preferred_height() + content.get_preferred_height() +
+                border.get_b_inset()
+      else
+         return border.get_total_height() + content.get_preferred_height()
+   end
+
+   public layout()
+      if \title then {
+         #
+         # Setup title; this gives us its height to work out some other dimensions.
+         # NB Important not to use resize here as this would fill up the _spec fields,
+         # and mean later calls to get_preferred_xxx would go wrong (they would get stuck
+         # with the _spec values) - see ivib/canvas.icn reset_layout() method.
+         #
+         title.w := title.get_preferred_width()
+         title.h := title.get_preferred_height()
+         title.x := self.x + case self.internal_align of {
+            Align.C : (self.w - title.w) / 2
+            Align.L : TITLE_OFFSET
+            Align.R : self.w - title.w - TITLE_OFFSET
+            default : runerr("incorrect internal_align specifier", self.internal_align)
+         }
+         title.y := self.y
+         title.layout()
+         content.x := self.x + border.get_l_inset()
+         content.y := self.y + title.h
+         content.w := self.w - border.get_total_width()
+         content.h := self.h - title.h - border.get_b_inset()
+         y0 := self.y + title.h / 2 - border.get_t_inset() / 2
+         h0 := self.y + self.h - self.y0
+      } else {
+         content.x := self.x + border.get_l_inset()
+         content.y := self.y + border.get_t_inset()
+         content.w := self.w - border.get_total_width()
+         content.h := self.h - border.get_total_height()
+         y0 := self.y
+         h0 := self.h
+      }
+      content.layout()
+   end
+
+   protected set_one(f)
+      case f.attr of {
+         "title" : set_title(f.object_val(gui.Component))
+         "content" : set_content(f.object_val(gui.Component))
+         "internal_align" : set_internal_align(f.string_val())
+         default: return cast(self,Component).set_one(f)
+      }
+      return
+   end
+
+   protected set_special(a)
+      if is(a[1], Component) then
+         set_content(pop(a))
+   end
+
+   public new(a[])
+      cast(self,Component).new()
+      self.internal_align := Align.L
+      self.set_border(BevelledBorder())
+      self.set_constraint("x_fill", &yes)
+      self.set_constraint("y_fill", &yes)
+      self.set_constraint("x_weight", "1")
+      self.set_constraint("y_weight", "1")
+      set_fields(a)
+      return
+   end
+end
+
+

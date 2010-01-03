@@ -1,0 +1,101 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import graphics
+
+class ListLabel(Label)
+   public keeps(e)
+      return member(Key.CURSOR_V, e.code)
+   end
+
+   public on_key(e)
+      case e.code of {
+         Key.UP : parent.go_up(e)
+         Key.DOWN : parent.go_down(e)
+      }
+   end
+
+   public new(a[])
+      cast(self,Label).new()
+      self.set_label("")
+      self.set_accepts_focus(&yes)
+      self.connect(self.on_key, Event.KEY_PRESS)
+      # Align with the text in the textlist.
+      self.border.set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, Gui.Y_INSET, Gui.Y_INSET)
+      set_fields(a)
+      return
+   end
+end
+
+#
+#
+# This component is for selecting one string from a list of
+# several.  When a button is pressed a list appears (possibly
+# with a scroll bar) from which one item can be selected.
+# 
+# A Event.SELECTION_CHANGED is generated whenever an item is selected from the
+# list.
+# 
+# @field constant_label=string : see {set_constant_label}
+# @field see also {DropDown}
+#
+# @example
+# @ l := List()
+# @ l.set_selection_list(["Red", "Green", "Yellow", "Blue", "Orange"])
+# @ l.set_size(120)
+# @ l.set_pos(100, 100)
+# @ l.set_selection(2)  # Green will be the first selection
+# @ self.add(l)
+#
+class List(DropDown)
+   public 
+      constant_label
+
+   public apply_selection()
+      local s
+      s := \self.constant_label | self.selection_list[\self.selection] | ""
+      self.view.set_label(s)
+   end
+
+   #
+   # The given string will always appear in the text part of the
+   # component, rather than the currently selected item.
+   #
+   public set_constant_label(x)
+      self.constant_label := x
+      apply_selection()
+   end
+
+   public create_view()
+      return ListLabel()
+   end
+
+   public get_default_width()
+      local t
+      if \self.constant_label then
+         t := self.cbwin.text_width(self.constant_label)
+      else {
+         t := 0
+         every t <:= self.cbwin.text_width(!self.selection_list)
+      }
+      return border.get_total_width() + b.get_preferred_width() + t + view.border.get_total_width()
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "constant_label" : set_constant_label(f.text_val())
+         default: return cast(self,DropDown).set_one(f)
+      }
+      return
+   end
+end
+
+
+

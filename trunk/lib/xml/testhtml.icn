@@ -1,0 +1,30 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import xml, ipl.options, io, lang
+
+procedure main(a)
+   local p, fmt, e, s, d, t
+   p := HtmlParser()
+
+   t := options(a, "-u!")
+   fmt := HtmlFormatter()
+
+   every e := !a do {
+      s := Files.file_to_string(e) | stop("couldnt open" || e)
+      if \t["u"] then
+         s := ucs(s) | stop("Couldn't convert utf8: ", &why)
+      d := p.parse(s) | stop("couldnt parse " || e)
+      fmt.format(d)
+      write("--- Document structure")
+      ObjectOutputStream("indent=3",).show(d)
+      write("------------")
+   }
+end
+
+

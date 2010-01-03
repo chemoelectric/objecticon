@@ -1,0 +1,173 @@
+tracing.icn  :   10  | recurse(0)
+tracing.icn  :   23  | | failer()
+tracing.icn  :   29  | | failer failed
+tracing.icn  :   24  | | genr(5,12,4)
+tracing.icn  :   37  | | genr suspended 5
+tracing.icn  :   24  | | genr resumed
+tracing.icn  :   37  | | genr suspended 9
+tracing.icn  :   24  | | genr resumed
+tracing.icn  :   38  | | genr failed
+tracing.icn  :   25  | | func(3,4)
+tracing.icn  :   33  | | func returned 13
+tracing.icn  :   25  | recurse returned 13
+tracing.icn  :   10  | recurse(1)
+tracing.icn  :   22  | | recurse(0)
+tracing.icn  :   23  | | | failer()
+tracing.icn  :   29  | | | failer failed
+tracing.icn  :   24  | | | genr(5,12,4)
+tracing.icn  :   37  | | | genr suspended 5
+tracing.icn  :   24  | | | genr resumed
+tracing.icn  :   37  | | | genr suspended 9
+tracing.icn  :   24  | | | genr resumed
+tracing.icn  :   38  | | | genr failed
+tracing.icn  :   25  | | | func(3,4)
+tracing.icn  :   33  | | | func returned 13
+tracing.icn  :   25  | | recurse returned 13
+tracing.icn  :   22  | recurse returned 14
+tracing.icn  :   10  | recurse(2)
+tracing.icn  :   22  | | recurse(1)
+tracing.icn  :   22  | | | recurse(0)
+tracing.icn  :   23  | | | | failer()
+tracing.icn  :   29  | | | | failer failed
+tracing.icn  :   24  | | | | genr(5,12,4)
+tracing.icn  :   37  | | | | genr suspended 5
+tracing.icn  :   24  | | | | genr resumed
+tracing.icn  :   37  | | | | genr suspended 9
+tracing.icn  :   24  | | | | genr resumed
+tracing.icn  :   38  | | | | genr failed
+tracing.icn  :   25  | | | | func(3,4)
+tracing.icn  :   33  | | | | func returned 13
+tracing.icn  :   25  | | | recurse returned 13
+tracing.icn  :   22  | | recurse returned 14
+tracing.icn  :   22  | recurse returned 15
+tracing.icn  :   10  | recurse(3)
+tracing.icn  :   22  | | recurse(2)
+tracing.icn  :   22  | | | recurse(1)
+tracing.icn  :   22  | | | | recurse(0)
+tracing.icn  :   23  | | | | | failer()
+tracing.icn  :   29  | | | | | failer failed
+tracing.icn  :   24  | | | | | genr(5,12,4)
+tracing.icn  :   37  | | | | | genr suspended 5
+tracing.icn  :   24  | | | | | genr resumed
+tracing.icn  :   37  | | | | | genr suspended 9
+tracing.icn  :   24  | | | | | genr resumed
+tracing.icn  :   38  | | | | | genr failed
+tracing.icn  :   25  | | | | | func(3,4)
+tracing.icn  :   33  | | | | | func returned 13
+tracing.icn  :   25  | | | | recurse returned 13
+tracing.icn  :   22  | | | recurse returned 14
+tracing.icn  :   22  | | recurse returned 15
+tracing.icn  :   22  | recurse returned 16
+tracing.icn  :   11  | divall("")
+tracing.icn  :   48  | divall returned &null
+tracing.icn  :   11  | divall("314")
+tracing.icn  :   46  | | divide(9,"3")
+tracing.icn  :   52  | | divide returned 3
+tracing.icn  :   46  | | divide(9,"1")
+tracing.icn  :   52  | | divide returned 9
+tracing.icn  :   46  | | divide(9,"4")
+tracing.icn  :   52  | | divide returned 2
+tracing.icn  :   48  | divall returned &null
+tracing.icn  :   11  | divall("x")
+tracing.icn  :   46  | | divide(9,"x")
+tracing.icn  :   52  | | divide failed
+tracing.icn  :   48  | divall returned &null
+tracing.icn  :   11  | divall("12x")
+tracing.icn  :   46  | | divide(9,"1")
+tracing.icn  :   52  | | divide returned 9
+tracing.icn  :   46  | | divide(9,"2")
+tracing.icn  :   52  | | divide returned 4
+tracing.icn  :   46  | | divide(9,"x")
+tracing.icn  :   52  | | divide failed
+tracing.icn  :   48  | divall returned &null
+tracing.icn  :   12  | varargs()
+tracing.icn  :   61  | | vproc(&null,list#1 = [])
+tracing.icn  :   73  | | vproc returned &null
+tracing.icn  :   62  | | vproc(1,list#2 = [])
+tracing.icn  :   73  | | vproc returned 1
+tracing.icn  :   63  | | vproc(1,list#3 = [2])
+tracing.icn  :   74  | | vproc suspended list#3(1)[1] = 2
+tracing.icn  :   63  | | vproc resumed
+tracing.icn  :   75  | | vproc failed
+tracing.icn  :   64  | | vproc(1,list#4 = [2,3])
+tracing.icn  :   74  | | vproc suspended list#4(2)[1] = 2
+tracing.icn  :   64  | | vproc resumed
+tracing.icn  :   74  | | vproc suspended list#4(2)[2] = 3
+tracing.icn  :   64  | | vproc resumed
+tracing.icn  :   75  | | vproc failed
+tracing.icn  :   65  | | vproc(1,list#5 = [2,3,4])
+tracing.icn  :   74  | | vproc suspended list#5(3)[1] = 2
+tracing.icn  :   65  | | vproc resumed
+tracing.icn  :   74  | | vproc suspended list#5(3)[2] = 3
+tracing.icn  :   65  | | vproc resumed
+tracing.icn  :   74  | | vproc suspended list#5(3)[3] = 4
+tracing.icn  :   65  | | vproc resumed
+tracing.icn  :   75  | | vproc failed
+tracing.icn  :   68  | | vproc(1,list#7 = [2,3,4])
+tracing.icn  :   74  | | vproc suspended list#7(3)[1] = 2
+tracing.icn  :   68  | | vproc resumed
+tracing.icn  :   74  | | vproc suspended list#7(3)[2] = 3
+tracing.icn  :   68  | | vproc resumed
+tracing.icn  :   74  | | vproc suspended list#7(3)[3] = 4
+tracing.icn  :   68  | | vproc resumed
+tracing.icn  :   75  | | vproc failed
+tracing.icn  :   68  | | vproc(1,list#8 = [2,3])
+tracing.icn  :   74  | | vproc suspended list#8(2)[1] = 2
+tracing.icn  :   68  | | vproc resumed
+tracing.icn  :   74  | | vproc suspended list#8(2)[2] = 3
+tracing.icn  :   68  | | vproc resumed
+tracing.icn  :   75  | | vproc failed
+tracing.icn  :   68  | | vproc(1,list#9 = [2])
+tracing.icn  :   74  | | vproc suspended list#9(1)[1] = 2
+tracing.icn  :   68  | | vproc resumed
+tracing.icn  :   75  | | vproc failed
+tracing.icn  :   68  | | vproc(1,list#10 = [])
+tracing.icn  :   73  | | vproc returned 1
+tracing.icn  :   68  | | vproc(&null,list#11 = [])
+tracing.icn  :   73  | | vproc returned &null
+tracing.icn  :   69  | varargs returned &null
+tracing.icn  :   13  | p()
+tracing.icn  :  100  | p suspended &random = 0
+tracing.icn  :   13  | p resumed
+tracing.icn  :  100  | p suspended &trace = -133
+tracing.icn  :   13  | p resumed
+tracing.icn  :  100  | p suspended &dump = 0
+tracing.icn  :   13  | p resumed
+tracing.icn  :  100  | p suspended &error = 0
+tracing.icn  :   13  | p resumed
+tracing.icn  :  100  | p suspended &progname = "something"
+tracing.icn  :   13  | p resumed
+tracing.icn  :  100  | p suspended &why = ""
+tracing.icn  :   13  | p resumed
+tracing.icn  :  100  | p suspended &pos = 1
+tracing.icn  :   13  | p resumed
+tracing.icn  :  100  | p suspended &subject = ""
+tracing.icn  :   13  | p resumed
+tracing.icn  :  100  | p suspended table#1(1)[1] = "one"
+tracing.icn  :   13  | p resumed
+tracing.icn  :  100  | p suspended table#1(1)[100]
+tracing.icn  :   13  | p resumed
+tracing.icn  :  100  | p suspended (variable = 102)
+tracing.icn  :   13  | p resumed
+tracing.icn  :  100  | p suspended object SomeClass#1(3) . x = 99
+tracing.icn  :   13  | p resumed
+tracing.icn  :  100  | p suspended object SomeClass#1(3) . y = 100
+tracing.icn  :   13  | p resumed
+tracing.icn  :  100  | p suspended object SomeClass#1(3) . z = 101
+tracing.icn  :   13  | p resumed
+tracing.icn  :  100  | p suspended record SomeRec#1(3) . one = 1
+tracing.icn  :   13  | p resumed
+tracing.icn  :  100  | p suspended record SomeRec#1(3) . two = 2
+tracing.icn  :   13  | p resumed
+tracing.icn  :  100  | p suspended record SomeRec#1(3) . three = 3
+tracing.icn  :   13  | p resumed
+tracing.icn  :  100  | p suspended list#12(100)[2] = &null
+tracing.icn  :   13  | p resumed
+tracing.icn  :  100  | p suspended list#12(100)[10] = 199
+tracing.icn  :   13  | p resumed
+tracing.icn  :  100  | p suspended "the quick brown ..."[2+:3] = "he "
+tracing.icn  :   13  | p resumed
+tracing.icn  :  100  | p suspended u"over the lazy do..."[2+:4] = u"ver "
+tracing.icn  :   13  | p resumed
+tracing.icn  :  103  | p failed
+tracing.icn  :   14  main failed

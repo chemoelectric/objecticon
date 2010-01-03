@@ -1,0 +1,1336 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import 
+   ipl.sort,
+   util,
+   io
+
+#
+# This is the parent class of all the GUI components.  All of
+# its methods and variables therefore apply to its sub-classes.
+#
+# @field tooltip=val: see {set_tooltip}
+# @field tooltip_start_delay=integer: see {set_tooltip_start_delay}
+# @field tooltip_end_delay=integer: see {set_tooltip_end_delay}
+# @field tooltip_follows_mouse=flag: see {set_tooltip_follows_mouse}
+# @field pointer=string : see {set_pointer}
+# @field show_layout=flag : see {set_show_layout}
+# @field allow_drop=flag : see {set_allow_drop}
+# @field allow_drag=flag : see {set_allow_drag}
+# @field is_shaded=flag : see {set_is_shaded}
+# @field accepts_focus=flag : see {set_accepts_focus}
+# @field pos=string,string : see {set_pos}
+# @field x=string : see {set_x}
+# @field y=string : see {set_y}
+# @field width or w=string : see {set_w}
+# @field height or h=string : see {set_h}
+# @field size=string,string : see {set_size}
+# @field align=string,string : see {set_align}
+# @field x_align=string : see {set_x_align}
+# @field y_align=string : see {set_y_align}
+# @field z=integer : see {set_z}
+# @field tab_ord=integer : see {set_tab_ord}
+# @field accel=string : see {set_accel}
+# @field layout={gui.Layout}: see {set_layout}
+# @field border={gui.ABorder}: see {set_border}
+# @field c:<constraint>=value: set a constraint, see {set_constraint}
+# @field w:<attrib>=value: set a window attribute, see {set_wattrib}
+#
+class Component(Rect,Align,SetFields,Connectable)
+   public 
+      #
+      # x position as specified by {set_pos()}, eg "50%"
+      #                        
+      x_spec,
+      #
+      # y position as specified by set_pos().
+      #
+      y_spec,
+      #
+      # width specifier as specified in set_size(), eg "100%"              
+      #
+      w_spec, 
+      #
+      # height specifier as specified in set_size(),
+      #
+      h_spec, 
+      #
+      # An integer used to sort the parent's z_children list.
+      #
+      z,
+      #
+      # This can be set to alter the tab-focus ordering of the parent
+      # container.
+      #
+      tab_ord,
+      #
+      # The {Dialog} class instance of which this {Component} is a part.
+      #
+      parent_dialog,
+      #
+      # A map of the Icon window graphics attributes, eg "bg"->"blue",
+      # "resize"->"on" etc.
+      wattribs,
+      effective_wattribs,
+      #
+      # Flags indicating whether the {Component} currently is shaded;
+      # {&null} means it isn't.
+      is_shaded_flag, 
+      effective_is_shaded_flag,
+      #
+      # Flags indicating whether the {Component} currently is hidden;
+      # {&null} means it isn't.
+      is_hidden_flag,
+      effective_is_hidden_flag,
+      #
+      # A cloned window created by combining a buffer window with
+      # the {Component's} attributes.  The component draws itself
+      # into this window.
+      cbwin,
+      #
+      # Flag indicating whether the {Component} accepts keyboard focus
+      # by way of the tab key being pressed;  {&null} means it doesn't.
+      accepts_focus_flag,
+      #
+      # Tooltip config
+      #
+      tooltip,         
+      tooltip_start_delay,
+      tooltip_end_delay,
+      tooltip_follows_mouse_flag,
+      #
+      # Reference to enclosing {Component} object.
+      #
+      parent,
+      #
+      # List of child components
+      #
+      children,
+      #
+      # The same children, but sorted in z order.
+      #
+      z_children,
+      #
+      # The same children, but sorted in tab order.
+      #
+      tab_children,
+      #
+      # Mnemonic key for keyboard accelerators.
+      #
+      accel,
+      #
+      # The child which we want to give the focus to.
+      #
+      preferred_focus,
+      #
+      # Flags to turn on drag and drop
+      #
+      allow_drag_flag,
+      allow_drop_flag,
+      #
+      # Mouse pointer.
+      #
+      pointer,
+      #
+      # Layout manager
+      #
+      layout_delegate,
+      #
+      # Layout constraints
+      # 
+      constraints,
+      #
+      # Show layout grid - for layout debugging
+      #
+      show_layout_flag,
+      #
+      # Border instance
+      #
+      border,
+      #
+      # Default ticker
+      #
+      ticker
+
+   #
+   # Set the tooltip.  This object is passed to {create_tooltip_component} when a
+   # tooltip is to be created.
+   #
+   public set_tooltip(x)
+      self.tooltip := x
+   end
+
+   #
+   # Return the tooltip, if any.
+   #
+   public get_tooltip()
+      return \self.tooltip
+   end
+
+   #
+   # Set the delay in ms before the tooltip appears.
+   #
+   public set_tooltip_start_delay(x)
+      self.tooltip_start_delay := x
+   end
+
+   #
+   # Get the tooltip start delay.
+   #
+   public get_tooltip_start_delay()
+      return self.tooltip_start_delay
+   end
+
+   #
+   # Set the delay in ms before the tooltip disappears after it has been
+   # shown; &null means infinite.
+   #
+   public set_tooltip_end_delay(x)
+      self.tooltip_end_delay := x
+   end
+
+   #
+   # Get the tooltip end delay.
+   #
+   public get_tooltip_end_delay()
+      return self.tooltip_end_delay
+   end
+
+   #
+   # This indicates whether the tooltip follows the mouse around within
+   # a component, when the tooltip changes - applicable for example in a Tree
+   # which has a tip for each node.  By default off.
+   #
+   public set_tooltip_follows_mouse(s)
+      self.tooltip_follows_mouse_flag := check_flag(s)
+   end
+
+   #
+   # Create a tooltip Component.  By default delegates this to the {Style} object,
+   # to create a standard {Label}.  The content is then set from the tip, which
+   # can be a string or a {Paint} instance.
+   #
+   public create_tooltip_component(tip)
+      local c, s
+      c := Gui.style.create_tooltip_label()
+      if s := text(tip) then
+         c.set_label(s)
+      else
+         c.set_paint(tip)
+      if \self.accel then
+         c.set_linked_accel(self)
+      return c
+   end
+
+   #
+   # Set the pointer.  When the mouse moves over the component,
+   # the pointer cursor will automatically be set to this value.
+   #
+   public set_pointer(x)
+      self.pointer := x
+   end
+
+   #
+   # Return the pointer string, if any.
+   #
+   public get_pointer()
+      return \self.pointer
+   end
+
+   #
+   # Set the border to use.
+   #
+   public set_border(b)
+      (\self.border).finally()
+      self.border := b
+      if is_initialized() then {
+         self.border.initially(self)
+         self.invalidate()
+      }
+   end
+
+   #
+   # Get the cloned buffer window, as seen by a child component.
+   #
+   public get_cbwin()
+      return self.cbwin
+   end
+
+   #
+   # Get the wattribs in effect in the component's cbwin window.
+   #
+   public get_effective_wattribs()
+      return effective_wattribs
+   end
+
+   #
+   # This method can be overridden to succeed if the component should keep
+   # an event rather than allow it to be used by the parent dialog to move
+   # the focus between c
+   #
+   public keeps(e)
+   end
+
+   #
+   # Succeed if the component is hidden; for example if it is
+   # within a tabbed pane not presently visible.
+   #
+   public is_hidden()
+      return \self.effective_is_hidden_flag
+   end
+
+   #
+   # Succeed if the component is not hidden.
+   #
+   public is_unhidden()
+      return /self.effective_is_hidden_flag
+   end
+
+   #
+   # Swap the hidden status of the component.
+   #
+   public toggle_is_hidden()
+      set_is_hidden(toggle_flag(self.is_hidden_flag))
+   end
+
+   #
+   # Set the hidden status of the component.
+   #
+   public set_is_hidden(s)
+      # NB - try invalidate before and after, since invalidating a hidden
+      # component is a no-op.
+      self.invalidate()
+      self.is_hidden_flag := check_flag(s)
+      self.hidden_change()
+      self.invalidate()
+   end
+
+   #
+   # Called to re-compute the effective_is_hidden_flags under this tree.
+   #
+   public hidden_change()
+      is_initialized() | fail
+      self.effective_is_hidden_flag := 
+         if (\parent).is_hidden() | \self.is_hidden_flag then &yes else &no
+      every (!self.children).hidden_change()
+   end
+
+   #
+   # Succeeds if the component is shaded; fails otherwise.  A
+   # shaded component, such as a button, may be displayed
+   # differently, and will not generate events.
+   #
+   public is_shaded()
+      return \self.effective_is_shaded_flag
+   end
+
+   #
+   # Succeed if the component is not shaded.
+   #
+   public is_unshaded()
+      return /self.effective_is_shaded_flag
+   end
+
+   #
+   # Called to re-compute the effective_is_shaded_flags under this tree.
+   #
+   public shaded_change()
+      is_initialized() | fail
+      self.effective_is_shaded_flag := 
+         if (\parent).is_shaded() | \self.is_shaded_flag then &yes else &no
+      every (!self.children).shaded_change()
+   end
+
+   #
+   # Determines whether the component accepts the tab focus
+   #
+   public accepts_focus()
+      return \self.accepts_focus_flag
+   end
+
+   #
+   # Handle the component's keyboard accelerator key.  By
+   # default, this requests the keyboard focus (if the
+   # component is configured to accept it).
+   #
+   public handle_accel(e)
+      grab_focus(e)
+   end
+
+   #
+   # Grab the focus for this component's preferred focus.
+   # @param e the causing event, if any.
+   #
+   public grab_focus(e)
+      (\self.parent_dialog).set_focus(find_focus(e), e)
+   end
+
+   #
+   # Swap the shaded status of the component.
+   #
+   public toggle_is_shaded()
+      self.is_shaded_flag := toggle_flag(self.is_shaded_flag)
+      self.shaded_change()
+      self.invalidate()
+   end
+
+   #
+   # Set the shaded status of the component.
+   #
+   public set_is_shaded(s)
+      self.is_shaded_flag := check_flag(s)
+      self.shaded_change()
+      self.invalidate()
+   end
+
+   #
+   # Set the flag indicating that the component accepts tab focus.
+   #
+   public set_accepts_focus(s)
+      self.accepts_focus_flag := check_flag(s)
+   end
+
+   #
+   # This draws, or re-draws, the component and all its children in the dialog
+   # window.
+   #
+   public display(r)
+      display_children(r)
+   end
+
+   #
+   # Useful function to display the children.
+   #
+   public display_children(r)
+      every display_child(r, !self.z_children)
+   end
+
+   public display_child(r, c)
+      if c.is_unhidden() then
+         c.invoke_display(r.intersect(c))
+   end
+
+   public invoke_display(r)
+      local cw
+      self.cbwin.clip(r.x, r.y, r.w, r.h)
+      erase_rectangle(self.cbwin, r.x, r.y, r.w, r.h)
+      self.display(r)
+      if \self.show_layout_flag then
+         (\layout_delegate).display()
+      if is_shaded() then {
+         cw := Gui.style.get_filter_clone(self.cbwin)
+         cw.fill_rectangle(r.x, r.y, r.w, r.h)
+         cw.uncouple()
+      }
+   end
+
+   #
+   # Add the given window attribute and value to those used in
+   # this component's cloned buffer window.
+   #
+   public set_wattrib(attr, val)
+      insert(self.wattribs, attr, val)
+   end
+
+   #
+   # Remove the given window attribute.
+   #
+   public remove_wattrib(attr)
+      delete(self.wattribs, attr)
+   end
+
+   #
+   # Return the window attrib with the given name in the icon attribs
+   # list, or fail if none is present.
+   #
+   public get_wattrib(attr)
+      return \self.wattribs[attr]
+   end
+
+   #
+   # Clear all wattribs
+   #
+   public clear_wattribs()
+      self.wattribs := table()
+   end
+
+   #
+   # Set all of the wattribs to the given table.
+   #
+   public set_all_wattribs(t)
+      self.wattribs := copy(t)
+   end
+
+   #
+   # Set a layout constraint
+   #
+   public set_constraint(key, val)
+      insert(self.constraints, key, val)
+   end
+
+   #
+   # Remove a layout constraint
+   #
+   public remove_constraint(key)
+      delete(self.constraints, key)
+   end
+
+   #
+   # Get a layout constraint, or fail if it's not present.
+   #
+   public get_constraint(key)
+      return \self.constraints[key]
+   end
+
+   #
+   # Clear all constraints
+   #
+   public clear_constraints()
+      self.constraints := table()
+   end      
+
+   #
+   # This method disposes of the component's cloned windows and
+   # re-creates them afresh using the current value of the window attribs.
+   # 
+   # This method may be used to put any changed icon window attributes,
+   # set with set_wattrib above, into effect.
+   #
+   public reset()
+      self.finally()
+      self.initially()
+      self.layout()
+      self.invalidate()
+   end
+
+   #
+   # Return a z that would ensure a component were on top in the
+   # z order.
+   #
+   public get_top_z()
+      return (self.z_children[-1].z + 1) | 1
+   end
+
+   #
+   # Return a z that would ensure a component were on bottom in the
+   # z order.
+   #
+   public get_bottom_z()
+      return (self.z_children[1].z - 1) | -1
+   end
+
+   #
+   # Which component does the point lie in, searching in z-order?
+   #
+   public whose_point(ex, ey)
+      local c
+      every c := back(z_children) do {
+         if c.is_unhidden() & c.inside(ex, ey) then
+            return c
+      }
+   end
+
+   #
+   # Is the given Point (normally the current event) within this
+   # component?
+   #
+   public in_region(e)
+      #
+      # Use the point chain if we can
+      #
+      if e === parent_dialog.point_chain_source then
+         return keyof(parent_dialog.point_chain, self)
+      else
+         return get_clip_rect().inside(e.x, e.y)
+   end
+
+   #
+   # Succeed if this component is held with the given button press.
+   # @param e The mouse press event code - Mouse_LeftPress, Mouse_RightPress or Mouse_MiddlePress
+   #
+   public is_held(e)
+      return keyof(\parent_dialog.held[e], self)
+   end
+
+   #
+   # Method called when the component gets the keyboard focus; may be extended.
+   # @param e the event causing the change of focus, if any
+   #
+   public got_focus(e)
+      invalidate()
+      fire(Event.GOT_FOCUS, e)
+   end
+
+   #
+   # Return the Icon window of the dialog in which the component resides.
+   #
+   public get_parent_win()
+      return (\self.parent_dialog).get_win()
+   end
+
+   #
+   # Return the Icon buffer window of the dialog in which the component resides.
+   #
+   public get_parent_buffer_win()
+      return (\self.parent_dialog).get_buffer_win()
+   end
+
+   #
+   # Succeed if this component has the dialog's focus.
+   #
+   public has_focus()
+      return (\self.parent_dialog).focus === self
+   end
+
+   #
+   # Method called when the component loses the keyboard focus; may be extended.
+   # @param e the event causing the change of focus, if any
+   #
+   public lost_focus(e)
+      invalidate()
+      fire(Event.LOST_FOCUS, e)
+   end
+
+   #
+   # Set the x and y position of the component.  Each coordinate
+   # can be either an absolute pixel position, or can be given in
+   # the form of a percentage plus or minus an offset.
+   # @param x_spec   The x specification.
+   # @param y_spec   The y specification.
+   # @example
+   # @ c.set_pos(100, "25%")
+   # @ c.set_pos("50%-20", "25%+100")
+   #
+   public set_pos(x_spec, y_spec)
+      self.x_spec := x_spec
+      self.y_spec := y_spec
+   end
+
+   #
+   # Set the x specification
+   # @param x_spec   The x specification.
+   #
+   public set_x(x_spec)
+      self.x_spec := x_spec
+   end
+
+   #
+   # Set the y specification
+   # @param y_spec   The y specification.
+   #
+   public set_y(y_spec)
+      self.y_spec := y_spec
+   end
+
+   #
+   # Set the z value.
+   # @param z   The z value.
+   #
+   public set_z(z)
+      self.z := z
+   end
+
+   #
+   # Set the size of the component.  The parameters are in the
+   # same format as for {set_pos()}
+   # above.  Some components will
+   # set sensible default sizes, but for others the size must be
+   # set explicitly.
+   #
+   public set_size(w_spec, h_spec)
+      self.w_spec := w_spec
+      self.h_spec := h_spec
+   end
+
+   #
+   # Set the width specification
+   # @param w_spec   The width specification.
+   #
+   public set_w(w_spec)
+      self.w_spec := w_spec
+   end
+
+   #
+   # Set the height specification
+   # @param h_spec   The height specification.
+   #
+   public set_h(h_spec)
+      self.h_spec := h_spec
+   end
+
+   #
+   # Set the alignment of the component.  Options for
+   # {x_align} are ``l'', ``c'' and ``r'', for left, centre, and right
+   # alignment.  Options for {y_align} are ``t'', ``c'' and ``b'', 
+   # for top centre and bottom alignment.  The default alignment is ``l'', ``t''.
+   #
+   # @param x_align   The x alignment
+   # @param y_align   The y alignment
+   #
+   public set_align(x_align, y_align)
+      self.x_align := x_align
+      self.y_align := y_align
+   end
+
+   #
+   # Set the x alignment
+   # @param x_align   The x alignment
+   #
+   public set_x_align(x_align)
+      self.x_align := x_align
+   end
+
+   #
+   # Set the y alignment
+   # @param y_align   The y alignment
+   #
+   public set_y_align(y_align)
+      self.y_align := y_align
+   end
+
+   #
+   # Set the tab priority, which affects the tab focus ordering of the parent.
+   #
+   public set_tab_ord(x)
+      self.tab_ord := x
+   end
+
+   #
+   # Set the accelerator key, which will be used with the Alt
+   # key to provide keyboard accelerators.
+   #
+   public set_accel(k)
+      self.accel := k
+   end
+
+   #
+   # Get the accelerator key, if any.
+   #
+   public get_accel()
+      return \self.accel
+   end
+
+   #
+   # Get the component's parent component, or fail if there is none.
+   #
+   public get_parent()
+      return \self.parent
+   end
+
+   #
+   # Set the component's parent component.
+   #
+   public set_parent(c)
+      self.parent := c
+   end
+
+   #
+   # Complete the final setup before display by initializing the parent
+   # dialog reference and creating the cloned windows.
+   #
+   public initially()
+      local i, p, attribs, e
+      \self.parent | runerr("incorrect ancestry (parent null)")
+      parent_dialog := parent.get_parent_dialog()
+      self.effective_is_hidden_flag := if parent.is_hidden() | \self.is_hidden_flag then 1 else &null
+      self.effective_is_shaded_flag := if parent.is_shaded() | \self.is_shaded_flag then 1 else &null
+      Gui.style.polish(self)
+      self.effective_wattribs := copy(parent.get_effective_wattribs())
+      every e := !sort(self.wattribs) do
+         insert(self.effective_wattribs, e[1], e[2])
+      self.compute_z_order()
+      self.compute_tab_order()
+      attribs := wattribs_to_list(self.wattribs)
+      if not(cbwin := (parent.get_cbwin().clone!attribs)) then {
+	 # Clone failed, what to do?  Try to drop a single
+	 # attribute, as that will identify which one is hurting us.
+	 every i := 1 to *attribs do {
+	    p := pop(attribs)
+	    if cbwin := (parent.get_cbwin().clone!attribs) then {
+               ewrite("clone failed, had to discard attribute ", image(p))
+	       break
+            }
+	    push(attribs, p)
+         }
+	 if /cbwin then {
+	    ewrite("clone failed, discarding attributes:")
+	    every ewrite("\t", ! attribs)
+	    cbwin := parent.get_cbwin().clone()
+	    if /cbwin then 
+               runerr("multiple bad attributes")
+         }
+      }
+      (\self.border).initially(self)
+      every (!self.children).initially()
+   end
+
+   #
+   # Returns the dialog holding the component, or fail if unset
+   #
+   public get_parent_dialog()
+      return \self.parent_dialog
+   end
+
+   #
+   # Sets the owning Dialog of the component.
+   #
+   # @param c   The parent dialog.
+   #
+   public set_parent_dialog(c)
+      self.parent_dialog := c
+   end
+
+   #
+   # This method may be extended.  It is invoked just before the
+   # window is closed.
+   #
+   public finally()
+      stop_ticker()
+      (\self.border).finally()
+      Gui.style.dispose(self.cbwin)
+      self.cbwin.uncouple()
+      self.cbwin := &null
+      #
+      # Can't use !self.children here because some finally() methods
+      # can cause deletion of one of the parent dialog's children, (eg
+      # DropDown).  This messes up the usual iterator.
+      #
+      every self.children[1 to *self.children].finally()
+      self.parent_dialog := &null
+   end
+
+   #
+   #
+   # Parse a position specification into an absolute value.
+   # @param total   The total value
+   # @param s  The size specifier 
+   #
+   public parse_pos(total, s)
+      local pct, off
+      s ? {
+         if pct := 0.01 * integer(tab(upto('%'))) then {
+            move(1) 
+            if ="-" then
+               off := -integer(tab(0)) | fail
+            else if ="+" then
+               off := integer(tab(0)) | fail
+            else off := 0
+         } else {
+            pct := 0
+            off := integer(tab(0)) | fail
+         }
+      }
+      return integer(pct * total + off)
+   end
+
+   public get_preferred_width()
+      return integer(self.w_spec) | get_default_width() | (\layout_delegate).get_preferred_width() | runerr("width must be specified")
+   end
+
+   public get_preferred_height()
+      return integer(self.h_spec) | get_default_height() | (\layout_delegate).get_preferred_height() | runerr("height must be specified")
+   end
+
+   #
+   # Size this component using compute_absolutes, and then layout all
+   # its children.
+   #
+   public resize()
+      compute_absolutes()
+      layout()
+   end
+
+   public get_default_width()
+   end
+
+   public get_default_height()
+   end
+
+   public set_layout(l)
+      self.layout_delegate := l
+      (\l).set_parent(self)
+   end
+
+   #
+   # Given that this component's size and position has already been
+   # calculated, this method lays out all of its children.
+   #
+   public layout()
+      if /layout_delegate then
+         every (!children).compute_absolutes()
+      else
+         layout_delegate.layout()
+      every (!children).layout()
+   end
+
+   public reset_all_layouts()
+      (\layout_delegate).reset()
+      every (!self.children).reset_all_layouts()
+   end
+
+   public reset_layout_chain()
+      local c
+      c := self
+      while \c do {
+         (\c.layout_delegate).reset()
+         c := c.parent
+      }
+   end
+
+   #
+   # Compute the absolute positions and sizes from the
+   # specifications given by {set_pos()} and {set_size()}.
+   #
+   public compute_absolutes()
+      local wspec, hspec
+      #
+      # Check for unspecified fields
+      #
+      \self.x_spec | runerr("x position unspecified")
+      \self.y_spec | runerr("y position unspecified")
+
+      wspec := \self.w_spec | get_preferred_width()
+      hspec := \self.h_spec | get_preferred_height()
+
+      self.x := parent.x + parse_pos(parent.w, self.x_spec) | runerr("invalid x position specification", self.x_spec)
+      self.y := parent.y + parse_pos(parent.h, self.y_spec) | runerr("invalid y position specification", self.y_spec)
+      self.w := parse_pos(parent.w, wspec) | runerr("invalid width specification", wspec)
+      self.h := parse_pos(parent.h, hspec) | runerr("invalid height specification", hspec)
+
+      #
+      # Adjust x, y based on alignments
+      #
+      case self.x_align of {
+         Align.C : self.x -:= self.w / 2
+         Align.R : self.x -:= self.w
+         Align.L : &null
+         default : runerr("incorrect x alignment specifier", self.x_align)
+      }
+      case self.y_align of {
+         Align.C : self.y -:= self.h / 2
+         Align.B : self.y -:= self.h
+         Align.T : &null
+         default : runerr("incorrect y alignment specifier", self.y_align)
+      }
+   end
+
+   public build_point_chain(l, ex, ey)
+      local c
+      if c := whose_point(ex, ey) then {
+         c.build_point_chain(l, ex, ey)
+         put(l, c)
+      }
+      return l
+   end
+
+   #
+   # Traverse all the components, including subcomponents, with a
+   # post-order traversal.
+   #
+   public traverse_components_postorder()
+      every (!self.children).traverse_components_postorder()
+      coact(self)
+   end
+
+   #
+   # Traverse all the components, including subcomponents, with a
+   # pre-order traversal.
+   #
+   public traverse_components_preorder()
+      coact(self)
+      every (!self.children).traverse_components_preorder()
+   end
+
+   #
+   # Return the preferred focus, if it accepts focus.
+   #
+   public find_focus(e)
+      if self.preferred_focus.is_unshaded() & 
+         self.preferred_focus.is_unhidden() &
+         self.preferred_focus.accepts_focus(e) then
+         return self.preferred_focus
+   end
+
+   #
+   # Search for a component with the matching accelerator key within
+   # components rooted at this component.
+   #
+   public find_accel(e)
+      local c, f
+
+      if self.is_unshaded() & self.is_unhidden() then {
+         # Note this is a pre-order search.  This is needed for TabSet, which
+         # wants to handle its tabs' accelerator keys.
+
+         if match_accel(e) then
+            return self
+
+         every c := !self.children do {
+            if f := c.find_accel(e) then
+               return f
+         }
+      }
+   end
+
+   #
+   # Succeed if the given (key) event matches this component's accelerator.
+   #
+   public match_accel(e)
+      return self.accel === e
+   end
+
+   #
+   # Traverse the components under this tree in the order in which
+   # tab focus should iterate over them.
+   #
+   public traverse_tab_order()
+      coact(self)
+      every (!self.tab_children).traverse_tab_order()
+   end
+
+   #
+   # Invalidate the {Component}'s rectangle on the screen, optionally
+   # intersected with {r}.
+   #
+   public invalidate(r)
+      if self.is_live() & self.is_unhidden() then
+         parent_dialog.invalidate_rect(if /r then get_clip_rect()
+                                       else r.intersect(get_clip_rect()))
+   end
+
+   #
+   # Get the clipping rectangle of this component, ie the rectangle actually
+   # visible (ignoring other overlapping components).  Fails if the component is
+   # not visible at all.
+   #
+   public get_clip_rect()
+      local r, c
+      c := r := self
+      repeat {
+         c := c.parent
+         if /c then
+            return r
+         r := r.intersect(c) | fail
+      }
+   end
+
+   #
+   # Compute the z_children list.
+   #
+   public compute_z_order()
+      self.z_children := isort(self.children, component_zsort)
+   end
+
+   #
+   # Compute the tab order list.
+   #
+   public compute_tab_order()
+      self.tab_children := isort(self.children, component_tabsort)
+   end
+
+   private static component_zsort(c)
+      return c.z
+   end
+
+   private static component_tabsort(c)
+      return c.tab_ord
+   end
+
+   #
+   # Add the {Component} to the list of children.
+   #
+   # @param c   The {Component} to add.
+   # @param i   The index to add at; if omitted then the new component
+   # @          is appended to the end.
+   #
+   public add(c, i)
+      /i := 0
+      insert(self.children, i, c)
+      c.set_parent(self)
+      if is_initialized() then {
+         compute_z_order()
+         compute_tab_order()
+      }
+   end
+
+   #
+   # Get the index of the given child component
+   #
+   public get_index(c)
+      return keyof(self.children, c)
+   end
+
+   #
+   # Remove the {Component} from the list of children.
+   # @param c   The {Component} to remove.
+   #
+   public remove(c)
+      remove_index(get_index(c))
+   end
+
+   #
+   # Remove the {Component} at the given index from the list of children.
+   # @param i    The index
+   #
+   public remove_index(i)
+      self.children[i].set_parent(&null)
+      delete(self.children, i)
+      if is_initialized() then {
+         compute_z_order()
+         compute_tab_order()
+      }
+   end
+
+   #
+   # Succeed iff the component has been initialized with {init()}, but
+   # not yet cleaned up with {finally()}.
+   #
+   public is_initialized()
+      return \self.parent_dialog
+   end
+
+   #
+   # Succeed iff the component has been initialized AND has a position and
+   # size on the screen, ie has been laid out by its parent.
+   #
+   public is_live()
+      return \self.x & \self.parent_dialog
+   end
+
+   #
+   # Get the list of {Components} in this {Container}.
+   # @return   The list of {Components}
+   #
+   public get_children()
+      return self.children
+   end
+
+   #
+   # For backward compatibility only...(now use {fire()}).
+   #
+   public create_event_and_fire(type, param)
+      return fire(type, param)
+   end
+
+   #
+   # Convenience method to start a ticker that invokes the "tick()" method
+   # in this class.
+   #
+   public start_ticker(n, d)
+      self.ticker.set_interval(n)
+      self.ticker.set_delay(d)
+      self.ticker.start()
+   end
+
+   #
+   # Stop the ticker.
+   #
+   public stop_ticker()
+      self.ticker.stop()
+   end
+
+   #
+   # Change the interval of the ticker
+   # @param n   the new interval.
+   #
+   public retime_ticker(n)
+      self.ticker.set_interval(n)
+   end
+
+   #
+   # Is the ticker ticking?
+   #
+   public is_ticking()
+      return Dispatcher.is_ticking(self.ticker)
+   end
+
+   #
+   # This method should be implemented to make use of the component's default
+   # ticker.
+   #
+   public defer tick()
+
+   #
+   # Drag and drop helper to invoke drag_reset
+   #
+   public invoke_drag_reset(e)
+      every (!self.children).invoke_drag_reset(e)
+      drag_reset(e)
+   end
+
+   #
+   # Invoked on a drag gesture; if the  component wishes to start a drag and drop session,
+   # it should succeed, otherwise it should fail.
+   #
+   # NB - this method will only be invoked if the allow_drag flag is non-null.
+   #
+   # @param e the event, an instance of WindowEvent
+   #
+   public can_drag(e)
+   end
+
+   #
+   # Invoked during a drag.  The component may update itself to indicate a potential drop
+   # location.  If it succeeds, then this component becomes the "drag holder".  It is the only
+   # component for which drag_event() is called in the future.  Should the method fail, then
+   # the component ceases to be the "drag holder" and other components are tried again.
+   #
+   # NB - this method will only be invoked if the allow_drop flag is non-null.
+   #
+   # @param drag the current Drag object.
+   # @param e the drag event
+   #
+   public drag_event(drag, e)
+   end
+
+   #
+   # Invoked on the "drag holder", ie after the drag_event() method has succeeded for a
+   # particular event.  The method indicates whether the current location is suitable for
+   # a drop.  The mouse cursor is updated accordingly.   The component remains the "drag
+   # holder" regardless of whether this method succeeds or fails.  On success, the data
+   # returned is put into the content field of a Drag object, which is passed to
+   # {perform_drop()} on a drop event.
+   #
+   # @param drag the current Drag object.
+   # @param e the drag event
+   #
+   public can_drop(drag, e)
+   end
+
+   #
+   # Invoked on a drop.  The component's can_drop() method has previously succeeded during
+   # the drag.  However, the component can still reject the drop if it so wishes.
+   #
+   # If the component accepts the drop, it should handle it and succeed;
+   # otherwise it should fail.
+   #
+   # NB - this method will only be invoked if the allow_drop flag is non-null.
+   #
+   # @param d the current Drag object representing the drag
+   # @param d the current Drag object representing the drop.
+   # @param e the drop event
+   #
+   public perform_drop(drag, drop, e)
+   end
+
+   #
+   # Invoked on the component that started the drag, after a successful drop
+   # @param d the current Drag object representing the drag
+   # @param d the current Drag object representing the drop.
+   # @param e the drop event
+   #
+   public end_drag(drag, drop, e)
+   end
+
+   #
+   # Invoked at the end of drag and drop (on all components) to clear any drag state
+   # @param e the last event
+   #
+   public drag_reset(e)
+   end
+
+   #
+   # Configure whether the component allows drags, if it is so capable.
+   #
+   public set_allow_drag(s)
+      self.allow_drag_flag := check_flag(s)
+   end
+
+   #
+   # Configure whether the component allows drops, if it is so capable.
+   #
+   public set_allow_drop(s)
+      return self.allow_drop_flag := check_flag(s)
+   end
+
+   #
+   # Set whether the component will show the layout grid, if any.
+   #
+   public set_show_layout(s)
+      return self.show_layout_flag := check_flag(s)
+   end
+
+   public try_constraint(f)
+      local attr
+      if map(f.attr[1:3]) == "c:" then
+         attr := f.attr[3:0]
+      else {
+         attr := f.attr
+         Gui.is_constraint(attr) | fail
+      }
+
+      set_constraint(attr, f.val)
+
+      return
+   end
+
+   public try_wattrib(f)
+      local attr
+      if map(f.attr[1:3]) == "w:" then
+         attr := f.attr[3:0]
+      else {
+         attr := f.attr
+         Gui.is_window_attrib(attr) | fail
+      }
+
+      set_wattrib(attr, f.val)
+
+      return
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "tooltip" : set_tooltip(f.val)
+         "tooltip_start_delay" : set_tooltip_start_delay(f.int_val())
+         "tooltip_end_delay" : set_tooltip_end_delay(f.int_val())
+         "tooltip_follows_mouse" : set_tooltip_follows_mouse(f.flag_val())
+         "pointer" : set_pointer(f.string_val())
+         "show_layout" : set_show_layout(f.flag_val()) 
+         "allow_drop" : set_allow_drop(f.flag_val()) 
+         "allow_drag" : set_allow_drag(f.flag_val()) 
+         "is_shaded" : set_is_shaded(f.flag_val()) 
+         "accepts_focus" : set_accepts_focus(f.flag_val()) 
+         "pos" : set_pos!(f.string_list_val())
+         "x" : set_x(f.string_val())
+         "y" : set_y(f.string_val())
+         "width"|"w" : set_w(f.string_val())
+         "height"|"h" : set_h(f.string_val())
+         "size" : set_size!(f.string_list_val())
+         "align" : set_align!(f.string_list_val())
+         "x_align" : set_x_align(f.string_val())
+         "y_align" : set_y_align(f.string_val())
+         "z" : set_z(f.int_val())
+         "tab_ord" : set_tab_ord(f.int_val())
+         "accel" : set_accel(f.string_val())
+         "layout" : set_layout(f.object_val(gui.Layout))
+         "border" : set_border(f.object_val(gui.ABorder))
+         default : try_constraint(f) | try_wattrib(f) | fail
+      }
+      return
+   end
+
+   public new(a[])
+      cast(self,Connectable).new()
+      self.ticker := Ticker()
+      self.ticker.connect(self.tick, Event.TICK)
+      self.wattribs := table()
+      self.children := []
+      self.x_align := Align.L
+      self.y_align := Align.T
+      self.constraints := table()
+      self.preferred_focus := self
+      self.z := self.tab_ord := 0
+      self.tooltip_start_delay := Dialog.TOOLTIP_START_DELAY
+      self.tooltip_end_delay := Dialog.TOOLTIP_END_DELAY
+      set_fields(a)
+      return
+   end
+end

@@ -1,0 +1,145 @@
+package gui
+
+import 
+   util
+
+#
+# @field dii=integer : see {set_dii}
+# @field doi=integer : see {set_doi}
+# @field flush=: equivalent to {set_doi(0)}
+# @field extra=string : see {set_extra}
+# @field debug=flag : see {set_debug}
+#
+class GridLayout(Layout,SetFields)
+   public 
+      g,
+      dii,          # Default inner padding, ie not at edge of grid
+      doi,          # Default outer padding
+      extra,        # Flag indicating how to allocate extra space
+      debug
+
+   # Default insets between components in a GridLayout.
+   public static const
+      DEFAULT_OUTER_INSET,
+      DEFAULT_INNER_INSET
+
+   private static init()
+      DEFAULT_OUTER_INSET := 10
+      DEFAULT_INNER_INSET := 5
+   end
+
+   public reset()
+      g := &null
+   end
+
+   public ensure_grid()
+      local c, ci
+
+      if \g then
+         return
+
+      g := Grid()
+      g.set_dii(dii)
+      g.set_doi(doi)
+      g.set_extra(extra)
+
+      every c := !parent.children do {
+         if /c.x_spec then {
+            ci := g.create_cell(c.constraints)
+            ci.pw := c.get_preferred_width()
+            ci.ph := c.get_preferred_height()
+            ci.obj := c
+         }
+      }
+      g.dimension()
+   end
+
+   public get_preferred_width()
+      ensure_grid()
+      return g.get_preferred_width()
+   end
+
+   public get_preferred_height()
+      ensure_grid()
+      return g.get_preferred_height()
+   end
+
+   public display()
+      local i, cw
+
+      cw := Gui.style.get_dashed_clone(self.parent.cbwin)
+
+      rectangle(cw, parent.x, parent.y, parent.w, parent.h)
+
+      every i := !g.info do {
+         rectangle(cw,
+                   g.col_x[i.x],
+                   g.row_y[i.y],
+                   g.slice(i.x, i.w, g.a_col_w),
+                   g.slice(i.y, i.h, g.a_row_h))
+      }
+
+      cw.uncouple()
+   end
+
+   public layout()
+      local c, i
+
+      every c := !parent.children do {
+         if \c.x_spec then
+            c.compute_absolutes()
+      }
+
+      ensure_grid()
+
+      g.compute_locations(parent.x, parent.y, parent.w, parent.h)
+
+      every i := !g.info do {
+         i.obj.x := i.ax
+         i.obj.y := i.ay
+         i.obj.w := i.aw
+         i.obj.h := i.ah
+      }
+
+      if \debug then
+         g.print_layout()
+   end
+
+   public set_debug(s)
+      self.debug := check_flag(s)
+   end
+
+   public set_dii(n)
+      self.dii := n
+   end
+
+   public set_doi(n)
+      self.doi := n
+   end
+
+   public set_extra(s)
+      self.extra := s
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "dii" : set_dii(f.int_val())
+         "doi" : set_doi(f.int_val())
+         "flush" : set_doi(0)
+         "extra" : set_extra(f.string_val())
+         "debug" : set_debug(f.flag_val())
+         default : fail
+      }
+      return
+   end
+
+   public new(a[])
+      self.dii := DEFAULT_INNER_INSET
+      self.doi := DEFAULT_OUTER_INSET
+      self.extra := "cells"
+      set_fields(a)
+      return
+   end
+end
+
+

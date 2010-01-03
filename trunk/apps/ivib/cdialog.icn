@@ -1,0 +1,36 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import lang
+import gui
+
+#
+# Extends Dialog to enable saving of some fields.
+#
+class CDialog(Dialog,SelectiveObjectCodec)
+   public ticker_rate
+
+   private pre_decode()
+      new()
+   end
+
+   public static get_template()
+      suspend ["Only Enlarge Width Flag", "only_enlarge_width_flag"] | 
+              ["Only Enlarge Height Flag", "only_enlarge_height_flag"] | 
+              ["Ticker Rate", "ticker_rate"] |
+              ["WAttribs", "wattribs"]
+   end
+
+   public new()
+      cast(self,Dialog).new()
+      self.clear_wattribs()
+      self.is_open_flag := 1
+      return
+   end
+end
+

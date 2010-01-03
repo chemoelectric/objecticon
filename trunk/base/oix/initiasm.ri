@@ -1,0 +1,16 @@
+static word main_wrapper_code[] = {
+   Op_Invoke,
+   0,
+   Op_Nil,
+   Op_FrameVar,
+   0,
+   1,
+   0,
+   (word)&main_wrapper_code[10],
+   Op_FrameVar,
+   1,
+   Op_Custom,
+   (word)handle_prog_exit,
+   Op_Exit,
+};
+CustomProc(main_wrapper,main_wrapper_code,2,0,1,0,0,0,"main_wrapper")

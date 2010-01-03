@@ -1,0 +1,33 @@
+.PHONY:         all clean test
+.PRECIOUS:      %.u
+
+OIHOME=@CONFIG_DIR@
+OIBIN=$(OIHOME)/bin
+OILIB=$(OIHOME)/lib
+CWARN=-Wall
+LDFLAGS=@LDFLAGS@
+LIBS=@LIBS@
+CFLAGS=$(CWARN) @CFLAGS@
+CPPFLAGS=@CPPFLAGS@
+RTT=rtt
+CC=@CC@
+RM=rm -f
+RMDIR=rm -rf
+MKDIR=mkdir
+CP=cp
+INSTALL=@INSTALL@
+LN_S=@LN_S@
+@SET_MAKE@
+
+ICNTAGS=--lang=none \
+	--regex='/[ \t]*global[ \t]+\([a-zA-Z0-9_, \t]+\)/\1/' \
+	--regex='/[ \t]*\(procedure\|record\)[ \t]+\([a-zA-Z0-9_]+\)[ \t]*(/\2/' \
+	--regex='/[ \t]*\(final[ \t]+\)?class[ \t]+\([a-zA-Z0-9_]+\)[ \t]*(/\2/' \
+	--regex='/[ \t]*\(\(public\|private\|package\|protected\|final\|static\|defer\)[ \t]+\)+\([a-zA-Z0-9_]+\)[ \t]*(/\3/'
+
+export OIPATH:=$(OILIB)/main:$(OILIB)/gui:$(OILIB)/xml:$(OILIB)/parser:$(OILIB)/ipl
+export OLPATH:=$(OILIB)/incl
+export PATH:=$(OIBIN):$(PATH)
+
+%.u: %.icn
+	oit -c -s $<

@@ -1,0 +1,135 @@
+############################################################################
+#
+#	File:     wopen.icn
+#
+#	Subject:  Procedures for graphics input/output
+#
+#	Authors:  Gregg M. Townsend and Ralph E. Griswold
+#
+#	Date:     July 26, 1999
+#
+############################################################################
+#
+#   This file is in the public domain.
+#
+############################################################################
+#
+#	These procedures provide window input and output using "W" names as
+#	substitutes for standard input and output functions.
+#
+#	WDelay(W, n)		flushes a window, then delays n milliseconds.
+#				default:  n = 1
+#
+#	WDone(), WQuit(), QuitCheck(), and QuitEvents() incorporate knowledge
+#	of the Icon standard set of "quit" events, currently the letters
+#	"q" or "Q".  The procedures themselves are trivial.
+#
+#	WQuit() consumes unread window events and succeeds if a quit event
+#	is seen.  It does not wait.  WDone() waits until a quit event is read,
+#	then exits the program.  QuitCheck(ev) calls exit() if its parameter
+#	is a quit event; QuitCheck can be used with the vidget package as a
+#	default event handler.  QuitEvents() generates the standard set of
+#	quit events.
+#
+#	ZDone() is a zooming version of WDone().  If the window is resized
+#	while waiting for a quit event, its contents are zoomed to fill the
+#	new size.  Zooming to a multiple of the original size can also be
+#	accomplished by typing a nonzero digit into the window.
+#
+#	Subwindow(W, x, y, w, h) produces a subwindow by creating and
+#	reconfiguring a clone of the given window.  The original window
+#	is not modified.  In the clone, which is returned, clipping
+#	bounds are set by the given rectangle and the origin is
+#	set at the rectangle's upper left corner.
+#
+############################################################################
+#
+#  Requires:  Version 9 graphics
+#
+############################################################################
+
+package ipl.graphics
+
+import
+   graphics(Mouse, Window)
+
+procedure WDelay(window, n)
+   /n := 1
+   integer(n) | runerr(101, n)
+   window.flush()
+   delay(n)
+
+   return window
+
+end
+
+
+procedure QuitEvents()
+   suspend !"qQ"
+end
+
+
+procedure QuitCheck(ev)
+   if ev === QuitEvents() then
+      exit()
+   return
+end
+
+
+procedure WQuit(win)
+   while *win.pending() > 0 do
+      if win.event()[1] === QuitEvents() then
+         return win
+   fail
+end
+
+
+procedure WDone(win)
+   until win.event()[1] === QuitEvents()
+   exit()
+end
+
+
+#  ZDone(win) -- like WDone(), but zoom window if resized while waiting
+
+procedure ZDone(win)
+   local org, e, w, h, ww, hh, x0, y0
+
+   x0 := -win.attrib( "dx")
+   y0 := -win.attrib( "dy")
+   w := win.attrib( "width")
+   h := win.attrib( "height")
+   org := Window.open("width=" || w, "height=" || h, "canvas=hidden") | WDone()
+   win.copy_to(org, x0, y0)
+   win.attrib( "resize=on")
+   while e := win.event()[1] do case e of {
+      QuitEvents():
+         exit()
+      Mouse.WINDOW_RESIZE:
+         Zoom(org, win, , , , , x0, y0)
+      !"123456789": {
+         ww := e * w
+         hh := e * h
+         win.attrib( "width=" || ww, "height=" || hh)
+         Zoom(org, win, , , , , x0, y0, ww, hh)
+         }
+      }
+end
+
+procedure SubWindow(win, x, y, w, h)
+   /x := -win.attrib( "dx")
+   /y := -win.attrib( "dy")
+   /w := win.attrib( "width") - (x + win.attrib( "dx"))
+   /h := win.attrib( "height") - (y + win.attrib( "dy"))
+
+   if w < 0 then
+      x -:= (w := -w)
+   if h < 0 then
+      y -:= (h := -h)
+
+   win := win.clone("dx=" || win.attrib( "dx") + x,
+                    "dy=" || win.attrib( "dy") + y)
+   win.clip( 0, 0, w, h)
+   #GotoRC(win, 1, 1)
+   return win
+end

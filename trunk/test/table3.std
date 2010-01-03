@@ -1,0 +1,63 @@
+>>>test_ord(class datastruct.EqTable)
+equals(t1,t2): yes
+t1.size() = t2.size(): yes
+hash(t1) = hash(t2): yes
+equals(t1,clone(t1)): yes
+equals(t2,clone(t2)): yes
+equals(TableSet(t1),TableSet(t2)): yes
+hash(TableSet(t1))=hash(TableSet(t2)): yes
+t1.size()=0: yes
+t2.size()=0: yes
+>>>test_ord(class datastruct.SortTable)
+equals(t1,t2): yes
+t1.size() = t2.size(): yes
+hash(t1) = hash(t2): yes
+equals(t1,clone(t1)): yes
+equals(t2,clone(t2)): yes
+equals(TableSet(t1),TableSet(t2)): yes
+hash(TableSet(t1))=hash(TableSet(t2)): yes
+t1.size()=0: yes
+t2.size()=0: yes
+>>>test_ord(class datastruct.BuiltinTable)
+equals(t1,t2): yes
+t1.size() = t2.size(): yes
+hash(t1) = hash(t2): yes
+equals(t1,clone(t1)): yes
+equals(t2,clone(t2)): yes
+equals(TableSet(t1),TableSet(t2)): yes
+hash(TableSet(t1))=hash(TableSet(t2)): yes
+t1.size()=0: yes
+t2.size()=0: yes
+>>>test_cl()
+get("Abc"): 3
+get("DEf"): 3
+get("GHI"): 3
+get("Jkl"): 3
+equals(t1,t2): yes
+t1.size() = t2.size(): yes
+hash(t1) = hash(t2): yes
+equals(t1,clone(t1)): yes
+equals(t2,clone(t2)): yes
+equals(TableSet(t1),TableSet(t2)): yes
+hash(TableSet(t1))=hash(TableSet(t2)): yes
+t1.size()=0: yes
+t2.size()=0: yes
+>>>test_eq()
+get(list#*(0)): 2
+get(0): 2
+get(&null): 2
+get(100): 2
+get(table#*(0)): 2
+get(list#*(3)): 2
+get(table#*(2)): 2
+get(list#*(2)): 2
+get(set#*(3)): 2
+get(object datastruct.ClTable#*(2)): 2
+equals(t1,clone(t1)): yes
+t1.size()=0: yes
+>>>test_set()
+m1: same
+m2: same
+gen: same
+sort=: yes
+size: same

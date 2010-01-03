@@ -1,0 +1,36 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+
+
+class CanvasTabSetUI(CanvasComponentUI)
+   public create_canvas_component(canvas)
+      local t, t1
+      t := CanvasTabSet()
+      t.set_size(200, 150)
+      t1 := CanvasTabItem()
+      t1.set_paint(CanvasTextPaint("Edit me"))
+      t.add(t1)
+      return t
+   end
+
+   public get_category()
+      return "Containers"
+   end
+
+   public get_name()
+      return "TabSet"
+   end
+
+   public get_icon()
+      return (
+              $include "icon/icn13.icon"
+              )
+   end
+end
+

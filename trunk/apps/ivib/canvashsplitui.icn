@@ -1,0 +1,30 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+class CanvasHSplitUI(CanvasComponentUI)
+   public create_canvas_component(canvas)
+      local t, c1, c2
+      t := CanvasSplit()
+      c1 := CanvasSplitContent()
+      c1.set_size(75, 150)
+      c2 := CanvasSplitContent()
+      c2.set_size(75, 150)
+      t.set_left(c1)
+      t.set_right(c2)
+      return t
+   end
+
+   public get_category()
+      return "Containers"
+   end
+
+   public get_name()
+      return "HSplit"
+   end
+end
+

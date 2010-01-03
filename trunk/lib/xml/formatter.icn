@@ -1,0 +1,101 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package xml
+
+import io
+
+#
+# This is an abstract base class for Formatters, which take a Document
+# object (or a Node within a Document), and output that document to a
+# stream.
+#
+class Formatter()
+   protected 
+      out, level
+
+   public format_to_string(n, level)
+      local f
+      f := RamStream()
+      format(n, f) | {
+         f.close()
+         fail
+      }
+      return f.done()
+   end
+
+   public format(n, out)
+      /out := FileStream.stdout
+      self.out := out
+      out.can(Stream.WRITE) | runerr("Formatter: stream not writable: ", out)
+      self.level := -1
+      return format_node(n)
+   end
+
+   public format_node(n)
+      local s, res
+      level +:= 1
+      res := if s := text(n) then
+         format_content(s)
+      else if is(n, Element) then
+         format_element(n)
+      else if is(n, DocType) then
+         format_doctype(n)
+      else if is(n, Comment) then
+         format_comment(n)
+      else if is(n, ProcessingInstruction) then
+         format_pi(n)
+      else if is(n, CData) then
+         format_cdata(n)
+      else if is(n, Document) then
+         format_document(n)
+      else if is(n, XmlDecl) then
+         format_xmldecl(n)
+      level -:= 1
+      return res
+   end
+
+   public defer format_document(n)
+
+   public defer format_content(s)
+
+   public defer format_doctype(n)
+
+   public defer format_comment(n)
+
+   public defer format_pi(n)
+
+   public defer format_element(n)
+
+   public defer format_cdata(n)
+
+   public defer format_xmldecl(n)
+end
+
+
+procedure xml_escape(s, c)
+   local ch, r
+
+   r := ""
+   s ? repeat {
+      r ||:= tab(upto(c) | 0)
+
+      if pos(0) then
+         break
+
+      r ||:= case string(ch := move(1)) of {
+         "&" : "&amp;"
+         "<" : "&lt;"
+         ">" : "&gt;"
+         "\"" : "&quot;"
+         default : "&#" || ord(ch) || ";"
+      }
+   }
+   return r
+end
+

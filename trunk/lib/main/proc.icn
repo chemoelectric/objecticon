@@ -1,0 +1,105 @@
+package lang
+
+class Proc()
+   public static const
+      Procedure,
+      Function,
+      Keyword,
+      Operator,
+      Internal,
+      Argument,
+      Dynamic,
+      Static
+
+   private static init()
+      # Kinds of procedure
+      Procedure := 0
+      Function :=  1
+      Keyword :=   2
+      Operator :=  3
+      Internal :=  4
+      # Types of local variable
+      Argument := 0
+      Dynamic := 1
+      Static := 2
+   end
+      
+   # Return the name of the proc
+   #
+   public static defer get_name(p, flag)
+
+   # Return the program this proc resides in.  The program's &main
+   # co-expression is returned.
+   #
+   public static defer get_program(p)
+
+   # Return the name of the package in which this proc resides; fails
+   # if the proc is not in a package.
+   #
+   public static defer get_package(p)
+
+   # Return the source location of the proc
+   # @return a {Location} instance
+   #
+   public static get_location(p, flag)
+      return Location!get_location_impl(p, flag)
+   end
+
+   private static defer get_location_impl(p, flag)
+
+   public static defer get_defining_class(p)
+   public static defer get_field_name(p)
+
+   #
+   # Return the kind of this procedure, which is one of the constants :-
+   #  {Procedure} for a procedure or method defined in an icon source file
+   #  {Function} a builtin function like {upto}
+   #  {Keyword} a keyword function, obtained via {Prog.get_keyword()}
+   #  {Operator} an operator function, obtained via {Prog.get_operator()}
+   #  {Internal} an internally used block of VM instructions.
+   #
+   public static defer get_kind(p)
+
+   public static defer get_n_locals(p)
+   public static defer get_n_arguments(p)
+   public static defer has_varargs(p)
+   public static defer get_n_dynamics(p)
+   public static defer get_n_statics(p)
+   public static defer get_local_names(p)
+   public static defer get_local_index(p, id)
+
+   public static get_local_location(p, id)
+      return Location!get_local_location_impl(p, id)
+   end
+
+   private static defer get_local_location_impl(p, id)
+   public static defer get_local_name(p, id)
+
+   #
+   # Return the type of the given local, which is one of the constants
+   # {Argument}, {Dynamic} or {Static}.
+   #
+   public static defer get_local_kind(p, id)
+
+   # load C function dynamically.
+   public static defer load(filename, funcname)
+
+   # Succeed if and only if the given procedure has a definition, ie
+   # is not an unresolved deferred method.
+   public static defer is_defined(p)
+
+   # Lookup a procedure (or function) by name.  First the globals are
+   # searched for a matching procedure or function.  Failing that, the
+   # builtin function, operator and keyword tables are searched.
+   # 
+   # @param s a name to search for
+   # @param n the arity of an operator
+   # @param ce a coexpression, representing a loaded program, defaults
+   # @ to the main program
+   # @return a procedure
+   # @fail if the name is unknown as a proc
+   #
+   public static for_name(s, n, ce)
+      return proc(s, n, ce)
+   end
+end
