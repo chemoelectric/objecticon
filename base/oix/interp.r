@@ -1088,7 +1088,7 @@ void interp()
 
             case Op_Custom: {
                 word w = GetWord;
-                int (*ccode)() = (int (*)())w;
+                void (*ccode)() = (void (*)())w;
 	        ccode();
                 break;
             }
