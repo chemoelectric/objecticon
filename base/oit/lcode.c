@@ -936,7 +936,7 @@ static void lemitproc()
     struct lentry *le;
     struct centry *ce;
 
-    size = (23*WordSize) + WordSize * (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics);
+    size = (22*WordSize) + WordSize * (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics);
     if (loclevel > 1)
         size += 2*WordSize * (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics);
 
@@ -948,7 +948,6 @@ static void lemitproc()
     ce = inst_sdescrip(p);
 
     outwordx(T_Proc, "T_Proc");
-    outwordx(size, "   Block size");
     outwordx(0, "   C func ptr");
     outwordx(curr_lfunc->pc + size, "   Entry point");
     outwordx(curr_lfunc->narguments, "   Num args");
@@ -1125,7 +1124,6 @@ static void genclass(struct lclass *cl)
         fprintf(dbgfile, "\n# class %s\n", name);
 
     outwordx(T_Class, "T_Class");		/* type code */
-    outwordx(cl->size, "   Block size");
     outwordx(0, "   Owning prog");
     outwordx(cl->global->defined->package_id, "   Package id");
     outwordx(0, "   Instance id counter");
@@ -1299,7 +1297,7 @@ static void genclasses()
     for (cl = lclasses; cl; cl = cl->next) {
         int n_fields = cl->n_implemented_class_fields + cl->n_implemented_instance_fields;
         cl->pc = x;
-        cl->size = WordSize * (17 +
+        cl->size = WordSize * (16 +
                                1 + 
                                cl->n_supers +
                                cl->n_implemented_classes +
@@ -1399,7 +1397,7 @@ static void gentables()
         s = rec->global->name;
         rec->pc = pc;
         ce = inst_sdescrip(s);
-        size = 10 * WordSize + rec->nfields * (WordSize + ShortSize);
+        size = 9 * WordSize + rec->nfields * (WordSize + ShortSize);
         if (loclevel > 1)
             size += rec->nfields * 2 * WordSize;
         size += nalign(size);
@@ -1408,7 +1406,6 @@ static void gentables()
             fprintf(dbgfile, "\n# constructor %s\n", s);
 
         outwordx(T_Constructor, "T_Constructor");		/* type code */
-        outwordx(size, "   Block size");
         outwordx(0, "   Owning prog");
         outwordx(rec->global->defined->package_id, "   Package id");
         outwordx(0, "   Instance id counter");

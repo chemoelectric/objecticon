@@ -44,8 +44,8 @@ int bsizes[] = {
      0,                       /* T_Lrgint (2), large integer */
      sizeof(struct b_real),   /* T_Real (3), real number */
      0,                       /* T_Cset (4), cset */
-     0,                       /* T_Constructor (5), record constructor */
-     0,                       /* T_Proc (6), procedure block */
+     sizeof(struct b_constructor), /* T_Constructor (5), record constructor */
+     sizeof(struct b_proc),        /* T_Proc (6), procedure block */
      0,                       /* T_Record (7), record block */
      sizeof(struct b_list),   /* T_List (8), list header block */
      0,                       /* T_Lelem (9), list element block */
@@ -64,7 +64,7 @@ int bsizes[] = {
      -1,                      /* T_Kywdsubj (22), keyword &subject */
      -1,                      /* T_Kywdstr (23), string keyword variable */
      -1,                      /* T_Kywdany (24), event keyword variable */
-     0,                       /* T_Class (25), class */
+     sizeof(struct b_class),  /* T_Class (25), class */
      0,                       /* T_Object (26), object */
      sizeof(struct b_cast),   /* T_Cast (27), cast */
     };

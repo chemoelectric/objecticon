@@ -453,7 +453,6 @@
         static struct sdescrip Cat(f,_name_desc) = {sizeof(Lit(f))-1,Lit(f)}; \
       	struct b_proc Cat(B,f) = {\
       	T_Proc,\
-      	sizeof(struct b_proc),\
       	Cat(Z,f),\
         0,\
       	nargs,\
@@ -474,7 +473,6 @@
         static struct sdescrip Cat(f,_name_desc) = {sizeof(sname)-1,sname}; \
    	struct b_proc Cat(B,f) = {\
    	T_Proc,\
-   	sizeof(struct b_proc),\
    	Cat(O,f),\
         0,\
    	nargs,\
@@ -492,7 +490,6 @@
         static struct sdescrip Cat(f,_name_desc) = {sizeof("&" Lit(f))-1, "&" Lit(f)}; \
    	struct b_proc Cat(L,f) = {\
    	T_Proc,\
-   	sizeof(struct b_proc),\
    	Cat(K,f),\
    	0,0,0,0,0,0,0,0,0,0,0,\
         sizeof(struct Cat(f,_frame)),\

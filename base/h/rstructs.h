@@ -95,7 +95,6 @@ struct b_list {			/* list-header block */
 
 struct b_proc {			/* procedure block */
     word title;			/*   T_Proc */
-    word blksize;		/*   size of block */
 
     int (*ccode)();	        /*   C routines */
     word *icode;		/*   OR pointer to icode */
@@ -130,7 +129,6 @@ struct b_proc {			/* procedure block */
 
 struct b_constructor {		/* constructor block */
     word title;			/*   T_Constructor */
-    word blksize;		/*   size of block */
     struct progstate *program;  /*   program in which this constructor resides */
     word package_id;            /*   Package id of this constructor's package - see b_proc above */
     word instance_ids;          /*   Sequence for instance ids */
@@ -163,7 +161,6 @@ struct class_field {
 
 struct b_class {                 /* block representing a class - always static, never allocated */
     word title;                  /* T_Class */
-    word blksize;
     struct progstate *program;   /* Program in which this class resides */
     word package_id;             /* Package id of this class's package - see b_proc above */
     word instance_ids;           /* Sequence for instance ids */

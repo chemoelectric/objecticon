@@ -300,7 +300,6 @@ typedef int siptr, stringint, inst;
     static struct sdescrip Cat(f,_name_desc) = {sizeof(sname) - 1, sname};\
     struct b_proc Cat(B,f) = {\
    	T_Proc,\
-   	sizeof(struct b_proc),\
    	0,\
         code,\
    	nparam,\
