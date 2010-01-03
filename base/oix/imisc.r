@@ -4,7 +4,7 @@
 struct p_frame *get_current_user_frame()
 {
     struct p_frame *pf = curr_pf;
-    while (pf && pf->proc->program == 0)
+    while (pf && !pf->proc->program)
         pf = pf->caller;
     return pf;
 }
@@ -12,12 +12,12 @@ struct p_frame *get_current_user_frame()
 struct p_frame *get_current_user_frame_of(struct b_coexpr *ce)
 {
     struct p_frame *pf = ce->curr_pf;
-    while (pf && pf->proc->program == 0)
+    while (pf && !pf->proc->program)
         pf = pf->caller;
     return pf;
 }
 
-struct b_proc *get_current_user_proc()
+struct p_proc *get_current_user_proc()
 {
     return get_current_user_frame()->proc;
 }
@@ -36,7 +36,7 @@ struct progstate *get_current_program_of(struct b_coexpr *ce)
  */
 int check_access(struct class_field *cf, struct b_class *instance_class)
 {
-    struct b_proc *caller_proc;
+    struct p_proc *caller_proc;
     struct class_field *caller_field;
 
     if (cf->flags & M_Public)
@@ -372,4 +372,31 @@ int c_is(dptr x, dptr cname, struct inline_global_cache *ic)
         p = lookup_global(cname, class0->program);
 
     return p && is:class(*p) && class_is(class0, &ClassBlk(*p));
+}
+
+int get_proc_kind(struct b_proc *bp)
+{
+    switch (bp->type) {
+        case P_Proc: {
+            /* Icon procedure */
+            if (((struct p_proc *)bp)->program == 0)
+                return Internal;
+            return Procedure;
+            break;
+        }
+        case C_Proc: {
+            /* Builtin */
+            char c = *StrLoc(*bp->name);
+            if (c == '&')
+                return Keyword;
+            if (isalpha((unsigned char)c))
+                return Function;
+            return Operator;
+            break;
+        }
+        default: {
+            syserr("Unknown proc type");
+            return 0;  /* Not reached */
+        }
+    }
 }

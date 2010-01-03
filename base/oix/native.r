@@ -852,7 +852,7 @@ struct b_proc *string_to_proc(dptr s, int arity, struct progstate *prog)
     if (arity && !isalpha((unsigned char)*StrLoc(*s)) && *StrLoc(*s) != '&') {
         for (i = 0; i < op_tbl_sz; ++i)
             if (eq(s, op_tbl[i]->name) && arity == op_tbl[i]->nparam)
-                return op_tbl[i];
+                return (struct b_proc *)op_tbl[i];
         return 0;
     }
 
@@ -1217,14 +1217,29 @@ end
 struct b_proc *clone_b_proc(struct b_proc *bp)
 {
     struct b_proc *new0;
-    MemProtect(new0 = malloc(sizeof(struct b_proc)));
-    memcpy(new0, bp, sizeof(struct b_proc));
+    switch (bp->type) {
+        case P_Proc: {
+            MemProtect(new0 = malloc(sizeof(struct p_proc)));
+            memcpy(new0, bp, sizeof(struct p_proc));
+            break;
+        }
+        case C_Proc: {
+            MemProtect(new0 = malloc(sizeof(struct c_proc)));
+            memcpy(new0, bp, sizeof(struct c_proc));
+            break;
+        }
+        default: {
+            syserr("Unknown proc type");
+            return 0;  /* Not reached */
+        }
+    }
     return new0;
 }
 
 function lang_Class_set_method(field, pr)
    body {
-        struct b_proc *caller_proc, *new_proc;
+        struct p_proc *caller_proc;
+        struct b_proc *new_proc;
         struct b_class *class0;
         struct class_field *cf;
         int i;
@@ -1303,7 +1318,7 @@ function lang_Class_load_library(lib)
    if !cnv:C_string(lib) then
       runerr(103, lib)
    body {
-        struct b_proc *caller_proc;
+        struct p_proc *caller_proc;
         struct b_class *class0;
         word i;
         void *handle;
@@ -2943,7 +2958,7 @@ function lang_Constructor_get_field_name(c, field)
      }
 end
 
-int lookup_proc_local(struct b_proc *proc, dptr query)
+static int lookup_proc_local(struct p_proc *proc, dptr query)
 {
     word nf;
 
@@ -2974,14 +2989,26 @@ int lookup_proc_local(struct b_proc *proc, dptr query)
     return 0;
 }
 
+static struct p_proc *get_procedure(struct b_proc *bp)
+{
+    struct p_proc *pp;
+    if (bp->type != P_Proc)
+        return 0;
+    pp = (struct p_proc *)bp;
+    if (!pp->program)
+        return 0;
+    return pp;
+}
+
 function lang_Proc_get_n_locals(c)
    body {
         struct b_proc *proc0;
+        struct p_proc *pp;
         if (!(proc0 = get_proc_for(&c)))
            runerr(0);
-       if (!proc0->program)
+        if (!(pp = get_procedure(proc0)))
             fail;
-        return C_integer proc0->nparam + proc0->ndynam + proc0->nstatic;
+        return C_integer pp->nparam + pp->ndynam + pp->nstatic;
      }
 end
 
@@ -3009,36 +3036,39 @@ end
 function lang_Proc_get_n_dynamics(c)
    body {
        struct b_proc *proc0;
+       struct p_proc *pp;
        if (!(proc0 = get_proc_for(&c)))
            runerr(0);
-       if (!proc0->program)
-            fail;
-       return C_integer proc0->ndynam;
+       if (!(pp = get_procedure(proc0)))
+           fail;
+       return C_integer pp->ndynam;
      }
 end
 
 function lang_Proc_get_n_statics(c)
    body {
        struct b_proc *proc0;
+       struct p_proc *pp;
        if (!(proc0 = get_proc_for(&c)))
           runerr(0);
-       if (!proc0->program)
-            fail;
-        return C_integer proc0->nstatic;
+       if (!(pp = get_procedure(proc0)))
+           fail;
+        return C_integer pp->nstatic;
      }
 end
 
 function lang_Proc_get_local_names(c)
    body {
         struct b_proc *proc0;
+        struct p_proc *pp;
         word i, nf;
         if (!(proc0 = get_proc_for(&c)))
            runerr(0);
-        if (!proc0->program)
-            fail;
-        nf = proc0->nparam + proc0->ndynam + proc0->nstatic;
+        if (!(pp = get_procedure(proc0)))
+           fail;
+        nf = pp->nparam + pp->ndynam + pp->nstatic;
         for (i = 0; i < nf; ++i)
-            suspend *proc0->lnames[i];
+            suspend *pp->lnames[i];
         fail;
     }
 end
@@ -3046,11 +3076,14 @@ end
 function lang_Proc_get_local_index(c, id)
    body {
         struct b_proc *proc0;
+        struct p_proc *pp;
         int i;
         if (!(proc0 = get_proc_for(&c)))
             runerr(0);
         CheckField(id);
-        i = lookup_proc_local(proc0, &id);
+        if (!(pp = get_procedure(proc0)))
+           fail;
+        i = lookup_proc_local(pp, &id);
         if (i < 0)
             fail;
         return C_integer i + 1;
@@ -3061,20 +3094,25 @@ function lang_Proc_get_local_location_impl(c, id)
    body {
         int i;
         struct b_proc *proc0;
+        struct p_proc *pp;
         tended struct descrip result;
         if (!(proc0 = get_proc_for(&c)))
             runerr(0);
         CheckField(id);
-        if (!proc0->llocs) {
+        if (!(pp = get_procedure(proc0))) {
+            LitWhy("Not a Procedure");
+            fail;
+        }
+        if (!pp->llocs) {
             LitWhy("No local location data in icode");
             fail;
         }
-        i = lookup_proc_local(proc0, &id);
+        i = lookup_proc_local(pp, &id);
         if (i < 0) {
             LitWhy("Unknown local");
             fail;
         }
-        loc_to_list(&proc0->llocs[i], &result);
+        loc_to_list(&pp->llocs[i], &result);
         return result;
      }
 end
@@ -3082,30 +3120,36 @@ end
 function lang_Proc_get_local_name(c, id)
    body {
         struct b_proc *proc0;
+        struct p_proc *pp;
         int i;
         if (!(proc0 = get_proc_for(&c)))
             runerr(0);
         CheckField(id);
-        i = lookup_proc_local(proc0, &id);
+        if (!(pp = get_procedure(proc0)))
+            fail;
+        i = lookup_proc_local(pp, &id);
         if (i < 0)
             fail;
-        return *proc0->lnames[i];
+        return *pp->lnames[i];
      }
 end
 
 function lang_Proc_get_local_kind(c, id)
    body {
         struct b_proc *proc0;
+        struct p_proc *pp;
         int i;
         if (!(proc0 = get_proc_for(&c)))
             runerr(0);
         CheckField(id);
-        i = lookup_proc_local(proc0, &id);
+        if (!(pp = get_procedure(proc0)))
+            fail;
+        i = lookup_proc_local(pp, &id);
         if (i < 0)
             fail;
-        if (i < proc0->nparam)
+        if (i < pp->nparam)
             return C_integer 0;
-        if (i < proc0->nparam + proc0->ndynam)
+        if (i < pp->nparam + pp->ndynam)
             return C_integer 1;
         return C_integer 2;
      }
@@ -3144,9 +3188,12 @@ function lang_Proc_get_package(c, flag)
                 fail;
             extract_package(proc0->field->defining_class->name, &result);
         } else {
-            if (proc0->package_id == 0)
+            struct p_proc *pp;
+            if (!(pp = get_procedure(proc0)))
                 fail;
-            extract_package(proc0->name, &result);
+            if (pp->package_id == 0)
+                fail;
+            extract_package(pp->name, &result);
         }
         return result;
     }
@@ -3160,10 +3207,12 @@ function lang_Proc_get_program(c, flag)
             runerr(0);
         if (proc0->field && is:null(flag))
             prog = proc0->field->defining_class->program;
-        else
-            prog = proc0->program;
-        if (!prog)
-            fail;
+        else {
+            struct p_proc *pp;
+            if (!(pp = get_procedure(proc0)))
+                fail;
+            prog = pp->program;
+        }
         return coexpr(prog->K_main);
     }
 end
@@ -3172,6 +3221,7 @@ function lang_Proc_get_location_impl(c, flag)
    body {
         tended struct descrip result;
         struct b_proc *proc0;
+        struct p_proc *pp;
         struct loc *p;
         if (!(proc0 = get_proc_for(&c)))
             runerr(0);
@@ -3186,15 +3236,15 @@ function lang_Proc_get_location_impl(c, flag)
                 fail;
             }
             p = &prog->ClassFieldLocs[proc0->field - prog->ClassFields];
-        } else if (!proc0->program) {
-            LitWhy("Proc is builtin, has no location");
+        } else if (!(pp = get_procedure(proc0))) {
+            LitWhy("Proc not a procedure, has no location");
             fail;
         } else {
-            if (proc0->program->Glocs == proc0->program->Eglocs) {
+            if (pp->program->Glocs == pp->program->Eglocs) {
                 LitWhy("No global location data in icode");
                 fail;
             }
-            p = lookup_global_loc(proc0->name, proc0->program);
+            p = lookup_global_loc(pp->name, pp->program);
             if (!p)
                 syserr("Procedure name not found in global table");
         }
@@ -3208,7 +3258,7 @@ function lang_Proc_get_kind(c)
         struct b_proc *proc0;
         if (!(proc0 = get_proc_for(&c)))
             runerr(0);
-        return C_integer proc0->kind;
+        return C_integer get_proc_kind(proc0);
      }
 end
 
@@ -3217,7 +3267,7 @@ function lang_Proc_is_defined(c)
         struct b_proc *proc0;
         if (!(proc0 = get_proc_for(&c)))
             runerr(0);
-        if (proc0 == &Bdeferred_method_stub)
+        if (proc0 == (struct b_proc *)&Bdeferred_method_stub)
             fail;
         else
             return nulldesc;
@@ -3285,7 +3335,7 @@ function lang_Coexpression_get_stack_info_impl(ce, lim)
           runerr(0);
 
        for (pf = b->curr_pf; lim && pf; pf = pf->caller) {
-            if (pf->proc->program) {
+           if (pf->proc->program) {
                 struct descrip prc;
                 tended struct descrip img, args, result;
                 dptr arg;

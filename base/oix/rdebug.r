@@ -182,7 +182,7 @@ static void trace_frame(struct p_frame *pf)
 
     arg = pf->fvars->desc;
     fprintf(stderr, "   ");
-    procname(stderr, pf->proc);
+    procname(stderr, (struct b_proc *)pf->proc);
     putc('(', stderr);
     while (nargs--) {
         outimage(stderr, arg++, 0);
@@ -275,7 +275,7 @@ int get_name(dptr dp1, dptr dp0)
     tended union block *blkptr;
     dptr arg1;                           /* 1st parameter */
     dptr loc1;                           /* 1st local */
-    struct b_proc *proc0;                 /* address of procedure block */
+    struct p_proc *proc0;                 /* address of procedure block */
     char sbuf[100];			/* buffer; might be too small */
     char *s, *s2;
     word i, j, k;
@@ -532,7 +532,7 @@ static void cotrace_line(struct b_coexpr *from)
     struct p_frame *pf = get_current_user_frame_of(from);
     showline(pf);
     showlevel(k_level);
-    procname(stderr, pf->proc);
+    procname(stderr, (struct b_proc *)pf->proc);
 }
 
 void trace_coact(struct b_coexpr *from, struct b_coexpr *to, dptr val)
@@ -622,7 +622,7 @@ static void outfield()
 /*
  * Is a given b_proc an operator or not?
  */
-static int is_op(struct b_proc *bp)
+static int is_op(struct c_proc *bp)
 {
     int i;
     for (i = 0; i < op_tbl_sz; ++i) {
@@ -653,7 +653,7 @@ static void xtrace()
             fprintf(stderr, "   ");
             if (curr_cf) {
                 /* Will happen if a builtin proc calls runnerr */
-                procname(stderr, curr_cf->proc);
+                procname(stderr, (struct b_proc *)curr_cf->proc);
                 xnargs = curr_cf->nargs;
                 xargp = curr_cf->args;
                 putc('(', stderr);
@@ -676,7 +676,7 @@ static void xtrace()
             fprintf(stderr, "   ");
             if (curr_cf) {
                 /* Will happen if a builtin proc calls runnerr */
-                procname(stderr, curr_cf->proc);
+                procname(stderr, (struct b_proc *)curr_cf->proc);
                 xnargs = curr_cf->nargs;
                 xargp = curr_cf->args;
                 fprintf(stderr," ! [ ");
@@ -703,7 +703,7 @@ static void xtrace()
             fprintf(stderr, "   ");
             if (curr_cf) {
                 /* Will happen if a builtin proc calls runnerr */
-                procname(stderr, curr_cf->proc);
+                procname(stderr, (struct b_proc *)curr_cf->proc);
                 xnargs = curr_cf->nargs;
                 xargp = curr_cf->args;
                 fprintf(stderr," ! [ ");
@@ -728,7 +728,7 @@ static void xtrace()
             fprintf(stderr, "   ");
             if (curr_cf) {
                 /* Will happen if a builtin proc calls runnerr */
-                procname(stderr, curr_cf->proc);
+                procname(stderr, (struct b_proc *)curr_cf->proc);
                 xnargs = curr_cf->nargs;
                 xargp = curr_cf->args;
                 putc('(', stderr);
@@ -815,7 +815,7 @@ static void xtrace()
             break;
 
         default: {
-            struct b_proc *bp;
+            struct c_proc *bp;
 
             /*
              * Have we come here from a C operator/function?
@@ -851,7 +851,7 @@ static void xtrace()
             } else {
                 /* Not an operator, perhaps a function being resumed. */
                 fprintf(stderr, "   ");
-                procname(stderr, bp);
+                procname(stderr, (struct b_proc *)bp);
                 xnargs = curr_cf->nargs;
                 xargp = curr_cf->args;
                 putc('(', stderr);
@@ -889,7 +889,7 @@ void call_trace(struct p_frame *pf)
     showline(pf->caller);
     showlevel(k_level);
 
-    procname(stderr, pf->proc);
+    procname(stderr, (struct b_proc *)pf->proc);
     if (pf->curr_inst) {
         fprintf(stderr, " resumed\n");
     } else {
@@ -914,7 +914,7 @@ void fail_trace(struct p_frame *pf)
 {
     showline(pf);
     showlevel(k_level);
-    procname(stderr, pf->proc);
+    procname(stderr, (struct b_proc *)pf->proc);
     fprintf(stderr, " failed");
     putc('\n', stderr);
     fflush(stderr);
@@ -928,7 +928,7 @@ void suspend_trace(struct p_frame *pf, dptr val)
 {
     showline(pf);
     showlevel(k_level);
-    procname(stderr, pf->proc);
+    procname(stderr, (struct b_proc *)pf->proc);
     fprintf(stderr, " suspended ");
     outimage(stderr, val, 0);
     putc('\n', stderr);
@@ -944,7 +944,7 @@ void return_trace(struct p_frame *pf, dptr val)
 {
     showline(pf);
     showlevel(k_level);
-    procname(stderr, pf->proc);
+    procname(stderr, (struct b_proc *)pf->proc);
     fprintf(stderr, " returned ");
     outimage(stderr, val, 0);
     putc('\n', stderr);
@@ -960,7 +960,7 @@ void xdisp(struct b_coexpr *ce, int count, FILE *f)
 {
     dptr *np;
     int n;
-    struct b_proc *bp;
+    struct p_proc *bp;
     word nglobals;
     dptr dp;
     struct p_frame *pf, *upf;
@@ -990,7 +990,7 @@ void xdisp(struct b_coexpr *ce, int count, FILE *f)
         /*
          * Print procedure name.
          */
-        procname(f, bp);
+        procname(f, (struct b_proc *)bp);
         fprintf(f, " local identifiers:\n");
 
         /*
@@ -1137,7 +1137,19 @@ void print_vword(FILE *f, dptr d) {
             case D_Slots :
             case D_Proc : {
                 struct b_proc *p = &ProcBlk(*d);
-                fprintf(f, "%p -> prog:%p=", p, p->program);
+                switch (p->type) {
+                    case P_Proc: {
+                        fprintf(f, "%p -> prog:%p=", p, ((struct p_proc *)p)->program);
+                        break;
+                    }
+                    case C_Proc: {
+                        fprintf(f, "%p =", p);
+                        break;
+                    }
+                    default: {
+                        syserr("Unknown proc type");
+                    }
+                }
                 outimage(f, d, 1);
                 break;
             }
@@ -1246,54 +1258,57 @@ void showstack(FILE *f, struct b_coexpr *c)
         if (x == (struct frame *)c->curr_pf)
             fprintf(f, "PF-> ");
         fprintf(f, "Frame %p type=%c, size=%d\n", x, 
-               x->type == C_FRAME_TYPE ? 'C':'P', 
+               x->type == C_Frame ? 'C':'P', 
                x->size);
         fprintf(f, "\tlhs="); print_desc(f, x->lhs); fprintf(f, "\n");
         fprintf(f, "\tfailure_label=%p\n", x->failure_label);
-        tmp.dword = D_Proc;
-        BlkLoc(tmp) = (union block *)x->proc;
-        fprintf(f, "\tproc="); print_vword(f, &tmp); fprintf(f, "\n");
         fprintf(f, "\tparent_sp=%p\n", x->parent_sp);
         fprintf(f, "\texhausted=%d\n", x->exhausted);
         fprintf(f, "\trval=%d\n", x->rval);
         switch (x->type) {
-            case C_FRAME_TYPE: {
+            case C_Frame: {
                 struct c_frame *cf = (struct c_frame *)x;
+                tmp.dword = D_Proc;
+                BlkLoc(tmp) = (union block *)cf->proc;
+                fprintf(f, "\tproc="); print_vword(f, &tmp); fprintf(f, "\n");
                 fprintf(f, "\tpc=0x%lx\n", (long)cf->pc);
                 fprintf(f, "\tnargs=%d\n", cf->nargs);
                 for (i = 0; i < cf->nargs; ++i) {
                     fprintf(f, "\targs[%d]=", i); print_desc(f, &cf->args[i]); fprintf(f, "\n");
                 }
-                for (i = 0; i < x->proc->ntend; ++i) {
+                for (i = 0; i < cf->proc->ntend; ++i) {
                     fprintf(f, "\ttend[%d]=", i); print_desc(f, &cf->tend[i]); fprintf(f, "\n");
                 }
                 break;
             }
-            case P_FRAME_TYPE: {
+            case P_Frame: {
                 struct p_frame *pf = (struct p_frame *)x;
                 dptr *np, dp;
                 int j;
+                tmp.dword = D_Proc;
+                BlkLoc(tmp) = (union block *)pf->proc;
+                fprintf(f, "\tproc="); print_vword(f, &tmp); fprintf(f, "\n");
                 fprintf(f, "\tipc=%p\n", pf->ipc);
                 fprintf(f, "\tcurr_inst=%p\n", pf->curr_inst);
                 fprintf(f, "\tcaller=%p\n", pf->caller);
-                for (i = 0; i < x->proc->nclo; ++i) {
+                for (i = 0; i < pf->proc->nclo; ++i) {
                     fprintf(f, "\tclo[%d]=%p\n", i, pf->clo[i]);
                 }
-                for (i = 0; i < x->proc->ntmp; ++i) {
+                for (i = 0; i < pf->proc->ntmp; ++i) {
                     fprintf(f, "\ttmp[%d]=", i); print_desc(f, &pf->tmp[i]); fprintf(f, "\n");
                 }
-                for (i = 0; i < x->proc->nlab; ++i) {
+                for (i = 0; i < pf->proc->nlab; ++i) {
                     fprintf(f, "\tlab[%d]=%p\n", i, pf->lab[i]);
                 }
-                for (i = 0; i < x->proc->nmark; ++i) {
+                for (i = 0; i < pf->proc->nmark; ++i) {
                     fprintf(f, "\tmark[%d]=%p\n", i, pf->mark[i]);
                 }
                 if (pf->fvars) {
                     fprintf(f, "\tfvars=%p, size=%d\n", pf->fvars, pf->fvars->size);
                     i = 0;
-                    np = x->proc->lnames;
+                    np = pf->proc->lnames;
                     dp = pf->fvars->desc;
-                    for (j = 0; j < x->proc->nparam; ++j) {
+                    for (j = 0; j < pf->proc->nparam; ++j) {
                         if (np) {
                             fprintf(f, "\t   fvars.desc[%d] (arg %.*s)=", i, (int)StrLen(**np), StrLoc(**np)); 
                             ++np;
@@ -1302,7 +1317,7 @@ void showstack(FILE *f, struct b_coexpr *c)
                         print_desc(f, dp++); fprintf(f, "\n");
                         ++i;
                     }
-                    for (j = 0; j < x->proc->ndynam; ++j) {
+                    for (j = 0; j < pf->proc->ndynam; ++j) {
                         if (np) {
                             fprintf(f, "\t   fvars.desc[%d] (local %.*s)=", i, (int)StrLen(**np), StrLoc(**np)); 
                             ++np;

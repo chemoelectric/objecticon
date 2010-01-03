@@ -936,7 +936,7 @@ static void lemitproc()
     struct lentry *le;
     struct centry *ce;
 
-    size = (22*WordSize) + WordSize * (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics);
+    size = (18*WordSize) + WordSize * (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics);
     if (loclevel > 1)
         size += 2*WordSize * (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics);
 
@@ -948,10 +948,12 @@ static void lemitproc()
     ce = inst_sdescrip(p);
 
     outwordx(T_Proc, "T_Proc");
-    outwordx(0, "   C func ptr");
-    outwordx(curr_lfunc->pc + size, "   Entry point");
+    outwordx(P_Proc, "   Type");
     outwordx(curr_lfunc->narguments, "   Num args");
     outwordx(curr_lfunc->vararg, "   Vararg flag");
+    outwordx(0, "   Field");
+    outsdescrip(ce, "   Procedure name (%s)", p);
+    outwordx(curr_lfunc->pc + size, "   Entry point");
     outwordx(curr_lfunc->ndynamic, "   Num dynamic");
     outwordx(curr_lfunc->nstatics, "   Num static");
     outwordx(nstatics, "   First static");
@@ -960,13 +962,7 @@ static void lemitproc()
     outwordx(n_tmp, "   Num temporaries");
     outwordx(n_lab, "   Num labels");
     outwordx(n_mark, "   Num marks");
-    outwordx(0, "   Frame size");
-    outwordx(0, "   Num tended");
-    outwordx(0, "   Deref flag");
     outwordx(curr_lfunc->defined->package_id, "   Package id");
-    outwordx(0, "   Field");
-    outsdescrip(ce, "   Procedure name (%s)", p);
-    outwordx(Procedure, "   Kind");
 
     /*
      * Pointers to the tables that follow.

@@ -654,18 +654,18 @@ static void sweep_stack(struct frame *f)
     while (f) {
         /*printf("sweep stack frame %p\n",f);*/
         switch (f->type) {
-            case C_FRAME_TYPE: {
+            case C_Frame: {
                 struct c_frame *cf = (struct c_frame *)f;
                 for (i = 0; i < cf->nargs; ++i)
                     PostDescrip(cf->args[i]);
-                for (i = 0; i < f->proc->ntend; ++i)
+                for (i = 0; i < cf->proc->ntend; ++i)
                     PostDescrip(cf->tend[i]);
                 break;
             }
-            case P_FRAME_TYPE: {
+            case P_Frame: {
                 struct p_frame *pf = (struct p_frame *)f;
                 struct frame_vars *l = pf->fvars;
-                for (i = 0; i < f->proc->ntmp; ++i)
+                for (i = 0; i < pf->proc->ntmp; ++i)
                     PostDescrip(pf->tmp[i]);
                 if (l && l->seen != current_collection) {
                     dptr d;

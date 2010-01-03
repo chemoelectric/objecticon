@@ -77,19 +77,20 @@ void set_curr_pf(struct p_frame *pf)
 
 void tail_invoke_frame(struct frame *f)
 {
-    Desc_EVValD(f->proc, E_Pcall, D_Proc);
     switch (f->type) {
-        case C_FRAME_TYPE: {
+        case C_Frame: {
             curr_cf = (struct c_frame *)f;
-            if (!f->proc->ccode(f)) {
+            Desc_EVValD(curr_cf->proc, E_Pcall, D_Proc);
+            if (!curr_cf->proc->ccode(f)) {
                 ipc = f->failure_label;
                 pop_to(f->parent_sp);
             }
             curr_cf = 0;
             break;
         }
-        case P_FRAME_TYPE: {
+        case P_Frame: {
             struct p_frame *pf = (struct p_frame *)f;
+            Desc_EVValD(pf->proc, E_Pcall, D_Proc);
             pf->caller = curr_pf;
             if (pf->proc->program) {
                 /*
@@ -136,8 +137,8 @@ void pop_to(struct frame *f)
 
 word get_offset(word *w)
 {
-    word *code_start = curr_pf->proc->program ? 
-        (word *)curr_pf->proc->program->Code : curr_pf->proc->icode;
+    struct p_proc *pp = curr_pf->proc;
+    word *code_start = pp->program ? (word *)pp->program->Code : pp->icode;
     return DiffPtrsBytes(w, code_start);
 }
 
@@ -334,7 +335,7 @@ void skip_descrip()
 #endif
     p->size = size;
     p->creator = 0;
-    p->type = C_FRAME_TYPE;
+    p->type = C_Frame;
     p->lhs = 0;
     p->proc = pb;
     p->parent_sp = 0;
@@ -369,7 +370,7 @@ void skip_descrip()
 static void do_op(int nargs)
 {
     struct c_frame *cf;
-    struct b_proc *bp = opblks[curr_op];
+    struct c_proc *bp = opblks[curr_op];
     int i;
     quick_alc_c_frame(cf, bp, nargs);
     push_frame((struct frame *)cf);
@@ -396,7 +397,7 @@ static void do_op(int nargs)
 static void do_opclo(int nargs)
 {
     struct c_frame *cf;
-    struct b_proc *bp = opblks[curr_op];
+    struct c_proc *bp = opblks[curr_op];
     int i;
     word clo;
     clo = GetWord;
@@ -419,7 +420,7 @@ static void do_opclo(int nargs)
 static void do_keyop()
 {
     struct c_frame *cf;
-    struct b_proc *bp = keyblks[GetWord];
+    struct c_proc *bp = keyblks[GetWord];
     quick_alc_c_frame(cf, bp, 0);
     push_frame((struct frame *)cf);
     cf->lhs = get_dptr();
@@ -437,7 +438,7 @@ static void do_keyop()
 static void do_keyclo()
 {
     struct c_frame *cf;
-    struct b_proc *bp;
+    struct c_proc *bp;
     word clo;
     bp = keyblks[GetWord];
     clo = GetWord;
@@ -678,7 +679,7 @@ function coact(underef val, ce, activator, failto)
         if (!is:null(failto) && !CoexprBlk(ce).failure_label)
             runerr(135, ce);
 
-        MemProtect(pf = alc_p_frame((struct b_proc *)&Bcoact_impl, 0));
+        MemProtect(pf = alc_p_frame(&Bcoact_impl, 0));
         push_frame((struct frame *)pf);
         pf->fvars->desc[0] = val;
         pf->fvars->desc[1] = ce;
@@ -701,7 +702,7 @@ operator @ bactivate(underef val, ce)
         struct p_frame *pf;
         if (!get_current_user_frame_of(&CoexprBlk(ce)))
             runerr(138, ce);
-        MemProtect(pf = alc_p_frame((struct b_proc *)&Bcoact_impl, 0));
+        MemProtect(pf = alc_p_frame(&Bcoact_impl, 0));
         push_frame((struct frame *)pf);
         pf->fvars->desc[0] = val;
         pf->fvars->desc[1] = ce;
@@ -719,7 +720,7 @@ operator @ uactivate(ce)
         struct p_frame *pf;
         if (!get_current_user_frame_of(&CoexprBlk(ce)))
             runerr(138, ce);
-        MemProtect(pf = alc_p_frame((struct b_proc *)&Bcoact_impl, 0));
+        MemProtect(pf = alc_p_frame(&Bcoact_impl, 0));
         push_frame((struct frame *)pf);
         pf->fvars->desc[0] = nulldesc;
         pf->fvars->desc[1] = ce;
@@ -1206,7 +1207,7 @@ function lang_Prog_get_event_impl(c, res)
        }
        if (prog->exited)
            fail;
-       MemProtect(pf = alc_p_frame((struct b_proc *)&Blang_Prog_get_event_impl_impl, 0));
+       MemProtect(pf = alc_p_frame(&Blang_Prog_get_event_impl_impl, 0));
        push_frame((struct frame *)pf);
        pf->fvars->desc[0] = c;
        pf->fvars->desc[1] = res;

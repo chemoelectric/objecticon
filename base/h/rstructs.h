@@ -93,38 +93,43 @@ struct b_list {			/* list-header block */
     union block *listtail;	/*   pointer to last list-element block */
 };
 
+#define PROC_BASE \
+    word title;			/*   T_Proc */ \
+    word type;                  /*   structure type, C_Proc or P_Proc */ \
+    word nparam;		/*   number of parameters */ \
+    word vararg;                /*      vararg flag */ \
+    struct class_field *field;  /*   For a method, a pointer to the corresponding class_field.  The only */ \
+                                /*     exception is the deferred method stub, which can be pointed to by */ \
+                                /*     many different fields of course. */ \
+    dptr name;              	/*   procedure name (pointer to string qualifier) */
+
 struct b_proc {			/* procedure block */
-    word title;			/*   T_Proc */
+    PROC_BASE
+};
 
-    int (*ccode)();	        /*   C routines */
-    word *icode;		/*   OR pointer to icode */
-
-    word nparam;		/*   number of parameters */
-    word vararg;                /*      vararg flag */
+struct p_proc {
+    PROC_BASE
+    word *icode;		/*   pointer to icode */
     word ndynam;		/*   number of dynamic locals */
     word nstatic;		/*   number of static locals */
     dptr fstatic;		/*   pointer to first static, or null if there are none */
-    struct progstate *program;  /*   program in which this procedure resides; 
-                                 *     null => builtin function */
-
+    struct progstate *program;  /*   program in which this procedure resides; null for Internal kind */
     word nclo;                  /*   count of various elements that make up a frame for this */
     word ntmp;                  /*     procedure */
     word nlab;
     word nmark;
-
-    word framesize;             /*   frame struct size (for builtin functions/operators only). */
-    word ntend;                 /*   num tended needed (for builtin functions/operators only). */
-    word underef;               /*   underef flag (for builtin functions/operators only). */
-
     word package_id;            /*   package id of package in which this proc resides; 0=not in 
                                  *     a package; 1=lang; >1=other package */
-    struct class_field *field;  /*   For a method, a pointer to the corresponding class_field.  The only
-                                 *     exception is the deferred method stub, which can be pointed to by
-                                 *     many different fields of course. */
-    dptr name;              	/*   procedure name (pointer to string qualifier) */
-    word kind;                  /*   kind of procedure */
-    dptr *lnames;               /*   list of local names (qualifiers), null for a function */
+    dptr *lnames;               /*   list of local names (qualifiers), null for an Internal kind */
     struct loc *llocs;	        /*   locations of local names, or null if not available */
+};
+
+struct c_proc {
+    PROC_BASE
+    int (*ccode)();	        /*   C routines */
+    word framesize;             /*   frame struct size */
+    word ntend;                 /*   num tended needed */
+    word underef;               /*   underef flag */
 };
 
 struct b_constructor {		/* constructor block */
@@ -547,18 +552,15 @@ struct frame_vars {
     struct descrip desc[1];
 };
 
-enum FRAME_TYPE { C_FRAME_TYPE, P_FRAME_TYPE };
-
 /*
  * Common elements for both frame types
  */
 #define FRAME_BASE \
-     int type; \
+     int type;          /* Structure type */                            \
      int size;          /* Size and creator of this allocation */ \
      struct progstate *creator; \
      dptr lhs;               /* Place to put result */ \
      word *failure_label;    /* Caller's failure label */  \
-     struct b_proc *proc;    /* Corresponding procedure block */  \
      struct frame *parent_sp;  /* Parent in the stack chain */ \
      int rval;               /* Set if source location is an rval (ie cannot be assigned to) */  \
      int exhausted;          /* Set after a return, indicating thatf a further request for a result */ \
@@ -566,6 +568,7 @@ enum FRAME_TYPE { C_FRAME_TYPE, P_FRAME_TYPE };
 
 #define C_FRAME \
      FRAME_BASE   \
+     struct c_proc *proc;    /* Corresponding procedure block */  \
      word pc;        /* C program counter */    \
      int nargs;      /* Number of args; may exceed declared number for a vararg func */ \
      dptr args;      /* Arg array - nargs descriptors */ \
@@ -581,6 +584,7 @@ struct c_frame {
 
 struct p_frame {
     FRAME_BASE
+    struct p_proc *proc;      /* Corresponding procedure block */        \
     word *ipc;                /* Program counter; note this is only up-to-date when
                                * frames change (see interp.r and the use of the ipc global var.) */
     word *curr_inst;          /* Location of start of current instruction */

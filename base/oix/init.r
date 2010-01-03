@@ -21,15 +21,15 @@ static void    startuperr(char *fmt, ...);
  * External declarations for operator and function blocks.
  */
 
-#define OpDef(f)  extern struct b_proc Cat(B,f);
+#define OpDef(f)  extern struct c_proc Cat(B,f);
 #include "../h/odefs.h"
 #undef OpDef
 
-#define FncDef(f)  extern struct b_proc Cat(B,f);
+#define FncDef(f)  extern struct c_proc Cat(B,f);
 #include "../h/fdefs.h"
 #undef FncDef
 
-#define KDef(p,n) extern struct b_proc Cat(L,p);
+#define KDef(p,n) extern struct c_proc Cat(L,p);
 #include "../h/kdefs.h"
 #undef KDef
 
@@ -37,7 +37,7 @@ static void    startuperr(char *fmt, ...);
  * operators table
  */
 #define OpDef(f)  Cat(&B,f),
-struct b_proc *op_tbl[] = {
+struct c_proc *op_tbl[] = {
 #include "../h/odefs.h"
 };
 #undef OpDef
@@ -46,7 +46,7 @@ struct b_proc *op_tbl[] = {
  * function table
  */
 #define FncDef(f)  Cat(&B,f),
-struct b_proc *fnc_tbl[] = {
+struct c_proc *fnc_tbl[] = {
 #include "../h/fdefs.h"
 };
 #undef FncDef
@@ -55,7 +55,7 @@ struct b_proc *fnc_tbl[] = {
  * keyword table
  */
 #define KDef(p,n) Cat(&L,p),
-struct b_proc *keyword_tbl[] = {
+struct c_proc *keyword_tbl[] = {
 #include "../h/kdefs.h"
 };
 #undef KDef
@@ -63,7 +63,7 @@ struct b_proc *keyword_tbl[] = {
 /*
  * Map from opcode to procedure block
  */
-struct b_proc *opblks[] = {
+struct c_proc *opblks[] = {
 	NULL,
 #define OpDef(p) Cat(&B,p),
 #include "../h/odefs.h"
@@ -73,7 +73,7 @@ struct b_proc *opblks[] = {
 /*
  * Map from keyword number to procedure block
  */
-struct b_proc *keyblks[] = {
+struct c_proc *keyblks[] = {
     NULL,
 #define KDef(p,n) Cat(&L,p),
 #include "../h/kdefs.h"
@@ -694,7 +694,7 @@ function lang_Prog_load(s, arglist, blocksize, stringsize)
          fatalerr(117, NULL);
 
        main_bp = &ProcBlk(*pstate->MainProc);
-       MemProtect(new_pf = alc_p_frame((struct b_proc *)&Bmain_wrapper, 0));
+       MemProtect(new_pf = alc_p_frame(&Bmain_wrapper, 0));
        new_pf->fvars->desc[0] = *pstate->MainProc;
        coex->sp = (struct frame *)new_pf;
        coex->base_pf = coex->curr_pf = new_pf;
@@ -718,11 +718,11 @@ function lang_Prog_load(s, arglist, blocksize, stringsize)
       }
 end
 
-#define NativeDef(class,field,func) extern struct b_proc B##func##;
+#define NativeDef(class,field,func) extern struct c_proc B##func##;
 #include "../h/nativedefs.h"
 #undef NativeDef
 
-static struct b_proc *native_methods[] = {
+static struct c_proc *native_methods[] = {
 #define NativeDef(class,field,func) &B##func##,
 #include "../h/nativedefs.h"
 #undef NativeDef
@@ -735,7 +735,8 @@ static struct b_proc *native_methods[] = {
 void resolve(struct progstate *p)
 {
     word i, j, n_fields;
-    struct b_proc *pp;
+    struct p_proc *pp;
+    struct c_proc *cp;
     struct class_field *cf;
     dptr *dpp;
     struct ipc_fname *fnptr;
@@ -804,23 +805,23 @@ void resolve(struct progstate *p)
                     /* Resolved to native method, do sanity checks, set pointer */
                     if (n < 0 || n >= ElemCount(native_methods))
                         ffatalerr("Native method index out of range: %d", n);
-                    pp = (struct b_proc *)native_methods[n];
-                    /* Clone the b_proc for a loaded program; we don't
+                    cp = (struct c_proc *)native_methods[n];
+                    /* Clone the c_proc for a loaded program; we don't
                      * want to change the original's reference to the
-                     * corresponding field (pp->field)
+                     * corresponding field (cp->field)
                      */
                     if (p != &rootpstate) 
-                        pp = clone_b_proc(pp);
+                        cp = (struct c_proc *)clone_b_proc((struct b_proc *)cp);
                     t = *p->Fnames[cf->fnum];
                     /* The field name should match the end of the procedure block's name */
                     if (strncmp(StrLoc(t),
-                                StrLoc(*pp->name) + StrLen(*pp->name) - StrLen(t),
+                                StrLoc(*cp->name) + StrLen(*cp->name) - StrLen(t),
                                 StrLen(t)))
                         ffatalerr("Native method name mismatch: %.*s", 
                                   (int)StrLen(t), StrLoc(t));
                     /* Pointer back to the corresponding field */
-                    pp->field = cf;
-                    BlkLoc(*cf->field_descriptor) = (union block *)pp;
+                    cp->field = cf;
+                    BlkLoc(*cf->field_descriptor) = (union block *)cp;
                 }
             } else if (cf->flags & M_Method) {
                 /*
@@ -828,7 +829,7 @@ void resolve(struct progstate *p)
                  * and the names of the parameters, locals, and static
                  * variables.
                  */
-                pp = (struct b_proc *)(p->Code + IntVal(*cf->field_descriptor));
+                pp = (struct p_proc *)(p->Code + IntVal(*cf->field_descriptor));
                 BlkLoc(*cf->field_descriptor) = (union block *)pp;
                 /* Pointer back to the corresponding field */
                 pp->field = cf;
@@ -955,7 +956,7 @@ void resolve(struct progstate *p)
                      *  to location of the procedure block in the code section.  Point
                      *  pp at the block and replace BlkLoc(p->Globals[j]).
                      */
-                    pp = (struct b_proc *)(p->Code + i);
+                    pp = (struct p_proc *)(p->Code + i);
                     BlkLoc(p->Globals[j]) = (union block *)pp;
 
                     /*
@@ -1319,7 +1320,7 @@ int main(int argc, char **argv)
 
     main_bp = &ProcBlk(*main_proc);
 
-    MemProtect(frame = alc_p_frame((struct b_proc *)&Bmain_wrapper, 0));
+    MemProtect(frame = alc_p_frame(&Bmain_wrapper, 0));
     frame->fvars->desc[0] = *main_proc;
     /*
      * Only create an args list if main has a parameter; otherwise args[1]

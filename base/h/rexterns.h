@@ -6,14 +6,14 @@
  * External declarations common to the compiler and interpreter.
  */
 
-extern struct b_proc *op_tbl[]; /* operators available for string invocation */
+extern struct c_proc *op_tbl[]; /* operators available for string invocation */
 extern int op_tbl_sz;           /* number of operators in op_tbl */
-extern struct b_proc *fnc_tbl[]; /* builtin functions */
+extern struct c_proc *fnc_tbl[]; /* builtin functions */
 extern int fnc_tbl_sz;           /* sizeof of fnc_tbl */
-extern struct b_proc *keyword_tbl[]; /* keyword functions */
+extern struct c_proc *keyword_tbl[]; /* keyword functions */
 extern int keyword_tbl_sz;           /* sizeof of keyword_tbl */
-extern struct b_proc *opblks[];  /* maps opcode to corresponding operator blocks */
-extern struct b_proc *keyblks[];  /* maps keyword number to corresponding function blocks */
+extern struct c_proc *opblks[];  /* maps opcode to corresponding operator blocks */
+extern struct c_proc *keyblks[];  /* maps keyword number to corresponding function blocks */
 extern word dodump;		/* termination dump */
 extern int set_up;
 extern int collecting;          /* non-zero whilst a GC is taking place */
@@ -49,7 +49,7 @@ extern struct descrip minusonedesc;	/* -ve one */
 extern struct descrip thousanddesc;	/* 1000 */
 extern struct descrip milliondesc;	/* 1000000 */
 
-extern struct b_proc Bdeferred_method_stub;  /* Deferred method block */
+extern struct c_proc Bdeferred_method_stub;  /* Deferred method block */
 
 extern word qualsize;		/* size of string qualifier list */
 extern word memcushion;		/* memory region cushion factor */

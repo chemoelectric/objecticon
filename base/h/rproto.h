@@ -448,6 +448,7 @@ void    rtos            (double n,dptr dp,char *s);
 struct progstate *alcprog(long icodesize);
 
 struct sockaddr *parse_sockaddr(char *s, int *size);
+int get_proc_kind(struct b_proc *bp);
 
 void call_trace(struct p_frame *pf);
 void fail_trace(struct p_frame *pf);
@@ -502,8 +503,8 @@ long    millisec        (void);
 /* Debug func. */
 void show_regions(void);
 
-struct p_frame *alc_p_frame(struct b_proc *pb, struct frame_vars *dynamics);
-struct c_frame *alc_c_frame(struct b_proc *pb, int nargs);
+struct p_frame *alc_p_frame(struct p_proc *pb, struct frame_vars *dynamics);
+struct c_frame *alc_c_frame(struct c_proc *pb, int nargs);
 void dyn_free(void *p);
 void free_frame(struct frame *f);
 
@@ -529,7 +530,7 @@ struct inline_field_cache *get_inline_field_cache(void);
 void traceback(struct b_coexpr *ce, int with_xtrace, int act_chain);
 struct ipc_line *frame_ipc_line(struct p_frame *pf);
 struct ipc_fname *frame_ipc_fname(struct p_frame *pf);
-struct b_proc *get_current_user_proc(void);
+struct p_proc *get_current_user_proc(void);
 struct p_frame *get_current_user_frame(void);
 struct p_frame *get_current_user_frame_of(struct b_coexpr *ce);
 struct progstate *get_current_program_of(struct b_coexpr *ce);

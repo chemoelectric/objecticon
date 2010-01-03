@@ -259,6 +259,16 @@
 #define Blocks	3			/* collection is for blocks */
 
 /*
+ * Struct types for proc blocks and frames.
+ */
+
+#define C_Frame 0
+#define P_Frame 1
+
+#define C_Proc 0
+#define P_Proc 1
+
+/*
  * procedure block kinds (b_proc.kind)
  */
 #define Procedure  0
@@ -451,53 +461,48 @@
  */
 #define FncBlock(f,nargs,vararg,ntend,underef)                          \
         static struct sdescrip Cat(f,_name_desc) = {sizeof(Lit(f))-1,Lit(f)}; \
-      	struct b_proc Cat(B,f) = {\
+      	struct c_proc Cat(B,f) = {\
       	T_Proc,\
-      	Cat(Z,f),\
-        0,\
+        C_Proc, \
       	nargs,\
         vararg,\
-   	0,0,0,0,0,0,0,0,\
+        0,\
+      	(dptr)&Cat(f,_name_desc), \
+      	Cat(Z,f),\
         sizeof(struct Cat(f,_frame)),\
         ntend,\
-        underef,\
-        0,0,\
-      	(dptr)&Cat(f,_name_desc), \
-        Function,\
-        0,0};
+        underef};
 
 /*
  * Procedure block for an operator.
  */
 #define OpBlock(f,nargs,ntend,sname,underef)                            \
         static struct sdescrip Cat(f,_name_desc) = {sizeof(sname)-1,sname}; \
-   	struct b_proc Cat(B,f) = {\
+   	struct c_proc Cat(B,f) = {\
    	T_Proc,\
-   	Cat(O,f),\
-        0,\
+        C_Proc, \
    	nargs,\
-   	0,0,0,0,0,0,0,0,0,\
+        0,\
+        0,\
+      	(dptr)&Cat(f,_name_desc), \
+   	Cat(O,f),\
         sizeof(struct Cat(f,_frame)),\
         ntend,\
-        underef,\
-        0,0,  \
-      	(dptr)&Cat(f,_name_desc), \
-        Operator,\
-        0,0};
-
+        underef};
 
 #define KeywordBlock(f,ntend)                                           \
         static struct sdescrip Cat(f,_name_desc) = {sizeof("&" Lit(f))-1, "&" Lit(f)}; \
-   	struct b_proc Cat(L,f) = {\
+   	struct c_proc Cat(L,f) = {\
    	T_Proc,\
+        C_Proc, \
+        0,\
+        0,\
+        0,\
+      	(dptr)&Cat(f,_name_desc), \
    	Cat(K,f),\
-   	0,0,0,0,0,0,0,0,0,0,0,\
         sizeof(struct Cat(f,_frame)),\
         ntend,\
-        0,0,0,  \
-      	(dptr)&Cat(f,_name_desc), \
-        Keyword,\
-        0,0};
+        0};
 
 /*
  * Miscellaneous macro definitions.

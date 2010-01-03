@@ -146,7 +146,7 @@ operator ! bang(underef x -> dx)
            struct p_frame *pf;
            EVValD(&dx, E_Cobang);
 
-           MemProtect(pf = alc_p_frame((struct b_proc *)&Bcoexp_bang_impl, 0));
+           MemProtect(pf = alc_p_frame(&Bcoexp_bang_impl, 0));
            push_frame((struct frame *)pf);
            pf->fvars->desc[0] = dx;
            for (;;) {

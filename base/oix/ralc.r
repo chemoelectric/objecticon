@@ -869,7 +869,7 @@ static void check_stack_usage()
     stacklim = Max(stacklim, 3 * (total_stackcurr / 2));
 }
 
-struct p_frame *alc_p_frame(struct b_proc *pb, struct frame_vars *fvars)
+struct p_frame *alc_p_frame(struct p_proc *pb, struct frame_vars *fvars)
 {
     struct p_frame *p;
     char *t;
@@ -912,7 +912,7 @@ struct p_frame *alc_p_frame(struct b_proc *pb, struct frame_vars *fvars)
             p->mark[i] = 0;
     } else
         p->mark = 0;
-    p->type = P_FRAME_TYPE;
+    p->type = P_Frame;
     p->lhs = 0;
     p->failure_label = 0;
     p->rval = 0;
@@ -950,7 +950,7 @@ struct p_frame *alc_p_frame(struct b_proc *pb, struct frame_vars *fvars)
     return p;
 }
 
-struct c_frame *alc_c_frame(struct b_proc *pb, int nargs)
+struct c_frame *alc_c_frame(struct c_proc *pb, int nargs)
 {
     struct c_frame *p;
     char *t;
@@ -962,7 +962,7 @@ struct c_frame *alc_c_frame(struct b_proc *pb, int nargs)
     curpstate->stackcurr += size;
     p->size = size;
     p->creator = curpstate;
-    p->type = C_FRAME_TYPE;
+    p->type = C_Frame;
     p->lhs = 0;
     p->proc = pb;
     p->parent_sp = 0;
@@ -991,12 +991,12 @@ struct c_frame *alc_c_frame(struct b_proc *pb, int nargs)
 void free_frame(struct frame *f)
 {
     switch (f->type) {
-        case C_FRAME_TYPE: {
+        case C_Frame: {
             f->creator->stackcurr -= f->size;
             free(f);
             break;
         }
-        case P_FRAME_TYPE: {
+        case P_Frame: {
             struct frame_vars *l = ((struct p_frame *)f)->fvars;
             f->creator->stackcurr -= f->size;
             free(f);

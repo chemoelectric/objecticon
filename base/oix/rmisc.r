@@ -142,7 +142,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
      */
     pf = get_current_user_frame_of(p->K_current);
     if (pf) {
-        struct b_proc *bp;
+        struct p_proc *bp;
         dptr *np;
         int i;
 
@@ -606,10 +606,10 @@ void outimage(FILE *f, dptr dp, int noimage)
              putstr(f, field->defining_class->name);
              fprintf(f, ".");
              putstr(f, field->defining_class->program->Fnames[field->fnum]);
-         } else if (&ProcBlk(*dp) == &Bdeferred_method_stub)
+         } else if (&ProcBlk(*dp) == (struct b_proc *)&Bdeferred_method_stub)
              fprintf(f, "deferred method");
          else {
-             fprintf(f, "%s ", proc_kinds[ProcBlk(*dp).kind]);
+             fprintf(f, "%s ", proc_kinds[get_proc_kind(&ProcBlk(*dp))]);
              putstr(f, ProcBlk(*dp).name);
          }
       }
@@ -1222,10 +1222,10 @@ void getimage(dptr dp1, dptr dp2)
              alcstr(StrLoc(*field_class->name),StrLen(*field_class->name));
              alcstr(".", 1);
              alcstr(StrLoc(*field_name),StrLen(*field_name));
-         } else if (&ProcBlk(source) == &Bdeferred_method_stub)
+         } else if (&ProcBlk(source) == (struct b_proc *)&Bdeferred_method_stub)
              LitStr("deferred method", dp2);
          else {
-             char *type0 = proc_kinds[ProcBlk(source).kind];
+             char *type0 = proc_kinds[get_proc_kind(&ProcBlk(source))];
              len = strlen(type0) + 1 + StrLen(*ProcBlk(source).name);
              MemProtect (StrLoc(*dp2) = reserve(Strings, len));
              StrLen(*dp2) = len;
@@ -1350,7 +1350,7 @@ void getimage(dptr dp1, dptr dp2)
                alcstr(")", 1);
            } else {
                /* No field - it should only be possible to be the deferred method stub here */
-               if (proc0 != &Bdeferred_method_stub)
+               if (proc0 != (struct b_proc *)&Bdeferred_method_stub)
                    syserr("Expected deferred_method_stub");
                len = StrLen(*obj_class->name) + strlen(sbuf) + 29;
                MemProtect (StrLoc(*dp2) = reserve(Strings, len));

@@ -16,7 +16,7 @@ Glob loc'n of One: failed, &why="No global location data in icode"
 Glob loc'n of upto: failed, &why="No global location data in icode"
 Loc'n of proc procedure main: failed, &why="No global location data in icode"
 Loc'n of proc procedure p: failed, &why="No global location data in icode"
-Loc'n of proc function upto: failed, &why="Proc is builtin, has no location"
+Loc'n of proc function upto: failed, &why="Proc not a procedure, has no location"
 Loc'n of proc method One.four: failed, &why="No field location data in icode"
 Loc'n of constructor rectype: failed, &why="No global location data in icode"
 Loc'n of class One: failed, &why="No global location data in icode"
@@ -48,7 +48,7 @@ Glob loc'n of One: test/loc.icn:6
 Glob loc'n of upto: failed, &why="Symbol is builtin, has no location"
 Loc'n of proc procedure main: test/loc.icn:45
 Loc'n of proc procedure p: test/loc.icn:23
-Loc'n of proc function upto: failed, &why="Proc is builtin, has no location"
+Loc'n of proc function upto: failed, &why="Proc not a procedure, has no location"
 Loc'n of proc method One.four: test/loc.icn:19
 Loc'n of constructor rectype: test/loc.icn:3
 Loc'n of class One: test/loc.icn:6

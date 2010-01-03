@@ -24,149 +24,158 @@ static void invoke_class_init(void);
 static struct frame *push_frame_for_proc(struct b_proc *bp, int argc, dptr args, dptr self)
 {
     int i, j;
-    
-    if (bp->icode) {
-        /* Icon procedure */
-        struct p_frame *pf;
-        MemProtect(pf = alc_p_frame(bp, 0));
-        push_frame((struct frame *)pf);
-        if (self) {
-            pf->fvars->desc[0] = *self;
-            i = 1;
-        } else
-            i = 0;
-        if (bp->vararg) {
-            /* Varargs, last param is a list */
-            tended struct descrip tmp, l;
-            create_list(Max(0, argc - bp->nparam + 1 + i), &l);
+
+    switch (bp->type) {
+        case P_Proc: {
+            /* Icon procedure */
+            struct p_proc *pp = (struct p_proc *)bp;
+            struct p_frame *pf;
+            MemProtect(pf = alc_p_frame(pp, 0));
+            push_frame((struct frame *)pf);
+            if (self) {
+                pf->fvars->desc[0] = *self;
+                i = 1;
+            } else
+                i = 0;
+            if (pp->vararg) {
+                /* Varargs, last param is a list */
+                tended struct descrip tmp, l;
+                create_list(Max(0, argc - pp->nparam + 1 + i), &l);
+                if (args) {
+                    type_case *args of {
+                      list: {
+                            struct lgstate state;
+                            tended struct b_lelem *le;
+                            le = lgfirst(&ListBlk(*args), &state);
+                            for (j = 0; j < argc; ++j) {
+                                if (i < pp->nparam - 1)
+                                    pf->fvars->desc[i++] = le->lslots[state.result];
+                                else {
+                                    /* This must be done via a tended temporary */
+                                    tmp = le->lslots[state.result];
+                                    list_put(&l, &tmp);
+                                }
+                                le = lgnext(&ListBlk(*args), &state, le);
+                            }
+                        }
+                      record: {
+                            for (j = 0; j < argc; ++j) {
+                                if (i < pp->nparam - 1)
+                                    pf->fvars->desc[i++] = RecordBlk(*args).fields[j];
+                                else {
+                                    /* This must be done via a tended temporary */
+                                    tmp = RecordBlk(*args).fields[j];
+                                    list_put(&l, &tmp);
+                                }
+                            }
+                        }
+                        default: syserr("Unexpected type");
+                    }
+                } else {
+                    for (j = 0; j < argc; ++j) {
+                        if (i < pp->nparam - 1)
+                            get_deref(&pf->fvars->desc[i++]);
+                        else {
+                            get_deref(&tmp);
+                            list_put(&l, &tmp);
+                        }
+                    }
+                }
+                /* Params i ... pp->nparam - 2 are already initialized to nulldesc by alc_p_frame */
+                pf->fvars->desc[pp->nparam - 1] = l;
+            } else {
+                if (args) {
+                    type_case *args of {
+                      list: {
+                            struct lgstate state;
+                            tended struct b_lelem *le;
+                            le = lgfirst(&ListBlk(*args), &state);
+                            for (j = 0; j < argc; ++j) {
+                                if (i < pp->nparam)
+                                    pf->fvars->desc[i++] = le->lslots[state.result];
+                                else
+                                    break;
+                                le = lgnext(&ListBlk(*args), &state, le);
+                            }
+                        }
+                      record: {
+                            for (j = 0; j < argc; ++j) {
+                                if (i < pp->nparam)
+                                    pf->fvars->desc[i++] = RecordBlk(*args).fields[j];
+                                else
+                                    break;
+                            }
+                        }
+                        default: syserr("Unexpected type");
+                    }
+                } else {
+                    for (j = 0; j < argc; ++j) {
+                        if (i < pp->nparam)
+                            get_deref(&pf->fvars->desc[i++]);
+                        else
+                            skip_descrip();
+                    }
+                }
+                /* Remaining args (i ... pp->nparam-1) are already set to nulldesc */
+            }
+            return (struct frame *)pf;
+        }
+        case C_Proc: {
+            /* Builtin */
+            struct c_proc *cp = (struct c_proc *)bp;
+            struct c_frame *cf;
+            int want;
+
+            if (self)
+                i = 1;
+            else
+                i = 0;
+
+            if (cp->vararg)
+                want = Max(argc + i, cp->nparam - 1);
+            else
+                want = Max(argc + i, cp->nparam);
+
+            MemProtect(cf = alc_c_frame(cp, want));
+            push_frame((struct frame *)cf);
+
+            if (self)
+                cf->args[0] = *self;
+
             if (args) {
                 type_case *args of {
                   list: {
-                    struct lgstate state;
-                    tended struct b_lelem *le;
-                    le = lgfirst(&ListBlk(*args), &state);
-                    for (j = 0; j < argc; ++j) {
-                        if (i < bp->nparam - 1)
-                            pf->fvars->desc[i++] = le->lslots[state.result];
-                        else {
-                            /* This must be done via a tended temporary */
-                            tmp = le->lslots[state.result];
-                            list_put(&l, &tmp);
+                        struct lgstate state;
+                        tended struct b_lelem *le;
+                        le = lgfirst(&ListBlk(*args), &state);
+                        for (j = 0; j < argc; ++j) {
+                            cf->args[i++] = le->lslots[state.result];
+                            le = lgnext(&ListBlk(*args), &state, le);
                         }
-                        le = lgnext(&ListBlk(*args), &state, le);
                     }
-                  }
                   record: {
-                    for (j = 0; j < argc; ++j) {
-                        if (i < bp->nparam - 1)
-                            pf->fvars->desc[i++] = RecordBlk(*args).fields[j];
-                        else {
-                            /* This must be done via a tended temporary */
-                            tmp = RecordBlk(*args).fields[j];
-                            list_put(&l, &tmp);
-                        }
+                        for (j = 0; j < argc; ++j)
+                            cf->args[i++] = RecordBlk(*args).fields[j];
                     }
-                  }
-                  default: syserr("Unexpected type");
+                    default: syserr("Unexpected type");
                 }
             } else {
-                for (j = 0; j < argc; ++j) {
-                    if (i < bp->nparam - 1)
-                        get_deref(&pf->fvars->desc[i++]);
-                    else {
-                        get_deref(&tmp);
-                        list_put(&l, &tmp);
-                    }
+                if (cp->underef) {
+                    for (j = 0; j < argc; ++j)
+                        get_variable(&cf->args[i++]);
+                } else {
+                    for (j = 0; j < argc; ++j)
+                        get_deref(&cf->args[i++]);
                 }
             }
-            /* Params i ... bp->nparam - 2 are already initialized to nulldesc by alc_p_frame */
-            pf->fvars->desc[bp->nparam - 1] = l;
-        } else {
-            if (args) {
-                type_case *args of {
-                   list: {
-                      struct lgstate state;
-                      tended struct b_lelem *le;
-                      le = lgfirst(&ListBlk(*args), &state);
-                      for (j = 0; j < argc; ++j) {
-                          if (i < bp->nparam)
-                              pf->fvars->desc[i++] = le->lslots[state.result];
-                          else
-                              break;
-                          le = lgnext(&ListBlk(*args), &state, le);
-                      }
-                   }
-                   record: {
-                      for (j = 0; j < argc; ++j) {
-                          if (i < bp->nparam)
-                              pf->fvars->desc[i++] = RecordBlk(*args).fields[j];
-                          else
-                              break;
-                      }
-                   }
-                   default: syserr("Unexpected type");
-                }
-            } else {
-                for (j = 0; j < argc; ++j) {
-                    if (i < bp->nparam)
-                        get_deref(&pf->fvars->desc[i++]);
-                    else
-                        skip_descrip();
-                }
-            }
-            /* Remaining args (i ... bp->nparam-1) are already set to nulldesc */
+            /* Remaining args (i ... want-1) are already set to nulldesc */
+
+            return (struct frame *)cf;
         }
-        return (struct frame *)pf;
-    } else {
-        /* Builtin */
-        struct c_frame *cf;
-        int want;
-
-        if (self)
-            i = 1;
-        else
-            i = 0;
-
-        if (bp->vararg)
-            want = Max(argc + i, bp->nparam - 1);
-        else
-            want = Max(argc + i, bp->nparam);
-
-        MemProtect(cf = alc_c_frame(bp, want));
-        push_frame((struct frame *)cf);
-
-        if (self)
-            cf->args[0] = *self;
-
-        if (args) {
-            type_case *args of {
-               list: {
-                  struct lgstate state;
-                  tended struct b_lelem *le;
-                  le = lgfirst(&ListBlk(*args), &state);
-                  for (j = 0; j < argc; ++j) {
-                      cf->args[i++] = le->lslots[state.result];
-                      le = lgnext(&ListBlk(*args), &state, le);
-                  }
-               }
-               record: {
-                  for (j = 0; j < argc; ++j)
-                      cf->args[i++] = RecordBlk(*args).fields[j];
-               }
-               default: syserr("Unexpected type");
-            }
-        } else {
-            if (bp->underef) {
-                for (j = 0; j < argc; ++j)
-                    get_variable(&cf->args[i++]);
-            } else {
-                for (j = 0; j < argc; ++j)
-                    get_deref(&cf->args[i++]);
-            }
+        default: {
+            syserr("Unknown proc type");
+            return 0;  /* Not reached */
         }
-        /* Remaining args (i ... want-1) are already set to nulldesc */
-
-        return (struct frame *)cf;
     }
 }
 
@@ -364,7 +373,7 @@ static void ensure_class_initialized()
     /* Avoid creating a frame if we don't need to */
     if (ClassBlk(*d).init_state != Uninitialized)
         return;
-    MemProtect(pf = alc_p_frame((struct b_proc *)&Bensure_class_initialized, 0));
+    MemProtect(pf = alc_p_frame(&Bensure_class_initialized, 0));
     push_frame((struct frame *)pf);
     pf->fvars->desc[0] = *d;
     pf->failure_label = ipc;
@@ -430,7 +439,7 @@ void construct_object(word clo, dptr lhs, dptr expr, int argc, dptr args, word r
             return;
         }
 
-        MemProtect(pf = alc_p_frame((struct b_proc *)&Bconstruct_object, 0));
+        MemProtect(pf = alc_p_frame(&Bconstruct_object, 0));
         push_frame((struct frame *)pf);
         pf->lhs = lhs;
         /* Arg0 is the class */
@@ -455,7 +464,7 @@ void construct_object(word clo, dptr lhs, dptr expr, int argc, dptr args, word r
         pf->clo[0] = new_f;
     } else {
         skip_args(argc, args);
-        MemProtect(pf = alc_p_frame((struct b_proc *)&Bconstruct_object0, 0));
+        MemProtect(pf = alc_p_frame(&Bconstruct_object0, 0));
         push_frame((struct frame *)pf);
         pf->lhs = lhs;
         /* Arg0 is the class */
@@ -478,7 +487,7 @@ static void construct_record(word clo, dptr lhs, dptr expr, int argc, dptr args,
     int i;
     tended struct descrip tmp;
 
-    MemProtect(pf = alc_p_frame((struct b_proc *)&Bgenerate_arg, 0));
+    MemProtect(pf = alc_p_frame(&Bgenerate_arg, 0));
     push_frame((struct frame *)pf);
     pf->lhs = lhs;
 
@@ -569,7 +578,7 @@ static void invoke_misc(word clo, dptr lhs, dptr expr, int argc, dptr args, word
             ipc = failure_label;
             return;
         }
-        MemProtect(pf = alc_p_frame((struct b_proc *)&Bgenerate_arg, 0));
+        MemProtect(pf = alc_p_frame(&Bgenerate_arg, 0));
         push_frame((struct frame *)pf);
         pf->lhs = lhs;
         if (args)
@@ -773,7 +782,7 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
 
     if (class0->init_state == Uninitialized) {
         struct p_frame *pf;
-        MemProtect(pf = alc_p_frame((struct b_proc *)&Binitialize_class_and_repeat, 0));
+        MemProtect(pf = alc_p_frame(&Binitialize_class_and_repeat, 0));
         push_frame((struct frame *)pf);
         pf->fvars->desc[0] = *expr;
         pf->failure_label = failure_label;
@@ -804,7 +813,7 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
               (class0->init_state == Initializing &&
                ic &&                      /* No Class.get(..) := ... */
                class0->init_field &&       /* .. and must be in init() method */
-               get_current_user_proc() == &ProcBlk(*class0->init_field->field_descriptor))))
+               (struct b_proc *)get_current_user_proc() == &ProcBlk(*class0->init_field->field_descriptor))))
     {
         lhs->dword = D_NamedVar;
         VarLoc(*lhs) = dp;
@@ -960,7 +969,7 @@ static void class_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inli
 
     if (class0->init_state == Uninitialized) {
         struct p_frame *pf;
-        MemProtect(pf = alc_p_frame((struct b_proc *)&Binitialize_class_and_repeat, 0));
+        MemProtect(pf = alc_p_frame(&Binitialize_class_and_repeat, 0));
         push_frame((struct frame *)pf);
         pf->fvars->desc[0] = *expr;
         pf->failure_label = failure_label;
@@ -1153,7 +1162,7 @@ static void handle_access_failure()
 function lang_Class_get(obj, field)
    body {
       struct p_frame *pf;
-      MemProtect(pf = alc_p_frame((struct b_proc *)&Bget_impl, 0));
+      MemProtect(pf = alc_p_frame(&Bget_impl, 0));
       push_frame((struct frame *)pf);
       pf->fvars->desc[0] = obj;
       pf->fvars->desc[1] = field;
@@ -1165,7 +1174,7 @@ end
 function lang_Class_getf(obj, field)
    body {
       struct p_frame *pf;
-      MemProtect(pf = alc_p_frame((struct b_proc *)&Bgetf_impl, 0));
+      MemProtect(pf = alc_p_frame(&Bgetf_impl, 0));
       push_frame((struct frame *)pf);
       pf->fvars->desc[0] = obj;
       pf->fvars->desc[1] = field;
@@ -1177,7 +1186,7 @@ end
 function lang_Class_getq(obj, field)
    body {
       struct p_frame *pf;
-      MemProtect(pf = alc_p_frame((struct b_proc *)&Bgetq_impl, 0));
+      MemProtect(pf = alc_p_frame(&Bgetq_impl, 0));
       push_frame((struct frame *)pf);
       pf->fvars->desc[0] = obj;
       pf->fvars->desc[1] = field;
@@ -1203,7 +1212,7 @@ function lang_Class_create_raw(c)
        runerr(603, c)
     body {
       struct p_frame *pf;
-      MemProtect(pf = alc_p_frame((struct b_proc *)&Blang_Class_create_raw_impl, 0));
+      MemProtect(pf = alc_p_frame(&Blang_Class_create_raw_impl, 0));
       push_frame((struct frame *)pf);
       pf->fvars->desc[0] = c;
       tail_invoke_frame((struct frame *)pf);
@@ -1228,7 +1237,7 @@ function lang_Class_ensure_initialized(c)
       /* Avoid creating a frame if we don't need to */
       if (ClassBlk(c).init_state != Uninitialized)
           return c;
-      MemProtect(pf = alc_p_frame((struct b_proc *)&Blang_Class_ensure_initialized_impl, 0));
+      MemProtect(pf = alc_p_frame(&Blang_Class_ensure_initialized_impl, 0));
       push_frame((struct frame *)pf);
       pf->fvars->desc[0] = c;
       tail_invoke_frame((struct frame *)pf);
