@@ -945,7 +945,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             chunk1(to->failure, ir_goto(n, from->resume));
 
             chunk2(by->success, 
-                   ir_opclo(n, clo, target, n->op, fv, tv, bv, 1, by->resume),
+                   ir_opclo(n, clo, target, n->op, fv, tv, bv, rval, by->resume),
                    ir_goto(n, res->success));
             chunk1(by->failure, ir_goto(n, to->resume));
 
@@ -979,7 +979,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             chunk1(from->failure, ir_goto(n, res->failure));
 
             chunk2(to->success, 
-                   ir_opclo(n, clo, target, Uop_Toby, fv, tv, one, 1, to->resume),
+                   ir_opclo(n, clo, target, Uop_Toby, fv, tv, one, rval, to->resume),
                    ir_goto(n, res->success));
             chunk1(to->failure, ir_goto(n, from->resume));
 
