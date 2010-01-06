@@ -27,7 +27,6 @@
 #define Ir_Applyf      27
 #define Ir_Create      28
 #define Ir_Coret       29
-#define Ir_Coact       30
 #define Ir_Cofail      31
 #define Ir_Limit       32
 #define Ir_Return      33
@@ -264,15 +263,6 @@ struct ir_create {
 struct ir_coret {
     IR_SUB
     struct ir_var *value;
-};
-
-struct ir_coact {
-    IR_SUB
-    struct ir_var *lhs;
-    struct ir_var *arg1;
-    struct ir_var *arg2;
-    int rval;
-    int fail_label;
 };
 
 struct ir_limit {

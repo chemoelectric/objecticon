@@ -1672,10 +1672,11 @@ static void relocate_code(struct progstate *ps, word *c)
                 break;
             }
 
-            case Op_Coact: {
+            case Op_Activate: {
                 conv_var();  /* lhs */
                 conv_var();  /* arg1 */
                 conv_var();  /* arg2 */
+                ++pc;            /* rval */
                 conv_addr(); /* failure label */
                 break;
             }

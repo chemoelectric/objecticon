@@ -898,15 +898,6 @@ static void lemitcode()
                     emit_ir_var(x->value, "value");
                     break;
                 }
-                case Ir_Coact: {
-                    struct ir_coact *x = (struct ir_coact *)ir;
-                    out_op(Op_Coact);
-                    emit_ir_var(x->lhs, "lhs");
-                    emit_ir_var(x->arg1, "arg1");
-                    emit_ir_var(x->arg2, "arg2");
-                    labout(x->fail_label, "fail");
-                    break;
-                }
                 case Ir_Cofail: {
                     out_op(Op_Cofail);
                     break;
@@ -2084,6 +2075,10 @@ static word cnv_op(int n)
 
         case Uop_Toby:
             opcode = Op_Toby;
+            break;
+
+        case Uop_Bactivate:
+            opcode = Op_Activate;
             break;
 
         case Uop_Sect:                  /* section operation x[a:b] */

@@ -789,7 +789,7 @@ static void xtrace()
             fputs(" ? ..}", stderr);
             break;
 
-        case Op_Coact:
+        case Op_Activate:
             fprintf(stderr, "   {");
             outimage(stderr, xargp, 0);
             fprintf(stderr, " @ ");

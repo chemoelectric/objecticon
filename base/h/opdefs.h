@@ -50,7 +50,7 @@
 #define Op_Toby		 41
 #define Op_Unions	 42
 #define Op_Value	 43
-#define Op_Coact         44
+#define Op_Activate      44
 /*
  * Other instructions.
  */

@@ -44,7 +44,7 @@ static char *op_names[] = {
     /*  41 */         "toby",
     /*  42 */         "unions",
     /*  43 */         "value",
-    /*  44 */         "coact",
+    /*  44 */         "activate",
     /*  45 */         INVALID,
     /*  46 */         "coret",
     /*  47 */         "create",

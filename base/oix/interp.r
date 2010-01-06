@@ -5,7 +5,7 @@ static void coact_ex(void);
 static void get_child_prog_result(void);
 static void activate_child_prog(void);
 static void do_cofail(void);
-static void do_coact(void);
+static void do_activate(void);
 static void do_op(int nargs);
 static void do_opclo(int nargs);
 static void do_keyop(void);
@@ -484,17 +484,18 @@ static void do_create()
     EVValD(lhs, E_Cocreate);
 }
 
-static void do_coact()
+static void do_activate()
 {
     dptr lhs;
     tended struct descrip arg1, arg2;
-    word *failure_label;
+    word rval, *failure_label;
     struct p_frame *pf;
 
     lhs = get_dptr();
 
     get_variable(&arg1);   /* Value */
     get_deref(&arg2);     /* Coexp */
+    rval = GetWord;
     failure_label = GetAddr;
     if (!is:coexpr(arg2)) {
         xargp = &arg1;
@@ -690,11 +691,10 @@ function coact(underef val, ce, activator, failto)
 end
 
 /*
- * These two operators allow binary and unary activation operations
- * via string invocation.
+ * This operator allows the activation operation via string invocation.
  */
 
-operator @ bactivate(underef val, ce)
+operator @ activate(underef val, ce)
     if !is:coexpr(ce) then
        runerr(118, ce)
     body {
@@ -704,24 +704,6 @@ operator @ bactivate(underef val, ce)
         MemProtect(pf = alc_p_frame(&Bcoact_impl, 0));
         push_frame((struct frame *)pf);
         pf->fvars->desc[0] = val;
-        pf->fvars->desc[1] = ce;
-        pf->fvars->desc[2].dword = D_Coexpr;
-        BlkLoc(pf->fvars->desc[2]) = (union block *)k_current;
-        tail_invoke_frame((struct frame *)pf);
-        return;
-    }
-end
-
-operator @ uactivate(ce)
-    if !is:coexpr(ce) then
-       runerr(118, ce)
-    body {
-        struct p_frame *pf;
-        if (!get_current_user_frame_of(&CoexprBlk(ce)))
-            runerr(138, ce);
-        MemProtect(pf = alc_p_frame(&Bcoact_impl, 0));
-        push_frame((struct frame *)pf);
-        pf->fvars->desc[0] = nulldesc;
         pf->fvars->desc[1] = ce;
         pf->fvars->desc[2].dword = D_Coexpr;
         BlkLoc(pf->fvars->desc[2]) = (union block *)k_current;
@@ -1120,8 +1102,8 @@ void interp()
                 break;
             }
 
-            case Op_Coact: {
-                do_coact();
+            case Op_Activate: {
+                do_activate();
                 break;
             }
 
