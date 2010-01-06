@@ -1426,6 +1426,7 @@ static void relocate_code(struct progstate *ps, word *c)
             }
 
             /* Binary ops */
+            case Op_Activate:
             case Op_Asgn:
             case Op_Power:
             case Op_Cat:
@@ -1669,15 +1670,6 @@ static void relocate_code(struct progstate *ps, word *c)
             case Op_Create: {
                 conv_var();  /* lhs */
                 conv_addr(); /* start label */
-                break;
-            }
-
-            case Op_Activate: {
-                conv_var();  /* lhs */
-                conv_var();  /* arg1 */
-                conv_var();  /* arg2 */
-                ++pc;            /* rval */
-                conv_addr(); /* failure label */
                 break;
             }
 

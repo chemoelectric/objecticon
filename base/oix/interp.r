@@ -488,14 +488,14 @@ static void do_activate()
 {
     dptr lhs;
     tended struct descrip arg1, arg2;
-    word rval, *failure_label;
+    word *failure_label;
     struct p_frame *pf;
 
     lhs = get_dptr();
 
     get_variable(&arg1);   /* Value */
-    get_deref(&arg2);     /* Coexp */
-    rval = GetWord;
+    get_deref(&arg2);      /* Coexp */
+    ipc++;                 /* rval */
     failure_label = GetAddr;
     if (!is:coexpr(arg2)) {
         xargp = &arg1;
