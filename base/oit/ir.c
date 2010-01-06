@@ -1823,6 +1823,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             chunk1(e2->success, ir_goto(n, res->success));
             chunk1(e2->failure, ir_goto(n, e1->resume));
 
+            res->uses_stack = e1->uses_stack || e2->uses_stack;
             break;
         }
 
@@ -1845,6 +1846,8 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                    ir_op(n, target, Uop_Asgn, v1, v2, 0, rval, e2->resume),
                    ir_goto(n, res->success));
             chunk1(e2->failure, ir_goto(n, e1->resume));
+
+            res->uses_stack = e1->uses_stack || e2->uses_stack;
             break;
         }
 
