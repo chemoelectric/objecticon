@@ -869,7 +869,7 @@ int *dflt_to_ptr;
 static void ret_value(struct token *t, struct node *n, int indent)
 {
    if (n == NULL)
-      errt1(t, "there is no default return value for run-time operations");
+       return;
     prt_str("struct descrip result;", indent);
     ForceNl();
     ret_value1(t, n, indent);

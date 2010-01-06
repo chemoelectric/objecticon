@@ -151,7 +151,7 @@ operator ! bang(underef x -> dx)
            pf->fvars->desc[0] = dx;
            for (;;) {
                tail_invoke_frame((struct frame *)pf);
-               suspend nulldesc;
+               suspend;
            }
        }
 

@@ -13,7 +13,6 @@ static void do_keyclo(void);
 static void do_makelist(void);
 static void do_create(void);
 static void do_coret(void);
-static void coact_ex(void);
 static void do_limit(void);
 static void do_scansave(void);
 static void pop_from_prog_event_queue(struct progstate *prog, dptr res);
@@ -686,7 +685,7 @@ function coact(underef val, ce, activator, failto)
         pf->fvars->desc[2] = activator;
         pf->fvars->desc[3] = failto;
         tail_invoke_frame((struct frame *)pf);
-        return nulldesc;
+        return;
     }
 end
 
@@ -709,7 +708,7 @@ operator @ bactivate(underef val, ce)
         pf->fvars->desc[2].dword = D_Coexpr;
         BlkLoc(pf->fvars->desc[2]) = (union block *)k_current;
         tail_invoke_frame((struct frame *)pf);
-        return nulldesc;
+        return;
     }
 end
 
@@ -727,7 +726,7 @@ operator @ uactivate(ce)
         pf->fvars->desc[2].dword = D_Coexpr;
         BlkLoc(pf->fvars->desc[2]) = (union block *)k_current;
         tail_invoke_frame((struct frame *)pf);
-        return nulldesc;
+        return;
     }
 end
 
@@ -1212,7 +1211,7 @@ function lang_Prog_get_event_impl(c, res)
        pf->fvars->desc[0] = c;
        pf->fvars->desc[1] = res;
        tail_invoke_frame((struct frame *)pf);
-       return nulldesc;
+       return;
    }
 end
 
