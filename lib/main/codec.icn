@@ -343,10 +343,7 @@ class Decode()
       self.tag_count := 0
       self.seen := table()
       s ? {
-         if =Codec.FAST_FLAG then
-            self.fast_flag := 1
-         else
-            self.fast_flag := &null
+         self.fast_flag := if =Codec.FAST_FLAG then 1 else &null
          if res := decode() then {
             self.seen := &null
             return res
