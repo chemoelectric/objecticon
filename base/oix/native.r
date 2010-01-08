@@ -3306,9 +3306,7 @@ end
 
 function lang_Internal_hash(x)
    body {
-       struct descrip result;
-       MakeInt(hash(&x) & MaxWord, &result);
-       return result;
+      return C_integer hash(&x) & MaxWord;
    }
 end
 
