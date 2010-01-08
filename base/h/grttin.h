@@ -42,7 +42,7 @@
        if (frame->lhs)
            suspend expr;
        else
-           suspend nulldesc;
+           suspend;
    } while (0)
 #enddef
 
@@ -51,7 +51,7 @@
        if (frame->lhs)
            return expr;
        else
-           return nulldesc;
+           return;
    } while (0)
 #enddef
 
