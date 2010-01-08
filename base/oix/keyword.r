@@ -300,9 +300,7 @@ end
 "&version - a string indentifying this version of Icon."
 keyword version
    body {
-    struct descrip result;
-    LitStr(Version, &result);
-    return result;
+    return C_string Version;
    }
 end
 

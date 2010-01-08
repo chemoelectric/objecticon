@@ -971,30 +971,28 @@ static dptr nth(dptr d)
 "type(x) - return type of x as a string."
 
 function type(x)
-  body {
-   struct descrip result;
-   type_case x of {
-      string:      LitStr("string", &result);    
-      null:        LitStr("null", &result);      
-      integer:     LitStr("integer", &result);   
-      real:        LitStr("real", &result);      
-      cset:        LitStr("cset", &result);      
-      proc:        LitStr("procedure", &result); 
-      list:        LitStr("list", &result);      
-      table:       LitStr("table", &result);     
-      set:         LitStr("set", &result);       
-      class:       LitStr("class", &result);       
-      constructor: LitStr("constructor", &result);       
-      record:      LitStr("record", &result);    
-      object:      LitStr("object", &result);    
-      methp:       LitStr("methp", &result);    
-      cast:        LitStr("cast", &result);    
-      ucs:         LitStr("ucs", &result);    
-      coexpr:      LitStr("co-expression", &result); 
-      default:     runerr(123,x);
+   body {
+      type_case x of {
+         string:      return C_string "string";
+         null:        return C_string "null";
+         integer:     return C_string "integer";
+         real:        return C_string "real";
+         cset:        return C_string "cset";
+         proc:        return C_string "procedure";
+         list:        return C_string "list";
+         table:       return C_string "table";
+         set:         return C_string "set";
+         class:       return C_string "class";
+         constructor: return C_string "constructor";
+         record:      return C_string "record";
+         object:      return C_string "object";
+         methp:       return C_string "methp";
+         cast:        return C_string "cast";
+         ucs:         return C_string "ucs";
+         coexpr:      return C_string "co-expression";
+         default:     runerr(123,x);
+      }
    }
-   return result;
-  }
 end
 
 
