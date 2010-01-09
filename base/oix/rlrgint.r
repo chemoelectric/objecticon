@@ -209,18 +209,21 @@ static void itobig(word i, struct b_bignum *x, dptr dx)
 
 word bigradix(int sign,                      /* '-' or not */
               int r,                         /* radix 2 .. 36 */
-              char *s,                       /* input string */
-              char *end_s,
+              dptr sd,                       /* input string (pointer to tended descriptor) */
               union numeric *result)         /* output T_Integer or T_Lrgint */
 {
-    struct b_bignum *b;
+    struct b_bignum *b;   /* Doesn't need to be tended */
     DIGIT *bd;
     word len;
     int c;
+    char *s, *end_s;     /* Don't need to be tended */
+    struct descrip dx;
 
     if (r == 0)
         return CvtFail;
-    len = ceil((end_s - s) * ln(r) / ln(B));
+
+    len = ceil(StrLen(*sd) * ln(r) / ln(B));
+
     MemProtect(b = alcbignum(len));
     bd = DIG(b,0);
 
@@ -229,6 +232,8 @@ word bigradix(int sign,                      /* '-' or not */
     if (r < 2 || r > 36)
         return CvtFail;
 
+    s = StrLoc(*sd);
+    end_s = s + StrLen(*sd);
     for (c = ((s < end_s) ? *s++ : ' '); isalnum((unsigned char)c);
          c = ((s < end_s) ? *s++ : ' ')) {
         c = isdigit((unsigned char)c) ? (c)-'0' : 10+(((c)|(040))-'a');
@@ -251,15 +256,12 @@ word bigradix(int sign,                      /* '-' or not */
         b->sign = 1;
 
     /* put value into dx and return the type */
-
-    { struct descrip dx;
-        mkdesc(b, &dx);
-        if (Type(dx) == T_Lrgint)
-            result->big = &BignumBlk(dx);
-        else
-            result->integer = IntVal(dx);
-        return Type(dx);
-    }
+    mkdesc(b, &dx);
+    if (Type(dx) == T_Lrgint)
+        result->big = &BignumBlk(dx);
+    else
+        result->integer = IntVal(dx);
+    return Type(dx);
 }
 
 /*

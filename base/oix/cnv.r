@@ -809,7 +809,7 @@ static void itos(word num, dptr dp, char *s)
    StrLen(*dp) = s + MaxCvtLen - 1 - p;
    StrLoc(*dp) = p;
    }
-
+
 
 /*
  * ston - convert a string to a numeric quantity if possible.
@@ -880,8 +880,10 @@ static int ston(dptr sp, union numeric *result)
     * Check for based integer.
     */
    if (c == 'r' || c == 'R') {
+      tended struct descrip sd;
       int rv;
-      rv = bigradix((int)msign, (int)mantissa, s, end_s, result);
+      MakeStr(s, end_s-s, &sd);
+      rv = bigradix((int)msign, (int)mantissa, &sd, result);
       if (rv == Error)
          fatalerr(0, NULL);
       return rv;
@@ -953,8 +955,10 @@ static int ston(dptr sp, union numeric *result)
     * Test for bignum.
     */
       if (!realflag) {
+         tended struct descrip sd;
          int rv;
-         rv = bigradix((int)msign, 10, ssave, end_s, result);
+         MakeStr(ssave, end_s-ssave, &sd);
+         rv = bigradix((int)msign, 10, &sd, result);
          if (rv == Error)
             fatalerr(0, NULL);
          return rv;
@@ -1009,7 +1013,7 @@ static int ston(dptr sp, union numeric *result)
    return T_Real;
    }
 
-
+
 /*
  * cvpos - convert position to strictly positive position
  *  given length.

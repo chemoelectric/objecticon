@@ -148,7 +148,7 @@ void print_dword(FILE *f, dptr d);
 
 struct b_bignum *alcbignum_0    (word n);
 struct b_bignum *alcbignum_1    (word n);
-word   bigradix(int sign, int r, char *s, char *x,
+word   bigradix(int sign, int r, dptr sd,
                    union numeric *result);
 int   bigtoreal       (dptr da, double *d);
 int   realtobig       (dptr da, dptr dx);
