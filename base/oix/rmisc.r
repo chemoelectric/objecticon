@@ -1060,7 +1060,7 @@ void getimage(dptr dp1, dptr dp2)
    register union block *bp;
    char sbuf[64];
    char cbuf[CHAR_CVT_LEN];
-   test_collect(0,20,0);
+
    type_case *dp1 of {
       string: {
          s = StrLoc(*dp1);
