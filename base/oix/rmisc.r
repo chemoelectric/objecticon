@@ -1048,7 +1048,8 @@ void abbr_fname(dptr s, dptr d)
 }
 
 /*
- * getimage(dp1,dp2) - return string image of object dp1 in dp2.
+ * getimage(dp1,dp2) - return string image of object dp1 in dp2.  Both
+ * pointers must point to tended descriptors.
  */
 
 void getimage(dptr dp1, dptr dp2)
@@ -1056,23 +1057,22 @@ void getimage(dptr dp1, dptr dp2)
    register word len;
    int i, j;
    tended char *s;
-   tended struct descrip source = *dp1;    /* the source may move during gc */
    register union block *bp;
    char sbuf[64];
    char cbuf[CHAR_CVT_LEN];
-
-   type_case source of {
+   test_collect(0,20,0);
+   type_case *dp1 of {
       string: {
-         s = StrLoc(source);
-         i = StrLen(source);
+         s = StrLoc(*dp1);
+         i = StrLen(*dp1);
          len = 2;  /* quotes */
          while (i-- > 0)
              len += str_charstr(*s++ & 0xff, 0);
 	 MemProtect(StrLoc(*dp2) = reserve(Strings, len));
          StrLen(*dp2) = len;
          alcstr("\"", 1);
-         s = StrLoc(source);
-         i = StrLen(source);
+         s = StrLoc(*dp1);
+         i = StrLen(*dp1);
          while (i-- > 0) {
              int n = str_charstr(*s++ & 0xff, cbuf);
              alcstr(cbuf, n);
@@ -1081,8 +1081,8 @@ void getimage(dptr dp1, dptr dp2)
          }
 
       ucs: {
-         s = StrLoc(UcsBlk(source).utf8);
-         i = UcsBlk(source).length;
+         s = StrLoc(UcsBlk(*dp1).utf8);
+         i = UcsBlk(*dp1).length;
          len = 3;  /* u"" */
          while (i-- > 0) {
              j = utf8_iter(&s);
@@ -1093,8 +1093,8 @@ void getimage(dptr dp1, dptr dp2)
 
          alcstr("u\"", 2);
              
-         s = StrLoc(UcsBlk(source).utf8);
-         i = UcsBlk(source).length;
+         s = StrLoc(UcsBlk(*dp1).utf8);
+         i = UcsBlk(*dp1).length;
          while (i-- > 0) {
              int n;
              j = utf8_iter(&s);
@@ -1106,33 +1106,32 @@ void getimage(dptr dp1, dptr dp2)
          }
 
       null: {
-         StrLoc(*dp2) = "&null";
-         StrLen(*dp2) = 5;
+           LitStr("&null", dp2);
          }
 
      class: {
            /* produce "class " + the class name */
-         len = 6 + StrLen(*ClassBlk(source).name);
+         len = 6 + StrLen(*ClassBlk(*dp1).name);
 	 MemProtect (StrLoc(*dp2) = reserve(Strings, len));
          StrLen(*dp2) = len;
          alcstr("class ", 6);
-         alcstr(StrLoc(*ClassBlk(source).name), StrLen(*ClassBlk(source).name));
+         alcstr(StrLoc(*ClassBlk(*dp1).name), StrLen(*ClassBlk(*dp1).name));
        }
 
      constructor: {
           /* produce "constructor " + the type name */
-         len = 12 + StrLen(*ConstructorBlk(source).name);
+         len = 12 + StrLen(*ConstructorBlk(*dp1).name);
 	 MemProtect (StrLoc(*dp2) = reserve(Strings, len));
          StrLen(*dp2) = len;
          alcstr("constructor ", 12);
-         alcstr(StrLoc(*ConstructorBlk(source).name), StrLen(*ConstructorBlk(source).name));
+         alcstr(StrLoc(*ConstructorBlk(*dp1).name), StrLen(*ConstructorBlk(*dp1).name));
        }
 
       integer: {
-         if (Type(source) == T_Lrgint) {
+         if (Type(*dp1) == T_Lrgint) {
             word slen;
             word dlen;
-            struct b_bignum *blk = &BignumBlk(source);
+            struct b_bignum *blk = &BignumBlk(*dp1);
 
             slen = blk->lsd - blk->msd;
             dlen = slen * DigitBits * 0.3010299956639812 	/* 1 / log2(10) */
@@ -1146,14 +1145,14 @@ void getimage(dptr dp1, dptr dp2)
 
                StrLen(*dp2) = len;
                }
-	    else bigtos(&source,dp2);
+	    else bigtos(dp1,dp2);
 	    }
          else
-            cnv: string(source, *dp2);
+            cnv: string(*dp1, *dp2);
 	 }
 
       real: {
-         cnv:string(source, *dp2);
+         cnv:string(*dp1, *dp2);
          }
 
       cset: {
@@ -1171,9 +1170,9 @@ void getimage(dptr dp1, dptr dp2)
 	  * Otherwise, describe it in terms of the character membership.
 	  */
          len = 2;   /* 2 quotes */
-         for (i = 0; i < CsetBlk(source).n_ranges; ++i) {
-             from = CsetBlk(source).range[i].from;
-             to = CsetBlk(source).range[i].to;
+         for (i = 0; i < CsetBlk(*dp1).n_ranges; ++i) {
+             from = CsetBlk(*dp1).range[i].from;
+             to = CsetBlk(*dp1).range[i].to;
              if (cset_do_range(from, to))
                  len += cset_charstr(from, 0) + 1 + cset_charstr(to, 0);
              else {
@@ -1185,10 +1184,10 @@ void getimage(dptr dp1, dptr dp2)
 	 MemProtect (StrLoc(*dp2) = reserve(Strings, len));
          StrLen(*dp2) = len;
          alcstr("'", 1);
-         for (i = 0; i < CsetBlk(source).n_ranges; ++i) {
+         for (i = 0; i < CsetBlk(*dp1).n_ranges; ++i) {
              int n;
-             from = CsetBlk(source).range[i].from;
-             to = CsetBlk(source).range[i].to;
+             from = CsetBlk(*dp1).range[i].from;
+             to = CsetBlk(*dp1).range[i].to;
              if (cset_do_range(from, to)) {
                  n = cset_charstr(from, cbuf);
                  alcstr(cbuf, n);
@@ -1207,7 +1206,7 @@ void getimage(dptr dp1, dptr dp2)
 
 
       proc: {
-         struct class_field *field = ProcBlk(source).field;
+         struct class_field *field = ProcBlk(*dp1).field;
          if (field) {
              /*
               * Produce "method classname.fieldname"
@@ -1222,16 +1221,16 @@ void getimage(dptr dp1, dptr dp2)
              alcstr(StrLoc(*field_class->name),StrLen(*field_class->name));
              alcstr(".", 1);
              alcstr(StrLoc(*field_name),StrLen(*field_name));
-         } else if (&ProcBlk(source) == (struct b_proc *)&Bdeferred_method_stub)
+         } else if (&ProcBlk(*dp1) == (struct b_proc *)&Bdeferred_method_stub)
              LitStr("deferred method", dp2);
          else {
-             char *type0 = proc_kinds[get_proc_kind(&ProcBlk(source))];
-             len = strlen(type0) + 1 + StrLen(*ProcBlk(source).name);
+             char *type0 = proc_kinds[get_proc_kind(&ProcBlk(*dp1))];
+             len = strlen(type0) + 1 + StrLen(*ProcBlk(*dp1).name);
              MemProtect (StrLoc(*dp2) = reserve(Strings, len));
              StrLen(*dp2) = len;
              alcstr(type0, strlen(type0));
              alcstr(" ", 1);
-             alcstr(StrLoc(*ProcBlk(source).name), StrLen(*ProcBlk(source).name));
+             alcstr(StrLoc(*ProcBlk(*dp1).name), StrLen(*ProcBlk(*dp1).name));
          }
       }
 
@@ -1276,7 +1275,7 @@ void getimage(dptr dp1, dptr dp2)
       record: {
          /*
           * Produce:
-          *  "record name_m(n)"	-- under construction
+          *  "record name_m(n)"
           * where n is the number of fields.
           */
          struct b_constructor *rec_const;
@@ -1390,8 +1389,8 @@ void getimage(dptr dp1, dptr dp2)
           *  number of results that have been produced.
           */
 
-         sprintf(sbuf, "#%ld(%ld)", (long)CoexprBlk(source).id,
-            (long)CoexprBlk(source).size);
+         sprintf(sbuf, "#%ld(%ld)", (long)CoexprBlk(*dp1).id,
+            (long)CoexprBlk(*dp1).size);
          len = strlen(sbuf) + 13;
 	 MemProtect (StrLoc(*dp2) = reserve(Strings, len));
          StrLen(*dp2) = len;

@@ -507,11 +507,12 @@ int get_name(dptr dp1, dptr dp0)
  */
 static void keyref(union block *bp, dptr dp)
 {
-    tended struct descrip td;
+    tended struct descrip tr, td;
     char sbuf[64];
     int len;
 
-    getimage(&(bp->telem.tref), &td);
+    tr = bp->telem.tref;
+    getimage(&tr, &td);
 
     if (BlkType(bp) == T_Tvtbl)
         bp = bp->tvtbl.clink;
