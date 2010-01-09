@@ -131,7 +131,7 @@ struct tlentry *put_local(char *name, int flag, struct node *n, int unique)
  */
 int putlit(char *id, int idtype, int len)
 {
-    register struct tcentry *ptr;
+    struct tcentry *ptr;
     int i = hasher(id, curr_func->chash);
     if ((ptr = clookup(id,idtype)) == NULL) {   /* add to head of hash chain */
         ptr = curr_func->chash[i];
@@ -147,7 +147,7 @@ int putlit(char *id, int idtype, int len)
  */
 static struct tcentry *clookup(char *id, int flag)
 {
-    register struct tcentry *ptr;
+    struct tcentry *ptr;
 
     ptr = curr_func->chash[hasher(id, curr_func->chash)];
     while (ptr != NULL && (ptr->c_name != id || ptr->c_flag != flag))
@@ -182,7 +182,7 @@ int klookup(char *id)
  */
 static struct tcentry *alclit(struct tcentry *blink, char *name, int len, int flag)
 {
-    register struct tcentry *cp;
+    struct tcentry *cp;
 
     cp = FAlloc(struct tcentry);
     cp->c_blink = blink;

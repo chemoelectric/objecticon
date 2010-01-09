@@ -178,11 +178,9 @@ int minus_loc = 13;
  *  index to its entry in the operator table.
  */
 
-int getopr(ac, cc)
-int ac;
-int *cc;
+int getopr(int ac, int *cc)
    {
-   register char c;
+   char c;
 
    *cc = ' ';
    switch (c = ac) {

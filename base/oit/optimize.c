@@ -3010,7 +3010,7 @@ static void fold_neqv(struct lnode *n)
 
 static word cvpos(long pos, long len)
 {
-    register word p;
+    word p;
 
     /*
      * Make sure the position is in the range of an int. (?)
@@ -3134,8 +3134,8 @@ static void free_literal(struct literal *l)
 
 static int lexcmp(struct literal *x, struct literal *y)
 {
-    register char *s1, *s2;
-    register word minlen;
+    char *s1, *s2;
+    word minlen;
     word l1, l2;
 
     /*

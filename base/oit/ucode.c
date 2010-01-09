@@ -419,7 +419,7 @@ struct ucode_op *uin_expectop()
  */
 char *uin_fqid(char *package)
 {
-    register int c;
+    int c;
     check_param(TYPE_STR);
     zero_sbuf(&ucode_sbuf);
     if (package) {

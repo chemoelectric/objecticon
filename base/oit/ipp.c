@@ -410,8 +410,8 @@ static char *rline(FILE *fp)
 #define LINE_SIZE_INCR 100
    static char *lbuf = NULL;	/* line buffer */
    static int llen = 0;		/* current buffer length */
-   register char *p;
-   register int c, n;
+   char *p;
+   int c, n;
 
    /* if first time, allocate buffer */
    if (!lbuf) {

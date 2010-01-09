@@ -88,8 +88,8 @@ static void lexfatal(char *fmt, ...)
 
 int yylex()
 {
-    register struct toktab *t;
-    register int c;
+    struct toktab *t;
+    int c;
     int n;
     static nodeptr lastval;
     static struct node semi_loc;
@@ -249,8 +249,8 @@ int yylex()
 
 static struct toktab *getident(int ac, int *cc)
 {
-    register int c;
-    register struct toktab *t;
+    int c;
+    struct toktab *t;
 
     c = ac;
     /*
@@ -286,8 +286,8 @@ static struct toktab *getident(int ac, int *cc)
 
 static struct toktab *findres()
 {
-    register struct toktab *t;
-    register char c;
+    struct toktab *t;
+    char c;
 
     c = *lex_sbuf.strtimage;
     if (!islower(c))
@@ -314,7 +314,7 @@ static struct toktab *findres()
  */
 static int bufcmp(char *s)
 {
-    register char *s1;
+    char *s1;
     s1 = lex_sbuf.strtimage;
     while (s != '\0' && s1 < lex_sbuf.endimage && *s == *s1) {
         ++s;
@@ -336,7 +336,7 @@ static int bufcmp(char *s)
 
 static struct toktab *getnum(int ac, int *cc)
 {
-    register int c, state;
+    int c, state;
     int i, realflag, n, dummy;
     int radix = 0;
     word wval = 0;
@@ -646,7 +646,7 @@ static struct toktab *getucs(int ac, int *cc)
  */
 static struct toktab *getcset(int ac, int *cc)
 {
-    register int c, prev = 0, i, len;
+    int c, prev = 0, i, len;
     struct rangeset *cs;
     int state = 0;
     int esc_flag;
@@ -742,7 +742,7 @@ static struct toktab *getcset(int ac, int *cc)
 
 static int ctlesc()
 {
-    register int c;
+    int c;
 
     c = NextChar;
     if (c == EOF)
@@ -758,7 +758,7 @@ static int ctlesc()
 
 static int octesc(int ac)
 {
-    register int c, nc, i;
+    int c, nc, i;
 
     c = 0;
     nc = ac;
@@ -781,7 +781,7 @@ static int octesc(int ac)
 
 static int hexesc(int digs)
 {
-    register int c, nc, i;
+    int c, nc, i;
 
     c = 0;
     i = 0;
@@ -812,7 +812,7 @@ static int hexesc(int digs)
 
 static int setlineno()
 {
-    register int c;
+    int c;
 
     while ((c = NextChar) == ' ' || c == '\t')
         ;
@@ -900,7 +900,7 @@ static int setencoding(int c)
 
 static int nextchar()
 {
-    register int c;
+    int c;
 
     if ((c = peekc) != 0) {
         peekc = 0;
@@ -1014,9 +1014,9 @@ void yyerror(char *msg)
  */
 static char *mapterm(int typ, nodeptr val)
 {
-    register struct toktab *t;
-    register struct optab *ot;
-    register int i;
+    struct toktab *t;
+    struct optab *ot;
+    int i;
 
     i = typ;
     if (i == IDENT || i == STRINGLIT)

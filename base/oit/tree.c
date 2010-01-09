@@ -19,7 +19,7 @@
 
 nodeptr tree1(int type)
    {
-   register nodeptr t;
+   nodeptr t;
 
    t = NewNode(0);
    t->n_type = type;
@@ -31,7 +31,7 @@ nodeptr tree1(int type)
 
 nodeptr tree2(int type, nodeptr loc_model)
    {
-   register nodeptr t;
+   nodeptr t;
 
    t = NewNode(0);
    t->n_type = type;
@@ -43,7 +43,7 @@ nodeptr tree2(int type, nodeptr loc_model)
 
 nodeptr tree3(int type, nodeptr loc_model, nodeptr c)
    {
-   register nodeptr t;
+   nodeptr t;
 
    t = NewNode(1);
    t->n_type = type;
@@ -56,7 +56,7 @@ nodeptr tree3(int type, nodeptr loc_model, nodeptr c)
 
 nodeptr tree4(int type, nodeptr loc_model, nodeptr c, nodeptr d)
    {
-   register nodeptr t;
+   nodeptr t;
 
    t = NewNode(2);
    t->n_type = type;
@@ -70,7 +70,7 @@ nodeptr tree4(int type, nodeptr loc_model, nodeptr c, nodeptr d)
 
 nodeptr tree5(int type, nodeptr loc_model, nodeptr c, nodeptr d, nodeptr e)
    {
-   register nodeptr t;
+   nodeptr t;
 
    t = NewNode(3);
    t->n_type = type;
@@ -85,7 +85,7 @@ nodeptr tree5(int type, nodeptr loc_model, nodeptr c, nodeptr d, nodeptr e)
 
 nodeptr tree6(int type, nodeptr loc_model, nodeptr c, nodeptr d, nodeptr e, nodeptr f)
    {
-   register nodeptr t;
+   nodeptr t;
 
    t = NewNode(4);
    t->n_type = type;
@@ -101,7 +101,7 @@ nodeptr tree6(int type, nodeptr loc_model, nodeptr c, nodeptr d, nodeptr e, node
 
 nodeptr buildarray(nodeptr a, nodeptr lb, nodeptr e,nodeptr rb)
    {
-   register nodeptr t, t2;
+   nodeptr t, t2;
    if (e->n_type == N_Elist) {
       t2 = int_leaf(lb->n_type, lb, (int)lb->n_field[0].n_val);
       t = tree5(N_Binop, t2, t2, buildarray(a,lb,e->n_field[0].n_ptr,rb),
@@ -115,7 +115,7 @@ nodeptr buildarray(nodeptr a, nodeptr lb, nodeptr e,nodeptr rb)
 
 nodeptr int_leaf(int type, nodeptr loc_model, int c)
    {
-   register nodeptr t;
+   nodeptr t;
 
    t = NewNode(1);
    t->n_type = type;
@@ -128,7 +128,7 @@ nodeptr int_leaf(int type, nodeptr loc_model, int c)
 
 nodeptr c_str_leaf(int type, nodeptr loc_model, char *c)
    {
-   register nodeptr t;
+   nodeptr t;
 
    t = NewNode(1);
    t->n_type = type;
@@ -141,7 +141,7 @@ nodeptr c_str_leaf(int type, nodeptr loc_model, char *c)
 
 nodeptr i_str_leaf(int type, nodeptr loc_model, char *c, int d)
    {
-   register nodeptr t;
+   nodeptr t;
 
    t = NewNode(2);
    t->n_type = type;
