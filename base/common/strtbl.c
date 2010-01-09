@@ -137,8 +137,8 @@ void new_sbuf(struct str_buf *sbuf)
 char *spec_str(char *s)
 {
     struct str_entry *se;
-    register char *s1;
-    register int l;
+    char *s1;
+    int l;
     unsigned int h;
 
     h = 0;
@@ -173,8 +173,8 @@ char *str_install(struct str_buf *sbuf)
 {
     unsigned int h;
     struct str_entry *se;
-    register char *s;
-    register char *e;
+    char *s;
+    char *e;
     int l;
 
     /* null terminate the buffered copy of the string */
