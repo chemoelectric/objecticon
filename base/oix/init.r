@@ -636,10 +636,18 @@ function lang_Prog_load(s, arglist, blocksize, stringsize)
         */
        MemProtect(pstate = alcprog(hdr.icodesize));
        MemProtect(coex = alccoexp());
+
+       /*
+        * Add to chain of progs.  Do this now since pstate has some
+        * tended variables in it (K_current, K_main, Kywd_prog).
+        */
        coex->main_of = pstate;
        coex->activator = coex;
 
        initprogstate(pstate);
+       pstate->next = progs;
+       progs = pstate;
+
        pstate->Kywd_time_elsewhere = millisec();
        pstate->Kywd_time_out = 0;
        pstate->K_current = pstate->K_main = coex;
@@ -679,19 +687,15 @@ function lang_Prog_load(s, arglist, blocksize, stringsize)
        initalloc(pstate);
        check_version(&hdr, loadstring, ifile);
        read_icode(&hdr, loadstring, ifile, pstate->Code);
-
        fclose(ifile);
 
        resolve(pstate);
 
-       pstate->next = progs;
-       progs = pstate;
-
       /*
        * Check whether resolve() found the main procedure.
        */
-      if (!pstate->MainProc)
-         fatalerr(117, NULL);
+       if (!pstate->MainProc)
+          fatalerr(117, NULL);
 
        main_bp = &ProcBlk(*pstate->MainProc);
        MemProtect(new_pf = alc_p_frame(&Bmain_wrapper, 0));
