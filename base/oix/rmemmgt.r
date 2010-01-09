@@ -486,11 +486,11 @@ static void postqual(dptr dp)
 
 static void markptr(union block **ptr)
 {
-    register dptr dp, lastdesc;
-    register char *block, *endblock = 0;
+    dptr dp, lastdesc;
+    char *block, *endblock = 0;
     word type0, fdesc;
     int numptr, numdesc;
-    register union block **ptr1, **lastptr;
+    union block **ptr1, **lastptr;
 
     /*
      * Get the block to which ptr points.
@@ -690,8 +690,8 @@ static void sweep_stack(struct frame *f)
 
 static void sweep_tended()
 {
-    register struct tend_desc *tp;
-    register int i;
+    struct tend_desc *tp;
+    int i;
 
     for (tp = tend; tp != NULL; tp = tp->previous) {
         for (i = 0; i < tp->num; ++i) {
@@ -733,8 +733,8 @@ static void reclaim()
 
 static void scollect()
 {
-    register char *source, *dest;
-    register dptr *qptr;
+    char *source, *dest;
+    dptr *qptr;
     char *cend;
 
     if (qualfree <= quallist) {
@@ -818,8 +818,8 @@ static int qlcmp(dptr *q1, dptr *q2)
 
 static void adjust()
 {
-    register union block **nxtptr, **tptr;
-    register char *source = blkbase, *dest;
+    union block **nxtptr, **tptr;
+    char *source = blkbase, *dest;
 
     /*
      * Start dest at source.
@@ -858,8 +858,8 @@ static void adjust()
 
 static void compact()
 {
-    register word size;
-    register char *source = blkbase, *dest;
+    word size;
+    char *source = blkbase, *dest;
 
     /*
      * Start dest at source.

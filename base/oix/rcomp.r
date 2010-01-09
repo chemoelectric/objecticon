@@ -8,8 +8,8 @@
 
 int anycmp(dptr dp1, dptr dp2)
    {
-   register int o1, o2;
-   register long v1, v2, lresult;
+   int o1, o2;
+   long v1, v2, lresult;
    int iresult;
    double rres1, rres2, rresult;
 
@@ -299,9 +299,9 @@ int order(dptr dp)
 
 int equiv(dptr dp1, dptr dp2)
    {
-   register int result;
-   register word i;
-   register char *s1, *s2;
+   int result;
+   word i;
+   char *s1, *s2;
    double rres1, rres2;
 
    result = 0;
@@ -390,8 +390,8 @@ int lexcmp(dptr dp1, dptr dp2)
    {
 
 
-   register char *s1, *s2;
-   register word minlen;
+   char *s1, *s2;
+   word minlen;
    word l1, l2;
 
    /*

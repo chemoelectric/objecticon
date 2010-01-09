@@ -9,7 +9,7 @@
 
 operator ! bang(underef x -> dx)
    body {
-      register word i, j;
+      word i, j;
       tended union block *ep;
 
    type_case dx of {
@@ -574,7 +574,7 @@ operator [] subsc(underef x -> dx,y)
       table: {
             uword hn;
             int res;
-            register union block *bp; /* doesn't need to be tended */
+            union block *bp; /* doesn't need to be tended */
             union block **dp1;
             struct b_tvtbl *tp;
 
@@ -605,9 +605,9 @@ operator [] subsc(underef x -> dx,y)
           *  it is in range as a field number.
           */
          if (!cnv:C_integer(y,yi)) {
-            register union block *bp;  /* doesn't need to be tended */
-            register struct b_constructor *bp2; /* doesn't need to be tended */
-            register word i;
+            union block *bp;  /* doesn't need to be tended */
+            struct b_constructor *bp2; /* doesn't need to be tended */
+            word i;
 
             if (!cnv:tmp_string(y,y))
                runerr(101,y);
@@ -627,7 +627,7 @@ operator [] subsc(underef x -> dx,y)
             return struct_var(&bp->record.fields[i], bp);
          } else {
             word i;
-            register union block *bp; /* doesn't need to be tended */
+            union block *bp; /* doesn't need to be tended */
 
             bp = BlkLoc(dx);
             i = cvpos(yi, (word)(bp->record.constructor->n_fields));
@@ -762,7 +762,7 @@ end
 
 function back(underef x -> dx)
  body {
-   register word i, j;
+   word i, j;
    tended union block *ep;
 
    type_case dx of {

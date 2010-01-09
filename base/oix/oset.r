@@ -38,8 +38,8 @@ operator -- diff(x,y)
    if is:set(x) && is:set(y) then {
       body {
 	 int res;
-         register int i;
-         register word slotnum;
+         int i;
+         word slotnum;
          tended union block *srcp, *tstp, *dstp;
          tended struct b_slots *seg;
          tended struct b_selem *ep;
@@ -143,8 +143,8 @@ operator ** inter(x,y)
    if is:set(x) && is:set(y) then {
       body {
 	 int res;
-         register int i;
-         register word slotnum;
+         int i;
+         word slotnum;
          tended union block *srcp, *tstp, *dstp;
          tended struct b_slots *seg;
          tended struct b_selem *ep;
@@ -237,8 +237,8 @@ operator ++ union(x,y)
    if is:set(x) && is:set(y) then {
       body {
 	 int res;
-	 register int i;
-	 register word slotnum;
+	 int i;
+	 word slotnum;
          struct descrip d;
          tended union block *dstp;
          tended struct b_slots *seg;

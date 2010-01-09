@@ -138,8 +138,8 @@ operator ||| lconcat(x, y)
 
 
    body {
-      register struct b_list *bp1;
-      register struct b_lelem *lp1;
+      struct b_list *bp1;
+      struct b_lelem *lp1;
       word size1, size2, size3;
 
       /*

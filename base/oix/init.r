@@ -316,8 +316,8 @@ static void env_int(char *name, word *variable, int non_neg, uword limit)
 {
     char *value;
     char *s;
-    register uword n = 0;
-    register uword d;
+    uword n = 0;
+    uword d;
     int sign = 1;
 
     if ((value = getenv(name)) == NULL || *value == '\0')

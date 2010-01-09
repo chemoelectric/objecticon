@@ -3184,8 +3184,8 @@ int strimage(wbp w, int x, int y, int width, int height,
  */
 static int ulcmp(unsigned long *p1, unsigned long *p2)
 {
-    register unsigned long u1 = *p1;
-    register unsigned long u2 = *p2;
+    unsigned long u1 = *p1;
+    unsigned long u2 = *p2;
 
     if (u1 < u2)
         return -1;

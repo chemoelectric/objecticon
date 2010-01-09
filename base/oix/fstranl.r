@@ -49,7 +49,7 @@
        if ((cnv_ ## j = cvpos(cnv_ ## j, slen)) == CvtFail)
           fail;
        if (cnv_ ## i > cnv_ ## j) {
-          register word tmp;
+          word tmp;
           tmp = cnv_ ## i;
           cnv_ ## i = cnv_ ## j;
           cnv_ ## j = tmp;

@@ -11,7 +11,7 @@
  */
 static void keyref    (union block *bp, dptr dp);
 static void showline(struct p_frame *pf);
-static void showlevel (register int n);
+static void showlevel (int n);
 static void xtrace	(void);
 static void procname(FILE *f, struct b_proc *p);
 static void trace_at(struct p_frame *pf);

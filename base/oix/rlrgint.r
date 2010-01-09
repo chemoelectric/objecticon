@@ -913,7 +913,7 @@ int bigpow(dptr da, dptr db, dptr dx)
         else {
             /* integer ^ +bignum */
             word n, blen;
-            register DIGIT nth_dig, mask;
+            DIGIT nth_dig, mask;
 
             b = &BignumBlk(*db);
             blen = LEN(b);
@@ -946,9 +946,9 @@ int bigpow(dptr da, dptr db, dptr dx)
 
 int bigpowri(double a, dptr db, dptr drslt)
 {
-    register double retval;
-    register word n;
-    register DIGIT nth_dig, mask;
+    double retval;
+    word n;
+    DIGIT nth_dig, mask;
     struct b_bignum *b;
     word blen;
 

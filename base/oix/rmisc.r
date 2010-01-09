@@ -197,9 +197,9 @@ int getvar(dptr s, dptr vp, struct progstate *p)
 
 uword hash(dptr dp)
    {
-   register char *s;
-   register uword i;
-   register word j, n;
+   char *s;
+   uword i;
+   word j, n;
    double r;
 
    if (Qual(*dp)) {
@@ -925,8 +925,8 @@ void outimage(FILE *f, dptr dp, int noimage)
 
 static void listimage(FILE *f, struct b_list *lp, int noimage)
    {
-   register word i, j;
-   register struct b_lelem *bp;
+   word i, j;
+   struct b_lelem *bp;
    word size, count;
 
    bp = (struct b_lelem *) lp->listhead;
@@ -1054,10 +1054,10 @@ void abbr_fname(dptr s, dptr d)
 
 void getimage(dptr dp1, dptr dp2)
    {
-   register word len;
+   word len;
    int i, j;
    tended char *s;
-   register union block *bp;
+   union block *bp;
    char sbuf[64];
    char cbuf[CHAR_CVT_LEN];
 
@@ -1714,7 +1714,7 @@ int stringint_str2int(stringint * sip, char *s)
  */
 char *stringint_int2str(stringint * sip, int i)
 {
-    register stringint * sip2 = sip+1;
+    stringint * sip2 = sip+1;
     for(;sip2<=sip+sip[0].i;sip2++) if (sip2->i == i) return sip2->s;
     return NULL;
 }
@@ -1781,7 +1781,7 @@ void whyf(char *fmt, ...)
 
 char *salloc(char *s)
 {
-    register char *s1;
+    char *s1;
     MemProtect(s1 = malloc(strlen(s) + 1));
     return strcpy(s1, s);
 }

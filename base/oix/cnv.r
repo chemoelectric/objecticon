@@ -182,8 +182,8 @@ int cnv_c_str(dptr s, dptr d)
       ++StrLen(*d);
       }
    else {
-      register word slen = StrLen(*d);
-      register char *sp, *dp;
+      word slen = StrLen(*d);
+      char *sp, *dp;
       MemProtect(dp = alcstr(NULL,slen+1));
       StrLen(*d) = StrLen(*d)+1;
       sp = StrLoc(*d);
@@ -781,7 +781,7 @@ deref_macro(deref_1,E_Deref)
 
 static void itos(word num, dptr dp, char *s)
    {
-   register char *p;
+   char *p;
 
    p = s + MaxCvtLen - 1;
 
@@ -820,8 +820,8 @@ static void itos(word num, dptr dp, char *s)
  */
 static int ston(dptr sp, union numeric *result)
    {
-   register char *s = StrLoc(*sp), *end_s;
-   register int c;
+   char *s = StrLoc(*sp), *end_s;
+   int c;
    int realflag = 0;	/* indicates a real number */
    char msign = '+';    /* sign of mantissa */
    char esign = '+';    /* sign of exponent */
@@ -1017,7 +1017,7 @@ static int ston(dptr sp, union numeric *result)
 
 word cvpos(long pos, long len)
    {
-   register word p;
+   word p;
 
    /*
     * Make sure the position is in the range of an int. (?)

@@ -487,7 +487,7 @@ function sort(t, i)
    type_case t of {
       list: {
          body {
-            register word size;
+            word size;
             tended struct descrip result;
 
             /*
@@ -506,11 +506,11 @@ function sort(t, i)
 
       record: {
          body {
-            register dptr d1;
-            register word size;
+            dptr d1;
+            word size;
             tended struct b_list *lp;
             struct b_record *bp;
-            register int i;
+            int i;
             /*
              * Create a list the size of the record, copy each element into
              * the list, and then sort the list using qsort as in list
@@ -537,13 +537,13 @@ function sort(t, i)
 
       set: {
          body {
-            register dptr d1;
-            register word size;
-            register int j, k;
+            dptr d1;
+            word size;
+            int j, k;
             tended struct b_list *lp;
             struct b_set *bp;
             union block *ep;
-            register struct b_slots *seg;
+            struct b_slots *seg;
             /*
              * Create a list the size of the set, copy each element into
              * the list, and then sort the list using qsort as in list
@@ -574,9 +574,9 @@ function sort(t, i)
          if !def:C_integer(i, 1) then
             runerr(101, i)
          body {
-            register dptr d1;
-            register word size;
-            register int j, k, n;
+            dptr d1;
+            word size;
+            int j, k, n;
 	    tended struct b_table *bp;
             tended struct b_list *lp, *tp;
             tended union block *ep;

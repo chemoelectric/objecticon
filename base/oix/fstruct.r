@@ -227,7 +227,7 @@ function member(s, x)
      type_case s of {
         set: {
             int res;
-            register uword hn;
+            uword hn;
 
             EVValD(&s, E_Smember);
             EVValD(&x, E_Sval);
@@ -241,9 +241,9 @@ function member(s, x)
          }
       table: {
             int res;
-            register uword hn;
+            uword hn;
             union block **p;
-            register union block *bp; /* doesn't need to be tended */
+            union block *bp; /* doesn't need to be tended */
 
             EVValD(&s, E_Tmember);
             EVValD(&x, E_Tsub);

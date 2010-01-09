@@ -2054,8 +2054,8 @@ int on_icon;
    {
    HDC tempdc;
    HBITMAP temppix;
-   register int c;
-   register unsigned int ix;
+   int c;
+   unsigned int ix;
    int v, anytransparent=0;
    unsigned int iy, tmpw;
    SysColor clrlist[256], xc, palbg;
@@ -2656,7 +2656,7 @@ void freecolor(wbp w, char *s)
  */
 void drawarcs(wbp wb, XArc *arcs, int narcs)
    {
-   register XArc *arc = arcs;
+   XArc *arc = arcs;
    int i, halfwidth, halfheight, x1, y1, x2, y2, right, bottom;
    double a1_a2;
    HPEN hp, oldpen, oldpen2;
@@ -2719,7 +2719,7 @@ void drawlines(wbinding *wb, XPoint *points, int npoints)
  */
 void drawpoints(wbinding *wb, XPoint *points, int npoints)
    {
-   register XPoint *p, *endp;
+   XPoint *p, *endp;
    SysColor palfg;
    STDLOCALS(wb);
    endp = points + npoints;
@@ -2882,7 +2882,7 @@ void drawstrng(wbinding *wb, int x, int y, char *s, int slen)
  */
 void fillarcs(wbp wb, XArc *arcs, int narcs) 
    {
-   register XArc *arc = arcs;
+   XArc *arc = arcs;
    int i, diff, bheight;
    HBRUSH hb, oldbrush, oldbrush2;
    POINT pts[3];
@@ -2995,7 +2995,7 @@ void fillrectangles(wbp wb, XRectangle *recs, int nrecs)
  */
 void drawrectangles(wbp w, XRectangle *recs, int nrecs)
    {
-   register XRectangle *r;
+   XRectangle *r;
    LOGBRUSH lb;
    HBRUSH hb, oldbrush, oldbrush2;
    HPEN hp, oldpen, oldpen2;

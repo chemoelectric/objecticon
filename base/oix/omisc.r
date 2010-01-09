@@ -98,7 +98,7 @@ end
 
 operator = tabmat(x)
    body {
-      register word l;
+      word l;
       char *s1, *s2;
       word i, j;
       /*

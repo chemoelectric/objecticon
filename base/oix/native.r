@@ -499,7 +499,7 @@ end
 
 function lang_Prog_get_functions()
    body {
-      register int i;
+      int i;
 
       for (i = 0; i < fnc_tbl_sz; ++i)
           suspend proc(fnc_tbl[i]);
@@ -510,7 +510,7 @@ end
 
 function lang_Prog_get_operators()
    body {
-      register int i;
+      int i;
 
       for (i = 0; i < op_tbl_sz; ++i)
           suspend proc(op_tbl[i]);
@@ -521,7 +521,7 @@ end
 
 function lang_Prog_get_keywords()
    body {
-      register int i;
+      int i;
 
       for (i = 0; i < keyword_tbl_sz; ++i)
           suspend proc(keyword_tbl[i]);

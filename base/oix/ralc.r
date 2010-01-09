@@ -94,8 +94,8 @@ static void check_stack_usage(void);
 
 struct b_bignum *f(word n)
    {
-   register struct b_bignum *blk;
-   register uword size;
+   struct b_bignum *blk;
+   uword size;
 
    size = sizeof(struct b_bignum) + ((n - 1) * sizeof(DIGIT));
    /* ensure whole number of words allocated */
@@ -182,8 +182,8 @@ struct progstate *alcprog(long icodesize)
 
 struct b_cset *f(word n)
    {
-   register struct b_cset *blk;
-   register uword size;
+   struct b_cset *blk;
+   uword size;
 
    size = sizeof(struct b_cset) + ((n - 1) * sizeof(struct b_cset_range));
    AlcBlk(blk, b_cset, T_Cset, size, e_cset);
@@ -203,9 +203,9 @@ alccset_macro(alccset_1,E_Cset)
  */
 union block *f(int tcode)
    {
-   register int i;
-   register struct b_set *ps;
-   register struct b_table *pt;
+   int i;
+   struct b_set *ps;
+   struct b_table *pt;
 
    if (tcode == T_Table) {
       AlcFixBlk(pt, b_table, T_Table, e_table);
@@ -236,7 +236,7 @@ alchash_macro(alchash_1,E_Table,E_Set)
 struct b_slots *f(word nslots)
    {
    uword size;
-   register struct b_slots *blk;
+   struct b_slots *blk;
 
    size = sizeof(struct b_slots) + WordSize * (nslots - HSlots);
    AlcBlk(blk, b_slots, T_Slots, size, e_slots);
@@ -263,9 +263,9 @@ alcsegment_macro(alcsegment_1,E_Slots)
 
 struct b_list *f(uword size, uword nslots)
    {
-   register word i = sizeof(struct b_lelem)+(nslots-1)*sizeof(struct descrip);
-   register struct b_list *blk;
-   register struct b_lelem *lblk;
+   word i = sizeof(struct b_lelem)+(nslots-1)*sizeof(struct descrip);
+   struct b_list *blk;
+   struct b_lelem *lblk;
 
    Alc2Blks(blk, b_list, T_List, sizeof(struct b_list), e_list,
             lblk, b_lelem, T_Lelem, i, e_lelem)
@@ -295,9 +295,9 @@ alclist_raw_macro(alclist_raw_1,E_List,E_Lelem)
 
 struct b_list *f(uword size, uword nslots)
 {
-   register word i = sizeof(struct b_lelem)+(nslots-1)*sizeof(struct descrip);
-   register struct b_list *blk;
-   register struct b_lelem *lblk;
+   word i = sizeof(struct b_lelem)+(nslots-1)*sizeof(struct descrip);
+   struct b_list *blk;
+   struct b_lelem *lblk;
 
    Alc2Blks(blk, b_list, T_List, sizeof(struct b_list), e_list,
             lblk, b_lelem, T_Lelem, i, e_lelem)
@@ -330,8 +330,8 @@ alclist_macro(alclist_1,E_List,E_Lelem)
 
 struct b_lelem *f(uword nslots)
    {
-   register struct b_lelem *blk;
-   register word i;
+   struct b_lelem *blk;
+   word i;
 
    AlcVarBlk(blk, b_lelem, T_Lelem, nslots, e_lelem)
    blk->nslots = nslots;
@@ -358,7 +358,7 @@ alclstb_macro(alclstb_1,E_Lelem)
 
 struct b_real *f(double val)
    {
-   register struct b_real *blk;
+   struct b_real *blk;
 
    AlcFixBlk(blk, b_real, T_Real, e_real)
    SetReal(val, *blk);
@@ -377,7 +377,7 @@ alcreal_macro(alcreal_1,E_Real)
 
 struct b_record *f(struct b_constructor *con)
    {
-   register struct b_record *blk;
+   struct b_record *blk;
    int i, nflds = con->n_fields;
 
    AlcVarBlk(blk, b_record, T_Record, nflds, e_record)
@@ -403,7 +403,7 @@ alcrecd_macro(alcrecd_1,E_Record)
 
 struct b_object *f(struct b_class *class)
    {
-   register struct b_object *blk;
+   struct b_object *blk;
    int i, nflds = class->n_instance_fields;
    AlcVarBlk(blk, b_object, T_Object, nflds, e_object);
    blk->class = class;
@@ -429,7 +429,7 @@ alcobject_macro(alcobject_1,E_Object)
 
 struct b_cast *f()
    {
-   register struct b_cast *blk;
+   struct b_cast *blk;
 
    AlcFixBlk(blk, b_cast, T_Cast, e_cast)
    return blk;
@@ -446,7 +446,7 @@ alccast_macro(alccast_1,E_Cast)
 
 struct b_methp *f()
    {
-   register struct b_methp *blk;
+   struct b_methp *blk;
 
    AlcFixBlk(blk, b_methp, T_Methp, e_methp)
    return blk;
@@ -465,8 +465,8 @@ alcmethp_macro(alcmethp_1,E_Methp)
 
 struct b_ucs *f(int n)
    {
-   register struct b_ucs *blk;
-   register uword size;
+   struct b_ucs *blk;
+   uword size;
    size = sizeof(struct b_ucs) + ((n - 1) * sizeof(word));
    AlcBlk(blk, b_ucs, T_Ucs, size, e_ucs);
    blk->blksize = size;
@@ -486,7 +486,7 @@ alcucs_macro(alcucs_1,E_Ucs)
  */
 struct b_selem *f()
    {
-   register struct b_selem *blk;
+   struct b_selem *blk;
 
    AlcFixBlk(blk, b_selem, T_Selem, e_selem)
    blk->clink = NULL;
@@ -504,10 +504,10 @@ alcselem_macro(alcselem_1,E_Selem)
  * alcstr - allocate a string in the string space.
  */
 
-char *f(register char *s, register word slen)
+char *f(char *s, word slen)
    {
    tended struct descrip ts;
-   register char *d;
+   char *d;
    char *ofree;
 
 #if e_string
@@ -561,7 +561,7 @@ alcstr_macro(alcstr_1,E_String)
 struct b_tvsubs *f(word len, word pos, dptr var)
    {
    tended struct descrip tvar = *var;
-   register struct b_tvsubs *blk;
+   struct b_tvsubs *blk;
 
    AlcFixBlk(blk, b_tvsubs, T_Tvsubs, e_tvsubs)
    blk->sslen = len;
@@ -581,7 +581,7 @@ alcsubs_macro(alcsubs_1,E_Tvsubs)
 
 struct b_telem *f()
    {
-   register struct b_telem *blk;
+   struct b_telem *blk;
 
    AlcFixBlk(blk, b_telem, T_Telem, e_telem)
    blk->hashnum = 0;
@@ -600,11 +600,11 @@ alctelem_macro(alctelem_1,E_Telem)
  *  region.
  */
 
-struct b_tvtbl *f(register dptr tbl, register dptr ref, uword hashnum)
+struct b_tvtbl *f(dptr tbl, dptr ref, uword hashnum)
    {
    tended struct descrip ttbl = *tbl;
    tended struct descrip tref = *ref;
-   register struct b_tvtbl *blk;
+   struct b_tvtbl *blk;
 
    AlcFixBlk(blk, b_tvtbl, T_Tvtbl, e_tvtbl)
    blk->hashnum = hashnum;

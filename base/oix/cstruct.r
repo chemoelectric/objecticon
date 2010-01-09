@@ -101,8 +101,8 @@ void create_list(uword nslots, dptr d)
 
 int set_del(dptr s, dptr key)
 {
-    register uword hn;
-    register union block **pd;
+    uword hn;
+    union block **pd;
     int res;
 
     hn = hash(key);
@@ -119,8 +119,8 @@ int set_del(dptr s, dptr key)
 
 int table_del(dptr t, dptr key)
 {
-    register union block **pd;
-    register uword hn;
+    union block **pd;
+    uword hn;
     int res;
 
     hn = hash(key);
@@ -189,7 +189,7 @@ void table_insert(dptr t, dptr key, dptr val)
 {
     union block **pd;
     struct b_telem *te;
-    register uword hn;
+    uword hn;
     int res;
 
     hn = hash(key);
@@ -223,10 +223,10 @@ void table_insert(dptr t, dptr key, dptr val)
 
 void set_insert(dptr s, dptr entry)
 {
-    register uword hn;
+    uword hn;
     int res;
     struct b_selem *se;
-    register union block **pd;
+    union block **pd;
 
     hn = hash(entry);
     /*
@@ -301,8 +301,8 @@ int list_pull(dptr l, dptr res)
 
 void list_push(dptr l, dptr val)
 {
-   register word i = 0;
-   register struct b_lelem *bp; /* does not need to be tended */
+   word i = 0;
+   struct b_lelem *bp; /* does not need to be tended */
 
    /*
     * Point bp at the first list-element block.
@@ -467,8 +467,8 @@ void list_del(dptr l, word index)
 
 void list_put(dptr l, dptr val)
 {
-   register word i = 0;
-   register struct b_lelem *bp;  /* does not need to be tended */
+   word i = 0;
+   struct b_lelem *bp;  /* does not need to be tended */
 
    /*
     * Point hp at the list-header block and bp at the last

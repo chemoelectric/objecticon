@@ -653,9 +653,9 @@ function map(s1,s2,s3)
           return ucs(make_ucs_block(&utf8, UcsBlk(s1).length));
       } else {
           tended struct descrip result;
-          register int i;
-          register word slen;
-          register char *str1, *str2, *str3;
+          int i;
+          word slen;
+          char *str1, *str2, *str3;
           static char maptab[256];
 
           /*
@@ -858,8 +858,8 @@ function reverse(s)
            return ucs(make_ucs_block(&utf8, UcsBlk(s).length));
        } else {
            tended struct descrip result;
-           register char c, *floc, *lloc;
-           register word slen;
+           char c, *floc, *lloc;
+           word slen;
 
            /*
             * Allocate a copy of s.
@@ -964,7 +964,7 @@ function left(s1,n,s2)
 
           return ucs(make_ucs_block(&utf8, n));
       } else {
-          register char *s, *st;
+          char *s, *st;
           word slen;
           char *sbuf, *s3;
 
@@ -1104,7 +1104,7 @@ function right(s1,n,s2)
 
           return ucs(make_ucs_block(&utf8, n));
       } else {
-          register char *s, *st;
+          char *s, *st;
           word slen;
           char *sbuf, *s3;
 
@@ -1262,7 +1262,7 @@ function center(s1,n,s2)
 
           return ucs(make_ucs_block(&utf8, n));
       } else {
-          register char *s, *st;
+          char *s, *st;
           word slen;
           char *sbuf, *s3;
           word hcnt;

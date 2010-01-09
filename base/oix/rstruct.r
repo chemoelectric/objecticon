@@ -122,8 +122,8 @@ static void cphash(dptr dp1, dptr dp2, word n, int tcode)
    tended struct b_slots *seg;
    tended struct b_selem *ep, *prev;
    struct b_selem *se;
-   register word slotnum;
-   register int i;
+   word slotnum;
+   int i;
 
    /*
     * Make a new set organized like dp1, with room for n elements.
@@ -229,8 +229,8 @@ static unsigned char log2h[] = {
 
 union block **hchain(union block *pb, uword hn)
    {
-   register struct b_set *ps;
-   register word slotnum, segnum, segslot;
+   struct b_set *ps;
+   word slotnum, segnum, segslot;
 
    ps = (struct b_set *)pb;
    slotnum = hn & ps->mask;
@@ -372,8 +372,8 @@ union block *hgnext(union block *bp, struct hgstate *s, union block *ep)
 
 void hgrow(union block *bp)
    {
-   register union block **tp0, **tp1, *ep;
-   register word newslots, slotnum, segnum;
+   union block **tp0, **tp1, *ep;
+   word newslots, slotnum, segnum;
    tended struct b_set *ps;
    struct b_slots *seg, *newseg;
    union block **curslot;
@@ -422,7 +422,7 @@ void hgrow(union block *bp)
  */
 void hshrink(union block *bp)
    {
-   register union block **tp, *ep0, *ep1;
+   union block **tp, *ep0, *ep1;
    int topseg, curseg;
    word slotnum;
    tended struct b_set *ps;
@@ -479,9 +479,9 @@ void hshrink(union block *bp)
 union block **memb(union block *pb, dptr x, uword hn, int *res)
    {
    struct b_set *ps;
-   register union block **lp;
-   register struct b_selem *pe;
-   register uword eh;
+   union block **lp;
+   struct b_selem *pe;
+   uword eh;
 
    ps = (struct b_set *)pb;
    lp = hchain(pb, hn);

@@ -10,8 +10,8 @@
 
 int putstr(FILE *f, dptr d)
    {
-   register char *s;
-   register word l;
+   char *s;
+   word l;
 
    l = StrLen(*d);
    if (l == 0)
