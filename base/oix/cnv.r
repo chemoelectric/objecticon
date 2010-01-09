@@ -881,12 +881,8 @@ static int ston(dptr sp, union numeric *result)
     */
    if (c == 'r' || c == 'R') {
       tended struct descrip sd;
-      int rv;
       MakeStr(s, end_s-s, &sd);
-      rv = bigradix((int)msign, (int)mantissa, &sd, result);
-      if (rv == Error)
-         fatalerr(0, NULL);
-      return rv;
+      return bigradix((int)msign, (int)mantissa, &sd, result);
       }
 
    /*
@@ -956,12 +952,8 @@ static int ston(dptr sp, union numeric *result)
     */
       if (!realflag) {
          tended struct descrip sd;
-         int rv;
          MakeStr(ssave, end_s-ssave, &sd);
-         rv = bigradix((int)msign, 10, &sd, result);
-         if (rv == Error)
-            fatalerr(0, NULL);
-         return rv;
+         return bigradix((int)msign, 10, &sd, result);
          }
 
    if (!realflag)
