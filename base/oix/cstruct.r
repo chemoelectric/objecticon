@@ -330,7 +330,7 @@ void list_push(dptr l, dptr val)
       while ((bp = alclstb(i)) == NULL) {
          i /= 4;
          if (i < MinListSlots)
-            fatalerr(0, NULL);
+            fatalerr(309, NULL);
          }
 
       ListBlk(*l).listhead->lelem.listprev = (union block *) bp;
@@ -497,7 +497,7 @@ void list_put(dptr l, dptr val)
       while ((bp = alclstb(i)) == NULL) {
          i /= 4;
          if (i < MinListSlots)
-            fatalerr(0, NULL);
+            fatalerr(309, NULL);
          }
 
       ListBlk(*l).listtail->lelem.listnext =
