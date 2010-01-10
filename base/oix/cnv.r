@@ -227,6 +227,7 @@ int f(dptr s, dptr d)
        d->dword = D_Cset;
        BlkLoc(*d) = (union block *)rangeset_to_block(rs);
        free_rangeset(rs);
+       EVValD(d, e_sconv);
        return 1;
    }
 
@@ -244,9 +245,11 @@ int f(dptr s, dptr d)
        d->dword = D_Cset;
        BlkLoc(*d) = (union block *)rangeset_to_block(rs);
        free_rangeset(rs);
+       EVValD(d, e_sconv);
        return 1;
      }
 
+     EVValD(s, e_fconv);
      return 0;
 
   }
@@ -494,8 +497,10 @@ int f(dptr s, dptr d)
           s = &UcsBlk(*s).utf8;
          }
       cset: {
-        if (!cset2str(s, &cnvstr))
-            return 0;
+        if (!cset2str(s, &cnvstr)) {
+           EVValD(s, e_fconv);
+           return 0;
+        }
         s = &cnvstr;
         }
       default: {
@@ -573,7 +578,7 @@ cnv_real_macro(cnv_real_0,0,0,0,0)
 cnv_real_macro(cnv_real_1,E_Aconv,E_Tconv,E_Sconv,E_Fconv)
 
 
-#begdef cnv_str_macro(f, e_aconv, e_tconv, e_nconv, e_sconf, e_fconv)
+#begdef cnv_str_macro(f, e_aconv, e_tconv, e_nconv, e_sconv, e_fconv)
 /*
  * cnv_str - cnv:string(*s, *d), convert to a string
  */
@@ -592,6 +597,7 @@ int f(dptr s, dptr d)
          }
      ucs: {
            *d = UcsBlk(*s).utf8;
+           EVValD(d, e_sconv);
            return 1;
        }
       integer: {
@@ -602,6 +608,7 @@ int f(dptr s, dptr d)
             slen = (BignumBlk(*s).lsd - BignumBlk(*s).msd +1);
             dlen = slen * DigitBits * 0.3010299956639812;	/* 1 / log2(10) */
 	    bigtos(s,d);
+            EVValD(d, e_sconv);
             return 1;
           }
          else
@@ -613,7 +620,13 @@ int f(dptr s, dptr d)
          rtos(res, d, sbuf);
          }
      cset: {
-         return cset2str(s, d);
+           if (cset2str(s, d)) {
+               EVValD(d, e_sconv);
+               return 1;
+           } else {
+               EVValD(s, e_fconv);
+               return 0;
+           }
       }
 
       default: {
