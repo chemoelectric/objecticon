@@ -969,9 +969,6 @@ static int ston(dptr sp, union numeric *result)
          return bigradix((int)msign, 10, &sd, result);
          }
 
-   if (!realflag)
-      return CvtFail;		/* don't promote to real if integer format */
-
    /*
     * Rough tests for overflow and underflow.
     */
