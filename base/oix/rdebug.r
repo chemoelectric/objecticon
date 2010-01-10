@@ -1144,7 +1144,7 @@ void print_vword(FILE *f, dptr d) {
                         break;
                     }
                     case C_Proc: {
-                        fprintf(f, "%p =", p);
+                        fprintf(f, "%p -> ", p);
                         break;
                     }
                     default: {
