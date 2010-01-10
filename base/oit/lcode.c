@@ -1690,7 +1690,7 @@ static void gentables()
         report("  Total           %7ld", (long)tsize);
     }
 }
-
+
 /*
  * align() outputs zeroes as padding until pc is a multiple of WordSize.
  */
@@ -1826,7 +1826,7 @@ static void outword(word oword)
     pc += WordSize;
 }
 
-
+
 /*
  * flushcode - write buffered code to the output file.
  */

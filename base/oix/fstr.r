@@ -205,7 +205,7 @@ function detab(s,i[n])
       }
    }
 end
-
+
 
 
 "entab(s,i,...) - replace spaces with tabs, with stops at columns indicated."
@@ -492,7 +492,7 @@ function entab(s,i[n])
       }
    }
 end
-
+
 /*
  * nxttab -- helper routine for entab and detab, returns next tab
  *   beyond col
@@ -728,7 +728,7 @@ function map(s1,s2,s3)
       }
     }
 end
-
+
 
 "repl(s,i) - concatenate i copies of string s."
 
@@ -829,7 +829,7 @@ function repl(s,n)
       }
    }
 end
-
+
 
 "reverse(x) - reverse ucs or string x."
 
@@ -884,7 +884,7 @@ function reverse(s)
        }
    }
 end
-
+
 
 "left(s1,i,s2) - pad s1 on right with s2 to length i."
 
@@ -1159,7 +1159,7 @@ function right(s1,n,s2)
       }
     }
 end
-
+
 
 "center(s1,i,s2) - pad s1 on left and right with s2 to length i."
 
@@ -1347,7 +1347,7 @@ function center(s1,n,s2)
       }
  }
 end
-
+
 
 "trim(s,c) - trim trailing characters in c from s."
 

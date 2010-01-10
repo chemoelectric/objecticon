@@ -56,7 +56,7 @@ function abs(n)
    else
       runerr(102,n)
 end
-
+
 
 /*
  * The convertible types cset, integer, and real are identical
@@ -123,5 +123,5 @@ function numeric(n)
          }
       }
 end
-
+
 

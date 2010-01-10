@@ -30,7 +30,7 @@ operator ~ compl(x)
        return cset(blk);
       }
 end
-
+
 
 "x -- y - difference of csets x and y or of sets x and y."
 
@@ -135,7 +135,7 @@ operator -- diff(x,y)
          }
       }
 end
-
+
 
 "x ** y - intersection of csets x and y or of sets x and y."
 
@@ -229,7 +229,7 @@ operator ** inter(x,y)
          }
       }
 end
-
+
 
 "x ++ y - union of csets x and y or of sets x and y."
 

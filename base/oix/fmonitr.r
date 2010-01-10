@@ -16,7 +16,7 @@
  */
 
 
-
+
 void set_event_mask(struct progstate *p, struct b_cset *cs)
 {
     word *bits;
@@ -164,7 +164,7 @@ void set_event_mask(struct progstate *p, struct b_cset *cs)
 
 
 #define evforget()
-
+
 
 char typech[MaxType+1];	/* output character for each type */
 
@@ -177,10 +177,10 @@ int noMTevents;			/* don't produce events in EVAsgn */
  */
 word oldsum = 0;
 #endif					/* UNIX */
-
 
 
-
+
+
 /*
  *  EVInit() - initialization.
  */

@@ -187,7 +187,7 @@ ArithOp( % , mod , IntMod , RealMod, list_add /* bogus */ )
 #define RealMpy(x,y) return C_double ((long double)x * (long double)y);
 
 ArithOp( * , mult , Mpy , RealMpy, list_add /* bogus */ )
-
+
 
 "-x - negate x."
 
@@ -224,7 +224,7 @@ operator - neg(x)
          }
       }
 end
-
+
 
 "+x - convert x to a number."
 /*
@@ -275,7 +275,7 @@ end
 #define RealAdd(x,y) return C_double (x + y);
 
 ArithOp( + , plus , Add , RealAdd, list_add )
-
+
 
 
 "x ^ y - raise x to the y power."

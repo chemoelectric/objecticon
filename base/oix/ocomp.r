@@ -129,7 +129,7 @@ StrComp(>>=, lexge, , , !=, Less,    greater than or equal to)
 StrComp(>>,  lexgt, , , ==, Greater, greater than)
 StrComp(<<=, lexle, , , !=, Greater, less than or equal to)
 StrComp(<<,  lexlt, , , ==, Less,    less than)
-
+
 
 "x === y - test equivalence of x and y."
 
@@ -144,7 +144,7 @@ operator === eqv(x,y)
          fail;
    }
 end
-
+
 
 "x ~=== y - test inequivalence of x and y."
 

@@ -45,7 +45,7 @@ HPALETTE palette;
 int numColors = 0;
 
 char szAppName[] = "Icon";
-
+
 /*
  * pattern symbols
  */
@@ -104,7 +104,7 @@ stringint siLineTypes[] = {
   {"solid",             PS_SOLID},
   {"striped",           PS_DOT}
 };
-
+
 HINSTANCE mswinInstance;
 int ncmdShow;
 
@@ -956,7 +956,7 @@ int wclose(wbp w)
       }
    return 1;
    }
-
+
 void pollevent()
    {
    wbp w;
@@ -970,7 +970,7 @@ void pollevent()
       DispatchMessage(&m);
       }
    }
-
+
 int own_selection(wbp w, char *selname)
 {
     return Succeeded;
@@ -1025,7 +1025,7 @@ int wgetq(wbp w, dptr res, int t)
       DispatchMessage(&m);
       }
    }
-
+
 /*
  * determine the new size of the client
  */
@@ -1069,7 +1069,7 @@ char *geo;
       }
    return Succeeded;
    }
-
+
 int setcanvas(w,s)
 wbp w;
 char *s;
@@ -1112,7 +1112,7 @@ char *val;
    int height;
    return Failed;
    }
-
+
 int seticonlabel(w, val)
 wbp w;
 char *val;
@@ -1307,7 +1307,7 @@ wbp w, w2;
    w->context = w2->context;
    return Succeeded;
    }
-
+
 void setclip(w)
 wbp w;
    {
@@ -1346,7 +1346,7 @@ int raiseWindow(wbp w)
       SetWindowPos(ws->win, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
    return Succeeded;
    }
-
+
 int nativecolor(w, s, r, g, b)
 wbp w;
 char *s;
@@ -1368,7 +1368,7 @@ SysColor mscolor(wbp w, long r, long g, long b)
    blue  = 65535L * pow(b / 65535.0, invgamma);
    return RGB(red >> 8, green >> 8, blue >> 8);
 }
-
+
 /*
  * Set the context's fill style by name.
  */
@@ -1403,7 +1403,7 @@ char *s;
       }
    return Succeeded;
    }
-
+
 /*
  * Set the context's line style by name.
  */
@@ -1433,7 +1433,7 @@ int setlinewidth(wbp w, LONG linewid)
       wc->bgpen.lopnWidth.x = wc->bgpen.lopnWidth.y = linewid;
    return Succeeded;
    }
-
+
 
 /*
  * Set the foreground to draw in a mutable color
@@ -1473,7 +1473,7 @@ int i;
    return ISXORREVERSE(w) ? resetfg(w) : Succeeded;
    }
 
-
+
 int getdepthDC(HDC dc)
 {
    return GetDeviceCaps(dc, BITSPIXEL) * GetDeviceCaps(dc, PLANES);
@@ -1497,7 +1497,7 @@ int devicecaps(wbp w, int i)
    FREE_STDLOCALS(w);
    return rv;
 }
-
+
 /*
  * Reset the context's foreground color to whatever it is supposed to be.
  */
@@ -1608,7 +1608,7 @@ double gamma;
    setbg(w, wc->bgname);
    return Succeeded;
    }
-
+
 /*
  * setpointer() - define a mouse pointer shape
  */
@@ -1647,7 +1647,7 @@ char *val;
    /* should restore savedcursor when pointer moves outside our window */
    return Succeeded;
    }
-
+
 /*
  * setdrawop() - set the drawing operation
  */
@@ -1673,7 +1673,7 @@ char *val;
       }
    return Succeeded;
    }
-
+
 setdisplay(wbp w, char *val)
    {
    if (strcmp(val, "MS Windows"))
@@ -1699,7 +1699,7 @@ int i;
    wc->leading = i;
    return Succeeded;
    }
-
+
 void toggle_fgbg(w)
 wbp w;
    {
@@ -1717,7 +1717,7 @@ wbp w;
    wc->brush = wc->bgbrush;
    wc->bgbrush = tbrush;
    }
-
+
 int getvisual(w, answer)
 wbp w;
 char *answer;
@@ -1759,7 +1759,7 @@ char *answer;
       }
    else strcpy(answer, "unknown");
    }
-
+
 void getfntnam(w, answer)
 wbp w;
 char *answer;
@@ -1791,7 +1791,7 @@ char *answer;
    if (s) sprintf(answer, "%s", s);
    else strcpy(answer, "unknown");
    }
-
+
 void geticonic(w, answer)
 wbp w;
 char *answer;
@@ -1812,7 +1812,7 @@ char *answer;
       }
    else sprintf(answer,"hidden");
    }
-
+
 int geticonpos(w, val)
 wbp w;
 char *val;
@@ -1967,7 +1967,7 @@ int x, y, width, height, x2, y2;
    FREE_STDLOCALS(w2);
    return Succeeded;
    }
-
+
 int getdefault(w, prog, opt, answer)
 wbp w;
 char *prog, *opt, *answer;
@@ -2197,7 +2197,7 @@ int on_icon;
    FREE_STDLOCALS(w);
    return 0;
    }
-
+
 /*
  * imqsearch(key,base,nel) - binary search hardwired for images
  *
@@ -2362,7 +2362,7 @@ unsigned char *data;
    FREE_STDLOCALS(w);
    return 1;
    }
-
+
 int readimage(w, filename, x, y, status)
 wbp w;
 char *filename;
@@ -2403,7 +2403,7 @@ int x, y, *status;
    }
    }
 
-
+
 
 /*
  * Initialize client for producing pixels from a window, or in this case,
@@ -2461,7 +2461,7 @@ int getpixel(wbp w, int x, int y, word *rv, char *s, struct imgmem *imem)
 	   (long)RED(cr)*257L, (long)GREEN(cr)*257L, (long)BLUE(cr)*257L);
    return Succeeded;
    }
-
+
 int query_pointer(w, pp)
 wbp w;
 XPoint *pp;
@@ -2492,7 +2492,7 @@ dptr dp;
    wsp ws = w->window;
    return Succeeded;
    }
-
+
 /*
  * dumpimage -- write an image to a disk file.
  *  At present, there are no MS Windows-specific image file formats.
@@ -2512,7 +2512,7 @@ HBITMAP loadimage(wbp w, char *filename, unsigned int *width,
    {
    return NULL;
    }
-
+
 
 char *get_mutable_name(wbp w, int mute_index)
    {
@@ -2685,7 +2685,7 @@ void drawarcs(wbp wb, XArc *arcs, int narcs)
    FREE_STDLOCALS(wb);
    return;
    }
-
+
 
 /*
  * drawlines - Support routine for DrawLine
@@ -2710,7 +2710,7 @@ void drawlines(wbinding *wb, XPoint *points, int npoints)
    FREE_STDLOCALS(wb);
    return;
    }
-
+
 
 /*
  * drawpoints() - 
@@ -2768,7 +2768,7 @@ void drawsegments(wbinding *wb, XSegment *segs, int nsegs)
    FREE_STDLOCALS(wb);
    return;
    }
-
+
 
 int allowresize(w, on)
 wbp w;
@@ -2849,7 +2849,7 @@ int setselection(wbp w, dptr val)
    FREE_STDLOCALS(w);
    return Failed;
 }
-
+
 /*
  * drawstrng()
  */
@@ -2875,7 +2875,7 @@ void drawstrng(wbinding *wb, int x, int y, char *s, int slen)
    FREE_STDLOCALS(wb);
    return;
    }
-
+
 
 /*
  * fillarcs
@@ -3084,7 +3084,7 @@ void fillpolygon(wbp w, XPoint *pts, int npts)
 
 LONG NumWindows = 0;
 
-
+
 /*
  * allocate a context.  Can't be called until w has a window.
  */
@@ -3128,7 +3128,7 @@ wbp w;
    GRFX_LINK(wc, wcntxts);
    return wc;
    }
-
+
 /*
  * allocate a context, cloning attributes from an existing context
  */
@@ -3201,7 +3201,7 @@ wbp w;
    GRFX_LINK(wc, wcntxts);
    return wc;
    }
-
+
 /*
  * allocate a window state structure
  */
@@ -3489,7 +3489,7 @@ wbp w;
    resizePixmap(w, ws->width, ws->height);
    return Succeeded;
    }
-
+
 
 int do_config(w, status)
 wbp w;
@@ -3541,7 +3541,7 @@ int status;
       }
    return Succeeded;
    }
-
+
 DWORD playMIDIfile(HWND hWndNotify, LPSTR s)
 {
    UINT wDeviceID;
@@ -3598,7 +3598,7 @@ int playmedia(wbp w, char *s)
       }
    return Failed;
 }
-
+
 
 int resizePixmap(wbp w, int width, int height)
    {
@@ -3801,7 +3801,7 @@ int textWidth(wbp w, char *s, int n)
    ReleaseDC(ws->iconwin, stddc);
    return rv;
    }
-
+
 void warpPointer(w, x, y)
 wbp w;
 int x, y;

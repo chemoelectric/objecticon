@@ -74,7 +74,7 @@ static int subs_asgn	(dptr dest, dptr src);
 
 }
 #enddef
-
+
 
 "x := y - assign y to x."
 
@@ -94,7 +94,7 @@ operator := asgn(underef x, y)
       return x;
    }
 end
-
+
 
 "x <- y - assign y to x."
 " Reverses assignment if resumed."
@@ -111,7 +111,7 @@ operator <- rasgn(underef x -> saved_x, y)
       fail;
  }
 end
-
+
 
 "x <-> y - swap values of x and y."
 " Reverses swap if resumed."
@@ -199,7 +199,7 @@ operator <-> rswap(underef x -> dx, underef y -> dy)
       fail;
    }
 end
-
+
 
 "x :=: y - swap values of x and y."
 
@@ -422,7 +422,7 @@ int subs_asgn(dptr dest, dptr src)
    EVVal(tvsub->sslen, E_Ssasgn);
    return Succeeded;
    }
-
+
 /*
  * tvtbl_asgn - perform an assignment to a table element trapped variable,
  *  inserting the element in the table if needed.

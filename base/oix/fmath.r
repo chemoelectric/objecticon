@@ -24,7 +24,7 @@ function funcname(x)
       }
 end
 #enddef
-
+
 
 #define aroundone if (x < -1.0 || x > 1.0) {drunerr(205, x); errorfail;}
 #define positive  if (x < 0)               {drunerr(205, x); errorfail;}
@@ -44,7 +44,7 @@ MathOp(util_Math_sqrt,sqrt, " - square root of x.", positive, edom)
 MathOp(util_Math_dtor,DTOR, " - convert x from degrees to radians.", ; , ;)
 MathOp(util_Math_rtod,RTOD, " - convert x from radians to degrees.", ; , ;)
 
-
+
 
 "atan(r1,r2) -- r1, r2  in radians; if r2 is present, produces atan2(r1,r2)."
 
@@ -63,7 +63,7 @@ function util_Math_atan(x,y)
       return C_double atan2(x,y);
       }
 end
-
+
 
 "log(r1,r2) - logarithm of r1 to base r2."
 

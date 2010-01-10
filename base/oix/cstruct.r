@@ -135,7 +135,7 @@ int table_del(dptr t, dptr key)
     return res;
 }
 
-
+
 /*
  * c_get - convenient C-level access to the get function
  *  returns 0 on failure, otherwise fills in res
