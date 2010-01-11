@@ -612,7 +612,7 @@ static void showlevel(int n)
 
 static void outfield()
 {
-    if (IntVal(*xfield) < 0 && fnames-efnames < IntVal(*xfield))
+    if (IntVal(*xfield) < 0 && fnames - efnames <= IntVal(*xfield))
         putstr(stderr, efnames[IntVal(*xfield)]);
     else if (0 <= IntVal(*xfield) && IntVal(*xfield) < efnames - fnames)
         putstr(stderr, fnames[IntVal(*xfield)]);
