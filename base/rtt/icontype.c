@@ -31,7 +31,7 @@ struct icon_type icontypes[24] = {
   {"ucs", 0, DrfNone, TRetBlkP, NULL, 0, 0, "ucs", "Ucs"},
   {"proc", 0, DrfNone, TRetBlkP, NULL, 0, 0, "proc", "Proc"},
   {"coexpr", 0, DrfNone, TRetBlkP, NULL, 0, 0, "C", "Coexpr"},
-  {"tvsubs", 1, DrfSpcl, TRetSpcl, NULL, 1, 0, "sstv", "Tvsubs"},
+  {"tvsubs", 1, DrfSpcl, TRetBlkP, NULL, 1, 0, "sstv", "Tvsubs"},
   {"tvtbl", 1, DrfSpcl, TRetBlkP, NULL, 1, 1, "tetv", "Tvtbl"},
   {"null", 0, DrfNone, TRetNone, NULL, 0, 0, "n", "Null"},
   {"cset", 0, DrfNone, TRetBlkP, NULL, 0, 0, "c", "Cset"},

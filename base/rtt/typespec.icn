@@ -222,7 +222,7 @@ procedure main()
 
    indx := req_type("tvsubs")
    icontypes[indx + 1].deref := "DrfSpcl"
-   icontypes[indx + 1].rtl_ret := "TRetSpcl"
+   icontypes[indx + 1].rtl_ret := "TRetBlkP"
    write("int stv_typ = ", indx, ";")
 
    indx := req_type("tvtbl")

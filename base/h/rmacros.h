@@ -437,18 +437,6 @@
  */
 #define Deref(d) if (Var(d)) deref(&d, &d)
 
-/*
- * Construct a substring trapped variable.
- */
-#define SubStr(dest,var,len,pos)\
-   if ((var)->dword == D_Tvsubs)\
-      (dest)->vword.bptr = (union block *)alcsubs(len, (pos) +\
-         BlkLoc(*(var))->tvsubs.sspos - 1, &BlkLoc(*(var))->tvsubs.ssvar);\
-   else\
-      (dest)->vword.bptr = (union block *)alcsubs(len, pos, (var));\
-   (dest)->dword = D_Tvsubs;
-
-
 #define ssize    (curstring->size)
 #define strbase  (curstring->base)
 #define strend   (curstring->end)

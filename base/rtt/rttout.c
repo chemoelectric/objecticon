@@ -23,7 +23,6 @@ static void cnv_fnc       (struct token *t, int typcd,
                                struct node *dest, int indent);
 static void chk_conj      (struct node *n);
 static void chk_nl        (int indent);
-static void chk_rsltblk   (int indent);
 static int     does_call     (struct node *expr);
 static void failure       (int indent, int brace);
 static void interp_def    (struct node *n);
@@ -907,7 +906,9 @@ static void ret_value1(struct token *t, struct node *n, int indent)
             /*
              * The allocation of the real block may fail.
              */
-            chk_rsltblk(indent);
+            ForceNl();
+            prt_str("if (!result.vword.bptr) fatalerr(309, NULL);", indent);
+            ForceNl();
             return;
          case C_String:
             /*
@@ -980,31 +981,6 @@ static void ret_value1(struct token *t, struct node *n, int indent)
                         prt_str("result.dword = ", indent);
                         c_walk(args->u[0].child, indent + IndentInc, 0);
                         prt_str(";", indent);
-                        }
-                     else if (typcd == stv_typ) {
-                        /*
-                         * return/suspend tvsubs(<desc-pntr>, <start>, <len>);
-                         */
-                        if (args == NULL || args->nd_id != CommaNd ||
-                           args->u[0].child->nd_id != CommaNd ||
-                           args->u[0].child->u[0].child->nd_id == CommaNd)
-                           errt1(t, "wrong no. of args for tvsubs(dp, i, j)");
-                        no_nl = 1;
-                        prt_str("SubStr(&result, ", indent);
-                        c_walk(args->u[0].child->u[0].child, indent + IndentInc,
-                           0);
-                        prt_str(", ", indent + IndentInc);
-                        c_walk(args->u[1].child, indent + IndentInc, 0);
-                        prt_str(", ", indent + IndentInc);
-                        c_walk(args->u[0].child->u[1].child, indent + IndentInc,
-                          0);
-                        prt_str(");", indent + IndentInc);
-                        no_nl = 0;
-                        /*
-                         * The allocation of the substring trapped variable
-                         *   block may fail.
-                         */
-                        chk_rsltblk(indent);
                         }
                      break;
                   }
@@ -1082,21 +1058,6 @@ int indent;
    prt_str(";", indent);
    }
 
-/*
- * chk_rsltblk - the result value contains an allocated block, make sure
- *    the allocation succeeded.
- */
-static void chk_rsltblk(indent)
-int indent;
-   {
-   ForceNl();
-   prt_str("if (!result.vword.bptr) {", indent);
-   ForceNl();
-   prt_str("fatalerr(309, NULL);", indent + IndentInc);
-   ForceNl();
-   prt_str("}", indent + IndentInc);
-   ForceNl();
-   }
 
 /*
  * failure - produce code for fail or efail.

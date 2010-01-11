@@ -261,8 +261,8 @@ struct b_telem {		/* table-element block */
     word title;			/*   T_Telem */
     union block *clink;		/*   hash chain link */
     uword hashnum;		/*   for ordering chain */
-    struct descrip tref;		/*   entry value */
-    struct descrip tval;		/*   assigned value */
+    struct descrip tref;	/*   entry value */
+    struct descrip tval;	/*   assigned value */
 };
 
 struct b_tvsubs {		/* substring trapped variable block */
@@ -276,7 +276,7 @@ struct b_tvtbl {		/* table element trapped variable block */
     word title;			/*   T_Tvtbl */
     union block *clink;		/*   pointer to table header block */
     uword hashnum;		/*   hash number */
-    struct descrip tref;		/*   entry value */
+    struct descrip tref;	/*   entry value */
 };
 
 /*
@@ -467,7 +467,7 @@ struct progstate {
     int (*Cnvtstr)(char *,dptr,dptr);
     void (*Deref)(dptr,dptr);
     struct b_bignum * (*Alcbignum)(word);
-    struct b_cset * (*Alccset)();
+    struct b_cset * (*Alccset)(word);
     union block * (*Alchash)(int);
     struct b_slots * (*Alcsegment)(word);
     struct b_list *(*Alclist_raw)(uword,uword);
@@ -476,15 +476,15 @@ struct progstate {
     struct b_real *(*Alcreal)(double);
     struct b_record *(*Alcrecd)(struct b_constructor *);
     struct b_object *(*Alcobject)(struct b_class *);
-    struct b_cast *(*Alccast)();
-    struct b_methp *(*Alcmethp)();
-    struct b_coexpr *(*Alccoexp)();
-    struct b_ucs *(*Alcucs)();
+    struct b_cast *(*Alccast)(void);
+    struct b_methp *(*Alcmethp)(void);
+    struct b_coexpr *(*Alccoexp)(void);
+    struct b_ucs *(*Alcucs)(int);
     struct b_selem *(*Alcselem)(void);
     char *(*Alcstr)(char *, word);
-    struct b_tvsubs *(*Alcsubs)(word, word, dptr);
+    struct b_tvsubs *(*Alcsubs)(void);
     struct b_telem *(*Alctelem)(void);
-    struct b_tvtbl *(*Alctvtbl)(dptr, dptr, uword);
+    struct b_tvtbl *(*Alctvtbl)(void);
     void (*Dealcblk)(union block *);
     void (*Dealcstr)(char *);
     char * (*Reserve)(int, word);

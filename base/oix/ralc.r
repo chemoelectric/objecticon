@@ -432,6 +432,7 @@ struct b_cast *f()
    struct b_cast *blk;
 
    AlcFixBlk(blk, b_cast, T_Cast, e_cast)
+   blk->object = 0;
    return blk;
    }
 #enddef
@@ -449,6 +450,7 @@ struct b_methp *f()
    struct b_methp *blk;
 
    AlcFixBlk(blk, b_methp, T_Methp, e_methp)
+   blk->object = 0;
    return blk;
    }
 #enddef
@@ -491,7 +493,6 @@ struct b_selem *f()
    AlcFixBlk(blk, b_selem, T_Selem, e_selem)
    blk->clink = NULL;
    blk->setmem = nulldesc;
-   blk->hashnum = 0;
    return blk;
    }
 #enddef
@@ -558,17 +559,13 @@ alcstr_macro(alcstr_1,E_String)
  * alcsubs - allocate a substring trapped variable in the block region.
  */
 
-struct b_tvsubs *f(word len, word pos, dptr var)
-   {
-   tended struct descrip tvar = *var;
-   struct b_tvsubs *blk;
-
-   AlcFixBlk(blk, b_tvsubs, T_Tvsubs, e_tvsubs)
-   blk->sslen = len;
-   blk->sspos = pos;
-   blk->ssvar = tvar;
-   return blk;
-   }
+struct b_tvsubs *f()
+{
+    struct b_tvsubs *blk;
+    AlcFixBlk(blk, b_tvsubs, T_Tvsubs, e_tvsubs)
+    blk->ssvar = nulldesc;
+    return blk;
+}
 #enddef
 
 alcsubs_macro(alcsubs_0,0)
@@ -584,7 +581,6 @@ struct b_telem *f()
    struct b_telem *blk;
 
    AlcFixBlk(blk, b_telem, T_Telem, e_telem)
-   blk->hashnum = 0;
    blk->clink = NULL;
    blk->tref = nulldesc;
    return blk;
@@ -600,18 +596,14 @@ alctelem_macro(alctelem_1,E_Telem)
  *  region.
  */
 
-struct b_tvtbl *f(dptr tbl, dptr ref, uword hashnum)
-   {
-   tended struct descrip ttbl = *tbl;
-   tended struct descrip tref = *ref;
-   struct b_tvtbl *blk;
-
-   AlcFixBlk(blk, b_tvtbl, T_Tvtbl, e_tvtbl)
-   blk->hashnum = hashnum;
-   blk->clink = BlkLoc(ttbl);
-   blk->tref = tref;
-   return blk;
-   }
+struct b_tvtbl *f()
+{
+    struct b_tvtbl *blk;
+    AlcFixBlk(blk, b_tvtbl, T_Tvtbl, e_tvtbl)
+    blk->clink = NULL;
+    blk->tref = nulldesc;
+    return blk;
+}
 #enddef
 
 alctvtbl_macro(alctvtbl_0,0)

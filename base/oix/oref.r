@@ -5,6 +5,24 @@
 #include "../h/opdefs.h"
 #include "orefiasm.ri"
 
+/* Helper method to allocate and fill in a b_tvsubs; var must be a pointer
+ * to a tended descriptor.
+ */
+static struct b_tvsubs *make_tvsubs(dptr var, word pos, word len)
+{
+    struct b_tvsubs *t;
+    MemProtect(t = alcsubs());
+    t->sslen = len;
+    if (is:tvsubs(*var)) {
+       t->sspos = pos + TvsubsBlk(*var).sspos - 1;
+       t->ssvar = TvsubsBlk(*var).ssvar;
+    } else {
+       t->sspos = pos;
+       t->ssvar = *var;
+    }
+    return t;
+}
+
 "!x - generate successive values from object x."
 
 operator ! bang(underef x -> dx)
@@ -26,7 +44,7 @@ operator ! bang(underef x -> dx)
                     }
                 } else {
                     for (i = 1; i <= StrLen(dx); i++) {
-                        suspend tvsubs(&x, i, (word)1);
+                        suspend tvsubs(make_tvsubs(&x, i, 1));
                         deref(&x, &dx);
                         if (!is:string(dx)) 
                             runerr(103, dx);
@@ -108,7 +126,7 @@ operator ! bang(underef x -> dx)
                   }
               } else {
                   for (i = 1; i <= UcsBlk(dx).length; i++) {
-                      suspend tvsubs(&x, i, (word)1);
+                      suspend tvsubs(make_tvsubs(&x, i, 1));
                       deref(&x, &dx);
                       if (!is:ucs(dx)) 
                           runerr(128, dx);
@@ -191,7 +209,7 @@ operator ? random(underef x -> dx)
             rval = RandVal;
             rval *= val;
             if (is:variable(x) && !frame->rval)
-                return tvsubs(&x, (word)rval + 1, (word)1);
+                return tvsubs(make_tvsubs(&x, (word)rval + 1, 1));
             else
                 return string(1, StrLoc(dx)+(word)rval);
          }
@@ -207,7 +225,7 @@ operator ? random(underef x -> dx)
             rval *= val;
             i = (word)rval + 1;
             if (is:variable(x) && !frame->rval)
-               return tvsubs(&x, i, (word)1);
+                return tvsubs(make_tvsubs(&x, i, 1));
             else
                 return ucs(make_ucs_substring(&UcsBlk(dx), i, 1));
        }
@@ -448,7 +466,7 @@ operator [:] sect(underef x -> dx, i, j)
              j = j - i;
    
          if (use_trap) 
-             return tvsubs(&x, i, j);
+             return tvsubs(make_tvsubs(&x, i, j));
          else 
              return ucs(make_ucs_substring(&UcsBlk(dx), i, j));
 
@@ -513,7 +531,7 @@ operator [:] sect(underef x -> dx, i, j)
             j = j - i;
    
          if (use_trap)
-            return tvsubs(&x, i, j);
+             return tvsubs(make_tvsubs(&x, i, j));
          else
             return string(j, StrLoc(dx)+i-1);
        }
@@ -594,7 +612,10 @@ operator [] subsc(underef x -> dx,y)
                 * dx[y] is not in the table, make a table element trapped
                 *  variable and return it as the result.
                 */
-               MemProtect(tp = alctvtbl(&dx, &y, hn));
+               MemProtect(tp = alctvtbl());
+               tp->hashnum = hn;
+               tp->clink = BlkLoc(dx);
+               tp->tref = y;
                return tvtbl(tp);
            }
       }
@@ -630,7 +651,7 @@ operator [] subsc(underef x -> dx,y)
             union block *bp; /* doesn't need to be tended */
 
             bp = BlkLoc(dx);
-            i = cvpos(yi, (word)(bp->record.constructor->n_fields));
+            i = cvpos(yi, bp->record.constructor->n_fields);
             if (i == CvtFail || i > bp->record.constructor->n_fields)
                fail;
 
@@ -673,7 +694,7 @@ operator [] subsc(underef x -> dx,y)
              * x is a string, make a substring trapped variable for the
              * one character substring selected and return it.
              */
-            return tvsubs(&x, i, (word)1);
+            return tvsubs(make_tvsubs(&x, i, 1));
         else
             return ucs(make_ucs_substring(&UcsBlk(dx), i, 1));
       }
@@ -743,7 +764,7 @@ operator [] subsc(underef x -> dx,y)
               * x is a string, make a substring trapped variable for the
               * one character substring selected and return it.
               */
-             return tvsubs(&x, i, (word)1);
+             return tvsubs(make_tvsubs(&x, i, 1));
          }
          else {
              /*
@@ -789,7 +810,7 @@ function back(underef x -> dx)
                             if (i == 0)
                                 break;
                         }
-                        suspend tvsubs(&x, i, (word)1);
+                        suspend tvsubs(make_tvsubs(&x, i, 1));
                         deref(&x, &dx);
                         if (!is:string(dx)) 
                             runerr(103, dx);
@@ -851,7 +872,7 @@ function back(underef x -> dx)
                           if (i == 0)
                               break;
                       }
-                      suspend tvsubs(&x, i, (word)1);
+                      suspend tvsubs(make_tvsubs(&x, i, 1));
                       deref(&x, &dx);
                       if (!is:ucs(dx)) 
                           runerr(128, dx);
