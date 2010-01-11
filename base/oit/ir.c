@@ -794,9 +794,11 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         }
 
         case Uop_Local: {
-            struct ir_var *v = make_local(n);
+            struct ir_var *v = 0;
             if (target && target->type != TMP)
                 target = 0;
+            if (target)
+                v = make_local(n);
             chunk2(res->start, 
                   ir_move(n, target, v, rval),
                   ir_goto(n, res->success));
@@ -806,9 +808,11 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         }
 
         case Uop_Global: {
-            struct ir_var *v = make_global(n);
+            struct ir_var *v = 0;
             if (target && target->type != TMP)
                 target = 0;
+            if (target)
+                v = make_global(n);
             chunk2(res->start, 
                   ir_move(n, target, v, rval),
                   ir_goto(n, res->success));
@@ -818,9 +822,11 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         }
 
         case Uop_Const: {
-            struct ir_var *v = make_const(n);
+            struct ir_var *v = 0;
             if (target && target->type == CONST)
                 target = 0;
+            if (target)
+                v = make_const(n);
             chunk2(res->start, 
                   ir_move(n, target, v, 0),
                   ir_goto(n, res->success));
@@ -835,7 +841,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             struct ir_var *lv;
 
             init_scan(res, st);
-            lv = make_tmp(st);
+            lv = get_var(x->child1, st, 0);
             expr = ir_traverse(x->child1, st, lv, 0, 1);
             push_scan(res);
             body = ir_traverse(x->child2, st, target, bounded, rval);
@@ -869,7 +875,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             struct ir_var *lv, *rv;
 
             init_scan(res, st);
-            lv = make_tmp(st);
+            lv = get_var(x->child1, st, 0);
             rv = target ? target : make_tmp(st);
             expr = ir_traverse(x->child1, st, lv, 0, 0);
             push_scan(res);
@@ -1421,7 +1427,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             push_loop(res);
 
             body_expr_st = branch_stack(res->loop->loop_st);
-            v = make_tmp(body_expr_st);
+            v = get_var(x->child1, body_expr_st, 0);
             body_mk = make_mark(body_expr_st);
 
             expr = ir_traverse(x->child1, body_expr_st, v, 0, 0);
@@ -1498,7 +1504,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             push_loop(res);
 
             expr_st = branch_stack(res->loop->loop_st);
-            v = make_tmp(expr_st);
+            v = get_var(x->child, expr_st, 0);
 
             expr = ir_traverse(x->child, expr_st, v, 0, 0);
             pop_loop();
@@ -1739,7 +1745,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
 
             tst = branch_stack(st);
             mk = make_mark(tst);
-            v = make_tmp(tst);
+            v = get_var(x->child, tst, 0);
 
             expr = ir_traverse(x->child, tst, v, 1, 0);
 
@@ -1967,17 +1973,21 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             int i;
             char *fname = 0;
             int clo = make_closure(st);
-            fn = make_tmp(st);
             args = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_var *));
             info = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
-            for (i = 0; i < x->n; ++i)
-                args[i] = get_var(x->child[i], st, 0);
             if (x->expr->op == Uop_Field) {
                 struct lnode_field *y = (struct lnode_field *)x->expr;
+                fn = get_var(y->child, st, 0);
+                for (i = 0; i < x->n; ++i)
+                    args[i] = get_var(x->child[i], st, 0);
                 expr = ir_traverse(y->child, st, fn, 0, 1);
                 fname = y->fname;
-            } else
+            } else {
+                fn = get_var(x->expr, st, 0);
+                for (i = 0; i < x->n; ++i)
+                    args[i] = get_var(x->child[i], st, 0);
                 expr = ir_traverse(x->expr, st, fn, 0, 1);
+            }
             for (i = 0; i < x->n; ++i) 
                 info[i] = ir_traverse(x->child[i], st, args[i], 0, 0);
 
