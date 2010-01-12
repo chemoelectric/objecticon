@@ -800,7 +800,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         }
 
         case Uop_Local: {
-            if (target && target->type != TMP)
+            if (target && target->type == LOCAL)
                 target = 0;
             chunk2(res->start, 
                   ir_move(n, target, make_local(n), rval),
@@ -811,7 +811,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         }
 
         case Uop_Global: {
-            if (target && target->type != TMP)
+            if (target && target->type == GLOBAL)
                 target = 0;
             chunk2(res->start, 
                   ir_move(n, target, make_global(n), rval),
