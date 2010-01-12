@@ -920,7 +920,7 @@ static void ret_value1(struct token *t, struct node *n, int indent)
             ForceNl();
             if (n->u[0].child->tok->tok_id == StrLit) {
                 prt_str("result.dword = ", indent);
-                fprintf(out_file, "%d;", strlen(n->u[0].child->tok->image));
+                fprintf(out_file, "%d;", (int)strlen(n->u[0].child->tok->image));
             } else
                 prt_str("result.dword = strlen(result.vword.sptr);", indent);
             return;
