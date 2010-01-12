@@ -14,7 +14,7 @@
  * through calls to ppdef().
  */
 
-   Feature("_V2", 0)			/* Version 2 */
+   Feature("_V2", "V2")			/* Version 2 */
 
    Feature("_OBJECT_ICON", "Object Icon")
 
@@ -31,35 +31,22 @@
 #endif					/* VM */
 
    Feature("_POSIX", "POSIX")
-
    Feature("_ASCII", "ASCII")
-
    Feature("_CO_EXPRESSIONS", "co-expressions")
-
+   Feature("_EVENT_MONITOR", "event monitoring")
+   Feature("_KEYBOARD_FUNCTIONS", "keyboard functions")
+   Feature("_LARGE_INTEGERS", "large integers")
+   Feature("_MULTITASKING", "multiple programs")
+   Feature("_PIPES", "pipes")
+   Feature("_SYSTEM_FUNCTION", "system function")
 
 #ifdef HAVE_LIBDL
    Feature("_DYNAMIC_LOADING", "dynamic loading")
 #endif					/* HAVE_LIBDL */
 
-   Feature("", "environment variables")
-
-   Feature("_EVENT_MONITOR", "event monitoring")
-
-   Feature("_KEYBOARD_FUNCTIONS", "keyboard functions")
-
-   Feature("_LARGE_INTEGERS", "large integers")
-
-   Feature("_MULTITASKING", "multiple programs")
-
-   Feature("_PIPES", "pipes")
-
-   Feature("_SYSTEM_FUNCTION", "system function")
-
-
 #ifdef Graphics
    Feature("_GRAPHICS", "graphics")
 #endif					/* Graphics */
-
 
 #ifdef XWindows
    Feature("_X_WINDOW_SYSTEM", "X Windows")

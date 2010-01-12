@@ -47,15 +47,19 @@ class Parser(Connectable)
       PARSER_ERROR_EVENT := "parser error"
       DEFAULT_SYMBOLS := table()
       # reverse engineer the predefined symbols list from our predefined symbols
-      DEFAULT_SYMBOLS["_V9"] := 1
       every s := &features do {
          DEFAULT_SYMBOLS[case s of {
+            "Object Icon": "_OBJECT_ICON"
+            "V2": "_V2"
+            "PORT": "_PORT"
+            "keyboard functions": "_KEYBOARD_FUNCTIONS"
+            "libz file compression": "_LIBZ_COMPRESSION"
+            "JPEG images": "_JPEG"
+            "XPM images": "_XPM"
             "Macintosh":"_MACINTOSH"
             "MS Win32":"_MS_WIN32"
             "UNIX":"_UNIX"
             "POSIX":"_POSIX"
-            "DBM":"_DBM"
-            "SQL connectivity":"_SQL"
             "ASCII":"_ASCII"
             "co-expressions":"_CO_EXPRESSIONS"
             "dynamic loading":"_DYNAMIC_LOADING"
