@@ -149,7 +149,7 @@ int ppinit(char *fname, int m4)
    /*
     * install predefined symbols
     */
-#define Feature(guard,symname,kwval) dlookup(symname, -1, "1");
+#define Feature(symname,kwval) dlookup(symname, -1, "1");
 #include "../h/features.h"
 
    /*

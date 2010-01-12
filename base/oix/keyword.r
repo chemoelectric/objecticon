@@ -135,7 +135,7 @@ end
 "&features - generate strings identifying features in this version of Icon"
 keyword features
    body {
-#define Feature(guard,sym,kwval) if (kwval) suspend C_string kwval;
+#define Feature(sym,kwval) if (kwval) suspend C_string kwval;
 #include "../h/features.h"
       fail;
       }
