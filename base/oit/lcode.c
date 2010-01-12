@@ -691,7 +691,7 @@ static void lemitcode()
                 }
                 case Ir_Move: {
                     struct ir_move *x = (struct ir_move *)ir;
-                    out_op(x->rval ? Op_Move : Op_MoveVar);
+                    out_op(Op_Move);
                     emit_ir_var(x->lhs, "lhs");
                     emit_ir_var(x->rhs, "rhs");
                     break;

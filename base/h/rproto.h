@@ -512,7 +512,6 @@ void push_frame(struct frame *f);
 void push_p_frame(struct p_frame *f);
 void interp(void);
 dptr get_dptr(void);
-void get_descrip(dptr dest);
 void get_deref(dptr dest);
 void get_variable(dptr dest);
 void skip_descrip();

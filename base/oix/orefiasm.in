@@ -1,20 +1,20 @@
 $start coexp_bang_impl
    Op_Refresh
-        Op_FrameVar arg:0
-        Op_FrameVar arg:0
+        Op_Tmp tmp:0
+        Op_Tmp tmp:0
         1
         Coactfail
 
 Loop:
    Op_Activate
-        Op_Tmp tmp:0
+        Op_Tmp tmp:1
         Op_Knull
-        Op_FrameVar arg:0
+        Op_Tmp tmp:0
         0
         Coactfail
 
    Op_CSuspend
-        Op_Tmp tmp:0
+        Op_Tmp tmp:1
 
    Op_Goto
         Loop

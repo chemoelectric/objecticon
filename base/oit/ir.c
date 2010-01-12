@@ -2269,7 +2269,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             case_st = branch_stack(st);
 
             mk = make_mark(case_st);
-            e = make_tmp(case_st);
+            e = get_var(x->expr, case_st, 0);
             v = target ? target : make_tmp(case_st);
 
             expr = ir_traverse(x->expr, branch_stack(case_st), e, 1, 1);

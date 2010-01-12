@@ -177,45 +177,8 @@ dptr get_dptr()
 }
 
 /*
- * Get a copy of a descriptor without any alteration to it (no dereferencing or
- * making of variables).
- */
-void get_descrip(dptr dest)
-{
-    word op = GetWord;
-    switch (op) {
-        case Op_Int: {
-            MakeInt(GetWord, dest);
-            break;
-        }
-        case Op_Knull: {
-            *dest = nulldesc;
-            break;
-        }
-        case Op_Const:
-        case Op_Static:
-        case Op_Global: {
-            *dest = *(dptr)GetAddr;
-            break;
-        }
-        case Op_FrameVar: {
-            *dest = curr_pf->fvars->desc[GetWord];
-            break;
-        }
-        case Op_Tmp: {
-            *dest = curr_pf->tmp[GetWord];
-            break;
-        }
-
-        default: {
-            syserr("Invalid opcode in get_descrip: %d (%s)\n", op, op_names[op]);
-        }
-    }
-}
-
-/*
- * Like get_descrip, but dereference temporary and closure descriptors
- * (dynamics/args/statics/globals should already be dereferenced).
+ * Get a descriptor, but dereference temporary descriptors
+ * (dynamics/args/statics/globals should never be variables).
  */
 void get_deref(dptr dest)
 {
@@ -251,8 +214,8 @@ void get_deref(dptr dest)
 }
 
 /*
- * Like get_descrip, but for statics, args, dynamics and globals, rather than
- * copy the descriptor, make a named variable pointer to it instead.
+ * Get a descriptor, but make a named variable rather than copying
+ * dynamics/args/statics/globals.
  */
 void get_variable(dptr dest)
 {
@@ -291,7 +254,7 @@ void get_variable(dptr dest)
 }
 
 /*
- * Like get_descrip, but just discard the result.
+ * Skip over a variable.
  */
 void skip_descrip()
 {
@@ -585,51 +548,49 @@ static void do_cofail()
 
 static void coact_ex()
 {
-    dptr lhs;
-    tended struct descrip arg1, arg2, arg3, arg4;
+    dptr lhs, val, ce, activator, failto;
     word *failure_label;
     struct p_frame *upf;
 
     lhs = get_dptr();
-    get_descrip(&arg1);   /* Value - may already be a variable in a framevar, so use
-                           * get_descrip() instead of get_variable(). */
-    get_deref(&arg2);     /* Coexp */
-    get_deref(&arg3);     /* Activator */
-    get_deref(&arg4);     /* Fail-to flag */
+    val = get_dptr();          /* Val */
+    ce = get_dptr();           /* Coexp */
+    activator = get_dptr();    /* Activator */
+    failto = get_dptr();       /* Fail-to flag */
     failure_label = GetAddr;
 
-    /* Dereference against the calling user frame, since arg1 is potentially a variable
+    /* Dereference against the calling user frame, since val is potentially a variable
      * from that frame, rather than curr_pf
      */
     upf = get_current_user_frame();
-    if (get_current_user_frame_of(&CoexprBlk(arg2))->fvars != upf->fvars)
-        retderef(&arg1, upf->fvars);
+    if (get_current_user_frame_of(&CoexprBlk(*ce))->fvars != upf->fvars)
+        retderef(val, upf->fvars);
 
     if (curpstate->monitor) {
-        if (is:null(arg4))
-            EVValD(&arg2, E_Coact);
+        if (is:null(*failto))
+            EVValD(ce, E_Coact);
         else
-            EVValD(&arg2, E_Cofail);
+            EVValD(ce, E_Cofail);
     }
 
     if (k_trace) {
         --k_trace;
-        if (is:null(arg4))
-            trace_coact(k_current, &CoexprBlk(arg2), &arg1);
+        if (is:null(*failto))
+            trace_coact(k_current, &CoexprBlk(*ce), val);
         else
-            trace_cofail(k_current, &CoexprBlk(arg2));
+            trace_cofail(k_current, &CoexprBlk(*ce));
     }
 
     k_current->tvalloc = lhs;
     k_current->failure_label = failure_label;
 
     /* Perform the switch with the various option possibilities */
-    if (!is:null(arg3))
-        CoexprBlk(arg2).activator = &CoexprBlk(arg3);
-    switch_to(&CoexprBlk(arg2));
-    if (is:null(arg4)) {
+    if (!is:null(*activator))
+        CoexprBlk(*ce).activator = &CoexprBlk(*activator);
+    switch_to(&CoexprBlk(*ce));
+    if (is:null(*failto)) {
         if (k_current->tvalloc)
-            *k_current->tvalloc = arg1;
+            *k_current->tvalloc = *val;
     } else {
         ipc = k_current->failure_label;
     }
@@ -681,10 +642,10 @@ function coact(underef val, ce, activator, failto)
 
         MemProtect(pf = alc_p_frame(&Bcoact_impl, 0));
         push_frame((struct frame *)pf);
-        pf->fvars->desc[0] = val;
-        pf->fvars->desc[1] = ce;
-        pf->fvars->desc[2] = activator;
-        pf->fvars->desc[3] = failto;
+        pf->tmp[0] = val;
+        pf->tmp[1] = ce;
+        pf->tmp[2] = activator;
+        pf->tmp[3] = failto;
         tail_invoke_frame((struct frame *)pf);
         return;
     }
@@ -703,10 +664,10 @@ operator @ activate(underef val, ce)
             runerr(138, ce);
         MemProtect(pf = alc_p_frame(&Bcoact_impl, 0));
         push_frame((struct frame *)pf);
-        pf->fvars->desc[0] = val;
-        pf->fvars->desc[1] = ce;
-        pf->fvars->desc[2].dword = D_Coexpr;
-        BlkLoc(pf->fvars->desc[2]) = (union block *)k_current;
+        pf->tmp[0] = val;
+        pf->tmp[1] = ce;
+        pf->tmp[2].dword = D_Coexpr;
+        BlkLoc(pf->tmp[2]) = (union block *)k_current;
         tail_invoke_frame((struct frame *)pf);
         return;
     }
@@ -788,10 +749,6 @@ void interp()
                 break;
             }
             case Op_Move: {
-                get_descrip(get_dptr());
-                break;
-            }
-            case Op_MoveVar: {
                 get_variable(get_dptr());
                 break;
             }
@@ -918,7 +875,7 @@ void interp()
                 struct p_frame *t = curr_pf;
                 /* Set the value in the C frame's lhs */
                 if (t->parent_sp->lhs)
-                    get_descrip(t->parent_sp->lhs);
+                    get_variable(t->parent_sp->lhs);
                 else
                     skip_descrip();
                 set_curr_pf(curr_pf->caller);
@@ -935,7 +892,7 @@ void interp()
                 struct p_frame *t = curr_pf;
                 /* Set the value in the C frame's lhs */
                 if (t->parent_sp->lhs)
-                    get_descrip(t->parent_sp->lhs);
+                    get_variable(t->parent_sp->lhs);
                 else
                     skip_descrip();
                 set_curr_pf(curr_pf->caller);
@@ -974,7 +931,7 @@ void interp()
             case Op_Suspend: {
                 tended struct descrip tmp;
                 Desc_EVValD(curr_pf->proc, E_Psusp, D_Proc);
-                get_descrip(&tmp);
+                get_variable(&tmp);
                 retderef(&tmp, curr_pf->fvars);
                 if (curr_pf->lhs)
                     *curr_pf->lhs = tmp;
@@ -992,7 +949,7 @@ void interp()
             case Op_Return: {
                 tended struct descrip tmp;
                 Desc_EVValD(curr_pf->proc, E_Pret, D_Proc);
-                get_descrip(&tmp);
+                get_variable(&tmp);
                 retderef(&tmp, curr_pf->fvars);
                 if (curr_pf->lhs)
                     *curr_pf->lhs = tmp;
@@ -1190,8 +1147,8 @@ function lang_Prog_get_event_impl(c, res)
            fail;
        MemProtect(pf = alc_p_frame(&Blang_Prog_get_event_impl_impl, 0));
        push_frame((struct frame *)pf);
-       pf->fvars->desc[0] = c;
-       pf->fvars->desc[1] = res;
+       pf->tmp[0] = c;
+       pf->tmp[1] = res;
        tail_invoke_frame((struct frame *)pf);
        return;
    }

@@ -166,7 +166,7 @@ operator ! bang(underef x -> dx)
 
            MemProtect(pf = alc_p_frame(&Bcoexp_bang_impl, 0));
            push_frame((struct frame *)pf);
-           pf->fvars->desc[0] = dx;
+           pf->tmp[0] = dx;
            for (;;) {
                tail_invoke_frame((struct frame *)pf);
                suspend;

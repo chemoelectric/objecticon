@@ -699,7 +699,7 @@ function lang_Prog_load(s, arglist, blocksize, stringsize)
 
        main_bp = &ProcBlk(*pstate->MainProc);
        MemProtect(new_pf = alc_p_frame(&Bmain_wrapper, 0));
-       new_pf->fvars->desc[0] = *pstate->MainProc;
+       new_pf->tmp[0] = *pstate->MainProc;
        coex->sp = (struct frame *)new_pf;
        coex->base_pf = coex->curr_pf = new_pf;
        coex->start_label = new_pf->ipc = Bmain_wrapper.icode;
@@ -710,9 +710,9 @@ function lang_Prog_load(s, arglist, blocksize, stringsize)
 
        if (main_bp->nparam) {
            if (is:null(arglist))
-               create_list(0, &new_pf->fvars->desc[1]);
+               create_list(0, &new_pf->tmp[1]);
            else
-               new_pf->fvars->desc[1] = arglist;
+               new_pf->tmp[1] = arglist;
        }
 
       result.dword = D_Coexpr;
@@ -1325,7 +1325,7 @@ int main(int argc, char **argv)
     main_bp = &ProcBlk(*main_proc);
 
     MemProtect(frame = alc_p_frame(&Bmain_wrapper, 0));
-    frame->fvars->desc[0] = *main_proc;
+    frame->tmp[0] = *main_proc;
     /*
      * Only create an args list if main has a parameter; otherwise args[1]
      * is just left as &null.
@@ -1338,7 +1338,7 @@ int main(int argc, char **argv)
             CMakeStr(argv[i], &t);
             list_put(&args, &t);
         }
-        frame->fvars->desc[1] = args;
+        frame->tmp[1] = args;
     }
     k_current->sp = (struct frame *)frame;
     curr_pf = k_current->curr_pf = k_current->base_pf = frame;
@@ -1416,7 +1416,6 @@ static void relocate_code(struct progstate *ps, word *c)
                 ++pc;
                 break;
             }
-            case Op_MoveVar:
             case Op_Move: {
                 conv_var();
                 conv_var();

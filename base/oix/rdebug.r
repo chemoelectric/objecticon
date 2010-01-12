@@ -1261,7 +1261,7 @@ void showstack(FILE *f, struct b_coexpr *c)
         fprintf(f, "Frame %p type=%c, size=%d\n", x, 
                x->type == C_Frame ? 'C':'P', 
                x->size);
-        fprintf(f, "\tlhs="); print_desc(f, x->lhs); fprintf(f, "\n");
+        fprintf(f, "\tlhs=%p\n",x->lhs);
         fprintf(f, "\tfailure_label=%p\n", x->failure_label);
         fprintf(f, "\tparent_sp=%p\n", x->parent_sp);
         fprintf(f, "\texhausted=%d\n", x->exhausted);

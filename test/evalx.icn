@@ -148,7 +148,7 @@ procedure p11()
    write("/[] ----> ",image(/[]) | "none")
    write("/&lcase ----> ",image(/&lcase) | "none")
    write("\\main ----> ",image(\main) | "none")
-   write("\\\"abc\" ----> ",image(\"abc") | "none")
+   write("\\\"abc\" ----> ",image(\ "abc") | "none")
    write("\\x ----> ",image(\x) | "none")
    write("\\[] ----> ",imagex(\[]) | "none")
    write("\\&null ----> ",image(\&null) | "none")
@@ -226,6 +226,96 @@ procedure p16()
    write("y ----> ",image(y) | "none")
 end
 
+procedure p(a,b,c)
+   write("p:",image(a),",",image(b),",",image(c))
+end
+
+procedure q(a,b,c)
+   write("q:",image(a),",",image(b),",",image(c))
+end
+
+procedure p17()
+   local x,y
+
+   write("seq with changing limitation")
+   y := 5
+   every x := (1 to 100)\y do {
+      y := 3
+      write(x)
+   }
+
+   write("case with changing variable expression")
+   x := 10
+   case x of {
+      (x:=2) : write("A",x)
+      2: write("B",x) 
+      10: write("C",x) 
+   }
+
+   x := 10
+   case (100,200,x) of {
+      (x:=2) : write("A",x)
+      2: write("B",x) 
+      10: write("C",x) 
+   }
+
+   x := 10
+   case 1(x,100,200) of {
+      (x:=2) : write("A",x)
+      2: write("B",x) 
+      10: write("C",x) 
+   }
+
+   x := 10
+   case .x of {
+      (x:=2) : write("A",x)
+      2: write("B",x) 
+      10: write("C",x) 
+   }
+
+   x := 10
+   case x+1 of {
+      (x:=2) : write("A",x)
+      3: write("B",x) 
+      11: write("C",x) 
+   }
+
+   x := 10
+   case x+1 of {
+      (x:=11) : write("A",x)
+      3: write("B",x) 
+      11: write("C",x) 
+   }
+
+   write("procedure calls with changing function variable")
+   x := p
+   x(x,x:=q,x)
+
+   x := p
+   (100,x)(x,x:=q,x)
+
+   y := 1
+   p(y+1,y:=2,y+1)
+
+   write("mutual evaluation")
+   1(x,100) := 99
+   write(x)
+
+   (100,x) := 99
+   write(x)
+
+   1((2,x),100) := 99
+   write(x)
+
+   x := "cat"
+   every 1(!x,100) := "*"
+   write(x)
+
+   x := "cat"
+   every (1,!x) := "*"
+   write(x)
+end
+
 procedure main()
    p1()
    p2()
@@ -243,5 +333,6 @@ procedure main()
    p14()
    p15()
    p16()
+   p17()
 end
 
