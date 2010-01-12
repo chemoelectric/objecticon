@@ -654,15 +654,19 @@ static struct ir_var *make_global(struct lnode *n)
 
 static struct ir_var *get_var(struct lnode *n, struct ir_stack *st, struct ir_var *target)
 {
-    if (n->op == Uop_Const)
-        return make_const(n);
-
-    if (n->op == Uop_Local)
-        return make_local(n);
-
-    if (n->op == Uop_Global)
-        return make_global(n);
-
+    switch (n->op) {
+        case Uop_Keyword: {
+            if (((struct lnode_keyword *)n)->num == K_NULL)
+                return make_knull();
+            break;
+        }
+        case Uop_Const:
+            return make_const(n);
+        case Uop_Local:
+            return make_local(n);
+        case Uop_Global:
+            return make_global(n);
+    }
     if (target)
         return target;
     return make_tmp(st);
@@ -759,6 +763,8 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 }
 
                 case K_NULL: {
+                    if (target && target->type == KNULL)
+                        target = 0;
                     chunk2(res->start, 
                           ir_move(n, target, make_knull(), 0),
                           ir_goto(n, res->success));
@@ -794,13 +800,10 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         }
 
         case Uop_Local: {
-            struct ir_var *v = 0;
             if (target && target->type != TMP)
                 target = 0;
-            if (target)
-                v = make_local(n);
             chunk2(res->start, 
-                  ir_move(n, target, v, rval),
+                  ir_move(n, target, make_local(n), rval),
                   ir_goto(n, res->success));
             if (!bounded)
                 chunk1(res->resume, ir_goto(n, res->failure));
@@ -808,13 +811,10 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         }
 
         case Uop_Global: {
-            struct ir_var *v = 0;
             if (target && target->type != TMP)
                 target = 0;
-            if (target)
-                v = make_global(n);
             chunk2(res->start, 
-                  ir_move(n, target, v, rval),
+                  ir_move(n, target, make_global(n), rval),
                   ir_goto(n, res->success));
             if (!bounded)
                 chunk1(res->resume, ir_goto(n, res->failure));
@@ -822,13 +822,10 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         }
 
         case Uop_Const: {
-            struct ir_var *v = 0;
             if (target && target->type == CONST)
                 target = 0;
-            if (target)
-                v = make_const(n);
             chunk2(res->start, 
-                  ir_move(n, target, v, 0),
+                  ir_move(n, target, make_const(n), 0),
                   ir_goto(n, res->success));
             if (!bounded)
                 chunk1(res->resume, ir_goto(n, res->failure));
