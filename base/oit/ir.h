@@ -285,7 +285,6 @@ struct chunk {
 
 extern struct chunk **chunks;
 extern int hi_chunk;
-extern int ir_start;
 extern struct lfunction *curr_ir_func;
 extern int n_clo, n_tmp, n_lab, n_mark;
 

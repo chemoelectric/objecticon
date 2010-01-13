@@ -15,7 +15,6 @@ static int n_chunks_alloc;
 static int chunk_id_seq;
 struct chunk **chunks;
 int hi_chunk;
-int ir_start;
 static int hi_clo, hi_tmp, hi_lab, hi_mark;
 
 static struct ir_info *scan_stack;
@@ -2522,7 +2521,6 @@ void generate_ir()
     int init_mk = -1;
 
     hi_chunk = -1;
-    ir_start = 0;
     chunk_id_seq = 1;
     memset(chunks, 0, n_chunks_alloc * sizeof(struct chunk *));
     mb_clear(&ir_func_mb);
@@ -2553,7 +2551,7 @@ void generate_ir()
      */
     if (init) {
         if (body) {
-            chunk3(ir_start, 
+            chunk3(0, 
                    ir_enterinit(n, body->start), 
                    cond_ir_mark(init->uses_stack, n, init_mk),
                    ir_goto(n, init->start));
@@ -2565,18 +2563,18 @@ void generate_ir()
             chunk1(body->failure, ir_goto(n, end->start));
         }
         else {
-            chunk2(ir_start, ir_enterinit(n, end->start), 
+            chunk2(0, ir_enterinit(n, end->start), 
                                   ir_goto(n, init->start));
             chunk1(init->success, ir_goto(n, end->start));
             chunk1(init->failure, ir_goto(n, end->start));
         }
     } else {
         if (body) {
-            chunk1(ir_start, ir_goto(n, body->start));
+            chunk1(0, ir_goto(n, body->start));
             chunk1(body->success, ir_goto(n, end->start));
             chunk1(body->failure, ir_goto(n, end->start));
         } else
-            chunk1(ir_start, ir_goto(n, end->start));
+            chunk1(0, ir_goto(n, end->start));
     }
 
     optimize_goto();
@@ -3048,7 +3046,7 @@ static void optimize_goto()
 {
     int i;
     struct chunk *last;
-    optimize_goto1(ir_start);
+    optimize_goto1(0);
 
     /* Eliminate unseen ones */
     for (i = 0; i <= hi_chunk; ++i) {
@@ -3059,6 +3057,53 @@ static void optimize_goto()
                 fprintf(stderr, "Elminating untraversed chunk %d (line %d)\n", i, chunk->line);
             chunks[i] = 0;
         }
+    }
+
+    /* Merge chunks where possible */
+    i = 0;
+    while (i <= hi_chunk) {
+        struct chunk *chunk, *other;
+        int j;
+        chunk = chunks[i];
+        /*
+         * If we have
+         *    chunk i: A
+         *             goto j
+         *    ...
+         *    chunk j: B
+         *             goto k
+         * and j is only referenced once (by chunk i), delete chunk j and 
+         * transform chunk i to :-
+         *    chunk i: A
+         *             B
+         *             goto k
+         * and then repeat the loop for chunk i again.
+         */
+        if (chunk &&
+            chunk->n_inst > 0 && 
+            chunk->inst[chunk->n_inst - 1]->op == Ir_Goto &&
+            (other = chunks[j = ((struct ir_goto *)(chunk->inst[chunk->n_inst - 1]))->dest]) &&
+            other->seen == 1 &&
+            i != j &&
+            other->n_inst > 0 && 
+            other->inst[other->n_inst - 1]->op == Ir_Goto)
+        {
+            struct chunk *new;
+            if (Iflag)
+                fprintf(stderr, "Merge chunk %d into %d\n", j, i);
+            new = mb_alloc(&ir_func_mb, sizeof(struct chunk) + 
+                           (chunk->n_inst + other->n_inst - 2) * sizeof(struct ir *));
+            new->id = chunk->id;
+            new->desc = chunk->desc;
+            new->line = chunk->line;
+            new->n_inst = chunk->n_inst - 1 + other->n_inst;
+            new->seen = chunk->seen;
+            memcpy(new->inst, chunk->inst, (chunk->n_inst - 1) * sizeof(struct ir *));
+            memcpy(new->inst + chunk->n_inst - 1, other->inst, other->n_inst * sizeof(struct ir *));
+            chunks[j] = 0;
+            chunks[i] = new;
+        } else
+            ++i;
     }
 
     /* Eliminate redundant trailing gotos */
@@ -3087,8 +3132,12 @@ static void optimize_goto1(int i)
     if (i < 0)
         return;
     chunk = chunks[i];
-    if (!chunk || chunk->seen)
+    if (!chunk)
         return;
+    if (chunk->seen) {
+        ++chunk->seen;
+        return;
+    }
     chunk->seen = 1;
     for (j = 0; j < chunk->n_inst; ++j) {
         struct ir *ir = chunk->inst[j];
