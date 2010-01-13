@@ -660,6 +660,8 @@ static struct ir_var *get_var(struct lnode *n, struct ir_stack *st, struct ir_va
                 return make_knull();
             break;
         }
+        case Uop_Empty:
+            return make_knull();
         case Uop_Const:
             return make_const(n);
         case Uop_Local:
@@ -744,6 +746,8 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             break;
         }
         case Uop_Empty: {
+            if (target && target->type == KNULL)
+                target = 0;
             chunk2(res->start,
                   ir_move(n, target, make_knull(), 0),
                   ir_goto(n, res->success));
@@ -3219,12 +3223,8 @@ static void renumber_var(struct ir_var *v)
     if (!v || v->renumbered)
         return;
     v->renumbered = 1;
-    switch (v->type) {
-        case TMP: {
-            renumber_tmp(&v->index);
-            break;
-        }
-    }
+    if (v->type == TMP)
+        renumber_tmp(&v->index);
 }
 
 static void renumber_ir()
