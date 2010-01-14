@@ -1793,40 +1793,88 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             break;
         }
 
-        case Uop_Alt: {
-            struct lnode_2 *x = (struct lnode_2 *)n;
-            struct ir_info *e1, *e2;
-            struct ir_stack *st1, *st2;
+        case Uop_Alt: {               /* Alternation */
+            struct lnode *n1;
+            int count, i;
+            struct ir_info **info;
+            struct ir_stack *expr_st, *tst;
             int tl = -1;
             if (!bounded)
                 tl = make_tmploc(st);
 
-            st1 = branch_stack(st);
-            e1 = ir_traverse(x->child1, st1, target, bounded, rval);
-            
-            st2 = branch_stack(st);
-            e2 = ir_traverse(x->child2, st2, target, bounded, rval);
-
-            union_stack(st, st1);
-            union_stack(st, st2);
-
-            if (bounded) {
-                chunk1(res->start, ir_goto(n, e1->start));
-                chunk1(e1->failure, ir_goto(n, e2->start));
-            } else {
-                chunk2(res->start, 
-                       ir_movelabel(n, tl, e1->resume),
-                       ir_goto(n, e1->start));
-                chunk1(res->resume, ir_igoto(n, tl));
-                chunk2(e1->failure, 
-                       ir_movelabel(n, tl, e2->resume),
-                       ir_goto(n, e2->start));
+            /*
+             * We generate code for a tree of Uop_Alts all in one go.  If they
+             * were done as binary ops then we would need a tmp label for each
+             * Uop_Alt, and resuming the last one would have to igoto over the
+             * whole chain of labels.
+             * 
+             * Firstly, count how many alts are in the tree, whose structure is
+             * 
+             *               '|'
+             *               / \
+             *             e1  '|'
+             *                 / \
+             *                e2 ...
+             *                     '|'
+             *                     / \
+             *                  en-1  en
+             *                   
+             */
+            count = 1;
+            n1 = n;
+            while (n1->op == Uop_Alt) {
+                ++count;
+                n1 = ((struct lnode_2 *)n1)->child2;
             }
-            chunk1(e1->success, ir_goto(n, res->success));
-            chunk1(e2->success, ir_goto(n, res->success));
-            chunk1(e2->failure, ir_goto(n, res->failure));
 
-            res->uses_stack = e1->uses_stack || e2->uses_stack;
+            info = mb_alloc(&ir_func_mb, count * sizeof(struct ir_info *));
+            expr_st = branch_stack(st);
+
+            /* Traverse elements 1..count-1 */
+            n1 = n;
+            i = 0;
+            while (n1->op == Uop_Alt) {
+                struct lnode_2 *x = (struct lnode_2 *)n1;
+                tst = branch_stack(expr_st);
+                info[i] = ir_traverse(x->child1, tst, target, bounded, rval);
+                if (info[i]->uses_stack)
+                    res->uses_stack = 1;
+                union_stack(st, tst);
+                ++i;
+                n1 = ((struct lnode_2 *)n1)->child2;
+            }
+            /* Now do the last one (the rightmost node in the diagram above) */
+            tst = branch_stack(expr_st);
+            info[i] = ir_traverse(n1, tst, target, bounded, rval);
+            if (info[i]->uses_stack)
+                res->uses_stack = 1;
+            union_stack(st, tst);
+            
+            if (bounded)
+                chunk1(res->start, ir_goto(n, info[0]->start));
+            else {
+                chunk2(res->start, 
+                       ir_movelabel(n, tl, info[0]->resume),
+                       ir_goto(n, info[0]->start));
+                chunk1(res->resume, ir_igoto(n, tl));
+            }
+
+            for (i = 0; i < count - 1; ++i) {
+                chunk1(info[i]->success, 
+                       ir_goto(n, res->success));
+                if (bounded)
+                    chunk1(info[i]->failure, 
+                           ir_goto(n, info[i + 1]->start));
+                else
+                    chunk2(info[i]->failure, 
+                           ir_movelabel(n, tl, info[i + 1]->resume),
+                           ir_goto(n, info[i + 1]->start));
+            }
+            /* Last one, i == count - 1 */
+            chunk1(info[i]->success, 
+                   ir_goto(n, res->success));
+            chunk1(info[i]->failure, 
+                   ir_goto(n, res->failure));
             break;
         }
 
