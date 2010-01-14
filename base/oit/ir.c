@@ -1753,7 +1753,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                   cond_ir_mark(expr->uses_stack, n, mk), 
                   ir_goto(n, expr->start));
             if (!bounded)
-                chunk1(res->resume, ir_goto(n, res->failure));
+                chunk1(res->resume, ir_syserr(n));
 
             if (scan_stack) {
                 struct ir_info *t = scan_stack;
@@ -2491,13 +2491,11 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                        ir_scanrestore(n, t->scan->old_subject, t->scan->old_pos),
                        ir_fail(n));
                 if (!bounded)
-                    chunk2(res->resume, 
-                           ir_scanrestore(n, t->scan->old_subject, t->scan->old_pos),
-                           ir_fail(n));
+                    chunk1(res->resume, ir_syserr(n));
             } else {
                 chunk1(res->start, ir_fail(n));
                 if (!bounded)
-                    chunk1(res->resume, ir_fail(n));
+                    chunk1(res->resume, ir_syserr(n));
             }
             break;
         }
@@ -2888,6 +2886,10 @@ static void print_chunk(struct chunk *chunk)
                 indentf("\tIr_Limit ");
                 print_ir_var(x->limit);
                 fprintf(stderr, "  fail_label=%d\n", x->fail_label);
+                break;
+            }
+            case Ir_SysErr: {
+                indentf("\tIr_SysErr\n");
                 break;
             }
             default: {
