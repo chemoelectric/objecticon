@@ -158,6 +158,21 @@ static struct chunk *chunk(int line, char *desc, int id, int n, ...)
             chunk->inst[chunk->n_inst++] = inst;
     }
     va_end(argp);
+    /*
+     * Check we have a valid last instruction.
+     */
+    if (chunk->n_inst == 0)
+        quitf("empty chunk allocated from line %d", line);
+    switch (chunk->inst[chunk->n_inst - 1]->op) {
+        case Ir_Goto:
+        case Ir_IGoto:
+        case Ir_Fail:
+        case Ir_Return:
+        case Ir_SysErr:
+            break;
+        default:
+            quitf("invalid last instruction for chunk allocated from line %d", line);
+    }
     if (Iflag)
         print_chunk(chunk);
     return chunk;
@@ -3073,12 +3088,12 @@ static void optimize_goto()
          *             goto j
          *    ...
          *    chunk j: B
-         *             goto k
+         *             T
          * and j is only referenced once (by chunk i), delete chunk j and 
          * transform chunk i to :-
          *    chunk i: A
          *             B
-         *             goto k
+         *             T
          * and then repeat the loop for chunk i again.
          */
         if (chunk &&
@@ -3087,8 +3102,7 @@ static void optimize_goto()
             (other = chunks[j = ((struct ir_goto *)(chunk->inst[chunk->n_inst - 1]))->dest]) &&
             other->seen == 1 &&
             i != j &&
-            other->n_inst > 0 && 
-            other->inst[other->n_inst - 1]->op == Ir_Goto)
+            other->n_inst > 0)
         {
             struct chunk *new;
             if (Iflag)
