@@ -3,11 +3,6 @@
  */
 
 /*
- * Structures common to the compiler and interpreter.
- */
-
-
-/*
  * Descriptor
  */
 
