@@ -2390,48 +2390,42 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                    ir_goto(n, res->failure));
             if (x->n == 0) {
                 /* Must have a default clause if no other clauses */
-                chunk2(expr->success,
+                chunk3(expr->success,
                        cond_ir_unmark(expr->uses_stack, n, mk),
+                       bounded ? 0 : ir_movelabel(n, tl, def->resume), 
                        ir_goto(n, def->start));
             } else {
                 chunk2(expr->success,
                        cond_ir_unmark(expr->uses_stack, n, mk),
                        ir_goto(n, selector[0]->start));
                 for (i = 0; i < x->n; ++i) {
-                    chunk3(selector[i]->success,
+                    chunk4(selector[i]->success,
                            ir_op(n, 0, Uop_Eqv, e, v, 0, 1, selector[i]->resume),
                            cond_ir_unmark(selector[i]->uses_stack, n, mk),
+                           bounded ? 0 : ir_movelabel(n, tl, clause[i]->resume), 
                            ir_goto(n, clause[i]->start));
 
                     if (i < x->n - 1)
                         chunk1(selector[i]->failure,
                                ir_goto(n, selector[i + 1]->start));
                     else if (def)
-                        chunk1(selector[i]->failure,
+                        chunk2(selector[i]->failure,
+                               bounded ? 0 : ir_movelabel(n, tl, def->resume), 
                                ir_goto(n, def->start));
                     else
                         chunk1(selector[i]->failure,
                                ir_goto(n, res->failure));
 
-                    if (bounded)
-                        chunk1(clause[i]->success,
-                               ir_goto(n, res->success));
-                    else
-                        chunk2(clause[i]->success,
-                               ir_movelabel(n, tl, clause[i]->resume), 
-                               ir_goto(n, res->success));
+                    chunk1(clause[i]->success,
+                           ir_goto(n, res->success));
+
                     chunk1(clause[i]->failure,
                            ir_goto(n, res->failure));
                 }
             }
             if (def) {
-                if (bounded)
-                    chunk1(def->success,
-                           ir_goto(n, res->success));
-                else
-                    chunk2(def->success,
-                           ir_movelabel(n, tl, def->resume), 
-                           ir_goto(n, res->success));
+                chunk1(def->success,
+                       ir_goto(n, res->success));
                 chunk1(def->failure,
                        ir_goto(n, res->failure));
             }
