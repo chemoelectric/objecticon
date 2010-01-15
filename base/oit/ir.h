@@ -45,7 +45,7 @@ struct loop_info {
     struct ir_var *target;
     int bounded, rval;
     struct ir_info *next;
-    int has_break;
+    int has_break, has_next, next_fails_flag;
 };
 
 struct ir_info {
