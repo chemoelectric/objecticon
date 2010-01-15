@@ -34,15 +34,15 @@ Exit:
       Op_Fail
 $end
 
-$start construct_object
+$start construct_object_impl
     Op_Custom c:ensure_class_initialized
        Op_Tmp tmp:0
     # Resume closure 0, which has been setup to call the new method and
     # goto NewFail on failure (see construct_object() in invoke.r)
     Op_Resume
        clo:0
-    Op_Unmark
-       mark:0
+    # If the closure left any frames on the stack, Op_Return below will tidy
+    # them up.
     Op_Custom c:set_object_state
        Op_Tmp tmp:1
        Op_Int Initialized
@@ -61,7 +61,7 @@ $end
 #
 # Construct object closure for class with no "new" function
 #
-$start construct_object0
+$start construct_object0_impl
     Op_Custom c:ensure_class_initialized
        Op_Tmp tmp:0
     Op_Custom c:set_object_state

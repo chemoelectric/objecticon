@@ -1737,7 +1737,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
 
         case Uop_Return: {                      /* return */
             if (!bounded)
-                chunk1(res->resume, ir_goto(n, res->failure));
+                chunk1(res->resume, ir_syserr(n));
 
             if (scan_stack) {
                 struct ir_info *t = scan_stack;
@@ -1760,35 +1760,35 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             struct ir_info *expr;
             struct ir_var *v;
             struct ir_stack *tst;
-            int mk;
 
             tst = branch_stack(st);
-            mk = make_mark(tst);
             v = get_var(x->child, tst, 0);
 
             expr = ir_traverse(x->child, tst, v, 1, 0);
 
-            chunk2(res->start, 
-                   OptIns(expr->uses_stack, ir_mark(n, mk)), 
+            chunk1(res->start, 
                    ir_goto(n, expr->start));
             if (!bounded)
                 chunk1(res->resume, ir_syserr(n));
 
+            /*
+             * Note that there is no point in marking/unmarking expr,
+             * since the return instruction will clean up the stack,
+             * leaving just the returning P frame at the top.
+             */
             if (scan_stack) {
                 struct ir_info *t = scan_stack;
                 /* Get bottom of scan stack */
                 while (t->scan->next)
                     t = t->scan->next;
-                chunk3(expr->success, 
-                       OptIns(expr->uses_stack, ir_unmark(n, mk)), 
+                chunk2(expr->success, 
                        ir_scanrestore(n, t->scan->old_subject, t->scan->old_pos),
                        ir_return(n, v));
                 chunk2(expr->failure, 
                        ir_scanrestore(n, t->scan->old_subject, t->scan->old_pos),
                        ir_fail(n));
             } else {
-                chunk2(expr->success, 
-                       OptIns(expr->uses_stack, ir_unmark(n, mk)), 
+                chunk1(expr->success, 
                        ir_return(n, v));
                 chunk1(expr->failure, 
                        ir_fail(n));
@@ -2539,13 +2539,10 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 chunk2(res->start, 
                        ir_scanrestore(n, t->scan->old_subject, t->scan->old_pos),
                        ir_fail(n));
-                if (!bounded)
-                    chunk1(res->resume, ir_syserr(n));
-            } else {
+            } else
                 chunk1(res->start, ir_fail(n));
-                if (!bounded)
-                    chunk1(res->resume, ir_syserr(n));
-            }
+            if (!bounded)
+                chunk1(res->resume, ir_syserr(n));
             break;
         }
 

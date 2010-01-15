@@ -439,7 +439,7 @@ void construct_object(word clo, dptr lhs, dptr expr, int argc, dptr args, word r
             return;
         }
 
-        MemProtect(pf = alc_p_frame(&Bconstruct_object, 0));
+        MemProtect(pf = alc_p_frame(&Bconstruct_object_impl, 0));
         push_frame((struct frame *)pf);
         pf->lhs = lhs;
         /* Arg0 is the class */
@@ -450,21 +450,20 @@ void construct_object(word clo, dptr lhs, dptr expr, int argc, dptr args, word r
         ObjectBlk(pf->tmp[1]).init_state = Initializing;
 
         /* Allocate a frame for the "new" method.  It is invoked from
-         * within construct_object.  The failure label is exported from
-         * construct_object.
+         * within construct_object_impl.  The failure label is exported from
+         * construct_object_impl.
          */
         new_f = push_frame_for_proc(bp, argc, args, &pf->tmp[1]);
-        new_f->failure_label = construct_object_NewFail;
+        new_f->failure_label = construct_object_impl_NewFail;
 
-        /* Set up a mark and closure for the new method.  They are
-         * used with Op_Resume and Op_Unmark in construct_object's
-         * code to invoke the new method.
+        /* Set up a closure for the new method.  It is used with
+         * Op_Resume in construct_object_impl's code to invoke the new
+         * method.
          */
-        pf->mark[0] = (struct frame *)pf;
         pf->clo[0] = new_f;
     } else {
         skip_args(argc, args);
-        MemProtect(pf = alc_p_frame(&Bconstruct_object0, 0));
+        MemProtect(pf = alc_p_frame(&Bconstruct_object0_impl, 0));
         push_frame((struct frame *)pf);
         pf->lhs = lhs;
         /* Arg0 is the class */

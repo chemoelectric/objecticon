@@ -947,6 +947,7 @@ void interp()
             }
 
             case Op_Return: {
+                struct p_frame *t = curr_pf;
                 tended struct descrip tmp;
                 Desc_EVValD(curr_pf->proc, E_Pret, D_Proc);
                 get_variable(&tmp);
@@ -962,6 +963,8 @@ void interp()
                     }
                 }
                 set_curr_pf(curr_pf->caller);
+                /* Pop any frames below the returning procedure frame */
+                pop_to((struct frame *)t);
                 break;
             }
 

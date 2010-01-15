@@ -48,14 +48,12 @@ static word ensure_class_initialized_impl_code[] = {
    Op_Fail,
 };
 CustomProc(ensure_class_initialized_impl,ensure_class_initialized_impl_code,0,0,0,3,0,1,"ensure_class_initialized_impl")
-static word construct_object_code[] = {
+static word construct_object_impl_code[] = {
    Op_Custom,
    (word)ensure_class_initialized,
    Op_Tmp,
    0,
    Op_Resume,
-   0,
-   Op_Unmark,
    0,
    Op_Custom,
    (word)set_object_state,
@@ -74,9 +72,9 @@ static word construct_object_code[] = {
    Initialized,
    Op_Fail,
 };
-CustomProc(construct_object,construct_object_code,0,0,1,2,0,1,"construct_object")
-static word *construct_object_NewFail = &construct_object_code[17];
-static word construct_object0_code[] = {
+CustomProc(construct_object_impl,construct_object_impl_code,0,0,1,2,0,0,"construct_object_impl")
+static word *construct_object_impl_NewFail = &construct_object_impl_code[15];
+static word construct_object0_impl_code[] = {
    Op_Custom,
    (word)ensure_class_initialized,
    Op_Tmp,
@@ -91,7 +89,7 @@ static word construct_object0_code[] = {
    Op_Tmp,
    1,
 };
-CustomProc(construct_object0,construct_object0_code,0,0,0,2,0,0,"construct_object0")
+CustomProc(construct_object0_impl,construct_object0_impl_code,0,0,0,2,0,0,"construct_object0_impl")
 static word generate_arg_code[] = {
    Op_Return,
    Op_Tmp,
