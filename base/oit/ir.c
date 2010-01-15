@@ -42,6 +42,7 @@ struct membuff ir_func_mb = {"Per func IR membuff", 64000, 0,0,0 };
 #define chunk3(lab, I1, I2, I3) chunk(__LINE__, Lit(lab), lab, 3, I1, I2, I3)
 #define chunk4(lab, I1, I2, I3, I4) chunk(__LINE__, Lit(lab), lab, 4, I1, I2, I3, I4)
 #define chunk5(lab, I1, I2, I3, I4, I5) chunk(__LINE__, Lit(lab), lab, 5, I1, I2, I3, I4, I5)
+#define OptIns(cond, inst) ((cond) ? (inst):0)
 
 static void indentf(char *fmt, ...)
 {
@@ -320,14 +321,6 @@ static struct ir_mark *ir_mark(struct lnode *n, int no)
     return res;
 }
 
-static struct ir_mark *cond_ir_mark(int c, struct lnode *n, int no)
-{
-    if (c)
-        return ir_mark(n, no);
-    else
-        return 0;
-}
-
 static struct ir_unmark *ir_unmark(struct lnode *n, int no)
 {
     struct ir_unmark *res = IRAlloc(struct ir_unmark);
@@ -335,14 +328,6 @@ static struct ir_unmark *ir_unmark(struct lnode *n, int no)
     res->op = Ir_Unmark;
     res->no = no;
     return res;
-}
-
-static struct ir_unmark *cond_ir_unmark(int c, struct lnode *n, int no)
-{
-    if (c)
-        return ir_unmark(n, no);
-    else
-        return 0;
 }
 
 static struct ir_enterinit *ir_enterinit(struct lnode *n, int dest)
@@ -1249,8 +1234,8 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             pop_loop();
 
             chunk2(res->start, 
-                  cond_ir_mark(res->loop->has_break, n, res->loop->loop_mk),
-                  ir_goto(n, expr->start));
+                   OptIns(res->loop->has_break, ir_mark(n, res->loop->loop_mk)),
+                   ir_goto(n, expr->start));
             if (!bounded)
                 chunk1(res->resume, ir_igoto(n, res->loop->continue_tmploc));
 
@@ -1280,8 +1265,8 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             pop_loop();
 
             chunk2(res->start, 
-                  cond_ir_mark(res->loop->has_break, n, res->loop->loop_mk),
-                  ir_goto(n, expr->start));
+                   OptIns(res->loop->has_break, ir_mark(n, res->loop->loop_mk)),
+                   ir_goto(n, expr->start));
             if (res->loop->has_next)
                 chunk2(res->loop->next_chunk, 
                        ir_unmark(n, body_mk),
@@ -1290,14 +1275,14 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 chunk1(res->resume, ir_igoto(n, res->loop->continue_tmploc));
 
             chunk2(expr->success, 
-                  cond_ir_mark(body->uses_stack || res->loop->has_next, n, body_mk),
-                  ir_goto(n, body->start));
+                   OptIns(body->uses_stack || res->loop->has_next, ir_mark(n, body_mk)),
+                   ir_goto(n, body->start));
             chunk1(expr->failure, 
                   ir_goto(n, res->failure));
 
             chunk2(body->success, 
-                  cond_ir_unmark(body->uses_stack, n, body_mk),
-                  ir_goto(n, expr->resume));
+                   OptIns(body->uses_stack, ir_unmark(n, body_mk)),
+                   ir_goto(n, expr->resume));
             chunk1(body->failure, 
                   ir_goto(n, expr->resume));
 
@@ -1314,9 +1299,9 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             pop_loop();
 
             chunk2(res->start, 
-                  cond_ir_mark(res->loop->has_break || res->loop->has_next || expr->uses_stack, n, 
-                               res->loop->loop_mk),
-                  ir_goto(n, expr->start));
+                   OptIns(res->loop->has_break || res->loop->has_next || expr->uses_stack, 
+                          ir_mark(n, res->loop->loop_mk)),
+                   ir_goto(n, expr->start));
             if (res->loop->has_next)
                 chunk2(res->loop->next_chunk, 
                        ir_unmark(n, res->loop->loop_mk),
@@ -1325,8 +1310,8 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 chunk1(res->resume, ir_igoto(n, res->loop->continue_tmploc));
 
             chunk2(expr->success, 
-                  cond_ir_unmark(expr->uses_stack, n, res->loop->loop_mk),
-                  ir_goto(n, expr->start));
+                   OptIns(expr->uses_stack, ir_unmark(n, res->loop->loop_mk)),
+                   ir_goto(n, expr->start));
             chunk1(expr->failure, 
                   ir_goto(n, res->failure));
             break;
@@ -1345,9 +1330,9 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             pop_loop();
 
             chunk2(res->start, 
-                  cond_ir_mark(res->loop->has_break || res->loop->has_next || expr->uses_stack || body->uses_stack, n, 
-                               res->loop->loop_mk),
-                  ir_goto(n, expr->start));
+                   OptIns(res->loop->has_break || res->loop->has_next || expr->uses_stack || body->uses_stack, 
+                          ir_mark(n, res->loop->loop_mk)),
+                   ir_goto(n, expr->start));
             if (res->loop->has_next)
                 chunk2(res->loop->next_chunk, 
                        ir_unmark(n, res->loop->loop_mk),
@@ -1356,14 +1341,14 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 chunk1(res->resume, ir_igoto(n, res->loop->continue_tmploc));
 
             chunk2(expr->success, 
-                  cond_ir_unmark(expr->uses_stack, n, res->loop->loop_mk),
-                  ir_goto(n, body->start));
+                   OptIns(expr->uses_stack, ir_unmark(n, res->loop->loop_mk)),
+                   ir_goto(n, body->start));
             chunk1(expr->failure, 
                   ir_goto(n, res->failure));
 
             chunk2(body->success, 
-                  cond_ir_unmark(body->uses_stack, n, res->loop->loop_mk),
-                  ir_goto(n, expr->start));
+                   OptIns(body->uses_stack, ir_unmark(n, res->loop->loop_mk)),
+                   ir_goto(n, expr->start));
             chunk1(body->failure, 
                   ir_goto(n, expr->start));
 
@@ -1380,9 +1365,9 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             pop_loop();
 
             chunk2(res->start, 
-                  cond_ir_mark(res->loop->has_break || res->loop->has_next || expr->uses_stack, n, 
-                               res->loop->loop_mk),
-                  ir_goto(n, expr->start));
+                   OptIns(res->loop->has_break || res->loop->has_next || expr->uses_stack, 
+                          ir_mark(n, res->loop->loop_mk)),
+                   ir_goto(n, expr->start));
             if (res->loop->has_next)
                 chunk2(res->loop->next_chunk, 
                        ir_unmark(n, res->loop->loop_mk),
@@ -1391,8 +1376,8 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 chunk1(res->resume, ir_igoto(n, res->loop->continue_tmploc));
 
             chunk2(expr->failure, 
-                  cond_ir_unmark(expr->uses_stack, n, res->loop->loop_mk),
-                  ir_goto(n, expr->start));
+                   OptIns(expr->uses_stack, ir_unmark(n, res->loop->loop_mk)),
+                   ir_goto(n, expr->start));
             chunk1(expr->success, 
                   ir_goto(n, res->failure));
             break;
@@ -1411,11 +1396,10 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             pop_loop();
 
             chunk2(res->start, 
-                  cond_ir_mark(res->loop->has_break || res->loop->has_next || 
-                                   expr->uses_stack || body->uses_stack, 
-                               n, 
-                               res->loop->loop_mk),
-                  ir_goto(n, expr->start));
+                  OptIns(res->loop->has_break || res->loop->has_next || 
+                         expr->uses_stack || body->uses_stack, 
+                         ir_mark(n, res->loop->loop_mk)),
+                   ir_goto(n, expr->start));
             if (res->loop->has_next)
                 chunk2(res->loop->next_chunk, 
                        ir_unmark(n, res->loop->loop_mk),
@@ -1424,14 +1408,14 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 chunk1(res->resume, ir_igoto(n, res->loop->continue_tmploc));
 
             chunk2(expr->failure, 
-                  cond_ir_unmark(expr->uses_stack, n, res->loop->loop_mk),
-                  ir_goto(n, body->start));
+                   OptIns(expr->uses_stack, ir_unmark(n, res->loop->loop_mk)),
+                   ir_goto(n, body->start));
             chunk1(expr->success, 
                   ir_goto(n, res->failure));
 
             chunk2(body->success, 
-                  cond_ir_unmark(body->uses_stack, n, res->loop->loop_mk),
-                  ir_goto(n, expr->start));
+                   OptIns(body->uses_stack, ir_unmark(n, res->loop->loop_mk)),
+                   ir_goto(n, expr->start));
             chunk1(body->failure, 
                   ir_goto(n, expr->start));
 
@@ -1459,8 +1443,8 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             pop_loop();
 
             chunk2(res->start, 
-                  cond_ir_mark(res->loop->has_break, n, res->loop->loop_mk),
-                  ir_goto(n, expr->start));
+                   OptIns(res->loop->has_break, ir_mark(n, res->loop->loop_mk)),
+                   ir_goto(n, expr->start));
             if (res->loop->has_next)
                 chunk2(res->loop->next_chunk, 
                        ir_unmark(n, body_mk),
@@ -1477,20 +1461,20 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                        ir_scanswap(n, t->scan->old_subject, t->scan->old_pos),
                        ir_suspend(n, v),
                        ir_scanswap(n, t->scan->old_subject, t->scan->old_pos),
-                       cond_ir_mark(body->uses_stack || res->loop->has_next, n, body_mk),
+                       OptIns(body->uses_stack || res->loop->has_next, ir_mark(n, body_mk)),
                        ir_goto(n, body->start));
             } else {
                 chunk3(expr->success, 
                        ir_suspend(n, v),
-                       cond_ir_mark(body->uses_stack || res->loop->has_next, n, body_mk),
+                       OptIns(body->uses_stack || res->loop->has_next, ir_mark(n, body_mk)),
                        ir_goto(n, body->start));
             }
             chunk1(expr->failure, 
                    ir_goto(n, res->failure));
 
             chunk2(body->success, 
-                  cond_ir_unmark(body->uses_stack, n, body_mk),
-                  ir_goto(n, expr->resume));
+                   OptIns(body->uses_stack, ir_unmark(n, body_mk)),
+                   ir_goto(n, expr->resume));
             chunk1(body->failure, 
                   ir_goto(n, expr->resume));
 
@@ -1536,8 +1520,8 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             pop_loop();
 
             chunk2(res->start, 
-                  cond_ir_mark(res->loop->has_break, n, res->loop->loop_mk),
-                  ir_goto(n, expr->start));
+                   OptIns(res->loop->has_break, ir_mark(n, res->loop->loop_mk)),
+                   ir_goto(n, expr->start));
             if (!bounded)
                 chunk1(res->resume, ir_igoto(n, res->loop->continue_tmploc));
 
@@ -1572,8 +1556,8 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             pop_loop();
 
             chunk2(res->start, 
-                  cond_ir_mark(res->loop->has_break || res->loop->has_next || body->uses_stack, n, 
-                               res->loop->loop_mk),
+                   OptIns(res->loop->has_break || res->loop->has_next || body->uses_stack, 
+                          ir_mark(n, res->loop->loop_mk)),
                   ir_goto(n, body->start));
             if (res->loop->has_next)
                 chunk2(res->loop->next_chunk, 
@@ -1583,8 +1567,8 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 chunk1(res->resume, ir_igoto(n, res->loop->continue_tmploc));
 
             chunk2(body->success, 
-                  cond_ir_unmark(body->uses_stack, n, res->loop->loop_mk),
-                  ir_goto(n, body->start));
+                   OptIns(body->uses_stack, ir_unmark(n, res->loop->loop_mk)),
+                   ir_goto(n, body->start));
             chunk1(body->failure, 
                   ir_goto(n, body->start));
             break;
@@ -1785,8 +1769,8 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             expr = ir_traverse(x->child, tst, v, 1, 0);
 
             chunk2(res->start, 
-                  cond_ir_mark(expr->uses_stack, n, mk), 
-                  ir_goto(n, expr->start));
+                   OptIns(expr->uses_stack, ir_mark(n, mk)), 
+                   ir_goto(n, expr->start));
             if (!bounded)
                 chunk1(res->resume, ir_syserr(n));
 
@@ -1796,7 +1780,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 while (t->scan->next)
                     t = t->scan->next;
                 chunk3(expr->success, 
-                       cond_ir_unmark(expr->uses_stack, n, mk), 
+                       OptIns(expr->uses_stack, ir_unmark(n, mk)), 
                        ir_scanrestore(n, t->scan->old_subject, t->scan->old_pos),
                        ir_return(n, v));
                 chunk2(expr->failure, 
@@ -1804,7 +1788,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                        ir_fail(n));
             } else {
                 chunk2(expr->success, 
-                       cond_ir_unmark(expr->uses_stack, n, mk), 
+                       OptIns(expr->uses_stack, ir_unmark(n, mk)), 
                        ir_return(n, v));
                 chunk1(expr->failure, 
                        ir_fail(n));
@@ -1870,25 +1854,19 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 res->uses_stack = 1;
             union_stack(st, tst);
             
-            if (bounded)
-                chunk1(res->start, ir_goto(n, info[0]->start));
-            else {
-                chunk2(res->start, 
-                       ir_movelabel(n, tl, info[0]->resume),
-                       ir_goto(n, info[0]->start));
+            chunk2(res->start, 
+                   OptIns(!bounded, ir_movelabel(n, tl, info[0]->resume)),
+                   ir_goto(n, info[0]->start));
+
+            if (!bounded)
                 chunk1(res->resume, ir_igoto(n, tl));
-            }
 
             for (i = 0; i < count - 1; ++i) {
                 chunk1(info[i]->success, 
                        ir_goto(n, res->success));
-                if (bounded)
-                    chunk1(info[i]->failure, 
-                           ir_goto(n, info[i + 1]->start));
-                else
-                    chunk2(info[i]->failure, 
-                           ir_movelabel(n, tl, info[i + 1]->resume),
-                           ir_goto(n, info[i + 1]->start));
+                chunk2(info[i]->failure, 
+                       OptIns(!bounded, ir_movelabel(n, tl, info[i + 1]->resume)),
+                       ir_goto(n, info[i + 1]->start));
             }
             /* Last one, i == count - 1 */
             chunk1(info[i]->success, 
@@ -1983,15 +1961,15 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             info[x->n - 1] = ir_traverse(x->child[x->n - 1], st, target, bounded, rval);
 
             chunk2(res->start, 
-                  cond_ir_mark(need_mark, n, mk), 
-                  ir_goto(n, info[0]->start));
+                   OptIns(need_mark, ir_mark(n, mk)), 
+                   ir_goto(n, info[0]->start));
             if (!bounded) 
                 chunk1(res->resume, ir_goto(n, info[x->n - 1]->resume));
 
             for (i = 0; i < x->n - 1; ++i) {
                 chunk2(info[i]->success,
-                      cond_ir_unmark(info[i]->uses_stack, n, mk),
-                      ir_goto(n, info[i + 1]->start));
+                       OptIns(info[i]->uses_stack, ir_unmark(n, mk)),
+                       ir_goto(n, info[i + 1]->start));
                 chunk1(info[i]->failure,
                       ir_goto(n, info[i + 1]->start));
             }
@@ -2267,13 +2245,13 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             union_stack(st, then_st);
 
             chunk2(res->start,
-                  cond_ir_mark(expr->uses_stack, n, expr_mk),
-                  ir_goto(n, expr->start));
+                   OptIns(expr->uses_stack, ir_mark(n, expr_mk)),
+                   ir_goto(n, expr->start));
             if (!bounded)
                 chunk1(res->resume, ir_goto(n, then->resume));
             chunk2(expr->success,
-                  cond_ir_unmark(expr->uses_stack, n, expr_mk),
-                  ir_goto(n, then->start));
+                   OptIns(expr->uses_stack, ir_unmark(n, expr_mk)),
+                   ir_goto(n, then->start));
             chunk1(expr->failure,
                   ir_goto(n, res->failure));
             chunk1(then->success, ir_goto(n, res->success));
@@ -2305,24 +2283,18 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             union_stack(st, else_st);
 
             chunk2(res->start,
-                  cond_ir_mark(expr->uses_stack, n, expr_mk),
-                  ir_goto(n, expr->start));
-            if (bounded) {
-                chunk2(expr->success,
-                      cond_ir_unmark(expr->uses_stack, n, expr_mk),
-                      ir_goto(n, then->start));
-                chunk1(expr->failure,
-                      ir_goto(n, els->start));
-            } else {
-                chunk3(expr->success,
-                      cond_ir_unmark(expr->uses_stack, n, expr_mk),
-                       ir_movelabel(n, tl, then->resume),
-                       ir_goto(n, then->start));
-                chunk2(expr->failure,
-                       ir_movelabel(n, tl, els->resume),
-                       ir_goto(n, els->start));
+                   OptIns(expr->uses_stack, ir_mark(n, expr_mk)),
+                   ir_goto(n, expr->start));
+
+            chunk3(expr->success,
+                   OptIns(expr->uses_stack, ir_unmark(n, expr_mk)),
+                   OptIns(!bounded, ir_movelabel(n, tl, then->resume)),
+                   ir_goto(n, then->start));
+            chunk2(expr->failure,
+                   OptIns(!bounded, ir_movelabel(n, tl, els->resume)),
+                   ir_goto(n, els->start));
+            if (!bounded)
                 chunk1(res->resume, ir_igoto(n, tl));
-            }
 
             chunk1(then->success, ir_goto(n, res->success));
             chunk1(then->failure, ir_goto(n, res->failure));
@@ -2381,8 +2353,8 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             union_stack(st, clause_st);
 
             chunk2(res->start,
-                  cond_ir_mark(need_mark, n, mk),
-                  ir_goto(n, expr->start));
+                   OptIns(need_mark, ir_mark(n, mk)),
+                   ir_goto(n, expr->start));
             if (!bounded)
                 chunk1(res->resume, ir_igoto(n, tl));
 
@@ -2391,18 +2363,18 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             if (x->n == 0) {
                 /* Must have a default clause if no other clauses */
                 chunk3(expr->success,
-                       cond_ir_unmark(expr->uses_stack, n, mk),
-                       bounded ? 0 : ir_movelabel(n, tl, def->resume), 
+                       OptIns(expr->uses_stack, ir_unmark(n, mk)),
+                       OptIns(!bounded, ir_movelabel(n, tl, def->resume)), 
                        ir_goto(n, def->start));
             } else {
                 chunk2(expr->success,
-                       cond_ir_unmark(expr->uses_stack, n, mk),
+                       OptIns(expr->uses_stack, ir_unmark(n, mk)),
                        ir_goto(n, selector[0]->start));
                 for (i = 0; i < x->n; ++i) {
                     chunk4(selector[i]->success,
                            ir_op(n, 0, Uop_Eqv, e, v, 0, 1, selector[i]->resume),
-                           cond_ir_unmark(selector[i]->uses_stack, n, mk),
-                           bounded ? 0 : ir_movelabel(n, tl, clause[i]->resume), 
+                           OptIns(selector[i]->uses_stack, ir_unmark(n, mk)),
+                           OptIns(!bounded, ir_movelabel(n, tl, clause[i]->resume)), 
                            ir_goto(n, clause[i]->start));
 
                     if (i < x->n - 1)
@@ -2410,7 +2382,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                                ir_goto(n, selector[i + 1]->start));
                     else if (def)
                         chunk2(selector[i]->failure,
-                               bounded ? 0 : ir_movelabel(n, tl, def->resume), 
+                               OptIns(!bounded, ir_movelabel(n, tl, def->resume)), 
                                ir_goto(n, def->start));
                     else
                         chunk1(selector[i]->failure,
@@ -2471,12 +2443,12 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             expr = ir_traverse(x->child, not_st, target, 1, 1);
 
             chunk2(res->start, 
-                   cond_ir_mark(expr->uses_stack, n, mk),
+                   OptIns(expr->uses_stack, ir_mark(n, mk)),
                    ir_goto(n, expr->start));
             if (!bounded)
                 chunk1(res->resume, ir_goto(n, res->failure));
             chunk2(expr->success, 
-                   cond_ir_unmark(expr->uses_stack, n, mk),
+                   OptIns(expr->uses_stack, ir_unmark(n, mk)),
                    ir_goto(n, res->failure));
             chunk2(expr->failure, 
                    ir_move(n, target, make_knull(), 0),
@@ -2628,10 +2600,10 @@ void generate_ir()
         if (body) {
             chunk3(0, 
                    ir_enterinit(n, body->start), 
-                   cond_ir_mark(init->uses_stack, n, init_mk),
+                   OptIns(init->uses_stack, ir_mark(n, init_mk)),
                    ir_goto(n, init->start));
             chunk2(init->success, 
-                   cond_ir_unmark(init->uses_stack, n, init_mk),
+                   OptIns(init->uses_stack, ir_unmark(n, init_mk)),
                    ir_goto(n, body->start));
             chunk1(init->failure, ir_goto(n, body->start));
             chunk1(body->success, ir_goto(n, end->start));
