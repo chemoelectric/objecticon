@@ -82,8 +82,9 @@ AC_CONFIG_COMMANDS(system, [
 	AS_MKDIR_P(bin)
 ])
 
-AC_CONFIG_FILES([Makedefs:config/files/Makedefs],)
-AC_CONFIG_FILES([test/Makefile:config/files/test/Makefile],)
+AC_CONFIG_FILES([Makedefs:config/files/Makedefs])
+AC_CONFIG_FILES([test/Makefile:config/files/test/Makefile])
+AC_CONFIG_FILES([bmark/Makefile:config/files/bmark/Makefile])
 AC_CONFIG_FILES([apps/ivib/plugins/Makefile:config/files/apps/ivib/plugins/Makefile])
 AC_CONFIG_FILES([apps/ivib/Makefile:config/files/apps/ivib/Makefile])
 AC_CONFIG_FILES([apps/oidoc/Makefile:config/files/apps/oidoc/Makefile])
@@ -106,9 +107,9 @@ AC_CONFIG_FILES([base/h/Makefile:config/files/base/h/Makefile])
 AC_CONFIG_FILES([base/Makefile:config/files/base/Makefile])
 AC_CONFIG_FILES([Makefile:config/files/Makefile])
 AC_CONFIG_FILES([paths.sh:config/files/paths.sh])
-AC_CONFIG_FILES([base/h/version.h:config/files/base/h/version.h],)
-AC_CONFIG_FILES([base/h/define.h:config/files/base/h/define.h],)
-AC_CONFIG_HEADERS([base/h/auto.h:config/files/base/h/auto.h],)
+AC_CONFIG_FILES([base/h/version.h:config/files/base/h/version.h])
+AC_CONFIG_FILES([base/h/define.h:config/files/base/h/define.h])
+AC_CONFIG_HEADERS([base/h/auto.h:config/files/base/h/auto.h])
 AC_OUTPUT
 echo "Summary:-"
 echo    "Installation prefix    :" $prefix

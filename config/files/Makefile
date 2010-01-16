@@ -1,5 +1,7 @@
 include Makedefs
 
+.PHONY:	libref bmark etags
+
 all :
 	$(MAKE) -C base all
 	$(MAKE) -C lib all
@@ -17,6 +19,9 @@ etags :
 
 test :
 	$(MAKE) -C test all
+
+bmark :
+	$(MAKE) -C bmark all
 
 PACKAGE_NAME=@PACKAGE_NAME@
 PACKAGE_TARNAME=@PACKAGE_TARNAME@
@@ -101,7 +106,6 @@ install-libref :
 	oidoc -html -d -o "$(LIBREF)" -a
 	@echo -e "\nInstallation complete to file://$(LIBREF)/index.html"
 
-.PHONY:	libref
 libref :
 	rm -rf libref
 	mkdir libref
