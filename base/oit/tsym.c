@@ -592,7 +592,9 @@ static void nodegen(nodeptr t)
             if (!in_loop)
                 tfatal_at(t, "invalid context for break");
             uout_op(Uop_Breakexpr);
+            --in_loop;
             nodegen(Tree0(t));
+            ++in_loop;
             break;
         }
 
