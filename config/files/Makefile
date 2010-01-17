@@ -1,6 +1,6 @@
 include Makedefs
 
-.PHONY:	libref bmark etags
+.PHONY:	libref test bmark tar install install-libref
 
 all :
 	$(MAKE) -C base all
