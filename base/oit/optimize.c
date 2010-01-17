@@ -96,6 +96,7 @@ static void fold_toby(struct lnode *n);
 static void fold_invoke(struct lnode *n);
 static void fold_apply(struct lnode *n);
 static void fold_keyword(struct lnode *n);
+static void fold_return(struct lnode *n);
 
 static int over_flow;
 static word add(word a, word b);
@@ -248,6 +249,11 @@ static int fold_consts(struct lnode *n)
         case Uop_Tabmat:
         case Uop_Rptalt: {
             fold_simple1(n);
+            break;
+        }
+
+        case Uop_Returnexpr: {
+            fold_return(n);
             break;
         }
 
@@ -2517,6 +2523,17 @@ static void fold_mod(struct lnode *n)
     }
     free_literal(&l1);
     free_literal(&l2);
+}
+
+static void fold_return(struct lnode *n)
+{
+    struct lnode_1 *x = (struct lnode_1 *)n;
+    struct literal l;
+    if (!get_literal(x->child, &l))
+        return;
+    if (l.type == FAIL)
+        replace_node(n, (struct lnode *)lnode_0(Uop_Fail, &n->loc));
+    free_literal(&l);
 }
 
 static void fold_value(struct lnode *n)
