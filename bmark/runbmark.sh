@@ -42,7 +42,7 @@ done
 shift $((OPTIND-1))
 
 if (($# == 0)) ; then
-    set tgrlink geddump deal ipxref queens rsg concord
+    set tgrlink geddump deal ipxref queens rsg concord cochain
 fi
 
 while (($# > 0)) ; do
@@ -54,6 +54,7 @@ while (($# > 0)) ; do
         queens) bm queens -n10;;
         rsg) bm rsg rsg.dat;;
         concord) bm concord concord.dat;;
+        cochain) bm cochain 2000;;
         *) echo "Unknown prog: $1"
             exit 1;;
     esac
