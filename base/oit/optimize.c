@@ -921,7 +921,7 @@ static int cnv_real(struct literal *s)
              * be handled at runtime.  If we handled large ints this
              * wouldn't arise of course.
              */
-            if (index(s->u.str.s, '.') == 0)
+            if (strchr(s->u.str.s, '.') == 0)
                 return 0;
 
             errno = 0;
