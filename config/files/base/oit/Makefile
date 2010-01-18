@@ -1,6 +1,6 @@
 include ../../Makedefs
 
-OITOBJS=		trans.o tlex.o tparse.o tsym.o tmem.o \
+OITOBJS=	trans.o tlex.o tparse.o tsym.o tmem.o \
 		tree.o ucode.o ipp.o membuff.o ir.o \
 		package.o resolve.o tmain.o \
 		link.o lglob.o lcode.o lmem.o lsym.o ltree.o optimize.o

@@ -47,9 +47,6 @@ oix:	$(OBJS)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $*.c
 	$(RM) $*.c
 
-%.o: %.s
-	$(CC) $(CFLAGS) -c $<
-
 clean:		
 	rm -f *.o $(RTTC) $(RTTTMP) rt.db rt.a rttcur.lst rttfull.lst oix keysymtocodepoint iasm
 
