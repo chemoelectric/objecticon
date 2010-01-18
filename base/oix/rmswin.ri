@@ -3346,7 +3346,7 @@ int len;
    int width, nbits;
    int i, j;
    int symbol;
-   C_integer v, bits[MAXXOBJS];
+   word v, bits[MAXXOBJS];
    HBITMAP p;
    char data[MAXXOBJS];
    char *buf = data;
@@ -3418,10 +3418,10 @@ HBITMAP CreateBitmapFromData(char *data)
 int SetPatternBits(w, width, bits, nbits)
 wbp w;
 int width;
-C_integer *bits;
+word *bits;
 int nbits;
    {
-   C_integer v;
+   word v;
    int i, j, k;
    HBITMAP p;
    char data[MAXXOBJS];
@@ -3994,7 +3994,7 @@ void seteditregion(childcontrol *cc, char *s2)
 
 
 void movechild(childcontrol *cc,
-	       C_integer x, C_integer y, C_integer width, C_integer height)
+	       word x, word y, word width, word height)
 {
    MoveWindow(cc->win, x, y, width, height, TRUE);
 }

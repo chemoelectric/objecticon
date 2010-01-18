@@ -1492,7 +1492,7 @@ void bigshift(dptr da, dptr db, dptr dx)
         }
         else
             *DIG(x,0) =
-                shifti1(ad, r, ad[alen+q] >> (DigitBits-r),
+                shifti1(ad, r, (DIGIT)(ad[alen+q] >> (DigitBits-r)),
                         DIG(x,1), alen+q);
 
         if (a->sign) {
@@ -2054,7 +2054,7 @@ static void div1(DIGIT *a, DIGIT *b, DIGIT *q, DIGIT *r,
         if (d == 0)
             shifti1(&u[m+1], (word)d, (DIGIT)0, r, n);
         else
-            r[0] = shifti1(&u[m+1], (word)(DigitBits - d), u[m+n]>>d, &r[1], n - 1);
+            r[0] = shifti1(&u[m+1], (word)(DigitBits - d), (DIGIT)(u[m+n]>>d), &r[1], n - 1);
     }
 }
 
