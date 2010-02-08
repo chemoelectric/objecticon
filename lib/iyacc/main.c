@@ -325,9 +325,12 @@ void create_file_names(void)
     text_file_name[len + 5] = 't';
     union_file_name[len + 5] = 'u';
 
-    mkstemp(action_file_name);
-    mkstemp(text_file_name);
-    mkstemp(union_file_name);
+    if (mkstemp(action_file_name) < 0 ||
+	mkstemp(text_file_name) < 0 ||
+	mkstemp(union_file_name) < 0) {
+      fprintf(stderr, "Couldn't mkstemp\n");
+      exit(1);
+    }
 
     if (jflag)/*rwj*/
       {
