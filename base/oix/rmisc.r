@@ -538,7 +538,7 @@ void outimage(FILE *f, dptr dp, int noimage)
 
          GetReal(RealBlk(*dp),rresult);
          rtos(rresult, &rd, s);
-         fprintf(f, "%s", StrLoc(rd));
+	 fprintf(f, "%.*s", (int)StrLen(rd), StrLoc(rd));
          }
 
       cset: {
@@ -546,7 +546,7 @@ void outimage(FILE *f, dptr dp, int noimage)
 	  * Check for a predefined cset; use keyword name if found.
 	  */
 	 if ((csn = csname(dp)) != NULL) {
-	    fprintf(f, csn);
+	    fputs(csn, f);
 	    return;
 	    }
          putc('\'', f);
@@ -911,7 +911,7 @@ void outimage(FILE *f, dptr dp, int noimage)
 
       default: { 
          if (Type(*dp) <= MaxType)
-            fprintf(f, "%s", blkname[Type(*dp)]);
+            fputs(blkname[Type(*dp)], f);
          else
             syserr("outimage: unknown type");
          }
