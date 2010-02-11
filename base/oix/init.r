@@ -422,7 +422,7 @@ void syserr(char *fmt, ...)
  */
 void c_exit(int i)
 {
-    if (k_dump && set_up) {
+    if (set_up && k_dump) {
         fprintf(stderr,"\nTermination dump:\n\n");
         fflush(stderr);
         xdisp(k_current, -1, stderr);
@@ -434,7 +434,6 @@ void c_exit(int i)
 #endif					/* MSWindows */
 
     exit(i);
-
 }
 
 /*
