@@ -480,27 +480,27 @@ static char *convert_spec(char *s)
      * Check first for special "standard" family names.
      */
     if (!strcmp(family, "fixed")) {
-        XftPatternAddString(p, XFT_FAMILY, "Unicon fixed");
+        XftPatternAddString(p, XFT_FAMILY, "Object Icon fixed");
         XftPatternAddString(p, XFT_FAMILY, "fixed");
         flags |= FONTFLAG_MONO;
     }
     else if (!strcmp(family, "mono")) {
-        XftPatternAddString(p, XFT_FAMILY, "Unicon mono");
+        XftPatternAddString(p, XFT_FAMILY, "Object Icon mono");
         XftPatternAddString(p, XFT_FAMILY, "lucidatypewriter");
         flags |= FONTFLAG_MONO;
     }
     else if (!strcmp(family, "typewriter")) {
-        XftPatternAddString(p, XFT_FAMILY, "Unicon typewriter");
+        XftPatternAddString(p, XFT_FAMILY, "Object Icon typewriter");
         XftPatternAddString(p, XFT_FAMILY, "courier");
         flags |= FONTFLAG_MONO;
     }
     else if (!strcmp(family, "sans")) {
-        XftPatternAddString(p, XFT_FAMILY, "Unicon sans");
+        XftPatternAddString(p, XFT_FAMILY, "Object Icon sans");
         XftPatternAddString(p, XFT_FAMILY, "helvetica");
         flags |= FONTFLAG_PROPORTIONAL;
     }
     else if (!strcmp(family, "serif")) {
-        XftPatternAddString(p, XFT_FAMILY, "Unicon serif");
+        XftPatternAddString(p, XFT_FAMILY, "Object Icon serif");
         XftPatternAddString(p, XFT_FAMILY, "times");
         flags |= FONTFLAG_PROPORTIONAL;
     }
