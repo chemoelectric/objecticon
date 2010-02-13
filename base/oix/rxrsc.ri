@@ -481,12 +481,12 @@ static char *convert_spec(char *s)
      */
     if (!strcmp(family, "fixed")) {
         XftPatternAddString(p, XFT_FAMILY, "Object Icon fixed");
-        XftPatternAddString(p, XFT_FAMILY, "fixed");
+        XftPatternAddString(p, XFT_FAMILY, "mono");
         flags |= FONTFLAG_MONO;
     }
     else if (!strcmp(family, "mono")) {
         XftPatternAddString(p, XFT_FAMILY, "Object Icon mono");
-        XftPatternAddString(p, XFT_FAMILY, "lucidatypewriter");
+        XftPatternAddString(p, XFT_FAMILY, "mono");
         flags |= FONTFLAG_MONO;
     }
     else if (!strcmp(family, "typewriter")) {
