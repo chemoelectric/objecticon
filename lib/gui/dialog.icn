@@ -118,6 +118,13 @@ class Dialog(Component)
    end
 
    #
+   # Lower the window
+   #
+   public lower()
+      self.win.lower()
+   end
+
+   #
    # Returns the number of mouse clicks that have occurred
    # consecutively, with each click in the sequence being less
    # than {DOUBLE_CLICK_DELAY} milliseconds apart.  That variable is by default 500
