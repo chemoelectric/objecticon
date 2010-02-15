@@ -517,7 +517,10 @@ class Key()
       UP,
       CURSOR,
       CURSOR_V,
-      CURSOR_H
+      CURSOR_H,
+      SUPER_L,
+      SUPER_R,
+      MENU
 
    private static init()
 $ifdef _X_WINDOW_SYSTEM
@@ -592,6 +595,9 @@ $ifdef _X_WINDOW_SYSTEM
       SCROLL_LOCK :=         65300
       SELECT :=              65376
       UP :=                  65362
+      SUPER_L :=             65515
+      SUPER_R :=             65516
+      MENU :=                65383
 $endif
 $ifdef _MS_WINDOWS
       DOWN :=               40
@@ -669,6 +675,9 @@ $ifdef _MS_WINDOWS
       R13 :=                0
       R14 :=                0
       R15 :=                0
+      SUPER_L :=            0
+      SUPER_R :=            0
+      MENU :=               0
 $endif
 
       CURSOR := set(UP, DOWN, LEFT, RIGHT)
