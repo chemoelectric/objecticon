@@ -135,6 +135,13 @@ class Dispatcher()
       }
    end
 
+   #
+   # This is similar to the normal {message_loop} method, but instead
+   # of returning only when there are no dialogs open, this method
+   # will also return when it first finds it has no work to do,
+   # allowing the caller to undertake some activity before calling it
+   # again.
+   #
    public static service(r)
       if /r then {
          while *dialogs > 0 do
@@ -142,6 +149,17 @@ class Dispatcher()
       } else {
          while \r.is_open_flag do
             do_event() | do_validate() | do_ticker() | break
+      }
+   end
+
+   #
+   # A further variant of the message loop which never returns.  Even
+   # when there are no dialogs open, tickers continue to be called,
+   # with appropriate sleep intervals in-between.
+   #
+   public static message_loop_forever()
+      repeat {
+            do_event() | do_validate() | do_ticker() | delay(idle_sleep)
       }
    end
 
