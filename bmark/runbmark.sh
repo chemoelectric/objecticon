@@ -9,15 +9,15 @@ function bm()
     echo "----------------------"
     oit -s $name.icn post.icn
     ./$name "$@"
-    if [[ -n $BM_ICONT ]] ; then
+    if [[ -x $BM_ICONT ]] ; then
         $BM_ICONT -s $name.icn post.icn
         ./$name "$@"
     fi
-    if [[ -n $BM_ICONC ]] ; then
+    if [[ -x $BM_ICONC ]] ; then
         $BM_ICONC -s $name.icn post.icn
         ./$name "$@"
     fi
-    if [[ -n $BM_JCONT ]] ; then
+    if [[ -x $BM_JCONT ]] ; then
         $BM_JCONT -s $name.icn post.icn
         ./$name "$@"
     fi
