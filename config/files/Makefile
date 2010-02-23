@@ -123,6 +123,10 @@ tar :
 		-regex ".*\.\(icn\|std\|stde\|dat\|gif\|sh\)" ) ; do \
 		cp --parents $$f $(T) ;\
 	done
+	@for f in $$( find bmark \
+		-regex ".*\.\(icn\|dat\|sh\)" ) ; do \
+		cp --parents $$f $(T) ;\
+	done
 	@for f in $$( find config -type f -not -regex ".*\.svn.*" ) ; do \
 		cp --parents $$f $(T) ;\
 	done
