@@ -442,6 +442,16 @@ static void nodegen(nodeptr t)
             break;
         }
 
+        case N_CoInvoke: {			/* f{x,y...} invocation */
+            int len = elist_len(Tree1(t));
+            uout_op(Uop_CoInvoke);
+            uout_16(len);
+            nodegen(Tree0(t));
+            if (len > 0)
+                nodegen(Tree1(t));
+            break;
+        }
+
         case N_Mutual: {			/* (...) invocation */
             int len = elist_len(Tree0(t));
             uout_op(Uop_Mutual);

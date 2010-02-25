@@ -161,6 +161,7 @@ int modflag;
 #define Invocop1(x1)		add_invocable(dottedid2string(x1),1,x1)
 #define Invocop2(x1)		add_invocable(Str0(x1),2,x1)
 #define Invoke(x1,x2,x3,x4)	$$ = tree4(N_Invoke,x2,x1,x3) 
+#define CoInvoke(x1,x2,x3,x4)	$$ = tree4(N_CoInvoke,x2,x1,x3) 
 #define Keyword(x1,x2)		int kn = klookup(Str0(x2)); \
                                 if (kn == 0) \
 				   tfatal("invalid keyword: %s",Str0(x2));\
@@ -177,10 +178,6 @@ int modflag;
  				else\
  				   $$ = x2
 #define Pcolon(x)		$$ = x
-#define Pdco0(x1,x2,x3)		$$ = tree4(N_Invoke,x2,x1,EmptyNode)
-#define Pdco1(x1,x2,x3,x4)	$$ = tree4(N_Invoke,x2,x1,x3)
-#define Pdcolist0(x)		$$ = tree3(N_Create,x,x) 
-#define Pdcolist1(x1,x2,x3)	$$ = tree4(N_Elist,x2,x1,tree3(N_Create,x2,x3))
 
 #define Proc1(x1,x2)            next_procedure(Str0(x2), x2); \
                                 idflag = F_Argument

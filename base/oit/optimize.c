@@ -94,6 +94,7 @@ static void fold_case(struct lnode *n);
 static void fold_to(struct lnode *n);
 static void fold_toby(struct lnode *n);
 static void fold_invoke(struct lnode *n);
+static void fold_coinvoke(struct lnode *n);
 static void fold_apply(struct lnode *n);
 static void fold_keyword(struct lnode *n);
 static void fold_return(struct lnode *n);
@@ -176,6 +177,11 @@ static int fold_consts(struct lnode *n)
 
         case Uop_Invoke: {
             fold_invoke(n);
+            break;
+        }
+
+        case Uop_CoInvoke: {
+            fold_coinvoke(n);
             break;
         }
 
@@ -506,6 +512,7 @@ static int changes(struct lnode *n)
             case Uop_Value:
             case Uop_Field:
             case Uop_Invoke:
+            case Uop_CoInvoke:
             case Uop_Apply:
             case Uop_Power:
             case Uop_Cat:
@@ -1298,6 +1305,17 @@ static void fold_invoke(struct lnode *n)
         }
         free_literal(&l);
     }
+}
+
+static void fold_coinvoke(struct lnode *n)
+{
+    struct lnode_invoke *x = (struct lnode_invoke *)n;
+    struct literal l;
+    if (!get_literal(x->expr, &l))
+        return;
+    if (l.type == FAIL)
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+    free_literal(&l);
 }
 
 static void fold_apply(struct lnode *n)

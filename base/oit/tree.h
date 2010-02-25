@@ -71,6 +71,7 @@ extern struct node tok_loc;     /* "model" token holding current location */
 #define N_Empty		15		/* empty expression or statement */
 #define N_Field		16		/* record field reference */
 #define N_Id		17		/* identifier token */
+#define N_CoInvoke	18		/* invocation in form e{x,y,...} */
 #define N_Int		19		/* integer literal */
 #define N_Invoke	20		/* invocation */
 #define N_Key		21		/* keyword */

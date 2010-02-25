@@ -732,7 +732,6 @@ static int is_rval(int op, int arg, int parent)
 static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct ir_var *target, int bounded, int rval)
 {
     struct ir_info *res = ir_info(n);
-    res->node = n;
     if (Iflag) {
         indentf("uop = %s (bounded=%d rval=%d, target=", ucode_op_table[n->op].name, bounded, rval);
         print_ir_var(target);
@@ -2025,6 +2024,16 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             chunk1(operand->failure, ir_goto(n, res->failure));
             res->uses_stack = 1;
             break;
+        }
+
+        case Uop_CoInvoke: {                      /* e{x1, x2.., xn} */
+            struct lnode_invoke *x = (struct lnode_invoke *)n;
+            int i;
+            /* Transform into an invoke node: e(create x1, create x2, ... create xn) */
+            x->op = Uop_Invoke;
+            for (i = 0; i < x->n; ++i)
+                x->child[i] = (struct lnode *)lnode_1(Uop_Create, &x->child[i]->loc, x->child[i]);
+            /* Fall through */
         }
 
         case Uop_Invoke: {                      /* e(x1, x2.., xn) */

@@ -382,8 +382,7 @@ expr11	: literal ;
 	| LBRACE compound RBRACE { $$ := Node("Brace", $1,$2,$3);} ;
 	| LBRACK exprlist RBRACK { $$ := Node("Brack", $1,$2,$3);} ;
 	| expr11 LBRACK exprlist RBRACK { $$ := Node("Subscript", $1,$2,$3,$4);} ;
-	| expr11 LBRACE	RBRACE { $$ := Node("Pdco0", $1,$2,$3);} ;
-	| expr11 LBRACE pdcolist RBRACE { $$ := Node("Pdco1", $1,$2,$3,$4);} ;
+	| expr11 LBRACE exprlist RBRACE { $$ := Node("coinvoke", $1,$2,$3,$4);} ;
 	| expr11 LPAREN exprlist RPAREN { $$ := Node("invoke", $1,$2,$3,$4);} ;
 	| expr11 DOT IDENT { $$ := Node("field",$1,$2,$3);} ;
 	| AND FAIL { $$ := Node("keyword",$1,$2);} ;
@@ -420,9 +419,6 @@ cclause	: DEFAULT COLON expr { $$ := Node("cclause0", $1,$2,$3);} ;
 
 exprlist: nexpr ;
 	| exprlist COMMA nexpr { $$ := Node("exprlist", $1,$2,$3) } ;
-
-pdcolist: nexpr ;
-	| pdcolist COMMA nexpr { $$ := Node("pdcolist", $1,$2,$3); } ;
 
 literal	: INTLIT ;
 	| REALLIT ;

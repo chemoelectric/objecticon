@@ -248,8 +248,7 @@ expr11	: literal ;
 	| LBRACE compound RBRACE {Brace($1,$2,$3);} ;
 	| LBRACK exprlist RBRACK {Brack($1,$2,$3);} ;
 	| expr11 LBRACK exprlist RBRACK {Subscript($1,$2,$3,$4);} ;
-	| expr11 LBRACE	RBRACE {Pdco0($1,$2,$3);} ;
-	| expr11 LBRACE pdcolist RBRACE {Pdco1($1,$2,$3,$4);} ;
+	| expr11 LBRACE exprlist RBRACE {CoInvoke($1,$2,$3,$4);} ;
 	| expr11 LPAREN exprlist RPAREN {Invoke($1,$2,$3,$4);} ;
 	| expr11 DOT IDENT {Field($1,$2,$3);} ;
 	| AND FAIL {Kfail($1,$2);} ;
@@ -286,9 +285,6 @@ cclause	: DEFAULT COLON expr {Cclause0($1,$2,$3);} ;
 
 exprlist: nexpr                {Elst0($1);}
 	| exprlist COMMA nexpr {Elst1($1,$2,$3);} ;
-
-pdcolist: nexpr { Pdcolist0($1); } ;
-	| pdcolist COMMA nexpr { Pdcolist1($1,$2,$3); } ;
 
 literal	: INTLIT {Iliter($1);} ;
 	| REALLIT {Rliter($1);} ;

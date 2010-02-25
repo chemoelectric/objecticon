@@ -91,7 +91,7 @@ struct lnode_2 *lnode_2(int op, struct loc *pos, struct lnode *c1, struct lnode 
 struct lnode_3 *lnode_3(int op, struct loc *pos, struct lnode *c1, struct lnode *c2, struct lnode *c3);
 struct lnode_n *lnode_n(int op, struct loc *pos, int x);
 struct lnode_field *lnode_field(struct loc *loc, struct lnode *c, char *fname);
-struct lnode_invoke *lnode_invoke(struct loc *loc, struct lnode *expr, int x);
+struct lnode_invoke *lnode_invoke(int op, struct loc *loc, struct lnode *expr, int x);
 struct lnode_apply *lnode_apply(struct loc *loc, struct lnode *expr, struct lnode *args);
 struct lnode_keyword *lnode_keyword(struct loc *loc, int num);
 struct lnode_local *lnode_local(struct loc *loc, struct lentry *local);
