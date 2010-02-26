@@ -448,9 +448,12 @@ static void nodegen(nodeptr t)
             uout_16(len);
             nodegen(Tree0(t));
             if (len > 0) {
+                int x = in_loop;
+                in_loop = 0;
                 ++in_create;
                 nodegen(Tree1(t));
                 --in_create;
+                in_loop = x;
             }
             break;
         }
