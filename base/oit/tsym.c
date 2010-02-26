@@ -447,8 +447,11 @@ static void nodegen(nodeptr t)
             uout_op(Uop_CoInvoke);
             uout_16(len);
             nodegen(Tree0(t));
-            if (len > 0)
+            if (len > 0) {
+                ++in_create;
                 nodegen(Tree1(t));
+                --in_create;
+            }
             break;
         }
 
