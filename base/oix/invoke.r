@@ -764,8 +764,10 @@ static void cast_access(dptr lhs, dptr expr, dptr query, struct inline_field_cac
     MemProtect(mp = alcmethp());
     mp->object = CastBlk(*expr).object;
     mp->proc = &ProcBlk(*cf->field_descriptor);
-    lhs->dword = D_Methp;
-    BlkLoc(*lhs) = (union block *)mp;
+    if (lhs) {
+        lhs->dword = D_Methp;
+        BlkLoc(*lhs) = (union block *)mp;
+    }
 
     EVValD(expr, e_castref);
     EVVal(i + 1, e_castsub);
@@ -814,11 +816,14 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
                class0->init_field &&       /* .. and must be in init() method */
                (struct b_proc *)get_current_user_proc() == &ProcBlk(*class0->init_field->field_descriptor))))
     {
-        lhs->dword = D_NamedVar;
-        VarLoc(*lhs) = dp;
-    } else if (ac == Succeeded || (cf->flags & M_Readable))
-        *lhs = *dp;
-    else 
+        if (lhs) {
+            lhs->dword = D_NamedVar;
+            VarLoc(*lhs) = dp;
+        }
+    } else if (ac == Succeeded || (cf->flags & M_Readable)) {
+        if (lhs)
+            *lhs = *dp;
+    } else 
         AccessErr(0);
 
     EVValD(expr, e_classref);
@@ -860,20 +865,25 @@ static void instance_access(dptr lhs, dptr expr, dptr query, struct inline_field
         MemProtect(mp = alcmethp());
         mp->object = &ObjectBlk(*expr);
         mp->proc = &ProcBlk(*cf->field_descriptor);
-        lhs->dword = D_Methp;
-        BlkLoc(*lhs) = (union block *)mp;
+        if (lhs) {
+            lhs->dword = D_Methp;
+            BlkLoc(*lhs) = (union block *)mp;
+        }
     } else {
         ac = check_access(cf, class0);
         if (ac == Succeeded &&
             (!(cf->flags & M_Const) || ObjectBlk(*expr).init_state == Initializing))
         {
             /* Return a pointer to the field */
-            lhs->dword = D_StructVar + 
-                          ((word *)(&ObjectBlk(*expr).fields[i]) - (word *)BlkLoc(*expr));
-            BlkLoc(*lhs) = BlkLoc(*expr);
-        } else if (ac == Succeeded || (cf->flags & M_Readable))
-            *lhs = ObjectBlk(*expr).fields[i];
-        else 
+            if (lhs) {
+                lhs->dword = D_StructVar + 
+                    ((word *)(&ObjectBlk(*expr).fields[i]) - (word *)BlkLoc(*expr));
+                BlkLoc(*lhs) = BlkLoc(*expr);
+            }
+        } else if (ac == Succeeded || (cf->flags & M_Readable)) {
+            if (lhs)
+                *lhs = ObjectBlk(*expr).fields[i];
+        } else 
             AccessErr(0);
     }
 
@@ -893,8 +903,10 @@ static void record_access(dptr lhs, dptr expr, dptr query, struct inline_field_c
     /*
      * Return a pointer to the descriptor for the appropriate field.
      */
-    lhs->dword = D_StructVar + ((word *)(&RecordBlk(*expr).fields[i]) - (word *)BlkLoc(*expr));
-    BlkLoc(*lhs) = BlkLoc(*expr);
+    if (lhs) {
+        lhs->dword = D_StructVar + ((word *)(&RecordBlk(*expr).fields[i]) - (word *)BlkLoc(*expr));
+        BlkLoc(*lhs) = BlkLoc(*expr);
+    }
 
     EVValD(expr, e_rref);
     EVVal(i + 1, e_rsub);
@@ -1202,6 +1214,7 @@ static void create_raw_object()
     c = get_dptr();
     MemProtect(obj = alcobject(&ClassBlk(*c)));
     obj->init_state = Initializing;
+    /* lhs is never null */
     lhs->dword = D_Object;
     BlkLoc(*lhs) = (union block *)obj;
 }
