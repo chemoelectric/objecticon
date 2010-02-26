@@ -512,7 +512,6 @@ static int changes(struct lnode *n)
             case Uop_Value:
             case Uop_Field:
             case Uop_Invoke:
-            case Uop_CoInvoke:
             case Uop_Apply:
             case Uop_Power:
             case Uop_Cat:
@@ -591,6 +590,16 @@ static int changes(struct lnode *n)
                 return x->child1 == n;
             }
 
+            case Uop_CoInvoke: {
+                struct lnode_invoke *x = (struct lnode_invoke *)n->parent;
+                int i;
+                for (i = 0; i < x->n; ++i) {
+                    if (x->child[i] == n)
+                        return 1;
+                }
+                return 0;
+            }
+
             case Uop_Breakexpr: 
             case Uop_Create: 
             case Uop_Suspendexpr: 
@@ -615,6 +624,13 @@ static int visit_init_assign(struct lnode *n)
     struct lclass_field *f;
 
     if (x->child1->op != Uop_Field)
+        return 1;
+
+    /*
+     * Check the assign is at the top level in the method; eg not something like
+     * if ... then CONST := 100
+     */
+    if (!(n->parent == 0 || (n->parent->op == Uop_Slist && n->parent->parent == 0)))
         return 1;
 
     y = (struct lnode_field *)x->child1;

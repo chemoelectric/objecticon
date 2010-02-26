@@ -334,24 +334,12 @@ static struct lnode *buildtree()
             return (struct lnode *)lnode_field(&t, c, s);
         }
 
+        case Uop_CoInvoke:                      /* e{x1, x2.., xn} */
         case Uop_Invoke: {                      /* e(x1, x2.., xn) */
             int i, n = uin_16();
             struct loc t = curr_loc;
             struct lnode *e = buildtree();
-            struct lnode_invoke *x = lnode_invoke(Uop_Invoke, &t, e, n);
-            for (i = 0; i < n; ++i) {
-                struct lnode *y = buildtree();
-                x->child[i] = y;
-                y->parent = (struct lnode *)x;
-            }
-            return (struct lnode *)x;
-        }
-
-        case Uop_CoInvoke: {                      /* e{x1, x2.., xn} */
-            int i, n = uin_16();
-            struct loc t = curr_loc;
-            struct lnode *e = buildtree();
-            struct lnode_invoke *x = lnode_invoke(Uop_CoInvoke, &t, e, n);
+            struct lnode_invoke *x = lnode_invoke(op, &t, e, n);
             for (i = 0; i < n; ++i) {
                 struct lnode *y = buildtree();
                 x->child[i] = y;
@@ -662,16 +650,8 @@ static void visitnode_pre(struct lnode *n, visitf v)
             break;
         }
 
+        case Uop_CoInvoke:                      /* e{x1, x2.., xn} */
         case Uop_Invoke: {                      /* e(x1, x2.., xn) */
-            struct lnode_invoke *x = (struct lnode_invoke *)n;
-            int i;
-            visitnode_pre(x->expr, v);
-            for (i = 0; i < x->n; ++i)
-                visitnode_pre(x->child[i], v);
-            break;
-        }
-
-        case Uop_CoInvoke: {                      /* e{x1, x2.., xn} */
             struct lnode_invoke *x = (struct lnode_invoke *)n;
             int i;
             visitnode_pre(x->expr, v);
@@ -855,16 +835,8 @@ static void visitnode_post(struct lnode *n, visitf v)
             break;
         }
 
+        case Uop_CoInvoke:                      /* e{x1, x2.., xn} */
         case Uop_Invoke: {                      /* e(x1, x2.., xn) */
-            struct lnode_invoke *x = (struct lnode_invoke *)n;
-            int i;
-            visitnode_post(x->expr, v);
-            for (i = 0; i < x->n; ++i)
-                visitnode_post(x->child[i], v);
-            break;
-        }
-
-        case Uop_CoInvoke: {                      /* e{x1, x2.., xn} */
             struct lnode_invoke *x = (struct lnode_invoke *)n;
             int i;
             visitnode_post(x->expr, v);
@@ -1142,7 +1114,7 @@ void replace_node(struct lnode *old, struct lnode *new)
             break;
         }
 
-        case Uop_CoInvoke:                       /* e{x1, x2.., xn} */
+        case Uop_CoInvoke:                      /* e{x1, x2.., xn} */
         case Uop_Invoke: {                      /* e(x1, x2.., xn) */
             struct lnode_invoke *x = (struct lnode_invoke *)n;
             int i;
