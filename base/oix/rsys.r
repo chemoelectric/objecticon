@@ -4,25 +4,23 @@
 
 
 /*
- * Print string referenced by descriptor d. Note, d must not move during
- *   a garbage collection.
+ * Print string referenced by descriptor d.
  */
-
 int putstr(FILE *f, dptr d)
-   {
-   char *s;
-   word l;
+{
+    return putn(f, StrLoc(*d), StrLen(*d));
+}
 
-   l = StrLen(*d);
-   if (l == 0)
-      return  Succeeded;
-   s = StrLoc(*d);
-
-   if (fwrite(s,1,l,f) != l)
-      return Failed;
-   else
-      return Succeeded;
-   }
+/*
+ * Put n chars from s to file f.
+ */
+int putn(FILE *f, char *s, int n)
+{
+    if (fwrite(s, 1, n, f) != n)
+        return Failed;
+    else
+        return Succeeded;
+}
 
 /*
  * Wait for input to become available on fd, with timeout of t ms

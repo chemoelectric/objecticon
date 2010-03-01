@@ -1684,11 +1684,11 @@ static void gfout(int tcode)
  */
 static void gfdump()
 {
-    int n;
+    int n, dummy;
 
     n = GifBlockSize - gf_rem;
     putc(n, gf_f);			/* write block size */
-    fwrite(gf_obuf, 1, n, gf_f); /*write block */
+    dummy = fwrite(gf_obuf, 1, n, gf_f); /*write block */
     gf_rem = GifBlockSize;		/* reset buffer to empty */
 }
 

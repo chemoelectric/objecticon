@@ -499,7 +499,7 @@ void outimage(FILE *f, dptr dp, int noimage)
          putc('"', f);
          while (j-- > 0) {
              int n = str_charstr(*s++ & 0xff, cbuf);
-             fwrite(cbuf, 1, n, f);
+             putn(f, cbuf, n);
          }
          if (i > StringLimit)
              fprintf(f, "...");
@@ -515,7 +515,7 @@ void outimage(FILE *f, dptr dp, int noimage)
              int n;
              k = utf8_iter(&s);
              n = ucs_charstr(k, cbuf);
-             fwrite(cbuf, 1, n, f);
+             putn(f, cbuf, n);
          }
          if (i > StringLimit)
              fprintf(f, "...");
@@ -562,10 +562,10 @@ void outimage(FILE *f, dptr dp, int noimage)
                      break;
                  }
                  n = cset_charstr(from, cbuf);
-                 fwrite(cbuf, 1, n, f);
+                 putn(f, cbuf, n);
                  putc('-', f);
                  n = cset_charstr(to, cbuf);
-                 fwrite(cbuf, 1, n, f);
+                 putn(f, cbuf, n);
                  j -= 2;
              } else {
                  int k;
@@ -576,7 +576,7 @@ void outimage(FILE *f, dptr dp, int noimage)
                          break;
                      }
                      n = cset_charstr(k, cbuf);
-                     fwrite(cbuf, 1, n, f);
+                     putn(f, cbuf, n);
                  }
              }
          }
@@ -775,7 +775,7 @@ void outimage(FILE *f, dptr dp, int noimage)
                  int n;
                  k = utf8_iter(&s);
                  n = ucs_charstr(k, cbuf);
-                 fwrite(cbuf, 1, n, f);
+                 putn(f, cbuf, n);
              }
              if (i > StringLimit)
                  fprintf(f, "...");

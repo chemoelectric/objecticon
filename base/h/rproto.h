@@ -128,7 +128,8 @@ void            outimage        (FILE *f,dptr dp,int noimage);
 longlong        physicalmemorysize(void);
 word            prescan         (dptr d);
 int             putstr          (FILE *f,dptr d);
-int              radix          (int sign, register int r, register char *s,
+int             putn            (FILE *f, char *s, int n);
+int             radix           (int sign, register int r, register char *s,
                                    register char *end_s, union numeric *result);
 char            *reserve_0      (int region, word nbytes);
 char            *reserve_1      (int region, word nbytes);
