@@ -11,12 +11,11 @@ procedure main()
 
 $ifdef _MS_WIN32
    local s
-   Files.string_to_file("motd", "message of the day")
    L := [FileStream.stdin, FileStream.stdout, FileStream.stderr,
-   	m := open("motd"), n := open("nul", "w")]
+   	m := open("io.icn"), n := open("nul", "w")]
 $else
    L := [FileStream.stdin, FileStream.stdout, FileStream.stderr,
-   	m := open("/etc/motd"), n := open("/dev/null", "w")]
+   	m := open("io.icn"), n := open("/dev/null", "w")]
 $endif
    L := sort(L)
    every f := !L do
@@ -31,11 +30,8 @@ $endif
    every write(|read()) \ 2
 
    write()
-   write("flush /etc/motd: ", imagex(m.flush()) | "FAILED")
-   write("close /etc/motd: ", imagex(m.close()) | "FAILED")
-$ifdef _MS_WIN32
-   Files.remove("motd")
-$endif
+   write("flush io.icn: ", imagex(m.flush()) | "FAILED")
+   write("close io.icn: ", imagex(m.close()) | "FAILED")
    write()
    write("flush /dev/null: ", imagex(n.flush()) | "FAILED")
    write("close /dev/null: ", imagex(n.close()) | "FAILED")
