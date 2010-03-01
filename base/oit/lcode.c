@@ -290,7 +290,7 @@ void generate_code()
      */
     outfile = fopen(ofile, WriteBinary);
     if (outfile == NULL)
-        quitf("cannot create %s",ofile);
+        quit("cannot create %s",ofile);
 
     /*
      * Write the bootstrap header to the output file.
@@ -904,7 +904,7 @@ static void lemitcode()
                     break;
                 }
                 default: {
-                    quitf("lemitcode: illegal ir opcode(%d)\n", ir->op);
+                    quit("lemitcode: illegal ir opcode(%d)\n", ir->op);
                     break;
                 }
             }
@@ -1018,10 +1018,10 @@ static void lemitproc()
 
     /* Check our calculations were right */
     if (ap != pc)
-        quitf("I got my sums wrong(d): %d != %d", ap, pc);
+        quit("I got my sums wrong(d): %d != %d", ap, pc);
 
     if (curr_lfunc->pc + size != pc)
-        quitf("I got my sums wrong(e): %d != %d", curr_lfunc->pc + size, pc);
+        quit("I got my sums wrong(e): %d != %d", curr_lfunc->pc + size, pc);
 }
 
 struct field_sort_item {
@@ -1094,7 +1094,7 @@ static void genclass(struct lclass *cl)
     word p;
 
     if (cl->pc != pc)
-        quitf("I got my sums wrong(a): %d != %d", pc, cl->pc);
+        quit("I got my sums wrong(a): %d != %d", pc, cl->pc);
     
     name = cl->global->name;
     ce = inst_sdescrip(name);
@@ -1193,9 +1193,9 @@ static void genclass(struct lclass *cl)
 
     /* Check our calculations were right */
     if (ap != pc)
-        quitf("I got my sums wrong(b): %d != %d", ap, pc);
+        quit("I got my sums wrong(b): %d != %d", ap, pc);
     if (cl->pc + cl->size != pc)
-        quitf("I got my sums wrong(c): %d != %d", cl->pc + cl->size, pc);
+        quit("I got my sums wrong(c): %d != %d", cl->pc + cl->size, pc);
 
     flushcode();
 }
@@ -1444,9 +1444,9 @@ static void gentables()
 
         /* Check our calculations were right */
         if (ap != pc)
-            quitf("I got my sums wrong(d): %d != %d", ap, pc);
+            quit("I got my sums wrong(d): %d != %d", ap, pc);
         if (rec->pc + size != pc)
-            quitf("I got my sums wrong(e): %d != %d", rec->pc + size, pc);
+            quit("I got my sums wrong(e): %d != %d", rec->pc + size, pc);
 
         flushcode();
     }
@@ -1841,7 +1841,7 @@ static void labout(int i, char *desc)
     if (Dflag)
         fprintf(dbgfile, WordFmt ":   " WordFmt "    #    %s=chunk %d\n", (long)pc, (long)0, desc, i);
     if (!chunk)
-        quitf("Missing chunk: %d\n", i);
+        quit("Missing chunk: %d\n", i);
     outword(chunk->refs);
     chunk->refs = t;
 }
@@ -1885,7 +1885,7 @@ static void * expand_table(void * table,      /* table to be realloc()ed */
         free_offset = DiffPtrs(*(char **)tblfree,  (char *)table);
 
     if ((new_tbl = (char *)realloc(table, (unsigned)num_bytes)) == 0)
-        quitf("out of memory for %s", tbl_name);
+        quit("out of memory for %s", tbl_name);
 
     for (i = *size * unit_size; i < num_bytes; ++i)
         new_tbl[i] = 0;
@@ -2093,9 +2093,9 @@ static void writescript()
    FILE *f;
    int c;
    if (!hdr)
-      quitf("Couldn't find win32header header file on PATH");
+      quit("Couldn't find win32header header file on PATH");
    if (!(f = fopen(hdr, ReadBinary)))
-      quitf("Tried to open win32header to build .exe, but couldn't");
+      quit("Tried to open win32header to build .exe, but couldn't");
    scriptsize = 0;
    while ((c = fgetc(f)) != EOF) {
       fputc(c, outfile);
@@ -2133,7 +2133,9 @@ static void writescript()
              " $0 ${1+\"$@\"}",
              IcodeDelim "\n");
     scriptsize = strlen(script);
-    fwrite(script, scriptsize, 1, outfile);	/* write header */
+    /* write header */
+    if (fwrite(script, scriptsize, 1, outfile) != 1)
+        quit("cannot write header to icode file");
 #endif					/* UNIX */
 }
 

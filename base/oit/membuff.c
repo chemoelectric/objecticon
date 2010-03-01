@@ -32,7 +32,7 @@ void *mb_alloc(struct membuff *mb, size_t n)
         new_size = mb->init_size;
 
     if (n > new_size)
-        quitf("Request too big for membuff %s", mb->name);
+        quit("Request too big for membuff %s", mb->name);
 
     nb = Alloc(struct membuff_block);
     nb->size = new_size;

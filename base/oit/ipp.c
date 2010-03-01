@@ -382,7 +382,6 @@ int ppch()
 
 #if UNIX
          if (fs->m4flag) {			/* if m4 preprocessing */
-	    void quit();
             if (pclose(fs->fp) != 0)		/* close pipe */
                quit("m4 terminated abnormally");
             }

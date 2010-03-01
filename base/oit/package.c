@@ -133,16 +133,16 @@ int load_package_dir(struct package_dir *dir)
         if (s == package_marker_string) {
             s = read_package_line(f);
             if (!s)
-                quitf("%s corrupt - package name expected following package", fn);
+                quit("%s corrupt - package name expected following package", fn);
             pack = create_package(s);
             if (!add_package(dir, pack))
-                quitf("%s corrupt - duplicate package entry", fn);
+                quit("%s corrupt - duplicate package entry", fn);
         } else {
             if (!pack)
-                quitf("%s corrupt - package expected", fn);
+                quit("%s corrupt - package expected", fn);
             pf = create_package_file(s);
             if (!add_package_file(pack, pf))
-                quitf("%s corrupt - duplicate file entry", fn);
+                quit("%s corrupt - duplicate file entry", fn);
         }
     }
     fclose(f);
@@ -160,7 +160,7 @@ static void save_package_dir(struct package_dir *dir)
     struct package *pk;
     struct package_file *pf;
     if (!f)
-        quitf("Unable to open package file %s", fn);
+        quit("Unable to open package file %s", fn);
     for (pk = dir->packages; pk; pk = pk->next) {
         fprintf(f, ">package\n%s\n", pk->name);
         for (pf = pk->files; pf; pf = pf->next)
@@ -168,7 +168,7 @@ static void save_package_dir(struct package_dir *dir)
     }
     dir->modflag = 0;
     if (ferror(f) != 0)
-        quitf("failed to write to package file %s", fn);
+        quit("failed to write to package file %s", fn);
     fclose(f);
 }
 

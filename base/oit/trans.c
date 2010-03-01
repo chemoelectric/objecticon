@@ -93,20 +93,6 @@ void twarn_at(struct node *n, char *fmt, ...)
 }
 
 /*
- * tsyserr is called for fatal errors.  The message s is produced and the
- *  translator exits.
- */
-void tsyserr(char *s)
-{
-    if (File(&tok_loc))
-        fprintf(stderr, "File %s; ", File(&tok_loc));
-    if (Line(&tok_loc))
-        fprintf(stderr, "Line %d # ", Line(&tok_loc));
-    fprintf(stderr, "%s\n", s);
-    exit(EXIT_FAILURE);
-}
-
-/*
  * translate the parameters contained in the list, returning an error/warning count
  */
 void trans(struct file_param *trans_files, int *fatals, int *warnings)
@@ -199,7 +185,7 @@ static void trans1(char *filename)
     peekc = 0;                  /* clear character lookahead */
 
     if (!ppinit(filename, m4pre))
-        quitf("cannot open %s",filename);
+        quit("cannot open %s",filename);
 
     if (strcmp(filename,"-") == 0) {
         filename = stdin_string;
@@ -234,7 +220,7 @@ static void trans1(char *filename)
 
         ucodefile = fopen(outname, WriteBinary);
         if (!ucodefile)
-            quitf("cannot create %s", outname);
+            quit("cannot create %s", outname);
         output_code();
         fclose(ucodefile);
 

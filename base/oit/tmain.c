@@ -169,7 +169,7 @@ int main(int argc, char **argv)
 
     oixloc = findexe("oix");
     if (!oixloc)
-        quitf("Couldn't find oix on PATH");
+        quit("Couldn't find oix on PATH");
     oixloc = intern(canonicalize(oixloc));
 
     /*
@@ -226,17 +226,17 @@ int main(int argc, char **argv)
 
             case 'v':			/* -v n: set verbosity level */
                 if (sscanf(optarg, "%d%c", &verbose, &ch) != 1)
-                    quitf("bad operand to -v option: %s",optarg);
+                    quit("bad operand to -v option: %s",optarg);
                 break;
 
             case 'l':			/* -l n: source location store level */
                 if (sscanf(optarg, "%d%c", &loclevel, &ch) != 1)
-                    quitf("bad operand to -l option: %s",optarg);
+                    quit("bad operand to -l option: %s",optarg);
                 break;
 
             case 'O':			/* -O n: optimisation level */
                 if (sscanf(optarg, "%d%c", &Olevel, &ch) != 1)
-                    quitf("bad operand to -O option: %s",optarg);
+                    quit("bad operand to -O option: %s",optarg);
                 break;
 
             case 'Z':
@@ -273,7 +273,7 @@ int main(int argc, char **argv)
                 add_link_file(makename(TargetDir, argv[optind], USuffix));
             }
             else
-                quitf("bad argument %s", argv[optind]);
+                quit("bad argument %s", argv[optind]);
         }
         optind++;
     }
@@ -386,7 +386,7 @@ static void execute(char **args)
    /*printf("cmd=%s\n",cmd);fflush(stdout);*/
    if (!CreateProcess(oixloc, cmd, NULL, NULL, FALSE, 0, NULL, NULL, 
 		      &siStartupInfo, &piProcessInfo)) {
-      quitf("CreateProcess failed GetLastError=%d\n",GetLastError());
+      quit("CreateProcess failed GetLastError=%d\n",GetLastError());
    }
    WaitForSingleObject(piProcessInfo.hProcess, INFINITE);
    CloseHandle( piProcessInfo.hProcess );
@@ -405,7 +405,7 @@ static void execute(char **args)
 
    *p = NULL;
    execv(ofile, argv);
-   quitf("could not execute %s", ofile);
+   quit("could not execute %s", ofile);
 #endif
 }
 
@@ -417,17 +417,17 @@ static void bundle_iconx()
     rename(ofile, tmp);
 
     if (!(f = fopen(oixloc, ReadBinary)))
-        quitf("Tried to open oix to build .exe, but couldn't");
+        quit("Tried to open oix to build .exe, but couldn't");
 
     if (!(f2 = fopen(ofile, WriteBinary)))
-        quitf("Couldn't reopen output file %s", ofile);
+        quit("Couldn't reopen output file %s", ofile);
 
     while ((c = fgetc(f)) != EOF)
         fputc(c, f2);
 
     fclose(f);
     if (!(f = fopen(tmp, ReadBinary))) 
-        quitf("tried to read %s to append to exe, but couldn't",tmp);
+        quit("tried to read %s to append to exe, but couldn't",tmp);
 
     while ((c = fgetc(f)) != EOF)
         fputc(c, f2);
@@ -454,29 +454,30 @@ static void file_comp()
     /* use fopen() to open the target file then read the header and add "z" to the hdr->config. */
     
     if (!(finput = fopen(ofile, ReadBinary)))
-        quitf("Can't open the file to compress: %s",ofile);
+        quit("Can't open the file to compress: %s",ofile);
     
     if (!(foutput = fopen(tmp, WriteBinary)))
-        quitf("Can't open the temp compression file: %s",tmp);
+        quit("Can't open the temp compression file: %s",tmp);
 
     n = strlen(IcodeDelim);
     for (;;) {
         if (fgets(buf, sizeof(buf) - 1, finput) == NULL)
-            quitf("Compression - Reading Error: Check if the file is executable Icon");
+            quit("Compression - Reading Error: Check if the file is executable Icon");
         fputs(buf, foutput);
         if (strncmp(buf, IcodeDelim, n) == 0)
             break;
     }
 
     if (fread((char *)hdr, sizeof(char), sizeof(*hdr), finput) != sizeof(*hdr))
-        quitf("gz compressor can't read the header, compression");
+        quit("gz compressor can't read the header, compression");
     
     /* Turn on the Z flag */
     strcat((char *)hdr->config,"Z");
 
     /* write the modified header into a new file */
     
-    fwrite((char *)hdr, sizeof(char), sizeof(*hdr), foutput);
+    if (fwrite((char *)hdr, sizeof(char), sizeof(*hdr), foutput) != sizeof(*hdr))
+        quit("failed to write header to temp compression file");
     
     /* close the new file */
   
@@ -485,7 +486,7 @@ static void file_comp()
     /* use gzopen() to open the new file */
     
     if (!(f = gzopen(tmp, AppendBinary)))
-        quitf("Compression Error: can not open output file %s", tmp);
+        quit("Compression Error: can not open output file %s", tmp);
     
     /*
      * read the rest of the target file and write the compressed data into
@@ -495,7 +496,7 @@ static void file_comp()
     while((c = fgetc(finput)) != EOF) {
         gzputc(f, c);
         if (ferror(finput))
-            quitf("Compression - Error occurs while reading!");
+            quit("Compression - Error occurs while reading!");
     }
    
     /* close both files */
@@ -503,11 +504,11 @@ static void file_comp()
     gzclose(f);
     
     if (unlink(ofile))
-        quitf("can't remove old %s, compressed version left in %s",
+        quit("can't remove old %s, compressed version left in %s",
               ofile, tmp);
 
     if (rename(tmp, ofile))
-        quitf("can't rename compressed %s back to %s", tmp, ofile);
+        quit("can't rename compressed %s back to %s", tmp, ofile);
 
     setexe(ofile);
 }
@@ -537,18 +538,9 @@ static void usage()
 }
 
 /*
- * quit - immediate exit with error message
- */
-
-void quit(char *msg)
-{
-    quitf(msg,"");
-}
-
-/*
  * quitf - immediate exit with message format and argument
  */
-void quitf(char *fmt, ...)
+void quit(char *fmt, ...)
 {
     va_list argp;
     extern char *progname;
@@ -616,7 +608,7 @@ static int ldbg(int argc, char **argv)
     }
 
     if (!ppinit(argv[1],0))
-        quitf("cannot open %s", argv[1]);
+        quit("cannot open %s", argv[1]);
 
     while (1) {
         yylex();

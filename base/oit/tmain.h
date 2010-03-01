@@ -50,8 +50,7 @@ extern char *iso_8859_1_string;
 
 int main(int argc, char **argv);
 void report(char *fmt, ...);
-void quit(char *msg);
-void quitf(char *fmt, ...);
+void quit(char *fmt, ...);
 char *abbreviate(char *path);
 
 #endif

@@ -61,10 +61,10 @@ void readglob(struct lfile *lf)
 
     uop = uin_expectop();
     if (uop->opcode != Uop_Version)
-        quitf("ucode file %s has no version identification", lf->name);
+        quit("ucode file %s has no version identification", lf->name);
     id = uin_str();		/* get version number of ucode */
     if (strcmp(id, UVersion))
-        quitf("version mismatch in ucode file %s - got %s instead of %s", lf->name, id, UVersion);
+        quit("version mismatch in ucode file %s - got %s instead of %s", lf->name, id, UVersion);
 
     while (1) {
         uop = uin_expectop();
@@ -218,7 +218,7 @@ void readglob(struct lfile *lf)
                 break;
 
             default:
-                quitf("ill-formed global file %s",lf->name);
+                quit("ill-formed global file %s",lf->name);
         }
     }
 }

@@ -163,7 +163,7 @@ static struct chunk *chunk(int line, char *desc, int id, int n, ...)
      * Check we have a valid last instruction.
      */
     if (chunk->n_inst == 0)
-        quitf("empty chunk allocated from line %d", line);
+        quit("empty chunk allocated from line %d", line);
     switch (chunk->inst[chunk->n_inst - 1]->op) {
         case Ir_Goto:
         case Ir_IGoto:
@@ -172,7 +172,7 @@ static struct chunk *chunk(int line, char *desc, int id, int n, ...)
         case Ir_SysErr:
             break;
         default:
-            quitf("invalid last instruction for chunk allocated from line %d", line);
+            quit("invalid last instruction for chunk allocated from line %d", line);
     }
     if (Iflag)
         print_chunk(chunk);
@@ -1946,7 +1946,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             int need_mark, mk;
 
             if (x->n < 2)
-                quitf("got slist with < 2 elements");
+                quit("got slist with < 2 elements");
 
             list_st = branch_stack(st);
             mk = make_mark(list_st);
@@ -2141,7 +2141,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             int i;
 
             if (x->n < 2)
-                quitf("got mutual with < 2 elements");
+                quit("got mutual with < 2 elements");
 
             info = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
             for (i = 0; i < x->n - 1; ++i) {
@@ -2556,7 +2556,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         }
 
         default:
-            quitf("ir_traverse: illegal opcode(%d): %s in file %s\n", n->op, 
+            quit("ir_traverse: illegal opcode(%d): %s in file %s\n", n->op, 
                   ucode_op_table[n->op].name, n->loc.file);
     }
     if (Iflag)
@@ -3091,7 +3091,7 @@ static void optimize_goto_chain(int *lab)
     while (1) {
         chunk = chunks[*lab];
         if (!chunk || chunk->n_inst == 0)
-            quitf("Optimize goto chain dead end at chunk %d, start was %d", *lab, start);
+            quit("Optimize goto chain dead end at chunk %d, start was %d", *lab, start);
         if (chunk->inst[0]->op != Ir_Goto || chunk->circle == marker)
             break;
         *lab = ((struct ir_goto *)chunk->inst[0])->dest;
@@ -3521,7 +3521,7 @@ static void renumber_ir()
                     break;
                 }
                 default: {
-                    quitf("renumber: illegal ir opcode(%d)\n", ir->op);
+                    quit("renumber: illegal ir opcode(%d)\n", ir->op);
                     break;
                 }
             }

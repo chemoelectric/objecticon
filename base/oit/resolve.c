@@ -102,7 +102,7 @@ static void resolve_global(struct lfile *lf, char *name)
         else if (lf->package != package) {
             struct fimport *im = lookup_fimport(lf, package);
             if (!im)
-                quitf("Couldn't find import %s in file %s", package, lf->name);
+                quit("Couldn't find import %s in file %s", package, lf->name);
             im->used = 1;
         }
         rres_found = gb_locate(name);

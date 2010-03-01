@@ -270,16 +270,16 @@ static struct str_buf ucode_sbuf;
 static void check_param(int type)
 {
     if (n_params > 1)
-        quitf("Too many params opcode %d", last_opcode);
+        quit("Too many params opcode %d", last_opcode);
     if (ucode_op_table[last_opcode].param_type[n_params] != type)
-        quitf("Wrong param type %d for opcode %d", type, last_opcode);
+        quit("Wrong param type %d for opcode %d", type, last_opcode);
     ++n_params;
 }
 
 void uout_op(int opcode)
 {
     if (ucode_op_table[opcode].opcode != opcode)
-        quitf("Illegal opcode output: %d", opcode);
+        quit("Illegal opcode output: %d", opcode);
     last_opcode = opcode;
     n_params = 0;
     putc(opcode, ucodefile);
@@ -293,7 +293,7 @@ void uout_16(int n)
     } i;
     check_param(TYPE_16);
     if (n > 0x7fff || n < -0x8000)
-        quitf("Param to uout_16 out of range");
+        quit("Param to uout_16 out of range");
     i.s = n;
     putc(i.c[0], ucodefile);
     putc(i.c[1], ucodefile);
@@ -329,7 +329,7 @@ void uout_bin(int len, char *s)
     } i;
     check_param(TYPE_BIN);
     if (len > 0xffff)
-        quitf("Param to uout_bin out of range");
+        quit("Param to uout_bin out of range");
     i.s = len;
     putc(i.c[0], ucodefile);
     putc(i.c[1], ucodefile);
@@ -341,7 +341,7 @@ static int uin_nextch()
 {
     int c = getc(ucodefile);
     if (c == EOF)
-        quitf("Unexpected EOF in ufile %s", inname);
+        quit("Unexpected EOF in ufile %s", inname);
     return c;
 }
 
@@ -410,7 +410,7 @@ struct ucode_op *uin_expectop()
 {
     struct ucode_op* op = uin_op();
     if (!op)
-        quitf("Unexpected EOF in ufile %s", inname);
+        quit("Unexpected EOF in ufile %s", inname);
     return op;
 }
 
@@ -446,10 +446,10 @@ struct ucode_op *uin_op()
     if (opcode == EOF)
         return 0;
     if (opcode >= ElemCount(ucode_op_table))
-        quitf("Illegal opcode: %d", opcode);
+        quit("Illegal opcode: %d", opcode);
     op = &ucode_op_table[opcode];
     if (op->opcode == 0)
-        quitf("Illegal opcode: %d", opcode);
+        quit("Illegal opcode: %d", opcode);
     last_opcode = opcode;
     n_params = 0;
     return op;
@@ -475,7 +475,7 @@ void uin_skip(int opcode)
                 uin_bin(0);
                 break;
             default:
-                quitf("Internal error");
+                quit("Internal error");
         }
     }
 }
@@ -560,7 +560,7 @@ static void read_params(struct ucode_op *op)
                 break;
             }
             default:
-                quitf("Internal error");
+                quit("Internal error");
         }
     }
     snprintf(buff, sizeof(buff), op->fmt, op->name, args[0], args[1], args[2]);

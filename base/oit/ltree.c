@@ -182,7 +182,7 @@ static struct lnode *buildtree()
 
     while (1) {
         if (!(uop = uin_op()))
-            quitf("nodecode: unexpected eof");
+            quit("nodecode: unexpected eof");
         op = uop->opcode;
         if (op ==  Uop_Filen) {
             curr_loc.file = uin_str();
@@ -421,7 +421,7 @@ static struct lnode *buildtree()
         }
 
         default:
-            quitf("nodecode: illegal opcode(%d): %s in file %s\n", op, uop->name, lf->name);
+            quit("nodecode: illegal opcode(%d): %s in file %s\n", op, uop->name, lf->name);
     }
 
     /* Not reached */
@@ -493,7 +493,7 @@ void loadtrees()
         inname = lf->name;
         ucodefile = fopen(inname, ReadBinary);
         if (!ucodefile)
-            quitf("cannot open .u for %s", inname);
+            quit("cannot open .u for %s", inname);
         fseek(ucodefile, lf->declend_offset, SEEK_SET);
         loadtree();
         fclose(ucodefile);
@@ -684,7 +684,7 @@ static void visitnode_pre(struct lnode *n, visitf v)
 
 
         default:
-            quitf("visitnode_pre: illegal opcode(%d)", n->op);
+            quit("visitnode_pre: illegal opcode(%d)", n->op);
     }
 }
 
@@ -869,7 +869,7 @@ static void visitnode_post(struct lnode *n, visitf v)
 
 
         default:
-            quitf("visitnode_post: illegal opcode(%d)", n->op);
+            quit("visitnode_post: illegal opcode(%d)", n->op);
     }
 
     v(n);
@@ -1173,8 +1173,8 @@ void replace_node(struct lnode *old, struct lnode *new)
         }
 
         default:
-            quitf("replace_child: illegal opcode(%d)", n->op);
+            quit("replace_child: illegal opcode(%d)", n->op);
     }
 
-    quitf("replace_child: old child node not found in parent node");
+    quit("replace_child: old child node not found in parent node");
 }

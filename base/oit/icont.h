@@ -39,7 +39,7 @@
  */
 #define hasher(x,obj)   (((word)x)%ElemCount(obj))
 
-#define MemProtect(notnull) do {if (!(notnull)) quitf("Out of memory");} while(0)
+#define MemProtect(notnull) do {if (!(notnull)) quit("Out of memory");} while(0)
 #define Abs(x) (((x) < 0) ? (-(x)) : (x))
 #define Max(x,y)        ((x)>(y)?(x):(y))
 #define Min(x,y)        ((x)<(y)?(x):(y))

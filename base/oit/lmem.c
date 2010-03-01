@@ -113,7 +113,7 @@ void paramlink(char *name)
     char *file = pathfind(0, 0, name, USuffix);
 
     if (!file)
-        quitf("cannot open %s", name);
+        quit("cannot open %s", name);
 
     ensure_lfile(intern(canonicalize(file)));
 }
@@ -233,7 +233,7 @@ void add_super(struct lclass *x, char *name, struct loc *pos)
     while (cs && cs->name != name)
         cs = cs->b_next;
     if (cs) 
-        quitf("duplicate superclass: %s", name);
+        quit("duplicate superclass: %s", name);
     cs = Alloc(struct lclass_super);
     cs->b_next = x->super_hash[i];
     x->super_hash[i] = cs;
@@ -253,7 +253,7 @@ void add_field(struct lclass *x, char *name, int flag, struct loc *pos)
     while (cf && cf->name != name)
         cf = cf->b_next;
     if (cf) 
-        quitf("duplicate class field: %s", name);
+        quit("duplicate class field: %s", name);
     cf = Alloc(struct lclass_field);
     cf->b_next = x->field_hash[i];
     x->field_hash[i] = cf;

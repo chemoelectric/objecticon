@@ -23,7 +23,7 @@ struct gentry *putglobal(char *name, int flag, struct lfile *lf, struct loc *pos
     while (p && p->name != name)
         p = p->g_blink;
     if (p)
-        quitf("Attempted to add an global which already existed:%s", name);
+        quit("Attempted to add an global which already existed:%s", name);
     p = Alloc(struct gentry);
     p->g_blink = lghash[i];
     lghash[i] = p;
