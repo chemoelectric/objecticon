@@ -1228,7 +1228,7 @@ function lang_Class_create_raw(c)
       push_frame((struct frame *)pf);
       pf->tmp[0] = c;
       tail_invoke_frame((struct frame *)pf);
-      return nulldesc;
+      return;
     }
 end
 
@@ -1253,6 +1253,6 @@ function lang_Class_ensure_initialized(c)
       push_frame((struct frame *)pf);
       pf->tmp[0] = c;
       tail_invoke_frame((struct frame *)pf);
-      return nulldesc;
+      return;
    }
 end
