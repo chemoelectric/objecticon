@@ -155,5 +155,14 @@ procedure main()
    print{"o.snaps", o.snaps}
    print{"o.increment_size", o.increment_size}
 
+   o:=Slider(u"is_horizontal=t",u"value=10",u"range=1,20",u"ticks=5",u"labels=6",u"snaps=7",u"increment_size=2")
+   print{"o.is_horizontal_flag", o.is_horizontal_flag}
+   print{"o.lo", o.lo}
+   print{"o.hi", o.hi}
+   print{"o.ticks", o.ticks}
+   print{"o.labels", o.labels}
+   print{"o.snaps", o.snaps}
+   print{"o.increment_size", o.increment_size}
+
    write("okay")
 end

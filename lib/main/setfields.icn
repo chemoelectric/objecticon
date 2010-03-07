@@ -12,10 +12,6 @@ class Field()
       val,
       obj
 
-   public as_attrib() 
-      return attr || "=" || string_val() 
-   end
-
    public flag_val()
       return flag(val) | field_error("Need a boolean parameter")
    end
@@ -200,6 +196,8 @@ class SetFields()
                val := &yes
             }
          }
+         # Ensure attr is a string (we could have, for example, u"label=xyz").
+         attr := string(attr)
          set_one(Field(attr, val, self)) | runerr("setfields: Unknown attribute", attr)
       }
    end
