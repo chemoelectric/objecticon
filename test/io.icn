@@ -1,7 +1,7 @@
 #SRC: JCON
 #  I/O test -- writes ./tmp1 and ./tmp2 as well as stdout
 
-import io, posix(System)
+import io
 $ifdef _MS_WIN32
 import ipl.strings(replace)
 $endif
@@ -139,8 +139,7 @@ procedure rfile(name)
 
    writes("read  ", name, ":\t")
 
-   if (name == "/dev/null") & ((&features == "MS Win32") |
-	                        find("cygwin", map(System.uname().sysname))) then
+   if name == "/dev/null" then
       f := NullStream()
    else {
       if not (f := open(name, "r")) then {
