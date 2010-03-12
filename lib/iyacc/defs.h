@@ -1,7 +1,6 @@
 #include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
-#include <malloc.h>
 #include <string.h>
 #include <stdlib.h>
 #ifdef _WIN32
