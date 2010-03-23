@@ -710,11 +710,10 @@ class HttpClient(NetClient)
          if prev_read ~=== self.read & \retry_while_data_flag then {
             i := retries
          } else if (i -:= 1) < 0 then {
+            if retries ~= 0 then
+               error("Gave up after " || (1+retries) || " attempts - last reason: " || &why)
             fire(FAILED_EVENT)
-            if retries = 0 then {
-               fail
-            } else
-               return error("Gave up after " || (1+retries) || " attempts - last reason: " || &why)
+            fail
          }
 
          fire(RETRYING_EVENT)
