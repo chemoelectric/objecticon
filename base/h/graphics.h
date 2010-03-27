@@ -124,7 +124,7 @@
 #define SETTITLEBAR(ws) ((ws)->bits |= 8192)
 #define CLRTITLEBAR(ws) ((ws)->bits &= ~8192)
 
-
+
 /*
  * Window Resources
  * Icon "Resources" are a layer on top of the window system resources,
@@ -134,7 +134,6 @@
  * into internal window system structures.
  */
 
-
 
 /*
  * Fonts are allocated within displays.
@@ -360,7 +359,6 @@ typedef struct _wstate {
   int           nChildren;
   childcontrol *child;
 #endif					/* MSWindows */
-  int            no;          /* new field added for child windows */
 } wstate, *wsp;
 
 /*
