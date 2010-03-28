@@ -55,7 +55,7 @@ static void indentf(char *fmt, ...)
     va_end(argp);
 }
 
-struct ir_stack *new_stack()
+struct ir_stack *new_stack(void)
 {
     return IRAlloc(struct ir_stack);
 }
@@ -114,7 +114,7 @@ static void push_scan(struct ir_info *info)
     scan_stack = info;
 }
 
-static void pop_scan()
+static void pop_scan(void)
 {
     scan_stack = scan_stack->scan->next;
 }
@@ -125,7 +125,7 @@ static void push_loop(struct ir_info *info)
     loop_stack = info;
 }
 
-static struct ir_info *pop_loop()
+static struct ir_info *pop_loop(void)
 {
     struct ir_info *t = loop_stack;
     loop_stack = loop_stack->loop->next;
@@ -595,7 +595,7 @@ static struct ir_var *make_word(word w)
     return v;
 }
 
-static struct ir_var *make_knull()
+static struct ir_var *make_knull(void)
 {
     struct ir_var *v = IRAlloc(struct ir_var);
     v->type = KNULL;

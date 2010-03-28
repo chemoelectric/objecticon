@@ -691,7 +691,7 @@ static int visit_init_method(struct lnode *n)
     return 1;
 }
 
-static void compute_class_consts()
+static void compute_class_consts(void)
 {
     if (verbose > 3)
         fprintf(stderr, "Public static constant analysis:\n\n");
@@ -719,7 +719,7 @@ static void compute_class_consts()
     }
 }
 
-static void init_rangesets()
+static void init_rangesets(void)
 {
     MemProtect(k_ascii_rangeset = init_rangeset());
     add_range(k_ascii_rangeset, 0, 127);

@@ -8,9 +8,9 @@
 #define FAlloc(type)   mb_alloc(&file_mb, sizeof(type))
 extern struct membuff file_mb;
 
-void tminit();
-void tmfilefree();
-void tmfree();
+void tminit(void);
+void tmfilefree(void);
+void tmfree(void);
 void next_function(int flag);
 void next_class(char *name, int flag, struct node *n);
 void next_super(char *name, struct node *n);

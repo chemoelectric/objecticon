@@ -175,7 +175,7 @@ static struct lclass_field *lookup_method(char *class, char *method)
     return cf;
 }
 
-static struct lnode *buildtree()
+static struct lnode *buildtree(void)
 {
     struct ucode_op *uop;
     int op;
@@ -442,7 +442,7 @@ static void loadtree_for(struct lfunction *f)
     curr_lfunc->end = buildtree();
 }
 
-static void loadtree()
+static void loadtree(void)
 {
     struct ucode_op *uop;
     int op;

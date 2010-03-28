@@ -55,7 +55,7 @@ static struct gentry *gb_locate(char *name)
 
 static struct gentry *rres_found, *rres_ambig;
 
-static void print_clash()
+static void print_clash(void)
 {
     fprintf(stderr, "\t%s (File %s; Line %d)\n", 
             rres_found->name, abbreviate(rres_found->pos.file), rres_found->pos.line);

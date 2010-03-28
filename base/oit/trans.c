@@ -28,7 +28,7 @@ int peekc;			/* one-character look ahead */
 static int afatals;		/* total number of fatal errors */
 static int awarnings;		/* total number of warning errors */
 
-int yyparse();
+int yyparse(void);
 
 /*
  * tfatal produces a translator error message.  The location of the
@@ -134,7 +134,7 @@ static void check_dottedident(struct node *pos, char *s)
     tfatal_at(pos, "Reference to unimported package: '%s'", t);
 }
 
-static void check_dottedidents()
+static void check_dottedidents(void)
 {
     struct tgentry *gp;
     struct tinvocable *iv;
@@ -149,7 +149,7 @@ static void check_dottedidents()
         check_dottedident(iv->pos, iv->name);
 }
 
-static void check_unused()
+static void check_unused(void)
 {
     struct tlentry *l;
     for (curr_func = functions; curr_func; curr_func = curr_func->next) {

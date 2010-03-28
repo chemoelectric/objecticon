@@ -337,7 +337,7 @@ void uout_bin(int len, char *s)
         putc(*s++, ucodefile);
 }
 
-static int uin_nextch()
+static int uin_nextch(void)
 {
     int c = getc(ucodefile);
     if (c == EOF)
