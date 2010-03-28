@@ -16,6 +16,9 @@ static void    handle_prog_exit(void);
 static void    relocate_code(struct progstate *ps, word *c);
 static void    env_int(char *name,word *variable,int non_neg, uword limit);
 static void    startuperr(char *fmt, ...);
+static void    conv_addr(void);
+static void    conv_var(void);
+
 
 /*
  * External declarations for operator and function blocks.

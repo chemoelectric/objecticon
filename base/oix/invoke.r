@@ -17,6 +17,7 @@ static void check_if_uninitialized(void);
 static void for_class_supers(void);
 static void set_object_state(void);
 static void invoke_class_init(void);
+static void ensure_class_initialized(void);
 
 
 #include "invokeiasm.ri"

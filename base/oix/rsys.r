@@ -104,7 +104,7 @@ int idelay(int n)
  *  times() function instead.
  */
 
-static long cptime()
+static long cptime(void)
    {
    struct tms tp;
    times(&tp);
