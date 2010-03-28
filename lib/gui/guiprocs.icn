@@ -168,15 +168,7 @@ procedure erase_rectangle(W, x, y, w, h)
 end
 
 procedure draw_image_ex(W, x, y, i)
-   i := get_extended_image(W, i) | fail
-   #
-   # This gets round a bug whereby painting an image
-   # in a -ve location (off screen) takes a really long
-   # time (it should be a no-op of course).
-   #
-   if x + image_width(i) < 0 & y + image_height(i) < 0 then
-      return
-   W.draw_image(x, y, i)
+   W.draw_image(x, y, get_extended_image(W, i))
 end
 
 procedure palette_key_ex(W, palette, spec)
