@@ -25,16 +25,16 @@ void uout_bin(int len, char *s);
  */
 
 /* Get the next op, returning null on EOF */
-struct ucode_op *uin_op();
+struct ucode_op *uin_op(void);
 
 /* Get the next op, but quit on EOF */
-struct ucode_op *uin_expectop();
+struct ucode_op *uin_expectop(void);
 
 /* Get a word */
-word uin_32();
+word uin_32(void);
 
 /* Get and intern a null-terminated string */
-char *uin_str();
+char *uin_str(void);
 
 /* Get and intern a null-terminated string, prefix with package plus a . */
 char *uin_fqid(char *package);
@@ -43,7 +43,7 @@ char *uin_fqid(char *package);
 char *uin_bin(int *n);
 
 /* Get a 16 bit signed short */
-int uin_16();
+int uin_16(void);
 
 /* Given the last opcode just read, skip over the instruction's parameters */
 void uin_skip(int opcode);

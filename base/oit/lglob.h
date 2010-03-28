@@ -3,10 +3,10 @@
 
 int get_package_id(char *s);
 void readglob(struct lfile *lf);
-void resolve_locals();
-void scanrefs();
-void build_fieldtable();
-void sort_global_table();
-void resolve_native_methods();
+void resolve_locals(void);
+void scanrefs(void);
+void build_fieldtable(void);
+void sort_global_table(void);
+void resolve_native_methods(void);
 
 #endif

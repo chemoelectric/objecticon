@@ -288,7 +288,7 @@ extern int hi_chunk;
 extern struct lfunction *curr_ir_func;
 extern int n_clo, n_tmp, n_lab, n_mark;
 
-void generate_ir();
-void dump_ir();
+void generate_ir(void);
+void dump_ir(void);
 
 #endif

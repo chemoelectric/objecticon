@@ -1200,7 +1200,7 @@ static void genclass(struct lclass *cl)
     flushcode();
 }
 
-static void genclasses()
+static void genclasses(void)
 {
     struct lclass *cl;
     struct lclass_field *cf;

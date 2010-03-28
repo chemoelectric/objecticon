@@ -21,28 +21,6 @@
 
 static void check_unused_imports(void);
 
-
-/*
- * The following code is operating-system dependent [@link.01].  Include
- *  system-dependent files and declarations.
- */
-
-#if PORT
-/* nothing to do */
-Deliberate Syntax Error
-#endif					/* PORT */
-
-#if UNIX
-#ifndef XWindows
-#include <sys/types.h>
-#endif				/* XWindows */
-#include <sys/stat.h>
-#endif					/* UNIX */
-
-/*
- * End of operating-system specific code.
- */
-
 FILE *infile;                           /* input file (.u) */
 FILE *outfile;                          /* interpreter code output file */
 

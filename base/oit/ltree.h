@@ -80,7 +80,7 @@ struct lnode_const {
     struct centry *con;
 };
 
-void loadtrees();
+void loadtrees(void);
 
 /*
  * Allocation funcs.

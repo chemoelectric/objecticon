@@ -691,7 +691,7 @@ static int visit_init_method(struct lnode *n)
     return 1;
 }
 
-static void compute_class_consts()
+static void compute_class_consts(void)
 {
     if (verbose > 3)
         fprintf(stderr, "Public static constant analysis:\n\n");
@@ -719,7 +719,7 @@ static void compute_class_consts()
     }
 }
 
-static void init_rangesets()
+static void init_rangesets(void)
 {
     MemProtect(k_ascii_rangeset = init_rangeset());
     add_range(k_ascii_rangeset, 0, 127);
@@ -870,10 +870,16 @@ static int cnv_eint(struct literal *s)
                 return 0;
             if (!*s->u.str.s)  /* Empty string */
                 return 0;
+#if PLAN9
+            t = strtol(s->u.str.s, &e, 10);
+            if (t == MinWord || t == MaxWord)
+                return 0;
+#else
             errno = 0;
             t = strtol(s->u.str.s, &e, 10);
             if (errno)
                 return 0;       /* overflow */
+#endif
             if (*e)             /* End not reached, so reject */
                 return 0;
             if (t < MinWord || t > MaxWord)
@@ -907,10 +913,16 @@ static int cnv_int(struct literal *s)
                 return 0;
             if (!*s->u.str.s)  /* Empty string */
                 return 0;
+#if PLAN9
+            t = strtol(s->u.str.s, &e, 10);
+            if (t == MinWord || t == MaxWord)
+                return 0;
+#else
             errno = 0;
             t = strtol(s->u.str.s, &e, 10);
             if (errno)
                 return 0;       /* overflow */
+#endif
             if (*e)             /* End not reached, so reject */
                 return 0;
             if (t < MinWord || t > MaxWord)
@@ -947,10 +959,16 @@ static int cnv_real(struct literal *s)
             if (strchr(s->u.str.s, '.') == 0)
                 return 0;
 
+#if PLAN9
+            t = strtod(s->u.str.s, &e);
+            if (isNaN(t) || isInf(t,1) || isInf(t,-1))
+                return 0;
+#else
             errno = 0;
             t = strtod(s->u.str.s, &e);
             if (errno)
                 return 0;       /* overflow */
+#endif
             if (*e)             /* End not reached, so reject */
                 return 0;
             s->type = REAL;

@@ -91,7 +91,7 @@ static	cdefn *	dlookup	(char *name, int len, char *val);
 
 struct ppcmd {
    char *name;
-   char *(*func)();
+   char *(*func)(char *);
    }
 pplist[] = {
    { "define",  define  },

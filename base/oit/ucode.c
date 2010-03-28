@@ -303,7 +303,11 @@ void uout_32(word n)
 {
     union {
         unsigned char c[4];
+#if PLAN9 && SIZEOF_LONG == 4
+        signed long int w;
+#else
         signed long int w:32;
+#endif
     } i;
     check_param(TYPE_32);
     i.w = n;
@@ -337,7 +341,7 @@ void uout_bin(int len, char *s)
         putc(*s++, ucodefile);
 }
 
-static int uin_nextch()
+static int uin_nextch(void)
 {
     int c = getc(ucodefile);
     if (c == EOF)
@@ -349,7 +353,11 @@ word uin_32()
 {
     union {
         unsigned char c[4];
+#if PLAN9 && SIZEOF_LONG == 4
+        signed long int w;
+#else
         signed long int w:32;
+#endif
     } i;
     check_param(TYPE_32);
     i.c[0] = uin_nextch();

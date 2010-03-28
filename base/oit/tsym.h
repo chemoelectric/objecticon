@@ -26,7 +26,7 @@ struct tlentry *put_local(char *name, int flag, struct node *n, int unique);
 int putlit(char *id, int idtype, int len);
 int klookup(char *id);
 void ensure_pos(struct node *x);
-void reset_pos();
-void output_code();
+void reset_pos(void);
+void output_code(void);
 
 #endif

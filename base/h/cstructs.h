@@ -97,6 +97,11 @@ struct rangeset {
 #define FILEPREFIX "/"
 #define PATHSEP ':'
 #endif
+#if PLAN9
+#define FILESEP '/'
+#define FILEPREFIX "/"
+#define PATHSEP ' '
+#endif
 #if MSWIN32
 #define FILESEP '\\'
 #define FILEPREFIX "/:\\"

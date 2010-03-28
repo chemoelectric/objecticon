@@ -29,12 +29,12 @@ extern struct lrecord *lrecords, *lrecord_last;
 extern struct linvocable *linvocables,
                     *last_linvocable; /* invocables in link stage */
 
-void linit();
-void dumplfiles();
+void linit(void);
+void dumplfiles(void);
 void paramlink(char *name);
 void alsoimport(char *package, struct lfile *lf, struct loc *pos);
 void addinvk(char *name, struct lfile *lf, struct loc *pos);
-void lmfree();
+void lmfree(void);
 void add_super(struct lclass *x, char *name, struct loc *pos);
 void add_field(struct lclass *x, char *name, int flag, struct loc *pos);
 void add_method(struct lfile *lf, struct lclass *x, char *name, int flag, struct loc *pos);

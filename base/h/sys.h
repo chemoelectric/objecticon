@@ -6,17 +6,40 @@
 /*
  * Universal (Standard ANSI C) includes.
  */
-#include <ctype.h>
-#include <errno.h>
-#include <math.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <stdarg.h>
-#include <limits.h>
-#include <float.h>
+#if PLAN9
+   #include <u.h>
+   #include <libc.h>
+   #include <ctype.h>
+   #include <stdio.h>
+   typedef unsigned int size_t;
+   typedef unsigned long time_t;
+   #define EXIT_FAILURE 1
+   #define EXIT_SUCCESS 0
+   #define F_OK 0
+   #define R_OK 4
+   #define W_OK 2
+   #define X_OK 1
+   char *getcwd(char *buf, size_t size);
+   void exit(int status);
+   void *bsearch(const void *key, const void *base,
+                     size_t nmemb, size_t size,
+                     int (*compar)(const void *, const void *));
+   int execv(const char *path, char *const argv[]);
+   int rename(const char *old, const char *new);
+   int unlink(const char *path);
+#else
+   #include <ctype.h>
+   #include <errno.h>
+   #include <math.h>
+   #include <signal.h>
+   #include <stdio.h>
+   #include <stdlib.h>
+   #include <string.h>
+   #include <time.h>
+   #include <stdarg.h>
+   #include <limits.h>
+   #include <float.h>
+#endif
 
 /*
  * Operating-system-dependent includes.
@@ -60,7 +83,6 @@
    #define lstat stat
    #define alloca _alloca
 #endif					/* MSWIN32 */
-
 
 #if UNIX
    #include <dirent.h>

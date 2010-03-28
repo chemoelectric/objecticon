@@ -48,7 +48,11 @@ char *findexe(char *name)
             return tryexe(0, name);
     }
 
+#if PLAN9
+    path = getenv("path");
+#else
     path = getenv("PATH");
+#endif
     if (!path)
         path = "";
 
@@ -64,7 +68,7 @@ char *findexe(char *name)
 }
 
 
-#if UNIX
+#if UNIX || PLAN9
 
 /*
  * Normalize a path by removing redundant slashes, . dirs and .. dirs.
@@ -380,6 +384,22 @@ char *last_pathelem(char *s)
  */
 int newer_than(char *f1, char *f2)
 {
+#if PLAN9
+    Dir *d1, *d2;
+    int res;
+    d1 = dirstat(f1);
+    if (!d1)
+        return 1;
+    d2 = dirstat(f2);
+    if (!d2) {
+        free(d1);
+        return 1;
+    }
+    res = (d1->mtime > d2->mtime);
+    free(d1);
+    free(d2);
+    return res;
+#else
     time_t t1;
     static struct stat buf;
     if (stat(f1, &buf) < 0)
@@ -388,6 +408,7 @@ int newer_than(char *f1, char *f2)
     if (stat(f2, &buf) < 0)
         return 1;
     return t1 > buf.st_mtime;
+#endif
 }
 
 /*

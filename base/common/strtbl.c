@@ -3,7 +3,6 @@
  *   string buffers.
  */
 #include "../h/gsupport.h"
-#include <stdarg.h>
 
 /*
  * Prototype for static function.
