@@ -61,6 +61,10 @@ static int     typ_case      (struct node *var, struct node *slct_lst,
                                  int brace), int maybe_var, int indent);
 static void just_type(struct node *typ, int indent, int ilc);
 static void untend        (int indent);
+static void count_ntend(void);
+static void swap_files(void);
+static void copy_tmp(void);
+
 static int use_frame = 0;
 static int in_struct = 0;
 static int lab_seq = 0;
@@ -3086,7 +3090,7 @@ struct node *block;
     */
    prt_tok(block->tok, IndentInc);          /* { */
    c_walk(block->u[0].child, IndentInc, 0); /* non-tended declarations */
-   spcl_dcls(NULL);                         /* tended declarations */
+   spcl_dcls();                         /* tended declarations */
    no_ret_val = 1;
    c_walk(block->u[2].child, IndentInc, 0); /* statement list */
    if (ntend != 0 && no_ret_val) {
