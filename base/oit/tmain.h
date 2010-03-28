@@ -1,7 +1,6 @@
 #ifndef _TMAIN_H
 #define _TMAIN_H 1
 
-#include <stdio.h>
 #include "icont.h"
 
 struct file_param {

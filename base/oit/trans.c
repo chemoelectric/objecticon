@@ -11,7 +11,6 @@
 #include "package.h"
 #include "tlex.h"
 #include "ipp.h"
-#include <string.h>
 
 /*
  * Prototypes.

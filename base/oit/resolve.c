@@ -4,8 +4,6 @@
 #include "lmem.h"
 #include "resolve.h"
 #include "tmain.h"
-#include <stdio.h>
-#include <string.h>
 
 static void merge(struct lclass *cl, struct lclass *super);
 

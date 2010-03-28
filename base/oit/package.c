@@ -1,10 +1,6 @@
 #include "package.h"
 #include "tmain.h"
 #include "icont.h"
-#include <stdio.h>
-#include <limits.h>
-#include <string.h>
-#include <ctype.h>
 
 struct package_dir *package_dir_hash[16], *package_dirs, *package_dir_last;
 

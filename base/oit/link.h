@@ -1,7 +1,6 @@
 #ifndef _LINK_H
 #define _LINK_H 1
 
-#include <stdio.h>
 #include "tmain.h"
 #include "icont.h"
 #include "linkstructs.h"
