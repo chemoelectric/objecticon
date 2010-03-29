@@ -121,7 +121,7 @@ struct p_proc {
 
 struct c_proc {
     PROC_BASE
-    int (*ccode)();	        /*   C routines */
+    int (*ccode)(void *);       /*   C routines */
     word framesize;             /*   frame struct size */
     word ntend;                 /*   num tended needed */
     word underef;               /*   underef flag */

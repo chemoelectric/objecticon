@@ -23,24 +23,6 @@ int putn(FILE *f, char *s, int n)
 }
 
 /*
- * Wait for input to become available on fd, with timeout of t ms
- */
-int iselect(int fd, word t)
-   {
-
-   struct timeval tv;
-   fd_set fds;
-   tv.tv_sec = t/1000;
-   tv.tv_usec = (t % 1000) * 1000;
-#if !MSWIN32
-   FD_ZERO(&fds);
-#endif					/* MSWIN32 */
-   FD_SET(fd, &fds);
-   return select(fd+1, &fds, NULL, NULL, &tv);
-
-   }
-
-/*
  * idelay(n) - delay for n milliseconds
  */
 int idelay(int n)

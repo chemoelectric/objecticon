@@ -16,7 +16,7 @@ keyword clock
       time(&t);
       ct = localtime(&t);
       sprintf(sbuf,"%02d:%02d:%02d", ct->tm_hour, ct->tm_min, ct->tm_sec);
-      MemProtect(tmp = alcstr(sbuf,(word)8));
+      MemProtect(tmp = alcstr(sbuf, 8));
       return string(8, tmp);
       }
 end
@@ -39,7 +39,7 @@ keyword date
       ct = localtime(&t);
       sprintf(sbuf, "%04d/%02d/%02d",
          1900 + ct->tm_year, ct->tm_mon + 1, ct->tm_mday);
-      MemProtect(tmp = alcstr(sbuf,(word)10));
+      MemProtect(tmp = alcstr(sbuf, 10));
       return string(10, tmp);
       }
 end
@@ -55,12 +55,12 @@ keyword dateline
          "January", "February", "March", "April", "May", "June",
          "July", "August", "September", "October", "November", "December"
          };
+      tended struct descrip result;
       time_t t;
       struct tm *ct;
       char sbuf[256];
       int hour;
       char *merid, *tmp;
-      int i;
 
       time(&t);
       ct = localtime(&t);
@@ -77,9 +77,8 @@ keyword dateline
       sprintf(sbuf, "%s, %s %d, %d  %d:%02d %s", day[ct->tm_wday],
          month[ct->tm_mon], ct->tm_mday, 1900 + ct->tm_year, hour,
          ct->tm_min, merid);
-       i = strlen(sbuf);
-       MemProtect(tmp = alcstr(sbuf, i));
-       return string(i, tmp);
+       cstr2string(sbuf, &result);
+       return result;
        }
 end
 

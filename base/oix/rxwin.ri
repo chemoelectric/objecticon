@@ -677,6 +677,20 @@ void pollevent()
 }
 
 /*
+ * Wait for input to become available on fd, with timeout of t ms
+ */
+static int iselect(int fd, word t)
+{
+   struct timeval tv;
+   fd_set fds;
+   tv.tv_sec = t/1000;
+   tv.tv_usec = (t % 1000) * 1000;
+   FD_ZERO(&fds);
+   FD_SET(fd, &fds);
+   return select(fd+1, &fds, NULL, NULL, &tv);
+}
+
+/*
  * get a single item from w's pending queue
  */
 int wgetq(wbp w, dptr res, word t)
