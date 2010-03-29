@@ -464,7 +464,7 @@
         vararg,\
         0,\
       	(dptr)&Cat(f,_name_desc), \
-        (int (*)(void *))Cat(Z,f),     \
+        (int (*)(struct c_frame *))Cat(Z,f),     \
         sizeof(struct Cat(f,_frame)),\
         ntend,\
         underef};
@@ -481,7 +481,7 @@
         0,\
         0,\
       	(dptr)&Cat(f,_name_desc), \
-   	(int (*)(void *))Cat(O,f),\
+   	(int (*)(struct c_frame *))Cat(O,f),\
         sizeof(struct Cat(f,_frame)),\
         ntend,\
         underef};
@@ -495,7 +495,7 @@
         0,\
         0,\
       	(dptr)&Cat(f,_name_desc), \
-   	(int (*)(void *))Cat(K,f),\
+   	(int (*)(struct c_frame *))Cat(K,f),\
         sizeof(struct Cat(f,_frame)),\
         ntend,\
         0};
