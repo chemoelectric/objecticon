@@ -29,15 +29,7 @@
 #define XLFD_Spacing	11
 #define XLFD_CharSet	13
 
-#ifdef HAVE_LIBXFT
-#define TEXTWIDTH(w,s,n) xft_stringwidth(w, s, n)
-#define UTF8WIDTH(w,s,n) xft_utf8width(w, s, n)
-#else
-#define TEXTWIDTH(w,s,n) XTextWidth((w)->context->font->fsp, s, n)
-#define UTF8WIDTH(w,s,n) XTextWidth((w)->context->font->fsp, s, n)
-#endif
 #define FWIDTH(w) ((w)->context->font->maxwidth)
-#define MAXDESCENDER(w) (w->context->font->descent)
 #define SCREENDEPTH(w)\
 	DefaultDepth((w)->window->display->display, w->window->display->screen)
 #define ASCENT(w) ((w)->context->font->ascent)
@@ -51,10 +43,6 @@
 #define FS_SOLID FillSolid
 #define FS_STIPPLE FillStippled
 #define SysColor XColor
-/* 8-bit primary components of a current fg or bg index, used in 3D code */
-#define RED(colrindex) ((w->context->display->colors[colrindex].r)>>8)
-#define GREEN(colrindex) ((w->context->display->colors[colrindex].g)>>8)
-#define BLUE(colrindex) ((w->context->display->colors[colrindex].b)>>8)
 #define ARCWIDTH(arc) ((arc).width)
 #define ARCHEIGHT(arc) ((arc).height)
 #define RECX(rec) ((rec).x)
@@ -63,10 +51,6 @@
 #define RECHEIGHT(rec) ((rec).height)
 #define ANGLE(ang) (-(ang) * 180 / Pi * 64)
 #define EXTENT(ang) (-(ang) * 180 / Pi * 64)
-#define ISICONIC(w) ((w)->window->iconic == IconicState)
-#define ISFULLSCREEN(w) (0)
-#define ISROOTWIN(w) ((w)->window->iconic == RootState)
-#define ISNORMALWINDOW(w) ((w)->window->iconic == NormalState)
 #define ICONFILENAME(w) ((w)->window->iconimage)
 #define ICONLABEL(w) ((w)->window->iconlabel)
 #define WINDOWLABEL(w) ((w)->window->windowlabel)
@@ -110,7 +94,7 @@
 #define RENDER7(func,v1,v2,v3,v4,v5,v6,v7) {\
    if (stdwin) func(stddpy, stdwin, stdgc, v1, v2, v3, v4, v5, v6, v7); \
    func(stddpy, stdpix, stdgc, v1, v2, v3, v4, v5, v6, v7);}
-
+
 
 /*
  * Macros to perform direct window system calls from graphics routines

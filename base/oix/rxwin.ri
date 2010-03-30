@@ -915,7 +915,7 @@ static void makeIcon(wbp w, int x, int y)  /* x,y = current mouse position */
             wd->fonts->descent + 5;
         if (ws->iconlabel == NULL) ws->iconlabel = "";
 #ifdef HAVE_LIBXFT
-        ws->iconw = xft_stringwidth(w, ws->iconlabel,
+        ws->iconw = textwidth(w, ws->iconlabel,
                                   strlen(ws->iconlabel)) + 6;
 #else
         ws->iconw = XTextWidth(wd->fonts->fsp, ws->iconlabel,
@@ -2561,19 +2561,6 @@ void drawsegments(wbp w, XSegment *segs, int nsegs)
     RENDER2(XDrawSegments,segs,nsegs);
 }
 
-#ifndef HAVE_LIBXFT
-void drawstrng(wbp w, int x, int y, char *s, int slen)
-{ 
-    STDLOCALS(w); 
-    RENDER4(XDrawString, x, y, s, slen); 
-}
-void drawutf8(wbp w, int x, int y, char *s, int slen)
-{
-    STDLOCALS(w); 
-    RENDER4(XDrawString, x, y, s, slen);
-}
-#endif
-
 void fillarcs(wbp w, XArc *arcs, int narcs)
 { 
     STDLOCALS(w); 
@@ -4064,7 +4051,7 @@ int walert(wbp w, int volume)
 }
 
 #ifdef HAVE_LIBXFT
-int xft_stringwidth(wbp w, char *s, int n)
+int textwidth(wbp w, char *s, int n)
 {
     XGlyphInfo	extents; 
 
@@ -4076,7 +4063,7 @@ int xft_stringwidth(wbp w, char *s, int n)
     return extents.xOff;
 }
 
-int xft_utf8width(wbp w, char *s, int n)
+int utf8width(wbp w, char *s, int n)
 {
     XGlyphInfo	extents; 
 
@@ -4224,7 +4211,27 @@ void drawutf8(wbp w, int x, int y, char *str, int slen)
                            (FcChar8 *)str,
                            slen);
 }
+#else
+int textwidth(wbp w, char *s, int n)
+{
+    return XTextWidth(w->context->font->fsp, s, n);
+}
 
+int utf8width(wbp w, char *s, int n)
+{
+    return textwidth(w, s, n);
+}
+
+void drawstrng(wbp w, int x, int y, char *s, int slen)
+{ 
+    STDLOCALS(w); 
+    RENDER4(XDrawString, x, y, s, slen); 
+}
+void drawutf8(wbp w, int x, int y, char *s, int slen)
+{
+    STDLOCALS(w); 
+    RENDER4(XDrawString, x, y, s, slen);
+}
 #endif            /* HAVE_LIBXFT */
 
 #endif            /* Graphics */

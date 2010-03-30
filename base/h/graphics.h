@@ -337,7 +337,6 @@ typedef struct _wstate {
   int           numiColors;		/* allocated color info for the icon */
   int           siziColors;		/* malloced size of iconColors */
   short		*iconColors;		/* indices into display color table */
-  char *selectiondata;
   int		iconic;			/* window state; icon, window or root*/
   int		iconx, icony;           /* location of icon */
   unsigned int	iconw, iconh;		/* width and height of icon */

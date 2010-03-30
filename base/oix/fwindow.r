@@ -1417,9 +1417,9 @@ function graphics_Window_text_width(self, s)
       word i;
       GetSelfW();
       if (is:ucs(s))
-          i = UTF8WIDTH(self_w, StrLoc(UcsBlk(s).utf8), StrLen(UcsBlk(s).utf8));
+          i = utf8width(self_w, StrLoc(UcsBlk(s).utf8), StrLen(UcsBlk(s).utf8));
       else
-          i = TEXTWIDTH(self_w, StrLoc(s), StrLen(s));
+          i = textwidth(self_w, StrLoc(s), StrLen(s));
       return C_integer i;
    }
 end

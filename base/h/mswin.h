@@ -20,16 +20,12 @@
 #define DRAWOP_SET			R2_WHITE
 #define DRAWOP_XOR			R2_XORPEN
 
-#define TEXTWIDTH(w,s,n) textWidth(w, s, n)
 #define SCREENDEPTH(w) getdepth(w)
 #define ASCENT(w)  ((w)->context->font->ascent)
-#define ASCENTC(wc)  ((wc)->font->ascent)
 #define DESCENT(w) ((w)->context->font->descent)
 #define LEADING(w) ((w)->context->leading)
 #define FHEIGHT(w) ((w)->context->font->height)
-#define FHEIGHTC(wc) ((wc)->font->height)
 #define FWIDTH(w)  ((w)->context->font->charwidth)
-#define FWIDTHC(wc)  ((wc)->font->charwidth)
 #define LINEWIDTH(w) ((w)->context->pen.lopnWidth.x)
 #define DISPLAYHEIGHT(w) devicecaps(w, VERTRES)
 #define DISPLAYWIDTH(w) devicecaps(w, HORZRES)
@@ -52,15 +48,9 @@
 #define ANGLE(ang) (ang)
 #define EXTENT(ang) (ang)
 #define FULLARC 2 * Pi
-#define ISICONIC(w) (IsIconic((w)->window->iconwin))
-#define ISFULLSCREEN(w) 0
-#define ISROOTWIN(w) (0) 0
-#define ISNORMALWINDOW(w) 0
 #define ICONFILENAME(w) ""
 #define ICONLABEL(w) ((w)->window->iconlabel)
 #define WINDOWLABEL(w) ((w)->window->windowlabel)
-
-#define MAXDESCENDER(w) DESCENT(w)
 
 /*
  * gemeotry bitmasks
@@ -74,7 +64,6 @@
  */
 #define FS_SOLID             1
 #define FS_STIPPLE           2
-#define FS_OPAQUESTIPPLE     4
 /*
  * the special ROP code for mode reverse
  */
@@ -125,9 +114,6 @@
   if (!list_get(&ws->listp,&d)) fatalerr(0,NULL); \
   }
 #define EVQUEEMPTY(w) (BlkLoc((w)->window->listp)->list.size == 0)
-
-#define drawutf8 drawstrng
-#define UTF8WIDTH TEXTWIDTH
 
 #define SHARED          0
 #define MUTABLE         1
