@@ -128,32 +128,6 @@
    stdwin  = ws->win; \
    stdpix  = ws->pix;
 
-#define drawarcs(w, arcs, narcs) \
-   { STDLOCALS(w); RENDER2(XDrawArcs,arcs,narcs); }
-#define drawlines(w, points, npoints) \
-   { STDLOCALS(w); RENDER3(XDrawLines,points,npoints,CoordModeOrigin); }
-#define drawpoints(w, points, npoints) \
-   { STDLOCALS(w); RENDER3(XDrawPoints,points,npoints,CoordModeOrigin); }
-#define drawrectangles(w, recs, nrecs) { \
-   int i; \
-   STDLOCALS(w); \
-   for(i=0; i<nrecs; i++) { \
-     RENDER4(XDrawRectangle,recs[i].x,recs[i].y,recs[i].width,recs[i].height);\
-     }}
-
-#define drawsegments(w, segs, nsegs) \
-   { STDLOCALS(w); RENDER2(XDrawSegments,segs,nsegs); }
-#ifndef HAVE_LIBXFT
-#define drawstrng(w, x, y, s, slen) \
-   { STDLOCALS(w); RENDER4(XDrawString, x, y, s, slen); }
-#define drawutf8(w, x, y, s, slen) \
-   { STDLOCALS(w); RENDER4(XDrawString, x, y, s, slen); }
-#endif
-#define fillarcs(w, arcs, narcs) \
-   { STDLOCALS(w); RENDER2(XFillArcs, arcs, narcs); }
-#define fillpolygon(w, points, npoints) \
-   { STDLOCALS(w); RENDER4(XFillPolygon, points, npoints, Complex, CoordModeOrigin); }
-
 /*
  * "get" means remove them from the Icon list and put them on the ghost queue
  */

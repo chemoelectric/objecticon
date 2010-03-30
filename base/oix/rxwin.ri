@@ -2528,6 +2528,64 @@ static void handle_mouse(wbp w, XButtonEvent *event)
 }
 
 
+void drawarcs(wbp w, XArc *arcs, int narcs)
+{ 
+    STDLOCALS(w); 
+    RENDER2(XDrawArcs,arcs,narcs);
+}
+
+void drawlines(wbp w, XPoint *points, int npoints)
+{
+    STDLOCALS(w); 
+    RENDER3(XDrawLines,points,npoints,CoordModeOrigin);
+}
+
+void drawpoints(wbp w, XPoint *points, int npoints)
+{
+    STDLOCALS(w); 
+    RENDER3(XDrawPoints,points,npoints,CoordModeOrigin);
+}
+
+void drawrectangles(wbp w, XRectangle *recs, int nrecs)
+{
+   int i;
+   STDLOCALS(w);
+   for(i=0; i<nrecs; i++) {
+       RENDER4(XDrawRectangle,recs[i].x,recs[i].y,recs[i].width,recs[i].height);
+   }
+}
+
+void drawsegments(wbp w, XSegment *segs, int nsegs)
+{ 
+    STDLOCALS(w); 
+    RENDER2(XDrawSegments,segs,nsegs);
+}
+
+#ifndef HAVE_LIBXFT
+void drawstrng(wbp w, int x, int y, char *s, int slen)
+{ 
+    STDLOCALS(w); 
+    RENDER4(XDrawString, x, y, s, slen); 
+}
+void drawutf8(wbp w, int x, int y, char *s, int slen)
+{
+    STDLOCALS(w); 
+    RENDER4(XDrawString, x, y, s, slen);
+}
+#endif
+
+void fillarcs(wbp w, XArc *arcs, int narcs)
+{ 
+    STDLOCALS(w); 
+    RENDER2(XFillArcs, arcs, narcs);
+}
+
+void fillpolygon(wbp w, XPoint *points, int npoints)
+{
+    STDLOCALS(w); 
+    RENDER4(XFillPolygon, points, npoints, Complex, CoordModeOrigin);
+}
+
 /*
  * fill a series of rectangles
  */

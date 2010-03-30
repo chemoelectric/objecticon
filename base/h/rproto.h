@@ -301,13 +301,21 @@ void    qevent          (wsp ws, dptr e, int x, int y, uword t, long f, int krel
    void wflush          (wbp w);
    void wsync           (wbp w);
    void xdis            (wbp w, char *s, int n);
-
+   void unsetclip       (wbp w);
+   void fillarcs        (wbp w, XArc *arcs, int narcs);
+   void drawarcs        (wbp w, XArc *arcs, int narcs);
+   void drawlines       (wbp w, XPoint *points, int npoints);
+   void drawpoints      (wbp w, XPoint *points, int npoints);
+   void drawrectangles  (wbp w, XRectangle *recs, int nrecs);
+   void fillpolygon     (wbp w, XPoint *pts, int npts);
+   void drawsegments    (wbp w, XSegment *segs, int nsegs);
+   void drawstrng       (wbp w, int x, int y, char *str, int slen);
+   void drawutf8        (wbp w, int x, int y, char *str, int slen);
 
    #if XWindows
       /*
        * Implementation routines specific to X-Windows
        */
-      void      unsetclip               (wbp w);
       int       resetfg                 (wbp w);
       int       setfgrgb                (wbp w, int r, int g, int b);
       int       setbgrgb                (wbp w, int r, int g, int b);
@@ -336,12 +344,10 @@ void    qevent          (wsp ws, dptr e, int x, int y, uword t, long f, int krel
       void      wflushall               (void);
       void postcursor(wbp);
       void scrubcursor(wbp);
-int wgetevent2(wbp w, dptr res, word timeout);
-int readBMP(char *filename, int p, struct imgdata *imd);
-int writeJPEG(wbp w, char *filename, int x, int y, int width, int height);
+      int wgetevent2(wbp w, dptr res, word timeout);
+      int readBMP(char *filename, int p, struct imgdata *imd);
+      int writeJPEG(wbp w, char *filename, int x, int y, int width, int height);
 #ifdef HAVE_LIBXFT
-      void drawstrng(wbp w, int x, int y, char *str, int slen);
-      void drawutf8(wbp w, int x, int y, char *str, int slen);
       int xft_stringwidth(wbp w, char *s, int n);
       int xft_utf8width(wbp w, char *s, int n);
 #endif
@@ -376,15 +382,6 @@ int writeJPEG(wbp w, char *filename, int x, int y, int width, int height);
       int textWidth(wbp w, char *s, int n);
       int       seticonimage            (wbp w, dptr dp);
       int devicecaps(wbp w, int i);
-      void fillarcs(wbp wb, XArc *arcs, int narcs);
-      void drawarcs(wbp wb, XArc *arcs, int narcs);
-      void drawlines(wbinding *wb, XPoint *points, int npoints);
-      void drawpoints(wbinding *wb, XPoint *points, int npoints);
-      void drawrectangles(wbp wb, XRectangle *recs, int nrecs);
-      void fillpolygon(wbp w, XPoint *pts, int npts);
-      void drawsegments(wbinding *wb, XSegment *segs, int nsegs);
-      void drawstrng(wbinding *wb, int x, int y, char *s, int slen);
-      void unsetclip(wbp w);
 
    #endif                               /* MSWIN32 */
 
