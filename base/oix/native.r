@@ -269,6 +269,7 @@ static void convert_from_##TYPE(TYPE src, dptr dest)
 #enddef
 convert_to_macro(off_t)
 convert_from_macro(off_t)
+convert_from_macro(time_t)
 #if UNIX
 convert_from_macro(ino_t)
 convert_from_macro(blkcnt_t)
@@ -2570,11 +2571,11 @@ static struct descrip stat2list(struct stat *st)
    list_put(&res, &zerodesc);
    list_put(&res, &zerodesc);
 #endif
-   MakeInt(st->st_atime, &tmp);
+   convert_from_time_t(st->st_atime, &tmp);
    list_put(&res, &tmp);
-   MakeInt(st->st_mtime, &tmp);
+   convert_from_time_t(st->st_mtime, &tmp);
    list_put(&res, &tmp);
-   MakeInt(st->st_ctime, &tmp);
+   convert_from_time_t(st->st_ctime, &tmp);
    list_put(&res, &tmp);
 
    return res;
@@ -2617,6 +2618,54 @@ function io_Files_access(s, mode)
           fail;
       }
       return nulldesc;
+   }
+end
+
+function util_Time_get_system_seconds()
+   body {
+      tended struct descrip result;
+      struct timeval tp;
+      if (gettimeofday(&tp, 0) < 0) {
+	 errno2why();
+	 fail;
+      }
+      convert_from_time_t(tp.tv_sec, &result);
+      return result;
+   }
+end
+
+function util_Time_get_system_millis()
+   body {
+      struct timeval tp;
+      struct descrip lm;
+      tended struct descrip ls, lt1, lt2, result;
+      if (gettimeofday(&tp, 0) < 0) {
+	 errno2why();
+	 fail;
+      }
+      convert_from_time_t(tp.tv_sec, &ls);
+      MakeInt(tp.tv_usec, &lm);
+      bigmul(&ls, &thousanddesc, &lt1);
+      bigdiv(&lm, &thousanddesc ,&lt2);
+      bigadd(&lt1, &lt2, &result);
+      return result;
+   }
+end
+
+function util_Time_get_system_micros()
+   body {
+      struct timeval tp;
+      struct descrip lm;
+      tended struct descrip ls, lt1, result;
+      if (gettimeofday(&tp, 0) < 0) {
+	 errno2why();
+	 fail;
+      }
+      convert_from_time_t(tp.tv_sec, &ls);
+      MakeInt(tp.tv_usec, &lm);
+      bigmul(&ls, &milliondesc, &lt1);
+      bigadd(&lt1, &lm, &result);
+      return result;
    }
 end
 
