@@ -111,7 +111,6 @@ extern char *op_name;              /* Name of curr func/keyword/op */
 extern char *op_sym;               /* For an op, its symbol (eg ">=") */
 extern int op_generator;           /* Does this op generate a sequence */
 extern char *fname;                /* current source file name */
-extern int line;                   /* current source line number */
 extern struct token *comment;      /* descriptive comment for current oper */
 extern int n_tmp_str;              /* total number of string buffers needed */
 extern char *progname;

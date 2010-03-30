@@ -44,6 +44,12 @@
 #undef TEXT
 #endif
 
+#if PLAN9
+#undef TYPE
+/* avoid clash of line() func. in draw */
+#define line oi_line
+#endif
+
 /* keyword codes */
 
 #define TOKEN 0

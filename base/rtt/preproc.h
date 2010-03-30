@@ -1,4 +1,9 @@
 #include "../h/gsupport.h"
+#if PLAN9
+/* avoid clash of line() func. in draw */
+#define line oi_line
+#endif
+
 
 /*
  * If Bell is not defined, determine the default value for the "bell"
