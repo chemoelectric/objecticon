@@ -2542,7 +2542,7 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
                 break;
             }
             case A_PATTERN: {
-                AttemptAttr(SetPattern(w, val, strlen(val)));
+                AttemptAttr(setpattern(w, val, strlen(val)));
                 break;
             }
             case A_POS: {

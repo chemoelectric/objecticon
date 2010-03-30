@@ -3336,9 +3336,9 @@ int patbits[] = {
 };
 
 /*
- * SetPattern
+ * setpattern
  */
-int SetPattern(w, name, len)
+int setpattern(w, name, len)
 wbp w;
 char *name;
 int len;
@@ -3370,7 +3370,7 @@ int len;
 	 ReturnErrNum(145, Error);
 	 }
       if (w->window->iconwin == NULL) return Succeeded;
-      return SetPatternBits(w, width, bits, nbits);
+      return setpatternbits(w, width, bits, nbits);
       }
 
    /*
@@ -3415,7 +3415,7 @@ HBITMAP CreateBitmapFromData(char *data)
 }
 
 
-int SetPatternBits(w, width, bits, nbits)
+int setpatternbits(w, width, bits, nbits)
 wbp w;
 int width;
 word *bits;

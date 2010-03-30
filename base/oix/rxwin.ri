@@ -1095,7 +1095,7 @@ static int wmap(wbp w, wbp parent)
     }
 
     if (wc->patternname != NULL) {
-        if (SetPattern(w, wc->patternname, strlen(wc->patternname)) != Succeeded)
+        if (setpattern(w, wc->patternname, strlen(wc->patternname)) != Succeeded)
             return Failed;
     }
 
@@ -3464,9 +3464,9 @@ stringint siPatternSyms[] = {
 };
 
 /*
- * SetPattern
+ * setpattern
  */
-int SetPattern(wbp w, char *name, int len)
+int setpattern(wbp w, char *name, int len)
 {
     int width, nbits;
     int i;
@@ -3493,7 +3493,7 @@ int SetPattern(wbp w, char *name, int len)
                 ReturnErrNum(145, Error);
         }
         if (!stdgc) return Succeeded;
-        return SetPatternBits(w, width, bits, nbits);
+        return setpatternbits(w, width, bits, nbits);
     }
 
     /*
@@ -3514,7 +3514,7 @@ int SetPattern(wbp w, char *name, int len)
     return Failed;
 }
 
-int SetPatternBits(wbp w, int width, word *bits, int nbits)
+int setpatternbits(wbp w, int width, word *bits, int nbits)
 {
     word v;
     int i, j;

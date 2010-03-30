@@ -211,8 +211,8 @@ void    qevent          (wsp ws, dptr e, int x, int y, uword t, long f, int krel
     * graphics implementation routines supplied for each platform
     * (excluding those defined as macros for X-windows)
     */
-   int  SetPattern      (wbp w, char *name, int len);
-   int  SetPatternBits  (wbp w, int width, word *bits, int nbits);
+   int  setpattern      (wbp w, char *name, int len);
+   int  setpatternbits  (wbp w, int width, word *bits, int nbits);
    int  allowresize     (wbp w, int on);
    int  blimage         (wbp w, int x, int y, int wd, int h,
                           int ch, unsigned char *s, word len);
