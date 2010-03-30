@@ -1026,7 +1026,7 @@ wsp alc_winstate()
 /*
  * free a window state
  */
-int free_window(wsp ws)
+void free_window(wsp ws)
 {
     ws->refcount--;
     if(ws->refcount == 0) {
@@ -1066,7 +1066,6 @@ int free_window(wsp ws)
         if (ws->iconColors) { free(ws->iconColors); ws->iconColors = NULL; }
         GRFX_UNLINK(ws, wstates);
     }
-    return 0;
 }
 
 /*

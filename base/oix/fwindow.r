@@ -328,7 +328,7 @@ function graphics_Window_copy_to(self, dest, argv[argc])
       if (r >= 0)
           runerr(101, argv[r]);
 
-      if (copyArea(self_w, w2, x, y, width, height, x2, y2) == Failed)
+      if (copyarea(self_w, w2, x, y, width, height, x2, y2) == Failed)
           fail;
 
       return nulldesc;
@@ -582,7 +582,7 @@ function graphics_Window_draw_image(self, argv[argc])
           if (nchars % row != 0)
               fail;
           height = nchars / row;
-          if (blimage(self_w, x, y, width, height, c, s, (word)(z - s)) == Error)
+          if (drawblimage(self_w, x, y, width, height, c, s, (word)(z - s)) == Error)
               runerr(305);
           else
               return nulldesc;
@@ -843,7 +843,7 @@ function graphics_Window_erase_area(self, argv[argc])
           r = rectargs(self_w, argc, argv, i, &x, &y, &width, &height);
           if (r >= 0)
               runerr(101, argv[r]);
-          eraseArea(self_w, x, y, width, height);
+          erasearea(self_w, x, y, width, height);
       }
       return self;
    }
@@ -1096,7 +1096,7 @@ function graphics_Window_font(self, f)
           if (setfont(self_w,&tmp) == Failed) 
               fail;
       }
-      getfntnam(self_w, attr_buff);
+      getfontname(self_w, attr_buff);
       cstr2string(attr_buff, &result);
       return result;
    }
@@ -1121,7 +1121,7 @@ function graphics_Window_free_color(self, argv[argc])
           else {
               if (!cnv:C_string(argv[i], s))
                   runerr(103,argv[i]);
-              freecolor(self_w, s);
+              free_color(self_w, s);
           }
       }
 
@@ -1325,7 +1325,8 @@ end
 function graphics_Window_raise(self)
    body {
       GetSelfW();
-      raiseWindow(self_w);
+      if (raisewindow(self_w) == Failed)
+          fail;
       return self;
    }
 end

@@ -714,7 +714,7 @@ int wgetq(wbp w, dptr res, word t)
  * wclose - close a window.  If is a real on-screen window,
  * wait for a DestroyNotify event from the server before returning.
  */
-int wclose(wbp w)
+void wclose(wbp w)
 {
     STDLOCALS(w);
 
@@ -748,8 +748,6 @@ int wclose(wbp w)
 /*      free_window(ws);  */
         free_binding(w);
     }
-
-    return 0;
 }
 /*
  * flush a window
@@ -1469,7 +1467,7 @@ int allowresize(wbp w, int on)
     return Succeeded;
 }
 
-void warpPointer(wbp w, int x, int y)
+void warppointer(wbp w, int x, int y)
 {
     wsp ws = w->window;
     XWarpPointer(ws->display->display, None, ws->win, 0,0,0,0, x, y);
@@ -2177,7 +2175,7 @@ void getlinestyle(wbp w, char *answer)
             ((wc->linestyle==LineOnOffDash)?"dashed":"striped"));
 }
 
-void getfntnam(wbp w, char *answer)
+void getfontname(wbp w, char *answer)
 {
     sprintf(answer,"%s", w->context->font->name);
 }
@@ -2597,7 +2595,7 @@ void fillrectangles(wbp w, XRectangle *recs, int nrecs)
 /*
  * erase an area
  */
-void eraseArea(wbp w, int x, int y, int width, int height)
+void erasearea(wbp w, int x, int y, int width, int height)
 {
     STDLOCALS(w);
 
@@ -2632,7 +2630,7 @@ void eraseArea(wbp w, int x, int y, int width, int height)
 /*
  * copy an area
  */
-int copyArea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2)
+int copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2)
 {
     int lpad, rpad, tpad, bpad;
     Pixmap src;
@@ -2971,7 +2969,7 @@ void free_mutable(wbp w, int mute_index)
 }
 
 
-void freecolor(wbp w, char *s)
+void free_color(wbp w, char *s)
 {
     wdp dp;
     Display *d;
@@ -2996,7 +2994,7 @@ void freecolor(wbp w, char *s)
 /*
  * Draw a bilevel image
  */
-int blimage(wbp w, int x, int y, int width, int height, int ch, unsigned char *s, word len)
+int drawblimage(wbp w, int x, int y, int width, int height, int ch, unsigned char *s, word len)
 {
     unsigned int m, msk1, c, ix, iy;
     long fg, bg;
@@ -4007,7 +4005,7 @@ XColor xcolor(wbp w, LinearColor c)
 }
 
 
-int raiseWindow(wbp w)
+int raisewindow(wbp w)
 {
     XEvent event;
     XWindowAttributes attr;

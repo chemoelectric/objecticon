@@ -12,7 +12,7 @@
  *   rebind
  *   geticonic
  *   getimstr
- *   getfntnam
+ *   getfontname
  *   dumpimage
  *   getpointername
  *
@@ -932,7 +932,7 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 /*
  * wclose - make sure the window goes away - no questions asked
  */
-int wclose(wbp w)
+void wclose(wbp w)
    {
    wsp ws = w->window;
    wbp tmp_wb;
@@ -954,7 +954,6 @@ int wclose(wbp w)
    else {
       free_binding(w);
       }
-   return 1;
    }
 
 void pollevent()
@@ -1339,7 +1338,7 @@ wbp w;
    return Succeeded;
    }
 
-int raiseWindow(wbp w)
+int raisewindow(wbp w)
    {
    wsp ws = w->window;
    if (ws->win)
@@ -1760,7 +1759,7 @@ char *answer;
    else strcpy(answer, "unknown");
    }
 
-void getfntnam(w, answer)
+void getfontname(w, answer)
 wbp w;
 char *answer;
    {
@@ -1823,7 +1822,7 @@ char *val;
 /*
  * erase an area
  */
-void eraseArea(w,x,y,width,height)
+void erasearea(w,x,y,width,height)
 wbp w;
 int x, y, width, height;
    {
@@ -1847,7 +1846,7 @@ int x, y, width, height;
 /*
  * copy an area
  */
-int copyArea(w,w2,x,y,width,height,x2,y2)
+int copyarea(w,w2,x,y,width,height,x2,y2)
 wbp w, w2;
 int x, y, width, height, x2, y2;
    {
@@ -1978,7 +1977,7 @@ char *prog, *opt, *answer;
 /*
  * Draw a bilevel image.
  */
-int blimage(w, x, y, width, height, ch, s, len)
+int drawblimage(w, x, y, width, height, ch, s, len)
 wbp w;
 int x, y, width, height, ch;
 unsigned char *s;
@@ -2550,7 +2549,7 @@ int set_mutable(wbp w, int i, char *s)
    pe.peGreen = g >> 8;
    pe.peBlue = b >> 8;
    pe.peFlags = PC_RESERVED;
-   raiseWindow(w);	/* mutable won't mutate if window isn't active */
+   raisewindow(w);	/* mutable won't mutate if window isn't active */
 #if 1
    AnimatePalette(palette, -i, 1, &pe);
    rv = SetPaletteEntries(palette, -i, 1, &pe);
@@ -2647,7 +2646,7 @@ int mutable_color(wbp w, dptr argv, int argc, int *retval)
    }
    }
 
-void freecolor(wbp w, char *s)
+void free_color(wbp w, char *s)
    {
    }
 
@@ -3228,7 +3227,7 @@ wsp alc_winstate()
 /*
  * free a window state
  */
-int free_window(ws)
+void free_window(ws)
 wsp ws;
    {
    int i;
@@ -3274,7 +3273,6 @@ wsp ws;
       ws->child = 0;
       GRFX_UNLINK(ws, wstates);
       }
-   return 0;
    }
 
 /*
@@ -3811,7 +3809,7 @@ int utf8width(wbp w, char *s, int n)
     return textwidth(w, s, n);
 }
 
-void warpPointer(w, x, y)
+void warppointer(w, x, y)
 wbp w;
 int x, y;
    {
