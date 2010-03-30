@@ -1,0 +1,447 @@
+
+wbp wopen(wbp parent, char *nm, struct b_list *hp, dptr attr, int n, int *e)
+{
+    return 0;
+}
+
+int walert(wbp w, int volume)
+{
+    return Succeeded;
+}
+
+int isetbg(wbp w, int bg)
+{
+    return Succeeded;
+}
+
+int setbg(wbp w, char *s)
+{
+    return Succeeded;
+}
+
+void getbg(wbp w, char *answer)
+{
+    strcpy(answer, "none");
+}
+
+void unsetclip(wbp w)
+{
+}
+
+void setclip(wbp w)
+{
+}
+
+wcp clone_context(wbp w)
+{
+    return 0;
+}
+
+char *get_mutable_name(wbp w, int mute_index)
+{
+    return 0;
+}
+
+int set_mutable(wbp w, int i, char *s)
+{
+    return Succeeded;
+}
+
+int copyarea(wbp w,wbp w2,int x,int y,int wd,int h,int x2,int y2)
+{
+    return Succeeded;
+}
+
+int rebind(wbp w, wbp w2)
+{
+    return Succeeded;
+}
+
+void drawarcs(wbp w, XArc *arcs, int narcs) 
+{
+}
+
+void drawlines(wbp w, XPoint *points, int npoints)
+{
+}
+
+void drawpoints(wbp w, XPoint *points, int npoints)
+{
+}
+
+void drawrectangles(wbp w, XRectangle *recs, int nrecs)
+{
+}
+
+void fillpolygon (wbp w, XPoint *pts, int npts)
+{
+}
+
+void drawsegments(wbp w, XSegment *segs, int nsegs)
+{
+}
+
+void drawstrng(wbp w, int x, int y, char *str, int slen)
+{
+}
+
+void drawutf8(wbp w, int x, int y, char *str, int slen)
+{
+}
+
+int drawblimage(wbp w, int x, int y, int wd, int h,
+                int ch, unsigned char *s, word len)
+{
+    return Succeeded;
+}
+
+int strimage(wbp w, int x, int y, int width, int height,
+             struct palentry *e, unsigned char *s,
+             word len, int on_icon)
+{
+    return 0;
+}
+
+void erasearea(wbp w, int x, int y, int width, int height)
+{
+}
+
+void wsync (wbp w)
+{
+}
+
+void pollevent(void)
+{
+}
+
+int isetfg(wbp w, int fg)
+{
+    return Succeeded;
+}
+
+int setfg(wbp w, char *s)
+{
+    return Succeeded;
+}
+
+void getfg(wbp w, char *answer)
+{
+    strcpy(answer, "none");
+}
+
+void fillarcs(wbp w, XArc *arcs, int narcs)
+{
+}
+
+void fillrectangles(wbp w, XRectangle *recs, int nrecs)
+{
+}
+
+int setfont(wbp w, char **s)
+{
+    return Succeeded;
+}
+
+void getfontname(wbp w, char *answer)
+{
+    strcpy(answer, "none");
+}
+
+void free_mutable(wbp w, int mute_index)
+{
+}
+
+void free_color(wbp w, char *s)
+{
+}
+
+int lowerWindow (wbp w)
+{
+    return Succeeded;
+}
+
+int mutable_color (wbp w, dptr argv, int ac, int *retval)
+{
+    *retval = 0;
+    return Succeeded;
+}
+
+int setpattern(wbp w, char *name, int len)
+{
+    return Succeeded;
+}
+
+int setpatternbits(wbp w, int width, word *bits, int nbits)
+{
+    return Succeeded;
+}
+
+int getpixel_init(wbp w, struct imgmem *imem)
+{
+    return Succeeded;
+}
+
+int getpixel_term(wbp w, struct imgmem *imem)
+{
+    return Succeeded;
+}
+
+int getpixel(wbp w,int x,int y,word *rv,char *s,struct imgmem *im)
+{
+    return Succeeded;
+}
+
+int query_rootpointer(XPoint *pp)
+{
+    return Succeeded;
+}
+
+int raisewindow(wbp w)
+{
+    return Succeeded;
+}
+
+int readimage(wbp w, char *filename, int x, int y, int *status)
+{
+    return Succeeded;
+}
+
+int textwidth(wbp w, char *s, int n)
+{
+    return 0;
+}
+
+int utf8width(wbp w, char *s, int n)
+{
+    return 0;
+}
+
+int do_config(wbp w, int status)
+{
+    return Succeeded;
+}
+
+int getdefault(wbp w, char *prog, char *opt, char *answer)
+{
+    return Failed;
+}
+
+void wflush(wbp w)
+{
+}
+
+int dumpimage (wbp w, char *filename, unsigned int x, unsigned int y,
+               unsigned int width, unsigned int height)
+{
+    return NoCvt;
+}
+
+int own_selection(wbp w, char *selection)
+{
+    return Succeeded;
+}
+
+int request_selection(wbp w, char *selname, char *targetname)
+{
+    return Succeeded;
+}
+
+int send_selection_response(wbp w, word requestor, char *property, 
+                            char *target, char *selection, word time, dptr data)
+{
+    return Succeeded;
+}
+
+void wclose(wbp w)
+{
+}
+
+void free_window (wsp ws)
+{
+}
+
+void free_context(wcp wc)
+{
+}
+
+int wgetq(wbp w, dptr res, word t)
+{
+    return -1;
+}
+
+int setgeometry(wbp w, char *geo)
+{
+    return Succeeded;
+}
+
+int setminheight(wbp w, int new_height)
+{
+    return Succeeded;
+}
+
+int setminwidth(wbp w, int new_width)
+{
+    return Succeeded;
+}
+
+int nativecolor(wbp w, char *s, long *r, long *g, long *b)
+{
+    return 0; /* boolean rv */
+}
+
+int getimstr(wbp w, int x, int y, int width, int hgt,
+             struct palentry *ptbl, unsigned char *data)
+{
+    return 0; /* boolean rv */
+}
+
+int setheight(wbp w, int new_height)
+{
+    return Succeeded;
+}
+
+int setwidth(wbp w, int new_width)
+{
+    return Succeeded;
+}
+
+int setinputmask(wbp w, char *val)
+{
+    return Succeeded;
+}
+
+int allowresize(wbp w, int on)
+{
+    return Succeeded;
+}
+
+int setcanvas(wbp w, char *s)
+{
+    return Succeeded;
+}
+
+int seticonicstate(wbp w, char *s)
+{
+    return Succeeded;
+}
+
+int seticonlabel(wbp w, char *val)
+{
+    return Succeeded;
+}
+
+int seticonpos(wbp w, char *s)
+{
+    return Succeeded;
+}
+
+int setwindowlabel(wbp w, char *val)
+{
+    return Succeeded;
+}
+
+int setgamma(wbp w, double gamma)
+{
+    return Succeeded;
+}
+
+int setfillstyle(wbp w, char *s)
+{
+    return Succeeded;
+}
+
+int setlinestyle(wbp w, char *s)
+{
+    return Succeeded;
+}
+
+int setlinewidth(wbp w, int linewid)
+{
+    return Succeeded;
+}
+
+int setpointer(wbp w, char *val)
+{
+    return Succeeded;
+}
+
+int setdrawop(wbp w, char *val)
+{
+    return Succeeded;
+}
+
+int setdisplay(wbp w, char *s)
+{
+    return Succeeded;
+}
+
+int setimage(wbp w, char *val)
+{
+    return Succeeded;
+}
+
+void toggle_fgbg (wbp w)
+{
+}
+
+void warppointer(wbp w, int x, int y)
+{
+}
+
+int getvisual(wbp w, char *answer)
+{
+    strcpy(answer, "none");
+    return Succeeded;
+}
+
+void getdisplay(wbp w, char *answer)
+{
+    strcpy(answer, "Plan9");
+}
+
+int seticonimage(wbp w, dptr dp)
+{
+    return Succeeded;
+}
+
+int getpos(wbp w)
+{
+    return Succeeded;
+}
+
+void getlinestyle(wbp w, char *answer)
+{
+    strcpy(answer, "none");
+}
+
+int query_pointer (wbp w, XPoint *pp)
+{
+    return Succeeded;
+}
+
+void getpointername(wbp w, char *answer)
+{
+    strcpy(answer, "none");
+}
+
+void getdrawop (wbp w, char *answer)
+{
+    strcpy(answer, "none");
+}
+
+void getcanvas (wbp w, char *answer)
+{
+    strcpy(answer, "none");
+}
+
+void geticonic (wbp w, char *answer)
+{
+    strcpy(answer, "none");
+}
+
+int geticonpos(wbp w, char *answer)
+{
+    strcpy(answer, "none");
+    return Succeeded;
+}
+
