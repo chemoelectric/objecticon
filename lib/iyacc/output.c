@@ -284,7 +284,7 @@ void token_actions(void)
 	    {
 		froms[i] = r = NEW2(shiftcount, short);
 		tos[i] = s = NEW2(shiftcount, short);
-		min = MAXSHORT;
+		min = SHRT_MAX;
 		max = 0;
 		for (j = 0; j < ntokens; ++j)
 		{
@@ -304,7 +304,7 @@ void token_actions(void)
 	    {
 		froms[nstates+i] = r = NEW2(reducecount, short);
 		tos[nstates+i] = s = NEW2(reducecount, short);
-		min = MAXSHORT;
+		min = SHRT_MAX;
 		max = 0;
 		for (j = 0; j < ntokens; ++j)
 		{

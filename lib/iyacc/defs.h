@@ -1,12 +1,6 @@
 #include "../../base/h/gsupport.h"
 
 /*  machine-dependent definitions			*/
-/*  the following definitions are for the Tahoe		*/
-/*  they might have to be changed for other machines	*/
-
-/*  MAXCHAR is the largest unsigned character value	*/
-/*  MAXSHORT is the largest value of a C short		*/
-/*  MINSHORT is the most negative value of a C short	*/
 /*  MAXTABLE is the maximum table size			*/
 /*  BITS_PER_WORD is the number of bits in a C unsigned	*/
 /*  WORDSIZE computes the number of words needed to	*/
@@ -15,9 +9,6 @@
 /*	from r (0-indexed)				*/
 /*  SETBIT sets the n-th bit starting from r		*/
 
-#define	MAXCHAR		255
-#define	MAXSHORT	32767
-#define MINSHORT	-32768
 #define MAXTABLE	32500
 #define BITS_PER_WORD	32
 #define	WORDSIZE(n)	(((n)+(BITS_PER_WORD-1))/BITS_PER_WORD)
@@ -49,6 +40,9 @@
 #define	ICON_OUTPUT_SUFFIX	".icn" 
 #define	VERBOSE_SUFFIX	".output"
 
+#if MSWIN32
+#undef TEXT
+#endif
 
 /* keyword codes */
 
