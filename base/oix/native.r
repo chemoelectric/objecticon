@@ -1,6 +1,6 @@
 #include "../h/modflags.h"
 
-static struct descrip stat2list(struct stat *st);
+static void stat2list(struct stat *st, dptr res);
 
 /*
  * Helper method to get a class from a descriptor; if a class
@@ -1997,13 +1997,15 @@ end
 
 function io_DescStream_stat_impl(self)
    body {
+       tended struct descrip result;
        struct stat st;
        GetSelfFd();
        if (fstat(self_fd, &st) < 0) {
            errno2why();
            fail;
        }
-       return stat2list(&st);
+       stat2list(&st, &result);
+       return result;
    }
 end
 
@@ -2480,21 +2482,21 @@ function io_Files_truncate(s, len)
    }
 end
 
-static struct descrip stat2list(struct stat *st)
+static void stat2list(struct stat *st, dptr result)
 {
-   tended struct descrip tmp, res;
+   tended struct descrip tmp;
    char mode[12], *user, *group;
    struct passwd *pw;
    struct group *gr;
 
-   create_list(13, &res);
+   create_list(13, result);
    MakeInt(st->st_dev, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
 #if UNIX
    convert_from_ino_t(st->st_ino, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
 #else
-   list_put(&res, &zerodesc);
+   list_put(result, &zerodesc);
 #endif
    strcpy(mode, "----------");
 #if UNIX
@@ -2530,10 +2532,10 @@ static struct descrip stat2list(struct stat *st)
    if (st->st_mode & S_IEXEC) mode[3] = mode[6] = mode[9] = 'x';
 #endif
    cstr2string(mode, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
 
    MakeInt(st->st_nlink, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
 
 #if UNIX
    pw = getpwuid(st->st_uid);
@@ -2543,7 +2545,7 @@ static struct descrip stat2list(struct stat *st)
    } else
       user = pw->pw_name;
    cstr2string(user, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
    
    gr = getgrgid(st->st_gid);
    if (!gr) {
@@ -2552,45 +2554,45 @@ static struct descrip stat2list(struct stat *st)
    } else
       group = gr->gr_name;
    cstr2string(group, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
 #else
-   list_put(&res, &emptystr);
-   list_put(&res, &emptystr);
+   list_put(result, &emptystr);
+   list_put(result, &emptystr);
 #endif
 
    MakeInt(st->st_rdev, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
    convert_from_off_t(st->st_size, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
 #if UNIX
    MakeInt(st->st_blksize, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
    convert_from_blkcnt_t(st->st_blocks, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
 #else
-   list_put(&res, &zerodesc);
-   list_put(&res, &zerodesc);
+   list_put(result, &zerodesc);
+   list_put(result, &zerodesc);
 #endif
    convert_from_time_t(st->st_atime, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
    convert_from_time_t(st->st_mtime, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
    convert_from_time_t(st->st_ctime, &tmp);
-   list_put(&res, &tmp);
-
-   return res;
+   list_put(result, &tmp);
 }
 
 function io_Files_stat_impl(s)
    if !cnv:C_string(s) then
       runerr(103,s)
    body {
+      tended struct descrip result;
       struct stat st;
       if (stat(s, &st) < 0) {
           errno2why();
           fail;
       }
-      return stat2list(&st);
+      stat2list(&st, &result);
+      return result;
    }
 end
 
@@ -2598,12 +2600,14 @@ function io_Files_lstat_impl(s)
    if !cnv:C_string(s) then
       runerr(103,s)
    body {
+      tended struct descrip result;
       struct stat st;
       if (lstat(s, &st) < 0) {
           errno2why();
           fail;
       }
-      return stat2list(&st);
+      stat2list(&st, &result);
+      return result;
    }
 end
 
