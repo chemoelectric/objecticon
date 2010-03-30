@@ -17,7 +17,7 @@ wbp wbndngs = NULL;
 int win_highwater = -1;
 
 
-#ifdef XWindows
+#if XWindows
 #include "rxrsc.ri"
 #endif					/* XWindows */
 

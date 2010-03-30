@@ -10,10 +10,6 @@ word            add             (word a,word b);
 void            addmem  (struct b_set *ps,struct b_selem *pe, union block **pl);
 struct b_cset   *alccset_0      (word n);
 struct b_cset   *alccset_1      (word n);
-#ifdef Graphics
-struct b_window *alcwindow_0    (wbp w, word isopen);
-struct b_window *alcwindow_1    (wbp w, word isopen);
-#endif
 union block     *alchash_0      (int tcode);
 union block     *alchash_1      (int tcode);
 struct b_slots  *alcsegment_0   (word nslots);
@@ -176,6 +172,9 @@ void  bigrand         (dptr da, dptr dx);
    /*
     * portable graphics routines in rwindow.r and rwinrsc.r
     */
+
+   struct b_window *alcwindow_0    (wbp w, word isopen);
+   struct b_window *alcwindow_1    (wbp w, word isopen);
    wcp  alc_context     (wbp w);
    wbp  alc_wbinding    (void);
    wsp  alc_winstate    (void);
@@ -299,14 +298,12 @@ void    qevent          (wsp ws, dptr e, int x, int y, uword t, long f, int krel
    int  wclose          (wbp w);
    int  wgetq           (wbp w, dptr res, word t);
    wbp  wopen           (wbp parent, char *nm, struct b_list *hp, dptr attr, int n, int *e);
-#ifndef MSWindows
    void wflush          (wbp w);
    void wsync           (wbp w);
-#endif                                  /* MSWindows */
    void xdis            (wbp w, char *s, int n);
 
 
-   #ifdef XWindows
+   #if XWindows
       /*
        * Implementation routines specific to X-Windows
        */
@@ -353,7 +350,7 @@ int writeJPEG(wbp w, char *filename, int x, int y, int width, int height);
    #endif                               /* XWindows */
 
 
-   #ifdef MSWindows
+   #if MSWIN32
       /*
        * Implementation routines specific to MS Windows
        */
@@ -389,7 +386,7 @@ int writeJPEG(wbp w, char *filename, int x, int y, int width, int height);
       void drawstrng(wbinding *wb, int x, int y, char *s, int slen);
       void unsetclip(wbp w);
 
-   #endif                               /* MSWindows */
+   #endif                               /* MSWIN32 */
 
 #endif                                  /* Graphics */
 

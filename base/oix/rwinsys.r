@@ -6,12 +6,12 @@
 
 #ifdef Graphics
 
-#ifdef XWindows
+#if XWindows
 #include "rxwin.ri"
 #endif					/* XWindows */
 
-#ifdef MSWindows
+#if MSWIN32
 #include "rmswin.ri"
-#endif  				/* MSWindows */
+#endif  				/* MSWIN32 */
 
 #endif					/* Graphics */

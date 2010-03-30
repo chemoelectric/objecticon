@@ -431,10 +431,10 @@ void c_exit(int i)
         xdisp(k_current, -1, stderr);
     }
 
-#ifdef MSWindows
+#if MSWIN32
     PostQuitMessage(0);
     while (wstates != NULL) pollevent();
-#endif					/* MSWindows */
+#endif					/* MSWIN32 */
 
     exit(i);
 }
@@ -1016,7 +1016,7 @@ void resolve(struct progstate *p)
 
 
 
-#ifdef MSWindows
+#if MSWIN32
 
 /*
  * CmdParamToArgv() - convert a command line to an argv array.  Return argc.
@@ -1113,13 +1113,10 @@ int_PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         free(argv[argc]);
     free(argv);
     wfreersc();
-#ifdef NTGCC
-    _exit(0);
-#endif					/* NTGCC */
     return 0;
 }
 #define main iconx
-#endif					/* MSWindows */
+#endif					/* MSWIN32 */
 
 int main(int argc, char **argv)
 {

@@ -44,13 +44,9 @@
    Feature("_GRAPHICS", "graphics")
 #endif					/* Graphics */
 
-#ifdef XWindows
+#if XWindows
    Feature("_X_WINDOW_SYSTEM", "X Windows")
 #endif					/* XWindows */
-
-#ifdef MSWindows
-   Feature("_MS_WINDOWS", "MS Windows")
-#endif					/* MSWindows */
 
 #ifdef HAVE_LIBZ
    Feature("_LIBZ_COMPRESSION", "libz file compression")

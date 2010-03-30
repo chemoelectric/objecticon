@@ -116,15 +116,15 @@ extern int win_highwater, canvas_serial, context_serial;
 extern clock_t starttime;		/* start time in milliseconds */
 
 
-#ifdef XWindows
+#if XWindows
       extern struct _wdisplay * wdsplys;
       extern stringint cursorsyms[];
 #endif				/* XWindows */
 
-#ifdef MSWindows
+#if MSWIN32
       extern HINSTANCE mswinInstance;
       extern int ncmdShow;
-#endif				/* MSWindows */
+#endif				/* MSWIN32 */
 
 #endif					/* Graphics */
 

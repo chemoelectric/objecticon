@@ -2,13 +2,13 @@
  * graphics.h - macros and types used in Icon's graphics interface.
  */
 
-#ifdef XWindows
+#if XWindows
    #include "../h/xwin.h"
 #endif					/* XWindows */
 
-#ifdef MSWindows
+#if MSWIN32
    #include "../h/mswin.h"
-#endif					/* MSWindows */
+#endif					/* MSWIN32 */
 
 #ifndef MAXXOBJS
    #define MAXXOBJS 256
@@ -108,17 +108,17 @@
 #define CLRRESIZABLE(w)	((w)->window->bits &= ~128)
 #define CLREXPOSED(w)   ((w)->window->bits &= ~256)
 
-#ifdef XWindows
+#if XWindows
 #define ISZOMBIE(w)     ((w)->window->bits & 1)
 #define SETZOMBIE(w)    ((w)->window->bits |= 1)
 #define CLRZOMBIE(w)    ((w)->window->bits &= ~1)
 #endif					/* XWindows */
 
-#ifdef MSWindows
+#if MSWIN32
 #define ISTOBEHIDDEN(ws)  ((ws)->bits & 4096)
 #define SETTOBEHIDDEN(ws)  ((ws)->bits |= 4096)
 #define CLRTOBEHIDDEN(ws)  ((ws)->bits &= ~4096)
-#endif					/* MSWindows */
+#endif					/* MSWIN32 */
 
 #define ISTITLEBAR(ws) ((ws)->bits & 8192)
 #define SETTITLEBAR(ws) ((ws)->bits |= 8192)
@@ -142,7 +142,7 @@ typedef struct _wfont {
   int		refcount;
   int		serial;			/* serial # */
   struct _wfont *previous, *next;
-#ifdef XWindows
+#if XWindows
   char	      *	name;			/* name for WAttrib and fontsearch */
   int           ascent;                 /* font dimensions */
   int           descent;
@@ -154,14 +154,14 @@ typedef struct _wfont {
   XFontStruct *	fsp;			/* X font pointer */
 #endif /* HAVE_LIBXFT */
 #endif					/* XWindows */
-#ifdef MSWindows
+#if MSWIN32
   char		*name;			/* name for WAttrib and fontsearch */
   HFONT		font;
   int		ascent;
   int		descent;
   int		charwidth;
   int		height;
-#endif					/* MSWindows */
+#endif					/* MSWIN32 */
 } wfont, *wfp;
 
 /*
@@ -186,12 +186,12 @@ struct imgdata {			/* image loaded from a file */
 
 struct imgmem {
    int x, y, width, height;
-#ifdef XWindows
+#if XWindows
    XImage *im;
 #endif					/* XWindows */
-#ifdef MSWindows
+#if MSWIN32
    COLORREF *crp;
-#endif					/* MSWindows */
+#endif					/* MSWIN32 */
    };
 
 #define TCH1 '~'			/* usual transparent character */
@@ -200,7 +200,7 @@ struct imgmem {
 #define PCH2 ','			/* punctuation character */
 
 
-#ifdef XWindows
+#if XWindows
 
 /*
  * Displays are maintained in a global list in rwinrsc.r.
@@ -251,7 +251,7 @@ typedef struct _wcontext {
   int		drawop;
   double	gamma;			/* gamma correction value */
   int		bits;			/* context bits */
-#ifdef XWindows
+#if XWindows
   wdp		display;
   GC		gc;			/* X graphics context */
   int		fg, bg;
@@ -259,7 +259,7 @@ typedef struct _wcontext {
   int		linewidth;
   int		leading;		/* inter-line leading */
 #endif					/* XWindows */
-#ifdef MSWindows
+#if MSWIN32
   LOGPEN	pen;
   LOGPEN	bgpen;
   LOGBRUSH	brush;
@@ -269,7 +269,7 @@ typedef struct _wcontext {
   SysColor	fg, bg;
   char		*fgname, *bgname;
   int		leading, bkmode;
-#endif					/* MSWindows*/
+#endif					/* MSWIN32*/
 
 } wcontext, *wcp;
 
@@ -277,7 +277,7 @@ typedef struct _wcontext {
  * Native facilities include the following child controls (windows) that
  * persist on the canvas and intercept various events.
  */
-#ifdef MSWindows
+#if MSWIN32
 #define CHILD_BUTTON 0
 #define CHILD_SCROLLBAR 1
 #define CHILD_EDIT 2
@@ -287,7 +287,7 @@ typedef struct childcontrol {
    HFONT font;
    char *id;				/* child window string id */
 } childcontrol;
-#endif					/* MSWindows */
+#endif					/* MSWIN32 */
 
 /*
  * "Window state" includes the actual X window and references to a large
@@ -318,7 +318,7 @@ typedef struct _wstate {
   word		timestamp;		/* last event time stamp */
   char		*cursorname;
   struct descrip listp;		/* icon values for this window */
-#ifdef XWindows
+#if XWindows
   wdp		display;
   Window	win;			/* X window */
   Pixmap	pix;			/* current screen state */
@@ -343,7 +343,7 @@ typedef struct _wstate {
   unsigned int	iconw, iconh;		/* width and height of icon */
   long		wmhintflags;		/* window manager hints */
 #endif					/* XWindows */
-#ifdef MSWindows
+#if MSWIN32
   HWND		win;			/* client window */
   HWND		iconwin;		/* client window when iconic */
   HBITMAP	pix;			/* backing bitmap */
@@ -358,7 +358,7 @@ typedef struct _wstate {
   HWND		focusChild;
   int           nChildren;
   childcontrol *child;
-#endif					/* MSWindows */
+#endif					/* MSWIN32 */
 } wstate, *wsp;
 
 /*

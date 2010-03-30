@@ -102,10 +102,10 @@
    #define OLPATH "OLPATH"
 #endif
 
-#ifdef MSWindows
+#if MSWIN32
    #undef Graphics
    #define Graphics 1
-#endif					/* MSWindows */
+#endif					/* MSWIN32 */
 
 #ifdef HAVE_LIBX11
    #define Graphics 1

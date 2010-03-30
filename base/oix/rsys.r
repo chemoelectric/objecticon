@@ -26,7 +26,7 @@ int putn(FILE *f, char *s, int n)
  * idelay(n) - delay for n milliseconds
  */
 int idelay(int n)
-   {
+{
    if (n <= 0) return Succeeded; /* delay < 0 = no delay */
 
 /*
@@ -41,25 +41,14 @@ int idelay(int n)
    select(1, NULL, NULL, NULL, &t);
    return Succeeded;
    }
-#endif					/* UNIX */
-
-#if MSWIN32
-#ifdef MSWindows
+#elif MSWIN32
    Sleep(n);
-#else					/* MSWindows */
-   /*
-    * In the old DOS documentation, sleep(n) took a # of seconds to sleep,
-    * but VC++ 2.0's _sleep() seems to be taking milliseconds.
-    */
-   _sleep(n);
-
-#endif					/* MSWindows */
    return Succeeded;
 #else					/* MSWIN32 */
    return Failed;
 #endif					/* MSWIN32 */
 
-   }
+}
 
 
 /*

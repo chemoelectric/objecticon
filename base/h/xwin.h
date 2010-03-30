@@ -1,4 +1,4 @@
-#ifdef XWindows
+#if XWindows
 
 #define DRAWOP_AND			GXand
 #define DRAWOP_ANDINVERTED		GXandInverted
