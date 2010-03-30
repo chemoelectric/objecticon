@@ -263,53 +263,6 @@ function posix_System_wait(pid, options)
 end
 
 
-function util_Time_get_system_seconds()
-   body {
-      struct timeval tp;
-      if (gettimeofday(&tp, 0) < 0) {
-	 errno2why();
-	 fail;
-      }
-      return C_integer tp.tv_sec;
-   }
-end
-
-function util_Time_get_system_millis()
-   body {
-      struct timeval tp;
-      struct descrip ls, lm;
-      tended struct descrip lt1, lt2, result;
-      if (gettimeofday(&tp, 0) < 0) {
-	 errno2why();
-	 fail;
-      }
-      MakeInt(tp.tv_sec, &ls);
-      MakeInt(tp.tv_usec, &lm);
-      bigmul(&ls, &thousanddesc, &lt1);
-      bigdiv(&lm, &thousanddesc ,&lt2);
-      bigadd(&lt1, &lt2, &result);
-      return result;
-   }
-end
-
-
-function util_Time_get_system_micros()
-   body {
-      struct timeval tp;
-      struct descrip ls, lm;
-      tended struct descrip lt1, result;
-      if (gettimeofday(&tp, 0) < 0) {
-	 errno2why();
-	 fail;
-      }
-      MakeInt(tp.tv_sec, &ls);
-      MakeInt(tp.tv_usec, &lm);
-      bigmul(&ls, &milliondesc, &lt1);
-      bigadd(&lt1, &lm, &result);
-      return result;
-   }
-end
-
 function posix_System_unsetenv(name)
    if !cnv:C_string(name) then
       runerr(103, name)

@@ -1,6 +1,10 @@
 #include "../h/modflags.h"
 
-static struct descrip stat2list(struct stat *st);
+#if PLAN9
+static void stat2list(struct Dir *st, dptr res);
+#else
+static void stat2list(struct stat *st, dptr res);
+#endif
 
 /*
  * Helper method to get a class from a descriptor; if a class
@@ -269,9 +273,14 @@ static void convert_from_##TYPE(TYPE src, dptr dest)
 #enddef
 convert_to_macro(off_t)
 convert_from_macro(off_t)
+convert_from_macro(time_t)
 #if UNIX
 convert_from_macro(ino_t)
 convert_from_macro(blkcnt_t)
+#endif
+#if PLAN9
+convert_from_macro(ulong)
+convert_from_macro(vlong)
 #endif
 convert_from_macro(ulonglong)
 
@@ -2041,8 +2050,16 @@ end
 
 function io_DescStream_stat_impl(self)
    body {
+       tended struct descrip result;
 #if PLAN9
-       Unsupported;
+       struct Dir *st;
+       GetSelfFd();
+       if (!(st = dirfstat(self_fd))) {
+           errno2why();
+           fail;
+       }
+       stat2list(st, &result);
+       free(st);
 #else
        struct stat st;
        GetSelfFd();
@@ -2050,8 +2067,9 @@ function io_DescStream_stat_impl(self)
            errno2why();
            fail;
        }
-       return stat2list(&st);
+       stat2list(&st, &result);
 #endif
+       return result;
    }
 end
 
@@ -2571,22 +2589,71 @@ function io_Files_truncate(s, len)
 end
 
 #if PLAN9
-#else
-static struct descrip stat2list(struct stat *st)
+static void stat2list(struct Dir *st, dptr result)
 {
-   tended struct descrip tmp, res;
+   tended struct descrip tmp;
    char mode[12], *user, *group;
    struct passwd *pw;
    struct group *gr;
 
-   create_list(13, &res);
+   create_list(13, result);
+   list_put(result, &zerodesc);
+   list_put(result, &zerodesc);
+
+   strcpy(mode, "----------");
+   if (st->mode & DMDIR) mode[0] = 'd';
+   else if (st->mode & DMAPPEND) mode[0] = 'a';
+   if (st->mode & 0400) mode[1] = 'r';
+   if (st->mode & 0200) mode[2] = 'w';
+   if (st->mode & 0100) mode[3] = 'x';
+   if (st->mode & 0040) mode[4] = 'r';
+   if (st->mode & 0020) mode[5] = 'w';
+   if (st->mode & 0010) mode[6] = 'x';
+   if (st->mode & 0004) mode[7] = 'r';
+   if (st->mode & 0002) mode[8] = 'w';
+   if (st->mode & 0001) mode[9] = 'x';
+   cstr2string(mode, &tmp);
+   list_put(result, &tmp);
+
+   list_put(result, &onedesc);  /* nlinks = 1 */
+
+   cstr2string(st->uid, &tmp);
+   list_put(result, &tmp);
+
+   cstr2string(st->gid, &tmp);
+   list_put(result, &tmp);
+
+   list_put(result, &zerodesc);  /* dev no */
+   convert_from_vlong(st->length, &tmp);
+   list_put(result, &tmp);
+
+   list_put(result, &zerodesc);  /* blocksize */
+   list_put(result, &zerodesc);  /* block count */
+
+   convert_from_ulong(st->atime, &tmp);
+   list_put(result, &tmp);
+   convert_from_ulong(st->mtime, &tmp);
+   list_put(result, &tmp);
+   list_put(result, &tmp);
+}
+
+#else
+
+static void stat2list(struct stat *st, dptr result)
+{
+   tended struct descrip tmp;
+   char mode[12], *user, *group;
+   struct passwd *pw;
+   struct group *gr;
+
+   create_list(13, result);
    MakeInt(st->st_dev, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
 #if UNIX
    convert_from_ino_t(st->st_ino, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
 #else
-   list_put(&res, &zerodesc);
+   list_put(result, &zerodesc);
 #endif
    strcpy(mode, "----------");
 #if UNIX
@@ -2622,10 +2689,10 @@ static struct descrip stat2list(struct stat *st)
    if (st->st_mode & S_IEXEC) mode[3] = mode[6] = mode[9] = 'x';
 #endif
    cstr2string(mode, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
 
    MakeInt(st->st_nlink, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
 
 #if UNIX
    pw = getpwuid(st->st_uid);
@@ -2635,7 +2702,7 @@ static struct descrip stat2list(struct stat *st)
    } else
       user = pw->pw_name;
    cstr2string(user, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
    
    gr = getgrgid(st->st_gid);
    if (!gr) {
@@ -2644,33 +2711,31 @@ static struct descrip stat2list(struct stat *st)
    } else
       group = gr->gr_name;
    cstr2string(group, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
 #else
-   list_put(&res, &emptystr);
-   list_put(&res, &emptystr);
+   list_put(result, &emptystr);
+   list_put(result, &emptystr);
 #endif
 
    MakeInt(st->st_rdev, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
    convert_from_off_t(st->st_size, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
 #if UNIX
    MakeInt(st->st_blksize, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
    convert_from_blkcnt_t(st->st_blocks, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
 #else
-   list_put(&res, &zerodesc);
-   list_put(&res, &zerodesc);
+   list_put(result, &zerodesc);
+   list_put(result, &zerodesc);
 #endif
-   MakeInt(st->st_atime, &tmp);
-   list_put(&res, &tmp);
-   MakeInt(st->st_mtime, &tmp);
-   list_put(&res, &tmp);
-   MakeInt(st->st_ctime, &tmp);
-   list_put(&res, &tmp);
-
-   return res;
+   convert_from_time_t(st->st_atime, &tmp);
+   list_put(result, &tmp);
+   convert_from_time_t(st->st_mtime, &tmp);
+   list_put(result, &tmp);
+   convert_from_time_t(st->st_ctime, &tmp);
+   list_put(result, &tmp);
 }
 #endif /* PLAN9 */
 
@@ -2681,12 +2746,14 @@ function io_Files_stat_impl(s)
 #if PLAN9
        Unsupported;
 #else
+      tended struct descrip result;
       struct stat st;
       if (stat(s, &st) < 0) {
           errno2why();
           fail;
       }
-      return stat2list(&st);
+      stat2list(&st, &result);
+      return result;
 #endif
    }
 end
@@ -2698,12 +2765,14 @@ function io_Files_lstat_impl(s)
 #if PLAN9
        Unsupported;
 #else
+      tended struct descrip result;
       struct stat st;
       if (lstat(s, &st) < 0) {
           errno2why();
           fail;
       }
-      return stat2list(&st);
+      stat2list(&st, &result);
+      return result;
 #endif
    }
 end
@@ -2719,6 +2788,54 @@ function io_Files_access(s, mode)
           fail;
       }
       return nulldesc;
+   }
+end
+
+function util_Time_get_system_seconds()
+   body {
+      tended struct descrip result;
+      struct timeval tp;
+      if (gettimeofday(&tp, 0) < 0) {
+	 errno2why();
+	 fail;
+      }
+      convert_from_time_t(tp.tv_sec, &result);
+      return result;
+   }
+end
+
+function util_Time_get_system_millis()
+   body {
+      struct timeval tp;
+      struct descrip lm;
+      tended struct descrip ls, lt1, lt2, result;
+      if (gettimeofday(&tp, 0) < 0) {
+	 errno2why();
+	 fail;
+      }
+      convert_from_time_t(tp.tv_sec, &ls);
+      MakeInt(tp.tv_usec, &lm);
+      bigmul(&ls, &thousanddesc, &lt1);
+      bigdiv(&lm, &thousanddesc ,&lt2);
+      bigadd(&lt1, &lt2, &result);
+      return result;
+   }
+end
+
+function util_Time_get_system_micros()
+   body {
+      struct timeval tp;
+      struct descrip lm;
+      tended struct descrip ls, lt1, result;
+      if (gettimeofday(&tp, 0) < 0) {
+	 errno2why();
+	 fail;
+      }
+      convert_from_time_t(tp.tv_sec, &ls);
+      MakeInt(tp.tv_usec, &lm);
+      bigmul(&ls, &milliondesc, &lt1);
+      bigadd(&lt1, &lm, &result);
+      return result;
    }
 end
 

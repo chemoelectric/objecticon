@@ -124,6 +124,10 @@ typedef int gzFile;
 
 typedef int jmp_buf;
 
+#if PLAN9
+typedef int vlong, ulong;
+#endif
+
 #if MSWIN32
 typedef int HMODULE, WSADATA, WORD, HANDLE, MEMORYSTATUS, WIN32_FIND_DATA, 
    PVOID, PFIBER_START_ROUTINE;
