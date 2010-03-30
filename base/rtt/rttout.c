@@ -73,7 +73,7 @@ int op_type = OrdFunc;  /* type of operation */
 char *op_name;
 char *op_sym;
 char *fname = "";       /* current source file name */
-int line = 0;           /* current source line number */
+static int line = 0;           /* current source line number */
 static int nxt_sbuf;           /* next string buffer index */
 static int nxt_cbuf;           /* next cset buffer index */
 
