@@ -2689,14 +2689,14 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
                 if (!cnv:C_integer(d, tmp))
                     return Failed;
                 ws->pointerx = tmp + wc->dx;
-                warpPointer(w, ws->pointerx, ws->pointery);
+                warppointer(w, ws->pointerx, ws->pointery);
                 break;
             }
             case A_POINTERY: {
                 if (!cnv:C_integer(d, tmp))
                     return Failed;
                 ws->pointery = tmp + wc->dy;
-                warpPointer(w, ws->pointerx, ws->pointery);
+                warppointer(w, ws->pointerx, ws->pointery);
                 break;
             }
                 /*
@@ -2834,7 +2834,7 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
                 CMakeStr(abuf, answer);
                 break;
             case A_FONT:
-                getfntnam(w, abuf);
+                getfontname(w, abuf);
                 CMakeStr(abuf, answer);
                 break;
             case A_DX: MakeInt(wc->dx, answer); break;

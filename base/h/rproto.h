@@ -217,20 +217,20 @@ void  bigrand         (dptr da, dptr dx);
    int  setpattern      (wbp w, char *name, int len);
    int  setpatternbits  (wbp w, int width, word *bits, int nbits);
    int  allowresize     (wbp w, int on);
-   int  blimage         (wbp w, int x, int y, int wd, int h,
+   int  drawblimage     (wbp w, int x, int y, int wd, int h,
                           int ch, unsigned char *s, word len);
    wcp  clone_context   (wbp w);
-   int  copyArea        (wbp w,wbp w2,int x,int y,int wd,int h,int x2,int y2);
+   int  copyarea        (wbp w,wbp w2,int x,int y,int wd,int h,int x2,int y2);
    int  do_config       (wbp w, int status);
    int  dumpimage       (wbp w, char *filename, unsigned int x, unsigned int y,
                            unsigned int width, unsigned int height);
-   void eraseArea       (wbp w, int x, int y, int width, int height);
+   void erasearea       (wbp w, int x, int y, int width, int height);
    void fillrectangles  (wbp w, XRectangle *recs, int nrecs);
    void free_binding    (wbp w);
    void free_context    (wcp wc);
    void free_mutable    (wbp w, int mute_index);
-   int  free_window     (wsp ws);
-   void freecolor       (wbp w, char *s);
+   void free_window     (wsp ws);
+   void free_color       (wbp w, char *s);
    char *get_mutable_name (wbp w, int mute_index);
    void getbg           (wbp w, char *answer);
    void getcanvas       (wbp w, char *s);
@@ -238,7 +238,7 @@ void  bigrand         (dptr da, dptr dx);
    void getdisplay      (wbp w, char *answer);
    void getdrawop       (wbp w, char *answer);
    void getfg           (wbp w, char *answer);
-   void getfntnam       (wbp w, char *answer);
+   void getfontname     (wbp w, char *answer);
    void geticonic       (wbp w, char *answer);
    int  geticonpos      (wbp w, char *s);
    int  getimstr        (wbp w, int x, int y, int width, int hgt,
@@ -261,7 +261,7 @@ void  bigrand         (dptr da, dptr dx);
 
    int  query_pointer   (wbp w, XPoint *pp);
    int  query_rootpointer (XPoint *pp);
-   int  raiseWindow     (wbp w);
+   int  raisewindow     (wbp w);
    int  readimage       (wbp w, char *filename, int x, int y, int *status);
    int  rebind          (wbp w, wbp w2);
    int  set_mutable     (wbp w, int i, char *s);
@@ -297,8 +297,8 @@ void  bigrand         (dptr da, dptr dx);
                            word len, int on_icon);
    void toggle_fgbg     (wbp w);
    int  walert          (wbp w, int volume);
-   void warpPointer     (wbp w, int x, int y);
-   int  wclose          (wbp w);
+   void warppointer     (wbp w, int x, int y);
+   void wclose          (wbp w);
    int  wgetq           (wbp w, dptr res, word t);
    wbp  wopen           (wbp parent, char *nm, struct b_list *hp, dptr attr, int n, int *e);
    void wflush          (wbp w);
