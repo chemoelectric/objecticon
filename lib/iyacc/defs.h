@@ -1,16 +1,4 @@
-#include <assert.h>
-#include <ctype.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#ifdef _WIN32
-#include <io.h>
-#ifndef mkstemp
-  #define mkstemp mktemp
-#endif
-#else
-#include <unistd.h>
-#endif
+#include "../../base/h/gsupport.h"
 
 /*  machine-dependent definitions			*/
 /*  the following definitions are for the Tahoe		*/

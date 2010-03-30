@@ -60,7 +60,7 @@ void start_class(char *s, char *a, int t1, int t2)
     desc_flag = t2;
 }
 
-void end_class()
+void end_class(void)
 {
     int i;
     if (n_entries > 0) {
