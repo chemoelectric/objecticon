@@ -27,13 +27,6 @@
 #ifdef Graphics
    #define XKey_Window 0
    #define XKey_Fg 1
-   
-   #ifndef SHORT
-      #define SHORT int
-   #endif				/* SHORT */
-   #ifndef LONG
-      #define LONG int
-   #endif				/* LONG */
 #endif					/* Graphics */
 
 /*

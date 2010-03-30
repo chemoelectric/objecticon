@@ -262,7 +262,7 @@ int setsize(wbp w, char *s)
  */
 int setminsize(wbp w, char *s)
 {
-    SHORT width, height;
+    int width, height;
     if (isdigit((unsigned char)*s)) {
         if ((width = atoi(s)) <= 0) return Error;
         while (isdigit((unsigned char)*++s));
@@ -2361,7 +2361,7 @@ int parsepattern(char *s, int len, int *width, int *nbits, word *bits)
  * Returns:
  *  0 on bad value, 1 if size is set, 2 if position is set, 3 if both are set
  */
-int parsegeometry(char *buf, SHORT *x, SHORT *y, SHORT *width, SHORT *height)
+int parsegeometry(char *buf, int *x, int *y, int *width, int *height)
 {
     int retval = 0;
     if (isdigit((unsigned char)*buf)) {
@@ -2410,7 +2410,7 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
     word tmp;
     long lenattr, lenval;
     double gamma;
-    SHORT new_height, new_width;
+    int new_height, new_width;
     wsp ws = w->window;
     wcp wc = w->context;
     int toolong = 0;

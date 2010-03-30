@@ -1229,7 +1229,7 @@ int do_config(wbp w, int status)
     return Succeeded;
 }
 
-int setheight(wbp w, SHORT new_height)
+int setheight(wbp w, int new_height)
 {
     STDLOCALS(w);
     if (new_height < 0) return Failed;
@@ -1237,7 +1237,7 @@ int setheight(wbp w, SHORT new_height)
     return Succeeded;
 }
 
-int setwidth(wbp w, SHORT new_width)
+int setwidth(wbp w, int new_width)
 {
     STDLOCALS(w);
     if (new_width < 0) return Failed;
@@ -1273,7 +1273,7 @@ int setgeometry(wbp w, char *geo)
     return Succeeded;
 }
 
-int setminheight(wbp w, SHORT new_height)
+int setminheight(wbp w, int new_height)
 {
     XSizeHints size_hints;
     long t;
@@ -1288,7 +1288,7 @@ int setminheight(wbp w, SHORT new_height)
     return Succeeded;
 }
 
-int setminwidth(wbp w, SHORT new_width)
+int setminwidth(wbp w, int new_width)
 {
     XSizeHints size_hints;
     long t;
@@ -1923,7 +1923,7 @@ int setlinestyle(wbp w, char *s)
 /*
  * Set the context's line width
  */
-int setlinewidth(wbp w, LONG linewid)
+int setlinewidth(wbp w, int linewid)
 {
     unsigned long gcmask;
     XGCValues gcv;

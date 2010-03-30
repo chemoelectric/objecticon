@@ -515,7 +515,7 @@ int handle_config(wbp w, UINT msg, WPARAM wp, LPARAM lp)
 void handle_child(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
    {
    DWORD dw;
-   LONG t;
+   int t;
    WORD x, y;
    wsp ws = wb->window;
    char *s;
@@ -558,7 +558,7 @@ void handle_menu(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
    {
    wsp ws = wb->window;
    DWORD dw;
-   LONG t;
+   int t;
    WORD x, y;
    struct descrip d;
    char *s = ws->menuMap[wp];
@@ -579,7 +579,7 @@ void handle_keypress(wbp wb, UINT msg, WPARAM wp, LPARAM lp, int meta)
    {
    wsp ws = wb->window;
    DWORD dw;
-   LONG t;
+   int t;
    WORD x, y;
    struct descrip d;
    int flags = 0;
@@ -611,7 +611,7 @@ void handle_keypress(wbp wb, UINT msg, WPARAM wp, LPARAM lp, int meta)
 void handle_wheel(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
 {
    wsp ws = wb->window;
-   LONG t;
+   int t;
    WORD x, y;
    struct descrip d;
    long flags = 0;
@@ -649,7 +649,7 @@ void handle_wheel(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
 void handle_mouse(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
    {
    wsp ws = wb->window;
-   LONG t;
+   int t;
    WORD x, y;
    struct descrip d;
    long flags = 0, eventcode;
@@ -986,12 +986,12 @@ int send_selection_response(wbp w, word requestor, char *property, char *target,
     return Succeeded;
 }
 
-int setminheight(wbp w, SHORT new_height)
+int setminheight(wbp w, int new_height)
 {
     return Succeeded;
 }
 
-int setminwidth(wbp w, SHORT new_width)
+int setminwidth(wbp w, int new_width)
 {
     return Succeeded;
 }
@@ -1043,7 +1043,7 @@ int height;
  */
 int setwidth(w, width)
 wbp w;
-SHORT width;
+int width;
    {
    wsp ws = w->window;
    ws->width = width;
@@ -1387,14 +1387,14 @@ char *s;
       || !strcmp(s, "stippled") || !strcmp(s, "patterned")) {
 	 wc->brush.lbStyle = wc->fillstyle = BS_PATTERN;
 	 wc->brush.lbColor = PALCLR(wc->fg);
-	 wc->brush.lbHatch = (LONG)wc->pattern;
+	 wc->brush.lbHatch = (int)wc->pattern;
          wc->bkmode = TRANSPARENT;
 	 }
       else if (!strcmp(s, "textured")
       || !strcmp(s, "opaquestippled") || !strcmp(s, "opaquepatterned")) {
 	 wc->brush.lbStyle = wc->fillstyle = BS_PATTERN;
 	 wc->brush.lbColor = PALCLR(wc->fg);
-	 wc->brush.lbHatch = (LONG)wc->pattern;
+	 wc->brush.lbHatch = (int)wc->pattern;
          wc->bkmode = OPAQUE;
 	 }
       else {
@@ -1412,7 +1412,7 @@ wbp w;
 char *s;
    {
    wcp wc = w->context;
-   SHORT ltype;
+   int ltype;
 
    if ((ltype = stringint_str2int(siLineTypes, s)) < 0)
       return Error;
@@ -1426,7 +1426,7 @@ char *s;
 /*
  * Set the context's line width
  */
-int setlinewidth(wbp w, LONG linewid)
+int setlinewidth(wbp w, int linewid)
    {
    wcp wc = w->context;
    wc->pen.lopnWidth.x = wc->pen.lopnWidth.y =
@@ -1566,7 +1566,7 @@ int setfg(wbp w, char *val)
       wc->pen.lopnColor = wc->brush.lbColor;
       wc->brush.lbStyle = wc->fillstyle;
       if (wc->fillstyle == BS_PATTERN)
-	 wc->brush.lbHatch = (LONG)wc->pattern;
+	 wc->brush.lbHatch = (int)wc->pattern;
       return Succeeded;
       }
    return Failed;
@@ -3082,7 +3082,7 @@ void fillpolygon(wbp w, XPoint *pts, int npts)
    FREE_STDLOCALS(w);
    }
 
-LONG NumWindows = 0;
+int NumWindows = 0;
 
 
 /*
@@ -3389,7 +3389,7 @@ int len;
       if (wc->fillstyle == BS_PATTERN) {
 	 wc->brush.lbStyle = BS_PATTERN;
 	 wc->brush.lbColor = PALCLR(wc->fg);
-	 wc->brush.lbHatch = (LONG)p;
+	 wc->brush.lbHatch = (int)p;
 	 }     
       return Succeeded;
       }
@@ -3453,7 +3453,7 @@ int nbits;
    if (wc->fillstyle == BS_PATTERN) {
       wc->brush.lbStyle = BS_PATTERN;
       wc->brush.lbColor = PALCLR(wc->fg);
-      wc->brush.lbHatch = (LONG)p;
+      wc->brush.lbHatch = (int)p;
       }     
    return Succeeded;
    }

@@ -149,16 +149,16 @@ typedef struct wcolor {
  * cast it to POINTL structures that can be passed to GpiPolyLineDisjoint
  */
 typedef struct {
-   LONG x1, y1;
-   LONG x2, y2;
+   int x1, y1;
+   int x2, y2;
    } XSegment;
 
 typedef POINT XPoint;
 typedef RECT XRectangle;
 
 typedef struct {
-  LONG x, y;
-  LONG width, height;
+  int x, y;
+  int width, height;
   double angle1, angle2;
   } XArc;
 

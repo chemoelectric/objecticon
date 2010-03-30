@@ -157,10 +157,10 @@ typedef struct _wfont {
 #ifdef MSWindows
   char		*name;			/* name for WAttrib and fontsearch */
   HFONT		font;
-  LONG		ascent;
-  LONG		descent;
-  LONG		charwidth;
-  LONG		height;
+  int		ascent;
+  int		descent;
+  int		charwidth;
+  int		height;
 #endif					/* MSWindows */
 } wfont, *wfp;
 

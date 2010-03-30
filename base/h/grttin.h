@@ -159,7 +159,6 @@ typedef int siptr, stringint, inst;
    typedef int wbp, wsp, wcp, wdp, wclrp, wfp, wtp;
    typedef int wbinding, wstate, wcontext, wfont;
    typedef int XRectangle, XPoint, XSegment, XArc, SysColor, LinearColor;
-   typedef int LONG, SHORT;
 
    #ifdef XWindows
       typedef int Atom, Time, XSelectionEvent, XErrorEvent, XErrorHandler;
