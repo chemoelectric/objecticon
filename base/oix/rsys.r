@@ -59,13 +59,6 @@ int idelay(int n)
    return Failed;
 #endif					/* MSWIN32 */
 
-#if PORT
-   return Failed;
-#endif	
-
-   /*
-    * End of operating-system dependent code.
-    */
    }
 
 

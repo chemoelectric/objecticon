@@ -204,11 +204,6 @@ void setexe(char *fname)
  *  mode of executable file so that it can be executed directly.
  */
 
-#if PORT
-    /* something is needed */
-    Deliberate Syntax Error
-#endif					/* PORT */
-
 #if UNIX
     {
         struct stat stbuf;

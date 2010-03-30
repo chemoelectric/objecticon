@@ -36,10 +36,6 @@
  * can be used in logical expressions in #if directives.
  */
 
-#ifndef PORT
-   #define PORT 0
-#endif					/* PORT */
-
 #ifndef MSWIN32
    #define MSWIN32 0
 #endif					/* MSWIN32 */
@@ -219,21 +215,6 @@
 #ifndef AppendText
    #define AppendText "a"
 #endif					/* AppendText */
-
-/*
- * The following code is operating-system dependent [@config.01].
- *  Any configuration stuff that has to be done at this point.
- */
-
-#if PORT
-   /* Probably nothing is needed. */
-Deliberate Syntax Error
-#endif					/* PORT */
-
-
-/*
- * End of operating-system specific code.
- */
 
 #ifndef DiffPtrs
    #define DiffPtrs(p1,p2) (word)((p1)-(p2))

@@ -22,9 +22,6 @@
 /*
  * Operating-system-dependent includes.
  */
-#if PORT
-   Deliberate Syntax Error
-#endif					/* PORT */
 
 #if MSWIN32
    #define  _WIN32_WINNT 0x0400

@@ -8,11 +8,6 @@
  *  System header files needed for handling paths.
  */
 
-#if PORT
-   /* something may be needed */
-Deliberate Syntax Error
-#endif					/* PORT */
-
 #if MSWIN32
 #define IsRelPath(fname) (fname[0] != '/')
 #endif					/* MSWIN32 */
@@ -20,10 +15,6 @@ Deliberate Syntax Error
 #if UNIX
 #define IsRelPath(fname) (fname[0] != '/')
 #endif	
-
-/*
- * End of operating-system specific code.
- */
 
 #include "pproto.h"
 
@@ -52,11 +43,6 @@ FILE *f;
  *  /filename is equivalent to the UNIX path ../filename.
  */
 
-#if PORT
-   /* something may be needed */
-Deliberate Syntax Error
-#endif					/* PORT */
-
 #if MSWIN32
    char *s;
    
@@ -82,7 +68,7 @@ Deliberate Syntax Error
    next_char = NULL;
    fill_cbuf();
    }
-
+
 /*
  * source - Open the file named fname or use stdin if fname is "-". fname
  *  is the first file from which to read input (that is, the outermost file).
@@ -100,7 +86,7 @@ char *fname;
       file_src(fname, f);
       }
    }
-
+
 /*
  * include - open the file named fname and make it the current input file. 
  */
@@ -179,7 +165,7 @@ int system;
       errt2(trigger, "cannot open include file ", fname);
    file_src(path, f);
    }
-
+
 /*
  * init_files - Initialize this module, setting up the search path for
  *  system header files.
@@ -198,11 +184,6 @@ char **opt_args;
  *  header files and provide any declarations needed for the code
  *  that establishes these search locations.
  */
-
-#if PORT
-   /* probably needs something */
-Deliberate Syntax Error
-#endif					/* PORT */
 
 #if MSWIN32
    char *syspath;
@@ -277,28 +258,6 @@ Deliberate Syntax Error
    incl_search = safe_alloc((unsigned int)(sizeof(char *)*(n_paths + 1)));
    j = 0;
   
-/*
- * The following code is operating-system dependent [@files.04].
- *  Establish the standard locations to search before the -I options
- *  on the preprocessor.
- */
-
-#if PORT
-   /* something may be needed */
-Deliberate Syntax Error
-#endif					/* PORT */
-
-#if MSWIN32
-#endif					/* MSWIN32 */
-
-#if UNIX
-   /* nothing is needed */
-#endif					/* UNIX */
-
-/*
- * End of operating-system specific code.
- */
-
    /*
     * Get the locations from the -I options to the preprocessor.
     */
@@ -314,11 +273,6 @@ Deliberate Syntax Error
  *  (note, this may not work well on all systems).
  *  In particular, Amiga paths are left intact.
  */
-
-#if PORT
-   /* something might be needed */
-Deliberate Syntax Error
-#endif					/* PORT */
 
 #if MSWIN32
          /*
@@ -346,11 +300,6 @@ Deliberate Syntax Error
  *  on the preprocessor.
  */
 
-#if PORT
-   /* probably needs something */
-Deliberate Syntax Error
-#endif					/* PORT */
-
 #if MSWIN32
 
 #endif					/* MSWIN32 */
@@ -365,5 +314,5 @@ Deliberate Syntax Error
 
    incl_search[n_paths] = NULL;
    }
-
+
 

@@ -22,10 +22,6 @@
    Feature("_MS_WIN32", "MS Win32")
 #endif					/* MSWIN32 */
 
-#if PORT
-   Feature("_PORT", "PORT")
-#endif					/* PORT */
-
 #if UNIX
    Feature("_UNIX", "UNIX")
 #endif					/* VM */
