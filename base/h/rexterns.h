@@ -112,7 +112,7 @@ extern wcp wcntxts;
 extern wsp wstates;
 extern int GraphicsLeft, GraphicsUp, GraphicsRight, GraphicsDown;
 extern int GraphicsHome, GraphicsPrior, GraphicsNext, GraphicsEnd;
-extern int win_highwater, canvas_serial, context_serial;
+extern int canvas_serial, context_serial;
 extern clock_t starttime;		/* start time in milliseconds */
 
 
