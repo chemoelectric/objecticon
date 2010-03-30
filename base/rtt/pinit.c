@@ -5,29 +5,6 @@
  */
 #include "preproc.h"
 #include "ptoken.h"
-
-/*
- * The following code is operating-system dependent [@p_init.01]. 
- *  #includes and #defines.
- */
-
-#if PORT
-   /* something may be needed */
-Deliberate Syntax Error
-#endif					/* PORT */
-
-#if MSWIN32
-   /* nothing is needed */
-#endif					/* MSWIN32 */
- 
-#if UNIX
-   /* nothing is needed */
-#endif	
-
-/*
- * End of operating-system specific code.
- */
-
 #include "pproto.h"
 
 /*
@@ -60,7 +37,7 @@ char **opt_args;
    mac_opts(opt_lst, opt_args);     /* process options for predefined macros */
    source(fname);                   /* establish primary source file */
    }
-
+
 /*
  * mac_opts - handle options which affect what predefined macros are in
  *  effect when preprocessing starts. Some of these options may be system
@@ -76,28 +53,14 @@ char **opt_args;
    int i;
 
 /*
- * The following code is operating-system dependent [@p_init.02].
  *  Establish predefined macros and look for options in environment
  *  variables and/or configuration files that affect predefined macros.
  */
-
-#if PORT
-   /* something may be needed */
-Deliberate Syntax Error
-#endif					/* PORT */
-
-#if MSWIN32
-
-#endif					/* MSWIN32 */
  
 #if UNIX
    do_directive("#define unix 1\n");
    do_directive(PPInit);   /* defines that vary between Unix systems */
 #endif					/* UNIX */
-
-/*
- * End of operating-system specific code.
- */
 
    /*
     * look for options that affect macro definitions (-U, -D, etc).
@@ -118,30 +81,9 @@ Deliberate Syntax Error
             define_opt(opt_args[i], (int)strlen(opt_args[i]), one_tok);
             break;
 
-/*
- * The following code is operating-system dependent [@p_init.03]. Check for
- *  system specific options from command line.
- */
-
-#if PORT
-   /* something may be needed */
-Deliberate Syntax Error
-#endif					/* PORT */
-
-#if MSWIN32
-
-#endif					/* MSWIN32 */
- 
-#if UNIX
-   /* nothing is needed */
-#endif	
-
-/*
- * End of operating-system specific code.
- */
          }
    }
-
+
 /*
  * str_src - establish a string, given by a character pointer and a length,
  *  as the current source of tokens.

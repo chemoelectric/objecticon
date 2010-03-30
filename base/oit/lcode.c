@@ -1150,7 +1150,7 @@ static void genclass(struct lclass *cl)
     outwordz(ap, "   Pointer to field info array");
     ap += n_fields * WordSize;
     outwordz(ap, "   Pointer to field sort array");
-    ap += n_fields * ShortSize;
+    ap += n_fields * sizeof(short);
     ap += nalign(ap);
 
     /*
@@ -1283,7 +1283,7 @@ static void genclasses(void)
                                cl->n_supers +
                                cl->n_implemented_classes +
                                n_fields) + 
-            ShortSize * n_fields;
+            sizeof(short) * n_fields;
 
         cl->size += nalign(cl->size);
         x += cl->size;
@@ -1378,7 +1378,7 @@ static void gentables()
         s = rec->global->name;
         rec->pc = pc;
         ce = inst_sdescrip(s);
-        size = 9 * WordSize + rec->nfields * (WordSize + ShortSize);
+        size = 9 * WordSize + rec->nfields * (WordSize + sizeof(short));
         if (loclevel > 1)
             size += rec->nfields * 2 * WordSize;
         size += nalign(size);
@@ -1405,7 +1405,7 @@ static void gentables()
         } else
             outwordz(0, "   Pointer to field_locs array");
         outwordz(ap, "   Pointer to field sort array");
-        ap += rec->nfields * ShortSize;
+        ap += rec->nfields * sizeof(short);
         ap += nalign(ap);
 
         /*
@@ -1768,10 +1768,10 @@ static void outshortx(short s, char *fmt, ...)
         putc('\n', dbgfile);
         va_end(ap);
     }
-    CodeCheck(ShortSize);
-    memcpy(codep, &s, ShortSize);
-    codep += ShortSize;
-    pc += ShortSize;
+    CodeCheck(sizeof(short));
+    memcpy(codep, &s, sizeof(short));
+    codep += sizeof(short);
+    pc += sizeof(short);
 }
 
 static void outwordz(word oword, char *fmt, ...)

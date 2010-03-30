@@ -10,10 +10,6 @@ word            add             (word a,word b);
 void            addmem  (struct b_set *ps,struct b_selem *pe, union block **pl);
 struct b_cset   *alccset_0      (word n);
 struct b_cset   *alccset_1      (word n);
-#ifdef Graphics
-struct b_window *alcwindow_0    (wbp w, word isopen);
-struct b_window *alcwindow_1    (wbp w, word isopen);
-#endif
 union block     *alchash_0      (int tcode);
 union block     *alchash_1      (int tcode);
 struct b_slots  *alcsegment_0   (word nslots);
@@ -176,6 +172,9 @@ void  bigrand         (dptr da, dptr dx);
    /*
     * portable graphics routines in rwindow.r and rwinrsc.r
     */
+
+   struct b_window *alcwindow_0    (wbp w, word isopen);
+   struct b_window *alcwindow_1    (wbp w, word isopen);
    wcp  alc_context     (wbp w);
    wbp  alc_wbinding    (void);
    wsp  alc_winstate    (void);
@@ -188,7 +187,7 @@ void  bigrand         (dptr da, dptr dx);
    int  palnum          (dptr d);
    int  parsecolor      (wbp w, char *s, long *r, long *g, long *b, long *a);
    int  parsefont       (char *s, char *fam, int *sty, int *sz);
-   int  parsegeometry   (char *buf, SHORT *x, SHORT *y, SHORT *w, SHORT *h);
+   int  parsegeometry   (char *buf, int *x, int *y, int *w, int *h);
    int  parsepattern    (char *s, int len, int *w, int *nbits, word *bits);
 void    qevent          (wsp ws, dptr e, int x, int y, uword t, long f, int krel);
    int  readGIF         (char *fname, int p, struct imgdata *d);
@@ -212,8 +211,8 @@ void    qevent          (wsp ws, dptr e, int x, int y, uword t, long f, int krel
     * graphics implementation routines supplied for each platform
     * (excluding those defined as macros for X-windows)
     */
-   int  SetPattern      (wbp w, char *name, int len);
-   int  SetPatternBits  (wbp w, int width, word *bits, int nbits);
+   int  setpattern      (wbp w, char *name, int len);
+   int  setpatternbits  (wbp w, int width, word *bits, int nbits);
    int  allowresize     (wbp w, int on);
    int  blimage         (wbp w, int x, int y, int wd, int h,
                           int ch, unsigned char *s, word len);
@@ -273,18 +272,18 @@ void    qevent          (wsp ws, dptr e, int x, int y, uword t, long f, int krel
    int  setfont         (wbp w, char **s);
    int  setgamma        (wbp w, double gamma);
    int  setgeometry     (wbp w, char *geo);
-   int  setheight       (wbp w, SHORT new_height);
-   int  setminheight    (wbp w, SHORT new_height);
+   int  setheight       (wbp w, int new_height);
+   int  setminheight    (wbp w, int new_height);
    int  seticonicstate  (wbp w, char *s);
    int  seticonlabel    (wbp w, char *val);
    int  seticonpos      (wbp w, char *s);
    int  setimage        (wbp w, char *val);
    int  setleading      (wbp w, int i);
    int  setlinestyle    (wbp w, char *s);
-   int  setlinewidth    (wbp w, LONG linewid);
+   int  setlinewidth    (wbp w, int linewid);
    int  setpointer      (wbp w, char *val);
-   int  setwidth        (wbp w, SHORT new_width);
-   int  setminwidth     (wbp w, SHORT new_width);
+   int  setwidth        (wbp w, int new_width);
+   int  setminwidth     (wbp w, int new_width);
    int  own_selection    (wbp w, char *selection);
    int  request_selection(wbp w, char *selname, char *targetname);
    int  send_selection_response(wbp w, word requestor, char *property, char *target, char *selection, word time, dptr data);
@@ -299,14 +298,12 @@ void    qevent          (wsp ws, dptr e, int x, int y, uword t, long f, int krel
    int  wclose          (wbp w);
    int  wgetq           (wbp w, dptr res, word t);
    wbp  wopen           (wbp parent, char *nm, struct b_list *hp, dptr attr, int n, int *e);
-#ifndef MSWindows
    void wflush          (wbp w);
    void wsync           (wbp w);
-#endif                                  /* MSWindows */
    void xdis            (wbp w, char *s, int n);
 
 
-   #ifdef XWindows
+   #if XWindows
       /*
        * Implementation routines specific to X-Windows
        */
@@ -353,7 +350,7 @@ int writeJPEG(wbp w, char *filename, int x, int y, int width, int height);
    #endif                               /* XWindows */
 
 
-   #ifdef MSWindows
+   #if MSWIN32
       /*
        * Implementation routines specific to MS Windows
        */
@@ -389,7 +386,7 @@ int writeJPEG(wbp w, char *filename, int x, int y, int width, int height);
       void drawstrng(wbinding *wb, int x, int y, char *s, int slen);
       void unsetclip(wbp w);
 
-   #endif                               /* MSWindows */
+   #endif                               /* MSWIN32 */
 
 #endif                                  /* Graphics */
 

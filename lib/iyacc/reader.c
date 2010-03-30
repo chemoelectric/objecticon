@@ -631,7 +631,7 @@ bucket *get_literal(void)
 			++cptr;
 		    }
 		}
-		if (n > MAXCHAR) illegal_character(c_cptr);
+		if (n > UCHAR_MAX) illegal_character(c_cptr);
 		c = n;
 	    	break;
 
@@ -647,7 +647,7 @@ bucket *get_literal(void)
 		    if (i < 0 || i >= 16) break;
 		    ++cptr;
 		    n = (n << 4) + i;
-		    if (n > MAXCHAR) illegal_character(c_cptr);
+		    if (n > UCHAR_MAX) illegal_character(c_cptr);
 		}
 		c = n;
 		break;

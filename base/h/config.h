@@ -3,61 +3,6 @@
  */
 
 /*
- * System-specific definitions are in define.h
- */
-
-/*
- *  A number of symbols are defined here.  Some are specific to individual
- *  to operating systems.  Examples are:
- *
- *	MSWIN32		MS-DOS for PCs
- *	UNIX		any UNIX system; also set for BeOS
- *
- *  These are defined to be 1 or 0 depending on which operating system
- *  the installation is being done under.  They are all defined and only
- *  one is defined to be 1.  (They are used in the form #if VAX || MSWIN32.)
- *
- *  There also are definitions of symbols for specific computers and
- *  versions of operating systems.  These include:
- *
- *	SUN		code specific to the Sun Workstation
- *	MICROSOFT	code specific to the Microsoft C compiler for MS-DOS
- *
- *  Other definitions may occur for different configurations. These include:
- *
- *	DeBug		debugging code
- *
- *
- */
-
-/*
- * The following definitions insure that all the symbols for operating
- * systems that are not relevant are defined to be 0 -- so that they
- * can be used in logical expressions in #if directives.
- */
-
-#ifndef PORT
-   #define PORT 0
-#endif					/* PORT */
-
-#ifndef MSWIN32
-   #define MSWIN32 0
-#endif					/* MSWIN32 */
-
-#ifndef UNIX
-   #define UNIX 0
-#endif					/* UNIX */
-
-/*
- * The following definitions serve to cast common conditionals is
- *  a positive way, while allowing defaults for the cases that
- *  occur most frequently.  That is, if co-expressions are not supported,
- *  NoCoexpr is defined in define.h, but if they are supported, no
- *  definition is needed in define.h; nonetheless subsequent conditionals
- *  can be cast as #ifdef Coexpr.
- */
-
-/*
  * Names for standard environment variables.
  * The standard names are used unless they are overridden.
  */
@@ -106,10 +51,10 @@
    #define OLPATH "OLPATH"
 #endif
 
-#ifdef MSWindows
+#if MSWIN32
    #undef Graphics
    #define Graphics 1
-#endif					/* MSWindows */
+#endif					/* MSWIN32 */
 
 #ifdef HAVE_LIBX11
    #define Graphics 1
@@ -161,16 +106,10 @@
 #endif					/* TargetDir */
 
 /*
- * Features enabled by default under certain systems
- */
-
-
-/*
  * Default sizing and such.
  */
 
 #define WordSize sizeof(word)
-#define ShortSize sizeof(short)
 
 /*
  *  The following definitions assume ANSI C.
@@ -219,21 +158,6 @@
 #ifndef AppendText
    #define AppendText "a"
 #endif					/* AppendText */
-
-/*
- * The following code is operating-system dependent [@config.01].
- *  Any configuration stuff that has to be done at this point.
- */
-
-#if PORT
-   /* Probably nothing is needed. */
-Deliberate Syntax Error
-#endif					/* PORT */
-
-
-/*
- * End of operating-system specific code.
- */
 
 #ifndef DiffPtrs
    #define DiffPtrs(p1,p2) (word)((p1)-(p2))

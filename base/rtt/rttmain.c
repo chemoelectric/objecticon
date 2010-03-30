@@ -9,24 +9,8 @@ static void add_tdef (char *name);
 
 char *refpath = 0;
 
-/*
- * The following code is operating-system dependent [@rttmain.02].
- * The relative path to grttin.h and rt.h depends on whether they are
- *  interpreted as relative to where rtt.exe is or where rtt.exe is
- *  invoked.
- */
-
-#if PORT
-   /* something is needed */
-Deliberate Syntax Error
-#endif					/* PORT */
-
 #define GRTTIN_H "grttin.h"
 #define RT_H "rt.h"
-
-/*
- * End of operating-system specific code.
- */
 
 static char *ostr = "EWPD:I:U:cir:st:h:";
 

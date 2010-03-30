@@ -27,13 +27,6 @@
 #ifdef Graphics
    #define XKey_Window 0
    #define XKey_Fg 1
-   
-   #ifndef SHORT
-      #define SHORT int
-   #endif				/* SHORT */
-   #ifndef LONG
-      #define LONG int
-   #endif				/* LONG */
 #endif					/* Graphics */
 
 /*
@@ -464,7 +457,7 @@
         vararg,\
         0,\
       	(dptr)&Cat(f,_name_desc), \
-      	Cat(Z,f),\
+        (int (*)(struct c_frame *))Cat(Z,f),     \
         sizeof(struct Cat(f,_frame)),\
         ntend,\
         underef};
@@ -481,7 +474,7 @@
         0,\
         0,\
       	(dptr)&Cat(f,_name_desc), \
-   	Cat(O,f),\
+   	(int (*)(struct c_frame *))Cat(O,f),\
         sizeof(struct Cat(f,_frame)),\
         ntend,\
         underef};
@@ -495,7 +488,7 @@
         0,\
         0,\
       	(dptr)&Cat(f,_name_desc), \
-   	Cat(K,f),\
+   	(int (*)(struct c_frame *))Cat(K,f),\
         sizeof(struct Cat(f,_frame)),\
         ntend,\
         0};

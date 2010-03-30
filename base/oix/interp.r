@@ -80,7 +80,7 @@ void tail_invoke_frame(struct frame *f)
         case C_Frame: {
             curr_cf = (struct c_frame *)f;
             Desc_EVValD(curr_cf->proc, E_Pcall, D_Proc);
-            if (!curr_cf->proc->ccode(f)) {
+            if (!curr_cf->proc->ccode(curr_cf)) {
                 ipc = f->failure_label;
                 pop_to(f->parent_sp);
             }

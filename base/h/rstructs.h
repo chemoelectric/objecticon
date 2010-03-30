@@ -119,9 +119,11 @@ struct p_proc {
     struct loc *llocs;	        /*   locations of local names, or null if not available */
 };
 
+struct c_frame;
+
 struct c_proc {
     PROC_BASE
-    int (*ccode)(void *);	        /*   C routines */
+    int (*ccode)(struct c_frame *); /*   C implementation */
     word framesize;             /*   frame struct size */
     word ntend;                 /*   num tended needed */
     word underef;               /*   underef flag */

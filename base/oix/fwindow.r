@@ -1241,7 +1241,7 @@ function graphics_Window_pattern(self, s)
    body {
       GetSelfW();
 
-      switch (SetPattern(self_w, StrLoc(s), StrLen(s))) {
+      switch (setpattern(self_w, StrLoc(s), StrLen(s))) {
           case Error:
               runerr(0, s);
           case Failed:

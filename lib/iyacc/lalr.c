@@ -181,7 +181,7 @@ void set_goto_map(void)
 
 	  if (ISTOKEN(symbol)) break;
 
-	  if (ngotos == MAXSHORT)
+	  if (ngotos == SHRT_MAX)
 	    fatal("too many gotos");
 
 	  ngotos++;

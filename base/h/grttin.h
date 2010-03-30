@@ -159,9 +159,8 @@ typedef int siptr, stringint, inst;
    typedef int wbp, wsp, wcp, wdp, wclrp, wfp, wtp;
    typedef int wbinding, wstate, wcontext, wfont;
    typedef int XRectangle, XPoint, XSegment, XArc, SysColor, LinearColor;
-   typedef int LONG, SHORT;
 
-   #ifdef XWindows
+   #if XWindows
       typedef int Atom, Time, XSelectionEvent, XErrorEvent, XErrorHandler;
       typedef int XGCValues, XColor, XFontStruct, XWindowAttributes, XEvent;
       typedef int XExposeEvent, XKeyEvent, XButtonEvent, XConfigureEvent;
@@ -173,7 +172,7 @@ typedef int siptr, stringint, inst;
       typedef int Cardinal,String,XtResource,XtPointer;
    #endif				/* XWindows */
       
-   #ifdef MSWindows
+   #if MSWIN32
       typedef int clock_t, jmp_buf, MINMAXINFO, OSVERSIONINFO, BOOL_CALLBACK;
       typedef int int_PASCAL, LRESULT_CALLBACK, MSG, BYTE, WORD, DWORD;
       typedef int HINSTANCE, HGLOBAL, HPEN, HBRUSH, HRGN;
@@ -185,7 +184,7 @@ typedef int siptr, stringint, inst;
       typedef int MCI_OPEN_PARMS, MCI_STATUS_PARMS, MCI_SEQ_SET_PARMS;
       typedef int CHOOSEFONT, CHOOSECOLOR, OPENFILENAME, HMENU, LPBITMAPINFO;
       typedef int childcontrol, CPINFO, BITMAPINFO, BITMAPINFOHEADER, RGBQUAD;
-   #endif				/* MSWindows */
+   #endif				/* MSWIN32 */
 
    /*
     * Convenience macros to make up for RTL's long-windedness.

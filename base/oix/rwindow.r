@@ -12,11 +12,11 @@ static	int	setpos          (wbp w, char *s);
 
 int canvas_serial, context_serial;
 
-#ifdef MSWindows
+#if MSWIN32
 extern wclrp scp;
 extern HPALETTE palette;
 extern int numColors;
-#endif					/* MSWindows */
+#endif					/* MSWIN32 */
 
 
 int wgetevent2(wbp w, dptr res, word timeout)
@@ -30,7 +30,7 @@ int wgetevent2(wbp w, dptr res, word timeout)
     if (wstates != NULL && wstates->next != NULL		/* if multiple windows*/
         && (ListBlk(w->window->listp).size == 0)) {	/* & queue is empty */
         while (ListBlk(w->window->listp).size == 0) {
-#ifdef XWindows
+#if XWindows
             if (ISCLOSED(w)) {
                 return -1;
 	    }
@@ -39,9 +39,9 @@ int wgetevent2(wbp w, dptr res, word timeout)
 #if UNIX
             idelay(XICONSLEEP);
 #endif					/* UNIX */
-#ifdef MSWindows
+#if MSWIN32
             Sleep(20);
-#endif					/* MSWindows */
+#endif					/* MSWIN32 */
         }
     }
 
@@ -262,7 +262,7 @@ int setsize(wbp w, char *s)
  */
 int setminsize(wbp w, char *s)
 {
-    SHORT width, height;
+    int width, height;
     if (isdigit((unsigned char)*s)) {
         if ((width = atoi(s)) <= 0) return Error;
         while (isdigit((unsigned char)*++s));
@@ -912,11 +912,11 @@ static int gfread(char *filename, int p)
     if (!(gf_paltbl=malloc(256 * sizeof(struct palentry))))
         return Failed;
 
-#ifdef MSWindows
+#if MSWIN32
     if ((gf_f = fopen(filename, "rb")) == NULL)
-#else					/* MSWindows */
+#else					/* MSWIN32 */
         if ((gf_f = fopen(filename, "r")) == NULL)
-#endif					/* MSWindows */
+#endif					/* MSWIN32 */
             return Failed;
 
     for (i = 0; i < 256; i++)		/* init palette table */
@@ -1291,11 +1291,11 @@ static int jpegread(char *filename, int p)
     int i,j;
     gf_f = NULL;
 
-#ifdef MSWindows
+#if MSWIN32
     if ((gf_f = fopen(filename, "rb")) == NULL)
-#else					/* MSWindows */
+#else					/* MSWIN32 */
         if ((gf_f = fopen(filename, "r")) == NULL)
-#endif					/* MSWindows */
+#endif					/* MSWIN32 */
             return Failed;
 
     cinfo.err = jpeg_std_error(&jerr.pub);
@@ -2361,7 +2361,7 @@ int parsepattern(char *s, int len, int *width, int *nbits, word *bits)
  * Returns:
  *  0 on bad value, 1 if size is set, 2 if position is set, 3 if both are set
  */
-int parsegeometry(char *buf, SHORT *x, SHORT *y, SHORT *width, SHORT *height)
+int parsegeometry(char *buf, int *x, int *y, int *width, int *height)
 {
     int retval = 0;
     if (isdigit((unsigned char)*buf)) {
@@ -2410,7 +2410,7 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
     word tmp;
     long lenattr, lenval;
     double gamma;
-    SHORT new_height, new_width;
+    int new_height, new_width;
     wsp ws = w->window;
     wcp wc = w->context;
     int toolong = 0;
@@ -2542,7 +2542,7 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
                 break;
             }
             case A_PATTERN: {
-                AttemptAttr(SetPattern(w, val, strlen(val)));
+                AttemptAttr(setpattern(w, val, strlen(val)));
                 break;
             }
             case A_POS: {
