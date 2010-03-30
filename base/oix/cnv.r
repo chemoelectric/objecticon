@@ -1053,6 +1053,7 @@ static double dblZero = 0.0;
 void rtos(double n, dptr dp, char *s)
    {
    char *p;
+
    s++; 				/* leave room for leading zero */
    sprintf(s, "%.*g", Precision, n + dblZero);   /* format, avoiding -0 */
 

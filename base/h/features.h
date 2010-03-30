@@ -26,9 +26,13 @@
    Feature("_PORT", "PORT")
 #endif					/* PORT */
 
+#if PLAN9
+   Feature("_PLAN9", "PLAN9")
+#endif
+
 #if UNIX
    Feature("_UNIX", "UNIX")
-#endif					/* VM */
+#endif
 
    Feature("_POSIX", "POSIX")
    Feature("_ASCII", "ASCII")

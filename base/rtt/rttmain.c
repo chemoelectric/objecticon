@@ -194,7 +194,9 @@ int main(argc, argv)
         optind++;
     }
 
-
+#if PLAN9
+    exits(0);
+#endif
     return EXIT_SUCCESS;
 }
 

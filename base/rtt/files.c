@@ -17,7 +17,7 @@ Deliberate Syntax Error
 #define IsRelPath(fname) (fname[0] != '/')
 #endif					/* MSWIN32 */
 
-#if UNIX
+#if UNIX || PLAN9
 #define IsRelPath(fname) (fname[0] != '/')
 #endif	
 

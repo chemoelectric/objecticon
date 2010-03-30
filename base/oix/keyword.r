@@ -9,14 +9,23 @@
 "&clock - a string consisting of the current time of day"
 keyword clock
    body {
+      char sbuf[9], *tmp;
+#if PLAN9
+      long t;
+      struct Tm *ct;
+
+      time(&t);
+      ct = localtime(t);
+      sprintf(sbuf,"%02d:%02d:%02d", ct->hour, ct->min, ct->sec);
+#else
       time_t t;
       struct tm *ct;
-      char sbuf[9], *tmp;
 
       time(&t);
       ct = localtime(&t);
       sprintf(sbuf,"%02d:%02d:%02d", ct->tm_hour, ct->tm_min, ct->tm_sec);
-      MemProtect(tmp = alcstr(sbuf,(word)8));
+#endif
+      MemProtect(tmp = alcstr(sbuf, 8));
       return string(8, tmp);
       }
 end
@@ -31,15 +40,25 @@ end
 "&date - the current date"
 keyword date
    body {
+      char sbuf[11], *tmp;
+#if PLAN9
+      long t;
+      struct Tm *ct;
+
+      time(&t);
+      ct = localtime(t);
+      sprintf(sbuf, "%04d/%02d/%02d",
+         1900 + ct->year, ct->mon + 1, ct->mday);
+#else
       time_t t;
       struct tm *ct;
-      char sbuf[11], *tmp;
 
       time(&t);
       ct = localtime(&t);
       sprintf(sbuf, "%04d/%02d/%02d",
          1900 + ct->tm_year, ct->tm_mon + 1, ct->tm_mday);
-      MemProtect(tmp = alcstr(sbuf,(word)10));
+#endif
+      MemProtect(tmp = alcstr(sbuf, 10));
       return string(10, tmp);
       }
 end
@@ -55,12 +74,32 @@ keyword dateline
          "January", "February", "March", "April", "May", "June",
          "July", "August", "September", "October", "November", "December"
          };
-      time_t t;
-      struct tm *ct;
+      tended struct descrip result;
       char sbuf[256];
       int hour;
-      char *merid, *tmp;
-      int i;
+      char *merid;
+#if PLAN9
+      long t;
+      struct Tm *ct;
+
+      time(&t);
+      ct = localtime(t);
+      if ((hour = ct->hour) >= 12) {
+         merid = "pm";
+         if (hour > 12)
+            hour -= 12;
+         }
+      else {
+         merid = "am";
+         if (hour < 1)
+            hour += 12;
+         }
+      sprintf(sbuf, "%s, %s %d, %d  %d:%02d %s", day[ct->wday],
+         month[ct->mon], ct->mday, 1900 + ct->year, hour,
+         ct->min, merid);
+#else
+      time_t t;
+      struct tm *ct;
 
       time(&t);
       ct = localtime(&t);
@@ -77,9 +116,9 @@ keyword dateline
       sprintf(sbuf, "%s, %s %d, %d  %d:%02d %s", day[ct->tm_wday],
          month[ct->tm_mon], ct->tm_mday, 1900 + ct->tm_year, hour,
          ct->tm_min, merid);
-       i = strlen(sbuf);
-       MemProtect(tmp = alcstr(sbuf, i));
-       return string(i, tmp);
+#endif
+       cstr2string(sbuf, &result);
+       return result;
        }
 end
 

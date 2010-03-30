@@ -183,9 +183,6 @@ static void trans1(char *filename)
     incol = 0;
     peekc = 0;                  /* clear character lookahead */
 
-    if (!ppinit(filename, m4pre))
-        quit("cannot open %s",filename);
-
     if (strcmp(filename,"-") == 0) {
         filename = stdin_string;
     }
@@ -194,13 +191,16 @@ static void trans1(char *filename)
 
     report("%s:", filename);
 
-    if (pponly) {
-        ppecho();
+    if (neweronly && !newer_than(filename, outname)) {
+        report("  up-to-date");
         return;
     }
 
-    if (neweronly && !newer_than(filename, outname)) {
-        report("  up-to-date");
+    if (!ppinit(filename, m4pre))
+        quit("cannot open %s",filename);
+
+    if (pponly) {
+        ppecho();
         return;
     }
 

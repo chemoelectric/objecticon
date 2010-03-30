@@ -13,18 +13,60 @@
    #include <stdio.h>
    typedef unsigned int size_t;
    typedef unsigned long time_t;
+   typedef unsigned long mode_t;
+   typedef vlong off_t;
    #define EXIT_FAILURE 1
    #define EXIT_SUCCESS 0
    #define F_OK 0
    #define R_OK 4
    #define W_OK 2
    #define X_OK 1
+   #define ERANGE 100
+   #define EDOM   101
+   #define O_RDONLY 0
+   #define O_WRONLY 1
+   #define O_RDWR   2
+   #define O_ACCMODE       0x003
+   #define O_NONBLOCK      0x004
+   #define O_APPEND        0x008
+   #define O_CREAT         0x100
+   #define O_TRUNC         0x200
+   #define O_EXCL          0x400
+   #define O_NOCTTY        0x800
+   #define O_DSYNC         0x1000
+   #define O_RSYNC         0x2000
+   #define O_SYNC          0x4000
+
+   #define PF_INET 0
+   #define AF_INET 0
+   #define SOCK_STREAM 0
+
+   extern int errno;
+   struct timeval {
+      long    tv_sec;
+      long    tv_usec;
+   };
+   struct timezone {
+      int tz_minuteswest;     /* minutes west of Greenwich */
+      int tz_dsttime;         /* type of DST correction */
+   };
+   int system(const char *command);
    char *getcwd(char *buf, size_t size);
+   int mkdir(const char *path, mode_t mode);
+   int rmdir(const char *path);
+   int gethostname(char *name, size_t len);
+   int setenv(const char *name, const char *value, int overwrite);
+   int unsetenv(const char *name);
+   off_t lseek(int fd, off_t offset, int whence);
+   int dup2(int oldfd, int newfd);
    void exit(int status);
+   int mkstemp(char *template);
    void *bsearch(const void *key, const void *base,
                      size_t nmemb, size_t size,
                      int (*compar)(const void *, const void *));
+   int gettimeofday(struct timeval *tv, struct timezone *tz);
    int execv(const char *path, char *const argv[]);
+   int execve(const char *path, char *const argv[], char *const envp[]);
    int rename(const char *old, const char *new);
    int unlink(const char *path);
 #else
@@ -78,6 +120,9 @@
    #define unsetenv(a) SetEnvironmentVariable(a,"")
    #ifndef vsnprintf
       #define vsnprintf(a,b,c,d) vsprintf(a,c,d)
+   #endif
+   #ifndef mkstemp
+       #define mkstemp mktemp
    #endif
    #define ftruncate _chsize
    #define lstat stat

@@ -1029,7 +1029,7 @@ void interp()
 
             case Op_Custom: {
                 word w = GetWord;
-                void (*ccode)() = (void (*)())w;
+                void (*ccode)(void) = (void (*)(void))w;
 	        ccode();
                 break;
             }

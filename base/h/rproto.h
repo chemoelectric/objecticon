@@ -497,9 +497,7 @@ void cset_to_str(struct b_cset *b, word pos, word len, dptr res);
 struct b_ucs *make_ucs_substring(struct b_ucs *b, word pos, word len);
 int cset_range_of_pos(struct b_cset *b, word pos);
 int need_ucs(dptr s);
-
-int iselect(int fd, word t);
-long    millisec        (void);
+long millisec(void);
 
 /* Debug func. */
 void show_regions(void);
@@ -515,7 +513,7 @@ void interp(void);
 dptr get_dptr(void);
 void get_deref(dptr dest);
 void get_variable(dptr dest);
-void skip_descrip();
+void skip_descrip(void);
 void pop_to(struct frame *f);
 void do_apply(void);
 void do_invoke(void);

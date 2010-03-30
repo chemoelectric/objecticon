@@ -3,39 +3,13 @@
  * Routines needed for different systems.
  */
 
-/*  IMPORTANT NOTE:  Because of the way RTL works, this file should not
- *  contain any includes of system files, as in
- *
- *	include <foo>
- *
- *  Instead, such includes should be placed in h/sys.h.
- */
-
-/*
- * The following code is operating-system dependent [@rlocal.01].
- *  Routines needed by different systems.
- */
-
-#if PORT
-   /* place for anything system-specific */
-Deliberate Syntax Error
-#endif					/* PORT */
-
-
-
-/*********************************** MSWIN32 ***********************************/
-
-#if MSWIN32
+#if MSWIN32 || PLAN9
 
 int getch()  { return -1; }
 int getche() { return -1; }
 int kbhit()  { return 0; }
 
 #endif					/* MSWIN32 */
-
-
-
-/*********************************** UNIX ***********************************/
 
 #if UNIX
 

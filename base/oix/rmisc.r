@@ -1731,6 +1731,11 @@ stringint *stringint_lookup(stringint *sip, char *s)
  */
 void errno2why()
 {
+#if PLAN9
+    static char buff[ERRMAX];
+    rerrstr(buff, sizeof(buff));
+    why(buff);
+#else
     char *msg = 0;
     char buff[32];
     int len;
@@ -1752,6 +1757,7 @@ void errno2why()
     StrLen(kywd_why) = len;
     alcstr(msg, strlen(msg));
     alcstr(buff, strlen(buff));
+#endif
 }
 
 /*

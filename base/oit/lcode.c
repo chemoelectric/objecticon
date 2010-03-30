@@ -2104,8 +2104,7 @@ static void writescript()
    fputs("\n" IcodeDelim "\n", outfile);
    scriptsize += strlen("\n" IcodeDelim "\n");
    fclose(f);
-#endif					/* MSWIN32 */
-#if UNIX
+#elif UNIX
     char script[2048];
     /*
      *  Generate a shell header that searches for iconx in this order:
@@ -2136,7 +2135,16 @@ static void writescript()
     /* write header */
     if (fwrite(script, scriptsize, 1, outfile) != 1)
         quit("cannot write header to icode file");
-#endif					/* UNIX */
+#elif PLAN9
+    char script[2048];
+    sprintf(script, "#!/bin/rc\n"
+		"exec oix $0 $*\n"
+                IcodeDelim "\n");
+    scriptsize = strlen(script);
+    /* write header */
+    if (fwrite(script, scriptsize, 1, outfile) != 1)
+        quit("cannot write header to icode file");
+#endif
 }
 
 

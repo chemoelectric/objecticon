@@ -55,7 +55,7 @@ void		  ptout	    (struct token * x);
 void	push_cntxt	(int lvl_incr);
 void           push_lvl  (void);
 void           defout    (struct node *n);
-void           spcl_dcls ();
+void           spcl_dcls (void);
 void           strt_def  (void);
 void           sv_prmloc (struct parminfo *parminfo);
 struct sym_entry *sym_add  (int tok_id, char *image, int id_type, int nest_lvl);

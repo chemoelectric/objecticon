@@ -280,8 +280,13 @@ int bigtoreal(dptr da, double *d)
         r = -r;
 
     /* Check for inf */
+#if PLAN9
+    if (isInf(r,1) || isInf(r,-1))
+        return CvtFail;
+#else
     if (r > DBL_MAX || r < -DBL_MAX)
         return CvtFail;
+#endif
 
     *d = r;
     return Succeeded;
@@ -306,8 +311,13 @@ int realtobig(dptr da, dptr dx)
     /* Try to catch the case of x being +/-"inf" - these values produce a spurious value of
      * blen below, which causes a segfault.
      */
+#if PLAN9
+    if (isInf(x,1) || isInf(x,-1))
+        return CvtFail;
+#else
     if (x > DBL_MAX || x < -DBL_MAX)
         return CvtFail;
+#endif
 
     if (x > 0.9999 * MinWord && x < 0.9999 * MaxWord) {
         MakeInt((word)x, dx);

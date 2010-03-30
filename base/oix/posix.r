@@ -191,7 +191,7 @@ function posix_System_wait(pid, options)
       tended struct descrip result;
       char retval[64];
       int status = 0, wpid;
-#if !MSWIN32
+#if UNIX
 #if defined(BSD) || defined(Linux) || defined(BSD_4_4_LITE)
       struct rusage rusage;
       if ((wpid = wait4(pid, &status, options, &rusage)) < 0) {
@@ -238,14 +238,24 @@ function posix_System_wait(pid, options)
 #endif
 	 strcat(retval, ":core");
 
-#else					/* MSWIN32 */
+#elif PLAN9
+      for (;;) {
+          int x = waitpid();
+          if (x == pid)
+              break;
+      }
+      sprintf(retval, "%d terminated", pid);
+
+#elif MSWIN32
       int termstat;
       if ((wpid = _cwait(&termstat, pid, options)) < 0) {
 	 errno2why();
 	 fail;
 	 }
       sprintf(retval, "%d terminated:%d", wpid, termstat);
-#endif					/* MSWIN32 */
+#else
+      Unsupported;
+#endif
 
       cstr2string(retval, &result);
       return result;

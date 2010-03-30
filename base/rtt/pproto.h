@@ -1,6 +1,6 @@
 void            addrmlst     (char *fname, FILE *f);
 void		markrmlst    (FILE *closefile);
-int		rmlst_empty_p ();
+int		rmlst_empty_p (void);
 void            advance_tok  (struct token **tp);
 int                chk_eq_sign  (void);
 long               conditional  (struct token **tp, struct token *trigger);
@@ -61,4 +61,4 @@ int                rt_state     (int tok_id);
 void            show_usage   (void);
 void            source       (char *fname);
 void            str_src      (char *src_name, char *s, int len);
-struct token      *tokenize     (void);
+struct token      *rtt_tokenize     (void);

@@ -1487,7 +1487,12 @@ function io_FileStream_open_impl(path, flags, mode)
    body {
        int fd;
 
-#if MSWIN32
+#if PLAN9
+       if (flags & O_CREAT)
+          fd = create(path, flags, mode);
+       else
+          fd = open(path, flags);
+#elif MSWIN32
        fd = open(path, flags | O_BINARY, mode);
 #else
        fd = open(path, flags, mode);
@@ -1575,6 +1580,9 @@ function io_FileStream_truncate(self, len)
    if !cnv:integer(len) then
       runerr(101, len)
    body {
+#if PLAN9
+       Unsupported;
+#else
        off_t c_len;
        GetSelfFd();
 
@@ -1591,6 +1599,7 @@ function io_FileStream_truncate(self, len)
            fail;
        }
        return nulldesc;
+#endif
    }
 end
 
@@ -1685,6 +1694,9 @@ function io_SocketStream_in(self, i)
    if !cnv:C_integer(i) then
       runerr(101, i)
    body {
+#if PLAN9
+       Unsupported;
+#else
        int nread;
        tended struct descrip s;
        GetSelfFd();
@@ -1723,6 +1735,7 @@ function io_SocketStream_in(self, i)
        dealcstr(StrLoc(s) + nread);
 
        return s;
+#endif
    }
 end
 
@@ -1734,6 +1747,9 @@ function io_SocketStream_socket_impl(domain, typ)
       runerr(101, typ)
 
    body {
+#if PLAN9
+       Unsupported;
+#else
        int sockfd;
        sockfd = socket(domain, typ, 0);
        if (sockfd < 0) {
@@ -1741,6 +1757,7 @@ function io_SocketStream_socket_impl(domain, typ)
            fail;
        }
        return C_integer sockfd;
+#endif
    }
 end
 
@@ -1748,6 +1765,9 @@ function io_SocketStream_out(self, s)
    if !cnv:string(s) then
       runerr(103, s)
    body {
+#if PLAN9
+       Unsupported;
+#else
        int rc;
        GetSelfFd();
        /* 
@@ -1764,11 +1784,15 @@ function io_SocketStream_out(self, s)
            fail;
        }
        return C_integer rc;
+#endif
    }
 end
 
 function io_SocketStream_close(self)
    body {
+#if PLAN9
+       Unsupported;
+#else
        GetSelfFd();
        if (close(self_fd) < 0) {
            errno2why();
@@ -1776,6 +1800,7 @@ function io_SocketStream_close(self)
        }
        *self_fd_dptr = minusonedesc;
        return nulldesc;
+#endif
    }
 end
 
@@ -1811,6 +1836,9 @@ end
 
 struct sockaddr *parse_sockaddr(char *s, int *len)
 {
+#if PLAN9
+    return 0;
+#else
 #if UNIX
     if (strncmp(s, "unix:", 5) == 0) {
         static struct sockaddr_un us;
@@ -1866,12 +1894,16 @@ struct sockaddr *parse_sockaddr(char *s, int *len)
 
     LitWhy("Bad socket address format");
     return 0;
+#endif
 }
 
 function io_SocketStream_connect(self, addr)
    if !cnv:C_string(addr) then
       runerr(103, addr)
    body {
+#if PLAN9
+       Unsupported;
+#else
        struct sockaddr *sa;
        int len;
        GetSelfFd();
@@ -1888,6 +1920,7 @@ function io_SocketStream_connect(self, addr)
        }
 
        return nulldesc;
+#endif
    }
 end
 
@@ -1895,6 +1928,9 @@ function io_SocketStream_bind(self, addr)
    if !cnv:C_string(addr) then
       runerr(103, addr)
    body {
+#if PLAN9
+       Unsupported;
+#else
        struct sockaddr *sa;
        int len;
        GetSelfFd();
@@ -1911,6 +1947,7 @@ function io_SocketStream_bind(self, addr)
        }
 
        return nulldesc;
+#endif
    }
 end
 
@@ -1919,17 +1956,24 @@ function io_SocketStream_listen(self, backlog)
       runerr(101, backlog)
 
    body {
+#if PLAN9
+       Unsupported;
+#else
        GetSelfFd();
        if (listen(self_fd, backlog) < 0) {
            errno2why();
            fail;
        }
        return nulldesc;
+#endif
    }
 end
 
 function io_SocketStream_accept_impl(self)
    body {
+#if PLAN9
+       Unsupported;
+#else
        int sockfd;
        GetSelfFd();
 
@@ -1939,6 +1983,7 @@ function io_SocketStream_accept_impl(self)
        }
 
        return C_integer sockfd;
+#endif
    }
 end
 
@@ -1996,6 +2041,9 @@ end
 
 function io_DescStream_stat_impl(self)
    body {
+#if PLAN9
+       Unsupported;
+#else
        struct stat st;
        GetSelfFd();
        if (fstat(self_fd, &st) < 0) {
@@ -2003,11 +2051,15 @@ function io_DescStream_stat_impl(self)
            fail;
        }
        return stat2list(&st);
+#endif
    }
 end
 
 function io_DescStream_select(rl, wl, el, timeout)
     body {
+#if PLAN9
+       Unsupported;
+#else
        fd_set rset, wset, eset;
        struct timeval tv, *ptv;
        tended struct descrip rtmp, wtmp, etmp;
@@ -2050,6 +2102,7 @@ function io_DescStream_select(rl, wl, el, timeout)
        }
 
        return C_integer rc;
+#endif
     }
 end
 
@@ -2135,8 +2188,28 @@ function io_DescStream_flag(self, on, off)
     }
 end
 
+#if PLAN9
+function io_DirStream_open_impl(path)
+   if !cnv:C_string(path) then
+      runerr(103, path)
+   body {
+       Unsupported;
+   }
+end
 
-#if UNIX
+function io_DirStream_read_impl(self)
+   body {
+    fail;
+   }
+end
+
+function io_DirStream_close(self)
+   body {
+       return nulldesc;
+   }
+end
+
+#elif UNIX
 static struct sdescrip ddf = {2, "dd"};
 
 #begdef GetSelfDir()
@@ -2411,6 +2484,22 @@ function io_Files_mkdir(s, mode)
       return nulldesc;
    }
 end
+#elif PLAN9
+function io_Files_mkdir(s, mode)
+   if !cnv:C_string(s) then
+      runerr(103, s)
+
+   if !def:C_integer(mode, 0777) then
+      runerr(101, mode)
+
+   body {
+      if (mkdir(s, mode) < 0) {
+	 errno2why();
+	 fail;
+      }
+      return nulldesc;
+   }
+end
 #else
 function io_Files_mkdir(s, mode)
    if !cnv:C_string(s) then
@@ -2455,7 +2544,9 @@ function io_Files_truncate(s, len)
    if !cnv:C_integer(len) then
       runerr(101, len)
    body {
-#if HAVE_TRUNCATE
+#if PLAN9
+       Unsupported
+#elif HAVE_TRUNCATE
       if (truncate(s, len) < 0) {
           errno2why();
           fail;
@@ -2479,6 +2570,8 @@ function io_Files_truncate(s, len)
    }
 end
 
+#if PLAN9
+#else
 static struct descrip stat2list(struct stat *st)
 {
    tended struct descrip tmp, res;
@@ -2579,17 +2672,22 @@ static struct descrip stat2list(struct stat *st)
 
    return res;
 }
+#endif /* PLAN9 */
 
 function io_Files_stat_impl(s)
    if !cnv:C_string(s) then
       runerr(103,s)
    body {
+#if PLAN9
+       Unsupported;
+#else
       struct stat st;
       if (stat(s, &st) < 0) {
           errno2why();
           fail;
       }
       return stat2list(&st);
+#endif
    }
 end
 
@@ -2597,12 +2695,16 @@ function io_Files_lstat_impl(s)
    if !cnv:C_string(s) then
       runerr(103,s)
    body {
+#if PLAN9
+       Unsupported;
+#else
       struct stat st;
       if (lstat(s, &st) < 0) {
           errno2why();
           fail;
       }
       return stat2list(&st);
+#endif
    }
 end
 
@@ -2622,9 +2724,21 @@ end
 
 function util_Timezone_get_system_timezone()
    body {
+      tended struct descrip tmp, result;
+
+#if PLAN9
+      struct Tm *ct;
+
+      ct = localtime(time(0));
+      create_list(2, &result);
+      MakeInt(ct->tzoff, &tmp);
+      list_put(&result, &tmp);
+      cstr2string(ct->zone, &tmp);
+      list_put(&result, &tmp);
+
+#else
       time_t t;
       struct tm *ct;
-      tended struct descrip tmp, result;
 
       tzset();
       time(&t);
@@ -2656,7 +2770,7 @@ function util_Timezone_get_system_timezone()
       #else
          list_put(&result, &zerodesc);
       #endif
-
+#endif
       return result;
    }
 end

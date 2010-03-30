@@ -999,14 +999,6 @@ void yyerror(char *msg)
     else
         line = Line(yylval);
 
-#if PLAN9
-    if (tok_loc.n_file)
-        fprintf(stderr, "File %s; ", abbreviate(tok_loc.n_file));
-    else {
-        fprintf(stderr, "Line %d # ", line);
-        fprintf(stderr, "%s\n", msg);
-    }
-#else
     if (tok_loc.n_file)
         fprintf(stderr, "File %s; ", abbreviate(tok_loc.n_file));
     if (yychar == EOFX)   /* special case end of file */
@@ -1017,7 +1009,7 @@ void yyerror(char *msg)
             fprintf(stderr, "\"%s\": ", mapterm(yychar, yylval));
         fprintf(stderr, "%s\n", msg);
     }
-#endif
+
     tfatals++;
     nocode++;
 }

@@ -141,8 +141,12 @@ void init_macro()
     * __TIME__ and __DATE__ must be initialized to the current time and
     *  date.
     */
+#if PLAN9
+   tval = ctime(time(0));
+#else
    time(&tv);
    tval = ctime(&tv);
+#endif
    date_buf = safe_alloc((unsigned int)12);
    time_buf = safe_alloc((unsigned int)9);
    s = date_buf;
