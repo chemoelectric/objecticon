@@ -86,7 +86,7 @@ void append_states(void)
     register int j;
     register int symbol;
 
-#ifdef	TRACE
+#ifdef	IYACC_TRACE
     fprintf(stderr, "Entering append_states()\n");
 #endif
     for (i = 1; i < nshifts; i++)
@@ -159,7 +159,7 @@ int get_state(int symbol)
     register int found;
     register int n;
 
-#ifdef	TRACE
+#ifdef	IYACC_TRACE
     fprintf(stderr, "Entering get_state(%d)\n", symbol);
 #endif
 
@@ -283,7 +283,7 @@ core *new_state(int symbol)
     register short *isp2;
     register short *iend;
 
-#ifdef	TRACE
+#ifdef	IYACC_TRACE
     fprintf(stderr, "Entering new_state(%d)\n", symbol);
 #endif
 

@@ -17,6 +17,7 @@
 #include <stdarg.h>
 #include <limits.h>
 #include <float.h>
+#include <assert.h>
 
 /*
  * Operating-system-dependent includes.
@@ -55,6 +56,9 @@
    #define unsetenv(a) SetEnvironmentVariable(a,"")
    #ifndef vsnprintf
       #define vsnprintf(a,b,c,d) vsprintf(a,c,d)
+   #endif
+   #ifndef mkstemp
+       #define mkstemp mktemp
    #endif
    #define ftruncate _chsize
    #define lstat stat
