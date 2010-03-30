@@ -2876,6 +2876,10 @@ void drawstrng(wbinding *wb, int x, int y, char *s, int slen)
    return;
    }
 
+void drawutf8(wbp w, int x, int y, char *s, int slen)
+{
+    drawstrng(w, x, y, s, slen);
+}
 
 /*
  * fillarcs
@@ -3790,7 +3794,7 @@ int sysTextWidth(wbp w, char *s, int n)
    return rv;
 }
 
-int textWidth(wbp w, char *s, int n)
+int textwidth(wbp w, char *s, int n)
    {
    int rv;
    wsp ws = w->window;
@@ -3801,6 +3805,11 @@ int textWidth(wbp w, char *s, int n)
    ReleaseDC(ws->iconwin, stddc);
    return rv;
    }
+
+int utf8width(wbp w, char *s, int n)
+{
+    return textwidth(w, s, n);
+}
 
 void warpPointer(w, x, y)
 wbp w;

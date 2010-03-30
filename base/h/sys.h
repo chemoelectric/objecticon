@@ -38,8 +38,6 @@
    typedef struct {
        int x1, y1, x2, y2;
    } XSegment;
-   #define TEXTWIDTH(w,s,n) 0
-   #define UTF8WIDTH(w,s,n) 0
 #define SCREENDEPTH(w) 0
 #define ASCENT(w)  0
 #define DESCENT(w) 0

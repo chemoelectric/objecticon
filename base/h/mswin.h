@@ -20,7 +20,6 @@
 #define DRAWOP_SET			R2_WHITE
 #define DRAWOP_XOR			R2_XORPEN
 
-#define TEXTWIDTH(w,s,n) textWidth(w, s, n)
 #define SCREENDEPTH(w) getdepth(w)
 #define ASCENT(w)  ((w)->context->font->ascent)
 #define DESCENT(w) ((w)->context->font->descent)
@@ -115,9 +114,6 @@
   if (!list_get(&ws->listp,&d)) fatalerr(0,NULL); \
   }
 #define EVQUEEMPTY(w) (BlkLoc((w)->window->listp)->list.size == 0)
-
-#define drawutf8 drawstrng
-#define UTF8WIDTH TEXTWIDTH
 
 #define SHARED          0
 #define MUTABLE         1

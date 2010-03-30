@@ -315,6 +315,8 @@ void  bigrand         (dptr da, dptr dx);
    void drawstrng       (wbp w, int x, int y, char *str, int slen);
    void drawutf8        (wbp w, int x, int y, char *str, int slen);
    int  seticonimage    (wbp w, dptr dp);
+   int  textwidth       (wbp w, char *s, int n);
+   int  utf8width       (wbp w, char *s, int n);
 
    #if XWindows
       /*
@@ -347,10 +349,6 @@ void  bigrand         (dptr da, dptr dx);
       void      wflushall               (void);
       void postcursor(wbp);
       void scrubcursor(wbp);
-#ifdef HAVE_LIBXFT
-      int xft_stringwidth(wbp w, char *s, int n);
-      int xft_utf8width(wbp w, char *s, int n);
-#endif
       char my_wmap(wbp w);
 
    #endif                               /* XWindows */
@@ -379,7 +377,6 @@ void  bigrand         (dptr da, dptr dx);
       int getdepth(wbp w);
       HBITMAP CreateBitmapFromData(char *data);
       int resizePixmap(wbp w, int width, int height);
-      int textWidth(wbp w, char *s, int n);
       int devicecaps(wbp w, int i);
 
    #endif                               /* MSWIN32 */

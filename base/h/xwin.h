@@ -29,13 +29,6 @@
 #define XLFD_Spacing	11
 #define XLFD_CharSet	13
 
-#ifdef HAVE_LIBXFT
-#define TEXTWIDTH(w,s,n) xft_stringwidth(w, s, n)
-#define UTF8WIDTH(w,s,n) xft_utf8width(w, s, n)
-#else
-#define TEXTWIDTH(w,s,n) XTextWidth((w)->context->font->fsp, s, n)
-#define UTF8WIDTH(w,s,n) XTextWidth((w)->context->font->fsp, s, n)
-#endif
 #define FWIDTH(w) ((w)->context->font->maxwidth)
 #define SCREENDEPTH(w)\
 	DefaultDepth((w)->window->display->display, w->window->display->screen)
@@ -101,7 +94,7 @@
 #define RENDER7(func,v1,v2,v3,v4,v5,v6,v7) {\
    if (stdwin) func(stddpy, stdwin, stdgc, v1, v2, v3, v4, v5, v6, v7); \
    func(stddpy, stdpix, stdgc, v1, v2, v3, v4, v5, v6, v7);}
-
+
 
 /*
  * Macros to perform direct window system calls from graphics routines
