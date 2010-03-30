@@ -318,6 +318,10 @@ typedef struct _wstate {
   word		timestamp;		/* last event time stamp */
   char		*cursorname;
   struct descrip listp;		/* icon values for this window */
+#if PLAN9
+  Image         *win;
+  Image         *pix;
+#endif
 #if XWindows
   wdp		display;
   Window	win;			/* X window */

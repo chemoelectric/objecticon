@@ -189,9 +189,12 @@ void  bigrand         (dptr da, dptr dx);
    int  parsefont       (char *s, char *fam, int *sty, int *sz);
    int  parsegeometry   (char *buf, int *x, int *y, int *w, int *h);
    int  parsepattern    (char *s, int len, int *w, int *nbits, word *bits);
-void    qevent          (wsp ws, dptr e, int x, int y, uword t, long f, int krel);
+   void qevent          (wsp ws, dptr e, int x, int y, uword t, long f, int krel);
+   int  wgetevent2      (wbp w, dptr res, word timeout);
    int  readGIF         (char *fname, int p, struct imgdata *d);
+   int  readBMP         (char *filename, int p, struct imgdata *imd);
 #ifdef HAVE_LIBJPEG
+   int  writeJPEG       (wbp w, char *filename, int x, int y, int width, int height);
    int  readJPEG        (char *fname, int p, struct imgdata *d);
 #endif                                  /* HAVE_LIBJPEG */
    int  rectargs        (wbp w, int argc, dptr argv, int i,
@@ -301,13 +304,22 @@ void    qevent          (wsp ws, dptr e, int x, int y, uword t, long f, int krel
    void wflush          (wbp w);
    void wsync           (wbp w);
    void xdis            (wbp w, char *s, int n);
-
+   void unsetclip       (wbp w);
+   void fillarcs        (wbp w, XArc *arcs, int narcs);
+   void drawarcs        (wbp w, XArc *arcs, int narcs);
+   void drawlines       (wbp w, XPoint *points, int npoints);
+   void drawpoints      (wbp w, XPoint *points, int npoints);
+   void drawrectangles  (wbp w, XRectangle *recs, int nrecs);
+   void fillpolygon     (wbp w, XPoint *pts, int npts);
+   void drawsegments    (wbp w, XSegment *segs, int nsegs);
+   void drawstrng       (wbp w, int x, int y, char *str, int slen);
+   void drawutf8        (wbp w, int x, int y, char *str, int slen);
+   int  seticonimage    (wbp w, dptr dp);
 
    #if XWindows
       /*
        * Implementation routines specific to X-Windows
        */
-      void      unsetclip               (wbp w);
       int       resetfg                 (wbp w);
       int       setfgrgb                (wbp w, int r, int g, int b);
       int       setbgrgb                (wbp w, int r, int g, int b);
@@ -317,7 +329,6 @@ void    qevent          (wsp ws, dptr e, int x, int y, uword t, long f, int krel
       int       pixmap_open             (wbp w, dptr attribs, int argc);
       int       pixmap_init             (wbp w);
       int       remap                   (wbp w, int x, int y);
-      int       seticonimage            (wbp w, dptr dp);
       int       translate_key_event     (XKeyEvent *k1, char *s, KeySym *k2);
       wdp       alc_display             (char *s);
       void      free_display            (wdp wd);
@@ -336,12 +347,7 @@ void    qevent          (wsp ws, dptr e, int x, int y, uword t, long f, int krel
       void      wflushall               (void);
       void postcursor(wbp);
       void scrubcursor(wbp);
-int wgetevent2(wbp w, dptr res, word timeout);
-int readBMP(char *filename, int p, struct imgdata *imd);
-int writeJPEG(wbp w, char *filename, int x, int y, int width, int height);
 #ifdef HAVE_LIBXFT
-      void drawstrng(wbp w, int x, int y, char *str, int slen);
-      void drawutf8(wbp w, int x, int y, char *str, int slen);
       int xft_stringwidth(wbp w, char *s, int n);
       int xft_utf8width(wbp w, char *s, int n);
 #endif
@@ -374,17 +380,7 @@ int writeJPEG(wbp w, char *filename, int x, int y, int width, int height);
       HBITMAP CreateBitmapFromData(char *data);
       int resizePixmap(wbp w, int width, int height);
       int textWidth(wbp w, char *s, int n);
-      int       seticonimage            (wbp w, dptr dp);
       int devicecaps(wbp w, int i);
-      void fillarcs(wbp wb, XArc *arcs, int narcs);
-      void drawarcs(wbp wb, XArc *arcs, int narcs);
-      void drawlines(wbinding *wb, XPoint *points, int npoints);
-      void drawpoints(wbinding *wb, XPoint *points, int npoints);
-      void drawrectangles(wbp wb, XRectangle *recs, int nrecs);
-      void fillpolygon(wbp w, XPoint *pts, int npts);
-      void drawsegments(wbinding *wb, XSegment *segs, int nsegs);
-      void drawstrng(wbinding *wb, int x, int y, char *s, int slen);
-      void unsetclip(wbp w);
 
    #endif                               /* MSWIN32 */
 

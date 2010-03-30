@@ -14,4 +14,8 @@
 #include "rmswin.ri"
 #endif  				/* MSWIN32 */
 
+#if PLAN9
+#include "p9win.ri"
+#endif  				/* MSWIN32 */
+
 #endif					/* Graphics */

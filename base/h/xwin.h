@@ -37,7 +37,6 @@
 #define UTF8WIDTH(w,s,n) XTextWidth((w)->context->font->fsp, s, n)
 #endif
 #define FWIDTH(w) ((w)->context->font->maxwidth)
-#define MAXDESCENDER(w) (w->context->font->descent)
 #define SCREENDEPTH(w)\
 	DefaultDepth((w)->window->display->display, w->window->display->screen)
 #define ASCENT(w) ((w)->context->font->ascent)
@@ -51,10 +50,6 @@
 #define FS_SOLID FillSolid
 #define FS_STIPPLE FillStippled
 #define SysColor XColor
-/* 8-bit primary components of a current fg or bg index, used in 3D code */
-#define RED(colrindex) ((w->context->display->colors[colrindex].r)>>8)
-#define GREEN(colrindex) ((w->context->display->colors[colrindex].g)>>8)
-#define BLUE(colrindex) ((w->context->display->colors[colrindex].b)>>8)
 #define ARCWIDTH(arc) ((arc).width)
 #define ARCHEIGHT(arc) ((arc).height)
 #define RECX(rec) ((rec).x)
@@ -63,10 +58,6 @@
 #define RECHEIGHT(rec) ((rec).height)
 #define ANGLE(ang) (-(ang) * 180 / Pi * 64)
 #define EXTENT(ang) (-(ang) * 180 / Pi * 64)
-#define ISICONIC(w) ((w)->window->iconic == IconicState)
-#define ISFULLSCREEN(w) (0)
-#define ISROOTWIN(w) ((w)->window->iconic == RootState)
-#define ISNORMALWINDOW(w) ((w)->window->iconic == NormalState)
 #define ICONFILENAME(w) ((w)->window->iconimage)
 #define ICONLABEL(w) ((w)->window->iconlabel)
 #define WINDOWLABEL(w) ((w)->window->windowlabel)
@@ -127,32 +118,6 @@
    stddpy = wd->display; \
    stdwin  = ws->win; \
    stdpix  = ws->pix;
-
-#define drawarcs(w, arcs, narcs) \
-   { STDLOCALS(w); RENDER2(XDrawArcs,arcs,narcs); }
-#define drawlines(w, points, npoints) \
-   { STDLOCALS(w); RENDER3(XDrawLines,points,npoints,CoordModeOrigin); }
-#define drawpoints(w, points, npoints) \
-   { STDLOCALS(w); RENDER3(XDrawPoints,points,npoints,CoordModeOrigin); }
-#define drawrectangles(w, recs, nrecs) { \
-   int i; \
-   STDLOCALS(w); \
-   for(i=0; i<nrecs; i++) { \
-     RENDER4(XDrawRectangle,recs[i].x,recs[i].y,recs[i].width,recs[i].height);\
-     }}
-
-#define drawsegments(w, segs, nsegs) \
-   { STDLOCALS(w); RENDER2(XDrawSegments,segs,nsegs); }
-#ifndef HAVE_LIBXFT
-#define drawstrng(w, x, y, s, slen) \
-   { STDLOCALS(w); RENDER4(XDrawString, x, y, s, slen); }
-#define drawutf8(w, x, y, s, slen) \
-   { STDLOCALS(w); RENDER4(XDrawString, x, y, s, slen); }
-#endif
-#define fillarcs(w, arcs, narcs) \
-   { STDLOCALS(w); RENDER2(XFillArcs, arcs, narcs); }
-#define fillpolygon(w, points, npoints) \
-   { STDLOCALS(w); RENDER4(XFillPolygon, points, npoints, Complex, CoordModeOrigin); }
 
 /*
  * "get" means remove them from the Icon list and put them on the ghost queue

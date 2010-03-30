@@ -14,7 +14,6 @@
 wcp wcntxts = NULL;
 wsp wstates = NULL;
 wbp wbndngs = NULL;
-int win_highwater = -1;
 
 
 #if XWindows
