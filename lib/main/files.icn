@@ -62,6 +62,8 @@ $ifdef _PLAN9
       l := list_impl(s) | fail
       every e := !l do
          e[2] := Stat!e[2]
+      push(l, ["..", stat(FS.get_path(s).child("..").str())]) | fail
+      push(l, [".", stat(s)]) | fail
       return l
    end
 
