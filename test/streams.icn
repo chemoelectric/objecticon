@@ -110,7 +110,7 @@ $else
 $endif
 
    write("Socket")
-   f := SocketStream.socket()
+   f := SocketStream.socket() | stop(&why)
    do_mode(f)
    f.close()
 
