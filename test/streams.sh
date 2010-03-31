@@ -6,7 +6,7 @@ echo a >testdir/one
 echo a >testdir/two
 echo a >testdir/three
 oit -s streams.icn utils.icn
-./streams >streams.out
+./streams >streams.out 2>&1
 rm -rf testdir
 set -e
 cmp streams.out streams.std
