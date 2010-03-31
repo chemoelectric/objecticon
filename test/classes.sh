@@ -4,7 +4,7 @@
 rm -f packages.txt
 oit -s -c classes_packtest?.icn
 oit -l 2 -s classes.icn utils.icn
-./classes >classes.out
+./classes >classes.out 2>&1
 rm -f classes classes_packtest?.u
 set -e
 cmp classes.out classes.std

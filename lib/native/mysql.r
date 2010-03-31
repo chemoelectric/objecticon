@@ -1,7 +1,7 @@
 #passthru #undef column
 #passthru #include "mysql.h"
 
-static struct descrip field_to_list(MYSQL_FIELD *field);
+static void field_to_list(MYSQL_FIELD *field, dptr res);
 
 static struct sdescrip ptrf = {3, "ptr"};
 
@@ -691,6 +691,7 @@ end
 
 function mysql_MySqlRes_fetch_field_impl(self)
    body {
+       tended struct descrip result;
        MYSQL_FIELD *field;
        GetSelfMySqlRes();
        field = mysql_fetch_field(self_mysql_res);
@@ -698,45 +699,45 @@ function mysql_MySqlRes_fetch_field_impl(self)
            why("No more fields");
            fail;
        }
-       return field_to_list(field);
+       field_to_list(field, &result);
+       return result;
    }
 end
 
 /* def is a reserved word in rtl */
 #passthru #define _DEF def
 
-static struct descrip field_to_list(MYSQL_FIELD *field) {
-   tended struct descrip tmp, res;
+static void field_to_list(MYSQL_FIELD *field, dptr result) {
+   tended struct descrip tmp;
 
-   create_list(10, &res);
+   create_list(10, result);
    cstr2string(field->name, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
    cstr2string(field->table, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
    cstr2string(field->org_table, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
    cstr2string(field->db, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
    cstr2string(field->_DEF, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
    MakeInt(field->length, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
    MakeInt(field->max_length, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
    MakeInt(field->flags, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
    MakeInt(field->decimals, &tmp);
-   list_put(&res, &tmp);
+   list_put(result, &tmp);
    MakeInt(field->type, &tmp);
-   list_put(&res, &tmp);
-
-   return res;
+   list_put(result, &tmp);
 }
 
 function mysql_MySqlRes_fetch_field_direct_impl(self, fieldnr)
    if !cnv:C_integer(fieldnr) then
        runerr(101, fieldnr)
    body {
+       tended struct descrip result;
        MYSQL_FIELD *field;
        GetSelfMySqlRes();
        field = mysql_fetch_field_direct(self_mysql_res, fieldnr);
@@ -744,7 +745,8 @@ function mysql_MySqlRes_fetch_field_direct_impl(self, fieldnr)
            why("No more fields");
            fail;
        }
-       return field_to_list(field);
+       field_to_list(field, &result);
+       return result;
    }
 end
 
@@ -764,7 +766,8 @@ function mysql_MySqlRes_fetch_fields_impl(self)
        n = mysql_num_fields(self_mysql_res);
        create_list(n, &result);
        for (i = 0; i < n; ++i) {
-           tended struct descrip tmp = field_to_list(&fields[i]);
+           tended struct descrip tmp;
+           field_to_list(&fields[i], &tmp);
            list_put(&result, &tmp);
        }
        return result;
