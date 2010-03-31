@@ -220,7 +220,12 @@ void setexe(char *fname)
             chmod(fname,m);		 /* change file mode */
         }
     }
-#endif					/* UNIX */
+#elif PLAN9
+    struct Dir st;
+    nulldir(&st);
+    st.mode = 0755;
+    dirwstat(fname, &st);
+#endif
 
 /*
  * End of operating-system specific code.
