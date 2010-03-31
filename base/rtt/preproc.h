@@ -1,7 +1,8 @@
 #include "../h/gsupport.h"
 #if PLAN9
-/* avoid clash of line() func. in draw */
+/* avoid name clashes */
 #define line oi_line
+#define tokenize oi_tokenize
 #endif
 
 

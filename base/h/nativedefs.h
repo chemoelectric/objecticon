@@ -84,6 +84,9 @@ NativeDef(io.FileStream,truncate,io_FileStream_truncate)
 NativeDef(io.FileStream,chdir,io_FileStream_chdir)
 NativeDef(io.Files,access,io_Files_access)
 NativeDef(io.Files,hardlink,io_Files_hardlink)
+#if PLAN9
+NativeDef(io.Files,list_impl,io_Files_list_impl)
+#endif
 NativeDef(io.Files,lstat_impl,io_Files_lstat_impl)
 NativeDef(io.Files,mkdir,io_Files_mkdir)
 NativeDef(io.Files,rmdir,io_Files_rmdir)

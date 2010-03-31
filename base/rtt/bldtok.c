@@ -319,7 +319,7 @@ struct char_src *cs;
  * tokenize - return the next token from the character source on the top
  *  of the source stack.
  */
-struct token *rtt_tokenize()
+struct token *tokenize()
    {
    struct char_src *cs;
    struct token *t1, *t2;
@@ -383,7 +383,7 @@ struct token *rtt_tokenize()
             /*
              * Tokenize the identifier following the #
              */
-            t1 = rtt_tokenize();
+            t1 = tokenize();
             if ((tok_id = pp_tok_id(t1->image)) == Invalid) {
                /*
                 * We have a stringizing operation, not a preprocessing

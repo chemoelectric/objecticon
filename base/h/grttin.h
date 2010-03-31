@@ -298,19 +298,3 @@ typedef int siptr, stringint, inst;
       free(var);
    } while(0)
 #enddef				/* GRFX_UNLINK */
-
-#define CustomProc(f,code,nparam,ndynam,nclo,ntmp,nlab,nmark,sname)\
-    static struct sdescrip Cat(f,_name_desc) = {sizeof(sname) - 1, sname};\
-    struct p_proc Cat(B,f) = {\
-   	T_Proc,\
-        P_Proc,\
-   	nparam,\
-   	0,\
-   	0,\
-      	(dptr)&Cat(f,_name_desc), \
-        code,\
-   	ndynam,\
-        0,0,0,\
-        nclo,ntmp,nlab,nmark,\
-        0,0,0};
-   

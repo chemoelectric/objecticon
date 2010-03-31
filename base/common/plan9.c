@@ -169,7 +169,10 @@ int execve(const char *path, char *const argv[], char *const envp[])
 
 int rename(const char *old, const char *new)
 {
-    return 0;
+    struct Dir st;
+    nulldir(&st);
+    st.name = new;
+    return dirwstat(old, &st);
 }
 
 int unlink(const char *path)

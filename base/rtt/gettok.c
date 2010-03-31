@@ -34,7 +34,7 @@ struct token *next_tok()
          /*
           * Tokens from a raw character "stream".
           */
-         t = rtt_tokenize();
+         t = tokenize();
          if (t != NULL && src_stack->u.cs->f != NULL)
             t->flag |= LineChk;
          if (t != NULL && t->tok_id == PpLine) {

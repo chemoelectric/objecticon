@@ -61,4 +61,4 @@ int                rt_state     (int tok_id);
 void            show_usage   (void);
 void            source       (char *fname);
 void            str_src      (char *src_name, char *s, int len);
-struct token      *rtt_tokenize     (void);
+struct token      *tokenize     (void);

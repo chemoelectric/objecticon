@@ -1497,10 +1497,15 @@ function io_FileStream_open_impl(path, flags, mode)
        int fd;
 
 #if PLAN9
-       if (flags & O_CREAT)
-          fd = create(path, flags, mode);
-       else
-          fd = open(path, flags);
+       word flags2 = flags & ~(O_CREAT|O_APPEND);
+       if ((flags & O_CREAT) && access(path, 0) != 0)
+          fd = create(path, flags2 , mode);
+       else if (flags & O_APPEND) {
+          fd = open(path, flags2);
+          if (fd >= 0)
+              seek(fd, 0, SEEK_END);
+       } else
+          fd = open(path, flags2);
 #elif MSWIN32
        fd = open(path, flags | O_BINARY, mode);
 #else
@@ -2206,29 +2211,100 @@ function io_DescStream_flag(self, on, off)
     }
 end
 
+static struct sdescrip ddf = {2, "dd"};
+
 #if PLAN9
+
+struct DirData {
+   int fd, special;
+   struct Dir *st;
+   long pos, n;
+};
+#begdef GetSelfDir()
+struct DirData *self_dir;
+dptr self_dir_dptr;
+static struct inline_field_cache self_dir_ic;
+self_dir_dptr = c_get_instance_data(&self, (dptr)&ddf, &self_dir_ic);
+if (!self_dir_dptr)
+    syserr("Missing dd field");
+self_dir = (struct DirData*)IntVal(*self_dir_dptr);
+if (!self_dir)
+    runerr(219, self);
+#enddef
+
 function io_DirStream_open_impl(path)
    if !cnv:C_string(path) then
       runerr(103, path)
    body {
-       Unsupported;
+       int fd;
+       struct DirData *d;
+       fd = open(path, OREAD);
+       if (fd < 0) {
+           errno2why();
+           fail;
+       }
+       MemProtect(d = malloc(sizeof(struct DirData)));
+       d->fd = fd;
+       d->pos = d->n = 0;
+       d->st = 0;
+       d->special = 2;
+       return C_integer((word)d);
    }
 end
 
 function io_DirStream_read_impl(self)
    body {
-    fail;
+      tended struct descrip result;
+      GetSelfDir();
+      if (self_dir->special == 2) {
+          --self_dir->special;
+          return C_string ".";
+      }
+      if (self_dir->special == 1) {
+          --self_dir->special;
+          return C_string "..";
+      }
+      if (self_dir->pos >= self_dir->n) {
+          struct Dir *st;
+          long n;
+          n = dirread(self_dir->fd, &st);
+          if (n == 0) {
+              GetSelfEofFlag();
+              *self_eof_flag = onedesc;
+              LitWhy("End of file");
+              fail;
+          } else if (n < 0) {
+              GetSelfEofFlag();
+              *self_eof_flag = nulldesc;
+              errno2why();
+              fail;
+          }
+          free(self_dir->st);
+          self_dir->st = st;
+          self_dir->pos = 0;
+          self_dir->n = n;
+      }
+      cstr2string(self_dir->st[self_dir->pos++].name, &result);
+      return result;
    }
 end
 
+
 function io_DirStream_close(self)
    body {
+       GetSelfDir();
+       if ((close(self_dir->fd)) < 0) {
+           errno2why();
+           fail;
+       }
+       free(self_dir->st);
+       free(self_dir);
+       *self_dir_dptr = zerodesc;
        return nulldesc;
    }
 end
 
 #elif UNIX
-static struct sdescrip ddf = {2, "dd"};
 
 #begdef GetSelfDir()
 DIR *self_dir;
@@ -2298,8 +2374,6 @@ struct DirData {
    int status;
    HANDLE handle;
 };
-
-static struct sdescrip ddf = {2, "dd"};
 
 #begdef GetSelfDir()
 struct DirData *self_dir;
@@ -2743,18 +2817,24 @@ function io_Files_stat_impl(s)
    if !cnv:C_string(s) then
       runerr(103,s)
    body {
-#if PLAN9
-       Unsupported;
-#else
       tended struct descrip result;
+#if PLAN9
+      struct Dir *st;
+      if (!(st = dirstat(s))) {
+          errno2why();
+          fail;
+      }
+      stat2list(st, &result);
+      free(st);
+#else
       struct stat st;
       if (stat(s, &st) < 0) {
           errno2why();
           fail;
       }
       stat2list(&st, &result);
-      return result;
 #endif
+      return result;
    }
 end
 
@@ -2762,20 +2842,62 @@ function io_Files_lstat_impl(s)
    if !cnv:C_string(s) then
       runerr(103,s)
    body {
-#if PLAN9
-       Unsupported;
-#else
       tended struct descrip result;
+#if PLAN9
+      struct Dir *st;
+      if (!(st = dirstat(s))) {
+          errno2why();
+          fail;
+      }
+      stat2list(st, &result);
+      free(st);
+#else
       struct stat st;
       if (lstat(s, &st) < 0) {
           errno2why();
           fail;
       }
       stat2list(&st, &result);
-      return result;
 #endif
+      return result;
    }
 end
+
+#if PLAN9
+function io_Files_list_impl(s)
+   if !cnv:C_string(s) then
+      runerr(103,s)
+   body {
+      tended struct descrip result;
+      struct Dir *st;
+      int fd;
+      long n, i;
+      fd = open(s, OREAD);
+      if (fd < 0) {
+          errno2why();
+          fail;
+      }
+      n = dirreadall(fd, &st);
+      close(fd);
+      if (n < 0) {
+          errno2why();
+          fail;
+      }
+      create_list(n, &result);
+      for (i = 0; i < n; ++i) {
+          tended struct descrip t1, t2;
+          create_list(2, &t1);
+          cstr2string(st[i].name, &t2);
+          list_put(&t1, &t2);
+          stat2list(&st[i], &t2);
+          list_put(&t1, &t2);
+          list_put(&result, &t1);
+      }
+      free(st);
+      return result;
+   }
+end
+#endif
 
 function io_Files_access(s, mode)
    if !cnv:C_string(s) then

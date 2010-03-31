@@ -60,8 +60,11 @@ function util_Math_atan(x,y)
    if !cnv:C_double(y) then
       runerr(102, y)
    body {
-      return C_double atan2(x,y);
-      }
+       if (x == 0.0 && y == 0.0)
+           return C_double 0.0;
+       else
+           return C_double atan2(x,y);
+    }
 end
 
 

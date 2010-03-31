@@ -70,19 +70,19 @@
    #define X_OK 1
    #define ERANGE 100
    #define EDOM   101
-   #define O_RDONLY 0
-   #define O_WRONLY 1
-   #define O_RDWR   2
-   #define O_ACCMODE       0x003
-   #define O_NONBLOCK      0x004
-   #define O_APPEND        0x008
-   #define O_CREAT         0x100
-   #define O_TRUNC         0x200
-   #define O_EXCL          0x400
-   #define O_NOCTTY        0x800
-   #define O_DSYNC         0x1000
-   #define O_RSYNC         0x2000
-   #define O_SYNC          0x4000
+   #define O_RDONLY OREAD
+   #define O_WRONLY OWRITE
+   #define O_RDWR   ORDWR
+   #define O_ACCMODE 0 
+   #define O_NONBLOCK 0
+   #define O_APPEND  1024
+   #define O_CREAT   512
+   #define O_TRUNC   OTRUNC
+   #define O_EXCL    0
+   #define O_NOCTTY  0
+   #define O_DSYNC   0
+   #define O_RSYNC   0
+   #define O_SYNC    0
 
    #define PF_INET 0
    #define AF_INET 0

@@ -53,6 +53,20 @@ $endif
 $endif
    end
 
+$ifdef _PLAN9
+   #
+   # Read the given directory returning a list of [name, {Stat}] pairs.
+   #
+   public static list(s)
+      local l, e
+      l := list_impl(s) | fail
+      every e := !l do
+         e[2] := Stat!e[2]
+      return l
+   end
+
+   private static defer list_impl(s)
+$else
    #
    # Read the given directory returning a list of [name, {Stat}] pairs.
    #
@@ -72,6 +86,7 @@ $endif
       close(p)
       return l
    end
+$endif
 
    #
    # Return a {FilePath} corresponding to the given path in string
