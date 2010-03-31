@@ -84,7 +84,7 @@ $endif
    yes_no{"1.Access dir", Files.access("testdir")}
    Files.rmdir("testdir") | stop(&why)
    yes_no{"2.Access dir", Files.access("testdir")}
-   Files.truncate("testfile", 1000)
+   Files.truncate("testfile", 1000) | stop(&why)
    yes_no{"Truncated", Files.file_to_string("testfile") == left(repl(&ucase,20), 1000, "\0")}
    write("Unique name: ", Files.ensure_unique_filename("testfile"))
    every Files.remove("testfile"|"testfile2"|"testfile2a"|"testfile2b"|"testfile2c"|"testfile2d")
