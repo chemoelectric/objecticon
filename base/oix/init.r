@@ -1136,7 +1136,8 @@ int main(int argc, char **argv)
 #endif
 
 #if PLAN9
-    setfcr(getfcr()&~FPOVFL);
+    /* Turn off floating point exceptions */
+    setfcr(getfcr()&~(FPOVFL|FPINEX|FPUNFL|FPZDIV|FPINVAL));
 #endif
 
     fp = fparse(argv[0]);
