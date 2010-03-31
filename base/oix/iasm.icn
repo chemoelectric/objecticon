@@ -63,7 +63,7 @@ procedure main(a)
             write("static word ", title, "_code[] = {")
             every write("   ", !l, ",")
             write("};")
-            write("CustomProc(", 
+            write("#passthru CustomProc(", 
                   title, ",",
                   title, "_code,",
                   nparam, ",", 
