@@ -5,6 +5,15 @@
 
 #ifdef Graphics
 
+/*
+ * global variables.
+ */
+
+wcp wcntxts = NULL;
+wsp wstates = NULL;
+wbp wbndngs = NULL;
+
+
 static	int	colorphrase    (char *buf, long *r, long *g, long *b, long *a);
 static	double	rgbval		(double n1, double n2, double hue);
 
@@ -3239,6 +3248,30 @@ stringint attribs[] = {
     {"windowlabel",	A_WINDOWLABEL},
 };
 
+/*
+ * allocate a window binding structure
+ */
+wbp alc_wbinding()
+   {
+   wbp w;
+
+   GRFX_ALLOC(w, _wbinding);
+   GRFX_LINK(w, wbndngs);
+   return w;
+   }
+
+/*
+ * free a window binding.
+ */
+void free_binding(wbp w)
+   {
+   w->refcount--;
+   if(w->refcount == 0) {
+      if (w->window) free_window(w->window);
+      if (w->context) free_context(w->context);
+      GRFX_UNLINK(w, wbndngs);
+      }
+   }
 
 /*
  * There are more, X-specific stringint arrays in ../common/xwindow.c
