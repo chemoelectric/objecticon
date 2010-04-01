@@ -16,19 +16,21 @@ XSizeHints size_hints;
 /*
  * function prototypes
  */
-static int	     handle_misc      (wdp display, wbp w);
-static int	     handle_config    (wbp w, XConfigureEvent *event);
-static int           handle_exposures (wbp w, XExposeEvent *event);
-static void          handle_mouse     (wbp w, XButtonEvent *event);
-static void          handle_keypress  (wbp w, XKeyEvent *event);
-static XImage *	     getximage	      (wbp w, int x, int y,
-                                       int width, int height, int init);
-static void          moveWindow       (wbp w, int x, int y);
-static int           moveResizeWindow	(wbp w, int x, int y, int wd, int h);
-static void          makeIcon         (wbp w, int x, int y);
-static int	     wmap	      (wbp w, wbp parent);
-static Pixmap        loadimage	      (wbp w, char *filename, unsigned int *height, 
-                                       unsigned int *width, int atorigin, int *status);
+static wcp alc_context(wbp w);
+static wsp alc_winstate(void);
+static int handle_misc(wdp display, wbp w);
+static int handle_config(wbp w, XConfigureEvent *event);
+static int handle_exposures(wbp w, XExposeEvent *event);
+static void handle_mouse(wbp w, XButtonEvent *event);
+static void handle_keypress(wbp w, XKeyEvent *event);
+static XImage *getximage(wbp w, int x, int y,
+                         int width, int height, int init);
+static void moveWindow (wbp w, int x, int y);
+static int moveResizeWindow(wbp w, int x, int y, int wd, int h);
+static void makeIcon(wbp w, int x, int y);
+static int wmap(wbp w, wbp parent);
+static Pixmap loadimage(wbp w, char *filename, unsigned int *height, 
+                        unsigned int *width, int atorigin, int *status);
 static int convert_KeySym_to_code_point(KeySym k);
 #ifdef HAVE_LIBXFT
 int xft_stringwidth(wbp w, char *s, int n);
@@ -42,6 +44,27 @@ static char *xlfd_field(char *s, int i);
 static int xlfd_size(char *s, int n);
 #endif
 static wfp loadfont(wdp wd, char *s);
+static int resetfg (wbp w);
+static int setfgrgb(wbp w, int r, int g, int b);
+static int setbgrgb(wbp w, int r, int g, int b);
+static XColor xcolor(wbp w, LinearColor clr);
+static LinearColor lcolor(wbp w, XColor color);
+static int remap(wbp w, int x, int y);
+static wdp alc_display (char *s);
+static void free_display   (wdp wd);
+static wfp alc_font(wbp w, char **s);
+static wfp tryfont(wbp w, char *s);
+static wclrp alc_rgb(wbp w, char *s, unsigned int r,
+                     unsigned int g, unsigned int b,
+                     int is_iconcolor);
+static int alc_centry(wdp wd);
+static wclrp  alc_color(wbp w, char *s);
+static void copy_colors(wbp w1, wbp w2);
+static void free_xcolor(wbp w, unsigned long c);
+static void free_xcolors(wbp w, int extent);
+static int go_virtual(wbp w);
+static int resizePixmap(wbp w, int width, int height);
+
 
 #define DEFAULTFONTNAME "fixed"
 
@@ -1948,7 +1971,7 @@ int setlinewidth(wbp w, int linewid)
 /*
  * Reset the context's foreground color to whatever it is supposed to be.
  */
-int resetfg(wbp w)
+static int resetfg(wbp w)
 {
     wcp wc = w->context;
     wdp wd = wc->display;
@@ -1971,7 +1994,7 @@ int setfg(wbp w, char *s)
     return resetfg(w);
 }
 
-int setfgrgb(wbp w, int r, int g, int b)
+static int setfgrgb(wbp w, int r, int g, int b)
 {
     char sbuf1[32];
     sprintf(sbuf1, "%d,%d,%d", r, g, b);
@@ -2019,7 +2042,7 @@ int setbg(wbp w, char *s)
     return ISXORREVERSE(w) ? resetfg(w) : Succeeded;
 }
 
-int setbgrgb(wbp w, int r, int g, int b)
+static int setbgrgb(wbp w, int r, int g, int b)
 {
     char sbuf1[32];
     sprintf(sbuf1, "%d,%d,%d", r, g, b);
@@ -2273,7 +2296,7 @@ static int handle_exposures(wbp w, XExposeEvent *event)
  *
  * Returns 0 on failure.
  */
-int resizePixmap(wbp w, int width, int height)
+static int resizePixmap(wbp w, int width, int height)
 {
     Pixmap p;
     STDLOCALS(w);
@@ -3589,7 +3612,7 @@ int setpatternbits(wbp w, int width, word *bits, int nbits)
 /*
  * remap a window ... this time with an iconwin
  */
-int remap(wbp w, int x, int y)
+static int remap(wbp w, int x, int y)
 {
     XSizeHints size_hints;
     XWMHints   *wmhints;
@@ -3978,7 +4001,7 @@ int nativecolor(wbp w, char *s, long *r, long *g, long *b)
 /*
  * Convert an X color into an Icon linear color.
  */
-LinearColor lcolor(wbp w, XColor colorcell)
+static LinearColor lcolor(wbp w, XColor colorcell)
 {
     LinearColor l;
     double gamma = w->context->gamma;
@@ -3992,7 +4015,7 @@ LinearColor lcolor(wbp w, XColor colorcell)
 /*
  * Convert an Icon linear color into an X colorcell.
  */
-XColor xcolor(wbp w, LinearColor c)
+static XColor xcolor(wbp w, LinearColor c)
 {
     XColor x;
     double invgamma = 1.0 / w->context->gamma;
@@ -4240,7 +4263,7 @@ void drawutf8(wbp w, int x, int y, char *s, int slen)
  * per-display basis, but they are often freed on a per-window basis,
  * so they are remembered in two structures.
  */
-wclrp alc_rgb(wbp w, char *s, unsigned int r, unsigned int g,
+static wclrp alc_rgb(wbp w, char *s, unsigned int r, unsigned int g,
               unsigned int b, int is_iconcolor)
 {
     LinearColor lc;
@@ -4356,7 +4379,7 @@ wclrp alc_rgb(wbp w, char *s, unsigned int r, unsigned int g,
 /*
  * allocate a color entry, return index (or 0 if table is full)
  */
-int alc_centry(wdp wd)
+static int alc_centry(wdp wd)
 {
     int i, j;
 
@@ -4386,7 +4409,7 @@ int alc_centry(wdp wd)
  * allocate by named color and return Icon color pointer.
  *  This is used by setfg and setbg.
  */
-wclrp alc_color(wbp w, char *s)
+static wclrp alc_color(wbp w, char *s)
 {
     wclrp rv;
     long r, g, b, a;
@@ -4408,7 +4431,7 @@ wclrp alc_color(wbp w, char *s)
  * copy color entries to reflect pixel transmission via CopyArea()
  * (assumes w1 and w2 are on the same display)
  */
-void copy_colors(wbp w1, wbp w2)
+static void copy_colors(wbp w1, wbp w2)
 {
     wsp ws1 = w1->window, ws2 = w2 -> window;
     wdp wd = ws1->display;
@@ -4439,7 +4462,7 @@ void copy_colors(wbp w1, wbp w2)
 /*
  * free a single color allocated by a given window
  */
-void free_xcolor(wbp w, unsigned long c)
+static void free_xcolor(wbp w, unsigned long c)
 {
     int i;
     STDLOCALS(w);
@@ -4466,7 +4489,7 @@ void free_xcolor(wbp w, unsigned long c)
  * fg, bg, wbg, and mutable colors.  extent == 1 implies free icon colors.
  * extent == 2 implies free window AND fg/bg/wbg (window is closed)
  */
-void free_xcolors(wbp w, int extent)
+static void free_xcolors(wbp w, int extent)
 {
     int i;
     unsigned long toFree[DMAXCOLORS];
@@ -4531,7 +4554,7 @@ void free_xcolors(wbp w, int extent)
  * the default colormap to new colormap, and set all windows to use this new
  * colormap.  Returns 0 on failure.
  */
-int go_virtual(wbp w)
+static int go_virtual(wbp w)
 {
     wsp win;
     STDLOCALS(w);
@@ -4553,7 +4576,7 @@ int go_virtual(wbp w)
 /*
  * allocate a display on machine s
  */
-wdp alc_display(char *s)
+static wdp alc_display(char *s)
 {
     double g;
     wdp wd;
@@ -4754,7 +4777,7 @@ static char *convert_spec(char *s)
 /*
  * allocate font s in the display attached to w
  */
-wfp alc_font(wbp w, char **s)
+static wfp alc_font(wbp w, char **s)
 {
     return tryfont(w,convert_spec(*s));
 }
@@ -5032,7 +5055,7 @@ static int fontcmp(char *font1, char *font2, int size, int flags)
  * load a font and return a font structure.
  */
 
-wfp tryfont(wbp w, char *s)
+static wfp tryfont(wbp w, char *s)
 {
     wdp wd = w->window->display;
     wfp rv;
@@ -5118,7 +5141,7 @@ static wfp loadfont(wdp wd, char *s)
 /*
  * allocate a context.  Can't be called until w has a display and window.
  */
-wcp alc_context(wbp w)
+static wcp alc_context(wbp w)
 {
     wcp wc;
     wdp wd = w->window->display;
@@ -5214,7 +5237,7 @@ wcp clone_context(wbp w)
 /*
  * allocate a window state structure
  */
-wsp alc_winstate()
+static wsp alc_winstate()
 {
     wsp ws;
     GRFX_ALLOC(ws, _wstate);
@@ -5300,7 +5323,7 @@ void free_context(wcp wc)
 /*
  * free a display
  */
-void free_display(wdp wd)
+static void free_display(wdp wd)
 {
     wd->refcount--;
     if(wd->refcount == 0) {

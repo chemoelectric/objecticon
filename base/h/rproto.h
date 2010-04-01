@@ -173,12 +173,7 @@ void  bigrand         (dptr da, dptr dx);
     * portable graphics routines in rwindow.r and rwinrsc.r
     */
 
-   struct b_window *alcwindow_0    (wbp w, word isopen);
-   struct b_window *alcwindow_1    (wbp w, word isopen);
-   wcp  alc_context     (wbp w);
    wbp  alc_wbinding    (void);
-   wsp  alc_winstate    (void);
-   int  atobool         (char *s);
    int  docircles       (wbp w, int argc, dptr argv, int fill);
    void drawCurve       (wbp w, XPoint *p, int n);
    void genCurve        (wbp w, XPoint *p, int n, void (*h)(wbp, XPoint [], int));
@@ -255,10 +250,7 @@ void  bigrand         (dptr da, dptr dx);
    int  lowerWindow     (wbp w);
    int  mutable_color   (wbp w, dptr argv, int ac, int *retval);
    int  nativecolor     (wbp w, char *s, long *r, long *g, long *b);
-
-   /* Exclude those functions defined as macros */
    void pollevent       (void);
-
    int  query_pointer   (wbp w, XPoint *pp);
    int  query_rootpointer (XPoint *pp);
    int  raisewindow     (wbp w);
@@ -317,70 +309,6 @@ void  bigrand         (dptr da, dptr dx);
    int  seticonimage    (wbp w, dptr dp);
    int  textwidth       (wbp w, char *s, int n);
    int  utf8width       (wbp w, char *s, int n);
-
-   #if XWindows
-      /*
-       * Implementation routines specific to X-Windows
-       */
-      int       resetfg                 (wbp w);
-      int       setfgrgb                (wbp w, int r, int g, int b);
-      int       setbgrgb                (wbp w, int r, int g, int b);
-
-      XColor    xcolor                  (wbp w, LinearColor clr);
-      LinearColor       lcolor          (wbp w, XColor color);
-      int       pixmap_open             (wbp w, dptr attribs, int argc);
-      int       pixmap_init             (wbp w);
-      int       remap                   (wbp w, int x, int y);
-      int       translate_key_event     (XKeyEvent *k1, char *s, KeySym *k2);
-      wdp       alc_display             (char *s);
-      void      free_display            (wdp wd);
-      wfp       alc_font                (wbp w, char **s);
-      wfp       tryfont                 (wbp w, char *s);
-      wclrp     alc_rgb                 (wbp w, char *s, unsigned int r,
-                                           unsigned int g, unsigned int b,
-                                           int is_iconcolor);
-      int       alc_centry              (wdp wd);
-      wclrp     alc_color               (wbp w, char *s);
-      void      copy_colors             (wbp w1, wbp w2);
-      void      free_xcolor             (wbp w, unsigned long c);
-      void      free_xcolors            (wbp w, int extent);
-      int       go_virtual              (wbp w);
-      int       resizePixmap            (wbp w, int width, int height);
-      void      wflushall               (void);
-      void postcursor(wbp);
-      void scrubcursor(wbp);
-      char my_wmap(wbp w);
-
-   #endif                               /* XWindows */
-
-
-   #if MSWIN32
-      /*
-       * Implementation routines specific to MS Windows
-       */
-      int playmedia             (wbp w, char *s);
-      char *nativecolordialog   (wbp w,long r,long g, long b,char *s);
-      int nativefontdialog      (wbp w, char *buf, int flags, int fheight);
-      char *nativeselectdialog  (wbp w,struct b_list *,char *s);
-      char *nativefiledialog    (wbp w,char *s1,char *s2,char *s3,int i,int j,int k);
-      HFONT mkfont              (char *s);
-      int sysTextWidth          (wbp w, char *s, int n);
-      int sysFontHeight         (wbp w);
-      int mswinsystem           (char *s);
-      void UpdateCursorPos      (wsp ws, wcp wc);
-      LRESULT_CALLBACK WndProc  (HWND, UINT, WPARAM, LPARAM);
-      HDC CreateWinDC           (wbp);
-      HDC CreatePixDC           (wbp, HDC);
-      HBITMAP loadimage (wbp wb, char *filename, unsigned int *width,
-                        unsigned int *height, int atorigin, int *status);
-      void wfreersc(void);
-      int getdepth(wbp w);
-      HBITMAP CreateBitmapFromData(char *data);
-      int resizePixmap(wbp w, int width, int height);
-      int devicecaps(wbp w, int i);
-
-   #endif                               /* MSWIN32 */
-
 #endif                                  /* Graphics */
 
 
