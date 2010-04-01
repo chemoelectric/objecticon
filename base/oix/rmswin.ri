@@ -288,9 +288,9 @@ wbp wopen(wbp parent, char *name, struct b_list *lp, dptr attr, int n, int *err_
    /*
     * allocate a binding, a window state, and a context
     */
-   Protect(w = alc_wbinding(), return NULL);
-   Protect(w->window = alc_winstate(), { free_binding(w); return NULL; });
-   Protect(w->context = alc_context(w), { free_binding(w); return NULL; });
+   w = alc_wbinding();
+   w->window = alc_winstate();
+   w->context = alc_context(w);
    ws = w->window;
    ws->listp.dword = D_List;
    BlkLoc(ws->listp) = (union block *)lp;
@@ -305,9 +305,11 @@ wbp wopen(wbp parent, char *name, struct b_list *lp, dptr attr, int n, int *err_
       switch (wattrib(w, StrLoc(attr[i]), StrLen(attr[i]), &attrrslt,
 			answer)) {
       case Failed:
+         whyf("Bad window attribute: %.*s", (int)StrLen(attr[i]), StrLoc(attr[i]));
 	 wclose(w);
 	 return NULL;
       case Error:
+         *err_idx = i;
 	 /* think of something to do here */
 	 break;
 	 }

@@ -943,7 +943,7 @@ wcp clone_context(wbp w)
 
     wc = w->context;
     wd = w->context->display;
-    Protect(rv = alc_context(w), return NULL);
+    rv = alc_context(w);
 
     rv->dx = wc->dx;
     rv->dy = wc->dy;

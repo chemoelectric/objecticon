@@ -814,17 +814,11 @@ wbp wopen(wbp parent, char *name, struct b_list *lp, dptr attr, int n, int *err_
         }
     }
 
-    if ((w = alc_wbinding()) == NULL) {
-        *err_index = -2;
-        return NULL;
-    }
-    if ((w->window = alc_winstate()) == NULL) {
-        *err_index = -2;
-        free_binding(w);
-        return NULL;
-    }
+    w = alc_wbinding();
+    w->window = alc_winstate();
     if ((w->window->display = alc_display(display)) == NULL) {
-        *err_index = -1; /* might be out of memory, probably bad DISPLAY var. */
+        LitWhy("Couldn't initialize display structure");
+        *err_index = -1; /* non-fatal error; probably bad DISPLAY */
         free_binding(w);
         return NULL;
     }
@@ -839,11 +833,7 @@ wbp wopen(wbp parent, char *name, struct b_list *lp, dptr attr, int n, int *err_
      * some attributes of the display and window are used in the context
      */
 	
-    if ((w->context = alc_context(w)) == NULL) {
-        *err_index = -2;
-        free_binding(w);
-        return NULL;
-    }
+    w->context = alc_context(w);
 	
     /*
      * some attributes of the context determine window defaults
@@ -865,6 +855,7 @@ wbp wopen(wbp parent, char *name, struct b_list *lp, dptr attr, int n, int *err_
                     *err_index = i;
                     return NULL;
                 case Failed:
+                    whyf("Bad window attribute: %.*s", (int)StrLen(attr[i]), StrLoc(attr[i]));
                     free_binding((wbp)w);
                     *err_index = -1;
                     return NULL;
@@ -875,8 +866,8 @@ wbp wopen(wbp parent, char *name, struct b_list *lp, dptr attr, int n, int *err_
         ws->windowlabel = salloc(name);
     }
     if ((i = wmap(w, parent)) != Succeeded) {
-        if (i == Failed) *err_index = -1;
-        else *err_index = 0;
+        *err_index = -1;
+        LitWhy("Failed to map window");
         return NULL;
     }
 	

@@ -193,7 +193,7 @@ function graphics_Window_clone_impl(self, argv[argc])
        tended struct descrip sbuf, sbuf2;
        GetSelfW();
 
-       MemProtect(w2 = alc_wbinding());
+       w2 = alc_wbinding();
        w2->window = self_w->window;
        w2->window->refcount++;
        MemProtect(w2->context = clone_context(self_w));
@@ -353,7 +353,7 @@ function graphics_Window_couple_impl(win, win2)
       /*
        * make the new binding
        */
-      MemProtect(wb_new = alc_wbinding());
+      wb_new = alc_wbinding();
 
       wb_new->window = ws = wb->window;
       /*
