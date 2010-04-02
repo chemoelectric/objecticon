@@ -113,15 +113,6 @@
    stdpix  = ws->pix;
 
 /*
- * "get" means remove them from the Icon list and put them on the ghost queue
- */
-#define EVQUEGET(w,d) { \
-   wsp ws = (w)->window; \
-   if (!list_get(&ws->listp,&d)) fatalerr(0,NULL); \
-   }
-#define EVQUEEMPTY(w) (BlkLoc((w)->window->listp)->list.size == 0)
-
-/*
  * Colors.  These are allocated within displays; they are currently
  * statically bounded to DMAXCOLORS colors per display.  Pointers
  * into the display's color table are also kept on a per-window

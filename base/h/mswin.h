@@ -106,15 +106,6 @@
 #define MAKEFNTSIZE(height, width) (((height) << 16) | (width))
 #define WaitForEvent(msgnum, msgstruc) ObtainEvents(NULL, WAIT_EVT, msgnum, msgstruc)
 
-/*
- * "get" means remove them from the Icon list and put them on the ghost que
- */
-#define EVQUEGET(w,d) { \
-  wsp ws = (w)->window; \
-  if (!list_get(&ws->listp,&d)) fatalerr(0,NULL); \
-  }
-#define EVQUEEMPTY(w) (BlkLoc((w)->window->listp)->list.size == 0)
-
 #define SHARED          0
 #define MUTABLE         1
 #define MAXCOLORNAME	40

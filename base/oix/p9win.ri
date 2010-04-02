@@ -1,6 +1,22 @@
+static int inited;
+
+static wsp alc_winstate(void);
+static wcp alc_context(wbp w);
 
 wbp wopen(wbp parent, char *nm, struct b_list *hp, dptr attr, int n, int *e)
 {
+    wbp w;
+    if (!inited) {
+        if (initdraw(0, 0, "objecticon") < 0) {
+            errno2why();
+            return 0;
+        }
+        inited = 1;
+    }
+    w = alc_wbinding();
+    w->window = alc_winstate();
+   w->context = alc_context(w);
+
     return 0;
 }
 
@@ -264,11 +280,6 @@ void free_context(wcp wc)
 {
 }
 
-int wgetq(wbp w, dptr res, word t)
-{
-    return -1;
-}
-
 int setgeometry(wbp w, char *geo)
 {
     return Succeeded;
@@ -443,5 +454,21 @@ int geticonpos(wbp w, char *answer)
 {
     strcpy(answer, "none");
     return Succeeded;
+}
+
+static wsp alc_winstate()
+{
+    wsp ws;
+    GRFX_ALLOC(ws, _wstate);
+    ws->serial = ++canvas_serial;
+    ws->bits = 1024;				/* echo ON; others OFF */
+    ws->listp = nulldesc;
+    GRFX_LINK(ws, wstates);
+    return ws;
+}
+
+static wcp alc_context(wbp w)
+{
+    return 0;
 }
 

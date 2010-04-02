@@ -5,10 +5,20 @@
 
 #ifdef Graphics
 
-static	int	colorphrase    (char *buf, long *r, long *g, long *b, long *a);
-static	double	rgbval		(double n1, double n2, double hue);
+/*
+ * global variables.
+ */
 
-static	int	setpos          (wbp w, char *s);
+wcp wcntxts = NULL;
+wsp wstates = NULL;
+wbp wbndngs = NULL;
+
+
+static	int	colorphrase    (char *buf, long *r, long *g, long *b, long *a);
+static	double	rgbval	(double n1, double n2, double hue);
+
+static	int	setpos         (wbp w, char *s);
+static  void    wgetq          (wbp w, dptr res);
 
 int canvas_serial, context_serial;
 
@@ -18,82 +28,58 @@ extern HPALETTE palette;
 extern int numColors;
 #endif					/* MSWIN32 */
 
+static void wgetq(wbp w, dptr res)
+{
+    if (!list_get(&w->window->listp, res))
+        fatalerr(143, 0);
+}
 
-int wgetevent2(wbp w, dptr res, word timeout)
+
+void wgetevent(wbp w, dptr res)
 {
     struct descrip xdesc, ydesc;
     tended struct descrip qval;
     int t;
     uword i;
-    int retval;
 
-    if (wstates != NULL && wstates->next != NULL		/* if multiple windows*/
-        && (ListBlk(w->window->listp).size == 0)) {	/* & queue is empty */
-        while (ListBlk(w->window->listp).size == 0) {
-#if XWindows
-            if (ISCLOSED(w)) {
-                return -1;
-	    }
-#endif					/* XWindows */
-            pollevent();				/* poll all windows */
-#if UNIX
-            idelay(XICONSLEEP);
-#endif					/* UNIX */
-#if MSWIN32
-            Sleep(20);
-#endif					/* MSWIN32 */
-        }
+    while (ListBlk(w->window->listp).size == 0) {
+        pollevent();				/* poll all windows */
+        idelay(XICONSLEEP);
     }
 
-    retval = wgetq(w, &qval, timeout);
-    if (retval == -1)
-        return -1;					/* window died */
-    if (retval == -2)
-        return -3;					/* timeout expired */
-
+    wgetq(w, &qval);
+    create_list(8, res);
     list_put(res, &qval);
     switch (IntVal(qval)) {
         case SELECTIONREQUEST: {
             int i;
             /* Five items follow; copy them to the result */
-            if (ListBlk(w->window->listp).size < 5)
-                return -2;					/* malformed queue */
-
             for (i = 0; i < 5; ++i) {
-                wgetq(w, &qval, -1);
+                wgetq(w, &qval);
                 list_put(res, &qval);
             }
             break;
         }
         case SELECTIONCLEAR: {
-            if (ListBlk(w->window->listp).size < 1)
-                return -2;					/* malformed queue */
-
             /* One item follows */
-            wgetq(w, &qval, -1);
+            wgetq(w, &qval);
             list_put(res, &qval);
             break;
         }
         case SELECTIONRESPONSE: {
-            if (ListBlk(w->window->listp).size < 2)
-                return -2;					/* malformed queue */
-
             /* Three items follow */
             for (i = 0; i < 3; ++i) {
-                wgetq(w, &qval, -1);
+                wgetq(w, &qval);
                 list_put(res, &qval);
             }
             break;
         }
         default: {
-            if (ListBlk(w->window->listp).size < 2)
-                return -2;					/* malformed queue */
-
-            wgetq(w, &xdesc, -1);
-            wgetq(w, &ydesc, -1);
+            wgetq(w, &xdesc);
+            wgetq(w, &ydesc);
 
             if (xdesc.dword != D_Integer || ydesc.dword != D_Integer)
-                return -2;			/* bad values on queue */
+                fatalerr(143, 0);
 
             /* x location */
             t = IntVal(xdesc) & 0xFFFF;		
@@ -136,7 +122,6 @@ int wgetevent2(wbp w, dptr res, word timeout)
             list_put(res, &qval);
         }
     }
-    return 0;
 }
 
 
@@ -3239,6 +3224,30 @@ stringint attribs[] = {
     {"windowlabel",	A_WINDOWLABEL},
 };
 
+/*
+ * allocate a window binding structure
+ */
+wbp alc_wbinding()
+   {
+   wbp w;
+
+   GRFX_ALLOC(w, _wbinding);
+   GRFX_LINK(w, wbndngs);
+   return w;
+   }
+
+/*
+ * free a window binding.
+ */
+void free_binding(wbp w)
+   {
+   w->refcount--;
+   if(w->refcount == 0) {
+      if (w->window) free_window(w->window);
+      if (w->context) free_context(w->context);
+      GRFX_UNLINK(w, wbndngs);
+      }
+   }
 
 /*
  * There are more, X-specific stringint arrays in ../common/xwindow.c

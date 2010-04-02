@@ -21,6 +21,30 @@
  *   getdefault
  */
 
+static wcp           alc_context      (wbp w);
+static wsp           alc_winstate     (void);
+
+static int playmedia             (wbp w, char *s);
+static char *nativecolordialog   (wbp w,long r,long g, long b,char *s);
+static int nativefontdialog      (wbp w, char *buf, int flags, int fheight);
+static char *nativeselectdialog  (wbp w,struct b_list *,char *s);
+static char *nativefiledialog    (wbp w,char *s1,char *s2,char *s3,int i,int j,int k);
+static HFONT mkfont              (char *s);
+static int sysTextWidth          (wbp w, char *s, int n);
+static int sysFontHeight         (wbp w);
+static int mswinsystem           (char *s);
+static void UpdateCursorPos      (wsp ws, wcp wc);
+static LRESULT_CALLBACK WndProc  (HWND, UINT, WPARAM, LPARAM);
+static HDC CreateWinDC           (wbp);
+static HDC CreatePixDC           (wbp, HDC);
+static HBITMAP loadimage (wbp wb, char *filename, unsigned int *width,
+                        unsigned int *height, int atorigin, int *status);
+static void wfreersc(void);
+static int getdepth(wbp w);
+static HBITMAP CreateBitmapFromData(char *data);
+static int resizePixmap(wbp w, int width, int height);
+static int devicecaps(wbp w, int i);
+
 void wfreersc();
 void SetDCPixelFormat(HDC h);
 int alc_rgb(wbp w, SysColor rgb);
@@ -288,9 +312,9 @@ wbp wopen(wbp parent, char *name, struct b_list *lp, dptr attr, int n, int *err_
    /*
     * allocate a binding, a window state, and a context
     */
-   Protect(w = alc_wbinding(), return NULL);
-   Protect(w->window = alc_winstate(), { free_binding(w); return NULL; });
-   Protect(w->context = alc_context(w), { free_binding(w); return NULL; });
+   w = alc_wbinding();
+   w->window = alc_winstate();
+   w->context = alc_context(w);
    ws = w->window;
    ws->listp.dword = D_List;
    BlkLoc(ws->listp) = (union block *)lp;
@@ -305,9 +329,11 @@ wbp wopen(wbp parent, char *name, struct b_list *lp, dptr attr, int n, int *err_
       switch (wattrib(w, StrLoc(attr[i]), StrLen(attr[i]), &attrrslt,
 			answer)) {
       case Failed:
+         whyf("Bad window attribute: %.*s", (int)StrLen(attr[i]), StrLoc(attr[i]));
 	 wclose(w);
 	 return NULL;
       case Error:
+         *err_idx = i;
 	 /* think of something to do here */
 	 break;
 	 }
@@ -994,36 +1020,6 @@ int setminwidth(wbp w, int new_width)
 {
     return Succeeded;
 }
-
-
-/*
- * wgetq - get event from pending queue
- */
-int wgetq(wbp w, dptr res, int t)
-   {
-   MSG m;
-   wsp ws;
-   extern jmp_buf mark_sj;
-   FILE *f;
-
-   if (!w || !(ws = w->window))
-      return -1;
-   while (1) {
-      /*
-       * grab the built up queue
-       */
-      if (!EVQUEEMPTY(w)) {
-	 EVQUEGET(w, *res);
-	 return 1;
-	 }
-      if (!(ws->iconwin)) {
-         return -1;
-         }
-      if (GetMessage(&m, NULL, 0, 0) == 0) longjmp(mark_sj, -1);
-      TranslateMessage(&m);
-      DispatchMessage(&m);
-      }
-   }
 
 /*
  * determine the new size of the client
@@ -3091,7 +3087,7 @@ int NumWindows = 0;
 /*
  * allocate a context.  Can't be called until w has a window.
  */
-wcp alc_context(w)
+static wcp alc_context(w)
 wbp w;
    {
    int i;
@@ -3208,7 +3204,7 @@ wbp w;
 /*
  * allocate a window state structure
  */
-wsp alc_winstate()
+static wsp alc_winstate()
    {
    int i;
    wsp ws;

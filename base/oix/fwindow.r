@@ -193,7 +193,7 @@ function graphics_Window_clone_impl(self, argv[argc])
        tended struct descrip sbuf, sbuf2;
        GetSelfW();
 
-       MemProtect(w2 = alc_wbinding());
+       w2 = alc_wbinding();
        w2->window = self_w->window;
        w2->window->refcount++;
        MemProtect(w2->context = clone_context(self_w));
@@ -353,7 +353,7 @@ function graphics_Window_couple_impl(win, win2)
       /*
        * make the new binding
        */
-      MemProtect(wb_new = alc_wbinding());
+      wb_new = alc_wbinding();
 
       wb_new->window = ws = wb->window;
       /*
@@ -851,29 +851,12 @@ end
 
 
 
-function graphics_Window_event(self, timeout)
-   if !def:C_integer(timeout, -1) then
-      runerr(101, timeout)
+function graphics_Window_event(self)
    body {
-      word i;
       tended struct descrip d;
       GetSelfW();
-
-      create_list(8, &d);
-      i = wgetevent2(self_w, &d, timeout);
-      if (i == -3) {
-          if (timeout < 0) {
-              /* Something's wrong, but what?  */
-              runerr(-1);
-          }
-          fail;
-      }
-      if (i == 0)
-          return d;
-      else if (i == -1)
-          runerr(141);
-      else
-          runerr(143);
+      wgetevent(self_w, &d);
+      return d;
    }
 end
 
@@ -890,9 +873,8 @@ function graphics_Window_pending(self, argv[argc])
        * put additional arguments to Pending on the pending list in
        * guaranteed consecutive order.
        */
-      for (i = 0; i < argc; i++) {
+      for (i = 0; i < argc; i++)
           list_put(&(ws->listp), &argv[i]);
-      }
 
       /*
        * retrieve any events that might be relevant before returning the
