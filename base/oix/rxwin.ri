@@ -789,7 +789,7 @@ void wsync(wbp w)
  *  -1  : ordinary failure
  *  -2  : out of memory
  */
-wbp wopen(wbp parent, char *name, struct b_list *lp, dptr attr, int n, int *err_index)
+wbp wopen(wbp parent, struct b_list *lp, dptr attr, int n, int *err_index)
 {
     wbp w;
     wsp ws;
@@ -837,6 +837,8 @@ wbp wopen(wbp parent, char *name, struct b_list *lp, dptr attr, int n, int *err_
      */
     ws->height = w->context->font->height * 12;
     ws->width  = w->context->font->maxwidth * 80;
+    ws->windowlabel = DEFAULT_WINDOW_LABEL;
+
     /*
      * Loop through any remaining arguments.
      */
@@ -859,9 +861,7 @@ wbp wopen(wbp parent, char *name, struct b_list *lp, dptr attr, int n, int *err_
 	    }
         }
     }
-    if (ws->windowlabel == NULL) {
-        ws->windowlabel = salloc(name);
-    }
+
     if (wmap(w, parent) != Succeeded) {
         *err_index = -1;
         LitWhy("Failed to map window");

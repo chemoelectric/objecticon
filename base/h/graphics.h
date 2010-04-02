@@ -108,22 +108,21 @@
 #define CLRRESIZABLE(w)	((w)->window->bits &= ~128)
 #define CLREXPOSED(w)   ((w)->window->bits &= ~256)
 
+#define ISTOBEHIDDEN(ws)  ((ws)->bits & 4096)
+#define SETTOBEHIDDEN(ws)  ((ws)->bits |= 4096)
+#define CLRTOBEHIDDEN(ws)  ((ws)->bits &= ~4096)
+
 #if XWindows
 #define ISZOMBIE(w)     ((w)->window->bits & 1)
 #define SETZOMBIE(w)    ((w)->window->bits |= 1)
 #define CLRZOMBIE(w)    ((w)->window->bits &= ~1)
 #endif					/* XWindows */
 
-#if MSWIN32
-#define ISTOBEHIDDEN(ws)  ((ws)->bits & 4096)
-#define SETTOBEHIDDEN(ws)  ((ws)->bits |= 4096)
-#define CLRTOBEHIDDEN(ws)  ((ws)->bits &= ~4096)
-#endif					/* MSWIN32 */
-
 #define ISTITLEBAR(ws) ((ws)->bits & 8192)
 #define SETTITLEBAR(ws) ((ws)->bits |= 8192)
 #define CLRTITLEBAR(ws) ((ws)->bits &= ~8192)
 
+#define DEFAULT_WINDOW_LABEL "Object Icon"
 
 /*
  * Window Resources

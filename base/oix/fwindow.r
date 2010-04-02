@@ -68,7 +68,7 @@ function graphics_Window_open_impl(attr[n])
       }
 
       err_index = -1;
-      f = wopen(0, "Object Icon", hp, attr, n, &err_index);
+      f = wopen(0, hp, attr, n, &err_index);
 
       if (f == NULL) {
           if (err_index >= 0) runerr(145, attr[err_index]);
@@ -103,7 +103,7 @@ function graphics_Window_open_child_impl(self, attr[n])
       }
 
       err_index = -1;
-      f = wopen(self_w, "Object Icon", hp, attr, n, &err_index);
+      f = wopen(self_w, hp, attr, n, &err_index);
 
       if (f == NULL) {
           if (err_index >= 0) runerr(145, attr[err_index]);
