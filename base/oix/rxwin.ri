@@ -837,7 +837,6 @@ wbp wopen(wbp parent, struct b_list *lp, dptr attr, int n, int *err_index)
      */
     ws->height = w->context->font->height * 12;
     ws->width  = w->context->font->maxwidth * 80;
-    ws->windowlabel = DEFAULT_WINDOW_LABEL;
 
     /*
      * Loop through any remaining arguments.
@@ -861,6 +860,8 @@ wbp wopen(wbp parent, struct b_list *lp, dptr attr, int n, int *err_index)
 	    }
         }
     }
+    if (ws->windowlabel == NULL)
+        ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
 
     if (wmap(w, parent) != Succeeded) {
         *err_index = -1;
