@@ -205,7 +205,13 @@ class MenuBar(Component)
    end
 
    public get_tooltip(e)
-      return \self.tooltip | which_item(e).get_tooltip(e)
+      local m
+      if \self.tooltip then
+         return self.tooltip
+      every m := !self.menus do {
+         if m.in_label_region(e) then
+            return m.get_tooltip(e)
+      }
    end
 
    public handle_default(e)

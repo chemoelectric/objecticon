@@ -143,11 +143,14 @@ class MenuComponent(Rect,SetFields,Connectable)
    end
 
    #
-   # Invalidate the parent {Component} if this is the root of the menu hierarchy.
+   # Invalidate the parent {Component} if this is the root of the menu hierarchy, or
+   # the parent menu if it is open.
    #
    public possibly_invalidate()
       if /self.parent then
          (\self.parent_component).invalidate()
+      else
+         (\parent.temp_win).invalidate(get_label_rect())
    end
 
    #
@@ -412,7 +415,11 @@ class SubMenuProxyComponent(Component)
    end
 
    public get_tooltip(e)
-      return menu.which_item(e).get_tooltip(e)
+      local m
+      every m := !menu.children do {
+         if m.in_label_region(e) then
+            return m.get_tooltip(e)
+      }
    end
 
    public new(m)

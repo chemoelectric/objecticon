@@ -6,7 +6,7 @@ char **environ = &xyz;
 
 static uvlong order = 0x0001020304050607ULL;
 
-static void be2vlong(vlong *to, uchar *f)
+void be2vlong(vlong *to, uchar *f)
 {
     uchar *t, *o;
     int i;

@@ -49,13 +49,7 @@ if (!self_w || ISCLOSED(self_w))
 function graphics_Window_open_impl(attr[n])
    body {
       int j, err_index;
-      tended struct b_list *hp;
       wbp f;
-
-      /*
-       * allocate an empty event queue for the window
-       */
-      MemProtect(hp = alclist(0, MinListSlots));
 
       /*
        * loop through attributes, checking validity
@@ -68,29 +62,22 @@ function graphics_Window_open_impl(attr[n])
       }
 
       err_index = -1;
-      f = wopen(0, "Object Icon", hp, attr, n, &err_index);
+      f = wopen(0, attr, n, &err_index);
 
       if (f == NULL) {
           if (err_index >= 0) runerr(145, attr[err_index]);
-          else if (err_index == -1) fail;
-          else runerr(305);
+          else fail;
       }
 
-      return C_integer((word)f);
+      return C_integer (word)f;
    }
 end
 
 function graphics_Window_open_child_impl(self, attr[n])
    body {
       int j, err_index;
-      tended struct b_list *hp;
       wbp f;
       GetSelfW();
-
-      /*
-       * allocate an empty event queue for the window
-       */
-      MemProtect(hp = alclist(0, MinListSlots));
 
       /*
        * loop through attributes, checking validity
@@ -103,15 +90,14 @@ function graphics_Window_open_child_impl(self, attr[n])
       }
 
       err_index = -1;
-      f = wopen(self_w, "Object Icon", hp, attr, n, &err_index);
+      f = wopen(self_w, attr, n, &err_index);
 
       if (f == NULL) {
           if (err_index >= 0) runerr(145, attr[err_index]);
-          else if (err_index == -1) fail;
-          else runerr(305);
+          else fail;
       }
 
-      return C_integer((word)f);
+      return C_integer (word)f;
    }
 end
 

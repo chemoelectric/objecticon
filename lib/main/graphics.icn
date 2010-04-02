@@ -70,9 +70,9 @@ class Window(NoCopy)
    public defer draw_arc(a[])
 
    #
-   # event() - return an event from this window
+   # event() - return an event from this window, waiting if necessary.
    #
-   public defer event(timeout)
+   public defer event()
 
    #
    # draw_circle(x1, y1, r1, angle11, angle21, ...)

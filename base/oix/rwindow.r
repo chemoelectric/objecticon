@@ -50,78 +50,87 @@ void wgetevent(wbp w, dptr res)
     wgetq(w, &qval);
     create_list(8, res);
     list_put(res, &qval);
-    switch (IntVal(qval)) {
-        case SELECTIONREQUEST: {
-            int i;
-            /* Five items follow; copy them to the result */
-            for (i = 0; i < 5; ++i) {
+
+    /*
+     * Handle the selection message types.
+     */
+    if (is:integer(qval)) {
+        switch (IntVal(qval)) {
+            case SELECTIONREQUEST: {
+                int i;
+                /* Five items follow; copy them to the result */
+                for (i = 0; i < 5; ++i) {
+                    wgetq(w, &qval);
+                    list_put(res, &qval);
+                }
+                return;
+            }
+            case SELECTIONCLEAR: {
+                /* One item follows */
                 wgetq(w, &qval);
                 list_put(res, &qval);
+                return;
             }
-            break;
-        }
-        case SELECTIONCLEAR: {
-            /* One item follows */
-            wgetq(w, &qval);
-            list_put(res, &qval);
-            break;
-        }
-        case SELECTIONRESPONSE: {
-            /* Three items follow */
-            for (i = 0; i < 3; ++i) {
-                wgetq(w, &qval);
-                list_put(res, &qval);
+            case SELECTIONRESPONSE: {
+                /* Three items follow */
+                for (i = 0; i < 3; ++i) {
+                    wgetq(w, &qval);
+                    list_put(res, &qval);
+                }
+                return;
             }
-            break;
-        }
-        default: {
-            wgetq(w, &xdesc);
-            wgetq(w, &ydesc);
-
-            if (xdesc.dword != D_Integer || ydesc.dword != D_Integer)
-                fatalerr(143, 0);
-
-            /* x location */
-            t = IntVal(xdesc) & 0xFFFF;		
-            if (t >= 0x8000)
-                t -= 0x10000;
-            t -= w->context->dx;
-            MakeInt(t, &qval);
-            list_put(res, &qval);
-
-            t = IntVal(ydesc) & 0xFFFF;		/* &y */
-            if (t >= 0x8000)
-                t -= 0x10000;
-            t -= w->context->dy;
-            MakeInt(t, &qval);
-            list_put(res, &qval);
-
-            t = IntVal(xdesc);
-            if (t & EQ_MOD_CONTROL)
-                list_put(res, &onedesc);
-            else
-                list_put(res, &nulldesc);
-            if (t & EQ_MOD_META)
-                list_put(res, &onedesc);
-            else
-                list_put(res, &nulldesc);
-            if (t & EQ_MOD_SHIFT)
-                list_put(res, &onedesc);
-            else
-                list_put(res, &nulldesc);
-            if (t & EQ_MOD_RELEASE)
-                list_put(res, &onedesc);
-            else
-                list_put(res, &nulldesc);
-
-            /* Interval */
-            i = (((uword) IntVal(ydesc)) >> 16) & 0xFFF;		/* mantissa */
-            i <<= 4 * ((((uword) IntVal(ydesc)) >> 28) & 0x7);	/* scale it */
-
-            MakeInt(i, &qval);
-            list_put(res, &qval);
         }
     }
+
+    /*
+     * All other types - "real events" - follow the same format.
+     */
+
+    wgetq(w, &xdesc);
+    wgetq(w, &ydesc);
+
+    if (xdesc.dword != D_Integer || ydesc.dword != D_Integer)
+        fatalerr(143, 0);
+
+    /* x location */
+    t = IntVal(xdesc) & 0xFFFF;		
+    if (t >= 0x8000)
+        t -= 0x10000;
+    t -= w->context->dx;
+    MakeInt(t, &qval);
+    list_put(res, &qval);
+
+    t = IntVal(ydesc) & 0xFFFF;		/* &y */
+    if (t >= 0x8000)
+        t -= 0x10000;
+    t -= w->context->dy;
+    MakeInt(t, &qval);
+    list_put(res, &qval);
+
+    t = IntVal(xdesc);
+    if (t & EQ_MOD_CONTROL)
+        list_put(res, &onedesc);
+    else
+        list_put(res, &nulldesc);
+    if (t & EQ_MOD_META)
+        list_put(res, &onedesc);
+    else
+        list_put(res, &nulldesc);
+    if (t & EQ_MOD_SHIFT)
+        list_put(res, &onedesc);
+    else
+        list_put(res, &nulldesc);
+    if (t & EQ_MOD_RELEASE)
+        list_put(res, &onedesc);
+    else
+        list_put(res, &nulldesc);
+
+    /* Interval */
+    i = (((uword) IntVal(ydesc)) >> 16) & 0xFFF;		/* mantissa */
+    i <<= 4 * ((((uword) IntVal(ydesc)) >> 28) & 0x7);	/* scale it */
+
+    MakeInt(i, &qval);
+    list_put(res, &qval);
 }
 
 

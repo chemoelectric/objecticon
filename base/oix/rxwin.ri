@@ -364,7 +364,7 @@ char*  ErrorCodes[ NUMBER_ERRORS ] = {
 static void ErrorHandler(Display* display, XErrorEvent* error_event)
 {   
     char string0[BUFSIZE + 1];
-    printf("ERROR\n");fflush(stdout);
+
     ErrorFlag = True;
     LastError = (int) error_event->error_code;
 
@@ -787,9 +787,8 @@ void wsync(wbp w)
  * err_index is set to one of:
  *  >= 0: the index of an offending attribute value
  *  -1  : ordinary failure
- *  -2  : out of memory
  */
-wbp wopen(wbp parent, char *name, struct b_list *lp, dptr attr, int n, int *err_index)
+wbp wopen(wbp parent, dptr attr, int n, int *err_index)
 {
     wbp w;
     wsp ws;
@@ -797,11 +796,9 @@ wbp wopen(wbp parent, char *name, struct b_list *lp, dptr attr, int n, int *err_
     char answer[128];
     char *display = NULL;
     int i;
-    tended struct b_list *tlp;
     tended struct descrip attrrslt;
 
-    tlp = lp;
-    for(i=0;i<n;i++) {
+    for(i = 0; i < n; i++) {
         if (is:string(attr[i]) &&
             (StrLen(attr[i])>8) &&
             !strncmp("display=",StrLoc(attr[i]),8)) {
@@ -820,11 +817,8 @@ wbp wopen(wbp parent, char *name, struct b_list *lp, dptr attr, int n, int *err_
         return NULL;
     }
     ws = w->window;
-
     ws->vis = DefaultVisual(ws->display->display, ws->display->screen); 
-
-    ws->listp.dword = D_List;
-    BlkLoc(ws->listp) = (union block *)tlp;
+    create_list(0, &ws->listp);
 
     /*
      * some attributes of the display and window are used in the context
@@ -837,6 +831,7 @@ wbp wopen(wbp parent, char *name, struct b_list *lp, dptr attr, int n, int *err_
      */
     ws->height = w->context->font->height * 12;
     ws->width  = w->context->font->maxwidth * 80;
+
     /*
      * Loop through any remaining arguments.
      */
@@ -853,18 +848,19 @@ wbp wopen(wbp parent, char *name, struct b_list *lp, dptr attr, int n, int *err_
                     return NULL;
                 case Failed:
                     whyf("Bad window attribute: %.*s", (int)StrLen(attr[i]), StrLoc(attr[i]));
-                    free_binding((wbp)w);
+                    free_binding(w);
                     *err_index = -1;
                     return NULL;
 	    }
         }
     }
-    if (ws->windowlabel == NULL) {
-        ws->windowlabel = salloc(name);
-    }
-    if ((i = wmap(w, parent)) != Succeeded) {
-        *err_index = -1;
+    if (ws->windowlabel == NULL)
+        ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
+
+    if (wmap(w, parent) != Succeeded) {
         LitWhy("Failed to map window");
+        free_binding(w);
+        *err_index = -1;
         return NULL;
     }
 	

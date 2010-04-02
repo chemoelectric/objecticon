@@ -88,6 +88,8 @@
    #define AF_INET 0
    #define SOCK_STREAM 0
 
+   #define PointerMotionMask    1
+
    extern int errno;
    struct timeval {
       long    tv_sec;
@@ -97,6 +99,7 @@
       int tz_minuteswest;     /* minutes west of Greenwich */
       int tz_dsttime;         /* type of DST correction */
    };
+   void be2vlong(vlong *to, uchar *f);
    int system(const char *command);
    char *getcwd(char *buf, size_t size);
    int mkdir(const char *path, mode_t mode);
