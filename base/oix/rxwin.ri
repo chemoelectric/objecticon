@@ -364,7 +364,7 @@ char*  ErrorCodes[ NUMBER_ERRORS ] = {
 static void ErrorHandler(Display* display, XErrorEvent* error_event)
 {   
     char string0[BUFSIZE + 1];
-    printf("ERROR\n");fflush(stdout);
+
     ErrorFlag = True;
     LastError = (int) error_event->error_code;
 
@@ -862,7 +862,7 @@ wbp wopen(wbp parent, char *name, struct b_list *lp, dptr attr, int n, int *err_
     if (ws->windowlabel == NULL) {
         ws->windowlabel = salloc(name);
     }
-    if ((i = wmap(w, parent)) != Succeeded) {
+    if (wmap(w, parent) != Succeeded) {
         *err_index = -1;
         LitWhy("Failed to map window");
         return NULL;
