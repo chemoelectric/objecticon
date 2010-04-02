@@ -848,7 +848,7 @@ wbp wopen(wbp parent, dptr attr, int n, int *err_index)
                     return NULL;
                 case Failed:
                     whyf("Bad window attribute: %.*s", (int)StrLen(attr[i]), StrLoc(attr[i]));
-                    free_binding((wbp)w);
+                    free_binding(w);
                     *err_index = -1;
                     return NULL;
 	    }
@@ -858,8 +858,9 @@ wbp wopen(wbp parent, dptr attr, int n, int *err_index)
         ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
 
     if (wmap(w, parent) != Succeeded) {
-        *err_index = -1;
         LitWhy("Failed to map window");
+        free_binding(w);
+        *err_index = -1;
         return NULL;
     }
 	
