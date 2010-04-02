@@ -280,7 +280,7 @@ int mswinsystem(char *s)
 /*
  * wopen
  */
-wbp wopen(wbp parent, struct b_list *lp, dptr attr, int n, int *err_idx)
+wbp wopen(wbp parent, dptr attr, int n, int *err_idx)
    {
    wbp w;
    wsp ws;
@@ -316,8 +316,7 @@ wbp wopen(wbp parent, struct b_list *lp, dptr attr, int n, int *err_idx)
    w->window = alc_winstate();
    w->context = alc_context(w);
    ws = w->window;
-   ws->listp.dword = D_List;
-   BlkLoc(ws->listp) = (union block *)lp;
+   create_list(0, &ws->listp);
    ws->width = ws->height = 0;
    wc = w->context;
 

@@ -787,9 +787,8 @@ void wsync(wbp w)
  * err_index is set to one of:
  *  >= 0: the index of an offending attribute value
  *  -1  : ordinary failure
- *  -2  : out of memory
  */
-wbp wopen(wbp parent, struct b_list *lp, dptr attr, int n, int *err_index)
+wbp wopen(wbp parent, dptr attr, int n, int *err_index)
 {
     wbp w;
     wsp ws;
@@ -797,11 +796,9 @@ wbp wopen(wbp parent, struct b_list *lp, dptr attr, int n, int *err_index)
     char answer[128];
     char *display = NULL;
     int i;
-    tended struct b_list *tlp;
     tended struct descrip attrrslt;
 
-    tlp = lp;
-    for(i=0;i<n;i++) {
+    for(i = 0; i < n; i++) {
         if (is:string(attr[i]) &&
             (StrLen(attr[i])>8) &&
             !strncmp("display=",StrLoc(attr[i]),8)) {
@@ -820,11 +817,8 @@ wbp wopen(wbp parent, struct b_list *lp, dptr attr, int n, int *err_index)
         return NULL;
     }
     ws = w->window;
-
     ws->vis = DefaultVisual(ws->display->display, ws->display->screen); 
-
-    ws->listp.dword = D_List;
-    BlkLoc(ws->listp) = (union block *)tlp;
+    create_list(0, &ws->listp);
 
     /*
      * some attributes of the display and window are used in the context

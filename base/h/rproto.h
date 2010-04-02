@@ -290,7 +290,7 @@ void  bigrand         (dptr da, dptr dx);
    int  walert          (wbp w, int volume);
    void warppointer     (wbp w, int x, int y);
    void wclose          (wbp w);
-   wbp  wopen           (wbp parent, struct b_list *hp, dptr attr, int n, int *e);
+   wbp  wopen           (wbp parent, dptr attr, int n, int *e);
    void wflush          (wbp w);
    void wsync           (wbp w);
    void xdis            (wbp w, char *s, int n);
