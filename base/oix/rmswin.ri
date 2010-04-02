@@ -1021,36 +1021,6 @@ int setminwidth(wbp w, int new_width)
     return Succeeded;
 }
 
-
-/*
- * wgetq - get event from pending queue
- */
-int wgetq(wbp w, dptr res, int t)
-   {
-   MSG m;
-   wsp ws;
-   extern jmp_buf mark_sj;
-   FILE *f;
-
-   if (!w || !(ws = w->window))
-      return -1;
-   while (1) {
-      /*
-       * grab the built up queue
-       */
-      if (!EVQUEEMPTY(w)) {
-	 EVQUEGET(w, *res);
-	 return 1;
-	 }
-      if (!(ws->iconwin)) {
-         return -1;
-         }
-      if (GetMessage(&m, NULL, 0, 0) == 0) longjmp(mark_sj, -1);
-      TranslateMessage(&m);
-      DispatchMessage(&m);
-      }
-   }
-
 /*
  * determine the new size of the client
  */

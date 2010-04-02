@@ -185,7 +185,7 @@ void  bigrand         (dptr da, dptr dx);
    int  parsegeometry   (char *buf, int *x, int *y, int *w, int *h);
    int  parsepattern    (char *s, int len, int *w, int *nbits, word *bits);
    void qevent          (wsp ws, dptr e, int x, int y, uword t, long f, int krel);
-   int  wgetevent2      (wbp w, dptr res, word timeout);
+   void wgetevent       (wbp w, dptr res);
    int  readGIF         (char *fname, int p, struct imgdata *d);
    int  readBMP         (char *filename, int p, struct imgdata *imd);
 #ifdef HAVE_LIBJPEG
@@ -200,7 +200,6 @@ void  bigrand         (dptr da, dptr dx);
    int  setsize         (wbp w, char *s);
    int  setminsize      (wbp w, char *s);
    int  wattrib         (wbp w, char *s, long len, dptr answer, char *abuf);
-   int  wgetevent       (wbp w, dptr res, int t);
    int  writeGIF        (wbp w, char *filename,
                           int x, int y, int width, int height);
    int  writeBMP        (wbp w, char *filename,
@@ -291,7 +290,6 @@ void  bigrand         (dptr da, dptr dx);
    int  walert          (wbp w, int volume);
    void warppointer     (wbp w, int x, int y);
    void wclose          (wbp w);
-   int  wgetq           (wbp w, dptr res, word t);
    wbp  wopen           (wbp parent, char *nm, struct b_list *hp, dptr attr, int n, int *e);
    void wflush          (wbp w);
    void wsync           (wbp w);
