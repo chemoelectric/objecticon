@@ -1045,14 +1045,14 @@ int width;
 int setposx(wbp w, int new_posx)
 {
     wsp ws = w->window;
-    ws->posx = x;
+    ws->posx = new_posx;
     return Succeeded;
 }
 
 int setposy(wbp w, int new_posy)
 {
     wsp ws = w->window;
-    ws->posy = y;
+    ws->posy = new_posy;
     return Succeeded;
 }
 
