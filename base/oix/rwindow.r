@@ -18,6 +18,9 @@ static	int	colorphrase    (char *buf, long *r, long *g, long *b, long *a);
 static	double	rgbval	(double n1, double n2, double hue);
 
 static	int	setpos         (wbp w, char *s);
+static  int  setsize         (wbp w, char *s);
+static  int  setminsize      (wbp w, char *s);
+static  int  setgeometry     (wbp w, char *geo);
 static  void    wgetq          (wbp w, dptr res);
 
 int canvas_serial, context_serial;
@@ -186,92 +189,89 @@ void qevent(wsp ws,             /* canvas */
  */
 static int setpos(wbp w, char *s)
 {
-    char *s2, tmp[32];
-    int posx, posy;
+    int posx, posy, sign = 1;
+    if (*s == '-') {
+        sign = -1;
+        ++s;
+    }
+    if (!isdigit((unsigned char)*s))
+        return Error;
+    posx = sign * atoi(s);
+    while (isdigit((unsigned char)*++s));
+    if (*s++ != ',') return Error;
+    sign = 1;
+    if (*s == '-') {
+        sign = -1;
+        ++s;
+    }
+    if (!isdigit((unsigned char)*s))
+        return Error;
+    posy = sign * atoi(s);
 
-    s2 = s;
-    while (isspace((unsigned char)*s2)) s2++;
-    if (!isdigit((unsigned char)*s2) && (*s2 != '-')) return Error;
-    posx = atol(s2);
-    if (*s2 == '-') s2++;
-    while (isdigit((unsigned char)*s2)) s2++;
-    if (*s2 == '.') {
-        s2++;
-        while (isdigit((unsigned char)*s2)) s2++;
-    }
-    if (*s2++ != ',') return Error;
-    if (!isdigit((unsigned char)*s2) && (*s2 != '-')) return Error;
-    posy = atol(s2);
-    if (*s2 == '-') s2++;
-    while (isdigit((unsigned char)*s2)) s2++;
-    if (*s2 == '.') {
-        s2++;
-        while (isdigit((unsigned char)*s2)) s2++;
-    }
-    if (*s2) return Error;
-    if (posx < 0) {
-        if (posy < 0) sprintf(tmp,"%d%d",posx,posy);
-        else sprintf(tmp,"%d+%d",posx,posy);
-    }
-    else {
-        if (posy < 0) sprintf(tmp,"+%d%d",posx,posy);
-        else sprintf(tmp,"+%d+%d",posx,posy);
-    }
-    return setgeometry(w,tmp);
+    if (setposx(w, posx) == Failed) return Failed;
+    if (setposy(w, posy) == Failed) return Failed;
+
+    return Succeeded;
 }
 
 /*
  * setsize() - set canvas size
  */
-int setsize(wbp w, char *s)
+static int setsize(wbp w, char *s)
 {
-    char *s2, tmp[32];
     int width, height;
+    if (!isdigit((unsigned char)*s))
+        return Error;
+    if ((width = atoi(s)) <= 0) return Error;
+    while (isdigit((unsigned char)*++s));
+    if (*s++ != ',') return Error;
+    if (!isdigit((unsigned char)*s))
+        return Error;
+    if ((height = atoi(s)) <= 0) return Error;
 
-    s2 = s;
-    while (isspace((unsigned char)*s2)) s2++;
-    if (!isdigit((unsigned char)*s2) && (*s2 != '-')) return Error;
-    width = atol(s2);
-    if (*s2 == '-') s2++;
-    while (isdigit((unsigned char)*s2)) s2++;
-    if (*s2 == '.') {
-        s2++;
-        while (isdigit((unsigned char)*s2)) s2++;
+    if (setwidth(w, width) == Failed) return Failed;
+    if (setheight(w, height) == Failed) return Failed;
+
+    return Succeeded;
+}
+
+static int setgeometry(wbp w, char *geo)
+{
+    int width = 0, height = 0;
+    int x = 0, y = 0, status;
+    if ((status = parsegeometry(geo, &x, &y, &width, &height)) == 0)
+        return Error;
+    if (status & 1) {
+        if (setwidth(w, width) == Failed) return Failed;
+        if (setheight(w, height) == Failed) return Failed;
     }
-    if (*s2++ != ',') return Error;
-    height = atol(s2);
-    if (*s2 == '-') s2++;
-    while (isdigit((unsigned char)*s2)) s2++;
-    if (*s2 == '.') {
-        s2++;
-        while (isdigit((unsigned char)*s2)) s2++;
+    if (status & 2) {
+        if (setposx(w, x) == Failed) return Failed;
+        if (setposy(w, y) == Failed) return Failed;
     }
-    if (*s2) return Error;
-    sprintf(tmp,"%dx%d",width,height);
-    return setgeometry(w,tmp);
+    return Succeeded;
 }
 
 /*
  * setminsize() - set canvas minimum size
  */
-int setminsize(wbp w, char *s)
+static int setminsize(wbp w, char *s)
 {
     int width, height;
-    if (isdigit((unsigned char)*s)) {
-        if ((width = atoi(s)) <= 0) return Error;
-        while (isdigit((unsigned char)*++s));
-        if (*s++ != ',') return Error;
-        if ((height = atoi(s)) <= 0) return Error;
-    } else
+    if (isdigit((unsigned char)*s))
         return Error;
+    if ((width = atoi(s)) <= 0) return Error;
+    while (isdigit((unsigned char)*++s));
+    if (*s++ != ',') return Error;
+    if (!isdigit((unsigned char)*s))
+        return Error;
+    if ((height = atoi(s)) <= 0) return Error;
 
     if (setminwidth(w, width) == Failed) return Failed;
     if (setminheight(w, height) == Failed) return Failed;
 
     return Succeeded;
 }
-
-
 
 
 /*

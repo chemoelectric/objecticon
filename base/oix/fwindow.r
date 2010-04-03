@@ -1479,26 +1479,19 @@ function graphics_Window_attrib(self, argv[argc])
                           if (StrLen(sbuf) > 5) {
                               if (!strncmp(StrLoc(sbuf), "posx=", 5)) config |= 1;
                               if (!strncmp(StrLoc(sbuf), "posy=", 5)) config |= 1;
-                              if (!strncmp(StrLoc(sbuf), "rows=", 5)) config |= 2;
                               if (!strncmp(StrLoc(sbuf), "size=", 5)) config |= 2;
                               if (StrLen(sbuf) > 6) {
                                   if (!strncmp(StrLoc(sbuf), "width=", 6))
-                                      config |= 2;
-                                  if (!strncmp(StrLoc(sbuf), "lines=", 6))
                                       config |= 2;
                                   if (StrLen(sbuf) > 7) {
                                       if (!strncmp(StrLoc(sbuf), "height=", 7))
                                           config |= 2;
                                       if (!strncmp(StrLoc(sbuf), "resize=", 7))
                                           config |= 2;
-                                      if (StrLen(sbuf) > 8) {
-                                          if (!strncmp(StrLoc(sbuf), "columns=", 8))
-                                              config |= 2;
-                                          if (StrLen(sbuf) > 9) {
-                                              if (!strncmp(StrLoc(sbuf),
-                                                           "geometry=", 9))
-                                                  config |= 3;
-                                          }
+                                      if (StrLen(sbuf) > 9) {
+                                          if (!strncmp(StrLoc(sbuf),
+                                                       "geometry=", 9))
+                                              config |= 3;
                                       }
                                   }
                               }

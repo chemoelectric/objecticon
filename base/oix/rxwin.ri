@@ -1211,7 +1211,6 @@ int do_config(wbp w, int status)
 int setheight(wbp w, int new_height)
 {
     STDLOCALS(w);
-    if (new_height < 0) return Failed;
     ws->height = size_hints.height = new_height;
     return Succeeded;
 }
@@ -1219,36 +1218,29 @@ int setheight(wbp w, int new_height)
 int setwidth(wbp w, int new_width)
 {
     STDLOCALS(w);
-    if (new_width < 0) return Failed;
     ws->width = size_hints.width = new_width;
     return Succeeded;
 }
 
-int setgeometry(wbp w, char *geo)
+int setposx(wbp w, int new_posx)
 {
-    int width = 0, height = 0;
-    int x = 0, y = 0, status;
     STDLOCALS(w);
-
-    if ((status = parsegeometry(geo, &x, &y, &width, &height)) == 0)
-        return Error;
-    if (status & 1) {
-        ws->width = size_hints.width = width;
-        ws->height = size_hints.height = height;
-    }
     /*
      * can't set position on hidden windows (but can on opening ones)
      */
-    if ((stdwin || !stdpix) && (status & 2)) {
-        ws->posx = x;
-        ws->posy = y;
-    }
-    /* insert assigns here:
-     *  ws->posx = ((sign > 0) ? tmp :
-     *              DisplayWidth(stddpy,wd->screen) - ws->width - tmp);
-     *  ws->posy = ((sign > 0) ? tmp :
-     *              DisplayHeight(stddpy,wd->screen) - ws->height - tmp);
+    if ((stdwin || !stdpix))
+        ws->posx = new_posx;
+    return Succeeded;
+}
+
+int setposy(wbp w, int new_posy)
+{
+    STDLOCALS(w);
+    /*
+     * can't set position on hidden windows (but can on opening ones)
      */
+    if ((stdwin || !stdpix))
+        ws->posy = new_posy;
     return Succeeded;
 }
 

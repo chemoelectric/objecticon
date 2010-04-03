@@ -1042,25 +1042,19 @@ int width;
    return Succeeded;
    }
 
-int setgeometry(w, geo)
-wbp w;
-char *geo;
-   {
-   wsp ws = w->window;
-   int width = 0, height = 0;
-   int x = 0, y = 0, status;
-   if ((status = parsegeometry(geo, &x, &y, &width, &height)) == 0)
-      return Error;
-   if (status & 1) {
-      ws->width = width;
-      ws->height = height;
-      }
-   if (status & 2) {
-      ws->posx = x;
-      ws->posy = y;
-      }
-   return Succeeded;
-   }
+int setposx(wbp w, int new_posx)
+{
+    wsp ws = w->window;
+    ws->posx = x;
+    return Succeeded;
+}
+
+int setposy(wbp w, int new_posy)
+{
+    wsp ws = w->window;
+    ws->posy = y;
+    return Succeeded;
+}
 
 int setcanvas(w,s)
 wbp w;
