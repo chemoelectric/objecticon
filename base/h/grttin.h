@@ -212,40 +212,6 @@ typedef int siptr, stringint, inst;
    #define CnvTmpString(din,dout) \
      if (!cnv:tmp_string(din,dout)) runerr(103,din);
    
-   /*
-    * conventions supporting optional initial window arguments:
-    *
-    * All routines declare argv[argc] as their parameters
-    * Macro OptWindow checks argv[0] and assigns _w_ and warg if it is a window
-    * warg serves as a base index and is added everywhere argv is indexed
-    * n is used to denote the actual number of "objects" in the call
-    * Macro ReturnWindow returns either the initial window argument, or &window
-    */
-   #begdef OptWindow(w)
-      if (argc>warg && is:window(argv[warg])) {
-         if (!(BlkLoc(argv[warg])->window.isopen))
-	    runerr(142,argv[warg]);
-         (w) = BlkLoc(argv[warg])->window.wb;
-         if (ISCLOSED(w))
-	    runerr(142,argv[warg]);
-         warg++;
-         }
-      else {
-         if (!(is:window(kywd_xwin[XKey_Window])))
-	    runerr(140,kywd_xwin[XKey_Window]);
-         if (!(BlkLoc(kywd_xwin[XKey_Window])->window.isopen))
-	    runerr(142,kywd_xwin[XKey_Window]);
-         (w) = (wbp)BlkLoc(kywd_xwin[XKey_Window])->window.wb;
-         if (ISCLOSED(w))
-	    runerr(142,kywd_xwin[XKey_Window]);
-         }
-   #enddef				/* OptWindow */
-   
-   #begdef ReturnWindow
-         if (!warg) return kywd_xwin[XKey_Window];
-         else return argv[0]
-   #enddef				/* ReturnWindow */
-   
    #begdef CheckArgMultiple(mult)
    {
      if ((argc-warg) % (mult)) runerr(146);

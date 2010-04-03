@@ -934,7 +934,6 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	 ws->win = NULL;
       if (ws->iconwin == hwnd)
 	 ws->iconwin = NULL;
-      SETCLOSED((wbp)wb);
 
       if (ws->refcount > 0) {
           struct descrip d;
@@ -970,14 +969,13 @@ void wclose(wbp w)
        * Decrement refcount and negate it to tell the window procedure
        * that we closed the window, not the user, so don't terminate.
        */
+       /*RPP
       ws->refcount--;
       ws->refcount = -ws->refcount;
+       */
       DestroyWindow(ws->win);
       while (ws->win)
 	 pollevent();
-      }
-   else {
-      free_binding(w);
       }
    }
 

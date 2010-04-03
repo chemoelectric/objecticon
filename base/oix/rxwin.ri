@@ -732,7 +732,6 @@ void wclose(wbp w)
 #endif
         XDestroyWindow(stddpy,stdwin);
         XFlush(stddpy);
-        ws->refcount--;
         while (ws->win)
             pollevent();
     }
@@ -742,8 +741,6 @@ void wclose(wbp w)
     else {
         free_xcolors(w, 2);
         free_xcolors(w, 1);
-/*      free_window(ws);  */
-        free_binding(w);
     }
 }
 /*

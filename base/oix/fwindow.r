@@ -30,7 +30,7 @@ w##_dptr = c_get_instance_data(&p, (dptr)&wbpf, &w##_ic);
 if (!w##_dptr)
     syserr("Missing wbp field");
 (w) = (wbp)IntVal(*w##_dptr);
-if (!(w) || ISCLOSED(w))
+if (!(w))
     runerr(142, p);
 #enddef
 
@@ -42,7 +42,7 @@ self_w_dptr = c_get_instance_data(&self, (dptr)&wbpf, &self_w_ic);
 if (!self_w_dptr)
     syserr("Missing wbp field");
 self_w = (wbp)IntVal(*self_w_dptr);
-if (!self_w || ISCLOSED(self_w))
+if (!self_w)
     runerr(142, self);
 #enddef
 
@@ -1662,8 +1662,8 @@ function graphics_Window_close(self)
      GetSelfW();
 
      *self_w_dptr = zerodesc;
-     SETCLOSED(self_w);
      wclose(self_w);
+     free_binding(self_w);
 
      return self;
    }
