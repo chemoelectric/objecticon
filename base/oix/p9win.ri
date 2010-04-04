@@ -1,18 +1,26 @@
 static int inited;
-static int wsys_fd;
 static vlong startup_time;
 
 static wsp alc_winstate(void);
 static wcp alc_context(wbp w);
-static int init_window_system(void);
-static int set_visibility(wbp w);
+static int configure_canvas(wbp w);
 static void mouse_loop(wsp ws);
 static void cons_loop(wsp ws);
 static void flush_event_pipe(wsp ws);
 static vlong get_time(void);
+static int open_screen_win(wsp ws);
+static void close_screen_win(wsp ws);
+static int open_pix_win(wsp ws);
+static void close_pix_win(wsp ws);
+static void handle_resize(wsp ws);
+static int init_window_system(void);
 
 #define EMAXMSG 128+8192     /* size of 9p header+data */
 
+static void draw_error(Display *d, char *s)
+{
+    fprintf(stderr, "Draw error on display %p: %s\n", d, s);
+}
 
 wbp wopen(wbp parent, dptr attr, int n, int *err_index)
 {
@@ -41,6 +49,7 @@ wbp wopen(wbp parent, dptr attr, int n, int *err_index)
     for (i = 0; i < n; i++){
         switch (wattrib((wbp) w, StrLoc(attr[i]), StrLen(attr[i]), &attrrslt, answer)) {
             case Error:
+                free_binding(w);
                 *err_index = i;
                 return 0;
             case Failed:
@@ -53,7 +62,12 @@ wbp wopen(wbp parent, dptr attr, int n, int *err_index)
     if (ws->windowlabel == NULL)
         ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
 
-    if (set_visibility(w) != Succeeded) {
+    if (open_pix_win(ws) == Failed) {
+        free_binding(w);
+        return 0;
+    }
+
+    if (configure_canvas(w) != Succeeded) {
         free_binding(w);
         return 0;
     }
@@ -61,73 +75,41 @@ wbp wopen(wbp parent, dptr attr, int n, int *err_index)
     return w;
 }
 
-static int set_visibility(wbp w)
+static void printrect(char *s, Rectangle r)
+{
+    printf("%s: %d %d %d %d\n", s, r.min.x,r.min.y,r.max.x,r.max.y);
+}
+
+static void pix_to_win(wsp ws)
+{
+    draw(ws->win, ws->win->r, ws->pix, 0, ZP);
+    flushimage(display, 1);
+}
+
+static void win_to_pix(wsp ws)
+{
+    Rectangle t;
+    t = Rect(-ws->win->r.min.x, -ws->win->r.min.y,
+             ws->pix->r.max.x, ws->pix->r.max.y);
+    draw(ws->pix, t, ws->win, 0, ZP);
+    flushimage(display, 1);
+}
+
+static int configure_canvas(wbp w)
 {
     wsp ws = w->window;
 
     if (ISTOBEHIDDEN(ws)) {
+        if (ws->win) {
+            win_to_pix(ws);
+            close_screen_win(ws);
+        }
     } else {
-        char buff[256];
-        strcpy(ws->mount_dir, "/tmp");
-        snprintf(buff, sizeof(buff), "new -r %d %d %d %d %s",
-                 ws->posx, ws->posy, ws->height, ws->width, ws->windowlabel);
-        /* mount creates window; see rio(4) */
-        if (mount(wsys_fd, -1, "/tmp", MREPL, buff) < 0) {
-            whyf("Can't mount new window: %r");
-            return Failed;
-        }
-        if (gengetwindow(display, "/tmp/winname", &ws->win, &ws->screen, Refnone) < 0) {
-            whyf("gengetwindow failed: %r");
-            return Failed;
-        }
-        if (pipe(ws->event_pipe) < 0) {
-            whyf("Couldn't init event pipe: %r");
-            return Failed;
-        }
-
-        snprint(buff, sizeof buff, "%s/mouse", ws->mount_dir);
-        ws->mouse_fd = open(buff, ORDWR|OCEXEC);
-        if (ws->mouse_fd < 0) {
-            whyf("Can't open mouse file %s: %r", buff);
-            return Failed;
-        }
-
-        snprint(buff, sizeof buff, "%s/cons", ws->mount_dir);
-        ws->cons_fd = open(buff, OREAD);
-        if (ws->cons_fd < 0) {
-            whyf("Can't open cons file %s: %r", buff);
-            return Failed;
-        }
-
-        snprint(buff, sizeof buff, "%s/consctl", ws->mount_dir);
-        ws->consctl_fd = open(buff, OWRITE|OCEXEC);
-        if(ws->consctl_fd < 0) {
-            whyf("Can't open consctl file %s: %r", buff);
-            return Failed;
-        }
-        write(ws->consctl_fd, "rawon", 5);
-
-        switch (ws->mouse_pid = rfork(RFPROC)) {
-            case 0: {
-                mouse_loop(ws);
-                break;
-            }
-            case -1: {
-                whyf("rfork failed: %r");
+        if (!ws->win) {
+            if (open_screen_win(ws) == Failed)
                 return Failed;
-            }
         }
-
-        switch (ws->cons_pid = rfork(RFPROC)) {
-            case 0: {
-                cons_loop(ws);
-                break;
-            }
-            case -1: {
-                whyf("rfork failed: %r");
-                return Failed;
-            }
-        }
+        pix_to_win(ws);
     }
     return Succeeded;
 }
@@ -176,6 +158,32 @@ static void cons_loop(wsp ws)
     _exits(0);
 }
 
+static void handle_resize(wsp ws)
+{
+    char buff[128];
+    Rectangle t;
+    sprintf(buff, "%s/winname", ws->mount_dir);
+    printf("reconnecting to %s repl=%d\n",buff, ws->pix->repl);
+    if (gengetwindow(display, buff, &ws->win, &ws->screen, Refnone) < 0)
+        syserr("Failed to reconnect to window on a resize");
+
+    /* Essentially a pix_to_win, but using the old ws->win->r to avoid
+     * draw tiling the pixmap at the edges (if the window has got bigger).
+     */
+    t = Rect(ws->win->r.min.x, ws->win->r.min.y,
+             ws->win->r.min.x + ws->width, ws->win->r.min.y + ws->height);
+    draw(ws->win, t, ws->pix, 0, ZP);
+    flushimage(display, 1);
+
+    close_pix_win(ws);
+    ws->width = ws->win->r.max.x - ws->win->r.min.x;
+    ws->height = ws->win->r.max.y - ws->win->r.min.y;
+    printf("new size:%d %d\n",ws->width, ws->height);
+    if (open_pix_win(ws) == Failed)
+        syserr("Failed to open_pix_win on a resize");
+    win_to_pix(ws);
+}
+
 static void flush_event_pipe(wsp ws)
 {
     Dir *st;
@@ -184,9 +192,15 @@ static void flush_event_pipe(wsp ws)
     uchar ebuf[EMAXMSG + 1];
     tended struct descrip d;
 
+    /* Check if pipe open */
+    if (!ws->win || ws->event_pipe[0] < 0)
+        return;
+
     for (;;) {
         /* Check if anything to read */
         st = dirfstat(ws->event_pipe[0]);
+        if (!st)
+            syserr("Couldn't stat event pipe");
         length = st->length;
         free(st);
         if (length == 0)
@@ -224,61 +238,65 @@ static void flush_event_pipe(wsp ws)
                 uword time;
                 if(n < 10+2*12)
                     syserr("bad mouse data in event pipe");
-
                 be2vlong(&now, &ebuf[1]);
                 time = (now - startup_time) / 1000000;
-                x = atoi((char*)ebuf+10+0*12);
-                y = atoi((char*)ebuf+10+1*12);
+                x = atoi((char*)ebuf+10+0*12) - ws->win->r.min.x;
+                y = atoi((char*)ebuf+10+1*12) - ws->win->r.min.y;
                 b = atoi((char*)ebuf+10+2*12);
-                switch (b) {
-                    case 0: {
-                        if (ws->mouse_down) {
-                            e = ws->mouse_down;
-                            ws->mouse_down = 0;
-                        } else {
-                            if (ws->inputmask & PointerMotionMask)
-                                e = MOUSEMOVED;
-                            else
-                                e = 0;
+                if (ebuf[9] == 'r') {
+                    handle_resize(ws);
+                    e = RESIZED;
+                } else {
+                    switch (b) {
+                        case 0: {
+                            if (ws->mouse_down) {
+                                e = ws->mouse_down;
+                                ws->mouse_down = 0;
+                            } else {
+                                if (ws->inputmask & PointerMotionMask)
+                                    e = MOUSEMOVED;
+                                else
+                                    e = 0;
+                            }
+                            break;
                         }
-                        break;
-                    }
-                    case 1: {
-                        if (ws->mouse_down)
-                            e = MOUSELEFTDRAG;
-                        else {
-                            e = MOUSELEFT;
-                            ws->mouse_down = MOUSELEFTUP;
+                        case 1: {
+                            if (ws->mouse_down)
+                                e = MOUSELEFTDRAG;
+                            else {
+                                e = MOUSELEFT;
+                                ws->mouse_down = MOUSELEFTUP;
+                            }
+                            break;
                         }
-                        break;
-                    }
-                    case 2: {
-                        if (ws->mouse_down)
-                            e = MOUSEMIDDRAG;
-                        else {
-                            e = MOUSEMID;
-                            ws->mouse_down = MOUSEMIDUP;
+                        case 2: {
+                            if (ws->mouse_down)
+                                e = MOUSEMIDDRAG;
+                            else {
+                                e = MOUSEMID;
+                                ws->mouse_down = MOUSEMIDUP;
+                            }
+                            break;
                         }
-                        break;
-                    }
-                    case 4: {
-                        if (ws->mouse_down)
-                            e = MOUSERIGHTDRAG;
-                        else {
-                            e = MOUSERIGHT;
-                            ws->mouse_down = MOUSERIGHTUP;
+                        case 4: {
+                            if (ws->mouse_down)
+                                e = MOUSERIGHTDRAG;
+                            else {
+                                e = MOUSERIGHT;
+                                ws->mouse_down = MOUSERIGHTUP;
+                            }
+                            break;
                         }
-                        break;
-                    }
-                    case 8: {
-                        ws->mouse_down = MOUSE4UP;
-                        break;
-                    }
-                    case 16: {
-                        ws->mouse_down = MOUSE5UP;
-                        break;
-                    }
-                    default: {
+                        case 8: {
+                            ws->mouse_down = MOUSE4UP;
+                            break;
+                        }
+                        case 16: {
+                            ws->mouse_down = MOUSE5UP;
+                            break;
+                        }
+                        default: {
+                        }
                     }
                 }
                 if (e) {
@@ -358,6 +376,19 @@ void drawpoints(wbp w, XPoint *points, int npoints)
 
 void drawrectangles(wbp w, XRectangle *recs, int nrecs)
 {
+    wsp ws = w->window;
+    Point p[5];
+    Image *brdr = allocimage(display, Rect(0, 0, 1, 1), 
+                             screen->chan, 1, 0x44445555);
+
+    p[0] = addpt(ws->win->r.min, Pt(recs->x, recs->y));
+    p[1] = Pt(p[0].x + recs->width, p[0].y);
+    p[2] = Pt(p[0].x + recs->width, p[0].y + recs->height);
+    p[3] = Pt(p[0].x, p[0].y + recs->height);
+    p[4] = p[0];
+    poly(ws->win, p, 5, Endsquare, Endsquare, 0, brdr, ZP);
+    flushimage(display, 1);
+    win_to_pix(ws);
 }
 
 void fillpolygon (wbp w, XPoint *pts, int npts)
@@ -554,35 +585,181 @@ static void kill_proc(int id)
     }
 }
 
+static int open_screen_win(wsp ws)
+{
+    char *srvwsys, buff[256];
+    srvwsys = getenv("wsys");
+    if(srvwsys == 0) {
+        LitWhy("Can't find $wsys");
+        return 0;
+    }
+    ws->wsys_fd = open(srvwsys, ORDWR);
+    if(ws->wsys_fd < 0) {
+        whyf("Can't open $wsys(%s): %r", srvwsys);
+        close_screen_win(ws);
+        return Failed;
+    }
+    strcpy(ws->mount_dir, "/tmp");
+    snprintf(buff, sizeof(buff), "new -r %d %d %d %d %s",
+             ws->posx, ws->posy, ws->posx + ws->width + 2*Borderwidth, 
+             ws->posy + ws->height + 2*Borderwidth, ws->windowlabel);
+    if (mount(ws->wsys_fd, -1, "/tmp", MREPL, buff) < 0) {
+        whyf("Can't mount new window: %r");
+        close_screen_win(ws);
+        return Failed;
+    }
+    if (gengetwindow(display, "/tmp/winname", &ws->win, &ws->screen, Refnone) < 0) {
+        whyf("gengetwindow failed: %r");
+        close_screen_win(ws);
+        return Failed;
+    }
+    if (pipe(ws->event_pipe) < 0) {
+        whyf("Couldn't init event pipe: %r");
+        close_screen_win(ws);
+        return Failed;
+    }
+
+    snprint(buff, sizeof buff, "%s/mouse", ws->mount_dir);
+    ws->mouse_fd = open(buff, ORDWR|OCEXEC);
+    if (ws->mouse_fd < 0) {
+        whyf("Can't open mouse file %s: %r", buff);
+        close_screen_win(ws);
+        return Failed;
+    }
+
+    snprint(buff, sizeof buff, "%s/cons", ws->mount_dir);
+    ws->cons_fd = open(buff, OREAD);
+    if (ws->cons_fd < 0) {
+        whyf("Can't open cons file %s: %r", buff);
+        close_screen_win(ws);
+        return Failed;
+    }
+
+    snprint(buff, sizeof buff, "%s/consctl", ws->mount_dir);
+    ws->consctl_fd = open(buff, OWRITE|OCEXEC);
+    if(ws->consctl_fd < 0) {
+        whyf("Can't open consctl file %s: %r", buff);
+        close_screen_win(ws);
+        return Failed;
+    }
+    write(ws->consctl_fd, "rawon", 5);
+
+    switch (ws->mouse_pid = rfork(RFPROC)) {
+        case 0: {
+            mouse_loop(ws);
+            break;
+        }
+        case -1: {
+            whyf("rfork failed: %r");
+            close_screen_win(ws);
+            return Failed;
+        }
+    }
+
+    switch (ws->cons_pid = rfork(RFPROC)) {
+        case 0: {
+            cons_loop(ws);
+            break;
+        }
+        case -1: {
+            whyf("rfork failed: %r");
+            close_screen_win(ws);
+            return Failed;
+        }
+    }
+
+    return Succeeded;
+}
+
+static void close_screen_win(wsp ws)
+{
+    unmount(0, ws->mount_dir);
+    if (ws->event_pipe[0] >= 0)
+        close(ws->event_pipe[0]);
+    if (ws->event_pipe[1] >= 0)
+        close(ws->event_pipe[1]);
+    if (ws->consctl_fd >= 0)
+        close(ws->consctl_fd);
+    if (ws->mouse_fd >= 0)
+        close(ws->mouse_fd);
+    if (ws->cons_fd >= 0)
+        close(ws->cons_fd);
+    if (ws->mouse_pid >= 0)
+        kill_proc(ws->mouse_pid);
+    if (ws->cons_pid >= 0)
+        kill_proc(ws->cons_pid);
+    if (ws->wsys_fd >= 0)
+        close(ws->wsys_fd);
+    if (ws->win) {
+        freeimage(ws->win);
+        ws->win = 0;
+    }
+    if (ws->screen) {
+        freescreen(ws->screen);
+        ws->screen = 0;
+    }
+    ws->mount_dir[0] = 0;
+    ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
+        ws->mouse_pid = ws->cons_pid = ws->wsys_fd = -1;
+}
+
+static int open_pix_win(wsp ws)
+{
+    Image *i;
+    i = allocimage(display, Rect(0, 0, ws->width, ws->height), screen->chan, 1, DWhite);
+    if (!i) {
+        whyf("allocimage failed: %r");
+        return Failed;
+    }
+    ws->pix = i;
+    return Succeeded;
+}
+
+static void close_pix_win(wsp ws)
+{
+    if (ws->pix) {
+        freeimage(ws->pix);
+        ws->pix = 0;
+    }
+}
+
 void wclose(wbp w)
 {
     wsp ws = w->window;
     pollevent();
     if (ws->win && ws->refcount > 1) {
-    } else {
-        close(ws->event_pipe[0]);
-        close(ws->event_pipe[1]);
-        close(ws->consctl_fd);
-        close(ws->mouse_fd);
-        close(ws->cons_fd);
-        kill_proc(ws->mouse_pid);
-        kill_proc(ws->cons_pid);
-        unmount(0, ws->mount_dir);
-        free_binding(w);
+        /* Turn into pixmap */
+        SETTOBEHIDDEN(ws);
+        configure_canvas(w); 
     }
 }
 
-void free_window (wsp ws)
+void free_window(wsp ws)
 {
+   ws->refcount--;
+   if(ws->refcount == 0) {
+       if (ws->win)
+           close_screen_win(ws);
+       if (ws->pix)
+           close_pix_win(ws);
+       if (ws->windowlabel) { 
+           free(ws->windowlabel); 
+           ws->windowlabel=0;
+       }
+       if (ws->iconlabel) {
+           free(ws->iconlabel); 
+           ws->iconlabel=0;
+       }
+       GRFX_UNLINK(ws, wstates);
+   }
 }
 
 void free_context(wcp wc)
 {
-}
-
-int setgeometry(wbp w, char *geo)
-{
-    return Succeeded;
+    wc->refcount--;
+    if(wc->refcount == 0) {
+        GRFX_UNLINK(wc, wcntxts);
+    }
 }
 
 int setminheight(wbp w, int new_height)
@@ -608,11 +785,29 @@ int getimstr(wbp w, int x, int y, int width, int hgt,
 
 int setheight(wbp w, int new_height)
 {
+    wsp ws = w->window;
+    ws->height = new_height;
     return Succeeded;
 }
 
 int setwidth(wbp w, int new_width)
 {
+    wsp ws = w->window;
+    ws->width = new_width;
+    return Succeeded;
+}
+
+int setposx(wbp w, int new_posx)
+{
+    wsp ws = w->window;
+    ws->posx = new_posx;
+    return Succeeded;
+}
+
+int setposy(wbp w, int new_posy)
+{
+    wsp ws = w->window;
+    ws->posy = new_posy;
     return Succeeded;
 }
 
@@ -635,14 +830,24 @@ int allowresize(wbp w, int on)
 int setcanvas(wbp w, char *s)
 {
     wsp ws = w->window;
-    if (!strcmp(s, "iconic")) {
-    } else if (!strcmp(s, "maximal")) {
-    } else if (!strcmp(s, "normal")) {
+    if (!strcmp(s, "iconic") || !strcmp(s, "maximal"))
+        return Succeeded;
+    printf("setcanvas %p %p\n",ws->win,ws->pix);
+    if (!strcmp(s, "normal")) {
         CLRTOBEHIDDEN(ws);
     } else if (!strcmp(s, "hidden")) {
         SETTOBEHIDDEN(ws);
     } else
         return Error;
+
+    /* If the window is already open, call configure_canvas now; otherwise it
+     * is called from wopen after the rest of the arg
+     */
+    if (ws->win || ws->pix) {
+        if (configure_canvas(w) == Failed)
+            return Failed;
+    }
+
     return Succeeded;
 }
 
@@ -757,7 +962,10 @@ void getdrawop (wbp w, char *answer)
 
 void getcanvas (wbp w, char *answer)
 {
-    strcpy(answer, "none");
+    if (w->window->win)
+        strcpy(answer, "normal");
+    else
+        strcpy(answer, "hidden");
 }
 
 void geticonic (wbp w, char *answer)
@@ -778,6 +986,8 @@ static wsp alc_winstate()
     ws->serial = ++canvas_serial;
     ws->bits = 1024;				/* echo ON; others OFF */
     ws->listp = nulldesc;
+    ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
+        ws->mouse_pid = ws->cons_pid = ws->wsys_fd = -1;
     GRFX_LINK(ws, wstates);
     return ws;
 }
@@ -796,21 +1006,8 @@ static wcp alc_context(wbp w)
 
 static int init_window_system(void)
 {
-    char *srvwsys;
     if (initdraw(0, 0, "objecticon") < 0) {
         errno2why();
-        return 0;
-    }
-    srvwsys = getenv("wsys");
-    if(srvwsys == 0) {
-        LitWhy("Can't find $wsys");
-        return 0;
-    }
-    rfork(RFNAMEG); /* keep mount of rio private */
-
-    wsys_fd = open(srvwsys, ORDWR);
-    if(wsys_fd < 0) {
-        whyf("Can't open $wsys(%s): %r", srvwsys);
         return 0;
     }
     startup_time = get_time();

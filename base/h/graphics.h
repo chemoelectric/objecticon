@@ -91,20 +91,17 @@
 #define ISREVERSE(w)    ((w)->context->bits & 8)
 #define ISXORREVERSE(w)	((w)->context->bits & 16)
 #define ISXORREVERSEW(w) ((w)->bits & 16)
-#define ISCLOSED(w)	((w)->window->bits & 64)
 #define ISRESIZABLE(w)	((w)->window->bits & 128)
 #define ISEXPOSED(w)    ((w)->window->bits & 256)
 
 /* bit 4 is available */
 #define SETREVERSE(w)   ((w)->context->bits |= 8)
 #define SETXORREVERSE(w) ((w)->context->bits |= 16)
-#define SETCLOSED(w)	((w)->window->bits |= 64)
 #define SETRESIZABLE(w)	((w)->window->bits |= 128)
 #define SETEXPOSED(w)   ((w)->window->bits |= 256)
 /* bit 4 is available */
 #define CLRREVERSE(w)   ((w)->context->bits &= ~8)
 #define CLRXORREVERSE(w) ((w)->context->bits &= ~16)
-#define CLRCLOSED(w)	((w)->window->bits &= ~64)
 #define CLRRESIZABLE(w)	((w)->window->bits &= ~128)
 #define CLREXPOSED(w)   ((w)->window->bits &= ~256)
 
@@ -323,7 +320,7 @@ typedef struct _wstate {
   Image         *pix;
   char          mount_dir[64];
   int           event_pipe[2];
-  int           mouse_fd, cons_fd, consctl_fd;
+  int           wsys_fd, mouse_fd, cons_fd, consctl_fd;
   int           mouse_pid, cons_pid;
   int           mouse_down;
 #endif

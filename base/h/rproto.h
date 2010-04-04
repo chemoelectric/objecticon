@@ -197,8 +197,6 @@ void  bigrand         (dptr da, dptr dx);
    char *rgbkey         (int p, double r, double g, double b);
 
    int  setselection    (wbp w, dptr val);
-   int  setsize         (wbp w, char *s);
-   int  setminsize      (wbp w, char *s);
    int  wattrib         (wbp w, char *s, long len, dptr answer, char *abuf);
    int  writeGIF        (wbp w, char *filename,
                           int x, int y, int width, int height);
@@ -265,7 +263,8 @@ void  bigrand         (dptr da, dptr dx);
    int  setfillstyle    (wbp w, char *s);
    int  setfont         (wbp w, char **s);
    int  setgamma        (wbp w, double gamma);
-   int  setgeometry     (wbp w, char *geo);
+   int  setposx         (wbp w, int new_posx);
+   int  setposy         (wbp w, int new_posy);
    int  setheight       (wbp w, int new_height);
    int  setminheight    (wbp w, int new_height);
    int  seticonicstate  (wbp w, char *s);

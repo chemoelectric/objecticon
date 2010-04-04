@@ -30,7 +30,7 @@ w##_dptr = c_get_instance_data(&p, (dptr)&wbpf, &w##_ic);
 if (!w##_dptr)
     syserr("Missing wbp field");
 (w) = (wbp)IntVal(*w##_dptr);
-if (!(w) || ISCLOSED(w))
+if (!(w))
     runerr(142, p);
 #enddef
 
@@ -42,7 +42,7 @@ self_w_dptr = c_get_instance_data(&self, (dptr)&wbpf, &self_w_ic);
 if (!self_w_dptr)
     syserr("Missing wbp field");
 self_w = (wbp)IntVal(*self_w_dptr);
-if (!self_w || ISCLOSED(self_w))
+if (!self_w)
     runerr(142, self);
 #enddef
 
@@ -1479,26 +1479,19 @@ function graphics_Window_attrib(self, argv[argc])
                           if (StrLen(sbuf) > 5) {
                               if (!strncmp(StrLoc(sbuf), "posx=", 5)) config |= 1;
                               if (!strncmp(StrLoc(sbuf), "posy=", 5)) config |= 1;
-                              if (!strncmp(StrLoc(sbuf), "rows=", 5)) config |= 2;
                               if (!strncmp(StrLoc(sbuf), "size=", 5)) config |= 2;
                               if (StrLen(sbuf) > 6) {
                                   if (!strncmp(StrLoc(sbuf), "width=", 6))
-                                      config |= 2;
-                                  if (!strncmp(StrLoc(sbuf), "lines=", 6))
                                       config |= 2;
                                   if (StrLen(sbuf) > 7) {
                                       if (!strncmp(StrLoc(sbuf), "height=", 7))
                                           config |= 2;
                                       if (!strncmp(StrLoc(sbuf), "resize=", 7))
                                           config |= 2;
-                                      if (StrLen(sbuf) > 8) {
-                                          if (!strncmp(StrLoc(sbuf), "columns=", 8))
-                                              config |= 2;
-                                          if (StrLen(sbuf) > 9) {
-                                              if (!strncmp(StrLoc(sbuf),
-                                                           "geometry=", 9))
-                                                  config |= 3;
-                                          }
+                                      if (StrLen(sbuf) > 9) {
+                                          if (!strncmp(StrLoc(sbuf),
+                                                       "geometry=", 9))
+                                              config |= 3;
                                       }
                                   }
                               }
@@ -1662,8 +1655,8 @@ function graphics_Window_close(self)
      GetSelfW();
 
      *self_w_dptr = zerodesc;
-     SETCLOSED(self_w);
      wclose(self_w);
+     free_binding(self_w);
 
      return self;
    }

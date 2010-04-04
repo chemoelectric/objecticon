@@ -61,6 +61,8 @@
 #define ShiftMask            (4L << 16L)
 #define VirtKeyMask          (8L << 16L)
 
+#define vsnprint vsnprint
+
    #define readimage oi_readimage
    #define EXIT_FAILURE 1
    #define EXIT_SUCCESS 0
