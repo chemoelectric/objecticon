@@ -1,8 +1,10 @@
 static int inited;
 static vlong startup_time;
+static wfp fonts;
 
 static wsp alc_winstate(void);
 static wcp alc_context(wbp w);
+static wfp alc_font(wbp w, char **s);
 static int configure_canvas(wbp w);
 static void mouse_loop(wsp ws);
 static void cons_loop(wsp ws);
@@ -14,6 +16,8 @@ static int open_pix_win(wsp ws);
 static void close_pix_win(wsp ws);
 static void handle_resize(wsp ws);
 static int init_window_system(void);
+static void clear_pix(wbp wb);
+static void clear_win(wbp wb);
 
 #define EMAXMSG 128+8192     /* size of 9p header+data */
 
@@ -66,6 +70,8 @@ wbp wopen(wbp parent, dptr attr, int n, int *err_index)
         free_binding(w);
         return 0;
     }
+    /* Fill pixmap with bg color */
+    clear_pix(w);
 
     if (configure_canvas(w) != Succeeded) {
         free_binding(w);
@@ -80,18 +86,38 @@ static void printrect(char *s, Rectangle r)
     printf("%s: %d %d %d %d\n", s, r.min.x,r.min.y,r.max.x,r.max.y);
 }
 
+static void clear_pix(wbp w)
+{
+    wsp ws = w->window;
+    Image *src = w->context->bg;
+    gendraw(ws->pix, ws->pix->r, src, src->r.min, 0, ZP);
+}
+
+static void clear_win(wbp w)
+{
+    wsp ws = w->window;
+    Image *src = w->context->bg;
+    gendraw(ws->win, ws->win->r, src, src->r.min, 0, ZP);
+}
+
+static void copy_to(Image *dest, Image *src)
+{
+    Rectangle t = Rect(dest->r.min.x, 
+                       dest->r.min.y,
+                       dest->r.min.x + (src->r.max.x - src->r.min.x),
+                       dest->r.min.y + (src->r.max.y - src->r.min.y));
+    gendraw(dest, t, src, src->r.min, 0, ZP);
+}
+
 static void pix_to_win(wsp ws)
 {
-    draw(ws->win, ws->win->r, ws->pix, 0, ZP);
+    copy_to(ws->win, ws->pix);
     flushimage(display, 1);
 }
 
 static void win_to_pix(wsp ws)
 {
-    Rectangle t;
-    t = Rect(-ws->win->r.min.x, -ws->win->r.min.y,
-             ws->pix->r.max.x, ws->pix->r.max.y);
-    draw(ws->pix, t, ws->win, 0, ZP);
+    copy_to(ws->pix, ws->win);
     flushimage(display, 1);
 }
 
@@ -158,23 +184,25 @@ static void cons_loop(wsp ws)
     _exits(0);
 }
 
+static wbp find_first_wbp_for(wsp ws)
+{
+    wbp wb;
+    for (wb = wbndngs; wb; wb = wb->next)
+        if (wb->window == ws)
+            return wb;
+    syserr("Couldn't find wbp for wsp");
+}
+
 static void handle_resize(wsp ws)
 {
     char buff[128];
-    Rectangle t;
     sprintf(buff, "%s/winname", ws->mount_dir);
     printf("reconnecting to %s repl=%d\n",buff, ws->pix->repl);
     if (gengetwindow(display, buff, &ws->win, &ws->screen, Refnone) < 0)
         syserr("Failed to reconnect to window on a resize");
-
-    /* Essentially a pix_to_win, but using the old ws->win->r to avoid
-     * draw tiling the pixmap at the edges (if the window has got bigger).
-     */
-    t = Rect(ws->win->r.min.x, ws->win->r.min.y,
-             ws->win->r.min.x + ws->width, ws->win->r.min.y + ws->height);
-    draw(ws->win, t, ws->pix, 0, ZP);
-    flushimage(display, 1);
-
+    /* Fill the win with the bg of the first context */
+    clear_win(find_first_wbp_for(ws));
+    pix_to_win(ws);
     close_pix_win(ws);
     ws->width = ws->win->r.max.x - ws->win->r.min.x;
     ws->height = ws->win->r.max.y - ws->win->r.min.y;
@@ -314,21 +342,6 @@ int walert(wbp w, int volume)
     return Succeeded;
 }
 
-int isetbg(wbp w, int bg)
-{
-    return Succeeded;
-}
-
-int setbg(wbp w, char *s)
-{
-    return Succeeded;
-}
-
-void getbg(wbp w, char *answer)
-{
-    strcpy(answer, "none");
-}
-
 void unsetclip(wbp w)
 {
 }
@@ -349,7 +362,7 @@ char *get_mutable_name(wbp w, int mute_index)
 
 int set_mutable(wbp w, int i, char *s)
 {
-    return Succeeded;
+    return Failed;
 }
 
 int copyarea(wbp w,wbp w2,int x,int y,int wd,int h,int x2,int y2)
@@ -374,21 +387,28 @@ void drawpoints(wbp w, XPoint *points, int npoints)
 {
 }
 
-void drawrectangles(wbp w, XRectangle *recs, int nrecs)
+static void impl_drawrectangles(wcp wc, Image *dest, XRectangle *recs)
 {
-    wsp ws = w->window;
     Point p[5];
-    Image *brdr = allocimage(display, Rect(0, 0, 1, 1), 
-                             screen->chan, 1, 0x44445555);
-
-    p[0] = addpt(ws->win->r.min, Pt(recs->x, recs->y));
+    p[0] = addpt(dest->r.min, Pt(recs->x, recs->y));
     p[1] = Pt(p[0].x + recs->width, p[0].y);
     p[2] = Pt(p[0].x + recs->width, p[0].y + recs->height);
     p[3] = Pt(p[0].x, p[0].y + recs->height);
     p[4] = p[0];
-    poly(ws->win, p, 5, Endsquare, Endsquare, 0, brdr, ZP);
+    poly(dest, p, 5, Endsquare, Endsquare, 0, wc->fg, ZP);
+}
+
+void drawrectangles(wbp w, XRectangle *recs, int nrecs)
+{
+    wsp ws = w->window;
+    wcp wc = w->context;
+    while (nrecs-- > 0) {
+        if (ws->win)
+            impl_drawrectangles(wc, ws->win, recs);        
+        impl_drawrectangles(wc, ws->pix, recs);        
+        ++recs;
+    }
     flushimage(display, 1);
-    win_to_pix(ws);
 }
 
 void fillpolygon (wbp w, XPoint *pts, int npts)
@@ -399,8 +419,38 @@ void drawsegments(wbp w, XSegment *segs, int nsegs)
 {
 }
 
+static void clip(wcp wc, Image *i)
+{
+    if (wc->clipw < 0)
+        return;
+    i->clipr = Rect(i->r.min.x + wc->clipx, 
+                    i->r.min.y + wc->clipy, 
+                    i->r.min.x + wc->clipx + wc->clipw, 
+                    i->r.min.y + wc->clipy + wc->cliph);
+    print("clipr=%R\n",i->clipr);
+}
+
+static void unclip(wcp wc, Image *i)
+{
+    i->clipr = i->r;
+}
+
+static void impl_drawstrng(wcp wc, Image *dest, int x, int y, char *str, int slen)
+{
+    printf("font=%p\n",wc->font->font);
+    clip(wc, dest);
+    stringn(dest, addpt(dest->r.min, Pt(x, y)), wc->fg, ZP, wc->font->font, str, slen);
+    unclip(wc, dest);
+}
+
 void drawstrng(wbp w, int x, int y, char *str, int slen)
 {
+    wsp ws = w->window;
+    wcp wc = w->context;
+    if (ws->win)
+        impl_drawstrng(wc, ws->win, x, y, str, slen);
+    impl_drawstrng(wc, ws->pix, x, y, str, slen);
+    flushimage(display, 1);
 }
 
 void drawutf8(wbp w, int x, int y, char *str, int slen)
@@ -437,17 +487,64 @@ void pollevent(void)
 
 int isetfg(wbp w, int fg)
 {
-    return Succeeded;
+    return Failed;
 }
 
-int setfg(wbp w, char *s)
+int setfg(wbp w, char *val)
 {
+    long r, g, b, a, n;
+    wcp wc = w->context;
+    if (parsecolor(w, val, &r, &g, &b, &a) != Succeeded)
+        return Failed;
+    if (wc->fgname) 
+        free(wc->fgname);
+    wc->fgname = salloc(val);
+    if (wc->fg)
+        freeimage(wc->fg);
+    r /= 256;
+    g /= 256;
+    b /= 256;
+    a /= 256;
+    n = (r << 24) | (g << 16) | (b << 8) | a;
+    printf("setfg %d %d %d %d -> %x\n", r,g,b,a,n);
+    MemProtect(wc->fg = allocimage(display, Rect(0, 0, 1, 1), screen->chan, 1, n));
     return Succeeded;
 }
 
 void getfg(wbp w, char *answer)
 {
-    strcpy(answer, "none");
+    strcpy(answer, w->context->fgname);
+}
+
+int isetbg(wbp w, int bg)
+{
+    return Failed;
+}
+
+int setbg(wbp w, char *val)
+{
+    long r, g, b, a, n;
+    wcp wc = w->context;
+    if (parsecolor(w, val, &r, &g, &b, &a) != Succeeded)
+        return Failed;
+    if (wc->bgname) 
+        free(wc->bgname);
+    wc->bgname = salloc(val);
+    if (wc->bg)
+        freeimage(wc->bg);
+    r /= 256;
+    g /= 256;
+    b /= 256;
+    a /= 256;
+    n = (r << 24) | (g << 16) | (b << 8) | a;
+    printf("setbg %d %d %d %d -> %x\n", r,g,b,a,n);
+    MemProtect(wc->bg = allocimage(display, Rect(0, 0, 1, 1), screen->chan, 1, n));
+    return Succeeded;
+}
+
+void getbg(wbp w, char *answer)
+{
+    strcpy(answer, w->context->bgname);
 }
 
 void fillarcs(wbp w, XArc *arcs, int narcs)
@@ -458,14 +555,78 @@ void fillrectangles(wbp w, XRectangle *recs, int nrecs)
 {
 }
 
-int setfont(wbp w, char **s)
+static char *convert_spec(char *s)
 {
+    int flags, size;
+    char family[MAXFONTWORD+1], *r;
+    static char buff[256];
+    
+    if (!strncmp(s, "p9:", 3))
+        return s + 3;
+
+    if (!parsefont(s, family, &flags, &size))
+        return s;
+
+    /*
+     * Check for special "standard" family names.
+     */
+    if (!strcmp(family, "fixed"))
+        r = "fixed/unicode.8x13.font";
+    else if (!strcmp(family, "mono"))
+        r = "courier/latin1.5.font";
+    else if (!strcmp(family, "typewriter"))
+        r = "courier/latin1.5.font";
+    else if (!strcmp(family, "sans"))
+        r = "lucidasans/latin1.7.font";
+    else if (!strcmp(family, "serif"))
+        r = "times/latin1.7.font";
+    else
+        r = "times/latin1.7.font";
+            
+    sprintf(buff, "/lib/font/bit/%s", r);
+    printf("%s->%s\n",s,buff);
+    return buff;
+}
+
+static wfp new_font(char *s)
+{
+    wfp rv;
+    Font *f;
+
+    f = openfont(display, convert_spec(s));
+    if (!f)
+        f = display->defaultfont;
+
+    GRFX_ALLOC(rv, _wfont);
+    rv->name = salloc(s);
+    rv->font = f;
+    GRFX_LINK(rv, fonts);
+    return rv;
+}
+
+int setfont(wbp w, char *s)
+{
+    wcp wc = w->context;
+    wfp rv;
+    /*
+     * See if the font is already loaded
+     */
+    for(rv = fonts; rv; rv = rv->next) {
+        if (!strcmp(s, rv->name)) {
+            wc->font = rv;
+            return Succeeded;
+        }
+    }
+    if (!(rv = new_font(s)))
+        return Failed;
+
+    wc->font = rv;
     return Succeeded;
 }
 
 void getfontname(wbp w, char *answer)
 {
-    strcpy(answer, "none");
+    strcpy(answer, w->context->font->name);
 }
 
 void free_mutable(wbp w, int mute_index)
@@ -483,8 +644,8 @@ int lowerWindow (wbp w)
 
 int mutable_color (wbp w, dptr argv, int ac, int *retval)
 {
-    *retval = 0;
-    return Succeeded;
+    LitWhy("Mutable colors not supported");
+    return Failed;
 }
 
 int setpattern(wbp w, char *name, int len)
@@ -539,6 +700,31 @@ int utf8width(wbp w, char *s, int n)
 
 int do_config(wbp w, int status)
 {
+    wsp ws = w->window;
+    int have_win = 0;
+
+    /* Dispose of window if open */
+    if (ws->win) {
+        have_win = 1;
+        close_screen_win(ws);
+    }
+    if (status & 2) {
+        /* Copy the pixmap to a temporary buffer */
+        Image *t;
+        MemProtect(t = allocimage(display, ws->pix->r, screen->chan, 1, DNofill));
+        copy_to(t, ws->pix);
+        close_pix_win(ws);
+        if (open_pix_win(ws) == Failed)
+            syserr("Failed to open_pix_win on a resize");
+        clear_pix(w);
+        copy_to(ws->pix, t);
+        freeimage(t);
+    }
+    if (have_win) {
+        if (open_screen_win(ws) == Failed)
+            return Failed;
+        pix_to_win(ws);
+    }
     return Succeeded;
 }
 
@@ -705,13 +891,7 @@ static void close_screen_win(wsp ws)
 
 static int open_pix_win(wsp ws)
 {
-    Image *i;
-    i = allocimage(display, Rect(0, 0, ws->width, ws->height), screen->chan, 1, DWhite);
-    if (!i) {
-        whyf("allocimage failed: %r");
-        return Failed;
-    }
-    ws->pix = i;
+    MemProtect(ws->pix = allocimage(display, Rect(0, 0, ws->width, ws->height), screen->chan, 1, DNofill));
     return Succeeded;
 }
 
@@ -758,6 +938,14 @@ void free_context(wcp wc)
 {
     wc->refcount--;
     if(wc->refcount == 0) {
+        if (wc->fgname) 
+            free(wc->fgname);
+        if (wc->fg)
+            freeimage(wc->fg);
+        if (wc->bgname) 
+            free(wc->bgname);
+        if (wc->bg)
+            freeimage(wc->bg);
         GRFX_UNLINK(wc, wcntxts);
     }
 }
@@ -999,7 +1187,10 @@ static wcp alc_context(wbp w)
     wc->serial = ++context_serial;
     wc->clipx = wc->clipy = 0;
     wc->clipw = wc->cliph = -1;
-
+    MemProtect(wc->fg = allocimage(display, Rect(0, 0, 1, 1), screen->chan, 1, DBlack));
+    MemProtect(wc->bg = allocimage(display, Rect(0, 0, 1, 1), screen->chan, 1, DWhite));
+    wc->fgname = salloc("black");
+    wc->bgname = salloc("white");
     GRFX_LINK(wc, wcntxts);
     return wc;
 }

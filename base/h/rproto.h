@@ -261,7 +261,7 @@ void  bigrand         (dptr da, dptr dx);
    int  setdrawop       (wbp w, char *val);
    int  setfg           (wbp w, char *s);
    int  setfillstyle    (wbp w, char *s);
-   int  setfont         (wbp w, char **s);
+   int  setfont         (wbp w, char *s);
    int  setgamma        (wbp w, double gamma);
    int  setposx         (wbp w, int new_posx);
    int  setposy         (wbp w, int new_posy);

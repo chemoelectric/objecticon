@@ -1045,14 +1045,14 @@ int width;
 int setposx(wbp w, int new_posx)
 {
     wsp ws = w->window;
-    ws->posx = x;
+    ws->posx = new_posx;
     return Succeeded;
 }
 
 int setposy(wbp w, int new_posy)
 {
     wsp ws = w->window;
-    ws->posy = y;
+    ws->posy = new_posy;
     return Succeeded;
 }
 
@@ -1247,7 +1247,7 @@ HFONT mkfont(char *s)
  */
 int setfont(w, s)
 wbp w;
-char **s;
+char *s;
    {
    wsp ws = w->window;
    wcp wc = w->context;
@@ -1255,14 +1255,14 @@ char **s;
    TEXTMETRIC	metrics;
    HDC tmpdc;
 
-   hf = mkfont(*s);
+   hf = mkfont(s);
    if (hf != NULL) {
       if (wc->font->font)
 	 DeleteObject(wc->font->font);
       wc->font->font = hf;
       if (wc->font->name)
          free(wc->font->name);
-      wc->font->name = salloc(*s);
+      wc->font->name = salloc(s);
 
       tmpdc = GetDC(ws->iconwin);
       oldfont = SelectObject(tmpdc, hf);

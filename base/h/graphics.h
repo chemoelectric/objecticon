@@ -138,6 +138,10 @@ typedef struct _wfont {
   int		refcount;
   int		serial;			/* serial # */
   struct _wfont *previous, *next;
+#if PLAN9
+  char	        *name;			/* name for WAttrib and fontsearch */
+  Font          *font;
+#endif
 #if XWindows
   char	      *	name;			/* name for WAttrib and fontsearch */
   int           ascent;                 /* font dimensions */
@@ -247,6 +251,10 @@ typedef struct _wcontext {
   int		drawop;
   double	gamma;			/* gamma correction value */
   int		bits;			/* context bits */
+#if PLAN9
+  Image         *fg, *bg;
+  char		*fgname, *bgname;
+#endif
 #if XWindows
   wdp		display;
   GC		gc;			/* X graphics context */
