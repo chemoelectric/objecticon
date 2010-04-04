@@ -183,9 +183,8 @@ static void trans1(char *filename)
     incol = 0;
     peekc = 0;                  /* clear character lookahead */
 
-    if (strcmp(filename,"-") == 0) {
+    if (strcmp(filename,"-") == 0)
         filename = stdin_string;
-    }
 
     outname = intern(makename(SourceDir, filename, USuffix));
 

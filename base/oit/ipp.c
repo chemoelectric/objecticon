@@ -181,9 +181,8 @@ static int ppopen(char *fname, int m4)
          }
    if (m4)
       f = m4pipe(fname);
-   else if (curfile == &nofile && strcmp(fname, "-") == 0) { /* 1st file only */
+   else if (curfile == &nofile && fname == stdin_string) { /* 1st file only */
       f = stdin;
-      fname = stdin_string;
       }
    else
       f = fopen(fname, ReadText);
@@ -212,7 +211,10 @@ static FILE *m4pipe(char *filename)
       {
       FILE *f;
       char *s = safe_alloc(7 + strlen(filename));
-      sprintf(s, "m4 -s %s", filename);
+      if (filename == stdin_string)
+          sprintf(s, "m4 -s -");
+      else
+          sprintf(s, "m4 -s %s", filename);
       f = popen(s, ReadText);
       free(s);
       return f;
