@@ -1061,7 +1061,7 @@ function graphics_Window_font(self, f)
       if (!is:null(f)) {
           if (!cnv:C_string(f, tmp))
               runerr(103, f);
-          if (setfont(self_w,&tmp) == Failed) 
+          if (setfont(self_w,tmp) == Failed) 
               fail;
       }
       getfontname(self_w, attr_buff);

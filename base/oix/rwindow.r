@@ -2397,7 +2397,7 @@ int parsegeometry(char *buf, int *x, int *y, int *width, int *height)
  */
 int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
 {
-    char val[256], *valptr;
+    char val[256];
     struct descrip d;
     char *mid, *midend, c;
     int r, a;
@@ -2409,7 +2409,6 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
     wcp wc = w->context;
     int toolong = 0;
 
-    valptr = val;
     /*
      * catch up on any events pending - mainly to update pointerx, pointery
      */
@@ -2532,7 +2531,7 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
                 break;
             }
             case A_FONT: {
-                AttemptAttr(setfont(w, &valptr));
+                AttemptAttr(setfont(w, val));
                 break;
             }
             case A_PATTERN: {
