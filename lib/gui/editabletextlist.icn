@@ -970,24 +970,23 @@ class EditableTextList(LineBasedScrollArea)
             off := text_width_ex(view.cbwin, s, 1, si, self.tab_width)
             if \self.is_editable_flag then {
                cw := Gui.style.get_cursor_clone(view.cbwin)
-               erase_rectangle(cw, xp + off, yp, 
-                              char_width(view.cbwin, s[si]), self.line_height)
+               cw.erase_area(xp + off, yp, 
+                             char_width(view.cbwin, s[si]), self.line_height)
                if s[si] ~== "\t" then
                   draw_string_ex(cw, xp + off, yp, s[si])
                cw.uncouple()
             } else {
                cw := Gui.style.get_focus_clone(view.cbwin)
-               rectangle(cw, xp + off, yp, 
-                         char_width(view.cbwin, s[si]), self.line_height)
+               cw.draw_rectangle(xp + off, yp, 
+                                 char_width(view.cbwin, s[si]), self.line_height)
                cw.uncouple()
             }
          } else if \self.is_editable_flag | has_region() then {
             cw := Gui.style.get_dashed_clone(view.cbwin)
-            rectangle(cw,
-                      xp + text_width_ex(view.cbwin, s, 1, si, self.tab_width), 
-                      yp, 
-                      char_width(view.cbwin, s[si]), 
-                      self.line_height)
+            cw.draw_rectangle(xp + text_width_ex(view.cbwin, s, 1, si, self.tab_width), 
+                              yp, 
+                              char_width(view.cbwin, s[si]), 
+                              self.line_height)
             cw.uncouple()
          }
       }

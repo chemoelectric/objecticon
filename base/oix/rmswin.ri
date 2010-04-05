@@ -3019,6 +3019,7 @@ void drawrectangles(wbp w, XRectangle *recs, int nrecs)
    SelectObject(pixdc, oldpen2);
    SelectObject(pixdc, oldbrush2);
 
+#if 0
    for (r = recs; r < recs + nrecs; r++) {
       /*
        * from SDK reference: Rectangle() draws up to but not including
@@ -3027,6 +3028,7 @@ void drawrectangles(wbp w, XRectangle *recs, int nrecs)
       r->right += 1;
       r->bottom += 1;
       }
+#endif
    if (stdwin) {
       SetBkMode(stddc, wc->bkmode);
       oldpen = SelectObject(stddc, hp);

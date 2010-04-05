@@ -8,7 +8,7 @@ class MissingPlugin()
    end
 
    public display(obj, r)
-      rectangle(obj.cbwin, obj.x, obj.y, obj.w, obj.h)
+      obj.cbwin.draw_rectangle(obj.x, obj.y, obj.w, obj.h)
       center_string(obj.cbwin, 
                     obj.x + obj.w / 2, obj.y + 10, 
                     "<Missing Plugin>")

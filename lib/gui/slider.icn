@@ -20,7 +20,7 @@ class SliderArea(Component)
                                   self.inner_x, self.inner_y, 
                                   self.inner_w, self.inner_h,
                                   Gui.BORDER_WIDTH)
-      erase_rectangle(self.cbwin, self.slider_x, self.slider_y, self.slider_w, self.slider_h)
+      self.cbwin.erase_area(self.slider_x, self.slider_y, self.slider_w, self.slider_h)
       Gui.style.draw_raised_rectangle(self.cbwin, 
                                   self.slider_x, self.slider_y, 
                                   self.slider_w, self.slider_h,

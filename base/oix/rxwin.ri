@@ -2522,7 +2522,7 @@ void drawrectangles(wbp w, XRectangle *recs, int nrecs)
    int i;
    STDLOCALS(w);
    for(i=0; i<nrecs; i++) {
-       RENDER4(XDrawRectangle,recs[i].x,recs[i].y,recs[i].width,recs[i].height);
+       RENDER4(XDrawRectangle,recs[i].x,recs[i].y,recs[i].width-1,recs[i].height-1);
    }
 }
 
@@ -2576,8 +2576,8 @@ void erasearea(wbp w, int x, int y, int width, int height)
      * if width >= window width or height >= window height, clear any
      * offscreen portion as well in order to allow the freeing of colors.
      */
-    if (x + width  >= ws->width)  width  = ws->pixwidth - x;
-    if (y + height >= ws->height) height = ws->pixheight - y;
+    if (x + width  >= (int)ws->width)  width  = ws->pixwidth - x;
+    if (y + height >= (int)ws->height) height = ws->pixheight - y;
 
     /*
      * fill the rectangle with the background color
@@ -2585,6 +2585,7 @@ void erasearea(wbp w, int x, int y, int width, int height)
     XSetForeground(stddpy, stdgc, wd->colors[wc->bg].c);
     if (wc->drawop != GXcopy) XSetFunction(stddpy, stdgc, GXcopy);
     if (wc->fillstyle != FillSolid) XSetFillStyle(stddpy, stdgc, FillSolid);
+
     RENDER4(XFillRectangle, x, y, width, height);
     XSetForeground(stddpy, stdgc,
                    wd->colors[wc->fg].c ^ (ISXORREVERSE(w)?wd->colors[wc->bg].c:0));
