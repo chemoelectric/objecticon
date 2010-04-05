@@ -4202,7 +4202,7 @@ int utf8width(wbp w, char *s, int n)
     return textwidth(w, s, n);
 }
 
-void drawstrng(wbp w, int x, int y, char *s, int slen)
+void drawstring(wbp w, int x, int y, char *s, int slen)
 { 
     STDLOCALS(w); 
     RENDER4(XDrawString, x, y, s, slen); 

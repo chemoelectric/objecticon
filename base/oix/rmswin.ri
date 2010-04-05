@@ -2791,7 +2791,7 @@ int setselection(wbp w, dptr val)
 }
 
 /*
- * drawstrng()
+ * drawstring()
  */
 void drawstring(wbinding *wb, int x, int y, char *s, int slen)
    {
@@ -2818,7 +2818,7 @@ void drawstring(wbinding *wb, int x, int y, char *s, int slen)
 
 void drawutf8(wbp w, int x, int y, char *s, int slen)
 {
-    drawstrng(w, x, y, s, slen);
+    drawstring(w, x, y, s, slen);
 }
 
 /*
