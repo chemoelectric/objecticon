@@ -293,7 +293,7 @@ procedure BevelTriangle(win, x, y, r, o, bw)
             upper.draw_line(x - r, y + r, x - r, y - r, x + r, y)
          }
          "w": {
-            lower.draw_segment(x - r, y, x + r, y + r, x + r, y + r, x + r, y-r)
+            lower.draw_line(x - r, y, x + r, y + r, x + r, y + r, x + r, y-r, x - r, y)
             upper.draw_line(x - r, y, x + r, y - r)
          }
       }
@@ -384,7 +384,8 @@ procedure BevelRectangle(win, x, y, w, h, bw)
 
    xx := x + w
    yy := y + h
-   lower.fill_rectangle(x, yy, w, -bw, xx, y, -bw, h)
+   lower.fill_rectangle(x, yy, w, -bw)
+   lower.fill_rectangle(xx, y, -bw, h)
 
    while (bw -:= 1) >= 0 do {
       upper.draw_line(x, yy -:= 1, x, y, xx -:= 1, y)

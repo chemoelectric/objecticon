@@ -169,7 +169,7 @@ typedef int siptr, stringint, inst;
       typedef int *Display, Cursor, GC, Window, Pixmap, Visual, KeySym;
       typedef int WidgetClass, XImage, XpmAttributes, XSetWindowAttributes;
       typedef int XGlyphInfo, XftColor, Region, XftDraw, FcChar8;
-      typedef int Cardinal,String,XtResource,XtPointer;
+      typedef int Cardinal,String,XtResource,XtPointer,XArc;
    #endif				/* XWindows */
       
    #if MSWIN32

@@ -2499,10 +2499,17 @@ static void handle_mouse(wbp w, XButtonEvent *event)
 }
 
 
-void drawarcs(wbp w, XArc *arcs, int narcs)
-{ 
+void drawarc(wbp w, int x, int y, int width, int height, int angle1, int angle2)
+{
+    XArc arc;
     STDLOCALS(w); 
-    RENDER2(XDrawArcs,arcs,narcs);
+    arc.x = x;
+    arc.y = y;
+    arc.width = width;
+    arc.height = height;
+    arc.angle1 = angle1;
+    arc.angle2 = angle2;
+    RENDER2(XDrawArcs,&arc,1);
 }
 
 void drawlines(wbp w, XPoint *points, int npoints)
@@ -2511,31 +2518,32 @@ void drawlines(wbp w, XPoint *points, int npoints)
     RENDER3(XDrawLines,points,npoints,CoordModeOrigin);
 }
 
-void drawpoints(wbp w, XPoint *points, int npoints)
+void drawpoint(wbp w, int x, int y)
 {
-    STDLOCALS(w); 
-    RENDER3(XDrawPoints,points,npoints,CoordModeOrigin);
+    XPoint p;
+    STDLOCALS(w);
+    p.x = x;
+    p.y = y;
+    RENDER3(XDrawPoints,&p,1,CoordModeOrigin);
 }
 
-void drawrectangles(wbp w, XRectangle *recs, int nrecs)
+void drawrectangle(wbp w, int x, int y, int width, int height)
 {
-   int i;
    STDLOCALS(w);
-   for(i=0; i<nrecs; i++) {
-       RENDER4(XDrawRectangle,recs[i].x,recs[i].y,recs[i].width-1,recs[i].height-1);
-   }
+   RENDER4(XDrawRectangle,x,y,width-1,height-1);
 }
 
-void drawsegments(wbp w, XSegment *segs, int nsegs)
+void fillarc(wbp w, int x, int y, int width, int height, int angle1, int angle2)
 { 
+    XArc arc;
     STDLOCALS(w); 
-    RENDER2(XDrawSegments,segs,nsegs);
-}
-
-void fillarcs(wbp w, XArc *arcs, int narcs)
-{ 
-    STDLOCALS(w); 
-    RENDER2(XFillArcs, arcs, narcs);
+    arc.x = x;
+    arc.y = y;
+    arc.width = width;
+    arc.height = height;
+    arc.angle1 = angle1;
+    arc.angle2 = angle2;
+    RENDER2(XFillArcs, &arc, 1);
 }
 
 void fillpolygon(wbp w, XPoint *points, int npoints)
@@ -2545,24 +2553,28 @@ void fillpolygon(wbp w, XPoint *points, int npoints)
 }
 
 /*
- * fill a series of rectangles
+ * fill a rectangle
  */
-void fillrectangles(wbp w, XRectangle *recs, int nrecs)
+void fillrectangle(wbp w, int x, int y, int width, int height)
 {
+    XRectangle rec;
     STDLOCALS(w);
-
+    rec.x = x;
+    rec.y = y;
+    rec.width = width;
+    rec.height = height;
     /*
      * Free colors if drawop=copy, fillstyle~=masked, no clipping,
      * and a single rectangle that fills the whole window.
      */
-    if (!RECX(*recs) && !RECY(*recs) && RECWIDTH(*recs) >= ws->width &&
-        RECHEIGHT(*recs) >= ws->height && nrecs == 1 &&
+    if (!RECX(rec) && !RECY(rec) && RECWIDTH(rec) >= ws->width &&
+        RECHEIGHT(rec) >= ws->height &&
         wc->drawop == GXcopy && wc->fillstyle != FillStippled && wc->clipw < 0) {
-        RECWIDTH(*recs) = ws->pixwidth;	/* fill hidden part */
-        RECHEIGHT(*recs) = ws->pixheight;
+        RECWIDTH(rec) = ws->pixwidth;	/* fill hidden part */
+        RECHEIGHT(rec) = ws->pixheight;
         free_xcolors(w, 0);			/* free old colors */
     }
-    RENDER2(XFillRectangles, recs, nrecs);
+    RENDER2(XFillRectangles, &rec, 1);
 }
 
 /*
@@ -4048,7 +4060,7 @@ int utf8width(wbp w, char *s, int n)
 }
 
 
-void drawstrng(wbp w, int x, int y, char *str, int slen)
+void drawstring(wbp w, int x, int y, char *str, int slen)
 {
     XftColor color;
     Region r;

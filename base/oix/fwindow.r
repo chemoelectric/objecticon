@@ -360,73 +360,56 @@ end
 
 function graphics_Window_draw_arc(self, argv[argc])
    body {
-      int i, j, r;
-      XArc arcs[MAXXOBJS];
+      int r;
       word x, y, width, height;
       double a1, a2;
 
       GetSelfW();
 
-      j = 0;
-      for (i = 0; i < argc || i == 0; i += 6) {
-          if (j == MAXXOBJS) {
-              drawarcs(self_w, arcs, MAXXOBJS);
-              j = 0;
-          }
-          r = rectargs(self_w, argc, argv, i, &x, &y, &width, &height);
-          if (r >= 0)
-              runerr(101, argv[r]);
+      r = rectargs(self_w, argc, argv, 0, &x, &y, &width, &height);
+      if (r >= 0)
+          runerr(101, argv[r]);
 
-          arcs[j].x = x;
-          arcs[j].y = y;
-          ARCWIDTH(arcs[j]) = width;
-          ARCHEIGHT(arcs[j]) = height;
-
-          /*
-           * Angle 1 processing.  Computes in radians and 64'ths of a degree,
-           *  bounds checks, and handles wraparound.
-           */
-          if (i + 4 >= argc || is:null(argv[i + 4]))
-              a1 = 0.0;
-          else {
-              if (!cnv:C_double(argv[i + 4], a1))
-                  runerr(102, argv[i + 4]);
-              if (a1 >= 0.0)
-                  a1 = fmod(a1, 2 * Pi);
-              else
-                  a1 = -fmod(-a1, 2 * Pi);
-          }
-          /*
-           * Angle 2 processing
-           */
-          if (i + 5 >= argc || is:null(argv[i + 5]))
-              a2 = 2 * Pi;
-          else {
-              if (!cnv:C_double(argv[i + 5], a2))
-                  runerr(102, argv[i + 5]);
-              if (fabs(a2) > 3 * Pi)
-                  runerr(101, argv[i + 5]);
-          }
-          if (fabs(a2) >= 2 * Pi) {
-              a2 = 2 * Pi;
-          }
-          else {
-              if (a2 < 0.0) {
-                  a1 += a2;
-                  a2 = fabs(a2);
-              }
-          }
-          if (a1 < 0.0)
-              a1 = 2 * Pi - fmod(fabs(a1), 2 * Pi);
-          else
+      /*
+       * Angle 1 processing.  Computes in radians and 64'ths of a degree,
+       *  bounds checks, and handles wraparound.
+       */
+      if (4 >= argc || is:null(argv[4]))
+          a1 = 0.0;
+      else {
+          if (!cnv:C_double(argv[4], a1))
+              runerr(102, argv[4]);
+          if (a1 >= 0.0)
               a1 = fmod(a1, 2 * Pi);
-          arcs[j].angle1 = ANGLE(a1);
-          arcs[j].angle2 = EXTENT(a2);
-
-          j++;
+          else
+              a1 = -fmod(-a1, 2 * Pi);
       }
+      /*
+       * Angle 2 processing
+       */
+      if (5 >= argc || is:null(argv[5]))
+          a2 = 2 * Pi;
+      else {
+          if (!cnv:C_double(argv[5], a2))
+              runerr(102, argv[5]);
+          if (fabs(a2) > 3 * Pi)
+              runerr(101, argv[5]);
+      }
+      if (fabs(a2) >= 2 * Pi) {
+          a2 = 2 * Pi;
+      }
+      else {
+          if (a2 < 0.0) {
+              a1 += a2;
+              a2 = fabs(a2);
+          }
+      }
+      if (a1 < 0.0)
+          a1 = 2 * Pi - fmod(fabs(a1), 2 * Pi);
+      else
+          a1 = fmod(a1, 2 * Pi);
 
-      drawarcs(self_w, arcs, j);
+      drawarc(self_w, x, y, width, height, ANGLE(a1), EXTENT(a2));
 
       return self;
    }
@@ -626,7 +609,6 @@ function graphics_Window_draw_image(self, argv[argc])
    }
 end
 
-
 function graphics_Window_draw_line(self, argv[argc])
    body {
       int i, j, n;
@@ -657,30 +639,17 @@ function graphics_Window_draw_line(self, argv[argc])
    }
 end
 
-function graphics_Window_draw_point(self, argv[argc])
+function graphics_Window_draw_point(self, x, y)
+   if !cnv:C_integer(x) then
+      runerr(101, x)
+   if !cnv:C_integer(y) then
+      runerr(101, y)
    body {
-      int i, j, n;
-      XPoint points[MAXXOBJS];
       int dx, dy;
-
       GetSelfW();
-      CheckArgMultipleOf(2);
-
       dx = self_w->context->dx;
       dy = self_w->context->dy;
-      for(i=0, j=0; i < n; i++, j++) {
-          int base = i * 2;
-          if (j == MAXXOBJS) {
-              drawpoints(self_w, points, MAXXOBJS);
-              j = 0;
-          }
-          CnvCShort(argv[base], points[j].x);
-          CnvCShort(argv[base + 1], points[j].y);
-          points[j].x += dx;
-          points[j].y += dy;
-      }
-      drawpoints(self_w, points, j);
-      
+      drawpoint(self_w, x + dx, y + dy);
       return self;
    }
 end
@@ -727,115 +696,59 @@ end
 
 function graphics_Window_draw_rectangle(self, argv[argc])
    body {
-      int i, j, r;
-      XRectangle recs[MAXXOBJS];
+      int r;
       word x, y, width, height;
 
       GetSelfW();
 
-      j = 0;
+      r = rectargs(self_w, argc, argv, 0, &x, &y, &width, &height);
+      if (r >= 0)
+          runerr(101, argv[r]);
 
-      for (i = 0; i < argc || i == 0; i += 4) {
-          r = rectargs(self_w, argc, argv, i, &x, &y, &width, &height);
-          if (r >= 0)
-              runerr(101, argv[r]);
-          if (j == MAXXOBJS) {
-              drawrectangles(self_w,recs,MAXXOBJS);
-              j = 0;
-          }
-          RECX(recs[j]) = x;
-          RECY(recs[j]) = y;
-          RECWIDTH(recs[j]) = width;
-          RECHEIGHT(recs[j]) = height;
-          j++;
-      }
-
-      drawrectangles(self_w, recs, j);
+      drawrectangle(self_w, x, y, width, height);
 
       return self;
    }
 end
 
-function graphics_Window_draw_segment(self, argv[argc])
+function graphics_Window_draw_string(self, x, y, str)
+   if !cnv:C_integer(x) then
+      runerr(101, x)
+   if !cnv:C_integer(y) then
+      runerr(101, y)
+   if !cnv:string_or_ucs(str) then
+      runerr(129, str)
    body {
-      int i, j, n, dx, dy;
-      XSegment segs[MAXXOBJS];
-
-      GetSelfW();
-      CheckArgMultipleOf(4);
-
-      dx = self_w->context->dx;
-      dy = self_w->context->dy;
-      for(i=0, j=0; i < n; i++, j++) {
-          int base = i * 4;
-          if (j == MAXXOBJS) {
-              drawsegments(self_w, segs, MAXXOBJS);
-              j = 0;
-          }
-          CnvCShort(argv[base], segs[j].x1);
-          CnvCShort(argv[base + 1], segs[j].y1);
-          CnvCShort(argv[base + 2], segs[j].x2);
-          CnvCShort(argv[base + 3], segs[j].y2);
-          segs[j].x1 += dx;
-          segs[j].x2 += dx;
-          segs[j].y1 += dy;
-          segs[j].y2 += dy;
-      }
-      drawsegments(self_w, segs, j);
-
-      return self;
-    }
-end
-
-function graphics_Window_draw_string(self, argv[argc])
-   body {
-      int i, n, len;
+      int len;
       char *s;
-
       GetSelfW();
-      CheckArgMultipleOf(3);
-
-      for(i=0; i < n; i++) {
-          word x, y;
-          int base = i * 3;
-          CnvCInteger(argv[base], x);
-          CnvCInteger(argv[base + 1], y);
-          x += self_w->context->dx;
-          y += self_w->context->dy;
-          if (!cnv:string_or_ucs(argv[base + 2],argv[base + 2]))
-              runerr(129, argv[base + 2]);
-          if (is:ucs(argv[base + 2])) {
-              s = StrLoc(UcsBlk(argv[base + 2]).utf8);
-              len = StrLen(UcsBlk(argv[base + 2]).utf8);
-              drawutf8(self_w, x, y, s, len);
-          } else {
-              s = StrLoc(argv[base + 2]);
-              len = StrLen(argv[base + 2]);
-              drawstrng(self_w, x, y, s, len);
-          }
+      x += self_w->context->dx;
+      y += self_w->context->dy;
+      if (is:ucs(str)) {
+          s = StrLoc(UcsBlk(str).utf8);
+          len = StrLen(UcsBlk(str).utf8);
+          drawutf8(self_w, x, y, s, len);
+      } else {
+          s = StrLoc(str);
+          len = StrLen(str);
+          drawstring(self_w, x, y, s, len);
       }
       return self;
    }
 end
-
 
 function graphics_Window_erase_area(self, argv[argc])
    body {
-      int i, r;
+      int r;
       word x, y, width, height;
       GetSelfW();
-
-      for (i = 0; i < argc || i == 0; i += 4) {
-          r = rectargs(self_w, argc, argv, i, &x, &y, &width, &height);
-          if (r >= 0)
-              runerr(101, argv[r]);
-          erasearea(self_w, x, y, width, height);
-      }
+      r = rectargs(self_w, argc, argv, 0, &x, &y, &width, &height);
+      if (r >= 0)
+          runerr(101, argv[r]);
+      erasearea(self_w, x, y, width, height);
       return self;
    }
 end
-
-
 
 function graphics_Window_event(self)
    body {
@@ -909,68 +822,51 @@ end
 
 function graphics_Window_fill_arc(self, argv[argc])
    body {
-      int i, j, r;
-      XArc arcs[MAXXOBJS];
+      int r;
       word x, y, width, height;
       double a1, a2;
 
       GetSelfW();
 
-      j = 0;
-      for (i = 0; i < argc || i == 0; i += 6) {
-          if (j == MAXXOBJS) {
-              fillarcs(self_w, arcs, MAXXOBJS);
-              j = 0;
-          }
-          r = rectargs(self_w, argc, argv, i, &x, &y, &width, &height);
-          if (r >= 0)
-              runerr(101, argv[r]);
+      r = rectargs(self_w, argc, argv, 0, &x, &y, &width, &height);
+      if (r >= 0)
+          runerr(101, argv[r]);
 
-          arcs[j].x = x;
-          arcs[j].y = y;
-          ARCWIDTH(arcs[j]) = width;
-          ARCHEIGHT(arcs[j]) = height;
-
-          if (i + 4 >= argc || is:null(argv[i + 4])) {
-              a1 = 0.0;
-          }
-          else {
-              if (!cnv:C_double(argv[i + 4], a1))
-                  runerr(102, argv[i + 4]);
-              if (a1 >= 0.0)
-                  a1 = fmod(a1, 2 * Pi);
-              else
-                  a1 = -fmod(-a1, 2 * Pi);
-          }
-          if (i + 5 >= argc || is:null(argv[i + 5]))
-              a2 = 2 * Pi;
-          else {
-              if (!cnv:C_double(argv[i + 5], a2))
-                  runerr(102, argv[i + 5]);
-              if (fabs(a2) > 3 * Pi)
-                  runerr(101, argv[i + 5]);
-          }
-          if (fabs(a2) >= 2 * Pi) {
-              a2 = 2 * Pi;
-          }
-          else {
-              if (a2 < 0.0) {
-                  a1 += a2;
-                  a2 = fabs(a2);
-              }
-          }
-          arcs[j].angle2 = EXTENT(a2);
-          if (a1 < 0.0)
-              a1 = 2 * Pi - fmod(fabs(a1), 2 * Pi);
-          else
-              a1 = fmod(a1, 2 * Pi);
-          arcs[j].angle1 = ANGLE(a1);
-
-          j++;
+      if (4 >= argc || is:null(argv[4])) {
+          a1 = 0.0;
       }
-
-      fillarcs(self_w, arcs, j);
-
+      else {
+          if (!cnv:C_double(argv[4], a1))
+              runerr(102, argv[4]);
+          if (a1 >= 0.0)
+              a1 = fmod(a1, 2 * Pi);
+          else
+              a1 = -fmod(-a1, 2 * Pi);
+      }
+      if (5 >= argc || is:null(argv[5]))
+          a2 = 2 * Pi;
+      else {
+          if (!cnv:C_double(argv[5], a2))
+              runerr(102, argv[5]);
+          if (fabs(a2) > 3 * Pi)
+              runerr(101, argv[5]);
+      }
+      if (fabs(a2) >= 2 * Pi) {
+          a2 = 2 * Pi;
+      }
+      else {
+          if (a2 < 0.0) {
+              a1 += a2;
+              a2 = fabs(a2);
+          }
+      }
+      if (a1 < 0.0)
+          a1 = 2 * Pi - fmod(fabs(a1), 2 * Pi);
+      else
+          a1 = fmod(a1, 2 * Pi);
+      
+      fillarc(self_w, x, y, width, height, ANGLE(a1), EXTENT(a2));
+      
       return self;
    }
 end
@@ -1023,30 +919,16 @@ end
 
 function graphics_Window_fill_rectangle(self, argv[argc])
    body {
-      int i, j, r;
-      XRectangle recs[MAXXOBJS];
+      int r;
       word x, y, width, height;
 
       GetSelfW();
 
-      j = 0;
+      r = rectargs(self_w, argc, argv, 0, &x, &y, &width, &height);
+      if (r >= 0)
+          runerr(101, argv[r]);
 
-      for (i = 0; i < argc || i == 0; i += 4) {
-          r = rectargs(self_w, argc, argv, i, &x, &y, &width, &height);
-          if (r >= 0)
-              runerr(101, argv[r]);
-          if (j == MAXXOBJS) {
-              fillrectangles(self_w,recs,MAXXOBJS);
-              j = 0;
-          }
-          RECX(recs[j]) = x;
-          RECY(recs[j]) = y;
-          RECWIDTH(recs[j]) = width;
-          RECHEIGHT(recs[j]) = height;
-          j++;
-      }
-
-      fillrectangles(self_w, recs, j);
+      fillrectangle(self_w, x, y, width, height);
 
       return self;
    }

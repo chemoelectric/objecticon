@@ -2997,6 +2997,7 @@ int rectargs(wbp w, int argc, dptr argv, int i, word *px, word *py, word *pw, wo
     return -1;
 }
 
+
 /*
  * docircles -- draw or file circles.
  *
@@ -3005,75 +3006,73 @@ int rectargs(wbp w, int argc, dptr argv, int i, word *px, word *py, word *pw, wo
  */
 int docircles(wbp w, int argc, dptr argv, int fill)
 {
-    XArc arc;
-    int i, dx, dy;
+    int arc_x, arc_y, arc_width, arc_height, arc_angle1, arc_angle2;
+    int dx, dy;
     double x, y, r, theta, alpha;
 
     dx = w->context->dx;
     dy = w->context->dy;
 
-    for (i = 0; i < argc; i += 5) {	/* for each set of five args */
+    /*
+     * Collect arguments.
+     */
+    if (2 >= argc)
+        return 2;			/* missing y or r */
+    if (!cnv:C_double(argv[0], x))
+        return 0;
+    if (!cnv:C_double(argv[1], y))
+        return 1;
+    if (!cnv:C_double(argv[2], r))
+        return 2;
+    if (3 >= argc)
+        theta = 0.0;
+    else if (!def:C_double(argv[3], 0.0, theta))
+        return 3;
+    if (4 >= argc)
+        alpha = 2 * Pi;
+    else if (!def:C_double(argv[4], 2 * Pi, alpha))
+        return 4;
 
-        /*
-         * Collect arguments.
-         */
-        if (i + 2 >= argc)
-            return i + 2;			/* missing y or r */
-        if (!cnv:C_double(argv[i], x))
-            return i;
-        if (!cnv:C_double(argv[i + 1], y))
-            return i + 1;
-        if (!cnv:C_double(argv[i + 2], r))
-            return i + 2;
-        if (i + 3 >= argc)
-            theta = 0.0;
-        else if (!def:C_double(argv[i + 3], 0.0, theta))
-            return i + 3;
-        if (i + 4 >= argc)
-            alpha = 2 * Pi;
-        else if (!def:C_double(argv[i + 4], 2 * Pi, alpha))
-            return i + 4;
-
-        /*
-         * Put in canonical form: r >= 0, -2*pi <= theta < 0, alpha >= 0.
-         */
-        if (r < 0) {			/* ensure positive radius */
-            r = -r;
-            theta += Pi;
-        }
-        if (alpha < 0) {			/* ensure positive extent */
-            theta += alpha;
-            alpha = -alpha;
-        }
-
-        theta = fmod(theta, 2 * Pi);
-        if (theta > 0)			/* normalize initial angle */
-            theta -= 2 * Pi;
-
-        /*
-         * Build the Arc descriptor.
-         */
-        arc.x = x + dx - r;
-        arc.y = y + dy - r;
-        ARCWIDTH(arc) = 2 * r;
-        ARCHEIGHT(arc) = 2 * r;
-
-        arc.angle1 = ANGLE(theta);
-        if (alpha >= 2 * Pi)
-            arc.angle2 = EXTENT(2 * Pi);
-        else
-            arc.angle2 = EXTENT(alpha);
-
-        /*
-         * Draw or fill the arc.
-         */
-        if (fill) {			/* {} required due to form of macros */
-            fillarcs(w, &arc, 1);
-        }
-        else {
-            drawarcs(w, &arc, 1);
-        }
+    /*
+     * Put in canonical form: r >= 0, -2*pi <= theta < 0, alpha >= 0.
+     */
+    if (r < 0) {			/* ensure positive radius */
+        r = -r;
+        theta += Pi;
     }
+    if (alpha < 0) {			/* ensure positive extent */
+        theta += alpha;
+        alpha = -alpha;
+    }
+
+    theta = fmod(theta, 2 * Pi);
+    if (theta > 0)			/* normalize initial angle */
+        theta -= 2 * Pi;
+
+    /*
+     * Build the Arc descriptor.
+     */
+    arc_x = x + dx - r;
+    arc_y = y + dy - r;
+    arc_width = 2 * r;
+    arc_height = 2 * r;
+
+    arc_angle1 = ANGLE(theta);
+    if (alpha >= 2 * Pi)
+        arc_angle2 = EXTENT(2 * Pi);
+    else
+        arc_angle2 = EXTENT(alpha);
+
+    /*
+     * Draw or fill the arc.
+     */
+    if (fill) {			/* {} required due to form of macros */
+        fillarc(w, arc_x, arc_y, arc_width, arc_height, arc_angle1, arc_angle2);
+    }
+    else {
+        drawarc(w,arc_x, arc_y, arc_width, arc_height, arc_angle1, arc_angle2);
+    }
+
     return -1;
 }
 
