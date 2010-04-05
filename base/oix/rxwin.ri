@@ -2149,11 +2149,6 @@ void getlinestyle(wbp w, char *answer)
             ((wc->linestyle==LineOnOffDash)?"dashed":"striped"));
 }
 
-void getfontname(wbp w, char *answer)
-{
-    sprintf(answer,"%s", w->context->font->name);
-}
-
 void getpointername(wbp w, char *answer)
 {
     strcpy(answer, stringint_int2str(cursorsyms, 2 * w->window->theCursor));

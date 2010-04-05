@@ -946,8 +946,7 @@ function graphics_Window_font(self, f)
           if (setfont(self_w,tmp) == Failed) 
               fail;
       }
-      getfontname(self_w, attr_buff);
-      cstr2string(attr_buff, &result);
+      cstr2string(self_w->context->font->name, &result);
       return result;
    }
 end
