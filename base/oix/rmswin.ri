@@ -475,7 +475,7 @@ wbp wopen(wbp parent, dptr attr, int n, int *err_idx)
       imd = &ws->initimage;
       if (imd->width) {
 	 r = strimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
-		      imd->data, (word)imd->width * (word)imd->height, 0);
+		      imd->data, imd->width * imd->height, 0);
 	 if (imd->paltbl)
 	    free(imd->paltbl);
 	 free(imd->data);
@@ -2028,7 +2028,7 @@ wbp w;
 int x, y, width, height;
 struct palentry *e;
 unsigned char *s;
-word len;
+int len;
 int on_icon;
    {
    HDC tempdc;
@@ -2342,7 +2342,7 @@ unsigned char *data;
    return 1;
    }
 
-int readimage(w, filename, x, y, status)
+int readimage(w, x, y, filename, status)
 wbp w;
 char *filename;
 int x, y, *status;

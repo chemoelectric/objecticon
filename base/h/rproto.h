@@ -250,7 +250,7 @@ void  bigrand         (dptr da, dptr dx);
    int  query_pointer   (wbp w, XPoint *pp);
    int  query_rootpointer (XPoint *pp);
    int  raisewindow     (wbp w);
-   int  readimage       (wbp w, char *filename, int x, int y, int *status);
+   int  readimage       (wbp w, int x, int y, char *filename, int *status);
    int  rebind          (wbp w, wbp w2);
    int  set_mutable     (wbp w, int i, char *s);
    int  setbg           (wbp w, char *s);
@@ -282,8 +282,7 @@ void  bigrand         (dptr da, dptr dx);
    int  setwindowlabel  (wbp w, char *val);
    int setinputmask(wbp w, char *val);
    int  strimage        (wbp w, int x, int y, int width, int height,
-                           struct palentry *e, unsigned char *s,
-                           word len, int on_icon);
+                           struct palentry *e, unsigned char *s, int len, int on_icon);
    void toggle_fgbg     (wbp w);
    int  walert          (wbp w, int volume);
    void warppointer     (wbp w, int x, int y);

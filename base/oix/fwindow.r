@@ -599,7 +599,7 @@ function graphics_Window_draw_image(self, argv[argc])
        * Call platform-dependent code to draw the image.
        */
       height = nchars / width;
-      i = strimage(self_w, x, y, width, height, e, s, (word)(z - s), 0);
+      i = strimage(self_w, x, y, width, height, e, s, z - s, 0);
       if (i == 0)
           return nulldesc;
       else if (i < 0)
@@ -1180,49 +1180,36 @@ function graphics_Window_raise(self)
    }
 end
 
-function graphics_Window_read_image(self, argv[argc])
+function graphics_Window_read_image(self, x, y, file, pal)
+   if !cnv:C_integer(x) then
+      runerr(101, x)
+   if !cnv:C_integer(y) then
+      runerr(101, y)
+   if !cnv:C_string(file) then
+      runerr(103, file)
    body {
       char filename[MaxPath + 1];
-      tended char *tmp;
       int status;
-      word x, y;
       int p, r;
       struct imgdata imd;
       GetSelfW();
 
-      if (argc == 0)
-          runerr(103,nulldesc);
-      if (!cnv:C_string(argv[0], tmp))
-          runerr(103,argv[0]);
-
-      /*
-       * x and y must be integers; they default to the upper left pixel.
-       */
-      if (argc < 2) 
-          x = -self_w->context->dx;
-      else if (!def:C_integer(argv[1], -self_w->context->dx, x))
-          runerr(101, argv[1]);
-      if (argc < 3)
-          y = -self_w->context->dy;
-      else if (!def:C_integer(argv[2], -self_w->context->dy, y))
-          runerr(101, argv[2]);
-
       /*
        * p is an optional palette name.
        */
-      if (argc < 4 || is:null(argv[3])) 
+      if (is:null(pal)) 
           p = 0;
       else {
-          p = palnum(&argv[3]);
+          p = palnum(&pal);
           if (p == -1)
-              runerr(103, argv[3]);
+              runerr(103, pal);
           if (p == 0)
               fail;
       }
 
       x += self_w->context->dx;
       y += self_w->context->dy;
-      strncpy(filename, tmp, MaxPath);   /* copy to loc that won't move*/
+      strncpy(filename, file, MaxPath);   /* copy to loc that won't move*/
       filename[MaxPath] = '\0';
 
       /*
@@ -1230,17 +1217,22 @@ function graphics_Window_read_image(self, argv[argc])
        * If that doesn't work, try platform-dependent image reading code.
        */
       r = readGIF(filename, p, &imd);
-      if (r != Succeeded) r = readBMP(filename, p, &imd);
+      if (r != Succeeded) 
+          r = readBMP(filename, p, &imd);
+#ifdef HAVE_LIBJPEG
+      if (r != Succeeded) 
+          r = readJPEG(filename, p, &imd);
+#endif
       if (r == Succeeded) {
           status = strimage(self_w, x, y, imd.width, imd.height, imd.paltbl,
-                            imd.data, (word)imd.width * (word)imd.height, 0);
+                            imd.data, imd.width * imd.height, 0);
           if (status < 0)
               r = Error;
           free(imd.paltbl);
           free(imd.data);
       }
       else if (r == Failed)
-          r = readimage(self_w, filename, x, y, &status);
+          r = readimage(self_w, x, y, filename, &status);
       if (r == Error)
           runerr(305);
       if (r == Failed)

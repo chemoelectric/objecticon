@@ -1053,7 +1053,7 @@ static int wmap(wbp w, wbp parent)
     imd = &ws->initimage;
     if (imd->width) {
         r = strimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
-                     imd->data, (word)imd->width * (word)imd->height, 0);
+                     imd->data, imd->width * imd->height, 0);
         free(imd->paltbl);
         free(imd->data);
         imd->width = 0;
@@ -1064,7 +1064,7 @@ static int wmap(wbp w, wbp parent)
     imd = &ws->initicon;
     if (imd->width) {
         r = strimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
-                     imd->data, (word)imd->width * (word)imd->height, 1);
+                     imd->data, imd->width * imd->height, 1);
         free(imd->paltbl);
         free(imd->data);
         imd->width = 0;
@@ -3044,7 +3044,7 @@ int drawblimage(wbp w, int x, int y, int width, int height, int ch, unsigned cha
  * Draw a character-per-pixel image
  */
 int strimage(wbp w, int x, int y, int width, int height, 
-             struct palentry *e, unsigned char *s, word len, int on_icon)
+             struct palentry *e, unsigned char *s, int len, int on_icon)
 {
     int c, v, ret = 0, trans = 0;
     unsigned int r, g, b, ix, iy;
@@ -3289,7 +3289,7 @@ static XImage *getximage(wbp w, int x, int y, int width, int height, int init)
     return im;
 }
 
-int readimage(wbp w, char *filename, int x, int y, int *status)
+int readimage(wbp w, int x, int y, char *filename, int *status)
 {
     Pixmap p;
     unsigned int width, height;
