@@ -409,7 +409,7 @@ function graphics_Window_draw_arc(self, argv[argc])
       else
           a1 = fmod(a1, 2 * Pi);
 
-      drawarc(self_w, x, y, width, height, ANGLE(a1), EXTENT(a2));
+      drawarc(self_w, x, y, width, height, a1, a2);
 
       return self;
    }
@@ -865,7 +865,7 @@ function graphics_Window_fill_arc(self, argv[argc])
       else
           a1 = fmod(a1, 2 * Pi);
       
-      fillarc(self_w, x, y, width, height, ANGLE(a1), EXTENT(a2));
+      fillarc(self_w, x, y, width, height, a1, a2);
       
       return self;
    }

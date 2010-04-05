@@ -3006,7 +3006,8 @@ int rectargs(wbp w, int argc, dptr argv, int i, word *px, word *py, word *pw, wo
  */
 int docircles(wbp w, int argc, dptr argv, int fill)
 {
-    int arc_x, arc_y, arc_width, arc_height, arc_angle1, arc_angle2;
+    int arc_x, arc_y, arc_width, arc_height;
+    double arc_angle1, arc_angle2;
     int dx, dy;
     double x, y, r, theta, alpha;
 
@@ -3057,21 +3058,19 @@ int docircles(wbp w, int argc, dptr argv, int fill)
     arc_width = 2 * r;
     arc_height = 2 * r;
 
-    arc_angle1 = ANGLE(theta);
+    arc_angle1 = theta;
     if (alpha >= 2 * Pi)
-        arc_angle2 = EXTENT(2 * Pi);
+        arc_angle2 = 2 * Pi;
     else
-        arc_angle2 = EXTENT(alpha);
+        arc_angle2 = alpha;
 
     /*
      * Draw or fill the arc.
      */
-    if (fill) {			/* {} required due to form of macros */
+    if (fill)
         fillarc(w, arc_x, arc_y, arc_width, arc_height, arc_angle1, arc_angle2);
-    }
-    else {
+    else
         drawarc(w,arc_x, arc_y, arc_width, arc_height, arc_angle1, arc_angle2);
-    }
 
     return -1;
 }

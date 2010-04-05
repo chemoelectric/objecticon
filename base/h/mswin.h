@@ -33,20 +33,10 @@
 #define RED(x) GetRValue(x)
 #define GREEN(x) GetGValue(x)
 #define BLUE(x) GetBValue(x)
-#define ARCWIDTH(arc) (arc).width
-#define ARCHEIGHT(arc) (arc).height
-/*
- * These get fixed up in the window-system-specific code
- */
-#define RECX(rec) (rec).left
-#define RECY(rec) (rec).top
-#define RECWIDTH(rec) (rec).right
-#define RECHEIGHT(rec) (rec).bottom
+
 /*
  *
  */
-#define ANGLE(ang) (ang)
-#define EXTENT(ang) (ang)
 #define FULLARC 2 * Pi
 #define ICONFILENAME(w) ""
 #define ICONLABEL(w) ((w)->window->iconlabel)

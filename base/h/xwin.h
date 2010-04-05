@@ -43,14 +43,6 @@
 #define FS_SOLID FillSolid
 #define FS_STIPPLE FillStippled
 #define SysColor XColor
-#define ARCWIDTH(arc) ((arc).width)
-#define ARCHEIGHT(arc) ((arc).height)
-#define RECX(rec) ((rec).x)
-#define RECY(rec) ((rec).y)
-#define RECWIDTH(rec) ((rec).width)
-#define RECHEIGHT(rec) ((rec).height)
-#define ANGLE(ang) (-(ang) * 180 / Pi * 64)
-#define EXTENT(ang) (-(ang) * 180 / Pi * 64)
 #define ICONFILENAME(w) ((w)->window->iconimage)
 #define ICONLABEL(w) ((w)->window->iconlabel)
 #define WINDOWLABEL(w) ((w)->window->windowlabel)
