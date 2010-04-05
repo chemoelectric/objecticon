@@ -21,11 +21,7 @@
 #define DRAWOP_XOR			R2_XORPEN
 
 #define SCREENDEPTH(w) getdepth(w)
-#define ASCENT(w)  ((w)->context->font->ascent)
-#define DESCENT(w) ((w)->context->font->descent)
 #define LEADING(w) ((w)->context->leading)
-#define FHEIGHT(w) ((w)->context->font->height)
-#define FWIDTH(w)  ((w)->context->font->charwidth)
 #define LINEWIDTH(w) ((w)->context->pen.lopnWidth.x)
 #define DISPLAYHEIGHT(w) devicecaps(w, VERTRES)
 #define DISPLAYWIDTH(w) devicecaps(w, HORZRES)

@@ -387,12 +387,12 @@ wbp wopen(wbp parent, dptr attr, int n, int *err_idx)
       }
    oldfont = SelectObject(hdc, wc->font->font);
    GetTextMetrics(hdc, &metrics);
-   wc->font->charwidth = dc_maxcharwidth(hdc);
+   wc->font->maxwidth = dc_maxcharwidth(hdc);
    SelectObject(hdc, oldfont);
    ReleaseDC(ws->iconwin, hdc);
    wc->font->ascent = metrics.tmAscent;
    wc->font->descent = metrics.tmDescent;
-   /*   wc->font->charwidth = metrics.tmMaxCharWidth; buggy */
+   /*   wc->font->maxwidth = metrics.tmMaxCharWidth; buggy */
    wc->font->height = metrics.tmHeight;
    wc->leading = metrics.tmHeight;
    /*
@@ -1266,7 +1266,7 @@ char *s;
 
       tmpdc = GetDC(ws->iconwin);
       oldfont = SelectObject(tmpdc, hf);
-      wc->font->charwidth = dc_maxcharwidth(tmpdc);
+      wc->font->maxwidth = dc_maxcharwidth(tmpdc);
       if (GetTextMetrics(tmpdc, &metrics) == 0) {
          /* gettextmetrics can fail; what should we do about it? */
          ;
@@ -1275,7 +1275,7 @@ char *s;
       ReleaseDC(ws->iconwin, tmpdc);
       wc->font->ascent = metrics.tmAscent;
       wc->font->descent = metrics.tmDescent;
-/*    wc->font->charwidth = metrics.tmMaxCharWidth; unreliable due to MS bug */
+/*    wc->font->maxwidth = metrics.tmMaxCharWidth; unreliable due to MS bug */
       wc->leading = wc->font->height = metrics.tmHeight;
       return Succeeded;
       }
@@ -3069,7 +3069,7 @@ wbp w;
 	 DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
 	 getenv("ICONFONT"));
 
-   wc->font->charwidth = 8; /* looks like a bug */
+   wc->font->maxwidth = 8; /* looks like a bug */
    wc->leading = 16;
 
    GRFX_LINK(wc, wcntxts);

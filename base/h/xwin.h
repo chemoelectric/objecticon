@@ -32,10 +32,6 @@
 #define FWIDTH(w) ((w)->context->font->maxwidth)
 #define SCREENDEPTH(w)\
 	DefaultDepth((w)->window->display->display, w->window->display->screen)
-#define ASCENT(w) ((w)->context->font->ascent)
-#define DESCENT(w) ((w)->context->font->descent)
-#define FHEIGHT(w) ((w)->context->font->height)
-#define LINEWIDTH(w) ((w)->context->linewidth)
 #define DISPLAYHEIGHT(w)\
 	DisplayHeight(w->window->display->display, w->window->display->screen)
 #define DISPLAYWIDTH(w)\
