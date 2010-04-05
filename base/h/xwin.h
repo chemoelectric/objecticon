@@ -29,13 +29,13 @@
 #define XLFD_Spacing	11
 #define XLFD_CharSet	13
 
-#define FWIDTH(w) ((w)->context->font->maxwidth)
 #define SCREENDEPTH(w)\
 	DefaultDepth((w)->window->display->display, w->window->display->screen)
 #define DISPLAYHEIGHT(w)\
 	DisplayHeight(w->window->display->display, w->window->display->screen)
 #define DISPLAYWIDTH(w)\
 	DisplayWidth(w->window->display->display, w->window->display->screen)
+#define LINEWIDTH(w) ((w)->context->linewidth)
 #define FS_SOLID FillSolid
 #define FS_STIPPLE FillStippled
 #define SysColor XColor

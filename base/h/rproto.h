@@ -230,7 +230,6 @@ void  bigrand         (dptr da, dptr dx);
    void getdisplay      (wbp w, char *answer);
    void getdrawop       (wbp w, char *answer);
    void getfg           (wbp w, char *answer);
-   void getfontname     (wbp w, char *answer);
    void geticonic       (wbp w, char *answer);
    int  geticonpos      (wbp w, char *s);
    int  getimstr        (wbp w, int x, int y, int width, int hgt,

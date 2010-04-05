@@ -161,7 +161,7 @@ typedef struct _wfont {
 #define ASCENT(w) ((w)->context->font->ascent)
 #define DESCENT(w) ((w)->context->font->descent)
 #define FHEIGHT(w) ((w)->context->font->height)
-#define LINEWIDTH(w) ((w)->context->linewidth)
+#define FWIDTH(w) ((w)->context->font->maxwidth)
 
 /*
  * These structures and definitions are used for colors and images.

@@ -2827,7 +2827,7 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
                 CMakeStr(abuf, answer);
                 break;
             case A_FONT:
-                getfontname(w, abuf);
+                strcpy(abuf, w->context->font->name);
                 CMakeStr(abuf, answer);
                 break;
             case A_DX: MakeInt(wc->dx, answer); break;

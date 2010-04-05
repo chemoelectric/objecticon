@@ -1746,13 +1746,6 @@ char *answer;
    else strcpy(answer, "unknown");
    }
 
-void getfontname(w, answer)
-wbp w;
-char *answer;
-   {
-   strcpy(answer, w->context->font->name);
-   }
-
 void getpointername(w, answer)
 wbp w;
 char *answer;
