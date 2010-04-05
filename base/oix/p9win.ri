@@ -18,12 +18,29 @@ static void handle_resize(wsp ws);
 static int init_window_system(void);
 static void clear_pix(wbp wb);
 static void clear_win(wbp wb);
+static void clip(wcp wc, Image *i);
+static void unclip(wcp wc, Image *i);
 
 #define EMAXMSG 128+8192     /* size of 9p header+data */
 
 static void draw_error(Display *d, char *s)
 {
     fprintf(stderr, "Draw error on display %p: %s\n", d, s);
+}
+
+static void show_square(Image *dest, Rectangle r)
+{
+    Point p[5];
+    Image *red = allocimage(display, Rect(0, 0, 1, 1), screen->chan, 1, DRed);
+    p[0] = r.min;
+    p[1] = Pt(r.max.x, r.min.y);
+    p[2] = r.max;
+    p[3] = Pt(r.min.x, r.max.y);
+    p[4] = p[0];
+    print("square1 %P %P %P %P\n",p[0],p[1],p[2],p[3]);
+    poly(dest, p, 5, Endsquare, Endsquare, 0, red, ZP);
+    freeimage(red);
+    flushimage(display, 1);
 }
 
 wbp wopen(wbp parent, dptr attr, int n, int *err_index)
@@ -365,58 +382,142 @@ int set_mutable(wbp w, int i, char *s)
     return Failed;
 }
 
-int copyarea(wbp w,wbp w2,int x,int y,int wd,int h,int x2,int y2)
+static void impl_copyarea(wcp wc, Image *dest, Image *src,int x,int y,int w,int h,int x2,int y2)
 {
+    Rectangle r = Rect(dest->r.min.x + x2, 
+                       dest->r.min.y + y2,
+                       dest->r.min.x + x2 + w,
+                       dest->r.min.y + y2 + h);
+    /*printf("impl_copyarea %d %d %d %d %d %d\n",x,y,w,h,x2,y2);*/
+    clip(wc, dest);
+    gendraw(dest,
+            Rect(dest->r.min.x + x2, 
+                 dest->r.min.y + y2,
+                 dest->r.min.x + x2 + w,
+                 dest->r.min.y + y2 + h),
+            src,
+            Pt(src->r.min.x + x, 
+               src->r.min.y + y), 
+            0, ZP);
+    unclip(wc, dest);
+}
+
+int copyarea(wbp w1,wbp w2,int x,int y,int w,int h,int x2,int y2)
+{
+    wsp ws1 = w1->window;
+    wsp ws2 = w2->window;
+    wcp wc = w1->context;
+    impl_copyarea(wc, ws2->win, ws1->pix, x, y, w, h, x2, y2);
+    impl_copyarea(wc, ws2->pix, ws1->pix, x, y, w, h, x2, y2);
+    flushimage(display, 1);
     return Succeeded;
 }
 
 int rebind(wbp w, wbp w2)
 {
+    w->context = w2->context;
     return Succeeded;
 }
 
-void drawarcs(wbp w, XArc *arcs, int narcs) 
+static void impl_drawarc(wcp wc, Image *dest, int x, int y, int width, int height, double angle1, double angle2)
 {
+    int alpha, phi;
+    clip(wc, dest);
+    print("drawarc %d %d %d %d %f %f\n",x, y, width, height, angle1, angle2);
+    x += width/2;
+    y += height/2;
+    width /= 2;
+    height /= 2;
+    alpha = -angle1 * 180 / Pi;
+    phi = -angle2 * 180 / Pi;
+    arc(dest, 
+        Pt(dest->r.min.x + x, dest->r.min.y + y),
+        width, height,
+        0,
+        wc->fg, ZP,
+        alpha, phi);
+        
+    unclip(wc, dest);
+}
+
+void drawarc(wbp w, int x, int y, int width, int height, double angle1, double angle2)
+{
+    wsp ws = w->window;
+    wcp wc = w->context;
+    if (ws->win)
+        impl_drawarc(wc, ws->win, x, y, width, height, angle1, angle2);
+    impl_drawarc(wc, ws->pix, x, y, width, height, angle1, angle2);
+    flushimage(display, 1);
 }
 
 void drawlines(wbp w, XPoint *points, int npoints)
 {
-}
-
-void drawpoints(wbp w, XPoint *points, int npoints)
-{
-}
-
-static void impl_drawrectangles(wcp wc, Image *dest, XRectangle *recs)
-{
-    Point p[5];
-    p[0] = addpt(dest->r.min, Pt(recs->x, recs->y));
-    p[1] = Pt(p[0].x + recs->width, p[0].y);
-    p[2] = Pt(p[0].x + recs->width, p[0].y + recs->height);
-    p[3] = Pt(p[0].x, p[0].y + recs->height);
-    p[4] = p[0];
-    poly(dest, p, 5, Endsquare, Endsquare, 0, wc->fg, ZP);
-}
-
-void drawrectangles(wbp w, XRectangle *recs, int nrecs)
-{
+    int i;
     wsp ws = w->window;
     wcp wc = w->context;
-    while (nrecs-- > 0) {
-        if (ws->win)
-            impl_drawrectangles(wc, ws->win, recs);        
-        impl_drawrectangles(wc, ws->pix, recs);        
-        ++recs;
+
+    clip(wc, ws->pix);
+    poly(ws->pix, points, npoints, Endsquare, Endsquare, 0, wc->fg, ZP);
+    unclip(wc, ws->pix);
+
+    for (i = 0; i < npoints; ++i) {
+        points[i].x += ws->win->r.min.x;
+        points[i].y += ws->win->r.min.y;
     }
+    clip(wc, ws->win);
+    poly(ws->win, points, npoints, Endsquare, Endsquare, 0, wc->fg, ZP);
+    unclip(wc, ws->win);
+
     flushimage(display, 1);
 }
 
-void fillpolygon (wbp w, XPoint *pts, int npts)
+void drawpoint(wbp w, int x, int y)
 {
 }
 
-void drawsegments(wbp w, XSegment *segs, int nsegs)
+static void impl_drawrectangle(wcp wc, Image *dest, int x, int y, int width, int height)
 {
+    Point p[5];
+    p[0] = addpt(dest->r.min, Pt(x, y));
+    p[1] = Pt(p[0].x + width - 1, p[0].y);
+    p[2] = Pt(p[0].x + width - 1, p[0].y + height - 1);
+    p[3] = Pt(p[0].x, p[0].y + height - 1);
+    p[4] = p[0];
+    clip(wc, dest);
+    print("rectangle %P %P %P %P\n",p[0],p[1],p[2],p[3]);
+    poly(dest, p, 5, Endsquare, Endsquare, 0, wc->fg, ZP);
+    unclip(wc, dest);
+}
+
+void drawrectangle(wbp w, int x, int y, int width, int height)
+{
+    wsp ws = w->window;
+    wcp wc = w->context;
+    if (ws->win)
+        impl_drawrectangle(wc, ws->win, x, y, width, height);
+    impl_drawrectangle(wc, ws->pix, x, y, width, height);
+    flushimage(display, 1);
+}
+
+void fillpolygon(wbp w, XPoint *points, int npoints)
+{
+    int i;
+    wsp ws = w->window;
+    wcp wc = w->context;
+
+    clip(wc, ws->pix);
+    fillpoly(ws->pix, points, npoints, 0, wc->fg, ZP);
+    unclip(wc, ws->pix);
+
+    for (i = 0; i < npoints; ++i) {
+        points[i].x += ws->win->r.min.x;
+        points[i].y += ws->win->r.min.y;
+    }
+    clip(wc, ws->win);
+    fillpoly(ws->win, points, npoints, 0, wc->fg, ZP);
+    unclip(wc, ws->win);
+
+    flushimage(display, 1);
 }
 
 static void clip(wcp wc, Image *i)
@@ -435,21 +536,24 @@ static void unclip(wcp wc, Image *i)
     i->clipr = i->r;
 }
 
-static void impl_drawstrng(wcp wc, Image *dest, int x, int y, char *str, int slen)
+static void impl_drawstring(wcp wc, Image *dest, int x, int y, char *str, int slen)
 {
     printf("font=%p\n",wc->font->font);
     clip(wc, dest);
-    stringn(dest, addpt(dest->r.min, Pt(x, y)), wc->fg, ZP, wc->font->font, str, slen);
+    stringn(dest, 
+            Pt(dest->r.min.x + x,
+               dest->r.min.y + y - wc->font->font->ascent),
+            wc->fg, ZP, wc->font->font, str, slen);
     unclip(wc, dest);
 }
 
-void drawstrng(wbp w, int x, int y, char *str, int slen)
+void drawstring(wbp w, int x, int y, char *str, int slen)
 {
     wsp ws = w->window;
     wcp wc = w->context;
     if (ws->win)
-        impl_drawstrng(wc, ws->win, x, y, str, slen);
-    impl_drawstrng(wc, ws->pix, x, y, str, slen);
+        impl_drawstring(wc, ws->win, x, y, str, slen);
+    impl_drawstring(wc, ws->pix, x, y, str, slen);
     flushimage(display, 1);
 }
 
@@ -465,13 +569,37 @@ int drawblimage(wbp w, int x, int y, int wd, int h,
 
 int strimage(wbp w, int x, int y, int width, int height,
              struct palentry *e, unsigned char *s,
-             word len, int on_icon)
+             int len, int on_icon)
 {
+    int i;
+    print("strimage len=%d on_icon=%d\n");
+    for (i = 0; i < len; ++i) {
+        print("\ts[%d] = %c\n", i, s[i]);
+    }
     return 0;
+}
+
+static void impl_erasearea(wcp wc, Image *dest, int x, int y, int width, int height)
+{
+    Point p[4];
+    p[0] = addpt(dest->r.min, Pt(x, y));
+    p[1] = Pt(p[0].x + width, p[0].y);
+    p[2] = Pt(p[0].x + width, p[0].y + height);
+    p[3] = Pt(p[0].x, p[0].y + height);
+    clip(wc, dest);
+    print("erasearea %P %P %P %P\n",p[0],p[1],p[2],p[3]);
+    fillpoly(dest, p, 4, 0, wc->bg, ZP);
+    unclip(wc, dest);
 }
 
 void erasearea(wbp w, int x, int y, int width, int height)
 {
+    wsp ws = w->window;
+    wcp wc = w->context;
+    if (ws->win)
+        impl_erasearea(wc, ws->win, x, y, width, height);
+    impl_erasearea(wc, ws->pix, x, y, width, height);
+    flushimage(display, 1);
 }
 
 void wsync (wbp w)
@@ -547,12 +675,60 @@ void getbg(wbp w, char *answer)
     strcpy(answer, w->context->bgname);
 }
 
-void fillarcs(wbp w, XArc *arcs, int narcs)
+#passthru #undef fillarc
+
+static void impl_fillarc(wcp wc, Image *dest, int x, int y, int width, int height, double angle1, double angle2)
 {
+    int alpha, phi;
+    clip(wc, dest);
+    print("fillarc %d %d %d %d %f %f\n",x, y, width, height, angle1, angle2);
+    x += width/2;
+    y += height/2;
+    width /= 2;
+    height /= 2;
+    alpha = -angle1 * 180 / Pi;
+    phi = -angle2 * 180 / Pi;
+    fillarc(dest, 
+            Pt(dest->r.min.x + x, dest->r.min.y + y),
+            width, height,
+            wc->fg, ZP,
+            alpha, phi);
+    unclip(wc, dest);
 }
 
-void fillrectangles(wbp w, XRectangle *recs, int nrecs)
+#passthru #define fillarc oi_fillarc        
+
+void fillarc(wbp w, int x, int y, int width, int height, double angle1, double angle2)
 {
+    wsp ws = w->window;
+    wcp wc = w->context;
+    if (ws->win)
+        impl_fillarc(wc, ws->win, x, y, width, height, angle1, angle2);
+    impl_fillarc(wc, ws->pix, x, y, width, height, angle1, angle2);
+    flushimage(display, 1);
+}
+
+static void impl_fillrectangle(wcp wc, Image *dest, int x, int y, int width, int height)
+{
+    Point p[4];
+    p[0] = addpt(dest->r.min, Pt(x, y));
+    p[1] = Pt(p[0].x + width, p[0].y);
+    p[2] = Pt(p[0].x + width, p[0].y + height);
+    p[3] = Pt(p[0].x, p[0].y + height);
+    clip(wc, dest);
+    print("fillrectangle %P %P %P %P\n",p[0],p[1],p[2],p[3]);
+    fillpoly(dest, p, 4, 0, wc->fg, ZP);
+    unclip(wc, dest);
+}
+
+void fillrectangle(wbp w, int x, int y, int width, int height)
+{
+    wsp ws = w->window;
+    wcp wc = w->context;
+    if (ws->win)
+        impl_fillrectangle(wc, ws->win, x, y, width, height);
+    impl_fillrectangle(wc, ws->pix, x, y, width, height);
+    flushimage(display, 1);
 }
 
 static char *convert_spec(char *s)
@@ -593,12 +769,19 @@ static wfp new_font(char *s)
     wfp rv;
     Font *f;
 
-    f = openfont(display, convert_spec(s));
-    if (!f)
+    s = convert_spec(s);
+    f = openfont(display, s);
+    if (!f) {
         f = display->defaultfont;
+        s = "default font";
+    }
 
     GRFX_ALLOC(rv, _wfont);
     rv->name = salloc(s);
+    rv->ascent = f->ascent;               /* font dimensions */
+    rv->descent = f->height - f->ascent;
+    rv->height = f->height;
+    rv->maxwidth = f->width;               /* max width of one char */
     rv->font = f;
     GRFX_LINK(rv, fonts);
     return rv;
@@ -622,11 +805,6 @@ int setfont(wbp w, char *s)
 
     wc->font = rv;
     return Succeeded;
-}
-
-void getfontname(wbp w, char *answer)
-{
-    strcpy(answer, w->context->font->name);
 }
 
 void free_mutable(wbp w, int mute_index)
@@ -1191,6 +1369,7 @@ static wcp alc_context(wbp w)
     MemProtect(wc->bg = allocimage(display, Rect(0, 0, 1, 1), screen->chan, 1, DWhite));
     wc->fgname = salloc("black");
     wc->bgname = salloc("white");
+    wc->font = new_font("fixed");
     GRFX_LINK(wc, wcntxts);
     return wc;
 }

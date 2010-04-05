@@ -421,7 +421,7 @@ class Component(Rect,Align,SetFields,Connectable)
    public invoke_display(r)
       local cw
       self.cbwin.clip(r.x, r.y, r.w, r.h)
-      erase_rectangle(self.cbwin, r.x, r.y, r.w, r.h)
+      self.cbwin.erase_area(r.x, r.y, r.w, r.h)
       self.display(r)
       if \self.show_layout_flag then
          (\layout_delegate).display()

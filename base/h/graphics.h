@@ -138,16 +138,16 @@ typedef struct _wfont {
   int		refcount;
   int		serial;			/* serial # */
   struct _wfont *previous, *next;
-#if PLAN9
   char	        *name;			/* name for WAttrib and fontsearch */
-  Font          *font;
-#endif
-#if XWindows
-  char	      *	name;			/* name for WAttrib and fontsearch */
   int           ascent;                 /* font dimensions */
   int           descent;
   int		height;			
   int           maxwidth;               /* max width of one char */
+#if PLAN9
+  Font          *font;
+#endif
+
+#if XWindows
 #ifdef HAVE_LIBXFT
   XftFont     * fsp;
 #else
@@ -155,14 +155,14 @@ typedef struct _wfont {
 #endif /* HAVE_LIBXFT */
 #endif					/* XWindows */
 #if MSWIN32
-  char		*name;			/* name for WAttrib and fontsearch */
   HFONT		font;
-  int		ascent;
-  int		descent;
-  int		charwidth;
-  int		height;
 #endif					/* MSWIN32 */
 } wfont, *wfp;
+
+#define ASCENT(w) ((w)->context->font->ascent)
+#define DESCENT(w) ((w)->context->font->descent)
+#define FHEIGHT(w) ((w)->context->font->height)
+#define FWIDTH(w) ((w)->context->font->maxwidth)
 
 /*
  * These structures and definitions are used for colors and images.

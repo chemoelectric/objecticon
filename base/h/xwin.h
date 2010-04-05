@@ -29,28 +29,16 @@
 #define XLFD_Spacing	11
 #define XLFD_CharSet	13
 
-#define FWIDTH(w) ((w)->context->font->maxwidth)
 #define SCREENDEPTH(w)\
 	DefaultDepth((w)->window->display->display, w->window->display->screen)
-#define ASCENT(w) ((w)->context->font->ascent)
-#define DESCENT(w) ((w)->context->font->descent)
-#define FHEIGHT(w) ((w)->context->font->height)
-#define LINEWIDTH(w) ((w)->context->linewidth)
 #define DISPLAYHEIGHT(w)\
 	DisplayHeight(w->window->display->display, w->window->display->screen)
 #define DISPLAYWIDTH(w)\
 	DisplayWidth(w->window->display->display, w->window->display->screen)
+#define LINEWIDTH(w) ((w)->context->linewidth)
 #define FS_SOLID FillSolid
 #define FS_STIPPLE FillStippled
 #define SysColor XColor
-#define ARCWIDTH(arc) ((arc).width)
-#define ARCHEIGHT(arc) ((arc).height)
-#define RECX(rec) ((rec).x)
-#define RECY(rec) ((rec).y)
-#define RECWIDTH(rec) ((rec).width)
-#define RECHEIGHT(rec) ((rec).height)
-#define ANGLE(ang) (-(ang) * 180 / Pi * 64)
-#define EXTENT(ang) (-(ang) * 180 / Pi * 64)
 #define ICONFILENAME(w) ((w)->window->iconimage)
 #define ICONLABEL(w) ((w)->window->iconlabel)
 #define WINDOWLABEL(w) ((w)->window->windowlabel)

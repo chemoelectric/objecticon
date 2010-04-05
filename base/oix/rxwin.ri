@@ -5,6 +5,7 @@
 #ifdef Graphics
 
 #define RootState IconicState+1
+#define CONVERT_ANGLE(ang) (-(ang) * 180 / Pi * 64)
 
 wdp wdsplys;
 
@@ -1052,7 +1053,7 @@ static int wmap(wbp w, wbp parent)
     imd = &ws->initimage;
     if (imd->width) {
         r = strimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
-                     imd->data, (word)imd->width * (word)imd->height, 0);
+                     imd->data, imd->width * imd->height, 0);
         free(imd->paltbl);
         free(imd->data);
         imd->width = 0;
@@ -1063,7 +1064,7 @@ static int wmap(wbp w, wbp parent)
     imd = &ws->initicon;
     if (imd->width) {
         r = strimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
-                     imd->data, (word)imd->width * (word)imd->height, 1);
+                     imd->data, imd->width * imd->height, 1);
         free(imd->paltbl);
         free(imd->data);
         imd->width = 0;
@@ -2148,11 +2149,6 @@ void getlinestyle(wbp w, char *answer)
             ((wc->linestyle==LineOnOffDash)?"dashed":"striped"));
 }
 
-void getfontname(wbp w, char *answer)
-{
-    sprintf(answer,"%s", w->context->font->name);
-}
-
 void getpointername(wbp w, char *answer)
 {
     strcpy(answer, stringint_int2str(cursorsyms, 2 * w->window->theCursor));
@@ -2499,10 +2495,17 @@ static void handle_mouse(wbp w, XButtonEvent *event)
 }
 
 
-void drawarcs(wbp w, XArc *arcs, int narcs)
-{ 
+void drawarc(wbp w, int x, int y, int width, int height, double angle1, double angle2)
+{
+    XArc arc;
     STDLOCALS(w); 
-    RENDER2(XDrawArcs,arcs,narcs);
+    arc.x = x;
+    arc.y = y;
+    arc.width = width;
+    arc.height = height;
+    arc.angle1 = CONVERT_ANGLE(angle1);
+    arc.angle2 = CONVERT_ANGLE(angle2);
+    RENDER2(XDrawArcs,&arc,1);
 }
 
 void drawlines(wbp w, XPoint *points, int npoints)
@@ -2511,31 +2514,32 @@ void drawlines(wbp w, XPoint *points, int npoints)
     RENDER3(XDrawLines,points,npoints,CoordModeOrigin);
 }
 
-void drawpoints(wbp w, XPoint *points, int npoints)
+void drawpoint(wbp w, int x, int y)
 {
-    STDLOCALS(w); 
-    RENDER3(XDrawPoints,points,npoints,CoordModeOrigin);
+    XPoint p;
+    STDLOCALS(w);
+    p.x = x;
+    p.y = y;
+    RENDER3(XDrawPoints,&p,1,CoordModeOrigin);
 }
 
-void drawrectangles(wbp w, XRectangle *recs, int nrecs)
+void drawrectangle(wbp w, int x, int y, int width, int height)
 {
-   int i;
    STDLOCALS(w);
-   for(i=0; i<nrecs; i++) {
-       RENDER4(XDrawRectangle,recs[i].x,recs[i].y,recs[i].width,recs[i].height);
-   }
+   RENDER4(XDrawRectangle,x,y,width-1,height-1);
 }
 
-void drawsegments(wbp w, XSegment *segs, int nsegs)
+void fillarc(wbp w, int x, int y, int width, int height, double angle1, double angle2)
 { 
+    XArc arc;
     STDLOCALS(w); 
-    RENDER2(XDrawSegments,segs,nsegs);
-}
-
-void fillarcs(wbp w, XArc *arcs, int narcs)
-{ 
-    STDLOCALS(w); 
-    RENDER2(XFillArcs, arcs, narcs);
+    arc.x = x;
+    arc.y = y;
+    arc.width = width;
+    arc.height = height;
+    arc.angle1 = CONVERT_ANGLE(angle1);
+    arc.angle2 = CONVERT_ANGLE(angle2);
+    RENDER2(XFillArcs, &arc, 1);
 }
 
 void fillpolygon(wbp w, XPoint *points, int npoints)
@@ -2545,24 +2549,28 @@ void fillpolygon(wbp w, XPoint *points, int npoints)
 }
 
 /*
- * fill a series of rectangles
+ * fill a rectangle
  */
-void fillrectangles(wbp w, XRectangle *recs, int nrecs)
+void fillrectangle(wbp w, int x, int y, int width, int height)
 {
+    XRectangle rec;
     STDLOCALS(w);
-
+    rec.x = x;
+    rec.y = y;
+    rec.width = width;
+    rec.height = height;
     /*
      * Free colors if drawop=copy, fillstyle~=masked, no clipping,
      * and a single rectangle that fills the whole window.
      */
-    if (!RECX(*recs) && !RECY(*recs) && RECWIDTH(*recs) >= ws->width &&
-        RECHEIGHT(*recs) >= ws->height && nrecs == 1 &&
+    if (!rec.x && !rec.y && rec.width >= ws->width &&
+        rec.height >= ws->height &&
         wc->drawop == GXcopy && wc->fillstyle != FillStippled && wc->clipw < 0) {
-        RECWIDTH(*recs) = ws->pixwidth;	/* fill hidden part */
-        RECHEIGHT(*recs) = ws->pixheight;
+        rec.width = ws->pixwidth;	/* fill hidden part */
+        rec.height = ws->pixheight;
         free_xcolors(w, 0);			/* free old colors */
     }
-    RENDER2(XFillRectangles, recs, nrecs);
+    RENDER2(XFillRectangles, &rec, 1);
 }
 
 /*
@@ -2576,8 +2584,8 @@ void erasearea(wbp w, int x, int y, int width, int height)
      * if width >= window width or height >= window height, clear any
      * offscreen portion as well in order to allow the freeing of colors.
      */
-    if (x + width  >= ws->width)  width  = ws->pixwidth - x;
-    if (y + height >= ws->height) height = ws->pixheight - y;
+    if (x + width  >= (int)ws->width)  width  = ws->pixwidth - x;
+    if (y + height >= (int)ws->height) height = ws->pixheight - y;
 
     /*
      * fill the rectangle with the background color
@@ -2585,6 +2593,7 @@ void erasearea(wbp w, int x, int y, int width, int height)
     XSetForeground(stddpy, stdgc, wd->colors[wc->bg].c);
     if (wc->drawop != GXcopy) XSetFunction(stddpy, stdgc, GXcopy);
     if (wc->fillstyle != FillSolid) XSetFillStyle(stddpy, stdgc, FillSolid);
+
     RENDER4(XFillRectangle, x, y, width, height);
     XSetForeground(stddpy, stdgc,
                    wd->colors[wc->fg].c ^ (ISXORREVERSE(w)?wd->colors[wc->bg].c:0));
@@ -3035,7 +3044,7 @@ int drawblimage(wbp w, int x, int y, int width, int height, int ch, unsigned cha
  * Draw a character-per-pixel image
  */
 int strimage(wbp w, int x, int y, int width, int height, 
-             struct palentry *e, unsigned char *s, word len, int on_icon)
+             struct palentry *e, unsigned char *s, int len, int on_icon)
 {
     int c, v, ret = 0, trans = 0;
     unsigned int r, g, b, ix, iy;
@@ -3280,7 +3289,7 @@ static XImage *getximage(wbp w, int x, int y, int width, int height, int init)
     return im;
 }
 
-int readimage(wbp w, char *filename, int x, int y, int *status)
+int readimage(wbp w, int x, int y, char *filename, int *status)
 {
     Pixmap p;
     unsigned int width, height;
@@ -4047,7 +4056,7 @@ int utf8width(wbp w, char *s, int n)
 }
 
 
-void drawstrng(wbp w, int x, int y, char *str, int slen)
+void drawstring(wbp w, int x, int y, char *str, int slen)
 {
     XftColor color;
     Region r;
@@ -4193,7 +4202,7 @@ int utf8width(wbp w, char *s, int n)
     return textwidth(w, s, n);
 }
 
-void drawstrng(wbp w, int x, int y, char *s, int slen)
+void drawstring(wbp w, int x, int y, char *s, int slen)
 { 
     STDLOCALS(w); 
     RENDER4(XDrawString, x, y, s, slen); 

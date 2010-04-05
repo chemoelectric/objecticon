@@ -303,12 +303,12 @@ class Tree(SelectableScrollArea)
                                      yp, get_node_data_width(N), lh)
 
       if \cursor_cw then
-         rectangle(cursor_cw, lp + col_w,
-                   yp, get_node_data_width(N), lh)
+         cursor_cw.draw_rectangle(lp + col_w,
+                                  yp, get_node_data_width(N), lh)
 
       if \highlight_cw then
-         rectangle(highlight_cw, lp + col_w,
-                   yp, get_node_data_width(N), lh)
+         highlight_cw.draw_rectangle(lp + col_w,
+                                     yp, get_node_data_width(N), lh)
 
       dashed.uncouple()
    end

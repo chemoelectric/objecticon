@@ -33,7 +33,7 @@ class ABorder(Insets,Align,SetFields)
    public draw_focus(W, x, y, w, h)
       local cw
       cw := Gui.style.get_focus_clone(W)
-      rectangle(cw, x, y, w, h)
+      cw.draw_rectangle(x, y, w, h)
       cw.uncouple()
    end
 
@@ -158,9 +158,8 @@ class LineBorder(ABorder)
    public draw_focus(W, x, y, w, h)
       local cw
       cw := Gui.style.get_focus_clone(W)
-      rectangle(cw, 
-                x + line_width + 1, y + line_width + 1, 
-                w - 2 * line_width - 2, h - 2 * line_width - 2)
+      cw.draw_rectangle(x + line_width + 1, y + line_width + 1, 
+                        w - 2 * line_width - 2, h - 2 * line_width - 2)
       cw.uncouple()
    end
 
@@ -224,7 +223,7 @@ class PlainBorder(LineBorder)
    public draw(W, x, y, w, h)
       local i
       every i := 0 to line_width - 1 do
-         rectangle(W, x + i, y + i, w - 2 * i, h - 2 * i)
+         W.draw_rectangle(x + i, y + i, w - 2 * i, h - 2 * i)
    end
 end
 

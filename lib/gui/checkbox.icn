@@ -122,8 +122,8 @@ class CheckBox(Button)
 
       if self.has_focus() & self.is_unshaded() then {
          cw := Gui.style.get_focus_clone(self.cbwin)
-         rectangle(cw, self.tx - Gui.TEXT_INSET, self.y, 
-                   self.tw + 2 * Gui.TEXT_INSET, self.h)
+         cw.draw_rectangle(self.tx - Gui.TEXT_INSET, self.y, 
+                           self.tw + 2 * Gui.TEXT_INSET, self.h)
          cw.uncouple()
       }
    end

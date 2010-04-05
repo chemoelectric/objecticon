@@ -20,29 +20,9 @@
    typedef unsigned long clock_t;
    typedef vlong off_t;
    typedef Point XPoint;
-   typedef struct {
-       int x, y, width, height;
-   } XRectangle;
-   #define RECX(rec) (rec).x
-   #define RECY(rec) (rec).y
-   #define RECWIDTH(rec) (rec).width
-   #define RECHEIGHT(rec) (rec).height
-   typedef struct {
-       int x, y, width, height;
-       double angle1, angle2;
-   } XArc;
-   #define ARCWIDTH(arc) (arc).width
-   #define ARCHEIGHT(arc) (arc).height
    #define ANGLE(ang) (ang)
    #define EXTENT(ang) (ang)
-   typedef struct {
-       int x1, y1, x2, y2;
-   } XSegment;
 #define SCREENDEPTH(w) 0
-#define ASCENT(w)  0
-#define DESCENT(w) 0
-#define FHEIGHT(w) 0
-#define FWIDTH(w)  0
 #define LINEWIDTH(w) 0
 #define DISPLAYHEIGHT(w) 0
 #define DISPLAYWIDTH(w) 0
@@ -64,6 +44,7 @@
 #define vsnprint vsnprint
 
    #define readimage oi_readimage
+   #define fillarc oi_fillarc
    #define EXIT_FAILURE 1
    #define EXIT_SUCCESS 0
    #define F_OK 0

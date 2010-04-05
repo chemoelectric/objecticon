@@ -387,12 +387,12 @@ wbp wopen(wbp parent, dptr attr, int n, int *err_idx)
       }
    oldfont = SelectObject(hdc, wc->font->font);
    GetTextMetrics(hdc, &metrics);
-   wc->font->charwidth = dc_maxcharwidth(hdc);
+   wc->font->maxwidth = dc_maxcharwidth(hdc);
    SelectObject(hdc, oldfont);
    ReleaseDC(ws->iconwin, hdc);
    wc->font->ascent = metrics.tmAscent;
    wc->font->descent = metrics.tmDescent;
-   /*   wc->font->charwidth = metrics.tmMaxCharWidth; buggy */
+   /*   wc->font->maxwidth = metrics.tmMaxCharWidth; buggy */
    wc->font->height = metrics.tmHeight;
    wc->leading = metrics.tmHeight;
    /*
@@ -475,7 +475,7 @@ wbp wopen(wbp parent, dptr attr, int n, int *err_idx)
       imd = &ws->initimage;
       if (imd->width) {
 	 r = strimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
-		      imd->data, (word)imd->width * (word)imd->height, 0);
+		      imd->data, imd->width * imd->height, 0);
 	 if (imd->paltbl)
 	    free(imd->paltbl);
 	 free(imd->data);
@@ -1266,7 +1266,7 @@ char *s;
 
       tmpdc = GetDC(ws->iconwin);
       oldfont = SelectObject(tmpdc, hf);
-      wc->font->charwidth = dc_maxcharwidth(tmpdc);
+      wc->font->maxwidth = dc_maxcharwidth(tmpdc);
       if (GetTextMetrics(tmpdc, &metrics) == 0) {
          /* gettextmetrics can fail; what should we do about it? */
          ;
@@ -1275,7 +1275,7 @@ char *s;
       ReleaseDC(ws->iconwin, tmpdc);
       wc->font->ascent = metrics.tmAscent;
       wc->font->descent = metrics.tmDescent;
-/*    wc->font->charwidth = metrics.tmMaxCharWidth; unreliable due to MS bug */
+/*    wc->font->maxwidth = metrics.tmMaxCharWidth; unreliable due to MS bug */
       wc->leading = wc->font->height = metrics.tmHeight;
       return Succeeded;
       }
@@ -1746,13 +1746,6 @@ char *answer;
    else strcpy(answer, "unknown");
    }
 
-void getfontname(w, answer)
-wbp w;
-char *answer;
-   {
-   strcpy(answer, w->context->font->name);
-   }
-
 void getpointername(w, answer)
 wbp w;
 char *answer;
@@ -2035,7 +2028,7 @@ wbp w;
 int x, y, width, height;
 struct palentry *e;
 unsigned char *s;
-word len;
+int len;
 int on_icon;
    {
    HDC tempdc;
@@ -2349,7 +2342,7 @@ unsigned char *data;
    return 1;
    }
 
-int readimage(w, filename, x, y, status)
+int readimage(w, x, y, filename, status)
 wbp w;
 char *filename;
 int x, y, *status;
@@ -2640,9 +2633,8 @@ void free_color(wbp w, char *s)
 /*
  * drawarcs() - assumes x and y are already fixed up for the bitmap
  */
-void drawarcs(wbp wb, XArc *arcs, int narcs)
+void drawarc(wbp w, int x, int y, int width, int height, double angle1, double angle2)
    {
-   XArc *arc = arcs;
    int i, halfwidth, halfheight, x1, y1, x2, y2, right, bottom;
    double a1_a2;
    HPEN hp, oldpen, oldpen2;
@@ -2650,21 +2642,19 @@ void drawarcs(wbp wb, XArc *arcs, int narcs)
    hp = CreatePenIndirect(&(wc->pen));
    if (stdwin) oldpen = SelectObject(stddc, hp);
    oldpen2 = SelectObject(pixdc, hp);
-   for (i = 0; i < narcs; i++, arc++) {
-      halfwidth = arc->width >> 1;
-      halfheight = arc->height >> 1;
-      arc->angle1 = -arc->angle1 - arc->angle2;
-      a1_a2 = arc->angle1 + arc->angle2;
-      x1 = arc->x + halfwidth + (int)(halfwidth * cos(arc->angle1));
-      y1 = arc->y + halfheight - (int)(halfheight * sin(arc->angle1));
-      x2 = arc->x + halfwidth + (int)(halfwidth * cos(a1_a2));
-      y2 = arc->y + halfheight - (int)(halfheight * sin(a1_a2));
-      right = arc->x + arc->width + 1;
-      bottom = arc->y + arc->height + 1;
-      if (ws->win)
-	 Arc(stddc, arc->x, arc->y, right, bottom, x1, y1, x2, y2);
-      Arc(pixdc, arc->x, arc->y, right, bottom, x1, y1, x2, y2);
-      }
+   halfwidth = width >> 1;
+   halfheight = height >> 1;
+   angle1 = -angle1 - angle2;
+   a1_a2 = angle1 + angle2;
+   x1 = x + halfwidth + (int)(halfwidth * cos(angle1));
+   y1 = y + halfheight - (int)(halfheight * sin(angle1));
+   x2 = x + halfwidth + (int)(halfwidth * cos(a1_a2));
+   y2 = y + halfheight - (int)(halfheight * sin(a1_a2));
+   right = x + width + 1;
+   bottom = y + height + 1;
+   if (ws->win)
+       Arc(stddc, x, y, right, bottom, x1, y1, x2, y2);
+   Arc(pixdc, x, y, right, bottom, x1, y1, x2, y2);
    if (stdwin) SelectObject(stddc, oldpen);
    SelectObject(pixdc, oldpen2);
    DeleteObject(hp);
@@ -2703,57 +2693,21 @@ void drawlines(wbinding *wb, XPoint *points, int npoints)
  *  Parameters - the window binding for output, an array of points (assumed
  *               to be fixed up for bitmap) and the number of points
  */
-void drawpoints(wbinding *wb, XPoint *points, int npoints)
-   {
-   XPoint *p, *endp;
-   SysColor palfg;
-   STDLOCALS(wb);
-   endp = points + npoints;
-   palfg = PALCLR(wc->fg);
-   if (stdwin) {
-      for(p = points; p < endp; p++) {
-         SetPixel(stddc, p->x, p->y, palfg);
-         SetPixel(pixdc, p->x, p->y, palfg);
-         }
-      }
-   else {
-      for(p = points; p < endp; p++) {
-         SetPixel(pixdc, p->x, p->y, palfg);
-         }
-      }
-   FREE_STDLOCALS(wb);
-   return;
-   }
+void drawpoint(wbp wb, int x, int y)
 
-
-/*
- * drawsegments() -
- */
-void drawsegments(wbinding *wb, XSegment *segs, int nsegs)
-   {
-   int i, bheight;
-   XPoint ps[2];
-   HPEN hp, oldpen, oldpen2;
-   STDLOCALS(wb);
-   hp = CreatePenIndirect(&(wc->pen));
-   if (stdwin) oldpen = SelectObject(stddc, hp);
-   oldpen2 = SelectObject(pixdc, hp);
-   if (stdwin) {
-      SetBkMode(stddc, wc->bkmode);
-      for (i = 0; i < nsegs; i++) {
-	 Polyline(stddc, (POINT *)(segs+i), 2);
-	 }
-      }
-   SetBkMode(pixdc, wc->bkmode);
-   for (i = 0; i < nsegs; i++) {
-      Polyline(pixdc, (POINT *)(segs+i), 2);
-      }
-   if (stdwin) SelectObject(stddc, oldpen);
-   SelectObject(pixdc, oldpen2);
-   DeleteObject(hp);
-   FREE_STDLOCALS(wb);
-   return;
-   }
+{
+    SysColor palfg;
+    STDLOCALS(wb);
+    palfg = PALCLR(wc->fg);
+    if (stdwin) {
+        SetPixel(stddc, x, y, palfg);
+        SetPixel(pixdc, x, y, palfg);
+    }
+    else {
+        SetPixel(pixdc, x, y, palfg);
+    }
+    FREE_STDLOCALS(wb);
+}
 
 
 int allowresize(w, on)
@@ -2837,9 +2791,9 @@ int setselection(wbp w, dptr val)
 }
 
 /*
- * drawstrng()
+ * drawstring()
  */
-void drawstrng(wbinding *wb, int x, int y, char *s, int slen)
+void drawstring(wbinding *wb, int x, int y, char *s, int slen)
    {
    HFONT oldfont;
    STDLOCALS(wb);
@@ -2864,16 +2818,15 @@ void drawstrng(wbinding *wb, int x, int y, char *s, int slen)
 
 void drawutf8(wbp w, int x, int y, char *s, int slen)
 {
-    drawstrng(w, x, y, s, slen);
+    drawstring(w, x, y, s, slen);
 }
 
 /*
  * fillarcs
  */
-void fillarcs(wbp wb, XArc *arcs, int narcs) 
+void fillarc(wbp w, int x, int y, int width, int height, double angle1, double angle2)
    {
-   XArc *arc = arcs;
-   int i, diff, bheight;
+   int diff, bheight;
    HBRUSH hb, oldbrush, oldbrush2;
    POINT pts[3];
    HPEN hp, oldpen, oldpen2;
@@ -2890,40 +2843,39 @@ void fillarcs(wbp wb, XArc *arcs, int narcs)
    if (stdwin) SetBkColor(stddc, PALCLR(wc->bg));
    if (stdwin) SetBkMode(stddc, wc->bkmode);
    SetBkMode(pixdc, wc->bkmode);
-   for (i = 0; i < narcs; i++, arc++) {
-      if (arc->angle2 >= 2 * Pi) {
-         /*
-          * from SDK reference: Ellipse() draws up to but not including
-          * the right and bottom coordinates.  Add +1 to compensate.
-          */
-	 if (stdwin) 
-	    Ellipse(stddc, arc->x, arc->y, 
-		    arc->x + arc->width + 1, arc->y + arc->height + 1);
-	 Ellipse(pixdc, arc->x, arc->y, 
-		 arc->x + arc->width + 1, arc->y + arc->height + 1);
-	 }
-      else {
-	 arc->angle1 = -arc->angle1 - arc->angle2;
-	 pts[0].x = arc->x + (arc->width>>1);
-	 pts[0].y = arc->y + (arc->height>>1);
-	 pts[1].x = arc->x + (arc->width>>1) +
-            (int)(((arc->width + 1)>>1) * cos(arc->angle1));
-	 pts[1].y = arc->y + (arc->height>>1) -
-            (int)(((arc->height )>>1) * sin(arc->angle1));
-	 pts[2].x = arc->x + (arc->width>> 1) +
-            (int)(((arc->width + 1)>>1) * cos(arc->angle1+arc->angle2));
-	 pts[2].y = arc->y + (arc->height>>1) -
-            (int)(((arc->height )>>1) * sin(arc->angle1+arc->angle2));
-	 if (stdwin) {
-	    Pie(stddc, arc->x, arc->y,
-		arc->x + arc->width + 1, arc->y + arc->height + 1,
-		pts[1].x, pts[1].y, pts[2].x, pts[2].y);
-	    }
-	 Pie(pixdc, arc->x, arc->y,
-	     arc->x + arc->width + 1, arc->y + arc->height + 1,
-		pts[1].x, pts[1].y, pts[2].x, pts[2].y);
-	 }
-      }
+ 
+   if (angle2 >= 2 * Pi) {
+       /*
+        * from SDK reference: Ellipse() draws up to but not including
+        * the right and bottom coordinates.  Add +1 to compensate.
+        */
+       if (stdwin) 
+           Ellipse(stddc, x, y, 
+                   x + width + 1, y + height + 1);
+       Ellipse(pixdc, x, y, 
+               x + width + 1, y + height + 1);
+   }
+   else {
+       angle1 = -angle1 - angle2;
+       pts[0].x = x + (width>>1);
+       pts[0].y = y + (height>>1);
+       pts[1].x = x + (width>>1) +
+           (int)(((width + 1)>>1) * cos(angle1));
+       pts[1].y = y + (height>>1) -
+           (int)(((height )>>1) * sin(angle1));
+       pts[2].x = x + (width>> 1) +
+           (int)(((width + 1)>>1) * cos(angle1+angle2));
+       pts[2].y = y + (height>>1) -
+           (int)(((height )>>1) * sin(angle1+angle2));
+       if (stdwin) {
+           Pie(stddc, x, y,
+               x + width + 1, y + height + 1,
+               pts[1].x, pts[1].y, pts[2].x, pts[2].y);
+       }
+       Pie(pixdc, x, y,
+           x + width + 1, y + height + 1,
+           pts[1].x, pts[1].y, pts[2].x, pts[2].y);
+   }
    if (stdwin) SelectObject(stddc, oldpen);
    SelectObject(pixdc, oldpen2);
    DeleteObject(hp);
@@ -2937,9 +2889,9 @@ void fillarcs(wbp wb, XArc *arcs, int narcs)
 /*
  * fillrectangles
  */
-void fillrectangles(wbp wb, XRectangle *recs, int nrecs)
+void fillrectangle   (wbp wb, int x, int y, int width, int height)
    {
-   int i, diff, bheight;
+   int diff, bheight;
    HBRUSH hb, oldbrush, oldbrush2;
    HPEN hp, oldpen, oldpen2;
    HRGN hr; RECT r;
@@ -2956,19 +2908,20 @@ void fillrectangles(wbp wb, XRectangle *recs, int nrecs)
    if (stdwin) SetBkColor(stddc, PALCLR(wc->bg));
    if (stdwin) SetBkMode(stddc, wc->bkmode);
    SetBkMode(pixdc, wc->bkmode);
-   for (i = 0; i < nrecs; i++) {
-      recs[i].right += recs[i].left;
-      recs[i].bottom += recs[i].top;
-      /*
-       * Used to use FillRect(pixdc, (recs+i), hb); (with +1 for
-       * right & bottom coordinates) but it mystically didn't "stick"
-       * to the backing pixmap, although it showed OK on the window itself.
-       */
-      hr = CreateRectRgnIndirect(recs+i);
-      if (stdwin) FillRgn(stddc, hr, hb);
-      FillRgn(pixdc, hr, hb);
-      DeleteObject(hr);
-      }
+   r.left = x;
+   r.top = y;
+   r.right = x + width;
+   r.bottom = y + height;
+   /*
+    * Used to use FillRect(pixdc, (recs+i), hb); (with +1 for
+    * right & bottom coordinates) but it mystically didn't "stick"
+    * to the backing pixmap, although it showed OK on the window itself.
+    */
+   hr = CreateRectRgnIndirect(&r);
+   if (stdwin) FillRgn(stddc, hr, hb);
+   FillRgn(pixdc, hr, hb);
+   DeleteObject(hr);
+
    if (stdwin) SelectObject(stddc, oldpen);
    SelectObject(pixdc, oldpen2);
    DeleteObject(hp);
@@ -2983,42 +2936,38 @@ void fillrectangles(wbp wb, XRectangle *recs, int nrecs)
 /*
  * drawrectangles - draw nrecs # of rectangles in array recs to binding w
  */
-void drawrectangles(wbp w, XRectangle *recs, int nrecs)
+void drawrectangle(wbp w, int x, int y, int width, int height)
    {
-   XRectangle *r;
    LOGBRUSH lb;
    HBRUSH hb, oldbrush, oldbrush2;
    HPEN hp, oldpen, oldpen2;
+   XPoint tmp[5];
    STDLOCALS(w);
    hp = CreatePenIndirect(&(wc->pen));
    lb.lbStyle = BS_NULL;
    hb = CreateBrushIndirect(&lb);
-   for (r = recs; r < recs + nrecs; r++) {
-      r->right += r->left;
-      r->bottom += r->top;
-      }
-
    SetBkMode(pixdc, wc->bkmode);
    oldpen2 = SelectObject(pixdc, hp);
    oldbrush2 = SelectObject(pixdc, hb);
-   for (r = recs; r < recs + nrecs; r++) {
-/*      Rectangle(pixdc, r->left, r->top, r->right, r->bottom); */
-      XPoint tmp[5];
-      tmp[0].x = r->left;
-      tmp[0].y = r->top;
-      tmp[1].x = r->right;
-      tmp[1].y = r->top;
-      tmp[2].x = r->right;
-      tmp[2].y = r->bottom;
-      tmp[3].x = r->left;
-      tmp[3].y = r->bottom;
-      tmp[4].x = r->left;
-      tmp[4].y = r->top;
-      Polyline(pixdc, tmp, 5);
-      }
+
+   width += x;
+   height += y;
+   tmp[0].x = x;
+   tmp[0].y = y;
+   tmp[1].x = width;
+   tmp[1].y = y;
+   tmp[2].x = width;
+   tmp[2].y = height;
+   tmp[3].x = x;
+   tmp[3].y = height;
+   tmp[4].x = x;
+   tmp[4].y = y;
+   Polyline(pixdc, tmp, 5);
+
    SelectObject(pixdc, oldpen2);
    SelectObject(pixdc, oldbrush2);
 
+#if 0
    for (r = recs; r < recs + nrecs; r++) {
       /*
        * from SDK reference: Rectangle() draws up to but not including
@@ -3027,6 +2976,7 @@ void drawrectangles(wbp w, XRectangle *recs, int nrecs)
       r->right += 1;
       r->bottom += 1;
       }
+#endif
    if (stdwin) {
       SetBkMode(stddc, wc->bkmode);
       oldpen = SelectObject(stddc, hp);
@@ -3112,7 +3062,7 @@ wbp w;
 	 DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
 	 getenv("ICONFONT"));
 
-   wc->font->charwidth = 8; /* looks like a bug */
+   wc->font->maxwidth = 8; /* looks like a bug */
    wc->leading = 16;
 
    GRFX_LINK(wc, wcntxts);

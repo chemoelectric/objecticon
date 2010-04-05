@@ -153,20 +153,6 @@ class Gui()
    end
 end
 
-procedure erase_rectangle(W, x, y, w, h)
-   if x < 0 then {
-      w +:= x
-      x := 0
-   }
-
-   if y < 0 then {
-      h +:= y
-      y := 0
-   }
-
-   return W.erase_area(x, y, w, h)
-end
-
 procedure draw_image_ex(W, x, y, i)
    W.draw_image(x, y, get_extended_image(W, i))
 end
@@ -207,10 +193,6 @@ procedure get_extended_image(W, img)
       }
       return head || map(tab(0), s1, s2)
    }
-end
-
-procedure rectangle(W, x, y, w, h)
-   return W.draw_rectangle(x, y, w - 1, h - 1)
 end
 
 #

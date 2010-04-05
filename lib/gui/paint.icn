@@ -352,14 +352,13 @@ class GridPaint(Paint)
 
       cw := Gui.style.get_dashed_clone(win)
 
-      rectangle(cw, 0, 0, w, h)
+      cw.draw_rectangle(0, 0, w, h)
 
       every i := !(\g).info do {
-         rectangle(cw,
-                   g.col_x[i.x],
-                   g.row_y[i.y],
-                   g.slice(i.x, i.w, g.a_col_w),
-                   g.slice(i.y, i.h, g.a_row_h))
+         cw.draw_rectangle(g.col_x[i.x],
+                           g.row_y[i.y],
+                           g.slice(i.x, i.w, g.a_col_w),
+                           g.slice(i.y, i.h, g.a_row_h))
       }
 
       cw.uncouple()
