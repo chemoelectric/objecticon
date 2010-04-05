@@ -138,13 +138,11 @@ typedef struct _wfont {
   int		refcount;
   int		serial;			/* serial # */
   struct _wfont *previous, *next;
-
   char	        *name;			/* name for WAttrib and fontsearch */
   int           ascent;                 /* font dimensions */
   int           descent;
   int		height;			
   int           maxwidth;               /* max width of one char */
-
 #if XWindows
 #ifdef HAVE_LIBXFT
   XftFont     * fsp;
@@ -152,7 +150,6 @@ typedef struct _wfont {
   XFontStruct *	fsp;			/* X font pointer */
 #endif /* HAVE_LIBXFT */
 #endif					/* XWindows */
-
 #if MSWIN32
   HFONT		font;
 #endif					/* MSWIN32 */
