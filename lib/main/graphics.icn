@@ -65,9 +65,9 @@ class Window(NoCopy)
    public defer color_value(k)
 
    #
-   # draw_arc(x1, y1, width1, height1, angle11, angle21,...)
+   # draw_arc(x, y, width, height, angle1, angle2)
    #
-   public defer draw_arc(a[])
+   public defer draw_arc(x, y, width, height, angle1, angle2)
 
    #
    # event() - return an event from this window, waiting if necessary.
@@ -75,9 +75,9 @@ class Window(NoCopy)
    public defer event()
 
    #
-   # draw_circle(x1, y1, r1, angle11, angle21, ...)
+   # draw_circle(x, y, r, theta, alpha)
    #
-   public defer draw_circle(a[])
+   public defer draw_circle(x, y, r, theta, alpha)
 
    #
    # draw_curve(x1,y1,...xN,yN)
@@ -101,9 +101,9 @@ class Window(NoCopy)
    public defer draw_line(a[])
 
    #
-   # draw_point(x1, y1, ...xN, yN)
+   # draw_point(x, y)
    #
-   public defer draw_point(a[])
+   public defer draw_point(x, y)
 
    #
    # draw_polygon(x1,y1,...xN,yN)
@@ -113,17 +113,17 @@ class Window(NoCopy)
    #
    # draw_rectangle(x, y, width, height)
    #
-   public defer draw_rectangle(a[])
+   public defer draw_rectangle(x, y, width, height)
 
    #
-   # draw_string(x1, y1, s1, ..., xN, yN, sN)
+   # draw_string(x, y, s)
    #
-   public defer draw_string(a[])
+   public defer draw_string(x, y, s)
 
    #
    # erase_area(x,y,width,height) - clear an area of the window
    #
-   public defer erase_area(a[])
+   public defer erase_area(x, y, width, height)
 
    #
    # pending(x[]) - add to and then produce a list of events pending on window
@@ -136,14 +136,14 @@ class Window(NoCopy)
    public defer fg(colr)
 
    #
-   # fill_arc(x1, y1, width1, height1, angle11, angle21,...)
+   # fill_arc(x, y, width, height, angle1, angle2)
    #
-   public defer fill_arc(a[])
+   public defer fill_arc(x, y, width, height, angle1, angle2)
 
    #
-   # fill_circle(x1, y1, r1, angle11, angle21, ...)
+   # fill_circle(x, y, r, theta, alpha)
    #
-   public defer fill_circle(a[])
+   public defer fill_circle(x, y, r, theta, alpha)
 
    #
    # fill_polygon(x1, y1, ...xN, yN)
@@ -151,9 +151,9 @@ class Window(NoCopy)
    public defer fill_polygon(a[])
 
    #
-   # fill_rectangle(x1, y1, width1, height1,...,xN, yN, widthN, heightN)
+   # fill_rectangle(x, y, width, height)
    #
-   public defer fill_rectangle(a[])
+   public defer fill_rectangle(x, y, width, height)
 
    #
    # font(f) - get/set font

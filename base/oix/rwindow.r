@@ -3006,10 +3006,11 @@ int rectargs(wbp w, int argc, dptr argv, int i, word *px, word *py, word *pw, wo
  */
 int docircles(wbp w, int argc, dptr argv, int fill)
 {
+    word x, y, r;
     int arc_x, arc_y, arc_width, arc_height;
     double arc_angle1, arc_angle2;
     int dx, dy;
-    double x, y, r, theta, alpha;
+    double theta, alpha;
 
     dx = w->context->dx;
     dy = w->context->dy;
@@ -3019,11 +3020,11 @@ int docircles(wbp w, int argc, dptr argv, int fill)
      */
     if (2 >= argc)
         return 2;			/* missing y or r */
-    if (!cnv:C_double(argv[0], x))
+    if (!cnv:C_integer(argv[0], x))
         return 0;
-    if (!cnv:C_double(argv[1], y))
+    if (!cnv:C_integer(argv[1], y))
         return 1;
-    if (!cnv:C_double(argv[2], r))
+    if (!cnv:C_integer(argv[2], r))
         return 2;
     if (3 >= argc)
         theta = 0.0;
