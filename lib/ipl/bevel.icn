@@ -293,7 +293,8 @@ procedure BevelTriangle(win, x, y, r, o, bw)
             upper.draw_line(x - r, y + r, x - r, y - r, x + r, y)
          }
          "w": {
-            lower.draw_line(x - r, y, x + r, y + r, x + r, y + r, x + r, y-r, x - r, y)
+            lower.draw_line(x - r, y, x + r, y + r)
+            lower.draw_line(x + r, y + r, x + r, y-r)
             upper.draw_line(x - r, y, x + r, y - r)
          }
       }
