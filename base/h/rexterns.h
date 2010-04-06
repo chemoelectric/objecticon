@@ -94,7 +94,6 @@ extern int noMTevents;		/* no MT events during GC */
    
 extern int over_flow;
 
-extern stringint attribs[], drawops[];
 
 extern word curr_op;
 extern dptr xexpr;
@@ -107,6 +106,7 @@ extern int xnargs;
  */
 #ifdef Graphics
    
+extern stringint attribs[];
 extern wbp wbndngs;
 extern wcp wcntxts;
 extern wsp wstates;
@@ -118,7 +118,6 @@ extern clock_t starttime;		/* start time in milliseconds */
 
 #if XWindows
       extern struct _wdisplay * wdsplys;
-      extern stringint cursorsyms[];
 #endif				/* XWindows */
 
 #if MSWIN32

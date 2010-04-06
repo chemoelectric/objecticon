@@ -69,7 +69,7 @@ static int resizePixmap(wbp w, int width, int height);
 
 #define DEFAULTFONTNAME "fixed"
 
-stringint drawops[] = {
+static stringint drawops[] = {
    { 0, 16},
    {"and",		GXand},
    {"andInverted",	GXandInverted},
@@ -91,7 +91,7 @@ stringint drawops[] = {
 
 #define NUMCURSORSYMS	78
 
-stringint cursorsyms[] = {
+static stringint cursorsyms[] = {
   { 0, NUMCURSORSYMS},
   {"X cursor",		XC_X_cursor},
   {"arrow",		XC_arrow},
@@ -1511,6 +1511,7 @@ int setpointer(wbp w, char *val)
  */
 int setdrawop(wbp w, char *val)
 {
+    int i;
     STDLOCALS(w);
     XSync(stddpy, False);
     if (!strcmp(val,"reverse")) {
@@ -1528,8 +1529,9 @@ int setdrawop(wbp w, char *val)
             if (stdgc)
                 XSetForeground(stddpy, stdgc, wd->colors[wc->fg].c);
         }
-        wc->drawop = stringint_str2int(drawops,val);
-        if (wc->drawop == -1) { wc->drawop = GXcopy; return Error; }
+        if ((i = stringint_str2int(drawops,val)) < 0)
+            return Error;
+        wc->drawop = i;
     }
     if (stdgc) XSetFunction(stddpy, stdgc, wc->drawop);
     return Succeeded;
@@ -3516,7 +3518,7 @@ int patbits[] = {
 /*
  * pattern symbols
  */
-stringint siPatternSyms[] = {
+static stringint siPatternSyms[] = {
     {0,		16},
     { "black",	 0},
     { "checkers",	 12},

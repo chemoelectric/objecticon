@@ -1642,27 +1642,29 @@ char *val;
  * setdrawop() - set the drawing operation
  */
 int setdrawop(w, val)
-wbp w;
-char *val;
-   {
-   wcp wc = w->context;
-   if (!strcmp(val,"reverse")) {
-      if (!ISXORREVERSE(w)) {
-	 SETXORREVERSE(w);
-         wc->drawop = R2_XORPEN;
-         resetfg(w);
-	 }
-      }
-   else {
-      if (ISXORREVERSE(w)) {
-	 CLRXORREVERSE(w);
-         resetfg(w);
-	 }
-      wc->drawop = stringint_str2int(drawops,val);
-      if (wc->drawop == -1) { wc->drawop = R2_COPYPEN; return Error; }
-      }
-   return Succeeded;
-   }
+    wbp w;
+    char *val;
+{
+    int i;
+    wcp wc = w->context;
+    if (!strcmp(val,"reverse")) {
+        if (!ISXORREVERSE(w)) {
+            SETXORREVERSE(w);
+            wc->drawop = R2_XORPEN;
+            resetfg(w);
+        }
+    }
+    else {
+        if (ISXORREVERSE(w)) {
+            CLRXORREVERSE(w);
+            resetfg(w);
+        }
+        if ((i = stringint_str2int(drawops,val)) < 0)
+            return Error;
+        wc->drawop = i;
+    }
+    return Succeeded;
+}
 
 setdisplay(wbp w, char *val)
    {
