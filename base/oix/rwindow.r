@@ -258,7 +258,7 @@ static int setgeometry(wbp w, char *geo)
 static int setminsize(wbp w, char *s)
 {
     int width, height;
-    if (isdigit((unsigned char)*s))
+    if (!isdigit((unsigned char)*s))
         return Error;
     if ((width = atoi(s)) <= 0) return Error;
     while (isdigit((unsigned char)*++s));
