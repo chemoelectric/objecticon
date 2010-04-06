@@ -1075,7 +1075,11 @@ static int wmap(wbp w, wbp parent)
     }
 
     if (wc->patternname != NULL) {
-        if (setpattern(w, wc->patternname, strlen(wc->patternname)) != Succeeded)
+        char buff[128];
+        /* Use a temporary buff since setpattern frees wc->patternname, so can't use it
+         * as an argument */
+        strcpy(buff, wc->patternname);
+        if (setpattern(w, buff, strlen(buff)) != Succeeded)
             return Failed;
     }
 
