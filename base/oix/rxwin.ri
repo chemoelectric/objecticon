@@ -1916,6 +1916,11 @@ int setlinewidth(wbp w, int linewid)
     return Succeeded;
 }
 
+int getlinewidth(wbp w)
+{
+    return w->context->linewidth;
+}
+
 /*
  * Reset the context's foreground color to whatever it is supposed to be.
  */
@@ -2097,6 +2102,45 @@ void getdisplay(wbp w, char *answer)
             *answer = '\0';
     }
     else sprintf(answer, "%s", wd->name);
+}
+
+int geticonimage(wbp w, char *answer)
+{
+    if (!w->window->iconimage)
+        return Failed;
+    strcpy(answer, w->window->iconimage);
+    return Succeeded;
+}
+
+int geticonlabel(wbp w, char *answer)
+{
+    if (!w->window->iconlabel)
+        return Failed;
+    strcpy(answer, w->window->iconlabel);
+    return Succeeded;
+}
+
+int getwindowlabel(wbp w, char *answer)
+{
+    if (!w->window->windowlabel)
+        return Failed;
+    strcpy(answer, w->window->windowlabel);
+    return Succeeded;
+}
+
+int getdisplaywidth (wbp w)
+{
+    return DisplayWidth(w->window->display->display, w->window->display->screen);
+}
+
+int getdisplayheight(wbp w)
+{
+    return DisplayHeight(w->window->display->display, w->window->display->screen);
+}
+
+int getdepth(wbp w)
+{
+    return DefaultDepth(w->window->display->display, w->window->display->screen);
 }
 
 int getvisual(wbp w, char *answer)

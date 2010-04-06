@@ -1420,6 +1420,10 @@ int setlinewidth(wbp w, int linewid)
    return Succeeded;
    }
 
+int getlinewidth(wbp w)
+{
+    return w->context->pen.lopnWidth.x;
+}
 
 /*
  * Set the foreground to draw in a mutable color
@@ -1710,6 +1714,27 @@ char *answer;
    {
    return Failed;
    }
+
+int geticonimage(wbp w, char *answer)
+{
+    return Failed;
+}
+
+int geticonlabel(wbp w, char *answer)
+{
+    if (!w->window->iconlabel)
+        return Failed;
+    strcpy(answer, w->window->iconlabel);
+    return Succeeded;
+}
+
+int getwindowlabel(wbp w, char *answer)
+{
+    if (!w->window->windowlabel)
+        return Failed;
+    strcpy(answer, w->window->windowlabel);
+    return Succeeded;
+}
 
 /*
  * getpos() - update the window state's notion of its current position
@@ -2440,6 +2465,21 @@ int getpixel(wbp w, int x, int y, word *rv, char *s, struct imgmem *imem)
 	   (long)RED(cr)*257L, (long)GREEN(cr)*257L, (long)BLUE(cr)*257L);
    return Succeeded;
    }
+
+int getdisplaywidth (wbp w)
+{
+    return devicecaps(w, HORZRES);
+}
+
+int getdisplayheight(wbp w)
+{
+    return devicecaps(w, VERTRES);
+}
+
+int getdepth(wbp w)
+{
+    return DefaultDepth(w->window->display->display, w->window->display->screen);
+}
 
 int query_pointer(w, pp)
 wbp w;

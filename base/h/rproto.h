@@ -232,6 +232,16 @@ void  bigrand         (dptr da, dptr dx);
    void getfg           (wbp w, char *answer);
    void geticonic       (wbp w, char *answer);
    int  geticonpos      (wbp w, char *s);
+
+   int  getlinewidth    (wbp w);
+   int  getdisplaywidth (wbp w);
+   int  getdisplayheight(wbp w);
+   int  getdepth        (wbp w);
+
+   int  geticonimage    (wbp w, char *answer);
+   int  geticonlabel    (wbp w, char *answer);
+   int  getwindowlabel  (wbp w, char *answer);
+
    int  getimstr        (wbp w, int x, int y, int width, int hgt,
                           struct palentry *ptbl, unsigned char *data);
    void getlinestyle    (wbp w, char *answer);
