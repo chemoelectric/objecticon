@@ -551,10 +551,8 @@ function graphics_Window_draw_image(self, argv[argc])
           if (nchars % row != 0)
               fail;
           height = nchars / row;
-          if (drawblimage(self_w, x, y, width, height, c, s, (word)(z - s)) == Error)
-              runerr(305);
-          else
-              return nulldesc;
+          drawblimage(self_w, x, y, width, height, c, s, (word)(z - s));
+          return nulldesc;
       }
 
       /*
@@ -599,13 +597,8 @@ function graphics_Window_draw_image(self, argv[argc])
        * Call platform-dependent code to draw the image.
        */
       height = nchars / width;
-      i = strimage(self_w, x, y, width, height, e, s, z - s, 0);
-      if (i == 0)
-          return nulldesc;
-      else if (i < 0)
-          runerr(305);
-      else
-          return C_integer i;
+      strimage(self_w, x, y, width, height, e, s, z - s, 0);
+      return nulldesc;
    }
 end
 
@@ -1189,7 +1182,6 @@ function graphics_Window_read_image(self, x, y, file, pal)
       runerr(103, file)
    body {
       char filename[MaxPath + 1];
-      int status;
       int p, r;
       struct imgdata imd;
       GetSelfW();
@@ -1224,23 +1216,17 @@ function graphics_Window_read_image(self, x, y, file, pal)
           r = readJPEG(filename, p, &imd);
 #endif
       if (r == Succeeded) {
-          status = strimage(self_w, x, y, imd.width, imd.height, imd.paltbl,
+          strimage(self_w, x, y, imd.width, imd.height, imd.paltbl,
                             imd.data, imd.width * imd.height, 0);
-          if (status < 0)
-              r = Error;
           free(imd.paltbl);
           free(imd.data);
       }
-      else if (r == Failed)
-          r = readimage(self_w, x, y, filename, &status);
-      if (r == Error)
-          runerr(305);
-      if (r == Failed)
-          fail;
-      if (status == 0)
-          return nulldesc;
-      else
-          return C_integer (word)status;
+      else {
+          r = readimage(self_w, x, y, filename);
+          if (r != Succeeded) 
+              fail;
+      }
+      return nulldesc;
    }
 end
 

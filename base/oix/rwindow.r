@@ -2622,22 +2622,15 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
                 /* first try GIF; then try platform-dependent format */
                 r = readGIF(val, 0, &ws->initimage);
                 if (r != Succeeded) r = readBMP(val, 0, &ws->initimage);
+#ifdef HAVE_LIBJPEG
+                if (r != Succeeded) r = readJPEG(val, 1, &ws->initimage);
+#endif
                 if (r == Succeeded) {
                     setwidth(w, ws->initimage.width);
                     setheight(w, ws->initimage.height);
                 }
-                else {
-#ifdef HAVE_LIBJPEG
-                    r = readJPEG(val, 1, &ws->initimage);
-                    if (r == Succeeded) {
-                        setwidth(w, ws->initimage.width);
-                        setheight(w, ws->initimage.height);
-                    }
-                    else
-#endif					/* HAVE_LIBJPEG */
-                        r = setimage(w, val);
-                }
-
+                else
+                    r = setimage(w, val);
                 AttemptAttr(r);
                 break;
             }

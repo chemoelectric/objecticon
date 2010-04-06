@@ -474,15 +474,12 @@ wbp wopen(wbp parent, dptr attr, int n, int *err_idx)
 
       imd = &ws->initimage;
       if (imd->width) {
-	 r = strimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
+	 strimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
 		      imd->data, imd->width * imd->height, 0);
 	 if (imd->paltbl)
 	    free(imd->paltbl);
 	 free(imd->data);
 	 imd->width = 0;
-	 if (r < 0) {
-	    return 0;
-	    }
 	 }
       }
    if (ws->win)
@@ -1984,7 +1981,7 @@ char *prog, *opt, *answer;
 /*
  * Draw a bilevel image.
  */
-int drawblimage(w, x, y, width, height, ch, s, len)
+void drawblimage(w, x, y, width, height, ch, s, len)
 wbp w;
 int x, y, width, height, ch;
 unsigned char *s;
@@ -2044,13 +2041,12 @@ word len;
    if (ws->win)
       BitBlt(stddc, x, y, width, height, pixdc, x, y, SRCCOPY);
    FREE_STDLOCALS(w);
-   return Succeeded;
    }
 
 /*
  * Draw a character-per-pixel image.
  */
-int strimage(w, x, y, width, height, e, s, len, on_icon)
+void strimage(w, x, y, width, height, e, s, len, on_icon)
 wbp w;
 int x, y, width, height;
 struct palentry *e;
@@ -2071,18 +2067,14 @@ int on_icon;
    HBITMAP oldpix = 0;
    STDLOCALS(w);
 
-   bmi = malloc(sizeof(BITMAPINFO) + 256 * sizeof(SysColor));
-   if (bmi == NULL) {
-      FREE_STDLOCALS(w);
-      return -1;
-      }
+   MemProtect(bmi = malloc(sizeof(BITMAPINFO) + 256 * sizeof(SysColor)));
    
    bmih = &(bmi->bmiHeader);
    palbg = PALCLR(wc->bg);
    if (on_icon) {
       free(bmi);
       FREE_STDLOCALS(w);
-      return -1;
+      return;
       }
 
    bmih->biClrImportant = 0;
@@ -2103,7 +2095,7 @@ int on_icon;
          if (alc_rgb(w, clrlist[c]) == Failed) {
             free(bmi);
             FREE_STDLOCALS(w);
-            return -1;
+            return;
             }
 	 clrlist[c] = PALCLR(clrlist[c]);
 	 }
@@ -2194,14 +2186,13 @@ int on_icon;
     */
    if (on_icon) {
       FREE_STDLOCALS(w);
-      return -1;
+      return;
       }
    else {
       if (ws->win)
 	 BitBlt(stddc, x, y, width, height, pixdc, x, y, SRCCOPY);
       }
    FREE_STDLOCALS(w);
-   return 0;
    }
 
 /*

@@ -935,7 +935,7 @@ static int wmap(wbp w, wbp parent)
     unsigned long gcmask =
         GCFont | GCForeground | GCBackground | GCFillStyle | GCCapStyle;
     struct imgdata *imd;
-    int i, r;
+    int i;
     int new_pixmap = 0;
     struct descrip progname;
     char *p, *s, sbuf[256];
@@ -1052,24 +1052,20 @@ static int wmap(wbp w, wbp parent)
 
     imd = &ws->initimage;
     if (imd->width) {
-        r = strimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
+        strimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
                      imd->data, imd->width * imd->height, 0);
         free(imd->paltbl);
         free(imd->data);
         imd->width = 0;
-        if (r < 0)
-            return Failed;
     }
 
     imd = &ws->initicon;
     if (imd->width) {
-        r = strimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
+        strimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
                      imd->data, imd->width * imd->height, 1);
         free(imd->paltbl);
         free(imd->data);
         imd->width = 0;
-        if (r < 0)
-            return Failed;
         wmhints.icon_window = ws->iconwin;
         ws->wmhintflags |= IconWindowHint;
     }
@@ -3026,7 +3022,7 @@ void free_color(wbp w, char *s)
 /*
  * Draw a bilevel image
  */
-int drawblimage(wbp w, int x, int y, int width, int height, int ch, unsigned char *s, word len)
+void drawblimage(wbp w, int x, int y, int width, int height, int ch, unsigned char *s, word len)
 {
     unsigned int m, msk1, c, ix, iy;
     long fg, bg;
@@ -3036,9 +3032,7 @@ int drawblimage(wbp w, int x, int y, int width, int height, int ch, unsigned cha
     /*
      * Get an XImage structure and free the old color set if possible.
      */
-    im = getximage(w, x, y, width, height, ch == TCH1);
-    if (im == NULL)
-        return Error;
+    MemProtect(im = getximage(w, x, y, width, height, ch == TCH1));
 
     /*
      * Read the image string and set the pixel values.  Note that
@@ -3087,13 +3081,12 @@ int drawblimage(wbp w, int x, int y, int width, int height, int ch, unsigned cha
     RENDER7(XPutImage, im, 0, 0, x, y, width, height);
     XDestroyImage(im);
     if (wc->drawop != GXcopy) XSetFunction(stddpy, stdgc, wc->drawop);
-    return Succeeded;
 }
 
 /*
  * Draw a character-per-pixel image
  */
-int strimage(wbp w, int x, int y, int width, int height, 
+void strimage(wbp w, int x, int y, int width, int height, 
              struct palentry *e, unsigned char *s, int len, int on_icon)
 {
     int c, v, ret = 0, trans = 0;
@@ -3111,9 +3104,8 @@ int strimage(wbp w, int x, int y, int width, int height,
         for (c = 0; c < 256; c++)
             trans |= e[c].used && e[c].transpt;
     }
-    im = getximage(w, x, y, width, height, trans);
-    if (im == NULL)
-        return -1;
+    MemProtect(im = getximage(w, x, y, width, height, trans));
+
     if (e) {
         /*
          * Allocate the colors we need.  Use black or white if unsuccessful.
@@ -3187,7 +3179,6 @@ int strimage(wbp w, int x, int y, int width, int height,
     }
     XDestroyImage(im);
     if (wc->drawop != GXcopy) XSetFunction(stddpy, stdgc, wc->drawop);
-    return ret;
 }
 
 /*
@@ -3339,15 +3330,16 @@ static XImage *getximage(wbp w, int x, int y, int width, int height, int init)
     return im;
 }
 
-int readimage(wbp w, int x, int y, char *filename, int *status)
+int readimage(wbp w, int x, int y, char *filename)
 {
     Pixmap p;
     unsigned int width, height;
+    int status;
     STDLOCALS(w);
     if (!x && !y)
-        p = loadimage(w, filename, &height, &width, 1, status);
+        p = loadimage(w, filename, &height, &width, 1, &status);
     else
-        p = loadimage(w, filename, &height, &width, 0, status);
+        p = loadimage(w, filename, &height, &width, 0, &status);
     if (p == (Pixmap) NULL) return Failed;
 
     if (wc->drawop != GXcopy)
