@@ -182,7 +182,7 @@ function graphics_Window_clone_impl(self, argv[argc])
        w2 = alc_wbinding();
        w2->window = self_w->window;
        w2->window->refcount++;
-       MemProtect(w2->context = clone_context(self_w));
+       w2->context = clone_context(self_w);
 
        for (n = 0; n < argc; n++) {
            if (!is:null(argv[n])) {

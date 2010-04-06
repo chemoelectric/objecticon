@@ -5221,11 +5221,7 @@ wcp clone_context(wbp w)
     }
     gcv.fill_style = rv->fillstyle;
     gcv.cap_style  = CapProjecting;
-    rv->gc = XCreateGC(w->window->display->display,w->window->pix,gcmask,&gcv);
-    if (rv->gc == NULL) {
-        free(rv);
-        return NULL;
-    }
+    MemProtect(rv->gc = XCreateGC(w->window->display->display,w->window->pix,gcmask,&gcv));
     if (rv->clipw >= 0) {
         rec.x = rv->clipx;
         rec.y = rv->clipy;
