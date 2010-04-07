@@ -291,7 +291,7 @@ void  bigrand         (dptr da, dptr dx);
    int  send_selection_response(wbp w, word requestor, char *property, char *target, char *selection, word time, dptr data);
    int  setwindowlabel  (wbp w, char *val);
    int  setinputmask    (wbp w, char *val);
-   void strimage        (wbp w, int x, int y, int width, int height,
+   void drawstrimage    (wbp w, int x, int y, int width, int height,
                            struct palentry *e, unsigned char *s, int len, int on_icon);
    void toggle_fgbg     (wbp w);
    int  walert          (wbp w, int volume);

@@ -474,7 +474,7 @@ wbp wopen(wbp parent, dptr attr, int n, int *err_idx)
 
       imd = &ws->initimage;
       if (imd->width) {
-	 strimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
+	 drawstrimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
 		      imd->data, imd->width * imd->height, 0);
 	 if (imd->paltbl)
 	    free(imd->paltbl);
@@ -2046,7 +2046,7 @@ word len;
 /*
  * Draw a character-per-pixel image.
  */
-void strimage(w, x, y, width, height, e, s, len, on_icon)
+void drawstrimage(w, x, y, width, height, e, s, len, on_icon)
 wbp w;
 int x, y, width, height;
 struct palentry *e;

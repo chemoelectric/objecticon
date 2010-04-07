@@ -1052,7 +1052,7 @@ static int wmap(wbp w, wbp parent)
 
     imd = &ws->initimage;
     if (imd->width) {
-        strimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
+        drawstrimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
                      imd->data, imd->width * imd->height, 0);
         free(imd->paltbl);
         free(imd->data);
@@ -1061,7 +1061,7 @@ static int wmap(wbp w, wbp parent)
 
     imd = &ws->initicon;
     if (imd->width) {
-        strimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
+        drawstrimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
                      imd->data, imd->width * imd->height, 1);
         free(imd->paltbl);
         free(imd->data);
@@ -3086,7 +3086,7 @@ void drawblimage(wbp w, int x, int y, int width, int height, int ch, unsigned ch
 /*
  * Draw a character-per-pixel image
  */
-void strimage(wbp w, int x, int y, int width, int height, 
+void drawstrimage(wbp w, int x, int y, int width, int height, 
              struct palentry *e, unsigned char *s, int len, int on_icon)
 {
     int c, v, ret = 0, trans = 0;

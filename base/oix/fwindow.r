@@ -597,7 +597,7 @@ function graphics_Window_draw_image(self, argv[argc])
        * Call platform-dependent code to draw the image.
        */
       height = nchars / width;
-      strimage(self_w, x, y, width, height, e, s, z - s, 0);
+      drawstrimage(self_w, x, y, width, height, e, s, z - s, 0);
       return nulldesc;
    }
 end
@@ -1216,7 +1216,7 @@ function graphics_Window_read_image(self, x, y, file, pal)
           r = readJPEG(filename, p, &imd);
 #endif
       if (r == Succeeded) {
-          strimage(self_w, x, y, imd.width, imd.height, imd.paltbl,
+          drawstrimage(self_w, x, y, imd.width, imd.height, imd.paltbl,
                             imd.data, imd.width * imd.height, 0);
           free(imd.paltbl);
           free(imd.data);
