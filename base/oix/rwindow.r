@@ -2619,12 +2619,7 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
                 break;
             }
             case A_IMAGE: {
-                /* first try GIF; then try platform-dependent format */
-                r = readGIF(val, 0, &ws->initimage);
-                if (r != Succeeded) r = readBMP(val, 0, &ws->initimage);
-#ifdef HAVE_LIBJPEG
-                if (r != Succeeded) r = readJPEG(val, 1, &ws->initimage);
-#endif
+                r = readimagefile(val, 1, &ws->initimage);
                 if (r == Succeeded) {
                     setwidth(w, ws->initimage.width);
                     setheight(w, ws->initimage.height);
@@ -2935,6 +2930,20 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
     }
     wflush(w);
     return Succeeded;
+}
+
+int readimagefile(char *filename, int p, struct imgdata *imd)
+{
+    int r;
+    if ((r = readGIF(filename, p, imd)) == Succeeded)
+        return Succeeded;
+    if ((r = readBMP(filename, p, imd)) == Succeeded)
+        return Succeeded;
+#ifdef HAVE_LIBJPEG
+    if ((r = readJPEG(filename, p, imd)) == Succeeded)
+        return Succeeded;
+#endif
+    return Failed;
 }
 
 /*
@@ -3254,18 +3263,6 @@ void free_binding(wbp w)
       GRFX_UNLINK(w, wbndngs);
       }
    }
-
-/*
- * There are more, X-specific stringint arrays in ../common/xwindow.c
- */
-
-#else					/* Graphics */
-
-/*
- * Stubs to prevent dynamic loader from rejecting cfunc library of IPL.
- */
-int palnum(dptr *d)					{ return 0; }
-char *rgbkey(int p, double r, double g, double b)	{ return 0; }
 
 #endif					/* Graphics */
 

@@ -1205,16 +1205,10 @@ function graphics_Window_read_image(self, x, y, file, pal)
       filename[MaxPath] = '\0';
 
       /*
-       * First try to read as a GIF file.
+       * First try to read as a standard file.
        * If that doesn't work, try platform-dependent image reading code.
        */
-      r = readGIF(filename, p, &imd);
-      if (r != Succeeded) 
-          r = readBMP(filename, p, &imd);
-#ifdef HAVE_LIBJPEG
-      if (r != Succeeded) 
-          r = readJPEG(filename, p, &imd);
-#endif
+      r = readimagefile(filename, p, &imd);
       if (r == Succeeded) {
           drawstrimage(self_w, x, y, imd.width, imd.height, imd.paltbl,
                             imd.data, imd.width * imd.height, 0);
