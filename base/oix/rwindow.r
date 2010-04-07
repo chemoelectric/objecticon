@@ -2619,7 +2619,7 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
                 break;
             }
             case A_IMAGE: {
-                r = readimagefile(val, 1, &ws->initimage);
+                r = readimagefile(val, 0, &ws->initimage);
                 if (r == Succeeded) {
                     setwidth(w, ws->initimage.width);
                     setheight(w, ws->initimage.height);
@@ -2940,7 +2940,7 @@ int readimagefile(char *filename, int p, struct imgdata *imd)
     if ((r = readBMP(filename, p, imd)) == Succeeded)
         return Succeeded;
 #ifdef HAVE_LIBJPEG
-    if ((r = readJPEG(filename, p, imd)) == Succeeded)
+    if ((r = readJPEG(filename, p == 0 ? 1 : p, imd)) == Succeeded)
         return Succeeded;
 #endif
     return Failed;
