@@ -186,6 +186,7 @@ void  bigrand         (dptr da, dptr dx);
    int  parsepattern    (char *s, int len, int *w, int *nbits, word *bits);
    void qevent          (wsp ws, dptr e, int x, int y, uword t, long f, int krel);
    void wgetevent       (wbp w, dptr res);
+   int  readimagefile   (char *filename, int p, struct imgdata *imd);
    int  readGIF         (char *fname, int p, struct imgdata *d);
    int  readBMP         (char *filename, int p, struct imgdata *imd);
 #ifdef HAVE_LIBJPEG
