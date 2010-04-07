@@ -253,7 +253,7 @@ void  bigrand         (dptr da, dptr dx);
    int  getvisual       (wbp w, char *answer);
    int  isetbg          (wbp w, int bg);
    int  isetfg          (wbp w, int fg);
-   int  lowerWindow     (wbp w);
+   int  lowerwindow     (wbp w);
    int  mutable_color   (wbp w, dptr argv, int ac, int *retval);
    int  nativecolor     (wbp w, char *s, long *r, long *g, long *b);
    void pollevent       (void);

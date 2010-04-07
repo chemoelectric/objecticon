@@ -974,7 +974,7 @@ end
 function graphics_Window_lower(self)
    body {
       GetSelfW();
-      lowerWindow(self_w);
+      lowerwindow(self_w);
       return self;
    }
 end

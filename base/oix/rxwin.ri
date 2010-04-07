@@ -4057,7 +4057,7 @@ int raisewindow(wbp w)
     return Succeeded;
 }
 
-int lowerWindow(wbp w)
+int lowerwindow(wbp w)
 {
     if (w->window->win)
         XLowerWindow(w->window->display->display, w->window->win);
