@@ -5263,6 +5263,8 @@ void free_window(wsp ws)
 {
     ws->refcount--;
     if(ws->refcount == 0) {
+        struct imgdata *imd;
+
         ws->bits |= 1;			/* SETZOMBIE */
 #ifdef HAVE_LIBXFT
         if (ws->winDraw) {
@@ -5297,6 +5299,21 @@ void free_window(wsp ws)
          */
         if (ws->theColors) { free(ws->theColors); ws->iconColors = NULL; }
         if (ws->iconColors) { free(ws->iconColors); ws->iconColors = NULL; }
+
+        imd = &ws->initimage;
+        if (imd->width) {
+            free(imd->paltbl);
+            free(imd->data);
+            imd->width = 0;
+        }
+
+        imd = &ws->initicon;
+        if (imd->width) {
+            free(imd->paltbl);
+            free(imd->data);
+            imd->width = 0;
+        }
+
         GRFX_UNLINK(ws, wstates);
     }
 }
