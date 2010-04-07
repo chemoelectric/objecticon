@@ -293,7 +293,7 @@ class Dialog(Component)
          x1 := \x_spec | "0"
          set_wattrib("posx", x1)
       } else {
-         rp := Window.query_root_pointer()
+         rp := (\owning_dialog | ?Dispatcher.dialogs).win.query_root_pointer() | [0, 0]
          x1 := \x_spec | (rp[1] - get_width_attrib() - 20) | "50"
          y1 := \y_spec | (rp[2] - get_height_attrib() - 20) | "50"
          set_wattrib("pos", x1 || "," || y1)
@@ -788,19 +788,19 @@ class Dialog(Component)
    # Tooltip processing on a tick.
    # 
    private process_tooltip_tick()
-      local e
+      local e, t
       #
       # Don't process ticks whilst blocked, or button held.
       #
       if \self.is_blocked_flag | (get_held_count() > 0) then
          return
 
+      t := self.win.query_pointer() | fail
+
       #
       # Create an artificial event and process it.
       #
-      e := WinEvent(0, 
-                    self.win.attrib("pointerx"),
-                    self.win.attrib("pointery"))
+      e := WinEvent(0, t[1], t[2])
       create_point_chain(e)
       tooltip_states(e)
    end

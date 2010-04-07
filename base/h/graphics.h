@@ -303,7 +303,6 @@ typedef struct _wstate {
   char		*iconlabel;		/* icon label */
   struct imgdata initimage;		/* initial image data */
   struct imgdata initicon;		/* initial icon image data */
-  int		pointery,pointerx;	/* current mouse location, in pixels */
   int		posy, posx;		/* desired upper lefthand corner */
   unsigned int	height;			/* window height, in pixels */
   unsigned int	width;			/* window width, in pixels */
@@ -386,56 +385,52 @@ struct wbind_list {
  * Attributes
  */
 
-#define A_ASCENT	1
-#define A_BG		2
-#define A_CANVAS	3
-#define A_CLIPH		4
-#define A_CLIPW		5
-#define A_CLIPX		6
-#define A_CLIPY		7
-#define A_DEPTH		8 
-#define A_DESCENT	9 
+#define A_ASCENT        1
+#define A_BG	        2
+#define A_CANVAS        3
+#define A_CLIPH	        4
+#define A_CLIPW	        5
+#define A_CLIPX	        6
+#define A_CLIPY	        7
+#define A_DEPTH		8
+#define A_DESCENT	9
 #define A_DISPLAY	10
-#define A_DISPLAYHEIGHT	11
-#define A_DISPLAYWIDTH	12
-#define A_DRAWOP	13
-#define A_DX		14
-#define A_DY		15
-#define A_FG		16
-#define A_FHEIGHT	17
-#define A_FILLSTYLE	18
-#define A_FONT		19
-#define A_FWIDTH	20
-#define A_GAMMA		21
-#define A_GEOMETRY	22
-#define A_HEIGHT	23
-#define A_ICONIC	24
-#define A_ICONIMAGE     25
-#define A_ICONLABEL	26
-#define A_ICONPOS	27
-#define A_IMAGE		28
-#define A_LABEL		29
-#define A_LINESTYLE	30
-#define A_LINEWIDTH	31
-#define A_PATTERN	32
-#define A_POINTERX	33
-#define A_POINTERY	34
-#define A_POINTER	35
-#define A_POS		36
-#define A_POSX		37
-#define A_POSY		38
-#define A_RESIZE	39
-#define A_REVERSE	40
-#define A_SIZE		41
-#define A_VISUAL	42
-#define A_WIDTH		43
-#define A_WINDOWLABEL   44
-#define A_INPUTMASK	45
-#define A_TITLEBAR      46
-#define A_MINSIZE	47
-#define A_MINWIDTH	48
-#define A_MINHEIGHT	49
+#define A_DRAWOP	11
+#define A_DX		12
+#define A_DY		13
+#define A_FG		14
+#define A_FHEIGHT	15
+#define A_FILLSTYLE	16
+#define A_FONT		17
+#define A_FWIDTH	18
+#define A_GAMMA		19
+#define A_GEOMETRY	20
+#define A_HEIGHT	21
+#define A_ICONIC	22
+#define A_ICONIMAGE     23
+#define A_ICONLABEL	24
+#define A_ICONPOS	25
+#define A_IMAGE		26
+#define A_LABEL		27
+#define A_LINESTYLE	28
+#define A_LINEWIDTH	29
+#define A_PATTERN	30
+#define A_POINTER	31
+#define A_POS		32
+#define A_POSX		33
+#define A_POSY		34
+#define A_RESIZE	35
+#define A_REVERSE	36
+#define A_SIZE		37
+#define A_VISUAL	38
+#define A_WIDTH		39
+#define A_WINDOWLABEL   40
+#define A_INPUTMASK	41
+#define A_TITLEBAR      42
+#define A_MINSIZE	43
+#define A_MINWIDTH	44
+#define A_MINHEIGHT	45
 
-#define NUMATTRIBS	49
+#define NUMATTRIBS	45
 
 #define XICONSLEEP	20 /* milliseconds */

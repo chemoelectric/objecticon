@@ -2666,26 +2666,10 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
                 }
                 break;
             }
-            case A_POINTERX: {
-                if (!cnv:C_integer(d, tmp))
-                    return Failed;
-                ws->pointerx = tmp + wc->dx;
-                warppointer(w, ws->pointerx, ws->pointery);
-                break;
-            }
-            case A_POINTERY: {
-                if (!cnv:C_integer(d, tmp))
-                    return Failed;
-                ws->pointery = tmp + wc->dy;
-                warppointer(w, ws->pointerx, ws->pointery);
-                break;
-            }
                 /*
                  * remaining valid attributes are error #147
                  */
             case A_DEPTH:
-            case A_DISPLAYHEIGHT:
-            case A_DISPLAYWIDTH:
             case A_FHEIGHT:
             case A_FWIDTH:
             case A_ASCENT:
@@ -2808,20 +2792,6 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
                 sprintf(abuf,"%s",(ISRESIZABLE(w)?"on":"off"));
                 CMakeStr(abuf, answer);
                 break;
-            case A_DISPLAYHEIGHT: {
-                int i;
-                i = getdisplayheight(w);
-                if (i < 0) return Failed;
-                MakeInt(i, answer);
-                break;
-            }
-            case A_DISPLAYWIDTH: {
-                int i;
-                i = getdisplaywidth(w);
-                if (i < 0) return Failed;
-                MakeInt(i, answer);
-                break;
-            }
             case A_REVERSE:
                 sprintf(abuf,"%s",(ISREVERSE(w)?"on":"off"));
                 CMakeStr(abuf, answer);
@@ -2832,18 +2802,6 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
                 break;
             case A_DX: MakeInt(wc->dx, answer); break;
             case A_DY: MakeInt(wc->dy, answer); break;
-            case A_POINTERX: {
-                XPoint xp;
-                query_pointer(w, &xp);
-                MakeInt(xp.x - wc->dx, answer);
-                break;
-            }
-            case A_POINTERY: {
-                XPoint xp;
-                query_pointer(w, &xp);
-                MakeInt(xp.y - wc->dy, answer);
-                break;
-            }
             case A_POINTER:
                 getpointername(w, abuf);
                 CMakeStr(abuf, answer);
@@ -3198,8 +3156,6 @@ stringint attribs[] = {
     {"depth",		A_DEPTH},
     {"descent",		A_DESCENT},
     {"display",		A_DISPLAY},
-    {"displayheight",	A_DISPLAYHEIGHT},
-    {"displaywidth",	A_DISPLAYWIDTH},
     {"drawop",		A_DRAWOP},
     {"dx",		A_DX},
     {"dy",		A_DY},
@@ -3225,8 +3181,6 @@ stringint attribs[] = {
     {"minwidth",	A_MINWIDTH},
     {"pattern",		A_PATTERN},
     {"pointer",		A_POINTER},
-    {"pointerx",	A_POINTERX},
-    {"pointery",	A_POINTERY},
     {"pos",		A_POS},
     {"posx",		A_POSX},
     {"posy",		A_POSY},

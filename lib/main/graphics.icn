@@ -203,7 +203,23 @@ class Window(NoCopy)
    #
    # Return the current root x, y position as a two-element list.
    #
-   public static defer query_root_pointer()
+   public defer query_root_pointer()
+
+   #
+   # Return the current display size. as a two-element list.
+   #
+   public defer get_display_size()
+
+   #
+   # Return the current x, y position as a two-element list, relative to
+   # this window.
+   #
+   public defer query_pointer()
+
+   #
+   # Warp the pointer to the given location, relative to this window.
+   #
+   public defer warp_pointer(x, y)
 
    #
    # Raise window to the top of the window stack
