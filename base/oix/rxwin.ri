@@ -69,7 +69,7 @@ static int resizePixmap(wbp w, int width, int height);
 
 #define DEFAULTFONTNAME "fixed"
 
-stringint drawops[] = {
+static stringint drawops[] = {
    { 0, 16},
    {"and",		GXand},
    {"andInverted",	GXandInverted},
@@ -91,7 +91,7 @@ stringint drawops[] = {
 
 #define NUMCURSORSYMS	78
 
-stringint cursorsyms[] = {
+static stringint cursorsyms[] = {
   { 0, NUMCURSORSYMS},
   {"X cursor",		XC_X_cursor},
   {"arrow",		XC_arrow},
@@ -935,7 +935,7 @@ static int wmap(wbp w, wbp parent)
     unsigned long gcmask =
         GCFont | GCForeground | GCBackground | GCFillStyle | GCCapStyle;
     struct imgdata *imd;
-    int i, r;
+    int i;
     int new_pixmap = 0;
     struct descrip progname;
     char *p, *s, sbuf[256];
@@ -1052,30 +1052,30 @@ static int wmap(wbp w, wbp parent)
 
     imd = &ws->initimage;
     if (imd->width) {
-        r = strimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
+        strimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
                      imd->data, imd->width * imd->height, 0);
         free(imd->paltbl);
         free(imd->data);
         imd->width = 0;
-        if (r < 0)
-            return Failed;
     }
 
     imd = &ws->initicon;
     if (imd->width) {
-        r = strimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
+        strimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
                      imd->data, imd->width * imd->height, 1);
         free(imd->paltbl);
         free(imd->data);
         imd->width = 0;
-        if (r < 0)
-            return Failed;
         wmhints.icon_window = ws->iconwin;
         ws->wmhintflags |= IconWindowHint;
     }
 
     if (wc->patternname != NULL) {
-        if (setpattern(w, wc->patternname, strlen(wc->patternname)) != Succeeded)
+        char buff[128];
+        /* Use a temporary buff since setpattern frees wc->patternname, so can't use it
+         * as an argument */
+        strcpy(buff, wc->patternname);
+        if (setpattern(w, buff, strlen(buff)) != Succeeded)
             return Failed;
     }
 
@@ -1507,6 +1507,7 @@ int setpointer(wbp w, char *val)
  */
 int setdrawop(wbp w, char *val)
 {
+    int i;
     STDLOCALS(w);
     XSync(stddpy, False);
     if (!strcmp(val,"reverse")) {
@@ -1524,8 +1525,9 @@ int setdrawop(wbp w, char *val)
             if (stdgc)
                 XSetForeground(stddpy, stdgc, wd->colors[wc->fg].c);
         }
-        wc->drawop = stringint_str2int(drawops,val);
-        if (wc->drawop == -1) { wc->drawop = GXcopy; return Error; }
+        if ((i = stringint_str2int(drawops,val)) < 0)
+            return Error;
+        wc->drawop = i;
     }
     if (stdgc) XSetFunction(stddpy, stdgc, wc->drawop);
     return Succeeded;
@@ -1916,6 +1918,11 @@ int setlinewidth(wbp w, int linewid)
     return Succeeded;
 }
 
+int getlinewidth(wbp w)
+{
+    return w->context->linewidth;
+}
+
 /*
  * Reset the context's foreground color to whatever it is supposed to be.
  */
@@ -2097,6 +2104,45 @@ void getdisplay(wbp w, char *answer)
             *answer = '\0';
     }
     else sprintf(answer, "%s", wd->name);
+}
+
+int geticonimage(wbp w, char *answer)
+{
+    if (!w->window->iconimage)
+        return Failed;
+    strcpy(answer, w->window->iconimage);
+    return Succeeded;
+}
+
+int geticonlabel(wbp w, char *answer)
+{
+    if (!w->window->iconlabel)
+        return Failed;
+    strcpy(answer, w->window->iconlabel);
+    return Succeeded;
+}
+
+int getwindowlabel(wbp w, char *answer)
+{
+    if (!w->window->windowlabel)
+        return Failed;
+    strcpy(answer, w->window->windowlabel);
+    return Succeeded;
+}
+
+int getdisplaywidth (wbp w)
+{
+    return DisplayWidth(w->window->display->display, w->window->display->screen);
+}
+
+int getdisplayheight(wbp w)
+{
+    return DisplayHeight(w->window->display->display, w->window->display->screen);
+}
+
+int getdepth(wbp w)
+{
+    return DefaultDepth(w->window->display->display, w->window->display->screen);
 }
 
 int getvisual(wbp w, char *answer)
@@ -2976,7 +3022,7 @@ void free_color(wbp w, char *s)
 /*
  * Draw a bilevel image
  */
-int drawblimage(wbp w, int x, int y, int width, int height, int ch, unsigned char *s, word len)
+void drawblimage(wbp w, int x, int y, int width, int height, int ch, unsigned char *s, word len)
 {
     unsigned int m, msk1, c, ix, iy;
     long fg, bg;
@@ -2986,9 +3032,7 @@ int drawblimage(wbp w, int x, int y, int width, int height, int ch, unsigned cha
     /*
      * Get an XImage structure and free the old color set if possible.
      */
-    im = getximage(w, x, y, width, height, ch == TCH1);
-    if (im == NULL)
-        return Error;
+    MemProtect(im = getximage(w, x, y, width, height, ch == TCH1));
 
     /*
      * Read the image string and set the pixel values.  Note that
@@ -3037,13 +3081,12 @@ int drawblimage(wbp w, int x, int y, int width, int height, int ch, unsigned cha
     RENDER7(XPutImage, im, 0, 0, x, y, width, height);
     XDestroyImage(im);
     if (wc->drawop != GXcopy) XSetFunction(stddpy, stdgc, wc->drawop);
-    return Succeeded;
 }
 
 /*
  * Draw a character-per-pixel image
  */
-int strimage(wbp w, int x, int y, int width, int height, 
+void strimage(wbp w, int x, int y, int width, int height, 
              struct palentry *e, unsigned char *s, int len, int on_icon)
 {
     int c, v, ret = 0, trans = 0;
@@ -3061,9 +3104,8 @@ int strimage(wbp w, int x, int y, int width, int height,
         for (c = 0; c < 256; c++)
             trans |= e[c].used && e[c].transpt;
     }
-    im = getximage(w, x, y, width, height, trans);
-    if (im == NULL)
-        return -1;
+    MemProtect(im = getximage(w, x, y, width, height, trans));
+
     if (e) {
         /*
          * Allocate the colors we need.  Use black or white if unsuccessful.
@@ -3137,7 +3179,6 @@ int strimage(wbp w, int x, int y, int width, int height,
     }
     XDestroyImage(im);
     if (wc->drawop != GXcopy) XSetFunction(stddpy, stdgc, wc->drawop);
-    return ret;
 }
 
 /*
@@ -3289,15 +3330,16 @@ static XImage *getximage(wbp w, int x, int y, int width, int height, int init)
     return im;
 }
 
-int readimage(wbp w, int x, int y, char *filename, int *status)
+int readimage(wbp w, int x, int y, char *filename)
 {
     Pixmap p;
     unsigned int width, height;
+    int status;
     STDLOCALS(w);
     if (!x && !y)
-        p = loadimage(w, filename, &height, &width, 1, status);
+        p = loadimage(w, filename, &height, &width, 1, &status);
     else
-        p = loadimage(w, filename, &height, &width, 0, status);
+        p = loadimage(w, filename, &height, &width, 0, &status);
     if (p == (Pixmap) NULL) return Failed;
 
     if (wc->drawop != GXcopy)
@@ -3468,7 +3510,7 @@ int patbits[] = {
 /*
  * pattern symbols
  */
-stringint siPatternSyms[] = {
+static stringint siPatternSyms[] = {
     {0,		16},
     { "black",	 0},
     { "checkers",	 12},
@@ -4448,7 +4490,7 @@ static void free_xcolor(wbp w, unsigned long c)
 static void free_xcolors(wbp w, int extent)
 {
     int i;
-    unsigned long toFree[DMAXCOLORS];
+    unsigned long *toFree;
     int freed = 0;
     int *numColors;
     int numSaved;
@@ -4458,6 +4500,7 @@ static void free_xcolors(wbp w, int extent)
     numColors = (extent==1 ? &(ws->numiColors) : &(ws->numColors));
     theColors = (extent==1 ? ws->iconColors : ws->theColors);
 
+    MemProtect(toFree = malloc(*numColors * sizeof(unsigned long)));
     numSaved = 0;
     for (i = *numColors-1; i >= 0; i--) {
         int j = theColors[i];
@@ -4503,6 +4546,7 @@ static void free_xcolors(wbp w, int extent)
     if (freed>0)
         XFreeColors(stddpy, wd->cmap, toFree, freed,0);
     *numColors = numSaved;
+    free(toFree);
 }
 
 /*
@@ -5175,11 +5219,7 @@ wcp clone_context(wbp w)
     }
     gcv.fill_style = rv->fillstyle;
     gcv.cap_style  = CapProjecting;
-    rv->gc = XCreateGC(w->window->display->display,w->window->pix,gcmask,&gcv);
-    if (rv->gc == NULL) {
-        free(rv);
-        return NULL;
-    }
+    MemProtect(rv->gc = XCreateGC(w->window->display->display,w->window->pix,gcmask,&gcv));
     if (rv->clipw >= 0) {
         rec.x = rv->clipx;
         rec.y = rv->clipy;

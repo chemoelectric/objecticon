@@ -258,7 +258,7 @@ static int setgeometry(wbp w, char *geo)
 static int setminsize(wbp w, char *s)
 {
     int width, height;
-    if (isdigit((unsigned char)*s))
+    if (!isdigit((unsigned char)*s))
         return Error;
     if ((width = atoi(s)) <= 0) return Error;
     while (isdigit((unsigned char)*++s));
@@ -2622,22 +2622,15 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
                 /* first try GIF; then try platform-dependent format */
                 r = readGIF(val, 0, &ws->initimage);
                 if (r != Succeeded) r = readBMP(val, 0, &ws->initimage);
+#ifdef HAVE_LIBJPEG
+                if (r != Succeeded) r = readJPEG(val, 1, &ws->initimage);
+#endif
                 if (r == Succeeded) {
                     setwidth(w, ws->initimage.width);
                     setheight(w, ws->initimage.height);
                 }
-                else {
-#ifdef HAVE_LIBJPEG
-                    r = readJPEG(val, 1, &ws->initimage);
-                    if (r == Succeeded) {
-                        setwidth(w, ws->initimage.width);
-                        setheight(w, ws->initimage.height);
-                    }
-                    else
-#endif					/* HAVE_LIBJPEG */
-                        r = setimage(w, val);
-                }
-
+                else
+                    r = setimage(w, val);
                 AttemptAttr(r);
                 break;
             }
@@ -2728,9 +2721,13 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
                 if (getvisual(w, abuf) == Failed) return Failed;
                 CMakeStr(abuf, answer);
                 break;
-            case A_DEPTH:
-                MakeInt(SCREENDEPTH(w), answer);
+            case A_DEPTH: {
+                int i;
+                i = getdepth(w);
+                if (i < 0) return Failed;
+                MakeInt(i, answer);
                 break;
+            }
             case A_DISPLAY:
                 getdisplay(w, abuf);
                 CMakeStr(abuf, answer);
@@ -2798,7 +2795,7 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
                 CMakeStr(abuf, answer);
                 break;
             case A_LINEWIDTH:
-                MakeInt(LINEWIDTH(w), answer);
+                MakeInt(getlinewidth(w), answer);
                 break;
             case A_HEIGHT: { MakeInt(ws->height, answer); break; }
             case A_WIDTH: { MakeInt(ws->width, answer); break; }
@@ -2816,12 +2813,20 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
                 sprintf(abuf,"%s",(ISRESIZABLE(w)?"on":"off"));
                 CMakeStr(abuf, answer);
                 break;
-            case A_DISPLAYHEIGHT:
-                MakeInt(DISPLAYHEIGHT(w), answer);
+            case A_DISPLAYHEIGHT: {
+                int i;
+                i = getdisplayheight(w);
+                if (i < 0) return Failed;
+                MakeInt(i, answer);
                 break;
-            case A_DISPLAYWIDTH:
-                MakeInt(DISPLAYWIDTH(w), answer);
+            }
+            case A_DISPLAYWIDTH: {
+                int i;
+                i = getdisplaywidth(w);
+                if (i < 0) return Failed;
+                MakeInt(i, answer);
                 break;
+            }
             case A_REVERSE:
                 sprintf(abuf,"%s",(ISREVERSE(w)?"on":"off"));
                 CMakeStr(abuf, answer);
@@ -2870,22 +2875,16 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
                 CMakeStr(abuf, answer);
                 break;
             case A_ICONIMAGE:
-                if (ICONFILENAME(w) != NULL)
-                    sprintf(abuf, "%s", ICONFILENAME(w));
-                else *abuf = '\0';
+                if (geticonimage(w, abuf) == Failed) return Failed;
                 CMakeStr(abuf, answer);
                 break;
             case A_ICONLABEL:
-                if (ICONLABEL(w) != NULL)
-                    sprintf(abuf, "%s", ICONLABEL(w));
-                else return Failed;
+                if (geticonlabel(w, abuf) == Failed) return Failed;
                 CMakeStr(abuf, answer);
                 break;
             case A_LABEL:
             case A_WINDOWLABEL:
-                if (WINDOWLABEL(w) != NULL)
-                    sprintf(abuf,"%s", WINDOWLABEL(w));
-                else return Failed;
+                if (getwindowlabel(w, abuf) == Failed) return Failed;
                 CMakeStr(abuf, answer);
                 break;
             case A_ICONPOS: {

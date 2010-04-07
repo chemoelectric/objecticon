@@ -254,6 +254,7 @@ typedef struct _wcontext {
 #if PLAN9
   Image         *fg, *bg;
   char		*fgname, *bgname;
+  int           thick;
 #endif
 #if XWindows
   wdp		display;

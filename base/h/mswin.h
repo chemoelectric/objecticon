@@ -20,11 +20,7 @@
 #define DRAWOP_SET			R2_WHITE
 #define DRAWOP_XOR			R2_XORPEN
 
-#define SCREENDEPTH(w) getdepth(w)
 #define LEADING(w) ((w)->context->leading)
-#define LINEWIDTH(w) ((w)->context->pen.lopnWidth.x)
-#define DISPLAYHEIGHT(w) devicecaps(w, VERTRES)
-#define DISPLAYWIDTH(w) devicecaps(w, HORZRES)
 #define SysColor unsigned long
 #define RED(x) GetRValue(x)
 #define GREEN(x) GetGValue(x)
@@ -34,9 +30,6 @@
  *
  */
 #define FULLARC 2 * Pi
-#define ICONFILENAME(w) ""
-#define ICONLABEL(w) ((w)->window->iconlabel)
-#define WINDOWLABEL(w) ((w)->window->windowlabel)
 
 /*
  * gemeotry bitmasks

@@ -209,7 +209,7 @@ void  bigrand         (dptr da, dptr dx);
    int  setpattern      (wbp w, char *name, int len);
    int  setpatternbits  (wbp w, int width, word *bits, int nbits);
    int  allowresize     (wbp w, int on);
-   int  drawblimage     (wbp w, int x, int y, int wd, int h,
+   void drawblimage     (wbp w, int x, int y, int wd, int h,
                           int ch, unsigned char *s, word len);
    wcp  clone_context   (wbp w);
    int  copyarea        (wbp w,wbp w2,int x,int y,int wd,int h,int x2,int y2);
@@ -232,6 +232,16 @@ void  bigrand         (dptr da, dptr dx);
    void getfg           (wbp w, char *answer);
    void geticonic       (wbp w, char *answer);
    int  geticonpos      (wbp w, char *s);
+
+   int  getlinewidth    (wbp w);
+   int  getdisplaywidth (wbp w);
+   int  getdisplayheight(wbp w);
+   int  getdepth        (wbp w);
+
+   int  geticonimage    (wbp w, char *answer);
+   int  geticonlabel    (wbp w, char *answer);
+   int  getwindowlabel  (wbp w, char *answer);
+
    int  getimstr        (wbp w, int x, int y, int width, int hgt,
                           struct palentry *ptbl, unsigned char *data);
    void getlinestyle    (wbp w, char *answer);
@@ -250,7 +260,7 @@ void  bigrand         (dptr da, dptr dx);
    int  query_pointer   (wbp w, XPoint *pp);
    int  query_rootpointer (XPoint *pp);
    int  raisewindow     (wbp w);
-   int  readimage       (wbp w, int x, int y, char *filename, int *status);
+   int  readimage       (wbp w, int x, int y, char *filename);
    int  rebind          (wbp w, wbp w2);
    int  set_mutable     (wbp w, int i, char *s);
    int  setbg           (wbp w, char *s);
@@ -280,8 +290,8 @@ void  bigrand         (dptr da, dptr dx);
    int  request_selection(wbp w, char *selname, char *targetname);
    int  send_selection_response(wbp w, word requestor, char *property, char *target, char *selection, word time, dptr data);
    int  setwindowlabel  (wbp w, char *val);
-   int setinputmask(wbp w, char *val);
-   int  strimage        (wbp w, int x, int y, int width, int height,
+   int  setinputmask    (wbp w, char *val);
+   void strimage        (wbp w, int x, int y, int width, int height,
                            struct palentry *e, unsigned char *s, int len, int on_icon);
    void toggle_fgbg     (wbp w);
    int  walert          (wbp w, int volume);

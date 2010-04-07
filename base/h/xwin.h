@@ -29,19 +29,9 @@
 #define XLFD_Spacing	11
 #define XLFD_CharSet	13
 
-#define SCREENDEPTH(w)\
-	DefaultDepth((w)->window->display->display, w->window->display->screen)
-#define DISPLAYHEIGHT(w)\
-	DisplayHeight(w->window->display->display, w->window->display->screen)
-#define DISPLAYWIDTH(w)\
-	DisplayWidth(w->window->display->display, w->window->display->screen)
-#define LINEWIDTH(w) ((w)->context->linewidth)
 #define FS_SOLID FillSolid
 #define FS_STIPPLE FillStippled
 #define SysColor XColor
-#define ICONFILENAME(w) ((w)->window->iconimage)
-#define ICONLABEL(w) ((w)->window->iconlabel)
-#define WINDOWLABEL(w) ((w)->window->windowlabel)
 #define RootState IconicState+1
 #define MaximizedState IconicState+2
 #define HiddenState IconicState+3
