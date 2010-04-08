@@ -1543,9 +1543,10 @@ int getdisplaysize(wbp w, int *width, int *height)
     return Succeeded;
 }
 
-int getdepth(wbp w)
+int getdepth(wbp w, int *res)
 {
-    return w->window->pix->depth;
+    *res = w->window->pix->depth;
+    return Succeeded;
 }
 
 int geticonimage(wbp w, char *answer)
