@@ -38,7 +38,7 @@ $ifdef _PLAN9
       PATH_SEPARATOR := "/"
       PATH_SPECIALS := '/'
       PATHS_SEPARATOR := " "
-      FS := UnixFileSystem()
+      FS := Plan9FileSystem()
 $else
 $ifdef _MS_WIN32
       EOL := "\r\n"
@@ -776,6 +776,23 @@ class UnixFileSystem(FileSystem)
          if pos(0) then
             break
          move(1)
+      }
+   end
+end
+
+class Plan9FileSystem(UnixFileSystem)
+   public get_home()
+      return System.getenv("home")
+   end
+
+   public split_paths(s)
+      local t
+      s ? repeat {
+         tab(many(' '))
+         if pos(0) then
+            break
+         t := tab(upto(' ') | 0)
+         suspend t
       }
    end
 end
