@@ -523,7 +523,7 @@ int handle_config(wbp w, UINT msg, WPARAM wp, LPARAM lp)
       return 1;
       }
    MakeInt(RESIZED, &d);
-   qevent(w->window, &d, ws->width, ws->height, ~(uword)0, 0, 0);
+   qevent(w->window, &d, 0, 0, 0, 0, 0);
    return 1;
    }
 

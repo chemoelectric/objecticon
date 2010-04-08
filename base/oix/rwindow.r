@@ -160,7 +160,7 @@ void qevent(wsp ws,             /* canvas */
     if (f & ShiftMask)   mod |= EQ_MOD_SHIFT;
     if (krel) mod |= EQ_MOD_RELEASE;
 
-    if (t != ~(uword)0) {		/* if clock value supplied */
+    if (t != 0) {		/* if clock value supplied */
         if (ws->timestamp == 0)		/* if first time */
             ws->timestamp = t;
         if (t < ws->timestamp)		/* if clock went backwards */
