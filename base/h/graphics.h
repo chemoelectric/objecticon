@@ -384,7 +384,7 @@ struct wbind_list {
 #endif					/* GammaCorrection */
 
 /*
- * Flags to do_config()
+ * Flags to doconfig()
  */
 #define C_POS           1
 #define C_SIZE          2

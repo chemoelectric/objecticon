@@ -2701,7 +2701,7 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
                     return Failed;
                 if ((!ATOBOOL(val) && ISREVERSE(w)) ||
                     (ATOBOOL(val) && !ISREVERSE(w))) {
-                    toggle_fgbg(w);
+                    togglefgbg(w);
                     ISREVERSE(w) ? CLRREVERSE(w) : SETREVERSE(w);
                 }
                 break;

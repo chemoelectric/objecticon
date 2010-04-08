@@ -182,7 +182,7 @@ function graphics_Window_clone_impl(self, argv[argc])
        w2 = alc_wbinding();
        w2->window = self_w->window;
        w2->window->refcount++;
-       w2->context = clone_context(self_w);
+       w2->context = clonecontext(self_w);
 
        for (n = 0; n < argc; n++) {
            if (!is:null(argv[n])) {
@@ -212,7 +212,7 @@ function graphics_Window_color(self, argv[argc])
       if (argc == 1) {			/* if this is a query */
           tended struct descrip result;
           CnvCInteger(argv[0], n)
-          if ((colorname = get_mutable_name(self_w, n)) == NULL)
+          if ((colorname = getmutablename(self_w, n)) == NULL)
               fail;
           cstr2string(colorname, &result);
           return result;
@@ -222,15 +222,15 @@ function graphics_Window_color(self, argv[argc])
 
       for (i = 0; i < argc; i += 2) {
           CnvCInteger(argv[i], n)
-              if ((colorname = get_mutable_name(self_w, n)) == NULL)
+              if ((colorname = getmutablename(self_w, n)) == NULL)
                   fail;
 
           if (is:integer(argv[i+1])) {		/* copy another mutable  */
               if (IntVal(argv[i+1]) >= 0)
                   runerr(205, argv[i+1]);		/* must be negative */
-              if ((srcname = get_mutable_name(self_w, IntVal(argv[i+1]))) == NULL)
+              if ((srcname = getmutablename(self_w, IntVal(argv[i+1]))) == NULL)
                   fail;
-              if (set_mutable(self_w, n, srcname) == Failed) fail;
+              if (setmutable(self_w, n, srcname) == Failed) fail;
               strcpy(colorname, srcname);
           }
    
@@ -239,7 +239,7 @@ function graphics_Window_color(self, argv[argc])
               if (!cnv:C_string(argv[i+1],tmp))
                   runerr(103,argv[i+1]);
    
-              if (set_mutable(self_w, n, tmp) == Failed) fail;
+              if (setmutable(self_w, n, tmp) == Failed) fail;
               strcpy(colorname, tmp);
           }
       }
@@ -261,7 +261,7 @@ function graphics_Window_color_value(self, k)
           runerr(103);
 
       if (cnv:C_integer(k, n)) {
-          if ((t = get_mutable_name(self_w, n)))
+          if ((t = getmutablename(self_w, n)))
               MemProtect(s = alcstr(t, (word)strlen(t)+1));
           else
               fail;
@@ -985,7 +985,7 @@ function graphics_Window_new_color(self, argv[argc])
       int rv;
       GetSelfW();
 
-      if (mutable_color(self_w, argv, argc, &rv) == Failed) 
+      if (mutablecolor(self_w, argv, argc, &rv) == Failed) 
           fail;
       return C_integer rv;
    }
@@ -1064,7 +1064,7 @@ function graphics_Window_palette_key(self, s1, s2)
           fail;
 
       if (cnv:C_integer(s2, n)) {
-          if ((s = get_mutable_name(self_w, n)) == NULL)
+          if ((s = getmutablename(self_w, n)) == NULL)
               fail;
       }
       else if (!cnv:C_string(s2, s))
@@ -1117,7 +1117,7 @@ function graphics_Window_pixel(self, argv[argc])
       imem.width = Min(width, (int)ws->width - imem.x);
       imem.height = Min(height, (int)ws->height - imem.y);
 
-      if (getpixel_init(self_w, &imem) == Failed) fail;
+      if (getpixelinit(self_w, &imem) == Failed) fail;
 
       lastval = emptystr;
 
@@ -1143,7 +1143,7 @@ function graphics_Window_pixel(self, argv[argc])
           }
       }
 
-      getpixel_term(self_w, &imem);
+      getpixelterm(self_w, &imem);
       return result;
    }
 end
@@ -1326,7 +1326,7 @@ function graphics_Window_attrib(self, argv[argc])
       for (pass = 1; pass <= 2; pass++) {
           self_w = wsave;
           if (config && pass == 2) {
-              if (do_config(self_w, config) == Failed) fail;
+              if (doconfig(self_w, config) == Failed) fail;
           }
           for (n = 0; n < argc; n++) {
               /*
@@ -1529,7 +1529,7 @@ function graphics_Window_own_selection(self, selection)
       runerr(103,selection)
    body {
        GetSelfW();
-       if (own_selection(self_w, selection) == Failed)
+       if (ownselection(self_w, selection) == Failed)
            fail;
        return self;
    }
@@ -1548,7 +1548,7 @@ function graphics_Window_send_selection_response(self, requestor, property, targ
       runerr(101, time)
    body {
        GetSelfW();
-       if (send_selection_response(self_w, requestor, property, target, selection, time, &data) == Failed)
+       if (sendselectionresponse(self_w, requestor, property, target, selection, time, &data) == Failed)
            runerr(0);
        else
            return self;
@@ -1562,7 +1562,7 @@ function graphics_Window_request_selection(self, selection, target_type)
       runerr(103,target_type)
    body {
        GetSelfW();
-       if (request_selection(self_w, selection, target_type) == Failed)
+       if (requestselection(self_w, selection, target_type) == Failed)
            fail;
        return self;
    }

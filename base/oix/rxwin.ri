@@ -1179,7 +1179,7 @@ static int wmap(wbp w, wbp parent)
     return Succeeded;
 }
 
-int do_config(wbp w, int status)
+int doconfig(wbp w, int status)
 {
     wsp ws = w->window;
     wdp wd = ws->display;
@@ -1301,7 +1301,7 @@ int setmaxwidth(wbp w, int new_width)
  * Note that the three strings are pointers into the string space;
  * data is a safe pointer into a frame.
  */
-int send_selection_response(wbp w, word requestor, char *property, char *target, char *selection, word time, dptr data)
+int sendselectionresponse(wbp w, word requestor, char *property, char *target, char *selection, word time, dptr data)
 {
     Atom property_atom, target_atom, selection_atom, XA_TARGETS, target_list[32];
     XEvent theevent;
@@ -1378,7 +1378,7 @@ int send_selection_response(wbp w, word requestor, char *property, char *target,
     return Succeeded;
 }
 
-int own_selection(wbp w, char *selname)
+int ownselection(wbp w, char *selname)
 {
     Atom selection;
     Window curr;
@@ -1428,7 +1428,7 @@ int own_selection(wbp w, char *selname)
     }
 }
 
-int request_selection(wbp w, char *selname, char *targetname)
+int requestselection(wbp w, char *selname, char *targetname)
 {
     Atom selection, property, target;
     STDLOCALS(w);
@@ -1685,7 +1685,7 @@ int setcanvas(wbp w, char *s)
                 ws->posy = ws->normaly;
                 ws->width = ws->normalw;
                 ws->height = ws->normalh;
-                do_config(w, C_POS | C_SIZE);
+                doconfig(w, C_POS | C_SIZE);
                 ws->iconic = NormalState;
 	    }
         }
@@ -1715,11 +1715,11 @@ int setcanvas(wbp w, char *s)
                 }
                 else if (expect_config) {
                     ws->posx = ws->posy = 0;
-                    do_config(w, C_POS | C_SIZE);
+                    doconfig(w, C_POS | C_SIZE);
                     pollevent();
                     ws->posx = -ws->posx;
                     ws->posy = -ws->posy;
-                    do_config(w, C_POS);
+                    doconfig(w, C_POS);
                 }
 	    }
             ws->iconic = MaximizedState;
@@ -2054,7 +2054,7 @@ int setimage(wbp w, char *val)
     return Succeeded;
 }
 
-void toggle_fgbg(wbp w)
+void togglefgbg(wbp w)
 {
     int tmp;
     STDLOCALS(w);
@@ -2824,7 +2824,7 @@ int getdefault(wbp w, char *prog, char *opt, char *answer)
 /*
  * Allocate a mutable color
  */
-int mutable_color(wbp w, dptr argv, int ac, int *retval)
+int mutablecolor(wbp w, dptr argv, int ac, int *retval)
 {
     XColor colorcell;
     LinearColor clr;
@@ -2911,7 +2911,7 @@ int mutable_color(wbp w, dptr argv, int ac, int *retval)
     }
 }
 
-char *get_mutable_name(wbp w, int mute_index)
+char *getmutablename(wbp w, int mute_index)
 {
     wdp dp;
     Display *d;
@@ -2931,7 +2931,7 @@ char *get_mutable_name(wbp w, int mute_index)
     return colorname;
 }
 
-int set_mutable(wbp w, int i, char *s)
+int setmutable(wbp w, int i, char *s)
 {
     LinearColor clr;
     long alpha;
@@ -3328,7 +3328,7 @@ int readimage(wbp w, int x, int y, char *filename)
 /*
  * Initialize client for producing pixels from a window
  */
-int getpixel_init(wbp w, struct imgmem *imem)
+int getpixelinit(wbp w, struct imgmem *imem)
 {
     STDLOCALS(w);
 
@@ -3346,7 +3346,7 @@ int getpixel_init(wbp w, struct imgmem *imem)
 
 static wclrp lastcp;
 
-int getpixel_term(wbp w, struct imgmem *imem)
+int getpixelterm(wbp w, struct imgmem *imem)
 {
     if (imem->im != NULL)
         XDestroyImage(imem->im);
@@ -5122,7 +5122,7 @@ static wcp alc_context(wbp w)
 /*
  * allocate a context, cloning attributes from an existing context
  */
-wcp clone_context(wbp w)
+wcp clonecontext(wbp w)
 {
     wcp wc, rv;
     wdp wd;
