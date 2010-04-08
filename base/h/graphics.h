@@ -317,6 +317,8 @@ typedef struct _wstate {
   unsigned int	width;			/* window width, in pixels */
   unsigned int	minheight;		/* minimum window height, in pixels */
   unsigned int	minwidth;		/* minimum window width, in pixels */
+  unsigned int	maxheight;		/* maximum window height, in pixels */
+  unsigned int	maxwidth;		/* maximum window width, in pixels */
   int		bits;			/* window bits */
   int		theCursor;		/* index into cursor table */
   word		timestamp;		/* last event time stamp */
@@ -331,6 +333,7 @@ typedef struct _wstate {
   int           wsys_fd, mouse_fd, cons_fd, consctl_fd;
   int           mouse_pid, cons_pid;
   int           mouse_down;
+  int           last_mouse_x, last_mouse_y;
 #endif
 #if XWindows
   wdp		display;
@@ -401,6 +404,16 @@ struct wbind_list {
 #endif					/* GammaCorrection */
 
 /*
+ * Flags to doconfig()
+ */
+#define C_POS           1
+#define C_SIZE          2
+#define C_MINSIZE       4
+#define C_MAXSIZE       8
+#define C_RESIZE	16
+
+
+/*
  * Attributes
  */
 
@@ -449,7 +462,10 @@ struct wbind_list {
 #define A_MINSIZE	43
 #define A_MINWIDTH	44
 #define A_MINHEIGHT	45
+#define A_MAXSIZE	46
+#define A_MAXWIDTH	47
+#define A_MAXHEIGHT	48
 
-#define NUMATTRIBS	45
+#define NUMATTRIBS	48
 
 #define XICONSLEEP	20 /* milliseconds */

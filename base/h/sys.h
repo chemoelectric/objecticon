@@ -41,7 +41,7 @@ struct SharedImage {
 #define VirtKeyMask          (8L << 16L)
 
 #define vsnprint vsnprint
-#define vsnprintf vsnprintf
+#define vsnprintf vsnprint
 
    #define readimage oi_readimage
    #define fillarc oi_fillarc

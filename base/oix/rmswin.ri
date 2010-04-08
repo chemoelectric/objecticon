@@ -8,7 +8,7 @@
  *   freecolor
  *
  * Untested:
- *   toggle_fgbg
+ *   togglefgbg
  *   rebind
  *   geticonic
  *   getimstr
@@ -523,7 +523,7 @@ int handle_config(wbp w, UINT msg, WPARAM wp, LPARAM lp)
       return 1;
       }
    MakeInt(RESIZED, &d);
-   qevent(w->window, &d, ws->width, ws->height, ~(uword)0, 0, 0);
+   qevent(w->window, &d, 0, 0, 0, 0, 0);
    return 1;
    }
 
@@ -989,17 +989,17 @@ void pollevent()
       }
    }
 
-int own_selection(wbp w, char *selname)
+int ownselection(wbp w, char *selname)
 {
     return Succeeded;
 }
 
-int request_selection(wbp w, char *selname, char *targetname)
+int requestselection(wbp w, char *selname, char *targetname)
 {
     return Succeeded;
 }
 
-int send_selection_response(wbp w, word requestor, char *property, char *target, char *selection, word time, dptr data)
+int sendselectionresponse(wbp w, word requestor, char *property, char *target, char *selection, word time, dptr data)
 {
     return Succeeded;
 }
@@ -1688,7 +1688,7 @@ int i;
    return Succeeded;
    }
 
-void toggle_fgbg(w)
+void togglefgbg(w)
 wbp w;
    {
    SysColor tmp;
@@ -2405,7 +2405,7 @@ int x, y, *status;
  * Initialize client for producing pixels from a window, or in this case,
  * only create a device context once, not once per getpixel.
  */
-int getpixel_init(w, imem)
+int getpixelinit(w, imem)
 wbp w;
 struct imgmem *imem;
    {
@@ -2438,7 +2438,7 @@ struct imgmem *imem;
    return Succeeded;
    }
 
-int getpixel_term(w, imem)
+int getpixelterm(w, imem)
 wbp w;
 struct imgmem *imem;
 {
@@ -2520,7 +2520,7 @@ HBITMAP loadimage(wbp w, char *filename, unsigned int *width,
    }
 
 
-char *get_mutable_name(wbp w, int mute_index)
+char *getmutablename(wbp w, int mute_index)
    {
    char *tmp;
    PALETTEENTRY pe;
@@ -2539,7 +2539,7 @@ char *get_mutable_name(wbp w, int mute_index)
    return tmp + strlen(tmp) + 1;
    }
 
-int set_mutable(wbp w, int i, char *s)
+int setmutable(wbp w, int i, char *s)
    {
    long r, g, b, a;
    UINT rv;
@@ -2576,7 +2576,7 @@ void free_mutable(wbp w, int mute_index)
 /*
  * Allocate a mutable color
  */
-int mutable_color(wbp w, dptr argv, int argc, int *retval)
+int mutablecolor(wbp w, dptr argv, int argc, int *retval)
    {
    long r, g, b, a;
    tended char *str;
@@ -3099,7 +3099,7 @@ wbp w;
 /*
  * allocate a context, cloning attributes from an existing context
  */
-wcp clone_context(w)
+wcp clonecontext(w)
 wbp w;
    {
    wcp wc, wc2 = w->context;
@@ -3457,7 +3457,7 @@ wbp w;
    }
 
 
-int do_config(w, status)
+int doconfig(w, status)
 wbp w;
 int status;
    {
