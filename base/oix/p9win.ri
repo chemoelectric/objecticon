@@ -690,7 +690,7 @@ int setfg(wbp w, char *val)
     Image *i;
     wcp wc = w->context;
     if (parsecolor(w, val, &r, &g, &b, &a) != Succeeded)
-        return Failed;
+        return Error;
     if (wc->fgname) 
         free(wc->fgname);
     wc->fgname = salloc(val);
@@ -722,7 +722,7 @@ int setbg(wbp w, char *val)
     Image *i;
     wcp wc = w->context;
     if (parsecolor(w, val, &r, &g, &b, &a) != Succeeded)
-        return Failed;
+        return Error;
     if (wc->bgname) 
         free(wc->bgname);
     wc->bgname = salloc(val);
@@ -865,10 +865,7 @@ int setfont(wbp w, char *s)
             return Succeeded;
         }
     }
-    if (!(rv = new_font(s)))
-        return Failed;
-
-    wc->font = rv;
+    wc->font = new_font(s);
     return Succeeded;
 }
 

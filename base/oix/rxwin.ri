@@ -55,7 +55,6 @@ static wclrp alc_rgb(wbp w, char *s, unsigned int r,
                      unsigned int g, unsigned int b,
                      int is_iconcolor);
 static int alc_centry(wdp wd);
-static wclrp  alc_color(wbp w, char *s);
 static void copy_colors(wbp w1, wbp w2);
 static void free_xcolor(wbp w, unsigned long c);
 static void free_xcolors(wbp w, int extent);
@@ -1917,9 +1916,15 @@ static int resetfg(wbp w)
 int setfg(wbp w, char *s)
 {
     wclrp cp;
+    long r, g, b, a;
     wcp wc = w->context;
     wdp wd = w->window->display;
-    Protect(cp = alc_color(w,s), return Failed);
+    /*
+     * convert color to an r,g,b triple
+     */
+    if (parsecolor(w, s, &r, &g, &b, &a) != Succeeded)
+        return Error;
+    Protect(cp = alc_rgb(w, s, r, g, b, 0), return Failed);
     wc->fg = (cp - wd->colors);
     return resetfg(w);
 }
@@ -1961,11 +1966,17 @@ int isetfg(wbp w, int fg)
 int setbg(wbp w, char *s)
 {
     wclrp cp;
+    long r, g, b, a;
     wcp wc = w->context;
     wdp wd = w->window->display;
     GC stdgc = wc->gc;
     Display *stddpy = wd->display;
-    Protect(cp = alc_color(w,s), return Failed);
+    /*
+     * convert color to an r,g,b triple
+     */
+    if (parsecolor(w, s, &r, &g, &b, &a) != Succeeded)
+        return Error;
+    Protect(cp = alc_rgb(w, s, r, g, b, 0), return Failed);
     wc->bg = (cp - wd->colors);
     if (stdgc != NULL)
         XSetBackground(stddpy, stdgc, cp->c);
@@ -4355,28 +4366,6 @@ static int alc_centry(wdp wd)
 
     wd->colors[j].refcount = 1;
     return j;
-}
-
-/*
- * allocate by named color and return Icon color pointer.
- *  This is used by setfg and setbg.
- */
-static wclrp alc_color(wbp w, char *s)
-{
-    wclrp rv;
-    long r, g, b, a;
-
-    /*
-     * convert color to an r,g,b triple
-     */
-    if (parsecolor(w, s, &r, &g, &b, &a) != Succeeded)
-        return 0;
-
-    /*
-     * return Icon color structure, allocated & reference counted in display
-     */
-    Protect(rv = alc_rgb(w, s, r, g, b, 0), return 0);
-    return rv;
 }
 
 /*
