@@ -20,6 +20,7 @@ static	double	rgbval	(double n1, double n2, double hue);
 static	int	setpos         (wbp w, char *s);
 static  int  setsize         (wbp w, char *s);
 static  int  setminsize      (wbp w, char *s);
+static  int  setmaxsize      (wbp w, char *s);
 static  int  setgeometry     (wbp w, char *geo);
 static  void    wgetq          (wbp w, dptr res);
 
@@ -269,6 +270,28 @@ static int setminsize(wbp w, char *s)
 
     if (setminwidth(w, width) == Failed) return Failed;
     if (setminheight(w, height) == Failed) return Failed;
+
+    return Succeeded;
+}
+
+
+/*
+ * setmaxsize() - set canvas maximum size
+ */
+static int setmaxsize(wbp w, char *s)
+{
+    int width, height;
+    if (!isdigit((unsigned char)*s))
+        return Error;
+    if ((width = atoi(s)) <= 0) return Error;
+    while (isdigit((unsigned char)*++s));
+    if (*s++ != ',') return Error;
+    if (!isdigit((unsigned char)*s))
+        return Error;
+    if ((height = atoi(s)) <= 0) return Error;
+
+    if (setmaxwidth(w, width) == Failed) return Failed;
+    if (setmaxheight(w, height) == Failed) return Failed;
 
     return Succeeded;
 }
@@ -2404,7 +2427,6 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
     word tmp;
     long lenattr, lenval;
     double gamma;
-    int new_height, new_width;
     wsp ws = w->window;
     wcp wc = w->context;
     int toolong = 0;
@@ -2445,15 +2467,15 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
             case A_HEIGHT: {
                 if (!cnv:C_integer(d, tmp))
                     return Failed;
-                if ((new_height = tmp) < 1) return Failed;
-                if (setheight(w, new_height) == Failed) return Failed;
+                if (tmp < 1) return Failed;
+                if (setheight(w, tmp) == Failed) return Failed;
                 break;
             }
             case A_WIDTH: {
                 if (!cnv:C_integer(d, tmp))
                     return Failed;
-                if ((new_width = tmp) < 1) return Failed;
-                if (setwidth(w, new_width) == Failed) return Failed;
+                if (tmp < 1) return Failed;
+                if (setwidth(w, tmp) == Failed) return Failed;
                 break;
             }
             case A_SIZE: {
@@ -2463,19 +2485,37 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
             case A_MINHEIGHT: {
                 if (!cnv:C_integer(d, tmp))
                     return Failed;
-                if ((new_height = tmp) < 1) return Failed;
-                if (setminheight(w, new_height) == Failed) return Failed;
+                if (tmp < 1) return Failed;
+                if (setminheight(w, tmp) == Failed) return Failed;
                 break;
             }
             case A_MINWIDTH: {
                 if (!cnv:C_integer(d, tmp))
                     return Failed;
-                if ((new_width = tmp) < 1) return Failed;
-                if (setminwidth(w, new_width) == Failed) return Failed;
+                if (tmp < 1) return Failed;
+                if (setminwidth(w, tmp) == Failed) return Failed;
                 break;
             }
             case A_MINSIZE: {
                 AttemptAttr(setminsize(w, val));
+                break;
+            }
+            case A_MAXHEIGHT: {
+                if (!cnv:C_integer(d, tmp))
+                    return Failed;
+                if (tmp < 1) return Failed;
+                if (setmaxheight(w, tmp) == Failed) return Failed;
+                break;
+            }
+            case A_MAXWIDTH: {
+                if (!cnv:C_integer(d, tmp))
+                    return Failed;
+                if (tmp < 1) return Failed;
+                if (setmaxwidth(w, tmp) == Failed) return Failed;
+                break;
+            }
+            case A_MAXSIZE: {
+                AttemptAttr(setmaxsize(w, val));
                 break;
             }
             case A_GEOMETRY: {
@@ -2786,6 +2826,12 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
             case A_MINWIDTH: { MakeInt(ws->minwidth, answer); break; }
             case A_MINSIZE:
                 sprintf(abuf, "%d,%d", ws->minwidth, ws->minheight);
+                CMakeStr(abuf, answer);
+                break;
+            case A_MAXHEIGHT: { MakeInt(ws->maxheight, answer); break; }
+            case A_MAXWIDTH: { MakeInt(ws->maxwidth, answer); break; }
+            case A_MAXSIZE:
+                sprintf(abuf, "%d,%d", ws->maxwidth, ws->maxheight);
                 CMakeStr(abuf, answer);
                 break;
             case A_RESIZE:
@@ -3176,6 +3222,9 @@ stringint attribs[] = {
     {"label",		A_LABEL},
     {"linestyle",	A_LINESTYLE},
     {"linewidth",	A_LINEWIDTH},
+    {"maxheight",	A_MAXHEIGHT},
+    {"maxsize",		A_MAXSIZE},
+    {"maxwidth",	A_MAXWIDTH},
     {"minheight",	A_MINHEIGHT},
     {"minsize",		A_MINSIZE},
     {"minwidth",	A_MINWIDTH},

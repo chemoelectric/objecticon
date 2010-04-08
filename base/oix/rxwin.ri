@@ -7,12 +7,10 @@
 #define RootState IconicState+1
 #define CONVERT_ANGLE(ang) (-(ang) * 180 / Pi * 64)
 
-wdp wdsplys;
-
 /*
  * Global variables specific to X
  */
-XSizeHints size_hints;
+wdp wdsplys;
 
 /*
  * function prototypes
@@ -26,8 +24,6 @@ static void handle_mouse(wbp w, XButtonEvent *event);
 static void handle_keypress(wbp w, XKeyEvent *event);
 static XImage *getximage(wbp w, int x, int y,
                          int width, int height, int init);
-static void moveWindow (wbp w, int x, int y);
-static int moveResizeWindow(wbp w, int x, int y, int wd, int h);
 static void makeIcon(wbp w, int x, int y);
 static int wmap(wbp w, wbp parent);
 static Pixmap loadimage(wbp w, char *filename, unsigned int *height, 
@@ -1085,20 +1081,25 @@ static int wmap(wbp w, wbp parent)
     if (stdwin == (Window) NULL) return Succeeded;
 
     if (ws->iconic != RootState) {
+        XSizeHints size_hints;
         size_hints.flags = PSize | PMinSize | PMaxSize;
         size_hints.width = ws->width;
         size_hints.height= ws->height;
-        if (ws->posx == -(INT_MAX)) ws->posx = 0;
-        else size_hints.flags |= USPosition;
-        if (ws->posy == -(INT_MAX)) ws->posy = 0;
-        else size_hints.flags |= USPosition;
+        if (ws->posx == -(INT_MAX)) 
+            ws->posx = 0;
+        else
+            size_hints.flags |= USPosition;
+        if (ws->posy == -(INT_MAX)) 
+            ws->posy = 0;
+        else 
+            size_hints.flags |= USPosition;
         size_hints.x = ws->posx;
         size_hints.y = ws->posy;
         if (ISRESIZABLE(w)) {
             size_hints.min_width = ws->minwidth;
             size_hints.min_height = ws->minheight;
-            size_hints.max_width = DisplayWidth(stddpy, wd->screen);
-            size_hints.max_height = DisplayHeight(stddpy, wd->screen);
+            size_hints.max_width = Min(ws->maxwidth, DisplayWidth(stddpy, wd->screen));
+            size_hints.max_height = Min(ws->maxheight, DisplayHeight(stddpy, wd->screen));
         }
         else {
             size_hints.min_width = size_hints.max_width = ws->width;
@@ -1178,48 +1179,71 @@ static int wmap(wbp w, wbp parent)
     return Succeeded;
 }
 
-
 int do_config(wbp w, int status)
 {
     wsp ws = w->window;
     wdp wd = ws->display;
-    int wid = ws->width, ht = ws->height;
-    int posx = ws->posx, posy = ws->posy;
     XTextProperty textprop;
-
-    if (! resizePixmap(w, ws->width, ws->height))
+    
+    if (!resizePixmap(w, ws->width, ws->height))
         return Failed;
-    if (ws->win) {
-        XSync(wd->display, False);
-        pollevent();
-        if (status == 1)
-            moveWindow(w, posx, posy);
-        else {
-            if (status == 2)
-                posx = posy = -INT_MAX;
-            if (moveResizeWindow(w, posx, posy, wid, ht) == Failed)
-                return Failed;
-        }
 
-        /* XSync is not enough because the window manager gets involved here. */
-        XFlush(wd->display);			      /* force out request */
-        XGetWMName(wd->display, ws->win, &textprop);    /* force WM round trip */
-        XSync(wd->display, False);		      /* NOW sync */
+    if (!ws->win)
+        return Succeeded;
+
+    if (status != C_POS) {
+        XSizeHints size_hints;
+        long t;
+
+        /* Not just a move */
+
+        XGetWMNormalHints(wd->display, ws->win, &size_hints, &t);
+        if (ISRESIZABLE(w)) {
+            size_hints.min_width = ws->minwidth;
+            size_hints.min_height = ws->minheight;
+            size_hints.max_width = Min(ws->maxwidth, DisplayWidth(wd->display, wd->screen));
+            size_hints.max_height = Min(ws->maxheight, DisplayHeight(wd->display, wd->screen));
+        }
+        else {
+            size_hints.min_width = size_hints.max_width = ws->width;
+            size_hints.min_height = size_hints.max_height = ws->height;
+        }
+        XSetWMNormalHints(wd->display, ws->win, &size_hints);
     }
+
+    switch (status & (C_POS|C_SIZE)) {
+        case C_POS: {
+            XMoveWindow(wd->display, ws->win, ws->posx, ws->posy);
+            break;
+        }
+        case C_SIZE: {
+            XResizeWindow(wd->display, ws->win, ws->width, ws->height);
+            break;
+        }
+        case C_POS|C_SIZE: {
+            XMoveResizeWindow(wd->display, ws->win, ws->posx, ws->posy, ws->width, ws->height);
+            break;
+        }
+    }
+    /* XSync is not enough because the window manager gets involved here. */
+    XFlush(wd->display);			      /* force out request */
+    XGetWMName(wd->display, ws->win, &textprop);    /* force WM round trip */
+    XSync(wd->display, False);		      /* NOW sync */
+
     return Succeeded;
 }
 
 int setheight(wbp w, int new_height)
 {
     STDLOCALS(w);
-    ws->height = size_hints.height = new_height;
+    ws->height = new_height;
     return Succeeded;
 }
 
 int setwidth(wbp w, int new_width)
 {
     STDLOCALS(w);
-    ws->width = size_hints.width = new_width;
+    ws->width = new_width;
     return Succeeded;
 }
 
@@ -1247,31 +1271,29 @@ int setposy(wbp w, int new_posy)
 
 int setminheight(wbp w, int new_height)
 {
-    XSizeHints size_hints;
-    long t;
     STDLOCALS(w);
-    if (new_height < 0) return Failed;
     ws->minheight = new_height;
-    if (ws->win) {
-        XGetWMNormalHints(stddpy, ws->win, &size_hints, &t);
-        size_hints.min_height = ws->minheight;
-        XSetWMNormalHints(stddpy, ws->win, &size_hints);
-    }
     return Succeeded;
 }
 
 int setminwidth(wbp w, int new_width)
 {
-    XSizeHints size_hints;
-    long t;
     STDLOCALS(w);
-    if (new_width < 0) return Failed;
     ws->minwidth = new_width;
-    if (ws->win) {
-        XGetWMNormalHints(stddpy, ws->win, &size_hints, &t);
-        size_hints.min_width = ws->minwidth;
-        XSetWMNormalHints(stddpy, ws->win, &size_hints);
-    }
+    return Succeeded;
+}
+
+int setmaxheight(wbp w, int new_height)
+{
+    STDLOCALS(w);
+    ws->maxheight = new_height;
+    return Succeeded;
+}
+
+int setmaxwidth(wbp w, int new_width)
+{
+    STDLOCALS(w);
+    ws->maxwidth = new_width;
     return Succeeded;
 }
 
@@ -1619,7 +1641,6 @@ int setinputmask(wbp w, char *val)
  */
 int setcanvas(wbp w, char *s)
 {
-    XTextProperty textprop;
     STDLOCALS(w);
 
     if (!strcmp(s, "iconic")) {
@@ -1660,8 +1681,11 @@ int setcanvas(wbp w, char *s)
                     pollevent();
 	    }
             else if (ws->iconic == MaximizedState) {
-                moveResizeWindow(w, ws->normalx, ws->normaly,
-                                 ws->normalw, ws->normalh);
+                ws->posx = ws->normalx;
+                ws->posy = ws->normaly;
+                ws->width = ws->normalw;
+                ws->height = ws->normalh;
+                do_config(w, C_POS | C_SIZE);
                 ws->iconic = NormalState;
 	    }
         }
@@ -1690,16 +1714,12 @@ int setcanvas(wbp w, char *s)
                         pollevent();
                 }
                 else if (expect_config) {
-                    moveResizeWindow(w, 0, 0, ws->width, ws->height);
-                    /* XSync is not enough because the window manager gets involved here. */
-                    XFlush(wd->display);			      /* force out request */
-                    XGetWMName(wd->display, ws->win, &textprop);    /* force WM round trip */
-                    XSync(wd->display, False);		      /* NOW sync */
+                    ws->posx = ws->posy = 0;
+                    do_config(w, C_POS | C_SIZE);
                     pollevent();
-                    moveWindow(w, -ws->posx, -ws->posy);
-                    XFlush(wd->display);			      /* force out request */
-                    XGetWMName(wd->display, ws->win, &textprop);    /* force WM round trip */
-                    XSync(wd->display, False);		      /* NOW sync */
+                    ws->posx = -ws->posx;
+                    ws->posy = -ws->posy;
+                    do_config(w, C_POS);
                 }
 	    }
             ws->iconic = MaximizedState;
@@ -1799,52 +1819,6 @@ int geticonpos(wbp w, char *s)
     return Succeeded;
 }
 
-
-/*
- * if the window exists and is visible, set its position to (x,y)
- */
-static void moveWindow(wbp w, int x, int y)
-{
-    STDLOCALS(w);
-    ws->posx = x;
-    ws->posy = y;
-    if (stdwin) {
-        XMoveWindow(stddpy, stdwin, ws->posx, ws->posy);
-        XSync(stddpy, False);
-    }
-}
-
-static int moveResizeWindow(wbp w, int x, int y, int width, int height)
-{
-    wsp ws = w->window;
-    wdp wd = ws->display;
-    ws->width = width;
-    ws->height = height;
-
-    size_hints.flags = PMinSize | PMaxSize;
-    if (ISRESIZABLE(w)) {
-        size_hints.min_width = ws->minwidth;
-        size_hints.min_height = ws->minheight;
-        size_hints.max_width = DisplayWidth(wd->display, wd->screen);
-        size_hints.max_height = DisplayHeight(wd->display, wd->screen);
-    }
-    else {
-        size_hints.min_width = size_hints.max_width = width;
-        size_hints.min_height = size_hints.max_height = height;
-    }
-    XSetNormalHints(wd->display, ws->win, &size_hints);
-
-    if (resizePixmap(w, width, height) == 0) return Failed;
-
-    if (ws->win != (Window) NULL) {
-        if (x == -INT_MAX && y == -INT_MAX)
-            XResizeWindow(wd->display, ws->win, width, height);
-        else
-            XMoveResizeWindow(wd->display, ws->win, x, y, width, height);
-        XSync(wd->display, False);
-    }
-    return Succeeded;
-}
 
 /*
  * Set the context's fill style by name.
@@ -3456,7 +3430,7 @@ int queryrootpointer(wbp w, int *x, int *y)
     unsigned int key_buttons;
 
     theDisplay = w->window->display->display;
-    theWindow  = w->window->win;
+    theWindow  = DefaultRootWindow(theDisplay);
     if (!theWindow)
         return Failed;
     XQueryPointer(theDisplay, theWindow, &garbage1, &garbage2,
@@ -5227,6 +5201,7 @@ static wsp alc_winstate()
     ws->iconic = NormalState;
     ws->posx = ws->posy = -(INT_MAX);
     ws->minwidth = ws->minheight = 0;
+    ws->maxwidth = ws->maxheight = INT_MAX;
 #ifdef HAVE_LIBXFT
     ws->pixDraw = ws->winDraw = NULL;
 #endif
