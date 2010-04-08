@@ -281,14 +281,18 @@ static int setminsize(wbp w, char *s)
 static int setmaxsize(wbp w, char *s)
 {
     int width, height;
-    if (!isdigit((unsigned char)*s))
-        return Error;
-    if ((width = atoi(s)) <= 0) return Error;
-    while (isdigit((unsigned char)*++s));
-    if (*s++ != ',') return Error;
-    if (!isdigit((unsigned char)*s))
-        return Error;
-    if ((height = atoi(s)) <= 0) return Error;
+    if (!*s)
+        width = height = INT_MAX;
+    else { 
+        if (!isdigit((unsigned char)*s))
+            return Error;
+        if ((width = atoi(s)) <= 0) return Error;
+        while (isdigit((unsigned char)*++s));
+        if (*s++ != ',') return Error;
+        if (!isdigit((unsigned char)*s))
+            return Error;
+        if ((height = atoi(s)) <= 0) return Error;
+    }
 
     if (setmaxwidth(w, width) == Failed) return Failed;
     if (setmaxheight(w, height) == Failed) return Failed;
@@ -2501,16 +2505,25 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
                 break;
             }
             case A_MAXHEIGHT: {
-                if (!cnv:C_integer(d, tmp))
-                    return Error;
-                if (tmp < 1) return Error;
+                if (!*val)
+                    tmp = INT_MAX;
+                else {
+                    if (!cnv:C_integer(d, tmp))
+                        return Error;
+                    if (tmp < 1) return Error;
+                }
+                printf("tmp=%d\n",tmp);
                 AttemptAttr(setmaxheight(w, tmp));
                 break;
             }
             case A_MAXWIDTH: {
-                if (!cnv:C_integer(d, tmp))
-                    return Error;
-                if (tmp < 1) return Error;
+                if (!*val)
+                    tmp = INT_MAX;
+                else {
+                    if (!cnv:C_integer(d, tmp))
+                        return Error;
+                    if (tmp < 1) return Error;
+                }
                 AttemptAttr(setmaxwidth(w, tmp));
                 break;
             }
