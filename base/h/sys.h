@@ -9,6 +9,9 @@
 #if PLAN9
    #include <u.h>
    #include <libc.h>
+#include <fcall.h>
+#include <thread.h>
+#include <9p.h>
    #include <draw.h>
    #include <ctype.h>
    #include <stdio.h>
@@ -20,15 +23,11 @@
    typedef unsigned long clock_t;
    typedef vlong off_t;
    typedef Point XPoint;
-   #define ANGLE(ang) (ang)
-   #define EXTENT(ang) (ang)
-#define SCREENDEPTH(w) 0
-#define LINEWIDTH(w) 0
-#define DISPLAYHEIGHT(w) 0
-#define DISPLAYWIDTH(w) 0
-#define ICONFILENAME(w) ""
-#define ICONLABEL(w) ""
-#define WINDOWLABEL(w) ""
+
+struct SharedImage {
+  Image *i;
+  int	refcount;
+};
 
 #define FS_SOLID             1
 #define FS_STIPPLE           2
@@ -42,6 +41,7 @@
 #define VirtKeyMask          (8L << 16L)
 
 #define vsnprint vsnprint
+#define vsnprintf vsnprintf
 
    #define readimage oi_readimage
    #define fillarc oi_fillarc

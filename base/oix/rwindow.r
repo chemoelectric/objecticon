@@ -2619,12 +2619,7 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
                 break;
             }
             case A_IMAGE: {
-                /* first try GIF; then try platform-dependent format */
-                r = readGIF(val, 0, &ws->initimage);
-                if (r != Succeeded) r = readBMP(val, 0, &ws->initimage);
-#ifdef HAVE_LIBJPEG
-                if (r != Succeeded) r = readJPEG(val, 1, &ws->initimage);
-#endif
+                r = readimagefile(val, 0, &ws->initimage);
                 if (r == Succeeded) {
                     setwidth(w, ws->initimage.width);
                     setheight(w, ws->initimage.height);
@@ -2671,26 +2666,10 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
                 }
                 break;
             }
-            case A_POINTERX: {
-                if (!cnv:C_integer(d, tmp))
-                    return Failed;
-                ws->pointerx = tmp + wc->dx;
-                warppointer(w, ws->pointerx, ws->pointery);
-                break;
-            }
-            case A_POINTERY: {
-                if (!cnv:C_integer(d, tmp))
-                    return Failed;
-                ws->pointery = tmp + wc->dy;
-                warppointer(w, ws->pointerx, ws->pointery);
-                break;
-            }
                 /*
                  * remaining valid attributes are error #147
                  */
             case A_DEPTH:
-            case A_DISPLAYHEIGHT:
-            case A_DISPLAYWIDTH:
             case A_FHEIGHT:
             case A_FWIDTH:
             case A_ASCENT:
@@ -2813,20 +2792,6 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
                 sprintf(abuf,"%s",(ISRESIZABLE(w)?"on":"off"));
                 CMakeStr(abuf, answer);
                 break;
-            case A_DISPLAYHEIGHT: {
-                int i;
-                i = getdisplayheight(w);
-                if (i < 0) return Failed;
-                MakeInt(i, answer);
-                break;
-            }
-            case A_DISPLAYWIDTH: {
-                int i;
-                i = getdisplaywidth(w);
-                if (i < 0) return Failed;
-                MakeInt(i, answer);
-                break;
-            }
             case A_REVERSE:
                 sprintf(abuf,"%s",(ISREVERSE(w)?"on":"off"));
                 CMakeStr(abuf, answer);
@@ -2837,18 +2802,6 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
                 break;
             case A_DX: MakeInt(wc->dx, answer); break;
             case A_DY: MakeInt(wc->dy, answer); break;
-            case A_POINTERX: {
-                XPoint xp;
-                query_pointer(w, &xp);
-                MakeInt(xp.x - wc->dx, answer);
-                break;
-            }
-            case A_POINTERY: {
-                XPoint xp;
-                query_pointer(w, &xp);
-                MakeInt(xp.y - wc->dy, answer);
-                break;
-            }
             case A_POINTER:
                 getpointername(w, abuf);
                 CMakeStr(abuf, answer);
@@ -2935,6 +2888,20 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
     }
     wflush(w);
     return Succeeded;
+}
+
+int readimagefile(char *filename, int p, struct imgdata *imd)
+{
+    int r;
+    if ((r = readGIF(filename, p, imd)) == Succeeded)
+        return Succeeded;
+    if ((r = readBMP(filename, p, imd)) == Succeeded)
+        return Succeeded;
+#ifdef HAVE_LIBJPEG
+    if ((r = readJPEG(filename, p == 0 ? 1 : p, imd)) == Succeeded)
+        return Succeeded;
+#endif
+    return Failed;
 }
 
 /*
@@ -3189,8 +3156,6 @@ stringint attribs[] = {
     {"depth",		A_DEPTH},
     {"descent",		A_DESCENT},
     {"display",		A_DISPLAY},
-    {"displayheight",	A_DISPLAYHEIGHT},
-    {"displaywidth",	A_DISPLAYWIDTH},
     {"drawop",		A_DRAWOP},
     {"dx",		A_DX},
     {"dy",		A_DY},
@@ -3216,8 +3181,6 @@ stringint attribs[] = {
     {"minwidth",	A_MINWIDTH},
     {"pattern",		A_PATTERN},
     {"pointer",		A_POINTER},
-    {"pointerx",	A_POINTERX},
-    {"pointery",	A_POINTERY},
     {"pos",		A_POS},
     {"posx",		A_POSX},
     {"posy",		A_POSY},
@@ -3254,18 +3217,6 @@ void free_binding(wbp w)
       GRFX_UNLINK(w, wbndngs);
       }
    }
-
-/*
- * There are more, X-specific stringint arrays in ../common/xwindow.c
- */
-
-#else					/* Graphics */
-
-/*
- * Stubs to prevent dynamic loader from rejecting cfunc library of IPL.
- */
-int palnum(dptr *d)					{ return 0; }
-char *rgbkey(int p, double r, double g, double b)	{ return 0; }
 
 #endif					/* Graphics */
 

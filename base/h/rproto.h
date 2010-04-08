@@ -186,6 +186,7 @@ void  bigrand         (dptr da, dptr dx);
    int  parsepattern    (char *s, int len, int *w, int *nbits, word *bits);
    void qevent          (wsp ws, dptr e, int x, int y, uword t, long f, int krel);
    void wgetevent       (wbp w, dptr res);
+   int  readimagefile   (char *filename, int p, struct imgdata *imd);
    int  readGIF         (char *fname, int p, struct imgdata *d);
    int  readBMP         (char *filename, int p, struct imgdata *imd);
 #ifdef HAVE_LIBJPEG
@@ -234,8 +235,6 @@ void  bigrand         (dptr da, dptr dx);
    int  geticonpos      (wbp w, char *s);
 
    int  getlinewidth    (wbp w);
-   int  getdisplaywidth (wbp w);
-   int  getdisplayheight(wbp w);
    int  getdepth        (wbp w);
 
    int  geticonimage    (wbp w, char *answer);
@@ -253,12 +252,13 @@ void  bigrand         (dptr da, dptr dx);
    int  getvisual       (wbp w, char *answer);
    int  isetbg          (wbp w, int bg);
    int  isetfg          (wbp w, int fg);
-   int  lowerWindow     (wbp w);
+   int  lowerwindow     (wbp w);
    int  mutable_color   (wbp w, dptr argv, int ac, int *retval);
    int  nativecolor     (wbp w, char *s, long *r, long *g, long *b);
    void pollevent       (void);
-   int  query_pointer   (wbp w, XPoint *pp);
-   int  query_rootpointer (XPoint *pp);
+   int  querypointer    (wbp w, int *x, int *y);
+   int  queryrootpointer(wbp w, int *x, int *y);
+   int  getdisplaysize  (wbp w, int *width, int *height);
    int  raisewindow     (wbp w);
    int  readimage       (wbp w, int x, int y, char *filename);
    int  rebind          (wbp w, wbp w2);
@@ -291,11 +291,11 @@ void  bigrand         (dptr da, dptr dx);
    int  send_selection_response(wbp w, word requestor, char *property, char *target, char *selection, word time, dptr data);
    int  setwindowlabel  (wbp w, char *val);
    int  setinputmask    (wbp w, char *val);
-   void strimage        (wbp w, int x, int y, int width, int height,
+   void drawstrimage    (wbp w, int x, int y, int width, int height,
                            struct palentry *e, unsigned char *s, int len, int on_icon);
    void toggle_fgbg     (wbp w);
    int  walert          (wbp w, int volume);
-   void warppointer     (wbp w, int x, int y);
+   int  warppointer     (wbp w, int x, int y);
    void wclose          (wbp w);
    wbp  wopen           (wbp parent, dptr attr, int n, int *e);
    void wflush          (wbp w);

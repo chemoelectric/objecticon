@@ -20,8 +20,12 @@ static void clear_pix(wbp wb);
 static void clear_win(wbp wb);
 static void clip(wcp wc, Image *i);
 static void unclip(wcp wc, Image *i);
+static struct SharedImage *alc_sharedimage(Image *i);
+static struct SharedImage *link_sharedimage(struct SharedImage *i);
+static void unlink_sharedimage(struct SharedImage *i);
 
 #define EMAXMSG 128+8192     /* size of 9p header+data */
+#define WINDOW_MOUNT_ROOT "/tmp/oi_windowmounts"
 
 static stringint drawops[] = {
    { 0, 16},
@@ -42,6 +46,30 @@ static stringint drawops[] = {
    {"set",		DatopS},
    {"xor",		DxorS},
 };
+
+static struct SharedImage *black, *white;
+static int window_count;
+
+static struct SharedImage *alc_sharedimage(Image *i)
+{
+    struct SharedImage *res;
+    GRFX_ALLOC(res, SharedImage);
+    res->i = i;
+    return res;
+}
+
+static struct SharedImage *link_sharedimage(struct SharedImage *x)
+{
+    ++x->refcount;
+    return x;
+}
+
+static void unlink_sharedimage(struct SharedImage *x)
+{
+    --x->refcount;
+    if (x->refcount == 0)
+        free(x);
+}
 
 static void draw_error(Display *d, char *s)
 {
@@ -68,8 +96,10 @@ wbp wopen(wbp parent, dptr attr, int n, int *err_index)
     wbp w;
     wsp ws;
     int i;
+    struct imgdata *imd;
     char answer[128];
     tended struct descrip attrrslt;
+
     if (!inited) {
         if (!init_window_system())
             return 0;
@@ -115,6 +145,15 @@ wbp wopen(wbp parent, dptr attr, int n, int *err_index)
         return 0;
     }
 
+    imd = &ws->initimage;
+    if (imd->width) {
+        drawstrimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
+                     imd->data, imd->width * imd->height, 0);
+        free(imd->paltbl);
+        free(imd->data);
+        imd->width = 0;
+    }
+
     return w;
 }
 
@@ -126,14 +165,14 @@ static void printrect(char *s, Rectangle r)
 static void clear_pix(wbp w)
 {
     wsp ws = w->window;
-    Image *src = w->context->bg;
+    Image *src = w->context->bg->i;
     gendraw(ws->pix, ws->pix->r, src, src->r.min, 0, ZP);
 }
 
 static void clear_win(wbp w)
 {
     wsp ws = w->window;
-    Image *src = w->context->bg;
+    Image *src = w->context->bg->i;
     gendraw(ws->win, ws->win->r, src, src->r.min, 0, ZP);
 }
 
@@ -401,7 +440,6 @@ int set_mutable(wbp w, int i, char *s)
 
 static void impl_copyarea(wcp wc, Image *dest, Image *src,int x,int y,int w,int h,int x2,int y2)
 {
-    /*printf("impl_copyarea %d %d %d %d %d %d\n",x,y,w,h,x2,y2);*/
     clip(wc, dest);
     gendraw(dest,
             Rect(dest->r.min.x + x2, 
@@ -420,7 +458,8 @@ int copyarea(wbp w1,wbp w2,int x,int y,int w,int h,int x2,int y2)
     wsp ws1 = w1->window;
     wsp ws2 = w2->window;
     wcp wc = w1->context;
-    impl_copyarea(wc, ws2->win, ws1->pix, x, y, w, h, x2, y2);
+    if (ws2->win)
+        impl_copyarea(wc, ws2->win, ws1->pix, x, y, w, h, x2, y2);
     impl_copyarea(wc, ws2->pix, ws1->pix, x, y, w, h, x2, y2);
     flushimage(display, 1);
     return Succeeded;
@@ -447,7 +486,7 @@ static void impl_drawarc(wcp wc, Image *dest, int x, int y, int width, int heigh
           Pt(dest->r.min.x + x, dest->r.min.y + y),
           width, height,
           wc->thick,
-          wc->fg, ZP,
+          wc->fg->i, ZP,
           alpha, phi, 
           wc->drawop);
         
@@ -471,7 +510,7 @@ void drawlines(wbp w, XPoint *points, int npoints)
     wcp wc = w->context;
 
     clip(wc, ws->pix);
-    polyop(ws->pix, points, npoints, Endsquare, Endsquare, wc->thick, wc->fg, ZP, wc->drawop);
+    polyop(ws->pix, points, npoints, Endsquare, Endsquare, wc->thick, wc->fg->i, ZP, wc->drawop);
     unclip(wc, ws->pix);
 
     if (ws->win) {
@@ -482,7 +521,7 @@ void drawlines(wbp w, XPoint *points, int npoints)
             print("\tOK %d\n",i);
         }
         clip(wc, ws->win);
-        polyop(ws->win, points, npoints, Endsquare, Endsquare, wc->thick, wc->fg, ZP, wc->drawop);
+        polyop(ws->win, points, npoints, Endsquare, Endsquare, wc->thick, wc->fg->i, ZP, wc->drawop);
         unclip(wc, ws->win);
     }
 
@@ -503,7 +542,7 @@ static void impl_drawrectangle(wcp wc, Image *dest, int x, int y, int width, int
     p[4] = p[0];
     clip(wc, dest);
     print("rectangle %P %P %P %P\n",p[0],p[1],p[2],p[3]);
-    polyop(dest, p, 5, Endsquare, Endsquare, wc->thick, wc->fg, ZP, wc->drawop);
+    polyop(dest, p, 5, Endsquare, Endsquare, wc->thick, wc->fg->i, ZP, wc->drawop);
     unclip(wc, dest);
 }
 
@@ -524,7 +563,7 @@ void fillpolygon(wbp w, XPoint *points, int npoints)
     wcp wc = w->context;
 
     clip(wc, ws->pix);
-    fillpolyop(ws->pix, points, npoints, 0, wc->fg, ZP, wc->drawop);
+    fillpolyop(ws->pix, points, npoints, 0, wc->fg->i, ZP, wc->drawop);
     unclip(wc, ws->pix);
 
     for (i = 0; i < npoints; ++i) {
@@ -532,7 +571,7 @@ void fillpolygon(wbp w, XPoint *points, int npoints)
         points[i].y += ws->win->r.min.y;
     }
     clip(wc, ws->win);
-    fillpolyop(ws->win, points, npoints, 0, wc->fg, ZP, wc->drawop);
+    fillpolyop(ws->win, points, npoints, 0, wc->fg->i, ZP, wc->drawop);
     unclip(wc, ws->win);
 
     flushimage(display, 1);
@@ -561,7 +600,7 @@ static void impl_drawstring(wcp wc, Image *dest, int x, int y, char *str, int sl
     stringn(dest, 
             Pt(dest->r.min.x + x,
                dest->r.min.y + y - wc->font->font->ascent),
-            wc->fg, ZP, wc->font->font, str, slen);
+            wc->fg->i, ZP, wc->font->font, str, slen);
     unclip(wc, dest);
 }
 
@@ -584,7 +623,7 @@ void drawblimage(wbp w, int x, int y, int wd, int h,
 {
 }
 
-void strimage(wbp w, int x, int y, int width, int height,
+void drawstrimage(wbp w, int x, int y, int width, int height,
               struct palentry *e, unsigned char *s,
               int len, int on_icon)
 {
@@ -595,7 +634,7 @@ void strimage(wbp w, int x, int y, int width, int height,
     int ndata;
     Image *dest, *tmp;
 
-    print("strimage len=%d depth=%d\n",len,ws->pix->depth);
+    print("drawstrimage len=%d depth=%d\n",len,ws->pix->depth);
     ndata = len * 4;
     MemProtect(data = malloc(ndata * sizeof(uchar)));
     memset(data, 0, ndata);
@@ -615,7 +654,6 @@ void strimage(wbp w, int x, int y, int width, int height,
     if (ws->win)
         impl_copyarea(wc, ws->win, tmp, 0, 0, width, height, x, y);
     impl_copyarea(wc, ws->pix, tmp, 0, 0, width, height, x, y);
-    print("errstr:%r\n");
     flushimage(display, 1);
     free(data);
 }
@@ -629,7 +667,7 @@ static void impl_erasearea(wcp wc, Image *dest, int x, int y, int width, int hei
     p[3] = Pt(p[0].x, p[0].y + height);
     clip(wc, dest);
     print("erasearea %P %P %P %P\n",p[0],p[1],p[2],p[3]);
-    fillpolyop(dest, p, 4, 0, wc->bg, ZP, wc->drawop);
+    fillpolyop(dest, p, 4, 0, wc->bg->i, ZP, wc->drawop);
     unclip(wc, dest);
 }
 
@@ -662,6 +700,7 @@ int isetfg(wbp w, int fg)
 int setfg(wbp w, char *val)
 {
     long r, g, b, a, n;
+    Image *i;
     wcp wc = w->context;
     if (parsecolor(w, val, &r, &g, &b, &a) != Succeeded)
         return Failed;
@@ -669,14 +708,15 @@ int setfg(wbp w, char *val)
         free(wc->fgname);
     wc->fgname = salloc(val);
     if (wc->fg)
-        freeimage(wc->fg);
+        unlink_sharedimage(wc->fg);
     r /= 256;
     g /= 256;
     b /= 256;
     a /= 256;
     n = (r << 24) | (g << 16) | (b << 8) | a;
     printf("setfg %d %d %d %d -> %x\n", r,g,b,a,n);
-    MemProtect(wc->fg = allocimage(display, Rect(0, 0, 1, 1), screen->chan, 1, n));
+    MemProtect(i = allocimage(display, Rect(0, 0, 1, 1), screen->chan, 1, n));
+    wc->fg = alc_sharedimage(i);
     return Succeeded;
 }
 
@@ -693,6 +733,7 @@ int isetbg(wbp w, int bg)
 int setbg(wbp w, char *val)
 {
     long r, g, b, a, n;
+    Image *i;
     wcp wc = w->context;
     if (parsecolor(w, val, &r, &g, &b, &a) != Succeeded)
         return Failed;
@@ -700,14 +741,15 @@ int setbg(wbp w, char *val)
         free(wc->bgname);
     wc->bgname = salloc(val);
     if (wc->bg)
-        freeimage(wc->bg);
+        unlink_sharedimage(wc->bg);
     r /= 256;
     g /= 256;
     b /= 256;
     a /= 256;
     n = (r << 24) | (g << 16) | (b << 8) | a;
     printf("setbg %d %d %d %d -> %x\n", r,g,b,a,n);
-    MemProtect(wc->bg = allocimage(display, Rect(0, 0, 1, 1), screen->chan, 1, n));
+    MemProtect(i = allocimage(display, Rect(0, 0, 1, 1), screen->chan, 1, n));
+    wc->bg = alc_sharedimage(i);
     return Succeeded;
 }
 
@@ -732,7 +774,7 @@ static void impl_fillarc(wcp wc, Image *dest, int x, int y, int width, int heigh
     fillarcop(dest, 
               Pt(dest->r.min.x + x, dest->r.min.y + y),
               width, height,
-              wc->fg, ZP,
+              wc->fg->i, ZP,
               alpha, phi,
               wc->drawop);
     unclip(wc, dest);
@@ -759,7 +801,7 @@ static void impl_fillrectangle(wcp wc, Image *dest, int x, int y, int width, int
     p[3] = Pt(p[0].x, p[0].y + height);
     clip(wc, dest);
     print("fillrectangle %P %P %P %P drawop=%d\n",p[0],p[1],p[2],p[3],wc->drawop);
-    fillpolyop(dest, p, 4, 0, wc->fg, ZP, wc->drawop);
+    fillpolyop(dest, p, 4, 0, wc->fg->i, ZP, wc->drawop);
     unclip(wc, dest);
 }
 
@@ -857,7 +899,7 @@ void free_color(wbp w, char *s)
 {
 }
 
-int lowerWindow (wbp w)
+int lowerwindow (wbp w)
 {
     return Succeeded;
 }
@@ -893,9 +935,9 @@ int getpixel(wbp w,int x,int y,word *rv,char *s,struct imgmem *im)
     return Succeeded;
 }
 
-int query_rootpointer(XPoint *pp)
+int  queryrootpointer(wbp w, int *x, int *y)
 {
-    return Succeeded;
+    return Failed;
 }
 
 int raisewindow(wbp w)
@@ -924,7 +966,7 @@ int do_config(wbp w, int status)
     wsp ws = w->window;
     int have_win = 0;
 
-    /* Dispose of window if open */
+    /* Move/resize of window if open */
     if (ws->win) {
         int fd;
         char buff[256];
@@ -1012,11 +1054,18 @@ static int open_screen_win(wsp ws)
         close_screen_win(ws);
         return Failed;
     }
-    strcpy(ws->mount_dir, "/tmp");
+    sprintf(ws->mount_dir, "%s/%d", WINDOW_MOUNT_ROOT, ++window_count);
+    if (mkdir(ws->mount_dir, 0777) < 0) {
+        print("Can't make window mount dir (%s): %r", ws->mount_dir);
+        whyf("Can't make window mount dir (%s): %r", ws->mount_dir);
+        close_screen_win(ws);
+        return Failed;
+    }
     snprintf(buff, sizeof(buff), "new -r %d %d %d %d %s",
              ws->posx, ws->posy, ws->posx + ws->width + 2*Borderwidth, 
              ws->posy + ws->height + 2*Borderwidth, ws->windowlabel);
-    if (mount(ws->wsys_fd, -1, "/tmp", MREPL, buff) < 0) {
+    print("mounting window at %s\n",ws->mount_dir);
+    if (mount(ws->wsys_fd, -1, ws->mount_dir, MREPL, buff) < 0) {
         whyf("Can't mount new window: %r");
         close_screen_win(ws);
         return Failed;
@@ -1102,6 +1151,7 @@ static void close_screen_win(wsp ws)
     sprintf(buff, "%s/wctl", ws->mount_dir);
     fd = open(buff, OWRITE);
     unmount(0, ws->mount_dir);
+    remove(ws->mount_dir);
     if (ws->event_pipe[0] >= 0)
         close(ws->event_pipe[0]);
     if (ws->event_pipe[1] >= 0)
@@ -1164,6 +1214,7 @@ void free_window(wsp ws)
 {
    ws->refcount--;
    if(ws->refcount == 0) {
+       struct imgdata *imd;
        if (ws->win)
            close_screen_win(ws);
        if (ws->pix)
@@ -1176,6 +1227,13 @@ void free_window(wsp ws)
            free(ws->iconlabel); 
            ws->iconlabel = 0;
        }
+
+       imd = &ws->initimage;
+       if (imd->width) {
+           free(imd->paltbl);
+           free(imd->data);
+           imd->width = 0;
+       }
        GRFX_UNLINK(ws, wstates);
    }
 }
@@ -1187,11 +1245,11 @@ void free_context(wcp wc)
         if (wc->fgname) 
             free(wc->fgname);
         if (wc->fg)
-            freeimage(wc->fg);
+            unlink_sharedimage(wc->fg);
         if (wc->bgname) 
             free(wc->bgname);
         if (wc->bg)
-            freeimage(wc->bg);
+            unlink_sharedimage(wc->bg);
         GRFX_UNLINK(wc, wcntxts);
     }
 }
@@ -1354,7 +1412,7 @@ int setpointer(wbp w, char *val)
 int setdrawop(wbp w, char *val)
 {
     int i;
-    Image *t;
+    struct SharedImage *t;
     wcp wc = w->context;
     if (!strcmp(val,"reverse")) {
         if (!ISXORREVERSE(w)) {
@@ -1389,8 +1447,9 @@ void toggle_fgbg (wbp w)
 {
 }
 
-void warppointer(wbp w, int x, int y)
+int warppointer(wbp w, int x, int y)
 {
+    return Failed;
 }
 
 int getvisual(wbp w, char *answer)
@@ -1419,9 +1478,9 @@ void getlinestyle(wbp w, char *answer)
     strcpy(answer, "none");
 }
 
-int query_pointer (wbp w, XPoint *pp)
+int  querypointer(wbp w, int *x, int *y)
 {
-    return Succeeded;
+    return Failed;
 }
 
 void getpointername(wbp w, char *answer)
@@ -1457,14 +1516,12 @@ int geticonpos(wbp w, char *answer)
     return Succeeded;
 }
 
-int getdisplaywidth (wbp w)
+int getdisplaysize(wbp w, int *width, int *height)
 {
-    return -1;
-}
-
-int getdisplayheight(wbp w)
-{
-    return -1;
+    Rectangle r = screen->display->image->r;
+    *width = Dx(r);
+    *height = Dy(r);
+    return Succeeded;
 }
 
 int getdepth(wbp w)
@@ -1513,10 +1570,8 @@ wcp clone_context(wbp w)
     wc->clipy = src->clipy;
     wc->clipw = src->clipw;
     wc->cliph = src->cliph;
-    MemProtect(wc->fg = allocimage(display, src->fg->r, screen->chan, 1, DNofill));
-    gendraw(wc->fg, wc->fg->r, src->fg, src->fg->r.min, 0, ZP);
-    MemProtect(wc->bg = allocimage(display, src->bg->r, screen->chan, 1, DNofill));
-    gendraw(wc->bg, wc->bg->r, src->bg, src->bg->r.min, 0, ZP);
+    wc->fg = link_sharedimage(src->fg);
+    wc->bg = link_sharedimage(src->bg);
     wc->fgname = salloc(src->fgname);
     wc->bgname = salloc(src->bgname);
     wc->font = src->font;
@@ -1533,8 +1588,8 @@ static wcp alc_context(wbp w)
     wc->serial = ++context_serial;
     wc->clipx = wc->clipy = 0;
     wc->clipw = wc->cliph = -1;
-    MemProtect(wc->fg = allocimage(display, Rect(0, 0, 1, 1), screen->chan, 1, DBlack));
-    MemProtect(wc->bg = allocimage(display, Rect(0, 0, 1, 1), screen->chan, 1, DWhite));
+    wc->fg = link_sharedimage(black);
+    wc->bg = link_sharedimage(white);
     wc->fgname = salloc("black");
     wc->bgname = salloc("white");
     wc->font = new_font("fixed");
@@ -1543,12 +1598,47 @@ static wcp alc_context(wbp w)
     return wc;
 }
 
+static char Ebad[] = "something bad happened";
+
+static void fscreate(Req *r)
+{
+    File *f;
+    if(f = createfile(r->fid->file, r->ifcall.name, r->fid->uid, r->ifcall.perm, nil)){
+        r->fid->file = f;
+        r->ofcall.qid = f->qid;
+        respond(r, nil);
+        return;
+    }
+    respond(r, Ebad);
+}
+
+Srv win_fs;
+
+static void unmount_win_fs(void)
+{
+    unmount(0, WINDOW_MOUNT_ROOT);
+}
+
 static int init_window_system(void)
 {
+    Image *i;
     if (initdraw(0, 0, "objecticon") < 0) {
         errno2why();
         return 0;
     }
+
+    /* Ensure the window mount root exists */
+    mkdir(WINDOW_MOUNT_ROOT, 0777);
+
+    win_fs.tree = alloctree(0, 0, DMDIR | 0777, 0);
+    win_fs.create = fscreate;
+    postmountsrv(&win_fs, 0, WINDOW_MOUNT_ROOT, MREPL | MCREATE);
+    atexit(unmount_win_fs);
+
+    MemProtect(i = allocimage(display, Rect(0, 0, 1, 1), screen->chan, 1, DBlack));
+    black = alc_sharedimage(i);
+    MemProtect(i = allocimage(display, Rect(0, 0, 1, 1), screen->chan, 1, DWhite));
+    white = alc_sharedimage(i);
     startup_time = get_time();
 }
 

@@ -597,7 +597,7 @@ function graphics_Window_draw_image(self, argv[argc])
        * Call platform-dependent code to draw the image.
        */
       height = nchars / width;
-      strimage(self_w, x, y, width, height, e, s, z - s, 0);
+      drawstrimage(self_w, x, y, width, height, e, s, z - s, 0);
       return nulldesc;
    }
 end
@@ -974,7 +974,7 @@ end
 function graphics_Window_lower(self)
    body {
       GetSelfW();
-      lowerWindow(self_w);
+      lowerwindow(self_w);
       return self;
    }
 end
@@ -1148,26 +1148,76 @@ function graphics_Window_pixel(self, argv[argc])
    }
 end
 
-function graphics_Window_query_root_pointer()
+function graphics_Window_query_root_pointer(self)
    body {
-      XPoint xp;
+      int x, y;
       tended struct descrip result;
       struct descrip t;
+      GetSelfW();
       pollevent();
-      query_rootpointer(&xp);
+      if (queryrootpointer(self_w, &x, &y) != Succeeded)
+          fail;
       create_list(2, &result);
-      MakeInt(xp.x, &t);
+      MakeInt(x, &t);
       list_put(&result, &t);
-      MakeInt(xp.y, &t);
+      MakeInt(y, &t);
       list_put(&result, &t);
       return result;
+   }
+end
+
+function graphics_Window_query_pointer(self)
+   body {
+      int x, y;
+      tended struct descrip result;
+      struct descrip t;
+      GetSelfW();
+      pollevent();
+      if (querypointer(self_w, &x, &y) != Succeeded)
+          fail;
+      create_list(2, &result);
+      MakeInt(x - self_w->context->dx, &t);
+      list_put(&result, &t);
+      MakeInt(y - self_w->context->dy, &t);
+      list_put(&result, &t);
+      return result;
+   }
+end
+
+function graphics_Window_get_display_size(self)
+   body {
+      int width, height;
+      tended struct descrip result;
+      struct descrip t;
+      GetSelfW();
+      if (getdisplaysize(self_w, &width, &height) != Succeeded)
+          fail;
+      create_list(2, &result);
+      MakeInt(width, &t);
+      list_put(&result, &t);
+      MakeInt(height, &t);
+      list_put(&result, &t);
+      return result;
+   }
+end
+
+function graphics_Window_warp_pointer(self, x, y)
+   if !cnv:C_integer(x) then
+      runerr(101, x)
+   if !cnv:C_integer(y) then
+      runerr(101, y)
+   body {
+      GetSelfW();
+      if (warppointer(self_w, x + self_w->context->dx, y + self_w->context->dy) != Succeeded)
+          fail;
+      return self;
    }
 end
 
 function graphics_Window_raise(self)
    body {
       GetSelfW();
-      if (raisewindow(self_w) == Failed)
+      if (raisewindow(self_w) != Succeeded)
           fail;
       return self;
    }
@@ -1205,18 +1255,12 @@ function graphics_Window_read_image(self, x, y, file, pal)
       filename[MaxPath] = '\0';
 
       /*
-       * First try to read as a GIF file.
+       * First try to read as a standard file.
        * If that doesn't work, try platform-dependent image reading code.
        */
-      r = readGIF(filename, p, &imd);
-      if (r != Succeeded) 
-          r = readBMP(filename, p, &imd);
-#ifdef HAVE_LIBJPEG
-      if (r != Succeeded) 
-          r = readJPEG(filename, p, &imd);
-#endif
+      r = readimagefile(filename, p, &imd);
       if (r == Succeeded) {
-          strimage(self_w, x, y, imd.width, imd.height, imd.paltbl,
+          drawstrimage(self_w, x, y, imd.width, imd.height, imd.paltbl,
                             imd.data, imd.width * imd.height, 0);
           free(imd.paltbl);
           free(imd.data);

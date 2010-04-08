@@ -1052,7 +1052,7 @@ static int wmap(wbp w, wbp parent)
 
     imd = &ws->initimage;
     if (imd->width) {
-        strimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
+        drawstrimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
                      imd->data, imd->width * imd->height, 0);
         free(imd->paltbl);
         free(imd->data);
@@ -1061,7 +1061,7 @@ static int wmap(wbp w, wbp parent)
 
     imd = &ws->initicon;
     if (imd->width) {
-        strimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
+        drawstrimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
                      imd->data, imd->width * imd->height, 1);
         free(imd->paltbl);
         free(imd->data);
@@ -1441,10 +1441,11 @@ int allowresize(wbp w, int on)
     return Succeeded;
 }
 
-void warppointer(wbp w, int x, int y)
+int warppointer(wbp w, int x, int y)
 {
     wsp ws = w->window;
     XWarpPointer(ws->display->display, None, ws->win, 0,0,0,0, x, y);
+    return Succeeded;
 }
 
 /*
@@ -2130,14 +2131,11 @@ int getwindowlabel(wbp w, char *answer)
     return Succeeded;
 }
 
-int getdisplaywidth (wbp w)
+int getdisplaysize(wbp w, int *width, int *height)
 {
-    return DisplayWidth(w->window->display->display, w->window->display->screen);
-}
-
-int getdisplayheight(wbp w)
-{
-    return DisplayHeight(w->window->display->display, w->window->display->screen);
+    *width = DisplayWidth(w->window->display->display, w->window->display->screen);
+    *height = DisplayHeight(w->window->display->display, w->window->display->screen);
+    return Succeeded;
 }
 
 int getdepth(wbp w)
@@ -2395,9 +2393,6 @@ static void handle_keypress(wbp w, XKeyEvent *event)
     tended struct descrip d;
     KeySym k;
 
-    w->window->pointerx = event->x;
-    w->window->pointery = event->y;
-
     /* First try to convert the event to a simple char string, and a KeySym */
     i = XLookupString(event, s, sizeof(s), &k, NULL);
     if (i > 0) {
@@ -2531,9 +2526,6 @@ static void handle_mouse(wbp w, XButtonEvent *event)
      */
     if (eventcode == MOUSE4 || eventcode == MOUSE5)
         return;
-
-    w->window->pointerx = event->x;
-    w->window->pointery = event->y;
 
     MakeInt(eventcode,&d);
 
@@ -3086,7 +3078,7 @@ void drawblimage(wbp w, int x, int y, int width, int height, int ch, unsigned ch
 /*
  * Draw a character-per-pixel image
  */
-void strimage(wbp w, int x, int y, int width, int height, 
+void drawstrimage(wbp w, int x, int y, int width, int height, 
              struct palentry *e, unsigned char *s, int len, int on_icon)
 {
     int c, v, ret = 0, trans = 0;
@@ -3437,51 +3429,38 @@ int getpixel(wbp w, int x, int y, word *rv, char *s, struct imgmem *imem)
 }
 
 
-int query_pointer(wbp w, XPoint *pp)
+int querypointer(wbp w, int *x, int *y)
 {
     Display *theDisplay;
     Window theWindow;
     Window garbage1, garbage2;
-    int root_x, root_y, win_x, win_y;
+    int root_x, root_y;
     unsigned int key_buttons;
 
     theDisplay = w->window->display->display;
     theWindow  = w->window->win;
-    if (theWindow == (Window) NULL) return Failed;
+    if (!theWindow)
+        return Failed;
 
     XQueryPointer(theDisplay, theWindow, &garbage1, &garbage2,
-                  &root_x, &root_y, &win_x, &win_y, &key_buttons);
-    pp->x = w->window->pointerx = win_x;
-    pp->y = w->window->pointery = win_y;
+                  &root_x, &root_y, x, y, &key_buttons);
     return Succeeded;
 }
 
-int query_rootpointer(XPoint *pp)
+int queryrootpointer(wbp w, int *x, int *y)
 {
     Display *theDisplay;
     Window theWindow;
     Window garbage1, garbage2;
-    int root_x, root_y, win_x, win_y;
+    int win_x, win_y;
     unsigned int key_buttons;
-    wdp wd;
-    if (wdsplys == NULL) {
-        /*
-         * Initialize the window system
-         */
-        Protect(wd = alc_display(NULL), return Failed);
 
-        theDisplay = wd->display;
-        theWindow  = DefaultRootWindow(wd->display);
-    }
-    else {
-        wd = wdsplys;
-        theDisplay = wd->display;
-        theWindow  = DefaultRootWindow(wd->display);
-    }
+    theDisplay = w->window->display->display;
+    theWindow  = w->window->win;
+    if (!theWindow)
+        return Failed;
     XQueryPointer(theDisplay, theWindow, &garbage1, &garbage2,
-                  &root_x, &root_y, &win_x, &win_y, &key_buttons);
-    pp->x = root_x;
-    pp->y = root_y;
+                  x, y, &win_x, &win_y, &key_buttons);
     return Succeeded;
 }
 
@@ -4057,7 +4036,7 @@ int raisewindow(wbp w)
     return Succeeded;
 }
 
-int lowerWindow(wbp w)
+int lowerwindow(wbp w)
 {
     if (w->window->win)
         XLowerWindow(w->window->display->display, w->window->win);
@@ -5263,6 +5242,8 @@ void free_window(wsp ws)
 {
     ws->refcount--;
     if(ws->refcount == 0) {
+        struct imgdata *imd;
+
         ws->bits |= 1;			/* SETZOMBIE */
 #ifdef HAVE_LIBXFT
         if (ws->winDraw) {
@@ -5297,6 +5278,21 @@ void free_window(wsp ws)
          */
         if (ws->theColors) { free(ws->theColors); ws->iconColors = NULL; }
         if (ws->iconColors) { free(ws->iconColors); ws->iconColors = NULL; }
+
+        imd = &ws->initimage;
+        if (imd->width) {
+            free(imd->paltbl);
+            free(imd->data);
+            imd->width = 0;
+        }
+
+        imd = &ws->initicon;
+        if (imd->width) {
+            free(imd->paltbl);
+            free(imd->data);
+            imd->width = 0;
+        }
+
         GRFX_UNLINK(ws, wstates);
     }
 }
