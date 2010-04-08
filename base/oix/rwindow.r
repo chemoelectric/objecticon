@@ -2466,16 +2466,16 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
         switch (a = stringint_str2int(attribs, abuf)) {
             case A_HEIGHT: {
                 if (!cnv:C_integer(d, tmp))
-                    return Failed;
-                if (tmp < 1) return Failed;
-                if (setheight(w, tmp) == Failed) return Failed;
+                    return Error;
+                if (tmp < 1) return Error;
+                AttemptAttr(setheight(w, tmp));
                 break;
             }
             case A_WIDTH: {
                 if (!cnv:C_integer(d, tmp))
-                    return Failed;
-                if (tmp < 1) return Failed;
-                if (setwidth(w, tmp) == Failed) return Failed;
+                    return Error;
+                if (tmp < 1) return Error;
+                AttemptAttr(setwidth(w, tmp));
                 break;
             }
             case A_SIZE: {
@@ -2484,16 +2484,16 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
             }
             case A_MINHEIGHT: {
                 if (!cnv:C_integer(d, tmp))
-                    return Failed;
-                if (tmp < 1) return Failed;
-                if (setminheight(w, tmp) == Failed) return Failed;
+                    return Error;
+                if (tmp < 1) return Error;
+                AttemptAttr(setminheight(w, tmp));
                 break;
             }
             case A_MINWIDTH: {
                 if (!cnv:C_integer(d, tmp))
-                    return Failed;
-                if (tmp < 1) return Failed;
-                if (setminwidth(w, tmp) == Failed) return Failed;
+                    return Error;
+                if (tmp < 1) return Error;
+                AttemptAttr(setminwidth(w, tmp));
                 break;
             }
             case A_MINSIZE: {
@@ -2502,16 +2502,16 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
             }
             case A_MAXHEIGHT: {
                 if (!cnv:C_integer(d, tmp))
-                    return Failed;
-                if (tmp < 1) return Failed;
-                if (setmaxheight(w, tmp) == Failed) return Failed;
+                    return Error;
+                if (tmp < 1) return Error;
+                AttemptAttr(setmaxheight(w, tmp));
                 break;
             }
             case A_MAXWIDTH: {
                 if (!cnv:C_integer(d, tmp))
-                    return Failed;
-                if (tmp < 1) return Failed;
-                if (setmaxwidth(w, tmp) == Failed) return Failed;
+                    return Error;
+                if (tmp < 1) return Error;
+                AttemptAttr(setmaxwidth(w, tmp));
                 break;
             }
             case A_MAXSIZE: {
@@ -2528,14 +2528,14 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
             }
             case A_RESIZE: {
                 if (strcmp(val, "on") & strcmp(val, "off"))
-                    return Failed;
-                allowresize(w, ATOBOOL(val));
+                    return Error;
+                AttemptAttr(allowresize(w, ATOBOOL(val)));
                 break;
             }
             case A_TITLEBAR: {
                 if (w->window->pix != 0) return Failed;
                 if (strcmp(val, "on") & strcmp(val, "off"))
-                    return Failed;
+                    return Error;
                 if (ATOBOOL(val)) {
                     SETTITLEBAR(w->window);
                 }
@@ -2553,7 +2553,7 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
                 break;
             }
             case A_ICONIMAGE: {
-                if (!val[0]) return Failed;
+                if (!val[0]) return Error;
                 AttemptAttr(seticonimage(w, &d));
                 break;
             }
@@ -2595,28 +2595,23 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
                 break;
             }
             case A_FG: {
-                if (cnv:C_integer(d, tmp) && tmp < 0) {
-                    if (isetfg(w, tmp) != Succeeded) return Failed;
-                }
-                else {
-                    if (setfg(w, val) != Succeeded) return Failed;
-                }
+                if (cnv:C_integer(d, tmp) && tmp < 0)
+                    AttemptAttr(isetfg(w, tmp));
+                else
+                    AttemptAttr(setfg(w, val));
                 break;
             }
             case A_BG: {
-                if (cnv:C_integer(d, tmp) && tmp < 0) {
-                    if (isetbg(w, tmp) != Succeeded) return Failed;
-                }
-                else {
-                    if (setbg(w, val) != Succeeded) return Failed;
-                }
+                if (cnv:C_integer(d, tmp) && tmp < 0)
+                    AttemptAttr(isetbg(w, tmp));
+                else
+                    AttemptAttr(setbg(w, val));
                 break;
             }
             case A_GAMMA: {
                 if (sscanf(val, "%lf%c", &gamma, &c) != 1 || gamma <= 0.0)
-                    return Failed;
-                if (setgamma(w, gamma) != Succeeded)
-                    return Failed;
+                    return Error;
+                AttemptAttr(setgamma(w, gamma));
                 break;
             }
             case A_FILLSTYLE: {
@@ -2629,9 +2624,8 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
             }
             case A_LINEWIDTH: {
                 if (!cnv:C_integer(d, tmp))
-                    return Failed;
-                if (setlinewidth(w, tmp) == Error)
-                    return Failed;
+                    return Error;
+                AttemptAttr(setlinewidth(w, tmp));
                 break;
             }
             case A_POINTER: {
@@ -2648,13 +2642,13 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
             }
             case A_DX: {
                 if (!cnv:C_integer(d, tmp))
-                    return Failed;
+                    return Error;
                 wc->dx = tmp;
                 break;
             }
             case A_DY: {
                 if (!cnv:C_integer(d, tmp))
-                    return Failed;
+                    return Error;
                 wc->dy = tmp;
                 break;
             }
@@ -2680,7 +2674,7 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
                 }
                 else {
                     if (!cnv:C_integer(d, tmp))
-                        return Failed;
+                        return Error;
                     if (wc->clipw < 0) {
                         wc->clipx = wc->clipy = 0;
                         wc->clipw = ws->width;
@@ -2698,7 +2692,7 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
             }
             case A_REVERSE: {
                 if (strcmp(val, "on") && strcmp(val, "off"))
-                    return Failed;
+                    return Error;
                 if ((!ATOBOOL(val) && ISREVERSE(w)) ||
                     (ATOBOOL(val) && !ISREVERSE(w))) {
                     togglefgbg(w);
@@ -2732,7 +2726,7 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
          */
         strncpy(abuf, s, len);
         abuf[len] = '\0';
-        switch (a=stringint_str2int(attribs, abuf)) {
+        switch (a = stringint_str2int(attribs, abuf)) {
             case A_IMAGE:
                 ReturnErrNum(147, Error);
                 break;
@@ -2742,8 +2736,7 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
                 break;
             case A_DEPTH: {
                 int i;
-                i = getdepth(w);
-                if (i < 0) return Failed;
+                if (getdepth(w, &i) == Failed) return Failed;
                 MakeInt(i, answer);
                 break;
             }
@@ -2799,8 +2792,7 @@ int wattrib(wbp w, char *s, long len, dptr answer, char *abuf)
                 CMakeStr(abuf, answer);
                 break;
             case A_GAMMA:
-                Protect(BlkLoc(*answer) = (union block *)alcreal(wc->gamma),
-                        return Error);
+                MemProtect(BlkLoc(*answer) = (union block *)alcreal(wc->gamma));
                 answer->dword = D_Real;
                 break;
             case A_FILLSTYLE:

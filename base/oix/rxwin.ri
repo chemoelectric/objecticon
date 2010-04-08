@@ -1098,8 +1098,8 @@ static int wmap(wbp w, wbp parent)
         if (ISRESIZABLE(w)) {
             size_hints.min_width = ws->minwidth;
             size_hints.min_height = ws->minheight;
-            size_hints.max_width = Min(ws->maxwidth, DisplayWidth(stddpy, wd->screen));
-            size_hints.max_height = Min(ws->maxheight, DisplayHeight(stddpy, wd->screen));
+            size_hints.max_width = ws->maxwidth;
+            size_hints.max_height = ws->maxheight;
         }
         else {
             size_hints.min_width = size_hints.max_width = ws->width;
@@ -1201,8 +1201,8 @@ int doconfig(wbp w, int status)
         if (ISRESIZABLE(w)) {
             size_hints.min_width = ws->minwidth;
             size_hints.min_height = ws->minheight;
-            size_hints.max_width = Min(ws->maxwidth, DisplayWidth(wd->display, wd->screen));
-            size_hints.max_height = Min(ws->maxheight, DisplayHeight(wd->display, wd->screen));
+            size_hints.max_width = ws->maxwidth;
+            size_hints.max_height = ws->maxheight;
         }
         else {
             size_hints.min_width = size_hints.max_width = ws->width;
@@ -2112,9 +2112,10 @@ int getdisplaysize(wbp w, int *width, int *height)
     return Succeeded;
 }
 
-int getdepth(wbp w)
+int getdepth(wbp w, int *res)
 {
-    return DefaultDepth(w->window->display->display, w->window->display->screen);
+    *res = DefaultDepth(w->window->display->display, w->window->display->screen);
+    return Succeeded;
 }
 
 int getvisual(wbp w, char *answer)

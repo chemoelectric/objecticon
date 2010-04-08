@@ -102,13 +102,12 @@ procedure util_check_attribs(dialog, t)
    initial {
       test_win := Window.open("canvas=hidden") | stop("couldn't open window")
       attrib_table := set("label", "posx", "pos", "posy", "resize", "size", "height", 
-                          "width", "lines", "columns", "image", "canvas", "iconpos", "iconlabel", 
-                          "iconimage", "echo", "cursor", "x", "y", "row", "col", "pointer", 
-                          "pointerx", "pointery", "pointerrow", "pointercol", "display", "depth", 
-                          "displayheight", "displaywidth", "fg", "bg", "reverse", "drawop", "gamma", 
+                          "width", "image", "canvas", "iconpos", "iconlabel", 
+                          "iconimage", "x", "y", "pointer", 
+                          "display", "depth", "fg", "bg", "reverse", "drawop", "gamma", 
                           "font", "fheight", "fwidth", "ascent", "descent", "leading", "linewidth", 
                           "linestyle", "fillstyle", "pattern", "clipx", "clipy", "clipw", "cliph", 
-                          "dx", "dy", "minwidth", "minheight", "minsize")
+                          "dx", "dy", "minwidth", "minheight", "minsize", "maxwidth", "maxheight", "maxsize")
    }
 
    every s := !sort(t) do {
@@ -116,8 +115,12 @@ procedure util_check_attribs(dialog, t)
          next
       if not member(attrib_table, s[1]) then
          return alert_error(dialog, "Invalid attribute " || s[1])
-      if not(test_win.attrib(s[1] || "=" || s[2])) then
+      &error := -1
+      if not(test_win.attrib(s[1] || "=" || s[2])) then {
+         &error := 0
          return alert_error(dialog, "Invalid value " || s[2] || " for attrib " || s[1])
+      }
+      &error := 0
    }
    return
 end

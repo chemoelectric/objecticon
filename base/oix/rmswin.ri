@@ -1465,14 +1465,15 @@ int getdepthDC(HDC dc)
    return GetDeviceCaps(dc, BITSPIXEL) * GetDeviceCaps(dc, PLANES);
 }
 
-int getdepth(wbp w)
+int getdepth(wbp w, int *res)
 {
    int i, j;
    STDLOCALS(w);
    i = GetDeviceCaps(pixdc, BITSPIXEL);
    j = GetDeviceCaps(pixdc, PLANES);
    FREE_STDLOCALS(w);
-   return i * j;
+   *res = i * j;
+   return Succeeded;
 }
 
 int devicecaps(wbp w, int i)

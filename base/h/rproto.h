@@ -235,7 +235,7 @@ void  bigrand         (dptr da, dptr dx);
    int  geticonpos      (wbp w, char *s);
 
    int  getlinewidth    (wbp w);
-   int  getdepth        (wbp w);
+   int  getdepth        (wbp w, int *res);
 
    int  geticonimage    (wbp w, char *answer);
    int  geticonlabel    (wbp w, char *answer);
