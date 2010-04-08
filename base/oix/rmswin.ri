@@ -1537,50 +1537,50 @@ int alc_rgb(wbp w, SysColor rgb)
  * Set the context's foreground color
  */
 int setfg(wbp w, char *val)
-   {
-   long r, g, b, a;
-   wcp wc = w->context;
-   if (parsecolor(w, val, &r, &g, &b, &a) == Succeeded) {
-      wc->fg = mscolor(w, r, g, b);
-      if (alc_rgb(w, wc->fg) == Failed) return Failed;
-      if (!wc->fgname) wc->fgname = salloc(val);
-      else if (strcmp(wc->fgname, val)) {
-         free(wc->fgname);
-         wc->fgname = salloc(val);
-	 }
-      wc->brush.lbColor =
-	 PALCLR(ISXORREVERSE(w) ? ((wc->fg ^ wc->bg) & 0x00FFFFFF) : wc->fg);
-      wc->pen.lopnColor = wc->brush.lbColor;
-      wc->brush.lbStyle = wc->fillstyle;
-      if (wc->fillstyle == BS_PATTERN)
-	 wc->brush.lbHatch = (int)wc->pattern;
-      return Succeeded;
-      }
-   return Failed;
-   }
+{
+    long r, g, b, a;
+    wcp wc = w->context;
+    if (parsecolor(w, val, &r, &g, &b, &a) != Succeeded)
+        return Error;
+
+    wc->fg = mscolor(w, r, g, b);
+    if (alc_rgb(w, wc->fg) == Failed) return Failed;
+    if (!wc->fgname) wc->fgname = salloc(val);
+    else if (strcmp(wc->fgname, val)) {
+        free(wc->fgname);
+        wc->fgname = salloc(val);
+    }
+    wc->brush.lbColor =
+        PALCLR(ISXORREVERSE(w) ? ((wc->fg ^ wc->bg) & 0x00FFFFFF) : wc->fg);
+    wc->pen.lopnColor = wc->brush.lbColor;
+    wc->brush.lbStyle = wc->fillstyle;
+    if (wc->fillstyle == BS_PATTERN)
+        wc->brush.lbHatch = (int)wc->pattern;
+    return Succeeded;
+}
 
 /*
  * Set the window context's background color
  */
 int setbg(wbp w, char *val)
-   {
-   long r, g, b, a;
-   wcp wc = w->context;
-   if (parsecolor(w, val, &r, &g, &b, &a) == Succeeded) {
-      wc->bg = mscolor(w, r, g, b);
-      if (alc_rgb(w, wc->bg) == Failed) return Failed;
-      if (!wc->bgname) wc->bgname = salloc(val);
-      else if (strcmp(wc->bgname, val)) {
-         free(wc->bgname);
-         wc->bgname = salloc(val);
-	 }
-      wc->bgpen.lopnColor = PALCLR(wc->bg);
-      wc->bgbrush.lbStyle = BS_SOLID;
-      wc->bgbrush.lbColor = PALCLR(wc->bg);
-      return ISXORREVERSE(w) ? resetfg(w) : Succeeded;
-      }
-   return Failed;
-   }
+{
+    long r, g, b, a;
+    wcp wc = w->context;
+    if (parsecolor(w, val, &r, &g, &b, &a) != Succeeded)
+        return Error;
+
+    wc->bg = mscolor(w, r, g, b);
+    if (alc_rgb(w, wc->bg) == Failed) return Failed;
+    if (!wc->bgname) wc->bgname = salloc(val);
+    else if (strcmp(wc->bgname, val)) {
+        free(wc->bgname);
+        wc->bgname = salloc(val);
+    }
+    wc->bgpen.lopnColor = PALCLR(wc->bg);
+    wc->bgbrush.lbStyle = BS_SOLID;
+    wc->bgbrush.lbColor = PALCLR(wc->bg);
+    return ISXORREVERSE(w) ? resetfg(w) : Succeeded;
+}
 
 /*
  * Set the gamma correction factor.
