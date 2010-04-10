@@ -95,13 +95,13 @@ end
 procedure ZDone(win)
    local org, e, w, h, ww, hh, x0, y0
 
-   x0 := -win.attrib( "dx")
-   y0 := -win.attrib( "dy")
-   w := win.attrib( "width")
-   h := win.attrib( "height")
+   x0 := -win.get_dx()
+   y0 := -win.get_dy()
+   w := win.get_width()
+   h := win.get_height()
    org := Window.open("width=" || w, "height=" || h, "canvas=hidden") | WDone()
    win.copy_to(org, x0, y0)
-   win.attrib( "resize=on")
+   win.attrib("resize=on")
    while e := win.event()[1] do case e of {
       QuitEvents():
          exit()
@@ -117,18 +117,18 @@ procedure ZDone(win)
 end
 
 procedure SubWindow(win, x, y, w, h)
-   /x := -win.attrib( "dx")
-   /y := -win.attrib( "dy")
-   /w := win.attrib( "width") - (x + win.attrib( "dx"))
-   /h := win.attrib( "height") - (y + win.attrib( "dy"))
+   /x := -win.get_dx()
+   /y := -win.get_dy()
+   /w := win.get_width() - (x + win.get_dx())
+   /h := win.get_height() - (y + win.get_dy())
 
    if w < 0 then
       x -:= (w := -w)
    if h < 0 then
       y -:= (h := -h)
 
-   win := win.clone("dx=" || win.attrib( "dx") + x,
-                    "dy=" || win.attrib( "dy") + y)
+   win := win.clone("dx=" || win.get_dx() + x,
+                    "dy=" || win.get_dy() + y)
    win.clip( 0, 0, w, h)
    #GotoRC(win, 1, 1)
    return win

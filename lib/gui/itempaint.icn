@@ -47,7 +47,7 @@ class TextItemPaint(ItemPaint)
    public fh
 
    public initially(c)
-      fh := c.cbwin.attrib("fheight")
+      fh := c.cbwin.get_fheight()
    end
 
    public get_width(W, data)
@@ -89,15 +89,15 @@ end
 
 class ImageWindowItemPaint(ItemPaint)
    public get_width(W, data)
-      return data.attrib("width")
+      return data.get_width()
    end
 
    public get_height(W, data)
-      return data.attrib("height")
+      return data.get_height()
    end
 
    public get_size(W, data)
-      return Size(data.attrib("width"), data.attrib("height"))
+      return Size(data.get_width(), data.get_height())
    end
 
    public draw(W, data, x, y)

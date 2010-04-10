@@ -39,7 +39,7 @@ class Tree(SelectableScrollArea)
 
    public calculate_line_height()
       local res
-      res:= view.cbwin.attrib("fheight")
+      res:= view.cbwin.get_fheight()
       #
       # Ensure the line height is slightly greater than the
       # bitmap height
@@ -63,7 +63,7 @@ class Tree(SelectableScrollArea)
    public draw_node_data(n, xp, yp)
       draw_string_ex(view.cbwin, 
                    xp + Gui.TEXT_INSET,
-                   yp + (self.line_height - view.cbwin.attrib("fheight")) / 2,
+                   yp + (self.line_height - view.cbwin.get_fheight()) / 2,
                    n.label)
    end
 

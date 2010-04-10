@@ -182,8 +182,7 @@ void  bigrand         (dptr da, dptr dx);
    int  palnum          (dptr d);
    int  parsecolor      (wbp w, char *s, long *r, long *g, long *b, long *a);
    int  parsefont       (char *s, char *fam, int *sty, int *sz);
-   int  parsegeometry   (char *buf, int *x, int *y, int *w, int *h);
-   int  parsepattern    (char *s, int len, int *w, int *nbits, word *bits);
+   int  parsepattern    (char *s, int *w, int *nbits, word *bits);
    void qevent          (wsp ws, dptr e, int x, int y, uword t, long f, int krel);
    void wgetevent       (wbp w, dptr res);
    int  readimagefile   (char *filename, int p, struct imgdata *imd);
@@ -197,8 +196,6 @@ void  bigrand         (dptr da, dptr dx);
                            word *px, word *py, word *pw, word *ph);
    char *rgbkey         (int p, double r, double g, double b);
 
-   int  setselection    (wbp w, dptr val);
-   int  wattrib         (wbp w, char *s, long len, dptr answer, char *abuf);
    int  writeGIF        (wbp w, char *filename,
                           int x, int y, int width, int height);
    int  writeBMP        (wbp w, char *filename,
@@ -207,9 +204,8 @@ void  bigrand         (dptr da, dptr dx);
     * graphics implementation routines supplied for each platform
     * (excluding those defined as macros for X-windows)
     */
-   int  setpattern      (wbp w, char *name, int len);
+   int  setpattern      (wbp w, char *name);
    int  setpatternbits  (wbp w, int width, word *bits, int nbits);
-   int  allowresize     (wbp w, int on);
    void drawblimage     (wbp w, int x, int y, int wd, int h,
                           int ch, unsigned char *s, word len);
    wcp  clonecontext   (wbp w);
@@ -265,18 +261,12 @@ void  bigrand         (dptr da, dptr dx);
    int  setmutable      (wbp w, int i, char *s);
    int  setbg           (wbp w, char *s);
    int  setcanvas       (wbp w, char *s);
-   void setclip         (wbp w);
    int  setdisplay      (wbp w, char *s);
    int  setdrawop       (wbp w, char *val);
    int  setfg           (wbp w, char *s);
    int  setfillstyle    (wbp w, char *s);
    int  setfont         (wbp w, char *s);
    int  setgamma        (wbp w, double gamma);
-   int  setposx         (wbp w, int new_posx);
-   int  setposy         (wbp w, int new_posy);
-   int  setheight       (wbp w, int new_height);
-   int  setminheight    (wbp w, int new_height);
-   int  setmaxheight    (wbp w, int new_height);
    int  seticonicstate  (wbp w, char *s);
    int  seticonlabel    (wbp w, char *val);
    int  seticonpos      (wbp w, char *s);
@@ -285,9 +275,6 @@ void  bigrand         (dptr da, dptr dx);
    int  setlinestyle    (wbp w, char *s);
    int  setlinewidth    (wbp w, int linewid);
    int  setpointer      (wbp w, char *val);
-   int  setwidth        (wbp w, int new_width);
-   int  setminwidth     (wbp w, int new_width);
-   int  setmaxwidth     (wbp w, int new_width);
    int  ownselection    (wbp w, char *selection);
    int  requestselection(wbp w, char *selname, char *targetname);
    int  sendselectionresponse(wbp w, word requestor, char *property, char *target, char *selection, word time, dptr data);
@@ -299,11 +286,11 @@ void  bigrand         (dptr da, dptr dx);
    int  walert          (wbp w, int volume);
    int  warppointer     (wbp w, int x, int y);
    void wclose          (wbp w);
-   wbp  wopen           (wbp parent, dptr attr, int n, int *e);
+   wbp  wcreate         (char *display);
+   int  wopen           (wbp w, wbp parent);
    void wflush          (wbp w);
    void wsync           (wbp w);
    void xdis            (wbp w, char *s, int n);
-   void unsetclip       (wbp w);
    void fillarc         (wbp w, int x, int y, int width, int height, double angle1, double angle2);
    void drawarc         (wbp w, int x, int y, int width, int height, double angle1, double angle2);
    void drawlines       (wbp w, XPoint *points, int npoints);
@@ -315,8 +302,13 @@ void  bigrand         (dptr da, dptr dx);
    int  seticonimage    (wbp w, dptr dp);
    int  textwidth       (wbp w, char *s, int n);
    int  utf8width       (wbp w, char *s, int n);
+
 #endif                                  /* Graphics */
 
+#ifdef MSWIN32
+LRESULT_CALLBACK WndProc  (HWND, UINT, WPARAM, LPARAM);
+void wfreersc(void);
+#endif
 
 /*
  * Prototypes for the run-time system.

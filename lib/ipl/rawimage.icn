@@ -48,8 +48,8 @@ procedure WriteRaw(win, x, y, w, h)
    local nextid, palette, line, c, temp, tempname
 
 
-   /w := win.attrib("width")
-   /h := win.attrib("height")
+   /w := win.get_width()
+   /h := win.get_height()
    /x := 0
    /y := 0
 

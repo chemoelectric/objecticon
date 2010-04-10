@@ -116,7 +116,8 @@ procedure util_check_attribs(dialog, t)
       if not member(attrib_table, s[1]) then
          return alert_error(dialog, "Invalid attribute " || s[1])
       &error := -1
-      if not(test_win.attrib(s[1] || "=" || s[2])) then {
+      test_win.attrib(s[1] || "=" || s[2])
+      if &error < -1 then {
          &error := 0
          return alert_error(dialog, "Invalid value " || s[2] || " for attrib " || s[1])
       }
@@ -156,7 +157,7 @@ end
 procedure center_string(win, x, y, s, k)
    draw_string_ex(win, 
                 x - win.text_width(s) / 2, 
-                y - win.attrib("fheight") / 2, 
+                y - win.get_fheight() / 2, 
                 s, k)
 end
 

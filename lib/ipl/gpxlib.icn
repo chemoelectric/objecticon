@@ -107,19 +107,18 @@ procedure ScratchCanvas(win, w, h, id)
       dpytab := table()
       }
 
-   /w := win.attrib("width")
-   /h := win.attrib("height")
+   /w := win.get_width()
+   /h := win.get_height()
    w <:= 100				# if too teeny, can't open
    h <:= 100
 
-   d := win.attrib("display")
+   d := win.get_display()
    s := d || "," || image(id)
-   /dpytab[s] := Window.open("width=" || w, "height=" || h, "canvas=hidden",
-      "display=" || d)
+   /dpytab[s] := Window.open_on(d, "width=" || w, "height=" || h, "canvas=hidden")
    win := dpytab[s]
    if /win then
       fail
-   if win.attrib("width") < w | win.attrib("height") < h then
-      win.attrib("width=" || w, "height=" || h)
+   if win.get_width() < w | win.get_height() < h then
+      win.set_size(w, h)
    return win
 end

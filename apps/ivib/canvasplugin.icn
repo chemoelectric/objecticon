@@ -13,7 +13,7 @@ class MissingPlugin()
                     obj.x + obj.w / 2, obj.y + 10, 
                     "<Missing Plugin>")
       center_string(obj.cbwin, 
-                    obj.x + obj.w / 2, obj.y + 10 + obj.cbwin.attrib("fheight"), 
+                    obj.x + obj.w / 2, obj.y + 10 + obj.cbwin.get_fheight(), 
                     id)
    end
 

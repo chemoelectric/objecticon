@@ -31,10 +31,10 @@ procedure tile(win1, win2, x1, y1, w1, h1)
 
    /x1 := 0
    /y1 := 0
-   /w1 := win1.attrib("width")
-   /h1 := win1.attrib("height")
-   wmax := win2.attrib("width")
-   hmax := win2.attrib("height")
+   /w1 := win1.get_width()
+   /h1 := win1.get_height()
+   wmax := win2.get_width()
+   hmax := win2.get_height()
 
    if (w1 | h1) = 0 then fail
 

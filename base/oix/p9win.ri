@@ -2,6 +2,7 @@ static int inited;
 static vlong startup_time;
 static wfp fonts;
 
+static int open_winfile(wsp ws, char *s, int mode);
 static wsp alc_winstate(void);
 static wcp alc_context(wbp w);
 static wfp alc_font(wbp w, char **s);
@@ -27,6 +28,10 @@ static void unlink_sharedimage(struct SharedImage *i);
 #define EMAXMSG 128+8192     /* size of 9p header+data */
 #define WINDOW_MOUNT_ROOT "/tmp/oi_windowmounts"
 
+#define NormalCanvas 1
+#define HiddenCanvas 2
+#define IconicCanvas 3
+
 static stringint drawops[] = {
    { 0, 16},
    {"and",		Clear},
@@ -49,6 +54,15 @@ static stringint drawops[] = {
 
 static struct SharedImage *black, *white;
 static int window_count;
+
+static int open_winfile(wsp ws, char *s, int mode)
+{
+    char buff[128];
+    int fd;
+    sprintf(buff, "%s/%s", ws->mount_dir, s);
+    fd = open(buff, mode);
+    return fd;
+}
 
 static struct SharedImage *alc_sharedimage(Image *i)
 {
@@ -90,14 +104,10 @@ static void show_square(Image *dest, Rectangle r)
     flushimage(display, 1);
 }
 
-wbp wopen(wbp parent, dptr attr, int n, int *err_index)
+wbp wcreate(char *display)
 {
     wbp w;
     wsp ws;
-    int i;
-    struct imgdata *imd;
-    char answer[128];
-    tended struct descrip attrrslt;
 
     if (!inited) {
         if (!init_window_system())
@@ -113,36 +123,31 @@ wbp wopen(wbp parent, dptr attr, int n, int *err_index)
     /*
      * some defaults
      */
-    ws->height = 100;
-    ws->width  = 100;
+    ws->height = 200;
+    ws->width  = 200;
+    ws->desired_canvas = NormalCanvas;
+    ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
 
-    for (i = 0; i < n; i++){
-        switch (wattrib((wbp) w, StrLoc(attr[i]), StrLen(attr[i]), &attrrslt, answer)) {
-            case Error:
-                free_binding(w);
-                *err_index = i;
-                return 0;
-            case Failed:
-                whyf("Bad window attribute: %.*s", (int)StrLen(attr[i]), StrLoc(attr[i]));
-                free_binding(w);
-                *err_index = -1;
-                return 0;
-        }
-    }
-    if (ws->windowlabel == NULL)
-        ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
+    return w;
+}
 
-    if (open_pix_win(ws) == Failed) {
-        free_binding(w);
-        return 0;
-    }
+
+
+int wopen(wbp w, wbp parent)
+{
+    wsp ws = w->window;
+    struct imgdata *imd;
+    char answer[128];
+    tended struct descrip attrrslt;
+
+    if (open_pix_win(ws) != Succeeded)
+        return Failed;
+
     /* Fill pixmap with bg color */
     clear_pix(w);
 
-    if (configure_canvas(w) != Succeeded) {
-        free_binding(w);
-        return 0;
-    }
+    if (configure_canvas(w) != Succeeded)
+        return Failed;
 
     imd = &ws->initimage;
     if (imd->width) {
@@ -153,7 +158,7 @@ wbp wopen(wbp parent, dptr attr, int n, int *err_index)
         imd->width = 0;
     }
 
-    return w;
+    return Succeeded;
 }
 
 static void clear_pix(wbp w)
@@ -195,17 +200,25 @@ static int configure_canvas(wbp w)
 {
     wsp ws = w->window;
 
-    if (ISTOBEHIDDEN(ws)) {
+    if (ws->desired_canvas == HiddenCanvas) {
         if (ws->win) {
             win_to_pix(ws);
             close_screen_win(ws);
         }
     } else {
+        int fd;
         if (!ws->win) {
             if (open_screen_win(ws) == Failed)
                 return Failed;
+            pix_to_win(ws);
         }
-        pix_to_win(ws);
+        if ((fd = open_winfile(ws, "wctl", OWRITE)) >= 0) {
+            if (ws->desired_canvas == IconicCanvas)
+                fprint(fd, "hide");
+            else
+                fprint(fd, "unhide");
+            close(fd);
+        }
     }
     return Succeeded;
 }
@@ -266,7 +279,7 @@ static void handle_resize(wsp ws)
 {
     char buff[128];
     sprintf(buff, "%s/winname", ws->mount_dir);
-    /*printf("reconnecting to %s repl=%d\n",buff, ws->pix->repl);*/
+    /*fprintf(stderr,"reconnecting to %s repl=%d\n",buff, ws->pix->repl);fflush(stderr);*/
     if (gengetwindow(display, buff, &ws->win, &ws->screen, Refnone) < 0)
         syserr("Failed to reconnect to window on a resize");
     /* Fill the win with the bg of the first context */
@@ -414,14 +427,6 @@ static void flush_event_pipe(wsp ws)
 int walert(wbp w, int volume)
 {
     return Succeeded;
-}
-
-void unsetclip(wbp w)
-{
-}
-
-void setclip(wbp w)
-{
 }
 
 char *getmutablename(wbp w, int mute_index)
@@ -879,16 +884,13 @@ void free_color(wbp w, char *s)
 
 int lowerwindow (wbp w)
 {
-    char buff[256];
     int fd;
     wsp ws = w->window;
     if (!ws->win)
         return Failed;
-    sprintf(buff, "%s/wctl", ws->mount_dir);
-    fd = open(buff, OWRITE);
-    if (fd < 0)
+    if ((fd = open_winfile(ws, "wctl", OWRITE)) < 0)
         return Failed;
-    fprint(fd, "hide");
+    fprint(fd, "bottom");
     close(fd);
     return Succeeded;
 }
@@ -899,7 +901,7 @@ int mutablecolor (wbp w, dptr argv, int ac, int *retval)
     return Failed;
 }
 
-int setpattern(wbp w, char *name, int len)
+int setpattern(wbp w, char *name)
 {
     return Succeeded;
 }
@@ -931,16 +933,15 @@ int  queryrootpointer(wbp w, int *x, int *y)
 
 int raisewindow(wbp w)
 {
-    char buff[256];
     int fd;
     wsp ws = w->window;
     if (!ws->win)
         return Failed;
-    sprintf(buff, "%s/wctl", ws->mount_dir);
-    fd = open(buff, OWRITE);
-    if (fd < 0)
+    if ((fd = open_winfile(ws, "wctl", OWRITE)) < 0)
         return Failed;
     fprint(fd, "unhide");
+    fprint(fd, "top");
+    fprint(fd, "current");
     close(fd);
     return Succeeded;
 }
@@ -964,16 +965,11 @@ int utf8width(wbp w, char *s, int n)
 int doconfig(wbp w, int status)
 {
     wsp ws = w->window;
-    int have_win = 0;
-
     /* Move/resize of window if open */
     if (ws->win) {
-        int fd;
-        char buff[256];
         if (status & (C_POS|C_SIZE)) {
-            sprintf(buff, "%s/wctl", ws->mount_dir);
-            fd = open(buff, OWRITE);
-            if (fd < 0)
+            int fd;
+            if ((fd = open_winfile(ws, "wctl", OWRITE)) < 0)
                 return Failed;
             if (status & C_POS)
                 fprint(fd, "move  -minx %d -miny %d", ws->posx, ws->posy);
@@ -1079,9 +1075,7 @@ static int open_screen_win(wsp ws)
         return Failed;
     }
 
-    sprintf(buff, "%s/label", ws->mount_dir);
-    fd = open(buff, OWRITE);
-    if (fd < 0) {
+    if ((fd = open_winfile(ws, "label", OWRITE)) < 0) {
         close_screen_win(ws);
         return Failed;
     }
@@ -1094,25 +1088,19 @@ static int open_screen_win(wsp ws)
         return Failed;
     }
 
-    snprint(buff, sizeof buff, "%s/mouse", ws->mount_dir);
-    ws->mouse_fd = open(buff, ORDWR|OCEXEC);
-    if (ws->mouse_fd < 0) {
+    if ((ws->mouse_fd = open_winfile(ws, "mouse", ORDWR|OCEXEC)) < 0) {
         whyf("Can't open mouse file %s: %r", buff);
         close_screen_win(ws);
         return Failed;
     }
 
-    snprint(buff, sizeof buff, "%s/cons", ws->mount_dir);
-    ws->cons_fd = open(buff, OREAD);
-    if (ws->cons_fd < 0) {
+    if ((ws->cons_fd = open_winfile(ws, "cons", OREAD)) < 0) {
         whyf("Can't open cons file %s: %r", buff);
         close_screen_win(ws);
         return Failed;
     }
 
-    snprint(buff, sizeof buff, "%s/consctl", ws->mount_dir);
-    ws->consctl_fd = open(buff, OWRITE|OCEXEC);
-    if(ws->consctl_fd < 0) {
+    if ((ws->consctl_fd = open_winfile(ws, "consctl", OWRITE|OCEXEC)) < 0) {
         whyf("Can't open consctl file %s: %r", buff);
         close_screen_win(ws);
         return Failed;
@@ -1148,11 +1136,8 @@ static int open_screen_win(wsp ws)
 
 static void close_screen_win(wsp ws)
 {
-    char buff[128];
     int fd;
-    sprintf(buff, "%s/wctl", ws->mount_dir);
-    fd = open(buff, OWRITE);
-    if (fd >= 0)
+    if ((fd = open_winfile(ws, "wctl", OWRITE)) >= 0)
         fprint(fd, "hide");
     unmount(0, ws->mount_dir);
     remove(ws->mount_dir);
@@ -1209,7 +1194,7 @@ void wclose(wbp w)
     pollevent();
     if (ws->win && ws->refcount > 1) {
         /* Turn into pixmap */
-        SETTOBEHIDDEN(ws);
+        ws->desired_canvas = HiddenCanvas;
         configure_canvas(w); 
     }
 }
@@ -1258,26 +1243,6 @@ void free_context(wcp wc)
     }
 }
 
-int setminheight(wbp w, int new_height)
-{
-    return Succeeded;
-}
-
-int setminwidth(wbp w, int new_width)
-{
-    return Succeeded;
-}
-
-int setmaxheight(wbp w, int new_height)
-{
-    return Succeeded;
-}
-
-int setmaxwidth(wbp w, int new_width)
-{
-    return Succeeded;
-}
-
 int nativecolor(wbp w, char *s, long *r, long *g, long *b)
 {
     return 0; /* boolean rv */
@@ -1287,34 +1252,6 @@ int getimstr(wbp w, int x, int y, int width, int hgt,
              struct palentry *ptbl, unsigned char *data)
 {
     return 0; /* boolean rv */
-}
-
-int setheight(wbp w, int new_height)
-{
-    wsp ws = w->window;
-    ws->height = new_height;
-    return Succeeded;
-}
-
-int setwidth(wbp w, int new_width)
-{
-    wsp ws = w->window;
-    ws->width = new_width;
-    return Succeeded;
-}
-
-int setposx(wbp w, int new_posx)
-{
-    wsp ws = w->window;
-    ws->posx = new_posx;
-    return Succeeded;
-}
-
-int setposy(wbp w, int new_posy)
-{
-    wsp ws = w->window;
-    ws->posy = new_posy;
-    return Succeeded;
 }
 
 int setinputmask(wbp w, char *val)
@@ -1328,21 +1265,19 @@ int setinputmask(wbp w, char *val)
     return Succeeded;
 }
 
-int allowresize(wbp w, int on)
-{
-    return Succeeded;
-}
-
 int setcanvas(wbp w, char *s)
 {
     wsp ws = w->window;
-    if (!strcmp(s, "iconic") || !strcmp(s, "maximal"))
+    if (!strcmp(s, "maximal"))
         return Succeeded;
-    if (!strcmp(s, "normal")) {
-        CLRTOBEHIDDEN(ws);
-    } else if (!strcmp(s, "hidden")) {
-        SETTOBEHIDDEN(ws);
-    } else
+
+    if (!strcmp(s, "iconic"))
+        ws->desired_canvas = IconicCanvas;
+    else if (!strcmp(s, "normal"))
+        ws->desired_canvas = NormalCanvas;
+    else if (!strcmp(s, "hidden"))
+        ws->desired_canvas = HiddenCanvas;
+    else
         return Error;
 
     /* If the window is already open, call configure_canvas now; otherwise it
@@ -1356,33 +1291,15 @@ int setcanvas(wbp w, char *s)
     return Succeeded;
 }
 
-int seticonicstate(wbp w, char *s)
-{
-    return Succeeded;
-}
-
-int seticonlabel(wbp w, char *val)
-{
-    return Succeeded;
-}
-
-int seticonpos(wbp w, char *s)
-{
-    return Succeeded;
-}
-
 int setwindowlabel(wbp w, char *val)
 {
-    char buff[128];
-    int fd;
     wsp ws = w->window;
     if (ws->windowlabel) 
         free(ws->windowlabel);
     ws->windowlabel = salloc(val);
     if (ws->win) {
-        sprintf(buff, "%s/label", ws->mount_dir);
-        fd = open(buff, OWRITE);
-        if (fd < 0)
+        int fd;
+        if ((fd = open_winfile(ws, "label", OWRITE)) < 0)
             return Failed;
         write(fd, val, strlen(val));
         close(fd);
@@ -1431,13 +1348,11 @@ int setdrawop(wbp w, char *val)
         if (!ISXORREVERSE(w)) {
             SETXORREVERSE(w);
             wc->drawop = SoverD;
-            t = wc->fg; wc->fg = wc->bg; wc->bg = t;
         }
     }
     else {
         if (ISXORREVERSE(w)) {
             CLRXORREVERSE(w);
-            t = wc->fg; wc->fg = wc->bg; wc->bg = t;
         }
         if ((i = stringint_str2int(drawops,val)) < 0)
             return Error;
@@ -1458,6 +1373,11 @@ int setimage(wbp w, char *val)
 
 void togglefgbg (wbp w)
 {
+    wcp wc = w->context;
+    struct SharedImage *t1;
+    char *t2;
+    t1 = wc->fg; wc->fg = wc->bg; wc->bg = t1;
+    t2 = wc->fgname; wc->fgname = wc->bgname; wc->bgname = t2;
 }
 
 int warppointer(wbp w, int x, int y)
@@ -1474,11 +1394,6 @@ int getvisual(wbp w, char *answer)
 void getdisplay(wbp w, char *answer)
 {
     strcpy(answer, "Plan9");
-}
-
-int seticonimage(wbp w, dptr dp)
-{
-    return Succeeded;
 }
 
 int getpos(wbp w)
@@ -1515,21 +1430,21 @@ void getdrawop (wbp w, char *answer)
 
 void getcanvas (wbp w, char *answer)
 {
-    if (w->window->win)
-        strcpy(answer, "normal");
-    else
+    wsp ws = w->window;
+    if (ws->win) {
+        char buff[256];
+        int fd;
+        if ((fd = open_winfile(ws, "wctl", OREAD)) >= 0) {
+            pread(fd, buff, sizeof(buff), 0);
+            close(fd);
+        } else
+            buff[0] = 0;
+        if (strstr(buff, "hidden"))
+            strcpy(answer, "iconic");
+        else
+            strcpy(answer, "normal");
+    } else
         strcpy(answer, "hidden");
-}
-
-void geticonic (wbp w, char *answer)
-{
-    strcpy(answer, "none");
-}
-
-int geticonpos(wbp w, char *answer)
-{
-    strcpy(answer, "none");
-    return Succeeded;
 }
 
 int getdisplaysize(wbp w, int *width, int *height)
@@ -1544,16 +1459,6 @@ int getdepth(wbp w, int *res)
 {
     *res = w->window->pix->depth;
     return Succeeded;
-}
-
-int geticonimage(wbp w, char *answer)
-{
-    return Failed;
-}
-
-int geticonlabel(wbp w, char *answer)
-{
-    return Failed;
 }
 
 int getwindowlabel(wbp w, char *answer)

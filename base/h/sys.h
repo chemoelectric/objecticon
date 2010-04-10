@@ -17,6 +17,7 @@
    #include <stdio.h>
    #define SHRT_MAX 32767
    #define UCHAR_MAX 255
+   #define INT_MAX 0x7fffffff
    typedef unsigned int size_t;
    typedef unsigned long time_t;
    typedef unsigned long mode_t;

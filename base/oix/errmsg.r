@@ -62,7 +62,8 @@ struct errtab errtab[] = {
     {145, "bad window attribute"},
     {146, "incorrect number of arguments to drawing function"},
     {147, "window attribute cannot be read or written as requested"},
-    {148, "selection proc returned wrong type"},
+    {148, "invalid position or size"},
+    {149, "string too long"},
 #endif					/* Graphics */
 
     {170, "string or integer expected"},

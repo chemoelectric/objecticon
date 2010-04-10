@@ -435,7 +435,7 @@ procedure set_window(win, ll, ur, vp)
    if /vp then {	# make vp the entire 'screen'
       vp := viewport()
       vp.ul := [0,0]
-      vp.lr := [numeric(win.attrib("width")), numeric(win.attrib("height"))]
+      vp.lr := [numeric(win.get_width()), numeric(win.get_height())]
       vp.screen := win
       }
 

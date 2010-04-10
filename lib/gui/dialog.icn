@@ -101,13 +101,13 @@ class Dialog(Component)
 
    public block()
       self.is_blocked_flag := 1
-      self.resize_attrib := self.win.attrib("resize")
-      self.win.attrib("resize=off")
+      self.resize_attrib := if self.win.can_resize() then &yes else &no
+      self.win.set_resize(&no)
    end
 
    public unblock()
       self.is_blocked_flag := &null
-      self.win.attrib("resize=" || self.resize_attrib)
+      self.win.set_resize(self.resize_attrib)
    end
 
    #
@@ -137,8 +137,8 @@ class Dialog(Component)
    public compute_absolutes()
       self.x := 0
       self.y := 0
-      self.w := self.win.attrib("width")
-      self.h := self.win.attrib("height")
+      self.w := self.win.get_width()
+      self.h := self.win.get_height()
    end
 
    #
@@ -152,7 +152,7 @@ class Dialog(Component)
    # Change pointer
    #
    public change_pointer(s)
-      self.win.attrib("pointer=" || s)
+      self.win.set_pointer(s)
    end
 
    #
@@ -253,7 +253,7 @@ class Dialog(Component)
    end
 
    public resize_win(w, h)
-      self.win.attrib("size=" || w || "," || h)
+      self.win.set_size(w, h)
       self.win.enqueue(Mouse.WINDOW_RESIZE)      
    end
 
@@ -328,11 +328,11 @@ class Dialog(Component)
          (["inputmask=mk"] ||| wattribs_to_list(self.wattribs)) | runerr("couldn't open window")
 
       # Make the buffer the same size as the visible win.
-      self.buffer_win.attrib("size=" || self.win.attrib("size"))
+      self.buffer_win.set_size(self.win.get_width(), self.win.get_height())
       if \self.only_enlarge_width_flag then
-         self.win.attrib("minwidth=" || self.win.attrib("width"))
+         self.win.set_minwidth(self.win.get_width())
       if \self.only_enlarge_height_flag then
-         self.win.attrib("minheight=" || self.win.attrib("height"))
+         self.win.set_minheight(self.win.get_height())
    end
 
    public close_win()
@@ -999,7 +999,7 @@ class Dialog(Component)
       #
       # Resize buffer canvas
       #
-      self.buffer_win.attrib("size=" || self.win.attrib("size"))
+      self.buffer_win.set_size(self.win.get_width(), self.win.get_height())
       self.resize()
       self.invalidate()
    end

@@ -88,7 +88,7 @@ package ipl.graphics
 
 # draw left-justified string
 procedure LeftString(win, x, y, s)		
-   y +:= (win.attrib( "ascent") - win.attrib( "descent")) / 2 + 1
+   y +:= (win.get_ascent() - win.get_descent()) / 2 + 1
    return win.draw_string(x, y, s)
 end
 
@@ -98,7 +98,7 @@ end
 # draw centered string
 procedure CenterString(win, x, y, s)		
    x -:= win.text_width( s) / 2
-   y +:= (win.attrib( "ascent") - win.attrib( "descent")) / 2 + 1
+   y +:= (win.get_ascent() - win.get_descent()) / 2 + 1
    return win.draw_string(x, y, s)
 end
 
@@ -108,7 +108,7 @@ end
 # draw right-justified string
 procedure RightString(win, x, y, s)		
    x -:= win.text_width( s)
-   y +:= (win.attrib( "ascent") - win.attrib( "descent")) / 2 + 1
+   y +:= (win.get_ascent() - win.get_descent()) / 2 + 1
    return win.draw_string(x, y, s)
 end
 
@@ -117,10 +117,10 @@ end
 
 # draw and clear rectangle
 procedure ClearOutline(win, x, y, w, h)		
-   /x := -win.attrib( "dx")
-   /y := -win.attrib( "dy")
-   /w := win.attrib( "width") - (x + win.attrib( "dx"))
-   /h := win.attrib( "height") - (y + win.attrib( "dy"))
+   /x := -win.get_dx()
+   /y := -win.get_dy()
+   /w := win.get_width() - (x + win.get_dx())
+   /h := win.get_height() - (y + win.get_dy())
 
    if w < 0 then
       x -:= (w := -w)
@@ -137,7 +137,7 @@ end
 
 # add translation
 procedure Translate(win, dx, dy, w, h)		
-   win.attrib( "dx=" || win.attrib("dx")+dx, "dy=" || win.attrib("dy")+dy)
+   win.attrib("dx=" || win.get_dx()+dx, "dy=" || win.get_dy()+dy)
    win.clip( 0, 0, \w, \h)
    return win
 end
@@ -161,19 +161,19 @@ procedure Zoom(args[])
    win1 := get(args)
    win2 := get(args)
 
-   x1 := \get(args) | -win1.attrib("dx")
-   y1 := \get(args) | -win1.attrib("dy")
-   w1 := \get(args) | win1.attrib("width") - (x1 + win1.attrib("dx"))
-   h1 := \get(args) | win1.attrib("height") - (y1 + win1.attrib("dy"))
+   x1 := \get(args) | -win1.get_dx()
+   y1 := \get(args) | -win1.get_dy()
+   w1 := \get(args) | win1.get_width() - (x1 + win1.get_dx())
+   h1 := \get(args) | win1.get_height() - (y1 + win1.get_dy())
    if w1 < 0 then
       x1 -:= (w1 := -w1)
    if h1 < 0 then
       y1 -:= (h1 := -h1)
 
-   x2 := \get(args) | -win2.attrib("dx")
-   y2 := \get(args) | -win2.attrib("dy")
-   w2 := \get(args) | win2.attrib("width") - (x2 + win2.attrib("dx"))
-   h2 := \get(args) | win2.attrib("height") - (y2 + win2.attrib("dy"))
+   x2 := \get(args) | -win2.get_dx()
+   y2 := \get(args) | -win2.get_dy()
+   w2 := \get(args) | win2.get_width() - (x2 + win2.get_dx())
+   h2 := \get(args) | win2.get_height() - (y2 + win2.get_dy())
    if w2 < 0 then
       x2 -:= (w2 := -w2)
    if h2 < 0 then
@@ -203,10 +203,10 @@ procedure Capture(win, pal, x, y, w, h)
 
    /pal := "c1"
 
-   /x := -win.attrib( "dx")
-   /y := -win.attrib( "dy")
-   /w := win.attrib( "width") - (x + win.attrib( "dx"))
-   /h := win.attrib( "height") - (y + win.attrib( "dy"))
+   /x := -win.get_dx()
+   /y := -win.get_dy()
+   /w := win.get_width() - (x + win.get_dx())
+   /h := win.get_height() - (y + win.get_dy())
 
    if w < 0 then
       x -:= (w := -w)

@@ -50,8 +50,8 @@ procedure wipe(window, color, direction, x1, y1, w, h)
    /direction := "right"
    /x1 := 0
    /y1 := 0
-   /w := window.attrib("width")
-   /h := window.attrib("height")
+   /w := window.get_width()
+   /h := window.get_height()
    x2 := x1 + w
    y2 := y1 + h
 

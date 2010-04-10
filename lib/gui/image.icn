@@ -147,11 +147,11 @@ class Image(Component)
    end
 
    public get_default_width()
-      return (\win).attrib("width") + border.get_total_width()
+      return (\win).get_width() + border.get_total_width()
    end
 
    public get_default_height()
-      return (\win).attrib("height") + border.get_total_height()
+      return (\win).get_height() + border.get_total_height()
    end
 
    public display()
@@ -164,8 +164,8 @@ class Image(Component)
 
       ir := border.get_inner_rect(self)
 
-      img_w := win.attrib("width")
-      img_h := win.attrib("height")
+      img_w := win.get_width()
+      img_h := win.get_height()
 
       if img_w = ir.w & img_h = ir.h then {
          win.copy_to(self.cbwin,,,,, 
@@ -198,8 +198,8 @@ class Image(Component)
          zoom_h <:= 1
 
          if \zoom_win &
-            zoom_win.attrib("width") = zoom_w & 
-            zoom_win.attrib("height") = zoom_h then
+            zoom_win.get_width() = zoom_w & 
+            zoom_win.get_height() = zoom_h then
                zoom_win.copy_to(self.cbwin, , , , , pt.x, pt.y)
          else {
             (\zoom_win).close()

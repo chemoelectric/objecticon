@@ -62,10 +62,10 @@ record StripChart_Rec(win, x0, y, w, h, x, n, last)
 
 # create stripchart
 procedure stripchart(win, x, y, w, h)		
-   /x := -win.attrib("dx")
-   /y := -win.attrib("dy")
-   /w := win.attrib("width") - (x + win.attrib("dx"))
-   /h := win.attrib("height") - (y + win.attrib("dy"))
+   /x := -win.get_dx()
+   /y := -win.get_dy()
+   /w := win.get_width() - (x + win.get_dx())
+   /h := win.get_height() - (y + win.get_dy())
 
    if w < 0 then
       x -:= (w := -w)

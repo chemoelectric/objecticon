@@ -118,7 +118,7 @@ class DropDown(SelectionList,Component)
    public open_textlist(ev)
       local fh, max_h, spc_below
 
-      fh := self.cbwin.attrib("fheight")
+      fh := self.cbwin.get_fheight()
       # Space available for downward popup
       spc_below := parent_dialog.h - (self.y + self.h)
       max_h := case self.direction of {

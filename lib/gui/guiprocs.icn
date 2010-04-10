@@ -162,8 +162,8 @@ procedure palette_key_ex(W, palette, spec)
    color := case spec of {
       "hilite" : Gui.style.get_hilite_color(W)
       "shadow" : Gui.style.get_shadow_color(W)
-      "fg" : W.attrib("fg")
-      "bg" : W.attrib("bg")
+      "fg" : W.get_fg()
+      "bg" : W.get_bg()
       "trans" : return "\377"
       default : spec
    }
@@ -252,11 +252,11 @@ end
 
 procedure draw_string_ex(win, x, y, s, k)
    local i, x1, y1
-   y +:= win.attrib("ascent")
+   y +:= win.get_ascent()
    win.draw_string(x, y, s)
    if i := upto(\k, map(s)) then {
       x1 := x + win.text_width(s[1:i])
-      y1 := y + win.attrib("descent") - 1
+      y1 := y + win.get_descent() - 1
       win.draw_line(x1, y1, x1 + win.text_width(s[i]), y1)
    }
 end
