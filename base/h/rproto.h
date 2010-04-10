@@ -306,6 +306,10 @@ void  bigrand         (dptr da, dptr dx);
 
 #endif                                  /* Graphics */
 
+#ifdef MSWIN32
+LRESULT_CALLBACK WndProc  (HWND, UINT, WPARAM, LPARAM);
+void wfreersc(void);
+#endif
 
 /*
  * Prototypes for the run-time system.

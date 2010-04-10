@@ -24,27 +24,22 @@
 static wcp           alc_context      (wbp w);
 static wsp           alc_winstate     (void);
 
-static int playmedia             (wbp w, char *s);
-static char *nativecolordialog   (wbp w,long r,long g, long b,char *s);
-static int nativefontdialog      (wbp w, char *buf, int flags, int fheight);
-static char *nativeselectdialog  (wbp w,struct b_list *,char *s);
-static char *nativefiledialog    (wbp w,char *s1,char *s2,char *s3,int i,int j,int k);
 static HFONT mkfont              (char *s);
 static int sysTextWidth          (wbp w, char *s, int n);
 static int sysFontHeight         (wbp w);
 static int mswinsystem           (char *s);
 static void UpdateCursorPos      (wsp ws, wcp wc);
-static LRESULT_CALLBACK WndProc  (HWND, UINT, WPARAM, LPARAM);
+/*static LRESULT_CALLBACK WndProc  (HWND, UINT, WPARAM, LPARAM);*/
 static HDC CreateWinDC           (wbp);
 static HDC CreatePixDC           (wbp, HDC);
 static HBITMAP loadimage (wbp wb, char *filename, unsigned int *width,
                         unsigned int *height, int atorigin, int *status);
-static void wfreersc(void);
 static HBITMAP CreateBitmapFromData(char *data);
 static int resizePixmap(wbp w, int width, int height);
 static int devicecaps(wbp w, int i);
+static void setclip(wbp w);
+static void unsetclip(wbp w);
 
-void wfreersc();
 void SetDCPixelFormat(HDC h);
 int alc_rgb(wbp w, SysColor rgb);
 int numRealized;
@@ -279,9 +274,43 @@ int mswinsystem(char *s)
 /*
  * wopen
  */
-wbp wopen(wbp parent, dptr attr, int n, int *err_idx)
+wbp wcreate(char *display)
    {
    wbp w;
+   wsp ws;
+
+   if (! winInitialized++) {
+      BORDWIDTH = FRAMEWIDTH * 2;
+      BORDHEIGHT = TITLEHEIGHT + FRAMEHEIGHT * 2;
+      CLIENT_XOFF = FRAMEWIDTH;
+      CLIENT_YOFF = TITLEHEIGHT + FRAMEHEIGHT;
+      GetCPInfo(CP_ACP, &cpinfo);
+      MAXBYTESPERCHAR = cpinfo.MaxCharSize;
+      }
+   /*
+    * allocate a binding, a window state, and a context
+    */
+   w = alc_wbinding();
+   w->window = alc_winstate();
+   w->context = alc_context(w);
+   ws = w->window;
+   create_list(0, &ws->listp);
+   ws->width = ws->height = 0;
+   /*
+    * set the title
+    */
+   ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
+   ws->iconlabel = salloc(DEFAULT_WINDOW_LABEL);
+
+   return w;
+   }
+
+
+/*
+ * wopen
+ */
+int wopen(wbp w, wbp parent)
+   {
    wsp ws;
    wcp wc;
    struct imgdata *imd;
@@ -297,54 +326,11 @@ wbp wopen(wbp parent, dptr attr, int n, int *err_idx)
    HBITMAP oldpix, oldpix2;
    HFONT oldfont;
 
-   if (! winInitialized++) {
-      BORDWIDTH = FRAMEWIDTH * 2;
-      BORDHEIGHT = TITLEHEIGHT + FRAMEHEIGHT * 2;
-      CLIENT_XOFF = FRAMEWIDTH;
-      CLIENT_YOFF = TITLEHEIGHT + FRAMEHEIGHT;
-      GetCPInfo(CP_ACP, &cpinfo);
-      MAXBYTESPERCHAR = cpinfo.MaxCharSize;
-      }
-
-   tlp = lp;
-
-   /*
-    * allocate a binding, a window state, and a context
-    */
-   w = alc_wbinding();
-   w->window = alc_winstate();
-   w->context = alc_context(w);
    ws = w->window;
-   create_list(0, &ws->listp);
-   ws->width = ws->height = 0;
    wc = w->context;
-
-
-   /*
-    * process the passed in attributes - by calling wattrib
-    */
-   for(i = 0; i < n; i++)
-      switch (wattrib(w, StrLoc(attr[i]), StrLen(attr[i]), &attrrslt,
-			answer)) {
-      case Failed:
-         whyf("Bad window attribute: %.*s", (int)StrLen(attr[i]), StrLoc(attr[i]));
-	 wclose(w);
-	 return NULL;
-      case Error:
-         *err_idx = i;
-	 /* think of something to do here */
-	 break;
-	 }
-
-   /*
-    * set the title, defaulting to the "filename" supplied to open()
-    */
-   if (ws->windowlabel == NULL) ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
-   if (ws->iconlabel == NULL) ws->iconlabel = salloc(DEFAULT_WINDOW_LABEL);
 
    if (ws->posx < 0) ws->posx = 0;
    if (ws->posy < 0) ws->posy = 0;
-   ws->no = 0;
 
    /*
     * create the window
@@ -376,7 +362,8 @@ wbp wopen(wbp parent, dptr attr, int n, int *err_idx)
       logpal[0].palPalEntry[1].peGreen = 255;
       logpal[0].palPalEntry[1].peBlue = 255;
       palette = CreatePalette(logpal);
-      if ((scp = malloc(2 * sizeof (struct wcolor))) == NULL) return NULL;
+      if ((scp = malloc(2 * sizeof (struct wcolor))) == NULL) 
+	 return Failed;
       scp[0].c = RGB(0,0,0);
       scp[0].type = SHARED;
       strcpy(scp[0].name, "black");
@@ -413,10 +400,10 @@ wbp wopen(wbp parent, dptr attr, int n, int *err_idx)
       }
 
    if (alc_rgb(w, wc->fg) == Failed) {
-      return 0;
+      return Failed;
       }
    if (alc_rgb(w, wc->bg) == Failed) {
-      return 0;
+      return Failed;
       }
    ws->pixwidth = ws->width;
    ws->pixheight = ws->height;
@@ -484,8 +471,13 @@ wbp wopen(wbp parent, dptr attr, int n, int *err_idx)
    if (ws->win)
       UpdateWindow(ws->win);
 
-   return w;
+   return Succeeded;
    }
+
+
+
+
+
 
 int handle_config(wbp w, UINT msg, WPARAM wp, LPARAM lp)
    {
@@ -1004,54 +996,6 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *target, c
     return Succeeded;
 }
 
-int setminheight(wbp w, int new_height)
-{
-    return Succeeded;
-}
-
-int setminwidth(wbp w, int new_width)
-{
-    return Succeeded;
-}
-
-/*
- * determine the new size of the client
- */
-int setheight(w, height)
-wbp w;
-int height;
-   {
-   wsp ws = w->window;
-   ws->height = height;
-   return Succeeded;
-   }
-
-/*
- * determine new size of client
- */
-int setwidth(w, width)
-wbp w;
-int width;
-   {
-   wsp ws = w->window;
-   ws->width = width;
-   return Succeeded;
-   }
-
-int setposx(wbp w, int new_posx)
-{
-    wsp ws = w->window;
-    ws->posx = new_posx;
-    return Succeeded;
-}
-
-int setposy(wbp w, int new_posy)
-{
-    wsp ws = w->window;
-    ws->posy = new_posy;
-    return Succeeded;
-}
-
 int setcanvas(w,s)
 wbp w;
 char *s;
@@ -1290,7 +1234,7 @@ wbp w, w2;
    return Succeeded;
    }
 
-void setclip(w)
+static void setclip(w)
 wbp w;
    {
    wcp wc = w->context;
@@ -1304,7 +1248,7 @@ wbp w;
       wc->cliprgn = NULL;
    }
 
-void unsetclip(w)
+static void unsetclip(w)
 wbp w;
    {
    wcp wc = w->context;
@@ -1714,18 +1658,6 @@ char *answer;
    return Failed;
    }
 
-int geticonimage(wbp w, char *answer)
-{
-    return Failed;
-}
-
-int geticonlabel(wbp w, char *answer)
-{
-    if (!w->window->iconlabel)
-        return Failed;
-    strcpy(answer, w->window->iconlabel);
-    return Succeeded;
-}
 
 int getwindowlabel(wbp w, char *answer)
 {
@@ -1795,12 +1727,6 @@ char *answer;
    else strcpy(answer, "unknown");
    }
 
-void geticonic(w, answer)
-wbp w;
-char *answer;
-   {
-   getcanvas(w, answer);
-   }
 
 void getcanvas(w, answer)
 wbp w;
@@ -1814,13 +1740,6 @@ char *answer;
       else sprintf(answer,"normal");
       }
    else sprintf(answer,"hidden");
-   }
-
-int geticonpos(w, val)
-wbp w;
-char *val;
-   {
-   return Failed;
    }
 
 /*
@@ -2360,19 +2279,17 @@ unsigned char *data;
    return 1;
    }
 
-int readimage(w, x, y, filename, status)
-wbp w;
-char *filename;
-int x, y, *status;
+int readimage(wbp w, int x, int y, char *filename)
    {
    HBITMAP p, oldpix;
    unsigned int width, height;
+   int status;
    HDC srcdc, srcpixdc;
 
    if (!x && !y)
-      p = loadimage(w, filename, &width, &height, 1, status);
+      p = loadimage(w, filename, &width, &height, 1, &status);
    else
-      p = loadimage(w, filename, &width, &height, 0, status);
+      p = loadimage(w, filename, &width, &height, 0, &status);
 
    if (p == (HBITMAP) NULL) {
      return Failed;
@@ -2471,13 +2388,13 @@ int  querypointer(wbp w, int *x, int *y)
    wsp ws = w->window;
    RECT r;
    if (ws->win) {
-      XPoint *pp;
-      GetCursorPos(pp);
+      XPoint pp;
+      GetCursorPos(&pp);
       GetWindowRect(ws->win, &r);
-      pp->x -= r.left + CLIENT_XOFF;
-      pp->y -= r.top + CLIENT_YOFF;
-      *x = pp->x;
-      *y = pp->y;
+      pp.x -= r.left + CLIENT_XOFF;
+      pp.y -= r.top + CLIENT_YOFF;
+      *x = pp.x;
+      *y = pp.y;
       return Succeeded;
       }
    return Failed;
@@ -2485,20 +2402,13 @@ int  querypointer(wbp w, int *x, int *y)
 
 int  queryrootpointer(wbp w, int *x, int *y)
 {
-    XPoint *pp;
-    GetCursorPos(pp);
-    *x = pp->x;
-    *y = pp->y;
+    XPoint pp;
+    GetCursorPos(&pp);
+    *x = pp.x;
+    *y = pp.y;
     return Succeeded;
 }
 
-int seticonimage(w, dp)
-wbp w;
-dptr dp;
-   {
-   wsp ws = w->window;
-   return Succeeded;
-   }
 
 /*
  * dumpimage -- write an image to a disk file.
@@ -2661,7 +2571,7 @@ void free_color(wbp w, char *s)
 /*
  * drawarcs() - assumes x and y are already fixed up for the bitmap
  */
-void drawarc(wbp w, int x, int y, int width, int height, double angle1, double angle2)
+void drawarc(wbp wb, int x, int y, int width, int height, double angle1, double angle2)
    {
    int i, halfwidth, halfheight, x1, y1, x2, y2, right, bottom;
    double a1_a2;
@@ -2749,75 +2659,6 @@ int on;
    return Succeeded;
    }
 
-char *getselection(wbp w, char *buf)
-{
-   char *p;
-   char* rv = NULL;
-   int i = 0;
-   HGLOBAL hClipMemory;
-   STDLOCALS(w);
-   if (stdwin) {
-      if (OpenClipboard(stdwin)) {
-         hClipMemory = GetClipboardData(CF_TEXT);
-         if (hClipMemory != NULL) {
-            char *pClip = GlobalLock(hClipMemory);
-            int len = strlen(pClip);
-            if (len > 4000) {
-               rv = p = malloc(len+1); /* check receiver for leak ? */
-               }
-            else {
-               rv = p = buf;
-               }
-            while (pClip[i]) {
-               if (!(pClip[i]=='\r' && pClip[i+1]=='\n'))
-                  *p++ = pClip[i];
-               i++;
-               }
-            *p++ = '\0';
-            GlobalUnlock(hClipMemory);
-            }
-         CloseClipboard();
-         }
-      }
-   FREE_STDLOCALS(w);
- 
-  return rv;
-}
-
-int setselection(wbp w, dptr val)
-{
-   int i, iLength = 0;
-   char *s, *send, *pMem;
-   HGLOBAL hGlobalMemory;
-   STDLOCALS(w);
-
-   s = StrLoc(*val);
-   send = s + StrLen(*val);
-   for(i=0; i < StrLen(*val); i++, iLength++) if (s[i] == '\n') iLength++;
-
-   hGlobalMemory = GlobalAlloc(GHND, iLength+1);
-   if (hGlobalMemory) {
-      pMem = GlobalLock(hGlobalMemory);
-      while (s < send) {
-         if (*s == '\n') {
-            *pMem++ = '\r';
-            }
-         *pMem++ = *s++;
-         }
-      *pMem++ = '\0';
-      GlobalUnlock(hGlobalMemory);
-      if (OpenClipboard(stdwin)) {
-         EmptyClipboard();
-         SetClipboardData(CF_TEXT, hGlobalMemory);
-         CloseClipboard();
-         FREE_STDLOCALS(w);
-	 return Succeeded;
-         }
-      }
-   FREE_STDLOCALS(w);
-   return Failed;
-}
-
 /*
  * drawstring()
  */
@@ -2852,7 +2693,7 @@ void drawutf8(wbp w, int x, int y, char *s, int slen)
 /*
  * fillarcs
  */
-void fillarc(wbp w, int x, int y, int width, int height, double angle1, double angle2)
+void fillarc(wbp wb, int x, int y, int width, int height, double angle1, double angle2)
    {
    int diff, bheight;
    HBRUSH hb, oldbrush, oldbrush2;
@@ -2982,12 +2823,12 @@ void drawrectangle(wbp w, int x, int y, int width, int height)
    height += y;
    tmp[0].x = x;
    tmp[0].y = y;
-   tmp[1].x = width;
+   tmp[1].x = width-1;
    tmp[1].y = y;
-   tmp[2].x = width;
-   tmp[2].y = height;
+   tmp[2].x = width-1;
+   tmp[2].y = height-1;
    tmp[3].x = x;
-   tmp[3].y = height;
+   tmp[3].y = height-1;
    tmp[4].x = x;
    tmp[4].y = y;
    Polyline(pixdc, tmp, 5);
@@ -2995,22 +2836,11 @@ void drawrectangle(wbp w, int x, int y, int width, int height)
    SelectObject(pixdc, oldpen2);
    SelectObject(pixdc, oldbrush2);
 
-#if 0
-   for (r = recs; r < recs + nrecs; r++) {
-      /*
-       * from SDK reference: Rectangle() draws up to but not including
-       * the right and bottom coordinates.  Add +1 to compensate.
-       */
-      r->right += 1;
-      r->bottom += 1;
-      }
-#endif
    if (stdwin) {
       SetBkMode(stddc, wc->bkmode);
       oldpen = SelectObject(stddc, hp);
       oldbrush = SelectObject(stddc, hb);
-      for (r = recs; r < recs + nrecs; r++)
-         Rectangle(stddc, r->left, r->top, r->right, r->bottom);
+      Rectangle(stddc, x, y, width, height);
       SelectObject(stddc, oldpen);
       SelectObject(stddc, oldbrush);
       }
@@ -3163,7 +2993,7 @@ wbp w;
 	 DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
 	 getenv("ICONFONT"));
    wc->leading = wc2->leading;
-   setfont(&tmp, &(wc2->font->name));
+   setfont(&tmp, wc2->font->name);  /*rpp:check*/
 
 
    GRFX_LINK(wc, wcntxts);
@@ -3305,10 +3135,7 @@ int patbits[] = {
 /*
  * setpattern
  */
-int setpattern(w, name, len)
-wbp w;
-char *name;
-int len;
+int setpattern(wbp w, char *name)
    {
    int width, nbits;
    int i, j;
@@ -3318,19 +3145,21 @@ int len;
    char data[MAXXOBJS];
    char *buf = data;
    wcp wc = w->context;
+   int len;
 
+   len = strlen(name);
    if (wc->patternname != NULL)
       free(wc->patternname);
-   wc->patternname = malloc(len+1);
+   wc->patternname = malloc(len + 1);
    strncpy(wc->patternname, name, len);
    wc->patternname[len] = '\0';
    
    /*
     * If the pattern starts with a number it is a width , bits encoding
     */
-   if ((len > 0) && isdigit((unsigned char)name[0])) {
+   if (isdigit((unsigned char)name[0])) {
       nbits = MAXXOBJS;
-      switch (parsepattern(name, len, &width, &nbits, bits)) {
+      switch (parsepattern(name, &width, &nbits, bits)) {
       case Failed:
 	 return Failed;
       case Error:
@@ -3469,102 +3298,61 @@ int status;
    HDC hdc;
    HWND w_tmp;
 
-   if (! resizePixmap(w, wid, ht))
-      return Failed;
-   if (ws->win) {
-      pollevent();
-      if (status == 3) {
-	   SetWindowPos(ws->win, ws->win, posx, posy,
-		      wid + BORDWIDTH, ht + BORDHEIGHT,
-			SWP_NOZORDER|SWP_NOACTIVATE);
+    if (status & C_CLIP) {
+        if (wc->clipw >= 0)
+            setclip(w);
+        else
+            unsetclip(w);
+    }
+
+   if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE)) {
+      if (! resizePixmap(w, wid, ht))
+	 return Failed;
+      if (ws->win) {
+	 pollevent();
+	 switch (status & (C_POS|C_SIZE)) {
+            case C_POS|C_SIZE: {
+	       SetWindowPos(ws->win, ws->win, posx, posy,
+			    wid + BORDWIDTH, ht + BORDHEIGHT,
+			    SWP_NOZORDER|SWP_NOACTIVATE);
+	       break;
+	    }
+            case C_SIZE: {
+	       SetWindowPos(ws->win, ws->win, 0, 0,
+			    wid + BORDWIDTH, ht + BORDHEIGHT,
+			    SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
+	       break;
+	    }
+            case C_POS: {
+	       SetWindowPos(ws->win, ws->win,
+			    posx,
+			    posy,
+			    0, 0, SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
+	       break;
+	    }
 	 }
-      else if (status == 2) {
-	   SetWindowPos(ws->win, ws->win, 0, 0,
-		      wid + BORDWIDTH, ht + BORDHEIGHT,
-		      SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
-         }
-      else if (status == 1)
-	   SetWindowPos(ws->win, ws->win,
-		      posx,
-		      posy,
-		      0, 0, SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
       }
-   else if (ws->iconwin) {
-      if (status == 3) {
-	   SetWindowPos(ws->iconwin, ws->iconwin,
-		      posx,
-		      posy,
-		      wid, ht, SWP_NOZORDER|SWP_NOACTIVATE);
-	 }
-      else if (status == 2) {
-	   SetWindowPos(ws->iconwin, ws->iconwin, 0, 0,
-		      wid, ht, SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
-         }
-      else if (status == 1)
+      else if (ws->iconwin) {
+	 if (status == 3) {
 	    SetWindowPos(ws->iconwin, ws->iconwin,
-		      posx,
-		      posy,
-		      0, 0, SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
+			 posx,
+			 posy,
+			 wid, ht, SWP_NOZORDER|SWP_NOACTIVATE);
+	 }
+	 else if (status == 2) {
+	    SetWindowPos(ws->iconwin, ws->iconwin, 0, 0,
+			 wid, ht, SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
+         }
+	 else if (status == 1)
+	    SetWindowPos(ws->iconwin, ws->iconwin,
+			 posx,
+			 posy,
+			 0, 0, SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
       }
+   }
    return Succeeded;
    }
 
-DWORD playMIDIfile(HWND hWndNotify, LPSTR s)
-{
-   UINT wDeviceID;
-   DWORD dwReturn;
-   MCI_OPEN_PARMS mciOpenParms;
-   MCI_PLAY_PARMS mciPlayParms;
-   MCI_STATUS_PARMS mciStatusParms;
-   MCI_SEQ_SET_PARMS mciSeqSetParms;
-
-   mciOpenParms.lpstrDeviceType = "sequencer";
-   mciOpenParms.lpstrElementName = s;
-   if (dwReturn = mciSendCommand((UINT)NULL, MCI_OPEN,
-				 MCI_OPEN_TYPE | MCI_OPEN_ELEMENT,
-				 (DWORD)(LPVOID) &mciOpenParms)) {
-      return dwReturn;
-      }
-   wDeviceID = mciOpenParms.wDeviceID;
-
-   /* attempt to select the MIDI mapper */
-   mciSeqSetParms.dwPort = MIDI_MAPPER;
-   if (dwReturn = mciSendCommand(wDeviceID, MCI_SET, MCI_SEQ_SET_PORT,
-				 (DWORD)(LPVOID) &mciSeqSetParms)) {
-      /* could not select the MIDI mapper; play anyway */
-      }
-
-   mciPlayParms.dwCallback = (DWORD) hWndNotify;
-   if (dwReturn = mciSendCommand(wDeviceID, MCI_PLAY, MCI_NOTIFY,
-    				 (DWORD)(LPVOID) &mciPlayParms)) {
-      mciSendCommand(wDeviceID, MCI_CLOSE, 0, (DWORD)NULL);
-      return dwReturn;
-      }
-
-   return 0L;
-}
-
-
-int playmedia(wbp w, char *s)
-{
-   if (strstr(s, ".wav") || strstr(s, ".WAV")) {
-      sndPlaySound((LPSTR) s, SND_ASYNC);
-      return Succeeded;
-      }
-   else if (strstr(s, ".mid") || strstr(s, ".MID") ||
-            strstr(s, ".rmi") || strstr(s, ".RMI")) {
-      if (playMIDIfile(w->window->win, (LPSTR) s) == 0)
-         return Succeeded;
-      }
-   /*
-    * Interpret as an MCI command string
-    */
-   else {
-      if (mciSendString(s, NULL, 0, 0L)) return Failed;
-      return Succeeded;
-      }
-   return Failed;
-}
 
 
 int resizePixmap(wbp w, int width, int height)
@@ -3818,410 +3606,6 @@ void wfreersc()
    if (wlhead)
       wlfree();
    mciSendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, 0, (DWORD)NULL);
-}
-
-
-/*
- * Native Windows UI facilities
- */
-void makebutton(wsp ws, childcontrol *cc, char *s)
-{
-   cc->type = CHILD_BUTTON;
-   cc->font = 0;
-   cc->id = salloc(s);
-   cc->win = CreateWindow("button", cc->id,
-	         WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-		 0, 0, 0, 0, ws->iconwin, (HMENU)ws->nChildren, mswinInstance,
-		 NULL);
-}
-
-void makescrollbar(wsp ws, childcontrol *cc, char *s, int i1, int i2)
-{
-   cc->type = CHILD_SCROLLBAR;
-   cc->id = salloc(s);
-   cc->font = 0;
-   cc->win = CreateWindow("scrollbar", cc->id,
-            WS_CHILD | WS_VISIBLE | SBS_VERT, 0, 0, 0, 0,
-	    ws->iconwin, (HMENU)ws->nChildren, mswinInstance, NULL);
-   SetScrollRange(cc->win, SB_CTL, i1, i2, FALSE);
-}
-
-int nativemenubar(wbp w, int total, int argc, dptr argv, int warg, dptr d)
-{
-   wsp ws;
-   tended struct b_list *hp;
-   HMENU tempMenu, tempMenu2 = NULL;
-   tended char *s, *s2;
-   int r, i;
-   ws = w->window;
-
-   if (ws->nmMapElems)
-      tempMenu2 = ws->menuBar;
-
-   ws->menuBar = CreateMenu();
-   ws->nmMapElems = total;
-   total = 0;
-   while (warg < argc){
-      /*
-       * each argument must be a list of strings
-       */
-      hp = &ListBlk(argv[warg]);
-      r = hp->size;
-      /*
-       * Construct a Windows menu corresponding to the Icon list
-       */
-      tempMenu = CreateMenu();
-      for(i=0; i < r; i++) {
-         list_get(&argv[warg], d);
-         if (!is:string(*d)) return Error;
-         if (!cnv:C_string(*d, s)) return Error;
-         s = strdup(s);
-         if (i == 0) s2=s;
-         else
-            AppendMenu(tempMenu, MF_STRING, total, s);
-         ws->menuMap[total++] = s;
-         list_put(&(argv[warg]), d);
-         }
-      AppendMenu(ws->menuBar, MF_POPUP, (unsigned int)tempMenu, s2);
-      warg++;
-      }
-   /*
-    * Insert the menu into the window
-    */
-   if (ws->win) SetMenu(ws->win, ws->menuBar);
-   if (tempMenu2) {
-      int i, n = GetMenuItemCount(tempMenu2);
-      for (i=0; i < n; i++) {
-         DestroyMenu(GetSubMenu(tempMenu2, i));
-         }
-      DestroyMenu(tempMenu2);
-      }
-   return Succeeded;
-}
-
-void makeeditregion(wbp w, childcontrol *cc, char *s)
-{
-   wsp ws = w->window;
-   cc->type = CHILD_EDIT;
-   cc->id = salloc(s);
-   cc->win = CreateWindow("edit", NULL,
-		WS_CHILD | WS_VISIBLE | WS_HSCROLL | WS_VSCROLL |
-		WS_BORDER | ES_LEFT | ES_MULTILINE |
-		ES_AUTOHSCROLL | ES_AUTOVSCROLL,
-		0, 0, 0, 0, ws->iconwin,
-		(HMENU) ws->nChildren, mswinInstance, NULL);
-   setchildfont(cc, w->context->font->name);
-}
-
-void cleareditregion(childcontrol *cc)
-{
-   SendMessage(cc->win, WM_CLEAR, 0, 0);
-}
-
-void copyeditregion(childcontrol *cc)
-{
-   SendMessage(cc->win, WM_COPY, 0, 0);
-}
-
-void cuteditregion(childcontrol *cc)
-{
-   SendMessage(cc->win, WM_CUT, 0, 0);
-}
-
-void pasteeditregion(childcontrol *cc)
-{
-   SendMessage(cc->win, WM_PASTE, 0, 0);
-}
-
-int undoeditregion(childcontrol *cc)
-{
-   if (!SendMessage(cc->win, WM_UNDO, 0, 0)) return Failed;
-   return Succeeded;
-}
-
-int modifiededitregion(childcontrol *cc)
-{
-   if (!SendMessage(cc->win, EM_GETMODIFY, 0, 0)) return Failed;
-   return Succeeded;
-}
-
-int setmodifiededitregion(childcontrol *cc, int i)
-{
-   SendMessage(cc->win, EM_SETMODIFY, i, 0);
-   return Succeeded;
-}
-
-void geteditregion(childcontrol *cc, dptr d)
-{
-   int y = GetWindowTextLength(cc->win);
-   char *s2 = alcstr(NULL, y + 1);
-   GetWindowText(cc->win, s2, y+1);
-   StrLoc(*d) = s2;
-   StrLen(*d) = y;
-}
-
-void seteditregion(childcontrol *cc, char *s2)
-{
-   SetWindowText(cc->win, s2);
-}
-
-
-void movechild(childcontrol *cc,
-	       word x, word y, word width, word height)
-{
-   MoveWindow(cc->win, x, y, width, height, TRUE);
-}
-
-int setchildfont(childcontrol *cc, char *fontname)
-{
-   HFONT hf;
-   RECT rect;
-   if (hf = mkfont(fontname)) {
-      SendMessage(cc->win, WM_SETFONT, (WPARAM)hf, 0);
-      if (cc->font) DeleteObject(cc->font);
-      cc->font = hf;
-      GetClientRect(cc->win, &rect);
-      InvalidateRect(cc->win, &rect, TRUE);
-      return Succeeded;
-      }
-   return Failed;
-}
-
-void setfocusonchild(wsp ws, childcontrol *cc, int width, int height)
-{
-   if (width || height) {
-      SetFocus(cc->win);
-      ws->focusChild = cc->win;
-      }
-   else ws->focusChild = 0;
-}
-
-void setchildselection(wsp ws, childcontrol *cc, int x, int y)
-{
-   int iLine = SendMessage(cc->win, EM_LINEFROMCHAR, x-1,0);
-   int topLine = SendMessage(cc->win, EM_GETFIRSTVISIBLELINE, 0, 0);
-   if (topLine != iLine) {
-      SendMessage(cc->win, EM_LINESCROLL, 0, iLine-topLine);
-      }
-   SendMessage(cc->win, EM_SETSEL, x - 1, y - 1);
-
-   SetFocus(cc->win);
-   ws->focusChild = cc->win;
-}
-
-void getchildselection(wsp ws, childcontrol *cc, int *x, int *y)
-{
-   SendMessage(cc->win, EM_GETSEL, (WPARAM)x, (LPARAM)y);
-}
-
-
-CHOOSEFONT cf;
-LOGFONT lf;
-
-int nativefontdialog(wbp w, char *buf, int flags, int fheight)
-{
-   strcpy(lf.lfFaceName, buf);
-   lf.lfHeight = fheight;
-   lf.lfWidth = 0;
-   lf.lfEscapement = 0;
-   if (!strcmp(lf.lfFaceName, "mono") || !strcmp(lf.lfFaceName, "fixed")){
-      strcpy(lf.lfFaceName, "Lucida Sans Typewriter");
-      flags |= FONTFLAG_MONO + FONTFLAG_SANS;
-      }
-   else if (!strcmp(lf.lfFaceName, "typewriter")) {
-      strcpy(lf.lfFaceName, "courier");
-      flags |= FONTFLAG_MONO + FONTFLAG_SERIF;
-      }
-   else if (!strcmp(lf.lfFaceName, "sans")) {
-      strcpy(lf.lfFaceName, "swiss");
-      flags |= FONTFLAG_PROPORTIONAL + FONTFLAG_SANS;
-      }
-   else if (!strcmp(lf.lfFaceName, "serif")) {
-      strcpy(lf.lfFaceName, "roman");
-      flags |= FONTFLAG_PROPORTIONAL + FONTFLAG_SERIF;
-      }
-
-   if (flags & FONTFLAG_BOLD) lf.lfWeight = FW_BOLD;
-   else 
-      lf.lfWeight = FW_DONTCARE;
-   if (flags & FONTFLAG_ITALIC) lf.lfItalic = 1;
-   lf.lfUnderline = lf.lfStrikeOut = 0;
-   lf.lfCharSet = 
-	 ((MAXBYTESPERCHAR==1)?ANSI_CHARSET:DEFAULT_CHARSET);
-   lf.lfOutPrecision = OUT_DEFAULT_PRECIS;
-   lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
-   lf.lfQuality = DEFAULT_QUALITY;
-   if (FONTFLAG_PROPORTIONAL)
-      lf.lfPitchAndFamily = VARIABLE_PITCH;
-   else if (FONTFLAG_MONO)
-      lf.lfPitchAndFamily = FIXED_PITCH;
-   else
-      lf.lfPitchAndFamily = DEFAULT_PITCH;
-   if (!strcmp(lf.lfFaceName, "swiss")) lf.lfPitchAndFamily |= FF_SWISS;
-   else if (!strcmp(lf.lfFaceName, "roman"))
-      lf.lfPitchAndFamily |= FF_ROMAN;
-   else
-      lf.lfPitchAndFamily |= FF_DONTCARE;
-
-   memset(&cf, 0, sizeof(CHOOSEFONT));
-   cf.lStructSize = sizeof(CHOOSEFONT);
-   cf.hwndOwner   = w->window->iconwin;
-   cf.lpLogFont = &lf;
-   cf.Flags = CF_SCREENFONTS | CF_EFFECTS | CF_INITTOLOGFONTSTRUCT;
-   cf.rgbColors = RGB(0,0,0);
-   cf.nFontType = SCREEN_FONTTYPE;
-   if (ChooseFont(&cf) == 0) return Failed;
-   sprintf(buf, "%s,%d%s%s", lf.lfFaceName,
-           ((lf.lfHeight > 0) ? lf.lfHeight : -lf.lfHeight),
-           (lf.lfItalic ? ",italic" : ""),
-	   ((lf.lfWeight > 500) ? ",bold" : ""));
-   return Succeeded;
-}
-
-/*
- * common dialog functions
- */
-COLORREF aclrCust[16];
-CHOOSECOLOR cc;
-
-char *nativecolordialog(wbp w, long r, long g, long b, char *buf)
-{
-   int i;
-   for (i=0; i<16; i++) aclrCust[i] = RGB(255-(i<<4),255-(i<<4),255-(i<<4));
-   memset(&cc, 0, sizeof(CHOOSECOLOR));
-   cc.lStructSize = sizeof(CHOOSECOLOR);
-   cc.hwndOwner   = w->window->iconwin;
-   cc.lpCustColors = aclrCust;
-   cc.rgbResult = mscolor(w, r, g, b);
-   cc.Flags = CC_FULLOPEN | CC_RGBINIT;
-   if (ChooseColor(&cc) == 0)
-      return NULL;
-   sprintf(buf, "%d,%d,%d", (RED(cc.rgbResult)<<8) | 0xFF,
-      (GREEN(cc.rgbResult) << 8) | 0xFF,
-      (BLUE(cc.rgbResult) << 8) | 0xFF);
-   return buf;   
-}
-
-
-
-
-char *nativeselectdialog(wbp w, struct b_list *L, char *s)
-{
-   int i, j, okflag=0, yesnoflag=0, cancelflag=0, retryflag=0, otherflag=0;
-   tended struct b_list *hp = L;
-   tended char *s1 = NULL;
-   tended struct descrip d, d2;
-   char s3[8];
-   wsp ws = w->window;
-   int lsize;
-
-   if (hp == NULL) {
-      okflag = 1;
-      }
-   else {
-      BlkLoc(d2) = (union block *)hp;
-      d2.dword = D_List;
-      lsize  = hp->size;
-
-      for(i=0; i < lsize; i++) {
-         list_get(&d2, &d);
-         if (!cnv:C_string(d, s1)) return NULL;
-         for(j=0; j<8; j++) {
-            s3[j] = tolower((unsigned char)s1[j]);
-            if (s3[j] == '\0') break;
-            }
-         if (!strcmp(s3, "ok")) okflag = 1;
-         else if (!strcmp(s3, "okay")) okflag = 1;
-         else if (!strcmp(s3, "no")) yesnoflag = MB_YESNO;
-         else if (!strcmp(s3, "yes")) yesnoflag = MB_YESNO;
-         else if (!strcmp(s3, "cancel")) cancelflag++;
-         else if (!strcmp(s3, "retry")) retryflag = MB_RETRYCANCEL;
-         else { otherflag++; return NULL; }
-         list_put(&d2, &d);
-         }
-      }
-   /*
-    * validate flags
-    */
-   if (okflag && yesnoflag) return NULL;
-   if (okflag && retryflag) return NULL;
-   if (yesnoflag && retryflag) return NULL;
-   if (retryflag && !cancelflag) return NULL;
-
-   if (cancelflag) {
-      if (okflag) {
-         okflag = MB_OKCANCEL;
-         }
-      else if (yesnoflag) yesnoflag = MB_YESNOCANCEL;
-      }
-    else if (okflag) okflag = MB_OK;
-
-   j = MessageBox((ws->focusChild ? ws->focusChild :
-		  (ws->win ? ws->win : ws->iconwin)),
-           s, " ",
-          okflag | yesnoflag | retryflag
-          | (strchr(s, '!') ? MB_ICONEXCLAMATION : 
-	     (strchr(s, '?') ? MB_ICONQUESTION : MB_ICONASTERISK)));
-
-   switch (j) {
-   case IDOK: return "Okay";
-   case IDCANCEL: return "Cancel";
-   case IDYES: return "Yes";
-   case IDNO: return "No";
-   case IDRETRY: return "Retry";
-   default: return NULL;
-      }
-}
-
-OPENFILENAME ofn;
-
-char *nativefiledialog(wbp w, char *s1, char *s2, char *s3,
-			int i, int j, int saveflag)
-{
-   char buf[128], buf2[64];
-   char *stmp;
-
-   /*
-    * Use the standard dialog to obtain a filename.
-    */
-   memset(&ofn, 0, sizeof(OPENFILENAME));
-   ofn.lStructSize = sizeof(OPENFILENAME);
-   ofn.hwndOwner   = w->window->iconwin;
-   ofn.lpstrFilter = s3;
-   ofn.nFilterIndex = j;
-   strcpy(buf, s2);
-   ofn.lpstrFile = buf;
-   ofn.nMaxFile = sizeof(buf);
-   ofn.lpstrTitle = s1;
-   ofn.lpstrFileTitle = buf2;
-   ofn.nMaxFileTitle = sizeof(buf2);
-   ofn.lpstrInitialDir = NULL;
-   ofn.Flags = OFN_SHOWHELP | OFN_PATHMUSTEXIST;
-   if ((saveflag ? GetSaveFileName(&ofn) : GetOpenFileName(&ofn)) == 0)
-      return NULL;
-
-   /*
-    * If an extension is present in the filename, just return it
-    */
-   s2 = ofn.lpstrFile;
-   while(strchr(s2, '\\')) s2 = strchr(s2, '\\') + 1;
-   if (strchr(s2,'.'))
-      return ofn.lpstrFile;
-
-   /*
-    * If no extension was given, append whatever extension was selected
-    *  in the dialog.
-    */
-   for(j = 1; j < ofn.nFilterIndex; j++) {
-      s3 += strlen(s3) + 1;
-      s3 += strlen(s3) + 1;
-      }
-   s3 += strlen(s3) + 1;
-   s3 = strchr(s3, '.');
-   stmp = alcstr(0, strlen(ofn.lpstrFile) + strlen(s3) + 1);
-   strcpy(stmp, ofn.lpstrFile);
-   strcat(stmp, s3);
-   return stmp;
 }
 
 void wflush(wbp w)
