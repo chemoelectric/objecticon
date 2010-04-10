@@ -101,7 +101,7 @@ class Dialog(Component)
 
    public block()
       self.is_blocked_flag := 1
-      self.resize_attrib := if self.win.is_resizable() then &yes else &no
+      self.resize_attrib := if self.win.can_resize() then &yes else &no
       self.win.set_resize(&no)
    end
 

@@ -1355,16 +1355,6 @@ int requestselection(wbp w, char *selname, char *targetname)
     return Succeeded;
 }
 
-
-int allowresize(wbp w, int on)
-{
-    if (on)
-        SETRESIZABLE(w);
-    else
-        CLRRESIZABLE(w);
-    return Succeeded;
-}
-
 int warppointer(wbp w, int x, int y)
 {
     wsp ws = w->window;

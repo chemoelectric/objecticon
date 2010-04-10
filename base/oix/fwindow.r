@@ -1806,20 +1806,10 @@ function graphics_Window_get_posy(self)
    }
 end
 
-function graphics_Window_is_resizable(self)
+function graphics_Window_can_resize(self)
    body {
        GetSelfW();
        if (ISRESIZABLE(self_w))
-           return nulldesc;
-       else
-           fail;
-   }
-end
-
-function graphics_Window_is_reversed(self)
-   body {
-       GetSelfW();
-       if (ISREVERSE(self_w))
            return nulldesc;
        else
            fail;
@@ -2295,23 +2285,21 @@ end
 
 function graphics_Window_set_resize(self, val)
    body {
-       int i;
        GetSelfW();
-       i = is:null(val) ? 0:1;
-       AttemptAttr(allowresize(self_w, i));
+       if (is:null(val))
+           CLRRESIZABLE(self_w);
+       else
+           SETRESIZABLE(self_w);
+       wconfig |= C_RESIZE;
+       SimpleAttr();
        return self;
    }
 end
 
-function graphics_Window_set_reverse(self, val)
+function graphics_Window_toggle_fgbg(self)
    body {
-       int i;
        GetSelfW();
-       i = is:null(val) ? 0:1;
-       if ((!i && ISREVERSE(self_w)) || (i && !ISREVERSE(self_w))) {
-           togglefgbg(self_w);
-           ISREVERSE(self_w) ? CLRREVERSE(self_w) : SETREVERSE(self_w);
-       }
+       togglefgbg(self_w);
        return self;
    }
 end

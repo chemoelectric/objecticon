@@ -42,11 +42,14 @@ class Style()
    end
 
    public get_filter_clone(W)
+      local t
 $ifdef _MS_WIN32
-      return W.clone("fillstyle=masked", "drawop=reverse", "pattern=verydark")
+      t := W.clone("fillstyle=masked", "drawop=reverse", "pattern=verydark")
 $else
-      return W.clone("fillstyle=masked", "reverse=on", "pattern=waves")
+      t := W.clone("fillstyle=masked", "pattern=waves")
+      t.toggle_fgbg()
 $endif
+      return t
    end
 
    public get_down_clone(W)

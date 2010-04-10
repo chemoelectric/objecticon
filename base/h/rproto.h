@@ -206,7 +206,6 @@ void  bigrand         (dptr da, dptr dx);
     */
    int  setpattern      (wbp w, char *name);
    int  setpatternbits  (wbp w, int width, word *bits, int nbits);
-   int  allowresize     (wbp w, int on);
    void drawblimage     (wbp w, int x, int y, int wd, int h,
                           int ch, unsigned char *s, word len);
    wcp  clonecontext   (wbp w);
