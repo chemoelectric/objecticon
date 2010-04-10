@@ -404,8 +404,8 @@ class Window(SetFields,NoCopy)
    public enqueue(eventcode, x, y, modkeys, interval)	
       /x := 0
       /y := 0
-      x +:= attrib("dx")
-      y +:= attrib("dy")
+      x +:= get_dx()
+      y +:= get_dy()
       return pending(eventcode,
                      ior(pack_modkeys(\modkeys | ""), iand(x, 16rFFFF)),
                      ior(pack_intrvl(\interval | 0), iand(y, 16rFFFF)))
