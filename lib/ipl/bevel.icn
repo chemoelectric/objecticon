@@ -143,9 +143,9 @@ procedure BevelReset(win)
 
    BevelDispose(win)
 
-   if win.attrib("depth") >= 4 then {
+   if win.get_depth() >= 4 then {
 
-      HLS(win,win.color_value(win.bg())) ? {
+      HLS(win,win.color_value(win.get_bg())) ? {
          h := tab(many(&digits))
          move(1)
          l := tab(many(&digits))
@@ -189,13 +189,30 @@ procedure bev_lookup(win)
    
    # Ensure the shadow and hilite windows have the same values for
    # some selected attributes.
-   every attr := "dx" | "dy" | "clipx" | "clipy" | "clipw" | "cliph" do {
-      t := win.attrib(attr) 
-      if t ~=== b.shadow.attrib(attr) then {
-         /t := ""
-         every (b.shadow | b.hilite).attrib(attr || "=" || t)
-      }
-   }
+   t := win.get_dx()
+   if t ~=== b.shadow.get_dx() then
+      every (b.shadow | b.hilite).set_dx(t)
+
+   t := win.get_dy()
+   if t ~=== b.shadow.get_dy() then
+      every (b.shadow | b.hilite).set_dy(t)
+
+   t := win.get_clipx()
+   if t ~=== b.shadow.get_clipx() then
+      every (b.shadow | b.hilite).set_clipx(t)
+
+   t := win.get_clipy()
+   if t ~=== b.shadow.get_clipy() then
+      every (b.shadow | b.hilite).set_clipy(t)
+
+   t := win.get_clipw()
+   if t ~=== b.shadow.get_clipw() then
+      every (b.shadow | b.hilite).set_clipw(t)
+
+   t := win.get_cliph()
+   if t ~=== b.shadow.get_cliph() then
+      every (b.shadow | b.hilite).set_cliph(t)
+
    return b
 end
 
@@ -328,10 +345,10 @@ end
 procedure GrooveRectangle(win, x, y, w, h, bw)	
    local abw
 
-   /x := -win.attrib("dx")
-   /y := -win.attrib("dy")
-   /w := win.attrib("width") - (x + win.attrib("dx"))
-   /h := win.attrib("height") - (y + win.attrib("dy"))
+   /x := -win.get_dx()
+   /y := -win.get_dy()
+   /w := win.get_width() - (x + win.get_dx())
+   /h := win.get_height() - (y + win.get_dy())
 
    if w < 0 then
       x -:= (w := -w)
@@ -362,10 +379,10 @@ procedure BevelRectangle(win, x, y, w, h, bw)
 
    b := bev_lookup(win)
 
-   /x := -win.attrib("dx")
-   /y := -win.attrib("dy")
-   /w := win.attrib("width") - (x + win.attrib("dx"))
-   /h := win.attrib("height") - (y + win.attrib("dy"))
+   /x := -win.get_dx()
+   /y := -win.get_dy()
+   /w := win.get_width() - (x + win.get_dx())
+   /h := win.get_height() - (y + win.get_dy())
 
    if w < 0 then
       x -:= (w := -w)
@@ -436,8 +453,8 @@ procedure DrawGroove(win, x1, y1, x2, y2, w)
       lower := b.hilite
       }
    else {
-      fg := win.fg()			# if erasing, draw in bg color
-      win.fg(win.bg())
+      fg := win.get_fg()			# if erasing, draw in bg color
+      win.set_fg(win.get_bg())
       upper := lower := win
       }
 
@@ -460,7 +477,7 @@ procedure DrawGroove(win, x1, y1, x2, y2, w)
       lower.draw_line(x1, y1, x2, y2)
       }
 
-   win.fg(\fg)				# restore foreground if changed
+   win.set_fg(\fg)				# restore foreground if changed
    return win
 end
 

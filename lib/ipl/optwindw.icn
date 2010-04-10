@@ -166,15 +166,12 @@ procedure optwindow(opts, args[])
       w.font(opts["T"]) | stop(args[1], ": invalid font: ", opts["T"])
 
    # store actual values returned after window placement
-   w.attrib("pos") ? {
-      opts["X"] := integer(tab(many('+\-0123456789')))
-      move(1)
-      opts["Y"] := integer(tab(many('+\-0123456789')))
-   }
+   opts["X"] := w.get_posx()
+   opts["Y"] := w.get_posy()
    opts["P"] := opts["X"] || "," || opts["Y"]
-   opts["W"] := w.attrib("width") - 2 * opts["M"]
-   opts["H"] := w.attrib("height") - 2 * opts["M"]
-   opts["S"] := w.attrib("width") || "," || w.attrib("height")
+   opts["W"] := w.get_width() - 2 * opts["M"]
+   opts["H"] := w.get_height() - 2 * opts["M"]
+   opts["S"] := w.get_width() || "," || w.get_height()
    return w
 end
 

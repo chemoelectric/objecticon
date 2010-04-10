@@ -42,8 +42,8 @@ procedure repeats(name, i, j)
    /j := 1			# vertical repeats
 
    win1 := Window.open("canvas=hidden", "image=" || name) | fail
-   width := win1.attrib("width")
-   height := win1.attrib("height")
+   width := win1.get_width()
+   height := win1.get_height()
    hdim := height * i
    wdim := width * j
 

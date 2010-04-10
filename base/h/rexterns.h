@@ -106,6 +106,7 @@ extern int xnargs;
  */
 #ifdef Graphics
    
+extern int wconfig, inattr;
 extern stringint attribs[];
 extern wbp wbndngs;
 extern wcp wcntxts;

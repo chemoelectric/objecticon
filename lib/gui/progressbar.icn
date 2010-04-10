@@ -14,7 +14,7 @@ class ProgressBar(Component)
    public p
 
    public get_default_height()
-      return self.cbwin.attrib("fheight") + border.get_total_height()
+      return self.cbwin.get_fheight() + border.get_total_height()
    end
 
    public display()
@@ -24,7 +24,7 @@ class ProgressBar(Component)
       s := p || "%"
       draw_string_ex(self.cbwin,
                    r.x + (r.w - self.cbwin.text_width(s)) / 2,
-                   r.y + (r.h - self.cbwin.attrib("fheight")) / 2,
+                   r.y + (r.h - self.cbwin.get_fheight()) / 2,
                    s)
       #
       # Draw the bar in reverse mode

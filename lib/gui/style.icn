@@ -34,11 +34,11 @@ class Style()
    end
 
    public get_hilite_color(W)
-      return bev_lookup(W).hilite.attrib("fg")
+      return bev_lookup(W).hilite.get_fg()
    end
 
    public get_shadow_color(W)
-      return bev_lookup(W).shadow.attrib("fg")
+      return bev_lookup(W).shadow.get_fg()
    end
 
    public get_filter_clone(W)

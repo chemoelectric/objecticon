@@ -147,8 +147,8 @@ end
 procedure Enqueue(win, eventcode, x, y, modkeys, interval)	
    /x := 0
    /y := 0
-   x +:= win.attrib( "dx")
-   y +:= win.attrib( "dy")
+   x +:= win.get_dx()
+   y +:= win.get_dy()
    return put(win.pending(),
       eventcode,
       ior(pack_modkeys(\modkeys | ""), iand(x, 16rFFFF)),

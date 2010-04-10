@@ -38,8 +38,8 @@ procedure mirror(win, x, y, w, h)
 
    /x := 0
    /y := 0
-   /w := win.attrib("width")
-   /h := win.attrib("height")
+   /w := win.get_width()
+   /h := win.get_height()
 
    if w < 0 then {
       w := -w

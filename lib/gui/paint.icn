@@ -28,7 +28,7 @@ class TextPaint(Paint)
 
    public initially(c, accel)
       self.accel := accel
-      self.h := c.cbwin.attrib("fheight")
+      self.h := c.cbwin.get_fheight()
       self.w := c.cbwin.text_width(str)
    end
 
@@ -64,8 +64,8 @@ class ImageWindowPaint(Paint)
    public win
 
    public initially()
-      self.w := win.attrib("width")
-      self.h := win.attrib("height")
+      self.w := win.get_width()
+      self.h := win.get_height()
    end
 
    public draw(W, x, y)
@@ -221,13 +221,13 @@ class GridPaint(Paint)
       local y1
       if pass = 1 then {
          llen +:= win.text_width(s)
-         lheight <:= win.attrib("fheight")
+         lheight <:= win.get_fheight()
       } else {
          ready_to_output() | fail
          y1 := case ia_y of {
             Align.T : y
-            Align.C : y + (curr_cell.obj[lno].h - win.attrib("fheight")) / 2
-            Align.B : y + curr_cell.obj[lno].h - win.attrib("fheight")
+            Align.C : y + (curr_cell.obj[lno].h - win.get_fheight()) / 2
+            Align.B : y + curr_cell.obj[lno].h - win.get_fheight()
          }
          draw_string_ex(win, x, y1, s, accel)
          # Just print the accelerator once.
@@ -307,17 +307,17 @@ class GridPaint(Paint)
       local W, y1
       W := ImageCache.get(args[1]) | fail
       if pass = 1 then {
-         llen +:= W.attrib("width")
-         lheight <:= W.attrib("height")
+         llen +:= W.get_width()
+         lheight <:= W.get_height()
       } else {
          ready_to_output() | fail
          y1 := case ia_y of {
             Align.T : y
-            Align.C : y + (curr_cell.obj[lno].h - W.attrib("height")) / 2
-            Align.B : y + curr_cell.obj[lno].h - W.attrib("height")
+            Align.C : y + (curr_cell.obj[lno].h - W.get_height()) / 2
+            Align.B : y + curr_cell.obj[lno].h - W.get_height()
          }
          W.copy_to(win,,,,, x, y1)
-         x +:= W.attrib("width")
+         x +:= W.get_width()
       }
    end
 
@@ -459,8 +459,8 @@ class ImagePaint(Paint,SetFields)
       load_image(c)
       zoom_image()
       if \win then {
-         self.w := win.attrib("width")
-         self.h := win.attrib("height")
+         self.w := win.get_width()
+         self.h := win.get_height()
       } else
          self.w := self.h := 0
    end
@@ -504,8 +504,8 @@ class ImagePaint(Paint,SetFields)
       if /win | (/max_w & /max_h) then
          fail
 
-      img_w := win.attrib("width")
-      img_h := win.attrib("height")
+      img_w := win.get_width()
+      img_h := win.get_height()
       if /self.scale_up_flag & 
          (/max_w | img_w <= max_w)\1 & (/max_h | img_h <= \max_h) then
          return

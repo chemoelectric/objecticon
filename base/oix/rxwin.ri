@@ -60,6 +60,8 @@ static void free_xcolor(wbp w, unsigned long c);
 static void free_xcolors(wbp w, int extent);
 static int go_virtual(wbp w);
 static int resizePixmap(wbp w, int width, int height);
+static void setclip(wbp w);
+static void unsetclip(wbp w);
 
 
 #define DEFAULTFONTNAME "fixed"
@@ -774,40 +776,17 @@ void wsync(wbp w)
 
 /*
  * open a window
- * This routine really just allocates a window data structure.
- * The interesting part is done in wmap, after the user preferences
- * passed to Icon have been parsed.  Returns NULL on error/failure;
- * err_index is set to one of:
- *  >= 0: the index of an offending attribute value
- *  -1  : ordinary failure
  */
-wbp wopen(wbp parent, dptr attr, int n, int *err_index)
+wbp wcreate(char *display)
 {
     wbp w;
     wsp ws;
-    char dispchrs[256];
-    char answer[128];
-    char *display = NULL;
-    int i;
-    tended struct descrip attrrslt;
-
-    for(i = 0; i < n; i++) {
-        if (is:string(attr[i]) &&
-            (StrLen(attr[i])>8) &&
-            !strncmp("display=",StrLoc(attr[i]),8)) {
-            strncpy(dispchrs,StrLoc(attr[i])+8,StrLen(attr[i])-8);
-            dispchrs[StrLen(attr[i]) - 8] = '\0';
-            display = dispchrs;
-        }
-    }
-
     w = alc_wbinding();
     w->window = alc_winstate();
     if ((w->window->display = alc_display(display)) == NULL) {
         LitWhy("Couldn't initialize display structure");
-        *err_index = -1; /* non-fatal error; probably bad DISPLAY */
         free_binding(w);
-        return NULL;
+        return 0;
     }
     ws = w->window;
     ws->vis = DefaultVisual(ws->display->display, ws->display->screen); 
@@ -818,43 +797,22 @@ wbp wopen(wbp parent, dptr attr, int n, int *err_index)
      */
 	
     w->context = alc_context(w);
-	
-    /*
-     * some attributes of the context determine window defaults
-     */
-    ws->height = w->context->font->height * 12;
-    ws->width  = w->context->font->maxwidth * 80;
 
-    /*
-     * Loop through any remaining arguments.
-     */
-    for (i = 0; i < n; i++){
-        /*
-         * write the attribute,
-         *  except "display=" attribute, which is done earlier
-         */
-        if((StrLen(attr[i])<9)||strncmp(StrLoc(attr[i]),"display=",8)) {
-            switch (wattrib((wbp) w, StrLoc(attr[i]), StrLen(attr[i]), &attrrslt,
-                            answer)) {
-                case Error:
-                    *err_index = i;
-                    return NULL;
-                case Failed:
-                    whyf("Bad window attribute: %.*s", (int)StrLen(attr[i]), StrLoc(attr[i]));
-                    free_binding(w);
-                    *err_index = -1;
-                    return NULL;
-	    }
-        }
-    }
-    if (ws->windowlabel == NULL)
-        ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
+    ws->height = 200;
+    ws->width  = 200;
+    ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
+
+    return w;
+}
+
+int wopen(wbp w, wbp parent)
+{
+    wsp ws = w->window;
 
     if (wmap(w, parent) != Succeeded) {
         LitWhy("Failed to map window");
         free_binding(w);
-        *err_index = -1;
-        return NULL;
+        return Failed;
     }
 	
     if (ws->win) {
@@ -862,7 +820,7 @@ wbp wopen(wbp parent, dptr attr, int n, int *err_index)
         XSetWMProtocols(ws->display->display, ws->win, &WMDeleteWindow, 1);
     }
 
-    return w;
+    return Succeeded;
 }
 
 /*
@@ -1070,7 +1028,7 @@ static int wmap(wbp w, wbp parent)
         /* Use a temporary buff since setpattern frees wc->patternname, so can't use it
          * as an argument */
         strcpy(buff, wc->patternname);
-        if (setpattern(w, buff, strlen(buff)) != Succeeded)
+        if (setpattern(w, buff) != Succeeded)
             return Failed;
     }
 
@@ -1181,118 +1139,64 @@ static int wmap(wbp w, wbp parent)
 int doconfig(wbp w, int status)
 {
     wsp ws = w->window;
+    wcp wc = w->context;
     wdp wd = ws->display;
     XTextProperty textprop;
-    
-    if (!resizePixmap(w, ws->width, ws->height))
-        return Failed;
 
-    if (!ws->win)
-        return Succeeded;
-
-    if (status != C_POS) {
-        XSizeHints size_hints;
-        long t;
-
-        /* Not just a move */
-
-        XGetWMNormalHints(wd->display, ws->win, &size_hints, &t);
-        if (ISRESIZABLE(w)) {
-            size_hints.min_width = ws->minwidth;
-            size_hints.min_height = ws->minheight;
-            size_hints.max_width = ws->maxwidth;
-            size_hints.max_height = ws->maxheight;
-        }
-        else {
-            size_hints.min_width = size_hints.max_width = ws->width;
-            size_hints.min_height = size_hints.max_height = ws->height;
-        }
-        XSetWMNormalHints(wd->display, ws->win, &size_hints);
+    if (status & C_CLIP) {
+        if (wc->clipw >= 0)
+            setclip(w);
+        else
+            unsetclip(w);
     }
 
-    switch (status & (C_POS|C_SIZE)) {
-        case C_POS: {
-            XMoveWindow(wd->display, ws->win, ws->posx, ws->posy);
-            break;
+    if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE)) {
+        if (!resizePixmap(w, ws->width, ws->height))
+            return Failed;
+
+        if (!ws->win)
+            return Succeeded;
+
+        if (status != C_POS) {
+            XSizeHints size_hints;
+            long t;
+
+            /* Not just a move */
+
+            XGetWMNormalHints(wd->display, ws->win, &size_hints, &t);
+            if (ISRESIZABLE(w)) {
+                size_hints.min_width = ws->minwidth;
+                size_hints.min_height = ws->minheight;
+                size_hints.max_width = ws->maxwidth;
+                size_hints.max_height = ws->maxheight;
+            }
+            else {
+                size_hints.min_width = size_hints.max_width = ws->width;
+                size_hints.min_height = size_hints.max_height = ws->height;
+            }
+            XSetWMNormalHints(wd->display, ws->win, &size_hints);
         }
-        case C_SIZE: {
-            XResizeWindow(wd->display, ws->win, ws->width, ws->height);
-            break;
+
+        switch (status & (C_POS|C_SIZE)) {
+            case C_POS: {
+                XMoveWindow(wd->display, ws->win, ws->posx, ws->posy);
+                break;
+            }
+            case C_SIZE: {
+                XResizeWindow(wd->display, ws->win, ws->width, ws->height);
+                break;
+            }
+            case C_POS|C_SIZE: {
+                XMoveResizeWindow(wd->display, ws->win, ws->posx, ws->posy, ws->width, ws->height);
+                break;
+            }
         }
-        case C_POS|C_SIZE: {
-            XMoveResizeWindow(wd->display, ws->win, ws->posx, ws->posy, ws->width, ws->height);
-            break;
-        }
+        /* XSync is not enough because the window manager gets involved here. */
+        XFlush(wd->display);			      /* force out request */
+        XGetWMName(wd->display, ws->win, &textprop);    /* force WM round trip */
+        XSync(wd->display, False);		      /* NOW sync */
     }
-    /* XSync is not enough because the window manager gets involved here. */
-    XFlush(wd->display);			      /* force out request */
-    XGetWMName(wd->display, ws->win, &textprop);    /* force WM round trip */
-    XSync(wd->display, False);		      /* NOW sync */
-
-    return Succeeded;
-}
-
-int setheight(wbp w, int new_height)
-{
-    STDLOCALS(w);
-    ws->height = new_height;
-    return Succeeded;
-}
-
-int setwidth(wbp w, int new_width)
-{
-    STDLOCALS(w);
-    ws->width = new_width;
-    return Succeeded;
-}
-
-int setposx(wbp w, int new_posx)
-{
-    STDLOCALS(w);
-    /*
-     * can't set position on hidden windows (but can on opening ones)
-     */
-    if ((stdwin || !stdpix))
-        ws->posx = new_posx;
-    return Succeeded;
-}
-
-int setposy(wbp w, int new_posy)
-{
-    STDLOCALS(w);
-    /*
-     * can't set position on hidden windows (but can on opening ones)
-     */
-    if ((stdwin || !stdpix))
-        ws->posy = new_posy;
-    return Succeeded;
-}
-
-int setminheight(wbp w, int new_height)
-{
-    STDLOCALS(w);
-    ws->minheight = new_height;
-    return Succeeded;
-}
-
-int setminwidth(wbp w, int new_width)
-{
-    STDLOCALS(w);
-    ws->minwidth = new_width;
-    return Succeeded;
-}
-
-int setmaxheight(wbp w, int new_height)
-{
-    STDLOCALS(w);
-    ws->maxheight = new_height;
-    return Succeeded;
-}
-
-int setmaxwidth(wbp w, int new_width)
-{
-    STDLOCALS(w);
-    ws->maxwidth = new_width;
+        
     return Succeeded;
 }
 
@@ -1566,7 +1470,7 @@ int rebind(wbp w, wbp w2)
 }
 
 
-void setclip(wbp w)
+static void setclip(wbp w)
 {
     wcp wc = w->context;
     XRectangle rec;
@@ -1579,7 +1483,7 @@ void setclip(wbp w)
     }
 }
 
-void unsetclip(wbp w)
+static void unsetclip(wbp w)
 {
     wcp wc = w->context;
     if (wc->gc) {
@@ -3498,7 +3402,7 @@ static stringint siPatternSyms[] = {
 /*
  * setpattern
  */
-int setpattern(wbp w, char *name, int len)
+int setpattern(wbp w, char *name)
 {
     int width, nbits;
     int i;
@@ -3516,9 +3420,9 @@ int setpattern(wbp w, char *name, int len)
     /*
      * If the pattern starts with a number it is a width , bits encoding
      */
-    if ((len > 0) && isdigit((unsigned char)name[0])) {
+    if (isdigit((unsigned char)name[0])) {
         nbits = MAXXOBJS;
-        switch (parsepattern(name, len, &width, &nbits, bits)) {
+        switch (parsepattern(name, &width, &nbits, bits)) {
             case Failed:
                 return Failed;
             case Error:

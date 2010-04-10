@@ -99,8 +99,8 @@ procedure clearpanel(panel)
       }
    else panel.window.fg(panel.fg)
 
-   width := panel.window.attrib("width")
-   height := panel.window.attrib("height")
+   width := panel.window.get_width()
+   height := panel.window.get_height()
 
    every x := 0 to width by panel.size do
       panel.window.draw_line(x, 0, x, height)

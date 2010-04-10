@@ -1,46 +1,158 @@
 package graphics
 
 import 
-   lang(NoCopy)
+   lang(NoCopy),
+   util(SetFields)
 
-class Window(NoCopy)
+class Window(SetFields,NoCopy)
    private
       wbp
 
    public static open(a[])
-      return Window(open_impl!a)
+      local w
+      w := Window(wcreate())
+      w.set_fields(a)
+      w.wopen()
+      return w
+   end
+
+   public static open_on(display, a[])
+      local w
+      w := Window(wcreate(display))
+      w.set_fields(a)
+      w.wopen()
+      return w
    end
 
    public open_child(a[])
-      return Window(open_child_impl!a)
+      local w
+      w := Window(wcreate())
+      w.set_fields(a)
+      w.wopen(self)
+      return w
+   end
+
+   public open_child_on(display, a[])
+      local w
+      w := Window(wcreate(display))
+      w.set_fields(a)
+      w.wopen(self)
+      return w
    end
 
    public clone(a[])
-      return Window(clone_impl!a)
+      local w
+      w := Window(clone_impl())
+      w.pre_attrib()
+      w.set_fields(a)
+      w.post_attrib()
+      return w
+   end
+
+   public attrib(a[])
+      pre_attrib()
+      cast(self,SetFields).attrib!a
+      post_attrib()
    end
 
    public static couple(w1, w2)
       return Window(couple_impl(w1, w2))
    end
 
-   private static defer open_impl(a[])
-   private defer open_child_impl(a[])
+   private static defer wcreate(display)
+   private defer wopen(parent)
+   private defer pre_attrib()
+   private defer post_attrib()
    private defer clone_impl(a[])
    private static defer couple_impl(w1, w2)
+
+   public defer get_ascent()
+   public defer get_bg()
+   public defer get_canvas()
+   public defer get_cliph()
+   public defer get_clipw()
+   public defer get_clipx()
+   public defer get_clipy()
+   public defer get_depth()
+   public defer get_descent()
+   public defer get_display()
+   public defer get_drawop()
+   public defer get_dx()
+   public defer get_dy()
+   public defer get_fg()
+   public defer get_fheight()
+   public defer get_fillstyle()
+   public defer get_font()
+   public defer get_fwidth()
+   public defer get_gamma()
+   public defer get_geometry()
+   public defer get_height()
+   public defer get_image()
+   public defer get_inputmask()
+   public defer get_label()
+   public defer get_linestyle()
+   public defer get_linewidth()
+   public defer get_maxheight()
+   public defer get_maxsize()
+   public defer get_maxwidth()
+   public defer get_minheight()
+   public defer get_minsize()
+   public defer get_minwidth()
+   public defer get_pattern()
+   public defer get_pointer()
+   public defer get_pos()
+   public defer get_posx()
+   public defer get_posy()
+   public defer is_resizable()
+   public defer is_reversed()
+   public defer get_size()
+   public defer get_titlebar()
+   public defer get_visual()
+   public defer get_width()
+   public defer get_windowlabel()
+
+   public defer set_bg(v)
+   public defer set_canvas(v)
+   public defer set_cliph(v)
+   public defer set_clipw(v)
+   public defer set_clipx(v)
+   public defer set_clipy(v)
+   public defer set_drawop(v)
+   public defer set_dx(v)
+   public defer set_dy(v)
+   public defer set_fg(v)
+   public defer set_fillstyle(v)
+   public defer set_font(v)
+   public defer set_gamma(v)
+   public defer set_geometry(v)
+   public defer set_height(v)
+   public defer set_image(v)
+   public defer set_inputmask(v)
+   public defer set_label(v)
+   public defer set_linestyle(v)
+   public defer set_linewidth(v)
+   public defer set_maxheight(v)
+   public defer set_maxsize(v)
+   public defer set_maxwidth(v)
+   public defer set_minheight(v)
+   public defer set_minsize(v)
+   public defer set_minwidth(v)
+   public defer set_pattern(v)
+   public defer set_pointer(v)
+   public defer set_pos(v)
+   public defer set_posx(v)
+   public defer set_posy(v)
+   public defer set_resize(v)
+   public defer set_reverse(v)
+   public defer set_size(v)
+   public defer set_titlebar(v)
+   public defer set_width(v)
+   public defer set_windowlabel(v)
 
    #
    # Produces a beep or other signal to attract attention.
    #
    public defer alert(volume)
-
-   #
-   # Returns the background color. If colr is supplied, the color is
-   # first set to that specification; failure occurs if the request
-   # cannot be satisfied. Setting the background color does not change
-   # the appearance of the window, but subsequent drawing operations
-   # that use the background color are affected.
-   #
-   public defer bg(colr)
 
    #
    # Sets the clipping region to the specified rectangle; subsequent
@@ -131,11 +243,6 @@ class Window(NoCopy)
    public defer pending(a[])
 
    #
-   # Set foreground color
-   #
-   public defer fg(colr)
-
-   #
    # fill_arc(x, y, width, height, angle1, angle2)
    #
    public defer fill_arc(x, y, width, height, angle1, angle2)
@@ -154,11 +261,6 @@ class Window(NoCopy)
    # fill_rectangle(x, y, width, height)
    #
    public defer fill_rectangle(x, y, width, height)
-
-   #
-   # font(f) - get/set font
-   #
-   public defer font(f)
 
    #
    # free_color(a[]) - free colors
@@ -189,11 +291,6 @@ class Window(NoCopy)
    # Return key of closest color to s in palette p
    #
    public defer palette_key(s1, s2)
-
-   #
-   # Sets the context fill pattern by string name
-   #
-   public defer pattern(s)
 
    #
    # Produce the contents of some pixels
@@ -247,18 +344,6 @@ class Window(NoCopy)
    # the window is closed.
    #
    public defer uncouple()
-
-   #
-   # attrib() sets and generates window attribute values. Each string
-   # of the form name=value sets a value; a string with just a name is
-   # an inquiry. First, any requested values are set. Then attrib()
-   # generates the values of all referenced attributes. Each value has
-   # the data type appropriate to the attribute it
-   # represents. attrib() ignores unrecognized names and illegal
-   # values, producing no result; if all arguments are invalid,
-   # attrib() fails.
-   #
-   public defer attrib(a[])
 
    #
    # Returns the value of option s2 for the program named s1 as
@@ -354,6 +439,50 @@ class Window(NoCopy)
          e +:= 16r1000			# increase exponent
       }
       return ishift(e + n, 16)		# return shifted result
+   end
+
+   protected set_one(f)
+      case f.attr of {
+         "bg": set_bg(f.val)
+         "canvas": set_canvas(f.val)
+         "cliph": set_cliph(f.val)
+         "clipw": set_clipw(f.val)
+         "clipx": set_clipx(f.val)
+         "clipy": set_clipy(f.val)
+         "drawop": set_drawop(f.val)
+         "dx": set_dx(f.val)
+         "dy": set_dy(f.val)
+         "fg": set_fg(f.val)
+         "fillstyle": set_fillstyle(f.val)
+         "font": set_font(f.val)
+         "gamma": set_gamma(f.val)
+         "geometry": set_geometry!(f.int_list_val())
+         "height": set_height(f.val)
+         "image": set_image(f.val)
+         "inputmask": set_inputmask(f.val)
+         "label": set_label(f.val)
+         "linestyle": set_linestyle(f.val)
+         "linewidth": set_linewidth(f.val)
+         "maxheight": set_maxheight(f.val)
+         "maxsize": set_maxsize!(f.int_list_val())
+         "maxwidth": set_maxwidth(f.val)
+         "minheight": set_minheight(f.val)
+         "minsize": set_minsize!(f.int_list_val())
+         "minwidth": set_minwidth(f.val)
+         "pattern": set_pattern(f.val)
+         "pointer": set_pointer(f.val)
+         "pos": set_pos!(f.int_list_val())
+         "posx": set_posx(f.val)
+         "posy": set_posy(f.val)
+         "resize": set_resize(f.flag_val())
+         "reverse": set_reverse(f.flag_val())
+         "size": set_size!(f.int_list_val())
+         "titlebar": set_titlebar(f.val)
+         "width": set_width(f.val)
+         "windowlabel": set_windowlabel(f.val)
+         default : fail
+      }
+      return
    end
 
    private new(wbp)

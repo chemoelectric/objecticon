@@ -14,7 +14,6 @@
 static char attr_buff[4096];     /* Buff for attribute values */
 
 
-
 static struct sdescrip wclassname = {15, "graphics.Window"};
 
 static struct sdescrip wbpf = {3, "wbp"};
@@ -46,58 +45,89 @@ if (!self_w)
     runerr(142, self);
 #enddef
 
-function graphics_Window_open_impl(attr[n])
+static char *buffstr(dptr d)
+{
+    if (StrLen(*d) >= sizeof(attr_buff))
+        fatalerr(149, d);
+    memcpy(attr_buff, StrLoc(*d), StrLen(*d));
+    attr_buff[StrLen(*d)] = 0;
+    return attr_buff;
+}
+
+#passthru #define _DPTR dptr
+#passthru #define _CHARPP char **
+static void buffnstr(dptr d, char **s, ...)
+{
+    int free;
+    char *t;
+    va_list ap;
+    va_start(ap, s);
+    t = attr_buff;
+    free = sizeof(attr_buff);
+    while (d) {
+        if (StrLen(*d) >= free)
+            fatalerr(149, d);
+        memcpy(t, StrLoc(*d), StrLen(*d));
+        *s = t;
+        t += StrLen(*d);
+        *t++ = 0;
+        free -= StrLen(*d) + 1;
+        d = va_arg(ap, _DPTR);
+        if (!d)
+            break;
+        s = va_arg(ap, _CHARPP);
+    }
+    va_end(ap);
+}
+
+
+
+function graphics_Window_wcreate(display)
    body {
-      int j, err_index;
-      wbp f;
-
-      /*
-       * loop through attributes, checking validity
-       */
-      for (j = 0; j < n; j++) {
-          if (is:null(attr[j]))
-              attr[j] = emptystr;
-          if (!is:string(attr[j]))
-              runerr(109, attr[j]);
+      inattr = 1;
+      wconfig = 0;
+      if (is:null(display))
+         return C_integer (word) wcreate(0);
+      else {
+         if (!cnv:string(display, display))
+             runerr(103, display);
+         return C_integer (word) wcreate(buffstr(&display));
       }
-
-      err_index = -1;
-      f = wopen(0, attr, n, &err_index);
-
-      if (f == NULL) {
-          if (err_index >= 0) runerr(145, attr[err_index]);
-          else fail;
-      }
-
-      return C_integer (word)f;
    }
 end
 
-function graphics_Window_open_child_impl(self, attr[n])
+function graphics_Window_wopen(self, parent)
    body {
-      int j, err_index;
-      wbp f;
+      wbp w2;
       GetSelfW();
-
-      /*
-       * loop through attributes, checking validity
-       */
-      for (j = 0; j < n; j++) {
-          if (is:null(attr[j]))
-              attr[j] = emptystr;
-          if (!is:string(attr[j]))
-              runerr(109, attr[j]);
+      if (is:null(parent)) 
+          wopen(self_w, 0);
+      else {
+          WindowStaticParam(parent, w2);
+          wopen(self_w, w2);
       }
+      inattr = wconfig = 0;
+      return self;
+   }
+end
 
-      err_index = -1;
-      f = wopen(self_w, attr, n, &err_index);
+function graphics_Window_pre_attrib(self)
+   body {
+      inattr = 1;
+      wconfig = 0;
+      fail;
+   }
+end
 
-      if (f == NULL) {
-          if (err_index >= 0) runerr(145, attr[err_index]);
-          else fail;
+function graphics_Window_post_attrib(self)
+   body {
+      GetSelfW();
+      inattr = 0;
+      if (wconfig) {
+          doconfig(self_w, wconfig);
+          wconfig = 0;
       }
-
-      return C_integer (word)f;
+      fail;
    }
 end
 
@@ -108,38 +138,6 @@ function graphics_Window_alert(self, volume)
        GetSelfW();
        walert(self_w, volume);
        return nulldesc;
-   }
-end
-
-function graphics_Window_bg(self, colr)
-   body {
-      tended struct descrip result;
-      tended char *tmp;
-      GetSelfW();
-
-      /*
-       * If there is an argument we are setting by either a mutable
-       * color (negative int) or a string name.
-       */
-      if (!is:null(colr)) {
-          if (is:integer(colr)) {    /* mutable color or packed RGB */
-              if (isetbg(self_w, IntVal(colr)) == Failed) 
-                  fail;
-          }
-          else {
-              if (!cnv:C_string(colr, tmp))
-                  runerr(103, colr);
-              if(setbg(self_w, tmp) == Failed)
-                  fail;
-          }
-      }
-
-      /*
-       * In any event, this function returns the current background color.
-       */
-      getbg(self_w, attr_buff);
-      cstr2string(attr_buff, &result);
-      return result;
    }
 end
 
@@ -155,7 +153,6 @@ function graphics_Window_clip(self, argv[argc])
       if (argc == 0) {
           wc->clipx = wc->clipy = 0;
           wc->clipw = wc->cliph = -1;
-          unsetclip(self_w);
       }
       else {
           r = rectargs(self_w, argc, argv, 0, &x, &y, &width, &height);
@@ -165,36 +162,20 @@ function graphics_Window_clip(self, argv[argc])
           wc->clipy = y;
           wc->clipw = width;
           wc->cliph = height;
-          setclip(self_w);
       }
-
+      doconfig(self_w, C_CLIP);
       return self;
    }
 end
 
-function graphics_Window_clone_impl(self, argv[argc])
+function graphics_Window_clone_impl(self)
    body {
        wbp w2;
-       int n;
-       tended struct descrip sbuf, sbuf2;
        GetSelfW();
-
        w2 = alc_wbinding();
        w2->window = self_w->window;
        w2->window->refcount++;
        w2->context = clonecontext(self_w);
-
-       for (n = 0; n < argc; n++) {
-           if (!is:null(argv[n])) {
-               if (!cnv:tmp_string(argv[n], sbuf))
-                   runerr(109, argv[n]);
-               switch (wattrib(w2, StrLoc(argv[n]), StrLen(argv[n]), &sbuf2, attr_buff)) {
-                   case Failed: fail;
-                   case Error: runerr(0, argv[n]);
-	       }
-           }
-       }
-
        return C_integer((word)w2);
    }
 end
@@ -230,16 +211,18 @@ function graphics_Window_color(self, argv[argc])
                   runerr(205, argv[i+1]);		/* must be negative */
               if ((srcname = getmutablename(self_w, IntVal(argv[i+1]))) == NULL)
                   fail;
-              if (setmutable(self_w, n, srcname) == Failed) fail;
+              if (setmutable(self_w, n, srcname) == Failed) 
+                  fail;
               strcpy(colorname, srcname);
           }
    
           else {					/* specified by name */
-              tended char *tmp;
-              if (!cnv:C_string(argv[i+1],tmp))
+              char *tmp;
+              if (!cnv:string(argv[i+1],argv[i+1]))
                   runerr(103,argv[i+1]);
-   
-              if (setmutable(self_w, n, tmp) == Failed) fail;
+              tmp = buffstr(&argv[i+1]);
+              if (setmutable(self_w, n, tmp) == Failed) 
+                  fail;
               strcpy(colorname, tmp);
           }
       }
@@ -778,41 +761,6 @@ function graphics_Window_pending(self, argv[argc])
    }
 end
 
-
-function graphics_Window_fg(self, colr)
-   body {
-      tended struct descrip result;
-      tended char *tmp;
-      GetSelfW();
-
-      /*
-       * If there is a (non-window) argument we are setting by
-       *  either a mutable color (negative int) or a string name.
-       */
-      if (!is:null(colr)) {
-	  if (is:integer(colr)) {	/* mutable color or packed RGB */
-              if (isetfg(self_w, IntVal(colr)) == Failed) 
-                  fail;
-          }
-	  else {
-              if (!cnv:C_string(colr, tmp))
-                  runerr(103, colr);
-              if(setfg(self_w, tmp) == Failed)
-                  fail;
-          }
-
-      }
-
-      /*
-       * In any case, this function returns the current foreground color.
-       */
-
-      getfg(self_w, attr_buff);
-      cstr2string(attr_buff, &result);
-      return result;
-   }
-end
-
 function graphics_Window_fill_arc(self, argv[argc])
    body {
       int r;
@@ -927,23 +875,6 @@ function graphics_Window_fill_rectangle(self, argv[argc])
    }
 end
 
-function graphics_Window_font(self, f)
-   body {
-      tended struct descrip result;
-      tended char *tmp;
-      GetSelfW();
-
-      if (!is:null(f)) {
-          if (!cnv:C_string(f, tmp))
-              runerr(103, f);
-          if (setfont(self_w,tmp) == Failed) 
-              fail;
-      }
-      cstr2string(self_w->context->font->name, &result);
-      return result;
-   }
-end
-
 function graphics_Window_free_color(self, argv[argc])
    body {
       int i;
@@ -961,9 +892,9 @@ function graphics_Window_free_color(self, argv[argc])
                   free_mutable(self_w, n);
           }
           else {
-              if (!cnv:C_string(argv[i], s))
+              if (!cnv:string(argv[i],argv[i]))
                   runerr(103,argv[i]);
-              free_color(self_w, s);
+              free_color(self_w, buffstr(&argv[i]));
           }
       }
 
@@ -1074,23 +1005,6 @@ function graphics_Window_palette_key(self, s1, s2)
           return string(1, rgbkey(p, r / 65535.0, g / 65535.0, b / 65535.0));
       else
           fail;
-   }
-end
-
-function graphics_Window_pattern(self, s)
-   if !cnv:string(s) then
-      runerr(103, s)
-   body {
-      GetSelfW();
-
-      switch (setpattern(self_w, StrLoc(s), StrLen(s))) {
-          case Error:
-              runerr(0, s);
-          case Failed:
-              fail;
-      }
-
-      return self;
    }
 end
 
@@ -1228,10 +1142,10 @@ function graphics_Window_read_image(self, x, y, file, pal)
       runerr(101, x)
    if !cnv:C_integer(y) then
       runerr(101, y)
-   if !cnv:C_string(file) then
+   if !cnv:string(file) then
       runerr(103, file)
    body {
-      char filename[MaxPath + 1];
+      char *filename;
       int p, r;
       struct imgdata imd;
       GetSelfW();
@@ -1251,8 +1165,8 @@ function graphics_Window_read_image(self, x, y, file, pal)
 
       x += self_w->context->dx;
       y += self_w->context->dy;
-      strncpy(filename, file, MaxPath);   /* copy to loc that won't move*/
-      filename[MaxPath] = '\0';
+
+      filename = buffstr(&file);
 
       /*
        * First try to read as a standard file.
@@ -1307,157 +1221,20 @@ function graphics_Window_uncouple(self)
    }
 end
 
-function graphics_Window_attrib(self, argv[argc])
-   body {
-      wbp wsave;
-      word n;
-      tended struct descrip sbuf, sbuf2;
-      int pass, config;
-      GetSelfW();
-
-      config = 0;
-      sbuf2 = nulldesc;
-
-      wsave = self_w;
-      /*
-       * Loop through the arguments.
-       */
-
-      for (pass = 1; pass <= 2; pass++) {
-          self_w = wsave;
-          if (config && pass == 2) {
-              if (doconfig(self_w, config) == Failed) fail;
-          }
-          for (n = 0; n < argc; n++) {
-              /*
-               * In pass 1, a null argument is an error; failed attribute
-               *  assignments are turned into null descriptors for pass 2
-               *  and are ignored.
-               */
-              if (is:null(argv[n])) {
-                  if (pass == 2)
-                      continue;
-                  else runerr(109, argv[n]);
-              }
-              /*
-               * If its an integer or real, it can't be a valid attribute.
-               */
-              if (is:integer(argv[n]) || is:real(argv[n])) {
-                  runerr(145, argv[n]);
-              }
-              /*
-               * Convert the argument to a string
-               */
-              if (!cnv:tmp_string(argv[n], sbuf)) 
-                  runerr(109, argv[n]);
-              /*
-               * Read/write the attribute
-               */
-              if (pass == 1) {
-            
-                  char *tmp_s = StrLoc(sbuf);
-                  char *tmp_s2 = StrLoc(sbuf) + StrLen(sbuf); 
-                  for ( ; tmp_s < tmp_s2; tmp_s++)
-                      if (*tmp_s == '=') break;
-                  if (tmp_s < tmp_s2) {
-                      /*
-                       * pass 1: perform attribute assignments
-                       */  
-
-
-                      switch (wattrib(self_w, StrLoc(sbuf), StrLen(sbuf),
-                                      &sbuf2, attr_buff)) {
-                          case Failed:
-                              /*
-                               * Mark the attribute so we don't produce a result
-                               */
-                              argv[n] = nulldesc;
-                              continue;
-                          case Error: runerr(0, argv[n]);
-               
-
-                      }
-                      if (StrLen(sbuf) >= 4) {
-                          if (!strncmp(StrLoc(sbuf), "pos=", 4)) config |= C_POS;
-                          if (StrLen(sbuf) >= 5) {
-                              if (!strncmp(StrLoc(sbuf), "posx=", 5)) config |= C_POS;
-                              if (!strncmp(StrLoc(sbuf), "posy=", 5)) config |= C_POS;
-                              if (!strncmp(StrLoc(sbuf), "size=", 5)) config |= C_SIZE;
-                              if (StrLen(sbuf) >= 6) {
-                                  if (!strncmp(StrLoc(sbuf), "width=", 6))
-                                      config |= C_SIZE;
-                                  if (StrLen(sbuf) >= 7) {
-                                      if (!strncmp(StrLoc(sbuf), "height=", 7))
-                                          config |= C_SIZE;
-                                      if (!strncmp(StrLoc(sbuf), "resize=", 7))
-                                          config |= C_RESIZE;
-                                      if (StrLen(sbuf) >= 8) {
-                                          if (!strncmp(StrLoc(sbuf), "minsize=", 8))
-                                              config |= C_MINSIZE;
-                                          if (!strncmp(StrLoc(sbuf), "maxsize=", 8))
-                                              config |= C_MAXSIZE;
-                                          if (StrLen(sbuf) >= 9) {
-                                              if (!strncmp(StrLoc(sbuf), "geometry=", 9))
-                                                  config |= (C_POS | C_SIZE);
-                                              if (!strncmp(StrLoc(sbuf), "minwidth=", 9))
-                                                  config |= C_MINSIZE;
-                                              if (!strncmp(StrLoc(sbuf), "maxwidth=", 9))
-                                                  config |= C_MAXSIZE;
-                                              if (StrLen(sbuf) >= 10) {
-                                                  if (!strncmp(StrLoc(sbuf), "minheight=", 10))
-                                                      config |= C_MINSIZE;
-                                                  if (!strncmp(StrLoc(sbuf), "maxheight=", 10))
-                                                      config |= C_MAXSIZE;
-                                              }
-                                          }
-                                      }
-                                  }
-                              }
-                          }
-                      }
-                  }
-              }
-              /*
-               * pass 2: perform attribute queries, suspend result(s)
-               */
-              else if (pass==2) {
-                  char *stmp, *stmp2;
-                  /*
-                   * Turn assignments into queries.
-                   */
-                  for( stmp = StrLoc(sbuf), 
-                           stmp2 = stmp + StrLen(sbuf); stmp < stmp2; stmp++)
-                      if (*stmp == '=') break;
-                  if (stmp < stmp2)
-                      StrLen(sbuf) = stmp - StrLoc(sbuf);
-
-                  switch (wattrib(self_w, StrLoc(sbuf), StrLen(sbuf),
-                                  &sbuf2, attr_buff)) {
-                      case Failed: continue;
-                      case Error:  runerr(0, argv[n]);
-                  }
-                  if (is:string(sbuf2))
-                      MemProtect(StrLoc(sbuf2) = alcstr(StrLoc(sbuf2),StrLen(sbuf2)));
-                  suspend sbuf2;
-              }
-          }
-      }
-      fail;
-   }
-end
-
 function graphics_Window_wdefault(self, prog, opt)
-   if !cnv:C_string(prog) then
+   if !cnv:string(prog) then
        runerr(103, prog)
-   if !cnv:C_string(opt) then
+   if !cnv:string(opt) then
        runerr(103, opt)
    body {
+      char *t1, *t2, *res;
       tended struct descrip result; 
       GetSelfW();
-
-      if (getdefault(self_w, prog, opt, attr_buff) == Failed) 
+      /* res (space for result) will point to the remaining space in attr_buff */
+      buffnstr(&prog, &t1, &opt, &t2, &emptystr, &res, 0);
+      if (getdefault(self_w, t1, t2, res) == Failed) 
           fail;
-      cstr2string(attr_buff, &result);
+      cstr2string(res, &result);
       return result;
    }
 end
@@ -1470,13 +1247,16 @@ function graphics_Window_flush(self)
    }
 end
 
-function graphics_Window_write_image(self, s, argv[argc])
-   if !cnv:C_string(s) then
-       runerr(103, s)
+function graphics_Window_write_image(self, fname, argv[argc])
+   if !cnv:string(fname) then
+       runerr(103, fname)
    body {
       int r;
       word x, y, width, height;
+      char *s;
       GetSelfW();
+
+      s = buffstr(&fname);
 
       r = rectargs(self_w, argc, argv, 0, &x, &y, &width, &height);
       if (r >= 0)
@@ -1525,11 +1305,11 @@ function graphics_Window_write_image(self, s, argv[argc])
 end
 
 function graphics_Window_own_selection(self, selection)
-   if !cnv:C_string(selection) then
+   if !cnv:string(selection) then
       runerr(103,selection)
    body {
        GetSelfW();
-       if (ownselection(self_w, selection) == Failed)
+       if (ownselection(self_w, buffstr(&selection)) != Succeeded)
            fail;
        return self;
    }
@@ -1538,31 +1318,37 @@ end
 function graphics_Window_send_selection_response(self, requestor, property, target, selection, time, data)
    if !cnv:C_integer(requestor) then
       runerr(101, requestor)
-   if !cnv:C_string(property) then
+   if !cnv:string(property) then
       runerr(103, property)
-   if !cnv:C_string(target) then
+   if !cnv:string(target) then
       runerr(103, target)
-   if !cnv:C_string(selection) then
+   if !cnv:string(selection) then
       runerr(103, selection)
    if !cnv:C_integer(time) then
       runerr(101, time)
    body {
+       char *t1, *t2, *t3;
        GetSelfW();
-       if (sendselectionresponse(self_w, requestor, property, target, selection, time, &data) == Failed)
+       buffnstr(&property, &t1, &target, &t2, &selection, &t3, 0);
+       if (sendselectionresponse(self_w, requestor, t1, t2, t3, time, &data) == Failed)
            runerr(0);
        else
            return self;
    }
 end
 
+static struct sdescrip deftarget = {6, "STRING"};
+
 function graphics_Window_request_selection(self, selection, target_type)
-   if !cnv:C_string(selection) then
+   if !cnv:string(selection) then
       runerr(103,selection)
-   if !def:C_string(target_type, "STRING") then
+   if !def:string(target_type, *((dptr)&deftarget)) then
       runerr(103,target_type)
    body {
+       char *t1, *t2;
        GetSelfW();
-       if (requestselection(self_w, selection, target_type) == Failed)
+       buffnstr(&selection, &t1, &target_type, &t2, 0);
+       if (requestselection(self_w, t1, t2) == Failed)
            fail;
        return self;
    }
@@ -1630,6 +1416,934 @@ function graphics_Window_generic_color_value(k)
           return result;
       }
       fail;
+   }
+end
+
+
+function graphics_Window_get_ascent(self)
+   body {
+       struct descrip result;
+       GetSelfW();
+       MakeInt(ASCENT(self_w), &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_bg(self)
+   body {
+       tended struct descrip result;
+       GetSelfW();
+       getbg(self_w, attr_buff);
+       cstr2string(attr_buff, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_canvas(self)
+   body {
+       tended struct descrip result;
+       GetSelfW();
+       getcanvas(self_w, attr_buff);
+       cstr2string(attr_buff, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_cliph(self)
+   body {
+       struct descrip result;
+       GetSelfW();
+       if (self_w->context->clipw < 0)
+           fail;
+       MakeInt(self_w->context->cliph, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_clipw(self)
+   body {
+       struct descrip result;
+       GetSelfW();
+       if (self_w->context->clipw < 0)
+           fail;
+       MakeInt(self_w->context->clipw, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_clipx(self)
+   body {
+       struct descrip result;
+       GetSelfW();
+       if (self_w->context->clipw < 0)
+           fail;
+       MakeInt(self_w->context->clipx, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_clipy(self)
+   body {
+       struct descrip result;
+       GetSelfW();
+       if (self_w->context->clipw < 0)
+           fail;
+       MakeInt(self_w->context->clipy, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_depth(self)
+   body {
+       struct descrip result;
+       int i;
+       GetSelfW();
+       if (getdepth(self_w, &i) == Failed)
+           fail;
+       MakeInt(i, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_descent(self)
+   body {
+       struct descrip result;
+       GetSelfW();
+       MakeInt(DESCENT(self_w), &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_display(self)
+   body {
+       tended struct descrip result;
+       GetSelfW();
+       getdisplay(self_w, attr_buff);
+       cstr2string(attr_buff, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_drawop(self)
+   body {
+       tended struct descrip result;
+       GetSelfW();
+       getdrawop(self_w, attr_buff);
+       cstr2string(attr_buff, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_dx(self)
+   body {
+       struct descrip result;
+       GetSelfW();
+       MakeInt(self_w->context->dx, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_dy(self)
+   body {
+       struct descrip result;
+       GetSelfW();
+       MakeInt(self_w->context->dy, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_fg(self)
+   body {
+       tended struct descrip result;
+       GetSelfW();
+       getfg(self_w, attr_buff);
+       cstr2string(attr_buff, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_fheight(self)
+   body {
+       struct descrip result;
+       GetSelfW();
+       MakeInt(FHEIGHT(self_w), &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_fillstyle(self)
+   body {
+       GetSelfW();
+       switch (self_w->context->fillstyle) {
+           case FS_SOLID: return C_string "solid";
+           case FS_STIPPLE: return C_string "masked";
+           default: return C_string "textured";
+       }
+       fail;
+   }
+end
+
+function graphics_Window_get_font(self)
+   body {
+       tended struct descrip result;
+       GetSelfW();
+       cstr2string(self_w->context->font->name, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_fwidth(self)
+   body {
+       struct descrip result;
+       GetSelfW();
+       MakeInt(FWIDTH(self_w), &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_gamma(self)
+   body {
+       GetSelfW();
+       return C_double self_w->context->gamma;
+   }
+end
+
+function graphics_Window_get_geometry(self)
+   body {
+       tended struct descrip result;
+       wsp ws;
+       GetSelfW();
+       if (getpos(self_w) != Succeeded)
+           fail;
+       ws = self_w->window;
+       if (ws->win)
+           sprintf(attr_buff, "%dx%d+%d+%d",
+                   ws->width, ws->height, ws->posx, ws->posy);
+       else
+           sprintf(attr_buff, "%dx%d", ws->pixwidth, ws->pixheight);
+       cstr2string(attr_buff, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_height(self)
+   body {
+       struct descrip result;
+       GetSelfW();
+       MakeInt(self_w->window->height, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_inputmask(self)
+   body {
+       tended struct descrip result;
+       char *s;
+       int mask;
+       GetSelfW();
+       s = attr_buff;  
+       mask = self_w->window->inputmask;
+       if (mask & PointerMotionMask)
+           *s++ = 'm';
+       if (mask & KeyReleaseMask)
+           *s++ = 'k';
+       *s = 0;
+       cstr2string(attr_buff, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_label(self)
+   body {
+       tended struct descrip result;
+       GetSelfW();
+       if (getwindowlabel(self_w, attr_buff) != Succeeded)
+           fail;
+       cstr2string(attr_buff, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_linestyle(self)
+   body {
+       tended struct descrip result;
+       GetSelfW();
+       getlinestyle(self_w, attr_buff);
+       cstr2string(attr_buff, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_linewidth(self)
+   body {
+       struct descrip result;
+       GetSelfW();
+       MakeInt(getlinewidth(self_w), &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_maxheight(self)
+   body {
+       struct descrip result;
+       GetSelfW();
+       MakeInt(self_w->window->maxheight, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_maxsize(self)
+   body {
+       tended struct descrip result;
+       GetSelfW();
+       sprintf(attr_buff, "%d,%d", self_w->window->maxwidth, self_w->window->maxheight);
+       cstr2string(attr_buff, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_maxwidth(self)
+   body {
+       struct descrip result;
+       GetSelfW();
+       MakeInt(self_w->window->maxwidth, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_minheight(self)
+   body {
+       struct descrip result;
+       GetSelfW();
+       MakeInt(self_w->window->minheight, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_minsize(self)
+   body {
+       tended struct descrip result;
+       GetSelfW();
+       sprintf(attr_buff, "%d,%d", self_w->window->minwidth, self_w->window->minheight);
+       cstr2string(attr_buff, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_minwidth(self)
+   body {
+       struct descrip result;
+       GetSelfW();
+       MakeInt(self_w->window->minwidth, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_pattern(self)
+   body {
+       tended struct descrip result;
+       char *s;
+       GetSelfW();
+       s = self_w->context->patternname;
+       if (!s)
+           s = "black";
+       strcpy(attr_buff, s);
+       cstr2string(attr_buff, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_pointer(self)
+   body {
+       tended struct descrip result;
+       GetSelfW();
+       getpointername(self_w, attr_buff);
+       cstr2string(attr_buff, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_pos(self)
+   body {
+       tended struct descrip result;
+       GetSelfW();
+       if (getpos(self_w) != Succeeded)
+           fail;
+       sprintf(attr_buff, "%d,%d", self_w->window->posx, self_w->window->posy);
+       cstr2string(attr_buff, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_posx(self)
+   body {
+       struct descrip result;
+       GetSelfW();
+       if (getpos(self_w) != Succeeded)
+           fail;
+       MakeInt(self_w->window->posx, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_posy(self)
+   body {
+       struct descrip result;
+       GetSelfW();
+       if (getpos(self_w) != Succeeded)
+           fail;
+       MakeInt(self_w->window->posy, &result);
+       return result;
+   }
+end
+
+function graphics_Window_is_resizable(self)
+   body {
+       GetSelfW();
+       if (ISRESIZABLE(self_w))
+           return nulldesc;
+       else
+           fail;
+   }
+end
+
+function graphics_Window_is_reversed(self)
+   body {
+       GetSelfW();
+       if (ISREVERSE(self_w))
+           return nulldesc;
+       else
+           fail;
+   }
+end
+
+function graphics_Window_get_size(self)
+   body {
+       tended struct descrip result;
+       GetSelfW();
+       sprintf(attr_buff, "%d,%d", self_w->window->width, self_w->window->height);
+       cstr2string(attr_buff, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_visual(self)
+   body {
+       tended struct descrip result;
+       GetSelfW();
+       if (getvisual(self_w, attr_buff) != Succeeded)
+           fail;
+       cstr2string(attr_buff, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_width(self)
+   body {
+       struct descrip result;
+       GetSelfW();
+       MakeInt(self_w->window->width, &result);
+       return result;
+   }
+end
+
+int wconfig, inattr;
+
+#begdef AttemptAttr(operation)
+do {
+   switch (operation) { 
+       case Error: runerr(145, val); break;
+       case Succeeded: {
+           if (!inattr)
+               doconfig(self_w, wconfig);
+           break;
+       }
+       case Failed: fail;
+       default: syserr("Invalid return code from graphics op"); fail;
+   }
+} while(0)
+#enddef
+
+#begdef SimpleAttr()
+do {
+   if (!inattr)
+      doconfig(self_w, wconfig);
+} while(0)
+#enddef
+
+  
+function graphics_Window_set_bg(self, val)
+   body {
+       word i;
+       GetSelfW();
+       if (cnv:C_integer(val, i))
+           AttemptAttr(isetbg(self_w, i));
+       else {
+           if (!cnv:string(val, val))
+               runerr(103, val);
+           AttemptAttr(setbg(self_w, buffstr(&val)));
+       }
+       return self;
+   }
+end
+
+function graphics_Window_set_canvas(self, val)
+   if !cnv:string(val) then
+      runerr(103, val)
+   body {
+       GetSelfW();
+       AttemptAttr(setcanvas(self_w, buffstr(&val)));
+       return self;
+   }
+end
+
+function graphics_Window_set_cliph(self, val)
+   if !cnv:C_integer(val) then
+       runerr(101, val)
+   body {
+       GetSelfW();
+       self_w->context->cliph = val;
+       wconfig |= C_CLIP;
+       SimpleAttr();
+       return self;
+   }
+end
+
+function graphics_Window_set_clipw(self, val)
+   if !cnv:C_integer(val) then
+       runerr(101, val)
+   body {
+       GetSelfW();
+       self_w->context->clipw = val;
+       wconfig |= C_CLIP;
+       SimpleAttr();
+       return self;
+   }
+end
+
+function graphics_Window_set_clipx(self, val)
+   if !cnv:C_integer(val) then
+       runerr(101, val)
+   body {
+       GetSelfW();
+       self_w->context->clipx = val;
+       wconfig |= C_CLIP;
+       SimpleAttr();
+       return self;
+   }
+end
+
+function graphics_Window_set_clipy(self, val)
+   if !cnv:C_integer(val) then
+       runerr(101, val)
+   body {
+       GetSelfW();
+       self_w->context->clipy = val;
+       wconfig |= C_CLIP;
+       SimpleAttr();
+       return self;
+   }
+end
+
+function graphics_Window_set_drawop(self, val)
+   if !cnv:string(val) then
+      runerr(103, val)
+   body {
+       GetSelfW();
+       AttemptAttr(setdrawop(self_w, buffstr(&val)));
+       return self;
+   }
+end
+
+function graphics_Window_set_dx(self, val)
+   if !cnv:C_integer(val) then
+       runerr(101, val)
+   body {
+       GetSelfW();
+       self_w->context->dx = val;
+       return self;
+   }
+end
+
+function graphics_Window_set_dy(self, val)
+   if !cnv:C_integer(val) then
+       runerr(101, val)
+   body {
+       GetSelfW();
+       self_w->context->dy = val;
+       return self;
+   }
+end
+
+function graphics_Window_set_fg(self, val)
+   body {
+       word i;
+       GetSelfW();
+       if (cnv:C_integer(val, i))
+           AttemptAttr(isetfg(self_w, i));
+       else {
+           if (!cnv:string(val, val))
+               runerr(103, val);
+           AttemptAttr(setfg(self_w, buffstr(&val)));
+       }
+       return self;
+   }
+end
+
+function graphics_Window_set_fillstyle(self, val)
+   if !cnv:string(val) then
+      runerr(103, val)
+   body {
+       GetSelfW();
+       AttemptAttr(setfillstyle(self_w, buffstr(&val)));
+       return self;
+   }
+end
+
+function graphics_Window_set_font(self, val)
+   if !cnv:string(val) then
+      runerr(103, val)
+   body {
+       GetSelfW();
+       AttemptAttr(setfont(self_w, buffstr(&val)));
+       return self;
+   }
+end
+
+function graphics_Window_set_gamma(self, val)
+   body {
+       double d;
+       GetSelfW();
+       if (!cnv:C_double(val, d)) 
+           runerr(102, val);
+       AttemptAttr(setgamma(self_w, d));
+       return self;
+   }
+end
+
+function graphics_Window_set_geometry(self, argv[argc])
+   body {
+       int r;
+       word x, y, width, height;
+       GetSelfW();
+       r = rectargs(self_w, argc, argv, 0, &x, &y, &width, &height);
+       if (r >= 0)
+           runerr(101, argv[r]);
+       self_w->window->posx = x;
+       self_w->window->posy = y;
+       self_w->window->width = width;
+       self_w->window->height = height;
+       wconfig |= C_SIZE | C_POS;
+       SimpleAttr();
+       return self;
+   }
+end
+
+function graphics_Window_set_height(self, height)
+   if !cnv:C_integer(height) then
+      runerr(101, height)
+   body {
+       GetSelfW();
+       self_w->window->height = height;
+       wconfig |= C_SIZE;
+       SimpleAttr();
+       return self;
+   }
+end
+
+function graphics_Window_set_image(self, val)
+   if !cnv:string(val) then
+      runerr(103, val)
+   body {
+       wsp ws;
+       char *s;
+       int r;
+       GetSelfW();
+       ws = self_w->window;
+       s = buffstr(&val);
+       r = readimagefile(s, 0, &ws->initimage);
+       if (r == Succeeded) {
+           self_w->window->width = ws->initimage.width;
+           self_w->window->height = ws->initimage.height;
+           wconfig |= C_SIZE;
+       }
+       else
+           r = setimage(self_w, s);
+       AttemptAttr(r);
+       return self;
+   }
+end
+
+function graphics_Window_set_inputmask(self, val)
+   if !cnv:string(val) then
+      runerr(103, val)
+   body {
+       GetSelfW();
+       AttemptAttr(setinputmask(self_w, buffstr(&val)));
+       return self;
+   }
+end
+
+function graphics_Window_set_label(self, val)
+   if !cnv:string(val) then
+      runerr(103, val)
+   body {
+       GetSelfW();
+       AttemptAttr(setwindowlabel(self_w, buffstr(&val)));
+       return self;
+   }
+end
+
+function graphics_Window_set_linestyle(self, val)
+   if !cnv:string(val) then
+      runerr(103, val)
+   body {
+       GetSelfW();
+       AttemptAttr(setlinestyle(self_w, buffstr(&val)));
+       return self;
+   }
+end
+
+function graphics_Window_set_linewidth(self, val)
+   body {
+       word i;
+       GetSelfW();
+       if (!cnv:C_integer(val, i))
+           runerr(101, val);
+       AttemptAttr(setlinewidth(self_w, i));
+       return self;
+   }
+end
+
+function graphics_Window_set_maxheight(self, height)
+   body {
+       word i;
+       GetSelfW();
+       if (is:null(height))
+           i = INT_MAX;
+       else {
+           if (!cnv:C_integer(height, i))
+               runerr(101, height);
+           if (i < 1)
+               runerr(148, height);
+       }
+       self_w->window->maxheight = i;
+       wconfig |= C_MAXSIZE;
+       SimpleAttr();
+       return self;
+   }
+end
+
+function graphics_Window_set_maxsize(self, width, height)
+   body {
+       tended char *s;
+       word i;
+       GetSelfW();
+       if (is:null(width))
+           i = INT_MAX;
+       else {
+           if (!cnv:C_integer(width, i))
+               runerr(101, width);
+           if (i < 1)
+               runerr(148, width);
+       }
+       self_w->window->maxwidth = i;
+       if (is:null(height))
+           i = INT_MAX;
+       else {
+           if (!cnv:C_integer(height, i))
+               runerr(101, height);
+           if (i < 1)
+               runerr(148, height);
+       }
+       self_w->window->maxheight = i;
+       wconfig |= C_MAXSIZE;
+       SimpleAttr();
+       return self;
+   }
+end
+
+function graphics_Window_set_maxwidth(self, width)
+   body {
+       word i;
+       GetSelfW();
+       if (is:null(width))
+           i = INT_MAX;
+       else {
+           if (!cnv:C_integer(width, i))
+               runerr(101, width);
+           if (i < 1)
+               runerr(148, width);
+       }
+       self_w->window->maxwidth = i;
+       wconfig |= C_MAXSIZE;
+       SimpleAttr();
+       return self;
+   }
+end
+
+function graphics_Window_set_minheight(self, height)
+   if !cnv:C_integer(height) then
+      runerr(101, height)
+   body {
+       GetSelfW();
+       self_w->window->minheight = height;
+       wconfig |= C_MINSIZE;
+       SimpleAttr();
+       return self;
+   }
+end
+
+function graphics_Window_set_minsize(self, width, height)
+   if !cnv:C_integer(width) then
+      runerr(101, width)
+   if !cnv:C_integer(height) then
+      runerr(101, height)
+   body {
+       GetSelfW();
+       self_w->window->minwidth = width;
+       self_w->window->minheight = height;
+       wconfig |= C_MINSIZE;
+       SimpleAttr();
+       return self;
+   }
+end
+
+function graphics_Window_set_minwidth(self, width)
+   if !cnv:C_integer(width) then
+      runerr(101, width)
+   body {
+       GetSelfW();
+       self_w->window->minwidth = width;
+       wconfig |= C_MINSIZE;
+       SimpleAttr();
+       return self;
+   }
+end
+
+function graphics_Window_set_pattern(self, val)
+   if !cnv:string(val) then
+      runerr(103, val)
+   body {
+       GetSelfW();
+       AttemptAttr(setpattern(self_w, buffstr(&val)));
+       return self;
+   }
+end
+
+function graphics_Window_set_pointer(self, val)
+   if !cnv:string(val) then
+       runerr(103, val)
+   body {
+       GetSelfW();
+       AttemptAttr(setpointer(self_w, buffstr(&val)));
+       return self;
+   }
+end
+
+function graphics_Window_set_pos(self, x, y)
+   if !cnv:C_integer(x) then
+      runerr(101, x)
+   if !cnv:C_integer(y) then
+      runerr(101, y)
+   body {
+       GetSelfW();
+       self_w->window->posx = x;
+       self_w->window->posy = y;
+       wconfig |= C_POS;
+       SimpleAttr();
+       return self;
+   }
+end
+
+function graphics_Window_set_posx(self, x)
+   if !cnv:C_integer(x) then
+      runerr(101, x)
+   body {
+       GetSelfW();
+       self_w->window->posx = x;
+       wconfig |= C_POS;
+       SimpleAttr();
+       return self;
+   }
+end
+
+function graphics_Window_set_posy(self, y)
+   if !cnv:C_integer(y) then
+      runerr(101, y)
+   body {
+       GetSelfW();
+       self_w->window->posy = y;
+       wconfig |= C_POS;
+       SimpleAttr();
+       return self;
+   }
+end
+
+function graphics_Window_set_resize(self, val)
+   body {
+       int i;
+       GetSelfW();
+       i = is:null(val) ? 0:1;
+       AttemptAttr(allowresize(self_w, i));
+       return self;
+   }
+end
+
+function graphics_Window_set_reverse(self, val)
+   body {
+       int i;
+       GetSelfW();
+       i = is:null(val) ? 0:1;
+       if ((!i && ISREVERSE(self_w)) || (i && !ISREVERSE(self_w))) {
+           togglefgbg(self_w);
+           ISREVERSE(self_w) ? CLRREVERSE(self_w) : SETREVERSE(self_w);
+       }
+       return self;
+   }
+end
+
+function graphics_Window_set_size(self, width, height)
+   if !cnv:C_integer(width) then
+      runerr(101, width)
+   if !cnv:C_integer(height) then
+      runerr(101, height)
+   body {
+       GetSelfW();
+       self_w->window->width = width;
+       self_w->window->height = height;
+       wconfig |= C_SIZE;
+       SimpleAttr();
+       return self;
+   }
+end
+
+function graphics_Window_set_titlebar(self, val)
+   body {
+       GetSelfW();
+       if (is:null(val))
+           CLRTITLEBAR(self_w->window);
+       else
+           SETTITLEBAR(self_w->window);
+       return self;
+   }
+end
+
+function graphics_Window_set_width(self, width)
+   if !cnv:C_integer(width) then
+      runerr(101, width)
+   body {
+       GetSelfW();
+       self_w->window->width = width;
+       wconfig |= C_SIZE;
+       SimpleAttr();
+       return self;
+   }
+end
+
+function graphics_Window_post_set(self)
+   body {
+       return self;
    }
 end
 
