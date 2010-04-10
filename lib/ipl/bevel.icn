@@ -184,7 +184,7 @@ end
 #  (Internal procedure)
 
 procedure bev_lookup(win)
-   local b, attr, t
+   local b, t
    b := \ (\bev_table)[win] | bev_table[BevelReset(win)]
    
    # Ensure the shadow and hilite windows have the same values for
