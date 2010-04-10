@@ -100,11 +100,20 @@ function graphics_Window_wopen(self, parent)
    body {
       wbp w2;
       GetSelfW();
-      if (is:null(parent)) 
-          wopen(self_w, 0);
-      else {
+
+      if (is:null(parent)) {
+          if (wopen(self_w, 0) != Succeeded) {
+              *self_w_dptr = zerodesc;
+              free_binding(self_w);
+              fail;
+          }
+      } else {
           WindowStaticParam(parent, w2);
-          wopen(self_w, w2);
+          if (wopen(self_w, w2) != Succeeded) {
+              *self_w_dptr = zerodesc;
+              free_binding(self_w);
+              fail;
+          }
       }
       inattr = wconfig = 0;
       return self;

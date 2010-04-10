@@ -811,7 +811,6 @@ int wopen(wbp w, wbp parent)
 
     if (wmap(w, parent) != Succeeded) {
         LitWhy("Failed to map window");
-        free_binding(w);
         return Failed;
     }
 	

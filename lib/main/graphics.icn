@@ -12,7 +12,7 @@ class Window(SetFields,NoCopy)
       local w
       w := Window(wcreate())
       w.set_fields(a)
-      w.wopen()
+      w.wopen() | fail
       return w
    end
 
@@ -20,7 +20,7 @@ class Window(SetFields,NoCopy)
       local w
       w := Window(wcreate(display))
       w.set_fields(a)
-      w.wopen()
+      w.wopen() | fail
       return w
    end
 
@@ -28,7 +28,7 @@ class Window(SetFields,NoCopy)
       local w
       w := Window(wcreate())
       w.set_fields(a)
-      w.wopen(self)
+      w.wopen(self) | fail
       return w
    end
 
@@ -36,7 +36,7 @@ class Window(SetFields,NoCopy)
       local w
       w := Window(wcreate(display))
       w.set_fields(a)
-      w.wopen(self)
+      w.wopen(self) | fail
       return w
    end
 
