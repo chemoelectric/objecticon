@@ -1863,8 +1863,10 @@ do {
    switch (operation) { 
        case Error: runerr(145, val); break;
        case Succeeded: {
-           if (!inattr)
+           if (!inattr && wconfig) {
                doconfig(self_w, wconfig);
+               wconfig = 0;
+           }
            break;
        }
        case Failed: fail;
@@ -1875,8 +1877,10 @@ do {
 
 #begdef SimpleAttr()
 do {
-   if (!inattr)
-      doconfig(self_w, wconfig);
+   if (!inattr && wconfig) {
+       doconfig(self_w, wconfig);
+       wconfig = 0;
+   }
 } while(0)
 #enddef
 
