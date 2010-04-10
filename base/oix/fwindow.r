@@ -150,33 +150,6 @@ function graphics_Window_alert(self, volume)
    }
 end
 
-function graphics_Window_clip(self, argv[argc])
-   body {
-      int r;
-      word x, y, width, height;
-      wcp wc;
-      GetSelfW();
-
-      wc = self_w->context;
-
-      if (argc == 0) {
-          wc->clipx = wc->clipy = 0;
-          wc->clipw = wc->cliph = -1;
-      }
-      else {
-          r = rectargs(self_w, argc, argv, 0, &x, &y, &width, &height);
-          if (r >= 0)
-              runerr(101, argv[r]);
-          wc->clipx = x;
-          wc->clipy = y;
-          wc->clipw = width;
-          wc->cliph = height;
-      }
-      doconfig(self_w, C_CLIP);
-      return self;
-   }
-end
-
 function graphics_Window_clone_impl(self)
    body {
        wbp w2;
@@ -1945,6 +1918,34 @@ function graphics_Window_set_clipy(self, val)
        wconfig |= C_CLIP;
        SimpleAttr();
        return self;
+   }
+end
+
+function graphics_Window_clip(self, argv[argc])
+   body {
+      int r;
+      word x, y, width, height;
+      wcp wc;
+      GetSelfW();
+
+      wc = self_w->context;
+
+      if (argc == 0) {
+          wc->clipx = wc->clipy = 0;
+          wc->clipw = wc->cliph = -1;
+      }
+      else {
+          r = rectargs(self_w, argc, argv, 0, &x, &y, &width, &height);
+          if (r >= 0)
+              runerr(101, argv[r]);
+          wc->clipx = x;
+          wc->clipy = y;
+          wc->clipw = width;
+          wc->cliph = height;
+      }
+      wconfig |= C_CLIP;
+      SimpleAttr();
+      return self;
    }
 end
 

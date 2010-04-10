@@ -110,7 +110,6 @@ class Window(SetFields,NoCopy)
    public defer get_titlebar()
    public defer get_visual()
    public defer get_width()
-   public defer get_windowlabel()
 
    public defer set_bg(v)
    public defer set_canvas(v)
@@ -147,7 +146,6 @@ class Window(SetFields,NoCopy)
    public defer set_size(v)
    public defer set_titlebar(v)
    public defer set_width(v)
-   public defer set_windowlabel(v)
 
    #
    # Produces a beep or other signal to attract attention.
@@ -445,6 +443,7 @@ class Window(SetFields,NoCopy)
       case f.attr of {
          "bg": set_bg(f.val)
          "canvas": set_canvas(f.val)
+         "clip" : clip!(f.int_list_val())
          "cliph": set_cliph(f.val)
          "clipw": set_clipw(f.val)
          "clipx": set_clipx(f.val)
@@ -478,7 +477,6 @@ class Window(SetFields,NoCopy)
          "size": set_size!(f.int_list_val())
          "titlebar": set_titlebar(f.val)
          "width": set_width(f.val)
-         "windowlabel": set_windowlabel(f.val)
          default : fail
       }
       return
