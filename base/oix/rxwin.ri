@@ -2050,20 +2050,28 @@ int getpos(wbp w)
     return Succeeded;
 }
 
+void getpattern(wbp w, char *answer)
+{
+    if (w->context->patternname)
+        strcpy(answer, w->context->patternname);
+    else 
+        strcpy(answer, "black");
+}
+
 void getfg(wbp w, char *answer)
 {
-    sprintf(answer, "%s", w->window->display->colors[w->context->fg].name);
+    strcpy(answer, w->window->display->colors[w->context->fg].name);
 }
 
 void getbg(wbp w, char *answer)
 {
-    sprintf(answer, "%s", w->window->display->colors[w->context->bg].name);
+    strcpy(answer, w->window->display->colors[w->context->bg].name);
 }
 
 void getlinestyle(wbp w, char *answer)
 {
     wcp wc = w->context;
-    sprintf(answer,"%s",
+    strcpy(answer,
             (wc->linestyle==LineSolid)?"solid":
             ((wc->linestyle==LineOnOffDash)?"dashed":"striped"));
 }
