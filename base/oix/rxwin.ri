@@ -2889,7 +2889,7 @@ void free_color(wbp w, char *s)
 /*
  * Draw a bilevel image
  */
-void drawblimage(wbp w, int x, int y, int width, int height, int ch, unsigned char *s, word len)
+void drawblimage(wbp w, int x, int y, int width, int height, int ch, unsigned char *s, int len)
 {
     unsigned int m, msk1, c, ix, iy;
     long fg, bg;

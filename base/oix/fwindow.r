@@ -516,7 +516,7 @@ function graphics_Window_draw_image(self, argv[argc])
           if (nchars % row != 0)
               fail;
           height = nchars / row;
-          drawblimage(self_w, x, y, width, height, c, s, (word)(z - s));
+          drawblimage(self_w, x, y, width, height, c, s, z - s);
           return nulldesc;
       }
 
