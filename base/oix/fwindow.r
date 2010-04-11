@@ -2069,7 +2069,7 @@ function graphics_Window_set_image(self, val)
        if (r == Succeeded) {
            self_w->window->width = ws->initimage.width;
            self_w->window->height = ws->initimage.height;
-           wconfig |= C_SIZE;
+           wconfig |= C_SIZE | C_IMAGE;
        }
        else
            r = setimage(self_w, s);

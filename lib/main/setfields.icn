@@ -9,8 +9,7 @@ import lang
 class Field()
    public const 
       attr,
-      val,
-      obj
+      val
 
    public flag_val()
       return flag(val) | field_error("Need a boolean parameter")
@@ -150,38 +149,15 @@ class Field()
       runerr("attribute: " || attr || ": " || s, val)
    end
 
-   public new(attr, val, obj)
+   public new(attr, val)
       self.attr := attr
       self.val := val
-      self.obj := obj
       return
    end
 end
 
 class SetFields()
-   #
-   # Set attribs in the object by calling {set_one} for each attribute
-   # argument.  Note that {set_special} is NOT called first.
-   #
-   public attrib(a[])
-      set_fields_impl(a)
-   end
-
-   #
-   # Process a list of arguments; this should be called from the
-   # constructor.  First, {set_special} is called.  Then each
-   # remaining attribute argument is processed by calling {set_one}
-   # with an appropriate {Field} instance.
-   #
-   # @param l the arguments list
-   #
-   protected set_fields(l)
-      l := copy(l)
-      set_special(l)
-      set_fields_impl(l)
-   end
-
-   private set_fields_impl(l)
+   public static generate_fields(l)
       local s, attr, val
       while s := pop(l) do {
          s ? {
@@ -198,8 +174,34 @@ class SetFields()
          }
          # Ensure attr is a string (we could have, for example, u"label=xyz").
          attr := string(attr)
-         set_one(Field(attr, val, self)) | runerr("setfields: Unknown attribute", attr)
+         suspend Field(attr, val)
       }
+   end
+
+   public apply_field(f)
+      set_one(f) | runerr("setfields: Unknown attribute", f.attr)
+   end
+
+   #
+   # Set attribs in the object by calling {set_one} for each attribute
+   # argument.  Note that {set_special} is NOT called first.
+   #
+   public attrib(a[])
+      every apply_field(generate_fields(a))
+   end
+
+   #
+   # Process a list of arguments; this should be called from the
+   # constructor.  First, {set_special} is called.  Then each
+   # remaining attribute argument is processed by calling {set_one}
+   # with an appropriate {Field} instance.
+   #
+   # @param l the arguments list
+   #
+   protected set_fields(l)
+      l := copy(l)
+      set_special(l)
+      every apply_field(generate_fields(l))
    end
 
    #

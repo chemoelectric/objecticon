@@ -389,6 +389,7 @@ struct wbind_list {
 #define C_MAXSIZE       8
 #define C_RESIZE	16
 #define C_CLIP	        32
+#define C_IMAGE	        64
 
 
 #define XICONSLEEP	20 /* milliseconds */

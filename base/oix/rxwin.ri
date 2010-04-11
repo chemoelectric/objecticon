@@ -1190,6 +1190,17 @@ int doconfig(wbp w, int status)
                 break;
             }
         }
+        if (status & C_IMAGE) {
+            struct imgdata *imd = &ws->initimage;
+            if (imd->width) {
+                drawstrimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
+                             imd->data, imd->width * imd->height, 0);
+                free(imd->paltbl);
+                free(imd->data);
+                imd->width = 0;
+            }
+        }
+
         /* XSync is not enough because the window manager gets involved here. */
         XFlush(wd->display);			      /* force out request */
         XGetWMName(wd->display, ws->win, &textprop);    /* force WM round trip */
