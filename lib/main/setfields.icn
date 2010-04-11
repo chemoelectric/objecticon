@@ -157,6 +157,10 @@ class Field()
 end
 
 class SetFields()
+   #
+   # Generate the {Field}s for the given list.  Note that the list is
+   # emptied by this function.
+   # 
    public static generate_fields(l)
       local s, attr, val
       while s := pop(l) do {
@@ -196,10 +200,10 @@ class SetFields()
    # remaining attribute argument is processed by calling {set_one}
    # with an appropriate {Field} instance.
    #
-   # @param l the arguments list
+   # @param l the arguments list.  NB - this list is emptied by
+   #  calling this function.
    #
    protected set_fields(l)
-      l := copy(l)
       set_special(l)
       every apply_field(generate_fields(l))
    end
