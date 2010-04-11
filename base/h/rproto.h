@@ -281,7 +281,7 @@ void  bigrand         (dptr da, dptr dx);
    int  setwindowlabel  (wbp w, char *val);
    int  setinputmask    (wbp w, char *val);
    void drawstrimage    (wbp w, int x, int y, int width, int height,
-                           struct palentry *e, unsigned char *s, int len, int on_icon);
+                           struct palentry *e, unsigned char *s, int len);
    void togglefgbg      (wbp w);
    int  walert          (wbp w, int volume);
    int  warppointer     (wbp w, int x, int y);

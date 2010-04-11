@@ -562,7 +562,7 @@ function graphics_Window_draw_image(self, argv[argc])
        * Call platform-dependent code to draw the image.
        */
       height = nchars / width;
-      drawstrimage(self_w, x, y, width, height, e, s, z - s, 0);
+      drawstrimage(self_w, x, y, width, height, e, s, z - s);
       return nulldesc;
    }
 end
@@ -1157,7 +1157,7 @@ function graphics_Window_read_image(self, x, y, file, pal)
       r = readimagefile(filename, p, &imd);
       if (r == Succeeded) {
           drawstrimage(self_w, x, y, imd.width, imd.height, imd.paltbl,
-                            imd.data, imd.width * imd.height, 0);
+                            imd.data, imd.width * imd.height);
           free(imd.paltbl);
           free(imd.data);
       }
