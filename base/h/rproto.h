@@ -207,7 +207,7 @@ void  bigrand         (dptr da, dptr dx);
    int  setpattern      (wbp w, char *name);
    int  setpatternbits  (wbp w, int width, word *bits, int nbits);
    void drawblimage     (wbp w, int x, int y, int wd, int h,
-                          int ch, unsigned char *s, word len);
+                          int ch, unsigned char *s, int len);
    wcp  clonecontext   (wbp w);
    int  copyarea        (wbp w,wbp w2,int x,int y,int wd,int h,int x2,int y2);
    int  doconfig        (wbp w, int status);
@@ -281,7 +281,7 @@ void  bigrand         (dptr da, dptr dx);
    int  setwindowlabel  (wbp w, char *val);
    int  setinputmask    (wbp w, char *val);
    void drawstrimage    (wbp w, int x, int y, int width, int height,
-                           struct palentry *e, unsigned char *s, int len, int on_icon);
+                           struct palentry *e, unsigned char *s, int len);
    void togglefgbg      (wbp w);
    int  walert          (wbp w, int volume);
    int  warppointer     (wbp w, int x, int y);

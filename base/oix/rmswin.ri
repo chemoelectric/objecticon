@@ -461,7 +461,7 @@ int wopen(wbp w, wbp parent)
       imd = &ws->initimage;
       if (imd->width) {
 	 drawstrimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
-		      imd->data, imd->width * imd->height, 0);
+		      imd->data, imd->width * imd->height);
 	 if (imd->paltbl)
 	    free(imd->paltbl);
 	 free(imd->data);
@@ -1904,7 +1904,7 @@ void drawblimage(w, x, y, width, height, ch, s, len)
 wbp w;
 int x, y, width, height, ch;
 unsigned char *s;
-word len;
+int len;
    {
    unsigned int m, msk1, c, ix, iy;
    long fg, bg;
@@ -1965,13 +1965,12 @@ word len;
 /*
  * Draw a character-per-pixel image.
  */
-void drawstrimage(w, x, y, width, height, e, s, len, on_icon)
+void drawstrimage(w, x, y, width, height, e, s, len)
 wbp w;
 int x, y, width, height;
 struct palentry *e;
 unsigned char *s;
 int len;
-int on_icon;
    {
    HDC tempdc;
    HBITMAP temppix;
@@ -3288,15 +3287,15 @@ wbp w;
 
 
 int doconfig(w, status)
-wbp w;
-int status;
-   {
-   wsp ws = w->window;
-   wcp wc = w->context;
-   int wid = ws->width, ht = ws->height;
-   int posx = ws->posx, posy = ws->posy;
-   HDC hdc;
-   HWND w_tmp;
+    wbp w;
+    int status;
+{
+    wsp ws = w->window;
+    wcp wc = w->context;
+    int wid = ws->width, ht = ws->height;
+    int posx = ws->posx, posy = ws->posy;
+    HDC hdc;
+    HWND w_tmp;
 
     if (status & C_CLIP) {
         if (wc->clipw >= 0)
@@ -3305,53 +3304,64 @@ int status;
             unsetclip(w);
     }
 
-   if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE)) {
-      if (! resizePixmap(w, wid, ht))
-	 return Failed;
-      if (ws->win) {
-	 pollevent();
-	 switch (status & (C_POS|C_SIZE)) {
-            case C_POS|C_SIZE: {
-	       SetWindowPos(ws->win, ws->win, posx, posy,
-			    wid + BORDWIDTH, ht + BORDHEIGHT,
-			    SWP_NOZORDER|SWP_NOACTIVATE);
-	       break;
-	    }
-            case C_SIZE: {
-	       SetWindowPos(ws->win, ws->win, 0, 0,
-			    wid + BORDWIDTH, ht + BORDHEIGHT,
-			    SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
-	       break;
-	    }
-            case C_POS: {
-	       SetWindowPos(ws->win, ws->win,
-			    posx,
-			    posy,
-			    0, 0, SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
-	       break;
-	    }
-	 }
-      }
-      else if (ws->iconwin) {
-	 if (status == 3) {
-	    SetWindowPos(ws->iconwin, ws->iconwin,
-			 posx,
-			 posy,
-			 wid, ht, SWP_NOZORDER|SWP_NOACTIVATE);
-	 }
-	 else if (status == 2) {
-	    SetWindowPos(ws->iconwin, ws->iconwin, 0, 0,
-			 wid, ht, SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
-         }
-	 else if (status == 1)
-	    SetWindowPos(ws->iconwin, ws->iconwin,
-			 posx,
-			 posy,
-			 0, 0, SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
-      }
-   }
+    if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE)) {
+        if (! resizePixmap(w, wid, ht))
+            return Failed;
+        if (ws->win) {
+            pollevent();
+            switch (status & (C_POS|C_SIZE)) {
+                case C_POS|C_SIZE: {
+                    SetWindowPos(ws->win, ws->win, posx, posy,
+                                 wid + BORDWIDTH, ht + BORDHEIGHT,
+                                 SWP_NOZORDER|SWP_NOACTIVATE);
+                    break;
+                }
+                case C_SIZE: {
+                    SetWindowPos(ws->win, ws->win, 0, 0,
+                                 wid + BORDWIDTH, ht + BORDHEIGHT,
+                                 SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
+                    break;
+                }
+                case C_POS: {
+                    SetWindowPos(ws->win, ws->win,
+                                 posx,
+                                 posy,
+                                 0, 0, SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
+                    break;
+                }
+            }
+        }
+        else if (ws->iconwin) {
+            if (status == 3) {
+                SetWindowPos(ws->iconwin, ws->iconwin,
+                             posx,
+                             posy,
+                             wid, ht, SWP_NOZORDER|SWP_NOACTIVATE);
+            }
+            else if (status == 2) {
+                SetWindowPos(ws->iconwin, ws->iconwin, 0, 0,
+                             wid, ht, SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
+            }
+            else if (status == 1)
+                SetWindowPos(ws->iconwin, ws->iconwin,
+                             posx,
+                             posy,
+                             0, 0, SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
+        }
+    }
+    if (status & C_IMAGE) {
+        struct imgdata *imd = &ws->initimage;
+        if (imd->width) {
+            drawstrimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
+                         imd->data, imd->width * imd->height);
+            if (imd->paltbl)
+                free(imd->paltbl);
+            free(imd->data);
+            imd->width = 0;
+        }
+    }
    return Succeeded;
-   }
+}
 
 
 

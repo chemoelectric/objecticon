@@ -272,8 +272,10 @@ class Dialog(Component)
    end
 
    public open_buffer_win()
-      self.buffer_win := (Window.open ! (["canvas=hidden"] ||| 
-                                   wattribs_to_list(self.wattribs))) | runerr("couldn't open window")
+      local t
+      t := wattribs_to_list(self.wattribs)
+      put(t, "canvas=hidden")
+      self.buffer_win := Window.open!t | runerr("couldn't open window")
    end
 
    #
@@ -320,13 +322,14 @@ class Dialog(Component)
    end
 
    public open_visible_win()
-      local pw
+      local t, pw
       ensure_size()
       ensure_pos()
-      self.win := 
-         (if pw := (\owning_dialog).win then pw.open_child else Window.open)!
-         (["inputmask=mk"] ||| wattribs_to_list(self.wattribs)) | runerr("couldn't open window")
-
+      t := wattribs_to_list(self.wattribs)
+      put(t, "inputmask=mk")
+      if pw := (\owning_dialog).win then
+         every put(t, "parent=" | pw)
+      self.win := Window.open!t | runerr("couldn't open window")
       # Make the buffer the same size as the visible win.
       self.buffer_win.set_size(self.win.get_width(), self.win.get_height())
       if \self.only_enlarge_width_flag then

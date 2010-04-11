@@ -9,34 +9,18 @@ class Window(SetFields,NoCopy)
       wbp
 
    public static open(a[])
-      local w
-      w := Window(wcreate())
-      w.set_fields(a)
-      w.wopen() | fail
-      return w
-   end
-
-   public static open_on(display, a[])
-      local w
-      w := Window(wcreate(display))
-      w.set_fields(a)
-      w.wopen() | fail
-      return w
-   end
-
-   public open_child(a[])
-      local w
-      w := Window(wcreate())
-      w.set_fields(a)
-      w.wopen(self) | fail
-      return w
-   end
-
-   public open_child_on(display, a[])
-      local w
-      w := Window(wcreate(display))
-      w.set_fields(a)
-      w.wopen(self) | fail
+      local f, w, t, display, parent
+      t := []
+      every f := generate_fields(a) do {
+         case f.attr of {
+            "display": display := f.val
+            "parent": parent := f.object_val(Window)
+            default: put(t, f)
+         }
+      }
+      w := Window(wcreate(display)) | fail
+      every w.apply_field(!t)
+      w.wopen(parent) | fail
       return w
    end
 

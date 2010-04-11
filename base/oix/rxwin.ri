@@ -1005,29 +1005,14 @@ static int wmap(wbp w, wbp parent)
     imd = &ws->initimage;
     if (imd->width) {
         drawstrimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
-                     imd->data, imd->width * imd->height, 0);
+                     imd->data, imd->width * imd->height);
         free(imd->paltbl);
         free(imd->data);
         imd->width = 0;
-    }
-
-    imd = &ws->initicon;
-    if (imd->width) {
-        drawstrimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
-                     imd->data, imd->width * imd->height, 1);
-        free(imd->paltbl);
-        free(imd->data);
-        imd->width = 0;
-        wmhints.icon_window = ws->iconwin;
-        ws->wmhintflags |= IconWindowHint;
     }
 
     if (wc->patternname != NULL) {
-        char buff[128];
-        /* Use a temporary buff since setpattern frees wc->patternname, so can't use it
-         * as an argument */
-        strcpy(buff, wc->patternname);
-        if (setpattern(w, buff) != Succeeded)
+        if (setpattern(w, wc->patternname) != Succeeded)
             return Failed;
     }
 
@@ -1190,6 +1175,17 @@ int doconfig(wbp w, int status)
                 break;
             }
         }
+        if (status & C_IMAGE) {
+            struct imgdata *imd = &ws->initimage;
+            if (imd->width) {
+                drawstrimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
+                             imd->data, imd->width * imd->height);
+                free(imd->paltbl);
+                free(imd->data);
+                imd->width = 0;
+            }
+        }
+
         /* XSync is not enough because the window manager gets involved here. */
         XFlush(wd->display);			      /* force out request */
         XGetWMName(wd->display, ws->win, &textprop);    /* force WM round trip */
@@ -2893,7 +2889,7 @@ void free_color(wbp w, char *s)
 /*
  * Draw a bilevel image
  */
-void drawblimage(wbp w, int x, int y, int width, int height, int ch, unsigned char *s, word len)
+void drawblimage(wbp w, int x, int y, int width, int height, int ch, unsigned char *s, int len)
 {
     unsigned int m, msk1, c, ix, iy;
     long fg, bg;
@@ -2958,7 +2954,7 @@ void drawblimage(wbp w, int x, int y, int width, int height, int ch, unsigned ch
  * Draw a character-per-pixel image
  */
 void drawstrimage(wbp w, int x, int y, int width, int height, 
-             struct palentry *e, unsigned char *s, int len, int on_icon)
+             struct palentry *e, unsigned char *s, int len)
 {
     int c, v, ret = 0, trans = 0;
     unsigned int r, g, b, ix, iy;
@@ -3038,16 +3034,9 @@ void drawstrimage(wbp w, int x, int y, int width, int height,
      * Put it on the screen.
      */
     if (wc->drawop != GXcopy) XSetFunction(stddpy, stdgc, GXcopy);
-    if (on_icon) {
-        if (ws->iconwin == (Window) NULL) makeIcon(w, 0, 0);
-        XPutImage(stddpy, ws->iconwin, stdgc, im, 0, 0, x, y, width, height);
-        XPutImage(stddpy, ws->iconpix, stdgc, im, 0, 0, x, y, width, height);
-    }
-    else {
-        XPutImage(stddpy, ws->pix, stdgc, im, 0, 0, x, y, width, height);
-        if (ws->win)
-            XCopyArea(stddpy, ws->pix, ws->win, stdgc, x, y, width, height, x, y);
-    }
+    XPutImage(stddpy, ws->pix, stdgc, im, 0, 0, x, y, width, height);
+    if (ws->win)
+        XCopyArea(stddpy, ws->pix, ws->win, stdgc, x, y, width, height, x, y);
     XDestroyImage(im);
     if (wc->drawop != GXcopy) XSetFunction(stddpy, stdgc, wc->drawop);
 }
@@ -3399,12 +3388,13 @@ int setpattern(wbp w, char *name)
     word v, bits[MAXXOBJS];
     Pixmap p;
     char data[MAXXOBJS];
-    char *buf = data;
+    char *t, *buf = data;
     STDLOCALS(w);
 
+    t = salloc(name);
     if (wc->patternname != NULL)
         free(wc->patternname);
-    wc->patternname = salloc(name);
+    wc->patternname = t;
    
     /*
      * If the pattern starts with a number it is a width , bits encoding

@@ -17,7 +17,7 @@ static int open_pix_win(wsp ws);
 static void close_pix_win(wsp ws);
 static void handle_resize(wsp ws);
 static int init_window_system(void);
-static void clear_pix(wbp wb);
+static void clear_pix_win(wbp wb);
 static void clear_win(wbp wb);
 static void clip(wcp wc, Image *i);
 static void unclip(wcp wc, Image *i);
@@ -131,8 +131,6 @@ wbp wcreate(char *display)
     return w;
 }
 
-
-
 int wopen(wbp w, wbp parent)
 {
     wsp ws = w->window;
@@ -144,7 +142,7 @@ int wopen(wbp w, wbp parent)
         return Failed;
 
     /* Fill pixmap with bg color */
-    clear_pix(w);
+    clear_pix_win(w);
 
     if (configure_canvas(w) != Succeeded)
         return Failed;
@@ -152,7 +150,7 @@ int wopen(wbp w, wbp parent)
     imd = &ws->initimage;
     if (imd->width) {
         drawstrimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
-                     imd->data, imd->width * imd->height, 0);
+                     imd->data, imd->width * imd->height);
         free(imd->paltbl);
         free(imd->data);
         imd->width = 0;
@@ -161,7 +159,7 @@ int wopen(wbp w, wbp parent)
     return Succeeded;
 }
 
-static void clear_pix(wbp w)
+static void clear_pix_win(wbp w)
 {
     wsp ws = w->window;
     Image *src = w->context->bg->i;
@@ -275,25 +273,41 @@ static wbp find_first_wbp_for(wsp ws)
     syserr("Couldn't find wbp for wsp");
 }
 
+static void resize_pix_win(wbp w)
+{
+    wsp ws = w->window;
+    Image *t;
+    if (Dx(ws->pix->r) >= ws->width &&
+        Dy(ws->pix->r) >= ws->height)
+        return;
+    MemProtect(t = allocimage(display, ws->pix->r, screen->chan, 1, DNofill));
+    copy_to(t, ws->pix);
+    close_pix_win(ws);
+    if (open_pix_win(ws) == Failed)
+        syserr("Failed to open_pix_win on a resize");
+    clear_pix_win(w);
+    copy_to(ws->pix, t);
+    freeimage(t);
+}
+
 static void handle_resize(wsp ws)
 {
     char buff[128];
+    wbp w;
     sprintf(buff, "%s/winname", ws->mount_dir);
     /*fprintf(stderr,"reconnecting to %s repl=%d\n",buff, ws->pix->repl);fflush(stderr);*/
     if (gengetwindow(display, buff, &ws->win, &ws->screen, Refnone) < 0)
         syserr("Failed to reconnect to window on a resize");
-    /* Fill the win with the bg of the first context */
-    clear_win(find_first_wbp_for(ws));
-    pix_to_win(ws);
-    close_pix_win(ws);
     ws->width = ws->win->r.max.x - ws->win->r.min.x;
     ws->height = ws->win->r.max.y - ws->win->r.min.y;
     ws->posx = ws->win->r.min.x - Borderwidth;
     ws->posy = ws->win->r.min.y - Borderwidth;
-    /*printf("new pos/size:%d,%d  %dx%d\n",ws->posx, ws->posy, ws->width, ws->height);*/
-    if (open_pix_win(ws) == Failed)
-        syserr("Failed to open_pix_win on a resize");
-    win_to_pix(ws);
+    w = find_first_wbp_for(ws);
+
+    /* Fill the win with the bg of the first context */
+    clear_win(w);
+    resize_pix_win(w);
+    pix_to_win(ws);
 }
 
 static void flush_event_pipe(wsp ws)
@@ -614,13 +628,12 @@ void drawutf8(wbp w, int x, int y, char *str, int slen)
 }
 
 void drawblimage(wbp w, int x, int y, int wd, int h,
-                int ch, unsigned char *s, word len)
+                int ch, unsigned char *s, int len)
 {
 }
 
 void drawstrimage(wbp w, int x, int y, int width, int height,
-              struct palentry *e, unsigned char *s,
-              int len, int on_icon)
+                  struct palentry *e, unsigned char *s, int len)
 {
     wsp ws = w->window;
     wcp wc = w->context;
@@ -977,20 +990,21 @@ int doconfig(wbp w, int status)
                 fprint(fd, "resize  -dx %d -dy %d", ws->width, ws->height);
             close(fd);
         }
-    } else {
-        if (status & C_SIZE) {
-            /* Copy the pixmap to a temporary buffer */
-            Image *t;
-            MemProtect(t = allocimage(display, ws->pix->r, screen->chan, 1, DNofill));
-            copy_to(t, ws->pix);
-            close_pix_win(ws);
-            if (open_pix_win(ws) == Failed)
-                syserr("Failed to open_pix_win on a resize");
-            clear_pix(w);
-            copy_to(ws->pix, t);
-            freeimage(t);
+    }
+    if (status & C_SIZE)
+        resize_pix_win(w);
+
+    if (status & C_IMAGE) {
+        struct imgdata *imd = &ws->initimage;
+        if (imd->width) {
+            drawstrimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
+                         imd->data, imd->width * imd->height);
+            free(imd->paltbl);
+            free(imd->data);
+            imd->width = 0;
         }
     }
+
     return Succeeded;
 }
 
@@ -1280,10 +1294,11 @@ int setcanvas(wbp w, char *s)
     else
         return Error;
 
-    /* If the window is already open, call configure_canvas now; otherwise it
-     * is called from wopen after the rest of the arg
+    /* 
+     * If the window is already open, call configure_canvas now;
+     * otherwise it is called from wopen.
      */
-    if (ws->win || ws->pix) {
+    if (ws->pix) {
         if (configure_canvas(w) == Failed)
             return Failed;
     }
