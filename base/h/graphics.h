@@ -241,7 +241,6 @@ typedef struct _wcontext {
   int		serial;			/* serial # */
   struct _wcontext *previous, *next;
   int		clipx, clipy, clipw, cliph;
-  char		*patternname;
   wfp		font;
   int		dx, dy;
   int		fillstyle;
@@ -249,8 +248,7 @@ typedef struct _wcontext {
   double	gamma;			/* gamma correction value */
   int		bits;			/* context bits */
 #if PLAN9
-  struct SharedImage *fg, *bg;
-  char		*fgname, *bgname;
+  struct SharedImage *fg, *bg, *pattern;
   int           thick;
 #endif
 #if XWindows
@@ -260,6 +258,7 @@ typedef struct _wcontext {
   int		linestyle;
   int		linewidth;
   int		leading;		/* inter-line leading */
+  char		*patternname;
 #endif					/* XWindows */
 #if MSWIN32
   LOGPEN	pen;
@@ -269,7 +268,7 @@ typedef struct _wcontext {
   HRGN          cliprgn;
   HBITMAP	pattern;
   SysColor	fg, bg;
-  char		*fgname, *bgname;
+  char		*patternname, *fgname, *bgname;
   int		leading, bkmode;
 #endif					/* MSWIN32*/
 

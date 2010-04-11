@@ -1726,10 +1726,7 @@ function graphics_Window_get_pattern(self)
        tended struct descrip result;
        char *s;
        GetSelfW();
-       s = self_w->context->patternname;
-       if (!s)
-           s = "black";
-       strcpy(attr_buff, s);
+       getpattern(self_w, attr_buff);
        cstr2string(attr_buff, &result);
        return result;
    }

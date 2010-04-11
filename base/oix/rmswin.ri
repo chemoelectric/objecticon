@@ -1676,6 +1676,14 @@ wbp w;
    return Succeeded;
    }
 
+void getpattern(wbp w, char *answer)
+{
+    if (w->context->patternname)
+        strcpy(answer, w->context->patternname);
+    else 
+        strcpy(answer, "black");
+}
+
 void getfg(w, answer)
 wbp w;
 char *answer;

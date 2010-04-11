@@ -177,7 +177,7 @@ void  bigrand         (dptr da, dptr dx);
    int  docircles       (wbp w, int argc, dptr argv, int fill);
    void drawCurve       (wbp w, XPoint *p, int n);
    void genCurve        (wbp w, XPoint *p, int n, void (*h)(wbp, XPoint [], int));
-   int  getpattern      (wbp w, char *answer);
+   void getpattern      (wbp w, char *answer);
    struct palentry *palsetup(int p);
    int  palnum          (dptr d);
    int  parsecolor      (wbp w, char *s, long *r, long *g, long *b, long *a);
