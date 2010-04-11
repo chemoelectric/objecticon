@@ -3413,7 +3413,7 @@ int setpattern(wbp w, char *name)
             case Failed:
                 return Failed;
             case Error:
-                ReturnErrNum(145, Error);
+                return Error;
         }
         if (!stdgc) return Succeeded;
         return setpatternbits(w, width, bits, nbits);
