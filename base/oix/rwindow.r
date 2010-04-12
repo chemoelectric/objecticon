@@ -2180,9 +2180,9 @@ int parsefont(char *s, char family[MAXFONTWORD+1], int *style, int *size)
 /*
  * parsepattern() - parse an encoded numeric stipple pattern
  */
-int parsepattern(char *s, int *width, int *nbits, word *bits)
+int parsepattern(char *s, int *width, int *nbits, int *bits)
 {
-    word v;
+    int v;
     int i, j, len, hexdigits_per_row, maxbits = *nbits;
 
     len = strlen(s);

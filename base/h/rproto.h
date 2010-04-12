@@ -182,7 +182,7 @@ void  bigrand         (dptr da, dptr dx);
    int  palnum          (dptr d);
    int  parsecolor      (wbp w, char *s, long *r, long *g, long *b, long *a);
    int  parsefont       (char *s, char *fam, int *sty, int *sz);
-   int  parsepattern    (char *s, int *w, int *nbits, word *bits);
+   int  parsepattern    (char *s, int *w, int *nbits, int *bits);
    void qevent          (wsp ws, dptr e, int x, int y, uword t, long f, int krel);
    void wgetevent       (wbp w, dptr res);
    int  readimagefile   (char *filename, int p, struct imgdata *imd);

@@ -22,7 +22,7 @@ static int handle_config(wbp w, XConfigureEvent *event);
 static int handle_exposures(wbp w, XExposeEvent *event);
 static void handle_mouse(wbp w, XButtonEvent *event);
 static void handle_keypress(wbp w, XKeyEvent *event);
-static int setpatternbits(wbp w, int width, word *bits, int nbits);
+static int setpatternbits(wbp w, int width, int *bits, int nbits);
 static XImage *getximage(wbp w, int x, int y,
                          int width, int height, int init);
 static void makeIcon(wbp w, int x, int y);
@@ -1438,7 +1438,7 @@ int setdrawop(wbp w, char *val)
                 XSetForeground(stddpy, stdgc, wd->colors[wc->fg].c);
         }
         if ((i = stringint_str2int(drawops,val)) < 0)
-            return Error;
+            return Failed;
         wc->drawop = i;
     }
     if (stdgc) XSetFunction(stddpy, stdgc, wc->drawop);
@@ -1643,7 +1643,7 @@ int setcanvas(wbp w, char *s)
 	    }
         }
     }
-    else return Error;
+    else return Failed;
     XSync(ws->display->display, False);
     return Succeeded;
 }
@@ -3394,7 +3394,7 @@ int setpattern(wbp w, char *name)
     int width, nbits;
     int i;
     int symbol;
-    word v, bits[MAXXOBJS];
+    int v, bits[MAXXOBJS];
     Pixmap p;
     char data[MAXXOBJS];
     char *t, *buf = data;
@@ -3414,7 +3414,7 @@ int setpattern(wbp w, char *name)
          * Otherwise, it is a named pattern.  Find the symbol id.
          */
         if ((symbol = stringint_str2int(siPatternSyms, name)) < 0)
-            return Error;
+            return Failed;
 
         if (stdgc) {
             for(i = 0; i < 8; i++) {
@@ -3436,9 +3436,9 @@ int setpattern(wbp w, char *name)
     return Succeeded;
 }
 
-static int setpatternbits(wbp w, int width, word *bits, int nbits)
+static int setpatternbits(wbp w, int width, int *bits, int nbits)
 {
-    word v;
+    int v;
     int i, j;
     Pixmap p;
     char data[MAXXOBJS];

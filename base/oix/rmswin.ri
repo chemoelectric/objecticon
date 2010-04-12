@@ -24,7 +24,7 @@
 static wcp           alc_context      (wbp w);
 static wsp           alc_winstate     (void);
 
-static int setpatternbits(wbp w, int width, word *bits, int nbits);
+static int setpatternbits(wbp w, int width, int *bits, int nbits);
 static HFONT mkfont              (char *s);
 static int sysTextWidth          (wbp w, char *s, int n);
 static int sysFontHeight         (wbp w);
@@ -3148,7 +3148,7 @@ int setpattern(wbp w, char *name)
     int width, nbits;
     int i, j;
     int symbol;
-    word v, bits[MAXXOBJS];
+    int v, bits[MAXXOBJS];
     HBITMAP p;
     char data[MAXXOBJS];
     char *t, *buf = data;
@@ -3168,7 +3168,7 @@ int setpattern(wbp w, char *name)
          * Otherwise, it is a named pattern.  Find the symbol id.
          */
         if ((symbol = stringint_str2int(siPatternSyms, name)) < 0)
-            return Error;
+            return Failed;
         if (w->window->iconwin != NULL) {
             for(i = 0; i < 8; i++) {
                 v = reversebits(~(patbits[symbol * 8 + i]));
@@ -3216,10 +3216,10 @@ HBITMAP CreateBitmapFromData(char *data)
 static int setpatternbits(w, width, bits, nbits)
 wbp w;
 int width;
-word *bits;
+int *bits;
 int nbits;
    {
-   word v;
+   int v;
    int i, j, k;
    HBITMAP p;
    char data[MAXXOBJS];
