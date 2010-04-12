@@ -15,13 +15,14 @@ wdp wdsplys;
 /*
  * function prototypes
  */
-static wcp alc_context(wbp w);
-static wsp alc_winstate(void);
+static wcp alccontext(wbp w);
+static wsp alcwinstate(void);
 static int handle_misc(wdp display);
 static int handle_config(wbp w, XConfigureEvent *event);
 static int handle_exposures(wbp w, XExposeEvent *event);
 static void handle_mouse(wbp w, XButtonEvent *event);
 static void handle_keypress(wbp w, XKeyEvent *event);
+static int setpatternbits(wbp w, int width, word *bits, int nbits);
 static XImage *getximage(wbp w, int x, int y,
                          int width, int height, int init);
 static void makeIcon(wbp w, int x, int y);
@@ -47,14 +48,14 @@ static int setbgrgb(wbp w, int r, int g, int b);
 static XColor xcolor(wbp w, LinearColor clr);
 static LinearColor lcolor(wbp w, XColor color);
 static int remap(wbp w, int x, int y);
-static wdp alc_display (char *s);
+static wdp alcdisplay (char *s);
 static void free_display   (wdp wd);
-static wfp alc_font(wbp w, char *s);
+static wfp alcfont(wbp w, char *s);
 static wfp tryfont(wbp w, char *s);
-static wclrp alc_rgb(wbp w, char *s, unsigned int r,
+static wclrp alcrgb(wbp w, char *s, unsigned int r,
                      unsigned int g, unsigned int b,
                      int is_iconcolor);
-static int alc_centry(wdp wd);
+static int alccentry(wdp wd);
 static void copy_colors(wbp w1, wbp w2);
 static void free_xcolor(wbp w, unsigned long c);
 static void free_xcolors(wbp w, int extent);
@@ -781,11 +782,11 @@ wbp wcreate(char *display)
 {
     wbp w;
     wsp ws;
-    w = alc_wbinding();
-    w->window = alc_winstate();
-    if ((w->window->display = alc_display(display)) == NULL) {
+    w = alcwbinding();
+    w->window = alcwinstate();
+    if ((w->window->display = alcdisplay(display)) == NULL) {
         LitWhy("Couldn't initialize display structure");
-        free_binding(w);
+        freewbinding(w);
         return 0;
     }
     ws = w->window;
@@ -796,7 +797,7 @@ wbp wcreate(char *display)
      * some attributes of the display and window are used in the context
      */
 	
-    w->context = alc_context(w);
+    w->context = alccontext(w);
 
     ws->height = 200;
     ws->width  = 200;
@@ -1812,8 +1813,8 @@ int setfg(wbp w, char *s)
      * convert color to an r,g,b triple
      */
     if (parsecolor(w, s, &r, &g, &b, &a) != Succeeded)
-        return Error;
-    Protect(cp = alc_rgb(w, s, r, g, b, 0), return Failed);
+        return Failed;
+    Protect(cp = alcrgb(w, s, r, g, b, 0), return Failed);
     wc->fg = (cp - wd->colors);
     return resetfg(w);
 }
@@ -1864,8 +1865,8 @@ int setbg(wbp w, char *s)
      * convert color to an r,g,b triple
      */
     if (parsecolor(w, s, &r, &g, &b, &a) != Succeeded)
-        return Error;
-    Protect(cp = alc_rgb(w, s, r, g, b, 0), return Failed);
+        return Failed;
+    Protect(cp = alcrgb(w, s, r, g, b, 0), return Failed);
     wc->bg = (cp - wd->colors);
     if (stdgc != NULL)
         XSetBackground(stddpy, stdgc, cp->c);
@@ -1930,7 +1931,7 @@ int setdisplay(wbp w, char *s)
     if (w->window->pix != (Pixmap) NULL)
         return Failed;
 
-    Protect(d = alc_display(s), return 0);
+    Protect(d = alcdisplay(s), return 0);
     w->window->display = d;
     w->context->fg = 0;
     w->context->bg = 1;
@@ -2076,7 +2077,7 @@ void getlinestyle(wbp w, char *answer)
             ((wc->linestyle==LineOnOffDash)?"dashed":"striped"));
 }
 
-void getpointername(wbp w, char *answer)
+void getpointer(wbp w, char *answer)
 {
     strcpy(answer, stringint_int2str(cursorsyms, 2 * w->window->theCursor));
 }
@@ -2117,7 +2118,7 @@ int setfont(wbp w, char *s)
 
     /* could free up previously allocated font here */
 
-    Protect(tmp = alc_font(w,s), return Failed);
+    Protect(tmp = alcfont(w,s), return Failed);
     wc->font = tmp;
 
 #ifndef HAVE_LIBXFT
@@ -2576,14 +2577,14 @@ int copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2)
                             cp->b = clr.blue;
                             sprintf(cp->name,"%d,%d,%d",cp->r,cp->g,cp->b);
                         }
-                        cp2 = alc_rgb(w2, cp->name, cp->r, cp->g, cp->b, 0);
+                        cp2 = alcrgb(w2, cp->name, cp->r, cp->g, cp->b, 0);
                         if (cp2 == NULL) return Failed;
                         break;
                     }
                 }
                 if (cp2 == NULL) {
                     XQueryColor(d1, wd1->cmap, &clr);
-                    cp2 = alc_rgb(w2, "unknown", clr.red, clr.green, clr.blue, 0);
+                    cp2 = alcrgb(w2, "unknown", clr.red, clr.green, clr.blue, 0);
                 }
                 if (cp2 == NULL) return Failed;
                 XSetForeground(stddpy, stdgc, cp2->c);
@@ -2767,7 +2768,7 @@ int mutablecolor(wbp w, dptr argv, int ac, int *retval)
         /*
          * allocate a slot in wdisplay->colors and wstate->theColors arrays
          */
-        i = alc_centry(wd);
+        i = alccentry(wd);
         if (i == 0)
             return Failed;
         wd->colors[i].type = MUTABLE;
@@ -2855,7 +2856,7 @@ int setmutable(wbp w, int i, char *s)
     return Succeeded;
 }
 
-void free_mutable(wbp w, int mute_index)
+void freemutable(wbp w, int mute_index)
 {
     wdp dp;
     Display *d;
@@ -2872,7 +2873,7 @@ void free_mutable(wbp w, int mute_index)
 }
 
 
-void free_color(wbp w, char *s)
+void freecolor(wbp w, char *s)
 {
     wdp dp;
     Display *d;
@@ -2992,13 +2993,13 @@ void drawstrimage(wbp w, int x, int y, int width, int height,
                 g = e[c].clr.green;
                 b = e[c].clr.blue;
                 sprintf(tmp, "%d,%d,%d", r, g, b);
-                cp = alc_rgb(w, tmp, r, g, b, 0);
+                cp = alcrgb(w, tmp, r, g, b, 0);
                 if (cp == NULL) {
                     ret++;
                     if ((0.299 * r + 0.587 * g + 0.114 * b) > 32767)
-                        cp = alc_rgb(w, "white", 65535, 65535, 65535, 0);
+                        cp = alcrgb(w, "white", 65535, 65535, 65535, 0);
                     else
-                        cp = alc_rgb(w, "black", 0, 0, 0, 0);
+                        cp = alcrgb(w, "black", 0, 0, 0, 0);
                 }
                 ciarray[c] = cp-wd->colors;
             }
@@ -3032,7 +3033,7 @@ void drawstrimage(wbp w, int x, int y, int width, int height,
                 int b = *s++ * 257;
                 int g = *s++ * 257;
                 int r = *s++ * 257;
-                wclrp cp = alc_rgb(w,"anon", r, g, b, 0);
+                wclrp cp = alcrgb(w,"anon", r, g, b, 0);
                 XPutPixel(im, ix++, iy, cp->c);
 	    }
             iy++;
@@ -3399,45 +3400,43 @@ int setpattern(wbp w, char *name)
     char *t, *buf = data;
     STDLOCALS(w);
 
-    t = salloc(name);
-    if (wc->patternname != NULL)
-        free(wc->patternname);
-    wc->patternname = t;
-   
     /*
      * If the pattern starts with a number it is a width , bits encoding
      */
     if (isdigit((unsigned char)name[0])) {
         nbits = MAXXOBJS;
-        switch (parsepattern(name, &width, &nbits, bits)) {
-            case Failed:
-                return Failed;
-            case Error:
-                return Error;
+        if (parsepattern(name, &width, &nbits, bits) != Succeeded)
+            return Failed;
+        if (stdgc)
+            setpatternbits(w, width, bits, nbits);
+    } else {
+        /*
+         * Otherwise, it is a named pattern.  Find the symbol id.
+         */
+        if ((symbol = stringint_str2int(siPatternSyms, name)) < 0)
+            return Error;
+
+        if (stdgc) {
+            for(i = 0; i < 8; i++) {
+                v = patbits[symbol * 8 + i];
+                *buf++ = v;
+            }
+            p = XCreateBitmapFromData(stddpy, stdpix, data, 8, 8);
+            XSetStipple(stddpy, stdgc, p);
+            XSync(stddpy, False);
+            XFreePixmap(stddpy, p);
         }
-        if (!stdgc) return Succeeded;
-        return setpatternbits(w, width, bits, nbits);
     }
 
-    /*
-     * Otherwise, it is a named pattern.  Find the symbol id.
-     */
-    if ((symbol = stringint_str2int(siPatternSyms, wc->patternname)) >= 0) {
-        if (!stdgc) return Succeeded;
-        for(i = 0; i < 8; i++) {
-            v = patbits[symbol * 8 + i];
-            *buf++ = v;
-        }
-        p = XCreateBitmapFromData(stddpy, stdpix, data, 8, 8);
-        XSetStipple(stddpy, stdgc, p);
-        XSync(stddpy, False);
-        XFreePixmap(stddpy, p);
-        return Succeeded;
-    }
-    return Failed;
+    t = salloc(name);
+    if (wc->patternname != NULL)
+        free(wc->patternname);
+    wc->patternname = t;
+   
+    return Succeeded;
 }
 
-int setpatternbits(wbp w, int width, word *bits, int nbits)
+static int setpatternbits(wbp w, int width, word *bits, int nbits)
 {
     word v;
     int i, j;
@@ -4117,7 +4116,7 @@ void drawutf8(wbp w, int x, int y, char *s, int slen)
  * per-display basis, but they are often freed on a per-window basis,
  * so they are remembered in two structures.
  */
-static wclrp alc_rgb(wbp w, char *s, unsigned int r, unsigned int g,
+static wclrp alcrgb(wbp w, char *s, unsigned int r, unsigned int g,
               unsigned int b, int is_iconcolor)
 {
     LinearColor lc;
@@ -4200,7 +4199,7 @@ static wclrp alc_rgb(wbp w, char *s, unsigned int r, unsigned int g,
                 !XAllocColor(stddpy, wd->cmap, &color))
                 return NULL;
         }
-        j = alc_centry(wd);
+        j = alccentry(wd);
         if (j == 0)
             return NULL;
         strcpy(wd->colors[j].name, s);
@@ -4233,7 +4232,7 @@ static wclrp alc_rgb(wbp w, char *s, unsigned int r, unsigned int g,
 /*
  * allocate a color entry, return index (or 0 if table is full)
  */
-static int alc_centry(wdp wd)
+static int alccentry(wdp wd)
 {
     int i, j;
 
@@ -4410,7 +4409,7 @@ static int go_virtual(wbp w)
 /*
  * allocate a display on machine s
  */
-static wdp alc_display(char *s)
+static wdp alcdisplay(char *s)
 {
     double g;
     wdp wd;
@@ -4611,7 +4610,7 @@ static char *convert_spec(char *s)
 /*
  * allocate font s in the display attached to w
  */
-static wfp alc_font(wbp w, char *s)
+static wfp alcfont(wbp w, char *s)
 {
     return tryfont(w,convert_spec(s));
 }
@@ -4622,7 +4621,7 @@ static wfp alc_font(wbp w, char *s)
 /*
  * allocate font s in the display attached to w
  */
-wfp alc_font(wbp w, char *s)
+wfp alcfont(wbp w, char *s)
 {
     int flags, size;
     wfp rv = NULL;
@@ -4975,7 +4974,7 @@ static wfp loadfont(wdp wd, char *s)
 /*
  * allocate a context.  Can't be called until w has a display and window.
  */
-static wcp alc_context(wbp w)
+static wcp alccontext(wbp w)
 {
     wcp wc;
     wdp wd = w->window->display;
@@ -5014,7 +5013,7 @@ wcp clonecontext(wbp w)
 
     wc = w->context;
     wd = w->context->display;
-    rv = alc_context(w);
+    rv = alccontext(w);
 
     rv->dx = wc->dx;
     rv->dy = wc->dy;
@@ -5067,7 +5066,7 @@ wcp clonecontext(wbp w)
 /*
  * allocate a window state structure
  */
-static wsp alc_winstate()
+static wsp alcwinstate()
 {
     wsp ws;
     GRFX_ALLOC(ws, _wstate);
@@ -5094,7 +5093,7 @@ static wsp alc_winstate()
 /*
  * free a window state
  */
-void free_window(wsp ws)
+void freewindow(wsp ws)
 {
     ws->refcount--;
     if(ws->refcount == 0) {
@@ -5156,7 +5155,7 @@ void free_window(wsp ws)
 /*
  * free a window context
  */
-void free_context(wcp wc)
+void freecontext(wcp wc)
 {
     wc->refcount--;
     if(wc->refcount == 0) {

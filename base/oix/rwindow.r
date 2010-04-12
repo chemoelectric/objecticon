@@ -2190,7 +2190,7 @@ int parsepattern(char *s, int *width, int *nbits, word *bits)
     /*
      * Get the width
      */
-    if (sscanf(s, "%d,", width) != 1) return Error;
+    if (sscanf(s, "%d,", width) != 1) return Failed;
     if (*width < 1) return Failed;
 
     /*
@@ -2199,7 +2199,7 @@ int parsepattern(char *s, int *width, int *nbits, word *bits)
     while ((len > 0) && isdigit((unsigned char)*s)) {
         len--; s++;
     }
-    if ((len <= 1) || (*s != ',')) return Error;
+    if ((len <= 1) || (*s != ',')) return Failed;
     len--; s++;					/* skip over ',' */
 
     if (*s == '#') {
@@ -2207,7 +2207,7 @@ int parsepattern(char *s, int *width, int *nbits, word *bits)
          * get remaining bits as hex constant
          */
         s++; len--;
-        if (len == 0) return Error;
+        if (len == 0) return Failed;
         hexdigits_per_row = *width / 4;
         if (*width % 4) hexdigits_per_row++;
         *nbits = len / hexdigits_per_row;
@@ -2224,7 +2224,7 @@ int parsepattern(char *s, int *width, int *nbits, word *bits)
                         v += *s - 'a' + 10; break;
                     case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
                         v += *s - 'A' + 10; break;
-                    default: return Error;
+                    default: return Failed;
                 }
 	    }
             *bits++ = v;
@@ -2509,7 +2509,7 @@ void drawCurve(wbp w, XPoint *p, int n)
 /*
  * allocate a window binding structure
  */
-wbp alc_wbinding()
+wbp alcwbinding()
    {
    wbp w;
 
@@ -2521,12 +2521,12 @@ wbp alc_wbinding()
 /*
  * free a window binding.
  */
-void free_binding(wbp w)
+void freewbinding(wbp w)
    {
    w->refcount--;
    if(w->refcount == 0) {
-      if (w->window) free_window(w->window);
-      if (w->context) free_context(w->context);
+      if (w->window) freewindow(w->window);
+      if (w->context) freecontext(w->context);
       GRFX_UNLINK(w, wbndngs);
       }
    }

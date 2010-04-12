@@ -104,14 +104,14 @@ function graphics_Window_wopen(self, parent)
       if (is:null(parent)) {
           if (wopen(self_w, 0) != Succeeded) {
               *self_w_dptr = zerodesc;
-              free_binding(self_w);
+              freewbinding(self_w);
               fail;
           }
       } else {
           WindowStaticParam(parent, w2);
           if (wopen(self_w, w2) != Succeeded) {
               *self_w_dptr = zerodesc;
-              free_binding(self_w);
+              freewbinding(self_w);
               fail;
           }
       }
@@ -154,7 +154,7 @@ function graphics_Window_clone_impl(self)
    body {
        wbp w2;
        GetSelfW();
-       w2 = alc_wbinding();
+       w2 = alcwbinding();
        w2->window = self_w->window;
        w2->window->refcount++;
        w2->context = clonecontext(self_w);
@@ -304,7 +304,7 @@ function graphics_Window_couple_impl(win, win2)
       /*
        * make the new binding
        */
-      wb_new = alc_wbinding();
+      wb_new = alcwbinding();
 
       wb_new->window = ws = wb->window;
       /*
@@ -871,12 +871,12 @@ function graphics_Window_free_color(self, argv[argc])
           if (is:integer(argv[i])) {
               CnvCInteger(argv[i], n)
               if (n < 0)
-                  free_mutable(self_w, n);
+                  freemutable(self_w, n);
           }
           else {
               if (!cnv:string(argv[i],argv[i]))
                   runerr(103,argv[i]);
-              free_color(self_w, buffstr(&argv[i]));
+              freecolor(self_w, buffstr(&argv[i]));
           }
       }
 
@@ -1198,7 +1198,7 @@ function graphics_Window_uncouple(self)
    body {
       GetSelfW();
       *self_w_dptr = zerodesc;
-      free_binding(self_w);
+      freewbinding(self_w);
       return self;
    }
 end
@@ -1342,7 +1342,7 @@ function graphics_Window_close(self)
 
      *self_w_dptr = zerodesc;
      wclose(self_w);
-     free_binding(self_w);
+     freewbinding(self_w);
 
      return self;
    }
@@ -1736,7 +1736,7 @@ function graphics_Window_get_pointer(self)
    body {
        tended struct descrip result;
        GetSelfW();
-       getpointername(self_w, attr_buff);
+       getpointer(self_w, attr_buff);
        cstr2string(attr_buff, &result);
        return result;
    }
