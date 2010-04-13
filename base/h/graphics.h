@@ -295,13 +295,8 @@ typedef struct _wstate {
   int		serial;			/* serial # */
   struct _wstate *previous, *next;
   int		inputmask;		/* user input mask */
-  int		pixheight;		/* backing pixmap height, in pixels */
-  int		pixwidth;		/* pixmap width, in pixels */
   char		*windowlabel;		/* window label */
-  char		*iconimage;		/* icon pixmap file name */
-  char		*iconlabel;		/* icon label */
   struct imgdata initimage;		/* initial image data */
-  struct imgdata initicon;		/* initial icon image data */
   int		posy, posx;		/* desired upper lefthand corner */
   unsigned int	height;			/* window height, in pixels */
   unsigned int	width;			/* window width, in pixels */
@@ -310,10 +305,8 @@ typedef struct _wstate {
   unsigned int	maxheight;		/* maximum window height, in pixels */
   unsigned int	maxwidth;		/* maximum window width, in pixels */
   int		bits;			/* window bits */
-  int		theCursor;		/* index into cursor table */
   word		timestamp;		/* last event time stamp */
-  char		*cursorname;
-  struct descrip listp;		/* icon values for this window */
+  struct descrip listp;		        /* event list for this window */
 #if XWindows
   wdp		display;
   Window	win;			/* X window */
@@ -321,7 +314,10 @@ typedef struct _wstate {
   Pixmap	initialPix;		/* an initial image to display */
   Window        iconwin;		/* icon window */
   Pixmap	iconpix;		/* icon pixmap */
+  int		pixheight;		/* backing pixmap height, in pixels */
+  int		pixwidth;		/* pixmap width, in pixels */
   Visual	*vis;
+  int		theCursor;		/* index into cursor table */
 #ifdef HAVE_LIBXFT
   XftDraw       *winDraw,*pixDraw;
 #endif
@@ -337,6 +333,9 @@ typedef struct _wstate {
   int		iconx, icony;           /* location of icon */
   unsigned int	iconw, iconh;		/* width and height of icon */
   long		wmhintflags;		/* window manager hints */
+  char		*iconimage;		/* icon pixmap file name */
+  struct imgdata initicon;		/* initial icon image data */
+  char		*iconlabel;		/* icon label */
 #endif					/* XWindows */
 #if MSWIN32
   HWND		win;			/* client window */
@@ -345,8 +344,11 @@ typedef struct _wstate {
   HBITMAP	iconpix;		/* backing bitmap */
   HBITMAP	initialPix;		/* backing bitmap */
   HBITMAP	theOldPix;
+  int		pixheight;		/* backing pixmap height, in pixels */
+  int		pixwidth;		/* pixmap width, in pixels */
   HCURSOR	curcursor;
   HCURSOR	savedcursor;
+  char		*cursorname;
   HMENU		menuBar;
   int		nmMapElems;
   char **       menuMap;
