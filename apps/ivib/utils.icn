@@ -97,7 +97,7 @@ end
 # Check that the window attributes in list l are valid.
 #
 procedure util_check_attribs(dialog, t)
-   local s
+   local s, e
    static test_win, attrib_table
    initial {
       test_win := Window.open("canvas=hidden") | stop("couldn't open window")
@@ -110,19 +110,25 @@ procedure util_check_attribs(dialog, t)
                           "dx", "dy", "minwidth", "minheight", "minsize", "maxwidth", "maxheight", "maxsize")
    }
 
+   # Check for attrib names
    every s := !sort(t) do {
-      if s[1] == "pos" then
-         next
       if not member(attrib_table, s[1]) then
          return alert_error(dialog, "Invalid attribute " || s[1])
-#      &error := -1
-      test_win.attrib(s[1] || "=" || s[2])
-#      if &error < -1 then {
-#         &error := 0
-#         return alert_error(dialog, "Invalid value " || s[2] || " for attrib " || s[1])
-#      }
-#      &error := 0
    }
+
+   # Check no attrib values give runtime errors when set.
+   &handler := &current
+   errorclear()
+   e := create {
+      every s := !sort(t) do {
+         test_win.attrib(s[1] || "=" || s[2])
+      }
+   }
+   @e
+   &handler := &null
+   if &errornumber then
+      return alert_error(dialog, "Invalid value " || s[2] || " for attrib " || s[1])
+
    return
 end
 
