@@ -239,8 +239,6 @@ typedef struct _wcontext {
   int		clipx, clipy, clipw, cliph;
   wfp		font;
   int		dx, dy;
-  int		fillstyle;
-  int		drawop;
   double	gamma;			/* gamma correction value */
   int		bits;			/* context bits */
 #if XWindows
@@ -251,6 +249,8 @@ typedef struct _wcontext {
   int		linewidth;
   int		leading;		/* inter-line leading */
   char		*patternname;
+  int		fillstyle;
+  int		drawop;
 #endif					/* XWindows */
 #if MSWIN32
   LOGPEN	pen;
@@ -262,6 +262,8 @@ typedef struct _wcontext {
   SysColor	fg, bg;
   char		*patternname, *fgname, *bgname;
   int		leading, bkmode;
+  int		fillstyle;
+  int		drawop;
 #endif					/* MSWIN32*/
 
 } wcontext, *wcp;

@@ -29,8 +29,6 @@
 #define XLFD_Spacing	11
 #define XLFD_CharSet	13
 
-#define FS_SOLID FillSolid
-#define FS_STIPPLE FillStippled
 #define SysColor XColor
 #define RootState IconicState+1
 #define MaximizedState IconicState+2

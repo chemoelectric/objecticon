@@ -38,11 +38,7 @@
 #define GEOM_HEIGHT          2
 #define GEOM_POSX            4
 #define GEOM_POSY            8
-/*
- * fill styles
- */
-#define FS_SOLID             1
-#define FS_STIPPLE           2
+
 /*
  * the special ROP code for mode reverse
  */

@@ -1325,11 +1325,27 @@ char *s;
          wc->bkmode = OPAQUE;
 	 }
       else {
-	 return Error;
+	 return Failed;
 	 }
       }
    return Succeeded;
    }
+
+
+
+void getfillstyle(wbp w, char *answer)
+{
+    char *s;
+    wcp wc = w->context;
+
+    if (wc->fillstyle == BS_SOLID)
+        s = "solid";
+    else if (wc->bkmode = TRANSPARENT)
+        s = "masked";
+    else
+        s = "textured";
+    strcpy(answer, s);
+}
 
 /*
  * Set the context's line style by name.

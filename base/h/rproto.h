@@ -224,6 +224,7 @@ void  bigrand         (dptr da, dptr dx);
    int  getdefault      (wbp w, char *prog, char *opt, char *answer);
    void getdisplay      (wbp w, char *answer);
    void getdrawop       (wbp w, char *answer);
+   void getfillstyle    (wbp w, char *answer);
    void getfg           (wbp w, char *answer);
    void geticonic       (wbp w, char *answer);
    int  geticonpos      (wbp w, char *s);

@@ -1555,13 +1555,11 @@ end
 
 function graphics_Window_get_fillstyle(self)
    body {
+       tended struct descrip result;
        GetSelfW();
-       switch (self_w->context->fillstyle) {
-           case FS_SOLID: return C_string "solid";
-           case FS_STIPPLE: return C_string "masked";
-           default: return C_string "textured";
-       }
-       fail;
+       getfillstyle(self_w, attr_buff);
+       cstr2string(attr_buff, &result);
+       return result;
    }
 end
 

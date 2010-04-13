@@ -1727,12 +1727,35 @@ int setfillstyle(wbp w, char *s)
              || !strcmp(s, "opaquestippled") || !strcmp(s, "opaquepatterned")) {
         wc->fillstyle = FillOpaqueStippled;
     }
-    else return Error;
+    else 
+        return Failed;
     if (stdpix) {
         XSetFillStyle(stddpy, stdgc, wc->fillstyle);
     }
     return Succeeded;
 }
+
+void getfillstyle(wbp w, char *answer)
+{
+    char *s;
+    STDLOCALS(w);
+    switch (wc->fillstyle) {
+        case FillStippled: {
+            s = "masked";
+            break;
+        }
+        case FillOpaqueStippled: {
+            s = "textured";
+            break;
+        }
+        default: {
+            s = "solid";
+            break;
+        }
+    }
+    strcpy(answer, s);
+}
+
 
 /*
  * Set the context's line style by name.
