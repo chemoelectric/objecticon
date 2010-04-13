@@ -4,9 +4,9 @@ static wfp fonts;
 static Rectangle max_rect;
 
 static int open_winfile(wsp ws, char *s, int mode);
-static wsp alc_winstate(void);
-static wcp alc_context(wbp w);
-static wfp alc_font(wbp w, char **s);
+static wsp alcwinstate(void);
+static wcp alccontext(wbp w);
+static wfp alcfont(wbp w, char **s);
 static int configure_canvas(wbp w);
 static void mouse_loop(wsp ws);
 static void cons_loop(wsp ws);
@@ -22,9 +22,10 @@ static void clear_pix_win(wbp wb);
 static void clear_win(wbp wb);
 static void clip(wcp wc, Image *i);
 static void unclip(wcp wc, Image *i);
-static struct SharedImage *alc_sharedimage(Image *i, char *name);
+static struct SharedImage *new_sharedimage(Image *i, char *name);
 static struct SharedImage *link_sharedimage(struct SharedImage *i);
 static void unlink_sharedimage(struct SharedImage *i);
+static int reversebits(int c);
 
 #define EMAXMSG 128+8192     /* size of 9p header+data */
 #define WINDOW_MOUNT_ROOT "/tmp/oi_windowmounts"
@@ -88,7 +89,7 @@ static int open_winfile(wsp ws, char *s, int mode)
     return fd;
 }
 
-static struct SharedImage *alc_sharedimage(Image *i, char *name)
+static struct SharedImage *new_sharedimage(Image *i, char *name)
 {
     struct SharedImage *res;
     GRFX_ALLOC(res, SharedImage);
@@ -143,9 +144,9 @@ wbp wcreate(char *display)
         inited = 1;
     }
 
-    w = alc_wbinding();
-    ws = w->window = alc_winstate();
-    w->context = alc_context(w);
+    w = alcwbinding();
+    ws = w->window = alcwinstate();
+    w->context = alccontext(w);
     create_list(0, &ws->listp);
 
     /*
@@ -758,7 +759,7 @@ int setfg(wbp w, char *val)
     Image *i;
     wcp wc = w->context;
     if (parsecolor(w, val, &r, &g, &b, &a) != Succeeded)
-        return Error;
+        return Failed;
     if (wc->fg)
         unlink_sharedimage(wc->fg);
     r /= 256;
@@ -767,7 +768,7 @@ int setfg(wbp w, char *val)
     a /= 256;
     n = (r << 24) | (g << 16) | (b << 8) | a;
     MemProtect(i = allocimage(display, Rect(0, 0, 1, 1), screen->chan, 1, n));
-    wc->fg = alc_sharedimage(i, val);
+    wc->fg = new_sharedimage(i, val);
     return Succeeded;
 }
 
@@ -792,7 +793,7 @@ int setbg(wbp w, char *val)
     Image *i;
     wcp wc = w->context;
     if (parsecolor(w, val, &r, &g, &b, &a) != Succeeded)
-        return Error;
+        return Failed;
     if (wc->bg)
         unlink_sharedimage(wc->bg);
     r /= 256;
@@ -801,7 +802,7 @@ int setbg(wbp w, char *val)
     a /= 256;
     n = (r << 24) | (g << 16) | (b << 8) | a;
     MemProtect(i = allocimage(display, Rect(0, 0, 1, 1), screen->chan, 1, n));
-    wc->bg = alc_sharedimage(i, val);
+    wc->bg = new_sharedimage(i, val);
     return Succeeded;
 }
 
@@ -942,11 +943,11 @@ int setfont(wbp w, char *s)
     return Succeeded;
 }
 
-void free_mutable(wbp w, int mute_index)
+void freemutable(wbp w, int mute_index)
 {
 }
 
-void free_color(wbp w, char *s)
+void freecolor(wbp w, char *s)
 {
 }
 
@@ -971,40 +972,24 @@ int mutablecolor (wbp w, dptr argv, int ac, int *retval)
 
 static Image *pattern_image(char *name)
 {
-    int width, nbits, i, j, k;
-    ulong chan;
-    word bits[MAXXOBJS], v;
+    int width, height, i, j, k;
+    int bits[MAXXOBJS], v;
     unsigned char data[MAXXOBJS * 8];
     Image *img;
-    nbits = MAXXOBJS;
-    if (parsepattern(name, &width, &nbits, bits) != Succeeded)
+    height = MAXXOBJS;
+    if (parsepattern(name, &width, &height, bits) != Succeeded)
         return 0;
-
-    switch (width) {
-        case 8: chan = GREY1; break;
-        case 16: chan = GREY2; break;
-        default: return 0;
-    }
-
-    print("width=%d  nbits=%d\n",width,nbits);
-    for (i = 0; i < nbits; ++i)
-        print("\t%d %2x\n",i,bits[i]);
-
     k = 0;
-    for(i = 0; i < nbits; i++) {
+    for(i = 0; i < height; i++) {
         v = bits[i];
         for(j = 0; j < width; j += 8) {
-            data[k++] = v;
+            data[k++] = reversebits(v);
             v >>= 8;
         }
     }
 
-    for (i = 0; i < k; ++i)
-        print("\t data %d %2x\n",i,data[i]);
-
-    MemProtect(img = allocimage(display, Rect(0, 0, width, nbits), chan, 1, DNofill));
+    MemProtect(img = allocimage(display, Rect(0, 0, width, height), GREY1, 1, DNofill));
     loadimage(img, img->r, data, k);
-
     return img;
 }
 
@@ -1013,29 +998,23 @@ int setpattern(wbp w, char *name)
     wcp wc = w->context;
     int i;
 
-    print("setpattern->%s\n",name);
     /*
      * If the pattern starts with a number it is a width , bits encoding
      */
     if (isdigit((unsigned char)name[0])) {
         Image *img = pattern_image(name);
         if (!img)
-            return Error;
+            return Failed;
         if (wc->pattern)
             unlink_sharedimage(wc->pattern);
-        wc->pattern = alc_sharedimage(img, name);
+        wc->pattern = new_sharedimage(img, name);
     } else {
         if ((i = stringint_str2int(siPatternSyms, name)) < 0)
-            return Error;
+            return Failed;
         if (wc->pattern)
             unlink_sharedimage(wc->pattern);
         wc->pattern = link_sharedimage(patterns[i]);
     } 
-    return Succeeded;
-}
-
-int setpatternbits(wbp w, int width, word *bits, int nbits)
-{
     return Succeeded;
 }
 
@@ -1238,6 +1217,12 @@ static int open_screen_win(wsp ws)
     }
     write(ws->consctl_fd, "rawon", 5);
 
+    if ((ws->cursor_fd = open_winfile(ws, "cursor", OWRITE|OCEXEC)) < 0) {
+        whyf("Can't open cursor file %s: %r", buff);
+        close_screen_win(ws);
+        return Failed;
+    }
+
     switch (ws->mouse_pid = rfork(RFPROC)) {
         case 0: {
             mouse_loop(ws);
@@ -1278,6 +1263,8 @@ static void close_screen_win(wsp ws)
         close(ws->event_pipe[1]);
     if (ws->consctl_fd >= 0)
         close(ws->consctl_fd);
+    if (ws->cursor_fd >= 0)
+        close(ws->cursor_fd);
     if (ws->mouse_fd >= 0)
         close(ws->mouse_fd);
     if (ws->cons_fd >= 0)
@@ -1302,7 +1289,7 @@ static void close_screen_win(wsp ws)
     }        
     ws->mount_dir[0] = 0;
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
-        ws->mouse_pid = ws->cons_pid = ws->wsys_fd = -1;
+        ws->cursor_fd = ws->mouse_pid = ws->cons_pid = ws->wsys_fd = -1;
 }
 
 static int open_pix_win(wsp ws)
@@ -1330,7 +1317,7 @@ void wclose(wbp w)
     }
 }
 
-void free_window(wsp ws)
+void freewindow(wsp ws)
 {
    ws->refcount--;
    if(ws->refcount == 0) {
@@ -1358,7 +1345,7 @@ void free_window(wsp ws)
    }
 }
 
-void free_context(wcp wc)
+void freecontext(wcp wc)
 {
     wc->refcount--;
     if(wc->refcount == 0) {
@@ -1407,7 +1394,7 @@ int setcanvas(wbp w, char *s)
     else if (!strcmp(s, "hidden"))
         ws->desired_canvas = HiddenCanvas;
     else
-        return Error;
+        return Failed;
 
     /* 
      * If the window is already open, call configure_canvas now;
@@ -1464,8 +1451,77 @@ int getlinewidth(wbp w)
     return 1 + w->context->thick * 2;
 }
 
+#if 0
+static void xsetcursor(int fd, struct Cursor *c)
+{
+        char curs[2*4+2*2*16];
+
+        if(c == nil)
+                write(fd, curs, 0);
+        else{
+                BPLONG(curs+0*4, c->offset.x);
+                BPLONG(curs+1*4, c->offset.y);
+                memmove(curs+2*4, c->clr, 2*2*16);
+                write(fd, curs, sizeof curs);
+        }
+}
+#endif
+
+static struct Cursor bullseye={
+        {-7, -7},
+        {0x1F, 0xF8, 0x3F, 0xFC, 0x7F, 0xFE, 0xFB, 0xDF,
+         0xF3, 0xCF, 0xE3, 0xC7, 0xFF, 0xFF, 0xFF, 0xFF,
+         0xFF, 0xFF, 0xFF, 0xFF, 0xE3, 0xC7, 0xF3, 0xCF,
+         0x7B, 0xDF, 0x7F, 0xFE, 0x3F, 0xFC, 0x1F, 0xF8,},
+        {0x00, 0x00, 0x0F, 0xF0, 0x31, 0x8C, 0x21, 0x84,
+         0x41, 0x82, 0x41, 0x82, 0x41, 0x82, 0x7F, 0xFE,
+         0x7F, 0xFE, 0x41, 0x82, 0x41, 0x82, 0x41, 0x82,
+         0x21, 0x84, 0x31, 0x8C, 0x0F, 0xF0, 0x00, 0x00,}
+};
+
+static void printcursor(struct Cursor *c)
+{
+    int i, j, n, k;
+    print("clr\n");
+    k = 0;
+    for (i = 0; i < 32; ++i) {
+        n = reversebits(c->clr[i]);
+        for (j = 0; j < 8; ++j) {
+            if (n & 1) print("*"); else print(" ");
+            if (++k % 16 == 0) print("\n");
+            n /= 2;
+        }
+    }
+
+    print("set\n");
+    k = 0;
+    for (i = 0; i < 32; ++i) {
+        n = reversebits(c->set[i]);
+        for (j = 0; j < 8; ++j) {
+            if (n & 1) print("*"); else print(" ");
+            if (++k % 16 == 0) print("\n");
+            n /= 2;
+        }
+    }
+}
+
 int setpointer(wbp w, char *val)
 {
+    wsp ws = w->window;
+    int i;
+    struct Cursor c;
+
+    print("set cursor to %s %d\n",val,sizeof(c));
+
+/*
+    c.offset.x = c.offset.y = 0;
+    for (i = 0; i < 32; ++i)
+        c.clr[i] = c.set[i] = 111;
+*/
+    c = bullseye;
+
+    printcursor(&c);
+    write(ws->cursor_fd, &c, sizeof(c));
     return Succeeded;
 }
 
@@ -1485,7 +1541,7 @@ int setdrawop(wbp w, char *val)
             CLRXORREVERSE(w);
         }
         if ((i = stringint_str2int(drawops,val)) < 0)
-            return Error;
+            return Failed;
         wc->drawop = i;
     }
     return Succeeded;
@@ -1542,7 +1598,7 @@ int  querypointer(wbp w, int *x, int *y)
     return Succeeded;
 }
 
-void getpointername(wbp w, char *answer)
+void getpointer(wbp w, char *answer)
 {
     strcpy(answer, "none");
 }
@@ -1597,7 +1653,7 @@ int getwindowlabel(wbp w, char *answer)
     return Succeeded;
 }
 
-static wsp alc_winstate()
+static wsp alcwinstate()
 {
     wsp ws;
     GRFX_ALLOC(ws, _wstate);
@@ -1605,7 +1661,7 @@ static wsp alc_winstate()
     ws->bits = 1024;				/* echo ON; others OFF */
     ws->listp = nulldesc;
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
-        ws->mouse_pid = ws->cons_pid = ws->wsys_fd = -1;
+        ws->cursor_fd = ws->mouse_pid = ws->cons_pid = ws->wsys_fd = -1;
     GRFX_LINK(ws, wstates);
     return ws;
 }
@@ -1630,7 +1686,7 @@ wcp clonecontext(wbp w)
     return wc;
 }
 
-static wcp alc_context(wbp w)
+static wcp alccontext(wbp w)
 {
     wcp wc;
     GRFX_ALLOC(wc, _wcontext);
@@ -1673,22 +1729,22 @@ static void unmount_win_fs(void)
 }
 
 static unsigned char patbits[16][8] = {
-    {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF},
-    {0xFE,0xFF,0xEF,0xFF,0xFE,0xFF,0xEF,0xFF},
-    {0x77,0xDD,0x77,0xDD,0x77,0xDD,0x77,0xDD},
-    {0x55,0xAA,0x55,0xAA,0x55,0xAA,0x55,0xAA},
-    {0x11,0x44,0x11,0x44,0x11,0x44,0x11,0x44},
-    {0x01,0x00,0x10,0x00,0x01,0x00,0x10,0x00},
-    {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
-    {0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10},
-    {0x80,0x40,0x20,0x10,0x08,0x04,0x02,0x01},
-    {0x00,0x00,0x00,0xFF,0x00,0x00,0x00,0x00},
-    {0x10,0x10,0x10,0xFF,0x10,0x10,0x10,0x10},
-    {0x82,0x44,0x28,0x10,0x28,0x44,0x82,0x01},
-    {0x0F,0x0F,0x0F,0x0F,0xF0,0xF0,0xF0,0xF0},
-    {0x1B,0x18,0x81,0xB1,0x36,0x06,0x60,0x63},
-    {0x02,0x02,0x05,0xF8,0x20,0x20,0x50,0x8F},
-    {0x03,0x84,0x48,0x30,0x03,0x84,0x48,0x30}
+    {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+    {0x7f, 0xff, 0xf7, 0xff, 0x7f, 0xff, 0xf7, 0xff},
+    {0xee, 0xbb, 0xee, 0xbb, 0xee, 0xbb, 0xee, 0xbb},
+    {0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55},
+    {0x88, 0x22, 0x88, 0x22, 0x88, 0x22, 0x88, 0x22},
+    {0x80, 0x00, 0x08, 0x00, 0x80, 0x00, 0x08, 0x00},
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+    {0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08},
+    {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80},
+    {0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0x00},
+    {0x08, 0x08, 0x08, 0xff, 0x08, 0x08, 0x08, 0x08},
+    {0x41, 0x22, 0x14, 0x08, 0x14, 0x22, 0x41, 0x80},
+    {0xf0, 0xf0, 0xf0, 0xf0, 0x0f, 0x0f, 0x0f, 0x0f},
+    {0xd8, 0x18, 0x81, 0x8d, 0x6c, 0x60, 0x06, 0xc6},
+    {0x40, 0x40, 0xa0, 0x1f, 0x04, 0x04, 0x0a, 0xf1},
+    {0xc0, 0x21, 0x12, 0x0c, 0xc0, 0x21, 0x12, 0x0c}
 };
 
 Image *make_pattern(unsigned char a[])
@@ -1718,13 +1774,14 @@ static int init_window_system(void)
     win_fs.create = fscreate;
     postmountsrv(&win_fs, 0, WINDOW_MOUNT_ROOT, MREPL | MCREATE);
     atexit(unmount_win_fs);
-    black = alc_sharedimage(display->black, "black");
-    white = alc_sharedimage(display->white, "white");
+    black = new_sharedimage(display->black, "black");
+    white = new_sharedimage(display->white, "white");
     max_rect = Rect(-1073741823, -1073741823, 1073741823, 1073741823);
     startup_time = get_time();
-    for (i = 0; i < 16; ++i)
-        patterns[siPatternSyms[1 + i].i] = alc_sharedimage(make_pattern(patbits[siPatternSyms[1 + i].i]), 
-                                      siPatternSyms[1 + i].s);
+    for (i = 0; i < 16; ++i) {
+        patterns[siPatternSyms[1 + i].i] = new_sharedimage(make_pattern(patbits[siPatternSyms[1 + i].i]), 
+                                                           siPatternSyms[1 + i].s);
+    }
 }
 
 static vlong get_time()
@@ -1741,4 +1798,18 @@ static vlong get_time()
     }
     be2vlong(&t, b);
     return t;
+}
+
+static int reversebits(int c)
+{
+  int rv = 0;
+  if (c & 1) rv |= 128;
+  if (c & 2) rv |= 64;
+  if (c & 4) rv |= 32;
+  if (c & 8) rv |= 16;
+  if (c & 16) rv |= 8;
+  if (c & 32) rv |= 4;
+  if (c & 64) rv |= 2;
+  if (c & 128) rv |= 1;
+  return rv;
 }

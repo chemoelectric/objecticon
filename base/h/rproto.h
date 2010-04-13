@@ -173,7 +173,7 @@ void  bigrand         (dptr da, dptr dx);
     * portable graphics routines in rwindow.r and rwinrsc.r
     */
 
-   wbp  alc_wbinding    (void);
+   wbp  alcwbinding    (void);
    int  docircles       (wbp w, int argc, dptr argv, int fill);
    void drawCurve       (wbp w, XPoint *p, int n);
    void genCurve        (wbp w, XPoint *p, int n, void (*h)(wbp, XPoint [], int));
@@ -182,7 +182,7 @@ void  bigrand         (dptr da, dptr dx);
    int  palnum          (dptr d);
    int  parsecolor      (wbp w, char *s, long *r, long *g, long *b, long *a);
    int  parsefont       (char *s, char *fam, int *sty, int *sz);
-   int  parsepattern    (char *s, int *w, int *nbits, word *bits);
+   int  parsepattern    (char *s, int *w, int *nbits, int *bits);
    void qevent          (wsp ws, dptr e, int x, int y, uword t, long f, int krel);
    void wgetevent       (wbp w, dptr res);
    int  readimagefile   (char *filename, int p, struct imgdata *imd);
@@ -205,7 +205,6 @@ void  bigrand         (dptr da, dptr dx);
     * (excluding those defined as macros for X-windows)
     */
    int  setpattern      (wbp w, char *name);
-   int  setpatternbits  (wbp w, int width, word *bits, int nbits);
    void drawblimage     (wbp w, int x, int y, int wd, int h,
                           int ch, unsigned char *s, int len);
    wcp  clonecontext   (wbp w);
@@ -215,11 +214,11 @@ void  bigrand         (dptr da, dptr dx);
                            unsigned int width, unsigned int height);
    void erasearea       (wbp w, int x, int y, int width, int height);
    void fillrectangle   (wbp w, int x, int y, int width, int height);
-   void free_binding    (wbp w);
-   void free_context    (wcp wc);
-   void free_mutable    (wbp w, int mute_index);
-   void free_window     (wsp ws);
-   void free_color       (wbp w, char *s);
+   void freewbinding    (wbp w);
+   void freecontext    (wcp wc);
+   void freemutable    (wbp w, int mute_index);
+   void freewindow     (wsp ws);
+   void freecolor       (wbp w, char *s);
    char *getmutablename (wbp w, int mute_index);
    void getbg           (wbp w, char *answer);
    void getcanvas       (wbp w, char *s);
@@ -243,7 +242,7 @@ void  bigrand         (dptr da, dptr dx);
    int  getpixelinit   (wbp w, struct imgmem *imem);
    int  getpixelterm   (wbp w, struct imgmem *imem);
    int  getpixel        (wbp w,int x,int y,word *rv,char *s,struct imgmem *im);
-   void getpointername  (wbp w, char *answer);
+   void getpointer  (wbp w, char *answer);
    int  getpos          (wbp w);
    int  getvisual       (wbp w, char *answer);
    int  isetbg          (wbp w, int bg);

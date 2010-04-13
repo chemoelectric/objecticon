@@ -4,7 +4,7 @@
  * Todo:
  *   geticonpos
  *   seticonimage
- *   free_mutable
+ *   freemutable
  *   freecolor
  *
  * Untested:
@@ -14,7 +14,7 @@
  *   getimstr
  *   getfontname
  *   dumpimage
- *   getpointername
+ *   getpointer
  *
  * Blown off:
  *   getvisual
@@ -24,6 +24,7 @@
 static wcp           alc_context      (wbp w);
 static wsp           alc_winstate     (void);
 
+static int setpatternbits(wbp w, int width, int *bits, int nbits);
 static HFONT mkfont              (char *s);
 static int sysTextWidth          (wbp w, char *s, int n);
 static int sysFontHeight         (wbp w);
@@ -290,7 +291,7 @@ wbp wcreate(char *display)
    /*
     * allocate a binding, a window state, and a context
     */
-   w = alc_wbinding();
+   w = alcwbinding();
    w->window = alc_winstate();
    w->context = alc_context(w);
    ws = w->window;
@@ -1485,7 +1486,7 @@ int setfg(wbp w, char *val)
     long r, g, b, a;
     wcp wc = w->context;
     if (parsecolor(w, val, &r, &g, &b, &a) != Succeeded)
-        return Error;
+        return Failed;
 
     wc->fg = mscolor(w, r, g, b);
     if (alc_rgb(w, wc->fg) == Failed) return Failed;
@@ -1511,7 +1512,7 @@ int setbg(wbp w, char *val)
     long r, g, b, a;
     wcp wc = w->context;
     if (parsecolor(w, val, &r, &g, &b, &a) != Succeeded)
-        return Error;
+        return Failed;
 
     wc->bg = mscolor(w, r, g, b);
     if (alc_rgb(w, wc->bg) == Failed) return Failed;
@@ -1710,7 +1711,7 @@ char *answer;
    else strcpy(answer, "unknown");
    }
 
-void getpointername(w, answer)
+void getpointer(w, answer)
 wbp w;
 char *answer;
    {
@@ -2487,7 +2488,7 @@ int setmutable(wbp w, int i, char *s)
    return Succeeded;
    }
 
-void free_mutable(wbp w, int mute_index)
+void freemutable(wbp w, int mute_index)
    {
    }
 
@@ -2571,7 +2572,7 @@ int mutablecolor(wbp w, dptr argv, int argc, int *retval)
    }
    }
 
-void free_color(wbp w, char *s)
+void freecolor(wbp w, char *s)
    {
    }
 
@@ -3029,7 +3030,7 @@ static wsp alc_winstate()
 /*
  * free a window state
  */
-void free_window(ws)
+void freewindow(ws)
 wsp ws;
    {
    int i;
@@ -3080,7 +3081,7 @@ wsp ws;
 /*
  * free a window context
  */
-void free_context(wc)
+void freecontext(wc)
 wcp wc;
    {
    wc->refcount--;
@@ -3143,61 +3144,55 @@ int patbits[] = {
  * setpattern
  */
 int setpattern(wbp w, char *name)
-   {
-   int width, nbits;
-   int i, j;
-   int symbol;
-   word v, bits[MAXXOBJS];
-   HBITMAP p;
-   char data[MAXXOBJS];
-   char *buf = data;
-   wcp wc = w->context;
-   int len;
-
-   len = strlen(name);
-   if (wc->patternname != NULL)
-      free(wc->patternname);
-   wc->patternname = malloc(len + 1);
-   strncpy(wc->patternname, name, len);
-   wc->patternname[len] = '\0';
+{
+    int width, nbits;
+    int i, j;
+    int symbol;
+    int v, bits[MAXXOBJS];
+    HBITMAP p;
+    char data[MAXXOBJS];
+    char *t, *buf = data;
+    wcp wc = w->context;
    
-   /*
-    * If the pattern starts with a number it is a width , bits encoding
-    */
-   if (isdigit((unsigned char)name[0])) {
-      nbits = MAXXOBJS;
-      switch (parsepattern(name, &width, &nbits, bits)) {
-      case Failed:
-	 return Failed;
-      case Error:
-	 ReturnErrNum(145, Error);
-	 }
-      if (w->window->iconwin == NULL) return Succeeded;
-      return setpatternbits(w, width, bits, nbits);
-      }
+    /*
+     * If the pattern starts with a number it is a width , bits encoding
+     */
+    if (isdigit((unsigned char)name[0])) {
+        nbits = MAXXOBJS;
+        if (parsepattern(name, &width, &nbits, bits) != Succeeded)
+            return Failed; 
+        if (w->window->iconwin != NULL)
+            setpatternbits(w, width, bits, nbits);
+    } else {
+        /*
+         * Otherwise, it is a named pattern.  Find the symbol id.
+         */
+        if ((symbol = stringint_str2int(siPatternSyms, name)) < 0)
+            return Failed;
+        if (w->window->iconwin != NULL) {
+            for(i = 0; i < 8; i++) {
+                v = reversebits(~(patbits[symbol * 8 + i]));
+                *buf++ = v;
+            }
+            p = CreateBitmapFromData(data);
+            if (wc->pattern)
+                DeleteObject(wc->pattern);
+            wc->pattern = p;
+            if (wc->fillstyle == BS_PATTERN) {
+                wc->brush.lbStyle = BS_PATTERN;
+                wc->brush.lbColor = PALCLR(wc->fg);
+                wc->brush.lbHatch = (int)p;
+            }     
+        }
+    }
 
-   /*
-    * Otherwise, it is a named pattern.  Find the symbol id.
-    */
-   if ((symbol = stringint_str2int(siPatternSyms, wc->patternname)) >= 0) {
-      if (w->window->iconwin == NULL) return Succeeded;
-      for(i = 0; i < 8; i++) {
-	 v = reversebits(~(patbits[symbol * 8 + i]));
-	 *buf++ = v;
-	 }
-      p = CreateBitmapFromData(data);
-      if (wc->pattern)
-	 DeleteObject(wc->pattern);
-      wc->pattern = p;
-      if (wc->fillstyle == BS_PATTERN) {
-	 wc->brush.lbStyle = BS_PATTERN;
-	 wc->brush.lbColor = PALCLR(wc->fg);
-	 wc->brush.lbHatch = (int)p;
-	 }     
-      return Succeeded;
-      }
-   ReturnErrNum(145, Error);
-   }
+    t = salloc(name);
+    if (wc->patternname != NULL)
+        free(wc->patternname);
+    wc->patternname = t;
+
+    return Succeeded;
+}
 
 /*
  * Create an 8x8 bitmap from some data
@@ -3218,13 +3213,13 @@ HBITMAP CreateBitmapFromData(char *data)
 }
 
 
-int setpatternbits(w, width, bits, nbits)
+static int setpatternbits(w, width, bits, nbits)
 wbp w;
 int width;
-word *bits;
+int *bits;
 int nbits;
    {
-   word v;
+   int v;
    int i, j, k;
    HBITMAP p;
    char data[MAXXOBJS];
@@ -3603,11 +3598,11 @@ void wfreersc()
       }
    while (wstates != NULL) {
       wstates->refcount = 1;
-      free_window(wstates);
+      freewindow(wstates);
       }
    while (wcntxts != NULL) {
       wcntxts->refcount = 1;
-      free_context(wcntxts);
+      freecontext(wcntxts);
       }
    if (palette) {
       DeleteObject(palette);
