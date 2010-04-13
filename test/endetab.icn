@@ -33,20 +33,24 @@ end
 # ferr(err,func,arglst) -- call func(args), verify that error "err" is produced
 
 procedure ferr (err, func, args)
-   local val, msg
+   local val, msg, e, v
 
    val := ""
    every val ||:= imagex(!args) || ","
    val := val[1:-1]
    msg := "oops -- " || image(func) || "(" || val || ") "
-   &error := 1
-   if func ! args
-      then write (msg, "succeeded")
-   else if &error ~= 0
-      then write (msg, "failed but no error")
-   else if &errornumber ~= err
-      then write (msg, "got error ",&errornumber," instead of ",err)
-   &error := 0
+   e := create func!args
+   &handler := &current
+   errorclear()
+   if v := @e then
+      write (msg, "succeeded")
+   else {
+      if &errornumber then {
+         if &errornumber ~= err then
+            write (msg, "got error ",&errornumber," instead of ",err)
+      } else
+         write (msg, "failed but no error")
+   }
    return
 end
 

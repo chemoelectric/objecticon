@@ -213,7 +213,6 @@ void do_applyf()
             xfield = &query;
             xargp = &args;
             err_msg(126, &args);
-            ipc = failure_label;
             return;
       }
     }
@@ -286,7 +285,6 @@ void do_apply()
             xexpr = &expr;
             xargp = &args;
             err_msg(126, &args);
-            ipc = failure_label;
             return;
       }
     }
@@ -436,7 +434,6 @@ void construct_object(word clo, dptr lhs, dptr expr, int argc, dptr args, word r
             xargp = 0;
             skip_args(argc, args);
             err_msg(0, NULL);
-            ipc = failure_label;
             return;
         }
 
@@ -637,7 +634,6 @@ static void invoke_misc(word clo, dptr lhs, dptr expr, int argc, dptr args, word
     xexpr = expr;
     xargp = 0;
     err_msg(106, expr);
-    ipc = failure_label;
 }
 
 #enddef
@@ -673,13 +669,13 @@ void do_field()
                t_errorvalue = nulldesc;
                t_have_val = 0;
            }
+           ipc = failure_label;
        } else {
            xexpr = expr;
            xargp = 0;
            xfield = query;
            err_msg(err_num, expr);
        }
-       ipc = failure_label;
        return;
    } while (0)
 #enddef
@@ -721,7 +717,6 @@ void general_access(dptr lhs, dptr expr, dptr query, struct inline_field_cache *
           xargp = 0;
           xfield = query;
           err_msg(624, expr);
-          ipc = failure_label;
           return;
       }
    }
@@ -927,7 +922,6 @@ access_macro(general_access_1, cast_access_1,instance_access_1,class_access_1,re
        xargp = 0;
        xfield = query;
        err_msg(err_num, expr);
-       ipc = failure_label;
        return;
    } while (0)
 #enddef
@@ -966,7 +960,6 @@ void general_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inline_fi
           xfield = query;
           xargp = 0;
           err_msg(624, expr);
-          ipc = failure_label;
           return;
       }
     }

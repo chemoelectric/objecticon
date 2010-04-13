@@ -4,24 +4,29 @@
 import io
 
 procedure main()
-	write(&error)
-	write(&errornumber | "fail")
-	write(&errortext | "fail")
-	write(image(&errorvalue) | "fail")
-	&error := 1
-	write(&error)
-	write(&null() | "fail")
-	write(&error)
-	write(&errornumber | "fail")
-	write(&errortext | "fail")
-	write(image(&errorvalue) | "fail")
-	write(&error)
-	write(&errornumber | "fail")
-	write(&errortext | "fail")
-	write(image(&errorvalue) | "fail")
-	errorclear()
-	write(&error)
-	write(&errornumber | "fail")
-	write(&errortext | "fail")
-	write(image(&errorvalue) | "fail")
+   local e
+   write(image(&handler))
+   write(&errornumber | "fail")
+   write(&errortext | "fail")
+   write(image(&errorvalue) | "fail")
+   write(image(&errorcoexpr) | "fail")
+
+   &handler := &current
+   e := create 1+&null
+   @e
+
+   write("--------")
+   write(image(&handler))
+   write(&errornumber | "fail")
+   write(&errortext | "fail")
+   write(image(&errorvalue) | "fail")
+   write(image(&errorcoexpr) | "fail")
+
+   errorclear()
+   write("--------")
+   write(image(&handler))
+   write(&errornumber | "fail")
+   write(&errortext | "fail")
+   write(image(&errorvalue) | "fail")
+   write(image(&errorcoexpr) | "fail")
 end

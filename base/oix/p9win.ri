@@ -2,6 +2,7 @@ static int inited;
 static vlong startup_time;
 static wfp fonts;
 static Rectangle max_rect;
+static struct Cursor cursor_data[];
 
 static int open_winfile(wsp ws, char *s, int mode);
 static wsp alcwinstate(void);
@@ -9,8 +10,10 @@ static wcp alccontext(wbp w);
 static wfp alcfont(wbp w, char **s);
 static int configure_canvas(wbp w);
 static void mouse_loop(wsp ws);
+static Rune *utf8_to_runes(char *str, int nchars);
 static void cons_loop(wsp ws);
 static void flush_event_pipe(wsp ws);
+static void synch_cursor(wsp ws);
 static vlong get_time(void);
 static int open_screen_win(wsp ws);
 static void close_screen_win(wsp ws);
@@ -34,51 +37,149 @@ static int reversebits(int c);
 #define HiddenCanvas 2
 #define IconicCanvas 3
 
+#define FillSolid     1
+#define FillMasked    2
+#define FillTextured  3
+
+static stringint fillstyles[] = {
+    {0, 7},
+    {"masked", FillMasked },
+    {"opaquepatterned", FillTextured },
+    {"opaquestippled", FillTextured },
+    {"patterned", FillMasked },
+    {"solid", FillSolid },
+    {"stippled", FillMasked },
+    {"textured", FillTextured },
+};
+
 static stringint drawops[] = {
    { 0, 16},
-   {"and",		Clear},
-   {"andInverted",	SinD},
-   {"andReverse",	DinS},
-   {"clear",		SoutD},
-   {"copy",		SoverD},
-   {"copyInverted",	S},
-   {"equiv",		SoverD},
-   {"invert",		SatopD},
-   {"nand",		SxorD},
-   {"noop",		D},
-   {"nor",		DoverS},
-   {"or",		DatopS},
-   {"orInverted",	DxorS},
-   {"orReverse",	DoutS},
-   {"set",		DatopS},
-   {"xor",		DxorS},
+   {"and",              Clear},
+   {"andInverted",      SinD},
+   {"andReverse",       DinS},
+   {"clear",            SoutD},
+   {"copy",             SoverD},
+   {"copyInverted",     S},
+   {"equiv",            SoverD},
+   {"invert",           SatopD},
+   {"nand",             SxorD},
+   {"noop",             D},
+   {"nor",              DoverS},
+   {"or",               DatopS},
+   {"orInverted",       DxorS},
+   {"orReverse",        DoutS},
+   {"set",              DatopS},
+   {"xor",              DxorS},
 };
 
 /*
  * pattern symbols
  */
-static stringint siPatternSyms[] = {
-    {0,		16},
-    { "black",	 0},
-    { "checkers",	 12},
-    { "darkgray",	 2},
-    { "diagonal",	 8},
-    { "grains",	 13},
-    { "gray",	 3},
-    { "grid",	 10},
-    { "horizontal",9},
-    { "lightgray", 4},
-    { "scales",	 14},
-    { "trellis",	 11},
-    { "vertical",	 7},
-    { "verydark",	 1},
-    { "verylight", 5},
-    { "waves",	 15},
-    { "white",	 6},
+static stringint patternsyms[] = {
+    {0, 16},
+    { "black",      0},
+    { "checkers",  12},
+    { "darkgray",   2},
+    { "diagonal",   8},
+    { "grains",    13},
+    { "gray",       3},
+    { "grid",      10},
+    { "horizontal", 9},
+    { "lightgray",  4},
+    { "scales",    14},
+    { "trellis",   11},
+    { "vertical",   7},
+    { "verydark",   1},
+    { "verylight" , 5},
+    { "waves",     15},
+    { "white",      6},
+};
+
+static stringint cursors[] = {
+    { 0, 78},
+    {"X cursor",          -1},
+    {"arrow",             -1},
+    {"based arrow down",  -1},
+    {"based arrow up",    -1},
+    {"boat",              -1},
+    {"bogosity",          -1},
+    {"bottom left corner", 12},
+    {"bottom right corner",10},
+    {"bottom side",        11},
+    {"bottom tee",        -1},
+    {"box spiral",        -1},
+    {"center ptr",        -1},
+    {"circle",            -1},
+    {"clock",             -1},
+    {"coffee mug",        -1},
+    {"cross",              1},
+    {"cross reverse",     -1},
+    {"crosshair",         -1},
+    {"diamond cross",     -1},
+    {"dot",               -1},
+    {"dotbox",            -1},
+    {"double arrow",      -1},
+    {"draft large",       -1},
+    {"draft small",       -1},
+    {"draped box",        -1},
+    {"exchange",          -1},
+    {"fleur",              0},
+    {"gobbler",           -1},
+    {"gumby",             -1},
+    {"hand1",             -1},
+    {"hand2",             -1},
+    {"heart",             -1},
+    {"icon",              -1},
+    {"iron cross",        -1},
+    {"left ptr",          -1},
+    {"left side",          13},
+    {"left tee",          -1},
+    {"leftbutton",        -1},
+    {"ll angle",          -1},
+    {"lr angle",          -1},
+    {"man",               -1},
+    {"middlebutton",      -1},
+    {"mouse",             -1},
+    {"pencil",            -1},
+    {"pirate",            -1},
+    {"plus",              -1},
+    {"question arrow",     5},
+    {"right ptr",         -1},
+    {"right side",         9},
+    {"right tee",         -1},
+    {"rightbutton",       -1},
+    {"rtl logo",          -1},
+    {"sailboat",          -1},
+    {"sb down arrow",     -1},
+    {"sb h double arrow", -1},
+    {"sb left arrow",     -1},
+    {"sb right arrow",    -1},
+    {"sb up arrow",       -1},
+    {"sb v double arrow", -1},
+    {"shuttle",           -1},
+    {"sizing",            -1},
+    {"spider",            -1},
+    {"spraycan",          -1},
+    {"star",              -1},
+    {"target",             0},
+    {"tcross",            -1},
+    {"top left arrow",    -1},
+    {"top left corner",    6},
+    {"top right corner",   8},
+    {"top side",           7},
+    {"top tee",           -1},
+    {"trek",              -1},
+    {"ul angle",          -1},
+    {"umbrella",          -1},
+    {"ur angle",          -1},
+    {"watch",             -1},
+    {"xterm",             -1},
+    {"num glyphs",        -1},
 };
 
 static struct SharedImage *black, *white, *patterns[16];
 static int window_count;
+static Image *mask128, *mask64;
 
 static int open_winfile(wsp ws, char *s, int mode)
 {
@@ -531,7 +632,7 @@ static void impl_drawarc(wcp wc, Image *dest, int x, int y, int width, int heigh
           wc->thick,
           wc->fg->i, ZP,
           alpha, phi, 
-          wc->drawop);
+          wc->drawop->i);
         
     unclip(wc, dest);
 }
@@ -553,7 +654,7 @@ void drawlines(wbp w, XPoint *points, int npoints)
     wcp wc = w->context;
 
     clip(wc, ws->pix);
-    polyop(ws->pix, points, npoints, Endsquare, Endsquare, wc->thick, wc->fg->i, ZP, wc->drawop);
+    polyop(ws->pix, points, npoints, Endsquare, Endsquare, wc->thick, wc->fg->i, ZP, wc->drawop->i);
     unclip(wc, ws->pix);
 
     if (ws->win) {
@@ -562,7 +663,7 @@ void drawlines(wbp w, XPoint *points, int npoints)
             points[i].y += ws->win->r.min.y;
         }
         clip(wc, ws->win);
-        polyop(ws->win, points, npoints, Endsquare, Endsquare, wc->thick, wc->fg->i, ZP, wc->drawop);
+        polyop(ws->win, points, npoints, Endsquare, Endsquare, wc->thick, wc->fg->i, ZP, wc->drawop->i);
         unclip(wc, ws->win);
     }
 
@@ -571,6 +672,7 @@ void drawlines(wbp w, XPoint *points, int npoints)
 
 void drawpoint(wbp w, int x, int y)
 {
+    fillrectangle(w, x, y, 1, 1);
 }
 
 static void impl_drawrectangle(wcp wc, Image *dest, int x, int y, int width, int height)
@@ -582,7 +684,7 @@ static void impl_drawrectangle(wcp wc, Image *dest, int x, int y, int width, int
     p[3] = Pt(p[0].x, p[0].y + height - 1);
     p[4] = p[0];
     clip(wc, dest);
-    polyop(dest, p, 5, Endsquare, Endsquare, wc->thick, wc->fg->i, ZP, wc->drawop);
+    polyop(dest, p, 5, Endsquare, Endsquare, wc->thick, wc->fg->i, ZP, wc->drawop->i);
     unclip(wc, dest);
 }
 
@@ -603,7 +705,7 @@ void fillpolygon(wbp w, XPoint *points, int npoints)
     wcp wc = w->context;
 
     clip(wc, ws->pix);
-    fillpolyop(ws->pix, points, npoints, 0, wc->fg->i, ZP, wc->drawop);
+    fillpolyop(ws->pix, points, npoints, 0, wc->fg->i, ZP, wc->drawop->i);
     unclip(wc, ws->pix);
 
     for (i = 0; i < npoints; ++i) {
@@ -611,7 +713,7 @@ void fillpolygon(wbp w, XPoint *points, int npoints)
         points[i].y += ws->win->r.min.y;
     }
     clip(wc, ws->win);
-    fillpolyop(ws->win, points, npoints, 0, wc->fg->i, ZP, wc->drawop);
+    fillpolyop(ws->win, points, npoints, 0, wc->fg->i, ZP, wc->drawop->i);
     unclip(wc, ws->win);
 
     flushimage(display, 1);
@@ -652,8 +754,38 @@ void drawstring(wbp w, int x, int y, char *str, int slen)
     flushimage(display, 1);
 }
 
-void drawutf8(wbp w, int x, int y, char *str, int slen)
+static Rune *utf8_to_runes(char *str, int nchars)
 {
+    Rune *r;
+    int i, j;
+    MemProtect(r = malloc(nchars * sizeof(Rune)));
+    for (i = 0; i < nchars; ++i) {
+        j = chartorune(&r[i], str);
+        str += j;
+    }
+    return r;
+}
+
+static void impl_drawutf8(wcp wc, Image *dest, int x, int y, Rune *str, int len)
+{
+    clip(wc, dest);
+    runestringn(dest, 
+                Pt(dest->r.min.x + x,
+                   dest->r.min.y + y - wc->font->font->ascent),
+                wc->fg->i, ZP, wc->font->font, str, len);
+    unclip(wc, dest);
+}
+
+void drawutf8(wbp w, int x, int y, char *str, int slen, int nchars)
+{
+    wsp ws = w->window;
+    wcp wc = w->context;
+    Rune *r = utf8_to_runes(str, nchars);
+    if (ws->win)
+        impl_drawutf8(wc, ws->win, x, y, r, nchars);
+    impl_drawutf8(wc, ws->pix, x, y, r, nchars);
+    flushimage(display, 1);
+    free(r);
 }
 
 void drawblimage(wbp w, int x, int y, int wd, int h,
@@ -723,7 +855,7 @@ static void impl_erasearea(wcp wc, Image *dest, int x, int y, int width, int hei
                        dest->r.min.x + x + width,
                        dest->r.min.y + y + height);
     clip(wc, dest);
-    gendrawop(dest, t, wc->bg->i, wc->bg->i->r.min, 0, ZP, wc->drawop);
+    gendrawop(dest, t, wc->bg->i, wc->bg->i->r.min, 0, ZP, wc->drawop->i);
     unclip(wc, dest);
 }
 
@@ -828,7 +960,7 @@ static void impl_fillarc(wcp wc, Image *dest, int x, int y, int width, int heigh
               width, height,
               wc->fg->i, ZP,
               alpha, phi,
-              wc->drawop);
+              wc->drawop->i);
     unclip(wc, dest);
 }
 
@@ -851,13 +983,15 @@ static void impl_fillrectangle(wcp wc, Image *dest, int x, int y, int width, int
                        dest->r.min.x + x + width,
                        dest->r.min.y + y + height);
     clip(wc, dest);
-/*    gendrawop(dest, t, wc->fg->i, wc->fg->i->r.min, 0, ZP, wc->drawop); */
-
-    if (strcmp(wc->pattern->name, "black") != 0) {
-        gendrawop(dest, t, wc->pattern->i, wc->pattern->i->r.min, 0, ZP, wc->drawop);
-    } else
-        gendrawop(dest, t, wc->fg->i, wc->fg->i->r.min, 0, ZP, wc->drawop);
-
+    if (wc->fillstyle->i == FillSolid || 
+        strcmp(wc->pattern->name, "black") == 0) {
+        if (strcmp(wc->drawop->s, "copy") == 0)
+            gendrawop(dest, t, wc->fg->i, wc->fg->i->r.min, 0, ZP, wc->drawop->i); 
+        else
+            gendrawop(dest, t, wc->fg->i, wc->fg->i->r.min, mask128, ZP, wc->drawop->i); 
+    } else {
+        gendrawop(dest, t, wc->pattern->i, wc->pattern->i->r.min, mask64, ZP, wc->drawop->i);
+    }
     unclip(wc, dest);
 }
 
@@ -1009,7 +1143,7 @@ int setpattern(wbp w, char *name)
             unlink_sharedimage(wc->pattern);
         wc->pattern = new_sharedimage(img, name);
     } else {
-        if ((i = stringint_str2int(siPatternSyms, name)) < 0)
+        if ((i = stringint_str2int(patternsyms, name)) < 0)
             return Failed;
         if (wc->pattern)
             unlink_sharedimage(wc->pattern);
@@ -1064,9 +1198,14 @@ int textwidth(wbp w, char *s, int n)
     return stringnwidth(wc->font->font, s, n);
 }
 
-int utf8width(wbp w, char *s, int n)
+int utf8width(wbp w, char *s, int n, int nchars)
 {
-    return 0;
+    wcp wc = w->context;
+    int width;
+    Rune *r = utf8_to_runes(s, nchars);
+    width = runestringnwidth(wc->font->font, r, nchars);
+    free(r);
+    return width;
 }
 
 int doconfig(wbp w, int status)
@@ -1222,6 +1361,7 @@ static int open_screen_win(wsp ws)
         close_screen_win(ws);
         return Failed;
     }
+    synch_cursor(ws);
 
     switch (ws->mouse_pid = rfork(RFPROC)) {
         case 0: {
@@ -1330,11 +1470,6 @@ void freewindow(wsp ws)
            free(ws->windowlabel); 
            ws->windowlabel = 0;
        }
-       if (ws->iconlabel) {
-           free(ws->iconlabel); 
-           ws->iconlabel = 0;
-       }
-
        imd = &ws->initimage;
        if (imd->width) {
            free(imd->paltbl);
@@ -1429,9 +1564,19 @@ int setgamma(wbp w, double gamma)
     return Succeeded;
 }
 
-int setfillstyle(wbp w, char *s)
+int setfillstyle(wbp w, char *val)
 {
+    wcp wc = w->context;
+    stringint *e = stringint_lookup(fillstyles, val);
+    if (!e)
+        return Failed;
+    wc->fillstyle = e;
     return Succeeded;
+}
+
+void getfillstyle(wbp w, char *answer)
+{
+    strcpy(answer, w->context->fillstyle->s);
 }
 
 int setlinestyle(wbp w, char *s)
@@ -1450,34 +1595,6 @@ int getlinewidth(wbp w)
 {
     return 1 + w->context->thick * 2;
 }
-
-#if 0
-static void xsetcursor(int fd, struct Cursor *c)
-{
-        char curs[2*4+2*2*16];
-
-        if(c == nil)
-                write(fd, curs, 0);
-        else{
-                BPLONG(curs+0*4, c->offset.x);
-                BPLONG(curs+1*4, c->offset.y);
-                memmove(curs+2*4, c->clr, 2*2*16);
-                write(fd, curs, sizeof curs);
-        }
-}
-#endif
-
-static struct Cursor bullseye={
-        {-7, -7},
-        {0x1F, 0xF8, 0x3F, 0xFC, 0x7F, 0xFE, 0xFB, 0xDF,
-         0xF3, 0xCF, 0xE3, 0xC7, 0xFF, 0xFF, 0xFF, 0xFF,
-         0xFF, 0xFF, 0xFF, 0xFF, 0xE3, 0xC7, 0xF3, 0xCF,
-         0x7B, 0xDF, 0x7F, 0xFE, 0x3F, 0xFC, 0x1F, 0xF8,},
-        {0x00, 0x00, 0x0F, 0xF0, 0x31, 0x8C, 0x21, 0x84,
-         0x41, 0x82, 0x41, 0x82, 0x41, 0x82, 0x7F, 0xFE,
-         0x7F, 0xFE, 0x41, 0x82, 0x41, 0x82, 0x41, 0x82,
-         0x21, 0x84, 0x31, 0x8C, 0x0F, 0xF0, 0x00, 0x00,}
-};
 
 static void printcursor(struct Cursor *c)
 {
@@ -1505,23 +1622,25 @@ static void printcursor(struct Cursor *c)
     }
 }
 
+static void synch_cursor(wsp ws)
+{
+    if (ws->cursor->i == -1)
+        write(ws->cursor_fd, "", 0);
+    else
+        write(ws->cursor_fd, &cursor_data[ws->cursor->i], sizeof(struct Cursor));
+}
+
 int setpointer(wbp w, char *val)
 {
     wsp ws = w->window;
     int i;
     struct Cursor c;
-
-    print("set cursor to %s %d\n",val,sizeof(c));
-
-/*
-    c.offset.x = c.offset.y = 0;
-    for (i = 0; i < 32; ++i)
-        c.clr[i] = c.set[i] = 111;
-*/
-    c = bullseye;
-
-    printcursor(&c);
-    write(ws->cursor_fd, &c, sizeof(c));
+    stringint *e = stringint_lookup(cursors, val);
+    if (!e)
+        return Failed;
+    ws->cursor = e;
+    if (ws->win)
+        synch_cursor(ws);
     return Succeeded;
 }
 
@@ -1533,16 +1652,18 @@ int setdrawop(wbp w, char *val)
     if (!strcmp(val,"reverse")) {
         if (!ISXORREVERSE(w)) {
             SETXORREVERSE(w);
-            wc->drawop = SoverD;
+            wc->drawop = stringint_lookup(drawops, "xor");
         }
     }
     else {
+        stringint *e;
         if (ISXORREVERSE(w)) {
             CLRXORREVERSE(w);
         }
-        if ((i = stringint_str2int(drawops,val)) < 0)
+        e = stringint_lookup(drawops, val);
+        if (!e)
             return Failed;
-        wc->drawop = i;
+        wc->drawop = e;
     }
     return Succeeded;
 }
@@ -1590,7 +1711,7 @@ void getlinestyle(wbp w, char *answer)
     strcpy(answer, "none");
 }
 
-int  querypointer(wbp w, int *x, int *y)
+int querypointer(wbp w, int *x, int *y)
 {
     wsp ws = w->window;
     *x = ws->last_mouse_x;
@@ -1600,16 +1721,18 @@ int  querypointer(wbp w, int *x, int *y)
 
 void getpointer(wbp w, char *answer)
 {
-    strcpy(answer, "none");
+    strcpy(answer, w->window->cursor->s);
 }
 
-void getdrawop (wbp w, char *answer)
+void getdrawop(wbp w, char *answer)
 {
     char *s;
-    if (ISXORREVERSE(w)) s = "reverse";
-    else s = stringint_int2str(drawops, w->context->drawop);
-    if (s) sprintf(answer, "%s", s);
-    else strcpy(answer, "copy");
+
+    if (ISXORREVERSE(w)) 
+        s = "reverse";
+    else 
+        s = w->context->drawop->s;
+    strcpy(answer, s);
 }
 
 void getcanvas (wbp w, char *answer)
@@ -1662,6 +1785,7 @@ static wsp alcwinstate()
     ws->listp = nulldesc;
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
         ws->cursor_fd = ws->mouse_pid = ws->cons_pid = ws->wsys_fd = -1;
+    ws->cursor = stringint_lookup(cursors, "left ptr");
     GRFX_LINK(ws, wstates);
     return ws;
 }
@@ -1681,6 +1805,7 @@ wcp clonecontext(wbp w)
     wc->pattern = link_sharedimage(src->pattern);
     wc->font = src->font;
     wc->thick = src->thick;
+    wc->fillstyle = src->fillstyle;
     wc->drawop = src->drawop;
     GRFX_LINK(wc, wcntxts);
     return wc;
@@ -1697,7 +1822,8 @@ static wcp alccontext(wbp w)
     wc->bg = link_sharedimage(white);
     wc->pattern = link_sharedimage(patterns[0]);
     wc->font = new_font("fixed");
-    wc->drawop = SoverD;
+    wc->fillstyle = stringint_lookup(fillstyles, "solid");
+    wc->drawop = stringint_lookup(drawops, "copy");
     GRFX_LINK(wc, wcntxts);
     return wc;
 }
@@ -1727,6 +1853,176 @@ static void unmount_win_fs(void)
     }
     unmount(0, WINDOW_MOUNT_ROOT);
 }
+
+static struct Cursor cursor_data[] = {
+    {   /* 0: Bullseye */
+        {-7, -7},
+        {0x1F, 0xF8, 0x3F, 0xFC, 0x7F, 0xFE, 0xFB, 0xDF,
+         0xF3, 0xCF, 0xE3, 0xC7, 0xFF, 0xFF, 0xFF, 0xFF,
+         0xFF, 0xFF, 0xFF, 0xFF, 0xE3, 0xC7, 0xF3, 0xCF,
+         0x7B, 0xDF, 0x7F, 0xFE, 0x3F, 0xFC, 0x1F, 0xF8,},
+        {0x00, 0x00, 0x0F, 0xF0, 0x31, 0x8C, 0x21, 0x84,
+         0x41, 0x82, 0x41, 0x82, 0x41, 0x82, 0x7F, 0xFE,
+         0x7F, 0xFE, 0x41, 0x82, 0x41, 0x82, 0x41, 0x82,
+         0x21, 0x84, 0x31, 0x8C, 0x0F, 0xF0, 0x00, 0x00,}
+    },
+
+    {   /* 1: crosscursor */
+	{-7, -7},
+	{0x03, 0xC0, 0x03, 0xC0, 0x03, 0xC0, 0x03, 0xC0,
+	 0x03, 0xC0, 0x03, 0xC0, 0xFF, 0xFF, 0xFF, 0xFF,
+	 0xFF, 0xFF, 0xFF, 0xFF, 0x03, 0xC0, 0x03, 0xC0,
+	 0x03, 0xC0, 0x03, 0xC0, 0x03, 0xC0, 0x03, 0xC0, },
+	{0x00, 0x00, 0x01, 0x80, 0x01, 0x80, 0x01, 0x80,
+	 0x01, 0x80, 0x01, 0x80, 0x01, 0x80, 0x7F, 0xFE,
+	 0x7F, 0xFE, 0x01, 0x80, 0x01, 0x80, 0x01, 0x80,
+	 0x01, 0x80, 0x01, 0x80, 0x01, 0x80, 0x00, 0x00, }
+    },
+
+    { /* 2: boxcursor */
+	{-7, -7},
+	{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+	 0xFF, 0xFF, 0xF8, 0x1F, 0xF8, 0x1F, 0xF8, 0x1F,
+	 0xF8, 0x1F, 0xF8, 0x1F, 0xF8, 0x1F, 0xFF, 0xFF,
+	 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, },
+	{0x00, 0x00, 0x7F, 0xFE, 0x7F, 0xFE, 0x7F, 0xFE,
+	 0x70, 0x0E, 0x70, 0x0E, 0x70, 0x0E, 0x70, 0x0E,
+	 0x70, 0x0E, 0x70, 0x0E, 0x70, 0x0E, 0x70, 0x0E,
+	 0x7F, 0xFE, 0x7F, 0xFE, 0x7F, 0xFE, 0x00, 0x00, }
+    },
+
+    { /* 3: sightcursor */
+	{-7, -7},
+	{0x1F, 0xF8, 0x3F, 0xFC, 0x7F, 0xFE, 0xFB, 0xDF,
+	 0xF3, 0xCF, 0xE3, 0xC7, 0xFF, 0xFF, 0xFF, 0xFF,
+	 0xFF, 0xFF, 0xFF, 0xFF, 0xE3, 0xC7, 0xF3, 0xCF,
+	 0x7B, 0xDF, 0x7F, 0xFE, 0x3F, 0xFC, 0x1F, 0xF8, },
+	{0x00, 0x00, 0x0F, 0xF0, 0x31, 0x8C, 0x21, 0x84,
+	 0x41, 0x82, 0x41, 0x82, 0x41, 0x82, 0x7F, 0xFE,
+	 0x7F, 0xFE, 0x41, 0x82, 0x41, 0x82, 0x41, 0x82,
+	 0x21, 0x84, 0x31, 0x8C, 0x0F, 0xF0, 0x00, 0x00, }
+    },
+
+    { /* 4: whitearrow */
+	{0, 0},
+	{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFE, 0xFF, 0xFC, 
+	 0xFF, 0xF0, 0xFF, 0xF0, 0xFF, 0xF8, 0xFF, 0xFC, 
+	 0xFF, 0xFE, 0xFF, 0xFF, 0xFF, 0xFE, 0xFF, 0xFC, 
+	 0xF3, 0xF8, 0xF1, 0xF0, 0xE0, 0xE0, 0xC0, 0x40, },
+	{0xFF, 0xFF, 0xFF, 0xFF, 0xC0, 0x06, 0xC0, 0x1C, 
+	 0xC0, 0x30, 0xC0, 0x30, 0xC0, 0x38, 0xC0, 0x1C, 
+	 0xC0, 0x0E, 0xC0, 0x07, 0xCE, 0x0E, 0xDF, 0x1C, 
+	 0xD3, 0xB8, 0xF1, 0xF0, 0xE0, 0xE0, 0xC0, 0x40, }
+    },
+
+    { /* 5: query */
+	{-7,-7},
+	{0x0f, 0xf0, 0x1f, 0xf8, 0x3f, 0xfc, 0x7f, 0xfe, 
+	 0x7c, 0x7e, 0x78, 0x7e, 0x00, 0xfc, 0x01, 0xf8, 
+	 0x03, 0xf0, 0x07, 0xe0, 0x07, 0xc0, 0x07, 0xc0, 
+	 0x07, 0xc0, 0x07, 0xc0, 0x07, 0xc0, 0x07, 0xc0, },
+	{0x00, 0x00, 0x0f, 0xf0, 0x1f, 0xf8, 0x3c, 0x3c, 
+	 0x38, 0x1c, 0x00, 0x3c, 0x00, 0x78, 0x00, 0xf0, 
+	 0x01, 0xe0, 0x03, 0xc0, 0x03, 0x80, 0x03, 0x80, 
+	 0x00, 0x00, 0x03, 0x80, 0x03, 0x80, 0x00, 0x00, }
+    },
+
+    { /* 6:  tl */
+	{-4, -4},
+	{0xfe, 0x00, 0x82, 0x00, 0x8c, 0x00, 0x87, 0xff, 
+	 0xa0, 0x01, 0xb0, 0x01, 0xd0, 0x01, 0x11, 0xff, 
+	 0x11, 0x00, 0x11, 0x00, 0x11, 0x00, 0x11, 0x00, 
+	 0x11, 0x00, 0x11, 0x00, 0x11, 0x00, 0x1f, 0x00, },
+	{0x00, 0x00, 0x7c, 0x00, 0x70, 0x00, 0x78, 0x00, 
+	 0x5f, 0xfe, 0x4f, 0xfe, 0x0f, 0xfe, 0x0e, 0x00, 
+	 0x0e, 0x00, 0x0e, 0x00, 0x0e, 0x00, 0x0e, 0x00, 
+	 0x0e, 0x00, 0x0e, 0x00, 0x0e, 0x00, 0x00, 0x00, }
+    },
+
+    { /* 7:  t */
+	{-7, -8},
+	{0x00, 0x00, 0x00, 0x00, 0x03, 0x80, 0x06, 0xc0, 
+	 0x1c, 0x70, 0x10, 0x10, 0x0c, 0x60, 0xfc, 0x7f, 
+	 0x80, 0x01, 0x80, 0x01, 0x80, 0x01, 0xff, 0xff, 
+	 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, },
+	{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 
+	 0x03, 0x80, 0x0f, 0xe0, 0x03, 0x80, 0x03, 0x80, 
+	 0x7f, 0xfe, 0x7f, 0xfe, 0x7f, 0xfe, 0x00, 0x00, 
+	 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, }
+    },
+
+    { /* 8:  tr */
+	{-11, -4},
+	{0x00, 0x7f, 0x00, 0x41, 0x00, 0x31, 0xff, 0xe1, 
+	 0x80, 0x05, 0x80, 0x0d, 0x80, 0x0b, 0xff, 0x88, 
+	 0x00, 0x88, 0x0, 0x88, 0x00, 0x88, 0x00, 0x88, 
+	 0x00, 0x88, 0x00, 0x88, 0x00, 0x88, 0x00, 0xf8, },
+	{0x00, 0x00, 0x00, 0x3e, 0x00, 0x0e, 0x00, 0x1e, 
+	 0x7f, 0xfa, 0x7f, 0xf2, 0x7f, 0xf0, 0x00, 0x70, 
+	 0x00, 0x70, 0x00, 0x70, 0x00, 0x70, 0x00, 0x70, 
+	 0x00, 0x70, 0x00, 0x70, 0x00, 0x70, 0x00, 0x00, }
+    },
+
+    { /* 9:  r */
+	{-8, -7},
+	{0x07, 0xc0, 0x04, 0x40, 0x04, 0x40, 0x04, 0x58, 
+	 0x04, 0x68, 0x04, 0x6c, 0x04, 0x06, 0x04, 0x02, 
+	 0x04, 0x06, 0x04, 0x6c, 0x04, 0x68, 0x04, 0x58, 
+	 0x04, 0x40, 0x04, 0x40, 0x04, 0x40, 0x07, 0xc0, },
+	{0x00, 0x00, 0x03, 0x80, 0x03, 0x80, 0x03, 0x80, 
+	 0x03, 0x90, 0x03, 0x90, 0x03, 0xf8, 0x03, 0xfc, 
+	 0x03, 0xf8, 0x03, 0x90, 0x03, 0x90, 0x03, 0x80, 
+	 0x03, 0x80, 0x03, 0x80, 0x03, 0x80, 0x00, 0x00, }
+    },
+
+    { /* 10:  br */
+	{-11, -11},
+	{0x00, 0xf8, 0x00, 0x88, 0x00, 0x88, 0x00, 0x88, 
+	 0x00, 0x88, 0x00, 0x88, 0x00, 0x88, 0x00, 0x88, 
+	 0xff, 0x88, 0x80, 0x0b, 0x80, 0x0d, 0x80, 0x05, 
+	 0xff, 0xe1, 0x00, 0x31, 0x00, 0x41, 0x00, 0x7f, },
+	{0x00, 0x00, 0x00, 0x70, 0x00, 0x70, 0x00, 0x70, 
+	 0x0, 0x70, 0x00, 0x70, 0x00, 0x70, 0x00, 0x70, 
+	 0x00, 0x70, 0x7f, 0xf0, 0x7f, 0xf2, 0x7f, 0xfa, 
+	 0x00, 0x1e, 0x00, 0x0e, 0x00, 0x3e, 0x00, 0x00, }
+    },
+
+    { /* 11:  b */
+	{-7, -7},
+	{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+	 0xff, 0xff, 0x80, 0x01, 0x80, 0x01, 0x80, 0x01, 
+	 0xfc, 0x7f, 0x0c, 0x60, 0x10, 0x10, 0x1c, 0x70, 
+	 0x06, 0xc0, 0x03, 0x80, 0x00, 0x00, 0x00, 0x00, },
+	{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+	 0x00, 0x00, 0x7f, 0xfe, 0x7f, 0xfe, 0x7f, 0xfe, 
+	 0x03, 0x80, 0x03, 0x80, 0x0f, 0xe0, 0x03, 0x80, 
+	 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, }
+    },
+
+    { /* 12:  bl */
+	{-4, -11},
+	{0x1f, 0x00, 0x11, 0x00, 0x11, 0x00, 0x11, 0x00, 
+	 0x11, 0x00, 0x11, 0x00, 0x11, 0x00, 0x11, 0x00, 
+	 0x11, 0xff, 0xd0, 0x01, 0xb0, 0x01, 0xa0, 0x01, 
+	 0x87, 0xff, 0x8c, 0x00, 0x82, 0x00, 0xfe, 0x00, },
+	{0x00, 0x00, 0x0e, 0x00, 0x0e, 0x00, 0x0e, 0x00, 
+	 0x0e, 0x00, 0x0e, 0x00, 0x0e, 0x00, 0x0e, 0x00, 
+	 0x0e, 0x00, 0x0f, 0xfe, 0x4f, 0xfe, 0x5f, 0xfe, 
+	 0x78, 0x00, 0x70, 0x00, 0x7c, 0x00, 0x00, 0x0, }
+    },
+
+    { /* 13:  l */
+	{-7, -7},
+	{0x03, 0xe0, 0x02, 0x20, 0x02, 0x20, 0x1a, 0x20, 
+	 0x16, 0x20, 0x36, 0x20, 0x60, 0x20, 0x40, 0x20, 
+	 0x60, 0x20, 0x36, 0x20, 0x16, 0x20, 0x1a, 0x20, 
+	 0x02, 0x20, 0x02, 0x20, 0x02, 0x20, 0x03, 0xe0, },
+	{0x00, 0x00, 0x01, 0xc0, 0x01, 0xc0, 0x01, 0xc0, 
+	 0x09, 0xc0, 0x09, 0xc0, 0x1f, 0xc0, 0x3f, 0xc0, 
+	 0x1f, 0xc0, 0x09, 0xc0, 0x09, 0xc0, 0x01, 0xc0, 
+	 0x01, 0xc0, 0x01, 0xc0, 0x01, 0xc0, 0x00, 0x00, }
+    }
+};
 
 static unsigned char patbits[16][8] = {
     {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
@@ -1758,6 +2054,7 @@ Image *make_pattern(unsigned char a[])
 static int init_window_system(void)
 {
     int i;
+    uchar maskdata[1];
 
     if (initdraw(0, 0, "objecticon") < 0) {
         errno2why();
@@ -1779,9 +2076,17 @@ static int init_window_system(void)
     max_rect = Rect(-1073741823, -1073741823, 1073741823, 1073741823);
     startup_time = get_time();
     for (i = 0; i < 16; ++i) {
-        patterns[siPatternSyms[1 + i].i] = new_sharedimage(make_pattern(patbits[siPatternSyms[1 + i].i]), 
-                                                           siPatternSyms[1 + i].s);
+        patterns[patternsyms[1 + i].i] = new_sharedimage(make_pattern(patbits[patternsyms[1 + i].i]), 
+                                                           patternsyms[1 + i].s);
     }
+
+    maskdata[0] = 64;
+    MemProtect(mask64 = allocimage(display, Rect(0, 0, 1, 1), CHAN1(CAlpha, 8), 1, DNofill));
+    loadimage(mask64, mask64->r, maskdata, 1);
+
+    maskdata[0] = 128;
+    MemProtect(mask128 = allocimage(display, Rect(0, 0, 1, 1), CHAN1(CAlpha, 8), 1, DNofill));
+    loadimage(mask128, mask128->r, maskdata, 1);
 }
 
 static vlong get_time()

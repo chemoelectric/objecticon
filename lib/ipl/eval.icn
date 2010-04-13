@@ -44,7 +44,7 @@ invocable all
 procedure eval(expr)
    local p, args, tok
 
-   &error := -1				# to prevent error termination ...
+#   &error := -1				# to prevent error termination ...
 
    expr ? {
       p := trim(tab(upto('(')), '\t ') | {

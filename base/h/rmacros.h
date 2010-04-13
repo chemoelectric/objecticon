@@ -348,7 +348,8 @@
 #define T_Class         25      /* class */
 #define T_Object        26      /* object */
 #define T_Cast          27      /* cast */
-#define MaxType		27	/* maximum type number */
+#define T_Kywdhandler   28      /* cast */
+#define MaxType		28	/* maximum type number */
 
 /*
  * Convenient macros for access to a block from a descriptor
@@ -417,6 +418,7 @@
 #define D_Kywdstr	(T_Kywdstr  | D_Typecode | F_Var)
 #define D_Kywdany	(T_Kywdany  | D_Typecode | F_Var)
 #define D_Ucs   	(T_Ucs      | D_Typecode | F_Ptr)
+#define D_Kywdhandler	(T_Kywdhandler | D_Typecode | F_Var)
 
 #define D_StructVar	(F_Var | F_Nqual | F_Ptr)
 #define D_NamedVar     	(F_Var | F_Nqual)
@@ -514,7 +516,7 @@
  * Miscellaneous macro definitions.
  */
    
-#define kywd_err  (curpstate->Kywd_err)
+#define kywd_handler (curpstate->Kywd_handler)
 #define kywd_pos  (curpstate->Kywd_pos)
 #define kywd_prog  (curpstate->Kywd_prog)
 #define kywd_why  (curpstate->Kywd_why)
@@ -581,6 +583,7 @@
 #define k_errornumber (curpstate->K_errornumber)
 #define k_errortext   (curpstate->K_errortext)
 #define k_errorvalue  (curpstate->K_errorvalue)
+#define k_errorcoexpr (curpstate->K_errorcoexpr)
 #define have_errval   (curpstate->Have_errval)
 #define t_errornumber (curpstate->T_errornumber)
 #define t_have_val    (curpstate->T_have_val)

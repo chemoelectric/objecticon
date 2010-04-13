@@ -301,7 +301,6 @@ wbp wcreate(char *display)
     * set the title
     */
    ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
-   ws->iconlabel = salloc(DEFAULT_WINDOW_LABEL);
 
    return w;
    }
@@ -488,7 +487,7 @@ int handle_config(wbp w, UINT msg, WPARAM wp, LPARAM lp)
 
    if (wp == SIZE_MINIMIZED) {
       if (ws->win) {
-         SetWindowText(ws->win, ws->iconlabel);
+         SetWindowText(ws->win, ws->windowlabel);
          ws->win = NULL;
 	 }
       return 1;
@@ -1040,18 +1039,6 @@ char *val;
    return Failed;
    }
 
-int seticonlabel(w, val)
-wbp w;
-char *val;
-   {
-   wsp ws = w->window;
-   if (ws->iconlabel != NULL) free(ws->iconlabel);
-   ws->iconlabel = salloc(val);
-   if (ws->win && IsIconic(ws->win))
-      SetWindowText(ws->win, ws->iconlabel);
-   return Succeeded;
-   }
-
 int seticonpos(w, val)
 wbp w;
 char *val;
@@ -1325,11 +1312,27 @@ char *s;
          wc->bkmode = OPAQUE;
 	 }
       else {
-	 return Error;
+	 return Failed;
 	 }
       }
    return Succeeded;
    }
+
+
+
+void getfillstyle(wbp w, char *answer)
+{
+    char *s;
+    wcp wc = w->context;
+
+    if (wc->fillstyle == BS_SOLID)
+        s = "solid";
+    else if (wc->bkmode = TRANSPARENT)
+        s = "masked";
+    else
+        s = "textured";
+    strcpy(answer, s);
+}
 
 /*
  * Set the context's line style by name.
@@ -2693,7 +2696,7 @@ void drawstring(wbinding *wb, int x, int y, char *s, int slen)
    return;
    }
 
-void drawutf8(wbp w, int x, int y, char *s, int slen)
+void drawutf8(wbp w, int x, int y, char *s, int slen, int nchars)
 {
     drawstring(w, x, y, s, slen);
 }
@@ -3049,7 +3052,6 @@ wsp ws;
 	 if (pollevent() == -1) return -1;
 */
       if (ws->windowlabel) { free(ws->windowlabel); ws->windowlabel=0;}
-      if (ws->iconlabel) {free(ws->iconlabel); ws->iconlabel=0;}
       if (ws->pix)
 	 DeleteObject(ws->pix);
       ws->pix = 0;
@@ -3570,7 +3572,7 @@ int textwidth(wbp w, char *s, int n)
    return rv;
    }
 
-int utf8width(wbp w, char *s, int n)
+int utf8width(wbp w, char *s, int n, int nchars)
 {
     return textwidth(w, s, n);
 }

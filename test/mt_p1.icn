@@ -422,7 +422,7 @@ procedure test32()
    print{"c: &main",Prog.eval_keyword("&main",c)}
    pr_type{"c: &time",Prog.eval_keyword("&time",c)}
    print{"c: &trace",Prog.eval_keyword("&trace",c)}
-   print{"c: &error",Prog.eval_keyword("&error",c)}
+   print{"c: &handler",Prog.eval_keyword("&handler",c)}
    print{"c: &random",Prog.eval_keyword("&random",c)}
    print{"c: &source",Prog.eval_keyword("&source",c)}
    print{"c: &subject",Prog.eval_keyword("&subject",c)}
@@ -431,6 +431,7 @@ procedure test32()
    print{"c: &errortext",Prog.eval_keyword("&errortext",c)}
    print{"c: &errorvalue",Prog.eval_keyword("&errorvalue",c)}
    print{"c: &errornumber",Prog.eval_keyword("&errornumber",c)}
+   print{"c: &errorcoexpr",Prog.eval_keyword("&errorcoexpr",c)}
 
    @e
    print{"e: &pos",Prog.eval_keyword("&pos",c)}
@@ -440,7 +441,7 @@ procedure test32()
    print{"e: &main",Prog.eval_keyword("&main",c)}
    pr_type{"e: &time",Prog.eval_keyword("&time",c)}
    print{"e: &trace",Prog.eval_keyword("&trace",c)}
-   print{"e: &error",Prog.eval_keyword("&error",c)}
+   print{"e: &handler",Prog.eval_keyword("&handler",c)}
    print{"e: &random",Prog.eval_keyword("&random",c)}
    print{"e: &source",Prog.eval_keyword("&source",c)}
    print{"e: &subject",Prog.eval_keyword("&subject",c)}
@@ -449,4 +450,5 @@ procedure test32()
    print{"e: &errortext",Prog.eval_keyword("&errortext",c)}
    print{"e: &errorvalue",Prog.eval_keyword("&errorvalue",c)}
    print{"e: &errornumber",Prog.eval_keyword("&errornumber",c)}
+   print{"e: &errorcoexpr",Prog.eval_keyword("&errorcoexpr",c)}
 end

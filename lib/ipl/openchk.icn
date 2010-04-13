@@ -64,16 +64,16 @@ if type(p) == "procedure" then
       OpenCheck_close:  
       {
          e := 1
-         &error :=: e
+#         &error :=: e
          if ( f := p!x ) then 
          {  
-            &error :=: e
+#            &error :=: e
             ewrite( "Close of ", image(f), " succeeded." )
             delete( openS, f )
          }
          else 
          {
-            &error :=: e
+#            &error :=: e
             ewrite( "Close of ", image(f), " failed." )
          }
       }

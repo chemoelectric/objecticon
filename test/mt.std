@@ -110,10 +110,11 @@ date: string
 dateline: string
 digits: &digits
 dump: integer
-error: 747
+handler: &null
 errornumber: Failed
 errortext: Failed
 errorvalue: Failed
+errorcoexpr: Failed
 fail: Failed
 features: {string}
 file: "kwds.icn"
@@ -121,7 +122,7 @@ host: string
 lcase: &lcase
 letters: &letters
 level: 1
-line: 27
+line: 26
 main: co-expression#*(0)
 null: &null
 pos: 1
@@ -177,7 +178,7 @@ Test test32
 &main: co-expression#*(0)
 &time: integer
 &trace: 0
-&error: 0
+&handler: &null
 &random: 0
 &source: co-expression#*(1)
 &subject: ""
@@ -186,36 +187,39 @@ Test test32
 &errortext: Failed
 &errorvalue: Failed
 &errornumber: Failed
+&errorcoexpr: Failed
 c: &pos: 1
 c: &why: "why oh why"
 c: &file: string
-c: &line: 83
+c: &line: 85
 c: &main: co-expression#*(0)
 c: &time: integer
 c: &trace: 0
-c: &error: 0
+c: &handler: &null
 c: &random: 0
 c: &source: co-expression#*(1)
 c: &subject: ""
 c: &current: co-expression#*(1)
 c: &progname: string
-c: &errortext: ""
-c: &errorvalue: &null
-c: &errornumber: 0
+c: &errortext: Failed
+c: &errorvalue: Failed
+c: &errornumber: Failed
+c: &errorcoexpr: Failed
 e: &pos: 1
 e: &why: "why oh why"
 e: &file: string
-e: &line: 234
+e: &line: 235
 e: &main: co-expression#*(0)
 e: &time: integer
 e: &trace: 0
-e: &error: 0
+e: &handler: &null
 e: &random: 0
 e: &source: co-expression#*(1)
 e: &subject: ""
 e: &current: co-expression#*(1)
 e: &progname: string
-e: &errortext: ""
-e: &errorvalue: &null
-e: &errornumber: 0
+e: &errortext: Failed
+e: &errorvalue: Failed
+e: &errornumber: Failed
+e: &errorcoexpr: Failed
 exit

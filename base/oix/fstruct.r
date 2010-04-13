@@ -188,10 +188,9 @@ function list(n, x)
        * Ensure that the size is positive and that the list-element block 
        *  has at least MinListSlots slots.
        */
-      if (size < 0) {
-         irunerr(205, n);
-         errorfail;
-         }
+      if (size < 0)
+         Irunerr(205, n);
+
       if (nslots == 0)
          nslots = MinListSlots;
 

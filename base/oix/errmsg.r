@@ -52,9 +52,10 @@ struct errtab errtab[] = {
     {136, "cannot set activator to a unactivated co-expression"},
     {137, "must specify activator for an unactivated co-expression"},
     {138, "cannot activate this co-expression"},
+    {139, "cannot activate a co-expression that has caused a runtime error"},
+    {140, "&handler co-expression cannot be an unactivated co-expression"},
 
 #ifdef Graphics
-    {140, "window expected"},
     {141, "program terminated by window manager"},
     {142, "attempt to read/write on closed window"},
     {143, "malformed event queue"},
@@ -181,11 +182,12 @@ void err_msg(int n, dptr v)
         else
             k_errortext = emptystr;
     }
+    k_errorcoexpr = k_current;
 
     EVVal((word)k_errornumber,E_Error);
 
     if (set_up) {
-        if (IntVal(kywd_err) == 0) {
+        if (is:null(kywd_handler)) {
             char *s = StrLoc(k_errortext);
             int i = StrLen(k_errortext);
             struct ipc_line *pline;
@@ -219,9 +221,10 @@ void err_msg(int n, dptr v)
             }
         }
         else {
-            IntVal(kywd_err)--;
             /* Clear the x* variables for the next error */
             xexpr = xargp = xfield = 0;
+            /* Push the frame for the error handler and return to the interpreter loop */
+            activate_handler();
             return;
         }
     }
@@ -255,33 +258,4 @@ void err_msg(int n, dptr v)
         abort();
 
     c_exit(EXIT_FAILURE);
-}
-
-/*
- * irunerr - print an error message when the offending value is a word
- *  rather than a descriptor.
- */
-void irunerr(int n, word v)
-{
-    t_errornumber = n;
-    IntVal(t_errorvalue) = v;
-    t_errorvalue.dword = D_Integer;
-    t_have_val = 1;
-    err_msg(0,NULL);
-}
-
-/*
- * drunerr - print an error message when the offending value is a C double
- *  rather than a descriptor.
- */
-void drunerr(int n, double v)
-{
-    union block *bp;
-
-    MemProtect(bp = (union block *)alcreal(v));
-    t_errornumber = n;
-    BlkLoc(t_errorvalue) = bp;
-    t_errorvalue.dword = D_Real;
-    t_have_val = 1;
-    err_msg(0,NULL);
 }

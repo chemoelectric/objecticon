@@ -510,10 +510,12 @@ int indent;
       prt_str("));", indent);
       }
    /*
-    * Handle error conversion. Indicate that operation may fail because
-    *  of error conversion and produce the necessary code.
+    * Now do a return so that any error handler is run (err_msg pushes the frame).
     */
-   failure(indent, 1);
+   prt_str("frame->exhausted = 1;", indent);
+   ForceNl();
+   prt_str("return 1;", indent);
+   ForceNl();
    prt_str("}", indent);
    ForceNl();
    }

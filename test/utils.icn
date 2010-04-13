@@ -65,15 +65,17 @@ end
 procedure try(s, e)
    local x
    writes(@s, ": ")
-   &error := -1
+   &handler := &current
    errorclear()
    if x := @e then
       write("Succeeded with ", imagex(x))
-   else if &errornumber then
-      write("Error ", &errornumber)
-   else
-      write("Failed")
-   &error := 0
+   else {
+      if &errornumber then
+         write("Error ", &errornumber)
+      else
+         write("Failed")
+   }
+   &handler := &null
    return \x
 end
 

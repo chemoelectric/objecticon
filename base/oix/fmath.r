@@ -26,8 +26,8 @@ end
 #enddef
 
 
-#define aroundone if (x < -1.0 || x > 1.0) {drunerr(205, x); errorfail;}
-#define positive  if (x < 0)               {drunerr(205, x); errorfail;}
+#define aroundone if (x < -1.0 || x > 1.0) {Drunerr(205, x);}
+#define positive  if (x < 0)               {Drunerr(205, x);}
 
 #define erange    if (errno == ERANGE)     runerr(204);
 #define edom      if (errno == EDOM)       runerr(205);
@@ -77,8 +77,7 @@ function util_Math_log(x,b)
 
    body {
       if (x <= 0.0) {
-         drunerr(205, x);
-         errorfail;
+         Drunerr(205, x);
          }
       }
    if is:null(b) then
@@ -93,8 +92,7 @@ function util_Math_log(x,b)
          static double divisor;
 
          if (b <= 1.0) {
-            drunerr(205, b);
-            errorfail;
+            Drunerr(205, b);
             }
          if (b != lastbase) {
             divisor = log(b);

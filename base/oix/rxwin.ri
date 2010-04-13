@@ -1727,12 +1727,35 @@ int setfillstyle(wbp w, char *s)
              || !strcmp(s, "opaquestippled") || !strcmp(s, "opaquepatterned")) {
         wc->fillstyle = FillOpaqueStippled;
     }
-    else return Error;
+    else 
+        return Failed;
     if (stdpix) {
         XSetFillStyle(stddpy, stdgc, wc->fillstyle);
     }
     return Succeeded;
 }
+
+void getfillstyle(wbp w, char *answer)
+{
+    char *s;
+    STDLOCALS(w);
+    switch (wc->fillstyle) {
+        case FillStippled: {
+            s = "masked";
+            break;
+        }
+        case FillOpaqueStippled: {
+            s = "textured";
+            break;
+        }
+        default: {
+            s = "solid";
+            break;
+        }
+    }
+    strcpy(answer, s);
+}
+
 
 /*
  * Set the context's line style by name.
@@ -3940,7 +3963,7 @@ int textwidth(wbp w, char *s, int n)
     return extents.xOff;
 }
 
-int utf8width(wbp w, char *s, int n)
+int utf8width(wbp w, char *s, int n, int nchars)
 {
     XGlyphInfo	extents; 
 
@@ -4021,7 +4044,7 @@ void drawstring(wbp w, int x, int y, char *str, int slen)
                         slen);
 }
 
-void drawutf8(wbp w, int x, int y, char *str, int slen)
+void drawutf8(wbp w, int x, int y, char *str, int slen, int nchars)
 {
     XftColor color;
     Region r;
@@ -4094,7 +4117,7 @@ int textwidth(wbp w, char *s, int n)
     return XTextWidth(w->context->font->fsp, s, n);
 }
 
-int utf8width(wbp w, char *s, int n)
+int utf8width(wbp w, char *s, int n, int nchars)
 {
     return textwidth(w, s, n);
 }
@@ -4104,7 +4127,7 @@ void drawstring(wbp w, int x, int y, char *s, int slen)
     STDLOCALS(w); 
     RENDER4(XDrawString, x, y, s, slen); 
 }
-void drawutf8(wbp w, int x, int y, char *s, int slen)
+void drawutf8(wbp w, int x, int y, char *s, int slen, int nchars)
 {
     STDLOCALS(w); 
     RENDER4(XDrawString, x, y, s, slen);

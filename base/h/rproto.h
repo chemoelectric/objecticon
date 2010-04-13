@@ -95,10 +95,10 @@ int             def_tstr        (char *sbuf, dptr s, dptr df, dptr d);
 word            div3            (word a,word b);
 int             doasgn          (dptr dp1,dptr dp2);
 int             doimage         (int c,int q);
-void            drunerr         (int n, double v);
 int             equiv           (dptr dp1,dptr dp2);
 int             err             (void);
 void            err_msg         (int n, dptr v);
+void            activate_handler(void);
 void            fatalerr        (int n,dptr v);
 void            ffatalerr       (char *fmt, ...);
 struct ipc_fname *find_ipc_fname(word *ipc, struct progstate *p);
@@ -112,7 +112,6 @@ union block     *hgfirst        (union block *bp, struct hgstate *state);
 union block     *hgnext         (union block*b,struct hgstate*s,union block *e);
 union block     *hmake          (int tcode,word nslots,word nelem);
 int             idelay          (int n);
-void            irunerr         (int n, word v);
 int             lexcmp          (dptr dp1,dptr dp2);
 union block     **memb          (union block *pb,dptr x,uword hn, int *res);
 void            mksubs          (dptr var,dptr val,word i,word j, dptr result);
@@ -225,6 +224,7 @@ void  bigrand         (dptr da, dptr dx);
    int  getdefault      (wbp w, char *prog, char *opt, char *answer);
    void getdisplay      (wbp w, char *answer);
    void getdrawop       (wbp w, char *answer);
+   void getfillstyle    (wbp w, char *answer);
    void getfg           (wbp w, char *answer);
    void geticonic       (wbp w, char *answer);
    int  geticonpos      (wbp w, char *s);
@@ -297,10 +297,10 @@ void  bigrand         (dptr da, dptr dx);
    void drawrectangle   (wbp w, int x, int y, int width, int height);
    void fillpolygon     (wbp w, XPoint *pts, int npts);
    void drawstring      (wbp w, int x, int y, char *str, int slen);
-   void drawutf8        (wbp w, int x, int y, char *str, int slen);
+   void drawutf8        (wbp w, int x, int y, char *str, int slen, int nchars);
    int  seticonimage    (wbp w, dptr dp);
    int  textwidth       (wbp w, char *s, int n);
-   int  utf8width       (wbp w, char *s, int n);
+   int  utf8width       (wbp w, char *s, int n, int nchars);
 
 #endif                                  /* Graphics */
 
@@ -374,6 +374,7 @@ void return_trace(struct p_frame *pf, dptr val);
 void trace_coact(struct b_coexpr *from, struct b_coexpr *to, dptr val);
 void trace_coret(struct b_coexpr *from, struct b_coexpr *to, dptr val);
 void trace_cofail(struct b_coexpr *from, struct b_coexpr *to);
+void trace_cofail_to_handler(struct b_coexpr *from, struct b_coexpr *to);
 
 void xdisp(struct b_coexpr *ce, int count, FILE *f);
 

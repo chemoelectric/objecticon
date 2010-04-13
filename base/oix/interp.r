@@ -2,6 +2,7 @@
 #include "../h/opnames.h"
 
 static void coact_ex(void);
+static void coact_handler();
 static void get_child_prog_result(void);
 static void activate_child_prog(void);
 static void do_cofail(void);
@@ -16,6 +17,7 @@ static void do_coret(void);
 static void do_limit(void);
 static void do_scansave(void);
 static void pop_from_prog_event_queue(struct progstate *prog, dptr res);
+static void fatalerr_139(void);
 
 
 #include "interpiasm.ri"
@@ -464,7 +466,6 @@ static void do_activate()
         xargp = &arg1;
         xexpr = &arg2;
         err_msg(118, &arg2);
-        ipc = failure_label;
         return;
     }
     pf = get_current_user_frame_of(&CoexprBlk(arg2));
@@ -472,7 +473,6 @@ static void do_activate()
         xargp = &arg1;
         xexpr = &arg2;
         err_msg(138, &arg2);
-        ipc = failure_label;
         return;
     }
 
@@ -673,6 +673,47 @@ operator @ activate(underef val, ce)
     }
 end
 
+static void fatalerr_139()
+{
+    tended struct descrip d;
+    d.dword = D_Coexpr;
+    BlkLoc(d) = (union block *)k_current;
+    fatalerr(139, &d);
+}
+
+static void coact_handler()
+{
+    word *failure_label;
+    failure_label = GetAddr;
+
+    if (curpstate->monitor)
+        EVValD(&kywd_handler, E_Coact);
+
+    if (k_trace) {
+        --k_trace;
+        trace_cofail_to_handler(k_current, &CoexprBlk(kywd_handler));
+    }
+
+    k_current->tvalloc = 0;
+    k_current->failure_label = failure_label;
+
+    /* The handler must have an activator, since we don't set it */
+    if (!CoexprBlk(kywd_handler).activator)
+        fatalerr(140, &kywd_handler);
+
+    /* Fail to the handler coexpression */
+    switch_to(&CoexprBlk(kywd_handler));
+    ipc = k_current->failure_label;
+}
+
+void activate_handler(void)
+{
+    struct p_frame *pf;
+    MemProtect(pf = alc_p_frame(&Bactivate_handler_impl, 0));
+    push_frame((struct frame *)pf);
+    tail_invoke_frame((struct frame *)pf);
+}
+
 static void do_limit()
 {
     dptr limit;
@@ -685,14 +726,12 @@ static void do_limit()
     if (!cnv:C_integer(*limit, tmp)) {
         xargp = limit;
         err_msg(101, limit);
-        ipc = failure_label;
         return;
     }
     MakeInt(tmp, limit);
     if (tmp < 0) {
         xargp = limit;
         err_msg(205, limit);
-        ipc = failure_label;
         return;
     }
     EVValD(limit, E_Limit);
@@ -710,7 +749,6 @@ static void do_scansave()
     if (!cnv:string_or_ucs(new_subject, new_subject)) {
         xargp = &new_subject;
         err_msg(129, &new_subject);
-        ipc = failure_label;
         return;
     }
     curr_pf->tmp[s] = curpstate->Kywd_subject;

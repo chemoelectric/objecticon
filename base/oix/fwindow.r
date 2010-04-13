@@ -685,7 +685,7 @@ function graphics_Window_draw_string(self, x, y, str)
       if (is:ucs(str)) {
           s = StrLoc(UcsBlk(str).utf8);
           len = StrLen(UcsBlk(str).utf8);
-          drawutf8(self_w, x, y, s, len);
+          drawutf8(self_w, x, y, s, len, UcsBlk(str).length);
       } else {
           s = StrLoc(str);
           len = StrLen(str);
@@ -1185,7 +1185,10 @@ function graphics_Window_text_width(self, s)
       word i;
       GetSelfW();
       if (is:ucs(s))
-          i = utf8width(self_w, StrLoc(UcsBlk(s).utf8), StrLen(UcsBlk(s).utf8));
+          i = utf8width(self_w, 
+                        StrLoc(UcsBlk(s).utf8), 
+                        StrLen(UcsBlk(s).utf8),
+                        UcsBlk(s).length);
       else
           i = textwidth(self_w, StrLoc(s), StrLen(s));
       return C_integer i;
@@ -1555,13 +1558,11 @@ end
 
 function graphics_Window_get_fillstyle(self)
    body {
+       tended struct descrip result;
        GetSelfW();
-       switch (self_w->context->fillstyle) {
-           case FS_SOLID: return C_string "solid";
-           case FS_STIPPLE: return C_string "masked";
-           default: return C_string "textured";
-       }
-       fail;
+       getfillstyle(self_w, attr_buff);
+       cstr2string(attr_buff, &result);
+       return result;
    }
 end
 
@@ -1598,11 +1599,8 @@ function graphics_Window_get_geometry(self)
        if (getpos(self_w) != Succeeded)
            fail;
        ws = self_w->window;
-       if (ws->win)
-           sprintf(attr_buff, "%dx%d+%d+%d",
-                   ws->width, ws->height, ws->posx, ws->posy);
-       else
-           sprintf(attr_buff, "%dx%d", ws->pixwidth, ws->pixheight);
+       sprintf(attr_buff, "%dx%d+%d+%d",
+               ws->width, ws->height, ws->posx, ws->posy);
        cstr2string(attr_buff, &result);
        return result;
    }

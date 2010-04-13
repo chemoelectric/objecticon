@@ -221,7 +221,7 @@ procedure child32()
    print{"&main",&main}
    pr_type{"&time",&time}
    print{"&trace",&trace}
-   print{"&error",&error}
+   print{"&handler",&handler}
    print{"&random",&random}
    print{"&source",&source}
    print{"&subject",&subject}
@@ -230,6 +230,7 @@ procedure child32()
    print{"&errortext",&errortext}
    print{"&errorvalue",&errorvalue}
    print{"&errornumber",&errornumber}
+   print{"&errorcoexpr",&errorcoexpr}
 
    return create 1 to 3
 end

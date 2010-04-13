@@ -1,431 +1,431 @@
 
 error in line 6:
-   &error = -2
+   &errorcoexpr = co-expression#3(0)
    &errornumber = 102
    &errortext = "numeric expected"
 seq("a") | monitor(&line) ----> 6
 
 error in line 8:
-   &error = -3
+   &errorcoexpr = co-expression#5(0)
    &errornumber = 106
    &errortext = "procedure or other invocable expected"
    &errorvalue = "|"
 "|"(1,2) | monitor(&line) ----> 8
 
 error in line 10:
-   &error = -4
+   &errorcoexpr = co-expression#7(0)
    &errornumber = 133
    &errortext = "set or table expected"
    &errorvalue = &null
 member(x,x) | monitor(&line) ----> 10
 
 error in line 12:
-   &error = -5
+   &errorcoexpr = co-expression#9(0)
    &errornumber = 120
    &errortext = "two csets or two sets expected"
    &errorvalue = set#*(0)
 (set() ++ 'a') | monitor(&line) ----> 12
 
 error in line 14:
-   &error = -6
+   &errorcoexpr = co-expression#11(0)
    &errornumber = 112
    &errortext = "invalid type to size operation"
    &errorvalue = &null
 (every i := 1 to *a - 1 by 2 do write(image(a[i])," ",a[i + 1])) | monitor(&line) ----> 14
 
 error in line 16:
-   &error = -7
+   &errorcoexpr = co-expression#13(0)
    &errornumber = 112
    &errortext = "invalid type to size operation"
    &errorvalue = &null
 (every i := 1 to *a - 1 by 2 do write(image(a[i])," ",a[i + 1])) | monitor(&line) ----> 16
 
 error in line 18:
-   &error = -8
+   &errorcoexpr = co-expression#15(0)
    &errornumber = 108
    &errortext = "list expected"
    &errorvalue = &null
 (c |||:= s) | monitor(&line) ----> 18
 
 error in line 20:
-   &error = -9
+   &errorcoexpr = co-expression#17(0)
    &errornumber = 113
    &errortext = "invalid type to random operation"
    &errorvalue = &null
 ?&null | monitor(&line) ----> 20
 
 error in line 22:
-   &error = -10
+   &errorcoexpr = co-expression#19(0)
    &errornumber = 114
    &errortext = "invalid type to subscript operation"
    &errorvalue = &null
 c[1] | monitor(&line) ----> 22
 
 error in line 24:
-   &error = -11
+   &errorcoexpr = co-expression#21(0)
    &errornumber = 102
    &errortext = "numeric expected"
    &errorvalue = function image
 (image + image) | monitor(&line) ----> 24
 
 error in line 26:
-   &error = -12
+   &errorcoexpr = co-expression#23(0)
    &errornumber = 114
    &errortext = "invalid type to subscript operation"
    &errorvalue = &null
 .1(s[1],s := &null) | monitor(&line) ----> 26
 
 error in line 32:
-   &error = -13
+   &errorcoexpr = co-expression#25(0)
    &errornumber = 118
    &errortext = "co-expression expected"
    &errorvalue = list#*(0)
 display(,[]) | monitor(&line) ----> 32
 
 error in line 34:
-   &error = -14
+   &errorcoexpr = co-expression#27(0)
    &errornumber = 129
    &errortext = "string or ucs expected"
    &errorvalue = list#*(0)
 ([] ~== "x") | monitor(&line) ----> 34
 
 error in line 36:
-   &error = -15
+   &errorcoexpr = co-expression#29(0)
    &errornumber = 102
    &errortext = "numeric expected"
    &errorvalue = &null
 (x + 1) | monitor(&line) ----> 36
 
 error in line 38:
-   &error = -16
+   &errorcoexpr = co-expression#31(0)
    &errornumber = 106
    &errortext = "procedure or other invocable expected"
    &errorvalue = "a"
 "a"(1,2,3) | monitor(&line) ----> 38
 
 error in line 40:
-   &error = -17
+   &errorcoexpr = co-expression#33(0)
    &errornumber = 102
    &errortext = "numeric expected"
    &errorvalue = "o"
 ("o" + 0) | monitor(&line) ----> 40
 
 error in line 42:
-   &error = -18
+   &errorcoexpr = co-expression#35(0)
    &errornumber = 120
    &errortext = "two csets or two sets expected"
    &errorvalue = list#*(0)
 (&cset ++ []) | monitor(&line) ----> 42
 
 error in line 44:
-   &error = -19
+   &errorcoexpr = co-expression#37(0)
    &errornumber = 102
    &errortext = "numeric expected"
 (every 1 to "a") | monitor(&line) ----> 44
 
 error in line 46:
-   &error = -20
+   &errorcoexpr = co-expression#39(0)
    &errornumber = 116
    &errortext = "invalid type to element generator"
    &errorvalue = function image
 !image | monitor(&line) ----> 46
 
 error in line 52:
-   &error = -21
+   &errorcoexpr = co-expression#41(0)
    &errornumber = 211
    &errortext = "by value equal to zero"
    &errorvalue = 0
 (0 to 0 by 0) | monitor(&line) ----> 52
 
 error in line 54:
-   &error = -22
+   &errorcoexpr = co-expression#43(0)
    &errornumber = 101
    &errortext = "integer expected or out of range"
    &errorvalue = "a"
 repl("b","a") | monitor(&line) ----> 54
 
 error in line 56:
-   &error = -23
+   &errorcoexpr = co-expression#45(0)
    &errornumber = 106
    &errortext = "procedure or other invocable expected"
    &errorvalue = &null
 t(t) | monitor(&line) ----> 56
 
 error in line 58:
-   &error = -24
+   &errorcoexpr = co-expression#47(0)
    &errornumber = 115
    &errortext = "structure expected"
    &errorvalue = &cset
 sort(&cset) | monitor(&line) ----> 58
 
 error in line 60:
-   &error = -25
+   &errorcoexpr = co-expression#49(0)
    &errornumber = 108
    &errortext = "list expected"
    &errorvalue = &null
 pull(&null) | monitor(&line) ----> 60
 
 error in line 62:
-   &error = -26
+   &errorcoexpr = co-expression#51(0)
    &errornumber = 114
    &errortext = "invalid type to subscript operation"
    &errorvalue = &null
 c[-4] | monitor(&line) ----> 62
 
 error in line 64:
-   &error = -27
+   &errorcoexpr = co-expression#53(0)
    &errornumber = 106
    &errortext = "procedure or other invocable expected"
    &errorvalue = "procedure"
 (type(type)(type)) | monitor(&line) ----> 64
 
 error in line 66:
-   &error = -28
+   &errorcoexpr = co-expression#55(0)
    &errornumber = 114
    &errortext = "invalid type to subscript operation"
    &errorvalue = &null
 r[r] | monitor(&line) ----> 66
 
 error in line 68:
-   &error = -29
+   &errorcoexpr = co-expression#57(0)
    &errornumber = 120
    &errortext = "two csets or two sets expected"
    &errorvalue = list#*(0)
 ([] ** "abc") | monitor(&line) ----> 68
 
 error in line 70:
-   &error = -30
+   &errorcoexpr = co-expression#59(0)
    &errornumber = 102
    &errortext = "numeric expected"
    &errorvalue = 'abc'
 ('abc' ~= ('abc' ++ '')) | monitor(&line) ----> 70
 
 error in line 76:
-   &error = -31
+   &errorcoexpr = co-expression#61(0)
    &errornumber = 129
    &errortext = "string or ucs expected"
    &errorvalue = function numeric
 (&lcase || numeric) | monitor(&line) ----> 76
 
 error in line 78:
-   &error = -32
+   &errorcoexpr = co-expression#63(0)
    &errornumber = 114
    &errortext = "invalid type to subscript operation"
    &errorvalue = &null
 x["a"] | monitor(&line) ----> 78
 
 error in line 80:
-   &error = -33
+   &errorcoexpr = co-expression#65(0)
    &errornumber = 102
    &errortext = "numeric expected"
    &errorvalue = &null
 (100-()) | monitor(&line) ----> 80
 
 error in line 82:
-   &error = -34
+   &errorcoexpr = co-expression#67(0)
    &errornumber = 111
    &errortext = "variable expected"
    &errorvalue = 1
 ((1 := y) & &fail) | monitor(&line) ----> 82
 
 error in line 84:
-   &error = -35
+   &errorcoexpr = co-expression#69(0)
    &errornumber = 131
    &errortext = "invalid type to section operation"
    &errorvalue = &null
 (a[1:3] := a) | monitor(&line) ----> 84
 
 error in line 86:
-   &error = -36
+   &errorcoexpr = co-expression#71(0)
    &errornumber = 114
    &errortext = "invalid type to subscript operation"
    &errorvalue = &null
 (a[3] :=: a3[&null]) | monitor(&line) ----> 86
 
 error in line 88:
-   &error = -37
+   &errorcoexpr = co-expression#73(0)
    &errornumber = 114
    &errortext = "invalid type to subscript operation"
    &errorvalue = &null
 a5[a5] | monitor(&line) ----> 88
 
 error in line 90:
-   &error = -38
+   &errorcoexpr = co-expression#75(0)
    &errornumber = 114
    &errortext = "invalid type to subscript operation"
    &errorvalue = function pull
 pull[c] | monitor(&line) ----> 90
 
 error in line 92:
-   &error = -39
+   &errorcoexpr = co-expression#77(0)
    &errornumber = 129
    &errortext = "string or ucs expected"
    &errorvalue = list#*(0)
 (&subject := []) | monitor(&line) ----> 92
 
 error in line 94:
-   &error = -40
+   &errorcoexpr = co-expression#79(0)
    &errornumber = 129
    &errortext = "string or ucs expected"
    &errorvalue = list#*(0)
 ([] ? []) | monitor(&line) ----> 94
 
 error in line 96:
-   &error = -41
+   &errorcoexpr = co-expression#81(0)
    &errornumber = 102
    &errortext = "numeric expected"
    &errorvalue = "a"
 +"a" | monitor(&line) ----> 96
 
 error in line 102:
-   &error = -42
+   &errorcoexpr = co-expression#83(0)
    &errornumber = 102
    &errortext = "numeric expected"
    &errorvalue = &null
 (i <= []) | monitor(&line) ----> 102
 
 error in line 104:
-   &error = -43
+   &errorcoexpr = co-expression#85(0)
    &errornumber = 102
    &errortext = "numeric expected"
    &errorvalue = list#*(0)
 ([] ^ i) | monitor(&line) ----> 104
 
 error in line 106:
-   &error = -44
+   &errorcoexpr = co-expression#87(0)
    &errornumber = 129
    &errortext = "string or ucs expected"
    &errorvalue = &null
 (s ?:= &subject[3]) | monitor(&line) ----> 106
 
 error in line 108:
-   &error = -45
+   &errorcoexpr = co-expression#89(0)
    &errornumber = 129
    &errortext = "string or ucs expected"
    &errorvalue = &null
 (s >>:= 0) | monitor(&line) ----> 108
 
 error in line 110:
-   &error = -46
+   &errorcoexpr = co-expression#91(0)
    &errornumber = 102
    &errortext = "numeric expected"
    &errorvalue = &null
 (s = 0) | monitor(&line) ----> 110
 
 error in line 112:
-   &error = -47
+   &errorcoexpr = co-expression#93(0)
    &errornumber = 108
    &errortext = "list expected"
    &errorvalue = &null
 put(s) | monitor(&line) ----> 112
 
 error in line 114:
-   &error = -48
+   &errorcoexpr = co-expression#95(0)
    &errornumber = 102
    &errortext = "numeric expected"
    &errorvalue = 'abc'
 ('abc' = ('abc' ++ '')) | monitor(&line) ----> 114
 
 error in line 116:
-   &error = -49
+   &errorcoexpr = co-expression#97(0)
    &errornumber = 103
    &errortext = "string expected"
    &errorvalue = list#*(0)
 =[] | monitor(&line) ----> 116
 
 error in line 118:
-   &error = -50
+   &errorcoexpr = co-expression#99(0)
    &errornumber = 111
    &errortext = "variable expected"
    &errorvalue = 1
 ((1 <-> y) & &fail) | monitor(&line) ----> 118
 
 error in line 120:
-   &error = -51
+   &errorcoexpr = co-expression#101(0)
    &errornumber = 116
    &errortext = "invalid type to element generator"
    &errorvalue = &null
 !&null | monitor(&line) ----> 120
 
 error in line 122:
-   &error = -52
+   &errorcoexpr = co-expression#103(0)
    &errornumber = 101
    &errortext = "integer expected or out of range"
    &errorvalue = "a"
 (2 \ "a") | monitor(&line) ----> 122
 
 error in line 127:
-   &error = -53
+   &errorcoexpr = co-expression#105(0)
    &errornumber = 101
    &errortext = "integer expected or out of range"
    &errorvalue = ""
 right("","") | monitor(&line) ----> 127
 
 error in line 129:
-   &error = -54
+   &errorcoexpr = co-expression#107(0)
    &errornumber = 624
    &errortext = "record, class, cast or object expected"
    &errorvalue = "F"
 close("F") | monitor(&line) ----> 129
 
 error in line 131:
-   &error = -55
+   &errorcoexpr = co-expression#109(0)
    &errornumber = 104
    &errortext = "cset expected"
    &errorvalue = list#*(0)
 trim(&lcase,[]) | monitor(&line) ----> 131
 
 error in line 133:
-   &error = -56
+   &errorcoexpr = co-expression#111(0)
    &errornumber = 101
    &errortext = "integer expected or out of range"
    &errorvalue = list#*(0)
 list([]) | monitor(&line) ----> 133
 
 error in line 135:
-   &error = -57
+   &errorcoexpr = co-expression#113(0)
    &errornumber = 104
    &errortext = "cset expected"
    &errorvalue = list#*(0)
 bal([],,,"") | monitor(&line) ----> 135
 
 error in line 137:
-   &error = -58
+   &errorcoexpr = co-expression#115(0)
    &errornumber = 101
    &errortext = "integer expected or out of range"
    &errorvalue = "a"
 pos("a") | monitor(&line) ----> 137
 
 error in line 139:
-   &error = -59
+   &errorcoexpr = co-expression#117(0)
    &errornumber = 101
    &errortext = "integer expected or out of range"
    &errorvalue = "a"
-139
+"abcdef" ? (tab(0) & (while write(move("a"))))) | monitor(&line) ----> 139
 
 error in line 141:
-   &error = -60
+   &errorcoexpr = co-expression#119(0)
    &errornumber = 102
    &errortext = "numeric expected"
    &errorvalue = "a"
 (2 % "a") | monitor(&line) ----> 141
 
 error in line 146:
-   &error = -61
+   &errorcoexpr = co-expression#121(0)
    &errornumber = 102
    &errortext = "numeric expected"
    &errorvalue = "a"
 (2 * "a") | monitor(&line) ----> 146
 
 error in line 148:
-   &error = -62
+   &errorcoexpr = co-expression#123(0)
    &errornumber = 102
    &errortext = "numeric expected"
    &errorvalue = "a"
 (2 / "a") | monitor(&line) ----> 148
 
 error in line 150:
-   &error = -63
+   &errorcoexpr = co-expression#125(0)
    &errornumber = 102
    &errortext = "numeric expected"
    &errorvalue = "a"
@@ -433,84 +433,84 @@ error in line 150:
 (-36 ^ -9) | monitor(&line) ----> 0
 
 error in line 154:
-   &error = -64
+   &errorcoexpr = co-expression#129(0)
    &errornumber = 102
    &errortext = "numeric expected"
    &errorvalue = "a"
 (2 < "a") | monitor(&line) ----> 154
 
 error in line 156:
-   &error = -65
+   &errorcoexpr = co-expression#131(0)
    &errornumber = 102
    &errortext = "numeric expected"
    &errorvalue = &null
 (0 > &null) | monitor(&line) ----> 156
 
 error in line 158:
-   &error = -66
+   &errorcoexpr = co-expression#133(0)
    &errornumber = 102
    &errortext = "numeric expected"
    &errorvalue = "a"
 (2 <= "a") | monitor(&line) ----> 158
 
 error in line 160:
-   &error = -67
+   &errorcoexpr = co-expression#135(0)
    &errornumber = 102
    &errortext = "numeric expected"
    &errorvalue = "a"
 (2 > "a") | monitor(&line) ----> 160
 
 error in line 162:
-   &error = -68
+   &errorcoexpr = co-expression#137(0)
    &errornumber = 102
    &errortext = "numeric expected"
    &errorvalue = "a"
 (2 = "a") | monitor(&line) ----> 162
 
 error in line 164:
-   &error = -69
+   &errorcoexpr = co-expression#139(0)
    &errornumber = 102
    &errortext = "numeric expected"
    &errorvalue = "a"
 (2 ~= "a") | monitor(&line) ----> 164
 
 error in line 166:
-   &error = -70
+   &errorcoexpr = co-expression#141(0)
    &errornumber = 108
    &errortext = "list expected"
    &errorvalue = "abc"
 (list(10)) ||| "abc" | monitor(&line) ----> 166
 
 error in line 172:
-   &error = -71
+   &errorcoexpr = co-expression#143(0)
    &errornumber = 111
    &errortext = "variable expected"
    &errorvalue = "a"
 (x :=: "a") | monitor(&line) ----> 172
 
 error in line 174:
-   &error = -72
+   &errorcoexpr = co-expression#145(0)
    &errornumber = 111
    &errortext = "variable expected"
    &errorvalue = "b"
 (x <-> "b") | monitor(&line) ----> 174
 
 error in line 176:
-   &error = -73
+   &errorcoexpr = co-expression#147(0)
    &errornumber = 111
    &errortext = "variable expected"
    &errorvalue = 4
 ((x & 2 & 3 & 4) := 3) | monitor(&line) ----> 176
 
 error in line 178:
-   &error = -74
+   &errorcoexpr = co-expression#149(0)
    &errornumber = 111
    &errortext = "variable expected"
    &errorvalue = 1
 ((1 <- y) & &fail) | monitor(&line) ----> 178
 
 error in line 180:
-   &error = -75
+   &errorcoexpr = co-expression#151(0)
    &errornumber = 206
    &errortext = "negative first argument to real exponentiation"
 (-36. ^ -9.) | monitor(&line) ----> 180

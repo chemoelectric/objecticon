@@ -45,7 +45,7 @@ procedure main2(a)
    L1 := []
    every 1 to 200 do push(L1,1)
    write(image(L[10]))
-   write(image(Prog.get_variable_name(&error)))
+   write(image(Prog.get_variable_name(&handler)))
    write(imagex(Prog.get_variable_name(T["abc"])))
    T["abc"] := 1
    write(imagex(Prog.get_variable_name(T["abc"])))

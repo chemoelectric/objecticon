@@ -331,10 +331,6 @@ int get_name(dptr dp1, dptr dp0)
                   LitStr("&dump", dp0);
                   break;
               }
-              else if (VarLoc(*dp1) == &prog->Kywd_err) {
-                  LitStr("&error", dp0);
-                  break;
-              }
               else if (VarLoc(*dp1) == &prog->Kywd_maxlevel) {
                   LitStr("&maxlevel", dp0);
                   break;
@@ -345,7 +341,17 @@ int get_name(dptr dp1, dptr dp0)
         }            
       kywdany:
             syserr("name: unknown keyword variable");
-            
+
+      kywdhandler: {
+          for (prog = progs; prog; prog = prog->next) {
+              if (VarLoc(*dp1) == &prog->Kywd_handler) {
+                  LitStr("&handler", dp0);
+                  break;
+              }
+          }
+          if (!prog)
+            syserr("name: unknown handler keyword variable");
+        }            
       kywdstr: {
           for (prog = progs; prog; prog = prog->next) {
               if (VarLoc(*dp1) == &prog->Kywd_prog) {
@@ -559,6 +565,13 @@ void trace_cofail(struct b_coexpr *from, struct b_coexpr *to)
 {
     cotrace_line(from);
     fprintf(stderr,"; co-expression#%ld failed to co-expression#%ld\n", (long)from->id, (long)to->id);
+    fflush(stderr);
+}
+
+void trace_cofail_to_handler(struct b_coexpr *from, struct b_coexpr *to)
+{
+    cotrace_line(from);
+    fprintf(stderr,"; co-expression#%ld failed to &handler co-expression#%ld\n", (long)from->id, (long)to->id);
     fflush(stderr);
 }
 
