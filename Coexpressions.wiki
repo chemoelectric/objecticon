@@ -369,4 +369,53 @@ co-expression#2 activated by co-expression#1
 The `try` procedure works as a PDCO.  It runs its body (`p1()` in this case) in a separate co-expression, but before doing so sets a global variable, `exception.throw_handler` to `&current`, ie the co-expression to re-activate on a throw.  In fact, all the procedure `throw` does is store its parameter in the global variable `exception.thrown`, `&current` in the global variable `exception.thrower`, and activates `exception.throw_handler`.  Having been activated again, `try` then simply succeeds or fails depending on whether or not it was activated by a `throw`.
 
 Note that this way of handling exceptions does not "unwind" any stack.  The stack of `exception.thrower` remains fully intact, and can be printed.
- 
+=== Handling runtime errors ===
+In a similar vein to the handling of exceptions, it is possible to handle runtime errors too.  However, this facility is built into the implementation, since that is where most runtime errors are generated.
+
+To set a runtime error handler, an assignment to the keyword variable `&handler` is made.  The value must be either `&null` (which turns handling off), or a co-expression, which is activated when a runtime error occurs.  When that happens, the keywords `&errornumber`, `&errortext`, `&errorvalue` and `&errorcoexpr` will also be set to give detail about the runtime error.  Note that `&errorvalue` will not be set if no value was associated with the error (evaluating it will fail).  `&errorcoexpr` is set to the value of `&current` when the error occurred.
+
+Here is an example program which handles a runtime error caused by attempting to add 1 to the null value :-
+
+{{{
+import io, lang
+
+procedure main()
+   local e
+   e := create {
+      write("okay")
+      1 + &null
+      write("shouldn't get here")
+   }
+
+   &handler := &current
+   errorclear()
+   if @e then
+      write("Evaluation succeeded")
+   else {
+      if &errornumber then {
+         write("Evaluation caused runtime error")
+         write("\t&errornumber=",image(&errornumber))
+         write("\t&errortext=",image(&errortext))
+         write("\t&errorvalue=",image(&errorvalue) | "<none>")
+         write("\t&errorcoexpr=",image(&errorcoexpr))
+         Coexpression.traceback(&errorcoexpr)
+      } else
+         write("Evaluation failed")
+   }
+   &handler := &null
+end
+}}}
+The output is :-
+{{{
+okay
+Evaluation caused runtime error
+        &errornumber=102
+        &errortext="numeric expected"
+        &errorvalue=&null
+        &errorcoexpr=co-expression#2(0)
+Traceback:
+co-expression#2 activated by co-expression#1
+   main()
+   at line 7 in eg.icn
+}}}
+Note that attempting to resume the co-expression which caused the runtime error for another value will produce a runtime error.  This particular runtime error is in the "fatal" category, meaning it cannot be handled and always causes immediate termination.
