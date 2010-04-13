@@ -1596,11 +1596,8 @@ function graphics_Window_get_geometry(self)
        if (getpos(self_w) != Succeeded)
            fail;
        ws = self_w->window;
-       if (ws->win)
-           sprintf(attr_buff, "%dx%d+%d+%d",
-                   ws->width, ws->height, ws->posx, ws->posy);
-       else
-           sprintf(attr_buff, "%dx%d", ws->pixwidth, ws->pixheight);
+       sprintf(attr_buff, "%dx%d+%d+%d",
+               ws->width, ws->height, ws->posx, ws->posy);
        cstr2string(attr_buff, &result);
        return result;
    }
