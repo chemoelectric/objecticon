@@ -297,10 +297,10 @@ void  bigrand         (dptr da, dptr dx);
    void drawrectangle   (wbp w, int x, int y, int width, int height);
    void fillpolygon     (wbp w, XPoint *pts, int npts);
    void drawstring      (wbp w, int x, int y, char *str, int slen);
-   void drawutf8        (wbp w, int x, int y, char *str, int slen);
+   void drawutf8        (wbp w, int x, int y, char *str, int slen, int nchars);
    int  seticonimage    (wbp w, dptr dp);
    int  textwidth       (wbp w, char *s, int n);
-   int  utf8width       (wbp w, char *s, int n);
+   int  utf8width       (wbp w, char *s, int n, int nchars);
 
 #endif                                  /* Graphics */
 
