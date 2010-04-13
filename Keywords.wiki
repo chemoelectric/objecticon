@@ -44,10 +44,10 @@ The cset of digits 0-9
 
 If non-zero, causes dump on termination
 
-== &error ==
-`&error : i`
+== &errorcoexpr ==
+`&errorcoexpr : C`
 
-If non-zero, non-fatal run-time errors are converted to failure, setting `&errornumber`, `&errortext` and `&errorvalue`.
+The co-expression which caused the run-time error.
 
 == &errornumber ==
 `&errornumber : i`
@@ -78,6 +78,11 @@ Generate a sequence of strings describing implementation features
 `&file : s`
 
 The current source code file name
+
+== &handler ==
+`&error : C`
+
+If non-null, non-fatal run-time errors are handled by invoking this co-expression, whilst setting, setting `&errorcoexpr`, `&errornumber`, `&errortext` and `&errorvalue`.
 
 == &host ==
 `&host : s`
@@ -183,5 +188,3 @@ Reason for failure
 `&yes : i`
 
 A constant for representing "true", "on" etc.  It has the value 1.
-
-
