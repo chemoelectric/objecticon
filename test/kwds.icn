@@ -3,8 +3,6 @@
 #  kwds.icn -- check keywords, as best can do reproducibly
 
 procedure main()
-   &error := 747
-
    print{"ascii", &ascii}
    pr_type{"clock", &clock}
    print{"cset", &cset}
@@ -13,10 +11,11 @@ procedure main()
    pr_type{"dateline", &dateline}
    print{"digits", &digits}
    pr_type{"dump", &dump}
-   print{"error", &error}
+   print{"handler", &handler}
    print{"errornumber", &errornumber}
    print{"errortext", &errortext}
    print{"errorvalue", &errorvalue}
+   print{"errorcoexpr", &errorcoexpr}
    print{"fail", &fail}
    pr_seq_type{"features", &features}
    print{"file", &file[-8:0]}

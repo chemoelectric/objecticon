@@ -125,6 +125,7 @@ function errorclear()
       k_errornumber = 0;
       k_errortext = emptystr;
       k_errorvalue = nulldesc;
+      k_errorcoexpr = 0;
       have_errval = 0;
       return nulldesc;
       }
@@ -304,10 +305,11 @@ end
         k_errorvalue = x[0];
         have_errval = 1;
     }
+    k_errorcoexpr = k_current;
 
-    if (IntVal(kywd_err) != 0) {
-        IntVal(kywd_err)--;
-        errorfail;
+    if (!is:null(kywd_handler)) {
+        activate_handler();
+        return;
     }
 
     s = StrLoc(k_errortext);
@@ -332,8 +334,8 @@ end
         abort();
 
     c_exit(EXIT_FAILURE);
-
-    errorfail;
+    /* Not reached */
+    fail;
 }
 #enddef
 
@@ -349,7 +351,7 @@ end
 
 function fatalerr(i, x[n])
    body {
-      IntVal(kywd_err) = 0;
+      kywd_handler = nulldesc;
       ERRFUNC();
    }
 end
@@ -405,10 +407,8 @@ function seq(from, by)
         /*
          * by must not be zero.
          */
-        if (by0 == 0) {
-            irunerr(211, by0);
-            errorfail;
-        }
+        if (by0 == 0)
+            Irunerr(211, by0);
 
         if (by0 > 0) {
             for (;;) {
@@ -441,7 +441,6 @@ function seq(from, by)
        word sn = bigcmp(&by1, &zerodesc);
        if (sn == 0) {
            runerr(211, by1);
-           errorfail;
        }
        for (;;) {
            suspend from1;
@@ -450,10 +449,9 @@ function seq(from, by)
        fail;
    }
    else if (cnv:C_double(from,from2) && cnv:C_double(by,by2)) {
-       if (by2 == 0) {
-           irunerr(211, (int)by2);
-           errorfail;
-       }
+       if (by2 == 0)
+           Irunerr(211, (int)by2);
+
        for (;;) {
            suspend C_double from2;
            from2 += by2;
@@ -715,8 +713,7 @@ function sort(t, i)
                }
 
             default: {
-               irunerr(205, i);
-               errorfail;
+               Irunerr(205, i);
                }
 
             } /* end of switch statement */
@@ -794,10 +791,8 @@ function sortf(t, i)
      runerr (101, i)
 
   body {
-   if (i == 0) {
-       irunerr(205, i);
-       errorfail;
-   }
+   if (i == 0)
+       Irunerr(205, i);
 
    type_case t of {
       list: {

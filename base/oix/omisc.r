@@ -210,10 +210,8 @@ operator ... toby(from, to, by)
         /*
          * by must not be zero.
          */
-        if (by0 == 0) {
-            irunerr(211, by0);
-            errorfail;
-        }
+        if (by0 == 0)
+            Irunerr(211, by0);
 
         if (by0 > 0) {
             if (to0 + by0 > to0) {
@@ -254,7 +252,6 @@ operator ... toby(from, to, by)
        word sn = bigcmp(&by1, &zerodesc);
        if (sn == 0) {
            runerr(211, by1);
-           errorfail;
        }
        if (sn > 0) {
            for ( ; bigcmp(&from1, &to1) <= 0;) {
@@ -270,10 +267,9 @@ operator ... toby(from, to, by)
        fail;
    }
    else if (cnv:C_double(from,from2) && cnv:C_double(to,to2) && cnv:C_double(by,by2)) {
-       if (by2 == 0) {
-           irunerr(211, (int)by2);
-           errorfail;
-       }
+       if (by2 == 0)
+           Irunerr(211, (int)by2);
+
        if (by2 > 0)
            for ( ; from2 <= to2; from2 += by2) {
                suspend C_double from2;

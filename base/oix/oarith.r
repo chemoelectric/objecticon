@@ -119,8 +119,7 @@ ArithOp( - , minus , Sub , RealSub, list_add /* bogus */)
 #begdef big_IntMod(x,y)
 {
    if ( ( Type ( y ) == T_Integer ) && ( IntVal ( y ) == 0 ) ) {
-      irunerr(202,0);
-      errorfail;
+      Irunerr(202,0);
       }
    bigmod(&x,&y,&result);
    return result;
@@ -131,8 +130,7 @@ ArithOp( - , minus , Sub , RealSub, list_add /* bogus */)
 {
    irslt = mod3(x,y);
    if (over_flow) {
-      irunerr(202,y);
-      errorfail;
+      Irunerr(202,y);
       }
    return C_integer irslt;
 }

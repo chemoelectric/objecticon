@@ -3,185 +3,185 @@ record array(a,b,c,d,e,f,g)
 procedure p1()
    local x,i,a,c,s
    write("seq(\"a\") | monitor(&line) ----> ",
-      image(seq("a") | monitor(&line)) | "none")
+      fun{ &line, seq("a") })
    write("\"|\"(1,2) | monitor(&line) ----> ",
-      image("|"(1,2) | monitor(&line)) | "none")
+         fun{ &line,  "|"(1,2) })
    write("member(x,x) | monitor(&line) ----> ",
-      image(member(x,x) | monitor(&line)) | "none")
+         fun{ &line,  member(x,x) })
    write("(set() ++ 'a') | monitor(&line) ----> ",
-      image((set() ++ 'a') | monitor(&line)) | "none")
+         fun{ &line,  (set() ++ 'a') })
    write("(every i := 1 to *a - 1 by 2 do write(image(a[i]),\" \",a[i + 1])) | monitor(&line) ----> ",
-      image((every i := 1 to *a - 1 by 2 do write(image(a[i])," ",a[i + 1])) | monitor(&line)) | "none")
+         fun{ &line,  (every i := 1 to *a - 1 by 2 do write(image(a[i])," ",a[i + 1])) })
    write("(every i := 1 to *a - 1 by 2 do write(image(a[i]),\" \",a[i + 1])) | monitor(&line) ----> ",
-      image((every i := 1 to *a - 1 by 2 do write(image(a[i])," ",a[i + 1])) | monitor(&line)) | "none")
+         fun{ &line,  (every i := 1 to *a - 1 by 2 do write(image(a[i])," ",a[i + 1])) })
    write("(c |||:= s) | monitor(&line) ----> ",
-      image((c |||:= s) | monitor(&line)) | "none")
+         fun{ &line,  (c |||:= s) })
    write("?&null | monitor(&line) ----> ",
-      image(?&null | monitor(&line)) | "none")
+         fun{ &line,  ?&null })
    write("c[1] | monitor(&line) ----> ",
-      image(c[1] | monitor(&line)) | "none")
+         fun{ &line,  c[1] })
    write("(image + image) | monitor(&line) ----> ",
-      image((image + image) | monitor(&line)) | "none")
+         fun{ &line,  (image + image) })
    write(".1(s[1],s := &null) | monitor(&line) ----> ",
-      image(.1(s[1],s := &null) | monitor(&line)) | "none")
+         fun{ &line,  .1(s[1],s := &null) })
 end
 
 procedure p2()
    local x
    write("display(,[]) | monitor(&line) ----> ",
-      image(display(,[]) | monitor(&line)) | "none")
+         fun{ &line,  display(,[]) })
    write("([] ~== \"x\") | monitor(&line) ----> ",
-      image(([] ~== "x") | monitor(&line)) | "none")
+         fun{ &line,  ([] ~== "x") })
    write("(x + 1) | monitor(&line) ----> ",
-      image((x + 1) | monitor(&line)) | "none")
+         fun{ &line,  (x + 1) })
    write("\"a\"(1,2,3) | monitor(&line) ----> ",
-      image("a"(1,2,3) | monitor(&line)) | "none")
+         fun{ &line,  "a"(1,2,3) })
    write("(\"o\" + 0) | monitor(&line) ----> ",
-      image(("o" + 0) | monitor(&line)) | "none")
+         fun{ &line,  ("o" + 0) })
    write("(&cset ++ []) | monitor(&line) ----> ",
-      image((&cset ++ []) | monitor(&line)) | "none")
+         fun{ &line,  (&cset ++ []) })
    write("(every 1 to \"a\") | monitor(&line) ----> ",
-      image((every 1 to "a") | monitor(&line)) | "none")
+         fun{ &line,  (every 1 to "a") })
    write("!image | monitor(&line) ----> ",
-      image(!image | monitor(&line)) | "none")
+         fun{ &line,  !image })
 end
 
 procedure p3()
    local t,c,r
    write("(0 to 0 by 0) | monitor(&line) ----> ",
-      image((0 to 0 by 0) | monitor(&line)) | "none")
+         fun{ &line,  (0 to 0 by 0) })
    write("repl(\"b\",\"a\") | monitor(&line) ----> ",
-      image(repl("b","a") | monitor(&line)) | "none")
+         fun{ &line,  repl("b","a") })
    write("t(t) | monitor(&line) ----> ",
-      image(t(t) | monitor(&line)) | "none")
+         fun{ &line,  t(t) })
    write("sort(&cset) | monitor(&line) ----> ",
-      image(sort(&cset) | monitor(&line)) | "none")
+         fun{ &line,  sort(&cset) })
    write("pull(&null) | monitor(&line) ----> ",
-      image(pull(&null) | monitor(&line)) | "none")
+         fun{ &line,  pull(&null) })
    write("c[-4] | monitor(&line) ----> ",
-      image(c[-4] | monitor(&line)) | "none")
+         fun{ &line,  c[-4] })
    write("(type(type)(type)) | monitor(&line) ----> ",
-      image((type(type)(type)) | monitor(&line)) | "none")
+         fun{ &line,  (type(type)(type)) })
    write("r[r] | monitor(&line) ----> ",
-      image(r[r] | monitor(&line)) | "none")
+         fun{ &line,  r[r] })
    write("([] ** \"abc\") | monitor(&line) ----> ",
-      image(([] ** "abc") | monitor(&line)) | "none")
+         fun{ &line,  ([] ** "abc") })
    write("('abc' ~= ('abc' ++ '')) | monitor(&line) ----> ",
-      image(('abc' ~= ('abc' ++ '')) | monitor(&line)) | "none")
+         fun{ &line,  ('abc' ~= ('abc' ++ '')) })
 end
 
 procedure p4()
    local x,y,a,a3,a5,c
    write("(&lcase || numeric) | monitor(&line) ----> ",
-      image((&lcase || numeric) | monitor(&line)) | "none")
+         fun{ &line,  (&lcase || numeric) })
    write("x[\"a\"] | monitor(&line) ----> ",
-      image(x["a"] | monitor(&line)) | "none")
+         fun{ &line,  x["a"] })
    write("(100-()) | monitor(&line) ----> ",
-      image((100-()) | monitor(&line)) | "none")
+         fun{ &line,  (100-()) })
    write("((1 := y) & &fail) | monitor(&line) ----> ",
-      image(((1 := y) & &fail) | monitor(&line)) | "none")
+         fun{ &line,  ((1 := y) & &fail) })
    write("(a[1:3] := a) | monitor(&line) ----> ",
-      image((a[1:3] := a) | monitor(&line)) | "none")
+         fun{ &line,  (a[1:3] := a) })
    write("(a[3] :=: a3[&null]) | monitor(&line) ----> ",
-      image((a[3] :=: a3[&null]) | monitor(&line)) | "none")
+         fun{ &line,  (a[3] :=: a3[&null]) })
    write("a5[a5] | monitor(&line) ----> ",
-      image(a5[a5] | monitor(&line)) | "none")
+         fun{ &line,  a5[a5] })
    write("pull[c] | monitor(&line) ----> ",
-      image(pull[c] | monitor(&line)) | "none")
+         fun{ &line,  pull[c] })
    write("(&subject := []) | monitor(&line) ----> ",
-      image((&subject := []) | monitor(&line)) | "none")
+         fun{ &line,  (&subject := []) })
    write("([] ? []) | monitor(&line) ----> ",
-      image(([] ? []) | monitor(&line)) | "none")
+         fun{ &line,  ([] ? []) })
    write("+\"a\" | monitor(&line) ----> ",
-      image(+"a" | monitor(&line)) | "none")
+         fun{ &line,  +"a" })
 end
 
 procedure p5()
    local i,s,y
    write("(i <= []) | monitor(&line) ----> ",
-      image((i <= []) | monitor(&line)) | "none")
+         fun{ &line,  (i <= []) })
    write("([] ^ i) | monitor(&line) ----> ",
-      image(([] ^ i) | monitor(&line)) | "none")
+         fun{ &line,  ([] ^ i) })
    write("(s ?:= &subject[3]) | monitor(&line) ----> ",
-      image((s ?:= &subject[3]) | monitor(&line)) | "none")
+         fun{ &line,  (s ?:= &subject[3]) })
    write("(s >>:= 0) | monitor(&line) ----> ",
-      image((s >>:= 0) | monitor(&line)) | "none")
+         fun{ &line,  (s >>:= 0) })
    write("(s = 0) | monitor(&line) ----> ",
-      image((s = 0) | monitor(&line)) | "none")
+         fun{ &line,  (s = 0) })
    write("put(s) | monitor(&line) ----> ",
-      image(put(s) | monitor(&line)) | "none")
+         fun{ &line,  put(s) })
    write("('abc' = ('abc' ++ '')) | monitor(&line) ----> ",
-      image(('abc' = ('abc' ++ '')) | monitor(&line)) | "none")
+         fun{ &line,  ('abc' = ('abc' ++ '')) })
    write("=[] | monitor(&line) ----> ",
-      image(=[] | monitor(&line)) | "none")
+         fun{ &line,  =[] })
    write("((1 <-> y) & &fail) | monitor(&line) ----> ",
-      image(((1 <-> y) & &fail) | monitor(&line)) | "none")
+         fun{ &line,  ((1 <-> y) & &fail) })
    write("!&null | monitor(&line) ----> ",
-      image(!&null | monitor(&line)) | "none")
+         fun{ &line,  !&null })
    write("(2 \\ \"a\") | monitor(&line) ----> ",
-      image((2 \ "a") | monitor(&line)) | "none")
+         fun{ &line,  (2 \ "a") })
 end
 
 procedure p6()
    write("right(\"\",\"\") | monitor(&line) ----> ",
-      image(right("","") | monitor(&line)) | "none")
+         fun{ &line,  right("","") })
    write("close(\"F\") | monitor(&line) ----> ",
-      image(close("F") | monitor(&line)) | "none")
+         fun{ &line,  close("F") })
    write("trim(&lcase,[]) | monitor(&line) ----> ",
-      image(trim(&lcase,[]) | monitor(&line)) | "none")
+         fun{ &line,  trim(&lcase,[]) })
    write("list([]) | monitor(&line) ----> ",
-      image(list([]) | monitor(&line)) | "none")
+         fun{ &line,  list([]) })
    write("bal([],,,\"\") | monitor(&line) ----> ",
-      image(bal([],,,"") | monitor(&line)) | "none")
+         fun{ &line,  bal([],,,"") })
    write("pos(\"a\") | monitor(&line) ----> ",
-      image(pos("a") | monitor(&line)) | "none")
-   write(("\"abcdef\" ? (tab(0) & (while write(move(\"a\"))))) | monitor(&line) ----> ",
-      image(("abcdef" ? (tab(0) & (while write(move("a")))))) | monitor(&line)) | "none")
+         fun{ &line,  pos("a") })
+   write("\"abcdef\" ? (tab(0) & (while write(move(\"a\"))))) | monitor(&line) ----> ",
+          fun{ &line,  ("abcdef" ? (tab(0) & (while write(move("a"))))) })
    write("(2 % \"a\") | monitor(&line) ----> ",
-      image((2 % "a") | monitor(&line)) | "none")
+         fun{ &line,  (2 % "a") })
 end
 
 procedure p7()
    write("(2 * \"a\") | monitor(&line) ----> ",
-      image((2 * "a") | monitor(&line)) | "none")
+         fun{ &line,  (2 * "a") })
    write("(2 / \"a\") | monitor(&line) ----> ",
-      image((2 / "a") | monitor(&line)) | "none")
+         fun{ &line,  (2 / "a") })
    write("(2 + \"a\") | monitor(&line) ----> ",
-      image((2 + "a") | monitor(&line)) | "none")
+         fun{ &line,  (2 + "a") })
    write("(-36 ^ -9) | monitor(&line) ----> ",
-      image((-36 ^ -9) | monitor(&line)) | "none")
+         fun{ &line,  (-36 ^ -9) })
    write("(2 < \"a\") | monitor(&line) ----> ",
-      image((2 < "a") | monitor(&line)) | "none")
+         fun{ &line,  (2 < "a") })
    write("(0 > &null) | monitor(&line) ----> ",
-      image((0 > &null) | monitor(&line)) | "none")
+         fun{ &line,  (0 > &null) })
    write("(2 <= \"a\") | monitor(&line) ----> ",
-      image((2 <= "a") | monitor(&line)) | "none")
+         fun{ &line,  (2 <= "a") })
    write("(2 > \"a\") | monitor(&line) ----> ",
-      image((2 > "a") | monitor(&line)) | "none")
+         fun{ &line,  (2 > "a") })
    write("(2 = \"a\") | monitor(&line) ----> ",
-      image((2 = "a") | monitor(&line)) | "none")
+         fun{ &line,  (2 = "a") })
    write("(2 ~= \"a\") | monitor(&line) ----> ",
-      image((2 ~= "a") | monitor(&line)) | "none")
+         fun{ &line,  (2 ~= "a") })
    write("(list(10)) ||| \"abc\" | monitor(&line) ----> ",
-      image((list(10)) ||| "abc" | monitor(&line)) | "none")
+         fun{ &line,  (list(10)) ||| "abc" })
 end
 
 procedure p8()
    local x,y
    write("(x :=: \"a\") | monitor(&line) ----> ",
-      image((x :=: "a") | monitor(&line)) | "none")
+         fun{ &line,  (x :=: "a") })
    write("(x <-> \"b\") | monitor(&line) ----> ",
-      image((x <-> "b") | monitor(&line)) | "none")
+         fun{ &line,  (x <-> "b") })
    write("((x & 2 & 3 & 4) := 3) | monitor(&line) ----> ",
-      image(((x & 2 & 3 & 4) := 3) | monitor(&line)) | "none")
+         fun{ &line,  ((x & 2 & 3 & 4) := 3) })
    write("((1 <- y) & &fail) | monitor(&line) ----> ",
-      image(((1 <- y) & &fail) | monitor(&line)) | "none")
+         fun{ &line,  ((1 <- y) & &fail) })
    write("(-36. ^ -9.) | monitor(&line) ----> ",
-      image((-36. ^ -9.) | monitor(&line)) | "none")
+         fun{ &line,  (-36. ^ -9.) })
 end
 
 procedure main()
-   &error := -1
+#   &error := -1
    p1()
    p2()
    p3()
@@ -196,10 +196,32 @@ end
 
 procedure monitor(line)
    write("\nerror in line ",line,":")
-   write("   &error = ",&error)
+#   write("   &error = ",&error)
    write("   &errornumber = ",&errornumber)
    write("   &errortext = ",
       image(&errortext))
    write("   &errorvalue = ", imagex(&errorvalue))
    return line
+end
+
+procedure fun(eline, e)
+   local x, line
+   line := @eline
+   &handler := &current
+   errorclear()
+   if x := @e then {
+      &handler := &null
+      return x
+   }
+   &handler := &null
+   if &errornumber then {
+      write("\nerror in line ",line,":")
+      write("   &errorcoexpr = ", image(&errorcoexpr))
+      write("   &errornumber = ",&errornumber)
+      write("   &errortext = ", image(&errortext))
+      write("   &errorvalue = ", imagex(&errorvalue))
+      return line
+   } 
+   else
+      fail
 end

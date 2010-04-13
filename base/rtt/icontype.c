@@ -18,8 +18,8 @@ int list_typ = 16;
 int tbl_typ = 17;
 int ucs_typ = 8;
 
-int num_typs = 24;
-struct icon_type icontypes[24] = {
+int num_typs = 25;
+struct icon_type icontypes[25] = {
   {"string", 0, DrfNone, TRetSpcl, NULL, 0, 0, "s", "String"},
   {"integer", 0, DrfNone, TRetNone, NULL, 0, 0, "i", "Integer"},
   {"record", 0, DrfNone, TRetBlkP, NULL, 0, 0, "R", "Record"},
@@ -39,11 +39,12 @@ struct icon_type icontypes[24] = {
   {"list", 1, DrfNone, TRetBlkP, NULL, 1, 2, "L", "List"},
   {"table", 1, DrfNone, TRetBlkP, NULL, 3, 3, "T", "Table"},
   {"set", 1, DrfNone, TRetBlkP, NULL, 1, 6, "S", "Set"},
-  {"kywdint", 0, DrfCnst, TRetDescP, ".i......................", 0, 0, "kywdint", "Kywdint"},
-  {"kywdsubj", 0, DrfCnst, TRetDescP, "s.......................", 0, 0, "kywdsubj", "Kywdsubj"},
-  {"kywdpos", 0, DrfCnst, TRetDescP, ".i......................", 0, 0, "kywdpos", "Kywdpos"},
-  {"kywdany", 0, DrfCnst, TRetDescP, "siRcocmcupC..ncrLTS.....", 0, 0, "kywdany", "Kywdany"},
-  {"kywdstr", 0, DrfCnst, TRetDescP, "s.......................", 0, 0, "kywdstr", "Kywdstr"}};
+  {"kywdint", 0, DrfCnst, TRetDescP, ".i.......................", 0, 0, "kywdint", "Kywdint"},
+  {"kywdsubj", 0, DrfCnst, TRetDescP, "s........................", 0, 0, "kywdsubj", "Kywdsubj"},
+  {"kywdpos", 0, DrfCnst, TRetDescP, ".i.......................", 0, 0, "kywdpos", "Kywdpos"},
+  {"kywdany", 0, DrfCnst, TRetDescP, "siRcocmcupC..ncrLTS......", 0, 0, "kywdany", "Kywdany"},
+  {"kywdstr", 0, DrfCnst, TRetDescP, "s........................", 0, 0, "kywdstr", "Kywdstr"},
+  {"kywdhandler", 0, DrfCnst, TRetDescP, "siRcocmcupC..ncrLTS......", 0, 0, "kywdhandler", "Kywdhandler"}};
 
 int str_var = 0;
 int trpd_tbl = 1;

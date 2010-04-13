@@ -55,6 +55,28 @@
    } while (0)
 #enddef
 
+#begdef Irunerr(n, v)
+   do {
+      t_errornumber = n;
+      IntVal(t_errorvalue) = v;
+      t_errorvalue.dword = D_Integer;
+      t_have_val = 1;
+      runerr(0);
+   } while (0)
+#enddef
+
+#begdef Drunerr(n, v)
+   do {
+      union block *bp;
+      MemProtect(bp = (union block *)alcreal(v));
+      t_errornumber = n;
+      BlkLoc(t_errorvalue) = bp;
+      t_errorvalue.dword = D_Real;
+      t_have_val = 1;
+      runerr(0);
+   } while (0)
+#enddef
+
 /*
  * Protection macro.
  */

@@ -396,9 +396,6 @@ function lang_Prog_eval_keyword(s,c)
               if (strncmp(t,"trace",5) == 0) {
                   return kywdint(&(p->Kywd_trace));
               }
-              if (strncmp(t,"error",5) == 0) {
-                  return kywdint(&(p->Kywd_err));
-              }
               if (strncmp(t,"level",5) == 0) {
                   return C_integer p->K_current->level;
               }
@@ -420,6 +417,9 @@ function lang_Prog_eval_keyword(s,c)
               if (strncmp(t,"current",7) == 0) {
                   return coexpr(p->K_current);
               }
+              if (strncmp(t,"handler",7) == 0) {
+                  return kywdhandler(&(p->Kywd_handler));
+              }
               break;
           }
           case 9 : {
@@ -433,6 +433,8 @@ function lang_Prog_eval_keyword(s,c)
           }
           case 10: {
               if (strncmp(t,"errortext",9) == 0) {
+                  if (p->K_errornumber == 0)
+                      fail;
                   return p->K_errortext;
               }
               break;
@@ -440,12 +442,21 @@ function lang_Prog_eval_keyword(s,c)
 
           case 11 : {
               if (strncmp(t,"errorvalue",10) == 0) {
+                  if (!p->Have_errval)
+                      fail;
                   return p->K_errorvalue;
               }
               break;
           }
           case 12 : {
+              if (strncmp(t,"errorcoexpr",11) == 0) {
+                  if (p->K_errornumber == 0)
+                      fail;
+                  return coexpr(p->K_errorcoexpr);
+              }
               if (strncmp(t,"errornumber",11) == 0) {
+                  if (p->K_errornumber == 0)
+                      fail;
                   return C_integer p->K_errornumber;
               }
               break;
@@ -561,10 +572,8 @@ function lang_Prog_get_operator(s, n)
       runerr(101, n)
    body {
        int i;
-       if (n < 1 || n > 3) {
-           irunerr(205, n);
-           errorfail;
-       }
+       if (n < 1 || n > 3)
+           Irunerr(205, n);
        for (i = 0; i < op_tbl_sz; ++i)
            if (eq(&s, op_tbl[i]->name) && n == op_tbl[i]->nparam)
                return proc(op_tbl[i]);
@@ -896,10 +905,8 @@ function proc(x, n, c)
          struct b_proc *p;
 	 struct progstate *prog;
 
-         if (n < 1 || n > 3) {
-            irunerr(205, n);
-            errorfail;
-         }
+         if (n < 1 || n > 3)
+            Irunerr(205, n);
 
          if (!(prog = get_program_for(&c)))
              runerr(0);
@@ -1510,10 +1517,9 @@ function io_FileStream_in(self, i)
        tended struct descrip s;
        GetSelfFd();
 
-       if (i <= 0) {
-           irunerr(205, i);
-           errorfail;
-       }
+       if (i <= 0)
+           Irunerr(205, i);
+
        /*
         * For now, assume we can read the full number of bytes.
         */
@@ -1690,10 +1696,8 @@ function io_SocketStream_in(self, i)
        tended struct descrip s;
        GetSelfFd();
 
-       if (i <= 0) {
-           irunerr(205, i);
-           errorfail;
-       }
+       if (i <= 0)
+           Irunerr(205, i);
        /*
         * For now, assume we can read the full number of bytes.
         */
@@ -2752,10 +2756,8 @@ function io_RamStream_in(self, i)
        tended struct descrip result;
        GetSelfRs();
 
-       if (i <= 0) {
-           irunerr(205, i);
-           errorfail;
-       }
+       if (i <= 0)
+           Irunerr(205, i);
 
        if (self_rs->pos >= self_rs->size) {
            GetSelfEofFlag();
@@ -2779,10 +2781,9 @@ function io_RamStream_new_impl(s, wiggle)
       runerr(101, wiggle)
    body {
        struct ramstream *p;
-       if (wiggle < 0) {
-           irunerr(205, wiggle);
-           errorfail;
-       }
+       if (wiggle < 0)
+           Irunerr(205, wiggle);
+
        MemProtect(p = malloc(sizeof(*p)));
        p->wiggle = wiggle;
        p->pos = p->size = StrLen(s);

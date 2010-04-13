@@ -40,12 +40,12 @@ end
 
 
 #  test tracing in combination with errors
-
 procedure divall(s)
-   &error := 1
-   every divide(9, !s)
-   &error := 0
-   return
+   local e
+   e := create every divide(9, !s)
+   &handler := &current
+   @e
+   &handler := &null
 end
 
 procedure divide(a, b)
@@ -97,7 +97,7 @@ procedure p()
    s1 := "the quick brown fox jumps"
    s2 := u"over the lazy dog"
    &progname := "something"
-   suspend &random|&trace|&dump|&error|
+   suspend &random|&trace|&dump|
       &progname|&why|&pos|&subject|t[1]|t[100]|SomeClass.a_static|u.x|u.y|u.z|
       v.one|v.two|v.three|l[2]|l[10]|s1[2:5]|s2[2:6]
 end

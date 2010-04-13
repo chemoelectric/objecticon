@@ -444,7 +444,7 @@ void c_exit(int i)
  */
 void fatalerr(int n, dptr v)
 {
-    IntVal(kywd_err) = 0;
+    kywd_handler = nulldesc;
     err_msg(n, v);
 }
 
@@ -459,7 +459,7 @@ void ffatalerr(char *fmt, ...)
     va_start(ap, fmt);
     vsnprintf(buff, sizeof(buff), fmt, ap);
     CMakeStr(buff, &t_errortext);
-    IntVal(kywd_err) = 0;
+    kywd_handler = nulldesc;
     err_msg(-1, 0);
 }
 
@@ -486,7 +486,7 @@ static void initprogstate(struct progstate *p)
     p->monitor = 0;
     p->eventmask= emptycs;
     p->event_queue_head = p->event_queue_tail = 0;
-    p->Kywd_err = zerodesc;
+    p->Kywd_handler = nulldesc;
     p->Kywd_pos = onedesc;
     p->Kywd_why = emptystr;
     p->Kywd_subject = emptystr;
@@ -500,6 +500,7 @@ static void initprogstate(struct progstate *p)
     p->T_have_val = 0;
     p->K_errortext = emptystr;
     p->K_errorvalue = nulldesc;
+    p->K_errorcoexpr = 0;
     p->T_errorvalue = nulldesc;
     p->T_errortext = emptystr;
     p->Coexp_ser = 1;

@@ -89,11 +89,6 @@ int getvar(dptr s, dptr vp, struct progstate *p)
                 break;
             }
             case 6 : {
-                if (strncmp(t,"error",5) == 0) {
-                    vp->dword = D_Kywdint;
-                    VarLoc(*vp) = &p->Kywd_err;
-                    return Succeeded;
-                }
                 if (strncmp(t,"trace",5) == 0) {
                     vp->dword = D_Kywdint;
                     VarLoc(*vp) = &p->Kywd_trace;
@@ -110,6 +105,11 @@ int getvar(dptr s, dptr vp, struct progstate *p)
                 break;
             }
             case 8 : {
+                if (strncmp(t,"handler",7) == 0) {
+                    vp->dword = D_Kywdhandler;
+                    VarLoc(*vp) = &p->Kywd_handler;
+                    return Succeeded;
+                }
                 if (strncmp(t,"subject",7) == 0) {
                     vp->dword = D_Kywdsubj;
                     VarLoc(*vp) = &p->Kywd_subject;
@@ -814,10 +814,14 @@ void outimage(FILE *f, dptr dp, int noimage)
             fprintf(f, "&trace = ");
          else if (VarLoc(*dp) == &kywd_dump)
             fprintf(f, "&dump = ");
-         else if (VarLoc(*dp) == &kywd_err)
-            fprintf(f, "&error = ");
          else if (VarLoc(*dp) == &kywd_maxlevel)
             fprintf(f, "&maxlevel = ");
+         outimage(f, VarLoc(*dp), noimage);
+         }
+
+      kywdhandler: {
+         if (VarLoc(*dp) == &kywd_handler)
+            fprintf(f, "&handler = ");
          outimage(f, VarLoc(*dp), noimage);
          }
 

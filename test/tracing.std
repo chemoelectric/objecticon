@@ -59,27 +59,33 @@ tracing.icn  :   22  | | | recurse returned 14
 tracing.icn  :   22  | | recurse returned 15
 tracing.icn  :   22  | recurse returned 16
 tracing.icn  :   11  | divall("")
-tracing.icn  :   48  | divall returned &null
+tracing.icn  :   47  | | divall; co-expression#1 : &null @ co-expression#2
+tracing.icn  :   45  | divall; co-expression#2 failed to co-expression#1
+tracing.icn  :   49  | divall failed
 tracing.icn  :   11  | divall("314")
-tracing.icn  :   46  | | divide(9,"3")
-tracing.icn  :   52  | | divide returned 3
-tracing.icn  :   46  | | divide(9,"1")
-tracing.icn  :   52  | | divide returned 9
-tracing.icn  :   46  | | divide(9,"4")
-tracing.icn  :   52  | | divide returned 2
-tracing.icn  :   48  | divall returned &null
+tracing.icn  :   47  | | divall; co-expression#1 : &null @ co-expression#3
+tracing.icn  :   45  | divide(9,"3")
+tracing.icn  :   52  | divide returned 3
+tracing.icn  :   45  | divide(9,"1")
+tracing.icn  :   52  | divide returned 9
+tracing.icn  :   45  | divide(9,"4")
+tracing.icn  :   52  | divide returned 2
+tracing.icn  :   45  | divall; co-expression#3 failed to co-expression#1
+tracing.icn  :   49  | divall failed
 tracing.icn  :   11  | divall("x")
-tracing.icn  :   46  | | divide(9,"x")
-tracing.icn  :   52  | | divide failed
-tracing.icn  :   48  | divall returned &null
+tracing.icn  :   47  | | divall; co-expression#1 : &null @ co-expression#4
+tracing.icn  :   45  | divide(9,"x")
+tracing.icn  :   52  | | divide; co-expression#4 failed to &handler co-expression#1
+tracing.icn  :   49  | divall failed
 tracing.icn  :   11  | divall("12x")
-tracing.icn  :   46  | | divide(9,"1")
-tracing.icn  :   52  | | divide returned 9
-tracing.icn  :   46  | | divide(9,"2")
-tracing.icn  :   52  | | divide returned 4
-tracing.icn  :   46  | | divide(9,"x")
-tracing.icn  :   52  | | divide failed
-tracing.icn  :   48  | divall returned &null
+tracing.icn  :   47  | | divall; co-expression#1 : &null @ co-expression#5
+tracing.icn  :   45  | divide(9,"1")
+tracing.icn  :   52  | divide returned 9
+tracing.icn  :   45  | divide(9,"2")
+tracing.icn  :   52  | divide returned 4
+tracing.icn  :   45  | divide(9,"x")
+tracing.icn  :   52  | | divide; co-expression#5 failed to &handler co-expression#1
+tracing.icn  :   49  | divall failed
 tracing.icn  :   12  | varargs()
 tracing.icn  :   61  | | vproc(&null,list#1 = [])
 tracing.icn  :   73  | | vproc returned &null
@@ -129,11 +135,9 @@ tracing.icn  :   69  | varargs returned &null
 tracing.icn  :   13  | p()
 tracing.icn  :  100  | p suspended &random = 0
 tracing.icn  :   13  | p resumed
-tracing.icn  :  100  | p suspended &trace = -133
+tracing.icn  :  100  | p suspended &trace = -139
 tracing.icn  :   13  | p resumed
 tracing.icn  :  100  | p suspended &dump = 0
-tracing.icn  :   13  | p resumed
-tracing.icn  :  100  | p suspended &error = 0
 tracing.icn  :   13  | p resumed
 tracing.icn  :  100  | p suspended &progname = "something"
 tracing.icn  :   13  | p resumed

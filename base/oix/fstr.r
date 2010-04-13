@@ -742,10 +742,9 @@ function repl(s,n)
    body {
       word slen;
 
-      if (n < 0) {
-         irunerr(205,n);
-         errorfail;
-         }
+      if (n < 0)
+         Irunerr(205,n);
+
 
       if (is:ucs(s)) {
           tended struct descrip utf8;
@@ -762,11 +761,8 @@ function repl(s,n)
            * Make sure the resulting string will not be too long.
            */
           utf8_size = mul(n, StrLen(UcsBlk(s).utf8));
-          if (over_flow) {
-              irunerr(205,n);
-              errorfail;
-          }
-
+          if (over_flow) 
+              Irunerr(205,n);
 
           /*
            * Make a descriptor for the replicated utf8 string.
@@ -797,10 +793,8 @@ function repl(s,n)
            * Make sure the resulting string will not be too long.
            */
           size = mul(n, slen);
-          if (over_flow) {
-              irunerr(205,n);
-              errorfail;
-          }
+          if (over_flow)
+              Irunerr(205,n);
 
           /*
            * Make result a descriptor for the replicated string.
@@ -899,10 +893,8 @@ function left(s1,n,s2)
       runerr(101, n)
 
    body {
-      if (n < 0) {
-         irunerr(205,n);
-         errorfail;
-         }
+      if (n < 0)
+         Irunerr(205,n);
 
       if (is:ucs(s1)) {
           word odd_len, whole_len, utf8_size, i;
@@ -1037,10 +1029,8 @@ function right(s1,n,s2)
       runerr(101, n)
 
    body {
-      if (n < 0) {
-         irunerr(205,n);
-         errorfail;
-         }
+      if (n < 0)
+         Irunerr(205,n);
 
       if (is:ucs(s1)) {
           word odd_len, whole_len, utf8_size, i;
@@ -1175,10 +1165,8 @@ function center(s1,n,s2)
       runerr(101, n)
 
    body {
-      if (n < 0) {
-         irunerr(205,n);
-         errorfail;
-         }
+      if (n < 0)
+         Irunerr(205,n);
 
       if (is:ucs(s1)) {
           word left, right, whole_left_len, odd_left_len,

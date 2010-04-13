@@ -1192,13 +1192,13 @@ end
 procedure Safe(e)
    local t, x
    repeat {
-      t := &error
-      &error := -1
+#      t := &error
+#      &error := -1
       if x := @e then {
-         &error := t
+#         &error := t
          suspend x
       } else {
-         &error := t
+#         &error := t
          fail
       }
    }

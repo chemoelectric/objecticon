@@ -67,6 +67,7 @@ int bsizes[] = {
      sizeof(struct b_class),  /* T_Class (25), class */
      0,                       /* T_Object (26), object */
      sizeof(struct b_cast),   /* T_Cast (27), cast */
+     -1,                      /* T_Kywdhandler (28), error handler keyword variable */
     };
 
 /*
@@ -102,6 +103,7 @@ int firstd[] = {
      -1,                      /* T_Class (25), class, just contains static data in icode */
      5*WordSize,              /* T_Object (26), object */
      0,                       /* T_Cast (27), cast */
+     -1,                      /* T_Kywdhandler (28), error handler keyword variable */
     };
 
 /*
@@ -137,6 +139,7 @@ int firstp[] = {
      -1,                      /* T_Class (25), class, just contains static data in icode */
      0,                       /* T_Object (26), object, just a pointer to the class, which is static */
      1*WordSize,              /* T_Cast (27), cast */
+     -1,                      /* T_Kywdhandler (28), error handler keyword variable */
     };
 
 /*
@@ -172,6 +175,7 @@ int ptrno[] = {
     -1,                       /* T_Class (25), class */
     -1,                       /* T_Object (26), object */
      1,                       /* T_Cast (27), cast */
+    -1,                       /* T_Kywdhandler (28), error handler keyword variable */
     };
 
 /*
@@ -207,6 +211,7 @@ int descno[] = {
     -1,                       /* T_Class (25), class, just contains static data in icode */
      0,                       /* T_Object (26), object */
     -1,                       /* T_Cast (27), cast */
+    -1,                       /* T_Kywdhandler (28), error handler keyword variable */
 };
 
 /*
@@ -241,6 +246,7 @@ char *blkname[] = {
    "class",                             /* T_Class (25) */
    "object",                            /* T_Object (26) */
    "cast",                              /* T_Cast (27) */
+   "&handler",                          /* T_Kywdhandler (28), error handler keyword variable */
    };
 
 /*
@@ -426,6 +432,7 @@ static void markprogram(struct progstate *pstate)
 
     /* Kywd_err, &error, always an integer */
     /* Kywd_pos, &pos, always an integer */
+    PostDescrip(pstate->Kywd_handler);
     PostDescrip(pstate->Kywd_subject);
     PostDescrip(pstate->Kywd_prog);
     PostDescrip(pstate->Kywd_why);
@@ -448,6 +455,8 @@ static void markprogram(struct progstate *pstate)
     PostDescrip(pstate->K_errortext);
     PostDescrip(pstate->T_errorvalue);
     PostDescrip(pstate->T_errortext);
+    if (pstate->K_errorcoexpr)
+        markptr((union block **)&pstate->K_errorcoexpr);
 
     markptr((union block **)&pstate->K_main);
     markptr((union block **)&pstate->K_current);
@@ -522,7 +531,6 @@ static void markptr(union block **ptr)
              */
             if (type0 == T_Coexpr) {
                 struct b_coexpr *cp;
-                /*fprintf(stderr,"Yes, coexpr\n");fflush(stderr);*/
                 cp = (struct b_coexpr *)block;
                 /*
                  * Mark the activator of this co-expression.

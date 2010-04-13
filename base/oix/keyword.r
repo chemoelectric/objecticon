@@ -89,14 +89,7 @@ keyword digits
    }
 end
 
-"&error - enable/disable error conversion"
-keyword error
-   body {
-      return kywdint(&kywd_err);
-      }
-end
-
-"&errornumber - error number of last error converted to failure"
+"&errornumber - error number of last error"
 keyword errornumber
    body {
       if (k_errornumber == 0)
@@ -105,7 +98,7 @@ keyword errornumber
       }
 end
 
-"&errortext - error message of last error converted to failure"
+"&errortext - error message of last error"
 keyword errortext
    body {
       if (k_errornumber == 0)
@@ -114,13 +107,22 @@ keyword errortext
       }
 end
 
-"&errorvalue - erroneous value of last error converted to failure"
+"&errorvalue - erroneous value of last error"
 keyword errorvalue
    body {
       if (have_errval)
          return k_errorvalue;
       else
          fail;
+      }
+end
+
+"&errorcoexpr - coexpression causing last error"
+keyword errorcoexpr
+   body {
+      if (k_errornumber == 0)
+         fail;
+      return coexpr(k_errorcoexpr);
       }
 end
 
@@ -342,5 +344,12 @@ end
 keyword no
    body {
       return nulldesc;
+      }
+end
+
+"&handler - handle runtime error"
+keyword handler
+   body {
+      return kywdhandler(&kywd_handler);
       }
 end

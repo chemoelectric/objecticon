@@ -31,6 +31,11 @@ static int subs_asgn	(dptr dest, dptr src);
       kywdany: {
 	    *VarLoc(x) = y;
          }
+      kywdhandler: {
+           if (!is:null(y) && !is:coexpr(y))
+               runerr(118, y);
+           *VarLoc(x) = y;
+         }
       kywdint:  {
             word i;
 

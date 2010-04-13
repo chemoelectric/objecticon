@@ -382,7 +382,7 @@ struct progstate {
     /*
      * trapped variable keywords' values
      */
-    struct descrip Kywd_err;
+    struct descrip Kywd_handler;
     struct descrip Kywd_pos;
     struct descrip Kywd_subject;
     struct descrip Kywd_prog;
@@ -441,6 +441,7 @@ struct progstate {
     int K_errornumber;
     struct descrip K_errortext;
     struct descrip K_errorvalue;
+    struct b_coexpr *K_errorcoexpr;
     int Have_errval;
     struct descrip T_errortext;
     int T_errornumber;

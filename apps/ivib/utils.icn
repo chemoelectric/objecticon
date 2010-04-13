@@ -115,13 +115,13 @@ procedure util_check_attribs(dialog, t)
          next
       if not member(attrib_table, s[1]) then
          return alert_error(dialog, "Invalid attribute " || s[1])
-      &error := -1
+#      &error := -1
       test_win.attrib(s[1] || "=" || s[2])
-      if &error < -1 then {
-         &error := 0
-         return alert_error(dialog, "Invalid value " || s[2] || " for attrib " || s[1])
-      }
-      &error := 0
+#      if &error < -1 then {
+#         &error := 0
+#         return alert_error(dialog, "Invalid value " || s[2] || " for attrib " || s[1])
+#      }
+#      &error := 0
    }
    return
 end
