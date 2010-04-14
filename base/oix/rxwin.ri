@@ -1248,7 +1248,7 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *target, c
         theevent.xselection.property = None;
     } else {
         if (!cnv:string(*data, *data))
-            ReturnErrVal(103, le->lslots[state.result], Error);
+            ReturnErrVal(103, *data, Error);
         if (selection_debug)
             printf("\tSetting property to %d bytes of data\n", (int)StrLen(*data));
         XChangeProperty(ws->display->display,
