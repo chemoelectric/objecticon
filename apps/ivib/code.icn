@@ -85,8 +85,10 @@ class Code()
    # Add a import to the set of imports.
    #
    public add_import(pack, name)
-      /imports[pack] := set()
-      insert(imports[pack], name)
+      if *pack > 0 then {
+         /imports[pack] := set()
+         insert(imports[pack], name)
+      }
    end
 
    public add_event_handlers(name, t)
