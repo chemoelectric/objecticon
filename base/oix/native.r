@@ -1685,7 +1685,7 @@ end
 
 function io_FileStream_pipe_impl()
    body {
-#if UNIX
+#if UNIX || PLAN9
        int fds[2];
        struct descrip t;
        tended struct descrip result;

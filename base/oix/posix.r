@@ -62,6 +62,12 @@ function posix_System_fork()
         wdsplys = 0;
 #endif
       return C_integer pid;
+#elif PLAN9
+      if ((pid = rfork(RFPROC|RFFDG)) < 0) {
+	 errno2why();
+	 fail;
+      }
+      return C_integer pid;
 #else
      Unsupported;
 #endif

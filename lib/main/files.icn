@@ -507,7 +507,11 @@ $endif
       }
 
       # Search all the elements in the path
+$ifdef _PLAN9
+      path := System.getenv("path") | ""
+$else
       path := System.getenv("PATH") | ""
+$endif
       every s := get_path(split_paths(path)).append(p).str() do {
          if access(s, Access.X_OK) then
             return s

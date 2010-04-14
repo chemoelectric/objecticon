@@ -852,7 +852,11 @@ class FileStream(DescStream)
    public static pipe()
       local t
       t := pipe_impl() | fail
+$ifdef _PLAN9
+      return [FileStream(t[1], READ_WRITE), FileStream(t[2], READ_WRITE)]
+$else
       return [FileStream(t[1], READ), FileStream(t[2], WRITE)]
+$endif
    end
 
    private static defer pipe_impl()

@@ -91,6 +91,11 @@ $endif
    writes("\n")
 
    write()
+$ifdef _PLAN9
+   tsys("echo hello world")			# simple echo
+   tsys("ls io.[ids][tca][dnt]")		# check wildcarding
+   tpipe()
+$else
 $ifdef _UNIX
    tsys("echo hello world")			# simple echo
    tsys("ls io.[ids][tca][dnt]")		# check wildcarding
@@ -101,6 +106,7 @@ $else
       tab(find("$ echo hello world"))
       writes(tab(0))
    }
+$endif
 $endif
 end
 
@@ -212,7 +218,11 @@ procedure tpipe()
 
    # check wildcarding, and also !pipe
    write()
+$ifdef _PLAN9
+   p := ProgStream.open_read("rc", ["-c", "ls io.i?n io.d?t io.s?d"]) | stop("can't open ls pipe")
+$else
    p := ProgStream.open_read("sh", ["-c", "ls io.i?n io.d?t io.s?d"]) | stop("can't open ls pipe")
+$endif
    write(imagex(p))
    every write("> ", |read(p))
    close(p)

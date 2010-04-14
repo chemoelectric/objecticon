@@ -136,7 +136,24 @@ void *bsearch(const void *key, const void *base,
 
 int system(const char *command)
 {
-    return 0;
+    int pid;
+    if ((pid = rfork(RFPROC|RFFDG)) < 0)
+        return -1;
+    if (pid == 0) {
+        execl("/bin/rc", "rc", "-c", command, 0);
+        return -1;
+    }
+    for (;;) {
+        Waitmsg *w = wait();
+        if (!w)
+            return -1;
+        if (w->pid == pid) {
+            int rc = (w->msg[0] == 0 ? 0 : 1);
+            free(w);
+            return rc;
+        }
+        free(w);
+    }
 }
 
 int gethostname(char *name, size_t len)
