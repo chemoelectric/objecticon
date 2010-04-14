@@ -29,6 +29,7 @@
 struct SharedImage {
   Image *i;
   char *name;
+  int   rgba;
   int	refcount;
 };
 

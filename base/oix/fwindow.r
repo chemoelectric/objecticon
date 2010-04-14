@@ -1315,10 +1315,21 @@ function graphics_Window_send_selection_response(self, requestor, property, targ
        char *t1, *t2, *t3;
        GetSelfW();
        buffnstr(&property, &t1, &target, &t2, &selection, &t3, 0);
-       if (sendselectionresponse(self_w, requestor, t1, t2, t3, time, &data) == Failed)
-           runerr(0);
-       else
-           return self;
+       switch (sendselectionresponse(self_w, requestor, t1, t2, t3, time, &data)) {
+           case Error: {
+               runerr(0);
+               break;
+           }
+           case Failed: {
+               fail;
+               break;
+           }
+           case Succeeded: {
+               return self;
+           }
+       }
+       /* Not reached */
+       fail;
    }
 end
 
@@ -1816,10 +1827,14 @@ end
 
 int wconfig, inattr;
 
-#begdef AttemptAttr(operation)
+#begdef AttemptAttr(operation, reason)
 do {
+   LitWhy("");
    switch (operation) { 
-       case Error: runerr(145, val); break;
+       case Error: {
+           runerr(145, val); 
+           break;
+       }
        case Succeeded: {
            if (!inattr && wconfig) {
                doconfig(self_w, wconfig);
@@ -1827,8 +1842,15 @@ do {
            }
            break;
        }
-       case Failed: fail;
-       default: syserr("Invalid return code from graphics op"); fail;
+       case Failed: {
+           if (StrLen(kywd_why) == 0)
+               LitWhy(reason);
+           fail;
+       }
+       default: {
+           syserr("Invalid return code from graphics op"); 
+           fail;
+       }
    }
 } while(0)
 #enddef
@@ -1848,11 +1870,11 @@ function graphics_Window_set_bg(self, val)
        word i;
        GetSelfW();
        if (cnv:C_integer(val, i))
-           AttemptAttr(isetbg(self_w, i));
+           AttemptAttr(isetbg(self_w, i), "Invalid color number");
        else {
            if (!cnv:string(val, val))
                runerr(103, val);
-           AttemptAttr(setbg(self_w, buffstr(&val)));
+           AttemptAttr(setbg(self_w, buffstr(&val)), "Invalid color");
        }
        return self;
    }
@@ -1863,7 +1885,7 @@ function graphics_Window_set_canvas(self, val)
       runerr(103, val)
    body {
        GetSelfW();
-       AttemptAttr(setcanvas(self_w, buffstr(&val)));
+       AttemptAttr(setcanvas(self_w, buffstr(&val)), "Invalid canvas type");
        return self;
    }
 end
@@ -1949,7 +1971,7 @@ function graphics_Window_set_drawop(self, val)
       runerr(103, val)
    body {
        GetSelfW();
-       AttemptAttr(setdrawop(self_w, buffstr(&val)));
+       AttemptAttr(setdrawop(self_w, buffstr(&val)), "Invalid drawop");
        return self;
    }
 end
@@ -1979,11 +2001,11 @@ function graphics_Window_set_fg(self, val)
        word i;
        GetSelfW();
        if (cnv:C_integer(val, i))
-           AttemptAttr(isetfg(self_w, i));
+           AttemptAttr(isetfg(self_w, i), "Invalid color number");
        else {
            if (!cnv:string(val, val))
                runerr(103, val);
-           AttemptAttr(setfg(self_w, buffstr(&val)));
+           AttemptAttr(setfg(self_w, buffstr(&val)), "Invalid color");
        }
        return self;
    }
@@ -1994,7 +2016,7 @@ function graphics_Window_set_fillstyle(self, val)
       runerr(103, val)
    body {
        GetSelfW();
-       AttemptAttr(setfillstyle(self_w, buffstr(&val)));
+       AttemptAttr(setfillstyle(self_w, buffstr(&val)), "Invalid fillstyle");
        return self;
    }
 end
@@ -2004,7 +2026,7 @@ function graphics_Window_set_font(self, val)
       runerr(103, val)
    body {
        GetSelfW();
-       AttemptAttr(setfont(self_w, buffstr(&val)));
+       AttemptAttr(setfont(self_w, buffstr(&val)), "Invalid font");
        return self;
    }
 end
@@ -2015,7 +2037,7 @@ function graphics_Window_set_gamma(self, val)
        GetSelfW();
        if (!cnv:C_double(val, d)) 
            runerr(102, val);
-       AttemptAttr(setgamma(self_w, d));
+       AttemptAttr(setgamma(self_w, d), "Invalid gamma value");
        return self;
    }
 end
@@ -2068,7 +2090,7 @@ function graphics_Window_set_image(self, val)
        }
        else
            r = setimage(self_w, s);
-       AttemptAttr(r);
+       AttemptAttr(r, "Unable to draw image");
        return self;
    }
 end
@@ -2078,7 +2100,7 @@ function graphics_Window_set_inputmask(self, val)
       runerr(103, val)
    body {
        GetSelfW();
-       AttemptAttr(setinputmask(self_w, buffstr(&val)));
+       AttemptAttr(setinputmask(self_w, buffstr(&val)), "Invalid input mask");
        return self;
    }
 end
@@ -2088,7 +2110,7 @@ function graphics_Window_set_label(self, val)
       runerr(103, val)
    body {
        GetSelfW();
-       AttemptAttr(setwindowlabel(self_w, buffstr(&val)));
+       AttemptAttr(setwindowlabel(self_w, buffstr(&val)), "Failed to set window label");
        return self;
    }
 end
@@ -2098,7 +2120,7 @@ function graphics_Window_set_linestyle(self, val)
       runerr(103, val)
    body {
        GetSelfW();
-       AttemptAttr(setlinestyle(self_w, buffstr(&val)));
+       AttemptAttr(setlinestyle(self_w, buffstr(&val)), "Invalid linestyle");
        return self;
    }
 end
@@ -2109,7 +2131,7 @@ function graphics_Window_set_linewidth(self, val)
        GetSelfW();
        if (!cnv:C_integer(val, i))
            runerr(101, val);
-       AttemptAttr(setlinewidth(self_w, i));
+       AttemptAttr(setlinewidth(self_w, i), "Invalid linewidth");
        return self;
    }
 end
@@ -2225,7 +2247,7 @@ function graphics_Window_set_pattern(self, val)
       runerr(103, val)
    body {
        GetSelfW();
-       AttemptAttr(setpattern(self_w, buffstr(&val)));
+       AttemptAttr(setpattern(self_w, buffstr(&val)), "Invalid pattern");
        return self;
    }
 end
@@ -2235,7 +2257,7 @@ function graphics_Window_set_pointer(self, val)
        runerr(103, val)
    body {
        GetSelfW();
-       AttemptAttr(setpointer(self_w, buffstr(&val)));
+       AttemptAttr(setpointer(self_w, buffstr(&val)), "Invalid pointer");
        return self;
    }
 end
