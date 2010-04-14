@@ -481,9 +481,9 @@ static int handle_misc(wdp wd)
                     list_put(&ws->listp, &tmp);
                     get_atom_descriptor(ws, event.xselectionrequest.property, &tmp);
                     list_put(&ws->listp, &tmp);
-                    get_atom_descriptor(ws, event.xselectionrequest.target, &tmp);
-                    list_put(&ws->listp, &tmp);
                     get_atom_descriptor(ws, event.xselectionrequest.selection, &tmp);
+                    list_put(&ws->listp, &tmp);
+                    get_atom_descriptor(ws, event.xselectionrequest.target, &tmp);
                     list_put(&ws->listp, &tmp);
                     MakeInt(event.xselectionrequest.time, &tmp);
                     list_put(&ws->listp, &tmp);
@@ -1200,7 +1200,7 @@ int doconfig(wbp w, int status)
  * Note that the three strings are pointers into the string space;
  * data is a safe pointer into a frame.
  */
-int sendselectionresponse(wbp w, word requestor, char *property, char *target, char *selection, word time, dptr data)
+int sendselectionresponse(wbp w, word requestor, char *property, char *selection, char *target, word time, dptr data)
 {
     Atom property_atom, target_atom, selection_atom, XA_TARGETS, target_list[32];
     XEvent theevent;
@@ -1248,7 +1248,7 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *target, c
         theevent.xselection.property = None;
     } else {
         if (!cnv:string(*data, *data))
-            ReturnErrVal(103, le->lslots[state.result], Error);
+            ReturnErrVal(103, *data, Error);
         if (selection_debug)
             printf("\tSetting property to %d bytes of data\n", (int)StrLen(*data));
         XChangeProperty(ws->display->display,

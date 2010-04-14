@@ -1300,21 +1300,21 @@ function graphics_Window_own_selection(self, selection)
    }
 end
 
-function graphics_Window_send_selection_response(self, requestor, property, target, selection, time, data)
+function graphics_Window_send_selection_response(self, requestor, property, selection, target, time, data)
    if !cnv:C_integer(requestor) then
       runerr(101, requestor)
    if !cnv:string(property) then
       runerr(103, property)
-   if !cnv:string(target) then
-      runerr(103, target)
    if !cnv:string(selection) then
       runerr(103, selection)
+   if !cnv:string(target) then
+      runerr(103, target)
    if !cnv:C_integer(time) then
       runerr(101, time)
    body {
        char *t1, *t2, *t3;
        GetSelfW();
-       buffnstr(&property, &t1, &target, &t2, &selection, &t3, 0);
+       buffnstr(&property, &t1, &selection, &t2, &target, &t3, 0);
        switch (sendselectionresponse(self_w, requestor, t1, t2, t3, time, &data)) {
            case Error: {
                runerr(0);

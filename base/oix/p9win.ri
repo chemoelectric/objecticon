@@ -1348,20 +1348,20 @@ int ownselection(wbp w, char *selection)
 {
     wsp ws = w->window;
     tended struct descrip tmp;
-    if (strcmp(selection, "CLIPBOARD") == 0) {
-        MakeInt(SELECTIONREQUEST, &tmp);
-        list_put(&ws->listp, &tmp);
-        MakeInt(0, &tmp);               /* req id */
-        list_put(&ws->listp, &tmp);
-        LitStr("none", &tmp);           /* property */
-        list_put(&ws->listp, &tmp);
-        LitStr("UTF8_STRING", &tmp);    /* type */
-        list_put(&ws->listp, &tmp);
-        cstr2string(selection, &tmp);   /* selection */
-        list_put(&ws->listp, &tmp);
-        MakeInt(0, &tmp);               /* time */
-        list_put(&ws->listp, &tmp);
-    }
+
+    /* Note - could filter out selections to use CLIPBOARD only, ie ^C, not drag */
+    MakeInt(SELECTIONREQUEST, &tmp);
+    list_put(&ws->listp, &tmp);
+    MakeInt(0, &tmp);               /* req id */
+    list_put(&ws->listp, &tmp);
+    LitStr("none", &tmp);           /* property */
+    list_put(&ws->listp, &tmp);
+    cstr2string(selection, &tmp);   /* selection */
+    list_put(&ws->listp, &tmp);
+    LitStr("UTF8_STRING", &tmp);    /* type */
+    list_put(&ws->listp, &tmp);
+    MakeInt(0, &tmp);               /* time */
+    list_put(&ws->listp, &tmp);
     return Succeeded;
 }
 
@@ -1369,37 +1369,37 @@ int requestselection(wbp w, char *selection, char *target)
 {
     wsp ws = w->window;
     tended struct descrip tmp;
-    if (strcmp(selection, "CLIPBOARD") == 0) {
-        int fd, n_read;
-        static char buff[2048];
-        if ((fd = open("/dev/snarf", OREAD)) < 0) {
-            whyf("Can't open snarf file: %r");
-            return Failed;
-        }
-        n_read = read(fd, buff, sizeof(buff));
-        close(fd);
-        if (n_read < 0) {
-            whyf("Failed to read snarf file: %r");
-            return Failed;
-        }
-        MakeInt(SELECTIONRESPONSE, &tmp);
-        list_put(&ws->listp, &tmp);
-        cstr2string(selection, &tmp);   /* selection */
-        list_put(&ws->listp, &tmp);
-        cstr2string(target, &tmp);      /* target */
-        list_put(&ws->listp, &tmp);
-        if (strcmp(target, "UTF8_STRING") == 0) {
-            bytes2string(buff, n_read, &tmp);
-            list_put(&ws->listp, &tmp);
-        } else
-            list_put(&ws->listp, &nulldesc);
+    int fd, n_read;
+    static char buff[2048];
+
+    /* Note - could filter out selections to use CLIPBOARD only, ie ^C, not drag */
+    if ((fd = open("/dev/snarf", OREAD)) < 0) {
+        whyf("Can't open snarf file: %r");
+        return Failed;
     }
+    n_read = read(fd, buff, sizeof(buff));
+    close(fd);
+    if (n_read < 0) {
+        whyf("Failed to read snarf file: %r");
+        return Failed;
+    }
+    MakeInt(SELECTIONRESPONSE, &tmp);
+    list_put(&ws->listp, &tmp);
+    cstr2string(selection, &tmp);   /* selection */
+    list_put(&ws->listp, &tmp);
+    cstr2string(target, &tmp);      /* target */
+    list_put(&ws->listp, &tmp);
+    if (strcmp(target, "UTF8_STRING") == 0) {
+        bytes2string(buff, n_read, &tmp);
+        list_put(&ws->listp, &tmp);
+    } else
+        list_put(&ws->listp, &nulldesc);
 
     return Succeeded;
 }
 
 int sendselectionresponse(wbp w, word requestor, char *property, 
-                            char *target, char *selection, word time, dptr data)
+                          char *selection, char *target, word time, dptr data)
 {
     wsp ws = w->window;
     int fd;
@@ -1409,6 +1409,7 @@ int sendselectionresponse(wbp w, word requestor, char *property,
         whyf("Can't open snarf file: %r");
         return Failed;
     }
+    /*print("setting snarf to %.*s\n",StrLen(*data),StrLoc(*data));*/
     write(fd, StrLoc(*data), StrLen(*data));
     close(fd);
     return Succeeded;
