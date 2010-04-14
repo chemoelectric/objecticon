@@ -79,6 +79,18 @@ procedure test_modes()
    do_mode(f)
    f.close()
 
+$ifdef _PLAN9
+   write("Prog Read")
+   f := ProgStream.open_read("echo", ["hello"]) | stop(&why)
+   do_mode(f)
+   while f.read()
+   f.close()
+
+   write("Prog write")
+   f := ProgStream.open_write("rc", ["-c", "cat >/dev/null"]) | stop(&why)
+   do_mode(f)
+   f.close()
+$else
 $ifdef _UNIX
    write("Prog Read")
    f := ProgStream.open_read("echo", ["hello"]) | stop(&why)
@@ -107,6 +119,7 @@ $else
    write("Can seek: no")
    write("Can truncate: no")
    write("Can all: no")
+$endif
 $endif
 
    write("Socket")
