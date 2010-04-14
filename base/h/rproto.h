@@ -275,8 +275,8 @@ void  bigrand         (dptr da, dptr dx);
    int  setlinewidth    (wbp w, int linewid);
    int  setpointer      (wbp w, char *val);
    int  ownselection    (wbp w, char *selection);
-   int  requestselection(wbp w, char *selname, char *targetname);
-   int  sendselectionresponse(wbp w, word requestor, char *property, char *target, char *selection, word time, dptr data);
+   int  requestselection(wbp w, char *selection, char *targetname);
+   int  sendselectionresponse(wbp w, word requestor, char *property, char *selection, char *target, word time, dptr data);
    int  setwindowlabel  (wbp w, char *val);
    int  setinputmask    (wbp w, char *val);
    void drawstrimage    (wbp w, int x, int y, int width, int height,

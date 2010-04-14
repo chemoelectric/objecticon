@@ -452,8 +452,8 @@ class Dialog(Component)
    private process_selection_request(l)
       local c, data, target
       #write("process_selection-request:",to_string(l))
-      target := l[4]
-      if c := \selections[l[5]] then {
+      target := l[5]
+      if c := \selections[l[4]] then {
          #write("\towner=", image(c))
          if target == Selection.TARGETS_TARGET then {
             data := []
@@ -506,7 +506,6 @@ class Dialog(Component)
          # Check if current owner is asserting selection.
          if curr === obj then
             return
-
          curr.lost_ownership()
       } else
          win.own_selection(selection)
