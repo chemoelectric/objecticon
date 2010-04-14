@@ -1403,6 +1403,10 @@ int sendselectionresponse(wbp w, word requestor, char *property,
 {
     wsp ws = w->window;
     int fd;
+    /* data is &null if the selection doesn't support what we asked for (UTF8_STRING) */
+    if (is:null(*data))
+        return Succeeded;
+
     if (!cnv:string(*data, *data))
         ReturnErrVal(103, *data, Error);
     if ((fd = open("/dev/snarf", OWRITE)) < 0) {
