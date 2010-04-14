@@ -1315,10 +1315,21 @@ function graphics_Window_send_selection_response(self, requestor, property, targ
        char *t1, *t2, *t3;
        GetSelfW();
        buffnstr(&property, &t1, &target, &t2, &selection, &t3, 0);
-       if (sendselectionresponse(self_w, requestor, t1, t2, t3, time, &data) == Failed)
-           runerr(0);
-       else
-           return self;
+       switch (sendselectionresponse(self_w, requestor, t1, t2, t3, time, &data)) {
+           case Error: {
+               runerr(0);
+               break;
+           }
+           case Failed: {
+               fail;
+               break;
+           }
+           case Succeeded: {
+               return self;
+           }
+       }
+       /* Not reached */
+       fail;
    }
 end
 
