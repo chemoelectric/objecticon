@@ -84,6 +84,8 @@
 
 package ipl.graphics
 
+import graphics(Window)
+
 #   LeftString(x, y, s) -- draw string left-justified at (x,y).
 
 # draw left-justified string
@@ -213,7 +215,7 @@ procedure Capture(win, pal, x, y, w, h)
    if h < 0 then
       y -:= (h := -h)
 
-   win.palette_chars(pal) | runerr(205, pal)
+   Window.palette_chars(pal) | runerr(205, pal)
 
    cmap := table()
 
@@ -221,7 +223,7 @@ procedure Capture(win, pal, x, y, w, h)
    # (much faster than concatenating single chars on a very long string)
    s := ""
    a := []
-   every k := win.pixel(x, y, w, h) do {
+   every k := !win.pixel(x, y, w, h) do {
       c := \cmap[k] | (cmap[k] := win.palette_key(pal, k))
       if *(s ||:= c) >= CaptureChunk then {
          put(a, s)
