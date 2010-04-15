@@ -820,8 +820,7 @@ void outimage(FILE *f, dptr dp, int noimage)
          }
 
       kywdhandler: {
-         if (VarLoc(*dp) == &kywd_handler)
-            fprintf(f, "&handler = ");
+         fprintf(f, "&handler = ");
          outimage(f, VarLoc(*dp), noimage);
          }
 
