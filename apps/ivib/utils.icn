@@ -20,7 +20,7 @@ end
 # Read icon from file s.  dialog is an instance of Dialog
 #
 procedure util_read_icon(dialog, s)
-   if map(s)[-4:0] == ".gif" then
+   if map(s)[-4:0] == (".gif"|".bmp"|".jpg") then
       return read_gif_icon(dialog, s)
    else if map(s)[-4:0] == ".xpm" then
       return read_xpm_icon(dialog, s)
@@ -50,10 +50,9 @@ procedure read_xpm_icon(dialog, s)
    local f, raw
 
    f := open(s) | return alert_error(dialog, "Couldn't open file " || s)
-   raw := XPMImage(f, "c6")
+   raw := XPMImage(dialog.win, f, "c6")
    close(f)
-
-   return raw
+   return \raw | alert_error(dialog, "Couldn't decode xpm file " || s)
 end
 
 
