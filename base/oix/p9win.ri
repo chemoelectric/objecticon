@@ -95,6 +95,15 @@ static stringint patternsyms[] = {
     { "white",      6},
 };
 
+static stringint linestyles[] = {
+    {0, 5},
+    {"dashed",      0},
+    {"doubledash",  0},
+    {"onoff",       0},
+    {"solid",       0},
+    {"striped",     0},
+};
+
 static stringint cursors[] = {
     { 0, 78},
     {"X cursor",          -1},
@@ -1726,8 +1735,13 @@ void getfillstyle(wbp w, char *answer)
     strcpy(answer, w->context->fillstyle->s);
 }
 
-int setlinestyle(wbp w, char *s)
+int setlinestyle(wbp w, char *val)
 {
+    wcp wc = w->context;
+    stringint *e = stringint_lookup(linestyles, val);
+    if (!e)
+        return Failed;
+    wc->linestyle = e;
     return Succeeded;
 }
 
@@ -1855,7 +1869,7 @@ int getpos(wbp w)
 
 void getlinestyle(wbp w, char *answer)
 {
-    strcpy(answer, "none");
+    strcpy(answer, w->context->linestyle->s);
 }
 
 int querypointer(wbp w, int *x, int *y)
@@ -1971,6 +1985,7 @@ static wcp alccontext(wbp w)
     wc->font = new_font("fixed");
     wc->fillstyle = stringint_lookup(fillstyles, "solid");
     wc->drawop = stringint_lookup(drawops, "copy");
+    wc->linestyle = stringint_lookup(linestyles, "solid");
     GRFX_LINK(wc, wcntxts);
     return wc;
 }

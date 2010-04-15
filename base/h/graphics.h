@@ -250,6 +250,7 @@ typedef struct _wcontext {
   int           thick;
   stringint     *fillstyle;
   stringint     *drawop;
+  stringint     *linestyle;
 #endif
 #if XWindows
   wdp		display;
