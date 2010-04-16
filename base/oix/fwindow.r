@@ -995,8 +995,7 @@ function graphics_Window_pixel(self, argv[argc])
       struct imgmem imem;
       word x, y, width, height;
       int slen, r;
-      tended struct descrip lastval, result;
-      char strout[50];
+      tended struct descrip lastval, result, bg;
       int i, j;
       word rv;
       wsp ws;
@@ -1010,31 +1009,36 @@ function graphics_Window_pixel(self, argv[argc])
 
       imem.x = Max(x,0);
       imem.y = Max(y,0);
-      imem.width = Min(width, (int)ws->width - imem.x);
-      imem.height = Min(height, (int)ws->height - imem.y);
+      imem.width = Min(width, ws->width - imem.x);
+      imem.height = Min(height, ws->height - imem.y);
 
       if (getpixelinit(self_w, &imem) == Failed) fail;
-
+      getbg(self_w, attr_buff);
+      cstr2string(attr_buff, &bg);
       lastval = emptystr;
 
       create_list(width * height, &result);
 
       for (j=y; j < y + height; j++) {
           for (i=x; i < x + width; i++) {
-              getpixel(self_w, i, j, &rv, strout, &imem);
-              slen = strlen(strout);
-              if (rv >= 0) {
-                  if (slen != StrLen(lastval) ||
-                      strncmp(strout, StrLoc(lastval), slen)) {
-                      MemProtect((StrLoc(lastval) = alcstr(strout, slen)));
-                      StrLen(lastval) = slen;
+              if (i < imem.x || i >= imem.x + imem.width ||
+                  j < imem.y || j >= imem.y + imem.height)
+                  list_put(&result, &bg);
+              else  {
+                  getpixel(self_w, i, j, &rv, attr_buff, &imem);
+                  if (rv >= 0) {
+                      slen = strlen(attr_buff);
+                      if (slen != StrLen(lastval) ||
+                          strncmp(attr_buff, StrLoc(lastval), slen)) {
+                          bytes2string(attr_buff, slen, &lastval);
+                      }
+                      list_put(&result, &lastval);
                   }
-                  list_put(&result, &lastval);
-              }
-              else {
-                  struct descrip tmp;
-                  MakeInt(rv, &tmp);
-                  list_put(&result, &tmp);
+                  else {
+                      struct descrip tmp;
+                      MakeInt(rv, &tmp);
+                      list_put(&result, &tmp);
+                  }
               }
           }
       }

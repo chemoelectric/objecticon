@@ -209,8 +209,8 @@ void  bigrand         (dptr da, dptr dx);
    wcp  clonecontext   (wbp w);
    int  copyarea        (wbp w,wbp w2,int x,int y,int wd,int h,int x2,int y2);
    int  doconfig        (wbp w, int status);
-   int  dumpimage       (wbp w, char *filename, unsigned int x, unsigned int y,
-                           unsigned int width, unsigned int height);
+   int  dumpimage       (wbp w, char *filename,  int x,  int y,
+                         int width, int height);
    void erasearea       (wbp w, int x, int y, int width, int height);
    void fillrectangle   (wbp w, int x, int y, int width, int height);
    void freewbinding    (wbp w);
