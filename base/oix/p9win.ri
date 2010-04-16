@@ -132,7 +132,7 @@ static stringint cursors[] = {
     {"draft small",       -1},
     {"draped box",        -1},
     {"exchange",          -1},
-    {"fleur",              0},
+    {"fleur",             15},
     {"gobbler",           -1},
     {"gumby",             -1},
     {"hand1",             -1},
@@ -182,7 +182,7 @@ static stringint cursors[] = {
     {"umbrella",          -1},
     {"ur angle",          -1},
     {"watch",             -1},
-    {"xterm",             -1},
+    {"xterm",             14},
     {"num glyphs",        -1},
 };
 
@@ -486,6 +486,7 @@ static void flush_event_pipe(wsp ws)
                 be2vlong(&now, &ebuf[1]);
                 time = (now - startup_time) / 1000000;
                 i = ebuf[9] + (ebuf[10]<<8);
+                if (i == 10) i = 13;   /* Hack: convert \n to \r */
                 if (i < 256) {
                     /* Found a char string, so generate string event(s) */
                     StrLen(d) = 1;
@@ -1251,16 +1252,50 @@ int setpattern(wbp w, char *name)
 
 int getpixelinit(wbp w, struct imgmem *imem)
 {
+    wsp ws = w->window;
+    Image *tmp;
+    int ndata;
+    MemProtect(tmp = allocimage(display, Rect(0, 0, imem->width, imem->height), RGB24, 1, DNofill));
+    /* Clear the tmp win */
+    gendraw(tmp, tmp->r, w->context->bg->i, w->context->bg->i->r.min, 0, ZP);
+    /* Copy from pix to the tmp win */
+    gendraw(tmp, tmp->r, ws->pix, Pt(ws->pix->r.min.x + imem->x, 
+                                     ws->pix->r.min.y + imem->y), 0, ZP);
+    /* Get the pixels */
+    ndata = imem->width * imem->height * 3;
+    /*print("%d,%d   %d x %d ndata=%d\n",imem->x, imem->y, imem->width, imem->height, ndata); */
+    MemProtect(imem->data = malloc(ndata));
+    unloadimage(tmp, tmp->r, imem->data, ndata);
+    freeimage(tmp);
+    return Succeeded;
+}
+
+int getpixel(wbp w, int x, int y, word *rv, char *s, struct imgmem *imem)
+{
+    int r, g, b;
+    uchar *p;
+    *rv = 1;
+    if (x < imem->x || x >= imem->x + imem->width ||
+        y < imem->y || y >= imem->y + imem->height) {
+        int rgba;
+        /* Out of bounds, so return bg color */
+        rgba = w->context->bg->rgba;
+        b = (rgba >> 8) & 0xff;
+        g = (rgba >> 16) & 0xff;
+        r = (rgba >> 24) & 0xff;
+    } else {
+        p = &imem->data[3 * ((y - imem->y)*imem->width + (x - imem->x))];
+        b = *p++;
+        g = *p++;
+        r = *p++;
+    }
+    sprintf(s, "%d,%d,%d", r<<8, g<<8, b<<8);
     return Succeeded;
 }
 
 int getpixelterm(wbp w, struct imgmem *imem)
 {
-    return Succeeded;
-}
-
-int getpixel(wbp w,int x,int y,word *rv,char *s,struct imgmem *im)
-{
+    free(imem->data);
     return Succeeded;
 }
 
@@ -2183,7 +2218,33 @@ static struct Cursor cursor_data[] = {
 	 0x09, 0xc0, 0x09, 0xc0, 0x1f, 0xc0, 0x3f, 0xc0, 
 	 0x1f, 0xc0, 0x09, 0xc0, 0x09, 0xc0, 0x01, 0xc0, 
 	 0x01, 0xc0, 0x01, 0xc0, 0x01, 0xc0, 0x00, 0x00, }
+    },
+
+    {  /* 14: xterm */
+        {-7, -7},
+        {0x0E, 0xE0, 0x03, 0x80, 0x01, 0x00, 0x01, 0x00,
+         0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00,
+         0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00,
+         0x01, 0x00, 0x01, 0x00, 0x03, 0x80, 0x0E, 0xE0},
+        {0x0E, 0xE0, 0x03, 0x80, 0x01, 0x00, 0x01, 0x00,
+         0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00,
+         0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00,
+         0x01, 0x00, 0x01, 0x00, 0x03, 0x80, 0x0E, 0xE0}
+    },
+
+    {  /* 15: fleur */
+        {-7, -7},
+        {0x01, 0x80, 0x03, 0xC0, 0x07, 0xE0, 0x01, 0x80,
+         0x01, 0x80, 0x21, 0x84, 0x61, 0x86, 0xFF, 0xFF,
+         0xFF, 0xFF, 0x61, 0x86, 0x21, 0x84, 0x01, 0x80,
+         0x01, 0x80, 0x07, 0xE0, 0x03, 0xC0, 0x01, 0x80},
+        {0x01, 0x80, 0x03, 0xC0, 0x07, 0xE0, 0x01, 0x80,
+         0x01, 0x80, 0x21, 0x84, 0x61, 0x86, 0xFF, 0xFF,
+         0xFF, 0xFF, 0x61, 0x86, 0x21, 0x84, 0x01, 0x80,
+         0x01, 0x80, 0x07, 0xE0, 0x03, 0xC0, 0x01, 0x80}
     }
+
+
 };
 
 static unsigned char patbits[16][8] = {

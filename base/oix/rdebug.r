@@ -1125,6 +1125,7 @@ void print_vword(FILE *f, dptr d) {
             case D_Kywdpos :
             case D_Kywdsubj :
             case D_Kywdstr :
+            case D_Kywdhandler:
             case D_Kywdany : {
                 fprintf(f, "%p -> ", VarLoc(*d));
                 print_desc(f, VarLoc(*d));
@@ -1244,6 +1245,7 @@ void print_dword(FILE *f, dptr d) {
             case D_Constructor : fputs("D_Constructor", f); break;
             case D_Methp : fputs("D_Methp", f); break;
             case D_Ucs : fputs("D_Ucs", f); break;
+            case D_Kywdhandler: fputs("D_Kywdhandler", f); break;
             default : fputs("?", f);
         }
     }

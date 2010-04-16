@@ -185,8 +185,9 @@ struct imgmem {
    int x, y, width, height;
 #if XWindows
    XImage *im;
-#endif					/* XWindows */
-#if MSWIN32
+#elif PLAN9
+   uchar *data;
+#elif MSWIN32
    COLORREF *crp;
 #endif					/* MSWIN32 */
    };
@@ -251,8 +252,7 @@ typedef struct _wcontext {
   stringint     *fillstyle;
   stringint     *drawop;
   stringint     *linestyle;
-#endif
-#if XWindows
+#elif XWindows
   wdp		display;
   GC		gc;			/* X graphics context */
   int		fg, bg;
@@ -262,8 +262,7 @@ typedef struct _wcontext {
   char		*patternname;
   int		fillstyle;
   int		drawop;
-#endif					/* XWindows */
-#if MSWIN32
+#elif MSWIN32
   LOGPEN	pen;
   LOGPEN	bgpen;
   LOGBRUSH	brush;
@@ -330,8 +329,7 @@ typedef struct _wstate {
   int           last_mouse_x, last_mouse_y;
   int           desired_canvas;
   stringint     *cursor;
-#endif
-#if XWindows
+#elif XWindows
   wdp		display;
   Window	win;			/* X window */
   Pixmap	pix;			/* current screen state */
@@ -360,8 +358,7 @@ typedef struct _wstate {
   char		*iconimage;		/* icon pixmap file name */
   struct imgdata initicon;		/* initial icon image data */
   char		*iconlabel;		/* icon label */
-#endif					/* XWindows */
-#if MSWIN32
+#elif MSWIN32
   HWND		win;			/* client window */
   HWND		iconwin;		/* client window when iconic */
   HBITMAP	pix;			/* backing bitmap */

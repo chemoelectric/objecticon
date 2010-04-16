@@ -386,8 +386,10 @@ static struct lnode *buildtree(void)
                 x->clause[i] = z;
                 z->parent = (struct lnode *)x;
             }
-            if (op == Uop_Casedef)        /* evaluate default clause */
+            if (op == Uop_Casedef) {        /* evaluate default clause */
                 x->def = buildtree();
+                x->def->parent = (struct lnode *)x;
+            }
             return (struct lnode *)x;
         }
 

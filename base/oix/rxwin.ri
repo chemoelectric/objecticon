@@ -1773,7 +1773,7 @@ int setlinestyle(wbp w, char *s)
     else if (!strcmp(s, "doubledash") || !strcmp(s, "striped")) {
         wc->linestyle = LineDoubleDash;
     }
-    else return Error;
+    else return Failed;
     if (stdpix) {
         XSetLineAttributes(stddpy, stdgc,
                            wc->linewidth, wc->linestyle, CapProjecting, JoinMiter);
