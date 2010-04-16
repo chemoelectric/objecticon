@@ -82,6 +82,7 @@ static void buffnstr(dptr d, char **s, ...)
 
 function graphics_Window_wcreate(display)
    body {
+      wbp w;
       inattr = 1;
       wconfig = 0;
       if (is:null(display))
@@ -89,7 +90,10 @@ function graphics_Window_wcreate(display)
       else {
          if (!cnv:string(display, display))
              runerr(103, display);
-         return C_integer (word) wcreate(buffstr(&display));
+         w = wcreate(buffstr(&display));
+         if (!w)
+             fail;
+         return C_integer (word) w;
       }
    }
 end
