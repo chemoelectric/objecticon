@@ -1320,10 +1320,10 @@ static int bmpwrite(wbp w, char *filename, int x, int y, int width, int height)
 {
     int i, a[6];
     short sh[2];
-    long len;
+    int len;
     struct palentry paltbl[DMAXCOLORS];
 
-    len = (long)width * (long)height;	/* total length of data */
+    len = width * height;	/* total length of data */
 
     if (!(gf_f = fopen(filename, "wb")))
         return Failed;
@@ -1377,6 +1377,9 @@ int writeGIF(wbp w, char *filename, int x, int y, int width, int height)
 {
     int r;
 
+    if (strstr(filename, ".GIF")==NULL && strstr(filename,".gif")==NULL)
+        return NoCvt;
+
     r = gfwrite(w, filename, x, y, width, height);
     if (gf_f) { fclose(gf_f); gf_f = NULL; }
     if (gf_string) { free(gf_string); gf_string = NULL; }
@@ -1393,14 +1396,14 @@ int writeGIF(wbp w, char *filename, int x, int y, int width, int height)
 static int gfwrite(wbp w, char *filename, int x, int y, int width, int height)
 {
     int i, c, cur;
-    long len;
+    int len;
     LinearColor *cp;
     unsigned char *p, *q;
     struct palentry paltbl[DMAXCOLORS];
     unsigned char obuf[GifBlockSize];
     lzwnode tree[GifTableSize + 1];
 
-    len = (long)width * (long)height;	/* total length of data */
+    len = width * height;	/* total length of data */
 
     if (!(gf_f = fopen(filename, "wb")))
         return Failed;
@@ -1607,6 +1610,10 @@ int writeJPEG(wbp w, char *filename, int x, int y, int width, int height)
 {
     int r;
 
+    if (strstr(filename, ".JPEG")==NULL && strstr(filename,".jpeg")==NULL
+        && strstr(filename, ".JPG")==NULL && strstr(filename,".jpg")==NULL)
+        return NoCvt;
+
     r = jpegwrite(w, filename, x, y, width, height);
     if (gf_f) fclose(gf_f);
     if (gf_string) free(gf_string);
@@ -1621,7 +1628,7 @@ int writeJPEG(wbp w, char *filename, int x, int y, int width, int height)
 static int jpegwrite(wbp w, char *filename, int x, int y, int width,int height)
 {
     int i, j;
-    long len;
+    int len;
     struct palentry paltbl[DMAXCOLORS];
 
     struct jpeg_compress_struct cinfo;
@@ -1635,7 +1642,7 @@ static int jpegwrite(wbp w, char *filename, int x, int y, int width,int height)
 
     gf_string_pixcolor = calloc(width*height*3, sizeof(unsigned char));
 
-    len = (long)width * (long)height ;	/* total length of data */
+    len = width * height ;	/* total length of data */
 
     if (!(gf_string = malloc(len)))
         return Error;
