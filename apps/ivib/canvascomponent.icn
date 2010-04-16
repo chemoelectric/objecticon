@@ -285,7 +285,7 @@ class CanvasComponent(CanvasObject)
 
       if *self.parent_Canvas.selections > 1 then {
          cw.attrib("fg=blue")
-         cw.clip()
+         cw.unclip()
          cw.fill_circle(self.x + self.w, self.y, 8)
          cw.attrib("fg=white", "font=serif,10")
          center_string(cw, self.x + self.w, self.y, 
