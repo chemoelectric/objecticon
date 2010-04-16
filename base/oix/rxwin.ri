@@ -27,8 +27,8 @@ static XImage *getximage(wbp w, int x, int y,
                          int width, int height, int init);
 static void makeIcon(wbp w, int x, int y);
 static int wmap(wbp w, wbp parent);
-static Pixmap loadimage(wbp w, char *filename, unsigned int *height, 
-                        unsigned int *width, int atorigin, int *status);
+static Pixmap loadimage(wbp w, char *filename, int *height, 
+                        int *width, int atorigin, int *status);
 static int convert_KeySym_to_code_point(KeySym k);
 #ifdef HAVE_LIBXFT
 int xft_stringwidth(wbp w, char *s, int n);
@@ -2529,8 +2529,8 @@ void erasearea(wbp w, int x, int y, int width, int height)
      * if width >= window width or height >= window height, clear any
      * offscreen portion as well in order to allow the freeing of colors.
      */
-    if (x + width  >= (int)ws->width)  width  = ws->pixwidth - x;
-    if (y + height >= (int)ws->height) height = ws->pixheight - y;
+    if (x + width  >= ws->width)  width  = ws->pixwidth - x;
+    if (y + height >= ws->height) height = ws->pixheight - y;
 
     /*
      * fill the rectangle with the background color
@@ -3225,7 +3225,7 @@ static XImage *getximage(wbp w, int x, int y, int width, int height, int init)
 int readimage(wbp w, int x, int y, char *filename)
 {
     Pixmap p;
-    unsigned int width, height;
+    int width, height;
     int status;
     STDLOCALS(w);
     if (!x && !y)
@@ -3289,15 +3289,10 @@ int getpixel(wbp w, int x, int y, word *rv, char *s, struct imgmem *imem)
     LinearColor clr;
     wclrp cp;
     unsigned long c;
-    wcp wc = w->context;
     wdp wd = w->window->display;
     Display *stddpy = wd->display; 
 
-    if (x < imem->x || x >= imem->x + imem->width ||
-        y < imem->y || y >= imem->y + imem->height)
-        c = colorcell.pixel = wd->colors[wc->bg].c;
-    else
-        c = colorcell.pixel = XGetPixel(imem->im, x - imem->x, y - imem->y);
+    c = colorcell.pixel = XGetPixel(imem->im, x - imem->x, y - imem->y);
     *rv = 0xff000000;
 
     if (lastcp && (lastcp->c == c)) { cp = lastcp; goto foundc; }
@@ -3552,7 +3547,7 @@ int seticonimage(wbp w, dptr dp)
         STDLOCALS(w);
         /* get the pixmap file named by x */
         if (is:string(*dp)) {
-            unsigned int height, width;
+            int height, width;
             if (!cnv:C_string(*dp,tmp))
                 ReturnErrVal(103, *dp, Error);
 
@@ -3591,8 +3586,8 @@ int seticonimage(wbp w, dptr dp)
  * Accepts only .xpm and .xbm file names, returning NoCvt for anything else.
  */
 
-int dumpimage(wbp w, char *filename, unsigned int x, unsigned int y, 
-              unsigned int width, unsigned int height)
+int dumpimage(wbp w, char *filename,  int x,  int y, 
+               int width,  int height)
 {
     int status, slen;
     STDLOCALS(w);
@@ -3697,8 +3692,8 @@ int dumpimage(wbp w, char *filename, unsigned int x, unsigned int y,
 /*
  * Load an image, in any format we can figure out.
  */
-static Pixmap loadimage(wbp w, char *filename, unsigned int *height, 
-                        unsigned int *width, int atorigin, int *status)
+static Pixmap loadimage(wbp w, char *filename,  int *height, 
+                         int *width, int atorigin, int *status)
 {
     Pixmap p1, p2 = (Pixmap) NULL;
     int xhot, yhot;
@@ -3739,7 +3734,7 @@ static Pixmap loadimage(wbp w, char *filename, unsigned int *height,
 
     if (isxbm) {    /* isxbm = 1 => .xbm file */
         if (XReadBitmapFile(stddpy, DefaultRootWindow(stddpy), filename,
-                            width, height, &p1, &xhot, &yhot) != BitmapSuccess)
+                            (unsigned int *)width, (unsigned int *)height, &p1, &xhot, &yhot) != BitmapSuccess)
             return (Pixmap) NULL;
         else *status = 0;
         p2 = XCreatePixmap(stddpy, DefaultRootWindow(stddpy), *width, *height,

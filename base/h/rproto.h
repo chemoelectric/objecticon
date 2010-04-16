@@ -173,7 +173,7 @@ void  bigrand         (dptr da, dptr dx);
     */
 
    wbp  alcwbinding    (void);
-   int  docircles       (wbp w, int argc, dptr argv, int fill);
+   int  docircle        (wbp w, dptr argv, int fill);
    void drawCurve       (wbp w, XPoint *p, int n);
    void genCurve        (wbp w, XPoint *p, int n, void (*h)(wbp, XPoint [], int));
    void getpattern      (wbp w, char *answer);
@@ -191,8 +191,7 @@ void  bigrand         (dptr da, dptr dx);
    int  writeJPEG       (wbp w, char *filename, int x, int y, int width, int height);
    int  readJPEG        (char *fname, int p, struct imgdata *d);
 #endif                                  /* HAVE_LIBJPEG */
-   int  rectargs        (wbp w, int argc, dptr argv, int i,
-                           word *px, word *py, word *pw, word *ph);
+   int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph);
    char *rgbkey         (int p, double r, double g, double b);
 
    int  writeGIF        (wbp w, char *filename,
@@ -209,8 +208,8 @@ void  bigrand         (dptr da, dptr dx);
    wcp  clonecontext   (wbp w);
    int  copyarea        (wbp w,wbp w2,int x,int y,int wd,int h,int x2,int y2);
    int  doconfig        (wbp w, int status);
-   int  dumpimage       (wbp w, char *filename, unsigned int x, unsigned int y,
-                           unsigned int width, unsigned int height);
+   int  dumpimage       (wbp w, char *filename,  int x,  int y,
+                         int width, int height);
    void erasearea       (wbp w, int x, int y, int width, int height);
    void fillrectangle   (wbp w, int x, int y, int width, int height);
    void freewbinding    (wbp w);

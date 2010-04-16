@@ -308,12 +308,12 @@ typedef struct _wstate {
   char		*windowlabel;		/* window label */
   struct imgdata initimage;		/* initial image data */
   int		posy, posx;		/* desired upper lefthand corner */
-  unsigned int	height;			/* window height, in pixels */
-  unsigned int	width;			/* window width, in pixels */
-  unsigned int	minheight;		/* minimum window height, in pixels */
-  unsigned int	minwidth;		/* minimum window width, in pixels */
-  unsigned int	maxheight;		/* maximum window height, in pixels */
-  unsigned int	maxwidth;		/* maximum window width, in pixels */
+  int           height;                 /* window height, in pixels */
+  int           width;                  /* window width, in pixels */
+  int           minheight;              /* minimum window height, in pixels */
+  int           minwidth;               /* minimum window width, in pixels */
+  int           maxheight;              /* maximum window height, in pixels */
+  int           maxwidth;               /* maximum window width, in pixels */
   int		bits;			/* window bits */
   word		timestamp;		/* last event time stamp */
   struct descrip listp;		        /* event list for this window */
@@ -353,7 +353,7 @@ typedef struct _wstate {
   short		*iconColors;		/* indices into display color table */
   int		iconic;			/* window state; icon, window or root*/
   int		iconx, icony;           /* location of icon */
-  unsigned int	iconw, iconh;		/* width and height of icon */
+  int    	iconw, iconh;		/* width and height of icon */
   long		wmhintflags;		/* window manager hints */
   char		*iconimage;		/* icon pixmap file name */
   struct imgdata initicon;		/* initial icon image data */

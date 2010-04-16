@@ -681,6 +681,16 @@ int main(void)
     start_file("ioconsts.icn", "io");
 
     start_class("FileOpt", "O_", 0, 0);
+#if PLAN9
+        Const(OREAD)
+        Const(OWRITE)
+        Const(ORDWR)
+        Const(OEXEC)
+        Const(OTRUNC)
+        Const(OCEXEC)
+        Const(ORCLOSE)
+        Const(OEXCL)
+#endif
 
 #ifdef O_ACCMODE
         Const(O_ACCMODE)

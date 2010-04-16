@@ -26,26 +26,26 @@
    typedef vlong off_t;
    typedef Point XPoint;
 
-struct SharedImage {
-  Image *i;
-  char *name;
-  int   rgba;
-  int	refcount;
-};
+   struct SharedImage {
+     Image *i;
+     char *name;
+     int   rgba;
+     int	refcount;
+   };
 
-#define FS_SOLID             1
-#define FS_STIPPLE           2
+   #define FS_SOLID             1
+   #define FS_STIPPLE           2
 
-#define PointerMotionMask    1
-#define WindowClosureMask    2
-#define KeyReleaseMask       4
-#define ControlMask          (1L << 16L)
-#define Mod1Mask             (2L << 16L)
-#define ShiftMask            (4L << 16L)
-#define VirtKeyMask          (8L << 16L)
+   #define PointerMotionMask    1
+   #define WindowClosureMask    2
+   #define KeyReleaseMask       4
+   #define ControlMask          (1L << 16L)
+   #define Mod1Mask             (2L << 16L)
+   #define ShiftMask            (4L << 16L)
+   #define VirtKeyMask          (8L << 16L)
 
-#define vsnprint vsnprint
-#define vsnprintf vsnprint
+   #define vsnprint vsnprint
+   #define vsnprintf vsnprint
 
    #define readimage oi_readimage
    #define fillarc oi_fillarc
@@ -57,15 +57,17 @@ struct SharedImage {
    #define X_OK 1
    #define ERANGE 100
    #define EDOM   101
-   #define O_RDONLY OREAD
-   #define O_WRONLY OWRITE
-   #define O_RDWR   ORDWR
+
+   /* The posix open constants are all in bit positions above the plan9 ones */
+   #define O_RDONLY 0x2000
+   #define O_WRONLY 0x4000
+   #define O_RDWR   0x8000
    #define O_ACCMODE 0 
    #define O_NONBLOCK 0
-   #define O_APPEND  1024
-   #define O_CREAT   512
-   #define O_TRUNC   OTRUNC
-   #define O_EXCL    0
+   #define O_APPEND  0x10000
+   #define O_CREAT   0x20000
+   #define O_TRUNC   0x40000
+   #define O_EXCL    0x80000
    #define O_NOCTTY  0
    #define O_DSYNC   0
    #define O_RSYNC   0

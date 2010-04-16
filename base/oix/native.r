@@ -1504,7 +1504,15 @@ function io_FileStream_open_impl(path, flags, mode)
        int fd;
 
 #if PLAN9
-       word flags2 = flags & ~(O_CREAT|O_APPEND);
+       word flags2 = (flags & (OREAD|OWRITE|ORDWR|OEXEC|OTRUNC|OCEXEC|ORCLOSE|OEXCL));
+       if (flags & O_RDONLY)
+           flags2 |= OREAD;
+       if (flags & O_WRONLY)
+           flags2 |= OWRITE;
+       if (flags & O_RDWR)
+           flags2 |= ORDWR;
+       if (flags & O_TRUNC)
+           flags2 |= OTRUNC;
        if ((flags & O_CREAT) && access(path, 0) != 0)
           fd = create(path, flags2 , mode);
        else if (flags & O_APPEND) {

@@ -80,19 +80,21 @@ static void buffnstr(dptr d, char **s, ...)
     va_end(ap);
 }
 
-
-
 function graphics_Window_wcreate(display)
    body {
+      wbp w;
       inattr = 1;
       wconfig = 0;
       if (is:null(display))
-         return C_integer (word) wcreate(0);
+          w = wcreate(0);
       else {
          if (!cnv:string(display, display))
              runerr(103, display);
-         return C_integer (word) wcreate(buffstr(&display));
+         w = wcreate(buffstr(&display));
       }
+      if (!w)
+          fail;
+      return C_integer (word) w;
    }
 end
 
@@ -247,10 +249,10 @@ function graphics_Window_color_value(self, k)
    }
 end
 
-function graphics_Window_copy_to(self, dest, argv[argc])
+function graphics_Window_copy_to(self, dest, x0, y0, w0, h0, x1, y1)
    body {
       int n, r;
-      word x, y, width, height, x2, y2, width2, height2;
+      word x, y, width, height, x2, y2;
       wbp w2;
 
       GetSelfW();
@@ -265,19 +267,14 @@ function graphics_Window_copy_to(self, dest, argv[argc])
       /*
        * x1, y1, width, and height follow standard conventions.
        */
-      r = rectargs(self_w, argc, argv, 0, &x, &y, &width, &height);
-      if (r >= 0)
-          runerr(101, argv[r]);
+      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
 
-      /*
-       * get x2 and y2, ignoring width and height.
-       */
-      n = argc;
-      if (n > 6)
-          n = 6;
-      r = rectargs(w2, n, argv, 4, &x2, &y2, &width2, &height2);
-      if (r >= 0)
-          runerr(101, argv[r]);
+      if (!def:C_integer(x1, -self_w->context->dx, x2))
+          runerr(101, x1);
+
+      if (!def:C_integer(y1, -self_w->context->dy, y2))
+          runerr(101, y1);
 
       if (copyarea(self_w, w2, x, y, width, height, x2, y2) == Failed)
           fail;
@@ -323,46 +320,36 @@ function graphics_Window_couple_impl(win, win2)
 end
 
 
-function graphics_Window_draw_arc(self, argv[argc])
+function graphics_Window_draw_arc(self, x0, y0, w0, h0, ang1, ang2)
    body {
-      int r;
       word x, y, width, height;
       double a1, a2;
 
       GetSelfW();
 
-      r = rectargs(self_w, argc, argv, 0, &x, &y, &width, &height);
-      if (r >= 0)
-          runerr(101, argv[r]);
+      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
 
       /*
        * Angle 1 processing.  Computes in radians and 64'ths of a degree,
        *  bounds checks, and handles wraparound.
        */
-      if (4 >= argc || is:null(argv[4]))
-          a1 = 0.0;
-      else {
-          if (!cnv:C_double(argv[4], a1))
-              runerr(102, argv[4]);
-          if (a1 >= 0.0)
-              a1 = fmod(a1, 2 * Pi);
-          else
-              a1 = -fmod(-a1, 2 * Pi);
-      }
+      if (!def:C_double(ang1, 0.0, a1))
+          runerr(102, ang1);
+      if (a1 >= 0.0)
+          a1 = fmod(a1, 2 * Pi);
+      else
+          a1 = -fmod(-a1, 2 * Pi);
+
       /*
        * Angle 2 processing
        */
-      if (5 >= argc || is:null(argv[5]))
+      if (!def:C_double(ang2, 2 * Pi, a2))
+          runerr(102, ang2);
+      if (fabs(a2) > 3 * Pi)
+          runerr(101, ang2);
+      if (fabs(a2) >= 2 * Pi)
           a2 = 2 * Pi;
-      else {
-          if (!cnv:C_double(argv[5], a2))
-              runerr(102, argv[5]);
-          if (fabs(a2) > 3 * Pi)
-              runerr(101, argv[5]);
-      }
-      if (fabs(a2) >= 2 * Pi) {
-          a2 = 2 * Pi;
-      }
       else {
           if (a2 < 0.0) {
               a1 += a2;
@@ -380,18 +367,14 @@ function graphics_Window_draw_arc(self, argv[argc])
    }
 end
 
-function graphics_Window_draw_circle(self, argv[argc])
+function graphics_Window_draw_circle(self, x, y, r, theta, alpha)
    body {
       int r;
       GetSelfW();
 
-      r = docircles(self_w, argc, argv, 0);
-      if (r < 0)
-         return self;
-      else if (r >= argc)
-         runerr(146);
-      else 
-         runerr(102, argv[r]);
+      if (docircle(self_w, &x, 0) == Error)
+          runerr(0);
+      return self;
    }
 end
 
@@ -455,13 +438,12 @@ function graphics_Window_draw_curve(self, argv[argc])
 end
 
 
-function graphics_Window_draw_image(self, argv[argc])
+function graphics_Window_draw_image(self, x0, y0, d)
    body {
       int c, i, width, height, row, p;
       word x, y;
       word nchars;
       unsigned char *s, *t, *z;
-      struct descrip d;
       struct palentry *e;
       GetSelfW();
 
@@ -469,14 +451,12 @@ function graphics_Window_draw_image(self, argv[argc])
        * X or y can be defaulted but s is required.
        * Validate x/y first so that the error message makes more sense.
        */
-      if (argc >= 1 && !def:C_integer(argv[0], -self_w->context->dx, x))
-          runerr(101, argv[0]);
-      if (argc >= 2 && !def:C_integer(argv[1], -self_w->context->dy, y))
-          runerr(101, argv[1]);
-      if (argc < 3)
-          runerr(103);			/* missing s */
-      if (!cnv:tmp_string(argv[2], d))
-          runerr(103, argv[2]);
+      if (!def:C_integer(x0, -self_w->context->dx, x))
+          runerr(101, x0);
+      if (!def:C_integer(y0, -self_w->context->dy, y))
+          runerr(101, y0);
+      if (!cnv:string(d, d))
+          runerr(103, d);
 
       x += self_w->context->dx;
       y += self_w->context->dy;
@@ -652,16 +632,13 @@ function graphics_Window_draw_polygon(self, argv[argc])
    }
 end
 
-function graphics_Window_draw_rectangle(self, argv[argc])
+function graphics_Window_draw_rectangle(self, x0, y0, w0, h0)
    body {
-      int r;
       word x, y, width, height;
 
       GetSelfW();
-
-      r = rectargs(self_w, argc, argv, 0, &x, &y, &width, &height);
-      if (r >= 0)
-          runerr(101, argv[r]);
+      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
 
       drawrectangle(self_w, x, y, width, height);
 
@@ -695,14 +672,12 @@ function graphics_Window_draw_string(self, x, y, str)
    }
 end
 
-function graphics_Window_erase_area(self, argv[argc])
+function graphics_Window_erase_area(self, x0, y0, w0, h0)
    body {
-      int r;
       word x, y, width, height;
       GetSelfW();
-      r = rectargs(self_w, argc, argv, 0, &x, &y, &width, &height);
-      if (r >= 0)
-          runerr(101, argv[r]);
+      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
       erasearea(self_w, x, y, width, height);
       return self;
    }
@@ -743,40 +718,29 @@ function graphics_Window_pending(self, argv[argc])
    }
 end
 
-function graphics_Window_fill_arc(self, argv[argc])
+function graphics_Window_fill_arc(self, x0, y0, w0, h0, ang1, ang2)
    body {
-      int r;
       word x, y, width, height;
       double a1, a2;
 
       GetSelfW();
 
-      r = rectargs(self_w, argc, argv, 0, &x, &y, &width, &height);
-      if (r >= 0)
-          runerr(101, argv[r]);
+      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
 
-      if (4 >= argc || is:null(argv[4])) {
-          a1 = 0.0;
-      }
-      else {
-          if (!cnv:C_double(argv[4], a1))
-              runerr(102, argv[4]);
-          if (a1 >= 0.0)
-              a1 = fmod(a1, 2 * Pi);
-          else
-              a1 = -fmod(-a1, 2 * Pi);
-      }
-      if (5 >= argc || is:null(argv[5]))
+      if (!def:C_double(ang1, 0.0, a1))
+          runerr(102, ang1);
+      if (a1 >= 0.0)
+          a1 = fmod(a1, 2 * Pi);
+      else
+          a1 = -fmod(-a1, 2 * Pi);
+
+      if (!def:C_double(ang2, 2 * Pi, a2))
+          runerr(102, ang2);
+      if (fabs(a2) > 3 * Pi)
+          runerr(101, ang2);
+      if (fabs(a2) >= 2 * Pi)
           a2 = 2 * Pi;
-      else {
-          if (!cnv:C_double(argv[5], a2))
-              runerr(102, argv[5]);
-          if (fabs(a2) > 3 * Pi)
-              runerr(101, argv[5]);
-      }
-      if (fabs(a2) >= 2 * Pi) {
-          a2 = 2 * Pi;
-      }
       else {
           if (a2 < 0.0) {
               a1 += a2;
@@ -794,18 +758,13 @@ function graphics_Window_fill_arc(self, argv[argc])
    }
 end
 
-function graphics_Window_fill_circle(self, argv[argc])
+function graphics_Window_fill_circle(self, x, y, r, theta, alpha)
    body {
-      int r;
       GetSelfW();
 
-      r = docircles(self_w, argc, argv, 1);
-      if (r < 0)
-          return self;
-      else if (r >= argc)
-         runerr(146);
-      else 
-         runerr(102, argv[r]);
+      if (docircle(self_w, &x, 1) == Error)
+          runerr(0);
+      return self;
    }
 end
 
@@ -840,16 +799,13 @@ function graphics_Window_fill_polygon(self, argv[argc])
    }
 end
 
-function graphics_Window_fill_rectangle(self, argv[argc])
+function graphics_Window_fill_rectangle(self, x0, y0, w0, h0)
    body {
-      int r;
       word x, y, width, height;
 
       GetSelfW();
-
-      r = rectargs(self_w, argc, argv, 0, &x, &y, &width, &height);
-      if (r >= 0)
-          runerr(101, argv[r]);
+      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
 
       fillrectangle(self_w, x, y, width, height);
 
@@ -990,51 +946,54 @@ function graphics_Window_palette_key(self, s1, s2)
    }
 end
 
-function graphics_Window_pixel(self, argv[argc])
+function graphics_Window_pixel(self, x0, y0, w0, h0)
    body {
       struct imgmem imem;
       word x, y, width, height;
-      int slen, r;
-      tended struct descrip lastval, result;
-      char strout[50];
+      int slen;
+      tended struct descrip lastval, result, bg;
       int i, j;
       word rv;
       wsp ws;
       GetSelfW();
 
-      r = rectargs(self_w, argc, argv, 0, &x, &y, &width, &height);
-      if (r >= 0)
-          runerr(101, argv[r]);
+      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
 
       ws = self_w->window;
 
       imem.x = Max(x,0);
       imem.y = Max(y,0);
-      imem.width = Min(width, (int)ws->width - imem.x);
-      imem.height = Min(height, (int)ws->height - imem.y);
+      imem.width = Min(width, ws->width - imem.x);
+      imem.height = Min(height, ws->height - imem.y);
 
       if (getpixelinit(self_w, &imem) == Failed) fail;
-
+      getbg(self_w, attr_buff);
+      cstr2string(attr_buff, &bg);
       lastval = emptystr;
 
       create_list(width * height, &result);
 
       for (j=y; j < y + height; j++) {
           for (i=x; i < x + width; i++) {
-              getpixel(self_w, i, j, &rv, strout, &imem);
-              slen = strlen(strout);
-              if (rv >= 0) {
-                  if (slen != StrLen(lastval) ||
-                      strncmp(strout, StrLoc(lastval), slen)) {
-                      MemProtect((StrLoc(lastval) = alcstr(strout, slen)));
-                      StrLen(lastval) = slen;
+              if (i < imem.x || i >= imem.x + imem.width ||
+                  j < imem.y || j >= imem.y + imem.height)
+                  list_put(&result, &bg);
+              else  {
+                  getpixel(self_w, i, j, &rv, attr_buff, &imem);
+                  if (rv >= 0) {
+                      slen = strlen(attr_buff);
+                      if (slen != StrLen(lastval) ||
+                          strncmp(attr_buff, StrLoc(lastval), slen)) {
+                          bytes2string(attr_buff, slen, &lastval);
+                      }
+                      list_put(&result, &lastval);
                   }
-                  list_put(&result, &lastval);
-              }
-              else {
-                  struct descrip tmp;
-                  MakeInt(rv, &tmp);
-                  list_put(&result, &tmp);
+                  else {
+                      struct descrip tmp;
+                      MakeInt(rv, &tmp);
+                      list_put(&result, &tmp);
+                  }
               }
           }
       }
@@ -1232,7 +1191,7 @@ function graphics_Window_flush(self)
    }
 end
 
-function graphics_Window_write_image(self, fname, argv[argc])
+function graphics_Window_write_image(self, fname, x0, y0, w0, h0)
    if !cnv:string(fname) then
        runerr(103, fname)
    body {
@@ -1243,9 +1202,8 @@ function graphics_Window_write_image(self, fname, argv[argc])
 
       s = buffstr(&fname);
 
-      r = rectargs(self_w, argc, argv, 0, &x, &y, &width, &height);
-      if (r >= 0)
-          runerr(101, argv[r]);
+      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
 
       /*
        * clip image to window, and fail if zero-sized.
@@ -1938,28 +1896,33 @@ function graphics_Window_set_clipy(self, val)
    }
 end
 
-function graphics_Window_clip(self, argv[argc])
+function graphics_Window_clip(self, x0, y0, w0, h0)
    body {
-      int r;
       word x, y, width, height;
       wcp wc;
       GetSelfW();
 
       wc = self_w->context;
+      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
+      wc->clipx = x;
+      wc->clipy = y;
+      wc->clipw = width;
+      wc->cliph = height;
+      wconfig |= C_CLIP;
+      SimpleAttr();
+      return self;
+   }
+end
 
-      if (argc == 0) {
-          wc->clipx = wc->clipy = 0;
-          wc->clipw = wc->cliph = -1;
-      }
-      else {
-          r = rectargs(self_w, argc, argv, 0, &x, &y, &width, &height);
-          if (r >= 0)
-              runerr(101, argv[r]);
-          wc->clipx = x;
-          wc->clipy = y;
-          wc->clipw = width;
-          wc->cliph = height;
-      }
+function graphics_Window_unclip(self)
+   body {
+      word x, y, width, height;
+      wcp wc;
+      GetSelfW();
+      wc = self_w->context;
+      wc->clipx = wc->clipy = 0;
+      wc->clipw = wc->cliph = -1;
       wconfig |= C_CLIP;
       SimpleAttr();
       return self;
@@ -2042,14 +2005,12 @@ function graphics_Window_set_gamma(self, val)
    }
 end
 
-function graphics_Window_set_geometry(self, argv[argc])
+function graphics_Window_set_geometry(self, x0, y0, w0, h0)
    body {
-       int r;
        word x, y, width, height;
        GetSelfW();
-       r = rectargs(self_w, argc, argv, 0, &x, &y, &width, &height);
-       if (r >= 0)
-           runerr(101, argv[r]);
+      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
        self_w->window->posx = x;
        self_w->window->posy = y;
        self_w->window->width = width;

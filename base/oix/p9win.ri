@@ -267,7 +267,6 @@ wbp wcreate(char *display)
     ws->width  = 200;
     ws->desired_canvas = NormalCanvas;
     ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
-
     return w;
 }
 
@@ -1275,21 +1274,11 @@ int getpixel(wbp w, int x, int y, word *rv, char *s, struct imgmem *imem)
     int r, g, b;
     uchar *p;
     *rv = 1;
-    if (x < imem->x || x >= imem->x + imem->width ||
-        y < imem->y || y >= imem->y + imem->height) {
-        int rgba;
-        /* Out of bounds, so return bg color */
-        rgba = w->context->bg->rgba;
-        b = (rgba >> 8) & 0xff;
-        g = (rgba >> 16) & 0xff;
-        r = (rgba >> 24) & 0xff;
-    } else {
-        p = &imem->data[3 * ((y - imem->y)*imem->width + (x - imem->x))];
-        b = *p++;
-        g = *p++;
-        r = *p++;
-    }
-    sprintf(s, "%d,%d,%d", r<<8, g<<8, b<<8);
+    p = &imem->data[3 * ((y - imem->y)*imem->width + (x - imem->x))];
+    b = *p++;
+    g = *p++;
+    r = *p++;
+    sprintf(s, "%d,%d,%d", r*257, g*257, b*257);
     return Succeeded;
 }
 
@@ -1382,8 +1371,7 @@ void wflush(wbp w)
 {
 }
 
-int dumpimage (wbp w, char *filename, unsigned int x, unsigned int y,
-               unsigned int width, unsigned int height)
+int dumpimage (wbp w, char *filename, int x, int y, int width, int height)
 {
     return NoCvt;
 }
@@ -1690,7 +1678,7 @@ int nativecolor(wbp w, char *s, long *r, long *g, long *b)
     return 0; /* boolean rv */
 }
 
-int getimstr(wbp w, int x, int y, int width, int hgt,
+int getimstr(wbp w, int x, int y, int width, int hgt, 
              struct palentry *ptbl, unsigned char *data)
 {
     return 0; /* boolean rv */
@@ -2310,6 +2298,7 @@ static int init_window_system(void)
     maskdata[0] = 128;
     MemProtect(mask128 = allocimage(display, Rect(0, 0, 1, 1), CHAN1(CAlpha, 8), 1, DNofill));
     loadimage(mask128, mask128->r, maskdata, 1);
+    return 1;
 }
 
 static vlong get_time()

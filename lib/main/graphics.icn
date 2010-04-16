@@ -145,6 +145,11 @@ class Window(SetFields,NoCopy)
    public defer clip(x, y, w, h)
 
    #
+   # Clear the clip settings
+   #
+   public defer unclip()
+
+   #
    # Returns the setting of mutable color i if k1 is omitted. If k1 is
    # supplied, color i is changed as specified, with an immediate
    # effect on any visible pixels of that color. Additional index and
@@ -428,6 +433,7 @@ class Window(SetFields,NoCopy)
          "bg": set_bg(f.val)
          "canvas": set_canvas(f.val)
          "clip" : clip!(f.int_list_val())
+         "unclip" : unclip()
          "cliph": set_cliph(f.val)
          "clipw": set_clipw(f.val)
          "clipx": set_clipx(f.val)

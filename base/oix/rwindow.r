@@ -1320,10 +1320,10 @@ static int bmpwrite(wbp w, char *filename, int x, int y, int width, int height)
 {
     int i, a[6];
     short sh[2];
-    long len;
+    int len;
     struct palentry paltbl[DMAXCOLORS];
 
-    len = (long)width * (long)height;	/* total length of data */
+    len = width * height;	/* total length of data */
 
     if (!(gf_f = fopen(filename, "wb")))
         return Failed;
@@ -1377,6 +1377,9 @@ int writeGIF(wbp w, char *filename, int x, int y, int width, int height)
 {
     int r;
 
+    if (strstr(filename, ".GIF")==NULL && strstr(filename,".gif")==NULL)
+        return NoCvt;
+
     r = gfwrite(w, filename, x, y, width, height);
     if (gf_f) { fclose(gf_f); gf_f = NULL; }
     if (gf_string) { free(gf_string); gf_string = NULL; }
@@ -1393,14 +1396,14 @@ int writeGIF(wbp w, char *filename, int x, int y, int width, int height)
 static int gfwrite(wbp w, char *filename, int x, int y, int width, int height)
 {
     int i, c, cur;
-    long len;
+    int len;
     LinearColor *cp;
     unsigned char *p, *q;
     struct palentry paltbl[DMAXCOLORS];
     unsigned char obuf[GifBlockSize];
     lzwnode tree[GifTableSize + 1];
 
-    len = (long)width * (long)height;	/* total length of data */
+    len = width * height;	/* total length of data */
 
     if (!(gf_f = fopen(filename, "wb")))
         return Failed;
@@ -1607,6 +1610,10 @@ int writeJPEG(wbp w, char *filename, int x, int y, int width, int height)
 {
     int r;
 
+    if (strstr(filename, ".JPEG")==NULL && strstr(filename,".jpeg")==NULL
+        && strstr(filename, ".JPG")==NULL && strstr(filename,".jpg")==NULL)
+        return NoCvt;
+
     r = jpegwrite(w, filename, x, y, width, height);
     if (gf_f) fclose(gf_f);
     if (gf_string) free(gf_string);
@@ -1621,7 +1628,7 @@ int writeJPEG(wbp w, char *filename, int x, int y, int width, int height)
 static int jpegwrite(wbp w, char *filename, int x, int y, int width,int height)
 {
     int i, j;
-    long len;
+    int len;
     struct palentry paltbl[DMAXCOLORS];
 
     struct jpeg_compress_struct cinfo;
@@ -1635,7 +1642,7 @@ static int jpegwrite(wbp w, char *filename, int x, int y, int width,int height)
 
     gf_string_pixcolor = calloc(width*height*3, sizeof(unsigned char));
 
-    len = (long)width * (long)height ;	/* total length of data */
+    len = width * height ;	/* total length of data */
 
     if (!(gf_string = malloc(len)))
         return Error;
@@ -2281,9 +2288,9 @@ int readimagefile(char *filename, int p, struct imgdata *imd)
  *  are in canonical form:  Width and height are nonnegative and x and y
  *  have been corrected by dx and dy.
  *
- *  Returns index of bad argument, if any, or -1 for success.
+ *  Returns Error on problem, setting errval etc.
  */
-int rectargs(wbp w, int argc, dptr argv, int i, word *px, word *py, word *pw, word *ph)
+int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph)
 {
     int defw, defh;
     wcp wc = w->context;
@@ -2292,15 +2299,11 @@ int rectargs(wbp w, int argc, dptr argv, int i, word *px, word *py, word *pw, wo
     /*
      * Get x and y, defaulting to -dx and -dy.
      */
-    if (i >= argc)
-        *px = -wc->dx;
-    else if (!def:C_integer(argv[i], -wc->dx, *px))
-        return i;
+    if (!def:C_integer(argv[0], -wc->dx, *px))
+        ReturnErrVal(101, argv[0], Error);
 
-    if (++i >= argc)
-        *py = -wc->dy;
-    else if (!def:C_integer(argv[i], -wc->dy, *py))
-        return i;
+    if (!def:C_integer(argv[1], -wc->dy, *py))
+        ReturnErrVal(101, argv[1], Error);
 
     *px += wc->dx;
     *py += wc->dy;
@@ -2311,15 +2314,11 @@ int rectargs(wbp w, int argc, dptr argv, int i, word *px, word *py, word *pw, wo
     defw = ws->width - *px;
     defh = ws->height - *py;
 
-    if (++i >= argc)
-        *pw = defw;
-    else if (!def:C_integer(argv[i], defw, *pw))
-        return i;
+    if (!def:C_integer(argv[2], defw, *pw))
+        ReturnErrVal(101, argv[2], Error);
 
-    if (++i >= argc)
-        *ph = defh;
-    else if (!def:C_integer(argv[i], defh, *ph))
-        return i;
+    if (!def:C_integer(argv[3], defh, *ph))
+        ReturnErrVal(101, argv[3], Error);
 
     /*
      * Correct negative w/h values.
@@ -2329,7 +2328,7 @@ int rectargs(wbp w, int argc, dptr argv, int i, word *px, word *py, word *pw, wo
     if (*ph < 0)
         *py -= (*ph = -*ph);
 
-    return -1;
+    return Succeeded;
 }
 
 
@@ -2339,7 +2338,7 @@ int rectargs(wbp w, int argc, dptr argv, int i, word *px, word *py, word *pw, wo
  *  Helper for DrawCircle and FillCircle.
  *  Returns index of bad argument, or -1 for success.
  */
-int docircles(wbp w, int argc, dptr argv, int fill)
+int docircle(wbp w, dptr argv, int fill)
 {
     word x, y, r;
     int arc_x, arc_y, arc_width, arc_height;
@@ -2353,22 +2352,16 @@ int docircles(wbp w, int argc, dptr argv, int fill)
     /*
      * Collect arguments.
      */
-    if (2 >= argc)
-        return 2;			/* missing y or r */
     if (!cnv:C_integer(argv[0], x))
-        return 0;
+        ReturnErrVal(101, argv[0], Error);
     if (!cnv:C_integer(argv[1], y))
-        return 1;
+        ReturnErrVal(101, argv[1], Error);
     if (!cnv:C_integer(argv[2], r))
-        return 2;
-    if (3 >= argc)
-        theta = 0.0;
-    else if (!def:C_double(argv[3], 0.0, theta))
-        return 3;
-    if (4 >= argc)
-        alpha = 2 * Pi;
-    else if (!def:C_double(argv[4], 2 * Pi, alpha))
-        return 4;
+        ReturnErrVal(101, argv[2], Error);
+    if (!def:C_double(argv[3], 0.0, theta))
+        ReturnErrVal(102, argv[3], Error);
+    if (!def:C_double(argv[4], 2 * Pi, alpha))
+        ReturnErrVal(102, argv[4], Error);
 
     /*
      * Put in canonical form: r >= 0, -2*pi <= theta < 0, alpha >= 0.
@@ -2408,7 +2401,7 @@ int docircles(wbp w, int argc, dptr argv, int fill)
     else
         drawarc(w,arc_x, arc_y, arc_width, arc_height, arc_angle1, arc_angle2);
 
-    return -1;
+    return Succeeded;
 }
 
 
