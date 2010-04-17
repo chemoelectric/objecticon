@@ -2327,12 +2327,4 @@ function graphics_Window_post_set(self)
    }
 end
 
-#else  /* Graphics */
-
-function graphics_Window_open_impl(attr[n])
-   body {
-     Unsupported;
-   }
-end
-
 #endif   /* Graphics */
