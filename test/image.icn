@@ -9,7 +9,9 @@ record circle(x, y, r)
 
 procedure main(args)
    local c1, c2, c3, c4, s
-
+$ifdef _PLAN9
+image([],[],[])
+$endif
    dump()
    dump(047)
    dump(3.14159)

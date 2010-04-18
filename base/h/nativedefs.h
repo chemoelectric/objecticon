@@ -139,8 +139,6 @@ NativeDef(graphics.Window,wcreate,graphics_Window_wcreate)
 NativeDef(graphics.Window,wdefault,graphics_Window_wdefault)
 NativeDef(graphics.Window,wopen,graphics_Window_wopen)
 NativeDef(graphics.Window,write_image,graphics_Window_write_image)
-#else
-NativeDef(graphics.Window,open_impl,graphics_Window_open_impl)
 #endif
 NativeDef(io.DescStream,flag,io_DescStream_flag)
 NativeDef(io.DescStream,poll,io_DescStream_poll)
@@ -151,6 +149,9 @@ NativeDef(io.DirStream,close,io_DirStream_close)
 NativeDef(io.DirStream,open_impl,io_DirStream_open_impl)
 NativeDef(io.DirStream,read_impl,io_DirStream_read_impl)
 NativeDef(io.FileStream,close,io_FileStream_close)
+#if PLAN9
+NativeDef(io.FileStream,create_impl,io_FileStream_create_impl)
+#endif
 NativeDef(io.FileStream,in,io_FileStream_in)
 NativeDef(io.FileStream,open_impl,io_FileStream_open_impl)
 NativeDef(io.FileStream,out,io_FileStream_out)

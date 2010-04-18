@@ -794,6 +794,123 @@ class FileStream(DescStream)
       # A {FileStream} representing standard error
       stderr
 
+$ifdef _PLAN9
+   #
+   # Open a new {FileStream} using the underlying system open
+   # function.
+   # @param name the file name
+   # @param flags the flags, selected from {FileOpt}
+   # @param perm the create permissions to use if a file is
+   # @      created, selected from {Mode}.
+   # @param mode the resulting {Stream}'s mode; if omitted
+   # @      this is deduced from {flags} parameter and the
+   # @      type of file being opened.
+   #
+   public static open(name, flags, perm, mode)
+      local C, f, flags2
+
+      # If we have no mode then we need to test for SEEK after
+      # the file is opened.
+      C := if /mode then create_and_set_mode else FileStream
+
+      case iand(flags, 3) of {
+         0: {
+            flags2 := FileOpt.OREAD
+            /mode := READ
+         }
+         1: {
+            flags2 := FileOpt.OWRITE
+            /mode := WRITE
+         }
+         2: {
+            flags2 := FileOpt.ORDWR
+            /mode := READ_WRITE
+         }
+         default:
+            runerr("Invalid flags combination")
+      }
+      if iand(flags, FileOpt.TRUNC) ~= 0 then
+         flags2 := ior(flags2, FileOpt.OTRUNC)
+      if iand(flags, FileOpt.EXCL) ~= 0 then
+         flags2 := ior(flags2, FileOpt.OEXCL)
+
+      if iand(flags, FileOpt.CREAT) ~= 0 then {
+         if Files.access(name, 0) then {
+            if iand(flags, FileOpt.EXCL) ~= 0 then
+               return error("File exists")
+            return C(open_impl(name, flags2), mode)
+         } else
+            return C(create_impl(name, flags2, perm), mode)
+      }
+
+      if iand(flags, FileOpt.APPEND) ~= 0 then {
+         f := C(open_impl(name, flags2), mode) | fail
+         f.seek(0) | fail
+         return f
+      }
+      return C(open_impl(name, flags2), mode)
+   end
+
+   public static open9(name, flags, mode)
+      if \mode then
+         return FileStream(open_impl(name, flags), mode)
+
+      #
+      # Set the READ/WRITE mode flags based on the FileOpt flags.
+      #
+      if iand(flags, FileOpt.WRONLY) ~= 0 then
+         mode := WRITE
+      else if iand(flags, FileOpt.RDWR) ~= 0 then
+         mode := READ_WRITE
+      else
+         mode := READ
+
+      return create_and_set_mode(open_impl(name, flags), mode)
+   end
+
+   public static create9(name, flags, perm, mode)
+      if \mode then
+         return FileStream(create_impl(name, flags, perm), mode)
+
+      #
+      # Set the READ/WRITE mode flags based on the FileOpt flags.
+      #
+      if iand(flags, FileOpt.WRONLY) ~= 0 then
+         mode := WRITE
+      else if iand(flags, FileOpt.RDWR) ~= 0 then
+         mode := READ_WRITE
+      else
+         mode := READ
+
+      return create_and_set_mode(create_impl(name, flags, perm), mode)
+   end
+
+   #
+   # Create a new FileStream instance, and then adjust its mode based
+   # on the file type returned by stat().  If it is a regular file,
+   # add SEEK capability, and TRUNCATE too for a writable file.
+   #
+   private static create_and_set_mode(fd, mode)
+      local f
+      f := FileStream(fd, mode)
+      if f.tell() then
+         f.mode := ior(f.mode, SEEK)
+      return f
+   end
+
+   #
+   # Create a pair of {FileStream}s using the pipe system call.
+   #
+   public static pipe()
+      local t
+      t := pipe_impl() | fail
+      return [FileStream(t[1], READ_WRITE), FileStream(t[2], READ_WRITE)]
+   end
+
+   private static defer open_impl(path, flags)
+   private static defer create_impl(path, flags, perm)
+
+$else
    #
    # Open a new {FileStream} using the underlying system open
    # function.
@@ -838,25 +955,22 @@ class FileStream(DescStream)
       return f
    end
 
-   private static defer open_impl(path, flags, perm)
-
-   private static init()
-      stdin := create_and_set_mode(0, READ)
-      stdout := create_and_set_mode(1, WRITE)
-      stderr := create_and_set_mode(2, WRITE)
-   end
-
    #
    # Create a pair of {FileStream}s using the pipe system call.
    #
    public static pipe()
       local t
       t := pipe_impl() | fail
-$ifdef _PLAN9
-      return [FileStream(t[1], READ_WRITE), FileStream(t[2], READ_WRITE)]
-$else
       return [FileStream(t[1], READ), FileStream(t[2], WRITE)]
+   end
+
+   private static defer open_impl(path, flags, perm)
 $endif
+
+   private static init()
+      stdin := create_and_set_mode(0, READ)
+      stdout := create_and_set_mode(1, WRITE)
+      stderr := create_and_set_mode(2, WRITE)
    end
 
    private static defer pipe_impl()

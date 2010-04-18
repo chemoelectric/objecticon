@@ -58,10 +58,10 @@
    #define ERANGE 100
    #define EDOM   101
 
-   /* The posix open constants are all in bit positions above the plan9 ones */
-   #define O_RDONLY 0x2000
-   #define O_WRONLY 0x4000
-   #define O_RDWR   0x8000
+   /* The posix file open constants */
+   #define O_RDONLY 0
+   #define O_WRONLY 1
+   #define O_RDWR   2
    #define O_ACCMODE 0 
    #define O_NONBLOCK 0
    #define O_APPEND  0x10000

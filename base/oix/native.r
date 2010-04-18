@@ -1485,6 +1485,50 @@ if (self_fd < 0)
     runerr(219, self);
 #enddef
 
+#if PLAN9
+function io_FileStream_open_impl(path, flags)
+   if !cnv:C_string(path) then
+      runerr(103, path)
+
+   if !cnv:C_integer(flags) then
+      runerr(101, flags)
+
+   body {
+       int fd;
+
+       fd = open(path, flags);
+       if (fd < 0) {
+           errno2why();
+           fail;
+       }
+
+       return C_integer fd;
+   }
+end
+
+function io_FileStream_create_impl(path, flags, mode)
+   if !cnv:C_string(path) then
+      runerr(103, path)
+
+   if !cnv:C_integer(flags) then
+      runerr(101, flags)
+
+   if !def:C_integer(mode, 0664) then
+      runerr(101, mode)
+
+   body {
+       int fd;
+
+       fd = create(path, flags, mode);
+       if (fd < 0) {
+           errno2why();
+           fail;
+       }
+
+       return C_integer fd;
+   }
+end
+#else
 function io_FileStream_open_impl(path, flags, mode)
    if !cnv:C_string(path) then
       runerr(103, path)
@@ -1503,25 +1547,7 @@ function io_FileStream_open_impl(path, flags, mode)
    body {
        int fd;
 
-#if PLAN9
-       word flags2 = (flags & (OREAD|OWRITE|ORDWR|OEXEC|OTRUNC|OCEXEC|ORCLOSE|OEXCL));
-       if (flags & O_RDONLY)
-           flags2 |= OREAD;
-       if (flags & O_WRONLY)
-           flags2 |= OWRITE;
-       if (flags & O_RDWR)
-           flags2 |= ORDWR;
-       if (flags & O_TRUNC)
-           flags2 |= OTRUNC;
-       if ((flags & O_CREAT) && access(path, 0) != 0)
-          fd = create(path, flags2 , mode);
-       else if (flags & O_APPEND) {
-          fd = open(path, flags2);
-          if (fd >= 0)
-              seek(fd, 0, SEEK_END);
-       } else
-          fd = open(path, flags2);
-#elif MSWIN32
+#if MSWIN32
        fd = open(path, flags | O_BINARY, mode);
 #else
        fd = open(path, flags, mode);
@@ -1534,6 +1560,7 @@ function io_FileStream_open_impl(path, flags, mode)
        return C_integer fd;
    }
 end
+#endif
 
 function io_FileStream_in(self, i)
    if !cnv:C_integer(i) then

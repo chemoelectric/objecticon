@@ -13,6 +13,9 @@ end
 
 procedure main()
    local e,foo,x,input
+$ifdef _PLAN9
+image([],[],[])
+$endif
    if not(&features == "co-expressions") then
       stop("co-expressions not supported")
    write(imagex(&main))
