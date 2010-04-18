@@ -1188,8 +1188,10 @@ int lowerwindow (wbp w)
     wsp ws = w->window;
     if (!ws->win)
         return Failed;
-    if ((fd = open_winfile(ws, "wctl", OWRITE)) < 0)
+    if ((fd = open_winfile(ws, "wctl", OWRITE)) < 0) {
+        whyf("Can't open wctl file %r");
         return Failed;
+    }
     fprint(fd, "bottom");
     close(fd);
     return Succeeded;
@@ -1299,8 +1301,10 @@ int raisewindow(wbp w)
     wsp ws = w->window;
     if (!ws->win)
         return Failed;
-    if ((fd = open_winfile(ws, "wctl", OWRITE)) < 0)
+    if ((fd = open_winfile(ws, "wctl", OWRITE)) < 0) {
+        whyf("Can't open wctl file %r");
         return Failed;
+    }
     fprint(fd, "unhide");
     fprint(fd, "top");
     fprint(fd, "current");
@@ -1504,6 +1508,7 @@ static int open_screen_win(wsp ws)
     }
 
     if ((fd = open_winfile(ws, "label", OWRITE)) < 0) {
+        whyf("Can't open label file %r");
         close_screen_win(ws);
         return Failed;
     }
@@ -1517,26 +1522,26 @@ static int open_screen_win(wsp ws)
     }
 
     if ((ws->mouse_fd = open_winfile(ws, "mouse", ORDWR|OCEXEC)) < 0) {
-        whyf("Can't open mouse file %s: %r", buff);
+        whyf("Can't open mouse file: %r");
         close_screen_win(ws);
         return Failed;
     }
 
     if ((ws->cons_fd = open_winfile(ws, "cons", OREAD)) < 0) {
-        whyf("Can't open cons file %s: %r", buff);
+        whyf("Can't open cons file: %r");
         close_screen_win(ws);
         return Failed;
     }
 
     if ((ws->consctl_fd = open_winfile(ws, "consctl", OWRITE|OCEXEC)) < 0) {
-        whyf("Can't open consctl file %s: %r", buff);
+        whyf("Can't open consctl file: %r");
         close_screen_win(ws);
         return Failed;
     }
     write(ws->consctl_fd, "rawon", 5);
 
     if ((ws->cursor_fd = open_winfile(ws, "cursor", OWRITE|OCEXEC)) < 0) {
-        whyf("Can't open cursor file %s: %r", buff);
+        whyf("Can't open cursor file: %r");
         close_screen_win(ws);
         return Failed;
     }
@@ -1730,8 +1735,10 @@ int setwindowlabel(wbp w, char *val)
     ws->windowlabel = salloc(val);
     if (ws->win) {
         int fd;
-        if ((fd = open_winfile(ws, "label", OWRITE)) < 0)
+        if ((fd = open_winfile(ws, "label", OWRITE)) < 0) {
+            whyf("Can't open label file %r");
             return Failed;
+        }
         write(fd, val, strlen(val));
         close(fd);
     }
@@ -1919,7 +1926,7 @@ void getdrawop(wbp w, char *answer)
     strcpy(answer, s);
 }
 
-void getcanvas (wbp w, char *answer)
+void getcanvas(wbp w, char *answer)
 {
     wsp ws = w->window;
     if (ws->win) {

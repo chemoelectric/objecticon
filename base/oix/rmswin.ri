@@ -2001,11 +2001,6 @@ int len;
    
    bmih = &(bmi->bmiHeader);
    palbg = PALCLR(wc->bg);
-   if (on_icon) {
-      free(bmi);
-      FREE_STDLOCALS(w);
-      return;
-      }
 
    bmih->biClrImportant = 0;
    /*
@@ -2114,14 +2109,9 @@ int len;
    /*
     * Copy it from the pixmap onto the screen.
     */
-   if (on_icon) {
-      FREE_STDLOCALS(w);
-      return;
-      }
-   else {
-      if (ws->win)
-	 BitBlt(stddc, x, y, width, height, pixdc, x, y, SRCCOPY);
-      }
+   if (ws->win)
+      BitBlt(stddc, x, y, width, height, pixdc, x, y, SRCCOPY);
+
    FREE_STDLOCALS(w);
    }
 
@@ -2425,8 +2415,7 @@ int  queryrootpointer(wbp w, int *x, int *y)
  * dumpimage -- write an image to a disk file.
  *  At present, there are no MS Windows-specific image file formats.
  */
-int dumpimage(wbp w, char *filename, unsigned int x, unsigned int y,
-	      unsigned int width, unsigned int height)
+int dumpimage(wbp w, char *filename, int x, int y, int width, int height)
    {
    return NoCvt;
    }

@@ -45,6 +45,24 @@ function posix_System_kill(pid, signal)
       }
 end
 
+#ifdef PLAN9
+"fork() - spawn a new identical process."
+
+function posix_System_fork(flag)
+   if !def:C_integer(flag, RFFDG|RFREND|RFPROC) then
+      runerr(101, flag)
+   body {
+      int pid;
+      
+      if ((pid = rfork(flag)) < 0) {
+	 errno2why();
+	 fail;
+      }
+      return C_integer pid;
+   }
+end
+
+#else
 "fork() - spawn a new identical process."
 
 function posix_System_fork()
@@ -62,17 +80,13 @@ function posix_System_fork()
         wdsplys = 0;
 #endif
       return C_integer pid;
-#elif PLAN9
-      if ((pid = rfork(RFPROC|RFFDG)) < 0) {
-	 errno2why();
-	 fail;
-      }
-      return C_integer pid;
 #else
      Unsupported;
 #endif
       }
 end
+
+#endif
 
 extern char **environ;
 

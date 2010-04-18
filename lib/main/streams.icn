@@ -838,7 +838,10 @@ $ifdef _PLAN9
          if Files.access(name, 0) then {
             if iand(flags, FileOpt.EXCL) ~= 0 then
                return error("File exists")
-            return C(open_impl(name, flags2), mode)
+            f := C(open_impl(name, flags2), mode) | fail
+            if iand(flags, FileOpt.APPEND) ~= 0 then
+               f.seek(0) | fail
+            return f
          } else
             return C(create_impl(name, flags2, perm), mode)
       }
@@ -887,14 +890,15 @@ $ifdef _PLAN9
 
    #
    # Create a new FileStream instance, and then adjust its mode based
-   # on the file type returned by stat().  If it is a regular file,
-   # add SEEK capability, and TRUNCATE too for a writable file.
+   # on whether we think it is seekable or not.
    #
    private static create_and_set_mode(fd, mode)
       local f
       f := FileStream(fd, mode)
       if f.tell() then
          f.mode := ior(f.mode, SEEK)
+      else
+         &why := ""
       return f
    end
 

@@ -275,7 +275,7 @@ class Dialog(Component)
       local t
       t := wattribs_to_list(self.wattribs)
       put(t, "canvas=hidden")
-      self.buffer_win := Window.open!t | runerr("couldn't open window")
+      self.buffer_win := Window.open!t | runerr("couldn't open window:" || &why)
    end
 
    #
@@ -329,7 +329,7 @@ class Dialog(Component)
       put(t, "inputmask=mk")
       if pw := (\owning_dialog).win then
          every put(t, "parent=" | pw)
-      self.win := Window.open!t | runerr("couldn't open window")
+      self.win := Window.open!t | runerr("Couldn't open window:" || &why)
       # Make the buffer the same size as the visible win.
       self.buffer_win.set_size(self.win.get_width(), self.win.get_height())
       if \self.only_enlarge_width_flag then

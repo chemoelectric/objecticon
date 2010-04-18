@@ -2705,27 +2705,33 @@ end
 static void stat2list(struct Dir *st, dptr result)
 {
    tended struct descrip tmp;
-   char mode[12], *user, *group;
+   char mode[13], *user, *group;
    struct passwd *pw;
    struct group *gr;
 
-   create_list(13, result);
-   list_put(result, &zerodesc);
+   create_list(17, result);
+   MakeInt(st->dev, &tmp);
+   list_put(result, &tmp);
    list_put(result, &zerodesc);
 
-   strcpy(mode, "----------");
+   strcpy(mode, "-----------");
    if (st->mode & DMDIR) mode[0] = 'd';
    else if (st->mode & DMAPPEND) mode[0] = 'a';
-   if (st->mode & 0400) mode[1] = 'r';
-   if (st->mode & 0200) mode[2] = 'w';
-   if (st->mode & 0100) mode[3] = 'x';
-   if (st->mode & 0040) mode[4] = 'r';
-   if (st->mode & 0020) mode[5] = 'w';
-   if (st->mode & 0010) mode[6] = 'x';
-   if (st->mode & 0004) mode[7] = 'r';
-   if (st->mode & 0002) mode[8] = 'w';
-   if (st->mode & 0001) mode[9] = 'x';
+   else if(st->mode & DMAUTH) mode[0]='A';
+   if (st->mode & DMEXCL) mode[1] = 'l';
+   if (st->mode & 0400) mode[2] = 'r';
+   if (st->mode & 0200) mode[3] = 'w';
+   if (st->mode & 0100) mode[4] = 'x';
+   if (st->mode & 0040) mode[5] = 'r';
+   if (st->mode & 0020) mode[6] = 'w';
+   if (st->mode & 0010) mode[7] = 'x';
+   if (st->mode & 0004) mode[8] = 'r';
+   if (st->mode & 0002) mode[9] = 'w';
+   if (st->mode & 0001) mode[10] = 'x';
    cstr2string(mode, &tmp);
+   list_put(result, &tmp);
+
+   MakeInt(st->type, &tmp);      /* server type */
    list_put(result, &tmp);
 
    list_put(result, &onedesc);  /* nlinks = 1 */
@@ -2736,6 +2742,9 @@ static void stat2list(struct Dir *st, dptr result)
    cstr2string(st->gid, &tmp);
    list_put(result, &tmp);
 
+   cstr2string(st->muid, &tmp);
+   list_put(result, &tmp);
+
    list_put(result, &zerodesc);  /* dev no */
    convert_from_vlong(st->length, &tmp);
    list_put(result, &tmp);
@@ -2743,10 +2752,16 @@ static void stat2list(struct Dir *st, dptr result)
    list_put(result, &zerodesc);  /* blocksize */
    list_put(result, &zerodesc);  /* block count */
 
+   cstr2string(st->name, &tmp);   /* name */
+   list_put(result, &tmp);
+
    convert_from_ulong(st->atime, &tmp);
    list_put(result, &tmp);
    convert_from_ulong(st->mtime, &tmp);
    list_put(result, &tmp);
+   list_put(result, &tmp);
+
+   bytes2string((char *)&st->qid, sizeof(struct Qid), &tmp);
    list_put(result, &tmp);
 }
 
@@ -3760,3 +3775,67 @@ function lang_Coexpression_get_stack_info_impl(ce, lim)
        fail;
    }
 end
+
+#if PLAN9
+function io_Files_bind(name, old, flag)
+   if !cnv:C_string(name) then
+      runerr(103, name)
+   if !cnv:C_string(old) then
+      runerr(103, old)
+   if !cnv:C_integer(flag) then
+      runerr(101, flag)
+
+   body {
+       if (bind(name, old, flag) < 0) {
+           errno2why();
+           fail;
+       }
+       return nulldesc;
+   }
+end
+
+function io_Files_mount(f, af, old, flag, aname)
+   if !cnv:C_string(old) then
+      runerr(103, old)
+   if !cnv:C_integer(flag) then
+      runerr(101, flag)
+   if !cnv:C_string(aname) then
+      runerr(103, aname)
+
+   body {
+       int afd;
+       FdStaticParam(f, fd);
+       if (is:null(af))
+           afd = -1;
+       else {
+           FdStaticParam(af, tmp);
+           afd = tmp;
+       }
+       if (mount(fd, afd, old, flag, aname) < 0) {
+           errno2why();
+           fail;
+       }
+       return nulldesc;
+   }
+end
+
+function io_Files_unmount(name, old)
+   if !cnv:C_string(old) then
+      runerr(103, old)
+
+   body {
+       tended char *s;
+       if (is:null(name))
+           s = 0;
+       else if (!cnv:C_string(name, s))
+           runerr(103, name);
+
+       if (unmount(s, old) < 0) {
+           errno2why();
+           fail;
+       }
+       return nulldesc;
+   }
+end
+
+#endif

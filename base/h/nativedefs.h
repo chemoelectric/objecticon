@@ -164,6 +164,9 @@ NativeDef(io.Files,access,io_Files_access)
 NativeDef(io.Files,hardlink,io_Files_hardlink)
 #if PLAN9
 NativeDef(io.Files,list_impl,io_Files_list_impl)
+NativeDef(io.Files,mount,io_Files_mount)
+NativeDef(io.Files,bind,io_Files_bind)
+NativeDef(io.Files,unmount,io_Files_unmount)
 #endif
 NativeDef(io.Files,lstat_impl,io_Files_lstat_impl)
 NativeDef(io.Files,mkdir,io_Files_mkdir)

@@ -678,6 +678,23 @@ int main(void)
 #endif
     end_class();
 
+#if PLAN9
+    start_class("ForkOpt", 0, 0, 0);
+    Const(RFPROC)
+    Const(RFNOWAIT)
+    Const(RFNAMEG)
+    Const(RFCNAMEG)
+    Const(RFNOMNT)
+    Const(RFENVG)
+    Const(RFCENVG)
+    Const(RFNOTEG)
+    Const(RFFDG)
+    Const(RFCFDG)
+    Const(RFREND)
+    Const(RFMEM)
+    end_class();
+#endif
+
     start_file("ioconsts.icn", "io");
 
     start_class("FileOpt", "O_", 0, 0);
@@ -1132,6 +1149,19 @@ Const(SEEK_CUR)
 Const(SEEK_END)
 
     end_class();
+
+#if PLAN9
+        start_class("MountOpt", 0, 0, 0);
+        Const(MREPL)
+        Const(MBEFORE)
+        Const(MAFTER)
+        Const(MCREATE)
+        Const(MCACHE)
+        end_class();
+#endif
+
+
+
 
     start_file("ucodeconsts.icn", "lang");
     start_class("UcodeOp", "Uop_", 1, 0);
