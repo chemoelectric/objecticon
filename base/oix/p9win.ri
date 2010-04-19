@@ -1444,43 +1444,63 @@ static int open_screen_win(wsp ws)
 {
     char *srvwsys, buff[256];
     int fd;
+    static int first = 1;
 
-    srvwsys = getenv("wsys");
-    if(srvwsys == 0) {
-        LitWhy("Can't find $wsys");
-        return Failed;
-    }
-    ws->wsys_fd = open(srvwsys, ORDWR);
-    if(ws->wsys_fd < 0) {
-        whyf("Can't open $wsys(%s): %r", srvwsys);
-        close_screen_win(ws);
-        return Failed;
-    }
-    sprintf(ws->mount_dir, "%s/%d", WINDOW_MOUNT_ROOT, ++window_count);
-    if (mkdir(ws->mount_dir, 0777) < 0) {
-        whyf("Can't make window mount dir (%s): %r", ws->mount_dir);
-        close_screen_win(ws);
-        return Failed;
-    }
-    sprintf(buff, "new -r %d %d %d %d",
-             ws->posx, ws->posy, ws->posx + ws->width + 2*Borderwidth, 
-             ws->posy + ws->height + 2*Borderwidth);
-    if (ws->desired_canvas == IconicCanvas)
-        strcat(buff, " -hide");
+    if (!getenv("OIUSEWIN"))
+        first = 0;
 
-    if (mount(ws->wsys_fd, -1, ws->mount_dir, MREPL, buff) < 0) {
-        whyf("Can't mount new window: %r");
-        close_screen_win(ws);
-        return Failed;
+    if (first) {
+        strcpy(ws->mount_dir, "/dev");
+
+        if ((ws->wctl_fd = open_winfile(ws, "wctl", OWRITE)) < 0) {
+            whyf("Can't open wctl file: %r");
+            close_screen_win(ws);
+            return Failed;
+        }
+
+        fprint(ws->wctl_fd, "resize  -dx %d -dy %d", ws->width, ws->height);
+        first = 0;
+        ws->using_win = 1;
+    } else {
+        srvwsys = getenv("wsys");
+        if(srvwsys == 0) {
+            LitWhy("Can't find $wsys");
+            return Failed;
+        }
+        ws->wsys_fd = open(srvwsys, ORDWR);
+        if(ws->wsys_fd < 0) {
+            whyf("Can't open $wsys(%s): %r", srvwsys);
+            close_screen_win(ws);
+            return Failed;
+        }
+        sprintf(ws->mount_dir, "%s/%d", WINDOW_MOUNT_ROOT, ++window_count);
+        if (mkdir(ws->mount_dir, 0777) < 0) {
+            whyf("Can't make window mount dir (%s): %r", ws->mount_dir);
+            close_screen_win(ws);
+            return Failed;
+        }
+        sprintf(buff, "new -r %d %d %d %d",
+                ws->posx, ws->posy, ws->posx + ws->width + 2*Borderwidth, 
+                ws->posy + ws->height + 2*Borderwidth);
+        if (ws->desired_canvas == IconicCanvas)
+            strcat(buff, " -hide");
+
+        if (mount(ws->wsys_fd, -1, ws->mount_dir, MREPL, buff) < 0) {
+            whyf("Can't mount new window: %r");
+            close_screen_win(ws);
+            return Failed;
+        }
+
+        if ((ws->wctl_fd = open_winfile(ws, "wctl", OWRITE)) < 0) {
+            whyf("Can't open wctl file: %r");
+            close_screen_win(ws);
+            return Failed;
+        }
+
+        ws->using_win = 0;
     }
+
     sprintf(buff, "%s/winname", ws->mount_dir);
-
-    if ((ws->wctl_fd = open_winfile(ws, "wctl", OWRITE)) < 0) {
-        whyf("Can't open wctl file: %r");
-        close_screen_win(ws);
-        return Failed;
-    }
-
     if (gengetwindow(display, buff, &ws->win, &ws->screen, Refnone) < 0) {
         whyf("gengetwindow failed: %r");
         close_screen_win(ws);
@@ -1556,10 +1576,12 @@ static int open_screen_win(wsp ws)
 
 static void close_screen_win(wsp ws)
 {
-    if (ws->wctl_fd >= 0)
-        fprint(ws->wctl_fd, "hide");
-    unmount(0, ws->mount_dir);
-    remove(ws->mount_dir);
+    if (!ws->using_win) {
+        if (ws->wctl_fd >= 0)
+            fprint(ws->wctl_fd, "hide");
+        unmount(0, ws->mount_dir);
+        remove(ws->mount_dir);
+    }
     if (ws->event_pipe[0] >= 0)
         close(ws->event_pipe[0]);
     if (ws->event_pipe[1] >= 0)
@@ -1586,10 +1608,15 @@ static void close_screen_win(wsp ws)
         freescreen(ws->screen);
         ws->screen = 0;
     }
-    if (ws->wctl_fd >= 0) {
-        fprint(ws->wctl_fd, "delete");
+
+    if (!ws->using_win) { 
+        if (ws->wctl_fd >= 0)
+            fprint(ws->wctl_fd, "delete");
+    }
+
+    if (ws->wctl_fd >= 0)
         close(ws->wctl_fd);
-    }        
+
     ws->mount_dir[0] = 0;
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
         ws->cursor_fd = ws->mouse_pid = ws->cons_pid = ws->wsys_fd = ws->wctl_fd = -1;

@@ -329,6 +329,7 @@ typedef struct _wstate {
   int           last_mouse_x, last_mouse_y;
   int           desired_canvas;
   stringint     *cursor;
+  int           using_win;
 #elif XWindows
   wdp		display;
   Window	win;			/* X window */
