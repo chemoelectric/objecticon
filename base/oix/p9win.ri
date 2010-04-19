@@ -30,6 +30,7 @@ static struct SharedImage *new_sharedimage(Image *i, char *name, int rgba);
 static struct SharedImage *link_sharedimage(struct SharedImage *i);
 static void unlink_sharedimage(struct SharedImage *i);
 static int reversebits(int c);
+static int limit_size(wsp ws, int *width, int *height);
 
 #define EMAXMSG 128+8192     /* size of 9p header+data */
 #define WINDOW_MOUNT_ROOT "/tmp/oi_windowmounts"
@@ -271,6 +272,8 @@ int wopen(wbp w, wbp parent)
     char answer[128];
     tended struct descrip attrrslt;
 
+    limit_size(ws, &ws->width, &ws->height);
+
     if (open_pix_win(ws) != Succeeded)
         return Failed;
 
@@ -325,6 +328,28 @@ static void win_to_pix(wsp ws)
 {
     copy_to(ws->pix, ws->win);
     flushimage(display, 1);
+}
+
+static int limit_size(wsp ws, int *width, int *height)
+{
+    int rv = 0;
+    if (*width < ws->minwidth) {
+        *width = ws->minwidth;
+        rv = 1;
+    }
+    if (*width > ws->maxwidth) {
+        *width = ws->maxwidth;
+        rv = 1;
+    }
+    if (*height < ws->minheight) {
+        *height = ws->minheight;
+        rv = 1;
+    }
+    if (*height > ws->maxheight) {
+        *height = ws->maxheight;
+        rv = 1;
+    }
+    return rv;
 }
 
 static int configure_canvas(wbp w)
@@ -423,20 +448,56 @@ static void handle_resize(wsp ws)
 {
     char buff[128];
     wbp w;
+    int tw, th;
     sprintf(buff, "%s/winname", ws->mount_dir);
     /*fprintf(stderr,"reconnecting to %s repl=%d\n",buff, ws->pix->repl);fflush(stderr);*/
     if (gengetwindow(display, buff, &ws->win, &ws->screen, Refnone) < 0)
         syserr("Failed to reconnect to window on a resize");
-    ws->width = ws->win->r.max.x - ws->win->r.min.x;
-    ws->height = ws->win->r.max.y - ws->win->r.min.y;
-    ws->posx = ws->win->r.min.x - Borderwidth;
-    ws->posy = ws->win->r.min.y - Borderwidth;
-    w = find_first_wbp_for(ws);
 
-    /* Fill the win with the bg of the first context */
-    clear_win(w);
-    resize_pix_win(w);
-    pix_to_win(ws);
+    tw = ws->win->r.max.x - ws->win->r.min.x;
+    th = ws->win->r.max.y - ws->win->r.min.y;
+    /*print("resize: %d x %d   flag=%d\n",tw,th,ws->bits&128);*/
+
+    if (tw == ws->width && th == ws->height) {
+        /*
+         * If the new size matches the existing canvas size, just copy the
+         * pix win and adjust the pos.  Don't fire an event.
+         */
+        ws->posx = ws->win->r.min.x - Borderwidth;
+        ws->posy = ws->win->r.min.y - Borderwidth;
+        pix_to_win(ws);
+    }
+    else if ((ws->bits & 128) == 0)   /* If resizable flag off */
+        /* 
+         * If the resize flag is off, veto the resize by just resetting the size
+         * to the canvas size.  We then go through the previous if branch when that
+         * resize is processed.
+         */
+        fprint(ws->wctl_fd, "resize  -dx %d -dy %d", ws->width + 2*Borderwidth, ws->height + 2*Borderwidth);
+    else if (limit_size(ws, &tw, &th)) 
+        /*
+         * Similarly, if the resize is too big we veto it and set to the limited size.
+         */
+        fprint(ws->wctl_fd, "resize  -dx %d -dy %d", tw + 2*Borderwidth, th + 2*Borderwidth);
+    else {
+        /*
+         * Here we accept the resize, resize the pix win, copy it to the visible
+         * win and fire an event.
+         */
+        struct descrip d;
+        ws->width = tw;
+        ws->height = th;
+        ws->posx = ws->win->r.min.x - Borderwidth;
+        ws->posy = ws->win->r.min.y - Borderwidth;
+        w = find_first_wbp_for(ws);
+
+        /* Fill the win with the bg of the first context */
+        clear_win(w);
+        resize_pix_win(w);
+        pix_to_win(ws);
+        MakeInt(RESIZED, &d);
+        qevent(ws, &d, 0, 0, 0, 0, 0);
+    }
 }
 
 static void flush_event_pipe(wsp ws)
@@ -493,8 +554,6 @@ static void flush_event_pipe(wsp ws)
                     syserr("bad mouse data in event pipe");
                 if (ebuf[9] == 'r') {
                     handle_resize(ws);
-                    MakeInt(RESIZED, &d);
-                    qevent(ws, &d, 0, 0, 0, 0, 0);
                 } else {
                     int x, y, b, e = 0;
                     vlong now;
@@ -1314,13 +1373,22 @@ int utf8width(wbp w, char *s, int n, int nchars)
 int doconfig(wbp w, int status)
 {
     wsp ws = w->window;
+
+    /* Limit size, if changed */
+    if (status & (C_SIZE|C_MAXSIZE|C_MINSIZE)) {
+        if (limit_size(ws, &ws->width, &ws->height))
+            status |= C_SIZE;
+    }
+
     /* Move/resize of window if open */
     if (ws->win) {
         if (status & (C_POS|C_SIZE)) {
             if (status & C_POS)
                 fprint(ws->wctl_fd, "move  -minx %d -miny %d", ws->posx, ws->posy);
             if (status & C_SIZE)
-                fprint(ws->wctl_fd, "resize  -dx %d -dy %d", ws->width, ws->height);
+                fprint(ws->wctl_fd, "resize  -dx %d -dy %d", 
+                       ws->width + 2*Borderwidth, 
+                       ws->height + 2*Borderwidth);
         }
     }
     if (status & C_SIZE)
@@ -1447,6 +1515,7 @@ static int open_screen_win(wsp ws)
     int fd;
 
     ws->using_win = use_win;
+
     if (ws->using_win) {
         strcpy(ws->mount_dir, "/dev");
 
@@ -1456,7 +1525,8 @@ static int open_screen_win(wsp ws)
             return Failed;
         }
 
-        fprint(ws->wctl_fd, "resize  -dx %d -dy %d", ws->width, ws->height);
+        fprint(ws->wctl_fd, "resize  -dx %d -dy %d", 
+               ws->width + 2*Borderwidth, ws->height + 2*Borderwidth);
         use_win = 0;
     } else {
         srvwsys = getenv("wsys");
@@ -1982,6 +2052,9 @@ static wsp alcwinstate()
     ws->cursor = stringint_lookup(cursors, "left ptr");
     ws->height = 200;
     ws->width  = 200;
+    ws->posx = ws->posy = 0;
+    ws->minwidth = ws->minheight = 0;
+    ws->maxwidth = ws->maxheight = INT_MAX;
     ws->desired_canvas = NormalCanvas;
     ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
     GRFX_LINK(ws, wstates);
