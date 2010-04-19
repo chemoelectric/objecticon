@@ -3,6 +3,7 @@ static vlong startup_time;
 static wfp fonts;
 static Rectangle max_rect;
 static struct Cursor cursor_data[];
+static int use_win;
 
 static int open_winfile(wsp ws, char *s, int mode);
 static wsp alcwinstate(void);
@@ -1444,12 +1445,9 @@ static int open_screen_win(wsp ws)
 {
     char *srvwsys, buff[256];
     int fd;
-    static int first = 1;
 
-    if (!getenv("OIUSEWIN"))
-        first = 0;
-
-    if (first) {
+    ws->using_win = use_win;
+    if (ws->using_win) {
         strcpy(ws->mount_dir, "/dev");
 
         if ((ws->wctl_fd = open_winfile(ws, "wctl", OWRITE)) < 0) {
@@ -1459,8 +1457,7 @@ static int open_screen_win(wsp ws)
         }
 
         fprint(ws->wctl_fd, "resize  -dx %d -dy %d", ws->width, ws->height);
-        first = 0;
-        ws->using_win = 1;
+        use_win = 0;
     } else {
         srvwsys = getenv("wsys");
         if(srvwsys == 0) {
@@ -1496,8 +1493,6 @@ static int open_screen_win(wsp ws)
             close_screen_win(ws);
             return Failed;
         }
-
-        ws->using_win = 0;
     }
 
     sprintf(buff, "%s/winname", ws->mount_dir);
@@ -2317,6 +2312,9 @@ static int init_window_system(void)
     maskdata[0] = 128;
     MemProtect(mask128 = allocimage(display, Rect(0, 0, 1, 1), CHAN1(CAlpha, 8), 1, DNofill));
     loadimage(mask128, mask128->r, maskdata, 1);
+
+    use_win = (getenv("OIUSEWIN") != 0);
+
     return 1;
 }
 
