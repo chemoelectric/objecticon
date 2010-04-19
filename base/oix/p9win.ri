@@ -21,7 +21,7 @@ static void close_screen_win(wsp ws);
 static int open_pix_win(wsp ws);
 static void close_pix_win(wsp ws);
 static void handle_resize(wsp ws);
-static int init_window_system(void);
+static void init_window_system(void);
 static void clear_pix_win(wbp wb);
 static void clear_win(wbp wb);
 static void clip(wcp wc, Image *i);
@@ -252,8 +252,7 @@ wbp wcreate(char *display)
     wsp ws;
 
     if (!inited) {
-        if (!init_window_system())
-            return 0;
+        init_window_system();
         inited = 1;
     }
 
@@ -2349,21 +2348,24 @@ Image *make_pattern(unsigned char a[])
     return img;
 }
 
-static int init_window_system(void)
+static void init_window_system(void)
 {
     int i;
     uchar maskdata[1];
+    Dir *fs;
 
-    if (initdraw(0, 0, "objecticon") < 0) {
-        errno2why();
-        return 0;
-    }
+    if (initdraw(0, 0, "objecticon") < 0)
+        ffatalerr("Couldn't initialize window system: %r");
 
     /* Keep mounts private */
     rfork(RFNAMEG); 
 
     /* Ensure the window mount root exists */
     mkdir(WINDOW_MOUNT_ROOT, 0777);
+    fs = dirstat(WINDOW_MOUNT_ROOT);
+    if (!fs || !(fs->mode & DMDIR))
+        ffatalerr("Couldn't initialize window mount directory: %r");
+    free(fs);
 
     win_fs.tree = alloctree(0, 0, DMDIR | 0777, 0);
     win_fs.create = fscreate;
@@ -2387,8 +2389,6 @@ static int init_window_system(void)
     loadimage(mask128, mask128->r, maskdata, 1);
 
     use_win = (getenv("OIUSEWIN") != 0);
-
-    return 1;
 }
 
 static vlong get_time()
