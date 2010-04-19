@@ -2371,6 +2371,11 @@ static void init_window_system(void)
     win_fs.create = fscreate;
     postmountsrv(&win_fs, 0, WINDOW_MOUNT_ROOT, MREPL | MCREATE);
     atexit(unmount_win_fs);
+
+    /* Bug workaround which prevents accessing rio's mounted window dir if it is the only
+     * entry in the directory */
+    mkdir(WINDOW_MOUNT_ROOT "/JUNK", 0777);
+
     black = new_sharedimage(display->black, "black", 0x000000ff);
     white = new_sharedimage(display->white, "white", 0xffffffff);
     max_rect = Rect(-1073741823, -1073741823, 1073741823, 1073741823);
