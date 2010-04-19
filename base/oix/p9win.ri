@@ -260,13 +260,6 @@ wbp wcreate(char *display)
     w->context = alccontext(w);
     create_list(0, &ws->listp);
 
-    /*
-     * some defaults
-     */
-    ws->height = 200;
-    ws->width  = 200;
-    ws->desired_canvas = NormalCanvas;
-    ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
     return w;
 }
 
@@ -343,19 +336,15 @@ static int configure_canvas(wbp w)
             close_screen_win(ws);
         }
     } else {
-        int fd;
         if (!ws->win) {
             if (open_screen_win(ws) == Failed)
                 return Failed;
             pix_to_win(ws);
         }
-        if ((fd = open_winfile(ws, "wctl", OWRITE)) >= 0) {
-            if (ws->desired_canvas == IconicCanvas)
-                fprint(fd, "hide");
-            else
-                fprint(fd, "unhide");
-            close(fd);
-        }
+        if (ws->desired_canvas == IconicCanvas)
+            fprint(ws->wctl_fd, "hide");
+        else
+            fprint(ws->wctl_fd, "unhide");
     }
     return Succeeded;
 }
@@ -1184,16 +1173,10 @@ void freecolor(wbp w, char *s)
 
 int lowerwindow (wbp w)
 {
-    int fd;
     wsp ws = w->window;
     if (!ws->win)
         return Failed;
-    if ((fd = open_winfile(ws, "wctl", OWRITE)) < 0) {
-        whyf("Can't open wctl file %r");
-        return Failed;
-    }
-    fprint(fd, "bottom");
-    close(fd);
+    fprint(ws->wctl_fd, "bottom");
     return Succeeded;
 }
 
@@ -1297,18 +1280,12 @@ int  queryrootpointer(wbp w, int *x, int *y)
 
 int raisewindow(wbp w)
 {
-    int fd;
     wsp ws = w->window;
     if (!ws->win)
         return Failed;
-    if ((fd = open_winfile(ws, "wctl", OWRITE)) < 0) {
-        whyf("Can't open wctl file %r");
-        return Failed;
-    }
-    fprint(fd, "unhide");
-    fprint(fd, "top");
-    fprint(fd, "current");
-    close(fd);
+    fprint(ws->wctl_fd, "unhide");
+    fprint(ws->wctl_fd, "top");
+    fprint(ws->wctl_fd, "current");
     return Succeeded;
 }
 
@@ -1339,14 +1316,10 @@ int doconfig(wbp w, int status)
     /* Move/resize of window if open */
     if (ws->win) {
         if (status & (C_POS|C_SIZE)) {
-            int fd;
-            if ((fd = open_winfile(ws, "wctl", OWRITE)) < 0)
-                return Failed;
             if (status & C_POS)
-                fprint(fd, "move  -minx %d -miny %d", ws->posx, ws->posy);
+                fprint(ws->wctl_fd, "move  -minx %d -miny %d", ws->posx, ws->posy);
             if (status & C_SIZE)
-                fprint(fd, "resize  -dx %d -dy %d", ws->width, ws->height);
-            close(fd);
+                fprint(ws->wctl_fd, "resize  -dx %d -dy %d", ws->width, ws->height);
         }
     }
     if (status & C_SIZE)
@@ -1501,6 +1474,13 @@ static int open_screen_win(wsp ws)
         return Failed;
     }
     sprintf(buff, "%s/winname", ws->mount_dir);
+
+    if ((ws->wctl_fd = open_winfile(ws, "wctl", OWRITE)) < 0) {
+        whyf("Can't open wctl file: %r");
+        close_screen_win(ws);
+        return Failed;
+    }
+
     if (gengetwindow(display, buff, &ws->win, &ws->screen, Refnone) < 0) {
         whyf("gengetwindow failed: %r");
         close_screen_win(ws);
@@ -1576,9 +1556,8 @@ static int open_screen_win(wsp ws)
 
 static void close_screen_win(wsp ws)
 {
-    int fd;
-    if ((fd = open_winfile(ws, "wctl", OWRITE)) >= 0)
-        fprint(fd, "hide");
+    if (ws->wctl_fd >= 0)
+        fprint(ws->wctl_fd, "hide");
     unmount(0, ws->mount_dir);
     remove(ws->mount_dir);
     if (ws->event_pipe[0] >= 0)
@@ -1607,13 +1586,13 @@ static void close_screen_win(wsp ws)
         freescreen(ws->screen);
         ws->screen = 0;
     }
-    if (fd >= 0) {
-        fprint(fd, "delete");
-        close(fd);
+    if (ws->wctl_fd >= 0) {
+        fprint(ws->wctl_fd, "delete");
+        close(ws->wctl_fd);
     }        
     ws->mount_dir[0] = 0;
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
-        ws->cursor_fd = ws->mouse_pid = ws->cons_pid = ws->wsys_fd = -1;
+        ws->cursor_fd = ws->mouse_pid = ws->cons_pid = ws->wsys_fd = ws->wctl_fd = -1;
 }
 
 static int open_pix_win(wsp ws)
@@ -1932,11 +1911,13 @@ void getcanvas(wbp w, char *answer)
     if (ws->win) {
         char buff[256];
         int fd;
+        buff[0] = 0;
         if ((fd = open_winfile(ws, "wctl", OREAD)) >= 0) {
-            pread(fd, buff, sizeof(buff), 0);
+            int n = read(fd, buff, sizeof(buff) - 1);
+            if (n > 0)
+                buff[n] = 0;
             close(fd);
-        } else
-            buff[0] = 0;
+        }
         if (strstr(buff, "hidden"))
             strcpy(answer, "iconic");
         else
@@ -1973,10 +1954,14 @@ static wsp alcwinstate()
     GRFX_ALLOC(ws, _wstate);
     ws->serial = ++canvas_serial;
     ws->bits = 1024;				/* echo ON; others OFF */
-    ws->listp = nulldesc;
+    ws->listp = nulldesc;    /* set to [] after linked into global context list */
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
-        ws->cursor_fd = ws->mouse_pid = ws->cons_pid = ws->wsys_fd = -1;
+        ws->cursor_fd = ws->mouse_pid = ws->cons_pid = ws->wsys_fd = ws->wctl_fd = -1;
     ws->cursor = stringint_lookup(cursors, "left ptr");
+    ws->height = 200;
+    ws->width  = 200;
+    ws->desired_canvas = NormalCanvas;
+    ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
     GRFX_LINK(ws, wstates);
     return ws;
 }
