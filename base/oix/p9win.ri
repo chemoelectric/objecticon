@@ -10,9 +10,9 @@ static wsp alcwinstate(void);
 static wcp alccontext(wbp w);
 static wfp alcfont(wbp w, char **s);
 static int configure_canvas(wbp w);
-static void mouse_loop(wsp ws);
+static void mouse_loop(int in_fd, int out_fd);
 static Rune *utf8_to_runes(char *str, int nchars);
-static void cons_loop(wsp ws);
+static void cons_loop(int in_fd, int out_fd);
 static void flush_event_pipe(wsp ws);
 static void synch_cursor(wsp ws);
 static vlong get_time(void);
@@ -268,7 +268,6 @@ int wopen(wbp w, wbp parent)
 {
     wsp ws = w->window;
     struct imgdata *imd;
-    char answer[128];
     tended struct descrip attrrslt;
 
     limit_size(ws, &ws->width, &ws->height);
@@ -374,7 +373,7 @@ static int configure_canvas(wbp w)
     return Succeeded;
 }
 
-static void mouse_loop(wsp ws)
+static void mouse_loop(int in_fd, int out_fd)
 {
     char buf[EMAXMSG + 9];
     int r;
@@ -382,19 +381,19 @@ static void mouse_loop(wsp ws)
 
     buf[0] = 'M';
     tfd = open("/dev/bintime", OREAD);
-    while ((r = read(ws->mouse_fd, buf + 9, EMAXMSG)) > 0) {
+    while ((r = read(in_fd, buf + 9, EMAXMSG)) > 0) {
         if (tfd)
             pread(tfd, &buf[1], 8, 0);
-        if (write(ws->event_pipe[1], buf, r + 9) != r + 9)
+        if (write(out_fd, buf, r + 9) != r + 9)
             break;
     }
 
     buf[0] = 'Q';
-    write(ws->event_pipe[1], buf, 1);
+    write(out_fd, buf, 1);
     _exits(0);
 }
 
-static void cons_loop(wsp ws) 
+static void cons_loop(int in_fd, int out_fd) 
 {
     Rune r;
     char t[11], in[10];
@@ -402,18 +401,18 @@ static void cons_loop(wsp ws)
 
     t[0] = 'C';
     tfd = open("/dev/bintime", OREAD);
-    while (read(ws->cons_fd, in, sizeof in) > 0) {
+    while (read(in_fd, in, sizeof in) > 0) {
         if (tfd)
             pread(tfd, &t[1], 8, 0);
         chartorune(&r, in);
         t[9] = r;
         t[10] = r>>8;
-        if (write(ws->event_pipe[1], t, 11) != 11)
+        if (write(out_fd, t, 11) != 11)
             break;
     }
 
     t[0] = 'Q';
-    write(ws->event_pipe[1], t, 1);
+    write(out_fd, t, 1);
     _exits(0);
 }
 
@@ -424,6 +423,7 @@ static wbp find_first_wbp_for(wsp ws)
         if (wb->window == ws)
             return wb;
     syserr("Couldn't find wbp for wsp");
+    return 0;  /* not reached */
 }
 
 static void resize_pix_win(wbp w)
@@ -1478,7 +1478,6 @@ int requestselection(wbp w, char *selection, char *target)
 int sendselectionresponse(wbp w, word requestor, char *property, 
                           char *selection, char *target, word time, dptr data)
 {
-    wsp ws = w->window;
     int fd;
     /* data is &null if the selection doesn't support what we asked for (UTF8_STRING) */
     if (is:null(*data))
@@ -1611,9 +1610,9 @@ static int open_screen_win(wsp ws)
     }
     synch_cursor(ws);
 
-    switch (ws->mouse_pid = rfork(RFPROC)) {
+    switch (ws->mouse_pid = rfork(RFPROC|RFMEM)) {
         case 0: {
-            mouse_loop(ws);
+            mouse_loop(ws->mouse_fd, ws->event_pipe[1]);
             break;
         }
         case -1: {
@@ -1623,9 +1622,9 @@ static int open_screen_win(wsp ws)
         }
     }
 
-    switch (ws->cons_pid = rfork(RFPROC)) {
+    switch (ws->cons_pid = rfork(RFPROC|RFMEM)) {
         case 0: {
-            cons_loop(ws);
+            cons_loop(ws->cons_fd, ws->event_pipe[1]);
             break;
         }
         case -1: {
@@ -1894,8 +1893,6 @@ static void synch_cursor(wsp ws)
 int setpointer(wbp w, char *val)
 {
     wsp ws = w->window;
-    int i;
-    struct Cursor c;
     stringint *e = stringint_lookup(cursors, val);
     if (!e)
         return Failed;
@@ -1907,8 +1904,6 @@ int setpointer(wbp w, char *val)
 
 int setdrawop(wbp w, char *val)
 {
-    int i;
-    struct SharedImage *t;
     wcp wc = w->context;
     if (!strcmp(val,"reverse")) {
         if (!ISXORREVERSE(w)) {
