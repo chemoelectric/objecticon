@@ -260,11 +260,14 @@ function posix_System_wait(pid, options)
 
 #elif PLAN9
       for (;;) {
-          int x = waitpid();
-          if (x == pid)
+          if ((wpid = waitpid()) < 0) {
+              LitWhy("process has no children");
+	      fail;
+          }
+          if (pid == -1 || wpid == pid)
               break;
       }
-      sprintf(retval, "%d terminated", pid);
+      sprintf(retval, "%d terminated", wpid);
 
 #elif MSWIN32
       int termstat;
