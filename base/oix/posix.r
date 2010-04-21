@@ -209,7 +209,7 @@ function posix_System_wait(pid, options)
       runerr(103, options)
    body {
       tended struct descrip result;
-      char retval[64];
+      char retval[256];
       int status = 0, wpid;
 #if UNIX
 #if defined(BSD) || defined(Linux) || defined(BSD_4_4_LITE)
@@ -259,15 +259,20 @@ function posix_System_wait(pid, options)
 	 strcat(retval, ":core");
 
 #elif PLAN9
+      Waitmsg *w;
       for (;;) {
-          if ((wpid = waitpid()) < 0) {
+          w = wait();
+          if (!w) {
               LitWhy("process has no children");
 	      fail;
           }
-          if (pid == -1 || wpid == pid)
+          if (pid == -1 || w->pid == pid)
               break;
       }
-      sprintf(retval, "%d terminated", wpid);
+      if (w->msg[0] == 0)
+          sprint(retval, "%d exited normally", w->pid);
+      else
+          snprint(retval, sizeof(retval), "%d exited: %s", w->pid, w->msg);
 
 #elif MSWIN32
       int termstat;

@@ -4,7 +4,25 @@
 
 
 "exit(i) - exit process with status i, which defaults to 0."
+#if PLAN9
+function exit(status)
+   body {
+      word i;
+      tended char *s;
+      if (is:null(status))
+         c_exit(EXIT_SUCCESS);
+      else if (cnv:C_integer(status, i))
+         c_exit((int)i);
+      else if (cnv:C_string(status, s))
+         c_exits(s);
+      else
+         runerr(170, status);
+      /* not reached */
+      fail;
+      }
+end
 
+#else
 function exit(status)
    if !def:C_integer(status, EXIT_SUCCESS) then
       runerr(101, status)
@@ -13,7 +31,7 @@ function exit(status)
       fail;
       }
 end
-
+#endif
 
 
 "getch() - return a character from console."

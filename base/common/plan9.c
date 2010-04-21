@@ -72,11 +72,13 @@ char *getcwd(char *buf, size_t size)
 
 void exit(int status)
 {
+    char buff[64];
     if (status == EXIT_SUCCESS)
         exits(0);
     if (status == EXIT_FAILURE)
         exits("Failure");
-    exits("Unknown exit code");
+    sprint(buff, "Unknown exit code: %d", status);
+    exits(buff);
 }
 
 int setenv(const char *name, const char *value, int overwrite)

@@ -35,6 +35,9 @@ int             anycmp          (dptr dp1,dptr dp2);
 int             bfunc           (void);
 struct b_proc *string_to_proc(dptr s, int arity, struct progstate *prog);
 
+#if PLAN9
+void            c_exits         (char *s);
+#endif
 void            c_exit          (int i);
 
 int             list_get        (dptr l, dptr res);

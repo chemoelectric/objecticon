@@ -439,6 +439,19 @@ void c_exit(int i)
     exit(i);
 }
 
+#if PLAN9
+void c_exits(char *s)
+{
+    if (set_up && k_dump) {
+        fprintf(stderr,"\nTermination dump:\n\n");
+        fflush(stderr);
+        xdisp(k_current, -1, stderr);
+    }
+    exits(s);
+}
+
+#endif
+
 /*
  * fatalerr - disable error conversion and call run-time error routine.
  */
