@@ -141,6 +141,7 @@ int system(const char *command)
         return -1;
     if (pid == 0) {
         execl("/bin/rc", "rc", "-c", command, 0);
+        exits("execl returned in system()");
         return -1;
     }
     for (;;) {
