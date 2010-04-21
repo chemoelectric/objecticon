@@ -278,6 +278,13 @@ class CompoundBorder(ABorder)
       self.outer := outer
    end
 
+   protected set_special(a)
+      if is(a[1], ABorder) & is(a[2], ABorder) then {
+         set_outer(pop(a))
+         set_inner(pop(a))
+      }
+   end
+
    public set_one(f)
       case f.attr of {
          "inner" : set_inner(f.object_val(gui.ABorder))
@@ -287,7 +294,3 @@ class CompoundBorder(ABorder)
       return
    end
 end
-
-
-
-

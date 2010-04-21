@@ -692,8 +692,7 @@ class TextField(Component)
       filter := Gui.PRINTABLE_1
       self.accepts_focus_flag := 1
       self.set_contents("")
-      self.set_border(CompoundBorder("outer=",SunkenBorder(),
-                                     "inner=",EmptyBorder()))
+      self.set_border(CompoundBorder(SunkenBorder(), EmptyBorder()))
       self.border.inner.set_l_inset(Gui.TEXT_INSET)
       self.border.inner.set_r_inset(Gui.TEXT_INSET)
       self.is_editable_flag := 1

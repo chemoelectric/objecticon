@@ -80,8 +80,8 @@ $endif
       return Label("bg=pale yellow", 
                    "font=sans,10", 
                    "fg=black",
-                   "border=",CompoundBorder("outer=",PlainBorder("line_width=1"),
-                                            "inner=",EmptyBorder("insets=3,3,2,2")))
+                   "border=",CompoundBorder(PlainBorder("line_width=1"),
+                                            EmptyBorder("insets=3,3,2,2")))
    end
 
    public polish(obj)

@@ -61,8 +61,7 @@ class ProgressBar(Component)
 
    public new(a[])
       cast(self,Component).new()
-      self.set_border(CompoundBorder("outer=",RaisedBorder(),
-                                     "inner=",EmptyBorder()))
+      self.set_border(CompoundBorder(RaisedBorder(), EmptyBorder()))
       self.set_percentage(0)
       set_fields(a)
       return
