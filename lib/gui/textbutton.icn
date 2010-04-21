@@ -159,8 +159,7 @@ class TextButton(Button)
 
    public new(a[])
       cast(self,Button).new()
-      self.border := CompoundBorder("outer=",RaisedBorder(),
-                                    "inner=",EmptyBorder())
+      self.border := CompoundBorder(RaisedBorder(), EmptyBorder())
       set_fields(a)
       return
    end
