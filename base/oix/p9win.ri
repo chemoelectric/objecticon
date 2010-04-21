@@ -2008,7 +2008,7 @@ void getcanvas(wbp w, char *answer)
 
 int getdisplaysize(wbp w, int *width, int *height)
 {
-    Rectangle r = screen->display->image->r;
+    Rectangle r = display->image->r;
     *width = Dx(r);
     *height = Dy(r);
     return Succeeded;
