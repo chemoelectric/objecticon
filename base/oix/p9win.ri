@@ -387,32 +387,26 @@ static void mouse_loop(int in_fd, int out_fd)
         if (write(out_fd, buf, r + 9) != r + 9)
             break;
     }
-
-    buf[0] = 'Q';
-    write(out_fd, buf, 1);
     _exits(0);
 }
 
 static void cons_loop(int in_fd, int out_fd) 
 {
     Rune r;
-    char t[11], in[10];
+    char buf[11], in[10];
     int tfd;
 
-    t[0] = 'C';
+    buf[0] = 'C';
     tfd = open("/dev/bintime", OREAD);
     while (read(in_fd, in, sizeof in) > 0) {
         if (tfd)
-            pread(tfd, &t[1], 8, 0);
+            pread(tfd, &buf[1], 8, 0);
         chartorune(&r, in);
-        t[9] = r;
-        t[10] = r>>8;
-        if (write(out_fd, t, 11) != 11)
+        buf[9] = r;
+        buf[10] = r>>8;
+        if (write(out_fd, buf, 11) != 11)
             break;
     }
-
-    t[0] = 'Q';
-    write(out_fd, t, 1);
     _exits(0);
 }
 
