@@ -515,7 +515,7 @@ int handle_config(wbp w, UINT msg, WPARAM wp, LPARAM lp)
       return 1;
       }
    MakeInt(RESIZED, &d);
-   qevent(w->window, &d, 0, 0, 0, 0, 0);
+   qevent(w->window, &d, -1, -1, 0, 0, 0);
    return 1;
    }
 
@@ -909,7 +909,7 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
    case WM_CLOSE: {
       struct descrip d;
       MakeInt(WINDOWCLOSED, &d);
-      qevent(ws, &d, 0, 0, 0, 0, 0);
+      qevent(ws, &d, -1, -1, 0, 0, 0);
       return 0;
    }
 
@@ -926,7 +926,7 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
       if (ws->refcount > 0) {
           struct descrip d;
           MakeInt(WINDOWCLOSED, &d);
-          qevent(ws ,&d, 0, 0, 0, 0, 0);
+          qevent(ws ,&d, -1, -1, 0, 0, 0);
          }
       else if (ws->refcount < 0) { /* window was closed by program */
          ws->refcount = -ws->refcount;

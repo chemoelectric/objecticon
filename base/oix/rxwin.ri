@@ -644,7 +644,7 @@ static int handle_misc(wdp wd)
                                                                "WM_DELETE_WINDOW", False)) {
                         struct descrip d;
                         MakeInt(WINDOWCLOSED, &d);
-                        qevent(wb->window, &d, 0, 0, 0, 0, 0);
+                        qevent(wb->window, &d, -1, -1, 0, 0, 0);
                         return 1;
                     }
                     continue;
@@ -2286,7 +2286,7 @@ static int handle_config(wbp w, XConfigureEvent *event)
         return 1;
 
     MakeInt(RESIZED, &d);
-    qevent(w->window, &d, 0, 0, 0, 0, 0);
+    qevent(w->window, &d, -1, -1, 0, 0, 0);
     return 1;
 }
 
