@@ -437,9 +437,10 @@ class Dialog(Component)
    public create_point_chain(e)
       self.point_chain := []
       self.point_chain_source := e
-      self.build_point_chain(self.point_chain, e.x, e.y)
-      if self.inside(e.x, e.y) then
+      if self.is_unhidden() & self.inside(e.x, e.y) then {
+         self.build_point_chain(self.point_chain, e.x, e.y)
          put(self.point_chain, self)
+      }
    end
 
    public dispose_selections()
