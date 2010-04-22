@@ -1149,7 +1149,10 @@ static char *convert_spec(char *s)
     int flags, size;
     char family[MAXFONTWORD+1], *r;
     static char buff[256];
-    
+
+    if (*s == '/')
+        return s;
+
     if (!strncmp(s, "p9:", 3))
         return s + 3;
 
