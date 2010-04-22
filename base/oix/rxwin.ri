@@ -791,7 +791,7 @@ wbp wcreate(char *display)
     }
     ws = w->window;
     ws->vis = DefaultVisual(ws->display->display, ws->display->screen); 
-    create_list(0, &ws->listp);
+    create_list(64, &ws->listp);
 
     /*
      * some attributes of the display and window are used in the context

@@ -259,7 +259,7 @@ wbp wcreate(char *display)
     w = alcwbinding();
     ws = w->window = alcwinstate();
     w->context = alccontext(w);
-    create_list(0, &ws->listp);
+    create_list(64, &ws->listp);
 
     return w;
 }

@@ -295,7 +295,7 @@ wbp wcreate(char *display)
    w->window = alc_winstate();
    w->context = alc_context(w);
    ws = w->window;
-   create_list(0, &ws->listp);
+   create_list(64, &ws->listp);
    ws->width = ws->height = 0;
    /*
     * set the title

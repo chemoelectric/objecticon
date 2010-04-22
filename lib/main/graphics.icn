@@ -388,44 +388,13 @@ class Window(SetFields,NoCopy)
    #
    public static defer generic_color_value(k)
 
-   public enqueue(eventcode, x, y, modkeys, interval)	
-      /x := 0
-      /y := 0
+   public enqueue(eventcode, x, y, ctrl, alt, shift, release, interval)	
+      /x := -1
+      /y := -1
       x +:= get_dx()
       y +:= get_dy()
-      return pending(eventcode,
-                     ior(pack_modkeys(\modkeys | ""), iand(x, 16rFFFF)),
-                     ior(pack_intrvl(\interval | 0), iand(y, 16rFFFF)))
-   end
-
-   # encode modifier keys
-   private static pack_modkeys(s)			
-      local b, c
-
-      b := 0
-      s := string(s) | runerr(103, s)		# ensure string value
-      every c := !s do case c of {			# set bit for each flag
-         "c":	b := ior(b, 16r10000)
-         "m":	b := ior(b, 16r20000)
-         "s":	b := ior(b, 16r40000)
-         "r":	b := ior(b, 16r80000)
-         default:	runerr(205, s)			# diagnose bad flag
-      }
-      return b					# return result
-   end
-
-   private static pack_intrvl(n)			
-      local e
-
-      n := integer(n) | runerr(101, n)	# ensure integer
-      n <:= 0				# ensure nonnegative
-      e := 0				# assume exponent of 0
-
-      while n >= 16r1000 do {		# if too big
-         n := ishift(n, -4)		# reduce significance
-         e +:= 16r1000			# increase exponent
-      }
-      return ishift(e + n, 16)		# return shifted result
+      /interval := 0
+      return pending(eventcode, x, y, ctrl, alt, shift, release, interval)
    end
 
    protected set_one(f)

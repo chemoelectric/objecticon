@@ -35,10 +35,8 @@ static void wgetq(wbp w, dptr res)
 
 void wgetevent(wbp w, dptr res)
 {
-    struct descrip xdesc, ydesc;
     tended struct descrip qval;
-    int t;
-    uword i;
+    int i;
 
     while (ListBlk(w->window->listp).size == 0) {
         pollevent();				/* poll all windows */
@@ -81,54 +79,21 @@ void wgetevent(wbp w, dptr res)
     }
 
     /*
-     * All other types - "real events" - follow the same format.
+     * All other types - "real events" - seven items follow.  The x,y
+     * values need to be adjusted with the dx,dy offsets.
      */
-
-    wgetq(w, &xdesc);
-    wgetq(w, &ydesc);
-
-    if (xdesc.dword != D_Integer || ydesc.dword != D_Integer)
-        fatalerr(143, 0);
-
-    /* x location */
-    t = IntVal(xdesc) & 0xFFFF;		
-    if (t >= 0x8000)
-        t -= 0x10000;
-    t -= w->context->dx;
-    MakeInt(t, &qval);
+    wgetq(w, &qval);
+    IntVal(qval) -= w->context->dx;
     list_put(res, &qval);
 
-    t = IntVal(ydesc) & 0xFFFF;		/* &y */
-    if (t >= 0x8000)
-        t -= 0x10000;
-    t -= w->context->dy;
-    MakeInt(t, &qval);
+    wgetq(w, &qval);
+    IntVal(qval) -= w->context->dy;
     list_put(res, &qval);
 
-    t = IntVal(xdesc);
-    if (t & EQ_MOD_CONTROL)
-        list_put(res, &onedesc);
-    else
-        list_put(res, &nulldesc);
-    if (t & EQ_MOD_META)
-        list_put(res, &onedesc);
-    else
-        list_put(res, &nulldesc);
-    if (t & EQ_MOD_SHIFT)
-        list_put(res, &onedesc);
-    else
-        list_put(res, &nulldesc);
-    if (t & EQ_MOD_RELEASE)
-        list_put(res, &onedesc);
-    else
-        list_put(res, &nulldesc);
-
-    /* Interval */
-    i = (((uword) IntVal(ydesc)) >> 16) & 0xFFF;		/* mantissa */
-    i <<= 4 * ((((uword) IntVal(ydesc)) >> 28) & 0x7);	/* scale it */
-
-    MakeInt(i, &qval);
-    list_put(res, &qval);
+    for (i = 0; i < 5; ++i) {
+        wgetq(w, &qval);
+        list_put(res, &qval);
+    }
 }
 
 
@@ -145,14 +110,7 @@ void qevent(wsp ws,             /* canvas */
 {
     dptr q = &(ws->listp);	/* a window's event queue (Icon list value) */
     struct descrip d;
-    uword ivl, mod;
-    int expo;
-
-    mod = 0;				/* set modifier key bits */
-    if (f & ControlMask) mod |= EQ_MOD_CONTROL;
-    if (f & Mod1Mask)    mod |= EQ_MOD_META;
-    if (f & ShiftMask)   mod |= EQ_MOD_SHIFT;
-    if (krel) mod |= EQ_MOD_RELEASE;
+    word ivl;
 
     if (t != 0) {		/* if clock value supplied */
         if (ws->timestamp == 0)		/* if first time */
@@ -161,21 +119,39 @@ void qevent(wsp ws,             /* canvas */
             t = ws->timestamp;
         ivl = t - ws->timestamp;		/* calc interval in milliseconds */
         ws->timestamp = t;		/* save new clock value */
-        expo = 0;
-        while (ivl >= 0x1000) {		/* if too big */
-            ivl >>= 4;			/* reduce significance */
-            expo += 0x1000;		/* bump exponent */
-        }
-        ivl += expo;			/* combine exponent with mantissa */
     }
     else
         ivl = 0;				/* report 0 if interval unknown */
 
+    /* Event code */
     list_put(q, e);
-    d.dword = D_Integer;
-    IntVal(d) = mod | (x & 0xFFFF);
+
+    /* x, y */
+    MakeInt(x, &d);
     list_put(q, &d);
-    IntVal(d) = (ivl << 16) | (y & 0xFFFF);
+    MakeInt(y, &d);
+    list_put(q, &d);
+
+    /* Modifiers */
+    if (f & ControlMask)
+        list_put(q, &onedesc);
+    else
+        list_put(q, &nulldesc);
+    if (f & Mod1Mask)
+        list_put(q, &onedesc);
+    else
+        list_put(q, &nulldesc);
+    if (f & ShiftMask)
+        list_put(q, &onedesc);
+    else
+        list_put(q, &nulldesc);
+    if (krel)
+        list_put(q, &onedesc);
+    else
+        list_put(q, &nulldesc);
+
+    /* Interval */
+    MakeInt(ivl, &d);
     list_put(q, &d);
 }
 
