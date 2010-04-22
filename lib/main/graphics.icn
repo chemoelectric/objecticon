@@ -8,6 +8,13 @@ class Window(SetFields,NoCopy)
    private
       wbp
 
+   public static const
+      INVOKE_LATER
+
+   private static init()
+      INVOKE_LATER := -40
+   end
+
    public static open(a[])
       local f, w, t, display, parent
       t := []

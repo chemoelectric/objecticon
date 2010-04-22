@@ -54,7 +54,6 @@ class Dialog(Component)
       curr_drag_holder,
       curr_drop,
       tried_drag,
-      invokes,
       tooltip_ticker,
       tooltip_last_obj, 
       tooltip_last_tip, 
@@ -501,6 +500,10 @@ class Dialog(Component)
       }
    end
 
+   private process_invoke_later(l)
+      l[2](l[3])
+   end
+
 $ifdef _PLAN9
    public own_selection(selection, obj)
       local curr
@@ -537,6 +540,7 @@ $endif
          Selection.REQUEST: process_selection_request(l)
          Selection.CLEAR: process_selection_clear(l)
          Selection.RESPONSE: process_selection_response(l)
+         Window.INVOKE_LATER: process_invoke_later(l)
          default: {
             if member(Mouse.DRAG_OR_MOVEMENT, l[1]) then
                consume_same(l[1])
@@ -574,8 +578,7 @@ $endif
          check_click_count(e)
          if c := (!self.point_chain).find_focus(e) then
             self.set_focus(c, e)
-      } else if ec === Event.INVOKE_LATER then
-         do_invoke()
+      }
       else if ec === Mouse.WINDOW_RESIZE then
          handle_resize(e)
       else if \e.meta & /e.release & type(ec) == ("string" | "ucs") then {
@@ -1082,18 +1085,7 @@ $endif
    #                method.
    #
    public invoke_later(proc, param)
-      put(self.invokes, [proc, param])
-      self.win.enqueue(Event.INVOKE_LATER)
-   end
-
-   #
-   # Call a method added via invoke_later().
-   # 
-   private do_invoke()
-      local e
-      if e := pop(self.invokes) then {
-         e[1](e[2])
-      }
+      self.win.pending(Window.INVOKE_LATER, proc, param)
    end
 
    #
@@ -1136,7 +1128,6 @@ $endif
       cast(self,Component).new()
       self.set_all_wattribs(ROOT_WATTRIBS)
       self.child_dialogs := set()
-      self.invokes := []
       self.held := table()
       self.selections := table()
       self.selection_requests := table()
