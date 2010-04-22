@@ -63,23 +63,6 @@
 #define FONTFLAG_HEBREW		0x00400000
 #define FONTFLAG_LATIN6		0x00800000
 
-/*
- * EVENT HANDLING
- *
- * Each window keeps an associated queue of events waiting to be
- * processed.  The queue consists of <eventcode,x,y> triples,
- * where eventcodes are strings for normal keyboard events, and
- * integers for mouse and special keystroke events.
- *
- * The main queue is an icon list.  In addition, there is a queue of
- * old keystrokes maintained for cooked mode operations, maintained
- * in a little circular array of chars.
- */
-#define EQ_MOD_CONTROL (1L<<16L)
-#define EQ_MOD_META    (1L<<17L)
-#define EQ_MOD_SHIFT   (1L<<18L)
-#define EQ_MOD_RELEASE (1L<<19L)
-
 
 /*
  * mode bits for the Icon window context (as opposed to X context)
