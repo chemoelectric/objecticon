@@ -539,7 +539,7 @@ static void flush_event_pipe(wsp ws)
                     BlkLoc(d) = (union block *)make_one_char_ucs_block(i);
                 } else 
                     MakeInt(i, &d);
-                qevent(ws, &d, 0, 0, time, 0, 0);
+                qevent(ws, &d, ws->last_mouse_x, ws->last_mouse_y, time, 0, 0);
                 break;
             }
             case 'M': {
