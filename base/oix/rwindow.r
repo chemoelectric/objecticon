@@ -53,7 +53,6 @@ void wgetevent(wbp w, dptr res)
     if (is:integer(qval)) {
         switch (IntVal(qval)) {
             case SELECTIONREQUEST: {
-                int i;
                 /* Five items follow; copy them to the result */
                 for (i = 0; i < 5; ++i) {
                     wgetq(w, &qval);
