@@ -489,7 +489,7 @@ static void handle_resize(wsp ws)
         resize_pix_win(w);
         pix_to_win(ws);
         MakeInt(RESIZED, &d);
-        qevent(ws, &d, 0, 0, 0, 0, 0);
+        qevent(ws, &d, -1, -1, 0, 0, 0);
     }
 }
 
