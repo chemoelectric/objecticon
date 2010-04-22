@@ -292,29 +292,6 @@
 #define BlkSize(x) (bsizes[*(word *)x & ~F_Mark] ? \
 		     bsizes[*(word *)x & ~F_Mark] : *((word *)x + 1))
 
-/*
- * Here are the events we support (in addition to keyboard characters)
- */
-#define MOUSELEFT	(-1)
-#define MOUSEMID	(-2)
-#define MOUSERIGHT	(-3)
-#define MOUSELEFTUP	(-4)
-#define MOUSEMIDUP	(-5)
-#define MOUSERIGHTUP	(-6)
-#define MOUSELEFTDRAG	(-7)
-#define MOUSEMIDDRAG	(-8)
-#define MOUSERIGHTDRAG	(-9)
-#define RESIZED		(-10)
-#define WINDOWCLOSED    (-11)
-#define MOUSEMOVED      (-12)
-#define MOUSE4          (-13)
-#define MOUSE5          (-14)
-#define MOUSE4UP        (-16)
-#define MOUSE5UP        (-17)
-#define SELECTIONREQUEST   (-30)
-#define SELECTIONCLEAR     (-31)
-#define SELECTIONRESPONSE  (-32)
-
 
 /*
  * Type codes (descriptors and blocks).

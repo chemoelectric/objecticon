@@ -26,8 +26,6 @@ class Event()
       MOUSE_WHEEL_DOWN,
       WINDOW_RESIZE,
       WINDOW_CLOSE_BUTTON,
-      # The synthetic event for invocation via the event queue.
-      INVOKE_LATER,        
       # This event listens for all window-system generated events
       ICON,
       BUTTON_RELEASE,
@@ -66,7 +64,6 @@ class Event()
       MOUSE_WHEEL_DOWN := Mouse.WHEEL_DOWN
       WINDOW_RESIZE := Mouse.WINDOW_RESIZE
       WINDOW_CLOSE_BUTTON := Mouse.WINDOW_CLOSE_BUTTON
-      INVOKE_LATER := -1000
       ICON := 1
       BUTTON_RELEASE := 20
       BUTTON_PRESS := 21
