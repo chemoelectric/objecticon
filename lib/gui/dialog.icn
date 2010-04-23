@@ -10,7 +10,6 @@ package gui
 
 import 
    graphics,
-   util,
    lang,
    ipl.sets,
    ipl.lists,
@@ -19,10 +18,6 @@ import
 #
 #
 # This is the parent class of a dialog window.
-#
-# @field only_enlarge_height=flag : see {set_only_enlarge_height}
-# @field only_enlarge_width=flag : see {set_only_enlarge_width}
-# @field see also {Component}
 #
 class Dialog(Component)
    public static 
@@ -65,8 +60,6 @@ class Dialog(Component)
       point_chain,
       point_chain_source,
       copy_rect,
-      only_enlarge_width_flag,
-      only_enlarge_height_flag,
       held,
       moving,
       selection_requests,
@@ -263,7 +256,8 @@ class Dialog(Component)
       self.effective_wattribs := copy(self.wattribs)
       every delete(self.effective_wattribs, 
                    "pos" | "posx" | "posy" | "size" | "width" | "height"|
-                   "minwidth" | "minheight" | "minsize")
+                   "minwidth" | "minheight" | "minsize" |
+                   "maxwidth" | "maxheight" | "maxsize")
       self.compute_z_order()
       self.compute_tab_order()
       self.cbwin := self.buffer_win.clone()
@@ -331,10 +325,6 @@ class Dialog(Component)
       self.win := Window.open!t | runerr("Couldn't open window:" || &why)
       # Make the buffer the same size as the visible win.
       self.buffer_win.set_size(self.win.get_width(), self.win.get_height())
-      if \self.only_enlarge_width_flag then
-         self.win.set_minwidth(self.win.get_width())
-      if \self.only_enlarge_height_flag then
-         self.win.set_minheight(self.win.get_height())
    end
 
    public close_win()
@@ -1073,31 +1063,6 @@ class Dialog(Component)
    #
    public invoke_later(proc, param)
       self.win.pending(Window.INVOKE_LATER, proc, param)
-   end
-
-   #
-   # Configure the dialog so that it can't be reduced below its original
-   # height.
-   #
-   public set_only_enlarge_height(s)
-      self.only_enlarge_height_flag := check_flag(s)
-   end
-
-   #
-   # Configure the dialog so that it can't be reduced below its original
-   # width.
-   #
-   public set_only_enlarge_width(s)
-      self.only_enlarge_width_flag := check_flag(s)
-   end
-
-   public set_one(f)
-      case f.attr of {
-         "only_enlarge_height" : set_only_enlarge_height(f.flag_val()) 
-         "only_enlarge_width" : set_only_enlarge_width(f.flag_val()) 
-         default: return cast(self,Component).set_one(f)
-      }
-      return
    end
 
    private static init()

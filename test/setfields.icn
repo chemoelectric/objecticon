@@ -142,10 +142,6 @@ procedure main()
    print{"o.x_align", o.x_align}
    print{"o.y_align", o.y_align}
 
-   o := Dialog("only_enlarge_height=y","only_enlarge_width=t")
-   print{"o.only_enlarge_width_flag", o.only_enlarge_width_flag}
-   print{"o.only_enlarge_height_flag", o.only_enlarge_height_flag}
-
    o:=Slider("is_horizontal=t","value=10","range=1,20","ticks=5","labels=6","snaps=7","increment_size=2")
    print{"o.is_horizontal_flag", o.is_horizontal_flag}
    print{"o.lo", o.lo}
