@@ -512,14 +512,18 @@ class Dialog(Component)
    end
 
    public process_event(l)
+      static consume_same_events
       local e
+      initial
+         consume_same_events := Mouse.DRAG_OR_MOVEMENT ++ set(Mouse.WINDOW_RESIZE)
+
       case l[1] of {
          Selection.REQUEST: process_selection_request(l)
          Selection.CLEAR: process_selection_clear(l)
          Selection.RESPONSE: process_selection_response(l)
          Window.INVOKE_LATER: process_invoke_later(l)
          default: {
-            if member(Mouse.DRAG_OR_MOVEMENT, l[1]) then
+            if member(consume_same_events, l[1]) then
                consume_same(l[1])
 
             e := WinEvent!l
@@ -991,7 +995,6 @@ class Dialog(Component)
    # Process a resize 
    # 
    private handle_resize(e)
-      consume_same(e)
       #
       # Resize buffer canvas
       #
