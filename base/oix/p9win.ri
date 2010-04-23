@@ -18,8 +18,9 @@ static void synch_cursor(wsp ws);
 static vlong get_time(void);
 static int open_screen_win(wsp ws);
 static void close_screen_win(wsp ws);
-static int open_pix_win(wsp ws);
+static void open_pix_win(wsp ws);
 static void close_pix_win(wsp ws);
+static void resize_pix_win(wbp w);
 static void handle_resize(wsp ws);
 static void init_window_system(void);
 static void clear_pix_win(wbp wb);
@@ -268,13 +269,8 @@ int wopen(wbp w, wbp parent)
 {
     wsp ws = w->window;
     struct imgdata *imd;
-    tended struct descrip attrrslt;
 
-    limit_size(ws, &ws->width, &ws->height);
-
-    if (open_pix_win(ws) != Succeeded)
-        return Failed;
-
+    open_pix_win(ws);
     /* Fill pixmap with bg color */
     clear_pix_win(w);
 
@@ -371,6 +367,8 @@ static int configure_canvas(wbp w)
         }
     } else {
         if (!ws->win) {
+            if (limit_size(ws, &ws->width, &ws->height))
+                resize_pix_win(w);
             if (open_screen_win(ws) == Failed)
                 return Failed;
             pix_to_win(ws);
@@ -440,8 +438,7 @@ static void resize_pix_win(wbp w)
     MemProtect(t = allocimage(display, ws->pix->r, screen->chan, 1, DNofill));
     copy_to(t, ws->pix);
     close_pix_win(ws);
-    if (open_pix_win(ws) == Failed)
-        syserr("Failed to open_pix_win on a resize");
+    open_pix_win(ws);
     clear_pix_win(w);
     copy_to(ws->pix, t);
     freeimage(t);
@@ -1380,14 +1377,13 @@ int doconfig(wbp w, int status)
 {
     wsp ws = w->window;
 
-    /* Limit size, if changed */
-    if (status & (C_SIZE|C_MAXSIZE|C_MINSIZE)) {
-        if (limit_size(ws, &ws->width, &ws->height))
-            status |= C_SIZE;
-    }
-
     /* Move/resize of window if open */
     if (ws->win) {
+        /* Limit size, if changed */
+        if (status & (C_SIZE|C_MAXSIZE|C_MINSIZE)) {
+            if (limit_size(ws, &ws->width, &ws->height))
+                status |= C_SIZE;
+        }
         if (status & C_POS)
             fprint(ws->wctl_fd, "move  -minx %d -miny %d", ws->posx, ws->posy);
         if (status & C_SIZE)
@@ -1688,10 +1684,9 @@ static void close_screen_win(wsp ws)
         ws->cursor_fd = ws->mouse_pid = ws->cons_pid = ws->wsys_fd = ws->wctl_fd = -1;
 }
 
-static int open_pix_win(wsp ws)
+static void open_pix_win(wsp ws)
 {
     MemProtect(ws->pix = allocimage(display, Rect(0, 0, ws->width, ws->height), screen->chan, 1, DNofill));
-    return Succeeded;
 }
 
 static void close_pix_win(wsp ws)
