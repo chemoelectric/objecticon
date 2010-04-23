@@ -966,8 +966,6 @@ class Canvas(Component,SelectiveObjectCodec)
       c.dialog_struct := CDialog()
       c.dialog_struct.ticker_rate := self.dialog_struct.ticker_rate
       c.dialog_struct.wattribs := copy(self.dialog_struct.wattribs)
-      c.dialog_struct.only_enlarge_width_flag := self.dialog_struct.only_enlarge_width_flag
-      c.dialog_struct.only_enlarge_height_flag := self.dialog_struct.only_enlarge_height_flag
       c.name := self.name
       c.is_component := self.is_component
       c.superclass_name := self.superclass_name

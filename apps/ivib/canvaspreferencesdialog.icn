@@ -15,8 +15,6 @@ class CanvasPreferencesDialog(Dialog)
       h_spec_tf,               # TextField
       set_w_default,           # CheckBoxes                     
       set_h_default,           #                     
-      only_enlarge_width,
-      only_enlarge_height,
       okay_result,             # Flag indicating result
       name,                    # TextField - object name
       is_component_cb,         # Component or not
@@ -83,9 +81,6 @@ class CanvasPreferencesDialog(Dialog)
          integer(h_spec_tf.get_contents()) | return alert_error(self, "Invalid height")
       util_check_attribs(self, attrib_tab.get_table()) | fail
 
-      c.dialog_struct.only_enlarge_width_flag := if only_enlarge_width.is_checked() then 1 else &null
-      c.dialog_struct.only_enlarge_height_flag := if only_enlarge_height.is_checked() then 1 else &null
-
       #
       # Set some values.
       #
@@ -141,15 +136,11 @@ class CanvasPreferencesDialog(Dialog)
             self.superclass_name.set_contents("Component")
          self.gen_init_dialog.set_is_shaded(&yes)
          self.gen_main.set_is_shaded(&yes)
-         only_enlarge_width.set_is_shaded(&yes)
-         only_enlarge_height.set_is_shaded(&yes)
       } else {
          if s == "Component" then
             self.superclass_name.set_contents("Dialog")
          self.gen_init_dialog.set_is_shaded(&no)
          self.gen_main.set_is_shaded(&no)
-         only_enlarge_width.set_is_shaded(&no)
-         only_enlarge_height.set_is_shaded(&no)
       }
    end
 
@@ -212,12 +203,6 @@ class CanvasPreferencesDialog(Dialog)
          set_w_default.set_is_shaded(&yes)
       pos_tab.add(set_w_default)
 
-      only_enlarge_width := CheckBox("c:eol", "c:tab=1", "c:w=2", "label=Only allow resize above original size")
-      if \c.dialog_struct.only_enlarge_width_flag then
-         only_enlarge_width.set_is_checked(&yes)
-      pos_tab.add(only_enlarge_width)
-
-
       l := Label()
       l.set_label("H : ")
       pos_tab.add(l)
@@ -238,11 +223,6 @@ class CanvasPreferencesDialog(Dialog)
       if /c.layout_delegate then
          set_h_default.set_is_shaded(&yes)
       pos_tab.add(set_h_default)
-
-      only_enlarge_height := CheckBox("c:eol", "c:tab=1", "c:w=2", "label=Only allow resize above original size")
-      if \c.dialog_struct.only_enlarge_height_flag then
-         only_enlarge_height.set_is_checked(&yes)
-      pos_tab.add(only_enlarge_height)
 
       pos_tab.add(Label("label=Layout"))
       layout_field := LayoutField("c:eol", "c:w=2")

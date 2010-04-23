@@ -224,6 +224,10 @@ class Main(Dialog)
       self.filename_label.set_label(Files.get_path(s).get(-1))
    end      
 
+   public init_dialog()
+      win.set_minsize(win.get_width(), win.get_height())
+   end
+
    #
    # Special custom show to allow a popup during init
    #         
@@ -1369,7 +1373,6 @@ class Main(Dialog)
       self.connect(self.op_quit, Event.WINDOW_CLOSE_BUTTON)
 
       self.attrib("label=Ivib", "height=600", "minheight=400")
-      self.set_only_enlarge_width(&yes)
       canvas_zone := Panel("bg=blue", "size=50,50")
       self.add(canvas_zone)
 

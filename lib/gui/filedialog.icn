@@ -72,6 +72,7 @@ class FileDialog(Dialog)
    end
 
    public init_dialog()
+      win.set_minsize(win.get_width(), win.get_height())
       goto_dir(dir.get_contents())
       # If we have a filename in the field, select it in the file list,
       # if it's there.
@@ -361,8 +362,6 @@ class FileDialog(Dialog)
       local panel_2, layout_7, layout_4, split_content_1, split_content_2, panel_4, layout_9, paint_1, split_1, layout_6, layout_3, panel_3, paint, layout_8
       self.set_wattrib("label", "Select file")
       self.set_wattrib("resize", "on")
-      self.set_only_enlarge_width(&yes)
-      self.set_only_enlarge_height(&yes)
       panel_4 := Panel()
       panel_4.clear_constraints()
       panel_4.set_constraint("eol", "y")

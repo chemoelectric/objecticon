@@ -347,6 +347,16 @@ static int limit_size(wsp ws, int *width, int *height)
         *height = ws->maxheight;
         rv = 1;
     }
+    /* Ensure size within permissible limits for a rio window.  If we don't keep within
+     * these limits, mount and resize requests fail with an error. */
+    if (*width < 92) {
+        *width = 92;
+        rv = 1;
+    }
+    if (*height < 46) {
+        *height = 46;
+        rv = 1;
+    }
     return rv;
 }
 
@@ -1378,14 +1388,12 @@ int doconfig(wbp w, int status)
 
     /* Move/resize of window if open */
     if (ws->win) {
-        if (status & (C_POS|C_SIZE)) {
-            if (status & C_POS)
-                fprint(ws->wctl_fd, "move  -minx %d -miny %d", ws->posx, ws->posy);
-            if (status & C_SIZE)
-                fprint(ws->wctl_fd, "resize  -dx %d -dy %d", 
-                       ws->width + 2*Borderwidth, 
-                       ws->height + 2*Borderwidth);
-        }
+        if (status & C_POS)
+            fprint(ws->wctl_fd, "move  -minx %d -miny %d", ws->posx, ws->posy);
+        if (status & C_SIZE)
+            fprint(ws->wctl_fd, "resize  -dx %d -dy %d", 
+                   ws->width + 2*Borderwidth, 
+                   ws->height + 2*Borderwidth);
     }
     if (status & C_SIZE)
         resize_pix_win(w);
@@ -1546,13 +1554,11 @@ static int open_screen_win(wsp ws)
                 ws->posy + ws->height + 2*Borderwidth);
         if (ws->desired_canvas == IconicCanvas)
             strcat(buff, " -hide");
-
         if (mount(ws->wsys_fd, -1, ws->mount_dir, MREPL, buff) < 0) {
             whyf("Can't mount new window: %r");
             close_screen_win(ws);
             return Failed;
         }
-
         if ((ws->wctl_fd = open_winfile(ws, "wctl", OWRITE)) < 0) {
             whyf("Can't open wctl file: %r");
             close_screen_win(ws);
