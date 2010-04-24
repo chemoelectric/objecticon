@@ -10,8 +10,7 @@ package gui
 
 import 
    ipl.sort,
-   util,
-   io
+   util
 
 #
 # This is the parent class of all the GUI components.  All of
@@ -737,7 +736,7 @@ class Component(Rect,Align,SetFields,Connectable)
    # dialog reference and creating the cloned windows.
    #
    public initially()
-      local i, p, attribs, e
+      local e
       \self.parent | runerr("incorrect ancestry (parent null)")
       parent_dialog := parent.get_parent_dialog()
       self.effective_is_hidden_flag := if parent.is_hidden() | \self.is_hidden_flag then 1 else &null
@@ -748,26 +747,8 @@ class Component(Rect,Align,SetFields,Connectable)
          insert(self.effective_wattribs, e[1], e[2])
       self.compute_z_order()
       self.compute_tab_order()
-      attribs := wattribs_to_list(self.wattribs)
-      if not(cbwin := (parent.get_cbwin().clone!attribs)) then {
-	 # Clone failed, what to do?  Try to drop a single
-	 # attribute, as that will identify which one is hurting us.
-	 every i := 1 to *attribs do {
-	    p := pop(attribs)
-	    if cbwin := (parent.get_cbwin().clone!attribs) then {
-               ewrite("clone failed, had to discard attribute ", image(p))
-	       break
-            }
-	    push(attribs, p)
-         }
-	 if /cbwin then {
-	    ewrite("clone failed, discarding attributes:")
-	    every ewrite("\t", ! attribs)
-	    cbwin := parent.get_cbwin().clone()
-	    if /cbwin then 
-               runerr("multiple bad attributes")
-         }
-      }
+      cbwin := parent.get_cbwin().clone!wattribs_to_list(self.wattribs) | 
+         runerr("Failed to clone window:" || &why)
       (\self.border).initially(self)
       every (!self.children).initially()
    end
