@@ -253,6 +253,7 @@ class Dialog(Component)
       self.parent_dialog := self
       self.effective_is_hidden_flag := self.is_hidden_flag
       self.effective_is_shaded_flag := self.is_shaded_flag
+      Gui.style.polish(self)
       self.effective_wattribs := copy(self.wattribs)
       every delete(self.effective_wattribs, 
                    "pos" | "posx" | "posy" | "size" | "width" | "height"|
@@ -260,15 +261,17 @@ class Dialog(Component)
                    "maxwidth" | "maxheight" | "maxsize")
       self.compute_z_order()
       self.compute_tab_order()
-      self.cbwin := self.buffer_win.clone()
+      self.cbwin := self.buffer_win.clone!wattribs_to_list(self.wattribs) | 
+         runerr("Failed to open clone window:" || &why)
       every (!self.children).initially()
    end
 
    public open_buffer_win()
-      local t
-      t := wattribs_to_list(self.wattribs)
-      put(t, "canvas=hidden")
-      self.buffer_win := Window.open!t | runerr("couldn't open window:" || &why)
+      # Note that the window attribs are applied in initially() above.  This may be called
+      # several times (eg via reset()), so we must start with empty attributes here since we
+      # may start with say "bg=blue", then delete that attrib and call reset().  We wouldn't
+      # then want "bg=blue" to still be stuck in the root buffer window's context.
+      self.buffer_win := Window.open("canvas=hidden") | runerr("couldn't open buffer window:" || &why)
    end
 
    #
