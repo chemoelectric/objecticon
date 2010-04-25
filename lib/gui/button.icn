@@ -125,14 +125,32 @@ class Button(Toggle,Component)
       fire(Event.ACTION, e)
    end
 
+   #
+   # Visualize the given (keyboard) event, by making the button go down
+   # for a short time (50ms), before making it go up again, and then
+   # calling {on_action}
+   #
+   public visualize_action(e)
+      local t
+      self.is_down := 1
+      self.invalidate()
+      t := Ticker("delay=50", "times=1")
+      t.connect(create {
+         self.is_down := &null
+         on_action(e)
+      }, Event.TICK) 
+      t.start()
+   end
+
    public handle_accel(e)
-      cast(self,Component).handle_accel(e)
-      on_action(e)
+      if /self.no_click_focus_flag then
+         grab_focus(e)
+      visualize_action(e)
    end
 
    public handle_key(e)
       if e.code == ("\r"|"\l"|" ") then
-         on_action(e)
+         visualize_action(e)
    end
 
    #
