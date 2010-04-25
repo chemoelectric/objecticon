@@ -1,8 +1,8 @@
 package gui
 
-import util, graphics, io, lang
+import util, graphics, io
 
-class ImageCache(NoCopy)
+class ImageCache()
    public static 
       map,
       path
@@ -68,7 +68,7 @@ class ImageCache(NoCopy)
       suspend (!path).append(p).str()
    end
    
-   private new()
+   final private new()
    end
 end
 
