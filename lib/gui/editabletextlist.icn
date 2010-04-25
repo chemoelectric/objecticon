@@ -57,7 +57,8 @@ class EditableTextList(LineBasedScrollArea)
       line_splitter,
       changed,
       primary_selection_owner,
-      clipboard_selection_owner
+      clipboard_selection_owner,
+      scroll_ticker
 
    public calculate_line_count()
       if /view_list then
@@ -70,6 +71,7 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public finally()
+      scroll_ticker.stop()
       cast(self,LineBasedScrollArea).finally()
       # In case the component changes the contents and is then re-inited.
       clear_view_list()
@@ -606,7 +608,7 @@ class EditableTextList(LineBasedScrollArea)
          check_ticker(e.x - (self.view.x + self.view.w))
       } else {
          direction := &null
-         stop_ticker()
+         scroll_ticker.stop()
          set_cursor_from_pos(e)
       }
 
@@ -614,15 +616,12 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public check_ticker(d)
-      local r
-      r := Gui.style.distance2ticker_rate(d)
-      if is_ticking() then
-         retime_ticker(r)
-      else
-         start_ticker(r)
+      scroll_ticker.set_interval(Gui.style.distance2ticker_rate(d))
+      # Start it (if it isn't already running)
+      scroll_ticker.start()
    end
 
-   public tick()
+   public scroll_tick()
       local l, s, v, vi, e
 
       start_handle(e)
@@ -678,7 +677,7 @@ class EditableTextList(LineBasedScrollArea)
       # after release.
       #
       has_region() | clear_mark()
-      stop_ticker()
+      scroll_ticker.stop()
       end_handle(e)
    end
 
@@ -1242,6 +1241,8 @@ class EditableTextList(LineBasedScrollArea)
 
    public new(a[])
       cast(self,LineBasedScrollArea).new()
+      scroll_ticker := Ticker()
+      scroll_ticker.connect(self.scroll_tick, Event.TICK)
       self.set_accepts_focus(&yes)
       undo_manager := UndoManager()
       tab_width := Gui.TAB_WIDTH

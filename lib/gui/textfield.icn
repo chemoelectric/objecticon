@@ -60,7 +60,8 @@ class TextField(Component)
       changed,
       loff,
       primary_selection_owner,
-      clipboard_selection_owner
+      clipboard_selection_owner,
+      scroll_ticker
 
    #
    # Set the displaychar attribute
@@ -269,18 +270,15 @@ class TextField(Component)
          check_ticker(e.x - (self.tx + self.tw))
       } else {
          self.cursor := whereis_x(e)
-         stop_ticker()
+         scroll_ticker.stop()
       }
       end_handle(e)
    end
 
    public check_ticker(d)
-      local r
-      r := Gui.style.distance2ticker_rate(d)
-      if is_ticking() then
-         retime_ticker(r)
-      else
-         start_ticker(r)
+      scroll_ticker.set_interval(Gui.style.distance2ticker_rate(d))
+      # Start it (if it isn't already running)
+      scroll_ticker.start()
    end
 
    #
@@ -301,7 +299,7 @@ class TextField(Component)
          loff := max(0, self.cbwin.text_width(s) - self.tw)
    end
 
-   public tick()
+   public scroll_tick()
       local s
       start_handle()
       s := get_view()
@@ -324,12 +322,17 @@ class TextField(Component)
       #
       # For consistency with editabletextlist we clear_mark if no region.
       has_region() | clear_mark()
-      stop_ticker()
+      scroll_ticker.stop()
       end_handle(e)
    end
 
    public clear_mark()
       self.mark := &null
+   end
+
+   public finally()
+      scroll_ticker.stop()
+      cast(self,Component).finally()
    end
 
    #
@@ -688,6 +691,8 @@ class TextField(Component)
 
    public new(a[])
       cast(self,Component).new()
+      scroll_ticker := Ticker()
+      scroll_ticker.connect(self.scroll_tick, Event.TICK)
       undo_manager := UndoManager()
       filter := Gui.PRINTABLE_1
       self.accepts_focus_flag := 1
@@ -946,10 +951,3 @@ class TextFieldDeleteLineEdit(TextFieldEdit)
       return
    end
 end
-
-
-
-
-
-
-

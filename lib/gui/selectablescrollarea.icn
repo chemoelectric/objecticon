@@ -41,7 +41,8 @@ class SelectableScrollArea(LineBasedScrollArea)
       highlight,
       draggable_cursor,
       motion_cursor,
-      selection_on_key_moves
+      selection_on_key_moves,
+      scroll_ticker
 
    public calculate_line_count()
       return *self.contents
@@ -567,21 +568,18 @@ class SelectableScrollArea(LineBasedScrollArea)
       } else {
          self.cursor := get_nearest_line_to_pointer(e)
          ensure_line_visible(self.cursor)
-         stop_ticker()
+         scroll_ticker.stop()
       }
       end_handle(e)
    end
 
    public check_ticker(d)
-      local r
-      r := Gui.style.distance2ticker_rate(d)
-      if is_ticking() then
-         retime_ticker(r)
-      else
-         start_ticker(r)
+      scroll_ticker.set_interval(Gui.style.distance2ticker_rate(d))
+      # Start it (if it isn't already running)
+      scroll_ticker.start()
    end
 
-   public tick()
+   public scroll_tick()
       local i
       start_handle()
       i := get_line_info() | fail
@@ -615,7 +613,7 @@ class SelectableScrollArea(LineBasedScrollArea)
       #
       # Mouse released after being held down.  Clear flag
       #
-      stop_ticker()
+      scroll_ticker.stop()
       #
       # Clear flag, refresh, return event
       #
@@ -805,11 +803,11 @@ class SelectableScrollArea(LineBasedScrollArea)
             } else {
                self.highlight := get_nearest_line_to_pointer(e)
                ensure_line_visible(self.highlight)
-               stop_ticker()
+               scroll_ticker.stop()
             }
          } else {
             # We've gone to the left or right of the view, so stop being drag holder.
-            stop_ticker()
+            scroll_ticker.stop()
             self.highlight := &null
          }
       } else {
@@ -836,13 +834,20 @@ class SelectableScrollArea(LineBasedScrollArea)
       if \self.highlight then {
          start_handle(e)
          self.highlight := &null
-         stop_ticker()
+         scroll_ticker.stop()
          end_handle(e)
       }
    end
 
+   public finally()
+      scroll_ticker.stop()
+      cast(self,LineBasedScrollArea).finally()
+   end
+
    public new(a[])
-      cast(self,ScrollArea).new()
+      cast(self,LineBasedScrollArea).new()
+      scroll_ticker := Ticker()
+      scroll_ticker.connect(self.scroll_tick, Event.TICK)
       self.set_accepts_focus(&yes)
       self.select_mode := Select.NONE
       self.contents := []

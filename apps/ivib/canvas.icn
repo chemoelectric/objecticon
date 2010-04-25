@@ -964,7 +964,6 @@ class Canvas(Component,SelectiveObjectCodec)
       c.new_file_flag := self.new_file_flag
       c.modified := self.modified
       c.dialog_struct := CDialog()
-      c.dialog_struct.ticker_rate := self.dialog_struct.ticker_rate
       c.dialog_struct.wattribs := copy(self.dialog_struct.wattribs)
       c.name := self.name
       c.is_component := self.is_component
