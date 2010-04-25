@@ -32,7 +32,8 @@ import util
 class Ticker(SetFields,Connectable)
    private readable
       interval,
-      delay
+      delay,
+      running
 
    package readable
       times,
@@ -45,7 +46,12 @@ class Ticker(SetFields,Connectable)
    # fires off events to its listeners.
    #
    public tick()
+      # The running flag prevents re-entrant calls to tick() (see
+      # Dispatcher); this could happen if a tick listener called
+      # show_modal().
+      running := 1
       fire(Event.TICK)
+      running := &null
    end
 
    #

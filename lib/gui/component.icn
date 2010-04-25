@@ -153,11 +153,7 @@ class Component(Rect,Align,SetFields,Connectable)
       #
       # Border instance
       #
-      border,
-      #
-      # Default ticker
-      #
-      ticker
+      border
 
    #
    # Set the tooltip.  This object is passed to {create_tooltip_component} when a
@@ -774,7 +770,6 @@ class Component(Rect,Align,SetFields,Connectable)
    # window is closed.
    #
    public finally()
-      stop_ticker()
       (\self.border).finally()
       Gui.style.dispose(self.cbwin)
       self.cbwin.uncouple()
@@ -1102,44 +1097,6 @@ class Component(Rect,Align,SetFields,Connectable)
    end
 
    #
-   # Convenience method to start a ticker that invokes the "tick()" method
-   # in this class.
-   #
-   public start_ticker(n, d)
-      self.ticker.set_interval(n)
-      self.ticker.set_delay(d)
-      self.ticker.start()
-   end
-
-   #
-   # Stop the ticker.
-   #
-   public stop_ticker()
-      self.ticker.stop()
-   end
-
-   #
-   # Change the interval of the ticker
-   # @param n   the new interval.
-   #
-   public retime_ticker(n)
-      self.ticker.set_interval(n)
-   end
-
-   #
-   # Is the ticker ticking?
-   #
-   public is_ticking()
-      return Dispatcher.is_ticking(self.ticker)
-   end
-
-   #
-   # This method should be implemented to make use of the component's default
-   # ticker.
-   #
-   public defer tick()
-
-   #
    # Drag and drop helper to invoke drag_reset
    #
    public invoke_drag_reset(e)
@@ -1300,8 +1257,6 @@ class Component(Rect,Align,SetFields,Connectable)
 
    public new(a[])
       cast(self,Connectable).new()
-      self.ticker := Ticker()
-      self.ticker.connect(self.tick, Event.TICK)
       self.wattribs := table()
       self.children := []
       self.x_align := Align.L

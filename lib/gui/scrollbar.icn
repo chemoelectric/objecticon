@@ -100,7 +100,8 @@ class ScrollBar(Component)
       bar_area_size,           #                     
       is_range_flag,           
       wu_listener,
-      wd_listener
+      wd_listener,
+      repeat_ticker
 
    public static DEFAULT_SIZE, DEFAULT_WHEEL_FACTOR, MIN_BAR_SIZE
 
@@ -299,7 +300,7 @@ class ScrollBar(Component)
       end_handle(e)
    end
 
-   public tick()
+   public repeat_tick()
       start_handle()
       self.move_value(self.get_value() + self.is_paging * self.page_size)
       self.set_pos_from_value()
@@ -308,12 +309,12 @@ class ScrollBar(Component)
 
    public start_paging(n)
       self.is_paging := n
-      start_ticker(Gui.REPEAT_RATE, Gui.REPEAT_DELAY)
+      repeat_ticker.start()
    end
 
    public stop_paging()
       self.is_paging := &null
-      stop_ticker()
+      repeat_ticker.stop()
    end
 
    public start_handle(e)
@@ -524,6 +525,11 @@ class ScrollBar(Component)
       reconfigure()
    end
 
+   public finally()
+      repeat_ticker.stop()
+      cast(self,Component).finally()
+   end
+
    public set_one(f)
       case f.attr of {
          "is_horizontal" : set_is_horizontal(f.flag_val())
@@ -540,6 +546,9 @@ class ScrollBar(Component)
 
    public new(a[])
       cast(self,Component).new()
+      repeat_ticker := Ticker("interval=", Gui.REPEAT_RATE,
+                              "delay=", Gui.REPEAT_DELAY)
+      repeat_ticker.connect(self.repeat_tick, Event.TICK)
       self.b1 := IconButton("w=",DEFAULT_SIZE, "h=",DEFAULT_SIZE)
       self.b1.connect(self.handle_button_up, Event.BUTTON_PRESS)
       self.b1.connect(self.handle_button_up, Event.BUTTON_HELD)
@@ -563,8 +572,3 @@ class ScrollBar(Component)
       return
    end
 end
-
-
-
-
-

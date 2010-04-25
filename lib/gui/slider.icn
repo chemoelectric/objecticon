@@ -75,7 +75,9 @@ class Slider(Component)
       increment_size,
       wheel_factor,
       hi,                                
-      lo
+      lo,
+      repeat_ticker
+
 
    # These values refer to a horizontal slider, the logic is backwards for a vertical one.
    public static SLIDER_W, SLIDER_H, SLIDER_INNER_H, SLIDER_TICK_H
@@ -263,7 +265,7 @@ class Slider(Component)
       end_handle(e)
    end
 
-   public tick()
+   public repeat_tick()
       start_handle()
       self.move_value(self.get_value()  + self.is_paging * self.increment_size)
       self.set_pos_from_value()
@@ -272,12 +274,12 @@ class Slider(Component)
 
    public start_paging(n)
       self.is_paging := n
-      start_ticker(Gui.REPEAT_RATE, Gui.REPEAT_DELAY)
+      repeat_ticker.start()
    end
 
    public stop_paging()
       self.is_paging := &null
-      stop_ticker()
+      repeat_ticker.stop()
    end
 
    public handle_ldrag(e)
@@ -455,6 +457,11 @@ class Slider(Component)
       self.display_children(r)
    end
 
+   public finally()
+      repeat_ticker.stop()
+      cast(self,Component).finally()
+   end
+
    public set_one(f)
       case f.attr of {
          "is_horizontal" : set_is_horizontal(f.flag_val())
@@ -472,6 +479,9 @@ class Slider(Component)
 
    public new(a[])
       cast(self,Component).new()
+      repeat_ticker := Ticker("interval=", Gui.REPEAT_RATE,
+                              "delay=", Gui.REPEAT_DELAY)
+      repeat_ticker.connect(self.repeat_tick, Event.TICK)
       self.slider_area := SliderArea()
       self.increment_size := 1
       self.wheel_factor := 1

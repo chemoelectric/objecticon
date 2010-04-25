@@ -39,11 +39,12 @@ import
 #
 class Button(Toggle,Component)
    public 
-      is_down,                 #               
-      parent_button_group,     #
+      is_down,
+      parent_button_group,
       repeat_delay,
       no_click_focus_flag,
-      toggles_flag
+      toggles_flag,
+      repeat_ticker
 
    public set_parent_button_group(x)
       return self.parent_button_group := x
@@ -57,19 +58,24 @@ class Button(Toggle,Component)
       self.no_click_focus_flag := check_flag(s)
    end
 
-   public tick()
+   public finally()
+      repeat_ticker.stop()
+      cast(self,Component).finally()
+   end
+
+   public repeat_tick()
       if Prog.get_runtime_millis() > self.repeat_delay then
          fire(Event.BUTTON_HELD)
    end
 
    public go_down()
       self.is_down := 1
-      start_ticker(Gui.REPEAT_RATE)
+      repeat_ticker.start()
    end
 
    public go_up()
       self.is_down := &null
-      stop_ticker()
+      repeat_ticker.stop()
    end
 
    public handle_lpress(e)
@@ -125,14 +131,32 @@ class Button(Toggle,Component)
       fire(Event.ACTION, e)
    end
 
+   #
+   # Visualize the given (keyboard) event, by making the button go down
+   # for a short time (50ms), before making it go up again, and then
+   # calling {on_action}
+   #
+   public visualize_action(e)
+      local t
+      self.is_down := 1
+      self.invalidate()
+      t := Ticker("delay=50", "times=1")
+      t.connect(create {
+         self.is_down := &null
+         on_action(e)
+      }, Event.TICK) 
+      t.start()
+   end
+
    public handle_accel(e)
-      cast(self,Component).handle_accel(e)
-      on_action(e)
+      if /self.no_click_focus_flag then
+         grab_focus(e)
+      visualize_action(e)
    end
 
    public handle_key(e)
       if e.code == ("\r"|"\l"|" ") then
-         on_action(e)
+         visualize_action(e)
    end
 
    #
@@ -175,6 +199,8 @@ class Button(Toggle,Component)
 
    public new(a[])
       cast(self,Component).new()
+      repeat_ticker := Ticker("interval=", Gui.REPEAT_RATE)
+      repeat_ticker.connect(self.repeat_tick, Event.TICK)
       self.accepts_focus_flag := 1
       connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)

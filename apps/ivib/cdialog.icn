@@ -13,14 +13,12 @@ import gui
 # Extends Dialog to enable saving of some fields.
 #
 class CDialog(Dialog,SelectiveObjectCodec)
-   public ticker_rate
-
    private pre_decode()
       new()
    end
 
    public static get_template()
-      suspend ["Ticker Rate", "ticker_rate"] | ["WAttribs", "wattribs"]
+      suspend ["WAttribs", "wattribs"]
    end
 
    public new()

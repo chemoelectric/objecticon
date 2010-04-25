@@ -209,7 +209,7 @@ class Dispatcher()
 
       curr_time := Prog.get_runtime_millis()
       every d := !tickers do {
-         if curr_time >= d.next_tick_time then {
+         if (curr_time >= d.next_tick_time) & /d.running then {
             /bag := []
             put(bag, d)
          }
@@ -260,6 +260,6 @@ class Dispatcher()
       }
    end
 
-   private new()
+   final private new()
    end
 end
