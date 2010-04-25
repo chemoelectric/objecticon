@@ -391,8 +391,9 @@ class TabSet(Component)
 
    public handle_accel(e)
       start_handle(e)
-      set_which_one(find_key(e))
-      cast(self,Component).handle_accel(e)
+      set_which_one(find_key(e.code))
+      if /self.no_click_focus_flag then
+         grab_focus(e)
       end_handle(e)
    end
  
