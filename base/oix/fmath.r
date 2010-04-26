@@ -17,7 +17,9 @@ function funcname(x)
    body {
       double y;
       pre		/* Pre math-operation range checking */
+#if !PLAN9
       errno = 0;
+#endif
       y = ccode(x);
       post		/* Post math-operation C library error detection */
       return C_double y;
@@ -29,8 +31,13 @@ end
 #define aroundone if (x < -1.0 || x > 1.0) {Drunerr(205, x);}
 #define positive  if (x < 0)               {Drunerr(205, x);}
 
+#if PLAN9
+#define erange
+#define edom
+#else
 #define erange    if (errno == ERANGE)     runerr(204);
 #define edom      if (errno == EDOM)       runerr(205);
+#endif
 
 MathOp(util_Math_sin, sin,  ", x in radians.", ;, ;)
 MathOp(util_Math_cos, cos,  ", x in radians.", ;, ;)

@@ -55,8 +55,6 @@
    #define R_OK 4
    #define W_OK 2
    #define X_OK 1
-   #define ERANGE 100
-   #define EDOM   101
 
    /* The posix file open constants */
    #define O_RDONLY 0
@@ -79,7 +77,6 @@
 
    #define PointerMotionMask    1
 
-   extern int errno;
    struct timeval {
       long    tv_sec;
       long    tv_usec;
