@@ -91,14 +91,9 @@ $start get_impl
          Op_Tmp tmp:2
          Op_Tmp tmp:0
          Op_Tmp tmp:1
-         Op_Int 0
-         FailAccess
+         0             # Nil failure label
     Op_CReturn
          Op_Tmp tmp:2
-
-FailAccess:
-    # Will only get here if &error != 0.
-    Op_CFail
 $end
 
 $start getf_impl
@@ -106,7 +101,6 @@ $start getf_impl
          Op_Tmp tmp:2
          Op_Tmp tmp:0
          Op_Tmp tmp:1
-         Op_Int 1
          FailAccess
     Op_CReturn
          Op_Tmp tmp:2
@@ -120,7 +114,6 @@ $start getq_impl
          Op_Tmp tmp:2
          Op_Tmp tmp:0
          Op_Tmp tmp:1
-         Op_Int 1
          FailAccess
     Op_CReturn
          Op_Tmp tmp:2

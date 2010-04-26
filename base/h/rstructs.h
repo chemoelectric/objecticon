@@ -490,7 +490,7 @@ struct progstate {
     void (*GeneralCall)(word clo, dptr lhs, dptr expr, int argc, dptr args, word rval, word *failure_label);
 
     void (*GeneralAccess)(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
-                          int just_fail, word *failure_label);
+                          word *failure_label);
     void (*GeneralInvokef)(word clo, dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
                            int argc, dptr args, word rval, word *failure_label);
 };

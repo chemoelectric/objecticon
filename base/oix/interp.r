@@ -717,12 +717,10 @@ void activate_handler(void)
 static void do_limit()
 {
     dptr limit;
-    word *failure_label;
     word tmp;
 
     limit = get_dptr();
     Deref(*limit);
-    failure_label = GetAddr;
     if (!cnv:C_integer(*limit, tmp)) {
         xargp = limit;
         err_msg(101, limit);
@@ -741,11 +739,9 @@ static void do_scansave()
 {
     word s, p;
     tended struct descrip new_subject;
-    word *failure_label;
     get_deref(&new_subject);
     s = GetWord;
     p = GetWord;
-    failure_label = GetAddr;
     if (!cnv:string_or_ucs(new_subject, new_subject)) {
         xargp = &new_subject;
         err_msg(129, &new_subject);

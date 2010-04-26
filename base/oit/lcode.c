@@ -837,7 +837,6 @@ static void lemitcode()
                     }
                     word_field(0, "inline cache");
                     word_field(0, "inline cache");
-                    labout(x->fail_label, "fail");
                     break;
                 }
                 case Ir_Resume: {
@@ -859,7 +858,6 @@ static void lemitcode()
                     emit_ir_var(x->new_subject, "new_subject");
                     word_field(x->tmp_subject->index, "tmp_subject");
                     word_field(x->tmp_pos->index, "tmp_pos");
-                    labout(x->fail_label, "fail");
                     break;
                 }
                 case Ir_ScanRestore: {
@@ -900,7 +898,6 @@ static void lemitcode()
                     struct ir_limit *x = (struct ir_limit *)ir;
                     out_op(Op_Limit);
                     emit_ir_var(x->limit, "limit");
-                    labout(x->fail_label, "fail");
                     break;
                 }
                 default: {

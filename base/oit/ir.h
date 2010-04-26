@@ -114,7 +114,6 @@ struct ir_scansave {
     struct ir_var *new_subject;
     struct ir_var *tmp_subject;
     struct ir_var *tmp_pos;
-    int fail_label;
 };
 
 struct ir_scanrestore {
@@ -212,7 +211,6 @@ struct ir_field {
     struct ir_var *lhs;
     struct ir_var *expr;
     char *fname;
-    int fail_label;
 };
 
 struct ir_makelist {
@@ -268,7 +266,6 @@ struct ir_coret {
 struct ir_limit {
     IR_SUB
     struct ir_var *limit;
-    int fail_label;
 };
 
 struct chunk {

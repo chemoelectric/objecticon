@@ -452,9 +452,9 @@ void add_to_prog_event_queue(dptr value, int event);
 void general_call_0(word clo, dptr lhs, dptr expr, int argc, dptr args, word rval, word *failure_label);
 void general_call_1(word clo, dptr lhs, dptr expr, int argc, dptr args, word rval, word *failure_label);
 void general_access_0(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
-                      int just_fail, word *failure_label);
+                      word *failure_label);
 void general_access_1(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
-                      int just_fail, word *failure_label);
+                      word *failure_label);
 
 void general_invokef_0(word clo, dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
                        int argc, dptr args, word rval, word *failure_label);

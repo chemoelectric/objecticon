@@ -1577,13 +1577,11 @@ static void relocate_code(struct progstate *ps, word *c)
             case Op_ScanSave: {
                 conv_var();  /* val */
                 pc += 2;     /* tmp indices */
-                conv_addr(); /* failure label */
                 break;
             }
 
             case Op_Limit: {
                 conv_var();  /* limit */
-                conv_addr(); /* failure label */
                 break;
             }
 
@@ -1666,7 +1664,6 @@ static void relocate_code(struct progstate *ps, word *c)
                 conv_var();  /* lhs */
                 conv_var();  /* expr */
                 pc += 3;         /* fnum, inline cache */
-                conv_addr(); /* failure label */
                 break;
             }
 
