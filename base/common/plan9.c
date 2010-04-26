@@ -1,6 +1,5 @@
 #include "../h/gsupport.h"
 
-int errno;
 static char *xyz = "";
 char **environ = &xyz;
 
@@ -67,7 +66,15 @@ int rmdir(const char *path)
 
 char *getcwd(char *buf, size_t size)
 {
-    return getwd(buf, size);
+    int n, fd;
+    fd = open(".", OREAD);
+    if (fd < 0)
+        return 0;
+    n = fd2path(fd, buf, size);
+    close(fd);
+    if (n != 0 || strlen(buf) > size - 6)
+        return 0;
+    return buf;
 }
 
 void exit(int status)
