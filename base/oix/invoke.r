@@ -648,22 +648,20 @@ void do_field()
     tended struct descrip expr;
     word fno;
     struct inline_field_cache *ic;
-    word *failure_label;
     struct descrip query;
 
     lhs = get_dptr();
     get_deref(&expr);
     fno = GetWord;
     ic = get_inline_field_cache();
-    failure_label = GetAddr;
     MakeInt(fno, &query);
 
-    general_access(lhs, &expr, &query, ic, 0, failure_label);
+    general_access(lhs, &expr, &query, ic, 0);
 }
 
 #begdef AccessErr(err_num)
    do {
-       if (just_fail) {
+       if (failure_label) {
            if (err_num) {
                t_errornumber = err_num;
                t_errorvalue = nulldesc;
@@ -684,33 +682,33 @@ void do_field()
 #begdef access_macro(general_access, cast_access,instance_access,class_access,record_access,e_objectref,e_objectsub,e_castref,e_castsub,e_classref,e_classsub,e_rref,e_rsub)
 
 static void record_access(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
-                          int just_fail, word *failure_label);
+                          word *failure_label);
 static void instance_access(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
-                            int just_fail, word *failure_label);
+                            word *failure_label);
 static void cast_access(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
-                        int just_fail, word *failure_label);
+                        word *failure_label);
 static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
-                         int just_fail, word *failure_label);
+                         word *failure_label);
 
 
 void general_access(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
-                    int just_fail, word *failure_label)
+                    word *failure_label)
 {
     type_case *expr of {
       record: {
-            record_access(lhs, expr, query, ic, just_fail, failure_label);
+            record_access(lhs, expr, query, ic, failure_label);
       }
 
       cast: {
-            cast_access(lhs, expr, query, ic, just_fail, failure_label);
+            cast_access(lhs, expr, query, ic, failure_label);
       }
 
       class: {
-            class_access(lhs, expr, query, ic, just_fail, failure_label);
+            class_access(lhs, expr, query, ic, failure_label);
       }
 
       object: {
-            instance_access(lhs, expr, query, ic, just_fail, failure_label);
+            instance_access(lhs, expr, query, ic, failure_label);
       }
       default: {
           xexpr = expr;
@@ -723,7 +721,7 @@ void general_access(dptr lhs, dptr expr, dptr query, struct inline_field_cache *
 }
 
 static void cast_access(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
-                        int just_fail, word *failure_label)
+                        word *failure_label)
 {
     struct b_methp *mp;   /* Doesn't need to be tended */
     struct b_class *obj_class, *cast_class;
@@ -770,7 +768,7 @@ static void cast_access(dptr lhs, dptr expr, dptr query, struct inline_field_cac
 }
 
 static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
-                         int just_fail, word *failure_label)
+                         word *failure_label)
 {
     struct b_class *class0 = &ClassBlk(*expr);
     struct class_field *cf;
@@ -827,7 +825,7 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
 }
 
 static void instance_access(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
-                            int just_fail, word *failure_label)
+                            word *failure_label)
 {
     struct b_class *class0;
     struct b_methp *mp;  /* Doesn't need to be tended */
@@ -888,7 +886,7 @@ static void instance_access(dptr lhs, dptr expr, dptr query, struct inline_field
 }
 
 static void record_access(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic,
-                          int just_fail, word *failure_label)
+                          word *failure_label)
 {
     struct b_constructor *recdef = RecordBlk(*expr).constructor;
 
@@ -1144,14 +1142,12 @@ invokef_macro(general_invokef_1, cast_invokef_1,instance_invokef_1,class_invokef
 static void simple_access()
 {
     dptr lhs, expr, query;
-    struct descrip just_fail;
     word *a;
     lhs = get_dptr();
     expr = get_dptr();
     query = get_dptr();
-    get_deref(&just_fail);
     a = GetAddr;
-    general_access(lhs, expr, query, 0, IntVal(just_fail), a);
+    general_access(lhs, expr, query, 0, a);
 }
 
 static void handle_access_failure()
