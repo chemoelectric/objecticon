@@ -72,8 +72,12 @@ char *getcwd(char *buf, size_t size)
         return 0;
     n = fd2path(fd, buf, size);
     close(fd);
-    if (n != 0 || strlen(buf) > size - 6)
+    if (n != 0)
         return 0;
+    if (strlen(buf) > size - 6) {
+        werrstr("buffer too short");
+        return 0;
+    }
     return buf;
 }
 
