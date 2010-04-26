@@ -2110,14 +2110,22 @@ static void fscreate(Req *r)
 
 Srv win_fs;
 
-static void unmount_win_fs(void)
+static void close_window_system(void)
 {
     wsp ws;
+    int fd;
     for (ws = wstates; ws; ws = ws->next) {
        if (ws->win)
            close_screen_win(ws);
     }
     unmount(0, WINDOW_MOUNT_ROOT);
+    closedisplay(display);
+    if ((fd = open("/dev/wctl",OWRITE)) >= 0) {
+        fprint(fd, "unhide");
+        fprint(fd, "top");
+        fprint(fd, "current");
+        close(fd);
+    }
 }
 
 static struct Cursor cursor_data[] = {
@@ -2187,7 +2195,7 @@ static void init_window_system(void)
     uchar maskdata[1];
     Dir *fs;
 
-    if (initdraw(0, 0, "objecticon") < 0)
+    if (initdraw(draw_error, 0, "objecticon") < 0)
         ffatalerr("Couldn't initialize window system: %r");
 
     /* Keep mounts private */
@@ -2203,7 +2211,7 @@ static void init_window_system(void)
     win_fs.tree = alloctree(0, 0, DMDIR | 0777, 0);
     win_fs.create = fscreate;
     postmountsrv(&win_fs, 0, WINDOW_MOUNT_ROOT, MREPL | MCREATE);
-    atexit(unmount_win_fs);
+    atexit(close_window_system);
 
     /* Bug workaround which prevents accessing rio's mounted window dir if it is the only
      * entry in the directory */
