@@ -25,7 +25,7 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
 
     memset(b, 0, sizeof b);
     f = open("/dev/bintime", OREAD);
-    if(f >= 0) {
+    if (f >= 0) {
         pread(f, b, sizeof(b), 0);
         close(f);
     }
@@ -46,12 +46,12 @@ int mkdir(const char *path, mode_t mode)
 {
     int f;
 
-    if(access(path, AEXIST) == 0){
+    if (access(path, AEXIST) == 0){
         werrstr("mkdir: %s already exists", path);
         return -1;
     }
     f = create(path, OREAD, DMDIR | mode);
-    if(f < 0){
+    if (f < 0){
         werrstr("mkdir: can't create %s: %r", path);
         return -1;
     }
@@ -101,7 +101,7 @@ int unsetenv(const char *name)
 {
     char buf[128];
     snprint(buf, sizeof(buf), "/env/%s", name);
-    if(strcmp(buf+5, name) != 0) {
+    if (strcmp(buf + 5, name) != 0) {
         werrstr("name too long");
         return -1;
     }
@@ -137,9 +137,9 @@ void *bsearch(const void *key, const void *base,
         new = (top + bot)/2;
         p = (char *)base+new*size;
         i = (*compar)(key, p);
-        if(i == 0)
+        if (i == 0)
             return p;
-        if(i > 0)
+        if (i > 0)
             bot = new + 1;
         else
             top = new - 1;
@@ -176,15 +176,19 @@ int gethostname(char *name, size_t len)
     char buf[128];
 
     fd = open("/dev/sysname", OREAD);
-    if(fd < 0)
+    if (fd < 0)
         return -1;
-    n = read(fd, buf, sizeof(buf)-1);
+    n = read(fd, buf, sizeof(buf));
     close(fd);
-    if(n <= 0)
+    if (n <= 0)
         return -1;
+    if (n >= sizeof(buf)) {
+        werrstr("buffer too short");
+        return -1;
+    }
     buf[n] = 0;
     strncpy(name, buf, len);
-    name[len-1] = 0;
+    name[len - 1] = 0;
     return 0;
 }
 
