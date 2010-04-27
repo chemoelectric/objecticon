@@ -833,9 +833,12 @@ function mysql_MySqlRes_fetch_row(self)
        n = mysql_num_fields(self_mysql_res);
        create_list(n, &result);
        for (i = 0; i < n; ++i) {
-           tended struct descrip tmp;
-           bytes2string(row[i], lengths[i], &tmp);
-           list_put(&result, &tmp);
+           if (row[i]) {
+               tended struct descrip tmp;
+               bytes2string(row[i], lengths[i], &tmp);
+               list_put(&result, &tmp);
+           } else
+               list_put(&result, &nulldesc);
        }
        return result;
    }
