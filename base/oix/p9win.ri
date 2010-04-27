@@ -1462,29 +1462,35 @@ int requestselection(wbp w, char *selection, char *target)
 {
     wsp ws = w->window;
     tended struct descrip tmp;
-    int fd, n_read;
-    static char buff[2048];
+    int snarf_len = 0;
+    char *snarf = 0;
 
-    /* Note - could filter out selections to use CLIPBOARD only, ie ^C, not drag */
-    if ((fd = open("/dev/snarf", OREAD)) < 0) {
-        whyf("Can't open snarf file: %r");
-        return Failed;
+    if (strcmp(target, "UTF8_STRING") == 0) {
+        int fd, n_read;
+        char buff[512];
+        /* Note - could filter out selections to use CLIPBOARD only, ie ^C, not drag */
+        if ((fd = open("/dev/snarf", OREAD)) < 0) {
+            whyf("Can't open snarf file: %r");
+            return Failed;
+        }
+        while ((n_read = read(fd, buff, sizeof buff)) > 0) {
+            MemProtect(snarf = realloc(snarf, snarf_len + n_read));
+            memcpy(snarf + snarf_len, buff, n_read);
+            snarf_len += n_read;
+        }
+        close(fd);
     }
-    n_read = read(fd, buff, sizeof(buff));
-    close(fd);
-    if (n_read < 0) {
-        whyf("Failed to read snarf file: %r");
-        return Failed;
-    }
+
     MakeInt(SELECTIONRESPONSE, &tmp);
     list_put(&ws->listp, &tmp);
     cstr2string(selection, &tmp);   /* selection */
     list_put(&ws->listp, &tmp);
     cstr2string(target, &tmp);      /* target */
     list_put(&ws->listp, &tmp);
-    if (strcmp(target, "UTF8_STRING") == 0) {
-        bytes2string(buff, n_read, &tmp);
+    if (snarf) {
+        bytes2string(snarf, snarf_len, &tmp);
         list_put(&ws->listp, &tmp);
+        free(snarf);
     } else
         list_put(&ws->listp, &nulldesc);
 
