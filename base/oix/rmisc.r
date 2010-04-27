@@ -1624,33 +1624,26 @@ int strncasecmp(char *s1, char *s2, int n)
  */
 void cstr2string(char *s, dptr d) 
 {
-    char *a;
-    int n;
-
-    if (!s) {
+    if (s)
+        bytes2string(s, strlen(s), d);
+    else
         *d = nulldesc;
-        return;
-    }
-    n = strlen(s);
-    MemProtect(a = alcstr(s, n));
-    MakeStr(a, n, d);
 }
 
 /*
  * Allocate a string and initialize it based on the given pointer and
- * length.  The result is stored in the given dptr.  If s is null,
- * nulldesc is written to d.
+ * length.  The result is stored in the given dptr.  If len is zero,
+ * s is ignored and emptystr is returned.
  */
 void bytes2string(char *s, word len, dptr d) 
 {
     char *a;
-
-    if (!s) {
-        *d = nulldesc;
-        return;
+    if (len == 0)
+        *d = emptystr;
+    else {
+        MemProtect(a = alcstr(s, len));
+        MakeStr(a, len, d);
     }
-    MemProtect(a = alcstr(s, len));
-    MakeStr(a, len, d);
 }
 
 /*
