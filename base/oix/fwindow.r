@@ -1563,14 +1563,21 @@ end
 function graphics_Window_get_geometry(self)
    body {
        tended struct descrip result;
+       struct descrip t;
        wsp ws;
        GetSelfW();
        if (getpos(self_w) != Succeeded)
            fail;
        ws = self_w->window;
-       sprintf(attr_buff, "%dx%d+%d+%d",
-               ws->width, ws->height, ws->posx, ws->posy);
-       cstr2string(attr_buff, &result);
+       create_list(4, &result);
+       MakeInt(ws->posx, &t);
+       list_put(&result, &t);
+       MakeInt(ws->posy, &t);
+       list_put(&result, &t);
+       MakeInt(ws->width, &t);
+       list_put(&result, &t);
+       MakeInt(ws->height, &t);
+       list_put(&result, &t);
        return result;
    }
 end
@@ -1644,9 +1651,13 @@ end
 function graphics_Window_get_maxsize(self)
    body {
        tended struct descrip result;
+       struct descrip t;
        GetSelfW();
-       sprintf(attr_buff, "%d,%d", self_w->window->maxwidth, self_w->window->maxheight);
-       cstr2string(attr_buff, &result);
+       create_list(2, &result);
+       MakeInt(self_w->window->maxwidth, &t);
+       list_put(&result, &t);
+       MakeInt(self_w->window->maxheight, &t);
+       list_put(&result, &t);
        return result;
    }
 end
@@ -1672,9 +1683,13 @@ end
 function graphics_Window_get_minsize(self)
    body {
        tended struct descrip result;
+       struct descrip t;
        GetSelfW();
-       sprintf(attr_buff, "%d,%d", self_w->window->minwidth, self_w->window->minheight);
-       cstr2string(attr_buff, &result);
+       create_list(2, &result);
+       MakeInt(self_w->window->minwidth, &t);
+       list_put(&result, &t);
+       MakeInt(self_w->window->minheight, &t);
+       list_put(&result, &t);
        return result;
    }
 end
@@ -1712,11 +1727,15 @@ end
 function graphics_Window_get_pos(self)
    body {
        tended struct descrip result;
+       struct descrip t;
        GetSelfW();
        if (getpos(self_w) != Succeeded)
            fail;
-       sprintf(attr_buff, "%d,%d", self_w->window->posx, self_w->window->posy);
-       cstr2string(attr_buff, &result);
+       create_list(2, &result);
+       MakeInt(self_w->window->posx, &t);
+       list_put(&result, &t);
+       MakeInt(self_w->window->posy, &t);
+       list_put(&result, &t);
        return result;
    }
 end
@@ -1756,9 +1775,13 @@ end
 function graphics_Window_get_size(self)
    body {
        tended struct descrip result;
+       struct descrip t;
        GetSelfW();
-       sprintf(attr_buff, "%d,%d", self_w->window->width, self_w->window->height);
-       cstr2string(attr_buff, &result);
+       create_list(2, &result);
+       MakeInt(self_w->window->width, &t);
+       list_put(&result, &t);
+       MakeInt(self_w->window->height, &t);
+       list_put(&result, &t);
        return result;
    }
 end
