@@ -326,7 +326,7 @@ static void win_to_pix(wsp ws)
 
 static int limit_size(wsp ws, int *width, int *height)
 {
-    int min_rio_h, rv = 0;
+    int limw, limh, dispw, disph, rv = 0;
     if (*width < ws->minwidth) {
         *width = ws->minwidth;
         rv = 1;
@@ -346,15 +346,28 @@ static int limit_size(wsp ws, int *width, int *height)
     /* Ensure size within permissible limits for a rio window.  If we don't keep within
      * these limits, mount and resize requests fail with an error.  See goodrect() in 
      * rio/wctl.c */
-    if (*width < 92) {
-        *width = 92;
+    limw = 100 - 2 * Borderwidth;
+    if (*width < limw) {
+        *width = limw;
         rv = 1;
     }
-    min_rio_h = 3*font->height - 2 * Borderwidth;
-    if (*height < min_rio_h) {
-        *height = min_rio_h;
+    limh = 3*font->height - 2 * Borderwidth;
+    if (*height < limh) {
+        *height = limh;
         rv = 1;
     }
+    /* Unfortunately there seems to be no way to find the dimensions of the rio window in which
+     * we are running, only the top-level display size */
+    dispw = Dx(display->image->r);
+    disph = Dy(display->image->r);
+    limw = dispw - 2 * Borderwidth;
+    limh = disph - 2 * Borderwidth;
+    if (*width >= limw && *height >= limh) {
+        *width = limw - 1;
+        *height = limh - 1;
+        rv = 1;
+    }
+
     return rv;
 }
 
