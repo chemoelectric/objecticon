@@ -1411,58 +1411,14 @@ function graphics_Window_get_clip(self)
        if (self_w->context->clipw < 0)
            fail;
        create_list(4, &result);
-       MakeInt(self_w->context->clipx, &t);
+       MakeInt(self_w->context->clipx - self_w->context->dx, &t);
        list_put(&result, &t);
-       MakeInt(self_w->context->clipy, &t);
+       MakeInt(self_w->context->clipy - self_w->context->dy, &t);
        list_put(&result, &t);
        MakeInt(self_w->context->clipw, &t);
        list_put(&result, &t);
        MakeInt(self_w->context->cliph, &t);
        list_put(&result, &t);
-       return result;
-   }
-end
-
-function graphics_Window_get_cliph(self)
-   body {
-       struct descrip result;
-       GetSelfW();
-       if (self_w->context->clipw < 0)
-           fail;
-       MakeInt(self_w->context->cliph, &result);
-       return result;
-   }
-end
-
-function graphics_Window_get_clipw(self)
-   body {
-       struct descrip result;
-       GetSelfW();
-       if (self_w->context->clipw < 0)
-           fail;
-       MakeInt(self_w->context->clipw, &result);
-       return result;
-   }
-end
-
-function graphics_Window_get_clipx(self)
-   body {
-       struct descrip result;
-       GetSelfW();
-       if (self_w->context->clipw < 0)
-           fail;
-       MakeInt(self_w->context->clipx, &result);
-       return result;
-   }
-end
-
-function graphics_Window_get_clipy(self)
-   body {
-       struct descrip result;
-       GetSelfW();
-       if (self_w->context->clipw < 0)
-           fail;
-       MakeInt(self_w->context->clipy, &result);
        return result;
    }
 end
@@ -1891,54 +1847,6 @@ function graphics_Window_set_canvas(self, val)
    }
 end
 
-function graphics_Window_set_cliph(self, val)
-   if !cnv:C_integer(val) then
-       runerr(101, val)
-   body {
-       GetSelfW();
-       self_w->context->cliph = val;
-       wconfig |= C_CLIP;
-       SimpleAttr();
-       return self;
-   }
-end
-
-function graphics_Window_set_clipw(self, val)
-   if !cnv:C_integer(val) then
-       runerr(101, val)
-   body {
-       GetSelfW();
-       self_w->context->clipw = val;
-       wconfig |= C_CLIP;
-       SimpleAttr();
-       return self;
-   }
-end
-
-function graphics_Window_set_clipx(self, val)
-   if !cnv:C_integer(val) then
-       runerr(101, val)
-   body {
-       GetSelfW();
-       self_w->context->clipx = val + self_w->context->dx;
-       wconfig |= C_CLIP;
-       SimpleAttr();
-       return self;
-   }
-end
-
-function graphics_Window_set_clipy(self, val)
-   if !cnv:C_integer(val) then
-       runerr(101, val)
-   body {
-       GetSelfW();
-       self_w->context->clipy = val + self_w->context->dy;
-       wconfig |= C_CLIP;
-       SimpleAttr();
-       return self;
-   }
-end
-
 function graphics_Window_clip(self, x0, y0, w0, h0)
    body {
       word x, y, width, height;
@@ -2069,6 +1977,8 @@ function graphics_Window_set_height(self, height)
       runerr(101, height)
    body {
        GetSelfW();
+       if (height < 1)
+           Irunerr(148, height);
        self_w->window->height = height;
        wconfig |= C_SIZE;
        SimpleAttr();
@@ -2212,6 +2122,8 @@ function graphics_Window_set_minheight(self, height)
       runerr(101, height)
    body {
        GetSelfW();
+       if (height < 1)
+           Irunerr(148, height);
        self_w->window->minheight = height;
        wconfig |= C_MINSIZE;
        SimpleAttr();
@@ -2226,6 +2138,10 @@ function graphics_Window_set_minsize(self, width, height)
       runerr(101, height)
    body {
        GetSelfW();
+       if (width < 1)
+           Irunerr(148, width);
+       if (height < 0)
+           Irunerr(148, height);
        self_w->window->minwidth = width;
        self_w->window->minheight = height;
        wconfig |= C_MINSIZE;
@@ -2239,6 +2155,8 @@ function graphics_Window_set_minwidth(self, width)
       runerr(101, width)
    body {
        GetSelfW();
+       if (width < 1)
+           Irunerr(148, width);
        self_w->window->minwidth = width;
        wconfig |= C_MINSIZE;
        SimpleAttr();
@@ -2333,6 +2251,10 @@ function graphics_Window_set_size(self, width, height)
       runerr(101, height)
    body {
        GetSelfW();
+       if (width < 1)
+           Irunerr(148, width);
+       if (height < 1)
+           Irunerr(148, height);
        self_w->window->width = width;
        self_w->window->height = height;
        wconfig |= C_SIZE;
@@ -2357,6 +2279,8 @@ function graphics_Window_set_width(self, width)
       runerr(101, width)
    body {
        GetSelfW();
+       if (width < 1)
+           Irunerr(148, width);
        self_w->window->width = width;
        wconfig |= C_SIZE;
        SimpleAttr();
