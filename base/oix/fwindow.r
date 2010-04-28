@@ -1920,7 +1920,7 @@ function graphics_Window_set_clipx(self, val)
        runerr(101, val)
    body {
        GetSelfW();
-       self_w->context->clipx = val;
+       self_w->context->clipx = val + self_w->context->dx;
        wconfig |= C_CLIP;
        SimpleAttr();
        return self;
@@ -1932,7 +1932,7 @@ function graphics_Window_set_clipy(self, val)
        runerr(101, val)
    body {
        GetSelfW();
-       self_w->context->clipy = val;
+       self_w->context->clipy = val + self_w->context->dy;
        wconfig |= C_CLIP;
        SimpleAttr();
        return self;
