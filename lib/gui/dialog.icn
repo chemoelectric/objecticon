@@ -275,30 +275,6 @@ class Dialog(Component)
    end
 
    #
-   # Ensure we have a position if one is not set.
-   # 
-   private ensure_pos()
-      local x1, y1, rp
-      if get_wattrib("pos") | (get_wattrib("posx") & get_wattrib("posy")) then
-         return
-
-      if get_wattrib("posx") then {
-         # Got x, need y
-         y1 := \y_spec | "0"
-         set_wattrib("posy", y1)
-      } else if get_wattrib("posy") then {
-         # Got y, need x
-         x1 := \x_spec | "0"
-         set_wattrib("posx", x1)
-      } else {
-         rp := (\owning_dialog | ?Dispatcher.dialogs).win.query_root_pointer() | [0, 0]
-         x1 := \x_spec | (rp[1] - get_width_attrib() - 20) | "50"
-         y1 := \y_spec | (rp[2] - get_height_attrib() - 20) | "50"
-         set_wattrib("pos", x1 || "," || y1)
-      }
-   end
-
-   #
    # Ensure we have size attributes, setting from the preferred width/height if
    # absent
    # 
@@ -320,7 +296,6 @@ class Dialog(Component)
    public open_visible_win()
       local t, pw
       ensure_size()
-      ensure_pos()
       t := wattribs_to_list(self.wattribs)
       put(t, "inputmask=mk")
       if pw := (\owning_dialog).win then

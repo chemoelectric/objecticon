@@ -40,6 +40,7 @@ NativeDef(graphics.Window,generic_palette_key,graphics_Window_generic_palette_ke
 NativeDef(graphics.Window,get_ascent,graphics_Window_get_ascent)
 NativeDef(graphics.Window,get_bg,graphics_Window_get_bg)
 NativeDef(graphics.Window,get_canvas,graphics_Window_get_canvas)
+NativeDef(graphics.Window,get_clip,graphics_Window_get_clip)
 NativeDef(graphics.Window,get_cliph,graphics_Window_get_cliph)
 NativeDef(graphics.Window,get_clipw,graphics_Window_get_clipw)
 NativeDef(graphics.Window,get_clipx,graphics_Window_get_clipx)

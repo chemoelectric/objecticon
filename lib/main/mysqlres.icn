@@ -10,7 +10,7 @@ $define LIB "objecticonmysqllib.so"
 
 package mysql
 
-import lang, util, io
+import lang, util
 
 #
 # This class provides a wrapper around an MYSQL_RES object.
@@ -133,29 +133,29 @@ class MySqlRes(NoCopy)
                   MySql.FIELD_TYPE_TINY |
                   MySql.FIELD_TYPE_SHORT |
                   MySql.FIELD_TYPE_LONG :
-                  put(res, integer(o)) | stop("Expected integer type:", o)
+                  put(res, integer(o)) | runerr("mysql client: expected integer type:", o)
                
                MySql.FIELD_TYPE_DECIMAL |
                   MySql.FIELD_TYPE_FLOAT |
                   MySql.FIELD_TYPE_DOUBLE :
-                  put(res, real(o)) | stop("Expected real:", o)
+                  put(res, real(o)) | runerr("mysql client: expected real:", o)
                
                MySql.FIELD_TYPE_NULL :
                   put(res)
 
                MySql.FIELD_TYPE_DATE : {
-                  t := Time.parse(o, "yyyy-MM-dd") | stop("Expected date:", o)
+                  t := Time.parse(o, "yyyy-MM-dd") | runerr("mysql client: expected date:", o)
                   put(res, t)
                }
                
                MySql.FIELD_TYPE_TIME: {
-                  t := Time.parse(o, "HH:mm:ss") | stop("Expected time:", o)
+                  t := Time.parse(o, "HH:mm:ss") | runerr("mysql client: expected time:", o)
                   put(res, t)
                }
 
                MySql.FIELD_TYPE_DATETIME |
                   MySql.FIELD_TYPE_TIMESTAMP: {
-                     t := Time.parse(o, "yyyy-MM-dd HH:mm:ss") | stop("Expected timestamp:", o)
+                     t := Time.parse(o, "yyyy-MM-dd HH:mm:ss") | runerr("mysql client: expected timestamp:", o)
                      put(res, t)
                   }
 
@@ -170,7 +170,7 @@ class MySqlRes(NoCopy)
                   put(res, o)
 
                default:
-                  stop("Unknown coltype:",  f.get_type())
+                  runerr("mysql client: unknown coltype:", f.get_type())
             }
          }
       }
