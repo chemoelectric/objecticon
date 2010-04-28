@@ -4391,6 +4391,10 @@ wfp alcfont(wbp w, char *s)
     char family[MAXFONTWORD+1];
     char *stdfam;
 
+    /* Explicit X11 font name */
+    if (!strncmp(s, "x11:", 4))
+        return tryfont(w, s + 4);
+
     if (strcmp(s, "fixed") != 0 && parsefont(s, family, &flags, &size)) {
         /*
          * This is a legal Icon font spec (and it's not an unadorned "fixed").
@@ -4659,7 +4663,11 @@ static wfp tryfont(wbp w, char *s)
      * see if the font is already loaded on this display
      */
     for(rv = wd->fonts; rv != NULL; rv = rv->next) {
-        if (!strcmp(s,rv->name)) break;
+#ifdef HAVE_LIBXFT
+        if (!strcmp(s, rv->name + 3)) break;
+#else
+        if (!strcmp(s, rv->name + 4)) break;
+#endif
     }
     if (rv != NULL) {
         rv->refcount++;
@@ -4676,7 +4684,7 @@ static wfp tryfont(wbp w, char *s)
     w->context->leading = rv->height;
 
     /*
-     * link the font into this displays fontlist (but not at the head!)
+     * link the font into this display's fontlist (but not at the head!)
      */
     rv->next = wd->fonts->next;
     rv->previous = wd->fonts;
@@ -4689,35 +4697,30 @@ static wfp loadfont(wdp wd, char *s)
 {
     wfp rv;
     GRFX_ALLOC(rv, _wfont);
-    rv->name = salloc(s);
 #ifdef HAVE_LIBXFT
-    rv->fsp = XftFontOpenName(wd->display, wd->screen, rv->name);
+    rv->fsp = XftFontOpenName(wd->display, wd->screen, s);
 #else
-    rv->fsp = XLoadQueryFont(wd->display, rv->name);
+    rv->fsp = XLoadQueryFont(wd->display, s);
 #endif
     if (rv->fsp == NULL){
-        free(rv->name);
         free(rv);
         return NULL;
     }
 
 #ifdef HAVE_LIBXFT
+    MemProtect(rv->name = malloc(strlen(s) + 3 + 1));
+    sprintf(rv->name, "fc:%s", s);
     {
         XGlyphInfo	extents; 
-        char s[256];
-        int i;
-
         /*
          * Xft seems to sometimes give too-small values in its font
          * ascent/descent fields; therefore calculate the GlyphInfo
-         * for a sample string comprising the first 256 chars and take
-         * the maximum ascent/descent of the sample and the font's
-         * reported values.
+         * for the first 256 chars and take the maximum ascent/descent
+         * of the sample and the font's reported values.
          */
-        for (i = 0; i < 256; ++i) s[i] = (char)i;
         XftTextExtents8 (wd->display,
                          rv->fsp,
-                         (FcChar8 *)s,
+                         (FcChar8 *)allchars,
                          256,
                          &extents);
         rv->ascent = Max(rv->fsp->ascent, extents.y);
@@ -4725,6 +4728,8 @@ static wfp loadfont(wdp wd, char *s)
         rv->maxwidth = rv->fsp->max_advance_width;
     }
 #else
+    MemProtect(rv->name = malloc(strlen(s) + 4 + 1));
+    sprintf(rv->name, "x11:%s", s);
     rv->ascent = rv->fsp->ascent;
     rv->descent = rv->fsp->descent;
     rv->maxwidth = rv->fsp->max_bounds.width;
