@@ -1403,6 +1403,26 @@ function graphics_Window_get_canvas(self)
    }
 end
 
+function graphics_Window_get_clip(self)
+   body {
+       tended struct descrip result;
+       struct descrip t;
+       GetSelfW();
+       if (self_w->context->clipw < 0)
+           fail;
+       create_list(4, &result);
+       MakeInt(self_w->context->clipx, &t);
+       list_put(&result, &t);
+       MakeInt(self_w->context->clipy, &t);
+       list_put(&result, &t);
+       MakeInt(self_w->context->clipw, &t);
+       list_put(&result, &t);
+       MakeInt(self_w->context->cliph, &t);
+       list_put(&result, &t);
+       return result;
+   }
+end
+
 function graphics_Window_get_cliph(self)
    body {
        struct descrip result;
