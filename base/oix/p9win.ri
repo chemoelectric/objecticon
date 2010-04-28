@@ -1,6 +1,6 @@
 static int inited;
 static vlong startup_time;
-static wfp fonts;
+static wfp fonts, new_context_font;
 static Rectangle max_rect;
 static struct Cursor cursor_data[];
 static int use_win;
@@ -14,6 +14,7 @@ static void mouse_loop(int in_fd, int out_fd);
 static Rune *utf8_to_runes(char *str, int nchars);
 static void cons_loop(int in_fd, int out_fd);
 static void flush_event_pipe(wsp ws);
+static wfp load_font(char *s);
 static void synch_cursor(wsp ws);
 static vlong get_time(void);
 static int open_screen_win(wsp ws);
@@ -1209,12 +1210,24 @@ static char *convert_spec(char *s)
     return buff;
 }
 
-static wfp new_font(char *s)
+static wfp load_font(char *s)
 {
     wfp rv;
     Font *f;
 
+    /*
+     * Convert to a font path name (without the p9: prefix)
+     */
     s = convert_spec(s);
+
+    /*
+     * See if the font is already loaded.
+     */
+    for(rv = fonts; rv; rv = rv->next) {
+        if (!strcmp(s, rv->name + 3))
+            return rv;
+    }
+
     f = openfont(display, s);
     if (!f) {
         f = display->defaultfont;
@@ -1222,7 +1235,8 @@ static wfp new_font(char *s)
     }
 
     GRFX_ALLOC(rv, _wfont);
-    rv->name = salloc(s);
+    MemProtect(rv->name = malloc(strlen(s) + 3 + 1));
+    sprint(rv->name, "p9:%s", s);
     rv->ascent = f->ascent;               /* font dimensions */
     rv->descent = f->height - f->ascent;
     rv->height = f->height;
@@ -1234,18 +1248,7 @@ static wfp new_font(char *s)
 
 int setfont(wbp w, char *s)
 {
-    wcp wc = w->context;
-    wfp rv;
-    /*
-     * See if the font is already loaded
-     */
-    for(rv = fonts; rv; rv = rv->next) {
-        if (!strcmp(s, rv->name)) {
-            wc->font = rv;
-            return Succeeded;
-        }
-    }
-    wc->font = new_font(s);
+    w->context->font = load_font(s);
     return Succeeded;
 }
 
@@ -2085,7 +2088,7 @@ static wsp alcwinstate()
     ws->height = 200;
     ws->width  = 200;
     ws->posx = ws->posy = -INT_MAX;
-    ws->minwidth = ws->minheight = 0;
+    ws->minwidth = ws->minheight = 1;
     ws->maxwidth = ws->maxheight = INT_MAX;
     ws->desired_canvas = NormalCanvas;
     ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
@@ -2124,7 +2127,7 @@ static wcp alccontext(wbp w)
     wc->fg = link_sharedimage(black);
     wc->bg = link_sharedimage(white);
     wc->pattern = link_sharedimage(patterns[0]);
-    wc->font = new_font("fixed");
+    wc->font = new_context_font;
     wc->fillstyle = stringint_lookup(fillstyles, "solid");
     wc->drawop = stringint_lookup(drawops, "copy");
     wc->linestyle = stringint_lookup(linestyles, "solid");
@@ -2272,6 +2275,7 @@ static void init_window_system(void)
     MemProtect(mask128 = allocimage(display, Rect(0, 0, 1, 1), CHAN1(CAlpha, 8), 1, DNofill));
     loadimage(mask128, mask128->r, maskdata, 1);
 
+    new_context_font = load_font("fixed");
     use_win = (getenv("OIUSEWIN") != 0);
 }
 

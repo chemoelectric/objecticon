@@ -3014,6 +3014,8 @@ static wsp alc_winstate()
    ws->listp = nulldesc;
    ws->cursorname = salloc("arrow");
    ws->curcursor = LoadCursor(NULL, IDC_ARROW);
+   ws->minwidth = ws->minheight = 1;
+   ws->maxwidth = ws->maxheight = INT_MAX;
    SETTITLEBAR(ws);
    GRFX_LINK(ws, wstates);
    return ws;

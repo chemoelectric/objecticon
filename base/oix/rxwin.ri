@@ -25,7 +25,6 @@ static void handle_keypress(wbp w, XKeyEvent *event);
 static int setpatternbits(wbp w, int width, int *bits, int nbits);
 static XImage *getximage(wbp w, int x, int y,
                          int width, int height, int init);
-static void makeIcon(wbp w, int x, int y);
 static int wmap(wbp w, wbp parent);
 static Pixmap loadimage(wbp w, char *filename, int *height, 
                         int *width, int atorigin, int *status);
@@ -47,7 +46,6 @@ static int setfgrgb(wbp w, int r, int g, int b);
 static int setbgrgb(wbp w, int r, int g, int b);
 static XColor xcolor(wbp w, LinearColor clr);
 static LinearColor lcolor(wbp w, XColor color);
-static int remap(wbp w, int x, int y);
 static wdp alcdisplay (char *s);
 static void free_display   (wdp wd);
 static wfp alcfont(wbp w, char *s);
@@ -799,10 +797,6 @@ wbp wcreate(char *display)
 	
     w->context = alccontext(w);
 
-    ws->height = 200;
-    ws->width  = 200;
-    ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
-
     return w;
 }
 
@@ -821,58 +815,6 @@ int wopen(wbp w, wbp parent)
     }
 
     return Succeeded;
-}
-
-/*
- * make an icon for a window
- */
-static void makeIcon(wbp w, int x, int y)  /* x,y = current mouse position */
-{
-    int status;
-    STDLOCALS(w);
-   
-    /* if a pixmap image has been specified, load it */
-    if (ws->initicon.width) {
-        ws->iconpix = XCreatePixmap(stddpy, DefaultRootWindow(stddpy),
-                                    ws->iconw, ws->iconh,
-                                    DefaultDepth(stddpy,wd->screen));
-    }
-    else if (ws->iconimage && strcmp(ws->iconimage, "")) {
-        ws->iconpix = loadimage(w, ws->iconimage, &(ws->iconh), &(ws->iconw),
-                                0, &status);
-        ws->iconh += 6;
-        ws->iconw += 6;
-    }
-    else {    /* determine the size of the icon window */
-        ws->iconh = wd->fonts->ascent +
-            wd->fonts->descent + 5;
-        if (ws->iconlabel == NULL) ws->iconlabel = "";
-#ifdef HAVE_LIBXFT
-        ws->iconw = textwidth(w, ws->iconlabel,
-                                  strlen(ws->iconlabel)) + 6;
-#else
-        ws->iconw = XTextWidth(wd->fonts->fsp, ws->iconlabel,
-                               strlen(ws->iconlabel)) + 6;
-#endif
-    }
-
-    /* if icon position hint exists, get it */
-    if (ws->wmhintflags & IconPositionHint) {
-        x = ws->iconx;
-        y = ws->icony;
-    }
-
-    /* create the icon window */
-    ws->iconwin = XCreateSimpleWindow(stddpy, DefaultRootWindow(stddpy), x, y,
-                                      ws->iconw, ws->iconh, 2,
-                                      wd->colors[wc->fg].c,
-                                      wd->colors[wc->bg].c);
-
-    /* select events for the icon window */
-    XSelectInput(stddpy, ws->iconwin,
-                 ExposureMask | KeyPressMask | ButtonPressMask |
-                 StructureNotifyMask);
-
 }
 
 
@@ -1047,10 +989,7 @@ static int wmap(wbp w, wbp parent)
             size_hints.min_width = size_hints.max_width = ws->width;
             size_hints.min_height = size_hints.max_height = ws->height;
         }
-        if (ws->iconlabel == NULL) {
-            ws->iconlabel = salloc(ws->windowlabel);
-        }
-        XSetStandardProperties(stddpy, stdwin, ws->windowlabel, ws->iconlabel,
+        XSetStandardProperties(stddpy, stdwin, ws->windowlabel, ws->windowlabel,
                                0,0,0, &size_hints);
         XSelectInput(stddpy, stdwin, XMasks(ws->inputmask));
     }
@@ -1058,11 +997,6 @@ static int wmap(wbp w, wbp parent)
     wmhints.input = True;
     wmhints.flags = InputHint;
     if (ws->iconic != RootState) {
-        if (ws->iconimage != NULL) {
-            makeIcon(w, ws->posx < 0 ? 0 : ws->posx, ws->posy < 0 ? 0 : ws->posy);
-            wmhints.icon_window = ws->iconwin;
-            ws->wmhintflags |= IconWindowHint;
-        }
         wmhints.flags |= (ws->wmhintflags | StateHint);
         wmhints.initial_state = ws->iconic;
         wmhints.icon_x = ws->iconx;
@@ -1360,33 +1294,13 @@ int warppointer(wbp w, int x, int y)
 }
 
 /*
- * #@#@ This is a bug
- */
-int seticonlabel(wbp w, char *val)
-{
-    STDLOCALS(w);
-    if (ws->iconlabel != NULL) free(ws->iconlabel);
-    ws->iconlabel = salloc(val);
-   
-    if (stddpy && stdwin) {
-        XSetIconName(stddpy, stdwin, w->window->iconlabel);
-        if (ws->iconic == IconicState && !ws->iconpix && ws->iconwin) {
-            XClearWindow(stddpy, ws->iconwin);
-            XDrawString(stddpy, ws->iconwin, wd->icongc, 4,
-                        wd->fonts->ascent + 2,
-                        ws->iconlabel, strlen(ws->iconlabel));
-        }
-    }
-    return Succeeded;
-}
-
-/*
  * setwindowlabel
  */
 int setwindowlabel(wbp w, char *s)
 {
     wsp ws = w->window;
-    if (ws->windowlabel != NULL) free(ws->windowlabel);
+    if (ws->windowlabel)
+        free(ws->windowlabel);
     ws->windowlabel = salloc(s);
 
     if (ws->display && ws->display->display && ws->win)
@@ -1645,66 +1559,6 @@ int setcanvas(wbp w, char *s)
     }
     else return Failed;
     XSync(ws->display->display, False);
-    return Succeeded;
-}
-
-int seticonicstate(wbp w, char *s)
-{
-    STDLOCALS(w);
-
-    if (!strcmp(s, "icon")) {
-        if (ws->pix == (Pixmap) NULL) {
-            ws->wmhintflags |= StateHint;
-            ws->iconic = IconicState;
-        }
-        else {
-            if (ws->iconic != IconicState) {
-                XIconifyWindow(ws->display->display, ws->win, ws->display->screen);
-	    }
-        }
-    }
-    else if (!strcmp(s, "window")) {
-        if (ws->win != (Window) NULL) {
-            if (ws->iconic == IconicState) {
-                XMapWindow(stddpy, stdwin);
-	    }
-        }
-    }
-    else if (!strcmp(s, "root")) {
-        if (ws->win == (Window) NULL)
-            ws->iconic = RootState;
-        else return Failed;
-    }
-    else return Error;
-    XSync(ws->display->display, False);
-    return Succeeded;
-}
-
-int seticonpos(wbp w, char *s)
-{
-    char *s2;
-    wsp ws = w->window;
-
-    ws->wmhintflags |= IconPositionHint;
-    s2 = s;
-    ws->iconx = atol(s2);
-    while (isspace((unsigned char)*s2)) s2++;
-    while (isdigit((unsigned char)*s2)) s2++;
-    if (*s2++ != ',') return Error;
-    ws->icony = atol(s2);
-
-    if (ws->win) {
-        if (ws->iconwin == (Window) NULL)
-            makeIcon(w, ws->iconx, ws->icony);
-        if (remap(w, ws->iconx, ws->icony) == -1) return Error;
-    }
-    return Succeeded;
-}
-
-int geticonpos(wbp w, char *s)
-{
-    wsp ws = w->window;
-    sprintf(s,"%d,%d", ws->iconx, ws->icony);
     return Succeeded;
 }
 
@@ -2010,14 +1864,6 @@ int geticonimage(wbp w, char *answer)
     if (!w->window->iconimage)
         return Failed;
     strcpy(answer, w->window->iconimage);
-    return Succeeded;
-}
-
-int geticonlabel(wbp w, char *answer)
-{
-    if (!w->window->iconlabel)
-        return Failed;
-    strcpy(answer, w->window->iconlabel);
     return Succeeded;
 }
 
@@ -3479,107 +3325,6 @@ static int setpatternbits(wbp w, int width, int *bits, int nbits)
 }
 
 
-
-/*
- * remap a window ... this time with an iconwin
- */
-static int remap(wbp w, int x, int y)
-{
-    XSizeHints size_hints;
-    XWMHints   *wmhints;
-    STDLOCALS(w);
-
-    XGetSizeHints(stddpy, stdwin, &size_hints, XA_WM_NORMAL_HINTS);
-    wmhints = XGetWMHints(stddpy, stdwin);
-    if (ws->iconwin)
-        XDestroyWindow(stddpy, ws->iconwin);
-#ifdef HAVE_LIBXFT
-    if (ws->winDraw) {
-        XftDrawDestroy(ws->winDraw);
-        ws->winDraw = NULL;
-    }
-#endif
-    if (stdwin)
-        XDestroyWindow(stddpy, stdwin);
-    ws->win = XCreateSimpleWindow(stddpy, DefaultRootWindow(stddpy),
-                                  ws->posx, ws->posy, ws->width,
-                                  ws->height, 4,
-                                  wd->colors[wc->fg].c, wd->colors[wc->bg].c);
-    XSetStandardProperties(stddpy, ws->win, ws->windowlabel,
-                           ws->iconlabel, 0, 0, 0, &size_hints);
-    XSelectInput(stddpy, ws->win, XMasks(ws->inputmask));
-
-    ws->iconwin = XCreateSimpleWindow(stddpy, DefaultRootWindow(stddpy),
-                                      ws->iconx, ws->icony, ws->iconw,
-                                      ws->iconh, 2,
-                                      wd->colors[wc->fg].c,
-                                      wd->colors[wc->bg].c);
-    XSelectInput(stddpy, ws->iconwin,
-                 ExposureMask | KeyPressMask | ButtonPressMask);
-
-    wmhints->flags |= IconPositionHint;
-    wmhints->icon_x = x;
-    wmhints->icon_y = y;
-    wmhints->initial_state = ws->iconic;
-    wmhints->icon_window = ws->iconwin;
-    wmhints->flags |= IconWindowHint;
-    XSetWMHints(stddpy, ws->win, wmhints);
-    CLREXPOSED(w);
-    XMapWindow(stddpy, ws->win);
-    if (ws->iconic == NormalState) {
-        while (!ISEXPOSED(w))
-            pollevent();
-    }
-    ws->iconx = x;
-    ws->icony = y;
-    XSync(stddpy, False);
-    XFree((char *)wmhints);
-    return 1;
-}
-
-
-int seticonimage(wbp w, dptr dp)
-{
-    int status;
-    Pixmap pix;
-    tended char *tmp;
-    {
-        STDLOCALS(w);
-        /* get the pixmap file named by x */
-        if (is:string(*dp)) {
-            int height, width;
-            if (!cnv:C_string(*dp,tmp))
-                ReturnErrVal(103, *dp, Error);
-
-            if ((ws->iconimage != NULL) && strcmp(ws->iconimage, ""))
-                free(ws->iconimage);
-            ws->iconimage = salloc(tmp);
-
-            if (ws->iconwin == (Window) NULL) makeIcon(w,0,0);
-            else {
-                pix = loadimage(w, ws->iconimage, &height, &width, 0, &status);
-                if (pix == (Pixmap) NULL)
-                    return Failed;
-                XCopyArea(stddpy, pix, ws->iconwin, wd->icongc,
-                          0, 0, width, height, 0, 0);
-                if (ws->iconpix) {
-                    XSync(stddpy, False);
-                    XFreePixmap(stddpy, ws->iconpix);
-                }
-                ws->iconpix = pix;
-                ws->iconw = width;
-                ws->iconh = height;
-                if (remap(w,ws->iconx,ws->icony) == -1)
-                    ReturnErrNum(144, Error);
-            }
-        }
-        else
-            return Failed;
-        return Succeeded;
-    }
-}
-
-
 /*
  * dumpimage -- write an image to a disk file in an X format.
  *
@@ -4646,6 +4391,10 @@ wfp alcfont(wbp w, char *s)
     char family[MAXFONTWORD+1];
     char *stdfam;
 
+    /* Explicit X11 font name */
+    if (!strncmp(s, "x11:", 4))
+        return tryfont(w, s + 4);
+
     if (strcmp(s, "fixed") != 0 && parsefont(s, family, &flags, &size)) {
         /*
          * This is a legal Icon font spec (and it's not an unadorned "fixed").
@@ -4914,7 +4663,11 @@ static wfp tryfont(wbp w, char *s)
      * see if the font is already loaded on this display
      */
     for(rv = wd->fonts; rv != NULL; rv = rv->next) {
-        if (!strcmp(s,rv->name)) break;
+#ifdef HAVE_LIBXFT
+        if (!strcmp(s, rv->name + 3)) break;
+#else
+        if (!strcmp(s, rv->name + 4)) break;
+#endif
     }
     if (rv != NULL) {
         rv->refcount++;
@@ -4931,7 +4684,7 @@ static wfp tryfont(wbp w, char *s)
     w->context->leading = rv->height;
 
     /*
-     * link the font into this displays fontlist (but not at the head!)
+     * link the font into this display's fontlist (but not at the head!)
      */
     rv->next = wd->fonts->next;
     rv->previous = wd->fonts;
@@ -4944,35 +4697,30 @@ static wfp loadfont(wdp wd, char *s)
 {
     wfp rv;
     GRFX_ALLOC(rv, _wfont);
-    rv->name = salloc(s);
 #ifdef HAVE_LIBXFT
-    rv->fsp = XftFontOpenName(wd->display, wd->screen, rv->name);
+    rv->fsp = XftFontOpenName(wd->display, wd->screen, s);
 #else
-    rv->fsp = XLoadQueryFont(wd->display, rv->name);
+    rv->fsp = XLoadQueryFont(wd->display, s);
 #endif
     if (rv->fsp == NULL){
-        free(rv->name);
         free(rv);
         return NULL;
     }
 
 #ifdef HAVE_LIBXFT
+    MemProtect(rv->name = malloc(strlen(s) + 3 + 1));
+    sprintf(rv->name, "fc:%s", s);
     {
         XGlyphInfo	extents; 
-        char s[256];
-        int i;
-
         /*
          * Xft seems to sometimes give too-small values in its font
          * ascent/descent fields; therefore calculate the GlyphInfo
-         * for a sample string comprising the first 256 chars and take
-         * the maximum ascent/descent of the sample and the font's
-         * reported values.
+         * for the first 256 chars and take the maximum ascent/descent
+         * of the sample and the font's reported values.
          */
-        for (i = 0; i < 256; ++i) s[i] = (char)i;
         XftTextExtents8 (wd->display,
                          rv->fsp,
-                         (FcChar8 *)s,
+                         (FcChar8 *)allchars,
                          256,
                          &extents);
         rv->ascent = Max(rv->fsp->ascent, extents.y);
@@ -4980,6 +4728,8 @@ static wfp loadfont(wdp wd, char *s)
         rv->maxwidth = rv->fsp->max_advance_width;
     }
 #else
+    MemProtect(rv->name = malloc(strlen(s) + 4 + 1));
+    sprintf(rv->name, "x11:%s", s);
     rv->ascent = rv->fsp->ascent;
     rv->descent = rv->fsp->descent;
     rv->maxwidth = rv->fsp->max_bounds.width;
@@ -5078,6 +4828,8 @@ wcp clonecontext(wbp w)
         rec.height = rv->cliph;
         XSetClipRectangles(rv->display->display, rv->gc, 0, 0, &rec, 1,Unsorted);
     }
+    if (wc->patternname)
+        rv->patternname = salloc(wc->patternname);
     return rv;
 }
 
@@ -5097,13 +4849,15 @@ static wsp alcwinstate()
         ButtonPressMask | ButtonReleaseMask | ButtonMotionMask |
         StructureNotifyMask;
     ws->iconic = NormalState;
-    ws->posx = ws->posy = -(INT_MAX);
-    ws->minwidth = ws->minheight = 0;
+    ws->posx = ws->posy = -INT_MAX;
+    ws->minwidth = ws->minheight = 1;
     ws->maxwidth = ws->maxheight = INT_MAX;
 #ifdef HAVE_LIBXFT
     ws->pixDraw = ws->winDraw = NULL;
 #endif
-
+    ws->height = 200;
+    ws->width  = 200;
+    ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
     GRFX_LINK(ws, wstates);
     return ws;
 }
@@ -5166,6 +4920,11 @@ void freewindow(wsp ws)
             imd->width = 0;
         }
 
+       if (ws->windowlabel) { 
+           free(ws->windowlabel); 
+           ws->windowlabel = 0;
+       }
+
         GRFX_UNLINK(ws, wstates);
     }
 }
@@ -5179,6 +4938,8 @@ void freecontext(wcp wc)
     if(wc->refcount == 0) {
         if (wc->gc != NULL)
             XFreeGC(wc->display->display, wc->gc);
+        if (wc->patternname)
+            free(wc->patternname);
         /* free color references to fg and bg? */
         free_display(wc->display);
         GRFX_UNLINK(wc, wcntxts);
