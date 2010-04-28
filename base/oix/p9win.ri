@@ -32,6 +32,7 @@ static struct SharedImage *link_sharedimage(struct SharedImage *i);
 static void unlink_sharedimage(struct SharedImage *i);
 static int reversebits(int c);
 static int limit_size(wsp ws, int *width, int *height);
+static void synch_pos(wsp ws);
 
 #define EMAXMSG 128+8192     /* size of 9p header+data */
 #define WINDOW_MOUNT_ROOT "/tmp/oi_windowmounts"
@@ -443,6 +444,15 @@ static wbp find_first_wbp_for(wsp ws)
     return 0;  /* not reached */
 }
 
+/*
+ * Synch the posx, posy variables with rio's values.
+ */
+static void synch_pos(wsp ws)
+{
+    ws->posx = ws->win->r.min.x - Borderwidth;
+    ws->posy = ws->win->r.min.y - Borderwidth;
+}
+
 static void resize_pix_win(wbp w)
 {
     wsp ws = w->window;
@@ -478,8 +488,7 @@ static void handle_resize(wsp ws)
          * If the new size matches the existing canvas size, just copy the
          * pix win and adjust the pos.  Don't fire an event.
          */
-        ws->posx = ws->win->r.min.x - Borderwidth;
-        ws->posy = ws->win->r.min.y - Borderwidth;
+        synch_pos(ws);
         pix_to_win(ws);
     }
     else if ((ws->bits & 128) == 0)   /* If resizable flag off */
@@ -502,8 +511,7 @@ static void handle_resize(wsp ws)
         struct descrip d;
         ws->width = tw;
         ws->height = th;
-        ws->posx = ws->win->r.min.x - Borderwidth;
-        ws->posy = ws->win->r.min.y - Borderwidth;
+        synch_pos(ws);
         w = find_first_wbp_for(ws);
 
         /* Fill the win with the bg of the first context */
@@ -1566,9 +1574,15 @@ static int open_screen_win(wsp ws)
             close_screen_win(ws);
             return Failed;
         }
-        sprintf(buff, "new -r %d %d %d %d",
-                ws->posx, ws->posy, ws->posx + ws->width + 2*Borderwidth, 
-                ws->posy + ws->height + 2*Borderwidth);
+        /* If either posx or posy unset, let rio place the window */
+        if (ws->posx == -INT_MAX || ws->posy == -INT_MAX)
+            sprintf(buff, "new -dx %d -dy %d",
+                    ws->width + 2*Borderwidth, 
+                    ws->height + 2*Borderwidth);
+        else
+            sprintf(buff, "new -r %d %d %d %d",
+                    ws->posx, ws->posy, ws->posx + ws->width + 2*Borderwidth, 
+                    ws->posy + ws->height + 2*Borderwidth);
         if (ws->desired_canvas == IconicCanvas)
             strcat(buff, " -hide");
         if (mount(ws->wsys_fd, -1, ws->mount_dir, MREPL, buff) < 0) {
@@ -1589,6 +1603,7 @@ static int open_screen_win(wsp ws)
         close_screen_win(ws);
         return Failed;
     }
+    synch_pos(ws);
 
     if ((fd = open_winfile(ws, "label", OWRITE)) < 0) {
         whyf("Can't open label file %r");
@@ -1978,6 +1993,10 @@ void getdisplay(wbp w, char *answer)
 
 int getpos(wbp w)
 {
+    wsp ws = w->window;
+    if (!ws)
+        return Failed;
+    synch_pos(ws);
     return Succeeded;
 }
 
@@ -2065,7 +2084,7 @@ static wsp alcwinstate()
     ws->cursor = stringint_lookup(cursors, "left ptr");
     ws->height = 200;
     ws->width  = 200;
-    ws->posx = ws->posy = 0;
+    ws->posx = ws->posy = -INT_MAX;
     ws->minwidth = ws->minheight = 0;
     ws->maxwidth = ws->maxheight = INT_MAX;
     ws->desired_canvas = NormalCanvas;
