@@ -1558,6 +1558,10 @@ static int open_screen_win(wsp ws)
 
         fprint(ws->wctl_fd, "resize  -dx %d -dy %d", 
                ws->width + 2*Borderwidth, ws->height + 2*Borderwidth);
+
+        if (ws->posx != -INT_MAX && ws->posy != -INT_MAX)
+            fprint(ws->wctl_fd, "move  -minx %d -miny %d", ws->posx, ws->posy);
+
         use_win = 0;
     } else {
         srvwsys = getenv("wsys");
