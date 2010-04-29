@@ -1,6 +1,6 @@
 package gui
 
-import util, graphics, ipl.graphics(Zoom)
+import util, graphics, ipl.graphics(Zoom), ipl.pdco(Safe)
 
 class Paint(Size)
    public defer initially(c, accel)
@@ -266,8 +266,8 @@ class GridPaint(Paint)
             else
                val := ""
          }
-         if member(attrib_set, key) then
-            win.attrib(a)
+         if member(attrib_set, key) & (*val > 0) then
+            Safe{win.attrib(a)}
          else case key of {
             "ia_x" : ia_x := (val === (Align.L | Align.R)) | Align.C
             "ia_y" : ia_y := (val === (Align.T | Align.B)) | Align.C
