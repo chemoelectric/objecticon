@@ -685,7 +685,7 @@ int copyarea(wbp w1,wbp w2,int x,int y,int w,int h,int x2,int y2)
 {
     wsp ws1 = w1->window;
     wsp ws2 = w2->window;
-    wcp wc = w1->context;
+    wcp wc = w2->context;
     if (ws2->win)
         impl_copyarea(wc, ws2->win, ws1->pix, x, y, w, h, x2, y2);
     impl_copyarea(wc, ws2->pix, ws1->pix, x, y, w, h, x2, y2);
