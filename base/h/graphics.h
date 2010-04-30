@@ -2,14 +2,6 @@
  * graphics.h - macros and types used in Icon's graphics interface.
  */
 
-#if XWindows
-   #include "../h/xwin.h"
-#endif					/* XWindows */
-
-#if MSWIN32
-   #include "../h/mswin.h"
-#endif					/* MSWIN32 */
-
 #ifndef MAXXOBJS
    #define MAXXOBJS 256
 #endif					/* MAXXOBJS */
@@ -25,6 +17,18 @@
 #ifndef MAXFONTWORD
    #define MAXFONTWORD 40
 #endif					/* MAXFONTWORD */
+
+#if XWindows
+   #include "../h/xwin.h"
+#endif					/* XWindows */
+
+#if MSWIN32
+   #include "../h/mswin.h"
+#endif					/* MSWIN32 */
+
+#if PLAN9
+   #include "../h/p9win.h"
+#endif
 
 #define DEFAULTFONTSIZE 14
 
@@ -253,7 +257,8 @@ typedef struct _wcontext {
   double	gamma;			/* gamma correction value */
   int		bits;			/* context bits */
 #if PLAN9
-  struct SharedImage *fg, *bg, *pattern;
+  struct SharedColor *fg, *bg;
+  struct SharedPattern  *pattern;
   int           thick;
   stringint     *fillstyle;
   stringint     *drawop;

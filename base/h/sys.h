@@ -24,26 +24,6 @@
    typedef unsigned long mode_t;
    typedef unsigned long clock_t;
    typedef vlong off_t;
-   typedef Point XPoint;
-
-   struct SharedImage {
-     Image *i;
-     char *name;
-     int   rgba;
-     int	refcount;
-   };
-
-   #define FS_SOLID             1
-   #define FS_STIPPLE           2
-
-   #define PointerMotionMask    1
-   #define WindowClosureMask    2
-   #define KeyReleaseMask       4
-   #define ControlMask          (1L << 16L)
-   #define Mod1Mask             (2L << 16L)
-   #define ShiftMask            (4L << 16L)
-   #define VirtKeyMask          (8L << 16L)
-
    #define vsnprint vsnprint
    #define vsnprintf vsnprint
 
