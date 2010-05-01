@@ -911,7 +911,7 @@ function graphics_Window_palette_color(s1, s2)
       e += *StrLoc(d) & 0xFF;
       if (!e->valid)
           fail;
-      sprintf(tmp, "%ld,%ld,%ld", e->clr.red, e->clr.green, e->clr.blue);
+      sprintf(tmp, "%d,%d,%d", e->clr.red, e->clr.green, e->clr.blue);
       cstr2string(tmp, &result);
       return result;
    }

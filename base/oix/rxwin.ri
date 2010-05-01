@@ -1683,7 +1683,7 @@ static int resetfg(wbp w)
 int setfg(wbp w, char *s)
 {
     wclrp cp;
-    long r, g, b, a;
+    int r, g, b, a;
     wcp wc = w->context;
     wdp wd = w->window->display;
     /*
@@ -1733,7 +1733,7 @@ int isetfg(wbp w, int fg)
 int setbg(wbp w, char *s)
 {
     wclrp cp;
-    long r, g, b, a;
+    int r, g, b, a;
     wcp wc = w->context;
     wdp wd = w->window->display;
     GC stdgc = wc->gc;
@@ -2611,7 +2611,7 @@ int mutablecolor(wbp w, dptr argv, int ac, int *retval)
     char *colorname;
     tended char  *str;
     int i;
-    long alpha;
+    int alpha;
     {
         STDLOCALS(w);
 
@@ -2668,7 +2668,7 @@ int mutablecolor(wbp w, dptr argv, int ac, int *retval)
                 colorcell.pixel = -IntVal(argv[0]) - 1;
                 XQueryColor(stddpy, wd->cmap, &colorcell);
                 clr = lcolor(w, colorcell);
-                sprintf(colorname, "%ld,%ld,%ld", clr.red, clr.green, clr.blue);
+                sprintf(colorname, "%d,%d,%d", clr.red, clr.green, clr.blue);
             }
             else {
                 if (!cnv:C_string(argv[0],str)) {
@@ -2713,7 +2713,7 @@ char *getmutablename(wbp w, int mute_index)
 int setmutable(wbp w, int i, char *s)
 {
     LinearColor clr;
-    long alpha;
+    int alpha;
     XColor colorcell;
     wdp dp = w->window->display;
 
@@ -2746,7 +2746,7 @@ void freecolor(wbp w, char *s)
 {
     wdp dp;
     Display *d;
-    long i, alpha;
+    int i, alpha;
     LinearColor clr;
     XColor color;
 
@@ -3155,7 +3155,7 @@ int getpixel(wbp w, int x, int y, word *rv, char *s, struct imgmem *imem)
                     colorcell.green = cp->g;
                     colorcell.blue = cp->b;
                     clr = lcolor(w, colorcell);
-                    sprintf(s, "%ld,%ld,%ld", clr.red, clr.green, clr.blue);
+                    sprintf(s, "%d,%d,%d", clr.red, clr.green, clr.blue);
                 }
                 break;
             }
@@ -3164,7 +3164,7 @@ int getpixel(wbp w, int x, int y, word *rv, char *s, struct imgmem *imem)
         XQueryColor(stddpy, wd->cmap, &colorcell);
         *rv = 1;
         clr = lcolor(w, colorcell);
-        sprintf(s, "%ld,%ld,%ld", clr.red, clr.green, clr.blue);
+        sprintf(s, "%d,%d,%d", clr.red, clr.green, clr.blue);
     }
     return Succeeded;
 }
@@ -3551,7 +3551,7 @@ static Pixmap loadimage(wbp w, char *filename,  int *height,
             wd->colors[j].g = color.green;
             wd->colors[j].b = color.blue;
             clr = lcolor(w, color);
-            sprintf(wd->colors[j].name,"%ld,%ld,%ld",clr.red,clr.green,clr.blue);
+            sprintf(wd->colors[j].name,"%d,%d,%d",clr.red,clr.green,clr.blue);
             if (ws->numColors == WMAXCOLORS)
                 ;
             else {
@@ -3594,7 +3594,7 @@ static Pixmap loadimage(wbp w, char *filename,  int *height,
  * Interpret a platform-specific color name s.
  * Under X, we can do this only if there is a window.
  */
-int nativecolor(wbp w, char *s, long *r, long *g, long *b)
+int nativecolor(wbp w, char *s, int *r, int *g, int *b)
 {
     XColor colorcell;
     LinearColor clr;

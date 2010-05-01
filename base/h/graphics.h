@@ -167,7 +167,7 @@ typedef struct _wfont {
  * These structures and definitions are used for colors and images.
  */
 typedef struct {
-   long red, green, blue;		/* color components, linear 0 - 65535*/
+   int red, green, blue;		/* color components, linear 0 - 65535*/
    } LinearColor;
 
 struct palentry {			/* entry for one palette member */
