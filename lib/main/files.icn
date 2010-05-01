@@ -32,15 +32,13 @@ $ifdef _UNIX
       PATH_SPECIALS := '/'
       PATHS_SEPARATOR := ":"
       FS := UnixFileSystem()
-$else
-$ifdef _PLAN9
+$elsifdef _PLAN9
       EOL := "\n"
       PATH_SEPARATOR := "/"
       PATH_SPECIALS := '/'
       PATHS_SEPARATOR := " "
       FS := Plan9FileSystem()
-$else
-$ifdef _MS_WIN32
+$elsifdef _MS_WIN32
       EOL := "\r\n"
       PATH_SEPARATOR := "\\"
       PATH_SPECIALS := ':\\/'
@@ -48,8 +46,6 @@ $ifdef _MS_WIN32
       FS := WindowsFileSystem()
 $else
       runerr("Can't init_file_system: unknown o/s type")
-$endif
-$endif
 $endif
    end
 

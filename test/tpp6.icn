@@ -1,0 +1,86 @@
+$define A 1
+$undef B
+$undef C
+
+$ifdef B
+NO 1
+$elsifndef C
+YES 1
+$endif
+
+$ifdef A
+YES 2
+$else
+NO 2
+$endif
+
+$ifdef B
+NO 3
+$else
+YES 3
+$endif
+
+$ifdef B
+NO 4
+$elsifdef A
+YES 4
+$endif
+
+$ifdef B
+NO 5
+$elsifndef C
+YES 5
+$endif
+
+$ifdef B
+NO 6
+$elsifdef C
+NO 6
+$elsifdef A
+YES 6
+$endif
+
+
+$ifdef B
+NO 7
+$elsifdef C
+NO 7
+$else
+YES 7
+$endif
+
+$ifdef A
+YES 8
+$endif
+
+$ifdef A
+YES 9
+$elsifdef C
+NO 9
+$else
+NO 9
+$endif
+
+$ifdef B
+NO 10
+$elsifdef A
+YES 10
+$else
+NO 10
+$endif
+
+$ifdef B
+NO 11
+$elsifndef C
+YES 11
+$else
+NO 11
+$endif
+
+$ifdef A
+YES 12
+$elsifdef A
+NO 12
+$else
+NO 12
+$endif

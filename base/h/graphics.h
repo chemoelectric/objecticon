@@ -20,13 +20,9 @@
 
 #if XWindows
    #include "../h/xwin.h"
-#endif					/* XWindows */
-
-#if MSWIN32
+#elif MSWIN32
    #include "../h/mswin.h"
-#endif					/* MSWIN32 */
-
-#if PLAN9
+#elif PLAN9
    #include "../h/p9win.h"
 #endif
 
@@ -150,20 +146,17 @@ typedef struct _wfont {
   int           descent;
   int		height;			
   int           maxwidth;               /* max width of one char */
-#if PLAN9
-  Font          *font;
-#endif
-
 #if XWindows
-#ifdef HAVE_LIBXFT
-  XftFont     * fsp;
-#else
-  XFontStruct *	fsp;			/* X font pointer */
-#endif /* HAVE_LIBXFT */
-#endif					/* XWindows */
-#if MSWIN32
+  #ifdef HAVE_LIBXFT
+    XftFont     * fsp;
+  #else
+    XFontStruct *	fsp;			/* X font pointer */
+  #endif /* HAVE_LIBXFT */
+#elif PLAN9
+  Font          *font;
+#elif MSWIN32
   HFONT		font;
-#endif					/* MSWIN32 */
+#endif
 } wfont, *wfp;
 
 #define ASCENT(w) ((w)->context->font->ascent)
@@ -199,7 +192,7 @@ struct imgmem {
    uchar *data;
 #elif MSWIN32
    COLORREF *crp;
-#endif					/* MSWIN32 */
+#endif
    };
 
 #define TCH1 '~'			/* usual transparent character */
@@ -256,14 +249,7 @@ typedef struct _wcontext {
   int		dx, dy;
   double	gamma;			/* gamma correction value */
   int		bits;			/* context bits */
-#if PLAN9
-  struct SharedColor *fg, *bg;
-  struct SharedPattern  *pattern;
-  int           thick;
-  stringint     *fillstyle;
-  stringint     *drawop;
-  stringint     *linestyle;
-#elif XWindows
+#if XWindows
   wdp		display;
   GC		gc;			/* X graphics context */
   int		fg, bg;
@@ -273,6 +259,13 @@ typedef struct _wcontext {
   char		*patternname;
   int		fillstyle;
   int		drawop;
+#elif PLAN9
+  struct SharedColor *fg, *bg;
+  struct SharedPattern  *pattern;
+  int           thick;
+  stringint     *fillstyle;
+  stringint     *drawop;
+  stringint     *linestyle;
 #elif MSWIN32
   LOGPEN	pen;
   LOGPEN	bgpen;
@@ -285,7 +278,7 @@ typedef struct _wcontext {
   int		leading, bkmode;
   int		fillstyle;
   int		drawop;
-#endif					/* MSWIN32*/
+#endif
 
 } wcontext, *wcp;
 
@@ -328,20 +321,7 @@ typedef struct _wstate {
   int		bits;			/* window bits */
   word		timestamp;		/* last event time stamp */
   struct descrip listp;		        /* event list for this window */
-#if PLAN9
-  Image         *win;
-  Screen        *screen;
-  Image         *pix;
-  char          mount_dir[64];
-  int           event_pipe[2];
-  int           wsys_fd, wctl_fd, mouse_fd, cons_fd, consctl_fd, cursor_fd;
-  int           mouse_pid, cons_pid;
-  int           mouse_down;
-  int           last_mouse_x, last_mouse_y;
-  int           desired_canvas;
-  stringint     *cursor;
-  int           using_win;
-#elif XWindows
+#if XWindows
   wdp		display;
   Window	win;			/* X window */
   Pixmap	pix;			/* current screen state */
@@ -370,6 +350,19 @@ typedef struct _wstate {
   char		*iconimage;		/* icon pixmap file name */
   struct imgdata initicon;		/* initial icon image data */
   char		*iconlabel;		/* icon label */
+#elif PLAN9
+  Image         *win;
+  Screen        *screen;
+  Image         *pix;
+  char          mount_dir[64];
+  int           event_pipe[2];
+  int           wsys_fd, wctl_fd, mouse_fd, cons_fd, consctl_fd, cursor_fd;
+  int           mouse_pid, cons_pid;
+  int           mouse_down;
+  int           last_mouse_x, last_mouse_y;
+  int           desired_canvas;
+  stringint     *cursor;
+  int           using_win;
 #elif MSWIN32
   HWND		win;			/* client window */
   HWND		iconwin;		/* client window when iconic */
@@ -388,7 +381,7 @@ typedef struct _wstate {
   HWND		focusChild;
   int           nChildren;
   childcontrol *child;
-#endif					/* MSWIN32 */
+#endif
 } wstate, *wsp;
 
 /*

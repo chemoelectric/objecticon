@@ -690,8 +690,7 @@ $ifdef _X_WINDOW_SYSTEM
       SUPER_L :=             65515
       SUPER_R :=             65516
       MENU :=                65383
-$endif
-$ifdef _MS_WINDOWS
+$elsifdef _MS_WINDOWS
       DOWN :=               40
       END :=                35
       SCROLL_LOCK :=        145
