@@ -258,7 +258,6 @@ int parsecolor(wbp w, char *buf, int *r, int *g, int *b, int *a)
 
     /* try interpreting as three comma-separated numbers */
     if (sscanf(buf, "%d,%d,%d%c", r, g, b, &c) == 3) {
-        printf("three\n");
         if (*r>=0 && *r<=65535 && *g>=0 && *g<=65535 && *b>=0 && *b<=65535)
             return Succeeded;
         else
@@ -267,7 +266,6 @@ int parsecolor(wbp w, char *buf, int *r, int *g, int *b, int *a)
 
     /* try interpreting as four comma-separated numbers */
     if (sscanf(buf, "%d,%d,%d,%d%c", r, g, b, a, &c) == 4) {
-        printf("four %d %d %d %d\n",*r,*g,*b,*a);
         if (*r>=0 && *r<=65535 && *g>=0 && *g<=65535 && *b>=0 && *b<=65535 && *a>=0 && *a<=65535)
             return Succeeded;
         else
