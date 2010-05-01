@@ -7,11 +7,9 @@
 #ifdef Graphics
 
 #if XWindows
-#include "rxwin.ri"
-#endif					/* XWindows */
-
-#if MSWIN32
-#include "rmswin.ri"
-#endif  				/* MSWIN32 */
+  #include "rxwin.ri"
+#elif MSWIN32
+  #include "rmswin.ri"
+#endif
 
 #endif					/* Graphics */

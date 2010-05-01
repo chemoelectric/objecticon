@@ -69,13 +69,14 @@ static	void	pushdef	(cdefn *d);
 static	void	pushline (void);
 static	void	ppdir	(char *line);
 static	void	pfatal	(char *s1, char *s2);
-static	void	skipcode (int doelse, int report);
+static	void	skipcode (int doelse, int report, char **cmd0, char **args0);
 static	char *	define	(char *s);
 static	char *	undef	(char *s);
 static	char *	ifdef	(char *s);
 static	char *	ifndef	(char *s);
 static	char *	ifxdef	(char *s, int f);
 static	char *	elsedir	(char *s);
+static	char *	elsif	(char *s);
 static	char *	endif	(char *s);
 static	char *	encoding(char *s);
 static	char *	errdir	(char *s);
@@ -98,6 +99,8 @@ pplist[] = {
    { "undef",   undef   },
    { "ifdef",   ifdef   },
    { "ifndef",  ifndef  },
+   { "elsifdef",   elsif   },
+   { "elsifndef",  elsif  },
    { "else",    elsedir },
    { "endif",   endif   },
    { "include", include },
@@ -692,7 +695,6 @@ static char *ifndef(char *s)
 static char *ifxdef(char *s, int f)
    {
    char c, *name;
-
    ifdepth++;
    if (isalpha((unsigned char)(c = *s)) || c == '_')
       s = getidt(name = s - 1, s);		/* get name */
@@ -700,8 +702,25 @@ static char *ifxdef(char *s, int f)
       return "$ifdef/$ifndef: missing name";
    if (*wskip(s) != '\0')
       return "$ifdef/$ifndef: too many arguments";
-   if ((dlookup(name, -1, name) != NULL) ^ f)
-      skipcode(1, 1);				/* skip to $else or $endif */
+   for (;;) {
+       if ((dlookup(name, -1, name) != NULL) ^ f) {
+           char *cmd;
+           skipcode(1, 1, &cmd, &s);	/* skip to $else, $elsifdef, $elsifndef or $endif */
+
+           if (strcmp(cmd, "elsifdef") != 0 && strcmp(cmd, "elsifndef") != 0)
+               break;
+           
+           if (isalpha((unsigned char)(c = *s)) || c == '_')
+               s = getidt(name = s - 1, s);		/* get name */
+           else
+               return "$elsifdef/$elsifndef: missing name";
+           if (*wskip(s) != '\0')
+               return "$elsifdef/$elsifndef: too many arguments";
+
+           f = (strcmp(cmd, "elsifdef") == 0) ? 1 : 0;
+       } else
+           break;
+   }
    return NULL;
    }
 
@@ -714,9 +733,21 @@ static char *elsedir(char *s)
       return "unexpected $else";
    if (*s != '\0')
       pfatal ("extraneous arguments on $else/$endif", s);
-   skipcode(0, 1);			/* skip the $else section */
+   skipcode(0, 1, 0, 0);			/* skip the $else section */
    return NULL;
    }
+
+/*
+ * elsif(s) -- handle $elsif(n)def by skipping to $endif.
+ */
+static char *elsif(char *s)
+   {
+   if (ifdepth <= curfile->ifdepth)
+      return "unexpected $elsifdef/$elsifndef";
+   skipcode(0, 1, 0, 0);			/* skip the $elsif section */
+   return NULL;
+   }
+
 
 /*
  * endif(s) -- handle $endif.
@@ -753,64 +784,74 @@ static char *encoding(char *s)
  *
  *  If report is nonzero, generate #line directive at end of skip.
  */
-static void skipcode(int doelse, int report)
-   {
-   char c, *p, *cmd;
+static void skipcode(int doelse, int report, char **cmd0, char **args0)
+{
+    char c, *p, *cmd;
 
-   while ((p = buf = rline(curfile->fp)) != NULL) {
-      curfile->lno++;			/* bump line number */
+    while ((p = buf = rline(curfile->fp)) != NULL) {
+        curfile->lno++;			/* bump line number */
 
-      /*
-       * Handle #line form encountered while skipping.
-       */
-      if (buf[1]=='l' && buf[2]=='i' && buf[3]=='n' && buf[4]=='e' &&
+        /*
+         * Handle #line form encountered while skipping.
+         */
+        if (buf[1]=='l' && buf[2]=='i' && buf[3]=='n' && buf[4]=='e' &&
             buf[0]=='#' && buf[5]==' ') {
-         ppdir(buf + 1);			/* interpret #line */
-         continue;
-         }
+            ppdir(buf + 1);			/* interpret #line */
+            continue;
+        }
 
-      /*
-       * Check for any other kind of preprocessing directive.
-       */
-      while (isspace((unsigned char)(c = *p)))
-         p++;				/* find first nonwhite */
-      if (c != '$' || (ispunct((unsigned char)p[1]) && p[1]!=' '))
-         continue;			/* not a preprocessing directive */
-      p = wskip(p+1);			/* skip whitespace */
-      p = getidt(cmd = p-1, p);		/* get command name */
-      p = wskip(p);			/* skip whitespace */
+        /*
+         * Check for any other kind of preprocessing directive.
+         */
+        while (isspace((unsigned char)(c = *p)))
+            p++;				/* find first nonwhite */
+        if (c != '$' || (ispunct((unsigned char)p[1]) && p[1]!=' '))
+            continue;			/* not a preprocessing directive */
+        p = wskip(p+1);			/* skip whitespace */
+        p = getidt(cmd = p-1, p);		/* get command name */
+        p = wskip(p);			/* skip whitespace */
 
-      /*
-       * Check for a directive that needs special attention.
-       *  Deliberately accept any form of $if... as valid
-       *  in anticipation of possible future extensions;
-       *  this allows them to appear here if commented out.
-       */
-      if (cmd[0] == 'i' && cmd[1] == 'f') {
-         ifdepth++;
-         skipcode(0, 0);		/* skip to $endif */
-         }
-      else if (strcmp(cmd, "line") == 0)
-         setline(p);			/* process $line, ignore errors */
-      else if (strcmp(cmd, "endif") == 0 ||
-               (doelse == 1 && strcmp(cmd, "else") == 0)) {
-         /*
-          * Time to stop skipping.
-          */
-         if (*p != '\0')
-            pfatal ("extraneous arguments on $else/$endif", p);
-         if (cmd[1] == 'n')		/* if $endif */
-            ifdepth--;
-         if (report)
-             pushline();
-         return;
-         }
-      }
+        /*
+         * Check for a directive that needs special attention.
+         *  Deliberately accept any form of $if... as valid
+         *  in anticipation of possible future extensions;
+         *  this allows them to appear here if commented out.
+         */
+        if (cmd[0] == 'i' && cmd[1] == 'f') {
+            ifdepth++;
+            skipcode(0, 0, 0, 0);		/* skip to $endif */
+        }
+        else if (strcmp(cmd, "line") == 0)
+            setline(p);			/* process $line, ignore errors */
+        else if (strcmp(cmd, "endif") == 0 ||
+                 (doelse == 1 && strncmp(cmd, "els", 3) == 0)) {
+            /*
+             * Time to stop skipping.
+             */
+            if (*p != '\0' &&
+                (strcmp(cmd, "endif") == 0 || strcmp(cmd, "else") == 0))
+                pfatal ("extraneous arguments on $else/$endif", p);
+
+            if (cmd[1] == 'n')		/* if $endif */
+                ifdepth--;
+            if (report)
+                pushline();
+            if (cmd0)
+                *cmd0 = cmd;
+            if (args0)
+                *args0 = p;
+            return;
+        }
+    }
      
-   /*
-    *  At EOF, just return; main loop will report unterminated $if.
-    */
-   }
+    /*
+     *  At EOF, just return; main loop will report unterminated $if.
+     */
+    if (cmd0)
+        *cmd0 = "";
+    if (args0)
+        *args0 = "";
+}
 
 /*
  * Token scanning functions.

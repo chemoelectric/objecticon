@@ -4,9 +4,7 @@
 
 #if XWindows
    #include "../h/xwin.h"
-#endif					/* XWindows */
-
-#if MSWIN32
+#elif MSWIN32
    #include "../h/mswin.h"
 #endif					/* MSWIN32 */
 
@@ -147,15 +145,14 @@ typedef struct _wfont {
   int		height;			
   int           maxwidth;               /* max width of one char */
 #if XWindows
-#ifdef HAVE_LIBXFT
-  XftFont     * fsp;
-#else
-  XFontStruct *	fsp;			/* X font pointer */
-#endif /* HAVE_LIBXFT */
-#endif					/* XWindows */
-#if MSWIN32
+  #ifdef HAVE_LIBXFT
+    XftFont     * fsp;
+  #else
+    XFontStruct *	fsp;			/* X font pointer */
+  #endif /* HAVE_LIBXFT */
+#elif MSWIN32
   HFONT		font;
-#endif					/* MSWIN32 */
+#endif
 } wfont, *wfp;
 
 #define ASCENT(w) ((w)->context->font->ascent)
@@ -187,10 +184,9 @@ struct imgmem {
    int x, y, width, height;
 #if XWindows
    XImage *im;
-#endif					/* XWindows */
-#if MSWIN32
+#elif MSWIN32
    COLORREF *crp;
-#endif					/* MSWIN32 */
+#endif
    };
 
 #define TCH1 '~'			/* usual transparent character */
@@ -257,8 +253,7 @@ typedef struct _wcontext {
   char		*patternname;
   int		fillstyle;
   int		drawop;
-#endif					/* XWindows */
-#if MSWIN32
+#elif MSWIN32
   LOGPEN	pen;
   LOGPEN	bgpen;
   LOGBRUSH	brush;
@@ -270,7 +265,7 @@ typedef struct _wcontext {
   int		leading, bkmode;
   int		fillstyle;
   int		drawop;
-#endif					/* MSWIN32*/
+#endif
 
 } wcontext, *wcp;
 
@@ -342,8 +337,7 @@ typedef struct _wstate {
   char		*iconimage;		/* icon pixmap file name */
   struct imgdata initicon;		/* initial icon image data */
   char		*iconlabel;		/* icon label */
-#endif					/* XWindows */
-#if MSWIN32
+#elif MSWIN32
   HWND		win;			/* client window */
   HWND		iconwin;		/* client window when iconic */
   HBITMAP	pix;			/* backing bitmap */
@@ -361,7 +355,7 @@ typedef struct _wstate {
   HWND		focusChild;
   int           nChildren;
   childcontrol *child;
-#endif					/* MSWIN32 */
+#endif
 } wstate, *wsp;
 
 /*

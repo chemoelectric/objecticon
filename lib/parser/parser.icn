@@ -280,12 +280,34 @@ class Parser(Connectable)
             preproc_if_state := "off"
             fail
          }
+         "elsifdef" | "elsifndef" : {
+            if sym := preproc_word() & preproc_at_end() then {
+               if *preproc_if_stack <= preproc_nest_level then {
+                  preproc_error("no corresponding $if...")
+               } else {
+                  if \preproc_if_state == "false" then {
+                     value := (\preproc_sym_table[sym] & &null) | "false"
+                     if match("n",preproc_command,6) then {
+                        value := (\value & &null) | "false"
+                     }
+                     preproc_if_state := value
+                  } else {
+                     preproc_if_state := "off"
+                  }
+               }
+            } else {
+               preproc_error()
+            }
+            if /preproc_if_state then
+               return preproc_sync_lines()
+            else
+               fail
+         }
          "else": {
             if preproc_at_end() then {
                if *preproc_if_stack <= preproc_nest_level then {
                   preproc_error("no corresponding $if...")
                } else {
-                  #preproc_if_state := (\preproc_if_state & &null) | "done"
                   preproc_if_state := {
                      case preproc_if_state of {
                         "false": &null
