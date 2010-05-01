@@ -14,7 +14,7 @@ wsp wstates = NULL;
 wbp wbndngs = NULL;
 
 
-static	int	colorphrase    (char *buf, long *r, long *g, long *b, long *a);
+static	int	colorphrase    (char *buf, int *r, int *g, int *b, int *a);
 static	double	rgbval	(double n1, double n2, double hue);
 static  void    wgetq          (wbp w, dptr res);
 
@@ -244,11 +244,10 @@ static colrmod transptable[] = {		/* transparency levels */
  *     <native color spec>
  */
 
-int parsecolor(wbp w, char *buf, long *r, long *g, long *b, long *a)
+int parsecolor(wbp w, char *buf, int *r, int *g, int *b, int *a)
 {
     int len, mul;
     char *fmt, c;
-    double dr, dg, db = 1.0;
 
     *r = *g = *b = 0L;
     *a = 65535;
@@ -257,15 +256,17 @@ int parsecolor(wbp w, char *buf, long *r, long *g, long *b, long *a)
     while (isspace((unsigned char)*buf))
         buf++;
 
-
     /* try interpreting as three comma-separated numbers */
-    if (sscanf(buf, "%lf,%lf,%lf%c", &dr, &dg, &db, &c) == 3) {
-        *r = dr;
-        *g = dg;
-        *b = db;
-
-
+    if (sscanf(buf, "%d,%d,%d%c", r, g, b, &c) == 3) {
         if (*r>=0 && *r<=65535 && *g>=0 && *g<=65535 && *b>=0 && *b<=65535)
+            return Succeeded;
+        else
+            return Failed;
+    }
+
+    /* try interpreting as four comma-separated numbers */
+    if (sscanf(buf, "%d,%d,%d,%d%c", r, g, b, a, &c) == 4) {
+        if (*r>=0 && *r<=65535 && *g>=0 && *g<=65535 && *b>=0 && *b<=65535 && *a>=0 && *a<=65535)
             return Succeeded;
         else
             return Failed;
@@ -297,7 +298,6 @@ int parsecolor(wbp w, char *buf, long *r, long *g, long *b, long *a)
         *b *= mul;
         return Succeeded;
     }
-
 
     /* try interpreting as a color phrase or as a native color spec */
     if (colorphrase(buf, r, g, b, a) || nativecolor(w, buf, r, g, b))
@@ -337,7 +337,7 @@ int parsecolor(wbp w, char *buf, long *r, long *g, long *b, long *a)
  *	IEEE Computer Graphics & Applications, May 1982
  */
 
-static int colorphrase(char *buf, long *r, long *g, long *b, long *a)
+static int colorphrase(char *buf, int *r, int *g, int *b, int *a)
 {
     int len, very;
     char c, *p, *ebuf, cbuffer[MAXCOLORNAME];

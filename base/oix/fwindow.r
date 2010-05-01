@@ -218,7 +218,7 @@ end
 function graphics_Window_color_value(self, k)
    body {
       word n;
-      long r, g, b, a;
+      int r, g, b, a;
       tended char *s;
       char tmp[32], *t;
       GetSelfW();
@@ -239,9 +239,9 @@ function graphics_Window_color_value(self, k)
       if (parsecolor(self_w, s, &r, &g, &b, &a) == Succeeded) {
           tended struct descrip result;
           if (a < 65535)
-              sprintf(tmp,"%ld,%ld,%ld,%ld", r, g, b, a);
+              sprintf(tmp,"%d,%d,%d,%d", r, g, b, a);
           else
-              sprintf(tmp,"%ld,%ld,%ld", r, g, b);
+              sprintf(tmp,"%d,%d,%d", r, g, b);
           cstr2string(tmp, &result);
           return result;
       }
@@ -911,7 +911,7 @@ function graphics_Window_palette_color(s1, s2)
       e += *StrLoc(d) & 0xFF;
       if (!e->valid)
           fail;
-      sprintf(tmp, "%ld,%ld,%ld", e->clr.red, e->clr.green, e->clr.blue);
+      sprintf(tmp, "%d,%d,%d", e->clr.red, e->clr.green, e->clr.blue);
       cstr2string(tmp, &result);
       return result;
    }
@@ -922,7 +922,7 @@ function graphics_Window_palette_key(self, s1, s2)
       int p;
       word n;
       tended char *s;
-      long r, g, b, a;
+      int r, g, b, a;
 
       GetSelfW();
 
@@ -1325,7 +1325,7 @@ function graphics_Window_generic_palette_key(s1, s2)
       int p;
       word n;
       tended char *s;
-      long r, g, b, a;
+      int r, g, b, a;
 
       p = palnum(&s1);
       if (p == -1)
@@ -1348,7 +1348,7 @@ end
 function graphics_Window_generic_color_value(k)
    body {
       word n;
-      long r, g, b, a = 65535;
+      int r, g, b, a = 65535;
       tended char *s;
       char tmp[32];
 
@@ -1363,9 +1363,9 @@ function graphics_Window_generic_color_value(k)
       if (parsecolor(0, s, &r, &g, &b, &a) == Succeeded) {
           tended struct descrip result;
           if (a < 65535)
-              sprintf(tmp,"%ld,%ld,%ld,%ld", r, g, b, a);
+              sprintf(tmp,"%d,%d,%d,%d", r, g, b, a);
           else
-              sprintf(tmp,"%ld,%ld,%ld", r, g, b);
+              sprintf(tmp,"%d,%d,%d", r, g, b);
           cstr2string(tmp, &result);
           return result;
       }

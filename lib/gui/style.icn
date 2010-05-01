@@ -52,6 +52,18 @@ $endif
       return t
    end
 
+$ifdef _PLAN9
+   public get_down_clone(W)
+      local t
+      t := W.clone()
+      t.set_fg(EditRGBA(W, t.get_fg(), ,,, 16000))
+      return t
+   end
+
+   public get_selection_clone(W)
+      return get_down_clone(W)
+   end
+$else
    public get_down_clone(W)
       return W.clone("drawop=reverse")
    end
@@ -59,6 +71,7 @@ $endif
    public get_selection_clone(W)
       return W.clone("drawop=reverse")
    end
+$endif
 
    public get_cursor_clone(W)
       return W.clone("bg=red", "fg=white")

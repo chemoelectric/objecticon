@@ -1199,6 +1199,7 @@ procedure Safe(e)
          suspend x
       } else {
          &handler := t
+         errorclear()
          fail
       }
    }

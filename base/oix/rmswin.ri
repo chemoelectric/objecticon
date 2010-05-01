@@ -1264,7 +1264,7 @@ int raisewindow(wbp w)
 int nativecolor(w, s, r, g, b)
 wbp w;
 char *s;
-long *r, *g, *b;
+int *r, *g, *b;
    {
    return 0;                    /* no new colors beyond those of Icon */
    }

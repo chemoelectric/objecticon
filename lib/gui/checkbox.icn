@@ -106,6 +106,13 @@ class CheckBox(Button)
       self.tw := self.w - self.img_w - Gui.X_INSET - Gui.TEXT_INSET
    end
 
+   public visualize_action(e)
+      # For a checkbox, visualizing a keyboard action introduces a
+      # slight delay and has no real advantage; so we just call
+      # on_action directly.
+      on_action(e)
+   end
+
    public display()
       local cw, i
 
