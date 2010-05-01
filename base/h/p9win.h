@@ -1,11 +1,9 @@
 typedef Point XPoint;
 
 struct SharedColor {
-   Image *i,            /* 1x1 image representing colour rgba */
-         *i_trans;      /* same as i, but with a=0x80 */
-   char *name;
+   Image *i;            /* 1x1 image representing colour rgba */
+   char  *name;
    int   rgba;          /* rgba of i */
-   int   rgba_trans;    /* rgba of i_trans */
    int   refcount;
 };
 

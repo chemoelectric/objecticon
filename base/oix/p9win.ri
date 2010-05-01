@@ -63,7 +63,20 @@ static stringint fillstyles[] = {
 };
 
 static stringint drawops[] = {
-   { 0, 16},
+   { 0, 29},
+   {"Clear",            Clear},
+   {"D",                D},
+   {"DatopS",           DatopS},
+   {"DinS",             DinS},
+   {"DoutS",            DoutS},
+   {"DoverS",           DoverS},
+   {"DxorS",            DxorS},
+   {"S",                S},
+   {"SatopD",           SatopD},
+   {"SinD",             SinD},
+   {"SoutD",            SoutD},
+   {"SoverD",           SoverD},
+   {"SxorD",            SxorD},
    {"and",              Clear},
    {"andInverted",      SinD},
    {"andReverse",       DinS},
@@ -214,9 +227,7 @@ static struct SharedColor *new_sharedcolor(char *name, int rgba)
     GRFX_ALLOC(res, SharedColor);
     res->name = salloc(name);
     res->rgba = rgba;
-    res->rgba_trans = (rgba & 0xffffff00) | 0x80;
     MemProtect(res->i = allocimage(display, Rect(0, 0, 1, 1), RGBA32, 1, rgba));
-    MemProtect(res->i_trans = allocimage(display, Rect(0, 0, 1, 1), RGBA32, 1, res->rgba_trans));
     return res;
 }
 
@@ -232,7 +243,6 @@ static void unlink_sharedcolor(struct SharedColor *x)
     if (x->refcount == 0) {
         free(x->name);
         freeimage(x->i);
-        freeimage(x->i_trans);
         free(x);
     }
 }
@@ -1083,7 +1093,7 @@ int isetfg(wbp w, int fg)
 
 int setfg(wbp w, char *val)
 {
-    long r, g, b, a, n;
+    int r, g, b, a, n;
     wcp wc = w->context;
     if (parsecolor(w, val, &r, &g, &b, &a) != Succeeded)
         return Failed;
@@ -1115,7 +1125,7 @@ int isetbg(wbp w, int bg)
 
 int setbg(wbp w, char *val)
 {
-    long r, g, b, a, n;
+    int r, g, b, a, n;
     wcp wc = w->context;
     if (parsecolor(w, val, &r, &g, &b, &a) != Succeeded)
         return Failed;
@@ -1172,17 +1182,9 @@ void fillarc(wbp w, int x, int y, int width, int height, double angle1, double a
 static Image *get_draw_img(wcp wc)
 {
     if (wc->fillstyle->i == FillSolid) {
-        if (wc->drawop->i == SoverD)
-            return wc->fg->i;
-        else
-            return wc->fg->i_trans;
+        return wc->fg->i;
     } else {
-        int rgba;
-        if (wc->drawop->i == SoverD)
-            rgba = wc->fg->rgba;
-        else
-            rgba = wc->fg->rgba_trans;
-        synch_pattern_image(wc->pattern, rgba, wc->fillstyle->i);
+        synch_pattern_image(wc->pattern, wc->fg->rgba, wc->fillstyle->i);
         return wc->pattern->i;
     }
 }
@@ -1876,7 +1878,7 @@ void freecontext(wcp wc)
     }
 }
 
-int nativecolor(wbp w, char *s, long *r, long *g, long *b)
+int nativecolor(wbp w, char *s, int *r, int *g, int *b)
 {
     return 0; /* boolean rv */
 }
