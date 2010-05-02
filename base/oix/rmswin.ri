@@ -1,24 +1,6 @@
 /*
  * rmswin.ri - Microsoft Windows-specific graphics interface code.
  *
- * Todo:
- *   geticonpos
- *   seticonimage
- *   freemutable
- *   freecolor
- *
- * Untested:
- *   togglefgbg
- *   rebind
- *   geticonic
- *   getimstr
- *   getfontname
- *   dumpimage
- *   getpointer
- *
- * Blown off:
- *   getvisual
- *   getdefault
  */
 
 static wcp           alc_context      (wbp w);
@@ -30,7 +12,6 @@ static int sysTextWidth          (wbp w, char *s, int n);
 static int sysFontHeight         (wbp w);
 static int mswinsystem           (char *s);
 static void UpdateCursorPos      (wsp ws, wcp wc);
-/*static LRESULT_CALLBACK WndProc  (HWND, UINT, WPARAM, LPARAM);*/
 static HDC CreateWinDC           (wbp);
 static HDC CreatePixDC           (wbp, HDC);
 static HBITMAP loadimage (wbp wb, char *filename, unsigned int *width,
@@ -473,11 +454,6 @@ int wopen(wbp w, wbp parent)
 
    return Succeeded;
    }
-
-
-
-
-
 
 int handle_config(wbp w, UINT msg, WPARAM wp, LPARAM lp)
    {
@@ -1031,21 +1007,6 @@ char *s;
    return Succeeded;
    }
 
-int seticonicstate(w, val)
-wbp w;
-char *val;
-   {
-   int height;
-   return Failed;
-   }
-
-int seticonpos(w, val)
-wbp w;
-char *val;
-   {
-   return Failed;
-   }
-
 
 int setwindowlabel(w, val)
 wbp w;
@@ -1261,13 +1222,7 @@ int raisewindow(wbp w)
    return Succeeded;
    }
 
-int nativecolor(w, s, r, g, b)
-wbp w;
-char *s;
-int *r, *g, *b;
-   {
-   return 0;                    /* no new colors beyond those of Icon */
-   }
+
 /*
  * convert an Icon linear color into an MS Windows color value
  */
@@ -1368,45 +1323,6 @@ int getlinewidth(wbp w)
 {
     return w->context->pen.lopnWidth.x;
 }
-
-/*
- * Set the foreground to draw in a mutable color
- */
-int isetfg(wbp w, int i)
-   {
-   char tmp[20];
-   wcp wc = w->context;
-   if (-i > numColors) return Failed;
-   wc->fg = (0x01000000L | -i);
-   sprintf(tmp, "%ld", -i);
-   if (wc->fgname != NULL) free(wc->fgname);
-   wc->fgname = salloc(tmp);
-   wc->pen.lopnColor = wc->fg;
-   wc->brush.lbStyle = BS_SOLID;
-   wc->brush.lbColor = wc->fg;
-   return Succeeded;
-   }
-
-/*
- * Set the context's background color by color cell.
- */
-int isetbg(w, i)
-wbp w;
-int i;
-   {
-   char tmp[20];
-   wcp wc = w->context;
-   if (-i > numColors) return Failed;
-   wc->bg = (0x01000000L | -i);
-   sprintf(tmp, "%ld", -i);
-   if (wc->bgname != NULL) free(wc->bgname);
-   wc->bgname = salloc(tmp);
-   wc->bgpen.lopnColor = wc->bg;
-   wc->bgbrush.lbStyle = BS_SOLID;
-   wc->bgbrush.lbColor = wc->bg;
-   return ISXORREVERSE(w) ? resetfg(w) : Succeeded;
-   }
-
 
 int getdepthDC(HDC dc)
 {
@@ -1655,13 +1571,6 @@ wbp w;
    wc->bgbrush = tbrush;
    }
 
-int getvisual(w, answer)
-wbp w;
-char *answer;
-   {
-   return Failed;
-   }
-
 
 int getwindowlabel(wbp w, char *answer)
 {
@@ -1902,12 +1811,6 @@ int x, y, width, height, x2, y2;
    return Succeeded;
    }
 
-int getdefault(w, prog, opt, answer)
-wbp w;
-char *prog, *opt, *answer;
-   {
-   return Failed;
-   }
 
 /*
  * Draw a bilevel image.
@@ -2430,139 +2333,6 @@ HBITMAP loadimage(wbp w, char *filename, unsigned int *width,
    return NULL;
    }
 
-
-char *getmutablename(wbp w, int mute_index)
-   {
-   char *tmp;
-   PALETTEENTRY pe;
-   
-   if (-mute_index > numColors || scp[-mute_index].type != MUTABLE) {
-      return NULL;
-      }
-
-   if (GetPaletteEntries(palette, -mute_index, 1, &pe) == 0) {
-      return NULL;
-      }
-   tmp = scp[-mute_index].name;
-   sprintf(tmp, "%d", mute_index);
-   sprintf(tmp + strlen(tmp) + 1, "%d,%d,%d",
-      (pe.peRed << 8) | 0xff, (pe.peGreen << 8) | 0xff, (pe.peBlue << 8) | 0xff);
-   return tmp + strlen(tmp) + 1;
-   }
-
-int setmutable(wbp w, int i, char *s)
-   {
-   long r, g, b, a;
-   UINT rv;
-   PALETTEENTRY pe;
-   if (palette == 0) return Failed;
-
-   {
-   STDLOCALS(w);
-   if (parsecolor(w, s, &r, &g, &b, &a) != Succeeded) {
-      FREE_STDLOCALS(w);
-      return Failed;                        /* invalid color specification */
-      }
-   pe.peRed = r >> 8;
-   pe.peGreen = g >> 8;
-   pe.peBlue = b >> 8;
-   pe.peFlags = PC_RESERVED;
-   raisewindow(w);	/* mutable won't mutate if window isn't active */
-#if 1
-   AnimatePalette(palette, -i, 1, &pe);
-   rv = SetPaletteEntries(palette, -i, 1, &pe);
-#endif
-   UnrealizeObject(palette);
-   RealizePalette(stddc);
-   AnimatePalette(palette, -i, 1, &pe);
-   FREE_STDLOCALS(w);
-}
-   return Succeeded;
-   }
-
-void freemutable(wbp w, int mute_index)
-   {
-   }
-
-/*
- * Allocate a mutable color
- */
-int mutablecolor(wbp w, dptr argv, int argc, int *retval)
-   {
-   long r, g, b, a;
-   tended char *str;
-   LOGPALETTE lp;
-   {
-   STDLOCALS(w);
-
-   if (!stddc || ((GetDeviceCaps(stddc, RASTERCAPS) & RC_PALETTE) == 0)) {
-      FREE_STDLOCALS(w);
-      return Failed;
-      }
-
-   numColors++;
-   scp = realloc(scp, numColors * sizeof(struct wcolor));
-   if (scp == NULL) {
-      FREE_STDLOCALS(w);
-      return Failed;
-      }
-   scp[numColors-1].c = -(numColors-1);
-   sprintf(scp[numColors-1].name, "%d:", -(numColors-1));
-   scp[numColors-1].type = MUTABLE;
-   if (ResizePalette(palette, numColors) == 0) {
-      FREE_STDLOCALS(w);
-      return Failed;
-      }
-
-   if (argc > 0) {                     /* set the color */
-      if (argc != 1) {
-         FREE_STDLOCALS(w);
-         return Error;
-         }
-      /*
-       * old-style check for C integer
-       */
-      else if (argv[0].dword == D_Integer) {/* check for color cell */
-	 if (IntVal(argv[0]) >= 0) {
-            FREE_STDLOCALS(w);
-	    return Failed;        /* must be negative */
-            }
-	 if (GetPaletteEntries(palette, -IntVal(argv[0]),
-	    1, lp.palPalEntry) == 0) {
-            FREE_STDLOCALS(w);
-            return Error;
-            }
-	 /* convert to linear color? */
-	 }
-      else {
-	 if (!cnv:C_string(argv[0],str)) {
-            FREE_STDLOCALS(w);
-	    ReturnErrVal(103,argv[0], Error);
-	    }
-	 if (parsecolor(w, str, &r, &g, &b, &a) != Succeeded) {
-	    /* reduce logical palette size and count */
-            FREE_STDLOCALS(w);
-	    numColors--;
-            ResizePalette(palette, numColors);
-	    return Failed;                   /* invalid color specification */
-	    }
-	 lp.palPalEntry[0].peRed = r >> 8;
-	 lp.palPalEntry[0].peGreen = g >> 8;
-	 lp.palPalEntry[0].peBlue = b >> 8;
-	 }
-      lp.palNumEntries = 1;
-      lp.palVersion = 0x300;
-      lp.palPalEntry[0].peFlags = PC_RESERVED;
-      SetPaletteEntries(palette, numColors - 1, 1, lp.palPalEntry);
-      UnrealizeObject(palette);
-      RealizePalette(stddc);
-      }
-
-   *retval = -(numColors - 1);
-   FREE_STDLOCALS(w);
-   return Succeeded;
-   }
-   }
 
 void freecolor(wbp w, char *s)
    {

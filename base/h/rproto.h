@@ -240,7 +240,6 @@ void  bigrand         (dptr da, dptr dx);
    int  getpixel        (wbp w,int x,int y,word *rv,char *s,struct imgmem *im);
    void getpointer  (wbp w, char *answer);
    int  getpos          (wbp w);
-   int  getvisual       (wbp w, char *answer);
    int  lowerwindow     (wbp w);
    void pollevent       (void);
    int  querypointer    (wbp w, int *x, int *y);

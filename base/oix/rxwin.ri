@@ -1788,13 +1788,6 @@ int getdepth(wbp w, int *res)
     return Succeeded;
 }
 
-int getvisual(wbp w, char *answer)
-{
-    wdp wd = w->window->display;
-    Visual * v = DefaultVisual(wd->display,wd->screen);
-    sprintf(answer, "%d,%d,%d", v->class, v->bits_per_rgb, v->map_entries );
-    return Succeeded;
-}
 /*
  * getpos() - update the window state's notion of its current position
  */
@@ -2483,97 +2476,6 @@ void animHelper(wbp w, XPoint p[], int n)
  */
         lastx = p[i].x;
         lasty = p[i].y;
-    }
-}
-
-
-/*
- * Allocate a mutable color
- */
-int mutablecolor(wbp w, dptr argv, int ac, int *retval)
-{
-    XColor colorcell;
-    LinearColor clr;
-    unsigned long plane_masks[1], pixels[1];
-    char *colorname;
-    tended char  *str;
-    int i;
-    int alpha;
-    {
-        STDLOCALS(w);
-
-        /*
-         * X11 Bug Warning:  some old versions of the X server, but not X11R5,
-         * will crash sometime after a failed call to XNewColor.  This happens
-         * only if a virtual colormap has been allocated and completely filled
-         * and then XNewColor is called to allocate a new, unshared entry.  The
-         * request fails, as it should, but when the program eventually exits
-         * the X server crashes.  This has been seen on OpenWindows 3.0,
-         * Irix 4.0.1, and HP-UX 7.0.
-         */
-
-        if (!XAllocColorCells(stddpy,wd->cmap,False,plane_masks,0,pixels,1)) {
-            /*
-             * try again with a virtual colormap
-             */
-            if (!go_virtual(w) ||
-                !XAllocColorCells(stddpy,wd->cmap,False,plane_masks,0,pixels,1))
-                return Failed;                         /* cannot allocate an entry */
-        }
-
-        /*
-         * allocate a slot in wdisplay->colors and wstate->theColors arrays
-         */
-        i = alccentry(wd);
-        if (i == 0)
-            return Failed;
-        wd->colors[i].type = MUTABLE;
-        wd->colors[i].c = pixels[0];
-
-
-        /* save color index as "name", followed by a null string for value */
-        colorname = wd->colors[i].name;
-        sprintf(colorname, "%ld", -pixels[0] - 1);	/* index is name */
-        colorname = colorname + strlen(colorname) + 1;
-        *colorname = '\0';				/* value unknown */
-
-        if (ws->numColors < WMAXCOLORS) {
-            if (ws->theColors == NULL) {
-                MemProtect(ws->theColors = calloc(WMAXCOLORS, sizeof(short)));
-            }
-            ws->theColors[ws->numColors++] = i;
-        }
-
-        if (ac > 0) {                     /* set the color */
-            if (ac != 1) return Error;
-            /*
-             * old-style check for C integer
-             */
-            else if (argv[0].dword == D_Integer) {/* check for color cell */
-                if (IntVal(argv[0]) >= 0)
-                    return Failed;        /* must be negative */
-                colorcell.pixel = -IntVal(argv[0]) - 1;
-                XQueryColor(stddpy, wd->cmap, &colorcell);
-                clr = lcolor(w, colorcell);
-                sprintf(colorname, "%d,%d,%d", clr.red, clr.green, clr.blue);
-            }
-            else {
-                if (!cnv:C_string(argv[0],str)) {
-                    ReturnErrVal(103,argv[0], Error);
-                }
-                if (parsecolor(str, &clr.red, &clr.green, &clr.blue, &alpha) != Succeeded) {
-                    free_xcolor(w, pixels[0]);
-                    return Failed;                   /* invalid color specification */
-                }
-                strcpy(colorname, str);
-                colorcell = xcolor(w, clr);
-            }
-            colorcell.pixel = pixels[0];
-            XStoreColor(stddpy, wd->cmap, &colorcell);
-        }
-
-        *retval = (-pixels[0] - 1);
-        return Succeeded;
     }
 }
 

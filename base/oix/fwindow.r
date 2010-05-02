@@ -1605,17 +1605,6 @@ function graphics_Window_get_size(self)
    }
 end
 
-function graphics_Window_get_visual(self)
-   body {
-       tended struct descrip result;
-       GetSelfW();
-       if (getvisual(self_w, attr_buff) != Succeeded)
-           fail;
-       cstr2string(attr_buff, &result);
-       return result;
-   }
-end
-
 function graphics_Window_get_width(self)
    body {
        struct descrip result;
