@@ -42,8 +42,6 @@ static int xlfd_size(char *s, int n);
 #endif
 static wfp loadfont(wdp wd, char *s);
 static int resetfg (wbp w);
-static int setfgrgb(wbp w, int r, int g, int b);
-static int setbgrgb(wbp w, int r, int g, int b);
 static XColor xcolor(wbp w, LinearColor clr);
 static LinearColor lcolor(wbp w, XColor color);
 static wdp alcdisplay (char *s);
@@ -420,272 +418,237 @@ static int handle_misc(wdp wd)
             ws = wb->window;
             if (ws->display == wd) {
                 if (ws->win == evwin) break;
-                if (ws->iconwin == evwin) break;
                 if (ws->pix == evwin) break;
                 if (ws->initialPix == evwin) break;
 	    }
         }
         if (!wb) continue;
-        if (evwin == ws->iconwin) {
-            switch (event.type) {
-                case Expose:
-                    if (ws->iconpix)
-                        XCopyArea(wd->display, ws->iconpix, ws->iconwin,
-                                  wd->icongc, 0, 0, ws->iconw, ws->iconh, 3, 3);
-                    else
-                        XDrawString(wd->display, evwin, wd->icongc, 4,
-                                    ws->display->fonts->ascent + 2,
-                                    ws->iconlabel, strlen(ws->iconlabel));
-                    if (ws->iconic == IconicState)
-                        SETEXPOSED(wb);
-                    break;
-                case KeyRelease: {
-                    if (ws->inputmask & KeyReleaseMask) {
-                        handle_keypress(wb, (XKeyEvent *)&event);
-                    }
-                    break;
-                }
-                case KeyPress:
-                    handle_keypress(wb, (XKeyEvent *)&event);
-                    break;
-                case ButtonPress:
-                    if (ws->iconic == IconicState)
-                        XMapWindow(ws->display->display, ws->win);
-                    ws->iconic = NormalState;        /* set the current state */
-                    break;
-                case ConfigureNotify:
-                    ws->iconx = ((XConfigureEvent *)&event)->x;
-                    ws->icony = ((XConfigureEvent *)&event)->y;
-                    break;
-	    }
-        }
-        else {
-            switch (event.type) {
-                case SelectionRequest: {
-                    tended struct descrip tmp;
-                    if (selection_debug)
-                        printf("SelectionRequest event:\n\towner=%lx requestor=%lx "
-                               "property=%s target=%s selection=%s\n",
-                               (long)event.xselectionrequest.owner,
-                               (long)event.xselectionrequest.requestor,
-                               atom_fmt(ws, event.xselectionrequest.property),
-                               atom_fmt(ws, event.xselectionrequest.target),
-                               atom_fmt(ws, event.xselectionrequest.selection)
-                            );
 
-                    MakeInt(SELECTIONREQUEST, &tmp);
-                    list_put(&ws->listp, &tmp);
-                    MakeInt((word)event.xselectionrequest.requestor, &tmp);
-                    list_put(&ws->listp, &tmp);
-                    get_atom_descriptor(ws, event.xselectionrequest.property, &tmp);
-                    list_put(&ws->listp, &tmp);
-                    get_atom_descriptor(ws, event.xselectionrequest.selection, &tmp);
-                    list_put(&ws->listp, &tmp);
-                    get_atom_descriptor(ws, event.xselectionrequest.target, &tmp);
-                    list_put(&ws->listp, &tmp);
-                    MakeInt(event.xselectionrequest.time, &tmp);
-                    list_put(&ws->listp, &tmp);
-                    break;
-                }
+        switch (event.type) {
+            case SelectionRequest: {
+                tended struct descrip tmp;
+                if (selection_debug)
+                    printf("SelectionRequest event:\n\towner=%lx requestor=%lx "
+                           "property=%s target=%s selection=%s\n",
+                           (long)event.xselectionrequest.owner,
+                           (long)event.xselectionrequest.requestor,
+                           atom_fmt(ws, event.xselectionrequest.property),
+                           atom_fmt(ws, event.xselectionrequest.target),
+                           atom_fmt(ws, event.xselectionrequest.selection)
+                        );
 
-                case SelectionClear: {
-                    tended struct descrip tmp;
-                    if (selection_debug)
-                        printf("SelectionClear event win=%lx selection=%s\n",
-                               (long)event.xselectionclear.window,
-                               atom_fmt(ws, event.xselectionclear.selection));
-                    MakeInt(SELECTIONCLEAR, &tmp);
-                    list_put(&ws->listp, &tmp);
-                    get_atom_descriptor(ws, event.xselectionclear.selection, &tmp);
-                    list_put(&ws->listp, &tmp);
-                    break;
-                }
-
-                case SelectionNotify: {
-                    Atom actual_type, property;
-                    int actual_format;
-                    unsigned long bytes_after, nitems;
-                    unsigned char *prop;
-                    word bytes_read;
-                    tended struct descrip tmp;
-                    int status;
-                    char *conv_str;
-
-                    if (selection_debug)
-                        printf("SelectionNotify: requestor=%lx selection=%s target=%s property=%s\n",
-                               (long)event.xselection.requestor,
-                               atom_fmt(ws, event.xselection.selection),
-                               atom_fmt(ws, event.xselection.target),
-                               atom_fmt(ws, event.xselection.property));
-
-                    MakeInt(SELECTIONRESPONSE, &tmp);
-                    list_put(&ws->listp, &tmp);
-                    get_atom_descriptor(ws, event.xselection.selection, &tmp);
-                    list_put(&ws->listp, &tmp);
-                    get_atom_descriptor(ws, event.xselection.target, &tmp);
-                    list_put(&ws->listp, &tmp);
-
-                    if (event.xselection.property == None) {
-                        if (selection_debug)
-                            printf("XGetWindowProperty xselection.property == None\n");
-                        list_put(&ws->listp, &nulldesc);
-                        break;
-                    }
-
-                    property = XInternAtom(ws->display->display, "_OBJECTICON_PROP", False);
-
-                    status = XGetWindowProperty(ws->display->display,
-                                                ws->win,
-                                                property,
-                                                0,
-                                                8192,   /* Means we won't get back > 32kb of stuff */
-                                                True,
-                                                AnyPropertyType,
-                                                &actual_type,
-                                                &actual_format,
-                                                &nitems,
-                                                &bytes_after,
-                                                &prop);
-
-                    if (status != Success) {
-                        if (selection_debug)
-                            printf("XGetWindowProperty failed\n");
-                        list_put(&ws->listp, &nulldesc);
-                        break;
-                    }
-
-                    if (actual_type == None) {
-                        if (selection_debug)
-                            printf("XGetWindowProperty returned actual_type == None\n");
-                        list_put(&ws->listp, &nulldesc);
-                        break;
-                    }
-
-                    /* Shouldn't ever happen */
-                    if (!prop) {
-                        if (selection_debug)
-                            printf("XGetWindowProperty set prop to null\n");
-                        list_put(&ws->listp, &nulldesc);
-                        break;
-                    }
-
-                    bytes_read = nitems * (actual_format/8);
-                    if (selection_debug)
-                        printf("Got %lu items x %d bits -> %ld bytes\n",nitems, actual_format, (long)bytes_read);
-
-                    conv_str = PropertyToString(ws->display->display,
-                                                actual_type,
-                                                nitems,
-                                                prop);
-                    if (conv_str) {
-                        /* Make an Icon string out of the data */
-                        cstr2string(conv_str, &tmp);
-                        free(conv_str);
-                    } else {
-                        /* Make an Icon string out of the data */
-                        bytes2string((char *)prop, bytes_read, &tmp);
-                    }
-                    list_put(&ws->listp, &tmp);
-
-                    XFree(prop);
-                    
-                    break;
-                }
-
-                case KeyRelease: {
-                    if (ws->inputmask & KeyReleaseMask) {
-                        handle_keypress(wb, (XKeyEvent *)&event);
-                    }
-                    break;
-                }
-                case KeyPress:
-                    handle_keypress(wb, (XKeyEvent *)&event);
-                    break;
-                case ButtonPress:
-                    presscount++;
-                    handle_mouse(wb, (XButtonEvent *)&event);
-                    break;
-                case ButtonRelease:
-                    if (--presscount < 0) presscount = 0;
-                    handle_mouse(wb, (XButtonEvent *)&event);
-                    break;
-                case MotionNotify:
-                    if (presscount || wb->window->inputmask)
-                        handle_mouse(wb, (XButtonEvent *)&event);
-                    break;
-                case NoExpose:
-                    break;
-                case Expose:
-                    if (!handle_exposures(wb, (XExposeEvent *)&event))
-                        return 1;
-                    continue;
-                case UnmapNotify:
-                    wb->window->iconic = IconicState;
-                    continue;
-                case MapNotify:
-                    if ((ws->width != DisplayWidth(wd->display, wd->screen)) ||
-                        (ws->height != DisplayHeight(wd->display, wd->screen)))
-                        ws->iconic = NormalState;
-                    else
-                        ws->iconic = MaximizedState;
-                    continue;
-                case ConfigureNotify:
-                    if (!handle_config(wb, (XConfigureEvent *)&event)) {
-                        return 0;
-                    }
-                    break;
-                case ClientMessage: {
-                    /*
-                     * only client message we handle at present are destroy requests
-                     */
-                    if (event.xclient.data.l[0] == XInternAtom(ws->display->display, 
-                                                               "WM_DELETE_WINDOW", False)) {
-                        struct descrip d;
-                        MakeInt(WINDOWCLOSED, &d);
-                        qevent(wb->window, &d, -1, -1, 0, 0, 0);
-                        return 1;
-                    }
-                    continue;
-                }
-                case DestroyNotify:
-                    if (!ISZOMBIE(wb))
-                        fatalerr(141, NULL);
-                    /*
-                     * first of all, we are done with this window
-                     */
-                    ws->win = (Window) NULL;
-
-                    /*
-                     * if there are no more references, we are done with the pixmap
-                     *  too.  Free it and the colors allocated for this canvas.
-                     */
-                    if (ws->refcount == 0) {
-                        if (wb->window->pix) {
-                            Display *d = ws->display->display;
-                            XSync(d, False);
-                            if (ws->pix)
-                                XFreePixmap(d, ws->pix);
-                            ws->pix = (Pixmap) NULL;
-                        }
-#ifdef HAVE_LIBXFT
-                        if (ws->pixDraw) {
-                            XftDrawDestroy(ws->pixDraw);
-                            ws->pixDraw = NULL;
-                        }
-#endif
-                        if (ws->initialPix != (Pixmap) NULL) {
-                            Display *d = ws->display->display;
-                            XSync(d, False);
-                            XFreePixmap(d, ws->initialPix);
-                            ws->initialPix = (Pixmap) NULL;
-                        }
-                        free_xcolors(wb, 2); /* free regular colors */
-                        free_xcolors(wb, 1); /* free icon colors */
-                    }
-                    break;
-                default:
-                    continue;
+                MakeInt(SELECTIONREQUEST, &tmp);
+                list_put(&ws->listp, &tmp);
+                MakeInt((word)event.xselectionrequest.requestor, &tmp);
+                list_put(&ws->listp, &tmp);
+                get_atom_descriptor(ws, event.xselectionrequest.property, &tmp);
+                list_put(&ws->listp, &tmp);
+                get_atom_descriptor(ws, event.xselectionrequest.selection, &tmp);
+                list_put(&ws->listp, &tmp);
+                get_atom_descriptor(ws, event.xselectionrequest.target, &tmp);
+                list_put(&ws->listp, &tmp);
+                MakeInt(event.xselectionrequest.time, &tmp);
+                list_put(&ws->listp, &tmp);
+                break;
             }
+
+            case SelectionClear: {
+                tended struct descrip tmp;
+                if (selection_debug)
+                    printf("SelectionClear event win=%lx selection=%s\n",
+                           (long)event.xselectionclear.window,
+                           atom_fmt(ws, event.xselectionclear.selection));
+                MakeInt(SELECTIONCLEAR, &tmp);
+                list_put(&ws->listp, &tmp);
+                get_atom_descriptor(ws, event.xselectionclear.selection, &tmp);
+                list_put(&ws->listp, &tmp);
+                break;
+            }
+
+            case SelectionNotify: {
+                Atom actual_type, property;
+                int actual_format;
+                unsigned long bytes_after, nitems;
+                unsigned char *prop;
+                word bytes_read;
+                tended struct descrip tmp;
+                int status;
+                char *conv_str;
+
+                if (selection_debug)
+                    printf("SelectionNotify: requestor=%lx selection=%s target=%s property=%s\n",
+                           (long)event.xselection.requestor,
+                           atom_fmt(ws, event.xselection.selection),
+                           atom_fmt(ws, event.xselection.target),
+                           atom_fmt(ws, event.xselection.property));
+
+                MakeInt(SELECTIONRESPONSE, &tmp);
+                list_put(&ws->listp, &tmp);
+                get_atom_descriptor(ws, event.xselection.selection, &tmp);
+                list_put(&ws->listp, &tmp);
+                get_atom_descriptor(ws, event.xselection.target, &tmp);
+                list_put(&ws->listp, &tmp);
+
+                if (event.xselection.property == None) {
+                    if (selection_debug)
+                        printf("XGetWindowProperty xselection.property == None\n");
+                    list_put(&ws->listp, &nulldesc);
+                    break;
+                }
+
+                property = XInternAtom(ws->display->display, "_OBJECTICON_PROP", False);
+
+                status = XGetWindowProperty(ws->display->display,
+                                            ws->win,
+                                            property,
+                                            0,
+                                            8192,   /* Means we won't get back > 32kb of stuff */
+                                            True,
+                                            AnyPropertyType,
+                                            &actual_type,
+                                            &actual_format,
+                                            &nitems,
+                                            &bytes_after,
+                                            &prop);
+
+                if (status != Success) {
+                    if (selection_debug)
+                        printf("XGetWindowProperty failed\n");
+                    list_put(&ws->listp, &nulldesc);
+                    break;
+                }
+
+                if (actual_type == None) {
+                    if (selection_debug)
+                        printf("XGetWindowProperty returned actual_type == None\n");
+                    list_put(&ws->listp, &nulldesc);
+                    break;
+                }
+
+                /* Shouldn't ever happen */
+                if (!prop) {
+                    if (selection_debug)
+                        printf("XGetWindowProperty set prop to null\n");
+                    list_put(&ws->listp, &nulldesc);
+                    break;
+                }
+
+                bytes_read = nitems * (actual_format/8);
+                if (selection_debug)
+                    printf("Got %lu items x %d bits -> %ld bytes\n",nitems, actual_format, (long)bytes_read);
+
+                conv_str = PropertyToString(ws->display->display,
+                                            actual_type,
+                                            nitems,
+                                            prop);
+                if (conv_str) {
+                    /* Make an Icon string out of the data */
+                    cstr2string(conv_str, &tmp);
+                    free(conv_str);
+                } else {
+                    /* Make an Icon string out of the data */
+                    bytes2string((char *)prop, bytes_read, &tmp);
+                }
+                list_put(&ws->listp, &tmp);
+
+                XFree(prop);
+                    
+                break;
+            }
+
+            case KeyRelease: {
+                if (ws->inputmask & KeyReleaseMask) {
+                    handle_keypress(wb, (XKeyEvent *)&event);
+                }
+                break;
+            }
+            case KeyPress:
+                handle_keypress(wb, (XKeyEvent *)&event);
+                break;
+            case ButtonPress:
+                presscount++;
+                handle_mouse(wb, (XButtonEvent *)&event);
+                break;
+            case ButtonRelease:
+                if (--presscount < 0) presscount = 0;
+                handle_mouse(wb, (XButtonEvent *)&event);
+                break;
+            case MotionNotify:
+                if (presscount || wb->window->inputmask)
+                    handle_mouse(wb, (XButtonEvent *)&event);
+                break;
+            case NoExpose:
+                break;
+            case Expose:
+                if (!handle_exposures(wb, (XExposeEvent *)&event))
+                    return 1;
+                continue;
+            case UnmapNotify:
+                wb->window->iconic = IconicState;
+                continue;
+            case MapNotify:
+                if ((ws->width != DisplayWidth(wd->display, wd->screen)) ||
+                    (ws->height != DisplayHeight(wd->display, wd->screen)))
+                    ws->iconic = NormalState;
+                else
+                    ws->iconic = MaximizedState;
+                continue;
+            case ConfigureNotify:
+                if (!handle_config(wb, (XConfigureEvent *)&event)) {
+                    return 0;
+                }
+                break;
+            case ClientMessage: {
+                /*
+                 * only client message we handle at present are destroy requests
+                 */
+                if (event.xclient.data.l[0] == XInternAtom(ws->display->display, 
+                                                           "WM_DELETE_WINDOW", False)) {
+                    struct descrip d;
+                    MakeInt(WINDOWCLOSED, &d);
+                    qevent(wb->window, &d, -1, -1, 0, 0, 0);
+                    return 1;
+                }
+                continue;
+            }
+            case DestroyNotify:
+                if (!ISZOMBIE(wb))
+                    fatalerr(141, NULL);
+                /*
+                 * first of all, we are done with this window
+                 */
+                ws->win = (Window) NULL;
+
+                /*
+                 * if there are no more references, we are done with the pixmap
+                 *  too.  Free it and the colors allocated for this canvas.
+                 */
+                if (ws->refcount == 0) {
+                    if (wb->window->pix) {
+                        Display *d = ws->display->display;
+                        XSync(d, False);
+                        if (ws->pix)
+                            XFreePixmap(d, ws->pix);
+                        ws->pix = (Pixmap) NULL;
+                    }
+#ifdef HAVE_LIBXFT
+                    if (ws->pixDraw) {
+                        XftDrawDestroy(ws->pixDraw);
+                        ws->pixDraw = NULL;
+                    }
+#endif
+                    if (ws->initialPix != (Pixmap) NULL) {
+                        Display *d = ws->display->display;
+                        XSync(d, False);
+                        XFreePixmap(d, ws->initialPix);
+                        ws->initialPix = (Pixmap) NULL;
+                    }
+                    free_xcolors(wb, 2); /* free regular colors */
+                    free_xcolors(wb, 1); /* free icon colors */
+                }
+                break;
+            default:
+                continue;
         }
     }
     return 1;
@@ -1689,43 +1652,13 @@ int setfg(wbp w, char *s)
     /*
      * convert color to an r,g,b triple
      */
-    if (parsecolor(w, s, &r, &g, &b, &a) != Succeeded)
+    if (parsecolor(s, &r, &g, &b, &a) != Succeeded)
         return Failed;
     Protect(cp = alcrgb(w, s, r, g, b, 0), return Failed);
     wc->fg = (cp - wd->colors);
     return resetfg(w);
 }
 
-static int setfgrgb(wbp w, int r, int g, int b)
-{
-    char sbuf1[32];
-    sprintf(sbuf1, "%d,%d,%d", r, g, b);
-    return setfg(w, sbuf1);
-}
-
-/*
- * Set the context's foreground color by color cell.
- */
-int isetfg(wbp w, int fg)
-{
-    int i, r, g, b;
-    STDLOCALS(w);
-
-    if (fg >= 0) {
-        b = fg & 255;
-        fg >>= 8;
-        g = fg & 255;
-        fg >>= 8;
-        r = fg & 255;
-        return setfgrgb(w, r * 257, g * 257, b * 257);
-    }
-    for (i = 2; i < DMAXCOLORS; i++)
-        if (wd->colors[i].type == MUTABLE && wd->colors[i].c == -fg - 1)
-            break;
-    if (i == DMAXCOLORS) return Failed;
-    wc->fg = i;
-    return resetfg(w);
-}
 
 /*
  * Set the window context's background color by name.
@@ -1741,45 +1674,12 @@ int setbg(wbp w, char *s)
     /*
      * convert color to an r,g,b triple
      */
-    if (parsecolor(w, s, &r, &g, &b, &a) != Succeeded)
+    if (parsecolor(s, &r, &g, &b, &a) != Succeeded)
         return Failed;
     Protect(cp = alcrgb(w, s, r, g, b, 0), return Failed);
     wc->bg = (cp - wd->colors);
     if (stdgc != NULL)
         XSetBackground(stddpy, stdgc, cp->c);
-    return ISXORREVERSE(w) ? resetfg(w) : Succeeded;
-}
-
-static int setbgrgb(wbp w, int r, int g, int b)
-{
-    char sbuf1[32];
-    sprintf(sbuf1, "%d,%d,%d", r, g, b);
-    return setbg(w, sbuf1);
-}
-
-/*
- * Set the context's background color by color cell.
- */
-int isetbg(wbp w, int bg)
-{
-    int i, r, g, b;
-    STDLOCALS(w);
-
-    if (bg >= 0) {
-        b = bg & 255;
-        bg >>= 8;
-        g = bg & 255;
-        bg >>= 8;
-        r = bg & 255;
-        return setbgrgb(w, r * 257, g * 257, b * 257);
-    }
-    for (i = 2; i < DMAXCOLORS; i++)
-        if (wd->colors[i].type == MUTABLE && wd->colors[i].c == -bg - 1)
-            break;
-    if (i == DMAXCOLORS) return Failed;
-    wc->bg = i;
-    if (stdgc != NULL)
-        XSetBackground(stddpy, stdgc, wd->colors[wc->bg].c);
     return ISXORREVERSE(w) ? resetfg(w) : Succeeded;
 }
 
@@ -1888,13 +1788,6 @@ int getdepth(wbp w, int *res)
     return Succeeded;
 }
 
-int getvisual(wbp w, char *answer)
-{
-    wdp wd = w->window->display;
-    Visual * v = DefaultVisual(wd->display,wd->screen);
-    sprintf(answer, "%d,%d,%d", v->class, v->bits_per_rgb, v->map_entries );
-    return Succeeded;
-}
 /*
  * getpos() - update the window state's notion of its current position
  */
@@ -2586,162 +2479,6 @@ void animHelper(wbp w, XPoint p[], int n)
     }
 }
 
-
-int getdefault(wbp w, char *prog, char *opt, char *answer)
-{
-    char *p;
-    STDLOCALS(w);
-
-   
-    if ((p = XGetDefault(stddpy,prog,opt)) == NULL)
-        return Failed;
-    strcpy(answer, p);
-    return Succeeded;
-}
-
-
-/*
- * Allocate a mutable color
- */
-int mutablecolor(wbp w, dptr argv, int ac, int *retval)
-{
-    XColor colorcell;
-    LinearColor clr;
-    unsigned long plane_masks[1], pixels[1];
-    char *colorname;
-    tended char  *str;
-    int i;
-    int alpha;
-    {
-        STDLOCALS(w);
-
-        /*
-         * X11 Bug Warning:  some old versions of the X server, but not X11R5,
-         * will crash sometime after a failed call to XNewColor.  This happens
-         * only if a virtual colormap has been allocated and completely filled
-         * and then XNewColor is called to allocate a new, unshared entry.  The
-         * request fails, as it should, but when the program eventually exits
-         * the X server crashes.  This has been seen on OpenWindows 3.0,
-         * Irix 4.0.1, and HP-UX 7.0.
-         */
-
-        if (!XAllocColorCells(stddpy,wd->cmap,False,plane_masks,0,pixels,1)) {
-            /*
-             * try again with a virtual colormap
-             */
-            if (!go_virtual(w) ||
-                !XAllocColorCells(stddpy,wd->cmap,False,plane_masks,0,pixels,1))
-                return Failed;                         /* cannot allocate an entry */
-        }
-
-        /*
-         * allocate a slot in wdisplay->colors and wstate->theColors arrays
-         */
-        i = alccentry(wd);
-        if (i == 0)
-            return Failed;
-        wd->colors[i].type = MUTABLE;
-        wd->colors[i].c = pixels[0];
-
-
-        /* save color index as "name", followed by a null string for value */
-        colorname = wd->colors[i].name;
-        sprintf(colorname, "%ld", -pixels[0] - 1);	/* index is name */
-        colorname = colorname + strlen(colorname) + 1;
-        *colorname = '\0';				/* value unknown */
-
-        if (ws->numColors < WMAXCOLORS) {
-            if (ws->theColors == NULL) {
-                MemProtect(ws->theColors = calloc(WMAXCOLORS, sizeof(short)));
-            }
-            ws->theColors[ws->numColors++] = i;
-        }
-
-        if (ac > 0) {                     /* set the color */
-            if (ac != 1) return Error;
-            /*
-             * old-style check for C integer
-             */
-            else if (argv[0].dword == D_Integer) {/* check for color cell */
-                if (IntVal(argv[0]) >= 0)
-                    return Failed;        /* must be negative */
-                colorcell.pixel = -IntVal(argv[0]) - 1;
-                XQueryColor(stddpy, wd->cmap, &colorcell);
-                clr = lcolor(w, colorcell);
-                sprintf(colorname, "%d,%d,%d", clr.red, clr.green, clr.blue);
-            }
-            else {
-                if (!cnv:C_string(argv[0],str)) {
-                    ReturnErrVal(103,argv[0], Error);
-                }
-                if (parsecolor(w, str, &clr.red, &clr.green, &clr.blue, &alpha) != Succeeded) {
-                    free_xcolor(w, pixels[0]);
-                    return Failed;                   /* invalid color specification */
-                }
-                strcpy(colorname, str);
-                colorcell = xcolor(w, clr);
-            }
-            colorcell.pixel = pixels[0];
-            XStoreColor(stddpy, wd->cmap, &colorcell);
-        }
-
-        *retval = (-pixels[0] - 1);
-        return Succeeded;
-    }
-}
-
-char *getmutablename(wbp w, int mute_index)
-{
-    wdp dp;
-    Display *d;
-    int i;
-    char *colorname;
-
-    dp = w->window->display;
-    d = dp->display;
-
-    for (i = 2; i < DMAXCOLORS; i++)
-        if (dp->colors[i].type == MUTABLE && dp->colors[i].c == - mute_index - 1)
-	    break;
-    if (i == DMAXCOLORS)
-        return NULL;
-    colorname = dp->colors[i].name;			/* color name field */
-    colorname = colorname + strlen(colorname) + 1;	/* set value follows */
-    return colorname;
-}
-
-int setmutable(wbp w, int i, char *s)
-{
-    LinearColor clr;
-    int alpha;
-    XColor colorcell;
-    wdp dp = w->window->display;
-
-    if (parsecolor(w, s, &clr.red, &clr.green, &clr.blue, &alpha) != Succeeded)
-        return Failed;                        /* invalid color specification */
-    colorcell = xcolor(w, clr);
-    colorcell.pixel = -i - 1;
-    XStoreColor(dp->display, dp->cmap, &colorcell);
-    return Succeeded;
-}
-
-void freemutable(wbp w, int mute_index)
-{
-    wdp dp;
-    Display *d;
-    int i;
-
-    dp = w->window->display;
-    d = dp->display;
-
-    for (i = 2; i < DMAXCOLORS; i++)
-        if (dp->colors[i].type == MUTABLE && dp->colors[i].c == - mute_index - 1)
-            break;
-    if (i != DMAXCOLORS)
-        free_xcolor(w, dp->colors[i].c); 
-}
-
-
 void freecolor(wbp w, char *s)
 {
     wdp dp;
@@ -2750,7 +2487,7 @@ void freecolor(wbp w, char *s)
     LinearColor clr;
     XColor color;
 
-    if (parsecolor(w, s, &clr.red, &clr.green, &clr.blue, &alpha) != Succeeded)
+    if (parsecolor(s, &clr.red, &clr.green, &clr.blue, &alpha) != Succeeded)
         return;
     dp = w->window->display;
     d = dp->display;
@@ -3588,30 +3325,6 @@ static Pixmap loadimage(wbp w, char *filename,  int *height,
         XFreePixmap(stddpy, p1);
     }
     return p2;
-}
-
-/*
- * Interpret a platform-specific color name s.
- * Under X, we can do this only if there is a window.
- */
-int nativecolor(wbp w, char *s, int *r, int *g, int *b)
-{
-    XColor colorcell;
-    LinearColor clr;
-    wsp ws;
-    wdp wd;
-
-    if (!w)				/* if no window, give up */
-        return 0;
-    ws = w->window;
-    wd = ws->display;
-    if (!XParseColor(wd->display, wd->cmap, s, &colorcell))
-        return 0;				/* if unknown to X */
-    clr = lcolor(w, colorcell);
-    *r = clr.red;
-    *g = clr.green;
-    *b = clr.blue;
-    return 1;
 }
 
 /*

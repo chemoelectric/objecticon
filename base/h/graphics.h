@@ -326,8 +326,6 @@ typedef struct _wstate {
   Window	win;			/* X window */
   Pixmap	pix;			/* current screen state */
   Pixmap	initialPix;		/* an initial image to display */
-  Window        iconwin;		/* icon window */
-  Pixmap	iconpix;		/* icon pixmap */
   int		pixheight;		/* backing pixmap height, in pixels */
   int		pixwidth;		/* pixmap width, in pixels */
   Visual	*vis;

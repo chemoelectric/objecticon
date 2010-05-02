@@ -43,7 +43,7 @@ procedure colrlist(f)
    colors := []
 
    while line := read(input) do
-      put(colors, Window.generic_color_value(line ? tab(upto('\t') | 0)))
+      put(colors, Window.color_value(line ? tab(upto('\t') | 0)))
 
    close(input)
 

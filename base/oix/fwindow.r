@@ -164,79 +164,19 @@ function graphics_Window_clone_impl(self)
    }
 end
 
-function graphics_Window_color(self, argv[argc])
-   body {
-      int i;
-      word n;
-      char *colorname, *srcname;
-      tended char *tmp;
-      GetSelfW();
-
-      if (argc == 0) runerr(101);
-
-      if (argc == 1) {			/* if this is a query */
-          tended struct descrip result;
-          CnvCInteger(argv[0], n)
-          if ((colorname = getmutablename(self_w, n)) == NULL)
-              fail;
-          cstr2string(colorname, &result);
-          return result;
-      }
-
-      CheckArgMultipleOf(2);
-
-      for (i = 0; i < argc; i += 2) {
-          CnvCInteger(argv[i], n)
-              if ((colorname = getmutablename(self_w, n)) == NULL)
-                  fail;
-
-          if (is:integer(argv[i+1])) {		/* copy another mutable  */
-              if (IntVal(argv[i+1]) >= 0)
-                  runerr(205, argv[i+1]);		/* must be negative */
-              if ((srcname = getmutablename(self_w, IntVal(argv[i+1]))) == NULL)
-                  fail;
-              if (setmutable(self_w, n, srcname) == Failed) 
-                  fail;
-              strcpy(colorname, srcname);
-          }
-   
-          else {					/* specified by name */
-              char *tmp;
-              if (!cnv:string(argv[i+1],argv[i+1]))
-                  runerr(103,argv[i+1]);
-              tmp = buffstr(&argv[i+1]);
-              if (setmutable(self_w, n, tmp) == Failed) 
-                  fail;
-              strcpy(colorname, tmp);
-          }
-      }
-
-      return self;
-   }
-end
-
-function graphics_Window_color_value(self, k)
+function graphics_Window_color_value(k)
    body {
       word n;
       int r, g, b, a;
       tended char *s;
-      char tmp[32], *t;
-      GetSelfW();
+      char tmp[32];
 
       a = 65535;
-      if (is:null(k))
-          runerr(103);
 
-      if (cnv:C_integer(k, n)) {
-          if ((t = getmutablename(self_w, n)))
-              MemProtect(s = alcstr(t, (word)strlen(t)+1));
-          else
-              fail;
-      }
-      else if (!cnv:C_string(k, s))
+      if (!cnv:C_string(k, s))
           runerr(103, k);
 
-      if (parsecolor(self_w, s, &r, &g, &b, &a) == Succeeded) {
+      if (parsecolor(s, &r, &g, &b, &a) == Succeeded) {
           tended struct descrip result;
           if (a < 65535)
               sprintf(tmp,"%d,%d,%d,%d", r, g, b, a);
@@ -824,16 +764,9 @@ function graphics_Window_free_color(self, argv[argc])
           runerr(103);
 
       for (i = 0; i < argc; i++) {
-          if (is:integer(argv[i])) {
-              CnvCInteger(argv[i], n)
-              if (n < 0)
-                  freemutable(self_w, n);
-          }
-          else {
-              if (!cnv:string(argv[i],argv[i]))
-                  runerr(103,argv[i]);
-              freecolor(self_w, buffstr(&argv[i]));
-          }
+          if (!cnv:string(argv[i],argv[i]))
+              runerr(103,argv[i]);
+          freecolor(self_w, buffstr(&argv[i]));
       }
 
       return self;
@@ -845,18 +778,6 @@ function graphics_Window_lower(self)
       GetSelfW();
       lowerwindow(self_w);
       return self;
-   }
-end
-
-
-function graphics_Window_new_color(self, argv[argc])
-   body {
-      int rv;
-      GetSelfW();
-
-      if (mutablecolor(self_w, argv, argc, &rv) == Failed) 
-          fail;
-      return C_integer rv;
    }
 end
 
@@ -917,14 +838,12 @@ function graphics_Window_palette_color(s1, s2)
    }
 end
 
-function graphics_Window_palette_key(self, s1, s2)
+function graphics_Window_palette_key(s1, s2)
    body {
       int p;
       word n;
       tended char *s;
       int r, g, b, a;
-
-      GetSelfW();
 
       p = palnum(&s1);
       if (p == -1)
@@ -932,14 +851,10 @@ function graphics_Window_palette_key(self, s1, s2)
       if (p == 0)
           fail;
 
-      if (cnv:C_integer(s2, n)) {
-          if ((s = getmutablename(self_w, n)) == NULL)
-              fail;
-      }
-      else if (!cnv:C_string(s2, s))
+      if (!cnv:C_string(s2, s))
           runerr(103, s2);
 
-      if (parsecolor(self_w, s, &r, &g, &b, &a) == Succeeded)
+      if (parsecolor(s, &r, &g, &b, &a) == Succeeded)
           return string(1, rgbkey(p, r / 65535.0, g / 65535.0, b / 65535.0));
       else
           fail;
@@ -1165,24 +1080,6 @@ function graphics_Window_uncouple(self)
    }
 end
 
-function graphics_Window_wdefault(self, prog, opt)
-   if !cnv:string(prog) then
-       runerr(103, prog)
-   if !cnv:string(opt) then
-       runerr(103, opt)
-   body {
-      char *t1, *t2, *res;
-      tended struct descrip result; 
-      GetSelfW();
-      /* res (space for result) will point to the remaining space in attr_buff */
-      buffnstr(&prog, &t1, &opt, &t2, &emptystr, &res, 0);
-      if (getdefault(self_w, t1, t2, res) == Failed) 
-          fail;
-      cstr2string(res, &result);
-      return result;
-   }
-end
-
 function graphics_Window_flush(self)
    body {
       GetSelfW();
@@ -1319,60 +1216,6 @@ function graphics_Window_close(self)
      return self;
    }
 end
-
-function graphics_Window_generic_palette_key(s1, s2)
-   body {
-      int p;
-      word n;
-      tended char *s;
-      int r, g, b, a;
-
-      p = palnum(&s1);
-      if (p == -1)
-          runerr(103, s1);
-      if (p == 0)
-          fail;
-
-      if (cnv:C_integer(s2, n))
-              fail;
-      if (!cnv:C_string(s2, s))
-          runerr(103, s2);
-
-      if (parsecolor(0, s, &r, &g, &b, &a) == Succeeded)
-          return string(1, rgbkey(p, r / 65535.0, g / 65535.0, b / 65535.0));
-      else
-          fail;
-   }
-end
-
-function graphics_Window_generic_color_value(k)
-   body {
-      word n;
-      int r, g, b, a = 65535;
-      tended char *s;
-      char tmp[32];
-
-      if (is:null(k))
-          runerr(103);
-
-      if (cnv:C_integer(k, n))
-          fail;
-      if (!cnv:C_string(k, s))
-          runerr(103, k);
-
-      if (parsecolor(0, s, &r, &g, &b, &a) == Succeeded) {
-          tended struct descrip result;
-          if (a < 65535)
-              sprintf(tmp,"%d,%d,%d,%d", r, g, b, a);
-          else
-              sprintf(tmp,"%d,%d,%d", r, g, b);
-          cstr2string(tmp, &result);
-          return result;
-      }
-      fail;
-   }
-end
-
 
 function graphics_Window_get_ascent(self)
    body {
@@ -1762,17 +1605,6 @@ function graphics_Window_get_size(self)
    }
 end
 
-function graphics_Window_get_visual(self)
-   body {
-       tended struct descrip result;
-       GetSelfW();
-       if (getvisual(self_w, attr_buff) != Succeeded)
-           fail;
-       cstr2string(attr_buff, &result);
-       return result;
-   }
-end
-
 function graphics_Window_get_width(self)
    body {
        struct descrip result;
@@ -1826,13 +1658,9 @@ function graphics_Window_set_bg(self, val)
    body {
        word i;
        GetSelfW();
-       if (cnv:C_integer(val, i))
-           AttemptAttr(isetbg(self_w, i), "Invalid color number");
-       else {
-           if (!cnv:string(val, val))
-               runerr(103, val);
-           AttemptAttr(setbg(self_w, buffstr(&val)), "Invalid color");
-       }
+       if (!cnv:string(val, val))
+           runerr(103, val);
+       AttemptAttr(setbg(self_w, buffstr(&val)), "Invalid color");
        return self;
    }
 end
@@ -1914,13 +1742,9 @@ function graphics_Window_set_fg(self, val)
    body {
        word i;
        GetSelfW();
-       if (cnv:C_integer(val, i))
-           AttemptAttr(isetfg(self_w, i), "Invalid color number");
-       else {
-           if (!cnv:string(val, val))
-               runerr(103, val);
-           AttemptAttr(setfg(self_w, buffstr(&val)), "Invalid color");
-       }
+       if (!cnv:string(val, val))
+           runerr(103, val);
+       AttemptAttr(setfg(self_w, buffstr(&val)), "Invalid color");
        return self;
    }
 end

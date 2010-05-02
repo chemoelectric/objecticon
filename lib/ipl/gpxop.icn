@@ -224,7 +224,7 @@ procedure Capture(win, pal, x, y, w, h)
    s := ""
    a := []
    every k := !win.pixel(x, y, w, h) do {
-      c := \cmap[k] | (cmap[k] := win.palette_key(pal, k))
+      c := \cmap[k] | (cmap[k] := Window.palette_key(pal, k))
       if *(s ||:= c) >= CaptureChunk then {
          put(a, s)
          s := ""

@@ -159,9 +159,9 @@ class Window(SetFields,NoCopy)
    public defer color(a[])
 
    #
+   # Return the r,g,b,a values of the given color
    #
-   #
-   public defer color_value(k)
+   public static defer color_value(k)
 
    #
    # draw_arc(x, y, width, height, angle1, angle2)
@@ -277,7 +277,7 @@ class Window(SetFields,NoCopy)
    #
    # Return key of closest color to s in palette p
    #
-   public defer palette_key(s1, s2)
+   public static defer palette_key(s1, s2)
 
    #
    # Produce the contents of some pixels
@@ -375,18 +375,6 @@ class Window(SetFields,NoCopy)
    # Close this window.
    #
    public defer close()
-
-   #
-   # A static version of {palette_key}, which does not query an
-   # underlying window.
-   #
-   public static defer generic_palette_key(s1, s2)
-
-   #
-   # A static version of {color_value}, which does not query an
-   # underlying window.
-   #
-   public static defer generic_color_value(k)
 
    public enqueue(eventcode, x, y, ctrl, alt, shift, release, interval)	
       /x := -1

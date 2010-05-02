@@ -126,7 +126,7 @@ procedure Blend(args[])
       if integer(a) >= 0 then
          n := integer(a)
       else {
-         s := win.color_value(a) | fail
+         s := Window.color_value(a) | fail
          s ? {
             r2 := tab(many(&digits));  move(1)
             g2 := tab(many(&digits));  move(1)
@@ -178,7 +178,7 @@ procedure Shade(win, color)
       win.fg( color) | fail
       return win
       }
-   (win.color_value( color) | fail) ? {
+   (Window.color_value( color) | fail) ? {
       r := tab(many(&digits));  move(1)
       g := tab(many(&digits));  move(1)
       b := tab(many(&digits))
@@ -267,7 +267,7 @@ procedure RGBKey(win, palette, r, g, b)
    r := integer(r * 65535.99)
    g := integer(g * 65535.99)
    b := integer(b * 65535.99)
-   return win.palette_key(palette, r || "," || g || "," || b)
+   return Window.palette_key(palette, r || "," || g || "," || b)
 end
 
 
@@ -320,7 +320,7 @@ end
 procedure HSV(win,k)			
    local r, g, b, h, s, v, min, max, d
 
-   (win.color_value(k) | fail) ? {
+   (Window.color_value(k) | fail) ? {
       r := tab(many(&digits)) / 65535.0
       move(1)
       g := tab(many(&digits)) / 65535.0
@@ -417,7 +417,7 @@ end
 procedure HLS(win,k)			
    local r, g, b, h, l, s, min, max, delta
 
-   (win.color_value(k) | fail) ? {
+   (Window.color_value(k) | fail) ? {
       r := tab(many(&digits)) / 65535.0
       move(1)
       g := tab(many(&digits)) / 65535.0
@@ -517,9 +517,9 @@ end
 # Given a color {col}, return the color in "r,g,b,a" string format, with
 # those values optionally edited by the given parameters.
 #
-procedure EditRGBA(W, col, r, g, b, a)
+procedure EditRGBA(col, r, g, b, a)
    local r0, g0, b0, a0
-   W.color_value(col) ? {
+   Window.color_value(col) ? {
       r0 := integer(tab(upto(','))) | fail
       move(1)
       g0 := integer(tab(upto(','))) | fail

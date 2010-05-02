@@ -56,7 +56,7 @@ $ifdef _PLAN9
    public get_down_clone(W)
       local t
       t := W.clone()
-      t.set_fg(EditRGBA(W, t.get_fg(), ,,, 16000))
+      t.set_fg(EditRGBA(t.get_fg(), ,,, 16000))
       return t
    end
 

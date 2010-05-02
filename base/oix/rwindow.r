@@ -225,7 +225,7 @@ static colrmod transptable[] = {		/* transparency levels */
 
 
 /*
- *  parsecolor(w, s, &r, &g, &b, &a) - parse a color specification
+ *  parsecolor(s, &r, &g, &b, &a) - parse a color specification
  *
  *  parsecolor interprets a color specification and produces r/g/b values
  *  scaled linearly from 0 to 65535.  parsecolor returns Succeeded or Failed.
@@ -241,10 +241,9 @@ static colrmod transptable[] = {		/* transparency levels */
  *     #rrrrggggbbbbaaaa
  *     nnnnn,nnnnn,nnnnn	(integers 0 - 65535)
  *     <Icon color phrase>
- *     <native color spec>
  */
 
-int parsecolor(wbp w, char *buf, int *r, int *g, int *b, int *a)
+int parsecolor(char *buf, int *r, int *g, int *b, int *a)
 {
     int len, mul;
     char *fmt, c;
@@ -300,7 +299,7 @@ int parsecolor(wbp w, char *buf, int *r, int *g, int *b, int *a)
     }
 
     /* try interpreting as a color phrase or as a native color spec */
-    if (colorphrase(buf, r, g, b, a) || nativecolor(w, buf, r, g, b))
+    if (colorphrase(buf, r, g, b, a))
         return Succeeded;
     else
         return Failed;

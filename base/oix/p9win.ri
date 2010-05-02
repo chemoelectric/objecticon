@@ -703,16 +703,6 @@ int walert(wbp w, int volume)
     return Succeeded;
 }
 
-char *getmutablename(wbp w, int mute_index)
-{
-    return 0;
-}
-
-int setmutable(wbp w, int i, char *s)
-{
-    return Failed;
-}
-
 static void impl_copyarea(wcp wc, Image *dest, Image *src,int x,int y,int w,int h,int x2,int y2)
 {
     clip(wc, dest);
@@ -1086,16 +1076,11 @@ void pollevent(void)
         flush_event_pipe(ws);
 }
 
-int isetfg(wbp w, int fg)
-{
-    return Failed;
-}
-
 int setfg(wbp w, char *val)
 {
     int r, g, b, a, n;
     wcp wc = w->context;
-    if (parsecolor(w, val, &r, &g, &b, &a) != Succeeded)
+    if (parsecolor(val, &r, &g, &b, &a) != Succeeded)
         return Failed;
     if (wc->fg)
         unlink_sharedcolor(wc->fg);
@@ -1118,16 +1103,11 @@ void getfg(wbp w, char *answer)
     strcpy(answer, w->context->fg->name);
 }
 
-int isetbg(wbp w, int bg)
-{
-    return Failed;
-}
-
 int setbg(wbp w, char *val)
 {
     int r, g, b, a, n;
     wcp wc = w->context;
-    if (parsecolor(w, val, &r, &g, &b, &a) != Succeeded)
+    if (parsecolor(val, &r, &g, &b, &a) != Succeeded)
         return Failed;
     if (wc->bg)
         unlink_sharedcolor(wc->bg);
@@ -1287,10 +1267,6 @@ int setfont(wbp w, char *s)
     return Succeeded;
 }
 
-void freemutable(wbp w, int mute_index)
-{
-}
-
 void freecolor(wbp w, char *s)
 {
 }
@@ -1302,12 +1278,6 @@ int lowerwindow (wbp w)
         return Failed;
     fprint(ws->wctl_fd, "bottom");
     return Succeeded;
-}
-
-int mutablecolor (wbp w, dptr argv, int ac, int *retval)
-{
-    LitWhy("Mutable colors not supported");
-    return Failed;
 }
 
 static void synch_pattern_image(struct SharedPattern *pat, int rgba, int style)
@@ -1522,11 +1492,6 @@ int doconfig(wbp w, int status)
     }
 
     return Succeeded;
-}
-
-int getdefault(wbp w, char *prog, char *opt, char *answer)
-{
-    return Failed;
 }
 
 void wflush(wbp w)
@@ -1878,11 +1843,6 @@ void freecontext(wcp wc)
     }
 }
 
-int nativecolor(wbp w, char *s, int *r, int *g, int *b)
-{
-    return 0; /* boolean rv */
-}
-
 int getimstr(wbp w, int x, int y, int width, int hgt, 
              struct palentry *ptbl, unsigned char *data)
 {
@@ -2049,12 +2009,6 @@ void togglefgbg (wbp w)
 int warppointer(wbp w, int x, int y)
 {
     return Failed;
-}
-
-int getvisual(wbp w, char *answer)
-{
-    strcpy(answer, "none");
-    return Succeeded;
 }
 
 void getdisplay(wbp w, char *answer)

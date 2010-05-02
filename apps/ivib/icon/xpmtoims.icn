@@ -49,7 +49,7 @@ procedure main(args)
    opts := options(args, "dg+c+")
    pal := ("c" || \opts["c"]) | ("g" || \opts["g"]) | "c1"
    Window.palette_chars(pal) | stop("invalid palette ", pal)
-   w.color_value("navy") |
+   Window.color_value("navy") |
       ewrite("warning: no X color names, conversion is risky")
 
    # Convert the file.

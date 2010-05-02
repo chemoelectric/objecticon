@@ -166,7 +166,7 @@ procedure vrml_color(s)
 
    initial factor := real(2 ^ 16 - 1)
 
-   s := Window.generic_color_value(s) | fail
+   s := Window.color_value(s) | fail
 
    result := ""
 
