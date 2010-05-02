@@ -376,7 +376,7 @@ procedure XPMImage(win, f, pal)
       (c := !"cgm") & tab(upto(' \t') + 1) & =c & tab(many(' \t')) &
          (k := XPM_Key(win, pal, (tab(upto(' \t') | 0))))
       # use first color found, or default if none
-      s2 ||:= \k | win.palette_key(pal, "gray")
+      s2 ||:= \k | Window.palette_key(pal, "gray")
       }
 
    # construct image
@@ -398,8 +398,7 @@ procedure XPM_Key(win, pal, s)
          return "~"			# but use "~" if possible
       }
 
-   if \win then
-      return win.palette_key(pal, s)	# return key from palette, or fail
+   return Window.palette_key(pal, s)	# return key from palette, or fail
 end
 
 # read next C string from file f

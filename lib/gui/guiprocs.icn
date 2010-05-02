@@ -164,7 +164,7 @@ procedure palette_key_ex(W, palette, spec)
       "trans" : return "\377"
       default : spec
    }
-   return W.palette_key(palette, color)
+   return Window.palette_key(palette, color)
 end
 
 procedure get_extended_image(W, img)

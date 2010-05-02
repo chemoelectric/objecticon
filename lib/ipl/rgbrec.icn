@@ -34,7 +34,7 @@ record rgb(r, g, b)
 procedure rgbrec(s)
    local result
 
-   s := Window.generic_color_value(s) | fail
+   s := Window.color_value(s) | fail
 
    result := rgb()
 

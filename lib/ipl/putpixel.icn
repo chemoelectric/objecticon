@@ -126,7 +126,7 @@ procedure PutPixel(win, x, y, color)
       return
       }
 
-   (color | Window.generic_color_value(color) | fail) ? (
+   (color | Window.color_value(color) | fail) ? (
       (r := tab(many(&digits))) & move(1) &
       (g := tab(many(&digits))) & move(1) &
       (b := tab(many(&digits)))

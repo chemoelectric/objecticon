@@ -1689,7 +1689,7 @@ int setfg(wbp w, char *s)
     /*
      * convert color to an r,g,b triple
      */
-    if (parsecolor(w, s, &r, &g, &b, &a) != Succeeded)
+    if (parsecolor(s, &r, &g, &b, &a) != Succeeded)
         return Failed;
     Protect(cp = alcrgb(w, s, r, g, b, 0), return Failed);
     wc->fg = (cp - wd->colors);
@@ -1741,7 +1741,7 @@ int setbg(wbp w, char *s)
     /*
      * convert color to an r,g,b triple
      */
-    if (parsecolor(w, s, &r, &g, &b, &a) != Succeeded)
+    if (parsecolor(s, &r, &g, &b, &a) != Succeeded)
         return Failed;
     Protect(cp = alcrgb(w, s, r, g, b, 0), return Failed);
     wc->bg = (cp - wd->colors);
@@ -2674,7 +2674,7 @@ int mutablecolor(wbp w, dptr argv, int ac, int *retval)
                 if (!cnv:C_string(argv[0],str)) {
                     ReturnErrVal(103,argv[0], Error);
                 }
-                if (parsecolor(w, str, &clr.red, &clr.green, &clr.blue, &alpha) != Succeeded) {
+                if (parsecolor(str, &clr.red, &clr.green, &clr.blue, &alpha) != Succeeded) {
                     free_xcolor(w, pixels[0]);
                     return Failed;                   /* invalid color specification */
                 }
@@ -2717,7 +2717,7 @@ int setmutable(wbp w, int i, char *s)
     XColor colorcell;
     wdp dp = w->window->display;
 
-    if (parsecolor(w, s, &clr.red, &clr.green, &clr.blue, &alpha) != Succeeded)
+    if (parsecolor(s, &clr.red, &clr.green, &clr.blue, &alpha) != Succeeded)
         return Failed;                        /* invalid color specification */
     colorcell = xcolor(w, clr);
     colorcell.pixel = -i - 1;
@@ -2750,7 +2750,7 @@ void freecolor(wbp w, char *s)
     LinearColor clr;
     XColor color;
 
-    if (parsecolor(w, s, &clr.red, &clr.green, &clr.blue, &alpha) != Succeeded)
+    if (parsecolor(s, &clr.red, &clr.green, &clr.blue, &alpha) != Succeeded)
         return;
     dp = w->window->display;
     d = dp->display;
