@@ -91,6 +91,7 @@ static stringint drawops[] = {
    {"or",               DatopS},
    {"orInverted",       DxorS},
    {"orReverse",        DoutS},
+   {"reverse",          DoutS},
    {"set",              DatopS},
    {"xor",              DxorS},
 };
@@ -1970,22 +1971,10 @@ int setpointer(wbp w, char *val)
 int setdrawop(wbp w, char *val)
 {
     wcp wc = w->context;
-    if (!strcmp(val,"reverse")) {
-        if (!ISXORREVERSE(w)) {
-            SETXORREVERSE(w);
-            wc->drawop = stringint_lookup(drawops, "xor");
-        }
-    }
-    else {
-        stringint *e;
-        if (ISXORREVERSE(w)) {
-            CLRXORREVERSE(w);
-        }
-        e = stringint_lookup(drawops, val);
-        if (!e)
-            return Failed;
-        wc->drawop = e;
-    }
+    stringint *e = stringint_lookup(drawops, val);
+    if (!e)
+        return Failed;
+    wc->drawop = e;
     return Succeeded;
 }
 
@@ -2045,13 +2034,7 @@ void getpointer(wbp w, char *answer)
 
 void getdrawop(wbp w, char *answer)
 {
-    char *s;
-
-    if (ISXORREVERSE(w)) 
-        s = "reverse";
-    else 
-        s = w->context->drawop->s;
-    strcpy(answer, s);
+    strcpy(answer, w->context->drawop->s);
 }
 
 void getcanvas(wbp w, char *answer)
