@@ -39,6 +39,7 @@ static struct SharedPattern *link_sharedpattern(struct SharedPattern *x);
 static void unlink_sharedpattern(struct SharedPattern *x);
 static int limit_size(wsp ws, int *width, int *height);
 static void synch_pos(wsp ws);
+static void note_time(char *s);
 
 #define EMAXMSG 128+8192     /* size of 9p header+data */
 #define WINDOW_MOUNT_ROOT "/tmp/oi_windowmounts"
@@ -2282,5 +2283,15 @@ static vlong get_time()
     }
     be2vlong(&t, b);
     return t;
+}
+
+static void note_time(char *s)
+{
+    static vlong prev;
+    if (prev) {
+        int t = (get_time() - prev) / 1000000;
+        fprint(2, "%d: - %s\n", t, s);
+    }
+    prev = get_time();
 }
 
