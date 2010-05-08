@@ -265,9 +265,9 @@ class CanvasComponent(CanvasObject)
    public do_highlight(W)
       local cw, i, r
       r := self.get_clip_rect() | fail
-      cw := W.clone("linestyle=dashed")
+      cw := W.clone("line_style=dashed")
       cw.clip(r.x, r.y, r.w, r.h)
-      cw.attrib("linestyle=solid")
+      cw.attrib("line_style=solid")
       if self === self.parent_Canvas.selected then
          cw.attrib("fg=red")
 

@@ -56,7 +56,7 @@ class DirectoryDialog(Dialog)
    end
 
    public init_dialog()
-      win.set_minsize(win.get_width(), win.get_height())
+      win.set_min_size(win.get_width(), win.get_height())
       # Do this here as we need the tree to be setup so that we
       # can scroll to the selected dir.
       goto_dir(dir.get_contents())

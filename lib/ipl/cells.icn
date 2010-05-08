@@ -93,7 +93,7 @@ procedure clearpanel(panel)
    local width, height, x, y
    
    if \panel.pg then {			# default is textured
-      panel.window.attrib("fillstyle=textured")
+      panel.window.attrib("fill_style=textured")
       panel.window.pattern("checkers")
       panel.window.bg("very dark gray")
       }
@@ -108,7 +108,7 @@ procedure clearpanel(panel)
    every y := 0 to height by panel.size do
       panel.window.draw_line(0, y, width, y)
 
-   panel.window.attrib("fillstyle=solid")
+   panel.window.attrib("fill_style=solid")
 
    return panel
 

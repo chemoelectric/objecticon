@@ -225,16 +225,9 @@ void  bigrand         (dptr da, dptr dx);
    void getdrawop       (wbp w, char *answer);
    void getfillstyle    (wbp w, char *answer);
    void getfg           (wbp w, char *answer);
-   void geticonic       (wbp w, char *answer);
-   int  geticonpos      (wbp w, char *s);
-
    int  getlinewidth    (wbp w);
    int  getdepth        (wbp w, int *res);
-
-   int  geticonimage    (wbp w, char *answer);
-   int  geticonlabel    (wbp w, char *answer);
    int  getwindowlabel  (wbp w, char *answer);
-
    int  getimstr        (wbp w, int x, int y, int width, int hgt,
                           struct palentry *ptbl, unsigned char *data);
    void getlinestyle    (wbp w, char *answer);
@@ -259,9 +252,6 @@ void  bigrand         (dptr da, dptr dx);
    int  setfillstyle    (wbp w, char *s);
    int  setfont         (wbp w, char *s);
    int  setgamma        (wbp w, double gamma);
-   int  seticonicstate  (wbp w, char *s);
-   int  seticonlabel    (wbp w, char *val);
-   int  seticonpos      (wbp w, char *s);
    int  setimage        (wbp w, char *val);
    int  setleading      (wbp w, int i);
    int  setlinestyle    (wbp w, char *s);
@@ -278,8 +268,10 @@ void  bigrand         (dptr da, dptr dx);
    int  walert          (wbp w, int volume);
    int  warppointer     (wbp w, int x, int y);
    void wclose          (wbp w);
-   wbp  wcreate         (char *display);
-   int  wopen           (wbp w, wbp parent);
+   wbp  wcreate         (char *display, wbp parent);
+   int  wopen           (wbp w);
+   int  grabpointer      (wbp w);
+   int  ungrabpointer    (wbp w);
    void wflush          (wbp w);
    void wsync           (wbp w);
    void xdis            (wbp w, char *s, int n);
@@ -291,7 +283,6 @@ void  bigrand         (dptr da, dptr dx);
    void fillpolygon     (wbp w, XPoint *pts, int npts);
    void drawstring      (wbp w, int x, int y, char *str, int slen);
    void drawutf8        (wbp w, int x, int y, char *str, int slen, int nchars);
-   int  seticonimage    (wbp w, dptr dp);
    int  textwidth       (wbp w, char *s, int n);
    int  utf8width       (wbp w, char *s, int n, int nchars);
 

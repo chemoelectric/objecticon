@@ -63,7 +63,7 @@ procedure tileims(win, ims)
       tab(many(&digits)) & =",#"
       } then {
          win.attrib("pattern=" || ims)
-         win.attrib("fillstyle=textured")
+         win.attrib("fill_style=textured")
          win.fill_rectangle()
          }
    

@@ -136,7 +136,7 @@
 #  initialized with the bitplanes specified.
 #
 #
-#  Deplane([win,] color) -- restore normal drawop and set foreground
+#  Deplane([win,] color) -- restore normal draw_op and set foreground
 #
 #     Deplane is called to restore normal drawing operations after setting
 #  or clearing bits in a particular bitplane.  The foreground color can be
@@ -181,7 +181,7 @@
 #     These routines depend on the internals of Icon, specifically the
 #  mapping of window-system pixel values to mutable color indices.
 #
-#     The use of unusual "and" and "or" drawops makes the code hard to
+#     The use of unusual "and" and "or" draw_ops makes the code hard to
 #  understand.
 #
 ############################################################################
@@ -291,17 +291,17 @@ procedure PlaneOp(win, bp, op)
 
    case op of {
       "copy": {
-         win.attrib( "drawop=copy")
+         win.attrib( "draw_op=copy")
          win.fg( bp)
          }
       "set": {
          i := base + bits
-         win.attrib( "drawop=and")
+         win.attrib( "draw_op=and")
          win.fg( i)
          }
       "clear": {
          i := base + (mask - bits)
-         win.attrib( "drawop=or")
+         win.attrib( "draw_op=or")
          win.fg( i)
          }
       default:
@@ -312,10 +312,10 @@ end
 
 
 
-#  Deplane(win, color) -- restore normal drawop and set fg to color
+#  Deplane(win, color) -- restore normal draw_op and set fg to color
 
 procedure Deplane(win, color)
-   win.attrib("drawop=copy")
+   win.attrib("draw_op=copy")
    win.fg( \color)
    return win
 end

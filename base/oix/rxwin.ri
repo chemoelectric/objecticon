@@ -25,7 +25,7 @@ static void handle_keypress(wbp w, XKeyEvent *event);
 static int setpatternbits(wbp w, int width, int *bits, int nbits);
 static XImage *getximage(wbp w, int x, int y,
                          int width, int height, int init);
-static int wmap(wbp w, wbp parent);
+static int wmap(wbp w);
 static Pixmap loadimage(wbp w, char *filename, int *height, 
                         int *width, int atorigin, int *status);
 static int convert_KeySym_to_code_point(KeySym k);
@@ -739,7 +739,7 @@ void wsync(wbp w)
 /*
  * open a window
  */
-wbp wcreate(char *display)
+wbp wcreate(char *display, wbp parent)
 {
     wbp w;
     wsp ws;
@@ -754,6 +754,9 @@ wbp wcreate(char *display)
     ws->vis = DefaultVisual(ws->display->display, ws->display->screen); 
     create_list(64, &ws->listp);
 
+    if (parent)
+        ws->transientfor = parent->window->win;
+
     /*
      * some attributes of the display and window are used in the context
      */
@@ -763,11 +766,11 @@ wbp wcreate(char *display)
     return w;
 }
 
-int wopen(wbp w, wbp parent)
+int wopen(wbp w)
 {
     wsp ws = w->window;
 
-    if (wmap(w, parent) != Succeeded) {
+    if (wmap(w) != Succeeded) {
         LitWhy("Failed to map window");
         return Failed;
     }
@@ -786,7 +789,7 @@ int wopen(wbp w, wbp parent)
  *  If a window, cause the window to actually become visible on the screen.
  *  returns Succeeded, Failed, or Error
  */
-static int wmap(wbp w, wbp parent)
+static int wmap(wbp w)
 {
     XWindowAttributes attrs;
     XGCValues gcv;
@@ -822,7 +825,6 @@ static int wmap(wbp w, wbp parent)
         stdpix = ws->pix;
     }
 
-
     /*
      * create the X window (or use the DefaultRootWindow if requested)
      */
@@ -832,21 +834,40 @@ static int wmap(wbp w, wbp parent)
         attr.background_pixel = wd->colors[wc->bg].c;
         attr.border_pixel = wd->colors[wc->fg].c;
         attr.event_mask = StructureNotifyMask | ExposureMask;
- 
-        ws->win = ((ws->iconic == RootState) ? DefaultRootWindow(stddpy) :
-                   XCreateSimpleWindow(stddpy, DefaultRootWindow(stddpy),
+
+        switch (ws->iconic) {
+            case RootState:
+                ws->win = DefaultRootWindow(stddpy);
+                break;
+            case PopupState: {
+                attr.override_redirect = True;
+                ws->win = XCreateWindow(stddpy, DefaultRootWindow(stddpy),
+                                        ws->posx < 0 ? 0 : ws->posx,
+                                        ws->posy < 0 ? 0 : ws->posy, ws->width,
+                                        ws->height, 0,
+                                        DefaultDepth(stddpy,wd->screen),
+                                        InputOutput,
+                                        CopyFromParent,
+                                        CWBackPixel|CWBorderPixel|CWOverrideRedirect,
+                                        &attr);
+                break;
+            }
+            default: {
+                ws->win = XCreateSimpleWindow(stddpy, DefaultRootWindow(stddpy),
                                        ws->posx < 0 ? 0 : ws->posx,
                                        ws->posy < 0 ? 0 : ws->posy, ws->width,
                                        ws->height, 1,
                                        wd->colors[wc->fg].c,
-                                       wd->colors[wc->bg].c));
-
+                                       wd->colors[wc->bg].c);
+                break;
+            }
+        }
         if (ws->win == (Window) NULL)
             return Failed;
 
         /* If the window has a parent, set the WM_TRANSIENT_FOR hint. */
-        if (parent && parent->window->win)
-            XSetTransientForHint(stddpy, ws->win, parent->window->win);
+        if (ws->transientfor)
+            XSetTransientForHint(stddpy, ws->win, ws->transientfor);
 
         /* Turn off background; this prevents X filling the background on an expose
            and hence prevents unsightly flicker on a resize. */
@@ -961,9 +982,7 @@ static int wmap(wbp w, wbp parent)
     wmhints.flags = InputHint;
     if (ws->iconic != RootState) {
         wmhints.flags |= (ws->wmhintflags | StateHint);
-        wmhints.initial_state = ws->iconic;
-        wmhints.icon_x = ws->iconx;
-        wmhints.icon_y = ws->icony;
+        wmhints.initial_state = NormalState;
     }
     XSetWMHints(stddpy, stdwin, &wmhints);
 
@@ -1365,6 +1384,9 @@ void getcanvas(wbp w, char *s)
             case NormalState:
                 sprintf(s, "normal");
                 break;
+            case PopupState:
+                sprintf(s, "popup");
+                break;
             case IconicState:
                 sprintf(s, "iconic");
                 break;
@@ -1417,7 +1439,7 @@ int setcanvas(wbp w, char *s)
         else {
             if (ws->iconic != IconicState) {
                 if (ws->win == (Window) NULL) {
-                    wmap(w, 0);
+                    wmap(w);
                 }
                 XIconifyWindow(ws->display->display, ws->win, ws->display->screen);
                 XSync(stddpy, False);
@@ -1438,7 +1460,7 @@ int setcanvas(wbp w, char *s)
                 ws->iconic = NormalState;
                 ws->initialPix = ws->pix;
                 ws->pix = (Window) NULL;
-                wmap(w, 0);
+                wmap(w);
 	    }
             else if (ws->iconic == IconicState) {
                 XMapWindow(stddpy, stdwin);
@@ -1456,6 +1478,16 @@ int setcanvas(wbp w, char *s)
 	    }
         }
     }
+
+    else if (!strcmp(s, "popup")) {
+        if (ws->pix == (Pixmap) NULL || ws->win == (Window) NULL)  {
+            ws->iconic = PopupState;
+        }
+        else {
+            return Failed;
+        }
+    }
+
     else if (!strcmp(s, "maximal")) {
         if (ws->iconic != MaximizedState) {
             int expect_config= (ws->width != DisplayWidth(stddpy, wd->screen)) ||
@@ -1471,7 +1503,7 @@ int setcanvas(wbp w, char *s)
                     ws->iconic = MaximizedState;
                     ws->initialPix = ws->pix;
                     ws->pix = (Window) NULL;
-                    wmap(w, 0);
+                    wmap(w);
                 }
                 else if (ws->iconic == IconicState) {
                     XMapWindow(stddpy, stdwin);
@@ -1759,14 +1791,6 @@ void getdisplay(wbp w, char *answer)
     else sprintf(answer, "%s", wd->name);
 }
 
-int geticonimage(wbp w, char *answer)
-{
-    if (!w->window->iconimage)
-        return Failed;
-    strcpy(answer, w->window->iconimage);
-    return Succeeded;
-}
-
 int getwindowlabel(wbp w, char *answer)
 {
     if (!w->window->windowlabel)
@@ -1853,21 +1877,28 @@ void getdrawop(wbp w, char *answer)
     else strcpy(answer, "copy");
 }
 
-void geticonic(wbp w, char *answer)
+int grabpointer(wbp w)
 {
-    switch (w->window->iconic) {
-        case RootState:
-            sprintf(answer, "root");
-            break;
-        case NormalState:
-            sprintf(answer, "window");
-            break;
-        case IconicState:
-            sprintf(answer, "icon");
-            break;
-        default:
-            sprintf(answer, "???");
-    }
+    wsp ws = w->window;
+    if (!ws->win)
+        return Failed;
+    if (XGrabPointer(ws->display->display, ws->win,False,
+                     EnterWindowMask | LeaveWindowMask | PointerMotionMask |
+                     ButtonMotionMask | ButtonPressMask | ButtonReleaseMask |
+                     Button1MotionMask | Button2MotionMask | Button3MotionMask, 
+                     GrabModeAsync, GrabModeAsync, None, None, CurrentTime) == GrabSuccess)
+        return Succeeded;
+    else
+        return Failed;
+}
+
+int ungrabpointer(wbp w)
+{
+    wsp ws = w->window;
+    if (!ws->win)
+        return Failed;
+    XUngrabPointer(ws->display->display, CurrentTime);
+    return Succeeded;
 }
 
 /*
@@ -3959,7 +3990,6 @@ static wdp alcdisplay(char *s)
     /*
      * Initialize fonts and other things.
      */
-    wd->numFonts = 1;
 #ifdef HAVE_LIBXFT
     wd->fonts = loadfont(wd, convert_spec(DEFAULTFONTNAME));
 #else
@@ -3974,25 +4004,6 @@ static wdp alcdisplay(char *s)
 #ifdef HAVE_LIBXFT
     wd->xfont = XLoadQueryFont(wd->display, "fixed");
 #endif
-    {
-        XGCValues gcv;
-        Display *stddpy = wd->display;
-#ifdef HAVE_LIBXFT
-        gcv.font = wd->xfont->fid;
-#else
-        gcv.font = wd->fonts->fsp->fid;
-#endif
-        gcv.foreground = wd->colors[0].c;
-        gcv.background = wd->colors[1].c;
-        gcv.fill_style = FillSolid;
-        gcv.cap_style = CapProjecting;
-        wd->icongc = XCreateGC(stddpy, DefaultRootWindow(stddpy),
-                               GCFont | GCForeground | GCBackground | GCFillStyle | GCCapStyle, &gcv);
-        if (wd->icongc == NULL) {
-            free(wd);
-            return NULL;
-        }
-    }
     GRFX_LINK(wd, wdsplys);
     return wd;
 }
@@ -4620,13 +4631,6 @@ void freewindow(wsp ws)
         if (ws->iconColors) { free(ws->iconColors); ws->iconColors = NULL; }
 
         imd = &ws->initimage;
-        if (imd->width) {
-            free(imd->paltbl);
-            free(imd->data);
-            imd->width = 0;
-        }
-
-        imd = &ws->initicon;
         if (imd->width) {
             free(imd->paltbl);
             free(imd->data);

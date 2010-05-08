@@ -72,7 +72,7 @@ class FileDialog(Dialog)
    end
 
    public init_dialog()
-      win.set_minsize(win.get_width(), win.get_height())
+      win.set_min_size(win.get_width(), win.get_height())
       goto_dir(dir.get_contents())
       # If we have a filename in the field, select it in the file list,
       # if it's there.

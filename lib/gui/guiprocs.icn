@@ -132,13 +132,12 @@ class Gui()
       CONSTRAINT_SET := set("tab", "eol", "x", "y", "w", "h", "l_inset", "r_inset", "t_inset", "b_inset", 
                             "x_fill", "y_fill", "x_align", "y_align", "x_weight", "y_weight")
       WATTRIB_SET := set("label", "posx", "pos", "posy", "resize", "size", "height", 
-                         "width", "image", "canvas", "iconpos", "iconlabel", 
-                         "iconimage", "x", "y", "pointer", 
-                         "display", "depth", "fg", "bg", "drawop", "gamma", 
-                         "font", "fheight", "fwidth", "ascent", "descent", "leading", "linewidth", 
-                         "linestyle", "fillstyle", "pattern", "clipx", "clipy", "clipw", "cliph", 
-                         "dx", "dy", "inputmask", "minwidth", "minheight", "minsize", "maxwidth", 
-                         "maxheight", "maxsize")
+                         "width", "image", "canvas", "pointer", 
+                         "display", "depth", "fg", "bg", "draw_op", "gamma", 
+                         "font", "fheight", "fwidth", "ascent", "descent", "leading", "line_width", 
+                         "line_style", "fill_style", "pattern", "clip",
+                         "dx", "dy", "input_mask", "min_width", "min_height", "min_size", "max_width", 
+                         "max_height", "max_size")
    end
 
    public static is_constraint(s)

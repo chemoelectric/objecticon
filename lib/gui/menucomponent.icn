@@ -318,25 +318,93 @@ class MenuComponent(Rect,SetFields,Connectable)
    end
 
    #
-   # Display the submenu.
+   # Display the submenu. The preferred position is x, y.  If that is
+   # not possible, then xa, ya give another position to try, but this
+   # time the values are right-adjusted.  These params default to the
+   # right and bottom of the screen respectively.
    #
-   public show()
+   public show(x, y, xa, ya)
+      local d, win, x1, y1, pd, dim, right, bottom, left, top, use_popup_win
       /self.temp_win | fail
 
-      #
-      # Open a temporary area for the menu and copy.
-      #
-      self.temp_win := create_proxy()
-      self.temp_win.set_pos(self.x, 
-                            self.y)
-      self.temp_win.set_size(self.w, self.h)
-      self.temp_win.set_z(self.parent_component.parent_dialog.get_top_z())
-      # Copy attribs of the parent component
-      self.temp_win.set_all_wattribs(self.parent_component.get_effective_wattribs())
-      self.parent_component.parent_dialog.add(self.temp_win)
-      self.temp_win.initially()
-      self.temp_win.resize()
-      self.temp_win.invalidate()
+      pd := self.parent_component.parent_dialog
+      win := pd.win
+
+      # Edges of window in adjusted coordinates
+      left := -win.get_dx()
+      top := -win.get_dy()
+      right := pd.w - win.get_dx()
+      bottom := pd.h - win.get_dy()
+
+      self.x := x
+      self.y := y
+      self.resize()
+
+      if Gui.style.allow_popup(self) &
+         ((self.x < left) | (self.y < top) | 
+          (self.x + self.w > right) | (self.y + self.h > bottom)) then 
+      {
+         dim := win.get_display_size()
+         # Recalculate edges, but now of the screen rather than the window.
+         left := -win.get_posx() - win.get_dx()
+         right := dim[1] - win.get_posx() - win.get_dx()
+         top := -win.get_posy() - win.get_dy()
+         bottom := dim[2] - win.get_posy() - win.get_dy()
+         use_popup_win := 1
+      }
+
+      /xa := right
+      /ya := bottom
+      if self.x < left then
+         x1 := left
+      else if self.x + self.w > right then
+         x1 := left <= xa - self.w
+      if self.y < top then
+         y1 := top
+      else if self.y + self.h > bottom then
+         y1 := top <= ya - self.h
+      if \x1 | \y1 then {
+         /x1 := self.x
+         /y1 := self.y
+         self.x := x1
+         self.y := y1
+         self.resize()
+      }
+
+      if /use_popup_win then {
+         #
+         # Open a temporary area for the menu and copy.
+         #
+         self.temp_win := create_proxy()
+         self.temp_win.set_pos(self.x + win.get_dx(), 
+                               self.y + win.get_dy())
+         self.temp_win.set_size(self.w, self.h)
+         self.temp_win.set_z(pd.get_top_z())
+         # Copy attribs of the parent component
+         self.temp_win.set_all_wattribs(self.parent_component.get_effective_wattribs())
+         pd.add(self.temp_win)
+         self.temp_win.initially()
+         self.temp_win.resize()
+         self.temp_win.invalidate()
+      } else {
+         d := Dialog("canvas=popup", 
+                     "w=", self.w, "h=",self.h,
+                     "dx=",-self.x, "dy=",-self.y,
+                     "w:posx=", win.get_posx() + win.get_dx() + self.x,
+                     "w:posy=", win.get_posy() + win.get_dy() + self.y)
+
+         #
+         # Open a temporary area for the menu and copy.
+         #
+         self.temp_win := create_proxy()
+         self.temp_win.set_pos(0, 0)
+         self.temp_win.set_size(self.w, self.h)
+         # Copy attribs of the parent component
+         self.temp_win.set_all_wattribs(self.parent_component.get_effective_wattribs())
+         d.add(self.temp_win)
+         d.show_modeless()
+         pd.add_popup(d)
+      }
    end
 
    #
@@ -345,45 +413,15 @@ class MenuComponent(Rect,SetFields,Connectable)
    public hide()
       \self.temp_win | fail
 
-      #
-      # Restore window area.
-      #
-      self.temp_win.invalidate()
-      self.parent_component.parent_dialog.remove(self.temp_win)
-      self.temp_win.finally()
-      self.temp_win := &null
-   end
-
-   #
-   # Position the menu so that it is on-screen if possible.  The preferred
-   # position is x, y.  If that is not possible, then xa, ya give
-   # another position to try, but this time the values are right-adjusted.
-   # These params default to the right and bottom of the screen respectively.
-   #
-   public position_nicely(x, y, xa, ya)
-      local x1, y1, pw
-
-      pw := self.parent_component.parent_dialog
-      /xa := pw.w
-      /ya := pw.h
-
-      self.x := x
-      self.y := y
-      self.resize()
-
-      x1 := y1 := &null
-      if self.x + self.w > pw.w then
-         x1 := 0 <= xa - self.w
-      if self.y + self.h > pw.h then
-         y1 := 0 <= ya - self.h
-
-      if \x1 | \y1 then {
-         /x1 := self.x
-         /y1 := self.y
-         self.x := x1
-         self.y := y1
-         self.resize()
+      if /self.temp_win.parent_dialog.popup_manager then {
+         self.temp_win.invalidate()
+         self.parent_component.parent_dialog.remove(self.temp_win)
+         self.temp_win.finally()
+      } else {
+         parent_component.parent_dialog.remove_popup(self.temp_win.parent_dialog)
+         self.temp_win.parent_dialog.dispose()
       }
+      self.temp_win := &null
    end
 
    public set_one(f)

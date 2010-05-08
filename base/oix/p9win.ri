@@ -297,7 +297,7 @@ static void show_square(Image *dest, Rectangle r)
     flushimage(display, 1);
 }
 
-wbp wcreate(char *display)
+wbp wcreate(char *display, wbp parent)
 {
     wbp w;
     wsp ws;
@@ -315,7 +315,7 @@ wbp wcreate(char *display)
     return w;
 }
 
-int wopen(wbp w, wbp parent)
+int wopen(wbp w)
 {
     wsp ws = w->window;
     struct imgdata *imd;
@@ -697,6 +697,16 @@ static void flush_event_pipe(wsp ws)
             }
         }
     }
+}
+
+int grabpointer(wbp w)
+{
+    return Failed;
+}
+
+int ungrabpointer(wbp w)
+{
+    return Failed;
 }
 
 int walert(wbp w, int volume)
@@ -1864,8 +1874,6 @@ int setinputmask(wbp w, char *val)
 int setcanvas(wbp w, char *s)
 {
     wsp ws = w->window;
-    if (!strcmp(s, "maximal"))
-        return Succeeded;
 
     if (!strcmp(s, "iconic"))
         ws->desired_canvas = IconicCanvas;

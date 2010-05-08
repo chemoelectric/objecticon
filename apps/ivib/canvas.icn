@@ -1081,7 +1081,7 @@ class Canvas(Component,SelectiveObjectCodec)
 
    public show_moving()
       local cw
-      cw := item_buff_win.clone("fg=red","linestyle=dashed")
+      cw := item_buff_win.clone("fg=red","line_style=dashed")
       cw.draw_rectangle(moving.mx, moving.my, moving.mw, moving.mh)
       cw.uncouple()
    end

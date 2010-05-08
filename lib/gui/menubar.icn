@@ -129,10 +129,8 @@ class MenuBar(Component)
 
       set_which_highlight(x)
       self.which_open := x
-      self.which_open.position_nicely(max(0, self.which_open.label_x - 
-                                          self.which_open.border.get_l_inset()),
-                                          self.y + self.h,, self.y)
-      self.which_open.show()
+      self.which_open.show(self.which_open.label_x -self.which_open.border.get_l_inset(),
+                           self.y + self.h,, self.y)
    end
 
    #

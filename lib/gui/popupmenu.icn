@@ -86,8 +86,7 @@ class PopupMenu(Component)
       self.menu := menu
       self.menu.set_parent_component(self)         
       self.menu.initially()
-      self.menu.position_nicely(px, py, px)
-      self.menu.show()
+      self.menu.show(px, py, px)
    end
 
    public new(a[])

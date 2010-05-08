@@ -118,10 +118,6 @@
 #define CLRZOMBIE(w)    ((w)->window->bits &= ~1)
 #endif					/* XWindows */
 
-#define ISTITLEBAR(ws) ((ws)->bits & 8192)
-#define SETTITLEBAR(ws) ((ws)->bits |= 8192)
-#define CLRTITLEBAR(ws) ((ws)->bits &= ~8192)
-
 #define DEFAULT_WINDOW_LABEL "Object Icon"
 
 /*
@@ -212,11 +208,9 @@ typedef struct _wdisplay {
   char		name[MAXDISPLAYNAME];
   Display *	display;
   struct progstate *program;           /* owning program */
-  GC		icongc;
   Colormap	cmap;
   double	gamma;
   int		screen;
-  int		numFonts;
   wfp		fonts;
 #ifdef HAVE_LIBXFT
   XFontStruct   *xfont;
@@ -342,12 +336,8 @@ typedef struct _wstate {
   int           siziColors;		/* malloced size of iconColors */
   short		*iconColors;		/* indices into display color table */
   int		iconic;			/* window state; icon, window or root*/
-  int		iconx, icony;           /* location of icon */
-  int    	iconw, iconh;		/* width and height of icon */
+  Window        transientfor;           /* transient-for hint */
   long		wmhintflags;		/* window manager hints */
-  char		*iconimage;		/* icon pixmap file name */
-  struct imgdata initicon;		/* initial icon image data */
-  char		*iconlabel;		/* icon label */
 #elif PLAN9
   Image         *win;
   Screen        *screen;
