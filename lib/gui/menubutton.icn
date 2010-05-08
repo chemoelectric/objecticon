@@ -62,9 +62,8 @@ class MenuButton(Component)
    public open_menu()
       self.parent_dialog.enter_menu_mode(self)
       self.which_open := self.menu
-      self.menu.position_nicely(self.x,
-                                self.y + self.h,, self.y)
-      self.menu.show()
+      self.menu.show(self.x,
+                     self.y + self.h,, self.y)
    end
 
    public close_menu()

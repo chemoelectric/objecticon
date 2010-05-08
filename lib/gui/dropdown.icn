@@ -17,6 +17,8 @@ import graphics
 # @field selection_list=t1,t2,t3,... : see {set_selection_list}.  This may
 # @ also be given (as a list) as the first parameter to the constructor.
 # @field direction=string : see {set_direction}
+# @field max_height=integer : see {set_max_height}
+# @field max_width=integer : see {set_max_width}
 # @field see also {Component}
 #
 class DropDown(SelectionList,Component)
@@ -25,7 +27,9 @@ class DropDown(SelectionList,Component)
       view,
       tl,
       old_selection,
-      direction
+      direction,
+      max_height,
+      max_width
 
    public static const
       UP,
@@ -87,6 +91,22 @@ class DropDown(SelectionList,Component)
       return TextList()
    end
 
+   #
+   # Set the maximum height of the dropdown list; by default it is as large as is necessary
+   # and can be accommodated on the screen.
+   #
+   public set_max_height(n)
+      self.max_height := n
+   end
+
+   #
+   # Set the maximum width of the dropdown list; by default it is as wide as is necessary
+   # and can be accommodated on the screen.
+   #
+   public set_max_width(n)
+      self.max_width := n
+   end
+
    public go_up(e)
       if *selection_list = 0 then
          fail
@@ -116,70 +136,156 @@ class DropDown(SelectionList,Component)
    end
 
    public open_textlist(ev)
-      local fh, max_h, spc_below
+      local fh, max_h, max_w, spc_below, spc_above, spc_right, d, dim, win, win_spc_above, 
+         win_spc_below, win_spc_right, use_popup_win, use_direction
 
+      win := parent_dialog.win
       fh := self.cbwin.get_fheight()
-      # Space available for downward popup
-      spc_below := parent_dialog.h - (self.y + self.h)
-      max_h := case self.direction of {
-         UP: self.y
-         DOWN: spc_below
-         BEST: if spc_below >= 7 * fh then spc_below else max(self.y, spc_below)
-         default: runerr("Unknown direction", self.direction)
+
+      win_spc_above := self.y + win.get_dy()
+      win_spc_below := parent_dialog.h - win_spc_above - self.h
+      win_spc_right := parent_dialog.w - self.x - win.get_dx()
+      if Gui.style.allow_popup(self) then {
+         dim := win.get_display_size()
+         # Space available for popup limited by screen size
+         spc_above := self.y + win.get_dy() + win.get_posy()
+         spc_below := dim[2] - spc_above - self.h
+         spc_right := dim[1] - self.x - win.get_dx() - win.get_posx()
+      } else {
+         # Space available limited by window size
+         spc_above := win_spc_above
+         spc_below := win_spc_below
+         spc_right := win_spc_right
       }
 
-      #
-      # Initialize and open a list, saving window area below in a temp window.
-      #
+      #write("spc_above=",spc_above,"   below=",spc_below, "   right=",spc_right)
+      #write("\twin_spc_above=",win_spc_above,"   below=",win_spc_below,  " right=",win_spc_right)
+      max_h := case self.direction of {
+         UP: spc_above
+         DOWN: spc_below
+         BEST: max(spc_above, spc_below)
+         default: runerr("Unknown direction", self.direction)
+      }
+      max_w := spc_right
+      max_w >:= \self.max_width
+      max_h >:= \self.max_height
+
+      #write("\tmaxh=",max_h,"  maxw=",max_w)
+
       self.tl := create_popup()
-      # Copy our attribs
       self.tl.set_all_wattribs(self.get_effective_wattribs())
       self.tl.connect(self.on_textlist_selection, Event.SELECTION_CHANGED)
       self.tl.set_contents(self.selection_list)
       self.tl.set_draggable_cursor(&yes)
       self.tl.set_motion_cursor(&yes)
+      self.tl.set_select_mode(Select.ONE)
+      self.tl.set_selection_on_key_moves(&no)
       self.tl.set_z(self.parent_dialog.get_top_z())
       self.parent_dialog.add(tl)
       self.tl.initially()
       self.tl.set_ideal_size(self.w, 
-                             self.parent_dialog.w - self.x, 
+                             max_w,
                              0, max_h)
 
-      self.tl.set_pos(self.x, self.y + case self.direction of {
-         UP: -self.tl.h_spec
-         DOWN: self.h
-         BEST: {
-            if self.tl.h_spec > spc_below then
-               -self.tl.h_spec
-            else
-               self.h
-         }
-      })
+      #write("\tcomputed ideal", tl.w_spec,",",tl.h_spec)
+      #write("\tdialog width available=", parent_dialog.w - (self.x + win.get_dx()))
 
-      self.tl.set_select_mode(Select.ONE)
-      self.tl.resize()
-      self.tl.invalidate()
-      self.tl.set_selection_on_key_moves(&no)
+      if tl.w_spec > win_spc_right then
+         use_popup_win := 1
+      case self.direction of {
+         UP: {
+            if tl.h_spec > win_spc_above then
+               use_popup_win := 1
+            use_direction := UP
+         }
+         DOWN: {
+            if tl.h_spec > win_spc_below then
+               use_popup_win := 1
+            use_direction := DOWN
+         }
+         BEST: {
+            if tl.h_spec > win_spc_below then
+               if tl.h_spec <= spc_below then {
+                  use_popup_win := 1
+                  use_direction := DOWN
+               } else if tl.h_spec > win_spc_above then {
+                  use_popup_win := 1
+                  use_direction := UP
+               } else
+                  use_direction := UP
+            else
+               use_direction := DOWN
+         }
+      }
+
+      #write("type:",if \use_popup_win then "popup" else "normal")
+      self.parent_dialog.enter_menu_mode(self)
+
+      if Gui.style.allow_popup(self) & \use_popup_win then {
+         # Remove tl from dialog and use add to popup window.
+         self.tl.finally()
+         self.parent_dialog.remove(tl)
+
+         d := if use_direction == DOWN then 
+            Dialog("canvas=popup", 
+                   "w=", tl.w_spec, "h=",tl.h_spec,
+                   "w:dx=", -self.x,
+                   "w:dy=", -(self.y + self.h),
+                   "w:posx=", win.get_posx() + win.get_dx() + self.x,
+                   "w:posy=", win.get_posy() + win.get_dy() + self.y + self.h)
+         else
+            Dialog("canvas=popup", 
+                   "w=", tl.w_spec, "h=",tl.h_spec,
+                   "w:dx=", -self.x,
+                   "w:dy=", -(self.y - tl.h_spec),
+                   "w:posx=", win.get_posx() + win.get_dx() + self.x,
+                   "w:posy=", win.get_posy() + win.get_dy() + self.y - tl.h_spec)
+
+         d.add(tl)
+         self.tl.set_pos(0, 0)
+         self.parent_dialog.set_focus()
+         d.show_modeless()
+         d.set_focus(tl)
+         d.held[ev.code] := [tl.view, tl, d]
+         self.parent_dialog.add_popup(d)
+      } else {
+         if use_direction == DOWN then 
+            self.tl.set_pos(self.x + win.get_dx(), self.y + self.h + win.get_dy())
+         else
+            self.tl.set_pos(self.x + win.get_dx(), self.y - self.tl.h_spec + win.get_dy())
+
+         self.tl.resize()
+         self.tl.invalidate()
+         self.parent_dialog.set_focus(tl)
+         self.parent_dialog.hold(tl.view, ev)
+      } 
+
+      self.parent_dialog.connect(self.dialog_event, Event.ICON)
       if \self.selection then {
          self.tl.set_cursor(self.selection)
          self.tl.center_line(self.selection)
       }
-      self.parent_dialog.set_focus(tl)
-      self.parent_dialog.hold(tl.view, ev)
-      self.parent_dialog.connect(self.dialog_event, Event.ICON)
    end
 
    public close_textlist(ev)
-      #
-      # Close list, restore window
-      #
-      if self.parent_dialog.focus === tl then
-         self.parent_dialog.set_focus(view)
-      self.tl.invalidate()
-      self.tl.finally()
-      self.parent_dialog.remove(tl)
+      if /tl.parent_dialog.popup_manager then {
+         if self.parent_dialog.focus === tl then
+            self.parent_dialog.set_focus(view)
+         self.tl.invalidate()
+         self.tl.finally()
+         self.parent_dialog.remove(tl)
+      } else {
+         if /self.parent_dialog.focus then
+            self.parent_dialog.set_focus(view)
+         self.parent_dialog.remove_popup(self.tl.parent_dialog)
+         self.tl.parent_dialog.dispose()
+      }
       self.tl := &null
+      self.parent_dialog.exit_menu_mode(self)
       self.parent_dialog.disconnect_object(self)
+   end
+
+   public close_all()
    end
 
    public dialog_event(e)
@@ -240,6 +346,8 @@ class DropDown(SelectionList,Component)
          "selection_list" : set_selection_list(f.text_list_val())
          "selection" : set_selection(f.int_val())
          "direction" : set_direction(f.string_val())
+         "max_height" : set_max_height(f.int_val())
+         "max_width" : set_max_width(f.int_val())
          default: return cast(self,Component).set_one(f)
       }
       return

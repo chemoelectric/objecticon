@@ -117,12 +117,9 @@ class Menu(TextMenuItem)
 
       set_which_highlight(x)
       self.which_open := x
-      self.which_open.position_nicely(self.x + self.w, 
-                                      max(0, self.which_open.label_y - 
-                                          self.which_open.border.get_t_inset()),
-                                          self.x)
-
-      self.which_open.show()
+      self.which_open.show(self.x + self.w, 
+                           self.which_open.label_y - self.which_open.border.get_t_inset(),
+                           self.x)
    end
 
    #

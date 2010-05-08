@@ -87,6 +87,10 @@ $endif
    public polish(obj)
    end
 
+   public allow_popup(obj)
+      return 1
+   end
+
    public distance2ticker_rate(d)
       local r
       r := 200 - 6*d

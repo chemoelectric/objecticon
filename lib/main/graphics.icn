@@ -57,6 +57,9 @@ class Window(SetFields,NoCopy)
    private defer clone_impl(a[])
    private static defer couple_impl(w1, w2)
 
+   public defer grab_pointer()
+   public defer ungrab_pointer()
+
    public defer toggle_fgbg()
 
    public defer get_ascent()
@@ -148,15 +151,6 @@ class Window(SetFields,NoCopy)
    # Clear the clip settings
    #
    public defer unclip()
-
-   #
-   # Returns the setting of mutable color i if k1 is omitted. If k1 is
-   # supplied, color i is changed as specified, with an immediate
-   # effect on any visible pixels of that color. Additional index and
-   # color pairs may be supplied to set multiple entries with one
-   # call. Color() fails if a color specification is invalid.
-   #
-   public defer color(a[])
 
    #
    # Return the r,g,b,a values of the given color
@@ -331,14 +325,6 @@ class Window(SetFields,NoCopy)
    # the window is closed.
    #
    public defer uncouple()
-
-   #
-   # Returns the value of option s2 for the program named s1 as
-   # registered with the graphics system. If no such value is
-   # available, or if the system provides no registry, wdefault()
-   # fails.
-   #
-   public defer wdefault(s1, s2)
 
    #
    # Forces the execution of any window commands that have been

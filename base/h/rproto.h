@@ -277,6 +277,8 @@ void  bigrand         (dptr da, dptr dx);
    void wclose          (wbp w);
    wbp  wcreate         (char *display);
    int  wopen           (wbp w, wbp parent);
+   int  grabpointer      (wbp w);
+   int  ungrabpointer    (wbp w);
    void wflush          (wbp w);
    void wsync           (wbp w);
    void xdis            (wbp w, char *s, int n);

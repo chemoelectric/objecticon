@@ -142,6 +142,24 @@ function graphics_Window_post_attrib(self)
    }
 end
 
+function graphics_Window_grab_pointer(self)
+   body {
+      GetSelfW();
+      if (grabpointer(self_w) != Succeeded)
+          fail;
+      return nulldesc;
+   }
+end
+
+function graphics_Window_ungrab_pointer(self)
+   body {
+      GetSelfW();
+      if (ungrabpointer(self_w) != Succeeded)
+          fail;
+      return nulldesc;
+   }
+end
+
 function graphics_Window_alert(self, volume)
    if !def:C_integer(volume, 0) then
       runerr(101, volume)
@@ -210,11 +228,13 @@ function graphics_Window_copy_to(self, dest, x0, y0, w0, h0, x1, y1)
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
 
-      if (!def:C_integer(x1, -self_w->context->dx, x2))
+      if (!def:C_integer(x1, -w2->context->dx, x2))
           runerr(101, x1);
+      x2 += w2->context->dx;
 
-      if (!def:C_integer(y1, -self_w->context->dy, y2))
+      if (!def:C_integer(y1, -w2->context->dy, y2))
           runerr(101, y1);
+      y2 += w2->context->dy;
 
       if (copyarea(self_w, w2, x, y, width, height, x2, y2) == Failed)
           fail;

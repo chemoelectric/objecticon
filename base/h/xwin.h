@@ -33,6 +33,7 @@
 #define RootState IconicState+1
 #define MaximizedState IconicState+2
 #define HiddenState IconicState+3
+#define PopupState IconicState+4
 
 /*
  * This macro allows the "true" X input masks to be
