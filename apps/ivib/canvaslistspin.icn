@@ -45,6 +45,12 @@ class CanvasListSpin(CanvasComponent,ListSpin)
           ["Selection List", "selection_list"]
    end
 
+   private post_decode()
+      cast(self,CanvasComponent).post_decode()
+      # Little trick to initialize the selection index nicely
+      set_selection_list(self.selection_list)
+   end
+
    #
    # Open the configuration dialog box.
    #
