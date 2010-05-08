@@ -1738,7 +1738,7 @@ static int open_screen_win(wsp ws)
     }
     synch_cursor(ws);
 
-    switch (ws->mouse_pid = rfork(RFPROC|RFMEM)) {
+    switch (ws->mouse_pid = rfork(RFPROC|RFMEM|RFCFDG)) {
         case 0: {
             mouse_loop(ws->mouse_fd, ws->event_pipe[1]);
             break;
@@ -1750,7 +1750,7 @@ static int open_screen_win(wsp ws)
         }
     }
 
-    switch (ws->cons_pid = rfork(RFPROC|RFMEM)) {
+    switch (ws->cons_pid = rfork(RFPROC|RFMEM|RFCFDG)) {
         case 0: {
             cons_loop(ws->cons_fd, ws->event_pipe[1]);
             break;
