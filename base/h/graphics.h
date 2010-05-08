@@ -325,12 +325,7 @@ typedef struct _wstate {
   int           siziColors;		/* malloced size of iconColors */
   short		*iconColors;		/* indices into display color table */
   int		iconic;			/* window state; icon, window or root*/
-  int		iconx, icony;           /* location of icon */
-  int    	iconw, iconh;		/* width and height of icon */
   long		wmhintflags;		/* window manager hints */
-  char		*iconimage;		/* icon pixmap file name */
-  struct imgdata initicon;		/* initial icon image data */
-  char		*iconlabel;		/* icon label */
 #elif MSWIN32
   HWND		win;			/* client window */
   HWND		iconwin;		/* client window when iconic */

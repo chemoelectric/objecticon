@@ -980,8 +980,6 @@ static int wmap(wbp w, wbp parent)
     if (ws->iconic != RootState) {
         wmhints.flags |= (ws->wmhintflags | StateHint);
         wmhints.initial_state = NormalState;
-        wmhints.icon_x = ws->iconx;
-        wmhints.icon_y = ws->icony;
     }
     XSetWMHints(stddpy, stdwin, &wmhints);
 
@@ -1790,14 +1788,6 @@ void getdisplay(wbp w, char *answer)
     else sprintf(answer, "%s", wd->name);
 }
 
-int geticonimage(wbp w, char *answer)
-{
-    if (!w->window->iconimage)
-        return Failed;
-    strcpy(answer, w->window->iconimage);
-    return Succeeded;
-}
-
 int getwindowlabel(wbp w, char *answer)
 {
     if (!w->window->windowlabel)
@@ -1882,23 +1872,6 @@ void getdrawop(wbp w, char *answer)
     else s = stringint_int2str(drawops, w->context->drawop);
     if (s) sprintf(answer, "%s", s);
     else strcpy(answer, "copy");
-}
-
-void geticonic(wbp w, char *answer)
-{
-    switch (w->window->iconic) {
-        case RootState:
-            sprintf(answer, "root");
-            break;
-        case NormalState:
-            sprintf(answer, "window");
-            break;
-        case IconicState:
-            sprintf(answer, "icon");
-            break;
-        default:
-            sprintf(answer, "???");
-    }
 }
 
 int grabpointer(wbp w)
@@ -4675,13 +4648,6 @@ void freewindow(wsp ws)
         if (ws->iconColors) { free(ws->iconColors); ws->iconColors = NULL; }
 
         imd = &ws->initimage;
-        if (imd->width) {
-            free(imd->paltbl);
-            free(imd->data);
-            imd->width = 0;
-        }
-
-        imd = &ws->initicon;
         if (imd->width) {
             free(imd->paltbl);
             free(imd->data);
