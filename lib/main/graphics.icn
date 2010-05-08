@@ -6,7 +6,8 @@ import
 
 class Window(SetFields,NoCopy)
    private
-      wbp
+      wbp,
+      parent
 
    public static const
       INVOKE_LATER
@@ -25,9 +26,10 @@ class Window(SetFields,NoCopy)
             default: put(t, f)
          }
       }
-      w := Window(wcreate(display)) | fail
+      w := Window(wcreate(display, parent)) | fail
+      w.parent := parent
       every w.apply_field(!t)
-      w.wopen(parent) | fail
+      w.wopen() | fail
       return w
    end
 
@@ -50,8 +52,8 @@ class Window(SetFields,NoCopy)
       return Window(couple_impl(w1, w2))
    end
 
-   private static defer wcreate(display)
-   private defer wopen(parent)
+   private static defer wcreate(display, parent)
+   private defer wopen()
    private defer pre_attrib()
    private defer post_attrib()
    private defer clone_impl(a[])
@@ -131,6 +133,10 @@ class Window(SetFields,NoCopy)
    public defer set_resize(v)
    public defer set_size(v)
    public defer set_width(v)
+
+   public get_parent()
+      return \self.parent
+   end
 
    #
    # Produces a beep or other signal to attract attention.

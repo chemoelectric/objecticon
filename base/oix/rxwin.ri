@@ -25,7 +25,7 @@ static void handle_keypress(wbp w, XKeyEvent *event);
 static int setpatternbits(wbp w, int width, int *bits, int nbits);
 static XImage *getximage(wbp w, int x, int y,
                          int width, int height, int init);
-static int wmap(wbp w, wbp parent);
+static int wmap(wbp w);
 static Pixmap loadimage(wbp w, char *filename, int *height, 
                         int *width, int atorigin, int *status);
 static int convert_KeySym_to_code_point(KeySym k);
@@ -739,7 +739,7 @@ void wsync(wbp w)
 /*
  * open a window
  */
-wbp wcreate(char *display)
+wbp wcreate(char *display, wbp parent)
 {
     wbp w;
     wsp ws;
@@ -754,6 +754,9 @@ wbp wcreate(char *display)
     ws->vis = DefaultVisual(ws->display->display, ws->display->screen); 
     create_list(64, &ws->listp);
 
+    if (parent)
+        ws->transientfor = parent->window->win;
+
     /*
      * some attributes of the display and window are used in the context
      */
@@ -763,11 +766,11 @@ wbp wcreate(char *display)
     return w;
 }
 
-int wopen(wbp w, wbp parent)
+int wopen(wbp w)
 {
     wsp ws = w->window;
 
-    if (wmap(w, parent) != Succeeded) {
+    if (wmap(w) != Succeeded) {
         LitWhy("Failed to map window");
         return Failed;
     }
@@ -786,7 +789,7 @@ int wopen(wbp w, wbp parent)
  *  If a window, cause the window to actually become visible on the screen.
  *  returns Succeeded, Failed, or Error
  */
-static int wmap(wbp w, wbp parent)
+static int wmap(wbp w)
 {
     XWindowAttributes attrs;
     XGCValues gcv;
@@ -863,8 +866,8 @@ static int wmap(wbp w, wbp parent)
             return Failed;
 
         /* If the window has a parent, set the WM_TRANSIENT_FOR hint. */
-        if (parent && parent->window->win)
-            XSetTransientForHint(stddpy, ws->win, parent->window->win);
+        if (ws->transientfor)
+            XSetTransientForHint(stddpy, ws->win, ws->transientfor);
 
         /* Turn off background; this prevents X filling the background on an expose
            and hence prevents unsightly flicker on a resize. */
@@ -1436,7 +1439,7 @@ int setcanvas(wbp w, char *s)
         else {
             if (ws->iconic != IconicState) {
                 if (ws->win == (Window) NULL) {
-                    wmap(w, 0);
+                    wmap(w);
                 }
                 XIconifyWindow(ws->display->display, ws->win, ws->display->screen);
                 XSync(stddpy, False);
@@ -1457,7 +1460,7 @@ int setcanvas(wbp w, char *s)
                 ws->iconic = NormalState;
                 ws->initialPix = ws->pix;
                 ws->pix = (Window) NULL;
-                wmap(w, 0);
+                wmap(w);
 	    }
             else if (ws->iconic == IconicState) {
                 XMapWindow(stddpy, stdwin);
@@ -1500,7 +1503,7 @@ int setcanvas(wbp w, char *s)
                     ws->iconic = MaximizedState;
                     ws->initialPix = ws->pix;
                     ws->pix = (Window) NULL;
-                    wmap(w, 0);
+                    wmap(w);
                 }
                 else if (ws->iconic == IconicState) {
                     XMapWindow(stddpy, stdwin);

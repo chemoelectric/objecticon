@@ -88,7 +88,9 @@ $endif
    end
 
    public allow_popup(obj)
-      return 1
+$ifdef _X_WINDOW_SYSTEM
+      return
+$endif
    end
 
    public distance2ticker_rate(d)

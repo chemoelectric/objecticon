@@ -80,42 +80,41 @@ static void buffnstr(dptr d, char **s, ...)
     va_end(ap);
 }
 
-function graphics_Window_wcreate(display)
+function graphics_Window_wcreate(display, parent)
    body {
-      wbp w;
+      wbp w, w2;
+      char *s2;
       inattr = 1;
       wconfig = 0;
+
+      if (is:null(parent))
+          w2 = 0;
+      else {
+          WindowStaticParam(parent, tmp);
+          w2 = tmp;
+      }
+
       if (is:null(display))
-          w = wcreate(0);
+          s2 = 0;
       else {
          if (!cnv:string(display, display))
              runerr(103, display);
-         w = wcreate(buffstr(&display));
+         s2 = buffstr(&display);
       }
+      w = wcreate(s2, w2);
       if (!w)
           fail;
       return C_integer (word) w;
    }
 end
 
-function graphics_Window_wopen(self, parent)
+function graphics_Window_wopen(self)
    body {
-      wbp w2;
       GetSelfW();
-
-      if (is:null(parent)) {
-          if (wopen(self_w, 0) != Succeeded) {
-              *self_w_dptr = zerodesc;
-              freewbinding(self_w);
-              fail;
-          }
-      } else {
-          WindowStaticParam(parent, w2);
-          if (wopen(self_w, w2) != Succeeded) {
-              *self_w_dptr = zerodesc;
-              freewbinding(self_w);
-              fail;
-          }
+      if (wopen(self_w) != Succeeded) {
+          *self_w_dptr = zerodesc;
+          freewbinding(self_w);
+          fail;
       }
       inattr = wconfig = 0;
       return self;

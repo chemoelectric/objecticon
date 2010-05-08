@@ -323,6 +323,7 @@ typedef struct _wstate {
   int           siziColors;		/* malloced size of iconColors */
   short		*iconColors;		/* indices into display color table */
   int		iconic;			/* window state; icon, window or root*/
+  Window        transientfor;           /* transient-for hint */
   long		wmhintflags;		/* window manager hints */
 #elif MSWIN32
   HWND		win;			/* client window */

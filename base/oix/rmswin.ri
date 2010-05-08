@@ -256,7 +256,7 @@ int mswinsystem(char *s)
 /*
  * wopen
  */
-wbp wcreate(char *display)
+wbp wcreate(char *display, wbp parent)
    {
    wbp w;
    wsp ws;
@@ -290,7 +290,7 @@ wbp wcreate(char *display)
 /*
  * wopen
  */
-int wopen(wbp w, wbp parent)
+int wopen(wbp w)
    {
    wsp ws;
    wcp wc;
