@@ -52,6 +52,25 @@ static void note_time(char *s);
 #define FillMasked    2
 #define FillTextured  3
 
+#if 0
+static int n_open;
+static int myopen(char *s,int mode)
+{
+    int fd = open(s,mode);
+    if (fd >= 0)
+        ++n_open;
+    return fd;
+}
+static myclose(int fd)
+{
+    close(fd);
+    --n_open;
+    print("n_open now %d\n",n_open);
+}
+#define open myopen
+#define close myclose
+#endif
+
 static stringint fillstyles[] = {
     {0, 7},
     {"masked", FillMasked },
@@ -499,8 +518,8 @@ static wbp find_first_wbp_for(wsp ws)
  */
 static void synch_pos(wsp ws)
 {
-    ws->posx = ws->win->r.min.x - Borderwidth;
-    ws->posy = ws->win->r.min.y - Borderwidth;
+    ws->posx = ws->win->r.min.x;
+    ws->posy = ws->win->r.min.y;
 }
 
 static void resize_pix_win(wbp w)
