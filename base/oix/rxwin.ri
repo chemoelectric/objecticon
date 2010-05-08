@@ -4002,25 +4002,6 @@ static wdp alcdisplay(char *s)
 #ifdef HAVE_LIBXFT
     wd->xfont = XLoadQueryFont(wd->display, "fixed");
 #endif
-    {
-        XGCValues gcv;
-        Display *stddpy = wd->display;
-#ifdef HAVE_LIBXFT
-        gcv.font = wd->xfont->fid;
-#else
-        gcv.font = wd->fonts->fsp->fid;
-#endif
-        gcv.foreground = wd->colors[0].c;
-        gcv.background = wd->colors[1].c;
-        gcv.fill_style = FillSolid;
-        gcv.cap_style = CapProjecting;
-        wd->icongc = XCreateGC(stddpy, DefaultRootWindow(stddpy),
-                               GCFont | GCForeground | GCBackground | GCFillStyle | GCCapStyle, &gcv);
-        if (wd->icongc == NULL) {
-            free(wd);
-            return NULL;
-        }
-    }
     GRFX_LINK(wd, wdsplys);
     return wd;
 }
