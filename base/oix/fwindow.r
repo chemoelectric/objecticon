@@ -1317,7 +1317,7 @@ function graphics_Window_get_display(self)
    }
 end
 
-function graphics_Window_get_drawop(self)
+function graphics_Window_get_draw_op(self)
    body {
        tended struct descrip result;
        GetSelfW();
@@ -1364,7 +1364,7 @@ function graphics_Window_get_fheight(self)
    }
 end
 
-function graphics_Window_get_fillstyle(self)
+function graphics_Window_get_fill_style(self)
    body {
        tended struct descrip result;
        GetSelfW();
@@ -1430,7 +1430,7 @@ function graphics_Window_get_height(self)
    }
 end
 
-function graphics_Window_get_inputmask(self)
+function graphics_Window_get_input_mask(self)
    body {
        tended struct descrip result;
        char *s;
@@ -1459,7 +1459,7 @@ function graphics_Window_get_label(self)
    }
 end
 
-function graphics_Window_get_linestyle(self)
+function graphics_Window_get_line_style(self)
    body {
        tended struct descrip result;
        GetSelfW();
@@ -1469,7 +1469,7 @@ function graphics_Window_get_linestyle(self)
    }
 end
 
-function graphics_Window_get_linewidth(self)
+function graphics_Window_get_line_width(self)
    body {
        struct descrip result;
        GetSelfW();
@@ -1478,7 +1478,7 @@ function graphics_Window_get_linewidth(self)
    }
 end
 
-function graphics_Window_get_maxheight(self)
+function graphics_Window_get_max_height(self)
    body {
        struct descrip result;
        GetSelfW();
@@ -1487,7 +1487,7 @@ function graphics_Window_get_maxheight(self)
    }
 end
 
-function graphics_Window_get_maxsize(self)
+function graphics_Window_get_max_size(self)
    body {
        tended struct descrip result;
        struct descrip t;
@@ -1501,7 +1501,7 @@ function graphics_Window_get_maxsize(self)
    }
 end
 
-function graphics_Window_get_maxwidth(self)
+function graphics_Window_get_max_width(self)
    body {
        struct descrip result;
        GetSelfW();
@@ -1510,7 +1510,7 @@ function graphics_Window_get_maxwidth(self)
    }
 end
 
-function graphics_Window_get_minheight(self)
+function graphics_Window_get_min_height(self)
    body {
        struct descrip result;
        GetSelfW();
@@ -1519,7 +1519,7 @@ function graphics_Window_get_minheight(self)
    }
 end
 
-function graphics_Window_get_minsize(self)
+function graphics_Window_get_min_size(self)
    body {
        tended struct descrip result;
        struct descrip t;
@@ -1533,7 +1533,7 @@ function graphics_Window_get_minsize(self)
    }
 end
 
-function graphics_Window_get_minwidth(self)
+function graphics_Window_get_min_width(self)
    body {
        struct descrip result;
        GetSelfW();
@@ -1728,12 +1728,12 @@ function graphics_Window_unclip(self)
    }
 end
 
-function graphics_Window_set_drawop(self, val)
+function graphics_Window_set_draw_op(self, val)
    if !cnv:string(val) then
       runerr(103, val)
    body {
        GetSelfW();
-       AttemptAttr(setdrawop(self_w, buffstr(&val)), "Invalid drawop");
+       AttemptAttr(setdrawop(self_w, buffstr(&val)), "Invalid draw_op");
        return self;
    }
 end
@@ -1769,12 +1769,12 @@ function graphics_Window_set_fg(self, val)
    }
 end
 
-function graphics_Window_set_fillstyle(self, val)
+function graphics_Window_set_fill_style(self, val)
    if !cnv:string(val) then
       runerr(103, val)
    body {
        GetSelfW();
-       AttemptAttr(setfillstyle(self_w, buffstr(&val)), "Invalid fillstyle");
+       AttemptAttr(setfillstyle(self_w, buffstr(&val)), "Invalid fill_style");
        return self;
    }
 end
@@ -1853,7 +1853,7 @@ function graphics_Window_set_image(self, val)
    }
 end
 
-function graphics_Window_set_inputmask(self, val)
+function graphics_Window_set_input_mask(self, val)
    if !cnv:string(val) then
       runerr(103, val)
    body {
@@ -1873,28 +1873,28 @@ function graphics_Window_set_label(self, val)
    }
 end
 
-function graphics_Window_set_linestyle(self, val)
+function graphics_Window_set_line_style(self, val)
    if !cnv:string(val) then
       runerr(103, val)
    body {
        GetSelfW();
-       AttemptAttr(setlinestyle(self_w, buffstr(&val)), "Invalid linestyle");
+       AttemptAttr(setlinestyle(self_w, buffstr(&val)), "Invalid line_style");
        return self;
    }
 end
 
-function graphics_Window_set_linewidth(self, val)
+function graphics_Window_set_line_width(self, val)
    body {
        word i;
        GetSelfW();
        if (!cnv:C_integer(val, i))
            runerr(101, val);
-       AttemptAttr(setlinewidth(self_w, i), "Invalid linewidth");
+       AttemptAttr(setlinewidth(self_w, i), "Invalid line_width");
        return self;
    }
 end
 
-function graphics_Window_set_maxheight(self, height)
+function graphics_Window_set_max_height(self, height)
    body {
        word i;
        GetSelfW();
@@ -1913,7 +1913,7 @@ function graphics_Window_set_maxheight(self, height)
    }
 end
 
-function graphics_Window_set_maxsize(self, width, height)
+function graphics_Window_set_max_size(self, width, height)
    body {
        tended char *s;
        word i;
@@ -1942,7 +1942,7 @@ function graphics_Window_set_maxsize(self, width, height)
    }
 end
 
-function graphics_Window_set_maxwidth(self, width)
+function graphics_Window_set_max_width(self, width)
    body {
        word i;
        GetSelfW();
@@ -1961,7 +1961,7 @@ function graphics_Window_set_maxwidth(self, width)
    }
 end
 
-function graphics_Window_set_minheight(self, height)
+function graphics_Window_set_min_height(self, height)
    if !cnv:C_integer(height) then
       runerr(101, height)
    body {
@@ -1975,7 +1975,7 @@ function graphics_Window_set_minheight(self, height)
    }
 end
 
-function graphics_Window_set_minsize(self, width, height)
+function graphics_Window_set_min_size(self, width, height)
    if !cnv:C_integer(width) then
       runerr(101, width)
    if !cnv:C_integer(height) then
@@ -1994,7 +1994,7 @@ function graphics_Window_set_minsize(self, width, height)
    }
 end
 
-function graphics_Window_set_minwidth(self, width)
+function graphics_Window_set_min_width(self, width)
    if !cnv:C_integer(width) then
       runerr(101, width)
    body {
@@ -2103,17 +2103,6 @@ function graphics_Window_set_size(self, width, height)
        self_w->window->height = height;
        wconfig |= C_SIZE;
        SimpleAttr();
-       return self;
-   }
-end
-
-function graphics_Window_set_titlebar(self, val)
-   body {
-       GetSelfW();
-       if (is:null(val))
-           CLRTITLEBAR(self_w->window);
-       else
-           SETTITLEBAR(self_w->window);
        return self;
    }
 end

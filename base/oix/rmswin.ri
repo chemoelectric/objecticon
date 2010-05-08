@@ -316,7 +316,8 @@ int wopen(wbp w, wbp parent)
    /*
     * create the window
     */
-   winstyles=(ISTITLEBAR(ws)?WS_OVERLAPPEDWINDOW:(WS_DLGFRAME|WS_THICKFRAME));
+/*   winstyles=(ISTITLEBAR(ws)?WS_OVERLAPPEDWINDOW:(WS_DLGFRAME|WS_THICKFRAME));*/
+   winstyles=WS_OVERLAPPEDWINDOW;
 /*
    winstyles |= WS_CLIPCHILDREN;
    if (!ISTOBEHIDDEN(ws))
@@ -2786,7 +2787,7 @@ static wsp alc_winstate()
    ws->curcursor = LoadCursor(NULL, IDC_ARROW);
    ws->minwidth = ws->minheight = 1;
    ws->maxwidth = ws->maxheight = INT_MAX;
-   SETTITLEBAR(ws);
+   /*SETTITLEBAR(ws);*/
    GRFX_LINK(ws, wstates);
    return ws;
    }

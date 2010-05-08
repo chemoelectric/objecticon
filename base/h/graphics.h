@@ -116,10 +116,6 @@
 #define CLRZOMBIE(w)    ((w)->window->bits &= ~1)
 #endif					/* XWindows */
 
-#define ISTITLEBAR(ws) ((ws)->bits & 8192)
-#define SETTITLEBAR(ws) ((ws)->bits |= 8192)
-#define CLRTITLEBAR(ws) ((ws)->bits &= ~8192)
-
 #define DEFAULT_WINDOW_LABEL "Object Icon"
 
 /*

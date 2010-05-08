@@ -251,10 +251,10 @@ procedure drawpalette(win, p, x, y, w, h, f, n)
       y1 := y + i * h / nh
       x2 := x + w
       y2 := y + h
-      win.attrib("fg=black", "pattern=diagonal", "fillstyle=textured")
+      win.attrib("fg=black", "pattern=diagonal", "fill_style=textured")
       win.fill_rectangle(x1, y1, x2 - x1, y2 - y1)
       if upto('o', f) then {
-         win.attrib("fillstyle=solid")
+         win.attrib("fill_style=solid")
          win.draw_rectangle(x1, y1, x2 - x1, y2 - y1)
          }
       }

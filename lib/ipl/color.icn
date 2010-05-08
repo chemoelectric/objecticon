@@ -209,7 +209,7 @@ procedure Shade(win, color)
       "4,8,0,0,0",
       "4,0,0,0,0",
       ]
-   win.attrib("fillstyle=textured")
+   win.attrib("fill_style=textured")
    g := g / 3856 + 1
    win.pattern(dmat[g])
    return win

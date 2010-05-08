@@ -260,8 +260,8 @@ class Dialog(Component)
       every delete(self.effective_wattribs, 
                    "pos" | "posx" | "posy" | "size" | "width" | "height"|
                    "dx" | "dy" |
-                   "minwidth" | "minheight" | "minsize" |
-                   "maxwidth" | "maxheight" | "maxsize")
+                   "min_width" | "min_height" | "min_size" |
+                   "max_width" | "max_height" | "max_size")
       self.compute_z_order()
       self.compute_tab_order()
       self.cbwin := self.buffer_win.clone!wattribs_to_list(self.wattribs) | 
@@ -300,7 +300,7 @@ class Dialog(Component)
       local t, pw
       ensure_size()
       t := wattribs_to_list(self.wattribs)
-      put(t, "inputmask=mk")
+      put(t, "input_mask=mk")
       if pw := (\owning_dialog).win then
          every put(t, "parent=" | pw)
       self.win := Window.open!t | runerr("Couldn't open window:" || &why)

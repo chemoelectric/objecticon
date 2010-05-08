@@ -225,7 +225,7 @@ class Main(Dialog)
    end      
 
    public init_dialog()
-      win.set_minsize(win.get_width(), win.get_height())
+      win.set_min_size(win.get_width(), win.get_height())
    end
 
    #
@@ -1372,7 +1372,7 @@ class Main(Dialog)
 
       self.connect(self.op_quit, Event.WINDOW_CLOSE_BUTTON)
 
-      self.attrib("label=Ivib", "height=600", "minheight=400")
+      self.attrib("label=Ivib", "height=600", "min_height=400")
       canvas_zone := Panel("bg=blue", "size=50,50")
       self.add(canvas_zone)
 

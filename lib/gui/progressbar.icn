@@ -29,7 +29,7 @@ class ProgressBar(Component)
       #
       # Draw the bar in reverse mode
       #
-      cw := self.cbwin.clone("drawop=reverse")
+      cw := self.cbwin.clone("draw_op=reverse")
       cw.fill_rectangle(r.x, r.y, r.w * p / 100.0, r.h)
       cw.uncouple()
    end

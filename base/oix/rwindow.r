@@ -2465,8 +2465,8 @@ static void curveHelper(wbp w, XPoint *thepoints, int n)
 {
     /*
      * Could use drawpoints(w, thepoints, n)
-     *  but that ignores the linewidth and linestyle attributes...
-     * Might make linestyle work a little better by "compressing" straight
+     *  but that ignores the line_width and line_style attributes...
+     * Might make line_style work a little better by "compressing" straight
      *  sections produced by genCurve into single drawline points.
      */
     drawlines(w, thepoints, n);

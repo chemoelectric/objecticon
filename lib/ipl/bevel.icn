@@ -164,14 +164,14 @@ procedure BevelReset(win)
       s /:= 2
 
       shadow := win.clone("fg=" || HLSValue(h || ":" || lshadow || ":" || s),
-         "linewidth=1", "linestyle=solid", "fillstyle=solid", "drawop=copy")
+         "line_width=1", "line_style=solid", "fill_style=solid", "draw_op=copy")
       hilite := shadow.clone("fg=" || HLSValue(h || ":" || lhilite || ":" || s))
       b := bev_record(\shadow, \hilite)
       }
 
    if /b then {
-      shadow := win.clone("linewidth=1", "linestyle=solid", "fillstyle=solid", "drawop=copy")
-      hilite := shadow.clone("fillstyle=textured", "pattern=gray")
+      shadow := win.clone("line_width=1", "line_style=solid", "fill_style=solid", "draw_op=copy")
+      hilite := shadow.clone("fill_style=textured", "pattern=gray")
       b := bev_record(shadow, hilite)
       }
    bev_table[win] := bev_record(shadow, hilite)
@@ -428,7 +428,7 @@ end
 #  If w < 0, draw ridge of width 2.
 #
 #  Horizontal and vertical grooves fill the same pixels as lines drawn
-#  linewidth=2.  Angled grooves are not necessarily the same, though.
+#  line_width=2.  Angled grooves are not necessarily the same, though.
 
 # draw grooved line
 procedure DrawGroove(win, x1, y1, x2, y2, w)	

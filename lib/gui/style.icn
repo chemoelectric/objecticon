@@ -44,20 +44,20 @@ class Style()
    public get_filter_clone(W)
       local t
 $ifdef _MS_WIN32
-      t := W.clone("fillstyle=masked", "drawop=reverse", "pattern=verydark")
+      t := W.clone("fill_style=masked", "draw_op=reverse", "pattern=verydark")
 $else
-      t := W.clone("fillstyle=masked", "pattern=waves")
+      t := W.clone("fill_style=masked", "pattern=waves")
       t.toggle_fgbg()
 $endif
       return t
    end
 
    public get_down_clone(W)
-      return W.clone("drawop=reverse")
+      return W.clone("draw_op=reverse")
    end
 
    public get_selection_clone(W)
-      return W.clone("drawop=reverse")
+      return W.clone("draw_op=reverse")
    end
 
    public get_cursor_clone(W)
@@ -65,15 +65,15 @@ $endif
    end
 
    public get_focus_clone(W)
-      return W.clone("fg=red", "fillstyle=masked", "pattern=gray")
+      return W.clone("fg=red", "fill_style=masked", "pattern=gray")
    end
 
    public get_dashed_clone(W)
-      return bev_lookup(W).shadow.clone("fillstyle=masked", "pattern=gray")
+      return bev_lookup(W).shadow.clone("fill_style=masked", "pattern=gray")
    end
 
    public get_highlight_clone(W)
-      return W.clone("fg=blue", "fillstyle=masked", "pattern=gray")
+      return W.clone("fg=blue", "fill_style=masked", "pattern=gray")
    end
 
    public create_tooltip_label()

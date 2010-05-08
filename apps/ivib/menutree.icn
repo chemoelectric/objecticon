@@ -22,7 +22,7 @@ class MenuTree(SelectableScrollArea)
       y0 := yp + self.line_height / 2
       s := contents[i]
 
-      dashed := view.cbwin.clone("pattern=gray", "fillstyle=textured")
+      dashed := view.cbwin.clone("pattern=gray", "fill_style=textured")
       lp := xp
       every 1 to s.depth do {
          dashed.draw_line(lp + SPACING / 2, yp, lp + SPACING / 2, yp + self.line_height - 1)

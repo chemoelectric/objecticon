@@ -255,8 +255,8 @@ class GridPaint(Paint)
       local a, key, val
       initial {
          attrib_set := set()
-         every insert(attrib_set, "fg" | "bg" | "drawop" | "gamma" | 
-                      "font" | "leading" | "linewidth" | "linestyle" | "fillstyle" | "pattern")
+         every insert(attrib_set, "fg" | "bg" | "draw_op" | "gamma" | 
+                      "font" | "leading" | "line_width" | "line_style" | "fill_style" | "pattern")
       }
       every a := !args do {
          a ? {
