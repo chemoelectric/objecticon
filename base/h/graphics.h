@@ -205,7 +205,6 @@ typedef struct _wdisplay {
   Colormap	cmap;
   double	gamma;
   int		screen;
-  int		numFonts;
   wfp		fonts;
 #ifdef HAVE_LIBXFT
   XFontStruct   *xfont;

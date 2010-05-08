@@ -3987,7 +3987,6 @@ static wdp alcdisplay(char *s)
     /*
      * Initialize fonts and other things.
      */
-    wd->numFonts = 1;
 #ifdef HAVE_LIBXFT
     wd->fonts = loadfont(wd, convert_spec(DEFAULTFONTNAME));
 #else
