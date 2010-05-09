@@ -322,6 +322,19 @@ procedure p17()
    write(x)
 end
 
+procedure p18()
+   try{"limit with -ve number", (1 to 10) \ -1}
+   try{"limit with string", (1 to 10) \ "cat"}
+   pr_seq{"limit with zero", (1 to 10) \ 0 }
+   pr_seq{"limit 1", (1 to 10) \ ( 1 to 4) }
+   pr_seq{"limit 2", (1 to 10) \ ( 0 | 1 | 2 | 0 | 0 | 3 | 4) }
+   pr_seq{"limit 3", &fail \ (1 to 10) }
+   pr_seq{"limit 4", 1 \ (1 to 10) }
+   pr_seq{"limit 5", (1 to 10) \ &fail }
+   pr_seq{"limit with conversion 1", (1 to 10)  \ "4" }
+   pr_seq{"limit with conversion 2", (1 to 10)  \ "3.9" }
+end
+
 procedure main()
    p1()
    p2()
@@ -340,5 +353,6 @@ procedure main()
    p15()
    p16()
    p17()
+   p18()
 end
 
