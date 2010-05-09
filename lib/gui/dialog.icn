@@ -767,8 +767,11 @@ $endif
       right := self.w - win.get_dx()
       bottom := self.h - win.get_dy()
 
+      # Note that if we have popups, we use a popup for a tooltip, so that it won't appear
+      # below the other popup window.
       if Gui.style.allow_popup(self.tooltip_component) &
-         ((self.tooltip_component.x + self.tooltip_component.w > right) |
+         ((*\popups > 0) | \popup_manager |
+          (self.tooltip_component.x + self.tooltip_component.w > right) |
           (self.tooltip_component.y + self.tooltip_component.h > bottom)) then 
       {
          dim := win.get_display_size()

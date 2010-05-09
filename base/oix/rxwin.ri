@@ -918,13 +918,20 @@ static int wmap(wbp w)
     else
         XChangeGC(stddpy, stdgc, gcmask, &gcv);
 
-
     if (wc->clipw >= 0)
         setclip(w);
 
     if (new_pixmap) {
         XSetForeground(stddpy, stdgc, wd->colors[wc->bg].c);
         XFillRectangle(stddpy, ws->pix, stdgc, 0, 0, ws->width, ws->height);
+        XSetForeground(stddpy, stdgc,
+                       wd->colors[wc->fg].c ^(ISXORREVERSE(w)?wd->colors[wc->bg].c:0));
+    }
+
+    /* For RootState, need to fill since XClearWindow above fills with a pixmap */
+    if (ws->iconic == RootState) {
+        XSetForeground(stddpy, stdgc, wd->colors[wc->bg].c);
+        XFillRectangle(stddpy, ws->win, stdgc, 0, 0, ws->width, ws->height);
         XSetForeground(stddpy, stdgc,
                        wd->colors[wc->fg].c ^(ISXORREVERSE(w)?wd->colors[wc->bg].c:0));
     }
@@ -1480,8 +1487,17 @@ int setcanvas(wbp w, char *s)
     }
 
     else if (!strcmp(s, "popup")) {
-        if (ws->pix == (Pixmap) NULL || ws->win == (Window) NULL)  {
+        if (ws->win == (Window) NULL)  {
             ws->iconic = PopupState;
+        }
+        else {
+            return Failed;
+        }
+    }
+
+    else if (!strcmp(s, "root")) {
+        if (ws->win == (Window) NULL)  {
+            ws->iconic = RootState;
         }
         else {
             return Failed;

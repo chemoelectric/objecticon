@@ -340,8 +340,12 @@ class MenuComponent(Rect,SetFields,Connectable)
       self.y := y
       self.resize()
 
+      # Note the first test that we must use a popup for the menu if
+      # the parent's menu is a popup; otherwise it may appear below
+      # one of the parent popups.
       if Gui.style.allow_popup(self) &
-         ((self.x < left) | (self.y < top) | 
+         (\ (\parent).temp_win.parent_dialog.popup_manager |
+          (self.x < left) | (self.y < top) | 
           (self.x + self.w > right) | (self.y + self.h > bottom)) then 
       {
          dim := win.get_display_size()
@@ -372,9 +376,6 @@ class MenuComponent(Rect,SetFields,Connectable)
       }
 
       if /use_popup_win then {
-         #
-         # Open a temporary area for the menu and copy.
-         #
          self.temp_win := create_proxy()
          self.temp_win.set_pos(self.x + win.get_dx(), 
                                self.y + win.get_dy())
@@ -392,10 +393,6 @@ class MenuComponent(Rect,SetFields,Connectable)
                      "dx=",-self.x, "dy=",-self.y,
                      "w:posx=", win.get_posx() + win.get_dx() + self.x,
                      "w:posy=", win.get_posy() + win.get_dy() + self.y)
-
-         #
-         # Open a temporary area for the menu and copy.
-         #
          self.temp_win := create_proxy()
          self.temp_win.set_pos(0, 0)
          self.temp_win.set_size(self.w, self.h)

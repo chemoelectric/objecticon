@@ -118,20 +118,25 @@ class Sizer(Component)
    end
 
    public handle_lpress(e)
-      if \self.is_horizontal_flag then {
-         drag_offset := e.y - self.y
-         temp_orig := self.y
-      } else {
-         drag_offset := e.x - self.x
-         temp_orig := self.x
-      }
+      drag_offset := if \self.is_horizontal_flag then
+         e.y - self.y
+      else
+         e.x - self.x
+
       start_pos := set_curr_pos(e)
       if \self.show_inter_flag then {
          self.temp_win := SliderDragComponent()
-         self.temp_win.set_pos(self.x, 
-                               self.y)
+         self.temp_win.set_pos(self.x + parent_dialog.win.get_dx(), 
+                               self.y + parent_dialog.win.get_dy())
          self.temp_win.set_z(self.parent_dialog.get_top_z())
          self.temp_win.set_size(self.w, self.h)
+         if \self.is_horizontal_flag then {
+            temp_orig := self.y + parent_dialog.win.get_dy()
+            self.temp_win.set_pointer("sb v double arrow")
+         } else {
+            temp_orig := self.x + parent_dialog.win.get_dx()
+            self.temp_win.set_pointer("sb h double arrow")
+         }
          self.parent_dialog.add(self.temp_win)
          self.temp_win.initially()
          self.temp_win.resize()
