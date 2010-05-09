@@ -2463,8 +2463,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         case Uop_Limit: {                       /* limitation */
             struct lnode_2 *x = (struct lnode_2 *)n;
             struct ir_info *expr, *limit;
-            struct ir_var *c, *t;
-            c = make_tmp(st);
+            struct ir_var *t;
             t = make_tmp(st);
 
             limit = ir_traverse(x->child1, st, t, 0, 1);
@@ -2473,8 +2472,8 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             chunk1(res->start, ir_goto(n, limit->start));
             if (!bounded)
                 chunk3(res->resume, 
-                       ir_op(n, 0, Uop_Numgt, t, c, 0,            1, limit->resume),
-                       ir_op(n, c, Uop_Plus,  c, make_word(1), 0, 1, expr->resume),
+                       ir_op(n, 0, Uop_Numgt, t, make_word(1), 0, 1, limit->resume),
+                       ir_op(n, t, Uop_Minus, t, make_word(1), 0, 1, expr->resume),
                        ir_goto(n, expr->resume));
 
             chunk1(expr->failure, ir_goto(n, limit->resume));
@@ -2482,7 +2481,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             chunk1(expr->success, ir_goto(n, res->success));
             chunk3(limit->success, 
                    ir_limit(n, t),
-                   ir_move(n, c, make_word(1), 1),
+                   ir_op(n, 0, Uop_Numgt, t, make_word(0), 0, 1, limit->resume),  /* Check for expr \ 0 */
                    ir_goto(n, expr->start));
 
             res->uses_stack = (limit->uses_stack || expr->uses_stack);
