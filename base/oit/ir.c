@@ -2480,8 +2480,9 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             chunk1(expr->failure, ir_goto(n, limit->resume));
             chunk1(limit->failure, ir_goto(n, res->failure));
             chunk1(expr->success, ir_goto(n, res->success));
-            chunk3(limit->success, 
+            chunk4(limit->success, 
                    ir_limit(n, t),
+                   ir_op(n, 0, Uop_Numgt, t, make_word(0), 0, 1, limit->resume),  /* Check for expr \ 0 */
                    ir_move(n, c, make_word(1), 1),
                    ir_goto(n, expr->start));
 
