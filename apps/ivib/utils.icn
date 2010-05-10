@@ -97,21 +97,13 @@ end
 #
 procedure util_check_attribs(dialog, t)
    local s, e
-   static test_win, attrib_table
-   initial {
+   static test_win
+   initial
       test_win := Window.open("canvas=hidden") | stop("couldn't open window")
-      attrib_table := set("label", "x", "pos", "y", "resize", "size", "height", 
-                          "width", "image", "canvas", "iconpos", "iconlabel", 
-                          "iconimage", "x", "y", "pointer", 
-                          "display", "depth", "fg", "bg", "reverse", "draw_op", "gamma", 
-                          "font", "font_height", "font_width", "font_ascent", "font_descent", "line_width", 
-                          "line_style", "fill_style", "pattern", "clipx", "clipy", "clipw", "cliph", 
-                          "dx", "dy", "min_width", "min_height", "min_size", "max_width", "max_height", "max_size")
-   }
 
    # Check for attrib names
    every s := !sort(t) do {
-      if not member(attrib_table, s[1]) then
+      if not member(Gui.WATTRIB_SET, s[1]) then
          return alert_error(dialog, "Invalid attribute " || s[1])
    }
 
