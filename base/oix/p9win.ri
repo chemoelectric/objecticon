@@ -362,15 +362,13 @@ int wopen(wbp w)
 static void clear_pix_win(wbp w)
 {
     wsp ws = w->window;
-    Image *src = w->context->bg->i;
-    gendraw(ws->pix, ws->pix->r, src, src->r.min, 0, ZP);
+    gendraw(ws->pix, ws->pix->r, w->context->bg->i, ZP, 0, ZP);
 }
 
 static void clear_win(wbp w)
 {
     wsp ws = w->window;
-    Image *src = w->context->bg->i;
-    gendraw(ws->win, ws->win->r, src, src->r.min, 0, ZP);
+    gendraw(ws->win, ws->win->r, w->context->bg->i, ZP, 0, ZP);
 }
 
 static void copy_to(Image *dest, Image *src)
@@ -1076,7 +1074,7 @@ static void impl_erasearea(wcp wc, Image *dest, int x, int y, int width, int hei
                        dest->r.min.x + x + width,
                        dest->r.min.y + y + height);
     clip(wc, dest);
-    gendraw(dest, t, wc->bg->i, wc->bg->i->r.min, 0, ZP);
+    gendraw(dest, t, wc->bg->i, ZP, 0, ZP);
     unclip(wc, dest);
 }
 
@@ -1415,7 +1413,7 @@ int getpixelinit(wbp w, struct imgmem *imem)
     int ndata;
     MemProtect(tmp = allocimage(display, Rect(0, 0, imem->width, imem->height), RGB24, 1, DNofill));
     /* Clear the tmp win */
-    gendraw(tmp, tmp->r, w->context->bg->i, w->context->bg->i->r.min, 0, ZP);
+    gendraw(tmp, tmp->r, w->context->bg->i, ZP, 0, ZP);
     /* Copy from pix to the tmp win */
     gendraw(tmp, tmp->r, ws->pix, Pt(ws->pix->r.min.x + imem->x, 
                                      ws->pix->r.min.y + imem->y), 0, ZP);
@@ -1684,6 +1682,11 @@ static int open_screen_win(wsp ws)
         return Failed;
     }
     synch_pos(ws);
+
+    /* Ensure size matches the opened window */
+    ws->width =  ws->win->r.max.x - ws->win->r.min.x;
+    ws->height = ws->win->r.max.y - ws->win->r.min.y;
+    resize_pix_win(find_first_wbp_for(ws));
 
     if ((fd = open_winfile(ws, "label", OWRITE)) < 0) {
         whyf("Can't open label file %r");
