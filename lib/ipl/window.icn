@@ -66,8 +66,8 @@
 #				(trimmed)
 #
 #	-D	display		 -		window device
-#	-X	posx		 -		horizontal position
-#	-Y	posy		 -		vertical position
+#	-X	x		 -		horizontal position
+#	-Y	y		 -		vertical position
 #	-W	width		500		window width
 #	-H	height		300		window height
 #
@@ -183,9 +183,9 @@ procedure wdw_defaults(att, arglist, pname)
       stop(&progname, ": can't open display")
 
    # Set attributes from environment.  Order is significant here:
-   # pos & size override geometry, and posx/posy/width/height override both.
+   # pos & size override geometry, and x/y/width/height override both.
    every oname := "display" | "bg" | "fg" | "font" | "windowlabel" | "label" |
-         "geometry" | "size" | "pos" | "posx" | "posy" | "width" | "height" do
+         "geometry" | "size" | "pos" | "x" | "y" | "width" | "height" do
       wdw_register(att, oname, w.wdefault(pname, oname))
 
    # Delete the offscreen window, and return.
@@ -248,8 +248,8 @@ procedure wdw_options(att, arglist)
             "T":  wdw_register(att, "font", val)
             "L":  wdw_register(att, "label", val)
             "D":  wdw_register(att, "display", val)
-            "X":  wdw_register(att, "posx", val)
-            "Y":  wdw_register(att, "posy", val)
+            "X":  wdw_register(att, "x", val)
+            "Y":  wdw_register(att, "y", val)
             "W":  wdw_register(att, "width", val)
             "H":  wdw_register(att, "height", val)
             "P":  wdw_register(att, "pos", val)
@@ -300,9 +300,9 @@ procedure wdw_reg(att, name, val)
             delete(att, "canvas")
          }
       "pos": val ? {		# pos=xxx,yyy
-         att["posx"] := tab(many(&digits)) | fail
+         att["x"] := tab(many(&digits)) | fail
          ="," | fail
-         att["posy"] := tab(many(&digits)) | fail
+         att["y"] := tab(many(&digits)) | fail
          pos(0) | fail
          }
       "geometry": val ? {	# geometry=[wwwxhhh][+xxx+yyy]
@@ -314,9 +314,9 @@ procedure wdw_reg(att, name, val)
                delete(att, "canvas")
             }
          if ="+" then {
-            att["posx"] := tab(many(&digits)) | fail
+            att["x"] := tab(many(&digits)) | fail
             ="+" | fail
-            att["posy"] := tab(many(&digits)) | fail
+            att["y"] := tab(many(&digits)) | fail
             }
          pos(0) | fail
          }

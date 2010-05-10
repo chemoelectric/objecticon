@@ -1236,7 +1236,7 @@ function graphics_Window_close(self)
    }
 end
 
-function graphics_Window_get_ascent(self)
+function graphics_Window_get_font_ascent(self)
    body {
        struct descrip result;
        GetSelfW();
@@ -1297,7 +1297,7 @@ function graphics_Window_get_depth(self)
    }
 end
 
-function graphics_Window_get_descent(self)
+function graphics_Window_get_font_descent(self)
    body {
        struct descrip result;
        GetSelfW();
@@ -1354,7 +1354,7 @@ function graphics_Window_get_fg(self)
    }
 end
 
-function graphics_Window_get_fheight(self)
+function graphics_Window_get_font_height(self)
    body {
        struct descrip result;
        GetSelfW();
@@ -1382,7 +1382,7 @@ function graphics_Window_get_font(self)
    }
 end
 
-function graphics_Window_get_fwidth(self)
+function graphics_Window_get_font_width(self)
    body {
        struct descrip result;
        GetSelfW();
@@ -1408,9 +1408,9 @@ function graphics_Window_get_geometry(self)
            fail;
        ws = self_w->window;
        create_list(4, &result);
-       MakeInt(ws->posx, &t);
+       MakeInt(ws->x, &t);
        list_put(&result, &t);
-       MakeInt(ws->posy, &t);
+       MakeInt(ws->y, &t);
        list_put(&result, &t);
        MakeInt(ws->width, &t);
        list_put(&result, &t);
@@ -1570,32 +1570,32 @@ function graphics_Window_get_pos(self)
        if (getpos(self_w) != Succeeded)
            fail;
        create_list(2, &result);
-       MakeInt(self_w->window->posx, &t);
+       MakeInt(self_w->window->x, &t);
        list_put(&result, &t);
-       MakeInt(self_w->window->posy, &t);
+       MakeInt(self_w->window->y, &t);
        list_put(&result, &t);
        return result;
    }
 end
 
-function graphics_Window_get_posx(self)
+function graphics_Window_get_x(self)
    body {
        struct descrip result;
        GetSelfW();
        if (getpos(self_w) != Succeeded)
            fail;
-       MakeInt(self_w->window->posx, &result);
+       MakeInt(self_w->window->x, &result);
        return result;
    }
 end
 
-function graphics_Window_get_posy(self)
+function graphics_Window_get_y(self)
    body {
        struct descrip result;
        GetSelfW();
        if (getpos(self_w) != Succeeded)
            fail;
-       MakeInt(self_w->window->posy, &result);
+       MakeInt(self_w->window->y, &result);
        return result;
    }
 end
@@ -1805,8 +1805,8 @@ function graphics_Window_set_geometry(self, x0, y0, w0, h0)
        GetSelfW();
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
-       self_w->window->posx = x;
-       self_w->window->posy = y;
+       self_w->window->x = x;
+       self_w->window->y = y;
        self_w->window->width = width;
        self_w->window->height = height;
        wconfig |= C_SIZE | C_POS;
@@ -1914,8 +1914,7 @@ end
 
 function graphics_Window_set_max_size(self, width, height)
    body {
-       tended char *s;
-       word i;
+       word i, j;
        GetSelfW();
        if (is:null(width))
            i = INT_MAX;
@@ -1925,16 +1924,16 @@ function graphics_Window_set_max_size(self, width, height)
            if (i < 1)
                runerr(148, width);
        }
-       self_w->window->maxwidth = i;
        if (is:null(height))
-           i = INT_MAX;
+           j = INT_MAX;
        else {
-           if (!cnv:C_integer(height, i))
+           if (!cnv:C_integer(height, j))
                runerr(101, height);
-           if (i < 1)
+           if (j < 1)
                runerr(148, height);
        }
-       self_w->window->maxheight = i;
+       self_w->window->maxwidth = i;
+       self_w->window->maxheight = j;
        wconfig |= C_MAXSIZE;
        SimpleAttr();
        return self;
@@ -2028,38 +2027,57 @@ function graphics_Window_set_pointer(self, val)
 end
 
 function graphics_Window_set_pos(self, x, y)
-   if !cnv:C_integer(x) then
-      runerr(101, x)
-   if !cnv:C_integer(y) then
-      runerr(101, y)
    body {
+       word i, j;
        GetSelfW();
-       self_w->window->posx = x;
-       self_w->window->posy = y;
+       if (is:null(x))
+           i = -INT_MAX;
+       else {
+           if (!cnv:C_integer(x, i))
+               runerr(101, x);
+       }
+       if (is:null(y))
+           j = -INT_MAX;
+       else {
+           if (!cnv:C_integer(y, j))
+               runerr(101, y);
+       }
+       self_w->window->x = i;
+       self_w->window->y = j;
        wconfig |= C_POS;
        SimpleAttr();
        return self;
    }
 end
 
-function graphics_Window_set_posx(self, x)
-   if !cnv:C_integer(x) then
-      runerr(101, x)
+function graphics_Window_set_x(self, x)
    body {
+       word i;
        GetSelfW();
-       self_w->window->posx = x;
+       if (is:null(x))
+           i = -INT_MAX;
+       else {
+           if (!cnv:C_integer(x, i))
+               runerr(101, x);
+       }
+       self_w->window->x = i;
        wconfig |= C_POS;
        SimpleAttr();
        return self;
    }
 end
 
-function graphics_Window_set_posy(self, y)
-   if !cnv:C_integer(y) then
-      runerr(101, y)
+function graphics_Window_set_y(self, y)
    body {
+       word i;
        GetSelfW();
-       self_w->window->posy = y;
+       if (is:null(y))
+           i = -INT_MAX;
+       else {
+           if (!cnv:C_integer(y, i))
+               runerr(101, y);
+       }
+       self_w->window->y = i;
        wconfig |= C_POS;
        SimpleAttr();
        return self;

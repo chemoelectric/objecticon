@@ -508,12 +508,12 @@ static wbp find_first_wbp_for(wsp ws)
 }
 
 /*
- * Synch the posx, posy variables with rio's values.
+ * Synch the x, y variables with rio's values.
  */
 static void synch_pos(wsp ws)
 {
-    ws->posx = ws->win->r.min.x;
-    ws->posy = ws->win->r.min.y;
+    ws->x = ws->win->r.min.x;
+    ws->y = ws->win->r.min.y;
 }
 
 static void resize_pix_win(wbp w)
@@ -1496,7 +1496,7 @@ int doconfig(wbp w, int status)
                 status |= C_SIZE;
         }
         if (status & C_POS)
-            fprint(ws->wctl_fd, "move  -minx %d -miny %d", ws->posx, ws->posy);
+            fprint(ws->wctl_fd, "move  -minx %d -miny %d", ws->x, ws->y);
         if (status & C_SIZE)
             fprint(ws->wctl_fd, "resize  -dx %d -dy %d", 
                    ws->width + 2*Borderwidth, 
@@ -1632,8 +1632,8 @@ static int open_screen_win(wsp ws)
         fprint(ws->wctl_fd, "resize  -dx %d -dy %d", 
                ws->width + 2*Borderwidth, ws->height + 2*Borderwidth);
 
-        if (ws->posx != -INT_MAX && ws->posy != -INT_MAX)
-            fprint(ws->wctl_fd, "move  -minx %d -miny %d", ws->posx, ws->posy);
+        if (ws->x != -INT_MAX && ws->y != -INT_MAX)
+            fprint(ws->wctl_fd, "move  -minx %d -miny %d", ws->x, ws->y);
 
         use_win = 0;
     } else {
@@ -1654,15 +1654,15 @@ static int open_screen_win(wsp ws)
             close_screen_win(ws);
             return Failed;
         }
-        /* If either posx or posy unset, let rio place the window */
-        if (ws->posx == -INT_MAX || ws->posy == -INT_MAX)
+        /* If either x or y unset, let rio place the window */
+        if (ws->x == -INT_MAX || ws->y == -INT_MAX)
             sprintf(buff, "new -dx %d -dy %d",
                     ws->width + 2*Borderwidth, 
                     ws->height + 2*Borderwidth);
         else
             sprintf(buff, "new -r %d %d %d %d",
-                    ws->posx, ws->posy, ws->posx + ws->width + 2*Borderwidth, 
-                    ws->posy + ws->height + 2*Borderwidth);
+                    ws->x, ws->y, ws->x + ws->width + 2*Borderwidth, 
+                    ws->y + ws->height + 2*Borderwidth);
         if (ws->desired_canvas == IconicCanvas)
             strcat(buff, " -hide");
         if (mount(ws->wsys_fd, -1, ws->mount_dir, MREPL, buff) < 0) {
@@ -2125,7 +2125,7 @@ static wsp alcwinstate()
     ws->cursor = stringint_lookup(cursors, "left ptr");
     ws->height = 200;
     ws->width  = 200;
-    ws->posx = ws->posy = -INT_MAX;
+    ws->x = ws->y = -INT_MAX;
     ws->minwidth = ws->minheight = 1;
     ws->maxwidth = ws->maxheight = INT_MAX;
     ws->desired_canvas = NormalCanvas;

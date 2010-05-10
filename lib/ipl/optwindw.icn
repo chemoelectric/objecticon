@@ -166,8 +166,8 @@ procedure optwindow(opts, args[])
       w.font(opts["T"]) | stop(args[1], ": invalid font: ", opts["T"])
 
    # store actual values returned after window placement
-   opts["X"] := w.get_posx()
-   opts["Y"] := w.get_posy()
+   opts["X"] := w.get_x()
+   opts["Y"] := w.get_y()
    opts["P"] := opts["X"] || "," || opts["Y"]
    opts["W"] := w.get_width() - 2 * opts["M"]
    opts["H"] := w.get_height() - 2 * opts["M"]

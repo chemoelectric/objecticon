@@ -103,7 +103,7 @@ class TextField(Component)
    end
 
    public get_default_height()
-      return self.cbwin.get_fheight() + border.get_total_height()
+      return self.cbwin.get_font_height() + border.get_total_height()
    end
 
    public get_default_width()
@@ -624,7 +624,7 @@ class TextField(Component)
    public display()
       local fh, s, cw, mp, np, off1, off2, y1
 
-      fh := self.cbwin.get_fheight()
+      fh := self.cbwin.get_font_height()
       y1 := self.y + (self.h - fh) / 2
       s := get_view()
 

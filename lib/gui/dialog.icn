@@ -258,7 +258,7 @@ class Dialog(Component)
       Gui.style.polish(self)
       self.effective_wattribs := copy(self.wattribs)
       every delete(self.effective_wattribs, 
-                   "pos" | "posx" | "posy" | "size" | "width" | "height"|
+                   "pos" | "x" | "y" | "size" | "width" | "height"|
                    "dx" | "dy" |
                    "min_width" | "min_height" | "min_size" |
                    "max_width" | "max_height" | "max_size")
@@ -776,10 +776,10 @@ $endif
       {
          dim := win.get_display_size()
          # Recalculate edges, but now of the screen rather than the window.
-         left := -win.get_posx() - win.get_dx()
-         right := dim[1] - win.get_posx() - win.get_dx()
-         top := -win.get_posy() - win.get_dy()
-         bottom := dim[2] - win.get_posy() - win.get_dy()
+         left := -win.get_x() - win.get_dx()
+         right := dim[1] - win.get_x() - win.get_dx()
+         top := -win.get_y() - win.get_dy()
+         bottom := dim[2] - win.get_y() - win.get_dy()
          use_popup_win := 1
       }
 
@@ -807,8 +807,8 @@ $endif
          d := Dialog("canvas=popup", 
                      "dx=", -self.tooltip_component.x, "dy=",-self.tooltip_component.y,
                      "w=", self.tooltip_component.w, "h=",self.tooltip_component.h,
-                     "w:posx=", win.get_posx() + win.get_dx() + self.tooltip_component.x,
-                     "w:posy=", win.get_posy() + win.get_dy() + self.tooltip_component.y)
+                     "w:x=", win.get_x() + win.get_dx() + self.tooltip_component.x,
+                     "w:y=", win.get_y() + win.get_dy() + self.tooltip_component.y)
          self.tooltip_component.set_pos(0, 0)
          d.add(self.tooltip_component)
          d.show_modeless()

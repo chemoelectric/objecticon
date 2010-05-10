@@ -90,7 +90,7 @@ import graphics(Window)
 
 # draw left-justified string
 procedure LeftString(win, x, y, s)		
-   y +:= (win.get_ascent() - win.get_descent()) / 2 + 1
+   y +:= (win.get_font_ascent() - win.get_font_descent()) / 2 + 1
    return win.draw_string(x, y, s)
 end
 
@@ -100,7 +100,7 @@ end
 # draw centered string
 procedure CenterString(win, x, y, s)		
    x -:= win.text_width( s) / 2
-   y +:= (win.get_ascent() - win.get_descent()) / 2 + 1
+   y +:= (win.get_font_ascent() - win.get_font_descent()) / 2 + 1
    return win.draw_string(x, y, s)
 end
 
@@ -110,7 +110,7 @@ end
 # draw right-justified string
 procedure RightString(win, x, y, s)		
    x -:= win.text_width( s)
-   y +:= (win.get_ascent() - win.get_descent()) / 2 + 1
+   y +:= (win.get_font_ascent() - win.get_font_descent()) / 2 + 1
    return win.draw_string(x, y, s)
 end
 

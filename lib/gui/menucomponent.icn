@@ -350,10 +350,10 @@ class MenuComponent(Rect,SetFields,Connectable)
       {
          dim := win.get_display_size()
          # Recalculate edges, but now of the screen rather than the window.
-         left := -win.get_posx() - win.get_dx()
-         right := dim[1] - win.get_posx() - win.get_dx()
-         top := -win.get_posy() - win.get_dy()
-         bottom := dim[2] - win.get_posy() - win.get_dy()
+         left := -win.get_x() - win.get_dx()
+         right := dim[1] - win.get_x() - win.get_dx()
+         top := -win.get_y() - win.get_dy()
+         bottom := dim[2] - win.get_y() - win.get_dy()
          use_popup_win := 1
       }
 
@@ -391,8 +391,8 @@ class MenuComponent(Rect,SetFields,Connectable)
          d := Dialog("canvas=popup", 
                      "w=", self.w, "h=",self.h,
                      "dx=",-self.x, "dy=",-self.y,
-                     "w:posx=", win.get_posx() + win.get_dx() + self.x,
-                     "w:posy=", win.get_posy() + win.get_dy() + self.y)
+                     "w:x=", win.get_x() + win.get_dx() + self.x,
+                     "w:y=", win.get_y() + win.get_dy() + self.y)
          self.temp_win := create_proxy()
          self.temp_win.set_pos(0, 0)
          self.temp_win.set_size(self.w, self.h)

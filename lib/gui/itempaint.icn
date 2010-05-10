@@ -47,7 +47,7 @@ class TextItemPaint(ItemPaint)
    public fh
 
    public initially(c)
-      fh := c.cbwin.get_fheight()
+      fh := c.cbwin.get_font_height()
    end
 
    public get_width(W, data)

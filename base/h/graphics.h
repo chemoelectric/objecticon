@@ -249,7 +249,6 @@ typedef struct _wcontext {
   int		fg, bg;
   int		linestyle;
   int		linewidth;
-  int		leading;		/* inter-line leading */
   char		*patternname;
   int		fillstyle;
   int		drawop;
@@ -269,7 +268,7 @@ typedef struct _wcontext {
   HBITMAP	pattern;
   SysColor	fg, bg;
   char		*patternname, *fgname, *bgname;
-  int		leading, bkmode;
+  int		bkmode;
   int		fillstyle;
   int		drawop;
 #endif
@@ -305,7 +304,7 @@ typedef struct _wstate {
   int		inputmask;		/* user input mask */
   char		*windowlabel;		/* window label */
   struct imgdata initimage;		/* initial image data */
-  int		posy, posx;		/* desired upper lefthand corner */
+  int		y, x;		/* desired upper lefthand corner */
   int           height;                 /* window height, in pixels */
   int           width;                  /* window width, in pixels */
   int           minheight;              /* minimum window height, in pixels */

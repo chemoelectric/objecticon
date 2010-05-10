@@ -167,7 +167,7 @@ class TableColumn(TextButton)
          Align.L : self.tx
          default : runerr("Bad column alignment", border.x_align)
       }
-      y1 := cy + (ch - W.get_fheight()) / 2
+      y1 := cy + (ch - W.get_font_height()) / 2
       draw_string_ex(W, x1, y1, data)
    end
 
@@ -178,7 +178,7 @@ class TableColumn(TextButton)
    # @param W the cloned window to draw into
    #
    public calculate_line_height(W)
-      return W.get_fheight()
+      return W.get_font_height()
    end
 
    public new(a[])

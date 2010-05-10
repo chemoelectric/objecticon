@@ -131,10 +131,10 @@ class Gui()
       PRINTABLE_N := '\t\n\x20-\x7e\x80-\U10ffff'
       CONSTRAINT_SET := set("tab", "eol", "x", "y", "w", "h", "l_inset", "r_inset", "t_inset", "b_inset", 
                             "x_fill", "y_fill", "x_align", "y_align", "x_weight", "y_weight")
-      WATTRIB_SET := set("label", "posx", "pos", "posy", "resize", "size", "height", 
+      WATTRIB_SET := set("label", "x", "pos", "y", "resize", "size", "height", 
                          "width", "image", "canvas", "pointer", 
                          "display", "depth", "fg", "bg", "draw_op", "gamma", 
-                         "font", "fheight", "fwidth", "ascent", "descent", "leading", "line_width", 
+                         "font", "font_height", "font_width", "font_ascent", "font_descent", "line_width", 
                          "line_style", "fill_style", "pattern", "clip",
                          "dx", "dy", "input_mask", "min_width", "min_height", "min_size", "max_width", 
                          "max_height", "max_size")
@@ -248,11 +248,11 @@ end
 
 procedure draw_string_ex(win, x, y, s, k)
    local i, x1, y1
-   y +:= win.get_ascent()
+   y +:= win.get_font_ascent()
    win.draw_string(x, y, s)
    if i := upto(\k, map(s)) then {
       x1 := x + win.text_width(s[1:i])
-      y1 := y + win.get_descent() - 1
+      y1 := y + win.get_font_descent() - 1
       win.draw_line(x1, y1, x1 + win.text_width(s[i]), y1)
    }
 end

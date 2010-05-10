@@ -842,8 +842,8 @@ static int wmap(wbp w)
             case PopupState: {
                 attr.override_redirect = True;
                 ws->win = XCreateWindow(stddpy, DefaultRootWindow(stddpy),
-                                        ws->posx < 0 ? 0 : ws->posx,
-                                        ws->posy < 0 ? 0 : ws->posy, ws->width,
+                                        ws->x < 0 ? 0 : ws->x,
+                                        ws->y < 0 ? 0 : ws->y, ws->width,
                                         ws->height, 0,
                                         DefaultDepth(stddpy,wd->screen),
                                         InputOutput,
@@ -854,8 +854,8 @@ static int wmap(wbp w)
             }
             default: {
                 ws->win = XCreateSimpleWindow(stddpy, DefaultRootWindow(stddpy),
-                                       ws->posx < 0 ? 0 : ws->posx,
-                                       ws->posy < 0 ? 0 : ws->posy, ws->width,
+                                       ws->x < 0 ? 0 : ws->x,
+                                       ws->y < 0 ? 0 : ws->y, ws->width,
                                        ws->height, 1,
                                        wd->colors[wc->fg].c,
                                        wd->colors[wc->bg].c);
@@ -960,16 +960,16 @@ static int wmap(wbp w)
         size_hints.flags = PSize | PMinSize | PMaxSize;
         size_hints.width = ws->width;
         size_hints.height= ws->height;
-        if (ws->posx == -(INT_MAX)) 
-            ws->posx = 0;
+        if (ws->x == -(INT_MAX)) 
+            ws->x = 0;
         else
             size_hints.flags |= USPosition;
-        if (ws->posy == -(INT_MAX)) 
-            ws->posy = 0;
+        if (ws->y == -(INT_MAX)) 
+            ws->y = 0;
         else 
             size_hints.flags |= USPosition;
-        size_hints.x = ws->posx;
-        size_hints.y = ws->posy;
+        size_hints.x = ws->x;
+        size_hints.y = ws->y;
         if (ISRESIZABLE(w)) {
             size_hints.min_width = ws->minwidth;
             size_hints.min_height = ws->minheight;
@@ -1087,7 +1087,7 @@ int doconfig(wbp w, int status)
 
         switch (status & (C_POS|C_SIZE)) {
             case C_POS: {
-                XMoveWindow(wd->display, ws->win, ws->posx, ws->posy);
+                XMoveWindow(wd->display, ws->win, ws->x, ws->y);
                 break;
             }
             case C_SIZE: {
@@ -1095,7 +1095,7 @@ int doconfig(wbp w, int status)
                 break;
             }
             case C_POS|C_SIZE: {
-                XMoveResizeWindow(wd->display, ws->win, ws->posx, ws->posy, ws->width, ws->height);
+                XMoveResizeWindow(wd->display, ws->win, ws->x, ws->y, ws->width, ws->height);
                 break;
             }
         }
@@ -1476,8 +1476,8 @@ int setcanvas(wbp w, char *s)
                     pollevent();
 	    }
             else if (ws->iconic == MaximizedState) {
-                ws->posx = ws->normalx;
-                ws->posy = ws->normaly;
+                ws->x = ws->normalx;
+                ws->y = ws->normaly;
                 ws->width = ws->normalw;
                 ws->height = ws->normalh;
                 doconfig(w, C_POS | C_SIZE);
@@ -1508,8 +1508,8 @@ int setcanvas(wbp w, char *s)
         if (ws->iconic != MaximizedState) {
             int expect_config= (ws->width != DisplayWidth(stddpy, wd->screen)) ||
                 (ws->height != DisplayHeight(stddpy, wd->screen));
-            ws->normalx = ws->posx;
-            ws->normaly = ws->posy;
+            ws->normalx = ws->x;
+            ws->normaly = ws->y;
             ws->normalw = ws->width;
             ws->normalh = ws->height;
             ws->width = DisplayWidth(stddpy, wd->screen);
@@ -1528,11 +1528,11 @@ int setcanvas(wbp w, char *s)
                         pollevent();
                 }
                 else if (expect_config) {
-                    ws->posx = ws->posy = 0;
+                    ws->x = ws->y = 0;
                     doconfig(w, C_POS | C_SIZE);
                     pollevent();
-                    ws->posx = -ws->posx;
-                    ws->posy = -ws->posy;
+                    ws->x = -ws->x;
+                    ws->y = -ws->y;
                     doconfig(w, C_POS);
                 }
 	    }
@@ -1546,8 +1546,8 @@ int setcanvas(wbp w, char *s)
         else {
             if (ws->win != (Window) NULL) {
                 if (ws->iconic == MaximizedState) {
-                    ws->posx = ws->normalx;
-                    ws->posy = ws->normaly;
+                    ws->x = ws->normalx;
+                    ws->y = ws->normaly;
                     ws->width = ws->normalw;
                     ws->height = ws->normalh;
                     ws->iconic = NormalState;
@@ -1764,12 +1764,6 @@ int setdisplay(wbp w, char *s)
     return Succeeded;
 }
 
-int setleading(wbp w, int i)
-{
-    w->context->leading = i;
-    return Succeeded;
-}
-
 int setimage(wbp w, char *val)
 {
     wsp ws = w->window;
@@ -1848,8 +1842,8 @@ int getpos(wbp w)
         False) {
         return Failed;
     }
-    ws->posx = root_x - win_x;
-    ws->posy = root_y - win_y;
+    ws->x = root_x - win_x;
+    ws->y = root_y - win_y;
     return Succeeded;
 }
 
@@ -2050,8 +2044,8 @@ static int handle_config(wbp w, XConfigureEvent *event)
      * Update X-Icon's information about the window's configuration
      */
 
-    ws->posx = event->x;
-    ws->posy = event->y;
+    ws->x = event->x;
+    ws->y = event->y;
 
     /*
      * If this was not a resize, drop it
@@ -4421,8 +4415,6 @@ static wfp tryfont(wbp w, char *s)
         return NULL;
     }
 
-    w->context->leading = rv->height;
-
     /*
      * link the font into this display's fontlist (but not at the head!)
      */
@@ -4496,7 +4488,6 @@ static wcp alccontext(wbp w)
     wd->colors[1].refcount++;
     wc->bg = 1;
     wc->font = wd->fonts;
-    wc->leading = wd->fonts->height;
     wc->drawop = GXcopy;
     wc->gamma = wd->gamma;
     wc->clipx = wc->clipy = 0;
@@ -4589,7 +4580,7 @@ static wsp alcwinstate()
         ButtonPressMask | ButtonReleaseMask | ButtonMotionMask |
         StructureNotifyMask;
     ws->iconic = NormalState;
-    ws->posx = ws->posy = -INT_MAX;
+    ws->x = ws->y = -INT_MAX;
     ws->minwidth = ws->minheight = 1;
     ws->maxwidth = ws->maxheight = INT_MAX;
 #ifdef HAVE_LIBXFT
