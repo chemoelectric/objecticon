@@ -1914,8 +1914,7 @@ end
 
 function graphics_Window_set_max_size(self, width, height)
    body {
-       tended char *s;
-       word i;
+       word i, j;
        GetSelfW();
        if (is:null(width))
            i = INT_MAX;
@@ -1925,16 +1924,16 @@ function graphics_Window_set_max_size(self, width, height)
            if (i < 1)
                runerr(148, width);
        }
-       self_w->window->maxwidth = i;
        if (is:null(height))
-           i = INT_MAX;
+           j = INT_MAX;
        else {
-           if (!cnv:C_integer(height, i))
+           if (!cnv:C_integer(height, j))
                runerr(101, height);
-           if (i < 1)
+           if (j < 1)
                runerr(148, height);
        }
-       self_w->window->maxheight = i;
+       self_w->window->maxwidth = i;
+       self_w->window->maxheight = j;
        wconfig |= C_MAXSIZE;
        SimpleAttr();
        return self;
@@ -2028,14 +2027,23 @@ function graphics_Window_set_pointer(self, val)
 end
 
 function graphics_Window_set_pos(self, x, y)
-   if !cnv:C_integer(x) then
-      runerr(101, x)
-   if !cnv:C_integer(y) then
-      runerr(101, y)
    body {
+       word i, j;
        GetSelfW();
-       self_w->window->posx = x;
-       self_w->window->posy = y;
+       if (is:null(x))
+           i = -INT_MAX;
+       else {
+           if (!cnv:C_integer(x, i))
+               runerr(101, x);
+       }
+       if (is:null(y))
+           j = -INT_MAX;
+       else {
+           if (!cnv:C_integer(y, j))
+               runerr(101, y);
+       }
+       self_w->window->posx = i;
+       self_w->window->posy = j;
        wconfig |= C_POS;
        SimpleAttr();
        return self;
@@ -2043,11 +2051,16 @@ function graphics_Window_set_pos(self, x, y)
 end
 
 function graphics_Window_set_posx(self, x)
-   if !cnv:C_integer(x) then
-      runerr(101, x)
    body {
+       word i;
        GetSelfW();
-       self_w->window->posx = x;
+       if (is:null(x))
+           i = -INT_MAX;
+       else {
+           if (!cnv:C_integer(x, i))
+               runerr(101, x);
+       }
+       self_w->window->posx = i;
        wconfig |= C_POS;
        SimpleAttr();
        return self;
@@ -2055,11 +2068,16 @@ function graphics_Window_set_posx(self, x)
 end
 
 function graphics_Window_set_posy(self, y)
-   if !cnv:C_integer(y) then
-      runerr(101, y)
    body {
+       word i;
        GetSelfW();
-       self_w->window->posy = y;
+       if (is:null(y))
+           i = -INT_MAX;
+       else {
+           if (!cnv:C_integer(y, i))
+               runerr(101, y);
+       }
+       self_w->window->posy = i;
        wconfig |= C_POS;
        SimpleAttr();
        return self;
