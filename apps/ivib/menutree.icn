@@ -13,7 +13,7 @@ $define SPACING 25
 
 class MenuTree(SelectableScrollArea)
    public calculate_line_height()
-      return self.cbwin.get_fheight()
+      return self.cbwin.get_font_height()
    end
 
    public draw_line_data(xp, yp, lh, i, r)

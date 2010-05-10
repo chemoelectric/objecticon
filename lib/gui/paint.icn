@@ -28,7 +28,7 @@ class TextPaint(Paint)
 
    public initially(c, accel)
       self.accel := accel
-      self.h := c.cbwin.get_fheight()
+      self.h := c.cbwin.get_font_height()
       self.w := c.cbwin.text_width(str)
    end
 
@@ -221,13 +221,13 @@ class GridPaint(Paint)
       local y1
       if pass = 1 then {
          llen +:= win.text_width(s)
-         lheight <:= win.get_fheight()
+         lheight <:= win.get_font_height()
       } else {
          ready_to_output() | fail
          y1 := case ia_y of {
             Align.T : y
-            Align.C : y + (curr_cell.obj[lno].h - win.get_fheight()) / 2
-            Align.B : y + curr_cell.obj[lno].h - win.get_fheight()
+            Align.C : y + (curr_cell.obj[lno].h - win.get_font_height()) / 2
+            Align.B : y + curr_cell.obj[lno].h - win.get_font_height()
          }
          draw_string_ex(win, x, y1, s, accel)
          # Just print the accelerator once.
@@ -256,7 +256,7 @@ class GridPaint(Paint)
       initial {
          attrib_set := set()
          every insert(attrib_set, "fg" | "bg" | "draw_op" | "gamma" | 
-                      "font" | "leading" | "line_width" | "line_style" | "fill_style" | "pattern")
+                      "font" | "line_width" | "line_style" | "fill_style" | "pattern")
       }
       every a := !args do {
          a ? {

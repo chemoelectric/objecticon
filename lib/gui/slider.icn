@@ -344,7 +344,7 @@ class Slider(Component)
       if \self.is_horizontal_flag then {
          h := SLIDER_H + border.get_total_height()
          if \self.labels then
-            h +:= self.cbwin.get_fheight() + Gui.Y_INSET
+            h +:= self.cbwin.get_font_height() + Gui.Y_INSET
          if \self.ticks then
             h +:= SLIDER_TICK_H + Gui.Y_INSET
          return h
@@ -376,7 +376,7 @@ class Slider(Component)
       } else {
          if \self.labels then
             labels_pos := self.y + border.get_t_inset() + SLIDER_H + 
-                              Gui.Y_INSET + self.cbwin.get_fheight() / 2
+                              Gui.Y_INSET + self.cbwin.get_font_height() / 2
          if \self.ticks then {
             ticks_pos := self.y + border.get_t_inset() + SLIDER_H + Gui.Y_INSET
             \labels_pos +:= SLIDER_TICK_H + Gui.Y_INSET
@@ -420,7 +420,7 @@ class Slider(Component)
 
    public draw_labels()
       local i, xp, yp, fh
-      fh := self.cbwin.get_fheight()
+      fh := self.cbwin.get_font_height()
       if /self.is_horizontal_flag then {
          i := self.lo
          while i <= self.hi do {

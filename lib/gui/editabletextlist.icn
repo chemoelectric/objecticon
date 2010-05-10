@@ -1039,7 +1039,7 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public calculate_line_height()
-      return view.cbwin.get_fheight()
+      return view.cbwin.get_font_height()
    end
 
    public keeps(e)

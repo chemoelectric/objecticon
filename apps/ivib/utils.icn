@@ -100,11 +100,11 @@ procedure util_check_attribs(dialog, t)
    static test_win, attrib_table
    initial {
       test_win := Window.open("canvas=hidden") | stop("couldn't open window")
-      attrib_table := set("label", "posx", "pos", "posy", "resize", "size", "height", 
+      attrib_table := set("label", "x", "pos", "y", "resize", "size", "height", 
                           "width", "image", "canvas", "iconpos", "iconlabel", 
                           "iconimage", "x", "y", "pointer", 
                           "display", "depth", "fg", "bg", "reverse", "draw_op", "gamma", 
-                          "font", "fheight", "fwidth", "ascent", "descent", "leading", "line_width", 
+                          "font", "font_height", "font_width", "font_ascent", "font_descent", "line_width", 
                           "line_style", "fill_style", "pattern", "clipx", "clipy", "clipw", "cliph", 
                           "dx", "dy", "min_width", "min_height", "min_size", "max_width", "max_height", "max_size")
    }
@@ -162,7 +162,7 @@ end
 procedure center_string(win, x, y, s, k)
    draw_string_ex(win, 
                 x - win.text_width(s) / 2, 
-                y - win.get_fheight() / 2, 
+                y - win.get_font_height() / 2, 
                 s, k)
 end
 

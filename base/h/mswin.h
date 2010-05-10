@@ -20,7 +20,6 @@
 #define DRAWOP_SET			R2_WHITE
 #define DRAWOP_XOR			R2_XORPEN
 
-#define LEADING(w) ((w)->context->leading)
 #define SysColor unsigned long
 #define RED(x) GetRValue(x)
 #define GREEN(x) GetGValue(x)
@@ -30,14 +29,6 @@
  *
  */
 #define FULLARC 2 * Pi
-
-/*
- * gemeotry bitmasks
- */
-#define GEOM_WIDTH           1
-#define GEOM_HEIGHT          2
-#define GEOM_POSX            4
-#define GEOM_POSY            8
 
 /*
  * the special ROP code for mode reverse

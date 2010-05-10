@@ -250,7 +250,6 @@ void  bigrand         (dptr da, dptr dx);
    int  setfont         (wbp w, char *s);
    int  setgamma        (wbp w, double gamma);
    int  setimage        (wbp w, char *val);
-   int  setleading      (wbp w, int i);
    int  setlinestyle    (wbp w, char *s);
    int  setlinewidth    (wbp w, int linewid);
    int  setpointer      (wbp w, char *val);

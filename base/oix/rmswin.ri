@@ -310,8 +310,8 @@ int wopen(wbp w)
    ws = w->window;
    wc = w->context;
 
-   if (ws->posx < 0) ws->posx = 0;
-   if (ws->posy < 0) ws->posy = 0;
+   if (ws->x < 0) ws->x = 0;
+   if (ws->y < 0) ws->y = 0;
 
    /*
     * create the window
@@ -325,7 +325,7 @@ int wopen(wbp w)
 */
    ws->iconwin = CreateWindow( "oix", ws->windowlabel,
 		   winstyles,
-		   ws->posx, ws->posy,
+		   ws->x, ws->y,
 		   ws->width == 0 ? 400 : ws->width + BORDWIDTH,
 		   ws->height == 0 ? 400: ws->height + BORDHEIGHT,
 		   NULL, NULL, mswinInstance, NULL);
@@ -362,7 +362,7 @@ int wopen(wbp w)
    wc->font->descent = metrics.tmDescent;
    /*   wc->font->maxwidth = metrics.tmMaxCharWidth; buggy */
    wc->font->height = metrics.tmHeight;
-   wc->leading = metrics.tmHeight;
+
    /*
     * set the generic window's true default sizes
     */
@@ -370,8 +370,8 @@ int wopen(wbp w)
       if (!ws->width) ws->width = FWIDTH(w) * 80;
       if (!ws->height) ws->height = FHEIGHT(w) * 12;
       SetWindowPos(ws->iconwin, ws->iconwin,
-		   ws->posx,
-		   ws->posy,
+		   ws->x,
+		   ws->y,
 		   ws->width + BORDWIDTH, ws->height + BORDHEIGHT,
 		   SWP_NOZORDER);
       }
@@ -587,8 +587,8 @@ void handle_keypress(wbp wb, UINT msg, WPARAM wp, LPARAM lp, int meta)
       curr_down = d;
       }
    dw = GetMessagePos(); /* mouse location in SCREEN coordinates */
-   x = LOWORD(dw) - ws->posx - FRAMEWIDTH;
-   y = HIWORD(dw) - ws->posy - TITLEHEIGHT - (FRAMEHEIGHT-1);
+   x = LOWORD(dw) - ws->x - FRAMEWIDTH;
+   y = HIWORD(dw) - ws->y - TITLEHEIGHT - (FRAMEHEIGHT-1);
 
    t = GetMessageTime();
    if (GetKeyState(VK_CONTROL) < 0) flags |= ControlMask;
@@ -861,9 +861,9 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
          handle_config(wb, msg, wp, lp);
       break;
    case WM_MOVE:
-      /* posx,posy represents the position of the whole window, not the client area */
-      ws->posx = LOWORD(lp) - CLIENT_XOFF;
-      ws->posy = HIWORD(lp) - CLIENT_YOFF; 
+      /* x,y represents the position of the whole window, not the client area */
+      ws->x = LOWORD(lp) - CLIENT_XOFF;
+      ws->y = HIWORD(lp) - CLIENT_YOFF; 
       break;
    case WM_ACTIVATE:
       break;
@@ -1166,7 +1166,6 @@ char *s;
       wc->font->ascent = metrics.tmAscent;
       wc->font->descent = metrics.tmDescent;
 /*    wc->font->maxwidth = metrics.tmMaxCharWidth; unreliable due to MS bug */
-      wc->leading = wc->font->height = metrics.tmHeight;
       return Succeeded;
       }
    return Failed;
@@ -1542,15 +1541,6 @@ setimage(wbp w, char *val)
    ws->initialPix = loadimage(w, val, &(ws->width), &(ws->height),
 			  0, &status);
    if (ws->initialPix == (HBITMAP) NULL) return Failed;
-   return Succeeded;
-   }
-
-int setleading(w, i)
-wbp w;
-int i;
-   {
-   wcp wc = w->context;
-   wc->leading = i;
    return Succeeded;
    }
 
@@ -2692,7 +2682,6 @@ wbp w;
 	 getenv("ICONFONT"));
 
    wc->font->maxwidth = 8; /* looks like a bug */
-   wc->leading = 16;
 
    GRFX_LINK(wc, wcntxts);
    return wc;
@@ -2763,7 +2752,6 @@ wbp w;
 	 OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,
 	 DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
 	 getenv("ICONFONT"));
-   wc->leading = wc2->leading;
    setfont(&tmp, wc2->font->name);  /*rpp:check*/
 
 
@@ -3060,7 +3048,7 @@ int doconfig(w, status)
     wsp ws = w->window;
     wcp wc = w->context;
     int wid = ws->width, ht = ws->height;
-    int posx = ws->posx, posy = ws->posy;
+    int posx = ws->x, posy = ws->y;
     HDC hdc;
     HWND w_tmp;
 
@@ -3344,7 +3332,7 @@ wbp w;
 int x, y;
    {
    wsp ws = w->window;
-   SetCursorPos(ws->posx + x, ws->posy + y);
+   SetCursorPos(ws->x + x, ws->y + y);
    return Succeeded;
    }
 

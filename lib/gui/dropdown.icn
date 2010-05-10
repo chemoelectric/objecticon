@@ -140,7 +140,7 @@ class DropDown(SelectionList,Component)
          win_spc_below, win_spc_right, use_popup_win, use_direction
 
       win := parent_dialog.win
-      fh := self.cbwin.get_fheight()
+      fh := self.cbwin.get_font_height()
 
       win_spc_above := self.y + win.get_dy()
       win_spc_below := parent_dialog.h - win_spc_above - self.h
@@ -148,9 +148,9 @@ class DropDown(SelectionList,Component)
       if Gui.style.allow_popup(self) then {
          dim := win.get_display_size()
          # Space available for popup limited by screen size
-         spc_above := self.y + win.get_dy() + win.get_posy()
+         spc_above := self.y + win.get_dy() + win.get_y()
          spc_below := dim[2] - spc_above - self.h
-         spc_right := dim[1] - self.x - win.get_dx() - win.get_posx()
+         spc_right := dim[1] - self.x - win.get_dx() - win.get_x()
       } else {
          # Space available limited by window size
          spc_above := win_spc_above
@@ -231,15 +231,15 @@ class DropDown(SelectionList,Component)
                    "w=", tl.w_spec, "h=",tl.h_spec,
                    "w:dx=", -self.x,
                    "w:dy=", -(self.y + self.h),
-                   "w:posx=", win.get_posx() + win.get_dx() + self.x,
-                   "w:posy=", win.get_posy() + win.get_dy() + self.y + self.h)
+                   "w:x=", win.get_x() + win.get_dx() + self.x,
+                   "w:y=", win.get_y() + win.get_dy() + self.y + self.h)
          else
             Dialog("canvas=popup", 
                    "w=", tl.w_spec, "h=",tl.h_spec,
                    "w:dx=", -self.x,
                    "w:dy=", -(self.y - tl.h_spec),
-                   "w:posx=", win.get_posx() + win.get_dx() + self.x,
-                   "w:posy=", win.get_posy() + win.get_dy() + self.y - tl.h_spec)
+                   "w:x=", win.get_x() + win.get_dx() + self.x,
+                   "w:y=", win.get_y() + win.get_dy() + self.y - tl.h_spec)
 
          d.add(tl)
          self.tl.set_pos(0, 0)
