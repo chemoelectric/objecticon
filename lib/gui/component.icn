@@ -29,8 +29,8 @@ import
 # @field pos=string,string : see {set_pos}
 # @field x=string : see {set_x}
 # @field y=string : see {set_y}
-# @field width or w=string : see {set_w}
-# @field height or h=string : see {set_h}
+# @field width or w=string : see {set_width}
+# @field height or h=string : see {set_height}
 # @field size=string,string : see {set_size}
 # @field align=string,string : see {set_align}
 # @field x_align=string : see {set_x_align}
@@ -649,7 +649,7 @@ class Component(Rect,Align,SetFields,Connectable)
    # Set the width specification
    # @param w_spec   The width specification.
    #
-   public set_w(w_spec)
+   public set_width(w_spec)
       self.w_spec := w_spec
    end
 
@@ -657,7 +657,7 @@ class Component(Rect,Align,SetFields,Connectable)
    # Set the height specification
    # @param h_spec   The height specification.
    #
-   public set_h(h_spec)
+   public set_height(h_spec)
       self.h_spec := h_spec
    end
 
@@ -1239,8 +1239,8 @@ class Component(Rect,Align,SetFields,Connectable)
          "pos" : set_pos!(f.string_list_val())
          "x" : set_x(f.string_val())
          "y" : set_y(f.string_val())
-         "width"|"w" : set_w(f.string_val())
-         "height"|"h" : set_h(f.string_val())
+         "width"|"w" : set_width(f.string_val())
+         "height"|"h" : set_height(f.string_val())
          "size" : set_size!(f.string_list_val())
          "align" : set_align!(f.string_list_val())
          "x_align" : set_x_align(f.string_val())

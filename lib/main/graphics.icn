@@ -388,7 +388,7 @@ class Window(SetFields,NoCopy)
          "font": set_font(f.val)
          "gamma": set_gamma(f.val)
          "geometry": set_geometry!(f.int_list_val())
-         "height": set_height(f.val)
+         "height"|"h": set_height(f.val)
          "image": set_image(f.val)
          "input_mask": set_input_mask(f.val)
          "label": set_label(f.val)
@@ -407,7 +407,7 @@ class Window(SetFields,NoCopy)
          "y": set_y(f.val)
          "resize": set_resize(f.flag_val())
          "size": set_size!(f.int_list_val())
-         "width": set_width(f.val)
+         "width"|"w": set_width(f.val)
          default : fail
       }
       return
