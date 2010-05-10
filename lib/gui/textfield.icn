@@ -704,7 +704,7 @@ class TextField(Component)
       self.move_on_rpress_flag := 1
       self.set_constraint("x_fill", &yes)
       self.set_constraint("x_align", Align.L)
-      self.set_constraint("x_weight", "1")
+      self.set_constraint("x_weight", 1.0)
       set_pointer("xterm")
       self.loff := 0
       self.primary_selection_owner := TextFieldPrimarySelectionOwner(self)

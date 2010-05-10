@@ -155,8 +155,8 @@ class Border(Component)
       self.set_border(BevelledBorder())
       self.set_constraint("x_fill", &yes)
       self.set_constraint("y_fill", &yes)
-      self.set_constraint("x_weight", "1")
-      self.set_constraint("y_weight", "1")
+      self.set_constraint("x_weight", 1.0)
+      self.set_constraint("y_weight",  1.0)
       set_fields(a)
       return
    end
