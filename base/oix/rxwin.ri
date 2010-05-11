@@ -832,7 +832,6 @@ static int wmap(wbp w)
         XSetWindowAttributes attr;
         attr.background_pixmap = None;
         attr.background_pixel = wd->colors[wc->bg].c;
-        attr.border_pixel = wd->colors[wc->fg].c;
         attr.event_mask = StructureNotifyMask | ExposureMask;
 
         switch (ws->iconic) {
@@ -843,22 +842,27 @@ static int wmap(wbp w)
                 attr.override_redirect = True;
                 ws->win = XCreateWindow(stddpy, DefaultRootWindow(stddpy),
                                         ws->x < 0 ? 0 : ws->x,
-                                        ws->y < 0 ? 0 : ws->y, ws->width,
-                                        ws->height, 0,
+                                        ws->y < 0 ? 0 : ws->y, 
+                                        ws->width, ws->height, 
+                                        0,
                                         DefaultDepth(stddpy,wd->screen),
                                         InputOutput,
                                         CopyFromParent,
-                                        CWBackPixel|CWBorderPixel|CWOverrideRedirect,
+                                        CWBackPixel|CWOverrideRedirect,
                                         &attr);
                 break;
             }
             default: {
-                ws->win = XCreateSimpleWindow(stddpy, DefaultRootWindow(stddpy),
-                                       ws->x < 0 ? 0 : ws->x,
-                                       ws->y < 0 ? 0 : ws->y, ws->width,
-                                       ws->height, 1,
-                                       wd->colors[wc->fg].c,
-                                       wd->colors[wc->bg].c);
+                ws->win = XCreateWindow(stddpy, DefaultRootWindow(stddpy),
+                                        ws->x < 0 ? 0 : ws->x,
+                                        ws->y < 0 ? 0 : ws->y, 
+                                        ws->width, ws->height, 
+                                        0,
+                                        DefaultDepth(stddpy,wd->screen),
+                                        InputOutput,
+                                        CopyFromParent,
+                                        CWBackPixel,
+                                        &attr);
                 break;
             }
         }
@@ -1741,26 +1745,6 @@ int setgamma(wbp w, double gamma)
     wc->gamma = gamma;
     setfg(w, wd->colors[wc->fg].name);	/* reinterpret current Fg/Bg spec */
     setbg(w, wd->colors[wc->bg].name);
-    return Succeeded;
-}
-
-/*
- * Set the display by name.  Really should cache answers as per fonts below;
- * for now just open a new display each time.  Note that this can only be
- * called before a window is instantiated...
- */
-int setdisplay(wbp w, char *s)
-{
-    wdp d;
-    /* can't change display for mapped window! */
-    if (w->window->pix != (Pixmap) NULL)
-        return Failed;
-
-    Protect(d = alcdisplay(s), return 0);
-    w->window->display = d;
-    w->context->fg = 0;
-    w->context->bg = 1;
-    w->context->font = d->fonts;
     return Succeeded;
 }
 

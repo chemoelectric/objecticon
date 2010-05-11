@@ -1527,13 +1527,6 @@ int setdrawop(w, val)
     return Succeeded;
 }
 
-setdisplay(wbp w, char *val)
-   {
-   if (strcmp(val, "MS Windows"))
-      return Failed;
-   return Succeeded;
-   }
-
 setimage(wbp w, char *val)
    {
    wsp ws = w->window;
