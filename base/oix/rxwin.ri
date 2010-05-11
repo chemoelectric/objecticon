@@ -1735,19 +1735,6 @@ int setbg(wbp w, char *s)
     return ISXORREVERSE(w) ? resetfg(w) : Succeeded;
 }
 
-/*
- * Set the gamma correction value.
- */
-int setgamma(wbp w, double gamma)
-{
-    wcp wc = w->context;
-    wdp wd = w->window->display;
-    wc->gamma = gamma;
-    setfg(w, wd->colors[wc->fg].name);	/* reinterpret current Fg/Bg spec */
-    setbg(w, wd->colors[wc->bg].name);
-    return Succeeded;
-}
-
 int setimage(wbp w, char *val)
 {
     wsp ws = w->window;
@@ -3358,16 +3345,9 @@ static Pixmap loadimage(wbp w, char *filename,  int *height,
 static LinearColor lcolor(wbp w, XColor colorcell)
 {
     LinearColor l;
-    double gamma = w->context->gamma;
-    if (gamma == 1.0) {
-        l.red   = colorcell.red;
-        l.green = colorcell.green;
-        l.blue  = colorcell.blue;
-    } else {
-        l.red   = 65535 * pow(colorcell.red   / 65535.0, gamma);
-        l.green = 65535 * pow(colorcell.green / 65535.0, gamma);
-        l.blue  = 65535 * pow(colorcell.blue  / 65535.0, gamma);
-    }
+    l.red   = colorcell.red;
+    l.green = colorcell.green;
+    l.blue  = colorcell.blue;
     return l;
 }
 
@@ -3377,17 +3357,9 @@ static LinearColor lcolor(wbp w, XColor colorcell)
 static XColor xcolor(wbp w, LinearColor c)
 {
     XColor x;
-    double gamma = w->context->gamma;
-    if (gamma == 1.0) {
-        x.red   = c.red;
-        x.green = c.green;
-        x.blue  = c.blue;
-    } else {
-        double invgamma = 1.0 / gamma;
-        x.red   = 65535 * pow(c.red   / 65535.0, invgamma);
-        x.green = 65535 * pow(c.green / 65535.0, invgamma);
-        x.blue  = 65535 * pow(c.blue  / 65535.0, invgamma);
-    }
+    x.red   = c.red;
+    x.green = c.green;
+    x.blue  = c.blue;
     x.flags = DoRed | DoGreen | DoBlue;
     x.pixel = 0;
     x.pad = 0;
@@ -3978,14 +3950,6 @@ static wdp alcdisplay(char *s)
     wd->numColors = 2;
 
     /*
-     * Set the default gamma correction value for windows that are
-     * opened on this display.  Start with configuration default,
-     * but if we can get an interpretation of "RGBi:.5/.5/.5",
-     * calculate a gamma value from that instead.
-     */
-    wd->gamma = GammaCorrection;
-
-    /*
      * Initialize fonts and other things.
      */
 #ifdef HAVE_LIBXFT
@@ -4477,7 +4441,6 @@ static wcp alccontext(wbp w)
     wc->bg = 1;
     wc->font = wd->fonts;
     wc->drawop = GXcopy;
-    wc->gamma = wd->gamma;
     wc->clipx = wc->clipy = 0;
     wc->clipw = wc->cliph = -1;
     wc->linewidth = 1;
@@ -4518,7 +4481,6 @@ wcp clonecontext(wbp w)
     rv->linestyle = wc->linestyle;
     rv->linewidth = wc->linewidth;
     rv->drawop = wc->drawop;
-    rv->gamma = wc->gamma;
     rv->bits = wc->bits;
 
     if (ISXORREVERSE(w))

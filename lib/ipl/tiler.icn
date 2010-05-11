@@ -38,8 +38,7 @@ import
 procedure tileimg(win, img)		
    local hidden
 
-   hidden := Window.open("canvas=hidden", "image=" || img, "gamma=" ||
-      win.get_gamma()) | {
+   hidden := Window.open("canvas=hidden", "image=" || img) | {
       ewrite("*** cannot open image ", img)
       fail
       }

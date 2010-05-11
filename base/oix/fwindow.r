@@ -1391,13 +1391,6 @@ function graphics_Window_get_font_width(self)
    }
 end
 
-function graphics_Window_get_gamma(self)
-   body {
-       GetSelfW();
-       return C_double self_w->context->gamma;
-   }
-end
-
 function graphics_Window_get_geometry(self)
    body {
        tended struct descrip result;
@@ -1784,17 +1777,6 @@ function graphics_Window_set_font(self, val)
    body {
        GetSelfW();
        AttemptAttr(setfont(self_w, buffstr(&val)), "Invalid font");
-       return self;
-   }
-end
-
-function graphics_Window_set_gamma(self, val)
-   body {
-       double d;
-       GetSelfW();
-       if (!cnv:C_double(val, d)) 
-           runerr(102, val);
-       AttemptAttr(setgamma(self_w, d), "Invalid gamma value");
        return self;
    }
 end
