@@ -35,9 +35,8 @@ class ImageCache()
          if w := \map[key] then
             return w
          if Files.stat(f).mode[1] == "-" then {
-            w := Window.open("bg=", bg, 
-                             "image=", f, 
-                             "canvas=hidden") | return error("Couldn't load image from file " || f)
+            w := Window.open("bg=",bg, "canvas=hidden")
+            w.set_image(f) | return error("Couldn't load image from file " || f)
             insert(map, key, w)
             insert(map, w, f)
             return w
