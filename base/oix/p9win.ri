@@ -1109,21 +1109,30 @@ void pollevent(void)
 static int gamma_adjust(wbp w, int *r, int *g, int *b)
 {
     double gamma = w->context->gamma;
-    /*print("gamma=%f %d %d %d ->",w->context->gamma,*r/256,*g/256,*b/256);*/
-    *r = 65535 * pow(*r / 255.0, gamma);
-    *g = 65535 * pow(*g / 255.0, gamma);
-    *b = 65535 * pow(*b / 255.0, gamma);
-    /*print("%d %d %d\n",*r,*g,*b);*/
+    if (gamma == 1.0) {
+        *r *= 257;
+        *g *= 257;
+        *b *= 257;
+    } else {
+        *r = 65535 * pow(*r / 255.0, gamma);
+        *g = 65535 * pow(*g / 255.0, gamma);
+        *b = 65535 * pow(*b / 255.0, gamma);
+    }
 }
 
 static int gamma_inv_adjust(wbp w, int *r, int *g, int *b)
 {
-    double invgamma = 1.0 / w->context->gamma;
-    /*print("gamma=%f %d %d %d ->",w->context->gamma,*r/256,*g/256,*b/256);*/
-    *r = 255 * pow(*r / 65535.0, invgamma);
-    *g = 255 * pow(*g / 65535.0, invgamma);
-    *b = 255 * pow(*b / 65535.0, invgamma);
-    /*print("%d %d %d\n",*r,*g,*b);*/
+    double gamma = w->context->gamma;
+    if (gamma == 1.0) {
+        *r /= 257;
+        *g /= 257;
+        *b /= 257;
+    } else {
+        double invgamma = 1.0 / gamma;
+        *r = 255 * pow(*r / 65535.0, invgamma);
+        *g = 255 * pow(*g / 65535.0, invgamma);
+        *b = 255 * pow(*b / 65535.0, invgamma);
+    }
 }
 
 int setfg(wbp w, char *val)
