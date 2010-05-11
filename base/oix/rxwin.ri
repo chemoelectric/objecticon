@@ -1062,45 +1062,44 @@ int doconfig(wbp w, int status)
             unsetclip(w);
     }
 
-    if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE)) {
+    if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE | C_IMAGE)) {
         if (!resizePixmap(w, ws->width, ws->height))
             return Failed;
 
-        if (!ws->win)
-            return Succeeded;
+        if (ws->win) {
+            if (status != C_POS) {
+                XSizeHints size_hints;
+                long t;
 
-        if (status != C_POS) {
-            XSizeHints size_hints;
-            long t;
+                /* Not just a move */
 
-            /* Not just a move */
+                XGetWMNormalHints(wd->display, ws->win, &size_hints, &t);
+                if (ISRESIZABLE(w)) {
+                    size_hints.min_width = ws->minwidth;
+                    size_hints.min_height = ws->minheight;
+                    size_hints.max_width = ws->maxwidth;
+                    size_hints.max_height = ws->maxheight;
+                }
+                else {
+                    size_hints.min_width = size_hints.max_width = ws->width;
+                    size_hints.min_height = size_hints.max_height = ws->height;
+                }
+                XSetWMNormalHints(wd->display, ws->win, &size_hints);
+            }
 
-            XGetWMNormalHints(wd->display, ws->win, &size_hints, &t);
-            if (ISRESIZABLE(w)) {
-                size_hints.min_width = ws->minwidth;
-                size_hints.min_height = ws->minheight;
-                size_hints.max_width = ws->maxwidth;
-                size_hints.max_height = ws->maxheight;
-            }
-            else {
-                size_hints.min_width = size_hints.max_width = ws->width;
-                size_hints.min_height = size_hints.max_height = ws->height;
-            }
-            XSetWMNormalHints(wd->display, ws->win, &size_hints);
-        }
-
-        switch (status & (C_POS|C_SIZE)) {
-            case C_POS: {
-                XMoveWindow(wd->display, ws->win, ws->x, ws->y);
-                break;
-            }
-            case C_SIZE: {
-                XResizeWindow(wd->display, ws->win, ws->width, ws->height);
-                break;
-            }
-            case C_POS|C_SIZE: {
-                XMoveResizeWindow(wd->display, ws->win, ws->x, ws->y, ws->width, ws->height);
-                break;
+            switch (status & (C_POS|C_SIZE)) {
+                case C_POS: {
+                    XMoveWindow(wd->display, ws->win, ws->x, ws->y);
+                    break;
+                }
+                case C_SIZE: {
+                    XResizeWindow(wd->display, ws->win, ws->width, ws->height);
+                    break;
+                }
+                case C_POS|C_SIZE: {
+                    XMoveResizeWindow(wd->display, ws->win, ws->x, ws->y, ws->width, ws->height);
+                    break;
+                }
             }
         }
         if (status & C_IMAGE) {
@@ -1113,11 +1112,12 @@ int doconfig(wbp w, int status)
                 imd->width = 0;
             }
         }
-
-        /* XSync is not enough because the window manager gets involved here. */
-        XFlush(wd->display);			      /* force out request */
-        XGetWMName(wd->display, ws->win, &textprop);    /* force WM round trip */
-        XSync(wd->display, False);		      /* NOW sync */
+        if (ws->win) {
+            /* XSync is not enough because the window manager gets involved here. */
+            XFlush(wd->display);			      /* force out request */
+            XGetWMName(wd->display, ws->win, &textprop);    /* force WM round trip */
+            XSync(wd->display, False);		      /* NOW sync */
+        }
     }
         
     return Succeeded;
@@ -3912,7 +3912,6 @@ static int go_virtual(wbp w)
  */
 static wdp alcdisplay(char *s)
 {
-    double g;
     wdp wd;
     XColor color;
 
@@ -3974,12 +3973,6 @@ static wdp alcdisplay(char *s)
      * calculate a gamma value from that instead.
      */
     wd->gamma = GammaCorrection;
-    if (XParseColor(wd->display, wd->cmap, "RGBi:.5/.5/.5", &color)) {
-        g = .299 * color.red + .587 * color.green + .114 * color.blue;
-        g /= 65535;
-        if (g >= 0.1 && g <= 0.9)		/* sanity check */
-            wd->gamma = log(0.5) / log(g);
-    }
 
     /*
      * Initialize fonts and other things.

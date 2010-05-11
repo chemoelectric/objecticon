@@ -368,7 +368,7 @@ struct wbind_list {
  * Gamma Correction value to compensate for nonlinear monitor color response
  */
 #ifndef GammaCorrection
-#define GammaCorrection 2.5
+#define GammaCorrection 1.0
 #endif					/* GammaCorrection */
 
 /*
