@@ -30,8 +30,6 @@ static void init_window_system(void);
 static void clear_pix_win(wbp wb);
 static void clear_win(wbp wb);
 static void clip(wcp wc, Image *i);
-static int gamma_adjust(wbp w, int *r, int *g, int *b);
-static int gamma_inv_adjust(wbp w, int *r, int *g, int *b);
 static void unclip(wcp wc, Image *i);
 static struct SharedColor *new_sharedcolor(char *name, int rgba);
 static struct SharedColor *link_sharedcolor(struct SharedColor *i);
@@ -968,16 +966,11 @@ void drawstrimage(wbp w, int x, int y, int width, int height,
             imgdata[j++] = 0;
             imgdata[j++] = 0;
         } else {
-            int r, g, b;
             LinearColor c = e[s[i]].clr;
-            r = c.red;
-            b = c.blue;
-            g = c.green;
-            gamma_inv_adjust(w, &r, &g, &b);
             imgdata[j++] = 255;
-            imgdata[j++] = b;
-            imgdata[j++] = g;
-            imgdata[j++] = r;
+            imgdata[j++] = c.blue;
+            imgdata[j++] = c.green;
+            imgdata[j++] = c.red;
         }
     }
 
@@ -1106,35 +1099,6 @@ void pollevent(void)
         flush_event_pipe(ws);
 }
 
-static int gamma_adjust(wbp w, int *r, int *g, int *b)
-{
-    double gamma = w->context->gamma;
-    if (gamma == 1.0) {
-        *r *= 257;
-        *g *= 257;
-        *b *= 257;
-    } else {
-        *r = 65535 * pow(*r / 255.0, gamma);
-        *g = 65535 * pow(*g / 255.0, gamma);
-        *b = 65535 * pow(*b / 255.0, gamma);
-    }
-}
-
-static int gamma_inv_adjust(wbp w, int *r, int *g, int *b)
-{
-    double gamma = w->context->gamma;
-    if (gamma == 1.0) {
-        *r /= 257;
-        *g /= 257;
-        *b /= 257;
-    } else {
-        double invgamma = 1.0 / gamma;
-        *r = 255 * pow(*r / 65535.0, invgamma);
-        *g = 255 * pow(*g / 65535.0, invgamma);
-        *b = 255 * pow(*b / 65535.0, invgamma);
-    }
-}
-
 int setfg(wbp w, char *val)
 {
     int r, g, b, a, n;
@@ -1143,8 +1107,10 @@ int setfg(wbp w, char *val)
         return Failed;
     if (wc->fg)
         unlink_sharedcolor(wc->fg);
-    gamma_inv_adjust(w, &r, &g, &b);
-    a /= 256;
+    r /= 257;
+    g /= 257;
+    b /= 257;
+    a /= 257;
     n = (r << 24) | (g << 16) | (b << 8) | a;
     wc->fg = new_sharedcolor(val, n);
     return Succeeded;
@@ -1168,8 +1134,10 @@ int setbg(wbp w, char *val)
         return Failed;
     if (wc->bg)
         unlink_sharedcolor(wc->bg);
-    gamma_inv_adjust(w, &r, &g, &b);
-    a /= 256;
+    r /= 257;
+    g /= 257;
+    b /= 257;
+    a /= 257;
     n = (r << 24) | (g << 16) | (b << 8) | a;
     wc->bg = new_sharedcolor(val, n);
     return Succeeded;
@@ -1467,8 +1435,7 @@ int getpixel(wbp w, int x, int y, word *rv, char *s, struct imgmem *imem)
     b = *p++;
     g = *p++;
     r = *p++;
-    gamma_adjust(w, &r, &g, &b);
-    sprintf(s, "%d,%d,%d", r, g, b);
+    sprintf(s, "%d,%d,%d", r*257, g*257, b*257);
     return Succeeded;
 }
 
@@ -1974,15 +1941,6 @@ int setwindowlabel(wbp w, char *val)
     return Succeeded;
 }
 
-int setgamma(wbp w, double gamma)
-{
-    wcp wc = w->context;
-    wc->gamma = gamma;
-    setfg(w, w->context->fg->name);	/* reinterpret current Fg/Bg spec */
-    setbg(w, w->context->bg->name);
-    return Succeeded;
-}
-
 int setfillstyle(wbp w, char *val)
 {
     wcp wc = w->context;
@@ -2186,7 +2144,6 @@ wcp clonecontext(wbp w)
     wc->thick = src->thick;
     wc->fillstyle = src->fillstyle;
     wc->drawop = src->drawop;
-    wc->gamma = src->gamma;
     GRFX_LINK(wc, wcntxts);
     return wc;
 }
@@ -2205,7 +2162,6 @@ static wcp alccontext(wbp w)
     wc->fillstyle = stringint_lookup(fillstyles, "solid");
     wc->drawop = stringint_lookup(drawops, "copy");
     wc->linestyle = stringint_lookup(linestyles, "solid");
-    wc->gamma = GammaCorrection;
     GRFX_LINK(wc, wcntxts);
     return wc;
 }

@@ -1062,45 +1062,44 @@ int doconfig(wbp w, int status)
             unsetclip(w);
     }
 
-    if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE)) {
+    if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE | C_IMAGE)) {
         if (!resizePixmap(w, ws->width, ws->height))
             return Failed;
 
-        if (!ws->win)
-            return Succeeded;
+        if (ws->win) {
+            if (status != C_POS) {
+                XSizeHints size_hints;
+                long t;
 
-        if (status != C_POS) {
-            XSizeHints size_hints;
-            long t;
+                /* Not just a move */
 
-            /* Not just a move */
+                XGetWMNormalHints(wd->display, ws->win, &size_hints, &t);
+                if (ISRESIZABLE(w)) {
+                    size_hints.min_width = ws->minwidth;
+                    size_hints.min_height = ws->minheight;
+                    size_hints.max_width = ws->maxwidth;
+                    size_hints.max_height = ws->maxheight;
+                }
+                else {
+                    size_hints.min_width = size_hints.max_width = ws->width;
+                    size_hints.min_height = size_hints.max_height = ws->height;
+                }
+                XSetWMNormalHints(wd->display, ws->win, &size_hints);
+            }
 
-            XGetWMNormalHints(wd->display, ws->win, &size_hints, &t);
-            if (ISRESIZABLE(w)) {
-                size_hints.min_width = ws->minwidth;
-                size_hints.min_height = ws->minheight;
-                size_hints.max_width = ws->maxwidth;
-                size_hints.max_height = ws->maxheight;
-            }
-            else {
-                size_hints.min_width = size_hints.max_width = ws->width;
-                size_hints.min_height = size_hints.max_height = ws->height;
-            }
-            XSetWMNormalHints(wd->display, ws->win, &size_hints);
-        }
-
-        switch (status & (C_POS|C_SIZE)) {
-            case C_POS: {
-                XMoveWindow(wd->display, ws->win, ws->x, ws->y);
-                break;
-            }
-            case C_SIZE: {
-                XResizeWindow(wd->display, ws->win, ws->width, ws->height);
-                break;
-            }
-            case C_POS|C_SIZE: {
-                XMoveResizeWindow(wd->display, ws->win, ws->x, ws->y, ws->width, ws->height);
-                break;
+            switch (status & (C_POS|C_SIZE)) {
+                case C_POS: {
+                    XMoveWindow(wd->display, ws->win, ws->x, ws->y);
+                    break;
+                }
+                case C_SIZE: {
+                    XResizeWindow(wd->display, ws->win, ws->width, ws->height);
+                    break;
+                }
+                case C_POS|C_SIZE: {
+                    XMoveResizeWindow(wd->display, ws->win, ws->x, ws->y, ws->width, ws->height);
+                    break;
+                }
             }
         }
         if (status & C_IMAGE) {
@@ -1113,11 +1112,12 @@ int doconfig(wbp w, int status)
                 imd->width = 0;
             }
         }
-
-        /* XSync is not enough because the window manager gets involved here. */
-        XFlush(wd->display);			      /* force out request */
-        XGetWMName(wd->display, ws->win, &textprop);    /* force WM round trip */
-        XSync(wd->display, False);		      /* NOW sync */
+        if (ws->win) {
+            /* XSync is not enough because the window manager gets involved here. */
+            XFlush(wd->display);			      /* force out request */
+            XGetWMName(wd->display, ws->win, &textprop);    /* force WM round trip */
+            XSync(wd->display, False);		      /* NOW sync */
+        }
     }
         
     return Succeeded;
@@ -1733,19 +1733,6 @@ int setbg(wbp w, char *s)
     if (stdgc != NULL)
         XSetBackground(stddpy, stdgc, cp->c);
     return ISXORREVERSE(w) ? resetfg(w) : Succeeded;
-}
-
-/*
- * Set the gamma correction value.
- */
-int setgamma(wbp w, double gamma)
-{
-    wcp wc = w->context;
-    wdp wd = w->window->display;
-    wc->gamma = gamma;
-    setfg(w, wd->colors[wc->fg].name);	/* reinterpret current Fg/Bg spec */
-    setbg(w, wd->colors[wc->bg].name);
-    return Succeeded;
 }
 
 int setimage(wbp w, char *val)
@@ -3358,11 +3345,9 @@ static Pixmap loadimage(wbp w, char *filename,  int *height,
 static LinearColor lcolor(wbp w, XColor colorcell)
 {
     LinearColor l;
-    double gamma = w->context->gamma;
-
-    l.red   = 65535 * pow((int)colorcell.red   / 65535.0, gamma);
-    l.green = 65535 * pow((int)colorcell.green / 65535.0, gamma);
-    l.blue  = 65535 * pow((int)colorcell.blue  / 65535.0, gamma);
+    l.red   = colorcell.red;
+    l.green = colorcell.green;
+    l.blue  = colorcell.blue;
     return l;
 }
 
@@ -3372,11 +3357,9 @@ static LinearColor lcolor(wbp w, XColor colorcell)
 static XColor xcolor(wbp w, LinearColor c)
 {
     XColor x;
-    double invgamma = 1.0 / w->context->gamma;
-
-    x.red   = 65535 * pow(c.red   / 65535.0, invgamma);
-    x.green = 65535 * pow(c.green / 65535.0, invgamma);
-    x.blue  = 65535 * pow(c.blue  / 65535.0, invgamma);
+    x.red   = c.red;
+    x.green = c.green;
+    x.blue  = c.blue;
     x.flags = DoRed | DoGreen | DoBlue;
     x.pixel = 0;
     x.pad = 0;
@@ -3912,7 +3895,6 @@ static int go_virtual(wbp w)
  */
 static wdp alcdisplay(char *s)
 {
-    double g;
     wdp wd;
     XColor color;
 
@@ -3966,20 +3948,6 @@ static wdp alcdisplay(char *s)
     else
         wd->colors[1].c = WhitePixel(wd->display,wd->screen);
     wd->numColors = 2;
-
-    /*
-     * Set the default gamma correction value for windows that are
-     * opened on this display.  Start with configuration default,
-     * but if we can get an interpretation of "RGBi:.5/.5/.5",
-     * calculate a gamma value from that instead.
-     */
-    wd->gamma = GammaCorrection;
-    if (XParseColor(wd->display, wd->cmap, "RGBi:.5/.5/.5", &color)) {
-        g = .299 * color.red + .587 * color.green + .114 * color.blue;
-        g /= 65535;
-        if (g >= 0.1 && g <= 0.9)		/* sanity check */
-            wd->gamma = log(0.5) / log(g);
-    }
 
     /*
      * Initialize fonts and other things.
@@ -4473,7 +4441,6 @@ static wcp alccontext(wbp w)
     wc->bg = 1;
     wc->font = wd->fonts;
     wc->drawop = GXcopy;
-    wc->gamma = wd->gamma;
     wc->clipx = wc->clipy = 0;
     wc->clipw = wc->cliph = -1;
     wc->linewidth = 1;
@@ -4514,7 +4481,6 @@ wcp clonecontext(wbp w)
     rv->linestyle = wc->linestyle;
     rv->linewidth = wc->linewidth;
     rv->drawop = wc->drawop;
-    rv->gamma = wc->gamma;
     rv->bits = wc->bits;
 
     if (ISXORREVERSE(w))

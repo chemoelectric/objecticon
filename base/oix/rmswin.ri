@@ -1228,14 +1228,7 @@ int raisewindow(wbp w)
  */
 SysColor mscolor(wbp w, long r, long g, long b)
 {
-   SysColor x;
-   double invgamma = 1.0 / w->context->gamma;
-   long int red, green, blue;
-
-   red   = 65535L * pow(r / 65535.0, invgamma);
-   green = 65535L * pow(g / 65535.0, invgamma);
-   blue  = 65535L * pow(b / 65535.0, invgamma);
-   return RGB(red >> 8, green >> 8, blue >> 8);
+   return RGB(r >> 8, g >> 8, b >> 8);
 }
 
 /*
@@ -1446,19 +1439,6 @@ int setbg(wbp w, char *val)
     return ISXORREVERSE(w) ? resetfg(w) : Succeeded;
 }
 
-/*
- * Set the gamma correction factor.
- */
-int setgamma(w, gamma)
-wbp w;
-double gamma;
-   {
-   wcp wc = w->context;
-   wc->gamma = gamma;
-   setfg(w, wc->fgname);
-   setbg(w, wc->bgname);
-   return Succeeded;
-   }
 
 /*
  * setpointer() - define a mouse pointer shape
@@ -2664,7 +2644,6 @@ wbp w;
    wc->brush.lbColor = PALCLR(wc->fg);
    wc->bgbrush.lbStyle = BS_SOLID;
    wc->bgbrush.lbColor = PALCLR(wc->bg);
-   wc->gamma = GammaCorrection;
    wc->drawop = R2_COPYPEN;
    MemProtect(wc->font = calloc(1, sizeof (struct _wfont)));
    wc->font->name = salloc("fixed");
@@ -2736,7 +2715,6 @@ wbp w;
    wc->brush.lbStyle = wc->fillstyle;
    wc->bgbrush.lbStyle = wc->fillstyle;
    wc->bgbrush.lbColor = PALCLR(wc->bg);
-   wc->gamma = wc2->gamma;
    wc->drawop = wc2->drawop;
    MemProtect(wc->font = calloc(1, sizeof (struct _wfont)));
    wc->font->name = salloc("fixed");

@@ -209,7 +209,6 @@ typedef struct _wdisplay {
   Display *	display;
   struct progstate *program;           /* owning program */
   Colormap	cmap;
-  double	gamma;
   int		screen;
   wfp		fonts;
 #ifdef HAVE_LIBXFT
@@ -241,7 +240,6 @@ typedef struct _wcontext {
   int		clipx, clipy, clipw, cliph;
   wfp		font;
   int		dx, dy;
-  double	gamma;			/* gamma correction value */
   int		bits;			/* context bits */
 #if XWindows
   wdp		display;
@@ -390,13 +388,6 @@ struct wbind_list {
   struct wbind_list *next;
 };
 
-
-/*
- * Gamma Correction value to compensate for nonlinear monitor color response
- */
-#ifndef GammaCorrection
-#define GammaCorrection 2.5
-#endif					/* GammaCorrection */
 
 /*
  * Flags to doconfig()
