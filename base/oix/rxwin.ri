@@ -3359,10 +3359,15 @@ static LinearColor lcolor(wbp w, XColor colorcell)
 {
     LinearColor l;
     double gamma = w->context->gamma;
-
-    l.red   = 65535 * pow((int)colorcell.red   / 65535.0, gamma);
-    l.green = 65535 * pow((int)colorcell.green / 65535.0, gamma);
-    l.blue  = 65535 * pow((int)colorcell.blue  / 65535.0, gamma);
+    if (gamma == 1.0) {
+        l.red   = colorcell.red;
+        l.green = colorcell.green;
+        l.blue  = colorcell.blue;
+    } else {
+        l.red   = 65535 * pow(colorcell.red   / 65535.0, gamma);
+        l.green = 65535 * pow(colorcell.green / 65535.0, gamma);
+        l.blue  = 65535 * pow(colorcell.blue  / 65535.0, gamma);
+    }
     return l;
 }
 
@@ -3372,11 +3377,17 @@ static LinearColor lcolor(wbp w, XColor colorcell)
 static XColor xcolor(wbp w, LinearColor c)
 {
     XColor x;
-    double invgamma = 1.0 / w->context->gamma;
-
-    x.red   = 65535 * pow(c.red   / 65535.0, invgamma);
-    x.green = 65535 * pow(c.green / 65535.0, invgamma);
-    x.blue  = 65535 * pow(c.blue  / 65535.0, invgamma);
+    double gamma = w->context->gamma;
+    if (gamma == 1.0) {
+        x.red   = c.red;
+        x.green = c.green;
+        x.blue  = c.blue;
+    } else {
+        double invgamma = 1.0 / gamma;
+        x.red   = 65535 * pow(c.red   / 65535.0, invgamma);
+        x.green = 65535 * pow(c.green / 65535.0, invgamma);
+        x.blue  = 65535 * pow(c.blue  / 65535.0, invgamma);
+    }
     x.flags = DoRed | DoGreen | DoBlue;
     x.pixel = 0;
     x.pad = 0;
