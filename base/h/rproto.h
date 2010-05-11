@@ -243,7 +243,6 @@ void  bigrand         (dptr da, dptr dx);
    int  rebind          (wbp w, wbp w2);
    int  setbg           (wbp w, char *s);
    int  setcanvas       (wbp w, char *s);
-   int  setdisplay      (wbp w, char *s);
    int  setdrawop       (wbp w, char *val);
    int  setfg           (wbp w, char *s);
    int  setfillstyle    (wbp w, char *s);

@@ -1748,26 +1748,6 @@ int setgamma(wbp w, double gamma)
     return Succeeded;
 }
 
-/*
- * Set the display by name.  Really should cache answers as per fonts below;
- * for now just open a new display each time.  Note that this can only be
- * called before a window is instantiated...
- */
-int setdisplay(wbp w, char *s)
-{
-    wdp d;
-    /* can't change display for mapped window! */
-    if (w->window->pix != (Pixmap) NULL)
-        return Failed;
-
-    Protect(d = alcdisplay(s), return 0);
-    w->window->display = d;
-    w->context->fg = 0;
-    w->context->bg = 1;
-    w->context->font = d->fonts;
-    return Succeeded;
-}
-
 int setimage(wbp w, char *val)
 {
     wsp ws = w->window;
