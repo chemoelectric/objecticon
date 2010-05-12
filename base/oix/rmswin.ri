@@ -1228,7 +1228,7 @@ int raisewindow(wbp w)
 /*
  * convert an Icon linear color into an MS Windows color value
  */
-SysColor mscolor(wbp w, long r, long g, long b)
+SysColor mscolor(wbp w, int r, int g, int b)
 {
    return RGB(r >> 8, g >> 8, b >> 8);
 }
@@ -3060,21 +3060,26 @@ int doconfig(w, status)
             }
         }
         else if (ws->iconwin) {
-            if (status == 3) {
-                SetWindowPos(ws->iconwin, ws->iconwin,
-                             posx,
-                             posy,
-                             wid, ht, SWP_NOZORDER|SWP_NOACTIVATE);
-            }
-            else if (status == 2) {
-                SetWindowPos(ws->iconwin, ws->iconwin, 0, 0,
-                             wid, ht, SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
-            }
-            else if (status == 1)
-                SetWindowPos(ws->iconwin, ws->iconwin,
-                             posx,
-                             posy,
-                             0, 0, SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
+            switch (status & (C_POS|C_SIZE)) {
+                case C_POS|C_SIZE: {
+		   SetWindowPos(ws->iconwin, ws->iconwin,
+				posx,
+				posy,
+				wid, ht, SWP_NOZORDER|SWP_NOACTIVATE);
+		   break;
+		}
+                case C_SIZE: {
+		   SetWindowPos(ws->iconwin, ws->iconwin, 0, 0,
+				wid, ht, SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
+		   break;
+		}
+                case C_POS: {
+		   SetWindowPos(ws->iconwin, ws->iconwin,
+				posx,
+				posy,
+				0, 0, SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
+		}
+	    }
         }
     }
     if (status & C_IMAGE) {
