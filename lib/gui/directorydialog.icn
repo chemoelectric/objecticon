@@ -213,7 +213,12 @@ $endif
    end
 
    public on_up_button(ev)
-      goto_dir(self.get_dir_path().parent().str())
+      local t
+      t := self.get_dir_path()
+      if t.size() > 1 then
+         goto_dir(t.parent().str())
+      else
+         msg("At root")
    end
 
    public on_home_button(ev)
