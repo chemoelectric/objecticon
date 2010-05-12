@@ -861,9 +861,10 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
          handle_config(wb, msg, wp, lp);
       break;
    case WM_MOVE:
-      /* x,y represents the position of the whole window, not the client area */
-      ws->x = LOWORD(lp) - CLIENT_XOFF;
-      ws->y = HIWORD(lp) - CLIENT_YOFF; 
+      /* x,y represents the position of the drawable area. Casting to
+         short ensures -ve values are handle correctly */
+      ws->x = (short)LOWORD(lp);
+      ws->y = (short)HIWORD(lp); 
       break;
    case WM_ACTIVATE:
       break;
@@ -1166,6 +1167,7 @@ char *s;
       wc->font->ascent = metrics.tmAscent;
       wc->font->descent = metrics.tmDescent;
 /*    wc->font->maxwidth = metrics.tmMaxCharWidth; unreliable due to MS bug */
+      wc->font->height = metrics.tmHeight;
       return Succeeded;
       }
    return Failed;
@@ -3090,6 +3092,15 @@ int doconfig(w, status)
 }
 
 
+int grabpointer(wbp w)
+{
+   return Failed;
+}
+
+int ungrabpointer(wbp w)
+{
+   return Failed;
+}
 
 int resizePixmap(wbp w, int width, int height)
    {
