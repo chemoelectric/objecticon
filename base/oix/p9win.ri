@@ -968,9 +968,9 @@ void drawstrimage(wbp w, int x, int y, int width, int height,
         } else {
             LinearColor c = e[s[i]].clr;
             imgdata[j++] = 255;
-            imgdata[j++] = c.blue;
-            imgdata[j++] = c.green;
-            imgdata[j++] = c.red;
+            imgdata[j++] = c.blue / 257;
+            imgdata[j++] = c.green / 257;
+            imgdata[j++] = c.red / 257;
         }
     }
 
