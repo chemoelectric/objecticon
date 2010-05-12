@@ -187,8 +187,13 @@ class DirectoryDialog(Dialog)
    public find_child(n, s)
       local n1
       every n1 := !n.children do {
+$ifdef _MS_WIN32
+         if map(n1.label) == map(s) then
+            return n1
+$else
          if n1.label == s then
             return n1
+$endif
       }
    end
 
