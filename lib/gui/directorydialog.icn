@@ -187,8 +187,13 @@ class DirectoryDialog(Dialog)
    public find_child(n, s)
       local n1
       every n1 := !n.children do {
+$ifdef _MS_WIN32
+         if map(n1.label) == map(s) then
+            return n1
+$else
          if n1.label == s then
             return n1
+$endif
       }
    end
 
@@ -208,7 +213,12 @@ class DirectoryDialog(Dialog)
    end
 
    public on_up_button(ev)
-      goto_dir(self.get_dir_path().parent().str())
+      local t
+      t := self.get_dir_path()
+      if t.size() > 1 then
+         goto_dir(t.parent().str())
+      else
+         msg("At root")
    end
 
    public on_home_button(ev)

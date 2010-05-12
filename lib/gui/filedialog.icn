@@ -230,7 +230,12 @@ class FileDialog(Dialog)
    end
 
    public on_up_button(ev)
-      goto_dir(self.get_dir_path().parent().str(), 1)
+      local t
+      t := self.get_dir_path()
+      if t.size() > 1 then
+         goto_dir(t.parent().str(), 1)
+      else
+         msg("At root")
    end
 
    public on_home_button(ev)

@@ -49,8 +49,7 @@ static void free_display   (wdp wd);
 static wfp alcfont(wbp w, char *s);
 static wfp tryfont(wbp w, char *s);
 static wclrp alcrgb(wbp w, char *s, unsigned int r,
-                     unsigned int g, unsigned int b,
-                     int is_iconcolor);
+                     unsigned int g, unsigned int b);
 static int alccentry(wdp wd);
 static void copy_colors(wbp w1, wbp w2);
 static void free_xcolor(wbp w, unsigned long c);
@@ -644,7 +643,6 @@ static int handle_misc(wdp wd)
                         ws->initialPix = (Pixmap) NULL;
                     }
                     free_xcolors(wb, 2); /* free regular colors */
-                    free_xcolors(wb, 1); /* free icon colors */
                 }
                 break;
             default:
@@ -700,7 +698,6 @@ void wclose(wbp w)
      */
     else {
         free_xcolors(w, 2);
-        free_xcolors(w, 1);
     }
 }
 /*
@@ -1062,7 +1059,7 @@ int doconfig(wbp w, int status)
             unsetclip(w);
     }
 
-    if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE | C_IMAGE)) {
+    if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE)) {
         if (!resizePixmap(w, ws->width, ws->height))
             return Failed;
 
@@ -1101,25 +1098,24 @@ int doconfig(wbp w, int status)
                     break;
                 }
             }
-        }
-        if (status & C_IMAGE) {
-            struct imgdata *imd = &ws->initimage;
-            if (imd->width) {
-                drawstrimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
-                             imd->data, imd->width * imd->height);
-                free(imd->paltbl);
-                free(imd->data);
-                imd->width = 0;
-            }
-        }
-        if (ws->win) {
             /* XSync is not enough because the window manager gets involved here. */
             XFlush(wd->display);			      /* force out request */
             XGetWMName(wd->display, ws->win, &textprop);    /* force WM round trip */
             XSync(wd->display, False);		      /* NOW sync */
         }
     }
-        
+
+    if (status & C_IMAGE) {
+        struct imgdata *imd = &ws->initimage;
+        if (imd->width) {
+            drawstrimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
+                         imd->data, imd->width * imd->height);
+            free(imd->paltbl);
+            free(imd->data);
+            imd->width = 0;
+        }
+    }
+
     return Succeeded;
 }
 
@@ -1706,7 +1702,7 @@ int setfg(wbp w, char *s)
      */
     if (parsecolor(s, &r, &g, &b, &a) != Succeeded)
         return Failed;
-    Protect(cp = alcrgb(w, s, r, g, b, 0), return Failed);
+    Protect(cp = alcrgb(w, s, r, g, b), return Failed);
     wc->fg = (cp - wd->colors);
     return resetfg(w);
 }
@@ -1728,7 +1724,7 @@ int setbg(wbp w, char *s)
      */
     if (parsecolor(s, &r, &g, &b, &a) != Succeeded)
         return Failed;
-    Protect(cp = alcrgb(w, s, r, g, b, 0), return Failed);
+    Protect(cp = alcrgb(w, s, r, g, b), return Failed);
     wc->bg = (cp - wd->colors);
     if (stdgc != NULL)
         XSetBackground(stddpy, stdgc, cp->c);
@@ -2351,14 +2347,14 @@ int copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2)
                             cp->b = clr.blue;
                             sprintf(cp->name,"%d,%d,%d",cp->r,cp->g,cp->b);
                         }
-                        cp2 = alcrgb(w2, cp->name, cp->r, cp->g, cp->b, 0);
+                        cp2 = alcrgb(w2, cp->name, cp->r, cp->g, cp->b);
                         if (cp2 == NULL) return Failed;
                         break;
                     }
                 }
                 if (cp2 == NULL) {
                     XQueryColor(d1, wd1->cmap, &clr);
-                    cp2 = alcrgb(w2, "unknown", clr.red, clr.green, clr.blue, 0);
+                    cp2 = alcrgb(w2, "unknown", clr.red, clr.green, clr.blue);
                 }
                 if (cp2 == NULL) return Failed;
                 XSetForeground(stddpy, stdgc, cp2->c);
@@ -2611,13 +2607,13 @@ void drawstrimage(wbp w, int x, int y, int width, int height,
                 g = e[c].clr.green;
                 b = e[c].clr.blue;
                 sprintf(tmp, "%d,%d,%d", r, g, b);
-                cp = alcrgb(w, tmp, r, g, b, 0);
+                cp = alcrgb(w, tmp, r, g, b);
                 if (cp == NULL) {
                     ret++;
                     if ((0.299 * r + 0.587 * g + 0.114 * b) > 32767)
-                        cp = alcrgb(w, "white", 65535, 65535, 65535, 0);
+                        cp = alcrgb(w, "white", 65535, 65535, 65535);
                     else
-                        cp = alcrgb(w, "black", 0, 0, 0, 0);
+                        cp = alcrgb(w, "black", 0, 0, 0);
                 }
                 ciarray[c] = cp-wd->colors;
             }
@@ -2651,7 +2647,7 @@ void drawstrimage(wbp w, int x, int y, int width, int height,
                 int b = *s++ * 257;
                 int g = *s++ * 257;
                 int r = *s++ * 257;
-                wclrp cp = alcrgb(w,"anon", r, g, b, 0);
+                wclrp cp = alcrgb(w,"anon", r, g, b);
                 XPutPixel(im, ix++, iy, cp->c);
 	    }
             iy++;
@@ -3600,8 +3596,7 @@ void drawutf8(wbp w, int x, int y, char *s, int slen, int nchars)
  * per-display basis, but they are often freed on a per-window basis,
  * so they are remembered in two structures.
  */
-static wclrp alcrgb(wbp w, char *s, unsigned int r, unsigned int g,
-              unsigned int b, int is_iconcolor)
+static wclrp alcrgb(wbp w, char *s, unsigned int r, unsigned int g, unsigned int b)
 {
     LinearColor lc;
     XColor color;
@@ -3619,24 +3614,13 @@ static wclrp alcrgb(wbp w, char *s, unsigned int r, unsigned int g,
     if ((r == 65535) && (g == 65535) && (b == 65535))
         return &(wd->colors[1]);
 
-    if (is_iconcolor) {
-        if (ws->iconColors == NULL) {
-            MemProtect(ws->iconColors = calloc(WMAXCOLORS, sizeof(short)));
-            ws->siziColors = WMAXCOLORS;
-        }
-        numColors = &(ws->numiColors);
-        sizColors = &(ws->siziColors);
-        theColors = &(ws->iconColors);
+    if (ws->theColors == NULL) {
+        MemProtect(ws->theColors = calloc(WMAXCOLORS*2, sizeof(short)));
+        ws->sizColors = WMAXCOLORS*2;
     }
-    else {
-        if (ws->theColors == NULL) {
-            MemProtect(ws->theColors = calloc(WMAXCOLORS*2, sizeof(short)));
-            ws->sizColors = WMAXCOLORS*2;
-        }
-        numColors = &(ws->numColors);
-        sizColors = &(ws->sizColors);
-        theColors = &(ws->theColors);
-    }
+    numColors = &(ws->numColors);
+    sizColors = &(ws->sizColors);
+    theColors = &(ws->theColors);
 
     /*
      * Change into server-dependent R G B
@@ -3679,7 +3663,7 @@ static wclrp alcrgb(wbp w, char *s, unsigned int r, unsigned int g,
 
         if (!XAllocColor(stddpy, wd->cmap, &color)) {
             /* try again with a virtual colormap (but not for an icon) */
-            if (is_iconcolor || !go_virtual(w) ||
+            if (!go_virtual(w) ||
                 !XAllocColor(stddpy, wd->cmap, &color))
                 return NULL;
         }
@@ -3801,7 +3785,7 @@ static void free_xcolor(wbp w, unsigned long c)
 /*
  * free the colors allocated by a given window.  extent indicates how much
  * to free.  extent == 0 implies window colors except black, white,
- * fg, bg, wbg, and mutable colors.  extent == 1 implies free icon colors.
+ * fg, bg, wbg, and mutable colors.
  * extent == 2 implies free window AND fg/bg/wbg (window is closed)
  */
 static void free_xcolors(wbp w, int extent)
@@ -3809,19 +3793,13 @@ static void free_xcolors(wbp w, int extent)
     int i;
     unsigned long *toFree;
     int freed = 0;
-    int *numColors;
     int numSaved;
-    short *theColors;
     STDLOCALS(w);
 
-    numColors = (extent==1 ? &(ws->numiColors) : &(ws->numColors));
-    theColors = (extent==1 ? ws->iconColors : ws->theColors);
-
-    MemProtect(toFree = malloc(*numColors * sizeof(unsigned long)));
+    MemProtect(toFree = malloc(ws->numColors * sizeof(unsigned long)));
     numSaved = 0;
-    for (i = *numColors-1; i >= 0; i--) {
-        int j = theColors[i];
-
+    for (i = ws->numColors-1; i >= 0; i--) {
+        int j = ws->theColors[i];
 
         if (j < 2)		/* black & white are permanent residents */
             continue;
@@ -3831,11 +3809,10 @@ static void free_xcolors(wbp w, int extent)
         if (((extent==0) && (j == w->context->fg)) ||
             ((extent==0) && (j == w->context->bg)) ||
             (wd->colors[j].type == MUTABLE)) {
-            theColors[numSaved++] = j;
+            ws->theColors[numSaved++] = j;
             continue;
         }
 
-#ifndef NoFreeColorFix
         /*
          * don't free ANY context's fg or bg
          */
@@ -3844,7 +3821,7 @@ static void free_xcolors(wbp w, int extent)
             for(wc=wcntxts; wc; wc=wc->next) {
                 if ((wc->fg == j) || (wc->bg == j)) {
                     if (numhits == 0)
-                        theColors[numSaved++] = j;
+                        ws->theColors[numSaved++] = j;
                     numhits++;
                 }
             }
@@ -3854,15 +3831,13 @@ static void free_xcolors(wbp w, int extent)
                 continue;
             }
         }
-#endif					/* NoFreeColorFix */
-
         if (--(wd->colors[j].refcount) == 0) {
             toFree[freed++] = wd->colors[j].c;
         }
     }
     if (freed>0)
         XFreeColors(stddpy, wd->cmap, toFree, freed,0);
-    *numColors = numSaved;
+    ws->numColors = numSaved;
     free(toFree);
 }
 
@@ -4584,8 +4559,7 @@ void freewindow(wsp ws)
         /*
          * free any malloc'ed space within this window state, before freeing it in GRFX_UNLINK
          */
-        if (ws->theColors) { free(ws->theColors); ws->iconColors = NULL; }
-        if (ws->iconColors) { free(ws->iconColors); ws->iconColors = NULL; }
+        if (ws->theColors) { free(ws->theColors); ws->theColors = NULL; }
 
         imd = &ws->initimage;
         if (imd->width) {

@@ -329,9 +329,6 @@ typedef struct _wstate {
   int           numColors;		/* allocated (used) color info */
   int           sizColors;		/* malloced size of theColors */
   short		*theColors;		/* indices into display color table */
-  int           numiColors;		/* allocated color info for the icon */
-  int           siziColors;		/* malloced size of iconColors */
-  short		*iconColors;		/* indices into display color table */
   int		iconic;			/* window state; icon, window or root*/
   Window        transientfor;           /* transient-for hint */
   long		wmhintflags;		/* window manager hints */

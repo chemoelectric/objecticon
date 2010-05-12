@@ -861,9 +861,10 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
          handle_config(wb, msg, wp, lp);
       break;
    case WM_MOVE:
-      /* x,y represents the position of the whole window, not the client area */
-      ws->x = LOWORD(lp) - CLIENT_XOFF;
-      ws->y = HIWORD(lp) - CLIENT_YOFF; 
+      /* x,y represents the position of the drawable area. Casting to
+         short ensures -ve values are handle correctly */
+      ws->x = (short)LOWORD(lp);
+      ws->y = (short)HIWORD(lp); 
       break;
    case WM_ACTIVATE:
       break;
@@ -1166,6 +1167,7 @@ char *s;
       wc->font->ascent = metrics.tmAscent;
       wc->font->descent = metrics.tmDescent;
 /*    wc->font->maxwidth = metrics.tmMaxCharWidth; unreliable due to MS bug */
+      wc->font->height = metrics.tmHeight;
       return Succeeded;
       }
    return Failed;
@@ -1226,7 +1228,7 @@ int raisewindow(wbp w)
 /*
  * convert an Icon linear color into an MS Windows color value
  */
-SysColor mscolor(wbp w, long r, long g, long b)
+SysColor mscolor(wbp w, int r, int g, int b)
 {
    return RGB(r >> 8, g >> 8, b >> 8);
 }
@@ -3058,21 +3060,26 @@ int doconfig(w, status)
             }
         }
         else if (ws->iconwin) {
-            if (status == 3) {
-                SetWindowPos(ws->iconwin, ws->iconwin,
-                             posx,
-                             posy,
-                             wid, ht, SWP_NOZORDER|SWP_NOACTIVATE);
-            }
-            else if (status == 2) {
-                SetWindowPos(ws->iconwin, ws->iconwin, 0, 0,
-                             wid, ht, SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
-            }
-            else if (status == 1)
-                SetWindowPos(ws->iconwin, ws->iconwin,
-                             posx,
-                             posy,
-                             0, 0, SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
+            switch (status & (C_POS|C_SIZE)) {
+                case C_POS|C_SIZE: {
+		   SetWindowPos(ws->iconwin, ws->iconwin,
+				posx,
+				posy,
+				wid, ht, SWP_NOZORDER|SWP_NOACTIVATE);
+		   break;
+		}
+                case C_SIZE: {
+		   SetWindowPos(ws->iconwin, ws->iconwin, 0, 0,
+				wid, ht, SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
+		   break;
+		}
+                case C_POS: {
+		   SetWindowPos(ws->iconwin, ws->iconwin,
+				posx,
+				posy,
+				0, 0, SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
+		}
+	    }
         }
     }
     if (status & C_IMAGE) {
@@ -3090,6 +3097,15 @@ int doconfig(w, status)
 }
 
 
+int grabpointer(wbp w)
+{
+   return Failed;
+}
+
+int ungrabpointer(wbp w)
+{
+   return Failed;
+}
 
 int resizePixmap(wbp w, int width, int height)
    {
