@@ -257,7 +257,7 @@ class Tree(SelectableScrollArea)
       y0 := yp + lh / 2
 
       N := contents[i]
-      dashed := view.cbwin.clone("pattern=gray", "fill_style=textured")
+      dashed := view.cbwin.clone("fill_style=masked", "pattern=gray")
       lp := xp
       every j := 1 to N.depth - 1 do {
          if N.draw_line[j] == ("f"|"d") then
