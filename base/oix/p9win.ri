@@ -793,12 +793,17 @@ void drawarc(wbp w, int x, int y, int width, int height, double angle1, double a
 
 void drawlines(wbp w, XPoint *points, int npoints)
 {
-    int i;
+    int i, term;
     wsp ws = w->window;
     wcp wc = w->context;
 
+    /* Hack - if line thickness is 1, and we are drawing a horizontal or vertical line, then
+     * Endsquare omits the last pixel (eg 0,0->0,1 just draws a single dot at 0,0).
+     */
+    term = wc->thick == 1 ? Enddisc:Endsquare;
+
     clip(wc, ws->pix);
-    polyop(ws->pix, points, npoints, Endsquare, Endsquare, wc->thick, 
+    polyop(ws->pix, points, npoints, term, term, wc->thick, 
            get_draw_img(wc), ZP, wc->drawop->i);
     unclip(wc, ws->pix);
 
@@ -808,7 +813,7 @@ void drawlines(wbp w, XPoint *points, int npoints)
             points[i].y += ws->win->r.min.y;
         }
         clip(wc, ws->win);
-        polyop(ws->win, points, npoints, Endsquare, Endsquare, wc->thick, 
+        polyop(ws->win, points, npoints, term, term, wc->thick, 
                get_draw_img(wc), ZP, wc->drawop->i);
         unclip(wc, ws->win);
     }
