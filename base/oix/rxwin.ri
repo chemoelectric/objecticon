@@ -765,18 +765,11 @@ wbp wcreate(char *display, wbp parent)
 
 int wopen(wbp w)
 {
-    wsp ws = w->window;
-
     if (wmap(w) != Succeeded) {
         LitWhy("Failed to map window");
         return Failed;
     }
 	
-    if (ws->win) {
-        Atom WMDeleteWindow = XInternAtom(ws->display->display, "WM_DELETE_WINDOW", False);
-        XSetWMProtocols(ws->display->display, ws->win, &WMDeleteWindow, 1);
-    }
-
     return Succeeded;
 }
 
@@ -826,10 +819,9 @@ static int wmap(wbp w)
      * create the X window (or use the DefaultRootWindow if requested)
      */
     if (ws->iconic != HiddenState) {
+        Atom WMDeleteWindow;
         XSetWindowAttributes attr;
-        attr.background_pixmap = None;
         attr.background_pixel = wd->colors[wc->bg].c;
-        attr.event_mask = StructureNotifyMask | ExposureMask;
 
         switch (ws->iconic) {
             case RootState:
@@ -872,8 +864,10 @@ static int wmap(wbp w)
 
         /* Turn off background; this prevents X filling the background on an expose
            and hence prevents unsightly flicker on a resize. */
-        if (ws->win)
-            XSetWindowBackgroundPixmap(stddpy, ws->win, None);
+        XSetWindowBackgroundPixmap(stddpy, ws->win, None);
+
+        WMDeleteWindow = XInternAtom(ws->display->display, "WM_DELETE_WINDOW", False);
+        XSetWMProtocols(ws->display->display, ws->win, &WMDeleteWindow, 1);
 
         stdwin = ws->win;
         XClearWindow(stddpy, stdwin);
