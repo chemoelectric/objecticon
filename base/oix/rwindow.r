@@ -1927,12 +1927,9 @@ struct palentry *palsetup(int p)
 
     if (palnumber == p)
         return palsetup_palette;
-    if (palsetup_palette == NULL) {
-        palsetup_palette =
-            malloc(256 * sizeof(struct palentry));
-        if (palsetup_palette == NULL)
-            return NULL;
-    }
+    if (palsetup_palette == NULL)
+        MemProtect(palsetup_palette = malloc(256 * sizeof(struct palentry)));
+
     palnumber = p;
 
     for (i = 0; i < 256; i++)

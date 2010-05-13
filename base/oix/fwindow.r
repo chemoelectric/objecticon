@@ -479,8 +479,6 @@ function graphics_Window_draw_image(self, x0, y0, d)
        * Scan the image to see which colors are needed.
        */
       e = palsetup(p); 
-      if (e == NULL)
-          runerr(305);
       for (i = 0; i < 256; i++)
           e[i].used = 0;
       nchars = 0;
@@ -846,8 +844,6 @@ function graphics_Window_palette_color(s1, s2)
       if (StrLen(d) != 1)
           runerr(205, d);
       e = palsetup(p); 
-      if (e == NULL)
-          runerr(305);
       e += *StrLoc(d) & 0xFF;
       if (!e->valid)
           fail;
