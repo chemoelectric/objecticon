@@ -1034,8 +1034,10 @@ function graphics_Window_read_image(self, x, y, file, pal)
           p = palnum(&pal);
           if (p == -1)
               runerr(103, pal);
-          if (p == 0)
+          if (p == 0) {
+              LitWhy("Invalid palette");
               fail;
+          }
       }
 
       x += self_w->context->dx;
@@ -1811,17 +1813,31 @@ function graphics_Window_set_height(self, height)
    }
 end
 
-function graphics_Window_set_image(self, val)
+function graphics_Window_set_image(self, val, pal)
    if !cnv:string(val) then
       runerr(103, val)
    body {
        wsp ws;
        char *s;
-       int r;
+       int r, p;
        GetSelfW();
        ws = self_w->window;
+       /*
+        * p is an optional palette name.
+        */
+       if (is:null(pal)) 
+           p = 0;
+       else {
+           p = palnum(&pal);
+           if (p == -1)
+               runerr(103, pal);
+           if (p == 0) {
+               LitWhy("Invalid palette");
+               fail;
+           }
+       }
        s = buffstr(&val);
-       r = readimagefile(s, 0, &ws->initimage);
+       r = readimagefile(s, p, &ws->initimage);
        if (r == Succeeded) {
            self_w->window->width = ws->initimage.width;
            self_w->window->height = ws->initimage.height;
