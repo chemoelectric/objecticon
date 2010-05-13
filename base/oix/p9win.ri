@@ -10,7 +10,7 @@ static int open_winfile(wsp ws, char *s, int mode);
 static wsp alcwinstate(void);
 static wcp alccontext(wbp w);
 static wfp alcfont(wbp w, char **s);
-static void synch_pattern_image(struct SharedPattern *pat, int rgba, int style);
+static void synch_pattern_image(struct SharedPattern *pat, int fg_rgba, int bg_rgba, int style);
 static int configure_canvas(wbp w);
 static void mouse_loop(int in_fd, int out_fd, int time_fd);
 static Rune *utf8_to_runes(char *str, int nchars);
@@ -277,7 +277,7 @@ static struct SharedPattern *new_sharedpattern(int width, int height, int bits[]
     res->width = width;
     res->height = height;
     memcpy(res->bits, bits, sizeof(res->bits));
-    res->rgba = 0;
+    res->fg_rgba = res->bg_rgba = 0;
     return res;
 }
 
@@ -1192,7 +1192,7 @@ static Image *get_draw_img(wcp wc)
     if (wc->fillstyle->i == FillSolid) {
         return wc->fg->i;
     } else {
-        synch_pattern_image(wc->pattern, wc->fg->rgba, wc->fillstyle->i);
+        synch_pattern_image(wc->pattern, wc->fg->rgba, wc->bg->rgba, wc->fillstyle->i);
         return wc->pattern->i;
     }
 }
@@ -1308,18 +1308,18 @@ int lowerwindow (wbp w)
     return Succeeded;
 }
 
-static void synch_pattern_image(struct SharedPattern *pat, int rgba, int style)
+static void synch_pattern_image(struct SharedPattern *pat, int fg_rgba, int bg_rgba, int style)
 {
     int i, j, k, x, y, v, a1, a2;
     unsigned char data[MAXXOBJS * 8 * 8 * 4];
 
-    if (pat->i && pat->rgba == rgba && pat->style == style)
+    if (pat->i && pat->fg_rgba == fg_rgba && pat->bg_rgba == bg_rgba && pat->style == style)
         return;
 
     if (style == FillTextured) {
         /*
          * Textured style means no transparency; on bits are fg rgb, off bits
-         * are black.
+         * are bg rgb.
          */
         k = 0;
         for(i = 0; i < pat->height; i++) {
@@ -1329,13 +1329,13 @@ static void synch_pattern_image(struct SharedPattern *pat, int rgba, int style)
                 for (y = 0; y < 8; ++y) {
                     int bit = (x & 1);
                     if (bit) {
-                        data[k++] = (rgba>>8) & 0xff;
-                        data[k++] = (rgba>>16) & 0xff;
-                        data[k++] = (rgba>>24) & 0xff;
+                        data[k++] = (fg_rgba>>8) & 0xff;
+                        data[k++] = (fg_rgba>>16) & 0xff;
+                        data[k++] = (fg_rgba>>24) & 0xff;
                     } else {
-                        data[k++] = 0x00;
-                        data[k++] = 0x00;
-                        data[k++] = 0x00;
+                        data[k++] = (bg_rgba>>8) & 0xff;
+                        data[k++] = (bg_rgba>>16) & 0xff;
+                        data[k++] = (bg_rgba>>24) & 0xff;
                     }
                     x /= 2;
                 }
@@ -1359,10 +1359,10 @@ static void synch_pattern_image(struct SharedPattern *pat, int rgba, int style)
                 for (y = 0; y < 8; ++y) {
                     int bit = (x & 1);
                     if (bit) {
-                        data[k++] = rgba & 0xff;
-                        data[k++] = (rgba>>8) & 0xff;
-                        data[k++] = (rgba>>16) & 0xff;
-                        data[k++] = (rgba>>24) & 0xff;
+                        data[k++] = fg_rgba & 0xff;
+                        data[k++] = (fg_rgba>>8) & 0xff;
+                        data[k++] = (fg_rgba>>16) & 0xff;
+                        data[k++] = (fg_rgba>>24) & 0xff;
                     } else {
                         data[k++] = 0x00;
                         data[k++] = 0x00;
@@ -1381,7 +1381,8 @@ static void synch_pattern_image(struct SharedPattern *pat, int rgba, int style)
     }
 
     loadimage(pat->i, pat->i->r, data, k);
-    pat->rgba = rgba;
+    pat->fg_rgba = fg_rgba;
+    pat->bg_rgba = bg_rgba;
     pat->style = style;
 }
 

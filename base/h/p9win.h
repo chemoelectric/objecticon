@@ -10,10 +10,10 @@ struct SharedColor {
 struct SharedPattern {
    int width, height;    /* Data representing the pattern */
    int bits[MAXXOBJS];
-   Image *i;             /* Cached image of the pattern computed according to rgba and style.  It is */
-                         /* recomputed as and when rgba and/or style change. */
+   Image *i;             /* Cached image of the pattern computed according to fg & bg rgba and style.  It is */
+                         /* recomputed as and when fg/bg rgba and/or style change. */
    char *name;
-   int   rgba, style;
+   int   fg_rgba, bg_rgba, style;
    int   refcount;
 };
 
