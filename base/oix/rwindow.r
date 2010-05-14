@@ -615,8 +615,7 @@ static int jpg_space;
 struct palentry *bmp_paltbl(int n, int *colortable)
 {
     int i;
-    if (!(gf_paltbl=(struct palentry *)calloc(256, sizeof(struct palentry))))
-        return NULL;
+    MemProtect(gf_paltbl = (struct palentry *)calloc(256, sizeof(struct palentry)));
     for(i=0;i<n;i++) {
         gf_paltbl[i].used = gf_paltbl[i].valid = 1;
         gf_paltbl[i].transpt = 0;
@@ -791,8 +790,7 @@ static int gfread(char *filename, int p)
     gf_suffix = NULL;
     gf_string = NULL;
 
-    if (!(gf_paltbl=malloc(256 * sizeof(struct palentry))))
-        return Failed;
+    MemProtect(gf_paltbl = malloc(256 * sizeof(struct palentry)));
 
 #if MSWIN32
     if ((gf_f = fopen(filename, "rb")) == NULL)
@@ -1141,7 +1139,7 @@ static void gfput(int b)
 /*
  * readJPEG(filename, p, imd) - read JPEG file into image data structure
  * p is a palette number to which the JPEG colors are to be coerced;
- * p=0 uses the colors exactly as given in the JPEG file.
+ * p=0 uses the palette colours created by the quantization of the jpeg library itself.
  */
 static int jpegread(char *filename, int p);
 
@@ -1171,7 +1169,11 @@ static int jpegread(char *filename, int p)
     JSAMPARRAY buffer;
     int row_stride;
     int i,j;
+    struct palentry *stdpal = 0;
+
     gf_f = NULL;
+    if (p)
+        stdpal = palsetup(p);
 
 #if MSWIN32
     if ((gf_f = fopen(filename, "rb")) == NULL)
@@ -1196,13 +1198,8 @@ static int jpegread(char *filename, int p)
     /*
      * set parameters for decompression
      */
-    if (p == 1) {  /* 8-bit */
-        cinfo.quantize_colors = TRUE;
-        cinfo.desired_number_of_colors = 254;
-    }
-    else { 
-        cinfo.quantize_colors = FALSE;
-    }
+    cinfo.quantize_colors = TRUE;
+    cinfo.desired_number_of_colors = 254;
 
     /* Start decompression */
 
@@ -1211,26 +1208,30 @@ static int jpegread(char *filename, int p)
     gf_height = cinfo.output_height;
     row_stride = cinfo.output_width * cinfo.output_components; /* actual width of the image */
 
-    if (p == 1) {
-        if (!(gf_paltbl=malloc(256 * sizeof(struct palentry))))
-            return Failed;
+    MemProtect(gf_paltbl = malloc(256 * sizeof(struct palentry)));
 
-        for (i = 0; i < cinfo.actual_number_of_colors; i++) {
-            /* init palette table */
-            gf_paltbl[i].used = 1;
-            gf_paltbl[i].valid = 1;
-            gf_paltbl[i].transpt = 0;
+    for (i = 0; i < cinfo.actual_number_of_colors; i++) {
+        /* init palette table */
+        gf_paltbl[i].used = 1;
+        gf_paltbl[i].valid = 1;
+        gf_paltbl[i].transpt = 0;
+        if (p) {
+            int c = *(unsigned char *)(rgbkey(p, 
+                                              cinfo.colormap[0][i] / 255.0, 
+                                              cinfo.colormap[1][i] / 255.0, 
+                                              cinfo.colormap[2][i] / 255.0));
+            gf_paltbl[i].clr = stdpal[c].clr;
+        } else {
             gf_paltbl[i].clr.red = cinfo.colormap[0][i] * 257;
             gf_paltbl[i].clr.green = cinfo.colormap[1][i] * 257;
             gf_paltbl[i].clr.blue = cinfo.colormap[2][i] * 257;
         }
-
-        for(;i < 256; i++) {
-            gf_paltbl[i].used = gf_paltbl[i].valid = gf_paltbl[i].transpt = 0;
-        }
     }
 
-/*   if (p == 1) */
+    for(;i < 256; i++) {
+        gf_paltbl[i].used = gf_paltbl[i].valid = gf_paltbl[i].transpt = 0;
+    }
+
     gf_string = calloc(jpg_space=row_stride*cinfo.output_height,
                        sizeof(unsigned char));
 	
@@ -1241,11 +1242,9 @@ static int jpegread(char *filename, int p)
         ((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
     j = 0;
     while (cinfo.output_scanline < cinfo.output_height) {
-/*      k = 0; */
         (void) jpeg_read_scanlines(&cinfo, buffer, 1);
 
         for (i=0; i<row_stride; i++) {
-/*	 if (p == 1) */   /* 8bit color */
 	    gf_string[j*row_stride+i] = buffer[0][i];
         }
         j += 1;
@@ -2253,7 +2252,7 @@ int readimagefile(char *filename, int p, struct imgdata *imd)
     if ((r = readBMP(filename, p, imd)) == Succeeded)
         return Succeeded;
 #ifdef HAVE_LIBJPEG
-    if ((r = readJPEG(filename, p == 0 ? 1 : p, imd)) == Succeeded)
+    if ((r = readJPEG(filename, p, imd)) == Succeeded)
         return Succeeded;
 #endif
     return Failed;

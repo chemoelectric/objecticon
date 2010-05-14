@@ -2581,72 +2581,56 @@ void drawstrimage(wbp w, int x, int y, int width, int height,
     char tmp[32];
     STDLOCALS(w);
 
-    if (e) {
-        /*
-         * Get an XImage structure and free the old color set if possible.
-         */
-        for (c = 0; c < 256; c++)
-            trans |= e[c].used && e[c].transpt;
-    }
+    /*
+     * Get an XImage structure and free the old color set if possible.
+     */
+    for (c = 0; c < 256; c++)
+        trans |= e[c].used && e[c].transpt;
+
     MemProtect(im = getximage(w, x, y, width, height, trans));
 
-    if (e) {
-        /*
-         * Allocate the colors we need.  Use black or white if unsuccessful.
-         */
-        ret = 0;
-        for (c = 0; c < 256; c++)
-            if (e[c].used && e[c].valid) {
-                r = e[c].clr.red;
-                g = e[c].clr.green;
-                b = e[c].clr.blue;
-                sprintf(tmp, "%d,%d,%d", r, g, b);
-                cp = alcrgb(w, tmp, r, g, b);
-                if (cp == NULL) {
-                    ret++;
-                    if ((0.299 * r + 0.587 * g + 0.114 * b) > 32767)
-                        cp = alcrgb(w, "white", 65535, 65535, 65535);
-                    else
-                        cp = alcrgb(w, "black", 0, 0, 0);
-                }
-                ciarray[c] = cp-wd->colors;
+    /*
+     * Allocate the colors we need.  Use black or white if unsuccessful.
+     */
+    ret = 0;
+    for (c = 0; c < 256; c++)
+        if (e[c].used && e[c].valid) {
+            r = e[c].clr.red;
+            g = e[c].clr.green;
+            b = e[c].clr.blue;
+            sprintf(tmp, "%d,%d,%d", r, g, b);
+            cp = alcrgb(w, tmp, r, g, b);
+            if (cp == NULL) {
+                ret++;
+                if ((0.299 * r + 0.587 * g + 0.114 * b) > 32767)
+                    cp = alcrgb(w, "white", 65535, 65535, 65535);
+                else
+                    cp = alcrgb(w, "black", 0, 0, 0);
             }
+            ciarray[c] = cp-wd->colors;
+        }
 
-        /*
-         * Read the image string and set the pixel values.
-         */
-        ix = iy = 0;
-        while (len--) {
-            c = *s++;
-            v = e[c].valid;
-            if (v)				/* put char if valid */
-                XPutPixel(im, ix, iy, wd->colors[ciarray[c]].c);
-            if (v || e[c].transpt) { 		/* advance if valid or transparent */
-                if (++ix >= width) {
-                    ix = 0;			/* reset for new row */
-                    iy++;
-                }
+    /*
+     * Read the image string and set the pixel values.
+     */
+    ix = iy = 0;
+    while (len--) {
+        c = *s++;
+        v = e[c].valid;
+        if (v)				/* put char if valid */
+            XPutPixel(im, ix, iy, wd->colors[ciarray[c]].c);
+        if (v || e[c].transpt) { 		/* advance if valid or transparent */
+            if (++ix >= width) {
+                ix = 0;			/* reset for new row */
+                iy++;
             }
         }
-        if (ix > 0) {			/* pad final row if incomplete */
-            while (ix < width)
-                XPutPixel(im, ix++, iy, wd->colors[wc->bg].c);
-        }
     }
-    else {
-        iy = 0;
-        while (iy < height) {
-            ix = 0;
-            while (ix < width) {
-                int b = *s++ * 257;
-                int g = *s++ * 257;
-                int r = *s++ * 257;
-                wclrp cp = alcrgb(w,"anon", r, g, b);
-                XPutPixel(im, ix++, iy, cp->c);
-	    }
-            iy++;
-        }
+    if (ix > 0) {			/* pad final row if incomplete */
+        while (ix < width)
+            XPutPixel(im, ix++, iy, wd->colors[wc->bg].c);
     }
+
     /*
      * Put it on the screen.
      */
