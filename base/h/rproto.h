@@ -225,7 +225,7 @@ void  bigrand         (dptr da, dptr dx);
    void getlinestyle    (wbp w, char *answer);
    int  getpixelinit   (wbp w, struct imgmem *imem);
    int  getpixelterm   (wbp w, struct imgmem *imem);
-   int  getpixel        (wbp w,int x,int y,word *rv,char *s,struct imgmem *im);
+   int  getpixel        (wbp w,int x,int y,char *s,struct imgmem *im);
    void getpointer  (wbp w, char *answer);
    int  getpos          (wbp w);
    int  lowerwindow     (wbp w);

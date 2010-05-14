@@ -879,7 +879,6 @@ function graphics_Window_pixel(self, x0, y0, w0, h0)
       int slen;
       tended struct descrip lastval, result, bg;
       int i, j;
-      word rv;
       wsp ws;
       GetSelfW();
 
@@ -906,20 +905,13 @@ function graphics_Window_pixel(self, x0, y0, w0, h0)
                   j < imem.y || j >= imem.y + imem.height)
                   list_put(&result, &bg);
               else  {
-                  getpixel(self_w, i, j, &rv, attr_buff, &imem);
-                  if (rv >= 0) {
-                      slen = strlen(attr_buff);
-                      if (slen != StrLen(lastval) ||
-                          strncmp(attr_buff, StrLoc(lastval), slen)) {
-                          bytes2string(attr_buff, slen, &lastval);
-                      }
-                      list_put(&result, &lastval);
+                  getpixel(self_w, i, j, attr_buff, &imem);
+                  slen = strlen(attr_buff);
+                  if (slen != StrLen(lastval) ||
+                      strncmp(attr_buff, StrLoc(lastval), slen)) {
+                      bytes2string(attr_buff, slen, &lastval);
                   }
-                  else {
-                      struct descrip tmp;
-                      MakeInt(rv, &tmp);
-                      list_put(&result, &tmp);
-                  }
+                  list_put(&result, &lastval);
               }
           }
       }

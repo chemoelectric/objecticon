@@ -2186,10 +2186,9 @@ struct imgmem *imem;
 /*
  * Return pixel (x,y) from a window
  */
-int getpixel(wbp w, int x, int y, word *rv, char *s, struct imgmem *imem)
+int getpixel(wbp w, int x, int y, char *s, struct imgmem *imem)
    {
    COLORREF cr = imem->crp[(y-imem->y) * imem->width + (x-imem->x)];
-   *rv = 1;
    sprintf(s, "%ld,%ld,%ld",
 	   (long)RED(cr)*257L, (long)GREEN(cr)*257L, (long)BLUE(cr)*257L);
    return Succeeded;
