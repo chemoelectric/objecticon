@@ -193,15 +193,23 @@ void  bigrand         (dptr da, dptr dx);
    int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph);
    char *rgbkey         (int p, double r, double g, double b);
 
+   void init_imgmem     (wbp w, struct imgmem *i, int x, int y, int width, int height);
    int  writeGIF        (wbp w, char *filename,
                           int x, int y, int width, int height);
+   void drawstrimage    (wbp w, int x, int y, int width, int height,
+                           struct palentry *e, unsigned char *s);
+   void drawblimage     (wbp w, int x, int y, int wd, int h,
+                          int ch, unsigned char *s);
+   void drawimgdata     (wbp w, int x, int y, struct imgdata *img);
+   void drawrgb24       (wbp w, int x, int y, int width, int height, unsigned char *s);
+   void drawrgba32      (wbp w, int x, int y, int width, int height, unsigned char *s);
+
+
    /*
     * graphics implementation routines supplied for each platform
     * (excluding those defined as macros for X-windows)
     */
    int  setpattern      (wbp w, char *name);
-   void drawblimage     (wbp w, int x, int y, int wd, int h,
-                          int ch, unsigned char *s);
    wcp  clonecontext   (wbp w);
    int  copyarea        (wbp w,wbp w2,int x,int y,int wd,int h,int x2,int y2);
    int  doconfig        (wbp w, int status);
@@ -220,12 +228,13 @@ void  bigrand         (dptr da, dptr dx);
    int  getlinewidth    (wbp w);
    int  getdepth        (wbp w, int *res);
    int  getwindowlabel  (wbp w, char *answer);
-   int  getimstr        (wbp w, int x, int y, int width, int hgt,
-                          struct palentry *ptbl, unsigned char *data);
    void getlinestyle    (wbp w, char *answer);
-   int  getpixelinit   (wbp w, struct imgmem *imem);
-   int  getpixelterm   (wbp w, struct imgmem *imem);
-   int  getpixel        (wbp w,int x,int y,char *s,struct imgmem *im);
+   void getpixelinit   (wbp w, struct imgmem *imem);
+   void getpixelterm   (wbp w, struct imgmem *imem);
+   void getpixel        (struct imgmem *im);
+   void setpixelinit   (wbp w, struct imgmem *imem);
+   void setpixelterm   (wbp w, struct imgmem *imem);
+   void setpixel        (struct imgmem *im);
    void getpointer  (wbp w, char *answer);
    int  getpos          (wbp w);
    int  lowerwindow     (wbp w);
@@ -249,8 +258,6 @@ void  bigrand         (dptr da, dptr dx);
    int  sendselectionresponse(wbp w, word requestor, char *property, char *selection, char *target, word time, dptr data);
    int  setwindowlabel  (wbp w, char *val);
    int  setinputmask    (wbp w, char *val);
-   void drawstrimage    (wbp w, int x, int y, int width, int height,
-                           struct palentry *e, unsigned char *s);
    void togglefgbg      (wbp w);
    int  walert          (wbp w, int volume);
    int  warppointer     (wbp w, int x, int y);

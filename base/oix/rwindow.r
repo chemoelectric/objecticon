@@ -528,6 +528,237 @@ static double rgbval(double n1, double n2, double hue)
         return n1;
 }
 
+void init_imgmem(wbp w, struct imgmem *i, int x, int y, int width, int height)
+{
+    wsp ws = w->window;
+    if (x < 0)  { 
+        width += x; 
+        x = 0; 
+    }
+    if (y < 0)  { 
+        height += y; 
+        y = 0; 
+    }
+    if (x + width > ws->width)
+        width = ws->width - x; 
+    if (y + height > ws->height)
+        height = ws->height - y; 
+    i->x = x;
+    i->y = y;
+    i->width = width;
+    i->height = height;
+}
+
+void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
+{
+    switch (imd->format) {
+        case IMGDATA_PALETTE:
+            drawstrimage(w, x, y, imd->width, imd->height, imd->paltbl, imd->data);
+            break;
+        case IMGDATA_RGB24:
+            drawrgb24(w, x, y, imd->width, imd->height, imd->data);
+            break;
+        case IMGDATA_RGBA32:
+            drawrgba32(w, x, y, imd->width, imd->height, imd->data);
+            break;
+        default:
+            syserr("Unknown image format");
+            break;
+    }
+}
+
+void drawstrimage(wbp w, int x, int y, int width, int height, 
+                  struct palentry *e, unsigned char *s)
+{
+    struct imgmem imem;
+    int i, j;
+
+    init_imgmem(w, &imem, x, y, width, height);
+    if (imem.width <= 0 || imem.height <= 0)
+        return;
+
+    setpixelinit(w, &imem);
+
+    for (j = y; j < y + height; j++) {
+        for (i = x; i < x + width; i++) {
+            if (i < imem.x || i >= imem.x + imem.width ||
+                j < imem.y || j >= imem.y + imem.height) {
+                ++s;
+                continue;
+            } else  {
+                if (!e[*s].transpt) {
+                    LinearColor c = e[*s].clr;
+                    imem.xoff = i - imem.x;
+                    imem.yoff = j - imem.y;
+                    imem.r = c.red;
+                    imem.g = c.green;
+                    imem.b = c.blue;
+                    imem.a = 65535;
+                    setpixel(&imem);
+                }
+                ++s;
+            }
+        }
+    }
+    setpixelterm(w, &imem);
+}
+
+void drawrgb24(wbp w, int x, int y, int width, int height, unsigned char *s)
+{
+    struct imgmem imem;
+    int i, j;
+
+    init_imgmem(w, &imem, x, y, width, height);
+    if (imem.width <= 0 || imem.height <= 0)
+        return;
+
+    setpixelinit(w, &imem);
+
+    for (j = y; j < y + height; j++) {
+        for (i = x; i < x + width; i++) {
+            if (i < imem.x || i >= imem.x + imem.width ||
+                j < imem.y || j >= imem.y + imem.height) {
+                s += 3;
+                continue;
+            } else  {
+                imem.xoff = i - imem.x;
+                imem.yoff = j - imem.y;
+                imem.r = 257 * (*s++);
+                imem.g = 257 * (*s++);
+                imem.b = 257 * (*s++);
+                imem.a = 65535;
+                setpixel(&imem);
+            }
+        }
+    }
+
+    setpixelterm(w, &imem);
+}
+
+void drawrgba32(wbp w, int x, int y, int width, int height, unsigned char *s)
+{
+    struct imgmem imem;
+    int i, j;
+
+    init_imgmem(w, &imem, x, y, width, height);
+    if (imem.width <= 0 || imem.height <= 0)
+        return;
+
+    setpixelinit(w, &imem);
+
+    for (j = y; j < y + height; j++) {
+        for (i = x; i < x + width; i++) {
+            if (i < imem.x || i >= imem.x + imem.width ||
+                j < imem.y || j >= imem.y + imem.height) {
+                s += 4;
+                continue;
+            } else  {
+                imem.xoff = i - imem.x;
+                imem.yoff = j - imem.y;
+                imem.r = 257 * (*s++);
+                imem.g = 257 * (*s++);
+                imem.b = 257 * (*s++);
+                imem.a = 257 * (*s++);
+                setpixel(&imem);
+            }
+        }
+    }
+
+    setpixelterm(w, &imem);
+}
+
+void drawblimage(wbp w, int x, int y, int width, int height,
+                int ch, unsigned char *s)
+{
+    unsigned int m, msk1, c, ix, iy;
+    int slen = height*((width + 3)/4);
+    int fg_r, fg_g, fg_b, fg_a, bg_r, bg_g, bg_b, bg_a;
+    char color[128];
+    struct imgmem imem;
+
+    getfg(w, color);
+    if (parsecolor(color, &fg_r, &fg_g, &fg_b, &fg_a) != Succeeded)
+        return;
+
+    getbg(w, color);
+    if (parsecolor(color, &bg_r, &bg_g, &bg_b, &bg_a) != Succeeded)
+        return;
+
+    init_imgmem(w, &imem, x, y, width, height);
+    if (imem.width <= 0 || imem.height <= 0)
+        return;
+
+    setpixelinit(w, &imem);
+
+    m = width % 4;
+    if (m == 0)
+        msk1 = 8;
+    else
+        msk1 = 1 << (m - 1);              /* mask for first byte of row */
+
+    ix = width;
+    iy = 0;
+    m = msk1;
+    while (slen--) {
+        if (isxdigit((unsigned char)(c = *s++))) {         /* if hexadecimal character */
+            if (!isdigit((unsigned char)c))               /* fix bottom 4 bits if necessary */
+                c += 9;
+            while (m > 0) {                /* set (usually) 4 pixel values */
+                --ix;
+                if (ix >= 0 && ix < imem.width && iy >= 0 && iy < imem.height) {
+                    imem.xoff = ix;
+                    imem.yoff = iy;
+                    if (c & m) {
+                        imem.r = fg_r;
+                        imem.g = fg_g;
+                        imem.b = fg_b;
+                        imem.a = 65535;
+                        setpixel(&imem);
+                    }
+                    else if (ch != TCH1) {      /* if zeroes aren't transparent */
+                        imem.r = bg_r;
+                        imem.g = bg_g;
+                        imem.b = bg_b;
+                        imem.a = 65535;
+                        setpixel(&imem);
+                    }
+                }
+                m >>= 1;
+	    }
+            if (ix == 0) {                 /* if end of row */
+                ix = width;
+                iy++;
+                m = msk1;
+	    }
+            else
+                m = 8;
+        }
+    }
+    if (ix > 0) {                         /* pad final row if incomplete */
+        while (ix < width) {
+            if (ix >= 0 && ix < imem.width && iy >= 0 && iy < imem.height) {
+                imem.xoff = ix;
+                imem.yoff = iy;
+                imem.r = bg_r;
+                imem.g = bg_g;
+                imem.b = bg_b;
+                imem.a = 65535;
+                setpixel(&imem);
+            }
+            ix++;
+        }
+    }
+
+    setpixelterm(w, &imem);
+}
+
+static int  getimstr        (wbp w, int x, int y, int width, int hgt,
+                          struct palentry *ptbl, unsigned char *data)
+{
+    return Failed;
+}
+
+
 /*
  *  Functions and data for reading and writing GIF and JPEG images
  */
@@ -647,6 +878,7 @@ int readGIF(char *filename, int p, struct imgdata *imd)
     imd->height = gf_height;
     imd->paltbl = gf_paltbl;
     imd->data = gf_string;
+    imd->format = IMGDATA_PALETTE;
 
     return Succeeded;				/* return success */
 }
@@ -1026,6 +1258,10 @@ int readJPEG(char *filename, int p, struct imgdata *imd)
     imd->height = gf_height;
     imd->paltbl = gf_paltbl;
     imd->data = gf_string;
+    if (gf_paltbl)
+        imd->format = IMGDATA_PALETTE;
+    else
+        imd->format = IMGDATA_RGB24;
 
     return Succeeded;				/* return success */
 }
@@ -1071,8 +1307,11 @@ static int jpegread(char *filename, int p)
     /*
      * set parameters for decompression
      */
-    cinfo.quantize_colors = TRUE;
-    cinfo.desired_number_of_colors = 254;
+    if (p) {
+        cinfo.quantize_colors = TRUE;
+        cinfo.desired_number_of_colors = 254;
+    } else
+        cinfo.quantize_colors = FALSE;
 
     /* Start decompression */
 
@@ -1081,29 +1320,31 @@ static int jpegread(char *filename, int p)
     gf_height = cinfo.output_height;
     row_stride = cinfo.output_width * cinfo.output_components; /* actual width of the image */
 
-    MemProtect(gf_paltbl = malloc(256 * sizeof(struct palentry)));
-
-    for (i = 0; i < cinfo.actual_number_of_colors; i++) {
-        /* init palette table */
-        gf_paltbl[i].used = 1;
-        gf_paltbl[i].valid = 1;
-        gf_paltbl[i].transpt = 0;
-        if (p) {
-            int c = *(unsigned char *)(rgbkey(p, 
-                                              cinfo.colormap[0][i] / 255.0, 
-                                              cinfo.colormap[1][i] / 255.0, 
-                                              cinfo.colormap[2][i] / 255.0));
-            gf_paltbl[i].clr = stdpal[c].clr;
-        } else {
-            gf_paltbl[i].clr.red = cinfo.colormap[0][i] * 257;
-            gf_paltbl[i].clr.green = cinfo.colormap[1][i] * 257;
-            gf_paltbl[i].clr.blue = cinfo.colormap[2][i] * 257;
+    if (p) {
+        MemProtect(gf_paltbl = malloc(256 * sizeof(struct palentry)));
+        for (i = 0; i < cinfo.actual_number_of_colors; i++) {
+            /* init palette table */
+            gf_paltbl[i].used = 1;
+            gf_paltbl[i].valid = 1;
+            gf_paltbl[i].transpt = 0;
+            if (p) {
+                int c = *(unsigned char *)(rgbkey(p, 
+                                                  cinfo.colormap[0][i] / 255.0, 
+                                                  cinfo.colormap[1][i] / 255.0, 
+                                                  cinfo.colormap[2][i] / 255.0));
+                gf_paltbl[i].clr = stdpal[c].clr;
+            } else {
+                gf_paltbl[i].clr.red = cinfo.colormap[0][i] * 257;
+                gf_paltbl[i].clr.green = cinfo.colormap[1][i] * 257;
+                gf_paltbl[i].clr.blue = cinfo.colormap[2][i] * 257;
+            }
         }
-    }
 
-    for(;i < 256; i++) {
-        gf_paltbl[i].used = gf_paltbl[i].valid = gf_paltbl[i].transpt = 0;
-    }
+        for(;i < 256; i++) {
+            gf_paltbl[i].used = gf_paltbl[i].valid = gf_paltbl[i].transpt = 0;
+        }
+    } else
+        gf_paltbl = 0;
 
     gf_string = calloc(jpg_space=row_stride*cinfo.output_height,
                        sizeof(unsigned char));

@@ -270,9 +270,14 @@ class Window(SetFields,NoCopy)
    public static defer palette_key(s1, s2)
 
    #
-   # Produce the contents of some pixels
+   # Get the contents of some pixels as a list of colours
    #
-   public defer pixel(x, y, width, height)
+   public defer get_pixels(x, y, width, height)
+
+   #
+   # Set the contents of some pixels from a list of colours
+   #
+   public defer set_pixels(data, x, y, width, height)
    
    #
    # Return the current root x, y position as a two-element list.

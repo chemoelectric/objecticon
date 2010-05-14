@@ -440,7 +440,7 @@ int wopen(wbp w)
 
       imd = &ws->initimage;
       if (imd->width) {
-	 drawstrimage(w, 0, 0, imd->width, imd->height, imd->paltbl, imd->data);
+         drawimgdata(w, 0, 0, imd);
 	 if (imd->paltbl)
 	    free(imd->paltbl);
 	 free(imd->data);
@@ -3012,7 +3012,7 @@ int doconfig(w, status)
     if (status & C_IMAGE) {
         struct imgdata *imd = &ws->initimage;
         if (imd->width) {
-            drawstrimage(w, 0, 0, imd->width, imd->height, imd->paltbl, imd->data);
+            drawimgdata(w, 0, 0, imd);
             if (imd->paltbl)
                 free(imd->paltbl);
             free(imd->data);

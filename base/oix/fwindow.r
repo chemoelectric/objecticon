@@ -872,13 +872,13 @@ function graphics_Window_palette_key(s1, s2)
    }
 end
 
-function graphics_Window_pixel(self, x0, y0, w0, h0)
+function graphics_Window_get_pixels(self, x0, y0, w0, h0)
    body {
       struct imgmem imem;
       word x, y, width, height;
       int slen;
       tended struct descrip lastval, result, bg;
-      int i, j;
+      int i, j, r, g, b;
       wsp ws;
       GetSelfW();
 
@@ -887,37 +887,92 @@ function graphics_Window_pixel(self, x0, y0, w0, h0)
 
       ws = self_w->window;
 
-      imem.x = Max(x,0);
-      imem.y = Max(y,0);
-      imem.width = Min(width, ws->width - imem.x);
-      imem.height = Min(height, ws->height - imem.y);
-
-      if (getpixelinit(self_w, &imem) == Failed) fail;
+      init_imgmem(self_w, &imem, x, y, width, height);
+      getpixelinit(self_w, &imem);
       getbg(self_w, attr_buff);
       cstr2string(attr_buff, &bg);
       lastval = emptystr;
 
       create_list(width * height, &result);
-
-      for (j=y; j < y + height; j++) {
-          for (i=x; i < x + width; i++) {
+      r = g = b = -1;
+      for (j = y; j < y + height; j++) {
+          for (i = x; i < x + width; i++) {
               if (i < imem.x || i >= imem.x + imem.width ||
                   j < imem.y || j >= imem.y + imem.height)
                   list_put(&result, &bg);
               else  {
-                  getpixel(self_w, i, j, attr_buff, &imem);
-                  slen = strlen(attr_buff);
-                  if (slen != StrLen(lastval) ||
-                      strncmp(attr_buff, StrLoc(lastval), slen)) {
-                      bytes2string(attr_buff, slen, &lastval);
+                  imem.xoff = i - imem.x;
+                  imem.yoff = j - imem.y;
+                  getpixel(&imem);
+                  if (r == imem.r && g == imem.g && b == imem.b)
+                      list_put(&result, &lastval);
+                  else {
+                      char buff[64];
+                      r = imem.r; g = imem.g; b = imem.b;
+                      sprintf(buff, "%d,%d,%d", r, g, b);
+                      cstr2string(buff, &lastval);
+                      list_put(&result, &lastval);
                   }
-                  list_put(&result, &lastval);
               }
           }
       }
 
       getpixelterm(self_w, &imem);
       return result;
+   }
+end
+
+function graphics_Window_set_pixels(self, data, x0, y0, w0, h0)
+   if !is:list(data) then
+      runerr(108, data)
+   body {
+      struct imgmem imem;
+      word x, y, width, height;
+      int slen;
+      struct lgstate state;
+      tended struct b_lelem *le;
+      tended struct descrip elem, bg;
+      int i, j, r, g, b;
+      char *color;
+      wsp ws;
+      GetSelfW();
+
+      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
+
+      ws = self_w->window;
+
+      init_imgmem(self_w, &imem, x, y, width, height);
+      setpixelinit(self_w, &imem);
+      getbg(self_w, attr_buff);
+      cstr2string(attr_buff, &bg);
+
+      le = lgfirst(&ListBlk(data), &state);
+      for (j = y; j < y + height; j++) {
+          for (i = x; i < x + width; i++) {
+              char *color;
+              if (!le) {
+                  elem = bg;
+              } else {
+                  elem = le->lslots[state.result];
+                  le = lgnext(&ListBlk(data), &state, le);
+              }
+              color = buffstr(&elem);
+              if (parsecolor(color, &imem.r, &imem.g, &imem.b, &imem.a) == Succeeded) {
+                  if (i < imem.x || i >= imem.x + imem.width ||
+                      j < imem.y || j >= imem.y + imem.height)
+                      continue;
+                  else {
+                      imem.xoff = i - imem.x;
+                      imem.yoff = j - imem.y;
+                      setpixel(&imem);
+                  }
+              }
+          }
+      }
+
+      setpixelterm(self_w, &imem);
+      return nulldesc;
    }
 end
 
@@ -1030,7 +1085,7 @@ function graphics_Window_read_image(self, x, y, file, pal)
       filename = buffstr(&file);
       r = readimagefile(filename, p, &imd);
       if (r == Succeeded) {
-          drawstrimage(self_w, x, y, imd.width, imd.height, imd.paltbl, imd.data);
+          drawimgdata(self_w, x, y, &imd);
           free(imd.paltbl);
           free(imd.data);
       }

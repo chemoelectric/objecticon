@@ -23,8 +23,6 @@ static int handle_exposures(wbp w, XExposeEvent *event);
 static void handle_mouse(wbp w, XButtonEvent *event);
 static void handle_keypress(wbp w, XKeyEvent *event);
 static int setpatternbits(wbp w, int width, int *bits, int nbits);
-static XImage *getximage(wbp w, int x, int y,
-                         int width, int height, int init);
 static int wmap(wbp w);
 static int convert_KeySym_to_code_point(KeySym k);
 #ifdef HAVE_LIBXFT
@@ -41,7 +39,6 @@ static int xlfd_size(char *s, int n);
 static wfp loadfont(wdp wd, char *s);
 static int resetfg (wbp w);
 static XColor xcolor(wbp w, LinearColor clr);
-static LinearColor lcolor(wbp w, XColor color);
 static wdp alcdisplay (char *s);
 static void free_display   (wdp wd);
 static wfp alcfont(wbp w, char *s);
@@ -416,7 +413,6 @@ static int handle_misc(wdp wd)
             if (ws->display == wd) {
                 if (ws->win == evwin) break;
                 if (ws->pix == evwin) break;
-                if (ws->initialPix == evwin) break;
 	    }
         }
         if (!wb) continue;
@@ -634,12 +630,6 @@ static int handle_misc(wdp wd)
                         ws->pixDraw = NULL;
                     }
 #endif
-                    if (ws->initialPix != (Pixmap) NULL) {
-                        Display *d = ws->display->display;
-                        XSync(d, False);
-                        XFreePixmap(d, ws->initialPix);
-                        ws->initialPix = (Pixmap) NULL;
-                    }
                     free_xcolors(wb, 2); /* free regular colors */
                 }
                 break;
@@ -796,20 +786,12 @@ static int wmap(wbp w)
      *  Create a pixmap for this canvas if there isn't one already.
      */
     if (ws->pix == (Pixmap) NULL) {
-        if (ws->initialPix) {
-            ws->pix = ws->initialPix;
-            ws->initialPix = (Pixmap) NULL;
-            ws->pixwidth = ws->width;
-            ws->pixheight = ws->height;
-        }
-        else {
-            ws->pix = XCreatePixmap(stddpy, DefaultRootWindow(stddpy),
-                                    ws->width, ws->height,
-                                    DefaultDepth(stddpy,wd->screen));
-            ws->pixwidth = ws->width;
-            ws->pixheight = ws->height;
-            new_pixmap = 1;
-        }
+        ws->pix = XCreatePixmap(stddpy, DefaultRootWindow(stddpy),
+                                ws->width, ws->height,
+                                DefaultDepth(stddpy,wd->screen));
+        ws->pixwidth = ws->width;
+        ws->pixheight = ws->height;
+        new_pixmap = 1;
         stdpix = ws->pix;
     }
 
@@ -931,7 +913,7 @@ static int wmap(wbp w)
 
     imd = &ws->initimage;
     if (imd->width) {
-        drawstrimage(w, 0, 0, imd->width, imd->height, imd->paltbl, imd->data);
+        drawimgdata(w, 0, 0, imd);
         free(imd->paltbl);
         free(imd->data);
         imd->width = 0;
@@ -1099,7 +1081,7 @@ int doconfig(wbp w, int status)
     if (status & C_IMAGE) {
         struct imgdata *imd = &ws->initimage;
         if (imd->width) {
-            drawstrimage(w, 0, 0, imd->width, imd->height, imd->paltbl, imd->data);
+            drawimgdata(w, 0, 0, imd);
             free(imd->paltbl);
             free(imd->data);
             imd->width = 0;
@@ -1455,8 +1437,6 @@ int setcanvas(wbp w, char *s)
         else {
             if (ws->win == (Window) NULL) {
                 ws->iconic = NormalState;
-                ws->initialPix = ws->pix;
-                ws->pix = (Window) NULL;
                 wmap(w);
 	    }
             else if (ws->iconic == IconicState) {
@@ -1507,8 +1487,6 @@ int setcanvas(wbp w, char *s)
             if (ws->pix != (Pixmap) NULL) {
                 if (ws->win == (Window) NULL) {
                     ws->iconic = MaximizedState;
-                    ws->initialPix = ws->pix;
-                    ws->pix = (Window) NULL;
                     wmap(w);
                 }
                 else if (ws->iconic == IconicState) {
@@ -2421,52 +2399,6 @@ int copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2)
 }
 
 
-wbp sprite;
-int tics;
-int lastx,lasty;
-int animwidth, animheight;
-
-void animHelper(wbp w, XPoint p[], int n)
-{
-    int i=0;
-    STDLOCALS(w);
-
-    for ( ; i < n; i++) {
-        int j;
-
-        /*
-         * redraw that portion of the previous image that isn't overlapped
-         * by the new image being drawn
-         */
-        if (lastx >= 0) {
-            int dx = p[i].x - lastx, dy = p[i].y - lasty;
-            if (dx > 0) XCopyArea(stddpy,stdpix,stdwin,stdgc, lastx, lasty,
-                                  dx, animheight, lastx, lasty);
-            else if (dx < 0)
-                XCopyArea(stddpy,stdpix,stdwin,stdgc, lastx+animwidth+dx, lasty,
-                          -dx, animheight, lastx+animwidth+dx, lasty);
-
-            if (dy > 0) XCopyArea(stddpy, stdpix, stdwin, stdgc, lastx, lasty,
-                                  animwidth, dy, lastx, lasty);
-            else if (dy < 0)
-                XCopyArea(stddpy,stdpix,stdwin,stdgc, lastx, lasty+animheight+dy,
-                          animwidth, -dy, lastx, lasty+animheight+dy);
-        }
-
-        XCopyArea(stddpy, sprite->window->pix, stdwin, stdgc,
-                  0, 0, animwidth, animheight, p[i].x, p[i].y);
-        XFlush(stddpy);
-        for (j = 0; j < tics; j++);
-/*     
- * erase the whole box approach:
- *      XCopyArea(stddpy, stdpix, stdwin, stdgc,
- *                0, 0, animwidth, animheight, p[i].x, p[i].y);
- */
-        lastx = p[i].x;
-        lasty = p[i].y;
-    }
-}
-
 void freecolor(wbp w, char *s)
 {
     wdp dp;
@@ -2489,354 +2421,59 @@ void freecolor(wbp w, char *s)
         free_xcolor(w, dp->colors[i].c);
 }
 
-/*
- * Draw a bilevel image
- */
-void drawblimage(wbp w, int x, int y, int width, int height, int ch, unsigned char *s)
-{
-    unsigned int m, msk1, c, ix, iy;
-    int len = height*((width + 3)/4);
-    long fg, bg;
-    XImage *im;
-    STDLOCALS(w);
-
-    /*
-     * Get an XImage structure and free the old color set if possible.
-     */
-    MemProtect(im = getximage(w, x, y, width, height, ch == TCH1));
-
-    /*
-     * Read the image string and set the pixel values.  Note that
-     * the hex digits in sequence fill the rows *right to left*.
-     */
-    m = width % 4;
-    if (m == 0)
-        msk1 = 8;
-    else
-        msk1 = 1 << (m - 1);		/* mask for first byte of row */
-
-    fg = wd->colors[wc->fg].c;
-    bg = wd->colors[wc->bg].c;
-    ix = width;
-    iy = 0;
-    m = msk1;
-    while (len--) {
-        if (isxdigit((unsigned char)(c = *s++))) {		/* if hexadecimal character */
-            if (!isdigit((unsigned char)c))		/* fix bottom 4 bits if necessary */
-                c += 9;
-            while (m > 0) {		/* set (usually) 4 pixel values */
-                --ix;
-                if (c & m)
-                    XPutPixel(im, ix, iy, fg);
-                else if (ch != TCH1)	/* if zeroes aren't transparent */
-                    XPutPixel(im, ix, iy, bg);
-                m >>= 1;
-            }
-            if (ix == 0) {			/* if end of row */
-                ix = width;
-                iy++;
-                m = msk1;
-            }
-            else
-                m = 8;
-        }
-    }
-    if (ix > 0)				/* pad final row if incomplete */
-        while (ix < width)
-            XPutPixel(im, ix++, iy, bg);
-
-    /*
-     * Put it on the screen.
-     */
-    if (wc->drawop != GXcopy) XSetFunction(stddpy, stdgc, GXcopy);
-    RENDER7(XPutImage, im, 0, 0, x, y, width, height);
-    XDestroyImage(im);
-    if (wc->drawop != GXcopy) XSetFunction(stddpy, stdgc, wc->drawop);
-}
 
 /*
- * Draw a character-per-pixel image
+ * Client for producing pixels from a window
  */
-void drawstrimage(wbp w, int x, int y, int width, int height, 
-             struct palentry *e, unsigned char *s)
-{
-    int c, v, ret = 0, trans = 0;
-    unsigned int r, g, b, ix, iy;
-    XImage *im;
-    wclrp cp;
-    int ciarray[256];
-    char tmp[32];
-    int len = width * height;
-    STDLOCALS(w);
-
-    /*
-     * Get an XImage structure and free the old color set if possible.
-     */
-    for (c = 0; c < 256; c++)
-        trans |= e[c].used && e[c].transpt;
-
-    MemProtect(im = getximage(w, x, y, width, height, trans));
-
-    /*
-     * Allocate the colors we need.  Use black or white if unsuccessful.
-     */
-    ret = 0;
-    for (c = 0; c < 256; c++)
-        if (e[c].used && e[c].valid) {
-            r = e[c].clr.red;
-            g = e[c].clr.green;
-            b = e[c].clr.blue;
-            sprintf(tmp, "%d,%d,%d", r, g, b);
-            cp = alcrgb(w, tmp, r, g, b);
-            if (cp == NULL) {
-                ret++;
-                if ((0.299 * r + 0.587 * g + 0.114 * b) > 32767)
-                    cp = alcrgb(w, "white", 65535, 65535, 65535);
-                else
-                    cp = alcrgb(w, "black", 0, 0, 0);
-            }
-            ciarray[c] = cp-wd->colors;
-        }
-
-    /*
-     * Read the image string and set the pixel values.
-     */
-    ix = iy = 0;
-    while (len--) {
-        c = *s++;
-        v = e[c].valid;
-        if (v)				/* put char if valid */
-            XPutPixel(im, ix, iy, wd->colors[ciarray[c]].c);
-        if (v || e[c].transpt) { 		/* advance if valid or transparent */
-            if (++ix >= width) {
-                ix = 0;			/* reset for new row */
-                iy++;
-            }
-        }
-    }
-    if (ix > 0) {			/* pad final row if incomplete */
-        while (ix < width)
-            XPutPixel(im, ix++, iy, wd->colors[wc->bg].c);
-    }
-
-    /*
-     * Put it on the screen.
-     */
-    if (wc->drawop != GXcopy) XSetFunction(stddpy, stdgc, GXcopy);
-    XPutImage(stddpy, ws->pix, stdgc, im, 0, 0, x, y, width, height);
-    if (ws->win)
-        XCopyArea(stddpy, ws->pix, ws->win, stdgc, x, y, width, height, x, y);
-    XDestroyImage(im);
-    if (wc->drawop != GXcopy) XSetFunction(stddpy, stdgc, wc->drawop);
-}
-
-/*
- * getimstr(w, x, y, width, height, paltbl, data) -- get image as a string.
- *
- * Stores the specified subimage in data, one pixel per byte, and sets
- * entries in paltbl corresponding to the pixel values that were used.
- */
-
-/*
- * Compare two unsigned long values for qsort or bsearch.
- */
-static int ulcmp(unsigned long *p1, unsigned long *p2)
-{
-    unsigned long u1 = *p1;
-    unsigned long u2 = *p2;
-
-    if (u1 < u2)
-        return -1;
-    else
-        return (u1 > u2);
-}
-
-
-/*
- * The getimstr() code assumes that a maximum of 256 colors can be onscreen
- * at one time.  If DMAXCOLORS maximum is raised, code must be added for the
- * depth>8 case to reduce the local copy of the image to no more than the
- * 256-color maximum allowed in a GIF file.  This reduction operation is
- * nontrivial; look up "color quantization" in computer graphics literature.
- */
-#passthru #if (DMAXCOLORS > 256)
-#passthru   Deliberate Syntax error
-#passthru #endif				/* DMAXCOLORS */
-
-int getimstr(wbp w, int x, int y, int width, int height,
-             struct palentry paltbl[DMAXCOLORS], unsigned char *data)
-{
-    XImage *im;
-    XColor colorcell;
-    wclrp cp;
-    unsigned long px, clist[DMAXCOLORS], *lp;
-    int i, ncolors;
-    STDLOCALS(w);
-
-    /*
-     * Get an XImage structure containing window pixel values.
-     */
-    im = getximage(w, x, y, width, height, 1);
-    if (!im)
-        return 0;
-   
-    if (im->depth <= 8) {
-
-        /*
-         * We can use the pixel values directly as color indices.
-         * Put them in the data string, noting which colors are used.
-         */
-        for (i = 0; i < DMAXCOLORS; i++)
-            clist[i] = i;
-        for (y = 0; y < height; y++)
-            for (x = 0; x < width; x++) {
-                *data++ = px = XGetPixel(im, x, y) & 0xFF;
-                paltbl[px].used = 1;
-            }
-    }
-
-    else {
-
-        /*
-         * Make a sorted list of the pixel values of the colors that are in
-         * use.  Search this list for every pixel and store the resulting
-         * list index as the color index.
-         */
-        lp = clist;
-        for (cp = wd->colors; cp < wd->colors + wd->numColors; cp++)
-            *lp++ = cp->c;
-        ncolors = lp - clist;
-        qsort((char *)clist, ncolors, sizeof(*clist), (QSortFncCast)ulcmp);
-
-        for (y = 0; y < height; y++)
-            for (x = 0; x < width; x++) {
-                px = XGetPixel(im, x, y);
-                lp = (unsigned long *)bsearch((char *)&px, (char *)clist,
-                                              ncolors, sizeof(*clist), (BSearchFncCast)ulcmp);
-                if (lp)
-                    i = lp - clist;
-                else
-                    i = 0;			/* use black if not found */
-                *data++ = i;
-                paltbl[i].used = 1;
-            }
-    }
-
-    /*
-     * Query the real color values from X; Icon's data structures
-     * may show several entries for any particular pixel value.
-     */
-    for (i = 0; i < DMAXCOLORS; i++)
-        if (paltbl[i].used) {
-            colorcell.pixel = clist[i];
-            colorcell.flags = DoRed | DoGreen | DoBlue;
-            XQueryColor(stddpy, wd->cmap, &colorcell);
-            paltbl[i].clr = lcolor(w, colorcell);
-            paltbl[i].valid = 1;
-        }
-
-    XDestroyImage(im);
-    return 1;
-}
-
-/*
- * Create an XImage structure corresponding to subimage (x, y, w, h).
- * If init is nonzero, initialize it with current contents.
- * If init is zero and (x,y,w,h) fills the window, free existing color set.
- */
-static XImage *getximage(wbp w, int x, int y, int width, int height, int init)
-{
-    int tx, ty;
-    XImage *im;
-    STDLOCALS(w);
-
-    im = XCreateImage(stddpy, DefaultVisual(stddpy, wd->screen),
-                      DefaultDepth(stddpy, wd->screen), ZPixmap, 0, NULL, width, height, 32, 0);
-    if (im == NULL)
-        return NULL;
-    im->data = malloc((im->bytes_per_line * height));
-    if (im->data == NULL) {
-        XDestroyImage(im);
-        return NULL;
-    }
-
-    if (!init) {
-        if (x <= 0 && y <= 0 && x + width >= ws->pixwidth &&
-            y + height >= ws->pixheight && wc->clipw < 0) {
-            free_xcolors(w, 0);
-        }
-        return im;
-    }
-
-    tx = ty = 0;
-    if (x < 0)  { tx -= x; width += x; x = 0; }
-    if (y < 0)  { ty -= y; height += y; y = 0; }
-    if (x + width > ws->width)  { width = ws->width - x; }
-    if (y + height > ws->height) { height = ws->height - y; }
-    if (width > 0 && height > 0)
-        XGetSubImage(stddpy, stdpix, x, y, width, height, AllPlanes, ZPixmap,
-                     im, tx, ty);
-    return im;
-}
-
-/*
- * Initialize client for producing pixels from a window
- */
-int getpixelinit(wbp w, struct imgmem *imem)
+void getpixelinit(wbp w, struct imgmem *imem)
 {
     STDLOCALS(w);
-
-    if (imem->width <= 0 || imem->height <= 0) {
-        imem->im = NULL;
-        return Succeeded;
-    }
-    imem->im = XGetImage(stddpy, stdpix,
-                         imem->x, imem->y, imem->width, imem->height,
-                         (1 << DefaultDepth(stddpy, wd->screen))-1, XYPixmap);
-   
-    if (imem->im == NULL) return Failed;
-    return Succeeded;
+    MemProtect(imem->im = XGetImage(stddpy, stdpix,
+                                    imem->x, imem->y, imem->width, imem->height,
+                                    AllPlanes, ZPixmap));
 }
 
-static wclrp lastcp;
-
-int getpixelterm(wbp w, struct imgmem *imem)
+void getpixel(struct imgmem *imem)
 {
-    if (imem->im != NULL)
-        XDestroyImage(imem->im);
-    lastcp = NULL;
-    return Succeeded;
-}
-
-/*
- * Return pixel (x,y) from a window in long value (rv)
- */
-int getpixel(wbp w, int x, int y, char *s, struct imgmem *imem)
-{
-    XColor colorcell;
-    wclrp cp;
     unsigned long c;
-    wdp wd = w->window->display;
-    Display *stddpy = wd->display; 
+    c = XGetPixel(imem->im, imem->xoff, imem->yoff);
+    imem->b = (c&0xff)*257;
+    imem->g = ((c>>8)&0xff)*257;
+    imem->r = ((c>>16)&0xff)*257;
+}
 
-    c = colorcell.pixel = XGetPixel(imem->im, x - imem->x, y - imem->y);
+void getpixelterm(wbp w, struct imgmem *imem)
+{
+    XDestroyImage(imem->im);
+}
 
-    if (lastcp && (lastcp->c == c)) { 
-        sprintf(s, "%d,%d,%d", lastcp->r, lastcp->g, lastcp->b);
-        return Succeeded;
+/*
+ * Client for setting pixels to a window
+ */
+void setpixelinit(wbp w, struct imgmem *imem)
+{
+    STDLOCALS(w);
+    MemProtect(imem->im = XGetImage(stddpy, stdpix,
+                                    imem->x, imem->y, imem->width, imem->height,
+                                    AllPlanes, ZPixmap));
+}
+
+void setpixel(struct imgmem *imem)
+{
+    unsigned long c;
+    if (imem->a) {
+        c = ((imem->r/257)<<16) | ((imem->g/257)<<8) | (imem->b/257);
+        XPutPixel(imem->im, imem->xoff, imem->yoff, c);
     }
+}
 
-    for (cp = wd->colors ; cp < wd->colors + wd->numColors; cp++) {
-        if (cp->c == c) {
-            lastcp = cp;
-            sprintf(s, "%d,%d,%d", cp->r, cp->g, cp->b);
-            return Succeeded;
-        }
-    }
-
-    XQueryColor(stddpy, wd->cmap, &colorcell);
-    sprintf(s, "%d,%d,%d", colorcell.red, colorcell.green, colorcell.blue);
-    return Succeeded;
+void setpixelterm(wbp w, struct imgmem *imem)
+{
+    STDLOCALS(w);
+    if (wc->drawop != GXcopy) XSetFunction(stddpy, stdgc, GXcopy);
+    RENDER7(XPutImage, imem->im, 0, 0, imem->x, imem->y, imem->width, imem->height);
+    if (wc->drawop != GXcopy) XSetFunction(stddpy, stdgc, wc->drawop);
+    XDestroyImage(imem->im);
 }
 
 
@@ -2992,18 +2629,6 @@ static int setpatternbits(wbp w, int width, int *bits, int nbits)
     XSync(stddpy, False);
     XFreePixmap(stddpy, p);
     return Succeeded;
-}
-
-/*
- * Convert an X color into an Icon linear color.
- */
-static LinearColor lcolor(wbp w, XColor colorcell)
-{
-    LinearColor l;
-    l.red   = colorcell.red;
-    l.green = colorcell.green;
-    l.blue  = colorcell.blue;
-    return l;
 }
 
 /*

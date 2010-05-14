@@ -170,14 +170,21 @@ struct palentry {			/* entry for one palette member */
    char transpt;			/* nonzero if char is transparent */
    };
 
+#define IMGDATA_PALETTE    0
+#define IMGDATA_RGB24      1
+#define IMGDATA_RGBA32     2
+
 struct imgdata {			/* image loaded from a file */
    int width, height;			/* image dimensions */
    struct palentry *paltbl;		/* pointer to palette table */
+   int format;                          /* format of data, if palette is nil */
    unsigned char *data;			/* pointer to image data */
    };
 
 struct imgmem {
-   int x, y, width, height;
+   int x, y, width, height;             /* Pos/dimensions of rectangle being got/set */
+   int xoff, yoff;                      /* Increasing x,y offset within rectangle during looping */
+   int r, g, b, a;                      /* rgba values to return or set */
 #if XWindows
    XImage *im;
 #elif MSWIN32
@@ -286,7 +293,7 @@ typedef struct _wstate {
   int		inputmask;		/* user input mask */
   char		*windowlabel;		/* window label */
   struct imgdata initimage;		/* initial image data */
-  int		y, x;		/* desired upper lefthand corner */
+  int		y, x;		        /* desired upper lefthand corner */
   int           height;                 /* window height, in pixels */
   int           width;                  /* window width, in pixels */
   int           minheight;              /* minimum window height, in pixels */
@@ -300,7 +307,6 @@ typedef struct _wstate {
   wdp		display;
   Window	win;			/* X window */
   Pixmap	pix;			/* current screen state */
-  Pixmap	initialPix;		/* an initial image to display */
   int		pixheight;		/* backing pixmap height, in pixels */
   int		pixwidth;		/* pixmap width, in pixels */
   Visual	*vis;

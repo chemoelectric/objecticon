@@ -195,6 +195,6 @@ procedure cell(panel, x, y)
 
    if (n > panel.n) | (m > panel.m) then fail
 
-   return Cell(n, m, panel.window.pixel(x, y))
+   return Cell(n, m, panel.window.get_pixels(x, y, 1, 1)[1])
 
 end
