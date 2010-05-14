@@ -26,8 +26,6 @@ static int setpatternbits(wbp w, int width, int *bits, int nbits);
 static XImage *getximage(wbp w, int x, int y,
                          int width, int height, int init);
 static int wmap(wbp w);
-static Pixmap loadimage(wbp w, char *filename, int *height, 
-                        int *width, int atorigin, int *status);
 static int convert_KeySym_to_code_point(KeySym k);
 #ifdef HAVE_LIBXFT
 int xft_stringwidth(wbp w, char *s, int n);
@@ -933,8 +931,7 @@ static int wmap(wbp w)
 
     imd = &ws->initimage;
     if (imd->width) {
-        drawstrimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
-                     imd->data, imd->width * imd->height);
+        drawstrimage(w, 0, 0, imd->width, imd->height, imd->paltbl, imd->data);
         free(imd->paltbl);
         free(imd->data);
         imd->width = 0;
@@ -1102,8 +1099,7 @@ int doconfig(wbp w, int status)
     if (status & C_IMAGE) {
         struct imgdata *imd = &ws->initimage;
         if (imd->width) {
-            drawstrimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
-                         imd->data, imd->width * imd->height);
+            drawstrimage(w, 0, 0, imd->width, imd->height, imd->paltbl, imd->data);
             free(imd->paltbl);
             free(imd->data);
             imd->width = 0;
@@ -1723,16 +1719,6 @@ int setbg(wbp w, char *s)
     if (stdgc != NULL)
         XSetBackground(stddpy, stdgc, cp->c);
     return ISXORREVERSE(w) ? resetfg(w) : Succeeded;
-}
-
-int setimage(wbp w, char *val)
-{
-    wsp ws = w->window;
-    int status;
-    ws->initialPix = loadimage(w, val, &(ws->height), &(ws->width),
-                               0, &status);
-    if (ws->initialPix == (Pixmap) NULL) return Failed;
-    return Succeeded;
 }
 
 void togglefgbg(wbp w)
@@ -2506,9 +2492,10 @@ void freecolor(wbp w, char *s)
 /*
  * Draw a bilevel image
  */
-void drawblimage(wbp w, int x, int y, int width, int height, int ch, unsigned char *s, int len)
+void drawblimage(wbp w, int x, int y, int width, int height, int ch, unsigned char *s)
 {
     unsigned int m, msk1, c, ix, iy;
+    int len = height*((width + 3)/4);
     long fg, bg;
     XImage *im;
     STDLOCALS(w);
@@ -2571,7 +2558,7 @@ void drawblimage(wbp w, int x, int y, int width, int height, int ch, unsigned ch
  * Draw a character-per-pixel image
  */
 void drawstrimage(wbp w, int x, int y, int width, int height, 
-             struct palentry *e, unsigned char *s, int len)
+             struct palentry *e, unsigned char *s)
 {
     int c, v, ret = 0, trans = 0;
     unsigned int r, g, b, ix, iy;
@@ -2579,6 +2566,7 @@ void drawstrimage(wbp w, int x, int y, int width, int height,
     wclrp cp;
     int ciarray[256];
     char tmp[32];
+    int len = width * height;
     STDLOCALS(w);
 
     /*
@@ -2790,35 +2778,6 @@ static XImage *getximage(wbp w, int x, int y, int width, int height, int init)
                      im, tx, ty);
     return im;
 }
-
-int readimage(wbp w, int x, int y, char *filename)
-{
-    Pixmap p;
-    int width, height;
-    int status;
-    STDLOCALS(w);
-    if (!x && !y)
-        p = loadimage(w, filename, &height, &width, 1, &status);
-    else
-        p = loadimage(w, filename, &height, &width, 0, &status);
-    if (p == (Pixmap) NULL) return Failed;
-
-    if (wc->drawop != GXcopy)
-        XSetFunction(stddpy, stdgc, GXcopy);
-    if (stdwin)
-        XCopyArea(stddpy, p, stdwin, stdgc, 0, 0, width, height, x, y);
-    XCopyArea(stddpy, p, stdpix, stdgc, 0, 0, width, height, x, y);
-    if (wc->drawop != GXcopy)
-        XSetFunction(stddpy,stdgc,wc->drawop);
-
-    /*
-     * Make sure previous ops on p are complete, then free it.
-     */
-    XSync(stddpy, False);
-    XFreePixmap(stddpy, p);
-    return Succeeded;
-}
-
 
 /*
  * Initialize client for producing pixels from a window
@@ -3045,272 +3004,6 @@ static int setpatternbits(wbp w, int width, int *bits, int nbits)
     XSync(stddpy, False);
     XFreePixmap(stddpy, p);
     return Succeeded;
-}
-
-
-/*
- * dumpimage -- write an image to a disk file in an X format.
- *
- * Accepts only .xpm and .xbm file names, returning NoCvt for anything else.
- */
-
-int dumpimage(wbp w, char *filename,  int x,  int y, 
-               int width,  int height)
-{
-    int status, slen;
-    STDLOCALS(w);
-
-    /*
-     * Check for bilevel XBM (X BitMap) format.
-     */
-    slen = strlen(filename);
-    if ((slen > 4) &&
-        (!strcmp(".xbm", filename + slen - 4) ||
-         !strcmp(".XBM", filename + slen - 4))) {
-        /*
-         * Write a bitmap from a "color" window (presumed to have only BW in it).
-         * BlackPixel ^ WhitePixel will have a 1 in the first bit in which
-         * they are different, so this bit is the plane we want to copy.
-         */
-
-        if (DefaultDepth(stddpy,wd->screen) != 1) {
-            unsigned long bw =
-                BlackPixel(stddpy,wd->screen) ^ WhitePixel(stddpy,wd->screen);
-            Pixmap p1 = XCreatePixmap(stddpy, DefaultRootWindow(stddpy),
-                                      width, height, 1);
-            XGCValues xgc;
-            GC thinGC;
-            int i;
-            /*
-             * pick out the bitplane on which Black and White differ
-             */
-            for(i=0;!((1<<i) & bw);i++);
-            bw &= (1<<i);
-            /*
-             * Construct a 1-bit-deep GC for use in copying the plane.
-             */
-            xgc.foreground = BlackPixel(stddpy,wd->screen);
-            xgc.background = WhitePixel(stddpy,wd->screen);
-            thinGC = XCreateGC(stddpy,p1,GCForeground|GCBackground,&xgc);
-
-            if (i>DefaultDepth(stddpy,wd->screen)) return Failed;
-            XCopyPlane(stddpy,stdpix,p1,thinGC,x,y,width,height,0,0,bw);
-            status= XWriteBitmapFile(stddpy, filename, p1, width, height, -1, -1);
-
-            XSync(stddpy, False);
-            XFreePixmap(stddpy, p1);
-            XFreeGC(stddpy,thinGC);
-            if (status != BitmapSuccess) return Failed;
-        }
-        else {
-            if(x || y) {
-                Pixmap p1 = XCreatePixmap(stddpy, DefaultRootWindow(stddpy), width,
-                                          height, DefaultDepth(stddpy,wd->screen));
-
-                XCopyArea(stddpy, stdpix, p1, stdgc, x, y, width, height, 0, 0);
-                XSync(stddpy, False);
-
-                status = XWriteBitmapFile(stddpy, filename, p1, width, height, -1, -1);
-
-                XSync(stddpy, False);
-                XFreePixmap(stddpy, p1);
-
-                if (status != BitmapSuccess) return Failed;
-
-            }
-            else if (XWriteBitmapFile(stddpy, filename, stdpix,
-                                      width, height, -1, -1) != BitmapSuccess)
-                return Failed;
-
-        }
-        return Succeeded;
-    }
-    /*
-     * Check for XPM (color X PixMap) format.
-     */
-    else if (((slen > 4) &&
-              (!strcmp(".xpm", filename + slen - 4) ||
-               !strcmp(".XPM", filename + slen - 4))) ||
-             ((slen > 6) && !strcmp(".xpm.Z", filename + slen - 6))) {
-#ifdef HAVE_LIBXPM
-        /*
-         * Could optimize by calling XpmWriteFileFromPixmap directly on the
-         * stdpix...
-         */
-        Pixmap p1 = XCreatePixmap(stddpy, DefaultRootWindow(stddpy), width,
-                                  height, DefaultDepth(stddpy,wd->screen));
-
-        XCopyArea(stddpy, stdpix, p1, stdgc, x, y, width, height, 0, 0);
-        XSync(stddpy, False);
-
-        status = XpmWriteFileFromPixmap(stddpy, filename, p1,
-                                        (Pixmap) NULL, NULL);
-        XSync(stddpy, False);
-        XFreePixmap(stddpy, p1);
-
-        if (status == XpmSuccess)
-            return Succeeded;
-#endif					/* HAVE_LIBXPM */
-        return Failed;
-    }
-    else
-        return NoCvt;		/* not an X format -- write GIF instead */
-}
-
-/*
- * Load an image, in any format we can figure out.
- */
-static Pixmap loadimage(wbp w, char *filename,  int *height, 
-                         int *width, int atorigin, int *status)
-{
-    Pixmap p1, p2 = (Pixmap) NULL;
-    int xhot, yhot;
-    XGCValues gcv;
-    unsigned long gcmask = GCFont | GCForeground | GCBackground;
-    int isxbm;
-    STDLOCALS(w);
-
-    if (!strcmp(".xbm", filename + strlen(filename) - 4))
-        isxbm = 1;
-    else if (!strcmp(".xpm", filename + strlen(filename) - 4) ||
-             !strcmp(".xpm.Z", filename + strlen(filename) - 6))
-        isxbm = 0;
-    else {
-        /*
-         * Not sure what kind of file this is, make a guess
-         * For example, the format might be on the first line of the file,
-         * so open it up and read some.
-         */
-        FILE *ftemp = fopen(filename,"r");
-        char s[6];
-        int  i;
-
-        if (!ftemp) {
-            return (Pixmap) NULL;
-        }
-        if ((long)fread(s,1,6,ftemp) < (long)6) {
-            fclose(ftemp);
-            return (Pixmap) NULL;
-        }
-        fclose(ftemp);
-        /* check s for XPM string */
-        isxbm = 1;         /* default to xbm */
-        for (i = 0; i <= 3; i++)
-            if (!strncmp(&s[i], "XPM", 3))
-                isxbm = 0;
-    }
-
-    if (isxbm) {    /* isxbm = 1 => .xbm file */
-        if (XReadBitmapFile(stddpy, DefaultRootWindow(stddpy), filename,
-                            (unsigned int *)width, (unsigned int *)height, &p1, &xhot, &yhot) != BitmapSuccess)
-            return (Pixmap) NULL;
-        else *status = 0;
-        p2 = XCreatePixmap(stddpy, DefaultRootWindow(stddpy), *width, *height,
-                           DefaultDepth(stddpy,DefaultScreen(stddpy)));
-    }
-    else {				/* isxbm == 0 => .xpm file */
-#ifdef HAVE_LIBXPM
-        int i, j;
-        XpmAttributes a;
-        XColor color;
-        LinearColor clr;
-        Pixmap dummy;
-        a.npixels = 0;
-        a.colormap = wd->cmap;
-        a.valuemask = XpmReturnPixels | XpmColormap;
-      
-        *status = XpmReadFileToPixmap(stddpy, DefaultRootWindow(stddpy),
-                                      filename, &p2, &dummy, &a);
-
-        if (*status == XpmColorFailed && go_virtual(w)) {
-            /* try again with a virtual colormap */
-            a.npixels = 0;
-            a.colormap = wd->cmap;
-            a.valuemask = XpmReturnPixels | XpmColormap;
-            *status = XpmReadFileToPixmap(stddpy, DefaultRootWindow(stddpy),
-                                          filename, &p2, &dummy, &a);
-        }
-
-        if (*status != XpmSuccess) {
-            if (*status == XpmColorFailed)
-                *status = 1;
-            else
-                return (Pixmap) NULL;
-        }
-        else *status = 0;
-        *height = a.height;
-        *width = a.width;
-
-        /*
-         * if the loaded image is to cover an entire window, free up colors
-         * currently in use by the window
-         */
-        if (atorigin && *width >= ws->pixwidth && *height >= ws->pixheight
-            && wc->clipw < 0) {
-            free_xcolors(w, 0);
-        }
-
-        /*
-         * OK, now register all the allocated colors with the display
-         * and window in which we are residing.
-         */
-        for (i = 0; i < a.npixels; i++) {
-            for (j = 2; j < DMAXCOLORS; j++)
-                if (wd->colors[j].refcount == 0) break;
-            if (j == DMAXCOLORS) {
-                return (Pixmap) NULL;
-	    }
-            if (j == wd->numColors) wd->numColors++;
-            else if (j > wd->numColors) {
-                wd->numColors = j+1;
-	    }
-            wd->colors[j].refcount = 1;
-            /*
-             * Store their allocated pixel (r,g,b) values.
-             */
-            color.pixel = wd->colors[j].c = a.pixels[i];
-            XQueryColor(stddpy, wd->cmap, &color);
-            wd->colors[j].r = color.red;
-            wd->colors[j].g = color.green;
-            wd->colors[j].b = color.blue;
-            clr = lcolor(w, color);
-            sprintf(wd->colors[j].name,"%d,%d,%d",clr.red,clr.green,clr.blue);
-            if (ws->numColors == WMAXCOLORS)
-                ;
-            else {
-                if (ws->theColors == NULL) {
-                    MemProtect(ws->theColors = calloc(WMAXCOLORS, sizeof(short)));
-                }
-                ws->theColors[ws->numColors++] = j;
-	    }
-        }
-#else					/* HAVE_LIBXPM */
-        return (Pixmap) NULL;
-#endif					/* HAVE_LIBXPM */
-    }
-
-    if (p2 == (Pixmap) NULL) {
-        return (Pixmap) NULL;
-    }
-
-    if (stdgc == NULL) {
-        gcv.foreground = wd->colors[wc->fg].c;
-        gcv.background = wd->colors[wc->bg].c;
-#ifdef HAVE_LIBXFT
-        gcv.font       = wd->xfont->fid;
-#else
-        gcv.font       = wc->font->fsp->fid;
-#endif
-        wc->gc = XCreateGC(stddpy, p2, gcmask, &gcv);
-        stdgc = wc->gc;
-    }
-
-    if (isxbm) {
-        XCopyPlane(stddpy, p1, p2, stdgc, 0, 0, *width, *height, 0, 0, 1);
-        XSync(stddpy, False);
-        XFreePixmap(stddpy, p1);
-    }
-    return p2;
 }
 
 /*

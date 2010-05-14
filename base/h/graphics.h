@@ -187,9 +187,6 @@ struct imgmem {
 
 #define TCH1 '~'			/* usual transparent character */
 #define TCH2 0377			/* alternate transparent character */
-#define PCH1 ' '			/* punctuation character */
-#define PCH2 ','			/* punctuation character */
-
 
 #if XWindows
 

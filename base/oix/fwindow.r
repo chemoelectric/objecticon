@@ -443,11 +443,9 @@ function graphics_Window_draw_image(self, x0, y0, d)
        */
       if ((c = *s) == '#' || c == '~') {
           s++;
-          nchars = 0;
+          nchars = z - s;
           for (t = s; t < z; t++)
-              if (isxdigit((unsigned char)*t))
-                  nchars++;			/* count hex digits */
-              else if (*t != PCH1 && *t != PCH2)
+              if (!isxdigit((unsigned char)*t))
                   fail;				/* illegal punctuation */
           if (nchars == 0)
               fail;
@@ -455,7 +453,7 @@ function graphics_Window_draw_image(self, x0, y0, d)
           if (nchars % row != 0)
               fail;
           height = nchars / row;
-          drawblimage(self_w, x, y, width, height, c, s, z - s);
+          drawblimage(self_w, x, y, width, height, c, s);
           return nulldesc;
       }
 
@@ -481,13 +479,11 @@ function graphics_Window_draw_image(self, x0, y0, d)
       e = palsetup(p); 
       for (i = 0; i < 256; i++)
           e[i].used = 0;
-      nchars = 0;
+      nchars = z - s;
       for (t = s; t < z; t++) {
           c = *t; 
           e[c].used = 1;
-          if (e[c].valid || e[c].transpt)
-              nchars++;			/* valid color, or transparent */
-          else if (c != PCH1 && c != PCH2)
+          if (!(e[c].valid || e[c].transpt))
               fail;
       }
       if (nchars == 0)
@@ -499,7 +495,7 @@ function graphics_Window_draw_image(self, x0, y0, d)
        * Call platform-dependent code to draw the image.
        */
       height = nchars / width;
-      drawstrimage(self_w, x, y, width, height, e, s, z - s);
+      drawstrimage(self_w, x, y, width, height, e, s);
       return nulldesc;
    }
 end
@@ -1040,22 +1036,11 @@ function graphics_Window_read_image(self, x, y, file, pal)
       y += self_w->context->dy;
 
       filename = buffstr(&file);
-
-      /*
-       * First try to read as a standard file.
-       * If that doesn't work, try platform-dependent image reading code.
-       */
       r = readimagefile(filename, p, &imd);
       if (r == Succeeded) {
-          drawstrimage(self_w, x, y, imd.width, imd.height, imd.paltbl,
-                            imd.data, imd.width * imd.height);
+          drawstrimage(self_w, x, y, imd.width, imd.height, imd.paltbl, imd.data);
           free(imd.paltbl);
           free(imd.data);
-      }
-      else {
-          r = readimage(self_w, x, y, filename);
-          if (r != Succeeded) 
-              fail;
       }
       return nulldesc;
    }
@@ -1137,20 +1122,13 @@ function graphics_Window_write_image(self, fname, x0, y0, w0, h0)
       if (width <= 0 || height <= 0)
           fail;
 
-      /*
-       * try platform-dependent code first; it will reject the call
-       * if the file name s does not specify a platform-dependent format.
-       */
-      r = dumpimage(self_w, s, x, y, width, height);
+      r = NoCvt;
 #ifdef HAVE_LIBJPEG
-      if ((r == NoCvt) &&
-	  (strcmp(s + strlen(s)-4, ".jpg")==0 ||
+      if ((strcmp(s + strlen(s)-4, ".jpg")==0 ||
            (strcmp(s + strlen(s)-4, ".JPG")==0))) {
           r = writeJPEG(self_w, s, x, y, width, height);
       }
 #endif					/* HAVE_LIBJPEG */
-      if (r == NoCvt)
-          r = writeBMP(self_w, s, x, y, width, height);
       if (r == NoCvt)
           r = writeGIF(self_w, s, x, y, width, height);
       if (r != Succeeded)
@@ -1838,8 +1816,6 @@ function graphics_Window_set_image(self, val, pal)
            self_w->window->height = ws->initimage.height;
            wconfig |= C_SIZE | C_IMAGE;
        }
-       else
-           r = setimage(self_w, s);
        AttemptAttr(r, "Unable to draw image");
        return self;
    }

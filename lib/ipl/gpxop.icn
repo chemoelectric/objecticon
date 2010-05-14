@@ -84,7 +84,7 @@
 
 package ipl.graphics
 
-import graphics(Window)
+import graphics(Window), io(RamStream)
 
 #   LeftString(x, y, s) -- draw string left-justified at (x,y).
 
@@ -197,8 +197,6 @@ end
 
 #  Capture(win, pal, x, y, w, h) -- capture screen region as image string
 
-$define CaptureChunk 100
-
 # capture image as string
 procedure Capture(win, pal, x, y, w, h)		
    local a, c, k, s, cmap
@@ -221,18 +219,11 @@ procedure Capture(win, pal, x, y, w, h)
 
    # accumulate the image in chunks and then concatenate
    # (much faster than concatenating single chars on a very long string)
-   s := ""
-   a := []
+   s := RamStream()
+   s.out(w || "," || pal || ",")
    every k := !win.pixel(x, y, w, h) do {
       c := \cmap[k] | (cmap[k] := Window.palette_key(pal, k))
-      if *(s ||:= c) >= CaptureChunk then {
-         put(a, s)
-         s := ""
-         }
+      s.out(c)
       }
-   put(a, s)
-
-   s := w || "," || pal || ","
-   while s ||:= get(a)
-   return s
+   return s.done()
 end

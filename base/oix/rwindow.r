@@ -572,8 +572,6 @@ static	void	gfput		(int b);
 
 static	int	gfwrite		(wbp w, char *filename,
                                  int x, int y, int width, int height);
-static	int	bmpwrite	(wbp w, char *filename,
-                                 int x, int y, int width, int height);
 static	void	gfpack		(unsigned char *data, long len,
                                  struct palentry *paltbl);
 static	void	gfmktree	(lzwnode *tree);
@@ -608,131 +606,6 @@ static int gf_rem;			/* remaining bytes in this block */
 static int jpg_space;
 #endif					/* HAVE_LIBJPEG */
 
-
-/*
- * Construct Icon-style paltbl from BMP-style colortable
- */
-struct palentry *bmp_paltbl(int n, int *colortable)
-{
-    int i;
-    MemProtect(gf_paltbl = (struct palentry *)calloc(256, sizeof(struct palentry)));
-    for(i=0;i<n;i++) {
-        gf_paltbl[i].used = gf_paltbl[i].valid = 1;
-        gf_paltbl[i].transpt = 0;
-        gf_paltbl[i].clr.red = ((unsigned char)((char *)(colortable+i))[0]) * 257;
-        gf_paltbl[i].clr.green = ((unsigned char)((char *)(colortable+i))[1]) * 257;
-        gf_paltbl[i].clr.blue = ((unsigned char)((char *)(colortable+i))[2]) * 257;
-    }
-    return gf_paltbl;
-}
-
-/*
- * Construct Icon-style imgdata from BMP-style rasterdata.
- * Only trick we know about so far is to reverse rows so first row is bottom
- */
-unsigned char * bmp_data(int width, int height, int bpp, unsigned char * rasterdata)
-{
-    int i;
-    int rowbytes = width * bpp;
-    unsigned char *tmp = malloc(rowbytes);
-
-    if (tmp==NULL) return NULL;
-    for(i=0;i<height/2;i++) {
-        memmove(tmp, rasterdata + (i * rowbytes), rowbytes);
-        memmove(rasterdata + (i * rowbytes),
-                rasterdata + (height-i-1) * rowbytes, rowbytes);
-        memmove(rasterdata + (height-i-1) * rowbytes, tmp, rowbytes);
-    }
-    free(tmp);
-    return rasterdata;
-}
-
-
-/*
- * readBMP() - BMP file reader, patterned after readGIF().
- */
-int readBMP(char *filename, int p, struct imgdata *imd)
-{
-    FILE *f;
-    int c;
-    char headerstuff[52]; /* 54 - 2 byte magic number = 52 */
-    int filesize, dataoffset, width, height, compression, imagesize,
-        xpixelsperm, ypixelsperm, colorsused, colorsimportant, numcolors;
-    short bitcount;
-    int *colortable = NULL;
-    unsigned char *rasterdata;
-    if ((f = fopen(filename, "rb")) == NULL) return Failed;
-    if (((c = getc(f)) != 'B') || ((c = getc(f)) != 'M')) {
-        fclose(f);
-        return Failed;
-    }
-    if (fread(headerstuff, 1, 52, f) < 1) {
-        fclose(f);
-        return Failed;
-    }
-    filesize = *(int *)(headerstuff);
-    dataoffset = *(int *)(headerstuff+8);
-    width = *(int *)(headerstuff+16);
-    height = *(int *)(headerstuff+20);
-    bitcount = *(short *)(headerstuff+26);
-    switch(bitcount) {
-        case 1: numcolors = 1; break;
-        case 4: numcolors = 16; break;
-        case 8: numcolors = 256; break;
-        case 16: numcolors = 65536; break;
-        case 24: numcolors = 65536 * 256;
-        default: {
-            fclose(f);
-            return Failed;
-        }
-    }
-    compression = *(int *)(headerstuff+28);
-    if (compression != 0) {
-        fprintf(stderr, "warning, can't read compressed bmp's yet\n");
-        fclose(f);
-        return Failed;
-    }
-
-    imagesize = *(int *)(headerstuff+32);
-    if (compression == 0 && (imagesize==0)) {
-        imagesize = filesize - 54;
-        if (bitcount <= 8) imagesize -= 4 * numcolors;
-    }
-
-    xpixelsperm = *(int *)(headerstuff+36);
-    ypixelsperm = *(int *)(headerstuff+40);
-
-    colorsused = *(int *)(headerstuff+44);
-    colorsimportant = *(int *)(headerstuff+48);
-
-    if (bitcount <= 8) {
-        if ((colortable = malloc(4 * numcolors)) == NULL) {
-            fclose(f); return Failed;
-	}
-        if (fread(colortable, 4, numcolors, f) < numcolors) {
-            fclose(f); return Failed;
-	}
-    }
-    if ((rasterdata = malloc(imagesize))) {
-        if (fread(rasterdata, 1, imagesize, f) < imagesize) {
-            fclose(f); return Failed;
-	}
-        /* OK, read the whole thing, now what to do with it ? */
-        imd->width = width;
-        imd->height = height;
-        if (colortable) {
-            imd->paltbl = bmp_paltbl(numcolors, colortable);
-            imd->data = bmp_data(width, height, 1, rasterdata);
-        }
-        else {
-            imd->paltbl = NULL;
-            imd->data = bmp_data(width, height, 3, rasterdata);
-        }
-        return Succeeded;
-    }
-    fclose(f);
-    return Failed;
-}
 /*
  * readGIF(filename, p, imd) - read GIF file into image data structure
  *
@@ -1272,80 +1145,6 @@ void my_error_exit (j_common_ptr cinfo)
 }
 
 #endif
-
-
-/*
- * writeBMP(w, filename, x, y, width, height) - write BMP image
- *
- * Fails if filename does not end in .bmp or .BMP; default is write .GIF.
- * Returns Succeeded, Failed, or Error.
- * We assume that the area specified is within the window.
- */
-int writeBMP(wbp w, char *filename, int x, int y, int width, int height)
-{
-    int r;
-    if (strstr(filename, ".BMP")==NULL && strstr(filename,".bmp")==NULL)
-        return NoCvt;
-
-    r = bmpwrite(w, filename, x, y, width, height);
-    if (gf_f) { fclose(gf_f); gf_f = NULL; }
-    if (gf_string) { free(gf_string); gf_string = NULL; }
-    return r;
-}
-
-/*
- * bmpwrite(w, filename, x, y, width, height) - write BMP file
- */
-
-static int bmpwrite(wbp w, char *filename, int x, int y, int width, int height)
-{
-    int i, a[6];
-    short sh[2];
-    int len;
-    struct palentry paltbl[DMAXCOLORS];
-
-    len = width * height;	/* total length of data */
-
-    if (!(gf_f = fopen(filename, "wb")))
-        return Failed;
-    if (!(gf_string = malloc(len)))
-        return Error;
-
-    for (i = 0; i < DMAXCOLORS; i++)
-        paltbl[i].used = paltbl[i].valid = paltbl[i].transpt = 0;
-    if (!getimstr(w, x, y, width, height, paltbl, gf_string))
-        return Error;
-
-    fprintf(gf_f, "BM");
-    a[0] = 54 + 4 * 256 + len;
-    a[1] = 0;
-    a[2] = 54 + 4 * 256;
-    a[3] = 40;
-    a[4] = width;
-    a[5] = height;
-    if (fwrite(a, 4, 6, gf_f) < 6) return Failed;
-    sh[0] = 1;
-    sh[1] = 8;
-    if (fwrite(sh, 2, 2, gf_f) < 2) return Failed;
-    a[0] = 0;
-    a[1] = len;
-    a[2] = a[3] = 3938; /* presumably, hardwire to assume 100dpi */
-    a[4] = 256; /* colors used */
-    a[5] = 0; /* colors important */
-    if (fwrite(a, 4, 6, gf_f) < 6) return Failed;
-
-    for (i=0; i<256; i++) {
-        unsigned char c[4];
-        c[0] = paltbl[i].clr.red >> 8;
-        c[1] = paltbl[i].clr.green >> 8;
-        c[2] = paltbl[i].clr.blue >> 8;
-        c[3] = 0;
-        if (fwrite(c, 4, 1, gf_f) < 1) return Failed;
-    }
-    if (bmp_data(width, height, 1, gf_string) == NULL) return Error;
-    if (fwrite(gf_string, width, height, gf_f) < height) return Failed;
-    return Succeeded;
-}
 
 
 /*
@@ -2248,8 +2047,6 @@ int readimagefile(char *filename, int p, struct imgdata *imd)
 {
     int r;
     if ((r = readGIF(filename, p, imd)) == Succeeded)
-        return Succeeded;
-    if ((r = readBMP(filename, p, imd)) == Succeeded)
         return Succeeded;
 #ifdef HAVE_LIBJPEG
     if ((r = readJPEG(filename, p, imd)) == Succeeded)

@@ -186,7 +186,6 @@ void  bigrand         (dptr da, dptr dx);
    void wgetevent       (wbp w, dptr res);
    int  readimagefile   (char *filename, int p, struct imgdata *imd);
    int  readGIF         (char *fname, int p, struct imgdata *d);
-   int  readBMP         (char *filename, int p, struct imgdata *imd);
 #ifdef HAVE_LIBJPEG
    int  writeJPEG       (wbp w, char *filename, int x, int y, int width, int height);
    int  readJPEG        (char *fname, int p, struct imgdata *d);
@@ -196,20 +195,16 @@ void  bigrand         (dptr da, dptr dx);
 
    int  writeGIF        (wbp w, char *filename,
                           int x, int y, int width, int height);
-   int  writeBMP        (wbp w, char *filename,
-                          int x, int y, int width, int height);
    /*
     * graphics implementation routines supplied for each platform
     * (excluding those defined as macros for X-windows)
     */
    int  setpattern      (wbp w, char *name);
    void drawblimage     (wbp w, int x, int y, int wd, int h,
-                          int ch, unsigned char *s, int len);
+                          int ch, unsigned char *s);
    wcp  clonecontext   (wbp w);
    int  copyarea        (wbp w,wbp w2,int x,int y,int wd,int h,int x2,int y2);
    int  doconfig        (wbp w, int status);
-   int  dumpimage       (wbp w, char *filename,  int x,  int y,
-                         int width, int height);
    void erasearea       (wbp w, int x, int y, int width, int height);
    void fillrectangle   (wbp w, int x, int y, int width, int height);
    void freewbinding    (wbp w);
@@ -239,7 +234,6 @@ void  bigrand         (dptr da, dptr dx);
    int  queryrootpointer(wbp w, int *x, int *y);
    int  getdisplaysize  (wbp w, int *width, int *height);
    int  raisewindow     (wbp w);
-   int  readimage       (wbp w, int x, int y, char *filename);
    int  rebind          (wbp w, wbp w2);
    int  setbg           (wbp w, char *s);
    int  setcanvas       (wbp w, char *s);
@@ -247,7 +241,6 @@ void  bigrand         (dptr da, dptr dx);
    int  setfg           (wbp w, char *s);
    int  setfillstyle    (wbp w, char *s);
    int  setfont         (wbp w, char *s);
-   int  setimage        (wbp w, char *val);
    int  setlinestyle    (wbp w, char *s);
    int  setlinewidth    (wbp w, int linewid);
    int  setpointer      (wbp w, char *val);
@@ -257,7 +250,7 @@ void  bigrand         (dptr da, dptr dx);
    int  setwindowlabel  (wbp w, char *val);
    int  setinputmask    (wbp w, char *val);
    void drawstrimage    (wbp w, int x, int y, int width, int height,
-                           struct palentry *e, unsigned char *s, int len);
+                           struct palentry *e, unsigned char *s);
    void togglefgbg      (wbp w);
    int  walert          (wbp w, int volume);
    int  warppointer     (wbp w, int x, int y);

@@ -55,8 +55,3 @@
 #ifdef HAVE_LIBJPEG
    Feature("_JPEG", "JPEG images")
 #endif					/* HAVE_LIBJPEG */
-
-#ifdef HAVE_LIBXPM
-   Feature("_XPM", "XPM images")
-#endif					/* HAVE_LIBXPM */
-
