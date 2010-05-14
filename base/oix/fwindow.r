@@ -1121,7 +1121,6 @@ function graphics_Window_write_image(self, fname, x0, y0, w0, h0)
 
       /*
        * clip image to window, and fail if zero-sized.
-       * (the casts to long are necessary to avoid unsigned comparison.)
        */
       if (x < 0) {
           width += x;
@@ -1131,9 +1130,9 @@ function graphics_Window_write_image(self, fname, x0, y0, w0, h0)
           height += y;
           y = 0;
       }
-      if (x + width > (long) self_w->window->width)
+      if (x + width > self_w->window->width)
           width = self_w->window->width - x;
-      if (y + height > (long) self_w->window->height)
+      if (y + height > self_w->window->height)
           height = self_w->window->height - y;
       if (width <= 0 || height <= 0)
           fail;
