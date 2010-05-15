@@ -110,6 +110,13 @@ typedef struct wcolor {
    unsigned long	c;		/* X pixel value */
 } *wclrp;
 
+struct SharedColor {
+   int r, g, b;         /* rgb of c */
+   unsigned long c;     /* X pixel value */
+   char  *name;
+   int   refcount;
+};
 
 
-#endif					/* XWindows */
+
+#endif                                  /* XWindows */

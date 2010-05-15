@@ -180,7 +180,6 @@ struct imgdata {			/* image loaded from a file */
 struct imgmem {
    int x, y, width, height;             /* Pos/dimensions of rectangle being got/set */
    int xoff, yoff;                      /* Increasing x,y offset within rectangle during looping */
-   int r, g, b;                         /* rgba values to return or set */
 #if XWindows
    XImage *im;
 #elif MSWIN32
@@ -202,15 +201,13 @@ typedef struct _wdisplay {
   char		name[MAXDISPLAYNAME];
   Display *	display;
   struct progstate *program;           /* owning program */
+  struct SharedColor *black, *white;
   Colormap	cmap;
   int		screen;
   wfp		fonts;
 #ifdef HAVE_LIBXFT
   XFontStruct   *xfont;
 #endif
-  int           numColors;		/* allocated color info */
-  int		sizColors;		/* # elements of alloc. color array */
-  struct wcolor	*colors;
   Cursor	cursors[NUMCURSORSYMS];
   struct _wdisplay *previous, *next;
 } *wdp;
@@ -238,7 +235,7 @@ typedef struct _wcontext {
 #if XWindows
   wdp		display;
   GC		gc;			/* X graphics context */
-  int		fg, bg;
+  struct SharedColor *fg, *bg;
   int		linestyle;
   int		linewidth;
   char		*patternname;
@@ -312,9 +309,6 @@ typedef struct _wstate {
 #endif
   int		normalx, normaly;	/* pos to remember when maximized */
   int		normalw, normalh;	/* size to remember when maximized */
-  int           numColors;		/* allocated (used) color info */
-  int           sizColors;		/* malloced size of theColors */
-  short		*theColors;		/* indices into display color table */
   int		iconic;			/* window state; icon, window or root*/
   Window        transientfor;           /* transient-for hint */
   long		wmhintflags;		/* window manager hints */

@@ -193,7 +193,7 @@ void  bigrand         (dptr da, dptr dx);
    int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph);
    char *rgbkey         (int p, double r, double g, double b);
 
-   void pixelinit       (wbp w, struct imgmem *i, int x, int y, int width, int height);
+   int  pixelinit       (wbp w, struct imgmem *i, int x, int y, int width, int height);
    int  gotopixel       (struct imgmem *i, int x, int y);
    int  writeGIF        (wbp w, char *filename,
                           int x, int y, int width, int height);
@@ -211,8 +211,8 @@ void  bigrand         (dptr da, dptr dx);
     * (excluding those defined as macros for X-windows)
     */
    void pixelload       (wbp w, struct imgmem *imem);
-   void getpixel        (struct imgmem *im);
-   void setpixel        (struct imgmem *im);
+   void getpixel        (struct imgmem *imem, int *r, int *g, int *b);
+   void setpixel        (struct imgmem *imem, int r, int g, int b);
    void pixelsave       (wbp w, struct imgmem *imem);
    void pixelfree       (struct imgmem *imem);
    int  setpattern      (wbp w, char *name);
@@ -224,7 +224,6 @@ void  bigrand         (dptr da, dptr dx);
    void freewbinding    (wbp w);
    void freecontext    (wcp wc);
    void freewindow     (wsp ws);
-   void freecolor       (wbp w, char *s);
    void getbg           (wbp w, char *answer);
    void getcanvas       (wbp w, char *s);
    void getdisplay      (wbp w, char *answer);

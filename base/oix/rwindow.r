@@ -528,7 +528,7 @@ static double rgbval(double n1, double n2, double hue)
         return n1;
 }
 
-void pixelinit(wbp w, struct imgmem *i, int x, int y, int width, int height)
+int pixelinit(wbp w, struct imgmem *i, int x, int y, int width, int height)
 {
     wsp ws = w->window;
     if (x < 0)  { 
@@ -543,10 +543,16 @@ void pixelinit(wbp w, struct imgmem *i, int x, int y, int width, int height)
         width = ws->width - x; 
     if (y + height > ws->height)
         height = ws->height - y; 
+
+    if (width <= 0 || height <= 0)
+        return 0;
+    
     i->x = x;
     i->y = y;
     i->width = width;
     i->height = height;
+    pixelload(w, i);
+    return 1;
 }
 
 int gotopixel(struct imgmem *imem, int x, int y)
@@ -584,20 +590,14 @@ void drawstrimage(wbp w, int x, int y, int width, int height,
     struct imgmem imem;
     int i, j;
 
-    pixelinit(w, &imem, x, y, width, height);
-    if (imem.width <= 0 || imem.height <= 0)
+    if (!pixelinit(w, &imem, x, y, width, height))
         return;
-
-    pixelload(w, &imem);
 
     for (j = y; j < y + height; j++) {
         for (i = x; i < x + width; i++) {
             if (gotopixel(&imem, i, j) && !e[*s].transpt) {
                 LinearColor c = e[*s].clr;
-                imem.r = c.red;
-                imem.g = c.green;
-                imem.b = c.blue;
-                setpixel(&imem);
+                setpixel(&imem, c.red, c.green, c.blue);
             }
             ++s;
         }
@@ -611,19 +611,17 @@ void drawrgb24(wbp w, int x, int y, int width, int height, unsigned char *s)
     struct imgmem imem;
     int i, j;
 
-    pixelinit(w, &imem, x, y, width, height);
-    if (imem.width <= 0 || imem.height <= 0)
+    if (!pixelinit(w, &imem, x, y, width, height))
         return;
-
-    pixelload(w, &imem);
 
     for (j = y; j < y + height; j++) {
         for (i = x; i < x + width; i++) {
             if (gotopixel(&imem, i, j)) {
-                imem.r = 257 * (*s++);
-                imem.g = 257 * (*s++);
-                imem.b = 257 * (*s++);
-                setpixel(&imem);
+                int r, g, b;
+                r = 257 * (*s++);
+                g = 257 * (*s++);
+                b = 257 * (*s++);
+                setpixel(&imem, r, g, b);
             } else
                 s += 3;
         }
@@ -638,22 +636,19 @@ void drawrgba32(wbp w, int x, int y, int width, int height, unsigned char *s)
     struct imgmem imem;
     int i, j;
 
-    pixelinit(w, &imem, x, y, width, height);
-    if (imem.width <= 0 || imem.height <= 0)
+    if (!pixelinit(w, &imem, x, y, width, height))
         return;
-
-    pixelload(w, &imem);
 
     for (j = y; j < y + height; j++) {
         for (i = x; i < x + width; i++) {
             if (gotopixel(&imem, i, j)) {
-                int a;
-                imem.r = 257 * (*s++);
-                imem.g = 257 * (*s++);
-                imem.b = 257 * (*s++);
+                int r, g, b, a;
+                r = 257 * (*s++);
+                g = 257 * (*s++);
+                b = 257 * (*s++);
                 a = 257 * (*s++);
                 if (a)
-                    setpixel(&imem);
+                    setpixel(&imem, r, g, b);
             } else
                 s += 4;
         }
@@ -680,11 +675,8 @@ void drawblimage(wbp w, int x, int y, int width, int height,
     if (parsecolor(color, &bg_r, &bg_g, &bg_b, &bg_a) != Succeeded)
         return;
 
-    pixelinit(w, &imem, x, y, width, height);
-    if (imem.width <= 0 || imem.height <= 0)
+    if (!pixelinit(w, &imem, x, y, width, height))
         return;
-
-    pixelload(w, &imem);
 
     m = width % 4;
     if (m == 0)
@@ -701,20 +693,12 @@ void drawblimage(wbp w, int x, int y, int width, int height,
                 c += 9;
             while (m > 0) {                /* set (usually) 4 pixel values */
                 --ix;
-                if (ix >= 0 && ix < imem.width && iy >= 0 && iy < imem.height) {
-                    imem.xoff = ix;
-                    imem.yoff = iy;
+                if (gotopixel(&imem, x + ix, y + iy)) {
                     if (c & m) {
-                        imem.r = fg_r;
-                        imem.g = fg_g;
-                        imem.b = fg_b;
-                        setpixel(&imem);
+                        setpixel(&imem, fg_r, fg_g, fg_b);
                     }
                     else if (ch != TCH1) {      /* if zeroes aren't transparent */
-                        imem.r = bg_r;
-                        imem.g = bg_g;
-                        imem.b = bg_b;
-                        setpixel(&imem);
+                        setpixel(&imem, bg_r, bg_g, bg_b);
                     }
                 }
                 m >>= 1;
@@ -730,13 +714,8 @@ void drawblimage(wbp w, int x, int y, int width, int height,
     }
     if (ix > 0) {                         /* pad final row if incomplete */
         while (ix < width) {
-            if (ix >= 0 && ix < imem.width && iy >= 0 && iy < imem.height) {
-                imem.xoff = ix;
-                imem.yoff = iy;
-                imem.r = bg_r;
-                imem.g = bg_g;
-                imem.b = bg_b;
-                setpixel(&imem);
+            if (gotopixel(&imem, x + ix, y + iy)) {
+                setpixel(&imem, bg_r, bg_g, bg_b);
             }
             ix++;
         }

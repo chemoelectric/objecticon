@@ -789,26 +789,6 @@ function graphics_Window_fill_rectangle(self, x0, y0, w0, h0)
    }
 end
 
-function graphics_Window_free_color(self, argv[argc])
-   body {
-      int i;
-      word n;
-      tended char *s;
-      GetSelfW();
-
-      if (argc == 0)
-          runerr(103);
-
-      for (i = 0; i < argc; i++) {
-          if (!cnv:string(argv[i],argv[i]))
-              runerr(103,argv[i]);
-          freecolor(self_w, buffstr(&argv[i]));
-      }
-
-      return self;
-   }
-end
-
 function graphics_Window_lower(self)
    body {
       GetSelfW();
@@ -910,31 +890,35 @@ function graphics_Window_get_pixels(self, x0, y0, w0, h0)
 
       ws = self_w->window;
 
-      pixelinit(self_w, &imem, x, y, width, height);
-      pixelload(self_w, &imem);
       getbg(self_w, attr_buff);
       cstr2string(attr_buff, &bg);
-      lastval = emptystr;
-
       create_list(width * height, &result);
-      r = g = b = -1;
-      for (j = y; j < y + height; j++) {
-          for (i = x; i < x + width; i++) {
-              if (gotopixel(&imem, i, j)) {
-                  getpixel(&imem);
-                  if (r != imem.r || g != imem.g || b != imem.b) {
-                      char buff[64];
-                      r = imem.r; g = imem.g; b = imem.b;
-                      sprintf(buff, "%d,%d,%d", r, g, b);
-                      cstr2string(buff, &lastval);
-                  }
-                  list_put(&result, &lastval);
-              } else
-                  list_put(&result, &bg);
-          }
-      }
 
-      pixelfree(&imem);
+      if (pixelinit(self_w, &imem, x, y, width, height)) {
+          lastval = emptystr;
+          r = g = b = -1;
+          for (j = y; j < y + height; j++) {
+              for (i = x; i < x + width; i++) {
+                  if (gotopixel(&imem, i, j)) {
+                      int r0, g0, b0;
+                      getpixel(&imem, &r0, &g0, &b0);
+                      if (r != r0 || g != g0 || b != b0) {
+                          char buff[64];
+                          r = r0; g = g0; b = b0;
+                          sprintf(buff, "%d,%d,%d", r, g, b);
+                          cstr2string(buff, &lastval);
+                      }
+                      list_put(&result, &lastval);
+                  } else
+                      list_put(&result, &bg);
+              }
+          }
+          pixelfree(&imem);
+      } else {
+          /* Region completely off-screen */
+          for (i = 0; i < width * height; i++)
+              list_put(&result, &bg);
+      }
       return result;
    }
 end
@@ -947,7 +931,7 @@ function graphics_Window_set_pixels(self, data, x0, y0, w0, h0)
       word x, y, width, height;
       struct lgstate state;
       tended struct b_lelem *le;
-      tended struct descrip elem, bg;
+      tended struct descrip elem;
       int i, j;
       wsp ws;
       GetSelfW();
@@ -957,25 +941,19 @@ function graphics_Window_set_pixels(self, data, x0, y0, w0, h0)
 
       ws = self_w->window;
 
-      pixelinit(self_w, &imem, x, y, width, height);
-      pixelload(self_w, &imem);
-      getbg(self_w, attr_buff);
-      cstr2string(attr_buff, &bg);
+      if (!pixelinit(self_w, &imem, x, y, width, height))
+          return;
 
       le = lgfirst(&ListBlk(data), &state);
-      for (j = y; j < y + height; j++) {
-          for (i = x; i < x + width; i++) {
-              int ignore;
-              if (le) {
-                  elem = le->lslots[state.result];
-                  le = lgnext(&ListBlk(data), &state, le);
-              } else 
-                  elem = bg;
-              
+      for (j = y; le && j < y + height; j++) {
+          for (i = x; le && i < x + width; i++) {
+              int r, g, b, a;
+              elem = le->lslots[state.result];
+              le = lgnext(&ListBlk(data), &state, le);
               if (gotopixel(&imem, i, j)) {
                   char *color = buffstr(&elem);
-                  if (parsecolor(color, &imem.r, &imem.g, &imem.b, &ignore) == Succeeded)
-                      setpixel(&imem);
+                  if (parsecolor(color, &r, &g, &b, &a) == Succeeded)
+                      setpixel(&imem, r, g, b);
               }
           }
       }
