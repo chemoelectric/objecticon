@@ -888,7 +888,7 @@ function graphics_Window_get_pixels(self, x0, y0, w0, h0)
       ws = self_w->window;
 
       init_imgmem(self_w, &imem, x, y, width, height);
-      getpixelinit(self_w, &imem);
+      pixelinit(self_w, &imem);
       getbg(self_w, attr_buff);
       cstr2string(attr_buff, &bg);
       lastval = emptystr;
@@ -917,7 +917,7 @@ function graphics_Window_get_pixels(self, x0, y0, w0, h0)
           }
       }
 
-      getpixelterm(self_w, &imem);
+      pixelfree(&imem);
       return result;
    }
 end
@@ -943,7 +943,7 @@ function graphics_Window_set_pixels(self, data, x0, y0, w0, h0)
       ws = self_w->window;
 
       init_imgmem(self_w, &imem, x, y, width, height);
-      setpixelinit(self_w, &imem);
+      pixelinit(self_w, &imem);
       getbg(self_w, attr_buff);
       cstr2string(attr_buff, &bg);
 
@@ -951,6 +951,7 @@ function graphics_Window_set_pixels(self, data, x0, y0, w0, h0)
       for (j = y; j < y + height; j++) {
           for (i = x; i < x + width; i++) {
               char *color;
+              int ignore;
               if (!le) {
                   elem = bg;
               } else {
@@ -958,7 +959,7 @@ function graphics_Window_set_pixels(self, data, x0, y0, w0, h0)
                   le = lgnext(&ListBlk(data), &state, le);
               }
               color = buffstr(&elem);
-              if (parsecolor(color, &imem.r, &imem.g, &imem.b, &imem.a) == Succeeded) {
+              if (parsecolor(color, &imem.r, &imem.g, &imem.b, &ignore) == Succeeded) {
                   if (i < imem.x || i >= imem.x + imem.width ||
                       j < imem.y || j >= imem.y + imem.height)
                       continue;
@@ -971,7 +972,8 @@ function graphics_Window_set_pixels(self, data, x0, y0, w0, h0)
           }
       }
 
-      setpixelterm(self_w, &imem);
+      pixelsave(self_w, &imem);
+      pixelfree(&imem);
       return nulldesc;
    }
 end

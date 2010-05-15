@@ -184,7 +184,7 @@ struct imgdata {			/* image loaded from a file */
 struct imgmem {
    int x, y, width, height;             /* Pos/dimensions of rectangle being got/set */
    int xoff, yoff;                      /* Increasing x,y offset within rectangle during looping */
-   int r, g, b, a;                      /* rgba values to return or set */
+   int r, g, b;                         /* rgba values to return or set */
 #if XWindows
    XImage *im;
 #elif MSWIN32

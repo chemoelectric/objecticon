@@ -204,6 +204,12 @@ void  bigrand         (dptr da, dptr dx);
    void drawrgb24       (wbp w, int x, int y, int width, int height, unsigned char *s);
    void drawrgba32      (wbp w, int x, int y, int width, int height, unsigned char *s);
 
+   void pixelinit       (wbp w, struct imgmem *imem);
+   void getpixel        (struct imgmem *im);
+   void setpixel        (struct imgmem *im);
+   void pixelsave       (wbp w, struct imgmem *imem);
+   void pixelfree       (struct imgmem *imem);
+
 
    /*
     * graphics implementation routines supplied for each platform
@@ -229,12 +235,6 @@ void  bigrand         (dptr da, dptr dx);
    int  getdepth        (wbp w, int *res);
    int  getwindowlabel  (wbp w, char *answer);
    void getlinestyle    (wbp w, char *answer);
-   void getpixelinit   (wbp w, struct imgmem *imem);
-   void getpixelterm   (wbp w, struct imgmem *imem);
-   void getpixel        (struct imgmem *im);
-   void setpixelinit   (wbp w, struct imgmem *imem);
-   void setpixelterm   (wbp w, struct imgmem *imem);
-   void setpixel        (struct imgmem *im);
    void getpointer  (wbp w, char *answer);
    int  getpos          (wbp w);
    int  lowerwindow     (wbp w);

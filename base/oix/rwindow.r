@@ -577,7 +577,7 @@ void drawstrimage(wbp w, int x, int y, int width, int height,
     if (imem.width <= 0 || imem.height <= 0)
         return;
 
-    setpixelinit(w, &imem);
+    pixelinit(w, &imem);
 
     for (j = y; j < y + height; j++) {
         for (i = x; i < x + width; i++) {
@@ -593,14 +593,14 @@ void drawstrimage(wbp w, int x, int y, int width, int height,
                     imem.r = c.red;
                     imem.g = c.green;
                     imem.b = c.blue;
-                    imem.a = 65535;
                     setpixel(&imem);
                 }
                 ++s;
             }
         }
     }
-    setpixelterm(w, &imem);
+    pixelsave(w, &imem);
+    pixelfree(&imem);
 }
 
 void drawrgb24(wbp w, int x, int y, int width, int height, unsigned char *s)
@@ -612,7 +612,7 @@ void drawrgb24(wbp w, int x, int y, int width, int height, unsigned char *s)
     if (imem.width <= 0 || imem.height <= 0)
         return;
 
-    setpixelinit(w, &imem);
+    pixelinit(w, &imem);
 
     for (j = y; j < y + height; j++) {
         for (i = x; i < x + width; i++) {
@@ -626,13 +626,13 @@ void drawrgb24(wbp w, int x, int y, int width, int height, unsigned char *s)
                 imem.r = 257 * (*s++);
                 imem.g = 257 * (*s++);
                 imem.b = 257 * (*s++);
-                imem.a = 65535;
                 setpixel(&imem);
             }
         }
     }
 
-    setpixelterm(w, &imem);
+    pixelsave(w, &imem);
+    pixelfree(&imem);
 }
 
 void drawrgba32(wbp w, int x, int y, int width, int height, unsigned char *s)
@@ -644,7 +644,7 @@ void drawrgba32(wbp w, int x, int y, int width, int height, unsigned char *s)
     if (imem.width <= 0 || imem.height <= 0)
         return;
 
-    setpixelinit(w, &imem);
+    pixelinit(w, &imem);
 
     for (j = y; j < y + height; j++) {
         for (i = x; i < x + width; i++) {
@@ -653,18 +653,21 @@ void drawrgba32(wbp w, int x, int y, int width, int height, unsigned char *s)
                 s += 4;
                 continue;
             } else  {
+                int a;
                 imem.xoff = i - imem.x;
                 imem.yoff = j - imem.y;
                 imem.r = 257 * (*s++);
                 imem.g = 257 * (*s++);
                 imem.b = 257 * (*s++);
-                imem.a = 257 * (*s++);
-                setpixel(&imem);
+                a = 257 * (*s++);
+                if (a)
+                    setpixel(&imem);
             }
         }
     }
 
-    setpixelterm(w, &imem);
+    pixelsave(w, &imem);
+    pixelfree(&imem);
 }
 
 void drawblimage(wbp w, int x, int y, int width, int height,
@@ -688,7 +691,7 @@ void drawblimage(wbp w, int x, int y, int width, int height,
     if (imem.width <= 0 || imem.height <= 0)
         return;
 
-    setpixelinit(w, &imem);
+    pixelinit(w, &imem);
 
     m = width % 4;
     if (m == 0)
@@ -712,14 +715,12 @@ void drawblimage(wbp w, int x, int y, int width, int height,
                         imem.r = fg_r;
                         imem.g = fg_g;
                         imem.b = fg_b;
-                        imem.a = 65535;
                         setpixel(&imem);
                     }
                     else if (ch != TCH1) {      /* if zeroes aren't transparent */
                         imem.r = bg_r;
                         imem.g = bg_g;
                         imem.b = bg_b;
-                        imem.a = 65535;
                         setpixel(&imem);
                     }
                 }
@@ -742,14 +743,14 @@ void drawblimage(wbp w, int x, int y, int width, int height,
                 imem.r = bg_r;
                 imem.g = bg_g;
                 imem.b = bg_b;
-                imem.a = 65535;
                 setpixel(&imem);
             }
             ix++;
         }
     }
 
-    setpixelterm(w, &imem);
+    pixelsave(w, &imem);
+    pixelfree(&imem);
 }
 
 static int  getimstr        (wbp w, int x, int y, int width, int hgt,

@@ -2425,7 +2425,7 @@ void freecolor(wbp w, char *s)
 /*
  * Client for producing pixels from a window
  */
-void getpixelinit(wbp w, struct imgmem *imem)
+void pixelinit(wbp w, struct imgmem *imem)
 {
     STDLOCALS(w);
     MemProtect(imem->im = XGetImage(stddpy, stdpix,
@@ -2442,37 +2442,22 @@ void getpixel(struct imgmem *imem)
     imem->r = ((c>>16)&0xff)*257;
 }
 
-void getpixelterm(wbp w, struct imgmem *imem)
-{
-    XDestroyImage(imem->im);
-}
-
-/*
- * Client for setting pixels to a window
- */
-void setpixelinit(wbp w, struct imgmem *imem)
-{
-    STDLOCALS(w);
-    MemProtect(imem->im = XGetImage(stddpy, stdpix,
-                                    imem->x, imem->y, imem->width, imem->height,
-                                    AllPlanes, ZPixmap));
-}
-
 void setpixel(struct imgmem *imem)
 {
-    unsigned long c;
-    if (imem->a) {
-        c = ((imem->r/257)<<16) | ((imem->g/257)<<8) | (imem->b/257);
-        XPutPixel(imem->im, imem->xoff, imem->yoff, c);
-    }
+    unsigned long c = ((imem->r/257)<<16) | ((imem->g/257)<<8) | (imem->b/257);
+    XPutPixel(imem->im, imem->xoff, imem->yoff, c);
 }
 
-void setpixelterm(wbp w, struct imgmem *imem)
+void pixelsave(wbp w, struct imgmem *imem)
 {
     STDLOCALS(w);
     if (wc->drawop != GXcopy) XSetFunction(stddpy, stdgc, GXcopy);
     RENDER7(XPutImage, imem->im, 0, 0, imem->x, imem->y, imem->width, imem->height);
     if (wc->drawop != GXcopy) XSetFunction(stddpy, stdgc, wc->drawop);
+}
+
+void pixelfree(struct imgmem *imem)
+{
     XDestroyImage(imem->im);
 }
 
