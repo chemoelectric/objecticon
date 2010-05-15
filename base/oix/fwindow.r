@@ -879,8 +879,7 @@ function graphics_Window_get_pixels(self, x0, y0, w0, h0)
    body {
       struct imgmem imem;
       word x, y, width, height;
-      int slen;
-      tended struct descrip lastval, result, bg;
+      tended struct descrip lastval, result;
       int i, j, r, g, b;
       wsp ws;
       GetSelfW();
@@ -890,8 +889,6 @@ function graphics_Window_get_pixels(self, x0, y0, w0, h0)
 
       ws = self_w->window;
 
-      getbg(self_w, attr_buff);
-      cstr2string(attr_buff, &bg);
       create_list(width * height, &result);
 
       if (pixelinit(self_w, &imem, x, y, width, height)) {
@@ -910,14 +907,14 @@ function graphics_Window_get_pixels(self, x0, y0, w0, h0)
                       }
                       list_put(&result, &lastval);
                   } else
-                      list_put(&result, &bg);
+                      list_put(&result, &nulldesc);
               }
           }
           pixelfree(&imem);
       } else {
           /* Region completely off-screen */
           for (i = 0; i < width * height; i++)
-              list_put(&result, &bg);
+              list_put(&result, &nulldesc);
       }
       return result;
    }
@@ -947,13 +944,113 @@ function graphics_Window_set_pixels(self, data, x0, y0, w0, h0)
       le = lgfirst(&ListBlk(data), &state);
       for (j = y; le && j < y + height; j++) {
           for (i = x; le && i < x + width; i++) {
-              int r, g, b, a;
               elem = le->lslots[state.result];
               le = lgnext(&ListBlk(data), &state, le);
-              if (gotopixel(&imem, i, j)) {
-                  char *color = buffstr(&elem);
-                  if (parsecolor(color, &r, &g, &b, &a) == Succeeded)
+              if (!is:null(elem) && gotopixel(&imem, i, j)) {
+                  int r, g, b, a;
+                  if (!cnv:string(elem, elem))
+                      runerr(103, elem);
+                  if (parsecolor(buffstr(&elem), &r, &g, &b, &a) == Succeeded)
                       setpixel(&imem, r, g, b);
+              }
+          }
+      }
+
+      pixelsave(self_w, &imem);
+      pixelfree(&imem);
+      return nulldesc;
+   }
+end
+
+function graphics_Window_get_rgb(self, x0, y0, w0, h0)
+   body {
+      struct imgmem imem;
+      word x, y, width, height;
+      tended struct descrip result;
+      struct descrip tmp;
+      int i, j;
+      wsp ws;
+      GetSelfW();
+
+      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
+
+      ws = self_w->window;
+      create_list(3 * width * height, &result);
+
+      if (pixelinit(self_w, &imem, x, y, width, height)) {
+          for (j = y; j < y + height; j++) {
+              for (i = x; i < x + width; i++) {
+                  if (gotopixel(&imem, i, j)) {
+                      int r, g, b;
+                      getpixel(&imem, &r, &g, &b);
+                      MakeInt(r, &tmp);
+                      list_put(&result, &tmp);
+                      MakeInt(g, &tmp);
+                      list_put(&result, &tmp);
+                      MakeInt(b, &tmp);
+                      list_put(&result, &tmp);
+                  } else {
+                      list_put(&result, &nulldesc);
+                      list_put(&result, &nulldesc);
+                      list_put(&result, &nulldesc);
+                  }
+              }
+          }
+          pixelfree(&imem);
+      } else {
+          /* Region completely off-screen */
+          for (i = 0; i < 3 * width * height; i++) {
+              list_put(&result, &nulldesc);
+          }
+      }
+      return result;
+   }
+end
+
+function graphics_Window_set_rgb(self, data, x0, y0, w0, h0)
+   if !is:list(data) then
+      runerr(108, data)
+   body {
+      struct imgmem imem;
+      word x, y, width, height;
+      struct lgstate state;
+      tended struct b_lelem *le;
+      tended struct descrip rd, gd, bd;
+      int i, j;
+      wsp ws;
+      GetSelfW();
+
+      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
+
+      ws = self_w->window;
+
+      if (!pixelinit(self_w, &imem, x, y, width, height))
+          return;
+
+      le = lgfirst(&ListBlk(data), &state);
+      for (j = y; le && j < y + height; j++) {
+          for (i = x; le && i < x + width; i++) {
+              rd = le->lslots[state.result];
+              le = lgnext(&ListBlk(data), &state, le);
+              if (le) {
+                  gd = le->lslots[state.result];
+                  le = lgnext(&ListBlk(data), &state, le);
+                  if (le) {
+                      bd = le->lslots[state.result];
+                      le = lgnext(&ListBlk(data), &state, le);
+                      if (!is:null(rd) && !is:null(gd) && !is:null(bd) && gotopixel(&imem, i, j)) {
+                          word r, g, b;
+                          if (!cnv:C_integer(rd, r))
+                              runerr(101, rd);
+                          if (!cnv:C_integer(gd, g))
+                              runerr(101, gd);
+                          if (!cnv:C_integer(bd, b))
+                              runerr(101, bd);
+                          setpixel(&imem, r, g, b);
+                      }
+                  }
               }
           }
       }
