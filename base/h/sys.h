@@ -57,6 +57,7 @@
    #define ftruncate _chsize
    #define lstat stat
    #define alloca _alloca
+   #define qsort myqsort
 #endif					/* MSWIN32 */
 
 

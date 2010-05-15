@@ -44,7 +44,7 @@ class Style()
    public get_filter_clone(W)
       local t
 $ifdef _MS_WIN32
-      t := W.clone("fill_style=masked", "draw_op=xor", "pattern=verydark")
+      t := W.clone("bg=pale grey", "fill_style=masked", "draw_op=xor", "pattern=waves")
       t.xor_reverse()
 $else
       t := W.clone("fill_style=masked", "pattern=waves")

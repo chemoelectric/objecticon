@@ -257,21 +257,6 @@ typedef struct _wcontext {
 
 } wcontext, *wcp;
 
-/*
- * Native facilities include the following child controls (windows) that
- * persist on the canvas and intercept various events.
- */
-#if MSWIN32
-#define CHILD_BUTTON 0
-#define CHILD_SCROLLBAR 1
-#define CHILD_EDIT 2
-typedef struct childcontrol {
-   int  type;				/* what kind of control? */
-   HWND win;				/* child window handle */
-   HFONT font;
-   char *id;				/* child window string id */
-} childcontrol;
-#endif					/* MSWIN32 */
 
 /*
  * "Window state" includes the actual X window and references to a large
@@ -317,19 +302,12 @@ typedef struct _wstate {
   HWND		iconwin;		/* client window when iconic */
   HBITMAP	pix;			/* backing bitmap */
   HBITMAP	iconpix;		/* backing bitmap */
-  HBITMAP	initialPix;		/* backing bitmap */
   HBITMAP	theOldPix;
   int		pixheight;		/* backing pixmap height, in pixels */
   int		pixwidth;		/* pixmap width, in pixels */
   HCURSOR	curcursor;
   HCURSOR	savedcursor;
   char		*cursorname;
-  HMENU		menuBar;
-  int		nmMapElems;
-  char **       menuMap;
-  HWND		focusChild;
-  int           nChildren;
-  childcontrol *child;
 #endif
 } wstate, *wsp;
 

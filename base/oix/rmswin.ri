@@ -295,6 +295,7 @@ int wopen(wbp w)
    struct imgdata *imd;
    char answer[256];
    int i, r;
+   RECT rec;
    tended struct b_list *tlp;
    tended struct descrip attrrslt;
    HDC hdc, hdc2, hdc3;
@@ -396,57 +397,39 @@ int wopen(wbp w)
    else ws->win = 0;
 
    BringWindowToTop(ws->win);
-   if (ws->initialPix) {
-      hdc = GetDC(ws->iconwin);
-      hdc2 = CreateCompatibleDC(hdc);
-      oldpix = SelectObject(hdc2, ws->pix);
-      hdc3 = CreateCompatibleDC(hdc);
-      oldpix2 = SelectObject(hdc3, ws->initialPix);
-      BitBlt(hdc2, 0, 0, ws->width, ws->height, hdc3, 0, 0, SRCCOPY);
-      if (ws->win)
-         BitBlt(hdc, 0, 0, ws->width, ws->height, hdc3, 0, 0, SRCCOPY);
-      SelectObject(hdc2, oldpix);
-      SelectObject(hdc3, oldpix2);
-      DeleteDC(hdc2);
-      DeleteDC(hdc3);
-      DeleteObject(ws->initialPix);
-      ws->initialPix = (HBITMAP) NULL;
-      }
-   else {
-      /*
-       * initialize the image with the background color
-       */
-      RECT rec;
-      hdc = GetDC(ws->iconwin);
-      hdc2 = CreateCompatibleDC(hdc);
-      oldpix = SelectObject(hdc2, ws->pix);
-      rec.left = rec.top = 0;
-      rec.right = ws->width;
-      rec.bottom = ws->height;
-      if (palette) {
-         SelectPalette(hdc, palette, FALSE);
-         SelectPalette(hdc2, palette, FALSE);
-	 RealizePalette(hdc);
-	 RealizePalette(hdc2);
-	 }
-      brush = CreateBrushIndirect(&(wc->bgbrush));
-      if (ws->win)
-         FillRect(hdc, &rec, brush);
-      FillRect(hdc2, &rec, brush);
-      DeleteObject(brush);
-      SelectObject(hdc2, oldpix);
-      ReleaseDC(ws->iconwin, hdc);
-      DeleteDC(hdc2);
+   /*
+    * initialize the image with the background color
+    */
+   hdc = GetDC(ws->iconwin);
+   hdc2 = CreateCompatibleDC(hdc);
+   oldpix = SelectObject(hdc2, ws->pix);
+   rec.left = rec.top = 0;
+   rec.right = ws->width;
+   rec.bottom = ws->height;
+   if (palette) {
+      SelectPalette(hdc, palette, FALSE);
+      SelectPalette(hdc2, palette, FALSE);
+      RealizePalette(hdc);
+      RealizePalette(hdc2);
+   }
+   brush = CreateBrushIndirect(&(wc->bgbrush));
+   if (ws->win)
+      FillRect(hdc, &rec, brush);
+   FillRect(hdc2, &rec, brush);
+   DeleteObject(brush);
+   SelectObject(hdc2, oldpix);
+   ReleaseDC(ws->iconwin, hdc);
+   DeleteDC(hdc2);
 
-      imd = &ws->initimage;
-      if (imd->width) {
-         drawimgdata(w, 0, 0, imd);
-	 if (imd->paltbl)
-	    free(imd->paltbl);
-	 free(imd->data);
-	 imd->width = 0;
-	 }
-      }
+   imd = &ws->initimage;
+   if (imd->width) {
+      drawimgdata(w, 0, 0, imd);
+      if (imd->paltbl)
+	 free(imd->paltbl);
+      free(imd->data);
+      imd->width = 0;
+   }
+
    if (ws->win)
       UpdateWindow(ws->win);
 
@@ -493,74 +476,6 @@ int handle_config(wbp w, UINT msg, WPARAM wp, LPARAM lp)
    return 1;
    }
 
-/*
- * handle window controls (child windows), at the moment these are
- * buttons and scrollbars.  wp is which child (base 1).
- * Buttons come in as undiluted messages.
- * Scrollbars come in with msg = new value of scrollbar
- */
-void handle_child(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
-   {
-   DWORD dw;
-   int t;
-   WORD x, y;
-   wsp ws = wb->window;
-   char *s;
-   int len;
-   struct descrip d;
-   int flags = 0;
-   if (LOWORD(wp) > ws->nChildren) return;
-   s = ws->child[LOWORD(wp) - 1].id;
-   len = strlen(s);
-   d = nulldesc;
-   StrLoc(d) = alcstr(s, len);
-   StrLen(d) = len;
-   switch (HIWORD(wp)) {
-   case BN_CLICKED: {
-      dw = GetMessagePos();
-      x = LOWORD(dw);
-      y = HIWORD(dw);
-      break;
-      }
-   case EN_SETFOCUS: case EN_KILLFOCUS: case EN_CHANGE: case EN_UPDATE:
-   case EN_ERRSPACE: case EN_MAXTEXT: case EN_HSCROLL: case EN_VSCROLL: {
-	return;
-      }      
-   default: { /* scrollbar */
-      x = y = msg;
-      }
-   }
-   t = GetMessageTime();
-   qevent(ws, &d, x, y, t, flags, 0);
-
-   if (ws->focusChild)
-      SetFocus(ws->focusChild);
-   else if (ws->win)
-      SetFocus(ws->win);
-   else
-      SetFocus(ws->iconwin);
-   }
-
-void handle_menu(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
-   {
-   wsp ws = wb->window;
-   DWORD dw;
-   int t;
-   WORD x, y;
-   struct descrip d;
-   char *s = ws->menuMap[wp];
-   int len = strlen(s);
-   int flags = 0;
-
-   d = nulldesc;
-   StrLoc(d) = alcstr(s, len);
-   StrLen(d) = len;
-   dw = GetMessagePos();
-   x = LOWORD(dw);
-   y = HIWORD(dw);
-   t = GetMessageTime();
-   qevent(ws, &d, x, y, t, flags, 0);
-   }
 
 void handle_keypress(wbp wb, UINT msg, WPARAM wp, LPARAM lp, int meta)
    {
@@ -796,62 +711,11 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
       return 0;
    case WM_SYSCHAR:
       handle_keypress(wb, msg, wp, lp, 1);
-      /*
-       * Unless there is a menu bar installed,
-       * Alt-A .. Alt-Z, and Alt-0 .. Alt-9 are eaten by Icon;
-       * others are passed on to Windows for things like Alt-Esc.
-       */
-      if (isalnum((unsigned char)wp) && !(ws->menuMap)) return 0;
       break;
    case WM_HSCROLL:
    case WM_VSCROLL:
-      for(n=0; n < ws->nChildren && ws->child[n].win != (HWND)LOWORD(lp); n++){
-         }
-      if (n == ws->nChildren) break;
-      i = GetScrollPos(ws->child[n].win, SB_CTL);      
-      GetScrollRange(ws->child[n].win, SB_CTL, &imin, &imax);
-      switch (LOWORD(wp)) {
-      case SB_PAGEDOWN :
-         break;
-      case SB_LINEDOWN :
-         if (i < imax) {
-            SetScrollPos(ws->child[n].win, SB_CTL,
-	       GetScrollPos(ws->child[n].win, SB_CTL) + 1, TRUE);
-	    }
-         break;
-      case SB_PAGEUP :
-         break;
-      case SB_LINEUP :
-         if (i > imin) {
-            SetScrollPos(ws->child[n].win, SB_CTL,
-	       GetScrollPos(ws->child[n].win, SB_CTL) - 1, TRUE);
-	    }
-         break;
-      case SB_TOP :
-         SetScrollPos(ws->child[n].win, SB_CTL, imin, TRUE);
-         break;
-      case SB_BOTTOM :
-         SetScrollPos(ws->child[n].win, SB_CTL, imax, TRUE);
-         break;
-      case SB_THUMBPOSITION :
-         SetScrollPos(ws->child[n].win, SB_CTL, HIWORD(wp), TRUE);
-         break;
-      case SB_THUMBTRACK :
-         SetScrollPos(ws->child[n].win, SB_CTL, HIWORD(wp), TRUE);
-         break;
-      case SB_ENDSCROLL: /* noop */
-         break;
-      default : /* potentially a problem here */
-         break;
-      }
-      i = GetScrollPos(ws->child[n].win, SB_CTL);      
-      handle_child(wb, i, n+1, -1);
       break;
    case WM_COMMAND:
-      if (LOWORD(lp) == 0)
-         handle_menu(wb, msg, wp, lp);
-      else
-         handle_child(wb, msg, wp, lp);
       break;
    case WM_SIZE:
       if (hwnd == ws->win)
@@ -878,8 +742,6 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
    case WM_KILLFOCUS:
       break;
    case WM_SETFOCUS:
-      if (ws->focusChild)
-         SetFocus(ws->focusChild);
       break;
    case WM_CLOSE: {
       struct descrip d;
@@ -998,7 +860,7 @@ char *s;
       SETTOBEHIDDEN(ws);
       }
    else {
-      return Error;
+      return Failed;
       }
    if (stdwin)
       ShowWindow(stdwin, cmd);
@@ -1292,7 +1154,7 @@ char *s;
    int ltype;
 
    if ((ltype = stringint_str2int(siLineTypes, s)) < 0)
-      return Error;
+      return Failed;
    wc->pen.lopnStyle = ltype;
    resetfg(w);
    if(!strcmp(s, "striped")) wc->bkmode = OPAQUE;
@@ -1406,8 +1268,7 @@ int setfg(wbp w, char *val)
         free(wc->fgname);
         wc->fgname = salloc(val);
     }
-    wc->brush.lbColor =
-        PALCLR(ISXORREVERSE(w) ? ((wc->fg ^ wc->bg) & 0x00FFFFFF) : wc->fg);
+    wc->brush.lbColor = PALCLR(wc->fg);
     wc->pen.lopnColor = wc->brush.lbColor;
     wc->brush.lbStyle = wc->fillstyle;
     if (wc->fillstyle == BS_PATTERN)
@@ -1435,7 +1296,7 @@ int setbg(wbp w, char *val)
     wc->bgpen.lopnColor = PALCLR(wc->bg);
     wc->bgbrush.lbStyle = BS_SOLID;
     wc->bgbrush.lbColor = PALCLR(wc->bg);
-    return ISXORREVERSE(w) ? resetfg(w) : Succeeded;
+    return Succeeded;
 }
 
 
@@ -1487,22 +1348,9 @@ int setdrawop(w, val)
 {
     int i;
     wcp wc = w->context;
-    if (!strcmp(val,"reverse")) {
-        if (!ISXORREVERSE(w)) {
-            SETXORREVERSE(w);
-            wc->drawop = R2_XORPEN;
-            resetfg(w);
-        }
-    }
-    else {
-        if (ISXORREVERSE(w)) {
-            CLRXORREVERSE(w);
-            resetfg(w);
-        }
-        if ((i = stringint_str2int(drawops,val)) < 0)
-            return Error;
-        wc->drawop = i;
-    }
+    if ((i = stringint_str2int(drawops,val)) < 0)
+       return Failed;
+    wc->drawop = i;
     return Succeeded;
 }
 
@@ -1595,8 +1443,7 @@ wbp w;
 char *answer;
    {
    char *s;
-   if (ISXORREVERSE(w)) s = "reverse";
-   else s = stringint_int2str(drawops, w->context->drawop);
+   s = stringint_int2str(drawops, w->context->drawop);
    if (s) sprintf(answer, "%s", s);
    else strcpy(answer, "unknown");
    }
@@ -1765,211 +1612,6 @@ int x, y, width, height, x2, y2;
    }
 
 
-/*
- * Draw a bilevel image.
- */
-void drawblimage(w, x, y, width, height, ch, s)
-wbp w;
-int x, y, width, height, ch;
-unsigned char *s;
-   {
-   unsigned int m, msk1, c, ix, iy;
-   int len = height*((width + 3)/4);
-   long fg, bg;
-   SysColor palfg, palbg;
-   STDLOCALS(w);
-   palfg = PALCLR(wc->fg);
-   palbg = PALCLR(wc->bg);
-   /*
-    * Read the image string and set the pixel values.  Note that
-    * the hex digits in sequence fill the rows *right to left*.
-    */
-   m = width % 4;
-   if (m == 0)
-      msk1 = 8;
-   else
-      msk1 = 1 << (m - 1);              /* mask for first byte of row */
-
-   fg = wc->fg;
-   bg = wc->bg;
-   ix = width;
-   iy = 0;
-   m = msk1;
-   while (len--) {
-     if (isxdigit((unsigned char)(c = *s++))) {         /* if hexadecimal character */
-         if (!isdigit((unsigned char)c))               /* fix bottom 4 bits if necessary */
-	    c += 9;
-	 while (m > 0) {                /* set (usually) 4 pixel values */
-	    --ix;
-	    if (c & m) {
-	       SetPixel(pixdc, ix, iy, palfg);
-	       }
-	    else if (ch != TCH1) {      /* if zeroes aren't transparent */
-	       SetPixel(pixdc, ix, iy, palbg);
-	       }
-	    m >>= 1;
-	    }
-	 if (ix == 0) {                 /* if end of row */
-	    ix = width;
-	    iy++;
-	    m = msk1;
-	    }
-	 else
-	    m = 8;
-	 }
-      }
-   if (ix > 0)                          /* pad final row if incomplete */
-      while (ix < width)
-	 SetPixel(pixdc, ix++, iy, palbg);
-
-   /*
-    * Put it on the screen.
-    */
-   if (ws->win)
-      BitBlt(stddc, x, y, width, height, pixdc, x, y, SRCCOPY);
-   FREE_STDLOCALS(w);
-   }
-
-/*
- * Draw a character-per-pixel image.
- */
-void drawstrimage(w, x, y, width, height, e, s)
-wbp w;
-int x, y, width, height;
-struct palentry *e;
-unsigned char *s;
-   {
-   HDC tempdc;
-   HBITMAP temppix;
-   int c;
-   unsigned int ix;
-   int v, anytransparent=0;
-   unsigned int iy, tmpw;
-   SysColor clrlist[256], xc, palbg;
-   char tmp[24];
-   BITMAPINFO *bmi = NULL;
-   BITMAPINFOHEADER *bmih = NULL;
-   HBITMAP oldpix = 0;
-   int len = width * height;
-   STDLOCALS(w);
-
-   MemProtect(bmi = malloc(sizeof(BITMAPINFO) + 256 * sizeof(SysColor)));
-   
-   bmih = &(bmi->bmiHeader);
-   palbg = PALCLR(wc->bg);
-
-   bmih->biClrImportant = 0;
-   /*
-    * Build arrays of colors in SysColor and RGBQUAD format for use by
-    * either SetPixel or DIB.  Decide which to use based on whether
-    * there are any transparent pixels
-    */
-   if (e)
-   for (c = 0; c < 256; c++) {
-      if (e[c].transpt) anytransparent++;
-      if (e[c].used && e[c].valid) {
-         bmih->biClrImportant++;
-	 clrlist[c] = mscolor(w, e[c].clr.red, e[c].clr.green, e[c].clr.blue);
-	 bmi->bmiColors[c].rgbBlue = BLUE(clrlist[c]);
-	 bmi->bmiColors[c].rgbRed = RED(clrlist[c]);
-	 bmi->bmiColors[c].rgbGreen = GREEN(clrlist[c]);
-         if (alc_rgb(w, clrlist[c]) == Failed) {
-            free(bmi);
-            FREE_STDLOCALS(w);
-            return;
-            }
-	 clrlist[c] = PALCLR(clrlist[c]);
-	 }
-      else {
-	 bmi->bmiColors[c].rgbBlue = BLUE(wc->bg);
-	 bmi->bmiColors[c].rgbRed = RED(wc->bg);
-	 bmi->bmiColors[c].rgbGreen = GREEN(wc->bg);
-         }
-      }
-
-   /*
-    * if transparent characters are not present, blast out a DIB.
-    */
-   if (anytransparent == 0) {
-      char *buf, *buf2;
-      bmih->biSize = sizeof(BITMAPINFOHEADER);
-      bmih->biWidth = width;
-      bmih->biPlanes = 1;
-      bmih->biCompression = BI_RGB;
-      bmih->biSizeImage = 0;
-      bmih->biXPelsPerMeter = 0;
-      bmih->biYPelsPerMeter = 0;
-      if (e) {
-         buf = malloc(height * (width+4));
-         buf2 = buf;
-         bmih->biBitCount = 8;
-         bmih->biClrUsed = 256;
-         bmih->biHeight = -height;
-         ix = 0;
-         while (len--) {
-            *buf++ = *s++;
-            if (++ix >= width) {
-               while(ix % 4) {
-                  buf++;
-                  ix++;
-                  }
-               ix = 0;
-               }
-            }
-      temppix=CreateDIBitmap(pixdc, bmih, CBM_INIT, buf2, bmi, DIB_RGB_COLORS);
-      free(buf2);
-         }
-      else {
-	 buf2 = s;
-         bmih->biBitCount = 24;
-         bmih->biClrUsed = 0;
-         bmih->biHeight = height;
-         temppix=CreateDIBitmap(pixdc, bmih, CBM_INIT, buf2, bmi, 0);
-        }
-
-      tempdc = CreateCompatibleDC(stddc);
-      oldpix = SelectObject(tempdc, temppix);
-      BitBlt(pixdc, x, y, width, height, tempdc, 0, 0, SRCCOPY);
-      SelectObject(tempdc, oldpix);
-      DeleteDC(tempdc);
-      DeleteObject(temppix);
-      }
-   else {
-      /*
-       * The image contains some transparent pixels.
-       * Read the image string and set the pixel values.
-       * Note that SetPixelV() fails under Win32s; so we don't use it.
-       */
-      ix = x;
-      iy = y;
-      tmpw = x + width;
-      while (len--) {
-         c = *s++;
-         v = e[c].valid;
-         if (v) {                         /* put char if valid */
-	    xc = SetPixel(pixdc, ix, iy, clrlist[c]);
-	    }
-         if (v || e[c].transpt) {        /* advance if valid or transparent */
-	    if (++ix >= tmpw) {
-	       ix = x;                             /* reset for new row */
-	       iy++;
-	       }
-	    }
-         }
-      if (ix > 0)                          /* pad final row if incomplete */
-         while (ix < width)
-	    SetPixel(pixdc, x+ix++, y+iy, palbg);
-      }
-
-   free(bmi);
-   /*
-    * Copy it from the pixmap onto the screen.
-    */
-   if (ws->win)
-      BitBlt(stddc, x, y, width, height, pixdc, x, y, SRCCOPY);
-
-   FREE_STDLOCALS(w);
-   }
 
 /*
  * imqsearch(key,base,nel) - binary search hardwired for images
@@ -2136,63 +1778,79 @@ unsigned char *data;
    return 1;
    }
 
-
-
 /*
  * Initialize client for producing pixels from a window, or in this case,
  * only create a device context once, not once per getpixel.
  */
-int getpixelload(w, imem)
-wbp w;
-struct imgmem *imem;
-   {
+void pixelload(wbp w, struct imgmem *imem)
+{
    COLORREF *p;
    wsp ws = w->window;
-   int i, j, x2, y2;
+   int i, j;
    HDC stddc = GetDC(ws->iconwin), pixdc = CreateCompatibleDC(stddc);
    HBITMAP oldpix;
 
    if (palette) SelectPalette(pixdc, palette, FALSE);
    oldpix = SelectObject(pixdc, ws->pix);
 
-   /* this looks like a bug for Win16 for images > 100x100 or so... */
-   imem->crp = malloc( imem->width * imem->height * sizeof(COLORREF));
-   if (imem->crp == NULL) return Failed;
+   MemProtect(imem->crp = malloc( imem->width * imem->height * sizeof(COLORREF)));
    p = imem->crp;
-   x2 = imem->x + imem->width;
-   y2 = imem->y + imem->height;
-   for(i = imem->y; i < y2; i++)
-      for(j = imem->x; j < x2; j++) {
-         if ((*p++ = GetPixel(pixdc, j, i)) == (COLORREF)-1L) {
-	    free(imem->crp);
-            SelectObject(pixdc, oldpix);
-            FREE_STDLOCALS(w);
-            return Failed;
-            }
-         }
+   for(i = imem->y; i < imem->y + imem->height; i++)
+      for(j = imem->x; j < imem->x + imem->width; j++)
+         *p++ = GetPixel(pixdc, j, i);
+
    SelectObject(pixdc, oldpix);
    FREE_STDLOCALS(w);
-   return Succeeded;
-   }
-
-int getpixelterm(w, imem)
-wbp w;
-struct imgmem *imem;
-{
-   free(imem->crp);
-   return Succeeded;
 }
 
-/*
- * Return pixel (x,y) from a window
- */
-int getpixel(wbp w, int x, int y, char *s, struct imgmem *imem)
-   {
-   COLORREF cr = imem->crp[(y-imem->y) * imem->width + (x-imem->x)];
-   sprintf(s, "%ld,%ld,%ld",
-	   (long)RED(cr)*257L, (long)GREEN(cr)*257L, (long)BLUE(cr)*257L);
-   return Succeeded;
+void getpixel(struct imgmem *imem, int *r, int *g, int *b)
+{
+
+   COLORREF cr = imem->crp[imem->yoff * imem->width + imem->xoff];
+   *r = RED(cr)*257;
+   *g = GREEN(cr)*257;
+   *b = BLUE(cr)*257;
+}
+
+void setpixel(struct imgmem *imem, int r, int g, int b)
+{
+   imem->crp[imem->yoff * imem->width + imem->xoff] = RGB(r/257, g/257, b/257);
+}
+
+void pixelsave(wbp w, struct imgmem *imem)
+{
+   COLORREF *p;
+   wsp ws = w->window;
+   int i, j;
+   HDC stddc = GetDC(ws->iconwin), pixdc = CreateCompatibleDC(stddc);
+   HBITMAP oldpix;
+
+   if (palette) SelectPalette(pixdc, palette, FALSE);
+   oldpix = SelectObject(pixdc, ws->pix);
+
+   p = imem->crp;
+   for(i = imem->y; i < imem->y + imem->height; i++)
+      for(j = imem->x; j < imem->x + imem->width; j++)
+         SetPixel(pixdc, j, i, *p++);
+
+   /*
+    * Copy it from the pixmap onto the screen.
+    */
+   if (ws->win){
+      BitBlt(stddc, imem->x, imem->y, imem->width, imem->height, 
+	     pixdc, imem->x, imem->y, SRCCOPY);
    }
+
+   SelectObject(pixdc, oldpix);
+
+   FREE_STDLOCALS(w);
+}
+
+void pixelfree(struct imgmem *imem)
+{
+   free(imem->crp);
+}
+
 
 int  getdisplaysize  (wbp w, int *width, int *height)
 {
@@ -2226,10 +1884,6 @@ int  queryrootpointer(wbp w, int *x, int *y)
     *y = pp.y;
     return Succeeded;
 }
-
-void freecolor(wbp w, char *s)
-   {
-   }
 
 /*
  * drawarcs() - assumes x and y are already fixed up for the bitmap
@@ -2633,12 +2287,7 @@ wbp w;
    wc->fgname = salloc(wc2->fgname);
    wc->bgname = salloc(wc2->bgname);
    wc->pen = wc2->pen;
-   if (ISXORREVERSEW(wc)) {
-      wc->brush.lbColor = PALCLR((wc->fg ^ wc->bg) & 0x00FFFFFF);
-      }
-   else {
-      wc->brush.lbColor = PALCLR(wc->fg);
-      }
+   wc->brush.lbColor = PALCLR(wc->fg);
    wc->bgpen = wc2->bgpen;
    wc->fillstyle = wc2->fillstyle;
    wc->brush.lbStyle = wc->fillstyle;
@@ -2708,24 +2357,7 @@ wsp ws;
       if (ws->iconpix)
 	 DeleteObject(ws->iconpix);
       ws->iconpix = 0;
-      if (ws->initialPix)
-	 DeleteObject(ws->initialPix);
-      ws->initialPix = 0;
-      /* need to enumerate and specifically free each string */
-      if (ws->menuMap) {
-	 for(i=0;i<ws->nmMapElems;i++) free(ws->menuMap[i]);
-         free(ws->menuMap);
-         ws->menuMap = 0;
-	 }
       free(ws->cursorname);
-      if (ws->child) {
-         for(i=0;i<ws->nChildren;i++) {
-            free(ws->child[i].id);
-            if (ws->child[i].font) DeleteObject(ws->child[i].font);
-	    }
-         free(ws->child);
-	 }
-      ws->child = 0;
       GRFX_UNLINK(ws, wstates);
       }
    }
@@ -3139,7 +2771,7 @@ HDC CreatePixDC(wbp w, HDC hdc)
       SelectPalette(hdc2, palette, FALSE);
       RealizePalette(hdc2);
       }
-/*   ws->initialPix = */ ws->theOldPix = SelectObject(hdc2, ws->pix);
+   ws->theOldPix = SelectObject(hdc2, ws->pix);
    SetROP2(hdc2, wc->drawop);
    if (wc->clipw >= 0){
       SelectClipRgn(hdc2, wc->cliprgn);
