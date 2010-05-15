@@ -37,7 +37,6 @@ static char *xlfd_field(char *s, int i);
 static int xlfd_size(char *s, int n);
 #endif
 static wfp loadfont(wdp wd, char *s);
-static int resetfg (wbp w);
 static XColor xcolor(wbp w, LinearColor clr);
 static wdp alcdisplay (char *s);
 static void free_display   (wdp wd);
@@ -857,7 +856,7 @@ static int wmap(wbp w)
      * before creating the graphics context, construct a description
      * of any non-default initial graphics context values.
      */
-    gcv.foreground = wd->colors[wc->fg].c ^ (ISXORREVERSE(w) ? wd->colors[wc->bg].c : 0);
+    gcv.foreground = wd->colors[wc->fg].c;
     gcv.background = wd->colors[wc->bg].c;
 #ifdef HAVE_LIBXFT
     gcv.font       = wd->xfont->fid;
@@ -899,16 +898,14 @@ static int wmap(wbp w)
     if (new_pixmap) {
         XSetForeground(stddpy, stdgc, wd->colors[wc->bg].c);
         XFillRectangle(stddpy, ws->pix, stdgc, 0, 0, ws->width, ws->height);
-        XSetForeground(stddpy, stdgc,
-                       wd->colors[wc->fg].c ^(ISXORREVERSE(w)?wd->colors[wc->bg].c:0));
+        XSetForeground(stddpy, stdgc, wd->colors[wc->fg].c);
     }
 
     /* For RootState, need to fill since XClearWindow above fills with a pixmap */
     if (ws->iconic == RootState) {
         XSetForeground(stddpy, stdgc, wd->colors[wc->bg].c);
         XFillRectangle(stddpy, ws->win, stdgc, 0, 0, ws->width, ws->height);
-        XSetForeground(stddpy, stdgc,
-                       wd->colors[wc->fg].c ^(ISXORREVERSE(w)?wd->colors[wc->bg].c:0));
+        XSetForeground(stddpy, stdgc, wd->colors[wc->fg].c);
     }
 
     imd = &ws->initimage;
@@ -1297,25 +1294,9 @@ int setdrawop(wbp w, char *val)
     int i;
     STDLOCALS(w);
     XSync(stddpy, False);
-    if (!strcmp(val,"reverse")) {
-        if (!ISXORREVERSE(w)) {
-            SETXORREVERSE(w);
-            wc->drawop = GXxor;
-            if (stdgc)
-                XSetForeground(stddpy, stdgc,
-                               wd->colors[wc->fg].c ^ wd->colors[wc->bg].c);
-        }
-    }
-    else {
-        if (ISXORREVERSE(w)) {
-            CLRXORREVERSE(w);
-            if (stdgc)
-                XSetForeground(stddpy, stdgc, wd->colors[wc->fg].c);
-        }
-        if ((i = stringint_str2int(drawops,val)) < 0)
-            return Failed;
-        wc->drawop = i;
-    }
+    if ((i = stringint_str2int(drawops,val)) < 0)
+        return Failed;
+    wc->drawop = i;
     if (stdgc) XSetFunction(stddpy, stdgc, wc->drawop);
     return Succeeded;
 }
@@ -1644,19 +1625,6 @@ int getlinewidth(wbp w)
 }
 
 /*
- * Reset the context's foreground color to whatever it is supposed to be.
- */
-static int resetfg(wbp w)
-{
-    wcp wc = w->context;
-    wdp wd = wc->display;
-    if (wc->gc != NULL)
-        XSetForeground(wc->display->display, wc->gc,
-                       wd->colors[wc->fg].c ^ (ISXORREVERSE(w) ? wd->colors[wc->bg].c : 0));
-    return Succeeded;
-}
-
-/*
  * Set the context's foreground color by name.
  */
 int setfg(wbp w, char *s)
@@ -1672,7 +1640,9 @@ int setfg(wbp w, char *s)
         return Failed;
     Protect(cp = alcrgb(w, s, r, g, b), return Failed);
     wc->fg = (cp - wd->colors);
-    return resetfg(w);
+    if (wc->gc != NULL)
+        XSetForeground(wc->display->display, wc->gc, wd->colors[wc->fg].c);
+    return Succeeded;
 }
 
 
@@ -1696,7 +1666,7 @@ int setbg(wbp w, char *s)
     wc->bg = (cp - wd->colors);
     if (stdgc != NULL)
         XSetBackground(stddpy, stdgc, cp->c);
-    return ISXORREVERSE(w) ? resetfg(w) : Succeeded;
+    return Succeeded;
 }
 
 void togglefgbg(wbp w)
@@ -1707,8 +1677,7 @@ void togglefgbg(wbp w)
     wc->fg = wc->bg;
     wc->bg = tmp;
     if (stdpix) {
-        XSetForeground(stddpy, stdgc,
-                       wd->colors[wc->fg].c ^ (ISXORREVERSE(w)?wd->colors[wc->bg].c:0));
+        XSetForeground(stddpy, stdgc, wd->colors[wc->fg].c);
         XSetBackground(stddpy, stdgc, wd->colors[wc->bg].c);
     }
 }
@@ -1806,8 +1775,7 @@ void getpointer(wbp w, char *answer)
 void getdrawop(wbp w, char *answer)
 {
     char *s;
-    if (ISXORREVERSE(w)) s = "reverse";
-    else s = stringint_int2str(drawops, w->context->drawop);
+    s = stringint_int2str(drawops, w->context->drawop);
     if (s) sprintf(answer, "%s", s);
     else strcpy(answer, "copy");
 }
@@ -1933,8 +1901,7 @@ static int resizePixmap(wbp w, int width, int height)
             if (stdwin != (Window) NULL)
                 XFillRectangle(stddpy, stdwin, stdgc, 0, y, x, height - y);
         }
-        XSetForeground(stddpy, stdgc,
-                       wd->colors[wc->fg].c ^ (ISXORREVERSE(w)?wd->colors[wc->bg].c:0));
+        XSetForeground(stddpy, stdgc, wd->colors[wc->fg].c);
         XCopyArea(stddpy, stdpix, p, stdgc, 0, 0, x, y, 0, 0);
         if (wc->drawop != GXcopy)
             XSetFunction(stddpy,stdgc,wc->drawop);
@@ -2245,8 +2212,7 @@ void erasearea(wbp w, int x, int y, int width, int height)
     if (wc->fillstyle != FillSolid) XSetFillStyle(stddpy, stdgc, FillSolid);
 
     RENDER4(XFillRectangle, x, y, width, height);
-    XSetForeground(stddpy, stdgc,
-                   wd->colors[wc->fg].c ^ (ISXORREVERSE(w)?wd->colors[wc->bg].c:0));
+    XSetForeground(stddpy, stdgc, wd->colors[wc->fg].c);
     if (wc->drawop != GXcopy) XSetFunction(stddpy, stdgc, wc->drawop);
     if (wc->fillstyle != FillSolid) XSetFillStyle(stddpy, stdgc, wc->fillstyle);
 
@@ -2319,8 +2285,7 @@ int copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2)
                 RENDER2(XDrawPoint, i + x2, j + y2);
 	    }
         }
-        XSetForeground(stddpy, stdgc,
-                       wd->colors[wc->fg].c ^ (ISXORREVERSE(w2) ? wd->colors[wc->bg].c : 0));
+        XSetForeground(stddpy, stdgc, wd->colors[wc->fg].c);
         XSetFunction(stddpy, stdgc, wc->drawop);
         XSync(stddpy,False);
         XDestroyImage(xim);
@@ -2391,8 +2356,7 @@ int copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2)
                 RENDER4(XFillRectangle, x2, y2+height, width, bpad);
         }
 
-        XSetForeground(stddpy,stdgc,
-                       wd->colors[wc->fg].c^(ISXORREVERSE(w2) ? wd->colors[wc->bg].c :0));
+        XSetForeground(stddpy,stdgc, wd->colors[wc->fg].c);
         XSetFunction(stddpy, stdgc, wc->drawop);
     }
     return Succeeded;
@@ -2721,11 +2685,7 @@ void drawstring(wbp w, int x, int y, char *str, int slen)
                                     ws->pix,
                                     ws->vis,
                                     ws->display->cmap);
-    /* Don't think xft can do XOR drawing, so just swap bg/fg instead */
-    if (ISXORREVERSE(w))
-        cc = &wd->colors[wc->bg];
-    else
-        cc = &wd->colors[wc->fg];
+    cc = &wd->colors[wc->fg];
     color.pixel = cc->c;
     color.color.red = cc->r;
     color.color.green = cc->g;
@@ -2789,11 +2749,7 @@ void drawutf8(wbp w, int x, int y, char *str, int slen, int nchars)
                                     ws->pix,
                                     ws->vis,
                                     ws->display->cmap);
-    /* Don't think xft can do XOR drawing, so just swap bg/fg instead */
-    if (ISXORREVERSE(w))
-        cc = &wd->colors[wc->bg];
-    else
-        cc = &wd->colors[wc->fg];
+    cc = &wd->colors[wc->fg];
     color.pixel = cc->c;
     color.color.red = cc->r;
     color.color.green = cc->g;
@@ -3722,10 +3678,7 @@ wcp clonecontext(wbp w)
     rv->drawop = wc->drawop;
     rv->bits = wc->bits;
 
-    if (ISXORREVERSE(w))
-        gcv.foreground = wd->colors[rv->fg].c ^ wd->colors[rv->bg].c;
-    else
-        gcv.foreground = wd->colors[rv->fg].c;
+    gcv.foreground = wd->colors[rv->fg].c;
     gcv.background = wd->colors[rv->bg].c;
 #ifdef HAVE_LIBXFT
     gcv.font       = wd->xfont->fid;

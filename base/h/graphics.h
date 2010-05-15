@@ -92,17 +92,13 @@
 #define ISINITIAL(w)    ((w)->window->bits & 1)
 #define ISINITIALW(ws)   ((ws)->bits & 1)
 /* bit 4 is available */
-#define ISXORREVERSE(w)	((w)->context->bits & 16)
-#define ISXORREVERSEW(w) ((w)->bits & 16)
 #define ISRESIZABLE(w)	((w)->window->bits & 128)
 #define ISEXPOSED(w)    ((w)->window->bits & 256)
 
 /* bit 4 is available */
-#define SETXORREVERSE(w) ((w)->context->bits |= 16)
 #define SETRESIZABLE(w)	((w)->window->bits |= 128)
 #define SETEXPOSED(w)   ((w)->window->bits |= 256)
 /* bit 4 is available */
-#define CLRXORREVERSE(w) ((w)->context->bits &= ~16)
 #define CLRRESIZABLE(w)	((w)->window->bits &= ~128)
 #define CLREXPOSED(w)   ((w)->window->bits &= ~256)
 
