@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import gui, ipl.graphics, ipl.imscolor, io, graphics, ipl.lists
+import gui, ipl.graphics, io, graphics, ipl.lists
 
 #
 # Convert a list l to a string representation.
@@ -20,10 +20,8 @@ end
 # Read icon from file s.  dialog is an instance of Dialog
 #
 procedure util_read_icon(dialog, s)
-   if map(s)[-4:0] == (".gif"|".bmp"|".jpg") then
+   if map(s)[-4:0] == (".gif"|".jpg"|".jpeg") then
       return read_gif_icon(dialog, s)
-   else if map(s)[-4:0] == ".xpm" then
-      return read_xpm_icon(dialog, s)
    else
       return read_string_icon(dialog, s)
 end
@@ -35,24 +33,12 @@ end
 procedure read_gif_icon(dialog, s)
    local w, raw
 
-   w := Window.open("canvas=hidden", "image=" || s) | return alert_error(dialog, "Couldn't open file " || s)
+   w := Window.open("canvas=hidden")
+   w.set_image(s) | return alert_error(dialog, "Couldn't load image file " || s)
    raw := Capture(w, "c6")
    w.close()
 
    return raw
-end
-
-
-#
-# Read an xpm icon.
-#
-procedure read_xpm_icon(dialog, s)
-   local f, raw
-
-   f := open(s) | return alert_error(dialog, "Couldn't open file " || s)
-   raw := XPMImage(dialog.win, f, "c6")
-   close(f)
-   return \raw | alert_error(dialog, "Couldn't decode xpm file " || s)
 end
 
 

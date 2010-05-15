@@ -63,7 +63,7 @@ procedure WriteRaw(win, x, y, w, h)
 
    nextid := create !"0123456789abcdef" || !"0123456789abcdef"
 
-   every c := win.pixel(x, y, w, h) do {
+   every c := !win.get_pixels(x, y, w, h) do {
       /palette[c] := @nextid
       line ||:= palette[c]
       line ?:= {

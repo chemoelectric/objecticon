@@ -44,7 +44,8 @@ class Style()
    public get_filter_clone(W)
       local t
 $ifdef _MS_WIN32
-      t := W.clone("fill_style=masked", "draw_op=reverse", "pattern=verydark")
+      t := W.clone("fill_style=masked", "draw_op=xor", "pattern=verydark")
+      t.xor_reverse()
 $else
       t := W.clone("fill_style=masked", "pattern=waves")
       t.toggle_fgbg()
@@ -65,11 +66,17 @@ $ifdef _PLAN9
    end
 $else
    public get_down_clone(W)
-      return W.clone("draw_op=reverse")
+      local t
+      t := W.clone("draw_op=xor")
+      t.xor_reverse()
+      return t
    end
 
    public get_selection_clone(W)
-      return W.clone("draw_op=reverse")
+      local t
+      t := W.clone("draw_op=xor")
+      t.xor_reverse()
+      return t
    end
 $endif
 

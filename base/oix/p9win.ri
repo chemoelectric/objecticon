@@ -111,7 +111,6 @@ static stringint drawops[] = {
    {"or",               DatopS},
    {"orInverted",       DxorS},
    {"orReverse",        DoutS},
-   {"reverse",          DoutS},
    {"set",              DatopS},
    {"xor",              DxorS},
 };
@@ -349,8 +348,7 @@ int wopen(wbp w)
 
     imd = &ws->initimage;
     if (imd->width) {
-        drawstrimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
-                     imd->data, imd->width * imd->height);
+        drawimgdata(w, 0, 0, imd);
         free(imd->paltbl);
         free(imd->data);
         imd->width = 0;
@@ -939,139 +937,6 @@ void drawutf8(wbp w, int x, int y, char *str, int slen, int nchars)
     free(r);
 }
 
-static void impl_draw(wcp wc, Image *dest, Image *src, int x, int y, int w, int h)
-{
-    clip(wc, dest);
-    gendraw(dest,
-            Rect(dest->r.min.x + x, 
-                 dest->r.min.y + y,
-                 dest->r.min.x + x + w,
-                 dest->r.min.y + y + h),
-            src, ZP,
-            0, ZP);
-    unclip(wc, dest);
-}
-
-void drawstrimage(wbp w, int x, int y, int width, int height,
-                  struct palentry *e, unsigned char *s, int len)
-{
-    wsp ws = w->window;
-    wcp wc = w->context;
-    int i, j, k;
-    uchar *imgdata;
-    Image *img;
-
-    MemProtect(imgdata = malloc(len * 4 * sizeof(uchar)));
-    
-    j = k = 0;
-    for (i = 0; i < len; ++i) {
-        if (e[s[i]].transpt) {
-            imgdata[j++] = 0;
-            imgdata[j++] = 0;
-            imgdata[j++] = 0;
-            imgdata[j++] = 0;
-        } else {
-            LinearColor c = e[s[i]].clr;
-            imgdata[j++] = 255;
-            imgdata[j++] = c.blue / 257;
-            imgdata[j++] = c.green / 257;
-            imgdata[j++] = c.red / 257;
-        }
-    }
-
-    MemProtect(img = allocimage(display, Rect(0, 0, width, height), RGBA32, 1, DNofill));
-    loadimage(img, img->r, imgdata, 4*len);
-
-    if (ws->win)
-        impl_draw(wc, ws->win, img, x, y, width, height);
-    impl_draw(wc, ws->pix, img, x, y, width, height);
-    flushimage(display, 1);
-    free(imgdata);
-    freeimage(img);
-}
-
-void drawblimage(wbp w, int x, int y, int width, int height,
-                int ch, unsigned char *s, int slen)
-{
-    wsp ws = w->window;
-    wcp wc = w->context;
-    unsigned int m, msk1, c, ix, iy;
-    int i, len, fg, bg;
-    uchar *imgdata;
-    Image *img;
-
-    len = width * height;
-    MemProtect(imgdata = malloc(len * 4 * sizeof(uchar)));
-
-    fg = wc->fg->rgba;
-    bg = wc->bg->rgba;
-
-    m = width % 4;
-    if (m == 0)
-        msk1 = 8;
-    else
-        msk1 = 1 << (m - 1);              /* mask for first byte of row */
-
-    ix = width;
-    iy = 0;
-    m = msk1;
-    while (slen--) {
-        if (isxdigit((unsigned char)(c = *s++))) {         /* if hexadecimal character */
-            if (!isdigit((unsigned char)c))               /* fix bottom 4 bits if necessary */
-                c += 9;
-            while (m > 0) {                /* set (usually) 4 pixel values */
-                --ix;
-                i = 4 * (ix + iy * width);
-                if (c & m) {
-                    imgdata[i++] = 255;
-                    imgdata[i++] = (fg >> 8) & 0xff;
-                    imgdata[i++] = (fg >> 16) & 0xff;
-                    imgdata[i++] = (fg >> 24) & 0xff;
-                }
-                else if (ch != TCH1) {      /* if zeroes aren't transparent */
-                    imgdata[i++] = 255;
-                    imgdata[i++] = (bg >> 8) & 0xff;
-                    imgdata[i++] = (bg >> 16) & 0xff;
-                    imgdata[i++] = (bg >> 24) & 0xff;
-                } else {
-                    imgdata[i++] = 0;
-                    imgdata[i++] = 0;
-                    imgdata[i++] = 0;
-                    imgdata[i++] = 0;
-                }
-                m >>= 1;
-	    }
-            if (ix == 0) {                 /* if end of row */
-                ix = width;
-                iy++;
-                m = msk1;
-	    }
-            else
-                m = 8;
-        }
-    }
-    if (ix > 0) {                         /* pad final row if incomplete */
-        while (ix < width) {
-            i = 4 * (ix + iy * width);
-            imgdata[i++] = 255;
-            imgdata[i++] = (bg >> 8) & 0xff;
-            imgdata[i++] = (bg >> 16) & 0xff;
-            imgdata[i++] = (bg >> 24) & 0xff;
-            ix++;
-        }
-    }
-
-    MemProtect(img = allocimage(display, Rect(0, 0, width, height), RGBA32, 1, DNofill));
-    loadimage(img, img->r, imgdata, 4*len);
-
-    if (ws->win)
-        impl_draw(wc, ws->win, img, x, y, width, height);
-    impl_draw(wc, ws->pix, img, x, y, width, height);
-    flushimage(display, 1);
-    free(imgdata);
-    freeimage(img);
-}
-
 static void impl_erasearea(wcp wc, Image *dest, int x, int y, int width, int height)
 {
     Rectangle t = Rect(dest->r.min.x + x, 
@@ -1295,10 +1160,6 @@ int setfont(wbp w, char *s)
     return Succeeded;
 }
 
-void freecolor(wbp w, char *s)
-{
-}
-
 int lowerwindow (wbp w)
 {
     wsp ws = w->window;
@@ -1412,46 +1273,68 @@ int setpattern(wbp w, char *name)
     return Succeeded;
 }
 
-int getpixelinit(wbp w, struct imgmem *imem)
+void pixelload(wbp w, struct imgmem *imem)
 {
     wsp ws = w->window;
-    Image *tmp;
-    int ndata;
-    MemProtect(tmp = allocimage(display, Rect(0, 0, imem->width, imem->height), RGB24, 1, DNofill));
-    /* Clear the tmp win */
-    gendraw(tmp, tmp->r, w->context->bg->i, ZP, 0, ZP);
+    MemProtect(imem->im = allocimage(display, Rect(0, 0, imem->width, imem->height), RGB24, 1, DNofill));
     /* Copy from pix to the tmp win */
-    gendraw(tmp, tmp->r, ws->pix, Pt(ws->pix->r.min.x + imem->x, 
-                                     ws->pix->r.min.y + imem->y), 0, ZP);
+    gendraw(imem->im, imem->im->r, ws->pix, Pt(imem->x, imem->y), 0, ZP);
     /* Get the pixels */
-    ndata = imem->width * imem->height * 3;
-    /*print("%d,%d   %d x %d ndata=%d\n",imem->x, imem->y, imem->width, imem->height, ndata); */
-    MemProtect(imem->data = malloc(ndata));
-    unloadimage(tmp, tmp->r, imem->data, ndata);
-    freeimage(tmp);
-    return Succeeded;
+    imem->len = imem->width * imem->height * 3;
+    MemProtect(imem->data = malloc(imem->len));
+    unloadimage(imem->im, imem->im->r, imem->data, imem->len);
 }
 
-int getpixel(wbp w, int x, int y, word *rv, char *s, struct imgmem *imem)
+void getpixel(struct imgmem *imem, int *r, int *g, int *b)
 {
-    int r, g, b;
     uchar *p;
-    *rv = 1;
-    p = &imem->data[3 * ((y - imem->y)*imem->width + (x - imem->x))];
-    b = *p++;
-    g = *p++;
-    r = *p++;
-    sprintf(s, "%d,%d,%d", r*257, g*257, b*257);
-    return Succeeded;
+    p = &imem->data[3 * (imem->yoff*imem->width + imem->xoff)];
+    *b = 257 * *p++;
+    *g = 257 * *p++;
+    *r = 257 * *p++;
 }
 
-int getpixelterm(wbp w, struct imgmem *imem)
+void setpixel(struct imgmem *imem, int r, int g, int b)
+{
+    uchar *p = &imem->data[3 * (imem->yoff*imem->width + imem->xoff)];
+    *p++ = b / 257;
+    *p++ = g / 257;
+    *p++ = r / 257;
+}
+
+static void impl_pixelsave(wcp wc, Image *dest, struct imgmem *imem)
+{
+    clip(wc, dest);
+    gendraw(dest,
+            Rect(dest->r.min.x + imem->x, 
+                 dest->r.min.y + imem->y,
+                 dest->r.min.x + imem->x + imem->width,
+                 dest->r.min.y + imem->y + imem->height),
+            imem->im, ZP,
+            0, ZP);
+    unclip(wc, dest);
+}
+
+void pixelsave(wbp w, struct imgmem *imem)
+{
+    wcp wc = w->context;
+    wsp ws = w->window;
+    /* Put the altered pixels back in the image */
+    loadimage(imem->im, imem->im->r, imem->data, imem->len);
+    /* Copy tmp image back to screen */
+    if (ws->win)
+        impl_pixelsave(wc, ws->win, imem);
+    impl_pixelsave(wc, ws->pix, imem);
+    flushimage(display, 1);
+}
+
+void pixelfree(struct imgmem *imem)
 {
     free(imem->data);
-    return Succeeded;
+    freeimage(imem->im);
 }
 
-int  queryrootpointer(wbp w, int *x, int *y)
+int queryrootpointer(wbp w, int *x, int *y)
 {
     return Failed;
 }
@@ -1465,11 +1348,6 @@ int raisewindow(wbp w)
     fprint(ws->wctl_fd, "top");
     fprint(ws->wctl_fd, "current");
     return Succeeded;
-}
-
-int readimage(wbp w, int x, int y, char *filename)
-{
-    return Failed;
 }
 
 int textwidth(wbp w, char *s, int n)
@@ -1512,8 +1390,7 @@ int doconfig(wbp w, int status)
     if (status & C_IMAGE) {
         struct imgdata *imd = &ws->initimage;
         if (imd->width) {
-            drawstrimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
-                         imd->data, imd->width * imd->height);
+            drawimgdata(w, 0, 0, imd);
             free(imd->paltbl);
             free(imd->data);
             imd->width = 0;
@@ -1525,11 +1402,6 @@ int doconfig(wbp w, int status)
 
 void wflush(wbp w)
 {
-}
-
-int dumpimage (wbp w, char *filename, int x, int y, int width, int height)
-{
-    return NoCvt;
 }
 
 int ownselection(wbp w, char *selection)
@@ -2012,11 +1884,6 @@ int setdrawop(wbp w, char *val)
         return Failed;
     wc->drawop = e;
     return Succeeded;
-}
-
-int setimage(wbp w, char *val)
-{
-    return Failed;
 }
 
 void togglefgbg (wbp w)

@@ -528,6 +528,210 @@ static double rgbval(double n1, double n2, double hue)
         return n1;
 }
 
+int pixelinit(wbp w, struct imgmem *i, int x, int y, int width, int height)
+{
+    wsp ws = w->window;
+    if (x < 0)  { 
+        width += x; 
+        x = 0; 
+    }
+    if (y < 0)  { 
+        height += y; 
+        y = 0; 
+    }
+    if (x + width > ws->width)
+        width = ws->width - x; 
+    if (y + height > ws->height)
+        height = ws->height - y; 
+
+    if (width <= 0 || height <= 0)
+        return 0;
+    
+    i->x = x;
+    i->y = y;
+    i->width = width;
+    i->height = height;
+    pixelload(w, i);
+    return 1;
+}
+
+int gotopixel(struct imgmem *imem, int x, int y)
+{
+    if (x >= imem->x && x < imem->x + imem->width &&
+        y >= imem->y && y < imem->y + imem->height) {
+        imem->xoff = x - imem->x;
+        imem->yoff = y - imem->y;
+        return 1;
+    } else
+        return 0;
+}
+
+void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
+{
+    switch (imd->format) {
+        case IMGDATA_PALETTE:
+            drawstrimage(w, x, y, imd->width, imd->height, imd->paltbl, imd->data);
+            break;
+        case IMGDATA_RGB24:
+            drawrgb24(w, x, y, imd->width, imd->height, imd->data);
+            break;
+        case IMGDATA_RGBA32:
+            drawrgba32(w, x, y, imd->width, imd->height, imd->data);
+            break;
+        default:
+            syserr("Unknown image format");
+            break;
+    }
+}
+
+void drawstrimage(wbp w, int x, int y, int width, int height, 
+                  struct palentry *e, unsigned char *s)
+{
+    struct imgmem imem;
+    int i, j;
+
+    if (!pixelinit(w, &imem, x, y, width, height))
+        return;
+
+    for (j = y; j < y + height; j++) {
+        for (i = x; i < x + width; i++) {
+            if (gotopixel(&imem, i, j) && !e[*s].transpt) {
+                LinearColor c = e[*s].clr;
+                setpixel(&imem, c.red, c.green, c.blue);
+            }
+            ++s;
+        }
+    }
+    pixelsave(w, &imem);
+    pixelfree(&imem);
+}
+
+void drawrgb24(wbp w, int x, int y, int width, int height, unsigned char *s)
+{
+    struct imgmem imem;
+    int i, j;
+
+    if (!pixelinit(w, &imem, x, y, width, height))
+        return;
+
+    for (j = y; j < y + height; j++) {
+        for (i = x; i < x + width; i++) {
+            if (gotopixel(&imem, i, j)) {
+                int r, g, b;
+                r = 257 * (*s++);
+                g = 257 * (*s++);
+                b = 257 * (*s++);
+                setpixel(&imem, r, g, b);
+            } else
+                s += 3;
+        }
+    }
+
+    pixelsave(w, &imem);
+    pixelfree(&imem);
+}
+
+void drawrgba32(wbp w, int x, int y, int width, int height, unsigned char *s)
+{
+    struct imgmem imem;
+    int i, j;
+
+    if (!pixelinit(w, &imem, x, y, width, height))
+        return;
+
+    for (j = y; j < y + height; j++) {
+        for (i = x; i < x + width; i++) {
+            if (gotopixel(&imem, i, j)) {
+                int r, g, b, a;
+                r = 257 * (*s++);
+                g = 257 * (*s++);
+                b = 257 * (*s++);
+                a = 257 * (*s++);
+                if (a)
+                    setpixel(&imem, r, g, b);
+            } else
+                s += 4;
+        }
+    }
+
+    pixelsave(w, &imem);
+    pixelfree(&imem);
+}
+
+void drawblimage(wbp w, int x, int y, int width, int height,
+                int ch, unsigned char *s)
+{
+    unsigned int m, msk1, c, ix, iy;
+    int slen = height*((width + 3)/4);
+    int fg_r, fg_g, fg_b, fg_a, bg_r, bg_g, bg_b, bg_a;
+    char color[128];
+    struct imgmem imem;
+
+    getfg(w, color);
+    if (parsecolor(color, &fg_r, &fg_g, &fg_b, &fg_a) != Succeeded)
+        return;
+
+    getbg(w, color);
+    if (parsecolor(color, &bg_r, &bg_g, &bg_b, &bg_a) != Succeeded)
+        return;
+
+    if (!pixelinit(w, &imem, x, y, width, height))
+        return;
+
+    m = width % 4;
+    if (m == 0)
+        msk1 = 8;
+    else
+        msk1 = 1 << (m - 1);              /* mask for first byte of row */
+
+    ix = width;
+    iy = 0;
+    m = msk1;
+    while (slen--) {
+        if (isxdigit((unsigned char)(c = *s++))) {         /* if hexadecimal character */
+            if (!isdigit((unsigned char)c))               /* fix bottom 4 bits if necessary */
+                c += 9;
+            while (m > 0) {                /* set (usually) 4 pixel values */
+                --ix;
+                if (gotopixel(&imem, x + ix, y + iy)) {
+                    if (c & m) {
+                        setpixel(&imem, fg_r, fg_g, fg_b);
+                    }
+                    else if (ch != TCH1) {      /* if zeroes aren't transparent */
+                        setpixel(&imem, bg_r, bg_g, bg_b);
+                    }
+                }
+                m >>= 1;
+	    }
+            if (ix == 0) {                 /* if end of row */
+                ix = width;
+                iy++;
+                m = msk1;
+	    }
+            else
+                m = 8;
+        }
+    }
+    if (ix > 0) {                         /* pad final row if incomplete */
+        while (ix < width) {
+            if (gotopixel(&imem, x + ix, y + iy)) {
+                setpixel(&imem, bg_r, bg_g, bg_b);
+            }
+            ix++;
+        }
+    }
+
+    pixelsave(w, &imem);
+    pixelfree(&imem);
+}
+
+static int  getimstr        (wbp w, int x, int y, int width, int hgt,
+                          struct palentry *ptbl, unsigned char *data)
+{
+    return Failed;
+}
+
+
 /*
  *  Functions and data for reading and writing GIF and JPEG images
  */
@@ -572,8 +776,6 @@ static	void	gfput		(int b);
 
 static	int	gfwrite		(wbp w, char *filename,
                                  int x, int y, int width, int height);
-static	int	bmpwrite	(wbp w, char *filename,
-                                 int x, int y, int width, int height);
 static	void	gfpack		(unsigned char *data, long len,
                                  struct palentry *paltbl);
 static	void	gfmktree	(lzwnode *tree);
@@ -608,132 +810,6 @@ static int gf_rem;			/* remaining bytes in this block */
 static int jpg_space;
 #endif					/* HAVE_LIBJPEG */
 
-
-/*
- * Construct Icon-style paltbl from BMP-style colortable
- */
-struct palentry *bmp_paltbl(int n, int *colortable)
-{
-    int i;
-    if (!(gf_paltbl=(struct palentry *)calloc(256, sizeof(struct palentry))))
-        return NULL;
-    for(i=0;i<n;i++) {
-        gf_paltbl[i].used = gf_paltbl[i].valid = 1;
-        gf_paltbl[i].transpt = 0;
-        gf_paltbl[i].clr.red = ((unsigned char)((char *)(colortable+i))[0]) * 257;
-        gf_paltbl[i].clr.green = ((unsigned char)((char *)(colortable+i))[1]) * 257;
-        gf_paltbl[i].clr.blue = ((unsigned char)((char *)(colortable+i))[2]) * 257;
-    }
-    return gf_paltbl;
-}
-
-/*
- * Construct Icon-style imgdata from BMP-style rasterdata.
- * Only trick we know about so far is to reverse rows so first row is bottom
- */
-unsigned char * bmp_data(int width, int height, int bpp, unsigned char * rasterdata)
-{
-    int i;
-    int rowbytes = width * bpp;
-    unsigned char *tmp = malloc(rowbytes);
-
-    if (tmp==NULL) return NULL;
-    for(i=0;i<height/2;i++) {
-        memmove(tmp, rasterdata + (i * rowbytes), rowbytes);
-        memmove(rasterdata + (i * rowbytes),
-                rasterdata + (height-i-1) * rowbytes, rowbytes);
-        memmove(rasterdata + (height-i-1) * rowbytes, tmp, rowbytes);
-    }
-    free(tmp);
-    return rasterdata;
-}
-
-
-/*
- * readBMP() - BMP file reader, patterned after readGIF().
- */
-int readBMP(char *filename, int p, struct imgdata *imd)
-{
-    FILE *f;
-    int c;
-    char headerstuff[52]; /* 54 - 2 byte magic number = 52 */
-    int filesize, dataoffset, width, height, compression, imagesize,
-        xpixelsperm, ypixelsperm, colorsused, colorsimportant, numcolors;
-    short bitcount;
-    int *colortable = NULL;
-    unsigned char *rasterdata;
-    if ((f = fopen(filename, "rb")) == NULL) return Failed;
-    if (((c = getc(f)) != 'B') || ((c = getc(f)) != 'M')) {
-        fclose(f);
-        return Failed;
-    }
-    if (fread(headerstuff, 1, 52, f) < 1) {
-        fclose(f);
-        return Failed;
-    }
-    filesize = *(int *)(headerstuff);
-    dataoffset = *(int *)(headerstuff+8);
-    width = *(int *)(headerstuff+16);
-    height = *(int *)(headerstuff+20);
-    bitcount = *(short *)(headerstuff+26);
-    switch(bitcount) {
-        case 1: numcolors = 1; break;
-        case 4: numcolors = 16; break;
-        case 8: numcolors = 256; break;
-        case 16: numcolors = 65536; break;
-        case 24: numcolors = 65536 * 256;
-        default: {
-            fclose(f);
-            return Failed;
-        }
-    }
-    compression = *(int *)(headerstuff+28);
-    if (compression != 0) {
-        fprintf(stderr, "warning, can't read compressed bmp's yet\n");
-        fclose(f);
-        return Failed;
-    }
-
-    imagesize = *(int *)(headerstuff+32);
-    if (compression == 0 && (imagesize==0)) {
-        imagesize = filesize - 54;
-        if (bitcount <= 8) imagesize -= 4 * numcolors;
-    }
-
-    xpixelsperm = *(int *)(headerstuff+36);
-    ypixelsperm = *(int *)(headerstuff+40);
-
-    colorsused = *(int *)(headerstuff+44);
-    colorsimportant = *(int *)(headerstuff+48);
-
-    if (bitcount <= 8) {
-        if ((colortable = malloc(4 * numcolors)) == NULL) {
-            fclose(f); return Failed;
-	}
-        if (fread(colortable, 4, numcolors, f) < numcolors) {
-            fclose(f); return Failed;
-	}
-    }
-    if ((rasterdata = malloc(imagesize))) {
-        if (fread(rasterdata, 1, imagesize, f) < imagesize) {
-            fclose(f); return Failed;
-	}
-        /* OK, read the whole thing, now what to do with it ? */
-        imd->width = width;
-        imd->height = height;
-        if (colortable) {
-            imd->paltbl = bmp_paltbl(numcolors, colortable);
-            imd->data = bmp_data(width, height, 1, rasterdata);
-        }
-        else {
-            imd->paltbl = NULL;
-            imd->data = bmp_data(width, height, 3, rasterdata);
-        }
-        return Succeeded;
-    }
-    fclose(f);
-    return Failed;
-}
 /*
  * readGIF(filename, p, imd) - read GIF file into image data structure
  *
@@ -775,6 +851,7 @@ int readGIF(char *filename, int p, struct imgdata *imd)
     imd->height = gf_height;
     imd->paltbl = gf_paltbl;
     imd->data = gf_string;
+    imd->format = IMGDATA_PALETTE;
 
     return Succeeded;				/* return success */
 }
@@ -791,8 +868,7 @@ static int gfread(char *filename, int p)
     gf_suffix = NULL;
     gf_string = NULL;
 
-    if (!(gf_paltbl=malloc(256 * sizeof(struct palentry))))
-        return Failed;
+    MemProtect(gf_paltbl = malloc(256 * sizeof(struct palentry)));
 
 #if MSWIN32
     if ((gf_f = fopen(filename, "rb")) == NULL)
@@ -1141,7 +1217,7 @@ static void gfput(int b)
 /*
  * readJPEG(filename, p, imd) - read JPEG file into image data structure
  * p is a palette number to which the JPEG colors are to be coerced;
- * p=0 uses the colors exactly as given in the JPEG file.
+ * p=0 uses the rgb data from the image, with no palette.
  */
 static int jpegread(char *filename, int p);
 
@@ -1155,6 +1231,10 @@ int readJPEG(char *filename, int p, struct imgdata *imd)
     imd->height = gf_height;
     imd->paltbl = gf_paltbl;
     imd->data = gf_string;
+    if (gf_paltbl)
+        imd->format = IMGDATA_PALETTE;
+    else
+        imd->format = IMGDATA_RGB24;
 
     return Succeeded;				/* return success */
 }
@@ -1171,7 +1251,11 @@ static int jpegread(char *filename, int p)
     JSAMPARRAY buffer;
     int row_stride;
     int i,j;
+    struct palentry *stdpal = 0;
+
     gf_f = NULL;
+    if (p)
+        stdpal = palsetup(p);
 
 #if MSWIN32
     if ((gf_f = fopen(filename, "rb")) == NULL)
@@ -1196,13 +1280,11 @@ static int jpegread(char *filename, int p)
     /*
      * set parameters for decompression
      */
-    if (p == 1) {  /* 8-bit */
+    if (p) {
         cinfo.quantize_colors = TRUE;
         cinfo.desired_number_of_colors = 254;
-    }
-    else { 
+    } else
         cinfo.quantize_colors = FALSE;
-    }
 
     /* Start decompression */
 
@@ -1211,26 +1293,26 @@ static int jpegread(char *filename, int p)
     gf_height = cinfo.output_height;
     row_stride = cinfo.output_width * cinfo.output_components; /* actual width of the image */
 
-    if (p == 1) {
-        if (!(gf_paltbl=malloc(256 * sizeof(struct palentry))))
-            return Failed;
-
+    if (p) {
+        MemProtect(gf_paltbl = malloc(256 * sizeof(struct palentry)));
         for (i = 0; i < cinfo.actual_number_of_colors; i++) {
+            int c;
             /* init palette table */
             gf_paltbl[i].used = 1;
             gf_paltbl[i].valid = 1;
             gf_paltbl[i].transpt = 0;
-            gf_paltbl[i].clr.red = cinfo.colormap[0][i] * 257;
-            gf_paltbl[i].clr.green = cinfo.colormap[1][i] * 257;
-            gf_paltbl[i].clr.blue = cinfo.colormap[2][i] * 257;
+            c = *(unsigned char *)(rgbkey(p, 
+                                          cinfo.colormap[0][i] / 255.0, 
+                                          cinfo.colormap[1][i] / 255.0, 
+                                          cinfo.colormap[2][i] / 255.0));
+            gf_paltbl[i].clr = stdpal[c].clr;
         }
-
         for(;i < 256; i++) {
             gf_paltbl[i].used = gf_paltbl[i].valid = gf_paltbl[i].transpt = 0;
         }
-    }
+    } else
+        gf_paltbl = 0;
 
-/*   if (p == 1) */
     gf_string = calloc(jpg_space=row_stride*cinfo.output_height,
                        sizeof(unsigned char));
 	
@@ -1241,11 +1323,9 @@ static int jpegread(char *filename, int p)
         ((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
     j = 0;
     while (cinfo.output_scanline < cinfo.output_height) {
-/*      k = 0; */
         (void) jpeg_read_scanlines(&cinfo, buffer, 1);
 
         for (i=0; i<row_stride; i++) {
-/*	 if (p == 1) */   /* 8bit color */
 	    gf_string[j*row_stride+i] = buffer[0][i];
         }
         j += 1;
@@ -1273,80 +1353,6 @@ void my_error_exit (j_common_ptr cinfo)
 }
 
 #endif
-
-
-/*
- * writeBMP(w, filename, x, y, width, height) - write BMP image
- *
- * Fails if filename does not end in .bmp or .BMP; default is write .GIF.
- * Returns Succeeded, Failed, or Error.
- * We assume that the area specified is within the window.
- */
-int writeBMP(wbp w, char *filename, int x, int y, int width, int height)
-{
-    int r;
-    if (strstr(filename, ".BMP")==NULL && strstr(filename,".bmp")==NULL)
-        return NoCvt;
-
-    r = bmpwrite(w, filename, x, y, width, height);
-    if (gf_f) { fclose(gf_f); gf_f = NULL; }
-    if (gf_string) { free(gf_string); gf_string = NULL; }
-    return r;
-}
-
-/*
- * bmpwrite(w, filename, x, y, width, height) - write BMP file
- */
-
-static int bmpwrite(wbp w, char *filename, int x, int y, int width, int height)
-{
-    int i, a[6];
-    short sh[2];
-    int len;
-    struct palentry paltbl[DMAXCOLORS];
-
-    len = width * height;	/* total length of data */
-
-    if (!(gf_f = fopen(filename, "wb")))
-        return Failed;
-    if (!(gf_string = malloc(len)))
-        return Error;
-
-    for (i = 0; i < DMAXCOLORS; i++)
-        paltbl[i].used = paltbl[i].valid = paltbl[i].transpt = 0;
-    if (!getimstr(w, x, y, width, height, paltbl, gf_string))
-        return Error;
-
-    fprintf(gf_f, "BM");
-    a[0] = 54 + 4 * 256 + len;
-    a[1] = 0;
-    a[2] = 54 + 4 * 256;
-    a[3] = 40;
-    a[4] = width;
-    a[5] = height;
-    if (fwrite(a, 4, 6, gf_f) < 6) return Failed;
-    sh[0] = 1;
-    sh[1] = 8;
-    if (fwrite(sh, 2, 2, gf_f) < 2) return Failed;
-    a[0] = 0;
-    a[1] = len;
-    a[2] = a[3] = 3938; /* presumably, hardwire to assume 100dpi */
-    a[4] = 256; /* colors used */
-    a[5] = 0; /* colors important */
-    if (fwrite(a, 4, 6, gf_f) < 6) return Failed;
-
-    for (i=0; i<256; i++) {
-        unsigned char c[4];
-        c[0] = paltbl[i].clr.red >> 8;
-        c[1] = paltbl[i].clr.green >> 8;
-        c[2] = paltbl[i].clr.blue >> 8;
-        c[3] = 0;
-        if (fwrite(c, 4, 1, gf_f) < 1) return Failed;
-    }
-    if (bmp_data(width, height, 1, gf_string) == NULL) return Error;
-    if (fwrite(gf_string, width, height, gf_f) < height) return Failed;
-    return Succeeded;
-}
 
 
 /*
@@ -1927,12 +1933,9 @@ struct palentry *palsetup(int p)
 
     if (palnumber == p)
         return palsetup_palette;
-    if (palsetup_palette == NULL) {
-        palsetup_palette =
-            malloc(256 * sizeof(struct palentry));
-        if (palsetup_palette == NULL)
-            return NULL;
-    }
+    if (palsetup_palette == NULL)
+        MemProtect(palsetup_palette = malloc(256 * sizeof(struct palentry)));
+
     palnumber = p;
 
     for (i = 0; i < 256; i++)
@@ -2253,10 +2256,8 @@ int readimagefile(char *filename, int p, struct imgdata *imd)
     int r;
     if ((r = readGIF(filename, p, imd)) == Succeeded)
         return Succeeded;
-    if ((r = readBMP(filename, p, imd)) == Succeeded)
-        return Succeeded;
 #ifdef HAVE_LIBJPEG
-    if ((r = readJPEG(filename, p == 0 ? 1 : p, imd)) == Succeeded)
+    if ((r = readJPEG(filename, p, imd)) == Succeeded)
         return Succeeded;
 #endif
     return Failed;

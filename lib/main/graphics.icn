@@ -154,9 +154,14 @@ class Window(SetFields,NoCopy)
    public defer unclip()
 
    #
-   # Return the r,g,b,a values of the given color
+   # Return the r,g,b,a values of the given color, as a color string
    #
    public static defer color_value(k)
+
+   #
+   # Return the r,g,b,a values of the given color, as a list of 4 integers.
+   #
+   public static defer parse_color(k)
 
    #
    # draw_arc(x, y, width, height, angle1, angle2)
@@ -245,19 +250,9 @@ class Window(SetFields,NoCopy)
    public defer fill_rectangle(x, y, width, height)
 
    #
-   # free_color(a[]) - free colors
-   #
-   public defer free_color(a[])
-
-   #
    # Lower this window to the bottom of the window stack
    #
    public defer lower()
-
-   #
-   # new_color(a[]) - allocate an entry in the color map
-   #
-   public defer new_color(a[])
 
    #
    # Return the characters forming keys to palette p
@@ -275,9 +270,14 @@ class Window(SetFields,NoCopy)
    public static defer palette_key(s1, s2)
 
    #
-   # Produce the contents of some pixels
+   # Get the contents of some pixels as a list of colours
    #
-   public defer pixel(x, y, width, height)
+   public defer get_pixels(x, y, width, height)
+
+   #
+   # Set the contents of some pixels from a list of colours
+   #
+   public defer set_pixels(data, x, y, width, height)
    
    #
    # Return the current root x, y position as a two-element list.
@@ -370,6 +370,15 @@ class Window(SetFields,NoCopy)
       y +:= get_dy()
       /interval := 0
       return pending(eventcode, x, y, ctrl, alt, shift, release, interval)
+   end
+
+   public xor_reverse()
+      local fg, bg
+      fg := parse_color(get_fg()) | fail
+      bg := parse_color(get_bg()) | fail
+      set_fg(ixor(fg[1], bg[1]) || "," ||
+             ixor(fg[2], bg[2]) || "," ||
+             ixor(fg[3], bg[3]) || "," || fg[4])
    end
 
    protected set_one(f)

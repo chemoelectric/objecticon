@@ -14,8 +14,6 @@ static int mswinsystem           (char *s);
 static void UpdateCursorPos      (wsp ws, wcp wc);
 static HDC CreateWinDC           (wbp);
 static HDC CreatePixDC           (wbp, HDC);
-static HBITMAP loadimage (wbp wb, char *filename, unsigned int *width,
-                        unsigned int *height, int atorigin, int *status);
 static HBITMAP CreateBitmapFromData(char *data);
 static int resizePixmap(wbp w, int width, int height);
 static int devicecaps(wbp w, int i);
@@ -442,8 +440,7 @@ int wopen(wbp w)
 
       imd = &ws->initimage;
       if (imd->width) {
-	 drawstrimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
-		      imd->data, imd->width * imd->height);
+         drawimgdata(w, 0, 0, imd);
 	 if (imd->paltbl)
 	    free(imd->paltbl);
 	 free(imd->data);
@@ -1509,16 +1506,6 @@ int setdrawop(w, val)
     return Succeeded;
 }
 
-setimage(wbp w, char *val)
-   {
-   wsp ws = w->window;
-   int status;
-   ws->initialPix = loadimage(w, val, &(ws->width), &(ws->height),
-			  0, &status);
-   if (ws->initialPix == (HBITMAP) NULL) return Failed;
-   return Succeeded;
-   }
-
 void togglefgbg(w)
 wbp w;
    {
@@ -1781,13 +1768,13 @@ int x, y, width, height, x2, y2;
 /*
  * Draw a bilevel image.
  */
-void drawblimage(w, x, y, width, height, ch, s, len)
+void drawblimage(w, x, y, width, height, ch, s)
 wbp w;
 int x, y, width, height, ch;
 unsigned char *s;
-int len;
    {
    unsigned int m, msk1, c, ix, iy;
+   int len = height*((width + 3)/4);
    long fg, bg;
    SysColor palfg, palbg;
    STDLOCALS(w);
@@ -1846,12 +1833,11 @@ int len;
 /*
  * Draw a character-per-pixel image.
  */
-void drawstrimage(w, x, y, width, height, e, s, len)
+void drawstrimage(w, x, y, width, height, e, s)
 wbp w;
 int x, y, width, height;
 struct palentry *e;
 unsigned char *s;
-int len;
    {
    HDC tempdc;
    HBITMAP temppix;
@@ -1864,6 +1850,7 @@ int len;
    BITMAPINFO *bmi = NULL;
    BITMAPINFOHEADER *bmih = NULL;
    HBITMAP oldpix = 0;
+   int len = width * height;
    STDLOCALS(w);
 
    MemProtect(bmi = malloc(sizeof(BITMAPINFO) + 256 * sizeof(SysColor)));
@@ -2149,51 +2136,13 @@ unsigned char *data;
    return 1;
    }
 
-int readimage(wbp w, int x, int y, char *filename)
-   {
-   HBITMAP p, oldpix;
-   unsigned int width, height;
-   int status;
-   HDC srcdc, srcpixdc;
-
-   if (!x && !y)
-      p = loadimage(w, filename, &width, &height, 1, &status);
-   else
-      p = loadimage(w, filename, &width, &height, 0, &status);
-
-   if (p == (HBITMAP) NULL) {
-     return Failed;
-     }
-
-   {
-   STDLOCALS(w);
-
-   srcdc = GetDC(ws->iconwin);
-   srcpixdc = CreateCompatibleDC(srcdc);
-   oldpix = SelectObject(srcpixdc, p);
-   BitBlt(pixdc, x, y, width, height, srcpixdc, 0, 0, SRCCOPY);
-   if (stdwin)
-      BitBlt(stddc, x, y, width, height, srcpixdc, 0, 0, SRCCOPY);
-   SelectObject(srcpixdc, oldpix);
-   ReleaseDC(ws->iconwin, srcdc);
-   DeleteDC(srcpixdc);
-
-   /*
-    * Make sure previous ops on p are complete, then free it.
-    */
-   DeleteObject(p);
-   FREE_STDLOCALS(w);
-   return Succeeded;
-   }
-   }
-
 
 
 /*
  * Initialize client for producing pixels from a window, or in this case,
  * only create a device context once, not once per getpixel.
  */
-int getpixelinit(w, imem)
+int getpixelload(w, imem)
 wbp w;
 struct imgmem *imem;
    {
@@ -2237,10 +2186,9 @@ struct imgmem *imem;
 /*
  * Return pixel (x,y) from a window
  */
-int getpixel(wbp w, int x, int y, word *rv, char *s, struct imgmem *imem)
+int getpixel(wbp w, int x, int y, char *s, struct imgmem *imem)
    {
    COLORREF cr = imem->crp[(y-imem->y) * imem->width + (x-imem->x)];
-   *rv = 1;
    sprintf(s, "%ld,%ld,%ld",
 	   (long)RED(cr)*257L, (long)GREEN(cr)*257L, (long)BLUE(cr)*257L);
    return Succeeded;
@@ -2278,27 +2226,6 @@ int  queryrootpointer(wbp w, int *x, int *y)
     *y = pp.y;
     return Succeeded;
 }
-
-
-/*
- * dumpimage -- write an image to a disk file.
- *  At present, there are no MS Windows-specific image file formats.
- */
-int dumpimage(wbp w, char *filename, int x, int y, int width, int height)
-   {
-   return NoCvt;
-   }
-
-
-/*
- * loadimage. At present, there are no MS Windows-specific image formats.
- */
-HBITMAP loadimage(wbp w, char *filename, unsigned int *width,
-		  unsigned int *height, int atorigin, int *status)
-   {
-   return NULL;
-   }
-
 
 void freecolor(wbp w, char *s)
    {
@@ -3085,8 +3012,7 @@ int doconfig(w, status)
     if (status & C_IMAGE) {
         struct imgdata *imd = &ws->initimage;
         if (imd->width) {
-            drawstrimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
-                         imd->data, imd->width * imd->height);
+            drawimgdata(w, 0, 0, imd);
             if (imd->paltbl)
                 free(imd->paltbl);
             free(imd->data);

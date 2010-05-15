@@ -94,17 +94,13 @@
 #define ISINITIAL(w)    ((w)->window->bits & 1)
 #define ISINITIALW(ws)   ((ws)->bits & 1)
 /* bit 4 is available */
-#define ISXORREVERSE(w)	((w)->context->bits & 16)
-#define ISXORREVERSEW(w) ((w)->bits & 16)
 #define ISRESIZABLE(w)	((w)->window->bits & 128)
 #define ISEXPOSED(w)    ((w)->window->bits & 256)
 
 /* bit 4 is available */
-#define SETXORREVERSE(w) ((w)->context->bits |= 16)
 #define SETRESIZABLE(w)	((w)->window->bits |= 128)
 #define SETEXPOSED(w)   ((w)->window->bits |= 256)
 /* bit 4 is available */
-#define CLRXORREVERSE(w) ((w)->context->bits &= ~16)
 #define CLRRESIZABLE(w)	((w)->window->bits &= ~128)
 #define CLREXPOSED(w)   ((w)->window->bits &= ~256)
 
@@ -174,18 +170,26 @@ struct palentry {			/* entry for one palette member */
    char transpt;			/* nonzero if char is transparent */
    };
 
+#define IMGDATA_PALETTE    0
+#define IMGDATA_RGB24      1
+#define IMGDATA_RGBA32     2
+
 struct imgdata {			/* image loaded from a file */
    int width, height;			/* image dimensions */
    struct palentry *paltbl;		/* pointer to palette table */
+   int format;                          /* format of data, if palette is nil */
    unsigned char *data;			/* pointer to image data */
    };
 
 struct imgmem {
-   int x, y, width, height;
+   int x, y, width, height;             /* Pos/dimensions of rectangle being got/set */
+   int xoff, yoff;                      /* Increasing x,y offset within rectangle during looping */
 #if XWindows
    XImage *im;
 #elif PLAN9
+   Image *im;
    uchar *data;
+   int len;
 #elif MSWIN32
    COLORREF *crp;
 #endif
@@ -193,9 +197,6 @@ struct imgmem {
 
 #define TCH1 '~'			/* usual transparent character */
 #define TCH2 0377			/* alternate transparent character */
-#define PCH1 ' '			/* punctuation character */
-#define PCH2 ','			/* punctuation character */
-
 
 #if XWindows
 
@@ -208,15 +209,13 @@ typedef struct _wdisplay {
   char		name[MAXDISPLAYNAME];
   Display *	display;
   struct progstate *program;           /* owning program */
+  struct SharedColor *black, *white;
   Colormap	cmap;
   int		screen;
   wfp		fonts;
 #ifdef HAVE_LIBXFT
   XFontStruct   *xfont;
 #endif
-  int           numColors;		/* allocated color info */
-  int		sizColors;		/* # elements of alloc. color array */
-  struct wcolor	*colors;
   Cursor	cursors[NUMCURSORSYMS];
   struct _wdisplay *previous, *next;
 } *wdp;
@@ -244,7 +243,7 @@ typedef struct _wcontext {
 #if XWindows
   wdp		display;
   GC		gc;			/* X graphics context */
-  int		fg, bg;
+  struct SharedColor *fg, *bg;
   int		linestyle;
   int		linewidth;
   char		*patternname;
@@ -302,7 +301,7 @@ typedef struct _wstate {
   int		inputmask;		/* user input mask */
   char		*windowlabel;		/* window label */
   struct imgdata initimage;		/* initial image data */
-  int		y, x;		/* desired upper lefthand corner */
+  int		y, x;		        /* desired upper lefthand corner */
   int           height;                 /* window height, in pixels */
   int           width;                  /* window width, in pixels */
   int           minheight;              /* minimum window height, in pixels */
@@ -316,7 +315,6 @@ typedef struct _wstate {
   wdp		display;
   Window	win;			/* X window */
   Pixmap	pix;			/* current screen state */
-  Pixmap	initialPix;		/* an initial image to display */
   int		pixheight;		/* backing pixmap height, in pixels */
   int		pixwidth;		/* pixmap width, in pixels */
   Visual	*vis;
@@ -326,9 +324,6 @@ typedef struct _wstate {
 #endif
   int		normalx, normaly;	/* pos to remember when maximized */
   int		normalw, normalh;	/* size to remember when maximized */
-  int           numColors;		/* allocated (used) color info */
-  int           sizColors;		/* malloced size of theColors */
-  short		*theColors;		/* indices into display color table */
   int		iconic;			/* window state; icon, window or root*/
   Window        transientfor;           /* transient-for hint */
   long		wmhintflags;		/* window manager hints */

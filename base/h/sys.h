@@ -154,18 +154,12 @@
 #endif					/* UNIX */
 
 #if XWindows
-      #ifdef HAVE_LIBXPM
-         #include <X11/xpm.h>
-      #else				/* HAVE_LIBXPM */
-         #include <X11/Xlib.h>
-      #endif				/* HAVE_LIBXPM */
-
-      #include <X11/Xutil.h>
-      #include <X11/Xos.h>
-      #include <X11/Xatom.h>
-      #include <X11/cursorfont.h>
-      #include <X11/keysym.h>
-
+   #include <X11/Xlib.h>
+   #include <X11/Xutil.h>
+   #include <X11/Xos.h>
+   #include <X11/Xatom.h>
+   #include <X11/cursorfont.h>
+   #include <X11/keysym.h>
    #ifdef HAVE_LIBXFT
    #include <X11/Xft/Xft.h>
    #endif

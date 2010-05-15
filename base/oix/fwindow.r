@@ -183,26 +183,49 @@ end
 
 function graphics_Window_color_value(k)
    body {
-      word n;
       int r, g, b, a;
       tended char *s;
+      tended struct descrip result;
       char tmp[32];
-
-      a = 65535;
 
       if (!cnv:C_string(k, s))
           runerr(103, k);
 
-      if (parsecolor(s, &r, &g, &b, &a) == Succeeded) {
-          tended struct descrip result;
-          if (a < 65535)
-              sprintf(tmp,"%d,%d,%d,%d", r, g, b, a);
-          else
-              sprintf(tmp,"%d,%d,%d", r, g, b);
-          cstr2string(tmp, &result);
-          return result;
-      }
-      fail;
+      if (parsecolor(s, &r, &g, &b, &a) != Succeeded)
+          fail;
+
+      if (a < 65535)
+          sprintf(tmp,"%d,%d,%d,%d", r, g, b, a);
+      else
+          sprintf(tmp,"%d,%d,%d", r, g, b);
+      cstr2string(tmp, &result);
+      return result;
+   }
+end
+
+function graphics_Window_parse_color(k)
+   body {
+      int r, g, b, a;
+      tended char *s;
+      tended struct descrip result;
+      struct descrip t;
+
+      if (!cnv:C_string(k, s))
+          runerr(103, k);
+
+      if (parsecolor(s, &r, &g, &b, &a) != Succeeded)
+          fail;
+
+      create_list(4, &result);
+      MakeInt(r, &t);
+      list_put(&result, &t);
+      MakeInt(g, &t);
+      list_put(&result, &t);
+      MakeInt(b, &t);
+      list_put(&result, &t);
+      MakeInt(a, &t);
+      list_put(&result, &t);
+      return result;
    }
 end
 
@@ -443,11 +466,9 @@ function graphics_Window_draw_image(self, x0, y0, d)
        */
       if ((c = *s) == '#' || c == '~') {
           s++;
-          nchars = 0;
+          nchars = z - s;
           for (t = s; t < z; t++)
-              if (isxdigit((unsigned char)*t))
-                  nchars++;			/* count hex digits */
-              else if (*t != PCH1 && *t != PCH2)
+              if (!isxdigit((unsigned char)*t))
                   fail;				/* illegal punctuation */
           if (nchars == 0)
               fail;
@@ -455,7 +476,7 @@ function graphics_Window_draw_image(self, x0, y0, d)
           if (nchars % row != 0)
               fail;
           height = nchars / row;
-          drawblimage(self_w, x, y, width, height, c, s, z - s);
+          drawblimage(self_w, x, y, width, height, c, s);
           return nulldesc;
       }
 
@@ -479,17 +500,13 @@ function graphics_Window_draw_image(self, x0, y0, d)
        * Scan the image to see which colors are needed.
        */
       e = palsetup(p); 
-      if (e == NULL)
-          runerr(305);
       for (i = 0; i < 256; i++)
           e[i].used = 0;
-      nchars = 0;
+      nchars = z - s;
       for (t = s; t < z; t++) {
           c = *t; 
           e[c].used = 1;
-          if (e[c].valid || e[c].transpt)
-              nchars++;			/* valid color, or transparent */
-          else if (c != PCH1 && c != PCH2)
+          if (!(e[c].valid || e[c].transpt))
               fail;
       }
       if (nchars == 0)
@@ -501,7 +518,7 @@ function graphics_Window_draw_image(self, x0, y0, d)
        * Call platform-dependent code to draw the image.
        */
       height = nchars / width;
-      drawstrimage(self_w, x, y, width, height, e, s, z - s);
+      drawstrimage(self_w, x, y, width, height, e, s);
       return nulldesc;
    }
 end
@@ -772,26 +789,6 @@ function graphics_Window_fill_rectangle(self, x0, y0, w0, h0)
    }
 end
 
-function graphics_Window_free_color(self, argv[argc])
-   body {
-      int i;
-      word n;
-      tended char *s;
-      GetSelfW();
-
-      if (argc == 0)
-          runerr(103);
-
-      for (i = 0; i < argc; i++) {
-          if (!cnv:string(argv[i],argv[i]))
-              runerr(103,argv[i]);
-          freecolor(self_w, buffstr(&argv[i]));
-      }
-
-      return self;
-   }
-end
-
 function graphics_Window_lower(self)
    body {
       GetSelfW();
@@ -846,8 +843,6 @@ function graphics_Window_palette_color(s1, s2)
       if (StrLen(d) != 1)
           runerr(205, d);
       e = palsetup(p); 
-      if (e == NULL)
-          runerr(305);
       e += *StrLoc(d) & 0xFF;
       if (!e->valid)
           fail;
@@ -880,14 +875,13 @@ function graphics_Window_palette_key(s1, s2)
    }
 end
 
-function graphics_Window_pixel(self, x0, y0, w0, h0)
+function graphics_Window_get_pixels(self, x0, y0, w0, h0)
    body {
       struct imgmem imem;
       word x, y, width, height;
       int slen;
       tended struct descrip lastval, result, bg;
-      int i, j;
-      word rv;
+      int i, j, r, g, b;
       wsp ws;
       GetSelfW();
 
@@ -896,44 +890,77 @@ function graphics_Window_pixel(self, x0, y0, w0, h0)
 
       ws = self_w->window;
 
-      imem.x = Max(x,0);
-      imem.y = Max(y,0);
-      imem.width = Min(width, ws->width - imem.x);
-      imem.height = Min(height, ws->height - imem.y);
-
-      if (getpixelinit(self_w, &imem) == Failed) fail;
       getbg(self_w, attr_buff);
       cstr2string(attr_buff, &bg);
-      lastval = emptystr;
-
       create_list(width * height, &result);
 
-      for (j=y; j < y + height; j++) {
-          for (i=x; i < x + width; i++) {
-              if (i < imem.x || i >= imem.x + imem.width ||
-                  j < imem.y || j >= imem.y + imem.height)
-                  list_put(&result, &bg);
-              else  {
-                  getpixel(self_w, i, j, &rv, attr_buff, &imem);
-                  if (rv >= 0) {
-                      slen = strlen(attr_buff);
-                      if (slen != StrLen(lastval) ||
-                          strncmp(attr_buff, StrLoc(lastval), slen)) {
-                          bytes2string(attr_buff, slen, &lastval);
+      if (pixelinit(self_w, &imem, x, y, width, height)) {
+          lastval = emptystr;
+          r = g = b = -1;
+          for (j = y; j < y + height; j++) {
+              for (i = x; i < x + width; i++) {
+                  if (gotopixel(&imem, i, j)) {
+                      int r0, g0, b0;
+                      getpixel(&imem, &r0, &g0, &b0);
+                      if (r != r0 || g != g0 || b != b0) {
+                          char buff[64];
+                          r = r0; g = g0; b = b0;
+                          sprintf(buff, "%d,%d,%d", r, g, b);
+                          cstr2string(buff, &lastval);
                       }
                       list_put(&result, &lastval);
-                  }
-                  else {
-                      struct descrip tmp;
-                      MakeInt(rv, &tmp);
-                      list_put(&result, &tmp);
-                  }
+                  } else
+                      list_put(&result, &bg);
+              }
+          }
+          pixelfree(&imem);
+      } else {
+          /* Region completely off-screen */
+          for (i = 0; i < width * height; i++)
+              list_put(&result, &bg);
+      }
+      return result;
+   }
+end
+
+function graphics_Window_set_pixels(self, data, x0, y0, w0, h0)
+   if !is:list(data) then
+      runerr(108, data)
+   body {
+      struct imgmem imem;
+      word x, y, width, height;
+      struct lgstate state;
+      tended struct b_lelem *le;
+      tended struct descrip elem;
+      int i, j;
+      wsp ws;
+      GetSelfW();
+
+      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
+
+      ws = self_w->window;
+
+      if (!pixelinit(self_w, &imem, x, y, width, height))
+          return;
+
+      le = lgfirst(&ListBlk(data), &state);
+      for (j = y; le && j < y + height; j++) {
+          for (i = x; le && i < x + width; i++) {
+              int r, g, b, a;
+              elem = le->lslots[state.result];
+              le = lgnext(&ListBlk(data), &state, le);
+              if (gotopixel(&imem, i, j)) {
+                  char *color = buffstr(&elem);
+                  if (parsecolor(color, &r, &g, &b, &a) == Succeeded)
+                      setpixel(&imem, r, g, b);
               }
           }
       }
 
-      getpixelterm(self_w, &imem);
-      return result;
+      pixelsave(self_w, &imem);
+      pixelfree(&imem);
+      return nulldesc;
    }
 end
 
@@ -1034,30 +1061,21 @@ function graphics_Window_read_image(self, x, y, file, pal)
           p = palnum(&pal);
           if (p == -1)
               runerr(103, pal);
-          if (p == 0)
+          if (p == 0) {
+              LitWhy("Invalid palette");
               fail;
+          }
       }
 
       x += self_w->context->dx;
       y += self_w->context->dy;
 
       filename = buffstr(&file);
-
-      /*
-       * First try to read as a standard file.
-       * If that doesn't work, try platform-dependent image reading code.
-       */
       r = readimagefile(filename, p, &imd);
       if (r == Succeeded) {
-          drawstrimage(self_w, x, y, imd.width, imd.height, imd.paltbl,
-                            imd.data, imd.width * imd.height);
+          drawimgdata(self_w, x, y, &imd);
           free(imd.paltbl);
           free(imd.data);
-      }
-      else {
-          r = readimage(self_w, x, y, filename);
-          if (r != Succeeded) 
-              fail;
       }
       return nulldesc;
    }
@@ -1123,7 +1141,6 @@ function graphics_Window_write_image(self, fname, x0, y0, w0, h0)
 
       /*
        * clip image to window, and fail if zero-sized.
-       * (the casts to long are necessary to avoid unsigned comparison.)
        */
       if (x < 0) {
           width += x;
@@ -1133,27 +1150,20 @@ function graphics_Window_write_image(self, fname, x0, y0, w0, h0)
           height += y;
           y = 0;
       }
-      if (x + width > (long) self_w->window->width)
+      if (x + width > self_w->window->width)
           width = self_w->window->width - x;
-      if (y + height > (long) self_w->window->height)
+      if (y + height > self_w->window->height)
           height = self_w->window->height - y;
       if (width <= 0 || height <= 0)
           fail;
 
-      /*
-       * try platform-dependent code first; it will reject the call
-       * if the file name s does not specify a platform-dependent format.
-       */
-      r = dumpimage(self_w, s, x, y, width, height);
+      r = NoCvt;
 #ifdef HAVE_LIBJPEG
-      if ((r == NoCvt) &&
-	  (strcmp(s + strlen(s)-4, ".jpg")==0 ||
+      if ((strcmp(s + strlen(s)-4, ".jpg")==0 ||
            (strcmp(s + strlen(s)-4, ".JPG")==0))) {
           r = writeJPEG(self_w, s, x, y, width, height);
       }
 #endif					/* HAVE_LIBJPEG */
-      if (r == NoCvt)
-          r = writeBMP(self_w, s, x, y, width, height);
       if (r == NoCvt)
           r = writeGIF(self_w, s, x, y, width, height);
       if (r != Succeeded)
@@ -1811,24 +1821,36 @@ function graphics_Window_set_height(self, height)
    }
 end
 
-function graphics_Window_set_image(self, val)
+function graphics_Window_set_image(self, val, pal)
    if !cnv:string(val) then
       runerr(103, val)
    body {
        wsp ws;
        char *s;
-       int r;
+       int r, p;
        GetSelfW();
        ws = self_w->window;
+       /*
+        * p is an optional palette name.
+        */
+       if (is:null(pal)) 
+           p = 0;
+       else {
+           p = palnum(&pal);
+           if (p == -1)
+               runerr(103, pal);
+           if (p == 0) {
+               LitWhy("Invalid palette");
+               fail;
+           }
+       }
        s = buffstr(&val);
-       r = readimagefile(s, 0, &ws->initimage);
+       r = readimagefile(s, p, &ws->initimage);
        if (r == Succeeded) {
            self_w->window->width = ws->initimage.width;
            self_w->window->height = ws->initimage.height;
            wconfig |= C_SIZE | C_IMAGE;
        }
-       else
-           r = setimage(self_w, s);
        AttemptAttr(r, "Unable to draw image");
        return self;
    }

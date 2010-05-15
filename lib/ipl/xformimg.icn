@@ -51,7 +51,7 @@ procedure wreflect(win1, dir)
       "h":  {
          x2 := 0
          y2 := height - 1
-         every win2.fg(win1.pixel()) do {
+         every win2.fg(!win1.get_pixels()) do {
             win2.draw_point(x2, y2)
             if x2 = width - 1 then {
                x2 := 0
@@ -63,7 +63,7 @@ procedure wreflect(win1, dir)
       "v":  {
          x2 := width - 1
          y2 := 0
-         every win2.fg(win1.pixel()) do {
+         every win2.fg(!win1.get_pixels()) do {
             win2.draw_point(x2, y2)
             if x2 = 0 then {
                x2 := width - 1
@@ -94,7 +94,7 @@ procedure wrotate(win1, dir)
          y2 := 0
          win2 := Window.open("canvas=hidden", "width=" || height,
             "height=" || width) | stop("*** cannot open target window")
-         every win2.fg(win1.pixel()) do {
+         every win2.fg(!win1.get_pixels()) do {
             win2.draw_point(x2, y2)
             if y2 = width - 1 then {
                y2 := 0
@@ -108,7 +108,7 @@ procedure wrotate(win1, dir)
             "height=" || width) | stop("*** cannot open target window")
          x2 := 0
          y2 := width - 1
-         every win2.fg(win1.pixel()) do {
+         every win2.fg(!win1.get_pixels()) do {
             win2.draw_point(x2, y2)
             if y2 = 0 then {
                y2 := width - 1
@@ -122,7 +122,7 @@ procedure wrotate(win1, dir)
             "height=" || height) | stop("*** cannot open target window")
          x2 := width - 1
          y2 := height - 1
-         every win2.fg(win1.pixel()) do {
+         every win2.fg(!win1.get_pixels()) do {
             win2.draw_point(x2, y2)
             if x2 = 0 then {
                x2 := width - 1

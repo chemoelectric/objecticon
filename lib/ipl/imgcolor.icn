@@ -31,7 +31,7 @@ procedure imgcolor(win, x, y, w, h)
 
    colors := table(0)
 
-   every colors[win.pixel(x, y, w, h)] +:= 1
+   every colors[!win.get_pixels(x, y, w, h)] +:= 1
 
    return colors
 
