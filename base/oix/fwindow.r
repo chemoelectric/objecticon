@@ -183,26 +183,49 @@ end
 
 function graphics_Window_color_value(k)
    body {
-      word n;
       int r, g, b, a;
       tended char *s;
+      tended struct descrip result;
       char tmp[32];
-
-      a = 65535;
 
       if (!cnv:C_string(k, s))
           runerr(103, k);
 
-      if (parsecolor(s, &r, &g, &b, &a) == Succeeded) {
-          tended struct descrip result;
-          if (a < 65535)
-              sprintf(tmp,"%d,%d,%d,%d", r, g, b, a);
-          else
-              sprintf(tmp,"%d,%d,%d", r, g, b);
-          cstr2string(tmp, &result);
-          return result;
-      }
-      fail;
+      if (parsecolor(s, &r, &g, &b, &a) != Succeeded)
+          fail;
+
+      if (a < 65535)
+          sprintf(tmp,"%d,%d,%d,%d", r, g, b, a);
+      else
+          sprintf(tmp,"%d,%d,%d", r, g, b);
+      cstr2string(tmp, &result);
+      return result;
+   }
+end
+
+function graphics_Window_parse_color(k)
+   body {
+      int r, g, b, a;
+      tended char *s;
+      tended struct descrip result;
+      struct descrip t;
+
+      if (!cnv:C_string(k, s))
+          runerr(103, k);
+
+      if (parsecolor(s, &r, &g, &b, &a) != Succeeded)
+          fail;
+
+      create_list(4, &result);
+      MakeInt(r, &t);
+      list_put(&result, &t);
+      MakeInt(g, &t);
+      list_put(&result, &t);
+      MakeInt(b, &t);
+      list_put(&result, &t);
+      MakeInt(a, &t);
+      list_put(&result, &t);
+      return result;
    }
 end
 
@@ -887,8 +910,8 @@ function graphics_Window_get_pixels(self, x0, y0, w0, h0)
 
       ws = self_w->window;
 
-      init_imgmem(self_w, &imem, x, y, width, height);
-      pixelinit(self_w, &imem);
+      pixelinit(self_w, &imem, x, y, width, height);
+      pixelload(self_w, &imem);
       getbg(self_w, attr_buff);
       cstr2string(attr_buff, &bg);
       lastval = emptystr;
@@ -897,23 +920,17 @@ function graphics_Window_get_pixels(self, x0, y0, w0, h0)
       r = g = b = -1;
       for (j = y; j < y + height; j++) {
           for (i = x; i < x + width; i++) {
-              if (i < imem.x || i >= imem.x + imem.width ||
-                  j < imem.y || j >= imem.y + imem.height)
-                  list_put(&result, &bg);
-              else  {
-                  imem.xoff = i - imem.x;
-                  imem.yoff = j - imem.y;
+              if (gotopixel(&imem, i, j)) {
                   getpixel(&imem);
-                  if (r == imem.r && g == imem.g && b == imem.b)
-                      list_put(&result, &lastval);
-                  else {
+                  if (r != imem.r || g != imem.g || b != imem.b) {
                       char buff[64];
                       r = imem.r; g = imem.g; b = imem.b;
                       sprintf(buff, "%d,%d,%d", r, g, b);
                       cstr2string(buff, &lastval);
-                      list_put(&result, &lastval);
                   }
-              }
+                  list_put(&result, &lastval);
+              } else
+                  list_put(&result, &bg);
           }
       }
 
@@ -928,12 +945,10 @@ function graphics_Window_set_pixels(self, data, x0, y0, w0, h0)
    body {
       struct imgmem imem;
       word x, y, width, height;
-      int slen;
       struct lgstate state;
       tended struct b_lelem *le;
       tended struct descrip elem, bg;
-      int i, j, r, g, b;
-      char *color;
+      int i, j;
       wsp ws;
       GetSelfW();
 
@@ -942,32 +957,25 @@ function graphics_Window_set_pixels(self, data, x0, y0, w0, h0)
 
       ws = self_w->window;
 
-      init_imgmem(self_w, &imem, x, y, width, height);
-      pixelinit(self_w, &imem);
+      pixelinit(self_w, &imem, x, y, width, height);
+      pixelload(self_w, &imem);
       getbg(self_w, attr_buff);
       cstr2string(attr_buff, &bg);
 
       le = lgfirst(&ListBlk(data), &state);
       for (j = y; j < y + height; j++) {
           for (i = x; i < x + width; i++) {
-              char *color;
               int ignore;
-              if (!le) {
-                  elem = bg;
-              } else {
+              if (le) {
                   elem = le->lslots[state.result];
                   le = lgnext(&ListBlk(data), &state, le);
-              }
-              color = buffstr(&elem);
-              if (parsecolor(color, &imem.r, &imem.g, &imem.b, &ignore) == Succeeded) {
-                  if (i < imem.x || i >= imem.x + imem.width ||
-                      j < imem.y || j >= imem.y + imem.height)
-                      continue;
-                  else {
-                      imem.xoff = i - imem.x;
-                      imem.yoff = j - imem.y;
+              } else 
+                  elem = bg;
+              
+              if (gotopixel(&imem, i, j)) {
+                  char *color = buffstr(&elem);
+                  if (parsecolor(color, &imem.r, &imem.g, &imem.b, &ignore) == Succeeded)
                       setpixel(&imem);
-                  }
               }
           }
       }

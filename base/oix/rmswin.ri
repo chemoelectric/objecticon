@@ -2142,7 +2142,7 @@ unsigned char *data;
  * Initialize client for producing pixels from a window, or in this case,
  * only create a device context once, not once per getpixel.
  */
-int getpixelinit(w, imem)
+int getpixelload(w, imem)
 wbp w;
 struct imgmem *imem;
    {

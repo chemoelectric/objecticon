@@ -193,7 +193,8 @@ void  bigrand         (dptr da, dptr dx);
    int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph);
    char *rgbkey         (int p, double r, double g, double b);
 
-   void init_imgmem     (wbp w, struct imgmem *i, int x, int y, int width, int height);
+   void pixelinit       (wbp w, struct imgmem *i, int x, int y, int width, int height);
+   int  gotopixel       (struct imgmem *i, int x, int y);
    int  writeGIF        (wbp w, char *filename,
                           int x, int y, int width, int height);
    void drawstrimage    (wbp w, int x, int y, int width, int height,
@@ -204,17 +205,16 @@ void  bigrand         (dptr da, dptr dx);
    void drawrgb24       (wbp w, int x, int y, int width, int height, unsigned char *s);
    void drawrgba32      (wbp w, int x, int y, int width, int height, unsigned char *s);
 
-   void pixelinit       (wbp w, struct imgmem *imem);
-   void getpixel        (struct imgmem *im);
-   void setpixel        (struct imgmem *im);
-   void pixelsave       (wbp w, struct imgmem *imem);
-   void pixelfree       (struct imgmem *imem);
-
 
    /*
     * graphics implementation routines supplied for each platform
     * (excluding those defined as macros for X-windows)
     */
+   void pixelload       (wbp w, struct imgmem *imem);
+   void getpixel        (struct imgmem *im);
+   void setpixel        (struct imgmem *im);
+   void pixelsave       (wbp w, struct imgmem *imem);
+   void pixelfree       (struct imgmem *imem);
    int  setpattern      (wbp w, char *name);
    wcp  clonecontext   (wbp w);
    int  copyarea        (wbp w,wbp w2,int x,int y,int wd,int h,int x2,int y2);

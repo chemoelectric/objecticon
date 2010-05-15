@@ -154,9 +154,14 @@ class Window(SetFields,NoCopy)
    public defer unclip()
 
    #
-   # Return the r,g,b,a values of the given color
+   # Return the r,g,b,a values of the given color, as a color string
    #
    public static defer color_value(k)
+
+   #
+   # Return the r,g,b,a values of the given color, as a list of 4 integers.
+   #
+   public static defer parse_color(k)
 
    #
    # draw_arc(x, y, width, height, angle1, angle2)
@@ -370,6 +375,15 @@ class Window(SetFields,NoCopy)
       y +:= get_dy()
       /interval := 0
       return pending(eventcode, x, y, ctrl, alt, shift, release, interval)
+   end
+
+   public xor_reverse()
+      local fg, bg
+      fg := parse_color(get_fg()) | fail
+      bg := parse_color(get_bg()) | fail
+      set_fg(ixor(fg[1], bg[1]) || "," ||
+             ixor(fg[2], bg[2]) || "," ||
+             ixor(fg[3], bg[3]) || "," || fg[4])
    end
 
    protected set_one(f)

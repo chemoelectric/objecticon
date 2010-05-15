@@ -528,7 +528,7 @@ static double rgbval(double n1, double n2, double hue)
         return n1;
 }
 
-void init_imgmem(wbp w, struct imgmem *i, int x, int y, int width, int height)
+void pixelinit(wbp w, struct imgmem *i, int x, int y, int width, int height)
 {
     wsp ws = w->window;
     if (x < 0)  { 
@@ -547,6 +547,17 @@ void init_imgmem(wbp w, struct imgmem *i, int x, int y, int width, int height)
     i->y = y;
     i->width = width;
     i->height = height;
+}
+
+int gotopixel(struct imgmem *imem, int x, int y)
+{
+    if (x >= imem->x && x < imem->x + imem->width &&
+        y >= imem->y && y < imem->y + imem->height) {
+        imem->xoff = x - imem->x;
+        imem->yoff = y - imem->y;
+        return 1;
+    } else
+        return 0;
 }
 
 void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
@@ -573,30 +584,22 @@ void drawstrimage(wbp w, int x, int y, int width, int height,
     struct imgmem imem;
     int i, j;
 
-    init_imgmem(w, &imem, x, y, width, height);
+    pixelinit(w, &imem, x, y, width, height);
     if (imem.width <= 0 || imem.height <= 0)
         return;
 
-    pixelinit(w, &imem);
+    pixelload(w, &imem);
 
     for (j = y; j < y + height; j++) {
         for (i = x; i < x + width; i++) {
-            if (i < imem.x || i >= imem.x + imem.width ||
-                j < imem.y || j >= imem.y + imem.height) {
-                ++s;
-                continue;
-            } else  {
-                if (!e[*s].transpt) {
-                    LinearColor c = e[*s].clr;
-                    imem.xoff = i - imem.x;
-                    imem.yoff = j - imem.y;
-                    imem.r = c.red;
-                    imem.g = c.green;
-                    imem.b = c.blue;
-                    setpixel(&imem);
-                }
-                ++s;
+            if (gotopixel(&imem, i, j) && !e[*s].transpt) {
+                LinearColor c = e[*s].clr;
+                imem.r = c.red;
+                imem.g = c.green;
+                imem.b = c.blue;
+                setpixel(&imem);
             }
+            ++s;
         }
     }
     pixelsave(w, &imem);
@@ -608,26 +611,21 @@ void drawrgb24(wbp w, int x, int y, int width, int height, unsigned char *s)
     struct imgmem imem;
     int i, j;
 
-    init_imgmem(w, &imem, x, y, width, height);
+    pixelinit(w, &imem, x, y, width, height);
     if (imem.width <= 0 || imem.height <= 0)
         return;
 
-    pixelinit(w, &imem);
+    pixelload(w, &imem);
 
     for (j = y; j < y + height; j++) {
         for (i = x; i < x + width; i++) {
-            if (i < imem.x || i >= imem.x + imem.width ||
-                j < imem.y || j >= imem.y + imem.height) {
-                s += 3;
-                continue;
-            } else  {
-                imem.xoff = i - imem.x;
-                imem.yoff = j - imem.y;
+            if (gotopixel(&imem, i, j)) {
                 imem.r = 257 * (*s++);
                 imem.g = 257 * (*s++);
                 imem.b = 257 * (*s++);
                 setpixel(&imem);
-            }
+            } else
+                s += 3;
         }
     }
 
@@ -640,29 +638,24 @@ void drawrgba32(wbp w, int x, int y, int width, int height, unsigned char *s)
     struct imgmem imem;
     int i, j;
 
-    init_imgmem(w, &imem, x, y, width, height);
+    pixelinit(w, &imem, x, y, width, height);
     if (imem.width <= 0 || imem.height <= 0)
         return;
 
-    pixelinit(w, &imem);
+    pixelload(w, &imem);
 
     for (j = y; j < y + height; j++) {
         for (i = x; i < x + width; i++) {
-            if (i < imem.x || i >= imem.x + imem.width ||
-                j < imem.y || j >= imem.y + imem.height) {
-                s += 4;
-                continue;
-            } else  {
+            if (gotopixel(&imem, i, j)) {
                 int a;
-                imem.xoff = i - imem.x;
-                imem.yoff = j - imem.y;
                 imem.r = 257 * (*s++);
                 imem.g = 257 * (*s++);
                 imem.b = 257 * (*s++);
                 a = 257 * (*s++);
                 if (a)
                     setpixel(&imem);
-            }
+            } else
+                s += 4;
         }
     }
 
@@ -687,11 +680,11 @@ void drawblimage(wbp w, int x, int y, int width, int height,
     if (parsecolor(color, &bg_r, &bg_g, &bg_b, &bg_a) != Succeeded)
         return;
 
-    init_imgmem(w, &imem, x, y, width, height);
+    pixelinit(w, &imem, x, y, width, height);
     if (imem.width <= 0 || imem.height <= 0)
         return;
 
-    pixelinit(w, &imem);
+    pixelload(w, &imem);
 
     m = width % 4;
     if (m == 0)
@@ -1245,7 +1238,7 @@ static void gfput(int b)
 /*
  * readJPEG(filename, p, imd) - read JPEG file into image data structure
  * p is a palette number to which the JPEG colors are to be coerced;
- * p=0 uses the palette colours created by the quantization of the jpeg library itself.
+ * p=0 uses the rgb data from the image, with no palette.
  */
 static int jpegread(char *filename, int p);
 
@@ -1324,23 +1317,17 @@ static int jpegread(char *filename, int p)
     if (p) {
         MemProtect(gf_paltbl = malloc(256 * sizeof(struct palentry)));
         for (i = 0; i < cinfo.actual_number_of_colors; i++) {
+            int c;
             /* init palette table */
             gf_paltbl[i].used = 1;
             gf_paltbl[i].valid = 1;
             gf_paltbl[i].transpt = 0;
-            if (p) {
-                int c = *(unsigned char *)(rgbkey(p, 
-                                                  cinfo.colormap[0][i] / 255.0, 
-                                                  cinfo.colormap[1][i] / 255.0, 
-                                                  cinfo.colormap[2][i] / 255.0));
-                gf_paltbl[i].clr = stdpal[c].clr;
-            } else {
-                gf_paltbl[i].clr.red = cinfo.colormap[0][i] * 257;
-                gf_paltbl[i].clr.green = cinfo.colormap[1][i] * 257;
-                gf_paltbl[i].clr.blue = cinfo.colormap[2][i] * 257;
-            }
+            c = *(unsigned char *)(rgbkey(p, 
+                                          cinfo.colormap[0][i] / 255.0, 
+                                          cinfo.colormap[1][i] / 255.0, 
+                                          cinfo.colormap[2][i] / 255.0));
+            gf_paltbl[i].clr = stdpal[c].clr;
         }
-
         for(;i < 256; i++) {
             gf_paltbl[i].used = gf_paltbl[i].valid = gf_paltbl[i].transpt = 0;
         }

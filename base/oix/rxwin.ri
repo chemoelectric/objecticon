@@ -2425,7 +2425,7 @@ void freecolor(wbp w, char *s)
 /*
  * Client for producing pixels from a window
  */
-void pixelinit(wbp w, struct imgmem *imem)
+void pixelload(wbp w, struct imgmem *imem)
 {
     STDLOCALS(w);
     MemProtect(imem->im = XGetImage(stddpy, stdpix,
