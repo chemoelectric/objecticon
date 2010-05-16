@@ -62,8 +62,6 @@ class Window(SetFields,NoCopy)
    public defer grab_pointer()
    public defer ungrab_pointer()
 
-   public defer toggle_fgbg()
-
    public defer get_font_ascent()
    public defer get_bg()
    public defer get_canvas()
@@ -389,6 +387,13 @@ class Window(SetFields,NoCopy)
       set_fg(ixor(fg[1], bg[1]) || "," ||
              ixor(fg[2], bg[2]) || "," ||
              ixor(fg[3], bg[3]) || "," || fg[4])
+   end
+
+   public toggle_fgbg()
+      local t
+      t := get_bg()
+      set_bg(get_fg())
+      set_fg(t)
    end
 
    protected set_one(f)

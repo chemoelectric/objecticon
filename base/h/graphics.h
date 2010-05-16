@@ -236,11 +236,11 @@ typedef struct _wcontext {
   wdp		display;
   GC		gc;			/* X graphics context */
   struct SharedColor *fg, *bg;
-  int		linestyle;
+  stringint     *linestyle;
   int		linewidth;
   char		*patternname;
-  int		fillstyle;
-  int		drawop;
+  stringint     *fillstyle;
+  stringint     *drawop;
 #elif MSWIN32
   LOGPEN	pen;
   LOGPEN	bgpen;
@@ -288,7 +288,7 @@ typedef struct _wstate {
   int		pixheight;		/* backing pixmap height, in pixels */
   int		pixwidth;		/* pixmap width, in pixels */
   Visual	*vis;
-  int		theCursor;		/* index into cursor table */
+  stringint     *cursor;
 #ifdef HAVE_LIBXFT
   XftDraw       *winDraw,*pixDraw;
 #endif

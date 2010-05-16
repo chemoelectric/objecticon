@@ -2198,14 +2198,6 @@ function graphics_Window_set_resize(self, val)
    }
 end
 
-function graphics_Window_toggle_fgbg(self)
-   body {
-       GetSelfW();
-       togglefgbg(self_w);
-       return self;
-   }
-end
-
 function graphics_Window_set_size(self, width, height)
    if !cnv:C_integer(width) then
       runerr(101, width)
