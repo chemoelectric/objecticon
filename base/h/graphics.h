@@ -244,11 +244,11 @@ typedef struct _wcontext {
   wdp		display;
   GC		gc;			/* X graphics context */
   struct SharedColor *fg, *bg;
-  int		linestyle;
+  stringint     *linestyle;
   int		linewidth;
   char		*patternname;
-  int		fillstyle;
-  int		drawop;
+  stringint     *fillstyle;
+  stringint     *drawop;
 #elif PLAN9
   struct SharedColor *fg, *bg;
   struct SharedPattern  *pattern;
@@ -272,21 +272,6 @@ typedef struct _wcontext {
 
 } wcontext, *wcp;
 
-/*
- * Native facilities include the following child controls (windows) that
- * persist on the canvas and intercept various events.
- */
-#if MSWIN32
-#define CHILD_BUTTON 0
-#define CHILD_SCROLLBAR 1
-#define CHILD_EDIT 2
-typedef struct childcontrol {
-   int  type;				/* what kind of control? */
-   HWND win;				/* child window handle */
-   HFONT font;
-   char *id;				/* child window string id */
-} childcontrol;
-#endif					/* MSWIN32 */
 
 /*
  * "Window state" includes the actual X window and references to a large
@@ -318,7 +303,7 @@ typedef struct _wstate {
   int		pixheight;		/* backing pixmap height, in pixels */
   int		pixwidth;		/* pixmap width, in pixels */
   Visual	*vis;
-  int		theCursor;		/* index into cursor table */
+  stringint     *cursor;
 #ifdef HAVE_LIBXFT
   XftDraw       *winDraw,*pixDraw;
 #endif
@@ -346,19 +331,12 @@ typedef struct _wstate {
   HWND		iconwin;		/* client window when iconic */
   HBITMAP	pix;			/* backing bitmap */
   HBITMAP	iconpix;		/* backing bitmap */
-  HBITMAP	initialPix;		/* backing bitmap */
   HBITMAP	theOldPix;
   int		pixheight;		/* backing pixmap height, in pixels */
   int		pixwidth;		/* pixmap width, in pixels */
   HCURSOR	curcursor;
   HCURSOR	savedcursor;
   char		*cursorname;
-  HMENU		menuBar;
-  int		nmMapElems;
-  char **       menuMap;
-  HWND		focusChild;
-  int           nChildren;
-  childcontrol *child;
 #endif
 } wstate, *wsp;
 

@@ -1886,13 +1886,6 @@ int setdrawop(wbp w, char *val)
     return Succeeded;
 }
 
-void togglefgbg (wbp w)
-{
-    wcp wc = w->context;
-    struct SharedColor *t1;
-    t1 = wc->fg; wc->fg = wc->bg; wc->bg = t1;
-}
-
 int warppointer(wbp w, int x, int y)
 {
     return Failed;

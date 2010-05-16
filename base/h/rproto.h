@@ -260,7 +260,6 @@ void  bigrand         (dptr da, dptr dx);
    int  sendselectionresponse(wbp w, word requestor, char *property, char *selection, char *target, word time, dptr data);
    int  setwindowlabel  (wbp w, char *val);
    int  setinputmask    (wbp w, char *val);
-   void togglefgbg      (wbp w);
    int  walert          (wbp w, int volume);
    int  warppointer     (wbp w, int x, int y);
    void wclose          (wbp w);

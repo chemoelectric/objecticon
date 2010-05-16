@@ -518,24 +518,14 @@ end
 # those values optionally edited by the given parameters.
 #
 procedure EditRGBA(col, r, g, b, a)
-   local r0, g0, b0, a0
-   Window.color_value(col) ? {
-      r0 := integer(tab(upto(','))) | fail
-      move(1)
-      g0 := integer(tab(upto(','))) | fail
-      move(1)
-      b0 := integer(tab(upto(',') | 0)) | fail
-      if any(',') then {
-         move(1)
-         a0 := integer(tab(0)) | fail
-      }
-   }
-   r0 := \r
-   g0 := \g
-   b0 := \b
-   a0 := \a
-   if /a0 | (a0 = 65535) then
-      return r0 || "," || g0 || "," || b0
+   local l
+   l := Window.parse_color(col) | fail
+   l[1] := \r
+   l[2] := \g
+   l[3] := \b
+   l[4] := \a
+   if l[4] = 65535 then
+      return l[1] || "," || l[2] || "," || l[3]
    else
-      return r0 || "," || g0 || "," || b0 || "," || a0
+      return l[1] || "," || l[2] || "," || l[3] || "," || l[4]
 end

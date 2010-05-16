@@ -48,6 +48,17 @@ static void unsetclip(wbp w);
 
 #define DEFAULTFONTNAME "fixed"
 
+static stringint fillstyles[] = {
+    {0, 7},
+    {"masked", FillStippled },
+    {"opaquepatterned", FillOpaqueStippled },
+    {"opaquestippled", FillOpaqueStippled },
+    {"patterned", FillStippled },
+    {"solid", FillSolid },
+    {"stippled", FillStippled },
+    {"textured", FillOpaqueStippled },
+};
+
 static stringint drawops[] = {
    { 0, 16},
    {"and",		GXand},
@@ -68,9 +79,18 @@ static stringint drawops[] = {
    {"xor",		GXxor},
 };
 
+static stringint linestyles[] = {
+    {0, 5},
+    {"dashed",      LineOnOffDash},
+    {"doubledash",  LineDoubleDash},
+    {"onoff",       LineOnOffDash},
+    {"solid",       LineSolid},
+    {"striped",     LineDoubleDash},
+};
+
 #define NUMCURSORSYMS	78
 
-static stringint cursorsyms[] = {
+static stringint cursors[] = {
   { 0, NUMCURSORSYMS},
   {"X cursor",		XC_X_cursor},
   {"arrow",		XC_arrow},
@@ -875,21 +895,14 @@ static int wmap(wbp w)
 #else
     gcv.font       = wc->font->fsp->fid;
 #endif
-    if (wc->fillstyle)
-        gcv.fill_style = wc->fillstyle;
-    else
-        gcv.fill_style = wc->fillstyle = FillSolid;
-    if (wc->linestyle || wc->linewidth) {
-        gcmask |= (GCLineWidth | GCLineStyle);
-        gcv.line_width = wc->linewidth;
-        gcv.line_style = wc->linestyle;
-        if (wc->linewidth > 1) {
-            gcv.dashes = 3 * wc->linewidth;
-            gcmask |= GCDashList;
-        }
+    gcv.fill_style = wc->fillstyle->i;
+    gcmask |= (GCLineWidth | GCLineStyle);
+    gcv.line_width = wc->linewidth;
+    gcv.line_style = wc->linestyle->i;
+    if (wc->linewidth > 1) {
+        gcv.dashes = 3 * wc->linewidth;
+        gcmask |= GCDashList;
     }
-    else
-        wc->linestyle = LineSolid;
     gcv.cap_style = CapProjecting;
 
     /*
@@ -1009,7 +1022,7 @@ static int wmap(wbp w)
     if (!resizePixmap(w, ws->width, ws->height)) return Failed;
 
     if (stdwin) {
-        i = ws->theCursor;
+        i = ws->cursor->i >> 1;
         if (!(wd->cursors[i]))
             wd->cursors[i] = XCreateFontCursor(stddpy, 2 * i);
         XDefineCursor(stddpy, stdwin, wd->cursors[i]);
@@ -1021,7 +1034,7 @@ static int wmap(wbp w)
      */
     CLRZOMBIE(w);
 
-    XSetFunction(stddpy, stdgc, wc->drawop);
+    XSetFunction(stddpy, stdgc, wc->drawop->i);
     XSync(stddpy, False);
 
     return Succeeded;
@@ -1286,6 +1299,22 @@ int setwindowlabel(wbp w, char *s)
  */
 int setpointer(wbp w, char *val)
 {
+    stringint *e;
+    int i;
+    STDLOCALS(w);
+    e = stringint_lookup(cursors, val);
+    if (!e)
+        return Failed;
+    ws->cursor = e;
+    i = ws->cursor->i >> 1;
+    if (!(wd->cursors[i]))
+        wd->cursors[i] = XCreateFontCursor(stddpy, 2 * i);
+    if (stdwin)
+        XDefineCursor(stddpy, stdwin, wd->cursors[i]);
+    return Succeeded;
+}
+
+#if 0
     int i = stringint_str2int(cursorsyms,val) >> 1;
     STDLOCALS(w);
     if (i < 0 || i >= NUMCURSORSYMS) return Failed;
@@ -1297,19 +1326,21 @@ int setpointer(wbp w, char *val)
         XDefineCursor(stddpy, stdwin, wd->cursors[i]);
     return Succeeded;
 }
+#endif
 
 /*
  * setdrawop() - set the drawing operation
  */
 int setdrawop(wbp w, char *val)
 {
-    int i;
+    stringint *e;
     STDLOCALS(w);
     XSync(stddpy, False);
-    if ((i = stringint_str2int(drawops,val)) < 0)
+    e = stringint_lookup(drawops, val);
+    if (!e)
         return Failed;
-    wc->drawop = i;
-    if (stdgc) XSetFunction(stddpy, stdgc, wc->drawop);
+    wc->drawop = e;
+    if (stdgc) XSetFunction(stddpy, stdgc, wc->drawop->i);
     return Succeeded;
 }
 
@@ -1538,72 +1569,39 @@ int setcanvas(wbp w, char *s)
 /*
  * Set the context's fill style by name.
  */
-int setfillstyle(wbp w, char *s)
+int setfillstyle(wbp w, char *val)
 {
+    stringint *e;
     STDLOCALS(w);
-
-    if (!strcmp(s, "solid")) {
-        wc->fillstyle = FillSolid;
-    }
-    else if (!strcmp(s, "masked")
-             || !strcmp(s, "stippled") || !strcmp(s, "patterned")) {
-        wc->fillstyle = FillStippled;
-    }
-    else if (!strcmp(s, "textured")
-             || !strcmp(s, "opaquestippled") || !strcmp(s, "opaquepatterned")) {
-        wc->fillstyle = FillOpaqueStippled;
-    }
-    else 
+    e = stringint_lookup(fillstyles, val);
+    if (!e)
         return Failed;
-    if (stdpix) {
-        XSetFillStyle(stddpy, stdgc, wc->fillstyle);
-    }
+    wc->fillstyle = e;
+    if (stdpix)
+        XSetFillStyle(stddpy, stdgc, wc->fillstyle->i);
     return Succeeded;
 }
 
 void getfillstyle(wbp w, char *answer)
 {
-    char *s;
-    STDLOCALS(w);
-    switch (wc->fillstyle) {
-        case FillStippled: {
-            s = "masked";
-            break;
-        }
-        case FillOpaqueStippled: {
-            s = "textured";
-            break;
-        }
-        default: {
-            s = "solid";
-            break;
-        }
-    }
-    strcpy(answer, s);
+    strcpy(answer, w->context->fillstyle->s);
 }
 
 
 /*
  * Set the context's line style by name.
  */
-int setlinestyle(wbp w, char *s)
+int setlinestyle(wbp w, char *val)
 {
+    stringint *e;
     STDLOCALS(w);
-
-    if (!strcmp(s, "solid")) {
-        wc->linestyle = LineSolid;
-    }
-    else if (!strcmp(s, "onoff") || !strcmp(s, "dashed")) {
-        wc->linestyle = LineOnOffDash;
-    }
-    else if (!strcmp(s, "doubledash") || !strcmp(s, "striped")) {
-        wc->linestyle = LineDoubleDash;
-    }
-    else return Failed;
-    if (stdpix) {
+    e = stringint_lookup(linestyles, val);
+    if (!e)
+        return Failed;
+    wc->linestyle = e;
+    if (stdpix) 
         XSetLineAttributes(stddpy, stdgc,
-                           wc->linewidth, wc->linestyle, CapProjecting, JoinMiter);
-    }
+                           wc->linewidth, wc->linestyle->i, CapProjecting, JoinMiter);
     return Succeeded;
 }
 
@@ -1620,7 +1618,7 @@ int setlinewidth(wbp w, int linewid)
     wc->linewidth = linewid;
     if (stdpix) {
         gcv.line_width = linewid;
-        gcv.line_style = wc->linestyle;
+        gcv.line_style = wc->linestyle->i;
         if (linewid > 1)
             gcv.dashes = 3 * wc->linewidth;
         else
@@ -1669,19 +1667,6 @@ int setbg(wbp w, char *s)
     if (wc->gc)
         XSetBackground(wc->display->display, wc->gc, wc->bg->c);
     return Succeeded;
-}
-
-void togglefgbg(wbp w)
-{
-    struct SharedColor *tmp;
-    STDLOCALS(w);
-    tmp = wc->fg;
-    wc->fg = wc->bg;
-    wc->bg = tmp;
-    if (stdpix) {
-        XSetForeground(stddpy, stdgc, wc->fg->c);
-        XSetBackground(stddpy, stdgc, wc->bg->c);
-    }
 }
 
 void getdisplay(wbp w, char *answer)
@@ -1763,23 +1748,17 @@ void getbg(wbp w, char *answer)
 
 void getlinestyle(wbp w, char *answer)
 {
-    wcp wc = w->context;
-    strcpy(answer,
-            (wc->linestyle==LineSolid)?"solid":
-            ((wc->linestyle==LineOnOffDash)?"dashed":"striped"));
+    strcpy(answer, w->context->linestyle->s);
 }
 
 void getpointer(wbp w, char *answer)
 {
-    strcpy(answer, stringint_int2str(cursorsyms, 2 * w->window->theCursor));
+    strcpy(answer, w->window->cursor->s);
 }
 
 void getdrawop(wbp w, char *answer)
 {
-    char *s;
-    s = stringint_int2str(drawops, w->context->drawop);
-    if (s) sprintf(answer, "%s", s);
-    else strcpy(answer, "copy");
+    strcpy(answer, w->context->drawop->s);
 }
 
 int grabpointer(wbp w)
@@ -1838,8 +1817,7 @@ static int handle_exposures(wbp w, XExposeEvent *event)
     returnval = ISEXPOSED(w);
     SETEXPOSED(w);
     if (stdwin && !ISZOMBIE(w)) {
-/* if its a 3D window, do we skip this part ?? */
-        if (wc->drawop != GXcopy)
+        if (wc->drawop->i != GXcopy)
             XSetFunction(stddpy, stdgc, GXcopy);
         if (wc->clipw >= 0)
             unsetclip(w);
@@ -1847,11 +1825,8 @@ static int handle_exposures(wbp w, XExposeEvent *event)
                   event->width,event->height, event->x,event->y);
         if (wc->clipw >= 0)
             setclip(w);
-        if (wc->drawop != GXcopy)
-            XSetFunction(stddpy,stdgc,wc->drawop);
-/* end of " if its a 3D window " */
-
-
+        if (wc->drawop->i != GXcopy)
+            XSetFunction(stddpy,stdgc,wc->drawop->i);
     }
     return returnval;
 }
@@ -1886,7 +1861,7 @@ static int resizePixmap(wbp w, int width, int height)
          * The window is redrawn.
          */
         XSetForeground(stddpy, stdgc, wc->bg->c);
-        if (wc->drawop != GXcopy)
+        if (wc->drawop->i != GXcopy)
             XSetFunction(stddpy, stdgc, GXcopy);
         if (wc->fillstyle != FillSolid)
             XSetFillStyle(stddpy, stdgc, FillSolid);
@@ -1905,10 +1880,10 @@ static int resizePixmap(wbp w, int width, int height)
         }
         XSetForeground(stddpy, stdgc, wc->fg->c);
         XCopyArea(stddpy, stdpix, p, stdgc, 0, 0, x, y, 0, 0);
-        if (wc->drawop != GXcopy)
-            XSetFunction(stddpy,stdgc,wc->drawop);
-        if (wc->fillstyle != FillSolid)
-            XSetFillStyle(stddpy, stdgc, wc->fillstyle);
+        if (wc->drawop->i != GXcopy)
+            XSetFunction(stddpy,stdgc,wc->drawop->i);
+        if (wc->fillstyle->i != FillSolid)
+            XSetFillStyle(stddpy, stdgc, wc->fillstyle->i);
         if (wc->clipw >= 0)
             setclip(w);
 
@@ -2178,16 +2153,6 @@ void fillrectangle(wbp w, int x, int y, int width, int height)
     rec.y = y;
     rec.width = width;
     rec.height = height;
-    /*
-     * Free colors if drawop=copy, fillstyle~=masked, no clipping,
-     * and a single rectangle that fills the whole window.
-     */
-    if (!rec.x && !rec.y && rec.width >= ws->width &&
-        rec.height >= ws->height &&
-        wc->drawop == GXcopy && wc->fillstyle != FillStippled && wc->clipw < 0) {
-        rec.width = ws->pixwidth;	/* fill hidden part */
-        rec.height = ws->pixheight;
-    }
     RENDER2(XFillRectangles, &rec, 1);
 }
 
@@ -2209,13 +2174,13 @@ void erasearea(wbp w, int x, int y, int width, int height)
      * fill the rectangle with the background color
      */
     XSetForeground(stddpy, stdgc, wc->bg->c);
-    if (wc->drawop != GXcopy) XSetFunction(stddpy, stdgc, GXcopy);
-    if (wc->fillstyle != FillSolid) XSetFillStyle(stddpy, stdgc, FillSolid);
+    if (wc->drawop->i != GXcopy) XSetFunction(stddpy, stdgc, GXcopy);
+    if (wc->fillstyle->i != FillSolid) XSetFillStyle(stddpy, stdgc, FillSolid);
 
     RENDER4(XFillRectangle, x, y, width, height);
     XSetForeground(stddpy, stdgc, wc->fg->c);
-    if (wc->drawop != GXcopy) XSetFunction(stddpy, stdgc, wc->drawop);
-    if (wc->fillstyle != FillSolid) XSetFillStyle(stddpy, stdgc, wc->fillstyle);
+    if (wc->drawop->i != GXcopy) XSetFunction(stddpy, stdgc, wc->drawop->i);
+    if (wc->fillstyle->i != FillSolid) XSetFillStyle(stddpy, stdgc, wc->fillstyle->i);
 }
 
 /*
@@ -2249,7 +2214,7 @@ int copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2)
 	    }
         }
         XSetForeground(stddpy, stdgc, wc->fg->c);
-        XSetFunction(stddpy, stdgc, wc->drawop);
+        XSetFunction(stddpy, stdgc, wc->drawop->i);
         XSync(stddpy,False);
         XDestroyImage(xim);
     }
@@ -2311,7 +2276,7 @@ int copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2)
         }
 
         XSetForeground(stddpy,stdgc, wc->fg->c);
-        XSetFunction(stddpy, stdgc, wc->drawop);
+        XSetFunction(stddpy, stdgc, wc->drawop->i);
     }
     return Succeeded;
 }
@@ -2346,9 +2311,9 @@ void setpixel(struct imgmem *imem, int r, int g, int b)
 void pixelsave(wbp w, struct imgmem *imem)
 {
     STDLOCALS(w);
-    if (wc->drawop != GXcopy) XSetFunction(stddpy, stdgc, GXcopy);
+    if (wc->drawop->i != GXcopy) XSetFunction(stddpy, stdgc, GXcopy);
     RENDER7(XPutImage, imem->im, 0, 0, imem->x, imem->y, imem->width, imem->height);
-    if (wc->drawop != GXcopy) XSetFunction(stddpy, stdgc, wc->drawop);
+    if (wc->drawop->i != GXcopy) XSetFunction(stddpy, stdgc, wc->drawop->i);
 }
 
 void pixelfree(struct imgmem *imem)
@@ -3250,10 +3215,12 @@ static wcp alccontext(wbp w)
     wc->bg = link_sharedcolor(wd->white);
     wc->fg = link_sharedcolor(wd->black);
     wc->font = wd->fonts;
-    wc->drawop = GXcopy;
+    wc->drawop = stringint_lookup(drawops, "copy");
     wc->clipx = wc->clipy = 0;
     wc->clipw = wc->cliph = -1;
     wc->linewidth = 1;
+    wc->fillstyle = stringint_lookup(fillstyles, "solid");
+    wc->linestyle = stringint_lookup(linestyles, "solid");
 
     GRFX_LINK(wc, wcntxts);
     return wc;
@@ -3298,13 +3265,13 @@ wcp clonecontext(wbp w)
 #else
     gcv.font       = rv->font->fsp->fid;
 #endif
-    gcv.line_style = rv->linestyle;
+    gcv.line_style = rv->linestyle->i;
     gcv.line_width = rv->linewidth;
     if (rv->linewidth > 1) {
         gcv.dashes = 3 * rv->linewidth;
         gcmask |= GCDashList;
     }
-    gcv.fill_style = rv->fillstyle;
+    gcv.fill_style = rv->fillstyle->i;
     gcv.cap_style  = CapProjecting;
     MemProtect(rv->gc = XCreateGC(w->window->display->display,w->window->pix,gcmask,&gcv));
     if (rv->clipw >= 0) {
@@ -3329,7 +3296,7 @@ static wsp alcwinstate()
     ws->serial = ++canvas_serial;
     ws->bits = 1024;				/* echo ON; others OFF */
     ws->listp = nulldesc;
-    ws->theCursor = stringint_str2int(cursorsyms, "left ptr") >> 1;
+    ws->cursor = stringint_lookup(cursors, "left ptr");
     ws->inputmask =
         ExposureMask | KeyPressMask |
         ButtonPressMask | ButtonReleaseMask | ButtonMotionMask |

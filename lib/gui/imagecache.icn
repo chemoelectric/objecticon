@@ -4,11 +4,11 @@ import util, graphics, io
 
 class ImageCache()
    public static 
-      map,
+      imap,
       path
 
    private static init()
-      map := table()
+      imap := table()
       path := []
    end
 
@@ -24,21 +24,36 @@ class ImageCache()
    # Get the full file path where the given window was found and loaded from.
    #
    public static get_source(w)
-      return \map[w]
+      return \imap[w]
+   end
+
+   #
+   # Get the background to use for loading the image; for an opaque
+   # jpeg this is always white, otherwise it is the user-supplied
+   # background colour, or white by default
+   #
+   private static get_bg(s, bg)
+      if /bg | (map(s[-4:0]) == ".jpg") | (map(s[-5:0]) == ".jpeg") then
+         return "white"
+      else
+         return bg
    end
 
    public static get(s, bg)
       local f, w, key
-      /bg := "white"
+      bg := get_bg(s, bg)
       every f := get_paths(s) do {
          key := bg || "#" || f
-         if w := \map[key] then
+         if w := \imap[key] then
             return w
          if Files.stat(f).mode[1] == "-" then {
             w := Window.open("bg=",bg, "canvas=hidden")
-            w.set_image(f) | return error("Couldn't load image from file " || f)
-            insert(map, key, w)
-            insert(map, w, f)
+            w.set_image(f) | {
+               w.close()
+               return error("Couldn't load image from file " || f)
+            }
+            insert(imap, key, w)
+            insert(imap, w, f)
             return w
          }
       }
@@ -47,13 +62,13 @@ class ImageCache()
 
    public static delete(s, bg)
       local f, w, key
-      /bg := "white"
+      bg := get_bg(s, bg)
       every f := get_paths(s) do {
          key := bg || "#" || f
-         if w := \map[key] then {
+         if w := \imap[key] then {
             w.close()
-            default.delete(map, key)
-            default.delete(map, w)
+            default.delete(imap, key)
+            default.delete(imap, w)
             return
          }
       }
