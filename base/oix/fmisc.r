@@ -494,8 +494,8 @@ function sort(t, i)
              */
             size = ListBlk(t).size;
             cplist(&t, &result, (word)1, size + 1);
-            qsort((char *)ListBlk(result).listhead->lelem.lslots,
-               (int)size, sizeof(struct descrip),(QSortFncCast) anycmp);
+            qsort(ListBlk(result).listhead->lelem.lslots,
+                  size, sizeof(struct descrip),(QSortFncCast) anycmp);
 
             Desc_EVValD(BlkLoc(result), E_Lcreate, D_List);
             return result;
@@ -524,7 +524,7 @@ function sort(t, i)
                d1 = lp->listhead->lelem.lslots;
                for (i = 0; i < size; i++)
                   *d1++ = bp->fields[i];
-               qsort((char *)lp->listhead->lelem.lslots,(int)size,
+               qsort(lp->listhead->lelem.lslots,size,
                      sizeof(struct descrip),(QSortFncCast)anycmp);
                }
 
@@ -559,7 +559,7 @@ function sort(t, i)
                   for (k = segsize[j] - 1; k >= 0; k--)
                      for (ep= seg->hslots[k]; ep != NULL; ep= ep->telem.clink)
                         *d1++ = ep->selem.setmem;
-               qsort((char *)lp->listhead->lelem.lslots,(int)size,
+               qsort(lp->listhead->lelem.lslots,size,
                      sizeof(struct descrip),(QSortFncCast)anycmp);
                }
 
@@ -644,10 +644,10 @@ function sort(t, i)
                 *  function determined by i.
                 */
                if (i == 1)
-                  qsort((char *)lp->listhead->lelem.lslots, (int)size,
+                  qsort(lp->listhead->lelem.lslots, size,
                         sizeof(struct descrip), (QSortFncCast)trefcmp);
                else
-                  qsort((char *)lp->listhead->lelem.lslots, (int)size,
+                  qsort(lp->listhead->lelem.lslots, size,
                         sizeof(struct descrip), (QSortFncCast)tvalcmp);
                break;		/* from cases 1 and 2 */
                }
@@ -704,10 +704,10 @@ function sort(t, i)
              *  sorting function determined by i.
              */
             if (i == 3)
-               qsort((char *)lp->listhead->lelem.lslots, (int)size / 2,
+               qsort(lp->listhead->lelem.lslots, size / 2,
                      (2 * sizeof(struct descrip)),(QSortFncCast)trcmp3);
             else
-               qsort((char *)lp->listhead->lelem.lslots, (int)size / 2,
+               qsort(lp->listhead->lelem.lslots, size / 2,
                      (2 * sizeof(struct descrip)),(QSortFncCast)tvcmp4);
             break; /* from case 3 or 4 */
                }
@@ -806,8 +806,8 @@ function sortf(t, i)
          size = ListBlk(t).size;
          cplist(&t, &result, (word)1, size + 1);
          sort_field = i;
-         qsort((char *)ListBlk(result).listhead->lelem.lslots,
-               (int)size, sizeof(struct descrip),(QSortFncCast) nthcmp);
+         qsort(ListBlk(result).listhead->lelem.lslots,
+               size, sizeof(struct descrip),(QSortFncCast) nthcmp);
 
          Desc_EVValD(BlkLoc(result), E_Lcreate, D_List);
          return result;
@@ -836,7 +836,7 @@ function sortf(t, i)
              for (j = 0; j < size; j++)
                  *d1++ = bp->fields[j];
              sort_field = i;
-             qsort((char *)lp->listhead->lelem.lslots,(int)size,
+             qsort(lp->listhead->lelem.lslots,size,
                    sizeof(struct descrip),(QSortFncCast)nthcmp);
          }
 
@@ -871,7 +871,7 @@ function sortf(t, i)
                      for (ep = seg->hslots[k]; ep != NULL; ep= ep->telem.clink)
                          *d1++ = ep->selem.setmem;
              sort_field = i;
-             qsort((char *)lp->listhead->lelem.lslots,(int)size,
+             qsort(lp->listhead->lelem.lslots,size,
                    sizeof(struct descrip),(QSortFncCast)nthcmp);
          }
 
