@@ -1226,7 +1226,6 @@ function graphics_Window_write_image(self, fname, x0, y0, w0, h0)
    if !cnv:string(fname) then
        runerr(103, fname)
    body {
-      int r;
       word x, y, width, height;
       char *s;
       GetSelfW();
@@ -1236,35 +1235,8 @@ function graphics_Window_write_image(self, fname, x0, y0, w0, h0)
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
 
-      /*
-       * clip image to window, and fail if zero-sized.
-       */
-      if (x < 0) {
-          width += x;
-          x = 0;
-      }
-      if (y < 0) {
-          height += y;
-          y = 0;
-      }
-      if (x + width > self_w->window->width)
-          width = self_w->window->width - x;
-      if (y + height > self_w->window->height)
-          height = self_w->window->height - y;
-      if (width <= 0 || height <= 0)
+      if (writeimagefile(self_w, s, x, y, width, height) != Succeeded)
           fail;
-
-      r = NoCvt;
-#ifdef HAVE_LIBJPEG
-      if ((strcmp(s + strlen(s)-4, ".jpg")==0 ||
-           (strcmp(s + strlen(s)-4, ".JPG")==0))) {
-          r = writeJPEG(self_w, s, x, y, width, height);
-      }
-#endif					/* HAVE_LIBJPEG */
-      if (r == NoCvt)
-          r = writeGIF(self_w, s, x, y, width, height);
-      if (r != Succeeded)
-         fail;
 
       return self;
    }
@@ -1942,13 +1914,12 @@ function graphics_Window_set_image(self, val, pal)
            }
        }
        s = buffstr(&val);
-       r = readimagefile(s, p, &ws->initimage);
-       if (r == Succeeded) {
-           self_w->window->width = ws->initimage.width;
-           self_w->window->height = ws->initimage.height;
-           wconfig |= C_SIZE | C_IMAGE;
-       }
-       AttemptAttr(r, "Unable to draw image");
+       if (readimagefile(s, p, &ws->initimage) != Succeeded)
+           fail;
+       self_w->window->width = ws->initimage.width;
+       self_w->window->height = ws->initimage.height;
+       wconfig |= C_SIZE | C_IMAGE;
+       SimpleAttr();
        return self;
    }
 end

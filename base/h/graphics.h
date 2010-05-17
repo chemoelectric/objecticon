@@ -169,6 +169,8 @@ struct palentry {			/* entry for one palette member */
 #define IMGDATA_PALETTE    0
 #define IMGDATA_RGB24      1
 #define IMGDATA_RGBA32     2
+#define IMGDATA_RGB48      3
+#define IMGDATA_RGBA64     4
 
 struct imgdata {			/* image loaded from a file */
    int width, height;			/* image dimensions */

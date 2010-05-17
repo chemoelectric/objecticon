@@ -185,11 +185,8 @@ void  bigrand         (dptr da, dptr dx);
    void qevent          (wsp ws, dptr e, int x, int y, uword t, long f, int krel);
    void wgetevent       (wbp w, dptr res);
    int  readimagefile   (char *filename, int p, struct imgdata *imd);
+   int  writeimagefile  (wbp w, char *filename, int x, int y, int width, int height);
    int  readGIF         (char *fname, int p, struct imgdata *d);
-#ifdef HAVE_LIBJPEG
-   int  writeJPEG       (wbp w, char *filename, int x, int y, int width, int height);
-   int  readJPEG        (char *fname, int p, struct imgdata *d);
-#endif                                  /* HAVE_LIBJPEG */
    int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph);
    char *rgbkey         (int p, double r, double g, double b);
 
@@ -204,6 +201,8 @@ void  bigrand         (dptr da, dptr dx);
    void drawimgdata     (wbp w, int x, int y, struct imgdata *img);
    void drawrgb24       (wbp w, int x, int y, int width, int height, unsigned char *s);
    void drawrgba32      (wbp w, int x, int y, int width, int height, unsigned char *s);
+   void drawrgb48       (wbp w, int x, int y, int width, int height, unsigned char *s);
+   void drawrgba64      (wbp w, int x, int y, int width, int height, unsigned char *s);
 
 
    /*

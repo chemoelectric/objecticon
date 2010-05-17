@@ -13,7 +13,10 @@ wcp wcntxts = NULL;
 wsp wstates = NULL;
 wbp wbndngs = NULL;
 
-
+#ifdef HAVE_LIBJPEG
+static int  writeJPEG       (wbp w, char *filename, int x, int y, int width, int height);
+static int  readJPEG        (char *fname, int p, struct imgdata *d);
+#endif                                  /* HAVE_LIBJPEG */
 static	int	colorphrase    (char *buf, int *r, int *g, int *b, int *a);
 static	double	rgbval	(double n1, double n2, double hue);
 static  void    wgetq          (wbp w, dptr res);
@@ -578,6 +581,12 @@ void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
         case IMGDATA_RGBA32:
             drawrgba32(w, x, y, imd->width, imd->height, imd->data);
             break;
+        case IMGDATA_RGB48:
+            drawrgb48(w, x, y, imd->width, imd->height, imd->data);
+            break;
+        case IMGDATA_RGBA64:
+            drawrgba64(w, x, y, imd->width, imd->height, imd->data);
+            break;
         default:
             syserr("Unknown image format");
             break;
@@ -631,6 +640,34 @@ void drawrgb24(wbp w, int x, int y, int width, int height, unsigned char *s)
     pixelfree(&imem);
 }
 
+void drawrgb48(wbp w, int x, int y, int width, int height, unsigned char *s)
+{
+    struct imgmem imem;
+    int i, j;
+
+    if (!pixelinit(w, &imem, x, y, width, height))
+        return;
+
+    for (j = y; j < y + height; j++) {
+        for (i = x; i < x + width; i++) {
+            if (gotopixel(&imem, i, j)) {
+                int r1, g1, b1, r2, g2, b2;
+                r1 = *s++;
+                g1 = *s++;
+                b1 = *s++;
+                r2 = *s++;
+                g2 = *s++;
+                b2 = *s++;
+                setpixel(&imem, r1<<8|r2, g1<<8|g2, b1<<8|b2);
+            } else
+                s += 6;
+        }
+    }
+
+    pixelsave(w, &imem);
+    pixelfree(&imem);
+}
+
 void drawrgba32(wbp w, int x, int y, int width, int height, unsigned char *s)
 {
     struct imgmem imem;
@@ -651,6 +688,37 @@ void drawrgba32(wbp w, int x, int y, int width, int height, unsigned char *s)
                     setpixel(&imem, r, g, b);
             } else
                 s += 4;
+        }
+    }
+
+    pixelsave(w, &imem);
+    pixelfree(&imem);
+}
+
+void drawrgba64(wbp w, int x, int y, int width, int height, unsigned char *s)
+{
+    struct imgmem imem;
+    int i, j;
+
+    if (!pixelinit(w, &imem, x, y, width, height))
+        return;
+
+    for (j = y; j < y + height; j++) {
+        for (i = x; i < x + width; i++) {
+            if (gotopixel(&imem, i, j)) {
+                int r1, g1, b1, a1, r2, g2, b2, a2;
+                r1 = *s++;
+                g1 = *s++;
+                b1 = *s++;
+                a1 = *s++;
+                r2 = *s++;
+                g2 = *s++;
+                b2 = *s++;
+                a2 = *s++;
+                if (a1<<8|a2)
+                    setpixel(&imem, r1<<8|r2, g1<<8|g2, b1<<8|b2);
+            } else
+                s += 8;
         }
     }
 
@@ -1221,7 +1289,7 @@ static void gfput(int b)
  */
 static int jpegread(char *filename, int p);
 
-int readJPEG(char *filename, int p, struct imgdata *imd)
+static int readJPEG(char *filename, int p, struct imgdata *imd)
 {
     int r;
     r = jpegread(filename, p);			/* read image */
@@ -1257,12 +1325,8 @@ static int jpegread(char *filename, int p)
     if (p)
         stdpal = palsetup(p);
 
-#if MSWIN32
     if ((gf_f = fopen(filename, "rb")) == NULL)
-#else					/* MSWIN32 */
-        if ((gf_f = fopen(filename, "r")) == NULL)
-#endif					/* MSWIN32 */
-            return Failed;
+        return Failed;
 
     cinfo.err = jpeg_std_error(&jerr.pub);
     jerr.pub.error_exit = my_error_exit;
@@ -1354,6 +1418,90 @@ void my_error_exit (j_common_ptr cinfo)
 
 #endif
 
+#ifdef HAVE_LIBPNG
+
+static int readPNG(char *filename, int pal, struct imgdata *imd)
+{
+    png_structp png_ptr;
+    png_infop info_ptr;
+    png_byte header[8];	/* 8 is the maximum size that can be checked */
+    int width, height, i;
+    png_bytep *row_pointers, p;
+    unsigned char *data;
+    int format;
+
+    /* open file and test for it being a png */
+    FILE *fp = fopen(filename, "rb");
+    if (!fp) {
+        errno2why();
+        return Failed;
+    }
+    if (fread(header, 1, 8, fp) != 8) {
+        errno2why();
+        fclose(fp);
+        return Failed;
+    }
+
+    if (png_sig_cmp(header, 0, 8)) {
+        fclose(fp);
+        whyf("readPNG: File %s is not recognized as a PNG file", filename);
+        return Failed;
+    }
+
+    MemProtect(png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL));
+    MemProtect(info_ptr = png_create_info_struct(png_ptr));
+
+    png_init_io(png_ptr, fp);
+    png_set_sig_bytes(png_ptr, 8);
+    png_set_expand(png_ptr);
+    png_set_gray_to_rgb(png_ptr);
+    png_read_info(png_ptr, info_ptr);
+    png_read_update_info(png_ptr, info_ptr);
+
+    if (info_ptr->color_type == PNG_COLOR_TYPE_RGB && info_ptr->pixel_depth == 24)
+        format = IMGDATA_RGB24;
+    else if (info_ptr->color_type == PNG_COLOR_TYPE_RGB && info_ptr->pixel_depth == 48)
+        format = IMGDATA_RGB48;
+    else if (info_ptr->color_type == PNG_COLOR_TYPE_RGB_ALPHA && info_ptr->pixel_depth == 32)
+        format = IMGDATA_RGBA32;
+    else if (info_ptr->color_type == PNG_COLOR_TYPE_RGB_ALPHA && info_ptr->pixel_depth == 64)
+        format = IMGDATA_RGBA64;
+    else {
+        fclose(fp);
+        whyf("readPNG: File %s, unsupported format/depth", filename);
+        return Failed;
+    }
+
+    width = info_ptr->width;
+    height = info_ptr->height;
+
+    MemProtect(row_pointers = malloc(sizeof(png_bytep) * height));
+    MemProtect(data = malloc(info_ptr->rowbytes * height));
+    p = (png_bytep)data;
+    for (i = 0; i < height; ++i) {
+        row_pointers[i] = p;
+        p += info_ptr->rowbytes;
+    }
+    png_read_image(png_ptr, row_pointers);
+    free(row_pointers);
+    fclose(fp);
+
+    imd->width = width;
+    imd->height = height;
+    imd->paltbl = 0;
+    imd->data = data;
+    imd->format = format;
+
+    return Succeeded;
+}
+
+
+
+
+
+
+
+#endif
 
 /*
  * writeGIF(w, filename, x, y, width, height) - write GIF image
@@ -1368,9 +1516,13 @@ int writeGIF(wbp w, char *filename, int x, int y, int width, int height)
     if (strstr(filename, ".GIF")==NULL && strstr(filename,".gif")==NULL)
         return NoCvt;
 
+    gf_f = 0;
+    gf_string = 0;
     r = gfwrite(w, filename, x, y, width, height);
-    if (gf_f) { fclose(gf_f); gf_f = NULL; }
-    if (gf_string) { free(gf_string); gf_string = NULL; }
+    if (gf_f) 
+        fclose(gf_f);
+    if (gf_string) 
+        free(gf_string);
     return r;
 }
 
@@ -1602,9 +1754,13 @@ int writeJPEG(wbp w, char *filename, int x, int y, int width, int height)
         && strstr(filename, ".JPG")==NULL && strstr(filename,".jpg")==NULL)
         return NoCvt;
 
+    gf_f = 0;
+    gf_string = 0;
     r = jpegwrite(w, filename, x, y, width, height);
-    if (gf_f) fclose(gf_f);
-    if (gf_string) free(gf_string);
+    if (gf_f) 
+        fclose(gf_f);
+    if (gf_string) 
+        free(gf_string);
     return r;
 }
 
@@ -1615,49 +1771,45 @@ int writeJPEG(wbp w, char *filename, int x, int y, int width, int height)
 
 static int jpegwrite(wbp w, char *filename, int x, int y, int width,int height)
 {
-    int i, j;
-    int len;
-    struct palentry paltbl[DMAXCOLORS];
-
+    struct imgmem imem;
+    int i, j, len;
     struct jpeg_compress_struct cinfo;
     struct jpeg_error_mgr jerr;
-
     JSAMPROW row_pointer[1];	/* pointer to JSAMPLE row[s] */
     int row_stride;		/* physical row width in image buffer */
     int quality;
 
-    unsigned char * gf_string_pixcolor;
+    if ((gf_f = fopen(filename,"wb")) == NULL)
+        return Failed;
 
-    gf_string_pixcolor = calloc(width*height*3, sizeof(unsigned char));
+    MemProtect(gf_string = malloc(width * height * 3));
 
     len = width * height ;	/* total length of data */
 
-    if (!(gf_string = malloc(len)))
-        return Error;
-
-    for (i = 0; i < DMAXCOLORS; i++)
-        paltbl[i].used = paltbl[i].valid = paltbl[i].transpt = 0;
-
-    if (!getimstr(w, x, y, width, height, paltbl, gf_string))
-        return Error;
-
-    gfpack(gf_string, len, paltbl);/* pack color table, set color params */
-
     quality = 95;
-
-    for ( i = 0, j=0; j < len; i = i + 3, j++) {
-        gf_string_pixcolor[i] = paltbl[gf_string[j]].clr.red;
-        gf_string_pixcolor[i+1] = paltbl[gf_string[j]].clr.green;
-        gf_string_pixcolor[i+2] = paltbl[gf_string[j]].clr.blue;
-    }
+    
+    if (pixelinit(w, &imem, x, y, width, height)) {
+        unsigned char *p = gf_string;
+        for (j = y; j < y + height; j++) {
+            for (i = x; i < x + width; i++) {
+                if (gotopixel(&imem, i, j)) {
+                    int r, g, b;
+                    getpixel(&imem, &r, &g, &b);
+                    *p++ = r / 257;
+                    *p++ = g / 257;
+                    *p++ = b / 257;
+                } else {
+                    *p++ = 0;
+                    *p++ = 0;
+                    *p++ = 0;
+                }
+            }
+        }
+    } else
+        memset(gf_string, 0, width * height * 3);
 
     cinfo.err = jpeg_std_error(&jerr);
     jpeg_create_compress(&cinfo);
-
-    if ((gf_f = fopen(filename,"wb")) == NULL) {
-        fprintf(stderr, "can't open file" );
-        exit(1);
-    }
 
     jpeg_stdio_dest(&cinfo, gf_f);
 
@@ -1675,13 +1827,11 @@ static int jpegwrite(wbp w, char *filename, int x, int y, int width,int height)
     row_stride = cinfo.image_width *3;	/* JSAMPLEs per row in image_buffer */
 
     while (cinfo.next_scanline < cinfo.image_height) {
-        row_pointer[0] = & gf_string_pixcolor[cinfo.next_scanline*row_stride];
+        row_pointer[0] = & gf_string[cinfo.next_scanline*row_stride];
         (void) jpeg_write_scanlines(&cinfo, row_pointer, 1);
     }
 
     jpeg_finish_compress(&cinfo);
-    fclose(gf_f);
-    gf_f = NULL;
     jpeg_destroy_compress(&cinfo);
     return Succeeded;
 }
@@ -2260,8 +2410,31 @@ int readimagefile(char *filename, int p, struct imgdata *imd)
     if ((r = readJPEG(filename, p, imd)) == Succeeded)
         return Succeeded;
 #endif
+#ifdef HAVE_LIBPNG
+    if ((r = readPNG(filename, p, imd)) == Succeeded)
+        return Succeeded;
+#endif
     return Failed;
 }
+
+
+int writeimagefile(wbp w, char *s, int x, int y, int width, int height)
+{
+    int r;
+
+      r = NoCvt;
+#ifdef HAVE_LIBJPEG
+      if ((strcmp(s + strlen(s)-4, ".jpg")==0 ||
+           (strcmp(s + strlen(s)-4, ".JPG")==0))) {
+          r = writeJPEG(w, s, x, y, width, height);
+      }
+#endif					/* HAVE_LIBJPEG */
+      if (r == NoCvt)
+          r = writeGIF(w, s, x, y, width, height);
+
+      return r;
+}
+
 
 /*
  * rectargs -- interpret rectangle arguments uniformly

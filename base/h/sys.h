@@ -99,6 +99,11 @@
 #undef OF
 #endif					/* HAVE_LIBJPEG */
 
+#ifdef HAVE_LIBPNG
+#define PNG_SKIP_SETJMP_CHECK 1
+#include "png.h"
+#endif
+
 #ifdef HAVE_LIBDL
 #if MSWIN32
    void *dlopen(char *, int); /* LoadLibrary */

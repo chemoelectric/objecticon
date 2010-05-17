@@ -28,6 +28,7 @@ CHECK_XLIB()
 if test "$ac_cv_lib_X11_main" = yes; then
    CHECK_FREETYPE()
    CHECK_JPEG()
+   CHECK_PNG()
    CHECK_XFT()
    if test "$ac_cv_lib_Xft_main" = yes -a "$ac_cv_lib_freetype_main" != yes ; then
         AC_MSG_ERROR([*** Xft needs freetype to work])
@@ -117,6 +118,12 @@ if test "$ac_cv_lib_X11_main" = yes; then
         echo yes
         echo -n "jpeg library           : "
         if test "$ac_cv_lib_jpeg_main" = yes; then
+                echo yes
+        else
+                echo no
+        fi
+        echo -n "png library            : "
+        if test "$ac_cv_lib_png_main" = yes; then
                 echo yes
         else
                 echo no
