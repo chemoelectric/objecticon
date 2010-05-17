@@ -20,7 +20,7 @@ end
 # Read icon from file s.  dialog is an instance of Dialog
 #
 procedure util_read_icon(dialog, s)
-   if map(s)[-4:0] == (".gif"|".jpg"|".jpeg") then
+   if map(s)[-4:0] == (".gif"|".png"|".jpg"|".jpeg") then
       return read_gif_icon(dialog, s)
    else
       return read_string_icon(dialog, s)
@@ -34,7 +34,10 @@ procedure read_gif_icon(dialog, s)
    local w, raw
 
    w := Window.open("canvas=hidden")
-   w.set_image(s) | return alert_error(dialog, "Couldn't load image file " || s)
+   w.set_image(s) | {
+      w.close()
+      return alert_error(dialog, "Couldn't load image file " || s)
+   }
    raw := Capture(w, "c6")
    w.close()
 
