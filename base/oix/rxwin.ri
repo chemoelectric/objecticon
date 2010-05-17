@@ -41,7 +41,7 @@ static wdp alcdisplay (char *s);
 static void free_display   (wdp wd);
 static wfp alcfont(wbp w, char *s);
 static wfp tryfont(wbp w, char *s);
-static int resizePixmap(wbp w, int width, int height);
+static void resizePixmap(wbp w, int width, int height);
 static void setclip(wbp w);
 static void unsetclip(wbp w);
 
@@ -936,9 +936,7 @@ static int wmap(wbp w)
     imd = &ws->initimage;
     if (imd->width) {
         drawimgdata(w, 0, 0, imd);
-        free(imd->paltbl);
-        free(imd->data);
-        imd->width = 0;
+        freeimgdata(imd);
     }
 
     if (wc->patternname != NULL) {
@@ -1019,7 +1017,7 @@ static int wmap(wbp w)
     XGetWindowAttributes(stddpy, stdwin, &attrs);
     ws->width = attrs.width;
     ws->height = attrs.height;
-    if (!resizePixmap(w, ws->width, ws->height)) return Failed;
+    resizePixmap(w, ws->width, ws->height);
 
     if (stdwin) {
         i = ws->cursor->i >> 1;
@@ -1040,7 +1038,7 @@ static int wmap(wbp w)
     return Succeeded;
 }
 
-int doconfig(wbp w, int status)
+void doconfig(wbp w, int status)
 {
     wsp ws = w->window;
     wcp wc = w->context;
@@ -1055,8 +1053,7 @@ int doconfig(wbp w, int status)
     }
 
     if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE)) {
-        if (!resizePixmap(w, ws->width, ws->height))
-            return Failed;
+        resizePixmap(w, ws->width, ws->height);
 
         if (ws->win) {
             if (status != C_POS) {
@@ -1104,13 +1101,9 @@ int doconfig(wbp w, int status)
         struct imgdata *imd = &ws->initimage;
         if (imd->width) {
             drawimgdata(w, 0, 0, imd);
-            free(imd->paltbl);
-            free(imd->data);
-            imd->width = 0;
+            freeimgdata(imd);
         }
     }
-
-    return Succeeded;
 }
 
 /*
@@ -1641,8 +1634,10 @@ int setfg(wbp w, char *s)
 {
     int r, g, b, a;
     wcp wc = w->context;
-    if (parsecolor(s, &r, &g, &b, &a) != Succeeded)
+    if (!parsecolor(s, &r, &g, &b, &a)) {
+        LitWhy("Invalid color");
         return Failed;
+    }
     if (wc->fg)
         unlink_sharedcolor(wc->fg);
     wc->fg = new_sharedcolor(s, r, g, b);
@@ -1659,8 +1654,10 @@ int setbg(wbp w, char *s)
 {
     int r, g, b, a;
     wcp wc = w->context;
-    if (parsecolor(s, &r, &g, &b, &a) != Succeeded)
+    if (!parsecolor(s, &r, &g, &b, &a)) {
+        LitWhy("Invalid color");
         return Failed;
+    }
     if (wc->bg)
         unlink_sharedcolor(wc->bg);
     wc->bg = new_sharedcolor(s, r, g, b);
@@ -1838,23 +1835,20 @@ static int handle_exposures(wbp w, XExposeEvent *event)
  * Resizes the backing pixmap, if needed.  Called when X resize events
  * arrive, as well as when programs make explicit resize requests.
  *
- * Returns 0 on failure.
  */
-static int resizePixmap(wbp w, int width, int height)
+static void resizePixmap(wbp w, int width, int height)
 {
     Pixmap p;
     STDLOCALS(w);
-    if (ws->pix == (Pixmap) NULL) return 1;
+    if (ws->pix == (Pixmap) NULL) 
+        return;
     if ((width > ws->pixwidth) || (height > ws->pixheight)) {
         int x = ws->pixwidth, y = ws->pixheight;
 
         ws->pixheight = Max(ws->pixheight, height);
         ws->pixwidth  = Max(ws->pixwidth, width);
-        p = XCreatePixmap(stddpy, DefaultRootWindow(stddpy), ws->pixwidth,
-                          ws->pixheight, DefaultDepth(stddpy,wd->screen));
-        if (p == (Pixmap) NULL)
-            return 0;
-
+        MemProtect(p = XCreatePixmap(stddpy, DefaultRootWindow(stddpy), ws->pixwidth,
+                                     ws->pixheight, DefaultDepth(stddpy,wd->screen)));
         /*
          * This staggering amount of redudancy manages to make sure the new
          * pixmap gets initialized including areas not in the old pixmap.
@@ -1896,7 +1890,6 @@ static int resizePixmap(wbp w, int width, int height)
         }
 #endif
     }
-    return 1;
 }
 
 /*
@@ -1925,7 +1918,7 @@ static int handle_config(wbp w, XConfigureEvent *event)
     ws->width = event->width;
     ws->height = event->height;
 
-    if (! resizePixmap(w, event->width, event->height)) return 0;
+    resizePixmap(w, event->width, event->height);
 
 
     /*
@@ -2285,7 +2278,7 @@ int copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2)
 /*
  * Client for producing pixels from a window
  */
-void pixelload(wbp w, struct imgmem *imem)
+void loadimgmem(wbp w, struct imgmem *imem)
 {
     STDLOCALS(w);
     MemProtect(imem->im = XGetImage(stddpy, stdpix,
@@ -2308,7 +2301,7 @@ void setpixel(struct imgmem *imem, int r, int g, int b)
     XPutPixel(imem->im, imem->xoff, imem->yoff, c);
 }
 
-void pixelsave(wbp w, struct imgmem *imem)
+void saveimgmem(wbp w, struct imgmem *imem)
 {
     STDLOCALS(w);
     if (wc->drawop->i != GXcopy) XSetFunction(stddpy, stdgc, GXcopy);
@@ -2316,7 +2309,7 @@ void pixelsave(wbp w, struct imgmem *imem)
     if (wc->drawop->i != GXcopy) XSetFunction(stddpy, stdgc, wc->drawop->i);
 }
 
-void pixelfree(struct imgmem *imem)
+void freeimgmem(struct imgmem *imem)
 {
     XDestroyImage(imem->im);
     imem->im = 0;
@@ -2422,8 +2415,10 @@ int setpattern(wbp w, char *name)
      */
     if (isdigit((unsigned char)name[0])) {
         nbits = MAXXOBJS;
-        if (parsepattern(name, &width, &nbits, bits) != Succeeded)
+        if (!parsepattern(name, &width, &nbits, bits)) {
+            LitWhy("Invalid pattern");
             return Failed;
+        }
         if (stdgc)
             setpatternbits(w, width, bits, nbits);
     } else {

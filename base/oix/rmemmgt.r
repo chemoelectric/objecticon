@@ -757,8 +757,8 @@ static void scollect()
      * Sort the pointers on quallist in ascending order of string
      *  locations.
      */
-    qsort((char *)quallist, (int)(DiffPtrs((char *)qualfree,(char *)quallist)) /
-          sizeof(dptr *), sizeof(dptr), (QSortFncCast)qlcmp);
+    qsort(quallist, qualfree - quallist, sizeof(dptr), (QSortFncCast)qlcmp);
+
     /*
      * The string qualifiers are now ordered by starting location.
      */
@@ -807,7 +807,7 @@ static void scollect()
 static int qlcmp(dptr *q1, dptr *q2)
 {
 #if IntBits == WordBits
-    return (int)DiffPtrs(StrLoc(**q1),StrLoc(**q2));
+    return DiffPtrs(StrLoc(**q1),StrLoc(**q2));
 #else
     long l = (long)DiffPtrs(StrLoc(**q1),StrLoc(**q2));
     if (l < 0)

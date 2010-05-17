@@ -34,9 +34,9 @@ class ImageCache()
    #
    private static get_bg(s, bg)
       if /bg | (map(s[-4:0]) == ".jpg") | (map(s[-5:0]) == ".jpeg") then
-         return "white"
+         return "65535,65535,65535"
       else
-         return bg
+         return Window.color_value(bg)
    end
 
    public static get(s, bg)

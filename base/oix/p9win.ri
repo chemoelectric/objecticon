@@ -349,9 +349,7 @@ int wopen(wbp w)
     imd = &ws->initimage;
     if (imd->width) {
         drawimgdata(w, 0, 0, imd);
-        free(imd->paltbl);
-        free(imd->data);
-        imd->width = 0;
+        freeimgdata(imd);
     }
 
     return Succeeded;
@@ -973,8 +971,10 @@ int setfg(wbp w, char *val)
 {
     int r, g, b, a, n;
     wcp wc = w->context;
-    if (parsecolor(val, &r, &g, &b, &a) != Succeeded)
+    if (!parsecolor(val, &r, &g, &b, &a)) {
+        LitWhy("Invalid color");
         return Failed;
+    }
     if (wc->fg)
         unlink_sharedcolor(wc->fg);
     r /= 257;
@@ -1000,8 +1000,10 @@ int setbg(wbp w, char *val)
 {
     int r, g, b, a, n;
     wcp wc = w->context;
-    if (parsecolor(val, &r, &g, &b, &a) != Succeeded)
+    if (!parsecolor(val, &r, &g, &b, &a)) {
+        LitWhy("Invalid color");
         return Failed;
+    }
     if (wc->bg)
         unlink_sharedcolor(wc->bg);
     r /= 257;
@@ -1257,8 +1259,10 @@ int setpattern(wbp w, char *name)
     if (isdigit((unsigned char)name[0])) {
         int width, height, bits[MAXXOBJS];
         height = MAXXOBJS;
-        if (parsepattern(name, &width, &height, bits) != Succeeded)
-            return 0;
+        if (!parsepattern(name, &width, &height, bits)) {
+            LitWhy("Invalid pattern");
+            return Failed;
+        }
         if (wc->pattern)
             unlink_sharedpattern(wc->pattern);
         wc->pattern = new_sharedpattern(width, height, bits, name);
@@ -1273,7 +1277,7 @@ int setpattern(wbp w, char *name)
     return Succeeded;
 }
 
-void pixelload(wbp w, struct imgmem *imem)
+void loadimgmem(wbp w, struct imgmem *imem)
 {
     wsp ws = w->window;
     MemProtect(imem->im = allocimage(display, Rect(0, 0, imem->width, imem->height), RGB24, 1, DNofill));
@@ -1302,7 +1306,7 @@ void setpixel(struct imgmem *imem, int r, int g, int b)
     *p++ = r / 257;
 }
 
-static void impl_pixelsave(wcp wc, Image *dest, struct imgmem *imem)
+static void impl_saveimgmem(wcp wc, Image *dest, struct imgmem *imem)
 {
     clip(wc, dest);
     gendraw(dest,
@@ -1315,7 +1319,7 @@ static void impl_pixelsave(wcp wc, Image *dest, struct imgmem *imem)
     unclip(wc, dest);
 }
 
-void pixelsave(wbp w, struct imgmem *imem)
+void saveimgmem(wbp w, struct imgmem *imem)
 {
     wcp wc = w->context;
     wsp ws = w->window;
@@ -1323,12 +1327,12 @@ void pixelsave(wbp w, struct imgmem *imem)
     loadimage(imem->im, imem->im->r, imem->data, imem->len);
     /* Copy tmp image back to screen */
     if (ws->win)
-        impl_pixelsave(wc, ws->win, imem);
-    impl_pixelsave(wc, ws->pix, imem);
+        impl_saveimgmem(wc, ws->win, imem);
+    impl_saveimgmem(wc, ws->pix, imem);
     flushimage(display, 1);
 }
 
-void pixelfree(struct imgmem *imem)
+void freeimgmem(struct imgmem *imem)
 {
     free(imem->data);
     freeimage(imem->im);
@@ -1366,7 +1370,7 @@ int utf8width(wbp w, char *s, int n, int nchars)
     return width;
 }
 
-int doconfig(wbp w, int status)
+void doconfig(wbp w, int status)
 {
     wsp ws = w->window;
 
@@ -1391,13 +1395,9 @@ int doconfig(wbp w, int status)
         struct imgdata *imd = &ws->initimage;
         if (imd->width) {
             drawimgdata(w, 0, 0, imd);
-            free(imd->paltbl);
-            free(imd->data);
-            imd->width = 0;
+            freeimgdata(imd);
         }
     }
-
-    return Succeeded;
 }
 
 void wflush(wbp w)

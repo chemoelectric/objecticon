@@ -188,40 +188,31 @@ void  bigrand         (dptr da, dptr dx);
    void qevent          (wsp ws, dptr e, int x, int y, uword t, long f, int krel);
    void wgetevent       (wbp w, dptr res);
    int  readimagefile   (char *filename, int p, struct imgdata *imd);
-   int  readGIF         (char *fname, int p, struct imgdata *d);
-#ifdef HAVE_LIBJPEG
-   int  writeJPEG       (wbp w, char *filename, int x, int y, int width, int height);
-   int  readJPEG        (char *fname, int p, struct imgdata *d);
-#endif                                  /* HAVE_LIBJPEG */
+   int  writeimagefile  (wbp w, char *filename, int x, int y, int width, int height);
    int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph);
    char *rgbkey         (int p, double r, double g, double b);
 
-   int  pixelinit       (wbp w, struct imgmem *i, int x, int y, int width, int height);
+   int  intimgmem       (wbp w, struct imgmem *i, int x, int y, int width, int height);
    int  gotopixel       (struct imgmem *i, int x, int y);
-   int  writeGIF        (wbp w, char *filename,
-                          int x, int y, int width, int height);
-   void drawstrimage    (wbp w, int x, int y, int width, int height,
-                           struct palentry *e, unsigned char *s);
    void drawblimage     (wbp w, int x, int y, int wd, int h,
                           int ch, unsigned char *s);
    void drawimgdata     (wbp w, int x, int y, struct imgdata *img);
-   void drawrgb24       (wbp w, int x, int y, int width, int height, unsigned char *s);
-   void drawrgba32      (wbp w, int x, int y, int width, int height, unsigned char *s);
-
+   void freeimgdata     (struct imgdata *img);
+   
 
    /*
     * graphics implementation routines supplied for each platform
     * (excluding those defined as macros for X-windows)
     */
-   void pixelload       (wbp w, struct imgmem *imem);
+   void loadimgmem       (wbp w, struct imgmem *imem);
    void getpixel        (struct imgmem *imem, int *r, int *g, int *b);
    void setpixel        (struct imgmem *imem, int r, int g, int b);
-   void pixelsave       (wbp w, struct imgmem *imem);
-   void pixelfree       (struct imgmem *imem);
+   void saveimgmem       (wbp w, struct imgmem *imem);
+   void freeimgmem       (struct imgmem *imem);
    int  setpattern      (wbp w, char *name);
    wcp  clonecontext   (wbp w);
    int  copyarea        (wbp w,wbp w2,int x,int y,int wd,int h,int x2,int y2);
-   int  doconfig        (wbp w, int status);
+   void doconfig        (wbp w, int status);
    void erasearea       (wbp w, int x, int y, int width, int height);
    void fillrectangle   (wbp w, int x, int y, int width, int height);
    void freewbinding    (wbp w);

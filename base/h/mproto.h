@@ -52,3 +52,8 @@ int add_range(struct rangeset *cs, int from, int to);
 void print_rangeset(struct rangeset *rs);
 
 int calc_ucs_index_step(word length);
+
+#if MSWIN32 || PLAN9
+int strcasecmp(char *s1, char *s2);
+int strncasecmp(char *s1, char *s2, int n);
+#endif

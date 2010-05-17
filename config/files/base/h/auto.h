@@ -12,6 +12,9 @@
 /* define as 1 if we have jpeg */
 #undef HAVE_LIBJPEG
 
+/* define as 1 if we have png */
+#undef HAVE_LIBPNG
+
 /* define as 1 if we have dl */
 #undef HAVE_LIBDL
 
