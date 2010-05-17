@@ -1592,31 +1592,6 @@ void retderef(dptr valp, struct frame_vars *fvars)
    }
 }
 
-#if MSWIN32
-#ifndef NTGCC
-int strcasecmp(char *s1, char *s2)
-{
-   while (*s1 && *s2) {
-       if (tolower((unsigned char)*s1) != tolower((unsigned char)*s2))
-           return tolower((unsigned char)*s1) - tolower((unsigned char)*s2);
-      s1++; s2++;
-      }
-   return tolower((unsigned char)*s1) - tolower((unsigned char)*s2);
-}
-
-int strncasecmp(char *s1, char *s2, int n)
-{
-   int i, j;
-   for(i=0;i<n;i++) {
-      j = tolower((unsigned char)s1[i]) - tolower((unsigned char)s2[i]);
-      if (j) return j;
-      if (s1[i] == '\0') return 0; /* terminate if both at end-of-string */
-      }
-   return 0;
-}
-#endif					/* NTGCC */
-#endif					/* MSWIN32 */
-
 /*
  * Allocate a string and initialize it based on the given
  * null-terminated C string.  The result is stored in the
