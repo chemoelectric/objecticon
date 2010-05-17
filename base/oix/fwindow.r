@@ -191,7 +191,7 @@ function graphics_Window_color_value(k)
       if (!cnv:C_string(k, s))
           runerr(103, k);
 
-      if (parsecolor(s, &r, &g, &b, &a) != Succeeded)
+      if (!parsecolor(s, &r, &g, &b, &a))
           fail;
 
       if (a < 65535)
@@ -213,7 +213,7 @@ function graphics_Window_parse_color(k)
       if (!cnv:C_string(k, s))
           runerr(103, k);
 
-      if (parsecolor(s, &r, &g, &b, &a) != Succeeded)
+      if (!parsecolor(s, &r, &g, &b, &a))
           fail;
 
       create_list(4, &result);
@@ -427,6 +427,7 @@ function graphics_Window_draw_image(self, x0, y0, d)
       word nchars;
       unsigned char *s, *t, *z;
       struct palentry *e;
+      struct imgdata imd;
       GetSelfW();
 
       /*
@@ -514,11 +515,15 @@ function graphics_Window_draw_image(self, x0, y0, d)
       if (nchars % width != 0)
           fail;					/* not rectangular */
 
-      /*
-       * Call platform-dependent code to draw the image.
-       */
       height = nchars / width;
-      drawstrimage(self_w, x, y, width, height, e, s);
+
+      imd.width = width;
+      imd.height = height;
+      imd.paltbl = e;
+      imd.data = s;
+      imd.format = IMGDATA_PALETTE;
+      drawimgdata(self_w, x, y, &imd);
+
       return nulldesc;
    }
 end
@@ -868,7 +873,7 @@ function graphics_Window_palette_key(s1, s2)
       if (!cnv:C_string(s2, s))
           runerr(103, s2);
 
-      if (parsecolor(s, &r, &g, &b, &a) == Succeeded)
+      if (parsecolor(s, &r, &g, &b, &a))
           return string(1, rgbkey(p, r / 65535.0, g / 65535.0, b / 65535.0));
       else
           fail;
@@ -891,7 +896,7 @@ function graphics_Window_get_pixels(self, x0, y0, w0, h0)
 
       create_list(width * height, &result);
 
-      if (pixelinit(self_w, &imem, x, y, width, height)) {
+      if (intimgmem(self_w, &imem, x, y, width, height)) {
           lastval = emptystr;
           r = g = b = -1;
           for (j = y; j < y + height; j++) {
@@ -910,7 +915,7 @@ function graphics_Window_get_pixels(self, x0, y0, w0, h0)
                       list_put(&result, &nulldesc);
               }
           }
-          pixelfree(&imem);
+          freeimgmem(&imem);
       } else {
           /* Region completely off-screen */
           for (i = 0; i < width * height; i++)
@@ -938,7 +943,7 @@ function graphics_Window_set_pixels(self, data, x0, y0, w0, h0)
 
       ws = self_w->window;
 
-      if (!pixelinit(self_w, &imem, x, y, width, height))
+      if (!intimgmem(self_w, &imem, x, y, width, height))
           return;
 
       le = lgfirst(&ListBlk(data), &state);
@@ -950,14 +955,14 @@ function graphics_Window_set_pixels(self, data, x0, y0, w0, h0)
                   int r, g, b, a;
                   if (!cnv:string(elem, elem))
                       runerr(103, elem);
-                  if (parsecolor(buffstr(&elem), &r, &g, &b, &a) == Succeeded)
+                  if (parsecolor(buffstr(&elem), &r, &g, &b, &a))
                       setpixel(&imem, r, g, b);
               }
           }
       }
 
-      pixelsave(self_w, &imem);
-      pixelfree(&imem);
+      saveimgmem(self_w, &imem);
+      freeimgmem(&imem);
       return nulldesc;
    }
 end
@@ -978,7 +983,7 @@ function graphics_Window_get_rgb(self, x0, y0, w0, h0)
       ws = self_w->window;
       create_list(3 * width * height, &result);
 
-      if (pixelinit(self_w, &imem, x, y, width, height)) {
+      if (intimgmem(self_w, &imem, x, y, width, height)) {
           for (j = y; j < y + height; j++) {
               for (i = x; i < x + width; i++) {
                   if (gotopixel(&imem, i, j)) {
@@ -997,7 +1002,7 @@ function graphics_Window_get_rgb(self, x0, y0, w0, h0)
                   }
               }
           }
-          pixelfree(&imem);
+          freeimgmem(&imem);
       } else {
           /* Region completely off-screen */
           for (i = 0; i < 3 * width * height; i++) {
@@ -1026,7 +1031,7 @@ function graphics_Window_set_rgb(self, data, x0, y0, w0, h0)
 
       ws = self_w->window;
 
-      if (!pixelinit(self_w, &imem, x, y, width, height))
+      if (!intimgmem(self_w, &imem, x, y, width, height))
           return;
 
       le = lgfirst(&ListBlk(data), &state);
@@ -1055,8 +1060,8 @@ function graphics_Window_set_rgb(self, data, x0, y0, w0, h0)
           }
       }
 
-      pixelsave(self_w, &imem);
-      pixelfree(&imem);
+      saveimgmem(self_w, &imem);
+      freeimgmem(&imem);
       return nulldesc;
    }
 end
@@ -1168,12 +1173,10 @@ function graphics_Window_read_image(self, x, y, file, pal)
       y += self_w->context->dy;
 
       filename = buffstr(&file);
-      r = readimagefile(filename, p, &imd);
-      if (r == Succeeded) {
-          drawimgdata(self_w, x, y, &imd);
-          free(imd.paltbl);
-          free(imd.data);
-      }
+      if (readimagefile(filename, p, &imd) != Succeeded)
+          fail;
+      drawimgdata(self_w, x, y, &imd);
+      freeimgdata(&imd);
       return nulldesc;
    }
 end

@@ -424,10 +424,7 @@ int wopen(wbp w)
    imd = &ws->initimage;
    if (imd->width) {
       drawimgdata(w, 0, 0, imd);
-      if (imd->paltbl)
-	 free(imd->paltbl);
-      free(imd->data);
-      imd->width = 0;
+      freeimgdata(imd);
    }
 
    if (ws->win)
@@ -1258,8 +1255,10 @@ int setfg(wbp w, char *val)
 {
     int r, g, b, a;
     wcp wc = w->context;
-    if (parsecolor(val, &r, &g, &b, &a) != Succeeded)
+    if (!parsecolor(val, &r, &g, &b, &a)) {
+        LitWhy("Invalid color");
         return Failed;
+    }
 
     wc->fg = mscolor(w, r, g, b);
     if (alc_rgb(w, wc->fg) == Failed) return Failed;
@@ -1283,9 +1282,10 @@ int setbg(wbp w, char *val)
 {
     int r, g, b, a;
     wcp wc = w->context;
-    if (parsecolor(val, &r, &g, &b, &a) != Succeeded)
+    if (!parsecolor(val, &r, &g, &b, &a)) {
+        LitWhy("Invalid color");
         return Failed;
-
+    }
     wc->bg = mscolor(w, r, g, b);
     if (alc_rgb(w, wc->bg) == Failed) return Failed;
     if (!wc->bgname) wc->bgname = salloc(val);
@@ -1782,7 +1782,7 @@ unsigned char *data;
  * Initialize client for producing pixels from a window, or in this case,
  * only create a device context once, not once per getpixel.
  */
-void pixelload(wbp w, struct imgmem *imem)
+void loadimgmem(wbp w, struct imgmem *imem)
 {
    COLORREF *p;
    wsp ws = w->window;
@@ -1817,7 +1817,7 @@ void setpixel(struct imgmem *imem, int r, int g, int b)
    imem->crp[imem->yoff * imem->width + imem->xoff] = RGB(r/257, g/257, b/257);
 }
 
-void pixelsave(wbp w, struct imgmem *imem)
+void saveimgmem(wbp w, struct imgmem *imem)
 {
    COLORREF *p;
    wsp ws = w->window;
@@ -1846,7 +1846,7 @@ void pixelsave(wbp w, struct imgmem *imem)
    FREE_STDLOCALS(w);
 }
 
-void pixelfree(struct imgmem *imem)
+void freeimgmem(struct imgmem *imem)
 {
    free(imem->crp);
 }
@@ -2443,8 +2443,10 @@ int setpattern(wbp w, char *name)
      */
     if (isdigit((unsigned char)name[0])) {
         nbits = MAXXOBJS;
-        if (parsepattern(name, &width, &nbits, bits) != Succeeded)
+        if (!parsepattern(name, &width, &nbits, bits)) {
+            LitWhy("Invalid pattern");
             return Failed; 
+        }
         if (w->window->iconwin != NULL)
             setpatternbits(w, width, bits, nbits);
     } else {
@@ -2573,7 +2575,7 @@ wbp w;
    }
 
 
-int doconfig(w, status)
+void doconfig(w, status)
     wbp w;
     int status;
 {
@@ -2645,10 +2647,7 @@ int doconfig(w, status)
         struct imgdata *imd = &ws->initimage;
         if (imd->width) {
             drawimgdata(w, 0, 0, imd);
-            if (imd->paltbl)
-                free(imd->paltbl);
-            free(imd->data);
-            imd->width = 0;
+            freeimgdata(imd);
         }
     }
    return Succeeded;
