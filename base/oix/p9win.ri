@@ -1277,16 +1277,18 @@ int setpattern(wbp w, char *name)
     return Succeeded;
 }
 
-void loadimgmem(wbp w, struct imgmem *imem)
+void loadimgmem(wbp w, struct imgmem *imem, int copy)
 {
     wsp ws = w->window;
     MemProtect(imem->im = allocimage(display, Rect(0, 0, imem->width, imem->height), RGB24, 1, DNofill));
-    /* Copy from pix to the tmp win */
-    gendraw(imem->im, imem->im->r, ws->pix, Pt(imem->x, imem->y), 0, ZP);
-    /* Get the pixels */
     imem->len = imem->width * imem->height * 3;
     MemProtect(imem->data = malloc(imem->len));
-    unloadimage(imem->im, imem->im->r, imem->data, imem->len);
+    if (copy) {
+        /* Copy from pix to the tmp win */
+        gendraw(imem->im, imem->im->r, ws->pix, Pt(imem->x, imem->y), 0, ZP);
+        /* Get the pixels */
+        unloadimage(imem->im, imem->im->r, imem->data, imem->len);
+    }
 }
 
 void getpixel(struct imgmem *imem, int *r, int *g, int *b)
@@ -2150,6 +2152,8 @@ static void init_window_system(void)
     startup_time = get_time();
     new_context_font = load_font("fixed");
     use_win = (getenv("OIUSEWIN") != 0);
+
+    memimageinit();
 }
 
 static vlong get_time()
@@ -2178,3 +2182,180 @@ static void note_time(char *s)
     prev = get_time();
 }
 
+int readimagefileimpl(char *filename, struct imgdata *imd)
+{
+    Memimage *m;
+    int pip[2], fd, ndata;
+    char *cmd;
+    struct fileparts *fp = fparse(filename);
+    if (strcasecmp(fp->ext, ".png") == 0)
+        cmd = "png -9 -3";
+    else if (strcasecmp(fp->ext, ".jpg") == 0 || strcasecmp(fp->ext, ".jpeg") == 0)
+        cmd = "jpg -9 -3";
+    else if (strcasecmp(fp->ext, ".gif") == 0)
+        cmd = "gif -9 -3";
+    else
+        return NoCvt;
+    if ((fd = open(filename, OREAD)) < 0) {
+        whyf("Couldn't open %s: %r", filename);
+        return Failed;
+    }
+    if (pipe(pip) < 0) {
+        whyf("Couldn't make pipe: %r");
+        close(fd);
+        return Failed;
+    }
+    switch (fork()) {
+        case -1: {
+            whyf("Couldn't fork: %r");
+            close(fd);
+            close(pip[0]);
+            close(pip[1]);
+            return Failed;
+        }
+
+        case 0: {
+            dup(fd, 0);
+            dup(pip[0], 1);
+            close(fd);
+            close(pip[0]);
+            close(pip[1]);
+            execl("/bin/rc", "rc", "-c", cmd, 0);
+            _exits(0);
+        }
+    }
+    m = readmemimage(pip[1]);
+    close(fd);
+    close(pip[0]);
+    close(pip[1]);
+    if (!m) {
+        whyf("Failed to read memimage: %r");
+        return Failed;
+    }
+
+    /*
+    {
+        char buf[10];
+        chantostr(buf,m->chan);
+        print("chan=%s nchan=%d\n",buf,m->nchan);
+    }
+    */
+
+    switch (m->chan) {
+        case RGB24: {
+            imd->format = IMGDATA_BGR24;
+            break;
+        }
+        case RGBA32: {
+            imd->format = IMGDATA_ABGR32;
+            break;
+        }
+        case GREY8: {
+            imd->format = IMGDATA_G8;
+            break;
+        }
+        case CHAN2(CGrey, 8, CAlpha, 8): {
+            imd->format = IMGDATA_AG16;
+            break;
+        }
+        default: {
+            /* Hopefully shouldn't happen; try to convert to BGR format */
+            Memimage *tmp;
+            MemProtect(tmp = allocmemimage(m->r, RGB24));
+            memimagedraw(tmp, tmp->r, m, ZP, 0, ZP, SoverD);
+            freememimage(m);
+            m = tmp;
+            imd->format = IMGDATA_BGR24;
+            break;
+        }
+    }
+    imd->width = Dx(m->r);
+    imd->height = Dy(m->r);
+    imd->paltbl = 0;
+    ndata = imd->width * imd->height * m->nchan;
+    MemProtect(imd->data = malloc(ndata));
+    unloadmemimage(m, m->r, imd->data, ndata);
+    freememimage(m);
+    return Succeeded;
+}
+
+int writeimagefileimpl(wbp w, char *filename, int x, int y, int width, int height)
+{
+    Memimage *m;
+    int pip[2], fd, ndata;
+    char *cmd;
+    uchar *data;
+    struct imgmem imem;
+    struct fileparts *fp = fparse(filename);
+
+    if (strcasecmp(fp->ext, ".png") == 0)
+        cmd = "topng";
+    else if (strcasecmp(fp->ext, ".gif") == 0)
+        cmd = "togif";
+    else
+        return NoCvt;
+    ndata = 3 * width * height;
+    MemProtect(data = malloc(ndata));
+    if (initimgmem(w, &imem, 1, x, y, width, height)) {
+        int i, j;
+        uchar *p = data;
+        for (j = y; j < y + height; j++) {
+            for (i = x; i < x + width; i++) {
+                if (gotopixel(&imem, i, j)) {
+                    int r, g, b;
+                    getpixel(&imem, &r, &g, &b);
+                    *p++ = b / 257;
+                    *p++ = g / 257;
+                    *p++ = r / 257;
+                } else {
+                    *p++ = 0;
+                    *p++ = 0;
+                    *p++ = 0;
+                }
+            }
+        }
+    } else
+        memset(data, 0, ndata);
+
+    MemProtect(m = allocmemimage(Rect(0, 0, width, height), RGB24));
+    loadmemimage(m, m->r, data, ndata);
+    free(data);
+
+    if ((fd = create(filename, OWRITE, 0777)) < 0) {
+        whyf("Couldn't open %s: %r", filename);
+        freememimage(m);
+        return Failed;
+    }
+    if (pipe(pip) < 0) {
+        whyf("Couldn't make pipe: %r");
+        freememimage(m);
+        close(fd);
+        return Failed;
+    }
+    switch (fork()) {
+        case -1: {
+            whyf("Couldn't fork: %r");
+            freememimage(m);
+            close(fd);
+            close(pip[0]);
+            close(pip[1]);
+            return Failed;
+        }
+
+        case 0: {
+            dup(pip[0], 0);
+            dup(fd, 1);
+            close(fd);
+            close(pip[0]);
+            close(pip[1]);
+            execl("/bin/rc", "rc", "-c", cmd, 0);
+            _exits(0);
+        }
+    }
+    writememimage(pip[1], m);
+    freememimage(m);
+    close(fd);
+    close(pip[0]);
+    close(pip[1]);
+    return Succeeded;
+}
