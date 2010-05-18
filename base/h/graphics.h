@@ -114,6 +114,9 @@
 
 #define DEFAULT_WINDOW_LABEL "Object Icon"
 
+#define CombineAlpha(v1, v2, a) \
+            (((unsigned)v1*a)/65535 + ((unsigned)v2*(65535-a))/65535)
+
 /*
  * Window Resources
  * Icon "Resources" are a layer on top of the window system resources,

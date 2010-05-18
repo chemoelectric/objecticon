@@ -896,7 +896,7 @@ function graphics_Window_get_pixels(self, x0, y0, w0, h0)
 
       create_list(width * height, &result);
 
-      if (intimgmem(self_w, &imem, x, y, width, height)) {
+      if (initimgmem(self_w, &imem, x, y, width, height)) {
           lastval = emptystr;
           r = g = b = -1;
           for (j = y; j < y + height; j++) {
@@ -943,7 +943,7 @@ function graphics_Window_set_pixels(self, data, x0, y0, w0, h0)
 
       ws = self_w->window;
 
-      if (!intimgmem(self_w, &imem, x, y, width, height))
+      if (!initimgmem(self_w, &imem, x, y, width, height))
           return;
 
       le = lgfirst(&ListBlk(data), &state);
@@ -955,104 +955,15 @@ function graphics_Window_set_pixels(self, data, x0, y0, w0, h0)
                   int r, g, b, a;
                   if (!cnv:string(elem, elem))
                       runerr(103, elem);
-                  if (parsecolor(buffstr(&elem), &r, &g, &b, &a))
-                      setpixel(&imem, r, g, b);
-              }
-          }
-      }
-
-      saveimgmem(self_w, &imem);
-      freeimgmem(&imem);
-      return nulldesc;
-   }
-end
-
-function graphics_Window_get_rgb(self, x0, y0, w0, h0)
-   body {
-      struct imgmem imem;
-      word x, y, width, height;
-      tended struct descrip result;
-      struct descrip tmp;
-      int i, j;
-      wsp ws;
-      GetSelfW();
-
-      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
-          runerr(0);
-
-      ws = self_w->window;
-      create_list(3 * width * height, &result);
-
-      if (intimgmem(self_w, &imem, x, y, width, height)) {
-          for (j = y; j < y + height; j++) {
-              for (i = x; i < x + width; i++) {
-                  if (gotopixel(&imem, i, j)) {
-                      int r, g, b;
-                      getpixel(&imem, &r, &g, &b);
-                      MakeInt(r, &tmp);
-                      list_put(&result, &tmp);
-                      MakeInt(g, &tmp);
-                      list_put(&result, &tmp);
-                      MakeInt(b, &tmp);
-                      list_put(&result, &tmp);
-                  } else {
-                      list_put(&result, &nulldesc);
-                      list_put(&result, &nulldesc);
-                      list_put(&result, &nulldesc);
-                  }
-              }
-          }
-          freeimgmem(&imem);
-      } else {
-          /* Region completely off-screen */
-          for (i = 0; i < 3 * width * height; i++) {
-              list_put(&result, &nulldesc);
-          }
-      }
-      return result;
-   }
-end
-
-function graphics_Window_set_rgb(self, data, x0, y0, w0, h0)
-   if !is:list(data) then
-      runerr(108, data)
-   body {
-      struct imgmem imem;
-      word x, y, width, height;
-      struct lgstate state;
-      tended struct b_lelem *le;
-      tended struct descrip rd, gd, bd;
-      int i, j;
-      wsp ws;
-      GetSelfW();
-
-      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
-          runerr(0);
-
-      ws = self_w->window;
-
-      if (!intimgmem(self_w, &imem, x, y, width, height))
-          return;
-
-      le = lgfirst(&ListBlk(data), &state);
-      for (j = y; le && j < y + height; j++) {
-          for (i = x; le && i < x + width; i++) {
-              rd = le->lslots[state.result];
-              le = lgnext(&ListBlk(data), &state, le);
-              if (le) {
-                  gd = le->lslots[state.result];
-                  le = lgnext(&ListBlk(data), &state, le);
-                  if (le) {
-                      bd = le->lslots[state.result];
-                      le = lgnext(&ListBlk(data), &state, le);
-                      if (!is:null(rd) && !is:null(gd) && !is:null(bd) && gotopixel(&imem, i, j)) {
-                          word r, g, b;
-                          if (!cnv:C_integer(rd, r))
-                              runerr(101, rd);
-                          if (!cnv:C_integer(gd, g))
-                              runerr(101, gd);
-                          if (!cnv:C_integer(bd, b))
-                              runerr(101, bd);
+                  if (parsecolor(buffstr(&elem), &r, &g, &b, &a)) {
+                      if (a) {
+                          if (a != 65535) {
+                              int r1, g1, b1;
+                              getpixel(&imem, &r1, &g1, &b1);
+                              r = CombineAlpha(r, r1, a);
+                              g = CombineAlpha(g, g1, a);
+                              b = CombineAlpha(b, b1, a);
+                          }
                           setpixel(&imem, r, g, b);
                       }
                   }
@@ -1141,7 +1052,7 @@ function graphics_Window_raise(self)
    }
 end
 
-function graphics_Window_read_image(self, x, y, file, pal)
+function graphics_Window_read_image(self, x, y, file)
    if !cnv:C_integer(x) then
       runerr(101, x)
    if !cnv:C_integer(y) then
@@ -1150,30 +1061,15 @@ function graphics_Window_read_image(self, x, y, file, pal)
       runerr(103, file)
    body {
       char *filename;
-      int p, r;
+      int r;
       struct imgdata imd;
       GetSelfW();
-
-      /*
-       * p is an optional palette name.
-       */
-      if (is:null(pal)) 
-          p = 0;
-      else {
-          p = palnum(&pal);
-          if (p == -1)
-              runerr(103, pal);
-          if (p == 0) {
-              LitWhy("Invalid palette");
-              fail;
-          }
-      }
 
       x += self_w->context->dx;
       y += self_w->context->dy;
 
       filename = buffstr(&file);
-      if (readimagefile(filename, p, &imd) != Succeeded)
+      if (readimagefile(filename, &imd) != Succeeded)
           fail;
       drawimgdata(self_w, x, y, &imd);
       freeimgdata(&imd);
@@ -1893,31 +1789,17 @@ function graphics_Window_set_height(self, height)
    }
 end
 
-function graphics_Window_set_image(self, val, pal)
+function graphics_Window_set_image(self, val)
    if !cnv:string(val) then
       runerr(103, val)
    body {
        wsp ws;
        char *s;
-       int r, p;
+       int r;
        GetSelfW();
        ws = self_w->window;
-       /*
-        * p is an optional palette name.
-        */
-       if (is:null(pal)) 
-           p = 0;
-       else {
-           p = palnum(&pal);
-           if (p == -1)
-               runerr(103, pal);
-           if (p == 0) {
-               LitWhy("Invalid palette");
-               fail;
-           }
-       }
        s = buffstr(&val);
-       if (readimagefile(s, p, &ws->initimage) != Succeeded)
+       if (readimagefile(s, &ws->initimage) != Succeeded)
            fail;
        self_w->window->width = ws->initimage.width;
        self_w->window->height = ws->initimage.height;
