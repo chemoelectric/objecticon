@@ -189,7 +189,7 @@ void  bigrand         (dptr da, dptr dx);
    int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph);
    char *rgbkey         (int p, double r, double g, double b);
 
-   int  initimgmem       (wbp w, struct imgmem *i, int x, int y, int width, int height);
+   int  initimgmem      (wbp w, struct imgmem *i, int copy, int x, int y, int width, int height);
    int  gotopixel       (struct imgmem *i, int x, int y);
    void drawblimage     (wbp w, int x, int y, int wd, int h,
                           int ch, unsigned char *s);
@@ -201,7 +201,7 @@ void  bigrand         (dptr da, dptr dx);
     * graphics implementation routines supplied for each platform
     * (excluding those defined as macros for X-windows)
     */
-   void loadimgmem       (wbp w, struct imgmem *imem);
+   void loadimgmem       (wbp w, struct imgmem *imem, int copy);
    void getpixel        (struct imgmem *imem, int *r, int *g, int *b);
    void setpixel        (struct imgmem *imem, int r, int g, int b);
    void saveimgmem       (wbp w, struct imgmem *imem);
@@ -268,6 +268,8 @@ void  bigrand         (dptr da, dptr dx);
    void drawutf8        (wbp w, int x, int y, char *str, int slen, int nchars);
    int  textwidth       (wbp w, char *s, int n);
    int  utf8width       (wbp w, char *s, int n, int nchars);
+   int  readimagefileimpl(char *filename, struct imgdata *imd);
+   int  writeimagefileimpl(wbp w, char *filename, int x, int y, int width, int height);
 
 #endif                                  /* Graphics */
 
