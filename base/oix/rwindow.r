@@ -27,14 +27,6 @@ static int readGIF         (char *fname, struct imgdata *d);
 static	int	colorphrase    (char *buf, int *r, int *g, int *b, int *a);
 static	double	rgbval	(double n1, double n2, double hue);
 static  void    wgetq          (wbp w, dptr res);
-static  void drawrgb24       (wbp w, int x, int y, int width, int height, unsigned char *s);
-static  void drawrgba32      (wbp w, int x, int y, int width, int height, unsigned char *s);
-static  void drawrgb48       (wbp w, int x, int y, int width, int height, unsigned char *s);
-static  void drawrgba64      (wbp w, int x, int y, int width, int height, unsigned char *s);
-static  void drawg8(wbp w, int x, int y, int width, int height, unsigned char *s);
-static  void drawga16(wbp w, int x, int y, int width, int height, unsigned char *s);
-static  void drawg16(wbp w, int x, int y, int width, int height, unsigned char *s);
-static  void drawga32(wbp w, int x, int y, int width, int height, unsigned char *s);
 static  void drawstrimage    (wbp w, int x, int y, int width, int height,
                               struct palentry *e, unsigned char *s);
 
@@ -596,6 +588,146 @@ void freeimgdata(struct imgdata *imd)
     imd->format = imd->height = imd->width = 0;
 }
 
+#begdef DrawOpaqueStart(func, size)
+static void func(wbp w, int x, int y, int width, int height, unsigned char *s);
+
+static void func(wbp w, int x, int y, int width, int height, unsigned char *s)
+{
+    struct imgmem imem;
+    int i, j;
+
+    if (!initimgmem(w, &imem, 0, x, y, width, height))
+        return;
+
+    for (j = y; j < y + height; j++) {
+        for (i = x; i < x + width; i++) {
+            if (!gotopixel(&imem, i, j)) 
+                s += size;
+            else {
+                int r, g, b;
+#enddef
+#begdef DrawOpaqueEnd()
+                setpixel(&imem, r, g, b);
+            }
+        }
+    }
+    saveimgmem(w, &imem);
+    freeimgmem(&imem);
+}
+#enddef
+
+#begdef DrawAlphaStart(func, size)
+static void func(wbp w, int x, int y, int width, int height, unsigned char *s);
+
+static void func(wbp w, int x, int y, int width, int height, unsigned char *s)
+{
+    struct imgmem imem;
+    int i, j;
+
+    if (!initimgmem(w, &imem, 1, x, y, width, height))
+        return;
+
+    for (j = y; j < y + height; j++) {
+        for (i = x; i < x + width; i++) {
+            if (!gotopixel(&imem, i, j)) 
+                s += size;
+            else {
+                int r, g, b, a;
+#enddef
+
+#begdef DrawAlphaEnd()
+                if (a) {
+                    if (a != 65535) {
+                        int r1, g1, b1;
+                        getpixel(&imem, &r1, &g1, &b1);
+                        r = CombineAlpha(r, r1, a);
+                        g = CombineAlpha(g, g1, a);
+                        b = CombineAlpha(b, b1, a);
+                    }
+                    setpixel(&imem, r, g, b);
+                }
+            }
+        }
+    }
+    saveimgmem(w, &imem);
+    freeimgmem(&imem);
+}
+#enddef
+
+DrawAlphaStart(drawga16,2)
+   r = g = b = 257 * (*s++);
+   a = 257 * (*s++);
+DrawAlphaEnd()
+
+DrawAlphaStart(drawag16,2)
+   a = 257 * (*s++);
+   r = g = b = 257 * (*s++);
+DrawAlphaEnd()
+
+DrawAlphaStart(drawga32,4)
+    r = *s++;
+    r = r<<8|*s++;
+    g = b = r;
+    a = *s++;
+    a = a<<8|*s++;
+DrawAlphaEnd()
+
+DrawAlphaStart(drawrgba32,4)
+    r = 257 * (*s++);
+    g = 257 * (*s++);
+    b = 257 * (*s++);
+    a = 257 * (*s++);
+DrawAlphaEnd()
+
+DrawAlphaStart(drawabgr32,4)
+    a = 257 * (*s++);
+    b = 257 * (*s++);
+    g = 257 * (*s++);
+    r = 257 * (*s++);
+DrawAlphaEnd()
+
+DrawAlphaStart(drawrgba64,8)
+    r = *s++;
+    r = r<<8|*s++;
+    g = *s++;
+    g = g<<8|*s++;
+    b = *s++;
+    b = b<<8|*s++;
+    a = *s++;
+    a = a<<8|*s++;
+DrawAlphaEnd()
+
+DrawOpaqueStart(drawrgb48,6)
+    r = *s++;
+    r = r<<8|*s++;
+    g = *s++;
+    g = g<<8|*s++;
+    b = *s++;
+    b = b<<8|*s++;
+DrawOpaqueEnd()
+
+DrawOpaqueStart(drawrgb24,3)
+    r = 257 * (*s++);
+    g = 257 * (*s++);
+    b = 257 * (*s++);
+DrawOpaqueEnd()
+
+DrawOpaqueStart(drawbgr24,3)
+    b = 257 * (*s++);
+    g = 257 * (*s++);
+    r = 257 * (*s++);
+DrawOpaqueEnd()
+
+DrawOpaqueStart(drawg8,1)
+    r = g = b = 257 * (*s++);
+DrawOpaqueEnd()
+
+DrawOpaqueStart(drawg16,2)
+    r = *s++;
+    r = r<<8|*s++;
+    g = b = r;
+DrawOpaqueEnd()
+
 void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
     switch (imd->format) {
@@ -605,8 +737,14 @@ void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
         case IMGDATA_RGB24:
             drawrgb24(w, x, y, imd->width, imd->height, imd->data);
             break;
+        case IMGDATA_BGR24:
+            drawbgr24(w, x, y, imd->width, imd->height, imd->data);
+            break;
         case IMGDATA_RGBA32:
             drawrgba32(w, x, y, imd->width, imd->height, imd->data);
+            break;
+        case IMGDATA_ABGR32:
+            drawabgr32(w, x, y, imd->width, imd->height, imd->data);
             break;
         case IMGDATA_RGB48:
             drawrgb48(w, x, y, imd->width, imd->height, imd->data);
@@ -619,6 +757,9 @@ void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
             break;
         case IMGDATA_GA16:
             drawga16(w, x, y, imd->width, imd->height, imd->data);
+            break;
+        case IMGDATA_AG16:
+            drawag16(w, x, y, imd->width, imd->height, imd->data);
             break;
         case IMGDATA_G16:
             drawg16(w, x, y, imd->width, imd->height, imd->data);
@@ -650,249 +791,6 @@ static void drawstrimage(wbp w, int x, int y, int width, int height,
             ++s;
         }
     }
-    saveimgmem(w, &imem);
-    freeimgmem(&imem);
-}
-
-static void drawrgb24(wbp w, int x, int y, int width, int height, unsigned char *s)
-{
-    struct imgmem imem;
-    int i, j;
-
-    if (!initimgmem(w, &imem, 0, x, y, width, height))
-        return;
-
-    for (j = y; j < y + height; j++) {
-        for (i = x; i < x + width; i++) {
-            if (gotopixel(&imem, i, j)) {
-                int r, g, b;
-                r = 257 * (*s++);
-                g = 257 * (*s++);
-                b = 257 * (*s++);
-                setpixel(&imem, r, g, b);
-            } else
-                s += 3;
-        }
-    }
-
-    saveimgmem(w, &imem);
-    freeimgmem(&imem);
-}
-
-static void drawrgb48(wbp w, int x, int y, int width, int height, unsigned char *s)
-{
-    struct imgmem imem;
-    int i, j;
-
-    if (!initimgmem(w, &imem, 0, x, y, width, height))
-        return;
-
-    for (j = y; j < y + height; j++) {
-        for (i = x; i < x + width; i++) {
-            if (gotopixel(&imem, i, j)) {
-                int r, g, b;
-                r = *s++;
-                r = r<<8|*s++;
-                g = *s++;
-                g = g<<8|*s++;
-                b = *s++;
-                b = b<<8|*s++;
-                setpixel(&imem, r, g, b);
-            } else
-                s += 6;
-        }
-    }
-
-    saveimgmem(w, &imem);
-    freeimgmem(&imem);
-}
-
-static void drawrgba32(wbp w, int x, int y, int width, int height, unsigned char *s)
-{
-    struct imgmem imem;
-    int i, j;
-
-    if (!initimgmem(w, &imem, 1, x, y, width, height))
-        return;
-
-    for (j = y; j < y + height; j++) {
-        for (i = x; i < x + width; i++) {
-            if (gotopixel(&imem, i, j)) {
-                int r, g, b, a;
-                r = 257 * (*s++);
-                g = 257 * (*s++);
-                b = 257 * (*s++);
-                a = 257 * (*s++);
-                if (a) {
-                    if (a != 65535) {
-                        int r1, g1, b1;
-                        getpixel(&imem, &r1, &g1, &b1);
-                        r = CombineAlpha(r, r1, a);
-                        g = CombineAlpha(g, g1, a);
-                        b = CombineAlpha(b, b1, a);
-                    }
-                    setpixel(&imem, r, g, b);
-                }
-            } else
-                s += 4;
-        }
-    }
-
-    saveimgmem(w, &imem);
-    freeimgmem(&imem);
-}
-
-static void drawrgba64(wbp w, int x, int y, int width, int height, unsigned char *s)
-{
-    struct imgmem imem;
-    int i, j;
-
-    if (!initimgmem(w, &imem, 1, x, y, width, height))
-        return;
-
-    for (j = y; j < y + height; j++) {
-        for (i = x; i < x + width; i++) {
-            if (gotopixel(&imem, i, j)) {
-                int r, g, b, a;
-                r = *s++;
-                r = r<<8|*s++;
-                g = *s++;
-                g = g<<8|*s++;
-                b = *s++;
-                b = b<<8|*s++;
-                a = *s++;
-                a = a<<8|*s++;
-                if (a) {
-                    if (a != 65535) {
-                        int r1, g1, b1;
-                        getpixel(&imem, &r1, &g1, &b1);
-                        r = CombineAlpha(r, r1, a);
-                        g = CombineAlpha(g, g1, a);
-                        b = CombineAlpha(b, b1, a);
-                    }
-                    setpixel(&imem, r, g, b);
-                }
-            } else
-                s += 8;
-        }
-    }
-
-    saveimgmem(w, &imem);
-    freeimgmem(&imem);
-}
-
-static void drawg8(wbp w, int x, int y, int width, int height, unsigned char *s)
-{
-    struct imgmem imem;
-    int i, j;
-
-    if (!initimgmem(w, &imem, 0, x, y, width, height))
-        return;
-
-    for (j = y; j < y + height; j++) {
-        for (i = x; i < x + width; i++) {
-            if (gotopixel(&imem, i, j)) {
-                int g;
-                g = 257 * (*s++);
-                setpixel(&imem, g, g, g);
-            } else
-                ++s;
-        }
-    }
-
-    saveimgmem(w, &imem);
-    freeimgmem(&imem);
-}
-
-static void drawg16(wbp w, int x, int y, int width, int height, unsigned char *s)
-{
-    struct imgmem imem;
-    int i, j;
-
-    if (!initimgmem(w, &imem, 0, x, y, width, height))
-        return;
-
-    for (j = y; j < y + height; j++) {
-        for (i = x; i < x + width; i++) {
-            if (gotopixel(&imem, i, j)) {
-                int g;
-                g = *s++;
-                g = g<<8|*s++;
-                setpixel(&imem, g, g, g);
-            } else
-                s += 2;
-        }
-    }
-
-    saveimgmem(w, &imem);
-    freeimgmem(&imem);
-}
-
-static void drawga16(wbp w, int x, int y, int width, int height, unsigned char *s)
-{
-    struct imgmem imem;
-    int i, j;
-
-    if (!initimgmem(w, &imem, 1, x, y, width, height))
-        return;
-
-    for (j = y; j < y + height; j++) {
-        for (i = x; i < x + width; i++) {
-            if (gotopixel(&imem, i, j)) {
-                int r, g, b, a;
-                r = g = b = 257 * (*s++);
-                a = 257 * (*s++);
-                if (a) {
-                    if (a != 65535) {
-                        int r1, g1, b1;
-                        getpixel(&imem, &r1, &g1, &b1);
-                        r = CombineAlpha(r, r1, a);
-                        g = CombineAlpha(g, g1, a);
-                        b = CombineAlpha(b, b1, a);
-                    }
-                    setpixel(&imem, r, g, b);
-                }
-            } else
-                s += 2;
-        }
-    }
-
-    saveimgmem(w, &imem);
-    freeimgmem(&imem);
-}
-
-static void drawga32(wbp w, int x, int y, int width, int height, unsigned char *s)
-{
-    struct imgmem imem;
-    int i, j;
-
-    if (!initimgmem(w, &imem, 1, x, y, width, height))
-        return;
-
-    for (j = y; j < y + height; j++) {
-        for (i = x; i < x + width; i++) {
-            if (gotopixel(&imem, i, j)) {
-                int r, g, b, a;
-                r = *s++;
-                r = r<<8|*s++;
-                g = b = r;
-                a = *s++;
-                a = a<<8|*s++;
-                if (a) {
-                    if (a != 65535) {
-                        int r1, g1, b1;
-                        getpixel(&imem, &r1, &g1, &b1);
-                        r = CombineAlpha(r, r1, a);
-                        g = CombineAlpha(g, g1, a);
-                        b = CombineAlpha(b, b1, a);
-                    }
-                    setpixel(&imem, r, g, b);
-                }
-            } else
-                s += 4;
-        }
-    }
-
     saveimgmem(w, &imem);
     freeimgmem(&imem);
 }
