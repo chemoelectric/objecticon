@@ -116,6 +116,9 @@
 
 #define DEFAULT_WINDOW_LABEL "Object Icon"
 
+#define CombineAlpha(v1, v2, a) \
+            (((unsigned)v1*a)/65535 + ((unsigned)v2*(65535-a))/65535)
+
 /*
  * Window Resources
  * Icon "Resources" are a layer on top of the window system resources,
@@ -171,10 +174,18 @@ struct palentry {			/* entry for one palette member */
    };
 
 #define IMGDATA_RGB24      1
-#define IMGDATA_RGBA32     2
-#define IMGDATA_RGB48      3
-#define IMGDATA_RGBA64     4
-#define IMGDATA_PALETTE    5
+#define IMGDATA_BGR24      2
+#define IMGDATA_RGBA32     3
+#define IMGDATA_ABGR32     4
+#define IMGDATA_RGB48      5
+#define IMGDATA_RGBA64     6
+#define IMGDATA_G8         7
+#define IMGDATA_GA16       8
+#define IMGDATA_AG16       9
+#define IMGDATA_G16        10
+#define IMGDATA_GA32       11
+#define IMGDATA_PALETTE_OPAQUE      20
+#define IMGDATA_PALETTE_TRANS       21
 
 struct imgdata {			/* image loaded from a file */
    int width, height;			/* image dimensions */

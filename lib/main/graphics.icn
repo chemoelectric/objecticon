@@ -278,16 +278,6 @@ class Window(SetFields,NoCopy)
    public defer set_pixels(data, x, y, width, height)
 
    #
-   # Get the contents of some pixels as a flat list of rgb triples
-   #
-   public defer get_rgb(x, y, width, height)
-
-   #
-   # Set the contents of some pixels from a flat list of rgb triples
-   #
-   public defer set_rgb(data, x, y, width, height)
-   
-   #
    # Return the current root x, y position as a two-element list.
    #
    public defer query_root_pointer()

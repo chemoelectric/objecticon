@@ -15,24 +15,20 @@ wbp wbndngs = NULL;
 
 #ifdef HAVE_LIBJPEG
 static int  writeJPEG       (wbp w, char *filename, int x, int y, int width, int height);
-static int  readJPEG        (char *fname, int p, struct imgdata *d);
+static int  readJPEG        (char *fname, struct imgdata *d);
 #endif                                  /* HAVE_LIBJPEG */
 #ifdef HAVE_LIBPNG
-static int readPNG(char *filename, int pal, struct imgdata *imd);
+static int readPNG(char *filename, struct imgdata *imd);
 static int writePNG(wbp w, char *filename, int x, int y, int width, int height);
 #endif
 static int writeGIF(wbp w, char *filename, int x, int y, int width, int height);
-static int readGIF         (char *fname, int p, struct imgdata *d);
+static int readGIF         (char *fname, struct imgdata *d);
 
 static	int	colorphrase    (char *buf, int *r, int *g, int *b, int *a);
 static	double	rgbval	(double n1, double n2, double hue);
 static  void    wgetq          (wbp w, dptr res);
-static  void drawrgb24       (wbp w, int x, int y, int width, int height, unsigned char *s);
-static  void drawrgba32      (wbp w, int x, int y, int width, int height, unsigned char *s);
-static  void drawrgb48       (wbp w, int x, int y, int width, int height, unsigned char *s);
-static  void drawrgba64      (wbp w, int x, int y, int width, int height, unsigned char *s);
-static  void drawstrimage    (wbp w, int x, int y, int width, int height,
-                              struct palentry *e, unsigned char *s);
+static void drawpalette(wbp w, int x, int y, int width, int height, 
+                        struct palentry *e, unsigned char *s, int copy);
 
 int canvas_serial, context_serial;
 
@@ -545,7 +541,7 @@ static double rgbval(double n1, double n2, double hue)
         return n1;
 }
 
-int intimgmem(wbp w, struct imgmem *i, int x, int y, int width, int height)
+int initimgmem(wbp w, struct imgmem *i, int copy, int x, int y, int width, int height)
 {
     wsp ws = w->window;
     if (x < 0)  { 
@@ -568,7 +564,7 @@ int intimgmem(wbp w, struct imgmem *i, int x, int y, int width, int height)
     i->y = y;
     i->width = width;
     i->height = height;
-    loadimgmem(w, i);
+    loadimgmem(w, i, copy);
     return 1;
 }
 
@@ -592,17 +588,166 @@ void freeimgdata(struct imgdata *imd)
     imd->format = imd->height = imd->width = 0;
 }
 
+#begdef DrawOpaqueStart(func, size)
+static void func(wbp w, int x, int y, int width, int height, unsigned char *s);
+
+static void func(wbp w, int x, int y, int width, int height, unsigned char *s)
+{
+    struct imgmem imem;
+    int i, j;
+
+    if (!initimgmem(w, &imem, 0, x, y, width, height))
+        return;
+
+    for (j = y; j < y + height; j++) {
+        for (i = x; i < x + width; i++) {
+            if (!gotopixel(&imem, i, j)) 
+                s += size;
+            else {
+                int r, g, b;
+#enddef
+#begdef DrawOpaqueEnd()
+                setpixel(&imem, r, g, b);
+            }
+        }
+    }
+    saveimgmem(w, &imem);
+    freeimgmem(&imem);
+}
+#enddef
+
+#begdef DrawAlphaStart(func, size)
+static void func(wbp w, int x, int y, int width, int height, unsigned char *s);
+
+static void func(wbp w, int x, int y, int width, int height, unsigned char *s)
+{
+    struct imgmem imem;
+    int i, j;
+
+    if (!initimgmem(w, &imem, 1, x, y, width, height))
+        return;
+
+    for (j = y; j < y + height; j++) {
+        for (i = x; i < x + width; i++) {
+            if (!gotopixel(&imem, i, j)) 
+                s += size;
+            else {
+                int r, g, b, a;
+#enddef
+
+#begdef DrawAlphaEnd()
+                if (a) {
+                    if (a != 65535) {
+                        int r1, g1, b1;
+                        getpixel(&imem, &r1, &g1, &b1);
+                        r = CombineAlpha(r, r1, a);
+                        g = CombineAlpha(g, g1, a);
+                        b = CombineAlpha(b, b1, a);
+                    }
+                    setpixel(&imem, r, g, b);
+                }
+            }
+        }
+    }
+    saveimgmem(w, &imem);
+    freeimgmem(&imem);
+}
+#enddef
+
+DrawAlphaStart(drawga16,2)
+   r = g = b = 257 * (*s++);
+   a = 257 * (*s++);
+DrawAlphaEnd()
+
+DrawAlphaStart(drawag16,2)
+   a = 257 * (*s++);
+   r = g = b = 257 * (*s++);
+DrawAlphaEnd()
+
+DrawAlphaStart(drawga32,4)
+    r = *s++;
+    r = r<<8|*s++;
+    g = b = r;
+    a = *s++;
+    a = a<<8|*s++;
+DrawAlphaEnd()
+
+DrawAlphaStart(drawrgba32,4)
+    r = 257 * (*s++);
+    g = 257 * (*s++);
+    b = 257 * (*s++);
+    a = 257 * (*s++);
+DrawAlphaEnd()
+
+DrawAlphaStart(drawabgr32,4)
+    a = 257 * (*s++);
+    b = 257 * (*s++);
+    g = 257 * (*s++);
+    r = 257 * (*s++);
+DrawAlphaEnd()
+
+DrawAlphaStart(drawrgba64,8)
+    r = *s++;
+    r = r<<8|*s++;
+    g = *s++;
+    g = g<<8|*s++;
+    b = *s++;
+    b = b<<8|*s++;
+    a = *s++;
+    a = a<<8|*s++;
+DrawAlphaEnd()
+
+DrawOpaqueStart(drawrgb48,6)
+    r = *s++;
+    r = r<<8|*s++;
+    g = *s++;
+    g = g<<8|*s++;
+    b = *s++;
+    b = b<<8|*s++;
+DrawOpaqueEnd()
+
+DrawOpaqueStart(drawrgb24,3)
+    r = 257 * (*s++);
+    g = 257 * (*s++);
+    b = 257 * (*s++);
+DrawOpaqueEnd()
+
+DrawOpaqueStart(drawbgr24,3)
+    b = 257 * (*s++);
+    g = 257 * (*s++);
+    r = 257 * (*s++);
+DrawOpaqueEnd()
+
+DrawOpaqueStart(drawg8,1)
+    r = g = b = 257 * (*s++);
+DrawOpaqueEnd()
+
+DrawOpaqueStart(drawg16,2)
+    r = *s++;
+    r = r<<8|*s++;
+    g = b = r;
+DrawOpaqueEnd()
+
 void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
     switch (imd->format) {
-        case IMGDATA_PALETTE:
-            drawstrimage(w, x, y, imd->width, imd->height, imd->paltbl, imd->data);
+        case IMGDATA_PALETTE_OPAQUE:
+            drawpalette(w, x, y, imd->width, imd->height, imd->paltbl, imd->data, 0);
             break;
-        case IMGDATA_RGB24:
+        case IMGDATA_PALETTE_TRANS:
+            drawpalette(w, x, y, imd->width, imd->height, imd->paltbl, imd->data, 1);
+            break; 
+       case IMGDATA_RGB24:
             drawrgb24(w, x, y, imd->width, imd->height, imd->data);
+            break;
+        case IMGDATA_BGR24:
+            drawbgr24(w, x, y, imd->width, imd->height, imd->data);
             break;
         case IMGDATA_RGBA32:
             drawrgba32(w, x, y, imd->width, imd->height, imd->data);
+            break;
+        case IMGDATA_ABGR32:
+            drawabgr32(w, x, y, imd->width, imd->height, imd->data);
             break;
         case IMGDATA_RGB48:
             drawrgb48(w, x, y, imd->width, imd->height, imd->data);
@@ -610,19 +755,34 @@ void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
         case IMGDATA_RGBA64:
             drawrgba64(w, x, y, imd->width, imd->height, imd->data);
             break;
+        case IMGDATA_G8:
+            drawg8(w, x, y, imd->width, imd->height, imd->data);
+            break;
+        case IMGDATA_GA16:
+            drawga16(w, x, y, imd->width, imd->height, imd->data);
+            break;
+        case IMGDATA_AG16:
+            drawag16(w, x, y, imd->width, imd->height, imd->data);
+            break;
+        case IMGDATA_G16:
+            drawg16(w, x, y, imd->width, imd->height, imd->data);
+            break;
+        case IMGDATA_GA32:
+            drawga32(w, x, y, imd->width, imd->height, imd->data);
+            break;
         default:
             syserr("Unknown image format");
             break;
     }
 }
 
-static void drawstrimage(wbp w, int x, int y, int width, int height, 
-                  struct palentry *e, unsigned char *s)
+static void drawpalette(wbp w, int x, int y, int width, int height, 
+                        struct palentry *e, unsigned char *s, int copy)
 {
     struct imgmem imem;
     int i, j;
 
-    if (!intimgmem(w, &imem, x, y, width, height))
+    if (!initimgmem(w, &imem, copy, x, y, width, height))
         return;
 
     for (j = y; j < y + height; j++) {
@@ -634,136 +794,6 @@ static void drawstrimage(wbp w, int x, int y, int width, int height,
             ++s;
         }
     }
-    saveimgmem(w, &imem);
-    freeimgmem(&imem);
-}
-
-static void drawrgb24(wbp w, int x, int y, int width, int height, unsigned char *s)
-{
-    struct imgmem imem;
-    int i, j;
-
-    if (!intimgmem(w, &imem, x, y, width, height))
-        return;
-
-    for (j = y; j < y + height; j++) {
-        for (i = x; i < x + width; i++) {
-            if (gotopixel(&imem, i, j)) {
-                int r, g, b;
-                r = 257 * (*s++);
-                g = 257 * (*s++);
-                b = 257 * (*s++);
-                setpixel(&imem, r, g, b);
-            } else
-                s += 3;
-        }
-    }
-
-    saveimgmem(w, &imem);
-    freeimgmem(&imem);
-}
-
-static void drawrgb48(wbp w, int x, int y, int width, int height, unsigned char *s)
-{
-    struct imgmem imem;
-    int i, j;
-
-    if (!intimgmem(w, &imem, x, y, width, height))
-        return;
-
-    for (j = y; j < y + height; j++) {
-        for (i = x; i < x + width; i++) {
-            if (gotopixel(&imem, i, j)) {
-                int r, g, b;
-                r = *s++;
-                r = r<<8|*s++;
-                g = *s++;
-                g = g<<8|*s++;
-                b = *s++;
-                b = b<<8|*s++;
-                setpixel(&imem, r, g, b);
-            } else
-                s += 6;
-        }
-    }
-
-    saveimgmem(w, &imem);
-    freeimgmem(&imem);
-}
-
-#define CombineAlpha(v1, v2, a) \
-            (((unsigned)v1*a)/65535 + ((unsigned)v2*(65535-a))/65535)
-
-static void drawrgba32(wbp w, int x, int y, int width, int height, unsigned char *s)
-{
-    struct imgmem imem;
-    int i, j;
-
-    if (!intimgmem(w, &imem, x, y, width, height))
-        return;
-
-    for (j = y; j < y + height; j++) {
-        for (i = x; i < x + width; i++) {
-            if (gotopixel(&imem, i, j)) {
-                int r, g, b, a;
-                r = 257 * (*s++);
-                g = 257 * (*s++);
-                b = 257 * (*s++);
-                a = 257 * (*s++);
-                if (a) {
-                    if (a != 65535) {
-                        int r1, g1, b1;
-                        getpixel(&imem, &r1, &g1, &b1);
-                        r = CombineAlpha(r, r1, a);
-                        g = CombineAlpha(g, g1, a);
-                        b = CombineAlpha(b, b1, a);
-                    }
-                    setpixel(&imem, r, g, b);
-                }
-            } else
-                s += 4;
-        }
-    }
-
-    saveimgmem(w, &imem);
-    freeimgmem(&imem);
-}
-
-static void drawrgba64(wbp w, int x, int y, int width, int height, unsigned char *s)
-{
-    struct imgmem imem;
-    int i, j;
-
-    if (!intimgmem(w, &imem, x, y, width, height))
-        return;
-
-    for (j = y; j < y + height; j++) {
-        for (i = x; i < x + width; i++) {
-            if (gotopixel(&imem, i, j)) {
-                int r, g, b, a;
-                r = *s++;
-                r = r<<8|*s++;
-                g = *s++;
-                g = g<<8|*s++;
-                b = *s++;
-                b = b<<8|*s++;
-                a = *s++;
-                a = a<<8|*s++;
-                if (a) {
-                    if (a != 65535) {
-                        int r1, g1, b1;
-                        getpixel(&imem, &r1, &g1, &b1);
-                        r = CombineAlpha(r, r1, a);
-                        g = CombineAlpha(g, g1, a);
-                        b = CombineAlpha(b, b1, a);
-                    }
-                    setpixel(&imem, r, g, b);
-                }
-            } else
-                s += 8;
-        }
-    }
-
     saveimgmem(w, &imem);
     freeimgmem(&imem);
 }
@@ -785,7 +815,7 @@ void drawblimage(wbp w, int x, int y, int width, int height,
     if (!parsecolor(color, &bg_r, &bg_g, &bg_b, &bg_a))
         return;
 
-    if (!intimgmem(w, &imem, x, y, width, height))
+    if (!initimgmem(w, &imem, ch == TCH1, x, y, width, height))
         return;
 
     m = width % 4;
@@ -870,12 +900,12 @@ struct my_error_mgr { /* a part of JPEG error handling */
 typedef struct my_error_mgr * my_error_ptr; /* a part of error handling */
 #endif					/* HAVE_LIBJPEG */
 
-static	int	gfread		(FILE *f, int p);
+static	int	gfread		(FILE *f);
 static	int	gfheader	(FILE *f);
 static	int	gfskip		(FILE *f);
 static	void	gfcontrol	(FILE *f);
 static	int	gfimhdr		(FILE *f);
-static	int	gfmap		(FILE *f, int p);
+static	int	gfmap		(FILE *f);
 static	int	gfsetup		(void);
 static	int	gfrdata		(FILE *f);
 static	int	gfrcode		(FILE *f);
@@ -915,12 +945,12 @@ static int gf_valid;			/* number of valid bits */
 static int gf_rem;			/* remaining bytes in this block */
 
 /*
- * readGIF(filename, p, imd) - read GIF file into image data structure
+ * readGIF(filename, imd) - read GIF file into image data structure
  *
  * p is a palette number to which the GIF colors are to be coerced;
  * p=0 uses the colors exactly as given in the GIF file.
  */
-static int readGIF(char *filename, int p, struct imgdata *imd)
+static int readGIF(char *filename, struct imgdata *imd)
 {
     int r;
     FILE *fp;
@@ -930,7 +960,7 @@ static int readGIF(char *filename, int p, struct imgdata *imd)
         return Failed;
     }
 
-    r = gfread(fp, p);			/* read image */
+    r = gfread(fp);			/* read image */
     fclose(fp);
 
     if (gf_prefix) {
@@ -958,7 +988,7 @@ static int readGIF(char *filename, int p, struct imgdata *imd)
     imd->height = gf_height;
     imd->paltbl = gf_paltbl;
     imd->data = gf_string;
-    imd->format = IMGDATA_PALETTE;
+    imd->format = IMGDATA_PALETTE_TRANS;
 
     return Succeeded;				/* return success */
 }
@@ -966,7 +996,7 @@ static int readGIF(char *filename, int p, struct imgdata *imd)
 /*
  * gfread(filename, p) - read GIF file, setting gf_ globals
  */
-static int gfread(FILE *fp, int p)
+static int gfread(FILE *fp)
 {
     int i;
 
@@ -982,14 +1012,14 @@ static int gfread(FILE *fp, int p)
     if (!gfheader(fp))			/* read file header */
         return 0;
     if (gf_gcmap)			/* read global color map, if any */
-        if (!gfmap(fp, p))
+        if (!gfmap(fp))
             return 0;
     if (!gfskip(fp))			/* skip to start of image */
         return 0;
     if (!gfimhdr(fp))			/* read image header */
         return 0;
     if (gf_lcmap)			/* read local color map, if any */
-        if (!gfmap(fp, p))
+        if (!gfmap(fp))
             return 0;
     if (!gfsetup())			/* prepare to read image */
         return 0;
@@ -1089,13 +1119,9 @@ static int gfimhdr(FILE *f)
 /*
  * gfmap(f, p) - read GIF color map into paltbl under control of palette p
  */
-static int gfmap(FILE *f, int p)
+static int gfmap(FILE *f)
 {
-    int ncolors, i, r, g, b, c;
-    struct palentry *stdpal = 0;
-
-    if (p)
-        stdpal = palsetup(p);
+    int ncolors, i, r, g, b;
 
     ncolors = 1 << gf_nbits;
 
@@ -1105,15 +1131,9 @@ static int gfmap(FILE *f, int p)
         b = getc(f);
         if (r == EOF || g == EOF || b == EOF)
             return 0;
-        if (p) {
-            c = *(unsigned char *)(rgbkey(p, r / 255.0, g / 255.0, b / 255.0));
-            gf_paltbl[i].clr = stdpal[c].clr;
-        }
-        else {
-            gf_paltbl[i].clr.red   = 257 * r;	/* 257 * 255 -> 65535 */
-            gf_paltbl[i].clr.green = 257 * g;
-            gf_paltbl[i].clr.blue  = 257 * b;
-        }
+        gf_paltbl[i].clr.red   = 257 * r;	/* 257 * 255 -> 65535 */
+        gf_paltbl[i].clr.green = 257 * g;
+        gf_paltbl[i].clr.blue  = 257 * b;
         if (!gf_paltbl[i].transpt)		/* if not transparent color */
             gf_paltbl[i].valid = 1;		/* mark as valid/opaque */
     }
@@ -1320,20 +1340,15 @@ static void gfput(int b)
 void my_error_exit (j_common_ptr cinfo);
 
 
-static int readJPEG(char *filename, int p, struct imgdata *imd)
+static int readJPEG(char *filename, struct imgdata *imd)
 {
     struct jpeg_decompress_struct cinfo; /* libjpeg struct */
     struct my_error_mgr jerr;
     JSAMPARRAY buffer;
     int row_stride;
     int i,j;
-    struct palentry *stdpal = 0;
     unsigned char *data;
     FILE *fp;
-    static struct palentry *paltbl;	/* palette table */
-
-    if (p)
-        stdpal = palsetup(p);
 
     fp = fopen(filename, "rb");
     if (!fp) {
@@ -1357,36 +1372,12 @@ static int readJPEG(char *filename, int p, struct imgdata *imd)
     /*
      * set parameters for decompression
      */
-    if (p) {
-        cinfo.quantize_colors = TRUE;
-        cinfo.desired_number_of_colors = 254;
-    } else
-        cinfo.quantize_colors = FALSE;
+    cinfo.quantize_colors = FALSE;
 
     /* Start decompression */
 
     jpeg_start_decompress(&cinfo);
     row_stride = cinfo.output_width * cinfo.output_components; /* actual width of the image */
-
-    if (p) {
-        MemProtect(paltbl = malloc(256 * sizeof(struct palentry)));
-        for (i = 0; i < cinfo.actual_number_of_colors; i++) {
-            int c;
-            /* init palette table */
-            paltbl[i].used = 1;
-            paltbl[i].valid = 1;
-            paltbl[i].transpt = 0;
-            c = *(unsigned char *)(rgbkey(p, 
-                                          cinfo.colormap[0][i] / 255.0, 
-                                          cinfo.colormap[1][i] / 255.0, 
-                                          cinfo.colormap[2][i] / 255.0));
-            paltbl[i].clr = stdpal[c].clr;
-        }
-        for(;i < 256; i++) {
-            paltbl[i].used = paltbl[i].valid = paltbl[i].transpt = 0;
-        }
-    } else
-        paltbl = 0;
 
     MemProtect(data = malloc(row_stride * cinfo.output_height));
 	
@@ -1417,12 +1408,9 @@ static int readJPEG(char *filename, int p, struct imgdata *imd)
 
     imd->width = cinfo.output_width;
     imd->height = cinfo.output_height;
-    imd->paltbl = paltbl;
+    imd->paltbl = 0;
     imd->data = data;
-    if (paltbl)
-        imd->format = IMGDATA_PALETTE;
-    else
-        imd->format = IMGDATA_RGB24;
+    imd->format = IMGDATA_RGB24;
     return Succeeded;
 }
 
@@ -1460,7 +1448,7 @@ int writeJPEG(wbp w, char *filename, int x, int y, int width,int height)
 
     quality = 95;
     
-    if (intimgmem(w, &imem, x, y, width, height)) {
+    if (initimgmem(w, &imem, 1, x, y, width, height)) {
         unsigned char *p = data;
         for (j = y; j < y + height; j++) {
             for (i = x; i < x + width; i++) {
@@ -1516,7 +1504,7 @@ int writeJPEG(wbp w, char *filename, int x, int y, int width,int height)
 
 #ifdef HAVE_LIBPNG
 
-static int readPNG(char *filename, int pal, struct imgdata *imd)
+static int readPNG(char *filename, struct imgdata *imd)
 {
     png_structp png_ptr;
     png_infop info_ptr;
@@ -1561,14 +1549,23 @@ static int readPNG(char *filename, int pal, struct imgdata *imd)
     png_init_io(png_ptr, fp);
 
     png_set_sig_bytes(png_ptr, 8);
+    /*
     png_set_expand(png_ptr);
     png_set_gray_to_rgb(png_ptr);
+    */
     png_read_info(png_ptr, info_ptr);
 
-    /* Gamma correction using a screen gamma of 2.2.
+    /* 
+     * Gamma correction using a screen gamma of 2.2.
      */
     if (png_get_gAMA(png_ptr, info_ptr, &image_gamma))
         png_set_gamma(png_ptr, 2.2, image_gamma);
+    if (info_ptr->color_type == PNG_COLOR_TYPE_PALETTE)
+        png_set_palette_to_rgb(png_ptr);
+    if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY && info_ptr->bit_depth < 8) 
+        png_set_gray_1_2_4_to_8(png_ptr);
+    if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS))
+        png_set_tRNS_to_alpha(png_ptr);
 
     png_read_update_info(png_ptr, info_ptr);
 
@@ -1580,6 +1577,14 @@ static int readPNG(char *filename, int pal, struct imgdata *imd)
         format = IMGDATA_RGBA32;
     else if (info_ptr->color_type == PNG_COLOR_TYPE_RGB_ALPHA && info_ptr->pixel_depth == 64)
         format = IMGDATA_RGBA64;
+    else if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY && info_ptr->pixel_depth == 8)
+        format = IMGDATA_G8;
+    else if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY_ALPHA && info_ptr->pixel_depth == 16)
+        format = IMGDATA_GA16;
+    else if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY && info_ptr->pixel_depth == 16)
+        format = IMGDATA_G16;
+    else if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY_ALPHA && info_ptr->pixel_depth == 32)
+        format = IMGDATA_GA32;
     else {
         fclose(fp);
         png_destroy_read_struct(&png_ptr, &info_ptr, 0);
@@ -1657,7 +1662,7 @@ static int writePNG(wbp w, char *filename, int x, int y, int width, int height)
         p += 6 * width;
     }
 
-    if (intimgmem(w, &imem, x, y, width, height)) {
+    if (initimgmem(w, &imem, 1, x, y, width, height)) {
         p = (png_bytep)data;
         for (j = y; j < y + height; j++) {
             for (i = x; i < x + width; i++) {
@@ -2487,22 +2492,27 @@ int parsepattern(char *s, int *width, int *nbits, int *bits)
 }
 
 
-int readimagefile(char *filename, int p, struct imgdata *imd)
+int readimagefile(char *filename, struct imgdata *imd)
 {
-    struct fileparts *fp = fparse(filename);
+    int r;
+    struct fileparts *fp;
 
+    if ((r = readimagefileimpl(filename, imd)) != NoCvt)
+        return r;
+
+    fp = fparse(filename);
 #ifdef HAVE_LIBPNG
     if (strcasecmp(fp->ext, ".png") == 0)
-        return readPNG(filename, p, imd);
+        return readPNG(filename, imd);
 #endif
 
 #ifdef HAVE_LIBJPEG
     if (strcasecmp(fp->ext, ".jpg") == 0 || strcasecmp(fp->ext, ".jpeg") == 0)
-        return readJPEG(filename, p, imd);
+        return readJPEG(filename, imd);
 #endif
 
     if (strcasecmp(fp->ext, ".gif") == 0)
-        return readGIF(filename, p, imd);
+        return readGIF(filename, imd);
 
     LitWhy("Unsupported file type");
     return Failed;
@@ -2511,7 +2521,13 @@ int readimagefile(char *filename, int p, struct imgdata *imd)
 
 int writeimagefile(wbp w, char *filename, int x, int y, int width, int height)
 {
-    struct fileparts *fp = fparse(filename);
+    int r;
+    struct fileparts *fp;
+
+    if ((r = writeimagefileimpl(w, filename, x, y, width, height)) != NoCvt)
+        return r;
+
+    fp = fparse(filename);
 
 #ifdef HAVE_LIBPNG
     if (strcasecmp(fp->ext, ".png") == 0)

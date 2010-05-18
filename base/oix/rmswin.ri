@@ -1782,9 +1782,8 @@ unsigned char *data;
  * Initialize client for producing pixels from a window, or in this case,
  * only create a device context once, not once per getpixel.
  */
-void loadimgmem(wbp w, struct imgmem *imem)
+void loadimgmem(wbp w, struct imgmem *imem, int copy)
 {
-   COLORREF *p;
    wsp ws = w->window;
    int i, j;
    HDC stddc = GetDC(ws->iconwin), pixdc = CreateCompatibleDC(stddc);
@@ -1794,10 +1793,12 @@ void loadimgmem(wbp w, struct imgmem *imem)
    oldpix = SelectObject(pixdc, ws->pix);
 
    MemProtect(imem->crp = malloc( imem->width * imem->height * sizeof(COLORREF)));
-   p = imem->crp;
-   for(i = imem->y; i < imem->y + imem->height; i++)
-      for(j = imem->x; j < imem->x + imem->width; j++)
-         *p++ = GetPixel(pixdc, j, i);
+   if (copy) {
+       COLORREF *p = imem->crp;
+       for(i = imem->y; i < imem->y + imem->height; i++)
+           for(j = imem->x; j < imem->x + imem->width; j++)
+               *p++ = GetPixel(pixdc, j, i);
+   }
 
    SelectObject(pixdc, oldpix);
    FREE_STDLOCALS(w);
@@ -2925,3 +2926,12 @@ void wsync(wbp w)
 {
 }
 
+int  readimagefileimpl(char *filename, struct imgdata *imd) 
+{
+    return NoCvt;
+}
+
+int  writeimagefileimpl(wbp w, char *filename, int x, int y, int width, int height)
+{
+    return NoCvt;
+}

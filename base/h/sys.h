@@ -13,6 +13,7 @@
    #include <thread.h>
    #include <9p.h>
    #include <draw.h>
+   #include <memdraw.h>
    #include <cursor.h>
    #include <ctype.h>
    #include <stdio.h>

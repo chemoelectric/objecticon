@@ -134,7 +134,7 @@ class ImagePaintEdit(PaintEdit)
       put(l, \Ivib.last_icon_dir)
       l |||:= Ivib.main.prefs.cache_path
       fd.set_directories(l)
-      fd.set_filters(["*.gif;*.jpg","*"])
+      fd.set_filters(["*.gif;*.png;*.jpg","*"])
       fd.show_modal(self)
       Ivib.last_icon_dir := fd.get_directory()
       if s := util_read_icon(self, fd.get_result()) then 
@@ -153,7 +153,7 @@ class ImagePaintEdit(PaintEdit)
       put(l, \Ivib.last_icon_dir)
       l |||:= Ivib.main.prefs.cache_path
       fd.set_directories(l)
-      fd.set_filters(["*.gif;*.jpg","*"])
+      fd.set_filters(["*.gif;*.png;*.jpg","*"])
       fd.show_modal(self)
       Ivib.last_icon_dir := fd.get_directory()
       if s := fd.get_result() then {
