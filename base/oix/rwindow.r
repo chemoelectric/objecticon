@@ -27,8 +27,8 @@ static int readGIF         (char *fname, struct imgdata *d);
 static	int	colorphrase    (char *buf, int *r, int *g, int *b, int *a);
 static	double	rgbval	(double n1, double n2, double hue);
 static  void    wgetq          (wbp w, dptr res);
-static  void drawstrimage    (wbp w, int x, int y, int width, int height,
-                              struct palentry *e, unsigned char *s);
+static void drawpalette(wbp w, int x, int y, int width, int height, 
+                        struct palentry *e, unsigned char *s, int copy);
 
 int canvas_serial, context_serial;
 
@@ -731,10 +731,13 @@ DrawOpaqueEnd()
 void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
     switch (imd->format) {
-        case IMGDATA_PALETTE:
-            drawstrimage(w, x, y, imd->width, imd->height, imd->paltbl, imd->data);
+        case IMGDATA_PALETTE_OPAQUE:
+            drawpalette(w, x, y, imd->width, imd->height, imd->paltbl, imd->data, 0);
             break;
-        case IMGDATA_RGB24:
+        case IMGDATA_PALETTE_TRANS:
+            drawpalette(w, x, y, imd->width, imd->height, imd->paltbl, imd->data, 1);
+            break; 
+       case IMGDATA_RGB24:
             drawrgb24(w, x, y, imd->width, imd->height, imd->data);
             break;
         case IMGDATA_BGR24:
@@ -773,13 +776,13 @@ void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
     }
 }
 
-static void drawstrimage(wbp w, int x, int y, int width, int height, 
-                  struct palentry *e, unsigned char *s)
+static void drawpalette(wbp w, int x, int y, int width, int height, 
+                        struct palentry *e, unsigned char *s, int copy)
 {
     struct imgmem imem;
     int i, j;
 
-    if (!initimgmem(w, &imem, 1, x, y, width, height))
+    if (!initimgmem(w, &imem, copy, x, y, width, height))
         return;
 
     for (j = y; j < y + height; j++) {
@@ -812,7 +815,7 @@ void drawblimage(wbp w, int x, int y, int width, int height,
     if (!parsecolor(color, &bg_r, &bg_g, &bg_b, &bg_a))
         return;
 
-    if (!initimgmem(w, &imem, 1, x, y, width, height))
+    if (!initimgmem(w, &imem, ch == TCH1, x, y, width, height))
         return;
 
     m = width % 4;
@@ -985,7 +988,7 @@ static int readGIF(char *filename, struct imgdata *imd)
     imd->height = gf_height;
     imd->paltbl = gf_paltbl;
     imd->data = gf_string;
-    imd->format = IMGDATA_PALETTE;
+    imd->format = IMGDATA_PALETTE_TRANS;
 
     return Succeeded;				/* return success */
 }

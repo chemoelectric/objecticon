@@ -422,7 +422,7 @@ end
 
 function graphics_Window_draw_image(self, x0, y0, d)
    body {
-      int c, i, width, height, row, p;
+      int c, i, width, height, row, p, format;
       word x, y;
       word nchars;
       unsigned char *s, *t, *z;
@@ -498,8 +498,9 @@ function graphics_Window_draw_image(self, x0, y0, d)
           fail;
 
       /*
-       * Scan the image to see which colors are needed.
+       * Scan the image to see which colors are needed, and if transparency is used.
        */
+      format = IMGDATA_PALETTE_OPAQUE;
       e = palsetup(p); 
       for (i = 0; i < 256; i++)
           e[i].used = 0;
@@ -507,7 +508,9 @@ function graphics_Window_draw_image(self, x0, y0, d)
       for (t = s; t < z; t++) {
           c = *t; 
           e[c].used = 1;
-          if (!(e[c].valid || e[c].transpt))
+          if (e[c].transpt)
+              format = IMGDATA_PALETTE_TRANS;
+          else if (!e[c].valid)
               fail;
       }
       if (nchars == 0)
@@ -521,7 +524,7 @@ function graphics_Window_draw_image(self, x0, y0, d)
       imd.height = height;
       imd.paltbl = e;
       imd.data = s;
-      imd.format = IMGDATA_PALETTE;
+      imd.format = format;
       drawimgdata(self_w, x, y, &imd);
 
       return nulldesc;

@@ -180,7 +180,8 @@ struct palentry {			/* entry for one palette member */
 #define IMGDATA_AG16       9
 #define IMGDATA_G16        10
 #define IMGDATA_GA32       11
-#define IMGDATA_PALETTE    12
+#define IMGDATA_PALETTE_OPAQUE      20
+#define IMGDATA_PALETTE_TRANS       21
 
 struct imgdata {			/* image loaded from a file */
    int width, height;			/* image dimensions */
