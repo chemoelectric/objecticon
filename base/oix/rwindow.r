@@ -31,6 +31,10 @@ static  void drawrgb24       (wbp w, int x, int y, int width, int height, unsign
 static  void drawrgba32      (wbp w, int x, int y, int width, int height, unsigned char *s);
 static  void drawrgb48       (wbp w, int x, int y, int width, int height, unsigned char *s);
 static  void drawrgba64      (wbp w, int x, int y, int width, int height, unsigned char *s);
+static  void drawg8(wbp w, int x, int y, int width, int height, unsigned char *s);
+static  void drawga16(wbp w, int x, int y, int width, int height, unsigned char *s);
+static  void drawg16(wbp w, int x, int y, int width, int height, unsigned char *s);
+static  void drawga32(wbp w, int x, int y, int width, int height, unsigned char *s);
 static  void drawstrimage    (wbp w, int x, int y, int width, int height,
                               struct palentry *e, unsigned char *s);
 
@@ -545,7 +549,7 @@ static double rgbval(double n1, double n2, double hue)
         return n1;
 }
 
-int initimgmem(wbp w, struct imgmem *i, int x, int y, int width, int height)
+int initimgmem(wbp w, struct imgmem *i, int copy, int x, int y, int width, int height)
 {
     wsp ws = w->window;
     if (x < 0)  { 
@@ -568,7 +572,7 @@ int initimgmem(wbp w, struct imgmem *i, int x, int y, int width, int height)
     i->y = y;
     i->width = width;
     i->height = height;
-    loadimgmem(w, i);
+    loadimgmem(w, i, copy);
     return 1;
 }
 
@@ -610,6 +614,18 @@ void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
         case IMGDATA_RGBA64:
             drawrgba64(w, x, y, imd->width, imd->height, imd->data);
             break;
+        case IMGDATA_G8:
+            drawg8(w, x, y, imd->width, imd->height, imd->data);
+            break;
+        case IMGDATA_GA16:
+            drawga16(w, x, y, imd->width, imd->height, imd->data);
+            break;
+        case IMGDATA_G16:
+            drawg16(w, x, y, imd->width, imd->height, imd->data);
+            break;
+        case IMGDATA_GA32:
+            drawga32(w, x, y, imd->width, imd->height, imd->data);
+            break;
         default:
             syserr("Unknown image format");
             break;
@@ -622,7 +638,7 @@ static void drawstrimage(wbp w, int x, int y, int width, int height,
     struct imgmem imem;
     int i, j;
 
-    if (!initimgmem(w, &imem, x, y, width, height))
+    if (!initimgmem(w, &imem, 1, x, y, width, height))
         return;
 
     for (j = y; j < y + height; j++) {
@@ -643,7 +659,7 @@ static void drawrgb24(wbp w, int x, int y, int width, int height, unsigned char 
     struct imgmem imem;
     int i, j;
 
-    if (!initimgmem(w, &imem, x, y, width, height))
+    if (!initimgmem(w, &imem, 0, x, y, width, height))
         return;
 
     for (j = y; j < y + height; j++) {
@@ -668,7 +684,7 @@ static void drawrgb48(wbp w, int x, int y, int width, int height, unsigned char 
     struct imgmem imem;
     int i, j;
 
-    if (!initimgmem(w, &imem, x, y, width, height))
+    if (!initimgmem(w, &imem, 0, x, y, width, height))
         return;
 
     for (j = y; j < y + height; j++) {
@@ -696,7 +712,7 @@ static void drawrgba32(wbp w, int x, int y, int width, int height, unsigned char
     struct imgmem imem;
     int i, j;
 
-    if (!initimgmem(w, &imem, x, y, width, height))
+    if (!initimgmem(w, &imem, 1, x, y, width, height))
         return;
 
     for (j = y; j < y + height; j++) {
@@ -731,7 +747,7 @@ static void drawrgba64(wbp w, int x, int y, int width, int height, unsigned char
     struct imgmem imem;
     int i, j;
 
-    if (!initimgmem(w, &imem, x, y, width, height))
+    if (!initimgmem(w, &imem, 1, x, y, width, height))
         return;
 
     for (j = y; j < y + height; j++) {
@@ -765,6 +781,122 @@ static void drawrgba64(wbp w, int x, int y, int width, int height, unsigned char
     freeimgmem(&imem);
 }
 
+static void drawg8(wbp w, int x, int y, int width, int height, unsigned char *s)
+{
+    struct imgmem imem;
+    int i, j;
+
+    if (!initimgmem(w, &imem, 0, x, y, width, height))
+        return;
+
+    for (j = y; j < y + height; j++) {
+        for (i = x; i < x + width; i++) {
+            if (gotopixel(&imem, i, j)) {
+                int g;
+                g = 257 * (*s++);
+                setpixel(&imem, g, g, g);
+            } else
+                ++s;
+        }
+    }
+
+    saveimgmem(w, &imem);
+    freeimgmem(&imem);
+}
+
+static void drawg16(wbp w, int x, int y, int width, int height, unsigned char *s)
+{
+    struct imgmem imem;
+    int i, j;
+
+    if (!initimgmem(w, &imem, 0, x, y, width, height))
+        return;
+
+    for (j = y; j < y + height; j++) {
+        for (i = x; i < x + width; i++) {
+            if (gotopixel(&imem, i, j)) {
+                int g;
+                g = *s++;
+                g = g<<8|*s++;
+                setpixel(&imem, g, g, g);
+            } else
+                s += 2;
+        }
+    }
+
+    saveimgmem(w, &imem);
+    freeimgmem(&imem);
+}
+
+static void drawga16(wbp w, int x, int y, int width, int height, unsigned char *s)
+{
+    struct imgmem imem;
+    int i, j;
+
+    if (!initimgmem(w, &imem, 1, x, y, width, height))
+        return;
+
+    for (j = y; j < y + height; j++) {
+        for (i = x; i < x + width; i++) {
+            if (gotopixel(&imem, i, j)) {
+                int r, g, b, a;
+                r = g = b = 257 * (*s++);
+                a = 257 * (*s++);
+                if (a) {
+                    if (a != 65535) {
+                        int r1, g1, b1;
+                        getpixel(&imem, &r1, &g1, &b1);
+                        r = CombineAlpha(r, r1, a);
+                        g = CombineAlpha(g, g1, a);
+                        b = CombineAlpha(b, b1, a);
+                    }
+                    setpixel(&imem, r, g, b);
+                }
+            } else
+                s += 2;
+        }
+    }
+
+    saveimgmem(w, &imem);
+    freeimgmem(&imem);
+}
+
+static void drawga32(wbp w, int x, int y, int width, int height, unsigned char *s)
+{
+    struct imgmem imem;
+    int i, j;
+
+    if (!initimgmem(w, &imem, 1, x, y, width, height))
+        return;
+
+    for (j = y; j < y + height; j++) {
+        for (i = x; i < x + width; i++) {
+            if (gotopixel(&imem, i, j)) {
+                int r, g, b, a;
+                r = *s++;
+                r = r<<8|*s++;
+                g = b = r;
+                a = *s++;
+                a = a<<8|*s++;
+                if (a) {
+                    if (a != 65535) {
+                        int r1, g1, b1;
+                        getpixel(&imem, &r1, &g1, &b1);
+                        r = CombineAlpha(r, r1, a);
+                        g = CombineAlpha(g, g1, a);
+                        b = CombineAlpha(b, b1, a);
+                    }
+                    setpixel(&imem, r, g, b);
+                }
+            } else
+                s += 4;
+        }
+    }
+
+    saveimgmem(w, &imem);
+    freeimgmem(&imem);
+}
+
 void drawblimage(wbp w, int x, int y, int width, int height,
                 int ch, unsigned char *s)
 {
@@ -782,7 +914,7 @@ void drawblimage(wbp w, int x, int y, int width, int height,
     if (!parsecolor(color, &bg_r, &bg_g, &bg_b, &bg_a))
         return;
 
-    if (!initimgmem(w, &imem, x, y, width, height))
+    if (!initimgmem(w, &imem, 1, x, y, width, height))
         return;
 
     m = width % 4;
@@ -1415,7 +1547,7 @@ int writeJPEG(wbp w, char *filename, int x, int y, int width,int height)
 
     quality = 95;
     
-    if (initimgmem(w, &imem, x, y, width, height)) {
+    if (initimgmem(w, &imem, 1, x, y, width, height)) {
         unsigned char *p = data;
         for (j = y; j < y + height; j++) {
             for (i = x; i < x + width; i++) {
@@ -1516,14 +1648,23 @@ static int readPNG(char *filename, struct imgdata *imd)
     png_init_io(png_ptr, fp);
 
     png_set_sig_bytes(png_ptr, 8);
+    /*
     png_set_expand(png_ptr);
     png_set_gray_to_rgb(png_ptr);
+    */
     png_read_info(png_ptr, info_ptr);
 
-    /* Gamma correction using a screen gamma of 2.2.
+    /* 
+     * Gamma correction using a screen gamma of 2.2.
      */
     if (png_get_gAMA(png_ptr, info_ptr, &image_gamma))
         png_set_gamma(png_ptr, 2.2, image_gamma);
+    if (info_ptr->color_type == PNG_COLOR_TYPE_PALETTE)
+        png_set_palette_to_rgb(png_ptr);
+    if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY && info_ptr->bit_depth < 8) 
+        png_set_gray_1_2_4_to_8(png_ptr);
+    if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS))
+        png_set_tRNS_to_alpha(png_ptr);
 
     png_read_update_info(png_ptr, info_ptr);
 
@@ -1535,6 +1676,14 @@ static int readPNG(char *filename, struct imgdata *imd)
         format = IMGDATA_RGBA32;
     else if (info_ptr->color_type == PNG_COLOR_TYPE_RGB_ALPHA && info_ptr->pixel_depth == 64)
         format = IMGDATA_RGBA64;
+    else if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY && info_ptr->pixel_depth == 8)
+        format = IMGDATA_G8;
+    else if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY_ALPHA && info_ptr->pixel_depth == 16)
+        format = IMGDATA_GA16;
+    else if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY && info_ptr->pixel_depth == 16)
+        format = IMGDATA_G16;
+    else if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY_ALPHA && info_ptr->pixel_depth == 32)
+        format = IMGDATA_GA32;
     else {
         fclose(fp);
         png_destroy_read_struct(&png_ptr, &info_ptr, 0);
@@ -1612,7 +1761,7 @@ static int writePNG(wbp w, char *filename, int x, int y, int width, int height)
         p += 6 * width;
     }
 
-    if (initimgmem(w, &imem, x, y, width, height)) {
+    if (initimgmem(w, &imem, 1, x, y, width, height)) {
         p = (png_bytep)data;
         for (j = y; j < y + height; j++) {
             for (i = x; i < x + width; i++) {
@@ -2444,8 +2593,13 @@ int parsepattern(char *s, int *width, int *nbits, int *bits)
 
 int readimagefile(char *filename, struct imgdata *imd)
 {
-    struct fileparts *fp = fparse(filename);
+    int r;
+    struct fileparts *fp;
 
+    if ((r = readimagefileimpl(filename, imd)) != NoCvt)
+        return r;
+
+    fp = fparse(filename);
 #ifdef HAVE_LIBPNG
     if (strcasecmp(fp->ext, ".png") == 0)
         return readPNG(filename, imd);
@@ -2466,7 +2620,13 @@ int readimagefile(char *filename, struct imgdata *imd)
 
 int writeimagefile(wbp w, char *filename, int x, int y, int width, int height)
 {
-    struct fileparts *fp = fparse(filename);
+    int r;
+    struct fileparts *fp;
+
+    if ((r = writeimagefileimpl(w, filename, x, y, width, height)) != NoCvt)
+        return r;
+
+    fp = fparse(filename);
 
 #ifdef HAVE_LIBPNG
     if (strcasecmp(fp->ext, ".png") == 0)

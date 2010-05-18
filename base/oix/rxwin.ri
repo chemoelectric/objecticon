@@ -2278,7 +2278,7 @@ int copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2)
 /*
  * Client for producing pixels from a window
  */
-void loadimgmem(wbp w, struct imgmem *imem)
+void loadimgmem(wbp w, struct imgmem *imem, int copy)
 {
     STDLOCALS(w);
     MemProtect(imem->im = XGetImage(stddpy, stdpix,
@@ -3401,5 +3401,16 @@ static void free_display(wdp wd)
         free(wd);
     }
 }
+
+int  readimagefileimpl(char *filename, struct imgdata *imd) 
+{
+    return NoCvt;
+}
+
+int  writeimagefileimpl(wbp w, char *filename, int x, int y, int width, int height)
+{
+    return NoCvt;
+}
+
 
 #endif            /* Graphics */

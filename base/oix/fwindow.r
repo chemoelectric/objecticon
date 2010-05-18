@@ -896,7 +896,7 @@ function graphics_Window_get_pixels(self, x0, y0, w0, h0)
 
       create_list(width * height, &result);
 
-      if (initimgmem(self_w, &imem, x, y, width, height)) {
+      if (initimgmem(self_w, &imem, 1, x, y, width, height)) {
           lastval = emptystr;
           r = g = b = -1;
           for (j = y; j < y + height; j++) {
@@ -943,7 +943,7 @@ function graphics_Window_set_pixels(self, data, x0, y0, w0, h0)
 
       ws = self_w->window;
 
-      if (!initimgmem(self_w, &imem, x, y, width, height))
+      if (!initimgmem(self_w, &imem, 1, x, y, width, height))
           return;
 
       le = lgfirst(&ListBlk(data), &state);
