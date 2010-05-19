@@ -2250,7 +2250,7 @@ static void note_time(char *s)
 int readimagefileimpl(char *filename, struct imgdata *imd)
 {
     Memimage *m;
-    int pip[2], err[2], fd, ndata, format;
+    int pip[2], fd, ndata, format;
     char *cmd;
     struct fileparts *fp = fparse(filename);
     if (strcasecmp(fp->ext, ".png") == 0)
@@ -2270,58 +2270,38 @@ int readimagefileimpl(char *filename, struct imgdata *imd)
         close(fd);
         return Failed;
     }
-    if (pipe(err) < 0) {
-        whyf("Couldn't make pipe: %r");
-        close(pip[0]);
-        close(pip[1]);
-        close(fd);
-        return Failed;
-    }
     switch (fork()) {
         case -1: {
             whyf("Couldn't fork: %r");
             close(fd);
             close(pip[0]);
             close(pip[1]);
-            close(err[0]);
-            close(err[1]);
             return Failed;
         }
 
         case 0: {
+            int nf;
             dup(fd, 0);
             dup(pip[0], 1);
-            dup(err[0], 2);
+            if ((nf = open("/dev/null", OWRITE)) >= 0) {
+                dup(nf, 2);
+                close(nf);
+            }
             close(fd);
             close(pip[0]);
             close(pip[1]);
-            close(err[0]);
-            close(err[1]);
             execl("/bin/rc", "rc", "-c", cmd, 0);
             _exits(0);
         }
     }
     close(pip[0]);
-    close(err[0]);
     close(fd);
     m = readmemimage(pip[1]);
     close(pip[1]);
     if (!m) {
-        int n;
-        char errmsg[128];
-        errmsg[0] = 0;
-        if ((n = read(err[1], errmsg, sizeof(errmsg) - 1)) > 0) {
-            if (errmsg[n - 1] == '\n')
-                errmsg[n - 1] = 0;
-            else
-                errmsg[n] = 0;
-        }
-        close(err[1]);
-        whyf("Failed to read memimage: %s", errmsg);
+        whyf("Failed to readmemimage on file %s: %r", filename);
         return Failed;
     }
-    close(err[1]);
-
     switch (m->chan) {
         case RGB24: {
             format = IMGDATA_BGR24;
@@ -2342,7 +2322,7 @@ int readimagefileimpl(char *filename, struct imgdata *imd)
         default: {
             char buf[10];
             chantostr(buf,m->chan);
-            whyf("Unknown channel format '%s' from '%s <%s'", 
+            whyf("Unknown channel format %s from command %s <%s", 
                  buf, cmd, filename);
             freememimage(m);
             return Failed;
