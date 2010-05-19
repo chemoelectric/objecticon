@@ -725,15 +725,80 @@ int walert(wbp w, int volume)
 static void impl_copyarea(wcp wc, Image *dest, Image *src,int x,int y,int w,int h,int x2,int y2)
 {
     clip(wc, dest);
-    gendraw(dest,
-            Rect(dest->r.min.x + x2, 
-                 dest->r.min.y + y2,
-                 dest->r.min.x + x2 + w,
-                 dest->r.min.y + y2 + h),
-            src,
-            Pt(src->r.min.x + x, 
-               src->r.min.y + y), 
-            0, ZP);
+
+    if (x + w < 0 || y + h < 0 || x >= Dx(src->r) || y >= Dy(src->r)) {
+        /* source is entirely offscreen, fill dest with bg */
+        gendraw(dest, 
+                Rect(dest->r.min.x + x2, 
+                     dest->r.min.y + y2,
+                     dest->r.min.x + x2 + w,
+                     dest->r.min.y + y2 + h), 
+                wc->bg->i, ZP, 0, ZP);
+    } else {
+        int lpad, rpad, tpad, bpad;
+        lpad = rpad = tpad = bpad = 0;
+        if (x < 0) {			/* source extends past left edge */
+            lpad = -x;
+            w -= lpad;
+            x2 += lpad;
+            x = 0;
+        }
+        if (x + w > Dx(src->r)) {  /* source extends past right edge */
+            rpad = x + w - Dx(src->r);
+            w -= rpad;
+        }
+        if (y < 0) {			/* source extends above top edge */
+            tpad = -y;
+            h -= tpad;
+            y2 += tpad;
+            y = 0;
+        }
+        if (y + h > Dy(src->r)) {  /* source extends below bottom */
+            bpad = y + h - Dy(src->r);
+            h -= bpad;
+        }
+
+        gendraw(dest,
+                Rect(dest->r.min.x + x2, 
+                     dest->r.min.y + y2,
+                     dest->r.min.x + x2 + w,
+                     dest->r.min.y + y2 + h),
+                src,
+                Pt(src->r.min.x + x, 
+                   src->r.min.y + y), 
+                0, ZP);
+        if (lpad > 0)
+            gendraw(dest,
+                    Rect(dest->r.min.x + x2 - lpad, 
+                         dest->r.min.y + y2 - tpad,
+                         dest->r.min.x + x2,
+                         dest->r.min.y + y2 + h + bpad),
+                    wc->bg->i, ZP, 0, ZP);
+
+        if (rpad > 0)
+            gendraw(dest,
+                    Rect(dest->r.min.x + x2 + w, 
+                         dest->r.min.y + y2 - tpad,
+                         dest->r.min.x + x2 + w + rpad,
+                         dest->r.min.y + y2 + h + bpad),
+                    wc->bg->i, ZP, 0, ZP);
+
+        if (tpad > 0)
+            gendraw(dest,
+                    Rect(dest->r.min.x + x2, 
+                         dest->r.min.y + y2 - tpad,
+                         dest->r.min.x + x2 + w,
+                         dest->r.min.y + y2),
+                    wc->bg->i, ZP, 0, ZP);
+
+        if (bpad > 0)
+            gendraw(dest,
+                    Rect(dest->r.min.x + x2, 
+                         dest->r.min.y + y2 + h,
+                         dest->r.min.x + x2 + w,
+                         dest->r.min.y + y2 + h + bpad),
+                    wc->bg->i, ZP, 0, ZP);
+    }
     unclip(wc, dest);
 }
 
@@ -2185,7 +2250,7 @@ static void note_time(char *s)
 int readimagefileimpl(char *filename, struct imgdata *imd)
 {
     Memimage *m;
-    int pip[2], fd, ndata;
+    int pip[2], err[2], fd, ndata, format;
     char *cmd;
     struct fileparts *fp = fparse(filename);
     if (strcasecmp(fp->ext, ".png") == 0)
@@ -2205,73 +2270,88 @@ int readimagefileimpl(char *filename, struct imgdata *imd)
         close(fd);
         return Failed;
     }
+    if (pipe(err) < 0) {
+        whyf("Couldn't make pipe: %r");
+        close(pip[0]);
+        close(pip[1]);
+        close(fd);
+        return Failed;
+    }
     switch (fork()) {
         case -1: {
             whyf("Couldn't fork: %r");
             close(fd);
             close(pip[0]);
             close(pip[1]);
+            close(err[0]);
+            close(err[1]);
             return Failed;
         }
 
         case 0: {
             dup(fd, 0);
             dup(pip[0], 1);
+            dup(err[0], 2);
             close(fd);
             close(pip[0]);
             close(pip[1]);
+            close(err[0]);
+            close(err[1]);
             execl("/bin/rc", "rc", "-c", cmd, 0);
             _exits(0);
         }
     }
-    m = readmemimage(pip[1]);
-    close(fd);
     close(pip[0]);
+    close(err[0]);
+    close(fd);
+    m = readmemimage(pip[1]);
     close(pip[1]);
     if (!m) {
-        whyf("Failed to read memimage: %r");
+        int n;
+        char errmsg[128];
+        errmsg[0] = 0;
+        if ((n = read(err[1], errmsg, sizeof(errmsg) - 1)) > 0) {
+            if (errmsg[n - 1] == '\n')
+                errmsg[n - 1] = 0;
+            else
+                errmsg[n] = 0;
+        }
+        close(err[1]);
+        whyf("Failed to read memimage: %s", errmsg);
         return Failed;
     }
-
-    /*
-    {
-        char buf[10];
-        chantostr(buf,m->chan);
-        print("chan=%s nchan=%d\n",buf,m->nchan);
-    }
-    */
+    close(err[1]);
 
     switch (m->chan) {
         case RGB24: {
-            imd->format = IMGDATA_BGR24;
+            format = IMGDATA_BGR24;
             break;
         }
         case RGBA32: {
-            imd->format = IMGDATA_ABGR32;
+            format = IMGDATA_ABGR32;
             break;
         }
         case GREY8: {
-            imd->format = IMGDATA_G8;
+            format = IMGDATA_G8;
             break;
         }
         case CHAN2(CGrey, 8, CAlpha, 8): {
-            imd->format = IMGDATA_AG16;
+            format = IMGDATA_AG16;
             break;
         }
         default: {
-            /* Hopefully shouldn't happen; try to convert to BGR format */
-            Memimage *tmp;
-            MemProtect(tmp = allocmemimage(m->r, RGB24));
-            memimagedraw(tmp, tmp->r, m, ZP, 0, ZP, SoverD);
+            char buf[10];
+            chantostr(buf,m->chan);
+            whyf("Unknown channel format '%s' from '%s <%s'", 
+                 buf, cmd, filename);
             freememimage(m);
-            m = tmp;
-            imd->format = IMGDATA_BGR24;
-            break;
+            return Failed;
         }
     }
     imd->width = Dx(m->r);
     imd->height = Dy(m->r);
     imd->paltbl = 0;
+    imd->format = format;
     ndata = imd->width * imd->height * m->nchan;
     MemProtect(imd->data = malloc(ndata));
     unloadmemimage(m, m->r, imd->data, ndata);
@@ -2294,6 +2374,17 @@ int writeimagefileimpl(wbp w, char *filename, int x, int y, int width, int heigh
         cmd = "togif";
     else
         return NoCvt;
+
+    if ((fd = create(filename, OWRITE, 0777)) < 0) {
+        whyf("Couldn't open %s: %r", filename);
+        return Failed;
+    }
+    if (pipe(pip) < 0) {
+        whyf("Couldn't make pipe: %r");
+        close(fd);
+        return Failed;
+    }
+
     ndata = 3 * width * height;
     MemProtect(data = malloc(ndata));
     if (initimgmem(w, &imem, 1, x, y, width, height)) {
@@ -2321,17 +2412,6 @@ int writeimagefileimpl(wbp w, char *filename, int x, int y, int width, int heigh
     loadmemimage(m, m->r, data, ndata);
     free(data);
 
-    if ((fd = create(filename, OWRITE, 0777)) < 0) {
-        whyf("Couldn't open %s: %r", filename);
-        freememimage(m);
-        return Failed;
-    }
-    if (pipe(pip) < 0) {
-        whyf("Couldn't make pipe: %r");
-        freememimage(m);
-        close(fd);
-        return Failed;
-    }
     switch (fork()) {
         case -1: {
             whyf("Couldn't fork: %r");
@@ -2352,10 +2432,10 @@ int writeimagefileimpl(wbp w, char *filename, int x, int y, int width, int heigh
             _exits(0);
         }
     }
+    close(pip[0]);
+    close(fd);
     writememimage(pip[1], m);
     freememimage(m);
-    close(fd);
-    close(pip[0]);
     close(pip[1]);
     return Succeeded;
 }
