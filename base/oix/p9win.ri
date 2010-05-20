@@ -2250,7 +2250,7 @@ static void note_time(char *s)
 int readimagefileimpl(char *filename, struct imgdata *imd)
 {
     Memimage *m;
-    int pip[2], fd, ndata, format;
+    int pid, pip[2], fd, ndata, format;
     char *cmd;
     struct fileparts *fp = fparse(filename);
     if (strcasecmp(fp->ext, ".png") == 0)
@@ -2270,34 +2270,34 @@ int readimagefileimpl(char *filename, struct imgdata *imd)
         close(fd);
         return Failed;
     }
-    switch (fork()) {
-        case -1: {
-            whyf("Couldn't fork: %r");
-            close(fd);
-            close(pip[0]);
-            close(pip[1]);
-            return Failed;
-        }
-
-        case 0: {
-            int nf;
-            dup(fd, 0);
-            dup(pip[0], 1);
-            if ((nf = open("/dev/null", OWRITE)) >= 0) {
-                dup(nf, 2);
-                close(nf);
-            }
-            close(fd);
-            close(pip[0]);
-            close(pip[1]);
-            execl("/bin/rc", "rc", "-c", cmd, 0);
-            _exits(0);
-        }
+    if ((pid = fork()) < 0) {
+        whyf("Couldn't fork: %r");
+        close(fd);
+        close(pip[0]);
+        close(pip[1]);
+        return Failed;
     }
+    if (pid == 0) {
+        int nf;
+        dup(fd, 0);
+        dup(pip[0], 1);
+        if ((nf = open("/dev/null", OWRITE)) >= 0) {
+            dup(nf, 2);
+            close(nf);
+        }
+        close(fd);
+        close(pip[0]);
+        close(pip[1]);
+        execl("/bin/rc", "rc", "-c", cmd, 0);
+        _exits(0);
+    }
+
     close(pip[0]);
     close(fd);
     m = readmemimage(pip[1]);
     close(pip[1]);
+    while (waitpid() != pid);
+
     if (!m) {
         whyf("Failed to readmemimage on file %s: %r", filename);
         return Failed;
@@ -2342,7 +2342,7 @@ int readimagefileimpl(char *filename, struct imgdata *imd)
 int writeimagefileimpl(wbp w, char *filename, int x, int y, int width, int height)
 {
     Memimage *m;
-    int pip[2], fd, ndata;
+    int pip[2], pid, fd, ndata;
     char *cmd;
     uchar *data;
     struct imgmem imem;
@@ -2392,29 +2392,29 @@ int writeimagefileimpl(wbp w, char *filename, int x, int y, int width, int heigh
     loadmemimage(m, m->r, data, ndata);
     free(data);
 
-    switch (fork()) {
-        case -1: {
-            whyf("Couldn't fork: %r");
-            freememimage(m);
-            close(fd);
-            close(pip[0]);
-            close(pip[1]);
-            return Failed;
-        }
-
-        case 0: {
-            dup(pip[0], 0);
-            dup(fd, 1);
-            close(fd);
-            close(pip[0]);
-            close(pip[1]);
-            execl("/bin/rc", "rc", "-c", cmd, 0);
-            _exits(0);
-        }
+    if ((pid = fork()) < 0) {
+        whyf("Couldn't fork: %r");
+        freememimage(m);
+        close(fd);
+        close(pip[0]);
+        close(pip[1]);
+        return Failed;
     }
+
+    if (pid == 0) {
+        dup(pip[0], 0);
+        dup(fd, 1);
+        close(fd);
+        close(pip[0]);
+        close(pip[1]);
+        execl("/bin/rc", "rc", "-c", cmd, 0);
+        _exits(0);
+    }
+
     close(pip[0]);
     close(fd);
     writememimage(pip[1], m);
+    while (waitpid() != pid);
     freememimage(m);
     close(pip[1]);
     return Succeeded;
