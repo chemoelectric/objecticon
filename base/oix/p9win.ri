@@ -1554,6 +1554,7 @@ int sendselectionresponse(wbp w, word requestor, char *property,
 static void kill_proc(int id)
 {
     postnote(PNPROC, id, "kill");
+    free(waitforpid(id));
 }
 
 static int open_screen_win(wsp ws)
@@ -2270,33 +2271,35 @@ int readimagefileimpl(char *filename, struct imgdata *imd)
         close(fd);
         return Failed;
     }
-    if ((pid = fork()) < 0) {
-        whyf("Couldn't fork: %r");
-        close(fd);
-        close(pip[0]);
-        close(pip[1]);
-        return Failed;
-    }
-    if (pid == 0) {
-        int nf;
-        dup(fd, 0);
-        dup(pip[0], 1);
-        if ((nf = open("/dev/null", OWRITE)) >= 0) {
-            dup(nf, 2);
-            close(nf);
+    switch (pid = fork()) {
+        case -1: {
+            whyf("Couldn't fork: %r");
+            close(fd);
+            close(pip[0]);
+            close(pip[1]);
+            return Failed;
         }
-        close(fd);
-        close(pip[0]);
-        close(pip[1]);
-        execl("/bin/rc", "rc", "-c", cmd, 0);
-        _exits(0);
+        case 0: {
+            int nf;
+            dup(fd, 0);
+            dup(pip[0], 1);
+            if ((nf = open("/dev/null", OWRITE)) >= 0) {
+                dup(nf, 2);
+                close(nf);
+            }
+            close(fd);
+            close(pip[0]);
+            close(pip[1]);
+            execl("/bin/rc", "rc", "-c", cmd, 0);
+            _exits(0);
+        }
     }
 
     close(pip[0]);
     close(fd);
     m = readmemimage(pip[1]);
     close(pip[1]);
-    while (waitpid() != pid);
+    free(waitforpid(pid));
 
     if (!m) {
         whyf("Failed to readmemimage on file %s: %r", filename);
@@ -2392,29 +2395,29 @@ int writeimagefileimpl(wbp w, char *filename, int x, int y, int width, int heigh
     loadmemimage(m, m->r, data, ndata);
     free(data);
 
-    if ((pid = fork()) < 0) {
-        whyf("Couldn't fork: %r");
-        freememimage(m);
-        close(fd);
-        close(pip[0]);
-        close(pip[1]);
-        return Failed;
+    switch (pid = fork()) {
+        case -1: {
+            whyf("Couldn't fork: %r");
+            freememimage(m);
+            close(fd);
+            close(pip[0]);
+            close(pip[1]);
+            return Failed;
+        }
+        case 0: {
+            dup(pip[0], 0);
+            dup(fd, 1);
+            close(fd);
+            close(pip[0]);
+            close(pip[1]);
+            execl("/bin/rc", "rc", "-c", cmd, 0);
+            _exits(0);
+        }
     }
-
-    if (pid == 0) {
-        dup(pip[0], 0);
-        dup(fd, 1);
-        close(fd);
-        close(pip[0]);
-        close(pip[1]);
-        execl("/bin/rc", "rc", "-c", cmd, 0);
-        _exits(0);
-    }
-
     close(pip[0]);
     close(fd);
     writememimage(pip[1], m);
-    while (waitpid() != pid);
+    free(waitforpid(pid));
     freememimage(m);
     close(pip[1]);
     return Succeeded;

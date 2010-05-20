@@ -259,20 +259,16 @@ function posix_System_wait(pid, options)
 	 strcat(retval, ":core");
 
 #elif PLAN9
-      Waitmsg *w;
-      for (;;) {
-          w = wait();
-          if (!w) {
-              LitWhy("process has no children");
-	      fail;
-          }
-          if (pid == -1 || w->pid == pid)
-              break;
+      Waitmsg *w = waitforpid(pid);
+      if (!w) {
+          LitWhy("process has no children");
+          fail;
       }
       if (w->msg[0] == 0)
           sprint(retval, "%d exited normally", w->pid);
       else
           snprint(retval, sizeof(retval), "%d exited: %s", w->pid, w->msg);
+      free(w);
 
 #elif MSWIN32
       int termstat;
