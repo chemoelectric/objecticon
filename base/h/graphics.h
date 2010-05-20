@@ -331,8 +331,7 @@ typedef struct _wstate {
   Image         *pix;
   char          mount_dir[64];
   int           event_pipe[2];
-  int           wsys_fd, wctl_fd, mouse_fd, cons_fd, consctl_fd, cursor_fd,
-                   mouse_time_fd, cons_time_fd;
+  int           wsys_fd, wctl_fd, mouse_fd, cons_fd, consctl_fd, cursor_fd;
   int           mouse_pid, cons_pid;
   int           mouse_down;
   int           last_mouse_x, last_mouse_y;

@@ -5,6 +5,7 @@ static Rectangle max_rect;
 static struct Cursor cursor_data[];
 static int use_win;
 static int pattern_bits[16][8];
+static int bintime_fd;
 
 static int open_winfile(wsp ws, char *s, int mode);
 static wsp alcwinstate(void);
@@ -12,9 +13,9 @@ static wcp alccontext(wbp w);
 static wfp alcfont(wbp w, char **s);
 static void synch_pattern_image(struct SharedPattern *pat, int fg_rgba, int bg_rgba, int style);
 static int configure_canvas(wbp w);
-static void mouse_loop(int in_fd, int out_fd, int time_fd);
+static void mouse_loop(int in_fd, int out_fd);
 static Rune *utf8_to_runes(char *str, int nchars);
-static void cons_loop(int in_fd, int out_fd, int time_fd);
+static void cons_loop(int in_fd, int out_fd);
 static void flush_event_pipe(wsp ws);
 static wfp load_font(char *s);
 static void synch_cursor(wsp ws);
@@ -460,28 +461,28 @@ static int configure_canvas(wbp w)
     return Succeeded;
 }
 
-static void mouse_loop(int in_fd, int out_fd, int time_fd)
+static void mouse_loop(int in_fd, int out_fd)
 {
     char buf[EMAXMSG + 9];
     int r;
 
     buf[0] = 'M';
     while ((r = read(in_fd, buf + 9, EMAXMSG)) > 0) {
-        pread(time_fd, &buf[1], 8, 0);
+        read(bintime_fd, &buf[1], 8);
         if (write(out_fd, buf, r + 9) != r + 9)
             break;
     }
     _exits(0);
 }
 
-static void cons_loop(int in_fd, int out_fd, int time_fd) 
+static void cons_loop(int in_fd, int out_fd) 
 {
     Rune r;
     char buf[11], in[10];
 
     buf[0] = 'C';
     while (read(in_fd, in, sizeof in) > 0) {
-        pread(time_fd, &buf[1], 8, 0);
+        read(bintime_fd, &buf[1], 8);
         chartorune(&r, in);
         buf[9] = r;
         buf[10] = r>>8;
@@ -1674,15 +1675,9 @@ static int open_screen_win(wsp ws)
     }
     synch_cursor(ws);
 
-    if ((ws->mouse_time_fd = open("/dev/bintime", OREAD)) < 0) {
-        whyf("Can't open /dev/bintime: %r");
-        close_screen_win(ws);
-        return Failed;
-    }
-
     switch (ws->mouse_pid = rfork(RFPROC|RFMEM)) {
         case 0: {
-            mouse_loop(ws->mouse_fd, ws->event_pipe[1], ws->mouse_time_fd);
+            mouse_loop(ws->mouse_fd, ws->event_pipe[1]);
             break;
         }
         case -1: {
@@ -1692,15 +1687,9 @@ static int open_screen_win(wsp ws)
         }
     }
 
-    if ((ws->cons_time_fd = open("/dev/bintime", OREAD)) < 0) {
-        whyf("Can't open /dev/bintime: %r");
-        close_screen_win(ws);
-        return Failed;
-    }
-
     switch (ws->cons_pid = rfork(RFPROC|RFMEM)) {
         case 0: {
-            cons_loop(ws->cons_fd, ws->event_pipe[1], ws->cons_time_fd);
+            cons_loop(ws->cons_fd, ws->event_pipe[1]);
             break;
         }
         case -1: {
@@ -1729,12 +1718,8 @@ static void close_screen_win(wsp ws)
         close(ws->consctl_fd);
     if (ws->cursor_fd >= 0)
         close(ws->cursor_fd);
-    if (ws->mouse_time_fd >= 0)
-        close(ws->mouse_time_fd);
     if (ws->mouse_fd >= 0)
         close(ws->mouse_fd);
-    if (ws->cons_time_fd >= 0)
-        close(ws->cons_time_fd);
     if (ws->cons_fd >= 0)
         close(ws->cons_fd);
     if (ws->mouse_pid >= 0)
@@ -1762,8 +1747,7 @@ static void close_screen_win(wsp ws)
 
     ws->mount_dir[0] = 0;
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
-        ws->cursor_fd = ws->mouse_pid = ws->cons_pid = ws->wsys_fd = ws->wctl_fd = 
-        ws->mouse_time_fd = ws->cons_time_fd = -1;
+        ws->cursor_fd = ws->mouse_pid = ws->cons_pid = ws->wsys_fd = ws->wctl_fd = -1;
 }
 
 static void open_pix_win(wsp ws)
@@ -2047,8 +2031,7 @@ static wsp alcwinstate()
     ws->bits = 1024;				/* echo ON; others OFF */
     ws->listp = nulldesc;    /* set to [] after linked into global context list */
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
-        ws->cursor_fd = ws->mouse_pid = ws->cons_pid = ws->wsys_fd = ws->wctl_fd = 
-        ws->mouse_time_fd = ws->cons_time_fd = -1;
+        ws->cursor_fd = ws->mouse_pid = ws->cons_pid = ws->wsys_fd = ws->wctl_fd = -1;
     ws->cursor = stringint_lookup(cursors, "left ptr");
     ws->height = 200;
     ws->width  = 200;
@@ -2131,6 +2114,7 @@ static void close_window_system(void)
         fprint(fd, "current");
         close(fd);
     }
+    close(bintime_fd);
 }
 
 static struct Cursor cursor_data[] = {
@@ -2190,6 +2174,9 @@ static void init_window_system(void)
 {
     Dir *fs;
 
+    if ((bintime_fd = open("/dev/bintime", OREAD)) < 0)
+        ffatalerr("Can't open /dev/bintime: %r");
+
     if (initdraw(draw_error, 0, 0) < 0)
         ffatalerr("Couldn't initialize window system: %r");
 
@@ -2224,16 +2211,9 @@ static void init_window_system(void)
 
 static vlong get_time()
 {
-    int f;
     uchar b[8];
     vlong t;
-
-    memset(b, 0, sizeof b);
-    f = open("/dev/bintime", OREAD);
-    if(f >= 0) {
-        pread(f, b, sizeof(b), 0);
-        close(f);
-    }
+    read(bintime_fd, b, sizeof(b));
     be2vlong(&t, b);
     return t;
 }
