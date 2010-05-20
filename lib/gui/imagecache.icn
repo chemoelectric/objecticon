@@ -50,7 +50,7 @@ class ImageCache()
             w := Window.open("bg=",bg, "canvas=hidden")
             w.set_image(f) | {
                w.close()
-               return error("Couldn't load image from file " || f)
+               fail
             }
             insert(imap, key, w)
             insert(imap, w, f)
