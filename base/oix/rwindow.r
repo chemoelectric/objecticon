@@ -21,12 +21,12 @@ static int  readJPEG        (char *fname, struct imgdata *d);
 static int readPNG(char *filename, struct imgdata *imd);
 static int writePNG(wbp w, char *filename, int x, int y, int width, int height);
 #endif
-static int writeGIF(wbp w, char *filename, int x, int y, int width, int height);
 static int readGIF         (char *fname, struct imgdata *d);
 
 static	int	colorphrase    (char *buf, int *r, int *g, int *b, int *a);
 static	double	rgbval	(double n1, double n2, double hue);
 static  void    wgetq          (wbp w, dptr res);
+
 static void drawpalette(wbp w, int x, int y, int width, int height, 
                         struct palentry *e, unsigned char *s, int copy);
 
@@ -865,13 +865,6 @@ void drawblimage(wbp w, int x, int y, int width, int height,
     freeimgmem(&imem);
 }
 
-static int  getimstr        (wbp w, int x, int y, int width, int hgt,
-                          struct palentry *ptbl, unsigned char *data)
-{
-    return 0;
-}
-
-
 /*
  *  Functions and data for reading and writing GIF and JPEG images
  */
@@ -914,14 +907,6 @@ static	int	gffirst		(int c);
 static	void	gfgen		(int c);
 static	void	gfput		(int b);
 
-static	int	gfwrite		(wbp w, FILE *f,
-                                 int x, int y, int width, int height);
-static	void	gfpack		(unsigned char *data, long len,
-                                 struct palentry *paltbl);
-static	void	gfmktree	(lzwnode *tree);
-static	void	gfout		(FILE *f, int tcode);
-static	void	gfdump		(FILE *f);
-
 static int gf_gcmap, gf_lcmap;		/* global color map? local color map? */
 static int gf_nbits;			/* number of bits per pixel */
 static int gf_ilace;			/* interlace flag */
@@ -939,7 +924,6 @@ static int gf_cdsize;			/* code size */
 static int gf_clear, gf_eoi;		/* values of CLEAR and EOI codes */
 static int gf_lzwbits, gf_lzwmask;	/* current bits per code */
 
-static unsigned char *gf_obuf;		/* output buffer */
 static unsigned long gf_curr;		/* current partial byte(s) */
 static int gf_valid;			/* number of valid bits */
 static int gf_rem;			/* remaining bytes in this block */
@@ -1007,7 +991,7 @@ static int gfread(FILE *fp)
     MemProtect(gf_paltbl = malloc(256 * sizeof(struct palentry)));
 
     for (i = 0; i < 256; i++)		/* init palette table */
-        gf_paltbl[i].used = gf_paltbl[i].valid = gf_paltbl[i].transpt = 0;
+        gf_paltbl[i].valid = gf_paltbl[i].transpt = 0;
 
     if (!gfheader(fp))			/* read file header */
         return 0;
@@ -1326,7 +1310,6 @@ static void gfput(int b)
     }
 
     *gf_nxt++ = b;			/* store byte */
-    gf_paltbl[b].used = 1;		/* mark color entry as used */
 }
 
 
@@ -1427,7 +1410,7 @@ void my_error_exit (j_common_ptr cinfo)
 int writeJPEG(wbp w, char *filename, int x, int y, int width,int height)
 {
     struct imgmem imem;
-    int i, j, len;
+    int i, j;
     struct jpeg_compress_struct cinfo;
     struct jpeg_error_mgr jerr;
     JSAMPROW row_pointer[1];	/* pointer to JSAMPLE row[s] */
@@ -1443,8 +1426,6 @@ int writeJPEG(wbp w, char *filename, int x, int y, int width,int height)
     }
 
     MemProtect(data = malloc(width * height * 3));
-
-    len = width * height ;	/* total length of data */
 
     quality = 95;
     
@@ -1465,6 +1446,7 @@ int writeJPEG(wbp w, char *filename, int x, int y, int width,int height)
                 }
             }
         }
+        freeimgmem(&imem);
     } else
         memset(data, 0, width * height * 3);
 
@@ -1685,6 +1667,7 @@ static int writePNG(wbp w, char *filename, int x, int y, int width, int height)
                 }
             }
         }
+        freeimgmem(&imem);
     } else
         memset(data, 0, width * height * 6);
 
@@ -1700,235 +1683,6 @@ static int writePNG(wbp w, char *filename, int x, int y, int width, int height)
 }
 
 #endif
-
-/*
- * writeGIF(w, filename, x, y, width, height) - write GIF image
- *
- * We assume that the area specified is within the window.
- */
-static int writeGIF(wbp w, char *filename, int x, int y, int width, int height)
-{
-    FILE *fp;
-    if (!(fp = fopen(filename, "wb"))) {
-        errno2why();
-        return Failed;
-    }
-    gfwrite(w, fp, x, y, width, height);
-    if (ferror(fp)) {
-        errno2why();
-        return Failed;
-    }
-    fclose(fp);
-    return Succeeded;
-}
-
-/*
- * gfwrite(w, filename, x, y, width, height) - write GIF file
- *
- * We write GIF87a format (not 89a) for maximum acceptability and because
- * we don't need any of the extensions of GIF89.
- */
-
-static int gfwrite(wbp w, FILE *fp, int x, int y, int width, int height)
-{
-    int i, c, cur;
-    int len;
-    LinearColor *cp;
-    unsigned char *p, *q;
-    struct palentry paltbl[DMAXCOLORS];
-    unsigned char obuf[GifBlockSize];
-    lzwnode tree[GifTableSize + 1];
-
-    len = width * height;	/* total length of data */
-
-    MemProtect(gf_string = malloc(len));
-
-    for (i = 0; i < DMAXCOLORS; i++)
-        paltbl[i].used = paltbl[i].valid = paltbl[i].transpt = 0;
-
-    if (!getimstr(w, x, y, width, height, paltbl, gf_string))
-        return 0;
-
-    gfpack(gf_string, len, paltbl);	/* pack color table, set color params */
-
-    gf_clear = 1 << gf_cdsize;		/* set encoding variables */
-    gf_eoi = gf_clear + 1;
-    gf_free = gf_eoi + 1;
-    gf_lzwbits = gf_cdsize + 1;
-
-    /*
-     * Write the header, global color table, and image descriptor.
-     */
-
-    fprintf(fp, "GIF87a%c%c%c%c%c%c%c", width, width >> 8, height, height >> 8,
-            0x80 | ((gf_nbits - 1) << 4) | (gf_nbits - 1), 0, 0);
-
-
-    for (i = 0; i < (1 << gf_nbits); i++) {	/* output color table */
-        if (i < DMAXCOLORS && paltbl[i].valid) {
-            cp = &paltbl[i].clr;
-            putc(cp->red >> 8, fp);
-            putc(cp->green >> 8, fp);
-            putc(cp->blue >> 8, fp);
-        }
-        else {
-            putc(0, fp);
-            putc(0, fp);
-            putc(0, fp);
-        }
-    }
-
-    fprintf(fp, "%c%c%c%c%c%c%c%c%c%c%c", GifSeparator, 0, 0, 0, 0,
-            width, width >> 8, height, height >> 8, gf_nbits - 1, gf_cdsize);
-
-    /*
-     * Encode and write the image.
-     */
-    gf_obuf = obuf;			/* initialize output state */
-    gf_curr = 0;
-    gf_valid = 0;
-    gf_rem = GifBlockSize;
-
-    gfmktree(tree);			/* initialize encoding tree */
-
-    gfout(fp, gf_clear);			/* start with CLEAR code */
-
-    p = gf_string;
-    q = p + len;
-    cur = *p++;				/* first pixel is special */
-    while (p < q) {
-        c = *p++;				/* get code */
-        for (i = tree[cur].child; i != 0; i = tree[i].sibling)
-            if (tree[i].tcode == c)	/* find as suffix of previous string */
-                break;
-        if (i != 0) {			/* if found in encoding tree */
-            cur = i;			/* note where */
-            continue;			/* and accumulate more */
-        }
-        gfout(fp, cur);			/* new combination -- output prefix */
-        tree[gf_free].tcode = c;		/* make node for new combination */
-        tree[gf_free].child = 0;
-        tree[gf_free].sibling = tree[cur].child;
-        tree[cur].child = gf_free;
-        cur = c;				/* restart string from single pixel */
-        ++gf_free;			/* grow tree to account for new node */
-        if (gf_free > (1 << gf_lzwbits)) {
-            if (gf_free > GifTableSize) {
-                gfout(fp, gf_clear);		/* table is full; reset to empty */
-                gf_lzwbits = gf_cdsize + 1;
-                gfmktree(tree);
-            }
-            else
-                gf_lzwbits++;		/* time to make output one bit wider */
-        }
-    }
-
-    /*
-     * Finish up.
-     */
-    gfout(fp, cur);				/* flush accumulated prefix */
-    gfout(fp, gf_eoi);			/* send EOI code */
-    gf_lzwbits = 7;
-    gfout(fp, 0);				/* force out last partial byte */
-    gfdump(fp);				/* dump final block */
-    putc(0, fp);			/* terminate image (block of size 0) */
-    putc(GifTerminator, fp);		/* terminate file */
-
-    fflush(fp);
-    free(gf_string);
-
-    return 1;			/* caller will close file */
-}
-
-/*
- * gfpack() - pack palette table to eliminate gaps
- *
- * Sets gf_nbits and gf_cdsize based on the number of colors.
- */
-static void gfpack(unsigned char *data, long len, struct palentry *paltbl)
-{
-    int i, ncolors, lastcolor;
-    unsigned char *p, *q, cmap[DMAXCOLORS];
-
-    ncolors = 0;
-    lastcolor = 0;
-    for (i = 0; i < DMAXCOLORS; i++)
-        if (paltbl[i].used) {
-            lastcolor = i;
-            cmap[i] = ncolors;		/* mapping to output color */
-            if (i != ncolors) {
-                paltbl[ncolors] = paltbl[i];		/* shift down */
-                paltbl[i].used = paltbl[i].valid = paltbl[i].transpt = 0;
-                /* invalidate old */
-            }
-            ncolors++;
-        }
-
-    if (ncolors < lastcolor + 1) {	/* if entries were moved to fill gaps */
-        p = data;
-        q = p + len;
-        while (p < q) {
-            *p = cmap[*p];			/* adjust color values in data string */
-            p++;
-        }
-    }
-
-    gf_nbits = 1;
-    while ((1 << gf_nbits) < ncolors)
-        gf_nbits++;
-    if (gf_nbits < 2)
-        gf_cdsize = 2;
-    else
-        gf_cdsize = gf_nbits;
-}
-
-/*
- * gfmktree() - initialize or reinitialize encoding tree
- */
-
-static void gfmktree(lzwnode *tree)
-{
-    int i;
-
-    for (i = 0; i < gf_clear; i++) {	/* for each basic entry */
-        tree[i].tcode = i;			/* code is pixel value */
-        tree[i].child = 0;		/* no suffixes yet */
-        tree[i].sibling = i + 1;		/* next code is sibling */
-    }
-    tree[gf_clear - 1].sibling = 0;	/* last entry has no sibling */
-    gf_free = gf_eoi + 1;		/* reset next free entry */
-}
-
-/*
- * gfout(code) - output one LZW token
- */
-static void gfout(FILE *fp, int tcode)
-{
-    gf_curr |= tcode << gf_valid;		/* add to current word */
-    gf_valid += gf_lzwbits;		/* count the bits */
-    while (gf_valid >= 8) {		/* while we have a byte to output */
-        gf_obuf[GifBlockSize - gf_rem] = gf_curr;	/* put in buffer */
-        gf_curr >>= 8;				/* remove from word */
-        gf_valid -= 8;
-        if (--gf_rem == 0)			/* flush buffer when full */
-            gfdump(fp);
-    }
-}
-
-/*
- * gfdump() - dump output buffer
- */
-static void gfdump(FILE *fp)
-{
-    int n, dummy;
-
-    n = GifBlockSize - gf_rem;
-    putc(n, fp);			/* write block size */
-    dummy = fwrite(gf_obuf, 1, n, fp); /*write block */
-    gf_rem = GifBlockSize;		/* reset buffer to empty */
-}
-
-
 
 /*
  * Static data for XDrawImage and XPalette functions
@@ -2538,9 +2292,6 @@ int writeimagefile(wbp w, char *filename, int x, int y, int width, int height)
     if (strcasecmp(fp->ext, ".jpg") == 0 || strcasecmp(fp->ext, ".jpeg") == 0)
         return writeJPEG(w, filename, x, y, width, height);
 #endif
-
-    if (strcasecmp(fp->ext, ".gif") == 0)
-        return writeGIF(w, filename, x, y, width, height);
 
     LitWhy("Unsupported file type");
     return Failed;

@@ -164,7 +164,6 @@ typedef struct {
 
 struct palentry {			/* entry for one palette member */
    LinearColor clr;			/* RGB value of color */
-   char used;				/* nonzero if char is used */
    char valid;				/* nonzero if entry is valid & opaque */
    char transpt;			/* nonzero if char is transparent */
    };
