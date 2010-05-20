@@ -1327,10 +1327,8 @@ static int readJPEG(char *filename, struct imgdata *imd)
 {
     struct jpeg_decompress_struct cinfo; /* libjpeg struct */
     struct my_error_mgr jerr;
-    JSAMPARRAY buffer;
     int row_stride;
-    int i,j;
-    unsigned char *data;
+    unsigned char *data = 0;
     FILE *fp;
 
     fp = fopen(filename, "rb");
@@ -1344,7 +1342,9 @@ static int readJPEG(char *filename, struct imgdata *imd)
 
     if (setjmp(jerr.setjmp_buffer)) {
         jpeg_destroy_decompress(&cinfo);
+        if (data) free(data);
         fclose(fp);
+        whyf("readJPEG: Failed to read file %s", filename);
         return Failed;
     }
 
@@ -1364,28 +1364,19 @@ static int readJPEG(char *filename, struct imgdata *imd)
 
     MemProtect(data = malloc(row_stride * cinfo.output_height));
 	
-    /*
-     * Make a one-row-high sample array that will go away when done with image
-     */
-    buffer = (*cinfo.mem->alloc_sarray)
-        ((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
-    j = 0;
-    while (cinfo.output_scanline < cinfo.output_height) {
-        (void) jpeg_read_scanlines(&cinfo, buffer, 1);
-
-        for (i=0; i<row_stride; i++) {
-	    data[j*row_stride+i] = buffer[0][i];
-        }
-        j += 1;
+    while (cinfo.output_scanline < cinfo.image_height) {
+        JSAMPROW row_pointer[1];
+        row_pointer[0] = &data[cinfo.output_scanline * row_stride];
+        jpeg_read_scanlines(&cinfo, row_pointer, 1);
     }
 
 
-    (void) jpeg_finish_decompress(&cinfo); /* jpeg lib function call */
+    jpeg_finish_decompress(&cinfo);
 
     /*
      * Release JPEG decompression object
      */
-    jpeg_destroy_decompress(&cinfo); /* jpeg lib function call */
+    jpeg_destroy_decompress(&cinfo);
 
     fclose(fp);
 
@@ -1413,7 +1404,6 @@ int writeJPEG(wbp w, char *filename, int x, int y, int width,int height)
     int i, j;
     struct jpeg_compress_struct cinfo;
     struct jpeg_error_mgr jerr;
-    JSAMPROW row_pointer[1];	/* pointer to JSAMPLE row[s] */
     int row_stride;		/* physical row width in image buffer */
     int quality;
     FILE *fp;
@@ -1466,11 +1456,12 @@ int writeJPEG(wbp w, char *filename, int x, int y, int width,int height)
 
     jpeg_start_compress(&cinfo, TRUE);
 
-    row_stride = cinfo.image_width *3;	/* JSAMPLEs per row in image_buffer */
+    row_stride = cinfo.image_width * 3;	/* JSAMPLEs per row in image_buffer */
 
     while (cinfo.next_scanline < cinfo.image_height) {
-        row_pointer[0] = & data[cinfo.next_scanline*row_stride];
-        (void) jpeg_write_scanlines(&cinfo, row_pointer, 1);
+        JSAMPROW row_pointer[1];     
+        row_pointer[0] = &data[cinfo.next_scanline * row_stride];
+        jpeg_write_scanlines(&cinfo, row_pointer, 1);
     }
 
     jpeg_finish_compress(&cinfo);
@@ -1531,10 +1522,6 @@ static int readPNG(char *filename, struct imgdata *imd)
     png_init_io(png_ptr, fp);
 
     png_set_sig_bytes(png_ptr, 8);
-    /*
-    png_set_expand(png_ptr);
-    png_set_gray_to_rgb(png_ptr);
-    */
     png_read_info(png_ptr, info_ptr);
 
     /* 
