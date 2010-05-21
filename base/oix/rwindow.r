@@ -311,7 +311,7 @@ int parsecolor(char *buf, int *r, int *g, int *b, int *a)
         return 1;
     }
 
-    /* try interpreting as a color phrase or as a native color spec */
+    /* try interpreting as a color phrase */
     if (colorphrase(buf, r, g, b, a))
         return 1;
     else
@@ -787,10 +787,9 @@ static void drawpalette(wbp w, int x, int y, int width, int height,
 
     for (j = y; j < y + height; j++) {
         for (i = x; i < x + width; i++) {
-            if (gotopixel(&imem, i, j) && !e[*s].transpt) {
-                LinearColor c = e[*s].clr;
-                setpixel(&imem, c.red, c.green, c.blue);
-            }
+            struct palentry *pe = &e[*s];
+            if (!pe->transpt && gotopixel(&imem, i, j))
+                setpixel(&imem, pe->r, pe->g, pe->b);
             ++s;
         }
     }
@@ -914,6 +913,7 @@ static int gf_width, gf_height;		/* image size */
 
 static short *gf_prefix, *gf_suffix;	/* prefix and suffix tables */
 static int gf_free;			/* next free position */
+static int gf_format;			/* imgdata format */
 
 static struct palentry *gf_paltbl;	/* palette table */
 static unsigned char *gf_string;	/* image string */
@@ -972,7 +972,7 @@ static int readGIF(char *filename, struct imgdata *imd)
     imd->height = gf_height;
     imd->paltbl = gf_paltbl;
     imd->data = gf_string;
-    imd->format = IMGDATA_PALETTE_TRANS;
+    imd->format = gf_format;
 
     return Succeeded;				/* return success */
 }
@@ -987,6 +987,7 @@ static int gfread(FILE *fp)
     gf_prefix = NULL;
     gf_suffix = NULL;
     gf_string = NULL;
+    gf_format = IMGDATA_PALETTE_OPAQUE;
 
     MemProtect(gf_paltbl = malloc(256 * sizeof(struct palentry)));
 
@@ -1076,6 +1077,7 @@ static void gfcontrol(FILE *f)
         else if (i == 3 && t != 0) {
             gf_paltbl[c].transpt = 1;		/* set flag for transpt color */
             gf_paltbl[c].valid = 0;		/* color is no longer "valid" */
+            gf_format = IMGDATA_PALETTE_TRANS;  /* change the format to indicate transparency */
         }
     }
 }
@@ -1101,7 +1103,7 @@ static int gfimhdr(FILE *f)
 }
 
 /*
- * gfmap(f, p) - read GIF color map into paltbl under control of palette p
+ * gfmap(f, p) - read GIF color map into paltbl
  */
 static int gfmap(FILE *f)
 {
@@ -1115,9 +1117,9 @@ static int gfmap(FILE *f)
         b = getc(f);
         if (r == EOF || g == EOF || b == EOF)
             return 0;
-        gf_paltbl[i].clr.red   = 257 * r;	/* 257 * 255 -> 65535 */
-        gf_paltbl[i].clr.green = 257 * g;
-        gf_paltbl[i].clr.blue  = 257 * b;
+        gf_paltbl[i].r   = 257 * r;	/* 257 * 255 -> 65535 */
+        gf_paltbl[i].g = 257 * g;
+        gf_paltbl[i].b  = 257 * b;
         if (!gf_paltbl[i].transpt)		/* if not transparent color */
             gf_paltbl[i].valid = 1;		/* mark as valid/opaque */
     }
@@ -1935,7 +1937,7 @@ struct palentry *palsetup(int p)
         for (i = 0; i < n; i++) {
             e = &palsetup_palette[*s++];
             gg = 65535 * m * i;
-            e->clr.red = e->clr.green = e->clr.blue = gg;
+            e->r = e->g = e->b = gg;
             e->valid = 1;
             e->transpt = 0;
         }
@@ -1947,9 +1949,9 @@ struct palentry *palsetup(int p)
         t = c1rgb;
         while ((c = *s++) != 0) {
             e = &palsetup_palette[c];
-            e->clr.red   = 65535 * (((int)*t++) / 48.0);
-            e->clr.green = 65535 * (((int)*t++) / 48.0);
-            e->clr.blue  = 65535 * (((int)*t++) / 48.0);
+            e->r   = 65535 * (((int)*t++) / 48.0);
+            e->g = 65535 * (((int)*t++) / 48.0);
+            e->b  = 65535 * (((int)*t++) / 48.0);
             e->valid = 1;
             e->transpt = 0;
         }
@@ -1971,9 +1973,9 @@ struct palentry *palsetup(int p)
             for (b = 0; b < p; b++) {
                 bb = 65535 * m * b;
                 e = &palsetup_palette[*s++];
-                e->clr.red = rr;
-                e->clr.green = gg;
-                e->clr.blue = bb;
+                e->r = rr;
+                e->g = gg;
+                e->b = bb;
                 e->valid = 1;
                 e->transpt = 0;
             }
@@ -1984,7 +1986,7 @@ struct palentry *palsetup(int p)
         if (g % p != 0) {
             gg = 65535 * m * g;
             e = &palsetup_palette[*s++];
-            e->clr.red = e->clr.green = e->clr.blue = gg;
+            e->r = e->g = e->b = gg;
             e->valid = 1;
             e->transpt = 0;
         }
