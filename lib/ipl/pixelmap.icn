@@ -54,7 +54,7 @@ procedure pixelmap(name, p, args[])
    every y := 0 to height - 1 do
       every x := 0 to width - 1 do {
          args[1] := read(input) | stop("*** short data in pixel list")
-         win.fg(p ! args)
+         win.set_fg(p ! args)
          win.draw_point(x, y)
          }
 

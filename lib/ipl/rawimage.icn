@@ -121,7 +121,7 @@ procedure ReadRaw(win, s, x, y)
       line := read(input) | break
       line ? {
          while c := move(2) do {
-            temp.fg(palette[c]) | stop("***invalid color: ", c)
+            temp.set_fg(palette[c]) | stop("***invalid color: ", c)
             temp.draw_point(x, y)
             x +:= 1
             if x = width then {
