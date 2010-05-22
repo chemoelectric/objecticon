@@ -182,7 +182,7 @@ static struct SharedColor *new_sharedcolor(char *name, int r, int g, int b)
     res->r = r;
     res->g = g;
     res->b = b;
-    res->c = ((r/257)<<16) | ((g/257)<<8) | (b/257);
+    res->c = ((r/256)<<16) | ((g/256)<<8) | (b/256);
     res->name = salloc(name);
     return res;
 }
@@ -2297,7 +2297,7 @@ void getpixel(struct imgmem *imem, int *r, int *g, int *b)
 
 void setpixel(struct imgmem *imem, int r, int g, int b)
 {
-    unsigned long c = ((r/257)<<16) | ((g/257)<<8) | (b/257);
+    unsigned long c = ((r/256)<<16) | ((g/256)<<8) | (b/256);
     XPutPixel(imem->im, imem->xoff, imem->yoff, c);
 }
 

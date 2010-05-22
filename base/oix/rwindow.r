@@ -1428,9 +1428,9 @@ int writeJPEG(wbp w, char *filename, int x, int y, int width,int height)
                 if (gotopixel(&imem, i, j)) {
                     int r, g, b;
                     getpixel(&imem, &r, &g, &b);
-                    *p++ = r / 257;
-                    *p++ = g / 257;
-                    *p++ = b / 257;
+                    *p++ = r / 256;
+                    *p++ = g / 256;
+                    *p++ = b / 256;
                 } else {
                     *p++ = 0;
                     *p++ = 0;
