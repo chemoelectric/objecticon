@@ -95,9 +95,9 @@ procedure clearpanel(panel)
    if \panel.pg then {			# default is textured
       panel.window.attrib("fill_style=textured")
       panel.window.pattern("checkers")
-      panel.window.bg("very dark gray")
+      panel.window.set_bg("very dark gray")
       }
-   else panel.window.fg(panel.fg)
+   else panel.window.set_fg(panel.fg)
 
    width := panel.window.get_width()
    height := panel.window.get_height()
@@ -129,7 +129,7 @@ procedure colorcell(panel, n, m, color)
 
    cellsize := panel.size
 
-   panel.window.fg( color)
+   panel.window.set_fg( color)
 
    panel.window.fill_rectangle((n - 1) * cellsize + 1, (m - 1) * cellsize + 1,
        cellsize - 1, cellsize - 1)
@@ -152,7 +152,7 @@ procedure colorcells(panel, matrix)
          # fudge 0/1 matrix
          if matrix[i, j] === "1" then matrix[i, j] := "white"
          else if matrix[i, j] === "0" then matrix[i, j] := "black"
-         panel.window.fg(matrix[i, j])
+         panel.window.set_fg(matrix[i, j])
             stop("Fg() failed in colorcells() with matrix[" ||
               i || "," || j || "]=" || matrix[i, j] || ".")
          panel.window.fill_rectangle((j - 1) * cellsize + 1, (i - 1) * cellsize + 1,
@@ -176,8 +176,8 @@ procedure tiercells(panel, tier)
 
    every i := 1 to m do {
       every j := 1 to n do {
-         if matrix[i, j] === "1" then panel.window.fg("white")
-         else panel.window.fg("black")
+         if matrix[i, j] === "1" then panel.window.set_fg("white")
+         else panel.window.set_fg("black")
          panel.window.fill_rectangle((j - 1) * cellsize + 1, (i - 1) * cellsize + 1,
             cellsize - 1, cellsize - 1)
          }

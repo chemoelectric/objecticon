@@ -1815,7 +1815,7 @@ void getpixel(struct imgmem *imem, int *r, int *g, int *b)
 
 void setpixel(struct imgmem *imem, int r, int g, int b)
 {
-   imem->crp[imem->yoff * imem->width + imem->xoff] = RGB(r/257, g/257, b/257);
+   imem->crp[imem->yoff * imem->width + imem->xoff] = RGB(r/256, g/256, b/256);
 }
 
 void saveimgmem(wbp w, struct imgmem *imem)

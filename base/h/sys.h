@@ -99,6 +99,7 @@
    #include <limits.h>
    #include <float.h>
    #include <assert.h>
+   #include <setjmp.h>
 #endif
 
 /*
@@ -118,7 +119,6 @@
    #define BOOL_CALLBACK BOOL CALLBACK
    #include <mmsystem.h>
    #include <process.h>
-   #include <setjmp.h>
    #define Type(d) (int)((d).dword & TypeMask)
    #undef lst1
    #undef lst2
@@ -173,7 +173,6 @@
 #ifdef HAVE_LIBJPEG
 #include "jpeglib.h"
 #include "jerror.h"
-#include <setjmp.h>
 /* we do not use their definitions of GLOBAL, LOCAL, or OF; we use our own */
 #undef GLOBAL
 #undef LOCAL

@@ -1043,10 +1043,10 @@ int setfg(wbp w, char *val)
     }
     if (wc->fg)
         unlink_sharedcolor(wc->fg);
-    r /= 257;
-    g /= 257;
-    b /= 257;
-    a /= 257;
+    r /= 256;
+    g /= 256;
+    b /= 256;
+    a /= 256;
     n = (r << 24) | (g << 16) | (b << 8) | a;
     wc->fg = new_sharedcolor(val, n);
     return Succeeded;
@@ -1072,10 +1072,10 @@ int setbg(wbp w, char *val)
     }
     if (wc->bg)
         unlink_sharedcolor(wc->bg);
-    r /= 257;
-    g /= 257;
-    b /= 257;
-    a /= 257;
+    r /= 256;
+    g /= 256;
+    b /= 256;
+    a /= 256;
     n = (r << 24) | (g << 16) | (b << 8) | a;
     wc->bg = new_sharedcolor(val, n);
     return Succeeded;
@@ -1369,9 +1369,9 @@ void getpixel(struct imgmem *imem, int *r, int *g, int *b)
 void setpixel(struct imgmem *imem, int r, int g, int b)
 {
     uchar *p = &imem->data[3 * (imem->yoff*imem->width + imem->xoff)];
-    *p++ = b / 257;
-    *p++ = g / 257;
-    *p++ = r / 257;
+    *p++ = b / 256;
+    *p++ = g / 256;
+    *p++ = r / 256;
 }
 
 static void impl_saveimgmem(wcp wc, Image *dest, struct imgmem *imem)
@@ -2358,9 +2358,9 @@ int writeimagefileimpl(wbp w, char *filename, int x, int y, int width, int heigh
                 if (gotopixel(&imem, i, j)) {
                     int r, g, b;
                     getpixel(&imem, &r, &g, &b);
-                    *p++ = b / 257;
-                    *p++ = g / 257;
-                    *p++ = r / 257;
+                    *p++ = b / 256;
+                    *p++ = g / 256;
+                    *p++ = r / 256;
                 } else {
                     *p++ = 0;
                     *p++ = 0;

@@ -29,25 +29,10 @@ package ipl.rgbrec
 import
    graphics(Window)
 
-record rgb(r, g, b)
+record rgb(r, g, b, a)
 
 procedure rgbrec(s)
-   local result
-
-   s := Window.color_value(s) | fail
-
-   result := rgb()
-
-   s ? {
-      result.r := tab(upto(','))
-      move(1)
-      result.g := tab(upto(','))
-      move(1)
-      result.b := tab(0)
-      }
-
-   return result
-
+   return rgb!Window.parse_color(s)
 end
 
 

@@ -422,7 +422,7 @@ end
 
 function graphics_Window_draw_image(self, x0, y0, d)
    body {
-      int c, i, width, height, row, p, format;
+      int c, width, height, row, p, format;
       word x, y;
       word nchars;
       unsigned char *s, *t, *z;
@@ -502,12 +502,9 @@ function graphics_Window_draw_image(self, x0, y0, d)
        */
       format = IMGDATA_PALETTE_OPAQUE;
       e = palsetup(p); 
-      for (i = 0; i < 256; i++)
-          e[i].used = 0;
       nchars = z - s;
       for (t = s; t < z; t++) {
           c = *t; 
-          e[c].used = 1;
           if (e[c].transpt)
               format = IMGDATA_PALETTE_TRANS;
           else if (!e[c].valid)
@@ -854,7 +851,7 @@ function graphics_Window_palette_color(s1, s2)
       e += *StrLoc(d) & 0xFF;
       if (!e->valid)
           fail;
-      sprintf(tmp, "%d,%d,%d", e->clr.red, e->clr.green, e->clr.blue);
+      sprintf(tmp, "%d,%d,%d", e->r, e->g, e->b);
       cstr2string(tmp, &result);
       return result;
    }

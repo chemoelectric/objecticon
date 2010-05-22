@@ -175,7 +175,7 @@ procedure Shade(win, color)
       }
 
    if win.get_depth() ~== "1" & /env then {
-      win.fg( color) | fail
+      win.set_fg( color) | fail
       return win
       }
    (Window.color_value( color) | fail) ? {
@@ -186,7 +186,7 @@ procedure Shade(win, color)
    g := integer(0.30 * r + 0.59 * g + 0.11 * b)
 
    if \env == ("gray" | "grey") then {
-      win.fg( g || "," || g || "," || g)
+      win.set_fg( g || "," || g || "," || g)
       return win
       }
 
@@ -317,16 +317,13 @@ end
 #  based on Foley et al, 2/e, p.592
 
 # HSV interpretation of color
-procedure HSV(win,k)			
-   local r, g, b, h, s, v, min, max, d
+procedure HSV(k)			
+   local r, g, b, h, s, v, min, max, d, t
 
-   (Window.color_value(k) | fail) ? {
-      r := tab(many(&digits)) / 65535.0
-      move(1)
-      g := tab(many(&digits)) / 65535.0
-      move(1)
-      b := tab(many(&digits)) / 65535.0
-      }
+   t := Window.parse_color(k) | fail
+   r := t[1] / 65535.0
+   g := t[2] / 65535.0
+   b := t[3] / 65535.0
 
    min := r;  min >:= g;  min >:= b		# minimum
    max := r;  max <:= g;  max <:= b		# maximum
@@ -414,16 +411,13 @@ end
 #  based on Foley et al, 2/e, p.595
 
 # HLS interpretation of color
-procedure HLS(win,k)			
-   local r, g, b, h, l, s, min, max, delta
+procedure HLS(k)			
+   local r, g, b, h, l, s, min, max, delta, t
 
-   (Window.color_value(k) | fail) ? {
-      r := tab(many(&digits)) / 65535.0
-      move(1)
-      g := tab(many(&digits)) / 65535.0
-      move(1)
-      b := tab(many(&digits)) / 65535.0
-      }
+   t := Window.parse_color(k) | fail
+   r := t[1] / 65535.0
+   g := t[2] / 65535.0
+   b := t[3] / 65535.0
 
    min := r;  min >:= g;  min >:= b	# minimum
    max := r;  max <:= g;  max <:= b	# maximum

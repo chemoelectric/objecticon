@@ -114,28 +114,16 @@ end
 
 # write pixel
 procedure PutPixel(win, x, y, color)		   
-   local i, r, g, b
+   local i, r, g, b, l
 
    initial if /XPP_qtab then PixInit()
 
-   # convert color to 8-bit r, g, b
-   if type(color) == "integer" then {
-      # mutable -- don't quantize
-      win.fg(color)
-      win.draw_point(x, y)
-      return
-      }
-
-   (color | Window.color_value(color) | fail) ? (
-      (r := tab(many(&digits))) & move(1) &
-      (g := tab(many(&digits))) & move(1) &
-      (b := tab(many(&digits)))
-      )
+   l := Window.parse_color(color) | fail
 
    # convert three 0..65535 ints to 0..255
-   r := (r + 255) / 257
-   g := (g + 255) / 257
-   b := (b + 255) / 257
+   r := l[1] / 256
+   g := l[2] / 256
+   b := l[3] / 256
 
    # get dither table index based on coordinates
    i := iand(x, 3) + 4 * iand(y, 3) + 1
@@ -158,7 +146,7 @@ procedure PutPixel(win, x, y, color)
       }
 
    # finally, put the pixel on the screen
-   win.fg(r || "," || g || "," || b)
+   win.set_fg(r || "," || g || "," || b)
    win.draw_point(x, y)
    return
 end

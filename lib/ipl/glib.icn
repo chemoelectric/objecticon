@@ -551,7 +551,7 @@ procedure moveto(t,p)
 end
 
 procedure lineto(t,p)
-   t.win.vp.screen.fg(\@\(t.color))
+   t.win.vp.screen.set_fg(\@\(t.color))
    DrwLine(t.win, t.pos, p)
    return t.pos := p
 end

@@ -226,16 +226,16 @@ procedure drawpalette(win, p, x, y, w, h, f, n)
       x2 := x + (j + 1) * w / n
       y1 := y + i * h / nh
       y2 := y + (i + 1) * h / nh
-      win.fg(colr := Window.palette_color(p, c)) | (ret := &null)
+      win.set_fg(colr := Window.palette_color(p, c)) | (ret := &null)
       win.fill_rectangle(x1, y1, x2 - x1, y2 - y1)
       if upto('l', f) then {
-         win.fg(Contrast(win, colr))
+         win.set_fg(Contrast(win, colr))
          if not upto(cs, c) then
             c := image(c)[-3:-1]
          CenterString(win, (x1 + x2) / 2, (y1 + y2) / 2, c)
          }
       if upto('o', f) then {
-         win.fg("black")
+         win.set_fg("black")
          win.draw_rectangle(x1, y1, x2 - x1, y2 - y1)
          }
       if (j +:= 1) >= n then {

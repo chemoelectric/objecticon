@@ -204,7 +204,7 @@ procedure AlcPlane(win, n)
 
    if n < 1 | n > 7 then
       runerr(205, n)
-   fg := win.fg()
+   fg := win.get_fg()
 
    ncolors := 2 ^ n
    mask := ncolors - 1
@@ -235,7 +235,7 @@ procedure AlcPlane(win, n)
       }
 
    # set base color to background and return result
-   win.color( b, win.bg() | "white")
+   win.color( b, win.get_bg() | "white")
    /Plane_Mask := table()
    every Plane_Mask [b to b + mask] := mask
    return b
@@ -292,17 +292,17 @@ procedure PlaneOp(win, bp, op)
    case op of {
       "copy": {
          win.attrib( "draw_op=copy")
-         win.fg( bp)
+         win.set_fg( bp)
          }
       "set": {
          i := base + bits
          win.attrib( "draw_op=and")
-         win.fg( i)
+         win.set_fg( i)
          }
       "clear": {
          i := base + (mask - bits)
          win.attrib( "draw_op=or")
-         win.fg( i)
+         win.set_fg( i)
          }
       default:
          runerr(205, op)
@@ -316,6 +316,6 @@ end
 
 procedure Deplane(win, color)
    win.attrib("draw_op=copy")
-   win.fg( \color)
+   win.set_fg( \color)
    return win
 end

@@ -46,7 +46,7 @@ import
 procedure wipe(window, color, direction, x1, y1, w, h)
    local x, y, x2, y2, fg
 
-   /color := window.bg()			# establish defaults
+   /color := window.get_bg()			# establish defaults
    /direction := "right"
    /x1 := 0
    /y1 := 0
@@ -55,8 +55,8 @@ procedure wipe(window, color, direction, x1, y1, w, h)
    x2 := x1 + w
    y2 := y1 + h
 
-   fg := window.fg()				# save present foreground color
-   window.fg(color)				# set foreground for wiping
+   fg := window.get_fg()				# save present foreground color
+   window.set_fg(color)				# set foreground for wiping
 
    if not(integer(x1) & integer(x2) & integer(y1) & integer(y2)) |
       (x1 > x2) | (y1 > y2) then stop("*** illegal coordinates in wipe()")
@@ -110,7 +110,7 @@ procedure wipe(window, color, direction, x1, y1, w, h)
       default: stop("*** illegal direction specificaion in wipe()")
       }
 
-   window.fg(fg)			# restore foreground color
+   window.set_fg(fg)			# restore foreground color
 
    return
 

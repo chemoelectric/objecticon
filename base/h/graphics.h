@@ -160,18 +160,13 @@ typedef struct _wfont {
 #define FWIDTH(w) ((w)->context->font->maxwidth)
 
 /*
- * These structures and definitions are used for colors and images.
+ * Entry in palette table.
  */
-typedef struct {
-   int red, green, blue;		/* color components, linear 0 - 65535*/
-   } LinearColor;
-
-struct palentry {			/* entry for one palette member */
-   LinearColor clr;			/* RGB value of color */
-   char used;				/* nonzero if char is used */
-   char valid;				/* nonzero if entry is valid & opaque */
-   char transpt;			/* nonzero if char is transparent */
-   };
+struct palentry {
+   int r, g, b;                         /* RGB value of color */
+   char valid;                          /* nonzero if entry is valid & opaque */
+   char transpt;                        /* nonzero if char is transparent */
+};
 
 #define IMGDATA_RGB24      1
 #define IMGDATA_BGR24      2
