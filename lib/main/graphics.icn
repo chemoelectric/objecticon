@@ -4,6 +4,39 @@ import
    lang(NoCopy),
    util(SetFields)
 
+#
+# @field bg=string : see {set_bg}
+# @field canvas=string : see {set_canvas}
+# @field clip=i1,i2,i3,i4  : see {clip}
+# @field unclip=: see {unclip}
+# @field draw_op=string : see {set_draw_op}
+# @field dx=integer : see {set_dx}
+# @field dy=integer : see {set_dy}
+# @field fg=string : see {set_fg}
+# @field fill_style=string : see {set_fill_style}
+# @field font=string : see {set_font}
+# @field geometry=i1,i2,i3,i4 : see {set_geometry}
+# @field height=integer : see {set_height}
+# @field image=string : see {set_image}
+# @field input_mask=string : see {set_input_mask}
+# @field label=string : see {set_label}
+# @field line_style=string : see {set_line_style}
+# @field line_width=integer : see {set_line_width}
+# @field max_height=integer : see {set_max_height}
+# @field max_size=integer : see {set_max_size}
+# @field max_width=integer : see {set_max_width}
+# @field min_height=integer : see {set_min_height}
+# @field min_size=integer : see {set_min_size}
+# @field min_width=integer : see {set_min_width}
+# @field pattern=string : see {set_pattern}
+# @field pointer=string : see {set_pointer}
+# @field pos=i1,i2 : see {set_pos}
+# @field x=integer : see {set_x}
+# @field y=integer : see {set_y}
+# @field resize=flag : see {set_resize}
+# @field size=i1,i2 : see {set_size}
+# @field width=integer : see {set_width}
+#
 class Window(SetFields,NoCopy)
    private
       wbp,
@@ -384,6 +417,26 @@ class Window(SetFields,NoCopy)
       t := get_bg()
       set_bg(get_fg())
       set_fg(t)
+   end
+
+   #
+   # Convenient method to open an image file and return a hidden window with
+   # its contents.
+   # @param file the name of the file
+   # @param bg the optional background colour (only relevant with transparent
+   # @         images)
+   #
+   public static open_image(file, bg)
+      local w
+      w := if /bg then
+         Window.open("canvas=hidden")
+      else
+         Window.open("canvas=hidden", "bg=",bg)
+      w.set_image(file) | {
+         w.close()
+         fail
+      }
+      return w
    end
 
    protected set_one(f)
