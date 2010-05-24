@@ -123,10 +123,10 @@ if test "$ac_cv_lib_X11_main" = yes; then
                 echo no
         fi
         echo -n "png library            : "
-        if test "$ac_cv_lib_png_main" = yes; then
-                echo yes
-        else
+        if test -z "$PNG_VERSION"; then
                 echo no
+        else
+                echo yes
         fi
         echo -n "Xft anti-aliased fonts : "
         if test "$ac_cv_lib_Xft_main" = yes; then
