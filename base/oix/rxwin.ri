@@ -17,13 +17,13 @@ wdp wdsplys;
  */
 static wcp alccontext(wbp w);
 static wsp alcwinstate(void);
-static int handle_misc(wdp display);
-static int handle_config(wbp w, XConfigureEvent *event);
-static int handle_exposures(wbp w, XExposeEvent *event);
+static void handle_misc(wdp display);
+static void handle_config(wbp w, XConfigureEvent *event);
+static void handle_exposures(wbp w, XExposeEvent *event);
 static void handle_mouse(wbp w, XButtonEvent *event);
 static void handle_keypress(wbp w, XKeyEvent *event);
-static int setpatternbits(wbp w, int width, int *bits, int nbits);
-static int wmap(wbp w);
+static void setpatternbits(wbp w, int width, int *bits, int nbits);
+static void wmap(wbp w);
 static int convert_KeySym_to_code_point(KeySym k);
 #ifdef HAVE_LIBXFT
 int xft_stringwidth(wbp w, char *s, int n);
@@ -92,7 +92,7 @@ static stringint canvastypes[] = {
     {0, 6},
     {"hidden",      HiddenState},
     {"iconic",      IconicState},
-    {"maximal",     MaximizedState},
+    {"maximized",   MaximizedState},
     {"normal",      NormalState},
     {"popup",       PopupState},
     {"root",        RootState},
@@ -366,83 +366,11 @@ char* PropertyToString(Display* display, Atom target, int number_items,
 }
 
 /*
- * Function to append data to an X property.
- */
-
-static int     ErrorFlag = False;
-static int     LastError = None;
-
-#define BUFSIZE     1024
-
-#define NUMBER_ERRORS   18
-
-char*  ErrorCodes[ NUMBER_ERRORS ] = {
-    "Success",           /* 0  */
-    "BadRequest",        /* 1  */
-    "BadValue",          /* 2  */
-    "BadWindow",         /* 3  */
-    "BadPixmap",         /* 4  */
-    "BadAtom",           /* 5  */
-    "BadCursor",         /* 6  */
-    "BadFont",           /* 7  */
-    "BadMatch",          /* 8  */
-    "BadDrawable",       /* 9  */
-    "BadAccess",         /* 10 */
-    "BadAlloc",          /* 11 */
-    "BadColor",          /* 12 */
-    "BadGC",             /* 13 */
-    "BadIDChoice",       /* 14 */
-    "BadName",           /* 15 */
-    "BadLength",         /* 16 */
-    "BadImplementation"  /* 17 */
-};
-
-
-static void ErrorHandler(Display* display, XErrorEvent* error_event)
-{   
-    char string0[BUFSIZE + 1];
-
-    ErrorFlag = True;
-    LastError = (int) error_event->error_code;
-
-    /* Find out the error message and print it. */
-    XGetErrorText(display, error_event->error_code, string0, BUFSIZE);
-
-    fprintf(stderr, "X Error on display %s.i\nResource %ld:  ",
-            DisplayString( display ), error_event->resourceid );
-
-    if ((error_event->error_code > 0 ) && 
-        (error_event->error_code < NUMBER_ERRORS ) ) {
-
-        fprintf( stderr, "%s (%s).\n", string0,
-                 ErrorCodes[ error_event->error_code ] );
-    }
-    else {
-        fprintf( stderr, "%s.\n", string0 );
-    }
-
-    fprintf(stderr, "Op code %d.%d, Error code %d\n", error_event->request_code,
-            error_event->minor_code, error_event->error_code );
-}
-
-
-void ResetErrorFlag()
-{  
-    ErrorFlag = False;
-    LastError = None;
-}
-
-void SetErrorHandler()
-{   
-    (void) XSetErrorHandler((XErrorHandler) ErrorHandler);
-}
-
-/*
  * handle_misc processes pending events on display.
  * if w is non-null, block until a returnable event arrives.
  * returns 1 on success, 0 on failure.
  */
-static int handle_misc(wdp wd)
+static void handle_misc(wdp wd)
 {
     XEvent event;
     Window evwin;
@@ -621,23 +549,20 @@ static int handle_misc(wdp wd)
             case NoExpose:
                 break;
             case Expose:
-                if (!handle_exposures(wb, (XExposeEvent *)&event))
-                    return 1;
-                continue;
+                handle_exposures(wb, (XExposeEvent *)&event);
+                break;
             case UnmapNotify:
-                wb->window->iconic = IconicState;
-                continue;
+                wb->window->state = IconicState;
+                break;
             case MapNotify:
                 if ((ws->width != DisplayWidth(wd->display, wd->screen)) ||
                     (ws->height != DisplayHeight(wd->display, wd->screen)))
-                    ws->iconic = NormalState;
+                    ws->state = NormalState;
                 else
-                    ws->iconic = MaximizedState;
-                continue;
+                    ws->state = MaximizedState;
+                break;
             case ConfigureNotify:
-                if (!handle_config(wb, (XConfigureEvent *)&event)) {
-                    return 0;
-                }
+                handle_config(wb, (XConfigureEvent *)&event);
                 break;
             case ClientMessage: {
                 /*
@@ -648,9 +573,8 @@ static int handle_misc(wdp wd)
                     struct descrip d;
                     MakeInt(WINDOWCLOSED, &d);
                     qevent(wb->window, &d, -1, -1, 0, 0, 0);
-                    return 1;
                 }
-                continue;
+                break;
             }
             case DestroyNotify:
                 if (!ISZOMBIE(wb))
@@ -681,10 +605,9 @@ static int handle_misc(wdp wd)
                 }
                 break;
             default:
-                continue;
+                break;
         }
     }
-    return 1;
 }
 
 /*
@@ -794,11 +717,17 @@ wbp wcreate(char *display, wbp parent)
 
 int wopen(wbp w)
 {
-    if (wmap(w) != Succeeded) {
-        LitWhy("Failed to map window");
-        return Failed;
+    wsp ws = w->window;
+    struct imgdata *imd;
+
+    wmap(w);
+
+    imd = &ws->initimage;
+    if (imd->width) {
+        drawimgdata(w, 0, 0, imd);
+        freeimgdata(imd);
     }
-	
+
     return Succeeded;
 }
 
@@ -806,15 +735,13 @@ int wopen(wbp w)
 /*
  * Create a canvas.
  *  If a window, cause the window to actually become visible on the screen.
- *  returns Succeeded, Failed, or Error
  */
-static int wmap(wbp w)
+static void wmap(wbp w)
 {
     XWindowAttributes attrs;
     XGCValues gcv;
     unsigned long gcmask =
         GCFont | GCForeground | GCBackground | GCFillStyle | GCCapStyle;
-    struct imgdata *imd;
     int i;
     int new_pixmap = 0;
     struct descrip progname;
@@ -839,12 +766,12 @@ static int wmap(wbp w)
     /*
      * create the X window (or use the DefaultRootWindow if requested)
      */
-    if (ws->iconic != HiddenState) {
+    if (ws->state != HiddenState) {
         Atom WMDeleteWindow;
         XSetWindowAttributes attr;
         attr.background_pixel = wc->bg->c;
 
-        switch (ws->iconic) {
+        switch (ws->state) {
             case RootState:
                 ws->win = DefaultRootWindow(stddpy);
                 break;
@@ -876,8 +803,6 @@ static int wmap(wbp w)
                 break;
             }
         }
-        if (ws->win == (Window) NULL)
-            return Failed;
 
         /* If the window has a parent, set the WM_TRANSIENT_FOR hint. */
         if (ws->transientfor)
@@ -922,7 +847,6 @@ static int wmap(wbp w)
     if (stdgc == NULL) {
         wc->gc = XCreateGC(stddpy, stdpix, gcmask, &gcv);
         stdgc = wc->gc;
-        if (stdgc == NULL) return Failed;
     }
     else
         XChangeGC(stddpy, stdgc, gcmask, &gcv);
@@ -937,29 +861,22 @@ static int wmap(wbp w)
     }
 
     /* For RootState, need to fill since XClearWindow above fills with a pixmap */
-    if (ws->iconic == RootState) {
+    if (ws->state == RootState) {
         XSetForeground(stddpy, stdgc, wc->bg->c);
         XFillRectangle(stddpy, ws->win, stdgc, 0, 0, ws->width, ws->height);
         XSetForeground(stddpy, stdgc, wc->fg->c);
     }
 
-    imd = &ws->initimage;
-    if (imd->width) {
-        drawimgdata(w, 0, 0, imd);
-        freeimgdata(imd);
-    }
-
-    if (wc->patternname != NULL) {
-        if (setpattern(w, wc->patternname) != Succeeded)
-            return Failed;
-    }
+    if (wc->patternname != NULL)
+        setpattern(w, wc->patternname);
 
     /*
      *  if we are opening a pixmap, we are done at this point.
      */
-    if (stdwin == (Window) NULL) return Succeeded;
+    if (stdwin == (Window) NULL) 
+        return;
 
-    if (ws->iconic != RootState) {
+    if (ws->state != RootState) {
         XSizeHints size_hints;
         size_hints.flags = PSize | PMinSize | PMaxSize;
         size_hints.width = ws->width;
@@ -991,7 +908,7 @@ static int wmap(wbp w)
 
     wmhints.input = True;
     wmhints.flags = InputHint;
-    if (ws->iconic != RootState) {
+    if (ws->state != RootState) {
         wmhints.flags |= (ws->wmhintflags | StateHint);
         wmhints.initial_state = NormalState;
     }
@@ -1019,7 +936,7 @@ static int wmap(wbp w)
     }
     XSync(stddpy, False);
 
-    if (ws->iconic != RootState) {
+    if (ws->state != RootState) {
         CLREXPOSED(w);
         XMapWindow(stddpy, stdwin);
     }
@@ -1036,16 +953,10 @@ static int wmap(wbp w)
         XDefineCursor(stddpy, stdwin, wd->cursors[i]);
     }
 
-    /*
-     * busy loop for an expose event, unless of course we are starting out
-     *  in an iconic state
-     */
     CLRZOMBIE(w);
 
     XSetFunction(stddpy, stdgc, wc->drawop->i);
     XSync(stddpy, False);
-
-    return Succeeded;
 }
 
 void doconfig(wbp w, int status)
@@ -1201,7 +1112,6 @@ int ownselection(wbp w, char *selname)
 {
     Atom selection;
     Window curr;
-    {
     STDLOCALS(w);
 
     selection = XInternAtom(ws->display->display, selname, False);
@@ -1244,7 +1154,6 @@ int ownselection(wbp w, char *selname)
                        CurrentTime);
 
     return Succeeded;
-    }
 }
 
 int requestselection(wbp w, char *selname, char *targetname)
@@ -1317,20 +1226,6 @@ int setpointer(wbp w, char *val)
     return Succeeded;
 }
 
-#if 0
-    int i = stringint_str2int(cursorsyms,val) >> 1;
-    STDLOCALS(w);
-    if (i < 0 || i >= NUMCURSORSYMS) return Failed;
-
-    ws->theCursor = i;
-    if (!(wd->cursors[i]))
-        wd->cursors[i] = XCreateFontCursor(stddpy, 2 * i);
-    if (stdwin)
-        XDefineCursor(stddpy, stdwin, wd->cursors[i]);
-    return Succeeded;
-}
-#endif
-
 /*
  * setdrawop() - set the drawing operation
  */
@@ -1374,16 +1269,15 @@ static void setclip(wbp w)
 static void unsetclip(wbp w)
 {
     wcp wc = w->context;
-    if (wc->gc) {
+    if (wc->gc) 
         XSetClipMask(wc->display->display, wc->gc, None);
-    }
 }
 
 void getcanvas(wbp w, char *s)
 {
-    char *v = stringint_int2str(canvastypes, w->window->iconic);
+    char *v = stringint_int2str(canvastypes, w->window->state);
     if (!v)
-        syserr("Invalid value of iconic");
+        syserr("Invalid value of state");
     strcpy(s, v);
 }
 
@@ -1424,19 +1318,18 @@ int setcanvas(wbp w, char *s)
         case IconicState: {
             if (ws->pix == (Pixmap) NULL) {
                 ws->wmhintflags |= StateHint;
-                ws->iconic = IconicState;
+                ws->state = IconicState;
             }
             else {
-                if (ws->iconic != IconicState) {
+                if (ws->state != IconicState) {
                     if (ws->win == (Window) NULL) {
+                        ws->state = NormalState;
                         wmap(w);
                     }
                     XIconifyWindow(ws->display->display, ws->win, ws->display->screen);
                     XSync(stddpy, False);
-                    while (ws->iconic != IconicState)
-                        if (handle_misc(wd) < 1) {
-                            return Failed;
-                        }
+                    while (ws->state != IconicState)
+                        handle_misc(wd);
                 }
             }
             break;
@@ -1444,26 +1337,26 @@ int setcanvas(wbp w, char *s)
 
         case NormalState: {
             if (ws->pix == (Pixmap) NULL) {
-                ws->iconic = NormalState;
+                ws->state = NormalState;
             }
             else {
                 if (ws->win == (Window) NULL) {
-                    ws->iconic = NormalState;
+                    ws->state = NormalState;
                     wmap(w);
                 }
-                else if (ws->iconic == IconicState) {
+                else if (ws->state == IconicState) {
                     XMapWindow(stddpy, stdwin);
                     XSync(stddpy, False);
-                    while (ws->iconic == IconicState)
+                    while (ws->state == IconicState)
                         pollevent();
                 }
-                else if (ws->iconic == MaximizedState) {
+                else if (ws->state == MaximizedState) {
                     ws->x = ws->normalx;
                     ws->y = ws->normaly;
                     ws->width = ws->normalw;
                     ws->height = ws->normalh;
                     doconfig(w, C_POS | C_SIZE);
-                    ws->iconic = NormalState;
+                    ws->state = NormalState;
                 }
             }
             break;
@@ -1471,7 +1364,7 @@ int setcanvas(wbp w, char *s)
 
         case PopupState: {
             if (ws->win == (Window) NULL)  {
-                ws->iconic = PopupState;
+                ws->state = PopupState;
             }
             else {
                 return Failed;
@@ -1481,7 +1374,7 @@ int setcanvas(wbp w, char *s)
 
         case RootState: {
             if (ws->win == (Window) NULL)  {
-                ws->iconic = RootState;
+                ws->state = RootState;
             }
             else {
                 return Failed;
@@ -1490,7 +1383,7 @@ int setcanvas(wbp w, char *s)
         }
 
         case MaximizedState: {
-            if (ws->iconic != MaximizedState) {
+            if (ws->state != MaximizedState) {
                 int expect_config= (ws->width != DisplayWidth(stddpy, wd->screen)) ||
                     (ws->height != DisplayHeight(stddpy, wd->screen));
                 ws->normalx = ws->x;
@@ -1501,13 +1394,13 @@ int setcanvas(wbp w, char *s)
                 ws->height= DisplayHeight(stddpy, wd->screen);
                 if (ws->pix != (Pixmap) NULL) {
                     if (ws->win == (Window) NULL) {
-                        ws->iconic = MaximizedState;
+                        ws->state = MaximizedState;
                         wmap(w);
                     }
-                    else if (ws->iconic == IconicState) {
+                    else if (ws->state == IconicState) {
                         XMapWindow(stddpy, stdwin);
                         XSync(stddpy, False);
-                        while (ws->iconic == IconicState)
+                        while (ws->state == IconicState)
                             pollevent();
                     }
                     else if (expect_config) {
@@ -1519,23 +1412,23 @@ int setcanvas(wbp w, char *s)
                         doconfig(w, C_POS);
                     }
                 }
-                ws->iconic = MaximizedState;
+                ws->state = MaximizedState;
             }
             break;
         }
 
         case HiddenState: {
             if (ws->pix == (Pixmap)NULL) {
-                ws->iconic = HiddenState;
+                ws->state = HiddenState;
             }
             else {
                 if (ws->win != (Window) NULL) {
-                    if (ws->iconic == MaximizedState) {
+                    if (ws->state == MaximizedState) {
                         ws->x = ws->normalx;
                         ws->y = ws->normaly;
                         ws->width = ws->normalw;
                         ws->height = ws->normalh;
-                        ws->iconic = NormalState;
+                        ws->state = NormalState;
                     }
                     SETZOMBIE(w);
 #ifdef HAVE_LIBXFT
@@ -1548,7 +1441,7 @@ int setcanvas(wbp w, char *s)
                     XFlush(stddpy);
                     while (ws->win)
                         pollevent();
-                    ws->iconic = HiddenState;
+                    ws->state = HiddenState;
                 }
             }
             break;
@@ -1809,11 +1702,9 @@ int setfont(wbp w, char *s)
  * callback procedures
  */
 
-static int handle_exposures(wbp w, XExposeEvent *event)
+static void handle_exposures(wbp w, XExposeEvent *event)
 {
-    int returnval;
     STDLOCALS(w);
-    returnval = ISEXPOSED(w);
     SETEXPOSED(w);
     if (stdwin && !ISZOMBIE(w)) {
         if (wc->drawop->i != GXcopy)
@@ -1827,7 +1718,6 @@ static int handle_exposures(wbp w, XExposeEvent *event)
         if (wc->drawop->i != GXcopy)
             XSetFunction(stddpy,stdgc,wc->drawop->i);
     }
-    return returnval;
 }
 
 /*
@@ -1849,8 +1739,8 @@ static void resizePixmap(wbp w, int width, int height)
 
         ws->pixheight = Max(ws->pixheight, height);
         ws->pixwidth  = Max(ws->pixwidth, width);
-        MemProtect(p = XCreatePixmap(stddpy, DefaultRootWindow(stddpy), ws->pixwidth,
-                                     ws->pixheight, DefaultDepth(stddpy,wd->screen)));
+        p = XCreatePixmap(stddpy, DefaultRootWindow(stddpy), ws->pixwidth,
+                          ws->pixheight, DefaultDepth(stddpy,wd->screen));
         /*
          * This staggering amount of redudancy manages to make sure the new
          * pixmap gets initialized including areas not in the old pixmap.
@@ -1899,7 +1789,7 @@ static void resizePixmap(wbp w, int width, int height)
  * user program is informed anyhow.  The integer coordinates are
  * the new size of the window, in pixels.
  */
-static int handle_config(wbp w, XConfigureEvent *event)
+static void handle_config(wbp w, XConfigureEvent *event)
 {
     struct descrip d;
     STDLOCALS(w);
@@ -1915,7 +1805,7 @@ static int handle_config(wbp w, XConfigureEvent *event)
      * If this was not a resize, drop it
      */
     if ((event->width == ws->width) && (event->height == ws->height))
-        return 1;
+        return;
 
     ws->width = event->width;
     ws->height = event->height;
@@ -1927,11 +1817,10 @@ static int handle_config(wbp w, XConfigureEvent *event)
      * The initial configure event generates no Icon-level "events"
      */
     if (!ISEXPOSED(w))
-        return 1;
+        return;
 
     MakeInt(RESIZED, &d);
     qevent(w->window, &d, -1, -1, 0, 0, 0);
-    return 1;
 }
 
 /*
@@ -2450,7 +2339,7 @@ int setpattern(wbp w, char *name)
     return Succeeded;
 }
 
-static int setpatternbits(wbp w, int width, int *bits, int nbits)
+static void setpatternbits(wbp w, int width, int *bits, int nbits)
 {
     int v;
     int i, j;
@@ -2471,7 +2360,6 @@ static int setpatternbits(wbp w, int width, int *bits, int nbits)
     XSetStipple(stddpy, stdgc, p);
     XSync(stddpy, False);
     XFreePixmap(stddpy, p);
-    return Succeeded;
 }
 
 int raisewindow(wbp w)
@@ -3270,7 +3158,7 @@ wcp clonecontext(wbp w)
     }
     gcv.fill_style = rv->fillstyle->i;
     gcv.cap_style  = CapProjecting;
-    MemProtect(rv->gc = XCreateGC(w->window->display->display,w->window->pix,gcmask,&gcv));
+    rv->gc = XCreateGC(w->window->display->display,w->window->pix,gcmask,&gcv);
     if (rv->clipw >= 0) {
         rec.x = rv->clipx;
         rec.y = rv->clipy;
@@ -3298,7 +3186,7 @@ static wsp alcwinstate()
         ExposureMask | KeyPressMask |
         ButtonPressMask | ButtonReleaseMask | ButtonMotionMask |
         StructureNotifyMask;
-    ws->iconic = NormalState;
+    ws->state = NormalState;
     ws->x = ws->y = -INT_MAX;
     ws->minwidth = ws->minheight = 1;
     ws->maxwidth = ws->maxheight = INT_MAX;

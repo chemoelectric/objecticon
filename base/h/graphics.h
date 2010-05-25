@@ -317,7 +317,7 @@ typedef struct _wstate {
 #endif
   int		normalx, normaly;	/* pos to remember when maximized */
   int		normalw, normalh;	/* size to remember when maximized */
-  int		iconic;			/* window state; icon, window or root*/
+  int		state;			/* window state; icon, window or root*/
   Window        transientfor;           /* transient-for hint */
   long		wmhintflags;		/* window manager hints */
 #elif PLAN9

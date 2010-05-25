@@ -143,7 +143,7 @@ procedure OpenWindow(args[])
    /att["bg"] := VBackground
    /att["label"] := pname
 
-   if /att["image"] & not (att["canvas"] === "maximal") then {	# don't override
+   if /att["image"] & not (att["canvas"] === "maximized") then {	# don't override
       /att["width"] := 500
       /att["height"] := 300
       }
@@ -282,7 +282,7 @@ end
 #  The compound attributes "pos", "size",  and "geometry" are broken down
 #  into their component parts and stored as multiple values.  A runtime
 #  error occurs if any of these is malformed.  Interactions with
-#  "canvas=maximal" are also handled.
+#  "canvas=maximized" are also handled.
 
 procedure wdw_register(att, name, val)
    wdw_reg(att, name, val) | runerr(205, name || "=" || val)
@@ -296,7 +296,7 @@ procedure wdw_reg(att, name, val)
          ="," | fail
          att["height"] := tab(many(&digits)) | fail
          pos(0) | fail
-         if \att["canvas"] == "maximal" then
+         if \att["canvas"] == "maximized" then
             delete(att, "canvas")
          }
       "pos": val ? {		# pos=xxx,yyy
@@ -310,7 +310,7 @@ procedure wdw_reg(att, name, val)
          then {
             ="x" | fail
             att["height"] := tab(many(&digits)) | fail
-            if \att["canvas"] == "maximal" then
+            if \att["canvas"] == "maximized" then
                delete(att, "canvas")
             }
          if ="+" then {
@@ -322,7 +322,7 @@ procedure wdw_reg(att, name, val)
          }
       "canvas": {
          att[name] := val
-         if val == "maximal" then
+         if val == "maximized" then
             every delete(att, "width" | "height")
          }
       default: {

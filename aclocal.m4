@@ -278,7 +278,7 @@ AC_DEFUN([CHECK_PNG],
                     if test "$PNG_INCLUDE_DIR" != "-I/usr/include"; then
                        CPPFLAGS="$CPPFLAGS $PNG_INCLUDE_DIR"
                     fi
-                    AC_DEFINE(HAVE_PNG)
+                    AC_DEFINE(HAVE_LIBPNG)
                else
                     AC_MSG_RESULT([no])
                     echo "*** At least version 1.2.37 of libpng is required for png support (currently have $PNG_VERSION)"

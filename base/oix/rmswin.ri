@@ -847,7 +847,7 @@ char *s;
       stdwin = ws->win = ws->iconwin;
       CLRTOBEHIDDEN(ws);
       }
-   else if (!strcmp(s, "maximal")) {
+   else if (!strcmp(s, "maximized")) {
       cmd = SW_SHOWMAXIMIZED;
       stdwin = ws->win = ws->iconwin;
       CLRTOBEHIDDEN(ws);
@@ -1457,7 +1457,7 @@ char *answer;
    if (ws->iconwin) {
       if (!IsWindowVisible(ws->iconwin)) sprintf(answer, "hidden");
       else if (IsIconic(ws->iconwin)) sprintf(answer, "iconic");
-      else if (IsZoomed(ws->iconwin)) sprintf(answer, "maximal");
+      else if (IsZoomed(ws->iconwin)) sprintf(answer, "maximized");
       else sprintf(answer,"normal");
       }
    else sprintf(answer,"hidden");
