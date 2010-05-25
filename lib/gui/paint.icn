@@ -479,22 +479,19 @@ class ImagePaint(Paint,SetFields)
 
    public load_image(c)
       if \self.image_str then {
-         if win := Window.open!(wattribs_to_list(c.get_effective_wattribs()) ||| 
-                                ["width=", (0 < image_width(self.image_str)),
-                                 "height=", (0 < image_height(self.image_str)),
-                                 "canvas=hidden"]) then
+         # Note we need foreground too for shade & highlight chars in image_str
+         if win := Window.open("fg=",c.cbwin.get_fg(),
+                               "bg=",c.cbwin.get_bg(),
+                               "width=", (0 < image_width(self.image_str)),
+                               "height=", (0 < image_height(self.image_str)),
+                               "canvas=hidden") then
             draw_image_ex(win, 0, 0, self.image_str)
       } else if \self.image_file then {
          if \self.use_cache_flag then {
             if win := ImageCache.get(self.image_file, c.cbwin.get_bg()) then
                dont_close := 1
-         } else {
-            win := Window.open!(wattribs_to_list(c.get_effective_wattribs()) ||| ["canvas=hidden"])
-            win.set_image(self.image_file) | {
-               win.close()
-               win := &null
-            }
-         }
+         } else
+            win := Window.open_image(self.image_file, c.cbwin.get_bg())
       } else if \self.image_window then {
          win := self.image_window
          dont_close := 1

@@ -88,6 +88,16 @@ static stringint linestyles[] = {
     {"striped",     LineDoubleDash},
 };
 
+static stringint canvastypes[] = {
+    {0, 6},
+    {"hidden",      HiddenState},
+    {"iconic",      IconicState},
+    {"maximal",     MaximizedState},
+    {"normal",      NormalState},
+    {"popup",       PopupState},
+    {"root",        RootState},
+};
+
 #define NUMCURSORSYMS	78
 
 static stringint cursors[] = {
@@ -1371,30 +1381,10 @@ static void unsetclip(wbp w)
 
 void getcanvas(wbp w, char *s)
 {
-    if (w->window->win == (Window) NULL) sprintf(s, "hidden");
-    else
-        switch (w->window->iconic) {
-            case RootState:
-                sprintf(s, "root");
-                break;
-            case NormalState:
-                sprintf(s, "normal");
-                break;
-            case PopupState:
-                sprintf(s, "popup");
-                break;
-            case IconicState:
-                sprintf(s, "iconic");
-                break;
-            case MaximizedState:
-                sprintf(s, "maximal");
-                break;
-            case HiddenState:
-                sprintf(s, "hidden");
-                break;
-            default:
-                sprintf(s, "???");
-        }
+    char *v = stringint_int2str(canvastypes, w->window->iconic);
+    if (!v)
+        syserr("Invalid value of iconic");
+    strcpy(s, v);
 }
 
 
@@ -1425,85 +1415,40 @@ int setinputmask(wbp w, char *val)
  */
 int setcanvas(wbp w, char *s)
 {
+    stringint *e;
     STDLOCALS(w);
-
-    if (!strcmp(s, "iconic")) {
-        if (ws->pix == (Pixmap) NULL) {
-            ws->wmhintflags |= StateHint;
-            ws->iconic = IconicState;
-        }
-        else {
-            if (ws->iconic != IconicState) {
-                if (ws->win == (Window) NULL) {
-                    wmap(w);
-                }
-                XIconifyWindow(ws->display->display, ws->win, ws->display->screen);
-                XSync(stddpy, False);
-                while (ws->iconic != IconicState)
-                    if (handle_misc(wd) < 1) {
-                        return Failed;
+    e = stringint_lookup(canvastypes, s);
+    if (!e)
+        return Failed;
+    switch (e->i) {
+        case IconicState: {
+            if (ws->pix == (Pixmap) NULL) {
+                ws->wmhintflags |= StateHint;
+                ws->iconic = IconicState;
+            }
+            else {
+                if (ws->iconic != IconicState) {
+                    if (ws->win == (Window) NULL) {
+                        wmap(w);
                     }
-	    }
+                    XIconifyWindow(ws->display->display, ws->win, ws->display->screen);
+                    XSync(stddpy, False);
+                    while (ws->iconic != IconicState)
+                        if (handle_misc(wd) < 1) {
+                            return Failed;
+                        }
+                }
+            }
+            break;
         }
-    }
 
-    else if (!strcmp(s, "normal")) {
-        if (ws->pix == (Pixmap) NULL) {
-            ws->iconic = NormalState;
-        }
-        else {
-            if (ws->win == (Window) NULL) {
+        case NormalState: {
+            if (ws->pix == (Pixmap) NULL) {
                 ws->iconic = NormalState;
-                wmap(w);
-	    }
-            else if (ws->iconic == IconicState) {
-                XMapWindow(stddpy, stdwin);
-                XSync(stddpy, False);
-                while (ws->iconic == IconicState)
-                    pollevent();
-	    }
-            else if (ws->iconic == MaximizedState) {
-                ws->x = ws->normalx;
-                ws->y = ws->normaly;
-                ws->width = ws->normalw;
-                ws->height = ws->normalh;
-                doconfig(w, C_POS | C_SIZE);
-                ws->iconic = NormalState;
-	    }
-        }
-    }
-
-    else if (!strcmp(s, "popup")) {
-        if (ws->win == (Window) NULL)  {
-            ws->iconic = PopupState;
-        }
-        else {
-            return Failed;
-        }
-    }
-
-    else if (!strcmp(s, "root")) {
-        if (ws->win == (Window) NULL)  {
-            ws->iconic = RootState;
-        }
-        else {
-            return Failed;
-        }
-    }
-
-    else if (!strcmp(s, "maximal")) {
-        if (ws->iconic != MaximizedState) {
-            int expect_config= (ws->width != DisplayWidth(stddpy, wd->screen)) ||
-                (ws->height != DisplayHeight(stddpy, wd->screen));
-            ws->normalx = ws->x;
-            ws->normaly = ws->y;
-            ws->normalw = ws->width;
-            ws->normalh = ws->height;
-            ws->width = DisplayWidth(stddpy, wd->screen);
-            ws->height= DisplayHeight(stddpy, wd->screen);
-            if (ws->pix != (Pixmap) NULL) {
+            }
+            else {
                 if (ws->win == (Window) NULL) {
-                    ws->iconic = MaximizedState;
+                    ws->iconic = NormalState;
                     wmap(w);
                 }
                 else if (ws->iconic == IconicState) {
@@ -1512,32 +1457,86 @@ int setcanvas(wbp w, char *s)
                     while (ws->iconic == IconicState)
                         pollevent();
                 }
-                else if (expect_config) {
-                    ws->x = ws->y = 0;
-                    doconfig(w, C_POS | C_SIZE);
-                    pollevent();
-                    ws->x = -ws->x;
-                    ws->y = -ws->y;
-                    doconfig(w, C_POS);
-                }
-	    }
-            ws->iconic = MaximizedState;
-        }
-    }
-    else if (!strcmp(s, "hidden")) {
-        if (ws->pix == (Pixmap)NULL) {
-            ws->iconic = HiddenState;
-        }
-        else {
-            if (ws->win != (Window) NULL) {
-                if (ws->iconic == MaximizedState) {
+                else if (ws->iconic == MaximizedState) {
                     ws->x = ws->normalx;
                     ws->y = ws->normaly;
                     ws->width = ws->normalw;
                     ws->height = ws->normalh;
+                    doconfig(w, C_POS | C_SIZE);
                     ws->iconic = NormalState;
                 }
-                if (ws->iconic != IconicState) {
+            }
+            break;
+        }
+
+        case PopupState: {
+            if (ws->win == (Window) NULL)  {
+                ws->iconic = PopupState;
+            }
+            else {
+                return Failed;
+            }
+            break;
+        }
+
+        case RootState: {
+            if (ws->win == (Window) NULL)  {
+                ws->iconic = RootState;
+            }
+            else {
+                return Failed;
+            }
+            break;
+        }
+
+        case MaximizedState: {
+            if (ws->iconic != MaximizedState) {
+                int expect_config= (ws->width != DisplayWidth(stddpy, wd->screen)) ||
+                    (ws->height != DisplayHeight(stddpy, wd->screen));
+                ws->normalx = ws->x;
+                ws->normaly = ws->y;
+                ws->normalw = ws->width;
+                ws->normalh = ws->height;
+                ws->width = DisplayWidth(stddpy, wd->screen);
+                ws->height= DisplayHeight(stddpy, wd->screen);
+                if (ws->pix != (Pixmap) NULL) {
+                    if (ws->win == (Window) NULL) {
+                        ws->iconic = MaximizedState;
+                        wmap(w);
+                    }
+                    else if (ws->iconic == IconicState) {
+                        XMapWindow(stddpy, stdwin);
+                        XSync(stddpy, False);
+                        while (ws->iconic == IconicState)
+                            pollevent();
+                    }
+                    else if (expect_config) {
+                        ws->x = ws->y = 0;
+                        doconfig(w, C_POS | C_SIZE);
+                        pollevent();
+                        ws->x = -ws->x;
+                        ws->y = -ws->y;
+                        doconfig(w, C_POS);
+                    }
+                }
+                ws->iconic = MaximizedState;
+            }
+            break;
+        }
+
+        case HiddenState: {
+            if (ws->pix == (Pixmap)NULL) {
+                ws->iconic = HiddenState;
+            }
+            else {
+                if (ws->win != (Window) NULL) {
+                    if (ws->iconic == MaximizedState) {
+                        ws->x = ws->normalx;
+                        ws->y = ws->normaly;
+                        ws->width = ws->normalw;
+                        ws->height = ws->normalh;
+                        ws->iconic = NormalState;
+                    }
                     SETZOMBIE(w);
 #ifdef HAVE_LIBXFT
                     if (ws->winDraw) {
@@ -1549,11 +1548,14 @@ int setcanvas(wbp w, char *s)
                     XFlush(stddpy);
                     while (ws->win)
                         pollevent();
+                    ws->iconic = HiddenState;
                 }
-	    }
+            }
+            break;
         }
+        default:
+            syserr("Unexpected canvas state");
     }
-    else return Failed;
     XSync(ws->display->display, False);
     return Succeeded;
 }

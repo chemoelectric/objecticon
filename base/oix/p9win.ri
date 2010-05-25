@@ -148,6 +148,13 @@ static stringint linestyles[] = {
     {"striped",     0},
 };
 
+static stringint canvastypes[] = {
+    {0, 3},
+    {"hidden",      HiddenCanvas},
+    {"iconic",      IconicCanvas},
+    {"normal",      NormalCanvas},
+};
+
 static stringint cursors[] = {
     { 0, 78},
     {"X cursor",          25},
@@ -1830,16 +1837,12 @@ int setinputmask(wbp w, char *val)
 
 int setcanvas(wbp w, char *s)
 {
+    stringint *e;
     wsp ws = w->window;
-
-    if (!strcmp(s, "iconic"))
-        ws->desired_canvas = IconicCanvas;
-    else if (!strcmp(s, "normal"))
-        ws->desired_canvas = NormalCanvas;
-    else if (!strcmp(s, "hidden"))
-        ws->desired_canvas = HiddenCanvas;
-    else
+    e = stringint_lookup(canvastypes, s);
+    if (!e)
         return Failed;
+    ws->desired_canvas = e->i;
 
     /* 
      * If the window is already open, call configure_canvas now;
