@@ -259,7 +259,7 @@ class Grid(SetFields)
       }
 
       write("----- Items ------")
-      write(to_string(!info))
+      every write(to_string(!info))
 
       write("----- Data -------")
       write("p_col_w=", to_string(p_col_w))
