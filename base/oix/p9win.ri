@@ -21,6 +21,7 @@ static wfp load_font(char *s);
 static void synch_cursor(wsp ws);
 static vlong get_time(void);
 static int open_screen_win(wsp ws);
+static Image *any_other_win(Image *win);
 static void close_screen_win(wsp ws);
 static void open_pix_win(wsp ws);
 static Image *get_draw_img(wcp wc);
@@ -1709,6 +1710,15 @@ static int open_screen_win(wsp ws)
     return Succeeded;
 }
 
+static Image *any_other_win(Image *win)
+{
+    wsp ws;
+    for (ws = wstates; ws; ws = ws->next)
+        if (ws->win && ws->win != win)
+            return ws->win;
+    return 0;
+}
+
 static void close_screen_win(wsp ws)
 {
     if (!ws->using_win) {
@@ -1742,7 +1752,7 @@ static void close_screen_win(wsp ws)
          * seem to be used).
          */
         if (ws->win == display->screenimage)
-            display->screenimage = 0;
+            display->screenimage = any_other_win(ws->win);
         freeimage(ws->win);
         ws->win = 0;
     }
