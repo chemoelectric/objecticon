@@ -332,6 +332,9 @@ function posix_System_getenv(s)
       if ((p = getenv(s)) != NULL) {	/* get environment variable */
           tended struct descrip result;
           cstr2string(p, &result);
+#if PLAN9
+          free(p);
+#endif
           return result;
       }
       else 				/* fail if not in environment */

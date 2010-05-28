@@ -50,11 +50,13 @@ char *findexe(char *name)
 
 #if PLAN9
     path = getenv("path");
+    if (!path)
+        path = ". /bin";
 #else
     path = getenv("PATH");
-#endif
     if (!path)
         path = "";
+#endif
 
     for (;;) {
         char *e = pathelem(&path);

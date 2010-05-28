@@ -508,7 +508,7 @@ $endif
 
       # Search all the elements in the path
 $ifdef _PLAN9
-      path := System.getenv("path") | ""
+      path := System.getenv("path") | ". /bin"
 $else
       path := System.getenv("PATH") | ""
 $endif
@@ -859,11 +859,13 @@ class Plan9FileSystem(UnixFileSystem)
    public split_paths(s)
       local t
       s ? repeat {
-         tab(many(' '))
+         t := tab(upto(' ') | 0)
+         if *t = 0 then
+            t := "."
+         suspend t
          if pos(0) then
             break
-         t := tab(upto(' ') | 0)
-         suspend t
+         move(1)
       }
    end
 end

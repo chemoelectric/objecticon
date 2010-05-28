@@ -1591,18 +1591,17 @@ static int open_screen_win(wsp ws)
 
         use_win = 0;
     } else {
-        char *srvwsys = ws->wsys;
-        if (!srvwsys) {
-            srvwsys = getenv("wsys");
-            if(!srvwsys) {
+        if (!ws->wsys) {
+            ws->wsys = getenv("wsys");
+            if(!ws->wsys) {
                 LitWhy("Can't find $wsys");
                 close_screen_win(ws);
                 return Failed;
             }
         }
-        ws->wsys_fd = open(srvwsys, ORDWR);
+        ws->wsys_fd = open(ws->wsys, ORDWR);
         if(ws->wsys_fd < 0) {
-            whyf("Can't open $wsys(%s): %r", srvwsys);
+            whyf("Can't open $wsys(%s): %r", ws->wsys);
             close_screen_win(ws);
             return Failed;
         }
