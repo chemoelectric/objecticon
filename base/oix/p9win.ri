@@ -339,10 +339,8 @@ wbp wcreate(char *display, wbp parent)
     ws = w->window = alcwinstate();
     w->context = alccontext(w);
     create_list(64, &ws->listp);
-    if (display) {
-        MemProtect(ws->wsys = malloc(strlen(display) + 1));
-        strcpy(ws->wsys, display);
-    }
+    if (display)
+        ws->wsys = salloc(display);
     return w;
 }
 
