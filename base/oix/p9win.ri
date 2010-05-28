@@ -337,10 +337,18 @@ wbp wcreate(char *display, wbp parent)
 
     w = alcwbinding();
     ws = w->window = alcwinstate();
-    w->context = alccontext(w);
-    create_list(64, &ws->listp);
     if (display)
         ws->wsys = salloc(display);
+    else {
+        ws->wsys = getenv("wsys");
+        if (!ws->wsys) {
+            LitWhy("wsys environment variable not set");
+            freewbinding(w);
+            return 0;
+        }
+    }
+    w->context = alccontext(w);
+    create_list(64, &ws->listp);
     return w;
 }
 
@@ -640,7 +648,7 @@ static void flush_event_pipe(wsp ws)
                 break;
             }
             case 'M': {
-                if(n < 10+2*12)
+                if (n < 10+2*12)
                     syserr("bad mouse data in event pipe");
                 if (ebuf[9] == 'r') {
                     handle_resize(ws);
@@ -1591,16 +1599,8 @@ static int open_screen_win(wsp ws)
 
         use_win = 0;
     } else {
-        if (!ws->wsys) {
-            ws->wsys = getenv("wsys");
-            if(!ws->wsys) {
-                LitWhy("Can't find $wsys");
-                close_screen_win(ws);
-                return Failed;
-            }
-        }
         ws->wsys_fd = open(ws->wsys, ORDWR);
-        if(ws->wsys_fd < 0) {
+        if (ws->wsys_fd < 0) {
             whyf("Can't open $wsys(%s): %r", ws->wsys);
             close_screen_win(ws);
             return Failed;
@@ -1800,7 +1800,7 @@ void wclose(wbp w)
 void freewindow(wsp ws)
 {
    ws->refcount--;
-   if(ws->refcount == 0) {
+   if (ws->refcount == 0) {
        struct imgdata *imd;
        if (ws->win)
            close_screen_win(ws);
@@ -1827,7 +1827,7 @@ void freewindow(wsp ws)
 void freecontext(wcp wc)
 {
     wc->refcount--;
-    if(wc->refcount == 0) {
+    if (wc->refcount == 0) {
         if (wc->fg)
             unlink_sharedcolor(wc->fg);
         if (wc->bg)
@@ -1968,7 +1968,7 @@ int warppointer(wbp w, int x, int y)
 
 void getdisplay(wbp w, char *answer)
 {
-    strcpy(answer, "Plan9");
+    strcpy(answer, w->window->wsys);
 }
 
 int getpos(wbp w)
@@ -2111,7 +2111,7 @@ static char Ebad[] = "something bad happened";
 static void fscreate(Req *r)
 {
     File *f;
-    if(f = createfile(r->fid->file, r->ifcall.name, r->fid->uid, r->ifcall.perm, nil)){
+    if (f = createfile(r->fid->file, r->ifcall.name, r->fid->uid, r->ifcall.perm, nil)){
         r->fid->file = f;
         r->ofcall.qid = f->qid;
         respond(r, nil);
