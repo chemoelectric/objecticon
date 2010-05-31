@@ -78,7 +78,7 @@ class Menu(TextMenuItem)
             if c === \self.which_highlight then
                Gui.style.down_rectangle(cw, c.label_x, c.label_y, c.label_w, c.label_h)
             else if c.is_shaded() then
-               Gui.style.filter_rectangle(cw,
+               Gui.style.shade_rectangle(cw,
                                           c.label_x, c.label_y, c.label_w, c.label_h)
          }
       }

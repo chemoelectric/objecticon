@@ -24,8 +24,10 @@ static int writePNG(wbp w, char *filename, int x, int y, int width, int height);
 static int readGIF         (char *fname, struct imgdata *d);
 
 static	int	colorphrase    (char *buf, int *r, int *g, int *b);
-static	double	rgbval	(double n1, double n2, double hue);
-static  void    wgetq          (wbp w, dptr res);
+static	double rgbval(double n1, double n2, double hue);
+static  void wgetq(wbp w, dptr res);
+static	void getfg_rgb(wbp w, int *r, int *g, int *b);
+static	void getbg_rgb(wbp w, int *r, int *g, int *b);
 
 static void drawpalette(wbp w, int x, int y, int width, int height, 
                         struct palentry *e, unsigned char *s, int copy);
@@ -174,9 +176,23 @@ void qevent(wsp ws,             /* canvas */
     list_put(q, &d);
 }
 
-static void linearfilter_impl(int *val, struct filter *f)
+static void getfg_rgb(wbp w, int *r, int *g, int *b)
 {
-    *val = *val * f->p.linear.m  + f->p.linear.c;
+    char color[MAXCOLORNAME];
+    getfg(w, color);
+    parsecolor(color, r, g, b);
+}
+
+static void getbg_rgb(wbp w, int *r, int *g, int *b)
+{
+    char color[MAXCOLORNAME];
+    getbg(w, color);
+    parsecolor(color, r, g, b);
+}
+
+static void linearfilter_impl(int *val, float f)
+{
+    *val *= f;
     if (*val < 0) *val = 0;
     else if (*val > 65535) *val = 65535;
 }
@@ -190,25 +206,20 @@ static void linearfilter(struct filter *f)
             int r, g, b;
             gotopixel(imem, i, j);
             getpixel(imem, &r, &g, &b);
-            linearfilter_impl(&r, f);
-            linearfilter_impl(&g, f);
-            linearfilter_impl(&b, f);
+            linearfilter_impl(&r, f->p.linear.mr);
+            linearfilter_impl(&g, f->p.linear.mg);
+            linearfilter_impl(&b, f->p.linear.mb);
             setpixel(imem, r, g, b);
         }
     }
 }
 
-static void greyfilter(struct filter *f)
+static void shadefilter(struct filter *f)
 {
     int i, j;
     struct imgmem *imem = f->imem;
-    char color[128];
-    int bg_r, bg_g, bg_b;
-    int fg_r, fg_g, fg_b, bk;
-    getfg(f->w, color);
-    parsecolor(color, &fg_r, &fg_g, &fg_b);
-    getbg(f->w, color);
-    parsecolor(color, &bg_r, &bg_g, &bg_b);
+    int bk, bg_r, bg_g, bg_b;
+    getbg_rgb(f->w, &bg_r, &bg_g, &bg_b);
 
     bk = (int)(4.0 * (0.299 * bg_r + 0.587 * bg_g + 0.114 * bg_b) / 65535.0);
     for (j = imem->y; j < imem->y + imem->height; j++) {
@@ -218,23 +229,30 @@ static void greyfilter(struct filter *f)
             gotopixel(imem, i, j);
             getpixel(imem, &r, &g, &b);
 
-/*
-            if (r == bg_r && g == bg_g && b == bg_b)
-                continue;
-*/
             k = (int)(4.0 * (0.299 * r + 0.587 * g + 0.114 * b) / 65535.0);
-            if (k == bk) {
-                /*#if (k) --k; else ++k;*/
-                continue;
+            if (k != bk) {
+                v = 40000 + 5000*k;
+                setpixel(imem, v, v, v);
             }
-            switch (k) {
-                case 0: v = 40000;break;
-                case 1: v = 45000;break;
-                case 2: v = 50000;break;
-                case 3: v = 55000;break;
-            }
+        }
+    }
+}
 
-            setpixel(imem, v, v, v);
+static void coercefilter(struct filter *f)
+{
+    int i, j;
+    struct imgmem *imem = f->imem;
+    struct palentry *pal = palsetup(f->p.coerce.p);
+    for (j = imem->y; j < imem->y + imem->height; j++) {
+        for (i = imem->x; i < imem->x + imem->width; i++) {
+            int r, g, b;
+            char *s;
+            struct palentry *e;
+            gotopixel(imem, i, j);
+            getpixel(imem, &r, &g, &b);
+            s = rgbkey(f->p.coerce.p, r, g, b);
+            e = pal + *s;
+            setpixel(imem, e->r, e->g, e->b);
         }
     }
 }
@@ -244,12 +262,27 @@ int parsefilter(wbp w, char *s, struct filter *res)
     res->w = w;
     if (strncmp(s, "linear", 6) == 0) {
         res->f = linearfilter;
-        res->p.linear.m = 0.75;
-        res->p.linear.c = 0.0;
+        if (sscanf(s + 6, ",%f,%f,%f", &res->p.linear.mr,
+                   &res->p.linear.mg, &res->p.linear.mb) != 3)
+            return 0;
         return 1;
     }
-    if (strncmp(s, "grey", 4) == 0) {
-        res->f = greyfilter;
+    if (strncmp(s, "shade", 5) == 0) {
+        res->f = shadefilter;
+        return 1;
+    }
+    if (strncmp(s, "coerce", 6) == 0) {
+        char c;
+        int n;
+        res->f = coercefilter;
+        if (sscanf(s + 6, ",%c%d", &c, &n) != 2)
+            return 0;
+        if (c == 'c' && n >= 1 && n <= 6)
+            res->p.coerce.p = n;
+        else if (c == 'g' && n >= 2 && n <= 256)
+            res->p.coerce.p = -n;
+        else
+            return 0;
         return 1;
     }
     return 0;
@@ -597,6 +630,8 @@ int initimgmem(wbp w, struct imgmem *i, int copy, int clip, int x, int y, int wi
         return 0;
 
     if (clip && wc->clipw >= 0) {
+        /* Further reduce the rectangle to the clipping region */
+
         if (x < wc->clipx) {
             x = wc->clipx;
             width += x - wc->clipx;
@@ -857,16 +892,10 @@ void drawblimage(wbp w, int x, int y, int width, int height,
     unsigned int m, msk1, c, ix, iy;
     int slen = height*((width + 3)/4);
     int fg_r, fg_g, fg_b, bg_r, bg_g, bg_b;
-    char color[128];
     struct imgmem imem;
 
-    getfg(w, color);
-    if (!parsecolor(color, &fg_r, &fg_g, &fg_b))
-        return;
-
-    getbg(w, color);
-    if (!parsecolor(color, &bg_r, &bg_g, &bg_b))
-        return;
+    getfg_rgb(w, &fg_r, &fg_g, &fg_b);
+    getbg_rgb(w, &bg_r, &bg_g, &bg_b);
 
     if (!initimgmem(w, &imem, ch == TCH1, 1, x, y, width, height))
         return;

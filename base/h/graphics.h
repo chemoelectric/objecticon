@@ -336,8 +336,11 @@ struct filter {
    void (*f)(struct filter *);
    union {
       struct {
-         float m, c;
+         float mr, mb, mg;
       } linear;
+      struct {
+         int p;
+      } coerce;
    } p;
 };
 

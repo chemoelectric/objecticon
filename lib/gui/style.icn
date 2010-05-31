@@ -41,16 +41,16 @@ class Style()
       return bev_lookup(W).shadow.get_fg()
    end
 
-   public filter_rectangle(W, x, y, w, h)
-      W.filter("grey", x, y, w, h)
+   public shade_rectangle(W, x, y, w, h)
+      W.filter("shade", x, y, w, h)
    end
 
    public down_rectangle(W, x, y, w, h)
-      W.filter("linear,0.75,0.0", x, y, w, h)
+      W.filter("linear,0.85,0.85,0.85", x, y, w, h)
    end
 
    public selection_rectangle(W, x, y, w, h)
-      W.filter("linear,0.75,0.0", x, y, w, h)
+      W.filter("linear,0.6,0.75,1.0", x, y, w, h)
    end
 
    public get_cursor_clone(W)

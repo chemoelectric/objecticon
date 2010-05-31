@@ -116,7 +116,7 @@ class TabSet(Component)
                          then 1 else &null)
 
             if c.is_shaded() then
-               Gui.style.filter_rectangle(self.cbwin,
+               Gui.style.shade_rectangle(self.cbwin,
                                           c.tab_x, ypos, c.tab_w, self.label_h)
          }
          ypos +:= self.label_h + Gui.BORDER_WIDTH
@@ -163,7 +163,7 @@ class TabSet(Component)
                          then 1 else &null)
 
             if c.is_shaded() then
-               Gui.style.filter_rectangle(self.cbwin,
+               Gui.style.shade_rectangle(self.cbwin,
                                           c.tab_x, ypos, c.tab_w, self.label_h)
          }
          ypos -:= self.label_h + Gui.BORDER_WIDTH

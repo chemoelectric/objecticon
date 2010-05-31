@@ -419,8 +419,10 @@ class Component(Rect,Align,SetFields,Connectable)
       self.display(r)
       if \self.show_layout_flag then
          (\layout_delegate).display()
-      if is_shaded() then
-         Gui.style.filter_rectangle(self.cbwin, r.x, r.y, r.w, r.h)
+      # Only need to shade if we are shaded and the parent won't shade for us.  This also
+      # avoids filtering twice, which makes the result too grey.
+      if is_shaded() & not((\parent).is_shaded()) then
+         Gui.style.shade_rectangle(self.cbwin, r.x, r.y, r.w, r.h)
    end
 
    #

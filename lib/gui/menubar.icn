@@ -93,7 +93,7 @@ class MenuBar(Component)
             if m === \self.which_highlight then
                Gui.style.down_rectangle(self.cbwin, m.label_x, m.label_y, m.label_w, m.label_h)
             if m.is_shaded() then
-               Gui.style.filter_rectangle(self.cbwin,
+               Gui.style.shade_rectangle(self.cbwin,
                                           m.label_x, m.label_y, m.label_w, m.label_h)
          }
       }

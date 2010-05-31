@@ -51,7 +51,7 @@ class MenuButton(Component)
    public display()
       menu.draw_label(self.cbwin, 0, menu.label_w, 0)
       if menu.is_shaded() then
-         Gui.style.filter_rectangle(self.cbwin,
+         Gui.style.shade_rectangle(self.cbwin,
                                     self.x, self.y, self.w, self.h)
       border.draw_rect(self.cbwin, self)
    end
