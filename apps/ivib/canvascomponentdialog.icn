@@ -288,7 +288,7 @@ class CanvasComponentDialog(Dialog)
          accel_tf.set_contents(c.accel)
       }
 
-      shaded := CheckBox("c:eol")
+      shaded := CheckBox("c:eol", "c:w=2")
       shaded.set_label("Is shaded")
       if \c.is_shaded_flag then
          shaded.set_is_checked(&yes)
@@ -317,7 +317,7 @@ class CanvasComponentDialog(Dialog)
       }
 
       other_tab.add(Label("label=Tab order:"))
-      tab_field := TextField("w=100", "filter=",&digits, "c:w=2")
+      tab_field := TextField("w=100", "filter=",&digits)
       tab_field.set_contents(c.tab_ord)
       other_tab.add(tab_field)
 

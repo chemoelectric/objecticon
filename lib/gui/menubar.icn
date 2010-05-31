@@ -82,7 +82,7 @@ class MenuBar(Component)
    end
 
    public display(r)
-      local m, cw, rw
+      local m
 
       border.draw_rect(self.cbwin, self)
 
@@ -90,16 +90,11 @@ class MenuBar(Component)
       every m := !menus do {
          if r.intersect(m.get_label_rect()) then {
             m.draw_label(self.cbwin, 0, m.label_w, 0)
-            if m === \self.which_highlight then {
-               rw := Gui.style.get_down_clone(self.cbwin)
-               rw.fill_rectangle(m.label_x, m.label_y, m.label_w, m.label_h)
-               rw.uncouple()
-            }
-            if m.is_shaded() then {
-               cw := Gui.style.get_filter_clone(self.cbwin)
-               cw.fill_rectangle(m.label_x, m.label_y, m.label_w, m.label_h)
-               cw.uncouple()
-            }
+            if m === \self.which_highlight then
+               Gui.style.down_rectangle(self.cbwin, m.label_x, m.label_y, m.label_w, m.label_h)
+            if m.is_shaded() then
+               Gui.style.shade_rectangle(self.cbwin,
+                                          m.label_x, m.label_y, m.label_w, m.label_h)
          }
       }
    end

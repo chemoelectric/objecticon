@@ -41,13 +41,6 @@
  */
 #define XMasks(f)            ((f) & ((1L<<25)-1))
 
-/*
- * The following constants define limitations in the system, gradually being
- * removed as this code is rewritten to use dynamic allocation.
- */
-#define DMAXCOLORS	256
-#define WMAXCOLORS	256
-#define MAXCOLORNAME	40
 #define MAXDISPLAYNAME	64
 #define NUMCURSORSYMS	78
 
@@ -86,29 +79,6 @@
    stddpy = wd->display; \
    stdwin  = ws->win; \
    stdpix  = ws->pix;
-
-/*
- * Colors.  These are allocated within displays; they are currently
- * statically bounded to DMAXCOLORS colors per display.  Pointers
- * into the display's color table are also kept on a per-window
- * basis so that they may be (de)allocated when a window is cleared.
- * Colors are aliased by r,g,b value.  Allocations by name and r,g,b
- * share when appropriate.
- *
- * Color (de)allocation comprises a simple majority of the space
- * requirements of the current implementation.  A monochrome-only
- * version would take a lot less space.
- *
- * The name field is the string returned by WAttrib.  For a mutable
- * color this is of the form "-47" followed by a second C string
- * containing the current color setting.
- */
-typedef struct wcolor {
-   int		refcount;
-   char		name[6+MAXCOLORNAME];	/* name for WAttrib & WColor reads */
-   unsigned short r, g, b;		/* rgb for colorsearch */
-   unsigned long	c;		/* X pixel value */
-} *wclrp;
 
 struct SharedColor {
    int r, g, b;         /* rgb of c */

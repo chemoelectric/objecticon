@@ -667,12 +667,11 @@ class TextField(Component)
          if (off1 := self.cbwin.text_width(s[1:mp])) &
             (off2 := self.cbwin.text_width(s[1:np])) then 
          {
-               cw := Gui.style.get_selection_clone(self.cbwin)
-               cw.fill_rectangle(self.tx - loff + off1, 
-                                 y1, 
-                                 off2 - off1,
-                                 fh)
-               cw.uncouple()
+            Gui.style.selection_rectangle(self.cbwin,
+                                          self.tx - loff + off1, 
+                                          y1, 
+                                          off2 - off1,
+                                          fh)
          }
       }
    end

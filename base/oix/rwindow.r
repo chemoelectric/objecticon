@@ -23,9 +23,11 @@ static int writePNG(wbp w, char *filename, int x, int y, int width, int height);
 #endif
 static int readGIF         (char *fname, struct imgdata *d);
 
-static	int	colorphrase    (char *buf, int *r, int *g, int *b, int *a);
-static	double	rgbval	(double n1, double n2, double hue);
-static  void    wgetq          (wbp w, dptr res);
+static	int	colorphrase    (char *buf, int *r, int *g, int *b);
+static	double rgbval(double n1, double n2, double hue);
+static  void wgetq(wbp w, dptr res);
+static	void getfg_rgb(wbp w, int *r, int *g, int *b);
+static	void getbg_rgb(wbp w, int *r, int *g, int *b);
 
 static void drawpalette(wbp w, int x, int y, int width, int height, 
                         struct palentry *e, unsigned char *s, int copy);
@@ -174,6 +176,118 @@ void qevent(wsp ws,             /* canvas */
     list_put(q, &d);
 }
 
+static void getfg_rgb(wbp w, int *r, int *g, int *b)
+{
+    char color[MAXCOLORNAME];
+    getfg(w, color);
+    parsecolor(color, r, g, b);
+}
+
+static void getbg_rgb(wbp w, int *r, int *g, int *b)
+{
+    char color[MAXCOLORNAME];
+    getbg(w, color);
+    parsecolor(color, r, g, b);
+}
+
+static void linearfilter_impl(int *val, float f)
+{
+    *val *= f;
+    if (*val < 0) *val = 0;
+    else if (*val > 65535) *val = 65535;
+}
+ 
+static void linearfilter(struct filter *f)
+{
+    int i, j;
+    struct imgmem *imem = f->imem;
+    for (j = imem->y; j < imem->y + imem->height; j++) {
+        for (i = imem->x; i < imem->x + imem->width; i++) {
+            int r, g, b;
+            gotopixel(imem, i, j);
+            getpixel(imem, &r, &g, &b);
+            linearfilter_impl(&r, f->p.linear.mr);
+            linearfilter_impl(&g, f->p.linear.mg);
+            linearfilter_impl(&b, f->p.linear.mb);
+            setpixel(imem, r, g, b);
+        }
+    }
+}
+
+static void shadefilter(struct filter *f)
+{
+    int i, j;
+    struct imgmem *imem = f->imem;
+    int bk, bg_r, bg_g, bg_b;
+    getbg_rgb(f->w, &bg_r, &bg_g, &bg_b);
+
+    bk = (int)(4.0 * (0.299 * bg_r + 0.587 * bg_g + 0.114 * bg_b) / 65535.0);
+    for (j = imem->y; j < imem->y + imem->height; j++) {
+        for (i = imem->x; i < imem->x + imem->width; i++) {
+            int r, g, b, k, v = 0;
+
+            gotopixel(imem, i, j);
+            getpixel(imem, &r, &g, &b);
+
+            k = (int)(4.0 * (0.299 * r + 0.587 * g + 0.114 * b) / 65535.0);
+            if (k != bk) {
+                v = 40000 + 5000*k;
+                setpixel(imem, v, v, v);
+            }
+        }
+    }
+}
+
+static void coercefilter(struct filter *f)
+{
+    int i, j;
+    struct imgmem *imem = f->imem;
+    struct palentry *pal = palsetup(f->p.coerce.p);
+    for (j = imem->y; j < imem->y + imem->height; j++) {
+        for (i = imem->x; i < imem->x + imem->width; i++) {
+            int r, g, b;
+            char *s;
+            struct palentry *e;
+            gotopixel(imem, i, j);
+            getpixel(imem, &r, &g, &b);
+            s = rgbkey(f->p.coerce.p, r, g, b);
+            e = pal + *s;
+            setpixel(imem, e->r, e->g, e->b);
+        }
+    }
+}
+
+int parsefilter(wbp w, char *s, struct filter *res)
+{
+    res->w = w;
+    if (strncmp(s, "linear", 6) == 0) {
+        res->f = linearfilter;
+        if (sscanf(s + 6, ",%f,%f,%f", &res->p.linear.mr,
+                   &res->p.linear.mg, &res->p.linear.mb) != 3)
+            return 0;
+        return 1;
+    }
+    if (strncmp(s, "shade", 5) == 0) {
+        res->f = shadefilter;
+        return 1;
+    }
+    if (strncmp(s, "coerce", 6) == 0) {
+        char c;
+        int n;
+        res->f = coercefilter;
+        if (sscanf(s + 6, ",%c%d", &c, &n) != 2)
+            return 0;
+        if (c == 'c' && n >= 1 && n <= 6)
+            res->p.coerce.p = n;
+        else if (c == 'g' && n >= 2 && n <= 256)
+            res->p.coerce.p = -n;
+        else
+            return 0;
+        return 1;
+    }
+    return 0;
+}
+
 
 /*
  * Structures and tables used for color parsing.
@@ -227,17 +341,8 @@ static colrmod sattable[] = {			/* saturation levels */
     { "weak",      25 },
 };
 
-static colrmod transptable[] = {		/* transparency levels */
-    { "opaque",  100 },
-    { "subtranslucent",  75 },
-    { "subtransparent",  25 },
-    { "translucent",  50 },
-    { "transparent",  5 },
-};
-
-
 /*
- *  parsecolor(s, &r, &g, &b, &a) - parse a color specification
+ *  parsecolor(s, &r, &g, &b) - parse a color specification
  *
  *  parsecolor interprets a color specification and produces r/g/b values
  *  scaled linearly from 0 to 65535.  parsecolor returns 1 on success, 0
@@ -246,23 +351,19 @@ static colrmod transptable[] = {		/* transparency levels */
  *  An Icon color specification can be any of the forms
  *
  *     #rgb			(hexadecimal digits)
- *     #rgba
  *     #rrggbb
- *     #rrggbbaa
  *     #rrrgggbbb		(note: no 3 digit rrrgggbbbaaa)
  *     #rrrrggggbbbb
- *     #rrrrggggbbbbaaaa
  *     nnnnn,nnnnn,nnnnn	(integers 0 - 65535)
  *     <Icon color phrase>
  */
 
-int parsecolor(char *buf, int *r, int *g, int *b, int *a)
+int parsecolor(char *buf, int *r, int *g, int *b)
 {
     int len, mul;
     char *fmt, c;
 
     *r = *g = *b = 0L;
-    *a = 65535;
 
     /* trim leading spaces */
     while (isspace((unsigned char)*buf))
@@ -276,34 +377,18 @@ int parsecolor(char *buf, int *r, int *g, int *b, int *a)
             return 0;
     }
 
-    /* try interpreting as four comma-separated numbers */
-    if (sscanf(buf, "%d,%d,%d,%d%c", r, g, b, a, &c) == 4) {
-        if (*r>=0 && *r<=65535 && *g>=0 && *g<=65535 && *b>=0 && *b<=65535 && *a>=0 && *a<=65535)
-            return 1;
-        else
-            return 0;
-    }
-
     /* try interpreting as a hexadecimal value */
     if (*buf == '#') {
         buf++;
         for (len = 0; isalnum((unsigned char)buf[len]); len++);
         switch (len) {
             case  3:  fmt = "%1x%1x%1x%c";  mul = 0x1111;  break;
-            case  4:  fmt = "%1x%1x%1x%1x%c";  mul = 0x1111;  break;
             case  6:  fmt = "%2x%2x%2x%c";  mul = 0x0101;  break;
-            case  8:  fmt = "%2x%2x%2x%2x%c";  mul = 0x0101;  break;
             case  9:  fmt = "%3x%3x%3x%c";  mul = 0x0010;  break;
             case 12:  fmt = "%4x%4x%4x%c";  mul = 0x0001;  break;
-            case 16:  fmt = "%4x%4x%4x%4x%c";  mul = 0x0001;  break;
             default:  return 0;
         }
-        if ((len == 4) || (len == 8) || (len == 16)) {
-            if (sscanf(buf, fmt, r, g, b, a, &c) != 4)
-                return 0;
-            *a *= mul;
-        }
-        else if (sscanf(buf, fmt, r, g, b, &c) != 3)
+        if (sscanf(buf, fmt, r, g, b, &c) != 3)
             return 0;
         *r *= mul;
         *g *= mul;
@@ -312,7 +397,7 @@ int parsecolor(char *buf, int *r, int *g, int *b, int *a)
     }
 
     /* try interpreting as a color phrase */
-    if (colorphrase(buf, r, g, b, a))
+    if (colorphrase(buf, r, g, b))
         return 1;
     else
         return 0;
@@ -320,7 +405,7 @@ int parsecolor(char *buf, int *r, int *g, int *b, int *a)
 
 
 /*
- *  colorphrase(s, &r, &g, &b, &a) -- parse Icon color phrase.
+ *  colorphrase(s, &r, &g, &b) -- parse Icon color phrase.
  *
  *  A Unicon color phrase matches the pattern
  *
@@ -349,14 +434,13 @@ int parsecolor(char *buf, int *r, int *g, int *b, int *a)
  *	IEEE Computer Graphics & Applications, May 1982
  */
 
-static int colorphrase(char *buf, int *r, int *g, int *b, int *a)
+static int colorphrase(char *buf, int *r, int *g, int *b)
 {
     int len, very;
     char c, *p, *ebuf, cbuffer[MAXCOLORNAME];
-    float lgt, sat, blend, bl2, m1, m2, alpha;
+    float lgt, sat, blend, bl2, m1, m2;
     float h1, l1, s1, h2, l2, s2, r2, g2, b2;
 
-    alpha = 1.0;
     lgt = -1.0;				/* default no lightness mod */
     sat =  1.0;				/* default vivid saturation */
     len = strlen(buf);
@@ -378,21 +462,6 @@ static int colorphrase(char *buf, int *r, int *g, int *b, int *a)
 
     buf = cbuffer;
     ebuf = buf + len;
-
-    /* check for diaphaneity adjective */
-    p = bsearch(buf, (char *)transptable,
-                ElemCount(transptable), ElemSize(transptable), (BSearchFncCast)strcmp);
-
-    if (p) {
-        /* skip past word */
-        buf += strlen(buf) + 1;
-        if (buf >= ebuf)
-            return 0;
-        /* save diaphaneity value, but ignore "opaque" */
-        if ((((colrmod *)p) -> val) != 100)
-            alpha = ((colrmod *)p) -> val / 100.0;
-    }
-
     /* check for "very" */
     if (strcmp(buf, "very") == 0) {
         very = 1;
@@ -516,7 +585,6 @@ static int colorphrase(char *buf, int *r, int *g, int *b, int *a)
     *r = 65535 * r2;
     *g = 65535 * g2;
     *b = 65535 * b2;
-    *a = 65535 * alpha;
 
     return 1;
 }
@@ -541,8 +609,9 @@ static double rgbval(double n1, double n2, double hue)
         return n1;
 }
 
-int initimgmem(wbp w, struct imgmem *i, int copy, int x, int y, int width, int height)
+int initimgmem(wbp w, struct imgmem *i, int copy, int clip, int x, int y, int width, int height)
 {
+    wcp wc = w->context;
     wsp ws = w->window;
     if (x < 0)  { 
         width += x; 
@@ -559,7 +628,27 @@ int initimgmem(wbp w, struct imgmem *i, int copy, int x, int y, int width, int h
 
     if (width <= 0 || height <= 0)
         return 0;
-    
+
+    if (clip && wc->clipw >= 0) {
+        /* Further reduce the rectangle to the clipping region */
+
+        if (x < wc->clipx) {
+            x = wc->clipx;
+            width += x - wc->clipx;
+        }
+        if (y < wc->clipy) {
+            y = wc->clipy;
+            height += y - wc->clipy;
+        }
+        if (x + width > wc->clipx + wc->clipw)
+            width = wc->clipx + wc->clipw - x;
+        if (y + height > wc->clipy + wc->cliph)
+            height = wc->clipy + wc->cliph - y;
+
+        if (width <= 0 || height <= 0)
+            return 0;
+    }
+
     i->x = x;
     i->y = y;
     i->width = width;
@@ -596,7 +685,7 @@ static void func(wbp w, int x, int y, int width, int height, unsigned char *s)
     struct imgmem imem;
     int i, j;
 
-    if (!initimgmem(w, &imem, 0, x, y, width, height))
+    if (!initimgmem(w, &imem, 0, 1, x, y, width, height))
         return;
 
     for (j = y; j < y + height; j++) {
@@ -624,7 +713,7 @@ static void func(wbp w, int x, int y, int width, int height, unsigned char *s)
     struct imgmem imem;
     int i, j;
 
-    if (!initimgmem(w, &imem, 1, x, y, width, height))
+    if (!initimgmem(w, &imem, 1, 1, x, y, width, height))
         return;
 
     for (j = y; j < y + height; j++) {
@@ -782,7 +871,7 @@ static void drawpalette(wbp w, int x, int y, int width, int height,
     struct imgmem imem;
     int i, j;
 
-    if (!initimgmem(w, &imem, copy, x, y, width, height))
+    if (!initimgmem(w, &imem, copy, 1, x, y, width, height))
         return;
 
     for (j = y; j < y + height; j++) {
@@ -802,19 +891,13 @@ void drawblimage(wbp w, int x, int y, int width, int height,
 {
     unsigned int m, msk1, c, ix, iy;
     int slen = height*((width + 3)/4);
-    int fg_r, fg_g, fg_b, fg_a, bg_r, bg_g, bg_b, bg_a;
-    char color[128];
+    int fg_r, fg_g, fg_b, bg_r, bg_g, bg_b;
     struct imgmem imem;
 
-    getfg(w, color);
-    if (!parsecolor(color, &fg_r, &fg_g, &fg_b, &fg_a))
-        return;
+    getfg_rgb(w, &fg_r, &fg_g, &fg_b);
+    getbg_rgb(w, &bg_r, &bg_g, &bg_b);
 
-    getbg(w, color);
-    if (!parsecolor(color, &bg_r, &bg_g, &bg_b, &bg_a))
-        return;
-
-    if (!initimgmem(w, &imem, ch == TCH1, x, y, width, height))
+    if (!initimgmem(w, &imem, ch == TCH1, 1, x, y, width, height))
         return;
 
     m = width % 4;
@@ -1421,7 +1504,7 @@ int writeJPEG(wbp w, char *filename, int x, int y, int width,int height)
 
     quality = 95;
     
-    if (initimgmem(w, &imem, 1, x, y, width, height)) {
+    if (initimgmem(w, &imem, 1, 0, x, y, width, height)) {
         unsigned char *p = data;
         for (j = y; j < y + height; j++) {
             for (i = x; i < x + width; i++) {
@@ -1589,8 +1672,6 @@ static int readPNG(char *filename, struct imgdata *imd)
 }
 
 
-
-
 static int writePNG(wbp w, char *filename, int x, int y, int width, int height)
 {
     FILE *fp;
@@ -1633,7 +1714,7 @@ static int writePNG(wbp w, char *filename, int x, int y, int width, int height)
         p += 6 * width;
     }
 
-    if (initimgmem(w, &imem, 1, x, y, width, height)) {
+    if (initimgmem(w, &imem, 1, 0, x, y, width, height)) {
         p = (png_bytep)data;
         for (j = y; j < y + height; j++) {
             for (i = x; i < x + width; i++) {
@@ -1998,11 +2079,15 @@ struct palentry *palsetup(int p)
  *
  * In color cubes, finds "extra" grays only if r == g == b.
  */
-char *rgbkey(int p, double r, double g, double b)
+char *rgbkey(int p, int r0, int g0, int b0)
 {
     int n, i;
-    double m;
+    double m, r, g, b;
     char *s;
+
+    r = r0 / 65535.0;
+    g = g0 / 65535.0;
+    b = b0 / 65535.0;
 
     if (p > 0) { 			/* color */
         if (r == g && g == b) {
@@ -2152,22 +2237,75 @@ int parsefont(char *s, char family[MAXFONTWORD+1], int *style, int *size)
     return (*family != '\0');
 }
 
+static int pattern_bits[16][8] = {
+    {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+    {0xfe, 0xff, 0xef, 0xff, 0xfe, 0xff, 0xef, 0xff},
+    {0x77, 0xdd, 0x77, 0xdd, 0x77, 0xdd, 0x77, 0xdd},
+    {0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa},
+    {0x11, 0x44, 0x11, 0x44, 0x11, 0x44, 0x11, 0x44},
+    {0x01, 0x00, 0x10, 0x00, 0x01, 0x00, 0x10, 0x00},
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+    {0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10},
+    {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01},
+    {0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0x00},
+    {0x10, 0x10, 0x10, 0xff, 0x10, 0x10, 0x10, 0x10},
+    {0x82, 0x44, 0x28, 0x10, 0x28, 0x44, 0x82, 0x01},
+    {0x0f, 0x0f, 0x0f, 0x0f, 0xf0, 0xf0, 0xf0, 0xf0},
+    {0x1b, 0x18, 0x81, 0xb1, 0x36, 0x06, 0x60, 0x63},
+    {0x02, 0x02, 0x05, 0xf8, 0x20, 0x20, 0x50, 0x8f},
+    {0x03, 0x84, 0x48, 0x30, 0x03, 0x84, 0x48, 0x30}
+};
+
+/*
+ * pattern symbols
+ */
+static stringint patternsyms[] = {
+    {0, 16},
+    { "black",      0},
+    { "checkers",  12},
+    { "darkgray",   2},
+    { "diagonal",   8},
+    { "grains",    13},
+    { "gray",       3},
+    { "grid",      10},
+    { "horizontal", 9},
+    { "lightgray",  4},
+    { "scales",    14},
+    { "trellis",   11},
+    { "vertical",   7},
+    { "verydark",   1},
+    { "verylight" , 5},
+    { "waves",     15},
+    { "white",      6},
+};
+
+static int ppattern[MAX_PATTERN_HEIGHT];
+
 /*
  * parsepattern() - parse an encoded numeric stipple pattern, return 1 on success,
  * 0 on invalid pattern.
  */
-int parsepattern(char *s, int *width, int *nbits, int *bits)
+int parsepattern(char *s, int *width, int *height, int **data)
 {
-    int v;
-    int i, j, len, hexdigits_per_row, maxbits = *nbits;
+    int i, j, v, len, hexdigits_per_row;
+
+    if (!isdigit((unsigned char)s[0])) {
+        if ((i = stringint_str2int(patternsyms, s)) < 0)
+            return 0;
+        *width = *height = 8;
+        *data = pattern_bits[i];
+        return 1;
+    }
 
     len = strlen(s);
 
     /*
      * Get the width
      */
-    if (sscanf(s, "%d,", width) != 1) return 0;
-    if (*width < 1) return 0;
+    if (sscanf(s, "%d,", width) != 1) 
+        return 0;
+    if (*width < 1 || *width > MAX_PATTERN_WIDTH)
+        return 0;
 
     /*
      * skip over width
@@ -2175,7 +2313,8 @@ int parsepattern(char *s, int *width, int *nbits, int *bits)
     while ((len > 0) && isdigit((unsigned char)*s)) {
         len--; s++;
     }
-    if ((len <= 1) || (*s != ',')) return 0;
+    if ((len <= 1) || (*s != ',')) 
+        return 0;
     len--; s++;					/* skip over ',' */
 
     if (*s == '#') {
@@ -2183,13 +2322,15 @@ int parsepattern(char *s, int *width, int *nbits, int *bits)
          * get remaining bits as hex constant
          */
         s++; len--;
-        if (len == 0) return 0;
+        if (len == 0) 
+            return 0;
         hexdigits_per_row = *width / 4;
         if (*width % 4) hexdigits_per_row++;
-        *nbits = len / hexdigits_per_row;
-        if (len % hexdigits_per_row) (*nbits)++;
-        if (*nbits > maxbits) return 0;
-        for (i = 0; i < *nbits; i++) {
+        *height = len / hexdigits_per_row;
+        if (len % hexdigits_per_row) (*height)++;
+        if (*height > MAX_PATTERN_HEIGHT)
+            return 0;
+        for (i = 0; i < *height; i++) {
             v = 0;
             for (j = 0; j < hexdigits_per_row; j++, len--, s++) {
                 if (len == 0) break;
@@ -2203,34 +2344,35 @@ int parsepattern(char *s, int *width, int *nbits, int *bits)
                     default: return 0;
                 }
 	    }
-            *bits++ = v;
+            ppattern[i] = v;
         }
     }
     else {
-        if (*width > 32) return 0;
         /*
          * get remaining bits as comma-separated decimals
          */
         v = 0;
-        *nbits = 0;
+        *height = 0;
         while (len > 0) {
             while ((len > 0) && isdigit((unsigned char)*s)) {
                 v = v * 10 + *s - '0';
                 len--; s++;
 	    }
-            (*nbits)++;
-            if (*nbits > maxbits) return 0;
-            *bits++ = v;
+            if (*height >= MAX_PATTERN_HEIGHT) 
+                return 0; 
+            ppattern[*height] = v;
+            (*height)++;
             v = 0;
 
             if (len > 0) {
-                if (*s == ',') { len--; s++; }
-                else {
+                if (*s == ',') { 
+                    len--; s++; 
+                } else
                     return 0;
-                }
             }
         }
     }
+    *data = ppattern;
     return 1;
 }
 

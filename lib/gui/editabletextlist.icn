@@ -938,23 +938,19 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public draw(r)
-      local rev, xp, yp, i, info
+      local xp, yp, i, info
 
       info := get_line_info() | fail
       yp := view.y - info.offset
       xp := view.x - get_area_x()
 
-      rev := Gui.style.get_selection_clone(view.cbwin)
-
       #
       # Write the lines
       #
       every i := info.first to info.last do {
-         draw_line(xp, yp, i, rev)
+         draw_line(xp, yp, i)
          yp +:= self.line_height
       }
-
-      rev.uncouple()
    end
 
    public draw_line(xp, yp, i, rev)
@@ -1018,7 +1014,7 @@ class EditableTextList(LineBasedScrollArea)
          if \r then {
             off1 := text_width_ex(view.cbwin, s, 1, r[1] - v.first + 1, self.tab_width)
             off2 := text_width_ex(view.cbwin, s, 1, r[2] - v.first + 1, self.tab_width)
-            rev.fill_rectangle(xp + off1, yp,  off2 - off1, self.line_height)
+            Gui.style.selection_rectangle(self.cbwin, xp + off1, yp,  off2 - off1, self.line_height)
          }
       }
    end

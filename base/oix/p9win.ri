@@ -4,14 +4,13 @@ static wfp fonts, new_context_font;
 static Rectangle max_rect;
 static struct Cursor cursor_data[];
 static int use_win;
-static int pattern_bits[16][8];
 static int bintime_fd;
 
 static int open_winfile(wsp ws, char *s, int mode);
 static wsp alcwinstate(void);
 static wcp alccontext(wbp w);
 static wfp alcfont(wbp w, char **s);
-static void synch_pattern_image(struct SharedPattern *pat, int fg_rgba, int bg_rgba, int style);
+static void synch_pattern_image(struct SharedPattern *pat, int fg_rgb, int bg_rgb, int style);
 static int configure_canvas(wbp w);
 static void mouse_loop(int in_fd, int out_fd);
 static Rune *utf8_to_runes(char *str, int nchars);
@@ -33,10 +32,10 @@ static void clear_pix_win(wbp wb);
 static void clear_win(wbp wb);
 static void clip(wcp wc, Image *i);
 static void unclip(wcp wc, Image *i);
-static struct SharedColor *new_sharedcolor(char *name, int rgba);
+static struct SharedColor *new_sharedcolor(char *name, int rgb);
 static struct SharedColor *link_sharedcolor(struct SharedColor *i);
 static void unlink_sharedcolor(struct SharedColor *i);
-static struct SharedPattern *new_sharedpattern(int width, int height, int bits[], char *name);
+static struct SharedPattern *new_sharedpattern(int width, int height, int *rowdata, char *name);
 static struct SharedPattern *link_sharedpattern(struct SharedPattern *x);
 static void unlink_sharedpattern(struct SharedPattern *x);
 static int limit_size(wsp ws, int *width, int *height);
@@ -82,71 +81,6 @@ static stringint fillstyles[] = {
     {"solid", FillSolid },
     {"stippled", FillMasked },
     {"textured", FillTextured },
-};
-
-static stringint drawops[] = {
-   { 0, 29},
-   {"Clear",            Clear},
-   {"D",                D},
-   {"DatopS",           DatopS},
-   {"DinS",             DinS},
-   {"DoutS",            DoutS},
-   {"DoverS",           DoverS},
-   {"DxorS",            DxorS},
-   {"S",                S},
-   {"SatopD",           SatopD},
-   {"SinD",             SinD},
-   {"SoutD",            SoutD},
-   {"SoverD",           SoverD},
-   {"SxorD",            SxorD},
-   {"and",              Clear},
-   {"andInverted",      SinD},
-   {"andReverse",       DinS},
-   {"clear",            SoutD},
-   {"copy",             SoverD},
-   {"copyInverted",     S},
-   {"equiv",            SoverD},
-   {"invert",           SatopD},
-   {"nand",             SxorD},
-   {"noop",             D},
-   {"nor",              DoverS},
-   {"or",               DatopS},
-   {"orInverted",       DxorS},
-   {"orReverse",        DoutS},
-   {"set",              DatopS},
-   {"xor",              DxorS},
-};
-
-/*
- * pattern symbols
- */
-static stringint patternsyms[] = {
-    {0, 16},
-    { "black",      0},
-    { "checkers",  12},
-    { "darkgray",   2},
-    { "diagonal",   8},
-    { "grains",    13},
-    { "gray",       3},
-    { "grid",      10},
-    { "horizontal", 9},
-    { "lightgray",  4},
-    { "scales",    14},
-    { "trellis",   11},
-    { "vertical",   7},
-    { "verydark",   1},
-    { "verylight" , 5},
-    { "waves",     15},
-    { "white",      6},
-};
-
-static stringint linestyles[] = {
-    {0, 5},
-    {"dashed",      0},
-    {"doubledash",  0},
-    {"onoff",       0},
-    {"solid",       0},
-    {"striped",     0},
 };
 
 static stringint canvastypes[] = {
@@ -238,8 +172,9 @@ static stringint cursors[] = {
     {"num glyphs",        -1},
 };
 
-static struct SharedColor *black, *white, *patterns[16];
+static struct SharedColor *black, *white;
 static int window_count;
+static struct SharedPattern *black_pattern;
 
 static int open_winfile(wsp ws, char *s, int mode)
 {
@@ -250,13 +185,13 @@ static int open_winfile(wsp ws, char *s, int mode)
     return fd;
 }
 
-static struct SharedColor *new_sharedcolor(char *name, int rgba)
+static struct SharedColor *new_sharedcolor(char *name, int rgb)
 {
     struct SharedColor *res;
     GRFX_ALLOC(res, SharedColor);
     res->name = salloc(name);
-    res->rgba = rgba;
-    MemProtect(res->i = allocimage(display, Rect(0, 0, 1, 1), RGBA32, 1, rgba));
+    res->rgb = rgb;
+    MemProtect(res->i = allocimage(display, Rect(0, 0, 1, 1), RGB24, 1, rgb));
     return res;
 }
 
@@ -276,7 +211,7 @@ static void unlink_sharedcolor(struct SharedColor *x)
     }
 }
 
-static struct SharedPattern *new_sharedpattern(int width, int height, int bits[], char *name)
+static struct SharedPattern *new_sharedpattern(int width, int height, int *rowdata, char *name)
 {
     struct SharedPattern *res;
     GRFX_ALLOC(res, SharedPattern);
@@ -284,8 +219,8 @@ static struct SharedPattern *new_sharedpattern(int width, int height, int bits[]
     res->name = salloc(name);
     res->width = width;
     res->height = height;
-    memcpy(res->bits, bits, sizeof(res->bits));
-    res->fg_rgba = res->bg_rgba = 0;
+    memcpy(res->rowdata, rowdata, height * sizeof(int));
+    res->fg_rgb = res->bg_rgb = 0;
     return res;
 }
 
@@ -848,14 +783,13 @@ static void impl_drawarc(wcp wc, Image *dest, int x, int y, int width, int heigh
     height /= 2;
     alpha = -angle1 * 180 / Pi;
     phi = -angle2 * 180 / Pi;
-    arcop(dest, 
-          Pt(dest->r.min.x + x, dest->r.min.y + y),
-          width, height,
-          wc->thick,
-          get_draw_img(wc), 
-          ZP,
-          alpha, phi, 
-          wc->drawop->i);
+    arc(dest, 
+        Pt(dest->r.min.x + x, dest->r.min.y + y),
+        width, height,
+        wc->thick,
+        get_draw_img(wc), 
+        ZP,
+        alpha, phi);
         
     unclip(wc, dest);
 }
@@ -882,8 +816,8 @@ void drawlines(wbp w, XPoint *points, int npoints)
     term = wc->thick == 1 ? Enddisc:Endsquare;
 
     clip(wc, ws->pix);
-    polyop(ws->pix, points, npoints, term, term, wc->thick, 
-           get_draw_img(wc), ZP, wc->drawop->i);
+    poly(ws->pix, points, npoints, term, term, wc->thick, 
+         get_draw_img(wc), ZP);
     unclip(wc, ws->pix);
 
     if (ws->win) {
@@ -892,8 +826,8 @@ void drawlines(wbp w, XPoint *points, int npoints)
             points[i].y += ws->win->r.min.y;
         }
         clip(wc, ws->win);
-        polyop(ws->win, points, npoints, term, term, wc->thick, 
-               get_draw_img(wc), ZP, wc->drawop->i);
+        poly(ws->win, points, npoints, term, term, wc->thick, 
+             get_draw_img(wc), ZP);
         unclip(wc, ws->win);
     }
 
@@ -914,7 +848,7 @@ static void impl_drawrectangle(wcp wc, Image *dest, int x, int y, int width, int
     p[3] = Pt(p[0].x, p[0].y + height - 1);
     p[4] = p[0];
     clip(wc, dest);
-    polyop(dest, p, 5, Endsquare, Endsquare, wc->thick, get_draw_img(wc), ZP, wc->drawop->i);
+    poly(dest, p, 5, Endsquare, Endsquare, wc->thick, get_draw_img(wc), ZP);
     unclip(wc, dest);
 }
 
@@ -935,7 +869,7 @@ void fillpolygon(wbp w, XPoint *points, int npoints)
     wcp wc = w->context;
 
     clip(wc, ws->pix);
-    fillpolyop(ws->pix, points, npoints, 0, get_draw_img(wc), ZP, wc->drawop->i);
+    fillpoly(ws->pix, points, npoints, 0, get_draw_img(wc), ZP);
     unclip(wc, ws->pix);
 
     for (i = 0; i < npoints; ++i) {
@@ -943,7 +877,7 @@ void fillpolygon(wbp w, XPoint *points, int npoints)
         points[i].y += ws->win->r.min.y;
     }
     clip(wc, ws->win);
-    fillpolyop(ws->win, points, npoints, 0, get_draw_img(wc), ZP, wc->drawop->i);
+    fillpoly(ws->win, points, npoints, 0, get_draw_img(wc), ZP);
     unclip(wc, ws->win);
 
     flushimage(display, 1);
@@ -1052,9 +986,9 @@ void pollevent(void)
 
 int setfg(wbp w, char *val)
 {
-    int r, g, b, a, n;
+    int r, g, b, n;
     wcp wc = w->context;
-    if (!parsecolor(val, &r, &g, &b, &a)) {
+    if (!parsecolor(val, &r, &g, &b)) {
         LitWhy("Invalid color");
         return Failed;
     }
@@ -1063,8 +997,7 @@ int setfg(wbp w, char *val)
     r /= 256;
     g /= 256;
     b /= 256;
-    a /= 256;
-    n = (r << 24) | (g << 16) | (b << 8) | a;
+    n = (r << 24) | (g << 16) | (b << 8) | 0xff;
     wc->fg = new_sharedcolor(val, n);
     return Succeeded;
 }
@@ -1081,9 +1014,9 @@ void getfg(wbp w, char *answer)
 
 int setbg(wbp w, char *val)
 {
-    int r, g, b, a, n;
+    int r, g, b, n;
     wcp wc = w->context;
-    if (!parsecolor(val, &r, &g, &b, &a)) {
+    if (!parsecolor(val, &r, &g, &b)) {
         LitWhy("Invalid color");
         return Failed;
     }
@@ -1092,8 +1025,7 @@ int setbg(wbp w, char *val)
     r /= 256;
     g /= 256;
     b /= 256;
-    a /= 256;
-    n = (r << 24) | (g << 16) | (b << 8) | a;
+    n = (r << 24) | (g << 16) | (b << 8) | 0xff;
     wc->bg = new_sharedcolor(val, n);
     return Succeeded;
 }
@@ -1115,13 +1047,12 @@ static void impl_fillarc(wcp wc, Image *dest, int x, int y, int width, int heigh
     height /= 2;
     alpha = -angle1 * 180 / Pi;
     phi = -angle2 * 180 / Pi;
-    fillarcop(dest, 
-              Pt(dest->r.min.x + x, dest->r.min.y + y),
-              width, height,
-              get_draw_img(wc),
-              ZP,
-              alpha, phi,
-              wc->drawop->i);
+    fillarc(dest, 
+            Pt(dest->r.min.x + x, dest->r.min.y + y),
+            width, height,
+            get_draw_img(wc),
+            ZP,
+            alpha, phi);
     unclip(wc, dest);
 }
 
@@ -1142,7 +1073,7 @@ static Image *get_draw_img(wcp wc)
     if (wc->fillstyle->i == FillSolid) {
         return wc->fg->i;
     } else {
-        synch_pattern_image(wc->pattern, wc->fg->rgba, wc->bg->rgba, wc->fillstyle->i);
+        synch_pattern_image(wc->pattern, wc->fg->rgb, wc->bg->rgb, wc->fillstyle->i);
         return wc->pattern->i;
     }
 }
@@ -1154,7 +1085,7 @@ static void impl_fillrectangle(wcp wc, Image *dest, int x, int y, int width, int
                        dest->r.min.x + x + width,
                        dest->r.min.y + y + height);
     clip(wc, dest);
-    gendrawop(dest, t, get_draw_img(wc), ZP, 0, ZP, wc->drawop->i);
+    gendraw(dest, t, get_draw_img(wc), ZP, 0, ZP);
     unclip(wc, dest);
 }
 
@@ -1254,12 +1185,12 @@ int lowerwindow (wbp w)
     return Succeeded;
 }
 
-static void synch_pattern_image(struct SharedPattern *pat, int fg_rgba, int bg_rgba, int style)
+static void synch_pattern_image(struct SharedPattern *pat, int fg_rgb, int bg_rgb, int style)
 {
     int i, j, k, x, y, v, a1, a2;
-    unsigned char data[MAXXOBJS * 8 * 8 * 4];
+    unsigned char data[MAX_PATTERN_WIDTH * MAX_PATTERN_HEIGHT * 4];
 
-    if (pat->i && pat->fg_rgba == fg_rgba && pat->bg_rgba == bg_rgba && pat->style == style)
+    if (pat->i && pat->fg_rgb == fg_rgb && pat->bg_rgb == bg_rgb && pat->style == style)
         return;
 
     if (style == FillTextured) {
@@ -1269,23 +1200,21 @@ static void synch_pattern_image(struct SharedPattern *pat, int fg_rgba, int bg_r
          */
         k = 0;
         for(i = 0; i < pat->height; i++) {
-            v = pat->bits[i];
+            v = pat->rowdata[i];
             for(j = 0; j < pat->width; j += 8) {
-                int x = v;
                 for (y = 0; y < 8; ++y) {
-                    int bit = (x & 1);
+                    int bit = (v & 1);
                     if (bit) {
-                        data[k++] = (fg_rgba>>8) & 0xff;
-                        data[k++] = (fg_rgba>>16) & 0xff;
-                        data[k++] = (fg_rgba>>24) & 0xff;
+                        data[k++] = (fg_rgb>>8) & 0xff;
+                        data[k++] = (fg_rgb>>16) & 0xff;
+                        data[k++] = (fg_rgb>>24) & 0xff;
                     } else {
-                        data[k++] = (bg_rgba>>8) & 0xff;
-                        data[k++] = (bg_rgba>>16) & 0xff;
-                        data[k++] = (bg_rgba>>24) & 0xff;
+                        data[k++] = (bg_rgb>>8) & 0xff;
+                        data[k++] = (bg_rgb>>16) & 0xff;
+                        data[k++] = (bg_rgb>>24) & 0xff;
                     }
-                    x /= 2;
+                    v /= 2;
                 }
-                v >>= 8;
             }
         }
 
@@ -1294,30 +1223,28 @@ static void synch_pattern_image(struct SharedPattern *pat, int fg_rgba, int bg_r
         MemProtect(pat->i = allocimage(display, Rect(0, 0, pat->width, pat->height), RGB24, 1, DNofill));
     } else {
         /*
-         * Masked style means off bits are transparent and on bits have the rgba of the
+         * Masked style means off bits are transparent and on bits have the rgb of the
          * foreground.
          */
         k = 0;
         for(i = 0; i < pat->height; i++) {
-            v = pat->bits[i];
+            v = pat->rowdata[i];
             for(j = 0; j < pat->width; j += 8) {
-                int x = v;
                 for (y = 0; y < 8; ++y) {
-                    int bit = (x & 1);
+                    int bit = (v & 1);
                     if (bit) {
-                        data[k++] = fg_rgba & 0xff;
-                        data[k++] = (fg_rgba>>8) & 0xff;
-                        data[k++] = (fg_rgba>>16) & 0xff;
-                        data[k++] = (fg_rgba>>24) & 0xff;
+                        data[k++] = 0xff;
+                        data[k++] = (fg_rgb>>8) & 0xff;
+                        data[k++] = (fg_rgb>>16) & 0xff;
+                        data[k++] = (fg_rgb>>24) & 0xff;
                     } else {
                         data[k++] = 0x00;
                         data[k++] = 0x00;
                         data[k++] = 0x00;
                         data[k++] = 0x00;
                     }
-                    x /= 2;
+                    v /= 2;
                 }
-                v >>= 8;
             }
         }
 
@@ -1327,36 +1254,23 @@ static void synch_pattern_image(struct SharedPattern *pat, int fg_rgba, int bg_r
     }
 
     loadimage(pat->i, pat->i->r, data, k);
-    pat->fg_rgba = fg_rgba;
-    pat->bg_rgba = bg_rgba;
+    pat->fg_rgb = fg_rgb;
+    pat->bg_rgb = bg_rgb;
     pat->style = style;
 }
 
 int setpattern(wbp w, char *name)
 {
+    int width, height, *rowdata;
     wcp wc = w->context;
 
-    /*
-     * If the pattern starts with a number it is a width , bits encoding
-     */
-    if (isdigit((unsigned char)name[0])) {
-        int width, height, bits[MAXXOBJS];
-        height = MAXXOBJS;
-        if (!parsepattern(name, &width, &height, bits)) {
-            LitWhy("Invalid pattern");
-            return Failed;
-        }
-        if (wc->pattern)
-            unlink_sharedpattern(wc->pattern);
-        wc->pattern = new_sharedpattern(width, height, bits, name);
-    } else {
-        int i;
-        if ((i = stringint_str2int(patternsyms, name)) < 0)
-            return Failed;
-        if (wc->pattern)
-            unlink_sharedpattern(wc->pattern);
-        wc->pattern = new_sharedpattern(8, 8, pattern_bits[i], name);
+    if (!parsepattern(name, &width, &height, &rowdata)) {
+        LitWhy("Invalid pattern");
+        return Failed;
     }
+    if (wc->pattern)
+        unlink_sharedpattern(wc->pattern);
+    wc->pattern = new_sharedpattern(width, height, rowdata, name);
     return Succeeded;
 }
 
@@ -1911,11 +1825,8 @@ void getfillstyle(wbp w, char *answer)
 
 int setlinestyle(wbp w, char *val)
 {
-    wcp wc = w->context;
-    stringint *e = stringint_lookup(linestyles, val);
-    if (!e)
+    if (strcmp(val, "solid") != 0)
         return Failed;
-    wc->linestyle = e;
     return Succeeded;
 }
 
@@ -1953,11 +1864,8 @@ int setpointer(wbp w, char *val)
 
 int setdrawop(wbp w, char *val)
 {
-    wcp wc = w->context;
-    stringint *e = stringint_lookup(drawops, val);
-    if (!e)
+    if (strcmp(val, "copy") != 0)
         return Failed;
-    wc->drawop = e;
     return Succeeded;
 }
 
@@ -1982,7 +1890,7 @@ int getpos(wbp w)
 
 void getlinestyle(wbp w, char *answer)
 {
-    strcpy(answer, w->context->linestyle->s);
+    strcpy(answer, "solid");
 }
 
 int querypointer(wbp w, int *x, int *y)
@@ -2000,7 +1908,7 @@ void getpointer(wbp w, char *answer)
 
 void getdrawop(wbp w, char *answer)
 {
-    strcpy(answer, w->context->drawop->s);
+    strcpy(answer, "copy");
 }
 
 void getcanvas(wbp w, char *answer)
@@ -2083,10 +1991,11 @@ wcp clonecontext(wbp w)
     wc->font = src->font;
     wc->thick = src->thick;
     wc->fillstyle = src->fillstyle;
-    wc->drawop = src->drawop;
     GRFX_LINK(wc, wcntxts);
     return wc;
 }
+
+static int black_pattern_data[] =  {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
 static wcp alccontext(wbp w)
 {
@@ -2097,11 +2006,9 @@ static wcp alccontext(wbp w)
     wc->clipw = wc->cliph = -1;
     wc->fg = link_sharedcolor(black);
     wc->bg = link_sharedcolor(white);
-    wc->pattern = new_sharedpattern(8, 8, pattern_bits[0], "black");
+    wc->pattern = link_sharedpattern(black_pattern);
     wc->font = new_context_font;
     wc->fillstyle = stringint_lookup(fillstyles, "solid");
-    wc->drawop = stringint_lookup(drawops, "copy");
-    wc->linestyle = stringint_lookup(linestyles, "solid");
     GRFX_LINK(wc, wcntxts);
     return wc;
 }
@@ -2174,25 +2081,6 @@ static struct Cursor cursor_data[] = {
     #include "p9cursors/watch"             /* 30 */
 };
 
-static int pattern_bits[16][8] = {
-    {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
-    {0xfe, 0xff, 0xef, 0xff, 0xfe, 0xff, 0xef, 0xff},
-    {0x77, 0xdd, 0x77, 0xdd, 0x77, 0xdd, 0x77, 0xdd},
-    {0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa},
-    {0x11, 0x44, 0x11, 0x44, 0x11, 0x44, 0x11, 0x44},
-    {0x01, 0x00, 0x10, 0x00, 0x01, 0x00, 0x10, 0x00},
-    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-    {0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10},
-    {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01},
-    {0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0x00},
-    {0x10, 0x10, 0x10, 0xff, 0x10, 0x10, 0x10, 0x10},
-    {0x82, 0x44, 0x28, 0x10, 0x28, 0x44, 0x82, 0x01},
-    {0x0f, 0x0f, 0x0f, 0x0f, 0xf0, 0xf0, 0xf0, 0xf0},
-    {0x1b, 0x18, 0x81, 0xb1, 0x36, 0x06, 0x60, 0x63},
-    {0x02, 0x02, 0x05, 0xf8, 0x20, 0x20, 0x50, 0x8f},
-    {0x03, 0x84, 0x48, 0x30, 0x03, 0x84, 0x48, 0x30}
-};
-
 static void init_window_system(void)
 {
     Dir *fs;
@@ -2224,6 +2112,7 @@ static void init_window_system(void)
 
     black = new_sharedcolor("black", 0x000000ff);
     white = new_sharedcolor("white", 0xffffffff);
+    black_pattern = new_sharedpattern(8, 8, black_pattern_data, "black");
     max_rect = Rect(-1073741823, -1073741823, 1073741823, 1073741823);
     startup_time = get_time();
     new_context_font = load_font("fixed");
@@ -2373,7 +2262,7 @@ int writeimagefileimpl(wbp w, char *filename, int x, int y, int width, int heigh
 
     ndata = 3 * width * height;
     MemProtect(data = malloc(ndata));
-    if (initimgmem(w, &imem, 1, x, y, width, height)) {
+    if (initimgmem(w, &imem, 1, 0, x, y, width, height)) {
         int i, j;
         uchar *p = data;
         for (j = y; j < y + height; j++) {

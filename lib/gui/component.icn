@@ -414,17 +414,15 @@ class Component(Rect,Align,SetFields,Connectable)
    end
 
    public invoke_display(r)
-      local cw
       self.cbwin.clip(r.x, r.y, r.w, r.h)
       self.cbwin.erase_area(r.x, r.y, r.w, r.h)
       self.display(r)
       if \self.show_layout_flag then
          (\layout_delegate).display()
-      if is_shaded() then {
-         cw := Gui.style.get_filter_clone(self.cbwin)
-         cw.fill_rectangle(r.x, r.y, r.w, r.h)
-         cw.uncouple()
-      }
+      # Only need to shade if we are shaded and the parent won't shade for us.  This also
+      # avoids filtering twice, which makes the result too grey.
+      if is_shaded() & not((\parent).is_shaded()) then
+         Gui.style.shade_rectangle(self.cbwin, r.x, r.y, r.w, r.h)
    end
 
    #

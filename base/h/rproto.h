@@ -182,17 +182,18 @@ void  bigrand         (dptr da, dptr dx);
    void getpattern      (wbp w, char *answer);
    struct palentry *palsetup(int p);
    int  palnum          (dptr d);
-   int  parsecolor      (char *s, int *r, int *g, int *b, int *a);
+   int  parsefilter     (wbp w, char *s, struct filter *res);
+   int  parsecolor      (char *s, int *r, int *g, int *b);
    int  parsefont       (char *s, char *fam, int *sty, int *sz);
-   int  parsepattern    (char *s, int *w, int *nbits, int *bits);
+   int  parsepattern    (char *s, int *w, int *height, int **data);
    void qevent          (wsp ws, dptr e, int x, int y, uword t, long f, int krel);
    void wgetevent       (wbp w, dptr res);
    int  readimagefile   (char *filename, struct imgdata *imd);
    int  writeimagefile  (wbp w, char *filename, int x, int y, int width, int height);
    int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph);
-   char *rgbkey         (int p, double r, double g, double b);
+   char *rgbkey         (int p, int r, int g, int b);
 
-   int  initimgmem      (wbp w, struct imgmem *i, int copy, int x, int y, int width, int height);
+   int  initimgmem      (wbp w, struct imgmem *i, int copy, int clip, int x, int y, int width, int height);
    int  gotopixel       (struct imgmem *i, int x, int y);
    void drawblimage     (wbp w, int x, int y, int wd, int h,
                           int ch, unsigned char *s);

@@ -136,8 +136,6 @@ typedef struct {
 
 #define FREE_STDLOCALS(w) do { SelectObject(pixdc, (w)->window->theOldPix); ReleaseDC((w)->window->iconwin, stddc); DeleteDC(pixdc); } while (0)
 
-#define MAXXOBJS 8
-
 #define glXSwapBuffers(foo, bar) { \
 HDC stddc = CreateWinDC(w);\
          SwapBuffers(stddc);\

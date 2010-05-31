@@ -2,21 +2,8 @@
  * graphics.h - macros and types used in Icon's graphics interface.
  */
 
-#ifndef MAXXOBJS
-   #define MAXXOBJS 256
-#endif					/* MAXXOBJS */
-
-#ifndef DMAXCOLORS
-   #define DMAXCOLORS 256
-#endif					/* DMAXCOLORS */
-
-#ifndef MAXCOLORNAME
-   #define MAXCOLORNAME 40
-#endif					/* MAXCOLORNAME */
-
-#ifndef MAXFONTWORD
-   #define MAXFONTWORD 40
-#endif					/* MAXFONTWORD */
+#define MAX_PATTERN_WIDTH  32
+#define MAX_PATTERN_HEIGHT 32
 
 #if XWindows
    #include "../h/xwin.h"
@@ -25,6 +12,12 @@
 #elif PLAN9
    #include "../h/p9win.h"
 #endif
+
+#define MAXCOLORNAME 40
+
+#ifndef MAXFONTWORD
+   #define MAXFONTWORD 40
+#endif					/* MAXFONTWORD */
 
 #define DEFAULTFONTSIZE 14
 
@@ -262,8 +255,6 @@ typedef struct _wcontext {
   struct SharedPattern  *pattern;
   int           thick;
   stringint     *fillstyle;
-  stringint     *drawop;
-  stringint     *linestyle;
 #elif MSWIN32
   LOGPEN	pen;
   LOGPEN	bgpen;
@@ -364,6 +355,20 @@ typedef struct _wbinding {
 struct wbind_list {
   struct _wbinding *child;
   struct wbind_list *next;
+};
+
+struct filter {
+   wbp w;
+   struct imgmem *imem;
+   void (*f)(struct filter *);
+   union {
+      struct {
+         float mr, mb, mg;
+      } linear;
+      struct {
+         int p;
+      } coerce;
+   } p;
 };
 
 

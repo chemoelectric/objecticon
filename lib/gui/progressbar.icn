@@ -18,7 +18,7 @@ class ProgressBar(Component)
    end
 
    public display()
-      local cw, s, r
+      local s, r
       border.draw_rect(self.cbwin, self)
       r := border.get_inner_rect(self)
       s := p || "%"
@@ -27,11 +27,9 @@ class ProgressBar(Component)
                    r.y + (r.h - self.cbwin.get_font_height()) / 2,
                    s)
       #
-      # Draw the bar in reverse mode
+      # Draw the bar in 'down' mode
       #
-      cw := Gui.style.get_down_clone(self.cbwin)
-      cw.fill_rectangle(r.x, r.y, r.w * p / 100.0, r.h)
-      cw.uncouple()
+      Gui.style.down_rectangle(self.cbwin, r.x, r.y, r.w * p / 100.0, r.h)
    end
 
    #
