@@ -345,8 +345,6 @@ struct filter {
       struct {
          float m, c;
       } linear;
-      struct {
-      } grey;
    } p;
 };
 
@@ -364,3 +362,6 @@ struct filter {
 
 
 #define XICONSLEEP	20 /* milliseconds */
+
+#define MAX_PATTERN_HEIGHT 64
+

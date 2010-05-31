@@ -22,7 +22,6 @@ static void handle_config(wbp w, XConfigureEvent *event);
 static void handle_exposures(wbp w, XExposeEvent *event);
 static void handle_mouse(wbp w, XButtonEvent *event);
 static void handle_keypress(wbp w, XKeyEvent *event);
-static void setpatternbits(wbp w, int width, int *bits, int nbits);
 static void wmap(wbp w);
 static int convert_KeySym_to_code_point(KeySym k);
 #ifdef HAVE_LIBXFT
@@ -2242,124 +2241,41 @@ int queryrootpointer(wbp w, int *x, int *y)
     return Succeeded;
 }
 
-
-int patbits[] = {
-    0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
-    0xFE,0xFF,0xEF,0xFF,0xFE,0xFF,0xEF,0xFF,
-    0x77,0xDD,0x77,0xDD,0x77,0xDD,0x77,0xDD,
-    0x55,0xAA,0x55,0xAA,0x55,0xAA,0x55,0xAA,
-    0x11,0x44,0x11,0x44,0x11,0x44,0x11,0x44,
-    0x01,0x00,0x10,0x00,0x01,0x00,0x10,0x00,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-
-    0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,
-    0x80,0x40,0x20,0x10,0x08,0x04,0x02,0x01,
-    0x00,0x00,0x00,0xFF,0x00,0x00,0x00,0x00,
-    0x10,0x10,0x10,0xFF,0x10,0x10,0x10,0x10,
-    0x82,0x44,0x28,0x10,0x28,0x44,0x82,0x01,
-
-    0x0F,0x0F,0x0F,0x0F,0xF0,0xF0,0xF0,0xF0,
-    0x1B,0x18,0x81,0xB1,0x36,0x06,0x60,0x63,
-    0x02,0x02,0x05,0xF8,0x20,0x20,0x50,0x8F,
-    0x03,0x84,0x48,0x30,0x03,0x84,0x48,0x30,
-};
-
-/*
- * pattern symbols
- */
-static stringint siPatternSyms[] = {
-    {0,		16},
-    { "black",	 0},
-    { "checkers",	 12},
-    { "darkgray",	 2},
-    { "diagonal",	 8},
-    { "grains",	 13},
-    { "gray",	 3},
-    { "grid",	 10},
-    { "horizontal",9},
-    { "lightgray", 4},
-    { "scales",	 14},
-    { "trellis",	 11},
-    { "vertical",	 7},
-    { "verydark",	 1},
-    { "verylight", 5},
-    { "waves",	 15},
-    { "white",	 6},
-};
-
 /*
  * setpattern
  */
 int setpattern(wbp w, char *name)
 {
-    int width, nbits;
-    int i;
-    int symbol;
-    int v, bits[MAXXOBJS];
+    int i, j, v, width, height, *rowdata;
     Pixmap p;
-    char data[MAXXOBJS];
-    char *t, *buf = data;
+    char *t, data[4 * MAX_PATTERN_HEIGHT];
     STDLOCALS(w);
 
-    /*
-     * If the pattern starts with a number it is a width , bits encoding
-     */
-    if (isdigit((unsigned char)name[0])) {
-        nbits = MAXXOBJS;
-        if (!parsepattern(name, &width, &nbits, bits)) {
-            LitWhy("Invalid pattern");
-            return Failed;
-        }
-        if (stdgc)
-            setpatternbits(w, width, bits, nbits);
-    } else {
-        /*
-         * Otherwise, it is a named pattern.  Find the symbol id.
-         */
-        if ((symbol = stringint_str2int(siPatternSyms, name)) < 0)
-            return Failed;
-
-        if (stdgc) {
-            for(i = 0; i < 8; i++) {
-                v = patbits[symbol * 8 + i];
-                *buf++ = v;
+    if (!parsepattern(name, &width, &height, &rowdata)) {
+        LitWhy("Invalid pattern");
+        return Failed;
+    }
+    if (stdgc) {
+        t = data;
+        for(i = 0; i < height; i++) {
+            v = rowdata[i];
+            for(j = 0; j < width; j += 8) {
+                *t++ = v;
+                v >>= 8;
             }
-            p = XCreateBitmapFromData(stddpy, stdpix, data, 8, 8);
-            XSetStipple(stddpy, stdgc, p);
-            XSync(stddpy, False);
-            XFreePixmap(stddpy, p);
         }
+        p = XCreateBitmapFromData(stddpy, stdpix, data, width, height);
+        XSetStipple(stddpy, stdgc, p);
+        XSync(stddpy, False);
+        XFreePixmap(stddpy, p);
     }
 
     t = salloc(name);
-    if (wc->patternname != NULL)
+    if (wc->patternname)
         free(wc->patternname);
     wc->patternname = t;
    
     return Succeeded;
-}
-
-static void setpatternbits(wbp w, int width, int *bits, int nbits)
-{
-    int v;
-    int i, j;
-    Pixmap p;
-    char data[MAXXOBJS];
-    char *buf = data;
-    STDLOCALS(w);
-
-    for(i = 0; i < nbits; i++) {
-        v = bits[i];
-        for(j=0; j<width; j+=8) {
-            *buf++ = v;
-            v >>= 8;
-        }
-    }
-
-    p = XCreateBitmapFromData(stddpy, stdpix, data, width, nbits);
-    XSetStipple(stddpy, stdgc, p);
-    XSync(stddpy, False);
-    XFreePixmap(stddpy, p);
 }
 
 int raisewindow(wbp w)
