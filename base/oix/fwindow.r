@@ -13,6 +13,7 @@
 
 static char attr_buff[4096];     /* Buff for attribute values */
 
+#define MAXPOINTS 256
 
 static struct sdescrip wclassname = {15, "graphics.Window"};
 
@@ -525,7 +526,7 @@ end
 function graphics_Window_draw_line(self, argv[argc])
    body {
       int i, j, n;
-      XPoint points[MAXXOBJS];
+      XPoint points[MAXPOINTS];
       int dx, dy;
 
       GetSelfW();
@@ -536,9 +537,9 @@ function graphics_Window_draw_line(self, argv[argc])
       dy = self_w->context->dy;
       for(i = 0, j = 0; i < n; i++, j++) {
           int base = i * 2;
-          if (j == MAXXOBJS) {
-              drawlines(self_w, points, MAXXOBJS);
-              points[0] = points[MAXXOBJS-1];
+          if (j == MAXPOINTS) {
+              drawlines(self_w, points, MAXPOINTS);
+              points[0] = points[MAXPOINTS-1];
               j = 1;
           }
           CnvCShort(argv[base], points[j].x);
@@ -570,7 +571,7 @@ end
 function graphics_Window_draw_polygon(self, argv[argc])
    body {
       int i, j, n, base, dx, dy;
-      XPoint points[MAXXOBJS];
+      XPoint points[MAXPOINTS];
 
       GetSelfW();
       CheckArgMultipleOf(2);
@@ -591,9 +592,9 @@ function graphics_Window_draw_polygon(self, argv[argc])
        */
       for(i = 0, j = 1; i < n; i++, j++) {
           base = i * 2;
-          if (j == MAXXOBJS) {
-              drawlines(self_w, points, MAXXOBJS);
-              points[0] = points[MAXXOBJS-1];
+          if (j == MAXPOINTS) {
+              drawlines(self_w, points, MAXPOINTS);
+              points[0] = points[MAXPOINTS-1];
               j = 1;
           }
           CnvCShort(argv[base], points[j].x);

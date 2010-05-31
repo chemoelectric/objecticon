@@ -2275,7 +2275,7 @@ int parsepattern(char *s, int *width, int *height, int **data)
      */
     if (sscanf(s, "%d,", width) != 1) 
         return 0;
-    if (*width < 1 || *width > 32) 
+    if (*width < 1 || *width > MAX_PATTERN_WIDTH)
         return 0;
 
     /*

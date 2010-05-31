@@ -2,23 +2,16 @@
  * graphics.h - macros and types used in Icon's graphics interface.
  */
 
+#define MAX_PATTERN_WIDTH  32
+#define MAX_PATTERN_HEIGHT 32
+
 #if XWindows
    #include "../h/xwin.h"
 #elif MSWIN32
    #include "../h/mswin.h"
 #endif					/* MSWIN32 */
 
-#ifndef MAXXOBJS
-   #define MAXXOBJS 256
-#endif					/* MAXXOBJS */
-
-#ifndef DMAXCOLORS
-   #define DMAXCOLORS 256
-#endif					/* DMAXCOLORS */
-
-#ifndef MAXCOLORNAME
-   #define MAXCOLORNAME 40
-#endif					/* MAXCOLORNAME */
+#define MAXCOLORNAME 40
 
 #ifndef MAXFONTWORD
    #define MAXFONTWORD 40
@@ -362,6 +355,3 @@ struct filter {
 
 
 #define XICONSLEEP	20 /* milliseconds */
-
-#define MAX_PATTERN_HEIGHT 64
-
