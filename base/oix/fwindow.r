@@ -183,7 +183,7 @@ end
 
 function graphics_Window_color_value(k)
    body {
-      int r, g, b, a;
+      int r, g, b;
       tended char *s;
       tended struct descrip result;
       char tmp[32];
@@ -191,13 +191,9 @@ function graphics_Window_color_value(k)
       if (!cnv:C_string(k, s))
           runerr(103, k);
 
-      if (!parsecolor(s, &r, &g, &b, &a))
+      if (!parsecolor(s, &r, &g, &b))
           fail;
-
-      if (a < 65535)
-          sprintf(tmp,"%d,%d,%d,%d", r, g, b, a);
-      else
-          sprintf(tmp,"%d,%d,%d", r, g, b);
+      sprintf(tmp,"%d,%d,%d", r, g, b);
       cstr2string(tmp, &result);
       return result;
    }
@@ -205,7 +201,7 @@ end
 
 function graphics_Window_parse_color(k)
    body {
-      int r, g, b, a;
+      int r, g, b;
       tended char *s;
       tended struct descrip result;
       struct descrip t;
@@ -213,17 +209,15 @@ function graphics_Window_parse_color(k)
       if (!cnv:C_string(k, s))
           runerr(103, k);
 
-      if (!parsecolor(s, &r, &g, &b, &a))
+      if (!parsecolor(s, &r, &g, &b))
           fail;
 
-      create_list(4, &result);
+      create_list(3, &result);
       MakeInt(r, &t);
       list_put(&result, &t);
       MakeInt(g, &t);
       list_put(&result, &t);
       MakeInt(b, &t);
-      list_put(&result, &t);
-      MakeInt(a, &t);
       list_put(&result, &t);
       return result;
    }
@@ -862,7 +856,7 @@ function graphics_Window_palette_key(s1, s2)
       int p;
       word n;
       tended char *s;
-      int r, g, b, a;
+      int r, g, b;
 
       p = palnum(&s1);
       if (p == -1)
@@ -873,8 +867,8 @@ function graphics_Window_palette_key(s1, s2)
       if (!cnv:C_string(s2, s))
           runerr(103, s2);
 
-      if (parsecolor(s, &r, &g, &b, &a))
-          return string(1, rgbkey(p, r / 65535.0, g / 65535.0, b / 65535.0));
+      if (parsecolor(s, &r, &g, &b))
+          return string(1, rgbkey(p, r, g, b));
       else
           fail;
    }
@@ -886,17 +880,14 @@ function graphics_Window_get_pixels(self, x0, y0, w0, h0)
       word x, y, width, height;
       tended struct descrip lastval, result;
       int i, j, r, g, b;
-      wsp ws;
       GetSelfW();
 
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
 
-      ws = self_w->window;
-
       create_list(width * height, &result);
 
-      if (initimgmem(self_w, &imem, 1, x, y, width, height)) {
+      if (initimgmem(self_w, &imem, 1, 0, x, y, width, height)) {
           lastval = emptystr;
           r = g = b = -1;
           for (j = y; j < y + height; j++) {
@@ -935,15 +926,12 @@ function graphics_Window_set_pixels(self, data, x0, y0, w0, h0)
       tended struct b_lelem *le;
       tended struct descrip elem;
       int i, j;
-      wsp ws;
       GetSelfW();
 
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
 
-      ws = self_w->window;
-
-      if (!initimgmem(self_w, &imem, 1, x, y, width, height))
+      if (!initimgmem(self_w, &imem, 1, 1, x, y, width, height))
           return;
 
       le = lgfirst(&ListBlk(data), &state);
@@ -952,25 +940,41 @@ function graphics_Window_set_pixels(self, data, x0, y0, w0, h0)
               elem = le->lslots[state.result];
               le = lgnext(&ListBlk(data), &state, le);
               if (!is:null(elem) && gotopixel(&imem, i, j)) {
-                  int r, g, b, a;
+                  int r, g, b;
                   if (!cnv:string(elem, elem))
                       runerr(103, elem);
-                  if (parsecolor(buffstr(&elem), &r, &g, &b, &a)) {
-                      if (a) {
-                          if (a != 65535) {
-                              int r1, g1, b1;
-                              getpixel(&imem, &r1, &g1, &b1);
-                              r = CombineAlpha(r, r1, a);
-                              g = CombineAlpha(g, g1, a);
-                              b = CombineAlpha(b, b1, a);
-                          }
-                          setpixel(&imem, r, g, b);
-                      }
-                  }
+                  if (parsecolor(buffstr(&elem), &r, &g, &b))
+                      setpixel(&imem, r, g, b);
               }
           }
       }
 
+      saveimgmem(self_w, &imem);
+      freeimgmem(&imem);
+      return nulldesc;
+   }
+end
+
+function graphics_Window_filter(self, spec, x0, y0, w0, h0)
+   if !cnv:string(spec) then
+      runerr(103, spec)
+   body {
+      struct imgmem imem;
+      word x, y, width, height;
+      struct filter filter;
+      GetSelfW();
+
+      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
+
+      if (!parsefilter(self_w, buffstr(&spec), &filter))
+          fail;
+
+      if (!initimgmem(self_w, &imem, 1, 1, x, y, width, height))
+          return;
+
+      filter.imem = &imem;
+      filter.f(&filter);
       saveimgmem(self_w, &imem);
       freeimgmem(&imem);
       return nulldesc;

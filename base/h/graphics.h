@@ -337,6 +337,19 @@ struct wbind_list {
   struct wbind_list *next;
 };
 
+struct filter {
+   wbp w;
+   struct imgmem *imem;
+   void (*f)(struct filter *);
+   union {
+      struct {
+         float m, c;
+      } linear;
+      struct {
+      } grey;
+   } p;
+};
+
 
 /*
  * Flags to doconfig()

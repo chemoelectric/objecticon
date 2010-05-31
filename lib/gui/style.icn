@@ -41,29 +41,16 @@ class Style()
       return bev_lookup(W).shadow.get_fg()
    end
 
-   public get_filter_clone(W)
-      local t
-$ifdef _MS_WIN32
-      t := W.clone("bg=pale grey", "fill_style=masked", "draw_op=xor", "pattern=waves")
-      t.xor_reverse()
-$else
-      t := W.clone("fill_style=masked", "pattern=waves", "fg=", W.get_bg())
-$endif
-      return t
+   public filter_rectangle(W, x, y, w, h, width)
+      W.filter("grey", x, y, w, h, width)
    end
 
-   public get_down_clone(W)
-      local t
-      t := W.clone("draw_op=xor")
-      t.xor_reverse()
-      return t
+   public down_rectangle(W, x, y, w, h, width)
+      W.filter("linear,0.75,0.0", x, y, w, h, width)
    end
 
-   public get_selection_clone(W)
-      local t
-      t := W.clone("draw_op=xor")
-      t.xor_reverse()
-      return t
+   public selection_rectangle(W, x, y, w, h, width)
+      W.filter("linear,0.75,0.0", x, y, w, h, width)
    end
 
    public get_cursor_clone(W)

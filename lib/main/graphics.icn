@@ -311,6 +311,11 @@ class Window(SetFields,NoCopy)
    public defer set_pixels(data, x, y, width, height)
 
    #
+   # Filter the given pixels according to the given filter spec.
+   #
+   public defer filter(filter, x, y, width, height)
+
+   #
    # Return the current root x, y position as a two-element list.
    #
    public defer query_root_pointer()

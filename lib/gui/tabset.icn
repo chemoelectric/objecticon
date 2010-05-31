@@ -91,7 +91,7 @@ class TabSet(Component)
    end
 
    public display_tabs_at_top()
-      local l, c, ypos, fw, nx
+      local l, c, ypos, nx
 
       ypos := self.y + border.get_t_inset()
       
@@ -115,12 +115,9 @@ class TabSet(Component)
                          if self.has_focus() & self.is_unshaded() & c === self.which_one 
                          then 1 else &null)
 
-            if c.is_shaded() then {
-               fw := Gui.style.get_filter_clone(self.cbwin)
-               fw.fill_rectangle(c.tab_x, ypos, c.tab_w, self.label_h)
-               fw.uncouple()
-            }
-            
+            if c.is_shaded() then
+               Gui.style.filter_rectangle(self.cbwin,
+                                          c.tab_x, ypos, c.tab_w, self.label_h)
          }
          ypos +:= self.label_h + Gui.BORDER_WIDTH
       }
@@ -141,7 +138,7 @@ class TabSet(Component)
    end
 
    public display_tabs_at_bottom()
-      local l, c, ypos, fw, nx
+      local l, c, ypos, nx
 
       ypos := self.y + self.h - border.get_b_inset() - self.label_h
       
@@ -165,12 +162,9 @@ class TabSet(Component)
                          if self.has_focus() & self.is_unshaded() & c === self.which_one 
                          then 1 else &null)
 
-            if c.is_shaded() then {
-               fw := Gui.style.get_filter_clone(self.cbwin)
-               fw.fill_rectangle(c.tab_x, ypos, c.tab_w, self.label_h)
-               fw.uncouple()
-            }
-            
+            if c.is_shaded() then
+               Gui.style.filter_rectangle(self.cbwin,
+                                          c.tab_x, ypos, c.tab_w, self.label_h)
          }
          ypos -:= self.label_h + Gui.BORDER_WIDTH
       }

@@ -61,7 +61,7 @@ class Menu(TextMenuItem)
    end
 
    public display(cw, r)
-      local c, rw, fw
+      local c
 
       #
       # Draw rectangle around whole
@@ -75,18 +75,11 @@ class Menu(TextMenuItem)
       every c := !self.children do {
          if r.intersect(c.get_label_rect()) then {
             c.draw_label(cw, self.max_label_left_w, self.max_label_mid_w, self.max_label_right_w)
-            if c === \self.which_highlight then {
-               rw := Gui.style.get_down_clone(cw)
-               rw.fill_rectangle(c.label_x, c.label_y, c.label_w, c.label_h)
-               rw.uncouple()
-            } else if c.is_shaded() then {
-               #
-               # Filter if shaded
-               #
-               fw := Gui.style.get_filter_clone(cw)
-               fw.fill_rectangle(c.label_x, c.label_y, c.label_w, c.label_h)
-               fw.uncouple()
-            }
+            if c === \self.which_highlight then
+               Gui.style.down_rectangle(cw, c.label_x, c.label_y, c.label_w, c.label_h)
+            else if c.is_shaded() then
+               Gui.style.filter_rectangle(cw,
+                                          c.label_x, c.label_y, c.label_w, c.label_h)
          }
       }
    end
