@@ -1794,7 +1794,7 @@ struct loc *lookup_global_loc(dptr name, struct progstate *prog)
     return prog->Glocs + (p - prog->Gnames);
 }
 
-char c_buff[4096];     /* Buff for attribute values */
+static char c_buff[4096];     /* Buff for conversion to static C strings */
 
 char *buffstr(dptr d)
 {

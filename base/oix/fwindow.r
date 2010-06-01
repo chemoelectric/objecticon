@@ -1384,17 +1384,17 @@ end
 function graphics_Window_get_input_mask(self)
    body {
        tended struct descrip result;
-       char *s;
+       char buf[3], *s;
        int mask;
        GetSelfW();
-       s = c_buff;  
+       s = buf;  
        mask = self_w->window->inputmask;
        if (mask & PointerMotionMask)
            *s++ = 'm';
        if (mask & KeyReleaseMask)
            *s++ = 'k';
        *s = 0;
-       cstr2string(c_buff, &result);
+       cstr2string(buf, &result);
        return result;
    }
 end

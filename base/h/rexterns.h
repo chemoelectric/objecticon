@@ -116,7 +116,6 @@ extern int GraphicsHome, GraphicsPrior, GraphicsNext, GraphicsEnd;
 extern int canvas_serial, context_serial;
 extern clock_t starttime;		/* start time in milliseconds */
 extern char c1list[], c2list[], c3list[], c4list[];
-extern char c_buff[];
 
 #if XWindows
       extern struct _wdisplay * wdsplys;
