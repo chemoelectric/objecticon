@@ -933,7 +933,7 @@ function graphics_Window_set_pixels(self, data, x0, y0, w0, h0)
           runerr(0);
 
       if (!initimgmem(self_w, &imem, 1, 1, x, y, width, height))
-          return;
+          return nulldesc;
 
       le = lgfirst(&ListBlk(data), &state);
       for (j = y; le && j < y + height; j++) {
@@ -957,27 +957,59 @@ function graphics_Window_set_pixels(self, data, x0, y0, w0, h0)
 end
 
 function graphics_Window_filter(self, spec, x0, y0, w0, h0)
-   if !cnv:string(spec) then
-      runerr(103, spec)
    body {
       struct imgmem imem;
       word x, y, width, height;
-      struct filter filter;
+      struct filter *filter;
+      int i, nfilter;
       GetSelfW();
 
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
 
-      if (!parsefilter(self_w, buffstr(&spec), &filter))
-          fail;
+      if (is:list(spec)) {
+          struct lgstate state;
+          tended struct b_lelem *le;
+          tended struct descrip elem;
+          nfilter = ListBlk(spec).size;
+          MemProtect(filter = malloc(nfilter * sizeof(struct filter)));
+          for (le = lgfirst(&ListBlk(spec), &state); le;
+               le = lgnext(&ListBlk(spec), &state, le)) {
+              elem = le->lslots[state.result];
+              if (!cnv:string(elem, elem)) {
+                  free(filter);
+                  runerr(103, elem);
+              }
+              if (!parsefilter(self_w, buffstr(&elem), &filter[state.listindex - 1])) {
+                  free(filter);
+                  fail;
+              }
+          }
+      } else {
+          if (!cnv:string(spec, spec))
+              runerr(103, spec);
 
-      if (!initimgmem(self_w, &imem, 1, 1, x, y, width, height))
-          return;
+          MemProtect(filter = malloc(sizeof(struct filter)));
+          nfilter = 1;
+          if (!parsefilter(self_w, buffstr(&spec), &filter[0])) {
+              free(filter);
+              fail;
+          }
+      }
 
-      filter.imem = &imem;
-      filter.f(&filter);
+      if (!initimgmem(self_w, &imem, 1, 1, x, y, width, height)) {
+          free(filter);
+          return nulldesc;
+      }
+
+      for (i = 0; i < nfilter; ++i) {
+          filter[i].imem = &imem;
+          filter[i].f(&filter[i]);
+      }
       saveimgmem(self_w, &imem);
       freeimgmem(&imem);
+      free(filter);
+
       return nulldesc;
    }
 end

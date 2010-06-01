@@ -214,6 +214,11 @@ static void linearfilter(struct filter *f)
     }
 }
 
+static int grey_band(int nb, int r, int g, int b)
+{
+    return (int)(nb * (0.299 * r + 0.587 * g + 0.114 * b) / 65535.0);
+}
+
 static void shadefilter(struct filter *f)
 {
     int i, j;
@@ -221,17 +226,15 @@ static void shadefilter(struct filter *f)
     int bk, bg_r, bg_g, bg_b;
     getbg_rgb(f->w, &bg_r, &bg_g, &bg_b);
 
-    bk = (int)(4.0 * (0.299 * bg_r + 0.587 * bg_g + 0.114 * bg_b) / 65535.0);
+    bk = grey_band(f->p.shade.nband, bg_r, bg_g, bg_b);
     for (j = imem->y; j < imem->y + imem->height; j++) {
         for (i = imem->x; i < imem->x + imem->width; i++) {
-            int r, g, b, k, v = 0;
-
+            int r, g, b, k, v;
             gotopixel(imem, i, j);
             getpixel(imem, &r, &g, &b);
-
-            k = (int)(4.0 * (0.299 * r + 0.587 * g + 0.114 * b) / 65535.0);
+            k = grey_band(f->p.shade.nband, r, g, b);
             if (k != bk) {
-                v = 40000 + 5000*k;
+                v = f->p.shade.c + f->p.shade.m * k;
                 setpixel(imem, v, v, v);
             }
         }
@@ -259,23 +262,27 @@ static void coercefilter(struct filter *f)
 
 int parsefilter(wbp w, char *s, struct filter *res)
 {
+    char eof;
     res->w = w;
     if (strncmp(s, "linear", 6) == 0) {
         res->f = linearfilter;
-        if (sscanf(s + 6, ",%f,%f,%f", &res->p.linear.mr,
-                   &res->p.linear.mg, &res->p.linear.mb) != 3)
+        if (sscanf(s + 6, ",%f,%f,%f%c", &res->p.linear.mr,
+                   &res->p.linear.mg, &res->p.linear.mb, &eof) != 3)
             return 0;
         return 1;
     }
     if (strncmp(s, "shade", 5) == 0) {
         res->f = shadefilter;
+        if (sscanf(s + 5, ",%d,%d,%d%c", &res->p.shade.nband,
+                   &res->p.shade.m, &res->p.shade.c, &eof) != 3)
+            return 0;
         return 1;
     }
     if (strncmp(s, "coerce", 6) == 0) {
         char c;
         int n;
         res->f = coercefilter;
-        if (sscanf(s + 6, ",%c%d", &c, &n) != 2)
+        if (sscanf(s + 6, ",%c%d%c", &c, &n, &eof) != 2)
             return 0;
         if (c == 'c' && n >= 1 && n <= 6)
             res->p.coerce.p = n;

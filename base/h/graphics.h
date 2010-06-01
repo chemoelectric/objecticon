@@ -341,6 +341,9 @@ struct filter {
       struct {
          int p;
       } coerce;
+      struct {
+         int nband, c, m;
+      } shade;
    } p;
 };
 
