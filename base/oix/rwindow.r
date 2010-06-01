@@ -250,8 +250,22 @@ static void coercefilter(struct filter *f)
             gotopixel(imem, i, j);
             getpixel(imem, &r, &g, &b);
             s = rgbkey(f->p.coerce.p, r, g, b);
-            e = pal + *s;
+            e = pal + (*s & 0xff);
             setpixel(imem, e->r, e->g, e->b);
+        }
+    }
+}
+
+static void invertfilter(struct filter *f)
+{
+    int i, j;
+    struct imgmem *imem = f->imem;
+    for (j = imem->y; j < imem->y + imem->height; j++) {
+        for (i = imem->x; i < imem->x + imem->width; i++) {
+            int r, g, b;
+            gotopixel(imem, i, j);
+            getpixel(imem, &r, &g, &b);
+            setpixel(imem, 65535 - r, 65535 - g, 65535 - b);
         }
     }
 }
@@ -278,6 +292,11 @@ int parsefilter(wbp w, char *s, struct filter *res)
         res->f = coercefilter;
         return parsepalette(s + 7, &res->p.coerce.p);
     }
+    if (strncmp(s, "invert", 6) == 0) {
+        res->f = invertfilter;
+        return 1;
+    }
+
     return 0;
 }
 
@@ -1957,11 +1976,15 @@ int parsepalette(char *s, int *p)
     int n;
     if (sscanf(s, "%c%d%c", &c, &n, &x) != 2)
         return 0;
-    if (c == 'c' && n >= 1 && n <= 6)
+    if (c == 'c' && n >= 1 && n <= 6) {
         *p = n;
-    if (c == 'g' && n >= 2 && n <= 256)
+        return 1;
+    }
+    if (c == 'g' && n >= 2 && n <= 256) {
         *p = -n;
-    return 1;
+        return 1;
+    }
+    return 0;
 }
 
 

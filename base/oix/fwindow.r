@@ -1621,11 +1621,11 @@ do {
 
   
 function graphics_Window_set_bg(self, val)
+   if !cnv:string(val) then
+      runerr(103, val)
    body {
        word i;
        GetSelfW();
-       if (!cnv:string(val, val))
-           runerr(103, val);
        AttemptAttr(setbg(self_w, buffstr(&val)), "Invalid color");
        return self;
    }
@@ -1705,11 +1705,11 @@ function graphics_Window_set_dy(self, val)
 end
 
 function graphics_Window_set_fg(self, val)
+   if !cnv:string(val) then
+      runerr(103, val)
    body {
        word i;
        GetSelfW();
-       if (!cnv:string(val, val))
-           runerr(103, val);
        AttemptAttr(setfg(self_w, buffstr(&val)), "Invalid color");
        return self;
    }
