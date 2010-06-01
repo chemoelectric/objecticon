@@ -73,13 +73,9 @@ static myclose(int fd)
 #endif
 
 static stringint fillstyles[] = {
-    {0, 7},
+    {0, 3},
     {"masked", FillMasked },
-    {"opaquepatterned", FillTextured },
-    {"opaquestippled", FillTextured },
-    {"patterned", FillMasked },
     {"solid", FillSolid },
-    {"stippled", FillMasked },
     {"textured", FillTextured },
 };
 
@@ -755,7 +751,7 @@ static void impl_copyarea(wcp wc, Image *dest, Image *src,int x,int y,int w,int 
     unclip(wc, dest);
 }
 
-int copyarea(wbp w1,wbp w2,int x,int y,int w,int h,int x2,int y2)
+void copyarea(wbp w1,wbp w2,int x,int y,int w,int h,int x2,int y2)
 {
     wsp ws1 = w1->window;
     wsp ws2 = w2->window;
@@ -764,7 +760,6 @@ int copyarea(wbp w1,wbp w2,int x,int y,int w,int h,int x2,int y2)
         impl_copyarea(wc, ws2->win, ws1->pix, x, y, w, h, x2, y2);
     impl_copyarea(wc, ws2->pix, ws1->pix, x, y, w, h, x2, y2);
     flushimage(display, 1);
-    return Succeeded;
 }
 
 int rebind(wbp w, wbp w2)
@@ -988,10 +983,8 @@ int setfg(wbp w, char *val)
 {
     int r, g, b, n;
     wcp wc = w->context;
-    if (!parsecolor(val, &r, &g, &b)) {
-        LitWhy("Invalid color");
+    if (!parsecolor(val, &r, &g, &b))
         return Failed;
-    }
     if (wc->fg)
         unlink_sharedcolor(wc->fg);
     r /= 256;
@@ -1002,24 +995,22 @@ int setfg(wbp w, char *val)
     return Succeeded;
 }
 
-void getpattern(wbp w, char *answer)
+char *getpattern(wbp w)
 {
-    strcpy(answer, w->context->pattern->name);
+    return w->context->pattern->name;
 }
 
-void getfg(wbp w, char *answer)
+char *getfg(wbp w)
 {
-    strcpy(answer, w->context->fg->name);
+    return w->context->fg->name;
 }
 
 int setbg(wbp w, char *val)
 {
     int r, g, b, n;
     wcp wc = w->context;
-    if (!parsecolor(val, &r, &g, &b)) {
-        LitWhy("Invalid color");
+    if (!parsecolor(val, &r, &g, &b))
         return Failed;
-    }
     if (wc->bg)
         unlink_sharedcolor(wc->bg);
     r /= 256;
@@ -1030,9 +1021,9 @@ int setbg(wbp w, char *val)
     return Succeeded;
 }
 
-void getbg(wbp w, char *answer)
+char *getbg(wbp w)
 {
-    strcpy(answer, w->context->bg->name);
+    return w->context->bg->name;
 }
 
 #passthru #undef fillarc
@@ -1187,7 +1178,7 @@ int lowerwindow (wbp w)
 
 static void synch_pattern_image(struct SharedPattern *pat, int fg_rgb, int bg_rgb, int style)
 {
-    int i, j, k, x, y, v, a1, a2;
+    int i, j, k, v;
     unsigned char data[MAX_PATTERN_WIDTH * MAX_PATTERN_HEIGHT * 4];
 
     if (pat->i && pat->fg_rgb == fg_rgb && pat->bg_rgb == bg_rgb && pat->style == style)
@@ -1201,20 +1192,18 @@ static void synch_pattern_image(struct SharedPattern *pat, int fg_rgb, int bg_rg
         k = 0;
         for(i = 0; i < pat->height; i++) {
             v = pat->rowdata[i];
-            for(j = 0; j < pat->width; j += 8) {
-                for (y = 0; y < 8; ++y) {
-                    int bit = (v & 1);
-                    if (bit) {
-                        data[k++] = (fg_rgb>>8) & 0xff;
-                        data[k++] = (fg_rgb>>16) & 0xff;
-                        data[k++] = (fg_rgb>>24) & 0xff;
-                    } else {
-                        data[k++] = (bg_rgb>>8) & 0xff;
-                        data[k++] = (bg_rgb>>16) & 0xff;
-                        data[k++] = (bg_rgb>>24) & 0xff;
-                    }
-                    v /= 2;
+            for(j = 0; j < pat->width; j++) {
+                int bit = (v & 1);
+                if (bit) {
+                    data[k++] = (fg_rgb>>8) & 0xff;
+                    data[k++] = (fg_rgb>>16) & 0xff;
+                    data[k++] = (fg_rgb>>24) & 0xff;
+                } else {
+                    data[k++] = (bg_rgb>>8) & 0xff;
+                    data[k++] = (bg_rgb>>16) & 0xff;
+                    data[k++] = (bg_rgb>>24) & 0xff;
                 }
+                v /= 2;
             }
         }
 
@@ -1229,22 +1218,20 @@ static void synch_pattern_image(struct SharedPattern *pat, int fg_rgb, int bg_rg
         k = 0;
         for(i = 0; i < pat->height; i++) {
             v = pat->rowdata[i];
-            for(j = 0; j < pat->width; j += 8) {
-                for (y = 0; y < 8; ++y) {
-                    int bit = (v & 1);
-                    if (bit) {
-                        data[k++] = 0xff;
-                        data[k++] = (fg_rgb>>8) & 0xff;
-                        data[k++] = (fg_rgb>>16) & 0xff;
-                        data[k++] = (fg_rgb>>24) & 0xff;
-                    } else {
-                        data[k++] = 0x00;
-                        data[k++] = 0x00;
-                        data[k++] = 0x00;
-                        data[k++] = 0x00;
-                    }
-                    v /= 2;
+            for(j = 0; j < pat->width; j++) {
+                int bit = (v & 1);
+                if (bit) {
+                    data[k++] = 0xff;
+                    data[k++] = (fg_rgb>>8) & 0xff;
+                    data[k++] = (fg_rgb>>16) & 0xff;
+                    data[k++] = (fg_rgb>>24) & 0xff;
+                } else {
+                    data[k++] = 0x00;
+                    data[k++] = 0x00;
+                    data[k++] = 0x00;
+                    data[k++] = 0x00;
                 }
+                v /= 2;
             }
         }
 
@@ -1264,10 +1251,8 @@ int setpattern(wbp w, char *name)
     int width, height, *rowdata;
     wcp wc = w->context;
 
-    if (!parsepattern(name, &width, &height, &rowdata)) {
-        LitWhy("Invalid pattern");
+    if (!parsepattern(name, &width, &height, &rowdata))
         return Failed;
-    }
     if (wc->pattern)
         unlink_sharedpattern(wc->pattern);
     wc->pattern = new_sharedpattern(width, height, rowdata, name);
@@ -1818,9 +1803,9 @@ int setfillstyle(wbp w, char *val)
     return Succeeded;
 }
 
-void getfillstyle(wbp w, char *answer)
+char *getfillstyle(wbp w)
 {
-    strcpy(answer, w->context->fillstyle->s);
+    return w->context->fillstyle->s;
 }
 
 int setlinestyle(wbp w, char *val)
@@ -1874,9 +1859,9 @@ int warppointer(wbp w, int x, int y)
     return Failed;
 }
 
-void getdisplay(wbp w, char *answer)
+char *getdisplay(wbp w)
 {
-    strcpy(answer, w->window->wsys);
+    return w->window->wsys;
 }
 
 int getpos(wbp w)
@@ -1888,9 +1873,9 @@ int getpos(wbp w)
     return Succeeded;
 }
 
-void getlinestyle(wbp w, char *answer)
+char *getlinestyle(wbp w)
 {
-    strcpy(answer, "solid");
+    return "solid";
 }
 
 int querypointer(wbp w, int *x, int *y)
@@ -1901,17 +1886,17 @@ int querypointer(wbp w, int *x, int *y)
     return Succeeded;
 }
 
-void getpointer(wbp w, char *answer)
+char *getpointer(wbp w)
 {
-    strcpy(answer, w->window->cursor->s);
+    return w->window->cursor->s;
 }
 
-void getdrawop(wbp w, char *answer)
+char *getdrawop(wbp w)
 {
-    strcpy(answer, "copy");
+    return "copy";
 }
 
-void getcanvas(wbp w, char *answer)
+char *getcanvas(wbp w)
 {
     wsp ws = w->window;
     if (ws->win) {
@@ -1925,11 +1910,11 @@ void getcanvas(wbp w, char *answer)
             close(fd);
         }
         if (strstr(buff, "hidden"))
-            strcpy(answer, "iconic");
+            return "iconic";
         else
-            strcpy(answer, "normal");
+            return "normal";
     } else
-        strcpy(answer, "hidden");
+        return "hidden";
 }
 
 int getdisplaysize(wbp w, int *width, int *height)
@@ -1946,12 +1931,9 @@ int getdepth(wbp w, int *res)
     return Succeeded;
 }
 
-int getwindowlabel(wbp w, char *answer)
+char *getwindowlabel(wbp w)
 {
-    if (!w->window->windowlabel)
-        return Failed;
-    strcpy(answer, w->window->windowlabel);
-    return Succeeded;
+    return w->window->windowlabel;
 }
 
 static wsp alcwinstate()

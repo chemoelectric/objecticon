@@ -137,7 +137,7 @@ end
 
 # set colors for beveled drawing
 procedure BevelReset(win)	
-   local b, h, l, s, hilite, shadow, lhilite, lshadow
+   local h, l, s, hilite, shadow, lhilite, lshadow
 
    /bev_table := table()
 
@@ -146,11 +146,11 @@ procedure BevelReset(win)
    if win.get_depth() >= 4 then {
 
       HLS(win.get_bg()) ? {
-         h := tab(many(&digits))
+         h := integer(tab(many(&digits)))
          move(1)
-         l := tab(many(&digits))
+         l := integer(tab(many(&digits)))
          move(1)
-         s := tab(0)
+         s := integer(tab(0))
          }
 
       case l of {
@@ -166,14 +166,11 @@ procedure BevelReset(win)
       shadow := win.clone("fg=" || HLSValue(h || ":" || lshadow || ":" || s),
          "line_width=1", "line_style=solid", "fill_style=solid", "draw_op=copy")
       hilite := shadow.clone("fg=" || HLSValue(h || ":" || lhilite || ":" || s))
-      b := bev_record(\shadow, \hilite)
-      }
-
-   if /b then {
+   } else {
       shadow := win.clone("line_width=1", "line_style=solid", "fill_style=solid", "draw_op=copy")
       hilite := shadow.clone("fill_style=textured", "pattern=gray")
-      b := bev_record(shadow, hilite)
-      }
+   }
+
    bev_table[win] := bev_record(shadow, hilite)
    return win
 end

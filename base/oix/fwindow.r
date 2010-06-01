@@ -11,8 +11,6 @@
  *  &col, &row, &x, &y, &interval, timestamp, and modifier keys.
  */
 
-static char attr_buff[4096];     /* Buff for attribute values */
-
 #define MAXPOINTS 256
 
 static struct sdescrip wclassname = {15, "graphics.Window"};
@@ -45,41 +43,6 @@ self_w = (wbp)IntVal(*self_w_dptr);
 if (!self_w)
     runerr(142, self);
 #enddef
-
-static char *buffstr(dptr d)
-{
-    if (StrLen(*d) >= sizeof(attr_buff))
-        fatalerr(149, d);
-    memcpy(attr_buff, StrLoc(*d), StrLen(*d));
-    attr_buff[StrLen(*d)] = 0;
-    return attr_buff;
-}
-
-#passthru #define _DPTR dptr
-#passthru #define _CHARPP char **
-static void buffnstr(dptr d, char **s, ...)
-{
-    int free;
-    char *t;
-    va_list ap;
-    va_start(ap, s);
-    t = attr_buff;
-    free = sizeof(attr_buff);
-    while (d) {
-        if (StrLen(*d) >= free)
-            fatalerr(149, d);
-        memcpy(t, StrLoc(*d), StrLen(*d));
-        *s = t;
-        t += StrLen(*d);
-        *t++ = 0;
-        free -= StrLen(*d) + 1;
-        d = va_arg(ap, _DPTR);
-        if (!d)
-            break;
-        s = va_arg(ap, _CHARPP);
-    }
-    va_end(ap);
-}
 
 function graphics_Window_wcreate(display, parent)
    body {
@@ -182,17 +145,14 @@ function graphics_Window_clone_impl(self)
    }
 end
 
-function graphics_Window_color_value(k)
+function graphics_Window_color_value(s)
+    if !cnv:string(s) then
+       runerr(103, s);
    body {
       int r, g, b;
-      tended char *s;
       tended struct descrip result;
       char tmp[32];
-
-      if (!cnv:C_string(k, s))
-          runerr(103, k);
-
-      if (!parsecolor(s, &r, &g, &b))
+      if (!parsecolor(buffstr(&s), &r, &g, &b))
           fail;
       sprintf(tmp,"%d,%d,%d", r, g, b);
       cstr2string(tmp, &result);
@@ -200,19 +160,15 @@ function graphics_Window_color_value(k)
    }
 end
 
-function graphics_Window_parse_color(k)
+function graphics_Window_parse_color(s)
+    if !cnv:string(s) then
+       runerr(103, s);
    body {
       int r, g, b;
-      tended char *s;
       tended struct descrip result;
       struct descrip t;
-
-      if (!cnv:C_string(k, s))
-          runerr(103, k);
-
-      if (!parsecolor(s, &r, &g, &b))
+      if (!parsecolor(buffstr(&s), &r, &g, &b))
           fail;
-
       create_list(3, &result);
       MakeInt(r, &t);
       list_put(&result, &t);
@@ -253,8 +209,7 @@ function graphics_Window_copy_to(self, dest, x0, y0, w0, h0, x1, y1)
           runerr(101, y1);
       y2 += w2->context->dy;
 
-      if (copyarea(self_w, w2, x, y, width, height, x2, y2) == Failed)
-          fail;
+      copyarea(self_w, w2, x, y, width, height, x2, y2);
 
       return nulldesc;
    }
@@ -797,18 +752,14 @@ function graphics_Window_lower(self)
    }
 end
 
-function graphics_Window_palette_chars(p)
+function graphics_Window_palette_chars(pal)
+   if !cnv:string(pal) then
+       runerr(103, pal)
    body {
       int n;
-      extern char c1list[], c2list[], c3list[], c4list[];
-
-      if (is:null(p))
-          n = 1;
-      else
-          n = palnum(&p);
+      if (!parsepalette(buffstr(&pal), &n))
+          fail;
       switch (n) {
-          case -1:  runerr(103, p);		/* not a string */
-          case  0:  fail;				/* unrecognized */
           case  1:  return string(90, c1list);			/* c1 */
           case  2:  return string(9, c2list);			/* c2 */
           case  3:  return string(31, c3list);			/* c3 */
@@ -826,26 +777,27 @@ function graphics_Window_palette_chars(p)
 end
 
 function graphics_Window_palette_color(s1, s2)
+   if !cnv:string(s1) then
+       runerr(103, s1)
+   if !cnv:string(s2) then
+       runerr(103, s2)
    body {
       int p;
       char tmp[32];
       struct palentry *e;
-      tended struct descrip d, result;
-
-      p = palnum(&s1);
-      if (p == -1)
-          runerr(103, s1);
-      if (p == 0)
+      tended struct descrip result;
+      if (!parsepalette(buffstr(&s1), &p)) {
+          LitWhy("Invalid palette");
           fail;
-
-      if (!cnv:tmp_string(s2, d))
-          runerr(103, s2);
-      if (StrLen(d) != 1)
-          runerr(205, d);
+      }
+      if (StrLen(s2) != 1)
+          runerr(205, s2);
       e = palsetup(p); 
-      e += *StrLoc(d) & 0xFF;
-      if (!e->valid)
+      e += *StrLoc(s2) & 0xFF;
+      if (!e->valid) {
+          LitWhy("Invalid character");
           fail;
+      }
       sprintf(tmp, "%d,%d,%d", e->r, e->g, e->b);
       cstr2string(tmp, &result);
       return result;
@@ -853,25 +805,21 @@ function graphics_Window_palette_color(s1, s2)
 end
 
 function graphics_Window_palette_key(s1, s2)
+   if !cnv:string(s1) then
+       runerr(103, s1)
+   if !cnv:string(s2) then
+       runerr(103, s2)
    body {
-      int p;
-      word n;
-      tended char *s;
-      int r, g, b;
-
-      p = palnum(&s1);
-      if (p == -1)
-          runerr(103, s1);
-      if (p == 0)
+      int p, r, g, b;
+      if (!parsepalette(buffstr(&s1), &p)) {
+          LitWhy("Invalid palette");
           fail;
-
-      if (!cnv:C_string(s2, s))
-          runerr(103, s2);
-
-      if (parsecolor(s, &r, &g, &b))
-          return string(1, rgbkey(p, r, g, b));
-      else
+      }
+      if (!parsecolor(buffstr(&s2), &r, &g, &b)) {
+          LitWhy("Invalid color");
           fail;
+      }
+      return string(1, rgbkey(p, r, g, b));
    }
 end
 
@@ -933,7 +881,7 @@ function graphics_Window_set_pixels(self, data, x0, y0, w0, h0)
           runerr(0);
 
       if (!initimgmem(self_w, &imem, 1, 1, x, y, width, height))
-          return;
+          return nulldesc;
 
       le = lgfirst(&ListBlk(data), &state);
       for (j = y; le && j < y + height; j++) {
@@ -957,27 +905,61 @@ function graphics_Window_set_pixels(self, data, x0, y0, w0, h0)
 end
 
 function graphics_Window_filter(self, spec, x0, y0, w0, h0)
-   if !cnv:string(spec) then
-      runerr(103, spec)
    body {
       struct imgmem imem;
       word x, y, width, height;
-      struct filter filter;
+      struct filter *filter;
+      int i, nfilter;
       GetSelfW();
 
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
 
-      if (!parsefilter(self_w, buffstr(&spec), &filter))
-          fail;
+      if (is:list(spec)) {
+          struct lgstate state;
+          tended struct b_lelem *le;
+          tended struct descrip elem;
+          nfilter = ListBlk(spec).size;
+          MemProtect(filter = malloc(nfilter * sizeof(struct filter)));
+          for (le = lgfirst(&ListBlk(spec), &state); le;
+               le = lgnext(&ListBlk(spec), &state, le)) {
+              elem = le->lslots[state.result];
+              if (!cnv:string(elem, elem)) {
+                  free(filter);
+                  runerr(103, elem);
+              }
+              if (!parsefilter(self_w, buffstr(&elem), &filter[state.listindex - 1])) {
+                  LitWhy("Invalid filter");
+                  free(filter);
+                  fail;
+              }
+          }
+      } else {
+          if (!cnv:string(spec, spec))
+              runerr(103, spec);
 
-      if (!initimgmem(self_w, &imem, 1, 1, x, y, width, height))
-          return;
+          MemProtect(filter = malloc(sizeof(struct filter)));
+          nfilter = 1;
+          if (!parsefilter(self_w, buffstr(&spec), &filter[0])) {
+              LitWhy("Invalid filter");
+              free(filter);
+              fail;
+          }
+      }
 
-      filter.imem = &imem;
-      filter.f(&filter);
+      if (!initimgmem(self_w, &imem, 1, 1, x, y, width, height)) {
+          free(filter);
+          return nulldesc;
+      }
+
+      for (i = 0; i < nfilter; ++i) {
+          filter[i].imem = &imem;
+          filter[i].f(&filter[i]);
+      }
       saveimgmem(self_w, &imem);
       freeimgmem(&imem);
+      free(filter);
+
       return nulldesc;
    }
 end
@@ -1232,8 +1214,7 @@ function graphics_Window_get_bg(self)
    body {
        tended struct descrip result;
        GetSelfW();
-       getbg(self_w, attr_buff);
-       cstr2string(attr_buff, &result);
+       cstr2string(getbg(self_w), &result);
        return result;
    }
 end
@@ -1242,8 +1223,7 @@ function graphics_Window_get_canvas(self)
    body {
        tended struct descrip result;
        GetSelfW();
-       getcanvas(self_w, attr_buff);
-       cstr2string(attr_buff, &result);
+       cstr2string(getcanvas(self_w), &result);
        return result;
    }
 end
@@ -1293,8 +1273,7 @@ function graphics_Window_get_display(self)
    body {
        tended struct descrip result;
        GetSelfW();
-       getdisplay(self_w, attr_buff);
-       cstr2string(attr_buff, &result);
+       cstr2string(getdisplay(self_w), &result);
        return result;
    }
 end
@@ -1303,8 +1282,7 @@ function graphics_Window_get_draw_op(self)
    body {
        tended struct descrip result;
        GetSelfW();
-       getdrawop(self_w, attr_buff);
-       cstr2string(attr_buff, &result);
+       cstr2string(getdrawop(self_w), &result);
        return result;
    }
 end
@@ -1331,8 +1309,7 @@ function graphics_Window_get_fg(self)
    body {
        tended struct descrip result;
        GetSelfW();
-       getfg(self_w, attr_buff);
-       cstr2string(attr_buff, &result);
+       cstr2string(getfg(self_w), &result);
        return result;
    }
 end
@@ -1350,8 +1327,7 @@ function graphics_Window_get_fill_style(self)
    body {
        tended struct descrip result;
        GetSelfW();
-       getfillstyle(self_w, attr_buff);
-       cstr2string(attr_buff, &result);
+       cstr2string(getfillstyle(self_w), &result);
        return result;
    }
 end
@@ -1408,17 +1384,17 @@ end
 function graphics_Window_get_input_mask(self)
    body {
        tended struct descrip result;
-       char *s;
+       char buf[3], *s;
        int mask;
        GetSelfW();
-       s = attr_buff;  
+       s = buf;  
        mask = self_w->window->inputmask;
        if (mask & PointerMotionMask)
            *s++ = 'm';
        if (mask & KeyReleaseMask)
            *s++ = 'k';
        *s = 0;
-       cstr2string(attr_buff, &result);
+       cstr2string(buf, &result);
        return result;
    }
 end
@@ -1427,9 +1403,7 @@ function graphics_Window_get_label(self)
    body {
        tended struct descrip result;
        GetSelfW();
-       if (getwindowlabel(self_w, attr_buff) != Succeeded)
-           fail;
-       cstr2string(attr_buff, &result);
+       cstr2string(getwindowlabel(self_w), &result);
        return result;
    }
 end
@@ -1438,8 +1412,7 @@ function graphics_Window_get_line_style(self)
    body {
        tended struct descrip result;
        GetSelfW();
-       getlinestyle(self_w, attr_buff);
-       cstr2string(attr_buff, &result);
+       cstr2string(getlinestyle(self_w), &result);
        return result;
    }
 end
@@ -1522,8 +1495,7 @@ function graphics_Window_get_pattern(self)
        tended struct descrip result;
        char *s;
        GetSelfW();
-       getpattern(self_w, attr_buff);
-       cstr2string(attr_buff, &result);
+       cstr2string(getpattern(self_w), &result);
        return result;
    }
 end
@@ -1532,8 +1504,7 @@ function graphics_Window_get_pointer(self)
    body {
        tended struct descrip result;
        GetSelfW();
-       getpointer(self_w, attr_buff);
-       cstr2string(attr_buff, &result);
+       cstr2string(getpointer(self_w), &result);
        return result;
    }
 end
@@ -1650,11 +1621,11 @@ do {
 
   
 function graphics_Window_set_bg(self, val)
+   if !cnv:string(val) then
+      runerr(103, val)
    body {
        word i;
        GetSelfW();
-       if (!cnv:string(val, val))
-           runerr(103, val);
        AttemptAttr(setbg(self_w, buffstr(&val)), "Invalid color");
        return self;
    }
@@ -1734,11 +1705,11 @@ function graphics_Window_set_dy(self, val)
 end
 
 function graphics_Window_set_fg(self, val)
+   if !cnv:string(val) then
+      runerr(103, val)
    body {
        word i;
        GetSelfW();
-       if (!cnv:string(val, val))
-           runerr(103, val);
        AttemptAttr(setfg(self_w, buffstr(&val)), "Invalid color");
        return self;
    }

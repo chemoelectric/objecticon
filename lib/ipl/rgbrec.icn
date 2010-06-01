@@ -29,7 +29,7 @@ package ipl.rgbrec
 import
    graphics(Window)
 
-record rgb(r, g, b, a)
+record rgb(r, g, b)
 
 procedure rgbrec(s)
    return rgb!Window.parse_color(s)
