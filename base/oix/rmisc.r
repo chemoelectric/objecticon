@@ -1794,3 +1794,39 @@ struct loc *lookup_global_loc(dptr name, struct progstate *prog)
     return prog->Glocs + (p - prog->Gnames);
 }
 
+char c_buff[4096];     /* Buff for attribute values */
+
+char *buffstr(dptr d)
+{
+    if (StrLen(*d) >= sizeof(c_buff))
+        fatalerr(149, d);
+    memcpy(c_buff, StrLoc(*d), StrLen(*d));
+    c_buff[StrLen(*d)] = 0;
+    return c_buff;
+}
+
+#passthru #define _DPTR dptr
+#passthru #define _CHARPP char **
+void buffnstr(dptr d, char **s, ...)
+{
+    int free;
+    char *t;
+    va_list ap;
+    va_start(ap, s);
+    t = c_buff;
+    free = sizeof(c_buff);
+    while (d) {
+        if (StrLen(*d) >= free)
+            fatalerr(149, d);
+        memcpy(t, StrLoc(*d), StrLen(*d));
+        *s = t;
+        t += StrLen(*d);
+        *t++ = 0;
+        free -= StrLen(*d) + 1;
+        d = va_arg(ap, _DPTR);
+        if (!d)
+            break;
+        s = va_arg(ap, _CHARPP);
+    }
+    va_end(ap);
+}

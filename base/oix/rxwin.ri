@@ -48,13 +48,9 @@ static void unsetclip(wbp w);
 #define DEFAULTFONTNAME "fixed"
 
 static stringint fillstyles[] = {
-    {0, 7},
+    {0, 3},
     {"masked", FillStippled },
-    {"opaquepatterned", FillOpaqueStippled },
-    {"opaquestippled", FillOpaqueStippled },
-    {"patterned", FillStippled },
     {"solid", FillSolid },
-    {"stippled", FillStippled },
     {"textured", FillOpaqueStippled },
 };
 
@@ -1270,12 +1266,12 @@ static void unsetclip(wbp w)
         XSetClipMask(wc->display->display, wc->gc, None);
 }
 
-void getcanvas(wbp w, char *s)
+char *getcanvas(wbp w)
 {
     char *v = stringint_int2str(canvastypes, w->window->state);
     if (!v)
         syserr("Invalid value of state");
-    strcpy(s, v);
+    return v;
 }
 
 
@@ -1467,9 +1463,9 @@ int setfillstyle(wbp w, char *val)
     return Succeeded;
 }
 
-void getfillstyle(wbp w, char *answer)
+char *getfillstyle(wbp w)
 {
-    strcpy(answer, w->context->fillstyle->s);
+    return w->context->fillstyle->s;
 }
 
 
@@ -1526,10 +1522,8 @@ int setfg(wbp w, char *s)
 {
     int r, g, b;
     wcp wc = w->context;
-    if (!parsecolor(s, &r, &g, &b)) {
-        LitWhy("Invalid color");
+    if (!parsecolor(s, &r, &g, &b))
         return Failed;
-    }
     if (wc->fg)
         unlink_sharedcolor(wc->fg);
     wc->fg = new_sharedcolor(s, r, g, b);
@@ -1546,10 +1540,8 @@ int setbg(wbp w, char *s)
 {
     int r, g, b;
     wcp wc = w->context;
-    if (!parsecolor(s, &r, &g, &b)) {
-        LitWhy("Invalid color");
+    if (!parsecolor(s, &r, &g, &b))
         return Failed;
-    }
     if (wc->bg)
         unlink_sharedcolor(wc->bg);
     wc->bg = new_sharedcolor(s, r, g, b);
@@ -1558,25 +1550,22 @@ int setbg(wbp w, char *s)
     return Succeeded;
 }
 
-void getdisplay(wbp w, char *answer)
+char *getdisplay(wbp w)
 {
     char *tmp;
     wdp wd = w->window->display;
     if (!strcmp(wd->name, "")) {
         if ((tmp = getenv("DISPLAY")) != NULL)
-            sprintf(answer, "%s", tmp);
+            return tmp;
         else
-            *answer = '\0';
+            return "";
     }
-    else sprintf(answer, "%s", wd->name);
+    else return wd->name;
 }
 
-int getwindowlabel(wbp w, char *answer)
+char *getwindowlabel(wbp w)
 {
-    if (!w->window->windowlabel)
-        return Failed;
-    strcpy(answer, w->window->windowlabel);
-    return Succeeded;
+    return w->window->windowlabel;
 }
 
 int getdisplaysize(wbp w, int *width, int *height)
@@ -1617,37 +1606,37 @@ int getpos(wbp w)
     return Succeeded;
 }
 
-void getpattern(wbp w, char *answer)
+char *getpattern(wbp w)
 {
     if (w->context->patternname)
-        strcpy(answer, w->context->patternname);
+        return w->context->patternname;
     else 
-        strcpy(answer, "black");
+        return "black";
 }
 
-void getfg(wbp w, char *answer)
+char *getfg(wbp w)
 {
-    strcpy(answer, w->context->fg->name);
+    return w->context->fg->name;
 }
 
-void getbg(wbp w, char *answer)
+char *getbg(wbp w)
 {
-    strcpy(answer, w->context->bg->name);
+    return w->context->bg->name;
 }
 
-void getlinestyle(wbp w, char *answer)
+char *getlinestyle(wbp w)
 {
-    strcpy(answer, w->context->linestyle->s);
+    return w->context->linestyle->s;
 }
 
-void getpointer(wbp w, char *answer)
+char *getpointer(wbp w)
 {
-    strcpy(answer, w->window->cursor->s);
+    return w->window->cursor->s;
 }
 
-void getdrawop(wbp w, char *answer)
+char *getdrawop(wbp w)
 {
-    strcpy(answer, w->context->drawop->s);
+    return w->context->drawop->s;
 }
 
 int grabpointer(wbp w)
@@ -2067,7 +2056,7 @@ void erasearea(wbp w, int x, int y, int width, int height)
 /*
  * copy an area
  */
-int copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2)
+void copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2)
 {
     int lpad, rpad, tpad, bpad;
     Pixmap src;
@@ -2084,7 +2073,7 @@ int copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2)
          * Copying is between windows on two different displays.
          */
         if (x<0 || y<0 || x+width > ws1->pixwidth || y+height > ws1->pixheight)
-            return Failed;		/*#%#%# BOGUS, NEEDS FIXING */
+            return;		/*#%#%# BOGUS, NEEDS FIXING */
         xim = XGetImage(d1, ws1->pix, x, y, width, height,
                         (1<<DefaultDepth(d1,wd1->screen))-1,XYPixmap);
         XSetFunction(stddpy, stdgc, GXcopy);
@@ -2159,7 +2148,6 @@ int copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2)
         XSetForeground(stddpy,stdgc, wc->fg->c);
         XSetFunction(stddpy, stdgc, wc->drawop->i);
     }
-    return Succeeded;
 }
 
 
@@ -2249,10 +2237,8 @@ int setpattern(wbp w, char *name)
     char *t, data[4 * MAX_PATTERN_HEIGHT];
     STDLOCALS(w);
 
-    if (!parsepattern(name, &width, &height, &rowdata)) {
-        LitWhy("Invalid pattern");
+    if (!parsepattern(name, &width, &height, &rowdata))
         return Failed;
-    }
     if (stdgc) {
         t = data;
         for(i = 0; i < height; i++) {

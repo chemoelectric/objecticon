@@ -166,6 +166,9 @@ void  bigshift        (dptr da, dptr db, dptr dx);
 word  bigcmp          (dptr da, dptr db);
 void  bigrand         (dptr da, dptr dx);
 
+char *buffstr(dptr d);
+void buffnstr(dptr d, char **s, ...);
+
 
 #ifdef Graphics
    /*
@@ -176,9 +179,8 @@ void  bigrand         (dptr da, dptr dx);
    int  docircle        (wbp w, dptr argv, int fill);
    void drawCurve       (wbp w, XPoint *p, int n);
    void genCurve        (wbp w, XPoint *p, int n, void (*h)(wbp, XPoint [], int));
-   void getpattern      (wbp w, char *answer);
    struct palentry *palsetup(int p);
-   int  palnum          (dptr d);
+   int  parsepalette    (char *s, int *p);
    int  parsefilter     (wbp w, char *s, struct filter *res);
    int  parsecolor      (char *s, int *r, int *g, int *b);
    int  parsefont       (char *s, char *fam, int *sty, int *sz);
@@ -209,24 +211,25 @@ void  bigrand         (dptr da, dptr dx);
    void freeimgmem       (struct imgmem *imem);
    int  setpattern      (wbp w, char *name);
    wcp  clonecontext   (wbp w);
-   int  copyarea        (wbp w,wbp w2,int x,int y,int wd,int h,int x2,int y2);
+   void copyarea        (wbp w,wbp w2,int x,int y,int wd,int h,int x2,int y2);
    void doconfig        (wbp w, int status);
    void erasearea       (wbp w, int x, int y, int width, int height);
    void fillrectangle   (wbp w, int x, int y, int width, int height);
    void freewbinding    (wbp w);
-   void freecontext    (wcp wc);
-   void freewindow     (wsp ws);
-   void getbg           (wbp w, char *answer);
-   void getcanvas       (wbp w, char *s);
-   void getdisplay      (wbp w, char *answer);
-   void getdrawop       (wbp w, char *answer);
-   void getfillstyle    (wbp w, char *answer);
-   void getfg           (wbp w, char *answer);
+   void freecontext     (wcp wc);
+   void freewindow      (wsp ws);
+   char *getbg          (wbp w);
+   char *getcanvas      (wbp w);
+   char *getdisplay     (wbp w);
+   char *getdrawop      (wbp w);
+   char *getfillstyle   (wbp w);
+   char *getfg          (wbp w);
+   char *getpattern     (wbp w);
    int  getlinewidth    (wbp w);
    int  getdepth        (wbp w, int *res);
-   int  getwindowlabel  (wbp w, char *answer);
-   void getlinestyle    (wbp w, char *answer);
-   void getpointer  (wbp w, char *answer);
+   char *getwindowlabel (wbp w);
+   char *getlinestyle   (wbp w);
+   char *getpointer     (wbp w);
    int  getpos          (wbp w);
    int  lowerwindow     (wbp w);
    void pollevent       (void);

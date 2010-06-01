@@ -178,16 +178,12 @@ void qevent(wsp ws,             /* canvas */
 
 static void getfg_rgb(wbp w, int *r, int *g, int *b)
 {
-    char color[MAXCOLORNAME];
-    getfg(w, color);
-    parsecolor(color, r, g, b);
+    parsecolor(getfg(w), r, g, b);
 }
 
 static void getbg_rgb(wbp w, int *r, int *g, int *b)
 {
-    char color[MAXCOLORNAME];
-    getbg(w, color);
-    parsecolor(color, r, g, b);
+    parsecolor(getbg(w), r, g, b);
 }
 
 static void linearfilter_impl(int *val, float f)
@@ -264,33 +260,23 @@ int parsefilter(wbp w, char *s, struct filter *res)
 {
     char eof;
     res->w = w;
-    if (strncmp(s, "linear", 6) == 0) {
+    if (strncmp(s, "linear,", 7) == 0) {
         res->f = linearfilter;
-        if (sscanf(s + 6, ",%f,%f,%f%c", &res->p.linear.mr,
+        if (sscanf(s + 7, "%f,%f,%f%c", &res->p.linear.mr,
                    &res->p.linear.mg, &res->p.linear.mb, &eof) != 3)
             return 0;
         return 1;
     }
-    if (strncmp(s, "shade", 5) == 0) {
+    if (strncmp(s, "shade,", 6) == 0) {
         res->f = shadefilter;
-        if (sscanf(s + 5, ",%d,%d,%d%c", &res->p.shade.nband,
+        if (sscanf(s + 6, "%d,%d,%d%c", &res->p.shade.nband,
                    &res->p.shade.m, &res->p.shade.c, &eof) != 3)
             return 0;
         return 1;
     }
-    if (strncmp(s, "coerce", 6) == 0) {
-        char c;
-        int n;
+    if (strncmp(s, "coerce,", 7) == 0) {
         res->f = coercefilter;
-        if (sscanf(s + 6, ",%c%d%c", &c, &n, &eof) != 2)
-            return 0;
-        if (c == 'c' && n >= 1 && n <= 6)
-            res->p.coerce.p = n;
-        else if (c == 'g' && n >= 2 && n <= 256)
-            res->p.coerce.p = -n;
-        else
-            return 0;
-        return 1;
+        return parsepalette(s + 7, &res->p.coerce.p);
     }
     return 0;
 }
@@ -1959,31 +1945,23 @@ static unsigned char c1rgb[] = {
 };
 
 /*
- * palnum(d) - return palette number, or 0 if unrecognized.
+ * parsepalette() - get palette number, or 0 if unrecognized.
  *
- *    returns +1 ... +6 for "c1" through "c6"
- *    returns +1 for &null
- *    returns -2 ... -256 for "g2" through "g256"
+ *    returns in *p: +1 ... +6 for "c1" through "c6"
+ *                   -2 ... -256 for "g2" through "g256"
  *    returns 0 for unrecognized palette name
- *    returns -1 for non-string argument
  */
-int palnum(dptr d)
+int parsepalette(char *s, int *p)
 {
-    tended char *s;
     char c, x;
     int n;
-
-    if (is:null(*d))
-        return 1;
-    if (!cnv:C_string(*d, s))
-        return -1;
     if (sscanf(s, "%c%d%c", &c, &n, &x) != 2)
         return 0;
     if (c == 'c' && n >= 1 && n <= 6)
-        return n;
+        *p = n;
     if (c == 'g' && n >= 2 && n <= 256)
-        return -n;
-    return 0;
+        *p = -n;
+    return 1;
 }
 
 

@@ -1102,18 +1102,15 @@ char *s;
 
 
 
-void getfillstyle(wbp w, char *answer)
+char *getfillstyle(wbp w)
 {
-    char *s;
     wcp wc = w->context;
-
     if (wc->fillstyle == BS_SOLID)
-        s = "solid";
+        return "solid";
     else if (wc->bkmode == TRANSPARENT)
-        s = "masked";
+        return "masked";
     else
-        s = "textured";
-    strcpy(answer, s);
+        return "textured";
 }
 
 /*
@@ -1346,12 +1343,9 @@ wbp w;
    }
 
 
-int getwindowlabel(wbp w, char *answer)
+char *getwindowlabel(wbp w)
 {
-    if (!w->window->windowlabel)
-        return Failed;
-    strcpy(answer, w->window->windowlabel);
-    return Succeeded;
+    return w->window->windowlabel;
 }
 
 /*
@@ -1363,7 +1357,7 @@ wbp w;
    return Succeeded;
    }
 
-void getpattern(wbp w, char *answer)
+char *getpattern(wbp w, char *answer)
 {
     if (w->context->patternname)
         strcpy(answer, w->context->patternname);
@@ -1371,70 +1365,57 @@ void getpattern(wbp w, char *answer)
         strcpy(answer, "black");
 }
 
-void getfg(w, answer)
-wbp w;
-char *answer;
-   {
-   strcpy(answer, w->context->fgname);
-   }
+char *getfg(wbp w)
+{
+    return w->context->fgname;
+}
 
-void getbg(w, answer)
-wbp w;
-char *answer;
-   {
-   strcpy(answer, w->context->bgname);
-   }
+char *getbg(wbp w)
+{
+    return w->context->bgname;
+}
 
-void getlinestyle(w, answer)
-wbp w;
-char *answer;
-   {
-   wcp wc = w->context;
-   char *ptr = stringint_int2str(siLineTypes, wc->pen.lopnStyle);
-   if (ptr != NULL) {
-      strcpy(answer, ptr);
-      }
-   else strcpy(answer, "unknown");
-   }
+char *getlinestyle(wbp w)
+{
+    wcp wc = w->context;
+    char *ptr = stringint_int2str(siLineTypes, wc->pen.lopnStyle);
+    if (ptr)
+        return ptr;
+    else 
+        return "unknown";
+}
 
-void getpointer(w, answer)
-wbp w;
-char *answer;
-   {
-   char *s;
-   wsp ws = w->window;
-   strcpy(answer, w->window->cursorname);
-   }
+char *getpointer(wbp w)
+{
+    return w->window->cursorname;
+}
 
-void getdisplay(wbp w, char *answer)
-   {
-   strcpy(answer, "MS Windows");
-   }
+char *getdisplay(wbp w)
+{
+    return "MS Windows";
+}
 
-void getdrawop(w, answer)
-wbp w;
-char *answer;
-   {
-   char *s;
-   s = stringint_int2str(drawops, w->context->drawop);
-   if (s) sprintf(answer, "%s", s);
-   else strcpy(answer, "unknown");
-   }
+char *getdrawop(wbp w)
+{
+    char *s = stringint_int2str(drawops, w->context->drawop);
+    if (s) 
+        return s;
+    else 
+        return "unknown";
+}
 
 
-void getcanvas(w, answer)
-wbp w;
-char *answer;
-   {
-   wsp ws = w->window;
-   if (ws->iconwin) {
-      if (!IsWindowVisible(ws->iconwin)) sprintf(answer, "hidden");
-      else if (IsIconic(ws->iconwin)) sprintf(answer, "iconic");
-      else if (IsZoomed(ws->iconwin)) sprintf(answer, "maximized");
-      else sprintf(answer,"normal");
-      }
-   else sprintf(answer,"hidden");
-   }
+char *getcanvas(wbp w)
+{
+    wsp ws = w->window;
+    if (ws->iconwin) {
+        if (!IsWindowVisible(ws->iconwin)) return "hidden";
+        else if (IsIconic(ws->iconwin)) return "iconic";
+        else if (IsZoomed(ws->iconwin)) return "maximized";
+        else return "normal";
+    }
+    else return "hidden";
+}
 
 /*
  * erase an area
@@ -1463,7 +1444,7 @@ int x, y, width, height;
 /*
  * copy an area
  */
-int copyarea(w,w2,x,y,width,height,x2,y2)
+void copyarea(w,w2,x,y,width,height,x2,y2)
 wbp w, w2;
 int x, y, width, height, x2, y2;
    {
@@ -1581,7 +1562,6 @@ int x, y, width, height, x2, y2;
       }
    DeleteObject(hb);
    FREE_STDLOCALS(w2);
-   return Succeeded;
    }
 
 
