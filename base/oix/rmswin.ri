@@ -1357,12 +1357,12 @@ wbp w;
    return Succeeded;
    }
 
-char *getpattern(wbp w, char *answer)
+char *getpattern(wbp w)
 {
     if (w->context->patternname)
-        strcpy(answer, w->context->patternname);
+        return w->context->patternname;
     else 
-        strcpy(answer, "black");
+        return "black";
 }
 
 char *getfg(wbp w)
