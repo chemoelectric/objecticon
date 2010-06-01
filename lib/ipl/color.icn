@@ -325,8 +325,8 @@ procedure HSV(k)
    g := t[2] / 65535.0
    b := t[3] / 65535.0
 
-   min := r;  min >:= g;  min >:= b		# minimum
-   max := r;  max <:= g;  max <:= b		# maximum
+   min := default.min(r, g, b)	# minimum
+   max := default.max(r, g, b)	# maximum
    d := max - min				# difference
 
    v := max					# value is max of all values
@@ -419,8 +419,8 @@ procedure HLS(k)
    g := t[2] / 65535.0
    b := t[3] / 65535.0
 
-   min := r;  min >:= g;  min >:= b	# minimum
-   max := r;  max <:= g;  max <:= b	# maximum
+   min := default.min(r, g, b)	# minimum
+   max := default.max(r, g, b)	# maximum
    delta := max - min			# difference
 
    l := (max + min) / 2			# lightness
@@ -508,18 +508,14 @@ procedure hls_rgb_val(n1, n2, hue)
 end
 
 #
-# Given a color {col}, return the color in "r,g,b,a" string format, with
+# Given a color {col}, return the color in "r,g,b" string format, with
 # those values optionally edited by the given parameters.
 #
-procedure EditRGBA(col, r, g, b, a)
+procedure EditRGB(col, r, g, b)
    local l
    l := Window.parse_color(col) | fail
    l[1] := \r
    l[2] := \g
    l[3] := \b
-   l[4] := \a
-   if l[4] = 65535 then
-      return l[1] || "," || l[2] || "," || l[3]
-   else
-      return l[1] || "," || l[2] || "," || l[3] || "," || l[4]
+   return l[1] || "," || l[2] || "," || l[3]
 end
