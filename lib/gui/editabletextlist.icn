@@ -940,8 +940,8 @@ class EditableTextList(LineBasedScrollArea)
    public draw(r)
       local xp, yp, i, info
 
-      info := get_line_info() | fail
-      yp := view.y - info.offset
+      info := get_line_info(r) | fail
+      yp := r.y - info.offset
       xp := view.x - get_area_x()
 
       #

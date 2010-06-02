@@ -692,9 +692,9 @@ class SelectableScrollArea(LineBasedScrollArea)
    public draw(r)
       local xp, yp, i, info, cursor_cw, highlight_cw, h, lh
 
-      info := get_line_info() | fail
+      info := get_line_info(r) | fail
       h := get_line_height()
-      yp := view.y - info.offset
+      yp := r.y - info.offset
       xp := view.x - get_area_x()
 
       #
