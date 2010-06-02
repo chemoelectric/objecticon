@@ -186,9 +186,9 @@ static void getbg_rgb(wbp w, int *r, int *g, int *b)
     parsecolor(getbg(w), r, g, b);
 }
 
-static void linearfilter_impl(int *val, float f)
+static void linearfilter_impl(int *val, float m, int c)
 {
-    *val *= f;
+    *val = *val * m + c;
     if (*val < 0) *val = 0;
     else if (*val > 65535) *val = 65535;
 }
@@ -202,9 +202,9 @@ static void linearfilter(struct filter *f)
             int r, g, b;
             gotopixel(imem, i, j);
             getpixel(imem, &r, &g, &b);
-            linearfilter_impl(&r, f->p.linear.mr);
-            linearfilter_impl(&g, f->p.linear.mg);
-            linearfilter_impl(&b, f->p.linear.mb);
+            linearfilter_impl(&r, f->p.linear.mr, f->p.linear.cr);
+            linearfilter_impl(&g, f->p.linear.mg, f->p.linear.cg);
+            linearfilter_impl(&b, f->p.linear.mb, f->p.linear.cb);
             setpixel(imem, r, g, b);
         }
     }
@@ -275,10 +275,16 @@ int parsefilter(wbp w, char *s, struct filter *res)
     char eof;
     res->w = w;
     if (strncmp(s, "linear,", 7) == 0) {
+        int n;
         res->f = linearfilter;
-        if (sscanf(s + 7, "%f,%f,%f%c", &res->p.linear.mr,
-                   &res->p.linear.mg, &res->p.linear.mb, &eof) != 3)
+        n = sscanf(s + 7, "%f,%f,%f,%d,%d,%d%c", 
+                   &res->p.linear.mr, &res->p.linear.mg, &res->p.linear.mb,
+                   &res->p.linear.cr, &res->p.linear.cg, &res->p.linear.cb, 
+                   &eof);
+        if (n != 3 && n != 6)
             return 0;
+        if (n == 3)
+            res->p.linear.cr = res->p.linear.cg = res->p.linear.cb = 0;
         return 1;
     }
     if (strncmp(s, "shade,", 6) == 0) {
@@ -643,14 +649,13 @@ int initimgmem(wbp w, struct imgmem *i, int copy, int clip, int x, int y, int wi
 
     if (clip && wc->clipw >= 0) {
         /* Further reduce the rectangle to the clipping region */
-
         if (x < wc->clipx) {
-            x = wc->clipx;
             width += x - wc->clipx;
+            x = wc->clipx;
         }
         if (y < wc->clipy) {
+            height += y - wc->clipy; 
             y = wc->clipy;
-            height += y - wc->clipy;
         }
         if (x + width > wc->clipx + wc->clipw)
             width = wc->clipx + wc->clipw - x;

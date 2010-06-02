@@ -337,6 +337,7 @@ struct filter {
    union {
       struct {
          float mr, mb, mg;
+         int cr, cb, cg;
       } linear;
       struct {
          int p;
