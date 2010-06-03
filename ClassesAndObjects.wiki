@@ -38,6 +38,8 @@ end
 To bring these things together, here is a simple class definition to represent an x,y point :-
 
 {{{
+import util(Math)
+
 class Point()
    public const x, y
    public static const ORIGIN
@@ -48,12 +50,12 @@ class Point()
 
    # Radius of a circle on which this point lies
    public radius()
-      return sqrt(x * x + y * y)
+      return Math.sqrt(x * x + y * y)
    end
 
    # Distance between two points
    public static distance(p1, p2)
-      return sqrt((p1.x - p2.x) ^ 2 + (p1.y - p2.y) ^ 2)
+      return Math.sqrt((p1.x - p2.x) ^ 2 + (p1.y - p2.y) ^ 2)
    end
 
    public new(x, y)
