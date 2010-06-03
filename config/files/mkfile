@@ -1,0 +1,21 @@
+< mkdefs
+
+default:V:	all
+
+all:V:
+	@{ cd base ; mk }
+	@{ cd lib ; mk }
+	@{ cd apps ; mk }
+
+clean:V:
+	@{ cd base ; mk clean }
+	@{ cd lib ; mk clean }
+	@{ cd apps ; mk clean }
+
+test:V:
+        @{ cd test ; runtest.sh }
+
+libref:V:
+	rm -rf libref
+	mkdir libref
+	oidoc -html -d -o libref -a

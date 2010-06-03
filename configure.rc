@@ -1,0 +1,39 @@
+#!/bin/rc
+cp config/files/mkfile .
+cp config/files/mkdefs .
+cp config/files/lib/iyacc/mkfile lib/iyacc/mkfile
+cp config/files/lib/mkfile lib/mkfile
+cp config/files/lib/xml/mkfile lib/xml/mkfile
+cp config/files/lib/ipl/mkfile lib/ipl/mkfile
+cp config/files/lib/gui/mkfile lib/gui/mkfile
+cp config/files/lib/main/mkfile lib/main/mkfile
+cp config/files/lib/incl/mkfile lib/incl/mkfile
+cp config/files/lib/parser/mkfile lib/parser/mkfile
+cp config/files/base/oix/mkfile base/oix/mkfile
+cp config/files/base/mkfile base/mkfile
+cp config/files/base/rtt/mkfile base/rtt/mkfile
+cp config/files/base/oit/mkfile base/oit/mkfile
+cp config/files/base/common/mkfile base/common/mkfile
+cp config/files/apps/ivib/mkfile apps/ivib/mkfile
+cp config/files/apps/mkfile apps/mkfile
+cp config/files/apps/oidoc/mkfile apps/oidoc/mkfile
+x=`{pwd}
+cat >paths.rc <<EOF
+# Object Icon path settings
+OIHOME=$x
+OIBIN=$$OIHOME/bin
+OILIB=$$OIHOME/lib
+OIPATH=($$OILIB/main $$OILIB/gui $$OILIB/xml $$OILIB/parser $$OILIB/ipl)
+OLPATH=($$OILIB/incl)
+bind -a $$OIBIN /bin 
+EOF
+cat >paths.sh <<EOF
+# Object Icon path settings
+export OIHOME="$x"
+export OIBIN="$$OIHOME/bin"
+export OILIB="$$OIHOME/lib"
+export OIPATH="$$OILIB/main $$OILIB/gui $$OILIB/xml $$OILIB/parser $$OILIB/ipl"
+export OLPATH="$$OILIB/incl"
+PATH="$$PATH:$$OIBIN"
+export TRACE MAXLEVEL
+EOF

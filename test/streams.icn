@@ -90,8 +90,7 @@ $ifdef _PLAN9
    f := ProgStream.open_write("rc", ["-c", "cat >/dev/null"]) | stop(&why)
    do_mode(f)
    f.close()
-$else
-$ifdef _UNIX
+$elsifdef _UNIX
    write("Prog Read")
    f := ProgStream.open_read("echo", ["hello"]) | stop(&why)
    do_mode(f)
@@ -120,18 +119,9 @@ $else
    write("Can truncate: no")
    write("Can all: no")
 $endif
-$endif
 
+$ifndef _PLAN9
    write("Socket")
-$ifdef _PLAN9
-   write("Mode: 3")
-   write("Can read: yes")
-   write("Can write: yes")
-   write("Can readwrite: yes")
-   write("Can seek: no")
-   write("Can truncate: no")
-   write("Can all: no")
-$else
    f := SocketStream.socket() | stop(&why)
    do_mode(f)
    f.close()

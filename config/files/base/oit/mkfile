@@ -1,0 +1,49 @@
+< ../../mkdefs
+
+OITOBJS=	trans.$O tlex.$O tparse_mod.$O tsym.$O tmem.$O \
+		tree.$O ucode.$O ipp.$O membuff.$O ir.$O \
+		package.$O resolve.$O tmain.$O \
+		link.$O lglob.$O lcode.$O lmem.$O lsym.$O ltree.$O optimize.$O
+
+COBJS=		../common/getopt.$O ../common/alloc.$O \
+		../common/strtbl.$O ../common/mlocal.$O ../common/plan9.$O
+
+OBJS=		$OITOBJS $COBJS
+
+all:V:		oit
+
+clean:V:
+        	rm -f *.[$OS] [$OS].out tparse_mod.c oit
+
+oit:            $OBJS
+		$LD $LDFLAGS -o oit $OBJS $LIBS
+		cp oit ../../bin
+
+$OBJS:   ../h/define.h ../h/config.h ../h/cpuconf.h ../h/gsupport.h \
+		   ../h/mproto.h ../h/typedefs.h ../h/cstructs.h
+
+$COBJS:	../h/mproto.h
+
+tmain.$O:	tree.h lexdef.h
+package.$O:	package.h
+resolve.$O:	link.h
+
+# translator files
+ipp.$O:		../h/features.h
+trans.$O:	tsym.h ttoken.h tree.h ../h/version.h ../h/kdefs.h
+tparse_mod.$O:	lexdef.h tsym.h tree.h keyword.h
+tlex.$O:		lexdef.h ttoken.h tree.h ../h/esctab.h  lextab.h
+tmem.$O:		tsym.h tree.h
+tree.$O:		tree.h
+tsym.$O:		tsym.h ttoken.h keyword.h ../h/kdefs.h
+ucode.$O:	tsym.h ttoken.h keyword.h ../h/kdefs.h
+link.$O:		../h/header.h
+lcode.$O:	keyword.h ../h/header.h \
+			../h/opdefs.h ../h/version.h ../h/nativedefs.h
+lglob.$O:	../h/opdefs.h ../h/version.h
+lmem.$O:		
+lsym.$O:		
+
+tparse_mod.c: tparse.c
+              sed -e 's/^#include <stdlib.h>$//'  \
+              -e 's/^#include <string.h>$//' tparse.c >tparse_mod.c

@@ -1,0 +1,34 @@
+< ../../mkdefs
+
+LIBSRC=`{ls *.icn}
+AUTOSRC=posixconsts.icn ioconsts.icn evmonconsts.icn ucodeconsts.icn
+
+LIBU=${LIBSRC:%.icn=%.u}
+AUTOU=${AUTOSRC:%.icn=%.u}
+
+all:V: mkconsts $LIBU $AUTOU
+
+clean:
+	rm -f mkconsts mkconsts.$O $AUTOSRC *.u packages.txt
+
+$AUTOSRC: 	mkconsts
+	./mkconsts
+
+mkconsts:       mkconsts.$O
+		$LD $LDFLAGS -o mkconsts mkconsts.$O ../../base/common/plan9.$O
+
+%.u:Q: %.icn
+       test $stem.u -nt $stem.icn || oit -snc $LIBSRC
+
+posixconsts.u: posixconsts.icn
+       oit -c -s posixconsts.icn
+
+ioconsts.u: ioconsts.icn
+       oit -c -s ioconsts.icn
+
+evmonconsts.u: evmonconsts.icn
+       oit -c -s evmonconsts.icn
+
+ucodeconsts.u: ucodeconsts.icn
+       oit -c -s ucodeconsts.icn
+

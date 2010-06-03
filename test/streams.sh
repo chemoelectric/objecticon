@@ -9,4 +9,8 @@ oit -s streams.icn utils.icn
 ./streams >streams.out 2>&1
 rm -rf testdir
 set -e
-cmp streams.out streams.std
+if [ "$site" = plan9 ] ; then
+   cmp streams.out streams.std.p9
+else
+   cmp streams.out streams.std
+fi

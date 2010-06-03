@@ -1,0 +1,19 @@
+default:V:	all
+
+all :
+	@{ cd incl ; mk all }
+	@{ cd iyacc ; mk all }
+	@{ cd ipl ; mk all }
+	@{ cd main ; mk all }
+	@{ cd gui ; mk all }
+	@{ cd xml ; mk all }
+	@{ cd parser ; mk all }
+
+clean :
+	@{ cd incl ; mk clean }
+	@{ cd iyacc ; mk clean }
+	@{ cd ipl ; mk clean }
+	@{ cd main ; mk clean }
+	@{ cd gui ; mk clean }
+	@{ cd xml ; mk clean }
+	@{ cd parser ; mk clean }

@@ -1,0 +1,15 @@
+< ../mkdefs
+
+default:V:	all
+
+all:V:
+	@{ cd common ; mk }
+	@{ cd rtt ; mk }
+	@{ cd oit ; mk }
+	@{ cd oix ; mk }
+
+clean:V:
+	@{ cd common ; mk clean }
+	@{ cd rtt ; mk clean }
+	@{ cd oit ; mk clean }
+	@{ cd oix ; mk clean }

@@ -1,0 +1,19 @@
+< ../../mkdefs
+
+LIBSRC=ucode.icn lex.icn parser.icn tokens.icn tree.icn symboltable.icn oigram.icn
+
+LIBU=${LIBSRC:%.icn=%.u}
+
+all:V: $LIBU
+
+clean:V:
+	rm -f *.u packages.txt ../incl/oigram_tab.icn oigram.icn packages.txt
+
+$LIBU: oigram.icn
+
+%.u:Q: %.icn
+       test $stem.u -nt $stem.icn || oit -snc $LIBSRC
+
+oigram.icn : oigram.y
+	iyacc -v -k parser -d -i oigram.y
+	mv oigram_tab.icn ../incl

@@ -1,0 +1,44 @@
+#  Makefile for oix
+< ../../mkdefs
+
+HDRS = ../h/define.h ../h/config.h ../h/typedefs.h ../h/monitor.h\
+	  ../h/cstructs.h ../h/cpuconf.h ../h/grttin.h\
+	  ../h/rmacros.h ../h/rexterns.h ../h/rstructs.h \
+	  ../h/rproto.h ../h/mproto.h ../h/sys.h
+
+GRAPHICSHDRS = ../h/graphics.h ../h/xwin.h
+
+default:V: oix
+
+XOBJS=	cnv.$O def.$O errmsg.$O fconv.$O fload.$O fmath.$O\
+	fmisc.$O fmonitr.$O fscan.$O fstr.$O fstranl.$O fstruct.$O fsys.$O\
+	fwindow.$O imisc.$O init.$O interp.$O invoke.$O \
+	keyword.$O oarith.$O oasgn.$O ocat.$O ocomp.$O native.$O \
+	omisc.$O oref.$O oset.$O ovalue.$O ralc.$O rcomp.$O \
+	rdebug.$O rlocal.$O rlrgint.$O rmemmgt.$O rmisc.$O rstruct.$O rsys.$O\
+	rwinsys.$O rwindow.$O posix.$O cstruct.$O
+
+COBJS=	../common/mlocal.$O ../common/plan9.$O
+
+OBJS=	$XOBJS  $COBJS
+
+rwinsys.$O: rxwin.ri rmswin.ri rxkeysyms.ri p9win.ri
+invoke.$O: invokeiasm.ri
+interp.$O: interpiasm.ri
+init.$O: initiasm.ri
+oref.$O: orefiasm.ri
+
+all:V:   oix
+
+oix:	$XOBJS
+	$LD -o oix $OBJS $LIBS
+	cp oix ../../bin
+
+clean:V:
+	rm -f *.c *.[$OS] [$OS].out oix
+
+%.$O: %.r
+	rtt -r ../h/ $stem.r
+	$CC $CFLAGS $stem.c
+	rm $stem.c
+        

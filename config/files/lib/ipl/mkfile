@@ -1,0 +1,14 @@
+< ../../mkdefs
+
+LIBSRC=`{ls *.icn}
+
+LIBU=${LIBSRC:%.icn=%.u}
+
+all:V: $LIBU
+
+clean:V:
+	rm -f *.u packages.txt
+
+%.u:Q: %.icn
+       test $stem.u -nt $stem.icn || oit -snc $LIBSRC
+

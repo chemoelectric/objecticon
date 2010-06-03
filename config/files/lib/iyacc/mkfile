@@ -1,0 +1,53 @@
+#  Makefile for iyacc, the Icon-enabled version of Berkeley YACC
+< ../../mkdefs
+
+
+OBJS	      = closure.$O \
+		error.$O \
+		lalr.$O \
+		lr0.$O \
+		main.$O \
+		mkpar.$O \
+		output.$O \
+		reader.$O \
+		skeleton.$O \
+		symtab.$O \
+		verbose.$O \
+		warshall.$O
+
+PROGRAM	      = iyacc
+
+SRCS	      = closure.c \
+		error.c \
+		lalr.c \
+		lr0.c \
+		main.c \
+		mkpar.c \
+		output.c \
+		reader.c \
+		skeleton.c \
+		symtab.c \
+		verbose.c \
+		warshall.c
+
+all:V:		$PROGRAM
+
+$PROGRAM:       $OBJS
+		$LD -o $PROGRAM $OBJS $LIBS ../../base/common/plan9.$O
+		cp iyacc ../../bin
+
+clean:V:	
+                rm -f $OBJS $PROGRAM
+
+closure.$O: defs.h
+error.$O: defs.h
+lalr.$O: defs.h
+lr0.$O: defs.h
+main.$O: defs.h
+mkpar.$O: defs.h
+output.$O: defs.h
+reader.$O: defs.h
+skeleton.$O: defs.h
+symtab.$O: defs.h
+verbose.$O: defs.h
+warshall.$O: defs.h
