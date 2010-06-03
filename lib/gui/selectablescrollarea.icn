@@ -690,11 +690,11 @@ class SelectableScrollArea(LineBasedScrollArea)
    end
 
    public draw(r)
-      local xp, yp, i, info, cursor_cw, highlight_cw, h, lh
+      local xp, yp, i, info, cursor_cw, highlight_cw, h, lh, sel
 
-      info := get_line_info() | fail
+      info := get_line_info(r) | fail
       h := get_line_height()
-      yp := view.y - info.offset
+      yp := r.y - info.offset
       xp := view.x - get_area_x()
 
       #
@@ -711,11 +711,12 @@ class SelectableScrollArea(LineBasedScrollArea)
          if i = \self.highlight then {
             highlight_cw := Gui.style.get_highlight_clone(view.cbwin)
          }
+         sel := if member(self.selections, i) then 1 else &null
 
          lh := integer(h) | h[i]
          
          # Draw the line
-         draw_line(xp, yp, lh, i, r, cursor_cw, highlight_cw)
+         draw_line(xp, yp, lh, i, r, sel, cursor_cw, highlight_cw)
 
          # Uncouple cloned windows.
          if \cursor_cw then {
@@ -753,15 +754,15 @@ class SelectableScrollArea(LineBasedScrollArea)
    # @param xp  The x position it should be drawn at
    # @param yp  The y position it should be drawn at
    # @param lh  The line height allowed for this line
-   # @param i   The line number to draw; if member(selections, i) then the line should be
-   # @          selected
+   # @param i   The line number to draw
    # @param r   The view's clipping region.
+   # @param sel          If non-null, the line must be drawn as selected
    # @param cursor_cw    If non-null, this cloned window must be used to show the cursor
    # @param highlight_cw If non-null, this cloned window must be used to show the highlight
    #
-   public draw_line(xp, yp, lh, i, r, cursor_cw, highlight_cw)
+   public draw_line(xp, yp, lh, i, r, sel, cursor_cw, highlight_cw)
       draw_line_data(xp, yp, lh, i, r)
-      if member(self.selections, i) then
+      if \sel then
          Gui.style.selection_rectangle(view.cbwin, self.view.x, yp, self.view.w, lh)
 
       if \cursor_cw then 
