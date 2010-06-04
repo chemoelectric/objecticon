@@ -447,7 +447,7 @@ int handle_config(wbp w, UINT msg, WPARAM wp, LPARAM lp)
       return 1;
       }
    MakeInt(RESIZED, &d);
-   qevent(w->window, &d, -1, -1, 0, 0, 0);
+   qevent(w->window, &d, -1, -1, 0, 0, 0, 0, 0);
    return 1;
    }
 
@@ -459,7 +459,6 @@ void handle_keypress(wbp wb, UINT msg, WPARAM wp, LPARAM lp, int meta)
    int t;
    WORD x, y;
    struct descrip d;
-   int flags = 0;
    static struct descrip curr_down;
 
    if (msg == WM_KEYUP)
@@ -478,11 +477,12 @@ void handle_keypress(wbp wb, UINT msg, WPARAM wp, LPARAM lp, int meta)
    y = HIWORD(dw) - ws->y - TITLEHEIGHT - (FRAMEHEIGHT-1);
 
    t = GetMessageTime();
-   if (GetKeyState(VK_CONTROL) < 0) flags |= ControlMask;
-   if (GetKeyState(VK_SHIFT) < 0) flags |= ShiftMask;
 
-   if (meta) flags |= Mod1Mask;
-   qevent(ws, &d, x, y, t, flags, (msg == WM_KEYUP));
+   qevent(ws, &d, x, y, t, 
+          GetKeyState(VK_CONTROL) < 0
+          meta,
+          GetKeyState(VK_SHIFT) < 0
+          (msg == WM_KEYUP));
    }
 
 void handle_wheel(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
@@ -491,7 +491,6 @@ void handle_wheel(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
    int t;
    WORD x, y;
    struct descrip d;
-   long flags = 0;
    RECT r;
 
    /* Unlike normal mouse events, the co-ordinates are absolute, so
@@ -503,23 +502,36 @@ void handle_wheel(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
 
    t = GetMessageTime(); /* why might someone comment this out? */
 
-   if (MK_CONTROL & wp) flags |= ControlMask;
-   if (MK_SHIFT & wp) flags |= ShiftMask;
-
    /*
     * Wheel events produce two events each, namely a "press" and
     * "release" of buttons 4 (scroll up) and 5 (scroll down).
     */
    if ((long)wp > 0) {
       MakeInt(MOUSE4, &d);
-      qevent(ws, &d, x, y, t, flags, 0);
+      qevent(ws, &d, x, y, t,
+             MK_CONTROL & wp,
+             0,
+             MK_SHIFT & wp,
+             0);
       MakeInt(MOUSE4UP, &d);
-      qevent(ws, &d, x, y, t, flags, 0);
+      qevent(ws, &d, x, y, t,
+             MK_CONTROL & wp,
+             0,
+             MK_SHIFT & wp,
+             0);
    } else {
       MakeInt(MOUSE5, &d);
-      qevent(ws, &d, x, y, t, flags, 0);
+      qevent(ws, &d, x, y, t,
+             MK_CONTROL & wp,
+             0,
+             MK_SHIFT & wp,
+             0);
       MakeInt(MOUSE5UP, &d);
-      qevent(ws, &d, x, y, t, flags, 0);
+      qevent(ws, &d, x, y, t,
+             MK_CONTROL & wp,
+             0,
+             MK_SHIFT & wp,
+             0);
    }
 }
 
@@ -529,7 +541,7 @@ void handle_mouse(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
    int t;
    WORD x, y;
    struct descrip d;
-   long flags = 0, eventcode;
+   long eventcode;
 
    switch(msg) {
    case WM_MOUSEMOVE: /* only called if one of these three cases is true */
@@ -567,10 +579,11 @@ void handle_mouse(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
    y = HIWORD(lp);
    t = GetMessageTime(); /* why might someone comment this out? */
 
-   if (MK_CONTROL & wp) flags |= ControlMask;
-   if (MK_SHIFT & wp) flags |= ShiftMask;
-
-   qevent(ws, &d, x, y, t, flags, 0);
+   qevent(ws, &d, x, y, t, 
+          MK_CONTROL & wp,
+          0,
+          MK_SHIFT & wp,
+          0);
    }
 
 LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
@@ -721,7 +734,7 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
    case WM_CLOSE: {
       struct descrip d;
       MakeInt(WINDOWCLOSED, &d);
-      qevent(ws, &d, -1, -1, 0, 0, 0);
+      qevent(ws, &d, -1, -1, 0, 0, 0, 0, 0);
       return 0;
    }
 
@@ -738,7 +751,7 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
       if (ws->refcount > 0) {
           struct descrip d;
           MakeInt(WINDOWCLOSED, &d);
-          qevent(ws ,&d, -1, -1, 0, 0, 0);
+          qevent(ws ,&d, -1, -1, 0, 0, 0, 0, 0);
          }
       else if (ws->refcount < 0) { /* window was closed by program */
          ws->refcount = -ws->refcount;
