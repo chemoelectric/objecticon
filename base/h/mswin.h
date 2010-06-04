@@ -42,13 +42,6 @@
 #define WS_MAX               2
 
 /*
- * input masks
- */
-#define PointerMotionMask    1
-#define WindowClosureMask    2
-#define KeyReleaseMask       4
-
-/*
  * something I think should be #defined
  */
 #define EOS                  '\0'

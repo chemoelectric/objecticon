@@ -272,6 +272,25 @@ static void invertfilter(struct filter *f)
     }
 }
 
+int parseinputmask(char *s, int *res)
+{
+    char *t;
+    *res = 0;
+    for (t = s; *t; ++t) {
+        switch (*t) {
+            case 'k':
+                *res |= IM_KEY_RELEASE;
+                break;
+            case 'm':
+                *res |= IM_POINTER_MOTION;
+                break;
+            default:
+                return 0;
+        }
+    }
+    return 1;
+}
+
 int parsefilter(wbp w, char *s, struct filter *res)
 {
     char eof;

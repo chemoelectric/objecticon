@@ -185,6 +185,7 @@ void buffnstr(dptr d, char **s, ...);
    int  parsecolor      (char *s, int *r, int *g, int *b);
    int  parsefont       (char *s, char *fam, int *sty, int *sz);
    int  parsepattern    (char *s, int *w, int *height, int **data);
+   int  parseinputmask  (char *s, int *res);
    void qevent          (wsp ws, dptr e, int x, int y, uword t, int ctrl, int meta, int shift, int rel);
    void wgetevent       (wbp w, dptr res);
    int  readimagefile   (char *filename, struct imgdata *imd);

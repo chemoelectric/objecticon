@@ -35,11 +35,6 @@
 #define HiddenState IconicState+3
 #define PopupState IconicState+4
 
-/*
- * This macro allows the "true" X input masks to be
- * obtained from the inputmask field.
- */
-#define XMasks(f)            ((f) & ((1L<<25)-1))
 
 #define MAXDISPLAYNAME	64
 #define NUMCURSORSYMS	78

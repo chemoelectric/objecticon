@@ -1389,9 +1389,9 @@ function graphics_Window_get_input_mask(self)
        GetSelfW();
        s = buf;  
        mask = self_w->window->inputmask;
-       if (mask & PointerMotionMask)
+       if (mask & IM_POINTER_MOTION)
            *s++ = 'm';
-       if (mask & KeyReleaseMask)
+       if (mask & IM_KEY_RELEASE)
            *s++ = 'k';
        *s = 0;
        cstr2string(buf, &result);

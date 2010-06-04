@@ -360,5 +360,10 @@ struct filter {
 #define C_CLIP	        32
 #define C_IMAGE	        64
 
+/*
+ * Input masks
+ */
+#define IM_KEY_RELEASE     1
+#define IM_POINTER_MOTION  2
 
 #define XICONSLEEP	20 /* milliseconds */
