@@ -42,26 +42,12 @@
 #define WS_MAX               2
 
 /*
- * input masks
- */
-#define PointerMotionMask    1
-#define WindowClosureMask    2
-#define KeyReleaseMask       4
-
-/*
  * something I think should be #defined
  */
 #define EOS                  '\0'
 
 /* size of the working buffer, used for dialog messages and such */
 #define PMSTRBUFSIZE         2048
-/*
- * the bitmasks for the modifier keys
- */
-#define ControlMask          (1L << 16L)
-#define Mod1Mask             (2L << 16L)
-#define ShiftMask            (4L << 16L)
-#define VirtKeyMask          (8L << 16L)
 
 /* some macros for Windows */
 

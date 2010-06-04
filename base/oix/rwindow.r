@@ -126,8 +126,10 @@ void qevent(wsp ws,             /* canvas */
             int x,              /* x and y values */
             int y,      
             uword t,            /* ms clock value */
-            long f,             /* modifier key flags */
-            int krel)           /* key release flag */
+            int ctrl,           /* modifier key flags */
+            int meta,
+            int shift,
+            int rel)            /* key release flag */
 {
     dptr q = &(ws->listp);	/* a window's event queue (Icon list value) */
     struct descrip d;
@@ -154,19 +156,19 @@ void qevent(wsp ws,             /* canvas */
     list_put(q, &d);
 
     /* Modifiers */
-    if (f & ControlMask)
+    if (ctrl)
         list_put(q, &onedesc);
     else
         list_put(q, &nulldesc);
-    if (f & Mod1Mask)
+    if (meta)
         list_put(q, &onedesc);
     else
         list_put(q, &nulldesc);
-    if (f & ShiftMask)
+    if (shift)
         list_put(q, &onedesc);
     else
         list_put(q, &nulldesc);
-    if (krel)
+    if (rel)
         list_put(q, &onedesc);
     else
         list_put(q, &nulldesc);
@@ -268,6 +270,25 @@ static void invertfilter(struct filter *f)
             setpixel(imem, 65535 - r, 65535 - g, 65535 - b);
         }
     }
+}
+
+int parseinputmask(char *s, int *res)
+{
+    char *t;
+    *res = 0;
+    for (t = s; *t; ++t) {
+        switch (*t) {
+            case 'k':
+                *res |= IM_KEY_RELEASE;
+                break;
+            case 'm':
+                *res |= IM_POINTER_MOTION;
+                break;
+            default:
+                return 0;
+        }
+    }
+    return 1;
 }
 
 int parsefilter(wbp w, char *s, struct filter *res)

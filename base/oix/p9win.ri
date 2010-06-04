@@ -525,7 +525,7 @@ static void handle_resize(wsp ws)
         resize_pix_win(w);
         pix_to_win(ws);
         MakeInt(RESIZED, &d);
-        qevent(ws, &d, -1, -1, 0, 0, 0);
+        qevent(ws, &d, -1, -1, 0, 0, 0, 0, 0);
     }
 }
 
@@ -575,7 +575,7 @@ static void flush_event_pipe(wsp ws)
                     BlkLoc(d) = (union block *)make_one_char_ucs_block(i);
                 } else 
                     MakeInt(i, &d);
-                qevent(ws, &d, ws->last_mouse_x, ws->last_mouse_y, time, 0, 0);
+                qevent(ws, &d, ws->last_mouse_x, ws->last_mouse_y, time, 0, 0, 0, 0);
                 break;
             }
             case 'M': {
@@ -600,7 +600,7 @@ static void flush_event_pipe(wsp ws)
                                 e = ws->mouse_down;
                                 ws->mouse_down = 0;
                             } else {
-                                if (ws->inputmask & PointerMotionMask)
+                                if (ws->inputmask & IM_POINTER_MOTION)
                                     e = MOUSEMOVED;
                                 else
                                     e = 0;
@@ -647,7 +647,7 @@ static void flush_event_pipe(wsp ws)
                     }
                     if (e) {
                         MakeInt(e, &d);
-                        qevent(ws, &d, x, y, time, 0, 0);
+                        qevent(ws, &d, x, y, time, 0, 0, 0, 0);
                     }
                 }
                 break;
@@ -1396,16 +1396,14 @@ int ownselection(wbp w, char *selection)
     /* Note - could filter out selections to use CLIPBOARD only, ie ^C, not drag */
     MakeInt(SELECTIONREQUEST, &tmp);
     list_put(&ws->listp, &tmp);
-    MakeInt(0, &tmp);               /* req id */
-    list_put(&ws->listp, &tmp);
+    list_put(&ws->listp, &zerodesc);/* req id */
     LitStr("none", &tmp);           /* property */
     list_put(&ws->listp, &tmp);
     cstr2string(selection, &tmp);   /* selection */
     list_put(&ws->listp, &tmp);
     LitStr("UTF8_STRING", &tmp);    /* type */
     list_put(&ws->listp, &tmp);
-    MakeInt(0, &tmp);               /* time */
-    list_put(&ws->listp, &tmp);
+    list_put(&ws->listp, &zerodesc); /* time */
     return Succeeded;
 }
 
@@ -1737,20 +1735,13 @@ void freecontext(wcp wc)
     }
 }
 
-int getimstr(wbp w, int x, int y, int width, int hgt, 
-             struct palentry *ptbl, unsigned char *data)
-{
-    return 0; /* boolean rv */
-}
-
 int setinputmask(wbp w, char *val)
 {
     wsp ws = w->window;
-    if (strchr(val,'m'))
-        ws->inputmask |= PointerMotionMask;
-    else
-        ws->inputmask &= ~PointerMotionMask;
-
+    int t;
+    if (!parseinputmask(val, &t))
+        return Failed;
+    ws->inputmask = t;
     return Succeeded;
 }
 
