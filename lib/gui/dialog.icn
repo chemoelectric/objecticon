@@ -327,8 +327,17 @@ class Dialog(Component)
    end
 
    public exit_menu_mode()
+      local t
       (\self.menu_mode := &null) | syserr("internal error - not  in menu mode.")
       parent_dialog.win.ungrab_pointer()
+      # Partial workaround for little oddity of X11.  If we ungrab
+      # after a press, then we will only see the release if it happens
+      # inside our window.  Therefore remove any press if it happened
+      # outside the window (ie has an empty point chain), since we
+      # aren't interested in the release anyway.
+      every t := key(held) do
+         if *\held[t] = 0 then
+            delete(held, t)
       popups := &null
    end
 
@@ -548,7 +557,6 @@ $endif
       local e
       initial
          consume_same_events := Mouse.DRAG_OR_MOVEMENT ++ set(Mouse.WINDOW_RESIZE)
-
       case l[1] of {
          Selection.REQUEST: process_selection_request(l)
          Selection.CLEAR: process_selection_clear(l)
@@ -598,8 +606,11 @@ $endif
       else if ec === Mouse.WINDOW_RESIZE then
          handle_resize(e)
       else if \e.meta & /e.release & type(ec) == ("string" | "ucs") then {
-         if c := self.find_accel(ec) then
+         if c := self.find_accel(ec) then {
+            if \self.menu_mode then
+               self.menu_mode.close_all()
             c.handle_accel(e)
+         }
       }
 
       generate_events(e)
@@ -884,9 +895,14 @@ $endif
             }
          }
       }
-      #write("last=",image(obj), "  obj=",image(obj), " tip=",image(tip), "  state=",tooltip_state)
 
       t := Prog.get_runtime_millis()
+
+      #if \obj then 
+      #    write("last=",image(obj), "  obj=",image(obj), " tip=",image(tip), "  state=",tooltip_state,
+      #      "\n\tt=",t, "   start_time=",image(self.tooltip_start_time) )
+      #else
+      #    writes(".")
 
       case self.tooltip_state of {
          0 : {

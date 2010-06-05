@@ -630,8 +630,6 @@ class TextField(Component)
 
       draw_string_ex(self.cbwin, self.tx - loff, y1, s)
 
-      border.draw_rect(self.cbwin, self)
-
       #
       # If has focus display box cursor, else display outline cursor
       #
@@ -674,6 +672,7 @@ class TextField(Component)
                                           fh)
          }
       }
+      border.draw_rect(self.cbwin, self)
    end
 
    public set_one(f)

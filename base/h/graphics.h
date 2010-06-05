@@ -320,7 +320,6 @@ typedef struct _wstate {
   char          *wsys;
   int           wsys_fd, wctl_fd, mouse_fd, cons_fd, consctl_fd, cursor_fd;
   int           mouse_pid, cons_pid;
-  int           mouse_down;
   int           last_mouse_x, last_mouse_y;
   int           desired_canvas;
   stringint     *cursor;
