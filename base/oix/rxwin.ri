@@ -368,7 +368,6 @@ static void handle_misc(wdp wd)
 {
     XEvent event;
     Window evwin;
-    static int presscount = 0;
     wbp wb;
     wsp ws = 0;
 
@@ -520,25 +519,17 @@ static void handle_misc(wdp wd)
             }
 
             case KeyRelease: {
-                if (ws->inputmask & IM_KEY_RELEASE) {
+                if (ws->inputmask & IM_KEY_RELEASE)
                     handle_keypress(wb, (XKeyEvent *)&event);
-                }
                 break;
             }
             case KeyPress:
                 handle_keypress(wb, (XKeyEvent *)&event);
                 break;
             case ButtonPress:
-                presscount++;
-                handle_mouse(wb, (XButtonEvent *)&event);
-                break;
             case ButtonRelease:
-                if (--presscount < 0) presscount = 0;
-                handle_mouse(wb, (XButtonEvent *)&event);
-                break;
             case MotionNotify:
-                if (presscount || wb->window->inputmask)
-                    handle_mouse(wb, (XButtonEvent *)&event);
+                handle_mouse(wb, (XButtonEvent *)&event);
                 break;
             case NoExpose:
                 break;
@@ -1884,96 +1875,108 @@ static void handle_keypress(wbp w, XKeyEvent *event)
  */
 static void handle_mouse(wbp w, XButtonEvent *event)
 {
-    static unsigned int buttonorder[3] =
-        { Button1Mask, Button2Mask, Button3Mask };
-    unsigned int tmp;
-    int eventcode = 0;
+    static int buttonorder[3] = { Button1, Button2, Button3 };
+    int tmp, eventcode = 0;
     struct descrip d;
 
-    if (event->type == MotionNotify) {
-        if (event->state & buttonorder[0]) {
-            if (buttonorder[0] == Button1Mask)
-                eventcode = MOUSELEFTDRAG;
-            else if (buttonorder[0] == Button2Mask)
-                eventcode = MOUSEMIDDRAG;
-            else
-                eventcode = MOUSERIGHTDRAG;
+    switch (event->type) {
+        case MotionNotify: {
+            if (event->state == 0) {
+                if (w->window->inputmask & IM_POINTER_MOTION)
+                    eventcode = MOUSEMOVED;
+            } else {
+                switch (buttonorder[0]) {
+                    case Button1:
+                        eventcode = MOUSELEFTDRAG;
+                        break;
+                    case Button2:
+                        eventcode = MOUSEMIDDRAG;
+                        break;
+                    case Button3: 
+                        eventcode = MOUSERIGHTDRAG;
+                        break;
+                }
+            }
+            break;
         }
-        else if (event->state & buttonorder[1]) {
-            if (buttonorder[1] == Button1Mask)
-                eventcode = MOUSELEFTDRAG;
-            else if (buttonorder[1] == Button2Mask)
-                eventcode = MOUSEMIDDRAG;
-            else
-                eventcode = MOUSERIGHTDRAG;
+
+        case ButtonPress: {
+            switch (event->button) {
+                case Button1: {
+                    eventcode = MOUSELEFT;
+                    if (buttonorder[2] == Button1)
+                        swap(buttonorder[1],buttonorder[2]);
+                    if (buttonorder[1] == Button1)
+                        swap(buttonorder[0],buttonorder[1]);
+                    break;
+                }
+                case Button2: {
+                    eventcode = MOUSEMID;
+                    if (buttonorder[2] == Button2)
+                        swap(buttonorder[1],buttonorder[2]);
+                    if (buttonorder[1] == Button2)
+                        swap(buttonorder[0],buttonorder[1]);
+                    break;
+                }
+                case Button3: {
+                    eventcode = MOUSERIGHT;
+                    if (buttonorder[2] == Button3)
+                        swap(buttonorder[1],buttonorder[2]);
+                    if (buttonorder[1] == Button3)
+                        swap(buttonorder[0],buttonorder[1]);
+                    break;
+                }
+            }
+            break;
         }
-        else if (event->state & buttonorder[2]) {
-            if (buttonorder[2] == Button1Mask)
-                eventcode = MOUSELEFTDRAG;
-            else if (buttonorder[2] == Button2Mask)
-                eventcode = MOUSEMIDDRAG;
-            else
-                eventcode = MOUSERIGHTDRAG;
-        }
-        else {
-            eventcode = MOUSEMOVED;
+
+        case ButtonRelease: {
+            switch (event->button) {
+                case Button1: {
+                    eventcode = MOUSELEFTUP;
+                    if (buttonorder[0] == Button1)
+                        swap(buttonorder[0],buttonorder[1]);
+                    if (buttonorder[1] == Button1)
+                        swap(buttonorder[1],buttonorder[2]);
+                    break;
+                }
+                case Button2: {
+                    eventcode = MOUSEMIDUP;
+                    if (buttonorder[0] == Button2)
+                        swap(buttonorder[0],buttonorder[1]);
+                    if (buttonorder[1] == Button2)
+                        swap(buttonorder[1],buttonorder[2]);
+                    break;
+                }
+                case Button3: {
+                    eventcode = MOUSERIGHTUP;
+                    if (buttonorder[0] == Button3)
+                        swap(buttonorder[0],buttonorder[1]);
+                    if (buttonorder[1] == Button3)
+                        swap(buttonorder[1],buttonorder[2]);
+                    break;
+                }
+                case Button4: {
+                    eventcode = MOUSE4UP;
+                    break;
+                }
+                case Button5: {
+                    eventcode = MOUSE5UP;
+                    break;
+                }
+            }
+            break;
         }
     }
-    else switch (event->button) {
-        case Button1: {
-            eventcode = MOUSELEFT;
-            if (buttonorder[2] == Button1Mask)
-                swap(buttonorder[1],buttonorder[2]);
-            if (buttonorder[1] == Button1Mask)
-                swap(buttonorder[0],buttonorder[1]);
-            break;
-        }
-        case Button2: {
-            eventcode = MOUSEMID;
-            if (buttonorder[2] == Button2Mask)
-                swap(buttonorder[1],buttonorder[2]);
-            if (buttonorder[1] == Button2Mask)
-                swap(buttonorder[0],buttonorder[1]);
-            break;
-        }
-        case Button3: {
-            eventcode = MOUSERIGHT;
-            if (buttonorder[2] == Button3Mask)
-                swap(buttonorder[1],buttonorder[2]);
-            if (buttonorder[1] == Button3Mask)
-                swap(buttonorder[0],buttonorder[1]);
-            break;
-        }
-        case Button4: {
-            eventcode = MOUSE4;
-            break;
-        }
-        case Button5: {
-            eventcode = MOUSE5;
-            break;
-        }
+
+    if (eventcode) {
+        MakeInt(eventcode,&d);
+        qevent(w->window, &d, event->x, event->y, (uword)event->time, 
+               event->state & ControlMask,
+               event->state & Mod1Mask,
+               event->state & ShiftMask,
+               0);
     }
-    if (event->type == ButtonRelease) {
-        eventcode -= (MOUSELEFT - MOUSELEFTUP);
-        swap(buttonorder[0],buttonorder[1]);
-        swap(buttonorder[1],buttonorder[2]);
-    }
-
-    /*
-     * Don't generate events for these codes.  Rather, MOUSE4UP and
-     * MOUSE5UP are used to generate the &wheelup and &wheeldown
-     * events respectively.
-     */
-    if (eventcode == MOUSE4 || eventcode == MOUSE5)
-        return;
-
-    MakeInt(eventcode,&d);
-
-    qevent(w->window, &d, event->x, event->y, (uword)event->time, 
-           event->state & ControlMask,
-           event->state & Mod1Mask,
-           event->state & ShiftMask,
-           0);
 }
 
 
