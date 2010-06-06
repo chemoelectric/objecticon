@@ -20,7 +20,7 @@ short *goto_map;
 short *from_state;
 short *to_state;
 
-static int infinity;
+static int infin;
 static int maxrhs;
 static int ngotos;
 static unsigned *F;
@@ -546,7 +546,7 @@ void digraph(short **relation)
 {
     register int i;
 
-  infinity = ngotos + 2;
+  infin = ngotos + 2;
   INDEX = NEW2(ngotos + 1, short);
   VERTICES = NEW2(ngotos + 1, short);
   top = 0;
@@ -609,7 +609,7 @@ void traverse(int i)
       for (;;)
 	{
 	  j = VERTICES[top--];
-	  INDEX[j] = infinity;
+	  INDEX[j] = infin;
 
 	  if (i == j)
 	    break;
