@@ -2411,7 +2411,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         case Uop_Rptalt: {                      /* repeated alternation */
             struct lnode_1 *x = (struct lnode_1 *)n;
             struct ir_info *expr;
-            int tl;
+            int tl = -1;
             if (!bounded)
                 tl = make_tmploc(st);
 

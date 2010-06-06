@@ -243,14 +243,16 @@ class ScrollBar(Component)
 
    public set_pos_from_value()
       if self.hi ~= self.lo then
-         self.move_bar_pos(self.bar_area_pos + integer(((self.get_value() - self.lo) * (self.bar_area_size - self.bar_size)) / (self.hi - self.lo)))
+         self.move_bar_pos(self.bar_area_pos + integer(((self.get_value() - self.lo) * 
+                                                        (self.bar_area_size - self.bar_size)) / (self.hi - self.lo)))
       else
          self.move_bar_pos(self.bar_area_pos)
    end
 
    public set_value_from_pos()
       if self.bar_area_size ~= self.bar_size then
-         self.move_value(self.lo + ((self.hi - self.lo) * (self.bar_pos - self.bar_area_pos)) / (self.bar_area_size - self.bar_size))
+         self.move_value(self.lo + ((self.hi - self.lo) * (self.bar_pos - self.bar_area_pos)) / 
+                         (self.bar_area_size - self.bar_size))
       else
          self.move_value(self.lo)
    end
@@ -267,7 +269,11 @@ class ScrollBar(Component)
 
    public handle_lpress(e)
       start_handle(e)
-      if (self.bar_area.bar_x <= e.x < self.bar_area.bar_x + self.bar_area.bar_w) & (self.bar_area.bar_y  <= e.y < self.bar_area.bar_y + self.bar_area.bar_h) then {
+      # Just in case we missed a release event, reset ticker and flag.
+      self.bar_down := &null
+      stop_paging()
+      if (self.bar_area.bar_x <= e.x < self.bar_area.bar_x + self.bar_area.bar_w) & 
+         (self.bar_area.bar_y  <= e.y < self.bar_area.bar_y + self.bar_area.bar_h) then {
          #
          # Click on bar; set flag and save offset between top of bar and pointer position
          #
@@ -276,11 +282,17 @@ class ScrollBar(Component)
             self.bar_down_offset := e.y - self.bar_area.bar_y
          else
             self.bar_down_offset := e.x - self.bar_area.bar_x
-      } else if (/self.is_horizontal_flag & (self.bar_area.x <= e.x < self.bar_area.x + self.bar_area.w) & (self.bar_area.y  <= e.y < self.bar_area.bar_y)) | ((self.bar_area.y <= e.y < self.bar_area.y + self.bar_area.h) & (self.bar_area.x  <= e.x < self.bar_area.bar_x)) then {
+      } else if (/self.is_horizontal_flag & (self.bar_area.x <= e.x < self.bar_area.x + self.bar_area.w) & 
+                 (self.bar_area.y  <= e.y < self.bar_area.bar_y)) | 
+         ((self.bar_area.y <= e.y < self.bar_area.y + self.bar_area.h) & 
+          (self.bar_area.x  <= e.x < self.bar_area.bar_x)) then {
          self.move_value(self.get_value() - self.page_size)
          self.set_pos_from_value()
          start_paging(-1)
-      } else  if (/self.is_horizontal_flag & (self.bar_area.x <= e.x < self.bar_area.x + self.bar_area.w) & ( self.bar_area.bar_y + self.bar_area.bar_h  <= e.y <  self.bar_area.y + self.bar_area.h)) | ((self.bar_area.y <= e.y < self.bar_area.y + self.bar_area.h) & ( self.bar_area.bar_x + self.bar_area.bar_w  <= e.x <  self.bar_area.x + self.bar_area.w)) then {
+      } else  if (/self.is_horizontal_flag & (self.bar_area.x <= e.x < self.bar_area.x + self.bar_area.w) & 
+                  (self.bar_area.bar_y + self.bar_area.bar_h  <= e.y <  self.bar_area.y + self.bar_area.h)) | 
+                 ((self.bar_area.y <= e.y < self.bar_area.y + self.bar_area.h) & 
+                  (self.bar_area.bar_x + self.bar_area.bar_w  <= e.x <  self.bar_area.x + self.bar_area.w)) then {
          self.move_value(self.get_value() + self.page_size)
          self.set_pos_from_value()
          start_paging(1)
@@ -290,13 +302,8 @@ class ScrollBar(Component)
 
    public handle_lrelease(e)
       start_handle(e)
-      if \self.bar_down then {
-         #
-         # Released; clear flag
-         #
-         self.bar_down := &null
-      } else if \self.is_paging then
-         stop_paging()
+      self.bar_down := &null
+      stop_paging()
       end_handle(e)
    end
 
@@ -562,12 +569,10 @@ class ScrollBar(Component)
       self.bar_area := BarArea()
       add(self.bar_area)
       self.wheel_factor := DEFAULT_WHEEL_FACTOR
-
       set_wheel_component(self)
       connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
       connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
-
       set_fields(a)
       return
    end

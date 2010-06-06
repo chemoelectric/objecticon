@@ -498,6 +498,8 @@ class SelectableScrollArea(LineBasedScrollArea)
 
    public handle_lpress(e)
       local l
+      # Just in case we missed a release event, ensure the ticker is stopped.
+      scroll_ticker.stop()
       # on_a_line indicates whether the current ldrag started over a line.
       self.on_a_line := &null
       l := get_line_under_pointer(e) | fail
@@ -609,14 +611,7 @@ class SelectableScrollArea(LineBasedScrollArea)
 
    public handle_lrelease(e)
       start_handle(e)
-
-      #
-      # Mouse released after being held down.  Clear flag
-      #
       scroll_ticker.stop()
-      #
-      # Clear flag, refresh, return event
-      #
       if (self.select_mode ~=== Select.NONE) & (get_line_under_pointer(e) = self.cursor) then {
          if (self.select_mode === Select.MANY) & (\e.shift | \e.ctrl) then {
             if \e.ctrl then {
@@ -625,9 +620,6 @@ class SelectableScrollArea(LineBasedScrollArea)
                else
                   insert(self.selections, self.cursor)
             } else {
-               #
-               # shift
-               #
                if \self.prev_cursor then {
                   if self.prev_cursor > self.cursor then {
                      every insert(self.selections, self.cursor to self.prev_cursor)

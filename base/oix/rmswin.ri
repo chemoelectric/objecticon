@@ -479,9 +479,9 @@ void handle_keypress(wbp wb, UINT msg, WPARAM wp, LPARAM lp, int meta)
    t = GetMessageTime();
 
    qevent(ws, &d, x, y, t, 
-          GetKeyState(VK_CONTROL) < 0
+          GetKeyState(VK_CONTROL) < 0,
           meta,
-          GetKeyState(VK_SHIFT) < 0
+          GetKeyState(VK_SHIFT) < 0,
           (msg == WM_KEYUP));
    }
 

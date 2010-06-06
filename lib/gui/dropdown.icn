@@ -55,7 +55,7 @@ class DropDown(SelectionList,Component)
          #
          # Button pressed whilst list open; just close
          #
-         self.close_textlist(ev)
+         self.close_textlist()
       else
          #
          # Button pressed whilst no list; open list
@@ -267,7 +267,7 @@ class DropDown(SelectionList,Component)
       }
    end
 
-   public close_textlist(ev)
+   public close_textlist()
       if /tl.parent_dialog.popup_manager then {
          if self.parent_dialog.focus === tl then
             self.parent_dialog.set_focus(view)
@@ -281,7 +281,7 @@ class DropDown(SelectionList,Component)
          self.tl.parent_dialog.dispose()
       }
       self.tl := &null
-      self.parent_dialog.exit_menu_mode(self)
+      self.parent_dialog.exit_menu_mode()
       self.parent_dialog.disconnect_object(self)
    end
 
