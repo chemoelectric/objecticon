@@ -44,10 +44,9 @@ class CanvasScrollBarDialog(CanvasComponentDialog)
       if slider.is_checked() then
          c.set_range(numeric(range_from.get_contents()), numeric(range_to.get_contents()))
       else {
-         c.set_page_size(numeric(page_size.get_contents()))
-         c.set_total_size(numeric(total_size.get_contents()))
          c.is_range_flag := &null
-         c.reconfigure()
+         c.set_total_size(numeric(total_size.get_contents()))
+         c.set_page_size(numeric(page_size.get_contents()))
       }
       cast(self,CanvasComponentDialog).set_vals()
    end
