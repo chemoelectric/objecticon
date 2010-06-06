@@ -186,7 +186,8 @@ class TextField(Component)
 
    public handle_lpress(e)
       start_handle(e)
-
+      # Just in case we missed a release event, ensure the ticker is stopped.
+      scroll_ticker.stop()
       if \e.shift then {
          /self.mark := self.cursor
          self.cursor := whereis_x(e)
@@ -317,9 +318,6 @@ class TextField(Component)
 
    public handle_lrelease(e)
       start_handle(e)
-      #
-      # Mouse released after being held down.  Clear flag
-      #
       # For consistency with editabletextlist we clear_mark if no region.
       has_region() | clear_mark()
       scroll_ticker.stop()

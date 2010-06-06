@@ -176,7 +176,8 @@ class Slider(Component)
 
    public set_pos_from_value()
       if self.hi ~= self.lo then
-         self.move_slider_pos(self.slider_area_pos + integer(((self.get_value() - self.lo) * self.slider_area_size / (self.hi - self.lo))))
+         self.move_slider_pos(self.slider_area_pos + integer(((self.get_value() - self.lo) * 
+                                                              self.slider_area_size / (self.hi - self.lo))))
       else
          self.move_slider_pos(self.slider_area_pos)
    end
@@ -228,7 +229,11 @@ class Slider(Component)
 
    public handle_lpress(e)
       start_handle(e)
-      if (self.slider_area.slider_x <= e.x < self.slider_area.slider_x + self.slider_area.slider_w) & (self.slider_area.slider_y  <= e.y < self.slider_area.slider_y + self.slider_area.slider_h) then {
+      # Just in case we missed a release event, reset ticker and flag.
+      self.slider_down := &null
+      stop_paging()
+      if (self.slider_area.slider_x <= e.x < self.slider_area.slider_x + self.slider_area.slider_w) & 
+         (self.slider_area.slider_y  <= e.y < self.slider_area.slider_y + self.slider_area.slider_h) then {
          #
          # Click on slider; set flag and save offset between top of slider and pointer position
          #
@@ -237,11 +242,17 @@ class Slider(Component)
             self.slider_down_offset := e.y - self.slider_pos
          else
             self.slider_down_offset := e.x - self.slider_pos
-      } else if (/self.is_horizontal_flag & (self.slider_area.x <= e.x < self.slider_area.x + self.slider_area.w) & (self.slider_area.y  <= e.y < self.slider_area.slider_y)) | ((self.slider_area.y <= e.y < self.slider_area.y + self.slider_area.h) & (self.slider_area.x  <= e.x < self.slider_area.slider_x)) then {
+      } else if (/self.is_horizontal_flag & (self.slider_area.x <= e.x < self.slider_area.x + self.slider_area.w) & 
+                 (self.slider_area.y  <= e.y < self.slider_area.slider_y)) | 
+         ((self.slider_area.y <= e.y < self.slider_area.y + self.slider_area.h) & 
+          (self.slider_area.x  <= e.x < self.slider_area.slider_x)) then {
          self.move_value(self.get_value() - self.increment_size)
          self.set_pos_from_value()
          start_paging(-1)
-      } else  if (/self.is_horizontal_flag & (self.slider_area.x <= e.x < self.slider_area.x + self.slider_area.w) & ( self.slider_area.slider_y + self.slider_area.slider_h  <= e.y <  self.slider_area.y + self.slider_area.h)) | ((self.slider_area.y <= e.y < self.slider_area.y + self.slider_area.h) & ( self.slider_area.slider_x + self.slider_area.slider_w  <= e.x <  self.slider_area.x + self.slider_area.w)) then {
+      } else  if (/self.is_horizontal_flag & (self.slider_area.x <= e.x < self.slider_area.x + self.slider_area.w) & 
+                  ( self.slider_area.slider_y + self.slider_area.slider_h  <= e.y <  self.slider_area.y + self.slider_area.h)) | 
+         ((self.slider_area.y <= e.y < self.slider_area.y + self.slider_area.h) & 
+          ( self.slider_area.slider_x + self.slider_area.slider_w  <= e.x <  self.slider_area.x + self.slider_area.w)) then {
          self.move_value(self.get_value() + self.increment_size)
          self.set_pos_from_value()
          start_paging(1)
@@ -260,8 +271,8 @@ class Slider(Component)
             self.value +:= self.snaps / 2
             self.set_value(self.value - (self.value % snaps))
          }
-      } else if \self.is_paging then
-         stop_paging()
+      } 
+      stop_paging()
       end_handle(e)
    end
 

@@ -501,9 +501,9 @@ class EditableTextList(LineBasedScrollArea)
 
    public handle_lpress(e)
       start_handle(e)
-      #
-      # Button down in region - move to cursor position.
-      #
+      # Just in case we missed a release event, ensure the ticker is stopped.
+      scroll_ticker.stop()
+      # Move to cursor position.
       if \e.shift then {
          /self.mark_y := self.cursor_y
          /self.mark_x := self.cursor_x
