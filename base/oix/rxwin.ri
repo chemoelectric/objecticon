@@ -1637,13 +1637,15 @@ char *getdrawop(wbp w)
 
 int grabpointer(wbp w)
 {
+    unsigned int x;
     wsp ws = w->window;
     if (!ws->win)
         return Failed;
-    if (XGrabPointer(ws->display->display, ws->win,False,
-                     EnterWindowMask | LeaveWindowMask | PointerMotionMask |
-                     ButtonMotionMask | ButtonPressMask | ButtonReleaseMask |
-                     Button1MotionMask | Button2MotionMask | Button3MotionMask, 
+    x = ButtonPressMask | ButtonReleaseMask | ButtonMotionMask;
+    if (ws->inputmask & IM_POINTER_MOTION)
+        x |= PointerMotionMask;
+
+    if (XGrabPointer(ws->display->display, ws->win,False, x,
                      GrabModeAsync, GrabModeAsync, None, None, CurrentTime) == GrabSuccess)
         return Succeeded;
     else
