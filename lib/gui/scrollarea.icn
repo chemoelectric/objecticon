@@ -32,6 +32,9 @@ class ScrollArea(Component)
       horizontal_increment,
       use_default_keys_flag
 
+   public static
+      SCROLLAREA_SCROLLBAR_SIZE
+
    #
    # The x offset into the object we are viewing
    #
@@ -151,12 +154,13 @@ class ScrollArea(Component)
       return self.horizontal_increment
    end
 
-   # Predict the default dimension for a ScrollBar with its default
-   # border.  This value will be used for any scrollbars in the
-   # ScrollArea, regardless of their actual default size.
+   #
+   # Return the default dimension for any {ScrollBar}(s) used in
+   # a {ScrollArea}.
    #
    public static predict_scrollbar_size()
-      return ScrollBar.DEFAULT_INNER_SIZE + 2 * Gui.BORDER_WIDTH
+      /SCROLLAREA_SCROLLBAR_SIZE := ScrollBar.DEFAULT_INNER_SIZE + 2 * Gui.BORDER_WIDTH
+      return SCROLLAREA_SCROLLBAR_SIZE
    end
 
    public predict_view_width(w, sb)
