@@ -290,6 +290,13 @@ class Component(Rect,Align,SetFields,Connectable)
    end
 
    #
+   # This method is invoked when an inconsistent mouse event occurs (for example two
+   # left press events in a row).  The component should reset itself accordingly.
+   #
+   public event_reset(e)
+   end
+
+   #
    # Swap the hidden status of the component.
    #
    public toggle_is_hidden()
@@ -1222,6 +1229,17 @@ class Component(Rect,Align,SetFields,Connectable)
       return
    end
 
+   public try_connect(f)
+      local ev
+      if map(f.attr[1:3]) == "e:" then
+         ev := f.attr[3:0]
+      else
+         ev := f.attr
+      ev := Gui.is_event(ev) | fail
+      connect(f.val, ev)
+      return
+   end
+
    public set_one(f)
       case f.attr of {
          "tooltip" : set_tooltip(f.val)
@@ -1248,7 +1266,7 @@ class Component(Rect,Align,SetFields,Connectable)
          "accel" : set_accel(f.string_val())
          "layout" : set_layout(f.object_val(gui.Layout))
          "border" : set_border(f.object_val(gui.ABorder))
-         default : try_constraint(f) | try_wattrib(f) | fail
+         default : try_constraint(f) | try_wattrib(f) | try_connect(f) | fail
       }
       return
    end

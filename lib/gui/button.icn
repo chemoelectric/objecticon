@@ -78,6 +78,13 @@ class Button(Toggle,Component)
       repeat_ticker.stop()
    end
 
+   public event_reset()
+      if \self.is_down then {
+         go_up()
+         invalidate()
+      }
+   end
+
    public handle_lpress(e)
       local b
 

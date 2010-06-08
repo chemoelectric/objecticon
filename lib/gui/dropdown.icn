@@ -363,7 +363,7 @@ class DropDown(SelectionList,Component)
       cast(self,Component).new()
       self.set_border(SunkenBorder())
       # Make the same width as the button in the scrollbar of the dropdown.
-      self.b := IconButton("w=",ScrollBar.DEFAULT_SIZE)
+      self.b := IconButton("w=",ScrollArea.predict_scrollbar_size())
       self.b.set_parent(self)
       self.b.connect(self.on_button_press, Event.BUTTON_PRESS)
       self.b.set_image(Icon.ARROW_DOWN)

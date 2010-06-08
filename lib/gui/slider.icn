@@ -227,11 +227,13 @@ class Slider(Component)
       self.reconfigure()
    end
 
-   public handle_lpress(e)
-      start_handle(e)
-      # Just in case we missed a release event, reset ticker and flag.
+   public event_reset()
       self.slider_down := &null
       stop_paging()
+   end
+
+   public handle_lpress(e)
+      start_handle(e)
       if (self.slider_area.slider_x <= e.x < self.slider_area.slider_x + self.slider_area.slider_w) & 
          (self.slider_area.slider_y  <= e.y < self.slider_area.slider_y + self.slider_area.slider_h) then {
          #
@@ -242,17 +244,14 @@ class Slider(Component)
             self.slider_down_offset := e.y - self.slider_pos
          else
             self.slider_down_offset := e.x - self.slider_pos
-      } else if (/self.is_horizontal_flag & (self.slider_area.x <= e.x < self.slider_area.x + self.slider_area.w) & 
-                 (self.slider_area.y  <= e.y < self.slider_area.slider_y)) | 
-         ((self.slider_area.y <= e.y < self.slider_area.y + self.slider_area.h) & 
-          (self.slider_area.x  <= e.x < self.slider_area.slider_x)) then {
+      } else if (/self.is_horizontal_flag & (self.slider_area.y  <= e.y < self.slider_area.slider_y)) | 
+         (self.slider_area.x  <= e.x < self.slider_area.slider_x) then {
          self.move_value(self.get_value() - self.increment_size)
          self.set_pos_from_value()
          start_paging(-1)
-      } else  if (/self.is_horizontal_flag & (self.slider_area.x <= e.x < self.slider_area.x + self.slider_area.w) & 
-                  ( self.slider_area.slider_y + self.slider_area.slider_h  <= e.y <  self.slider_area.y + self.slider_area.h)) | 
-         ((self.slider_area.y <= e.y < self.slider_area.y + self.slider_area.h) & 
-          ( self.slider_area.slider_x + self.slider_area.slider_w  <= e.x <  self.slider_area.x + self.slider_area.w)) then {
+      } else  if (/self.is_horizontal_flag & 
+                  (self.slider_area.slider_y + self.slider_area.slider_h <= e.y < self.slider_area.y + self.slider_area.h)) | 
+         (self.slider_area.slider_x + self.slider_area.slider_w  <= e.x < self.slider_area.x + self.slider_area.w) then {
          self.move_value(self.get_value() + self.increment_size)
          self.set_pos_from_value()
          start_paging(1)
@@ -498,9 +497,9 @@ class Slider(Component)
       self.wheel_factor := 1
       self.set_border(EmptyBorder("flush"))
       add(self.slider_area)
-      connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
-      connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
-      connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+      self.slider_area.connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
+      self.slider_area.connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
+      self.slider_area.connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
       connect(self.handle_wheel_up, Event.MOUSE_WHEEL_UP)
       connect(self.handle_wheel_down, Event.MOUSE_WHEEL_DOWN)
       set_fields(a)

@@ -32,6 +32,9 @@ class ScrollArea(Component)
       horizontal_increment,
       use_default_keys_flag
 
+   public static
+      SCROLLAREA_SCROLLBAR_SIZE
+
    #
    # The x offset into the object we are viewing
    #
@@ -151,11 +154,20 @@ class ScrollArea(Component)
       return self.horizontal_increment
    end
 
+   #
+   # Return the default dimension for any {ScrollBar}(s) used in
+   # a {ScrollArea}.
+   #
+   public static predict_scrollbar_size()
+      /SCROLLAREA_SCROLLBAR_SIZE := ScrollBar.DEFAULT_INNER_SIZE + 2 * Gui.BORDER_WIDTH
+      return SCROLLAREA_SCROLLBAR_SIZE
+   end
+
    public predict_view_width(w, sb)
       local w1
       w1 := w - border.get_total_width()
       if \sb then
-         w1 -:= ScrollBar.DEFAULT_SIZE
+         w1 -:= predict_scrollbar_size()
       return w1
    end
 
@@ -163,7 +175,7 @@ class ScrollArea(Component)
       local w1
       w1 := vw + border.get_total_width()
       if \sb then
-         w1 +:= ScrollBar.DEFAULT_SIZE
+         w1 +:= predict_scrollbar_size()
       return w1
    end
 
@@ -171,7 +183,7 @@ class ScrollArea(Component)
       local h1
       h1 := h - border.get_total_height()
       if \sb then
-         h1 -:= ScrollBar.DEFAULT_SIZE
+         h1 -:= predict_scrollbar_size()
       return h1
    end
 
@@ -179,7 +191,7 @@ class ScrollArea(Component)
       local h1
       h1 := vh + border.get_total_height()
       if \sb then
-         h1 +:= ScrollBar.DEFAULT_SIZE
+         h1 +:= predict_scrollbar_size()
       return h1
    end
 
@@ -241,7 +253,9 @@ class ScrollArea(Component)
    #
    public set_internal_fields()
       local max_th, max_tw, min_th, min_tw, need_vsb, need_hsb, 
-         new_vsb, new_hsb, i
+         new_vsb, new_hsb, i, sb_size
+
+      sb_size := predict_scrollbar_size()
 
       #
       # Position and size of scrolling region
@@ -250,8 +264,8 @@ class ScrollArea(Component)
       view.y := self.y + border.get_t_inset()
       max_tw := self.w - border.get_total_width()
       max_th := self.h - border.get_total_height()
-      min_th := max_th - ScrollBar.DEFAULT_SIZE
-      min_tw := max_tw - ScrollBar.DEFAULT_SIZE
+      min_th := max_th - sb_size
+      min_tw := max_tw - sb_size
 
       #
       # Set flags indicating whether scroll bars needed.  0 => definitely not
@@ -300,15 +314,15 @@ class ScrollArea(Component)
          view.w := min_tw
          view.h := min_th
 
-         self.vsb.x := self.x + self.w - ScrollBar.DEFAULT_SIZE - border.get_r_inset()
+         self.vsb.x := self.x + self.w - sb_size - border.get_r_inset()
          self.vsb.y := self.y + border.get_t_inset()
-         self.vsb.w := ScrollBar.DEFAULT_SIZE
-         self.vsb.h := self.h - ScrollBar.DEFAULT_SIZE - border.get_total_height()
+         self.vsb.w := sb_size
+         self.vsb.h := self.h - sb_size - border.get_total_height()
 
          self.hsb.x := self.x + border.get_l_inset()
-         self.hsb.y := self.y + self.h - ScrollBar.DEFAULT_SIZE - border.get_b_inset()
-         self.hsb.w := self.w - ScrollBar.DEFAULT_SIZE - border.get_total_width()
-         self.hsb.h := ScrollBar.DEFAULT_SIZE
+         self.hsb.y := self.y + self.h - sb_size - border.get_b_inset()
+         self.hsb.w := self.w - sb_size - border.get_total_width()
+         self.hsb.h := sb_size
       } else if (need_hsb = 0) & (need_vsb = 2) then {
          #
          # One vertical scroll bar.
@@ -322,9 +336,9 @@ class ScrollArea(Component)
          view.w := min_tw
          view.h := max_th
 
-         self.vsb.x := self.x + self.w - ScrollBar.DEFAULT_SIZE - border.get_r_inset()
+         self.vsb.x := self.x + self.w - sb_size - border.get_r_inset()
          self.vsb.y := self.y + border.get_t_inset()
-         self.vsb.w := ScrollBar.DEFAULT_SIZE
+         self.vsb.w := sb_size
          self.vsb.h := self.h  - border.get_total_height()
       } else if (need_hsb = 2) & (need_vsb = 0) then {
          #
@@ -342,9 +356,9 @@ class ScrollArea(Component)
          view.h := min_th
 
          self.hsb.x := self.x + border.get_l_inset()
-         self.hsb.y := self.y + self.h - ScrollBar.DEFAULT_SIZE - border.get_b_inset()
+         self.hsb.y := self.y + self.h - sb_size - border.get_b_inset()
          self.hsb.w := self.w - border.get_total_width()
-         self.hsb.h := ScrollBar.DEFAULT_SIZE
+         self.hsb.h := sb_size
       }
 
       #

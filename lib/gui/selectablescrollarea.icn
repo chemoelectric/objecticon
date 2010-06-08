@@ -496,10 +496,12 @@ class SelectableScrollArea(LineBasedScrollArea)
       end_handle(e)
    end
 
+   public event_reset()
+      scroll_ticker.stop()
+   end
+
    public handle_lpress(e)
       local l
-      # Just in case we missed a release event, ensure the ticker is stopped.
-      scroll_ticker.stop()
       # on_a_line indicates whether the current ldrag started over a line.
       self.on_a_line := &null
       l := get_line_under_pointer(e) | fail

@@ -103,10 +103,10 @@ class ScrollBar(Component)
       wd_listener,
       repeat_ticker
 
-   public static DEFAULT_SIZE, DEFAULT_WHEEL_FACTOR, MIN_BAR_SIZE
+   public static DEFAULT_INNER_SIZE, DEFAULT_WHEEL_FACTOR, MIN_BAR_SIZE
 
    private static init()
-      DEFAULT_SIZE := 20
+      DEFAULT_INNER_SIZE := 16
       DEFAULT_WHEEL_FACTOR := 4
       MIN_BAR_SIZE := 8
    end
@@ -259,19 +259,21 @@ class ScrollBar(Component)
 
    public get_default_height()
       if \self.is_horizontal_flag then
-         return DEFAULT_SIZE
+         return DEFAULT_INNER_SIZE + border.get_total_height()
    end
 
    public get_default_width()
       if /self.is_horizontal_flag then
-         return DEFAULT_SIZE
+         return DEFAULT_INNER_SIZE + border.get_total_width()
+   end
+
+   public event_reset()
+      self.bar_down := &null
+      stop_paging()
    end
 
    public handle_lpress(e)
       start_handle(e)
-      # Just in case we missed a release event, reset ticker and flag.
-      self.bar_down := &null
-      stop_paging()
       if (self.bar_area.bar_x <= e.x < self.bar_area.bar_x + self.bar_area.bar_w) & 
          (self.bar_area.bar_y  <= e.y < self.bar_area.bar_y + self.bar_area.bar_h) then {
          #
@@ -282,17 +284,14 @@ class ScrollBar(Component)
             self.bar_down_offset := e.y - self.bar_area.bar_y
          else
             self.bar_down_offset := e.x - self.bar_area.bar_x
-      } else if (/self.is_horizontal_flag & (self.bar_area.x <= e.x < self.bar_area.x + self.bar_area.w) & 
-                 (self.bar_area.y  <= e.y < self.bar_area.bar_y)) | 
-         ((self.bar_area.y <= e.y < self.bar_area.y + self.bar_area.h) & 
-          (self.bar_area.x  <= e.x < self.bar_area.bar_x)) then {
+      } else if (/self.is_horizontal_flag & (self.bar_area.y  <= e.y < self.bar_area.bar_y)) | 
+         (self.bar_area.x  <= e.x < self.bar_area.bar_x) then {
          self.move_value(self.get_value() - self.page_size)
          self.set_pos_from_value()
          start_paging(-1)
-      } else  if (/self.is_horizontal_flag & (self.bar_area.x <= e.x < self.bar_area.x + self.bar_area.w) & 
+      } else  if (/self.is_horizontal_flag &
                   (self.bar_area.bar_y + self.bar_area.bar_h  <= e.y <  self.bar_area.y + self.bar_area.h)) | 
-                 ((self.bar_area.y <= e.y < self.bar_area.y + self.bar_area.h) & 
-                  (self.bar_area.bar_x + self.bar_area.bar_w  <= e.x <  self.bar_area.x + self.bar_area.w)) then {
+          (self.bar_area.bar_x + self.bar_area.bar_w  <= e.x <  self.bar_area.x + self.bar_area.w) then {
          self.move_value(self.get_value() + self.page_size)
          self.set_pos_from_value()
          start_paging(1)
@@ -385,18 +384,7 @@ class ScrollBar(Component)
    end
 
    public display(r)
-      #
-      # Draw rectangle around area within which bar moves
-      #
-      if /self.is_horizontal_flag then
-         Gui.style.draw_raised_rectangle(self.cbwin, self.x, self.y + b1.h, 
-                                     self.w, self.h - b1.h - b2.h,
-                                     Gui.BORDER_WIDTH)
-      else
-         Gui.style.draw_raised_rectangle(self.cbwin, self.x + b1.w, self.y, 
-                                     self.w - b1.w - b2.w, self.h,
-                                     Gui.BORDER_WIDTH)
-
+      border.draw_rect(self.cbwin, self)
       display_children(r)
    end
 
@@ -484,41 +472,41 @@ class ScrollBar(Component)
          #
          # Set button positions
          #
-         b1.x := self.x
-         b1.y := self.y
-         b1.w := self.w
-         b1.h := b1.get_preferred_height()
-         b2.x := self.x
-         b2.h := b2.get_preferred_height()
-         b2.y := self.y + self.h - b2.h
-         b2.w := self.w
+         b1.x := self.x + border.get_l_inset()
+         b1.y := self.y + border.get_t_inset()
+         b1.w := self.w - border.get_total_width()
+         b1.h := max(DEFAULT_INNER_SIZE, b1.get_preferred_height())
+         b2.x := b1.x 
+         b2.h := max(DEFAULT_INNER_SIZE, b2.get_preferred_height())
+         b2.y := self.y + self.h - b2.h - border.get_b_inset()
+         b2.w := b1.w
 
          #
          # Compute bar area dimensions
          #
-         bar_area.x := self.x + Gui.BORDER_WIDTH + 2
-         bar_area.y := self.y + b1.h + Gui.BORDER_WIDTH + 2
-         bar_area.w := self.w - 2 * (Gui.BORDER_WIDTH + 2)
-         bar_area.h := self.h - b1.h - b2.h - 2 * (Gui.BORDER_WIDTH + 2)
+         bar_area.x := b1.x + 2
+         bar_area.y := b1.y + b1.h
+         bar_area.w := b1.w - 4
+         bar_area.h := b2.y - (b1.y + b1.h)
 
          self.bar_area.bar_x := self.bar_area.x
          self.bar_area_pos := self.bar_area.y
          self.bar_area.bar_w := self.bar_area.w
          self.bar_area_size := self.bar_area.h
       } else {
-         b1.x := self.x
-         b1.y := self.y
-         b1.w := b1.get_preferred_width()
-         b1.h := self.h
-         b2.w := b2.get_preferred_width()
-         b2.x := self.x + self.w - b2.w
-         b2.y := self.y
-         b2.h := self.h
+         b1.x := self.x + border.get_l_inset()
+         b1.y := self.y + border.get_t_inset()
+         b1.w := max(DEFAULT_INNER_SIZE, b1.get_preferred_width())
+         b1.h := self.h - border.get_total_height()
+         b2.w := max(DEFAULT_INNER_SIZE, b2.get_preferred_width())
+         b2.x := self.x + self.w - b2.w - border.get_r_inset()
+         b2.y := b1.y
+         b2.h := b1.h
 
-         bar_area.x := self.x + b1.w + Gui.BORDER_WIDTH + 2
-         bar_area.y := self.y + Gui.BORDER_WIDTH + 2
-         bar_area.w := self.w - b1.w - b2.w - 2 * (Gui.BORDER_WIDTH + 2)
-         bar_area.h := self.h - 2 * (Gui.BORDER_WIDTH + 2)
+         bar_area.x := b1.x + b1.w
+         bar_area.y := b1.y + 2
+         bar_area.w := b2.x - (b1.x + b1.w)
+         bar_area.h := b1.h - 4
 
          self.bar_area_pos := self.bar_area.x
          self.bar_area.bar_y := self.bar_area.y
@@ -556,12 +544,12 @@ class ScrollBar(Component)
       repeat_ticker := Ticker("interval=", Gui.REPEAT_RATE,
                               "delay=", Gui.REPEAT_DELAY)
       repeat_ticker.connect(self.repeat_tick, Event.TICK)
-      self.b1 := IconButton("w=",DEFAULT_SIZE, "h=",DEFAULT_SIZE)
+      self.b1 := IconButton("border=",EmptyBorder("flush"))
       self.b1.connect(self.handle_button_up, Event.BUTTON_PRESS)
       self.b1.connect(self.handle_button_up, Event.BUTTON_HELD)
       self.b1.set_accepts_focus(&no)
       add(self.b1)
-      self.b2 := IconButton("w=",DEFAULT_SIZE, "h=",DEFAULT_SIZE)
+      self.b2 := IconButton("border=",EmptyBorder("flush"))
       self.b2.connect(self.handle_button_down, Event.BUTTON_PRESS)
       self.b2.connect(self.handle_button_down, Event.BUTTON_HELD)
       self.b2.set_accepts_focus(&no)
@@ -570,10 +558,11 @@ class ScrollBar(Component)
       add(self.bar_area)
       self.wheel_factor := DEFAULT_WHEEL_FACTOR
       set_wheel_component(self)
-      connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
-      connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
-      connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+      self.bar_area.connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
+      self.bar_area.connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
+      self.bar_area.connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
       set_fields(a)
+      set_border(RaisedBorder())
       return
    end
 end

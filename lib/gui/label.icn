@@ -15,6 +15,7 @@ package gui
 # @field image=string : see {set_image}
 # @field label=text : see {set_label}
 # @field paint={Paint} : see {set_paint}
+# @field linked_accel={Component} : see {set_linked_accel}
 # @field see also {Component}
 #
 class Label(Component)
@@ -89,7 +90,8 @@ class Label(Component)
       case f.attr of {
          "image" : set_image(f.string_val())
          "label" : set_label(f.text_val())
-         "paint" : set_paint(f.object_val(gui.Paint))
+         "paint" : set_paint(f.object_val(Paint))
+         "linked_accel": set_linked_accel(f.object_val(Component))
          default: return cast(self,Component).set_one(f)
       }
       return
