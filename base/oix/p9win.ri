@@ -1995,6 +1995,8 @@ wcp clonecontext(wbp w)
     src = w->context;
     GRFX_ALLOC(wc, _wcontext);
     wc->serial = ++context_serial;
+    wc->dx = src->dx;
+    wc->dy = src->dy;
     wc->clipx = src->clipx;
     wc->clipy = src->clipy;
     wc->clipw = src->clipw;
