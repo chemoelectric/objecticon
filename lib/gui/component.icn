@@ -290,6 +290,13 @@ class Component(Rect,Align,SetFields,Connectable)
    end
 
    #
+   # This method is invoked when an inconsistent mouse event occurs (for example two
+   # left press events in a row).  The component should reset itself accordingly.
+   #
+   public event_reset(e)
+   end
+
+   #
    # Swap the hidden status of the component.
    #
    public toggle_is_hidden()

@@ -327,17 +327,8 @@ class Dialog(Component)
    end
 
    public exit_menu_mode()
-      local t
       (\self.menu_mode := &null) | syserr("internal error - not  in menu mode.")
       parent_dialog.win.ungrab_pointer()
-      # Partial workaround for little oddity of X11.  If we ungrab
-      # after a press, then we will only see the release if it happens
-      # inside our window.  Therefore remove any press if it happened
-      # outside the window (ie has an empty point chain), since we
-      # aren't interested in the release anyway.
-      every t := key(held) do
-         if *\held[t] = 0 then
-            delete(held, t)
       popups := &null
    end
 
@@ -539,6 +530,32 @@ class Dialog(Component)
       win.request_selection(selection, target_types[1])
    end
 
+   private check_event_consistent(e)
+      if consistent_event(e) then
+         return
+      #write("inconsistent: ",to_string(held,3,2))
+      every (!!held).event_reset(e)
+      held := table()
+      if \self.menu_mode then
+         self.menu_mode.close_all()
+      if \self.curr_drag then
+         exit_dnd(e)
+   end
+
+   private consistent_event(e)
+      local ec
+      ec := e.code
+      if ec === Mouse.MOVEMENT then
+         return *held = 0
+      if member(Mouse.DRAG, ec) then
+         return \held[ec + 6]
+      if member(Mouse.PRESS, ec) then
+         return /held[ec]
+      if member(Mouse.RELEASE, ec) then
+         return \held[ec + 3]
+      return
+   end
+
    public process_event(l)
       static consume_same_events
       local e
@@ -557,6 +574,7 @@ class Dialog(Component)
 
             e := WinEvent!l
             create_point_chain(e)
+            check_event_consistent(e)
 
             if /self.curr_drag then 
                check_dnd(e)
@@ -670,8 +688,19 @@ class Dialog(Component)
       return *held
    end
 
+   public check_moving(e)
+      local s1, s2
+      if *held > 0 then
+         return
+      s1 := elementset(\moving) | set()
+      s2 := elementset(point_chain)
+      fire_list(s1 -- s2, Event.MOUSE_EXIT, e)
+      fire_list(s2 -- s1, Event.MOUSE_ENTER, e)
+      moving := copy(point_chain)
+   end
+
    public generate_events(e)
-      local s1, s2, ec, ke
+      local ec, ke
 
       ec := e.code
       if integer(ec) < 0 then {
@@ -681,19 +710,15 @@ class Dialog(Component)
          } else if member(Mouse.PRESS, ec) then {
             held[ec] := copy(point_chain)
             fire_list(held[ec], ec, e)
-         } else if member(Mouse.DRAG_OR_MOVEMENT, ec) then {
-            s1 := elementset(\moving) | set()
-            s2 := elementset(point_chain)
-            fire_list(s1 -- s2, Event.MOUSE_EXIT, e)
-            fire_list(s2 -- s1, Event.MOUSE_ENTER, e)
-            if ec === Mouse.MOVEMENT then 
-               fire_list(point_chain, ec, e)
-            else
-               fire_list(\held[ec + 6], ec, e)
-            moving := copy(point_chain)
+         } else if member(Mouse.DRAG, ec) then {
+            fire_list(\held[ec + 6], ec, e)
+         } else if ec === Mouse.MOVEMENT then {
+            fire_list(point_chain, ec, e)
+            check_moving(e)
          } else if member(Mouse.RELEASE, ec) then {
             fire_list(\held[ec + 3], ec, e)
             delete(held, ec + 3)
+            check_moving(e)
          } else if member(Mouse.WINDOW, ec) then {
             fire(ec, e)
          }
@@ -961,6 +986,19 @@ class Dialog(Component)
    end
 
    #
+   # Exit dnd mode.
+   #
+   private exit_dnd(e)
+      self.curr_drag_holder := self.curr_drop := self.curr_drag := &null
+      self.invoke_drag_reset(e)
+      if *held = 0 then {
+         synch_pointer(e)
+         check_moving(e)
+      } else
+         change_pointer(DEFAULT_POINTER)
+   end
+
+   #
    # Drag & drop mode processing
    # 
    private process_dnd(e)
@@ -994,16 +1032,17 @@ class Dialog(Component)
          # If we have a prospective drop from can_drop, try to perform it.
          if (\self.curr_drop).get_source().perform_drop(self.curr_drag, self.curr_drop, e) then
             self.curr_drag.get_source().end_drag(self.curr_drag, self.curr_drop, e)
-         self.curr_drag_holder := self.curr_drop := self.curr_drag := &null
          delete(self.held, ec + 3)   # Now held should be empty
-         self.invoke_drag_reset(e)
-         synch_pointer(e)
+         exit_dnd(e)
       } else if /e.release & (ec === "\e") then {
          self.held[curr_drag.event.code + 6] := []    # Now held should hold this one empty list
-         self.curr_drag_holder := self.curr_drop := self.curr_drag := &null
-         self.invoke_drag_reset(e)
-         change_pointer(DEFAULT_POINTER)
-      }
+         exit_dnd(e)
+      } else if member(Mouse.PRESS, ec) then {        # keep things consistent if other mouse
+         held[ec] := []                               # buttons are pressed during the drag
+         change_pointer("exchange")
+         self.curr_drop := &null
+      } else if member(Mouse.RELEASE, ec) then
+         delete(held, ec + 3)
    end
 
    #

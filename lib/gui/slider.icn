@@ -227,11 +227,13 @@ class Slider(Component)
       self.reconfigure()
    end
 
-   public handle_lpress(e)
-      start_handle(e)
-      # Just in case we missed a release event, reset ticker and flag.
+   public event_reset()
       self.slider_down := &null
       stop_paging()
+   end
+
+   public handle_lpress(e)
+      start_handle(e)
       if (self.slider_area.slider_x <= e.x < self.slider_area.slider_x + self.slider_area.slider_w) & 
          (self.slider_area.slider_y  <= e.y < self.slider_area.slider_y + self.slider_area.slider_h) then {
          #
