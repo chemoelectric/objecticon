@@ -54,6 +54,7 @@ PROGSRC=${PROGS:%=%.icn}
 PROGU=${PROGSRC:%.icn=%.u}
 
 all:V: ivib
+	@{ cd plugins ; mk all }
 
 ivib:   $COMMONU
         oit -sn -o ivib ivib.icn $COMMONU
@@ -61,6 +62,7 @@ ivib:   $COMMONU
 
 clean:
 	rm -f $PROGS *.u packages.txt
+	@{ cd plugins ; mk clean }
 
 %.u:Q: %.icn
        test $stem.u -nt $stem.icn || oit -snc $COMMONSRC $PROGSRC

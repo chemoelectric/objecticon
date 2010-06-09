@@ -15,10 +15,13 @@ PROGS=testhtml testxml testpatterns testvalid testwf \
 PROGSRC=${PROGS:%=%.icn}
 PROGU=${PROGSRC:%.icn=%.u}
 
-all:V: $LIBU
+all:V: $LIBU $PROGS
 
 clean:
 	rm -f $PROGS *.u packages.txt
 
 %.u:Q: %.icn
        test $stem.u -nt $stem.icn || oit -snc $LIBSRC
+
+%: %.icn
+	oit -so $stem $stem.icn
