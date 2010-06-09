@@ -1,40 +1,40 @@
-#!/bin/bash
+#!/bin/sh
 
-function dir()
+dir()
 {
-	if (( verbose == 1 )) ; then
+	if [ "$verbose" = "1" ] ; then
 		echo cd $1
 	fi
 	cd $1
 }
 
-function valid()
+valid()
 {
-	if (( verbose == 1 )) ; then
+	if [ "$verbose" = "1" ] ; then
 		echo $DIR/testvalid $UCS "$@"
 	fi
 	$DIR/testvalid $UCS "$@"
 }
 
-function wf()
+wf()
 {
-	if (( verbose == 1 )) ; then
+	if [ "$verbose" = "1" ] ; then
 		echo $DIR/testwf $UCS "$@"
 	fi
 	$DIR/testwf $UCS "$@"
 }
 
-function notwf()
+notwf()
 {
-	if (( verbose == 1 )) ; then
+	if [ "$verbose" = "1" ] ; then
 		echo $DIR/testnotwf $UCS "$@"
 	fi
 	$DIR/testnotwf $UCS "$@"
 }
 
-function invalid()
+invalid()
 {
-	if (( verbose == 1 )) ; then
+	if [ "$verbose" = "1" ] ; then
 		echo $DIR/testinvalid $UCS "$@"
 	fi
 	$DIR/testinvalid $UCS "$@"
@@ -56,7 +56,7 @@ if [ ! -d $TESTS ] ; then
 fi
 
 UCS="-u"
-if [[ $1 == "-v" ]] ; then
+if [ "$1" = "-v" ] ; then
 	set -e
 	verbose=1
 fi
