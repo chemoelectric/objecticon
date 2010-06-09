@@ -115,7 +115,7 @@ class Gui()
    public static const 
       CONSTRAINT_SET,
       WATTRIB_SET,
-      EVENT_SET,
+      EVENT_TABLE,
       PRINTABLE_1,              # Printable on a single line of text
       PRINTABLE_N               # Printable on multi lines of text
 
@@ -139,7 +139,7 @@ class Gui()
                          "line_style", "fill_style", "pattern", "clip", "unclip",
                          "dx", "dy", "input_mask", "min_width", "min_height", "min_size", "max_width", 
                          "max_height", "max_size")
-      EVENT_SET := table(,
+      EVENT_TABLE := table(,
                          "mouse_left_press", Event.MOUSE_LEFT_PRESS,
                          "mouse_middle_press", Event.MOUSE_MIDDLE_PRESS,
                          "mouse_right_press", Event.MOUSE_RIGHT_PRESS,
@@ -186,7 +186,7 @@ class Gui()
    end
 
    public static is_event(s)
-      return member(EVENT_SET, s)
+      return member(EVENT_TABLE, s)
    end
 end
 

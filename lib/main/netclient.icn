@@ -26,8 +26,9 @@ class NetClient(Connectable, SetFields)
       WRITING_STRING_EVENT,
       WRITING_LINE_EVENT,
       READ_LINE_EVENT,
-      READ_STRING_EVENT
-
+      READ_STRING_EVENT,
+      EVENT_TABLE
+   
    private static init()
       CONNECTING_EVENT := "Connecting"
       CONNECTED_EVENT := "Connected"
@@ -36,6 +37,14 @@ class NetClient(Connectable, SetFields)
       WRITING_LINE_EVENT := "Writing line"
       READ_LINE_EVENT := "Read line"
       READ_STRING_EVENT := "Read string"
+      EVENT_TABLE := table(,
+                           "connecting", CONNECTING_EVENT,
+                           "connected", CONNECTED_EVENT,
+                           "closed", CLOSED_EVENT,
+                           "writing_string", WRITING_STRING_EVENT,
+                           "writing_line", WRITING_LINE_EVENT,
+                           "read_line", READ_LINE_EVENT,
+                           "read_string", READ_STRING_EVENT)
    end
 
    private readable
@@ -244,7 +253,7 @@ class NetClient(Connectable, SetFields)
          "server": set_server(f.string_val())
          "path": set_path(f.string_val())
          "port": set_port(f.int_val())
-         default : fail
+         default: return try_event(f, EVENT_TABLE)
       }
       return
    end

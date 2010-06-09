@@ -74,7 +74,8 @@ class XmlParser(Connectable,SetFields)
       XML_PUBID_CHAR,
       WARNING_EVENT,
       VALIDITY_ERROR_EVENT, 
-      FATAL_ERROR_EVENT
+      FATAL_ERROR_EVENT,
+      EVENT_TABLE
 
    private
       doc,
@@ -2323,7 +2324,7 @@ class XmlParser(Connectable,SetFields)
          "preserve_comments" : set_preserve_comments(f.flag_val())
          "preserve_insignificant_whitespace" : set_preserve_insignificant_whitespace(f.flag_val())
          "resolver" : set_resolver(f.object_val(Resolver))
-         default : fail
+         default: return try_event(f, EVENT_TABLE)
       }
       return
    end
@@ -2358,9 +2359,14 @@ class XmlParser(Connectable,SetFields)
       # [13] PubidChar ::= #x20 | #xD | #xA | [a-zA-Z0-9] | [-'()+,./:=?;!*#@$_%]
       XML_PUBID_CHAR := '\x20\x0D\x0Aa-zA-Z0-9\-\'()+,./:=?;!*#@$_%'
 
-      WARNING_EVENT := "warning"
-      VALIDITY_ERROR_EVENT := "validity error"
-      FATAL_ERROR_EVENT := "fatal error"
+      WARNING_EVENT := "Warning"
+      VALIDITY_ERROR_EVENT := "Validity error"
+      FATAL_ERROR_EVENT := "Fatal error"
+
+      EVENT_TABLE := table(,
+                           "warning", WARNING_EVENT,
+                           "validity_error",  VALIDITY_ERROR_EVENT, 
+                           "fatal_error", FATAL_ERROR_EVENT)
    end
 
    public new(a[])

@@ -25,6 +25,7 @@ import util
 # @field border={ABorder} : see {set_border}
 # @field is_shaded=flag : see {set_is_shaded}
 # @field is_decorative=flag : see {set_is_decorative}
+# @field e:<event>=value: connects value to the matching event
 #
 class MenuComponent(Rect,SetFields,Connectable)
    public 
@@ -421,17 +422,6 @@ class MenuComponent(Rect,SetFields,Connectable)
       self.temp_win := &null
    end
 
-   public try_connect(f)
-      local ev
-      if map(f.attr[1:3]) == "e:" then
-         ev := f.attr[3:0]
-      else
-         ev := f.attr
-      ev := Gui.is_event(ev) | fail
-      connect(f.val, ev)
-      return
-   end
-
    public set_one(f)
       case f.attr of {
          "tooltip" : set_tooltip(f.val)
@@ -439,7 +429,7 @@ class MenuComponent(Rect,SetFields,Connectable)
          "border" : set_border(f.object_val(gui.ABorder))
          "is_shaded" :  set_is_shaded(f.flag_val())
          "is_decorative" :  set_is_decorative(f.flag_val())
-         default : try_connect(f) | fail
+         default : return try_event(f, Gui.EVENT_TABLE)
       }
       return
    end

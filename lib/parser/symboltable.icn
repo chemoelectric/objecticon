@@ -272,13 +272,16 @@ class SymbolTable(Connectable,SetFields)
       PREFER_SRC,
       PREFER_U,
       ALWAYS_SRC,
-      ALWAYS_U
+      ALWAYS_U,
+      EVENT_TABLE
 
    private static const
       BUILTINS
 
    private static init()
       SCANNING_EVENT := "scanning"
+      EVENT_TABLE := table(,
+                           "scanning", SCANNING_EVENT)
       PREFER_SRC := "prefer_src"
       PREFER_U := "prefer_u"
       ALWAYS_SRC := "always_src"
@@ -664,7 +667,7 @@ class SymbolTable(Connectable,SetFields)
    protected set_one(f)
       case f.attr of {
          "file_mode" : set_file_mode(f.string_val())
-         default : fail
+         default: return try_event(f, EVENT_TABLE)
       }
       return
    end
