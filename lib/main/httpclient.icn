@@ -65,7 +65,8 @@ class HttpClient(NetClient)
       FAILED_EVENT,
       RETRYING_EVENT,
       HEADERS_EVENT,
-      PROGRESS_EVENT
+      PROGRESS_EVENT,
+      EVENT_TABLE
 
    private static init()
       TOKEN_CHAR := &ascii[33:128] -- '()<>@,;:\\\"/[]?={} \t'
@@ -74,6 +75,12 @@ class HttpClient(NetClient)
       RETRYING_EVENT := "Retrying"
       HEADERS_EVENT := "Headers"
       PROGRESS_EVENT := "Progress"
+      EVENT_TABLE := table(,
+                           "complete", COMPLETE_EVENT,
+                           "failed", FAILED_EVENT,
+                           "retrying", RETRYING_EVENT,
+                           "headers", HEADERS_EVENT,
+                           "progress", PROGRESS_EVENT)
    end
 
    private readable 
@@ -991,7 +998,7 @@ class HttpClient(NetClient)
          "retry_while_data": set_retry_while_data(f.flag_val())
          "keep_alive" : set_keep_alive(f.flag_val())
          "cookies" : set_cookies(f.table_val())
-         default: return cast(self,NetClient).set_one(f)
+         default: return try_event(f, EVENT_TABLE) | cast(self,NetClient).set_one(f)
       }
       return
    end

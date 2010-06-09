@@ -28,6 +28,7 @@ import util
 # @field interval=integer : see {set_interval}
 # @field delay=integer : see {set_delay}
 # @field times=integer : see {set_times}
+# @field e:tick=func : connects {func} to {Event.TICK} events.
 #
 class Ticker(SetFields,Connectable)
    private readable
@@ -111,7 +112,7 @@ class Ticker(SetFields,Connectable)
          "interval": set_interval(f.int_val())
          "delay" : set_delay(f.int_val())
          "times" : set_times(f.int_val())
-         default: fail
+         default : return try_event(f, Gui.EVENT_TABLE)
       }
       return
    end

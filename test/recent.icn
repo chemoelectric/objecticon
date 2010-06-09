@@ -104,7 +104,7 @@ procedure main ()
    fset := set()
    # try three kinds of reading in rotation
    while insert(fset, read(f))
-   every s := ![".", "..", "Makefile", "recent.icn", "recogn.dat", "nope"] do
+   every s := ![".", "..", "recent.std", "recent.icn", "recogn.dat", "nope"] do
       if member(fset, s) then
          write("found file: ", s)
 
