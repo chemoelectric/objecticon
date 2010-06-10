@@ -490,8 +490,12 @@ void handle_wheel(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
    wsp ws = wb->window;
    int t;
    WORD x, y;
-   struct descrip d;
    RECT r;
+   int state = 0;
+
+   if (MK_LBUTTON & wp) state |= 1;
+   if (MK_MBUTTON & wp) state |= 2;
+   if (MK_RBUTTON & wp) state |= 4;
 
    /* Unlike normal mouse events, the co-ordinates are absolute, so
     * convert to relative.
@@ -500,91 +504,52 @@ void handle_wheel(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
    x = LOWORD(lp) - (r.left + CLIENT_XOFF);
    y = HIWORD(lp) - (r.top + CLIENT_YOFF);
 
-   t = GetMessageTime(); /* why might someone comment this out? */
+   t = GetMessageTime();
 
    /*
-    * Wheel events produce two events each, namely a "press" and
-    * "release" of buttons 4 (scroll up) and 5 (scroll down).
+    * We only get one MS event for a wheel movement, so call
+    * qmouseevents twice, once with the button 4 or 5 going down and
+    * again with it coming up.  This generates one icon event, on the
+    * second qmouseevents call.
     */
    if ((long)wp > 0) {
-      MakeInt(MOUSE4, &d);
-      qevent(ws, &d, x, y, t,
-             MK_CONTROL & wp,
-             0,
-             MK_SHIFT & wp,
-             0);
-      MakeInt(MOUSE4UP, &d);
-      qevent(ws, &d, x, y, t,
-             MK_CONTROL & wp,
-             0,
-             MK_SHIFT & wp,
-             0);
+      qmouseevents(ws, state|8, x, y, t, 
+		   MK_CONTROL & wp,
+		   0,
+		   MK_SHIFT & wp);
+
    } else {
-      MakeInt(MOUSE5, &d);
-      qevent(ws, &d, x, y, t,
-             MK_CONTROL & wp,
-             0,
-             MK_SHIFT & wp,
-             0);
-      MakeInt(MOUSE5UP, &d);
-      qevent(ws, &d, x, y, t,
-             MK_CONTROL & wp,
-             0,
-             MK_SHIFT & wp,
-             0);
+      qmouseevents(ws, state|16, x, y, t, 
+		   MK_CONTROL & wp,
+		   0,
+		   MK_SHIFT & wp);
    }
+   qmouseevents(ws, state, x, y, t, 
+		MK_CONTROL & wp,
+		0,
+		MK_SHIFT & wp);
 }
 
 void handle_mouse(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
-   {
+{
    wsp ws = wb->window;
    int t;
    WORD x, y;
-   struct descrip d;
-   long eventcode;
+   int state = 0;
 
-   switch(msg) {
-   case WM_MOUSEMOVE: /* only called if one of these three cases is true */
-      if (MK_LBUTTON & wp)
-	 eventcode = MOUSELEFTDRAG;
-      else if (MK_RBUTTON & wp)
-	 eventcode = MOUSERIGHTDRAG;
-      else if (MK_MBUTTON & wp)
-	 eventcode = MOUSEMIDDRAG;
-      else 
-	 eventcode = MOUSEMOVED;
-      break;
-   case WM_LBUTTONDOWN:
-      eventcode = MOUSELEFT;
-      break;
-   case WM_MBUTTONDOWN:
-      eventcode = MOUSEMID;
-      break;
-   case WM_RBUTTONDOWN:
-      eventcode = MOUSERIGHT;
-      break;
-   case WM_LBUTTONUP:
-      eventcode = MOUSELEFTUP;
-      break;
-   case WM_MBUTTONUP:
-      eventcode = MOUSEMIDUP;
-      break;
-   case WM_RBUTTONUP:
-      eventcode = MOUSERIGHTUP;
-      break;
-      }
+   if (MK_LBUTTON & wp) state |= 1;
+   if (MK_MBUTTON & wp) state |= 2;
+   if (MK_RBUTTON & wp) state |= 4;
 
-   MakeInt(eventcode, &d);
    x = LOWORD(lp);
    y = HIWORD(lp);
-   t = GetMessageTime(); /* why might someone comment this out? */
+   t = GetMessageTime();
 
-   qevent(ws, &d, x, y, t, 
-          MK_CONTROL & wp,
-          0,
-          MK_SHIFT & wp,
-          0);
-   }
+   qmouseevents(ws, state, x, y, t, 
+		MK_CONTROL & wp,
+		0,
+		MK_SHIFT & wp);
+}
 
 LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -639,9 +604,7 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
    case WM_MOUSEMOVE:
       if (ws->curcursor)
          SetCursor(ws->curcursor);
-      if ((ws->inputmask & IM_POINTER_MOTION) ||
-	  ((MK_LBUTTON | MK_RBUTTON | MK_MBUTTON) & wp))
-	 handle_mouse(wb,msg,wp,lp);
+      handle_mouse(wb,msg,wp,lp);
       return 0;
    case WM_MOUSEWHEEL:
       handle_wheel(wb,msg,wp,lp);
@@ -2123,6 +2086,9 @@ static wsp alc_winstate()
    ws->serial = ++canvas_serial;
    ws->bits = 1024;                             /* echo ON; others OFF */
    ws->listp = nulldesc;
+   ws->buttonorder[0] = 1;
+   ws->buttonorder[1] = 2;
+   ws->buttonorder[2] = 4;
    ws->cursorname = salloc("arrow");
    ws->curcursor = LoadCursor(NULL, IDC_ARROW);
    ws->minwidth = ws->minheight = 1;
