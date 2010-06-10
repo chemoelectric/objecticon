@@ -314,6 +314,7 @@ typedef struct _wstate {
   Window        transientfor;           /* transient-for hint */
   long		wmhintflags;		/* window manager hints */
 #elif PLAN9
+  struct progstate *program;           /* owning program */
   Image         *win;
   Screen        *screen;
   Image         *pix;

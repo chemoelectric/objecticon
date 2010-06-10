@@ -923,8 +923,10 @@ void wsync (wbp w)
 void pollevent(void)
 {
     wsp ws;
-    for (ws = wstates; ws; ws = ws->next)
-        flush_event_pipe(ws);
+    for (ws = wstates; ws; ws = ws->next) {
+        if (ws->program == curpstate)
+            flush_event_pipe(ws);
+    }
 }
 
 int setfg(wbp w, char *val)
@@ -1881,6 +1883,7 @@ static wsp alcwinstate()
     GRFX_ALLOC(ws, _wstate);
     ws->serial = ++canvas_serial;
     ws->bits = 1024;				/* echo ON; others OFF */
+    ws->program = curpstate;
     ws->listp = nulldesc;    /* set to [] after linked into global context list */
     ws->buttonorder[0] = 1;
     ws->buttonorder[1] = 2;
