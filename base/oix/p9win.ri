@@ -587,8 +587,6 @@ static void flush_event_pipe(wsp ws)
                     handle_resize(ws);
                 else {
                     int x, y, state, tmp;
-                    static int old_state;
-                    static int buttonorder[3] = {1,2,4};
                     vlong now;
                     uword time;
                     be2vlong(&now, &ebuf[1]);
@@ -598,95 +596,7 @@ static void flush_event_pipe(wsp ws)
                     state = atoi((char*)ebuf+10+2*12);
                     ws->last_mouse_x = x;
                     ws->last_mouse_y = y;
-                    if (old_state == state) {
-                        /* Motion */
-                        if (state == 0) {
-                            if (ws->inputmask & IM_POINTER_MOTION) {
-                                MakeInt(MOUSEMOVED, &d);
-                                qevent(ws, &d, x, y, time, 0, 0, 0, 0);
-                            }
-                        } else {
-                            switch (buttonorder[0]) {
-                                case 1: {
-                                    MakeInt(MOUSELEFTDRAG, &d);
-                                    qevent(ws, &d, x, y, time, 0, 0, 0, 0);
-                                    break;
-                                }
-                                case 2: {
-                                    MakeInt(MOUSEMIDDRAG, &d);
-                                    qevent(ws, &d, x, y, time, 0, 0, 0, 0);
-                                    break;
-                                }
-                                case 4: {
-                                    MakeInt(MOUSERIGHTDRAG, &d);
-                                    qevent(ws, &d, x, y, time, 0, 0, 0, 0);
-                                    break;
-                                }
-                            }
-                        }
-                    } else {
-                        /* Press or release of one or more buttons */
-                        if ((old_state & 1) && !(state & 1)) {
-                            if (buttonorder[0] == 1)
-                                swap(buttonorder[0],buttonorder[1]);
-                            if (buttonorder[1] == 1)
-                                swap(buttonorder[1],buttonorder[2]);
-                            MakeInt(MOUSELEFTUP, &d);
-                            qevent(ws, &d, x, y, time, 0, 0, 0, 0);
-                        } else if (!(old_state & 1) && (state & 1)) {
-                            if (buttonorder[2] == 1)
-                                swap(buttonorder[1],buttonorder[2]);
-                            if (buttonorder[1] == 1)
-                                swap(buttonorder[0],buttonorder[1]);
-                            MakeInt(MOUSELEFT, &d);
-                            qevent(ws, &d, x, y, time, 0, 0, 0, 0);
-                        }
-
-                        if ((old_state & 2) && !(state & 2)) {
-                            if (buttonorder[0] == 2)
-                                swap(buttonorder[0],buttonorder[1]);
-                            if (buttonorder[1] == 2)
-                                swap(buttonorder[1],buttonorder[2]);
-                            MakeInt(MOUSEMIDUP, &d);
-                            qevent(ws, &d, x, y, time, 0, 0, 0, 0);
-
-                        } else if (!(old_state & 2) && (state & 2)) {
-                            if (buttonorder[2] == 2)
-                                swap(buttonorder[1], buttonorder[2]);
-                            if (buttonorder[1] == 2)
-                                swap(buttonorder[0], buttonorder[1]);
-                            MakeInt(MOUSEMID, &d);
-                            qevent(ws, &d, x, y, time, 0, 0, 0, 0);
-                        }
-
-                        if ((old_state & 4) && !(state & 4)) {
-                            if (buttonorder[0] == 4)
-                                swap(buttonorder[0],buttonorder[1]);
-                            if (buttonorder[1] == 4)
-                                swap(buttonorder[1],buttonorder[2]);
-                            MakeInt(MOUSERIGHTUP, &d);
-                            qevent(ws, &d, x, y, time, 0, 0, 0, 0);
-                        } else if (!(old_state & 4) && (state & 4)) {
-                            if (buttonorder[2] == 4)
-                                swap(buttonorder[1], buttonorder[2]);
-                            if (buttonorder[1] == 4)
-                                swap(buttonorder[0], buttonorder[1]);
-                            MakeInt(MOUSERIGHT, &d);
-                            qevent(ws, &d, x, y, time, 0, 0, 0, 0);
-                        }
-
-                        /* The mouse wheel just generates up events, depending on the 
-                         * direction */
-                        if ((old_state & 8) && !(state & 8)) {
-                            MakeInt(MOUSE4UP, &d);
-                            qevent(ws, &d, x, y, time, 0, 0, 0, 0);
-                        }
-                        if ((old_state & 16) && !(state & 16)) {
-                            MakeInt(MOUSE5UP, &d);
-                            qevent(ws, &d, x, y, time, 0, 0, 0, 0);
-                        }
-                    }
-                    old_state = state;
+                    qmouseevents(ws, state, x, y, time, 0, 0, 0);
                 }
                 break;
             }
@@ -1972,6 +1882,9 @@ static wsp alcwinstate()
     ws->serial = ++canvas_serial;
     ws->bits = 1024;				/* echo ON; others OFF */
     ws->listp = nulldesc;    /* set to [] after linked into global context list */
+    ws->buttonorder[0] = 1;
+    ws->buttonorder[1] = 2;
+    ws->buttonorder[2] = 4;
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
         ws->cursor_fd = ws->mouse_pid = ws->cons_pid = ws->wsys_fd = ws->wctl_fd = -1;
     ws->cursor = stringint_lookup(cursors, "left ptr");

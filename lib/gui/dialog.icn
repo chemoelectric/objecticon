@@ -543,32 +543,6 @@ $endif
       win.request_selection(selection, target_types[1])
    end
 
-   private check_event_consistent(e)
-      if consistent_event(e) then
-         return
-      #write("inconsistent: ",to_string(held,3,2))
-      every (!!held).event_reset(e)
-      held := table()
-      if \self.menu_mode then
-         self.menu_mode.close_all()
-      if \self.curr_drag then
-         exit_dnd(e)
-   end
-
-   private consistent_event(e)
-      local ec
-      ec := e.code
-      if ec === Mouse.MOVEMENT then
-         return *held = 0
-      if member(Mouse.DRAG, ec) then
-         return \held[ec + 6]
-      if member(Mouse.PRESS, ec) then
-         return /held[ec]
-      if member(Mouse.RELEASE, ec) then
-         return \held[ec + 3]
-      return
-   end
-
    public process_event(l)
       static consume_same_events
       local e
@@ -587,7 +561,6 @@ $endif
 
             e := WinEvent!l
             create_point_chain(e)
-            check_event_consistent(e)
 
             if /self.curr_drag then 
                check_dnd(e)

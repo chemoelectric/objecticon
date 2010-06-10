@@ -184,10 +184,6 @@ class TextField(Component)
       end_handle(e)
    end
 
-   public event_reset()
-      scroll_ticker.stop()
-   end
-
    public handle_lpress(e)
       start_handle(e)
       if \e.shift then {

@@ -267,11 +267,6 @@ class ScrollBar(Component)
          return DEFAULT_INNER_SIZE + border.get_total_width()
    end
 
-   public event_reset()
-      self.bar_down := &null
-      stop_paging()
-   end
-
    public handle_lpress(e)
       start_handle(e)
       if (self.bar_area.bar_x <= e.x < self.bar_area.bar_x + self.bar_area.bar_w) & 

@@ -496,10 +496,6 @@ class SelectableScrollArea(LineBasedScrollArea)
       end_handle(e)
    end
 
-   public event_reset()
-      scroll_ticker.stop()
-   end
-
    public handle_lpress(e)
       local l
       # on_a_line indicates whether the current ldrag started over a line.

@@ -350,7 +350,7 @@ class GridPaintEdit(PaintEdit)
       i.connect(self.on_debug, Event.ACTION)
       m.add(i)
       pm := PopupMenu()
-      pm.popup(self, m)
+      pm.popup(self, m, ev.x, ev.y)
    end
 
    public on_debug()
