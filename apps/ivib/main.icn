@@ -795,16 +795,10 @@ class Main(Dialog)
          bg.buttons := bg.get_members()
       d.set_focus((\t.initial_focus).find_focus())
       d.connect(d.dispose, Event.WINDOW_CLOSE_BUTTON)
-      d.connect(do_preview_popup, Event.MOUSE_RIGHT_PRESS)
+$ifdef _PLAN9
+      d.add(CloseButton("e:action=",d.dispose))
+$endif
       d.show_modal(self)
-   end
-
-   private static do_preview_popup(e, d)
-      local m, pm
-      m := Menu()
-      m.add(TextMenuItem("label=Close", "e:action=",d.dispose))
-      pm := PopupMenu()
-      pm.popup(d, m, e.x, e.y)
    end
 
    #
@@ -1397,6 +1391,10 @@ class Main(Dialog)
       canvas.synch_size()
       self.canvas_zone.add(canvas_border)
 
+$ifdef _PLAN9
+      add(CloseButton("e:action=",op_quit))
+$endif
+
       #
       # Initialize the undo/redo lists.
       #
@@ -1623,6 +1621,36 @@ class IvibClipboardSelectionOwner(SelectionOwner)
 
    public new(parent)
       self.parent := parent
+      return
+   end
+end
+
+class CloseButton(IconButton)
+   public static CLOSE_BUTTON
+
+   private static init()
+      CLOSE_BUTTON := "(r=light red;R=dark red;~=trans)12,c6,_
+rR~~~~~~~~rR_
+~rR~~~~~~rR~_
+~~rR~~~~rR~~_
+~~~rR~~rR~~~_
+~~~~rRrR~~~~_
+~~~~~rR~~~~~_
+~~~~rRrR~~~~_
+~~~rR~~rR~~~_
+~~rR~~~~rR~~_
+~rR~~~~~~rR~_
+rR~~~~~~~~rR_
+"
+   end
+
+   public new(a[])
+      cast(self,IconButton).new()
+      attrib("image=",CLOSE_BUTTON, 
+             "pos=100%,0", "align=r,t", 
+             "accepts_focus=no",
+             "tooltip=Close")
+      set_fields(a)
       return
    end
 end

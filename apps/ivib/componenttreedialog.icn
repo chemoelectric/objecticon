@@ -147,6 +147,9 @@ class ComponentTreeDialog(Dialog)
       tree.set_select_mode(Select.MANY)
       self.add(tree)
       self.connect(self.on_close_button, Event.WINDOW_CLOSE_BUTTON)
+$ifdef _PLAN9
+      add(CloseButton("e:action=",on_close_button))
+$endif
    end
 
    public new(main)
