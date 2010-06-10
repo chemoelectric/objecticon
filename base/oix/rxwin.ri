@@ -1868,7 +1868,6 @@ static void handle_keypress(wbp w, XKeyEvent *event)
 
 #include "rxkeysyms.ri"
 
-#define swap(a,b) { tmp = a; a = b; b = tmp; }
 /*
  * Handle button presses and drag events.  In the case of drags, we should
  * really be looking at an XMotionEvent instead of an XButtonEvent, but
@@ -1877,108 +1876,39 @@ static void handle_keypress(wbp w, XKeyEvent *event)
  */
 static void handle_mouse(wbp w, XButtonEvent *event)
 {
-    static int buttonorder[3] = { Button1, Button2, Button3 };
-    int tmp, eventcode = 0;
-    struct descrip d;
-
+    int state = 0;
+    if (event->state & Button1Mask) state |= 1;
+    if (event->state & Button2Mask) state |= 2;
+    if (event->state & Button3Mask) state |= 4;
+    if (event->state & Button4Mask) state |= 8;
+    if (event->state & Button5Mask) state |= 16;
     switch (event->type) {
-        case MotionNotify: {
-            if (event->state == 0) {
-                if (w->window->inputmask & IM_POINTER_MOTION)
-                    eventcode = MOUSEMOVED;
-            } else {
-                switch (buttonorder[0]) {
-                    case Button1:
-                        eventcode = MOUSELEFTDRAG;
-                        break;
-                    case Button2:
-                        eventcode = MOUSEMIDDRAG;
-                        break;
-                    case Button3: 
-                        eventcode = MOUSERIGHTDRAG;
-                        break;
-                }
-            }
-            break;
-        }
-
         case ButtonPress: {
             switch (event->button) {
-                case Button1: {
-                    eventcode = MOUSELEFT;
-                    if (buttonorder[2] == Button1)
-                        swap(buttonorder[1],buttonorder[2]);
-                    if (buttonorder[1] == Button1)
-                        swap(buttonorder[0],buttonorder[1]);
-                    break;
-                }
-                case Button2: {
-                    eventcode = MOUSEMID;
-                    if (buttonorder[2] == Button2)
-                        swap(buttonorder[1],buttonorder[2]);
-                    if (buttonorder[1] == Button2)
-                        swap(buttonorder[0],buttonorder[1]);
-                    break;
-                }
-                case Button3: {
-                    eventcode = MOUSERIGHT;
-                    if (buttonorder[2] == Button3)
-                        swap(buttonorder[1],buttonorder[2]);
-                    if (buttonorder[1] == Button3)
-                        swap(buttonorder[0],buttonorder[1]);
-                    break;
-                }
+                case Button1: state |= 1; break;
+                case Button2: state |= 2; break;
+                case Button3: state |= 4; break;
+                case Button4: state |= 8; break;
+                case Button5: state |= 16; break;
             }
             break;
         }
-
         case ButtonRelease: {
             switch (event->button) {
-                case Button1: {
-                    eventcode = MOUSELEFTUP;
-                    if (buttonorder[0] == Button1)
-                        swap(buttonorder[0],buttonorder[1]);
-                    if (buttonorder[1] == Button1)
-                        swap(buttonorder[1],buttonorder[2]);
-                    break;
-                }
-                case Button2: {
-                    eventcode = MOUSEMIDUP;
-                    if (buttonorder[0] == Button2)
-                        swap(buttonorder[0],buttonorder[1]);
-                    if (buttonorder[1] == Button2)
-                        swap(buttonorder[1],buttonorder[2]);
-                    break;
-                }
-                case Button3: {
-                    eventcode = MOUSERIGHTUP;
-                    if (buttonorder[0] == Button3)
-                        swap(buttonorder[0],buttonorder[1]);
-                    if (buttonorder[1] == Button3)
-                        swap(buttonorder[1],buttonorder[2]);
-                    break;
-                }
-                case Button4: {
-                    eventcode = MOUSE4UP;
-                    break;
-                }
-                case Button5: {
-                    eventcode = MOUSE5UP;
-                    break;
-                }
+                case Button1: state &= ~1; break;
+                case Button2: state &= ~2; break;
+                case Button3: state &= ~4; break;
+                case Button4: state &= ~8; break;
+                case Button5: state &= ~16; break;
             }
             break;
         }
     }
-
-    if (eventcode) {
-        MakeInt(eventcode,&d);
-        qevent(w->window, &d, event->x, event->y, (uword)event->time, 
-               event->state & ControlMask,
-               event->state & Mod1Mask,
-               event->state & ShiftMask,
-               0);
-    }
+    qmouseevents(w->window, state, 
+                 event->x, event->y, (uword)event->time, 
+                 event->state & ControlMask,
+                 event->state & Mod1Mask,
+                 event->state & ShiftMask);
 }
 
 
@@ -3105,8 +3035,10 @@ static wsp alcwinstate()
     ws->serial = ++canvas_serial;
     ws->bits = 1024;				/* echo ON; others OFF */
     ws->listp = nulldesc;
+    ws->buttonorder[0] = 1;
+    ws->buttonorder[1] = 2;
+    ws->buttonorder[2] = 4;
     ws->cursor = stringint_lookup(cursors, "left ptr");
-    ws->inputmask = 0;
     ws->state = NormalState;
     ws->x = ws->y = -INT_MAX;
     ws->minwidth = ws->minheight = 1;

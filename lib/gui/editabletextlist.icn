@@ -499,10 +499,6 @@ class EditableTextList(LineBasedScrollArea)
       return \mark_x & (mark_x ~= cursor_x | mark_y ~= cursor_y)
    end
 
-   public event_reset()
-      scroll_ticker.stop()
-   end
-
    public handle_lpress(e)
       start_handle(e)
       # Move to cursor position.

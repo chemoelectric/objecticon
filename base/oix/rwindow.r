@@ -178,6 +178,110 @@ void qevent(wsp ws,             /* canvas */
     list_put(q, &d);
 }
 
+#define swap(a,b) { int tmp = a; a = b; b = tmp; }
+
+void qmouseevents(wsp ws,             /* canvas */
+                  int state,          /* state of mouse buttons */
+                  int x,              /* x and y values */
+                  int y,      
+                  uword t,            /* ms clock value */
+                  int ctrl,           /* modifier key flags */
+                  int meta,
+                  int shift)
+{
+    struct descrip d;
+    if (ws->mousestate == state) {
+        /* Motion */
+        if (state == 0) {
+            if (ws->inputmask & IM_POINTER_MOTION) {
+                MakeInt(MOUSEMOVED, &d);
+                qevent(ws, &d, x, y, t, ctrl, meta, shift, 0);
+            }
+        } else {
+            switch (ws->buttonorder[0]) {
+                case 1: {
+                    MakeInt(MOUSELEFTDRAG, &d);
+                    qevent(ws, &d, x, y, t, ctrl, meta, shift, 0);
+                    break;
+                }
+                case 2: {
+                    MakeInt(MOUSEMIDDRAG, &d);
+                    qevent(ws, &d, x, y, t, ctrl, meta, shift, 0);
+                    break;
+                }
+                case 4: {
+                    MakeInt(MOUSERIGHTDRAG, &d);
+                    qevent(ws, &d, x, y, t, ctrl, meta, shift, 0);
+                    break;
+                }
+            }
+        }
+    } else {
+        /* Press or release of one or more buttons */
+        if ((ws->mousestate & 1) && !(state & 1)) {
+            if (ws->buttonorder[0] == 1)
+                swap(ws->buttonorder[0],ws->buttonorder[1]);
+            if (ws->buttonorder[1] == 1)
+                swap(ws->buttonorder[1],ws->buttonorder[2]);
+            MakeInt(MOUSELEFTUP, &d);
+            qevent(ws, &d, x, y, t, ctrl, meta, shift, 0);
+        } else if (!(ws->mousestate & 1) && (state & 1)) {
+            if (ws->buttonorder[2] == 1)
+                swap(ws->buttonorder[1],ws->buttonorder[2]);
+            if (ws->buttonorder[1] == 1)
+                swap(ws->buttonorder[0],ws->buttonorder[1]);
+            MakeInt(MOUSELEFT, &d);
+            qevent(ws, &d, x, y, t, ctrl, meta, shift, 0);
+        }
+
+        if ((ws->mousestate & 2) && !(state & 2)) {
+            if (ws->buttonorder[0] == 2)
+                swap(ws->buttonorder[0],ws->buttonorder[1]);
+            if (ws->buttonorder[1] == 2)
+                swap(ws->buttonorder[1],ws->buttonorder[2]);
+            MakeInt(MOUSEMIDUP, &d);
+            qevent(ws, &d, x, y, t, ctrl, meta, shift, 0);
+
+        } else if (!(ws->mousestate & 2) && (state & 2)) {
+            if (ws->buttonorder[2] == 2)
+                swap(ws->buttonorder[1], ws->buttonorder[2]);
+            if (ws->buttonorder[1] == 2)
+                swap(ws->buttonorder[0], ws->buttonorder[1]);
+            MakeInt(MOUSEMID, &d);
+            qevent(ws, &d, x, y, t, ctrl, meta, shift, 0);
+        }
+
+        if ((ws->mousestate & 4) && !(state & 4)) {
+            if (ws->buttonorder[0] == 4)
+                swap(ws->buttonorder[0],ws->buttonorder[1]);
+            if (ws->buttonorder[1] == 4)
+                swap(ws->buttonorder[1],ws->buttonorder[2]);
+            MakeInt(MOUSERIGHTUP, &d);
+            qevent(ws, &d, x, y, t, ctrl, meta, shift, 0);
+        } else if (!(ws->mousestate & 4) && (state & 4)) {
+            if (ws->buttonorder[2] == 4)
+                swap(ws->buttonorder[1], ws->buttonorder[2]);
+            if (ws->buttonorder[1] == 4)
+                swap(ws->buttonorder[0], ws->buttonorder[1]);
+            MakeInt(MOUSERIGHT, &d);
+            qevent(ws, &d, x, y, t, ctrl, meta, shift, 0);
+        }
+
+        /* The mouse wheel just generates up events, depending on the 
+         * direction */
+        if ((ws->mousestate & 8) && !(state & 8)) {
+            MakeInt(MOUSE4UP, &d);
+            qevent(ws, &d, x, y, t, ctrl, meta, shift, 0);
+        }
+        if ((ws->mousestate & 16) && !(state & 16)) {
+            MakeInt(MOUSE5UP, &d);
+            qevent(ws, &d, x, y, t, ctrl, meta, shift, 0);
+        }
+    }
+    ws->mousestate = state;
+}
+
+
 static void getfg_rgb(wbp w, int *r, int *g, int *b)
 {
     parsecolor(getfg(w), r, g, b);
