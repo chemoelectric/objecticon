@@ -2084,7 +2084,6 @@ static wsp alc_winstate()
    
    GRFX_ALLOC(ws, _wstate);
    ws->serial = ++canvas_serial;
-   ws->bits = 1024;                             /* echo ON; others OFF */
    ws->listp = nulldesc;
    ws->buttonorder[0] = 1;
    ws->buttonorder[1] = 2;
