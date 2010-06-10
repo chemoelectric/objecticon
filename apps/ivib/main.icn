@@ -795,16 +795,7 @@ class Main(Dialog)
          bg.buttons := bg.get_members()
       d.set_focus((\t.initial_focus).find_focus())
       d.connect(d.dispose, Event.WINDOW_CLOSE_BUTTON)
-      d.connect(do_preview_popup, Event.MOUSE_RIGHT_PRESS)
       d.show_modal(self)
-   end
-
-   private static do_preview_popup(e, d)
-      local m, pm
-      m := Menu()
-      m.add(TextMenuItem("label=Close", "e:action=",d.dispose))
-      pm := PopupMenu()
-      pm.popup(d, m, e.x, e.y)
    end
 
    #
