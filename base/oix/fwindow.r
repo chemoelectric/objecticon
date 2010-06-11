@@ -1789,8 +1789,13 @@ function graphics_Window_set_input_mask(self, val)
    if !cnv:string(val) then
       runerr(103, val)
    body {
+       int t;
        GetSelfW();
-       AttemptAttr(setinputmask(self_w, buffstr(&val)), "Invalid input mask");
+       if (!parseinputmask(buffstr(&val), &t)) {
+           LitWhy("Invalid input mask");
+           fail;
+       }
+       self_w->window->inputmask = t;
        return self;
    }
 end
