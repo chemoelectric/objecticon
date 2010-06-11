@@ -23,7 +23,6 @@ static void handle_exposures(wbp w, XExposeEvent *event);
 static void handle_mouse(wbp w, XButtonEvent *event);
 static void handle_keypress(wbp w, XKeyEvent *event);
 static void wmap(wbp w);
-static void select_input(wsp ws);
 static int convert_KeySym_to_code_point(KeySym k);
 #ifdef HAVE_LIBXFT
 int xft_stringwidth(wbp w, char *s, int n);
@@ -888,7 +887,10 @@ static void wmap(wbp w)
         }
         XSetStandardProperties(stddpy, stdwin, ws->windowlabel, ws->windowlabel,
                                0,0,0, &size_hints);
-        select_input(ws);
+        XSelectInput(ws->display->display, ws->win, 
+                     ExposureMask | KeyPressMask | 
+                     ButtonPressMask | ButtonReleaseMask | ButtonMotionMask |
+                     StructureNotifyMask | PointerMotionMask | KeyReleaseMask);
     }
 
     wmhints.input = True;
@@ -1266,32 +1268,6 @@ char *getcanvas(wbp w)
     return v;
 }
 
-static void select_input(wsp ws)
-{
-    long x;
-    if (!ws->win)
-        return;
-    x = ExposureMask | KeyPressMask |
-        ButtonPressMask | ButtonReleaseMask | ButtonMotionMask |
-        StructureNotifyMask;
-    if (ws->inputmask & IM_POINTER_MOTION)
-        x |= PointerMotionMask;
-    if (ws->inputmask & IM_KEY_RELEASE)
-        x |= KeyReleaseMask;
-    XSelectInput(ws->display->display, ws->win, x);
-}
-
-int setinputmask(wbp w, char *val)
-{
-    wsp ws = w->window;
-    int t;
-    if (!parseinputmask(val, &t))
-        return Failed;
-    ws->inputmask = t;
-    select_input(ws);
-    return Succeeded;
-}
-
 /*
  *  Set the canvas type, either during open (pixmap is null, set a flag)
  *   or change an existing canvas to a different type.
@@ -1637,15 +1613,11 @@ char *getdrawop(wbp w)
 
 int grabpointer(wbp w)
 {
-    unsigned int x;
     wsp ws = w->window;
     if (!ws->win)
         return Failed;
-    x = ButtonPressMask | ButtonReleaseMask | ButtonMotionMask;
-    if (ws->inputmask & IM_POINTER_MOTION)
-        x |= PointerMotionMask;
-
-    if (XGrabPointer(ws->display->display, ws->win,False, x,
+    if (XGrabPointer(ws->display->display, ws->win,False, 
+                     ButtonPressMask | ButtonReleaseMask | ButtonMotionMask | PointerMotionMask,
                      GrabModeAsync, GrabModeAsync, None, None, CurrentTime) == GrabSuccess)
         return Succeeded;
     else

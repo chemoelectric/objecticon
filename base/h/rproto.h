@@ -253,7 +253,6 @@ void buffnstr(dptr d, char **s, ...);
    int  requestselection(wbp w, char *selection, char *targetname);
    int  sendselectionresponse(wbp w, word requestor, char *property, char *selection, char *target, word time, dptr data);
    int  setwindowlabel  (wbp w, char *val);
-   int  setinputmask    (wbp w, char *val);
    int  walert          (wbp w, int volume);
    int  warppointer     (wbp w, int x, int y);
    void wclose          (wbp w);

@@ -2488,16 +2488,6 @@ HDC CreatePixDC(wbp w, HDC hdc)
    return hdc2;
    }
 
-int setinputmask(wbp w, char *val)
-{
-   wsp ws = w->window;
-    int t;
-    if (!parseinputmask(val, &t))
-        return Failed;
-    ws->inputmask = t;
-    return Succeeded;
-}
-
 int dc_maxcharwidth(HDC dc)
 {
   int i, m = -1, x;
