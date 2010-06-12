@@ -136,12 +136,10 @@ class DropDown(SelectionList,Component)
    end
 
    public open_textlist(ev)
-      local fh, max_h, max_w, spc_below, spc_above, spc_right, d, dim, win, win_spc_above, 
+      local max_h, max_w, spc_below, spc_above, spc_right, d, dim, win, win_spc_above, 
          win_spc_below, win_spc_right, use_popup_win, use_direction
 
       win := parent_dialog.win
-      fh := self.cbwin.get_font_height()
-
       win_spc_above := self.y + win.get_dy()
       win_spc_below := parent_dialog.h - win_spc_above - self.h
       win_spc_right := parent_dialog.w - self.x - win.get_dx()
