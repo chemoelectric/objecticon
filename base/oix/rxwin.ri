@@ -24,28 +24,23 @@ static void handle_mouse(wbp w, XButtonEvent *event);
 static void handle_keypress(wbp w, XKeyEvent *event);
 static void wmap(wbp w);
 static int convert_KeySym_to_code_point(KeySym k);
+static char *convertspec(wdp wd, char *s);
 #ifdef HAVE_LIBXFT
 int xft_stringwidth(wbp w, char *s, int n);
-static char *convert_spec(char *s);
 #else
-static wfp findfont(wbp w, char *fam, int size, int flags);
-static int okfont(char *spec, int size, int flags);
+static char *findfont(wdp wd, char *fam, int size, int flags);
+static int okfont(char *spec, int flags);
 static int fontcmp(char *font1, char *font2, int size, int flags);
 static int fieldcmp(char *font1, char *font2, char *value, int field);
 static char *xlfd_field(char *s, int i);
 static int xlfd_size(char *s, int n);
 #endif
-static wfp loadfont(wdp wd, char *s);
+static wfp newfont(wdp wd, char *s);
 static wdp alcdisplay (char *s);
-static void free_display   (wdp wd);
-static wfp alcfont(wbp w, char *s);
-static wfp tryfont(wbp w, char *s);
+static wfp loadfont(wdp wd, char *s);
 static void resizePixmap(wbp w, int width, int height);
 static void setclip(wbp w);
 static void unsetclip(wbp w);
-
-
-#define DEFAULTFONTNAME "fixed"
 
 static stringint fillstyles[] = {
     {0, 3},
@@ -917,10 +912,6 @@ static void wmap(wbp w)
         clhints.res_name[i] = '\0';
         XSetClassHint(stddpy, stdwin, &clhints);
     }
-
-    if (wd->cmap != DefaultColormap(stddpy,wd->screen)) { /* ? */
-        XSetWindowColormap(stddpy, stdwin, wd->cmap);
-    }
     XSync(stddpy, False);
 
     if (ws->state != RootState) {
@@ -1641,9 +1632,9 @@ int setfont(wbp w, char *s)
     wfp tmp;
     STDLOCALS(w);
 
-    /* could free up previously allocated font here */
-
-    Protect(tmp = alcfont(w,s), return Failed);
+    tmp = loadfont(wd, s);
+    if (!tmp)
+        return Failed;
     wc->font = tmp;
 
 #ifndef HAVE_LIBXFT
@@ -2423,41 +2414,28 @@ static wdp alcdisplay(char *s)
     strcpy(wd->name,s);
     wd->program = curpstate;
     wd->display = XOpenDisplay((*s=='\0') ? NULL : s);
-
     if (wd->display == NULL) {
-        wd->refcount = 0;
         free(wd);
         return NULL;
     }
 
     wd->screen = DefaultScreen(wd->display);
-
     wd->black = new_sharedcolor("black", 0, 0, 0);
     wd->white = new_sharedcolor("white", 65535, 65535, 65535);
-
     wd->cmap = DefaultColormap(wd->display, wd->screen);
-
-    /*
-     * Initialize fonts and other things.
-     */
-#ifdef HAVE_LIBXFT
-    wd->fonts = loadfont(wd, convert_spec(DEFAULTFONTNAME));
-#else
-    wd->fonts = loadfont(wd, DEFAULTFONTNAME);
-#endif
-    if (wd->fonts == NULL) {
+    wd->defaultfont = loadfont(wd, "fixed");
+    if (wd->defaultfont == NULL) {
+        unlink_sharedcolor(wd->white);
+        unlink_sharedcolor(wd->black);
         free(wd);
         return NULL;
     }
-    wd->fonts->refcount = 1;
-    wd->fonts->next = wd->fonts->previous = NULL;
 #ifdef HAVE_LIBXFT
     wd->xfont = XLoadQueryFont(wd->display, "fixed");
 #endif
     GRFX_LINK(wd, wdsplys);
     return wd;
 }
-
 
 #ifdef HAVE_LIBXFT
 
@@ -2468,7 +2446,7 @@ static wdp alcdisplay(char *s)
  * To avoid ambiguity, a spec can start with "fc:" to indicate it's in fontconfig
  * format; otherwise parsefont is called to decide the format.
  */
-static char *convert_spec(char *s)
+static char *convertspec(wdp wd, char *s)
 {
     static char res[256];
     int flags, size;
@@ -2544,76 +2522,65 @@ static char *convert_spec(char *s)
     return res;
 }
 
-/*
- * allocate font s in the display attached to w
- */
-static wfp alcfont(wbp w, char *s)
-{
-    return tryfont(w,convert_spec(s));
-}
-
-
 #else /* HAVE_LIBXFT */
 
-/*
- * allocate font s in the display attached to w
- */
-wfp alcfont(wbp w, char *s)
+static char *convertspec(wdp wd, char *s)
 {
     int flags, size;
-    wfp rv = NULL;
+    char *rv = 0;
     char family[MAXFONTWORD+1];
     char *stdfam;
 
     /* Explicit X11 font name */
     if (!strncmp(s, "x11:", 4))
-        return tryfont(w, s + 4);
+        return s + 4;
 
-    if (strcmp(s, "fixed") != 0 && parsefont(s, family, &flags, &size)) {
-        /*
-         * This is a legal Icon font spec (and it's not an unadorned "fixed").
-         * Check first for special "standard" family names.
-         */
-        if (!strcmp(family, "mono")) {
-            stdfam = "lucidatypewriter";
-            flags |= FONTFLAG_MONO + FONTFLAG_SANS;
-        }
-        else if (!strcmp(family, "typewriter")) {
-            stdfam = "courier";
-            flags |= FONTFLAG_MONO + FONTFLAG_SERIF;
-        }
-        else if (!strcmp(family, "sans")) {
-            stdfam = "helvetica";
-            flags |= FONTFLAG_PROPORTIONAL + FONTFLAG_SANS;
-        }
-        else if (!strcmp(family, "serif")) {
-            stdfam = "times";
-            flags |= FONTFLAG_PROPORTIONAL + FONTFLAG_SERIF;
-        }
-        else stdfam = NULL;
+    if (strcmp(s, "fixed") == 0 || !parsefont(s, family, &flags, &size))
+        return s;
 
-        if (stdfam) {
-            /*
-             * Standard name: first try preferred family, then generalize.
-             */
-            rv = findfont(w, stdfam, size, flags);
-            if (!rv)
-                rv = findfont(w, "*", size, flags);
-        }
-        else {
-            /*
-             * Any other name: must match as specified.
-             */
-            rv = findfont(w, family, size, flags);
-        }
-        if (rv != NULL)
-            return rv;
+    /*
+     * This is a legal Icon font spec (and it's not an unadorned "fixed").
+     * Check first for special "standard" family names.
+     */
+    if (!strcmp(family, "mono")) {
+        stdfam = "lucidatypewriter";
+        flags |= FONTFLAG_MONO + FONTFLAG_SANS;
     }
+    else if (!strcmp(family, "typewriter")) {
+        stdfam = "courier";
+        flags |= FONTFLAG_MONO + FONTFLAG_SERIF;
+    }
+    else if (!strcmp(family, "sans")) {
+        stdfam = "helvetica";
+        flags |= FONTFLAG_PROPORTIONAL + FONTFLAG_SANS;
+    }
+    else if (!strcmp(family, "serif")) {
+        stdfam = "times";
+        flags |= FONTFLAG_PROPORTIONAL + FONTFLAG_SERIF;
+    }
+    else stdfam = NULL;
+
+    if (stdfam) {
+        /*
+         * Standard name: first try preferred family, then generalize.
+         */
+        rv = findfont(wd, stdfam, size, flags);
+        if (!rv)
+            rv = findfont(wd, "*", size, flags);
+    }
+    else {
+        /*
+         * Any other name: must match as specified.
+         */
+        rv = findfont(wd, family, size, flags);
+    }
+    if (rv)
+        return rv;
 
     /*
      * Not found as an Icon name; may be an X font name.
      */
-    return tryfont(w, s);
+    return s;
 }
 
 /*
@@ -2650,9 +2617,9 @@ static int xlfd_size(char *s, int n)
 /*
  * Find the best font matching a set of specifications.
  */
-static wfp findfont(wbp w, char *family, int size, int flags)
+static char *findfont(wdp wd, char *family, int size, int flags)
 {
-    char fontspec[MAXFONTWORD+100];
+    static char fontspec[MAXFONTWORD+100];
     char *p, *weight, *slant, *width, *spacing, **fontlist;
     int n, champ, challenger, bestsize;
 
@@ -2705,22 +2672,26 @@ static wfp findfont(wbp w, char *family, int size, int flags)
     else
         spacing = "*";			/* can't specify {m or c} to X */
 
-    sprintf(fontspec, "-*-%s-%s-%s-%s-*-*-*-*-*-%s-*-*-*",
-            family, weight, slant, width, spacing);
+    if (size > 0)
+        sprintf(fontspec, "-*-%s-%s-%s-%s-*-%d-*-*-*-%s-*-*-*",
+                family, weight, slant, width, size, spacing);
+    else
+        sprintf(fontspec, "-*-%s-%s-%s-%s-*-*-*-*-*-%s-*-*-*",
+                family, weight, slant, width, spacing);
 
     /*
      * Get a list of matching fonts from the X server and find the best one.
      */
-    fontlist = XListFonts(w->window->display->display, fontspec, 2500, &n);
+    fontlist = XListFonts(wd->display, fontspec, 2500, &n);
     champ = 0;
-    while (champ < n && !okfont(fontlist[champ], size, flags))
+    while (champ < n && !okfont(fontlist[champ], flags))
         champ++;
     if (champ >= n) {
         XFreeFontNames(fontlist);
         return NULL;			/* nothing acceptable */
     }
     for (challenger = champ + 1; challenger < n; challenger++) 
-        if (okfont(fontlist[challenger], size, flags)
+        if (okfont(fontlist[challenger], flags)
             && fontcmp(fontlist[challenger], fontlist[champ], bestsize, flags) < 0)
             champ = challenger;
 
@@ -2734,19 +2705,16 @@ static wfp findfont(wbp w, char *family, int size, int flags)
     else
         strcpy(fontspec, fontlist[champ]);
     XFreeFontNames(fontlist);
-    return tryfont(w, fontspec);
+    return fontspec;
 }
 
 /*
  * check for minimum acceptability of a font
  * (things that couldn't be filtered by the XLFD pattern):
- * -- size wrong (there's a bug in OpenWindows 3.3 else X could do it)
  * -- not monospaced (can't set pattern to match m or c but not p)
  */
-static int okfont(char *spec, int size, int flags)
+static int okfont(char *spec, int flags)
 {
-    if (size > 0 && xlfd_size(spec, size) != size)
-        return 0;			/* can't match explicit size request */
     if ((flags & FONTFLAG_MONO) && xlfd_field(spec, XLFD_Spacing)[0] == 'p')
         return 0;			/* requested mono, but this isn't */
     return 1;
@@ -2814,7 +2782,7 @@ static int fontcmp(char *font1, char *font2, int size, int flags)
     SPURN("demi", XLFD_Weight);		/* prefer non-demi if no medium */
     PREFER("normal", XLFD_SetWidth);	/* prefer normal width */
     PREFER("iso8859", XLFD_CharSet);	/* prefer font of ASCII chars */
-    SPURN("0", XLFD_PointSize);		/* prefer tuned font to scaled */
+    SPURN("0", XLFD_AverageWidth);	/* prefer tuned font to scaled */
     PREFER("adobe", XLFD_Foundry);	/* these look better than others */
 
     /* no significant difference */
@@ -2829,43 +2797,41 @@ static int fontcmp(char *font1, char *font2, int size, int flags)
  * load a font and return a font structure.
  */
 
-static wfp tryfont(wbp w, char *s)
+static wfp loadfont(wdp wd, char *s)
 {
-    wdp wd = w->window->display;
     wfp rv;
+
+    /*
+     * Convert to a system font name (without the fc: or x11: prefix)
+     */
+    s = convertspec(wd, s);
+
     /*
      * see if the font is already loaded on this display
      */
-    for(rv = wd->fonts; rv != NULL; rv = rv->next) {
+    for(rv = wd->fonts; rv; rv = rv->next) {
 #ifdef HAVE_LIBXFT
-        if (!strcmp(s, rv->name + 3)) break;
+        if (!strcmp(s, rv->name + 3)) return rv;
 #else
-        if (!strcmp(s, rv->name + 4)) break;
+        if (!strcmp(s, rv->name + 4)) return rv;
 #endif
     }
-    if (rv != NULL) {
-        rv->refcount++;
-        return rv;
-    }
+
     /*
      * load a new font
      */
-    rv = loadfont(wd, s);
-    if (rv == NULL) {
+    rv = newfont(wd, s);
+    if (rv == NULL)
         return NULL;
-    }
 
     /*
-     * link the font into this display's fontlist (but not at the head!)
+     * link the font into this display's fontlist
      */
-    rv->next = wd->fonts->next;
-    rv->previous = wd->fonts;
-    if (wd->fonts->next) wd->fonts->next->previous = rv;
-    wd->fonts->next = rv;
+    GRFX_LINK(rv, wd->fonts);
     return rv;
 }
 
-static wfp loadfont(wdp wd, char *s)
+static wfp newfont(wdp wd, char *s)
 {
     wfp rv;
     GRFX_ALLOC(rv, _wfont);
@@ -2925,7 +2891,7 @@ static wcp alccontext(wbp w)
     wd->refcount++;
     wc->bg = link_sharedcolor(wd->white);
     wc->fg = link_sharedcolor(wd->black);
-    wc->font = wd->fonts;
+    wc->font = wd->defaultfont;
     wc->drawop = stringint_lookup(drawops, "copy");
     wc->clipx = wc->clipy = 0;
     wc->clipw = wc->cliph = -1;
@@ -2962,7 +2928,6 @@ wcp clonecontext(wbp w)
     rv->fg = link_sharedcolor(wc->fg);
     rv->bg = link_sharedcolor(wc->bg);
     rv->font = wc->font;
-    rv->font->refcount++;
     rv->fillstyle = wc->fillstyle;
     rv->linestyle = wc->linestyle;
     rv->linewidth = wc->linewidth;
@@ -3094,25 +3059,7 @@ void freecontext(wcp wc)
             unlink_sharedcolor(wc->fg);
         if (wc->bg)
             unlink_sharedcolor(wc->bg);
-        free_display(wc->display);
         GRFX_UNLINK(wc, wcntxts);
-    }
-}
-
-/*
- * free a display
- */
-static void free_display(wdp wd)
-{
-    wd->refcount--;
-    if(wd->refcount == 0) {
-        if (wd->cmap != DefaultColormap(wd->display, wd->screen))
-            XFreeColormap(wd->display, wd->cmap);
-        XCloseDisplay(wd->display);
-        if (wd->previous) wd->previous->next = wd->next;
-        else wdsplys = wd->next;
-        if (wd->next) wd->next->previous = wd->previous;
-        free(wd);
     }
 }
 
