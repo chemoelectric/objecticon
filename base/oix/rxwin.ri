@@ -674,7 +674,7 @@ wbp wcreate(char *display, wbp parent)
     w = alcwbinding();
     w->window = alcwinstate();
     if ((w->window->display = alcdisplay(display)) == NULL) {
-        LitWhy("Couldn't initialize display structure");
+        /* alcdisplay will have set &why */
         freewbinding(w);
         return 0;
     }
@@ -2415,6 +2415,7 @@ static wdp alcdisplay(char *s)
     wd->program = curpstate;
     wd->display = XOpenDisplay((*s=='\0') ? NULL : s);
     if (wd->display == NULL) {
+        LitWhy("Couldn't connect to display");
         free(wd);
         return NULL;
     }
@@ -2428,6 +2429,7 @@ static wdp alcdisplay(char *s)
         unlink_sharedcolor(wd->white);
         unlink_sharedcolor(wd->black);
         free(wd);
+        LitWhy("Couldn't load default fixed font");
         return NULL;
     }
 #ifdef HAVE_LIBXFT
@@ -2450,7 +2452,7 @@ static char *convertspec(wdp wd, char *s)
 {
     static char res[256];
     int flags, size;
-    char family[MAXFONTWORD+1];
+    char family[MAXFONTWORD];
     XftPattern *p;
 
     if (!strncmp(s, "fc:", 3))
@@ -2494,7 +2496,12 @@ static char *convertspec(wdp wd, char *s)
 
     if (size > 0)
         XftPatternAddDouble(p, XFT_SIZE, (double)size);
-
+    else {
+        /* Only use a default font size if explicitly set via OIFONTSIZE */
+        int t = getdefaultfontsize(-1);
+        if (t > 0)
+            XftPatternAddDouble(p, XFT_SIZE, (double)t);
+    }
     if (flags & FONTFLAG_MEDIUM)
         XftPatternAddInteger(p, XFT_WEIGHT, XFT_WEIGHT_MEDIUM);
     else if ((flags & FONTFLAG_DEMI) && (flags & FONTFLAG_BOLD))
@@ -2528,21 +2535,25 @@ static char *convertspec(wdp wd, char *s)
 {
     int flags, size;
     char *rv = 0;
-    char family[MAXFONTWORD+1];
+    char family[MAXFONTWORD];
     char *stdfam;
 
     /* Explicit X11 font name */
     if (!strncmp(s, "x11:", 4))
         return s + 4;
 
-    if (strcmp(s, "fixed") == 0 || !parsefont(s, family, &flags, &size))
+    if (!parsefont(s, family, &flags, &size))
         return s;
 
     /*
-     * This is a legal Icon font spec (and it's not an unadorned "fixed").
-     * Check first for special "standard" family names.
+     * This is a legal Icon font spec.  Check first for special
+     * "standard" family names.
      */
-    if (!strcmp(family, "mono")) {
+    if (!strcmp(family, "fixed")) {
+        stdfam = "fixed";
+        flags |= FONTFLAG_MONO + FONTFLAG_SANS;
+    } 
+    else if (!strcmp(family, "mono")) {
         stdfam = "lucidatypewriter";
         flags |= FONTFLAG_MONO + FONTFLAG_SANS;
     }
@@ -2630,7 +2641,7 @@ static char *findfont(wdp wd, char *family, int size, int flags)
     if (size > 0)
         bestsize = size;
     else
-        bestsize = DEFAULTFONTSIZE;
+        bestsize = getdefaultfontsize(14);
 
     if (flags & FONTFLAG_MEDIUM)
         weight = "medium";

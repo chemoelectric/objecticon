@@ -111,8 +111,6 @@ extern stringint attribs[];
 extern wbp wbndngs;
 extern wcp wcntxts;
 extern wsp wstates;
-extern int GraphicsLeft, GraphicsUp, GraphicsRight, GraphicsDown;
-extern int GraphicsHome, GraphicsPrior, GraphicsNext, GraphicsEnd;
 extern int canvas_serial, context_serial;
 extern clock_t starttime;		/* start time in milliseconds */
 extern char c1list[], c2list[], c3list[], c4list[];

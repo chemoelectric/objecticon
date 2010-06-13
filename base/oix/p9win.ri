@@ -2239,8 +2239,6 @@ static struct FontInfo *best_font(struct FontInfo *f1, struct FontInfo *f2, int 
     PREFER(FONTFLAG_MEDIUM);
     PREFER(FONTFLAG_NORMAL);
 
-    if (size < 0)
-        size = DEFAULTFONTSIZE;
     n = abs(f1->size - size) - abs(f2->size - size);
     if (n > 0)
         return f2;
@@ -2253,22 +2251,27 @@ static struct FontInfo *best_font(struct FontInfo *f1, struct FontInfo *f2, int 
 static struct FontInfo *match_font(char *s)
 {
     int flags, size;
-    char family[MAXFONTWORD+1];
+    char family[MAXFONTWORD];
     struct FontInfo *best = 0, *curr;
 
     if (!parsefont(s, family, &flags, &size))
         return 0;
+
+    if (size < 0)
+        size = getdefaultfontsize(14);
 
     for (curr = font_info; curr; curr = curr->next) {
         if (acceptable_font(curr, family, flags, size)) {
             if (!best)
                 best = curr;
             else
-                best = best_font(curr, best, flags, size);
+                best = best_font(best, curr, flags, size);
         }
     }
+    /*
     if (best)
         print("matched %s -> %s(family=%s,flags=%d,size=%d)\n",s,best->path,best->family,best->flags,best->size);
+    */
     return best;
 }
 
@@ -2293,13 +2296,12 @@ static void load_font_info(void)
 
         if (flag) {
             if (ch == '\n') {
-                char family[MAXFONTWORD+1];
-                int flags, size;
-                struct FontInfo *fi;
-
                 buff[i] = 0;
                 /* Ignore blank lines and commented lines */
                 if (buff[0] == 0 || buff[0] != '#') {
+                    char family[MAXFONTWORD];
+                    int flags, size;
+                    struct FontInfo *fi;
                     if (!parsefont(info, family, &flags, &size) || size <= 0)
                         ffatalerr("Couldn't parse line %d in font info file %s", line, fn);
                     if (access(buff, R_OK) == 0) {
@@ -2331,6 +2333,5 @@ static void load_font_info(void)
                 buff[i++] = ch;
         }
     }
-
     close(fd);
 }
