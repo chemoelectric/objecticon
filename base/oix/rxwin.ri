@@ -674,7 +674,7 @@ wbp wcreate(char *display, wbp parent)
     w = alcwbinding();
     w->window = alcwinstate();
     if ((w->window->display = alcdisplay(display)) == NULL) {
-        LitWhy("Couldn't initialize display structure");
+        /* alcdisplay will have set &why */
         freewbinding(w);
         return 0;
     }
@@ -2415,6 +2415,7 @@ static wdp alcdisplay(char *s)
     wd->program = curpstate;
     wd->display = XOpenDisplay((*s=='\0') ? NULL : s);
     if (wd->display == NULL) {
+        LitWhy("Couldn't connect to display");
         free(wd);
         return NULL;
     }
@@ -2428,6 +2429,7 @@ static wdp alcdisplay(char *s)
         unlink_sharedcolor(wd->white);
         unlink_sharedcolor(wd->black);
         free(wd);
+        LitWhy("Couldn't load default fixed font");
         return NULL;
     }
 #ifdef HAVE_LIBXFT
