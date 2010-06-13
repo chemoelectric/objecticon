@@ -1932,10 +1932,9 @@ static void close_window_system(void)
            close_screen_win(ws);
     }
     unmount(0, WINDOW_MOUNT_ROOT);
-    closedisplay(display);
     if ((fd = open("/dev/wctl", OWRITE)) >= 0) {
-        fprint(fd, "top"); 
-        fprint(fd, "current");
+        fprint(fd, "hide"); 
+        fprint(fd, "unhide"); 
         close(fd);
     }
     close(bintime_fd);
@@ -2258,7 +2257,7 @@ static struct FontInfo *match_font(char *s)
         return 0;
 
     if (size < 0)
-        size = getdefaultfontsize(14);
+        size = getdefaultfontsize(10);
 
     for (curr = font_info; curr; curr = curr->next) {
         if (acceptable_font(curr, family, flags, size)) {
