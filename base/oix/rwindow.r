@@ -2266,6 +2266,24 @@ char *rgbkey(int p, int r0, int g0, int b0)
     return 0;  /* avoid gcc warning */
 }
 
+int getdefaultfontsize(int deflt)
+{
+    static int t;
+    if (!t) {
+        char *s = getenv("OIFONTSIZE");
+        if (s) {
+            char ch;
+            if (sscanf(s, "%d%c", &t, &ch) != 1 || t <= 0)
+                t = -1;
+        } else
+            t = -1;
+    }
+    if (t < 0)
+        return deflt;
+    return t;
+}
+
+
 /*
  * mapping from recognized style attributes to flag values
  */
@@ -2328,9 +2346,7 @@ int parsefont(char *s, char family[MAXFONTWORD], int *style, int *size)
          * copy word, converting to lower case to implement case insensitivity
          */
         for (a = attr; (c = *s) != '\0' && c != ','; s++) {
-            if (isupper((unsigned char)c))
-                c = tolower((unsigned char)c);
-            *a++ = c;
+            *a++ = tolower((unsigned char)c);
             if (a - attr >= MAXFONTWORD - 1)
                 return 0;			/* too long */
         }

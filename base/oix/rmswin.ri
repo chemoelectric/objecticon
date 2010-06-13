@@ -846,7 +846,7 @@ HFONT findfont(char *family, int size, int flags, int ansi)
    int charset, weight;
    char slant, spacing;
 
-   if (size < 0) size = DEFAULTFONTSIZE;
+   if (size < 0) size = getdefaultfontsize(14);
 
    if (flags & FONTFLAG_MEDIUM)
       weight = FW_MEDIUM;
