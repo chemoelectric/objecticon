@@ -358,28 +358,21 @@ class GridPaintEdit(PaintEdit)
    end
 
    public on_save_input()
-      local d, fn, f
-      d := FileDialog("pos=100,100")
+      local d, fn
+      d := FileDialog()
       d.show_modal(self)
-      if fn := d.get_result() then {
-         f := open(fn, "w") | return alert_error(self, "Couldn't open " || fn)
-         every write(f, !input.get_contents())
-         close(f)
-      }
+      fn := d.get_result() | fail
+      Files.string_to_file(fn, input.get_contents_str()) | 
+         return alert_error(self, ["Couldn't save to " || fn, &why])
    end
 
    public on_load_input()
-      local l, d, fn, f
-      d := FileDialog("pos=100,100")
+      local d, fn, s
+      d := FileDialog()
       d.show_modal(self)
-      if fn := d.get_result() then {
-         f := open(fn) | return alert_error(self, "Couldn't open " || fn)
-         l := []
-         every put(l, !f)
-         close(f)
-         input.set_contents(l)
-         render()
-      }
+      fn := d.get_result() | fail
+      s := Files.file_to_string(fn) | return alert_error(self, ["Couldn't load from " || fn, &why])
+      input.set_contents_str(s)
    end
 
    public split_icon(s)
@@ -399,7 +392,7 @@ class GridPaintEdit(PaintEdit)
 
    public on_insert_icon(e)
       local d, s
-      d := FileDialog("pos=100,100")
+      d := FileDialog()
       d.set_directory(\Ivib.last_icon_dir)
       d.show_modal(self)
       Ivib.last_icon_dir := d.get_directory()
@@ -417,7 +410,7 @@ class GridPaintEdit(PaintEdit)
       p.set_layout(GridLayout())
       add_tab_at_front(p)
 
-      input := EditableTextList("c:x_weight=0", "size=250,200")
+      input := EditableTextList("c:x_weight=0", "size=250,200", "move_on_rpress=no")
       self.set_focus(input.find_focus())
       input.connect(self.on_input, Event.CONTENT_CHANGED)
       input.connect(self.on_input_press, Event.MOUSE_RIGHT_PRESS)

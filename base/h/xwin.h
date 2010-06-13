@@ -27,6 +27,7 @@
 #define XLFD_Size	 7
 #define XLFD_PointSize	 8
 #define XLFD_Spacing	11
+#define XLFD_AverageWidth 12
 #define XLFD_CharSet	13
 
 #define SysColor XColor

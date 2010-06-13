@@ -138,7 +138,7 @@ class ComponentTreeDialog(Dialog)
     end
 
    public setup()
-      self.attrib("pos=100,100", "label=Tree view")
+      self.attrib("label=Tree view")
       set_layout(GridLayout())
       tree := ComponentTree()
       tree.set_size(320, 320)
