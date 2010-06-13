@@ -2271,23 +2271,23 @@ char *rgbkey(int p, int r0, int g0, int b0)
  */
 stringint fontwords[] = {
     { 0,                17 },           /* number of entries */
-    { "bold",           FONTFLAG_BOLD },
-    { "condensed",      FONTFLAG_CONDENSED },
-    { "demi",           FONTFLAG_DEMI },
-    { "demibold",       FONTFLAG_DEMI | FONTFLAG_BOLD },
-    { "extended",       FONTFLAG_EXTENDED },
-    { "italic",         FONTFLAG_ITALIC },
-    { "light",          FONTFLAG_LIGHT },
-    { "medium",         FONTFLAG_MEDIUM },
-    { "mono",           FONTFLAG_MONO },
-    { "narrow",         FONTFLAG_NARROW },
-    { "normal",         FONTFLAG_NORMAL },
-    { "oblique",        FONTFLAG_OBLIQUE },
-    { "proportional",   FONTFLAG_PROPORTIONAL },
-    { "roman",          FONTFLAG_ROMAN },
-    { "sans",           FONTFLAG_SANS },
-    { "serif",          FONTFLAG_SERIF },
-    { "wide",           FONTFLAG_WIDE },
+    { "bold",           FONTATT_WEIGHT  | FONTFLAG_BOLD },
+    { "condensed",      FONTATT_WIDTH   | FONTFLAG_CONDENSED },
+    { "demi",           FONTATT_WEIGHT  | FONTFLAG_DEMI },
+    { "demibold",       FONTATT_WEIGHT  | FONTFLAG_DEMI | FONTFLAG_BOLD },
+    { "extended",       FONTATT_WIDTH   | FONTFLAG_EXTENDED },
+    { "italic",         FONTATT_SLANT   | FONTFLAG_ITALIC },
+    { "light",          FONTATT_WEIGHT  | FONTFLAG_LIGHT },
+    { "medium",         FONTATT_WEIGHT  | FONTFLAG_MEDIUM },
+    { "mono",           FONTATT_SPACING | FONTFLAG_MONO },
+    { "narrow",         FONTATT_WIDTH   | FONTFLAG_NARROW },
+    { "normal",         FONTATT_WIDTH   | FONTFLAG_NORMAL },
+    { "oblique",        FONTATT_SLANT   | FONTFLAG_OBLIQUE },
+    { "proportional",   FONTATT_SPACING | FONTFLAG_PROPORTIONAL },
+    { "roman",          FONTATT_SLANT   | FONTFLAG_ROMAN },
+    { "sans",           FONTATT_SERIF   | FONTFLAG_SANS },
+    { "serif",          FONTATT_SERIF   | FONTFLAG_SERIF },
+    { "wide",           FONTATT_WIDTH   | FONTFLAG_WIDE },
 };
 
 /*
@@ -2299,9 +2299,9 @@ stringint fontwords[] = {
  * returns 1 on an OK font name
  * returns 0 on a "malformed" font (might be a window-system fontname)
  */
-int parsefont(char *s, char family[MAXFONTWORD+1], int *style, int *size)
+int parsefont(char *s, char family[MAXFONTWORD], int *style, int *size)
 {
-    char c, *a, attr[MAXFONTWORD+1];
+    char c, *a, attr[MAXFONTWORD];
     int tmp;
 
     /*
@@ -2331,7 +2331,7 @@ int parsefont(char *s, char family[MAXFONTWORD+1], int *style, int *size)
             if (isupper((unsigned char)c))
                 c = tolower((unsigned char)c);
             *a++ = c;
-            if (a - attr >= MAXFONTWORD)
+            if (a - attr >= MAXFONTWORD - 1)
                 return 0;			/* too long */
         }
 
@@ -2347,13 +2347,11 @@ int parsefont(char *s, char family[MAXFONTWORD+1], int *style, int *size)
          */
         if (*family == '\0')
             strcpy(family, attr);		/* first word is the family name */
-
         else if (sscanf(attr, "%d%c", &tmp, &c) == 1 && tmp > 0) {
             if (*size != -1 && *size != tmp)
                 return 0;			/* if conflicting sizes given */
             *size = tmp;			/* integer value is a size */
         }
-
         else {				/* otherwise it's a style attribute */
             tmp = stringint_str2int(fontwords, attr);	/* look up in table */
             if (tmp != -1) {		/* if recognized */

@@ -2450,7 +2450,7 @@ static char *convertspec(wdp wd, char *s)
 {
     static char res[256];
     int flags, size;
-    char family[MAXFONTWORD+1];
+    char family[MAXFONTWORD];
     XftPattern *p;
 
     if (!strncmp(s, "fc:", 3))
@@ -2528,7 +2528,7 @@ static char *convertspec(wdp wd, char *s)
 {
     int flags, size;
     char *rv = 0;
-    char family[MAXFONTWORD+1];
+    char family[MAXFONTWORD];
     char *stdfam;
 
     /* Explicit X11 font name */
@@ -2630,7 +2630,7 @@ static char *findfont(wdp wd, char *family, int size, int flags)
     if (size > 0)
         bestsize = size;
     else
-        bestsize = DEFAULTFONTSIZE;
+        bestsize = 16;
 
     if (flags & FONTFLAG_MEDIUM)
         weight = "medium";

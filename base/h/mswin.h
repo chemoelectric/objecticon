@@ -25,6 +25,8 @@
 #define GREEN(x) GetGValue(x)
 #define BLUE(x) GetBValue(x)
 
+#define DEFAULTFONTSIZE 14
+
 /*
  *
  */

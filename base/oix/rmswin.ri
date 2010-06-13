@@ -897,7 +897,7 @@ HFONT findfont(char *family, int size, int flags, int ansi)
 HFONT mkfont(char *s)
 {
    int flags, size;
-   char family[MAXFONTWORD+1];
+   char family[MAXFONTWORD];
    char *stdfam = NULL;
    HFONT hf = 0;
 
