@@ -1,12 +1,14 @@
 static int inited;
 static vlong startup_time;
-static wfp fonts, new_context_font;
+static wfp fonts, default_font;
 static Rectangle max_rect;
 static struct Cursor cursor_data[];
 static int use_win;
 static int bintime_fd;
 
 static int open_winfile(wsp ws, char *s, int mode);
+static struct FontInfo *match_font(char *s);
+static void load_font_info(void);
 static wsp alcwinstate(void);
 static wcp alccontext(wbp w);
 static wfp alcfont(wbp w, char **s);
@@ -53,24 +55,15 @@ static void note_time(char *s);
 #define FillMasked    2
 #define FillTextured  3
 
-#if 0
-static int n_open;
-static int myopen(char *s,int mode)
-{
-    int fd = open(s,mode);
-    if (fd >= 0)
-        ++n_open;
-    return fd;
-}
-static myclose(int fd)
-{
-    close(fd);
-    --n_open;
-    print("n_open now %d\n",n_open);
-}
-#define open myopen
-#define close myclose
-#endif
+/* Provides info about a font available on the system. */
+struct FontInfo {
+   char *path;
+   char *family;
+   int flags;
+   int size;
+   struct FontInfo *next;
+};
+struct FontInfo *font_info;
 
 static stringint fillstyles[] = {
     {0, 3},
@@ -1042,9 +1035,7 @@ void fillrectangle(wbp w, int x, int y, int width, int height)
 
 static char *convert_spec(char *s)
 {
-    int flags, size;
-    char family[MAXFONTWORD+1], *r;
-    static char buff[256];
+    struct FontInfo *fi;
 
     if (*s == '/')
         return s;
@@ -1052,27 +1043,11 @@ static char *convert_spec(char *s)
     if (!strncmp(s, "p9:", 3))
         return s + 3;
 
-    if (!parsefont(s, family, &flags, &size))
-        return s;
+    fi = match_font(s);
+    if (fi)
+        return fi->path;
 
-    /*
-     * Check for special "standard" family names.
-     */
-    if (!strcmp(family, "fixed"))
-        r = "fixed/unicode.8x13.font";
-    else if (!strcmp(family, "mono"))
-        r = "courier/latin1.5.font";
-    else if (!strcmp(family, "typewriter"))
-        r = "courier/latin1.5.font";
-    else if (!strcmp(family, "sans"))
-        r = "lucidasans/latin1.7.font";
-    else if (!strcmp(family, "serif"))
-        r = "times/latin1.7.font";
-    else
-        r = "times/latin1.7.font";
-            
-    sprintf(buff, "/lib/font/bit/%s", r);
-    return buff;
+    return s;
 }
 
 static wfp load_font(char *s)
@@ -1094,10 +1069,8 @@ static wfp load_font(char *s)
     }
 
     f = openfont(display, s);
-    if (!f) {
-        f = display->defaultfont;
-        s = "default font";
-    }
+    if (!f)
+        return 0;
 
     GRFX_ALLOC(rv, _wfont);
     MemProtect(rv->name = malloc(strlen(s) + 3 + 1));
@@ -1113,7 +1086,10 @@ static wfp load_font(char *s)
 
 int setfont(wbp w, char *s)
 {
-    w->context->font = load_font(s);
+    wfp f = load_font(s);
+    if (!f)
+        return Failed;
+    w->context->font = f;
     return Succeeded;
 }
 
@@ -1925,7 +1901,7 @@ static wcp alccontext(wbp w)
     wc->fg = link_sharedcolor(black);
     wc->bg = link_sharedcolor(white);
     wc->pattern = link_sharedpattern(black_pattern);
-    wc->font = new_context_font;
+    wc->font = default_font;
     wc->fillstyle = stringint_lookup(fillstyles, "solid");
     GRFX_LINK(wc, wcntxts);
     return wc;
@@ -2003,6 +1979,8 @@ static void init_window_system(void)
 {
     Dir *fs;
 
+    load_font_info();
+
     if ((bintime_fd = open("/dev/bintime", OREAD)) < 0)
         ffatalerr("Can't open /dev/bintime: %r");
 
@@ -2033,7 +2011,10 @@ static void init_window_system(void)
     black_pattern = new_sharedpattern(8, 8, black_pattern_data, "black");
     max_rect = Rect(-1073741823, -1073741823, 1073741823, 1073741823);
     startup_time = get_time();
-    new_context_font = load_font("fixed");
+    default_font = load_font("fixed");
+    if (!default_font)
+        ffatalerr("Couldn't load default font");
+
     use_win = (getenv("OIUSEWIN") != 0);
 
     memimageinit();
@@ -2231,4 +2212,125 @@ int writeimagefileimpl(wbp w, char *filename, int x, int y, int width, int heigh
     freememimage(m);
     close(pip[1]);
     return Succeeded;
+}
+
+static int acceptable_font(struct FontInfo *fi, char *family, int flags, int size)
+{
+    if (strcmp(fi->family, family) != 0)
+        return 0;
+    if ((fi->flags & flags) != flags)
+        return 0;
+    return 1;
+}
+
+#define PREFER(f) \
+do { \
+    if ((f1->flags & (f)) && !(f2->flags & (f))) \
+        return f1; \
+    if (!(f1->flags & (f)) && (f2->flags & (f))) \
+        return f2; \
+} while(0)
+
+static struct FontInfo *best_font(struct FontInfo *f1, struct FontInfo *f2, int flags, int size)
+{
+    int n;
+
+    PREFER(FONTFLAG_ROMAN);
+    PREFER(FONTFLAG_MEDIUM);
+    PREFER(FONTFLAG_NORMAL);
+
+    if (size < 0)
+        size = DEFAULTFONTSIZE;
+    n = abs(f1->size - size) - abs(f2->size - size);
+    if (n > 0)
+        return f2;
+    if (n < 0)
+        return f1;
+
+    return f1;
+}
+
+static struct FontInfo *match_font(char *s)
+{
+    int flags, size;
+    char family[MAXFONTWORD+1];
+    struct FontInfo *best = 0, *curr;
+
+    if (!parsefont(s, family, &flags, &size))
+        return 0;
+
+    for (curr = font_info; curr; curr = curr->next) {
+        if (acceptable_font(curr, family, flags, size)) {
+            if (!best)
+                best = curr;
+            else
+                best = best_font(curr, best, flags, size);
+        }
+    }
+    if (best)
+        print("matched %s -> %s(family=%s,flags=%d,size=%d)\n",s,best->path,best->family,best->flags,best->size);
+    return best;
+}
+
+static void load_font_info(void)
+{
+    int fd, i, flag = 0, line = 1;
+    char ch, buff[512], *info = 0;
+    struct FontInfo *tail = 0;
+    char *fn;
+
+    fn = getenv("OIFONTS");
+    if (!fn)
+        ffatalerr("OIFONTS environment variable not set");
+
+    if ((fd = open(fn, OREAD)) < 0)
+        ffatalerr("Can't open font info file: %r");
+
+    i = 0;
+    while (read(fd, &ch, 1) > 0) {
+        if (i >= sizeof(buff))
+            ffatalerr("Line %d too long in font info file %s", line, fn);
+
+        if (flag) {
+            if (ch == '\n') {
+                char family[MAXFONTWORD+1];
+                int flags, size;
+                struct FontInfo *fi;
+
+                buff[i] = 0;
+                /* Ignore blank lines and commented lines */
+                if (buff[0] == 0 || buff[0] != '#') {
+                    if (!parsefont(info, family, &flags, &size) || size <= 0)
+                        ffatalerr("Couldn't parse line %d in font info file %s", line, fn);
+                    if (access(buff, R_OK) == 0) {
+                        MemProtect(fi = malloc(sizeof(struct FontInfo)));
+                        fi->path = salloc(buff);
+                        fi->family = salloc(family);
+                        fi->flags = flags;
+                        fi->size = size;
+                        fi->next = 0;
+                        if (tail) {
+                            tail->next = fi;
+                            tail = fi;
+                        } else
+                            font_info = tail = fi;
+                    }
+                }
+                ++line;
+                i = 0;
+                info = 0;
+                flag = 0;
+            } else
+                buff[i++] = ch;
+        } else {
+            if (ch == '=') {
+                buff[i++] = 0;
+                flag = 1;
+                info = buff + i;
+            } else
+                buff[i++] = ch;
+        }
+    }
+
+    close(fd);
 }
