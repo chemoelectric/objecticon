@@ -1942,8 +1942,6 @@ static void init_window_system(void)
     Dir *fs;
     int fd;
 
-    atexit(close_window_system);
-
     load_font_info();
 
     if ((bintime_fd = open("/dev/bintime", OREAD)) < 0)
@@ -1974,9 +1972,17 @@ static void init_window_system(void)
      * disappears and it is blanked entirely when the program exits).
      * Hiding and unhiding the current window fixes this.
      */
-    if ((fd = open("/dev/wctl", OWRITE)) >= 0) {
-        fprint(fd, "hide"); 
-        fprint(fd, "unhide"); 
+    if ((fd = open("/dev/wctl", ORDWR)) >= 0) {
+        char buff[256];
+        int n = read(fd, buff, sizeof(buff) - 1);
+        if (n > 0) {
+            buff[n] = 0;
+            /* Don't do anything if our window is hidden */
+            if (!strstr(buff, "hidden")) {
+                fprint(fd, "hide"); 
+                fprint(fd, "unhide"); 
+            }
+        }
         close(fd);
     }
 
@@ -1992,6 +1998,8 @@ static void init_window_system(void)
     use_win = (getenv("OIUSEWIN") != 0);
 
     memimageinit();
+
+    atexit(close_window_system);
 }
 
 static vlong get_time()
