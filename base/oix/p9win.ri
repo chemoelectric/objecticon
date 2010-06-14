@@ -474,7 +474,6 @@ static void handle_resize(wsp ws)
     wbp w;
     int tw, th;
     sprintf(buff, "%s/winname", ws->mount_dir);
-    /*fprintf(stderr,"reconnecting to %s repl=%d\n",buff, ws->pix->repl);fflush(stderr);*/
     if (gengetwindow(display, buff, &ws->win, &ws->screen, Refnone) < 0)
         syserr("Failed to reconnect to window on a resize");
 
@@ -1931,60 +1930,24 @@ static void close_window_system(void)
        if (ws->win)
            close_screen_win(ws);
     }
-    unmount(0, WINDOW_MOUNT_ROOT);
     if ((fd = open("/dev/wctl", OWRITE)) >= 0) {
-        fprint(fd, "hide"); 
-        fprint(fd, "unhide"); 
+        fprint(fd, "top"); 
+        fprint(fd, "current"); 
         close(fd);
     }
-    close(bintime_fd);
 }
-
-static struct Cursor cursor_data[] = {
-    #include "p9cursors/bullseye"          /*  0 */
-    #include "p9cursors/crosscursor"       /*  1 */
-    #include "p9cursors/boxcursor"         /*  2 */
-    #include "p9cursors/sightcursor"       /*  3 */
-    #include "p9cursors/whitearrow"        /*  4 */
-    #include "p9cursors/query"             /*  5 */
-    #include "p9cursors/top_left_corner"   /*  6 */
-    #include "p9cursors/top_side"          /*  7 */
-    #include "p9cursors/top_right_corner"  /*  8 */
-    #include "p9cursors/right_side"        /*  9 */
-    #include "p9cursors/bottom_right_corner"/* 10 */
-    #include "p9cursors/bottom_side"       /* 11 */
-    #include "p9cursors/bottom_left_corner"/* 12 */
-    #include "p9cursors/left_side"         /* 13 */
-    #include "p9cursors/xterm"             /* 14 */
-    #include "p9cursors/fleur"             /* 15 */
-    #include "p9cursors/arrow"             /* 16 */
-    #include "p9cursors/bottom_tee"        /* 17 */
-    #include "p9cursors/center_ptr"        /* 18 */
-    #include "p9cursors/circle"            /* 19 */
-    #include "p9cursors/cross"             /* 20 */
-    #include "p9cursors/cross_reverse"     /* 21 */
-    #include "p9cursors/crosshair"         /* 22 */
-    #include "p9cursors/diamond_cross"     /* 23 */
-    #include "p9cursors/dot"               /* 24 */
-    #include "p9cursors/x_cursor"          /* 25 */
-    #include "p9cursors/sb_h_double_arrow" /* 26 */
-    #include "p9cursors/sb_v_double_arrow" /* 27 */
-    #include "p9cursors/hand2"             /* 28 */
-    #include "p9cursors/exchange"          /* 29 */
-    #include "p9cursors/watch"             /* 30 */
-};
 
 static void init_window_system(void)
 {
     Dir *fs;
+    int fd;
+
+    atexit(close_window_system);
 
     load_font_info();
 
     if ((bintime_fd = open("/dev/bintime", OREAD)) < 0)
         ffatalerr("Can't open /dev/bintime: %r");
-
-    if (initdraw(draw_error, 0, 0) < 0)
-        ffatalerr("Couldn't initialize window system: %r");
 
     /* Keep mounts private */
     rfork(RFNAMEG); 
@@ -1999,11 +1962,23 @@ static void init_window_system(void)
     win_fs.tree = alloctree(0, 0, DMDIR | 0777, 0);
     win_fs.create = fscreate;
     postmountsrv(&win_fs, 0, WINDOW_MOUNT_ROOT, MREPL | MCREATE);
-    atexit(close_window_system);
 
     /* Bug workaround which prevents accessing rio's mounted window dir if it is the only
      * entry in the directory */
     mkdir(WINDOW_MOUNT_ROOT "/JUNK", 0777);
+
+    if (initdraw(draw_error, 0, 0) < 0)
+        ffatalerr("Couldn't initialize window system: %r");
+
+    /* initdraw seems to mess up the current window (the scrollbar
+     * disappears and it is blanked entirely when the program exits).
+     * Hiding and unhiding the current window fixes this.
+     */
+    if ((fd = open("/dev/wctl", OWRITE)) >= 0) {
+        fprint(fd, "hide"); 
+        fprint(fd, "unhide"); 
+        close(fd);
+    }
 
     black = new_sharedcolor("black", 0x000000ff);
     white = new_sharedcolor("white", 0xffffffff);
@@ -2334,3 +2309,38 @@ static void load_font_info(void)
     }
     close(fd);
 }
+
+static struct Cursor cursor_data[] = {
+    #include "p9cursors/bullseye"          /*  0 */
+    #include "p9cursors/crosscursor"       /*  1 */
+    #include "p9cursors/boxcursor"         /*  2 */
+    #include "p9cursors/sightcursor"       /*  3 */
+    #include "p9cursors/whitearrow"        /*  4 */
+    #include "p9cursors/query"             /*  5 */
+    #include "p9cursors/top_left_corner"   /*  6 */
+    #include "p9cursors/top_side"          /*  7 */
+    #include "p9cursors/top_right_corner"  /*  8 */
+    #include "p9cursors/right_side"        /*  9 */
+    #include "p9cursors/bottom_right_corner"/* 10 */
+    #include "p9cursors/bottom_side"       /* 11 */
+    #include "p9cursors/bottom_left_corner"/* 12 */
+    #include "p9cursors/left_side"         /* 13 */
+    #include "p9cursors/xterm"             /* 14 */
+    #include "p9cursors/fleur"             /* 15 */
+    #include "p9cursors/arrow"             /* 16 */
+    #include "p9cursors/bottom_tee"        /* 17 */
+    #include "p9cursors/center_ptr"        /* 18 */
+    #include "p9cursors/circle"            /* 19 */
+    #include "p9cursors/cross"             /* 20 */
+    #include "p9cursors/cross_reverse"     /* 21 */
+    #include "p9cursors/crosshair"         /* 22 */
+    #include "p9cursors/diamond_cross"     /* 23 */
+    #include "p9cursors/dot"               /* 24 */
+    #include "p9cursors/x_cursor"          /* 25 */
+    #include "p9cursors/sb_h_double_arrow" /* 26 */
+    #include "p9cursors/sb_v_double_arrow" /* 27 */
+    #include "p9cursors/hand2"             /* 28 */
+    #include "p9cursors/exchange"          /* 29 */
+    #include "p9cursors/watch"             /* 30 */
+};
+
