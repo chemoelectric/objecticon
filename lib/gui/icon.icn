@@ -35,7 +35,7 @@ class Icon(Label)
       TINY_X,
       GRID,
       WINDOW_CLOSE_BUTTON, 
-      WINDOW_LOWER_BUTTON
+      WINDOW_ICONIFY_BUTTON
 
    private static init()
       BOX_UP := "(0=shadow;1=hilite;~=trans)13,c6,_
@@ -257,7 +257,7 @@ class Icon(Label)
 >>iiiiiiiiiiii>>_
 ~>>>>>>>>>>>>>>~_
 "
-      WINDOW_LOWER_BUTTON := "16,c1,_
+      WINDOW_ICONIFY_BUTTON := "16,c1,_
 ~>>>>>>>>>>>>>>~_
 >>iiiiiiiiiiii>>_
 >iiiiiiiiiiiiii>_
