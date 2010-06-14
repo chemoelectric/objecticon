@@ -16,23 +16,26 @@ package gui
 # image rather than text.
 #
 class Icon(Label)
-   public static const BOX_UP,
-                       BOX_DOWN,
-                       DIAMOND_UP,
-                       DIAMOND_DOWN,
-                       ARROW_UP,
-                       ARROW_DOWN,
-                       ARROW_LEFT,
-                       ARROW_RIGHT ,
-                       CLOSED_FOLDER,
-                       OPEN_FOLDER,
-                       FILE,
-                       PLUS,
-                       MINUS,
-                       TINY_ARROW_UP,
-                       TINY_ARROW_DOWN,
-                       TINY_X,
-                       GRID
+   public static const 
+      BOX_UP,
+      BOX_DOWN,
+      DIAMOND_UP,
+      DIAMOND_DOWN,
+      ARROW_UP,
+      ARROW_DOWN,
+      ARROW_LEFT,
+      ARROW_RIGHT ,
+      CLOSED_FOLDER,
+      OPEN_FOLDER,
+      FILE,
+      PLUS,
+      MINUS,
+      TINY_ARROW_UP,
+      TINY_ARROW_DOWN,
+      TINY_X,
+      GRID,
+      WINDOW_CLOSE_BUTTON, 
+      WINDOW_LOWER_BUTTON
 
    private static init()
       BOX_UP := "(0=shadow;1=hilite;~=trans)13,c6,_
@@ -234,6 +237,43 @@ class Icon(Label)
 0011_
 0111_
 ~11~_
+"
+
+      WINDOW_CLOSE_BUTTON := "16,c1,_
+~>>>>>>>>>>>>>>~_
+>>iiiiiiiiiiii>>_
+>iiiiiiiiiiiiii>_
+>iiiiiiiiiiiiii>_
+>iii<<iiii<<iii>_
+>iii<6<ii<6<iii>_
+>iiii<6<<6<iiii>_
+>iiiii<66<iiiii>_
+>iiiii<66<iiiii>_
+>iiii<6<<6<iiii>_
+>iii<6<ii<6<iii>_
+>iii(<iiii<(iii>_
+>iiiiiiiiiiiiii>_
+>iiiiiiiiiiiiii>_
+>>iiiiiiiiiiii>>_
+~>>>>>>>>>>>>>>~_
+"
+      WINDOW_LOWER_BUTTON := "16,c1,_
+~>>>>>>>>>>>>>>~_
+>>iiiiiiiiiiii>>_
+>iiiiiiiiiiiiii>_
+>iiiiiiiiiiiiii>_
+>iiiiiiiiiiiiii>_
+>iiiiiiiiiiiiii>_
+>iiiiiiiiiiiiii>_
+>iiiiiiiiiiiiii>_
+>iiiiiiiiiiiiii>_
+>iiiiiiiiiiiiii>_
+>iiiiiiiiiiiiii>_
+>iiiiiiiiiiiiii>_
+>ii<<<<<<<<<<ii>_
+>ii6666666666ii>_
+>>iiiiiiiiiiii>>_
+~>>>>>>>>>>>>>>~_
 "
    end
 

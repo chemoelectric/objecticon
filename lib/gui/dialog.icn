@@ -1237,3 +1237,36 @@ class Accelerator(Component)
       return
    end
 end
+
+#
+# This component provides window control buttons (close and lower) for
+# systems that don't provide such controls themselves.
+#
+class WindowControl(Component)
+   private close_window()
+      parent_dialog.win.enqueue(Mouse.WINDOW_CLOSE_BUTTON)
+   end
+
+   private lower_window()
+      parent_dialog.win.lower()
+   end
+
+   public new(a[])
+      cast(self,Component).new()
+      set_layout(GridLayout("flush", "dii=0"))
+      attrib("pos=100%,0", "align=r,t")
+      add(IconButton("image=",Icon.WINDOW_LOWER_BUTTON,
+                     "border=",EmptyBorder("flush"),
+                     "accepts_focus=no",
+                     "tooltip=Lower",
+                     "e:action=", lower_window))
+      add(IconButton("image=",Icon.WINDOW_CLOSE_BUTTON,
+                     "border=",EmptyBorder("flush"),
+                     "accepts_focus=no",
+                     "tooltip=Close",
+                     "e:action=", close_window))
+      set_fields(a)
+      return
+   end
+end
+
