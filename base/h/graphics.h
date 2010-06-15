@@ -116,7 +116,6 @@
  */
 typedef struct _wfont {
   int		refcount;
-  int		serial;			/* serial # */
   struct _wfont *previous, *next;
   char	        *name;			/* name for WAttrib and fontsearch */
   int           ascent;                 /* font dimensions */
@@ -195,7 +194,6 @@ struct imgmem {
  */
 typedef struct _wdisplay {
   int		refcount;
-  int		serial;			/* serial # */
   char		name[MAXDISPLAYNAME];
   Display *	display;
   struct progstate *program;           /* owning program */
@@ -224,7 +222,6 @@ typedef struct _wdisplay {
  */
 typedef struct _wcontext {
   int		refcount;
-  int		serial;			/* serial # */
   struct _wcontext *previous, *next;
   int		clipx, clipy, clipw, cliph;
   wfp		font;
@@ -269,7 +266,6 @@ typedef struct _wcontext {
  */
 typedef struct _wstate {
   int		refcount;		/* reference count */
-  int		serial;			/* serial # */
   struct _wstate *previous, *next;
   int		inputmask;		/* user input mask */
   char		*windowlabel;		/* window label */
@@ -337,7 +333,6 @@ typedef struct _wstate {
  */
 typedef struct _wbinding {
   int refcount;
-  int serial;
   struct _wbinding *previous, *next;
   wcp context;
   wsp window;

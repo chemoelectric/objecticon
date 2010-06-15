@@ -202,6 +202,7 @@ void buffnstr(dptr d, char **s, ...);
    void drawimgdata     (wbp w, int x, int y, struct imgdata *img);
    void freeimgdata     (struct imgdata *img);
    int  getdefaultfontsize(int);
+   char *getdefaultfont(void);
    
 
    /*

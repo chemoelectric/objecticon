@@ -58,7 +58,6 @@ extern word memgrowth;		/* memory region growth factor */
 extern struct tend_desc *tend;  /* chain of tended descriptors */
 
 extern char typech[];
-extern word oldsum;
 extern struct descrip csetdesc;		/* cset descriptor */
 extern struct descrip eventdesc;	/* event descriptor */
 extern struct descrip rzerodesc;	/* real 0.0 descriptor */
@@ -71,8 +70,6 @@ extern struct b_real realzero;          /* real zero block */
  */
    
 extern word *ipc;			/* interpreter program counter */
-extern int ilevel;			/* interpreter level */
-extern int ntended;			/* number of active tended descriptors*/
 extern struct b_cset *k_ascii;	/* value of &ascii */
 extern struct b_cset *k_cset;	/* value of &cset */
 extern struct b_cset *k_uset;	/* value of &uset */
@@ -90,10 +87,8 @@ extern word *ipc;
 extern struct c_frame *curr_cf;           /* currently executing c frame */
 
 extern struct progstate rootpstate;
-extern int noMTevents;		/* no MT events during GC */
    
 extern int over_flow;
-
 
 extern word curr_op;
 extern dptr xexpr;
@@ -107,11 +102,9 @@ extern int xnargs;
 #ifdef Graphics
    
 extern int wconfig, inattr;
-extern stringint attribs[];
 extern wbp wbndngs;
 extern wcp wcntxts;
 extern wsp wstates;
-extern int canvas_serial, context_serial;
 extern clock_t starttime;		/* start time in milliseconds */
 extern char c1list[], c2list[], c3list[], c4list[];
 
@@ -125,9 +118,3 @@ extern char c1list[], c2list[], c3list[], c4list[];
 #endif				/* MSWIN32 */
 
 #endif					/* Graphics */
-
-#if UNIX && E_Tick
-extern union tickerdata ticker;
-extern unsigned long oldtick;
-#endif					/* UNIX && E_Tick */
-

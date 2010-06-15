@@ -32,8 +32,6 @@ static	void getbg_rgb(wbp w, int *r, int *g, int *b);
 static void drawpalette(wbp w, int x, int y, int width, int height, 
                         struct palentry *e, unsigned char *s, int copy);
 
-int canvas_serial, context_serial;
-
 #if MSWIN32
 extern wclrp scp;
 extern HPALETTE palette;
@@ -2280,6 +2278,19 @@ int getdefaultfontsize(int deflt)
     }
     if (t < 0)
         return deflt;
+    return t;
+}
+
+char *getdefaultfont()
+{
+    static char *t;
+    if (!t) {
+        char *s = getenv("OIFONT");
+        if (s)
+            t = salloc(s);
+        else
+            t = "fixed";
+    }
     return t;
 }
 

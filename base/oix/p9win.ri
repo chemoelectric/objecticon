@@ -1846,7 +1846,6 @@ static wsp alcwinstate()
 {
     wsp ws;
     GRFX_ALLOC(ws, _wstate);
-    ws->serial = ++canvas_serial;
     ws->program = curpstate;
     ws->listp = nulldesc;    /* set to [] after linked into global context list */
     ws->buttonorder[0] = 1;
@@ -1871,7 +1870,6 @@ wcp clonecontext(wbp w)
     wcp src, wc;
     src = w->context;
     GRFX_ALLOC(wc, _wcontext);
-    wc->serial = ++context_serial;
     wc->dx = src->dx;
     wc->dy = src->dy;
     wc->clipx = src->clipx;
@@ -1894,7 +1892,6 @@ static wcp alccontext(wbp w)
 {
     wcp wc;
     GRFX_ALLOC(wc, _wcontext);
-    wc->serial = ++context_serial;
     wc->clipx = wc->clipy = 0;
     wc->clipw = wc->cliph = -1;
     wc->fg = link_sharedcolor(black);
@@ -1991,7 +1988,7 @@ static void init_window_system(void)
     black_pattern = new_sharedpattern(8, 8, black_pattern_data, "black");
     max_rect = Rect(-1073741823, -1073741823, 1073741823, 1073741823);
     startup_time = get_time();
-    default_font = load_font("fixed");
+    default_font = load_font(getdefaultfont());
     if (!default_font)
         ffatalerr("Couldn't load default font");
 
@@ -2264,9 +2261,9 @@ static void load_font_info(void)
     struct FontInfo *tail = 0;
     char *fn;
 
-    fn = getenv("OIFONTS");
+    fn = getenv("OIFONTINFO");
     if (!fn)
-        ffatalerr("OIFONTS environment variable not set");
+        ffatalerr("OIFONTINFO environment variable not set");
 
     if ((fd = open(fn, OREAD)) < 0)
         ffatalerr("Can't open font info file: %r");
