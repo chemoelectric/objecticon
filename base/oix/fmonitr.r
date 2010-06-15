@@ -168,17 +168,6 @@ void set_event_mask(struct progstate *p, struct b_cset *cs)
 
 char typech[MaxType+1];	/* output character for each type */
 
-int noMTevents;			/* don't produce events in EVAsgn */
-
-
-#if UNIX
-/*
- * Global state used by EVTick()
- */
-word oldsum = 0;
-#endif					/* UNIX */
-
-
 
 
 /*

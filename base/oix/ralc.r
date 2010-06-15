@@ -512,12 +512,7 @@ char *f(char *s, word slen)
    char *ofree;
 
 #if e_string
-   if (!noMTevents) {
-      StrLen(ts) = slen;
-      StrLoc(ts) = s;
-      EVVal(slen, e_string);
-      s = StrLoc(ts);
-   }
+    EVVal(slen, e_string);
 #endif					/* E_String */
 
    /*
@@ -736,14 +731,10 @@ char *f(int region, word nbytes)
       curr->Gprev = rp;
       *pcurr = rp;
 #if e_tenurestring || e_tenureblock
-      if (!noMTevents) {
-         if (region == Strings) {
-            EVVal(rp->size, e_tenurestring);
-            }
-         else {
-            EVVal(rp->size, e_tenureblock);
-            }
-         }
+      if (region == Strings)
+         EVVal(rp->size, e_tenurestring);
+      else
+         EVVal(rp->size, e_tenureblock);
 #endif					/* e_tenurestring || e_tenureblock */
       return rp->free;
       }
