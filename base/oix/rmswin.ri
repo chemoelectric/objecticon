@@ -1974,7 +1974,6 @@ wbp w;
    wcp wc;
 
    GRFX_ALLOC(wc, _wcontext);
-   wc->serial = ++context_serial;
    wc->bkmode = OPAQUE;        /* at present, only used in line drawing */
    wc->fg = RGB(0,0,0);
    wc->bg = RGB(255,255,255);
@@ -1993,7 +1992,7 @@ wbp w;
    wc->bgbrush.lbColor = PALCLR(wc->bg);
    wc->drawop = R2_COPYPEN;
    MemProtect(wc->font = calloc(1, sizeof (struct _wfont)));
-   wc->font->name = salloc("fixed");
+   wc->font->name = salloc(getdefaultfont());
    wc->font->font = CreateFont(16,0,0,0,FW_NORMAL,0,0,0,
 	 ((MAXBYTESPERCHAR==1)?ANSI_CHARSET:DEFAULT_CHARSET),
 	 OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,
@@ -2020,7 +2019,6 @@ wbp w;
    int i;
 
    GRFX_ALLOC(wc, _wcontext);
-   wc->serial = ++context_serial;
 
    tmp.window = ws;
    tmp.context = wc;
@@ -2061,7 +2059,7 @@ wbp w;
    wc->bgbrush.lbColor = PALCLR(wc->bg);
    wc->drawop = wc2->drawop;
    MemProtect(wc->font = calloc(1, sizeof (struct _wfont)));
-   wc->font->name = salloc("fixed");
+   wc->font->name = salloc(getdefaultfont());
    wc->font->font = CreateFont(13,0,0,0,FW_NORMAL,0,0,0,
 	 ((MAXBYTESPERCHAR==1)?ANSI_CHARSET:DEFAULT_CHARSET),
 	 OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,
@@ -2083,7 +2081,6 @@ static wsp alc_winstate()
    wsp ws;
    
    GRFX_ALLOC(ws, _wstate);
-   ws->serial = ++canvas_serial;
    ws->listp = nulldesc;
    ws->buttonorder[0] = 1;
    ws->buttonorder[1] = 2;

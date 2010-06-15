@@ -2283,6 +2283,19 @@ int getdefaultfontsize(int deflt)
     return t;
 }
 
+char *getdefaultfont()
+{
+    static char *t;
+    if (!t) {
+        char *s = getenv("OIFONT");
+        if (s)
+            t = salloc(s);
+        else
+            t = "fixed";
+    }
+    return t;
+}
+
 
 /*
  * mapping from recognized style attributes to flag values
