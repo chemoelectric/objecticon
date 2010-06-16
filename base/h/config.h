@@ -7,36 +7,32 @@
  * The standard names are used unless they are overridden.
  */
 
-#ifndef NOERRBUF
-   #define NOERRBUF "NOERRBUF"
-#endif
-
 #ifndef TRACE
    #define TRACE "TRACE"
 #endif
 
-#ifndef MAXLEVEL
-   #define MAXLEVEL "MAXLEVEL"
+#ifndef OIMAXLEVEL
+   #define OIMAXLEVEL "OIMAXLEVEL"
 #endif
 
-#ifndef STRSIZE
-   #define STRSIZE "STRSIZE"
+#ifndef OISTRSIZE
+   #define OISTRSIZE "OISTRSIZE"
 #endif
 
-#ifndef BLKSIZE
-   #define BLKSIZE "BLKSIZE"
+#ifndef OIBLKSIZE
+   #define OIBLKSIZE "OIBLKSIZE"
 #endif
 
-#ifndef QLSIZE
-   #define QLSIZE "QLSIZE"
+#ifndef OIQLSIZE
+   #define OIQLSIZE "OIQLSIZE"
 #endif
 
-#ifndef IXGROWTH
-   #define IXGROWTH "IXGROWTH"
+#ifndef OIMEMGROWTH
+   #define OIMEMGROWTH "OIMEMGROWTH"
 #endif
 
-#ifndef IXCUSHION
-   #define IXCUSHION "IXCUSHION"
+#ifndef OIMEMCUSHION
+   #define OIMEMCUSHION "OIMEMCUSHION"
 #endif
 
 #ifndef OICORE
@@ -47,8 +43,16 @@
    #define OIPATH "OIPATH"
 #endif
 
-#ifndef OLPATH
-   #define OLPATH "OLPATH"
+#ifndef OIINCL
+   #define OIINCL "OIINCL"
+#endif
+
+#ifndef OIFONT
+   #define OIFONT "OIFONT"
+#endif
+
+#ifndef OIFONTSIZE
+   #define OIFONTSIZE "OIFONTSIZE"
 #endif
 
 #if MSWIN32

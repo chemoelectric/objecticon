@@ -853,7 +853,7 @@ end
 procedure str2list(s, sep, f)
    local l, t
    /sep := ','
-   /f := string
+   /f := 1
    l := []
    s ? repeat {
       t := tab(upto(sep) | 0)
@@ -876,7 +876,7 @@ end
 procedure list2str(l, sep, f)
    local s, e
    /sep := ","
-   /f := string
+   /f := 1
    s := ""
    every e := !l do
       s ||:= f(e) || sep | runerr("list2str: conversion proc failed")

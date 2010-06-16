@@ -27,7 +27,7 @@ OIHOME=$x
 OIBIN=$$OIHOME/bin
 OILIB=$$OIHOME/lib
 OIPATH=($$OILIB/main $$OILIB/gui $$OILIB/xml $$OILIB/parser $$OILIB/ipl)
-OLPATH=($$OILIB/incl)
+OIINCL=($$OILIB/incl)
 OIFONTINFO=$$OIHOME/fontinfo.txt
 bind -a $$OIBIN /bin 
 EOF
@@ -37,10 +37,10 @@ export OIHOME="$x"
 export OIBIN="$$OIHOME/bin"
 export OILIB="$$OIHOME/lib"
 export OIPATH="$$OILIB/main $$OILIB/gui $$OILIB/xml $$OILIB/parser $$OILIB/ipl"
-export OLPATH="$$OILIB/incl"
+export OIINCL="$$OILIB/incl"
 export OIFONTINFO="$$OIHOME/fontinfo.txt"
 PATH="$$PATH:$$OIBIN"
-export TRACE MAXLEVEL
+export TRACE OIMAXLEVEL
 EOF
 x=`{date}
 sed -e 's/@CONFIG_DATE@/'^$"x^'/'  \

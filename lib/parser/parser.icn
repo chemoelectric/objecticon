@@ -355,7 +355,7 @@ class Parser(Connectable, SetFields)
                   } else {
                      if new_file := open(new_filename := 
                                          Files.path_find(sym, 
-                                                         "OLPATH",
+                                                         "OIINCL",
                                                          Files.get_path(preproc_filename).parent().str()))
                      then {
                         every push(preproc_file_stack,

@@ -15,6 +15,9 @@ clean:V:
 test:V:
         @{ cd test ; runtest.sh }
 
+bmark:V:
+        @{ cd bmark ; runbmark.sh }
+
 libref:V:
 	rm -rf libref
 	mkdir libref
