@@ -183,8 +183,6 @@ word dodump = 1;			/* if zero never core dump;
                                          * if 2 core dump on all errors
                                          */
 
-int noerrbuf;				/* if nonzero, do not buffer stderr */
-
 struct descrip maps2;			/* second cached argument of map */
 struct descrip maps3;			/* third cached argument of map */
 struct descrip maps2u;			/* second cached argument of map */
@@ -1249,15 +1247,13 @@ int main(int argc, char **argv)
     /*
      * Examine the environment and make appropriate settings.    [[I?]]
      */
-    if (getenv(NOERRBUF))
-        noerrbuf++;
     env_int(TRACE, &k_trace, 0, MaxWord);
-    env_int(MAXLEVEL, &k_maxlevel, 1, MaxWord);
-    env_int(STRSIZE, &rootstring.size, 1, MaxWord);
-    env_int(BLKSIZE, &rootblock.size, 1, MaxWord); 
-    env_int(QLSIZE, &qualsize, 1, MaxWord);
-    env_int(IXCUSHION, &memcushion, 1, 100);	/* max 100 % */
-    env_int(IXGROWTH, &memgrowth, 1, 10000);	/* max 100x growth */
+    env_int(OIMAXLEVEL, &k_maxlevel, 1, MaxWord);
+    env_int(OISTRSIZE, &rootstring.size, 1, MaxWord);
+    env_int(OIBLKSIZE, &rootblock.size, 1, MaxWord); 
+    env_int(OIQLSIZE, &qualsize, 1, MaxWord);
+    env_int(OIMEMCUSHION, &memcushion, 1, 100);	/* max 100 % */
+    env_int(OIMEMGROWTH, &memgrowth, 1, 10000);	/* max 100x growth */
     env_int(OICORE, &dodump, 1, 2);
 
     stacklim = rootblock.size / 2;
@@ -1302,14 +1298,6 @@ int main(int argc, char **argv)
      * Resolve references from icode to run-time system.
      */
     resolve(&rootpstate);
-
-    if (noerrbuf)
-        setbuf(stderr, NULL);
-    else {
-        char *buf;
-        MemProtect(buf = malloc(BUFSIZ));
-        setbuf(stderr, buf);
-    }
 
     /*
      * Start timing execution.

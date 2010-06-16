@@ -2268,7 +2268,7 @@ int getdefaultfontsize(int deflt)
 {
     static int t;
     if (!t) {
-        char *s = getenv("OIFONTSIZE");
+        char *s = getenv(OIFONTSIZE);
         if (s) {
             char ch;
             if (sscanf(s, "%d%c", &t, &ch) != 1 || t <= 0)
@@ -2285,7 +2285,7 @@ char *getdefaultfont()
 {
     static char *t;
     if (!t) {
-        char *s = getenv("OIFONT");
+        char *s = getenv(OIFONT);
         if (s)
             t = salloc(s);
         else
