@@ -198,7 +198,7 @@ class Node()
       local i, j, e
       /indent := 0
       i := repl(" ", indent * 5)
-      write(f, i || to_string(self, 3))
+      write(f, i || to_string(self, "indent=3"))
       every j := 1 to *children do {
          writes(i || j || ":")
          e := children[j]

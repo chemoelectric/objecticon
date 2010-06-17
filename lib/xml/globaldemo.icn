@@ -52,7 +52,7 @@ procedure main(a)
    d := p.parse(s) | stop("Couldn't parse: ",&why)
 
    r := d.get_root_element()
-   write(to_string(d,3))
+   write(to_string(d,"indent=3"))
 
    write("Encoding style=", image(r.get_attribute_global_name(encoding_style_name)))
 

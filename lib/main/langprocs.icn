@@ -7,14 +7,12 @@ import io, util, ipl.tables
 # also {ObjectOutputStream}.
 #
 # @param o       The object to be converted.
-# @param indent  Output newlines and indentation to show the object structure
-# @param depth   The depth of recursion; default is all levels
+# @param a[]     The field options to pass to the {ObjectOutputStream} constructor
 #
-procedure to_string(o, indent, depth)
+procedure to_string(o, a[])
    local sb
    sb := RamStream()
-   ObjectOutputStream("indent=",indent, 
-                      "depth=",depth).show(o, sb)
+   (ObjectOutputStream!a).show(o, sb)
    return sb.done()
 end
 
@@ -23,12 +21,10 @@ end
 # also {ObjectOutputStream}.
 #
 # @param o       The object to be output.
-# @param indent  Output newlines and indentation to show the object structure
-# @param depth   The depth of recursion; default is all levels
+# @param a[]     The field options to pass to the {ObjectOutputStream} constructor
 #
-procedure to_stdout(o, indent, depth)
-   return ObjectOutputStream("indent=",indent, 
-                             "depth=",depth).show(o, FileStream.stdout)
+procedure to_stdout(o, a[])
+   return (ObjectOutputStream!a).show(o, FileStream.stdout)
 end
 
 #
@@ -36,12 +32,10 @@ end
 # also {ObjectOutputStream}.
 #
 # @param o       The object to be output.
-# @param indent  Output newlines and indentation to show the object structure
-# @param depth   The depth of recursion; default is all levels
+# @param a[]     The field options to pass to the {ObjectOutputStream} constructor
 #
-procedure to_stderr(o, indent, depth)
-   return ObjectOutputStream("indent=",indent, 
-                             "depth=",depth).show(o, FileStream.stderr)
+procedure to_stderr(o, a[])
+   return (ObjectOutputStream!a).show(o, FileStream.stderr)
 end
 
 #
