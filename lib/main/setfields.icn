@@ -20,7 +20,7 @@ class Field()
    end
 
    public table_val()
-      type(\val) == "table" | field_error("Need a table paramter")
+      /val | (type(val) == "table") | field_error("Need a table paramter")
       return val
    end
 
