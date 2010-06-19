@@ -1292,9 +1292,8 @@ int setcanvas(wbp w, char *s)
         }
 
         case NormalState: {
-            if (ws->pix == (Pixmap) NULL) {
+            if (ws->pix == (Pixmap) NULL)
                 ws->state = NormalState;
-            }
             else {
                 if (ws->win == (Window) NULL) {
                     ws->state = NormalState;
@@ -1314,26 +1313,36 @@ int setcanvas(wbp w, char *s)
                     doconfig(w, C_POS | C_SIZE);
                     ws->state = NormalState;
                 }
+                else
+                    return Failed;
             }
             break;
         }
 
         case PopupState: {
-            if (ws->win == (Window) NULL)  {
+            if (ws->pix == (Pixmap) NULL)
                 ws->state = PopupState;
-            }
             else {
-                return Failed;
+                if (ws->win == (Window) NULL) {
+                    ws->state = PopupState;
+                    wmap(w);
+                }
+                else
+                    return Failed;
             }
             break;
         }
 
         case RootState: {
-            if (ws->win == (Window) NULL)  {
+            if (ws->pix == (Pixmap) NULL)
                 ws->state = RootState;
-            }
             else {
-                return Failed;
+                if (ws->win == (Window) NULL) {
+                    ws->state = RootState;
+                    wmap(w);
+                }
+                else
+                    return Failed;
             }
             break;
         }
@@ -1374,9 +1383,8 @@ int setcanvas(wbp w, char *s)
         }
 
         case HiddenState: {
-            if (ws->pix == (Pixmap)NULL) {
+            if (ws->pix == (Pixmap)NULL)
                 ws->state = HiddenState;
-            }
             else {
                 if (ws->win != (Window) NULL) {
                     if (ws->state == MaximizedState) {
