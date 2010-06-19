@@ -892,8 +892,11 @@ static void wmap(wbp w)
 
     wmhints.input = True;
     wmhints.flags = InputHint;
-    if (ws->state != RootState) {
-        wmhints.flags |= (ws->wmhintflags | StateHint);
+    if (ws->state == IconicState) {
+        wmhints.flags |= StateHint;
+        wmhints.initial_state = IconicState;
+    } else if (ws->state != RootState) {
+        wmhints.flags |= StateHint;
         wmhints.initial_state = NormalState;
     }
     XSetWMHints(stddpy, stdwin, &wmhints);
@@ -1277,21 +1280,20 @@ int setcanvas(wbp w, char *s)
 
     switch (e->i) {
         case IconicState: {
-            if (ws->pix == (Pixmap) NULL) {
-                ws->wmhintflags |= StateHint;
+            if (ws->pix == (Pixmap) NULL)
                 ws->state = IconicState;
-            }
             else {
                 if (ws->state == RootState || ws->state == PopupState)
                     return Failed;
                 if (ws->win == (Window) NULL) {
-                    ws->state = NormalState;
+                    ws->state = IconicState;
                     wmap(w);
+                } else {
+                    XIconifyWindow(ws->display->display, ws->win, ws->display->screen);
+                    XSync(stddpy, False);
+                    while (ws->state != IconicState)
+                        handle_misc(wd);
                 }
-                XIconifyWindow(ws->display->display, ws->win, ws->display->screen);
-                XSync(stddpy, False);
-                while (ws->state != IconicState)
-                    handle_misc(wd);
             }
             break;
         }
