@@ -297,7 +297,6 @@ typedef struct _wstate {
   int		normalw, normalh;	/* size to remember when maximized */
   int		state;			/* window state; icon, window or root*/
   Window        transientfor;           /* transient-for hint */
-  long		wmhintflags;		/* window manager hints */
 #elif PLAN9
   struct progstate *program;           /* owning program */
   Image         *win;

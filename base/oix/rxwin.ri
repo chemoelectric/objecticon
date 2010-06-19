@@ -534,11 +534,13 @@ static void handle_misc(wdp wd)
                 wb->window->state = IconicState;
                 break;
             case MapNotify:
-                if ((ws->width != DisplayWidth(wd->display, wd->screen)) ||
-                    (ws->height != DisplayHeight(wd->display, wd->screen)))
-                    ws->state = NormalState;
-                else
-                    ws->state = MaximizedState;
+                if (wb->window->state == IconicState) {
+                    if ((ws->width != DisplayWidth(wd->display, wd->screen)) ||
+                        (ws->height != DisplayHeight(wd->display, wd->screen)))
+                        ws->state = NormalState;
+                    else
+                        ws->state = MaximizedState;
+                }
                 break;
             case ConfigureNotify:
                 handle_config(wb, (XConfigureEvent *)&event);
@@ -890,8 +892,11 @@ static void wmap(wbp w)
 
     wmhints.input = True;
     wmhints.flags = InputHint;
-    if (ws->state != RootState) {
-        wmhints.flags |= (ws->wmhintflags | StateHint);
+    if (ws->state == IconicState) {
+        wmhints.flags |= StateHint;
+        wmhints.initial_state = IconicState;
+    } else if (ws->state != RootState) {
+        wmhints.flags |= StateHint;
         wmhints.initial_state = NormalState;
     }
     XSetWMHints(stddpy, stdwin, &wmhints);
@@ -1270,18 +1275,20 @@ int setcanvas(wbp w, char *s)
     e = stringint_lookup(canvastypes, s);
     if (!e)
         return Failed;
+    if (e->i == ws->state)
+        return Succeeded;
+
     switch (e->i) {
         case IconicState: {
-            if (ws->pix == (Pixmap) NULL) {
-                ws->wmhintflags |= StateHint;
+            if (ws->pix == (Pixmap) NULL)
                 ws->state = IconicState;
-            }
             else {
-                if (ws->state != IconicState) {
-                    if (ws->win == (Window) NULL) {
-                        ws->state = NormalState;
-                        wmap(w);
-                    }
+                if (ws->state == RootState || ws->state == PopupState)
+                    return Failed;
+                if (ws->win == (Window) NULL) {
+                    ws->state = IconicState;
+                    wmap(w);
+                } else {
                     XIconifyWindow(ws->display->display, ws->win, ws->display->screen);
                     XSync(stddpy, False);
                     while (ws->state != IconicState)
@@ -1292,9 +1299,8 @@ int setcanvas(wbp w, char *s)
         }
 
         case NormalState: {
-            if (ws->pix == (Pixmap) NULL) {
+            if (ws->pix == (Pixmap) NULL)
                 ws->state = NormalState;
-            }
             else {
                 if (ws->win == (Window) NULL) {
                     ws->state = NormalState;
@@ -1314,69 +1320,79 @@ int setcanvas(wbp w, char *s)
                     doconfig(w, C_POS | C_SIZE);
                     ws->state = NormalState;
                 }
+                else
+                    return Failed;
             }
             break;
         }
 
         case PopupState: {
-            if (ws->win == (Window) NULL)  {
+            if (ws->pix == (Pixmap) NULL)
                 ws->state = PopupState;
-            }
             else {
-                return Failed;
+                if (ws->win == (Window) NULL) {
+                    ws->state = PopupState;
+                    wmap(w);
+                }
+                else
+                    return Failed;
             }
             break;
         }
 
         case RootState: {
-            if (ws->win == (Window) NULL)  {
+            if (ws->pix == (Pixmap) NULL)
                 ws->state = RootState;
-            }
             else {
-                return Failed;
+                if (ws->win == (Window) NULL) {
+                    ws->state = RootState;
+                    wmap(w);
+                }
+                else
+                    return Failed;
             }
             break;
         }
 
         case MaximizedState: {
-            if (ws->state != MaximizedState) {
-                int expect_config= (ws->width != DisplayWidth(stddpy, wd->screen)) ||
-                    (ws->height != DisplayHeight(stddpy, wd->screen));
-                ws->normalx = ws->x;
-                ws->normaly = ws->y;
-                ws->normalw = ws->width;
-                ws->normalh = ws->height;
-                ws->width = DisplayWidth(stddpy, wd->screen);
-                ws->height= DisplayHeight(stddpy, wd->screen);
-                if (ws->pix != (Pixmap) NULL) {
-                    if (ws->win == (Window) NULL) {
-                        ws->state = MaximizedState;
-                        wmap(w);
-                    }
-                    else if (ws->state == IconicState) {
-                        XMapWindow(stddpy, stdwin);
-                        XSync(stddpy, False);
-                        while (ws->state == IconicState)
-                            pollevent();
-                    }
-                    else if (expect_config) {
-                        ws->x = ws->y = 0;
-                        doconfig(w, C_POS | C_SIZE);
-                        pollevent();
-                        ws->x = -ws->x;
-                        ws->y = -ws->y;
-                        doconfig(w, C_POS);
-                    }
+            int expect_config;
+            if (ws->state == RootState || ws->state == PopupState)
+                return Failed;
+            expect_config= (ws->width != DisplayWidth(stddpy, wd->screen)) ||
+                (ws->height != DisplayHeight(stddpy, wd->screen));
+            ws->normalx = ws->x;
+            ws->normaly = ws->y;
+            ws->normalw = ws->width;
+            ws->normalh = ws->height;
+            ws->width = DisplayWidth(stddpy, wd->screen);
+            ws->height= DisplayHeight(stddpy, wd->screen);
+            if (ws->pix != (Pixmap) NULL) {
+                if (ws->win == (Window) NULL) {
+                    ws->state = MaximizedState;
+                    wmap(w);
                 }
-                ws->state = MaximizedState;
+                else if (ws->state == IconicState) {
+                    XMapWindow(stddpy, stdwin);
+                    XSync(stddpy, False);
+                    while (ws->state == IconicState)
+                        pollevent();
+                }
+                else if (expect_config) {
+                    ws->x = ws->y = 0;
+                    doconfig(w, C_POS | C_SIZE);
+                    pollevent();
+                    ws->x = -ws->x;
+                    ws->y = -ws->y;
+                    doconfig(w, C_POS);
+                }
             }
+            ws->state = MaximizedState;
             break;
         }
 
         case HiddenState: {
-            if (ws->pix == (Pixmap)NULL) {
+            if (ws->pix == (Pixmap)NULL)
                 ws->state = HiddenState;
-            }
             else {
                 if (ws->win != (Window) NULL) {
                     if (ws->state == MaximizedState) {

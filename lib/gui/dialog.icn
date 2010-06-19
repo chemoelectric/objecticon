@@ -252,6 +252,7 @@ class Dialog(Component)
    end
 
    public initially()
+      local t
       self.parent_dialog := self
       self.effective_is_hidden_flag := self.is_hidden_flag
       self.effective_is_shaded_flag := self.is_shaded_flag
@@ -259,12 +260,16 @@ class Dialog(Component)
       self.effective_wattribs := copy(self.wattribs)
       every delete(self.effective_wattribs, 
                    "pos" | "x" | "y" | "size" | "width" | "height"|
-                   "dx" | "dy" |
+                   "dx" | "dy" | "canvas" |
                    "min_width" | "min_height" | "min_size" |
                    "max_width" | "max_height" | "max_size")
       self.compute_z_order()
       self.compute_tab_order()
-      self.cbwin := self.buffer_win.clone!wattribs_to_list(self.wattribs) | 
+      # Delete "canvas" from the attribs, since canvas=popup may be specified, and we
+      # don't want the buffer window to popup.
+      t := copy(self.wattribs)
+      delete(t, "canvas")
+      self.cbwin := self.buffer_win.clone!wattribs_to_list(t) | 
          runerr("Failed to open clone window:" || &why)
       every (!self.children).initially()
    end

@@ -101,6 +101,8 @@ procedure util_check_attribs(dialog, t)
    errorclear()
    e := create {
       every s := !sort(t) do {
+         if s[1] == "canvas" then
+            next
          test_win.attrib(s[1] || "=" || s[2])
       }
    }
