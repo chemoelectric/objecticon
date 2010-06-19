@@ -269,7 +269,10 @@ class Canvas(Component,SelectiveObjectCodec)
    end
 
    public get_effective_wattribs()
-      return copy(dialog_struct.wattribs)
+      local t
+      t := copy(dialog_struct.wattribs)
+      default.delete(t, "canvas")
+      return t
    end
 
    public imagex(s)
@@ -1028,8 +1031,11 @@ class Canvas(Component,SelectiveObjectCodec)
    end
 
    public initially()
+      local wa
       # The size will be set up in resize()...
-      item_buff_win := Window.open!(["canvas=hidden"] ||| wattribs_to_list(self.dialog_struct.wattribs))
+      wa := copy(self.dialog_struct.wattribs)
+      default.delete(wa, "canvas")
+      item_buff_win := Window.open!(["canvas=hidden"] ||| wattribs_to_list(wa))
       cast(self,Component).initially()
    end
 
@@ -1055,11 +1061,12 @@ class Canvas(Component,SelectiveObjectCodec)
    # Reset the item window attributes.
    #  
    public reset_windows()
-      local t
-
+      local t, wa
       # Create a new buffer window, keeping a reference to the outgoing one.
       t := item_buff_win
-      item_buff_win := Window.open!(["canvas=hidden"] ||| wattribs_to_list(self.dialog_struct.wattribs) |||
+      wa := copy(self.dialog_struct.wattribs)
+      default.delete(wa, "canvas")
+      item_buff_win := Window.open!(["canvas=hidden"] ||| wattribs_to_list(wa) |||
                ["size=" || self.parent_dialog.w || "," || 
                 self.parent_dialog.h]) | stop("Couldn't open item_buff_win")
 
