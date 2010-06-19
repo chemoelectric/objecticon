@@ -387,17 +387,18 @@ static int configure_canvas(wbp w)
             close_screen_win(ws);
         }
     } else {
-        if (!ws->win) {
+        if (ws->win) {
+            if (ws->desired_canvas == IconicCanvas)
+                fprint(ws->wctl_fd, "hide");
+            else
+                fprint(ws->wctl_fd, "unhide");
+        } else {
             if (limit_size(ws, &ws->width, &ws->height))
                 resize_pix_win(w);
             if (open_screen_win(ws) == Failed)
                 return Failed;
             pix_to_win(ws);
         }
-        if (ws->desired_canvas == IconicCanvas)
-            fprint(ws->wctl_fd, "hide");
-        else
-            fprint(ws->wctl_fd, "unhide");
     }
     return Succeeded;
 }
@@ -1418,6 +1419,11 @@ static int open_screen_win(wsp ws)
 
         if (ws->x != -INT_MAX && ws->y != -INT_MAX)
             fprint(ws->wctl_fd, "move  -minx %d -miny %d", ws->x, ws->y);
+
+        if (ws->desired_canvas == IconicCanvas)
+            fprint(ws->wctl_fd, "hide");
+        else
+            fprint(ws->wctl_fd, "unhide");
 
         use_win = 0;
     } else {
