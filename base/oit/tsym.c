@@ -241,9 +241,15 @@ static void fout(struct tfunction *f)
     }
 
     for (cp = f->cfirst; cp; cp = cp->c_next) {
-        uout_op(Uop_Data);
-        uout_32(cp->c_flag);
-        uout_bin(cp->c_length, cp->c_name);
+        if (cp->c_length > 0xff) {
+            uout_op(Uop_Ldata);
+            uout_32(cp->c_flag);
+            uout_lbin(cp->c_length, cp->c_name);
+        } else {
+            uout_op(Uop_Sdata);
+            uout_32(cp->c_flag);
+            uout_sbin(cp->c_length, cp->c_name);
+        }
     }
 }
 

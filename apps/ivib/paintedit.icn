@@ -396,7 +396,7 @@ class GridPaintEdit(PaintEdit)
       d.set_directory(\Ivib.last_icon_dir)
       d.show_modal(self)
       Ivib.last_icon_dir := d.get_directory()
-      s := util_read_icon(self, d.get_result()) | fail
+      s := util_read_icon(self, d.get_result(), "c1") | fail
       s := split_icon(s)
       s := ".img\n" || s || "$\n"
       input.insert_string(s, e)
@@ -415,10 +415,10 @@ class GridPaintEdit(PaintEdit)
       input.connect(self.on_input, Event.CONTENT_CHANGED)
       input.connect(self.on_input_press, Event.MOUSE_RIGHT_PRESS)
       input.set_contents_str(\c.fmt)
-      p.add(input)
 
       output := ShowGridPaint("size=150,200", "c:eol")
-      p.add(output)
+
+      p.add(Split("left=",input, "right=",output, "c:eol"))
 
       ucs_cb := CheckBox("label=Ucs content")
       if type(c.fmt) == "ucs" then

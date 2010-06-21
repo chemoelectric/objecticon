@@ -296,9 +296,9 @@ class GridPaint(Paint)
             Align.B : y + curr_cell.obj[lno].h - image_height(icon)
          }
          draw_image_ex(win, 
-                     x, 
-                     y1,
-                     icon)
+                       x, 
+                       y1,
+                       text_convert(icon, "string"))
          x +:= image_width(icon)
       }
    end
