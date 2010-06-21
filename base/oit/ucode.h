@@ -17,8 +17,11 @@ void uout_32(word n);
 /* null-terminated string */
 void uout_str(char *s);
 
-/* len bytes of binary data */
-void uout_bin(int len, char *s);
+/* len bytes of binary data; len <= 0xff */
+void uout_sbin(int len, char *s);
+
+/* len bytes of binary data; len 32 bit int */
+void uout_lbin(int len, char *s);
 
 /*
  * The input routines follow a similar pattern.
@@ -40,7 +43,10 @@ char *uin_str(void);
 char *uin_fqid(char *package);
 
 /* Get and intern binary data, storing the length in n */
-char *uin_bin(int *n);
+char *uin_sbin(int *n);
+
+/* Get and intern binary data, storing the length in n */
+char *uin_lbin(int *n);
 
 /* Get a 16 bit signed short */
 int uin_16(void);
@@ -69,7 +75,8 @@ extern struct ucode_op ucode_op_table[];
 #define TYPE_32        1   /* signed 32 bits */
 #define TYPE_16        2   /* signed 16 bits */
 #define TYPE_STR       3   /* null terminated string */
-#define TYPE_BIN       4   /* binary data (length + bytes) */
+#define TYPE_SBIN      4   /* binary data (8 bit length + bytes) */
+#define TYPE_LBIN      5   /* binary data (32 bit length + bytes) */
 
 
 /*
@@ -184,8 +191,9 @@ extern struct ucode_op ucode_op_table[];
 #define Uop_Const       201
 #define Uop_Declend	202
 #define Uop_End		203
+#define Uop_Ldata	204
 #define Uop_Version	205
-#define Uop_Data	206
+#define Uop_Sdata	206
 #define Uop_Filen	207
 #define Uop_Package     208
 #define Uop_Import      209

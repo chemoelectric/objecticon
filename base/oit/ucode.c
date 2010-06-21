@@ -209,9 +209,9 @@ struct ucode_op ucode_op_table[] = {
     /* 201 */         { Uop_Const, "const", { TYPE_16,0 }, "\t%-12s %d" },
     /* 202 */         { Uop_Declend, "declend", {0,0}, "\t%-12s" },           
     /* 203 */         { Uop_End, "end", {0,0}, "\t%-12s" },                   
-    /* 204 */         INVALID,
+    /* 204 */         { Uop_Ldata, "ldata", { TYPE_32, TYPE_LBIN }, "\t%-12s %08o %s" },
     /* 205 */         { Uop_Version, "version", { TYPE_STR,0 }, "\t%-12s %s" },            
-    /* 206 */         { Uop_Data, "data", { TYPE_32, TYPE_BIN }, "\t%-12s %08o %s" },
+    /* 206 */         { Uop_Sdata, "sdata", { TYPE_32, TYPE_SBIN }, "\t%-12s %08o %s" },
     /* 207 */         { Uop_Filen, "filen", { TYPE_STR,0 }, "\t%-12s %s" },                
     /* 208 */         { Uop_Package, "package", { TYPE_STR,0 }, "\t%-12s %s" },            
     /* 209 */         { Uop_Import, "import", { TYPE_STR, TYPE_16 }, "\t%-12s %s %d" },          
@@ -321,18 +321,28 @@ void uout_str(char *s)
     putc(0, ucodefile);
 }
 
-void uout_bin(int len, char *s)
+void uout_sbin(int len, char *s)
+{
+    check_param(TYPE_SBIN);
+    if (len > 0xff)
+        quit("Param to uout_sbin out of range");
+    putc(len, ucodefile);
+    while (len-- > 0)
+        putc(*s++, ucodefile);
+}
+
+void uout_lbin(int len, char *s)
 {
     union {
-        unsigned char c[2];
-        unsigned int s:16;
+        unsigned char c[4];
+        unsigned int s:32;
     } i;
-    check_param(TYPE_BIN);
-    if (len > 0xffff)
-        quit("Param to uout_bin out of range");
+    check_param(TYPE_LBIN);
     i.s = len;
     putc(i.c[0], ucodefile);
     putc(i.c[1], ucodefile);
+    putc(i.c[2], ucodefile);
+    putc(i.c[3], ucodefile);
     while (len-- > 0)
         putc(*s++, ucodefile);
 }
@@ -385,16 +395,33 @@ char *uin_str()
     return str_install(&ucode_sbuf);
 }
 
-char *uin_bin(int *n)
+char *uin_sbin(int *n)
+{
+    int c, l;
+    check_param(TYPE_SBIN);
+    l = uin_nextch();
+    if (n)
+        *n = l;
+    zero_sbuf(&ucode_sbuf);
+    while (l-- > 0) {
+        c = uin_nextch();
+        AppChar(ucode_sbuf, c);
+    }
+    return str_install(&ucode_sbuf);
+}
+
+char *uin_lbin(int *n)
 {
     union {
-        unsigned char c[2];
-        unsigned int s:16;
+        unsigned char c[4];
+        unsigned int s:32;
     } i;
     int c, l;
-    check_param(TYPE_BIN);
+    check_param(TYPE_LBIN);
     i.c[0] = uin_nextch();
     i.c[1] = uin_nextch();
+    i.c[2] = uin_nextch();
+    i.c[3] = uin_nextch();
     l = (int)i.s;
     if (n)
         *n = l;
@@ -471,8 +498,11 @@ void uin_skip(int opcode)
             case TYPE_STR:
                 uin_str();
                 break;
-            case TYPE_BIN:
-                uin_bin(0);
+            case TYPE_SBIN:
+                uin_sbin(0);
+                break;
+            case TYPE_LBIN:
+                uin_lbin(0);
                 break;
             default:
                 quit("Internal error");
@@ -544,9 +574,24 @@ static void read_params(struct ucode_op *op)
             case TYPE_STR:
                 args[i] = (long)uin_str();
                 break;
-            case TYPE_BIN: {
+            case TYPE_SBIN: {
                 int l, t;
-                char *s1 = uin_bin(&l);
+                char *s1 = uin_sbin(&l);
+                t = l;
+                zero_sbuf(&ucode_sbuf);
+                while (l-- > 0) {
+                    if (isprint((unsigned char)*s1))
+                        AppChar(ucode_sbuf, *s1);
+                    else
+                        AppChar(ucode_sbuf, '?');
+                    ++s1;
+                }
+                args[i] = (long)str_install(&ucode_sbuf);
+                break;
+            }
+            case TYPE_LBIN: {
+                int l, t;
+                char *s1 = uin_lbin(&l);
                 t = l;
                 zero_sbuf(&ucode_sbuf);
                 while (l-- > 0) {

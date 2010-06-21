@@ -57,9 +57,10 @@ typedef struct {			/* preprocessor token structure */
 typedef struct cd {			/* structure holding a definition */
    struct cd *next;			/* link to next defn */
    struct cd *prev;			/* link to previous defn */
-   short nlen, vlen;			/* length of name & val */
+   int nlen, vlen;			/* length of name & val */
    char inuse;				/* nonzero if curr being expanded */
-   char s[1];				/* name then value, as needed, no \0 */
+   char *name;                          /* name */
+   char *val;                           /* value */
    } cdefn;
 
 static	int	ppopen	(char *fname, int m4);
@@ -79,6 +80,7 @@ static	char *	elsedir	(char *s);
 static	char *	elsif	(char *s);
 static	char *	endif	(char *s);
 static	char *	encoding(char *s);
+static  char *  load    (char *s);
 static	char *	errdir	(char *s);
 static	char *	include	(char *s);
 static	char *	setline	(char *s);
@@ -88,7 +90,11 @@ static	char *	matchq	(char *s);
 static	char *	getidt	(char *dst, char *src);
 static	char *	getencoding(char *dst, char *src);
 static	char *	getfnm	(char *dst, char *src);
-static	cdefn *	dlookup	(char *name, int len, char *val);
+static  void   freecdefn(cdefn *d);
+static cdefn *dquery(char *name, int len);
+static void  dremove(char *name);
+static void  dinsert(char *name, char *val);
+static void  dinsert_pre(char *name, char *val, int vlen);
 
 struct ppcmd {
    char *name;
@@ -107,6 +113,7 @@ pplist[] = {
    { "line",    setline },
    { "error",   errdir  },
    { "encoding",encoding  },
+   { "load",    load  },
    { 0,         0       }};
 
 static infile nofile;			/* ancestor of all files; all zero */
@@ -144,7 +151,7 @@ int ppinit(char *fname, int m4)
    for (i = 0; i < HTBINS; i++) {
       for (d = cbin[i]; d != NULL; d = n) {
          n = d->next;
-         free((char *)d);
+         freecdefn(d);
          }
       cbin[i] = NULL;
       }
@@ -152,7 +159,7 @@ int ppinit(char *fname, int m4)
    /*
     * install predefined symbols
     */
-#define Feature(symname,kwval) dlookup(symname, -1, "1");
+#define Feature(symname,kwval) dinsert(symname, "1");
 #include "../h/features.h"
 
    /*
@@ -235,11 +242,11 @@ static FILE *m4pipe(char *filename)
  *  No error is given for a redefinition.
  */
 void ppdef(char *s, char *v)
-   {
-   dlookup(s, -1, (char *)NULL);
+{
+   dremove(s);
    if (v != NULL)
-      dlookup(s, -1, v);
-   }
+       dinsert(s, v);
+}
 
 /*
  * ppecho() -- run input through preprocessor and echo directly to stdout.
@@ -284,7 +291,7 @@ int ppch()
             while (p < blim && (isalnum((unsigned char)(c = *p)) || c == '_'))	/* find end */
                p++;
             bstop = p;			/* safe to consume through end */
-            if (((d = dlookup(bnxt, p-bnxt, bnxt)) == 0)  || (d->inuse == 1)) {
+            if (((d = dquery(bnxt, p-bnxt)) == 0)  || (d->inuse == 1)) {
                bnxt++;
                return f;		/* not defined; just use it */
                }
@@ -446,11 +453,7 @@ static char *rline(FILE *fp)
 
       /* need to read more, so we need a bigger buffer */
       llen += LINE_SIZE_INCR;
-      lbuf = realloc(lbuf, (unsigned int)llen);
-      if (!lbuf) {
-         fprintf(stderr, "rline(%d): out of memory\n", llen);
-         exit(EXIT_FAILURE);
-         }
+      lbuf = safe_realloc(lbuf, llen);
       p = lbuf + llen - LINE_SIZE_INCR - 2;
       n = LINE_SIZE_INCR;
       }
@@ -462,7 +465,6 @@ static char *rline(FILE *fp)
 static void pushdef(cdefn *d)
    {
    buffer *b;
-
    d->inuse = 1;
    b = bfree;
    if (b == NULL)
@@ -475,7 +477,7 @@ static void pushdef(cdefn *d)
    b->stop = bstop;
    b->lim = blim;
    bstack = b;
-   bnxt = bstop = d->s + d->nlen;
+   bnxt = bstop = d->val;
    blim = bnxt + d->vlen;
    }
 
@@ -588,7 +590,127 @@ static char *define(char *s)
          s--;
       }
    *s = '\0';
-   dlookup(name, -1, val);		/* install in table */
+   dinsert(name, val);		/* install in table */
+   return NULL;
+   }
+
+/*
+ * Adapted from rmisc.r; should give the same result as image(s) for a string s.
+ */
+
+static int charstr(int c, char *b)
+{
+    static char cbuf[12];
+    if (c < 128 && isprint((unsigned char)c)) {
+        /*
+         * c is printable, but special case ", ', - and \.
+         */
+        switch (c) {
+            case '"':
+                strncpy(b, "\\\"", 2);
+                return 2;
+            case '\\':
+                strncpy(b, "\\\\", 2);
+                return 2;
+            default:
+                *b = c;
+                return 1;
+        }
+    }
+
+    /*
+     * c is some sort of unprintable character.	If it one of the common
+     *  ones, produce a special representation for it, otherwise, produce
+     *  its hex value.
+     */
+    switch (c) {
+        case '\b':			/* backspace */
+            strncpy(b, "\\b", 2);
+            return 2;
+
+        case '\177':			/* delete */
+            strncpy(b, "\\d", 2);
+            return 2;
+        case '\33':			/* escape */
+            strncpy(b, "\\e", 2);
+            return 2;
+        case '\f':			/* form feed */
+            strncpy(b, "\\f", 2);
+            return 2;
+        case '\n':			/* new line */
+            strncpy(b, "\\n", 2);
+            return 2;
+        case '\r':     		/* carriage return b */
+            strncpy(b, "\\r", 2);
+            return 2;
+        case '\t':			/* horizontal tab */
+            strncpy(b, "\\t", 2);
+            return 2;
+        case '\13':			/* vertical tab */
+            strncpy(b, "\\v", 2);
+            return 2;
+        default: {				/* hex escape sequence */
+            sprintf(cbuf, "\\x%02x", c);
+            strncpy(b, cbuf, 4);
+            return 4;
+        }
+    }
+}
+
+static char *loadfile(char *fname, int *vlen)
+{
+    FILE *f;
+    int ch;
+    int len, i, n;
+    char *s;
+
+    f = fopen(fname, ReadBinary);
+    if (f == NULL)
+        return 0;
+
+    len = 1024;
+    s = safe_alloc(len);
+    *s = '\"';
+    i = 1;
+    while ((ch = getc(f)) != EOF) {
+        /* Ensure enough room for maximum 4 bytes from charstr + 2 for
+         * the closing quote and null byte */
+        if (i >= len - 6) {
+            len *= 2;
+            s = safe_realloc(s, len);
+        }
+        n = charstr(ch, s + i);
+        i += n;
+    }
+    s[i++] = '\"';
+    s[i] = 0;
+    fclose(f);
+    *vlen = i;
+    return s;
+}
+
+/*
+ * load(s) -- handle $load directive.
+ */
+static char *load(char *s)
+   {
+   char c, *name, *val, *fname, *fullpath;
+   int vlen = 0;
+
+   if (isalpha((unsigned char)(c = *s)) || c == '_')
+      s = getidt(name = s - 1, s);		/* get name */
+   else
+      return "$load: missing name";
+   s = wskip(s);
+   s = getfnm(fname = s - 1, s);
+   if (*fname == '\0')
+      return "$load: invalid file name";
+   if (*wskip(s) != '\0')
+      return "$load: too many arguments";
+   fullpath = pathfind(intern(getdir(curfile->fname)), lpath, fname, 0);
+   if (!fullpath || !(val = loadfile(fullpath, &vlen)))
+      pfatal("cannot open", fname);
+   dinsert_pre(name, val, vlen);		/* install in table */
    return NULL;
    }
 
@@ -605,7 +727,7 @@ static char *undef(char *s)
       return "$undef: missing name";
    if (*wskip(s) != '\0')
       return "$undef: too many arguments";
-   dlookup(name, -1, (char *)NULL);
+   dremove(name);
    return NULL;
    }
 
@@ -703,7 +825,7 @@ static char *ifxdef(char *s, int f)
    if (*wskip(s) != '\0')
       return "$ifdef/$ifndef: too many arguments";
    for (;;) {
-       if ((dlookup(name, -1, name) != NULL) ^ f) {
+       if ((dquery(name, -1) != NULL) ^ f) {
            char *cmd;
            skipcode(1, 1, &cmd, &s);	/* skip to $else, $elsifdef, $elsifndef or $endif */
 
@@ -987,62 +1109,141 @@ static char *getfnm(char *dst, char *src)
    }
 
 /*
- * dlookup(name, len, val) look up entry in definition table.
- *
- *  If val == name, return the existing value, or NULL if undefined.
- *  If val == NULL, delete any existing value and undefine the name.
- *  If val != NULL, install a new value, and print error if different.
- *
- *  If name is null, the call is ignored.
- *  If len < 0, strlen(name) is taken.
+ * salloc - allocate and initialize string
  */
-static cdefn *dlookup(char *name, int len, char *val)
-   {
-   int h, i, nlen, vlen;
-   unsigned int t;
-   cdefn *d, **p;
 
-   if (len < 0)
-      len = strlen(name);
-   if (len == 0)
-      return NULL;
-   for (t = i = 0; i < len; i++)
-      t = 37 * t + (name[i] & 0xFF);	/* calc hash value */
-   h = t % HTBINS;			/* calc bin number */
-   p = &cbin[h];			/* get head of list */
-   while ((d = *p) != NULL) {
-      if (d->nlen == len && strncmp(name, d->s, len) == 0) {
-         /*
-          * We found a match in the table.
-          */
-         if (val == NULL) {		/* if $undef */
+char *salloc(char *s)
+{
+    char *s1;
+    s1 = (char *)safe_alloc(strlen(s) + 1);
+    return strcpy(s1, s);
+}
+
+static void freecdefn(cdefn *d)
+{
+    free(d->name);
+    free(d->val);
+    free(d);
+}
+
+static cdefn *dquery(char *name, int len)
+{
+    int h, i;
+    unsigned int t;
+    cdefn *d, **p;
+    if (len < 0)
+        len = strlen(name);
+    if (len == 0)
+        return NULL;
+    for (t = i = 0; i < len; i++)
+        t = 37 * t + (name[i] & 0xFF);	/* calc hash value */
+    h = t % HTBINS;			/* calc bin number */
+    p = &cbin[h];			/* get head of list */
+    while ((d = *p) != NULL) {
+        if (d->nlen == len && strncmp(name, d->name, len) == 0)
+            return d;			/* return pointer to entry */
+        p = &d->next;
+    }
+    /*
+     * No match
+     */
+    return NULL;
+}
+
+static void dremove(char *name)
+{
+    int nlen, h, i;
+    unsigned int t;
+    cdefn *d, **p;
+    nlen = strlen(name);
+    if (nlen == 0)
+        return;
+    for (t = i = 0; i < nlen; i++)
+        t = 37 * t + (name[i] & 0xFF);	/* calc hash value */
+    h = t % HTBINS;			/* calc bin number */
+    p = &cbin[h];			/* get head of list */
+    while ((d = *p) != NULL) {
+        if (d->nlen == nlen && strncmp(name, d->name, nlen) == 0) {
             *p = d->next;		/* delete from table */
-            free(d);
-            return NULL;
-            }
-         if (val != name && strcmp(val, d->s + d->nlen) != 0)
-            pfatal("value redefined", name);
-         return d;			/* return pointer to entry */
-         }
-      p = &d->next;
-      }
-   /*
-    * No match. Install a definition if that is what is wanted.
-    */
-   if (val == name || val == NULL)	/* if was reference or $undef */
-      return NULL;
-   nlen = strlen(name);
-   vlen = strlen(val);
-   d = safe_alloc(sizeof(*d) - sizeof(d->s) + nlen + vlen + 1);
-   d->nlen = nlen;
-   d->vlen = vlen;
-   d->inuse = 0;
-   strcpy(d->s, name);
-   strcpy(d->s + nlen, val);
-   d->prev = NULL;
-   d->next = cbin[h];
-   if (d->next != NULL)
-      d->next->prev = d;
-   cbin[h] = d;
-   return d;
-   }
+            freecdefn(d);
+            return;
+        }
+        p = &d->next;
+    }
+}
+
+static void dinsert(char *name, char *val)
+{
+    int h, i, nlen, vlen;
+    unsigned int t;
+    cdefn *d, **p;
+    nlen = strlen(name);
+    if (nlen == 0)
+        return;
+    vlen = strlen(val);
+    for (t = i = 0; i < nlen; i++)
+        t = 37 * t + (name[i] & 0xFF);	/* calc hash value */
+    h = t % HTBINS;			/* calc bin number */
+    p = &cbin[h];			/* get head of list */
+    while ((d = *p) != NULL) {
+        if (d->nlen == nlen && strncmp(name, d->name, nlen) == 0) {
+            /*
+             * We found a match in the table.
+             */
+            if (strcmp(val, d->val) != 0) 
+                pfatal("value redefined", name);
+            return;
+        }
+        p = &d->next;
+    }
+    d = safe_alloc(sizeof(*d));
+    d->nlen = nlen;
+    d->vlen = vlen;
+    d->inuse = 0;
+    d->name = salloc(name);
+    d->val = salloc(val);
+    d->prev = NULL;
+    d->next = cbin[h];
+    if (d->next != NULL)
+        d->next->prev = d;
+    cbin[h] = d;
+}
+
+/*
+ * Like dinsert, but val is pre-allocated and its length given.
+ */
+static void dinsert_pre(char *name, char *val, int vlen)
+{
+    int h, i, nlen;
+    unsigned int t;
+    cdefn *d, **p;
+    nlen = strlen(name);
+    if (nlen == 0)
+        return;
+    for (t = i = 0; i < nlen; i++)
+        t = 37 * t + (name[i] & 0xFF);	/* calc hash value */
+    h = t % HTBINS;			/* calc bin number */
+    p = &cbin[h];			/* get head of list */
+    while ((d = *p) != NULL) {
+        if (d->nlen == nlen && strncmp(name, d->name, nlen) == 0) {
+            /*
+             * We found a match in the table.
+             */
+            if (strcmp(val, d->val) != 0) 
+                pfatal("value redefined", name);
+            return;
+        }
+        p = &d->next;
+    }
+    d = safe_alloc(sizeof(*d));
+    d->nlen = nlen;
+    d->vlen = vlen;
+    d->inuse = 0;
+    d->name = salloc(name);
+    d->val = val;
+    d->prev = NULL;
+    d->next = cbin[h];
+    if (d->next != NULL)
+        d->next->prev = d;
+    cbin[h] = d;
+}

@@ -220,7 +220,7 @@ class Parser(Connectable, SetFields)
    # either a blank line or a #line directive.
    #
    private preproc_scan_directive()
-      local sym,value,new_file,new_filename,new_line,new_encoding,old,preproc_command,old_if_state
+      local sym,value,new_file,new_filename,new_line,new_encoding,old,preproc_command,old_if_state,fname
       preproc_space()
       preproc_command := preproc_word()
       if \preproc_if_state then {
@@ -251,6 +251,31 @@ class Parser(Connectable, SetFields)
             if /preproc_if_state then {
                if sym := preproc_word() & preproc_at_end() then {
                   delete(preproc_sym_table,sym)
+               } else {
+                  preproc_error()
+               }
+               return ""
+            }
+         }
+         "load": {
+            if /preproc_if_state then {
+               if sym := preproc_word() &
+                  preproc_opt_space() &
+                  fname := preproc_qword() & *fname > 0 & preproc_at_end() then 
+               {
+                  if value := image(Files.file_to_string(Files.path_find(fname, 
+                                                         "OIINCL",
+                                                          Files.get_path(preproc_filename).parent().str()))) then 
+                  {
+                     if \ (old := preproc_sym_table[sym]) ~=== value then {
+                        preproc_error("redefinition of " || sym || " = " ||
+                                      old)
+                     } else {
+                        preproc_sym_table[sym] := value
+                     }
+                  } else {
+                     preproc_error("cannot open " || image(fname))
+                  }
                } else {
                   preproc_error()
                }
