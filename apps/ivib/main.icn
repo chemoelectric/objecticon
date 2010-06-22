@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import lang, gui, io, graphics, ipl.pdco
+import lang, gui, io, graphics, ipl.pdco, ipl.strings
 
 $include "version.icn"
 
@@ -42,12 +42,18 @@ class Prefs(SelectiveObjectCodec)
    public 
       undo_size,                # Size of undo buffer
       plugin_directory,
-      cache_path
+      cache_path,
+      image_directory
 
    public static get_template()
       suspend ["Undo Size", "undo_size"] |
               ["Plugin Directory", "plugin_directory"] |
+              ["Image Directory", "image_directory"] |
               ["Cache Path", "cache_path"]
+   end
+
+   protected post_decode()
+      /image_directory := "images"
    end
 
    #
@@ -57,6 +63,7 @@ class Prefs(SelectiveObjectCodec)
       undo_size := 7
       cache_path := []
       plugin_directory := "plugins"
+      image_directory := "images"
       return
    end
 end
@@ -1035,7 +1042,7 @@ class Main(Dialog)
    public new()
       local mb, file, edit, alignment_sub_menu, copy_sub_menu, group_sub_menu,
          uis, objects_menu, tb, ui, listener, mi, ui_button, p,
-         order_sub_menu, f, ce, plugin, pp, fn, i
+         order_sub_menu, f, ce, plugin, pp, fn, i, fp
 
       cast(self,Dialog).new()
       set_layout(GridLayout("flush", "dii=0"))
@@ -1262,6 +1269,12 @@ class Main(Dialog)
          }
       }
 
+      fp := Files.get_path(prefs.image_directory)
+      every f := !Files.list(fp.str()) do {
+         if endswith(map(f[1]), ".gif", ".png", ".jpeg", ".jpg") then
+            ImageCache.name_data(f[1], Files.file_to_string(fp.child(f[1]).str()))
+      }
+
       save_button := IconButton("tooltip=Save")
       save_button.set_image(
                             $include "icon/icn35.icon"
@@ -1408,6 +1421,7 @@ class Preferences(Dialog)
       c, 
       undo_size, 
       plugin_dir_field,
+      image_dir_field,
       path_tab,
       okay_result
 
@@ -1416,6 +1430,7 @@ class Preferences(Dialog)
       c.cache_path := path_tab.get_contents()
       c.undo_size := integer(self.undo_size.get_contents())
       c.plugin_directory := plugin_dir_field.get_contents()
+      c.image_directory := image_dir_field.get_contents()
       okay_result := 1
       self.dispose()
    end
@@ -1424,7 +1439,7 @@ class Preferences(Dialog)
       self.dispose()
    end
 
-   public on_browse()
+   public on_plugin_dir_browse()
       local d, s
       d := DirectoryDialog()
       d.set_directory(plugin_dir_field.get_contents())
@@ -1433,8 +1448,17 @@ class Preferences(Dialog)
          plugin_dir_field.set_contents(s)
    end
 
+   public on_image_dir_browse()
+      local d, s
+      d := DirectoryDialog()
+      d.set_directory(image_dir_field.get_contents())
+      d.show_modal(self)
+      if s := d.get_result() then
+         image_dir_field.set_contents(s)
+   end
+
    public new(c)
-      local tabset, t, oc, browse
+      local tabset, t, oc
       cast(self,Dialog).new()
       self.c := c
       self.set_wattrib("label", "Program Preferences")
@@ -1457,10 +1481,15 @@ class Preferences(Dialog)
       plugin_dir_field := TextField("size=150")
       plugin_dir_field.set_contents(c.plugin_directory)
       t.add(plugin_dir_field)
-      browse := TextButton("label=...", "c:eol")
-      browse.connect(self.on_browse, Event.ACTION)
-      t.add(browse)
+      t.add(TextButton("label=...", "c:eol",
+                       "e:action=",on_plugin_dir_browse))
 
+      t.add(Label("label=Image directory"))
+      image_dir_field := TextField("size=150")
+      image_dir_field.set_contents(c.image_directory)
+      t.add(image_dir_field)
+      t.add(TextButton("label=...", "c:eol",
+                       "e:action=",on_image_dir_browse))
 
       path_tab := PathTab(c)
       tabset.add(path_tab)

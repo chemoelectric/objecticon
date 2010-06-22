@@ -56,8 +56,9 @@ class CanvasImagePaint(CanvasPaint,ImagePaint)
       cast(self,CanvasObject).dup_fields(c)
       c.image_file := self.image_file
       c.image_str := self.image_str
+      c.image_cache := self.image_cache
+      c.image_data := self.image_data
       c.scale_up_flag := self.scale_up_flag
-      c.use_cache_flag := self.use_cache_flag
       c.max_w := self.max_w
       c.max_h := self.max_h
       return c
@@ -67,8 +68,9 @@ class CanvasImagePaint(CanvasPaint,ImagePaint)
       suspend CanvasPaint.get_template() |
          ["Image File", "image_file"] | 
          ["Image Str", "image_str"] |
+         ["Image Data", "image_data"] |
+         ["Image Cache", "image_cache"] |
          ["Scale Up Flag", "scale_up_flag"] |
-         ["Use Cache Flag", "use_cache_flag"] |
          ["Max W", "max_w"] |
          ["Max H", "max_h"]
 
@@ -79,12 +81,12 @@ class CanvasImagePaint(CanvasPaint,ImagePaint)
       c.line(name || " := " || self.class_name || "()")
       c.line(name || ".set_file(" || image(\self.image_file) || ")")
       c.line(name || ".set_image(" || image(\self.image_str) || ")")
+      c.line(name || ".set_data(" || image(\self.image_data) || ")")
+      c.line(name || ".set_cache(" || image(\self.image_cache) || ")")
       c.line(name || ".set_max_w(" || \self.max_w || ")")
       c.line(name || ".set_max_h(" || \self.max_h || ")")
       if \self.scale_up_flag then
          c.line(name || ".set_scale_up(&yes)")
-      if /self.use_cache_flag then
-         c.line(name || ".set_use_cache(&no)")
       c.add_var(name, class_variable)
       c.add_import(self.import_name, self.class_name)
 

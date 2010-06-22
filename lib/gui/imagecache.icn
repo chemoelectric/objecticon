@@ -5,11 +5,17 @@ import util, graphics, io
 class ImageCache()
    public static 
       imap,
-      path
+      path,
+      names
 
    private static init()
+      names := table()
       imap := table()
       path := []
+   end
+
+   public static name_data(name, data)
+      insert(names, name, data)
    end
 
    public static add_dir(d)
@@ -40,17 +46,27 @@ class ImageCache()
    end
 
    public static get(s, bg)
-      local f, w, key
+      local f, w, key, data
       bg := get_bg(s, bg)
-      every f := get_paths(s) do {
-         key := bg || "#" || f
+      if data := \names[s] then {
+         key := bg || "#" || s
          if w := \imap[key] then
             return w
-         if Files.stat(f).mode[1] == "-" then {
-            w := Window.open_image_file(f, bg) | fail
-            insert(imap, key, w)
-            insert(imap, w, f)
-            return w
+         w := Window.open_image_data(data, bg) | fail
+         insert(imap, key, w)
+         insert(imap, w, s)
+         return w
+      } else {
+         every f := get_paths(s) do {
+            key := bg || "#" || f
+            if w := \imap[key] then
+               return w
+            if Files.stat(f).mode[1] == "-" then {
+               w := Window.open_image_file(f, bg) | fail
+               insert(imap, key, w)
+               insert(imap, w, f)
+               return w
+            }
          }
       }
       return error("Couldn't find on path:" || s)
@@ -59,13 +75,23 @@ class ImageCache()
    public static delete(s, bg)
       local f, w, key
       bg := get_bg(s, bg)
-      every f := get_paths(s) do {
-         key := bg || "#" || f
+      if \names[s] then {
+         key := bg || "#" || s
          if w := \imap[key] then {
             w.close()
             default.delete(imap, key)
             default.delete(imap, w)
             return
+         }
+      } else {
+         every f := get_paths(s) do {
+            key := bg || "#" || f
+            if w := \imap[key] then {
+               w.close()
+               default.delete(imap, key)
+               default.delete(imap, w)
+               return
+            }
          }
       }
    end

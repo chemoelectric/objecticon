@@ -36,7 +36,7 @@ class PaintField(Border)
          case paints.get_selection() of {
             4: {
                img.clear_image()
-               img.set_file(\c.image_file)
+               img.set_cache(\c.image_cache)
                img.set_image(\c.image_str)
             }
             5 : {
@@ -51,7 +51,7 @@ class PaintField(Border)
       t := get_contents()
       case paints.get_selection() of {
          4 : 
-            if /t.image_str & /t.image_file then
+            if /t.image_str & /t.image_cache then
                return alert_error(parent_dialog, "No image provided")
          5 :
             if /t.fmt then
@@ -78,7 +78,7 @@ class PaintField(Border)
             CanvasImagePaint: {
                paints.set_selection(4)
                img.clear_image()
-               img.set_file(\c.image_file)
+               img.set_cache(\c.image_cache)
                img.set_image(\c.image_str)
             }
             CanvasGridPaint: {

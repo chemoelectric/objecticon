@@ -27,7 +27,7 @@ class CanvasPreferencesDialog(Dialog)
       gen_main,                # CheckBoxes for code generation flags
       gen_component_setup,
       gen_init_dialog,
-      gen_initially,
+      gen_constructor,
       gen_indent,
       layout_field,
       orig_layout,
@@ -84,7 +84,7 @@ class CanvasPreferencesDialog(Dialog)
       c.gen_main := if self.gen_main.is_checked() then 1 else &null
       c.gen_component_setup := if self.gen_component_setup.is_checked() then 1 else &null
       c.gen_init_dialog := if self.gen_init_dialog.is_checked() then 1 else &null
-      c.gen_initially := if self.gen_initially.is_checked() then 1 else &null
+      c.gen_constructor := if self.gen_constructor.is_checked() then 1 else &null
       c.gen_indent := integer(self.gen_indent.get_contents()) 
 
       if c.layout_delegate ~=== orig_layout then {
@@ -237,9 +237,9 @@ class CanvasPreferencesDialog(Dialog)
       gen_init_dialog.set_label("Generate init_dialog() & end_dialog() methods")
       methods_tab.add(gen_init_dialog)
 
-      gen_initially := CheckBox("c:eol", "c:w=2")
-      gen_initially.set_label("Generate initially method")
-      methods_tab.add(gen_initially)
+      gen_constructor := CheckBox("c:eol", "c:w=2")
+      gen_constructor.set_label("Generate constructor")
+      methods_tab.add(gen_constructor)
 
       if \c.gen_main then
          gen_main.set_is_checked(&yes)
@@ -250,8 +250,8 @@ class CanvasPreferencesDialog(Dialog)
       if \c.gen_init_dialog then
          gen_init_dialog.set_is_checked(&yes)
 
-      if \c.gen_initially then
-         gen_initially.set_is_checked(&yes)
+      if \c.gen_constructor then
+         gen_constructor.set_is_checked(&yes)
 
 
       l := Label()

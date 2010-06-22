@@ -124,7 +124,7 @@ class CheckBox(Button)
       #
       # Draw image and string centred vertically; image has img_w pixel to its right
       #
-      draw_image_ex(self.cbwin, self.x, self.y + (self.h - img_h) / 2, i)
+      draw_image_string_ex(self.cbwin, self.x, self.y + (self.h - img_h) / 2, i)
       paint.draw(self.cbwin, self.tx, self.y + (self.h - paint.h) / 2)
 
       if self.has_focus() & self.is_unshaded() then {

@@ -1,4 +1,4 @@
-import gui, io, lang
+import gui, io, lang, ipl.pdco
 
 class PaintEdit(Dialog)
    public 
@@ -80,11 +80,10 @@ class ImagePaintEdit(PaintEdit)
       str_cb,
       str_panel,
       str_img,
-      file_cb,
-      file_panel,
-      file_img,
-      file_field,
-      use_cache,
+      cache_cb,
+      cache_panel,
+      cache_img,
+      cache_field,
       relativize
 
    public on_max_w()
@@ -114,16 +113,15 @@ class ImagePaintEdit(PaintEdit)
       else
          c.image_str := &null
 
-      if file_cb.is_checked() then {
-         c.image_file := file_img.image_file
-         c.use_cache_flag := use_cache.get_status()
-      } else
-         c.image_file := &null
+      if cache_cb.is_checked() then
+         c.image_cache := cache_img.image_cache
+      else
+         c.image_cache := &null
 
    end
 
-   public on_file_field()
-      file_img.set_file(file_field.get_contents())
+   public on_cache_field()
+      cache_img.set_cache(cache_field.get_contents())
       update_grey()
    end
 
@@ -145,8 +143,8 @@ class ImagePaintEdit(PaintEdit)
       local fd, s, l, p
       fd := FileDialog()
       l := []
-      if \file_img.image_file then {
-         p := Files.get_path(file_img.image_file).canonical()
+      if \cache_img.image_file then {
+         p := Files.get_path(cache_img.image_file).canonical()
          put(l, p.parent().str())
          fd.set_file(p.get(-1))
       }
@@ -157,20 +155,31 @@ class ImagePaintEdit(PaintEdit)
       fd.show_modal(self)
       Ivib.last_icon_dir := fd.get_directory()
       if s := fd.get_result() then {
-         self.file_img.set_file(s)
-         file_field.set_contents(s)
+         self.cache_img.set_cache(s)
+         cache_field.set_contents(s)
+         update_grey()
+      }
+   end
+
+   public on_data_browse()
+      local d, s
+      d := NamedImageDialog(cache_field.get_contents())
+      d.show_modal(self)
+      if s := d.get_result() then {
+         self.cache_img.set_cache(s)
+         cache_field.set_contents(s)
          update_grey()
       }
    end
 
    public on_file_relativize()
       local s, t
-      s := file_field.get_contents()
+      s := cache_field.get_contents()
       every t := !Ivib.main.prefs.cache_path do {
          s ? if =t then {
             ="/"
-            file_field.set_contents(tab(0))
-            on_file_field()
+            cache_field.set_contents(tab(0))
+            on_cache_field()
             break
          }
       }
@@ -190,19 +199,19 @@ class ImagePaintEdit(PaintEdit)
       else
          str_panel.set_is_shaded(&yes)
 
-      if file_cb.is_checked() then
-         file_panel.set_is_shaded(&no)
+      if cache_cb.is_checked() then
+         cache_panel.set_is_shaded(&no)
       else
-         file_panel.set_is_shaded(&yes)
+         cache_panel.set_is_shaded(&yes)
 
-      if file_field.get_contents()[1] == "/" then
+      if cache_field.get_contents()[1] == "/" then
          relativize.set_is_shaded(&no)
       else
          relativize.set_is_shaded(&yes)
    end
 
    public setup()
-      local p, q, b, browse
+      local p, q, b
       cast(self,PaintEdit).setup()
 
       p := TabItem("label=General")
@@ -252,45 +261,39 @@ class ImagePaintEdit(PaintEdit)
       str_img := Image("size=60,60")
       str_img.clear_constraints()
       str_panel.add(str_img)
-      browse := TextButton("label=Browse...", "c:x_weight=1", "c:x_align=l")
-      browse.connect(self.on_str_browse, Event.ACTION)
-      str_panel.add(browse)
+      str_panel.add(TextButton("label=Browse...", "c:x_weight=1", "c:x_align=l", 
+                               "e:action=",on_str_browse))
       if \c.image_str then {
          str_img.set_image(c.image_str)
          str_cb.set_is_checked(&yes)
       }
       p.add(b)
 
-      file_cb := CheckBox("label=File")
-      file_cb.connect(self.update_grey, Event.ACTION)
-      img_cbg.add(file_cb)
-      file_panel := Component("layout=",GridLayout())
-      b := Border("title=",file_cb,
-                  "content=",file_panel,
+      cache_cb := CheckBox("label=Cache")
+      cache_cb.connect(self.update_grey, Event.ACTION)
+      img_cbg.add(cache_cb)
+      cache_panel := Component("layout=",GridLayout())
+      b := Border("title=",cache_cb,
+                  "content=",cache_panel,
                   "c:eol", "c:y_weight=0")
-      file_img := Image("size=60,60")
-      file_img.clear_constraints()
-      file_panel.add(file_img)
+      cache_img := Image("size=60,60")
+      cache_img.clear_constraints()
+      cache_panel.add(cache_img)
       q := Component("layout=",GridLayout("flush"), 
                      "c:eol", "c:x_weight=1", "c:x_align=l", "c:x_fill=t")
-      file_field := TextField("size=150", "c:eol", "c:w=2")
-      file_field.connect(self.on_file_field, Event.CONTENT_CHANGED)
-      q.add(file_field)
-      browse := TextButton("label=Browse...")
-      browse.connect(self.on_file_browse, Event.ACTION)
-      q.add(browse)
-      relativize := TextButton("label=Relativize", "c:x_align=l", "c:x_weight=1")
-      relativize.connect(self.on_file_relativize, Event.ACTION)
+      cache_field := TextField("size=150", "c:eol", "c:w=3")
+      cache_field.connect(self.on_cache_field, Event.CONTENT_CHANGED)
+      q.add(cache_field)
+      q.add(TextButton("label=File...", "e:action=",on_file_browse))
+      relativize := TextButton("label=Relativize", "c:x_align=l", "c:x_weight=1",
+                               "e:action=",on_file_relativize)
       q.add(relativize)
-      file_panel.add(q)
-      use_cache := CheckBox("label=Use cache", "c:w=2")
-      if \c.use_cache_flag then
-         use_cache.set_is_checked(&yes)
-      file_panel.add(use_cache)
-      if \c.image_file then {
-         file_img.set_file(c.image_file)
-         file_field.set_contents(c.image_file)
-         file_cb.set_is_checked(&yes)
+      q.add(TextButton("label=Data...", "e:action=",on_data_browse))
+      cache_panel.add(q)
+      if \c.image_cache then {
+         cache_img.set_cache(c.image_cache)
+         cache_field.set_contents(c.image_cache)
+         cache_cb.set_is_checked(&yes)
       }
       p.add(b)
 
@@ -468,5 +471,51 @@ class ShowGridPaint(DrawScrollArea)
    end
 end
 
+class NamedImageDialog(Dialog)
+   public 
+      curr,
+      lst, 
+      result
+   
+   public setup()
+      local oc
+      attrib("w:label=Select image")
+      set_layout(GridLayout())
 
+      lst := TextList("size=250,300",
+                      "select_mode=one",
+                      "c:eol",
+                      "contents=",ipl.pdco.List{key(ImageCache.names)})
+      lst.object_set_selections([\curr])
+      lst.set_cursor(lst.get_selections()[1])
+      set_focus(lst)
+      self.add(lst)
+      oc := OkCancel()
+      oc.listen(self)
+      self.add(oc)
+   end
 
+   public init_dialog()
+      lst.center_line(lst.get_selections()[1])
+   end
+
+   public on_cancel()
+      self.dispose()
+   end
+
+   public on_okay()
+      result := lst.object_get_selections()[1] | return alert_error(self, "No image selected")
+      self.dispose()
+   end
+
+   public get_result()
+      return \self.result
+   end
+
+   public new(curr)
+      cast(self,Dialog).new()
+      self.curr := curr
+      setup()
+      return
+   end
+end

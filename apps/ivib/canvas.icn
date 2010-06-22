@@ -206,7 +206,7 @@ class Canvas(Component,SelectiveObjectCodec)
       is_component,            # Is it a Component (rather than a Dialog)?
       gen_main,                # Flags regarding code generation options.
       gen_component_setup,
-      gen_initially,
+      gen_constructor,
       gen_init_dialog,
       gen_indent,
       event_handlers,          # List of event, handler pairs
@@ -938,7 +938,7 @@ class Canvas(Component,SelectiveObjectCodec)
               ["Gen Main", "gen_main"] |
               ["Gen Component Setup", "gen_component_setup"] |
               ["Gen Init Dialog", "gen_init_dialog"] |
-              ["Gen Initially", "gen_initially"] |
+              ["Gen Constructor", "gen_constructor"] |
               ["Dialog Struct", "dialog_struct"] |
               ["Name", "name"] |
               ["Is Component", "is_component"] |
@@ -961,7 +961,7 @@ class Canvas(Component,SelectiveObjectCodec)
       c.gen_main := self.gen_main
       c.gen_component_setup := self.gen_component_setup
       c.gen_init_dialog := self.gen_init_dialog
-      c.gen_initially := self.gen_initially
+      c.gen_constructor := self.gen_constructor
       c.filename := self.filename
       c.layout_filename := self.layout_filename
       c.new_file_flag := self.new_file_flag
@@ -1904,7 +1904,7 @@ class Canvas(Component,SelectiveObjectCodec)
    public new()
       cast(self,Component).new()
       self.parent_Canvas := self
-      gen_main := gen_component_setup := gen_initially := gen_init_dialog := 1
+      gen_main := gen_component_setup := gen_constructor := gen_init_dialog := 1
       self.gen_indent := 3
       self.name := "Untitled"
       self.superclass_name := "Dialog"

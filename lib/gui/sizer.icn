@@ -78,13 +78,13 @@ class Sizer(Component)
       x1 := self.x + (self.w - image_width(i)) / 2
       y1 := self.y + (self.h - image_height(i)) / 2
       if \self.is_horizontal_flag then {
-         draw_image_ex(self.cbwin, x1 - 10, y1, i)
-         draw_image_ex(self.cbwin, x1, y1, i)
-         draw_image_ex(self.cbwin, x1 + 10, y1, i)
+         draw_image_string_ex(self.cbwin, x1 - 10, y1, i)
+         draw_image_string_ex(self.cbwin, x1, y1, i)
+         draw_image_string_ex(self.cbwin, x1 + 10, y1, i)
       } else {
-         draw_image_ex(self.cbwin, x1, y1 - 10, i)
-         draw_image_ex(self.cbwin, x1, y1, i)
-         draw_image_ex(self.cbwin, x1, y1 + 10, i)
+         draw_image_string_ex(self.cbwin, x1, y1 - 10, i)
+         draw_image_string_ex(self.cbwin, x1, y1, i)
+         draw_image_string_ex(self.cbwin, x1, y1 + 10, i)
       }
    end
 
