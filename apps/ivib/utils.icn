@@ -34,7 +34,7 @@ procedure read_gif_icon(dialog, s, pal)
    local w, raw
    /pal := "c6"
    w := Window.open("canvas=hidden")
-   w.set_image(s) | {
+   w.set_image_file(s) | {
       w.close()
       return alert_error(dialog, "Couldn't load image file " || s)
    }

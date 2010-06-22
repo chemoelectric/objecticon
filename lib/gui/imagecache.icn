@@ -47,7 +47,7 @@ class ImageCache()
          if w := \imap[key] then
             return w
          if Files.stat(f).mode[1] == "-" then {
-            w := Window.open_image(f, bg) | fail
+            w := Window.open_image_file(f, bg) | fail
             insert(imap, key, w)
             insert(imap, w, f)
             return w

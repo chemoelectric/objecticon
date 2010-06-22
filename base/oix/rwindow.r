@@ -2532,6 +2532,59 @@ int parsepattern(char *s, int *width, int *height, int **data)
     return 1;
 }
 
+int is_png(dptr data)
+{
+    return (StrLen(*data) >= 8 &&
+            strncmp(StrLoc(*data), "\x89PNG\x0D\x0A\x1A\x0A", 8) == 0);
+}
+
+int is_jpeg(dptr data)
+{
+    return (StrLen(*data) >= 2 &&
+            strncmp(StrLoc(*data), "\xFF\xD8", 2) == 0);
+
+}
+
+int is_gif(dptr data)
+{
+    return (StrLen(*data) >= 6 &&
+            strncmp(StrLoc(*data), "GIF8", 4) == 0 &&
+            (StrLoc(*data)[4] == '7' || StrLoc(*data)[4] == '9') &&
+            StrLoc(*data)[5] == 'a');
+}
+
+int parseimage(dptr data, struct imgdata *imd)
+{
+    int r;
+    char *fn = 0;
+    FILE *f;
+    if ((r = parseimageimpl(data, imd)) != NoCvt)
+        return r;
+    if (is_png(data))
+        fn = "/tmp/tmp.png";
+    else if (is_jpeg(data))
+        fn = "/tmp/tmp.jpg";
+    else if (is_gif(data))
+        fn = "/tmp/tmp.gif";
+    else {
+        LitWhy("Unsupported file type");
+        return Failed;
+    }
+    f = fopen(fn, "wb");
+    if (!f) {
+        LitWhy("Couldn't open temp image file");
+        return Failed;
+    }
+    if (fwrite(StrLoc(*data), 1, StrLen(*data), f) != StrLen(*data)) {
+        fclose(f);
+        LitWhy("Couldn't write to temp image file");
+        return Failed;
+    }
+    fclose(f);
+    r = readimagefile(fn, imd);
+    remove(fn);
+    return r;
+}
 
 int readimagefile(char *filename, struct imgdata *imd)
 {
@@ -2636,6 +2689,24 @@ int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph)
     return Succeeded;
 }
 
+int pointargs(wbp w, dptr argv, word *px, word *py)
+{
+    wcp wc = w->context;
+
+    /*
+     * Get x and y, defaulting to -dx and -dy.
+     */
+    if (!def:C_integer(argv[0], -wc->dx, *px))
+        ReturnErrVal(101, argv[0], Error);
+
+    if (!def:C_integer(argv[1], -wc->dy, *py))
+        ReturnErrVal(101, argv[1], Error);
+
+    *px += wc->dx;
+    *py += wc->dy;
+
+    return Succeeded;
+}
 
 /*
  * docircles -- draw or file circles.

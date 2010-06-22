@@ -89,7 +89,7 @@ procedure dofile(w,f, fname)
    if \opts["d"] then {
       w.attrib("width=" || imswidth(s), "height=" || imsheight(s))
       w.erase_area(0, 0)
-      w.draw_image(0, 0, s)
+      w.draw_image_string(0, 0, s)
       while e := w.event() do {
          if e[1] == "q" then 
             break

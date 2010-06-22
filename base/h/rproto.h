@@ -190,6 +190,7 @@ void buffnstr(dptr d, char **s, ...);
    int  readimagefile   (char *filename, struct imgdata *imd);
    int  writeimagefile  (wbp w, char *filename, int x, int y, int width, int height);
    int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph);
+   int pointargs(wbp w, dptr argv, word *px, word *py);
    char *rgbkey         (int p, int r, int g, int b);
 
    int  initimgmem      (wbp w, struct imgmem *i, int copy, int clip, int x, int y, int width, int height);
@@ -200,6 +201,11 @@ void buffnstr(dptr d, char **s, ...);
    void freeimgdata     (struct imgdata *img);
    int  getdefaultfontsize(int);
    char *getdefaultfont(void);
+   int parseimage(dptr data, struct imgdata *imd);
+   int is_png(dptr data);
+   int is_jpeg(dptr data);
+   int is_gif(dptr data);
+
    
 
    /*
@@ -275,6 +281,7 @@ void buffnstr(dptr d, char **s, ...);
    int  utf8width       (wbp w, char *s, int n, int nchars);
    int  readimagefileimpl(char *filename, struct imgdata *imd);
    int  writeimagefileimpl(wbp w, char *filename, int x, int y, int width, int height);
+   int  parseimageimpl(dptr data, struct imgdata *imd);
 
 #endif                                  /* Graphics */
 

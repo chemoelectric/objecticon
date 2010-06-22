@@ -17,7 +17,8 @@ import
 # @field font=string : see {set_font}
 # @field geometry=i1,i2,i3,i4 : see {set_geometry}
 # @field height=integer : see {set_height}
-# @field image=string : see {set_image}
+# @field image_data=string : see {set_image_data}
+# @field image_file=string : see {set_image_file}
 # @field input_mask=string : see {set_input_mask}
 # @field label=string : see {set_label}
 # @field line_style=string : see {set_line_style}
@@ -142,7 +143,8 @@ class Window(SetFields,NoCopy)
    public defer set_font(v)
    public defer set_geometry(v)
    public defer set_height(v)
-   public defer set_image(v)
+   public defer set_image_file(v)
+   public defer set_image_data(v)
    public defer set_input_mask(v)
    public defer set_label(v)
    public defer set_line_style(v)
@@ -216,9 +218,15 @@ class Window(SetFields,NoCopy)
    public defer draw_curve(a[])
 
    #
-   # draw_image(x,y,s) - draw bitmapped figure
+   # draw_image_string(x,y,s) - draw bitmapped figure
    #
-   public defer draw_image(x, y, s)
+   public defer draw_image_string(x, y, s)
+
+   #
+   # Draw an image given a string representing image data in gif, jpg or png
+   # format.
+   #
+   public defer draw_image_data(x, y, d)
 
    #
    # Copy an area from this window to another window.
@@ -344,7 +352,7 @@ class Window(SetFields,NoCopy)
    #
    # Load image file
    #
-   public defer read_image(s, x, y, p)
+   public defer draw_image_file(s, x, y, p)
 
    #
    # Synchronize with server
@@ -377,7 +385,7 @@ class Window(SetFields,NoCopy)
    # of file names may select different formats on some graphics
    # systems.
    #
-   public defer write_image(s, x, y, w, h)
+   public defer write_image_file(s, x, y, w, h)
 
    #
    # Set the window system's selection
@@ -431,13 +439,33 @@ class Window(SetFields,NoCopy)
    # @param bg the optional background colour (only relevant with transparent
    # @         images)
    #
-   public static open_image(file, bg)
+   public static open_image_file(file, bg)
       local w
       w := if /bg then
          Window.open("canvas=hidden")
       else
          Window.open("canvas=hidden", "bg=",bg)
-      w.set_image(file) | {
+      w.set_image_file(file) | {
+         w.close()
+         fail
+      }
+      return w
+   end
+
+   #
+   # Convenient method to interpret raw image data and return a hidden window with
+   # its contents.
+   # @param data the raw image data
+   # @param bg the optional background colour (only relevant with transparent
+   # @         images)
+   #
+   public static open_image_data(data, bg)
+      local w
+      w := if /bg then
+         Window.open("canvas=hidden")
+      else
+         Window.open("canvas=hidden", "bg=",bg)
+      w.set_image_data(data) | {
          w.close()
          fail
       }
@@ -458,7 +486,8 @@ class Window(SetFields,NoCopy)
          "font": set_font(f.val)
          "geometry": set_geometry!(f.int_list_val())
          "height"|"h": set_height(f.val)
-         "image": set_image(f.val)
+         "image_data": set_image_data(f.val)
+         "image_file": set_image_file(f.val)
          "input_mask": set_input_mask(f.val)
          "label": set_label(f.val)
          "line_style": set_line_style(f.val)

@@ -201,13 +201,8 @@ function graphics_Window_copy_to(self, dest, x0, y0, w0, h0, x1, y1)
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
 
-      if (!def:C_integer(x1, -w2->context->dx, x2))
-          runerr(101, x1);
-      x2 += w2->context->dx;
-
-      if (!def:C_integer(y1, -w2->context->dy, y2))
-          runerr(101, y1);
-      y2 += w2->context->dy;
+      if (pointargs(w2, &x1, &x2, &y2) == Error)
+          runerr(0);
 
       copyarea(self_w, w2, x, y, width, height, x2, y2);
 
@@ -370,7 +365,7 @@ function graphics_Window_draw_curve(self, argv[argc])
 end
 
 
-function graphics_Window_draw_image(self, x0, y0, d)
+function graphics_Window_draw_image_string(self, x0, y0, d)
    body {
       int c, width, height, row, p, format;
       word x, y;
@@ -380,19 +375,11 @@ function graphics_Window_draw_image(self, x0, y0, d)
       struct imgdata imd;
       GetSelfW();
 
-      /*
-       * X or y can be defaulted but s is required.
-       * Validate x/y first so that the error message makes more sense.
-       */
-      if (!def:C_integer(x0, -self_w->context->dx, x))
-          runerr(101, x0);
-      if (!def:C_integer(y0, -self_w->context->dy, y))
-          runerr(101, y0);
+      if (pointargs(self_w, &x0, &x, &y) == Error)
+          runerr(0);
       if (!cnv:string(d, d))
           runerr(103, d);
 
-      x += self_w->context->dx;
-      y += self_w->context->dy;
       /*
        * Extract the Width and skip the following comma.
        */
@@ -428,7 +415,7 @@ function graphics_Window_draw_image(self, x0, y0, d)
               fail;
           height = nchars / row;
           drawblimage(self_w, x, y, width, height, c, s);
-          return nulldesc;
+          return self;
       }
 
       /*
@@ -473,8 +460,26 @@ function graphics_Window_draw_image(self, x0, y0, d)
       imd.data = s;
       imd.format = format;
       drawimgdata(self_w, x, y, &imd);
+      return self;
+   }
+end
 
-      return nulldesc;
+function graphics_Window_draw_image_data(self, x0, y0, d)
+   body {
+      word x, y;
+      struct imgdata imd;
+      GetSelfW();
+
+      if (pointargs(self_w, &x0, &x, &y) == Error)
+          runerr(0);
+      if (!cnv:string(d, d))
+          runerr(103, d);
+
+      if (parseimage(&d, &imd) != Succeeded)
+          fail;
+      drawimgdata(self_w, x, y, &imd);
+      freeimgdata(&imd);
+      return self;
    }
 end
 
@@ -577,19 +582,18 @@ function graphics_Window_draw_rectangle(self, x0, y0, w0, h0)
    }
 end
 
-function graphics_Window_draw_string(self, x, y, str)
-   if !cnv:C_integer(x) then
-      runerr(101, x)
-   if !cnv:C_integer(y) then
-      runerr(101, y)
-   if !cnv:string_or_ucs(str) then
-      runerr(129, str)
+function graphics_Window_draw_string(self, x0, y0, str)
    body {
       int len;
+      word x, y;
       char *s;
       GetSelfW();
-      x += self_w->context->dx;
-      y += self_w->context->dy;
+
+      if (pointargs(self_w, &x0, &x, &y) == Error)
+          runerr(0);
+      if (!cnv:string_or_ucs(str,str))
+          runerr(129, str);
+
       if (is:ucs(str)) {
           s = StrLoc(UcsBlk(str).utf8);
           len = StrLen(UcsBlk(str).utf8);
@@ -1039,21 +1043,18 @@ function graphics_Window_raise(self)
    }
 end
 
-function graphics_Window_read_image(self, x, y, file)
-   if !cnv:C_integer(x) then
-      runerr(101, x)
-   if !cnv:C_integer(y) then
-      runerr(101, y)
-   if !cnv:string(file) then
-      runerr(103, file)
+function graphics_Window_draw_image_file(self, x0, y0, file)
    body {
       char *filename;
+      word x, y;
       int r;
       struct imgdata imd;
       GetSelfW();
 
-      x += self_w->context->dx;
-      y += self_w->context->dy;
+      if (pointargs(self_w, &x0, &x, &y) == Error)
+          runerr(0);
+      if (!cnv:string(file, file))
+          runerr(103, file);
 
       filename = buffstr(&file);
       if (readimagefile(filename, &imd) != Succeeded)
@@ -1108,7 +1109,7 @@ function graphics_Window_flush(self)
    }
 end
 
-function graphics_Window_write_image(self, fname, x0, y0, w0, h0)
+function graphics_Window_write_image_file(self, fname, x0, y0, w0, h0)
    if !cnv:string(fname) then
        runerr(103, fname)
    body {
@@ -1765,17 +1766,33 @@ function graphics_Window_set_height(self, height)
    }
 end
 
-function graphics_Window_set_image(self, val)
+function graphics_Window_set_image_file(self, val)
    if !cnv:string(val) then
       runerr(103, val)
    body {
        wsp ws;
        char *s;
-       int r;
        GetSelfW();
        ws = self_w->window;
        s = buffstr(&val);
        if (readimagefile(s, &ws->initimage) != Succeeded)
+           fail;
+       self_w->window->width = ws->initimage.width;
+       self_w->window->height = ws->initimage.height;
+       wconfig |= C_SIZE | C_IMAGE;
+       SimpleAttr();
+       return self;
+   }
+end
+
+function graphics_Window_set_image_data(self, d)
+   if !cnv:string(d) then
+      runerr(103, d)
+   body {
+       wsp ws;
+       GetSelfW();
+       ws = self_w->window;
+       if (parseimage(&d, &ws->initimage) != Succeeded)
            fail;
        self_w->window->width = ws->initimage.width;
        self_w->window->height = ws->initimage.height;

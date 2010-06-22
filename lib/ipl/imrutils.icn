@@ -150,7 +150,7 @@ procedure imrdraw(win, x, y, imr)
    /x := 0
    /y := 0
 
-   return win.draw_image(x, y, imrtoims(imr))
+   return win.draw_image_string(x, y, imrtoims(imr))
 
 end
 

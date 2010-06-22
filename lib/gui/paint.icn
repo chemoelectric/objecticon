@@ -372,6 +372,7 @@ end
 
 #
 # @field image=string : see {set_image}
+# @field data=string : see {set_data}
 # @field file=string : see {set_file}
 # @field window={Window} : see {set_window}
 # @field scale_up=flag : see {set_scale_up}
@@ -383,6 +384,7 @@ end
 class ImagePaint(Paint,SetFields)
    public 
       image_file, 
+      image_data,
       image_str,
       image_window,
       win,
@@ -397,6 +399,13 @@ class ImagePaint(Paint,SetFields)
    #
    public set_file(x)
       self.image_file := x
+   end
+
+   #
+   # Set the raw image data (gif, jpeg etc) from which to load the image.
+   #
+   public set_data(x)
+      self.image_data := x
    end
 
    #
@@ -486,12 +495,14 @@ class ImagePaint(Paint,SetFields)
                                "height=", (0 < image_height(self.image_str)),
                                "canvas=hidden") then
             draw_image_ex(win, 0, 0, self.image_str)
+      } else if \self.image_data then {
+         win := Window.open_image_data(self.image_data, c.cbwin.get_bg())
       } else if \self.image_file then {
          if \self.use_cache_flag then {
             if win := ImageCache.get(self.image_file, c.cbwin.get_bg()) then
                dont_close := 1
          } else
-            win := Window.open_image(self.image_file, c.cbwin.get_bg())
+            win := Window.open_image_file(self.image_file, c.cbwin.get_bg())
       } else if \self.image_window then {
          win := self.image_window
          dont_close := 1
@@ -553,6 +564,7 @@ class ImagePaint(Paint,SetFields)
    public set_one(f)
       case f.attr of {
          "image" : set_image(f.string_val())
+         "data" : set_data(f.string_val())
          "file" : set_file(f.string_val())
          "window" : set_window(f.object_val(Window))
          "scale_up" : set_scale_up(f.flag_val())

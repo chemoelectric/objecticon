@@ -191,7 +191,7 @@ class Gui()
 end
 
 procedure draw_image_ex(W, x, y, i)
-   W.draw_image(x, y, get_extended_image(W, i))
+   W.draw_image_string(x, y, get_extended_image(W, i))
 end
 
 procedure palette_key_ex(W, palette, spec)
