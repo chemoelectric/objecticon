@@ -287,7 +287,6 @@ typedef int siptr, stringint, inst;
       if (var->previous) var->previous->next = var->next;
       else chain = var->next;
       if (var->next) var->next->previous = var->previous;
-      free(var);
    } while(0)
 #enddef				/* GRFX_UNLINK */
 

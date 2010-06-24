@@ -297,7 +297,8 @@ typedef struct _wstate {
   int		state;			/* window state; icon, window or root*/
   Window        transientfor;           /* transient-for hint */
 #elif PLAN9
-  struct progstate *program;           /* owning program */
+  struct progstate *program;            /* owning program */
+  struct _wstate *vprevious, *vnext;    /* List of states with win non-null */
   Image         *win;
   Screen        *screen;
   Image         *pix;

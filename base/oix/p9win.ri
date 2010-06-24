@@ -63,7 +63,10 @@ struct FontInfo {
    int size;
    struct FontInfo *next;
 };
-struct FontInfo *font_info;
+static struct FontInfo *font_info;
+
+/* List of windows with win non-null */
+static wsp vwstates;
 
 static stringint fillstyles[] = {
     {0, 3},
@@ -164,6 +167,44 @@ static stringint cursors[] = {
 static struct SharedColor *black, *white;
 static int window_count;
 static struct SharedPattern *black_pattern;
+
+#if 0
+static void dump_all(void)
+{
+    int i,j,k;
+    wsp x;
+    wbp y;
+    i = 0;
+    for (y = wbndngs; y; y = y->next) {
+        printf("Binding %p\n",y);
+        printf("\tcanvas %p\n",y->window);
+        printf("\tcontext %p\n",y->context);
+        ++i;
+    }
+    printf("============\n");
+    j = 0;
+    for (x = wstates; x; x = x->next) {
+        printf("Canvas %p\n",x);
+        printf("\trefcount=%d\n", x->refcount);
+        printf("\tlabel=%s\n", x->windowlabel);
+        printf("\tgeometry=%d,%d %dx%d\n", x->x,x->y,x->width,x->height);
+        printf("\twin=%d\n", (int)x->win);
+        ++j; 
+    }
+    printf("============\n");
+    k = 0;
+    for (x = vwstates; x; x = x->vnext) {
+        printf("Non-hidden Canvas %p\n",x);
+        printf("\trefcount=%d\n", x->refcount);
+        printf("\tlabel=%s\n", x->windowlabel);
+        printf("\tgeometry=%d,%d %dx%d\n", x->x,x->y,x->width,x->height);
+        printf("\twin=%d\n", (int)x->win);
+        ++k; 
+    }
+
+    printf("Total %d bindings %d canvases (%d non-hidden)\n",i,j,k);
+}
+#endif
 
 static int open_winfile(wsp ws, char *s, int mode)
 {
@@ -280,6 +321,15 @@ int wopen(wbp w)
 {
     wsp ws = w->window;
     struct imgdata *imd;
+
+    /*
+     * Set the size if unset by the user.  The default varies on whether the
+     * window is hidden or not.
+     */
+    if (ws->width == 0)
+        ws->width = (ws->desired_canvas == HiddenCanvas ? 1 : 200);
+    if (ws->height == 0)
+        ws->height = (ws->desired_canvas == HiddenCanvas ? 1 : 200);
 
     open_pix_win(ws);
     /* Fill pixmap with bg color */
@@ -450,6 +500,13 @@ static void resize_pix_win(wbp w)
     if (Dx(ws->pix->r) >= ws->width &&
         Dy(ws->pix->r) >= ws->height)
         return;
+    MemProtect(t = allocimage(display, Rect(0, 0, ws->width, ws->height), screen->chan, 1, DNofill));
+    gendraw(t, t->r, w->context->bg->i, ZP, 0, ZP);
+    copy_to(t, ws->pix);
+    freeimage(ws->pix);
+    ws->pix = t;
+
+/*
     MemProtect(t = allocimage(display, ws->pix->r, screen->chan, 1, DNofill));
     copy_to(t, ws->pix);
     close_pix_win(ws);
@@ -457,6 +514,7 @@ static void resize_pix_win(wbp w)
     clear_pix_win(w);
     copy_to(ws->pix, t);
     freeimage(t);
+*/
 }
 
 static void handle_resize(wsp ws)
@@ -480,7 +538,7 @@ static void handle_resize(wsp ws)
         synch_pos(ws);
         pix_to_win(ws);
     }
-    else if ((ws->bits & 128) == 0)   /* If resizable flag off */
+    else if (!ISRESIZABLE(ws))   /* If resizable flag off */
         /* 
          * If the resize flag is off, veto the resize by just resetting the size
          * to the canvas size.  We then go through the previous if branch when that
@@ -906,7 +964,7 @@ void wsync (wbp w)
 void pollevent(void)
 {
     wsp ws;
-    for (ws = wstates; ws; ws = ws->next) {
+    for (ws = vwstates; ws; ws = ws->vnext) {
         if (ws->program == curpstate)
             flush_event_pipe(ws);
     }
@@ -1458,6 +1516,7 @@ static int open_screen_win(wsp ws)
         close_screen_win(ws);
         return Failed;
     }
+    GRFX_GENLINK(ws, vwstates, vnext, vprevious);
     synch_pos(ws);
 
     /* Ensure size matches the opened window */
@@ -1535,7 +1594,7 @@ static int open_screen_win(wsp ws)
 static Image *any_other_win(Image *win)
 {
     wsp ws;
-    for (ws = wstates; ws; ws = ws->next)
+    for (ws = vwstates; ws; ws = ws->vnext)
         if (ws->win && ws->win != win)
             return ws->win;
     return 0;
@@ -1577,6 +1636,7 @@ static void close_screen_win(wsp ws)
             display->screenimage = any_other_win(ws->win);
         freeimage(ws->win);
         ws->win = 0;
+        GRFX_GENUNLINK(ws, vwstates, vnext, vprevious);
     }
     if (ws->screen) {
         freeimage(ws->screen->image);
@@ -1639,6 +1699,7 @@ void freewindow(wsp ws)
            ws->wsys = 0;
        }
        GRFX_UNLINK(ws, wstates);
+       free(ws);
    }
 }
 
@@ -1653,6 +1714,7 @@ void freecontext(wcp wc)
         if (wc->pattern)
             unlink_sharedpattern(wc->pattern);
         GRFX_UNLINK(wc, wcntxts);
+        free(wc);
     }
 }
 
@@ -1850,8 +1912,6 @@ static wsp alcwinstate()
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
         ws->cursor_fd = ws->mouse_pid = ws->cons_pid = ws->wsys_fd = ws->wctl_fd = -1;
     ws->cursor = stringint_lookup(cursors, "left ptr");
-    ws->height = 200;
-    ws->width  = 200;
     ws->x = ws->y = -INT_MAX;
     ws->minwidth = ws->minheight = 1;
     ws->maxwidth = ws->maxheight = INT_MAX;
