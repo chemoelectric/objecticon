@@ -13,7 +13,7 @@ import util, ipl.pdco
 #
 # This class represents a node in a {Tree} object.
 #
-# @field images=s1,s2,s3 : see {set_images}
+# @field icon_paint=s1,s2,s3 : see {set_icon_paint}
 # @field label=value : see {set_label}
 # @field always_expandable=flag : see {set_always_expandable}
 # @field expanded=flag : see {set_expanded}
@@ -21,7 +21,7 @@ import util, ipl.pdco
 class TreeNode(SetFields)
    public 
       label,
-      imgs,
+      icon_paint,
       always_expandable_flag,
       depth,
       is_expanded_flag,
@@ -106,13 +106,13 @@ class TreeNode(SetFields)
       return self.label
    end
 
+   # Set the icons for this node, as three {Paint} instances.  The
+   # first is displayed if the {TreeNode} is open and has children,
+   # the second is displayed if the {TreeNode} is closed and has
+   # children, and the third is displayed if the node has no children.
    #
-   # Set the images for this node.  The first is displayed if the {TreeNode} is open and
-   # has children, the second is displayed if the {TreeNode} is closed and has children,
-   # and the third is displayed if the node has no children.
-   #
-   public set_images(i1, i2, i3)
-      self.imgs := [i1, i2, i3]
+   public set_icon_paint(i1, i2, i3)
+      self.icon_paint := [i1, i2, i3]
    end
 
    #
@@ -210,7 +210,7 @@ class TreeNode(SetFields)
 
    public set_one(f)
       case f.attr of {
-         "images" : set_images!(f.string_list_val(3))
+         "icon_paint" : set_icon_paint!(f.list_val(3))
          "label" : set_label(f.val)  # Any type - we may have a custom renderer.
          "always_expandable" : set_always_expandable(f.flag_val()) 
          "expanded" : set_expanded(f.flag_val()) 

@@ -87,8 +87,8 @@ procedure main()
    o := Label("label=xyz")
    print{"o.paint.str", o.paint.str}
 
-   o:=Image("file=xyz","scale_up=y")
-   print{"o.image_file", o.image_file}
+   o:=Image("image=xyz","scale_up=y")
+   print{"o.image_str", o.image_str}
    print{"o.scale_up_flag", o.scale_up_flag}
 
    o:=IconButton("label=x","is_checked=y","no_click_focus=y")

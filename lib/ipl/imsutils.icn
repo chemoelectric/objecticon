@@ -85,7 +85,7 @@ end
 procedure XDrawTile(win, xoff, yoff, pattern, magnif, mode)
    local x, y, row, pixel, dims, arglist
 
-   if magnif = 1 then win.draw_image_string(xoff, yoff, pattern, mode)
+   if magnif = 1 then win.draw_image(xoff, yoff, pattern, mode)
    else {
       if \mode then {
          dims := tiledim(pattern)

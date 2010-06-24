@@ -1,4 +1,4 @@
-import gui, io
+import gui
 
 class CanvasPaint(CanvasObject)
    public dialog()
@@ -54,10 +54,8 @@ class CanvasImagePaint(CanvasPaint,ImagePaint)
       local c
       c := CanvasImagePaint()
       cast(self,CanvasObject).dup_fields(c)
-      c.image_file := self.image_file
       c.image_str := self.image_str
       c.image_cache := self.image_cache
-      c.image_data := self.image_data
       c.scale_up_flag := self.scale_up_flag
       c.max_w := self.max_w
       c.max_h := self.max_h
@@ -66,9 +64,7 @@ class CanvasImagePaint(CanvasPaint,ImagePaint)
 
    public static get_template()
       suspend CanvasPaint.get_template() |
-         ["Image File", "image_file"] | 
          ["Image Str", "image_str"] |
-         ["Image Data", "image_data"] |
          ["Image Cache", "image_cache"] |
          ["Scale Up Flag", "scale_up_flag"] |
          ["Max W", "max_w"] |
@@ -77,11 +73,8 @@ class CanvasImagePaint(CanvasPaint,ImagePaint)
    end
 
    public gen_code(c)
-      local fp, p1, p2
       c.line(name || " := " || self.class_name || "()")
-      c.line(name || ".set_file(" || image(\self.image_file) || ")")
       c.line(name || ".set_image(" || image(\self.image_str) || ")")
-      c.line(name || ".set_data(" || image(\self.image_data) || ")")
       c.line(name || ".set_cache(" || image(\self.image_cache) || ")")
       c.line(name || ".set_max_w(" || \self.max_w || ")")
       c.line(name || ".set_max_h(" || \self.max_h || ")")
@@ -89,19 +82,6 @@ class CanvasImagePaint(CanvasPaint,ImagePaint)
          c.line(name || ".set_scale_up(&yes)")
       c.add_var(name, class_variable)
       c.add_import(self.import_name, self.class_name)
-
-      if \self.image_file & 
-         \self.use_cache_flag &
-         fp := ImageCache.get_source(self.win) then 
-      {
-         p1 := Files.get_path(self.image_file)
-         if not p1.is_absolute() then {
-            every p2 := !ImageCache.path do {
-               if p2.append(p1).str() == fp then
-                  c.add_cache_path(p2.str())
-            }
-         }
-      }
    end
 
    public new(a[])

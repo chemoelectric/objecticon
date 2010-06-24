@@ -195,13 +195,12 @@ void buffnstr(dptr d, char **s, ...);
 
    int  initimgmem      (wbp w, struct imgmem *i, int copy, int clip, int x, int y, int width, int height);
    int  gotopixel       (struct imgmem *i, int x, int y);
-   void drawblimage     (wbp w, int x, int y, int wd, int h,
-                          int ch, unsigned char *s);
    void drawimgdata     (wbp w, int x, int y, struct imgdata *img);
    void freeimgdata     (struct imgdata *img);
    int  getdefaultfontsize(int);
    char *getdefaultfont(void);
-   int parseimage(dptr data, struct imgdata *imd);
+   int parseimage(wbp w, dptr d,  struct imgdata *imd);
+
    int is_png(dptr data);
    int is_jpeg(dptr data);
    int is_gif(dptr data);

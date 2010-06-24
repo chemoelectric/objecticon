@@ -63,8 +63,7 @@ class TextButton(Button)
    end
 
    #
-   # Set down image to use in the button,
-   # which should be in Icon image format.
+   # Set down image to use in the button
    #
    # @param x   The down image
    #
@@ -72,21 +71,19 @@ class TextButton(Button)
       if /x then
          set_paint_down()
       else
-         set_paint_down(ImageStringPaint(x))
+         set_paint_down(ImagePaint("image=",x))
    end
 
    #
-   # Set an image to use in the button, which should be in Icon image
-   # format.
+   # Set an image to use in the button
    # @param x   The image
    #
    public set_image(x)
-      set_paint(ImageStringPaint(x))
+      set_paint(ImagePaint("image=",x))
    end
 
    #
-   # Set the up/down images (if any) to the strings provided,
-   # which should be in Icon image format.
+   # Set the up/down images (if any) to the strings provided.
    # The two images must have the same dimensions.
    # @param x   The up image
    # @param y   The down image

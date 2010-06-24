@@ -18,13 +18,10 @@ class CanvasCheckBox(CanvasButton,CheckBox)
       #
       # Set the images to the standard ones, unless custom images already set.
       #  
-      if \x then {
-         if self.img_up == Icon.BOX_UP & self.img_down == Icon.BOX_DOWN then 
-            self.set_images(Icon.DIAMOND_UP, Icon.DIAMOND_DOWN)
-      } else {
-         if self.img_up == Icon.DIAMOND_UP & self.img_down == Icon.DIAMOND_DOWN then 
-            self.set_images(Icon.BOX_UP, Icon.BOX_DOWN)
-      }
+      if \x then
+         self.set_box_paint(ImageStringPaint(Icon.DIAMOND_UP), ImageStringPaint(Icon.DIAMOND_DOWN))
+      else
+         self.set_box_paint(ImageStringPaint(Icon.BOX_UP), ImageStringPaint(Icon.BOX_DOWN))
       cast(self,CheckBox).set_parent_check_box_group(x)
    end
 
@@ -35,9 +32,6 @@ class CanvasCheckBox(CanvasButton,CheckBox)
       cast(self,CanvasButton).gen_code(c)
       self.paint.gen_code(c)
       c.line(name || ".set_paint(" || self.paint.name || ")")
-      if not((/self.parent_check_box_group & self.img_up == Icon.BOX_UP & self.img_down == Icon.BOX_DOWN) | 
-             (\self.parent_check_box_group & self.img_up == Icon.DIAMOND_UP & self.img_down == Icon.DIAMOND_DOWN)) then
-         c.line(name || ".set_images(" || image(self.img_up) || ", " || image(self.img_down) || ")")
    end
 
    #
@@ -45,11 +39,7 @@ class CanvasCheckBox(CanvasButton,CheckBox)
    #
    public static get_template()
       suspend CanvasButton.get_template() |
-         ["Paint", "paint"] |
-         ["Img Up", "img_up"] |
-         ["Img Down", "img_down"] |
-         ["Img Width", "img_w"] |
-         ["Img Height", "img_h"]
+         ["Paint", "paint"]
    end
 
    #
@@ -59,7 +49,6 @@ class CanvasCheckBox(CanvasButton,CheckBox)
       local c
       c := CanvasCheckBox()
       cast(self,CanvasButton).dup_fields(c)
-      c.set_images(self.img_up, self.img_down)
       c.set_paint(self.paint.dup(c))
       return c
    end

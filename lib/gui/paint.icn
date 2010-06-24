@@ -51,7 +51,7 @@ class ImageStringPaint(Paint)
    end
 
    public draw(W, x, y)
-      draw_image_string_ex(W, x, y, str)
+      draw_image_ex(W, x, y, str)
    end
 
    public new(s)
@@ -295,7 +295,7 @@ class GridPaint(Paint)
             Align.C : y + (curr_cell.obj[lno].h - image_height(icon)) / 2
             Align.B : y + curr_cell.obj[lno].h - image_height(icon)
          }
-         draw_image_string_ex(win, 
+         draw_image_ex(win, 
                        x, 
                        y1,
                        text_convert(icon, "string"))
@@ -305,7 +305,7 @@ class GridPaint(Paint)
 
    public do_imgc(args)
       local W, y1
-      W := ImageCache.get(args[1], win.get_bg()) | fail
+      W := ImageCache.get(args[1], win) | fail
       if pass = 1 then {
          llen +:= W.get_width()
          lheight <:= W.get_height()
@@ -372,8 +372,6 @@ end
 
 #
 # @field image=string : see {set_image}
-# @field data=string : see {set_data}
-# @field file=string : see {set_file}
 # @field cache=string : see {set_cache}
 # @field window={Window} : see {set_window}
 # @field scale_up=flag : see {set_scale_up}
@@ -383,8 +381,6 @@ end
 #
 class ImagePaint(Paint,SetFields)
    public 
-      image_file, 
-      image_data,
       image_str,
       image_window,
       image_cache,
@@ -395,22 +391,8 @@ class ImagePaint(Paint,SetFields)
       max_h
 
    #
-   # Set the name of the file from which to load the image.
-   #
-   public set_file(x)
-      self.image_file := x
-   end
-
-   #
-   # Set the raw image data (gif, jpeg etc) from which to load the image.
-   #
-   public set_data(x)
-      self.image_data := x
-   end
-
-   #
    # Set the name of a cache entry (either a file on the {ImageCache} path, or a named
-   # image data id, set with {ImageCache.name_data}).
+   # image data id, set with {ImageCache.name_image}).
    #
    public set_cache(x)
       self.image_cache := x
@@ -487,20 +469,14 @@ class ImagePaint(Paint,SetFields)
    end
 
    public load_image(c)
-      if \self.image_str then {
-         # Note we need foreground too for shade & highlight chars in image_str
-         if win := Window.open("fg=",c.cbwin.get_fg(),
-                               "bg=",c.cbwin.get_bg(),
-                               "width=", (0 < image_width(self.image_str)),
-                               "height=", (0 < image_height(self.image_str)),
-                               "canvas=hidden") then
-            draw_image_string_ex(win, 0, 0, self.image_str)
-      } else if \self.image_data then
-         win := Window.open_image_data(self.image_data, c.cbwin.get_bg())
-      else if \self.image_file then
-         win := Window.open_image_file(self.image_file, c.cbwin.get_bg())
-      else if \self.image_cache then {
-         if win := ImageCache.get(self.image_cache, c.cbwin.get_bg()) then
+      local s
+      if s := \self.image_str then {
+         if s[1] == "(" then
+            win := Window.open_image(get_extended_image(c.cbwin, s), c.cbwin)
+         else
+            win := Window.open_image(s, c.cbwin)
+      } else if \self.image_cache then {
+         if win := ImageCache.get(self.image_cache, c.cbwin) then
             dont_close := 1
       } else if \self.image_window then {
          win := self.image_window
@@ -562,9 +538,7 @@ class ImagePaint(Paint,SetFields)
 
    public set_one(f)
       case f.attr of {
-         "string" : set_image(f.string_val())
-         "data" : set_data(f.string_val())
-         "file" : set_file(f.string_val())
+         "image" : set_image(f.string_val())
          "cache" : set_cache(f.string_val())
          "window" : set_window(f.object_val(Window))
          "scale_up" : set_scale_up(f.flag_val())

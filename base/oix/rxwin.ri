@@ -696,10 +696,46 @@ wbp wcreate(char *display, wbp parent)
     return w;
 }
 
+#if 0
+static void dump_all()
+{
+    int i,j;
+    wsp x;
+    wbp y;
+    i = 0;
+    for (y = wbndngs; y; y = y->next) {
+        printf("Binding %p\n",y);
+        printf("\tcanvas %p\n",y->window);
+        printf("\tcontext %p\n",y->context);
+        ++i;
+    }
+    j = 0;
+    for (x = wstates; x; x = x->next) {
+        printf("Canvas %p\n",x);
+        printf("\trefcount=%d\n", x->refcount);
+        printf("\tlabel=%s\n", x->windowlabel);
+        printf("\tgeometry=%d,%d %dx%d\n", x->x,x->y,x->width,x->height);
+        printf("\twin=%d\n", (int)x->win);
+        ++j; 
+    }
+    printf("Total %d bindings %d canvases\n",i,j);
+}
+#endif
+
 int wopen(wbp w)
 {
     wsp ws = w->window;
     struct imgdata *imd;
+
+#if 0
+    {
+        static int first=1;
+        if (first) {
+            atexit(dump_all);
+            first = 0;
+        }
+    }
+#endif
 
     wmap(w);
 

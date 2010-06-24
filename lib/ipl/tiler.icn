@@ -67,7 +67,7 @@ procedure tileims(win, ims)
          }
    
    else {
-      win.draw_image_string(0, 0, ims) | fail
+      win.draw_image(0, 0, ims) | fail
       tile(win, win, 0, 0, w, h)
       }
 

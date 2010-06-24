@@ -103,11 +103,11 @@ class TextMenuItem(MenuComponent)
    end
 
    public set_image_left(x)
-      set_paint_left(ImageStringPaint(x))
+      set_paint_left(ImagePaint("image=",x))
    end
 
    public set_image_right(x)
-      set_paint_right(ImageStringPaint(x))
+      set_paint_right(ImagePaint("image=",x))
    end
 
    public set_border_left(x)

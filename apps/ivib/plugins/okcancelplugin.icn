@@ -44,7 +44,7 @@ class OkCancelPlugin(Plugin)
    end
 
    public display(obj, r)
-      draw_image_string_ex(obj.cbwin, obj.x, obj.y, get_display_icon())
+      draw_image_ex(obj.cbwin, obj.x, obj.y, get_display_icon())
    end
 
    public get_default_width(obj)

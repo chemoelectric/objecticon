@@ -363,7 +363,7 @@ class Menu(TextMenuItem)
       cast(self,TextMenuItem).new()
       self.set_border(RaisedBorder())
       self.is_sub_menu_flag := 1
-      self.set_image_right(Icon.ARROW_RIGHT)
+      self.set_paint_right(ImagePaint("cache=gui.ARROW_RIGHT"))
       # The little arrow is to the right of its area.
       self.border_right.x_align := Align.R
       set_fields(a)

@@ -1272,7 +1272,7 @@ class Main(Dialog)
       fp := Files.get_path(prefs.image_directory)
       every f := !Files.list(fp.str()) do {
          if endswith(map(f[1]), ".gif", ".png", ".jpeg", ".jpg") then
-            ImageCache.name_data(f[1], Files.file_to_string(fp.child(f[1]).str()))
+            ImageCache.name_image(f[1], Files.file_to_string(fp.child(f[1]).str()))
       }
 
       save_button := IconButton("tooltip=Save")

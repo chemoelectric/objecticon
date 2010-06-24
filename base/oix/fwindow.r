@@ -364,107 +364,7 @@ function graphics_Window_draw_curve(self, argv[argc])
    }
 end
 
-
-function graphics_Window_draw_image_string(self, x0, y0, d)
-   body {
-      int c, width, height, row, p, format;
-      word x, y;
-      word nchars;
-      unsigned char *s, *t, *z;
-      struct palentry *e;
-      struct imgdata imd;
-      GetSelfW();
-
-      if (pointargs(self_w, &x0, &x, &y) == Error)
-          runerr(0);
-      if (!cnv:string(d, d))
-          runerr(103, d);
-
-      /*
-       * Extract the Width and skip the following comma.
-       */
-      s = (unsigned char *)StrLoc(d);
-      z = s + StrLen(d);		/* end+1 of string */
-      width = 0;
-      while (s < z && *s == ' ')	/* skip blanks */
-          s++;
-      while (s < z && isdigit((unsigned char)*s))	/* scan number */
-          width = 10 * width + *s++ - '0';
-      while (s < z && *s == ' ')	/* skip blanks */
-          s++;
-      if (width == 0 || *s++ != ',')	/* skip comma */
-          fail;
-      while (s < z && *s == ' ')	/* skip blanks */
-          s++;
-      if (s >= z)			/* if end of string */
-          fail;
-
-      /*
-       * Check for a bilevel format.
-       */
-      if ((c = *s) == '#' || c == '~') {
-          s++;
-          nchars = z - s;
-          for (t = s; t < z; t++)
-              if (!isxdigit((unsigned char)*t))
-                  fail;				/* illegal punctuation */
-          if (nchars == 0)
-              fail;
-          row = (width + 3) / 4;			/* digits per row */
-          if (nchars % row != 0)
-              fail;
-          height = nchars / row;
-          drawblimage(self_w, x, y, width, height, c, s);
-          return self;
-      }
-
-      /*
-       * Extract the palette name and skip its comma.
-       */
-      c = *s++;					/* save initial character */
-      p = 0;
-      while (s < z && isdigit((unsigned char)*s))		/* scan digits */
-          p = 10 * p + *s++ - '0';
-      while (s < z && *s == ' ')		/* skip blanks */
-          s++;
-      if (s >= z || p == 0 || *s++ != ',')	/* skip comma */
-          fail;
-      if (c == 'g' && p >= 2 && p <= 256)	/* validate grayscale number */
-          p = -p;
-      else if (c != 'c' || p < 1 || p > 6)	/* validate color number */
-          fail;
-
-      /*
-       * Scan the image to see which colors are needed, and if transparency is used.
-       */
-      format = IMGDATA_PALETTE_OPAQUE;
-      e = palsetup(p); 
-      nchars = z - s;
-      for (t = s; t < z; t++) {
-          c = *t; 
-          if (e[c].transpt)
-              format = IMGDATA_PALETTE_TRANS;
-          else if (!e[c].valid)
-              fail;
-      }
-      if (nchars == 0)
-          fail;					/* empty image */
-      if (nchars % width != 0)
-          fail;					/* not rectangular */
-
-      height = nchars / width;
-
-      imd.width = width;
-      imd.height = height;
-      imd.paltbl = e;
-      imd.data = s;
-      imd.format = format;
-      drawimgdata(self_w, x, y, &imd);
-      return self;
-   }
-end
-
-function graphics_Window_draw_image_data(self, x0, y0, d)
+function graphics_Window_draw_image(self, x0, y0, d)
    body {
       word x, y;
       struct imgdata imd;
@@ -475,7 +375,7 @@ function graphics_Window_draw_image_data(self, x0, y0, d)
       if (!cnv:string(d, d))
           runerr(103, d);
 
-      if (parseimage(&d, &imd) != Succeeded)
+      if (parseimage(self_w, &d, &imd) != Succeeded)
           fail;
       drawimgdata(self_w, x, y, &imd);
       freeimgdata(&imd);
@@ -1043,28 +943,6 @@ function graphics_Window_raise(self)
    }
 end
 
-function graphics_Window_draw_image_file(self, x0, y0, file)
-   body {
-      char *filename;
-      word x, y;
-      int r;
-      struct imgdata imd;
-      GetSelfW();
-
-      if (pointargs(self_w, &x0, &x, &y) == Error)
-          runerr(0);
-      if (!cnv:string(file, file))
-          runerr(103, file);
-
-      filename = buffstr(&file);
-      if (readimagefile(filename, &imd) != Succeeded)
-          fail;
-      drawimgdata(self_w, x, y, &imd);
-      freeimgdata(&imd);
-      return nulldesc;
-   }
-end
-
 function graphics_Window_sync()
    body {
       wsync(0);
@@ -1109,7 +987,7 @@ function graphics_Window_flush(self)
    }
 end
 
-function graphics_Window_write_image_file(self, fname, x0, y0, w0, h0)
+function graphics_Window_write_image(self, fname, x0, y0, w0, h0)
    if !cnv:string(fname) then
        runerr(103, fname)
    body {
@@ -1766,33 +1644,14 @@ function graphics_Window_set_height(self, height)
    }
 end
 
-function graphics_Window_set_image_file(self, val)
-   if !cnv:string(val) then
-      runerr(103, val)
-   body {
-       wsp ws;
-       char *s;
-       GetSelfW();
-       ws = self_w->window;
-       s = buffstr(&val);
-       if (readimagefile(s, &ws->initimage) != Succeeded)
-           fail;
-       self_w->window->width = ws->initimage.width;
-       self_w->window->height = ws->initimage.height;
-       wconfig |= C_SIZE | C_IMAGE;
-       SimpleAttr();
-       return self;
-   }
-end
-
-function graphics_Window_set_image_data(self, d)
+function graphics_Window_set_image(self, d)
    if !cnv:string(d) then
       runerr(103, d)
    body {
        wsp ws;
        GetSelfW();
        ws = self_w->window;
-       if (parseimage(&d, &ws->initimage) != Succeeded)
+       if (parseimage(self_w, &d, &ws->initimage) != Succeeded)
            fail;
        self_w->window->width = ws->initimage.width;
        self_w->window->height = ws->initimage.height;

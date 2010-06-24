@@ -32,11 +32,11 @@ class Label(Component)
    end
 
    #
-   # Set an image for the label, in icon image string format.
+   # Set an image for the label
    # @param x  The image to be displayed
    #
    public set_image(x)
-      set_paint(ImageStringPaint(x))
+      set_paint(ImagePaint("image=",x))
    end
 
    public set_paint(p)

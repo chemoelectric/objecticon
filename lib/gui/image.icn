@@ -16,8 +16,6 @@ import util, ipl.graphics(Zoom), graphics
 # can be changed at any time.
 #
 # @field image=string : see {set_image}
-# @field data=string : see {set_data}
-# @field file=string : see {set_file}
 # @field cache=string : see {set_cache}
 # @field window={Window} : see {set_window}
 # @field scale_up=flag : see {set_scale_up}
@@ -25,8 +23,6 @@ import util, ipl.graphics(Zoom), graphics
 #
 class Image(Component)
    public 
-      image_file, 
-      image_data,
       image_str,
       image_window,
       image_cache,
@@ -36,39 +32,10 @@ class Image(Component)
       dont_close
 
    #
-   # Set the name of the file from which to load the image;
-   # re-display the image from the new file if appropriate.
-   #
-   public set_file(x)
-      self.image_file := self.image_data := self.image_str := self.image_cache := self.image_window := &null
-      if is_initialized() then {
-         close_image()
-         self.image_file := x
-         load_image()
-         self.invalidate()
-      } else
-         self.image_file := x
-   end
-
-   #
-   # Set the raw image data (gif, jpeg etc) from which to load the image.
-   #
-   public set_data(x)
-      self.image_file := self.image_data := self.image_str := self.image_cache := self.image_window := &null
-      if is_initialized() then {
-         close_image()
-         self.image_data := x
-         load_image()
-         self.invalidate()
-      } else
-         self.image_data := x
-   end
-
-   #
    # Set an image in Icon image format.
    #
    public set_image(x)
-      self.image_file := self.image_data := self.image_str := self.image_cache := self.image_window := &null
+      self.image_str := self.image_cache := self.image_window := &null
       if is_initialized() then {
          close_image()
          self.image_str := x
@@ -80,10 +47,10 @@ class Image(Component)
 
    #
    # Set the name of a cache entry (either a file on the {ImageCache} path, or a named
-   # image data id, set with {ImageCache.name_data}).
+   # image data id, set with {ImageCache.name_image}).
    #
    public set_cache(x)
-      self.image_file := self.image_data := self.image_str := self.image_cache := self.image_window := &null
+      self.image_str := self.image_cache := self.image_window := &null
       if is_initialized() then {
          close_image()
          self.image_cache := x
@@ -98,7 +65,7 @@ class Image(Component)
    # by this Component.
    #
    public set_window(x)
-      self.image_file := self.image_data := self.image_str := self.image_cache := self.image_window := &null
+      self.image_str := self.image_cache := self.image_window := &null
       if is_initialized() then {
          close_image()
          self.image_window := x
@@ -112,7 +79,7 @@ class Image(Component)
    # Blank the image
    #
    public clear_image()
-      self.image_file := self.image_data := self.image_str := self.image_cache := self.image_window := &null
+      self.image_str := self.image_cache := self.image_window := &null
       if is_initialized() then {
          close_image()
          self.invalidate()
@@ -125,20 +92,14 @@ class Image(Component)
    end
 
    public load_image()
-      if \self.image_str then {
-         # Note we need foreground too for shade & highlight chars in image_str
-         if win := Window.open("fg=",self.cbwin.get_fg(),
-                               "bg=",self.cbwin.get_bg(),
-                               "width=", (0 < image_width(self.image_str)),
-                               "height=", (0 < image_height(self.image_str)),
-                               "canvas=hidden") then
-            draw_image_string_ex(win, 0, 0, self.image_str)
-      } else if \self.image_data then
-         win := Window.open_image_data(self.image_data, self.cbwin.get_bg())
-      else if \self.image_file then
-         win := Window.open_image_file(self.image_file, self.cbwin.get_bg())
-      else if \self.image_cache then {
-         if win := ImageCache.get(self.image_cache, self.cbwin.get_bg()) then
+      local s
+      if s := \self.image_str then {
+         if s[1] == "(" then
+            win := Window.open_image(get_extended_image(self.cbwin, s), self.cbwin)
+         else
+            win := Window.open_image(s, self.cbwin)
+      } else if \self.image_cache then {
+         if win := ImageCache.get(self.image_cache, self.cbwin) then
             dont_close := 1
       } else if \self.image_window then {
          win := self.image_window
@@ -234,8 +195,6 @@ class Image(Component)
    public set_one(f)
       case f.attr of {
          "image" : set_image(f.string_val())
-         "data" : set_data(f.string_val())
-         "file" : set_file(f.string_val())
          "cache" : set_cache(f.string_val())
          "window" : set_window(f.object_val(Window))
          "scale_up" : set_scale_up(f.flag_val())
