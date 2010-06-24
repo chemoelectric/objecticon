@@ -174,6 +174,7 @@ void buffnstr(dptr d, char **s, ...);
     */
 
    wbp  alcwbinding    (void);
+   wbp  findwbp        (wsp ws);
    int  docircle        (wbp w, dptr argv, int fill);
    void drawCurve       (wbp w, XPoint *p, int n);
    void genCurve        (wbp w, XPoint *p, int n, void (*h)(wbp, XPoint [], int));

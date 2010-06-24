@@ -12,16 +12,19 @@
  */
 wdp wdsplys;
 
+/* List of windows with win non-null */
+static wsp vwstates;
+
 /*
  * function prototypes
  */
 static wcp alccontext(wbp w);
 static wsp alcwinstate(void);
 static void handle_misc(wdp display);
-static void handle_config(wbp w, XConfigureEvent *event);
-static void handle_exposures(wbp w, XExposeEvent *event);
-static void handle_mouse(wbp w, XButtonEvent *event);
-static void handle_keypress(wbp w, XKeyEvent *event);
+static void handle_config(wsp w, XConfigureEvent *event);
+static void handle_exposures(wsp ws, XExposeEvent *event);
+static void handle_mouse(wsp ws, XButtonEvent *event);
+static void handle_keypress(wsp ws, XKeyEvent *event);
 static void wmap(wbp w);
 static int convert_KeySym_to_code_point(KeySym k);
 static char *convertspec(wdp wd, char *s);
@@ -172,6 +175,44 @@ static stringint cursors[] = {
 
 
 static int selection_debug = 0;
+
+#if 0
+static void dump_all(void)
+{
+    int i,j,k;
+    wsp x;
+    wbp y;
+    i = 0;
+    for (y = wbndngs; y; y = y->next) {
+        printf("Binding %p\n",y);
+        printf("\tcanvas %p\n",y->window);
+        printf("\tcontext %p\n",y->context);
+        ++i;
+    }
+    printf("============\n");
+    j = 0;
+    for (x = wstates; x; x = x->next) {
+        printf("Canvas %p\n",x);
+        printf("\trefcount=%d\n", x->refcount);
+        printf("\tlabel=%s\n", x->windowlabel);
+        printf("\tgeometry=%d,%d %dx%d\n", x->x,x->y,x->width,x->height);
+        printf("\twin=%d\n", (int)x->win);
+        ++j; 
+    }
+    printf("============\n");
+    k = 0;
+    for (x = vwstates; x; x = x->vnext) {
+        printf("Non-hidden Canvas %p\n",x);
+        printf("\trefcount=%d\n", x->refcount);
+        printf("\tlabel=%s\n", x->windowlabel);
+        printf("\tgeometry=%d,%d %dx%d\n", x->x,x->y,x->width,x->height);
+        printf("\twin=%d\n", (int)x->win);
+        ++k; 
+    }
+
+    printf("Total %d bindings %d canvases (%d non-hidden)\n",i,j,k);
+}
+#endif
 
 static struct SharedColor *new_sharedcolor(char *name, int r, int g, int b)
 {
@@ -362,7 +403,6 @@ static void handle_misc(wdp wd)
 {
     XEvent event;
     Window evwin;
-    wbp wb;
     wsp ws = 0;
 
     while (XPending(wd->display)) {
@@ -370,15 +410,12 @@ static void handle_misc(wdp wd)
         XNextEvent(wd->display, &event);
         evwin = event.xexpose.window;  /* go ahead, criticize all you like */
 
-/* could avoid doing this search every event by handling 1 window at a time */
-        for (wb = wbndngs; wb; wb=wb->next) {
-            ws = wb->window;
+        for (ws = vwstates; ws; ws = ws->vnext) {
             if (ws->display == wd) {
                 if (ws->win == evwin) break;
-                if (ws->pix == evwin) break;
 	    }
         }
-        if (!wb) continue;
+        if (!ws) continue;
 
         switch (event.type) {
             case SelectionRequest: {
@@ -514,27 +551,27 @@ static void handle_misc(wdp wd)
 
             case KeyRelease: {
                 if (ws->inputmask & IM_KEY_RELEASE)
-                    handle_keypress(wb, (XKeyEvent *)&event);
+                    handle_keypress(ws, (XKeyEvent *)&event);
                 break;
             }
             case KeyPress:
-                handle_keypress(wb, (XKeyEvent *)&event);
+                handle_keypress(ws, (XKeyEvent *)&event);
                 break;
             case ButtonPress:
             case ButtonRelease:
             case MotionNotify:
-                handle_mouse(wb, (XButtonEvent *)&event);
+                handle_mouse(ws, (XButtonEvent *)&event);
                 break;
             case NoExpose:
                 break;
             case Expose:
-                handle_exposures(wb, (XExposeEvent *)&event);
+                handle_exposures(ws, (XExposeEvent *)&event);
                 break;
             case UnmapNotify:
-                wb->window->state = IconicState;
+                ws->state = IconicState;
                 break;
             case MapNotify:
-                if (wb->window->state == IconicState) {
+                if (ws->state == IconicState) {
                     if ((ws->width != DisplayWidth(wd->display, wd->screen)) ||
                         (ws->height != DisplayHeight(wd->display, wd->screen)))
                         ws->state = NormalState;
@@ -543,7 +580,7 @@ static void handle_misc(wdp wd)
                 }
                 break;
             case ConfigureNotify:
-                handle_config(wb, (XConfigureEvent *)&event);
+                handle_config(ws, (XConfigureEvent *)&event);
                 break;
             case ClientMessage: {
                 /*
@@ -553,24 +590,25 @@ static void handle_misc(wdp wd)
                                                            "WM_DELETE_WINDOW", False)) {
                     struct descrip d;
                     MakeInt(WINDOWCLOSED, &d);
-                    qevent(wb->window, &d, -1, -1, 0, 0, 0, 0, 0);
+                    qevent(ws, &d, -1, -1, 0, 0, 0, 0, 0);
                 }
                 break;
             }
             case DestroyNotify:
-                if (!ISZOMBIE(wb))
+                if (!ISZOMBIE(ws))
                     fatalerr(141, NULL);
                 /*
                  * first of all, we are done with this window
                  */
                 ws->win = (Window) NULL;
+                GRFX_GENUNLINK(ws, vwstates, vnext, vprevious);
 
                 /*
                  * if there are no more references, we are done with the pixmap
                  *  too.  Free it and the colors allocated for this canvas.
                  */
                 if (ws->refcount == 0) {
-                    if (wb->window->pix) {
+                    if (ws->pix) {
                         Display *d = ws->display->display;
                         XSync(d, False);
                         if (ws->pix)
@@ -620,7 +658,7 @@ void wclose(wbp w)
      * Force window to close (turn into a pixmap)
      */
     if (ws->win && ws->refcount > 1) {
-        SETZOMBIE(w);
+        SETZOMBIE(ws);
 #ifdef HAVE_LIBXFT
         if (ws->winDraw) {
             XftDrawDestroy(ws->winDraw);
@@ -696,32 +734,6 @@ wbp wcreate(char *display, wbp parent)
     return w;
 }
 
-#if 0
-static void dump_all()
-{
-    int i,j;
-    wsp x;
-    wbp y;
-    i = 0;
-    for (y = wbndngs; y; y = y->next) {
-        printf("Binding %p\n",y);
-        printf("\tcanvas %p\n",y->window);
-        printf("\tcontext %p\n",y->context);
-        ++i;
-    }
-    j = 0;
-    for (x = wstates; x; x = x->next) {
-        printf("Canvas %p\n",x);
-        printf("\trefcount=%d\n", x->refcount);
-        printf("\tlabel=%s\n", x->windowlabel);
-        printf("\tgeometry=%d,%d %dx%d\n", x->x,x->y,x->width,x->height);
-        printf("\twin=%d\n", (int)x->win);
-        ++j; 
-    }
-    printf("Total %d bindings %d canvases\n",i,j);
-}
-#endif
-
 int wopen(wbp w)
 {
     wsp ws = w->window;
@@ -758,7 +770,7 @@ static void wmap(wbp w)
     XWindowAttributes attrs;
     XGCValues gcv;
     unsigned long gcmask =
-        GCFont | GCForeground | GCBackground | GCFillStyle | GCCapStyle;
+        GCGraphicsExposures | GCFont | GCForeground | GCBackground | GCFillStyle | GCCapStyle;
     int i;
     int new_pixmap = 0;
     struct descrip progname;
@@ -834,6 +846,8 @@ static void wmap(wbp w)
 
         stdwin = ws->win;
         XClearWindow(stddpy, stdwin);
+
+        GRFX_GENLINK(ws, vwstates, vnext, vprevious);
     }
 
     /*
@@ -856,6 +870,7 @@ static void wmap(wbp w)
         gcmask |= GCDashList;
     }
     gcv.cap_style = CapProjecting;
+    gcv.graphics_exposures = False;
 
     /*
      * Create a graphics context (or change an existing one to conform
@@ -908,7 +923,7 @@ static void wmap(wbp w)
             size_hints.flags |= USPosition;
         size_hints.x = ws->x;
         size_hints.y = ws->y;
-        if (ISRESIZABLE(w)) {
+        if (ISRESIZABLE(ws)) {
             size_hints.min_width = ws->minwidth;
             size_hints.min_height = ws->minheight;
             size_hints.max_width = ws->maxwidth;
@@ -956,7 +971,7 @@ static void wmap(wbp w)
     XSync(stddpy, False);
 
     if (ws->state != RootState) {
-        CLREXPOSED(w);
+        CLREXPOSED(ws);
         XMapWindow(stddpy, stdwin);
     }
 
@@ -972,7 +987,7 @@ static void wmap(wbp w)
         XDefineCursor(stddpy, stdwin, wd->cursors[i]);
     }
 
-    CLRZOMBIE(w);
+    CLRZOMBIE(ws);
 
     XSetFunction(stddpy, stdgc, wc->drawop->i);
     XSync(stddpy, False);
@@ -1003,7 +1018,7 @@ void doconfig(wbp w, int status)
                 /* Not just a move */
 
                 XGetWMNormalHints(wd->display, ws->win, &size_hints, &t);
-                if (ISRESIZABLE(w)) {
+                if (ISRESIZABLE(ws)) {
                     size_hints.min_width = ws->minwidth;
                     size_hints.min_height = ws->minheight;
                     size_hints.max_width = ws->maxwidth;
@@ -1047,7 +1062,6 @@ void doconfig(wbp w, int status)
 }
 
 /*
- * Note that the three strings are pointers into the string space;
  * data is a safe pointer into a frame.
  */
 int sendselectionresponse(wbp w, word requestor, char *property, char *selection, char *target, word time, dptr data)
@@ -1153,7 +1167,7 @@ int ownselection(wbp w, char *selname)
      */
     if (curr) {
         wsp x;
-        for (x = wstates; x; x = x->next) {
+        for (x = vwstates; x; x = x->vnext) {
             if (x->win == curr) {
                 tended struct descrip tmp;
                 if (selection_debug)
@@ -1438,7 +1452,7 @@ int setcanvas(wbp w, char *s)
                         ws->height = ws->normalh;
                         ws->state = NormalState;
                     }
-                    SETZOMBIE(w);
+                    SETZOMBIE(ws);
 #ifdef HAVE_LIBXFT
                     if (ws->winDraw) {
                         XftDrawDestroy(ws->winDraw);
@@ -1701,21 +1715,14 @@ int setfont(wbp w, char *s)
  * callback procedures
  */
 
-static void handle_exposures(wbp w, XExposeEvent *event)
+static void handle_exposures(wsp ws, XExposeEvent *event)
 {
-    STDLOCALS(w);
-    SETEXPOSED(w);
-    if (stdwin && !ISZOMBIE(w)) {
-        if (wc->drawop->i != GXcopy)
-            XSetFunction(stddpy, stdgc, GXcopy);
-        if (wc->clipw >= 0)
-            unsetclip(w);
-        XCopyArea(stddpy, stdpix, stdwin, stdgc, event->x,event->y,
+    SETEXPOSED(ws);
+    if (ws->win && !ISZOMBIE(ws)) {
+        wdp wd = ws->display;
+        XCopyArea(wd->display, ws->pix, ws->win, 
+                  DefaultGC(wd->display, wd->screen), event->x,event->y,
                   event->width,event->height, event->x,event->y);
-        if (wc->clipw >= 0)
-            setclip(w);
-        if (wc->drawop->i != GXcopy)
-            XSetFunction(stddpy,stdgc,wc->drawop->i);
     }
 }
 
@@ -1788,10 +1795,9 @@ static void resizePixmap(wbp w, int width, int height)
  * user program is informed anyhow.  The integer coordinates are
  * the new size of the window, in pixels.
  */
-static void handle_config(wbp w, XConfigureEvent *event)
+static void handle_config(wsp ws, XConfigureEvent *event)
 {
     struct descrip d;
-    STDLOCALS(w);
 
     /*
      * Update X-Icon's information about the window's configuration
@@ -1809,23 +1815,23 @@ static void handle_config(wbp w, XConfigureEvent *event)
     ws->width = event->width;
     ws->height = event->height;
 
-    resizePixmap(w, event->width, event->height);
+    resizePixmap(findwbp(ws), event->width, event->height);
 
 
     /*
      * The initial configure event generates no Icon-level "events"
      */
-    if (!ISEXPOSED(w))
+    if (!ISEXPOSED(ws))
         return;
 
     MakeInt(RESIZED, &d);
-    qevent(w->window, &d, -1, -1, 0, 0, 0, 0, 0);
+    qevent(ws, &d, -1, -1, 0, 0, 0, 0, 0);
 }
 
 /*
  * Queue up characters for keypress events.
  */
-static void handle_keypress(wbp w, XKeyEvent *event)
+static void handle_keypress(wsp ws, XKeyEvent *event)
 {
     int i,j;
     char s[10];
@@ -1839,7 +1845,7 @@ static void handle_keypress(wbp w, XKeyEvent *event)
         StrLen(d) = 1;
         for (j = 0; j < i; j++) {
             StrLoc(d) = &allchars[s[j] & 0xFF];
-            qevent(w->window, &d, event->x, event->y,
+            qevent(ws, &d, event->x, event->y,
                    (uword)event->time, 
                    event->state & ControlMask,
                    event->state & Mod1Mask,
@@ -1860,7 +1866,7 @@ static void handle_keypress(wbp w, XKeyEvent *event)
             d.dword = D_Ucs;
             BlkLoc(d) = (union block *)make_one_char_ucs_block(i);
         }
-        qevent(w->window, &d, event->x, event->y,
+        qevent(ws, &d, event->x, event->y,
                (uword)event->time,
                event->state & ControlMask,
                event->state & Mod1Mask,
@@ -1873,7 +1879,7 @@ static void handle_keypress(wbp w, XKeyEvent *event)
      * So just generate the numerical value of the KeySym as an integer.
      */
     MakeInt(k, &d);
-    qevent(w->window, &d, event->x, event->y,
+    qevent(ws, &d, event->x, event->y,
            (uword)event->time, 
            event->state & ControlMask,
            event->state & Mod1Mask,
@@ -1889,7 +1895,7 @@ static void handle_keypress(wbp w, XKeyEvent *event)
  * the structures are identical up to the button field (which we do not
  * examine for drag events).  Mouse coordinates are queued up after the event.
  */
-static void handle_mouse(wbp w, XButtonEvent *event)
+static void handle_mouse(wsp ws, XButtonEvent *event)
 {
     int state = 0;
     if (event->state & Button1Mask) state |= 1;
@@ -1919,7 +1925,7 @@ static void handle_mouse(wbp w, XButtonEvent *event)
             break;
         }
     }
-    qmouseevents(w->window, state, 
+    qmouseevents(ws, state, 
                  event->x, event->y, (uword)event->time, 
                  event->state & ControlMask,
                  event->state & Mod1Mask,
@@ -2974,7 +2980,7 @@ wcp clonecontext(wbp w)
     wdp wd;
     XGCValues gcv;
     XRectangle rec;
-    unsigned long gcmask = GCFont | GCForeground | GCBackground |
+    unsigned long gcmask = GCGraphicsExposures | GCFont | GCForeground | GCBackground |
         GCFillStyle | GCCapStyle | GCLineWidth | GCLineStyle;
 
     wc = w->context;
@@ -3011,6 +3017,7 @@ wcp clonecontext(wbp w)
     }
     gcv.fill_style = rv->fillstyle->i;
     gcv.cap_style  = CapProjecting;
+    gcv.graphics_exposures = False;
     rv->gc = XCreateGC(w->window->display->display,w->window->pix,gcmask,&gcv);
     if (rv->clipw >= 0) {
         rec.x = rv->clipx;
@@ -3059,7 +3066,7 @@ void freewindow(wsp ws)
     if(ws->refcount == 0) {
         struct imgdata *imd;
 
-        ws->bits |= 1;			/* SETZOMBIE */
+        SETZOMBIE(ws);
 #ifdef HAVE_LIBXFT
         if (ws->winDraw) {
             XftDrawDestroy(ws->winDraw);

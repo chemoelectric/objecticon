@@ -49,6 +49,15 @@ static void wgetq(wbp w, dptr res)
         fatalerr(143, 0);
 }
 
+wbp findwbp(wsp ws)
+{
+    wbp wb;
+    for (wb = wbndngs; wb; wb = wb->next)
+        if (wb->window == ws)
+            return wb;
+    syserr("Couldn't find wbp for wsp");
+    return 0;  /* not reached */
+}
 
 void wgetevent(wbp w, dptr res)
 {

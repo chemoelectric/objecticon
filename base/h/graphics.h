@@ -71,27 +71,25 @@
  * mode bits for the Icon window context (as opposed to X context)
  */
 
-#define ISINITIAL(w)    ((w)->window->bits & 1)
-#define ISINITIALW(ws)   ((ws)->bits & 1)
 /* bit 4 is available */
-#define ISRESIZABLE(w)	((w)->window->bits & 128)
-#define ISEXPOSED(w)    ((w)->window->bits & 256)
+#define ISRESIZABLE(ws)	((ws)->bits & 128)
+#define ISEXPOSED(ws)    ((ws)->bits & 256)
 
 /* bit 4 is available */
-#define SETRESIZABLE(w)	((w)->window->bits |= 128)
-#define SETEXPOSED(w)   ((w)->window->bits |= 256)
+#define SETRESIZABLE(ws) ((ws)->bits |= 128)
+#define SETEXPOSED(ws)   ((ws)->bits |= 256)
 /* bit 4 is available */
-#define CLRRESIZABLE(w)	((w)->window->bits &= ~128)
-#define CLREXPOSED(w)   ((w)->window->bits &= ~256)
+#define CLRRESIZABLE(ws) ((ws)->bits &= ~128)
+#define CLREXPOSED(w)   ((ws)->bits &= ~256)
 
 #define ISTOBEHIDDEN(ws)  ((ws)->bits & 4096)
 #define SETTOBEHIDDEN(ws)  ((ws)->bits |= 4096)
 #define CLRTOBEHIDDEN(ws)  ((ws)->bits &= ~4096)
 
 #if XWindows
-#define ISZOMBIE(w)     ((w)->window->bits & 1)
-#define SETZOMBIE(w)    ((w)->window->bits |= 1)
-#define CLRZOMBIE(w)    ((w)->window->bits &= ~1)
+#define ISZOMBIE(ws)     ((ws)->bits & 1)
+#define SETZOMBIE(ws)    ((ws)->bits |= 1)
+#define CLRZOMBIE(ws)    ((ws)->bits &= ~1)
 #endif					/* XWindows */
 
 #define DEFAULT_WINDOW_LABEL "Object Icon"
@@ -271,6 +269,7 @@ typedef struct _wstate {
   int           buttonorder[3];         /* order for working out drag events */
 #if XWindows
   wdp		display;
+  struct _wstate *vprevious, *vnext;    /* List of states with win non-null */
   Window	win;			/* X window */
   Pixmap	pix;			/* current screen state */
   int		pixheight;		/* backing pixmap height, in pixels */

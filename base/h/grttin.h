@@ -286,3 +286,20 @@ typedef int siptr, stringint, inst;
       free(var);
    } while(0)
 #enddef				/* GRFX_UNLINK */
+
+#begdef GRFX_GENLINK(var, chain, next, previous)
+   do {
+      var->next = chain;
+      var->previous = NULL;
+      if (chain) chain->previous = var;
+      chain = var;
+   } while(0)
+#enddef
+   
+#begdef GRFX_GENUNLINK(var, chain, next, previous)
+   do {
+      if (var->previous) var->previous->next = var->next;
+      else chain = var->next;
+      if (var->next) var->next->previous = var->previous;
+   } while(0)
+#enddef

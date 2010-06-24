@@ -1429,7 +1429,7 @@ end
 function graphics_Window_can_resize(self)
    body {
        GetSelfW();
-       if (ISRESIZABLE(self_w))
+       if (ISRESIZABLE(self_w->window))
            return nulldesc;
        else
            fail;
@@ -1902,9 +1902,9 @@ function graphics_Window_set_resize(self, val)
    body {
        GetSelfW();
        if (is:null(val))
-           CLRRESIZABLE(self_w);
+           CLRRESIZABLE(self_w->window);
        else
-           SETRESIZABLE(self_w);
+           SETRESIZABLE(self_w->window);
        wconfig |= C_RESIZE;
        SimpleAttr();
        return self;
