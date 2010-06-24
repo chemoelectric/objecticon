@@ -336,11 +336,11 @@ class Tree(SelectableScrollArea)
 
    public new(a[])
       cast(self,SelectableScrollArea).new()
-      plus := ImagePaint("image=",Icon.PLUS)
-      minus := ImagePaint("image=",Icon.MINUS)
-      set_default_icon_paint(ImagePaint("image=",Icon.CLOSED_FOLDER), 
-                             ImagePaint("image=",Icon.OPEN_FOLDER),
-                             ImagePaint("image=",Icon.FILE))
+      plus := ImagePaint("cache=gui.PLUS")
+      minus := ImagePaint("cache=gui.MINUS")
+      set_default_icon_paint(ImagePaint("cache=gui.CLOSED_FOLDER"), 
+                             ImagePaint("cache=gui.OPEN_FOLDER"),
+                             ImagePaint("cache=gui.FILE"))
       show_root_flag := show_root_handles_flag := 1
       set_fields(a)
       return

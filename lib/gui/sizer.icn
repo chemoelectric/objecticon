@@ -29,6 +29,7 @@ class Sizer(Component)
       temp_orig,
       lo,
       hi,
+      gp,
       drag_offset,
       curr_pos,
       start_pos
@@ -73,18 +74,17 @@ class Sizer(Component)
    end
 
    public display()
-      local x1, y1, i
-      i := Icon.GRID
-      x1 := self.x + (self.w - image_width(i)) / 2
-      y1 := self.y + (self.h - image_height(i)) / 2
+      local x1, y1
+      x1 := self.x + (self.w - gp.w) / 2
+      y1 := self.y + (self.h - gp.h) / 2
       if \self.is_horizontal_flag then {
-         draw_image_ex(self.cbwin, x1 - 10, y1, i)
-         draw_image_ex(self.cbwin, x1, y1, i)
-         draw_image_ex(self.cbwin, x1 + 10, y1, i)
+         gp.draw(self.cbwin, x1 - 10, y1)
+         gp.draw(self.cbwin, x1, y1)
+         gp.draw(self.cbwin, x1 + 10, y1)
       } else {
-         draw_image_ex(self.cbwin, x1, y1 - 10, i)
-         draw_image_ex(self.cbwin, x1, y1, i)
-         draw_image_ex(self.cbwin, x1, y1 + 10, i)
+         gp.draw(self.cbwin, x1, y1 - 10)
+         gp.draw(self.cbwin, x1, y1)
+         gp.draw(self.cbwin, x1, y1 + 10)
       }
    end
 
@@ -105,6 +105,12 @@ class Sizer(Component)
       else
          set_pointer("sb h double arrow")
       cast(self,Component).initially()
+      self.gp.initially(self)
+   end
+
+   public finally()
+      cast(self,Component).finally()
+      self.gp.finally()
    end
 
    public get_default_width()
@@ -186,6 +192,7 @@ class Sizer(Component)
       connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
       connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+      gp := ImagePaint("cache=gui.GRID")
       set_fields(a)
       return
    end
@@ -202,6 +209,3 @@ class SliderDragComponent(Component)
       return
    end
 end
-
-
-

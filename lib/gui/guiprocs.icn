@@ -8,7 +8,7 @@
 
 package gui
 
-import graphics, lang
+import graphics, lang, util
 
 class Event()
    public static const
@@ -191,7 +191,7 @@ class Gui()
 end
 
 procedure draw_image_ex(W, x, y, i)
-   W.draw_image(x, y, get_extended_image(W, i))
+   return W.draw_image(x, y, get_extended_image(W, i))
 end
 
 procedure palette_key_ex(W, palette, spec)
@@ -212,21 +212,23 @@ procedure get_extended_image(W, img)
 
    img ? {
       ="(" | return img
-      spec := tab(upto(')')) | fail
+      spec := tab(upto(')')) | return error("Invalid extended image (no closing bracket)")
       =")"
       tab(many(' '))
       head := tab(upto(',')) || move(1) ||
-         (palette := tab(upto(','))) || move(1) | fail
+         (palette := tab(upto(','))) || move(1) | 
+            return error("Invalid extended image (no header)")
 
       s1 := s2 := ""
       spec ? repeat {
          tab(many('; '))
          if pos(0) then 
             break
-         s1 ||:= move(1) | fail
-         ="=" | fail
+         s1 ||:= move(1) | return error("Invalid extended image (bad palette spec)")
+         ="=" | return error("Invalid extended image (expected '=' in spec)")
          spec := tab(upto(';') | 0)
-         s2 ||:= palette_key_ex(W, palette, spec) | fail
+         s2 ||:= palette_key_ex(W, palette, spec) | 
+            return error("Invalid extended image (bad palette or color in spec)")
       }
       return head || map(tab(0), s1, s2)
    }

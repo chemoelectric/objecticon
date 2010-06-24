@@ -191,7 +191,7 @@ class FrameBar(Component)
       add(lab)
       b := IconButton("accepts_focus=no", "c:r_inset=3", "tooltip=Close")
       b.set_border(EmptyBorder("flush"))
-      b.set_image(Icon.TINY_X)
+      b.set_paint(ImagePaint("cache=gui.TINY_X"))
       b.connect(self.on_close, Event.ACTION)
       self.add(b)
    end

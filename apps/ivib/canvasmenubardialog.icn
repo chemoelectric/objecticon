@@ -35,7 +35,6 @@ class CanvasMenuBarDialog(CanvasComponentDialog)
       new.change_canvas(c.parent_Canvas)
       new.rename()
       select_rec.parent.add(new, select_rec.index)
-      new.set_parent_component(c)
       new.initially()
       c.set_string_rep()
       #
@@ -127,7 +126,7 @@ class CanvasMenuBarDialog(CanvasComponentDialog)
       l := struct.get_selections()
       n := c.parent_Canvas.new_checkbox_group()
       every e := struct.get_rec(!l) do {
-         e.owner.set_images(Icon.DIAMOND_UP, Icon.DIAMOND_DOWN)
+         e.owner.set_box_paint(ImagePaint("cache=gui.DIAMOND_UP"), ImagePaint("cache=gui.DIAMOND_DOWN"))
          e.owner.set_parent_check_box_group(n)
          e.owner.set_is_checked(&no)
       }
@@ -149,7 +148,7 @@ class CanvasMenuBarDialog(CanvasComponentDialog)
       local new
       new := CanvasMenu()
       new.set_paint_mid(CanvasTextPaint("Edit me"))
-      new.set_paint_right(CanvasImagePaint("image=",Icon.ARROW_RIGHT))
+      new.set_paint_right(CanvasImagePaint("cache=gui.ARROW_RIGHT"))
       update(new)
       update_grey()
    end

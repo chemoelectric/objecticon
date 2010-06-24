@@ -29,7 +29,7 @@ class CanvasMenu(CanvasTextMenuItem,Menu)
       }
       if \self.paint_right &
          not(is(self.paint_right, CanvasImagePaint) &
-             paint_right.image_str === Icon.ARROW_RIGHT) then  {
+             paint_right.image_cache === "gui.ARROW_RIGHT") then  {
          self.paint_right.gen_code(c)
          c.line(name || ".set_paint_right(" || self.paint_right.name || ")")
       }

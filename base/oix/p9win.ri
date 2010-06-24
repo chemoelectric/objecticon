@@ -505,16 +505,6 @@ static void resize_pix_win(wbp w)
     copy_to(t, ws->pix);
     freeimage(ws->pix);
     ws->pix = t;
-
-/*
-    MemProtect(t = allocimage(display, ws->pix->r, screen->chan, 1, DNofill));
-    copy_to(t, ws->pix);
-    close_pix_win(ws);
-    open_pix_win(ws);
-    clear_pix_win(w);
-    copy_to(ws->pix, t);
-    freeimage(t);
-*/
 }
 
 static void handle_resize(wsp ws)

@@ -1273,7 +1273,7 @@ class WindowControl(Component)
       cast(self,Component).new()
       set_layout(GridLayout("flush", "dii=0"))
       attrib("pos=100%,0", "align=r,t")
-      add(IconButton("image=",Icon.WINDOW_ICONIFY_BUTTON,
+      add(IconButton("paint=",ImagePaint("cache=gui.WINDOW_ICONIFY_BUTTON"),
                      "border=",EmptyBorder("flush"),
                      "accepts_focus=no",
 $ifdef _PLAN9
@@ -1282,7 +1282,7 @@ $else
                      "tooltip=Iconify",
 $endif
                      "e:action=", iconify_window))
-      add(IconButton("image=",Icon.WINDOW_CLOSE_BUTTON,
+      add(IconButton("paint=",ImagePaint("cache=gui.WINDOW_CLOSE_BUTTON"),
                      "border=",EmptyBorder("flush"),
                      "accepts_focus=no",
                      "tooltip=Close",

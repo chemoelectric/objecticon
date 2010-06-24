@@ -42,7 +42,7 @@ COMMONSRC=canvas.icn canvasborder.icn canvasborderdialog.icn \
 	okcancel.icn canvaslayout.icn canvaspreferencesdialog.icn \
 	xyalignlist.icn canvasborders.icn borderedit.icn \
 	codetab.icn canvaspaint.icn paintfield.icn canvasobject.icn \
-	checkboximagetab.icn groupsdialog.icn layoutfield.icn \
+	groupsdialog.icn layoutfield.icn \
 	borderfield.icn paintedit.icn canvasvsplitui.icn canvashsplitui.icn \
 	canvassplit.icn canvassplitdialog.icn canvasoverlayitemdialog.icn \
 	selectmodelist.icn plugin.icn maptab.icn canvasplugin.icn

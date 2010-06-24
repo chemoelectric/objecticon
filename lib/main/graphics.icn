@@ -432,7 +432,9 @@ class Window(SetFields,NoCopy)
       w := if /win then
          Window.open("canvas=hidden")
       else
-         Window.open("canvas=hidden", "bg=",win.get_bg())
+         Window.open("canvas=hidden", 
+                     "fg=",win.get_fg(),
+                     "bg=",win.get_bg())
       w.set_image(img) | {
          w.close()
          fail
