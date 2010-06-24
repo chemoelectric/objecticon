@@ -41,7 +41,7 @@ static int xlfd_size(char *s, int n);
 static wfp newfont(wdp wd, char *s);
 static wdp alcdisplay (char *s);
 static wfp loadfont(wdp wd, char *s);
-static void resizePixmap(wbp w, int width, int height);
+static void resizepixmap(wbp w, int width, int height);
 static void setclip(wbp w);
 static void unsetclip(wbp w);
 
@@ -739,16 +739,6 @@ int wopen(wbp w)
     wsp ws = w->window;
     struct imgdata *imd;
 
-#if 0
-    {
-        static int first=1;
-        if (first) {
-            atexit(dump_all);
-            first = 0;
-        }
-    }
-#endif
-
     wmap(w);
 
     imd = &ws->initimage;
@@ -778,6 +768,15 @@ static void wmap(wbp w)
     XWMHints wmhints;
     XClassHint clhints;
     STDLOCALS(w);
+
+    /*
+     * Set the size if unset by the user.  The default varies on whether the
+     * window is hidden or not.
+     */
+    if (ws->width == 0)
+        ws->width = (ws->state == HiddenState ? 1 : 200);
+    if (ws->height == 0)
+        ws->height = (ws->state == HiddenState ? 1 : 200);
 
     /*
      *  Create a pixmap for this canvas if there isn't one already.
@@ -978,7 +977,7 @@ static void wmap(wbp w)
     XGetWindowAttributes(stddpy, stdwin, &attrs);
     ws->width = attrs.width;
     ws->height = attrs.height;
-    resizePixmap(w, ws->width, ws->height);
+    resizepixmap(w, ws->width, ws->height);
 
     if (stdwin) {
         i = ws->cursor->i >> 1;
@@ -1008,7 +1007,7 @@ void doconfig(wbp w, int status)
     }
 
     if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE)) {
-        resizePixmap(w, ws->width, ws->height);
+        resizepixmap(w, ws->width, ws->height);
 
         if (ws->win) {
             if (status != C_POS) {
@@ -1727,14 +1726,14 @@ static void handle_exposures(wsp ws, XExposeEvent *event)
 }
 
 /*
- * resizePixmap(w,width,height) -- ensure w's backing pixmap is at least
+ * resizepixmap(w,width,height) -- ensure w's backing pixmap is at least
  * width x height pixels.
  *
  * Resizes the backing pixmap, if needed.  Called when X resize events
  * arrive, as well as when programs make explicit resize requests.
  *
  */
-static void resizePixmap(wbp w, int width, int height)
+static void resizepixmap(wbp w, int width, int height)
 {
     Pixmap p;
     STDLOCALS(w);
@@ -1815,7 +1814,7 @@ static void handle_config(wsp ws, XConfigureEvent *event)
     ws->width = event->width;
     ws->height = event->height;
 
-    resizePixmap(findwbp(ws), event->width, event->height);
+    resizepixmap(findwbp(ws), event->width, event->height);
 
 
     /*
@@ -3050,8 +3049,6 @@ static wsp alcwinstate()
 #ifdef HAVE_LIBXFT
     ws->pixDraw = ws->winDraw = NULL;
 #endif
-    ws->height = 200;
-    ws->width  = 200;
     ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
     GRFX_LINK(ws, wstates);
     return ws;
@@ -3109,6 +3106,7 @@ void freewindow(wsp ws)
        }
 
         GRFX_UNLINK(ws, wstates);
+        free(ws);
     }
 }
 
@@ -3128,6 +3126,7 @@ void freecontext(wcp wc)
         if (wc->bg)
             unlink_sharedcolor(wc->bg);
         GRFX_UNLINK(wc, wcntxts);
+        free(wc);
     }
 }
 

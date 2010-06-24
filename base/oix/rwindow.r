@@ -3024,6 +3024,7 @@ void freewbinding(wbp w)
       if (w->window) freewindow(w->window);
       if (w->context) freecontext(w->context);
       GRFX_UNLINK(w, wbndngs);
+      free(w);
       }
    }
 

@@ -2124,6 +2124,7 @@ wsp ws;
       ws->iconpix = 0;
       free(ws->cursorname);
       GRFX_UNLINK(ws, wstates);
+      free(ws);
       }
    }
 
@@ -2159,6 +2160,7 @@ wcp wc;
 	 }
       wc->font = 0;
       GRFX_UNLINK(wc, wcntxts);
+      free(wc);
       }
    }
 
