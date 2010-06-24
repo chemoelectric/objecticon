@@ -31,6 +31,16 @@ class ImageCache()
       name_image("gui.ARROW_RIGHT", Icon.ARROW_RIGHT)
       name_image("gui.TINY_ARROW_UP", Icon.TINY_ARROW_UP)
       name_image("gui.TINY_ARROW_DOWN", Icon.TINY_ARROW_DOWN)
+      name_image("gui.GRID", Icon.GRID)
+      name_image("gui.PLUS", Icon.PLUS)
+      name_image("gui.MINUS", Icon.MINUS)
+      name_image("gui.CLOSED_FOLDER", Icon.CLOSED_FOLDER)
+      name_image("gui.OPEN_FOLDER", Icon.OPEN_FOLDER)
+      name_image("gui.FILE", Icon.FILE)
+      name_image("gui.TINY_X", Icon.TINY_X)
+      name_image("gui.GRID", Icon.GRID)
+      name_image("gui.WINDOW_CLOSE_BUTTON", Icon.WINDOW_CLOSE_BUTTON)
+      name_image("gui.WINDOW_ICONIFY_BUTTON", Icon.WINDOW_ICONIFY_BUTTON)
    end
 
    public static name_image(name, data)
@@ -53,33 +63,24 @@ class ImageCache()
    end
 
    public static get(s, win)
-      local f, w, key, data, bg, fg
-      bg := if /win then
-         "65535,65535,65535"
+      local f, w, key, data, col
+      col := if /win then
+         "0,0,0/65535,65535,65535"
       else
-         Window.color_value(win.get_bg())
+         Window.color_value(win.get_fg()) || "/" || Window.color_value(win.get_bg())
       if data := \names[s] then {
-         if data[1] == "(" then {
-            fg := if /win then 
-               "0,0,0"
-            else
-               Window.color_value(win.get_fg())
-            key := fg || "/" || bg || "#" || s
-            if w := \imap[key] then
-               return w
+         key := col || "#" || s
+         if w := \imap[key] then
+            return w
+         if data[1] == "(" then
             data := get_extended_image(win, data) | fail
-         } else {
-            key := bg || "#" || s
-            if w := \imap[key] then
-               return w
-         }
          w := Window.open_image(data, win) | fail
          insert(imap, key, w)
          insert(imap, w, s)
          return w
       } else {
          every f := get_paths(s) do {
-            key := bg || "#" || f
+            key := col || "#" || f
             if w := \imap[key] then
                return w
             if Files.stat(f).mode[1] == "-" then {
