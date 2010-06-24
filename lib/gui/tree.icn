@@ -18,27 +18,26 @@ import util, graphics, ipl.pdco
 # @field show_root=flag : see {set_show_root}
 # @field show_root_handles=flag : see {set_show_root_handles}
 # @field root_node={TreeNode} : see {set_root_node}
-# @field default_images=s1,s2,s3 : see {set_default_images}
-# @field handle_images=s1,s2 : see {set_handle_images}
+# @field default_icon_paint=s1,s2,s3 : see {set_default_icon_paint}
 # @field see also {SelectableScrollArea}
 #
 class Tree(SelectableScrollArea)
    public 
       root_node,
-      default_images,
+      default_icon_paint,
       col_w,
       img_w,
       img_h,
       plus,
       minus,
-      little_h,
-      little_w,
       last_expanded,
       show_root_flag,
       show_root_handles_flag
 
    public calculate_line_height()
       local res
+      if /col_w then
+         compute_img_wh()
       res:= view.cbwin.get_font_height()
       #
       # Ensure the line height is slightly greater than the
@@ -62,25 +61,32 @@ class Tree(SelectableScrollArea)
 
    public draw_node_data(n, xp, yp)
       draw_string_ex(view.cbwin, 
-                   xp + Gui.TEXT_INSET,
-                   yp + (self.line_height - view.cbwin.get_font_height()) / 2,
-                   n.label)
+                     xp + Gui.TEXT_INSET,
+                     yp + (self.line_height - view.cbwin.get_font_height()) / 2,
+                     n.label)
+   end
+
+   public invalidate_node_images()
+      col_w := img_w := img_h := &null
+      invalidate_line_height()
    end
 
    public initially()
       # Ensure we start off with an up-to-date representation.
       tree_structure_changed()
-      cast(self,Component).initially()
+      cast(self,SelectableScrollArea).initially()
+      self.plus.initially(self)
+      self.minus.initially(self)
+      plus.w = minus.w | runerr("Handle image widths differ")
+      plus.h = minus.h | runerr("Handle image heights differ")
+      every (!default_icon_paint).initially(self)
    end
 
-   #
-   # Set the little plus/minus images to use; they must be the same size.
-   #
-   public set_handle_images(i1, i2)
-      self.plus := i1
-      self.minus := i2
-      self.little_w := image_width(i1) = image_width(i2) | runerr("Image widths differ")
-      self.little_h := image_height(i1) = image_height(i2) | runerr("Image heights differ")
+   public finally()
+      cast(self,SelectableScrollArea).finally()
+      self.plus.finally()
+      self.minus.finally()
+      every (!default_icon_paint).finally()
    end
 
    #
@@ -94,11 +100,14 @@ class Tree(SelectableScrollArea)
    end
 
    #
-   # Set the default bitmaps for each {Node} in the {Tree}.  The parameters should be
-   # three bitmaps;  see {Node} above for an explanation.
+   # Set the default icons for each {Node} in the {Tree}.  The parameters should be
+   # three distinct {Paint} objects.
    #
-   public set_default_images(i1, i2, i3)
-      self.default_images := [i1, i2, i3]
+   public set_default_icon_paint(i1, i2, i3)
+      every (!\default_icon_paint).finally()
+      self.default_icon_paint := [i1, i2, i3]
+      if is_initialized() then
+         every (!default_icon_paint).initially(self)
    end
    
    #
@@ -110,7 +119,7 @@ class Tree(SelectableScrollArea)
          set_contents([])
       else {
          root_node.is_expanded_flag := 1
-         compute_img_wh()
+         invalidate_node_images()
          set_contents(flatten())
          set_selections([])
       }
@@ -150,17 +159,17 @@ class Tree(SelectableScrollArea)
    end
 
    public compute_img_wh()
-      local n, imgs
+      local n, icon_paint
       img_w := img_h := 0
 
-      every n := Seq{root_node.traverse_all_preorder()} do {
-         imgs := \n.imgs | default_images
-         img_w <:= image_width(imgs[1])
-         img_w <:= image_width(imgs[2])
-         img_w <:= image_width(imgs[3])
-         img_h <:= image_height(imgs[1])
-         img_h <:= image_height(imgs[2])
-         img_h <:= image_height(imgs[3])
+      every n := Seq{(\root_node).traverse_all_preorder()} do {
+         icon_paint := \n.icon_paint | default_icon_paint
+         img_w <:= icon_paint[1].w
+         img_w <:= icon_paint[2].w
+         img_w <:= icon_paint[3].w
+         img_h <:= icon_paint[1].h
+         img_h <:= icon_paint[2].h
+         img_h <:= icon_paint[3].h
       }
 
       #
@@ -221,9 +230,9 @@ class Tree(SelectableScrollArea)
             #
             # Check for click on little +/- icon.
             #
-            yp := self.view.y + get_height_for_line(l) / 2 + l_off - little_h / 2
-            xp := self.get_subject_x() + (N.depth - 1) * col_w + little_w / 2
-            if (xp <= e.x < xp + little_w) & (yp <= e.y < yp + little_h) then {
+            yp := self.view.y + get_height_for_line(l) / 2 + l_off - plus.h / 2
+            xp := self.get_subject_x() + N.depth * col_w - col_w / 2  - plus.w / 2
+            if (xp <= e.x < xp + plus.w) & (yp <= e.y < yp + plus.h) then {
                #
                # Clicking on the little icon ends the sequence, and sets the selection
                # to the given node.
@@ -252,7 +261,7 @@ class Tree(SelectableScrollArea)
    end
 
    public draw_line(xp, yp, lh, i, r, sel, cursor_cw, highlight_cw)
-      local N, dashed, lp, j, imgs, img, little, y0
+      local N, dashed, lp, j, icon_paint, img, little, y0
 
       y0 := yp + lh / 2
 
@@ -278,24 +287,24 @@ class Tree(SelectableScrollArea)
          lp +:= col_w
       }
 
-      imgs := \N.imgs | default_images
+      icon_paint := \N.icon_paint | default_icon_paint
       if (*N.children = 0) & /N.always_expandable_flag then
-         img := imgs[3]
+         img := icon_paint[3]
       else {
          if \N.is_expanded_flag then {
-            img := imgs[2]
+            img := icon_paint[2]
             little := minus
             if *N.children > 0 then
                dashed.draw_line(lp + col_w / 2, y0, lp + col_w / 2, yp + lh - 1)
          } else {
-            img := imgs[1]
+            img := icon_paint[1]
             little := plus
          }
          # Erase first as the little +/- are not opaque images, and we may have drawn a line here.
-         view.cbwin.erase_area(lp - col_w / 2 - little_w / 2, y0 - little_h / 2, little_w, little_h)
-         draw_image_ex(view.cbwin, lp - col_w / 2 - little_w / 2, y0 - little_h / 2, little)
+         #view.cbwin.erase_area(lp - col_w / 2 - plus.w / 2, y0 - plus.h / 2, plus.w, plus.h)
+         little.draw(view.cbwin, lp - col_w / 2 - plus.w / 2, y0 - plus.h / 2)
       }
-      draw_image_ex(view.cbwin, lp + col_w / 2 - img_w / 2, y0 - img_h / 2, \img)
+      (\img).draw(view.cbwin, lp + col_w / 2 - img.w / 2, y0 - img.h / 2)
       draw_node_data(N, lp + col_w, yp, lh)
 
       if \sel then
@@ -319,8 +328,7 @@ class Tree(SelectableScrollArea)
          "show_root" : set_show_root(f.flag_val())
          "show_root_handles" :  set_show_root_handles(f.flag_val())
          "root_node" : set_root_node(f.object_val(gui.TreeNode))
-         "default_images" : set_default_images!(f.string_list_val(3))
-         "handle_images" : set_handle_images!(f.string_list_val(2))
+         "default_icon_paint" : set_default_icon_paint!(f.list_val(3))
          default: return cast(self,SelectableScrollArea).set_one(f)
       }
       return
@@ -328,16 +336,13 @@ class Tree(SelectableScrollArea)
 
    public new(a[])
       cast(self,SelectableScrollArea).new()
-      set_handle_images(Icon.PLUS, Icon.MINUS)
-      set_default_images(Icon.CLOSED_FOLDER, 
-                         Icon.OPEN_FOLDER,
-                         Icon.FILE)
+      plus := ImagePaint("image=",Icon.PLUS)
+      minus := ImagePaint("image=",Icon.MINUS)
+      set_default_icon_paint(ImagePaint("image=",Icon.CLOSED_FOLDER), 
+                             ImagePaint("image=",Icon.OPEN_FOLDER),
+                             ImagePaint("image=",Icon.FILE))
       show_root_flag := show_root_handles_flag := 1
       set_fields(a)
       return
    end
 end
-
-
-
-

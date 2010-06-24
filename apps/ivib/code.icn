@@ -301,7 +301,7 @@ class Code()
       if \self.parent_Canvas.gen_component_setup then 
          add_method("public", "component_setup", [], ["self.setup()"])
 
-      if \self.parent_Canvas.gen_initially then {
+      if \self.parent_Canvas.gen_constructor then {
          body := ["cast(self," || self.parent_Canvas.superclass_name || ").new()"]
          if /self.parent_Canvas.is_component then {
             if /self.parent_Canvas.gen_component_setup then
@@ -446,7 +446,7 @@ class Code()
          }
       }
       body ||:= indent1 || "d := " || self.parent_Canvas.name || "()"
-      if /self.parent_Canvas.gen_component_setup & /self.parent_Canvas.gen_initially then
+      if /self.parent_Canvas.gen_component_setup & /self.parent_Canvas.gen_constructor then
          body ||:= indent1 || "d.setup()"
       body ||:= indent1 || "d.show_modal()"
       x.set_body(body)

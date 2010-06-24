@@ -364,7 +364,7 @@ class DropDown(SelectionList,Component)
       self.b := IconButton("w=",ScrollArea.predict_scrollbar_size())
       self.b.set_parent(self)
       self.b.connect(self.on_button_press, Event.BUTTON_PRESS)
-      self.b.set_image(Icon.ARROW_DOWN)
+      self.b.set_paint(ImagePaint("cache=gui.ARROW_DOWN"))
       self.b.set_accepts_focus(&no)
       self.direction := BEST
       self.add(b)

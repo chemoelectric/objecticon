@@ -159,7 +159,7 @@ class GridPaint(Paint)
                   "cell" : do_cell(args)
                   "br" : do_brk(args)
                   "img" : do_img(args)
-                  "imgf" : do_imgf(args)
+                  "imgc" : do_imgc(args)
                   "xs" : do_xs(args)
                   "ys" : do_ys(args)
                   "attr" : do_attr(args)
@@ -303,9 +303,9 @@ class GridPaint(Paint)
       }
    end
 
-   public do_imgf(args)
+   public do_imgc(args)
       local W, y1
-      W := ImageCache.get(args[1], win.get_bg()) | fail
+      W := ImageCache.get(args[1], win) | fail
       if pass = 1 then {
          llen +:= W.get_width()
          lheight <:= W.get_height()
@@ -372,31 +372,30 @@ end
 
 #
 # @field image=string : see {set_image}
-# @field file=string : see {set_file}
+# @field cache=string : see {set_cache}
 # @field window={Window} : see {set_window}
 # @field scale_up=flag : see {set_scale_up}
 # @field max_w=integer : see {set_max_w}
 # @field max_h=integer : see {set_max_h}
 # @field max_size=i1,i2 : see {set_max_size}
-# @field use_cache=flag : see {set_use_cache}
 #
 class ImagePaint(Paint,SetFields)
    public 
-      image_file, 
       image_str,
       image_window,
+      image_cache,
       win,
       scale_up_flag,
-      use_cache_flag,
       dont_close,
       max_w,
       max_h
 
    #
-   # Set the name of the file from which to load the image.
+   # Set the name of a cache entry (either a file on the {ImageCache} path, or a named
+   # image data id, set with {ImageCache.name_image}).
    #
-   public set_file(x)
-      self.image_file := x
+   public set_cache(x)
+      self.image_cache := x
    end
 
    #
@@ -446,14 +445,6 @@ class ImagePaint(Paint,SetFields)
       self.scale_up_flag := check_flag(s)
    end
 
-   #
-   # Indicate whether to use the image cache to load external files; by
-   # default "y".
-   #
-   public set_use_cache(s)
-      self.use_cache_flag := check_flag(s)
-   end
-
    public initially(c)
       /win | syserr("init called out of sequence")
       load_image(c)
@@ -478,20 +469,15 @@ class ImagePaint(Paint,SetFields)
    end
 
    public load_image(c)
-      if \self.image_str then {
-         # Note we need foreground too for shade & highlight chars in image_str
-         if win := Window.open("fg=",c.cbwin.get_fg(),
-                               "bg=",c.cbwin.get_bg(),
-                               "width=", (0 < image_width(self.image_str)),
-                               "height=", (0 < image_height(self.image_str)),
-                               "canvas=hidden") then
-            draw_image_ex(win, 0, 0, self.image_str)
-      } else if \self.image_file then {
-         if \self.use_cache_flag then {
-            if win := ImageCache.get(self.image_file, c.cbwin.get_bg()) then
-               dont_close := 1
-         } else
-            win := Window.open_image(self.image_file, c.cbwin.get_bg())
+      local s
+      if s := \self.image_str then {
+         if s[1] == "(" then
+            win := Window.open_image(get_extended_image(c.cbwin, s), c.cbwin)
+         else
+            win := Window.open_image(s, c.cbwin)
+      } else if \self.image_cache then {
+         if win := ImageCache.get(self.image_cache, c.cbwin) then
+            dont_close := 1
       } else if \self.image_window then {
          win := self.image_window
          dont_close := 1
@@ -553,20 +539,18 @@ class ImagePaint(Paint,SetFields)
    public set_one(f)
       case f.attr of {
          "image" : set_image(f.string_val())
-         "file" : set_file(f.string_val())
+         "cache" : set_cache(f.string_val())
          "window" : set_window(f.object_val(Window))
          "scale_up" : set_scale_up(f.flag_val())
          "max_w" : set_max_w(f.int_val())
          "max_h" : set_max_h(f.int_val())
          "max_size" : set_max_size!(f.int_list_val(2))
-         "use_cache" : set_use_cache(f.flag_val())
          default: fail
       }
       return
    end
 
    public new(a[])
-      self.use_cache_flag := 1
       set_fields(a)
       return
    end

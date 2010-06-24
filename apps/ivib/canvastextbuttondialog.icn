@@ -12,10 +12,8 @@
 #
 class CanvasTextButtonDialog(CanvasButtonDialog)
    public setup()
-      has_label := 1
       has_label_down := 1
       cast(self,CanvasButtonDialog).setup()
-      self.set_wattrib("label", label)
    end
 end
 

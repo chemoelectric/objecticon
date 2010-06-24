@@ -453,11 +453,11 @@ class ScrollBar(Component)
       \self.value | runerr("Value not set")
 
       if /self.is_horizontal_flag then {
-         b1.set_image(Icon.ARROW_UP)
-         b2.set_image(Icon.ARROW_DOWN)
+         b1.set_paint(ImagePaint("cache=gui.ARROW_UP"))
+         b2.set_paint(ImagePaint("cache=gui.ARROW_DOWN"))
       } else {
-         b1.set_image(Icon.ARROW_LEFT)
-         b2.set_image(Icon.ARROW_RIGHT)
+         b1.set_paint(ImagePaint("cache=gui.ARROW_LEFT"))
+         b2.set_paint(ImagePaint("cache=gui.ARROW_RIGHT"))
       }
       cast(self,Component).initially()
    end

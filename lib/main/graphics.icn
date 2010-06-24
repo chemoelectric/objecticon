@@ -216,9 +216,10 @@ class Window(SetFields,NoCopy)
    public defer draw_curve(a[])
 
    #
-   # draw_image(x,y,s) - draw bitmapped figure
+   # Draw an image.  The image can be in icon image string format, raw image data, or
+   # a filename.
    #
-   public defer draw_image(x, y, s)
+   public defer draw_image(x, y, d)
 
    #
    # Copy an area from this window to another window.
@@ -342,11 +343,6 @@ class Window(SetFields,NoCopy)
    public defer raise()
 
    #
-   # Load image file
-   #
-   public defer read_image(s, x, y, p)
-
-   #
    # Synchronize with server
    #
    public static defer sync()
@@ -425,19 +421,19 @@ class Window(SetFields,NoCopy)
    end
 
    #
-   # Convenient method to open an image file and return a hidden window with
+   # Convenient method to open an image and return a hidden window with
    # its contents.
-   # @param file the name of the file
-   # @param bg the optional background colour (only relevant with transparent
-   # @         images)
+   # @param img the image
+   # @param win an optional window from which to get the background colour (only
+   # @          relevant with transparent images)
    #
-   public static open_image(file, bg)
+   public static open_image(img, win)
       local w
-      w := if /bg then
+      w := if /win then
          Window.open("canvas=hidden")
       else
-         Window.open("canvas=hidden", "bg=",bg)
-      w.set_image(file) | {
+         Window.open("canvas=hidden", "bg=",win.get_bg())
+      w.set_image(img) | {
          w.close()
          fail
       }

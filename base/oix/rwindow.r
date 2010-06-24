@@ -26,11 +26,16 @@ static int readGIF         (char *fname, struct imgdata *d);
 static	int	colorphrase    (char *buf, int *r, int *g, int *b);
 static	double rgbval(double n1, double n2, double hue);
 static  void wgetq(wbp w, dptr res);
-static	void getfg_rgb(wbp w, int *r, int *g, int *b);
-static	void getbg_rgb(wbp w, int *r, int *g, int *b);
 
 static void drawpalette(wbp w, int x, int y, int width, int height, 
                         struct palentry *e, unsigned char *s, int copy);
+
+static struct palentry *palsetup_palette;	/* current palette */
+
+static int tryimagestring(wbp w, dptr d,  struct imgdata *imd);
+static int tryimagedata(dptr data, struct imgdata *imd);
+static int tryimagefile(char *filename, struct imgdata *imd);
+
 
 #if MSWIN32
 extern wclrp scp;
@@ -44,6 +49,15 @@ static void wgetq(wbp w, dptr res)
         fatalerr(143, 0);
 }
 
+wbp findwbp(wsp ws)
+{
+    wbp wb;
+    for (wb = wbndngs; wb; wb = wb->next)
+        if (wb->window == ws)
+            return wb;
+    syserr("Couldn't find wbp for wsp");
+    return 0;  /* not reached */
+}
 
 void wgetevent(wbp w, dptr res)
 {
@@ -279,17 +293,6 @@ void qmouseevents(wsp ws,             /* canvas */
     ws->mousestate = state;
 }
 
-
-static void getfg_rgb(wbp w, int *r, int *g, int *b)
-{
-    parsecolor(getfg(w), r, g, b);
-}
-
-static void getbg_rgb(wbp w, int *r, int *g, int *b)
-{
-    parsecolor(getbg(w), r, g, b);
-}
-
 static void linearfilter_impl(int *val, float m, int c)
 {
     *val = *val * m + c;
@@ -324,7 +327,7 @@ static void shadefilter(struct filter *f)
     int i, j;
     struct imgmem *imem = f->imem;
     int bk, bg_r, bg_g, bg_b;
-    getbg_rgb(f->w, &bg_r, &bg_g, &bg_b);
+    parsecolor(getbg(f->w), &bg_r, &bg_g, &bg_b);
 
     bk = grey_band(f->p.shade.nband, bg_r, bg_g, bg_b);
     for (j = imem->y; j < imem->y + imem->height; j++) {
@@ -808,9 +811,255 @@ int gotopixel(struct imgmem *imem, int x, int y)
         return 0;
 }
 
+static int tryimagestring(wbp w, dptr d,  struct imgdata *imd)
+{
+    int c, width, height, row, p, format, nchars;
+    unsigned char *s, *t, *z;
+    struct palentry *e;
+
+    /*
+     * Extract the Width and skip the following comma.
+     */
+    s = (unsigned char *)StrLoc(*d);
+    z = s + StrLen(*d);		/* end+1 of string */
+    width = 0;
+    while (s < z && *s == ' ')	/* skip blanks */
+        s++;
+    while (s < z && isdigit((unsigned char)*s))	/* scan number */
+        width = 10 * width + *s++ - '0';
+    while (s < z && *s == ' ')	/* skip blanks */
+        s++;
+    if (width == 0 || *s++ != ',')	/* skip comma */
+        return NoCvt;
+    while (s < z && *s == ' ')	/* skip blanks */
+        s++;
+    if (s >= z)			/* if end of string */
+        return NoCvt;
+
+    /*
+     * Check for a bilevel format.
+     */
+    if ((c = *s) == '#' || c == '~') {
+        unsigned int m, msk1;
+        int k, d, ix, iy;
+          
+        s++;
+        nchars = z - s;
+        for (t = s; t < z; t++)
+            if (!isxdigit((unsigned char)*t)) {
+                LitWhy("Invalid bi-level format");
+                return Failed;				/* illegal punctuation */
+            }
+        row = (width + 3) / 4;			/* digits per row */
+        if (nchars == 0 || nchars % row != 0) {
+            LitWhy("Invalid bi-level format, wrong number of characters");
+            return Failed;
+        }
+        height = nchars / row;
+
+        MemProtect(imd->data = malloc(width * height));
+        MemProtect(imd->paltbl = malloc(2 * sizeof(struct palentry)));
+        imd->width = width;
+        imd->height = height;
+        parsecolor(getfg(w), &imd->paltbl[0].r, &imd->paltbl[0].g, &imd->paltbl[0].b);
+        imd->paltbl[0].valid = 1;
+        imd->paltbl[0].transpt = 0;
+        if (c == TCH1) {
+            imd->paltbl[1].valid = 0;
+            imd->paltbl[1].transpt = 1;
+            imd->format = IMGDATA_PALETTE_TRANS;
+        } else {
+            parsecolor(getbg(w), &imd->paltbl[1].r, &imd->paltbl[1].g, &imd->paltbl[1].b);
+            imd->paltbl[1].valid = 1;
+            imd->paltbl[1].transpt = 0;
+            imd->format = IMGDATA_PALETTE_OPAQUE;
+        }
+
+        m = width % 4;
+        if (m == 0)
+            msk1 = 8;
+        else
+            msk1 = 1 << (m - 1);              /* mask for first byte of row */
+
+        ix = width;
+        iy = 0;
+        m = msk1;
+        k = nchars;
+        while (k--) {
+            if (isxdigit((unsigned char)(d = *s++))) {         /* if hexadecimal character */
+                if (!isdigit((unsigned char)d))               /* fix bottom 4 bits if necessary */
+                    d += 9;
+                while (m > 0) {                /* set (usually) 4 pixel values */
+                    --ix;
+                    if (d & m)
+                        imd->data[iy * width + ix] = 0;
+                    else
+                        imd->data[iy * width + ix] = 1;
+                    m >>= 1;
+                }
+                if (ix == 0) {                 /* if end of row */
+                    ix = width;
+                    iy++;
+                    m = msk1;
+                }
+                else
+                    m = 8;
+            }
+        }
+        if (ix > 0) {                         /* pad final row if incomplete */
+            while (ix < width) {
+                imd->data[iy * width + ix] = 1;
+                ix++;
+            }
+        }
+    } else {
+        /*
+         * Extract the palette name and skip its comma.
+         */
+        c = *s++;					/* save initial character */
+        p = 0;
+        while (s < z && isdigit((unsigned char)*s))		/* scan digits */
+            p = 10 * p + *s++ - '0';
+        while (s < z && *s == ' ')		/* skip blanks */
+            s++;
+        if (s >= z || p == 0 || *s++ != ',')	/* skip comma */
+            return NoCvt;
+        if (c == 'g' && p >= 2 && p <= 256)	/* validate grayscale number */
+            p = -p;
+        else if (c != 'c' || p < 1 || p > 6)	/* validate color number */
+            return NoCvt;
+
+        /*
+         * Scan the image to see which colors are needed, and if transparency is used.
+         */
+        format = IMGDATA_PALETTE_OPAQUE;
+        e = palsetup(p); 
+        nchars = z - s;
+        for (t = s; t < z; t++) {
+            c = *t; 
+            if (e[c].transpt)
+                format = IMGDATA_PALETTE_TRANS;
+            else if (!e[c].valid) {
+                LitWhy("Invalid image string, character not in palette");
+                return Failed;
+            }
+        }
+        if (nchars == 0 || nchars % width != 0) {
+            LitWhy("Invalid image string, wrong number of characters");
+            return Failed;					/* empty image or not rectangular */
+        }
+
+        height = nchars / width;
+
+        imd->width = width;
+        imd->height = height;
+        imd->paltbl = e;
+        MemProtect(imd->data = malloc(nchars));
+        memcpy(imd->data, s, nchars);
+        imd->format = format;
+    }
+
+    return Succeeded;
+}
+
+static int tryimagedata(dptr data, struct imgdata *imd)
+{
+    int r;
+    char *fn = 0;
+    FILE *f;
+    if ((r = parseimageimpl(data, imd)) != NoCvt)
+        return r;
+    if (is_gif(data))
+        fn = "/tmp/tmp.gif";
+    else if (is_png(data)) {
+#ifdef HAVE_LIBPNG
+        fn = "/tmp/tmp.png";
+#else
+        LitWhy("PNG format not supported");
+        return Failed;
+#endif
+    } else if (is_jpeg(data)) {
+#ifdef HAVE_LIBJPEG
+        fn = "/tmp/tmp.jpg";
+#else
+        LitWhy("JPEG format not supported");
+        return Failed;
+#endif
+    }
+    if (!fn)
+        return NoCvt;
+
+    f = fopen(fn, "wb");
+    if (!f) {
+        LitWhy("Couldn't open temp image file");
+        return Failed;
+    }
+    if (fwrite(StrLoc(*data), 1, StrLen(*data), f) != StrLen(*data)) {
+        fclose(f);
+        LitWhy("Couldn't write to temp image file");
+        return Failed;
+    }
+    fclose(f);
+    r = tryimagefile(fn, imd);
+    remove(fn);
+    return r;
+}
+
+static int tryimagefile(char *filename, struct imgdata *imd)
+{
+    int r;
+    struct fileparts *fp;
+
+    if ((r = readimagefileimpl(filename, imd)) != NoCvt)
+        return r;
+
+    fp = fparse(filename);
+    if (strcasecmp(fp->ext, ".png") == 0)
+#ifdef HAVE_LIBPNG
+        return readPNG(filename, imd);
+#else
+    {
+        LitWhy("PNG format not supported");
+        return Failed;
+    }
+#endif
+
+    if (strcasecmp(fp->ext, ".jpg") == 0 || strcasecmp(fp->ext, ".jpeg") == 0)
+#ifdef HAVE_LIBJPEG
+        return readJPEG(filename, imd);
+#else
+    {
+        LitWhy("JPEG format not supported");
+        return Failed;
+    }
+#endif
+
+    if (strcasecmp(fp->ext, ".gif") == 0)
+        return readGIF(filename, imd);
+
+    return NoCvt;
+}
+
+int parseimage(wbp w, dptr d,  struct imgdata *imd)
+{
+    int r;
+
+    if ((r = tryimagestring(w, d, imd)) != NoCvt)
+        return r;
+    if ((r = tryimagedata(d, imd)) != NoCvt)
+        return r;
+    if (StrLen(*d) < MaxPath) {
+        if ((r = tryimagefile(buffstr(d), imd)) != NoCvt)
+            return r;
+    }
+    LitWhy("Unable to interpret string as image");
+    return Failed;
+}
+
 void freeimgdata(struct imgdata *imd)
 {
-    free(imd->paltbl);
+    if (imd->paltbl != palsetup_palette)
+        free(imd->paltbl);
     imd->paltbl = 0;
     free(imd->data);
     imd->data = 0;
@@ -1022,67 +1271,6 @@ static void drawpalette(wbp w, int x, int y, int width, int height,
             ++s;
         }
     }
-    saveimgmem(w, &imem);
-    freeimgmem(&imem);
-}
-
-void drawblimage(wbp w, int x, int y, int width, int height,
-                int ch, unsigned char *s)
-{
-    unsigned int m, msk1, c, ix, iy;
-    int slen = height*((width + 3)/4);
-    int fg_r, fg_g, fg_b, bg_r, bg_g, bg_b;
-    struct imgmem imem;
-
-    getfg_rgb(w, &fg_r, &fg_g, &fg_b);
-    getbg_rgb(w, &bg_r, &bg_g, &bg_b);
-
-    if (!initimgmem(w, &imem, ch == TCH1, 1, x, y, width, height))
-        return;
-
-    m = width % 4;
-    if (m == 0)
-        msk1 = 8;
-    else
-        msk1 = 1 << (m - 1);              /* mask for first byte of row */
-
-    ix = width;
-    iy = 0;
-    m = msk1;
-    while (slen--) {
-        if (isxdigit((unsigned char)(c = *s++))) {         /* if hexadecimal character */
-            if (!isdigit((unsigned char)c))               /* fix bottom 4 bits if necessary */
-                c += 9;
-            while (m > 0) {                /* set (usually) 4 pixel values */
-                --ix;
-                if (gotopixel(&imem, x + ix, y + iy)) {
-                    if (c & m) {
-                        setpixel(&imem, fg_r, fg_g, fg_b);
-                    }
-                    else if (ch != TCH1) {      /* if zeroes aren't transparent */
-                        setpixel(&imem, bg_r, bg_g, bg_b);
-                    }
-                }
-                m >>= 1;
-	    }
-            if (ix == 0) {                 /* if end of row */
-                ix = width;
-                iy++;
-                m = msk1;
-	    }
-            else
-                m = 8;
-        }
-    }
-    if (ix > 0) {                         /* pad final row if incomplete */
-        while (ix < width) {
-            if (gotopixel(&imem, x + ix, y + iy)) {
-                setpixel(&imem, bg_r, bg_g, bg_b);
-            }
-            ix++;
-        }
-    }
-
     saveimgmem(w, &imem);
     freeimgmem(&imem);
 }
@@ -2116,7 +2304,6 @@ int parsepalette(char *s, int *p)
 }
 
 
-struct palentry *palsetup_palette;	/* current palette */
 
 /*
  * palsetup(p) - set up palette for specified palette.
@@ -2532,33 +2719,26 @@ int parsepattern(char *s, int *width, int *height, int **data)
     return 1;
 }
 
-
-int readimagefile(char *filename, struct imgdata *imd)
+int is_png(dptr data)
 {
-    int r;
-    struct fileparts *fp;
-
-    if ((r = readimagefileimpl(filename, imd)) != NoCvt)
-        return r;
-
-    fp = fparse(filename);
-#ifdef HAVE_LIBPNG
-    if (strcasecmp(fp->ext, ".png") == 0)
-        return readPNG(filename, imd);
-#endif
-
-#ifdef HAVE_LIBJPEG
-    if (strcasecmp(fp->ext, ".jpg") == 0 || strcasecmp(fp->ext, ".jpeg") == 0)
-        return readJPEG(filename, imd);
-#endif
-
-    if (strcasecmp(fp->ext, ".gif") == 0)
-        return readGIF(filename, imd);
-
-    LitWhy("Unsupported file type");
-    return Failed;
+    return (StrLen(*data) >= 8 &&
+            strncmp(StrLoc(*data), "\x89PNG\x0D\x0A\x1A\x0A", 8) == 0);
 }
 
+int is_jpeg(dptr data)
+{
+    return (StrLen(*data) >= 2 &&
+            strncmp(StrLoc(*data), "\xFF\xD8", 2) == 0);
+
+}
+
+int is_gif(dptr data)
+{
+    return (StrLen(*data) >= 6 &&
+            strncmp(StrLoc(*data), "GIF8", 4) == 0 &&
+            (StrLoc(*data)[4] == '7' || StrLoc(*data)[4] == '9') &&
+            StrLoc(*data)[5] == 'a');
+}
 
 int writeimagefile(wbp w, char *filename, int x, int y, int width, int height)
 {
@@ -2636,6 +2816,24 @@ int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph)
     return Succeeded;
 }
 
+int pointargs(wbp w, dptr argv, word *px, word *py)
+{
+    wcp wc = w->context;
+
+    /*
+     * Get x and y, defaulting to -dx and -dy.
+     */
+    if (!def:C_integer(argv[0], -wc->dx, *px))
+        ReturnErrVal(101, argv[0], Error);
+
+    if (!def:C_integer(argv[1], -wc->dy, *py))
+        ReturnErrVal(101, argv[1], Error);
+
+    *px += wc->dx;
+    *py += wc->dy;
+
+    return Succeeded;
+}
 
 /*
  * docircles -- draw or file circles.

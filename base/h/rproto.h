@@ -177,6 +177,7 @@ void buffnstr(dptr d, char **s, ...);
     */
 
    wbp  alcwbinding    (void);
+   wbp  findwbp        (wsp ws);
    int  docircle        (wbp w, dptr argv, int fill);
    void drawCurve       (wbp w, XPoint *p, int n);
    void genCurve        (wbp w, XPoint *p, int n, void (*h)(wbp, XPoint [], int));
@@ -193,16 +194,21 @@ void buffnstr(dptr d, char **s, ...);
    int  readimagefile   (char *filename, struct imgdata *imd);
    int  writeimagefile  (wbp w, char *filename, int x, int y, int width, int height);
    int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph);
+   int pointargs(wbp w, dptr argv, word *px, word *py);
    char *rgbkey         (int p, int r, int g, int b);
 
    int  initimgmem      (wbp w, struct imgmem *i, int copy, int clip, int x, int y, int width, int height);
    int  gotopixel       (struct imgmem *i, int x, int y);
-   void drawblimage     (wbp w, int x, int y, int wd, int h,
-                          int ch, unsigned char *s);
    void drawimgdata     (wbp w, int x, int y, struct imgdata *img);
    void freeimgdata     (struct imgdata *img);
    int  getdefaultfontsize(int);
    char *getdefaultfont(void);
+   int parseimage(wbp w, dptr d,  struct imgdata *imd);
+
+   int is_png(dptr data);
+   int is_jpeg(dptr data);
+   int is_gif(dptr data);
+
    
 
    /*
@@ -278,6 +284,7 @@ void buffnstr(dptr d, char **s, ...);
    int  utf8width       (wbp w, char *s, int n, int nchars);
    int  readimagefileimpl(char *filename, struct imgdata *imd);
    int  writeimagefileimpl(wbp w, char *filename, int x, int y, int width, int height);
+   int  parseimageimpl(dptr data, struct imgdata *imd);
 
 #endif                                  /* Graphics */
 

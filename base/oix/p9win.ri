@@ -434,16 +434,6 @@ static void cons_loop(int in_fd, int out_fd)
     _exits(0);
 }
 
-static wbp find_first_wbp_for(wsp ws)
-{
-    wbp wb;
-    for (wb = wbndngs; wb; wb = wb->next)
-        if (wb->window == ws)
-            return wb;
-    syserr("Couldn't find wbp for wsp");
-    return 0;  /* not reached */
-}
-
 /*
  * Synch the x, y variables with rio's values.
  */
@@ -511,7 +501,7 @@ static void handle_resize(wsp ws)
         ws->width = tw;
         ws->height = th;
         synch_pos(ws);
-        w = find_first_wbp_for(ws);
+        w = findwbp(ws);
 
         /* Fill the win with the bg of the first context */
         clear_win(w);
@@ -1473,7 +1463,7 @@ static int open_screen_win(wsp ws)
     /* Ensure size matches the opened window */
     ws->width =  ws->win->r.max.x - ws->win->r.min.x;
     ws->height = ws->win->r.max.y - ws->win->r.min.y;
-    resize_pix_win(find_first_wbp_for(ws));
+    resize_pix_win(findwbp(ws));
 
     if ((fd = open_winfile(ws, "label", OWRITE)) < 0) {
         whyf("Can't open label file %r");
@@ -2116,6 +2106,11 @@ int readimagefileimpl(char *filename, struct imgdata *imd)
     unloadmemimage(m, m->r, imd->data, ndata);
     freememimage(m);
     return Succeeded;
+}
+
+int  parseimageimpl(dptr data, struct imgdata *imd)
+{
+    return NoCvt;
 }
 
 int writeimagefileimpl(wbp w, char *filename, int x, int y, int width, int height)

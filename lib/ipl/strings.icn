@@ -752,3 +752,8 @@ procedure words(s, c)
    fail
 
 end
+
+# Succeed if s1 ends with the string s2
+procedure endswith(s1, s2)
+   return s1[-*s2:0] == s2
+end

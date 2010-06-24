@@ -24,33 +24,37 @@ package gui
 # @ c.set_label("Checkbox")
 # @ self.add(c)
 #
-# @field images=s1,s2 : see {set_images}
+# @field box_paint=s1,s2 : see {set_box_paint}
 # @field label=text : see {set_label}
 # @field paint={Paint} : see {set_paint}
 # @field see also {Button}
 #
 class CheckBox(Button)
    public
-      img_up,
-      img_down,
-      img_w,
-      img_h,
+      unchecked_paint,
+      checked_paint,
       tx, 
       tw, 
       paint
 
    #
-   # Set the up/down images (if any) to the strings provided,
-   # which should be in Icon image format.
+   # Set the up/down icons to the given (distinct) {Paint} instances.
    # The two images must have the same dimensions.
    # @param x   The up image
    # @param y   The down image
    #
-   public set_images(x, y)
-      self.img_up := x
-      self.img_down := y
-      self.img_w := image_width(x) = image_width(y) | runerr("Image widths differ")
-      self.img_h := image_height(x) = image_height(y) | runerr("Image heights differ")
+   public set_box_paint(x, y)
+      (\self.unchecked_paint).finally()
+      (\self.checked_paint).finally()
+      self.unchecked_paint := x
+      self.checked_paint := y
+      if is_initialized() then {
+         self.unchecked_paint.initially(self)
+         self.checked_paint.initially(self)
+         self.invalidate()
+         unchecked_paint.w = checked_paint.h | runerr("Image widths differ")
+         unchecked_paint.h = checked_paint.h | runerr("Image heights differ")
+      }
    end
 
    #
@@ -74,36 +78,42 @@ class CheckBox(Button)
       #
       # Set the icons if necessary
       #
-      if /self.img_up then {
+      if /self.unchecked_paint then {
          if /self.parent_check_box_group then
-            self.set_images(Icon.BOX_UP, Icon.BOX_DOWN)
+            self.set_box_paint(ImagePaint("cache=gui.BOX_UP"), ImagePaint("cache=gui.BOX_DOWN"))
          else
-            self.set_images(Icon.DIAMOND_UP, Icon.DIAMOND_DOWN)
+            self.set_box_paint(ImagePaint("cache=gui.DIAMOND_UP"), ImagePaint("cache=gui.DIAMOND_DOWN"))
       }
       \self.paint | runerr("no label specified")
       cast(self,Component).initially()
       self.paint.initially(self, self.accel)
+      self.unchecked_paint.initially(self)
+      self.checked_paint.initially(self)
+      unchecked_paint.w = checked_paint.h | runerr("Image widths differ")
+      unchecked_paint.h = checked_paint.h | runerr("Image heights differ")
    end
 
    public finally()
       cast(self,Component).finally()
       paint.finally()
+      unchecked_paint.finally()
+      checked_paint.finally()
    end
 
    public get_default_width()
       #
       # We give extra border space; this looks better with the focus rectangle.
       #
-      return paint.w + self.img_w + Gui.X_INSET + Gui.TEXT_INSET
+      return paint.w + self.unchecked_paint.w + Gui.X_INSET + Gui.TEXT_INSET
    end
 
    public get_default_height()
-      return max(paint.h, img_h)
+      return max(paint.h, unchecked_paint.h)
    end
 
    public layout()
-      self.tx := self.x + self.img_w + Gui.X_INSET
-      self.tw := self.w - self.img_w - Gui.X_INSET - Gui.TEXT_INSET
+      self.tx := self.x + self.unchecked_paint.w + Gui.X_INSET
+      self.tw := self.w - self.unchecked_paint.w - Gui.X_INSET - Gui.TEXT_INSET
    end
 
    public visualize_action(e)
@@ -117,14 +127,14 @@ class CheckBox(Button)
       local cw, i
 
       if \self.is_down then
-         i := if /self.is_checked_flag then img_down else img_up
+         i := if /self.is_checked_flag then checked_paint else unchecked_paint
       else
-         i := if \self.is_checked_flag then img_down else img_up
+         i := if \self.is_checked_flag then checked_paint else unchecked_paint
 
       #
-      # Draw image and string centred vertically; image has img_w pixel to its right
+      # Draw image and string centred vertically; image has unchecked_paint.w pixel to its right
       #
-      draw_image_ex(self.cbwin, self.x, self.y + (self.h - img_h) / 2, i)
+      i.draw(self.cbwin, self.x, self.y + (self.h - unchecked_paint.h) / 2)
       paint.draw(self.cbwin, self.tx, self.y + (self.h - paint.h) / 2)
 
       if self.has_focus() & self.is_unshaded() then {
@@ -137,7 +147,7 @@ class CheckBox(Button)
 
    public set_one(f)
       case f.attr of {
-         "images" : set_images!(f.string_list_val(2))
+         "box_paint" : set_box_paint!(f.list_val(2))
          "label" : set_label(f.text_val())
          "paint" : set_paint(f.object_val(gui.Paint))
          default: return cast(self,Button).set_one(f)
@@ -153,8 +163,3 @@ class CheckBox(Button)
       return
    end
 end
-
-
-
-
-

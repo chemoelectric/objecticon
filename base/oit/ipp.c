@@ -708,9 +708,10 @@ static char *load(char *s)
    if (*wskip(s) != '\0')
       return "$load: too many arguments";
    fullpath = pathfind(intern(getdir(curfile->fname)), lpath, fname, 0);
-   if (!fullpath || !(val = loadfile(fullpath, &vlen)))
-      pfatal("cannot open", fname);
-   dinsert_pre(name, val, vlen);		/* install in table */
+   if (fullpath && (val = loadfile(fullpath, &vlen)))
+       dinsert_pre(name, val, vlen);		/* install in table */
+   else
+       pfatal("cannot open", fname);
    return NULL;
    }
 

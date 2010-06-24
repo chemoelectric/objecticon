@@ -19,12 +19,10 @@ class CanvasImage(CanvasComponent,Image)
    #
    public gen_code(c)
       cast(self,CanvasComponent).gen_code(c)
-      c.line(name || ".set_file(" || image(\self.image_file) || ")")
       c.line(name || ".set_image(" || image(\self.image_str) || ")")
+      c.line(name || ".set_cache(" || image(\self.image_cache) || ")")
       if \self.scale_up_flag then
          c.line(name || ".set_scale_up(&yes)")
-      if /self.use_cache_flag then
-         c.line(name || ".set_use_cache(&no)")
    end
 
    #
@@ -35,9 +33,8 @@ class CanvasImage(CanvasComponent,Image)
       c := CanvasImage()
       cast(self,CanvasComponent).dup_fields(c)
       c.scale_up_flag := self.scale_up_flag
-      c.use_cache_flag := self.use_cache_flag
-      c.image_file := self.image_file
       c.image_str := self.image_str
+      c.image_cache := self.image_cache
       return c
    end
 
@@ -46,9 +43,8 @@ class CanvasImage(CanvasComponent,Image)
    #
    public static get_template()
       suspend CanvasComponent.get_template() |
-         ["File name", "image_file"] |
          ["Image Str", "image_str"] |
-         ["Cache image Flag", "use_cache_flag"] |
+         ["Image Cache", "image_cache"] |
          ["Scale Up Flag", "scale_up_flag"]
    end
 
