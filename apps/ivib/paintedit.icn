@@ -185,7 +185,7 @@ class ImagePaintEdit(PaintEdit)
       p.set_layout(GridLayout())
       add_tab_at_front(p)
 
-      q := Component("layout=",GridLayout("flush"), "c:eol")
+      q := Component("layout=",GridLayout("flush"), "c:eol", "c:x_fill", "c:x_weight=1.0")
       img := Image("size=60,60")
       img.clear_constraints()
       q.add(img)
