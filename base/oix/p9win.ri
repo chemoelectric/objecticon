@@ -2074,8 +2074,9 @@ int readimagefileimpl(char *filename, struct imgdata *imd)
         cmd = "png -9 -3";
     else if (strcasecmp(fp->ext, ".jpg") == 0 || strcasecmp(fp->ext, ".jpeg") == 0)
         cmd = "jpg -9 -3";
-    else if (strcasecmp(fp->ext, ".gif") == 0)
+/*  else if (strcasecmp(fp->ext, ".gif") == 0)
         cmd = "gif -9 -3";
+*/
     else
         return NoCvt;
     if ((fd = open(filename, OREAD)) < 0) {

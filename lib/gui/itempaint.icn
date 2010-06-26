@@ -105,3 +105,22 @@ class ImageWindowItemPaint(ItemPaint)
    end
 end
 
+class ImageCacheItemPaint(ItemPaint)
+   public get_width(W, data)
+      return ImageCache.get(data, W).get_width()
+   end
+
+   public get_height(W, data)
+      return ImageCache.get(data, W).get_height()
+   end
+
+   public get_size(W, data)
+      local i
+      if i := ImageCache.get(data, W) then
+         return Size(i.get_width(), i.get_height())
+   end
+
+   public draw(W, data, x, y)
+      ImageCache.get(data, W).copy_to(W,,,,, x, y)
+   end
+end

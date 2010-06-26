@@ -152,8 +152,6 @@ class Source1(Source)
       cs.add(c)
 
       c := createcc_converter("CanvasCheckBox")
-      c.add_action("Img Up", ConvertIconAction())
-      c.add_action("Img Down", ConvertIconAction())
       c.add_action("Label", StringToPaintAction("Paint"))
       cs.add(c)
 
@@ -255,8 +253,6 @@ class Source1(Source)
 
       c := createcmc_converter("CanvasCheckBoxMenuItem")
       c.add_action("Label", StringToPaintAction("Paint mid"))
-      c.add_action("Img Up", ConvertIconAction())
-      c.add_action("Img Down", ConvertIconAction())
       cs.add(c)
 
       c := createcc_converter("CanvasMenuBar")
@@ -1098,28 +1094,6 @@ class CustomEncode()
 end
 
 
-global convert_icon_table
-
-class ConvertIconAction(Action)
-   public apply(decode, proxy, key, val)
-      if member(convert_icon_table, val) then
-         val := convert_icon_table[val]
-      proxy.add(key, val)
-   end
-
-   public new()
-      initial {
-         convert_icon_table := table()
-         insert(convert_icon_table, old_img_style("box_up"), Icon.BOX_UP)
-         insert(convert_icon_table, old_img_style("box_down"), Icon.BOX_DOWN)
-         insert(convert_icon_table, old_img_style("diamond_up"), Icon.DIAMOND_UP)
-         insert(convert_icon_table, old_img_style("diamond_down"), Icon.DIAMOND_DOWN)
-      }
-      return
-   end
-end
-
-
 class StringToPaintAction(Action)
    public new_key
 
@@ -1238,20 +1212,39 @@ end
 
 
 class FixAttribsAction(Action)
+   private fixone(t, oldk, newk)
+      local v
+      if v := \t[oldk] then {
+         delete(t, oldk)
+         t[newk] := v
+      }
+   end
+
    public apply(decode, proxy)
       local e, k, v, t
-      # Ignore if we already have a table
-      if proxy.get("WAttribs") then
-         return
-      t := table()
-      every e := !\proxy.get("Attribs") do {
-         e ? {
-            k := tab(upto('='))
-            ="="
-            v := tab(0)
-            insert(t, k, v)
+      t := proxy.get("WAttribs")
+      if /t then {
+         t := table()
+         every e := !\proxy.get("Attribs") do {
+            e ? {
+               k := tab(upto('='))
+               ="="
+               v := tab(0)
+               insert(t, k, v)
+            }
          }
       }
+      fixone(t, "drawop", "draw_op")
+      fixone(t, "fillstyle", "fill_style")
+      fixone(t, "linestyle", "line_style")
+      fixone(t, "linewidth", "line_width")
+      fixone(t, "inputmask", "input_mask")
+      fixone(t, "minheight", "min_height")
+      fixone(t, "maxheight", "max_height")
+      fixone(t, "minwidth", "min_width")
+      fixone(t, "maxwidth", "max_width")
+      fixone(t, "minsize", "min_size")
+      fixone(t, "maxsize", "max_size")
       proxy.add("WAttribs", t)
    end
 end
