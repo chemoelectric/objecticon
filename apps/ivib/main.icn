@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import lang, gui, io, graphics, ipl.pdco, ipl.strings
+import lang, gui, io, graphics, ipl.pdco
 
 $include "version.icn"
 
@@ -42,18 +42,16 @@ class Prefs(SelectiveObjectCodec)
    public 
       undo_size,                # Size of undo buffer
       plugin_directory,
-      cache_path,
-      image_directory
+      named_image_path
 
    public static get_template()
       suspend ["Undo Size", "undo_size"] |
               ["Plugin Directory", "plugin_directory"] |
-              ["Image Directory", "image_directory"] |
-              ["Cache Path", "cache_path"]
+              ["Named Image Path", "named_image_path"]
    end
 
    protected post_decode()
-      /image_directory := "images"
+      /named_image_path := ["images"]
    end
 
    #
@@ -61,9 +59,8 @@ class Prefs(SelectiveObjectCodec)
    #
    public new()
       undo_size := 7
-      cache_path := []
       plugin_directory := "plugins"
-      image_directory := "images"
+      named_image_path := ["images"]
       return
    end
 end
@@ -600,7 +597,7 @@ class Main(Dialog)
       d.show_modal(self)
       if \d.okay_result then {
          save_config_file()
-         synch_image_cache()
+         synch_named_images()
       }
    end
 
@@ -1006,8 +1003,7 @@ class Main(Dialog)
       return
    end
 
-   public synch_image_cache()
-      every ImageCache.add_dir(!self.prefs.cache_path)
+   public synch_named_images()
    end
 
    public get_plugin(id)
@@ -1042,11 +1038,13 @@ class Main(Dialog)
    public new()
       local mb, file, edit, alignment_sub_menu, copy_sub_menu, group_sub_menu,
          uis, objects_menu, tb, ui, listener, mi, ui_button, p,
-         order_sub_menu, f, ce, plugin, pp, fn, i, fp
+         order_sub_menu, f, ce, plugin, pp, fn, i, fp, ext
 
       cast(self,Dialog).new()
       set_layout(GridLayout("flush", "dii=0"))
       connect(self.dialog_event, Event.ICON)
+
+      load_icons()
 
       self.clipboard_selection_owner := IvibClipboardSelectionOwner(self)
 
@@ -1200,7 +1198,7 @@ class Main(Dialog)
       selections_menu.add(i)
 
       read_config_file()
-      synch_image_cache()
+      synch_named_images()
 
       uis := [CanvasTextButtonUI(),
               CanvasLabelUI(),
@@ -1269,86 +1267,65 @@ class Main(Dialog)
          }
       }
 
-      fp := Files.get_path(prefs.image_directory)
-      every f := !Files.list(fp.str()) do {
-         if endswith(map(f[1]), ".gif", ".png", ".jpeg", ".jpg") then
-            ImageCache.name_image(f[1], Files.file_to_string(fp.child(f[1]).str()))
+      every fp := Files.get_path(!prefs.named_image_path) do {
+         every f := !Files.list(fp.str()) do {
+            if ext := is_image_file(f[1]) then
+               ImageCache.name_image(f[1][1:-*ext], Files.file_to_string(fp.child(f[1]).str()))
+         }
       }
 
       save_button := IconButton("tooltip=Save")
-      save_button.set_image(
-                            $include "icon/icn35.icon"
-                            )
+      save_button.set_image("ivib.icn35")
       save_button.connect(self.op_save_button, Event.ACTION)
       tb.add_button(save_button)
 
       i := IconButton("tooltip=New")
-      i.set_image(
-                  $include "icon/icn40.icon"
-                  )
+      i.set_image("ivib.icn40")
       i.connect(self.op_new, Event.ACTION)
       tb.add_button(i)
 
       checkboxgroup_button := IconButton("tooltip=CheckBoxGroup")
-      checkboxgroup_button.set_image(
-                                     $include "icon/icn22.icon"
-                                     )
+      checkboxgroup_button.set_image("ivib.icn22")
       checkboxgroup_button.connect(self.op_selections_to_cbg, Event.ACTION)
       tb.add_button(checkboxgroup_button)
 
       buttongroup_button := IconButton("tooltip=ButtonGroup")
-      buttongroup_button.set_image(
-                                   $include "icon/icn23.icon"
-                                   )
+      buttongroup_button.set_image("ivib.icn23")
       buttongroup_button.connect(self.op_selections_to_bg, Event.ACTION)
       tb.add_button(buttongroup_button)
 
       delete_button := IconButton("tooltip=Delete")
-      delete_button.set_image(
-                              $include "icon/icn24.icon"
-                              )
+      delete_button.set_image("ivib.icn24")
       delete_button.connect(self.op_delete_selections, Event.ACTION)
       tb.add_button(delete_button)
 
       undo_button := IconButton("tooltip=Undo")
-      undo_button.set_image(
-                          $include "icon/icn25.icon"
-                          )
+      undo_button.set_image("ivib.icn25")
       undo_button.connect(self.op_undo, Event.ACTION)
       tb.add_button(undo_button)
 
       redo_button := IconButton("tooltip=Redo")
-      redo_button.set_image(
-                            $include "icon/icn26.icon"
-                            )
+      redo_button.set_image("ivib.icn26")
       redo_button.connect(self.op_redo, Event.ACTION)
       tb.add_button(redo_button)
 
       move_selection_up_order_button := IconButton("tooltip=Order Up")
-      move_selection_up_order_button.set_image(
-                                $include "icon/icn33.icon"
-                                )
+      move_selection_up_order_button.set_image("ivib.icn33")
       move_selection_up_order_button.connect(self.op_move_selection_up_order_button, Event.ACTION)
       tb.add_button(move_selection_up_order_button)
 
       move_selection_down_order_button := IconButton("tooltip=Order Down")
-      move_selection_down_order_button.set_image(
-                           $include "icon/icn34.icon"
-                           )
+      move_selection_down_order_button.set_image("ivib.icn34")
       move_selection_down_order_button.connect(self.op_move_selection_down_order_button, Event.ACTION)
       tb.add_button(move_selection_down_order_button)
 
       i := IconButton("tooltip=Preview")
-      i.set_image(
-                  $include "icon/icn38.icon"
-                  )
+      i.set_image("ivib.icn38")
       i.connect(self.op_preview, Event.ACTION)
       tb.add_button(i)
 
       i := IconButton("tooltip=Tree view")
-      i.set_image(
-                  $include "icon/icn39.icon"
-                  )
+      i.set_image("ivib.icn39")
       i.connect(self.op_tree, Event.ACTION)
       tb.add_button(i)
 
@@ -1421,16 +1398,14 @@ class Preferences(Dialog)
       c, 
       undo_size, 
       plugin_dir_field,
-      image_dir_field,
       path_tab,
       okay_result
 
    public on_okay()
       integer(self.undo_size.get_contents()) | return alert_error(self, "Non-integer undo size")
-      c.cache_path := path_tab.get_contents()
+      c.named_image_path := path_tab.get_contents()
       c.undo_size := integer(self.undo_size.get_contents())
       c.plugin_directory := plugin_dir_field.get_contents()
-      c.image_directory := image_dir_field.get_contents()
       okay_result := 1
       self.dispose()
    end
@@ -1446,15 +1421,6 @@ class Preferences(Dialog)
       d.show_modal(self)
       if s := d.get_result() then
          plugin_dir_field.set_contents(s)
-   end
-
-   public on_image_dir_browse()
-      local d, s
-      d := DirectoryDialog()
-      d.set_directory(image_dir_field.get_contents())
-      d.show_modal(self)
-      if s := d.get_result() then
-         image_dir_field.set_contents(s)
    end
 
    public new(c)
@@ -1483,13 +1449,6 @@ class Preferences(Dialog)
       t.add(plugin_dir_field)
       t.add(TextButton("label=...", "c:eol",
                        "e:action=",on_plugin_dir_browse))
-
-      t.add(Label("label=Image directory"))
-      image_dir_field := TextField("size=150")
-      image_dir_field.set_contents(c.image_directory)
-      t.add(image_dir_field)
-      t.add(TextButton("label=...", "c:eol",
-                       "e:action=",on_image_dir_browse))
 
       path_tab := PathTab(c)
       tabset.add(path_tab)
@@ -1582,9 +1541,9 @@ class PathTab(TabItem)
       local p
       cast(self,TabItem).new()
       self.c := c
-      contents := copy(c.cache_path)
+      contents := copy(c.named_image_path)
       set_layout(GridLayout())
-      set_label("Image Paths")
+      set_label("Named Image Paths")
 
       path_list := TextList("size=250,150", 
                             "c:eol",
@@ -1645,4 +1604,94 @@ class IvibClipboardSelectionOwner(SelectionOwner)
       self.parent := parent
       return
    end
+end
+
+$load ICN10 "icon/icn10.gif"
+$load ICN11 "icon/icn11.gif"
+$load ICN12 "icon/icn12.gif"
+$load ICN13 "icon/icn13.gif"
+$load ICN14 "icon/icn14.gif"
+$load ICN15 "icon/icn15.gif"
+$load ICN16 "icon/icn16.gif"
+$load ICN17 "icon/icn17.gif"
+$load ICN18 "icon/icn18.gif"
+$load ICN19 "icon/icn19.gif"
+$load ICN1 "icon/icn1.gif"
+$load ICN20 "icon/icn20.gif"
+$load ICN21 "icon/icn21.gif"
+$load ICN22 "icon/icn22.gif"
+$load ICN23 "icon/icn23.gif"
+$load ICN24 "icon/icn24.gif"
+$load ICN25 "icon/icn25.gif"
+$load ICN26 "icon/icn26.gif"
+$load ICN27 "icon/icn27.gif"
+$load ICN28 "icon/icn28.gif"
+$load ICN29 "icon/icn29.gif"
+$load ICN2 "icon/icn2.gif"
+$load ICN30 "icon/icn30.gif"
+$load ICN31 "icon/icn31.gif"
+$load ICN32 "icon/icn32.gif"
+$load ICN33 "icon/icn33.gif"
+$load ICN34 "icon/icn34.gif"
+$load ICN35 "icon/icn35.gif"
+$load ICN36 "icon/icn36.gif"
+$load ICN37 "icon/icn37.gif"
+$load ICN38 "icon/icn38.gif"
+$load ICN39 "icon/icn39.gif"
+$load ICN3 "icon/icn3.gif"
+$load ICN40 "icon/icn40.gif"
+$load ICN4 "icon/icn4.gif"
+$load ICN5 "icon/icn5.gif"
+$load ICN6 "icon/icn6.gif"
+$load ICN7 "icon/icn7.gif"
+$load ICN8 "icon/icn8.gif"
+$load ICN9 "icon/icn9.gif"
+$load ICONBUTTON "icon/iconbutton.gif"
+$load ICON "icon/icon.gif"
+$load PROTO "icon/proto.gif"
+
+procedure load_icons()
+   ImageCache.name_image("ivib.icn10", ICN10)
+   ImageCache.name_image("ivib.icn11", ICN11)
+   ImageCache.name_image("ivib.icn12", ICN12)
+   ImageCache.name_image("ivib.icn13", ICN13)
+   ImageCache.name_image("ivib.icn14", ICN14)
+   ImageCache.name_image("ivib.icn15", ICN15)
+   ImageCache.name_image("ivib.icn16", ICN16)
+   ImageCache.name_image("ivib.icn17", ICN17)
+   ImageCache.name_image("ivib.icn18", ICN18)
+   ImageCache.name_image("ivib.icn19", ICN19)
+   ImageCache.name_image("ivib.icn1", ICN1)
+   ImageCache.name_image("ivib.icn20", ICN20)
+   ImageCache.name_image("ivib.icn21", ICN21)
+   ImageCache.name_image("ivib.icn22", ICN22)
+   ImageCache.name_image("ivib.icn23", ICN23)
+   ImageCache.name_image("ivib.icn24", ICN24)
+   ImageCache.name_image("ivib.icn25", ICN25)
+   ImageCache.name_image("ivib.icn26", ICN26)
+   ImageCache.name_image("ivib.icn27", ICN27)
+   ImageCache.name_image("ivib.icn28", ICN28)
+   ImageCache.name_image("ivib.icn29", ICN29)
+   ImageCache.name_image("ivib.icn2", ICN2)
+   ImageCache.name_image("ivib.icn30", ICN30)
+   ImageCache.name_image("ivib.icn31", ICN31)
+   ImageCache.name_image("ivib.icn32", ICN32)
+   ImageCache.name_image("ivib.icn33", ICN33)
+   ImageCache.name_image("ivib.icn34", ICN34)
+   ImageCache.name_image("ivib.icn35", ICN35)
+   ImageCache.name_image("ivib.icn36", ICN36)
+   ImageCache.name_image("ivib.icn37", ICN37)
+   ImageCache.name_image("ivib.icn38", ICN38)
+   ImageCache.name_image("ivib.icn39", ICN39)
+   ImageCache.name_image("ivib.icn3", ICN3)
+   ImageCache.name_image("ivib.icn40", ICN40)
+   ImageCache.name_image("ivib.icn4", ICN4)
+   ImageCache.name_image("ivib.icn5", ICN5)
+   ImageCache.name_image("ivib.icn6", ICN6)
+   ImageCache.name_image("ivib.icn7", ICN7)
+   ImageCache.name_image("ivib.icn8", ICN8)
+   ImageCache.name_image("ivib.icn9", ICN9)
+   ImageCache.name_image("ivib.iconbutton", ICONBUTTON)
+   ImageCache.name_image("ivib.icon", ICON)
+   ImageCache.name_image("ivib.proto", PROTO)
 end

@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import gui, ipl.graphics, io, graphics, ipl.lists
+import gui, io, graphics, ipl.lists, ipl.strings
 
 #
 # Convert a list l to a string representation.
@@ -15,71 +15,9 @@ procedure contents_string(l)
    return "[" || list2str(l, ", ", image) || "]"
 end
 
-
-#
-# Read icon from file s.  dialog is an instance of Dialog
-#
-procedure util_read_icon(dialog, s, pal)
-   if map(s)[-4:0] == (".gif"|".png"|".jpg"|".jpeg") then
-      return read_gif_icon(dialog, s, pal)
-   else
-      return read_string_icon(dialog, s)
+procedure is_image_file(s)
+   return endswith(map(s), ".gif" | ".png" | ".jpeg" |".jpg")
 end
-
-
-#
-# Read a standard gif icon.
-#
-procedure read_gif_icon(dialog, s, pal)
-   local w, raw
-   /pal := "c6"
-   w := Window.open("canvas=hidden")
-   w.set_image(s) | {
-      w.close()
-      return alert_error(dialog, "Couldn't load image file " || s)
-   }
-   raw := Capture(w, pal)
-   w.close()
-
-   return raw
-end
-
-
-#
-# Read a standard Icon string formatted icon.
-#
-procedure read_string_icon(dialog, s)
-   local res, x, f
-
-   f := open(s) | return alert_error(dialog, "Couldn't open file " || s)
-
-   res := ""
-   while x := read(f) do {
-      x ? {
-         if ="#" then
-            next
-
-         ="\""
-         res ||:= tab(0)
-      }
-
-      if res[-1] == "_" then
-         res[-1] := ""
-      else
-         break
-   }
-
-   close(f)
-
-   #
-   # Check for reasonably valid image 
-   #
-   if image_height(res) then
-      return res
-   else   
-      return alert_error(dialog, "Not a valid image")
-end
-
 
 #
 # Check that the window attributes in list l are valid.

@@ -10,9 +10,7 @@ class CanvasIconButtonUI(CanvasComponentUI)
    public create_canvas_component(canvas)
       local t
       t := CanvasIconButton()
-      t.set_paint(CanvasImagePaint("image=",
-                $include "icon/icon.icon"
-                ))
+      t.set_paint(CanvasImagePaint("image=ivib.icon"))
       return t
    end
 
@@ -25,9 +23,7 @@ class CanvasIconButtonUI(CanvasComponentUI)
    end
 
    public get_icon()
-      return (
-              $include "icon/icn5.icon"
-              )
+      return "ivib.icn5"
    end
 end
 

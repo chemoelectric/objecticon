@@ -1212,20 +1212,39 @@ end
 
 
 class FixAttribsAction(Action)
+   private fixone(t, oldk, newk)
+      local v
+      if v := \t[oldk] then {
+         delete(t, oldk)
+         t[newk] := v
+      }
+   end
+
    public apply(decode, proxy)
       local e, k, v, t
-      # Ignore if we already have a table
-      if proxy.get("WAttribs") then
-         return
-      t := table()
-      every e := !\proxy.get("Attribs") do {
-         e ? {
-            k := tab(upto('='))
-            ="="
-            v := tab(0)
-            insert(t, k, v)
+      t := proxy.get("WAttribs")
+      if /t then {
+         t := table()
+         every e := !\proxy.get("Attribs") do {
+            e ? {
+               k := tab(upto('='))
+               ="="
+               v := tab(0)
+               insert(t, k, v)
+            }
          }
       }
+      fixone(t, "drawop", "draw_op")
+      fixone(t, "fillstyle", "fill_style")
+      fixone(t, "linestyle", "line_style")
+      fixone(t, "linewidth", "line_width")
+      fixone(t, "inputmask", "input_mask")
+      fixone(t, "minheight", "min_height")
+      fixone(t, "maxheight", "max_height")
+      fixone(t, "minwidth", "min_width")
+      fixone(t, "maxwidth", "max_width")
+      fixone(t, "minsize", "min_size")
+      fixone(t, "maxsize", "max_size")
       proxy.add("WAttribs", t)
    end
 end
