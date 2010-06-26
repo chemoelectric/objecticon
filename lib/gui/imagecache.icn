@@ -2,10 +2,10 @@ package gui
 
 import graphics
 
-$load HOME "images/gui.Home24.gif"
-$load NEW "images/gui.New24.gif"
-$load REFRESH "images/gui.Refresh24.gif"
-$load UP "images/gui.Up24.gif"
+$load HOME "images/gui.HOME_24.gif"
+$load NEW "images/gui.NEW_24.gif"
+$load REFRESH "images/gui.REFRESH_24.gif"
+$load UP "images/gui.UP_24.gif"
 
 class ImageCache()
    public static 
@@ -15,10 +15,10 @@ class ImageCache()
    private static init()
       names := table()
       imap := table()
-      name_image("gui.Home24.gif", HOME)
-      name_image("gui.New24.gif", NEW)
-      name_image("gui.Refresh24.gif", REFRESH)
-      name_image("gui.Up24.gif", UP)
+      name_image("gui.HOME_24", HOME)
+      name_image("gui.NEW_24", NEW)
+      name_image("gui.REFRESH_24", REFRESH)
+      name_image("gui.UP_24", UP)
       name_image("gui.BOX_UP", "(0=shadow;1=hilite;~=trans)13,c6,_
 ~~~~~~~~~~~~~_
 ~11111111111~_
