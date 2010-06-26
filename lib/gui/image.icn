@@ -93,12 +93,9 @@ class Image(Component)
 
    public load_image()
       local s
-      if s := \self.image_str then {
-         if s[1] == "(" then
-            win := Window.open_image(get_extended_image(self.cbwin, s), self.cbwin)
-         else
-            win := Window.open_image(s, self.cbwin)
-      } else if \self.image_cache then {
+      if s := \self.image_str then
+         win := ImageCache.load(s, self.cbwin)
+      else if \self.image_cache then {
          if win := ImageCache.get(self.image_cache, self.cbwin) then
             dont_close := 1
       } else if \self.image_window then {

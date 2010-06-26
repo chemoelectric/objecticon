@@ -42,6 +42,8 @@ class ItemPaintTree(Tree)
 
    public calculate_line_height()
       local h, h1
+      if /col_w then
+         compute_img_wh()
       if h := item_paint.get_constant_height(view.cbwin) +
          item_border.get_total_height() then 
       {

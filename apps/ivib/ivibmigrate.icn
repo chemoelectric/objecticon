@@ -152,8 +152,6 @@ class Source1(Source)
       cs.add(c)
 
       c := createcc_converter("CanvasCheckBox")
-      c.add_action("Img Up", ConvertIconAction())
-      c.add_action("Img Down", ConvertIconAction())
       c.add_action("Label", StringToPaintAction("Paint"))
       cs.add(c)
 
@@ -255,8 +253,6 @@ class Source1(Source)
 
       c := createcmc_converter("CanvasCheckBoxMenuItem")
       c.add_action("Label", StringToPaintAction("Paint mid"))
-      c.add_action("Img Up", ConvertIconAction())
-      c.add_action("Img Down", ConvertIconAction())
       cs.add(c)
 
       c := createcc_converter("CanvasMenuBar")
@@ -1093,28 +1089,6 @@ class CustomEncode()
       tag_count := 0
       seen := table()
       string_buff := RamStream()
-      return
-   end
-end
-
-
-global convert_icon_table
-
-class ConvertIconAction(Action)
-   public apply(decode, proxy, key, val)
-      if member(convert_icon_table, val) then
-         val := convert_icon_table[val]
-      proxy.add(key, val)
-   end
-
-   public new()
-      initial {
-         convert_icon_table := table()
-         insert(convert_icon_table, old_img_style("box_up"), Icon.BOX_UP)
-         insert(convert_icon_table, old_img_style("box_down"), Icon.BOX_DOWN)
-         insert(convert_icon_table, old_img_style("diamond_up"), Icon.DIAMOND_UP)
-         insert(convert_icon_table, old_img_style("diamond_down"), Icon.DIAMOND_DOWN)
-      }
       return
    end
 end
