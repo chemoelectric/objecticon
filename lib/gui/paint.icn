@@ -460,9 +460,8 @@ class ImagePaint(Paint,SetFields)
    end
 
    public load_image(c)
-      local s
-      if s := \self.image_str then
-         win := ImageCache.load(s, c.cbwin)
+      if \self.image_str then
+         win := ImageCache.load(self.image_str, c.cbwin)
       else if \self.image_cache then {
          if win := ImageCache.get(self.image_cache, c.cbwin) then
             dont_close := 1
