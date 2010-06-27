@@ -200,7 +200,7 @@ void buffnstr(dptr d, char **s, ...);
    void freeimgdata     (struct imgdata *img);
    int  getdefaultfontsize(int);
    char *getdefaultfont(void);
-   int parseimage(wbp w, dptr d,  struct imgdata *imd);
+   int interpimage(wbp w, dptr d,  struct imgdata *imd);
 
    int is_png(dptr data);
    int is_jpeg(dptr data);
@@ -281,7 +281,7 @@ void buffnstr(dptr d, char **s, ...);
    int  utf8width       (wbp w, char *s, int n, int nchars);
    int  readimagefileimpl(char *filename, struct imgdata *imd);
    int  writeimagefileimpl(wbp w, char *filename, int x, int y, int width, int height);
-   int  parseimageimpl(dptr data, struct imgdata *imd);
+   int  readimagedataimpl(dptr data, struct imgdata *imd);
 
 #endif                                  /* Graphics */
 

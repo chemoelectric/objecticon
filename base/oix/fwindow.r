@@ -375,7 +375,7 @@ function graphics_Window_draw_image(self, x0, y0, d)
       if (!cnv:string(d, d))
           runerr(103, d);
 
-      if (parseimage(self_w, &d, &imd) != Succeeded)
+      if (interpimage(self_w, &d, &imd) != Succeeded)
           fail;
       drawimgdata(self_w, x, y, &imd);
       freeimgdata(&imd);
@@ -1651,7 +1651,7 @@ function graphics_Window_set_image(self, d)
        wsp ws;
        GetSelfW();
        ws = self_w->window;
-       if (parseimage(self_w, &d, &ws->initimage) != Succeeded)
+       if (interpimage(self_w, &d, &ws->initimage) != Succeeded)
            fail;
        self_w->window->width = ws->initimage.width;
        self_w->window->height = ws->initimage.height;

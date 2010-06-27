@@ -968,7 +968,7 @@ static int tryimagedata(dptr data, struct imgdata *imd)
     int r;
     char *fn = 0;
     FILE *f;
-    if ((r = parseimageimpl(data, imd)) != NoCvt)
+    if ((r = readimagedataimpl(data, imd)) != NoCvt)
         return r;
     if (is_gif(data))
         return parseGIF(data, imd);
@@ -1032,7 +1032,7 @@ static int tryimagefile(char *filename, struct imgdata *imd)
     return NoCvt;
 }
 
-int parseimage(wbp w, dptr d,  struct imgdata *imd)
+int interpimage(wbp w, dptr d,  struct imgdata *imd)
 {
     int r;
 
