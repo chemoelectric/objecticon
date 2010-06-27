@@ -1,4 +1,4 @@
-import gui, io, lang, ipl.pdco
+import gui, io, lang
 
 class PaintEdit(Dialog)
    public 
@@ -185,7 +185,7 @@ class ImagePaintEdit(PaintEdit)
       p.set_layout(GridLayout())
       add_tab_at_front(p)
 
-      q := Component("layout=",GridLayout("flush"), "c:eol")
+      q := Component("layout=",GridLayout("flush"), "c:eol", "c:x_fill", "c:x_weight=1.0")
       img := Image("size=60,60")
       img.clear_constraints()
       q.add(img)
@@ -385,7 +385,17 @@ class NamedImageDialog(Dialog)
       curr,
       lst, 
       result
-   
+
+   private get_names()
+      local l, s
+      l := []
+      every s := key(ImageCache.names) do {
+         if (s == "ivib.icon") | not match("ivib.", s) then
+            put(l, s)
+      }
+      return sort(l)
+   end
+
    public setup()
       local oc
       attrib("w:label=Select image")
@@ -394,7 +404,7 @@ class NamedImageDialog(Dialog)
       lst := TextList("size=250,300",
                       "select_mode=one",
                       "c:eol",
-                      "contents=",sort(ipl.pdco.List{key(ImageCache.names)}))
+                      "contents=",get_names())
       lst.object_set_selections([\curr])
       lst.set_cursor(lst.get_selections()[1])
       set_focus(lst)

@@ -21,6 +21,7 @@ static int  readJPEG        (char *fname, struct imgdata *d);
 static int readPNG(char *filename, struct imgdata *imd);
 static int writePNG(wbp w, char *filename, int x, int y, int width, int height);
 #endif
+static int parseGIF        (dptr data, struct imgdata *imd);
 static int readGIF         (char *fname, struct imgdata *d);
 
 static	int	colorphrase    (char *buf, int *r, int *g, int *b);
@@ -970,23 +971,13 @@ static int tryimagedata(dptr data, struct imgdata *imd)
     if ((r = parseimageimpl(data, imd)) != NoCvt)
         return r;
     if (is_gif(data))
-        fn = "/tmp/tmp.gif";
-    else if (is_png(data)) {
-#ifdef HAVE_LIBPNG
-        fn = "/tmp/tmp.png";
-#else
-        LitWhy("PNG format not supported");
-        return Failed;
-#endif
-    } else if (is_jpeg(data)) {
-#ifdef HAVE_LIBJPEG
-        fn = "/tmp/tmp.jpg";
-#else
-        LitWhy("JPEG format not supported");
-        return Failed;
-#endif
-    }
-    if (!fn)
+        return parseGIF(data, imd);
+
+    if (is_png(data))
+        fn = "/tmp/oitmp.png";
+    else if (is_jpeg(data))
+        fn = "/tmp/oitmp.jpg";
+    else
         return NoCvt;
 
     f = fopen(fn, "wb");
@@ -1014,6 +1005,10 @@ static int tryimagefile(char *filename, struct imgdata *imd)
         return r;
 
     fp = fparse(filename);
+
+    if (strcasecmp(fp->ext, ".gif") == 0)
+        return readGIF(filename, imd);
+
     if (strcasecmp(fp->ext, ".png") == 0)
 #ifdef HAVE_LIBPNG
         return readPNG(filename, imd);
@@ -1033,9 +1028,6 @@ static int tryimagefile(char *filename, struct imgdata *imd)
         return Failed;
     }
 #endif
-
-    if (strcasecmp(fp->ext, ".gif") == 0)
-        return readGIF(filename, imd);
 
     return NoCvt;
 }
@@ -1303,19 +1295,24 @@ struct my_error_mgr { /* a part of JPEG error handling */
 typedef struct my_error_mgr * my_error_ptr; /* a part of error handling */
 #endif					/* HAVE_LIBJPEG */
 
-static	int	gfread		(FILE *f);
-static	int	gfheader	(FILE *f);
-static	int	gfskip		(FILE *f);
-static	void	gfcontrol	(FILE *f);
-static	int	gfimhdr		(FILE *f);
-static	int	gfmap		(FILE *f);
+static	int	gfread		(void);
+static	int	gfheader	(void);
+static	int	gfskip		(void);
+static	void	gfcontrol	(void);
+static	int	gfimhdr		(void);
+static	int	gfmap		(void);
 static	int	gfsetup		(void);
-static	int	gfrdata		(FILE *f);
-static	int	gfrcode		(FILE *f);
+static	int	gfrdata		(void);
+static	int	gfrcode		(void);
 static	void	gfinsert	(int prev, int c);
 static	int	gffirst		(int c);
 static	void	gfgen		(int c);
 static	void	gfput		(int b);
+static  int     gffread         (void *ptr, size_t size, size_t nmemb);
+static  int     gfgetc          (void);
+
+static FILE *gf_file;
+static char *gf_data, *gf_data_eof;
 
 static int gf_gcmap, gf_lcmap;		/* global color map? local color map? */
 static int gf_nbits;			/* number of bits per pixel */
@@ -1341,22 +1338,62 @@ static int gf_rem;			/* remaining bytes in this block */
 
 /*
  * readGIF(filename, imd) - read GIF file into image data structure
- *
- * p is a palette number to which the GIF colors are to be coerced;
- * p=0 uses the colors exactly as given in the GIF file.
  */
 static int readGIF(char *filename, struct imgdata *imd)
 {
     int r;
-    FILE *fp;
 
-    if ((fp = fopen(filename, "rb")) == NULL) {
+    gf_data = gf_data_eof = 0;
+    if ((gf_file = fopen(filename, "rb")) == NULL) {
         errno2why();
         return Failed;
     }
 
-    r = gfread(fp);			/* read image */
-    fclose(fp);
+    r = gfread();			/* read image */
+    fclose(gf_file);
+    gf_file = 0;
+
+    if (gf_prefix) {
+        free(gf_prefix);
+        gf_prefix = NULL;
+    }
+    if (gf_suffix) {
+        free(gf_suffix);
+        gf_suffix = NULL;
+    }
+
+    if (!r) {			/* if no success, free mem */
+        if (gf_paltbl) {
+            free(gf_paltbl);
+            gf_paltbl = NULL;
+        }
+        if (gf_string) {
+            free(gf_string);
+            gf_string = NULL;
+        }
+        return Failed;
+    }
+
+    imd->width = gf_width;			/* set return variables */
+    imd->height = gf_height;
+    imd->paltbl = gf_paltbl;
+    imd->data = gf_string;
+    imd->format = gf_format;
+
+    return Succeeded;				/* return success */
+}
+
+/*
+ * parseGIF(filename, imd) - parse GIF data into image data structure
+ */
+static int parseGIF(dptr data, struct imgdata *imd)
+{
+    int r;
+    gf_file = 0;
+    gf_data = StrLoc(*data);
+    gf_data_eof = gf_data + StrLen(*data);
+    r = gfread();			/* read image */
+    gf_data = gf_data_eof = 0;
 
     if (gf_prefix) {
         free(gf_prefix);
@@ -1391,7 +1428,7 @@ static int readGIF(char *filename, struct imgdata *imd)
 /*
  * gfread(filename, p) - read GIF file, setting gf_ globals
  */
-static int gfread(FILE *fp)
+static int gfread()
 {
     int i;
 
@@ -1405,21 +1442,21 @@ static int gfread(FILE *fp)
     for (i = 0; i < 256; i++)		/* init palette table */
         gf_paltbl[i].valid = gf_paltbl[i].transpt = 0;
 
-    if (!gfheader(fp))			/* read file header */
+    if (!gfheader())			/* read file header */
         return 0;
     if (gf_gcmap)			/* read global color map, if any */
-        if (!gfmap(fp))
+        if (!gfmap())
             return 0;
-    if (!gfskip(fp))			/* skip to start of image */
+    if (!gfskip())			/* skip to start of image */
         return 0;
-    if (!gfimhdr(fp))			/* read image header */
+    if (!gfimhdr())			/* read image header */
         return 0;
     if (gf_lcmap)			/* read local color map, if any */
-        if (!gfmap(fp))
+        if (!gfmap())
             return 0;
     if (!gfsetup())			/* prepare to read image */
         return 0;
-    if (!gfrdata(fp))			/* read image data */
+    if (!gfrdata())			/* read image data */
         return 0;
     while (gf_row < gf_height)		/* pad if too short */
         gfput(0);
@@ -1427,15 +1464,40 @@ static int gfread(FILE *fp)
     return 1;
 }
 
+static int gffread(void *ptr, size_t size, size_t nmemb)
+{
+    if (gf_file)
+        return fread(ptr, size, nmemb, gf_file);
+    else {
+        int n = size * nmemb;
+        n = Min(n, gf_data_eof - gf_data);
+        memcpy(ptr, gf_data, n);
+        gf_data += n;
+        return n;
+    }
+}
+
+static int gfgetc()
+{
+    if (gf_file)
+        return getc(gf_file);
+    else {
+        if (gf_data >= gf_data_eof)
+            return EOF;
+        else
+            return *gf_data++ & 0xff;
+    }
+}
+
 /*
  * gfheader(f) - read GIF file header; return nonzero if successful
  */
-static int gfheader(FILE *f)
+static int gfheader()
 {
     unsigned char hdr[13];		/* size of a GIF header */
     int b;
 
-    if (fread((char *)hdr, sizeof(char), sizeof(hdr), f) != sizeof(hdr))
+    if (gffread(hdr, sizeof(char), sizeof(hdr)) != sizeof(hdr))
         return 0;				/* header short or missing */
     if (strncmp((char *)hdr, "GIF", 3) != 0 ||
         !isdigit((unsigned char)hdr[3]) || !isdigit((unsigned char)hdr[4]))
@@ -1450,23 +1512,23 @@ static int gfheader(FILE *f)
 /*
  * gfskip(f) - skip intermediate blocks and locate image
  */
-static int gfskip(FILE *f)
+static int gfskip()
 {
     int c, n;
 
-    while ((c = getc(f)) != GifSeparator) { /* look for start-of-image flag */
+    while ((c = gfgetc()) != GifSeparator) { /* look for start-of-image flag */
         if (c == EOF)
             return 0;
         if (c == GifExtension) {		/* if extension block is present */
-            c = getc(f);				/* get label */
+            c = gfgetc();				/* get label */
             if ((c & 0xFF) == GifControlExt)
-                gfcontrol(f);			/* process control subblock */
-            while ((n = getc(f)) != 0) {		/* read blks until empty one */
+                gfcontrol();			/* process control subblock */
+            while ((n = gfgetc()) != 0) {		/* read blks until empty one */
                 if (n == EOF)
                     return 0;
                 n &= 0xFF;				/* ensure positive count */
                 while (n--)				/* skip block contents */
-                    getc(f);
+                    gfgetc();
             }
         }
     }
@@ -1476,13 +1538,13 @@ static int gfskip(FILE *f)
 /*
  * gfcontrol(f) - process control extension subblock
  */
-static void gfcontrol(FILE *f)
+static void gfcontrol()
 {
     int i, n, c, t;
 
-    n = getc(f) & 0xFF;				/* subblock length (s/b 4) */
+    n = gfgetc() & 0xFF;				/* subblock length (s/b 4) */
     for (i = t = 0; i < n; i++) {
-        c = getc(f) & 0xFF;
+        c = gfgetc() & 0xFF;
         if (i == 0)
             t = c & 1;				/* transparency flag */
         else if (i == 3 && t != 0) {
@@ -1496,12 +1558,12 @@ static void gfcontrol(FILE *f)
 /*
  * gfimhdr(f) - read image header
  */
-static int gfimhdr(FILE *f)
+static int gfimhdr()
 {
     unsigned char hdr[9];		/* size of image hdr excl separator */
     int b;
 
-    if (fread((char *)hdr, sizeof(char), sizeof(hdr), f) != sizeof(hdr))
+    if (gffread(hdr, sizeof(char), sizeof(hdr)) != sizeof(hdr))
         return 0;				/* header short or missing */
     gf_width = hdr[4] + 256 * hdr[5];
     gf_height = hdr[6] + 256 * hdr[7];
@@ -1516,16 +1578,16 @@ static int gfimhdr(FILE *f)
 /*
  * gfmap(f, p) - read GIF color map into paltbl
  */
-static int gfmap(FILE *f)
+static int gfmap()
 {
     int ncolors, i, r, g, b;
 
     ncolors = 1 << gf_nbits;
 
     for (i = 0; i < ncolors; i++) {
-        r = getc(f);
-        g = getc(f);
-        b = getc(f);
+        r = gfgetc();
+        g = gfgetc();
+        b = gfgetc();
         if (r == EOF || g == EOF || b == EOF)
             return 0;
         gf_paltbl[i].r   = 257 * r;	/* 257 * 255 -> 65535 */
@@ -1573,11 +1635,11 @@ static int gfsetup()
 /*
  * gfrdata(f) - read GIF data
  */
-static int gfrdata(FILE *f)
+static int gfrdata()
 {
     int curr, prev, c;
 
-    if ((gf_cdsize = getc(f)) == EOF)
+    if ((gf_cdsize = gfgetc()) == EOF)
         return 0;
     gf_clear = 1 << gf_cdsize;
     gf_eoi = gf_clear + 1;
@@ -1590,13 +1652,13 @@ static int gfrdata(FILE *f)
     gf_valid = 0;
     gf_rem = 0;
 
-    prev = curr = gfrcode(f);
+    prev = curr = gfrcode();
     while (curr != gf_eoi) {
         if (curr == gf_clear) {		/* if reset code */
             gf_lzwbits = gf_cdsize + 1;
             gf_lzwmask = (1 << gf_lzwbits) - 1;
             gf_free = gf_eoi + 1;
-            prev = curr = gfrcode(f);
+            prev = curr = gfrcode();
             gfgen(curr);
         }
         else if (curr < gf_free) {	/* if code is in table */
@@ -1617,7 +1679,7 @@ static int gfrdata(FILE *f)
             else
                 return 0;			/* more badly confused */
         }
-        curr = gfrcode(f);
+        curr = gfrcode();
     }
 
     return 1;
@@ -1626,16 +1688,16 @@ static int gfrdata(FILE *f)
 /*
  * gfrcode(f) - read next LZW code
  */
-static int gfrcode(FILE *f)
+static int gfrcode()
 {
     int c, r;
 
     while (gf_valid < gf_lzwbits) {
         if (--gf_rem <= 0) {
-            if ((gf_rem = getc(f)) == EOF)
+            if ((gf_rem = gfgetc()) == EOF)
                 return gf_eoi;
         }
-        if ((c = getc(f)) == EOF)
+        if ((c = gfgetc()) == EOF)
             return gf_eoi;
         gf_curr |= ((c & 0xFF) << gf_valid);
         gf_valid += 8;

@@ -92,9 +92,8 @@ class Image(Component)
    end
 
    public load_image()
-      local s
-      if s := \self.image_str then
-         win := ImageCache.load(s, self.cbwin)
+      if \self.image_str then
+         win := ImageCache.load(self.image_str, self.cbwin)
       else if \self.image_cache then {
          if win := ImageCache.get(self.image_cache, self.cbwin) then
             dont_close := 1
