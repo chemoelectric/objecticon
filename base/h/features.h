@@ -55,3 +55,7 @@
 #ifdef HAVE_LIBJPEG
    Feature("_JPEG", "JPEG images")
 #endif					/* HAVE_LIBJPEG */
+
+#ifdef HAVE_LIBPNG
+   Feature("_PNG", "PNG images")
+#endif					/* HAVE_LIBPNG */
