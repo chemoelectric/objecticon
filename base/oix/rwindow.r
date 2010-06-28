@@ -14,15 +14,18 @@ wsp wstates = NULL;
 wbp wbndngs = NULL;
 
 #ifdef HAVE_LIBJPEG
-static int  writeJPEG       (wbp w, char *filename, int x, int y, int width, int height);
-static int  readJPEG        (char *fname, struct imgdata *d);
+static int  readjpegdata       (dptr data, struct imgdata *d);
+static int  writejpegfile       (wbp w, char *filename, int x, int y, int width, int height);
+static int  readjpegfile        (char *fname, struct imgdata *d);
 #endif                                  /* HAVE_LIBJPEG */
 #ifdef HAVE_LIBPNG
-static int readPNG(char *filename, struct imgdata *imd);
-static int writePNG(wbp w, char *filename, int x, int y, int width, int height);
+static int readpngdata         (dptr data, struct imgdata *imd);
+static int readpngfile          (char *filename, struct imgdata *imd);
+static int writepngfile         (wbp w, char *filename, int x, int y, int width, int height);
 #endif
-static int parseGIF        (dptr data, struct imgdata *imd);
-static int readGIF         (char *fname, struct imgdata *d);
+static int datatofile(dptr data, char *fn);
+static int readgifdata        (dptr data, struct imgdata *imd);
+static int readgiffile         (char *fname, struct imgdata *d);
 
 static	int	colorphrase    (char *buf, int *r, int *g, int *b);
 static	double rgbval(double n1, double n2, double hue);
@@ -963,37 +966,41 @@ static int tryimagestring(wbp w, dptr d,  struct imgdata *imd)
     return Succeeded;
 }
 
+/*
+ * Write string data to a temporary file.
+ */
+static int datatofile(dptr data, char *fn)
+{
+    FILE *f;
+    if ((f = fopen(fn, "wb")) == NULL)
+        return 0;
+    if (fwrite(StrLoc(*data), 1, StrLen(*data), f) != StrLen(*data)) {
+        fclose(f);
+        return 0;
+    }
+    fclose(f);
+    return 1;
+}
+
 static int tryimagedata(dptr data, struct imgdata *imd)
 {
     int r;
-    char *fn = 0;
-    FILE *f;
     if ((r = readimagedataimpl(data, imd)) != NoCvt)
         return r;
     if (is_gif(data))
-        return parseGIF(data, imd);
+        return readgifdata(data, imd);
 
+#ifdef HAVE_LIBPNG
     if (is_png(data))
-        fn = "/tmp/oitmp.png";
-    else if (is_jpeg(data))
-        fn = "/tmp/oitmp.jpg";
-    else
-        return NoCvt;
+        return readpngdata(data, imd);
+#endif
 
-    f = fopen(fn, "wb");
-    if (!f) {
-        LitWhy("Couldn't open temp image file");
-        return Failed;
-    }
-    if (fwrite(StrLoc(*data), 1, StrLen(*data), f) != StrLen(*data)) {
-        fclose(f);
-        LitWhy("Couldn't write to temp image file");
-        return Failed;
-    }
-    fclose(f);
-    r = tryimagefile(fn, imd);
-    remove(fn);
-    return r;
+#ifdef HAVE_LIBJPEG
+    if (is_jpeg(data))
+        return readjpegdata(data, imd);
+#endif
+
+    return NoCvt;
 }
 
 static int tryimagefile(char *filename, struct imgdata *imd)
@@ -1007,26 +1014,16 @@ static int tryimagefile(char *filename, struct imgdata *imd)
     fp = fparse(filename);
 
     if (strcasecmp(fp->ext, ".gif") == 0)
-        return readGIF(filename, imd);
+        return readgiffile(filename, imd);
 
-    if (strcasecmp(fp->ext, ".png") == 0)
 #ifdef HAVE_LIBPNG
-        return readPNG(filename, imd);
-#else
-    {
-        LitWhy("PNG format not supported");
-        return Failed;
-    }
+    if (strcasecmp(fp->ext, ".png") == 0)
+        return readpngfile(filename, imd);
 #endif
 
-    if (strcasecmp(fp->ext, ".jpg") == 0 || strcasecmp(fp->ext, ".jpeg") == 0)
 #ifdef HAVE_LIBJPEG
-        return readJPEG(filename, imd);
-#else
-    {
-        LitWhy("JPEG format not supported");
-        return Failed;
-    }
+    if (strcasecmp(fp->ext, ".jpg") == 0 || strcasecmp(fp->ext, ".jpeg") == 0)
+        return readjpegfile(filename, imd);
 #endif
 
     return NoCvt;
@@ -1337,9 +1334,9 @@ static int gf_valid;			/* number of valid bits */
 static int gf_rem;			/* remaining bytes in this block */
 
 /*
- * readGIF(filename, imd) - read GIF file into image data structure
+ * readgiffile(filename, imd) - read GIF file into image data structure
  */
-static int readGIF(char *filename, struct imgdata *imd)
+static int readgiffile(char *filename, struct imgdata *imd)
 {
     int r;
 
@@ -1384,9 +1381,9 @@ static int readGIF(char *filename, struct imgdata *imd)
 }
 
 /*
- * parseGIF(filename, imd) - parse GIF data into image data structure
+ * readgifdata(filename, imd) - parse GIF data into image data structure
  */
-static int parseGIF(dptr data, struct imgdata *imd)
+static int readgifdata(dptr data, struct imgdata *imd)
 {
     int r;
     gf_file = 0;
@@ -1789,16 +1786,26 @@ static void gfput(int b)
 
 
 #ifdef HAVE_LIBJPEG
-/*
- * readJPEG(filename, p, imd) - read JPEG file into image data structure
- * p is a palette number to which the JPEG colors are to be coerced;
- * p=0 uses the rgb data from the image, with no palette.
- */
 
 void my_error_exit (j_common_ptr cinfo);
 
+static int readjpegdata(dptr data, struct imgdata *imd)
+{
+    static char *fn = "/tmp/oitmp.jpg";
+    int r;
+    if (!datatofile(data, fn)) {
+        LitWhy("Couldn't write to temp image file");
+        return Failed;
+    }
+    r = readjpegfile(fn, imd);
+    remove(fn);
+    return r;
+}
 
-static int readJPEG(char *filename, struct imgdata *imd)
+/*
+ * readjpegfile(filename, imd) - read JPEG file into image data structure
+ */
+static int readjpegfile(char *filename, struct imgdata *imd)
 {
     struct jpeg_decompress_struct cinfo; /* libjpeg struct */
     struct my_error_mgr jerr;
@@ -1819,7 +1826,7 @@ static int readJPEG(char *filename, struct imgdata *imd)
         jpeg_destroy_decompress(&cinfo);
         if (data) free(data);
         fclose(fp);
-        whyf("readJPEG: Failed to read file %s", filename);
+        whyf("readjpegfile: Failed to read file %s", filename);
         return Failed;
     }
 
@@ -1873,7 +1880,7 @@ void my_error_exit (j_common_ptr cinfo)
 }
 
 
-int writeJPEG(wbp w, char *filename, int x, int y, int width,int height)
+int writejpegfile(wbp w, char *filename, int x, int y, int width,int height)
 {
     struct imgmem imem;
     int i, j;
@@ -1952,7 +1959,21 @@ int writeJPEG(wbp w, char *filename, int x, int y, int width,int height)
 
 #ifdef HAVE_LIBPNG
 
-static int readPNG(char *filename, struct imgdata *imd)
+static int readpngdata(dptr data, struct imgdata *imd)
+{
+    static char *fn = "/tmp/oitmp.png";
+    int r;
+    if (!datatofile(data, fn)) {
+        LitWhy("Couldn't write to temp image file");
+        return Failed;
+    }
+    r = readpngfile(fn, imd);
+    remove(fn);
+    return r;
+}
+
+
+static int readpngfile(char *filename, struct imgdata *imd)
 {
     png_structp png_ptr;
     png_infop info_ptr;
@@ -1978,7 +1999,7 @@ static int readPNG(char *filename, struct imgdata *imd)
 
     if (png_sig_cmp(header, 0, 8)) {
         fclose(fp);
-        whyf("readPNG: File %s is not recognized as a PNG file", filename);
+        whyf("readpngfile: File %s is not recognized as a PNG file", filename);
         return Failed;
     }
 
@@ -1990,7 +2011,7 @@ static int readPNG(char *filename, struct imgdata *imd)
         if (row_pointers) free(row_pointers);
         if (data) free(data);
         fclose(fp);
-        whyf("readPNG: Failed to read file %s", filename);
+        whyf("readpngfile: Failed to read file %s", filename);
         return Failed;
     }
 
@@ -2032,7 +2053,7 @@ static int readPNG(char *filename, struct imgdata *imd)
     else {
         fclose(fp);
         png_destroy_read_struct(&png_ptr, &info_ptr, 0);
-        whyf("readPNG: File %s, unsupported format/depth", filename);
+        whyf("readpngfile: File %s, unsupported format/depth", filename);
         return Failed;
     }
 
@@ -2062,7 +2083,7 @@ static int readPNG(char *filename, struct imgdata *imd)
 }
 
 
-static int writePNG(wbp w, char *filename, int x, int y, int width, int height)
+static int writepngfile(wbp w, char *filename, int x, int y, int width, int height)
 {
     FILE *fp;
     png_structp png_ptr;
@@ -2086,7 +2107,7 @@ static int writePNG(wbp w, char *filename, int x, int y, int width, int height)
         if (row_pointers) free(row_pointers);
         if (data) free(data);
         fclose(fp);
-        LitWhy("readPNG: libpng failed to write image");
+        LitWhy("readpngfile: libpng failed to write image");
         return Failed;
     }
 
@@ -2814,12 +2835,12 @@ int writeimagefile(wbp w, char *filename, int x, int y, int width, int height)
 
 #ifdef HAVE_LIBPNG
     if (strcasecmp(fp->ext, ".png") == 0)
-        return writePNG(w, filename, x, y, width, height);
+        return writepngfile(w, filename, x, y, width, height);
 #endif		
 
 #ifdef HAVE_LIBJPEG
     if (strcasecmp(fp->ext, ".jpg") == 0 || strcasecmp(fp->ext, ".jpeg") == 0)
-        return writeJPEG(w, filename, x, y, width, height);
+        return writejpegfile(w, filename, x, y, width, height);
 #endif
 
     LitWhy("Unsupported file type");
