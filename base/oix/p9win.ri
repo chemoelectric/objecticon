@@ -43,6 +43,7 @@ static void unlink_sharedpattern(struct SharedPattern *x);
 static int limit_size(wsp ws, int *width, int *height);
 static void synch_pos(wsp ws);
 static void note_time(char *s);
+static int readimageimpl(char *cmd, int fd, struct imgdata *imd);
 
 #define EMAXMSG 128+8192     /* size of 9p header+data */
 #define WINDOW_MOUNT_ROOT "/tmp/oi_windowmounts"
@@ -2064,34 +2065,17 @@ static void note_time(char *s)
     prev = get_time();
 }
 
-int readimagefileimpl(char *filename, struct imgdata *imd)
+static int readimageimpl(char *cmd, int fd, struct imgdata *imd)
 {
     Memimage *m;
-    int pid, pip[2], fd, ndata, format;
-    char *cmd;
-    struct fileparts *fp = fparse(filename);
-    if (strcasecmp(fp->ext, ".png") == 0)
-        cmd = "png -9 -3";
-    else if (strcasecmp(fp->ext, ".jpg") == 0 || strcasecmp(fp->ext, ".jpeg") == 0)
-        cmd = "jpg -9 -3";
-/*  else if (strcasecmp(fp->ext, ".gif") == 0)
-        cmd = "gif -9 -3";
-*/
-    else
-        return NoCvt;
-    if ((fd = open(filename, OREAD)) < 0) {
-        whyf("Couldn't open %s: %r", filename);
-        return Failed;
-    }
+    int pid, pip[2], ndata, format;
     if (pipe(pip) < 0) {
         whyf("Couldn't make pipe: %r");
-        close(fd);
         return Failed;
     }
     switch (pid = fork()) {
         case -1: {
             whyf("Couldn't fork: %r");
-            close(fd);
             close(pip[0]);
             close(pip[1]);
             return Failed;
@@ -2113,13 +2097,12 @@ int readimagefileimpl(char *filename, struct imgdata *imd)
     }
 
     close(pip[0]);
-    close(fd);
     m = readmemimage(pip[1]);
     close(pip[1]);
     free(waitforpid(pid));
 
     if (!m) {
-        whyf("Failed to readmemimage on file %s: %r", filename);
+        whyf("Failed to readmemimage on file: %r");
         return Failed;
     }
     switch (m->chan) {
@@ -2142,8 +2125,7 @@ int readimagefileimpl(char *filename, struct imgdata *imd)
         default: {
             char buf[10];
             chantostr(buf,m->chan);
-            whyf("Unknown channel format %s from command %s <%s", 
-                 buf, cmd, filename);
+            whyf("Unknown channel format %s from command %s", buf, cmd);
             freememimage(m);
             return Failed;
         }
@@ -2159,9 +2141,59 @@ int readimagefileimpl(char *filename, struct imgdata *imd)
     return Succeeded;
 }
 
+int readimagefileimpl(char *filename, struct imgdata *imd)
+{
+    int fd, r;
+    char *cmd;
+    struct fileparts *fp = fparse(filename);
+    if (strcasecmp(fp->ext, ".png") == 0)
+        cmd = "png -9 -3";
+    else if (strcasecmp(fp->ext, ".jpg") == 0 || strcasecmp(fp->ext, ".jpeg") == 0)
+        cmd = "jpg -9 -3";
+    else
+        return NoCvt;
+    if ((fd = open(filename, OREAD)) < 0) {
+        whyf("Couldn't open %s: %r", filename);
+        return Failed;
+    }
+    r = readimageimpl(cmd, fd, imd);
+    close(fd);
+    return r;
+}
+
 int readimagedataimpl(dptr data, struct imgdata *imd)
 {
-    return NoCvt;
+    int pid, pip[2], r;
+    char *cmd;
+    if (is_png(data))
+        cmd = "png -9 -3";
+    else if (is_jpeg(data))
+        cmd = "jpg -9 -3";
+    else
+        return NoCvt;
+    if (pipe(pip) < 0) {
+        whyf("Couldn't make pipe: %r");
+        return Failed;
+    }
+    switch (pid = fork()) {
+        case -1: {
+            whyf("Couldn't fork: %r");
+            close(pip[0]);
+            close(pip[1]);
+            return Failed;
+        }
+        case 0: {
+            close(pip[1]);
+            write(pip[0], StrLoc(*data), StrLen(*data));
+            close(pip[0]);
+            _exits(0);
+        }
+    }
+    close(pip[0]);
+    r = readimageimpl(cmd, pip[1], imd);
+    close(pip[1]);
+    free(waitforpid(pid));
+    return r;
 }
 
 int writeimagefileimpl(wbp w, char *filename, int x, int y, int width, int height)
