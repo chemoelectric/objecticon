@@ -56,6 +56,10 @@
    Feature("_LIBZ_COMPRESSION", "libz file compression")
 #endif					/* HAVE_LIBZ */
 
-#ifdef HAVE_LIBJPEG
+#if PLAN9 || HAVE_LIBJPEG
    Feature("_JPEG", "JPEG images")
 #endif					/* HAVE_LIBJPEG */
+
+#if PLAN9 || HAVE_LIBPNG
+   Feature("_PNG", "PNG images")
+#endif					/* HAVE_LIBPNG */
