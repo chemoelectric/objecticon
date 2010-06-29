@@ -652,7 +652,7 @@ void wclose(wbp w)
 
     XSync(stddpy, False);
 
-    pollevent();
+    handle_misc(ws->display);
 
     /*
      * Force window to close (turn into a pixmap)
@@ -668,7 +668,7 @@ void wclose(wbp w)
         XDestroyWindow(stddpy,stdwin);
         XFlush(stddpy);
         while (ws->win)
-            pollevent();
+            handle_misc(ws->display);
     }
 }
 /*
@@ -1279,7 +1279,10 @@ int setdrawop(wbp w, char *val)
  */
 int rebind(wbp w, wbp w2)
 {
-    if (w->window->display != w2->context->display) return Failed;
+    if (w->window->display != w2->context->display) {
+        LitWhy("Can't couple between different displays");
+        return Failed;
+    }
     w->context = w2->context;
     return Succeeded;
 }
@@ -1341,7 +1344,7 @@ int setcanvas(wbp w, char *s)
                     XIconifyWindow(ws->display->display, ws->win, ws->display->screen);
                     XSync(stddpy, False);
                     while (ws->state != IconicState)
-                        handle_misc(wd);
+                        handle_misc(ws->display);
                 }
             }
             break;
@@ -1359,7 +1362,7 @@ int setcanvas(wbp w, char *s)
                     XMapWindow(stddpy, stdwin);
                     XSync(stddpy, False);
                     while (ws->state == IconicState)
-                        pollevent();
+                        handle_misc(ws->display);
                 }
                 else if (ws->state == MaximizedState) {
                     ws->x = ws->normalx;
@@ -1424,12 +1427,12 @@ int setcanvas(wbp w, char *s)
                     XMapWindow(stddpy, stdwin);
                     XSync(stddpy, False);
                     while (ws->state == IconicState)
-                        pollevent();
+                        handle_misc(ws->display);
                 }
                 else if (expect_config) {
                     ws->x = ws->y = 0;
                     doconfig(w, C_POS | C_SIZE);
-                    pollevent();
+                    handle_misc(ws->display);
                     ws->x = -ws->x;
                     ws->y = -ws->y;
                     doconfig(w, C_POS);
@@ -1461,7 +1464,7 @@ int setcanvas(wbp w, char *s)
                     XDestroyWindow(stddpy, stdwin);
                     XFlush(stddpy);
                     while (ws->win)
-                        pollevent();
+                        handle_misc(ws->display);
                     ws->state = HiddenState;
                 }
             }
@@ -3074,11 +3077,11 @@ void freewindow(wsp ws)
             ws->pixDraw = NULL;
         }
 #endif
-        if (ws->win != (Window) NULL) {
+        if (ws->win) {
             XDestroyWindow(ws->display->display, ws->win);
             XFlush(ws->display->display);
-            while (ws->win != (Window) NULL)
-                pollevent();
+            while (ws->win)
+                handle_misc(ws->display);
         }
         else {
             /*
@@ -3086,7 +3089,7 @@ void freewindow(wsp ws)
              * to free the Pixmap here, as it won't be freed via
              * a DestroyNotify event.
              */
-            if (ws->pix != (Pixmap) NULL) {
+            if (ws->pix) {
                 Display *d = ws->display->display;
                 XFreePixmap(d, ws->pix);
                 ws->pix = (Pixmap) NULL;
