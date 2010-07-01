@@ -5,6 +5,7 @@ static Rectangle max_rect;
 static struct Cursor cursor_data[];
 static int use_win;
 static int bintime_fd;
+static int last_mouse_x, last_mouse_y;
 
 static int open_winfile(wsp ws, char *s, int mode);
 static struct FontInfo *match_font(char *s);
@@ -609,7 +610,10 @@ static void flush_event_pipe(wsp ws)
                     BlkLoc(d) = (union block *)make_one_char_ucs_block(i);
                 } else 
                     MakeInt(i, &d);
-                qevent(ws, &d, ws->last_mouse_x, ws->last_mouse_y, time, 0, 0, 0, 0);
+                qevent(ws, &d, 
+                       last_mouse_x - ws->win->r.min.x, 
+                       last_mouse_y - ws->win->r.min.y, 
+                       time, 0, 0, 0, 0);
                 break;
             }
             case 'M': {
@@ -618,17 +622,18 @@ static void flush_event_pipe(wsp ws)
                 if (ebuf[9] == 'r')
                     handle_resize(ws);
                 else {
-                    int x, y, state, tmp;
+                    int state, tmp;
                     vlong now;
                     uword time;
                     be2vlong(&now, &ebuf[1]);
                     time = (now - startup_time) / 1000000;
-                    x = atoi((char*)ebuf+10+0*12) - ws->win->r.min.x;
-                    y = atoi((char*)ebuf+10+1*12) - ws->win->r.min.y;
+                    last_mouse_x = atoi((char*)ebuf+10+0*12);
+                    last_mouse_y = atoi((char*)ebuf+10+1*12);
                     state = atoi((char*)ebuf+10+2*12);
-                    ws->last_mouse_x = x;
-                    ws->last_mouse_y = y;
-                    qmouseevents(ws, state, x, y, time, 0, 0, 0);
+                    qmouseevents(ws, state, 
+                                 last_mouse_x - ws->win->r.min.x, 
+                                 last_mouse_y - ws->win->r.min.y, 
+                                 time, 0, 0, 0);
                 }
                 break;
             }
@@ -1289,7 +1294,9 @@ void freeimgmem(struct imgmem *imem)
 
 int queryrootpointer(wbp w, int *x, int *y)
 {
-    return Failed;
+    *x = last_mouse_x;
+    *y = last_mouse_y;
+    return Succeeded;
 }
 
 int raisewindow(wbp w)
@@ -1822,7 +1829,7 @@ char *getdisplay(wbp w)
 int getpos(wbp w)
 {
     wsp ws = w->window;
-    if (!ws)
+    if (!ws->win)
         return Failed;
     synch_pos(ws);
     return Succeeded;
@@ -1836,8 +1843,10 @@ char *getlinestyle(wbp w)
 int querypointer(wbp w, int *x, int *y)
 {
     wsp ws = w->window;
-    *x = ws->last_mouse_x;
-    *y = ws->last_mouse_y;
+    if (!ws->win)
+        return Failed;
+    *x = last_mouse_x - ws->win->r.min.x;
+    *y = last_mouse_y - ws->win->r.min.y;
     return Succeeded;
 }
 
