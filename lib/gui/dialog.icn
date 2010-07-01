@@ -572,7 +572,7 @@ class Dialog(Component)
    # 
    private process_normal(e)
       static focus_up, focus_down
-      local c, ec, old_n_held
+      local c, ec, old_n_held, t
       initial {
          focus_up := set(Key.SHIFT_TAB, Key.LEFT, Key.UP)
          focus_down := set("\t", Key.RIGHT, Key.DOWN)
@@ -622,9 +622,13 @@ class Dialog(Component)
       }
 
       #
-      # The event may have changed what's above the cursor, eg a menu may have
-      # closed revealing something below, so re-create the point chain.
+      # The mouse may have moved during the event, so update x,y and
+      # re-create the point chain.
       #
+      if t := self.win.query_pointer() then {
+         e.x := t[1]
+         e.y := t[2]
+      }
       create_point_chain(e)
       process_tooltip_event(e)
 
