@@ -683,6 +683,8 @@ procedure open(name, mode)
 $ifdef _UNIX
       "pr" : ProgStream.open_read("/bin/sh", ["-c", name])
       "pw" : ProgStream.open_write("/bin/sh", ["-c", name])
+$else
+      "pr"|"pw" : error("Mode not supported")
 $endif
       default: runerr("Invalid mode flag: " || mode)
    })
