@@ -659,31 +659,33 @@ end
 
 #
 # This procedure emulates the old Icon builtin function of the same
-# name.  It always returns a {BufferStream} wrapping a {FileStream},
-# or fails and sets {&why}.
+# name.  It always returns a {BufferStream} or fails and sets {&why}.
 # 
 # @param name The file name
-# @param mode The mode; possible values and their
-# @ equivalent {FileOpt} parameters are :-
-# @    "r" - RDONLY
-# @    "w" - WRONLY, TRUNC, CREAT
-# @    "b"|"rw"|"r+" - RDWR
-# @    "crw"|"w+" - RDWR, TRUNC, CREAT
-# @    "a" - WRONLY, APPEND, CREAT
-# @    "a+" - RDWR, APPEND, CREAT
+# @param mode The mode; possible values are :-
+# @    "r" - FileStream.open with {FileOpt.RDONLY}
+# @    "w" - FileStream.open with {FileOpt.WRONLY}, {FileOpt.TRUNC}, {FileOpt.CREAT}
+# @    "b"|"rw"|"r+" - FileStream.open with {FileOpt.RDWR}
+# @    "crw"|"w+" - FileStream.open with {FileOpt.RDWR}, {FileOpt.TRUNC}, {FileOpt.CREAT}
+# @    "a" - FileStream.open with {FileOpt.WRONLY}, {FileOpt.APPEND}, {FileOpt.CREAT}
+# @    "a+" - FileStream.open with {FileOpt.RDWR}, {FileOpt.APPEND}, {FileOpt.CREAT}
+# @    "pr" - ProgStream.open_read, using shell interpreter
+# @    "pw" - ProgStream.open_write, using shell interpreter
 #
 procedure open(name, mode)
-   local i
-   i := case mode of {
-      &null | "r" : FileOpt.RDONLY
-      "w" : ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)
-      "b"|"rw"|"r+" : FileOpt.RDWR
-      "crw"|"w+" : ior(FileOpt.RDWR, FileOpt.TRUNC, FileOpt.CREAT)
-      "a" : ior(FileOpt.WRONLY, FileOpt.APPEND, FileOpt.CREAT)
-      "a+" : ior(FileOpt.RDWR, FileOpt.APPEND, FileOpt.CREAT)
+   return BufferStream(case mode of {
+      &null | "r" : FileStream.open(name, FileOpt.RDONLY)
+      "w" : FileStream.open(name, ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT))
+      "b"|"rw"|"r+" : FileStream.open(name, FileOpt.RDWR)
+      "crw"|"w+" : FileStream.open(name, ior(FileOpt.RDWR, FileOpt.TRUNC, FileOpt.CREAT))
+      "a" : FileStream.open(name, ior(FileOpt.WRONLY, FileOpt.APPEND, FileOpt.CREAT))
+      "a+" : FileStream.open(name, ior(FileOpt.RDWR, FileOpt.APPEND, FileOpt.CREAT))
+$ifdef _UNIX
+      "pr" : ProgStream.open_read("/bin/sh", ["-c", name])
+      "pw" : ProgStream.open_write("/bin/sh", ["-c", name])
+$endif
       default: runerr("Invalid mode flag: " || mode)
-   }
-   return BufferStream(FileStream.open(name, i))
+   })
 end
 
 #
