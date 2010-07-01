@@ -686,6 +686,8 @@ $ifdef _UNIX
 $elsifdef _PLAN9
       "pr" : ProgStream.open_read("/bin/rc", ["-c", name])
       "pw" : ProgStream.open_write("/bin/rc", ["-c", name])
+$else
+      "pr"|"pw" : error("Mode not supported")
 $endif
       default: runerr("Invalid mode flag: " || mode)
    })
