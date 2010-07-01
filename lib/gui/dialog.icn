@@ -625,7 +625,9 @@ class Dialog(Component)
       # The mouse may have moved during the event, so update x,y and
       # re-create the point chain.
       #
-      if t := self.win.query_pointer() then {
+      if not member(Mouse.DRAG_OR_MOVEMENT, ec) &
+         t := self.win.query_pointer() then 
+      {
          e.x := t[1]
          e.y := t[2]
       }
