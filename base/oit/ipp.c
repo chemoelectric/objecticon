@@ -65,11 +65,12 @@ typedef struct cd {			/* structure holding a definition */
 
 static	int	ppopen	(char *fname, int m4);
 static	FILE *	m4pipe	(char *fname);
+static  char *  rmnl    (char *s);
 static	char *	rline	(FILE *fp);
 static	void	pushdef	(cdefn *d);
 static	void	pushline (void);
 static	void	ppdir	(char *line);
-static	void	pfatal	(char *s1, char *s2);
+static  void    pfatal(char *fmt, ...);
 static	void	skipcode (int doelse, int report, char **cmd0, char **args0);
 static	char *	define	(char *s);
 static	char *	undef	(char *s);
@@ -186,7 +187,7 @@ static int ppopen(char *fname, int m4)
    fname = intern(fname);
    for (fs = curfile; fs->fname != NULL; fs = fs->prev)
       if (fname == fs->fname) {
-         pfatal("circular include", fname);	/* issue error message */
+         pfatal("circular include: %s", fname);	/* issue error message */
          return 1;				/* treat as success */
          }
    if (m4)
@@ -382,7 +383,7 @@ int ppch()
           * The read hit EOF.
           */
          if (curfile->ifdepth != ifdepth) {
-            pfatal("unterminated $if", (char *)0);
+            pfatal("unterminated $if");
             ifdepth = curfile->ifdepth;
             }
 
@@ -522,46 +523,49 @@ static void ppdir(char *s)
       if (strcmp(cmd, p->name) == 0) {
          errmsg = (*p->func)(s);	/* process directive */
          if (errmsg != NULL && (p->func != setline || b0 != '#'))
-            pfatal(errmsg, (char *)0);	/* issue err if not from #line form */
+             pfatal("%s", errmsg);	/* issue err if not from #line form */
       return;
       }
 
-   pfatal("invalid preprocessing directive", cmd);
+   pfatal("invalid preprocessing directive: %s", cmd);
    }
 
 /*
- * pfatal(s1,s2) -- output a preprocessing error message.
- *
- *  s1 is the error message; s2 is the offending value, if any.
- *  If s2 ends in a newline, the newline is truncated in place.
+ * pfatal(fmt,...) -- output a preprocessing error message.
  *
  *  We can't use tfatal() because we have our own line counter which may be
  *  out of sync with the lexical analyzer's.
  */
-static void pfatal(char *s1, char *s2)
-   {
-   int n;
-
-   fprintf(stderr, "File %s; Line %ld # ", curfile->fname, curfile->lno);
-   if (s2 != NULL && *s2 != '\0') {
-      n = strlen(s2);
-      if (n > 0 && s2[n-1] == '\n')
-         s2[n-1] = '\0';			/* remove newline */
-      fprintf(stderr, "\"%s\": ", s2);		/* print offending value */
-      }
-   fprintf(stderr, "%s\n", s1);			/* print diagnostic */
-   tfatals++;
-   nocode++;
-   }
+static void pfatal(char *fmt, ...)
+{
+    va_list argp;
+    fprintf(stderr, "File %s; Line %ld # ", curfile->fname, curfile->lno);
+    va_start(argp, fmt);
+    vfprintf(stderr, fmt, argp);
+    putc('\n', stderr);
+    fflush(stderr);
+    va_end(argp);
+    tfatals++;
+    nocode++;
+}
 
 /*
  * errdir(s) -- handle deliberate $error.
  */
 static char *errdir(char *s)
-   {
-   pfatal("explicit $error", s);		/* issue msg with text */
-   return NULL;
-   }
+{
+    pfatal("explicit $error: %s", rmnl(s));		/* issue msg with text */
+    return NULL;
+}
+
+static char* rmnl(char *s)
+{
+    int n = strlen(s);
+    if (n > 0 && s[n - 1] == '\n')
+        s[n - 1] = 0;
+    return s;
+}
+
 
 /*
  * define(s) -- handle $define directive.
@@ -711,7 +715,7 @@ static char *load(char *s)
    if (fullpath && (val = loadfile(fullpath, &vlen)))
        dinsert_pre(name, val, vlen);		/* install in table */
    else
-       pfatal("cannot open", fname);
+       pfatal("cannot open: %s", fname);
    return NULL;
    }
 
@@ -746,7 +750,7 @@ static char *include(char *s)
       return "$include: too many arguments";
    fullpath = pathfind(intern(getdir(curfile->fname)), lpath, fname, 0);
    if (!fullpath || !ppopen(fullpath, 0))
-      pfatal("cannot open", fname);
+      pfatal("cannot open: %s", fname);
    return NULL;
    }
 
@@ -855,7 +859,7 @@ static char *elsedir(char *s)
    if (ifdepth <= curfile->ifdepth)
       return "unexpected $else";
    if (*s != '\0')
-      pfatal ("extraneous arguments on $else/$endif", s);
+      pfatal ("extraneous arguments on $else/$endif: %s", rmnl(s));
    skipcode(0, 1, 0, 0);			/* skip the $else section */
    return NULL;
    }
@@ -880,7 +884,7 @@ static char *endif(char *s)
    if (ifdepth <= curfile->ifdepth)
       return "unexpected $endif";
    if (*s != '\0')
-      pfatal ("extraneous arguments on $else/$endif", s);
+      pfatal ("extraneous arguments on $else/$endif: %s", rmnl(s));
    ifdepth--;
    return NULL;
    }
@@ -953,7 +957,7 @@ static void skipcode(int doelse, int report, char **cmd0, char **args0)
              */
             if (*p != '\0' &&
                 (strcmp(cmd, "endif") == 0 || strcmp(cmd, "else") == 0))
-                pfatal ("extraneous arguments on $else/$endif", p);
+                pfatal ("extraneous arguments on $else/$endif: %s", rmnl(p));
 
             if (cmd[1] == 'n')		/* if $endif */
                 ifdepth--;
@@ -1192,7 +1196,7 @@ static void dinsert(char *name, char *val)
              * We found a match in the table.
              */
             if (strcmp(val, d->val) != 0) 
-                pfatal("value redefined", name);
+                pfatal("value redefined: %s", name);
             return;
         }
         p = &d->next;
@@ -1231,7 +1235,7 @@ static void dinsert_pre(char *name, char *val, int vlen)
              * We found a match in the table.
              */
             if (strcmp(val, d->val) != 0) 
-                pfatal("value redefined", name);
+                pfatal("value redefined: %s", name);
             return;
         }
         p = &d->next;
