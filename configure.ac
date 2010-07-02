@@ -108,7 +108,11 @@ AC_CONFIG_FILES([base/Makefile:config/files/base/Makefile])
 AC_CONFIG_FILES([Makefile:config/files/Makefile])
 AC_CONFIG_FILES([paths.sh:config/files/paths.sh])
 AC_CONFIG_FILES([base/h/version.h:config/files/base/h/version.h])
+if test -f base/h/define.h ; then
+echo base/h/define.h already exists and is left untouched
+else
 AC_CONFIG_FILES([base/h/define.h:config/files/base/h/define.h])
+fi
 AC_CONFIG_HEADERS([base/h/auto.h:config/files/base/h/auto.h])
 AC_OUTPUT
 echo "Summary:-"
