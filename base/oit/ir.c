@@ -1569,12 +1569,8 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         }
 
         case Uop_Break: {
-            if (loop_stack == 0) {
-                lfatal(0, &n->loc, "break without corresponding loop");
-                chunk1(res->start, ir_goto(n, res->failure));
-                chunk1(res->resume, ir_goto(n, res->failure));
-                break;
-            }
+            if (!loop_stack)
+                quit("break without corresponding loop");
 
             if (scan_stack != loop_stack->loop->scan_stack) {
                 /* A scan is within the loop, and the break is within the scan.  Find the
@@ -1626,12 +1622,8 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             struct ir_info *cur_loop, *saved_scan_stack, *expr;
             struct ir_stack *expr_st;
 
-            if (loop_stack == 0) {
-                lfatal(0, &n->loc, "break without corresponding loop");
-                chunk1(res->start, ir_goto(n, res->failure));
-                chunk1(res->resume, ir_goto(n, res->failure));
-                break;
-            }
+            if (!loop_stack)
+                quit("break without corresponding loop");
 
             cur_loop = pop_loop();
             saved_scan_stack = scan_stack;
@@ -1693,12 +1685,9 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         }
 
         case Uop_Next: {                        /* next expression */
-            if (loop_stack == 0) {
-                lfatal(0, &n->loc, "next without corresponding loop");
-                chunk1(res->start, ir_goto(n, res->failure));
-                chunk1(res->resume, ir_goto(n, res->failure));
-                break;
-            }
+            if (!loop_stack)
+                quit("next without corresponding loop");
+
             if (loop_stack->loop->next_fails_flag) {
                 /*
                  * A next within the generator (but not the body) of
