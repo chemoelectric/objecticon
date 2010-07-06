@@ -663,14 +663,14 @@ end
 # 
 # @param name The file name
 # @param mode The mode; possible values are :-
-# @    "r" - FileStream.open with {FileOpt.RDONLY}
-# @    "w" - FileStream.open with {FileOpt.WRONLY}, {FileOpt.TRUNC}, {FileOpt.CREAT}
-# @    "b"|"rw"|"r+" - FileStream.open with {FileOpt.RDWR}
-# @    "crw"|"w+" - FileStream.open with {FileOpt.RDWR}, {FileOpt.TRUNC}, {FileOpt.CREAT}
-# @    "a" - FileStream.open with {FileOpt.WRONLY}, {FileOpt.APPEND}, {FileOpt.CREAT}
-# @    "a+" - FileStream.open with {FileOpt.RDWR}, {FileOpt.APPEND}, {FileOpt.CREAT}
-# @    "pr" - ProgStream.open_read, using shell interpreter
-# @    "pw" - ProgStream.open_write, using shell interpreter
+# @    "r" - {FileStream.open} with {FileOpt.RDONLY}
+# @    "w" - {FileStream.open} with {FileOpt.WRONLY}, {FileOpt.TRUNC}, {FileOpt.CREAT}
+# @    "b"|"rw"|"r+" - {FileStream.open} with {FileOpt.RDWR}
+# @    "crw"|"w+" - {FileStream.open} with {FileOpt.RDWR}, {FileOpt.TRUNC}, {FileOpt.CREAT}
+# @    "a" - {FileStream.open} with {FileOpt.WRONLY}, {FileOpt.APPEND}, {FileOpt.CREAT}
+# @    "a+" - {FileStream.open} with {FileOpt.RDWR}, {FileOpt.APPEND}, {FileOpt.CREAT}
+# @    "p"|"pr" - {ProgStream.open_read}, using shell interpreter
+# @    "pw" - {ProgStream.open_write}, using shell interpreter
 #
 procedure open(name, mode)
    return BufferStream(case mode of {
@@ -681,13 +681,13 @@ procedure open(name, mode)
       "a" : FileStream.open(name, ior(FileOpt.WRONLY, FileOpt.APPEND, FileOpt.CREAT))
       "a+" : FileStream.open(name, ior(FileOpt.RDWR, FileOpt.APPEND, FileOpt.CREAT))
 $ifdef _UNIX
-      "pr" : ProgStream.open_read("/bin/sh", ["-c", name])
+      "p"|"pr" : ProgStream.open_read("/bin/sh", ["-c", name])
       "pw" : ProgStream.open_write("/bin/sh", ["-c", name])
 $elsifdef _PLAN9
-      "pr" : ProgStream.open_read("/bin/rc", ["-c", name])
+      "p"|"pr" : ProgStream.open_read("/bin/rc", ["-c", name])
       "pw" : ProgStream.open_write("/bin/rc", ["-c", name])
 $else
-      "pr"|"pw" : error("Mode not supported")
+      "p"|"pr"|"pw" : error("Mode not supported")
 $endif
       default: runerr("Invalid mode flag: " || mode)
    })
