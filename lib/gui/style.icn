@@ -76,7 +76,7 @@ class Style()
 
    protected draw_text_cursor_impl(cw, x, y, w, h)
       cw.clip(x, y, w, h)
-      cw.draw_line(x + 1, y, x + 1, y + h)
+      cw.draw_line(x + 1, y + 3, x + 1, y + h - 4)
       cw.fill_rectangle(x, y, 3, 3)
       cw.fill_rectangle(x, y + h - 3, 3, 3)
    end
