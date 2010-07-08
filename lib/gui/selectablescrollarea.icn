@@ -680,7 +680,7 @@ class SelectableScrollArea(LineBasedScrollArea)
    end
 
    public draw(r)
-      local xp, yp, i, info, cursor_cw, highlight_cw, h, lh, sel
+      local xp, yp, i, info, h, lh, sel, cur
 
       info := get_line_info(r) | fail
       h := get_line_height()
@@ -691,32 +691,22 @@ class SelectableScrollArea(LineBasedScrollArea)
       # Write the lines
       #
       every i := info.first to info.last do {
-         # Setup cloned windows
-         if i = \self.cursor then {
+         cur := if i = \self.highlight then
+            "h"
+         else if i = \self.cursor then {
             if self.has_focus() & self.is_unshaded() then
-               cursor_cw := Gui.style.get_focus_clone(view.cbwin)
+               "f"
             else
-               cursor_cw := Gui.style.get_dashed_clone(view.cbwin)
-         }
-         if i = \self.highlight then {
-            highlight_cw := Gui.style.get_highlight_clone(view.cbwin)
-         }
+               "d"
+         } else
+            &null
+
          sel := if member(self.selections, i) then 1 else &null
 
          lh := integer(h) | h[i]
          
          # Draw the line
-         draw_line(xp, yp, lh, i, r, sel, cursor_cw, highlight_cw)
-
-         # Uncouple cloned windows.
-         if \cursor_cw then {
-            cursor_cw.uncouple()
-            cursor_cw := &null
-         }
-         if \highlight_cw then {
-            highlight_cw.uncouple()
-            highlight_cw := &null
-         }
+         draw_line(xp, yp, lh, i, r, sel, cur)
          yp +:= lh
       }
    end
@@ -746,20 +736,19 @@ class SelectableScrollArea(LineBasedScrollArea)
    # @param lh  The line height allowed for this line
    # @param i   The line number to draw
    # @param r   The view's clipping region.
-   # @param sel          If non-null, the line must be drawn as selected
-   # @param cursor_cw    If non-null, this cloned window must be used to show the cursor
-   # @param highlight_cw If non-null, this cloned window must be used to show the highlight
+   # @param sel If non-null, the line must be drawn as selected
+   # @param cur Indicates the cursor for this row; &null indicates none, "h" indicates the
+   # @          highlight cursor, "f" indicates focus cursor "d" indicates disabled cursor.
    #
-   public draw_line(xp, yp, lh, i, r, sel, cursor_cw, highlight_cw)
+   public draw_line(xp, yp, lh, i, r, sel, cur)
       draw_line_data(xp, yp, lh, i, r)
       if \sel then
          Gui.style.selection_rectangle(view.cbwin, self.view.x, yp, self.view.w, lh)
-
-      if \cursor_cw then 
-         cursor_cw.draw_rectangle(self.view.x, yp, self.view.w, lh)
-
-      if \highlight_cw then
-         highlight_cw.draw_rectangle(self.view.x, yp, self.view.w, lh)
+      case \cur of {
+         "h": Gui.style.highlight_rectangle(view.cbwin, self.view.x, yp, self.view.w, lh)
+         "f": Gui.style.focus_rectangle(view.cbwin, self.view.x, yp, self.view.w, lh)
+         "d": Gui.style.dashed_rectangle(view.cbwin, self.view.x, yp, self.view.w, lh)
+      }
    end
 
    public defer draw_line_data(xp, yp, lh, i, r)

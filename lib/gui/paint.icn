@@ -1,6 +1,6 @@
 package gui
 
-import util, graphics, ipl.graphics(Zoom), ipl.pdco(Safe)
+import util, graphics, ipl.graphics(Zoom,bev_lookup), ipl.pdco(Safe)
 
 class Paint(Size)
    public defer initially(c, accel)
@@ -341,7 +341,7 @@ class GridPaint(Paint)
       if /win then
          return
 
-      cw := Gui.style.get_dashed_clone(win)
+      cw := bev_lookup(win).shadow.clone("fill_style=masked", "pattern=gray")
 
       cw.draw_rectangle(0, 0, w, h)
 

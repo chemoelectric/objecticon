@@ -952,7 +952,7 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public draw_line(xp, yp, i)
-      local si, s, off, off1, off2, v, r, cw
+      local si, s, off, off1, off2, v, r, ch
 
       v := self.view_list[i]
       s := v.str
@@ -962,26 +962,21 @@ class EditableTextList(LineBasedScrollArea)
          if self.has_focus() & self.is_unshaded()then {
             off := text_width_ex(view.cbwin, s, 1, si, self.tab_width)
             if \self.is_editable_flag then {
-               cw := Gui.style.get_cursor_clone(view.cbwin)
-               cw.erase_area(xp + off, yp, 
-                             char_width(view.cbwin, s[si]), self.line_height)
-               if s[si] ~== "\t" then
-                  draw_string_ex(cw, xp + off, yp, s[si])
-               cw.uncouple()
-            } else {
-               cw := Gui.style.get_focus_clone(view.cbwin)
-               cw.draw_rectangle(xp + off, yp, 
-                                 char_width(view.cbwin, s[si]), self.line_height)
-               cw.uncouple()
-            }
-         } else if \self.is_editable_flag | has_region() then {
-            cw := Gui.style.get_dashed_clone(view.cbwin)
-            cw.draw_rectangle(xp + text_width_ex(view.cbwin, s, 1, si, self.tab_width), 
-                              yp, 
-                              char_width(view.cbwin, s[si]), 
-                              self.line_height)
-            cw.uncouple()
-         }
+               ch := s[si]
+               if ch == "\t" then ch := " "
+               Gui.style.draw_text_cursor(view.cbwin,
+                                          xp + off, yp, view.cbwin.text_width(ch), self.line_height,
+                                          ch)
+            } else
+               Gui.style.focus_rectangle(view.cbwin,
+                                         xp + off, yp, 
+                                         char_width(view.cbwin, s[si]), self.line_height)
+         } else if \self.is_editable_flag | has_region() then
+            Gui.style.dashed_rectangle(view.cbwin,
+                                       xp + text_width_ex(view.cbwin, s, 1, si, self.tab_width), 
+                                       yp, 
+                                       char_width(view.cbwin, s[si]), 
+                                       self.line_height)
       }
 
       if \self.mark_y then {

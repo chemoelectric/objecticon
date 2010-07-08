@@ -124,7 +124,7 @@ class CheckBox(Button)
    end
 
    public display()
-      local cw, i
+      local i
 
       if \self.is_down then
          i := if /self.is_checked_flag then checked_paint else unchecked_paint
@@ -137,12 +137,10 @@ class CheckBox(Button)
       i.draw(self.cbwin, self.x, self.y + (self.h - unchecked_paint.h) / 2)
       paint.draw(self.cbwin, self.tx, self.y + (self.h - paint.h) / 2)
 
-      if self.has_focus() & self.is_unshaded() then {
-         cw := Gui.style.get_focus_clone(self.cbwin)
-         cw.draw_rectangle(self.tx - Gui.TEXT_INSET, self.y, 
-                           self.tw + 2 * Gui.TEXT_INSET, self.h)
-         cw.uncouple()
-      }
+      if self.has_focus() & self.is_unshaded() then
+         Gui.style.focus_rectangle(self.cbwin,
+                                   self.tx - Gui.TEXT_INSET, self.y, 
+                                   self.tw + 2 * Gui.TEXT_INSET, self.h)
    end
 
    public set_one(f)

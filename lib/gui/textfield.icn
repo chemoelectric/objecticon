@@ -618,7 +618,7 @@ class TextField(Component)
    end
 
    public display()
-      local fh, s, cw, mp, np, off1, off2, y1
+      local fh, s, mp, np, off1, off2, x1, y1
 
       fh := self.cbwin.get_font_height()
       y1 := self.y + (self.h - fh) / 2
@@ -629,25 +629,18 @@ class TextField(Component)
       #
       # If has focus display box cursor, else display outline cursor
       #
+      x1 := self.tx - loff + self.cbwin.text_width(s[1:cursor])
       if self.has_focus() & self.is_unshaded() then {
-         if \self.is_editable_flag then {
-            cw := Gui.style.get_cursor_clone(self.cbwin)
-            cw.erase_area(self.tx - loff + self.cbwin.text_width(s[1:cursor]), 
-                          y1, self.cbwin.text_width(s[cursor]), fh)
-            draw_string_ex(cw, self.tx - loff + cw.text_width(s[1:cursor]), y1, s[cursor])
-            cw.uncouple()
-         } else {
-            cw := Gui.style.get_focus_clone(self.cbwin)
-            cw.draw_rectangle(self.tx - loff + self.cbwin.text_width(s[1:cursor]), 
-                              y1, self.cbwin.text_width(s[cursor]), fh)
-            cw.uncouple()
-         }
-      } else if \self.is_editable_flag | has_region() then {
-         cw := Gui.style.get_dashed_clone(self.cbwin)
-         cw.draw_rectangle(self.tx - loff + self.cbwin.text_width(s[1:cursor]), 
-                           y1, self.cbwin.text_width(s[cursor]), fh)
-         cw.uncouple()
-      }
+         if \self.is_editable_flag then
+            Gui.style.draw_text_cursor(self.cbwin,
+                                       x1, y1, self.cbwin.text_width(s[cursor]), fh,
+                                       s[cursor])
+         else
+            Gui.style.focus_rectangle(self.cbwin,
+                                      x1, y1, self.cbwin.text_width(s[cursor]), fh)
+      } else if \self.is_editable_flag | has_region() then
+         Gui.style.dashed_rectangle(self.cbwin,
+                                    x1, y1, self.cbwin.text_width(s[cursor]), fh)
 
       if has_region() then {
          mp := self.mark
