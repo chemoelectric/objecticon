@@ -418,7 +418,7 @@ class ScrollArea(Component)
       display_children(r)
 
       if \use_default_keys_flag & self.has_focus() & self.is_unshaded() then
-         Gui.style.focus_rectangle(self.cbwin, self.x, self.y, self.w, self.h)
+         Gui.style.draw_focus_rectangle(self.cbwin, self.x, self.y, self.w, self.h)
    end
 
    public default_on_key(e)

@@ -742,12 +742,19 @@ class SelectableScrollArea(LineBasedScrollArea)
    #
    public draw_line(xp, yp, lh, i, r, sel, cur)
       draw_line_data(xp, yp, lh, i, r)
+      draw_line_sel_cur(self.view.x, yp, self.view.w, lh, sel, cur)
+   end
+
+   #
+   # A helper method to draw the selection and cursor in the given rectangle.
+   #
+   public draw_line_sel_cur(x, y, w, h, sel, cur)
       if \sel then
-         Gui.style.selection_rectangle(view.cbwin, self.view.x, yp, self.view.w, lh)
+         Gui.style.selection_rectangle(view.cbwin, x, y, w, h)
       case \cur of {
-         "h": Gui.style.highlight_rectangle(view.cbwin, self.view.x, yp, self.view.w, lh)
-         "f": Gui.style.focus_rectangle(view.cbwin, self.view.x, yp, self.view.w, lh)
-         "d": Gui.style.dashed_rectangle(view.cbwin, self.view.x, yp, self.view.w, lh)
+         "h": Gui.style.draw_highlight_rectangle(view.cbwin, x, y, w, h)
+         "f": Gui.style.draw_focus_rectangle(view.cbwin, x, y, w, h)
+         "d": Gui.style.draw_dashed_rectangle(view.cbwin, x, y, w, h)
       }
    end
 

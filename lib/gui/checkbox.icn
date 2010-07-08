@@ -138,9 +138,9 @@ class CheckBox(Button)
       paint.draw(self.cbwin, self.tx, self.y + (self.h - paint.h) / 2)
 
       if self.has_focus() & self.is_unshaded() then
-         Gui.style.focus_rectangle(self.cbwin,
-                                   self.tx - Gui.TEXT_INSET, self.y, 
-                                   self.tw + 2 * Gui.TEXT_INSET, self.h)
+         Gui.style.draw_focus_rectangle(self.cbwin,
+                                        self.tx - Gui.TEXT_INSET, self.y, 
+                                        self.tw + 2 * Gui.TEXT_INSET, self.h)
    end
 
    public set_one(f)

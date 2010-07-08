@@ -306,17 +306,7 @@ class Tree(SelectableScrollArea)
       }
       (\img).draw(view.cbwin, lp + col_w / 2 - img.w / 2, y0 - img.h / 2)
       draw_node_data(N, lp + col_w, yp, lh)
-
-      if \sel then
-         Gui.style.selection_rectangle(view.cbwin,
-                                       lp + col_w,
-                                       yp, get_node_data_width(N), lh)
-      case \cur of {
-         "h": Gui.style.highlight_rectangle(view.cbwin, lp + col_w, yp, get_node_data_width(N), lh)
-         "f": Gui.style.focus_rectangle(view.cbwin, lp + col_w, yp, get_node_data_width(N), lh)
-         "d": Gui.style.dashed_rectangle(view.cbwin, lp + col_w, yp, get_node_data_width(N), lh)
-      }
-
+      draw_line_sel_cur(lp + col_w, yp, get_node_data_width(N), lh, sel, cur)
       dashed.uncouple()
    end
 

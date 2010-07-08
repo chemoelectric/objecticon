@@ -31,7 +31,7 @@ class ABorder(Insets,Align,SetFields)
    end
 
    public draw_focus(W, x, y, w, h)
-      Gui.style.focus_rectangle(W, x, y, w, h)
+      Gui.style.draw_focus_rectangle(W, x, y, w, h)
    end
 
    #
@@ -153,9 +153,9 @@ class LineBorder(ABorder)
    end
 
    public draw_focus(W, x, y, w, h)
-      Gui.style.focus_rectangle(W,
-                                x + line_width + 1, y + line_width + 1, 
-                                w - 2 * line_width - 2, h - 2 * line_width - 2)
+      Gui.style.draw_focus_rectangle(W,
+                                     x + line_width + 1, y + line_width + 1, 
+                                     w - 2 * line_width - 2, h - 2 * line_width - 2)
    end
 
    public get_line_width()

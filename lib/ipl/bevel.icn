@@ -105,7 +105,7 @@ $include "vdefns.icn"
 
 package ipl.graphics
 
-import util(Math), lang(equals)
+import util(Math)
 
 global bev_table
 record bev_record(shadow, hilite)
@@ -181,27 +181,21 @@ end
 #  (Internal procedure)
 
 procedure bev_lookup(win)
-   local b, t, c1, c2
+   local b, t
    b := \ (\bev_table)[win] | bev_table[BevelReset(win)]
    
    # Ensure the shadow and hilite windows have the same values for
    # some selected attributes.
    t := win.get_dx()
-   if t ~=== b.shadow.get_dx() then
-      every (b.shadow | b.hilite).set_dx(t)
+   every (b.shadow | b.hilite).set_dx(t)
 
    t := win.get_dy()
-   if t ~=== b.shadow.get_dy() then
-      every (b.shadow | b.hilite).set_dy(t)
+   every (b.shadow | b.hilite).set_dy(t)
 
-   c1 := win.get_clip()
-   c2 := b.shadow.get_clip()
-   if not equals(c1, c2) then {
-      if /c1 then 
-         every (b.shadow | b.hilite).unclip()
-      else
-         every (b.shadow | b.hilite).clip!c1
-   }
+   if t := win.get_clip() then
+      every (b.shadow | b.hilite).clip!t
+   else
+      every (b.shadow | b.hilite).unclip()
 
    return b
 end

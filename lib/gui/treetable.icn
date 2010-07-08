@@ -133,15 +133,7 @@ class TreeTableContent(Tree)
          }
       }
       view.cbwin.clip(r.x, r.y, r.w, r.h)
-
-      if \sel then
-         Gui.style.selection_rectangle(view.cbwin, self.view.x, yp, self.view.w, lh)
-
-      case \cur of {
-         "h": Gui.style.highlight_rectangle(view.cbwin, self.view.x, yp, self.view.w, lh)
-         "f": Gui.style.focus_rectangle(view.cbwin, self.view.x, yp, self.view.w, lh)
-         "d": Gui.style.dashed_rectangle(view.cbwin, self.view.x, yp, self.view.w, lh)
-      }
+      draw_line_sel_cur(self.view.x, yp, self.view.w, lh, sel, cur)
    end
 end
 
