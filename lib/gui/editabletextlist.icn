@@ -952,38 +952,12 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public draw_line(xp, yp, i)
-      local si, s, off, off1, off2, v, r, cw
+      local si, s, off1, off2, v, r
 
       v := self.view_list[i]
       s := v.str
       si := self.cursor_x - v.first + 1
       draw_string_ex(view.cbwin, xp, yp, detab(s, self.tab_width + 1))
-      if (v.index = \self.cursor_y) & (v.first <= \self.cursor_x <= v.last) then {
-         if self.has_focus() & self.is_unshaded()then {
-            off := text_width_ex(view.cbwin, s, 1, si, self.tab_width)
-            if \self.is_editable_flag then {
-               cw := Gui.style.get_cursor_clone(view.cbwin)
-               cw.erase_area(xp + off, yp, 
-                             char_width(view.cbwin, s[si]), self.line_height)
-               if s[si] ~== "\t" then
-                  draw_string_ex(cw, xp + off, yp, s[si])
-               cw.uncouple()
-            } else {
-               cw := Gui.style.get_focus_clone(view.cbwin)
-               cw.draw_rectangle(xp + off, yp, 
-                                 char_width(view.cbwin, s[si]), self.line_height)
-               cw.uncouple()
-            }
-         } else if \self.is_editable_flag | has_region() then {
-            cw := Gui.style.get_dashed_clone(view.cbwin)
-            cw.draw_rectangle(xp + text_width_ex(view.cbwin, s, 1, si, self.tab_width), 
-                              yp, 
-                              char_width(view.cbwin, s[si]), 
-                              self.line_height)
-            cw.uncouple()
-         }
-      }
-
       if \self.mark_y then {
          if (self.mark_y < v.index < self.cursor_y) | (self.mark_y > v.index > self.cursor_y) then {
             # Whole line selected
@@ -994,7 +968,7 @@ class EditableTextList(LineBasedScrollArea)
                r := range(v.first, v.last, self.mark_x, self.cursor_x)
             }
             else if self.mark_x > self.cursor_x then {
-               r := range(v.first, v.last, self.cursor_x + 1 , self.mark_x)
+               r := range(v.first, v.last, self.cursor_x, self.mark_x)
             }
          } else if v.index = self.mark_y then {
             if self.mark_y < self.cursor_y then {
@@ -1004,7 +978,7 @@ class EditableTextList(LineBasedScrollArea)
             }
          } else if v.index = self.cursor_y then {
             if self.mark_y > self.cursor_y then {
-               r := range(v.first, v.last, self.cursor_x + 1, *self.contents[v.index] + 1)
+               r := range(v.first, v.last, self.cursor_x, *self.contents[v.index] + 1)
             } else {
                r := range(v.first, v.last, 1, self.cursor_x)
             }
@@ -1014,6 +988,21 @@ class EditableTextList(LineBasedScrollArea)
             off2 := text_width_ex(view.cbwin, s, 1, r[2] - v.first + 1, self.tab_width)
             Gui.style.selection_rectangle(self.cbwin, xp + off1, yp,  off2 - off1, self.line_height)
          }
+      }
+
+      if (v.index = \self.cursor_y) & (v.first <= \self.cursor_x <= v.last) then {
+         if self.has_focus() & self.is_unshaded() then
+            Gui.style.draw_text_cursor(view.cbwin,
+                                       xp + text_width_ex(view.cbwin, s, 1, si, self.tab_width), 
+                                       yp, 
+                                       char_width(view.cbwin, s[si]), 
+                                       self.line_height)
+         else if \self.is_editable_flag | has_region() then
+            Gui.style.draw_shadow_text_cursor(view.cbwin,
+                                              xp + text_width_ex(view.cbwin, s, 1, si, self.tab_width), 
+                                              yp, 
+                                              char_width(view.cbwin, s[si]), 
+                                              self.line_height)
       }
    end
    

@@ -53,20 +53,44 @@ class Style()
       W.filter("linear,0.6,0.75,1.0", x, y, w, h)
    end
 
-   public get_cursor_clone(W)
-      return W.clone("bg=red", "fg=white")
+   public draw_dashed_rectangle(W, x, y, w, h)
+      local cw
+      cw := bev_lookup(W).shadow.clone("fill_style=masked", "pattern=gray")
+      cw.draw_rectangle(x, y, w, h)
+      cw.uncouple()
    end
 
-   public get_focus_clone(W)
-      return W.clone("fg=red", "fill_style=masked", "pattern=gray")
+   public draw_focus_rectangle(W, x, y, w, h)
+      local cw
+      cw := W.clone("fg=red", "fill_style=masked", "pattern=gray")
+      cw.draw_rectangle(x, y, w, h)
+      cw.uncouple()
    end
 
-   public get_dashed_clone(W)
-      return bev_lookup(W).shadow.clone("fill_style=masked", "pattern=gray")
+   public draw_highlight_rectangle(W, x, y, w, h)
+      local cw
+      cw := W.clone("fg=blue", "fill_style=masked", "pattern=gray")
+      cw.draw_rectangle(x, y, w, h)
+      cw.uncouple()
    end
 
-   public get_highlight_clone(W)
-      return W.clone("fg=blue", "fill_style=masked", "pattern=gray")
+   public draw_shadow_text_cursor(W, x, y, w, h)
+      local cw
+      cw := bev_lookup(W).shadow
+      cw.clip(x, y, w, h)
+      cw.draw_line(x + 1, y, x + 1, y + h)
+      cw.fill_rectangle(x, y, 3, 3)
+      cw.fill_rectangle(x, y + h - 3, 3, 3)
+   end
+
+   public draw_text_cursor(W, x, y, w, h)
+      local cw
+      cw := W.clone("fg=red")
+      cw.clip(x, y, w, h)
+      cw.draw_line(x + 1, y, x + 1, y + h)
+      cw.fill_rectangle(x, y, 3, 3)
+      cw.fill_rectangle(x, y + h - 3, 3, 3)
+      cw.uncouple()
    end
 
    public create_tooltip_label()

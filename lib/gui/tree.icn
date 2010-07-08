@@ -260,7 +260,7 @@ class Tree(SelectableScrollArea)
       return self.last_expanded
    end
 
-   public draw_line(xp, yp, lh, i, r, sel, cursor_cw, highlight_cw)
+   public draw_line(xp, yp, lh, i, r, sel, cur)
       local N, dashed, lp, j, icon_paint, img, little, y0
 
       y0 := yp + lh / 2
@@ -306,20 +306,7 @@ class Tree(SelectableScrollArea)
       }
       (\img).draw(view.cbwin, lp + col_w / 2 - img.w / 2, y0 - img.h / 2)
       draw_node_data(N, lp + col_w, yp, lh)
-
-      if \sel then
-         Gui.style.selection_rectangle(view.cbwin,
-                                       lp + col_w,
-                                       yp, get_node_data_width(N), lh)
-
-      if \cursor_cw then
-         cursor_cw.draw_rectangle(lp + col_w,
-                                  yp, get_node_data_width(N), lh)
-
-      if \highlight_cw then
-         highlight_cw.draw_rectangle(lp + col_w,
-                                     yp, get_node_data_width(N), lh)
-
+      draw_line_sel_cur(lp + col_w, yp, get_node_data_width(N), lh, sel, cur)
       dashed.uncouple()
    end
 

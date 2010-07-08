@@ -618,7 +618,7 @@ class TextField(Component)
    end
 
    public display()
-      local fh, s, cw, mp, np, off1, off2, y1
+      local fh, s, mp, np, y1
 
       fh := self.cbwin.get_font_height()
       y1 := self.y + (self.h - fh) / 2
@@ -626,48 +626,35 @@ class TextField(Component)
 
       draw_string_ex(self.cbwin, self.tx - loff, y1, s)
 
-      #
-      # If has focus display box cursor, else display outline cursor
-      #
-      if self.has_focus() & self.is_unshaded() then {
-         if \self.is_editable_flag then {
-            cw := Gui.style.get_cursor_clone(self.cbwin)
-            cw.erase_area(self.tx - loff + self.cbwin.text_width(s[1:cursor]), 
-                          y1, self.cbwin.text_width(s[cursor]), fh)
-            draw_string_ex(cw, self.tx - loff + cw.text_width(s[1:cursor]), y1, s[cursor])
-            cw.uncouple()
-         } else {
-            cw := Gui.style.get_focus_clone(self.cbwin)
-            cw.draw_rectangle(self.tx - loff + self.cbwin.text_width(s[1:cursor]), 
-                              y1, self.cbwin.text_width(s[cursor]), fh)
-            cw.uncouple()
-         }
-      } else if \self.is_editable_flag | has_region() then {
-         cw := Gui.style.get_dashed_clone(self.cbwin)
-         cw.draw_rectangle(self.tx - loff + self.cbwin.text_width(s[1:cursor]), 
-                           y1, self.cbwin.text_width(s[cursor]), fh)
-         cw.uncouple()
-      }
-
       if has_region() then {
          mp := self.mark
          if mp > cursor then {
             np := mp
-            mp := cursor + 1
-         } else {
+            mp := cursor
+         } else
             np := cursor
-         }
 
-         if (off1 := self.cbwin.text_width(s[1:mp])) &
-            (off2 := self.cbwin.text_width(s[1:np])) then 
-         {
-            Gui.style.selection_rectangle(self.cbwin,
-                                          self.tx - loff + off1, 
-                                          y1, 
-                                          off2 - off1,
-                                          fh)
-         }
+         Gui.style.selection_rectangle(self.cbwin,
+                                       self.tx - loff + self.cbwin.text_width(s[1:mp]), 
+                                       y1, 
+                                       self.cbwin.text_width(s[mp:np]),
+                                       fh)
       }
+
+      #
+      # If has focus display box cursor, else display outline cursor
+      #
+      if self.has_focus() & self.is_unshaded() then
+         Gui.style.draw_text_cursor(self.cbwin,
+                                    self.tx - loff + self.cbwin.text_width(s[1:cursor]), 
+                                    y1, 
+                                    self.cbwin.text_width(s[cursor]), fh)
+      else if \self.is_editable_flag | has_region() then
+         Gui.style.draw_shadow_text_cursor(self.cbwin,
+                                           self.tx - loff + self.cbwin.text_width(s[1:cursor]), 
+                                           y1, 
+                                           self.cbwin.text_width(s[cursor]), fh)
+
       border.draw_rect(self.cbwin, self)
    end
 

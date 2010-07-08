@@ -1,7 +1,7 @@
 package gui
 
 import 
-   util
+   util, ipl.graphics
 
 #
 # @field dii=integer : see {set_dii}
@@ -67,7 +67,7 @@ class GridLayout(Layout,SetFields)
    public display()
       local i, cw
 
-      cw := Gui.style.get_dashed_clone(self.parent.cbwin)
+      cw := bev_lookup(self.parent.cbwin).shadow.clone("fill_style=masked", "pattern=gray")
 
       cw.draw_rectangle(parent.x, parent.y, parent.w, parent.h)
 

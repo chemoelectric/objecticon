@@ -115,7 +115,7 @@ class TreeTableContent(Tree)
       return parent.table_header.children[n]
    end
 
-   public draw_line(xp, yp, lh, i, r, sel, cursor_cw, highlight_cw)
+   public draw_line(xp, yp, lh, i, r, sel, cur)
       local j, cols, clip_x, clip_w, col, N
       N := self.contents[i]
       cols := parent.table_header.children
@@ -133,15 +133,7 @@ class TreeTableContent(Tree)
          }
       }
       view.cbwin.clip(r.x, r.y, r.w, r.h)
-
-      if \sel then
-         Gui.style.selection_rectangle(view.cbwin, self.view.x, yp, self.view.w, lh)
-
-      if \cursor_cw then 
-         cursor_cw.draw_rectangle(self.view.x, yp, self.view.w, lh)
-
-      if \highlight_cw then
-         highlight_cw.draw_rectangle(self.view.x, yp, self.view.w, lh)
+      draw_line_sel_cur(self.view.x, yp, self.view.w, lh, sel, cur)
    end
 end
 
