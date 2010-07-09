@@ -30,7 +30,6 @@
 #define XLFD_AverageWidth 12
 #define XLFD_CharSet	13
 
-#define SysColor XColor
 #define RootState IconicState+1
 #define MaximizedState IconicState+2
 #define HiddenState IconicState+3
