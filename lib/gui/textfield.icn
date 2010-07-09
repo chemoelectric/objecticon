@@ -61,7 +61,9 @@ class TextField(Component)
       loff,
       primary_selection_owner,
       clipboard_selection_owner,
-      scroll_ticker
+      scroll_ticker,
+      cursor_ticker,
+      cursor_on
 
    #
    # Set the displaychar attribute
@@ -142,7 +144,6 @@ class TextField(Component)
 
    public end_handle(e)
       local r
-
       if r := get_region() then {
          parent_dialog.own_selection(Selection.PRIMARY, self.primary_selection_owner)
          self.remembered_region := r
@@ -150,11 +151,13 @@ class TextField(Component)
       if \changed then {
          self.constrain_line()
          self.invalidate()
+         cursor_on := -1
          fire(Event.CONTENT_CHANGED, e)
       }
       if old_cursor ~= cursor then {
          self.constrain_line()
          self.invalidate()
+         cursor_on := -1
          fire(Event.CURSOR_MOVED, e)
       }
       if old_mark ~=== mark then {
@@ -263,10 +266,10 @@ class TextField(Component)
       # Start ticking if to the left/right, otherwise stop ticking
       if e.x < self.tx then {
          self.going_left := 1
-         check_ticker(self.tx - e.x)
+         check_scroll_ticker(self.tx - e.x)
       } else if e.x >= self.tx + self.tw then {
          self.going_left := &null
-         check_ticker(e.x - (self.tx + self.tw))
+         check_scroll_ticker(e.x - (self.tx + self.tw))
       } else {
          self.cursor := whereis_x(e)
          scroll_ticker.stop()
@@ -274,7 +277,7 @@ class TextField(Component)
       end_handle(e)
    end
 
-   public check_ticker(d)
+   public check_scroll_ticker(d)
       scroll_ticker.set_interval(Gui.style.distance2ticker_rate(d))
       # Start it (if it isn't already running)
       scroll_ticker.start()
@@ -326,8 +329,14 @@ class TextField(Component)
       self.mark := &null
    end
 
+   public initially()
+      cast(self,Component).initially()
+      cursor_ticker.start()
+   end
+
    public finally()
       scroll_ticker.stop()
+      cursor_ticker.stop()
       cast(self,Component).finally()
    end
 
@@ -617,6 +626,19 @@ class TextField(Component)
          return self.contents || " "
    end
 
+   public cursor_tick()
+      local t
+      if self.has_focus() & self.is_unshaded() then {
+         t := cursor_on
+         cursor_on := if parent_dialog.is_blocked() | parent_dialog.in_menu_mode() then
+            0
+         else
+            (cursor_on + 1) % 3
+         if (t | cursor_on) = 2 then
+            invalidate()
+      }
+   end
+
    public display()
       local fh, s, mp, np, y1
 
@@ -644,12 +666,13 @@ class TextField(Component)
       #
       # If has focus display box cursor, else display outline cursor
       #
-      if self.has_focus() & self.is_unshaded() then
-         Gui.style.draw_text_cursor(self.cbwin,
-                                    self.tx - loff + self.cbwin.text_width(s[1:cursor]), 
-                                    y1, 
-                                    self.cbwin.text_width(s[cursor]), fh)
-      else if \self.is_editable_flag | has_region() then
+      if self.has_focus() & self.is_unshaded() then {
+         if self.cursor_on ~= 2 then
+            Gui.style.draw_text_cursor(self.cbwin,
+                                       self.tx - loff + self.cbwin.text_width(s[1:cursor]), 
+                                       y1, 
+                                       self.cbwin.text_width(s[cursor]), fh)
+      } else if \self.is_editable_flag then
          Gui.style.draw_shadow_text_cursor(self.cbwin,
                                            self.tx - loff + self.cbwin.text_width(s[1:cursor]), 
                                            y1, 
@@ -674,6 +697,9 @@ class TextField(Component)
       cast(self,Component).new()
       scroll_ticker := Ticker()
       scroll_ticker.connect(self.scroll_tick, Event.TICK)
+      cursor_ticker := Ticker("interval=",Gui.CURSOR_BLINK)
+      cursor_ticker.connect(self.cursor_tick, Event.TICK)
+      cursor_on := -1
       undo_manager := UndoManager()
       filter := Gui.PRINTABLE_1
       self.accepts_focus_flag := 1

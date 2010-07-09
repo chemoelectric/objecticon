@@ -74,24 +74,17 @@ class Style()
       cw.uncouple()
    end
 
-   protected draw_text_cursor_impl(cw, x, y, w, h)
-      cw.clip(x, y, w, h)
-      cw.draw_line(x + 1, y + 3, x + 1, y + h - 4)
-      cw.fill_rectangle(x, y, 3, 3)
-      cw.fill_rectangle(x, y + h - 3, 3, 3)
-   end
-
    public draw_shadow_text_cursor(W, x, y, w, h)
       local cw
       cw := bev_lookup(W).shadow.clone()
-      draw_text_cursor_impl(cw, x, y, w, h)
+      cw.draw_line(x, y, x, y + h - 1)
       cw.uncouple()
    end
 
    public draw_text_cursor(W, x, y, w, h)
       local cw
       cw := W.clone("fg=red")
-      draw_text_cursor_impl(cw, x, y, w, h)
+      cw.draw_line(x, y, x, y + h - 1)
       cw.uncouple()
    end
 

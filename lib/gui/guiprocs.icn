@@ -109,6 +109,7 @@ class Gui()
       Y_INSET,
       REPEAT_DELAY,            
       REPEAT_RATE,
+      CURSOR_BLINK,
       TAB_WIDTH,                 # Default tab char width
       style
 
@@ -126,6 +127,7 @@ class Gui()
       Y_INSET := 3
       REPEAT_DELAY := 500
       REPEAT_RATE := 100
+      CURSOR_BLINK := 400
       TAB_WIDTH := 8
       style := Style()
       PRINTABLE_1 := '\x20-\x7e\x80-\U10ffff'
