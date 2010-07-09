@@ -1443,7 +1443,7 @@ class Preferences(Dialog)
       t := TabItem("label=General")
       tabset.add(t)
 
-      t.set_layout(GridLayout("extra=borders"))
+      t.set_layout(GridLayout())
 
       t.add(Label("label=Undo buffer size"))
       undo_size := TextField("c:eol", "c:w=2", "size=100")

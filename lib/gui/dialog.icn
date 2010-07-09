@@ -93,6 +93,14 @@ class Dialog(Component)
          copy_rect := copy_rect.union(r)
    end
 
+   public is_blocked()
+      return \self.is_blocked_flag
+   end
+
+   public in_menu_mode()
+      return \self.menu_mode
+   end
+
    public block()
       self.is_blocked_flag := 1
       self.resize_attrib := if self.win.can_resize() then &yes else &no
