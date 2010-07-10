@@ -78,6 +78,7 @@ class Style()
       local cw
       cw := bev_lookup(W).shadow.clone()
       cw.draw_line(x, y, x, y + h - 1)
+      cw.draw_line(x - 1, y, x - 1, y + h - 1)
       cw.uncouple()
    end
 
@@ -85,6 +86,7 @@ class Style()
       local cw
       cw := W.clone("fg=red")
       cw.draw_line(x, y, x, y + h - 1)
+      cw.draw_line(x - 1, y, x - 1, y + h - 1)
       cw.uncouple()
    end
 

@@ -172,11 +172,11 @@ class TextDisplay(LineBasedScrollArea)
       if /view_list then
          create_view_list()
       # self.long_line will be null if contents is the empty list.
-      return (\self.long_line).tw | 0
+      return Gui.TEXT_INSET + ((\self.long_line).tw | 0)
    end
 
    public draw_line(xp, yp, lh, i)
-      draw_string_ex(view.cbwin, xp, yp, detab(view_list[i].str, self.tab_width + 1))
+      draw_string_ex(view.cbwin, xp + Gui.TEXT_INSET, yp, detab(view_list[i].str, self.tab_width + 1))
    end
 
    #
