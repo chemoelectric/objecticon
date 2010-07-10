@@ -237,22 +237,10 @@ procedure get_extended_image(W, img)
 end
 
 #
-# Return the char width for ch, which may be a tab
-#
-procedure char_width(win, ch)
-   if ch == "\t" then
-      return win.text_width(" ")
-   else
-      return win.text_width(ch)
-end
-
-#
 # Extended TextWidth function, handling tabs in s.  Returns the
 # width of the string from positions i through j.
 #
 procedure text_width_ex(win, s, i, j, tw)
-   local tp, w, lr, cc, ch
-
    if /i then {
       i := 1
       j := *s + 1
@@ -261,34 +249,10 @@ procedure text_width_ex(win, s, i, j, tw)
       if j <= 0 then
          j +:= *s + 1
    }
-
    if not upto('\t', s) then
       return win.text_width(s[i:j])
-
    /tw := 8
-   tp := 0
-   w := 0
-   lr := 0
-   every cc := 1 to *s do {
-      if cc = i then
-         lr := w
-      if cc = j then
-         break
-      ch := s[cc]
-
-      if ch == "\t" then {
-         repeat {
-            w +:= win.text_width(" ")
-            tp +:= 1
-            if tp % tw = 0 then 
-               break
-         }
-      } else {
-         w +:= win.text_width(ch)
-         tp +:= 1
-      }
-   }
-   return w - lr
+   return win.text_width(detab(s[1:j], tw + 1)) - win.text_width(detab(s[1:i], tw + 1))
 end
 
 procedure draw_string_ex(win, x, y, s, k)
