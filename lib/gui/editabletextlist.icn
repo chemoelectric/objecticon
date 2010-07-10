@@ -61,7 +61,9 @@ class EditableTextList(LineBasedScrollArea)
       scroll_ticker,
       cursor_ticker,
       cursor_last_y,
-      cursor_on
+      cursor_on,
+      tx,
+      tw
 
    public calculate_line_count()
       if /view_list then
@@ -232,7 +234,7 @@ class EditableTextList(LineBasedScrollArea)
    # if cursor at end of line to the left of the text area.
    #     
    private constrain_cursor()
-      local vi, v, s, i, j, l, info
+      local vi, v, s, i, ax, info
 
       vi := get_view_list_index()
       info := get_line_info() | fail
@@ -246,22 +248,23 @@ class EditableTextList(LineBasedScrollArea)
          self.cursor_y := v.index
          self.cursor_x := v.first
       }
-      else {
+      else
          v := view_list[vi]
-      }
 
       s := v.str
       i := text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 1, self.tab_width)
-      j := i + char_width(view.cbwin, s[self.cursor_x - v.first + 1])
-      l := self.get_subject_x()
-      if self.view.x - l > i then {
-         while (self.cursor_x - v.first + 1 < *s) & 
-            (text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 1, self.tab_width) < self.view.x - l) do
+      ax := get_area_x()
+      if ax > i then {
+         while (self.cursor_x - v.first + 1 < *s) & (ax > i) do {
             self.cursor_x +:= 1
-      } else if self.view.x - l + self.view.w < j then {
-         while (self.cursor_x - v.first + 1 > 1) & 
-            text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 2, self.tab_width) > self.view.x - l + self.view.w do
+            i := text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 1, self.tab_width)
+         }
+      } else {
+         i := text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 2, self.tab_width)
+         while (self.cursor_x - v.first + 1 > 1) & (ax + self.tw < i) do {
             self.cursor_x -:= 1
+            i := text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 2, self.tab_width)
+         }
       }
    end
 
@@ -283,7 +286,7 @@ class EditableTextList(LineBasedScrollArea)
    # Move the text area displayed so that the cursor is on the screen.
    #
    private constrain_line()
-      local vi, v, s, i, j, l
+      local vi, v, s, i, ax
 
       vi := get_view_list_index()
 
@@ -292,12 +295,14 @@ class EditableTextList(LineBasedScrollArea)
       v := self.view_list[vi]
       s := v.str
       i := text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 1, self.tab_width)
-      j := i + char_width(view.cbwin, s[self.cursor_x - v.first + 1])
-      l := self.get_subject_x()
-      if self.view.x - l > i then
+      ax := get_area_x()
+      if ax > i then
          set_area_x(i)
-      else if self.view.x - l + self.view.w < j then
-         set_area_x(j - self.view.w)
+      else {
+         i := text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 2, self.tab_width)
+         if ax + self.tw < i then
+            set_area_x(i - self.tw)
+      }
    end
 
    public handle_cut(e)
@@ -495,8 +500,9 @@ class EditableTextList(LineBasedScrollArea)
 
       s := v.str
       i := 1
-      l := self.get_subject_x()
-      while (i < *s) & (text_width_ex(view.cbwin, s, 1, i + 1, self.tab_width) < e.x - l) do
+      l := self.get_subject_x() + Gui.TEXT_INSET
+      while (i < *s) & ((text_width_ex(view.cbwin, s, 1, i, self.tab_width) + 
+                         text_width_ex(view.cbwin, s, 1, i + 1, self.tab_width)) / 2  < e.x - l) do
          i +:= 1
 
       self.cursor_x := v.first + i - 1
@@ -608,13 +614,13 @@ class EditableTextList(LineBasedScrollArea)
       } else if vi < *view_list & e.y >= self.view.y + self.view.h then {
          direction := "down"
          check_scroll_ticker(e.y - (self.view.y + self.view.h))
-      } else if self.cursor_x > v.first & e.x < self.view.x then {
+      } else if self.cursor_x > v.first & e.x < self.tx then {
          direction := "left"
-         check_scroll_ticker(self.view.x - e.x)
-      } else if e.x >= self.view.x + self.view.w & 
+         check_scroll_ticker(self.tx - e.x)
+      } else if e.x >= self.tx + self.tw & 
                 self.cursor_x - v.first + 1 < *v.str then {
          direction := "right"
-         check_scroll_ticker(e.x - (self.view.x + self.view.w))
+         check_scroll_ticker(e.x - (self.tx + self.tw))
       } else {
          direction := &null
          scroll_ticker.stop()
@@ -631,7 +637,7 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public scroll_tick()
-      local l, s, v, vi, e
+      local ax, s, v, vi, e
 
       start_handle(e)
 
@@ -654,21 +660,21 @@ class EditableTextList(LineBasedScrollArea)
          }
          "left" : {
             v := view_list[vi]
-            l := self.get_subject_x()
+            ax := get_area_x()
             s := v.str
             while (self.cursor_x > v.first) & 
                text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 1, 
-                           self.tab_width) >= self.view.x - l do {
+                           self.tab_width) >= ax do {
                self.cursor_x -:= 1
             }
          }
          "right" : {
             v := view_list[vi]
-            l := self.get_subject_x()
+            ax := get_area_x()
             s := v.str
             while (self.cursor_x - v.first + 1 < *s) & 
                text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 1, 
-                           self.tab_width) < self.view.x - l + self.view.w do {
+                           self.tab_width) < ax + self.tw do {
                self.cursor_x +:= 1
             }
          }
@@ -931,7 +937,6 @@ class EditableTextList(LineBasedScrollArea)
    public layout()
       if \wrap_mode == "width" then
          clear_view_list()
-
       cast(self,ScrollArea).layout()
       self.constrain_line()
    end
@@ -940,6 +945,8 @@ class EditableTextList(LineBasedScrollArea)
       local had_vsb
       had_vsb := self.vsb
       cast(self,LineBasedScrollArea).set_internal_fields()
+      self.tx := self.view.x + Gui.TEXT_INSET
+      self.tw := self.view.w - Gui.TEXT_INSET
       if \wrap_mode == "width" & had_vsb ~=== self.vsb then {
          clear_view_list()
          set_internal_fields()
@@ -964,7 +971,7 @@ class EditableTextList(LineBasedScrollArea)
 
       info := get_line_info(r) | fail
       yp := r.y - info.offset
-      xp := view.x - get_area_x()
+      xp := tx - get_area_x()
 
       #
       # Write the lines
@@ -988,24 +995,20 @@ class EditableTextList(LineBasedScrollArea)
             r := [v.first, v.last]
          } else if v.index = self.mark_y = self.cursor_y then {
             # Part of line
-            if self.mark_x < self.cursor_x then {
+            if self.mark_x < self.cursor_x then
                r := range(v.first, v.last, self.mark_x, self.cursor_x)
-            }
-            else if self.mark_x > self.cursor_x then {
+            else if self.mark_x > self.cursor_x then
                r := range(v.first, v.last, self.cursor_x, self.mark_x)
-            }
          } else if v.index = self.mark_y then {
-            if self.mark_y < self.cursor_y then {
+            if self.mark_y < self.cursor_y then
                r := range(v.first, v.last, self.mark_x, *self.contents[v.index] + 1)
-            } else {
+            else
                r := range(v.first, v.last, 1, self.mark_x)
-            }
          } else if v.index = self.cursor_y then {
-            if self.mark_y > self.cursor_y then {
+            if self.mark_y > self.cursor_y then
                r := range(v.first, v.last, self.cursor_x, *self.contents[v.index] + 1)
-            } else {
+            else
                r := range(v.first, v.last, 1, self.cursor_x)
-            }
          }
          if \r then {
             off1 := text_width_ex(view.cbwin, s, 1, r[1] - v.first + 1, self.tab_width)
@@ -1021,13 +1024,11 @@ class EditableTextList(LineBasedScrollArea)
                Gui.style.draw_text_cursor(view.cbwin,
                                           xp + text_width_ex(view.cbwin, s, 1, si, self.tab_width), 
                                           yp, 
-                                          char_width(view.cbwin, s[si]), 
                                           self.line_height)
          } else if \self.is_editable_flag then
             Gui.style.draw_shadow_text_cursor(view.cbwin,
                                               xp + text_width_ex(view.cbwin, s, 1, si, self.tab_width), 
                                               yp, 
-                                              char_width(view.cbwin, s[si]), 
                                               self.line_height)
       }
    end
@@ -1062,7 +1063,7 @@ class EditableTextList(LineBasedScrollArea)
    public calculate_subject_width()
       if /view_list then
          create_view_list()
-      return self.long_line.tw
+      return self.long_line.tw + Gui.TEXT_INSET
    end
 
    #
@@ -1708,7 +1709,7 @@ class WidthLineSplitter(LineSplitter)
    public split(s)
       local ch, ds, p, width
 
-      width := parent.predict_view_width(parent.w, parent.vsb)
+      width := parent.predict_view_width(parent.w, parent.vsb) - Gui.TEXT_INSET
       ds := ""
       s ? {
          while ch := move(1) do {

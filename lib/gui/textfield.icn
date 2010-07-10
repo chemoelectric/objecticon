@@ -251,7 +251,7 @@ class TextField(Component)
       s := get_view()
       d := e.x - self.tx + loff
       i := 1
-      while (self.cbwin.text_width(s[1+:i]) <= d) & (i < *s) do 
+      while (i < *s) & ((self.cbwin.text_width(s[1:i]) + self.cbwin.text_width(s[1:i + 1])) / 2 <= d) do
          i +:= 1
 
       return i
@@ -288,17 +288,19 @@ class TextField(Component)
    #
    # @p
    public constrain_line()
-      local s, i, j
+      local s, i
 
       s := get_view()
       i := self.cbwin.text_width(s[1:self.cursor])
-      j := i + char_width(self.cbwin, s[self.cursor])
       if loff > i then
          loff := i
-      else if loff + self.tw < j then
-         loff := j - self.tw
-      else if self.cbwin.text_width(s) - self.tw < loff then
-         loff := max(0, self.cbwin.text_width(s) - self.tw)
+      else {
+         i := self.cbwin.text_width(s[1:self.cursor + 1])
+         if loff + self.tw < i then
+            loff := i - self.tw
+         else if self.cbwin.text_width(s) - self.tw < loff then
+            loff := max(0, self.cbwin.text_width(s) - self.tw)
+      }
    end
 
    public scroll_tick()
@@ -640,7 +642,7 @@ class TextField(Component)
    end
 
    public display()
-      local fh, s, mp, np, y1
+      local fh, s, mp, np, y1, off1, off2
 
       fh := self.cbwin.get_font_height()
       y1 := self.y + (self.h - fh) / 2
@@ -655,11 +657,12 @@ class TextField(Component)
             mp := cursor
          } else
             np := cursor
-
+         off1 := self.cbwin.text_width(s[1:mp])
+         off2 := self.cbwin.text_width(s[1:np])
          Gui.style.selection_rectangle(self.cbwin,
-                                       self.tx - loff + self.cbwin.text_width(s[1:mp]), 
+                                       self.tx - loff + off1,
                                        y1, 
-                                       self.cbwin.text_width(s[mp:np]),
+                                       off2 - off1,
                                        fh)
       }
 
@@ -669,14 +672,10 @@ class TextField(Component)
       if self.has_focus() & self.is_unshaded() then {
          if self.cursor_on ~= 2 then
             Gui.style.draw_text_cursor(self.cbwin,
-                                       self.tx - loff + self.cbwin.text_width(s[1:cursor]), 
-                                       y1, 
-                                       self.cbwin.text_width(s[cursor]), fh)
+                                       self.tx - loff + self.cbwin.text_width(s[1:cursor]), y1, fh)
       } else if \self.is_editable_flag then
          Gui.style.draw_shadow_text_cursor(self.cbwin,
-                                           self.tx - loff + self.cbwin.text_width(s[1:cursor]), 
-                                           y1, 
-                                           self.cbwin.text_width(s[cursor]), fh)
+                                           self.tx - loff + self.cbwin.text_width(s[1:cursor]), y1, fh)
 
       border.draw_rect(self.cbwin, self)
    end
@@ -706,7 +705,7 @@ class TextField(Component)
       self.set_contents("")
       self.set_border(CompoundBorder(SunkenBorder(), EmptyBorder()))
       self.border.inner.set_l_inset(Gui.TEXT_INSET)
-      self.border.inner.set_r_inset(Gui.TEXT_INSET)
+      self.border.inner.set_r_inset(0)
       self.is_editable_flag := 1
       self.move_on_rpress_flag := 1
       self.set_constraint("x_fill", &yes)

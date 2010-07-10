@@ -26,7 +26,7 @@ class EditListTextField(TextField)
       cast(self,TextField).new()
       self.connect(self.on_key, Event.KEY_PRESS)
       self.set_border(EmptyBorder("l_inset=",Gui.TEXT_INSET,
-                                  "r_inset=",Gui.TEXT_INSET))
+                                  "r_inset=",0))
       set_fields(a)
       return
    end

@@ -74,17 +74,19 @@ class Style()
       cw.uncouple()
    end
 
-   public draw_shadow_text_cursor(W, x, y, w, h)
+   public draw_shadow_text_cursor(W, x, y, h)
       local cw
       cw := bev_lookup(W).shadow.clone()
       cw.draw_line(x, y, x, y + h - 1)
+      cw.draw_line(x - 1, y, x - 1, y + h - 1)
       cw.uncouple()
    end
 
-   public draw_text_cursor(W, x, y, w, h)
+   public draw_text_cursor(W, x, y, h)
       local cw
       cw := W.clone("fg=red")
       cw.draw_line(x, y, x, y + h - 1)
+      cw.draw_line(x - 1, y, x - 1, y + h - 1)
       cw.uncouple()
    end
 
