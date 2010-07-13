@@ -30,6 +30,8 @@ class ComponentScrollAreaView(Component)
    public size_inner()
       inner_w := inner.get_preferred_width()
       inner_h := inner.get_preferred_height()
+      parent.invalidate_subject_width()
+      parent.invalidate_subject_height()
    end
 
    public set_inner(inner)
