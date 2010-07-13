@@ -1709,7 +1709,13 @@ class WidthLineSplitter(LineSplitter)
    public split(s)
       local ch, ds, p, width
 
-      width := parent.predict_view_width(parent.w, parent.vsb) - Gui.TEXT_INSET
+      # This allows calculation of a default height given an integer width spec.
+      if parent.is_live() then
+         width := parent.predict_view_width(parent.w, parent.vsb) - Gui.TEXT_INSET
+      else
+         width := parent.predict_view_width(integer(parent.w_spec)) - Gui.TEXT_INSET | 
+             runerr("Need integer w_spec with width wrap mode")
+
       ds := ""
       s ? {
          while ch := move(1) do {
