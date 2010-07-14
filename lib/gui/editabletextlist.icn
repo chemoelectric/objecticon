@@ -695,13 +695,6 @@ class EditableTextList(LineBasedScrollArea)
       end_handle(e)
    end
 
-   public handle_key_up0(e)
-      start_handle(e)
-      keyboard_mark(e)
-      self.set_cursor_y(self.cursor_y - 1)
-      end_handle(e)
-   end
-
    private adjust_view_list_index(off)
       local e1, e2, v1, v2
       v1 := get_view_list_index()
