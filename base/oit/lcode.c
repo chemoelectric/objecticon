@@ -2085,23 +2085,7 @@ static word cnv_op(int n)
 
 static void writescript()
 {
-#if MSWIN32
-   char *hdr = findexe("win32header");
-   FILE *f;
-   int c;
-   if (!hdr)
-      quit("Couldn't find win32header header file on PATH");
-   if (!(f = fopen(hdr, ReadBinary)))
-      quit("Tried to open win32header to build .exe, but couldn't");
-   scriptsize = 0;
-   while ((c = fgetc(f)) != EOF) {
-      fputc(c, outfile);
-      ++scriptsize;
-   }
-   fputs("\n" IcodeDelim "\n", outfile);
-   scriptsize += strlen("\n" IcodeDelim "\n");
-   fclose(f);
-#elif UNIX
+#if UNIX
     char script[2048];
     /*
      *  Generate a shell header that searches for iconx in this order:
@@ -2132,6 +2116,22 @@ static void writescript()
     /* write header */
     if (fwrite(script, scriptsize, 1, outfile) != 1)
         quit("cannot write header to icode file");
+#elif MSWIN32
+   char *hdr = findexe("win32header");
+   FILE *f;
+   int c;
+   if (!hdr)
+      quit("Couldn't find win32header header file on PATH");
+   if (!(f = fopen(hdr, ReadBinary)))
+      quit("Tried to open win32header to build .exe, but couldn't");
+   scriptsize = 0;
+   while ((c = fgetc(f)) != EOF) {
+      fputc(c, outfile);
+      ++scriptsize;
+   }
+   fputs("\n" IcodeDelim "\n", outfile);
+   scriptsize += strlen("\n" IcodeDelim "\n");
+   fclose(f);
 #elif PLAN9
     char script[2048];
     sprintf(script, "#!/bin/rc\n"
@@ -2143,5 +2143,3 @@ static void writescript()
         quit("cannot write header to icode file");
 #endif
 }
-
-

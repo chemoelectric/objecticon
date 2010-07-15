@@ -205,37 +205,11 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    #
-   # Move cursor y to line n, and constrain x within range of that line.
-   #
-   private set_cursor_y(n)
-      local d, i, dest
-
-      n <:= 1
-      n >:= *self.contents
-      if n = self.cursor_y then
-         return n
-
-      # Search for the nearest x position on the new line corresponding to
-      # the current x position.
-      d := text_width_ex(view.cbwin, self.contents[cursor_y], 1, self.cursor_x, self.tab_width)
-      dest := self.contents[n]
-      i := 1
-      while (i <= *dest) & (text_width_ex(view.cbwin, dest, 1, i, self.tab_width) < d) do
-         i +:= 1
-
-      self.cursor_x := i
-      self.cursor_y := n
-
-      return n
-   end
-
-   #
    # Move cursor so that it is in the text area, if possible.  May not be possible
    # if cursor at end of line to the left of the text area.
    #     
    private constrain_cursor()
       local vi, v, s, i, ax, info
-
       vi := get_view_list_index()
       info := get_line_info() | fail
       if vi < info.first_whole then {
@@ -489,23 +463,26 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    #
-   # Set cursor from the current x, y
+   # Given a ViewLine v and a pixel offset d in that line (which may extend past the end),
+   # calculate the new cursor_x and cursor_y.
    #
-   private set_cursor_from_pos(e)
-      local l, s, i, v
-
-      v := self.view_list[get_nearest_line_to_pointer(e)]
-
+   private set_cursor_in_view_line(v, d)
+      local s, i, t
       self.cursor_y := v.index
-
       s := v.str
       i := 1
-      l := self.get_subject_x() + Gui.TEXT_INSET
-      while (i < *s) & ((text_width_ex(view.cbwin, s, 1, i, self.tab_width) + 
-                         text_width_ex(view.cbwin, s, 1, i + 1, self.tab_width)) / 2  < e.x - l) do
+      t := 0
+      while (i < *s) & ((.t + (t := text_width_ex(view.cbwin, s, 1, i + 1, self.tab_width))) / 2  < d) do
          i +:= 1
-
       self.cursor_x := v.first + i - 1
+   end
+
+   #
+   # Set cursor from the given event
+   #
+   private set_cursor_from_pos(e)
+      set_cursor_in_view_line(self.view_list[get_nearest_line_to_pointer(e)],
+                              e.x - self.tx + get_area_x())
    end
 
    public clear_mark()
@@ -718,10 +695,24 @@ class EditableTextList(LineBasedScrollArea)
       end_handle(e)
    end
 
+   private adjust_view_list_index(off)
+      local e1, e2, v1, v2
+      v1 := get_view_list_index()
+      v2 := v1 + off
+      v2 <:= 1
+      v2 >:= *self.view_list
+      if v1 = v2 then
+         return
+      e1 := view_list[v1]
+      e2 := view_list[v2]
+      set_cursor_in_view_line(e2, 
+                              text_width_ex(view.cbwin, e1.str, 1, self.cursor_x - e1.first + 1, self.tab_width))
+   end
+
    public handle_key_up(e)
       start_handle(e)
       keyboard_mark(e)
-      self.set_cursor_y(self.cursor_y - 1)
+      adjust_view_list_index(-1)
       end_handle(e)
    end
 
@@ -754,7 +745,7 @@ class EditableTextList(LineBasedScrollArea)
    public handle_key_down(e)
       start_handle(e)
       keyboard_mark(e)
-      self.set_cursor_y(self.cursor_y + 1)
+      adjust_view_list_index(1)
       end_handle(e)
    end
 
@@ -787,14 +778,14 @@ class EditableTextList(LineBasedScrollArea)
    public handle_key_page_up(e)
       start_handle(e)
       keyboard_mark(e)
-      self.set_cursor_y(self.cursor_y - self.view.h / self.line_height)
+      adjust_view_list_index(-self.view.h / self.line_height)
       end_handle(e)
    end
 
    public handle_key_page_down(e)
       start_handle(e)
       keyboard_mark(e)
-      self.set_cursor_y(self.cursor_y + self.view.h / self.line_height)
+      adjust_view_list_index(self.view.h / self.line_height)
       end_handle(e)
    end
 
@@ -1709,7 +1700,13 @@ class WidthLineSplitter(LineSplitter)
    public split(s)
       local ch, ds, p, width
 
-      width := parent.predict_view_width(parent.w, parent.vsb) - Gui.TEXT_INSET
+      # This allows calculation of a default height given an integer width spec.
+      width := if parent.is_live() then
+         parent.predict_view_width(parent.w, parent.vsb) - Gui.TEXT_INSET
+      else
+         parent.predict_view_width(integer(parent.w_spec)) - Gui.TEXT_INSET | 
+             runerr("Need integer w_spec with width wrap mode")
+
       ds := ""
       s ? {
          while ch := move(1) do {
