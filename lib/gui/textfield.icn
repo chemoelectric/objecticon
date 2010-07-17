@@ -631,15 +631,14 @@ class TextField(Component)
 
    public cursor_tick()
       local t
-      if self.has_focus() & self.is_unshaded() then {
-         t := cursor_on
-         cursor_on := if parent_dialog.is_blocked() | parent_dialog.in_menu_mode() then
-            0
-         else
-            (cursor_on + 1) % 3
-         if (t | cursor_on) = 2 then
-            invalidate()
-      }
+      (self.has_focus() & self.is_unshaded() & self.is_unhidden()) | fail
+      t := cursor_on
+      cursor_on := if parent_dialog.is_blocked() | parent_dialog.in_menu_mode() then
+         0
+      else
+         (cursor_on + 1) % 3
+      if (t | cursor_on) = 2 then
+         invalidate()
    end
 
    public display()
