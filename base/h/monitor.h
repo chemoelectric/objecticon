@@ -135,7 +135,6 @@
 #define E_Pret		'\122'		/* Procedure return */
 #define E_Psusp		'\123'		/* Procedure suspension */
 #define E_Presum	'\125'		/* Procedure resumption */
-#define E_Prem		'\126'		/* Suspended procedure removal */
 
 
    /*
@@ -169,7 +168,7 @@
 
 
 100 115 117 120
-124 127 130 131 133 134 135 136
+124 126 127 130 131 133 134 135 136
 137 140 141 142 143 146 147
 152 154
 162 165 166
