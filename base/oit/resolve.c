@@ -293,11 +293,8 @@ static void compute_impl(struct lclass *cl)
     queue->class = cl;
 
     /* Carry out a breadth first traversal of the class hierarchy */
-    for (;;) {
-        /* When the queue is empty, we've finished */
-        if (!queue)
-            return;
-
+    /* When the queue is empty, we've finished */
+    while (queue) {
         /* Pop one of the front */
         t = queue;
         x = queue->class;
