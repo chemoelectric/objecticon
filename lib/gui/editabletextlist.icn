@@ -946,15 +946,14 @@ class EditableTextList(LineBasedScrollArea)
 
    public cursor_tick()
       local t
-      if self.has_focus() & self.is_unshaded() then {
-         t := cursor_on
-         cursor_on := if parent_dialog.is_blocked() | parent_dialog.in_menu_mode() then
-            0
-         else
-            (cursor_on + 1) % 3
-         if (t | cursor_on) = 2 then
-            view.invalidate(Rect(view.x, cursor_last_y, view.w, line_height))
-      }
+      (self.has_focus() & self.is_unshaded() & self.is_unhidden() & \cursor_last_y) | fail
+      t := cursor_on
+      cursor_on := if parent_dialog.is_blocked() | parent_dialog.in_menu_mode() then
+         0
+      else
+         (cursor_on + 1) % 3
+      if (t | cursor_on) = 2 then
+         view.invalidate(Rect(view.x, cursor_last_y, view.w, line_height))
    end
 
    public draw(r)

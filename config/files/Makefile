@@ -39,6 +39,8 @@ LIBREF=@htmldir@/@PACKAGE_TARNAME@-libref-@PACKAGE_VERSION@
 PATHS=$(OILIB)/paths.sh
 MKDEFS=$(OILIB)/Makedefs
 UNINST=$(OILIB)/uninstall.sh
+TAB="\t"
+NL="\n"
 
 install :
 	$(INSTALL) -d "$(OIBIN)"
@@ -66,37 +68,38 @@ install :
 	$(INSTALL) -m 644 lib/xml/*.u lib/xml/packages.txt "$(OILIB)/xml"
 	$(INSTALL) -m 755 apps/ivib/plugins/okcancelplugin "$(OILIB)/ivib_plugins"
 	$(INSTALL) -m 644 base/h/*.h "$(OILIB)/h"
-	@echo -e "# Object Icon path settings" >"$(PATHS)"
-	@echo -e "export OIHOME=\"$(prefix)\"" >>"$(PATHS)"
-	@echo -e "export OIBIN=\"$(OIBIN)\"" >>"$(PATHS)"
-	@echo -e "export OILIB=\"$(OILIB)\"" >>"$(PATHS)"
-	@echo -e "# Object Icon Makedefs" >"$(MKDEFS)"
-	@echo -e "OIHOME=$(prefix)" >>"$(MKDEFS)"
-	@echo -e "OIBIN=$(OIBIN)" >>"$(MKDEFS)"
-	@echo -e "OILIB=$(OILIB)" >>"$(MKDEFS)"
-	@echo -e "LDFLAGS=$(LDFLAGS)" >>"$(MKDEFS)"
-	@echo -e "LIBS=$(LIBS)" >>"$(MKDEFS)"
-	@echo -e "CFLAGS=$(CFLAGS)" >>"$(MKDEFS)"
-	@echo -e "CPPFLAGS=$(CPPFLAGS)" >>"$(MKDEFS)"
-	@echo -e "RTT=rtt -r \"\$$(OILIB)/h/\"" >>"$(MKDEFS)"
-	@echo -e "export OIPATH:=\$$(OILIB)/main:\$$(OILIB)/gui:\$$(OILIB)/xml:\$$(OILIB)/parser:\$$(OILIB)/ipl" >>"$(MKDEFS)"
-	@echo -e "export OLPATH:=\$$(OILIB)/incl" >>"$(MKDEFS)"
-	@echo -e "export PATH:=\$$(OIBIN):\$$(PATH)" >>"$(MKDEFS)"
-	@echo -e "\n%.u: %.icn\n\toit -c -s \$$<" >>"$(MKDEFS)"
-	@echo -e "export OIPATH=\"\$$OILIB/main:\$$OILIB/gui:\$$OILIB/xml:\$$OILIB/parser:\$$OILIB/ipl\"" >>"$(PATHS)"
-	@echo -e "export OLPATH=\"\$$OILIB/incl\"" >>"$(PATHS)"
+	@echo "# Object Icon path settings" >"$(PATHS)"
+	@echo "export OIHOME=\"$(prefix)\"" >>"$(PATHS)"
+	@echo "export OIBIN=\"$(OIBIN)\"" >>"$(PATHS)"
+	@echo "export OILIB=\"$(OILIB)\"" >>"$(PATHS)"
+	@echo "# Object Icon Makedefs" >"$(MKDEFS)"
+	@echo "OIHOME=$(prefix)" >>"$(MKDEFS)"
+	@echo "OIBIN=$(OIBIN)" >>"$(MKDEFS)"
+	@echo "OILIB=$(OILIB)" >>"$(MKDEFS)"
+	@echo "LDFLAGS=$(LDFLAGS)" >>"$(MKDEFS)"
+	@echo "LIBS=$(LIBS)" >>"$(MKDEFS)"
+	@echo "CFLAGS=$(CFLAGS)" >>"$(MKDEFS)"
+	@echo "CPPFLAGS=$(CPPFLAGS)" >>"$(MKDEFS)"
+	@echo "RTT=rtt -r \"\$$(OILIB)/h/\"" >>"$(MKDEFS)"
+	@echo "export OIPATH:=\$$(OILIB)/main:\$$(OILIB)/gui:\$$(OILIB)/xml:\$$(OILIB)/parser:\$$(OILIB)/ipl" >>"$(MKDEFS)"
+	@echo "export OIINCL:=\$$(OILIB)/incl" >>"$(MKDEFS)"
+	@echo "export PATH:=\$$(OIBIN):\$$(PATH)" >>"$(MKDEFS)"
+	@echo $(NL)"%.u: %.icn" >>"$(MKDEFS)"
+	@echo $(TAB)"oit -c -s \$$<" >>"$(MKDEFS)"
+	@echo "export OIPATH=\"\$$OILIB/main:\$$OILIB/gui:\$$OILIB/xml:\$$OILIB/parser:\$$OILIB/ipl\"" >>"$(PATHS)"
+	@echo "export OIINCL=\"\$$OILIB/incl\"" >>"$(PATHS)"
 	@if [ "$(prefix)" != /usr/local ] ; then \
-		echo -e "PATH=\"\$$PATH:\$$OIBIN\"" >>"$(PATHS)" ; \
-		echo -e "LD_LIBRARY_PATH=\"\$$LD_LIBRARY_PATH:$(SOLIB)\"" >>"$(PATHS)" ; \
+		echo "PATH=\"\$$PATH:\$$OIBIN\"" >>"$(PATHS)" ; \
+		echo "LD_LIBRARY_PATH=\"\$$LD_LIBRARY_PATH:$(SOLIB)\"" >>"$(PATHS)" ; \
 	fi
-	@echo -e "export TRACE" >>"$(PATHS)" ; \
+	@echo "export TRACE OIMAXLEVEL" >>"$(PATHS)" ; \
 
-	@echo -e rm -f \"$(OIBIN)/ivib\" \"$(OIBIN)/oidoc\" \"$(OIBIN)/iyacc\" \"$(OIBIN)/oit\" \"$(OIBIN)/oix\" \"$(OIBIN)/udis\" \"$(OIBIN)/rtt\" >"$(UNINST)"
-	@echo -e rm -f \"$(SOLIB)/objecticonipclib.so\"  \"$(SOLIB)/objecticonmysqllib.so\" >>"$(UNINST)"
-	@echo -e rm -rf \"$(OILIB)\" >>"$(UNINST)"
-	@echo -e rm -rf \"$(LIBREF)\" >>"$(UNINST)"
+	@echo rm -f \"$(OIBIN)/ivib\" \"$(OIBIN)/oidoc\" \"$(OIBIN)/iyacc\" \"$(OIBIN)/oit\" \"$(OIBIN)/oix\" \"$(OIBIN)/udis\" \"$(OIBIN)/rtt\" >"$(UNINST)"
+	@echo rm -f \"$(SOLIB)/objecticonipclib.so\"  \"$(SOLIB)/objecticonmysqllib.so\" >>"$(UNINST)"
+	@echo rm -rf \"$(OILIB)\" >>"$(UNINST)"
+	@echo rm -rf \"$(LIBREF)\" >>"$(UNINST)"
 
-	@echo -e "\nInstallation complete.  Some helpful files :-"
+	@echo $(NL)"Installation complete.  Some helpful files :-"
 	@echo "   $(PATHS) - environment variables"
 	@echo "   $(MKDEFS) - useful Makefile definitions"
 	@echo "   $(UNINST) - uninstallation script"
@@ -104,7 +107,7 @@ install :
 install-libref :
 	$(INSTALL) -d "$(LIBREF)"
 	oidoc -html -d -o "$(LIBREF)" -a
-	@echo -e "\nInstallation complete to file://$(LIBREF)/index.html"
+	@echo $(NL)"Installation complete to file://$(LIBREF)/index.html"
 
 libref :
 	rm -rf libref
@@ -116,7 +119,7 @@ tar :
 	@rm -rf $(T)
 	@mkdir -p $(T)
 	@for f in $$( find apps base lib \
-		-regex ".*\.\(icn\|c\|r\|ri\|h\|y\|icon\)" ) ; do \
+		-regex ".*\.\(icn\|c\|r\|ri\|h\|y\|gif\)" ) ; do \
 		cp --parents $$f $(T) ;\
 	done
 	@for f in $$( find base/oix/p9cursors -type f -not -regex ".*\.svn.*" ) ; do \

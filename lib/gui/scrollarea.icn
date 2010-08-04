@@ -202,24 +202,31 @@ class ScrollArea(Component)
    public set_ideal_size(min_w, max_w, min_h, max_h)
       local max_th, max_tw, min_th, min_tw, need_vsb, need_hsb
 
-      max_tw := predict_view_width(max_w)
-      min_tw := predict_view_width(max_w, 1)
-      max_th := predict_view_height(max_h)
-      min_th := predict_view_height(max_h, 1)
-
-      if min_th >= get_subject_height() then
-         need_vsb := 0
-      else if max_th >= get_subject_height() then
-         need_vsb := 1
-      else
-         need_vsb := 2
-
-      if min_tw >= get_subject_width() then
+      if /max_w then
          need_hsb := 0
-      else if max_tw >= get_subject_width() then
-         need_hsb := 1
-      else
-         need_hsb := 2
+      else {
+         max_tw := predict_view_width(max_w)
+         min_tw := predict_view_width(max_w, 1)
+         if min_tw >= get_subject_width() then
+            need_hsb := 0
+         else if max_tw >= get_subject_width() then
+            need_hsb := 1
+         else
+            need_hsb := 2
+      }
+
+      if /max_h then
+         need_vsb := 0
+      else {
+         max_th := predict_view_height(max_h)
+         min_th := predict_view_height(max_h, 1)
+         if min_th >= get_subject_height() then
+            need_vsb := 0
+         else if max_th >= get_subject_height() then
+            need_vsb := 1
+         else
+            need_vsb := 2
+      }
 
       # ptw(pvw(x))=x
       # ptw(pvw(x,1),1)=x
