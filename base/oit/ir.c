@@ -856,8 +856,10 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                   ir_scanrestore(n, res->scan->old_subject, res->scan->old_pos),
                   ir_goto(n, expr->resume));
             chunk2(body->success,
-                  ir_scanswap(n, res->scan->old_subject, res->scan->old_pos),
-                  ir_goto(n, res->success));
+                   bounded ? 
+                      (struct ir *)ir_scanrestore(n, res->scan->old_subject, res->scan->old_pos) :
+                      (struct ir *)ir_scanswap(n, res->scan->old_subject, res->scan->old_pos),
+                   ir_goto(n, res->success));
 
             res->uses_stack = (expr->uses_stack || body->uses_stack);
             break;
@@ -892,7 +894,9 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                    ir_goto(n, expr->resume));
             chunk3(body->success,
                    ir_op(n, target, Uop_Asgn, lv, rv, 0, rval, body->resume),
-                   ir_scanswap(n, res->scan->old_subject, res->scan->old_pos),
+                   bounded ?
+                      (struct ir *)ir_scanrestore(n, res->scan->old_subject, res->scan->old_pos) :
+                      (struct ir *)ir_scanswap(n, res->scan->old_subject, res->scan->old_pos),
                    ir_goto(n, res->success));
 
             res->uses_stack = (expr->uses_stack || body->uses_stack);
