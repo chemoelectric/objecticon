@@ -8,6 +8,7 @@ static void activate_child_prog(void);
 static void do_cofail(void);
 static void do_activate(void);
 static void do_op(int nargs);
+static void do_mgop(int nargs);
 static void do_opclo(int nargs);
 static void do_keyop(void);
 static void do_keyclo(void);
@@ -352,6 +353,32 @@ static void do_op(int nargs)
     curr_cf = cf;
     if (!bp->ccode(cf))
         ipc = cf->failure_label;
+    curr_cf = 0;
+    /* Pop the C frame */
+    k_current->sp = cf->parent_sp;
+    quick_free_frame(cf);
+}
+
+static void do_mgop(int nargs)
+{
+    struct c_frame *cf;
+    struct c_proc *bp = opblks[curr_op];
+    int i;
+    quick_alc_c_frame(cf, bp, nargs);
+    push_frame((struct frame *)cf);
+    cf->lhs = get_dptr();
+    if (bp->underef) {
+        for (i = 0; i < nargs; ++i)
+            get_variable(&cf->args[i]);
+    } else {
+        for (i = 0; i < nargs; ++i)
+            get_deref(&cf->args[i]);
+    }
+    cf->rval = GetWord;
+    Desc_EVValD(bp, E_Pcall, D_Proc);
+    curr_cf = cf;
+    if (!bp->ccode(cf))
+        syserr("Monogenic op failed");
     curr_cf = 0;
     /* Pop the C frame */
     k_current->sp = cf->parent_sp;
@@ -792,47 +819,57 @@ void interp()
                 break;
             }
 
-            /* Binary ops */
-            case Op_Asgn:
-            case Op_Power:
+            /* Monogenic binary ops */
             case Op_Cat:
             case Op_Diff:
-            case Op_Eqv:
+            case Op_Div:
             case Op_Inter:
-            case Op_Subsc:
             case Op_Lconcat:
+            case Op_Minus:
+            case Op_Mod:
+            case Op_Mult:
+            case Op_Plus:
+            case Op_Power:
+            case Op_Unions: {
+                do_mgop(2);
+                break;
+            }
+
+            /* Binary ops */
+            case Op_Asgn:
+            case Op_Eqv:
+            case Op_Subsc:
             case Op_Lexeq:
             case Op_Lexge:
             case Op_Lexgt:
             case Op_Lexle:
             case Op_Lexlt:
             case Op_Lexne:
-            case Op_Minus:
-            case Op_Mod:
             case Op_Neqv:
             case Op_Numeq:
             case Op_Numge:
             case Op_Numgt:
             case Op_Numle:
             case Op_Numlt:
-            case Op_Numne:
-            case Op_Plus:
-            case Op_Div:
-            case Op_Mult:
-            case Op_Swap:
-            case Op_Unions: {
+            case Op_Numne: 
+            case Op_Swap: {
                 do_op(2);
                 break;
             }
 
-            /* Unary ops */
+            /* Monogenic unary ops */
             case Op_Value:
-            case Op_Nonnull:
+            case Op_Size:
             case Op_Refresh:
             case Op_Number:
             case Op_Compl:
-            case Op_Neg:
-            case Op_Size:
+            case Op_Neg: {
+                do_mgop(1);
+                break;
+            }
+
+            /* Unary ops */
+            case Op_Nonnull:
             case Op_Random:
             case Op_Null: {
                 do_op(1);

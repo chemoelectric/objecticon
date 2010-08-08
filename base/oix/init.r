@@ -1416,57 +1416,72 @@ static void relocate_code(struct progstate *ps, word *c)
                 break;
             }
 
-            /* Binary ops */
-            case Op_Activate:
-            case Op_Asgn:
-            case Op_Power:
-            case Op_Cat:
+            /* Monogenic binary ops */
+            case Op_Cat: 
             case Op_Diff:
-            case Op_Eqv:
+            case Op_Div:
             case Op_Inter:
-            case Op_Subsc:
             case Op_Lconcat:
+            case Op_Minus:
+            case Op_Mod:
+            case Op_Mult:
+            case Op_Plus:
+            case Op_Power:
+            case Op_Unions: {
+                conv_var();  /* lhs */
+                conv_var();  /* arg1 */
+                conv_var();  /* arg2 */
+                ++pc;        /* rval */
+                break;
+            }
+
+            /* Binary ops */
+            case Op_Asgn:
+            case Op_Activate:
+            case Op_Eqv:
+            case Op_Subsc:
             case Op_Lexeq:
             case Op_Lexge:
             case Op_Lexgt:
             case Op_Lexle:
             case Op_Lexlt:
             case Op_Lexne:
-            case Op_Minus:
-            case Op_Mod:
             case Op_Neqv:
             case Op_Numeq:
             case Op_Numge:
             case Op_Numgt:
             case Op_Numle:
             case Op_Numlt:
-            case Op_Numne:
-            case Op_Plus:
-            case Op_Div:
-            case Op_Mult:
-            case Op_Swap:
-            case Op_Unions: {
+            case Op_Numne: 
+            case Op_Swap: {
                 conv_var();  /* lhs */
                 conv_var();  /* arg1 */
                 conv_var();  /* arg2 */
-                ++pc;            /* rval */
+                ++pc;        /* rval */
                 conv_addr(); /* failure label */
                 break;
             }
 
-            /* Unary ops */
+            /* Monogenic unary ops */
             case Op_Value:
-            case Op_Nonnull:
+            case Op_Size:
             case Op_Refresh:
             case Op_Number:
             case Op_Compl:
-            case Op_Neg:
-            case Op_Size:
+            case Op_Neg: {
+                conv_var();  /* lhs */
+                conv_var();  /* arg1 */
+                ++pc;        /* rval */
+                break;
+            }
+
+            /* Unary ops */
+            case Op_Nonnull:
             case Op_Random:
             case Op_Null: {
                 conv_var();  /* lhs */
                 conv_var();  /* arg1 */
-                ++pc;            /* rval */
+                ++pc;        /* rval */
                 conv_addr(); /* failure label */
                 break;
             }
@@ -1477,7 +1492,7 @@ static void relocate_code(struct progstate *ps, word *c)
                 ++pc;            /* clo */
                 conv_var();  /* lhs */
                 conv_var();  /* arg1 */
-                ++pc;            /* rval */
+                ++pc;        /* rval */
                 conv_addr(); /* failure label */
                 break;
             }
@@ -1489,7 +1504,7 @@ static void relocate_code(struct progstate *ps, word *c)
                 conv_var();  /* lhs */
                 conv_var();  /* arg1 */
                 conv_var();  /* arg2 */
-                ++pc;            /* rval */
+                ++pc;        /* rval */
                 conv_addr(); /* failure label */
                 break;
             }

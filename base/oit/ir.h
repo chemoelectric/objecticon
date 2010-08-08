@@ -30,6 +30,7 @@
 #define Ir_Cofail      31
 #define Ir_Limit       32
 #define Ir_Return      33
+#define Ir_MgOp        34
 
 struct scan_info {
     struct ir_var *old_subject, *old_pos;
@@ -120,6 +121,15 @@ struct ir_scanrestore {
     IR_SUB
     struct ir_var *tmp_subject;
     struct ir_var *tmp_pos;
+};
+
+struct ir_mgop {
+    IR_SUB
+    struct ir_var *lhs;
+    int operation;
+    struct ir_var *arg1;
+    struct ir_var *arg2;
+    int rval;
 };
 
 struct ir_op {

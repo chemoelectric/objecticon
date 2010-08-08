@@ -717,6 +717,17 @@ static void lemitcode()
                     labout(x->fail_label, "fail");
                     break;
                 }
+                case Ir_MgOp: {
+                    struct ir_mgop *x = (struct ir_mgop *)ir;
+                    word op = cnv_op(x->operation);
+                    out_op(op);
+                    emit_ir_var(x->lhs, "lhs");
+                    emit_ir_var(x->arg1, "arg1");
+                    if (x->arg2)
+                        emit_ir_var(x->arg2, "arg2");
+                    word_field(x->rval, "rval");
+                    break;
+                }
                 case Ir_OpClo: {
                     struct ir_opclo *x = (struct ir_opclo *)ir;
                     word op = cnv_op(x->operation);
