@@ -254,7 +254,7 @@ class Class()
    #
    public static for_name(s, ce)
       local t
-      if t := Prog.get_global(s, ce) & type(t) == "class" then
+      if t := Prog.get_named_global(s, ce) & type(t) == "class" then
          return t
    end
 

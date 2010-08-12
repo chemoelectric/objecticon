@@ -884,9 +884,10 @@ void resolve(struct progstate *p)
 
     /*
      * Scan the global variable array and relocate all blocks. Also
-     * note the main procedure if found.
+     * note the main procedure if found, and create the table of named globals.
      */
     p->MainProc = 0;
+    MemProtect(p->NamedGlobals = p->ENamedGlobals = malloc(p->NGlobals * sizeof(struct descrip)));
     for (j = 0; j < p->NGlobals; j++) {
         switch (p->Globals[j].dword) {
             case D_Class: {
@@ -911,6 +912,7 @@ void resolve(struct progstate *p)
                 for (i = 0; i < n_fields; ++i) 
                     cb->fields[i] = (struct class_field*)(p->Code + (uword)cb->fields[i]);
                 cb->sorted_fields = (short *)(p->Code + (uword)cb->sorted_fields);
+                *(p->ENamedGlobals++) = p->Globals[j];
                 break;
             }
 
@@ -932,6 +934,7 @@ void resolve(struct progstate *p)
                     for (i = 0; i < c->n_fields; i++) 
                         c->field_locs[i].fname = p->Constants + (uword)c->field_locs[i].fname;
                 }
+                *(p->ENamedGlobals++) = p->Globals[j];
                 break;
             }
             case D_Proc: {
@@ -999,10 +1002,12 @@ void resolve(struct progstate *p)
 
                     pp->program = p;
                 }
+                *(p->ENamedGlobals++) = p->Globals[j];
                 break;
             }
         }
     }
+    p->NNamedGlobals = p->ENamedGlobals - p->NamedGlobals;
 
     /*
      * Relocate the names of the files in the ipc->filename table.

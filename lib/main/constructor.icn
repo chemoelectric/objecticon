@@ -79,7 +79,7 @@ class Constructor()
    #
    public static for_name(s, ce)
       local t
-      if t := Prog.get_global(s, ce) & type(t) == "constructor" then
+      if t := Prog.get_named_global(s, ce) & type(t) == "constructor" then
          return t
    end
 

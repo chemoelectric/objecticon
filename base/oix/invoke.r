@@ -596,34 +596,28 @@ static void invoke_misc(word clo, dptr lhs, dptr expr, int argc, dptr args, word
     }
 
     if (cnv:string(*expr, sexpr)) {
+        struct b_proc *bp;
         /*
          * Is it a global class or procedure (or record)?
          */
-        dptr p = lookup_global(&sexpr, curpstate);
+        dptr p = lookup_named_global(&sexpr, curpstate);
         if (p) {
-            type_case *p of {
-              proc:
-              constructor:
-              class: {
-                    general_call(clo, lhs, p, argc, args, rval, failure_label);
-                    return;
-                }
-            }
-        } else {
-            struct b_proc *bp;
-            /*
-             * Is it a builtin or an operator?
-             */
-            if ((bp = string_to_proc(&sexpr, argc, 0))) {
-                struct frame *f;
-                f = push_frame_for_proc(bp, argc, args, 0);
-                curr_pf->clo[clo] = f;
-                f->lhs = lhs;
-                f->failure_label = failure_label;
-                f->rval = rval;
-                tail_invoke_frame(f);
-                return;
-            }
+            /* p must be a proc, class or constructor */
+            general_call(clo, lhs, p, argc, args, rval, failure_label);
+            return;
+        }
+        /*
+         * Is it a builtin or an operator?
+         */
+        if ((bp = string_to_proc(&sexpr, argc, 0))) {
+            struct frame *f;
+            f = push_frame_for_proc(bp, argc, args, 0);
+            curr_pf->clo[clo] = f;
+            f->lhs = lhs;
+            f->failure_label = failure_label;
+            f->rval = rval;
+            tail_invoke_frame(f);
+            return;
         }
     }
 
