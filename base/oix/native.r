@@ -500,8 +500,7 @@ function lang_Prog_get_globals(c)
           runerr(0);
        for (dp = prog->Globals; dp != prog->Eglobals; dp++)
            suspend named_var(dp);
-
-      fail;
+       fail;
    }
 end
 
@@ -514,6 +513,34 @@ function lang_Prog_get_global_names(c)
       for (dp = prog->Gnames; dp != prog->Egnames; dp++)
          suspend **dp;
       fail;
+   }
+end
+
+function lang_Prog_get_named_globals(c)
+   body {
+       struct progstate *prog;
+       dptr dp;
+       if (!(prog = get_program_for(&c)))
+          runerr(0);
+       for (dp = prog->NamedGlobals; dp != prog->ENamedGlobals; dp++)
+           suspend *dp;
+       fail;
+   }
+end
+
+function lang_Prog_get_named_global(s, c)
+   if !cnv:string(s) then
+      runerr(103, s)
+   body {
+       struct progstate *prog;
+       dptr p;
+       if (!(prog = get_program_for(&c)))
+          runerr(0);
+       p = lookup_named_global(&s, prog);
+       if (p)
+           return *p;
+       else
+           fail;
    }
 end
 
@@ -856,11 +883,9 @@ struct b_proc *string_to_proc(dptr s, int arity, struct progstate *prog)
    /*
     * See if the string is the name of a global variable in prog.
     */
-    if (prog && (t = lookup_global(s, prog))) {
+    if (prog && (t = lookup_named_global(s, prog))) {
        if (is:proc(*t))
            return &ProcBlk(*t);
-       else
-           return 0;
    }
 
     /*

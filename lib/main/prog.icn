@@ -26,6 +26,17 @@ class Prog()
    public static defer get_global_names(P)
 
    #
+   # Generate the global definitions with names (records, classes and procedures)
+   # in program P.
+   #
+   public static defer get_named_globals(P)
+
+   #
+   # Get the global definition with name {s} in program P.
+   #
+   public static defer get_named_global(s, P)
+
+   #
    # Generate the builtin functions.
    #
    public static defer get_functions()

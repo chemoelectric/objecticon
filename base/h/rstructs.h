@@ -414,6 +414,9 @@ struct progstate {
     struct ipc_fname * Current_fname_ptr;
     dptr MainProc;
 
+    dptr NamedGlobals, ENamedGlobals;
+    int NNamedGlobals;
+
     word Coexp_ser;			/* this program's serial numbers */
     word List_ser;
     word Set_ser;
