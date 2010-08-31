@@ -277,8 +277,7 @@ convert_from_macro(time_t)
 #if UNIX
 convert_from_macro(ino_t)
 convert_from_macro(blkcnt_t)
-#endif
-#if PLAN9
+#elif PLAN9
 convert_from_macro(ulong)
 convert_from_macro(vlong)
 #endif
