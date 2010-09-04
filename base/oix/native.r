@@ -270,6 +270,8 @@ static void convert_from_##TYPE(TYPE src, dptr dest)
 convert_to_macro(off_t)
 convert_from_macro(off_t)
 convert_from_macro(time_t)
+convert_to_macro(mode_t)
+convert_from_macro(mode_t)
 #if UNIX
 convert_from_macro(ino_t)
 convert_from_macro(blkcnt_t)
@@ -1505,31 +1507,29 @@ if (self_fd < 0)
 function io_FileStream_open_impl(path, flags, mode)
    if !cnv:C_string(path) then
       runerr(103, path)
-
    if !cnv:C_integer(flags) then
       runerr(101, flags)
-
 #if UNIX
-   if !def:C_integer(mode, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) then
+   if !def:integer(mode, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, mode) then
       runerr(101, mode)
 #else
-   if !def:C_integer(mode, 0664) then
+   if !def:integer(mode, 0664, mode) then
       runerr(101, mode)
 #endif
-
    body {
        int fd;
-
+       mode_t c_mode;
+       if (!convert_to_mode_t(&mode, &c_mode))
+           runerr(0);
 #if MSWIN32
-       fd = open(path, flags | O_BINARY, mode);
+       fd = open(path, flags | O_BINARY, c_mode);
 #else
-       fd = open(path, flags, mode);
+       fd = open(path, flags, c_mode);
 #endif
        if (fd < 0) {
            errno2why();
            fail;
        }
-
        return C_integer fd;
    }
 end
@@ -2431,12 +2431,13 @@ end
 function io_Files_mkdir(s, mode)
    if !cnv:C_string(s) then
       runerr(103, s)
-
-   if !def:C_integer(mode, S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH) then
+   if !def:integer(mode, S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH, mode) then
       runerr(101, mode)
-
    body {
-      if (mkdir(s, mode) < 0) {
+       mode_t c_mode;
+       if (!convert_to_mode_t(&mode, &c_mode))
+           runerr(0);
+      if (mkdir(s, c_mode) < 0) {
 	 errno2why();
 	 fail;
       }
@@ -2533,6 +2534,8 @@ static void stat2list(struct stat *st, dptr result)
 #else
    list_put(result, &zerodesc);
 #endif
+   convert_from_mode_t(st->st_mode, &tmp);
+   list_put(result, &tmp);
    strcpy(mode, "----------");
 #if UNIX
    if (S_ISLNK(st->st_mode)) mode[0] = 'l';

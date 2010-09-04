@@ -119,6 +119,13 @@ void add_ientry(char *name, word val)
     add_entry(name, strdup(buff), 0);
 }
 
+void add_uientry(char *name, uword val)
+{
+    char buff[32];
+    sprintf(buff, "%lu", (unsigned long)val);
+    add_entry(name, strdup(buff), 0);
+}
+
 void add_entry(char *name, char *val, char *comment)
 {
     if (n_entries >= ElemCount(buff)) {
@@ -168,6 +175,7 @@ int main(void)
     start_class("Errno", 0, 0, 0);
 
 #define Const(x) add_ientry(#x,x);
+#define UConst(x) add_uientry(#x,x);
 
 #ifdef EPERM
     Const(EPERM)

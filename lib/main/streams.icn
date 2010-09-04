@@ -834,7 +834,7 @@ class FileStream(DescStream)
    private static create_and_set_mode(fd, mode)
       local f
       f := FileStream(fd, mode)
-      if f.stat().mode[1] == "-" then {
+      if f.stat().mode_str[1] == "-" then {
          if f.can(WRITE) then
             f.mode := ior(f.mode, TRUNCATE)
          f.mode := ior(f.mode, SEEK)

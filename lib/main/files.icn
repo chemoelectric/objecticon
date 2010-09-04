@@ -222,7 +222,7 @@ $endif
    # Succeed iff the given file is a directory.
    #
    public static is_directory(s)
-      return stat(s).mode[1] == "d"
+      return stat(s).mode_str[1] == "d"
    end
 
    #
@@ -621,6 +621,7 @@ class Stat()
       dev,
       ino,
       mode,
+      mode_str,
       nlink,
       uid,
       gid,
@@ -635,6 +636,7 @@ class Stat()
    package new(dev,
                ino,
                mode,
+               mode_str,
                nlink,
                uid,
                gid,
@@ -648,6 +650,7 @@ class Stat()
       self.dev := dev
       self.ino := ino
       self.mode := mode
+      self.mode_str := mode_str
       self.nlink := nlink
       self.uid := uid
       self.gid := gid
