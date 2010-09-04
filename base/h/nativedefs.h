@@ -130,6 +130,9 @@ NativeDef(io.DescStream,flag,io_DescStream_flag)
 NativeDef(io.DescStream,poll,io_DescStream_poll)
 NativeDef(io.DescStream,select,io_DescStream_select)
 NativeDef(io.DescStream,stat_impl,io_DescStream_stat_impl)
+#if PLAN9
+NativeDef(io.DescStream,wstat,io_DescStream_wstat)
+#endif
 NativeDef(io.DescStream,dup2_impl,io_DescStream_dup2_impl)
 NativeDef(io.DirStream,close,io_DirStream_close)
 NativeDef(io.DirStream,open_impl,io_DirStream_open_impl)
@@ -153,6 +156,7 @@ NativeDef(io.Files,list_impl,io_Files_list_impl)
 NativeDef(io.Files,mount,io_Files_mount)
 NativeDef(io.Files,bind,io_Files_bind)
 NativeDef(io.Files,unmount,io_Files_unmount)
+NativeDef(io.Files,wstat,io_Files_wstat)
 #endif
 NativeDef(io.Files,lstat_impl,io_Files_lstat_impl)
 NativeDef(io.Files,mkdir,io_Files_mkdir)

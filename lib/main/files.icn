@@ -68,6 +68,7 @@ $ifdef _PLAN9
    public static defer bind(name, old, flag)
    public static defer mount(f, af, old, flag, aname)
    public static defer unmount(name, old)
+   public static defer wstat(path, mode, mtime, length, name, gid)
 $else
    #
    # Read the given directory returning a list of [name, {Stat}] pairs.

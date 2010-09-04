@@ -650,6 +650,10 @@ class DescStream(Stream, NoCopy)
 
    private defer stat_impl()
 
+$ifdef _PLAN9
+   public defer wstat(mode, mtime, length, name, gid)
+$endif
+
    protected new(fd, mode)
       self.fd := fd
       self.mode := mode

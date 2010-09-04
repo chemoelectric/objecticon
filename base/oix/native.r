@@ -280,6 +280,7 @@ convert_from_macro(blkcnt_t)
 #elif PLAN9
 convert_from_macro(ulong)
 convert_from_macro(vlong)
+convert_to_macro(ulong)
 convert_to_macro(vlong)
 #endif
 convert_from_macro(ulonglong)
@@ -1665,7 +1666,7 @@ function io_FileStream_truncate(self, len)
        GetSelfFd();
 
        nulldir(&st);
-       if (!convert_to_off_t(&len, &st.length))
+       if (!convert_to_vlong(&len, &st.length))
            runerr(0);
 
        if (lseek(self_fd, st.length, SEEK_SET) < 0) {
@@ -2718,7 +2719,7 @@ function io_Files_truncate(s, len)
 #if PLAN9
        struct Dir st;
        nulldir(&st);
-       if (!convert_to_off_t(&len, &st.length))
+       if (!convert_to_vlong(&len, &st.length))
            runerr(0);
        if (dirwstat(s, &st) < 0) {
            errno2why();
@@ -3892,4 +3893,86 @@ function io_Files_unmount(name, old)
    }
 end
 
+#begdef WstatBody()
+{
+   tended char *c_name, *c_gid;
+   nulldir(&st);
+   if (!is:null(mode)) {
+       ulong n = 0;
+       char *p;
+       if (!cnv:string(mode, mode))
+           runerr(103, mode);
+       if (StrLen(mode) != 11)
+           runerr(205, mode);
+       p = StrLoc(mode);
+       if (p[0] == 'd') n |= DMDIR;
+       else if (p[0] == 'a') n |= DMAPPEND;
+       else if (p[0] == 'A') n |= DMAUTH;
+       else if (p[0] != '-') runerr(205, mode);
+       if (p[1] == 'l') n |= DMEXCL; else if (p[1] != '-') runerr(205, mode);
+       if (p[2] == 'r') n |= 0400; else if (p[2] != '-') runerr(205, mode);
+       if (p[3] == 'w') n |= 0200; else if (p[3] != '-') runerr(205, mode);
+       if (p[4] == 'x') n |= 0100; else if (p[4] != '-') runerr(205, mode);
+       if (p[5] == 'r') n |= 0040; else if (p[5] != '-') runerr(205, mode);
+       if (p[6] == 'w') n |= 0020; else if (p[6] != '-') runerr(205, mode);
+       if (p[7] == 'x') n |= 0010; else if (p[7] != '-') runerr(205, mode);
+       if (p[8] == 'r') n |= 0004; else if (p[8] != '-') runerr(205, mode);
+       if (p[9] == 'w') n |= 0002; else if (p[9] != '-') runerr(205, mode);
+       if (p[10] == 'x') n |= 0001; else if (p[10] != '-') runerr(205, mode);
+       st.mode = n;
+   }
+   if (!is:null(mtime)) {
+       if (!cnv:integer(mtime, mtime))
+           runerr(101, mtime);
+       if (!convert_to_ulong(&mtime, &st.mtime))
+           runerr(0);
+   }
+   if (!is:null(length)) {
+       if (!cnv:integer(length, length))
+           runerr(101, length);
+       if (!convert_to_vlong(&length, &st.length))
+           runerr(0);
+   }
+   if (!is:null(name)) {
+       if (!cnv:C_string(name, c_name))
+           runerr(103, name);
+   }
+   if (!is:null(gid)) {
+       if (!cnv:C_string(gid, c_gid))
+           runerr(103, gid);
+   }
+   /* Now safe to put tended strings into struct */
+   if (!is:null(name)) 
+       st.name = c_name;
+   if (!is:null(gid)) 
+       st.gid = c_gid;
+}
+#enddef
+
+function io_Files_wstat(path, mode, mtime, length, name, gid)
+   if !cnv:C_string(path) then
+      runerr(103, path)
+   body {
+       struct Dir st;
+       WstatBody();
+       if (dirwstat(path, &st) < 0) {
+           errno2why();
+           fail;
+       }
+       return nulldesc;
+   }
+end
+
+function io_DescStream_wstat(self, mode, mtime, length, name, gid)
+   body {
+       struct Dir st;
+       GetSelfFd();
+       WstatBody();
+       if (dirfwstat(self_fd, &st) < 0) {
+           errno2why();
+           fail;
+       }
+       return nulldesc;
+   }
+end
 #endif
