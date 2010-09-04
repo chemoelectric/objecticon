@@ -1,0 +1,1025 @@
+package plan9
+
+import io, lang, util, exception
+
+record RAttach(tag, qid)
+record RAuth(tag, aqid)
+record RClunk(tag)
+record RCreate(tag, qid, iounit)
+record RError(tag, ename)
+record RFlush(tag)
+record ROpen(tag, qid, iounit)
+record RRead(tag, data)
+record RRemove(tag)
+record RStat(tag, stat)
+record RVersion(tag, msize, version)
+record RWalk(tag, wqid)
+record RWrite(tag, count)
+record RWstat(tag)
+record TAttach(tag, fid, afid, uname, aname)
+record TAuth(tag, afid, uname, aname)
+record TClunk(tag, fid)
+record TCreate(tag, fid, name, perm, mode)
+record TFlush(tag, oldtag)
+record TOpen(tag, fid, mode)
+record TRead(tag, fid, offset, count)
+record TRemove(tag, fid)
+record TStat(tag, fid)
+record TVersion(tag, msize, version)
+record TWalk(tag, fid, newfid, wname)
+record TWrite(tag, fid, offset, data)
+record TWstat(tag, fid, stat)
+
+record Tinvalid()
+
+record Info(mode, atime, mtime, length, name, uid, gid, muid)
+record Qid(type, version, path)
+
+class File9P(SetFields)
+   private readable
+      parent,
+      name,
+      perm,
+      qversion,
+      qpath,
+      atime,
+      mtime,
+      uid,
+      gid,
+      muid
+
+   private static 
+      qpath_seq, user
+      
+   private static init()
+      qpath_seq := 0
+      user := Files.file_to_string("/env/user") | "none"
+   end
+
+   public defer get_length()
+   public defer set_length(len)
+
+   public open(mode)
+   end
+
+   public close()
+   end
+
+   public get_parent()
+      return \self.parent
+   end
+
+   public get_info()
+      return Info(perm, atime, mtime, get_length(), name, uid, gid, muid)
+   end
+
+   public set_info(x)
+      self.perm := \x.mode
+      self.mtime := \x.mtime
+      if \x.name then
+         set_name(x.name)
+      if \x.length then
+         set_length(x.length)
+      self.gid := \x.gid
+   end
+
+   public set_parent(x)
+      self.parent := x
+   end
+
+   public set_name(x)
+      if \parent then
+         parent.rename_child(self, x)
+      self.name := x
+   end
+
+   public set_perm(x)
+      iand(perm, Comms9P.DMDIR) = iand(x, Comms9P.DMDIR) | 
+         throw("Cannot change directory bit")
+      self.perm := x
+   end
+
+   public set_qversion(x)
+      self.qversion := x
+   end
+
+   public set_mtime(x)
+      self.mtime := x
+   end
+
+   public set_atime(x)
+      self.atime := x
+   end
+
+   public set_uid(x)
+      self.uid := x
+   end
+
+   public set_gid(x)
+      self.gid := x
+   end
+
+   public set_muid(x)
+      self.muid := x
+   end
+
+   public get_qid()
+      return Qid(ishift(perm, -24), qversion, qpath)
+   end
+
+   protected set_one(f)
+      case f.attr of {
+         "name" : set_name(f.string_val())
+         "perm" : set_perm(f.int_val())
+         "qversion" : set_qversion(f.int_val())
+         "mtime" : set_mtime(f.int_val())
+         "atime" : set_atime(f.int_val())
+         "uid" : set_uid(f.string_val())
+         "gid" : set_gid(f.string_val())
+         "muid" : set_muid(f.string_val())
+         default: fail
+      }
+      return
+   end
+
+   public new(a[])
+      self.qversion := 0
+      self.qpath := (qpath_seq +:= 1)
+      self.mtime := self.atime := Time.get_system_seconds()
+      self.uid := self.gid := self.muid := user
+      self.perm := if is(self,Dir9P) then ior(8r777, Comms9P.DMDIR) else 8r666
+      set_fields(a)
+      return
+   end
+end
+
+class Dir9P(File9P)
+   public defer add_child(x)
+   public defer delete_child(x)
+   public defer get_child(x)
+   public defer rename_child(x, s)
+   public defer gen_children()
+   public defer create_child(name, uid, perm)
+end
+
+class Dir9PImpl(Dir9P)
+   private readable
+      ent
+
+   public add_child(x)
+      ent[x.name] := x
+      x.set_parent(self)
+   end
+
+   public delete_child(x)
+      delete(ent, x.name)
+   end
+
+   public get_child(x)
+      return \ent[x]
+   end
+
+   public gen_children(x)
+      suspend !ent
+   end
+
+   public rename_child(x, s)
+      /ent[s] | throw("Can't change name to " || s || " - already exists")
+      delete(ent, x.name)
+      ent[s] := x
+   end
+
+   protected new_dir_child(name, uid, perm)
+      return Dir9PImpl("name=",name, 
+                       "uid=",uid,
+                       "muid=",uid,
+                       "gid=",self.gid,
+                       "perm=",iand(perm, ior(icom(8r777), iand(self.perm, 8r777))))
+   end
+
+   protected new_regular_child(name, uid, perm)
+      return Regular9PImpl("name=",name, 
+                           "uid=",uid,
+                           "muid=",uid,
+                           "gid=",self.gid,
+                           "perm=",iand(perm, ior(icom(8r666), iand(self.perm, 8r666))))
+   end
+
+   public create_child(name, uid, perm)
+      local n
+      n := if iand(perm, Comms9P.DMDIR) = 0 then
+         new_regular_child(name, uid, perm)
+      else
+         new_dir_child(name, uid, perm)
+      add_child(n)
+      return n
+   end
+
+   public get_length()
+      return 0
+   end
+
+   public set_length(len)
+   end
+
+   public new(a[])
+      cast(self,Dir9P).new()
+      ent := table()
+      set_fields(a)
+      return
+   end
+end
+
+class Regular9P(File9P)
+   public defer write(s, pos)
+   public defer read(pos, count)
+   public defer set_length(len)
+end
+
+class Regular9PImpl(Regular9P)
+   private readable
+      data
+
+   public open(mode)
+      if iand(self.perm, Comms9P.DMAPPEND) = 0 &
+         iand(mode, FileOpt.OTRUNC) ~= 0 then
+         data := ""
+   end
+
+   public set_length(len)
+      if len > *data then
+         data ||:= repl("\0", len - *data)
+      else
+         data := data[1+:len]
+   end
+
+   public write(s, pos)
+      if iand(self.perm, Comms9P.DMAPPEND) = 0 then {
+         if pos > *data then
+            data ||:= repl("\0", pos - *data - 1) || s
+         else
+            data[pos:min(pos + *s, *data + 1)] := s
+      } else
+         data ||:= s
+   end
+
+   public read(pos, count)
+      if pos > *data then
+         return ""
+      else
+         return data[pos:min(pos + count, *data + 1)]
+   end
+
+   public get_length()
+      return *data
+   end
+
+   public new(a[])
+      cast(self,Regular9P).new()
+      data := ""
+      set_fields(a)
+      return
+   end
+end
+
+class Comms9P()
+   public static const
+      Tversion,
+      Tauth,
+      Tattach,
+      Tflush,
+      Twalk,
+      Topen,
+      Tcreate,
+      Tread,
+      Twrite,
+      Tclunk,
+      Tremove,
+      Tstat,
+      Twstat,
+      Rversion,
+      Rauth,
+      Rattach,
+      Rerror,
+      Rflush,
+      Rwalk,
+      Ropen,
+      Rcreate,
+      Rread,
+      Rwrite,
+      Rclunk,
+      Rremove,
+      Rstat,
+      Rwstat,
+      QTDIR,
+      QTAPPEND,
+      QTEXCL,
+      QTMOUNT,
+      QTAUTH,
+      QTTMP,
+      AEXEC,
+      AWRITE,
+      AREAD,
+      DMDIR,
+      DMAPPEND,
+      DMEXCL,
+      DMMOUNT,
+      DMAUTH,
+      DMTMP,
+      MAX_32,
+      MAX_64
+
+   private static init()
+      Tversion :=     100
+      Rversion :=     101
+      Tauth :=        102
+      Rauth :=        103
+      Tattach :=      104
+      Rattach :=      105
+      Rerror :=       107
+      Tflush :=       108
+      Rflush :=       109
+      Twalk :=        110
+      Rwalk :=        111
+      Topen :=        112
+      Ropen :=        113
+      Tcreate :=      114
+      Rcreate :=      115
+      Tread :=        116
+      Rread :=        117
+      Twrite :=       118
+      Rwrite :=       119
+      Tclunk :=       120
+      Rclunk :=       121
+      Tremove :=      122
+      Rremove :=      123
+      Tstat :=        124
+      Rstat :=        125
+      Twstat :=       126
+      Rwstat :=       127
+
+      QTDIR :=        16r80
+      QTAPPEND :=     16r40
+      QTEXCL :=       16r20
+      QTMOUNT :=      16r10
+      QTAUTH :=       16r08
+      QTTMP :=        16r04
+
+      AEXEC :=        1
+      AWRITE :=       2
+      AREAD :=        4
+
+      DMDIR :=        16r80000000
+      DMAPPEND :=     16r40000000
+      DMEXCL :=       16r20000000
+      DMMOUNT :=      16r10000000
+      DMAUTH :=       16r08000000
+      DMTMP :=        16r04000000
+
+      MAX_32 :=       16rffffffff
+      MAX_64 :=       16rffffffffffffffff
+   end
+
+   public static int_to_bytes(n, w)
+      local s
+      s := ""
+      every 1 to w do {
+         s ||:= char(iand(n, 255))
+         n := ishift(n, -8)
+      }
+      return s
+   end
+
+   public static bytes_to_int(s)
+      local n, ch
+      n := 0
+      every ch := back(s) do
+         n := ishift(n, 8) + ord(ch)
+      return n
+   end
+
+   public static encode_qid(q)
+      return int_to_bytes(q.type, 1) || 
+         int_to_bytes(q.version, 4) || 
+         int_to_bytes(q.path,8)
+   end
+
+   public static encode_stat(qid, info)
+      local s
+      s := "\0\0\0\0\0\0" || 
+         encode_qid(qid) || 
+         int_to_bytes(info.mode, 4) ||
+         int_to_bytes(info.atime, 4) || 
+         int_to_bytes(info.mtime, 4) || 
+         int_to_bytes(info.length, 8) ||
+         int_to_bytes(*info.name, 2) || info.name ||
+         int_to_bytes(*info.uid, 2) || info.uid ||
+         int_to_bytes(*info.gid, 2) || info.gid ||
+         int_to_bytes(*info.muid, 2) || info.muid
+      return int_to_bytes(*s, 2) || s
+   end
+
+   public static decode_wstat(s)
+      local i, t
+      i := Info()
+      s ? {
+         move(21) | fail          # tab past qid
+         t := get_int4() | fail
+         if t ~= MAX_32 then i.mode := t
+         t := get_int4() | fail
+         if t ~= MAX_32 then i.atime := t
+         t := get_int4() | fail
+         if t ~= MAX_32 then i.mtime := t
+         t := get_int8() | fail
+         if t ~= MAX_64 then i.length := t
+         t := get_data_len2() | fail
+         if *t > 0 then i.name := t
+         t := get_data_len2() | fail
+         if *t > 0 then i.uid := t
+         t := get_data_len2() | fail
+         if *t > 0 then i.gid := t
+         t := get_data_len2() | fail
+         if *t > 0 then i.muid := t
+      }
+      return i
+   end
+
+   public static encode_int4(n)
+      return int_to_bytes(n, 4)
+   end
+
+   public static encode_int2(n)
+      return int_to_bytes(n, 2)
+   end
+
+   public static encode_data_len2(s)
+      return encode_int2(*s) || s
+   end
+
+   public static encode_data_len4(s)
+      return encode_int4(*s) || s
+   end
+
+   public static get_int8()
+      return bytes_to_int(move(8))
+   end
+
+   public static get_int4()
+      return bytes_to_int(move(4))
+   end
+
+   public static get_int2()
+      return bytes_to_int(move(2))
+   end
+
+   public static get_int1()
+      return ord(move(1))
+   end
+
+   public static get_data_len2()
+      return move(get_int2())
+   end
+
+   public static get_data_len4()
+      return move(get_int4())
+   end
+
+   public static get(f)
+      local s, size, body
+      s := f.reads(4) | fail
+      size := (s ? get_int4()) - 4 | return Tinvalid()
+      body := f.reads(size) | fail
+      return decode_body(body) | Tinvalid()
+   end
+
+   public static decode_body(body)
+      local type, f1, f2, f3, f4, tag, n
+      body ? {
+         type := ord(move(1)) | fail
+         tag := get_int2() | fail
+         case type of {
+            Tversion: {
+               f1 := get_int4() | fail
+               f2 := get_data_len2() | fail
+               pos(0) | fail
+               return TVersion(tag, f1, f2)
+            }
+            Tauth: {
+               f1 := get_int4() | fail    # afid
+               f2 := get_data_len2() | fail    # uname
+               f3 := get_data_len2() | fail    # aname
+               pos(0) | fail
+               return TAuth(tag, f1, f2, f3)
+            }
+               
+            Tattach: {
+               f1 := get_int4() | fail    # fid
+               f2 := get_int4() | fail    # afid
+               f3 := get_data_len2() | fail    # uname
+               f4 := get_data_len2() | fail    # aname
+               pos(0) | fail
+               return TAttach(tag, f1, f2, f3, f4)
+            }
+
+            Tflush: {
+               f1 := get_int2() | fail     # oldtag
+               pos(0) | fail
+               return TFlush(tag, f1)
+            }
+
+            Twalk: {
+               f1 := get_int4() | fail    # fid
+               f2 := get_int4() | fail    # newfid
+               n := get_int2() | fail     # nwname
+               f3 := []
+               every 1 to n do
+                  put(f3, get_data_len2()) | fail
+               pos(0) | fail
+               return TWalk(tag, f1, f2, f3)
+            }
+
+            Topen: {
+               f1 := get_int4() | fail    # fid
+               f2 := get_int1() | fail    # mode
+               pos(0) | fail
+               return TOpen(tag, f1, f2)
+            }
+
+            Tcreate: {
+               f1 := get_int4() | fail    # fid
+               f2 := get_data_len2() | fail    # name
+               f3 := get_int4() | fail    # perm
+               f4 := get_int1() | fail    # mode
+               pos(0) | fail
+               return TCreate(tag, f1, f2, f3, f4)
+            }
+
+            Tread: {
+               f1 := get_int4() | fail    # fid
+               f2 := get_int8() | fail    # offset
+               f3 := get_int4() | fail    # count
+               pos(0) | fail
+               return TRead(tag, f1, f2, f3)
+            }
+
+            Twrite: {
+               f1 := get_int4() | fail    # fid
+               f2 := get_int8() | fail    # offset
+               f3 := get_data_len4() | fail    # data
+               pos(0) | fail
+               return TWrite(tag, f1, f2, f3)
+            }
+
+            Tclunk: {
+               f1 := get_int4() | fail    # fid
+               pos(0) | fail
+               return TClunk(tag, f1)
+            }
+            Tremove: {
+               f1 := get_int4() | fail    # fid
+               pos(0) | fail
+               return TRemove(tag, f1)
+            }
+
+            Tstat: {
+               f1 := get_int4() | fail    # fid
+               pos(0) | fail
+               return TStat(tag, f1)
+            }
+
+            Twstat: {
+               f1 := get_int4() | fail         # fid
+               f2 := get_data_len2() | fail    # stat
+               pos(0) | fail
+               return TWstat(tag, f1, f2)
+            }
+
+            default: fail
+         }
+      }
+   end
+
+   public static encode(x)
+      local s
+      case classof(x) of {
+         RVersion: {
+            return encode_int4(13 + *x.version) ||
+               char(Rversion) ||
+               encode_int2(x.tag) ||
+               encode_int4(x.msize) ||
+               encode_data_len2(x.version)
+         }
+
+         RAttach: {
+            return encode_int4(20) ||
+               char(Rattach) ||
+               encode_int2(x.tag) ||
+               x.qid
+         }
+
+         RAuth: {
+            return encode_int4(20) ||
+               char(Rauth) ||
+               encode_int2(x.tag) ||
+               x.aqid
+         }
+
+         RClunk: {
+            return encode_int4(7) ||
+               char(Rclunk) ||
+               encode_int2(x.tag)
+         }
+
+         RFlush: {
+            return encode_int4(7) ||
+               char(Rflush) ||
+               encode_int2(x.tag)
+         }
+
+         RRemove: {
+            return encode_int4(7) ||
+               char(Rremove) ||
+               encode_int2(x.tag)
+         }
+
+         RWstat: {
+            return encode_int4(7) ||
+               char(Rwstat) ||
+               encode_int2(x.tag)
+         }
+
+         RError: {
+            return encode_int4(9 + *x.ename) ||
+               char(Rerror) ||
+               encode_int2(x.tag) ||
+               encode_data_len2(x.ename)
+         }
+
+         RWalk: {
+            s := encode_int4(9 + 13 * *x.wqid) ||
+               char(Rwalk) ||
+               encode_int2(x.tag) ||
+               encode_int2(*x.wqid)
+            every s ||:= !x.wqid
+            return s
+         }
+
+         RCreate: {
+            return encode_int4(24) ||
+               char(Rcreate) ||
+               encode_int2(x.tag) ||
+               x.qid ||
+               encode_int4(x.iounit)
+         }
+
+         ROpen: {
+            return encode_int4(24) ||
+               char(Ropen) ||
+               encode_int2(x.tag) ||
+               x.qid ||
+               encode_int4(x.iounit)
+         }
+
+         RWrite: {
+            return encode_int4(11) ||
+               char(Rwrite) ||
+               encode_int2(x.tag) ||
+               encode_int4(x.count)
+         }
+
+         RRead: {
+            return encode_int4(11 + *x.data) ||
+               char(Rread) ||
+               encode_int2(x.tag) ||
+               encode_data_len4(x.data)
+         }
+
+         RStat: {
+            return encode_int4(9 + *x.stat) ||
+               char(Rstat) ||
+               encode_int2(x.tag) || 
+               encode_data_len2(x.stat)
+         }
+
+         default:
+            runerr("Bad type to encode")
+      }
+   end
+end
+
+class Data9P()
+   public defer get_root(aname)
+   public defer get_parent(p)
+   public defer get_child(p, name)
+   public defer gen_children(p)
+   public defer delete_child(p1, p2)
+   public defer create_child(p, name, uid, perm)
+   public defer open(p, mode)
+   public defer write(p, s, pos)
+   public defer read(p, pos, count)
+   public defer close(p)
+   public defer get_info(p)
+   public defer set_info(p, x)
+   public defer get_qid(p)
+end
+
+class TreeData9P(Data9P)
+   private
+      root
+
+   public get_root(aname)
+      return root
+   end
+
+   public get_parent(p)
+      return p.get_parent()
+   end
+
+   public get_child(p, name)
+      return p.get_child(name)
+   end
+
+   public gen_children(p)
+      suspend p.gen_children()
+   end
+
+   public delete_child(p1, p2)
+      p1.delete_child(p2)
+   end
+
+   public create_child(p, name, uid, perm)
+      return p.create_child(name, uid, perm)
+   end
+
+   public open(p, mode)
+      p.open(mode)
+   end
+
+   public write(p, s, pos)
+      p.write(s, pos)
+   end
+
+   public read(p, pos, count)
+      return p.read(pos, count)
+   end
+
+   public close(p)
+      p.close()
+   end
+
+   public get_info(p)
+      return p.get_info()
+   end
+
+   public set_info(p, x)
+      p.set_info(x)
+   end
+
+   public get_qid(p)
+      return p.get_qid()
+   end
+
+   public new(root)
+      self.root := root
+      return
+   end
+end
+
+record Fid(path, uid, omode, dir)
+
+class Session9P(SetFields)
+   private
+      fids,
+      data,
+      verbose
+
+   private has_perm(path, uid, p)
+      local m, i
+      i := data.get_info(path)
+      # see uid.c
+      m := iand(i.mode, 7)
+      if iand(p, m) = p then
+         return
+      if uid == i.uid then {
+         m := ior(m, iand(ishift(i.mode, 6), 7))
+         if iand(p, m) = p then
+            return
+      }
+      if uid == i.gid then {
+         m := ior(m, iand(ishift(i.mode, 3), 7))
+         if iand(p, m) = p then
+            return
+      }
+   end
+
+   private is_dir(path)
+      return iand(data.get_info(path).mode, Comms9P.DMDIR) ~= 0
+   end
+
+   public respond(x)
+      return try{respond_impl(x)} | RError(x.tag, &why)
+   end
+
+   private respond_impl(x)
+      local o, qids, e, s, i, j, p
+      case classof(x) of {
+         TVersion:
+            return RVersion(65535, 8216, "9P2000")
+         TAttach: {
+            p := data.get_root(x.aname)
+            fids[x.fid] := Fid(p, x.uname)
+            return RAttach(x.tag, Comms9P.encode_qid(data.get_qid(p)))
+         }
+         TClunk: {
+            o := \fids[x.fid] | throw("no such fid:" || x.fid)
+            if \o.omode then {
+               data.close(o.path)
+               if iand(o.omode, FileOpt.ORCLOSE) ~= 0 then
+                  data.delete_child(data.get_parent(o.path), o.path)
+            }
+            delete(fids, x.fid)
+            return RClunk(x.tag)
+         }
+         TRemove: {
+            o := \fids[x.fid] | throw("no such fid:" || x.fid)
+            has_perm(p := data.get_parent(o.path), o.uid, Comms9P.AWRITE) | throw("permission denied")
+            delete(fids, x.fid)
+            data.delete_child(p, o.path)
+            return RRemove(x.tag)
+         }
+         TCreate: {
+            o := \fids[x.fid] | throw("no such fid:" || x.fid)
+            /o.omode | throw("fid already open")
+            is_dir(o.path) | throw("attempt to create in a regular file")
+            has_perm(o.path, o.uid, Comms9P.AWRITE) | throw("permission denied")
+            if data.get_child(o.path, x.name) then
+               throw("create with name which already exists")
+            p := data.create_child(o.path, x.name, o.uid, x.perm)
+            data.open(p, x.mode)
+            fids[x.fid] := Fid(p, o.uid, x.mode)
+            return RCreate(x.tag, Comms9P.encode_qid(data.get_qid(p)), 0)
+         }
+         TOpen: {
+            o := \fids[x.fid] | throw("no such fid:" || x.fid)
+            /o.omode | throw("fid already open")
+            if is_dir(o.path) then {
+               iand(x.mode, icom(FileOpt.ORCLOSE)) = FileOpt.OREAD |
+                  throw("invalid mode for opening a directory")
+            }
+            i := case iand(x.mode, 3) of {
+               FileOpt.OREAD : Comms9P.AREAD
+               FileOpt.OWRITE : Comms9P.AWRITE
+               FileOpt.ORDWR : ior(Comms9P.AREAD, Comms9P.AWRITE)
+               FileOpt.OEXEC : Comms9P.AEXEC
+               default: throw("strange permissions value")
+            }
+            if iand(x.mode, FileOpt.OTRUNC) ~= 0 then
+               i := ior(i, Comms9P.AWRITE)
+            has_perm(o.path, o.uid, i) | throw("permission denied")
+            if iand(x.mode, FileOpt.ORCLOSE) ~= 0 then
+               has_perm(data.get_parent(o.path), o.uid, Comms9P.AWRITE) | throw("permission denied")
+
+            data.open(o.path, x.mode)
+            o.omode := x.mode
+            return ROpen(x.tag, Comms9P.encode_qid(data.get_qid(o.path)), 0)
+         }
+         TWalk: {
+            o := \fids[x.fid] | throw("no such fid:" || x.fid)
+            p := o.path
+            qids := []
+            every e := !x.wname do {
+               if e == ".." then
+                  p := data.get_parent(p)   # Note parent of root is root
+               else 
+                  p := data.get_child(p, e) | break
+               put(qids, Comms9P.encode_qid(data.get_qid(p)))
+            }
+            if *qids = *x.wname then {
+               fids[x.newfid] := Fid(p, o.uid)
+               return RWalk(x.tag, qids)
+            } 
+            if *qids = 0 then
+               throw("file does not exist")
+            return RWalk(x.tag, qids)
+         }
+         TWrite: {
+            o := \fids[x.fid] | throw("no such fid:" || x.fid)
+            (iand(\o.omode, 3) = (FileOpt.OWRITE | FileOpt.ORDWR)) |
+               throw("write on file not open for writing")
+            if is_dir(o.path) then
+               throw("attempt to write to directory")
+            data.write(o.path, x.data, x.offset + 1)
+            return RWrite(x.tag, *x.data)
+         }
+         TRead: {
+            o := \fids[x.fid] | throw("no such fid:" || x.fid)
+            (iand(\o.omode, 3) = (FileOpt.OREAD | FileOpt.OEXEC | FileOpt.ORDWR)) |
+               throw("read on file not open for reading")
+            if is_dir(o.path) then {
+               if x.offset = 0 then {
+                  o.dir := []
+                  every e := data.gen_children(o.path) do
+                     put(o.dir, Comms9P.encode_stat(data.get_qid(e), data.get_info(e)))
+               }
+               s := ""
+               while *s + *o.dir[1] <= x.count do
+                  s ||:= get(o.dir)
+            } else
+               s := data.read(o.path, x.offset + 1, x.count)
+            return RRead(x.tag, s)
+         }
+         TStat: {
+            o := \fids[x.fid] | throw("no such fid:" || x.fid)
+            return RStat(x.tag, Comms9P.encode_stat(data.get_qid(o.path), data.get_info(o.path)))
+         }
+         TWstat: {
+            o := \fids[x.fid] | throw("no such fid:" || x.fid)
+            i := Comms9P.decode_wstat(x.stat)  | throw("invalid wstat data")
+            if \i.name then {
+               has_perm(p := data.get_parent(o.path), o.uid, Comms9P.AWRITE) | throw("permission denied")
+               if data.get_child(p, i.name) then
+                  throw("name already exists")
+            }
+            if \i.length then {
+               has_perm(o.path, o.uid, Comms9P.AWRITE) | throw("permission denied")
+               if i.length ~= 0 & is_dir(o.path) then
+                  throw("cannot set length of directory to non-zero value")
+            }
+            if \i.mtime | \i.mode | \i.gid then {
+               j := data.get_info(o.path)
+               ((j.uid | j.gid) == o.uid) | throw("permission denied")
+               if \i.mode then
+                  iand(i.mode, Comms9P.DMDIR) = iand(j.mode, Comms9P.DMDIR) | 
+                     throw("directory bit cannot be changed")
+            }
+            if \i.atime | \i.uid | \i.muid then
+               throw("invalid value set in wstat")
+
+            data.set_info(o.path, i)
+            return RWstat(x.tag)
+         }
+         TFlush:
+            return RFlush(x.tag)
+         TAuth:
+            throw("authorization not required")
+         default:
+            throw("unknown message type")
+      }
+   end
+
+   public io(f)
+      local x, y
+      while x := Comms9P.get(f) do {
+         if \verbose then write("GOT:", to_string(x))
+         if is(x, Tinvalid) then
+            next
+         y := respond(x)
+         if \verbose then write("SEND:",to_string(y))
+         f.writes(Comms9P.encode(y)) | fail
+      }
+   end
+
+   public poll(f, i)
+      local x, y
+      repeat {
+         if f.stat().size = 0 then
+            return
+         x := Comms9P.get(f) | fail
+         if \verbose then write("GOT:", to_string(x))
+         if is(x, Tinvalid) then
+            next
+         y := respond(x)
+         if \verbose then write("SEND:",to_string(y))
+         f.writes(Comms9P.encode(y)) | fail
+         delay(\i)
+      }
+   end
+
+   public set_data(d)
+      data := d
+   end
+
+   public set_verbose(x)
+      self.verbose := x
+   end
+
+   protected set_one(f)
+      case f.attr of {
+         "data": set_data(f.object_val(Data9P))
+         "verbose": set_verbose(f.flag_val())
+         default: fail
+      }
+      return
+   end
+
+   protected set_special(a)
+      if is(a[1], Data9P) then
+         set_data(pop(a))
+   end
+
+   public new(a[])
+      self.fids := table()
+      set_fields(a)
+      return
+   end
+end
