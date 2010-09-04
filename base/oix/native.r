@@ -2973,7 +2973,7 @@ function io_Files_lstat_impl(s)
 end
 
 #if PLAN9
-function io_Files_list_impl(s)
+function io_Files_dir_read_impl(s)
    if !cnv:C_string(s) then
       runerr(103,s)
    body {
@@ -2994,13 +2994,9 @@ function io_Files_list_impl(s)
       }
       create_list(n, &result);
       for (i = 0; i < n; ++i) {
-          tended struct descrip t1, t2;
-          create_list(2, &t1);
-          cstr2string(st[i].name, &t2);
-          list_put(&t1, &t2);
-          stat2list(&st[i], &t2);
-          list_put(&t1, &t2);
-          list_put(&result, &t1);
+          tended struct descrip t;
+          stat2list(&st[i], &t);
+          list_put(&result, &t);
       }
       free(st);
       return result;

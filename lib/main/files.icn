@@ -54,16 +54,26 @@ $ifdef _PLAN9
    # Read the given directory returning a list of [name, {Stat}] pairs.
    #
    public static list(s)
-      local l, e
-      l := list_impl(s) | fail
-      every e := !l do
-         e[2] := Stat!e[2]
-      push(l, ["..", stat(FS.get_path(s).child("..").str())]) | fail
-      push(l, [".", stat(s)]) | fail
+      local l, t, e, st
+      l := [[".", stat(s)],
+            ["..", stat(FS.get_path(s).child("..").str())]] | fail
+      t := dir_read_impl(s) | fail
+      every e := !t do {
+         st := Stat!e
+         put(l, [st.name, st])
+      }
       return l
    end
 
-   private static defer list_impl(s)
+   public static dir_read(s)
+      local l, t
+      l := []
+      t := dir_read_impl(s) | fail
+      every put(l, Stat!!t)
+      return l
+   end
+
+   private static defer dir_read_impl(s)
 
    public static defer bind(name, old, flag)
    public static defer mount(f, af, old, flag, aname)
