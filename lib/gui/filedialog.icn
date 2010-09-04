@@ -339,7 +339,7 @@ class FileDialog(Dialog)
          if show_hidden_cb.is_checked() | 
             not(Files.is_hidden(e[1])) then 
          {
-            if e[2].mode[1] == "d" then
+            if e[2].mode_str[1] == "d" then
                Files.is_relative_dir(e[1]) | put(dir_list, e[1])
             else {
                if wild_match(!pats, e[1]) then

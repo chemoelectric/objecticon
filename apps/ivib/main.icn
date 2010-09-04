@@ -1258,7 +1258,7 @@ $endif
       plugins := table()
       pp := Files.get_path(prefs.plugin_directory)
       every f := !Files.list(pp.str()) do {
-         if f[2].mode[1] == "-" & upto('x', f[2].mode) then {
+         if f[2].mode_str[1] == "-" & upto('x', f[2].mode_str) then {
             fn := pp.child(f[1]).str()
             ce := Prog.load(fn) | stop("Failed to load plugin:", fn)
             plugin := Prog.get_global("main", ce)() | stop("Plugin didn't return a Plugin from main")

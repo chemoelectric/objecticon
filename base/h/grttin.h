@@ -131,7 +131,7 @@
 /*
  * dummy typedefs for things defined in #include files
  */
-typedef int clock_t, time_t, fd_set, va_list, off_t,
+typedef int clock_t, time_t, fd_set, va_list, off_t, mode_t,
     ino_t, blkcnt_t;
 
 typedef int DIR;

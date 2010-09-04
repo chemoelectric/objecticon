@@ -94,7 +94,7 @@ class File9P(SetFields)
    end
 
    public set_perm(x)
-      iand(perm, Comms9P.DMDIR) = iand(x, Comms9P.DMDIR) | 
+      iand(perm, Mode.DMDIR) = iand(x, Mode.DMDIR) | 
          throw("Cannot change directory bit")
       self.perm := x
    end
@@ -147,7 +147,7 @@ class File9P(SetFields)
       self.qpath := (qpath_seq +:= 1)
       self.mtime := self.atime := Time.get_system_seconds()
       self.uid := self.gid := self.muid := user
-      self.perm := if is(self,Dir9P) then ior(8r777, Comms9P.DMDIR) else 8r666
+      self.perm := if is(self,Dir9P) then ior(8r777, Mode.DMDIR) else 8r666
       set_fields(a)
       return
    end
@@ -212,7 +212,7 @@ class Dir9PImpl(Dir9P)
 
    public create_child(name, uid, perm)
       local n
-      n := if iand(perm, Comms9P.DMDIR) = 0 then
+      n := if iand(perm, Mode.DMDIR) = 0 then
          new_regular_child(name, uid, perm)
       else
          new_dir_child(name, uid, perm)
@@ -246,7 +246,7 @@ class Regular9PImpl(Regular9P)
       data
 
    public open(mode)
-      if iand(self.perm, Comms9P.DMAPPEND) = 0 &
+      if iand(self.perm, Mode.DMAPPEND) = 0 &
          iand(mode, FileOpt.OTRUNC) ~= 0 then
          data := ""
    end
@@ -259,7 +259,7 @@ class Regular9PImpl(Regular9P)
    end
 
    public write(s, pos)
-      if iand(self.perm, Comms9P.DMAPPEND) = 0 then {
+      if iand(self.perm, Mode.DMAPPEND) = 0 then {
          if pos > *data then
             data ||:= repl("\0", pos - *data - 1) || s
          else
@@ -316,21 +316,9 @@ class Comms9P()
       Rremove,
       Rstat,
       Rwstat,
-      QTDIR,
-      QTAPPEND,
-      QTEXCL,
-      QTMOUNT,
-      QTAUTH,
-      QTTMP,
       AEXEC,
       AWRITE,
       AREAD,
-      DMDIR,
-      DMAPPEND,
-      DMEXCL,
-      DMMOUNT,
-      DMAUTH,
-      DMTMP,
       MAX_32,
       MAX_64
 
@@ -363,23 +351,9 @@ class Comms9P()
       Twstat :=       126
       Rwstat :=       127
 
-      QTDIR :=        16r80
-      QTAPPEND :=     16r40
-      QTEXCL :=       16r20
-      QTMOUNT :=      16r10
-      QTAUTH :=       16r08
-      QTTMP :=        16r04
-
       AEXEC :=        1
       AWRITE :=       2
       AREAD :=        4
-
-      DMDIR :=        16r80000000
-      DMAPPEND :=     16r40000000
-      DMEXCL :=       16r20000000
-      DMMOUNT :=      16r10000000
-      DMAUTH :=       16r08000000
-      DMTMP :=        16r04000000
 
       MAX_32 :=       16rffffffff
       MAX_64 :=       16rffffffffffffffff
@@ -850,7 +824,7 @@ class Session9P(SetFields)
          TRemove: {
             o := \fids[x.fid] | throw("no such fid:" || x.fid)
             info := data.get_info(o.path)
-            if iand(info.mode, Comms9P.DMDIR) ~= 0 & not data.is_empty(o.path) then
+            if iand(info.mode, Mode.DMDIR) ~= 0 & not data.is_empty(o.path) then
                throw("directory not empty")
             p := data.get_parent(o.path)
             has_perm(data.get_info(p), o.uid, Comms9P.AWRITE) | throw("permission denied")
@@ -866,7 +840,7 @@ class Session9P(SetFields)
             o := \fids[x.fid] | throw("no such fid:" || x.fid)
             /o.omode | throw("fid already open")
             info := data.get_info(o.path)
-            iand(info.mode, Comms9P.DMDIR) ~= 0 | throw("attempt to create in a regular file")
+            iand(info.mode, Mode.DMDIR) ~= 0 | throw("attempt to create in a regular file")
             has_perm(info, o.uid, Comms9P.AWRITE) | throw("permission denied")
             if data.get_child(o.path, x.name) then
                throw("create with name which already exists")
@@ -879,9 +853,9 @@ class Session9P(SetFields)
             o := \fids[x.fid] | throw("no such fid:" || x.fid)
             /o.omode | throw("fid already open")
             info := data.get_info(o.path)
-            if iand(info.mode, Comms9P.DMEXCL) ~= 0 & member(open_paths, o.path) then
+            if iand(info.mode, Mode.DMEXCL) ~= 0 & member(open_paths, o.path) then
                throw("exclusive use file already open")
-            if iand(info.mode, Comms9P.DMDIR) ~= 0 &
+            if iand(info.mode, Mode.DMDIR) ~= 0 &
                iand(x.mode, icom(FileOpt.ORCLOSE)) ~= FileOpt.OREAD then
                   throw("invalid mode for opening a directory")
             i := case iand(x.mode, 3) of {
@@ -927,7 +901,7 @@ class Session9P(SetFields)
             (iand(\o.omode, 3) = (FileOpt.OWRITE | FileOpt.ORDWR)) |
                throw("write on file not open for writing")
             info := data.get_info(o.path)
-            if iand(info.mode, Comms9P.DMDIR) ~= 0 then
+            if iand(info.mode, Mode.DMDIR) ~= 0 then
                throw("attempt to write to directory")
             data.write(o.path, x.data, x.offset + 1)
             return RWrite(x.tag, *x.data)
@@ -937,7 +911,7 @@ class Session9P(SetFields)
             (iand(\o.omode, 3) = (FileOpt.OREAD | FileOpt.OEXEC | FileOpt.ORDWR)) |
                throw("read on file not open for reading")
             info := data.get_info(o.path)
-            if iand(info.mode, Comms9P.DMDIR) ~= 0 then {
+            if iand(info.mode, Mode.DMDIR) ~= 0 then {
                if x.offset = 0 then {
                   o.dir := []
                   every e := data.gen_children(o.path) do
@@ -966,12 +940,12 @@ class Session9P(SetFields)
             }
             if \i.length then {
                has_perm(info, o.uid, Comms9P.AWRITE) | throw("permission denied")
-               if i.length ~= 0 & iand(info.mode, Comms9P.DMDIR) ~= 0 then
+               if i.length ~= 0 & iand(info.mode, Mode.DMDIR) ~= 0 then
                   throw("cannot set length of directory to non-zero value")
             }
             if \i.mtime | \i.mode | \i.gid then {
                ((info.uid | info.gid) == o.uid) | throw("permission denied")
-               if \i.mode & iand(i.mode, Comms9P.DMDIR) ~= iand(info.mode, Comms9P.DMDIR) then
+               if \i.mode & iand(i.mode, Mode.DMDIR) ~= iand(info.mode, Mode.DMDIR) then
                   throw("directory bit cannot be changed")
             }
             if \i.atime | \i.uid | \i.muid then

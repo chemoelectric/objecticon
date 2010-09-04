@@ -90,7 +90,7 @@ class DirectoryDialog(Dialog)
       }
       dir_list := []
       every e := !l do {
-         if e[2].mode[1] == "d" &
+         if e[2].mode_str[1] == "d" &
             not(Files.is_relative_dir(e[1])) &
             (show_hidden_cb.is_checked() | 
                not(Files.is_hidden(e[1]))) then
