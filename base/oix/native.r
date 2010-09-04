@@ -2484,23 +2484,29 @@ end
 function io_Files_truncate(s, len)
    if !cnv:C_string(s) then
       runerr(103,s)
-   if !cnv:C_integer(len) then
+   if !cnv:integer(len) then
       runerr(101, len)
    body {
 #if HAVE_TRUNCATE
-      if (truncate(s, len) < 0) {
+      off_t c_len;
+      if (!convert_to_off_t(&len, &c_len))
+          runerr(0);
+      if (truncate(s, c_len) < 0) {
           errno2why();
           fail;
       }
       return nulldesc;
 #else
       int fd;
+      off_t c_len;
+      if (!convert_to_off_t(&len, &c_len))
+          runerr(0);
       fd = open(s, O_WRONLY, 0);
       if (fd < 0) {
            errno2why();
            fail;
       }
-      if (ftruncate(fd, len) < 0) {
+      if (ftruncate(fd, c_len) < 0) {
            errno2why();
            close(fd);
            fail;
