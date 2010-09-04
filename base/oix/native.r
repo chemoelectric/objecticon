@@ -280,6 +280,7 @@ convert_from_macro(blkcnt_t)
 #elif PLAN9
 convert_from_macro(ulong)
 convert_from_macro(vlong)
+convert_to_macro(vlong)
 #endif
 convert_from_macro(ulonglong)
 
@@ -1660,7 +1661,22 @@ function io_FileStream_truncate(self, len)
       runerr(101, len)
    body {
 #if PLAN9
-       Unsupported;
+       struct Dir st;
+       GetSelfFd();
+
+       nulldir(&st);
+       if (!convert_to_off_t(&len, &st.length))
+           runerr(0);
+
+       if (lseek(self_fd, st.length, SEEK_SET) < 0) {
+           errno2why();
+           fail;
+       }
+       if (dirfwstat(self_fd, &st) < 0) {
+           errno2why();
+           fail;
+       }
+       return nulldesc;
 #else
        off_t c_len;
        GetSelfFd();
@@ -2696,25 +2712,39 @@ end
 function io_Files_truncate(s, len)
    if !cnv:C_string(s) then
       runerr(103,s)
-   if !cnv:C_integer(len) then
+   if !cnv:integer(len) then
       runerr(101, len)
    body {
 #if PLAN9
-       Unsupported
+       struct Dir st;
+       nulldir(&st);
+       if (!convert_to_off_t(&len, &st.length))
+           runerr(0);
+       if (dirwstat(s, &st) < 0) {
+           errno2why();
+           fail;
+       }
+       return nulldesc;
 #elif HAVE_TRUNCATE
-      if (truncate(s, len) < 0) {
+      off_t c_len;
+      if (!convert_to_off_t(&len, &c_len))
+          runerr(0);
+      if (truncate(s, c_len) < 0) {
           errno2why();
           fail;
       }
       return nulldesc;
 #else
       int fd;
+      off_t c_len;
+      if (!convert_to_off_t(&len, &c_len))
+          runerr(0);
       fd = open(s, O_WRONLY, 0);
       if (fd < 0) {
            errno2why();
            fail;
       }
-      if (ftruncate(fd, len) < 0) {
+      if (ftruncate(fd, c_len) < 0) {
            errno2why();
            close(fd);
            fail;
