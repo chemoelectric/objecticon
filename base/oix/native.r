@@ -3898,34 +3898,10 @@ end
    tended char *c_name, *c_gid;
    nulldir(&st);
    if (!is:null(mode)) {
-       ulong n;
-       if (cnv:integer(mode, mode)) {
-           if (!convert_to_ulong(&mode, &n))
-               runerr(0);
-       } else {
-           char *p;
-           if (!cnv:string(mode, mode))
-               runerr(103, mode);
-           if (StrLen(mode) != 11)
-               runerr(205, mode);
-           p = StrLoc(mode);
-           n = 0;
-           if (p[0] == 'd') n |= DMDIR;
-           else if (p[0] == 'a') n |= DMAPPEND;
-           else if (p[0] == 'A') n |= DMAUTH;
-           else if (p[0] != '-') runerr(205, mode);
-           if (p[1] == 'l') n |= DMEXCL; else if (p[1] != '-') runerr(205, mode);
-           if (p[2] == 'r') n |= 0400; else if (p[2] != '-') runerr(205, mode);
-           if (p[3] == 'w') n |= 0200; else if (p[3] != '-') runerr(205, mode);
-           if (p[4] == 'x') n |= 0100; else if (p[4] != '-') runerr(205, mode);
-           if (p[5] == 'r') n |= 0040; else if (p[5] != '-') runerr(205, mode);
-           if (p[6] == 'w') n |= 0020; else if (p[6] != '-') runerr(205, mode);
-           if (p[7] == 'x') n |= 0010; else if (p[7] != '-') runerr(205, mode);
-           if (p[8] == 'r') n |= 0004; else if (p[8] != '-') runerr(205, mode);
-           if (p[9] == 'w') n |= 0002; else if (p[9] != '-') runerr(205, mode);
-           if (p[10] == 'x') n |= 0001; else if (p[10] != '-') runerr(205, mode);
-       }
-       st.mode = n;
+       if (!cnv:integer(mode, mode))
+           runerr(101, mode);
+       if (!convert_to_ulong(&mode, &st.mode))
+           runerr(0);
    }
    if (!is:null(mtime)) {
        if (!cnv:integer(mtime, mtime))
