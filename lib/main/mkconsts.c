@@ -758,83 +758,83 @@ int main(void)
         start_class("Mode", "S_", 0, 0);
 
 #ifdef S_IFMT
-        Const(S_IFMT)
+        UConst(S_IFMT)
 #endif
 #ifdef S_IFSOCK
-        Const(S_IFSOCK)
+        UConst(S_IFSOCK)
 #endif
 #ifdef S_IFLNK
-        Const(S_IFLNK)
+        UConst(S_IFLNK)
 #endif
 #ifdef S_IFREG
-        Const(S_IFREG)
+        UConst(S_IFREG)
 #endif
 #ifdef S_IFBLK
-        Const(S_IFBLK)
+        UConst(S_IFBLK)
 #endif
 #ifdef S_IFDIR
-        Const(S_IFDIR)
+        UConst(S_IFDIR)
 #endif
 #ifdef S_IFCHR
-        Const(S_IFCHR)
+        UConst(S_IFCHR)
 #endif
 #ifdef S_IFIFO
-        Const(S_IFIFO)
+        UConst(S_IFIFO)
 #endif
 #ifdef S_ISUID
-        Const(S_ISUID)
+        UConst(S_ISUID)
 #endif
 #ifdef S_ISGID
-        Const(S_ISGID)
+        UConst(S_ISGID)
 #endif
 #ifdef S_ISVTX
-        Const(S_ISVTX)
+        UConst(S_ISVTX)
 #endif
 
 #ifdef S_IRUSR
-        Const(S_IRUSR)
+        UConst(S_IRUSR)
 #endif
 #ifdef S_IWUSR
-        Const(S_IWUSR)
+        UConst(S_IWUSR)
 #endif
 #ifdef S_IXUSR
-        Const(S_IXUSR)
+        UConst(S_IXUSR)
 #endif
 #ifdef S_IRWXU
-        Const(S_IRWXU)
+        UConst(S_IRWXU)
 #endif
 #ifdef S_IREAD
-        Const(S_IREAD)
+        UConst(S_IREAD)
 #endif
 #ifdef S_IWRITE
-        Const(S_IWRITE)
+        UConst(S_IWRITE)
 #endif
 #ifdef S_IEXEC
-        Const(S_IEXEC)
+        UConst(S_IEXEC)
 #endif
 #ifdef S_IRGRP
-        Const(S_IRGRP)
+        UConst(S_IRGRP)
 #endif
 #ifdef S_IWGRP
-        Const(S_IWGRP)
+        UConst(S_IWGRP)
 #endif
 #ifdef S_IXGRP
-        Const(S_IXGRP)
+        UConst(S_IXGRP)
 #endif
 #ifdef S_IRWXG
-        Const(S_IRWXG)
+        UConst(S_IRWXG)
 #endif
 #ifdef S_IROTH
-        Const(S_IROTH)
+        UConst(S_IROTH)
 #endif
 #ifdef S_IWOTH
-        Const(S_IWOTH)
+        UConst(S_IWOTH)
 #endif
 #ifdef S_IXOTH
-        Const(S_IXOTH)
+        UConst(S_IXOTH)
 #endif
 #ifdef S_IRWXO
-        Const(S_IRWXO)
+        UConst(S_IRWXO)
 #endif
 
     end_class();
