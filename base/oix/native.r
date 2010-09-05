@@ -280,10 +280,11 @@ convert_from_macro(mode_t)
 convert_from_macro(ino_t)
 convert_from_macro(blkcnt_t)
 #elif PLAN9
-convert_from_macro(ulong)
-convert_from_macro(vlong)
 convert_to_macro(ulong)
+convert_from_macro(ulong)
 convert_to_macro(vlong)
+convert_from_macro(vlong)
+convert_from_macro(uvlong)
 #endif
 convert_from_macro(ulonglong)
 
@@ -2814,7 +2815,13 @@ static void stat2list(struct Dir *st, dptr result)
    list_put(result, &tmp);
    list_put(result, &tmp);
 
-   bytes2string((char *)&st->qid, sizeof(struct Qid), &tmp);
+   convert_from_uvlong(st->qid.path, &tmp);
+   list_put(result, &tmp);
+
+   convert_from_ulong(st->qid.vers, &tmp);
+   list_put(result, &tmp);
+
+   MakeInt(st->qid.type, &tmp);
    list_put(result, &tmp);
 }
 

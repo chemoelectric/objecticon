@@ -678,7 +678,9 @@ class Stat()
       atime,
       mtime,
       ctime,
-      qid
+      qpath,
+      qvers,
+      qtype
 
    package new(dev,
                ino,
@@ -697,7 +699,9 @@ class Stat()
                atime,
                mtime,
                ctime,
-               qid)
+               qpath,
+               qvers,
+               qtype)
       self.dev := dev
       self.ino := ino
       self.mode := mode
@@ -715,7 +719,9 @@ class Stat()
       self.atime := atime
       self.mtime := mtime
       self.ctime := ctime
-      self.qid := qid
+      self.qpath := qpath
+      self.qvers := qvers
+      self.qtype := qtype
       return
    end
 end
