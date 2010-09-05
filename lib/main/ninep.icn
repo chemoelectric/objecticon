@@ -59,6 +59,12 @@ class File9P(SetFields)
    public defer get_length()
    public defer set_length(len)
 
+   public modified(uid)
+      self.qversion +:= 1
+      self.muid := uid
+      self.mtime := Time.get_system_seconds()
+   end
+
    public open(mode)
    end
 
@@ -694,6 +700,7 @@ class Data9P()
    public defer delete_child(p1, p2)
    public defer create_child(p, name, uid, perm)
    public defer is_empty(p)
+   public defer modified(p, uid)
    public defer open(p, mode)
    public defer write(p, s, pos)
    public defer read(p, pos, count)
@@ -735,6 +742,10 @@ class TreeData9P(Data9P)
       return p.is_empty()
    end
    
+   public modified(p, uid)
+      p.modified(uid)
+   end
+
    public open(p, mode)
       p.open(mode)
    end
@@ -814,9 +825,12 @@ class Session9P(SetFields)
             o := \fids[x.fid] | throw("no such fid:" || x.fid)
             if \o.omode then {
                data.close(o.path)
-               delete(open_paths, o.path)
-               if iand(o.omode, FileOpt.ORCLOSE) ~= 0 then
-                  data.delete_child(data.get_parent(o.path), o.path)
+               if (open_paths[o.path] -:= 1) <= 0 then delete(open_paths, o.path)
+               if iand(o.omode, FileOpt.ORCLOSE) ~= 0 then {
+                  p := data.get_parent(o.path)
+                  data.delete_child(p, o.path)
+                  data.modified(p, o.uid)
+               }
             }
             delete(fids, x.fid)
             return RClunk(x.tag)
@@ -830,10 +844,11 @@ class Session9P(SetFields)
             has_perm(data.get_info(p), o.uid, Comms9P.AWRITE) | throw("permission denied")
             if \o.omode then {
                data.close(o.path)
-               delete(open_paths, o.path)
+               if (open_paths[o.path] -:= 1) <= 0 then delete(open_paths, o.path)
             }
-            delete(fids, x.fid)
             data.delete_child(p, o.path)
+            data.modified(p, o.uid)
+            delete(fids, x.fid)
             return RRemove(x.tag)
          }
          TCreate: {
@@ -846,6 +861,7 @@ class Session9P(SetFields)
                throw("create with name which already exists")
             p := data.create_child(o.path, x.name, o.uid, x.perm)
             data.open(p, x.mode)
+            data.modified(o.path, o.uid)
             fids[x.fid] := Fid(p, o.uid, x.mode)
             return RCreate(x.tag, Comms9P.encode_qid(data.get_qid(p)), 0)
          }
@@ -853,7 +869,7 @@ class Session9P(SetFields)
             o := \fids[x.fid] | throw("no such fid:" || x.fid)
             /o.omode | throw("fid already open")
             info := data.get_info(o.path)
-            if iand(info.mode, Mode.DMEXCL) ~= 0 & member(open_paths, o.path) then
+            if iand(info.mode, Mode.DMEXCL) ~= 0 & open_paths[o.path] > 0 then
                throw("exclusive use file already open")
             if iand(info.mode, Mode.DMDIR) ~= 0 &
                iand(x.mode, icom(FileOpt.ORCLOSE)) ~= FileOpt.OREAD then
@@ -874,7 +890,7 @@ class Session9P(SetFields)
             }
             data.open(o.path, x.mode)
             o.omode := x.mode
-            insert(open_paths, o.path)
+            open_paths[o.path] +:= 1
             return ROpen(x.tag, Comms9P.encode_qid(data.get_qid(o.path)), 0)
          }
          TWalk: {
@@ -904,6 +920,7 @@ class Session9P(SetFields)
             if iand(info.mode, Mode.DMDIR) ~= 0 then
                throw("attempt to write to directory")
             data.write(o.path, x.data, x.offset + 1)
+            data.modified(o.path, o.uid)
             return RWrite(x.tag, *x.data)
          }
          TRead: {
@@ -952,6 +969,11 @@ class Session9P(SetFields)
                throw("invalid value set in wstat")
 
             data.set_info(o.path, i)
+            if \i.name then
+               data.modified(p, o.uid)
+            if \i.length then
+               data.modified(o.path, o.uid)
+
             return RWstat(x.tag)
          }
          TFlush:
@@ -1015,7 +1037,7 @@ class Session9P(SetFields)
 
    public new(a[])
       self.fids := table()
-      self.open_paths := set()
+      self.open_paths := table(0)
       set_fields(a)
       return
    end
