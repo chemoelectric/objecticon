@@ -911,16 +911,11 @@ static void wmap(wbp w)
         size_hints.flags = PSize | PMinSize | PMaxSize;
         size_hints.width = ws->width;
         size_hints.height= ws->height;
-        if (ws->x == -(INT_MAX)) 
-            ws->x = 0;
-        else
+        if (ws->x != -INT_MAX && ws->y != -INT_MAX) {
             size_hints.flags |= USPosition;
-        if (ws->y == -(INT_MAX)) 
-            ws->y = 0;
-        else 
-            size_hints.flags |= USPosition;
-        size_hints.x = ws->x;
-        size_hints.y = ws->y;
+            size_hints.x = ws->x;
+            size_hints.y = ws->y;
+        }
         if (ISRESIZABLE(ws)) {
             size_hints.min_width = ws->minwidth;
             size_hints.min_height = ws->minheight;
