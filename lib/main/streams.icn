@@ -652,6 +652,7 @@ class DescStream(Stream, NoCopy)
 
 $ifdef _PLAN9
    public defer wstat(mode, mtime, length, name, gid)
+   public defer length()
 $endif
 
    protected new(fd, mode)

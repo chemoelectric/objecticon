@@ -3960,4 +3960,20 @@ function io_DescStream_wstat(self, mode, mtime, length, name, gid)
        return nulldesc;
    }
 end
+
+function io_DescStream_length(self)
+   body {
+       tended struct descrip result;
+       struct Dir *st;
+       GetSelfFd();
+       if (!(st = dirfstat(self_fd))) {
+           errno2why();
+           fail;
+       }
+       convert_from_vlong(st->length, &result);
+       free(st);
+       return result;
+   }
+end
+
 #endif
