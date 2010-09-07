@@ -47,7 +47,7 @@ class File9P(SetFields)
       uid,
       gid,
       muid,
-      fixed_perm
+      fixed
 
    private static 
       qpath_seq, user
@@ -84,7 +84,7 @@ class File9P(SetFields)
    end
 
    public set_info(x)
-      if \x.mode & \fixed_perm then throw("permission bits cannot be changed")
+      if \fixed & (\x.mode | \x.mtime | \x.gid) then throw("permission denied")
       set_perm(\x.mode)
       set_mtime(\x.mtime)
       set_name(\x.name)
@@ -102,15 +102,10 @@ class File9P(SetFields)
       self.name := x
    end
 
-   public set_fixed_perm(x)
-      set_perm(x)
-      fixed_perm := 1
-   end
-
-   public set_perm(x)
-      iand(perm, Mode.DMDIR) = iand(x, Mode.DMDIR) | 
-         runerr("Cannot change directory bit")
+   public set_perm(x, y)
+      iand(perm, Mode.DMDIR) = iand(x, Mode.DMDIR) | runerr("Cannot change directory bit")
       self.perm := x
+      self.fixed := y
    end
 
    public set_qversion(x)
@@ -145,7 +140,7 @@ class File9P(SetFields)
       case f.attr of {
          "name" : set_name(f.string_val())
          "perm" : set_perm(f.int_val())
-         "fixed_perm" : set_fixed_perm(f.int_val())
+         "fixed_perm" : set_perm(f.int_val(), &yes)
          "qversion" : set_qversion(f.int_val())
          "mtime" : set_mtime(f.int_val())
          "atime" : set_atime(f.int_val())
