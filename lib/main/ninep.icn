@@ -74,20 +74,6 @@ class File9P(SetFields)
    public path_unreferenced()
    end
 
-   public path_string()
-      local s, t
-      t := parent
-      s := name
-      while \t do {
-         if t.name == "/" then
-            s := "/" || s
-         else
-            s := t.name || "/" || s
-         t := t.parent
-      }
-      return s
-   end
-
    public get_parent()
       return \self.parent
    end
@@ -300,6 +286,18 @@ class Regular9PImpl(Regular9P)
 
    public get_length()
       return *data
+   end
+
+   public set_data(s)
+      data := s
+   end
+
+   protected set_one(f)
+      case f.attr of {
+         "data" : set_data(f.string_val())
+         default: return cast(self,Regular9P).set_one(f)
+      }
+      return
    end
 
    public new(a[])
@@ -726,7 +724,6 @@ class Data9P()
    public defer set_info(p, x)
    public defer get_qid(p)
    public defer path_unreferenced(p)
-   public defer path_string(p)
 end
 
 class TreeData9P(Data9P)
@@ -797,10 +794,6 @@ class TreeData9P(Data9P)
       p.path_unreferenced()
    end
 
-   public path_string(p)
-      return p.path_string()
-   end
-
    public new(root)
       self.root := root
       return
@@ -835,18 +828,39 @@ class Session9P(SetFields)
       return \fids[!paths[path]].omode
    end
 
+   private lookup(n)
+      return \fids[n] | throw("no such fid:" || n)
+   end
+
    private check_referenced(path)
       member(paths, path) | data.path_unreferenced(path)
+   end
+
+   private path_string(path)
+      local s, t, n
+      s := ""
+      t := path
+      repeat {
+         n := data.get_info(t).name
+         if n == "/" then
+            s := "/" || s
+         else if *s = 0 then
+            s := n
+         else
+            s := n || "/" || s
+         t := data.get_parent(t) | break
+      }
+      return s
    end
 
    public dump()
       local e
       write("Fids(",*fids,")")
       every e := !sort(fids) do
-         write(e[1], " -> Fid(", data.path_string(e[2].path), ", ", e[2].uid, ", ", if \e[2].omode then "open" else "closed", ")")
+         write(e[1], " -> Fid(", path_string(e[2].path), ", ", e[2].uid, ", ", if \e[2].omode then "open" else "closed", ")")
       write("Paths(",*paths,")")
       every e := !sort(paths) do {
-         writes(data.path_string(e[1]), " -> ")
+         writes(path_string(e[1]), " -> ")
          every writes(!e[2], " ")
          write()
       }
@@ -885,7 +899,7 @@ class Session9P(SetFields)
             return RAttach(x.tag, Comms9P.encode_qid(data.get_qid(p)))
          }
          TClunk: {
-            o := \fids[x.fid] | throw("no such fid:" || x.fid)
+            o := lookup(x.fid)
             del_fid(x.fid)
             if \o.omode then {
                data.close(o.path)
@@ -899,7 +913,7 @@ class Session9P(SetFields)
             return RClunk(x.tag)
          }
          TRemove: {
-            o := \fids[x.fid] | throw("no such fid:" || x.fid)
+            o := lookup(x.fid)
             del_fid(x.fid)
             info := data.get_info(o.path)
             if iand(info.mode, Mode.DMDIR) ~= 0 & not data.is_empty(o.path) then
@@ -914,7 +928,7 @@ class Session9P(SetFields)
             return RRemove(x.tag)
          }
          TCreate: {
-            o := \fids[x.fid] | throw("no such fid:" || x.fid)
+            o := lookup(x.fid)
             /o.omode | throw("fid already open")
             info := data.get_info(o.path)
             iand(info.mode, Mode.DMDIR) ~= 0 | throw("attempt to create in a regular file")
@@ -930,7 +944,7 @@ class Session9P(SetFields)
             return RCreate(x.tag, Comms9P.encode_qid(data.get_qid(p)), 0)
          }
          TOpen: {
-            o := \fids[x.fid] | throw("no such fid:" || x.fid)
+            o := lookup(x.fid)
             /o.omode | throw("fid already open")
             info := data.get_info(o.path)
             if iand(info.mode, Mode.DMEXCL) ~= 0 & is_path_open(o.path) > 0 then
@@ -957,7 +971,7 @@ class Session9P(SetFields)
             return ROpen(x.tag, Comms9P.encode_qid(data.get_qid(o.path)), 0)
          }
          TWalk: {
-            o := \fids[x.fid] | throw("no such fid:" || x.fid)
+            o := lookup(x.fid)
             if is_path_open(o.path) then
                throw("cannot clone open fid")
             p := o.path
@@ -979,7 +993,7 @@ class Session9P(SetFields)
             return RWalk(x.tag, qids)
          }
          TWrite: {
-            o := \fids[x.fid] | throw("no such fid:" || x.fid)
+            o := lookup(x.fid)
             (iand(\o.omode, 3) = (FileOpt.OWRITE | FileOpt.ORDWR)) |
                throw("write on file not open for writing")
             info := data.get_info(o.path)
@@ -990,7 +1004,7 @@ class Session9P(SetFields)
             return RWrite(x.tag, *x.data)
          }
          TRead: {
-            o := \fids[x.fid] | throw("no such fid:" || x.fid)
+            o := lookup(x.fid)
             (iand(\o.omode, 3) = (FileOpt.OREAD | FileOpt.OEXEC | FileOpt.ORDWR)) |
                throw("read on file not open for reading")
             info := data.get_info(o.path)
@@ -1008,11 +1022,11 @@ class Session9P(SetFields)
             return RRead(x.tag, s)
          }
          TStat: {
-            o := \fids[x.fid] | throw("no such fid:" || x.fid)
+            o := lookup(x.fid)
             return RStat(x.tag, Comms9P.encode_stat(data.get_qid(o.path), data.get_info(o.path)))
          }
          TWstat: {
-            o := \fids[x.fid] | throw("no such fid:" || x.fid)
+            o := lookup(x.fid)
             i := Comms9P.decode_wstat(x.stat)  | throw("invalid wstat data")
             info := data.get_info(o.path)
             if \i.name then {
