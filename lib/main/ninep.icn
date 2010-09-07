@@ -46,7 +46,8 @@ class File9P(SetFields)
       mtime,
       uid,
       gid,
-      muid
+      muid,
+      fixed_perm
 
    private static 
       qpath_seq, user
@@ -75,7 +76,7 @@ class File9P(SetFields)
    end
 
    public get_parent()
-      return \self.parent
+      return .\self.parent
    end
 
    public get_info()
@@ -83,28 +84,32 @@ class File9P(SetFields)
    end
 
    public set_info(x)
-      self.perm := \x.mode
-      self.mtime := \x.mtime
-      if \x.name then
-         set_name(x.name)
-      if \x.length then
-         set_length(x.length)
-      self.gid := \x.gid
+      if \x.mode & \fixed_perm then throw("permission bits cannot be changed")
+      set_perm(\x.mode)
+      set_mtime(\x.mtime)
+      set_name(\x.name)
+      set_length(\x.length)
+      set_gid(\x.gid)
    end
 
-   public set_parent(x)
+   package set_parent(x)
       self.parent := x
    end
 
    public set_name(x)
-      if \parent then
+      if \parent & (\self.name ~== x) then
          parent.rename_child(self, x)
       self.name := x
    end
 
+   public set_fixed_perm(x)
+      set_perm(x)
+      fixed_perm := 1
+   end
+
    public set_perm(x)
       iand(perm, Mode.DMDIR) = iand(x, Mode.DMDIR) | 
-         throw("Cannot change directory bit")
+         runerr("Cannot change directory bit")
       self.perm := x
    end
 
@@ -140,6 +145,7 @@ class File9P(SetFields)
       case f.attr of {
          "name" : set_name(f.string_val())
          "perm" : set_perm(f.int_val())
+         "fixed_perm" : set_fixed_perm(f.int_val())
          "qversion" : set_qversion(f.int_val())
          "mtime" : set_mtime(f.int_val())
          "atime" : set_atime(f.int_val())
@@ -166,39 +172,41 @@ class Dir9P(File9P)
    public defer add_child(x)
    public defer delete_child(x)
    public defer get_child(x)
-   public defer rename_child(x, s)
+   package defer rename_child(x, s)
    public defer gen_children()
    public defer create_child(name, uid, perm)
    public defer is_empty()
 end
 
 class Dir9PImpl(Dir9P)
-   private readable
+   private
       ent
 
    public add_child(x)
-      ent[x.name] := x
+      \x.name | runerr("Child name not set")
+      (/ent[x.name] := x) | runerr("Can't add child named " || x.name || " - already exists")
       x.set_parent(self)
    end
 
    public delete_child(x)
       delete(ent, x.name)
+      x.set_parent()
    end
 
    public get_child(x)
-      return \ent[x]
+      return .\ent[x]
    end
 
    public gen_children()
-      suspend !ent
+      suspend .!ent
    end
 
    public is_empty()
       return *ent = 0
    end
 
-   public rename_child(x, s)
-      /ent[s] | throw("Can't change name to " || s || " - already exists")
+   package rename_child(x, s)
+      /ent[s] | runerr("Can't change name to " || s || " - already exists")
       delete(ent, x.name)
       ent[s] := x
    end
