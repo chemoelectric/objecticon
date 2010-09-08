@@ -70,7 +70,7 @@ class NetClient(Connectable, SetFields)
    # then no timeout will be used.
    #
    public set_timeout(timeout)
-      return self.timeout := timeout
+      self.timeout := timeout
    end
 
    #
