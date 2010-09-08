@@ -908,9 +908,9 @@ $ifdef _PLAN9
       local f
       f := FileStream(fd, mode)
       if f.tell() then {
-         f.mode := ior(f.mode, SEEK)
          if f.can(WRITE) then
             f.mode := ior(f.mode, TRUNCATE)
+         f.mode := ior(f.mode, SEEK)
       } else
          &why := ""
       return f
