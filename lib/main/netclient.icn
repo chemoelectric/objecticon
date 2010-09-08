@@ -4,10 +4,16 @@
 
 package net
 
+$ifdef _PLAN9
+import 
+   util, 
+   io
+$else
 import 
    util, 
    io,
    posix
+$endif
 
 #
 # Common base class for a client class which holds a connection to a
@@ -70,9 +76,23 @@ class NetClient(Connectable, SetFields)
    # then no timeout will be used.
    #
    public set_timeout(timeout)
-      return self.timeout := timeout
+      self.timeout := timeout
    end
 
+$ifdef _PLAN9
+   #
+   # Open the connection.
+   #
+   protected open()
+      local addr
+      close() | fail
+      addr := "tcp!" || server || "!" || port
+      connection := NetStream.dial(addr) | return error("Couldn't connect to " || addr || ": " || &why)
+      sbuff := ""
+      fire(CONNECTED_EVENT)
+      return
+   end
+$else
    #
    # Open the connection.
    #
@@ -115,6 +135,7 @@ class NetClient(Connectable, SetFields)
       fire(CONNECTED_EVENT)
       return
    end
+$endif
 
    #
    # Close the connection
@@ -149,6 +170,26 @@ class NetClient(Connectable, SetFields)
       port := n
    end
 
+$ifdef _PLAN9
+   #
+   # Low-level write on the connection. 
+   #
+   private send(s)
+      local i
+      while *s > 0 do {
+         i := connection.out(s) | fail
+         s := s[i+1 : 0]
+      }
+      return
+   end
+
+   #
+   # Low-level read on the connection. 
+   #
+   private recv(len)
+      return connection.in(len)
+   end
+$else
    #
    # Low-level write on the connection. 
    #
@@ -178,6 +219,7 @@ class NetClient(Connectable, SetFields)
       }
       return connection.in(len)
    end
+$endif
 
    #
    # Write the given string to the connection.

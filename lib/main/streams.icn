@@ -907,9 +907,11 @@ $ifdef _PLAN9
    private static create_and_set_mode(fd, mode)
       local f
       f := FileStream(fd, mode)
-      if f.tell() then
+      if f.tell() then {
          f.mode := ior(f.mode, SEEK)
-      else
+         if f.can(WRITE) then
+            f.mode := ior(f.mode, TRUNCATE)
+      } else
          &why := ""
       return f
    end
@@ -1006,6 +1008,7 @@ $endif
    public defer close()
 end
 
+$ifndef _PLAN9
 #
 # This class represents a stream based on a socket.
 #
@@ -1072,6 +1075,7 @@ class SocketStream(DescStream)
 
    private static defer socket_impl(domain, typ)
 end
+$endif
 
 #
 # This class is used to read directory contents.
@@ -1269,3 +1273,111 @@ class RamStream(Stream, NoCopy)
       return
    end
 end
+
+$ifdef _PLAN9
+class CtrlStream(FileStream)
+   package new(cfd)
+      cast(self,FileStream).new(cfd, READ_WRITE)
+      return
+   end
+end
+
+class ConnectionInfo()
+   public const
+      dir,
+      root,
+      spec,
+      lsys,
+      lserv,
+      rsys,
+      rserv,
+      laddr,
+      raddr
+
+   package new(dir,
+               root,
+               spec,
+               lsys,
+               lserv,
+               rsys,
+               rserv,
+               laddr,
+               raddr)
+      self.dir := dir
+      self.root := root
+      self.spec := spec
+      self.lsys := lsys
+      self.lserv := lserv
+      self.rsys := rsys
+      self.rserv := rserv
+      self.laddr := laddr
+      self.raddr := raddr
+      return
+   end
+end
+
+class NetStream(FileStream)
+   private dir, ctrl
+
+   public static dial(addr, loc)
+      local l
+      l := dial_impl(addr, loc) | fail
+      return NetStream!l
+   end
+
+   public static announce(addr)
+      local l
+      l := announce_impl(addr) | fail
+      return NetStream(-1, l[1], l[2])
+   end
+
+   public get_dir()
+      return .dir
+   end
+
+   public get_ctrl()
+      return .ctrl
+   end
+
+   public listen()
+      local l
+      l := listen_impl(self.dir) | fail
+      return NetStream(-1, l[1], l[2])
+   end
+
+   public accept()
+      self.fd := accept_impl(self.ctrl.get_fd(), self.dir) | fail
+      return
+   end
+
+   public reject(cause)
+      return reject_impl(self.ctrl.get_fd(), self.dir, cause)
+   end
+
+   public close()
+      cast(self,FileStream).close() | fail
+      (\ctrl).close() | fail
+      return
+   end
+
+   public get_connection_info()
+      return ConnectionInfo!get_connection_info_impl(self.ctrl.get_fd(), self.dir)
+   end
+
+   public static defer mkaddr(addr, defnet, defservice)
+
+   private static defer get_connection_info_impl(cfd, dir)
+   private static defer dial_impl(addr, loc)
+   private static defer announce_impl(addr)
+   private static defer listen_impl(dir)
+   private static defer accept_impl(cfd, dir)
+   private static defer reject_impl(cfd, dir, cause)
+
+   private new(fd, cfd, dir)
+      cast(self,FileStream).new(fd, READ_WRITE)
+      self.ctrl := CtrlStream(cfd)
+      self.dir := dir
+      return
+   end
+end
+$endif

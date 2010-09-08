@@ -200,12 +200,66 @@ int execve(const char *path, char *const argv[], char *const envp[])
     return exec(path, argv);
 }
 
-int rename(const char *old, const char *new)
+int rename(const char *from, const char *to)
 {
-    struct Dir st;
-    nulldir(&st);
-    st.name = new;
-    return dirwstat(old, &st);
+    int n, i;
+    char *f, *t;
+    struct Dir *d, nd;
+    long mode;
+
+    if(access(to, 0) >= 0){
+        if(remove(to) < 0){
+            return -1;
+        }
+    }
+    if((d = dirstat(to)) != 0){
+        free(d);
+        werrstr("rename: can't get rid of dest");
+        return -1;
+    }
+    if((d = dirstat(from)) == 0){
+        werrstr("rename: can't stat src");
+        return -1;
+    }
+    f = strrchr(from, '/');
+    t = strrchr(to, '/');
+    f = f? f+1 : from;
+    t = t? t+1 : to;
+    n = 0;
+    if(f-from==t-to && strncmp(from, to, f-from)==0){
+        /* from and to are in same directory (we miss some cases) */
+        i = strlen(t);
+        nulldir(&nd);
+        nd.name = t;
+        if(dirwstat(from, &nd) < 0){
+            n = -1;
+        }
+    }else{
+        /* different directories: have to copy */
+        int ffd, tfd;
+        char buf[8192];
+
+        if((ffd = open(from, 0)) < 0 ||
+           (tfd = create(to, 1, d->mode)) < 0){
+            close(ffd);
+            n = -1;
+        }
+        while(n>=0 && (n = read(ffd, buf, 8192)) > 0)
+            if(write(tfd, buf, n) != n){
+                n = -1;
+            }
+        close(ffd);
+        close(tfd);
+        if(n>0)
+            n = 0;
+        if(n == 0) {
+            if(remove(from) < 0){
+                return -1;
+            }
+        }
+    }
+    free(d);
+    return n;
 }
 
 int unlink(const char *path)

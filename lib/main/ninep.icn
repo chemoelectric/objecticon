@@ -876,12 +876,12 @@ class Session9P(SetFields)
       if iand(p, m) = p then
          return
       if uid == info.uid then {
-         m := ior(m, iand(ishift(info.mode, 6), 7))
+         m := ior(m, iand(ishift(info.mode, -6), 7))
          if iand(p, m) = p then
             return
       }
       if uid == info.gid then {
-         m := ior(m, iand(ishift(info.mode, 3), 7))
+         m := ior(m, iand(ishift(info.mode, -3), 7))
          if iand(p, m) = p then
             return
       }

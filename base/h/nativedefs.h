@@ -178,6 +178,7 @@ NativeDef(io.RamStream,seek,io_RamStream_seek)
 NativeDef(io.RamStream,str,io_RamStream_str)
 NativeDef(io.RamStream,tell,io_RamStream_tell)
 NativeDef(io.RamStream,truncate,io_RamStream_truncate)
+#if !PLAN9
 NativeDef(io.SocketStream,accept_impl,io_SocketStream_accept_impl)
 NativeDef(io.SocketStream,bind,io_SocketStream_bind)
 NativeDef(io.SocketStream,close,io_SocketStream_close)
@@ -187,6 +188,16 @@ NativeDef(io.SocketStream,listen,io_SocketStream_listen)
 NativeDef(io.SocketStream,out,io_SocketStream_out)
 NativeDef(io.SocketStream,socket_impl,io_SocketStream_socket_impl)
 NativeDef(io.SocketStream,socketpair_impl,io_SocketStream_socketpair_impl)
+#endif
+#if PLAN9
+NativeDef(io.NetStream,dial_impl,io_NetStream_dial_impl)
+NativeDef(io.NetStream,announce_impl,io_NetStream_announce_impl)
+NativeDef(io.NetStream,listen_impl,io_NetStream_listen_impl)
+NativeDef(io.NetStream,accept_impl,io_NetStream_accept_impl)
+NativeDef(io.NetStream,reject_impl,io_NetStream_reject_impl)
+NativeDef(io.NetStream,get_connection_info_impl,io_NetStream_get_connection_info_impl)
+NativeDef(io.NetStream,mkaddr,io_NetStream_mkaddr)
+#endif
 #if MSWIN32
 NativeDef(io.WindowsFilePath,getdcwd,io_WindowsFilePath_getdcwd)
 NativeDef(io.WindowsFileSystem,get_roots,io_WindowsFileSystem_get_roots)

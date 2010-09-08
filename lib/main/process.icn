@@ -86,7 +86,11 @@ class CommProcess()
    #
    public start()
       local l
+$ifdef _PLAN9
+      l := FileStream.pipe() | fail
+$else
       l := SocketStream.socketpair() | fail
+$endif
       pid := System.fork() | fail
       if pid = 0 then {
          sock := l[1]

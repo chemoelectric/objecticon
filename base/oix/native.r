@@ -1781,13 +1781,11 @@ function io_FileStream_pipe_impl()
    }
 end
 
+#if !PLAN9
 function io_SocketStream_in(self, i)
    if !cnv:C_integer(i) then
       runerr(101, i)
    body {
-#if PLAN9
-       Unsupported;
-#else
        int nread;
        tended struct descrip s;
        GetSelfFd();
@@ -1824,7 +1822,6 @@ function io_SocketStream_in(self, i)
        dealcstr(StrLoc(s) + nread);
 
        return s;
-#endif
    }
 end
 
@@ -1836,9 +1833,6 @@ function io_SocketStream_socket_impl(domain, typ)
       runerr(101, typ)
 
    body {
-#if PLAN9
-       Unsupported;
-#else
        int sockfd;
        sockfd = socket(domain, typ, 0);
        if (sockfd < 0) {
@@ -1846,7 +1840,6 @@ function io_SocketStream_socket_impl(domain, typ)
            fail;
        }
        return C_integer sockfd;
-#endif
    }
 end
 
@@ -1854,9 +1847,6 @@ function io_SocketStream_out(self, s)
    if !cnv:string(s) then
       runerr(103, s)
    body {
-#if PLAN9
-       Unsupported;
-#else
        int rc;
        GetSelfFd();
        /* 
@@ -1873,15 +1863,11 @@ function io_SocketStream_out(self, s)
            fail;
        }
        return C_integer rc;
-#endif
    }
 end
 
 function io_SocketStream_close(self)
    body {
-#if PLAN9
-       Unsupported;
-#else
        GetSelfFd();
        if (close(self_fd) < 0) {
            errno2why();
@@ -1889,7 +1875,6 @@ function io_SocketStream_close(self)
        }
        *self_fd_dptr = minusonedesc;
        return nulldesc;
-#endif
    }
 end
 
@@ -1925,9 +1910,6 @@ end
 
 struct sockaddr *parse_sockaddr(char *s, int *len)
 {
-#if PLAN9
-    return 0;
-#else
 #if UNIX
     if (strncmp(s, "unix:", 5) == 0) {
         static struct sockaddr_un us;
@@ -1983,16 +1965,12 @@ struct sockaddr *parse_sockaddr(char *s, int *len)
 
     LitWhy("Bad socket address format");
     return 0;
-#endif
 }
 
 function io_SocketStream_connect(self, addr)
    if !cnv:C_string(addr) then
       runerr(103, addr)
    body {
-#if PLAN9
-       Unsupported;
-#else
        struct sockaddr *sa;
        int len;
        GetSelfFd();
@@ -2009,7 +1987,6 @@ function io_SocketStream_connect(self, addr)
        }
 
        return nulldesc;
-#endif
    }
 end
 
@@ -2017,9 +1994,6 @@ function io_SocketStream_bind(self, addr)
    if !cnv:C_string(addr) then
       runerr(103, addr)
    body {
-#if PLAN9
-       Unsupported;
-#else
        struct sockaddr *sa;
        int len;
        GetSelfFd();
@@ -2036,7 +2010,6 @@ function io_SocketStream_bind(self, addr)
        }
 
        return nulldesc;
-#endif
    }
 end
 
@@ -2045,24 +2018,17 @@ function io_SocketStream_listen(self, backlog)
       runerr(101, backlog)
 
    body {
-#if PLAN9
-       Unsupported;
-#else
        GetSelfFd();
        if (listen(self_fd, backlog) < 0) {
            errno2why();
            fail;
        }
        return nulldesc;
-#endif
    }
 end
 
 function io_SocketStream_accept_impl(self)
    body {
-#if PLAN9
-       Unsupported;
-#else
        int sockfd;
        GetSelfFd();
 
@@ -2072,9 +2038,10 @@ function io_SocketStream_accept_impl(self)
        }
 
        return C_integer sockfd;
-#endif
    }
 end
+
+#endif  /* PLAN9 */
 
 /*
  * These two are macros since they call runerr (so does FdStaticParam).
@@ -3972,6 +3939,159 @@ function io_DescStream_length(self)
        }
        convert_from_vlong(st->length, &result);
        free(st);
+       return result;
+   }
+end
+
+function io_NetStream_dial_impl(addr, loc)
+   if !cnv:C_string(addr) then
+      runerr(103, addr)
+   body {
+       tended struct descrip result, t;
+       tended char *loc_s;
+       char dir[40];
+       int fd, cfd;
+       if (is:null(loc))
+           loc_s = 0;
+       else if (!cnv:C_string(loc, loc_s))
+           runerr(103, loc);
+       if ((fd = dial(addr, loc_s, dir, &cfd)) < 0) {
+           errno2why();
+           fail;
+       }
+       create_list(3, &result);
+       MakeInt(fd, &t);
+       list_put(&result, &t);
+       MakeInt(cfd, &t);
+       list_put(&result, &t);
+       cstr2string(dir, &t);
+       list_put(&result, &t);
+       return result;
+   }
+end
+
+function io_NetStream_announce_impl(addr)
+   if !cnv:C_string(addr) then
+      runerr(103, addr)
+   body {
+       tended struct descrip result, t;
+       char dir[40];
+       int cfd;
+       if ((cfd = announce(addr, dir)) < 0) {
+           errno2why();
+           fail;
+       }
+       create_list(2, &result);
+       MakeInt(cfd, &t);
+       list_put(&result, &t);
+       cstr2string(dir, &t);
+       list_put(&result, &t);
+       return result;
+   }
+end
+
+function io_NetStream_listen_impl(dir)
+   if !cnv:C_string(dir) then
+      runerr(103, dir)
+   body {
+       tended struct descrip result, t;
+       char newdir[40];
+       int cfd;
+       if ((cfd = listen(dir, newdir)) < 0) {
+           errno2why();
+           fail;
+       }
+       create_list(2, &result);
+       MakeInt(cfd, &t);
+       list_put(&result, &t);
+       cstr2string(newdir, &t);
+       list_put(&result, &t);
+       return result;
+   }
+end
+
+function io_NetStream_accept_impl(cfd, dir)
+   if !cnv:C_integer(cfd) then
+       runerr(101, cfd)
+   if !cnv:C_string(dir) then
+       runerr(103, dir)
+   body {
+       int fd;
+       if ((fd = accept(cfd, dir)) < 0) {
+           errno2why();
+           fail;
+       }
+       return C_integer fd;
+   }
+end
+
+function io_NetStream_reject_impl(cfd, dir, cause)
+   if !cnv:C_integer(cfd) then
+       runerr(101, cfd)
+   if !cnv:C_string(dir) then
+       runerr(103, dir)
+   if !cnv:C_string(cause) then
+       runerr(103, cause)
+   body {
+       if (reject(cfd, dir, cause) < 0) {
+           errno2why();
+           fail;
+       }
+       return nulldesc;
+   }
+end
+
+function io_NetStream_get_connection_info_impl(cfd, dir)
+   if !cnv:C_integer(cfd) then
+       runerr(101, cfd)
+   if !cnv:C_string(dir) then
+       runerr(103, dir)
+   body {
+       tended struct descrip result, t;
+       struct NetConnInfo *x;
+       if (!(x = getnetconninfo(dir, cfd))) {
+           errno2why();
+           fail;
+       }
+       create_list(9, &result);
+       cstr2string(x->dir, &t);
+       list_put(&result, &t);
+       cstr2string(x->root, &t);
+       list_put(&result, &t);
+       cstr2string(x->spec, &t);
+       list_put(&result, &t);
+       cstr2string(x->lsys, &t);
+       list_put(&result, &t);
+       cstr2string(x->lserv, &t);
+       list_put(&result, &t);
+       cstr2string(x->rsys, &t);
+       list_put(&result, &t);
+       cstr2string(x->rserv, &t);
+       list_put(&result, &t);
+       cstr2string(x->laddr, &t);
+       list_put(&result, &t);
+       cstr2string(x->raddr, &t);
+       list_put(&result, &t);
+       freenetconninfo(x);
+       return result;
+   }
+end
+
+function io_NetStream_mkaddr(addr, defnet, defservice)
+   if !cnv:C_string(addr) then
+      runerr(103, addr)
+   body {
+       tended struct descrip result;
+       tended char *defnet_s, *defservice_s;
+       if (is:null(defnet))
+           defnet_s = 0;
+       else if (!cnv:C_string(defnet, defnet_s))
+           runerr(103, defnet);
+       if (is:null(defservice))
+           defservice_s = 0;
+       else if (!cnv:C_string(defservice, defservice_s))
+           runerr(103, defservice);
+       cstr2string(netmkaddr(addr, defnet_s, defservice_s), &result);
        return result;
    }
 end
