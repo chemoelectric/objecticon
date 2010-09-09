@@ -1355,8 +1355,9 @@ class NetStream(FileStream)
    end
 
    public close()
-      cast(self,FileStream).close() | fail
-      (\ctrl).close() | fail
+      if self.fd ~= -1 then
+         cast(self,FileStream).close() | fail
+      ctrl.close() | fail
       return
    end
 
