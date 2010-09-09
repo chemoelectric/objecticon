@@ -826,15 +826,15 @@ $ifdef _PLAN9
       C := if /mode then create_and_set_mode else FileStream
 
       case iand(flags, 3) of {
-         0: {
+         FileOpt.RDONLY: {
             flags2 := FileOpt.OREAD
             /mode := READ
          }
-         1: {
+         FileOpt.WRONLY: {
             flags2 := FileOpt.OWRITE
             /mode := WRITE
          }
-         2: {
+         FileOpt.RDWR: {
             flags2 := FileOpt.ORDWR
             /mode := READ_WRITE
          }
