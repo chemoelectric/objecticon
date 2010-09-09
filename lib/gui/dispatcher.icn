@@ -61,24 +61,34 @@ class Dispatcher()
       compute_idle_sleep()
    end
 
+   private static start_impl(t)
+      # Times must be > 0 if set
+      if \t.times <= 0 then
+         runerr("Times must be >0 if set", t.times)
+      # One-time tick, or need an interval.
+      \t.times = 1 | \t.interval | runerr("Ticker interval not set")
+      t.last_tick_time := &null
+      t.start_time := Prog.get_runtime_millis()
+      t.next_tick_time := if /t.delay then 0 else t.start_time + t.delay
+   end
+
    #
    # Start a ticker; has no effect if already running.
    # 
    public static start_ticker(t)
       if member(tickers, t) then
          fail
-      # Times must be > 0 if set
-      if \t.times <= 0 then
-         runerr("Times must be >0 if set", t.times)
-      # One-time tick, or need an interval.
-      \t.times = 1 | \t.interval | runerr("Ticker interval not set")
+      start_impl(t)
       insert(tickers, t)
-      t.last_tick_time := &null
-      t.start_time := Prog.get_runtime_millis()
-      if /t.delay then
-         t.next_tick_time := 0
-      else
-         t.next_tick_time := t.start_time + t.delay
+      compute_idle_sleep()
+   end
+
+   #
+   # Equivalent to stop and start; has no effect if not running.
+   #
+   public static restart_ticker(t)
+      member(tickers, t) | fail
+      start_impl(t)
       compute_idle_sleep()
    end
 
