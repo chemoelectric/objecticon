@@ -1248,6 +1248,26 @@ class TextSelectionOwner(SelectionOwner)
    end
 end
 
+class StaticTextSelectionOwner(TextSelectionOwner)
+   private s
+
+   protected get_text()
+      return s
+   end
+
+   public set_text(s)
+      self.s := s
+   end
+
+   public lost_ownership()
+   end
+
+   public new(s)
+      self.s := s
+      return
+   end
+end
+
 #
 # This is a helpful component which has zero size, but reacts to accelerator keys
 # by firing an action event.
