@@ -72,6 +72,15 @@ class Ticker(SetFields,Connectable)
    end
 
    #
+   # Equivalent to calling {stop()} and then {start()}.  This has the effect of
+   # running the ticker at the earliest next opportunity (assuming no delay
+   # is configured).
+   #
+   public restart()
+      Dispatcher.restart_ticker(self)
+   end
+
+   #
    # Set the interval.
    #
    # @param n   the ticker interval in milliseconds.
