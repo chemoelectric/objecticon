@@ -305,11 +305,13 @@ typedef struct _wstate {
   char          mount_dir[64];
   int           event_pipe[2];
   char          *wsys;
-  int           wsys_fd, wctl_fd, mouse_fd, cons_fd, consctl_fd, cursor_fd;
+  int           wsys_fd, wctl_fd, mouse_fd, cons_fd, consctl_fd, 
+                screeninfo_fd, cursor_fd;
   int           mouse_pid, cons_pid;
   int           desired_canvas;
   stringint     *cursor;
   int           using_win;
+  int           border_width;
 #elif MSWIN32
   HWND		win;			/* client window */
   HWND		iconwin;		/* client window when iconic */

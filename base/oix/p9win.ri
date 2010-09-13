@@ -5,8 +5,8 @@ static Rectangle max_rect;
 static struct Cursor cursor_data[];
 static int use_win;
 static int bintime_fd;
-static int last_mouse_x, last_mouse_y;
 
+static int read_screeninfo(wsp ws, int *mx, int *my, int *sx, int *sy, int *sw, int *sh);
 static int open_winfile(wsp ws, char *s, int mode);
 static struct FontInfo *match_font(char *s);
 static void load_font_info(void);
@@ -17,7 +17,7 @@ static void synch_pattern_image(struct SharedPattern *pat, int fg_rgb, int bg_rg
 static int configure_canvas(wbp w);
 static void mouse_loop(int in_fd, int out_fd);
 static Rune *utf8_to_runes(char *str, int nchars);
-static void cons_loop(int in_fd, int out_fd);
+static void cons_loop(int in_fd, int out_fd, int screeninfo_fd);
 static void flush_event_pipe(wsp ws);
 static wfp load_font(char *s);
 static void synch_cursor(wsp ws);
@@ -41,8 +41,7 @@ static void unlink_sharedcolor(struct SharedColor *i);
 static struct SharedPattern *new_sharedpattern(int width, int height, int *rowdata, char *name);
 static struct SharedPattern *link_sharedpattern(struct SharedPattern *x);
 static void unlink_sharedpattern(struct SharedPattern *x);
-static int limit_size(wsp ws, int *width, int *height);
-static void synch_pos(wsp ws);
+static int synch_pos(wsp ws);
 static void note_time(char *s);
 static int readimageimpl(char *cmd, int fd, struct imgdata *imd);
 
@@ -52,6 +51,7 @@ static int readimageimpl(char *cmd, int fd, struct imgdata *imd);
 #define NormalCanvas 1
 #define HiddenCanvas 2
 #define IconicCanvas 3
+#define PopupCanvas  4
 
 #define FillSolid     1
 #define FillMasked    2
@@ -78,10 +78,11 @@ static stringint fillstyles[] = {
 };
 
 static stringint canvastypes[] = {
-    {0, 3},
+    {0, 5},
     {"hidden",      HiddenCanvas},
     {"iconic",      IconicCanvas},
     {"normal",      NormalCanvas},
+    {"popup",       PopupCanvas},
 };
 
 static stringint cursors[] = {
@@ -382,51 +383,12 @@ static void win_to_pix(wsp ws)
     flushimage(display, 1);
 }
 
-static int limit_size(wsp ws, int *width, int *height)
+static int adjust(wsp ws, int dim)
 {
-    int limw, limh, dispw, disph, rv = 0;
-    if (*width < ws->minwidth) {
-        *width = ws->minwidth;
-        rv = 1;
-    }
-    if (*width > ws->maxwidth) {
-        *width = ws->maxwidth;
-        rv = 1;
-    }
-    if (*height < ws->minheight) {
-        *height = ws->minheight;
-        rv = 1;
-    }
-    if (*height > ws->maxheight) {
-        *height = ws->maxheight;
-        rv = 1;
-    }
-    /* Ensure size within permissible limits for a rio window.  If we don't keep within
-     * these limits, mount and resize requests fail with an error.  See goodrect() in 
-     * rio/wctl.c */
-    limw = 100 - 2 * Borderwidth;
-    if (*width < limw) {
-        *width = limw;
-        rv = 1;
-    }
-    limh = 3*font->height - 2 * Borderwidth;
-    if (*height < limh) {
-        *height = limh;
-        rv = 1;
-    }
-    /* Unfortunately there seems to be no way to find the dimensions of the rio window in which
-     * we are running, only the top-level display size */
-    dispw = Dx(display->image->r);
-    disph = Dy(display->image->r);
-    limw = dispw - 2 * Borderwidth;
-    limh = disph - 2 * Borderwidth;
-    if (*width >= limw && *height >= limh) {
-        *width = limw - 1;
-        *height = limh - 1;
-        rv = 1;
-    }
-
-    return rv;
+    if (dim == INT_MAX)
+        return dim;
+    else
+        return dim + ws->border_width;
 }
 
 static int configure_canvas(wbp w)
@@ -442,11 +404,14 @@ static int configure_canvas(wbp w)
         if (ws->win) {
             if (ws->desired_canvas == IconicCanvas)
                 fprint(ws->wctl_fd, "hide");
-            else
-                fprint(ws->wctl_fd, "unhide");
+            else {
+                if (ws->border_width && ws->desired_canvas == NormalCanvas ||
+                    !ws->border_width && ws->desired_canvas == PopupCanvas)
+                    fprint(ws->wctl_fd, "unhide");
+                else
+                    return Failed;
+            }
         } else {
-            if (limit_size(ws, &ws->width, &ws->height))
-                resize_pix_win(w);
             if (open_screen_win(ws) == Failed)
                 return Failed;
             pix_to_win(ws);
@@ -469,18 +434,19 @@ static void mouse_loop(int in_fd, int out_fd)
     _exits(0);
 }
 
-static void cons_loop(int in_fd, int out_fd) 
+static void cons_loop(int in_fd, int out_fd, int screeninfo_fd)
 {
     Rune r;
-    char buf[11], in[10];
+    char buf[35], in[10];
 
     buf[0] = 'C';
     while (read(in_fd, in, sizeof in) > 0) {
         read(bintime_fd, &buf[1], 8);
+        pread(screeninfo_fd, &buf[9], 24, 0);
         chartorune(&r, in);
-        buf[9] = r;
-        buf[10] = r>>8;
-        if (write(out_fd, buf, 11) != 11)
+        buf[33] = r;
+        buf[34] = r>>8;
+        if (write(out_fd, buf, 35) != 35)
             break;
     }
     _exits(0);
@@ -489,10 +455,14 @@ static void cons_loop(int in_fd, int out_fd)
 /*
  * Synch the x, y variables with rio's values.
  */
-static void synch_pos(wsp ws)
+static int synch_pos(wsp ws)
 {
-    ws->x = ws->win->r.min.x;
-    ws->y = ws->win->r.min.y;
+    int sx, sy;
+    if (read_screeninfo(ws, 0,0, &sx, &sy, 0,0) != Succeeded)
+        return Failed;
+    ws->x = ws->win->r.min.x - sx;
+    ws->y = ws->win->r.min.y - sy;
+    return Succeeded;
 }
 
 static void resize_pix_win(wbp w)
@@ -529,20 +499,7 @@ static void handle_resize(wsp ws)
          */
         synch_pos(ws);
         pix_to_win(ws);
-    }
-    else if (!ISRESIZABLE(ws))   /* If resizable flag off */
-        /* 
-         * If the resize flag is off, veto the resize by just resetting the size
-         * to the canvas size.  We then go through the previous if branch when that
-         * resize is processed.
-         */
-        fprint(ws->wctl_fd, "resize  -dx %d -dy %d", ws->width + 2*Borderwidth, ws->height + 2*Borderwidth);
-    else if (limit_size(ws, &tw, &th)) 
-        /*
-         * Similarly, if the resize is too big we veto it and set to the limited size.
-         */
-        fprint(ws->wctl_fd, "resize  -dx %d -dy %d", tw + 2*Borderwidth, th + 2*Borderwidth);
-    else {
+    } else {
         /*
          * Here we accept the resize, resize the pix win, copy it to the visible
          * win and fire an event.
@@ -562,13 +519,11 @@ static void handle_resize(wsp ws)
     }
 }
 
-#define swap(a,b) { tmp = a; a = b; b = tmp; }
-
 static void flush_event_pipe(wsp ws)
 {
     Dir *st;
     vlong length;
-    int n;
+    int n, mx, my;
     uchar ebuf[EMAXMSG + 1];
     tended struct descrip d;
 
@@ -595,11 +550,13 @@ static void flush_event_pipe(wsp ws)
                 int i;
                 vlong now;
                 uword time;
-                if (n != 11)
+                if (n != 35)
                     syserr("bad console data in event pipe");
                 be2vlong(&now, &ebuf[1]);
                 time = (now - startup_time) / 1000000;
-                i = ebuf[9] + (ebuf[10]<<8);
+                mx = atoi((char*)ebuf+9+0*12);
+                my = atoi((char*)ebuf+9+1*12);
+                i = ebuf[33] + (ebuf[34]<<8);
                 if (i == 10) i = 13;   /* Hack: convert \n to \r */
                 if (i < 256) {
                     /* Found a char string, so generate string event(s) */
@@ -611,8 +568,8 @@ static void flush_event_pipe(wsp ws)
                 } else 
                     MakeInt(i, &d);
                 qevent(ws, &d, 
-                       last_mouse_x - ws->win->r.min.x, 
-                       last_mouse_y - ws->win->r.min.y, 
+                       mx - ws->win->r.min.x, 
+                       my - ws->win->r.min.y, 
                        time, 0, 0, 0, 0);
                 break;
             }
@@ -627,12 +584,12 @@ static void flush_event_pipe(wsp ws)
                     uword time;
                     be2vlong(&now, &ebuf[1]);
                     time = (now - startup_time) / 1000000;
-                    last_mouse_x = atoi((char*)ebuf+10+0*12);
-                    last_mouse_y = atoi((char*)ebuf+10+1*12);
+                    mx = atoi((char*)ebuf+10+0*12);
+                    my = atoi((char*)ebuf+10+1*12);
                     state = atoi((char*)ebuf+10+2*12);
                     qmouseevents(ws, state, 
-                                 last_mouse_x - ws->win->r.min.x, 
-                                 last_mouse_y - ws->win->r.min.y, 
+                                 mx - ws->win->r.min.x, 
+                                 my - ws->win->r.min.y, 
                                  time, 0, 0, 0);
                 }
                 break;
@@ -643,12 +600,20 @@ static void flush_event_pipe(wsp ws)
 
 int grabpointer(wbp w)
 {
-    return Failed;
+    wsp ws = w->window;
+    if (!ws->win)
+        return Failed;
+    fprint(ws->wctl_fd, "grab");
+    return Succeeded;
 }
 
 int ungrabpointer(wbp w)
 {
-    return Failed;
+    wsp ws = w->window;
+    if (!ws->win)
+        return Failed;
+    fprint(ws->wctl_fd, "ungrab");
+    return Succeeded;
 }
 
 int walert(wbp w, int volume)
@@ -1294,8 +1259,14 @@ void freeimgmem(struct imgmem *imem)
 
 int queryrootpointer(wbp w, int *x, int *y)
 {
-    *x = last_mouse_x;
-    *y = last_mouse_y;
+    int mx, my, sx, sy;
+    wsp ws = w->window;
+    if (!ws->win)
+        return Failed;
+    if (read_screeninfo(ws, &mx, &my, &sx, &sy, 0,0) != Succeeded)
+        return Failed;
+    *x = mx - sx;
+    *y = my - sy;
     return Succeeded;
 }
 
@@ -1332,17 +1303,19 @@ void doconfig(wbp w, int status)
 
     /* Move/resize of window if open */
     if (ws->win) {
-        /* Limit size, if changed */
-        if (status & (C_SIZE|C_MAXSIZE|C_MINSIZE)) {
-            if (limit_size(ws, &ws->width, &ws->height))
-                status |= C_SIZE;
-        }
+        if (status & C_RESIZE)
+            fprint(ws->wctl_fd, ISRESIZABLE(ws) ? "canresize" : "noresize");
         if (status & C_POS)
             fprint(ws->wctl_fd, "move  -minx %d -miny %d", ws->x, ws->y);
-        if (status & C_SIZE)
-            fprint(ws->wctl_fd, "resize  -dx %d -dy %d", 
-                   ws->width + 2*Borderwidth, 
-                   ws->height + 2*Borderwidth);
+        if (status & (C_SIZE|C_MAXSIZE|C_MINSIZE)) {
+            fprint(ws->wctl_fd, "resize  -dx %d -dy %d -mindx %d -maxdx %d -mindy %d -maxdy %d", 
+                   adjust(ws, ws->width), 
+                   adjust(ws, ws->height),
+                   adjust(ws, ws->minwidth),
+                   adjust(ws, ws->maxwidth),
+                   adjust(ws, ws->minheight),
+                   adjust(ws, ws->maxheight));
+        }
     }
     if (status & C_SIZE)
         resize_pix_win(w);
@@ -1452,6 +1425,9 @@ static int open_screen_win(wsp ws)
     ws->using_win = use_win;
 
     if (ws->using_win) {
+        char buff[256];
+        int fd;
+
         strcpy(ws->mount_dir, "/dev");
 
         if ((ws->wctl_fd = open_winfile(ws, "wctl", OWRITE)) < 0) {
@@ -1460,8 +1436,19 @@ static int open_screen_win(wsp ws)
             return Failed;
         }
 
+        /* See if the window has a border or not, and set the border width accordingly. */
+        buff[0] = 0;
+        if ((fd = open_winfile(ws, "winname", OREAD)) >= 0) {
+            int n = read(fd, buff, sizeof(buff) - 1);
+            if (n > 0)
+                buff[n] = 0;
+            close(fd);
+        }
+        ws->border_width = (strncmp(buff, "noborder", 8) == 0) ? 0 : 2 * Borderwidth;
+
         fprint(ws->wctl_fd, "resize  -dx %d -dy %d", 
-               ws->width + 2*Borderwidth, ws->height + 2*Borderwidth);
+               adjust(ws, ws->width), 
+               adjust(ws, ws->height));
 
         if (ws->x != -INT_MAX && ws->y != -INT_MAX)
             fprint(ws->wctl_fd, "move  -minx %d -miny %d", ws->x, ws->y);
@@ -1485,17 +1472,29 @@ static int open_screen_win(wsp ws)
             close_screen_win(ws);
             return Failed;
         }
+        ws->border_width = (ws->desired_canvas == PopupCanvas ? 0 : 2 * Borderwidth);
         /* If either x or y unset, let rio place the window */
         if (ws->x == -INT_MAX || ws->y == -INT_MAX)
             sprintf(buff, "new -dx %d -dy %d",
-                    ws->width + 2*Borderwidth, 
-                    ws->height + 2*Borderwidth);
+                    adjust(ws, ws->width), 
+                    adjust(ws, ws->height));
         else
             sprintf(buff, "new -r %d %d %d %d",
-                    ws->x, ws->y, ws->x + ws->width + 2*Borderwidth, 
-                    ws->y + ws->height + 2*Borderwidth);
-        if (ws->desired_canvas == IconicCanvas)
+                    ws->x, ws->y,  ws->x + adjust(ws, ws->width), 
+                    ws->y + adjust(ws, ws->height));
+        if (ws->desired_canvas == PopupCanvas)
+            strcat(buff, " -noborder");
+        else if (ws->desired_canvas == IconicCanvas)
             strcat(buff, " -hide");
+        sprintf(buff + strlen(buff), 
+                " -mindx %d -maxdx %d -mindy %d -maxdy %d", 
+                adjust(ws, ws->minwidth),
+                adjust(ws, ws->maxwidth),
+                adjust(ws, ws->minheight),
+                adjust(ws, ws->maxheight));
+        if (!ISRESIZABLE(ws))
+            strcat(buff, " -noresize");
+
         if (mount(ws->wsys_fd, -1, ws->mount_dir, MREPL, buff) < 0) {
             whyf("Can't mount new window: %r");
             close_screen_win(ws);
@@ -1515,7 +1514,6 @@ static int open_screen_win(wsp ws)
         return Failed;
     }
     GRFX_GENLINK(ws, vwstates, vnext, vprevious);
-    synch_pos(ws);
 
     /* Ensure size matches the opened window */
     ws->width =  ws->win->r.max.x - ws->win->r.min.x;
@@ -1541,6 +1539,13 @@ static int open_screen_win(wsp ws)
         close_screen_win(ws);
         return Failed;
     }
+
+    if ((ws->screeninfo_fd = open_winfile(ws, "screeninfo", OREAD)) < 0) {
+        whyf("Can't open screeninfo file: %r");
+        close_screen_win(ws);
+        return Failed;
+    }
+    synch_pos(ws);
 
     if ((ws->cons_fd = open_winfile(ws, "cons", OREAD)) < 0) {
         whyf("Can't open cons file: %r");
@@ -1576,7 +1581,7 @@ static int open_screen_win(wsp ws)
 
     switch (ws->cons_pid = rfork(RFPROC|RFMEM)) {
         case 0: {
-            cons_loop(ws->cons_fd, ws->event_pipe[1]);
+            cons_loop(ws->cons_fd, ws->event_pipe[1], ws->screeninfo_fd);
             break;
         }
         case -1: {
@@ -1616,6 +1621,8 @@ static void close_screen_win(wsp ws)
         close(ws->mouse_fd);
     if (ws->cons_fd >= 0)
         close(ws->cons_fd);
+    if (ws->screeninfo_fd >= 0)
+        close(ws->screeninfo_fd);
     if (ws->mouse_pid >= 0)
         kill_proc(ws->mouse_pid);
     if (ws->cons_pid >= 0)
@@ -1646,7 +1653,8 @@ static void close_screen_win(wsp ws)
 
     ws->mount_dir[0] = 0;
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
-        ws->cursor_fd = ws->mouse_pid = ws->cons_pid = ws->wsys_fd = ws->wctl_fd = -1;
+        ws->screeninfo_fd = ws->cursor_fd = ws->mouse_pid = ws->cons_pid = ws->wsys_fd = 
+        ws->wctl_fd = -1;
 }
 
 static void open_pix_win(wsp ws)
@@ -1828,10 +1836,12 @@ char *getdisplay(wbp w)
 
 int getpos(wbp w)
 {
+/*
     wsp ws = w->window;
     if (!ws->win)
         return Failed;
     synch_pos(ws);
+*/
     return Succeeded;
 }
 
@@ -1840,13 +1850,50 @@ char *getlinestyle(wbp w)
     return "solid";
 }
 
+static int read_screeninfo(wsp ws, int *mx, int *my, int *sx, int *sy, int *sw, int *sh)
+{
+    char buff[80];
+    int n;
+    n = pread(ws->screeninfo_fd, buff, 72, 0);
+    if (n != 72)
+        return Failed;
+    if (mx) {
+        buff[11] = 0;
+        *mx = atoi(buff);
+    }
+    if (my) {
+        buff[23] = 0;
+        *my = atoi(buff + 12);
+    }
+    if (sx) {
+        buff[35] = 0;
+        *sx = atoi(buff + 24);
+    }
+    if (sy) {
+        buff[47] = 0;
+        *sy = atoi(buff + 36);
+    }
+    if (sw) {
+        buff[59] = 0;
+        *sw = atoi(buff + 48);
+    }
+    if (sh) {
+        buff[71] = 0;
+        *sh = atoi(buff + 60);
+    }
+    return Succeeded;
+}
+
 int querypointer(wbp w, int *x, int *y)
 {
+    int mx, my;
     wsp ws = w->window;
     if (!ws->win)
         return Failed;
-    *x = last_mouse_x - ws->win->r.min.x;
-    *y = last_mouse_y - ws->win->r.min.y;
+    if (read_screeninfo(ws, &mx, &my, 0,0,0,0) != Succeeded)
+        return Failed;
+    *x = mx - ws->win->r.min.x;
+    *y = my - ws->win->r.min.y;
     return Succeeded;
 }
 
@@ -1875,18 +1922,29 @@ char *getcanvas(wbp w)
         }
         if (strstr(buff, "hidden"))
             return "iconic";
-        else
-            return "normal";
+        else {
+            buff[0] = 0;
+            if ((fd = open_winfile(ws, "winname", OREAD)) >= 0) {
+                int n = read(fd, buff, sizeof(buff) - 1);
+                if (n > 0)
+                    buff[n] = 0;
+                close(fd);
+            }
+            if (strncmp(buff, "noborder", 8) == 0)
+                return "popup";
+            else
+                return "normal";
+        }
     } else
         return "hidden";
 }
 
 int getdisplaysize(wbp w, int *width, int *height)
 {
-    Rectangle r = display->image->r;
-    *width = Dx(r);
-    *height = Dy(r);
-    return Succeeded;
+    wsp ws = w->window;
+    if (!ws->win)
+        return Failed;
+    return read_screeninfo(ws, 0,0,0,0, width, height);
 }
 
 int getdepth(wbp w, int *res)
@@ -1910,7 +1968,8 @@ static wsp alcwinstate()
     ws->buttonorder[1] = 2;
     ws->buttonorder[2] = 4;
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
-        ws->cursor_fd = ws->mouse_pid = ws->cons_pid = ws->wsys_fd = ws->wctl_fd = -1;
+        ws->screeninfo_fd = ws->cursor_fd = ws->mouse_pid = ws->cons_pid = ws->wsys_fd = 
+        ws->wctl_fd = -1;
     ws->cursor = stringint_lookup(cursors, "left ptr");
     ws->x = ws->y = -INT_MAX;
     ws->minwidth = ws->minheight = 1;

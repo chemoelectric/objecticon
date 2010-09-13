@@ -1,0 +1,21 @@
+< ../mkdefs
+
+OFILES=\
+	rio.$O\
+	data.$O\
+	fsys.$O\
+	scrl.$O\
+	time.$O\
+	util.$O\
+	wctl.$O\
+	wind.$O\
+	xfid.$O\
+
+all:V:  $O.out
+
+$O.out:  $OFILES
+        $LD $OFILES
+        cp $O.out ../bin/riox
+
+clean:V:	
+        rm -f $OFILES $O.out
