@@ -1941,10 +1941,15 @@ char *getcanvas(wbp w)
 
 int getdisplaysize(wbp w, int *width, int *height)
 {
+    Rectangle r;
     wsp ws = w->window;
     if (!ws->win)
         return Failed;
-    return read_screeninfo(ws, 0,0,0,0, width, height);
+    if (read_screeninfo(ws, 0,0, &r.min.x, &r.min.y, &r.max.x, &r.max.y) != Succeeded)
+        return Failed;
+    *width = Dx(r);
+    *height = Dy(r);
+    return Succeeded;
 }
 
 int getdepth(wbp w, int *res)

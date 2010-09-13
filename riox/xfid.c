@@ -749,7 +749,7 @@ xfidread(Xfid *x)
                 n = sprint(buf, "%11d %11d %11d %11d %11d %11d ", 
                            mousectl->xy.x, mousectl->xy.y, 
                            screen->r.min.x, screen->r.min.y,
-                           Dx(screen->r), Dy(screen->r));
+                           screen->r.max.x, screen->r.max.y);
 		t = estrdup(buf);
 		goto Text;
 
