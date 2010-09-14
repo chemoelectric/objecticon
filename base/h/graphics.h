@@ -71,26 +71,24 @@
  * mode bits for the Icon window context (as opposed to X context)
  */
 
-/* bit 4 is available */
 #define ISRESIZABLE(ws)	((ws)->bits & 128)
 #define ISEXPOSED(ws)    ((ws)->bits & 256)
 
-/* bit 4 is available */
 #define SETRESIZABLE(ws) ((ws)->bits |= 128)
 #define SETEXPOSED(ws)   ((ws)->bits |= 256)
-/* bit 4 is available */
+
 #define CLRRESIZABLE(ws) ((ws)->bits &= ~128)
 #define CLREXPOSED(w)   ((ws)->bits &= ~256)
-
-#define ISTOBEHIDDEN(ws)  ((ws)->bits & 4096)
-#define SETTOBEHIDDEN(ws)  ((ws)->bits |= 4096)
-#define CLRTOBEHIDDEN(ws)  ((ws)->bits &= ~4096)
 
 #if XWindows
 #define ISZOMBIE(ws)     ((ws)->bits & 1)
 #define SETZOMBIE(ws)    ((ws)->bits |= 1)
 #define CLRZOMBIE(ws)    ((ws)->bits &= ~1)
-#endif					/* XWindows */
+#elif MSWIN32
+#define ISTOBEHIDDEN(ws)  ((ws)->bits & 4096)
+#define SETTOBEHIDDEN(ws)  ((ws)->bits |= 4096)
+#define CLRTOBEHIDDEN(ws)  ((ws)->bits &= ~4096)
+#endif
 
 #define DEFAULT_WINDOW_LABEL "Object Icon"
 
@@ -216,7 +214,6 @@ typedef struct _wcontext {
   int		clipx, clipy, clipw, cliph;
   wfp		font;
   int		dx, dy;
-  int		bits;			/* context bits */
 #if XWindows
   wdp		display;
   GC		gc;			/* X graphics context */
