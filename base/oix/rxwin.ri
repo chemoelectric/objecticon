@@ -2996,7 +2996,6 @@ wcp clonecontext(wbp w)
     rv->linestyle = wc->linestyle;
     rv->linewidth = wc->linewidth;
     rv->drawop = wc->drawop;
-    rv->bits = wc->bits;
 
     gcv.foreground = rv->fg->c;
     gcv.background = rv->bg->c;

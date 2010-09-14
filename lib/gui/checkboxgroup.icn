@@ -8,19 +8,20 @@
 
 package gui
 
+import util
+
 #
 # This class is simply a container for several objects
 # which then act together as ``radio buttons''.  The objects
 # should be subclasses of {Toggle}, but are normally checkboxes.
 #
-# The set/unset status of objects in a {CheckBoxGroup} should be set
-# with the {set_which_one} method, not by setting the individual items
-# directly with their own methods; that would result in confusion.
+# An {Event.SELECTION_CHANGED} is fired when  the user changes the
+# selection (but not when the selection is changed programatically).
 #
 # NB - the objects in the group must be added to both the {CheckBoxGroup}
-# and the dialog box too; a {CheckBoxGroup} is not a {Container}.
+# and the dialog box too; a {CheckBoxGroup} is not a {Component}.
 #
-class CheckBoxGroup()
+class CheckBoxGroup(Connectable)
    public 
       checkboxes,              #                  
       which_one
@@ -50,6 +51,7 @@ class CheckBoxGroup()
    end
 
    public new()
+      cast(self,Connectable).new()
       self.checkboxes := []
       return
    end

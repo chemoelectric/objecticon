@@ -121,10 +121,14 @@ class Button(Toggle,Component)
    end
 
    public on_action(e)
+      local t
       if \self.toggles_flag then {
-         if \self.parent_check_box_group then
+         if \self.parent_check_box_group then {
+            t := self.parent_check_box_group.which_one
             self.set_is_checked(&yes)
-         else
+            if t ~=== self.parent_check_box_group.which_one then
+               self.parent_check_box_group.fire(Event.SELECTION_CHANGED, e)
+         } else
             self.toggle_is_checked()
       } else
          self.invalidate()

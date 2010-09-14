@@ -70,9 +70,13 @@ class CheckBoxMenuItem(Toggle,TextMenuItem)
    end
 
    public succeed(e)
-      if \self.parent_check_box_group then
+      local t
+      if \self.parent_check_box_group then {
+         t := self.parent_check_box_group.which_one
          self.parent_check_box_group.set_which_one(self)
-      else
+         if t ~=== self.parent_check_box_group.which_one then
+            self.parent_check_box_group.fire(Event.SELECTION_CHANGED, e)
+      } else
          self.toggle_is_checked()      
       cast(self,TextMenuItem).succeed(e)
    end
