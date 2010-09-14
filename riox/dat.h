@@ -163,7 +163,6 @@ struct Window
 	int			notefd;
 	uchar		scrolling;
 	uchar		noborder;
-        uchar           noresize;
         uchar           keepabove;
         uchar           keepbelow;
         int             mindx;
@@ -188,7 +187,7 @@ int		winborder(Window*, Point);
 void		winctl(void*);
 void		winshell(void*);
 Window*	wlookid(int);
-Window*	wmk(Image*, Mousectl*, Channel*, Channel*, int, int, int, int, int, int, int, int, int);
+Window*	wmk(Image*, Mousectl*, Channel*, Channel*, int, int, int, int, int, int, int, int);
 Window*	wpointto(Point);
 Window*	wtop(Point);
 void		wtopme(Window*);

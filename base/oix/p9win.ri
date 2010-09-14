@@ -488,10 +488,8 @@ static void handle_resize(wsp ws)
     if (gengetwindow(display, buff, &ws->win, &ws->screen, Refnone) < 0)
         syserr("Failed to reconnect to window on a resize");
 
-    tw = ws->win->r.max.x - ws->win->r.min.x;
-    th = ws->win->r.max.y - ws->win->r.min.y;
-    /*print("resize: %d x %d   flag=%d\n",tw,th,ws->bits&128);*/
-
+    tw = Dx(ws->win->r);
+    th = Dy(ws->win->r);
     if (tw == ws->width && th == ws->height) {
         /*
          * If the new size matches the existing canvas size, just copy the
@@ -1303,18 +1301,27 @@ void doconfig(wbp w, int status)
 
     /* Move/resize of window if open */
     if (ws->win) {
-        if (status & C_RESIZE)
-            fprint(ws->wctl_fd, ISRESIZABLE(ws) ? "canresize" : "noresize");
         if (status & C_POS)
             fprint(ws->wctl_fd, "move  -minx %d -miny %d", ws->x, ws->y);
-        if (status & (C_SIZE|C_MAXSIZE|C_MINSIZE)) {
+        if (status & (C_RESIZE|C_SIZE|C_MAXSIZE|C_MINSIZE)) {
+            int minw, maxw, minh, maxh;
+            if (ISRESIZABLE(ws)) {
+                minw = ws->minwidth;
+                minh = ws->minheight;
+                maxw = ws->maxwidth;
+                maxh = ws->maxheight;
+            }
+            else {
+                minw = maxw = ws->width;
+                minh = maxh = ws->height;
+            }
             fprint(ws->wctl_fd, "resize  -dx %d -dy %d -mindx %d -maxdx %d -mindy %d -maxdy %d", 
                    adjust(ws, ws->width), 
                    adjust(ws, ws->height),
-                   adjust(ws, ws->minwidth),
-                   adjust(ws, ws->maxwidth),
-                   adjust(ws, ws->minheight),
-                   adjust(ws, ws->maxheight));
+                   adjust(ws, minw),
+                   adjust(ws, maxw),
+                   adjust(ws, minh),
+                   adjust(ws, maxh));
         }
     }
     if (status & C_SIZE)
@@ -1421,9 +1428,20 @@ static int open_screen_win(wsp ws)
 {
     char buff[256];
     int fd;
+    int minw, maxw, minh, maxh;
+
+    if (ISRESIZABLE(ws)) {
+        minw = ws->minwidth;
+        minh = ws->minheight;
+        maxw = ws->maxwidth;
+        maxh = ws->maxheight;
+    }
+    else {
+        minw = maxw = ws->width;
+        minh = maxh = ws->height;
+    }
 
     ws->using_win = use_win;
-
     if (ws->using_win) {
         char buff[256];
         int fd;
@@ -1446,9 +1464,13 @@ static int open_screen_win(wsp ws)
         }
         ws->border_width = (strncmp(buff, "noborder", 8) == 0) ? 0 : 2 * Borderwidth;
 
-        fprint(ws->wctl_fd, "resize  -dx %d -dy %d", 
+        fprint(ws->wctl_fd, "resize -dx %d -dy %d -mindx %d -maxdx %d -mindy %d -maxdy %d", 
                adjust(ws, ws->width), 
-               adjust(ws, ws->height));
+               adjust(ws, ws->height),
+               adjust(ws, minw),
+               adjust(ws, maxw),
+               adjust(ws, minh),
+               adjust(ws, maxh));
 
         if (ws->x != -INT_MAX && ws->y != -INT_MAX)
             fprint(ws->wctl_fd, "move  -minx %d -miny %d", ws->x, ws->y);
@@ -1488,12 +1510,10 @@ static int open_screen_win(wsp ws)
             strcat(buff, " -hide");
         sprintf(buff + strlen(buff), 
                 " -mindx %d -maxdx %d -mindy %d -maxdy %d", 
-                adjust(ws, ws->minwidth),
-                adjust(ws, ws->maxwidth),
-                adjust(ws, ws->minheight),
-                adjust(ws, ws->maxheight));
-        if (!ISRESIZABLE(ws))
-            strcat(buff, " -noresize");
+                adjust(ws, minw),
+                adjust(ws, maxw),
+                adjust(ws, minh),
+                adjust(ws, maxh));
 
         if (mount(ws->wsys_fd, -1, ws->mount_dir, MREPL, buff) < 0) {
             whyf("Can't mount new window: %r");
@@ -1516,8 +1536,8 @@ static int open_screen_win(wsp ws)
     GRFX_GENLINK(ws, vwstates, vnext, vprevious);
 
     /* Ensure size matches the opened window */
-    ws->width =  ws->win->r.max.x - ws->win->r.min.x;
-    ws->height = ws->win->r.max.y - ws->win->r.min.y;
+    ws->width =  Dx(ws->win->r);
+    ws->height = Dy(ws->win->r);
     resize_pix_win(findwbp(ws));
 
     if ((fd = open_winfile(ws, "label", OWRITE)) < 0) {

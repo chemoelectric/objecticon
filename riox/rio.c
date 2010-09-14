@@ -223,7 +223,7 @@ threadmain(int argc, char *argv[])
 			r.max.y = r.min.y+80;
 			i = allocwindow(wscreen, r, Refbackup, DWhite);
 			wkeyboard = new(i, FALSE, scrolling, 0, 
-                                        0, 0, 0, 0, INT_MAX, 0, INT_MAX,
+                                        0, 0, 0, INT_MAX, 0, INT_MAX,
                                         0, nil, "/bin/rc", kbdargv);
 			if(wkeyboard == nil)
 				error("can't create keyboard window");
@@ -397,7 +397,7 @@ whichcorner(Window *w, Point p)
 void
 cornercursor(Window *w, Point p, int force)
 {
-	if(w!=nil && winborder(w, p) && !w->noresize)
+	if(w!=nil && winborder(w, p) && resizable(w))
 		riosetcursor(corners[whichcorner(w, p)], force);
 	else
 		wsetcursor(w, force);
@@ -676,7 +676,7 @@ button3menu(void)
 		break;
 	case New:
                 new(sweep(nil), FALSE, scrolling, 0, 
-                    0, 0, 0, 0, INT_MAX, 0, INT_MAX,
+                    0, 0, 0, INT_MAX, 0, INT_MAX,
                     0, nil, "/bin/rc", nil);
 		break;
 	case Reshape:
@@ -978,6 +978,12 @@ whichrect(Rectangle r, Point p, int which)
 }
 
 int
+resizable(Window *w)
+{
+    return w->mindx != w->maxdx || w->mindy != w->maxdy;
+}
+
+int
 wlimitrect(Window *w, Rectangle *r)
 {
     return limitrect(w->noborder, w->mindx, w->maxdx, w->mindy, w->maxdy, r);
@@ -1057,7 +1063,7 @@ bandsize(Window *w)
 	Rectangle r, or;
 	Point p, startp;
 	int which, but;
-        if (w->noresize)
+        if (!resizable(w))
             return nil;
 	p = mouse->xy;
 	but = mouse->buttons;
@@ -1146,7 +1152,7 @@ resize(void)
 	Image *i;
 
 	w = pointto(TRUE);
-	if(w == nil || w->noresize)
+	if(w == nil || !resizable(w))
 		return;
 	i = sweep(w);
 	if(i)
@@ -1229,14 +1235,14 @@ unhide(int h)
 
 Window*
 new(Image *i, int hideit, int scrollit, int noborder, 
-    int noresize, int keepabove, int keepbelow, int mindx, int maxdx, int mindy, int maxdy,
+    int keepabove, int keepbelow, int mindx, int maxdx, int mindy, int maxdy,
     int pid, char *dir, char *cmd, char **argv)
 {
 	Window *w;
 	Mousectl *mc;
 	Channel *cm, *ck, *cctl, *cpid;
 	void **arg;
-        //print("new noresize=%d dx=%d..%d dy=%d..%d\n",noresize,mindx,maxdx,mindy,maxdy);
+
 	if(i == nil)
 		return nil;
 	cm = chancreate(sizeof(Mouse), 0);
@@ -1250,7 +1256,7 @@ new(Image *i, int hideit, int scrollit, int noborder,
 	mc->image = i;
 	mc->c = cm;
 	w = wmk(i, mc, ck, cctl, scrollit, noborder,
-                noresize, keepabove, keepbelow, mindx, maxdx, mindy, maxdy);
+                keepabove, keepbelow, mindx, maxdx, mindy, maxdy);
 	free(mc);	/* wmk copies *mc */
 	window = erealloc(window, ++nwindow*sizeof(Window*));
 	window[nwindow-1] = w;

@@ -23,8 +23,6 @@ enum
 	Move,
 	Scroll,
 	Noscroll,
-        Canresize,
-        Noresizectl,
         Grab,
         Ungrab,
 	Set,
@@ -49,8 +47,6 @@ static char *cmds[] = {
 	[Hide]	        = "hide",
 	[Unhide]	= "unhide",
 	[Delete]	= "delete",
-        [Canresize]     = "canresize",
-        [Noresizectl]   = "noresize",
         [Grab]          = "grab",
         [Ungrab]        = "ungrab",
 	nil
@@ -75,7 +71,6 @@ enum
         Maxdx,
         Mindy,
         Maxdy,
-        Noresize,
         Noborder,
         Keepabove,
         Keepbelow,
@@ -99,7 +94,6 @@ static char *params[] = {
         [Maxdx]                 = "-maxdx",
         [Mindy]                 = "-mindy",
         [Maxdy]                 = "-maxdy",
-        [Noresize]              = "-noresize",
         [Noborder]              = "-noborder",
         [Keepabove]             = "-keepabove",
         [Keepbelow]             = "-keepbelow",
@@ -215,7 +209,7 @@ riostrtol(char *s, char **t)
 
 int
 parsewctl(char **argp, Rectangle r, Rectangle *rp, int *pidp, int *idp, int *hiddenp, int *scrollingp,
-          int *noborderp, int *noresizep, int *keepabovep, int *keepbelowp,
+          int *noborderp, int *keepabovep, int *keepbelowp,
           int *mindxp, int *maxdxp, int *mindyp, int *maxdyp, 
           char **cdp, char *s, char *err)
 {
@@ -225,7 +219,7 @@ parsewctl(char **argp, Rectangle r, Rectangle *rp, int *pidp, int *idp, int *hid
 	*pidp = 0;
 	*hiddenp = 0;
 	*scrollingp = scrolling;
-        *noresizep = *keepabovep = *keepbelowp = *noborderp = 0;
+        *keepabovep = *keepbelowp = *noborderp = 0;
 	*cdp = nil;
 	cmd = word(&s, cmds);
 	if(cmd < 0){
@@ -243,9 +237,6 @@ parsewctl(char **argp, Rectangle r, Rectangle *rp, int *pidp, int *idp, int *hid
 			continue;
 		case Noborder:
 			*noborderp = 1;
-			continue;
-		case Noresize:
-			*noresizep = 1;
 			continue;
                 case Keepabove:
                         *keepabovep = 1;
@@ -363,7 +354,7 @@ parsewctl(char **argp, Rectangle r, Rectangle *rp, int *pidp, int *idp, int *hid
 static
 int
 wctlnew(Rectangle rect, char *arg, int pid, int hideit, int scrollit, int noborder, 
-        int noresize, int keepabove, int keepbelow, int mindx, int maxdx, int mindy, int maxdy,
+        int keepabove, int keepbelow, int mindx, int maxdx, int mindy, int maxdy,
         char *dir, char *err)
 {
 	char **argv;
@@ -393,7 +384,7 @@ wctlnew(Rectangle rect, char *arg, int pid, int hideit, int scrollit, int nobord
 	if (!noborder) border(i, rect, Selborder, red, ZP);
 
 	new(i, hideit, scrollit, noborder, 
-            noresize, keepabove, keepbelow, mindx, maxdx, mindy, maxdy,
+            keepabove, keepbelow, mindx, maxdx, mindy, maxdy,
             pid, dir, "/bin/rc", argv);
 
 	free(argv);	/* when new() returns, argv and args have been copied */
@@ -404,7 +395,7 @@ int
 writewctl(Xfid *x, char *err)
 {
         int cnt, cmd, j, id, hideit, scrollit, pid, noborder,
-            noresize, keepabove, keepbelow, mindx, maxdx, mindy, maxdy;
+            keepabove, keepbelow, mindx, maxdx, mindy, maxdy;
 	Image *i;
 	char *arg, *dir;
 	Rectangle rect;
@@ -422,7 +413,7 @@ writewctl(Xfid *x, char *err)
         mindy = w->mindy;
         maxdy = w->maxdy;
 	cmd = parsewctl(&arg, rect, &rect, &pid, &id, &hideit, &scrollit, &noborder, 
-                        &noresize, &keepabove, &keepbelow, &mindx, &maxdx, &mindy, &maxdy,
+                        &keepabove, &keepbelow, &mindx, &maxdx, &mindy, &maxdy,
                         &dir, x->data, err);
 	if(cmd < 0)
 		return -1;
@@ -450,7 +441,7 @@ writewctl(Xfid *x, char *err)
 	switch(cmd){
 	case New:
 		return wctlnew(rect, arg, pid, hideit, scrollit, noborder, 
-                               noresize, keepabove, keepbelow, mindx, maxdx, mindy, maxdy,
+                               keepabove, keepbelow, mindx, maxdx, mindy, maxdy,
                                dir, err);
 	case Set:
 		if(pid > 0)
@@ -521,12 +512,6 @@ writewctl(Xfid *x, char *err)
 			return -1;
 		}
 		return 1;
-        case Canresize:
-                w->noresize = 0;
-                return 1;
-        case Noresizectl:
-                w->noresize = 1;
-                return 1;
         case Grab:
                 grab = w;
                 return 1;
@@ -546,7 +531,7 @@ wctlthread(void *v)
 {
 	char *buf, *arg, *dir;
 	int cmd, id, pid, hideit, scrollit, noborder,
-            noresize, keepabove, keepbelow, mindx, maxdx, mindy, maxdy;
+            keepabove, keepbelow, mindx, maxdx, mindy, maxdy;
 	Rectangle rect;
 	char err[ERRMAX];
 	Channel *c;
@@ -560,13 +545,13 @@ wctlthread(void *v)
                 mindx = mindy = 1;
                 maxdx = maxdy = INT_MAX;
 		cmd = parsewctl(&arg, ZR, &rect, &pid, &id, &hideit, &scrollit, &noborder, 
-                                &noresize, &keepabove, &keepbelow, &mindx, &maxdx, &mindy, &maxdy,
+                                &keepabove, &keepbelow, &mindx, &maxdx, &mindy, &maxdy,
                                 &dir, buf, err);
 
 		switch(cmd){
 		case New:
                     wctlnew(rect, arg, pid, hideit, scrollit, noborder, 
-                            noresize, keepabove, keepbelow, mindx, maxdx, mindy, maxdy,
+                            keepabove, keepbelow, mindx, maxdx, mindy, maxdy,
                             dir, err);
 		}
 		free(buf);

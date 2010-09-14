@@ -36,7 +36,7 @@ static	Image	*paleholdcol;
 
 Window*
 wmk(Image *i, Mousectl *mc, Channel *ck, Channel *cctl, int scrolling, int noborder,
-    int noresize, int keepabove, int keepbelow, int mindx, int maxdx, int mindy, int maxdy)
+    int keepabove, int keepbelow, int mindx, int maxdx, int mindy, int maxdy)
 {
 	Window *w;
 	Rectangle r;
@@ -79,7 +79,6 @@ wmk(Image *i, Mousectl *mc, Channel *ck, Channel *cctl, int scrolling, int nobor
 	w->notefd = -1;
 	w->scrolling = scrolling;
         w->noborder = noborder;
-        w->noresize = noresize;
         w->keepabove = keepabove;
         w->keepbelow = keepbelow;
         w->mindx = mindx;
