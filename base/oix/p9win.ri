@@ -317,6 +317,8 @@ wbp wcreate(char *display, wbp parent)
     }
     w->context = alccontext(w);
     create_list(64, &ws->listp);
+    if (parent)
+        ws->transientfor_winid = parent->window->winid;
     return w;
 }
 
@@ -366,8 +368,8 @@ static void copy_to(Image *dest, Image *src)
 {
     Rectangle t = Rect(dest->r.min.x, 
                        dest->r.min.y,
-                       dest->r.min.x + (src->r.max.x - src->r.min.x),
-                       dest->r.min.y + (src->r.max.y - src->r.min.y));
+                       dest->r.min.x + Dx(src->r),
+                       dest->r.min.y + Dy(src->r));
     gendraw(dest, t, src, src->r.min, 0, ZP);
 }
 
@@ -1427,7 +1429,7 @@ static void kill_proc(int id)
 static int open_screen_win(wsp ws)
 {
     char buff[256];
-    int fd;
+    int fd, n;
     int minw, maxw, minh, maxh;
 
     if (ISRESIZABLE(ws)) {
@@ -1443,9 +1445,6 @@ static int open_screen_win(wsp ws)
 
     ws->using_win = use_win;
     if (ws->using_win) {
-        char buff[256];
-        int fd;
-
         strcpy(ws->mount_dir, "/dev");
 
         if ((ws->wctl_fd = open_winfile(ws, "wctl", OWRITE)) < 0) {
@@ -1457,7 +1456,7 @@ static int open_screen_win(wsp ws)
         /* See if the window has a border or not, and set the border width accordingly. */
         buff[0] = 0;
         if ((fd = open_winfile(ws, "winname", OREAD)) >= 0) {
-            int n = read(fd, buff, sizeof(buff) - 1);
+            n = read(fd, buff, sizeof(buff) - 1);
             if (n > 0)
                 buff[n] = 0;
             close(fd);
@@ -1514,6 +1513,8 @@ static int open_screen_win(wsp ws)
                 adjust(ws, maxw),
                 adjust(ws, minh),
                 adjust(ws, maxh));
+        if (ws->transientfor_winid >= 0)
+            sprintf(buff + strlen(buff), " -transientfor %d", ws->transientfor_winid);
 
         if (mount(ws->wsys_fd, -1, ws->mount_dir, MREPL, buff) < 0) {
             whyf("Can't mount new window: %r");
@@ -1539,6 +1540,16 @@ static int open_screen_win(wsp ws)
     ws->width =  Dx(ws->win->r);
     ws->height = Dy(ws->win->r);
     resize_pix_win(findwbp(ws));
+
+    if ((fd = open_winfile(ws, "winid", OREAD)) < 0) {
+        whyf("Can't open winid file %r");
+        close_screen_win(ws);
+        return Failed;
+    }
+    n = read(fd, buff, 12);
+    buff[11] = 0;
+    ws->winid = atoi(buff);
+    close(fd);
 
     if ((fd = open_winfile(ws, "label", OWRITE)) < 0) {
         whyf("Can't open label file %r");
@@ -1674,7 +1685,7 @@ static void close_screen_win(wsp ws)
     ws->mount_dir[0] = 0;
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
         ws->screeninfo_fd = ws->cursor_fd = ws->mouse_pid = ws->cons_pid = ws->wsys_fd = 
-        ws->wctl_fd = -1;
+        ws->wctl_fd = ws->winid = -1;
 }
 
 static void open_pix_win(wsp ws)
@@ -1994,7 +2005,7 @@ static wsp alcwinstate()
     ws->buttonorder[2] = 4;
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
         ws->screeninfo_fd = ws->cursor_fd = ws->mouse_pid = ws->cons_pid = ws->wsys_fd = 
-        ws->wctl_fd = -1;
+        ws->wctl_fd = ws->winid = ws->transientfor_winid = -1;
     ws->cursor = stringint_lookup(cursors, "left ptr");
     ws->x = ws->y = -INT_MAX;
     ws->minwidth = ws->minheight = 1;

@@ -125,6 +125,9 @@ NativeDef(graphics.Window,warp_pointer,graphics_Window_warp_pointer)
 NativeDef(graphics.Window,wcreate,graphics_Window_wcreate)
 NativeDef(graphics.Window,wopen,graphics_Window_wopen)
 NativeDef(graphics.Window,write_image,graphics_Window_write_image)
+#if PLAN9
+NativeDef(graphics.Window,get_dir,graphics_Window_get_dir)
+#endif
 #endif
 NativeDef(io.DescStream,flag,io_DescStream_flag)
 NativeDef(io.DescStream,poll,io_DescStream_poll)

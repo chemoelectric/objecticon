@@ -1950,4 +1950,17 @@ function graphics_Window_post_set(self)
    }
 end
 
+#if PLAN9
+function graphics_Window_get_dir(self)
+   body {
+       tended struct descrip result;
+       GetSelfW();
+       if (!self_w->window->win)
+           fail;
+       cstr2string(self_w->window->mount_dir, &result);
+       return result;
+   }
+end
+#endif
+
 #endif   /* Graphics */

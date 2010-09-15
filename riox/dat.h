@@ -165,6 +165,7 @@ struct Window
 	uchar		noborder;
         uchar           keepabove;
         uchar           keepbelow;
+        int             transientfor;          /* id of transient-for parent */
         int             mindx;
         int             maxdx;
         int             mindy;
@@ -187,7 +188,7 @@ int		winborder(Window*, Point);
 void		winctl(void*);
 void		winshell(void*);
 Window*	wlookid(int);
-Window*	wmk(Image*, Mousectl*, Channel*, Channel*, int, int, int, int, int, int, int, int);
+Window*	wmk(Image*, Mousectl*, Channel*, Channel*, int, int, int, int, int, int, int, int, int);
 Window*	wpointto(Point);
 Window*	wtop(Point);
 void		wtopme(Window*);

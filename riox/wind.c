@@ -35,7 +35,7 @@ static	Image	*lightholdcol;
 static	Image	*paleholdcol;
 
 Window*
-wmk(Image *i, Mousectl *mc, Channel *ck, Channel *cctl, int scrolling, int noborder,
+wmk(Image *i, Mousectl *mc, Channel *ck, Channel *cctl, int scrolling, int transientfor, int noborder,
     int keepabove, int keepbelow, int mindx, int maxdx, int mindy, int maxdy)
 {
 	Window *w;
@@ -78,6 +78,7 @@ wmk(Image *i, Mousectl *mc, Channel *ck, Channel *cctl, int scrolling, int nobor
 	w->id = ++id;
 	w->notefd = -1;
 	w->scrolling = scrolling;
+        w->transientfor = transientfor;
         w->noborder = noborder;
         w->keepabove = keepabove;
         w->keepbelow = keepbelow;
@@ -87,9 +88,13 @@ wmk(Image *i, Mousectl *mc, Channel *ck, Channel *cctl, int scrolling, int nobor
         w->maxdy = maxdy;
 	w->dir = estrdup(startdir);
 	w->label = estrdup("<unnamed>");
-	r = insetrect(w->i->r, Selborder);
-	draw(w->i, r, cols[BACK], nil, w->entire.min);
-	wborder(w, Selborder);
+        if (noborder) {
+            draw(w->i, w->i->r, cols[BACK], nil, w->entire.min);
+        } else {
+            r = insetrect(w->i->r, Selborder);
+            draw(w->i, r, cols[BACK], nil, w->entire.min);
+            wborder(w, Selborder);
+        }
 	wscrdraw(w);
 	incref(w);	/* ref will be removed after mounting; avoids delete before ready to be deleted */
 	return w;
@@ -286,6 +291,7 @@ winctl(void *arg)
 //				wkeyctl(w, r);
 			break;
 		case WMouse:
+                    //print("%d,%d:",w->id,w->mouseopen);
 			if(w->mouseopen) {
 				w->mouse.counter++;
 
@@ -1068,6 +1074,7 @@ wctlmesg(Window *w, int m, Rectangle r, Image *i)
 		error("unknown control message");
 		break;
 	case Wakeup:
+                ensurestacking();
 		break;
 	case Moved:
 	case Reshaped:
@@ -1078,6 +1085,7 @@ wctlmesg(Window *w, int m, Rectangle r, Image *i)
 		w->screenr = r;
 		strcpy(buf, w->name);
 		wresize(w, i, m==Moved);
+                ensurestacking();
 		w->wctlready = 1;
 		proccreate(deletetimeoutproc, estrdup(buf), 4096);
 		if(Dx(r) > 0){
@@ -1248,6 +1256,24 @@ riosetcursor(Cursor *p, int force)
 	lastcursor = p;
 }
 
+void
+ensurestacking(void)
+{
+    int i;
+    //return;
+    for(i=0; i<nwindow; i++) {
+        Window *w = window[i];
+        if(w->keepabove) {
+            topwindow(w->i);
+            w->topped = ++topped;
+        }
+        if(w->keepbelow) {
+            bottomwindow(w->i);
+            w->topped = - ++topped;
+        }
+    }
+}
+
 Window*
 wtop(Point pt)
 {
@@ -1255,8 +1281,10 @@ wtop(Point pt)
 
 	w = wpointto(pt);
 	if(w){
-		if(w->topped == topped)
+            //print("a%d",w->id);
+		if(w->topped == topped && input == w)
 			return nil;
+                //print("b%d",w->id);
 		topwindow(w->i);
 		wcurrent(w);
 		flushimage(display, 1);
@@ -1270,6 +1298,7 @@ wtopme(Window *w)
 {
 	if(w!=nil && w->i!=nil && !w->deleted && w->topped!=topped){
 		topwindow(w->i);
+                ensurestacking();
 		flushimage(display, 1);
 		w->topped = ++ topped;
 	}
@@ -1280,6 +1309,7 @@ wbottomme(Window *w)
 {
 	if(w!=nil && w->i!=nil && !w->deleted){
 		bottomwindow(w->i);
+                ensurestacking();
 		flushimage(display, 1);
 		w->topped = - ++topped;
 	}

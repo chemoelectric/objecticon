@@ -305,6 +305,8 @@ typedef struct _wstate {
   int           wsys_fd, wctl_fd, mouse_fd, cons_fd, consctl_fd, 
                 screeninfo_fd, cursor_fd;
   int           mouse_pid, cons_pid;
+  int           winid;                  /* Id as per winid file */
+  int           transientfor_winid;     /* Winid of transient-for window, or -1 */
   int           desired_canvas;
   stringint     *cursor;
   int           using_win;

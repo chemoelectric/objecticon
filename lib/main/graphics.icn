@@ -395,6 +395,10 @@ class Window(SetFields,NoCopy)
    #
    public defer close()
 
+$ifdef _PLAN9
+   public defer get_dir()
+$endif
+
    public enqueue(eventcode, x, y, ctrl, alt, shift, release, interval)	
       /x := -1
       /y := -1

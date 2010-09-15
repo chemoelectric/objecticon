@@ -3,13 +3,14 @@ int	whide(Window*);
 int	wunhide(int);
 void	freescrtemps(void);
 int	parsewctl(char**, Rectangle, Rectangle*, int*, int*, int*, int*, int*, 
-                  int*, int*, int*, int*, int*, int *, char**, char*, char*);
+                  int *, int*, int*, int*, int*, int*, int *, char**, char*, char*);
 int	writewctl(Xfid*, char*);
 int     wlimitrect(Window *w, Rectangle *r);
 int     limitrect(int noborder, int mindx, int maxdx, int mindy, int maxdy, Rectangle *r);
 int     resizable(Window *w);
+void    ensurestacking(void);
 
-Window *new(Image*, int, int, int, int, int, int, int, int, int, int, char*, char*, char**);
+Window *new(Image*, int, int, int, int, int, int, int, int, int, int, int, char*, char*, char**);
 void	riosetcursor(Cursor*, int);
 int	min(int, int);
 int	max(int, int);

@@ -222,7 +222,7 @@ threadmain(int argc, char *argv[])
 			r.max.x = r.min.x+300;
 			r.max.y = r.min.y+80;
 			i = allocwindow(wscreen, r, Refbackup, DWhite);
-			wkeyboard = new(i, FALSE, scrolling, 0, 
+			wkeyboard = new(i, FALSE, scrolling, -1, 0, 
                                         0, 0, 0, INT_MAX, 0, INT_MAX,
                                         0, nil, "/bin/rc", kbdargv);
 			if(wkeyboard == nil)
@@ -466,7 +466,7 @@ void
 mousethread(void*)
 {
 	int sending, inside, scrolling, moving, band;
-	Window *oin, *w, *winput, *tw;
+	Window *oin, *w, *winput, *over;
 	Image *i;
 	Rectangle r;
 	Point xy;
@@ -503,20 +503,30 @@ mousethread(void*)
 			}
 		Again:
 			winput = input;
+                        over = wpointto(mouse->xy);
 			/* override everything for the keyboard window */
 			if(wkeyboard!=nil && ptinrect(mouse->xy, wkeyboard->screenr)){
 				/* make sure it's on top; this call is free if it is */
 				wtopme(wkeyboard);
 				winput = wkeyboard;
 			}
-                        if(grab!=nil){
+                        else if(grab!=nil){
                                 winput = grab;
                         } else {
-                                tw = wpointto(mouse->xy);
-                                if(tw && (!mouse->buttons || tw->noborder))
-                                    winput = tw;
+                                if(over && (!mouse->buttons || over->noborder))
+                                    winput = over;
+/*
+                                winput = wpointto(mouse->xy);
+                                if (winput &&
+                                    winput != input &&
+                                    mouse->buttons &&
+                                    !winput->noborder) 
+                                {
+                                    wtopme(winput);
+                                    wcurrent(winput);
+                                }
+*/
                         }
-
 			if(winput!=nil && winput->i!=nil){
 				/* convert to logical coordinates */
 				xy.x = mouse->xy.x + (winput->i->r.min.x-winput->screenr.min.x);
@@ -526,7 +536,8 @@ mousethread(void*)
 				if((mouse->buttons&(8|16)) && !winput->mouseopen)
 					goto Sending;
 
-				inside = (winput == grab) || ptinrect(mouse->xy, insetrect(winput->screenr, Selborder));
+				//inside = (winput == grab) || ptinrect(mouse->xy, insetrect(winput->screenr, Selborder));
+				inside = (winput == grab) || over==winput&&ptinrect(mouse->xy, insetrect(winput->screenr, Selborder));
 				if(winput->mouseopen)
 					scrolling = FALSE;
 				else if(scrolling)
@@ -595,9 +606,10 @@ mousethread(void*)
 				}else{
 					/* if button 1 event in the window, top the window and wait for button up. */
 					/* otherwise, top the window and pass the event on */
-//					if(wtop(mouse->xy) && (mouse->buttons!=1 || winborder(w, mouse->xy)))
+                                      //if(wtop(mouse->xy) && (mouse->buttons!=1 || winborder(w, mouse->xy)))
 					if(wtop(mouse->xy) && (w->mouseopen || mouse->buttons!=1 || winborder(w, mouse->xy)))
 						goto Again;
+                                        //print("r%d",input->id);
 					goto Drain;
 				}
 			}
@@ -675,7 +687,7 @@ button3menu(void)
 	case -1:
 		break;
 	case New:
-                new(sweep(nil), FALSE, scrolling, 0, 
+                new(sweep(nil), FALSE, scrolling, -1, 0, 
                     0, 0, 0, INT_MAX, 0, INT_MAX,
                     0, nil, "/bin/rc", nil);
 		break;
@@ -1234,7 +1246,7 @@ unhide(int h)
 }
 
 Window*
-new(Image *i, int hideit, int scrollit, int noborder, 
+new(Image *i, int hideit, int scrollit, int transientfor, int noborder, 
     int keepabove, int keepbelow, int mindx, int maxdx, int mindy, int maxdy,
     int pid, char *dir, char *cmd, char **argv)
 {
@@ -1255,7 +1267,7 @@ new(Image *i, int hideit, int scrollit, int noborder,
 	*mc = *mousectl;
 	mc->image = i;
 	mc->c = cm;
-	w = wmk(i, mc, ck, cctl, scrollit, noborder,
+	w = wmk(i, mc, ck, cctl, scrollit, transientfor, noborder,
                 keepabove, keepbelow, mindx, maxdx, mindy, maxdy);
 	free(mc);	/* wmk copies *mc */
 	window = erealloc(window, ++nwindow*sizeof(Window*));

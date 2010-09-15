@@ -148,7 +148,7 @@ void
 xfidattach(Xfid *x)
 {
 	Fcall t;
-	int id, hideit, scrollit, noborder,
+	int id, hideit, scrollit, noborder, transientfor,
             keepabove, keepbelow, mindx, maxdx, mindy, maxdy;
 	Window *w;
 	char *err, *n, *dir, errbuf[ERRMAX];
@@ -191,7 +191,7 @@ xfidattach(Xfid *x)
                         if (!noborder) border(i, r, Selborder, display->black, ZP);
 			if(pid == 0)
 				pid = -1;	/* make sure we don't pop a shell! - UGH */
-			w = new(i, hideit, scrolling, noborder, 
+			w = new(i, hideit, scrolling, transientfor, noborder, 
                                 keepabove, keepbelow, mindx, maxdx, mindy, maxdy,
                                 pid, nil, nil, nil);
 			flushimage(display, 1);
@@ -202,7 +202,7 @@ xfidattach(Xfid *x)
 		pid = 0;
                 mindx = mindy = 1;
                 maxdx = maxdy = INT_MAX;
-		if(parsewctl(nil, ZR, &r, &pid, nil, &hideit, &scrollit, &noborder, 
+		if(parsewctl(nil, ZR, &r, &pid, nil, &hideit, &scrollit, &transientfor, &noborder, 
                              &keepabove, &keepbelow, &mindx, &maxdx, &mindy, &maxdy,
                              &dir, x->aname, errbuf) < 0)
 			err = errbuf;
