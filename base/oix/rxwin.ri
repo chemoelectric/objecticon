@@ -25,6 +25,7 @@ static void handle_exposures(wsp ws, XExposeEvent *event);
 static void handle_mouse(wsp ws, XButtonEvent *event);
 static void handle_keypress(wsp ws, XKeyEvent *event);
 static void wmap(wbp w);
+static void synch_cursor(wsp ws);
 static int convert_KeySym_to_code_point(KeySym k);
 static char *convertspec(wdp wd, char *s);
 #ifdef HAVE_LIBXFT
@@ -973,12 +974,7 @@ static void wmap(wbp w)
     ws->height = attrs.height;
     resizepixmap(w, ws->width, ws->height);
 
-    if (stdwin) {
-        i = ws->cursor->i >> 1;
-        if (!(wd->cursors[i]))
-            wd->cursors[i] = XCreateFontCursor(stddpy, 2 * i);
-        XDefineCursor(stddpy, stdwin, wd->cursors[i]);
-    }
+    synch_cursor(ws);
 
     CLRZOMBIE(ws);
 
@@ -1230,7 +1226,15 @@ int setwindowlabel(wbp w, char *s)
     return Succeeded;
 }
 
-
+static void synch_cursor(wsp ws)
+{
+    int i;
+    wdp wd = ws->display;
+    i = ws->cursor->i >> 1;
+    if (!wd->cursors[i])
+        wd->cursors[i] = XCreateFontCursor(wd->display, 2 * i);
+    XDefineCursor(wd->display, ws->win, wd->cursors[i]);
+}
 
 /*
  * setpointer() - define a mouse pointer shape
@@ -1238,17 +1242,13 @@ int setwindowlabel(wbp w, char *s)
 int setpointer(wbp w, char *val)
 {
     stringint *e;
-    int i;
     STDLOCALS(w);
     e = stringint_lookup(cursors, val);
     if (!e)
         return Failed;
     ws->cursor = e;
-    i = ws->cursor->i >> 1;
-    if (!(wd->cursors[i]))
-        wd->cursors[i] = XCreateFontCursor(stddpy, 2 * i);
     if (stdwin)
-        XDefineCursor(stddpy, stdwin, wd->cursors[i]);
+        synch_cursor(ws);
     return Succeeded;
 }
 
