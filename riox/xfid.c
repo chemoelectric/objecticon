@@ -165,6 +165,7 @@ xfidattach(Xfid *x)
         noborder = keepabove = keepbelow = 0;
         mindx = mindy = 0;
         maxdx = maxdy = INT_MAX;
+        transientfor = -1;
 
 	if(x->aname[0] == 'N'){	/* N 100,100, 200, 200 - old syntax */
 		n = x->aname+1;

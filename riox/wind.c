@@ -108,6 +108,8 @@ wsetname(Window *w)
 
         if (w->noborder)
             n = sprint(w->name, "noborder.window.%d.%d", w->id, w->namecount++);
+        else if (w->transientfor != -1)
+            n = sprint(w->name, "transient.window.%d.%d", w->id, w->namecount++);
         else
             n = sprint(w->name, "window.%d.%d", w->id, w->namecount++);
 	for(i='A'; i<='Z'; i++){
@@ -1258,17 +1260,40 @@ riosetcursor(Cursor *p, int force)
 void
 ensurestacking(void)
 {
-    int i;
+    int i, smallest_notkb, largest_notka;
 
+    /* Work out topped values so that all windows with topped <
+     * smallest_notkb are keepbelow and > largest_notka are keepabove.
+     */
+    smallest_notkb = INT_MAX;
+    largest_notka = INT_MIN;
     for(i=0; i<nwindow; i++) {
         Window *w = window[i];
-        if(w->keepabove) {
-            topwindow(w->i);
-            w->topped = ++topped;
+        if (w->i->screen) {   /* if not hidden */
+            if (!w->keepbelow && w->topped < smallest_notkb)
+                smallest_notkb = w->topped;
+            if (!w->keepabove && w->topped > largest_notka)
+                largest_notka = w->topped;
         }
-        if(w->keepbelow) {
-            bottomwindow(w->i);
-            w->topped = - ++topped;
+    }
+    for(i=0; i<nwindow; i++) {
+        Window *w = window[i];
+        if (w->i->screen) {   /* if not hidden */
+            if(w->keepabove && w->topped < largest_notka) {
+                topwindow(w->i);
+                w->topped = ++topped;
+            }
+            if(w->keepbelow && w->topped > smallest_notkb) {
+                bottomwindow(w->i);
+                w->topped = - ++topped;
+            }
+            if(w->transientfor != -1) {
+                Window *x = wlookid(w->transientfor);
+                if (x && x->topped > w->topped) {
+                    topwindow(w->i);
+                    w->topped = ++topped;
+                }
+            }
         }
     }
 }
@@ -1282,10 +1307,11 @@ wtop(Point pt)
 	if(w){
 		if(w->topped == topped && input == w)
 			return nil;
+                if(w->noborder) return nil;
 		topwindow(w->i);
+		w->topped = ++topped;
 		wcurrent(w);
 		flushimage(display, 1);
-		w->topped = ++topped;
 	}
 	return w;
 }
@@ -1295,9 +1321,9 @@ wtopme(Window *w)
 {
 	if(w!=nil && w->i!=nil && !w->deleted && w->topped!=topped){
 		topwindow(w->i);
+		w->topped = ++ topped;
                 ensurestacking();
 		flushimage(display, 1);
-		w->topped = ++ topped;
 	}
 }
 
@@ -1306,9 +1332,9 @@ wbottomme(Window *w)
 {
 	if(w!=nil && w->i!=nil && !w->deleted){
 		bottomwindow(w->i);
+		w->topped = - ++topped;
                 ensurestacking();
 		flushimage(display, 1);
-		w->topped = - ++topped;
 	}
 }
 

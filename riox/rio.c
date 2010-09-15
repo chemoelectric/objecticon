@@ -466,7 +466,7 @@ void
 mousethread(void*)
 {
 	int sending, inside, scrolling, moving, band;
-	Window *oin, *w, *winput, *over;
+	Window *oin, *w, *winput, *over, *nbinput;
 	Image *i;
 	Rectangle r;
 	Point xy;
@@ -482,6 +482,7 @@ mousethread(void*)
 	sending = FALSE;
 	scrolling = FALSE;
 	moving = FALSE;
+        nbinput = 0;
 
 	alts[MReshape].c = mousectl->resizec;
 	alts[MReshape].v = nil;
@@ -502,7 +503,8 @@ mousethread(void*)
 				break;
 			}
 		Again:
-			winput = input;
+			//winput = input;
+			winput = nbinput ? nbinput : input;
                         over = wpointto(mouse->xy);
 			/* override everything for the keyboard window */
 			if(wkeyboard!=nil && ptinrect(mouse->xy, wkeyboard->screenr)){
@@ -540,17 +542,19 @@ mousethread(void*)
 
 			if(sending){
 			Sending:
-				if(mouse->buttons == 0){
-					cornercursor(winput, mouse->xy, 0);
-					sending = FALSE;
-				}else
-					wsetcursor(winput, 0);
+                                if (!grab) {
+                                        if(mouse->buttons == 0){
+					       cornercursor(winput, mouse->xy, 0);
+                                               sending = FALSE;
+                                        }else
+                                               wsetcursor(winput, 0);
+                                }
 				tmp = mousectl->Mouse;
 				tmp.xy = xy;
 				send(winput->mc.c, &tmp);
 				continue;
 			}
-			w = wpointto(mouse->xy);
+			w = over; //wpointto(mouse->xy);
 			/* change cursor if over anyone's border */
 			if(w != nil)
 				cornercursor(w, mouse->xy, 0);
@@ -591,10 +595,18 @@ mousethread(void*)
 						button3menu();
 				}else{
 					/* if button 1 event in the window, top the window and wait for button up. */
-					/* otherwise, top the window and pass the event on */
-                                      //if(wtop(mouse->xy) && (mouse->buttons!=1 || winborder(w, mouse->xy)))
-					if(wtop(mouse->xy) && (w->mouseopen || mouse->buttons!=1 || winborder(w, mouse->xy)))
+  					/* otherwise, top the window and pass the event on */
+                                        //if(wtop(mouse->xy) && (mouse->buttons!=1 || winborder(w, mouse->xy)))
+                                        if (w->noborder) {
+                                            if(w != nbinput && (w->mouseopen || mouse->buttons!=1)) {
+                                                nbinput = w;
+                                                goto Again;
+                                            }
+                                        } else {
+                                            nbinput = 0;
+                                            if(wtop(mouse->xy) && (w->mouseopen || mouse->buttons!=1 || winborder(w, mouse->xy)))
 						goto Again;
+                                        }
 					goto Drain;
 				}
 			}
@@ -977,7 +989,7 @@ whichrect(Rectangle r, Point p, int which)
 int
 resizable(Window *w)
 {
-    return w->mindx != w->maxdx || w->mindy != w->maxdy;
+    return !w->noborder && (w->mindx != w->maxdx || w->mindy != w->maxdy);
 }
 
 int
@@ -1164,7 +1176,7 @@ move(void)
 	Rectangle r;
 
 	w = pointto(FALSE);
-	if(w == nil)
+	if(w == nil || w->noborder)
 		return;
 	i = drag(w, &r);
 	if(i)
@@ -1172,8 +1184,8 @@ move(void)
 	cornercursor(input, mouse->xy, 1);
 }
 
-int
-whide(Window *w)
+static int
+whideimpl(Window *w)
 {
 	Image *i;
 	int j;
@@ -1185,9 +1197,21 @@ whide(Window *w)
 	if(i){
 		hidden[nhidden++] = w;
 		wsendctlmesg(w, Reshaped, ZR, i);
+                for(j=0; j<nwindow; j++){
+                    if(window[j]->transientfor == w->id)
+                        whideimpl(window[j]);
+                }
 		return 1;
 	}
 	return 0;
+}
+
+int
+whide(Window *w)
+{
+        if(w->noborder || w->transientfor != -1)
+            return 0;
+        return whideimpl(w);
 }
 
 int
@@ -1195,6 +1219,7 @@ wunhide(int h)
 {
 	Image *i;
 	Window *w;
+	int j;
 
 	w = hidden[h];
 	i = allocwindow(wscreen, w->i->r, Refbackup, DWhite);
@@ -1202,6 +1227,11 @@ wunhide(int h)
 		--nhidden;
 		memmove(hidden+h, hidden+h+1, (nhidden-h)*sizeof(Window*));
 		wsendctlmesg(w, Reshaped, w->i->r, i);
+
+                for(j=0; j<nhidden; j++)
+                    if(hidden[j]->transientfor == w->id)
+                        wunhide(j);
+
 		return 1;
 	}
 	return 0;

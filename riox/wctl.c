@@ -398,7 +398,6 @@ wctlnew(Rectangle rect, char *arg, int pid, int hideit, int scrollit, int transi
 	new(i, hideit, scrollit, transientfor, noborder, 
             keepabove, keepbelow, mindx, maxdx, mindy, maxdy,
             pid, dir, "/bin/rc", argv);
-
 	free(argv);	/* when new() returns, argv and args have been copied */
 	return 1;
 }
