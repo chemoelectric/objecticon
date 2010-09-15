@@ -512,20 +512,6 @@ mousethread(void*)
 			}
                         else if(grab!=nil){
                                 winput = grab;
-                        } else {
-                                if(over && (!mouse->buttons || over->noborder))
-                                    winput = over;
-/*
-                                winput = wpointto(mouse->xy);
-                                if (winput &&
-                                    winput != input &&
-                                    mouse->buttons &&
-                                    !winput->noborder) 
-                                {
-                                    wtopme(winput);
-                                    wcurrent(winput);
-                                }
-*/
                         }
 			if(winput!=nil && winput->i!=nil){
 				/* convert to logical coordinates */
@@ -537,7 +523,7 @@ mousethread(void*)
 					goto Sending;
 
 				//inside = (winput == grab) || ptinrect(mouse->xy, insetrect(winput->screenr, Selborder));
-				inside = (winput == grab) || over==winput&&ptinrect(mouse->xy, insetrect(winput->screenr, Selborder));
+				inside = (winput == grab) || over==winput && ptinrect(mouse->xy, insetrect(winput->screenr, Selborder));
 				if(winput->mouseopen)
 					scrolling = FALSE;
 				else if(scrolling)
@@ -545,7 +531,7 @@ mousethread(void*)
 				else
 					scrolling = mouse->buttons && ptinrect(xy, winput->scrollr);
 				/* topped will be zero or less if window has been bottomed */
-				if(sending == FALSE && !scrolling && winborder(winput, mouse->xy) && winput->topped>0){
+				if(sending == FALSE && !scrolling && over==winput && winborder(winput, mouse->xy) && winput->topped>0){
 					moving = TRUE;
 				}else if(inside && (scrolling || winput->mouseopen || (mouse->buttons&1)))
 					sending = TRUE;
@@ -609,7 +595,6 @@ mousethread(void*)
                                       //if(wtop(mouse->xy) && (mouse->buttons!=1 || winborder(w, mouse->xy)))
 					if(wtop(mouse->xy) && (w->mouseopen || mouse->buttons!=1 || winborder(w, mouse->xy)))
 						goto Again;
-                                        //print("r%d",input->id);
 					goto Drain;
 				}
 			}

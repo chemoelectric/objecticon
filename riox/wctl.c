@@ -24,9 +24,8 @@ enum
 	Scroll,
 	Noscroll,
         Keepabove2,
-        Nokeepabove,
         Keepbelow2,
-        Nokeepbelow,
+        Nokeeping,
         Grab,
         Ungrab,
 	Set,
@@ -54,9 +53,8 @@ static char *cmds[] = {
         [Grab]          = "grab",
         [Ungrab]        = "ungrab",
         [Keepabove2]    = "keepabove",
-        [Nokeepabove]   = "nokeepabove",
         [Keepbelow2]    = "keepbelow",
-        [Nokeepbelow]   = "nokeepbelow",
+        [Nokeeping]     = "nokeeping",
 	nil
 };
 
@@ -496,16 +494,12 @@ writewctl(Xfid *x, char *err)
 		w->keepabove = 1;
 		wsendctlmesg(w, Wakeup, ZR, nil);
 		return 1;
-	case Nokeepabove:
-		w->keepabove = 0;
-		wsendctlmesg(w, Wakeup, ZR, nil);
-		return 1;
 	case Keepbelow2:
 		w->keepbelow = 1;
 		wsendctlmesg(w, Wakeup, ZR, nil);
 		return 1;
-	case Nokeepbelow:
-		w->keepbelow = 0;
+	case Nokeeping:
+		w->keepabove = w->keepbelow = 0;
 		wsendctlmesg(w, Wakeup, ZR, nil);
 		return 1;
 	case Top:

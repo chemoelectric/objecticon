@@ -105,7 +105,7 @@ wsetname(Window *w)
 {
 	int i, n;
 	char err[ERRMAX];
-//        print("nameing:%R\n",w->i->r);	
+
         if (w->noborder)
             n = sprint(w->name, "noborder.window.%d.%d", w->id, w->namecount++);
         else
@@ -291,7 +291,6 @@ winctl(void *arg)
 //				wkeyctl(w, r);
 			break;
 		case WMouse:
-                    //print("%d,%d:",w->id,w->mouseopen);
 			if(w->mouseopen) {
 				w->mouse.counter++;
 
@@ -1260,7 +1259,7 @@ void
 ensurestacking(void)
 {
     int i;
-    //return;
+
     for(i=0; i<nwindow; i++) {
         Window *w = window[i];
         if(w->keepabove) {
@@ -1281,10 +1280,8 @@ wtop(Point pt)
 
 	w = wpointto(pt);
 	if(w){
-            //print("a%d",w->id);
 		if(w->topped == topped && input == w)
 			return nil;
-                //print("b%d",w->id);
 		topwindow(w->i);
 		wcurrent(w);
 		flushimage(display, 1);
@@ -1378,7 +1375,7 @@ wsetpid(Window *w, int pid, int dolabel)
 	fd = open(buf, OWRITE|OCEXEC);
 	if(w->notefd > 0)
 		close(w->notefd);
-        //print("buf=%s fd=%d\n",buf,fd);
+
 	w->notefd = fd;
 }
 
