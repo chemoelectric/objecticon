@@ -112,6 +112,11 @@ void wgetevent(wbp w, dptr res)
                 }
                 return;
             }
+            case WINDOWRESIZED:
+            case WINDOWCLOSED: {
+                /* No items follow */
+                return;
+            }
         }
     }
 
@@ -192,6 +197,16 @@ void qevent(wsp ws,             /* canvas */
     /* Interval */
     MakeInt(ivl, &d);
     list_put(q, &d);
+}
+
+/*
+ * Helper function to add a single-descriptor event to the queue.
+ */
+void qeventcode(wsp ws, int c)
+{
+    struct descrip d;
+    MakeInt(c, &d);
+    list_put(&ws->listp, &d);
 }
 
 #define swap(a,b) { int tmp = a; a = b; b = tmp; }

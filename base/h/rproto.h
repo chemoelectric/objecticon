@@ -186,6 +186,7 @@ void buffnstr(dptr d, char **s, ...);
    int  parsepattern    (char *s, int *w, int *height, int **data);
    int  parseinputmask  (char *s, int *res);
    void qevent          (wsp ws, dptr e, int x, int y, uword t, int ctrl, int meta, int shift, int rel);
+   void qeventcode      (wsp, int);
    void qmouseevents    (wsp ws, int state, int x, int y, uword t, int ctrl, int meta, int shift);
    void wgetevent       (wbp w, dptr res);
    int  readimagefile   (char *filename, struct imgdata *imd);

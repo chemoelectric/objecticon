@@ -587,11 +587,8 @@ static void handle_misc(wdp wd)
                  * only client message we handle at present are destroy requests
                  */
                 if (event.xclient.data.l[0] == XInternAtom(ws->display->display, 
-                                                           "WM_DELETE_WINDOW", False)) {
-                    struct descrip d;
-                    MakeInt(WINDOWCLOSED, &d);
-                    qevent(ws, &d, -1, -1, 0, 0, 0, 0, 0);
-                }
+                                                           "WM_DELETE_WINDOW", False))
+                    qeventcode(ws, WINDOWCLOSED);
                 break;
             }
             case DestroyNotify:
@@ -1793,8 +1790,6 @@ static void resizepixmap(wbp w, int width, int height)
  */
 static void handle_config(wsp ws, XConfigureEvent *event)
 {
-    struct descrip d;
-
     /*
      * Update X-Icon's information about the window's configuration
      */
@@ -1820,8 +1815,7 @@ static void handle_config(wsp ws, XConfigureEvent *event)
     if (!ISEXPOSED(ws))
         return;
 
-    MakeInt(RESIZED, &d);
-    qevent(ws, &d, -1, -1, 0, 0, 0, 0, 0);
+    qeventcode(ws, WINDOWRESIZED);
 }
 
 /*

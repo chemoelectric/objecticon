@@ -43,9 +43,13 @@ class Window(SetFields,NoCopy)
       parent
 
    public static const
+      RESIZE,
+      CLOSE_BUTTON,
       INVOKE_LATER
 
    private static init()
+      RESIZE :=       -10
+      CLOSE_BUTTON := -11
       INVOKE_LATER := -40
    end
 
@@ -540,11 +544,8 @@ class Mouse()
       MOVEMENT,
       WHEEL_UP,
       WHEEL_DOWN,
-      WINDOW_RESIZE,
-      WINDOW_CLOSE_BUTTON,
       WHEEL,
-      DRAG_OR_MOVEMENT,
-      WINDOW
+      DRAG_OR_MOVEMENT
 
    private static init()
       LEFT_PRESS :=           -1
@@ -564,9 +565,6 @@ class Mouse()
       WHEEL_UP :=            -16
       WHEEL_DOWN :=          -17
       WHEEL := set(WHEEL_UP, WHEEL_DOWN)
-      WINDOW_RESIZE :=       -10
-      WINDOW_CLOSE_BUTTON := -11
-      WINDOW := set(WINDOW_RESIZE, WINDOW_CLOSE_BUTTON)
    end
 end
 
