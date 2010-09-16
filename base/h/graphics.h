@@ -57,7 +57,7 @@
 #define MOUSELEFTDRAG	(-7)
 #define MOUSEMIDDRAG	(-8)
 #define MOUSERIGHTDRAG	(-9)
-#define RESIZED		(-10)
+#define WINDOWRESIZED	(-10)
 #define WINDOWCLOSED    (-11)
 #define MOUSEMOVED      (-12)
 #define MOUSE4          (-13)

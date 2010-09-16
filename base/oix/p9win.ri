@@ -496,7 +496,6 @@ static void handle_resize(wsp ws)
          * Here we accept the resize, resize the pix win, copy it to the visible
          * win and fire an event.
          */
-        struct descrip d;
         ws->width = tw;
         ws->height = th;
         synch_pos(ws);
@@ -506,8 +505,7 @@ static void handle_resize(wsp ws)
         clear_win(w);
         resize_pix_win(w);
         pix_to_win(ws);
-        MakeInt(RESIZED, &d);
-        qevent(ws, &d, -1, -1, 0, 0, 0, 0, 0);
+        qeventcode(ws, WINDOWRESIZED);
     }
 }
 
@@ -568,21 +566,30 @@ static void flush_event_pipe(wsp ws)
             case 'M': {
                 if (n < 10+2*12)
                     syserr("bad mouse data in event pipe");
-                if (ebuf[9] == 'r')
-                    handle_resize(ws);
-                else {
-                    int state, tmp;
-                    vlong now;
-                    uword time;
-                    be2vlong(&now, &ebuf[1]);
-                    time = (now - startup_time) / 1000000;
-                    mx = atoi((char*)ebuf+10+0*12);
-                    my = atoi((char*)ebuf+10+1*12);
-                    state = atoi((char*)ebuf+10+2*12);
-                    qmouseevents(ws, state, 
-                                 mx - ws->win->r.min.x, 
-                                 my - ws->win->r.min.y, 
-                                 time, 0, 0, 0);
+                switch (ebuf[9]) {
+                    case 'r':
+                        handle_resize(ws);
+                        break;
+                    case 'c': {
+                        qeventcode(ws, WINDOWCLOSED);
+                        print("*");
+                        break;
+                    }
+                    case 'm': {
+                        int state, tmp;
+                        vlong now;
+                        uword time;
+                        be2vlong(&now, &ebuf[1]);
+                        time = (now - startup_time) / 1000000;
+                        mx = atoi((char*)ebuf+10+0*12);
+                        my = atoi((char*)ebuf+10+1*12);
+                        state = atoi((char*)ebuf+10+2*12);
+                        qmouseevents(ws, state, 
+                                     mx - ws->win->r.min.x, 
+                                     my - ws->win->r.min.y, 
+                                     time, 0, 0, 0);
+                        break;
+                    }
                 }
                 break;
             }

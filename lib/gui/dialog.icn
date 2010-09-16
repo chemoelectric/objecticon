@@ -258,7 +258,7 @@ class Dialog(Component)
 
    public resize_win(w, h)
       self.win.set_size(w, h)
-      self.win.enqueue(Mouse.WINDOW_RESIZE)      
+      self.win.pending(Window.RESIZE)      
    end
 
    public initially()
@@ -559,17 +559,17 @@ $endif
    end
 
    public process_event(l)
-      static consume_same_events
       local e
-      initial
-         consume_same_events := Mouse.DRAG_OR_MOVEMENT ++ set(Mouse.WINDOW_RESIZE)
       case l[1] of {
          Selection.REQUEST: process_selection_request(l)
          Selection.CLEAR: process_selection_clear(l)
          Selection.RESPONSE: process_selection_response(l)
          Window.INVOKE_LATER: process_invoke_later(l)
+         Window.CLOSE_BUTTON: process_close_button(l)
+         Window.RESIZE: process_resize(l)
+
          default: {
-            if member(consume_same_events, l[1]) then {
+            if member(Mouse.DRAG_OR_MOVEMENT, l[1]) then {
                while win.pending()[1] === l[1] do
                   l := self.win.event()
             }
@@ -609,8 +609,6 @@ $endif
          if c := (!self.point_chain).find_focus(e) then
             self.set_focus(c, e)
       }
-      else if ec === Mouse.WINDOW_RESIZE then
-         handle_resize(e)
       else if \e.meta & /e.release & type(ec) == ("string" | "ucs") then {
          if c := self.find_accel(ec) then {
             if \self.menu_mode then
@@ -1094,13 +1092,20 @@ $endif
    #
    # Process a resize 
    # 
-   private handle_resize(e)
+   private process_resize(l)
+      while win.pending()[1] === l[1] do
+         l := self.win.event()
       #
       # Resize buffer canvas
       #
       self.buffer_win.set_size(self.win.get_width(), self.win.get_height())
       self.resize()
       self.invalidate()
+      fire(l[1])
+   end
+
+   private process_close_button(l)
+      fire(l[1])
    end
 
    #
@@ -1298,7 +1303,7 @@ end
 #
 class WindowControl(Component)
    private close_window()
-      parent_dialog.win.enqueue(Mouse.WINDOW_CLOSE_BUTTON)
+      parent_dialog.win.enqueue(Window.CLOSE_BUTTON)
    end
 
    private iconify_window()
