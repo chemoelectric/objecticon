@@ -1303,7 +1303,7 @@ end
 #
 class WindowControl(Component)
    private close_window()
-      parent_dialog.win.enqueue(Window.CLOSE_BUTTON)
+      parent_dialog.win.pending(Window.CLOSE_BUTTON)
    end
 
    private iconify_window()
