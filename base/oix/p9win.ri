@@ -379,12 +379,6 @@ static void pix_to_win(wsp ws)
     flushimage(display, 1);
 }
 
-static void win_to_pix(wsp ws)
-{
-    copy_to(ws->pix, ws->win);
-    flushimage(display, 1);
-}
-
 static int adjust(wsp ws, int dim)
 {
     if (dim == INT_MAX)
@@ -398,10 +392,8 @@ static int configure_canvas(wbp w)
     wsp ws = w->window;
 
     if (ws->desired_canvas == HiddenCanvas) {
-        if (ws->win) {
-            win_to_pix(ws);
+        if (ws->win)
             close_screen_win(ws);
-        }
     } else {
         if (ws->win) {
             if (ws->desired_canvas == IconicCanvas)
