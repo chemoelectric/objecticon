@@ -118,12 +118,12 @@ usage(void)
 void
 threadmain(int argc, char *argv[])
 {
-        char *initstr, *kbdin, *s, *saved_wsys;
+        char *initstr, *kbdin, *s;
 	static void *arg[1];
 	char buf[256];
 	Image *i;
 	Rectangle r;
-
+        rfork(RFENVG|RFNAMEG);
 	if(strstr(argv[0], ".out") == nil){
 		menu3str[Exit] = nil;
 		Hidden--;
@@ -207,7 +207,6 @@ threadmain(int argc, char *argv[])
 	threadcreate(mousethread, nil, STACK);
 	threadcreate(winclosethread, nil, STACK);
 	threadcreate(deletethread, nil, STACK);
-        saved_wsys = getenv("wsys");
 	filsys = filsysinit(xfidinit());
 
 	if(filsys == nil)
@@ -232,8 +231,6 @@ threadmain(int argc, char *argv[])
 		recv(exitchan, nil);
 	}
 	killprocs();
-        if (saved_wsys)
-            putenv("wsys", saved_wsys);
 	threadexitsall(nil);
 }
 
@@ -466,7 +463,7 @@ void
 mousethread(void*)
 {
 	int sending, inside, scrolling, moving, band;
-	Window *oin, *w, *winput, *over, *nbinput;
+	Window *winput, *over, *nbinput;
 	Image *i;
 	Rectangle r;
 	Point xy;
@@ -554,14 +551,12 @@ mousethread(void*)
 				send(winput->mc.c, &tmp);
 				continue;
 			}
-			w = over; //wpointto(mouse->xy);
 			/* change cursor if over anyone's border */
-			if(w != nil)
-				cornercursor(w, mouse->xy, 0);
+			if(over != nil)
+				cornercursor(over, mouse->xy, 0);
 			else
 				riosetcursor(nil, 0);
 			if(moving && (mouse->buttons&7)){
-				oin = winput;
 				band = mouse->buttons & 3;
 				sweeping = 1;
 				if(band)
@@ -570,22 +565,19 @@ mousethread(void*)
 					i = drag(winput, &r);
 				sweeping = 0;
 				if(i != nil){
-					if(winput == oin){
-						if(band)
-							wsendctlmesg(winput, Reshaped, i->r, i);
-						else
-							wsendctlmesg(winput, Moved, r, i);
-						cornercursor(winput, mouse->xy, 1);
-					}else
-						freeimage(i);
+					if(band)
+						wsendctlmesg(winput, Reshaped, i->r, i);
+					else
+						wsendctlmesg(winput, Moved, r, i);
+					cornercursor(winput, mouse->xy, 1);
 				}
 			}
-			if(w != nil)
-				cornercursor(w, mouse->xy, 0);
+			if(over != nil)
+				cornercursor(over, mouse->xy, 0);
 			/* we're not sending the event, but if button is down maybe we should */
 			if(mouse->buttons){
 				/* w->topped will be zero or less if window has been bottomed */
-				if(w==nil || (w==winput && w->topped>0)){
+				if(over==nil || (over==winput && over->topped>0)){
 					if(mouse->buttons & 1){
 						;
 					}else if(mouse->buttons & 2){
@@ -597,14 +589,14 @@ mousethread(void*)
 					/* if button 1 event in the window, top the window and wait for button up. */
   					/* otherwise, top the window and pass the event on */
                                         //if(wtop(mouse->xy) && (mouse->buttons!=1 || winborder(w, mouse->xy)))
-                                        if (w->noborder) {
-                                            if(w != nbinput && (w->mouseopen || mouse->buttons!=1)) {
-                                                nbinput = w;
+                                        if (over->noborder) {
+                                            if(over != nbinput && (over->mouseopen || mouse->buttons!=1)) {
+                                                nbinput = over;
                                                 goto Again;
                                             }
                                         } else {
                                             nbinput = 0;
-                                            if(wtop(mouse->xy) && (w->mouseopen || mouse->buttons!=1 || winborder(w, mouse->xy)))
+                                            if(wtop(mouse->xy) && (over->mouseopen || mouse->buttons!=1 || winborder(over, mouse->xy)))
 						goto Again;
                                         }
 					goto Drain;
@@ -917,7 +909,7 @@ drag(Window *w, Rectangle *rp)
 		*rp = Rect(0, 0, 0, 0);
 		return nil;
 	}
-	draw(ni, ni->r, i, nil, i->r.min);
+//	draw(ni, ni->r, i, nil, i->r.min);
 	*rp = r;
 	return ni;
 }
