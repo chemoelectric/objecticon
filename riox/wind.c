@@ -132,7 +132,7 @@ wresize(Window *w, Image *i, int move)
 
 	or = w->i->r;
 	if(move || (Dx(or)==Dx(i->r) && Dy(or)==Dy(i->r)))
-		draw(i, i->r, w->i, nil, w->i->r.min);
+	 	draw(i, i->r, w->i, nil, w->i->r.min);
 	freeimage(w->i);
 	w->i = i;
 	wsetname(w);
@@ -158,6 +158,20 @@ wresize(Window *w, Image *i, int move)
 	wborder(w, Selborder);
 	w->topped = ++topped;
 	w->resized = TRUE;
+	w->mouse.counter++;
+}
+
+void
+wclosereq(Window *w)
+{
+	w->closed = TRUE;
+        /*
+         * We need to send a wakeup message.  This wakes up the winctl() thread, processes
+         * the wakeup message (alt WCtl), goes round the loop, notices the mouse counter
+         * has changed, sets Wmouseread alt to CHANSND instead of CHANNOP and sends the
+         * close event.
+         */
+        wsendctlmesg(w, Wakeup, ZR, nil);
 	w->mouse.counter++;
 }
 
@@ -198,6 +212,14 @@ wclose(Window *w)
 	return 1;
 }
 
+int      dbgalt(Alt *alts, char *lab)
+{
+    int x;
+    print("<%s:",lab);
+    x = alt(alts);
+    print(":%s>",lab);
+    return x;
+}
 
 void
 winctl(void *arg)
@@ -319,8 +341,9 @@ winctl(void *arg)
 				m = w->mouse.queue[w->mouse.ri];
 				if(++w->mouse.ri == nelem(w->mouse.queue))
 					w->mouse.ri = 0;
-			} else
+			} else {
 				m = (Mousestate){w->mc.Mouse, w->mouse.counter};
+                        }
 
 			w->mouse.lastcounter = m.counter;
 			send(mrm.cm, &m.Mouse);
@@ -1296,13 +1319,13 @@ ensurestacking(void)
             }
         }
     }
+    flushimage(display, 1);
 }
 
 Window*
 wtop(Point pt)
 {
 	Window *w;
-
 	w = wpointto(pt);
 	if(w){
 		if(w->topped == topped && input == w)
@@ -1310,6 +1333,7 @@ wtop(Point pt)
                 if(w->noborder) return nil;
 		topwindow(w->i);
 		w->topped = ++topped;
+                ensurestacking();
 		wcurrent(w);
 		flushimage(display, 1);
 	}

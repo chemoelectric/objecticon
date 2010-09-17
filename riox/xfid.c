@@ -694,10 +694,14 @@ xfidread(Xfid *x)
 		qlock(&x->active);
 		recv(mrm.cm, &ms);
 		c = 'm';
-		if(w->resized)
+		if(w->resized) {
 			c = 'r';
+                        w->resized = 0;
+                } else if (w->closed) {
+			c = 'c';
+                        w->closed = 0;
+                }
 		n = sprint(buf, "%c%11d %11d %11d %11ld ", c, ms.xy.x, ms.xy.y, ms.buttons, ms.msec);
-		w->resized = 0;
 		fc.data = buf;
 		fc.count = min(n, cnt);
 		filsysrespond(x->fs, x, &fc, nil);

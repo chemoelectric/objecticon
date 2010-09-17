@@ -158,6 +158,7 @@ struct Window
 	*/
 	Rectangle		screenr;	/* screen coordinates of window */
 	int			resized;
+        int			closed;         /* User close requested */
 	int			wctlready;
 	Rectangle		lastsr;
 	int			topped;

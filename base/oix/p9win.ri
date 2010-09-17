@@ -572,7 +572,6 @@ static void flush_event_pipe(wsp ws)
                         break;
                     case 'c': {
                         qeventcode(ws, WINDOWCLOSED);
-                        print("*");
                         break;
                     }
                     case 'm': {

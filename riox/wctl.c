@@ -25,7 +25,6 @@ enum
 	Noscroll,
         Keepabove2,
         Keepbelow2,
-        Nokeeping,
         Grab,
         Ungrab,
 	Set,
@@ -34,6 +33,7 @@ enum
 	Current,
 	Hide,
 	Unhide,
+        Close,
 	Delete,
 };
 
@@ -54,7 +54,7 @@ static char *cmds[] = {
         [Ungrab]        = "ungrab",
         [Keepabove2]    = "keepabove",
         [Keepbelow2]    = "keepbelow",
-        [Nokeeping]     = "nokeeping",
+        [Close]         = "close",
 	nil
 };
 
@@ -248,9 +248,11 @@ parsewctl(char **argp, Rectangle r, Rectangle *rp, int *pidp, int *idp, int *hid
 			*noborderp = 1;
 			continue;
                 case Keepabove:
+                        *keepbelowp = 0;
                         *keepabovep = 1;
 			continue;
                 case Keepbelow:
+                        *keepabovep = 0;
                         *keepbelowp = 1;
 			continue;
 		case Scrolling:
@@ -490,16 +492,13 @@ writewctl(Xfid *x, char *err)
 		wsendctlmesg(w, Wakeup, ZR, nil);
 		return 1;
 	case Keepabove2:
-		w->keepabove = 1;
-		wsendctlmesg(w, Wakeup, ZR, nil);
+                wkeepabove(w);
 		return 1;
 	case Keepbelow2:
-		w->keepbelow = 1;
-		wsendctlmesg(w, Wakeup, ZR, nil);
+                wkeepbelow(w);
 		return 1;
-	case Nokeeping:
-		w->keepabove = w->keepbelow = 0;
-		wsendctlmesg(w, Wakeup, ZR, nil);
+	case Close:
+                wclosereq(w);
 		return 1;
 	case Top:
 		wtopme(w);

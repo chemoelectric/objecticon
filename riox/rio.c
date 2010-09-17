@@ -48,10 +48,12 @@ int		mainpid;
 enum
 {
 	New,
+/*
 	Reshape,
 	Move,
 	Delete,
 	Hide,
+*/
 	Exit,
 };
 
@@ -63,6 +65,15 @@ enum
 	Plumb,
 	Send,
 	Scroll,
+};
+
+enum
+{
+    Hide4,
+    Close4,
+    Keepabove4,
+    Keepbelow4,
+    Delete4,
 };
 
 char		*menu2str[] = {
@@ -84,18 +95,35 @@ int	Hidden = Exit+1;
 
 char		*menu3str[100] = {
  [New]		"New",
+/**
  [Reshape]	"Resize",
  [Move]		"Move",
- [Delete]		"Delete",
+ [Delete]	"Delete",
  [Hide]		"Hide",
+**/
  [Exit]		"Exit",
-			nil
+		nil
 };
 
 Menu menu3 =
 {
 	menu3str
 };
+
+char		*menu4str[] = {
+  [Hide4]       "Hide",
+  [Close4]      "Close",
+  [Keepabove4]  "Keep above",
+  [Keepbelow4]  "Keep below",
+  [Delete4]     "Delete",
+                nil
+};
+
+Menu menu4 =
+{
+	menu4str
+};
+
 
 char *rcargv[] = { "rc", "-i", nil };
 char *kbdargv[] = { "rc", "-c", nil, nil };
@@ -118,12 +146,13 @@ usage(void)
 void
 threadmain(int argc, char *argv[])
 {
-        char *initstr, *kbdin, *s;
+        char *initstr, *kbdin, *s, *saved_wsys, *saved_wctl;
 	static void *arg[1];
 	char buf[256];
 	Image *i;
 	Rectangle r;
-        rfork(RFENVG|RFNAMEG);
+
+        //rfork(RFENVG|RFNAMEG);
 	if(strstr(argv[0], ".out") == nil){
 		menu3str[Exit] = nil;
 		Hidden--;
@@ -207,6 +236,8 @@ threadmain(int argc, char *argv[])
 	threadcreate(mousethread, nil, STACK);
 	threadcreate(winclosethread, nil, STACK);
 	threadcreate(deletethread, nil, STACK);
+        saved_wsys = getenv("wsys");
+        saved_wctl = getenv("wctl");
 	filsys = filsysinit(xfidinit());
 
 	if(filsys == nil)
@@ -231,6 +262,10 @@ threadmain(int argc, char *argv[])
 		recv(exitchan, nil);
 	}
 	killprocs();
+        if (saved_wsys)
+            putenv("wsys", saved_wsys);
+        if (saved_wctl)
+            putenv("wctl", saved_wctl);
 	threadexitsall(nil);
 }
 
@@ -394,9 +429,16 @@ whichcorner(Window *w, Point p)
 void
 cornercursor(Window *w, Point p, int force)
 {
-	if(w!=nil && winborder(w, p) && resizable(w))
-		riosetcursor(corners[whichcorner(w, p)], force);
-	else
+	if(w!=nil && winborder(w, p)) {
+                int t = whichcorner(w, p);
+                if (t % 2 == 0) {
+                    if (resizable(w))
+                        riosetcursor(corners[whichcorner(w, p)], force);
+                    else
+                        wsetcursor(w, force);
+                } else
+                        riosetcursor(&boxcursor, force);
+	} else
 		wsetcursor(w, force);
 }
 
@@ -530,13 +572,13 @@ mousethread(void*)
 				else
 					scrolling = mouse->buttons && ptinrect(xy, winput->scrollr);
 				/* topped will be zero or less if window has been bottomed */
-				if(sending == FALSE && !scrolling && over==winput && winborder(winput, mouse->xy) && winput->topped>0){
+                                //if(sending == FALSE && !scrolling && over==winput && winborder(winput, mouse->xy) && winput->topped>0){
+                                if(sending == FALSE && !scrolling && over==winput && winborder(winput, mouse->xy) && (winput->keepbelow||winput->topped>0)){
 					moving = TRUE;
 				}else if(inside && (scrolling || winput->mouseopen || (mouse->buttons&1)))
 					sending = TRUE;
 			}else
 				sending = FALSE;
-
 			if(sending){
 			Sending:
                                 if (!grab) {
@@ -557,7 +599,11 @@ mousethread(void*)
 			else
 				riosetcursor(nil, 0);
 			if(moving && (mouse->buttons&7)){
-				band = mouse->buttons & 3;
+                            if(mouse->buttons & 4) {
+				riosetcursor(nil, 0);
+                                button3wmenu(over);
+                            } else {
+                                band = whichcorner(over, mouse->xy) % 2 == 0;
 				sweeping = 1;
 				if(band)
 					i = bandsize(winput);
@@ -571,6 +617,7 @@ mousethread(void*)
 						wsendctlmesg(winput, Moved, r, i);
 					cornercursor(winput, mouse->xy, 1);
 				}
+                            }
 			}
 			if(over != nil)
 				cornercursor(over, mouse->xy, 0);
@@ -578,6 +625,14 @@ mousethread(void*)
 			if(mouse->buttons){
 				/* w->topped will be zero or less if window has been bottomed */
 				if(over==nil || (over==winput && over->topped>0)){
+                                    if(mouse->buttons & 4) {
+                                        if(winput && over==winput && !winput->mouseopen)
+                                            button2menu(winput);
+                                        else 
+                                            button3menu();
+                                    }
+
+/**
 					if(mouse->buttons & 1){
 						;
 					}else if(mouse->buttons & 2){
@@ -585,6 +640,7 @@ mousethread(void*)
 							button2menu(winput);
 					}else if(mouse->buttons & 4)
 						button3menu();
+**/
 				}else{
 					/* if button 1 event in the window, top the window and wait for button up. */
   					/* otherwise, top the window and pass the event on */
@@ -680,6 +736,7 @@ button3menu(void)
                     0, 0, 0, INT_MAX, 0, INT_MAX,
                     0, nil, "/bin/rc", nil);
 		break;
+/*
 	case Reshape:
 		resize();
 		break;
@@ -692,6 +749,7 @@ button3menu(void)
 	case Hide:
 		hide();
 		break;
+*/
 	case Exit:
 		if(Hidden > Exit){
 			send(exitchan, nil);
@@ -706,6 +764,33 @@ button3menu(void)
 }
 
 void
+button3wmenu(Window *w)
+{
+	int i;
+	menu4str[Keepabove4] = w->keepabove ? "No keep above":"Keep above";
+	menu4str[Keepbelow4] = w->keepbelow ? "No keep below":"Keep below";
+	switch(i = menuhit(3, mousectl, &menu4, wscreen)){
+            case -1:
+		break;
+            case Hide4:
+                whide(w);
+                break;
+            case Close4:
+                wclosereq(w);
+                break;
+            case Keepabove4:
+                wkeepabove(w);
+                break;
+            case Keepbelow4:
+                wkeepbelow(w);
+                break;
+            case Delete4:
+		wsendctlmesg(w, Deleted, ZR, nil);
+                break;
+        }
+}
+
+void
 button2menu(Window *w)
 {
 	if(w->deleted)
@@ -715,7 +800,7 @@ button2menu(Window *w)
 		menu2str[Scroll] = "noscroll";
 	else
 		menu2str[Scroll] = "scroll";
-	switch(menuhit(2, mousectl, &menu2, wscreen)){
+	switch(menuhit(3, mousectl, &menu2, wscreen)){
 	case Cut:
 		wsnarf(w);
 		wcut(w);
@@ -792,9 +877,9 @@ sweep(Window *w)
 	r.max = p;
         if (w) wlimitrect(w, &r);
 	oi = nil;
-	while(mouse->buttons == 4){
+	while(mouse->buttons & 5){
 		readmouse(mousectl);
-		if(mouse->buttons != 4 && mouse->buttons != 0)
+		if(!(mouse->buttons & 5) && mouse->buttons != 0)
 			break;
 		if(!eqpt(mouse->xy, p)){
 			p = onscreen(mouse->xy);
@@ -884,7 +969,8 @@ drag(Window *w, Rectangle *rp)
 	op = subpt(mouse->xy, dm);
 	drawborder(Rect(op.x, op.y, op.x+d.x, op.y+d.y), 1);
 	flushimage(display, 1);
-	while(mouse->buttons == 4){
+	//while(mouse->buttons == 4){
+	while(mouse->buttons){
 		p = subpt(mouse->xy, dm);
 		if(!eqpt(p, op)){
                         r = Rect(p.x, p.y, p.x+d.x, p.y+d.y);
@@ -1199,6 +1285,22 @@ whideimpl(Window *w)
 }
 
 int
+wkeepabove(Window *w)
+{
+    w->keepbelow = 0;
+    w->keepabove = !w->keepabove;
+    wsendctlmesg(w, Wakeup, ZR, nil);
+}
+
+int
+wkeepbelow(Window *w)
+{
+    w->keepabove = 0;
+    w->keepbelow = !w->keepbelow;
+    wsendctlmesg(w, Wakeup, ZR, nil);
+}
+
+int
 whide(Window *w)
 {
         if(w->noborder || w->transientfor != -1)
@@ -1286,6 +1388,7 @@ new(Image *i, int hideit, int scrollit, int transientfor, int noborder,
 	threadcreate(winctl, w, 8192);
 	if(!hideit)
 		wcurrent(w);
+        ensurestacking();
 	flushimage(display, 1);
 
 	if(pid == 0){

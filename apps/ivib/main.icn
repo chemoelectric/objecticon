@@ -799,9 +799,6 @@ class Main(Dialog)
          bg.buttons := bg.get_members()
       d.set_focus((\t.initial_focus).find_focus())
       d.connect(d.dispose, Event.WINDOW_CLOSE_BUTTON)
-$ifdef _PLAN9
-      d.add(WindowControl())
-$endif
       d.show_modal(self)
    end
 
@@ -1380,10 +1377,6 @@ $endif
       canvas.dialog_ih := Canvas.DEFAULT_HEIGHT
       canvas.synch_size()
       self.canvas_zone.add(canvas_border)
-
-$ifdef _PLAN9
-      add(WindowControl())
-$endif
 
       #
       # Initialize the undo/redo lists.
