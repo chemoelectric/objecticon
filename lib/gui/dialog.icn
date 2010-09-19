@@ -864,9 +864,11 @@ class Dialog(Component)
    private process_tooltip_tick()
       local e, t
       #
-      # Don't process ticks whilst blocked, or button held.
+      # Don't process ticks whilst blocked, or button held.  Also, if this dialog is a popup, then
+      # we let the popup manager invoke tooltip_states instead (since create_point_chain should be
+      # called by the manager).
       #
-      if \self.is_blocked_flag | (get_held_count() > 0) then
+      if \self.popup_manager | \self.is_blocked_flag | (get_held_count() > 0) then
          return
 
       t := self.win.query_pointer() | fail
@@ -876,6 +878,7 @@ class Dialog(Component)
       #
       e := WinEvent(0, t[1], t[2])
       create_point_chain(e)
+      every (!\popups).tooltip_states(e)
       tooltip_states(e)
    end
 
