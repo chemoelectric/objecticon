@@ -758,7 +758,7 @@ class Dialog(Component)
    # the current tooltip based on its current location.
    # 
    private show_tooltip(obj, tip, e)
-      local d, dim, right, bottom, left, top, use_popup_win, ox, oy
+      local d, dim, use_popup_win, ox, oy, rs, r, r0
       if \self.tooltip_component then {
          ox := tooltip_component.x
          oy := tooltip_component.y
@@ -776,44 +776,46 @@ class Dialog(Component)
       self.tooltip_component.initially()
       self.tooltip_component.resize()
 
-      # Edges of window in adjusted coordinates
-      left := -win.get_dx()
-      top := -win.get_dy()
-      right := self.w - win.get_dx()
-      bottom := self.h - win.get_dy()
+      dim := win.get_display_size()
+      # Screen rectangle, in adjusted co-ordinates
+      rs := Rect(-win.get_x() - win.get_dx(), -win.get_y() - win.get_dy(), dim[1], dim[2])
+      r := r0 := self.intersect(rs)
 
       # Note that if we have popups, we use a popup for a tooltip, so that it won't appear
       # below the other popup window.
       if Gui.style.allow_popup(self.tooltip_component) &
          ((*\popups > 0) | \popup_manager |
-          (self.tooltip_component.x + self.tooltip_component.w > right) |
-          (self.tooltip_component.y + self.tooltip_component.h > bottom)) then 
+          not r.contains(self.tooltip_component)) then
       {
-         dim := win.get_display_size()
-         # Recalculate edges, but now of the screen rather than the window.
-         left := -win.get_x() - win.get_dx()
-         right := dim[1] - win.get_x() - win.get_dx()
-         top := -win.get_y() - win.get_dy()
-         bottom := dim[2] - win.get_y() - win.get_dy()
+         # Use screen dimensions for calculations.
+         r := rs
          use_popup_win := 1
       }
 
       #
       # Ensure it's in area; adjust and resize again if not.
       #
-      if self.tooltip_component.x + self.tooltip_component.w > right then {
+      if self.tooltip_component.x + self.tooltip_component.w > r.x + r.w then {
          if /e then
-            self.tooltip_component.x_spec := win.get_dx() + max(left, right - self.tooltip_component.w)
+            self.tooltip_component.x_spec := win.get_dx() + max(r.x, r.x + r.w - self.tooltip_component.w)
          else
-            self.tooltip_component.x_spec := win.get_dx() + max(left, e.x - TOOLTIP_X_OFFSET - self.tooltip_component.w)
+            self.tooltip_component.x_spec := win.get_dx() + max(r.x, e.x - TOOLTIP_X_OFFSET - self.tooltip_component.w)
          self.tooltip_component.resize()
       }
-      if self.tooltip_component.y + self.tooltip_component.h > bottom then {
+      if self.tooltip_component.y + self.tooltip_component.h > r.y + r.h then {
          if /e then
-            self.tooltip_component.y_spec := win.get_dy() + max(top, bottom - self.tooltip_component.h)
+            self.tooltip_component.y_spec := win.get_dy() + max(r.y, r.y + r.h - self.tooltip_component.h)
          else
-            self.tooltip_component.y_spec := win.get_dy() + max(top, e.y - TOOLTIP_Y_OFFSET - self.tooltip_component.h)
+            self.tooltip_component.y_spec := win.get_dy() + max(r.y, e.y - TOOLTIP_Y_OFFSET - self.tooltip_component.h)
          self.tooltip_component.resize()
+      }
+
+      # The above calculations may still let us avoid a popup window.
+      if \use_popup_win &
+         not((*\popups > 0) | \popup_manager) &
+         r0.contains(self.tooltip_component) then 
+      {
+         use_popup_win := &null
       }
 
       if \use_popup_win then {

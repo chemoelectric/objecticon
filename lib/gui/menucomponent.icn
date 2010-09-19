@@ -7,6 +7,7 @@
 #
 
 package gui
+
 import util
 
 #
@@ -325,18 +326,17 @@ class MenuComponent(Rect,SetFields,Connectable)
    # right and bottom of the screen respectively.
    #
    public show(x, y, xa, ya)
-      local d, win, x1, y1, pd, dim, right, bottom, left, top, use_popup_win
+      local d, win, x1, y1, pd, dim, use_popup_win, rs, r, r0
       /self.temp_win | fail
 
       pd := self.parent_component.parent_dialog
       win := pd.win
 
-      # Edges of window in adjusted coordinates
-      left := -win.get_dx()
-      top := -win.get_dy()
-      right := pd.w - win.get_dx()
-      bottom := pd.h - win.get_dy()
-
+      dim := win.get_display_size()
+      # Screen rectangle, in adjusted co-ordinates
+      rs := Rect(-win.get_x() - win.get_dx(), -win.get_y() - win.get_dy(), dim[1], dim[2])
+      # Intersection of dialog and screen, since it may be partly off-screen.
+      r := r0 := pd.intersect(rs)
       self.x := x
       self.y := y
       self.resize()
@@ -346,34 +346,37 @@ class MenuComponent(Rect,SetFields,Connectable)
       # one of the parent popups.
       if Gui.style.allow_popup(self) &
          (\ (\parent).temp_win.parent_dialog.popup_manager |
-          (self.x < left) | (self.y < top) | 
-          (self.x + self.w > right) | (self.y + self.h > bottom)) then 
+          not r.contains(self)) then
       {
-         dim := win.get_display_size()
-         # Recalculate edges, but now of the screen rather than the window.
-         left := -win.get_x() - win.get_dx()
-         right := dim[1] - win.get_x() - win.get_dx()
-         top := -win.get_y() - win.get_dy()
-         bottom := dim[2] - win.get_y() - win.get_dy()
+         # Use screen dimensions for calculations.
+         r := rs
          use_popup_win := 1
       }
 
-      /xa := right
-      /ya := bottom
-      if self.x < left then
-         x1 := left
-      else if self.x + self.w > right then
-         x1 := left <= xa - self.w
-      if self.y < top then
-         y1 := top
-      else if self.y + self.h > bottom then
-         y1 := top <= ya - self.h
+      /xa := r.x + r.w
+      /ya := r.y + r.h
+      if self.x < r.x then
+         x1 := r.x
+      else if self.x + self.w > r.x + r.w then
+         x1 := r.x <= xa - self.w
+      if self.y < r.y then
+         y1 := r.y
+      else if self.y + self.h > r.y + r.h then
+         y1 := r.y <= ya - self.h
       if \x1 | \y1 then {
          /x1 := self.x
          /y1 := self.y
          self.x := x1
          self.y := y1
          self.resize()
+      }
+
+      # The above calculations may still let us avoid a popup window.
+      if \use_popup_win &
+         not (\ (\parent).temp_win.parent_dialog.popup_manager) &
+         r0.contains(self) then 
+      {
+         use_popup_win := &null
       }
 
       if /use_popup_win then {
