@@ -505,7 +505,7 @@ void
 mousethread(void*)
 {
 	int sending, inside, scrolling, moving, band;
-	Window *winput, *over, *nbinput;
+	Window *winput, *over;
 	Image *i;
 	Rectangle r;
 	Point xy;
@@ -631,16 +631,6 @@ mousethread(void*)
                                         else 
                                             button3menu();
                                     }
-
-/**
-					if(mouse->buttons & 1){
-						;
-					}else if(mouse->buttons & 2){
-						if(winput && !winput->mouseopen)
-							button2menu(winput);
-					}else if(mouse->buttons & 4)
-						button3menu();
-**/
 				}else{
 					/* if button 1 event in the window, top the window and wait for button up. */
   					/* otherwise, top the window and pass the event on */
@@ -651,7 +641,10 @@ mousethread(void*)
                                                 goto Again;
                                             }
                                         } else {
-                                            nbinput = 0;
+                                            if (nbinput) {
+                                                nbinput = 0;
+                                                goto Again;
+                                            }
                                             if(wtop(mouse->xy) && (over->mouseopen || mouse->buttons!=1 || winborder(over, mouse->xy)))
 						goto Again;
                                         }

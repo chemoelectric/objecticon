@@ -108,8 +108,6 @@ wsetname(Window *w)
 
         if (w->noborder)
             n = sprint(w->name, "noborder.window.%d.%d", w->id, w->namecount++);
-        else if (w->transientfor != -1)
-            n = sprint(w->name, "transient.window.%d.%d", w->id, w->namecount++);
         else
             n = sprint(w->name, "window.%d.%d", w->id, w->namecount++);
 	for(i='A'; i<='Z'; i++){
@@ -238,11 +236,11 @@ winctl(void *arg)
 	Consreadmesg cwrm;
 	Stringpair pair;
 	Wctlmesg wcm;
-	char buf[4*12+1];
+        char buff[128];
 
 	w = arg;
-	snprint(buf, sizeof buf, "winctl-id%d", w->id);
-	threadsetname(buf);
+	snprint(buff, sizeof buff, "winctl-id%d", w->id);
+	threadsetname(buff);
 
 	mrm.cm = chancreate(sizeof(Mouse), 0);
 	cwm.cw = chancreate(sizeof(Stringpair), 0);
@@ -441,17 +439,25 @@ winctl(void *arg)
 			if(w->deleted || w->i==nil)
 				pair.ns = sprint(pair.s, "");
 			else{
-				s = "visible";
+                                strcpy(buff, " ");
 				for(i=0; i<nhidden; i++)
 					if(hidden[i] == w){
-						s = "hidden";
-						break;
+                                            strcat(buff, "hidden ");
+                                            break;
 					}
-				t = "notcurrent";
 				if(w == input)
-					t = "current";
-				pair.ns = snprint(pair.s, pair.ns, "%11d %11d %11d %11d %s %s ",
-					w->i->r.min.x, w->i->r.min.y, w->i->r.max.x, w->i->r.max.y, t, s);
+                                    strcat(buff, "current ");
+                                if(w->noborder)
+                                    strcat(buff, "noborder ");
+                                if(w->keepabove)
+                                    strcat(buff, "keepabove ");
+                                if(w->keepbelow)
+                                    strcat(buff, "keepbelow ");
+                                if (w->transientfor != -1)
+                                    sprint(buff + strlen(buff), "transientfor:%d ", w->transientfor);
+
+				pair.ns = snprint(pair.s, pair.ns, "%11d %11d %11d %11d%s",
+                                                  w->i->r.min.x, w->i->r.min.y, w->i->r.max.x, w->i->r.max.y, buff);
 			}
 			send(cwrm.c2, &pair);
 			continue;
@@ -1386,6 +1392,8 @@ wclosewin(Window *w)
 		input = nil;
 		wsetcursor(w, 0);
 	}
+	if(w == nbinput)
+		nbinput = nil;
 	if(w == wkeyboard)
 		wkeyboard = nil;
 	for(i=0; i<nhidden; i++)
