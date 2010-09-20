@@ -52,6 +52,7 @@ class Dialog(Component)
       tooltip_ticker,
       tooltip_last_obj, 
       tooltip_last_tip, 
+      tooltip_last_event, 
       tooltip_state,
       tooltip_start_time,
       tooltip_end_time,
@@ -361,7 +362,7 @@ class Dialog(Component)
 
    public which_popup(ex, ey)
       local p
-      every p := back(\popups) do
+      every p := back(\popups) | self do
          if p.inside(ex, ey) then
             return p
    end
@@ -741,7 +742,7 @@ class Dialog(Component)
    # 
    private tooltip_init()
       self.tooltip_state := 0
-      self.tooltip_ticker.start()
+      if /popup_manager then self.tooltip_ticker.start()
    end
 
    #
@@ -784,8 +785,7 @@ class Dialog(Component)
       # Note that if we have popups, we use a popup for a tooltip, so that it won't appear
       # below the other popup window.
       if Gui.style.allow_popup(self.tooltip_component) &
-         ((*\popups > 0) | \popup_manager |
-          not r.contains(self.tooltip_component)) then
+         ((*\popups > 0) | not r.contains(self.tooltip_component)) then
       {
          # Use screen dimensions for calculations.
          r := rs
@@ -812,7 +812,7 @@ class Dialog(Component)
 
       # The above calculations may still let us avoid a popup window.
       if \use_popup_win &
-         not((*\popups > 0) | \popup_manager) &
+         not(*\popups > 0) &
          r0.contains(self.tooltip_component) then 
       {
          use_popup_win := &null
@@ -848,47 +848,42 @@ class Dialog(Component)
    end
 
    #
-   # Tooltip processing during an event.
-   # 
-   private process_tooltip_event(e)
-      if e.code === Mouse.MOVEMENT then
-         tooltip_states(e)
-      else {
-         if tooltip_state = 2 then
-            hide_tooltip()
-         tooltip_state := 0
-      }
-   end
-
-   #
    # Tooltip processing on a tick.
    # 
    private process_tooltip_tick()
-      local e, t
-      #
-      # Don't process ticks whilst blocked, or button held.  Also, if this dialog is a popup, then
-      # we let the popup manager invoke tooltip_states instead (since create_point_chain should be
-      # called by the manager).
-      #
-      if \self.popup_manager | \self.is_blocked_flag | (get_held_count() > 0) then
-         return
+      local p, obj, tip
+      if \popup_manager then 
+         syserr("shouldn't have a tooltip ticker in a popup")
 
-      t := self.win.query_pointer() | fail
+      obj := self.tooltip_last_obj
+      # If over an object, check if the pointer has moved out of any of our windows, which may
+      # happen with a component at the edge of the dialog.
+      if \obj &
+         p := self.win.query_pointer() &
+         not((back(\popups) | self | \self.tooltip_component).inside(p[1], p[2])) then 
+         obj := &null
+      if \obj then
+         tip := self.tooltip_last_tip
 
-      #
-      # Create an artificial event and process it.
-      #
-      e := WinEvent(0, t[1], t[2])
-      create_point_chain(e)
-      every (!\popups).tooltip_states(e)
-      tooltip_states(e)
+      tooltip_states(obj, tip, self.tooltip_last_event)
    end
 
    #
-   # Tooltip state processing.
+   # Tooltip processing during an event.
    # 
-   private tooltip_states(e)
-      local obj, t, c, tip
+   private process_tooltip_event(e)
+      local obj, c, tip
+
+      # Popup window tooltips are processed by the manager.
+      if \popup_manager then 
+         return
+
+      if e.code ~=== Mouse.MOVEMENT then {
+         if tooltip_state = 2 then
+            hide_tooltip()
+         tooltip_state := 0
+         return
+      }
 
       #
       # If over tooltip, behave as though over current object.
@@ -897,7 +892,7 @@ class Dialog(Component)
          if tip := self.tooltip_last_obj.get_tooltip(e) then
             obj := self.tooltip_last_obj
       } else {
-         every c := !self.point_chain do {
+         every c := !(back(\popups) | self).point_chain do {
             if tip := c.get_tooltip(e) then {
                obj := c
                break
@@ -905,14 +900,15 @@ class Dialog(Component)
          }
       }
 
+      tooltip_states(obj, tip, e)
+   end
+
+   #
+   # Tooltip state processing.
+   # 
+   private tooltip_states(obj, tip, e)
+      local t
       t := Prog.get_runtime_millis()
-
-      #if \obj then 
-      #    write("last=",image(obj), "  obj=",image(obj), " tip=",image(tip), "  state=",tooltip_state,
-      #      "\n\tt=",t, "   start_time=",image(self.tooltip_start_time) )
-      #else
-      #    writes(".")
-
       case self.tooltip_state of {
          0 : {
             if (\obj ~=== self.tooltip_last_obj) |
@@ -967,6 +963,7 @@ class Dialog(Component)
 
       self.tooltip_last_obj := obj
       self.tooltip_last_tip := tip
+      self.tooltip_last_event := e
    end
 
    #

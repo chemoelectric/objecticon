@@ -248,10 +248,10 @@ class DropDown(SelectionList,Component)
          d.add(tl)
          self.tl.set_pos(0, 0)
          self.parent_dialog.set_focus()
+         self.parent_dialog.add_popup(d)
          d.show_modeless()
          d.set_focus(tl)
          d.held[ev.code] := [tl.view, tl, d]
-         self.parent_dialog.add_popup(d)
       } else {
          if use_direction == DOWN then 
             self.tl.set_pos(self.x + win.get_dx(), self.y + self.h + win.get_dy())
