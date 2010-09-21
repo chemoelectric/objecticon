@@ -132,11 +132,11 @@ void wgetevent(wbp w, dptr res)
     IntVal(qval) -= w->context->dy;
     list_put(res, &qval);
 
-    /* Modifier */
+    /* Interval */
     wgetq(w, &qval);
     list_put(res, &qval);
 
-    /* Interval */
+    /* Modifier */
     wgetq(w, &qval);
     list_put(res, &qval);
 }
@@ -176,12 +176,12 @@ void qevent(wsp ws,             /* canvas */
     MakeInt(y, &d);
     list_put(q, &d);
 
-    /* Modifier flags */
-    MakeInt(mod, &d);
-    list_put(q, &d);
-
     /* Interval */
     MakeInt(ivl, &d);
+    list_put(q, &d);
+
+    /* Modifier flags */
+    MakeInt(mod, &d);
     list_put(q, &d);
 }
 

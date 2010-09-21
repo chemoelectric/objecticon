@@ -399,13 +399,13 @@ class Window(SetFields,NoCopy)
    #
    public defer close()
 
-   public enqueue(eventcode, x, y, mod, interval)
+   public enqueue(eventcode, x, y, interval, mod)
       /x := -1
       /y := -1
       x +:= get_dx()
       y +:= get_dy()
       /interval := 0
-      return pending(eventcode, x, y, mod, interval)
+      return pending(eventcode, x, y, interval, mod)
    end
 
    public xor_reverse()
