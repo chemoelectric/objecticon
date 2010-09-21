@@ -560,7 +560,7 @@ static void flush_event_pipe(wsp ws)
                 qevent(ws, &d, 
                        mx,
                        my,
-                       time, 0, 0, 0, 0);
+                       time, 0);
                 break;
             }
             case 'M': {
@@ -585,7 +585,7 @@ static void flush_event_pipe(wsp ws)
                         if (state == 0) {
                             struct descrip d;
                             MakeInt(MOUSEENTERED, &d);
-                            qevent(ws, &d, mx, my, time, 0, 0, 0, 0);
+                            qevent(ws, &d, mx, my, time, 0);
                         }
                         break;
                     }
@@ -593,7 +593,7 @@ static void flush_event_pipe(wsp ws)
                         if (state == 0) {
                             struct descrip d;
                             MakeInt(MOUSEEXITED, &d);
-                            qevent(ws, &d, mx, my, time, 0, 0, 0, 0);
+                            qevent(ws, &d, mx, my, time, 0);
                         }
                         break;
                     }
@@ -602,7 +602,7 @@ static void flush_event_pipe(wsp ws)
                                      state, 
                                      mx,
                                      my,
-                                     time, 0, 0, 0);
+                                     time, 0);
                         break;
                     }
                 }

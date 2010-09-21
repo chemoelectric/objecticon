@@ -159,6 +159,7 @@ struct Window
 	Rectangle		screenr;	/* screen coordinates of window */
 	int			resized;
         int			closed;         /* User close requested */
+        int                     entered, exited;
 	int			wctlready;
 	Rectangle		lastsr;
 	int			topped;
@@ -337,6 +338,7 @@ int		snarffd;
 Window	*input;
 Window	*nbinput;
 Window	*grab;
+Window	*lastover;
 QLock	all;			/* BUG */
 Filsys	*filsys;
 Window	*hidden[100];

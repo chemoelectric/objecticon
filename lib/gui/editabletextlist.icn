@@ -137,12 +137,16 @@ class EditableTextList(LineBasedScrollArea)
       if is_live() then {
          clear_view_list()
          clear_mark()
-         self.cursor_y >:= *self.contents
-         self.cursor_x >:= *self.contents[self.cursor_y] + 1
+         ensure_valid_cursor()
          compute_and_invalidate()
          constrain_line()
          undo_manager.clear()
       }
+   end
+   
+   private ensure_valid_cursor()
+      self.cursor_y >:= *self.contents
+      self.cursor_x >:= *self.contents[self.cursor_y] + 1
    end
 
    #
@@ -196,6 +200,8 @@ class EditableTextList(LineBasedScrollArea)
          compute_and_invalidate()
          undo_manager.clear()
          goto_last(get_line_count())
+         # Make sure the cursor is valid, and on the screen.
+         ensure_valid_cursor()
          constrain_cursor()
       } else {
          put(self.contents, s)

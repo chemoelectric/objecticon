@@ -457,6 +457,7 @@ void handle_keypress(wbp wb, UINT msg, WPARAM wp, LPARAM lp, int meta)
    int t;
    WORD x, y;
    struct descrip d;
+   int fl = 0;
    static struct descrip curr_down;
 
    if (msg == WM_KEYUP)
@@ -476,11 +477,15 @@ void handle_keypress(wbp wb, UINT msg, WPARAM wp, LPARAM lp, int meta)
 
    t = GetMessageTime();
 
-   qevent(ws, &d, x, y, t, 
-          GetKeyState(VK_CONTROL) < 0,
-          meta,
-          GetKeyState(VK_SHIFT) < 0,
-          (msg == WM_KEYUP));
+   if (GetKeyState(VK_CONTROL) < 0)
+       fl |= MOD_CTRL;
+   if (GetKeyState(VK_SHIFT) < 0)
+       fl |= MOD_SHIFT;
+   if (meta)
+       fl |= MOD_META;
+   if (msg == WM_KEYUP)
+        fl |= MOD_RELEASE;
+   qevent(ws, &d, x, y, t, fl);
    }
 
 void handle_wheel(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
@@ -490,6 +495,7 @@ void handle_wheel(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
    WORD x, y;
    RECT r;
    int state = 0;
+   int fl = 0;
 
    if (MK_LBUTTON & wp) state |= 1;
    if (MK_MBUTTON & wp) state |= 2;
@@ -504,6 +510,11 @@ void handle_wheel(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
 
    t = GetMessageTime();
 
+   if (MK_CONTROL & wp)
+       fl |= MOD_CTRL;
+   if (MK_SHIFT & wp)
+       fl |= MOD_SHIFT;
+
    /*
     * We only get one MS event for a wheel movement, so call
     * qmouseevents twice, once with the button 4 or 5 going down and
@@ -511,21 +522,11 @@ void handle_wheel(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
     * second qmouseevents call.
     */
    if ((long)wp > 0) {
-      qmouseevents(ws, state|8, x, y, t, 
-		   MK_CONTROL & wp,
-		   0,
-		   MK_SHIFT & wp);
-
+       qmouseevents(ws, state|8, x, y, t, fl);
    } else {
-      qmouseevents(ws, state|16, x, y, t, 
-		   MK_CONTROL & wp,
-		   0,
-		   MK_SHIFT & wp);
+       qmouseevents(ws, state|16, x, y, t, fl);
    }
-   qmouseevents(ws, state, x, y, t, 
-		MK_CONTROL & wp,
-		0,
-		MK_SHIFT & wp);
+   qmouseevents(ws, state, x, y, t, fl);
 }
 
 void handle_mouse(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
@@ -534,7 +535,7 @@ void handle_mouse(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
    int t;
    WORD x, y;
    int state = 0;
-
+   int fl = 0;
    if (MK_LBUTTON & wp) state |= 1;
    if (MK_MBUTTON & wp) state |= 2;
    if (MK_RBUTTON & wp) state |= 4;
@@ -543,10 +544,12 @@ void handle_mouse(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
    y = HIWORD(lp);
    t = GetMessageTime();
 
-   qmouseevents(ws, state, x, y, t, 
-		MK_CONTROL & wp,
-		0,
-		MK_SHIFT & wp);
+   if (MK_CONTROL & wp)
+       fl |= MOD_CTRL;
+   if (MK_SHIFT & wp)
+       fl |= MOD_SHIFT;
+
+   qmouseevents(ws, state, x, y, t, fl);
 }
 
 LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
@@ -708,9 +711,7 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	 ws->iconwin = NULL;
 
       if (ws->refcount > 0) {
-          struct descrip d;
-          MakeInt(WINDOWCLOSED, &d);
-          qevent(ws ,&d, -1, -1, 0, 0, 0, 0, 0);
+          qeventcode(ws, WINDOWCLOSED);
          }
       else if (ws->refcount < 0) { /* window was closed by program */
          ws->refcount = -ws->refcount;

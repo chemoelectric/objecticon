@@ -1396,6 +1396,8 @@ wclosewin(Window *w)
 		nbinput = nil;
 	if(w == wkeyboard)
 		wkeyboard = nil;
+        if(w == lastover)
+                lastover = nil;
 	for(i=0; i<nhidden; i++)
 		if(hidden[i] == w){
 			--nhidden;

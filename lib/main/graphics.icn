@@ -403,13 +403,13 @@ $ifdef _PLAN9
    public defer get_dir()
 $endif
 
-   public enqueue(eventcode, x, y, ctrl, alt, shift, release, interval)	
+   public enqueue(eventcode, x, y, interval, mod)
       /x := -1
       /y := -1
       x +:= get_dx()
       y +:= get_dy()
       /interval := 0
-      return pending(eventcode, x, y, ctrl, alt, shift, release, interval)
+      return pending(eventcode, x, y, interval, mod)
    end
 
    public xor_reverse()
@@ -581,6 +581,17 @@ end
 #
 class Key()
    public static const
+      # Modifier flags
+      MOD_SHIFT,
+      MOD_LOCK,
+      MOD_CTRL,
+      MOD_META,
+      MOD_META2,
+      MOD_META3,
+      MOD_META4,
+      MOD_META5,
+      MOD_RELEASE,
+      # Key event codes
       SHIFT_TAB,
       COMPOSE,
       DO,
@@ -664,6 +675,15 @@ class Key()
       MENU
 
    private static init()
+      MOD_SHIFT :=    1
+      MOD_LOCK :=     2
+      MOD_CTRL :=     4
+      MOD_META :=     8 
+      MOD_META2 :=   16
+      MOD_META3 :=   32
+      MOD_META4 :=   64
+      MOD_META5 :=   128
+      MOD_RELEASE := 256
 $ifdef _X_WINDOW_SYSTEM
       SHIFT_TAB :=           65056
       COMPOSE :=             65312

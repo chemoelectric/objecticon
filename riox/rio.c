@@ -545,6 +545,12 @@ mousethread(void*)
 			//winput = input;
 			winput = nbinput ? nbinput : input;
                         over = wpointto(mouse->xy);
+                        if (over != lastover) {
+                            //print("*");
+                            if (over) over->entered = 1;
+                            if (lastover) lastover->exited = 1;
+                            lastover = over;
+                        }
 			/* override everything for the keyboard window */
 			if(wkeyboard!=nil && ptinrect(mouse->xy, wkeyboard->screenr)){
 				/* make sure it's on top; this call is free if it is */

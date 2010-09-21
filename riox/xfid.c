@@ -694,7 +694,15 @@ xfidread(Xfid *x)
 		qlock(&x->active);
 		recv(mrm.cm, &ms);
 		c = 'm';
-		if(w->resized) {
+                if(w->entered) {
+			c = 'e';
+                        w->entered = 0;
+                }
+                else if(w->exited) {
+			c = 'x';
+                        w->exited = 0;
+                }
+		else if(w->resized) {
 			c = 'r';
                         w->resized = 0;
                 } else if (w->closed) {
