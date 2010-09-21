@@ -26,11 +26,16 @@ class Dispatcher()
 
    private static const
       IDLE_SLEEP_MIN,
-      IDLE_SLEEP_MAX
+      IDLE_SLEEP_MAX,
+      BLOCKED_ALLOW,
+      BLOCKED_QUIET
 
    private static init()
       IDLE_SLEEP_MIN := 10
       IDLE_SLEEP_MAX := 50
+      BLOCKED_ALLOW := Selection.EVENTS ++ set(Mouse.EXIT, Mouse.ENTER, 
+                                               Window.INVOKE_LATER, Window.RESIZE)
+      BLOCKED_QUIET := Mouse.DRAG_OR_MOVEMENT ++ set(Mouse.RELEASE)
       dialogs := set()
       tickers := set()
       compute_idle_sleep()
@@ -186,10 +191,10 @@ class Dispatcher()
                   # Process selection events; discard others and beep in the window.
                   # 
                   e := d.win.event()
-                  if member(Selection.EVENTS, e[1]) then
+                  if member(BLOCKED_ALLOW, e[1]) then
                      d.process_event(e)
                   else
-                     member(Mouse.DRAG_OR_MOVEMENT | Mouse.RELEASE, e[1]) | d.win.alert()
+                     member(BLOCKED_QUIET, e[1]) | d.win.alert()
                }
             }
          }

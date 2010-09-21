@@ -627,15 +627,9 @@ class Dialog(Component)
       }
 
       #
-      # The mouse may have moved during the event, so update x,y and
-      # re-create the point chain.
+      # The event may have changed what's above the cursor, eg a menu may have
+      # closed revealing something below, so re-create the point chain.
       #
-      if not member(Mouse.DRAG_OR_MOVEMENT, ec) &
-         t := self.win.query_pointer() then 
-      {
-         e.x := t[1]
-         e.y := t[2]
-      }
       create_point_chain(e)
       process_tooltip_event(e)
 
@@ -1090,6 +1084,8 @@ class Dialog(Component)
       create_point_chain(e)
       fire(Event.ICON, e)
       check_moving(,, e)
+      if *held = 0 then
+         synch_pointer(e)
    end
 
    #
