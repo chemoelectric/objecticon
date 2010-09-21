@@ -476,10 +476,8 @@ class Dialog(Component)
 
    private process_selection_request(l)
       local c, data, target
-      #write("process_selection-request:",to_string(l))
       target := l[5]
       if c := \selections[l[4]] then {
-         #write("\towner=", image(c))
          if target == Selection.TARGETS_TARGET then {
             data := []
             every put(data, c.get_targets())
@@ -488,13 +486,11 @@ class Dialog(Component)
                data := c.get_content(target)
          }
       }
-      #write("\tdata=", image(data))
       win.send_selection_response(l[2], l[3], l[4], l[5], l[6], data)
    end
 
    private process_selection_clear(l)
       local c
-      #write("process_selection-clear:",to_string(l))
       if c := \selections[l[2]] then {
          c.lost_ownership()
          delete(selections, l[2])
@@ -503,7 +499,6 @@ class Dialog(Component)
 
    private process_selection_response(l)
       local req
-      #write("process_selection-response:",to_string(l))
       if req := \selection_requests[l[2]] then {
          if /l[4] | (l[3] ~== req.target_types[1]) then {
             # Null data (indicating failure), or mismatch in type.  Pop off
@@ -555,7 +550,8 @@ class Dialog(Component)
          Window.INVOKE_LATER: process_invoke_later(l)
          Window.CLOSE_BUTTON: process_close_button(l)
          Window.RESIZE: process_resize(l)
-
+         Mouse.EXIT: process_mouse_exit(l)
+         Mouse.ENTER: process_mouse_enter(l)
          default: {
             if member(Mouse.DRAG_OR_MOVEMENT, l[1]) then {
                while win.pending()[1] === l[1] do
@@ -681,19 +677,20 @@ class Dialog(Component)
       return *held
    end
 
-   public check_moving(e)
+   private check_moving(curr, ec, e)
       local s1, s2
       if *held > 0 then
          return
       s1 := elementset(\moving) | set()
       s2 := elementset(point_chain)
-      fire_list(s1 -- s2, Event.MOUSE_EXIT, e)
       fire_list(s2 -- s1, Event.MOUSE_ENTER, e)
+      fire_list(\curr, ec, e)
+      fire_list(s1 -- s2, Event.MOUSE_EXIT, e)
       moving := copy(point_chain)
    end
 
    public generate_events(e)
-      local ec, ke
+      local ec, ke, t
 
       ec := e.code
       if integer(ec) < 0 then {
@@ -706,14 +703,11 @@ class Dialog(Component)
          } else if member(Mouse.DRAG, ec) then {
             fire_list(\held[ec + 6], ec, e)
          } else if ec === Mouse.MOVEMENT then {
-            fire_list(point_chain, ec, e)
-            check_moving(e)
+            check_moving(point_chain, ec, e)
          } else if member(Mouse.RELEASE, ec) then {
-            fire_list(\held[ec + 3], ec, e)
+            t := held[ec + 3]
             delete(held, ec + 3)
-            check_moving(e)
-         } else if member(Mouse.WINDOW, ec) then {
-            fire(ec, e)
+            check_moving(t, ec, e)
          }
       } else {
          # Keyboard event
@@ -851,21 +845,9 @@ class Dialog(Component)
    # Tooltip processing on a tick.
    # 
    private process_tooltip_tick()
-      local p, obj, tip
       if \popup_manager then 
          syserr("shouldn't have a tooltip ticker in a popup")
-
-      obj := self.tooltip_last_obj
-      # If over an object, check if the pointer has moved out of any of our windows, which may
-      # happen with a component at the edge of the dialog.
-      if \obj &
-         p := self.win.query_pointer() &
-         not((back(\popups) | self | \self.tooltip_component).inside(p[1], p[2])) then 
-         obj := &null
-      if \obj then
-         tip := self.tooltip_last_tip
-
-      tooltip_states(obj, tip, self.tooltip_last_event)
+      tooltip_states(self.tooltip_last_obj, self.tooltip_last_tip, self.tooltip_last_event)
    end
 
    #
@@ -886,17 +868,12 @@ class Dialog(Component)
       }
 
       #
-      # If over tooltip, behave as though over current object.
+      # Get current tip/object, if any.
       #
-      if (\self.tooltip_component).in_region(e) then {
-         if tip := self.tooltip_last_obj.get_tooltip(e) then
-            obj := self.tooltip_last_obj
-      } else {
-         every c := !(back(\popups) | self).point_chain do {
-            if tip := c.get_tooltip(e) then {
-               obj := c
-               break
-            }
+      every c := !(back(\popups) | self).point_chain do {
+         if tip := c.get_tooltip(e) then {
+            obj := c
+            break
          }
       }
 
@@ -987,7 +964,7 @@ class Dialog(Component)
       self.invoke_drag_reset(e)
       if *held = 0 then {
          synch_pointer(e)
-         check_moving(e)
+         check_moving(,, e)
       } else
          change_pointer(DEFAULT_POINTER)
    end
@@ -1095,6 +1072,24 @@ class Dialog(Component)
 
    private process_close_button(l)
       fire(l[1])
+   end
+
+   private process_mouse_exit(l)
+      local e
+      e := WinEvent!l
+      self.point_chain := []
+      self.point_chain_source := e
+      check_moving(,, e)
+      fire(Event.ICON, e)
+      tooltip_states(,, e)
+   end
+
+   private process_mouse_enter(l)
+      local e
+      e := WinEvent!l
+      create_point_chain(e)
+      fire(Event.ICON, e)
+      check_moving(,, e)
    end
 
    #

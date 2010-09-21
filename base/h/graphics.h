@@ -62,6 +62,8 @@
 #define MOUSE5          (-14)
 #define MOUSE4UP        (-16)
 #define MOUSE5UP        (-17)
+#define MOUSEENTERED    (-18)
+#define MOUSEEXITED     (-19)
 #define SELECTIONREQUEST   (-30)
 #define SELECTIONCLEAR     (-31)
 #define SELECTIONRESPONSE  (-32)

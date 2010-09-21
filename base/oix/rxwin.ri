@@ -24,6 +24,7 @@ static void handle_config(wsp w, XConfigureEvent *event);
 static void handle_exposures(wsp ws, XExposeEvent *event);
 static void handle_mouse(wsp ws, XButtonEvent *event);
 static void handle_keypress(wsp ws, XKeyEvent *event);
+static void handle_crossing(wsp ws, XCrossingEvent *event);
 static void wmap(wbp w);
 static void synch_cursor(wsp ws);
 static int convert_KeySym_to_code_point(KeySym k);
@@ -562,6 +563,10 @@ static void handle_misc(wdp wd)
             case MotionNotify:
                 handle_mouse(ws, (XButtonEvent *)&event);
                 break;
+            case LeaveNotify:
+            case EnterNotify:
+                handle_crossing(ws, (XCrossingEvent *)&event);
+                break;
             case NoExpose:
                 break;
             case Expose:
@@ -927,7 +932,7 @@ static void wmap(wbp w)
         XSetStandardProperties(stddpy, stdwin, ws->windowlabel, ws->windowlabel,
                                0,0,0, &size_hints);
         XSelectInput(ws->display->display, ws->win, 
-                     ExposureMask | KeyPressMask | 
+                     ExposureMask | KeyPressMask | EnterWindowMask | LeaveWindowMask |
                      ButtonPressMask | ButtonReleaseMask | ButtonMotionMask |
                      StructureNotifyMask | PointerMotionMask | KeyReleaseMask);
     }
@@ -1816,6 +1821,21 @@ static void handle_config(wsp ws, XConfigureEvent *event)
         return;
 
     qeventcode(ws, WINDOWRESIZED);
+}
+
+static void handle_crossing(wsp ws, XCrossingEvent *event)
+{
+    struct descrip d;
+    /* X generates crossing events even during drags; just ignore these */
+    if (event->state & (Button1Mask|Button2Mask|Button3Mask|Button4Mask|Button5Mask))
+        return;
+    MakeInt(event->type == EnterNotify ? MOUSEENTERED:MOUSEEXITED, &d);
+    qevent(ws, &d, event->x, event->y,
+           (uword)event->time, 
+           event->state & ControlMask,
+           event->state & Mod1Mask,
+           event->state & ShiftMask,
+           0);
 }
 
 /*
