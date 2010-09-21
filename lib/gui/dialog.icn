@@ -1186,19 +1186,31 @@ class WinEvent(Point)
    public
       code,
       shift,
-      meta,
+      lock,
       ctrl,
+      meta,
+      meta2,
+      meta3,
+      meta4,
+      meta5,
       release,
       interval
 
-   public new(code, x, y, ctrl, meta, shift, release, interval)
+   public new(code, x, y, mod, interval)
       self.code := code
       self.x := x
       self.y := y
-      self.shift := shift
-      self.meta := meta
-      self.ctrl := ctrl
-      self.release := release
+      if mod ~= 0 then {
+         self.shift := if iand(mod, Key.MOD_SHIFT) = Key.MOD_SHIFT then &yes
+         self.lock := if iand(mod, Key.MOD_LOCK) = Key.MOD_LOCK then &yes
+         self.ctrl := if iand(mod, Key.MOD_CTRL) = Key.MOD_CTRL then &yes
+         self.meta := if iand(mod, Key.MOD_META) = Key.MOD_META then &yes
+         self.meta2 := if iand(mod, Key.MOD_META2) = Key.MOD_META2 then &yes
+         self.meta3 := if iand(mod, Key.MOD_META3) = Key.MOD_META3 then &yes
+         self.meta4 := if iand(mod, Key.MOD_META4) = Key.MOD_META4 then &yes
+         self.meta5 := if iand(mod, Key.MOD_META5) = Key.MOD_META5 then &yes
+         self.release := if iand(mod, Key.MOD_RELEASE) = Key.MOD_RELEASE then &yes
+      }
       self.interval := interval
       return
    end

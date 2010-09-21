@@ -74,7 +74,7 @@ void wgetevent(wbp w, dptr res)
     }
 
     wgetq(w, &qval);
-    create_list(8, res);
+    create_list(5, res);
     list_put(res, &qval);
 
     /*
@@ -121,7 +121,7 @@ void wgetevent(wbp w, dptr res)
     }
 
     /*
-     * All other types - "real events" - seven items follow.  The x,y
+     * All other types - "real events" - 4 items follow.  The x,y
      * values need to be adjusted with the dx,dy offsets.
      */
     wgetq(w, &qval);
@@ -132,10 +132,13 @@ void wgetevent(wbp w, dptr res)
     IntVal(qval) -= w->context->dy;
     list_put(res, &qval);
 
-    for (i = 0; i < 5; ++i) {
-        wgetq(w, &qval);
-        list_put(res, &qval);
-    }
+    /* Modifier */
+    wgetq(w, &qval);
+    list_put(res, &qval);
+
+    /* Interval */
+    wgetq(w, &qval);
+    list_put(res, &qval);
 }
 
 
@@ -147,10 +150,7 @@ void qevent(wsp ws,             /* canvas */
             int x,              /* x and y values */
             int y,      
             uword t,            /* ms clock value */
-            int ctrl,           /* modifier key flags */
-            int meta,
-            int shift,
-            int rel)            /* key release flag */
+            int mod)            /* modifier flags */
 {
     dptr q = &(ws->listp);	/* a window's event queue (Icon list value) */
     struct descrip d;
@@ -176,23 +176,9 @@ void qevent(wsp ws,             /* canvas */
     MakeInt(y, &d);
     list_put(q, &d);
 
-    /* Modifiers */
-    if (ctrl)
-        list_put(q, &onedesc);
-    else
-        list_put(q, &nulldesc);
-    if (meta)
-        list_put(q, &onedesc);
-    else
-        list_put(q, &nulldesc);
-    if (shift)
-        list_put(q, &onedesc);
-    else
-        list_put(q, &nulldesc);
-    if (rel)
-        list_put(q, &onedesc);
-    else
-        list_put(q, &nulldesc);
+    /* Modifier flags */
+    MakeInt(mod, &d);
+    list_put(q, &d);
 
     /* Interval */
     MakeInt(ivl, &d);
@@ -216,9 +202,7 @@ void qmouseevents(wsp ws,             /* canvas */
                   int x,              /* x and y values */
                   int y,      
                   uword t,            /* ms clock value */
-                  int ctrl,           /* modifier key flags */
-                  int meta,
-                  int shift)
+                  int mod)            /* modifier key flags */
 {
     struct descrip d;
     if (ws->mousestate == state) {
@@ -226,23 +210,23 @@ void qmouseevents(wsp ws,             /* canvas */
         if (state == 0) {
             if (ws->inputmask & IM_POINTER_MOTION) {
                 MakeInt(MOUSEMOVED, &d);
-                qevent(ws, &d, x, y, t, ctrl, meta, shift, 0);
+                qevent(ws, &d, x, y, t, mod);
             }
         } else {
             switch (ws->buttonorder[0]) {
                 case 1: {
                     MakeInt(MOUSELEFTDRAG, &d);
-                    qevent(ws, &d, x, y, t, ctrl, meta, shift, 0);
+                    qevent(ws, &d, x, y, t, mod);
                     break;
                 }
                 case 2: {
                     MakeInt(MOUSEMIDDRAG, &d);
-                    qevent(ws, &d, x, y, t, ctrl, meta, shift, 0);
+                    qevent(ws, &d, x, y, t, mod);
                     break;
                 }
                 case 4: {
                     MakeInt(MOUSERIGHTDRAG, &d);
-                    qevent(ws, &d, x, y, t, ctrl, meta, shift, 0);
+                    qevent(ws, &d, x, y, t, mod);
                     break;
                 }
             }
@@ -255,14 +239,14 @@ void qmouseevents(wsp ws,             /* canvas */
             if (ws->buttonorder[1] == 1)
                 swap(ws->buttonorder[1],ws->buttonorder[2]);
             MakeInt(MOUSELEFTUP, &d);
-            qevent(ws, &d, x, y, t, ctrl, meta, shift, 0);
+            qevent(ws, &d, x, y, t, mod);
         } else if (!(ws->mousestate & 1) && (state & 1)) {
             if (ws->buttonorder[2] == 1)
                 swap(ws->buttonorder[1],ws->buttonorder[2]);
             if (ws->buttonorder[1] == 1)
                 swap(ws->buttonorder[0],ws->buttonorder[1]);
             MakeInt(MOUSELEFT, &d);
-            qevent(ws, &d, x, y, t, ctrl, meta, shift, 0);
+            qevent(ws, &d, x, y, t, mod);
         }
 
         if ((ws->mousestate & 2) && !(state & 2)) {
@@ -271,7 +255,7 @@ void qmouseevents(wsp ws,             /* canvas */
             if (ws->buttonorder[1] == 2)
                 swap(ws->buttonorder[1],ws->buttonorder[2]);
             MakeInt(MOUSEMIDUP, &d);
-            qevent(ws, &d, x, y, t, ctrl, meta, shift, 0);
+            qevent(ws, &d, x, y, t, mod);
 
         } else if (!(ws->mousestate & 2) && (state & 2)) {
             if (ws->buttonorder[2] == 2)
@@ -279,7 +263,7 @@ void qmouseevents(wsp ws,             /* canvas */
             if (ws->buttonorder[1] == 2)
                 swap(ws->buttonorder[0], ws->buttonorder[1]);
             MakeInt(MOUSEMID, &d);
-            qevent(ws, &d, x, y, t, ctrl, meta, shift, 0);
+            qevent(ws, &d, x, y, t, mod);
         }
 
         if ((ws->mousestate & 4) && !(state & 4)) {
@@ -288,25 +272,25 @@ void qmouseevents(wsp ws,             /* canvas */
             if (ws->buttonorder[1] == 4)
                 swap(ws->buttonorder[1],ws->buttonorder[2]);
             MakeInt(MOUSERIGHTUP, &d);
-            qevent(ws, &d, x, y, t, ctrl, meta, shift, 0);
+            qevent(ws, &d, x, y, t, mod);
         } else if (!(ws->mousestate & 4) && (state & 4)) {
             if (ws->buttonorder[2] == 4)
                 swap(ws->buttonorder[1], ws->buttonorder[2]);
             if (ws->buttonorder[1] == 4)
                 swap(ws->buttonorder[0], ws->buttonorder[1]);
             MakeInt(MOUSERIGHT, &d);
-            qevent(ws, &d, x, y, t, ctrl, meta, shift, 0);
+            qevent(ws, &d, x, y, t, mod);
         }
 
         /* The mouse wheel just generates up events, depending on the 
          * direction */
         if ((ws->mousestate & 8) && !(state & 8)) {
             MakeInt(MOUSE4UP, &d);
-            qevent(ws, &d, x, y, t, ctrl, meta, shift, 0);
+            qevent(ws, &d, x, y, t, mod);
         }
         if ((ws->mousestate & 16) && !(state & 16)) {
             MakeInt(MOUSE5UP, &d);
-            qevent(ws, &d, x, y, t, ctrl, meta, shift, 0);
+            qevent(ws, &d, x, y, t, mod);
         }
     }
     ws->mousestate = state;

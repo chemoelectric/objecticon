@@ -350,3 +350,13 @@ struct filter {
 #define IM_POINTER_MOTION  2
 
 #define XICONSLEEP	20 /* milliseconds */
+
+#define MOD_SHIFT       1
+#define MOD_LOCK        2
+#define MOD_CTRL        4
+#define MOD_META        8 
+#define MOD_META2       16
+#define MOD_META3       32
+#define MOD_META4       64
+#define MOD_META5       128
+#define MOD_RELEASE     256

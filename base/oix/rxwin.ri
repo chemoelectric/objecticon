@@ -45,6 +45,7 @@ static wfp loadfont(wdp wd, char *s);
 static void resizepixmap(wbp w, int width, int height);
 static void setclip(wbp w);
 static void unsetclip(wbp w);
+static int make_mod(unsigned int state);
 
 static stringint fillstyles[] = {
     {0, 3},
@@ -1823,6 +1824,29 @@ static void handle_config(wsp ws, XConfigureEvent *event)
     qeventcode(ws, WINDOWRESIZED);
 }
 
+static int make_mod(unsigned int state)
+{
+    int x = 0;
+
+    if (state & ShiftMask)
+        x |= MOD_SHIFT;
+    if (state & LockMask)
+        x |= MOD_LOCK;
+    if (state & ControlMask)
+        x |= MOD_CTRL;
+    if (state & Mod1Mask)
+        x |= MOD_META;
+    if (state & Mod2Mask)
+        x |= MOD_META2;
+    if (state & Mod3Mask)
+        x |= MOD_META3;
+    if (state & Mod4Mask)
+        x |= MOD_META4;
+    if (state & Mod5Mask)
+        x |= MOD_META5;
+    return x;
+}
+
 static void handle_crossing(wsp ws, XCrossingEvent *event)
 {
     struct descrip d;
@@ -1832,10 +1856,7 @@ static void handle_crossing(wsp ws, XCrossingEvent *event)
     MakeInt(event->type == EnterNotify ? MOUSEENTERED:MOUSEEXITED, &d);
     qevent(ws, &d, event->x, event->y,
            (uword)event->time, 
-           event->state & ControlMask,
-           event->state & Mod1Mask,
-           event->state & ShiftMask,
-           0);
+           make_mod(event->state));
 }
 
 /*
@@ -1843,11 +1864,14 @@ static void handle_crossing(wsp ws, XCrossingEvent *event)
  */
 static void handle_keypress(wsp ws, XKeyEvent *event)
 {
-    int i,j;
+    int i, j, fl;
     char s[10];
     tended struct descrip d;
     KeySym k;
 
+    fl = make_mod(event->state);
+    if (event->type == KeyRelease)
+        fl |= MOD_RELEASE;
     /* First try to convert the event to a simple char string, and a KeySym */
     i = XLookupString(event, s, sizeof(s), &k, NULL);
     if (i > 0) {
@@ -1856,11 +1880,7 @@ static void handle_keypress(wsp ws, XKeyEvent *event)
         for (j = 0; j < i; j++) {
             StrLoc(d) = &allchars[s[j] & 0xFF];
             qevent(ws, &d, event->x, event->y,
-                   (uword)event->time, 
-                   event->state & ControlMask,
-                   event->state & Mod1Mask,
-                   event->state & ShiftMask,
-                   (event->type == KeyRelease) );
+                   (uword)event->time, fl);
         }
         return;
     }
@@ -1877,11 +1897,7 @@ static void handle_keypress(wsp ws, XKeyEvent *event)
             BlkLoc(d) = (union block *)make_one_char_ucs_block(i);
         }
         qevent(ws, &d, event->x, event->y,
-               (uword)event->time,
-               event->state & ControlMask,
-               event->state & Mod1Mask,
-               event->state & ShiftMask,
-               (event->type == KeyRelease) );
+               (uword)event->time, fl);
         return;
     }
 
@@ -1890,11 +1906,7 @@ static void handle_keypress(wsp ws, XKeyEvent *event)
      */
     MakeInt(k, &d);
     qevent(ws, &d, event->x, event->y,
-           (uword)event->time, 
-           event->state & ControlMask,
-           event->state & Mod1Mask,
-           event->state & ShiftMask,
-           (event->type == KeyRelease) );
+           (uword)event->time, fl);
 }
 
 #include "rxkeysyms.ri"
@@ -1936,10 +1948,9 @@ static void handle_mouse(wsp ws, XButtonEvent *event)
         }
     }
     qmouseevents(ws, state, 
-                 event->x, event->y, (uword)event->time, 
-                 event->state & ControlMask,
-                 event->state & Mod1Mask,
-                 event->state & ShiftMask);
+                 event->x, event->y, 
+                 (uword)event->time, 
+                 make_mod(event->state));
 }
 
 
