@@ -516,6 +516,8 @@ static void flush_event_pipe(wsp ws)
     int n, mx, my;
     uchar ebuf[EMAXMSG + 1];
     tended struct descrip d;
+    vlong now;
+    uword time;
 
     /* Check if pipe open */
     if (!ws->win || ws->event_pipe[0] < 0)
@@ -538,14 +540,12 @@ static void flush_event_pipe(wsp ws)
         switch (ebuf[0]) {
             case 'C' : {
                 int i;
-                vlong now;
-                uword time;
                 if (n != 35)
                     syserr("bad console data in event pipe");
                 be2vlong(&now, &ebuf[1]);
                 time = (now - startup_time) / 1000000;
-                mx = atoi((char*)ebuf+9+0*12);
-                my = atoi((char*)ebuf+9+1*12);
+                mx = atoi((char*)ebuf + 9 + 0*12) - ws->win->r.min.x; 
+                my = atoi((char*)ebuf + 9 + 1*12) - ws->win->r.min.y;
                 i = ebuf[33] + (ebuf[34]<<8);
                 if (i == 10) i = 13;   /* Hack: convert \n to \r */
                 if (i < 256) {
@@ -558,14 +558,21 @@ static void flush_event_pipe(wsp ws)
                 } else 
                     MakeInt(i, &d);
                 qevent(ws, &d, 
-                       mx - ws->win->r.min.x, 
-                       my - ws->win->r.min.y, 
+                       mx,
+                       my,
                        time, 0, 0, 0, 0);
                 break;
             }
             case 'M': {
+                int state;
                 if (n < 10+2*12)
                     syserr("bad mouse data in event pipe");
+                be2vlong(&now, &ebuf[1]);
+                time = (now - startup_time) / 1000000;
+                mx = atoi((char*)ebuf + 10 + 0*12) - ws->win->r.min.x;
+                my = atoi((char*)ebuf + 10 + 1*12) - ws->win->r.min.y;
+                state = atoi((char*)ebuf + 10 + 2*12);
+
                 switch (ebuf[9]) {
                     case 'r':
                         handle_resize(ws);
@@ -574,18 +581,27 @@ static void flush_event_pipe(wsp ws)
                         qeventcode(ws, WINDOWCLOSED);
                         break;
                     }
+                    case 'e': {
+                        if (state == 0) {
+                            struct descrip d;
+                            MakeInt(MOUSEENTERED, &d);
+                            qevent(ws, &d, mx, my, time, 0, 0, 0, 0);
+                        }
+                        break;
+                    }
+                    case 'x': {
+                        if (state == 0) {
+                            struct descrip d;
+                            MakeInt(MOUSEEXITED, &d);
+                            qevent(ws, &d, mx, my, time, 0, 0, 0, 0);
+                        }
+                        break;
+                    }
                     case 'm': {
-                        int state, tmp;
-                        vlong now;
-                        uword time;
-                        be2vlong(&now, &ebuf[1]);
-                        time = (now - startup_time) / 1000000;
-                        mx = atoi((char*)ebuf+10+0*12);
-                        my = atoi((char*)ebuf+10+1*12);
-                        state = atoi((char*)ebuf+10+2*12);
-                        qmouseevents(ws, state, 
-                                     mx - ws->win->r.min.x, 
-                                     my - ws->win->r.min.y, 
+                        qmouseevents(ws, 
+                                     state, 
+                                     mx,
+                                     my,
                                      time, 0, 0, 0);
                         break;
                     }

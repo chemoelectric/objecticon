@@ -549,7 +549,9 @@ class Mouse()
       WHEEL_UP,
       WHEEL_DOWN,
       WHEEL,
-      DRAG_OR_MOVEMENT
+      DRAG_OR_MOVEMENT,
+      ENTER,
+      EXIT
 
    private static init()
       LEFT_PRESS :=           -1
@@ -569,6 +571,8 @@ class Mouse()
       WHEEL_UP :=            -16
       WHEEL_DOWN :=          -17
       WHEEL := set(WHEEL_UP, WHEEL_DOWN)
+      ENTER :=               -18
+      EXIT :=                -19
    end
 end
 

@@ -195,7 +195,7 @@ typedef int siptr, stringint, inst;
       typedef int XGCValues, XColor, XFontStruct, XWindowAttributes, XEvent;
       typedef int XExposeEvent, XKeyEvent, XButtonEvent, XConfigureEvent;
       typedef int XSizeHints, XWMHints, XClassHint, XTextProperty;
-      typedef int Colormap, XVisualInfo;
+      typedef int Colormap, XVisualInfo, XCrossingEvent;
       typedef int *Display, Cursor, GC, Window, Pixmap, Visual, KeySym;
       typedef int WidgetClass, XImage, XpmAttributes, XSetWindowAttributes;
       typedef int XGlyphInfo, XftColor, Region, XftDraw, FcChar8;
