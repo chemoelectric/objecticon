@@ -28,7 +28,9 @@ class Dialog(Component)
       TOOLTIP_END_DELAY,
       TOOLTIP_CONTINUE_DELAY,
       TOOLTIP_X_OFFSET,
-      TOOLTIP_Y_OFFSET
+      TOOLTIP_Y_OFFSET,
+      FOCUS_UP,                  # Set of events to move focus
+      FOCUS_DOWN
 
    public 
       win,                     # The dialog's window.
@@ -578,12 +580,7 @@ class Dialog(Component)
    # Normal event processing - not dnd
    # 
    private process_normal(e)
-      static focus_up, focus_down
-      local c, ec, old_n_held, t
-      initial {
-         focus_up := set(Key.SHIFT_TAB, Key.LEFT, Key.UP)
-         focus_down := set("\t", Key.RIGHT, Key.DOWN)
-      }
+      local c, ec, old_n_held
 
       ec := e.code
 
@@ -614,12 +611,12 @@ class Dialog(Component)
       # with the menu's cursor movement.
       #
       if /e.release & /self.menu_mode then {
-         if member(focus_down, ec) & (/self.focus | 
+         if member(FOCUS_DOWN, ec) & (/self.focus | 
                                       self.focus.is_hidden() |
                                       self.focus.is_shaded() | 
                                       not(self.focus.keeps(e))) then 
             self.set_focus(find_next_focus(e), e)
-         else if member(focus_up, ec) & (/self.focus | 
+         else if member(FOCUS_UP, ec) & (/self.focus | 
                                          self.focus.is_hidden() |
                                          self.focus.is_shaded() | 
                                          not(self.focus.keeps(e))) then 
@@ -1161,6 +1158,8 @@ class Dialog(Component)
       TOOLTIP_X_OFFSET := 5
       TOOLTIP_Y_OFFSET := 15
       DEFAULT_POINTER := "left ptr"
+      FOCUS_UP := set(Key.SHIFT_TAB, Key.LEFT, Key.UP)
+      FOCUS_DOWN := set("\t", Key.RIGHT, Key.DOWN)
       ROOT_WATTRIBS := table()
    end
 
