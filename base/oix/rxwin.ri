@@ -2,8 +2,6 @@
  * File: rxwin.ri - X11 system-specific graphics interface code.
  */
 
-#ifdef Graphics
-
 #define CONVERT_ANGLE(ang) (-(ang) * 180 / Pi * 64)
 
 /*
@@ -3191,5 +3189,3 @@ int settransientfor(wbp w, wbp other)
         ws->transientfor = (Window) NULL;
     return Succeeded;
 }
-
-#endif            /* Graphics */
