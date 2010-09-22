@@ -44,7 +44,6 @@ class Dialog(Component)
       prev_time,
       prev_event,
       is_blocked_flag,
-      resize_attrib,
       drag_gesture_x,
       drag_gesture_y,
       curr_drag,
@@ -107,13 +106,11 @@ class Dialog(Component)
 
    public block()
       self.is_blocked_flag := 1
-      self.resize_attrib := if self.win.can_resize() then &yes else &no
-      self.win.set_resize(&no)
+      change_pointer(DEFAULT_POINTER)
    end
 
    public unblock()
       self.is_blocked_flag := &null
-      self.win.set_resize(self.resize_attrib)
    end
 
    #
@@ -1079,8 +1076,8 @@ class Dialog(Component)
       local e
       e := WinEvent!l
       create_point_chain(e)
-      fire(Event.ICON, e)
       check_moving(,, e)
+      fire(Event.ICON, e)
       if *held = 0 then
          synch_pointer(e)
    end
