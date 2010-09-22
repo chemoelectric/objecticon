@@ -2,8 +2,6 @@
  * File: rxwin.ri - X11 system-specific graphics interface code.
  */
 
-#ifdef Graphics
-
 #define CONVERT_ANGLE(ang) (-(ang) * 180 / Pi * 64)
 
 /*
@@ -710,7 +708,7 @@ void wsync(wbp w)
 /*
  * open a window
  */
-wbp wcreate(char *display, wbp parent)
+wbp wcreate(char *display)
 {
     wbp w;
     wsp ws;
@@ -724,9 +722,6 @@ wbp wcreate(char *display, wbp parent)
     ws = w->window;
     ws->vis = DefaultVisual(ws->display->display, ws->display->screen); 
     create_list(64, &ws->listp);
-
-    if (parent)
-        ws->transientfor = parent->window->win;
 
     /*
      * some attributes of the display and window are used in the context
@@ -838,6 +833,14 @@ static void wmap(wbp w)
         /* If the window has a parent, set the WM_TRANSIENT_FOR hint. */
         if (ws->transientfor)
             XSetTransientForHint(stddpy, ws->win, ws->transientfor);
+
+        if (ISMODAL(ws)) {
+            Atom t = XInternAtom(stddpy, "_NET_WM_STATE_MODAL", False);
+            XChangeProperty(stddpy, ws->win,
+                             XInternAtom(stddpy, "_NET_WM_STATE", False),
+                             XA_ATOM, 32, PropModeReplace,
+                            (unsigned char *) &t, 1);
+        }
 
         /* Turn off background; this prevents X filling the background on an expose
            and hence prevents unsightly flicker on a resize. */
@@ -3166,5 +3169,23 @@ int  readimagedataimpl(dptr data, struct imgdata *imd)
     return NoCvt;
 }
 
+int setmodal(wbp w, int val)
+{
+    STDLOCALS(w);
+    if (ws->win)
+        return Failed;
+    SETMODAL(ws);
+    return Succeeded;
+}
 
-#endif            /* Graphics */
+int settransientfor(wbp w, wbp other)
+{
+    STDLOCALS(w);
+    if (ws->win)
+        return Failed;
+    if (other)
+        ws->transientfor = other->window->win;
+    else
+        ws->transientfor = (Window) NULL;
+    return Succeeded;
+}

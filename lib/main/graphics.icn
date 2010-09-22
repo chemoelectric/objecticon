@@ -40,7 +40,7 @@ import
 class Window(SetFields,NoCopy)
    private
       wbp,
-      parent
+      transient_for
 
    public static const
       RESIZE,
@@ -54,17 +54,15 @@ class Window(SetFields,NoCopy)
    end
 
    public static open(a[])
-      local f, w, t, display, parent
+      local f, w, t, display
       t := []
       every f := generate_fields(a) do {
          case f.attr of {
             "display": display := f.val
-            "parent": parent := f.object_val(Window)
             default: put(t, f)
          }
       }
-      w := Window(wcreate(display, parent)) | fail
-      w.parent := parent
+      w := Window(wcreate(display)) | fail
       every w.apply_field(!t)
       w.wopen() | fail
       return w
@@ -89,7 +87,7 @@ class Window(SetFields,NoCopy)
       return Window(couple_impl(w1, w2))
    end
 
-   private static defer wcreate(display, parent)
+   private static defer wcreate(display)
    private defer wopen()
    private defer pre_attrib()
    private defer post_attrib()
@@ -135,6 +133,7 @@ class Window(SetFields,NoCopy)
    public defer can_resize()
    public defer get_size()
    public defer get_width()
+   public defer is_modal()
 
    public defer set_bg(v)
    public defer set_canvas(v)
@@ -157,6 +156,7 @@ class Window(SetFields,NoCopy)
    public defer set_min_height(v)
    public defer set_min_size(v)
    public defer set_min_width(v)
+   public defer set_modal(v)
    public defer set_pattern(v)
    public defer set_pointer(v)
    public defer set_pos(v)
@@ -166,8 +166,15 @@ class Window(SetFields,NoCopy)
    public defer set_size(v)
    public defer set_width(v)
 
-   public get_parent()
-      return \self.parent
+   public set_transient_for(w)
+      if set_transient_for_impl(w) then
+         self.transient_for := w
+   end
+
+   private defer set_transient_for_impl(v)
+
+   public get_transient_for()
+      return \self.transient_for
    end
 
    #
@@ -475,9 +482,11 @@ $endif
          "min_height": set_min_height(f.val)
          "min_size": set_min_size!(f.int_list_val())
          "min_width": set_min_width(f.val)
+         "modal": set_modal(f.flag_val())
          "pattern": set_pattern(f.val)
          "pointer": set_pointer(f.val)
          "pos": set_pos!(f.int_list_val())
+         "transient_for": set_transient_for(f.object_val(Window))
          "x": set_x(f.val)
          "y": set_y(f.val)
          "resize": set_resize(f.flag_val())

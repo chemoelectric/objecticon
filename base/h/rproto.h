@@ -266,7 +266,7 @@ void buffnstr(dptr d, char **s, ...);
    int  walert          (wbp w, int volume);
    int  warppointer     (wbp w, int x, int y);
    void wclose          (wbp w);
-   wbp  wcreate         (char *display, wbp parent);
+   wbp  wcreate         (char *display);
    int  wopen           (wbp w);
    int  grabpointer      (wbp w);
    int  ungrabpointer    (wbp w);
@@ -286,6 +286,8 @@ void buffnstr(dptr d, char **s, ...);
    int  readimagefileimpl(char *filename, struct imgdata *imd);
    int  writeimagefileimpl(wbp w, char *filename, int x, int y, int width, int height);
    int  readimagedataimpl(dptr data, struct imgdata *imd);
+   int  setmodal(wbp w, int val);
+   int  settransientfor(wbp w, wbp other);
 
 #endif                                  /* Graphics */
 

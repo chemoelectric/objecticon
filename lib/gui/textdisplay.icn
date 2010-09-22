@@ -8,7 +8,7 @@
 
 package gui
 
-import util
+import util, ipl.lists
 
 #
 # This class displays a list of strings.
@@ -33,6 +33,22 @@ class TextDisplay(LineBasedScrollArea)
       if /view_list then
          create_view_list()
       return *self.view_list
+   end
+
+   #
+   # Useful method to get the contents as a string, with each line
+   # separated by \n.
+   #
+   public get_contents_str()
+      return list2str(self.contents, "\n")
+   end
+
+   #
+   # Useful method to set the contents from a string in which each line
+   # is seperated by \n.
+   #
+   public set_contents_str(s)
+      set_contents(str2list(s, '\n'))
    end
 
    #

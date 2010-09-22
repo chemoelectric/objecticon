@@ -28,7 +28,9 @@ class Dialog(Component)
       TOOLTIP_END_DELAY,
       TOOLTIP_CONTINUE_DELAY,
       TOOLTIP_X_OFFSET,
-      TOOLTIP_Y_OFFSET
+      TOOLTIP_Y_OFFSET,
+      FOCUS_UP,                  # Set of events to move focus
+      FOCUS_DOWN
 
    public 
       win,                     # The dialog's window.
@@ -42,7 +44,6 @@ class Dialog(Component)
       prev_time,
       prev_event,
       is_blocked_flag,
-      resize_attrib,
       drag_gesture_x,
       drag_gesture_y,
       curr_drag,
@@ -67,7 +68,8 @@ class Dialog(Component)
       selections,
       popup_manager,
       popups,
-      curr_pointer
+      curr_pointer,
+      is_modal_flag
 
    public needs_validate()
       return \copy_rect
@@ -105,13 +107,11 @@ class Dialog(Component)
 
    public block()
       self.is_blocked_flag := 1
-      self.resize_attrib := if self.win.can_resize() then &yes else &no
-      self.win.set_resize(&no)
+      change_pointer(DEFAULT_POINTER)
    end
 
    public unblock()
       self.is_blocked_flag := &null
-      self.win.set_resize(self.resize_attrib)
    end
 
    #
@@ -195,6 +195,7 @@ class Dialog(Component)
    #
    public show_child(d)
       set_owning_dialog(\d)
+      is_modal_flag := d
       self.show()
       Dispatcher.add(self)
       if \d then {
@@ -216,6 +217,7 @@ class Dialog(Component)
    #
    public show_modeless(d)
       set_owning_dialog(\d)
+      is_modal_flag := &null
       self.show()
       Dispatcher.add(self)
       if \d then
@@ -233,6 +235,7 @@ class Dialog(Component)
    public show_modal(d)
       local l
       set_owning_dialog(\d)
+      is_modal_flag := &yes
       self.show()
       l := Dispatcher.list_unblocked()
       every (!l).block()
@@ -318,7 +321,9 @@ class Dialog(Component)
       t := wattribs_to_list(self.wattribs)
       put(t, "input_mask=mk")
       if pw := (\owning_dialog).win then
-         every put(t, "parent=" | pw)
+         every put(t, "transient_for=" | pw)
+      if \is_modal_flag then
+         put(t, "modal=yes")
       self.win := Window.open!t | runerr("Couldn't open window:" || &why)
       # Make the buffer the same size as the visible win.
       self.buffer_win.set_size(self.win.get_width(), self.win.get_height())
@@ -591,12 +596,7 @@ $endif
    # Normal event processing - not dnd
    # 
    private process_normal(e)
-      static focus_up, focus_down
-      local c, ec, old_n_held, t
-      initial {
-         focus_up := set(Key.SHIFT_TAB, Key.LEFT, Key.UP)
-         focus_down := set("\t", Key.RIGHT, Key.DOWN)
-      }
+      local c, ec, old_n_held
 
       ec := e.code
 
@@ -627,12 +627,12 @@ $endif
       # with the menu's cursor movement.
       #
       if /e.release & /self.menu_mode then {
-         if member(focus_down, ec) & (/self.focus | 
+         if member(FOCUS_DOWN, ec) & (/self.focus | 
                                       self.focus.is_hidden() |
                                       self.focus.is_shaded() | 
                                       not(self.focus.keeps(e))) then 
             self.set_focus(find_next_focus(e), e)
-         else if member(focus_up, ec) & (/self.focus | 
+         else if member(FOCUS_UP, ec) & (/self.focus | 
                                          self.focus.is_hidden() |
                                          self.focus.is_shaded() | 
                                          not(self.focus.keeps(e))) then 
@@ -1095,8 +1095,8 @@ $endif
       local e
       e := WinEvent!l
       create_point_chain(e)
-      fire(Event.ICON, e)
       check_moving(,, e)
+      fire(Event.ICON, e)
       if *held = 0 then
          synch_pointer(e)
    end
@@ -1174,6 +1174,8 @@ $endif
       TOOLTIP_X_OFFSET := 5
       TOOLTIP_Y_OFFSET := 15
       DEFAULT_POINTER := "left ptr"
+      FOCUS_UP := set(Key.SHIFT_TAB, Key.LEFT, Key.UP)
+      FOCUS_DOWN := set("\t", Key.RIGHT, Key.DOWN)
       ROOT_WATTRIBS := table()
    end
 

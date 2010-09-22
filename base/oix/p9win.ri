@@ -293,7 +293,7 @@ static void show_square(Image *dest, Rectangle r)
     flushimage(display, 1);
 }
 
-wbp wcreate(char *display, wbp parent)
+wbp wcreate(char *display)
 {
     wbp w;
     wsp ws;
@@ -317,8 +317,6 @@ wbp wcreate(char *display, wbp parent)
     }
     w->context = alccontext(w);
     create_list(64, &ws->listp);
-    if (parent)
-        ws->transientfor_winid = parent->window->winid;
     return w;
 }
 
@@ -1950,6 +1948,27 @@ char *getpointer(wbp w)
 char *getdrawop(wbp w)
 {
     return "copy";
+}
+
+int setmodal(wbp w, int val)
+{
+    wsp ws = w->window;
+    if (ws->win)
+        return Failed;
+    SETMODAL(ws);
+    return Succeeded;
+}
+
+int settransientfor(wbp w, wbp other)
+{
+    wsp ws = w->window;
+    if (ws->win)
+        return Failed;
+    if (other)
+        ws->transientfor_winid = other->window->winid;
+    else
+        ws->transientfor_winid = -1;
+    return Succeeded;
 }
 
 char *getcanvas(wbp w)

@@ -44,19 +44,12 @@ if (!self_w)
     runerr(142, self);
 #enddef
 
-function graphics_Window_wcreate(display, parent)
+function graphics_Window_wcreate(display)
    body {
-      wbp w, w2;
+      wbp w;
       char *s2;
       inattr = 1;
       wconfig = 0;
-
-      if (is:null(parent))
-          w2 = 0;
-      else {
-          WindowStaticParam(parent, tmp);
-          w2 = tmp;
-      }
 
       if (is:null(display))
           s2 = 0;
@@ -65,7 +58,7 @@ function graphics_Window_wcreate(display, parent)
              runerr(103, display);
          s2 = buffstr(&display);
       }
-      w = wcreate(s2, w2);
+      w = wcreate(s2);
       if (!w)
           fail;
       return C_integer (word) w;
@@ -82,26 +75,6 @@ function graphics_Window_wopen(self)
       }
       inattr = wconfig = 0;
       return self;
-   }
-end
-
-function graphics_Window_pre_attrib(self)
-   body {
-      inattr = 1;
-      wconfig = 0;
-      fail;
-   }
-end
-
-function graphics_Window_post_attrib(self)
-   body {
-      GetSelfW();
-      inattr = 0;
-      if (wconfig) {
-          doconfig(self_w, wconfig);
-          wconfig = 0;
-      }
-      fail;
    }
 end
 
@@ -1498,12 +1471,27 @@ do {
 } while(0)
 #enddef
 
+function graphics_Window_pre_attrib(self)
+   body {
+      inattr = 1;
+      wconfig = 0;
+      fail;
+   }
+end
+
+function graphics_Window_post_attrib(self)
+   body {
+      GetSelfW();
+      inattr = 0;
+      SimpleAttr();
+      fail;
+   }
+end
   
 function graphics_Window_set_bg(self, val)
    if !cnv:string(val) then
       runerr(103, val)
    body {
-       word i;
        GetSelfW();
        AttemptAttr(setbg(self_w, buffstr(&val)), "Invalid color");
        return self;
@@ -1587,7 +1575,6 @@ function graphics_Window_set_fg(self, val)
    if !cnv:string(val) then
       runerr(103, val)
    body {
-       word i;
        GetSelfW();
        AttemptAttr(setfg(self_w, buffstr(&val)), "Invalid color");
        return self;
@@ -1944,12 +1931,6 @@ function graphics_Window_set_width(self, width)
    }
 end
 
-function graphics_Window_post_set(self)
-   body {
-       return self;
-   }
-end
-
 #if PLAN9
 function graphics_Window_get_dir(self)
    body {
@@ -1962,5 +1943,40 @@ function graphics_Window_get_dir(self)
    }
 end
 #endif
+
+function graphics_Window_set_modal(self, val)
+   body {
+       int i;
+       GetSelfW();
+       i = is:null(val) ? 0:1;
+       AttemptAttr(setmodal(self_w, i), "Cannot set modal");
+       return self;
+   }
+end
+
+function graphics_Window_is_modal(self)
+   body {
+       GetSelfW();
+       if (ISMODAL(self_w->window))
+           return nulldesc;
+       else
+           fail;
+   }
+end
+
+function graphics_Window_set_transient_for_impl(self, val)
+   body {
+       wbp w2;
+       GetSelfW();
+       if (is:null(val))
+           w2 = 0;
+       else {
+           WindowStaticParam(val, tmp);
+           w2 = tmp;
+       }
+       AttemptAttr(settransientfor(self_w, w2), "Cannot set transient_for");
+       return self;
+   }
+end
 
 #endif   /* Graphics */
