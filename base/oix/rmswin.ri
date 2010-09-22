@@ -232,7 +232,7 @@ int mswinsystem(char *s)
 /*
  * wopen
  */
-wbp wcreate(char *display, wbp parent)
+wbp wcreate(char *display)
    {
    wbp w;
    wsp ws;
@@ -2621,4 +2621,14 @@ int  readimagefileimpl(char *filename, struct imgdata *imd)
 int  writeimagefileimpl(wbp w, char *filename, int x, int y, int width, int height)
 {
     return NoCvt;
+}
+
+int setmodal(wbp w, int val)
+{
+    return Failed;
+}
+
+int settransientfor(wbp w, wbp other)
+{
+    return Failed;
 }
