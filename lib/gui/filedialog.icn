@@ -44,6 +44,13 @@ class FileDialog(Dialog)
       message_label, 
       show_hidden_cb
 
+   public static ucs_list(l)
+      local t
+      t := []
+      every put(t, ucs(!l))
+      return t
+   end
+
    public component_setup()
       self.setup()
 
@@ -51,14 +58,17 @@ class FileDialog(Dialog)
       # Defaults and extra dirs.
       #
       /init_dirs := []
-      every put(init_dirs, Files.getcwd() | 
-                Files.get_home() | 
-                Files.get_temp() | 
-                Files.get_roots())
-      init_dirs := lunique(init_dirs)
+      every put(init_dirs, ucs(Files.getcwd() | 
+                               Files.get_home() | 
+                               Files.get_temp() | 
+                               Files.get_roots()))
+      init_dirs := lunique(ucs_list(init_dirs))
 
       /init_files := []
-      /init_filters := ["*"]
+      /init_filters := [u"*"]
+
+      init_files := ucs_list(init_files)
+      init_filters := ucs_list(init_filters)
 
       dir.set_selection_list(init_dirs)
       file.set_selection_list(init_files)
@@ -282,9 +292,9 @@ class FileDialog(Dialog)
    end
 
    public goto_dir(d, cf)
-      dir.set_contents(Files.get_path(d).canonical().str())
+      dir.set_contents(ucs(Files.get_path(d).canonical().str()))
       if \cf then
-         file.set_contents("")
+         file.set_contents(u"")
       load_dir()
    end
 
@@ -325,7 +335,7 @@ class FileDialog(Dialog)
    # Read a directory.
    #
    public list_directory(s)
-      local e, dir_list, file_list, l, pats
+      local e, dir_list, file_list, l, pats, t
       clear_msg()
       pats := get_pats()
 
@@ -336,14 +346,14 @@ class FileDialog(Dialog)
       dir_list := []
       file_list := []
       every e := !l do {
-         if show_hidden_cb.is_checked() | 
-            not(Files.is_hidden(e[1])) then 
+         if t := ucs(e[1]) & (show_hidden_cb.is_checked() | 
+                              not(Files.is_hidden(t))) then 
          {
             if e[2].mode_str[1] == "d" then
-               Files.is_relative_dir(e[1]) | put(dir_list, e[1])
+               Files.is_relative_dir(t) | put(dir_list, t)
             else {
-               if wild_match(!pats, e[1]) then
-                  put(file_list, e[1])
+               if wild_match(!pats, t) = *t + 1 then
+                  put(file_list, t)
             }
          }
       }
@@ -352,12 +362,12 @@ class FileDialog(Dialog)
 
    public set_one(f)
       case f.attr of {
-         "directory" : set_directory(f.string_val())
-         "directories" : set_directories(f.string_list_val())
-         "file" : set_file(f.string_val())
-         "files" : set_files(f.string_list_val())
-         "filters" : set_filters(f.string_list_val())
-         "path" : set_path(f.string_val())
+         "directory" : set_directory(f.ucs_val())
+         "directories" : set_directories(f.ucs_list_val())
+         "file" : set_file(f.ucs_val())
+         "files" : set_files(f.ucs_list_val())
+         "filters" : set_filters(f.ucs_list_val())
+         "path" : set_path(f.ucs_val())
          default: return cast(self,Dialog).set_one(f)
       }
       return
