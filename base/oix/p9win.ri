@@ -1950,15 +1950,6 @@ char *getdrawop(wbp w)
     return "copy";
 }
 
-int setmodal(wbp w, int val)
-{
-    wsp ws = w->window;
-    if (ws->win)
-        return Failed;
-    SETMODAL(ws);
-    return Succeeded;
-}
-
 int settransientfor(wbp w, wbp other)
 {
     wsp ws = w->window;

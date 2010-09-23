@@ -834,14 +834,6 @@ static void wmap(wbp w)
         if (ws->transientfor)
             XSetTransientForHint(stddpy, ws->win, ws->transientfor);
 
-        if (ISMODAL(ws)) {
-            Atom t = XInternAtom(stddpy, "_NET_WM_STATE_MODAL", False);
-            XChangeProperty(stddpy, ws->win,
-                             XInternAtom(stddpy, "_NET_WM_STATE", False),
-                             XA_ATOM, 32, PropModeReplace,
-                            (unsigned char *) &t, 1);
-        }
-
         /* Turn off background; this prevents X filling the background on an expose
            and hence prevents unsightly flicker on a resize. */
         XSetWindowBackgroundPixmap(stddpy, ws->win, None);
@@ -3167,15 +3159,6 @@ int  writeimagefileimpl(wbp w, char *filename, int x, int y, int width, int heig
 int  readimagedataimpl(dptr data, struct imgdata *imd)
 {
     return NoCvt;
-}
-
-int setmodal(wbp w, int val)
-{
-    STDLOCALS(w);
-    if (ws->win)
-        return Failed;
-    SETMODAL(ws);
-    return Succeeded;
 }
 
 int settransientfor(wbp w, wbp other)
