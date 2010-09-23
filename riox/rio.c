@@ -545,10 +545,19 @@ mousethread(void*)
 			//winput = input;
 			winput = nbinput ? nbinput : input;
                         over = wpointto(mouse->xy);
-                        if (over != lastover) {
-                            //print("*");
-                            if (over) over->entered = 1;
-                            if (lastover) lastover->exited = 1;
+                        if (!grab && over != lastover) {
+                            if (winput && lastover==winput) {
+				tmp = mousectl->Mouse;
+				tmp.xy = xy;
+                                winput->exited = 1;
+				send(winput->mc.c, &tmp);
+                            }
+                            if (winput && over==winput) {
+				tmp = mousectl->Mouse;
+				tmp.xy = xy;
+                                winput->entered = 1;
+				send(winput->mc.c, &tmp);
+                            }
                             lastover = over;
                         }
 			/* override everything for the keyboard window */
