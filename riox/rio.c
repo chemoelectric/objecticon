@@ -502,6 +502,17 @@ keyboardhide(void)
 }
 
 void
+sendmouseevent(Window *w, uchar type)
+{
+    MouseEx tmp;
+    tmp.Mouse = mousectl->Mouse;
+    tmp.xy.x = mousectl->xy.x + (w->i->r.min.x-w->screenr.min.x);
+    tmp.xy.y = mousectl->xy.y + (w->i->r.min.y-w->screenr.min.y);
+    tmp.type = type;
+    send(w->mc.c, &tmp);
+}
+
+void
 mousethread(void*)
 {
 	int sending, inside, scrolling, moving, band;
@@ -509,7 +520,6 @@ mousethread(void*)
 	Image *i;
 	Rectangle r;
 	Point xy;
-	Mouse tmp;
 	enum {
 		MReshape,
 		MMouse,
@@ -545,20 +555,25 @@ mousethread(void*)
 			//winput = input;
 			winput = nbinput ? nbinput : input;
                         over = wpointto(mouse->xy);
-                        if (!grab && over != lastover) {
-                            if (winput && lastover==winput) {
-				tmp = mousectl->Mouse;
-				tmp.xy = xy;
-                                winput->exited = 1;
-				send(winput->mc.c, &tmp);
+                        if (!grab && !mouse->buttons) {
+                            Window *t = over;
+                            /* If the mouse is in the border, then we're not over the window for enter/exit
+                             * purposes.
+                             */
+                            if (t && !ptinrect(mouse->xy, insetrect(t->screenr, Selborder)))
+                                t = 0;
+                            if (t != lastover) {
+                                if (winput && lastover==winput) {
+                                    sendmouseevent(winput, 'x');
+                                    lastover = t;
+                                }
+                                if (winput && t==winput) {
+                                    //print("E");
+                                    sendmouseevent(winput, 'e');
+                                    lastover = t;
+                                }
                             }
-                            if (winput && over==winput) {
-				tmp = mousectl->Mouse;
-				tmp.xy = xy;
-                                winput->entered = 1;
-				send(winput->mc.c, &tmp);
-                            }
-                            lastover = over;
+                            //if (lastover) print("+"); else print("-");
                         }
 			/* override everything for the keyboard window */
 			if(wkeyboard!=nil && ptinrect(mouse->xy, wkeyboard->screenr)){
@@ -603,9 +618,7 @@ mousethread(void*)
                                         }else
                                                wsetcursor(winput, 0);
                                 }
-				tmp = mousectl->Mouse;
-				tmp.xy = xy;
-				send(winput->mc.c, &tmp);
+                                sendmouseevent(winput, 'm');
 				continue;
 			}
 			/* change cursor if over anyone's border */
@@ -687,8 +700,13 @@ resized(void)
 	Point o, n;
 	Window *w;
 
-	if(getwindow(display, Refnone) < 0)
-		error("failed to re-attach window");
+//	if(getwindow(display, Refnone) < 0)
+//		error("failed to re-attach window");
+        /* There seems to be a race condition at startup which causes this to fail occasionally.  As we
+         * seem to get several reshapes, it doesn't matter if we miss one */
+	if(getwindow(display, Refnone) < 0) {
+            return;
+        }
 	freescrtemps();
 	view = screen;
 	freescreen(wscreen);
@@ -1362,28 +1380,41 @@ unhide(int h)
 	wunhide(h);
 }
 
+int
+readmouseex(MousectlEx *mc)
+{
+        if(mc->image)
+                flushimage(mc->image->display, 1);
+        if(recv(mc->c, &mc->MouseEx) < 0){
+                fprint(2, "readmouse: %r\n");
+                return -1;
+        }
+        return 0;
+}
+
 Window*
 new(Image *i, int hideit, int scrollit, int transientfor, int noborder, 
     int keepabove, int keepbelow, int mindx, int maxdx, int mindy, int maxdy,
     int pid, char *dir, char *cmd, char **argv)
 {
 	Window *w;
-	Mousectl *mc;
+	MousectlEx *mc;
 	Channel *cm, *ck, *cctl, *cpid;
 	void **arg;
 
 	if(i == nil)
 		return nil;
-	cm = chancreate(sizeof(Mouse), 0);
+	cm = chancreate(sizeof(MouseEx), 0);
 	ck = chancreate(sizeof(Rune*), 0);
 	cctl = chancreate(sizeof(Wctlmesg), 4);
 	cpid = chancreate(sizeof(int), 0);
 	if(cm==nil || ck==nil || cctl==nil)
 		error("new: channel alloc failed");
-	mc = emalloc(sizeof(Mousectl));
-	*mc = *mousectl;
-	mc->image = i;
+	mc = emalloc(sizeof(MousectlEx));
+        mc->Mouse = mousectl->Mouse;
+        mc->type = 'm';
 	mc->c = cm;
+        mc->image = i;
 	w = wmk(i, mc, ck, cctl, scrollit, transientfor, noborder,
                 keepabove, keepbelow, mindx, maxdx, mindy, maxdy);
 	free(mc);	/* wmk copies *mc */

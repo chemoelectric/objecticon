@@ -48,6 +48,8 @@ typedef	struct	Timer Timer;
 typedef	struct	Wctlmesg Wctlmesg;
 typedef	struct	Window Window;
 typedef	struct	Xfid Xfid;
+typedef struct  MouseEx MouseEx;
+typedef struct MousectlEx MousectlEx;
 
 enum
 {
@@ -108,20 +110,32 @@ struct Stringpair	/* rune and nrune or byte and nbyte */
 	int		ns;
 };
 
+struct MouseEx
+{
+        Mouse;
+        uchar type;
+};
+
+struct MousectlEx
+{
+        MouseEx;
+        Channel   *c;           /* chan(MouseEx) */
+        Image *image;
+};
+
 struct Mousestate
 {
-	Mouse;
+	MouseEx;
 	ulong	counter;	/* serial no. of mouse event */
 };
 
 struct Mouseinfo
 {
-	Mousestate	queue[16];
+	Mousestate	queue[64];
 	int	ri;	/* read index into queue */
 	int	wi;	/* write index */
 	ulong	counter;	/* serial no. of last mouse event we received */
 	ulong	lastcounter;	/* serial no. of last mouse event sent to client */
-	int	lastb;	/* last button state we received */
 	uchar	qfull;	/* filled the queue; no more recording until client comes back */	
 };	
 
@@ -131,7 +145,7 @@ struct Window
 	QLock;
 	Frame;
 	Image		*i;
-	Mousectl		mc;
+	MousectlEx		mc;
 	Mouseinfo	mouse;
 	Channel		*ck;			/* chan(Rune[10]) */
 	Channel		*cctl;		/* chan(Wctlmesg)[20] */
@@ -157,9 +171,6 @@ struct Window
 	 * Now they're always the same but the code doesn't assume so.
 	*/
 	Rectangle		screenr;	/* screen coordinates of window */
-	int			resized;
-        int			closed;         /* User close requested */
-        int                     entered, exited;
 	int			wctlready;
 	Rectangle		lastsr;
 	int			topped;
@@ -191,7 +202,7 @@ int		winborder(Window*, Point);
 void		winctl(void*);
 void		winshell(void*);
 Window*	wlookid(int);
-Window*	wmk(Image*, Mousectl*, Channel*, Channel*, int, int, int, int, int, int, int, int, int);
+Window*	wmk(Image*, MousectlEx*, Channel*, Channel*, int, int, int, int, int, int, int, int, int);
 Window*	wpointto(Point);
 Window*	wtop(Point);
 void		wtopme(Window*);

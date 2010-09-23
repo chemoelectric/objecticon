@@ -264,7 +264,7 @@ xfidopen(Xfid *x)
 		 * up in a window that has been resized since the
 		 * dawn of time.  We choose the lesser evil.
 		 */
-		w->resized = FALSE;
+		//w->resized = FALSE;
 		w->mouseopen = TRUE;
 		break;
 	case Qsnarf:
@@ -327,7 +327,7 @@ xfidclose(Xfid *x)
 		wsetcursor(w, FALSE);
 		break;
 	case Qmouse:
-		w->resized = FALSE;
+                //w->resized = FALSE;
 		w->mouseopen = FALSE;
 		if(w->i != nil)
 			wsendctlmesg(w, Refresh, w->i->r, nil);
@@ -588,7 +588,7 @@ xfidread(Xfid *x)
 	char buf[128], *t;
 	char cbuf[30];
 	Window *w;
-	Mouse ms;
+	MouseEx ms;
 	Rectangle r;
 	Image *i;
 	Channel *c1, *c2;	/* chan (tuple(char*, int)) */
@@ -693,22 +693,8 @@ xfidread(Xfid *x)
 		}
 		qlock(&x->active);
 		recv(mrm.cm, &ms);
-		c = 'm';
-                if(w->entered) {
-			c = 'e';
-                        w->entered = 0;
-                }
-                else if(w->exited) {
-			c = 'x';
-                        w->exited = 0;
-                }
-		else if(w->resized) {
-			c = 'r';
-                        w->resized = 0;
-                } else if (w->closed) {
-			c = 'c';
-                        w->closed = 0;
-                }
+                //print("%c",ms.type);
+		c = ms.type;
 		n = sprint(buf, "%c%11d %11d %11d %11ld ", c, ms.xy.x, ms.xy.y, ms.buttons, ms.msec);
 		fc.data = buf;
 		fc.count = min(n, cnt);

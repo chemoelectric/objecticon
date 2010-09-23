@@ -35,7 +35,7 @@ static	Image	*lightholdcol;
 static	Image	*paleholdcol;
 
 Window*
-wmk(Image *i, Mousectl *mc, Channel *ck, Channel *cctl, int scrolling, int transientfor, int noborder,
+wmk(Image *i, MousectlEx *mc, Channel *ck, Channel *cctl, int scrolling, int transientfor, int noborder,
     int keepabove, int keepbelow, int mindx, int maxdx, int mindy, int maxdy)
 {
 	Window *w;
@@ -155,22 +155,16 @@ wresize(Window *w, Image *i, int move)
 	}
 	wborder(w, Selborder);
 	w->topped = ++topped;
-	w->resized = TRUE;
-	w->mouse.counter++;
+
+
+	//w->resized = TRUE;
+	//w->mouse.counter++;
 }
 
 void
 wclosereq(Window *w)
 {
-	w->closed = TRUE;
-        /*
-         * We need to send a wakeup message.  This wakes up the winctl() thread, processes
-         * the wakeup message (alt WCtl), goes round the loop, notices the mouse counter
-         * has changed, sets Wmouseread alt to CHANSND instead of CHANNOP and sends the
-         * close event.
-         */
-        wsendctlmesg(w, Wakeup, ZR, nil);
-	w->mouse.counter++;
+    sendmouseevent(w, 'c');
 }
 
 void
@@ -215,7 +209,7 @@ int      dbgalt(Alt *alts, char *lab)
     int x;
     print("<%s:",lab);
     x = alt(alts);
-    print(":%s>",lab);
+    print(":%s=%d>",lab,x);
     return x;
 }
 
@@ -224,7 +218,7 @@ winctl(void *arg)
 {
 	Rune *rp, *bp, *tp, *up, *kbdr;
 	uint qh;
-	int nr, nb, c, wid, i, npart, initial, lastb;
+	int nr, nb, c, wid, i, npart, initial;
 	char *s, *t, part[3];
 	Window *w;
 	Mousestate *mp, m;
@@ -242,7 +236,7 @@ winctl(void *arg)
 	snprint(buff, sizeof buff, "winctl-id%d", w->id);
 	threadsetname(buff);
 
-	mrm.cm = chancreate(sizeof(Mouse), 0);
+	mrm.cm = chancreate(sizeof(MouseEx), 0);
 	cwm.cw = chancreate(sizeof(Stringpair), 0);
 	crm.c1 = chancreate(sizeof(Stringpair), 0);
 	crm.c2 = chancreate(sizeof(Stringpair), 0);
@@ -274,7 +268,6 @@ winctl(void *arg)
 	alts[NWALT].op = CHANEND;
 
 	npart = 0;
-	lastb = -1;
 	for(;;){
 		if(w->mouseopen && w->mouse.counter != w->mouse.lastcounter)
 			alts[WMouseread].op = CHANSND;
@@ -315,17 +308,15 @@ winctl(void *arg)
 		case WMouse:
 			if(w->mouseopen) {
 				w->mouse.counter++;
-
 				/* queue click events */
-				if(!w->mouse.qfull && lastb != w->mc.buttons) {	/* add to ring */
+				if(!w->mouse.qfull) {	/* add to ring */
 					mp = &w->mouse.queue[w->mouse.wi];
 					if(++w->mouse.wi == nelem(w->mouse.queue))
 						w->mouse.wi = 0;
 					if(w->mouse.wi == w->mouse.ri)
 						w->mouse.qfull = TRUE;
-					mp->Mouse = w->mc;
+					mp->MouseEx = w->mc;
 					mp->counter = w->mouse.counter;
-					lastb = w->mc.buttons;
 				}
 			} else
 				wmousectl(w);
@@ -340,11 +331,11 @@ winctl(void *arg)
 				if(++w->mouse.ri == nelem(w->mouse.queue))
 					w->mouse.ri = 0;
 			} else {
-				m = (Mousestate){w->mc.Mouse, w->mouse.counter};
+				m = (Mousestate){w->mc.MouseEx, w->mouse.counter};
                         }
 
 			w->mouse.lastcounter = m.counter;
-			send(mrm.cm, &m.Mouse);
+			send(mrm.cm, &m.MouseEx);
 			continue;
 		case WCtl:
 			if(wctlmesg(w, wcm.type, wcm.r, wcm.image) == Exited){
@@ -1024,7 +1015,7 @@ wselect(Window *w)
 		y = w->mc.xy.y;
 		/* stay here until something interesting happens */
 		do
-			readmouse(&w->mc);
+			readmouseex(&w->mc);
 		while(w->mc.buttons==b && abs(w->mc.xy.x-x)<3 && abs(w->mc.xy.y-y)<3);
 		w->mc.xy.x = x;	/* in case we're calling frselect */
 		w->mc.xy.y = y;
@@ -1034,7 +1025,8 @@ wselect(Window *w)
 	}
 	if(w->mc.buttons == b){
 		w->scroll = framescroll;
-		frselect(w, &w->mc);
+//RPP-UGH		frselect(w, &w->mc);
+                frselect(w, mousectl);
 		/* horrible botch: while asleep, may have lost selection altogether */
 		if(selectq > w->nr)
 			selectq = w->org + w->p0;
@@ -1078,7 +1070,7 @@ wselect(Window *w)
 		wscrdraw(w);
 		flushimage(display, 1);
 		while(w->mc.buttons == b)
-			readmouse(&w->mc);
+			readmouseex(&w->mc);
 		clickwin = nil;
 	}
 }
@@ -1092,6 +1084,8 @@ wsendctlmesg(Window *w, int type, Rectangle r, Image *image)
 	wcm.r = r;
 	wcm.image = image;
 	send(w->cctl, &wcm);
+        if(type == Reshaped || type == Moved)
+            sendmouseevent(w, 'r');
 }
 
 int

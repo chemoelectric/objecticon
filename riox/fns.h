@@ -41,6 +41,8 @@ void	putsnarf(void);
 void	getsnarf(void);
 void	timerinit(void);
 int	goodrect(Rectangle);
+int     readmouseex(MousectlEx *mc);
+void    sendmouseevent(Window *w, uchar type);
 
 #define	runemalloc(n)		malloc((n)*sizeof(Rune))
 #define	runerealloc(a, n)	realloc(a, (n)*sizeof(Rune))
