@@ -68,8 +68,7 @@ class Dialog(Component)
       selections,
       popup_manager,
       popups,
-      curr_pointer,
-      is_modal_flag
+      curr_pointer
 
    public needs_validate()
       return \copy_rect
@@ -195,7 +194,6 @@ class Dialog(Component)
    #
    public show_child(d)
       set_owning_dialog(\d)
-      is_modal_flag := d
       self.show()
       Dispatcher.add(self)
       if \d then {
@@ -217,7 +215,6 @@ class Dialog(Component)
    #
    public show_modeless(d)
       set_owning_dialog(\d)
-      is_modal_flag := &null
       self.show()
       Dispatcher.add(self)
       if \d then
@@ -235,7 +232,6 @@ class Dialog(Component)
    public show_modal(d)
       local l
       set_owning_dialog(\d)
-      is_modal_flag := &yes
       self.show()
       l := Dispatcher.list_unblocked()
       every (!l).block()
@@ -322,8 +318,6 @@ class Dialog(Component)
       put(t, "input_mask=mk")
       if pw := (\owning_dialog).win then
          every put(t, "transient_for=" | pw)
-      if \is_modal_flag then
-         put(t, "modal=yes")
       self.win := Window.open!t | runerr("Couldn't open window:" || &why)
       # Make the buffer the same size as the visible win.
       self.buffer_win.set_size(self.win.get_width(), self.win.get_height())

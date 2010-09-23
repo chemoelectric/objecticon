@@ -133,7 +133,6 @@ class Window(SetFields,NoCopy)
    public defer can_resize()
    public defer get_size()
    public defer get_width()
-   public defer is_modal()
 
    public defer set_bg(v)
    public defer set_canvas(v)
@@ -156,7 +155,6 @@ class Window(SetFields,NoCopy)
    public defer set_min_height(v)
    public defer set_min_size(v)
    public defer set_min_width(v)
-   public defer set_modal(v)
    public defer set_pattern(v)
    public defer set_pointer(v)
    public defer set_pos(v)
@@ -167,8 +165,10 @@ class Window(SetFields,NoCopy)
    public defer set_width(v)
 
    public set_transient_for(w)
-      if set_transient_for_impl(w) then
+      if set_transient_for_impl(w) then {
          self.transient_for := w
+         return self
+      }
    end
 
    private defer set_transient_for_impl(v)
@@ -478,7 +478,6 @@ class Window(SetFields,NoCopy)
          "min_height": set_min_height(f.val)
          "min_size": set_min_size!(f.int_list_val())
          "min_width": set_min_width(f.val)
-         "modal": set_modal(f.flag_val())
          "pattern": set_pattern(f.val)
          "pointer": set_pointer(f.val)
          "pos": set_pos!(f.int_list_val())

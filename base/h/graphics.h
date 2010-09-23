@@ -77,10 +77,6 @@
 #define SETRESIZABLE(ws) ((ws)->bits |= 128)
 #define CLRRESIZABLE(ws) ((ws)->bits &= ~128)
 
-#define ISMODAL(ws)	((ws)->bits & 32)
-#define SETMODAL(ws) ((ws)->bits |= 32)
-#define CLRMODAL(ws) ((ws)->bits &= ~32)
-
 #if XWindows
 #define ISZOMBIE(ws)     ((ws)->bits & 1)
 #define SETZOMBIE(ws)    ((ws)->bits |= 1)

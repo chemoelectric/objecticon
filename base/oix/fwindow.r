@@ -1931,26 +1931,6 @@ function graphics_Window_set_width(self, width)
    }
 end
 
-function graphics_Window_set_modal(self, val)
-   body {
-       int i;
-       GetSelfW();
-       i = is:null(val) ? 0:1;
-       AttemptAttr(setmodal(self_w, i), "Cannot set modal");
-       return self;
-   }
-end
-
-function graphics_Window_is_modal(self)
-   body {
-       GetSelfW();
-       if (ISMODAL(self_w->window))
-           return nulldesc;
-       else
-           fail;
-   }
-end
-
 function graphics_Window_set_transient_for_impl(self, val)
    body {
        wbp w2;
