@@ -65,7 +65,7 @@ procedure wild_match(plist,s,i1,i2)
 #  positions.
 #
    /i1:= if /s := &subject then &pos else 1 ; /i2 := 0
-   plist := (if type(plist) == "string" then wild_pat else copy)(plist)
+   plist := (if type(plist) == ("string"|"ucs") then wild_pat else copy)(plist)
    suspend s[i1:i2] ? (wild_match1(plist) & i1 + &pos - 1)
 end
 
@@ -79,7 +79,7 @@ procedure wild_find(plist,s,i1,i2)
 #
    local p
    /i1 := if /s := &subject then &pos else 1 ; /i2 := 0
-   if type(plist) == "string" then plist := wild_pat(plist)
+   if type(plist) == ("string"|"ucs") then plist := wild_pat(plist)
    s[i1:i2] ? suspend (
 	 wild_skip(plist) &
 	 p := &pos &
@@ -141,7 +141,7 @@ procedure wild_pat(s)
 	    e ++:= tab(0)
 	    if \complement then e := ~e
 	    }
-	 if type(e) == "string" == type(plist[-1]) then plist[-1] ||:= e
+	 if type(e) == ("string"|"ucs") == type(plist[-1]) then plist[-1] ||:= e
 	 else put(plist,e)
 	 }
       }
@@ -163,7 +163,7 @@ procedure wild_skip(plist)
    x := plist[1]
    suspend tab(
       case type(x) of {
-	 "string": find(x)
+	 "string"|"ucs": find(x)
 	 "cset": upto(x)
 	 default: &pos to *&subject + 1
 	 }

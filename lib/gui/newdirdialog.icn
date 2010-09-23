@@ -28,6 +28,12 @@ class NewDirectoryDialog(Dialog)
       dispose()
    end
 
+   public new(a[])
+      cast(self,Dialog).new()
+      set_fields(a)
+      return
+   end
+
    private setup()
       local panel_2, layout_4, line_1, layout_1, panel_1, label_1, paint, layout_2
       self.set_wattrib("label", "New directory")
@@ -35,9 +41,9 @@ class NewDirectoryDialog(Dialog)
       panel_1 := Panel()
       panel_1.clear_constraints()
       panel_1.set_constraint("eol", "")
-      panel_1.set_constraint("x_fill", &yes)
+      panel_1.set_constraint("x_fill", "")
       panel_1.set_constraint("x_weight", "1")
-      panel_1.set_constraint("y_fill", &yes)
+      panel_1.set_constraint("y_fill", "")
       panel_1.set_constraint("y_weight", "1")
       layout_1 := GridLayout()
       layout_1.set_doi(0)
@@ -59,7 +65,7 @@ class NewDirectoryDialog(Dialog)
       file_field.set_constraint("x_weight", "1")
       self.set_focus(file_field.find_focus())
       file_field.connect(on_okay_button, Event.ACTION)
-      file_field.set_contents("")
+      file_field.set_contents(u"")
       panel_1.add(file_field)
       self.add(panel_1)
       line_1 := Line()

@@ -41,16 +41,16 @@ class DirectoryDialog(Dialog)
       # Defaults and extra dirs.
       #
       /init_dirs := []
-      every put(init_dirs, Files.getcwd() | 
-                Files.get_home() | 
-                Files.get_temp() | 
-                Files.get_roots())
-      init_dirs := lunique(init_dirs)
+      every put(init_dirs, ucs(Files.getcwd() | 
+                               Files.get_home() | 
+                               Files.get_temp() | 
+                               Files.get_roots()))
+      init_dirs := lunique(FileDialog.ucs_list(init_dirs))
 
       dir.set_selection_list(init_dirs)
       root_node := TreeNode()
       every d := Files.get_roots() do
-         root_node.add(TreeNode("label=",d,
+         root_node.add(TreeNode("label=",ucs(d),
                                 "always_expandable=t"))
       tree.set_root_node(root_node)
    end
@@ -69,19 +69,17 @@ class DirectoryDialog(Dialog)
    # Given a TreeNode n, load its children with the sub-directories.
    #
    public load_subtree(n)
-      local s, name, l
+      local s, l
 
       s := get_full_path(n).str()
       l := list_directory(s)
       n.clear_children()
-      every name := !l do {
-         n.add(TreeNode("label=",name,
-                        "always_expandable=t"))
-      }
+      every n.add(TreeNode("label=",!l,
+                           "always_expandable=t"))
    end
 
    public list_directory(s)
-      local e, dir_list, l
+      local e, dir_list, l, t
       if l := Files.list(s) then 
          clear_msg()
       else {
@@ -91,10 +89,11 @@ class DirectoryDialog(Dialog)
       dir_list := []
       every e := !l do {
          if e[2].mode_str[1] == "d" &
-            not(Files.is_relative_dir(e[1])) &
+            t := ucs(e[1]) &
+            not(Files.is_relative_dir(t)) &
             (show_hidden_cb.is_checked() | 
-               not(Files.is_hidden(e[1]))) then
-            put(dir_list, e[1])
+               not(Files.is_hidden(t))) then
+            put(dir_list, t)
       }
       return isort(dir_list, map)
    end
@@ -255,8 +254,8 @@ $endif
 
    public set_one(f)
       case f.attr of {
-         "directory" : set_directory(f.string_val())
-         "directories" : set_directories(f.string_list_val())
+         "directory" : set_directory(f.ucs_val())
+         "directories" : set_directories(f.ucs_list_val())
          default: return cast(self,Dialog).set_one(f)
       }
       return
