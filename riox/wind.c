@@ -1323,10 +1323,8 @@ ensurestacking(void)
 }
 
 Window*
-wtop(Point pt)
+wtop(Window *w)
 {
-	Window *w;
-	w = wpointto(pt);
 	if(w){
 		if(w->topped == topped && input == w)
 			return nil;
@@ -1380,18 +1378,15 @@ wclosewin(Window *w)
 	int i;
 
 	w->deleted = TRUE;
-        if(w == grab)
-                grab = nil;
+        if(w == held) held = nil;
+        if(w == eein) eein = nil;
+        if(w == grab) grab = nil;
 	if(w == input){
 		input = nil;
 		wsetcursor(w, 0);
 	}
-	if(w == nbinput)
-		nbinput = nil;
 	if(w == wkeyboard)
 		wkeyboard = nil;
-        if(w == lastover)
-                lastover = nil;
 	for(i=0; i<nhidden; i++)
 		if(hidden[i] == w){
 			--nhidden;

@@ -204,7 +204,7 @@ void		winshell(void*);
 Window*	wlookid(int);
 Window*	wmk(Image*, MousectlEx*, Channel*, Channel*, int, int, int, int, int, int, int, int, int);
 Window*	wpointto(Point);
-Window*	wtop(Point);
+Window*	wtop(Window *);
 void		wtopme(Window*);
 void		wbottomme(Window*);
 char*	wcontents(Window*, int*);
@@ -347,9 +347,7 @@ Window	*wkeyboard;	/* window of simulated keyboard */
 int		nwindow;
 int		snarffd;
 Window	*input;
-Window	*nbinput;
-Window	*grab;
-Window	*lastover;
+Window	*grab, *eein, *held;
 QLock	all;			/* BUG */
 Filsys	*filsys;
 Window	*hidden[100];

@@ -32,7 +32,7 @@ void	*erealloc(void*, uint);
 void *emalloc(uint);
 char *estrdup(char*);
 void	button3menu(void);
-void	button2menu(Window*);
+void	button3txtmenu(Window*);
 void	button3wmenu(Window*);
 void	cvttorunes(char*, int, Rune*, int*, int*, int*);
 /* was (byte*,int)	runetobyte(Rune*, int); */

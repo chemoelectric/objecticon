@@ -512,14 +512,103 @@ sendmouseevent(Window *w, uchar type)
     send(w->mc.c, &tmp);
 }
 
+static void enterexit(Window *now, Window *evwin)
+{
+    if (eein != now && now)
+        sendmouseevent(now, 'e');
+    if (evwin)
+        sendmouseevent(evwin, 'm');
+    if (eein != now && eein)
+        sendmouseevent(eein, 'x');
+    eein = now;
+}
+
+static void doreshape(Window *w)
+{
+    int band;
+    Rectangle r;
+    Image *i;
+    band = whichcorner(w, mouse->xy) % 2 == 0;
+    if(band)
+        i = bandsize(w);
+    else
+        i = drag(w, &r);
+    if(i != nil){
+        if(band)
+            wsendctlmesg(w, Reshaped, i->r, i);
+        else
+            wsendctlmesg(w, Moved, r, i);
+        cornercursor(w, mouse->xy, 1);
+    }
+}
+
+static void domouse(void)
+{
+    static int oldbuttons;
+    Window *over, *overb, *pw;
+    int press;
+
+    if (grab) {
+        pw = over = grab;
+        overb = 0;
+    } else {
+        pw = wpointto(mouse->xy);
+        if (pw) {
+            if (pw->noborder || ptinrect(mouse->xy, insetrect(pw->screenr, Selborder))) {
+                over = pw;
+                overb = 0;
+            } else {
+                overb = pw;
+                over = 0;
+            }
+        } else
+            over = overb = 0;
+    }
+
+    press = ~oldbuttons & mouse->buttons;
+
+    if (press) {
+        if (held)
+            sendmouseevent(held, 'm');
+        else {
+            if ((press & 7) && pw && !grab)
+                wtop(pw);
+            held = over;
+            enterexit(over, held);
+
+            if (overb) {
+                if (press & 1) {
+                    doreshape(overb);
+                } else if (press & 4) {
+                    riosetcursor(nil, 0);
+                    button3wmenu(overb);
+                }
+            } else if (!held && (press & 4))
+                button3menu();
+            else if((press & 4) && over && !over->mouseopen)
+                button3txtmenu(over);
+        }
+    } else if (mouse->buttons == 0) {
+        if (oldbuttons == 0) 
+            enterexit(over, over);
+        else 
+            enterexit(over, held);
+        if (overb)
+            cornercursor(overb, mouse->xy, 0);
+        else
+            wsetcursor(over, 0);
+        held = 0;
+    } else {
+        if (held)
+            sendmouseevent(held, 'm');
+    }
+
+    oldbuttons = mouse->buttons;
+}
+
 void
 mousethread(void*)
 {
-	int sending, inside, scrolling, moving, band;
-	Window *winput, *over;
-	Image *i;
-	Rectangle r;
-	Point xy;
 	enum {
 		MReshape,
 		MMouse,
@@ -528,10 +617,7 @@ mousethread(void*)
 	static Alt alts[NALT+1];
 
 	threadsetname("mousethread");
-	sending = FALSE;
 	scrolling = FALSE;
-	moving = FALSE;
-        nbinput = 0;
 
 	alts[MReshape].c = mousectl->resizec;
 	alts[MReshape].v = nil;
@@ -547,147 +633,8 @@ mousethread(void*)
 			resized();
 			break;
 		case MMouse:
-			if(wkeyboard!=nil && (mouse->buttons & (1<<5))){
-				keyboardhide();
-				break;
-			}
-		Again:
-			//winput = input;
-			winput = nbinput ? nbinput : input;
-                        over = wpointto(mouse->xy);
-                        if (!grab && !mouse->buttons) {
-                            Window *t = over;
-                            /* If the mouse is in the border, then we're not over the window for enter/exit
-                             * purposes.
-                             */
-                            if (t && !ptinrect(mouse->xy, insetrect(t->screenr, Selborder)))
-                                t = 0;
-                            if (t != lastover) {
-                                if (winput && lastover==winput) {
-                                    sendmouseevent(winput, 'x');
-                                    lastover = t;
-                                }
-                                if (winput && t==winput) {
-                                    //print("E");
-                                    sendmouseevent(winput, 'e');
-                                    lastover = t;
-                                }
-                            }
-                            //if (lastover) print("+"); else print("-");
-                        }
-			/* override everything for the keyboard window */
-			if(wkeyboard!=nil && ptinrect(mouse->xy, wkeyboard->screenr)){
-				/* make sure it's on top; this call is free if it is */
-				wtopme(wkeyboard);
-				winput = wkeyboard;
-			}
-                        else if(grab!=nil){
-                                winput = grab;
-                        }
-			if(winput!=nil && winput->i!=nil){
-				/* convert to logical coordinates */
-				xy.x = mouse->xy.x + (winput->i->r.min.x-winput->screenr.min.x);
-				xy.y = mouse->xy.y + (winput->i->r.min.y-winput->screenr.min.y);
-
-				/* the up and down scroll buttons are not subject to the usual rules */
-				if((mouse->buttons&(8|16)) && !winput->mouseopen)
-					goto Sending;
-
-				//inside = (winput == grab) || ptinrect(mouse->xy, insetrect(winput->screenr, Selborder));
-				inside = (winput == grab) || over==winput && ptinrect(mouse->xy, insetrect(winput->screenr, Selborder));
-				if(winput->mouseopen)
-					scrolling = FALSE;
-				else if(scrolling)
-					scrolling = mouse->buttons;
-				else
-					scrolling = mouse->buttons && ptinrect(xy, winput->scrollr);
-				/* topped will be zero or less if window has been bottomed */
-                                //if(sending == FALSE && !scrolling && over==winput && winborder(winput, mouse->xy) && winput->topped>0){
-                                if(sending == FALSE && !scrolling && over==winput && winborder(winput, mouse->xy) && (winput->keepbelow||winput->topped>0)){
-					moving = TRUE;
-				}else if(inside && (scrolling || winput->mouseopen || (mouse->buttons&1)))
-					sending = TRUE;
-			}else
-				sending = FALSE;
-			if(sending){
-			Sending:
-                                if (!grab) {
-                                        if(mouse->buttons == 0){
-					       cornercursor(winput, mouse->xy, 0);
-                                               sending = FALSE;
-                                        }else
-                                               wsetcursor(winput, 0);
-                                }
-                                sendmouseevent(winput, 'm');
-				continue;
-			}
-			/* change cursor if over anyone's border */
-			if(over != nil)
-				cornercursor(over, mouse->xy, 0);
-			else
-				riosetcursor(nil, 0);
-			if(moving && (mouse->buttons&7)){
-                            if(mouse->buttons & 4) {
-				riosetcursor(nil, 0);
-                                button3wmenu(over);
-                            } else {
-                                band = whichcorner(over, mouse->xy) % 2 == 0;
-				sweeping = 1;
-				if(band)
-					i = bandsize(winput);
-				else
-					i = drag(winput, &r);
-				sweeping = 0;
-				if(i != nil){
-					if(band)
-						wsendctlmesg(winput, Reshaped, i->r, i);
-					else
-						wsendctlmesg(winput, Moved, r, i);
-					cornercursor(winput, mouse->xy, 1);
-				}
-                            }
-			}
-			if(over != nil)
-				cornercursor(over, mouse->xy, 0);
-			/* we're not sending the event, but if button is down maybe we should */
-			if(mouse->buttons){
-				/* w->topped will be zero or less if window has been bottomed */
-				if(over==nil || (over==winput && over->topped>0)){
-                                    if(mouse->buttons & 4) {
-                                        if(winput && over==winput && !winput->mouseopen)
-                                            button2menu(winput);
-                                        else 
-                                            button3menu();
-                                    }
-				}else{
-					/* if button 1 event in the window, top the window and wait for button up. */
-  					/* otherwise, top the window and pass the event on */
-                                        //if(wtop(mouse->xy) && (mouse->buttons!=1 || winborder(w, mouse->xy)))
-                                        if (over->noborder) {
-                                            if(over != nbinput && (over->mouseopen || mouse->buttons!=1)) {
-                                                nbinput = over;
-                                                goto Again;
-                                            }
-                                        } else {
-                                            if (nbinput) {
-                                                nbinput = 0;
-                                                goto Again;
-                                            }
-                                            if(wtop(mouse->xy) && (over->mouseopen || mouse->buttons!=1 || winborder(over, mouse->xy)))
-						goto Again;
-                                        }
-					goto Drain;
-				}
-			}
-			moving = FALSE;
-			break;
-
-		Drain:
-			do
-				readmouse(mousectl);
-			while(mousectl->buttons);
-			moving = FALSE;
-			goto Again;	/* recalculate mouse position, cursor */
+                    domouse();
+                    break;
 		}
 }
 
@@ -733,9 +680,10 @@ resized(void)
 				ishidden = 1;
 				break;
 			}
-		if(ishidden)
+		if(ishidden) {
 			im = allocimage(display, r, screen->chan, 0, DWhite);
-		else
+                        r = ZR;
+		} else
 			im = allocwindow(wscreen, r, Refbackup, DWhite);
 		if(im)
 			wsendctlmesg(w, Reshaped, r, im);
@@ -817,7 +765,7 @@ button3wmenu(Window *w)
 }
 
 void
-button2menu(Window *w)
+button3txtmenu(Window *w)
 {
 	if(w->deleted)
 		return;
