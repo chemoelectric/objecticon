@@ -667,8 +667,10 @@ class Dialog(Component)
 
    private check_moving(curr, ec, e)
       local s1, s2
-      if *held > 0 then
+      if *held > 0 then {
+         fire_list(\curr, ec, e)
          return
+      }
       s1 := elementset(\moving) | set()
       s2 := elementset(point_chain)
       fire_list(s2 -- s1, Event.MOUSE_ENTER, e)
