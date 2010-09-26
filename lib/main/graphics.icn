@@ -555,7 +555,8 @@ class Mouse()
       WHEEL,
       DRAG_OR_MOVEMENT,
       ENTER,
-      EXIT
+      EXIT,
+      CROSSING
 
    private static init()
       LEFT_PRESS :=           -1
@@ -577,6 +578,7 @@ class Mouse()
       WHEEL := set(WHEEL_UP, WHEEL_DOWN)
       ENTER :=               -18
       EXIT :=                -19
+      CROSSING := set(ENTER, EXIT)
    end
 end
 

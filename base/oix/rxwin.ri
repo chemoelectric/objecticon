@@ -1845,8 +1845,7 @@ static int make_mod(unsigned int state)
 static void handle_crossing(wsp ws, XCrossingEvent *event)
 {
     struct descrip d;
-    /* X generates crossing events even during drags; just ignore these */
-    if (event->state & (Button1Mask|Button2Mask|Button3Mask|Button4Mask|Button5Mask))
+    if (event->mode != NotifyNormal)
         return;
     MakeInt(event->type == EnterNotify ? MOUSEENTERED:MOUSEEXITED, &d);
     qevent(ws, &d, event->x, event->y,
@@ -3054,9 +3053,6 @@ static wsp alcwinstate()
     wsp ws;
     GRFX_ALLOC(ws, _wstate);
     ws->listp = nulldesc;
-    ws->buttonorder[0] = 1;
-    ws->buttonorder[1] = 2;
-    ws->buttonorder[2] = 4;
     ws->cursor = stringint_lookup(cursors, "left ptr");
     ws->state = NormalState;
     ws->x = ws->y = -INT_MAX;
