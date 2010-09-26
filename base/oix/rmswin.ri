@@ -2079,9 +2079,6 @@ static wsp alc_winstate()
    
    GRFX_ALLOC(ws, _wstate);
    ws->listp = nulldesc;
-   ws->buttonorder[0] = 1;
-   ws->buttonorder[1] = 2;
-   ws->buttonorder[2] = 4;
    ws->cursorname = salloc("arrow");
    ws->curcursor = LoadCursor(NULL, IDC_ARROW);
    ws->minwidth = ws->minheight = 1;

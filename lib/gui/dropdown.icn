@@ -251,8 +251,13 @@ class DropDown(SelectionList,Component)
 
          self.tl.resize()
          self.tl.invalidate()
-         self.parent_dialog.set_focus(tl)
          self.parent_dialog.hold(tl.view, ev)
+         self.parent_dialog.set_focus(tl)
+         # Since we are in menu mode, key events are forwarded to this
+         # component, rather than the text list, regardless of the
+         # focus.  So we must forward them on to the text list
+         # ourselves.
+         every self.parent_dialog.connect(self.forward_key_press, Event.KEY_PRESS | Event.KEY_RELEASE)
       } 
 
       self.parent_dialog.connect(self.dialog_event, Event.ICON)
@@ -260,6 +265,10 @@ class DropDown(SelectionList,Component)
          self.tl.set_cursor(self.selection)
          self.tl.center_line(self.selection)
       }
+   end
+
+   private forward_key_press(ev, src, type)
+      tl.fire(type, ev)
    end
 
    public close_textlist()

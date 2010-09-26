@@ -279,7 +279,6 @@ typedef struct _wstate {
   word		timestamp;		/* last event time stamp */
   struct descrip listp;		        /* event list for this window */
   int           mousestate;             /* buttons down after last mouse event */
-  int           buttonorder[3];         /* order for working out drag events */
 #if XWindows
   wdp		display;
   struct _wstate *vprevious, *vnext;    /* List of states with win non-null */

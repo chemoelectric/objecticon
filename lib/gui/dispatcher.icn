@@ -34,7 +34,7 @@ class Dispatcher()
       IDLE_SLEEP_MIN := 10
       IDLE_SLEEP_MAX := 50
       BLOCKED_ALLOW := Selection.EVENTS ++ set(Window.INVOKE_LATER, Window.RESIZE)
-      BLOCKED_QUIET := Mouse.DRAG_OR_MOVEMENT ++ set(Mouse.RELEASE, Mouse.EXIT, Mouse.ENTER)
+      BLOCKED_QUIET := Mouse.DRAG_OR_MOVEMENT ++ Mouse.CROSSING ++ set(Mouse.RELEASE)
       dialogs := set()
       tickers := set()
       compute_idle_sleep()

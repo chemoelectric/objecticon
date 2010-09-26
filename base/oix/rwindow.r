@@ -195,8 +195,6 @@ void qeventcode(wsp ws, int c)
     list_put(&ws->listp, &d);
 }
 
-#define swap(a,b) { int tmp = a; a = b; b = tmp; }
-
 void qmouseevents(wsp ws,             /* canvas */
                   int state,          /* state of mouse buttons */
                   int x,              /* x and y values */
@@ -213,71 +211,43 @@ void qmouseevents(wsp ws,             /* canvas */
                 qevent(ws, &d, x, y, t, mod);
             }
         } else {
-            switch (ws->buttonorder[0]) {
-                case 1: {
-                    MakeInt(MOUSELEFTDRAG, &d);
-                    qevent(ws, &d, x, y, t, mod);
-                    break;
-                }
-                case 2: {
-                    MakeInt(MOUSEMIDDRAG, &d);
-                    qevent(ws, &d, x, y, t, mod);
-                    break;
-                }
-                case 4: {
-                    MakeInt(MOUSERIGHTDRAG, &d);
-                    qevent(ws, &d, x, y, t, mod);
-                    break;
-                }
+            /* Drag on one or more buttons */
+            if (state & 1) {
+                MakeInt(MOUSELEFTDRAG, &d);
+                qevent(ws, &d, x, y, t, mod);
+            }
+            if (state & 2) {
+                MakeInt(MOUSEMIDDRAG, &d);
+                qevent(ws, &d, x, y, t, mod);
+            }
+            if (state & 4) {
+                MakeInt(MOUSERIGHTDRAG, &d);
+                qevent(ws, &d, x, y, t, mod);
             }
         }
     } else {
         /* Press or release of one or more buttons */
         if ((ws->mousestate & 1) && !(state & 1)) {
-            if (ws->buttonorder[0] == 1)
-                swap(ws->buttonorder[0],ws->buttonorder[1]);
-            if (ws->buttonorder[1] == 1)
-                swap(ws->buttonorder[1],ws->buttonorder[2]);
             MakeInt(MOUSELEFTUP, &d);
             qevent(ws, &d, x, y, t, mod);
         } else if (!(ws->mousestate & 1) && (state & 1)) {
-            if (ws->buttonorder[2] == 1)
-                swap(ws->buttonorder[1],ws->buttonorder[2]);
-            if (ws->buttonorder[1] == 1)
-                swap(ws->buttonorder[0],ws->buttonorder[1]);
             MakeInt(MOUSELEFT, &d);
             qevent(ws, &d, x, y, t, mod);
         }
 
         if ((ws->mousestate & 2) && !(state & 2)) {
-            if (ws->buttonorder[0] == 2)
-                swap(ws->buttonorder[0],ws->buttonorder[1]);
-            if (ws->buttonorder[1] == 2)
-                swap(ws->buttonorder[1],ws->buttonorder[2]);
             MakeInt(MOUSEMIDUP, &d);
             qevent(ws, &d, x, y, t, mod);
 
         } else if (!(ws->mousestate & 2) && (state & 2)) {
-            if (ws->buttonorder[2] == 2)
-                swap(ws->buttonorder[1], ws->buttonorder[2]);
-            if (ws->buttonorder[1] == 2)
-                swap(ws->buttonorder[0], ws->buttonorder[1]);
             MakeInt(MOUSEMID, &d);
             qevent(ws, &d, x, y, t, mod);
         }
 
         if ((ws->mousestate & 4) && !(state & 4)) {
-            if (ws->buttonorder[0] == 4)
-                swap(ws->buttonorder[0],ws->buttonorder[1]);
-            if (ws->buttonorder[1] == 4)
-                swap(ws->buttonorder[1],ws->buttonorder[2]);
             MakeInt(MOUSERIGHTUP, &d);
             qevent(ws, &d, x, y, t, mod);
         } else if (!(ws->mousestate & 4) && (state & 4)) {
-            if (ws->buttonorder[2] == 4)
-                swap(ws->buttonorder[1], ws->buttonorder[2]);
-            if (ws->buttonorder[1] == 4)
-                swap(ws->buttonorder[0], ws->buttonorder[1]);
             MakeInt(MOUSERIGHT, &d);
             qevent(ws, &d, x, y, t, mod);
         }

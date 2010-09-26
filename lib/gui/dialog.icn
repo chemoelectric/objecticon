@@ -63,7 +63,7 @@ class Dialog(Component)
       point_chain_source,
       copy_rect,
       held,
-      moving,
+      crossing,
       selection_requests,
       selections,
       popup_manager,
@@ -447,6 +447,12 @@ class Dialog(Component)
       self.point_chain := []
       self.point_chain_source := e
 
+      # A mouse exit always has an empty point chain, since the pointer is outside
+      # the window (or over an obscured part).  Note that we shouldn't get exit events
+      # if we have popups, since we are in grab mode.
+      if e.code === Mouse.EXIT then
+         return
+
       every p := back(\popups) do {
          p.point_chain := []
          p.point_chain_source := e
@@ -562,8 +568,6 @@ $endif
          Window.INVOKE_LATER: process_invoke_later(l)
          Window.CLOSE_BUTTON: process_close_button(l)
          Window.RESIZE: process_resize(l)
-         Mouse.EXIT: process_mouse_exit(l)
-         Mouse.ENTER: process_mouse_enter(l)
          default: {
             if member(Mouse.DRAG_OR_MOVEMENT, l[1]) then {
                while win.pending()[1] === l[1] do
@@ -590,11 +594,10 @@ $endif
    # Normal event processing - not dnd
    # 
    private process_normal(e)
-      local c, ec, old_n_held
+      local c, ec
 
       ec := e.code
 
-      old_n_held := *held
       if member(Mouse.PRESS, ec) then {
          check_click_count(e)
          if c := (!self.point_chain).find_focus(e) then
@@ -641,11 +644,9 @@ $endif
       process_tooltip_event(e)
 
       #
-      # Synch the pointer if either there were no buttons down before or after
-      # this event.  This means we synch at the start and end of a drag, but not
-      # during a drag.
+      # Synch the pointer if the left mouse button isn't held.
       #
-      if (old_n_held | *held) = 0 then
+      if /held[-1] then
          synch_pointer(e)
    end
 
@@ -678,26 +679,15 @@ $endif
       return *held
    end
 
-   private check_moving(curr, ec, e)
-      local s1, s2
-      if *held > 0 then {
-         fire_list(\curr, ec, e)
-         return
-      }
-      s1 := elementset(\moving) | set()
-      s2 := elementset(point_chain)
-      fire_list(s2 -- s1, Event.MOUSE_ENTER, e)
-      fire_list(\curr, ec, e)
-      fire_list(s1 -- s2, Event.MOUSE_EXIT, e)
-      moving := copy(point_chain)
-   end
-
    public generate_events(e)
-      local ec, ke, t
+      local ec, ke, s1, s2
 
       ec := e.code
       if integer(ec) < 0 then {
          # Non-keyboard event
+         s1 := elementset(\crossing) | set()
+         s2 := elementset(point_chain)
+         fire_list(s2 -- s1, Event.MOUSE_ENTER, e)
          if member(Mouse.WHEEL, ec) then {
             fire_list(point_chain, ec, e)
          } else if member(Mouse.PRESS, ec) then {
@@ -706,12 +696,13 @@ $endif
          } else if member(Mouse.DRAG, ec) then {
             fire_list(\held[ec + 6], ec, e)
          } else if ec === Mouse.MOVEMENT then {
-            check_moving(point_chain, ec, e)
+            fire_list(point_chain, ec, e)
          } else if member(Mouse.RELEASE, ec) then {
-            t := held[ec + 3]
+            fire_list(\held[ec + 3], ec, e)
             delete(held, ec + 3)
-            check_moving(t, ec, e)
          }
+         fire_list(s1 -- s2, Event.MOUSE_EXIT, e)
+         crossing := copy(point_chain)
       } else {
          # Keyboard event
          ke := if \e.release then Event.KEY_RELEASE else Event.KEY_PRESS
@@ -848,22 +839,43 @@ $endif
    # Tooltip processing on a tick.
    # 
    private process_tooltip_tick()
+      local t
       if \popup_manager then 
          syserr("shouldn't have a tooltip ticker in a popup")
-      tooltip_states(self.tooltip_last_obj, self.tooltip_last_tip, self.tooltip_last_event)
+
+      t := Prog.get_runtime_millis()
+      case self.tooltip_state of {
+         1 : 
+            if t >= self.tooltip_start_time then {
+               show_tooltip(self.tooltip_last_obj, self.tooltip_last_tip, self.tooltip_last_event)
+               self.tooltip_state := 2
+               self.tooltip_end_time := (t + \self.tooltip_last_obj.get_tooltip_end_delay()) | &null
+            }
+
+         2 :
+            if t >= \self.tooltip_end_time then {
+               hide_tooltip()
+               self.tooltip_state := 0
+               self.tooltip_continue_time := t + TOOLTIP_CONTINUE_DELAY
+            }
+
+         3 : 
+            if t >= self.tooltip_continue_time then
+               self.tooltip_state := 0
+      }
    end
 
    #
    # Tooltip processing during an event.
    # 
    private process_tooltip_event(e)
-      local obj, c, tip
+      local obj, c, tip, t
 
       # Popup window tooltips are processed by the manager.
       if \popup_manager then 
          return
 
-      if e.code ~=== Mouse.MOVEMENT then {
+      if not((e.code === Mouse.MOVEMENT) | (*held = 0 & member(Mouse.CROSSING, e.code))) then {
          if tooltip_state = 2 then
             hide_tooltip()
          tooltip_state := 0
@@ -880,14 +892,6 @@ $endif
          }
       }
 
-      tooltip_states(obj, tip, e)
-   end
-
-   #
-   # Tooltip state processing.
-   # 
-   private tooltip_states(obj, tip, e)
-      local t
       t := Prog.get_runtime_millis()
       case self.tooltip_state of {
          0 : {
@@ -903,10 +907,6 @@ $endif
                   self.tooltip_state := 0
                else
                   self.tooltip_start_time := t + obj.get_tooltip_start_delay()
-            } else if t >= self.tooltip_start_time then {
-               show_tooltip(obj, tip, e)
-               self.tooltip_state := 2
-               self.tooltip_end_time := (t + \obj.get_tooltip_end_delay()) | &null
             }
          }
          2 : {
@@ -925,10 +925,6 @@ $endif
                else
                   show_tooltip(obj, tip, e)
                self.tooltip_end_time := (t + \obj.get_tooltip_end_delay()) | &null
-            } else if t >= \self.tooltip_end_time then {
-               hide_tooltip()
-               self.tooltip_state := 0
-               self.tooltip_continue_time := t + TOOLTIP_CONTINUE_DELAY
             }
          }
          3 : {
@@ -936,8 +932,7 @@ $endif
                show_tooltip(obj, tip, e)
                self.tooltip_state := 2
                self.tooltip_end_time := (t + \obj.get_tooltip_end_delay()) | &null
-            } else if t >= self.tooltip_continue_time then
-               self.tooltip_state := 0
+            }
          }
       }
 
@@ -965,10 +960,9 @@ $endif
    private exit_dnd(e)
       self.curr_drag_holder := self.curr_drop := self.curr_drag := &null
       self.invoke_drag_reset(e)
-      if *held = 0 then {
+      if /held[-1] then
          synch_pointer(e)
-         check_moving(,, e)
-      } else
+      else
          change_pointer(DEFAULT_POINTER)
    end
 
@@ -1006,16 +1000,14 @@ $endif
          # If we have a prospective drop from can_drop, try to perform it.
          if (\self.curr_drop).get_source().perform_drop(self.curr_drag, self.curr_drop, e) then
             self.curr_drag.get_source().end_drag(self.curr_drag, self.curr_drop, e)
-         delete(self.held, ec + 3)   # Now held should be empty
+         delete(self.held, ec + 3)
          exit_dnd(e)
       } else if /e.release & (ec === "\e") then {
-         self.held[curr_drag.event.code + 6] := []    # Now held should hold this one empty list
+         self.held[curr_drag.event.code + 6] := []    # Replace held entry for current drag button
          exit_dnd(e)
-      } else if member(Mouse.PRESS, ec) then {        # keep things consistent if other mouse
-         held[ec] := []                               # buttons are pressed during the drag
-         change_pointer("exchange")
-         self.curr_drop := &null
-      } else if member(Mouse.RELEASE, ec) then
+      } else if member(Mouse.PRESS, ec) then          # Keep held consistent if other mouse
+         held[ec] := []                               # buttons are pressed/released during the drag
+      else if member(Mouse.RELEASE, ec) then
          delete(held, ec + 3)
    end
 
@@ -1075,26 +1067,6 @@ $endif
 
    private process_close_button(l)
       fire(l[1])
-   end
-
-   private process_mouse_exit(l)
-      local e
-      e := WinEvent!l
-      self.point_chain := []
-      self.point_chain_source := e
-      check_moving(,, e)
-      fire(Event.ICON, e)
-      tooltip_states(,, e)
-   end
-
-   private process_mouse_enter(l)
-      local e
-      e := WinEvent!l
-      create_point_chain(e)
-      check_moving(,, e)
-      fire(Event.ICON, e)
-      if *held = 0 then
-         synch_pointer(e)
    end
 
    #
