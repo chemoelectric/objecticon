@@ -671,9 +671,11 @@ class Dialog(Component)
 
       ec := e.code
       if integer(ec) < 0 then {
-         # Non-keyboard event
+         # Mouse event
          s1 := elementset(\crossing) | set()
          s2 := elementset(point_chain)
+         crossing := copy(point_chain)
+         fire_list(s1 -- s2, Event.MOUSE_EXIT, e)
          fire_list(s2 -- s1, Event.MOUSE_ENTER, e)
          if member(Mouse.WHEEL, ec) then {
             fire_list(point_chain, ec, e)
@@ -688,8 +690,6 @@ class Dialog(Component)
             fire_list(\held[ec + 3], ec, e)
             delete(held, ec + 3)
          }
-         fire_list(s1 -- s2, Event.MOUSE_EXIT, e)
-         crossing := copy(point_chain)
       } else {
          # Keyboard event
          ke := if \e.release then Event.KEY_RELEASE else Event.KEY_PRESS
