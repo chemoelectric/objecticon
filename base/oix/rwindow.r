@@ -204,26 +204,16 @@ void qmouseevents(wsp ws,             /* canvas */
 {
     struct descrip d;
     if (ws->mousestate == state) {
-        /* Motion */
         if (state == 0) {
+            /* Motion */
             if (ws->inputmask & IM_POINTER_MOTION) {
                 MakeInt(MOUSEMOVED, &d);
                 qevent(ws, &d, x, y, t, mod);
             }
         } else {
             /* Drag on one or more buttons */
-            if (state & 1) {
-                MakeInt(MOUSELEFTDRAG, &d);
-                qevent(ws, &d, x, y, t, mod);
-            }
-            if (state & 2) {
-                MakeInt(MOUSEMIDDRAG, &d);
-                qevent(ws, &d, x, y, t, mod);
-            }
-            if (state & 4) {
-                MakeInt(MOUSERIGHTDRAG, &d);
-                qevent(ws, &d, x, y, t, mod);
-            }
+            MakeInt(MOUSEDRAG, &d);
+            qevent(ws, &d, x, y, t, mod);
         }
     } else {
         /* Press or release of one or more buttons */

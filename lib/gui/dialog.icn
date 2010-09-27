@@ -640,11 +640,9 @@ class Dialog(Component)
    #
    # Artificially "hold" a component down.
    # @param c The component
-   # @param e The mouse event
+   # @param ec The simulated mouse event code
    #
-   public hold(c, e)
-      local ec
-      ec := e.code
+   public hold(c, ec)
       self.held[ec] := copy(\self.held[ec]) | fail
       put(self.held[ec], c)
    end
@@ -667,7 +665,7 @@ class Dialog(Component)
    end
 
    public generate_events(e)
-      local ec, ke, s1, s2
+      local ec, ke, s1, s2, t
 
       ec := e.code
       if integer(ec) < 0 then {
@@ -682,8 +680,9 @@ class Dialog(Component)
          } else if member(Mouse.PRESS, ec) then {
             held[ec] := copy(point_chain)
             fire_list(held[ec], ec, e)
-         } else if member(Mouse.DRAG, ec) then {
-            fire_list(\held[ec + 6], ec, e)
+         } else if ec === Mouse.DRAG then {
+            every t := key(held) do
+               fire_list(held[t], 10 - t, e)
          } else if ec === Mouse.MOVEMENT then {
             fire_list(point_chain, ec, e)
          } else if member(Mouse.RELEASE, ec) then {
@@ -968,7 +967,7 @@ class Dialog(Component)
       if member(Mouse.WHEEL, ec) then
          fire_list(point_chain, ec, e)
 
-      if (ec === curr_drag.event.code) | member(Mouse.WHEEL, ec) then {
+      if (ec === Mouse.DRAG) | member(Mouse.WHEEL, ec) then {
          # Try the drag holder's drag_event method first...
          if not((\self.curr_drag_holder).drag_event(self.curr_drag, e)) then {
             # No luck with the drag holder, so try to search for a new drag holder.
@@ -978,19 +977,19 @@ class Dialog(Component)
          # If we have a drag holder, see if it can drop here.
          if o := (\self.curr_drag_holder).can_drop(self.curr_drag, e) then {
             change_pointer("hand2")
-            self.curr_drop := Drag(self.curr_drag_holder, o, e)
+            self.curr_drop := Drag(self.curr_drag_holder, o, e, curr_drag.button)
          } else {
             change_pointer("exchange")
             self.curr_drop := &null
          }
-      } else if ec === curr_drag.event.code + 3 then {
+      } else if ec === curr_drag.button - 3 then {
          # If we have a prospective drop from can_drop, try to perform it.
          if (\self.curr_drop).get_source().perform_drop(self.curr_drag, self.curr_drop, e) then
             self.curr_drag.get_source().end_drag(self.curr_drag, self.curr_drop, e)
          delete(self.held, ec + 3)
          exit_dnd(e)
       } else if /e.release & (ec === "\e") then {
-         self.held[curr_drag.event.code + 6] := []    # Replace held entry for current drag button
+         self.held[curr_drag.button] := []            # Replace held entry for current drag button
          exit_dnd(e)
       } else if member(Mouse.PRESS, ec) then          # Keep held consistent if other mouse
          held[ec] := []                               # buttons are pressed/released during the drag
@@ -1006,7 +1005,7 @@ class Dialog(Component)
       # There must be only one button held, and the event must be
       # a drag.
       #
-      if (*self.held = 1) & member(Mouse.DRAG, e.code) then {
+      if (*self.held = 1) & (e.code === Mouse.DRAG) then {
          # Note the position of the start of a drag
          /self.drag_gesture_x := e.x
          /self.drag_gesture_y := e.y
@@ -1024,10 +1023,11 @@ class Dialog(Component)
    end
 
    public invoke_can_drag(ev)
-      local c, o
-      every c := !\self.held[ev.code + 6] do
+      local c, o, kc
+      kc := key(self.held)   # The only button pressed
+      every c := !self.held[kc] do
          if c.is_unshaded() & \c.allow_drag_flag & o := c.can_drag(ev) then
-            return Drag(c, o, ev)
+            return Drag(c, o, ev, kc)
    end
 
    public invoke_drag_event(d, ev)
