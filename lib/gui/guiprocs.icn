@@ -116,6 +116,7 @@ class Gui()
    public static const 
       CONSTRAINT_SET,
       WATTRIB_SET,
+      CONTEXT_WATTRIB_SET,      # attribs that affect the graphical drawing context
       EVENT_TABLE,
       PRINTABLE_1,              # Printable on a single line of text
       PRINTABLE_N               # Printable on multi lines of text
@@ -137,10 +138,12 @@ class Gui()
       WATTRIB_SET := set("label", "x", "pos", "y", "resize", "size", "height", 
                          "width", "w", "h", "image", "canvas", "pointer", 
                          "display", "depth", "fg", "bg", "draw_op",
-                         "font", "line_width", "geometry", "parent",
+                         "font", "line_width", "geometry", "transient_for",
                          "line_style", "fill_style", "pattern", "clip", "unclip",
                          "dx", "dy", "input_mask", "min_width", "min_height", "min_size", "max_width", 
                          "max_height", "max_size")
+      CONTEXT_WATTRIB_SET := set("fg", "bg", "draw_op", "font", "line_width", "line_style", "fill_style", 
+                                 "pattern")
       EVENT_TABLE := table(,
                          "mouse_left_press", Event.MOUSE_LEFT_PRESS,
                          "mouse_middle_press", Event.MOUSE_MIDDLE_PRESS,
