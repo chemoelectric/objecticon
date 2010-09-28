@@ -348,6 +348,7 @@ int		nwindow;
 int		snarffd;
 Window	*input;
 Window	*grab, *eein, *held;
+Window *over, *overb, *overw;
 QLock	all;			/* BUG */
 Filsys	*filsys;
 Window	*hidden[100];

@@ -545,36 +545,44 @@ static void doreshape(Window *w)
 static void domouse(void)
 {
     static int oldbuttons;
-    Window *over, *overb, *pw;
     int press;
 
     if (grab) {
-        pw = over = grab;
+        overw = over = grab;
         overb = 0;
     } else {
-        pw = wpointto(mouse->xy);
-        if (pw) {
-            if (pw->noborder || ptinrect(mouse->xy, insetrect(pw->screenr, Selborder))) {
-                over = pw;
+        overw = wpointto(mouse->xy);
+        if (overw) {
+            if (overw->noborder || ptinrect(mouse->xy, insetrect(overw->screenr, Selborder))) {
+                over = overw;
                 overb = 0;
             } else {
-                overb = pw;
+                overb = overw;
                 over = 0;
             }
         } else
             over = overb = 0;
+
+        /* Enter/exit events */
+        if (eein != over) {
+            if (eein) sendmouseevent(eein, 'x');
+            if (over) sendmouseevent(over, 'e');
+            eein = over;
+        }
     }
 
+    /* Which buttons have been pressed */
     press = ~oldbuttons & mouse->buttons;
 
     if (press) {
         if (held)
             sendmouseevent(held, 'm');
         else {
-            if ((press & 7) && pw && !grab)
-                wtop(pw);
+            if ((press & 7) && overw && !grab)
+                wtop(overw);
             held = over;
-            enterexit(over, held);
+            if (held)
+                sendmouseevent(held, 'm');
 
             if (overb) {
                 if (press & 1) {
@@ -589,10 +597,11 @@ static void domouse(void)
                 button3txtmenu(over);
         }
     } else if (mouse->buttons == 0) {
-        if (oldbuttons == 0) 
-            enterexit(over, over);
-        else 
-            enterexit(over, held);
+        if (oldbuttons == 0) {
+            if (over) sendmouseevent(over, 'm');
+        } else {
+            if (held) sendmouseevent(held, 'm');
+        }
         if (overb)
             cornercursor(overb, mouse->xy, 0);
         else
@@ -617,7 +626,6 @@ mousethread(void*)
 	static Alt alts[NALT+1];
 
 	threadsetname("mousethread");
-	scrolling = FALSE;
 
 	alts[MReshape].c = mousectl->resizec;
 	alts[MReshape].v = nil;

@@ -991,6 +991,109 @@ wframescroll(Window *w, int dl)
 	wsetorigin(w, q0, TRUE);
 }
 
+/**************************************************/
+/* Copied from frselect.c to work with MousectlEx */
+
+static
+int
+region(int a, int b)
+{
+	if(a < b)
+		return -1;
+	if(a == b)
+		return 0;
+	return 1;
+}
+
+void
+frselectex(Frame *f, MousectlEx *mc)	/* when called, button 1 is down */
+{
+	ulong p0, p1, q;
+	Point mp, pt0, pt1, qt;
+	int reg, b, scrled;
+
+	mp = mc->xy;
+	b = mc->buttons;
+
+	f->modified = 0;
+	frdrawsel(f, frptofchar(f, f->p0), f->p0, f->p1, 0);
+	p0 = p1 = frcharofpt(f, mp);
+	f->p0 = p0;
+	f->p1 = p1;
+	pt0 = frptofchar(f, p0);
+	pt1 = frptofchar(f, p1);
+	frdrawsel(f, pt0, p0, p1, 1);
+	reg = 0;
+	do{
+		scrled = 0;
+		if(f->scroll){
+			if(mp.y < f->r.min.y){
+				(*f->scroll)(f, -(f->r.min.y-mp.y)/(int)f->font->height-1);
+				p0 = f->p1;
+				p1 = f->p0;
+				scrled = 1;
+			}else if(mp.y > f->r.max.y){
+				(*f->scroll)(f, (mp.y-f->r.max.y)/(int)f->font->height+1);
+				p0 = f->p0;
+				p1 = f->p1;
+				scrled = 1;
+			}
+			if(scrled){
+				if(reg != region(p1, p0))
+					q = p0, p0 = p1, p1 = q;	/* undo the swap that will happen below */
+				pt0 = frptofchar(f, p0);
+				pt1 = frptofchar(f, p1);
+				reg = region(p1, p0);
+			}
+		}
+		q = frcharofpt(f, mp);
+		if(p1 != q){
+			if(reg != region(q, p0)){	/* crossed starting point; reset */
+				if(reg > 0)
+					frdrawsel(f, pt0, p0, p1, 0);
+				else if(reg < 0)
+					frdrawsel(f, pt1, p1, p0, 0);
+				p1 = p0;
+				pt1 = pt0;
+				reg = region(q, p0);
+				if(reg == 0)
+					frdrawsel(f, pt0, p0, p1, 1);
+			}
+			qt = frptofchar(f, q);
+			if(reg > 0){
+				if(q > p1)
+					frdrawsel(f, pt1, p1, q, 1);
+				else if(q < p1)
+					frdrawsel(f, qt, q, p1, 0);
+			}else if(reg < 0){
+				if(q > p1)
+					frdrawsel(f, pt1, p1, q, 0);
+				else
+					frdrawsel(f, qt, q, p1, 1);
+			}
+			p1 = q;
+			pt1 = qt;
+		}
+		f->modified = 0;
+		if(p0 < p1) {
+			f->p0 = p0;
+			f->p1 = p1;
+		}
+		else {
+			f->p0 = p1;
+			f->p1 = p0;
+		}
+		if(scrled)
+			(*f->scroll)(f, 0);
+		flushimage(f->display, 1);
+		if(!scrled)
+			readmouseex(mc);
+		mp = mc->xy;
+	}while(mc->buttons == b);
+}
+
+/**************************************************/
+
 void
 wselect(Window *w)
 {
@@ -1025,8 +1128,7 @@ wselect(Window *w)
 	}
 	if(w->mc.buttons == b){
 		w->scroll = framescroll;
-//RPP-UGH		frselect(w, &w->mc);
-                frselect(w, mousectl);
+                frselectex(w, &w->mc);
 		/* horrible botch: while asleep, may have lost selection altogether */
 		if(selectq > w->nr)
 			selectq = w->org + w->p0;
@@ -1381,6 +1483,10 @@ wclosewin(Window *w)
         if(w == held) held = nil;
         if(w == eein) eein = nil;
         if(w == grab) grab = nil;
+        if(w == over) over = nil;
+        if(w == overb) overb = nil;
+        if(w == overw) overw = nil;
+
 	if(w == input){
 		input = nil;
 		wsetcursor(w, 0);
