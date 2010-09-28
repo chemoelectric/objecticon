@@ -251,13 +251,7 @@ class GridPaint(Paint)
    end
 
    public do_attr(args)
-      static attrib_set
       local a, key, val
-      initial {
-         attrib_set := set()
-         every insert(attrib_set, "fg" | "bg" | "draw_op" |
-                      "font" | "line_width" | "line_style" | "fill_style" | "pattern")
-      }
       every a := !args do {
          a ? {
             key := tab(upto('=') | 0)
@@ -266,7 +260,7 @@ class GridPaint(Paint)
             else
                val := ""
          }
-         if member(attrib_set, key) & (*val > 0) then
+         if member(Gui.CONTEXT_WATTRIB_SET, key) & (*val > 0) then
             Safe{win.attrib(a)}
          else case key of {
             "ia_x" : ia_x := (val === (Align.L | Align.R)) | Align.C

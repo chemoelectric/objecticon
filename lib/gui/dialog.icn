@@ -267,29 +267,35 @@ class Dialog(Component)
       self.effective_is_hidden_flag := self.is_hidden_flag
       self.effective_is_shaded_flag := self.is_shaded_flag
       Gui.style.polish(self)
-      self.effective_wattribs := copy(self.wattribs)
-      every delete(self.effective_wattribs, 
-                   "pos" | "x" | "y" | "size" | "width" | "height"|
-                   "dx" | "dy" | "canvas" |
-                   "min_width" | "min_height" | "min_size" |
-                   "max_width" | "max_height" | "max_size")
+      self.effective_wattribs := table()
+      every t := key(self.wattribs) do {
+         if member(Gui.CONTEXT_WATTRIB_SET, t) then
+            insert(self.effective_wattribs, t, self.wattribs[t])
+      }
       self.compute_z_order()
       self.compute_tab_order()
       # Delete "canvas" from the attribs, since canvas=popup may be specified, and we
-      # don't want the buffer window to popup.
+      # don't want the buffer window to popup; similarly "display" is not permitted as a
+      # clone argument.
       t := copy(self.wattribs)
       delete(t, "canvas")
+      delete(t, "display")
       self.cbwin := self.buffer_win.clone!wattribs_to_list(t) | 
          runerr("Failed to open clone window:" || &why)
       every (!self.children).initially()
    end
 
    public open_buffer_win()
-      # Note that the window attribs are applied in initially() above.  This may be called
-      # several times (eg via reset()), so we must start with empty attributes here since we
-      # may start with say "bg=blue", then delete that attrib and call reset().  We wouldn't
-      # then want "bg=blue" to still be stuck in the root buffer window's context.
-      self.buffer_win := Window.open("canvas=hidden") | runerr("couldn't open buffer window:" || &why)
+      local t
+      # Note that the window attribs are applied in initially() above.
+      # This may be called several times (eg via reset()), so we must
+      # start with the most basic attributes here since we may start
+      # with say "bg=blue", then delete that attrib and call reset().
+      # We wouldn't then want "bg=blue" to still be stuck in the root
+      # buffer window's context.
+      t := ["canvas=hidden"]
+      put(t, "display=" || get_wattrib("display"))
+      self.buffer_win := Window.open!t | runerr("couldn't open buffer window:" || &why)
    end
 
    #
