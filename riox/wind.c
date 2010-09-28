@@ -82,6 +82,7 @@ wmk(Image *i, MousectlEx *mc, Channel *ck, Channel *cctl, int scrolling, int tra
         w->noborder = noborder;
         w->keepabove = keepabove;
         w->keepbelow = keepbelow;
+        w->focusclickflag = 0;
         w->mindx = mindx;
         w->maxdx = maxdx;
         w->mindy = mindy;
@@ -884,6 +885,11 @@ wmousectl(Window *w)
 {
 	int but;
 
+        if(w->focusclickflag) {
+            w->focusclickflag = 0;
+            return;
+        }
+
 	if(w->mc.buttons == 1)
 		but = 1;
 	else if(w->mc.buttons == 2)
@@ -1433,6 +1439,7 @@ wtop(Window *w)
                 if(w->noborder) return nil;
 		topwindow(w->i);
 		w->topped = ++topped;
+                w->focusclickflag = 1;
                 ensurestacking();
 		wcurrent(w);
 		flushimage(display, 1);

@@ -184,6 +184,7 @@ struct Window
         int             maxdx;
         int             mindy;
         int             maxdy;
+        int             focusclickflag;      /* flag indicating whether to skip first event in just-focused window */
 	Cursor		cursor;
 	Cursor		*cursorp;
 	uchar		holding;
