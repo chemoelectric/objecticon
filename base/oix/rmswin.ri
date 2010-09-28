@@ -441,8 +441,8 @@ int handle_config(wbp w, UINT msg, WPARAM wp, LPARAM lp)
    ws->width = neww;
    ws->height = newh;
    resizePixmap(w, ws->width, ws->height);
-   if (!ISEXPOSED(w)) {
-      SETEXPOSED(w);
+   if (!ISEXPOSED(ws)) {
+      SETEXPOSED(ws);
       return 1;
       }
    qeventcode(w->window, WINDOWRESIZED);
@@ -581,7 +581,7 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
    else
    switch(msg) {
    case WM_PAINT:
-      SETEXPOSED(wb);
+      SETEXPOSED(wb->window);
       hdc = BeginPaint(hwnd, &ps);
       GetClientRect(hwnd, &rect);
       if (IsIconic(hwnd)) {
@@ -683,7 +683,7 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
       break;
    case WM_GETMINMAXINFO: {
       MINMAXINFO *mmi = (MINMAXINFO *)lp;
-      if (! ISRESIZABLE(wb)) {
+      if (! ISRESIZABLE(wb->window)) {
 	 mmi->ptMinTrackSize.x = mmi->ptMaxTrackSize.x =
 	    ws->width + BORDWIDTH;
 	 mmi->ptMinTrackSize.y = mmi->ptMaxTrackSize.y =
@@ -863,22 +863,7 @@ HFONT findfont(char *family, int size, int flags, int ansi)
    else
       slant = 0;
 
-   if (flags & FONTFLAG_LATIN1)
-      charset = ANSI_CHARSET;
-   else if (flags & FONTFLAG_LATIN2)
-      charset = EASTEUROPE_CHARSET;
-   else if (flags & FONTFLAG_CYRILLIC)
-      charset = RUSSIAN_CHARSET;
-   else if (flags & FONTFLAG_ARABIC)
-      charset = ARABIC_CHARSET;
-   else if (flags & FONTFLAG_GREEK)
-      charset = GREEK_CHARSET;
-   else if (flags & FONTFLAG_HEBREW)
-      charset = HEBREW_CHARSET;
-   else if (flags & FONTFLAG_LATIN6)
-      charset = ANSI_CHARSET;
-   else
-      charset = (ansi && (MAXBYTESPERCHAR==1)) ? ANSI_CHARSET:DEFAULT_CHARSET;
+   charset = (ansi && (MAXBYTESPERCHAR==1)) ? ANSI_CHARSET:DEFAULT_CHARSET;
 
    if (flags & FONTFLAG_PROPORTIONAL)
       spacing = VARIABLE_PITCH;
@@ -1731,9 +1716,9 @@ wbp w;
 int on;
    {
    if (on)
-      SETRESIZABLE(w);
+      SETRESIZABLE(w->window);
    else
-      CLRRESIZABLE(w);
+      CLRRESIZABLE(w->window);
    return Succeeded;
    }
 
@@ -2379,7 +2364,7 @@ void resizePixmap(wbp w, int width, int height)
    wcp wc = w->context;
    int x = ws->pixwidth, y = ws->pixheight;
 
-   if (ISEXPOSED(w)) {
+   if (ISEXPOSED(ws)) {
         if (ws->pixwidth >= width && ws->pixheight >= height) {
            return;
         }
@@ -2571,7 +2556,6 @@ int x, y;
 void wfreersc()
 {
    wbp w;
-   extern struct palentry *palsetup_palette;
    while (wbndngs != NULL) {
       w = wbndngs;
       wbndngs = wbndngs->next;
@@ -2588,10 +2572,6 @@ void wfreersc()
    if (palette) {
       DeleteObject(palette);
       palette = 0;
-      }
-   if (palsetup_palette) {
-      free(palsetup_palette);
-      palsetup_palette = 0;
       }
    if (scp) {
       free(scp);
@@ -2616,6 +2596,11 @@ int  readimagefileimpl(char *filename, struct imgdata *imd)
 }
 
 int  writeimagefileimpl(wbp w, char *filename, int x, int y, int width, int height)
+{
+    return NoCvt;
+}
+
+int  readimagedataimpl(dptr data, struct imgdata *imd)
 {
     return NoCvt;
 }

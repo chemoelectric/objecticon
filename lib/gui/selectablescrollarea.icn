@@ -761,8 +761,7 @@ class SelectableScrollArea(LineBasedScrollArea)
    public defer draw_line_data(xp, yp, lh, i, r)
 
    public can_drag(ev)
-      if (ev.code === Mouse.LEFT_DRAG) & view.is_held(Mouse.LEFT_PRESS) & 
-                   /self.draggable_cursor & \self.on_a_line then
+      if view.is_held(Mouse.LEFT_PRESS) & /self.draggable_cursor & \self.on_a_line then
          return self.object_get_gesture_selections()
    end
 

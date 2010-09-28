@@ -17,7 +17,8 @@ class Drag()
    private readable 
       source,
       content, 
-      event
+      event,
+      button
 
    #
    # Get the content data
@@ -34,16 +35,24 @@ class Drag()
    end
 
    #
-   # Get the WindowEvent object which started the drag.
+   # Get the WinEvent object which started the drag.
    #
    public get_event()
       return event
    end
 
-   public new(source, content, event)
+   #
+   # Get the button number (eg Mouse.LEFT_PRESS) which started the drag.
+   #
+   public get_button()
+      return button
+   end
+
+   public new(source, content, event, button)
       self.source := source
       self.content := content
       self.event := event
+      self.button := button
       return
    end
 end

@@ -21,7 +21,7 @@ bm()
         $BM_JCONT -s $name.icn post.icn
         ./$name "$@"
     fi
-    rm $name
+    rm -f $name
     echo "\n\n"
 }
 

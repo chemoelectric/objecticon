@@ -110,6 +110,7 @@
    #define  _WIN32_WINNT 0x0400
    #include <windows.h>
    #undef Type
+   #undef MOD_SHIFT
    #include <sys/types.h>
    #include <sys/stat.h>
    #include <fcntl.h>
@@ -140,6 +141,7 @@
    #define lstat stat
    #define alloca _alloca
    #define qsort myqsort
+   typedef int mode_t;
 #endif					/* MSWIN32 */
 
 #if UNIX

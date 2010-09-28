@@ -549,9 +549,6 @@ class Mouse()
       MIDDLE_RELEASE,
       RIGHT_RELEASE,
       RELEASE,
-      LEFT_DRAG,
-      MIDDLE_DRAG,
-      RIGHT_DRAG,
       DRAG,
       MOVEMENT,
       WHEEL_UP,
@@ -571,18 +568,15 @@ class Mouse()
       MIDDLE_RELEASE :=       -5
       RIGHT_RELEASE :=        -6
       RELEASE := set(LEFT_RELEASE, MIDDLE_RELEASE, RIGHT_RELEASE)
-      LEFT_DRAG :=            -7
-      MIDDLE_DRAG :=          -8
-      RIGHT_DRAG :=           -9
-      DRAG := set(LEFT_DRAG, MIDDLE_DRAG, RIGHT_DRAG)
       MOVEMENT :=            -12
-      DRAG_OR_MOVEMENT := set(LEFT_DRAG, MIDDLE_DRAG, RIGHT_DRAG, MOVEMENT)
       WHEEL_UP :=            -16
       WHEEL_DOWN :=          -17
       WHEEL := set(WHEEL_UP, WHEEL_DOWN)
       ENTER :=               -18
       EXIT :=                -19
       CROSSING := set(ENTER, EXIT)
+      DRAG :=                -20
+      DRAG_OR_MOVEMENT := set(DRAG, MOVEMENT)
    end
 end
 

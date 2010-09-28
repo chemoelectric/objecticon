@@ -580,19 +580,15 @@ static void flush_event_pipe(wsp ws)
                         break;
                     }
                     case 'e': {
-                        if (state == 0) {
-                            struct descrip d;
-                            MakeInt(MOUSEENTERED, &d);
-                            qevent(ws, &d, mx, my, time, 0);
-                        }
+                        struct descrip d;
+                        MakeInt(MOUSEENTERED, &d);
+                        qevent(ws, &d, mx, my, time, 0);
                         break;
                     }
                     case 'x': {
-                        if (state == 0) {
-                            struct descrip d;
-                            MakeInt(MOUSEEXITED, &d);
-                            qevent(ws, &d, mx, my, time, 0);
-                        }
+                        struct descrip d;
+                        MakeInt(MOUSEEXITED, &d);
+                        qevent(ws, &d, mx, my, time, 0);
                         break;
                     }
                     case 'm': {
@@ -2024,9 +2020,6 @@ static wsp alcwinstate()
     GRFX_ALLOC(ws, _wstate);
     ws->program = curpstate;
     ws->listp = nulldesc;    /* set to [] after linked into global context list */
-    ws->buttonorder[0] = 1;
-    ws->buttonorder[1] = 2;
-    ws->buttonorder[2] = 4;
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
         ws->screeninfo_fd = ws->cursor_fd = ws->mouse_pid = ws->cons_pid = ws->wsys_fd = 
         ws->wctl_fd = ws->winid = ws->transientfor_winid = -1;
