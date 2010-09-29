@@ -49,12 +49,12 @@ static char *cmds[] = {
 	[Current]	= "current",
 	[Hide]	        = "hide",
 	[Unhide]	= "unhide",
-	[Delete]	= "delete",
         [Grab]          = "grab",
         [Ungrab]        = "ungrab",
         [Keepabove2]    = "keepabove",
         [Keepbelow2]    = "keepbelow",
         [Close]         = "close",
+	[Delete]	= "delete",
 	nil
 };
 
