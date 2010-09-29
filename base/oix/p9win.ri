@@ -1875,12 +1875,9 @@ char *getdisplay(wbp w)
 
 int getpos(wbp w)
 {
-/*
     wsp ws = w->window;
     if (!ws->win)
         return Failed;
-    synch_pos(ws);
-*/
     return Succeeded;
 }
 
