@@ -44,6 +44,9 @@ static void resizepixmap(wbp w, int width, int height);
 static void setclip(wbp w);
 static void unsetclip(wbp w);
 static int make_mod(unsigned int state);
+static char* property_to_string(wdp wd, Atom target, int number_items, void* data);
+static Atom convert_target(wdp wd, Atom desired_target);
+static void get_atom_descriptor(wsp ws, Atom a, dptr dest);
 
 static stringint fillstyles[] = {
     {0, 3},
@@ -214,6 +217,8 @@ static void dump_all(void)
 }
 #endif
 
+#define ATOM(d, x) ((d)->atoms[Cat(ATOM_,x)])
+
 static struct SharedColor *new_sharedcolor(char *name, int r, int g, int b)
 {
     struct SharedColor *res;
@@ -265,132 +270,92 @@ static char *atom_fmt(wsp ws,Atom a) {
  * Get the string name of the given Atom into dest.  The string is
  * allocated in the string region.
  */
-void get_atom_descriptor(wsp ws, Atom a, dptr dest)
+static void get_atom_descriptor(wsp ws, Atom a, dptr dest)
 {
     char *s = XGetAtomName(ws->display->display, a);
     cstr2string(s, dest);
     XFree(s);
 }
 
-Atom ConvertTarget(Display* display, Atom desired_target)
+static Atom convert_target(wdp wd, Atom desired_target)
 {
     /* Check for common cases. */
-    if ( (desired_target == XInternAtom(display, "TIMESTAMP", False))    ||
-         (desired_target == XInternAtom(display, "LIST_LENGTH", False) ) ||
-         (desired_target == XInternAtom(display, "LENGTH", False) ) ) {
+    if ( (desired_target == ATOM(wd, TIMESTAMP))    ||
+         (desired_target == ATOM(wd, LIST_LENGTH) ) ||
+         (desired_target == ATOM(wd, SPAN) ) ||
+         (desired_target == ATOM(wd, CHARACTER_POSITION) ) ||
+         (desired_target == ATOM(wd, LENGTH) ) ) {
         return XA_INTEGER;
     }
 
-    if ( desired_target == XInternAtom(display, "CHARACTER_POSITION", False) ) {
-        return XInternAtom(display, "SPAN", False);
-    }
-
-    if ( desired_target == XInternAtom(display, "TARGETS", False) ) {
+    if ( desired_target == ATOM(wd, TARGETS) ) {
         return XA_ATOM;
     }
 
-    if ( desired_target == XInternAtom(display, "CLIENT_WINDOW", False) ) {
+    if ( desired_target == ATOM(wd, CLIENT_WINDOW) ) {
         return XA_WINDOW;
     }
 
-    if (( desired_target == XInternAtom(display, "HOST_NAME", False) ) ||
-        ( desired_target == XInternAtom(display, "HOSTNAME", False) ) ||
-        ( desired_target == XInternAtom(display, "NAME", False) ) ||
-        ( desired_target == XInternAtom(display, "OWNER_OS", False) ) ||
-        ( desired_target == XInternAtom(display, "USER", False) ) ) {
-        return XA_STRING;
-    }
     /* Otherwise, no need to convert target. */
     return desired_target;
 }
 
-char* PropertyToString(Display* display, Atom target, int number_items,
-                       void* data)
+static char* property_to_string(wdp wd, Atom target, int number_items, void* data)
 {
-    Atom            new_target;
-    Atom            timestamp, span;
-    unsigned long*  long_array;
-    int*            int_array;
-    char*           string0 = NULL;
+    char*           result = 0;
     int             i, length;
-    char            temp[100];
-    char*           atom_name;
 
-    /* Convert our atoms. */
-    timestamp = XInternAtom(display, "TIMESTAMP", False);
-    span      = XInternAtom(display, "SPAN", False);
 
     /* Convert target, if necessary. */
-    new_target = ConvertTarget(display, target);
+    target = convert_target(wd, target);
 
-    if (new_target == XA_ATOM) {
+    switch (target) {
+        case XA_ATOM: {
+            int curr_len, total_len;
+            unsigned long *long_array = (unsigned long*) data;
 
-        long_array = (unsigned long*) data;
+            length = 32;
+            MemProtect(result = malloc(length));
+            *result = 0;
+            total_len = 0;
 
-        length = number_items * 30;
-        MemProtect(string0 = malloc( length + 1 ));
-        string0[0] = '\0';
-
-        /* Convert to atom names. */
-        for (i = 0; i < number_items; i++) {
-            atom_name = XGetAtomName(display, long_array[i] );
-
-            if (atom_name != NULL) {
-
-                /* Check that space is available. */
-                length -= strlen(atom_name);
- 
-                if (length > 1) {
-                    strcat(string0, atom_name);
-                    strcat(string0, "\n");
+            /* Convert to atom names. */
+            for (i = 0; i < number_items; i++) {
+                char *atom_name = XGetAtomName(wd->display, long_array[i] );
+                if (atom_name) {
+                    curr_len = strlen(atom_name) + 1;    /* +1 for the \n */
+                    if (total_len + curr_len + 1 > length) {  /* +1 for the \0 */
+                        length = total_len + curr_len + 1;
+                        MemProtect(result = realloc(result, length));
+                    }
+                    sprintf(result + total_len, "%s\n", atom_name);
+                    total_len += curr_len;
+                    XFree(atom_name);
                 }
-                XFree(atom_name);
             }
+            break;
+        }
+        case XA_INTEGER: {
+            long *int_array = (long*) data;
+            length = number_items * 20 + 1;
+            MemProtect(result = malloc(length));
+            *result = 0;
+            for (i = 0; i < number_items; i++)
+                sprintf(result + strlen(result), "%ld ", int_array[i]);
+            break;
+        }
+        case XA_WINDOW: {
+            unsigned long *long_array = (unsigned long*) data;
+            length = number_items * 12 + 1;
+            MemProtect(result = malloc(length));
+            *result = 0;
+            for (i = 0; i < number_items; i++)
+                sprintf(result + strlen(result), "0x%8.8lu ", long_array[i]);
+            break;
         }
     }
-    else if (new_target == XA_STRING) {
-        MemProtect(string0 = malloc(number_items + 1));
-        strcpy(string0, (char *)data);
-    }
-    else if ((new_target == XA_INTEGER) ||
-             (new_target == span) ||
-             (new_target == timestamp) ) {
 
-        int_array = (int*) data;
-
-        length = number_items * 20;
-        MemProtect(string0 = malloc( length + 1 ));
-        string0[0] = '\0';
-
-        for (i = 0; i < number_items; i++) {
-            sprintf(temp, "%d ", int_array[i]);
-
-            /* Check that space is available. */
-            length -= strlen(temp);
-            if (length > 0) {
-                strcat(string0, temp);
-            }
-        }
-    }
-    else if (new_target == XA_WINDOW) {
-
-        long_array = (unsigned long*) data;
-
-        length = number_items * 12;
-        MemProtect(string0 = malloc( length + 1 ));
-        string0[0] = '\0';
-
-        for (i = 0; i < number_items; i++) {
-            sprintf(temp, "0x%8.8lu ", long_array[i]);
-            strcat(string0, temp);
-        }
-
-    }
-    else {
-        /* Add extra cases as necessary... */
-    }
-
-    return string0;
+    return result;
 
 }
 
@@ -489,7 +454,7 @@ static void handle_misc(wdp wd)
                     break;
                 }
 
-                property = XInternAtom(ws->display->display, "_OBJECTICON_PROP", False);
+                property = ATOM(ws->display, _OBJECTICON_PROP);
 
                 status = XGetWindowProperty(ws->display->display,
                                             ws->win,
@@ -530,10 +495,10 @@ static void handle_misc(wdp wd)
                 if (selection_debug)
                     printf("Got %lu items x %d bits -> %ld bytes\n",nitems, actual_format, (long)bytes_read);
 
-                conv_str = PropertyToString(ws->display->display,
-                                            actual_type,
-                                            nitems,
-                                            prop);
+                conv_str = property_to_string(ws->display,
+                                              actual_type,
+                                              nitems,
+                                              prop);
                 if (conv_str) {
                     /* Make an Icon string out of the data */
                     cstr2string(conv_str, &tmp);
@@ -590,8 +555,7 @@ static void handle_misc(wdp wd)
                 /*
                  * only client message we handle at present are destroy requests
                  */
-                if (event.xclient.data.l[0] == XInternAtom(ws->display->display, 
-                                                           "WM_DELETE_WINDOW", False))
+                if (event.xclient.data.l[0] == ATOM(ws->display, WM_DELETE_WINDOW))
                     qeventcode(ws, WINDOWCLOSED);
                 break;
             }
@@ -838,7 +802,7 @@ static void wmap(wbp w)
            and hence prevents unsightly flicker on a resize. */
         XSetWindowBackgroundPixmap(stddpy, ws->win, None);
 
-        WMDeleteWindow = XInternAtom(ws->display->display, "WM_DELETE_WINDOW", False);
+        WMDeleteWindow = ATOM(ws->display, WM_DELETE_WINDOW);
         XSetWMProtocols(ws->display->display, ws->win, &WMDeleteWindow, 1);
 
         stdwin = ws->win;
@@ -1069,7 +1033,7 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
     property_atom = XInternAtom(ws->display->display, property, False);
     target_atom = XInternAtom(ws->display->display, target, False);
     selection_atom = XInternAtom(ws->display->display, selection, False);
-    XA_TARGETS = XInternAtom(ws->display->display, "TARGETS", False);
+    XA_TARGETS = ATOM(ws->display, TARGETS);
 
     if (target_atom == XA_TARGETS) {
         if (!is:list(*data))
@@ -1182,7 +1146,7 @@ int requestselection(wbp w, char *selname, char *targetname)
     STDLOCALS(w);
 
     selection = XInternAtom(ws->display->display, selname, False);
-    property = XInternAtom(ws->display->display, "_OBJECTICON_PROP", False);
+    property = ATOM(ws->display, _OBJECTICON_PROP);
     target = XInternAtom(ws->display->display, targetname, False);
     if (selection_debug)
         printf("getselectioncontent: calling XConvertSelection selection=%s target=%s property=%s requestor=%lx\n",
@@ -2467,6 +2431,24 @@ void drawutf8(wbp w, int x, int y, char *s, int slen, int nchars)
 }
 #endif            /* HAVE_LIBXFT */
 
+/* This array must correspond with the NUMATOMS and ATOM_xxx constants defined in xwin.h. */
+char *atom_names[] = {
+    "CHARACTER_POSITION",
+    "CLIENT_WINDOW",
+    "HOSTNAME",
+    "HOST_NAME",
+    "LENGTH",
+    "LIST_LENGTH",
+    "NAME",
+    "OWNER_OS",
+    "SPAN",
+    "TARGETS",
+    "TIMESTAMP",
+    "USER",
+    "WM_DELETE_WINDOW",
+    "_OBJECTICON_PROP",
+};
+
 /*
  * allocate a display on machine s
  */
@@ -2508,6 +2490,8 @@ static wdp alcdisplay(char *s)
 #ifdef HAVE_LIBXFT
     wd->xfont = XLoadQueryFont(wd->display, "fixed");
 #endif
+
+    XInternAtoms(wd->display, atom_names, NUMATOMS, False, wd->atoms);
     GRFX_LINK(wd, wdsplys);
     return wd;
 }

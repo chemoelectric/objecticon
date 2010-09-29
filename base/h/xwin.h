@@ -39,6 +39,23 @@
 #define MAXDISPLAYNAME	64
 #define NUMCURSORSYMS	78
 
+/* Interned atoms array */
+#define NUMATOMS        14
+#define ATOM_CHARACTER_POSITION    0
+#define ATOM_CLIENT_WINDOW         1
+#define ATOM_HOSTNAME              2
+#define ATOM_HOST_NAME             3
+#define ATOM_LENGTH                4
+#define ATOM_LIST_LENGTH           5
+#define ATOM_NAME                  6
+#define ATOM_OWNER_OS              7
+#define ATOM_SPAN                  8
+#define ATOM_TARGETS               9
+#define ATOM_TIMESTAMP            10
+#define ATOM_USER                 11
+#define ATOM_WM_DELETE_WINDOW     12
+#define ATOM__OBJECTICON_PROP     13
+
 /*
  * Macros to ease coding in which every X call must be done twice.
  */
