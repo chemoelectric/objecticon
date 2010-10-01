@@ -1070,6 +1070,12 @@ class EditableTextList(LineBasedScrollArea)
       local i, j, mid, v
       /x := self.cursor_x
       /y := self.cursor_y
+      # A search is not necessary with wrap mode off, since
+      # view_list[i].index=i for every line.
+      if is(line_splitter, DefaultLineSplitter) then {
+         v := view_list[y]
+         return (v.index = y) & (v.first <= x <= v.last) & y
+      }
       i := 1
       j := *view_list
       while i <= j do {
