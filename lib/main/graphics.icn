@@ -7,6 +7,7 @@ import
 #
 # @field bg=string : see {set_bg}
 # @field canvas=string : see {set_canvas}
+# @field display=string : X11 display to use (for {open} only)
 # @field clip=i1,i2,i3,i4  : see {clip}
 # @field unclip=: see {unclip}
 # @field draw_op=string : see {set_draw_op}
@@ -94,11 +95,11 @@ class Window(SetFields,NoCopy)
    end
 
    #
-   # Produces a new window value that binds the canvas of {w1} with
-   # the graphics context of {w2}. Both arguments are required.
+   # Produces a new window value that binds the canvas of {self} with
+   # the graphics context of {other}.
    #
-   public static couple(w1, w2)
-      return Window(couple_impl(w1, w2))
+   public couple(other)
+      return Window(couple_impl(other))
    end
 
    private static defer wcreate(display)
@@ -106,7 +107,7 @@ class Window(SetFields,NoCopy)
    private defer pre_attrib()
    private defer post_attrib()
    private defer clone_impl(a[])
-   private static defer couple_impl(w1, w2)
+   private defer couple_impl(other)
 
    #
    # Grab the pointer so that all mouse events are directed to this window.
