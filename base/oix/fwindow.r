@@ -183,18 +183,12 @@ function graphics_Window_copy_to(self, dest, x0, y0, w0, h0, x1, y1)
    }
 end
 
-function graphics_Window_couple_impl(win, win2)
+function graphics_Window_couple_impl(self, other)
    body {
-      tended struct descrip sbuf, sbuf2;
-      wbp wb, wb2, wb_new;
-      wsp ws;
-
+      wbp wb2, wb_new;
+      GetSelfW();
       {
-          WindowStaticParam(win, tmp);
-          wb = tmp;
-      }
-      {
-          WindowStaticParam(win2, tmp);
+          WindowStaticParam(other, tmp);
           wb2 = tmp;
       }
 
@@ -203,7 +197,7 @@ function graphics_Window_couple_impl(win, win2)
        */
       wb_new = alcwbinding();
 
-      wb_new->window = ws = wb->window;
+      wb_new->window = self_w->window;
       /*
        * Bind an existing window to an existing context,
        * and up the context's reference count.
@@ -212,8 +206,8 @@ function graphics_Window_couple_impl(win, win2)
           fail;
       wb_new->context->refcount++;
 
-      /* bump up refcount to ws */
-      ws->refcount++;
+      /* bump up refcount to self_w->window */
+      self_w->window->refcount++;
 
       return C_integer((word)wb_new);
    }

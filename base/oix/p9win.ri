@@ -1972,19 +1972,8 @@ char *getcanvas(wbp w)
         }
         if (strstr(buff, "hidden"))
             return "iconic";
-        else {
-            buff[0] = 0;
-            if ((fd = open_winfile(ws, "winname", OREAD)) >= 0) {
-                int n = read(fd, buff, sizeof(buff) - 1);
-                if (n > 0)
-                    buff[n] = 0;
-                close(fd);
-            }
-            if (strncmp(buff, "noborder", 8) == 0)
-                return "popup";
-            else
-                return "normal";
-        }
+        else
+            return ws->border_width ? "normal":"popup";
     } else
         return "hidden";
 }
