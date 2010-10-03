@@ -1,8 +1,52 @@
 #summary Low-level graphics interface.
-
+<wiki:toc max_depth="3" />
 = Introduction =
 
-Add your content here.
+== Opening a window ==
+
+Use the static method `Window.open` to open a window.  This method takes as parameters several key-value attributes.  For example :-
+{{{
+   w := Window.open("size=200,200", "fg=red", "bg=light grey", "font=serif,24") | stop(&why)
+}}}
+On success, a `Window` object is returned.  The `Window` class has methods for manipulating the window and drawing in it.
+
+== Window attributes ==
+
+The possible attributes for the `open` method described in detail in the API documentation for the `Window` class, but here is a summary.
+
+||Name||Type||Description||
+||bg||string||Background color||
+||canvas||string||Window visibility||
+||clip||i1,i2,i3,i4||Clipping region||
+||unclip||-||Unset clipping region||
+||draw_op||string||Pixel combination||
+||dx||integer||Window horizontal offset||
+||dy||integer Window vertical offset||
+||fg||string||Foreground color||
+||fill_style||string||Fill style to use in drawing||
+||font||string||Current text font||
+||geometry||i1,i2,i3,i4||Window position and size||
+||height||integer||Window height||
+||image||string||Load an image and set size||
+||input_mask||string||Mask of mouse/keyboard events||
+||label||string||Window label (title)||
+||line_style||string||Line style to use in drawing||
+||line_width||integer||Line style to use in drawing||
+||max_height||integer||Maximum window height||
+||max_size||i1,i2||Maximum window size||
+||max_width||integer||Maximum window width||
+||min_height||integer||Minimum window height||
+||min_size||i1,i2||Minimum window size||
+||min_width||integer||Minimum window width||
+||pattern||string||Pattern to use with fill_style||
+||pointer||string||Mouse pointer||
+||pos||i1,i2||Window position on screen||
+||transient_for||Window||Transient-for window||
+||x||integer||Window x position||
+||y||integer||Window y position||
+||resize||flag||Resizable flag||
+||size||i1,i2||Window size||
+||width||integer||Window width||
 
 
 = Details =
