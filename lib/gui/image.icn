@@ -32,7 +32,8 @@ class Image(Component)
       dont_close
 
    #
-   # Set an image in Icon image format.
+   # Set an image to use; the parameter is passed to {ImageCache.load}
+   # to load the image.
    #
    public set_image(x)
       self.image_str := self.image_cache := self.image_window := &null
@@ -46,8 +47,8 @@ class Image(Component)
    end
 
    #
-   # Set the name of a cache entry (either a file on the {ImageCache} path, or a named
-   # image data id, set with {ImageCache.name_image}).
+   # Set an image to use; the parameter is passed to {ImageCache.get}
+   # to load the image.
    #
    public set_cache(x)
       self.image_str := self.image_cache := self.image_window := &null

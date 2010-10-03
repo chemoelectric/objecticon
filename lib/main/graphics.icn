@@ -31,6 +31,7 @@ import
 # @field pattern=string : see {set_pattern}
 # @field pointer=string : see {set_pointer}
 # @field pos=i1,i2 : see {set_pos}
+# @field transient_for=W : see {set_transient_for}
 # @field x=integer : see {set_x}
 # @field y=integer : see {set_y}
 # @field resize=flag : see {set_resize}
@@ -53,6 +54,10 @@ class Window(SetFields,NoCopy)
       INVOKE_LATER := -40
    end
 
+   #
+   # Open a new window.  The parameters should be key=value attributes according to
+   # the available fields described above.
+   #
    public static open(a[])
       local f, w, t, display
       t := []
@@ -68,6 +73,11 @@ class Window(SetFields,NoCopy)
       return w
    end
 
+   #
+   # Produces a new window value that combines the canvas of
+   # {self} with a new graphics context. The new graphics attributes
+   # are copied from {self} and modified by the field arguments {a}.
+   #
    public clone(a[])
       local w
       w := Window(clone_impl())
@@ -83,6 +93,10 @@ class Window(SetFields,NoCopy)
       post_attrib()
    end
 
+   #
+   # Produces a new window value that binds the canvas of {w1} with
+   # the graphics context of {w2}. Both arguments are required.
+   #
    public static couple(w1, w2)
       return Window(couple_impl(w1, w2))
    end
@@ -94,7 +108,14 @@ class Window(SetFields,NoCopy)
    private defer clone_impl(a[])
    private static defer couple_impl(w1, w2)
 
+   #
+   # Grab the pointer so that all mouse events are directed to this window.
+   #
    public defer grab_pointer()
+
+   #
+   # Undoes the effect of {grab_pointer}.
+   #
    public defer ungrab_pointer()
 
    public defer get_font_ascent()
@@ -134,36 +155,190 @@ class Window(SetFields,NoCopy)
    public defer get_size()
    public defer get_width()
 
+   #
+   # The graphics context attribute bg specifies current background
+   # color.
+   #
    public defer set_bg(v)
-   public defer set_canvas(v)
-   public defer set_draw_op(v)
-   public defer set_dx(v)
-   public defer set_dy(v)
-   public defer set_fg(v)
-   public defer set_fill_style(v)
-   public defer set_font(v)
-   public defer set_geometry(v)
-   public defer set_height(v)
-   public defer set_image(v)
-   public defer set_input_mask(v)
-   public defer set_label(v)
-   public defer set_line_style(v)
-   public defer set_line_width(v)
-   public defer set_max_height(v)
-   public defer set_max_size(v)
-   public defer set_max_width(v)
-   public defer set_min_height(v)
-   public defer set_min_size(v)
-   public defer set_min_width(v)
-   public defer set_pattern(v)
-   public defer set_pointer(v)
-   public defer set_pos(v)
-   public defer set_x(v)
-   public defer set_y(v)
-   public defer set_resize(v)
-   public defer set_size(v)
-   public defer set_width(v)
 
+   #
+   # The canvas attribute canvas specifies the window visibility.
+   # Possible values include "hidden", "iconic", "normal", "popup"
+   #
+   public defer set_canvas(v)
+
+   #
+   # The graphics context attribute draw_op specifies the way in which
+   # newly drawn pixels are combined with the pixels that are already
+   # in a window.
+   #
+   public defer set_draw_op(v)
+
+   #
+   # The graphics context attribute dx specifies a horizontal offset
+   # that is added to the x value of every coordinate pair before
+   # interpretation.
+   #
+   public defer set_dx(v)
+
+   #
+   # The graphics context attribute dy specifies a vertical offset
+   # that is added to the y value of every coordinate pair before
+   # interpretation.
+   #
+   public defer set_dy(v)
+
+   #
+   # The graphics context attribute fg specifies the current
+   # foreground color.
+   #
+   public defer set_fg(v)
+
+   #
+   # The graphics context attribute fill_style specifies whether a
+   # pattern is to be used when drawing. The fill style affects lines
+   # and text as well as solid figures. The pattern itself is set by
+   # the pattern attribute.
+   # Possible values: "solid", "textured", "masked"
+   #
+   public defer set_fill_style(v)
+
+   #
+   # The graphics context attribute font specifies the current text font.
+   #
+   public defer set_font(v)
+
+   #
+   # Specifies the position and size of the window.
+   #
+   public defer set_geometry(x, y, width, height)
+
+   #
+   # Set the height of the window in pixels.
+   #
+   public defer set_height(height)
+
+   #
+   # Specifies an image to load into the window.  On success, the
+   # window is resized to the size of the image.  The given parameter
+   # {v} may be an Icon image string, raw binary image data (eg a gif
+   # file), or the name of a file containing an image.
+   #
+   public defer set_image(v)
+
+   #
+   # Set the input mask for the window.  If the string {v} contains
+   # "k" then key release events are reported; if it contains "m" then
+   # mouse motion events are reported.
+   #
+   public defer set_input_mask(v)
+
+   #
+   # The canvas attribute label specifies a title used to identify the
+   # window.
+   #
+   public defer set_label(v)
+
+   #
+   # The graphics context attribute line_style specifies the form of
+   # drawn lines.  Possible values may include: "solid", "dashed",
+   # "striped", although this is system dependent.
+   #
+   public defer set_line_style(v)
+
+   #
+   # The graphics context attribute linewidth specifies the width of
+   # drawn lines.
+   #
+   public defer set_line_width(v)
+
+   #
+   # Set the maximum height of the window in pixels.
+   #
+   public defer set_max_height(height)
+
+   #
+   # Set the maximum size of the window in pixels.
+   #
+   public defer set_max_size(width, height)
+
+   #
+   # Set the maximum width of the window in pixels.
+   #
+   public defer set_max_width(width)
+
+   #
+   # Set the minimum height of the window in pixels.
+   #
+   public defer set_min_height(height)
+
+   #
+   # Set the minimum size of the window in pixels.
+   #
+   public defer set_min_size(width, height)
+
+   #
+   # Set the minimum width of the window in pixels.
+   #
+   public defer set_min_width(width)
+
+   #
+   # The graphics context attribute pattern specifies the particular
+   # pattern to be used for drawing when the fill_style attribute is
+   # set to "textured" or "masked".  Possible values: "black",
+   # "verydark", "darkgray", "gray", "lightgray", "verylight",
+   # "white", "vertical", "diagonal", "horizontal", "grid", "trellis",
+   # "checkers", "grains", "scales", "waves", "width,#hexdigits"
+   #
+   public defer set_pattern(v)
+
+   #
+   # The canvas attribute pointer specifies the shape of the figure
+   # that represents the mouse position.
+   #
+   public defer set_pointer(v)
+
+   #
+   # Set the position of the window on the screen.
+   #
+   public defer set_pos(x, y)
+
+   #
+   # Set the x position of the window on the screen.
+   #
+   public defer set_x(v)
+
+   #
+   # Set the y position of the window on the screen.
+   #
+   public defer set_y(v)
+
+   #
+   # Configure whether the window can or cannot be resized by the
+   # user.  The parameter should be a flag value.
+   #
+   public defer set_resize(v)
+
+   #
+   # Set the size of the window in pixels.
+   #
+   public defer set_size(width, height)
+
+   #
+   # Set the width of the window in pixels.
+   #
+   public defer set_width(width)
+
+   #
+   # Configure this window so that it is transient in respect of the
+   # given window {w}.  This generally means that the transient window
+   # stays on top of the other window, although the exact behaviour
+   # depends on the window system.
+   # 
+   # When calling this method, this window must not be visible, and
+   # the other window must be visible; if that is not the case this
+   # method fails.
+   #
    public set_transient_for(w)
       if set_transient_for_impl(w) then {
          self.transient_for := w
@@ -173,6 +348,9 @@ class Window(SetFields,NoCopy)
 
    private defer set_transient_for_impl(v)
 
+   #
+   # Get the transient-for window, or fail if none is set.
+   #
    public get_transient_for()
       return \self.transient_for
    end
@@ -410,6 +588,9 @@ $ifdef _PLAN9
    public defer get_dir()
 $endif
 
+   #
+   # Enqueue a window event.
+   #
    public enqueue(eventcode, x, y, interval, mod)
       /x := -1
       /y := -1
@@ -419,28 +600,13 @@ $endif
       return pending(eventcode, x, y, interval, mod)
    end
 
-   public xor_reverse()
-      local fg, bg
-      fg := parse_color(get_fg()) | fail
-      bg := parse_color(get_bg()) | fail
-      set_fg(ixor(fg[1], bg[1]) || "," ||
-             ixor(fg[2], bg[2]) || "," ||
-             ixor(fg[3], bg[3]) || "," || fg[4])
-   end
-
-   public toggle_fgbg()
-      local t
-      t := get_bg()
-      set_bg(get_fg())
-      set_fg(t)
-   end
-
    #
    # Convenient method to open an image and return a hidden window with
    # its contents.
    # @param img the image
-   # @param win an optional window from which to get the background colour (only
-   # @          relevant with transparent images)
+   # @param win an optional window from which to get the background and
+   #            foreground colours (only relevant with bi-level icon
+   #            strings and transparent images).
    #
    public static open_image(img, win)
       local w

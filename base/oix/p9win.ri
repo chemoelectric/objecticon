@@ -1948,9 +1948,11 @@ int settransientfor(wbp w, wbp other)
     wsp ws = w->window;
     if (ws->win)
         return Failed;
-    if (other)
+    if (other) {
+        if (!other->window->win)
+            return Failed;
         ws->transientfor_winid = other->window->winid;
-    else
+    } else
         ws->transientfor_winid = -1;
     return Succeeded;
 }

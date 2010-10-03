@@ -202,6 +202,7 @@ typedef struct _wdisplay {
   XFontStruct   *xfont;
 #endif
   Cursor	cursors[NUMCURSORSYMS];
+  Atom          atoms[NUMATOMS];      /* interned atoms */
   struct _wdisplay *previous, *next;
 } *wdp;
 #endif					/* XWindows */
