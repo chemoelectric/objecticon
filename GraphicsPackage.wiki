@@ -17,15 +17,16 @@ The possible attributes for the `open` method described in detail in the API doc
 ||Name||Type||Description||
 ||bg||string||Background color||
 ||canvas||string||Window visibility||
-||clip||i1,i2,i3,i4||Clipping region||
+||clip||4xinteger||Clipping region||
+||display||string||X11 display to use||
 ||unclip||-||Unset clipping region||
 ||draw_op||string||Pixel combination||
 ||dx||integer||Window horizontal offset||
-||dy||integer Window vertical offset||
+||dy||integer||Window vertical offset||
 ||fg||string||Foreground color||
 ||fill_style||string||Fill style to use in drawing||
 ||font||string||Current text font||
-||geometry||i1,i2,i3,i4||Window position and size||
+||geometry||4xinteger||Window position and size||
 ||height||integer||Window height||
 ||image||string||Load an image and set size||
 ||input_mask||string||Mask of mouse/keyboard events||
@@ -33,20 +34,42 @@ The possible attributes for the `open` method described in detail in the API doc
 ||line_style||string||Line style to use in drawing||
 ||line_width||integer||Line style to use in drawing||
 ||max_height||integer||Maximum window height||
-||max_size||i1,i2||Maximum window size||
+||max_size||2xinteger||Maximum window size||
 ||max_width||integer||Maximum window width||
 ||min_height||integer||Minimum window height||
-||min_size||i1,i2||Minimum window size||
+||min_size||2xinteger||Minimum window size||
 ||min_width||integer||Minimum window width||
 ||pattern||string||Pattern to use with fill_style||
 ||pointer||string||Mouse pointer||
-||pos||i1,i2||Window position on screen||
+||pos||2xinteger||Window position on screen||
 ||transient_for||Window||Transient-for window||
 ||x||integer||Window x position||
 ||y||integer||Window y position||
 ||resize||flag||Resizable flag||
-||size||i1,i2||Window size||
+||size||2xinteger||Window size||
 ||width||integer||Window width||
+
+Most of the attributes have corresponding `get` and `set` methods.
+
+== Filters ==
+
+* *linear*.  The linear filter accepts 3 float parameters followed by 3 optional integer parameters (which default to zero).  Each pair provides a linear transformation to apply to the red, green and blue values of each pixel.  For example
+{{{
+W.filter("linear,0.6,0.75,1.0")
+}}}
+
+* *shade*.  This filter accepts three integer parameters.  It is a rather specialised filter, used to "grey-out" gui components.  The first parameter specifies a range of grey bands.  The grey band of the background is calculated.  Then each pixel's grey band value is calculated.  If it differs from the background's band value, then a new grey pixel is calculated by multipling the existing pixel's grey band value by the second parameter, and adding the third parameter.  The default filter used by the "gui" package is :-
+{{{
+W.filter("shade,4,5000,40000")
+}}}
+Note that the maximum possible new pixel value is `4*5000 + 40000 = 60000`, within the defined range of values (ie, `0 - 65535`).
+
+* *invert*.  This filter takes no parameters.  Each pixel's red, green and blue values is replaced with the value 65535 - _current value_.
+
+* *coerce*.  This filter takes one string parameter, namely a palette.  Each pixel is coerced into the permitted colors in that palette.  Thus the following example transforms the image into one in which each pixel has one of 256 possible greyscale values.
+{{{
+W.filter("coerce,g256")
+}}}
 
 
 = Details =
