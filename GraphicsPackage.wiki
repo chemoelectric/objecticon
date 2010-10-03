@@ -53,20 +53,17 @@ Most of the attributes have corresponding `get` and `set` methods.
 
 == Filters ==
 
-* linear.  The linear filter accepts 3 float parameters followed by 3 optional integer parameters (which default to zero).  Each pair provides a linear transformation to apply to the red, green and blue values of each pixel.  For example
+ * *linear*.  The linear filter accepts 3 float parameters followed by 3 optional integer parameters (which default to zero).  Each pair provides a linear transformation to apply to the red, green and blue values of each pixel.  For example
 {{{
 W.filter("linear,0.6,0.75,1.0")
 }}}
-
-* shade.  This filter accepts three integer parameters.  It is a rather specialised filter, used to "grey-out" gui components.  The first parameter specifies a range of grey bands.  The grey band of the background is calculated.  Then each pixel's grey band value is calculated.  If it differs from the background's band value, then a new grey pixel is calculated by multipling the existing pixel's grey band value by the second parameter, and adding the third parameter.  The default filter used by the "gui" package is :-
+ * *shade*.  This filter accepts three integer parameters.  It is a rather specialised filter, used to "grey-out" gui components.  The first parameter specifies a range of grey bands.  The grey band of the background is calculated.  Then each pixel's grey band value is calculated.  If it differs from the background's band value, then a new grey pixel is calculated by multipling the existing pixel's grey band value by the second parameter, and adding the third parameter.  The default filter used by the "gui" package is :-
 {{{
 W.filter("shade,4,5000,40000")
 }}}
 Note that the maximum possible new pixel value is `4*5000 + 40000 = 60000`, within the defined range of values (ie, `0 - 65535`).
-
-* invert.  This filter takes no parameters.  Each pixel's red, green and blue values is replaced with the value 65535 - _current value_.
-
-* coerce.  This filter takes one string parameter, namely a palette.  Each pixel is coerced into the permitted colors in that palette.  Thus the following example transforms the image into one in which each pixel has one of 256 possible greyscale values.
+ * *invert*.  This filter takes no parameters.  Each pixel's red, green and blue values is replaced with the value 65535 - _current value_.
+ * *coerce*.  This filter takes one string parameter, namely a palette.  Each pixel is coerced into the permitted colors in that palette.  Thus the following example transforms the image into one in which each pixel has one of 256 possible greyscale values.
 {{{
 W.filter("coerce,g256")
 }}}
