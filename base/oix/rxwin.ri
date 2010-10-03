@@ -567,6 +567,7 @@ static void handle_misc(wdp wd)
                  */
                 ws->win = (Window) NULL;
                 GRFX_GENUNLINK(ws, vwstates, vnext, vprevious);
+                ws->state = HiddenState;
 
                 /*
                  * if there are no more references, we are done with the pixmap
