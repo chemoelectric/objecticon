@@ -1420,9 +1420,8 @@ int setcanvas(wbp w, char *s)
 #endif
                     XDestroyWindow(stddpy, stdwin);
                     XFlush(stddpy);
-                    while (ws->win)
+                    while (ws->state != HiddenState)
                         handle_misc(ws->display);
-                    ws->state = HiddenState;
                 }
             }
             break;
