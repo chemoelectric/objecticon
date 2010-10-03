@@ -3146,9 +3146,11 @@ int settransientfor(wbp w, wbp other)
     STDLOCALS(w);
     if (ws->win)
         return Failed;
-    if (other)
+    if (other) {
+        if (!other->window->win)
+            return Failed;
         ws->transientfor = other->window->win;
-    else
+    } else
         ws->transientfor = (Window) NULL;
     return Succeeded;
 }
