@@ -14,7 +14,6 @@ static wsp alcwinstate(void);
 static wcp alccontext(wbp w);
 static wfp alcfont(wbp w, char **s);
 static void synch_pattern_image(struct SharedPattern *pat, int fg_rgb, int bg_rgb, int style);
-static int configure_canvas(wbp w);
 static void mouse_loop(int in_fd, int out_fd);
 static Rune *utf8_to_runes(char *str, int nchars);
 static void cons_loop(int in_fd, int out_fd, int screeninfo_fd);
@@ -29,7 +28,7 @@ static void open_pix_win(wsp ws);
 static Image *get_draw_img(wcp wc);
 static void close_pix_win(wsp ws);
 static void resize_pix_win(wbp w);
-static void handle_resize(wsp ws);
+static void handle_reshape(wsp ws);
 static void init_window_system(void);
 static void clear_pix_win(wbp wb);
 static void clear_win(wbp wb);
@@ -42,6 +41,7 @@ static struct SharedPattern *new_sharedpattern(int width, int height, int *rowda
 static struct SharedPattern *link_sharedpattern(struct SharedPattern *x);
 static void unlink_sharedpattern(struct SharedPattern *x);
 static int synch_pos(wsp ws);
+static void synch_state(wsp ws);
 static void note_time(char *s);
 static int readimageimpl(char *cmd, int fd, struct imgdata *imd);
 
@@ -330,16 +330,18 @@ int wopen(wbp w)
      * window is hidden or not.
      */
     if (ws->width == 0)
-        ws->width = (ws->desired_canvas == HiddenCanvas ? 1 : 200);
+        ws->width = (ws->state == HiddenCanvas ? 1 : 200);
     if (ws->height == 0)
-        ws->height = (ws->desired_canvas == HiddenCanvas ? 1 : 200);
+        ws->height = (ws->state == HiddenCanvas ? 1 : 200);
 
     open_pix_win(ws);
     /* Fill pixmap with bg color */
     clear_pix_win(w);
 
-    if (configure_canvas(w) != Succeeded)
-        return Failed;
+    if (ws->state != HiddenCanvas) {
+        if (open_screen_win(ws) == Failed)
+            return Failed;
+    }
 
     imd = &ws->initimage;
     if (imd->width) {
@@ -383,33 +385,6 @@ static int adjust(wsp ws, int dim)
         return dim;
     else
         return dim + ws->border_width;
-}
-
-static int configure_canvas(wbp w)
-{
-    wsp ws = w->window;
-
-    if (ws->desired_canvas == HiddenCanvas) {
-        if (ws->win)
-            close_screen_win(ws);
-    } else {
-        if (ws->win) {
-            if (ws->desired_canvas == IconicCanvas)
-                fprint(ws->wctl_fd, "hide");
-            else {
-                if (ws->border_width && ws->desired_canvas == NormalCanvas ||
-                    !ws->border_width && ws->desired_canvas == PopupCanvas)
-                    fprint(ws->wctl_fd, "unhide");
-                else
-                    return Failed;
-            }
-        } else {
-            if (open_screen_win(ws) == Failed)
-                return Failed;
-            pix_to_win(ws);
-        }
-    }
-    return Succeeded;
 }
 
 static void mouse_loop(int in_fd, int out_fd)
@@ -471,7 +446,7 @@ static void resize_pix_win(wbp w)
     ws->pix = t;
 }
 
-static void handle_resize(wsp ws)
+static void handle_reshape(wsp ws)
 {
     char buff[128];
     wbp w;
@@ -479,7 +454,7 @@ static void handle_resize(wsp ws)
     sprintf(buff, "%s/winname", ws->mount_dir);
     if (gengetwindow(display, buff, &ws->win, &ws->screen, Refnone) < 0)
         syserr("Failed to reconnect to window on a resize");
-
+    synch_state(ws);
     tw = Dx(ws->win->r);
     th = Dy(ws->win->r);
     if (tw == ws->width && th == ws->height) {
@@ -573,7 +548,7 @@ static void flush_event_pipe(wsp ws)
 
                 switch (ebuf[9]) {
                     case 'r':
-                        handle_resize(ws);
+                        handle_reshape(ws);
                         break;
                     case 'c': {
                         qeventcode(ws, WINDOWCLOSED);
@@ -1469,7 +1444,14 @@ static int open_screen_win(wsp ws)
                 buff[n] = 0;
             close(fd);
         }
-        ws->border_width = (strncmp(buff, "noborder", 8) == 0) ? 0 : 2 * Borderwidth;
+        if (strncmp(buff, "noborder", 8) == 0) {
+            ws->border_width = 0;
+            ws->state = PopupCanvas;
+        } else {
+            ws->border_width = 2 * Borderwidth;
+            if (ws->state == PopupCanvas)
+                ws->state = NormalCanvas;
+        }
 
         fprint(ws->wctl_fd, "resize -dx %d -dy %d -mindx %d -maxdx %d -mindy %d -maxdy %d", 
                adjust(ws, ws->width), 
@@ -1482,9 +1464,9 @@ static int open_screen_win(wsp ws)
         if (ws->x != -INT_MAX && ws->y != -INT_MAX)
             fprint(ws->wctl_fd, "move  -minx %d -miny %d", ws->x, ws->y);
 
-        if (ws->desired_canvas == IconicCanvas)
+        if (ws->state == IconicCanvas)
             fprint(ws->wctl_fd, "hide");
-        else
+        else if (ws->state != PopupCanvas)
             fprint(ws->wctl_fd, "unhide");
 
         use_win = 0;
@@ -1501,7 +1483,7 @@ static int open_screen_win(wsp ws)
             close_screen_win(ws);
             return Failed;
         }
-        ws->border_width = (ws->desired_canvas == PopupCanvas ? 0 : 2 * Borderwidth);
+        ws->border_width = (ws->state == PopupCanvas ? 0 : 2 * Borderwidth);
         /* If either x or y unset, let rio place the window */
         if (ws->x == -INT_MAX || ws->y == -INT_MAX)
             sprintf(buff, "new -dx %d -dy %d",
@@ -1511,9 +1493,9 @@ static int open_screen_win(wsp ws)
             sprintf(buff, "new -r %d %d %d %d",
                     ws->x, ws->y,  ws->x + adjust(ws, ws->width), 
                     ws->y + adjust(ws, ws->height));
-        if (ws->desired_canvas == PopupCanvas)
+        if (ws->state == PopupCanvas)
             strcat(buff, " -noborder");
-        else if (ws->desired_canvas == IconicCanvas)
+        else if (ws->state == IconicCanvas)
             strcat(buff, " -hide");
         sprintf(buff + strlen(buff), 
                 " -mindx %d -maxdx %d -mindy %d -maxdy %d", 
@@ -1630,6 +1612,9 @@ static int open_screen_win(wsp ws)
         }
     }
 
+    /* Copy the pixmap to the window to initialize its contents */
+    pix_to_win(ws);
+
     return Succeeded;
 }
 
@@ -1694,6 +1679,7 @@ static void close_screen_win(wsp ws)
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
         ws->screeninfo_fd = ws->cursor_fd = ws->mouse_pid = ws->cons_pid = ws->wsys_fd = 
         ws->wctl_fd = ws->winid = -1;
+    synch_state(ws);
 }
 
 static void open_pix_win(wsp ws)
@@ -1714,9 +1700,8 @@ void wclose(wbp w)
     wsp ws = w->window;
     pollevent();
     if (ws->win && ws->refcount > 1) {
-        /* Turn into pixmap */
-        ws->desired_canvas = HiddenCanvas;
-        configure_canvas(w); 
+        /* Turn into hidden window */
+        close_screen_win(ws);
     }
 }
 
@@ -1770,17 +1755,57 @@ int setcanvas(wbp w, char *s)
     e = stringint_lookup(canvastypes, s);
     if (!e)
         return Failed;
-    ws->desired_canvas = e->i;
 
-    /* 
-     * If the window is already open, call configure_canvas now;
-     * otherwise it is called from wopen.
+    if (e->i == ws->state)
+        return Succeeded;
+
+    /*
+     * If we're in the process of opening, just set state and leave to
+     * wopen.
      */
-    if (ws->pix) {
-        if (configure_canvas(w) == Failed)
-            return Failed;
+    if (!ws->pix) {
+        ws->state = e->i;
+        return Succeeded;
     }
 
+    /*
+     * If we're presently hidden, just open the visible window.
+     */
+    if (!ws->win) {
+        if (e->i != HiddenCanvas) {
+            ws->state = e->i;
+            if (open_screen_win(ws) == Failed)
+                return Failed;
+        }
+        return Succeeded;
+    }
+
+    /*
+     * More complex cases, with the window already unhidden.
+     */
+    switch (e->i) {
+        case HiddenCanvas: {
+            close_screen_win(ws);
+            break;
+        }
+
+        case IconicCanvas: {
+            if (ws->state == PopupCanvas)
+                return Failed;
+            fprint(ws->wctl_fd, "hide");
+            break;
+        }
+
+        case NormalCanvas: {
+            if (ws->state == PopupCanvas)
+                return Failed;
+            fprint(ws->wctl_fd, "unhide");
+            break;
+        }
+
+        case PopupCanvas:
+            return Failed;
+    }
     return Succeeded;
 }
 
@@ -1959,23 +1984,33 @@ int settransientfor(wbp w, wbp other)
 
 char *getcanvas(wbp w)
 {
-    wsp ws = w->window;
-    if (ws->win) {
-        char buff[256];
-        int fd;
-        buff[0] = 0;
-        if ((fd = open_winfile(ws, "wctl", OREAD)) >= 0) {
-            int n = read(fd, buff, sizeof(buff) - 1);
-            if (n > 0)
-                buff[n] = 0;
-            close(fd);
-        }
-        if (strstr(buff, "hidden"))
-            return "iconic";
-        else
-            return ws->border_width ? "normal":"popup";
-    } else
-        return "hidden";
+    char *v = stringint_int2str(canvastypes, w->window->state);
+    if (!v)
+        syserr("Invalid value of state");
+    return v;
+}
+
+static void synch_state(wsp ws)
+{
+    char buff[256];
+    int fd;
+
+    if (!ws->win) {
+        ws->state = HiddenCanvas;
+        return;
+    }
+
+    if (ws->state == PopupCanvas)
+        return;
+
+    buff[0] = 0;
+    if ((fd = open_winfile(ws, "wctl", OREAD)) >= 0) {
+        int n = read(fd, buff, sizeof(buff) - 1);
+        if (n > 0)
+            buff[n] = 0;
+        close(fd);
+    }
+    ws->state = strstr(buff, "hidden") ? IconicCanvas:NormalCanvas;
 }
 
 int getdisplaysize(wbp w, int *width, int *height)
@@ -2015,7 +2050,7 @@ static wsp alcwinstate()
     ws->x = ws->y = -INT_MAX;
     ws->minwidth = ws->minheight = 1;
     ws->maxwidth = ws->maxheight = INT_MAX;
-    ws->desired_canvas = NormalCanvas;
+    ws->state = NormalCanvas;
     ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
     GRFX_LINK(ws, wstates);
     return ws;
