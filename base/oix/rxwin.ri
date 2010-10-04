@@ -49,6 +49,7 @@ static Atom convert_target(wdp wd, Atom desired_target);
 static void get_atom_descriptor(wsp ws, Atom a, dptr dest);
 static void synch_state(wsp ws);
 static void synch_net_wm_state(wsp ws, int desired_state);
+static void close_screen_win(wsp ws);
 
 static stringint fillstyles[] = {
     {0, 3},
@@ -552,40 +553,26 @@ static void handle_misc(wdp wd)
                     qeventcode(ws, WINDOWCLOSED);
                 break;
             }
-            case DestroyNotify:
-                if (!ISZOMBIE(ws))
-                    fatalerr(141, NULL);
-                /*
-                 * first of all, we are done with this window
-                 */
-                ws->win = (Window) NULL;
-                GRFX_GENUNLINK(ws, vwstates, vnext, vprevious);
-                synch_state(ws);
-
-                /*
-                 * if there are no more references, we are done with the pixmap
-                 *  too.  Free it and the colors allocated for this canvas.
-                 */
-                if (ws->refcount == 0) {
-                    if (ws->pix) {
-                        Display *d = ws->display->display;
-                        XSync(d, False);
-                        if (ws->pix)
-                            XFreePixmap(d, ws->pix);
-                        ws->pix = (Pixmap) NULL;
-                    }
-#ifdef HAVE_LIBXFT
-                    if (ws->pixDraw) {
-                        XftDrawDestroy(ws->pixDraw);
-                        ws->pixDraw = NULL;
-                    }
-#endif
-                }
-                break;
             default:
                 break;
         }
     }
+}
+
+static void close_screen_win(wsp ws)
+{
+    wdp wd = ws->display;
+    XDestroyWindow(wd->display, ws->win);
+    XFlush(wd->display);
+#ifdef HAVE_LIBXFT
+    if (ws->winDraw) {
+        XftDrawDestroy(ws->winDraw);
+        ws->winDraw = NULL;
+    }
+#endif
+    ws->win = (Window) NULL;
+    GRFX_GENUNLINK(ws, vwstates, vnext, vprevious);
+    synch_state(ws);
 }
 
 /*
@@ -602,8 +589,7 @@ void pollevent()
 }
 
 /*
- * wclose - close a window.  If is a real on-screen window,
- * wait for a DestroyNotify event from the server before returning.
+ * wclose - close a window.
  */
 void wclose(wbp w)
 {
@@ -612,21 +598,9 @@ void wclose(wbp w)
     XSync(stddpy, False);
 
     handle_misc(ws->display);
-    /*
-     * Force window to close (turn into a pixmap)
-     */
     if (ws->win && ws->refcount > 1) {
-        SETZOMBIE(ws);
-#ifdef HAVE_LIBXFT
-        if (ws->winDraw) {
-            XftDrawDestroy(ws->winDraw);
-            ws->winDraw = NULL;
-        }
-#endif
-        XDestroyWindow(stddpy,stdwin);
-        XFlush(stddpy);
-        while (ws->win)
-            handle_misc(ws->display);
+        /* Turn into hidden window */
+        close_screen_win(ws);
     }
 }
 /*
@@ -948,8 +922,6 @@ static void wmap(wbp w)
     resizepixmap(w, ws->width, ws->height);
 
     synch_cursor(ws);
-
-    CLRZOMBIE(ws);
 
     XSetFunction(stddpy, stdgc, wc->drawop->i);
     XSync(stddpy, False);
@@ -1376,17 +1348,7 @@ int setcanvas(wbp w, char *s)
         }
 
         case HiddenState: {
-            SETZOMBIE(ws);
-#ifdef HAVE_LIBXFT
-            if (ws->winDraw) {
-                XftDrawDestroy(ws->winDraw);
-                ws->winDraw = NULL;
-            }
-#endif
-            XDestroyWindow(stddpy, stdwin);
-            XFlush(stddpy);
-            while (ws->state != HiddenState)
-                handle_misc(ws->display);
+            close_screen_win(ws);
             break;
         }
         default:
@@ -1638,7 +1600,7 @@ int setfont(wbp w, char *s)
 static void handle_exposures(wsp ws, XExposeEvent *event)
 {
     SETEXPOSED(ws);
-    if (ws->win && !ISZOMBIE(ws)) {
+    if (ws->win) {
         wdp wd = ws->display;
         XCopyArea(wd->display, ws->pix, ws->win, 
                   DefaultGC(wd->display, wd->screen), event->x,event->y,
@@ -1723,11 +1685,7 @@ static void synch_state(wsp ws)
         return;
     }
 
-    /*
-     * Note the check for ISZOMBIE, since we get an UnmapNotify after destroying the
-     * window.
-     */
-    if (ISZOMBIE(ws) || ws->state == PopupState || ws->state == RootState)
+    if (ws->state == PopupState || ws->state == RootState)
         return;
 
     XGetWindowAttributes(ws->display->display,
@@ -2488,11 +2446,10 @@ static wdp alcdisplay(char *s)
     if (s == NULL) s = "";
     for(wd = wdsplys; wd; wd = wd->next)
         if (wd->program == curpstate && !strcmp(wd->name,s)) {
-            wd->refcount++;
             return wd;
         }
 
-    GRFX_ALLOC(wd, _wdisplay);
+    MemProtect(wd = calloc(1, sizeof(struct _wdisplay)));
 
     strcpy(wd->name,s);
     wd->program = curpstate;
@@ -2983,7 +2940,6 @@ static wcp alccontext(wbp w)
 
     GRFX_ALLOC(wc, _wcontext);
     wc->display = wd;
-    wd->refcount++;
     wc->bg = link_sharedcolor(wd->white);
     wc->fg = link_sharedcolor(wd->black);
     wc->font = wd->defaultfont;
@@ -3086,35 +3042,17 @@ void freewindow(wsp ws)
     ws->refcount--;
     if(ws->refcount == 0) {
         struct imgdata *imd;
-
-        SETZOMBIE(ws);
+        if (ws->win)
+            close_screen_win(ws);
 #ifdef HAVE_LIBXFT
-        if (ws->winDraw) {
-            XftDrawDestroy(ws->winDraw);
-            ws->winDraw = NULL;
-        }
         if (ws->pixDraw) {
             XftDrawDestroy(ws->pixDraw);
             ws->pixDraw = NULL;
         }
 #endif
-        if (ws->win) {
-            XDestroyWindow(ws->display->display, ws->win);
-            XFlush(ws->display->display);
-            while (ws->win)
-                handle_misc(ws->display);
-        }
-        else {
-            /*
-             * There was no XDestroyWindow, so it is necessary
-             * to free the Pixmap here, as it won't be freed via
-             * a DestroyNotify event.
-             */
-            if (ws->pix) {
-                Display *d = ws->display->display;
-                XFreePixmap(d, ws->pix);
-                ws->pix = (Pixmap) NULL;
-            }
+        if (ws->pix) {
+            XFreePixmap(ws->display->display, ws->pix);
+            ws->pix = (Pixmap) NULL;
         }
 
         imd = &ws->initimage;
