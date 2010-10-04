@@ -277,8 +277,6 @@ typedef struct _wstate {
 #ifdef HAVE_LIBXFT
   XftDraw       *winDraw,*pixDraw;
 #endif
-  int		normalx, normaly;	/* pos to remember when maximized */
-  int		normalw, normalh;	/* size to remember when maximized */
   int		state;			/* window state; icon, window or root*/
   Window        transientfor;           /* transient-for hint */
 #elif MSWIN32
