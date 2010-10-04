@@ -76,9 +76,6 @@
 #define CLRRESIZABLE(ws) ((ws)->bits &= ~128)
 
 #if XWindows
-#define ISZOMBIE(ws)     ((ws)->bits & 1)
-#define SETZOMBIE(ws)    ((ws)->bits |= 1)
-#define CLRZOMBIE(ws)    ((ws)->bits &= ~1)
 #define ISEXPOSED(ws)    ((ws)->bits & 256)
 #define SETEXPOSED(ws)   ((ws)->bits |= 256)
 #define CLREXPOSED(w)   ((ws)->bits &= ~256)
@@ -182,7 +179,6 @@ struct imgmem {
  * Displays are maintained in a global list in rwinrsc.r.
  */
 typedef struct _wdisplay {
-  int		refcount;
   char		name[MAXDISPLAYNAME];
   Display *	display;
   struct progstate *program;           /* owning program */
@@ -293,13 +289,7 @@ typedef struct _wstate {
 #endif
 } wstate, *wsp;
 
-/*
- * Icon window file variables are actually pointers to "bindings"
- * of a window and a context.  They are allocated out of a global
- * array in rwinrsrc.c.  There is one binding per Icon window value.
- */
 typedef struct _wbinding {
-  int refcount;
   struct _wbinding *previous, *next;
   wcp context;
   wsp window;

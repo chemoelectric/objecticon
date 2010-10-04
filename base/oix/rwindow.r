@@ -3048,27 +3048,23 @@ void drawCurve(wbp w, XPoint *p, int n)
  * allocate a window binding structure
  */
 wbp alcwbinding()
-   {
-   wbp w;
-
-   GRFX_ALLOC(w, _wbinding);
-   GRFX_LINK(w, wbndngs);
-   return w;
-   }
+{
+    wbp w;
+    MemProtect(w = calloc(1, sizeof(struct _wbinding)));
+    GRFX_LINK(w, wbndngs);
+    return w;
+}
 
 /*
  * free a window binding.
  */
 void freewbinding(wbp w)
-   {
-   w->refcount--;
-   if(w->refcount == 0) {
-      if (w->window) freewindow(w->window);
-      if (w->context) freecontext(w->context);
-      GRFX_UNLINK(w, wbndngs);
-      free(w);
-      }
-   }
+{
+    if (w->window) freewindow(w->window);
+    if (w->context) freecontext(w->context);
+    GRFX_UNLINK(w, wbndngs);
+    free(w);
+}
 
 #endif					/* Graphics */
 
