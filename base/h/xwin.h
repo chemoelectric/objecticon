@@ -34,13 +34,13 @@
 #define MaximizedState IconicState+2
 #define HiddenState IconicState+3
 #define PopupState IconicState+4
-
+#define FullScreenState IconicState+5
 
 #define MAXDISPLAYNAME	64
 #define NUMCURSORSYMS	78
 
 /* Interned atoms array */
-#define NUMATOMS        14
+#define NUMATOMS        18
 #define ATOM_CHARACTER_POSITION    0
 #define ATOM_CLIENT_WINDOW         1
 #define ATOM_HOSTNAME              2
@@ -55,6 +55,13 @@
 #define ATOM_USER                 11
 #define ATOM_WM_DELETE_WINDOW     12
 #define ATOM__OBJECTICON_PROP     13
+#define ATOM__NET_WM_STATE_MAXIMIZED_VERT 14
+#define ATOM__NET_WM_STATE_MAXIMIZED_HORZ 15
+#define ATOM__NET_WM_STATE_FULLSCREEN     16
+#define ATOM__NET_WM_STATE                17
+
+#define _NET_WM_STATE_ADD            1
+#define _NET_WM_STATE_REMOVE         0
 
 /*
  * Macros to ease coding in which every X call must be done twice.

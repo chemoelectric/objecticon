@@ -290,8 +290,6 @@ typedef struct _wstate {
 #ifdef HAVE_LIBXFT
   XftDraw       *winDraw,*pixDraw;
 #endif
-  int		normalx, normaly;	/* pos to remember when maximized */
-  int		normalw, normalh;	/* size to remember when maximized */
   int		state;			/* window state; icon, window or root*/
   Window        transientfor;           /* transient-for hint */
 #elif PLAN9
@@ -308,7 +306,7 @@ typedef struct _wstate {
   int           mouse_pid, cons_pid;
   int           winid;                  /* Id as per winid file */
   int           transientfor_winid;     /* Winid of transient-for window, or -1 */
-  int           desired_canvas;
+  int           state;                  /* Current or desired window state */
   stringint     *cursor;
   int           using_win;
   int           border_width;

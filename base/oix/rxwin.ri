@@ -47,6 +47,8 @@ static int make_mod(unsigned int state);
 static char* property_to_string(wdp wd, Atom target, int number_items, void* data);
 static Atom convert_target(wdp wd, Atom desired_target);
 static void get_atom_descriptor(wsp ws, Atom a, dptr dest);
+static void synch_state(wsp ws);
+static void synch_net_wm_state(wsp ws, int desired_state);
 
 static stringint fillstyles[] = {
     {0, 3},
@@ -85,7 +87,8 @@ static stringint linestyles[] = {
 };
 
 static stringint canvastypes[] = {
-    {0, 6},
+    {0, 7},
+    {"fullscreen",  FullScreenState},
     {"hidden",      HiddenState},
     {"iconic",      IconicState},
     {"maximized",   MaximizedState},
@@ -424,7 +427,7 @@ static void handle_misc(wdp wd)
             }
 
             case SelectionNotify: {
-                Atom actual_type, property;
+                Atom actual_type;
                 int actual_format;
                 unsigned long bytes_after, nitems;
                 unsigned char *prop;
@@ -454,11 +457,9 @@ static void handle_misc(wdp wd)
                     break;
                 }
 
-                property = ATOM(ws->display, _OBJECTICON_PROP);
-
                 status = XGetWindowProperty(ws->display->display,
                                             ws->win,
-                                            property,
+                                            ATOM(ws->display, _OBJECTICON_PROP),
                                             0,
                                             8192,   /* Means we won't get back > 32kb of stuff */
                                             True,
@@ -537,16 +538,8 @@ static void handle_misc(wdp wd)
                 handle_exposures(ws, (XExposeEvent *)&event);
                 break;
             case UnmapNotify:
-                ws->state = IconicState;
-                break;
             case MapNotify:
-                if (ws->state == IconicState) {
-                    if ((ws->width != DisplayWidth(wd->display, wd->screen)) ||
-                        (ws->height != DisplayHeight(wd->display, wd->screen)))
-                        ws->state = NormalState;
-                    else
-                        ws->state = MaximizedState;
-                }
+                synch_state(ws);
                 break;
             case ConfigureNotify:
                 handle_config(ws, (XConfigureEvent *)&event);
@@ -567,7 +560,7 @@ static void handle_misc(wdp wd)
                  */
                 ws->win = (Window) NULL;
                 GRFX_GENUNLINK(ws, vwstates, vnext, vprevious);
-                ws->state = HiddenState;
+                synch_state(ws);
 
                 /*
                  * if there are no more references, we are done with the pixmap
@@ -619,7 +612,6 @@ void wclose(wbp w)
     XSync(stddpy, False);
 
     handle_misc(ws->display);
-
     /*
      * Force window to close (turn into a pixmap)
      */
@@ -758,7 +750,6 @@ static void wmap(wbp w)
      * create the X window (or use the DefaultRootWindow if requested)
      */
     if (ws->state != HiddenState) {
-        Atom WMDeleteWindow;
         XSetWindowAttributes attr;
         attr.background_pixel = wc->bg->c;
 
@@ -803,8 +794,7 @@ static void wmap(wbp w)
            and hence prevents unsightly flicker on a resize. */
         XSetWindowBackgroundPixmap(stddpy, ws->win, None);
 
-        WMDeleteWindow = ATOM(ws->display, WM_DELETE_WINDOW);
-        XSetWMProtocols(ws->display->display, ws->win, &WMDeleteWindow, 1);
+        XSetWMProtocols(ws->display->display, ws->win, &ATOM(ws->display, WM_DELETE_WINDOW), 1);
 
         stdwin = ws->win;
         XClearWindow(stddpy, stdwin);
@@ -927,6 +917,26 @@ static void wmap(wbp w)
     }
     XSync(stddpy, False);
 
+    if (ws->state == MaximizedState) {
+        Atom atoms[2];
+        atoms[0] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_VERT);
+        atoms[1] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_HORZ);
+        XChangeProperty(stddpy, stdwin,
+                        ATOM(wd, _NET_WM_STATE),
+                        XA_ATOM, 32,
+                        PropModeReplace, (unsigned char *)atoms, 2);
+    }
+
+    if (ws->state == FullScreenState) {
+        Atom atoms[1];
+        atoms[0] = ATOM(wd, _NET_WM_STATE_FULLSCREEN);
+        XChangeProperty(stddpy, stdwin,
+                        ATOM(wd, _NET_WM_STATE),
+                        XA_ATOM, 32,
+                        PropModeReplace, (unsigned char *)atoms, 1);
+    }
+
+
     if (ws->state != RootState) {
         CLREXPOSED(ws);
         XMapWindow(stddpy, stdwin);
@@ -943,6 +953,44 @@ static void wmap(wbp w)
 
     XSetFunction(stddpy, stdgc, wc->drawop->i);
     XSync(stddpy, False);
+}
+
+static void synch_net_wm_state(wsp ws, int desired_state)
+{
+    XEvent e;
+    wdp wd = ws->display;
+    e.xclient.type = ClientMessage;
+    e.xclient.serial = 0;
+    e.xclient.send_event = True;
+    e.xclient.display = wd->display;
+    e.xclient.message_type = ATOM(wd, _NET_WM_STATE);
+    e.xclient.format = 32;
+    e.xclient.window = ws->win;
+    e.xclient.data.l[3] = 0;
+    if (desired_state == NormalState) {
+        e.xclient.data.l[0] = _NET_WM_STATE_REMOVE;
+        e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_VERT);
+        e.xclient.data.l[2] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_HORZ);
+        XSendEvent(wd->display, DefaultRootWindow(wd->display), False,
+                   SubstructureNotifyMask | SubstructureRedirectMask, &e);
+        e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_FULLSCREEN);
+        e.xclient.data.l[2] = 0;
+        XSendEvent(wd->display, DefaultRootWindow(wd->display), False,
+                   SubstructureNotifyMask | SubstructureRedirectMask, &e);
+    } else {
+        e.xclient.data.l[0] = _NET_WM_STATE_ADD;
+        if (desired_state == MaximizedState) {
+            e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_VERT);
+            e.xclient.data.l[2] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_HORZ);
+        } else if (desired_state == FullScreenState) { 
+            e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_FULLSCREEN);
+            e.xclient.data.l[2] = 0;
+        } else
+            syserr("Invalid desired_state");
+        XSendEvent(wd->display, DefaultRootWindow(wd->display), False,
+                   SubstructureNotifyMask | SubstructureRedirectMask, &e);
+    }
+    XSync(wd->display, False);
 }
 
 void doconfig(wbp w, int status)
@@ -1143,23 +1191,21 @@ int ownselection(wbp w, char *selname)
 
 int requestselection(wbp w, char *selname, char *targetname)
 {
-    Atom selection, property, target;
+    Atom selection, target;
     STDLOCALS(w);
 
     selection = XInternAtom(ws->display->display, selname, False);
-    property = ATOM(ws->display, _OBJECTICON_PROP);
     target = XInternAtom(ws->display->display, targetname, False);
     if (selection_debug)
-        printf("getselectioncontent: calling XConvertSelection selection=%s target=%s property=%s requestor=%lx\n",
+        printf("getselectioncontent: calling XConvertSelection selection=%s target=%s requestor=%lx\n",
                atom_fmt(ws, selection),
                atom_fmt(ws, target),
-               atom_fmt(ws, property),
                (long)ws->win);
 
     XConvertSelection(ws->display->display,
                       selection, 
                       target, 
-                      property, 
+                      ATOM(ws->display, _OBJECTICON_PROP), 
                       ws->win,
                       CurrentTime);
 
@@ -1287,150 +1333,65 @@ int setcanvas(wbp w, char *s)
     if (e->i == ws->state)
         return Succeeded;
 
+    if (ws->pix == (Pixmap)NULL) {
+        ws->state = e->i;
+        return Succeeded;
+    }
+
+    if (ws->win == (Window) NULL) {
+        if (e->i != HiddenState) {
+            ws->state = e->i;
+            wmap(w);
+        }
+        return Succeeded;
+    }
+
     switch (e->i) {
         case IconicState: {
-            if (ws->pix == (Pixmap) NULL)
-                ws->state = IconicState;
-            else {
-                if (ws->state == RootState || ws->state == PopupState)
-                    return Failed;
-                if (ws->win == (Window) NULL) {
-                    ws->state = IconicState;
-                    wmap(w);
-                } else {
-                    XIconifyWindow(ws->display->display, ws->win, ws->display->screen);
-                    XSync(stddpy, False);
-                    while (ws->state != IconicState)
-                        handle_misc(ws->display);
-                }
-            }
+            if (ws->state == RootState || ws->state == PopupState)
+                return Failed;
+            XIconifyWindow(ws->display->display, ws->win, ws->display->screen);
             break;
         }
 
         case NormalState: {
-            if (ws->pix == (Pixmap) NULL)
-                ws->state = NormalState;
-            else {
-                if (ws->win == (Window) NULL) {
-                    ws->state = NormalState;
-                    wmap(w);
-                }
-                else if (ws->state == IconicState) {
-                    XMapWindow(stddpy, stdwin);
-                    XSync(stddpy, False);
-                    while (ws->state == IconicState)
-                        handle_misc(ws->display);
-                }
-                else if (ws->state == MaximizedState) {
-                    ws->x = ws->normalx;
-                    ws->y = ws->normaly;
-                    ws->width = ws->normalw;
-                    ws->height = ws->normalh;
-                    doconfig(w, C_POS | C_SIZE);
-                    ws->state = NormalState;
-                }
-                else
-                    return Failed;
-            }
-            break;
-        }
-
-        case PopupState: {
-            if (ws->pix == (Pixmap) NULL)
-                ws->state = PopupState;
-            else {
-                if (ws->win == (Window) NULL) {
-                    ws->state = PopupState;
-                    wmap(w);
-                }
-                else
-                    return Failed;
-            }
-            break;
-        }
-
-        case RootState: {
-            if (ws->pix == (Pixmap) NULL)
-                ws->state = RootState;
-            else {
-                if (ws->win == (Window) NULL) {
-                    ws->state = RootState;
-                    wmap(w);
-                }
-                else
-                    return Failed;
-            }
-            break;
-        }
-
-        case MaximizedState: {
-            int expect_config;
             if (ws->state == RootState || ws->state == PopupState)
                 return Failed;
-            expect_config= (ws->width != DisplayWidth(stddpy, wd->screen)) ||
-                (ws->height != DisplayHeight(stddpy, wd->screen));
-            ws->normalx = ws->x;
-            ws->normaly = ws->y;
-            ws->normalw = ws->width;
-            ws->normalh = ws->height;
-            ws->width = DisplayWidth(stddpy, wd->screen);
-            ws->height= DisplayHeight(stddpy, wd->screen);
-            if (ws->pix != (Pixmap) NULL) {
-                if (ws->win == (Window) NULL) {
-                    ws->state = MaximizedState;
-                    wmap(w);
-                }
-                else if (ws->state == IconicState) {
-                    XMapWindow(stddpy, stdwin);
-                    XSync(stddpy, False);
-                    while (ws->state == IconicState)
-                        handle_misc(ws->display);
-                }
-                else if (expect_config) {
-                    ws->x = ws->y = 0;
-                    doconfig(w, C_POS | C_SIZE);
-                    handle_misc(ws->display);
-                    ws->x = -ws->x;
-                    ws->y = -ws->y;
-                    doconfig(w, C_POS);
-                }
-            }
-            ws->state = MaximizedState;
+            XMapWindow(stddpy, stdwin);
+            synch_net_wm_state(ws, e->i);
+            break;
+        }
+
+        case PopupState:
+        case RootState:
+            return Failed;
+
+        case MaximizedState:
+        case FullScreenState: {
+            if (ws->state == RootState || ws->state == PopupState)
+                return Failed;
+            XMapWindow(stddpy, stdwin);
+            synch_net_wm_state(ws, e->i);
             break;
         }
 
         case HiddenState: {
-            if (ws->pix == (Pixmap)NULL)
-                ws->state = HiddenState;
-            else {
-                if (ws->win != (Window) NULL) {
-                    if (ws->state == MaximizedState) {
-                        ws->x = ws->normalx;
-                        ws->y = ws->normaly;
-                        ws->width = ws->normalw;
-                        ws->height = ws->normalh;
-                        ws->state = NormalState;
-                    }
-                    SETZOMBIE(ws);
+            SETZOMBIE(ws);
 #ifdef HAVE_LIBXFT
-                    if (ws->winDraw) {
-                        XftDrawDestroy(ws->winDraw);
-                        ws->winDraw = NULL;
-                    }
-#endif
-                    XDestroyWindow(stddpy, stdwin);
-                    XFlush(stddpy);
-                    while (ws->win)
-                        handle_misc(ws->display);
-                    ws->state = HiddenState;
-                }
+            if (ws->winDraw) {
+                XftDrawDestroy(ws->winDraw);
+                ws->winDraw = NULL;
             }
+#endif
+            XDestroyWindow(stddpy, stdwin);
+            XFlush(stddpy);
+            while (ws->state != HiddenState)
+                handle_misc(ws->display);
             break;
         }
         default:
             syserr("Unexpected canvas state");
     }
-    XSync(ws->display->display, False);
     return Succeeded;
 }
 
@@ -1749,6 +1710,67 @@ static void resizepixmap(wbp w, int width, int height)
     }
 }
 
+static void synch_state(wsp ws)
+{
+    Atom actual_type;
+    int actual_format;
+    unsigned long bytes_after, nitems;
+    unsigned char *prop;
+    XWindowAttributes attr;
+
+    if (ws->win == (Window) NULL) {
+        ws->state = HiddenState;
+        return;
+    }
+
+    /*
+     * Note the check for ISZOMBIE, since we get an UnmapNotify after destroying the
+     * window.
+     */
+    if (ISZOMBIE(ws) || ws->state == PopupState || ws->state == RootState)
+        return;
+
+    XGetWindowAttributes(ws->display->display,
+                         ws->win,
+                         &attr);
+    if (attr.map_state == IsUnmapped) {
+        ws->state = IconicState;
+        return;
+    }
+
+    if (XGetWindowProperty(ws->display->display,
+                           ws->win,
+                           ATOM(ws->display, _NET_WM_STATE),
+                           0,
+                           8192,
+                           False,
+                           XA_ATOM,
+                           &actual_type,
+                           &actual_format,
+                           &nitems,
+                           &bytes_after,
+                           &prop) == Success) {
+        Atom *atoms = (Atom *)prop;
+        int i, max = 0;
+        for (i = 0; i < nitems; ++i) {
+            if (atoms[i] == ATOM(ws->display, _NET_WM_STATE_MAXIMIZED_VERT))
+                max |= 1;
+            else if (atoms[i] == ATOM(ws->display, _NET_WM_STATE_MAXIMIZED_HORZ))
+                max |= 2;
+            else if (atoms[i] == ATOM(ws->display, _NET_WM_STATE_FULLSCREEN))
+                max |= 4;
+        }
+        if (max == 3)
+            ws->state = MaximizedState;
+        else if (max == 4)
+            ws->state = FullScreenState;
+        else
+            ws->state = NormalState;
+
+        XFree(prop);
+    }        
+}
+
 /*
  * Resize operations are made as painless as possible, but the
  * user program is informed anyhow.  The integer coordinates are
@@ -1756,6 +1778,8 @@ static void resizepixmap(wbp w, int width, int height)
  */
 static void handle_config(wsp ws, XConfigureEvent *event)
 {
+    synch_state(ws);
+
     /*
      * Update X-Icon's information about the window's configuration
      */
@@ -2219,36 +2243,35 @@ int setpattern(wbp w, char *name)
 
 int raisewindow(wbp w)
 {
-    XEvent event;
-    XWindowAttributes attr;
-
     wsp ws = w->window;
-    if (ws->win) {
-        XMapRaised(ws->display->display, ws->win);
+    if (!ws->win)
+        return Failed;
 
-        /* Wait for the window to become viewable before giving
-           it the focus. */
-        for (;;) {
-            XGetWindowAttributes(ws->display->display, ws->win, &attr);
-            if (attr.map_state == IsViewable)
-                break;
-            /* Not viewable yet, so wait for a MapNotify event. */
-            XWindowEvent(ws->display->display, 
-                         ws->win,
-                         StructureNotifyMask, 
-                         &event);
-        }
+    XMapRaised(ws->display->display, ws->win);
 
-        /* Now it is viewable, so give it the focus. */
-        XSetInputFocus(ws->display->display, ws->win, RevertToParent, CurrentTime);
+    /* Wait for the window to become viewable before giving
+       it the focus. */
+    for (;;) {
+        XWindowAttributes attr;
+        XGetWindowAttributes(ws->display->display, ws->win, &attr);
+        if (attr.map_state == IsViewable)
+            break;
+        /* Not viewable yet, so wait for a MapNotify event. */
+        handle_misc(ws->display);
     }
+
+    /* Now it is viewable, so give it the focus. */
+    XSetInputFocus(ws->display->display, ws->win, RevertToParent, CurrentTime);
+
     return Succeeded;
 }
 
 int lowerwindow(wbp w)
 {
-    if (w->window->win)
-        XLowerWindow(w->window->display->display, w->window->win);
+    wsp ws = w->window;
+    if (!ws->win)
+        return Failed;
+    XLowerWindow(ws->display->display, ws->win);
     return Succeeded;
 }
 
@@ -2448,6 +2471,10 @@ char *atom_names[] = {
     "USER",
     "WM_DELETE_WINDOW",
     "_OBJECTICON_PROP",
+    "_NET_WM_STATE_MAXIMIZED_VERT",
+    "_NET_WM_STATE_MAXIMIZED_HORZ",
+    "_NET_WM_STATE_FULLSCREEN",
+    "_NET_WM_STATE",
 };
 
 /*
