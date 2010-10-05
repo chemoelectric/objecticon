@@ -115,8 +115,9 @@ class TreeTableContent(Tree)
       return parent.table_header.children[n]
    end
 
-   public draw_line(xp, yp, lh, i, r, sel, cur)
-      local j, cols, clip_x, clip_w, col, N
+   public draw_line(xp, yp, lh, i, sel, cur)
+      local j, cols, clip_x, clip_w, col, N, r
+      r := view.get_cbwin_clip()
       N := self.contents[i]
       cols := parent.table_header.children
       every j := 1 to *cols do {
@@ -127,7 +128,7 @@ class TreeTableContent(Tree)
          if clip_w > 0 then {
             view.cbwin.clip(clip_x, self.view.y, clip_w, self.view.h)
             if j = 1 then
-               cast(self,Tree).draw_line(xp, yp, lh, i, r)
+               cast(self,Tree).draw_line(xp, yp, lh, i)
             else
                col.draw_cell(view.cbwin, (\N.contents)[j - 1], i, j, yp, lh)
          }

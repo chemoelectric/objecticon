@@ -50,6 +50,8 @@ static void get_atom_descriptor(wsp ws, Atom a, dptr dest);
 static void synch_state(wsp ws);
 static void synch_net_wm_state(wsp ws, int desired_state);
 static void close_screen_win(wsp ws);
+static int get_shift(unsigned long mask);
+static struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int b);
 
 static stringint fillstyles[] = {
     {0, 3},
@@ -223,14 +225,14 @@ static void dump_all(void)
 
 #define ATOM(d, x) ((d)->atoms[Cat(ATOM_,x)])
 
-static struct SharedColor *new_sharedcolor(char *name, int r, int g, int b)
+static struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int b)
 {
     struct SharedColor *res;
     GRFX_ALLOC(res, SharedColor);
     res->r = r;
     res->g = g;
     res->b = b;
-    res->c = ((r/256)<<16) | ((g/256)<<8) | (b/256);
+    res->c = ((r/256)<<wd->red_shift) | ((g/256)<<wd->green_shift) | (b/256<<wd->blue_shift);
     res->name = salloc(name);
     return res;
 }
@@ -651,7 +653,6 @@ wbp wcreate(char *display)
         return 0;
     }
     ws = w->window;
-    ws->vis = DefaultVisual(ws->display->display, ws->display->screen); 
     create_list(64, &ws->listp);
 
     /*
@@ -1119,6 +1120,9 @@ int ownselection(wbp w, char *selname)
     Window curr;
     STDLOCALS(w);
 
+    if (!ws->win)
+        return Failed;
+
     selection = XInternAtom(ws->display->display, selname, False);
 
     curr = XGetSelectionOwner(ws->display->display, selection);
@@ -1165,7 +1169,8 @@ int requestselection(wbp w, char *selname, char *targetname)
 {
     Atom selection, target;
     STDLOCALS(w);
-
+    if (!ws->win)
+        return Failed;
     selection = XInternAtom(ws->display->display, selname, False);
     target = XInternAtom(ws->display->display, targetname, False);
     if (selection_debug)
@@ -1437,7 +1442,7 @@ int setfg(wbp w, char *s)
         return Failed;
     if (wc->fg)
         unlink_sharedcolor(wc->fg);
-    wc->fg = new_sharedcolor(s, r, g, b);
+    wc->fg = new_sharedcolor(wc->display, s, r, g, b);
     if (wc->gc)
         XSetForeground(wc->display->display, wc->gc, wc->fg->c);
     return Succeeded;
@@ -1455,7 +1460,7 @@ int setbg(wbp w, char *s)
         return Failed;
     if (wc->bg)
         unlink_sharedcolor(wc->bg);
-    wc->bg = new_sharedcolor(s, r, g, b);
+    wc->bg = new_sharedcolor(wc->display, s, r, g, b);
     if (wc->gc)
         XSetBackground(wc->display->display, wc->gc, wc->bg->c);
     return Succeeded;
@@ -2277,13 +2282,13 @@ void drawstring(wbp w, int x, int y, char *str, int slen)
     if (ws->win && !ws->winDraw)
         ws->winDraw = XftDrawCreate(ws->display->display,
                                     ws->win,
-                                    ws->vis,
+                                    ws->display->vis,
                                     ws->display->cmap);
 
     if (!ws->pixDraw)
         ws->pixDraw = XftDrawCreate(ws->display->display,
                                     ws->pix,
-                                    ws->vis,
+                                    ws->display->vis,
                                     ws->display->cmap);
     color.pixel = wc->fg->c;
     color.color.red = wc->fg->r;
@@ -2339,13 +2344,13 @@ void drawutf8(wbp w, int x, int y, char *str, int slen, int nchars)
     if (ws->win && !ws->winDraw)
         ws->winDraw = XftDrawCreate(ws->display->display,
                                     ws->win,
-                                    ws->vis,
+                                    ws->display->vis,
                                     ws->display->cmap);
 
     if (!ws->pixDraw)
         ws->pixDraw = XftDrawCreate(ws->display->display,
                                     ws->pix,
-                                    ws->vis,
+                                    ws->display->vis,
                                     ws->display->cmap);
     color.pixel = wc->fg->c;
     color.color.red = wc->fg->r;
@@ -2435,12 +2440,25 @@ char *atom_names[] = {
     "_NET_WM_STATE",
 };
 
+static int get_shift(unsigned long mask)
+{
+    switch (mask) {
+        case 0xff000000: return 24;
+        case 0xff0000: return 16;
+        case 0xff00: return 8;
+        case 0xff: return 0;
+        default: return -1;
+    }
+}
+
 /*
  * allocate a display on machine s
  */
 static wdp alcdisplay(char *s)
 {
     wdp wd;
+    XVisualInfo xvi, *xvi_ret;
+    int nitems_return;
 
     if (s == NULL) s = getenv("DISPLAY");
     if (s == NULL) s = "";
@@ -2461,8 +2479,41 @@ static wdp alcdisplay(char *s)
     }
 
     wd->screen = DefaultScreen(wd->display);
-    wd->black = new_sharedcolor("black", 0, 0, 0);
-    wd->white = new_sharedcolor("white", 65535, 65535, 65535);
+    wd->vis = DefaultVisual(wd->display, wd->screen);
+
+    /*
+     * Get info about the default visual, check it's suitbale and
+     * extract the rgb shift masks.
+     */
+    xvi.visualid = XVisualIDFromVisual(wd->vis);
+    xvi_ret = XGetVisualInfo(wd->display, VisualIDMask, &xvi, &nitems_return);
+    if (nitems_return != 1) {
+        LitWhy("Couldn't get default visual's info");
+        free(wd);
+        return NULL;
+    }
+    if (xvi_ret->class != TrueColor) {
+        LitWhy("Only TrueColor displays are supported");
+        free(wd);
+        return NULL;
+    }
+    if (xvi_ret->depth != 24 || xvi_ret->bits_per_rgb != 8) {
+        LitWhy("Only 24-bit depth, 8 bits/rgb displays are supported");
+        free(wd);
+        return NULL;
+    }
+    wd->red_shift = get_shift(xvi_ret->red_mask);
+    wd->green_shift = get_shift(xvi_ret->green_mask);
+    wd->blue_shift = get_shift(xvi_ret->blue_mask);
+    if (wd->red_shift < 0 || wd->green_shift < 0 || wd->blue_shift < 0) {
+        LitWhy("Couldn't translate Visual color mask into shift");
+        free(wd);
+        return NULL;
+    }
+    XFree(xvi_ret);
+
+    wd->black = new_sharedcolor(wd, "black", 0, 0, 0);
+    wd->white = new_sharedcolor(wd, "white", 65535, 65535, 65535);
     wd->cmap = DefaultColormap(wd->display, wd->screen);
     wd->defaultfont = loadfont(wd, getdefaultfont());
     if (wd->defaultfont == NULL) {

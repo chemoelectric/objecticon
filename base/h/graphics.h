@@ -189,6 +189,8 @@ struct imgmem {
 typedef struct _wdisplay {
   char		name[MAXDISPLAYNAME];
   Display *	display;
+  Visual	*vis;
+  int           red_shift, blue_shift, green_shift;
   struct progstate *program;           /* owning program */
   struct SharedColor *black, *white;
   Colormap	cmap;
@@ -281,7 +283,6 @@ typedef struct _wstate {
   Pixmap	pix;			/* current screen state */
   int		pixheight;		/* backing pixmap height, in pixels */
   int		pixwidth;		/* pixmap width, in pixels */
-  Visual	*vis;
   stringint     *cursor;
 #ifdef HAVE_LIBXFT
   XftDraw       *winDraw,*pixDraw;

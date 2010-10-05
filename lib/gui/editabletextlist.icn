@@ -962,8 +962,10 @@ class EditableTextList(LineBasedScrollArea)
          view.invalidate(Rect(view.x, cursor_last_y, view.w, line_height))
    end
 
-   public draw(r)
-      local xp, yp, i, info
+   public draw()
+      local xp, yp, i, info, r
+
+      r := view.get_cbwin_clip()
 
       info := get_line_info(r) | fail
       yp := r.y - info.offset

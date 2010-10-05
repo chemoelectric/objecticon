@@ -254,6 +254,14 @@ class Component(Rect,Align,SetFields,Connectable)
    end
 
    #
+   # Return the clip rectangle of {cbwin} as a {Rect}.  Fails if there
+   # is no clip.
+   #
+   public get_cbwin_clip()
+      return Rect!cbwin.get_clip()
+   end
+
+   #
    # Get the cloned buffer window, as seen by a child component.
    #
    public get_cbwin()
@@ -398,32 +406,32 @@ class Component(Rect,Align,SetFields,Connectable)
    # This draws, or re-draws, the component and all its children in the dialog
    # window.
    #
-   public display(r)
-      display_children(r)
+   public display()
+      display_children()
    end
 
    #
    # Useful function to display the children.
    #
-   public display_children(r)
-      every display_child(r, !self.z_children)
+   public display_children()
+      every display_child(!self.z_children)
    end
 
-   public display_child(r, c)
+   public display_child(c)
       if c.is_unhidden() then
-         c.invoke_display(r.intersect(c))
+         c.invoke_display!cbwin.drawable(c.x, c.y, c.w, c.h)
    end
 
-   public invoke_display(r)
-      self.cbwin.clip(r.x, r.y, r.w, r.h)
-      self.cbwin.erase_area(r.x, r.y, r.w, r.h)
-      self.display(r)
+   public invoke_display(rx, ry, rw, rh)
+      self.cbwin.clip(rx, ry, rw, rh)
+      self.cbwin.erase_area(rx, ry, rw, rh)
+      self.display()
       if \self.show_layout_flag then
          (\layout_delegate).display()
       # Only need to shade if we are shaded and the parent won't shade for us.  This also
       # avoids filtering twice, which makes the result too grey.
       if is_shaded() & not((\parent).is_shaded()) then
-         Gui.style.shade_rectangle(self.cbwin, r.x, r.y, r.w, r.h)
+         Gui.style.shade_rectangle(self.cbwin, rx, ry, rw, rh)
    end
 
    #

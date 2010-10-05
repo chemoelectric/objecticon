@@ -16,7 +16,7 @@ class MenuTree(SelectableScrollArea)
       return self.cbwin.get_font_height()
    end
 
-   public draw_line_data(xp, yp, lh, i, r)
+   public draw_line_data(xp, yp, lh, i)
       local dashed, s, lp, y0
 
       y0 := yp + self.line_height / 2

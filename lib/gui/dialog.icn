@@ -84,7 +84,7 @@ class Dialog(Component)
       r := copy_rect
       copy_rect := &null
 
-      self.invoke_display(r)
+      self.invoke_display(r.x, r.y, r.w, r.h)
 
       cbwin.copy_to(win, r.x, r.y, r.w, r.h, r.x, r.y)
    end

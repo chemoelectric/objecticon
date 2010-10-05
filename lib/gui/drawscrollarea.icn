@@ -10,8 +10,8 @@ package gui
 
 
 class DrawScrollAreaView(Component)
-   public display(r)
-      parent.draw(r)
+   public display()
+      parent.draw()
    end
 end
 
@@ -23,10 +23,10 @@ end
 class DrawScrollArea(ScrollArea)
    #
    # Draw the object at the offset given by {get_area_x()}, {get_area_y()}
-   # into view.cbwin at view.x, view.y, with size view.w, view.h.  The parameter r gives
-   # the clipping rectangle; view is already clipped to this rectangle.
+   # into view.cbwin at view.x, view.y, with size view.w, view.h.  View is
+   # already clipped to the correct rectangle.
    #
-   public defer draw(r)
+   public defer draw()
 
    public create_view()
       return DrawScrollAreaView()

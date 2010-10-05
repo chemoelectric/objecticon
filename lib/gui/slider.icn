@@ -450,7 +450,7 @@ class Slider(Component)
       cast(self,Component).initially()
    end
 
-   public display(r)
+   public display()
       border.draw_rect(self.cbwin, self)
 
       if \self.labels then
@@ -459,7 +459,7 @@ class Slider(Component)
       if \self.ticks then
          draw_ticks()
 
-      self.display_children(r)
+      self.display_children()
    end
 
    public finally()

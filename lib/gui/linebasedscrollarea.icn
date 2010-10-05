@@ -245,8 +245,10 @@ class LineBasedScrollArea(DrawScrollArea)
       return r
    end
 
-   public draw(r)
-      local xp, yp, i, info, h, lh
+   public draw()
+      local xp, yp, i, info, h, lh, r
+
+      r := view.get_cbwin_clip()
 
       info := get_line_info(r) | fail
       h := get_line_height()
@@ -266,7 +268,7 @@ class LineBasedScrollArea(DrawScrollArea)
       #
       every i := info.first to info.last do {
          lh := integer(h) | h[i]
-         draw_line(xp, yp, lh, i, r)
+         draw_line(xp, yp, lh, i)
          yp +:= lh
       }
    end
@@ -278,9 +280,8 @@ class LineBasedScrollArea(DrawScrollArea)
    # @param yp  The y position it should be drawn at
    # @param lh  The line height allowed for this line
    # @param i   The line number to draw
-   # @param r   The view's clipping rectangle
    #
-   public defer draw_line(xp, yp, lh, i, r)
+   public defer draw_line(xp, yp, lh, i)
 
    #
    # Clear the cached value of line height (and subject height).

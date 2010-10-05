@@ -360,7 +360,7 @@ class ShowGridPaint(DrawScrollArea)
       return 10
    end
 
-   public draw(r)
+   public draw()
       (\d).draw(view.cbwin, 
                 view.x - get_area_x(), 
                 view.y - get_area_y())
