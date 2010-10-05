@@ -1120,6 +1120,9 @@ int ownselection(wbp w, char *selname)
     Window curr;
     STDLOCALS(w);
 
+    if (!ws->win)
+        return Failed;
+
     selection = XInternAtom(ws->display->display, selname, False);
 
     curr = XGetSelectionOwner(ws->display->display, selection);
@@ -1166,7 +1169,8 @@ int requestselection(wbp w, char *selname, char *targetname)
 {
     Atom selection, target;
     STDLOCALS(w);
-
+    if (!ws->win)
+        return Failed;
     selection = XInternAtom(ws->display->display, selname, False);
     target = XInternAtom(ws->display->display, targetname, False);
     if (selection_debug)
