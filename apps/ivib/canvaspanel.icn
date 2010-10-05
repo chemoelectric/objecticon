@@ -79,12 +79,12 @@ class CanvasPanel(CanvasComponent,Panel)
       return CanvasPanelDialog(self)
    end
 
-   public display(r)
+   public display()
       if in_preview() then
-         cast(self,Panel).display(r)
+         cast(self,Panel).display()
       else {
          center_string(self.cbwin, self.x + self.w / 2, self.y + 10, "<Panel>")
-         display_children(r)
+         display_children()
          self.cbwin.draw_rectangle(self.x, self.y, self.w, self.h)
       }
    end

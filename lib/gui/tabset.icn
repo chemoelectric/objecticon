@@ -185,7 +185,10 @@ class TabSet(Component)
                           self.x + self.w - nx)
    end
 
-   public display(r)
+   public display()
+      local r
+      r := get_cbwin_clip()
+      
       #
       # Display outline of tabbed pane area.
       #
@@ -205,7 +208,7 @@ class TabSet(Component)
       #
       # Display contents of current tab into buffer
       #
-      display_child(r, which_one)
+      display_child(which_one)
    end
 
    public draw_shadow_segment(loc, x, y, len)

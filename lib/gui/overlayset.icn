@@ -16,11 +16,11 @@ class OverlaySet(Component)
    public 
       which_one
 
-   public display(r)
+   public display()
       #
       # Display contents of current tab into buffer
       #
-      display_child(r, which_one)
+      display_child(which_one)
    end
 
    #

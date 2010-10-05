@@ -507,6 +507,15 @@ class Window(SetFields,NoCopy)
    public defer filter(filter, x, y, width, height)
 
    #
+   # Return a rectangle (as a list of four integers), representing
+   # that part of the given rectangle which would be drawable on the
+   # canvas; ie the intersection of the rectangle, the window and the
+   # clip area if set.  If the result would be an empty area, the
+   # method fails.
+   #
+   public defer drawable(x, y, width, height)
+
+   #
    # Return the current root x, y position as a two-element list.
    #
    public defer query_root_pointer()

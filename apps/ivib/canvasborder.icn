@@ -126,10 +126,10 @@ class CanvasBorder(CanvasComponent,Border)
    #
    # Overrides Border.display()
    #
-   public display(r)
+   public display()
       local cw
 
-      cast(self,Border).display(r)
+      cast(self,Border).display()
       if in_ivib() then {
          cw := self.cbwin.clone("line_style=dashed")
          cw.draw_rectangle(self.x + self.w - INSIDE_BOX, self.y + self.h - INSIDE_BOX, INSIDE_BOX - Gui.BORDER_WIDTH, INSIDE_BOX- Gui.BORDER_WIDTH)

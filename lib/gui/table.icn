@@ -83,8 +83,9 @@ class TableContent(SelectableScrollArea)
             return c
    end
 
-   public draw_line_data(xp, yp, lh, i, r)
-      local j, l, cols, clip_x, clip_w, col
+   public draw_line_data(xp, yp, lh, i)
+      local j, l, cols, clip_x, clip_w, col, r
+      r := view.get_cbwin_clip()
       l := self.contents[i]
       cols := parent.table_header.children
       every j := 1 to *cols do {
@@ -364,7 +365,7 @@ class Table(Component)
       self.table_header.layout()
    end
 
-   public display(r)
+   public display()
       border.draw_rect(self.cbwin, self)
       Gui.style.draw_raised_rectangle(self.cbwin, 
                                   self.x + border.get_l_inset(), 
@@ -372,7 +373,7 @@ class Table(Component)
                                   self.w - border.get_total_width(), 
                                   2 * Gui.BORDER_WIDTH,
                                   Gui.BORDER_WIDTH)
-      self.display_children(r)
+      self.display_children()
    end
 
    public on_table_content(ev, src, type)

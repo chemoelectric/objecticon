@@ -378,9 +378,9 @@ class ScrollBar(Component)
       end_handle(e)
    end
 
-   public display(r)
+   public display()
       border.draw_rect(self.cbwin, self)
-      display_children(r)
+      display_children()
    end
 
    public reconfigure()

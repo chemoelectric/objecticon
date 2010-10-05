@@ -260,7 +260,7 @@ class Tree(SelectableScrollArea)
       return self.last_expanded
    end
 
-   public draw_line(xp, yp, lh, i, r, sel, cur)
+   public draw_line(xp, yp, lh, i, sel, cur)
       local N, dashed, lp, j, icon_paint, img, little, y0
 
       y0 := yp + lh / 2

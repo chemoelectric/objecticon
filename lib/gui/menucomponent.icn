@@ -289,7 +289,7 @@ class MenuComponent(Rect,SetFields,Connectable)
    #
    # Display the submenu
    #
-   public defer display(w, r)
+   public defer display(w)
 
    #
    # Handle the given event.
@@ -449,8 +449,8 @@ end
 class SubMenuProxyComponent(Component)
    public menu
 
-   public display(r)
-      menu.display(self.cbwin, r)
+   public display()
+      menu.display(self.cbwin)
    end
 
    public get_tooltip(e)

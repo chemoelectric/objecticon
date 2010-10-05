@@ -28,7 +28,7 @@ class TextButton(Button)
       paint,
       paint_down
 
-   public display(r)
+   public display()
       local p
 
       p := if /paint_down | (self.is_down === self.is_checked_flag) then

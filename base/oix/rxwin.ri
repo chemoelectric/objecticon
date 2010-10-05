@@ -2443,6 +2443,7 @@ char *atom_names[] = {
 static int get_shift(unsigned long mask)
 {
     switch (mask) {
+        case 0xff000000: return 24;
         case 0xff0000: return 16;
         case 0xff00: return 8;
         case 0xff: return 0;

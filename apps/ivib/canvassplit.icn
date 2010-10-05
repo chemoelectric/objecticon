@@ -108,16 +108,16 @@ class CanvasSplit(CanvasComponent,Split)
       return self
    end
 
-   public display(r)
+   public display()
       if in_preview() then
-         cast(self,Split).display(r)
+         cast(self,Split).display()
       else {
          # Fiddly to get the label "<Split>" above the sizer, but below the
          # contents of first and second.  (See also CanvasSplitContent.display() below).
-         display_child(r, sizer)
+         display_child(sizer)
          center_string(self.cbwin, self.x + self.w / 2, self.y + 10, "<Split>")
-         display_child(r, first)
-         display_child(r, second)
+         display_child(first)
+         display_child(second)
          self.cbwin.draw_rectangle(self.x, self.y, self.w, self.h)
       }
    end
@@ -220,13 +220,13 @@ class CanvasSplitContent(CanvasComponent,Component)
    public allows_copy()
    end
 
-   public display(r)
+   public display()
       if in_preview() then
-         cast(self,Component).display(r)
+         cast(self,Component).display()
       else {
          parent.cbwin.draw_rectangle(parent.x, parent.y, parent.w, parent.h)
          center_string(self.cbwin, parent.x + parent.w / 2, parent.y + 10, "<Split>")
-         display_children(r)
+         display_children()
       }
    end
 

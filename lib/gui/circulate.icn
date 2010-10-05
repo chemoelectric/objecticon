@@ -91,9 +91,9 @@ class Circulate(SelectionList,Component)
    #
    # Display the object.
    #
-   public display(r)
+   public display()
       border.draw_rect(self.cbwin, self)
-      display_children(r)
+      display_children()
    end
 
    #

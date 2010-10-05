@@ -1074,21 +1074,87 @@ function graphics_Window_get_canvas(self)
    }
 end
 
+function graphics_Window_drawable(self, x0, y0, w0, h0)
+   body {
+      tended struct descrip result;
+      struct descrip t;
+      wcp wc;
+      wsp ws;
+      word x, y, width, height;
+      GetSelfW();
+      wc = self_w->context;
+      ws = self_w->window;
+
+      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
+
+      if (x < 0)  { 
+          width += x; 
+          x = 0; 
+      }
+      if (y < 0)  { 
+          height += y; 
+          y = 0; 
+      }
+      if (x + width > ws->width)
+          width = ws->width - x; 
+      if (y + height > ws->height)
+          height = ws->height - y; 
+
+      if (width <= 0 || height <= 0)
+          fail;
+
+      if (wc->clipw >= 0) {
+          /* Further reduce the rectangle to the clipping region */
+          if (x < wc->clipx) {
+              width += x - wc->clipx;
+              x = wc->clipx;
+          }
+          if (y < wc->clipy) {
+              height += y - wc->clipy; 
+              y = wc->clipy;
+          }
+          if (x + width > wc->clipx + wc->clipw)
+              width = wc->clipx + wc->clipw - x;
+          if (y + height > wc->clipy + wc->cliph)
+              height = wc->clipy + wc->cliph - y;
+
+          if (width <= 0 || height <= 0)
+              fail;
+      }
+
+      create_list(4, &result);
+      MakeInt(x - wc->dx, &t);
+      list_put(&result, &t);
+      MakeInt(y - wc->dy, &t);
+      list_put(&result, &t);
+      MakeInt(width, &t);
+      list_put(&result, &t);
+      MakeInt(height, &t);
+      list_put(&result, &t);
+
+      return result;
+   }
+end
+
+
 function graphics_Window_get_clip(self)
    body {
        tended struct descrip result;
        struct descrip t;
+       wcp wc;
        GetSelfW();
-       if (self_w->context->clipw < 0)
+       wc = self_w->context;
+       if (wc->clipw < 0)
            fail;
        create_list(4, &result);
-       MakeInt(self_w->context->clipx - self_w->context->dx, &t);
+       MakeInt(wc->clipx - wc->dx, &t);
        list_put(&result, &t);
-       MakeInt(self_w->context->clipy - self_w->context->dy, &t);
+       MakeInt(wc->clipy - wc->dy, &t);
        list_put(&result, &t);
-       MakeInt(self_w->context->clipw, &t);
+       MakeInt(wc->clipw, &t);
        list_put(&result, &t);
-       MakeInt(self_w->context->cliph, &t);
+       MakeInt(wc->cliph, &t);
        list_put(&result, &t);
        return result;
    }

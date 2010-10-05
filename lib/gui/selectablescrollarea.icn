@@ -679,8 +679,10 @@ class SelectableScrollArea(LineBasedScrollArea)
          return [self.cursor]
    end
 
-   public draw(r)
-      local xp, yp, i, info, h, lh, sel, cur
+   public draw()
+      local xp, yp, i, info, h, lh, sel, cur, r
+
+      r := view.get_cbwin_clip()
 
       info := get_line_info(r) | fail
       h := get_line_height()
@@ -706,7 +708,7 @@ class SelectableScrollArea(LineBasedScrollArea)
          lh := integer(h) | h[i]
          
          # Draw the line
-         draw_line(xp, yp, lh, i, r, sel, cur)
+         draw_line(xp, yp, lh, i, sel, cur)
          yp +:= lh
       }
    end
@@ -735,13 +737,12 @@ class SelectableScrollArea(LineBasedScrollArea)
    # @param yp  The y position it should be drawn at
    # @param lh  The line height allowed for this line
    # @param i   The line number to draw
-   # @param r   The view's clipping region.
    # @param sel If non-null, the line must be drawn as selected
    # @param cur Indicates the cursor for this row; &null indicates none, "h" indicates the
    # @          highlight cursor, "f" indicates focus cursor "d" indicates disabled cursor.
    #
-   public draw_line(xp, yp, lh, i, r, sel, cur)
-      draw_line_data(xp, yp, lh, i, r)
+   public draw_line(xp, yp, lh, i, sel, cur)
+      draw_line_data(xp, yp, lh, i)
       draw_line_sel_cur(self.view.x, yp, self.view.w, lh, sel, cur)
    end
 
@@ -758,7 +759,7 @@ class SelectableScrollArea(LineBasedScrollArea)
       }
    end
 
-   public defer draw_line_data(xp, yp, lh, i, r)
+   public defer draw_line_data(xp, yp, lh, i)
 
    public can_drag(ev)
       if view.is_held(Mouse.LEFT_PRESS) & /self.draggable_cursor & \self.on_a_line then
