@@ -1330,6 +1330,9 @@ int ownselection(wbp w, char *selection)
     wsp ws = w->window;
     tended struct descrip tmp;
 
+    if (!ws->win)
+        return Failed;
+
     /* Note - could filter out selections to use CLIPBOARD only, ie ^C, not drag */
     MakeInt(SELECTIONREQUEST, &tmp);
     list_put(&ws->listp, &tmp);
@@ -1350,6 +1353,9 @@ int requestselection(wbp w, char *selection, char *target)
     tended struct descrip tmp;
     int snarf_len = 0;
     char *snarf = 0;
+
+    if (!ws->win)
+        return Failed;
 
     if (strcmp(target, "UTF8_STRING") == 0) {
         int fd, n_read;
