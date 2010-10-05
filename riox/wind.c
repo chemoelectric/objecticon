@@ -1439,7 +1439,8 @@ wtop(Window *w)
                 if(w->noborder) return nil;
 		topwindow(w->i);
 		w->topped = ++topped;
-                w->focusclickflag = 1;
+                if (input != w)
+                    w->focusclickflag = 1;
                 ensurestacking();
 		wcurrent(w);
 		flushimage(display, 1);
