@@ -66,7 +66,6 @@ static void swap_files(void);
 static void copy_tmp(void);
 static void print_func_vars(void);
 
-static int use_frame = 0;
 static int in_struct = 0;
 static int lab_seq = 0;
  
@@ -258,7 +257,7 @@ int indent;
 static void untend(indent)
 int indent;
    {
-   if (use_frame)
+   if (op_type != OrdFunc)
        return;
    ForceNl();
    prt_str("tend = ", indent);
@@ -431,7 +430,8 @@ int indent;
           */
          if (sym->id_type & ByRef)
             prt_str("(*",indent);
-         if (use_frame && in_frame(sym->u.declare_var.tqual)) {
+         if (op_type != OrdFunc && 
+             in_frame(sym->u.declare_var.tqual)) {
              if (op_generator)
                  fprintf(out_file, "frame->L%d_", sym->f_indx);
              else
@@ -732,7 +732,7 @@ int indent;
          is_cstr = 1;
          break;
       case TypTStr:
-          if (use_frame && op_generator)
+          if (op_type != OrdFunc && op_generator)
               fprintf(out_file, "frame->r_sbuf[%d], ", nxt_sbuf++);
           else
               fprintf(out_file, "r_sbuf[%d], ", nxt_sbuf++);
@@ -1255,7 +1255,7 @@ int brace;
                 * Other "primary" expressions are just their token image,
                 *  possibly followed by a semicolon.
                 */
-                if (use_frame && 
+                if (op_type != OrdFunc && 
                     n->u[0].sym && 
                     n->u[0].sym->id_type == OtherDcl && 
                     in_frame(n->u[0].sym->u.declare_var.tqual)) {
@@ -1726,7 +1726,7 @@ int brace;
             tok_line(t, indent); /* just synch. file name and line number */
          else
             prt_tok(t, indent);  /* { */
-         if (use_frame)
+         if (op_type != OrdFunc)
              decl_walk(n->u[0].child, indent);
          else
              c_walk(n->u[0].child, indent, 0);
@@ -2831,7 +2831,7 @@ static void spcl_start(op_params)
 struct sym_entry *op_params;
    {
    ForceNl();
-   if (!use_frame && n_tmp_str > 0) {
+   if (op_type == OrdFunc && n_tmp_str > 0) {
       prt_str("char r_sbuf[", IndentInc);
       fprintf(out_file, "%d][MaxCvtLen];", n_tmp_str);
       ForceNl();
@@ -2878,7 +2878,7 @@ static void tend_init()
                  */
                 if (tnd->init == NULL) {
                     /* For a frame, the tended descriptors are initialized to nulldesc by alc_c_frame */
-                    if (!use_frame) {
+                    if (op_type == OrdFunc) {
                         prt_str(tend_loc, IndentInc);
                         fprintf(out_file, "[%d] = nulldesc;", tnd->t_indx);
                     }
@@ -3089,7 +3089,6 @@ struct node *block;
       return;       /* output disabled */
 
    def_fnd = 1;     /* this declaration defines a run-time object */
-   use_frame = 0;
    nxt_sbuf = 0;    /* clear number of string buffers */
    nxt_cbuf = 0;    /* clear number of cset buffers */
 
@@ -3147,7 +3146,6 @@ struct node *n;
 
    nxt_sbuf = 0;
    nxt_cbuf = 0;
-   use_frame = 1;
    lab_seq = 0;
 
    interp_def(n);
@@ -3171,7 +3169,6 @@ struct node *n;
    op_type = OrdFunc;
    pop_cntxt();
    clr_def();
-   use_frame = 0;
    }
 
 static void swap_files()
