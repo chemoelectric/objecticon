@@ -60,7 +60,7 @@ keyword dateline
       struct tm *ct;
       char sbuf[256];
       int hour;
-      char *merid, *tmp;
+      char *merid;
 
       time(&t);
       ct = localtime(&t);
