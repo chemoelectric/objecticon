@@ -154,18 +154,6 @@ void qevent(wsp ws,             /* canvas */
 {
     dptr q = &(ws->listp);	/* a window's event queue (Icon list value) */
     struct descrip d;
-    word ivl;
-
-    if (t != 0) {		/* if clock value supplied */
-        if (ws->timestamp == 0)		/* if first time */
-            ws->timestamp = t;
-        if (t < ws->timestamp)		/* if clock went backwards */
-            t = ws->timestamp;
-        ivl = t - ws->timestamp;		/* calc interval in milliseconds */
-        ws->timestamp = t;		/* save new clock value */
-    }
-    else
-        ivl = 0;				/* report 0 if interval unknown */
 
     /* Event code */
     list_put(q, e);
@@ -176,8 +164,8 @@ void qevent(wsp ws,             /* canvas */
     MakeInt(y, &d);
     list_put(q, &d);
 
-    /* Interval */
-    MakeInt(ivl, &d);
+    /* Timestamp */
+    MakeInt(t, &d);
     list_put(q, &d);
 
     /* Modifier flags */
