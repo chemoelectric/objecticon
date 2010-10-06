@@ -1,14 +1,14 @@
 #summary Co-expressions
 <wiki:toc max_depth="3" />
 = Introduction =
-The implementation and semantics of co-expressions is rather different in V2 of Object Icon, compared to V1, and indeed to traditional Icon.
+The implementation and semantics of co-expressions is rather different in Object Icon, compared to traditional Icon.
 
-The first and most significant difference to mention is that co-expressions in V2 are cheap.  Each co-expression has an interpreter stack, but it grows and shrinks dynamically in chunks called "frames", with one frame corresponding to each procedure call.  Each frame is quite small, typically about 100 bytes.  This is in sharp contrast to the traditional Icon interpreter's allocation for a co-expression - a fixed size region sufficient for the predicted maximum required for both C and interpreter stack.
+The first and most significant difference to mention is that co-expressions in Object Icon are cheap.  Each co-expression has an interpreter stack, but it grows and shrinks dynamically in chunks called "frames", with one frame corresponding to each procedure call.  Each frame is quite small, typically about 100 bytes.  This is in sharp contrast to the traditional Icon interpreter's allocation for a co-expression - a fixed size region sufficient for the predicted maximum required for both C and interpreter stack.
 
-The implementation of co-expressions in V2 of Object Icon is also highly portable.  The conventional Icon implementation requires a low-level context switch to swap between C stacks.  This is inherently non-portable, and raises a number of other issues.  The new non-recursive design of the interpreter loop in V2 of Object Icon means that no context-switch is required to implement co-expressions, and the new implementation is written entirely in standard C.
+The implementation of co-expressions in Object Icon is also highly portable.  The conventional Icon implementation requires a low-level context switch to swap between C stacks.  This is inherently non-portable, and raises a number of other issues.  The non-recursive design of the interpreter loop in Object Icon means that no context-switch is required to implement co-expressions, and the implementation is written entirely in standard C.
 
 == Co-expressions and local variables ==
-In contrast to conventional Icon, V2 of Object Icon implements co-expressions in such a way that they share the local variables of the procedure in which they were created (in Icon each co-expression gets a copy of the local variables).
+In contrast to conventional Icon, Object Icon implements co-expressions in such a way that they share the local variables of the procedure in which they were created (in Icon each co-expression gets a copy of the local variables).
 
 For example, the following program
 {{{
@@ -124,10 +124,10 @@ Note that `coact(val, ce, &current)` has the same effect as `val@ce`.
 The default of `ce` is `&source`, so `coact(val)` is like `val@&source`, with the important difference that the activator of `&source` is unchanged.  This use of `coact` is helpful in avoiding co-expression "black holes", described below.
 
 == Refreshing ==
-In Icon, refreshing a co-expression reset the local variables to their values when the co-expression was created.   This doesn't happen in the V2 Object Icon implementation of co-expressions.  Refreshing a co-expression simply creates a new co-expression which shares the local variables of the co-expression being refreshed.  `cocopy` does the same, but creates copies of the local variables instead.
+In Icon, refreshing a co-expression reset the local variables to their values when the co-expression was created.   This doesn't happen in the Object Icon implementation of co-expressions.  Refreshing a co-expression simply creates a new co-expression which shares the local variables of the co-expression being refreshed.  `cocopy` does the same, but creates copies of the local variables instead.
 
 == The ! operator ==
-V2 of Object Icon lets the unary ! operator be applied to co-expressions.  The effect is to generate the sequence of results from a refreshed copy of the given co-expression.  In other words, the result sequence of `!e` is the same as for `p(e)`, if `p` were defined as the following procedure :-
+Object Icon lets the unary ! operator be applied to co-expressions.  The effect is to generate the sequence of results from a refreshed copy of the given co-expression.  In other words, the result sequence of `!e` is the same as for `p(e)`, if `p` were defined as the following procedure :-
 {{{
 procedure p(e)
    local t
@@ -312,7 +312,7 @@ is just syntactic shorthand for
 {{{
 P(create e1, create e2, ... create en)
 }}}
-The ability of V2 co-expressions to refer to local variables (rather than copies of them) is a big advantage here.  In conventional Icon, the above code would require that `p`, `q` and `r` be global or static variables in order that their values could be changed by the co-expressions.
+The ability of co-expressions to refer to local variables (rather than copies of them) is a big advantage here.  In conventional Icon, the above code would require that `p`, `q` and `r` be global or static variables in order that their values could be changed by the co-expressions.
 
 Another nice example of the use of PDCOs is the function `List` in the package `ipl.pdco`, which is as follows :-
 {{{

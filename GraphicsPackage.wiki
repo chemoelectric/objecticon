@@ -1,6 +1,18 @@
 #summary Low-level graphics interface.
 <wiki:toc max_depth="3" />
 = Introduction =
+Object Icon's graphic facilities are based on Icon's, but with quite a large number of features omitted, and a few added.  Also, the programming interface is re-cast into an object-oriented form, consistent with the rest of the library.
+
+The following features in Icon's graphic facilities are omitted from Object Icon's :-
+
+ * The notion of a window as a file; in Object Icon a window is merely an object.
+ * Mutable colors.
+ * The use of a window as a sort of terminal, with a notional cursor position.
+ * Gamma correction
+ * The "reverse" drawop and the color reversal flag.
+
+Icon's graphics facilities are described in the following document :-
+http://www.cs.arizona.edu/icon/docs/ipd281.htm
 
 == Opening a window ==
 
@@ -49,9 +61,45 @@ The possible attributes for the `open` method described in detail in the API doc
 ||size||2xinteger||Window size||
 ||width||integer||Window width||
 
-Most of the attributes have corresponding `get` and `set` methods.
+Most of the attributes have corresponding `get` and `set` methods.  There is also an `attrib` method which can be used to set several attributes at once.  Note however that this method, unlike Icon's `WAttrib` function, is only used to set attributes, never to retrieve existing values.
+
+== Fonts ==
+Fonts follow the same format as in Icon, with some minor enhancements.  The environment variable `OIFONT` specifies the default font to use in a window, and `OIFONTSIZE` specifies the default fontsize.  If Xft anti-aliased fonts are available, then further customization can be achieved by editing the `~/.fonts.conf` file and defining patterns for the following family names :-
+
+|| *Icon font family* || *Xft family name* || *Default value* ||
+|| fixed || Object Icon fixed || mono ||
+|| mono || Object Icon mono || mono ||
+|| typewriter || Object Icon typewriter || courier ||
+|| sans || Object Icon sans || helvetica ||
+|| serif || Object Icon serif || times ||
+
+An example entry, which makes the Icon mono family use the "Deja Vu Sans Mono" font, is as follows :-
+{{{
+<match target="pattern">
+   <test name="family">
+      <string>Object Icon mono</string>
+   </test>
+   <edit name="family" mode="prepend" binding="same">
+      <string>Deja Vu Sans Mono</string>
+   </edit>
+   <edit name="size" mode="append" binding="same">
+      <int>10</int>
+   </edit>
+ </match>
+}}}
+ 
+A font specifier may specify a string to be interpreted directly by the platform's font system.  When using xft, this is done by prepending the string "fc:" to the specifier (for example, "fc:Bitstream Vera Sans-11").  When using plain X11 fonts, use "x11:".  The result of the `get_font()` method will in fact always be in this platform specific format.
+
+== Colours and Palettes ==
+Colour specifications and palettes follow the same format as in Icon.
+
+== Pixel data ==
+Raw pixel data can be extracted from a window using the `get_pixels` method.  A rectangular area is specified by the parameters, and the method returns a list with one element for each pixel in the area.  Any pixel which lies outside the window has the value `&null` in the list; otherwise the value is the colour specification for the pixel (as a string).
+
+To write raw pixel data back to a window, use `set_pixels`.  This takes a list and a rectangular area as parameters, and copies the colours in the list to the area.  Null entries in the list are simply skipped.
 
 == Filters ==
+The `filter` method is used to efficiently transform a rectangular area of pixels, according to one of several pre-defined filters.  The available filters are as follows :-
 
  * *linear*.  The linear filter accepts 3 float parameters followed by 3 optional integer parameters (which default to zero).  Each pair provides a linear transformation to apply to the red, green and blue values of each pixel.  For example
 {{{
@@ -68,10 +116,64 @@ W.filter("shade,4,5000,40000")
 W.filter("coerce,g256")
 }}}
 
+== Events ==
+Events are generated from a window as lists.  The first element of the list gives the event code, which is one of the following.  The number and type of the other elements depends on the code.
 
-= Details =
+|| *Type* || *Description* ||
+|| Mouse.LEFT_PRESS || Mouse left button press ||
+|| Mouse.MIDDLE_PRESS || Mouse middle button press ||
+|| Mouse.RIGHT_PRESS || Mouse right button press ||
+|| Mouse.LEFT_RELEASE || Mouse left button release ||
+|| Mouse.MIDDLE_RELEASE || Mouse middle button release ||
+|| Mouse.RIGHT_RELEASE || Mouse right button release ||
+|| Mouse.DRAG || Mouse drag with any button down ||
+|| Mouse.MOVEMENT || Mouse movement with no button down ||
+|| Mouse.WHEEL_UP || Mouse wheel upward direction ||
+|| Mouse.WHEEL_DOWN || Mouse wheel downward direction ||
+|| Mouse.ENTER || Mouse cursor enters window ||
+|| Mouse.EXIT || Mouse cursor leaves window ||
+|| Window.RESIZE || Window resized ||
+|| Window.CLOSE_BUTTON || Window close button pressed ||
+|| Window.INVOKE_LATER || Internal use by gui package ||
+|| Selection.REQUEST || Another application has requested a selection ||
+|| Selection.RESPONSE || Another application has responded to a request for a selection ||
+|| Selection.CLEAR || A selection must be cleared ||
+|| String or ucs || A key representing the given string has been pressed or released ||
+|| Positive integer || A key with the numeric code has been pressed or released ||
 
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+The class `Key` contains a several constants which match the numeric key codes in the last class of event in the above table.
+
+The keyboard and mouse events all produce a list of 5 items (including the initial code) :-
+ # Code
+ # Mouse x position
+ # Mouse y position
+ # Timestamp in milliseconds
+ # Keyboard state flags, being a combination of
+   * Key.MOD_SHIFT - the shift key was pressed
+   * Key.MOD_LOCK - the caps lock key was pressed
+   * Key.MOD_CTRL - the ctrl key was pressed
+   * Key.MOD_META - the meta key was pressed
+   * Key.MOD_META2
+   * Key.MOD_META3
+   * Key.MOD_META4
+   * Key.MOD_META5
+   * Key.MOD_RELEASE - the key event was a release (rather than a press).
+
+== Images ==
+The `set_image` method (or the `image` attribute) can be used to load an image.  The parameter can be one of three things :-
+ * An icon image string, in the same format as the Icon graphics implementation
+ * Raw image data
+ * The name of a filename containing an image
+The supported raw image formats depend on the underlying platform and its available libraries; only gif images have built-in support.  The second option indicated above can be used with the preprocessor to compile image data into the executable.  An example of this would be
+{{{
+$load FLINTSTONES "/tmp/flintstones.jpg"
+
+...
+   w := Window.open("image=",FLINTSTONES) | stop(&why)
+...
+}}}
+The `$load` directive defines the preprocessor symbol `FLINTSTONES` with the value being a string containing the contents of the specified file.  This raw data is then supplied with the `image` attribute to define the image to be loaded into the window.  We could also have simply used
+{{{
+   w := Window.open("image=/tmp/flintstones.jpg") | stop(&why)
+}}}
+but this would rely on the file being present at runtime (as opposed to compile-time).
