@@ -155,7 +155,6 @@ end
 
 function graphics_Window_copy_to(self, dest, x0, y0, w0, h0, x1, y1)
    body {
-      int n, r;
       word x, y, width, height, x2, y2;
       wbp w2;
 
@@ -263,7 +262,6 @@ end
 
 function graphics_Window_draw_circle(self, x, y, r, theta, alpha)
    body {
-      int r;
       GetSelfW();
 
       if (docircle(self_w, &x, 0) == Error)
@@ -1405,7 +1403,6 @@ end
 function graphics_Window_get_pattern(self)
    body {
        tended struct descrip result;
-       char *s;
        GetSelfW();
        cstr2string(getpattern(self_w), &result);
        return result;
@@ -1589,7 +1586,6 @@ end
 
 function graphics_Window_unclip(self)
    body {
-      word x, y, width, height;
       wcp wc;
       GetSelfW();
       wc = self_w->context;

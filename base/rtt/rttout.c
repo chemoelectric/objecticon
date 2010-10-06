@@ -64,6 +64,7 @@ static void untend        (int indent);
 static void count_ntend(void);
 static void swap_files(void);
 static void copy_tmp(void);
+static void print_func_vars(void);
 
 static int use_frame = 0;
 static int in_struct = 0;
@@ -379,14 +380,20 @@ int indent;
                 * Parameter converted to a C integer.
                 */
                chk_nl(indent);
-               fprintf(out_file, "frame->r_i%d", sym->u.param_info.param_num);
+               if (op_generator)
+                   fprintf(out_file, "frame->r_i%d", sym->u.param_info.param_num);
+               else
+                   fprintf(out_file, "r_i%d", sym->u.param_info.param_num);
                break;
             case PrmDbl:
                /*
                 * Parameter converted to a C double.
                 */
                chk_nl(indent);
-               fprintf(out_file, "frame->r_d%d", sym->u.param_info.param_num);
+               if (op_generator)
+                   fprintf(out_file, "frame->r_d%d", sym->u.param_info.param_num);
+               else
+                   fprintf(out_file, "r_d%d", sym->u.param_info.param_num);
                break;
             default:
                errt2(t, "Conflicting conversions for: ", t->image);
@@ -424,8 +431,12 @@ int indent;
           */
          if (sym->id_type & ByRef)
             prt_str("(*",indent);
-         if (use_frame && in_frame(sym->u.declare_var.tqual))
-             fprintf(out_file, "frame->L%d_", sym->f_indx);
+         if (use_frame && in_frame(sym->u.declare_var.tqual)) {
+             if (op_generator)
+                 fprintf(out_file, "frame->L%d_", sym->f_indx);
+             else
+                 fprintf(out_file, "L%d_", sym->f_indx);
+         }
          prt_str(sym->image, indent);
          if (sym->id_type & ByRef)
             prt_str(")",indent);
@@ -721,7 +732,7 @@ int indent;
          is_cstr = 1;
          break;
       case TypTStr:
-          if (use_frame)
+          if (use_frame && op_generator)
               fprintf(out_file, "frame->r_sbuf[%d], ", nxt_sbuf++);
           else
               fprintf(out_file, "r_sbuf[%d], ", nxt_sbuf++);
@@ -1149,7 +1160,10 @@ static void decl_walk3(struct node *tqual, struct node *dcltor, int indent)
                     /*printf("FOUND L%d_%s\n",part_dcltor->u[0].sym->f_indx,t->image);*/
                     if (sym->id_type == OtherDcl &&
                         sym->u.declare_var.init) {
-                        fprintf(out_file, "   frame->L%d_%s =",sym->f_indx,t->image);
+                        if (op_generator)
+                            fprintf(out_file, "   frame->L%d_%s =",sym->f_indx,t->image);
+                        else
+                            fprintf(out_file, "   L%d_%s =",sym->f_indx,t->image);
                         c_walk(sym->u.declare_var.init, indent, 0);
                         prt_str(";", indent);
                     }
@@ -1401,6 +1415,9 @@ int brace;
                if (op_type == OrdFunc)
                   errt1(t, "'suspend' may not be used in an ordinary C function"
                      );
+               if (!op_generator)
+                   err1("rtt internal error detected, op_generator flag expected");
+
                ForceNl();
                if (!brace) {
                   prt_str("{", indent);
@@ -3177,6 +3194,40 @@ static void copy_tmp()
     rewind(tmp_file);
 }
 
+static void print_func_vars()
+{
+   struct sym_entry *t;
+
+   t = ffirst;
+
+   while (t) {
+       if (t->id_type == OtherDcl && in_frame(t->u.declare_var.tqual)) {
+           ForceNl();
+           c_walk(t->u.declare_var.tqual,3,0);
+           fprintf(out_file, " ");
+           c_walk(t->u.declare_var.dcltor,3,0);
+           prt_str(";",0);
+       }
+       t = t->fnext;
+   }
+
+   /*
+    * Temporary vars
+    */
+   t = params;
+   while (t) {
+       if (t->u.param_info.non_tend & PrmInt) {
+           fprintf(out_file, "   word r_i%d;\n", t->u.param_info.param_num); ++line;
+       }
+       if (t->u.param_info.non_tend & PrmDbl) {
+           fprintf(out_file, "   double r_d%d;\n", t->u.param_info.param_num); ++line;
+       }
+       t = t->u.param_info.next;
+   }
+   if (n_tmp_str > 0)
+       fprintf(out_file, "   char r_sbuf[%d][MaxCvtLen];", n_tmp_str);
+}
+
 /*
  * interp_def - output code for the interpreter for operation definitions.
  */
@@ -3190,7 +3241,6 @@ struct node *n;
    char letter = 0;
    char *name;
    char *s;
-   struct sym_entry *t;
 
    /*
     * Note how result location is accessed in generated code.
@@ -3225,6 +3275,7 @@ struct node *n;
    count_ntend();
 
    name = op_name;
+   /*printf("name=%s susp=%d\n",name,op_generator);*/
 
    /*
     * Determine what letter is used to prefix the operation name.
@@ -3242,7 +3293,6 @@ struct node *n;
 
    fprintf(out_file, "\n"); ++line;
 
-   t = ffirst;
    /*
     * Output the header struct.
     */
@@ -3251,32 +3301,8 @@ struct node *n;
    fprintf(out_file, "\nstruct %s_frame {\n   C_FRAME\n", op_name);
    line += 3;
 
-   while (t) {
-       if (t->id_type == OtherDcl && in_frame(t->u.declare_var.tqual)) {
-           ForceNl();
-           c_walk(t->u.declare_var.tqual,3,0);
-           fprintf(out_file, " ");
-           c_walk(t->u.declare_var.dcltor,3,0);
-           prt_str(";",0);
-       }
-       t = t->fnext;
-   }
-
-   /*
-    * Temporary vars
-    */
-   t = params;
-   while (t) {
-       if (t->u.param_info.non_tend & PrmInt) {
-           fprintf(out_file, "   word r_i%d;\n", t->u.param_info.param_num); ++line;
-       }
-       if (t->u.param_info.non_tend & PrmDbl) {
-           fprintf(out_file, "   double r_d%d;\n", t->u.param_info.param_num); ++line;
-       }
-       t = t->u.param_info.next;
-   }
-   if (n_tmp_str > 0)
-       fprintf(out_file, "   char r_sbuf[%d][MaxCvtLen];", n_tmp_str);
+   if (op_generator)
+       print_func_vars();
 
    fprintf(out_file, "\n};\n"); line += 2;
 
@@ -3373,7 +3399,9 @@ struct node *n;
     */
    fprintf(out_file, "int %c%s(struct %s_frame *frame)\n{\n", letter, name, name);
 
-   if (lab_seq > 0) {
+   if (op_generator) {
+       if (lab_seq == 0)
+           err1("rtt internal error detected: expected some suspensions with op_generator flag set");
 #ifdef HAVE_COMPUTED_GOTO
        fprintf(out_file, "       if (frame->pc)\n");
        fprintf(out_file, "          goto *((void *)(frame->pc));\n");
@@ -3386,7 +3414,9 @@ struct node *n;
        fprintf(out_file, "      default: syserr(\"Invalid pc in %s\");\n", name);
        fprintf(out_file, "   }\n");
 #endif
-   }
+   } else
+       print_func_vars();
+
 
    /* Copy function body from temp diversion */
    copy_tmp();

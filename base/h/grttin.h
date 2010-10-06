@@ -215,50 +215,50 @@ typedef int siptr, stringint, inst;
       typedef int CHOOSEFONT, CHOOSECOLOR, OPENFILENAME, HMENU, LPBITMAPINFO;
       typedef int childcontrol, CPINFO, BITMAPINFO, BITMAPINFOHEADER, RGBQUAD;
    #endif				/* MSWIN32 */
-
-   /*
-    * Convenience macros to make up for RTL's long-windedness.
-    */
-   #begdef CnvShortInt(desc, s, max, min, type)
-	{
-	word tmp;
-	if (!cnv:C_integer(desc,tmp) || tmp > max || tmp < min)
-	   runerr(101,desc);
-	s = (type) tmp;
-	}
-   #enddef				/* CnvShortInt */
-   #define CnvCShort(desc, s) CnvShortInt(desc, s, 0x7FFF, -0x8000, short)
-   #define CnvCUShort(desc, s) CnvShortInt(desc, s, 0xFFFF, 0, unsigned short)
-   
-   #define CnvCInteger(d,i) \
-     if (!cnv:C_integer(d,i)) runerr(101,d);
-   
-   #define DefCInteger(d,default,i) \
-     if (!def:C_integer(d,default,i)) runerr(101,d);
-   
-   #define CnvString(din,dout) \
-     if (!cnv:string(din,dout)) runerr(103,din);
-   
-   #define CnvTmpString(din,dout) \
-     if (!cnv:tmp_string(din,dout)) runerr(103,din);
-   
-   #begdef CheckArgMultiple(mult)
-   {
-     if ((argc-warg) % (mult)) runerr(146);
-     n = (argc-warg)/mult;
-     if (!n) runerr(146);
-   }
-   #enddef				/* CheckArgMultiple */
-
-   #begdef CheckArgMultipleOf(mult)
-   {
-     if ((argc) % (mult)) runerr(146);
-     n = (argc)/mult;
-     if (!n) runerr(146);
-   }
-   #enddef				/* CheckArgMultiple */
-   
 #endif					/* Graphics */
+
+/*
+ * Convenience macros to make up for RTL's long-windedness.
+ */
+#begdef CnvShortInt(desc, s, max, min, type)
+      {
+          word tmp;
+          if (!cnv:C_integer(desc,tmp) || tmp > max || tmp < min)
+              runerr(101,desc);
+          s = (type) tmp;
+      }
+#enddef				/* CnvShortInt */
+#define CnvCShort(desc, s) CnvShortInt(desc, s, 0x7FFF, -0x8000, short)
+#define CnvCUShort(desc, s) CnvShortInt(desc, s, 0xFFFF, 0, unsigned short)
+   
+#define CnvCInteger(d,i)                        \
+if (!cnv:C_integer(d,i)) runerr(101,d);
+   
+#define DefCInteger(d,default,i)                \
+if (!def:C_integer(d,default,i)) runerr(101,d);
+   
+#define CnvString(din,dout)                     \
+if (!cnv:string(din,dout)) runerr(103,din);
+   
+#define CnvTmpString(din,dout)                  \
+if (!cnv:tmp_string(din,dout)) runerr(103,din);
+   
+#begdef CheckArgMultiple(mult)
+   {
+       if ((argc-warg) % (mult)) runerr(146);
+       n = (argc-warg)/mult;
+       if (!n) runerr(146);
+   }
+#enddef				/* CheckArgMultiple */
+
+#begdef CheckArgMultipleOf(mult)
+   {
+       if ((argc) % (mult)) runerr(146);
+       n = (argc)/mult;
+       if (!n) runerr(146);
+   }
+#enddef				/* CheckArgMultiple */
+   
 
 /*
  * GRFX_ALLOC* family of macros used for static allocations.
