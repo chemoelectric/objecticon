@@ -178,12 +178,6 @@ struct node {
 #define NoRsltSeq  -1L	     /* no result sequence: {} */
 #define UnbndSeq   -2L       /* unbounded result sequence: {*} */
 
-#define DoesRet    01	     /* operation (or "body" function) returns */
-#define DoesFail   02	     /* operation (or "body" function) fails */
-#define DoesSusp   04	     /* operation (or "body" function) suspends */
-#define DoesEFail 010        /* fails through error conversion */
-#define DoesFThru 020	     /* only "body" functions can "fall through" */
-
 /*
  * These codes are shared between the data base and rtt. They are defined
  *  here, though not all are used by the data base.
