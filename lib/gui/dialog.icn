@@ -41,7 +41,6 @@ class Dialog(Component)
       menu_mode,               # Do we have a menu open?
       buffer_win,              # Buffer window for double buffering                 
       click_count,             # Variables controlling multiple clicks
-      prev_time,
       prev_event,
       is_blocked_flag,
       drag_gesture_x,
@@ -1079,17 +1078,12 @@ $endif
    # Maybe increment the click count
    # 
    private check_click_count(e)
-      local t
-
-      t := Prog.get_runtime_millis()
       if e.code = (\prev_event).code & prev_event.x = e.x & prev_event.y = e.y & 
-                                 (t - prev_time < DOUBLE_CLICK_DELAY) then
+                                 (e.time - prev_event.time < DOUBLE_CLICK_DELAY) then
          click_count +:= 1
       else
          click_count := 1
-
       prev_event := e
-      prev_time := t
    end
 
    public get_focus_list(e)
@@ -1179,13 +1173,13 @@ class WinEvent(Point)
       meta4,
       meta5,
       release,
-      interval
+      time
 
-   public new(code, x, y, interval, mod)
+   public new(code, x, y, time, mod)
       self.code := code
       self.x := x
       self.y := y
-      self.interval := interval
+      self.time := time
       if mod ~= 0 then {
          self.shift := if iand(mod, Key.MOD_SHIFT) = Key.MOD_SHIFT then &yes
          self.lock := if iand(mod, Key.MOD_LOCK) = Key.MOD_LOCK then &yes

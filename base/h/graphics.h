@@ -273,7 +273,6 @@ typedef struct _wstate {
   int           maxheight;              /* maximum window height, in pixels */
   int           maxwidth;               /* maximum window width, in pixels */
   int		bits;			/* window bits */
-  word		timestamp;		/* last event time stamp */
   struct descrip listp;		        /* event list for this window */
   int           mousestate;             /* buttons down after last mouse event */
 #if XWindows

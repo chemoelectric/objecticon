@@ -1,5 +1,4 @@
 static int inited;
-static vlong startup_time;
 static wfp fonts, default_font;
 static Rectangle max_rect;
 static struct Cursor cursor_data[];
@@ -516,7 +515,7 @@ static void flush_event_pipe(wsp ws)
                 if (n != 35)
                     syserr("bad console data in event pipe");
                 be2vlong(&now, &ebuf[1]);
-                time = (now - startup_time) / 1000000;
+                time = now / 1000000;
                 mx = atoi((char*)ebuf + 9 + 0*12) - ws->win->r.min.x; 
                 my = atoi((char*)ebuf + 9 + 1*12) - ws->win->r.min.y;
                 i = ebuf[33] + (ebuf[34]<<8);
@@ -541,7 +540,7 @@ static void flush_event_pipe(wsp ws)
                 if (n < 10+2*12)
                     syserr("bad mouse data in event pipe");
                 be2vlong(&now, &ebuf[1]);
-                time = (now - startup_time) / 1000000;
+                time = now / 1000000;
                 mx = atoi((char*)ebuf + 10 + 0*12) - ws->win->r.min.x;
                 my = atoi((char*)ebuf + 10 + 1*12) - ws->win->r.min.y;
                 state = atoi((char*)ebuf + 10 + 2*12);
@@ -2184,7 +2183,6 @@ static void init_window_system(void)
     white = new_sharedcolor("white", 0xffffffff);
     black_pattern = new_sharedpattern(8, 8, black_pattern_data, "black");
     max_rect = Rect(-1073741823, -1073741823, 1073741823, 1073741823);
-    startup_time = get_time();
     default_font = load_font(getdefaultfont());
     if (!default_font)
         ffatalerr("Couldn't load default font");
