@@ -705,8 +705,8 @@ int main(void)
 
     start_file("ioconsts.icn", "io");
 
-    start_class("FileOpt", "O_", 0, 0);
 #if PLAN9
+    start_class("FileOpt9", 0, 0, 0);
         Const(OREAD)
         Const(OWRITE)
         Const(ORDWR)
@@ -715,8 +715,21 @@ int main(void)
         Const(OCEXEC)
         Const(ORCLOSE)
         Const(OEXCL)
+    end_class();
+
+    start_class("Mode9", 0, 0, 0);
+        UConst(DMDIR)
+        UConst(DMAPPEND)
+        UConst(DMEXCL)
+        UConst(DMMOUNT)
+        UConst(DMAUTH)
+        UConst(DMTMP)
+    end_class();
 #endif
 
+
+
+    start_class("FileOpt", "O_", 0, 0);
 #ifdef O_ACCMODE
         Const(O_ACCMODE)
 #endif
@@ -863,15 +876,6 @@ int main(void)
 #ifdef S_IRWXO
         UConst(S_IRWXO)
 #endif
-#if PLAN9
-        UConst(DMDIR)
-        UConst(DMAPPEND)
-        UConst(DMEXCL)
-        UConst(DMMOUNT)
-        UConst(DMAUTH)
-        UConst(DMTMP)
-#endif
-
     end_class();
         start_class("ProtocolFormat", "PF_", 0, 0);
 

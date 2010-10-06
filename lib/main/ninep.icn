@@ -103,7 +103,7 @@ class File9P(SetFields)
    end
 
    public set_perm(x, y)
-      iand(perm, Mode.DMDIR) = iand(x, Mode.DMDIR) | runerr("Cannot change directory bit")
+      iand(perm, Mode9.DMDIR) = iand(x, Mode9.DMDIR) | runerr("Cannot change directory bit")
       self.perm := x
       self.fixed := y
    end
@@ -157,7 +157,7 @@ class File9P(SetFields)
       self.qpath := (qpath_seq +:= 1)
       self.mtime := self.atime := Time.get_system_seconds()
       self.uid := self.gid := self.muid := user
-      self.perm := if is(self,Dir9P) then ior(8r777, Mode.DMDIR) else 8r666
+      self.perm := if is(self,Dir9P) then ior(8r777, Mode9.DMDIR) else 8r666
       set_fields(a)
       return
    end
@@ -224,7 +224,7 @@ class Dir9PImpl(Dir9P)
 
    public create_child(name, uid, perm)
       local n
-      n := if iand(perm, Mode.DMDIR) = 0 then
+      n := if iand(perm, Mode9.DMDIR) = 0 then
          new_regular_child(name, uid, perm)
       else
          new_dir_child(name, uid, perm)
@@ -258,8 +258,8 @@ class Regular9PImpl(Regular9P)
       data
 
    public open(mode)
-      if iand(self.perm, Mode.DMAPPEND) = 0 &
-         iand(mode, FileOpt.OTRUNC) ~= 0 then
+      if iand(self.perm, Mode9.DMAPPEND) = 0 &
+         iand(mode, FileOpt9.OTRUNC) ~= 0 then
          data := ""
    end
 
@@ -271,7 +271,7 @@ class Regular9PImpl(Regular9P)
    end
 
    public write(s, pos)
-      if iand(self.perm, Mode.DMAPPEND) = 0 then {
+      if iand(self.perm, Mode9.DMAPPEND) = 0 then {
          if pos > *data then
             data ||:= repl("\0", pos - *data - 1) || s
          else
@@ -906,7 +906,7 @@ class Session9P(SetFields)
             del_fid(x.fid)
             if \o.omode then {
                data.close(o.path)
-               if iand(o.omode, FileOpt.ORCLOSE) ~= 0 then {
+               if iand(o.omode, FileOpt9.ORCLOSE) ~= 0 then {
                   p := data.get_parent(o.path)
                   data.delete_child(p, o.path)
                   data.modified(p, o.uid)
@@ -919,7 +919,7 @@ class Session9P(SetFields)
             o := lookup(x.fid)
             del_fid(x.fid)
             info := data.get_info(o.path)
-            if iand(info.mode, Mode.DMDIR) ~= 0 & not data.is_empty(o.path) then
+            if iand(info.mode, Mode9.DMDIR) ~= 0 & not data.is_empty(o.path) then
                throw("directory not empty")
             p := data.get_parent(o.path)
             has_perm(data.get_info(p), o.uid, Comms9P.AWRITE) | throw("permission denied")
@@ -934,7 +934,7 @@ class Session9P(SetFields)
             o := lookup(x.fid)
             /o.omode | throw("fid already open")
             info := data.get_info(o.path)
-            iand(info.mode, Mode.DMDIR) ~= 0 | throw("attempt to create in a regular file")
+            iand(info.mode, Mode9.DMDIR) ~= 0 | throw("attempt to create in a regular file")
             has_perm(info, o.uid, Comms9P.AWRITE) | throw("permission denied")
             if data.get_child(o.path, x.name) then
                throw("create with name which already exists")
@@ -950,22 +950,22 @@ class Session9P(SetFields)
             o := lookup(x.fid)
             /o.omode | throw("fid already open")
             info := data.get_info(o.path)
-            if iand(info.mode, Mode.DMEXCL) ~= 0 & is_path_open(o.path) > 0 then
+            if iand(info.mode, Mode9.DMEXCL) ~= 0 & is_path_open(o.path) > 0 then
                throw("exclusive use file already open")
-            if iand(info.mode, Mode.DMDIR) ~= 0 &
-               iand(x.mode, icom(FileOpt.ORCLOSE)) ~= FileOpt.OREAD then
+            if iand(info.mode, Mode9.DMDIR) ~= 0 &
+               iand(x.mode, icom(FileOpt9.ORCLOSE)) ~= FileOpt9.OREAD then
                   throw("invalid mode for opening a directory")
             i := case iand(x.mode, 3) of {
-               FileOpt.OREAD : Comms9P.AREAD
-               FileOpt.OWRITE : Comms9P.AWRITE
-               FileOpt.ORDWR : ior(Comms9P.AREAD, Comms9P.AWRITE)
-               FileOpt.OEXEC : Comms9P.AEXEC
+               FileOpt9.OREAD : Comms9P.AREAD
+               FileOpt9.OWRITE : Comms9P.AWRITE
+               FileOpt9.ORDWR : ior(Comms9P.AREAD, Comms9P.AWRITE)
+               FileOpt9.OEXEC : Comms9P.AEXEC
                default: throw("strange permissions value")
             }
-            if iand(x.mode, FileOpt.OTRUNC) ~= 0 then
+            if iand(x.mode, FileOpt9.OTRUNC) ~= 0 then
                i := ior(i, Comms9P.AWRITE)
             has_perm(info, o.uid, i) | throw("permission denied")
-            if iand(x.mode, FileOpt.ORCLOSE) ~= 0 then {
+            if iand(x.mode, FileOpt9.ORCLOSE) ~= 0 then {
                p := data.get_parent(o.path)
                has_perm(data.get_info(p), o.uid, Comms9P.AWRITE) | throw("permission denied")
             }
@@ -997,10 +997,10 @@ class Session9P(SetFields)
          }
          TWrite: {
             o := lookup(x.fid)
-            (iand(\o.omode, 3) = (FileOpt.OWRITE | FileOpt.ORDWR)) |
+            (iand(\o.omode, 3) = (FileOpt9.OWRITE | FileOpt9.ORDWR)) |
                throw("write on file not open for writing")
             info := data.get_info(o.path)
-            if iand(info.mode, Mode.DMDIR) ~= 0 then
+            if iand(info.mode, Mode9.DMDIR) ~= 0 then
                throw("attempt to write to directory")
             data.write(o.path, x.data, x.offset + 1)
             data.modified(o.path, o.uid)
@@ -1008,10 +1008,10 @@ class Session9P(SetFields)
          }
          TRead: {
             o := lookup(x.fid)
-            (iand(\o.omode, 3) = (FileOpt.OREAD | FileOpt.OEXEC | FileOpt.ORDWR)) |
+            (iand(\o.omode, 3) = (FileOpt9.OREAD | FileOpt9.OEXEC | FileOpt9.ORDWR)) |
                throw("read on file not open for reading")
             info := data.get_info(o.path)
-            if iand(info.mode, Mode.DMDIR) ~= 0 then {
+            if iand(info.mode, Mode9.DMDIR) ~= 0 then {
                if x.offset = 0 then {
                   o.dir := []
                   every e := data.gen_children(o.path) do
@@ -1040,12 +1040,12 @@ class Session9P(SetFields)
             }
             if \i.length then {
                has_perm(info, o.uid, Comms9P.AWRITE) | throw("permission denied")
-               if i.length ~= 0 & iand(info.mode, Mode.DMDIR) ~= 0 then
+               if i.length ~= 0 & iand(info.mode, Mode9.DMDIR) ~= 0 then
                   throw("cannot set length of directory to non-zero value")
             }
             if \i.mtime | \i.mode | \i.gid then {
                ((info.uid | info.gid) == o.uid) | throw("permission denied")
-               if \i.mode & iand(i.mode, Mode.DMDIR) ~= iand(info.mode, Mode.DMDIR) then
+               if \i.mode & iand(i.mode, Mode9.DMDIR) ~= iand(info.mode, Mode9.DMDIR) then
                   throw("directory bit cannot be changed")
             }
             if \i.atime | \i.uid | \i.muid then

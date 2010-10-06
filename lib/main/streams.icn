@@ -827,24 +827,24 @@ $ifdef _PLAN9
 
       case iand(flags, 3) of {
          FileOpt.RDONLY: {
-            flags2 := FileOpt.OREAD
+            flags2 := FileOpt9.OREAD
             /mode := READ
          }
          FileOpt.WRONLY: {
-            flags2 := FileOpt.OWRITE
+            flags2 := FileOpt9.OWRITE
             /mode := WRITE
          }
          FileOpt.RDWR: {
-            flags2 := FileOpt.ORDWR
+            flags2 := FileOpt9.ORDWR
             /mode := READ_WRITE
          }
          default:
             runerr("Invalid flags combination")
       }
       if iand(flags, FileOpt.TRUNC) ~= 0 then
-         flags2 := ior(flags2, FileOpt.OTRUNC)
+         flags2 := ior(flags2, FileOpt9.OTRUNC)
       if iand(flags, FileOpt.EXCL) ~= 0 then
-         flags2 := ior(flags2, FileOpt.OEXCL)
+         flags2 := ior(flags2, FileOpt9.OEXCL)
 
       if iand(flags, FileOpt.CREAT) ~= 0 then {
          if Files.access(name, 0) then {
