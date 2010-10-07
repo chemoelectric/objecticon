@@ -1269,6 +1269,7 @@ whideimpl(Window *w)
 int
 wkeepabove(Window *w)
 {
+    w->wctlready = 1;
     w->keepbelow = 0;
     w->keepabove = !w->keepabove;
     wsendctlmesg(w, Wakeup, ZR, nil);
@@ -1277,6 +1278,7 @@ wkeepabove(Window *w)
 int
 wkeepbelow(Window *w)
 {
+    w->wctlready = 1;
     w->keepabove = 0;
     w->keepbelow = !w->keepbelow;
     wsendctlmesg(w, Wakeup, ZR, nil);
