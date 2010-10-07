@@ -152,13 +152,13 @@
 ############################################################################
 
 $ifdef _OBJECT_ICON
-import io, ipl.types
+import io
 $endif
 
 global defs, ifile, in, limit, prompt, tswitch
 
-record nonterm(name)
-record charset(chars)
+record nonterm(name,type)
+record charset(chars,type)
 
 procedure main(args)
    local line, plist, opts, f
@@ -177,9 +177,9 @@ procedure main(args)
    defs["vb"] := [["|"]]
    defs["nl"] := [["\n"]]
    defs[""] := [[""]]
-   defs["&lcase"] := [[charset(&lcase)]]
-   defs["&ucase"] := [[charset(&ucase)]]
-   defs["&digit"] := [[charset(&digits)]]
+   defs["&lcase"] := [[charset(&lcase,2)]]
+   defs["&ucase"] := [[charset(&ucase,2)]]
+   defs["&digit"] := [[charset(&digits,2)]]
 
    limit := \opts["l"] | 1000
    tswitch := \opts["t"]
@@ -231,8 +231,8 @@ procedure defnon(sym)
       chars := cset(tab(-1)) &
       ="'"
       }
-   then return charset(chars)
-   else return nonterm(sym)
+   then return charset(chars,2)
+   else return nonterm(sym,1)
 end
 
 #  note erroneous input line
@@ -246,15 +246,14 @@ end
 #
 procedure gener(goal)
    local pending, symbol
-   pending := [nonterm(goal)]
+   pending := [nonterm(goal,1)]
    while symbol := get(pending) do {
       if \tswitch then
          write(symimage(symbol),listimage(pending))
-$ifdef _OBJECT_ICON
-      case typeof(symbol) of {
-         "string":   writes(symbol)
-         charset:  writes(?symbol.chars)
-         nonterm:  {
+      if type(symbol) == "string" then
+         writes(symbol)
+      else case symbol.type of {
+         1:  {
             pending := ?\defs[symbol.name] ||| pending | {
                write("*** undefined nonterminal:  <",symbol.name,">")
                break 
@@ -264,23 +263,8 @@ $ifdef _OBJECT_ICON
                break 
                }
             }
+         2:  writes(?symbol.chars)
          }
-$else
-      case type(symbol) of {
-         "string":   writes(symbol)
-         "charset":  writes(?symbol.chars)
-         "nonterm":  {
-            pending := ?\defs[symbol.name] ||| pending | {
-               write("*** undefined nonterminal:  <",symbol.name,">")
-               break 
-               }
-            if *pending > \limit then {
-               write("*** excessive symbols remaining")
-               break 
-               }
-            }
-         }
-$endif
       }
    write()
 end
@@ -400,19 +384,12 @@ end
 #  produce string image of grammar symbol
 #
 procedure symimage(x)
-$ifdef _OBJECT_ICON
-   return case typeof(x) of {
-      "string":   x
-      nonterm:  "<" || x.name || ">"
-      charset:  "<'" || x.chars || "'>"
+   return if type(x) == "string" then
+      x
+   else case x.type of {
+      1:  "<" || x.name || ">"
+      2:  "<'" || x.chars || "'>"
       }
-$else
-   return case type(x) of {
-      "string":   x
-      "nonterm":  "<" || x.name || ">"
-      "charset":  "<'" || x.chars || "'>"
-      }
-$endif
 end
 
 #  process the symbols in an alternative
