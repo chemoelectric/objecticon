@@ -1895,7 +1895,14 @@ int setdrawop(wbp w, char *val)
 
 int warppointer(wbp w, int x, int y)
 {
-    return Failed;
+    wsp ws = w->window;
+    if (!ws->win)
+        return Failed;
+    fprint(ws->mouse_fd, 
+           "m%11d %11d %11d %11ld ", 
+           ws->win->r.min.x + x, 
+           ws->win->r.min.y + y, 0, 0);
+    return Succeeded;
 }
 
 char *getdisplay(wbp w)
