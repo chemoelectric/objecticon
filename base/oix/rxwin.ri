@@ -1192,6 +1192,8 @@ int requestselection(wbp w, char *selname, char *targetname)
 int warppointer(wbp w, int x, int y)
 {
     wsp ws = w->window;
+    if (!ws->win)
+        return Failed;
     XWarpPointer(ws->display->display, None, ws->win, 0,0,0,0, x, y);
     return Succeeded;
 }
