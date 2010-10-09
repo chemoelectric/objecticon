@@ -111,11 +111,11 @@ class CanvasComponent(CanvasObject)
          c.line(name || ".set_is_shaded(&yes)")
 
       every e := !sort(self.wattribs) do
-         c.line(name || ".set_wattrib(" || image(e[1]) || ", " || image(e[2]) || ")")
+         c.line(name || ".set_wattrib(" || image(e[1]) || ", " || txt_image(e[2]) || ")")
 
       c.line(name || ".clear_constraints()")
       every e := !sort(self.constraints) do
-         c.line(name || ".set_constraint(" || image(e[1]) || ", " || image(e[2]) || ")")
+         c.line(name || ".set_constraint(" || image(e[1]) || ", " || txt_image(e[2]) || ")")
 
       if \self.tooltip then {
          self.tooltip.gen_code(c)

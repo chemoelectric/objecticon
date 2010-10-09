@@ -97,3 +97,9 @@ procedure alert_error(d, a)
    InfoDialog(a, "Information", "Okay").show_modal(d)
 end
 
+procedure txt_image(s)
+   if ord(s) > 127 then
+      return image(s)
+   else
+      return image(string(s))
+end

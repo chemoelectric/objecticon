@@ -32,13 +32,13 @@ class MapTab(TabItem)
       #
       # Add a new value to the attributes table.
       #
-      put(contents, ["Edit me", ""])
+      put(contents, ["Edit me", u""])
       tbl.contents_changed()
       tbl.table_content.goto_first(*contents)
       tbl.set_selections([*contents])
       tbl.set_cursor(*contents)
       attrib_tf.set_contents(contents[-1][1])
-      value.set_contents(contents[-1][2])
+      value.set_contents(ucs(contents[-1][2]))
       update_grey()
       attrib_tf.grab_focus()
       attrib_tf.handle_select_all()
@@ -51,7 +51,7 @@ class MapTab(TabItem)
       #
       if i := tbl.get_selections()[1] then {
          attrib_tf.set_contents(contents[i][1])
-         value.set_contents(contents[i][2])
+         value.set_contents(ucs(contents[i][2]))
       }
       update_grey()
    end
@@ -128,7 +128,7 @@ class MapTab(TabItem)
       attrib_tf.set_size(95)
       attrib_tf.connect(self.on_apply, Event.ACTION)
       p.add(attrib_tf)
-      value := TextField()
+      value := TextField("contents=",u"")
       value.set_size(175)
       value.connect(self.on_apply, Event.ACTION)
       p.add(value)

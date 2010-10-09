@@ -33,14 +33,14 @@ class OkCancelPlugin(Plugin)
       c.add_import("gui", "GridLayout")
       c.add_import("gui", "TextButton")
       c.line(obj.name || ".set_layout(GridLayout(\"flush\"))")
-      c.line(t || " := TextButton(\"label=" || obj.config["okay_label"] || "\")")
+      c.line(t || " := TextButton(\"label=\"," || image(obj.config["okay_label"]) || ")")
       if h := \obj.config["okay_method"] then {
          c.add_import("gui", "Event")
          c.line(t || ".connect(" || h || ", Event.ACTION)")
          c.add_method("private", h, ["ev"])
       }
       c.line(obj.name || ".add(" || t || ")")
-      c.line(t || " := TextButton(\"label=" || obj.config["cancel_label"] || "\")")
+      c.line(t || " := TextButton(\"label=\"," || image(obj.config["cancel_label"]) || ")")
       if h := \obj.config["cancel_method"] then {
          c.add_import("gui", "Event")
          c.line(t || ".connect(" || h || ", Event.ACTION)")
