@@ -680,6 +680,29 @@ int wopen(wbp w)
     return Succeeded;
 }
 
+int setwindowicon(wbp w, struct imgdata *imd)
+{
+    wsp ws = w->window;
+    unsigned char *s;
+    int i, j, k;
+    if (ws->icondata)
+        free(ws->icondata);
+    ws->iconlen = 2 + imd->width * imd->height;
+    MemProtect(ws->icondata = malloc(ws->iconlen * sizeof(int)));
+    k = 0;
+    ws->icondata[k++] = imd->width;
+    ws->icondata[k++] = imd->height;
+    s = imd->data;
+    for (j = 0; j < imd->height; ++j) {
+        for (i = 0; i < imd->width; ++i) {
+            int r, g, b, a;
+            nextimgdata(imd, &s, &r, &g, &b, &a);
+            ws->icondata[k++] = ((a/256)<<24) | ((r/256)<<16) | ((g/256)<<8) | (b/256);
+        }
+    }
+    return Succeeded;
+}
+
 
 /*
  * Create a canvas.
@@ -861,6 +884,17 @@ static void wmap(wbp w)
                      ExposureMask | KeyPressMask | EnterWindowMask | LeaveWindowMask |
                      ButtonPressMask | ButtonReleaseMask | ButtonMotionMask |
                      StructureNotifyMask | PointerMotionMask | KeyReleaseMask);
+
+        if (ws->icondata) {
+            XChangeProperty(ws->display->display, 
+                            ws->win, 
+                            ATOM(ws->display, _NET_WM_ICON), 
+                            XA_CARDINAL, 
+                            32,
+                            PropModeReplace, 
+                            (unsigned char *)ws->icondata,
+                            ws->iconlen);
+        }
     }
 
     wmhints.input = True;
@@ -2440,6 +2474,7 @@ char *atom_names[] = {
     "_NET_WM_STATE_MAXIMIZED_HORZ",
     "_NET_WM_STATE_FULLSCREEN",
     "_NET_WM_STATE",
+    "_NET_WM_ICON",
 };
 
 static int get_shift(unsigned long mask)
@@ -3115,10 +3150,15 @@ void freewindow(wsp ws)
             imd->width = 0;
         }
 
-       if (ws->windowlabel) { 
+        if (ws->icondata) {
+            free(ws->icondata);
+            ws->icondata = 0;
+        }
+
+        if (ws->windowlabel) { 
            free(ws->windowlabel); 
            ws->windowlabel = 0;
-       }
+        }
 
         GRFX_UNLINK(ws, wstates);
         free(ws);

@@ -18,6 +18,7 @@ import
 # @field font=string : see {set_font}
 # @field geometry=i1,i2,i3,i4 : see {set_geometry}
 # @field height=integer : see {set_height}
+# @field icon=string : see {set_icon}
 # @field image=string : see {set_image}
 # @field input_mask=string : see {set_input_mask}
 # @field label=string : see {set_label}
@@ -233,6 +234,12 @@ class Window(SetFields,NoCopy)
    # mouse motion events are reported.
    #
    public defer set_input_mask(v)
+
+   #
+   # The canvas attribute icon specifies an image used to identify the
+   # window.  The parameter takes the same format as {set_image}.
+   #
+   public defer set_icon(v)
 
    #
    # The canvas attribute label specifies a title used to identify the
@@ -643,6 +650,7 @@ class Window(SetFields,NoCopy)
          "font": set_font(f.val)
          "geometry": set_geometry!(f.int_list_val())
          "height"|"h": set_height(f.val)
+         "icon": set_icon(f.val)
          "image": set_image(f.val)
          "input_mask": set_input_mask(f.val)
          "label": set_label(f.val)

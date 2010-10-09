@@ -1704,6 +1704,26 @@ function graphics_Window_set_image(self, d)
    }
 end
 
+static int setwindowicon1(wbp w, struct imgdata *imd)
+{
+    int r = setwindowicon(w, imd);
+    freeimgdata(imd);
+    return r;
+}
+
+function graphics_Window_set_icon(self, val)
+   if !cnv:string(val) then
+      runerr(103, val)
+   body {
+       struct imgdata imd;
+       GetSelfW();
+       if (interpimage(self_w, &val, &imd) != Succeeded)
+           fail;
+       AttemptAttr(setwindowicon1(self_w, &imd), "Failed to set window icon");
+       return self;
+   }
+end
+
 function graphics_Window_set_input_mask(self, val)
    if !cnv:string(val) then
       runerr(103, val)

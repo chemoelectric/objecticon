@@ -275,10 +275,11 @@ class Dialog(Component)
       self.compute_tab_order()
       # Delete "canvas" from the attribs, since canvas=popup may be specified, and we
       # don't want the buffer window to popup; similarly "display" is not permitted as a
-      # clone argument.
+      # clone argument, and the buffer window doesn't need an icon.
       t := copy(self.wattribs)
       delete(t, "canvas")
       delete(t, "display")
+      delete(t, "icon")
       self.cbwin := self.buffer_win.clone!wattribs_to_list(t) | 
          runerr("Failed to open clone window:" || &why)
       every (!self.children).initially()
