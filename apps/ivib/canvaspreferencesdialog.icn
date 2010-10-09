@@ -73,7 +73,7 @@ class CanvasPreferencesDialog(Dialog)
          integer(w_spec_tf.get_contents()) | return alert_error(self, "Invalid width")
       if h_spec_tf.is_unshaded() then
          integer(h_spec_tf.get_contents()) | return alert_error(self, "Invalid height")
-      util_check_attribs(self, attrib_tab.get_table()) | fail
+      util_check_attribs(self, attrib_tab.get_table(), Gui.WATTRIB_SET) | fail
 
       #
       # Set the attribs list.

@@ -270,7 +270,7 @@ typedef struct _wstate {
   int		pixheight;		/* backing pixmap height, in pixels */
   int		pixwidth;		/* pixmap width, in pixels */
   stringint     *cursor;
-  int           *icondata;              /* window icon data and length */
+  CARD32        *icondata;              /* window icon data and length */
   int           iconlen;
 #ifdef HAVE_LIBXFT
   XftDraw       *winDraw,*pixDraw;

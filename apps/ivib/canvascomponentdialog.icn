@@ -341,7 +341,7 @@ class CanvasComponentDialog(Dialog)
    # Validate data
    #
    public validate_input()
-      util_check_attribs(self, attrib_tab.get_table()) | fail
+      util_check_attribs(self, attrib_tab.get_table(), Gui.CONTEXT_WATTRIB_SET) | fail
 
       if \pos_tab then {
          if x_spec_list.is_unshaded() then

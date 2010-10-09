@@ -22,7 +22,7 @@ end
 #
 # Check that the window attributes in list l are valid.
 #
-procedure util_check_attribs(dialog, t)
+procedure util_check_attribs(dialog, t, valid_set)
    local s, e
    static test_win
    initial
@@ -30,7 +30,7 @@ procedure util_check_attribs(dialog, t)
 
    # Check for attrib names
    every s := !sort(t) do {
-      if not member(Gui.WATTRIB_SET, s[1]) then
+      if not member(valid_set, s[1]) then
          return alert_error(dialog, "Invalid attribute " || s[1])
    }
 

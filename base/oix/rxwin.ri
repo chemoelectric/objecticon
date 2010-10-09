@@ -743,11 +743,10 @@ int setwindowicon(wbp w, struct imgdata *imd)
     wsp ws = w->window;
     unsigned char *s;
     int i, j, k;
-    int32 fred;
     if (ws->icondata)
         free(ws->icondata);
     ws->iconlen = 2 + imd->width * imd->height;
-    MemProtect(ws->icondata = malloc(ws->iconlen * sizeof(int)));
+    MemProtect(ws->icondata = malloc(ws->iconlen * sizeof(CARD32)));
     k = 0;
     ws->icondata[k++] = imd->width;
     ws->icondata[k++] = imd->height;
@@ -758,6 +757,15 @@ int setwindowicon(wbp w, struct imgdata *imd)
             nextimgdata(imd, &s, &r, &g, &b, &a);
             ws->icondata[k++] = ((a/256)<<24) | ((r/256)<<16) | ((g/256)<<8) | (b/256);
         }
+    }
+    if (ws->win) {
+        XChangeProperty(ws->display->display, ws->win,
+                        ATOM(ws->display, _NET_WM_ICON), 
+                        XA_CARDINAL, 
+                        32,
+                        PropModeReplace, 
+                        (unsigned char *)ws->icondata,
+                        ws->iconlen);
     }
     return Succeeded;
 }
@@ -1218,7 +1226,7 @@ int setwindowlabel(wbp w, char *s)
         free(ws->windowlabel);
     ws->windowlabel = salloc(s);
 
-    if (ws->display && ws->display->display && ws->win)
+    if (ws->win)
         XStoreName(ws->display->display, ws->win,
                    *ws->windowlabel ? ws->windowlabel : " ");    /* empty string fails */
     return Succeeded;
