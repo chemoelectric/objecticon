@@ -799,13 +799,15 @@ void fillpolygon(wbp w, XPoint *points, int npoints)
     fillpoly(ws->pix, points, npoints, 0, get_draw_img(wc), ZP);
     unclip(wc, ws->pix);
 
-    for (i = 0; i < npoints; ++i) {
-        points[i].x += ws->win->r.min.x;
-        points[i].y += ws->win->r.min.y;
+    if (ws->win) {
+        for (i = 0; i < npoints; ++i) {
+            points[i].x += ws->win->r.min.x;
+            points[i].y += ws->win->r.min.y;
+        }
+        clip(wc, ws->win);
+        fillpoly(ws->win, points, npoints, 0, get_draw_img(wc), ZP);
+        unclip(wc, ws->win);
     }
-    clip(wc, ws->win);
-    fillpoly(ws->win, points, npoints, 0, get_draw_img(wc), ZP);
-    unclip(wc, ws->win);
 
     flushimage(display, 1);
 }
@@ -958,6 +960,11 @@ int setbg(wbp w, char *val)
 char *getbg(wbp w)
 {
     return w->context->bg->name;
+}
+
+int setwindowicon(wbp w, struct imgdata *imd)
+{
+    return Succeeded;
 }
 
 #passthru #undef fillarc

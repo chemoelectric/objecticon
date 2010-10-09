@@ -273,13 +273,7 @@ class Dialog(Component)
       }
       self.compute_z_order()
       self.compute_tab_order()
-      # Delete "canvas" from the attribs, since canvas=popup may be specified, and we
-      # don't want the buffer window to popup; similarly "display" is not permitted as a
-      # clone argument.
-      t := copy(self.wattribs)
-      delete(t, "canvas")
-      delete(t, "display")
-      self.cbwin := self.buffer_win.clone!wattribs_to_list(t) | 
+      self.cbwin := self.buffer_win.clone!wattribs_to_list(self.effective_wattribs) | 
          runerr("Failed to open clone window:" || &why)
       every (!self.children).initially()
    end
@@ -294,6 +288,8 @@ class Dialog(Component)
       # buffer window's context.
       t := ["canvas=hidden"]
       put(t, "display=" || get_wattrib("display"))
+      put(t, "dx=" || get_wattrib("dx"))
+      put(t, "dy=" || get_wattrib("dy"))
       self.buffer_win := Window.open!t | runerr("couldn't open buffer window:" || &why)
    end
 

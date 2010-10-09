@@ -158,6 +158,8 @@
 #endif					/* UNIX */
 
 #if XWindows
+   #include <X11/X.h>
+   #include <X11/Xmd.h>
    #include <X11/Xlib.h>
    #include <X11/Xutil.h>
    #include <X11/Xos.h>

@@ -1211,6 +1211,96 @@ static void drawpalette(wbp w, int x, int y, int width, int height,
     freeimgmem(&imem);
 }
 
+void nextimgdata(struct imgdata *imd, unsigned char **s, int *r, int *g, int *b, int *a)
+{
+    switch (imd->format) {
+        case IMGDATA_PALETTE_OPAQUE:
+        case IMGDATA_PALETTE_TRANS: {
+            struct palentry *pe = &imd->paltbl[*(*s)++];
+            if (pe->transpt)
+                *r = *g = *b = *a = 0;
+            else {
+                *r = pe->r;
+                *g = pe->g;
+                *b = pe->b;
+                *a = 65535;
+            }
+            break;
+        }
+       case IMGDATA_RGB24:
+           *r = 257 * (*(*s)++);
+           *g = 257 * (*(*s)++);
+           *b = 257 * (*(*s)++);
+           *a = 65535;
+            break;
+        case IMGDATA_BGR24:
+            *b = 257 * (*(*s)++);
+            *g = 257 * (*(*s)++);
+            *r = 257 * (*(*s)++);
+            *a = 65535;
+            break;
+        case IMGDATA_RGBA32:
+            *r = 257 * (*(*s)++);
+            *g = 257 * (*(*s)++);
+            *b = 257 * (*(*s)++);
+            *a = 257 * (*(*s)++);
+            break;
+        case IMGDATA_ABGR32:
+            *a = 257 * (*(*s)++);
+            *b = 257 * (*(*s)++);
+            *g = 257 * (*(*s)++);
+            *r = 257 * (*(*s)++);
+            break;
+        case IMGDATA_RGB48:
+            *r = *(*s)++;
+            *r = *r<<8|*(*s)++;
+            *g = *(*s)++;
+            *g = *g<<8|*(*s)++;
+            *b = *(*s)++;
+            *b = *b<<8|*(*s)++;
+            *a = 65535;
+            break;
+        case IMGDATA_RGBA64:
+            *r = *(*s)++;
+            *r = *r<<8|*(*s)++;
+            *g = *(*s)++;
+            *g = *g<<8|*(*s)++;
+            *b = *(*s)++;
+            *b = *b<<8|*(*s)++;
+            *a = *(*s)++;
+            *a = *a<<8|*(*s)++;
+            break;
+        case IMGDATA_G8:
+            *r = *g = *b = 257 * (*(*s)++);
+            *a = 65535;
+            break;
+        case IMGDATA_GA16:
+            *r = *g = *b = 257 * (*(*s)++);
+            *a = 257 * (*(*s)++);
+            break;
+        case IMGDATA_AG16:
+            *a = 257 * (*(*s)++);
+            *r = *g = *b = 257 * (*(*s)++);
+            break;
+        case IMGDATA_G16:
+            *r = *(*s)++;
+            *r = *r<<8|*(*s)++;
+            *g = *b = *r;
+            *a = 65535;
+            break;
+        case IMGDATA_GA32:
+            *r = *(*s)++;
+            *r = *r<<8|*(*s)++;
+            *g = *b = *r;
+            *a = *(*s)++;
+            *a = *a<<8|*(*s)++;
+            break;
+        default:
+            syserr("Unknown image format");
+            break;
+    }
+}
+
 /*
  *  Functions and data for reading and writing GIF and JPEG images
  */
