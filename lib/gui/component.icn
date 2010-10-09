@@ -739,15 +739,19 @@ class Component(Rect,Align,SetFields,Connectable)
    # dialog reference and creating the cloned windows.
    #
    public initially()
-      local e
+      local t
       \self.parent | runerr("incorrect ancestry (parent null)")
       parent_dialog := parent.get_parent_dialog()
       self.effective_is_hidden_flag := if parent.is_hidden() | \self.is_hidden_flag then 1 else &null
       self.effective_is_shaded_flag := if parent.is_shaded() | \self.is_shaded_flag then 1 else &null
       Gui.style.polish(self)
       self.effective_wattribs := copy(parent.get_effective_wattribs())
-      every e := !sort(self.wattribs) do
-         insert(self.effective_wattribs, e[1], e[2])
+      every t := key(self.wattribs) do {
+         if member(Gui.CONTEXT_WATTRIB_SET, t) then
+            insert(self.effective_wattribs, t, self.wattribs[t])
+         else
+            runerr("Invalid (non-graphics context) attribute for component:" || t)
+      }
       self.compute_z_order()
       self.compute_tab_order()
       cbwin := parent.get_cbwin().clone!wattribs_to_list(self.wattribs) | 
