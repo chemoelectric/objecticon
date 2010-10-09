@@ -863,8 +863,15 @@ static void wmap(wbp w)
             size_hints.min_width = size_hints.max_width = ws->width;
             size_hints.min_height = size_hints.max_height = ws->height;
         }
-        XSetStandardProperties(stddpy, stdwin, ws->windowlabel, ws->windowlabel,
-                               0,0,0, &size_hints);
+        XChangeProperty(stddpy, stdwin,
+                        ATOM(ws->display, _NET_WM_NAME), 
+                        ATOM(ws->display, UTF8_STRING),
+                        8,
+                        PropModeReplace, 
+                        (unsigned char *)ws->windowlabel,
+                        strlen(ws->windowlabel));
+
+        XSetWMNormalHints(stddpy, stdwin, &size_hints);
         XSelectInput(stddpy, stdwin, 
                      ExposureMask | KeyPressMask | EnterWindowMask | LeaveWindowMask |
                      ButtonPressMask | ButtonReleaseMask | ButtonMotionMask |
@@ -1004,11 +1011,7 @@ void doconfig(wbp w, int status)
         if (ws->win) {
             if (status != C_POS) {
                 XSizeHints size_hints;
-                long t;
-
-                /* Not just a move */
-
-                XGetWMNormalHints(wd->display, ws->win, &size_hints, &t);
+                size_hints.flags = PMinSize | PMaxSize;
                 if (ISRESIZABLE(ws)) {
                     size_hints.min_width = ws->minwidth;
                     size_hints.min_height = ws->minheight;
@@ -1227,8 +1230,14 @@ int setwindowlabel(wbp w, char *s)
     ws->windowlabel = salloc(s);
 
     if (ws->win)
-        XStoreName(ws->display->display, ws->win,
-                   *ws->windowlabel ? ws->windowlabel : " ");    /* empty string fails */
+        XChangeProperty(ws->display->display, ws->win,
+                        ATOM(ws->display, _NET_WM_NAME), 
+                        ATOM(ws->display, UTF8_STRING),
+                        8,
+                        PropModeReplace, 
+                        (unsigned char *)ws->windowlabel,
+                        strlen(ws->windowlabel));
+
     return Succeeded;
 }
 
@@ -2439,7 +2448,7 @@ void drawutf8(wbp w, int x, int y, char *s, int slen, int nchars)
 #endif            /* HAVE_LIBXFT */
 
 /* This array must correspond with the NUMATOMS and ATOM_xxx constants defined in xwin.h. */
-char *atom_names[] = {
+char *atom_names[NUMATOMS] = {
     "CHARACTER_POSITION",
     "CLIENT_WINDOW",
     "HOSTNAME",
@@ -2459,6 +2468,8 @@ char *atom_names[] = {
     "_NET_WM_STATE_FULLSCREEN",
     "_NET_WM_STATE",
     "_NET_WM_ICON",
+    "_NET_WM_NAME",
+    "UTF8_STRING",
 };
 
 static int get_shift(unsigned long mask)
