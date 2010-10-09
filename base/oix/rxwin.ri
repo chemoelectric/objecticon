@@ -667,9 +667,67 @@ wbp wcreate(char *display)
 int wopen(wbp w)
 {
     wsp ws = w->window;
+    wcp wc = w->context;
+    wdp wd = ws->display;
     struct imgdata *imd;
+    XGCValues gcv;
+    unsigned long gcmask =
+        GCGraphicsExposures | GCFont | GCForeground | GCBackground | GCFillStyle | 
+        GCLineWidth | GCLineStyle | GCCapStyle;
 
-    wmap(w);
+    /*
+     * Set the size if unset by the user.  The default varies on whether the
+     * window is hidden or not.
+     */
+    if (ws->width == 0)
+        ws->width = (ws->state == HiddenState ? 1 : 200);
+    if (ws->height == 0)
+        ws->height = (ws->state == HiddenState ? 1 : 200);
+
+    /*
+     * Create the pixmap
+     */
+    ws->pix = XCreatePixmap(wd->display, DefaultRootWindow(wd->display),
+                            ws->width, ws->height,
+                            DefaultDepth(wd->display, wd->screen));
+    ws->pixwidth = ws->width;
+    ws->pixheight = ws->height;
+
+    /*
+     * Create graphics context
+     */
+    gcv.foreground = wc->fg->c;
+    gcv.background = wc->bg->c;
+#ifdef HAVE_LIBXFT
+    gcv.font       = wd->xfont->fid;
+#else
+    gcv.font       = wc->font->fsp->fid;
+#endif
+    gcv.fill_style = wc->fillstyle->i;
+    gcv.line_width = wc->linewidth;
+    gcv.line_style = wc->linestyle->i;
+    if (wc->linewidth > 1) {
+        gcv.dashes = 3 * wc->linewidth;
+        gcmask |= GCDashList;
+    }
+    gcv.cap_style = CapProjecting;
+    gcv.graphics_exposures = False;
+    wc->gc = XCreateGC(wd->display, ws->pix, gcmask, &gcv);
+
+    /* Fill pixmap with background colour */
+    XSetForeground(wd->display, wc->gc, wc->bg->c);
+    XFillRectangle(wd->display, ws->pix, wc->gc, 0, 0, ws->width, ws->height);
+    XSetForeground(wd->display, wc->gc, wc->fg->c);
+
+    /* Set pattern and clip in the gc, if needed */
+    if (wc->clipw >= 0)
+        setclip(w);
+    if (wc->patternname != NULL)
+        setpattern(w, wc->patternname);
+
+    /* Open the window unless it is hidden */
+    if (ws->state != HiddenState)
+        wmap(w);
 
     imd = &ws->initimage;
     if (imd->width) {
@@ -685,6 +743,7 @@ int setwindowicon(wbp w, struct imgdata *imd)
     wsp ws = w->window;
     unsigned char *s;
     int i, j, k;
+    int32 fred;
     if (ws->icondata)
         free(ws->icondata);
     ws->iconlen = 2 + imd->width * imd->height;
@@ -705,17 +764,13 @@ int setwindowicon(wbp w, struct imgdata *imd)
 
 
 /*
- * Create a canvas.
- *  If a window, cause the window to actually become visible on the screen.
+ *  Open the X window for a non-hidden icon window.
  */
 static void wmap(wbp w)
 {
     XWindowAttributes attrs;
-    XGCValues gcv;
-    unsigned long gcmask =
-        GCGraphicsExposures | GCFont | GCForeground | GCBackground | GCFillStyle | GCCapStyle;
+    XSetWindowAttributes attr;
     int i;
-    int new_pixmap = 0;
     struct descrip progname;
     char *p, *s, sbuf[256];
     XWMHints wmhints;
@@ -723,142 +778,64 @@ static void wmap(wbp w)
     STDLOCALS(w);
 
     /*
-     * Set the size if unset by the user.  The default varies on whether the
-     * window is hidden or not.
-     */
-    if (ws->width == 0)
-        ws->width = (ws->state == HiddenState ? 1 : 200);
-    if (ws->height == 0)
-        ws->height = (ws->state == HiddenState ? 1 : 200);
-
-    /*
-     *  Create a pixmap for this canvas if there isn't one already.
-     */
-    if (ws->pix == (Pixmap) NULL) {
-        ws->pix = XCreatePixmap(stddpy, DefaultRootWindow(stddpy),
-                                ws->width, ws->height,
-                                DefaultDepth(stddpy,wd->screen));
-        ws->pixwidth = ws->width;
-        ws->pixheight = ws->height;
-        new_pixmap = 1;
-        stdpix = ws->pix;
-    }
-
-    /*
      * create the X window (or use the DefaultRootWindow if requested)
      */
-    if (ws->state != HiddenState) {
-        XSetWindowAttributes attr;
-        attr.background_pixel = wc->bg->c;
+    attr.background_pixel = wc->bg->c;
 
-        switch (ws->state) {
-            case RootState:
-                ws->win = DefaultRootWindow(stddpy);
-                break;
-            case PopupState: {
-                attr.override_redirect = True;
-                ws->win = XCreateWindow(stddpy, DefaultRootWindow(stddpy),
-                                        ws->x < 0 ? 0 : ws->x,
-                                        ws->y < 0 ? 0 : ws->y, 
-                                        ws->width, ws->height, 
-                                        0,
-                                        DefaultDepth(stddpy,wd->screen),
-                                        InputOutput,
-                                        CopyFromParent,
-                                        CWBackPixel|CWOverrideRedirect,
-                                        &attr);
-                break;
-            }
-            default: {
-                ws->win = XCreateWindow(stddpy, DefaultRootWindow(stddpy),
-                                        ws->x < 0 ? 0 : ws->x,
-                                        ws->y < 0 ? 0 : ws->y, 
-                                        ws->width, ws->height, 
-                                        0,
-                                        DefaultDepth(stddpy,wd->screen),
-                                        InputOutput,
-                                        CopyFromParent,
-                                        CWBackPixel,
-                                        &attr);
-                break;
-            }
+    switch (ws->state) {
+        case RootState:
+            ws->win = DefaultRootWindow(stddpy);
+            break;
+        case PopupState: {
+            attr.override_redirect = True;
+            ws->win = XCreateWindow(stddpy, DefaultRootWindow(stddpy),
+                                    ws->x < 0 ? 0 : ws->x,
+                                    ws->y < 0 ? 0 : ws->y, 
+                                    ws->width, ws->height, 
+                                    0,
+                                    DefaultDepth(stddpy,wd->screen),
+                                    InputOutput,
+                                    CopyFromParent,
+                                    CWBackPixel|CWOverrideRedirect,
+                                    &attr);
+            break;
         }
-
-        /* If the window has a parent, set the WM_TRANSIENT_FOR hint. */
-        if (ws->transientfor)
-            XSetTransientForHint(stddpy, ws->win, ws->transientfor);
-
-        /* Turn off background; this prevents X filling the background on an expose
-           and hence prevents unsightly flicker on a resize. */
-        XSetWindowBackgroundPixmap(stddpy, ws->win, None);
-
-        XSetWMProtocols(ws->display->display, ws->win, &ATOM(ws->display, WM_DELETE_WINDOW), 1);
-
-        stdwin = ws->win;
-        XClearWindow(stddpy, stdwin);
-
-        GRFX_GENLINK(ws, vwstates, vnext, vprevious);
+        default: {
+            ws->win = XCreateWindow(stddpy, DefaultRootWindow(stddpy),
+                                    ws->x < 0 ? 0 : ws->x,
+                                    ws->y < 0 ? 0 : ws->y, 
+                                    ws->width, ws->height, 
+                                    0,
+                                    DefaultDepth(stddpy,wd->screen),
+                                    InputOutput,
+                                    CopyFromParent,
+                                    CWBackPixel,
+                                    &attr);
+            break;
+        }
     }
 
-    /*
-     * before creating the graphics context, construct a description
-     * of any non-default initial graphics context values.
-     */
-    gcv.foreground = wc->fg->c;
-    gcv.background = wc->bg->c;
-#ifdef HAVE_LIBXFT
-    gcv.font       = wd->xfont->fid;
-#else
-    gcv.font       = wc->font->fsp->fid;
-#endif
-    gcv.fill_style = wc->fillstyle->i;
-    gcmask |= (GCLineWidth | GCLineStyle);
-    gcv.line_width = wc->linewidth;
-    gcv.line_style = wc->linestyle->i;
-    if (wc->linewidth > 1) {
-        gcv.dashes = 3 * wc->linewidth;
-        gcmask |= GCDashList;
-    }
-    gcv.cap_style = CapProjecting;
-    gcv.graphics_exposures = False;
+    /* If the window has a parent, set the WM_TRANSIENT_FOR hint. */
+    if (ws->transientfor)
+        XSetTransientForHint(stddpy, ws->win, ws->transientfor);
 
-    /*
-     * Create a graphics context (or change an existing one to conform
-     * with initial values).
-     */
-    if (stdgc == NULL) {
-        wc->gc = XCreateGC(stddpy, stdpix, gcmask, &gcv);
-        stdgc = wc->gc;
-    }
-    else
-        XChangeGC(stddpy, stdgc, gcmask, &gcv);
+    /* Turn off background; this prevents X filling the background on an expose
+       and hence prevents unsightly flicker on a resize. */
+    XSetWindowBackgroundPixmap(stddpy, ws->win, None);
 
-    if (wc->clipw >= 0)
-        setclip(w);
+    XSetWMProtocols(ws->display->display, ws->win, &ATOM(ws->display, WM_DELETE_WINDOW), 1);
 
-    if (new_pixmap) {
-        XSetForeground(stddpy, stdgc, wc->bg->c);
-        XFillRectangle(stddpy, ws->pix, stdgc, 0, 0, ws->width, ws->height);
-        XSetForeground(stddpy, stdgc, wc->fg->c);
-    }
+    stdwin = ws->win;
+    XClearWindow(stddpy, stdwin);
+
+    GRFX_GENLINK(ws, vwstates, vnext, vprevious);
 
     /* For RootState, need to fill since XClearWindow above fills with a pixmap */
     if (ws->state == RootState) {
         XSetForeground(stddpy, stdgc, wc->bg->c);
         XFillRectangle(stddpy, ws->win, stdgc, 0, 0, ws->width, ws->height);
         XSetForeground(stddpy, stdgc, wc->fg->c);
-    }
-
-    if (wc->patternname != NULL)
-        setpattern(w, wc->patternname);
-
-    /*
-     *  if we are opening a pixmap, we are done at this point.
-     */
-    if (stdwin == (Window) NULL) 
-        return;
-
-    if (ws->state != RootState) {
+    } else {
         XSizeHints size_hints;
         size_hints.flags = PSize | PMinSize | PMaxSize;
         size_hints.width = ws->width;
@@ -880,14 +857,13 @@ static void wmap(wbp w)
         }
         XSetStandardProperties(stddpy, stdwin, ws->windowlabel, ws->windowlabel,
                                0,0,0, &size_hints);
-        XSelectInput(ws->display->display, ws->win, 
+        XSelectInput(stddpy, stdwin, 
                      ExposureMask | KeyPressMask | EnterWindowMask | LeaveWindowMask |
                      ButtonPressMask | ButtonReleaseMask | ButtonMotionMask |
                      StructureNotifyMask | PointerMotionMask | KeyReleaseMask);
 
         if (ws->icondata) {
-            XChangeProperty(ws->display->display, 
-                            ws->win, 
+            XChangeProperty(stddpy, stdwin,
                             ATOM(ws->display, _NET_WM_ICON), 
                             XA_CARDINAL, 
                             32,
