@@ -392,11 +392,11 @@ class MenuComponent(Rect,SetFields,Connectable)
          self.temp_win.resize()
          self.temp_win.invalidate()
       } else {
-         d := Dialog("canvas=popup", 
-                     "w=", self.w, "h=",self.h,
-                     "dx=",-self.x, "dy=",-self.y,
-                     "w:x=", win.get_x() + win.get_dx() + self.x,
-                     "w:y=", win.get_y() + win.get_dy() + self.y)
+         d := PureDialog("canvas=popup", 
+                         "w=", self.w, "h=",self.h,
+                         "w:dx=",-self.x, "w:dy=",-self.y,
+                         "w:x=", win.get_x() + win.get_dx() + self.x,
+                         "w:y=", win.get_y() + win.get_dy() + self.y)
          self.temp_win := create_proxy()
          self.temp_win.set_pos(0, 0)
          self.temp_win.set_size(self.w, self.h)

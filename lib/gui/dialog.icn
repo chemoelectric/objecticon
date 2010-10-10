@@ -796,11 +796,11 @@ class Dialog(Component)
       if \use_popup_win then {
          self.tooltip_component.finally()
          self.remove(self.tooltip_component)
-         d := Dialog("canvas=popup", 
-                     "dx=", -self.tooltip_component.x, "dy=",-self.tooltip_component.y,
-                     "w=", self.tooltip_component.w, "h=",self.tooltip_component.h,
-                     "w:x=", win.get_x() + win.get_dx() + self.tooltip_component.x,
-                     "w:y=", win.get_y() + win.get_dy() + self.tooltip_component.y)
+         d := PureDialog("canvas=popup", 
+                         "w=", self.tooltip_component.w, "h=",self.tooltip_component.h,
+                         "w:dx=", -self.tooltip_component.x, "w:dy=",-self.tooltip_component.y,
+                         "w:x=", win.get_x() + win.get_dx() + self.tooltip_component.x,
+                         "w:y=", win.get_y() + win.get_dy() + self.tooltip_component.y)
          self.tooltip_component.set_pos(0, 0)
          d.add(self.tooltip_component)
          d.show_modeless()
@@ -1139,6 +1139,20 @@ class Dialog(Component)
       self.selection_requests := table()
       self.tooltip_ticker := Ticker("interval=200")
       self.tooltip_ticker.connect(self.process_tooltip_tick, Event.TICK)
+      set_fields(a)
+      return
+   end
+end
+
+#
+# This is just a {Dialog} which doesn't have its set of window attribs
+# initialized to {Dialog.ROOT_WATTRIBS}; rather it starts with an
+# empty set of attribs.
+#
+class PureDialog(Dialog)
+   public new(a[])
+      cast(self,Dialog).new()
+      self.clear_wattribs()
       set_fields(a)
       return
    end

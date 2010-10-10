@@ -779,7 +779,7 @@ class Main(Dialog)
 
       t := canvas.dup()
       every Seq{t.traverse_components_preorder()}.set_show_layout(&no)
-      d := Dialog()
+      d := PureDialog()
       d.set_layout(t.layout_delegate)
       every d.add(!t.children)
 
