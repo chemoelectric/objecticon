@@ -1,8 +1,27 @@
 #summary Some notes about the implementation.
-
+<wiki:toc max_depth="3" />
 = Introduction =
+This page gives some details about how Object Icon is implemented, with particular reference to how the core virtual machine operates, which differs markedly to the traditional Icon implementation.
 
-Add your content here.
+== Frames ==
+
+Consider the following program :-
+{{{
+import io
+
+procedure f1()
+   suspend "hello" | "goodbye"
+end
+
+procedure main()
+   local s, t
+   s := "the quick brown fox"
+   every t := !s || f1() do
+      write(t)
+end
+}}}
+
+Just before the call to `write`, the state of the chain of rames will look like as follows :-
 
 
 = Details =
