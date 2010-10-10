@@ -1,4 +1,6 @@
 static word main_wrapper_code[] = {
+   Op_Mark,
+   0,
    Op_Invoke,
    0,
    Op_Nil,
@@ -6,11 +8,13 @@ static word main_wrapper_code[] = {
    0,
    1,
    0,
-   (word)&main_wrapper_code[10],
+   (word)&main_wrapper_code[14],
    Op_Tmp,
    1,
+   Op_Unmark,
+   0,
    Op_Custom,
    (word)handle_prog_exit,
    Op_Exit,
 };
-#passthru CustomProc(main_wrapper,main_wrapper_code,0,0,1,2,0,0,"main_wrapper")
+#passthru CustomProc(main_wrapper,main_wrapper_code,0,0,1,2,0,1,"main_wrapper")

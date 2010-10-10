@@ -2,6 +2,8 @@
 # Wrapper for main procedure.
 #
 $start main_wrapper
+    Op_Mark
+        mark:0
     Op_Invoke
         clo:0
         Op_Nil
@@ -10,7 +12,8 @@ $start main_wrapper
         0
         MainExit
         Op_Tmp tmp:1
-
+    Op_Unmark
+        mark:0
 #      
 # main() has exited; either transfer to the monitoring progstate, setting
 # the exited flag, or fall through and exit.
