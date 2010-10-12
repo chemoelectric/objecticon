@@ -121,7 +121,7 @@ class ObjectOutputStream(Stream, SetFields)
    end
 
    public traverse(o)
-      local ty, s, i, e, pairs, mp, sep, desc, def
+      local ty, s, i, e, mp, sep, desc, def
 
       if s := \seen[o] then
          return writes("ref ", s)
@@ -271,23 +271,12 @@ class ObjectOutputStream(Stream, SetFields)
                writes(s) | fail
             else {
                def := o[[]]
-               if simple{\def | keyval(o)} then {
+               if simple{\def} then {
                   writes(s) | fail
                   if \def then {
                      writes(";def=") | fail
                      traverse(def) | fail
                   }
-                  pairs := sort(o)
-                  writes("{") | fail
-                  every e := !pairs do {
-                     if \sep then
-                        writes(";") | fail
-                     traverse(e[1]) | fail
-                     writes("->") | fail
-                     traverse(e[2]) | fail
-                     sep := 1
-                  }
-                  writes("}") | fail
                } else {
                   nl() | fail
                   writes(s) | fail
@@ -297,10 +286,23 @@ class ObjectOutputStream(Stream, SetFields)
                      traverse(def) | fail
                      iminus()
                   }
-                  pairs := sort(o)
+               }
+
+               if simple{keyval(o)} then {
+                  writes("{") | fail
+                  every e := !sort(o) do {
+                     if \sep then
+                        writes(";") | fail
+                     traverse(e[1]) | fail
+                     writes("->") | fail
+                     traverse(e[2]) | fail
+                     sep := 1
+                  }
+                  writes("}") | fail
+               } else {
                   writes("{") | fail
                   iplus()
-                  every e := !pairs do {
+                  every e := !sort(o) do {
                      nl() | fail
                      traverse(e[1]) | fail
                      writes("->") | fail
