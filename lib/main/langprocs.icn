@@ -59,6 +59,7 @@ end
 # @field depth=integer : see {set_depth}
 # @field ignore_object_output=flag : see {set_ignore_object_output}
 # @field always_structure=flag : see {set_always_structure}
+# @field always_indent=integer : short for indent=integer, always_structure=&yes
 #
 class ObjectOutputStream(Stream, SetFields)
    private readable
@@ -120,7 +121,7 @@ class ObjectOutputStream(Stream, SetFields)
    end
 
    public traverse(o)
-      local ty, s, i, e, pairs, mp, sep, desc
+      local ty, s, i, e, pairs, mp, sep, desc, def
 
       if s := \seen[o] then
          return writes("ref ", s)
@@ -268,46 +269,49 @@ class ObjectOutputStream(Stream, SetFields)
             seen[o] := s
             if /desc then
                writes(s) | fail
-            else if simple{o[[]] | keyval(o)} then {
-               writes(s) | fail
-               if \o[[]] then {
-                  writes(";def=") | fail
-                  traverse(o[[]]) | fail
-               }
-               pairs := sort(o)
-               writes("{") | fail
-               every e := !pairs do {
-                  if \sep then
-                     writes(";") | fail
-                  traverse(e[1]) | fail
-                  writes("->") | fail
-                  traverse(e[2]) | fail
-                  sep := 1
-               }
-               writes("}") | fail
-            } else {
-               nl() | fail
-               writes(s) | fail
-               if \o[[]] then {
-                  writes(";def=") | fail
-                  iplus()
-                  traverse(o[[]]) | fail
-                  iminus()
-               }
-               pairs := sort(o)
-               writes("{") | fail
-               iplus()
-               every e := !pairs do {
+            else {
+               def := o[[]]
+               if simple{\def | keyval(o)} then {
+                  writes(s) | fail
+                  if \def then {
+                     writes(";def=") | fail
+                     traverse(def) | fail
+                  }
+                  pairs := sort(o)
+                  writes("{") | fail
+                  every e := !pairs do {
+                     if \sep then
+                        writes(";") | fail
+                     traverse(e[1]) | fail
+                     writes("->") | fail
+                     traverse(e[2]) | fail
+                     sep := 1
+                  }
+                  writes("}") | fail
+               } else {
                   nl() | fail
-                  traverse(e[1]) | fail
-                  writes("->") | fail
+                  writes(s) | fail
+                  if \def then {
+                     writes(";def=") | fail
+                     iplus()
+                     traverse(def) | fail
+                     iminus()
+                  }
+                  pairs := sort(o)
+                  writes("{") | fail
                   iplus()
-                  traverse(e[2]) | fail
+                  every e := !pairs do {
+                     nl() | fail
+                     traverse(e[1]) | fail
+                     writes("->") | fail
+                     iplus()
+                     traverse(e[2]) | fail
+                     iminus()
+                  }
                   iminus()
+                  nl() | fail
+                  writes("}") | fail
                }
-               iminus()
-               nl() | fail
-               writes("}") | fail
             }
          }
 
@@ -412,10 +416,13 @@ class ObjectOutputStream(Stream, SetFields)
       static s
       initial s := set("null", "string", "ucs", "cset", "integer", "class",
                        "real", "co-expression", "constructor", "procedure")
-      if /indent | (level = \depth) then
+      if /indent then
          return
+      # If always structure, then only an empty sequence is simple.
       if \always_structure_flag then
-         fail
+         return not(@x)
+      if level = \depth then
+         return
       while e := @x do
          member(seen, e) | member(s, type(e)) | fail
       return 
@@ -459,6 +466,10 @@ class ObjectOutputStream(Stream, SetFields)
          "depth" : set_depth(f.int_val())
          "ignore_object_output" : set_ignore_object_output(f.flag_val())
          "always_structure" : set_always_structure(f.flag_val())
+         "always_indent" : {
+            set_indent(f.int_val())
+            set_always_structure(&yes)
+         }
          default: fail
       }
       return
