@@ -153,24 +153,21 @@ class LineBasedScrollArea(DrawScrollArea)
    # @p
    public goto_pos(line, horiz)
       goto_first(\line)
-      (\self.hsb).set_value(\horiz)
-      self.refresh()
+      set_area_x(\horiz)
    end
 
    #
    # Make the given line the first in the view.
    #
    public goto_first(line)
-      (\self.vsb).set_value(get_cum_line_height(line - 1))
-      self.refresh()
+      set_area_y(get_cum_line_height(line - 1))
    end
 
    #
    # Make the given line the last in the view.
    #
    public goto_last(line)
-      (\self.vsb).set_value(get_cum_line_height(line) - view.h)
-      self.refresh()
+      set_area_y(get_cum_line_height(line) - view.h)
    end
 
    #
@@ -192,7 +189,7 @@ class LineBasedScrollArea(DrawScrollArea)
    # view area.
    #
    public center_line(line)
-      (\self.vsb).set_value(get_cum_line_height(line) - view.h / 2)
+      set_area_y(get_cum_line_height(line) - view.h / 2)
    end
 
    #
