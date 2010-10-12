@@ -36,6 +36,7 @@ class MenuComponent(Rect,SetFields,Connectable)
       label_h,                                
       is_sub_menu_flag,                                
       is_decorative_flag,                                
+      component_link,
       parent_component,                               
       is_shaded_flag,                                
       parent,                  
@@ -46,7 +47,7 @@ class MenuComponent(Rect,SetFields,Connectable)
       temp_win
 
    public initially()
-      self.parent_component := (\parent).parent_component
+      self.parent_component := (\parent).parent_component | component_link
       (\self.border).initially(self.parent_component)
       every (!self.children).initially()
    end
@@ -171,6 +172,15 @@ class MenuComponent(Rect,SetFields,Connectable)
 
    public set_parent_component(x)
       self.parent_component := x
+   end
+
+   #
+   # Set the link to the parent component for the root of a tree of
+   # {MenuComponent}s.  The tree's {parent_component} links will then
+   # be set in the {initially} method.
+   #
+   public set_component_link(x)
+      self.component_link := x
    end
 
    public is_sub_menu()

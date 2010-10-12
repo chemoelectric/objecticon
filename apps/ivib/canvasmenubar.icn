@@ -47,6 +47,10 @@ class CanvasMenuBar(CanvasComponent,MenuBar)
       suspend CanvasComponent.get_template() | ["Menus", "menus"]
    end
 
+    protected post_decode()
+       every (!self.menus).component_link := self
+    end
+
    #
    # Set the menu bar's string representation.
    #
