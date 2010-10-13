@@ -49,6 +49,7 @@ class EditableTextList(LineBasedScrollArea)
       old_cursor_y,
       old_mark_x,
       old_mark_y,
+      old_has_region,
       old_region,
       view_list,
       tab_width,
@@ -60,7 +61,6 @@ class EditableTextList(LineBasedScrollArea)
       clipboard_selection_owner,
       scroll_ticker,
       cursor_ticker,
-      cursor_last_y,
       cursor_on,
       tx,
       tw
@@ -390,12 +390,13 @@ class EditableTextList(LineBasedScrollArea)
       old_cursor_y := cursor_y
       old_mark_x := mark_x
       old_mark_y := mark_y
+      old_has_region := has_region() | &null
       old_region := get_region_list() | &null
       changed := &null
    end
 
    public end_handle(e)
-      local r
+      local r, i, cursor_moved, t
 
       if r := get_region_list() then {
          parent_dialog.own_selection(Selection.PRIMARY, self.primary_selection_owner)
@@ -419,26 +420,40 @@ class EditableTextList(LineBasedScrollArea)
             self.refresh()
          }
          cursor_on := -1
-         fire(Event.CONTENT_CHANGED, e)
       }
 
       if (cursor_x ~= old_cursor_x) | (cursor_y ~= old_cursor_y) then {
-         if /changed then {
-            self.constrain_line()
-            self.refresh()
-         }
-         cursor_on := -1
-         fire(Event.CURSOR_MOVED, e)
-      }
-
-      if (mark_x ~=== old_mark_x) | (mark_y ~=== old_mark_y) then {
          if /changed then
-            self.refresh()
+            self.constrain_line()
+         cursor_on := -1
+         cursor_moved := 1
       }
 
-      if not lang.equals(old_region, r) then {
-         fire(Event.SELECTION_CHANGED, e)
+      # Invalidate on cursor/mark changes
+      if /changed & 
+         (\cursor_moved | (mark_x ~=== old_mark_x) | (mark_y ~=== old_mark_y)) & 
+         (i := get_line_info()) then 
+      {
+         t := [get_view_list_index(old_cursor_x, old_cursor_y),
+               get_view_list_index(cursor_x, cursor_y)]
+         if not has_region() & /old_has_region then
+            # No regions, so just invalidate cursor lines
+            every invalidate_line(!t, i)
+         else {
+            # Have and/or had regions, so invalidate whole range of lines involved
+            put(t, get_view_list_index(\old_mark_x, \old_mark_y))
+            put(t, get_view_list_index(\mark_x, \mark_y))
+            every invalidate_line(min!t to max!t, i)
+         }
       }
+
+      # Fire events
+      if \changed then
+         fire(Event.CONTENT_CHANGED, e)
+      if \cursor_moved then
+         fire(Event.CURSOR_MOVED, e)
+      if not lang.equals(old_region, r) then
+         fire(Event.SELECTION_CHANGED, e)
    end
 
    public handle_key(e)
@@ -952,14 +967,14 @@ class EditableTextList(LineBasedScrollArea)
 
    public cursor_tick()
       local t
-      (self.has_focus() & self.is_unshaded() & self.is_unhidden() & \cursor_last_y) | fail
+      (self.has_focus() & self.is_unshaded() & self.is_unhidden()) | fail
       t := cursor_on
       cursor_on := if parent_dialog.is_blocked() | parent_dialog.in_menu_mode() then
          0
       else
          (cursor_on + 1) % 3
       if (t | cursor_on) = 2 then
-         view.invalidate(Rect(view.x, cursor_last_y, view.w, line_height))
+         invalidate_line(get_view_list_index(cursor_x, cursor_y))
    end
 
    public draw()
@@ -1016,7 +1031,6 @@ class EditableTextList(LineBasedScrollArea)
       }
 
       if (v.index = \self.cursor_y) & (v.first <= \self.cursor_x <= v.last) then {
-         cursor_last_y := yp
          if self.has_focus() & self.is_unshaded() then {
             if self.cursor_on ~= 2 then
                Gui.style.draw_text_cursor(view.cbwin,

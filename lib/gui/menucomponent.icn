@@ -141,7 +141,9 @@ class MenuComponent(Rect,SetFields,Connectable)
    # Set the shaded status of the component.
    #
    public set_is_shaded(s)
-      self.is_shaded_flag := check_flag(s)
+      s := check_flag(s)
+      (s ~=== self.is_shaded_flag) | fail
+      self.is_shaded_flag := s
       possibly_invalidate()
    end
 

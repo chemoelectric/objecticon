@@ -193,6 +193,19 @@ class LineBasedScrollArea(DrawScrollArea)
    end
 
    #
+   # Invalidate the rectangle of the given line.
+   #
+   public invalidate_line(line, i)
+      is_live() | fail
+      /i := get_line_info()
+      if \i & (i.first <= line <= i.last) then
+         view.invalidate(Rect(view.x, 
+                              view.y - get_area_y() + get_cum_line_height(line - 1),
+                              view.w,
+                              get_height_for_line(line)))
+   end
+
+   #
    # Convert the current y pointer offset to a line number.  The result is <=0 if the
    # pointer is above all lines, >get_line_count() if below.  The view window is not
    # taken into account, so the result may not actually be visible.
