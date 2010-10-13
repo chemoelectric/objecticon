@@ -37,6 +37,7 @@ class MenuBar(Component)
    public add(c, i)
       /i := 0
       insert(self.menus, i, c)
+      c.set_component_link(self)
    end
 
    #
@@ -63,21 +64,15 @@ class MenuBar(Component)
    end
 
    public initially()
-      local m
       cast(self,Component).initially()
       self.parent_dialog.connect(self.dialog_event, Event.ICON)
-      every m := !self.menus do {
-         m.set_parent_component(self)         
-         m.initially()
-      }
+      every (!self.menus).initially()
    end
 
    public finally()
       self.parent_dialog.disconnect_object(self)
       self.set_which_highlight()
-      
       every (!self.menus).finally()
-
       cast(self,Component).finally()
    end
 

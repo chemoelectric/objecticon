@@ -229,6 +229,12 @@ class Coexpression()
    public static defer traceback(ce, act_chain)
 
    #
+   # Output (to stderr) a dump of the stack of the given coexpression,
+   # showing the internal format of the stack.
+   #
+   public static defer print_stack(ce)
+
+   #
    # Return a list containing information about the stack of frames in the given
    # co-expression.  Each element is a {FrameInfo} instance.
    #

@@ -712,6 +712,16 @@ function lang_Coexpression_is_main(ce)
    }
 end
 
+function lang_Coexpression_print_stack(ce)
+    body {
+       struct b_coexpr *b;
+       if (!(b = get_coexpr_for(&ce)))
+          runerr(0);
+       showstack(stderr, b);
+       fail;
+    }
+end
+
 function display(i, ce)
    if !def:C_integer(i, -1) then
       runerr(101, i)

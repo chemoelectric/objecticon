@@ -30,13 +30,13 @@ class MenuButton(Component)
    #
    public set_menu(c)
       self.menu := c
+      c.set_component_link(self)         
    end
 
    public initially()
       \self.menu | runerr("no menu set")
       cast(self,Component).initially()
       self.parent_dialog.connect(self.dialog_event, Event.ICON)
-      self.menu.set_parent_component(self)         
       self.menu.initially()
    end
 

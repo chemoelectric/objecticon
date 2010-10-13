@@ -222,19 +222,19 @@ class DropDown(SelectionList,Component)
          self.parent_dialog.remove(tl)
 
          d := if use_direction == DOWN then 
-            Dialog("canvas=popup", 
-                   "w=", tl.w_spec, "h=",tl.h_spec,
-                   "w:dx=", -self.x,
-                   "w:dy=", -(self.y + self.h),
-                   "w:x=", win.get_x() + win.get_dx() + self.x,
-                   "w:y=", win.get_y() + win.get_dy() + self.y + self.h)
+            PureDialog("canvas=popup", 
+                       "w=", tl.w_spec, "h=",tl.h_spec,
+                       "w:dx=", -self.x,
+                       "w:dy=", -(self.y + self.h),
+                       "w:x=", win.get_x() + win.get_dx() + self.x,
+                       "w:y=", win.get_y() + win.get_dy() + self.y + self.h)
          else
-            Dialog("canvas=popup", 
-                   "w=", tl.w_spec, "h=",tl.h_spec,
-                   "w:dx=", -self.x,
-                   "w:dy=", -(self.y - tl.h_spec),
-                   "w:x=", win.get_x() + win.get_dx() + self.x,
-                   "w:y=", win.get_y() + win.get_dy() + self.y - tl.h_spec)
+            PureDialog("canvas=popup", 
+                       "w=", tl.w_spec, "h=",tl.h_spec,
+                       "w:dx=", -self.x,
+                       "w:dy=", -(self.y - tl.h_spec),
+                       "w:x=", win.get_x() + win.get_dx() + self.x,
+                       "w:y=", win.get_y() + win.get_dy() + self.y - tl.h_spec)
 
          d.add(tl)
          self.tl.set_pos(0, 0)

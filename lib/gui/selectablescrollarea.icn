@@ -97,8 +97,7 @@ class SelectableScrollArea(LineBasedScrollArea)
    # Clear the selections.
    #
    public clear_selections()
-      self.selections := set()
-      refresh()
+      set_selections([])
    end
 
    #
@@ -216,26 +215,37 @@ class SelectableScrollArea(LineBasedScrollArea)
    # @param l   The list of item numbers.
    #
    public set_selections(l)
-      self.selections := elementset(l)
-      constrain_selections()
-      refresh()
+      local i, t
+      if is_live() then {
+         i := get_line_info()
+         t := copy(selections)
+         self.selections := elementset(l)
+         constrain_selections()
+         every invalidate_line(!(t -- selections) | !(selections -- t), i)
+      } else {
+         self.selections := elementset(l)
+         constrain_selections()
+      }
    end
 
    #
    # Select the given line number
    #
    public select_line(i)
-      if 0 < i <= *self.contents then
+      if (0 < i <= *self.contents) & not member(self.selections, i) then {
          insert(self.selections, i)
-      refresh()
+         invalidate_line(i)
+      }
    end
 
    #
    # De-select the given line number
    #
    public deselect_line(i)
-      delete(self.selections, i)
-      refresh()
+      if member(self.selections, i) then {
+         delete(self.selections, i)
+         invalidate_line(i)
+      }
    end
 
    #
@@ -253,10 +263,10 @@ class SelectableScrollArea(LineBasedScrollArea)
       every i := !self.selections do {
          if self.contents[i] === o then {
             delete(self.selections, i)
+            invalidate_line(i)
             break
          }
       }
-      refresh()
    end
 
    #
@@ -264,14 +274,14 @@ class SelectableScrollArea(LineBasedScrollArea)
    # @param l  The list of objects.
    #
    public object_set_selections(l)
-      local i, t
-      self.selections := set()
+      local i, t, s
+      s := set()
       t := elementset(l)
       every i := 1 to *self.contents do {
          if member(t, self.contents[i]) then
-            insert(self.selections, i)
+            insert(s, i)
       }
-      refresh()
+      set_selections(s)
    end
 
    #
@@ -286,9 +296,10 @@ class SelectableScrollArea(LineBasedScrollArea)
    # Set the cursor to the given line
    #
    public set_cursor(line)
+      invalidate_line(\self.cursor)
       self.cursor := line
+      invalidate_line(\self.cursor)
       constrain_cursor()
-      refresh()
    end
 
    #
@@ -403,7 +414,8 @@ class SelectableScrollArea(LineBasedScrollArea)
    end
 
    private move_cursor_on_key(e, line)
-      set_cursor(line)
+      self.cursor := line
+      constrain_cursor()
       self.prev_cursor := self.cursor
       if \self.selection_on_key_moves & (self.select_mode ~=== Select.NONE) then {
          if not (\e.shift & (self.select_mode === Select.MANY)) then {
@@ -417,21 +429,31 @@ class SelectableScrollArea(LineBasedScrollArea)
    public start_handle(e)
       self.old_cursor := self.cursor
       self.old_highlight := self.highlight
-      self.old_selections := get_selections()
+      self.old_selections := copy(self.selections)
    end
 
    public end_handle(e)
+      local i, cursor_moved, selection_changed
+      i := get_line_info()
       if self.cursor ~=== self.old_cursor then {
-         self.refresh()
-         fire(Event.CURSOR_MOVED, e)
+         invalidate_line(\self.old_cursor, i)
+         invalidate_line(\self.cursor, i)
+         cursor_moved := 1
       }
       if self.highlight ~=== self.old_highlight then {
-         self.refresh()
+         invalidate_line(\self.highlight, i)
+         invalidate_line(\self.old_highlight, i)
       }
-      if not lang.equals(self.old_selections, get_selections()) then {
-         self.refresh()
+      if not lang.equals(self.old_selections, self.selections) then {
+         every invalidate_line(!(old_selections -- selections) | !(selections -- old_selections), i)
+         selection_changed := 1
+      }
+
+      # Fire events
+      if \cursor_moved then
+         fire(Event.CURSOR_MOVED, e)
+      if \selection_changed then
          fire(Event.SELECTION_CHANGED, e)
-      }
    end
 
    public handle_return(e)
@@ -639,7 +661,7 @@ class SelectableScrollArea(LineBasedScrollArea)
 
    public handle_key_escape(e)
       start_handle(e)
-      clear_selections()
+      self.selections := set()
       end_handle(e)
    end
 
@@ -847,8 +869,3 @@ class SelectableScrollArea(LineBasedScrollArea)
       return
    end
 end
-
-
-
-
-

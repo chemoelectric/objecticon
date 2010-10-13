@@ -309,10 +309,12 @@ class Component(Rect,Align,SetFields,Connectable)
    # Set the hidden status of the component.
    #
    public set_is_hidden(s)
+      s := check_flag(s)
+      (s ~=== self.is_hidden_flag) | fail
       # NB - try invalidate before and after, since invalidating a hidden
       # component is a no-op.
       self.invalidate()
-      self.is_hidden_flag := check_flag(s)
+      self.is_hidden_flag := s
       self.hidden_change()
       self.invalidate()
    end
@@ -390,7 +392,9 @@ class Component(Rect,Align,SetFields,Connectable)
    # Set the shaded status of the component.
    #
    public set_is_shaded(s)
-      self.is_shaded_flag := check_flag(s)
+      s := check_flag(s)
+      (s ~=== self.is_shaded_flag) | fail
+      self.is_shaded_flag := s
       self.shaded_change()
       self.invalidate()
    end
