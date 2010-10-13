@@ -28,6 +28,7 @@ class LineBasedScrollArea(DrawScrollArea)
    public 
       # Cached line height and count.
       line_height,
+      cum_line_height,
       line_count
 
    #
@@ -133,17 +134,19 @@ class LineBasedScrollArea(DrawScrollArea)
    end
 
    #
-   # Get the total line height upto and including line
+   # Get the total line height upto but not including the line, which
+   # may range from 1 ... line_count+1
    #
    public get_cum_line_height(line)
-      local h, s, e
+      local h, s
       if integer(h := get_line_height()) then
-         return h * line
+         return h * (line - 1)
       else {
-         s := 0
-         every e := !h \ line do
-            s +:= e
-         return s
+         if /cum_line_height := [0] then {
+            s := 0
+            every put(cum_line_height, s +:= !h)
+         }
+         return cum_line_height[line]
       }
    end
 
@@ -160,14 +163,14 @@ class LineBasedScrollArea(DrawScrollArea)
    # Make the given line the first in the view.
    #
    public goto_first(line)
-      set_area_y(get_cum_line_height(line - 1))
+      set_area_y(get_cum_line_height(line))
    end
 
    #
    # Make the given line the last in the view.
    #
    public goto_last(line)
-      set_area_y(get_cum_line_height(line) - view.h)
+      set_area_y(get_cum_line_height(line + 1) - view.h)
    end
 
    #
@@ -189,7 +192,7 @@ class LineBasedScrollArea(DrawScrollArea)
    # view area.
    #
    public center_line(line)
-      set_area_y(get_cum_line_height(line) - view.h / 2)
+      set_area_y(get_cum_line_height(line) + get_height_for_line(line) / 2 - view.h / 2)
    end
 
    #
@@ -200,7 +203,7 @@ class LineBasedScrollArea(DrawScrollArea)
       /i := get_line_info()
       if \i & (i.first <= line <= i.last) then
          view.invalidate(Rect(view.x, 
-                              view.y - get_area_y() + get_cum_line_height(line - 1),
+                              view.y - get_area_y() + get_cum_line_height(line),
                               view.w,
                               get_height_for_line(line)))
    end
@@ -297,7 +300,7 @@ class LineBasedScrollArea(DrawScrollArea)
    # Clear the cached value of line height (and subject height).
    #
    public invalidate_line_height()
-      self.subject_height := self.line_height := &null
+      self.subject_height := self.line_height := self.cum_line_height := &null
    end
 
    #
