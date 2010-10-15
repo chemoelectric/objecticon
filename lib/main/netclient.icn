@@ -17,6 +17,7 @@ import
 # @field server=string: see {set_server}
 # @field path=string: see {set_path}
 # @field port=integer: see {set_port}
+# @field io_group=object: see {set_io_group}
 #
 class NetClient(Connectable, SetFields)
    public static const 
@@ -51,7 +52,8 @@ class NetClient(Connectable, SetFields)
       path,
       server,
       port,
-      timeout
+      timeout,
+      io_group
 
    private
       connection,
@@ -89,26 +91,50 @@ class NetClient(Connectable, SetFields)
          runerr("Neither server/port nor path set")
 
       close() | fail
-      connection := SocketStream.socket(domain)
 
-      # If we are using a timeout, put the socket into non-blocking mode
-      if \timeout > 0 then
+      if \io_group then {
+         connection := WorkerStream(SocketStream.socket(domain), io_group)
+         connection.set_timeout(timeout)
          connection.flag(FileOpt.NONBLOCK) | fail
+         fire(CONNECTING_EVENT)
 
-      fire(CONNECTING_EVENT)
-      connection.connect(addr) | {
-         if \timeout > 0 & errno() = Errno.EINPROGRESS then {
-            r := DescStream.poll(connection, Poll.OUT, timeout) | {
+         connection.connect(addr) | {
+            if errno() = Errno.EINPROGRESS then {
+               connection.sched(Poll.OUT) | {
+                  close()
+                  return error("Couldn't connect to " || addr || ": " || &why)
+               }
+            } else {
                close()
                return error("Couldn't connect to " || addr || ": " || &why)
             }
-            r[1] = Poll.OUT | {
+         }
+      } else {
+         connection := SocketStream.socket(domain)
+
+         # If we are using a timeout, put the socket into non-blocking mode
+         if \timeout > 0 then
+            connection.flag(FileOpt.NONBLOCK) | fail
+
+         fire(CONNECTING_EVENT)
+         connection.connect(addr) | {
+            if \timeout > 0 & errno() = Errno.EINPROGRESS then {
+               r := DescStream.poll(connection, Poll.OUT, timeout) | {
+                  close()
+                  return error("Couldn't connect to " || addr || ": " || &why)
+               }
+               if /r then {
+                  close()
+                  return error("Couldn't connect to " || addr || " (timeout)")
+               }
+               r[1] = Poll.OUT | {
+                  close()
+                  return error("Couldn't connect to " || addr || " (socket error)")
+               }
+            } else {
                close()
-               return error("Couldn't connect to " || addr || " (socket error)")
+               return error("Couldn't connect to " || addr || ": " || &why)
             }
-         } else {
-            close()
-            return error("Couldn't connect to " || addr || ": " || &why)
          }
       }
       sbuff := ""
@@ -156,8 +182,9 @@ class NetClient(Connectable, SetFields)
       local i, r
 
       while *s > 0 do {
-         if \timeout > 0 then {
+         if /io_group & (\timeout > 0) then {
             r := DescStream.poll(connection, Poll.OUT, timeout) | fail
+            if /r then return error("Send failed (timeout)")
             r[1] = Poll.OUT | return error("Send failed (socket error)")
          }
          i := connection.out(s) | fail
@@ -172,8 +199,9 @@ class NetClient(Connectable, SetFields)
    private recv(len)
       local r
 
-      if \timeout > 0 then {
+      if /io_group & (\timeout > 0) then {
          r := DescStream.poll(connection, Poll.IN, timeout) | fail
+         if /r then return error("Receive failed (timeout)")
          r[1] = Poll.IN | return error("Receive failed (socket error)")
       }
       return connection.in(len)
@@ -247,12 +275,22 @@ class NetClient(Connectable, SetFields)
       return connection.eof()
    end
 
+   #
+   # Set an {IoGroup} to use when creating the connection object.
+   # This allows several clients to be used together in a non-blocking
+   # fashion (using co-expressions for each task).
+   #
+   public set_io_group(g)
+      self.io_group := g
+   end
+
    protected set_one(f)
       case f.attr of {
          "timeout": set_timeout(f.int_val())
          "server": set_server(f.string_val())
          "path": set_path(f.string_val())
          "port": set_port(f.int_val())
+         "io_group": set_io_group(f.object_val(IoGroup))
          default: return try_event(f, EVENT_TABLE)
       }
       return

@@ -2075,11 +2075,6 @@ function io_DescStream_select(rl, wl, el, timeout)
            errno2why();
            fail;
        }
-       /* A rc of zero means timeout */
-       if (rc == 0) {
-           LitWhy("Timeout");
-           fail;
-       }
 
        count = 0;
        fd_set2list(rl, rtmp, rset);
@@ -2126,11 +2121,10 @@ function io_DescStream_poll(a[n])
            errno2why();
            fail;
        }
-       /* A rc of zero means timeout */
-       if (rc == 0) {
-           LitWhy("Timeout");
-           fail;
-       }
+
+       /* A rc of zero means timeout, and returns &null */
+       if (rc == 0)
+           return nulldesc;
 
        create_list(nfds, &result);
        for (i = 0; i < nfds; ++i) {

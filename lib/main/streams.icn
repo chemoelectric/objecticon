@@ -586,13 +586,14 @@ class DescStream(Stream, NoCopy)
    # and the modified lists indicate which streams are ready to read,
    # write or have an error.
    # 
-   # On a timeout or error this method fails and sets {&why}.
+   # On an error this method fails and sets {&why}.  On a timeout it
+   # returns 0, with all lists empty.
    #
    # @param rl the read list of streams
    # @param wl the write list of streams
    # @param el the error list of streams
    # @param timeout the timeout; if omitted waits indefinitely
-   # @return the number of items in the three lists, always > 0.
+   # @return the number of items in the three lists, always >= 0.
    #
    public static defer select(rl, wl, el, timeout)
 
@@ -602,8 +603,8 @@ class DescStream(Stream, NoCopy)
    # by flags, which should be selected from those constants in the
    # {Poll} class.  The last argument is the optional timeout. The
    # result is a list of the flags corresponding to each {Stream}
-   # provided.  This method fails on timeout or error, setting {&why}
-   # accordingly.
+   # provided.  This method fails on error, setting {&why}
+   # accordingly.  On a timeout, it succeeds and returns {&null}.
    #
    public static defer poll(a[])
 
