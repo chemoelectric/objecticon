@@ -599,14 +599,15 @@ class DescStream(Stream, NoCopy)
 
    #
    # Performs a poll on one or more streams, each of which must be a
-   # {DescStream}.  The arguments take the form of {Stream} followed
-   # by flags, which should be selected from those constants in the
-   # {Poll} class.  The last argument is the optional timeout. The
-   # result is a list of the flags corresponding to each {Stream}
-   # provided.  This method fails on error, setting {&why}
-   # accordingly.  On a timeout, it succeeds and returns {&null}.
+   # {DescStream}.  The parameter {l} is a list of pairs.  Each pair
+   # is a {Stream} followed by flags, which should be selected from
+   # those constants in the {Poll} class.  The last argument is the
+   # optional timeout. The result is a list of the flags corresponding
+   # to each {Stream} provided.  This method fails on error, setting
+   # {&why} accordingly.  On a timeout, it succeeds and returns
+   # {&null}.
    #
-   public static defer poll(a[])
+   public static defer poll(l, timeout)
 
    #
    # Turn the specified flags on or off, and return the new set of

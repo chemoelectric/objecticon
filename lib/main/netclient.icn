@@ -121,7 +121,7 @@ class NetClient(Connectable, SetFields)
          fire(CONNECTING_EVENT)
          connection.connect(addr) | {
             if \timeout > 0 & errno() = Errno.EINPROGRESS then {
-               r := DescStream.poll(connection, Poll.OUT, timeout) | {
+               r := DescStream.poll([connection, Poll.OUT], timeout) | {
                   close()
                   return error("Couldn't connect to " || addr || ": " || &why)
                }
@@ -185,7 +185,7 @@ class NetClient(Connectable, SetFields)
 
       while *s > 0 do {
          if /io_group & (\timeout > 0) then {
-            r := DescStream.poll(connection, Poll.OUT, timeout) | fail
+            r := DescStream.poll([connection, Poll.OUT], timeout) | fail
             if /r then return error("Send failed (timeout)")
             r[1] = Poll.OUT | return error("Send failed (socket error)")
          }
@@ -202,7 +202,7 @@ class NetClient(Connectable, SetFields)
       local r
 
       if /io_group & (\timeout > 0) then {
-         r := DescStream.poll(connection, Poll.IN, timeout) | fail
+         r := DescStream.poll([connection, Poll.IN], timeout) | fail
          if /r then return error("Receive failed (timeout)")
          r[1] = Poll.IN | return error("Receive failed (socket error)")
       }

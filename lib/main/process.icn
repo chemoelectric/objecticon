@@ -138,7 +138,7 @@ class CommProcess()
    #
    public poll(t)
       local r
-      r := DescStream.poll(sock, Poll.IN, t) | fail
+      r := DescStream.poll([sock, Poll.IN], t) | fail
       if /r then
          return error("Timeout")
       return receive()

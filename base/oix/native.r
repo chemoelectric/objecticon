@@ -2090,33 +2090,44 @@ function io_DescStream_select(rl, wl, el, timeout)
     }
 end
 
-function io_DescStream_poll(a[n])
+function io_DescStream_poll(l, timeout)
    body {
 #ifdef HAVE_POLL
        static struct pollfd *ufds = 0;
        unsigned int nfds;
-       word timeout;
+       word tw;
        int i, rc;
+       struct lgstate state;
+       tended struct b_lelem *le;
        tended struct descrip result;
 
-       nfds = n / 2;
-       if (n % 2 == 0 || is:null(a[n - 1]))
-           timeout = -1;
-       else if (!cnv:C_integer(a[n - 1], timeout))
-           runerr(101, a[n - 1]);
+       if (!is:list(l))
+           runerr(108, l);
+       if (is:null(timeout))
+           tw = -1;
+       else if (!cnv:C_integer(timeout, tw))
+           runerr(101, timeout);
+
+       if (ListBlk(l).size % 2 != 0)
+           runerr(130);
+
+       nfds = ListBlk(l).size / 2;
 
        MemProtect(ufds = realloc(ufds, nfds * sizeof(struct pollfd)));
 
+       le = lgfirst(&ListBlk(l), &state);
        for (i = 0; i < nfds; ++i) {
            word events;
-           FdStaticParam(a[2 * i], fd);
-           if (!cnv:C_integer(a[2 * i + 1], events))
-               runerr(101, a[2 * i + 1]);
+           FdStaticParam(le->lslots[state.result], fd);
+           le = lgnext(&ListBlk(l), &state, le);
+           if (!cnv:C_integer(le->lslots[state.result], events))
+               runerr(101, le->lslots[state.result]);
            ufds[i].fd = fd;
            ufds[i].events = (short)events;
+           le = lgnext(&ListBlk(l), &state, le);
        }
 
-       rc = poll(ufds, nfds, timeout);
+       rc = poll(ufds, nfds, tw);
        if (rc < 0) {
            errno2why();
            fail;

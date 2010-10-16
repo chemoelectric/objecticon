@@ -1,6 +1,6 @@
 package io
 
-import lang, util, ipl.lists
+import lang, ipl.lists
 
 class WorkerStream(Stream)
    private readable
@@ -114,10 +114,9 @@ class IoGroup()
                put(poll_l, e.other)
                put(poll_l, ior(e.poll_for,Poll.ERR))
             }
-            put(poll_l, 0)
          }
 
-         r := DescStream.poll!poll_l | {
+         r := DescStream.poll(poll_l, 0) | {
             ewrite("poll failed:",&why)
             fail
          }
