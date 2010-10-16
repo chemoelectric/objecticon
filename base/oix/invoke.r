@@ -89,8 +89,7 @@ static struct frame *push_frame_for_proc(struct b_proc *bp, int argc, dptr args,
                     type_case *args of {
                       list: {
                             struct lgstate state;
-                            tended struct b_lelem *le;
-                            le = lgfirst(&ListBlk(*args), &state);
+                            struct b_lelem *le = lgfirst(&ListBlk(*args), &state); /* Needn't be tended */
                             for (j = 0; j < argc; ++j) {
                                 if (i < pp->nparam)
                                     pf->fvars->desc[i++] = le->lslots[state.result];
@@ -147,8 +146,7 @@ static struct frame *push_frame_for_proc(struct b_proc *bp, int argc, dptr args,
                 type_case *args of {
                   list: {
                         struct lgstate state;
-                        tended struct b_lelem *le;
-                        le = lgfirst(&ListBlk(*args), &state);
+                        struct b_lelem *le = lgfirst(&ListBlk(*args), &state); /* Needn't be tended */
                         for (j = 0; j < argc; ++j) {
                             cf->args[i++] = le->lslots[state.result];
                             le = lgnext(&ListBlk(*args), &state, le);
@@ -495,8 +493,7 @@ static void construct_record(word clo, dptr lhs, dptr expr, int argc, dptr args,
        type_case *args of {
           list: {
                struct lgstate state;
-               tended struct b_lelem *le;
-               le = lgfirst(&ListBlk(*args), &state);
+               struct b_lelem *le = lgfirst(&ListBlk(*args), &state); /* Needn't be tended */
                for (i = 0; i < argc; ++i) {
                    if (i < con->n_fields)
                        RecordBlk(pf->tmp[0]).fields[i] = le->lslots[state.result];
