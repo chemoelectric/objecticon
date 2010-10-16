@@ -1,6 +1,6 @@
 package io
 
-import lang
+import lang, util, ipl.lists
 
 class WorkerStream(Stream)
    private readable
@@ -15,7 +15,8 @@ class WorkerStream(Stream)
       when_timeout := Prog.get_runtime_millis() + timeout
       self.poll_for := x
       self.coex := &current
-      return io_group.add_stream(self)
+      io_group.add_stream(self)
+      return @io_group.coex
    end
 
    public in(n)
@@ -26,10 +27,6 @@ class WorkerStream(Stream)
    public out(s)
       sched(Poll.OUT) | fail
       return other.out(s)
-   end
-
-   public set_timeout(t)
-      self.timeout := t
    end
 
    public close()
@@ -52,10 +49,10 @@ class WorkerStream(Stream)
       return other.connect(addr)
    end
 
-   public new(other, io_group)
+   public new(other, io_group, timeout)
       self.other := other
       self.io_group := io_group
-      self.timeout := 1000
+      self.timeout := timeout
       return
    end
 end
@@ -65,7 +62,7 @@ class IoGroup()
    private starters, streams, caller, poll_l
 
    public new()
-      streams := set()
+      streams := []
       starters := set()
       return
    end
@@ -75,18 +72,26 @@ class IoGroup()
    end
 
    public add_stream(w)
-      insert(streams, w)
+      put(streams, w)
       poll_l := &null
-      return @coex
    end
 
-   public work()
+   #
+   # Do some i/o work.  A maximum of {n} bits of work are done; the
+   # default is 1.  If {n} is negative, work is done until no more is
+   # ready.  Succeeds if any work was done; fails if no work was done.
+   #
+   public work(n)
+      local r
+      /n := 1
       coex := &current
-      if do_work() then {
-         coex := &null
-         return
-      } else
-         coex := &null
+      until n = 0 do {
+         do_work() | break
+         r := 1
+         n -:= 1
+      }
+      coex := &null
+      return \r
    end
 
    public empty()
@@ -98,7 +103,7 @@ class IoGroup()
       if *starters > 0 then {
          e := ?starters
          delete(starters, e)
-         # Don't use coex, since this should be a new coexpression.
+         # Don't use coact, since this should be a new coexpression.
          @e
          return
       } 
@@ -112,7 +117,6 @@ class IoGroup()
             put(poll_l, 0)
          }
 
-         write("poll:",to_string(poll_l,"depth=1"))
          r := DescStream.poll!poll_l | {
             ewrite("poll failed:",&why)
             fail
@@ -124,24 +128,23 @@ class IoGroup()
             t := pop(\r) | 0
             case t of {
                e.poll_for: {
-                  delete(streams, e)
+                  ldel(streams, e)
                   poll_l := &null
                   coact(, e.coex)
                   return
                }
                Poll.ERR: {
-                  delete(streams, e)
+                  ldel(streams, e)
                   poll_l := &null
-                  &why := "socket error"
+                  &why := "Socket error"
                   coact(, e.coex,, 1)
                   return
                }
                0: {
                   if now > e.when_timeout then {
-                     write("send timeout to ",image(e))
-                     delete(streams, e)
+                     ldel(streams, e)
                      poll_l := &null
-                     &why := "timeout"
+                     &why := "Timeout"
                      coact(, e.coex,, 1)
                      return
                   }

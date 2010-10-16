@@ -93,8 +93,10 @@ class NetClient(Connectable, SetFields)
       close() | fail
 
       if \io_group then {
-         connection := WorkerStream(SocketStream.socket(domain), io_group)
-         connection.set_timeout(timeout)
+         \timeout | runerr("Must set a timeout when using an io_group")
+         connection := WorkerStream(SocketStream.socket(domain), 
+                                    io_group,
+                                    timeout)
          connection.flag(FileOpt.NONBLOCK) | fail
          fire(CONNECTING_EVENT)
 
