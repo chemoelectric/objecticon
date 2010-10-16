@@ -141,7 +141,10 @@ $endif
    # fail.
    #
    public poll(t)
-      DescStream.poll(sock, Poll.IN, t) | fail
+      local r
+      r := DescStream.poll([sock, Poll.IN], t) | fail
+      if /r then
+         return error("Timeout")
       return receive()
    end
 

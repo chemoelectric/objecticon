@@ -63,6 +63,7 @@ class HttpClient(NetClient)
       TOKEN_CHAR,
       COMPLETE_EVENT,
       FAILED_EVENT,
+      ABORTED_EVENT,
       RETRYING_EVENT,
       HEADERS_EVENT,
       PROGRESS_EVENT,
@@ -72,12 +73,14 @@ class HttpClient(NetClient)
       TOKEN_CHAR := &ascii[33:128] -- '()<>@,;:\\\"/[]?={} \t'
       COMPLETE_EVENT := "Complete"
       FAILED_EVENT := "Failed"
+      ABORTED_EVENT := "Aborted"
       RETRYING_EVENT := "Retrying"
       HEADERS_EVENT := "Headers"
       PROGRESS_EVENT := "Progress"
       EVENT_TABLE := table(,
                            "complete", COMPLETE_EVENT,
                            "failed", FAILED_EVENT,
+                           "aborted", ABORTED_EVENT,
                            "retrying", RETRYING_EVENT,
                            "headers", HEADERS_EVENT,
                            "progress", PROGRESS_EVENT)
@@ -711,8 +714,11 @@ class HttpClient(NetClient)
          }
 
          close()
-         if \abort_flag then
+         if \abort_flag then {
+            error("Aborted")
+            fire(ABORTED_EVENT)
             fail
+         }
 
          if prev_read ~=== self.read & \retry_while_data_flag then {
             i := retries
@@ -908,6 +914,7 @@ class HttpClient(NetClient)
          if chunk = 0 then
             break
          while chunk > 0 do {
+            if \abort_flag then fail
             s := read_str(min(1024, chunk)) | fail
             add_some(s) | fail
             chunk -:= *s
@@ -937,8 +944,10 @@ class HttpClient(NetClient)
       #
       # No content length.  Read until eof, then close.
       #
-      while s := read_str(1024) do
+      while s := read_str(1024) do {
+         if \abort_flag then fail
          add_some(s) | fail
+      }
       # 
       # Make sure we actually read to the end of file
       #
@@ -959,6 +968,7 @@ class HttpClient(NetClient)
       # open - unless told to close it.
       #
       while self.read < length do {
+         if \abort_flag then fail
          s := read_str(min(1024, length - self.read)) | fail
          add_some(s) | fail
       }

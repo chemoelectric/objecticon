@@ -14,7 +14,16 @@ import util
 # Component representing the slider area
 # @p
 class SliderArea(Component)
-   public inner_x, inner_y, inner_w, inner_h, slider_x, slider_y, slider_w, slider_h
+   public 
+      inner_x, 
+      inner_y,
+      inner_w,
+      inner_h, 
+      slider_x,
+      slider_y,
+      slider_w,
+      slider_h
+
    public display()
       Gui.style.draw_sunken_rectangle(self.cbwin, 
                                   self.inner_x, self.inner_y, 
@@ -192,7 +201,8 @@ class Slider(Component)
          # small ranges is unattractive.  For non-discrete ranges this behaviour is
          # not appropriate.
          if \self.discrete_vals then
-            self.move_value(self.lo + ((self.slider_area_size / 2) + (self.hi - self.lo) * (self.slider_pos - self.slider_area_pos)) / self.slider_area_size)
+            self.move_value(self.lo + ((self.slider_area_size / 2) + (self.hi - self.lo) * 
+                                       (self.slider_pos - self.slider_area_pos)) / self.slider_area_size)
          else
             self.move_value(self.lo + ((self.hi - self.lo) * (self.slider_pos - self.slider_area_pos)) / self.slider_area_size)
       } else
@@ -200,9 +210,10 @@ class Slider(Component)
    end
 
    public move_slider_pos(x)
+      x <:= self.slider_area_pos
+      x >:= self.slider_area_pos + self.slider_area_size
+      (self.slider_pos ~=== x) | fail
       self.slider_pos := x
-      self.slider_pos <:= self.slider_area_pos
-      self.slider_pos >:= self.slider_area_pos + self.slider_area_size
       if /self.is_horizontal_flag then
          self.slider_area.slider_y := self.slider_pos - SLIDER_W / 2
       else
@@ -330,6 +341,7 @@ class Slider(Component)
       is_live() | fail
       self.move_value(self.value)
       self.set_pos_from_value()
+      self.invalidate()
    end
 
    public get_default_width()

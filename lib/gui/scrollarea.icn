@@ -96,18 +96,22 @@ class ScrollArea(Component)
    # Goto a horizontal pos.
    #
    public set_area_x(horiz)
-      ((\self.hsb).value ~=== horiz) | fail
+      local t
+      t := (\self.hsb).value | fail
       self.hsb.set_value(horiz)
-      self.refresh()
+      if hsb.value ~= t then
+         self.refresh()
    end
 
    #
    # Goto a vertical pos.
    #
    public set_area_y(vert)
-      ((\self.vsb).value ~=== vert) | fail
+      local t
+      t := (\self.vsb).value | fail
       self.vsb.set_value(vert)
-      self.refresh()
+      if vsb.value ~= t then
+         self.refresh()
    end
 
    #

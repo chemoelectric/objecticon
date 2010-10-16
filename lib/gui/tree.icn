@@ -224,7 +224,7 @@ class Tree(SelectableScrollArea)
    public handle_lpress(e)
       local l, l_off, N, curr_sel, curr_cursor, yp, xp
       if l := get_line_under_pointer(e) then {
-         l_off := get_cum_line_height(l - 1) - get_area_y()
+         l_off := get_cum_line_height(l) - get_area_y()
          N := self.contents[l]
          if (N.depth > 0) & (*N.children > 0) | \N.always_expandable_flag then {
             #

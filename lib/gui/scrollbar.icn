@@ -225,9 +225,10 @@ class ScrollBar(Component)
    end
 
    public move_bar_pos(x)
+      x <:= self.bar_area_pos
+      x >:= self.bar_area_pos + self.bar_area_size - self.bar_size
+      (self.bar_pos ~=== x) | fail
       self.bar_pos := x
-      self.bar_pos <:= self.bar_area_pos
-      self.bar_pos >:= self.bar_area_pos + self.bar_area_size - self.bar_size
       if /self.is_horizontal_flag then
          self.bar_area.bar_y := self.bar_pos
       else
@@ -442,6 +443,7 @@ class ScrollBar(Component)
 
       self.move_value(self.value)
       self.set_pos_from_value()
+      self.bar_area.invalidate()
    end
 
    public initially()
