@@ -1,7 +1,14 @@
 package io
 
-import lang, ipl.lists
+import lang
 
+# This stream wraps another stream (normally a {SocketStream}).  The
+# {in} and {out} methods are invoked from a worker co-expression,
+# started by the owning {IoGroup}.  Those methods activate the
+# {IoGroup}'s co-expression.  The worker co-expression is re-activated
+# only when the {IoGroup} determines the socket is ready for i/o (or
+# has timed out).
+#
 class WorkerStream(Stream)
    private readable
       timeout,
@@ -11,6 +18,13 @@ class WorkerStream(Stream)
       coex,
       poll_for
 
+   package readable
+      poll_res
+
+   # Use the owning {IoGroup}, schedule some i/o.  The given parameter
+   # should be {Poll.IN} or {Poll.OUT} depending on whether we want to
+   # be resumed on ready input or output respectively.
+   #
    public sched(x)
       when_timeout := Prog.get_runtime_millis() + timeout
       self.poll_for := x
@@ -57,23 +71,40 @@ class WorkerStream(Stream)
    end
 end
 
+# This is a class for doing non-blocking i/o in co-operation with
+# {WorkerStream} instances and co-expressions.
+#
 class IoGroup()
-   private readable coex
-   private starters, streams, caller, poll_l
+   private readable 
+      coex
+   private 
+      starters, 
+      streams, 
+      poll_t, 
+      poll_timeout
 
-   public new()
+   # Create a new IoGroup with the given timeout argument for {poll}
+   # calls (default zero, ie return immediately).
+   #
+   public new(n)
       streams := []
       starters := set()
+      poll_timeout := \n | 0
       return
    end
 
+   # Add a new co-expression worker thread.  It is invoked later on
+   # when {work} is called.
+   #
    public add_starter(w)
       insert(starters, w)
    end
 
+   # Add a {WorkerStream}, which wants to do some i/o.  This is
+   # normally only called from the {WorkerStream} class itself.
+   #
    public add_stream(w)
       put(streams, w)
-      poll_l := &null
    end
 
    #
@@ -94,12 +125,14 @@ class IoGroup()
       return \r
    end
 
+   # Test whether there are any starter threads or worker streams.
+   #
    public empty()
       return not(*(starters | streams) > 0)
    end
 
    private do_work()
-      local e, t, now, r
+      local e, t, r, poll_l
       if *starters > 0 then {
          e := ?starters
          delete(starters, e)
@@ -107,49 +140,55 @@ class IoGroup()
          @e
          return
       } 
-      if *streams > 0 then {
-         if /poll_l then {
-            poll_l := []
-            every e := !streams do {
-               put(poll_l, e.other)
-               put(poll_l, ior(e.poll_for,Poll.ERR))
-            }
-         }
 
-         r := DescStream.poll(poll_l, 0) | {
+      if *streams = 0 then
+         fail
+
+      if /streams[1].poll_res then {
+         # Time to do another poll()
+         poll_l := []
+         every e := !streams do {
+            put(poll_l, e.other)
+            put(poll_l, ior(e.poll_for,Poll.ERR))
+         }
+         poll_t := Prog.get_runtime_millis()
+         r := DescStream.poll(poll_l, poll_timeout) | {
             ewrite("poll failed:",&why)
             fail
          }
-         now := Prog.get_runtime_millis()
-         if \r then
-            *r = *streams | syserr("Odd result from poll")
-         every e := !streams do {
-            t := pop(\r) | 0
-            case t of {
-               e.poll_for: {
-                  ldel(streams, e)
-                  poll_l := &null
-                  coact(, e.coex)
-                  return
-               }
-               Poll.ERR: {
-                  ldel(streams, e)
-                  poll_l := &null
-                  &why := "Socket error"
+         # Save the poll results
+         every e := !streams do
+            e.poll_res := pop(\r) | 0
+         return
+      }
+
+      while \streams[1].poll_res do {
+         # We have a poll result to process.  Pop it off the list,
+         # clear the poll result and process it.  If it needs
+         # processing, invoke it, otherwise put it back on the end
+         # of the list and go round again.
+         e := pop(streams)
+         t := e.poll_res
+         e.poll_res := &null
+         case t of {
+            e.poll_for: {
+               coact(, e.coex)
+               return
+            }
+            Poll.ERR: {
+               &why := "Socket error"
+               coact(, e.coex,, 1)
+               return
+            }
+            0: {
+               if poll_t > e.when_timeout then {
+                  &why := "Timeout"
                   coact(, e.coex,, 1)
                   return
-               }
-               0: {
-                  if now > e.when_timeout then {
-                     ldel(streams, e)
-                     poll_l := &null
-                     &why := "Timeout"
-                     coact(, e.coex,, 1)
-                     return
-                  }
-               }
-               default: syserr("Odd value from poll:" || t)
+               } else
+                  put(streams, e)
             }
+            default: syserr("Odd value from poll:" || t)
          }
       }
    end
