@@ -163,7 +163,6 @@ class IoGroup()
          # Save the poll results
          every e := !streams do
             e.poll_res := pop(\r) | 0
-         return
       }
 
       while \streams[1].poll_res do {
