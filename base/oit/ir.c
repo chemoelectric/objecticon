@@ -2556,13 +2556,20 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         case Uop_Create: {                      /* create expression */
             struct lnode_1 *x = (struct lnode_1 *)n;
             struct ir_info *expr;
+            struct ir_stack *tst;
+            struct ir_var *t;
             if (!target) {
                 chunk1(res->start, ir_goto(n, res->success));
                 if (!bounded)
                     chunk1(res->resume, ir_goto(n, res->failure));
                 break;
             }
-            expr = ir_traverse(x->child, st, target, 0, 0);
+            
+            /* A coexpression executes in its own fresh stack frame */
+            tst = new_stack();
+            t = make_tmp(tst);
+            expr = ir_traverse(x->child, tst, t, 0, 0);
+            union_stack(st, tst);
 
             chunk2(res->start, 
                    ir_create(n, target, expr->start),
@@ -2572,7 +2579,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 chunk1(res->resume, ir_goto(n, res->failure));
 
             chunk2(expr->success, 
-                   ir_coret(n, target),
+                   ir_coret(n, t),
                    ir_goto(n, expr->resume));
             chunk2(expr->failure, 
                    ir_cofail(n),
