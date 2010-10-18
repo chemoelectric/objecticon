@@ -55,12 +55,16 @@ class WorkerStream(Stream)
       return other.get_mode()
    end
 
-   public flag(on, off)
-      return other.flag(on, off)
+   public seek(offset)
+      return other.seek(offset)
    end
 
-   public connect(addr)
-      return other.connect(addr)
+   public tell()
+      return other.tell()
+   end
+
+   public truncate(len)
+      return other.truncate(len)
    end
 
    public new(other, io_group, timeout)

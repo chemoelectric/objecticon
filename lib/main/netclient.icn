@@ -97,10 +97,10 @@ class NetClient(Connectable, SetFields)
          connection := WorkerStream(SocketStream.socket(domain), 
                                     io_group,
                                     timeout)
-         connection.flag(FileOpt.NONBLOCK) | fail
+         connection.other.flag(FileOpt.NONBLOCK) | fail
          fire(CONNECTING_EVENT)
 
-         connection.connect(addr) | {
+         connection.other.connect(addr) | {
             if errno() = Errno.EINPROGRESS then {
                connection.sched(Poll.OUT) | {
                   close()
