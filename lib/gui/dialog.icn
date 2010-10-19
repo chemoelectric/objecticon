@@ -827,28 +827,31 @@ class Dialog(Component)
    # 
    private process_tooltip_tick()
       local t
-      if \popup_manager then 
-         syserr("shouldn't have a tooltip ticker in a popup")
+      repeat {
+         if \popup_manager then 
+            syserr("shouldn't have a tooltip ticker in a popup")
 
-      t := Prog.get_runtime_millis()
-      case self.tooltip_state of {
-         1 : 
-            if t >= self.tooltip_start_time then {
-               show_tooltip(self.tooltip_last_obj, self.tooltip_last_tip, self.tooltip_last_event)
-               self.tooltip_state := 2
-               self.tooltip_end_time := (t + \self.tooltip_last_obj.get_tooltip_end_delay()) | &null
-            }
+         t := Prog.get_runtime_millis()
+         case self.tooltip_state of {
+            1 : 
+               if t >= self.tooltip_start_time then {
+                  show_tooltip(self.tooltip_last_obj, self.tooltip_last_tip, self.tooltip_last_event)
+                  self.tooltip_state := 2
+                  self.tooltip_end_time := (t + \self.tooltip_last_obj.get_tooltip_end_delay()) | &null
+               }
 
-         2 :
-            if t >= \self.tooltip_end_time then {
-               hide_tooltip()
-               self.tooltip_state := 0
-               self.tooltip_continue_time := t + TOOLTIP_CONTINUE_DELAY
-            }
+            2 :
+               if t >= \self.tooltip_end_time then {
+                  hide_tooltip()
+                  self.tooltip_state := 0
+                  self.tooltip_continue_time := t + TOOLTIP_CONTINUE_DELAY
+               }
 
-         3 : 
-            if t >= self.tooltip_continue_time then
-               self.tooltip_state := 0
+            3 : 
+               if t >= self.tooltip_continue_time then
+                  self.tooltip_state := 0
+         }
+         tooltip_ticker.sleep(200)
       }
    end
 
@@ -1137,8 +1140,7 @@ class Dialog(Component)
       self.held := table()
       self.selections := table()
       self.selection_requests := table()
-      self.tooltip_ticker := Ticker("interval=200")
-      self.tooltip_ticker.connect(self.process_tooltip_tick, Event.TICK)
+      self.tooltip_ticker := Dispatcher.new_task{self.process_tooltip_tick()}
       set_fields(a)
       return
    end

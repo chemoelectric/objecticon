@@ -1,0 +1,264 @@
+package io
+
+import lang
+
+# This stream wraps another stream (normally a {SocketStream}).  The
+# {in} and {out} methods are invoked from the co-expression of the
+# owning {Task}.  Those methods activate the {Task}'s {Scheduler}'s
+# co-expression.  The stream's co-expression is re-activated only when
+# the {Scheduler} determines the socket is ready for i/o (or has timed
+# out).
+#
+class TaskStream(Stream)
+   private readable
+      timeout,
+      other,
+      task
+
+   # Use the owning {Task} to poll for some i/o.  The given parameter
+   # should be {Poll.IN} or {Poll.OUT} depending on whether we want to
+   # be resumed on ready input or output respectively.
+   #
+   public poll(x)
+      return task.poll(self, x)
+   end
+
+   public in(n)
+      poll(Poll.IN) | fail
+      return other.in(n)
+   end
+
+   public out(s)
+      poll(Poll.OUT) | fail
+      return other.out(s)
+   end
+
+   public close()
+      return other.close()
+   end
+
+   public eof()
+      return other.eof()
+   end
+
+   public get_mode()
+      return other.get_mode()
+   end
+
+   public seek(offset)
+      return other.seek(offset)
+   end
+
+   public tell()
+      return other.tell()
+   end
+
+   public truncate(len)
+      return other.truncate(len)
+   end
+
+   public new(other, task, timeout)
+      self.other := other
+      self.task := task
+      self.timeout := timeout
+      return
+   end
+end
+
+class Task()
+   public const
+      coex,
+      scheduler
+   package readable
+      state,
+      last_activated,
+      sleep_until,
+      poll_until,
+      poll_stream,
+      poll_for
+
+   public change_sleep(n)
+      sleep_until := \last_activated + n
+   end
+
+   public poll(stream, for)
+      coex === &current | runerr("poll called from outside a task co-expression")
+      self.poll_until := Prog.get_runtime_millis() + stream.timeout
+      self.poll_stream := stream.other
+      self.poll_for := for
+      return scheduler.now_poll(self)
+   end
+
+   public sleep(n)
+      coex === &current | runerr("sleep called from outside a task co-expression")
+      sleep_until := Prog.get_runtime_millis() + n
+      scheduler.now_sleep(self)
+   end
+
+   #
+   # Start the task.
+   #
+   public start()
+      scheduler.start(self)
+   end
+
+   #
+   # Stop the task.
+   #
+   public stop()
+      scheduler.stop(self)
+   end
+
+   public new(scheduler, coex)
+      self.coex := coex
+      self.scheduler := scheduler
+      return
+   end
+end
+
+class Scheduler()
+   private readable 
+      coex,
+      curr_task
+
+   private
+      ready,
+      sleeping,
+      polling,
+      err_io,
+      timeout_io
+   
+   public new()
+      ready := set()
+      sleeping := set()
+      polling := set()
+      err_io := set()
+      timeout_io := set()
+      return
+   end
+
+   package start(t)
+      /t.state := ready
+      insert(t.state, t)
+   end
+
+   package stop(t)
+      delete(\t.state, t)
+   end
+
+   private set_state(t, x)
+      delete(\t.state, t)
+      t.state := x
+      insert(t.state, t)
+   end
+
+   package now_sleep(t)
+      \coex | runerr("Task.sleep called from outside task coexpression")
+      set_state(t, sleeping)
+      coact(, coex)
+   end
+
+   package now_poll(t)
+      \coex | runerr("Task.poll called from outside task coexpression")
+      set_state(t, polling)
+      return coact(, coex)
+   end
+
+   #
+   # Do some i/o work.  A maximum of {n} bits of work are done; the
+   # default is 1.  If {n} is negative, work is done until no more is
+   # ready.  Succeeds if any work was done; fails if no work was done.
+   #
+   public work(n)
+      local r
+      /n := 1
+      until n = 0 do {
+         do_work() | break
+         r := 1
+         n -:= 1
+      }
+      return \r
+   end
+
+   # Test whether there are any starter threads or worker streams.
+   #
+   public empty()
+      return not(*(ready | sleeping | polling | err_io | timeout_io) > 0)
+   end
+
+   private run(t, ff)
+      local sc, st
+      sc := coex
+      st := curr_task
+      coex := &current
+      curr_task := t
+      coact(, t.coex, &current, ff)
+      coex := sc
+      curr_task := st
+    end
+
+   private do_work()
+      local t, poll_l, r, curr_time, x
+      repeat {
+         if t := ?ready then {
+            delete(ready, t)
+            run(t)
+            return
+         }
+
+         if *sleeping > 0 then {
+            curr_time := Prog.get_runtime_millis()
+            every t := !sleeping do {
+               if curr_time >= t.sleep_until then
+                  set_state(t, ready)
+            }
+            if *ready > 0 then
+               next
+         }
+
+         if t := ?err_io then {
+            delete(err_io, t)
+            &why := "Socket error"
+            run(t, 1)
+            return
+         }
+
+         if t := ?timeout_io then {
+            delete(timeout_io, t)
+            &why := "Timeout"
+            run(t, 1)
+            return
+         }
+
+         if *polling > 0 then {
+            # Time to do another poll()
+            poll_l := []
+            every t := !polling do {
+               put(poll_l, t.poll_stream)
+               put(poll_l, ior(t.poll_for,Poll.ERR))
+            }
+            curr_time := Prog.get_runtime_millis()
+            r := DescStream.poll(poll_l, 0) | {
+               ewrite("poll failed:",&why)
+               fail
+            }
+            # Use the poll results
+            every t := !copy(polling) do {
+               x := pop(\r) | 0
+               case x of {
+                  t.poll_for: set_state(t, ready)
+                  Poll.ERR: set_state(t, err_io)
+                  0: {
+                     if curr_time > t.poll_until then
+                        set_state(t, timeout_io)
+                  }
+                  default: syserr("Odd value from poll:" || t)
+               }
+            }
+            if *(ready | err_io | timeout_io) > 0 then
+               next
+         }
+         fail
+      }
+   end
+end

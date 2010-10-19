@@ -8,7 +8,7 @@
 
 package gui
 
-import util
+import util, lang
 
 #
 # Component representing the slider area
@@ -85,7 +85,8 @@ class Slider(Component)
       wheel_factor,
       hi,                                
       lo,
-      repeat_ticker
+      repeat_ticker,
+      repeat_delay
 
 
    # These values refer to a horizontal slider, the logic is backwards for a vertical one.
@@ -282,14 +283,20 @@ class Slider(Component)
    end
 
    public repeat_tick()
-      start_handle()
-      self.move_value(self.get_value()  + self.is_paging * self.increment_size)
-      self.set_pos_from_value()
-      end_handle()
+      repeat {
+         if Prog.get_runtime_millis() > self.repeat_delay then {
+            start_handle()
+            self.move_value(self.get_value()  + self.is_paging * self.increment_size)
+            self.set_pos_from_value()
+            end_handle()
+         }
+         repeat_ticker.sleep(Gui.REPEAT_RATE)
+      }
    end
 
    public start_paging(n)
       self.is_paging := n
+      self.repeat_delay := Prog.get_runtime_millis() + Gui.REPEAT_DELAY
       repeat_ticker.start()
    end
 
@@ -496,9 +503,7 @@ class Slider(Component)
 
    public new(a[])
       cast(self,Component).new()
-      repeat_ticker := Ticker("interval=", Gui.REPEAT_RATE,
-                              "delay=", Gui.REPEAT_DELAY)
-      repeat_ticker.connect(self.repeat_tick, Event.TICK)
+      repeat_ticker := Dispatcher.new_task{repeat_tick()}
       self.slider_area := SliderArea()
       self.increment_size := 1
       self.wheel_factor := 1

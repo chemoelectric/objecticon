@@ -44,7 +44,6 @@ class Event()
       MOUSE_EXIT,
       KEY_PRESS,
       KEY_RELEASE,
-      TICK,
       GOT_FOCUS,
       LOST_FOCUS,
       DIALOG_CLOSED
@@ -81,7 +80,6 @@ class Event()
       MOUSE_EXIT := 95
       KEY_PRESS := 100
       KEY_RELEASE := 101
-      TICK := 300
       GOT_FOCUS := 400
       LOST_FOCUS := 401
       DIALOG_CLOSED := 500
@@ -176,7 +174,6 @@ class Gui()
                          "mouse_exit", Event.MOUSE_EXIT,
                          "key_press", Event.KEY_PRESS,
                          "key_release", Event.KEY_RELEASE,
-                         "tick", Event.TICK,
                          "got_focus", Event.GOT_FOCUS,
                          "lost_focus", Event.LOST_FOCUS,
                          "dialog_close", Event.DIALOG_CLOSED)

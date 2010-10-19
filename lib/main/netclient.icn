@@ -17,7 +17,7 @@ import
 # @field server=string: see {set_server}
 # @field path=string: see {set_path}
 # @field port=integer: see {set_port}
-# @field io_group=object: see {set_io_group}
+# @field task=object: see {set_task}
 #
 class NetClient(Connectable, SetFields)
    public static const 
@@ -53,7 +53,7 @@ class NetClient(Connectable, SetFields)
       server,
       port,
       timeout,
-      io_group
+      task
 
    private
       connection,
@@ -92,17 +92,17 @@ class NetClient(Connectable, SetFields)
 
       close() | fail
 
-      if \io_group then {
-         \timeout | runerr("Must set a timeout when using an io_group")
-         connection := WorkerStream(SocketStream.socket(domain), 
-                                    io_group,
-                                    timeout)
+      if \task then {
+         \timeout | runerr("Must set a timeout when using an task")
+         connection := TaskStream(SocketStream.socket(domain), 
+                                  task,
+                                  timeout)
          connection.other.flag(FileOpt.NONBLOCK) | fail
          fire(CONNECTING_EVENT)
 
          connection.other.connect(addr) | {
             if errno() = Errno.EINPROGRESS then {
-               connection.sched(Poll.OUT) | {
+               connection.poll(Poll.OUT) | {
                   close()
                   return error("Couldn't connect to " || addr || ": " || &why)
                }
@@ -184,7 +184,7 @@ class NetClient(Connectable, SetFields)
       local i, r
 
       while *s > 0 do {
-         if /io_group & (\timeout > 0) then {
+         if /task & (\timeout > 0) then {
             r := DescStream.poll([connection, Poll.OUT], timeout) | fail
             if /r then return error("Send failed (timeout)")
             r[1] = Poll.OUT | return error("Send failed (socket error)")
@@ -201,7 +201,7 @@ class NetClient(Connectable, SetFields)
    private recv(len)
       local r
 
-      if /io_group & (\timeout > 0) then {
+      if /task & (\timeout > 0) then {
          r := DescStream.poll([connection, Poll.IN], timeout) | fail
          if /r then return error("Receive failed (timeout)")
          r[1] = Poll.IN | return error("Receive failed (socket error)")
@@ -282,8 +282,8 @@ class NetClient(Connectable, SetFields)
    # This allows several clients to be used together in a non-blocking
    # fashion (using co-expressions for each task).
    #
-   public set_io_group(g)
-      self.io_group := g
+   public set_task(g)
+      self.task := g
    end
 
    protected set_one(f)
@@ -292,7 +292,7 @@ class NetClient(Connectable, SetFields)
          "server": set_server(f.string_val())
          "path": set_path(f.string_val())
          "port": set_port(f.int_val())
-         "io_group": set_io_group(f.object_val(IoGroup))
+         "task": set_task(f.object_val(Task))
          default: return try_event(f, EVENT_TABLE)
       }
       return

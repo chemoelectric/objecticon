@@ -42,7 +42,8 @@ class SelectableScrollArea(LineBasedScrollArea)
       draggable_cursor,
       motion_cursor,
       selection_on_key_moves,
-      scroll_ticker
+      scroll_ticker,
+      scroll_ticker_interval
 
    public calculate_line_count()
       return *self.contents
@@ -596,37 +597,41 @@ class SelectableScrollArea(LineBasedScrollArea)
    end
 
    public check_ticker(d)
-      scroll_ticker.set_interval(Gui.style.distance2ticker_rate(d))
+      scroll_ticker_interval := Gui.style.distance2ticker_rate(d)
+      scroll_ticker.change_sleep(scroll_ticker_interval)
       # Start it (if it isn't already running)
       scroll_ticker.start()
    end
 
    public scroll_tick()
       local i
-      start_handle()
-      i := get_line_info() | fail
-      if \self.highlight then {
-         if \going_up then {
-            self.highlight := i.first_whole - 1
-            self.highlight <:= 1
-            goto_first(self.highlight)
+      repeat {
+         start_handle()
+         i := get_line_info() | fail
+         if \self.highlight then {
+            if \going_up then {
+               self.highlight := i.first_whole - 1
+               self.highlight <:= 1
+               goto_first(self.highlight)
+            } else {
+               self.highlight := i.last_whole + 1
+               self.highlight >:= *self.contents 
+               goto_last(self.highlight)
+            }
          } else {
-            self.highlight := i.last_whole + 1
-            self.highlight >:= *self.contents 
-            goto_last(self.highlight)
+            if \going_up then {
+               self.cursor := i.first_whole - 1
+               self.cursor <:= 1
+               goto_first(self.cursor)
+            } else {
+               self.cursor := i.last_whole + 1
+               self.cursor >:= *self.contents 
+               goto_last(self.cursor)
+            }
          }
-      } else {
-         if \going_up then {
-            self.cursor := i.first_whole - 1
-            self.cursor <:= 1
-            goto_first(self.cursor)
-         } else {
-            self.cursor := i.last_whole + 1
-            self.cursor >:= *self.contents 
-            goto_last(self.cursor)
-         }
+         end_handle()
+         scroll_ticker.sleep(scroll_ticker_interval)
       }
-      end_handle()
    end
 
    public handle_lrelease(e)
@@ -852,8 +857,7 @@ class SelectableScrollArea(LineBasedScrollArea)
 
    public new(a[])
       cast(self,LineBasedScrollArea).new()
-      scroll_ticker := Ticker()
-      scroll_ticker.connect(self.scroll_tick, Event.TICK)
+      scroll_ticker := Dispatcher.new_task{scroll_tick()}
       self.set_accepts_focus(&yes)
       self.select_mode := Select.NONE
       self.contents := []
