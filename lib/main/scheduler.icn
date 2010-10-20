@@ -67,24 +67,29 @@ end
 
 class Task()
    public const
-      coex,
       scheduler
-   package readable
-      state,
-      active,
-      last_sleep,
+   private readable
+      coex,
       sleep_until,
+      last_sleep,
       poll_until,
       poll_stream,
       poll_for
+   package readable
+      state,
+      active
 
    public change_sleep(n)
       sleep_until := \last_sleep + n
    end
 
+   public is_active()
+      return .\active
+   end
+
    public poll(stream, for)
-      \active | runerr("poll called on a currently inactive task")
-      coex === &current | runerr("poll called while task co-expression not current")
+      self === scheduler.curr_task | runerr("poll called on task which is not current")
+      self.coex := &current
       self.poll_until := Prog.get_runtime_millis() + stream.timeout
       self.poll_stream := stream.other
       self.poll_for := for
@@ -92,8 +97,8 @@ class Task()
    end
 
    public sleep(n)
-      \active | runerr("sleep called on a currently inactive task")
-      coex === &current | runerr("sleep called while task co-expression not current")
+      self === scheduler.curr_task | runerr("sleep called on task which is not current")
+      self.coex := &current
       last_sleep := Prog.get_runtime_millis()
       sleep_until := last_sleep + n
       scheduler.now_sleep(self)
