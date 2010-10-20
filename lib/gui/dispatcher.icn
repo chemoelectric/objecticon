@@ -13,7 +13,7 @@ import graphics, ipl.lists, io
 #
 #
 # This class handles Icon events, dispatching them to
-# the appropriate dialog.  It also controls any active Tickers,
+# the appropriate dialog.  It also controls any active Tasks,
 # activating them between events as and when appropriate.
 #
 class Dispatcher()
@@ -42,14 +42,14 @@ class Dispatcher()
    #
    # Add a dialog
    #
-   public static add(d)
+   public static add_dialog(d)
       insert(dialogs, d)
    end
 
    #
    # Delete a dialog
    #
-   public static del(d)
+   public static remove_dialog(d)
       delete(dialogs, d)
    end
 
@@ -63,7 +63,7 @@ class Dispatcher()
    #
    # Delete an idle-time procedure
    #
-   public static del_idler(x)
+   public static remove_idler(x)
       ldel(idlers, x)
    end
 
@@ -72,7 +72,7 @@ class Dispatcher()
    end
 
    #
-   # Loop until dialog r is closed processing events and tickers.  If r
+   # Loop until dialog r is closed processing events and {Task}s.  If r
    # is omitted, then loop until there are no open dialogs.
    #
    public static message_loop(r)
@@ -104,8 +104,7 @@ class Dispatcher()
 
    #
    # A further variant of the message loop which never returns.  Even
-   # when there are no dialogs open, tickers continue to be called,
-   # with appropriate sleep intervals in-between.
+   # when there are no dialogs open, {Task}s continue to be activated.
    #
    public static message_loop_forever()
       repeat {
@@ -155,7 +154,7 @@ class Dispatcher()
    end
 
    public static do_scheduler()
-      return scheduler.work(-1)
+      return scheduler.work()
    end
 
    public static do_idle()

@@ -71,18 +71,20 @@ class Task()
       scheduler
    package readable
       state,
-      last_activated,
+      active,
+      last_sleep,
       sleep_until,
       poll_until,
       poll_stream,
       poll_for
 
    public change_sleep(n)
-      sleep_until := \last_activated + n
+      sleep_until := \last_sleep + n
    end
 
    public poll(stream, for)
-      coex === &current | runerr("poll called from outside a task co-expression")
+      \active | runerr("poll called on a currently inactive task")
+      coex === &current | runerr("poll called while task co-expression not current")
       self.poll_until := Prog.get_runtime_millis() + stream.timeout
       self.poll_stream := stream.other
       self.poll_for := for
@@ -90,8 +92,10 @@ class Task()
    end
 
    public sleep(n)
-      coex === &current | runerr("sleep called from outside a task co-expression")
-      sleep_until := Prog.get_runtime_millis() + n
+      \active | runerr("sleep called on a currently inactive task")
+      coex === &current | runerr("sleep called while task co-expression not current")
+      last_sleep := Prog.get_runtime_millis()
+      sleep_until := last_sleep + n
       scheduler.now_sleep(self)
    end
 
@@ -99,6 +103,7 @@ class Task()
    # Start the task.
    #
    public start()
+      /active | runerr("start called on a currently active task")
       scheduler.start(self)
    end
 
@@ -106,6 +111,7 @@ class Task()
    # Stop the task.
    #
    public stop()
+      /active | runerr("stop called on a currently active task")
       scheduler.stop(self)
    end
 
@@ -153,13 +159,13 @@ class Scheduler()
    end
 
    package now_sleep(t)
-      \coex | runerr("Task.sleep called from outside task coexpression")
+      \coex | syserr("now_sleep with null coex")
       set_state(t, sleeping)
       coact(, coex)
    end
 
    package now_poll(t)
-      \coex | runerr("Task.poll called from outside task coexpression")
+      \coex | syserr("now_poll with null coex")
       set_state(t, polling)
       return coact(, coex)
    end
@@ -180,7 +186,8 @@ class Scheduler()
       return \r
    end
 
-   # Test whether there are any starter threads or worker streams.
+   #
+   # Test whether there are any tasks in the internal lists.
    #
    public empty()
       return not(*(ready | sleeping | polling | err_io | timeout_io) > 0)
@@ -188,11 +195,15 @@ class Scheduler()
 
    private run(t, ff)
       local sc, st
+      delete(t.state, t)
+      t.state := &null
       sc := coex
       st := curr_task
       coex := &current
       curr_task := t
+      t.active := 1
       coact(, t.coex, &current, ff)
+      t.active := &null
       coex := sc
       curr_task := st
     end
@@ -201,7 +212,6 @@ class Scheduler()
       local t, poll_l, r, curr_time, x
       repeat {
          if t := ?ready then {
-            delete(ready, t)
             run(t)
             return
          }
@@ -217,14 +227,12 @@ class Scheduler()
          }
 
          if t := ?err_io then {
-            delete(err_io, t)
             &why := "Socket error"
             run(t, 1)
             return
          }
 
          if t := ?timeout_io then {
-            delete(timeout_io, t)
             &why := "Timeout"
             run(t, 1)
             return

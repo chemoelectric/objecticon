@@ -194,7 +194,7 @@ class Dialog(Component)
    public show_child(d)
       set_owning_dialog(\d)
       self.show()
-      Dispatcher.add(self)
+      Dispatcher.add_dialog(self)
       if \d then {
          d.block()
          Dispatcher.message_loop(self)
@@ -215,7 +215,7 @@ class Dialog(Component)
    public show_modeless(d)
       set_owning_dialog(\d)
       self.show()
-      Dispatcher.add(self)
+      Dispatcher.add_dialog(self)
       if \d then
          self.is_blocked_flag := d.is_blocked_flag
    end
@@ -234,7 +234,7 @@ class Dialog(Component)
       self.show()
       l := Dispatcher.list_unblocked()
       every (!l).block()
-      Dispatcher.add(self)
+      Dispatcher.add_dialog(self)
       Dispatcher.message_loop(self)
       every (!l).unblock()
    end
@@ -429,7 +429,7 @@ class Dialog(Component)
       Gui.style.dispose_all()
       self.close_win()
       self.is_open_flag := &null
-      Dispatcher.del(self)
+      Dispatcher.remove_dialog(self)
       if \self.owning_dialog then {
          delete(self.owning_dialog.child_dialogs, self)
          self.owning_dialog.raise()
