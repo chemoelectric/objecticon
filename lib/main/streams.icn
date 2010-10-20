@@ -354,8 +354,6 @@ end
 # that input/output to the inner stream tends to take place in larger
 # chunks.
 #
-# @field other={Stream} : see {set_other}.  May be given as first constructor 
-# @      parameter.
 # @field buff_size=integer : see {set_buff_size}
 # @field flush_on_nl=flag : see {set_flush_on_nl}
 #
@@ -368,13 +366,6 @@ class BufferStream(Stream, SetFields)
       rbuff,
       flush_on_nl_flag,
       buff_size
-
-   #
-   # Set the underlying stream to use.
-   #
-   public set_other(other)
-      self.other := other
-   end
 
    #
    # If set, the stream is flushed whenever a newline is written.
@@ -537,7 +528,6 @@ class BufferStream(Stream, SetFields)
 
    protected set_one(f)
       case f.attr of {
-         "other" : set_other(f.object_val(Stream))
          "buff_size" : set_buff_size(f.int_val())
          "flush_on_nl" : set_flush_on_nl(f.flag_val())
          default: fail
@@ -545,12 +535,8 @@ class BufferStream(Stream, SetFields)
       return
    end
 
-   protected set_special(a)
-      if is(a[1], Stream) then
-         set_other(pop(a))
-   end
-
-   public new(a[])
+   public new(other, a[])
+      self.other := other
       self.rbuff := ""
       self.wbuff := []
       self.wbuff_len := 0

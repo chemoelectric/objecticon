@@ -62,6 +62,7 @@ class TextField(Component)
       primary_selection_owner,
       clipboard_selection_owner,
       scroll_ticker,
+      scroll_ticker_interval,
       cursor_ticker,
       cursor_on
 
@@ -279,7 +280,8 @@ class TextField(Component)
    end
 
    public check_scroll_ticker(d)
-      scroll_ticker.set_interval(Gui.style.distance2ticker_rate(d))
+      scroll_ticker_interval := Gui.style.distance2ticker_rate(d)
+      scroll_ticker.change_sleep(scroll_ticker_interval)
       # Start it (if it isn't already running)
       scroll_ticker.start()
    end
@@ -306,18 +308,21 @@ class TextField(Component)
 
    public scroll_tick()
       local s
-      start_handle()
-      s := get_view()
-      if \going_left then {
-         while self.cursor > 1 &
-            self.cbwin.text_width(s[1:self.cursor]) >= loff do
-            self.cursor -:= 1
-      } else {
-         while self.cursor < *s &
-            self.cbwin.text_width(s[1:self.cursor]) < loff + self.tw do
-            self.cursor +:= 1
+      repeat {
+         start_handle()
+         s := get_view()
+         if \going_left then {
+            while self.cursor > 1 &
+               self.cbwin.text_width(s[1:self.cursor]) >= loff do
+               self.cursor -:= 1
+         } else {
+            while self.cursor < *s &
+               self.cbwin.text_width(s[1:self.cursor]) < loff + self.tw do
+               self.cursor +:= 1
+         }
+         end_handle()
+         scroll_ticker.sleep(scroll_ticker_interval)
       }
-      end_handle()
    end
 
    public handle_lrelease(e)
@@ -631,14 +636,18 @@ class TextField(Component)
 
    public cursor_tick()
       local t
-      (self.has_focus() & self.is_unshaded() & self.is_unhidden()) | fail
-      t := cursor_on
-      cursor_on := if parent_dialog.is_blocked() | parent_dialog.in_menu_mode() then
-         0
-      else
-         (cursor_on + 1) % 3
-      if (t | cursor_on) = 2 then
-         invalidate()
+      repeat {
+         if self.has_focus() & self.is_unshaded() & self.is_unhidden() then {
+            t := cursor_on
+            cursor_on := if parent_dialog.is_blocked() | parent_dialog.in_menu_mode() then
+               0
+            else
+               (cursor_on + 1) % 3
+            if (t | cursor_on) = 2 then
+               invalidate()
+         }
+         cursor_ticker.sleep(Gui.CURSOR_BLINK)
+      }
    end
 
    public display()
@@ -694,10 +703,8 @@ class TextField(Component)
 
    public new(a[])
       cast(self,Component).new()
-      scroll_ticker := Ticker()
-      scroll_ticker.connect(self.scroll_tick, Event.TICK)
-      cursor_ticker := Ticker("interval=",Gui.CURSOR_BLINK)
-      cursor_ticker.connect(self.cursor_tick, Event.TICK)
+      scroll_ticker := Dispatcher.new_task{scroll_tick()}
+      cursor_ticker := Dispatcher.new_task{cursor_tick()}
       cursor_on := -1
       undo_manager := UndoManager()
       filter := Gui.PRINTABLE_1

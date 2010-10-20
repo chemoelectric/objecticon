@@ -64,8 +64,11 @@ class Button(Toggle,Component)
    end
 
    public repeat_tick()
-      if Prog.get_runtime_millis() > self.repeat_delay then
-         fire(Event.BUTTON_HELD)
+      repeat {
+         if Prog.get_runtime_millis() > self.repeat_delay then
+            fire(Event.BUTTON_HELD)
+         repeat_ticker.sleep(Gui.REPEAT_RATE)
+      }
    end
 
    public go_down()
@@ -144,11 +147,11 @@ class Button(Toggle,Component)
       local t
       self.is_down := 1
       self.invalidate()
-      t := Ticker("delay=50", "times=1")
-      t.connect(create {
+      t := Dispatcher.new_task{{
+         t.sleep(50)
          self.is_down := &null
          on_action(e)
-      }, Event.TICK) 
+      }}
       t.start()
    end
 
@@ -203,8 +206,7 @@ class Button(Toggle,Component)
 
    public new(a[])
       cast(self,Component).new()
-      repeat_ticker := Ticker("interval=", Gui.REPEAT_RATE)
-      repeat_ticker.connect(self.repeat_tick, Event.TICK)
+      repeat_ticker := Dispatcher.new_task{repeat_tick()}
       self.accepts_focus_flag := 1
       connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)

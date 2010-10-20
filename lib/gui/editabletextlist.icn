@@ -60,6 +60,7 @@ class EditableTextList(LineBasedScrollArea)
       primary_selection_owner,
       clipboard_selection_owner,
       scroll_ticker,
+      scroll_ticker_interval,
       cursor_ticker,
       cursor_on,
       tx,
@@ -629,56 +630,59 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public check_scroll_ticker(d)
-      scroll_ticker.set_interval(Gui.style.distance2ticker_rate(d))
+      scroll_ticker_interval := Gui.style.distance2ticker_rate(d)
+      scroll_ticker.change_sleep(scroll_ticker_interval)
       # Start it (if it isn't already running)
       scroll_ticker.start()
    end
 
    public scroll_tick()
       local ax, s, v, vi, e
+      repeat {
+         start_handle(e)
 
-      start_handle(e)
+         vi := get_view_list_index()
+         
+         case self.direction of {
+            "up" : {
+               if vi > 1 then {
+                  v := view_list[vi - 1]
+                  self.cursor_y := v.index
+                  self.cursor_x := v.first
+               }
+            }
+            "down" : {
+               if vi < *view_list then {
+                  v := view_list[vi + 1]
+                  self.cursor_y := v.index
+                  self.cursor_x := v.first
+               }
+            }
+            "left" : {
+               v := view_list[vi]
+               ax := get_area_x()
+               s := v.str
+               while (self.cursor_x > v.first) & 
+                  text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 1, 
+                                self.tab_width) >= ax do {
+                                   self.cursor_x -:= 1
+                                }
+            }
+            "right" : {
+               v := view_list[vi]
+               ax := get_area_x()
+               s := v.str
+               while (self.cursor_x - v.first + 1 < *s) & 
+                  text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 1, 
+                                self.tab_width) < ax + self.tw do {
+                                   self.cursor_x +:= 1
+                                }
+            }
+         }
 
-      vi := get_view_list_index()
-      
-      case self.direction of {
-         "up" : {
-            if vi > 1 then {
-               v := view_list[vi - 1]
-               self.cursor_y := v.index
-               self.cursor_x := v.first
-            }
-         }
-         "down" : {
-            if vi < *view_list then {
-               v := view_list[vi + 1]
-               self.cursor_y := v.index
-               self.cursor_x := v.first
-            }
-         }
-         "left" : {
-            v := view_list[vi]
-            ax := get_area_x()
-            s := v.str
-            while (self.cursor_x > v.first) & 
-               text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 1, 
-                           self.tab_width) >= ax do {
-               self.cursor_x -:= 1
-            }
-         }
-         "right" : {
-            v := view_list[vi]
-            ax := get_area_x()
-            s := v.str
-            while (self.cursor_x - v.first + 1 < *s) & 
-               text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 1, 
-                           self.tab_width) < ax + self.tw do {
-               self.cursor_x +:= 1
-            }
-         }
+         end_handle(e)
+         scroll_ticker.sleep(scroll_ticker_interval)
       }
-
-      end_handle(e)
    end
 
    public handle_lrelease(e)
@@ -967,14 +971,18 @@ class EditableTextList(LineBasedScrollArea)
 
    public cursor_tick()
       local t
-      (self.has_focus() & self.is_unshaded() & self.is_unhidden()) | fail
-      t := cursor_on
-      cursor_on := if parent_dialog.is_blocked() | parent_dialog.in_menu_mode() then
-         0
-      else
-         (cursor_on + 1) % 3
-      if (t | cursor_on) = 2 then
-         invalidate_line(get_view_list_index(cursor_x, cursor_y))
+      repeat {
+         if self.has_focus() & self.is_unshaded() & self.is_unhidden() then {
+            t := cursor_on
+            cursor_on := if parent_dialog.is_blocked() | parent_dialog.in_menu_mode() then
+               0
+            else
+               (cursor_on + 1) % 3
+            if (t | cursor_on) = 2 then
+               invalidate_line(get_view_list_index(cursor_x, cursor_y))
+         }
+         cursor_ticker.sleep(Gui.CURSOR_BLINK)
+      }
    end
 
    public draw()
@@ -1269,10 +1277,8 @@ class EditableTextList(LineBasedScrollArea)
 
    public new(a[])
       cast(self,LineBasedScrollArea).new()
-      scroll_ticker := Ticker()
-      scroll_ticker.connect(self.scroll_tick, Event.TICK)
-      cursor_ticker := Ticker("interval=",Gui.CURSOR_BLINK)
-      cursor_ticker.connect(self.cursor_tick, Event.TICK)
+      scroll_ticker := Dispatcher.new_task{scroll_tick()}
+      cursor_ticker := Dispatcher.new_task{cursor_tick()}
       cursor_on := -1
       self.set_accepts_focus(&yes)
       undo_manager := UndoManager()
