@@ -73,9 +73,8 @@ class NetClient(Connectable, SetFields)
       close()
    end
 
-   #
-   # Set the timeout in ms to use.  If a figure of zero, or &null, is given (the default)
-   # then no timeout will be used.
+   # Set the timeout in ms to use.  If {&null}, then no timeout will
+   # be used.
    #
    public set_timeout(timeout)
       self.timeout := timeout
@@ -95,6 +94,13 @@ $ifdef _PLAN9
       return
    end
 $else
+   private do_poll(for)
+      return if \task then
+         task.poll([connection, for], timeout)
+      else
+         DescStream.poll([connection, for], timeout)
+   end
+
    #
    # Open the connection.
    #
@@ -111,52 +117,26 @@ $else
          runerr("Neither server/port nor path set")
 
       close() | fail
-
-      if \task then {
-         \timeout | runerr("Must set a timeout when using an task")
-         connection := TaskStream(SocketStream.socket(domain), 
-                                  task,
-                                  timeout)
-         connection.other.flag(FileOpt.NONBLOCK) | fail
-         fire(CONNECTING_EVENT)
-
-         connection.other.connect(addr) | {
-            if errno() = Errno.EINPROGRESS then {
-               connection.poll(Poll.OUT) | {
-                  close()
-                  return error("Couldn't connect to " || addr || ": " || &why)
-               }
-            } else {
+      connection := SocketStream.socket(domain)
+      connection.flag(FileOpt.NONBLOCK) | fail
+      fire(CONNECTING_EVENT)
+      connection.connect(addr) | {
+         if errno() = Errno.EINPROGRESS then {
+            r := do_poll(Poll.OUT) | {
                close()
                return error("Couldn't connect to " || addr || ": " || &why)
             }
-         }
-      } else {
-         connection := SocketStream.socket(domain)
-
-         # If we are using a timeout, put the socket into non-blocking mode
-         if \timeout > 0 then
-            connection.flag(FileOpt.NONBLOCK) | fail
-
-         fire(CONNECTING_EVENT)
-         connection.connect(addr) | {
-            if \timeout > 0 & errno() = Errno.EINPROGRESS then {
-               r := DescStream.poll([connection, Poll.OUT], timeout) | {
-                  close()
-                  return error("Couldn't connect to " || addr || ": " || &why)
-               }
-               if /r then {
-                  close()
-                  return error("Couldn't connect to " || addr || " (timeout)")
-               }
-               r[1] = Poll.OUT | {
-                  close()
-                  return error("Couldn't connect to " || addr || " (socket error)")
-               }
-            } else {
+            if /r then {
                close()
-               return error("Couldn't connect to " || addr || ": " || &why)
+               return error("Couldn't connect to " || addr || " (timeout)")
             }
+            r[1] = Poll.OUT | {
+               close()
+               return error("Couldn't connect to " || addr || " (socket error)")
+            }
+         } else {
+            close()
+            return error("Couldn't connect to " || addr || ": " || &why)
          }
       }
       sbuff := ""
@@ -225,11 +205,9 @@ $else
       local i, r
 
       while *s > 0 do {
-         if /task & (\timeout > 0) then {
-            r := DescStream.poll([connection, Poll.OUT], timeout) | fail
-            if /r then return error("Send failed (timeout)")
-            r[1] = Poll.OUT | return error("Send failed (socket error)")
-         }
+         r := do_poll(Poll.OUT) | return error("Send poll failed: " || &why)
+         if /r then return error("Send failed (timeout)")
+         r[1] = Poll.OUT | return error("Send failed (socket error)")
          i := connection.out(s) | fail
          s := s[i+1 : 0]
       }
@@ -241,12 +219,9 @@ $else
    #
    private recv(len)
       local r
-
-      if /task & (\timeout > 0) then {
-         r := DescStream.poll([connection, Poll.IN], timeout) | fail
-         if /r then return error("Receive failed (timeout)")
-         r[1] = Poll.IN | return error("Receive failed (socket error)")
-      }
+      r := do_poll(Poll.IN) | return error("Receive poll failed: " || &why)
+      if /r then return error("Receive failed (timeout)")
+      r[1] = Poll.IN | return error("Receive failed (socket error)")
       return connection.in(len)
    end
 $endif
