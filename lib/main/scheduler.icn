@@ -1,6 +1,6 @@
 package io
 
-import lang
+import lang, util
 
 # This stream wraps another stream (normally a {SocketStream}).  The
 # {in} and {out} methods are invoked from the co-expression of the
@@ -17,10 +17,15 @@ class TaskStream(Stream)
 
    # Use the owning {Task} to poll for some i/o.  The given parameter
    # should be {Poll.IN} or {Poll.OUT} depending on whether we want to
-   # be resumed on ready input or output respectively.
+   # be resumed on ready input or output respectively.  Fails on
+   # timeout or error.
    #
    public poll(x)
-      return task.poll(other, x, timeout)
+      local r
+      r := task.poll([other, x], timeout) | fail
+      if /r then return error("Timeout")
+      r[1] = x | return error("Socket error")
+      return
    end
 
    public in(n)
@@ -73,11 +78,12 @@ class Task()
       sleep_until,
       last_sleep,
       poll_until,
-      poll_stream,
-      poll_for
+      poll_req
    package readable
       state,
-      active
+      active,
+      poll_err,
+      poll_res
 
    # If a task is currently sleeping, then this alters the time it
    # will sleep for, behaving as though the original call to {sleep}
@@ -105,24 +111,29 @@ class Task()
       return self === scheduler.curr_task
    end
 
-   # Suspend this task, which must be the currently scheduled task
-   # until the given stream is ready for i/o, or the timeout expires.
-   # In the latter case, the method fails.  This method isn't normally
-   # called directly, but rather is invoked automatically by using a
-   # {TaskStream}.
+   # Suspend this task, which must be the currently scheduled task, in
+   # order to carry out a {DescStream.poll}.  The parameters and
+   # result are in the same form as for {DescStream.poll}.  The
+   # difference between this and {DescStream.poll} is that the
+   # scheduler will suspend this task whilst the poll is taking place,
+   # whereas {DescStream.poll} will block.  If {timeout} is zero, then
+   # there is no advantage in using this method, and {DescStream.poll}
+   # is preferable.
    #
-   # @param stream The stream to wait for, which must be suitable
-   # @              as a parameter for {DescStream.poll()}.
-   # @param for The event to wait for, either {Poll.IN} or {Poll.OUT}.
-   # @param timeout The timeout; if omitted wait indefinitely.
+   # @param l A list of alternating {DescStream}, flag (from {Poll})
+   # @        pairs.
+   # @param timeout The optional timeout
    #
-   public poll(stream, for, timeout)
+   public poll(l, timeout)
       self === scheduler.curr_task | runerr("poll called on task which is not current")
       self.coex := &current
       self.poll_until := (Prog.get_runtime_millis() + \timeout) | &null
-      self.poll_stream := stream
-      self.poll_for := for
-      return scheduler.now_poll(self)
+      self.poll_req := l
+      scheduler.now_poll(self)
+      return if \poll_err then
+         error(poll_err)
+      else
+         .self.poll_res
    end
 
    # Suspend this task, which must be the currently scheduled task,
@@ -136,6 +147,15 @@ class Task()
       last_sleep := Prog.get_runtime_millis()
       sleep_until := last_sleep + n
       scheduler.now_sleep(self)
+   end
+
+   # Suspend this task, which must be the currently scheduled task,
+   # placing it immediately into the ready state in the scheduler.
+   #
+   public yield()
+      self === scheduler.curr_task | runerr("yield called on task which is not current")
+      self.coex := &current
+      scheduler.now_yield(self)
    end
 
    # Suspend this task, which must be the currently scheduled task,
@@ -190,16 +210,12 @@ class Scheduler()
    private
       ready,
       sleeping,
-      polling,
-      err_io,
-      timeout_io
+      polling
    
    public new()
       ready := set()
       sleeping := set()
       polling := set()
-      err_io := set()
-      timeout_io := set()
       return
    end
 
@@ -227,12 +243,18 @@ class Scheduler()
    package now_poll(t)
       \coex | syserr("now_poll with null coex")
       set_state(t, polling)
-      return coact(, coex)
+      coact(, coex)
+   end
+
+   package now_yield(t)
+      \coex | syserr("now_yield with null coex")
+      set_state(t, ready)
+      coact(, coex)
    end
 
    package now_revert()
       \coex | syserr("now_revert with null coex")
-      return coact(, coex)
+      coact(, coex)
    end
 
    #
@@ -255,10 +277,10 @@ class Scheduler()
    # Test whether there are any tasks in the internal lists.
    #
    public empty()
-      return not(*(ready | sleeping | polling | err_io | timeout_io) > 0)
+      return not(*(ready | sleeping | polling) > 0)
    end
 
-   private run(t, ff)
+   private run(t)
       local sc, st
       delete(t.state, t)
       t.state := &null
@@ -267,14 +289,14 @@ class Scheduler()
       coex := &current
       curr_task := t
       t.active := 1
-      coact(, t.coex, &current, ff)
+      coact(, t.coex, &current)
       t.active := &null
       coex := sc
       curr_task := st
     end
 
    private do_work()
-      local t, poll_l, r, curr_time, x
+      local t, r, curr_time
       repeat {
          if t := ?ready then {
             run(t)
@@ -291,46 +313,30 @@ class Scheduler()
                next
          }
 
-         if t := ?err_io then {
-            &why := "Socket error"
-            run(t, 1)
-            return
-         }
-
-         if t := ?timeout_io then {
-            &why := "Timeout"
-            run(t, 1)
-            return
-         }
-
          if *polling > 0 then {
-            # Time to do another poll()
-            poll_l := []
-            every t := !polling do {
-               put(poll_l, t.poll_stream)
-               put(poll_l, ior(t.poll_for,Poll.ERR))
-            }
             curr_time := Prog.get_runtime_millis()
-            r := DescStream.poll(poll_l, 0) | {
-               ewrite("poll failed:",&why)
-               fail
-            }
-            # Use the poll results
-            every t := !copy(polling) do {
-               x := pop(\r) | 0
-               case x of {
-                  t.poll_for: set_state(t, ready)
-                  Poll.ERR: set_state(t, err_io)
-                  0: {
-                     if curr_time > \t.poll_until then
-                        set_state(t, timeout_io)
+            every t := !polling do {
+               if r := DescStream.poll(t.poll_req, 0) then {
+                  if /r then {
+                     if curr_time >= \t.poll_until then {
+                        set_state(t, ready)
+                        t.poll_err := t.poll_res := &null
+                     }
+                  } else {
+                     set_state(t, ready)
+                     t.poll_err := &null
+                     t.poll_res := r
                   }
-                  default: syserr("Odd value from poll:" || t)
+               } else {
+                  set_state(t, ready)
+                  t.poll_err := &why
+                  t.poll_res := &null
                }
             }
-            if *(ready | err_io | timeout_io) > 0 then
+            if *ready > 0 then
                next
          }
+
          fail
       }
    end

@@ -74,6 +74,13 @@ class NetClient(Connectable, SetFields)
       self.timeout := timeout
    end
 
+   private do_poll(for)
+      return if \task then
+         task.poll([connection, for], timeout)
+      else
+         DescStream.poll([connection, for], timeout)
+   end
+
    #
    # Open the connection.
    #
@@ -90,54 +97,26 @@ class NetClient(Connectable, SetFields)
          runerr("Neither server/port nor path set")
 
       close() | fail
-
-      if \task then {
-         connection := TaskStream(SocketStream.socket(domain), 
-                                  task,
-                                  timeout)
-         # Non-blocking even with no timeout, since blocking means
-         # waiting in the scheduler's polling set, not waiting for a
-         # low-level i/o call to return.
-         connection.other.flag(FileOpt.NONBLOCK) | fail
-         fire(CONNECTING_EVENT)
-
-         connection.other.connect(addr) | {
-            if errno() = Errno.EINPROGRESS then {
-               connection.poll(Poll.OUT) | {
-                  close()
-                  return error("Couldn't connect to " || addr || ": " || &why)
-               }
-            } else {
+      connection := SocketStream.socket(domain)
+      connection.flag(FileOpt.NONBLOCK) | fail
+      fire(CONNECTING_EVENT)
+      connection.connect(addr) | {
+         if errno() = Errno.EINPROGRESS then {
+            r := do_poll(Poll.OUT) | {
                close()
                return error("Couldn't connect to " || addr || ": " || &why)
             }
-         }
-      } else {
-         connection := SocketStream.socket(domain)
-
-         # If we are using a timeout, put the socket into non-blocking mode
-         if \timeout then
-            connection.flag(FileOpt.NONBLOCK) | fail
-
-         fire(CONNECTING_EVENT)
-         connection.connect(addr) | {
-            if \timeout & errno() = Errno.EINPROGRESS then {
-               r := DescStream.poll([connection, Poll.OUT], timeout) | {
-                  close()
-                  return error("Couldn't connect to " || addr || ": " || &why)
-               }
-               if /r then {
-                  close()
-                  return error("Couldn't connect to " || addr || " (timeout)")
-               }
-               r[1] = Poll.OUT | {
-                  close()
-                  return error("Couldn't connect to " || addr || " (socket error)")
-               }
-            } else {
+            if /r then {
                close()
-               return error("Couldn't connect to " || addr || ": " || &why)
+               return error("Couldn't connect to " || addr || " (timeout)")
             }
+            r[1] = Poll.OUT | {
+               close()
+               return error("Couldn't connect to " || addr || " (socket error)")
+            }
+         } else {
+            close()
+            return error("Couldn't connect to " || addr || ": " || &why)
          }
       }
       sbuff := ""
@@ -185,11 +164,9 @@ class NetClient(Connectable, SetFields)
       local i, r
 
       while *s > 0 do {
-         if /task & \timeout then {
-            r := DescStream.poll([connection, Poll.OUT], timeout) | fail
-            if /r then return error("Send failed (timeout)")
-            r[1] = Poll.OUT | return error("Send failed (socket error)")
-         }
+         r := do_poll(Poll.OUT) | return error("Send poll failed: " || &why)
+         if /r then return error("Send failed (timeout)")
+         r[1] = Poll.OUT | return error("Send failed (socket error)")
          i := connection.out(s) | fail
          s := s[i+1 : 0]
       }
@@ -201,12 +178,9 @@ class NetClient(Connectable, SetFields)
    #
    private recv(len)
       local r
-
-      if /task & \timeout then {
-         r := DescStream.poll([connection, Poll.IN], timeout) | fail
-         if /r then return error("Receive failed (timeout)")
-         r[1] = Poll.IN | return error("Receive failed (socket error)")
-      }
+      r := do_poll(Poll.IN) | return error("Receive poll failed: " || &why)
+      if /r then return error("Receive failed (timeout)")
+      r[1] = Poll.IN | return error("Receive failed (socket error)")
       return connection.in(len)
    end
 
