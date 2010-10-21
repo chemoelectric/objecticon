@@ -114,12 +114,12 @@ class Task()
    # @param stream The stream to wait for, which must be suitable
    # @              as a parameter for {DescStream.poll()}.
    # @param for The event to wait for, either {Poll.IN} or {Poll.OUT}.
-   # @param timeout The timeout.
+   # @param timeout The timeout; if omitted wait indefinitely.
    #
    public poll(stream, for, timeout)
       self === scheduler.curr_task | runerr("poll called on task which is not current")
       self.coex := &current
-      self.poll_until := Prog.get_runtime_millis() + timeout
+      self.poll_until := (Prog.get_runtime_millis() + \timeout) | &null
       self.poll_stream := stream
       self.poll_for := for
       return scheduler.now_poll(self)
@@ -322,7 +322,7 @@ class Scheduler()
                   t.poll_for: set_state(t, ready)
                   Poll.ERR: set_state(t, err_io)
                   0: {
-                     if curr_time > t.poll_until then
+                     if curr_time > \t.poll_until then
                         set_state(t, timeout_io)
                   }
                   default: syserr("Odd value from poll:" || t)

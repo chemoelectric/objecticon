@@ -67,9 +67,8 @@ class NetClient(Connectable, SetFields)
       close()
    end
 
-   #
-   # Set the timeout in ms to use.  If a figure of zero, or &null, is given (the default)
-   # then no timeout will be used.
+   # Set the timeout in ms to use.  If {&null}, then no timeout will
+   # be used.
    #
    public set_timeout(timeout)
       self.timeout := timeout
@@ -93,10 +92,12 @@ class NetClient(Connectable, SetFields)
       close() | fail
 
       if \task then {
-         \timeout | runerr("Must set a timeout when using an task")
          connection := TaskStream(SocketStream.socket(domain), 
                                   task,
                                   timeout)
+         # Non-blocking even with no timeout, since blocking means
+         # waiting in the scheduler's polling set, not waiting for a
+         # low-level i/o call to return.
          connection.other.flag(FileOpt.NONBLOCK) | fail
          fire(CONNECTING_EVENT)
 
@@ -115,12 +116,12 @@ class NetClient(Connectable, SetFields)
          connection := SocketStream.socket(domain)
 
          # If we are using a timeout, put the socket into non-blocking mode
-         if \timeout > 0 then
+         if \timeout then
             connection.flag(FileOpt.NONBLOCK) | fail
 
          fire(CONNECTING_EVENT)
          connection.connect(addr) | {
-            if \timeout > 0 & errno() = Errno.EINPROGRESS then {
+            if \timeout & errno() = Errno.EINPROGRESS then {
                r := DescStream.poll([connection, Poll.OUT], timeout) | {
                   close()
                   return error("Couldn't connect to " || addr || ": " || &why)
@@ -184,7 +185,7 @@ class NetClient(Connectable, SetFields)
       local i, r
 
       while *s > 0 do {
-         if /task & (\timeout > 0) then {
+         if /task & \timeout then {
             r := DescStream.poll([connection, Poll.OUT], timeout) | fail
             if /r then return error("Send failed (timeout)")
             r[1] = Poll.OUT | return error("Send failed (socket error)")
@@ -201,7 +202,7 @@ class NetClient(Connectable, SetFields)
    private recv(len)
       local r
 
-      if /task & (\timeout > 0) then {
+      if /task & \timeout then {
          r := DescStream.poll([connection, Poll.IN], timeout) | fail
          if /r then return error("Receive failed (timeout)")
          r[1] = Poll.IN | return error("Receive failed (socket error)")

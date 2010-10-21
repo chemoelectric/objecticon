@@ -73,7 +73,7 @@ class Sem(NoCopy)
    # until t milliseconds or {semop_nowait()} succeeds.  Fails on a timeout; otherwise
    # succeeds.
    # @param n the parameter to semop_nowait
-   # @param t the timeout in milliseconds, default 0
+   # @param t the timeout in milliseconds
    #
    public semop_poll(n, t)
       local c
