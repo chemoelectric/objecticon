@@ -20,7 +20,7 @@ class TaskStream(Stream)
    # be resumed on ready input or output respectively.
    #
    public poll(x)
-      return task.poll(self, x)
+      return task.poll(other, x, timeout)
    end
 
    public in(n)
@@ -79,23 +79,57 @@ class Task()
       state,
       active
 
+   # If a task is currently sleeping, then this alters the time it
+   # will sleep for, behaving as though the original call to {sleep}
+   # had given {n} as its parameter.  Providing {0} as a parameter
+   # will make the task ready to be activated again immediately.
+   #
    public change_sleep(n)
       sleep_until := \last_sleep + n
    end
 
+   # Succeed iff the task is currently active.
+   #
    public is_active()
       return .\active
    end
 
-   public poll(stream, for)
+   # Succeed iff the task is the current task.  Note that a task may
+   # be active, but not the current task, since a task may itself
+   # invoke {Scheduler.work} in order to activate another task, in a
+   # nested fashion.  This may happen for example when a task shows a
+   # modal dialog, and hence calls {Scheduler.work} via the dispatcher
+   # event loop.
+   #
+   public is_current()
+      return self === scheduler.curr_task
+   end
+
+   # Suspend this task, which must be the currently scheduled task
+   # until the given stream is ready for i/o, or the timeout expires.
+   # In the latter case, the method fails.  This method isn't normally
+   # called directly, but rather is invoked automatically by using a
+   # {TaskStream}.
+   #
+   # @param stream The stream to wait for, which must be suitable
+   # @              as a parameter for {DescStream.poll()}.
+   # @param for The event to wait for, either {Poll.IN} or {Poll.OUT}.
+   # @param timeout The timeout.
+   #
+   public poll(stream, for, timeout)
       self === scheduler.curr_task | runerr("poll called on task which is not current")
       self.coex := &current
-      self.poll_until := Prog.get_runtime_millis() + stream.timeout
-      self.poll_stream := stream.other
+      self.poll_until := Prog.get_runtime_millis() + timeout
+      self.poll_stream := stream
       self.poll_for := for
       return scheduler.now_poll(self)
    end
 
+   # Suspend this task, which must be the currently scheduled task,
+   # for {n} milliseconds.
+   #
+   # @param n The time to wait for.
+   #
    public sleep(n)
       self === scheduler.curr_task | runerr("sleep called on task which is not current")
       self.coex := &current
@@ -104,22 +138,43 @@ class Task()
       scheduler.now_sleep(self)
    end
 
+   # Suspend this task, which must be the currently scheduled task,
+   # but do not resume it.  Control reverts to the scheduler.  The
+   # task may be subsequently restarted with {start}.  It is not
+   # normally necessary to call this method, since it has the same
+   # effect as suspending the task's co-expression using {suspend},
+   # {fail}, or {return}.
    #
-   # Start the task.
+   public revert()
+      self === scheduler.curr_task | runerr("sleep called on task which is not current")
+      scheduler.now_revert()
+   end
+
+   # Start the task, which may not be currently active.  If the task
+   # was previously stopped in a particular state (eg sleeping), then
+   # it continues from that same state.
    #
    public start()
       /active | runerr("start called on a currently active task")
       scheduler.start(self)
    end
 
-   #
-   # Stop the task.
+   # Stop the task, which may not be currently active.  This prevents
+   # the scheduler from activating it.  Its present state is
+   # remembered, and it may be started again in that state using
+   # {start}.
    #
    public stop()
       /active | runerr("stop called on a currently active task")
       scheduler.stop(self)
    end
 
+   #
+   # Create a new {Task}.
+   #
+   # @param scheduler The {Scheduler} to use to activate the task.
+   # @param coex The co-expression body of the task.
+   #
    public new(scheduler, coex)
       self.coex := coex
       self.scheduler := scheduler
@@ -172,6 +227,11 @@ class Scheduler()
    package now_poll(t)
       \coex | syserr("now_poll with null coex")
       set_state(t, polling)
+      return coact(, coex)
+   end
+
+   package now_revert()
+      \coex | syserr("now_revert with null coex")
       return coact(, coex)
    end
 
