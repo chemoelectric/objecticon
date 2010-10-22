@@ -203,6 +203,8 @@ class Task()
 end
 
 class Scheduler()
+   public const
+      poll_timeout
    private readable 
       coex,
       curr_task
@@ -212,7 +214,8 @@ class Scheduler()
       sleeping,
       polling
    
-   public new()
+   public new(n)
+      poll_timeout := \n | 0
       ready := set()
       sleeping := set()
       polling := set()
@@ -258,22 +261,6 @@ class Scheduler()
    end
 
    #
-   # Do some i/o work.  A maximum of {n} bits of work are done; the
-   # default is 1.  If {n} is negative, work is done until no more is
-   # ready.  Succeeds if any work was done; fails if no work was done.
-   #
-   public work(n)
-      local r
-      /n := 1
-      until n = 0 do {
-         do_work() | break
-         r := 1
-         n -:= 1
-      }
-      return \r
-   end
-
-   #
    # Test whether there are any tasks in the internal lists.
    #
    public empty()
@@ -295,8 +282,8 @@ class Scheduler()
       curr_task := st
     end
 
-   private do_work()
-      local t, r, curr_time
+   public work()
+      local t, r, curr_time, poll_l, x
       repeat {
          if t := ?ready then {
             run(t)
@@ -314,25 +301,47 @@ class Scheduler()
          }
 
          if *polling > 0 then {
-            curr_time := Prog.get_runtime_millis()
-            every t := !polling do {
-               if r := DescStream.poll(t.poll_req, 0) then {
-                  if /r then {
-                     if curr_time >= \t.poll_until then {
+            poll_l := []
+            every t := !polling do
+               every put(poll_l, !t.poll_req)
+            curr_time := Prog.get_runtime_millis() + poll_timeout
+            if r := DescStream.poll(poll_l, poll_timeout) then {
+               if /r then {
+                  # Process timeout for each task.
+                  every t := !polling do {
+                     if curr_time > \t.poll_until then {
                         set_state(t, ready)
                         t.poll_err := t.poll_res := &null
                      }
-                  } else {
-                     set_state(t, ready)
-                     t.poll_err := &null
-                     t.poll_res := r
                   }
                } else {
+                  every t := !polling do {
+                     # Extract relevant part of result
+                     x := []
+                     every 1 to *t.poll_req / 2 do
+                        put(x, pop(r))
+                     # If all zeros, it's the same as a timeout.
+                     if !x ~= 0 then {
+                        set_state(t, ready)
+                        t.poll_res := x
+                        t.poll_err := &null
+                     } else if curr_time > \t.poll_until then {
+                        set_state(t, ready)
+                        t.poll_err := t.poll_res := &null
+                     }
+                  }
+               }
+            } else {
+               # poll error; forward error to each Task
+               every t := !polling do {
                   set_state(t, ready)
                   t.poll_err := &why
                   t.poll_res := &null
                }
             }
+            # If we have a poll_timeout, the poll counts as work; otherwise it does not
+            if poll_timeout > 0 then
+               return
             if *ready > 0 then
                next
          }
