@@ -21,19 +21,15 @@ class Dispatcher()
       dialogs,
       scheduler
 
-   public static
-      IDLE_SLEEP
-
    private static const
       BLOCKED_ALLOW,
       BLOCKED_QUIET
 
    private static init()
-      IDLE_SLEEP := 50
       BLOCKED_ALLOW := Selection.EVENTS ++ set(Window.INVOKE_LATER, Window.RESIZE)
       BLOCKED_QUIET := Mouse.DRAG_OR_MOVEMENT ++ Mouse.CROSSING ++ set(Mouse.RELEASE)
       dialogs := set()
-      scheduler := Scheduler(IDLE_SLEEP)
+      scheduler := Scheduler(Gui.IDLE_SLEEP)
    end
 
    #
@@ -61,10 +57,10 @@ class Dispatcher()
    public static message_loop(r)
       if /r then {
          while *dialogs > 0 do
-            work() | delay(IDLE_SLEEP)
+            work() | delay(Gui.IDLE_SLEEP)
       } else {
          while \r.is_open_flag do
-            work() | delay(IDLE_SLEEP)
+            work() | delay(Gui.IDLE_SLEEP)
       }
    end
 
@@ -91,7 +87,7 @@ class Dispatcher()
    #
    public static message_loop_forever()
       repeat {
-         work() | delay(IDLE_SLEEP)
+         work() | delay(Gui.IDLE_SLEEP)
       }
    end
 
