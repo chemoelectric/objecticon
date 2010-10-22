@@ -406,25 +406,27 @@ function keyof(s,x)
 end
 
 
-/* Clear all elements of a structure */
+"clear(s) - clear set or table or list s of all elements"
+" (always succeeds and returns s)."
+
 function clear(s)
     body {
       type_case s of {
 
       set: {
             set_clear(&s);
-            EVValD(&s, E_Sinsert);
+            EVValD(&s, E_Sclear);
             return s;
          }
 
       list: {
             list_clear(&s);
-            EVValD(&s, E_Linsert);
+            EVValD(&s, E_Lclear);
             return s;
         }
       table: {
             table_clear(&s);
-            EVValD(&s, E_Tinsert);
+            EVValD(&s, E_Tclear);
             return s;
          }
 

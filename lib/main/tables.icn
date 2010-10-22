@@ -85,6 +85,11 @@ class Table()
    public defer size()
 
    #
+   # Clear the table of all elements.
+   #
+   public defer clear()
+
+   #
    # Generate key-value pairs as a sequence of 2-element lists.  NB - for each
    # invocation, the same list is returned every time, with the values replaced.
    #
@@ -248,6 +253,10 @@ class ClTable(Table)
       suspend (!t)[2]
    end
 
+   public clear()
+      default.clear(t)
+   end
+
    public size()
       return *t
    end
@@ -400,6 +409,11 @@ class SortTable(Table)
       suspend Seq{(\root).traverse()}.val
    end
 
+   public clear()
+      root := &null
+      sz := 0
+   end
+
    public size()
       return sz
    end
@@ -489,6 +503,11 @@ class EqTable(Table)
       return sz
    end
 
+   public clear()
+      default.clear(t)
+      sz := 0
+   end
+
    #
    # Create a new instance.
    #
@@ -537,6 +556,10 @@ class BuiltinTable(Table)
 
    public gen()
       suspend !t
+   end
+
+   public clear()
+      default.clear(t)
    end
 
    public size()

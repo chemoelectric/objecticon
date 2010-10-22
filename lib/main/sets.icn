@@ -47,6 +47,11 @@ class Set()
    public defer size()
 
    #
+   # Clear the set of all elements.
+   #
+   public defer clear()
+
+   #
    # Return a list of the members, in the order produced by {gen()}.
    #
    public member_list()
@@ -147,6 +152,10 @@ class TableSet(Set)
       return t.size()
    end
 
+   public clear()
+      t.clear()
+   end
+
    #
    # Create a new instance.
    #
@@ -192,6 +201,10 @@ class BuiltinSet(Set)
 
    public size()
       return *s
+   end
+
+   public clear()
+      default.clear(s)
    end
 
    #
