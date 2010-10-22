@@ -404,3 +404,32 @@ function keyof(s,x)
       }
    }
 end
+
+
+/* Clear all elements of a structure */
+function clear(s)
+    body {
+      type_case s of {
+
+      set: {
+            set_clear(&s);
+            EVValD(&s, E_Sinsert);
+            return s;
+         }
+
+      list: {
+            list_clear(&s);
+            EVValD(&s, E_Linsert);
+            return s;
+        }
+      table: {
+            table_clear(&s);
+            EVValD(&s, E_Tinsert);
+            return s;
+         }
+
+      default:
+         runerr(122, s);
+    }
+  }
+end
