@@ -364,7 +364,6 @@ int ripow(double r, word n, dptr drslt)
       r *= r;
       n >>= 1;
       }
-   MemProtect(BlkLoc(*drslt) = (union block *)alcreal(retval));
-   drslt->dword = D_Real;
+   MakeReal(retval, drslt);
    return Succeeded;
    }

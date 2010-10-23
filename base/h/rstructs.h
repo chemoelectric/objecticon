@@ -9,6 +9,9 @@
 struct descrip {		/* descriptor */
     word dword;			/*   type field */
     union {
+#if REAL_IN_DESC
+        double realval;         /*   real value */
+#endif
         word integer;		/*   integer value */
         char *sptr;		/*   pointer to character string */
         union block *bptr;	/*   pointer to a block */
@@ -44,6 +47,7 @@ struct b_bignum {		/* large integer block */
     DIGIT digits[1];		/*   digits */
 };
 
+#if !REAL_IN_DESC
 struct b_real {			/* real block */
     word title;			/*   T_Real */
 #ifdef DOUBLE_HAS_WORD_ALIGNMENT
@@ -52,6 +56,7 @@ struct b_real {			/* real block */
     word realval[DoubleWords];
 #endif
 };
+#endif
 
 struct b_cset_range {
     word index,                 /* Index (zero-based) of first element */
@@ -474,7 +479,9 @@ struct progstate {
     struct b_list *(*Alclist_raw)(uword,uword);
     struct b_list *(*Alclist)(uword,uword);
     struct b_lelem *(*Alclstb)(uword);
+#if !REAL_IN_DESC
     struct b_real *(*Alcreal)(double);
+#endif
     struct b_record *(*Alcrecd)(struct b_constructor *);
     struct b_object *(*Alcobject)(struct b_class *);
     struct b_cast *(*Alccast)(void);
@@ -516,7 +523,9 @@ struct b_coexpr {		/* co-expression block */
 
 
 union block {			/* general block */
+#if !REAL_IN_DESC
     struct b_real real;
+#endif
     struct b_cset cset;
     struct b_proc proc;
     struct b_list list;

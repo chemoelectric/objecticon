@@ -351,6 +351,8 @@ struct b_lelem *f(uword nslots)
 alclstb_macro(alclstb_0,0)
 alclstb_macro(alclstb_1,E_Lelem)
 
+#if !REAL_IN_DESC
+
 #begdef alcreal_macro(f,e_real)
 /*
  * alcreal - allocate a real value in the block region.
@@ -369,6 +371,8 @@ struct b_real *f(double val)
 
 alcreal_macro(alcreal_0,0)
 alcreal_macro(alcreal_1,E_Real)
+
+#endif  /* REAL_IN_DESC */
 
 #begdef alcrecd_macro(f,e_record)
 /*

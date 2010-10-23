@@ -97,6 +97,10 @@
    #define LongBits (ByteBits * SIZEOF_LONG)
 #endif					/* LongBits */
 
+#ifndef RealBits
+   #define RealBits (ByteBits * SIZEOF_DOUBLE)
+#endif					/* RealBits */
+
 #ifndef SourceSuffix
    #define SourceSuffix ".icn"
 #endif					/* SourceSuffix */

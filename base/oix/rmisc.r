@@ -255,7 +255,7 @@ uword hash(dptr dp)
 	  *  and was observed to work well in empirical testing.
           */
          case T_Real:
-            GetReal(RealBlk(*dp),r);
+            DGetReal(*dp,r);
             i = r * 1129.27586206896558;
             break;
 
@@ -536,7 +536,7 @@ void outimage(FILE *f, dptr dp, int noimage)
          char s[30];
          struct descrip rd;
 
-         GetReal(RealBlk(*dp),rresult);
+         DGetReal(*dp,rresult);
          rtos(rresult, &rd, s);
 	 fprintf(f, "%.*s", (int)StrLen(rd), StrLoc(rd));
          }

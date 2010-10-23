@@ -305,7 +305,7 @@ int realtobig(dptr da, dptr dx)
     word d;
     int sgn;
 
-    GetReal(RealBlk(*da), x);
+    DGetReal(*da, x);
 
 
     /* Try to catch the case of x being +/-"inf" - these values produce a spurious value of
@@ -991,8 +991,7 @@ int bigpowri(double a, dptr db, dptr drslt)
         }
     }
 
-    MemProtect(BlkLoc(*drslt) = (union block *)alcreal(retval));
-    drslt->dword = D_Real;
+    MakeReal(retval, drslt);
     return Succeeded;
 }
 

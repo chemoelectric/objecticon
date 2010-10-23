@@ -191,6 +191,12 @@ void get_deref(dptr dest)
             MakeInt(GetWord, dest);
             break;
         }
+#if REAL_IN_DESC
+        case Op_Real: {
+            MakeReal(GetReal, dest);
+            break;
+        }
+#endif
         case Op_Knull: {
             *dest = nulldesc;
             break;
@@ -228,6 +234,12 @@ void get_variable(dptr dest)
             MakeInt(GetWord, dest);
             break;
         }
+#if REAL_IN_DESC
+        case Op_Real: {
+            MakeReal(GetReal, dest);
+            break;
+        }
+#endif
         case Op_Knull: {
             *dest = nulldesc;
             break;
@@ -267,6 +279,9 @@ void skip_descrip()
         case Op_Static:
         case Op_Global:
         case Op_Int:
+#if REAL_IN_DESC
+        case Op_Real:
+#endif
         case Op_FrameVar:
         case Op_Tmp: {
             ipc++;

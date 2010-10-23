@@ -82,6 +82,35 @@ static void setdump(dptr d)
     }
     fflush(stderr);
 }
+
+
+static void tabledump(dptr d)
+{
+    struct b_table *x = &TableBlk(*d);
+    int i, j;
+    fprintf(stderr, "table at %p size=%ld mask=%lx\n", x, (long)x->size, (long)x->mask);
+    for (i = 0; i < HSegs; ++i) {
+        struct b_slots *slot = x->hdir[i];
+        fprintf(stderr, "\tslot %d at %p segsize=%d\n", i, slot, segsize[i]);
+        if (slot) {
+            for (j = 0; j < segsize[i]; ++j) {
+                union block *elem = slot->hslots[j];
+                fprintf(stderr, "\t\tbucket chain %d at %p\n", j, elem);
+                while (elem && BlkType(elem) != T_Table) {
+                    struct b_telem *telem = (struct b_telem *)elem;
+                    fprintf(stderr, "\t\t\telem %p hash=%lu mem=", telem, (long unsigned)telem->hashnum);
+                    print_desc(stderr, &telem->tref);
+                    fprintf(stderr, "->");
+                    print_desc(stderr, &telem->tval);
+                    fprintf(stderr, "\n");
+                    elem = telem->clink;
+                }
+            }
+        }
+    }
+    fflush(stderr);
+}
+
 #endif
 
 /*
@@ -569,3 +598,51 @@ dptr get_element(dptr d, word i)
      }
    }
 }
+
+void list_clear(dptr l)
+{
+    int i, j;
+    struct b_list *x = &ListBlk(*l);
+    struct b_lelem *f = (struct b_lelem *)x->listhead;  /* First block is cleared and kept */
+    /* Set used elements in block to &null */
+    i = f->first;
+    for (j = 0; j < f->nused; ++j) {
+        f->lslots[i] = nulldesc;
+        if (++i >= f->nslots)
+            i = 0;
+    }
+    x->listtail = (union block *)f;
+    f->listnext = (union block *)x;
+    f->nused = 0;
+    ++x->changecount;
+    x->size = 0;
+}
+
+void set_clear(dptr s)
+{
+    struct b_set *x = &SetBlk(*s);
+    int i, j;
+    for (i = 0; i < HSegs; ++i) {
+        struct b_slots *slot = x->hdir[i];
+        if (slot) {
+            for (j = 0; j < segsize[i]; ++j)
+                slot->hslots[j] = 0;
+        }
+    }
+    x->size = 0;
+}
+
+void table_clear(dptr t)
+{
+    struct b_table *x = &TableBlk(*t);
+    int i, j;
+    for (i = 0; i < HSegs; ++i) {
+        struct b_slots *slot = x->hdir[i];
+        if (slot) {
+            for (j = 0; j < segsize[i]; ++j)
+                slot->hslots[j] = (union block *)x;
+        }
+    }
+    x->size = 0;
+}
+

@@ -117,8 +117,6 @@ struct descrip csetdesc;
 struct descrip eventdesc;
 struct descrip rzerodesc;
 
-struct b_real realzero;          /* real zero block */
-
 struct b_cset *k_ascii;	        /* value of &ascii */
 struct b_cset *k_cset;	        /* value of &cset */
 struct b_cset *k_uset;	        /* value of &uset */
@@ -541,7 +539,9 @@ static void initprogstate(struct progstate *p)
     p->Alclist_raw = alclist_raw_0;
     p->Alclist = alclist_0;
     p->Alclstb = alclstb_0;
+#if !REAL_IN_DESC
     p->Alcreal = alcreal_0;
+#endif
     p->Alcrecd = alcrecd_0;
     p->Alcobject = alcobject_0;
     p->Alccast = alccast_0;
@@ -1195,8 +1195,16 @@ int main(int argc, char **argv)
     IntVal(nulldesc) = 0;
 
     d = 0.0;
-    SetReal(d, realzero);
-    BlkLoc(rzerodesc) = (union block *)&realzero;
+#if REAL_IN_DESC
+    DSetReal(d, rzerodesc);
+#else
+    {
+        static struct b_real realzero;
+        SetReal(d, realzero);
+        BlkLoc(rzerodesc) = (union block *)&realzero;
+        rzerodesc.dword = D_Real;
+    }
+#endif
     maps2 = nulldesc;
     maps3 = nulldesc;
     maps2u = nulldesc;
@@ -1397,6 +1405,9 @@ static void conv_var()
         }
 
         case Op_Int:
+#if REAL_IN_DESC
+        case Op_Real:
+#endif
         case Op_FrameVar:
         case Op_Tmp: {
             ++pc;

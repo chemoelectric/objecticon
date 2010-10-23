@@ -1184,13 +1184,22 @@ void print_vword(FILE *f, dptr d) {
                 break;
             }
 
+#if REAL_IN_DESC
+            case D_Real : {
+                fprintf(f, "%e", d->vword.realval);
+                break;
+            }
+#endif
+
             case D_List :
             case D_Set : 
             case D_Table :
             case D_Record :
             case D_Coexpr :
             case D_Lrgint :
+#if !REAL_IN_DESC
             case D_Real :
+#endif
             case D_Cset :
             case D_Methp :
             case D_Ucs :

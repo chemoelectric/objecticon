@@ -28,6 +28,10 @@
    #error "DigitBits must equal either ShortBits or IntBits"
 #endif
 
+#if RealBits == WordBits && DOUBLE_HAS_WORD_ALIGNMENT
+   #define REAL_IN_DESC 1
+#endif
+
 /*
  * Typedefs to make some things easier.
  */

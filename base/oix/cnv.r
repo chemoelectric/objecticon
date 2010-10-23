@@ -39,7 +39,7 @@ int cnv_c_dbl(dptr s, double *d)
 
    type_case *s of {
       real: {
-         GetReal(RealBlk(*s), *d);
+         DGetReal(*s, *d);
          return 1;
          }
       integer: {
@@ -111,7 +111,7 @@ int cnv_c_int(dptr s, word *d)
          }
       real: {
          double dbl;
-         GetReal(RealBlk(*s),dbl);
+         DGetReal(*s,dbl);
          if (dbl > MaxWord || dbl < MinWord) {
             return 0;
             }
@@ -474,7 +474,7 @@ int f(dptr s, dptr d)
          }
       real: {
          double dbl;
-         GetReal(RealBlk(*s),dbl);
+         DGetReal(*s,dbl);
          if (dbl > MaxWord || dbl < MinWord) {
 
             if (realtobig(s, d) == Succeeded) {
@@ -563,8 +563,7 @@ int f(dptr s, dptr d)
    EVValD(&rzerodesc, e_tconv);
 
    if (cnv_c_dbl(s, &dbl)) {
-      MemProtect(BlkLoc(*d) = (union block *)alcreal(dbl));
-      d->dword = D_Real;
+      MakeReal(dbl, d);
       EVValD(d, e_sconv);
       return 1;
       }
@@ -616,7 +615,7 @@ int f(dptr s, dptr d)
        }
       real: {
          double res;
-         GetReal(RealBlk(*s), res);
+         DGetReal(*s, res);
          rtos(res, d, sbuf);
          }
      cset: {
@@ -669,7 +668,7 @@ int f(char *sbuf, dptr s, dptr d)
       }
       real: {
          double res;
-         GetReal(RealBlk(*s), res);
+         DGetReal(*s, res);
          rtos(res, d, sbuf);
          }
      cset: {
@@ -1045,8 +1044,6 @@ word cvpos(long pos, long len)
    return (len + p + 1);
    }
 
-static double dblZero = 0.0;
-
 /*
  * rtos - convert the real number n into a string using s as a buffer and
  *  making a descriptor for the resulting string.
@@ -1054,28 +1051,30 @@ static double dblZero = 0.0;
 void rtos(double n, dptr dp, char *s)
    {
    char *p;
+   if (n == 0.0)                        /* ensure -0.0 (which == 0.0), prints as "0.0" */
+     strcpy(s, "0.0");
+   else {
+     s++; 				/* leave room for leading zero */
+     sprintf(s, "%.*g", Precision, n);
 
-   s++; 				/* leave room for leading zero */
-   sprintf(s, "%.*g", Precision, n + dblZero);   /* format, avoiding -0 */
+     /*
+      * Now clean up possible messes.
+      */
+     while (*s == ' ')			/* delete leading blanks */
+       s++;
+     if (*s == '.') {			/* prefix 0 to initial period */
+       s--;
+       *s = '0';
+     }
+     else if (!strchr(s, '.') && !strchr(s, 'e') && !strchr(s, 'E'))
+       strcat(s, ".0");		/* if no decimal point or exp. */
+     if (s[strlen(s) - 1] == '.')		/* if decimal point is at end ... */
+       strcat(s, "0");
 
-   /*
-    * Now clean up possible messes.
-    */
-   while (*s == ' ')			/* delete leading blanks */
-      s++;
-   if (*s == '.') {			/* prefix 0 to initial period */
-      s--;
-      *s = '0';
-      }
-   else if (!strchr(s, '.') && !strchr(s, 'e') && !strchr(s, 'E'))
-         strcat(s, ".0");		/* if no decimal point or exp. */
-   if (s[strlen(s) - 1] == '.')		/* if decimal point is at end ... */
-      strcat(s, "0");
-
-   /* Convert e+0dd -> e+dd */
-   if ((p = strchr(s, 'e')) && p[2] == '0' && isdigit(p[3]) && isdigit(p[4]))
-      strcpy(p + 2, p + 3);
-
+     /* Convert e+0dd -> e+dd */
+     if ((p = strchr(s, 'e')) && p[2] == '0' && isdigit(p[3]) && isdigit(p[4]))
+       strcpy(p + 2, p + 3);
+   }
    StrLen(*dp) = strlen(s);
    StrLoc(*dp) = s;
    }

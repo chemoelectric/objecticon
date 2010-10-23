@@ -8,7 +8,7 @@
 
 package gui
 
-import graphics, ipl.lists, io
+import graphics, io
 
 #
 #
@@ -19,24 +19,17 @@ import graphics, ipl.lists, io
 class Dispatcher()
    public static const 
       dialogs,
-      scheduler,
-      idlers
-   
-   private static readable
-      coex
+      scheduler
 
    private static const
-      IDLE_SLEEP,
       BLOCKED_ALLOW,
       BLOCKED_QUIET
 
    private static init()
-      IDLE_SLEEP := 50
       BLOCKED_ALLOW := Selection.EVENTS ++ set(Window.INVOKE_LATER, Window.RESIZE)
       BLOCKED_QUIET := Mouse.DRAG_OR_MOVEMENT ++ Mouse.CROSSING ++ set(Mouse.RELEASE)
       dialogs := set()
-      scheduler := Scheduler()
-      idlers := []
+      scheduler := Scheduler(Gui.IDLE_SLEEP)
    end
 
    #
@@ -53,22 +46,8 @@ class Dispatcher()
       delete(dialogs, d)
    end
 
-   #
-   # Add an idle-time procedure
-   #
-   public static add_idler(x)
-      put(idlers, x)
-   end
-
-   #
-   # Delete an idle-time procedure
-   #
-   public static remove_idler(x)
-      ldel(idlers, x)
-   end
-
    public static work()
-      return do_event() | do_validate() | do_scheduler() | do_idle()
+      return do_event() | do_validate() | do_scheduler()
    end
 
    #
@@ -78,10 +57,10 @@ class Dispatcher()
    public static message_loop(r)
       if /r then {
          while *dialogs > 0 do
-            work() | delay(IDLE_SLEEP)
+            work() | delay(Gui.IDLE_SLEEP)
       } else {
          while \r.is_open_flag do
-            work() | delay(IDLE_SLEEP)
+            work() | delay(Gui.IDLE_SLEEP)
       }
    end
 
@@ -108,7 +87,7 @@ class Dispatcher()
    #
    public static message_loop_forever()
       repeat {
-         work() | delay(IDLE_SLEEP)
+         work() | delay(Gui.IDLE_SLEEP)
       }
    end
 
@@ -155,10 +134,6 @@ class Dispatcher()
 
    public static do_scheduler()
       return scheduler.work()
-   end
-
-   public static do_idle()
-      return (!idlers)()
    end
 
    #
