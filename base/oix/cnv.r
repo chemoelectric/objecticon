@@ -1044,8 +1044,6 @@ word cvpos(long pos, long len)
    return (len + p + 1);
    }
 
-static double dblZero = 0.0;
-
 /*
  * rtos - convert the real number n into a string using s as a buffer and
  *  making a descriptor for the resulting string.
@@ -1053,27 +1051,30 @@ static double dblZero = 0.0;
 void rtos(double n, dptr dp, char *s)
    {
    char *p;
-   s++; 				/* leave room for leading zero */
-   sprintf(s, "%.*g", Precision, n + dblZero);   /* format, avoiding -0 */
+   if (n == 0.0)                        /* ensure -0.0 (which == 0.0), prints as "0.0" */
+     strcpy(s, "0.0");
+   else {
+     s++; 				/* leave room for leading zero */
+     sprintf(s, "%.*g", Precision, n);
 
-   /*
-    * Now clean up possible messes.
-    */
-   while (*s == ' ')			/* delete leading blanks */
-      s++;
-   if (*s == '.') {			/* prefix 0 to initial period */
-      s--;
-      *s = '0';
-      }
-   else if (!strchr(s, '.') && !strchr(s, 'e') && !strchr(s, 'E'))
-         strcat(s, ".0");		/* if no decimal point or exp. */
-   if (s[strlen(s) - 1] == '.')		/* if decimal point is at end ... */
-      strcat(s, "0");
+     /*
+      * Now clean up possible messes.
+      */
+     while (*s == ' ')			/* delete leading blanks */
+       s++;
+     if (*s == '.') {			/* prefix 0 to initial period */
+       s--;
+       *s = '0';
+     }
+     else if (!strchr(s, '.') && !strchr(s, 'e') && !strchr(s, 'E'))
+       strcat(s, ".0");		/* if no decimal point or exp. */
+     if (s[strlen(s) - 1] == '.')		/* if decimal point is at end ... */
+       strcat(s, "0");
 
-   /* Convert e+0dd -> e+dd */
-   if ((p = strchr(s, 'e')) && p[2] == '0' && isdigit(p[3]) && isdigit(p[4]))
-      strcpy(p + 2, p + 3);
-
+     /* Convert e+0dd -> e+dd */
+     if ((p = strchr(s, 'e')) && p[2] == '0' && isdigit(p[3]) && isdigit(p[4]))
+       strcpy(p + 2, p + 3);
+   }
    StrLen(*dp) = strlen(s);
    StrLoc(*dp) = s;
    }
