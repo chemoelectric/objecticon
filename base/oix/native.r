@@ -238,8 +238,9 @@ static void convert_from_##TYPE(TYPE src, dptr dest)
     struct descrip pos = zerodesc, digs;
     tended struct descrip res, chunk, pwr;
 
-    /* See if it fits in a word */
-    if (src <= MaxWord && src >= MinWord) {
+    /* See if it fits in a word.  For an unsigned type, just compare
+     * against MaxWord; for a signed compare against MinWord too. */
+    if (src <= MaxWord && ((TYPE)-1 > 0 || src >= MinWord)) {
         MakeInt(src, dest);
         return;
     }
