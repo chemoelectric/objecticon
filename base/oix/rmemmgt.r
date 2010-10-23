@@ -42,7 +42,11 @@ int bsizes[] = {
     -1,                       /* T_Null (0), not block */
     -1,                       /* T_Integer (1), not block */
      0,                       /* T_Lrgint (2), large integer */
+#if REAL_IN_DESC
+     -1,                      /* T_Real (3), real number, not block */
+#else
      sizeof(struct b_real),   /* T_Real (3), real number */
+#endif
      0,                       /* T_Cset (4), cset */
      sizeof(struct b_constructor), /* T_Constructor (5), record constructor */
      sizeof(struct b_proc),        /* T_Proc (6), procedure block */
@@ -78,7 +82,11 @@ int firstd[] = {
     -1,                       /* T_Null (0), not block */
     -1,                       /* T_Integer (1), not block */
      0,                       /* T_Lrgint (2), large integer */
+#if REAL_IN_DESC
+     -1,                      /* T_Real (3), real number, not block */
+#else
      0,                       /* T_Real (3), real number */
+#endif
      0,                       /* T_Cset (4), cset */
     -1,                       /* T_Constructor (5), record constructor */
     -1,                       /* T_Proc (6), procedure block */
@@ -114,7 +122,11 @@ int firstp[] = {
     -1,                       /* T_Null (0), not block */
     -1,                       /* T_Integer (1), not block */
      0,                       /* T_Lrgint (2), large integer */
+#if REAL_IN_DESC
+     -1,                      /* T_Real (3), real number, not block */
+#else
      0,                       /* T_Real (3), real number */
+#endif
      0,                       /* T_Cset (4), cset */
      0,                       /* T_Constructor (5), record constructor */
      0,                       /* T_Proc (6), procedure block */
@@ -221,7 +233,11 @@ char *blkname[] = {
    "illegal object",                    /* T_Null (0), not block */
    "illegal object",                    /* T_Integer (1), not block */
    "large integer",                     /* T_Largint (2) */
+#if REAL_IN_DESC
+   "illegal object",                    /* T_Real (3), not block */
+#else
    "real number",                       /* T_Real (3) */
+#endif
    "cset",                              /* T_Cset (4) */
    "constructor",                       /* T_Constructor (5), record constructor */
    "procedure",                         /* T_Proc (6) */

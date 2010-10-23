@@ -915,6 +915,14 @@ static void ret_value1(struct token *t, struct node *n, int indent)
             /*
              * return/suspend C_double <expr>;
              */
+#if REAL_IN_DESC
+            prt_str("result.vword.realval = ", indent);
+            c_walk(n->u[0].child, indent + IndentInc, 0);
+            prt_str(";", indent);
+            ForceNl();
+            prt_str("result.dword = D_Real;", indent);
+            return;
+#else
             prt_str("result.vword.bptr = (union block *)alcreal(", indent);
             c_walk(n->u[0].child, indent + IndentInc, 0);
             prt_str(");", indent + IndentInc);
@@ -926,6 +934,7 @@ static void ret_value1(struct token *t, struct node *n, int indent)
             ForceNl();
             prt_str("if (!result.vword.bptr) fatalerr(309, NULL);", indent);
             ForceNl();
+#endif
             return;
          case C_String:
             /*

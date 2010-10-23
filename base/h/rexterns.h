@@ -61,7 +61,6 @@ extern char typech[];
 extern struct descrip csetdesc;		/* cset descriptor */
 extern struct descrip eventdesc;	/* event descriptor */
 extern struct descrip rzerodesc;	/* real 0.0 descriptor */
-extern struct b_real realzero;          /* real zero block */
 
 
 

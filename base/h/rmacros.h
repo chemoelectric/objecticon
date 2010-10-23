@@ -134,15 +134,22 @@
 
 #define InRange(p1,p2,p3) ((uword)(p2) >= (uword)(p1) && (uword)(p2) < (uword)(p3))
 
-/*
- * Get floating-point number from real block.
- */
-#ifdef DOUBLE_HAS_WORD_ALIGNMENT
-   #define GetReal(b, r)      r = (b).realval
-   #define SetReal(r, b)      (b).realval = r;
+#if REAL_IN_DESC
+   #define DGetReal(d, r)    r = (d).vword.realval
+   #define DSetReal(r, d)    (d).vword.realval = r
 #else
-   #define GetReal(b, r)      memcpy(&r, (b).realval, sizeof(double))
-   #define SetReal(r, b)      memcpy((b).realval, &r, sizeof(double))
+   /*
+    * Get floating-point number from real block.
+    */
+   #ifdef DOUBLE_HAS_WORD_ALIGNMENT
+      #define GetReal(b, r)      r = (b).realval
+      #define SetReal(r, b)      (b).realval = r
+   #else
+      #define GetReal(b, r)      memcpy(&r, (b).realval, sizeof(double))
+      #define SetReal(r, b)      memcpy((b).realval, &r, sizeof(double))
+   #endif
+   #define DGetReal(d, r)    GetReal(RealBlk(d), r)
+   #define DSetReal(r, d)    SetReal(r, RealBlk(d))
 #endif
 
 /*
@@ -152,6 +159,20 @@
 #define Max(x,y)        ((x)>(y)?(x):(y))
 #define Min(x,y)        ((x)<(y)?(x):(y))
 
+/*
+ * Construct an real descriptor
+ */
+#if REAL_IN_DESC
+#define MakeReal(r,dp)   do {\
+      DSetReal(r, *(dp));                             \
+      (dp)->dword = D_Real;                     \
+ } while (0)
+#else
+#define MakeReal(r,dp)   do {\
+      if (!(BlkLoc(*(dp)) = (union block *)alcreal(r))) fatalerr(309,NULL); \
+      (dp)->dword = D_Real;                                \
+ } while (0)
+#endif
 
 /*
  * Construct an integer descriptor.
@@ -613,4 +634,7 @@
 
 #define GetWord (*ipc++)
 #define GetAddr ((word *)GetWord)
+#if REAL_IN_DESC
+#define GetReal (*(double *)(ipc++))
+#endif
 

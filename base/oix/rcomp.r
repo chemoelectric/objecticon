@@ -118,8 +118,8 @@ int anycmp(dptr dp1, dptr dp2)
             &(UcsBlk(*dp2).utf8));
 
       case T_Real:
-         GetReal(RealBlk(*dp1),rres1);
-         GetReal(RealBlk(*dp2),rres2);
+         DGetReal(*dp1,rres1);
+         DGetReal(*dp2,rres2);
          rresult = rres1 - rres2;
 	 if (rresult == 0.0)
 	    return Equal;
@@ -346,8 +346,8 @@ int equiv(dptr dp1, dptr dp2)
 
 
 	 case T_Real:
-            GetReal(RealBlk(*dp1), rres1);
-            GetReal(RealBlk(*dp2), rres2);
+            DGetReal(*dp1, rres1);
+            DGetReal(*dp2, rres2);
             result = (rres1 == rres2);
 	    break;
 

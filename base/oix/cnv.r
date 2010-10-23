@@ -39,7 +39,7 @@ int cnv_c_dbl(dptr s, double *d)
 
    type_case *s of {
       real: {
-         GetReal(RealBlk(*s), *d);
+         DGetReal(*s, *d);
          return 1;
          }
       integer: {
@@ -111,7 +111,7 @@ int cnv_c_int(dptr s, word *d)
          }
       real: {
          double dbl;
-         GetReal(RealBlk(*s),dbl);
+         DGetReal(*s,dbl);
          if (dbl > MaxWord || dbl < MinWord) {
             return 0;
             }
@@ -474,7 +474,7 @@ int f(dptr s, dptr d)
          }
       real: {
          double dbl;
-         GetReal(RealBlk(*s),dbl);
+         DGetReal(*s,dbl);
          if (dbl > MaxWord || dbl < MinWord) {
 
             if (realtobig(s, d) == Succeeded) {
@@ -563,8 +563,7 @@ int f(dptr s, dptr d)
    EVValD(&rzerodesc, e_tconv);
 
    if (cnv_c_dbl(s, &dbl)) {
-      MemProtect(BlkLoc(*d) = (union block *)alcreal(dbl));
-      d->dword = D_Real;
+      MakeReal(dbl, d);
       EVValD(d, e_sconv);
       return 1;
       }
@@ -616,7 +615,7 @@ int f(dptr s, dptr d)
        }
       real: {
          double res;
-         GetReal(RealBlk(*s), res);
+         DGetReal(*s, res);
          rtos(res, d, sbuf);
          }
      cset: {
@@ -669,7 +668,7 @@ int f(char *sbuf, dptr s, dptr d)
       }
       real: {
          double res;
-         GetReal(RealBlk(*s), res);
+         DGetReal(*s, res);
          rtos(res, d, sbuf);
          }
      cset: {
