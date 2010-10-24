@@ -24,11 +24,6 @@
 #define Initializing  02
 #define Initialized   04
 
-#ifdef Graphics
-   #define XKey_Window 0
-   #define XKey_Fg 1
-#endif					/* Graphics */
-
 /*
  * Codes returned by runtime support routines.
  *  Note, some conversion routines also return type codes. Other routines may
@@ -134,7 +129,7 @@
 
 #define InRange(p1,p2,p3) ((uword)(p2) >= (uword)(p1) && (uword)(p2) < (uword)(p3))
 
-#if REAL_IN_DESC
+#if RealInDesc
    #define DGetReal(d, r)    r = (d).vword.realval
    #define DSetReal(r, d)    (d).vword.realval = r
 #else
@@ -162,7 +157,7 @@
 /*
  * Construct an real descriptor
  */
-#if REAL_IN_DESC
+#if RealInDesc
 #define MakeReal(r,dp)   do {\
       DSetReal(r, *(dp));                             \
       (dp)->dword = D_Real;                     \
@@ -634,7 +629,7 @@
 
 #define GetWord (*ipc++)
 #define GetAddr ((word *)GetWord)
-#if REAL_IN_DESC
+#if RealInDesc
 #define GetReal (*(double *)(ipc++))
 #endif
 

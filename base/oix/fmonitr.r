@@ -44,7 +44,7 @@ void set_event_mask(struct progstate *p, struct b_cset *cs)
       ((Testb((word)(E_Cset), bits)) ? alccset_1 : alccset_0);
    p->Alcsegment =
       ((Testb((word)(E_Slots), bits)) ? alcsegment_1 : alcsegment_0);
-#if! REAL_IN_DESC
+#if! RealInDesc
    p->Alcreal =
       ((Testb((word)(E_Real), bits)) ? alcreal_1 : alcreal_0);
 #endif

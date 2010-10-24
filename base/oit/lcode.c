@@ -155,7 +155,7 @@ static void emit_ir_var(struct ir_var *v, char *desc)
                 memcpy(&ival, ce->data, sizeof(word));
                 outwordx(Op_Int, "   %s=int", desc);
                 outwordx(ival, "      %d", ival);
-#if REAL_IN_DESC
+#if RealInDesc
             } else if (ce->c_flag & F_RealLit) {
                 word ival;
                 double dval;
@@ -449,7 +449,7 @@ static void synch_line()
 
 
 /* Same as in rstructs.h */
-#if !REAL_IN_DESC
+#if !RealInDesc
 struct b_real {			/* real block */
     word title;			/*   T_Real */
 #ifdef DOUBLE_HAS_WORD_ALIGNMENT
@@ -471,7 +471,7 @@ static void lemitcon(struct centry *ce)
     if (ce->c_flag & F_IntLit)
         return;
 
-#if REAL_IN_DESC
+#if RealInDesc
     if (ce->c_flag & F_RealLit)
         return;
 #endif
@@ -518,7 +518,7 @@ static void lemitcon(struct centry *ce)
         outwordx(T_Lrgint, "T_Lrgint");
         outstr(str, "   String rep");
     } else if (ce->c_flag & F_RealLit) {
-#if !REAL_IN_DESC
+#if !RealInDesc
         static struct b_real d;
         int i;
         word *p;

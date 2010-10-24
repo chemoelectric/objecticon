@@ -42,7 +42,7 @@ int bsizes[] = {
     -1,                       /* T_Null (0), not block */
     -1,                       /* T_Integer (1), not block */
      0,                       /* T_Lrgint (2), large integer */
-#if REAL_IN_DESC
+#if RealInDesc
      -1,                      /* T_Real (3), real number, not block */
 #else
      sizeof(struct b_real),   /* T_Real (3), real number */
@@ -82,7 +82,7 @@ int firstd[] = {
     -1,                       /* T_Null (0), not block */
     -1,                       /* T_Integer (1), not block */
      0,                       /* T_Lrgint (2), large integer */
-#if REAL_IN_DESC
+#if RealInDesc
      -1,                      /* T_Real (3), real number, not block */
 #else
      0,                       /* T_Real (3), real number */
@@ -122,7 +122,7 @@ int firstp[] = {
     -1,                       /* T_Null (0), not block */
     -1,                       /* T_Integer (1), not block */
      0,                       /* T_Lrgint (2), large integer */
-#if REAL_IN_DESC
+#if RealInDesc
      -1,                      /* T_Real (3), real number, not block */
 #else
      0,                       /* T_Real (3), real number */
@@ -233,7 +233,7 @@ char *blkname[] = {
    "illegal object",                    /* T_Null (0), not block */
    "illegal object",                    /* T_Integer (1), not block */
    "large integer",                     /* T_Largint (2) */
-#if REAL_IN_DESC
+#if RealInDesc
    "illegal object",                    /* T_Real (3), not block */
 #else
    "real number",                       /* T_Real (3) */

@@ -1184,7 +1184,7 @@ void print_vword(FILE *f, dptr d) {
                 break;
             }
 
-#if REAL_IN_DESC
+#if RealInDesc
             case D_Real : {
                 fprintf(f, "%e", d->vword.realval);
                 break;
@@ -1197,7 +1197,7 @@ void print_vword(FILE *f, dptr d) {
             case D_Record :
             case D_Coexpr :
             case D_Lrgint :
-#if !REAL_IN_DESC
+#if !RealInDesc
             case D_Real :
 #endif
             case D_Cset :

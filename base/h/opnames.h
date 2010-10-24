@@ -69,7 +69,7 @@ static char *op_names[] = {
     /*  66 */         "const",
     /*  67 */         "framevar",
     /*  68 */         "tmp",
-#if REAL_IN_DESC
+#if RealInDesc
     /*  69 */         "real",
 #else
     /*  69 */         INVALID,

@@ -526,7 +526,7 @@ static void initprogstate(struct progstate *p)
     p->Alclist_raw = alclist_raw_0;
     p->Alclist = alclist_0;
     p->Alclstb = alclstb_0;
-#if !REAL_IN_DESC
+#if !RealInDesc
     p->Alcreal = alcreal_0;
 #endif
     p->Alcrecd = alcrecd_0;
@@ -1176,7 +1176,7 @@ int main(int argc, char **argv)
     nulldesc.dword = D_Null;
     IntVal(nulldesc) = 0;
 
-#if !REAL_IN_DESC
+#if !RealInDesc
     {
         static struct b_real realzero;
         BlkLoc(rzerodesc) = (union block *)&realzero;
@@ -1386,7 +1386,7 @@ static void conv_var()
         }
 
         case Op_Int:
-#if REAL_IN_DESC
+#if RealInDesc
         case Op_Real:
 #endif
         case Op_FrameVar:

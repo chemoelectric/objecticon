@@ -29,7 +29,7 @@
 #endif
 
 #if RealBits == WordBits && DOUBLE_HAS_WORD_ALIGNMENT
-   #define REAL_IN_DESC 1
+   #define RealInDesc 1
 #endif
 
 /*
