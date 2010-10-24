@@ -162,7 +162,7 @@ static void emit_ir_var(struct ir_var *v, char *desc)
                 memcpy(&ival, ce->data, sizeof(word));
                 memcpy(&dval, ce->data, sizeof(double));
                 outwordx(Op_Real, "   %s=real", desc);
-                outwordx(ival, "      %f", dval);
+                outwordx(ival, "      %.*g", Precision, dval);
 #endif
             } else {
                 outwordx(Op_Const, "   %s=const", desc);
@@ -522,12 +522,15 @@ static void lemitcon(struct centry *ce)
         static struct b_real d;
         int i;
         word *p;
+        double dval;
         ce->pc = pc;
         d.title = T_Real;
         memcpy(&d.realval, ce->data, sizeof(double));
+        memcpy(&dval, ce->data, sizeof(double));
         outwordx(T_Real, "T_Real");
         p = (word *)&d + 1;
-        for (i = 1; i < sizeof(d) / sizeof(word); ++i)
+        outwordx(*p++, "   double data (%.*g)", Precision, dval);
+        for (i = 2; i < sizeof(d) / sizeof(word); ++i)
             outwordx(*p++, "   double data");
 #endif
     }
