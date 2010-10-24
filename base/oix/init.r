@@ -1176,17 +1176,16 @@ int main(int argc, char **argv)
     nulldesc.dword = D_Null;
     IntVal(nulldesc) = 0;
 
-    d = 0.0;
-#if REAL_IN_DESC
-    DSetReal(d, rzerodesc);
-#else
+#if !REAL_IN_DESC
     {
         static struct b_real realzero;
-        SetReal(d, realzero);
         BlkLoc(rzerodesc) = (union block *)&realzero;
-        rzerodesc.dword = D_Real;
     }
 #endif
+    d = 0.0;
+    DSetReal(d, rzerodesc);
+    rzerodesc.dword = D_Real;
+
     maps2 = nulldesc;
     maps3 = nulldesc;
     maps2u = nulldesc;

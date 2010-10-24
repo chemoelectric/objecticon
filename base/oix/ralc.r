@@ -363,7 +363,7 @@ struct b_real *f(double val)
    struct b_real *blk;
 
    AlcFixBlk(blk, b_real, T_Real, e_real)
-   SetReal(val, *blk);
+   BSetReal(val, *blk);
 
    return blk;
    }

@@ -142,14 +142,14 @@
     * Get floating-point number from real block.
     */
    #ifdef DOUBLE_HAS_WORD_ALIGNMENT
-      #define GetReal(b, r)      r = (b).realval
-      #define SetReal(r, b)      (b).realval = r
+      #define BGetReal(b, r)      r = (b).realval
+      #define BSetReal(r, b)      (b).realval = r
    #else
-      #define GetReal(b, r)      memcpy(&r, (b).realval, sizeof(double))
-      #define SetReal(r, b)      memcpy((b).realval, &r, sizeof(double))
+      #define BGetReal(b, r)      memcpy(&r, (b).realval, sizeof(double))
+      #define BSetReal(r, b)      memcpy((b).realval, &r, sizeof(double))
    #endif
-   #define DGetReal(d, r)    GetReal(RealBlk(d), r)
-   #define DSetReal(r, d)    SetReal(r, RealBlk(d))
+   #define DGetReal(d, r)    BGetReal(RealBlk(d), r)
+   #define DSetReal(r, d)    BSetReal(r, RealBlk(d))
 #endif
 
 /*
