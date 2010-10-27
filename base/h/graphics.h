@@ -165,6 +165,7 @@ struct imgmem {
    int xoff, yoff;                      /* Increasing x,y offset within rectangle during looping */
 #if XWindows
    XImage *im;
+   struct _wdisplay *wd;
 #elif MSWIN32
    COLORREF *crp;
 #endif
