@@ -155,14 +155,14 @@ static void emit_ir_var(struct ir_var *v, char *desc)
                 memcpy(&ival, ce->data, sizeof(word));
                 outwordx(Op_Int, "   %s=int", desc);
                 outwordx(ival, "      %d", ival);
-#if REAL_IN_DESC
+#if RealInDesc
             } else if (ce->c_flag & F_RealLit) {
                 word ival;
                 double dval;
                 memcpy(&ival, ce->data, sizeof(word));
                 memcpy(&dval, ce->data, sizeof(double));
                 outwordx(Op_Real, "   %s=real", desc);
-                outwordx(ival, "      %f", dval);
+                outwordx(ival, "      %.*g", Precision, dval);
 #endif
             } else {
                 outwordx(Op_Const, "   %s=const", desc);
@@ -449,7 +449,7 @@ static void synch_line()
 
 
 /* Same as in rstructs.h */
-#if !REAL_IN_DESC
+#if !RealInDesc
 struct b_real {			/* real block */
     word title;			/*   T_Real */
 #ifdef DOUBLE_HAS_WORD_ALIGNMENT
@@ -471,7 +471,7 @@ static void lemitcon(struct centry *ce)
     if (ce->c_flag & F_IntLit)
         return;
 
-#if REAL_IN_DESC
+#if RealInDesc
     if (ce->c_flag & F_RealLit)
         return;
 #endif
@@ -518,16 +518,19 @@ static void lemitcon(struct centry *ce)
         outwordx(T_Lrgint, "T_Lrgint");
         outstr(str, "   String rep");
     } else if (ce->c_flag & F_RealLit) {
-#if !REAL_IN_DESC
+#if !RealInDesc
         static struct b_real d;
         int i;
         word *p;
+        double dval;
         ce->pc = pc;
         d.title = T_Real;
         memcpy(&d.realval, ce->data, sizeof(double));
+        memcpy(&dval, ce->data, sizeof(double));
         outwordx(T_Real, "T_Real");
         p = (word *)&d + 1;
-        for (i = 1; i < sizeof(d) / sizeof(word); ++i)
+        outwordx(*p++, "   double data (%.*g)", Precision, dval);
+        for (i = 2; i < sizeof(d) / sizeof(word); ++i)
             outwordx(*p++, "   double data");
 #endif
     }

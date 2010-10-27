@@ -24,11 +24,6 @@
 #define Initializing  02
 #define Initialized   04
 
-#ifdef Graphics
-   #define XKey_Window 0
-   #define XKey_Fg 1
-#endif					/* Graphics */
-
 /*
  * Codes returned by runtime support routines.
  *  Note, some conversion routines also return type codes. Other routines may
@@ -134,7 +129,7 @@
 
 #define InRange(p1,p2,p3) ((uword)(p2) >= (uword)(p1) && (uword)(p2) < (uword)(p3))
 
-#if REAL_IN_DESC
+#if RealInDesc
    #define DGetReal(d, r)    r = (d).vword.realval
    #define DSetReal(r, d)    (d).vword.realval = r
 #else
@@ -142,14 +137,14 @@
     * Get floating-point number from real block.
     */
    #ifdef DOUBLE_HAS_WORD_ALIGNMENT
-      #define GetReal(b, r)      r = (b).realval
-      #define SetReal(r, b)      (b).realval = r
+      #define BGetReal(b, r)      r = (b).realval
+      #define BSetReal(r, b)      (b).realval = r
    #else
-      #define GetReal(b, r)      memcpy(&r, (b).realval, sizeof(double))
-      #define SetReal(r, b)      memcpy((b).realval, &r, sizeof(double))
+      #define BGetReal(b, r)      memcpy(&r, (b).realval, sizeof(double))
+      #define BSetReal(r, b)      memcpy((b).realval, &r, sizeof(double))
    #endif
-   #define DGetReal(d, r)    GetReal(RealBlk(d), r)
-   #define DSetReal(r, d)    SetReal(r, RealBlk(d))
+   #define DGetReal(d, r)    BGetReal(RealBlk(d), r)
+   #define DSetReal(r, d)    BSetReal(r, RealBlk(d))
 #endif
 
 /*
@@ -162,7 +157,7 @@
 /*
  * Construct an real descriptor
  */
-#if REAL_IN_DESC
+#if RealInDesc
 #define MakeReal(r,dp)   do {\
       DSetReal(r, *(dp));                             \
       (dp)->dword = D_Real;                     \
@@ -634,7 +629,7 @@
 
 #define GetWord (*ipc++)
 #define GetAddr ((word *)GetWord)
-#if REAL_IN_DESC
+#if RealInDesc
 #define GetReal (*(double *)(ipc++))
 #endif
 

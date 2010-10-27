@@ -746,7 +746,7 @@ int setwindowicon(wbp w, struct imgdata *imd)
     if (ws->icondata)
         free(ws->icondata);
     ws->iconlen = 2 + imd->width * imd->height;
-    MemProtect(ws->icondata = malloc(ws->iconlen * sizeof(CARD32)));
+    MemProtect(ws->icondata = malloc(ws->iconlen * sizeof(unsigned long)));
     k = 0;
     ws->icondata[k++] = imd->width;
     ws->icondata[k++] = imd->height;
@@ -2131,20 +2131,22 @@ void loadimgmem(wbp w, struct imgmem *imem, int copy)
     MemProtect(imem->im = XGetImage(stddpy, stdpix,
                                     imem->x, imem->y, imem->width, imem->height,
                                     AllPlanes, ZPixmap));
+    imem->wd = wd;
 }
 
 void getpixel(struct imgmem *imem, int *r, int *g, int *b)
 {
     unsigned long c;
     c = XGetPixel(imem->im, imem->xoff, imem->yoff);
-    *b = (c&0xff)*257;
-    *g = ((c>>8)&0xff)*257;
-    *r = ((c>>16)&0xff)*257;
+    *b = ((c>>imem->wd->blue_shift)&0xff)*257;
+    *g = ((c>>imem->wd->green_shift)&0xff)*257;
+    *r = ((c>>imem->wd->red_shift)&0xff)*257;
 }
 
 void setpixel(struct imgmem *imem, int r, int g, int b)
 {
-    unsigned long c = ((r/256)<<16) | ((g/256)<<8) | (b/256);
+    unsigned long c = ((r/256)<<imem->wd->red_shift) | ((g/256)<<imem->wd->green_shift) | 
+        ((b/256)<<imem->wd->blue_shift);
     XPutPixel(imem->im, imem->xoff, imem->yoff, c);
 }
 

@@ -77,7 +77,7 @@
 #define Op_Const         66
 #define Op_FrameVar      67
 #define Op_Tmp           68
-#if REAL_IN_DESC
+#if RealInDesc
 #define Op_Real          69
 #endif
 #define Op_Move          70

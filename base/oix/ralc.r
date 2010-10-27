@@ -351,7 +351,7 @@ struct b_lelem *f(uword nslots)
 alclstb_macro(alclstb_0,0)
 alclstb_macro(alclstb_1,E_Lelem)
 
-#if !REAL_IN_DESC
+#if !RealInDesc
 
 #begdef alcreal_macro(f,e_real)
 /*
@@ -363,7 +363,7 @@ struct b_real *f(double val)
    struct b_real *blk;
 
    AlcFixBlk(blk, b_real, T_Real, e_real)
-   SetReal(val, *blk);
+   BSetReal(val, *blk);
 
    return blk;
    }
@@ -372,7 +372,7 @@ struct b_real *f(double val)
 alcreal_macro(alcreal_0,0)
 alcreal_macro(alcreal_1,E_Real)
 
-#endif  /* REAL_IN_DESC */
+#endif  /* RealInDesc */
 
 #begdef alcrecd_macro(f,e_record)
 /*

@@ -915,7 +915,7 @@ static void ret_value1(struct token *t, struct node *n, int indent)
             /*
              * return/suspend C_double <expr>;
              */
-#if REAL_IN_DESC
+#if RealInDesc
             prt_str("result.vword.realval = ", indent);
             c_walk(n->u[0].child, indent + IndentInc, 0);
             prt_str(";", indent);

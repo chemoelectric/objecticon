@@ -539,7 +539,7 @@ static void initprogstate(struct progstate *p)
     p->Alclist_raw = alclist_raw_0;
     p->Alclist = alclist_0;
     p->Alclstb = alclstb_0;
-#if !REAL_IN_DESC
+#if !RealInDesc
     p->Alcreal = alcreal_0;
 #endif
     p->Alcrecd = alcrecd_0;
@@ -1194,17 +1194,16 @@ int main(int argc, char **argv)
     nulldesc.dword = D_Null;
     IntVal(nulldesc) = 0;
 
-    d = 0.0;
-#if REAL_IN_DESC
-    DSetReal(d, rzerodesc);
-#else
+#if !RealInDesc
     {
         static struct b_real realzero;
-        SetReal(d, realzero);
         BlkLoc(rzerodesc) = (union block *)&realzero;
-        rzerodesc.dword = D_Real;
     }
 #endif
+    d = 0.0;
+    DSetReal(d, rzerodesc);
+    rzerodesc.dword = D_Real;
+
     maps2 = nulldesc;
     maps3 = nulldesc;
     maps2u = nulldesc;
@@ -1405,7 +1404,7 @@ static void conv_var()
         }
 
         case Op_Int:
-#if REAL_IN_DESC
+#if RealInDesc
         case Op_Real:
 #endif
         case Op_FrameVar:
