@@ -746,7 +746,7 @@ int setwindowicon(wbp w, struct imgdata *imd)
     if (ws->icondata)
         free(ws->icondata);
     ws->iconlen = 2 + imd->width * imd->height;
-    MemProtect(ws->icondata = malloc(ws->iconlen * sizeof(CARD32)));
+    MemProtect(ws->icondata = malloc(ws->iconlen * sizeof(unsigned long)));
     k = 0;
     ws->icondata[k++] = imd->width;
     ws->icondata[k++] = imd->height;
