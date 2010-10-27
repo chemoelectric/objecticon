@@ -997,7 +997,7 @@ function graphics_Window_send_selection_response(self, requestor, property, sele
    body {
        char *t1, *t2, *t3;
        GetSelfW();
-       buffnstr(&property, &t1, &selection, &t2, &target, &t3, 0);
+       buffnstr(&property, &t1, &selection, &t2, &target, &t3, NULL);
        switch (sendselectionresponse(self_w, requestor, t1, t2, t3, time, &data)) {
            case Error: {
                runerr(0);
@@ -1026,7 +1026,7 @@ function graphics_Window_request_selection(self, selection, target_type)
    body {
        char *t1, *t2;
        GetSelfW();
-       buffnstr(&selection, &t1, &target_type, &t2, 0);
+       buffnstr(&selection, &t1, &target_type, &t2, NULL);
        if (requestselection(self_w, t1, t2) == Failed)
            fail;
        return self;
