@@ -4,6 +4,10 @@
 
 #define CONVERT_ANGLE(ang) (-(ang) * 180 / Pi * 64)
 
+#define RGB24 1
+#define RGB48 2
+#define GRAY8 3
+
 /*
  * Global variables specific to X
  */
@@ -52,6 +56,8 @@ static void synch_net_wm_state(wsp ws, int desired_state);
 static void close_screen_win(wsp ws);
 static int get_shift(unsigned long mask);
 static struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int b);
+static void from_pixel(wdp wd, unsigned long c, int *r, int *g, int *b);
+static unsigned long to_pixel(wdp wd, int r, int g, int b);
 
 static stringint fillstyles[] = {
     {0, 3},
@@ -232,7 +238,7 @@ static struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int
     res->r = r;
     res->g = g;
     res->b = b;
-    res->c = ((r/256)<<wd->red_shift) | ((g/256)<<wd->green_shift) | (b/256<<wd->blue_shift);
+    res->c = to_pixel(wd, r, g, b);
     res->name = salloc(name);
     return res;
 }
@@ -2134,20 +2140,55 @@ void loadimgmem(wbp w, struct imgmem *imem, int copy)
     imem->wd = wd;
 }
 
+static void from_pixel(wdp wd, unsigned long c, int *r, int *g, int *b)
+{
+    switch (wd->vtype) {
+        case RGB24: {
+            *b = ((c>>wd->blue_shift)&0xff)*257;
+            *g = ((c>>wd->green_shift)&0xff)*257;
+            *r = ((c>>wd->red_shift)&0xff)*257;
+            break;
+        }
+        case RGB48: {
+            *b = (c>>wd->blue_shift)&0xffff;
+            *g = (c>>wd->green_shift)&0xffff;
+            *r = (c>>wd->red_shift)&0xffff;
+            break;
+        }
+        case GRAY8: {
+            *b = *g = *r = (c & 0xff) * 257;
+            break;
+        }
+        default:
+            syserr("Invalid type");
+    }
+}
+
+static unsigned long to_pixel(wdp wd, int r, int g, int b)
+{
+    switch (wd->vtype) {
+        case RGB24:
+            return ((r/256)<<wd->red_shift) | ((g/256)<<wd->green_shift) | ((b/256)<<wd->blue_shift);
+        case RGB48:
+            return (r<<wd->red_shift) | (g<<wd->green_shift) | (b<<wd->blue_shift);
+        case GRAY8:
+            return (0.299 * r + 0.587 * g + 0.114 * b) / 256;
+        default: {
+            syserr("Invalid type");
+            /* not reached */
+            return 0;
+        }
+    }
+}
+
 void getpixel(struct imgmem *imem, int *r, int *g, int *b)
 {
-    unsigned long c;
-    c = XGetPixel(imem->im, imem->xoff, imem->yoff);
-    *b = ((c>>imem->wd->blue_shift)&0xff)*257;
-    *g = ((c>>imem->wd->green_shift)&0xff)*257;
-    *r = ((c>>imem->wd->red_shift)&0xff)*257;
+    from_pixel(imem->wd, XGetPixel(imem->im, imem->xoff, imem->yoff), r, g, b);
 }
 
 void setpixel(struct imgmem *imem, int r, int g, int b)
 {
-    unsigned long c = ((r/256)<<imem->wd->red_shift) | ((g/256)<<imem->wd->green_shift) | 
-        ((b/256)<<imem->wd->blue_shift);
-    XPutPixel(imem->im, imem->xoff, imem->yoff, c);
+    XPutPixel(imem->im, imem->xoff, imem->yoff, to_pixel(imem->wd, r, g, b));
 }
 
 void saveimgmem(wbp w, struct imgmem *imem)
@@ -2476,13 +2517,14 @@ char *atom_names[NUMATOMS] = {
 
 static int get_shift(unsigned long mask)
 {
-    switch (mask) {
-        case 0xff000000: return 24;
-        case 0xff0000: return 16;
-        case 0xff00: return 8;
-        case 0xff: return 0;
-        default: return -1;
+    int i = 0;
+    if (mask == 0)
+        syserr("Zero mask passed to get_shift()");
+     while ((mask & 1) == 0) {
+        mask >>= 1;
+        ++i;
     }
+    return i;
 }
 
 /*
@@ -2526,21 +2568,20 @@ static wdp alcdisplay(char *s)
         free(wd);
         return NULL;
     }
-    if (xvi_ret->class != TrueColor) {
-        LitWhy("Only TrueColor displays are supported");
-        free(wd);
-        return NULL;
-    }
-    if (xvi_ret->depth != 24 || xvi_ret->bits_per_rgb != 8) {
-        LitWhy("Only 24-bit depth, 8 bits/rgb displays are supported");
-        free(wd);
-        return NULL;
-    }
-    wd->red_shift = get_shift(xvi_ret->red_mask);
-    wd->green_shift = get_shift(xvi_ret->green_mask);
-    wd->blue_shift = get_shift(xvi_ret->blue_mask);
-    if (wd->red_shift < 0 || wd->green_shift < 0 || wd->blue_shift < 0) {
-        LitWhy("Couldn't translate Visual color mask into shift");
+    if (xvi_ret->class == StaticGray && xvi_ret->depth == 8 && xvi_ret->bits_per_rgb == 8)
+        wd->vtype = GRAY8;
+    else if (xvi_ret->class == TrueColor && xvi_ret->depth == 24 && xvi_ret->bits_per_rgb == 8) {
+        wd->vtype = RGB24;
+        wd->red_shift = get_shift(xvi_ret->red_mask);
+        wd->green_shift = get_shift(xvi_ret->green_mask);
+        wd->blue_shift = get_shift(xvi_ret->blue_mask);
+    } else if (xvi_ret->class == TrueColor && xvi_ret->depth == 48 && xvi_ret->bits_per_rgb == 16) {
+        wd->vtype = RGB48;
+        wd->red_shift = get_shift(xvi_ret->red_mask);
+        wd->green_shift = get_shift(xvi_ret->green_mask);
+        wd->blue_shift = get_shift(xvi_ret->blue_mask);
+    } else {
+        LitWhy("Unsupported display type");
         free(wd);
         return NULL;
     }

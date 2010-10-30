@@ -183,6 +183,7 @@ typedef struct _wdisplay {
   char		name[MAXDISPLAYNAME];
   Display *	display;
   Visual	*vis;
+  int           vtype;
   int           red_shift, blue_shift, green_shift;
   struct progstate *program;           /* owning program */
   struct SharedColor *black, *white;
