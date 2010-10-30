@@ -122,6 +122,10 @@ tar :
 		-regex ".*\.\(icn\|c\|r\|ri\|h\|y\|gif\)" ) ; do \
 		cp --parents $$f $(T) ;\
 	done
+	@for f in $$( find riox \
+		-regex "riox/mkfile\|.*\.\(c\|h\)" ) ; do \
+		cp --parents $$f $(T) ;\
+	done
 	@for f in $$( find base/oix/p9cursors -type f -not -regex ".*\.svn.*" ) ; do \
 		cp --parents $$f $(T) ;\
 	done
