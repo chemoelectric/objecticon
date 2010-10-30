@@ -4,6 +4,18 @@
 
 #define CONVERT_ANGLE(ang) (-(ang) * 180 / Pi * 64)
 
+#define RGB24 1
+#define RGB48 2
+#define GRAY8 3
+
+#define GetDepth(wd) DefaultDepth((wd)->display,DefaultScreen((wd)->display))
+#define GetVisual(wd) DefaultVisual((wd)->display,DefaultScreen((wd)->display))
+#define GetColormap(wd) DefaultColormap((wd)->display,DefaultScreen((wd)->display))
+#define GetGC(wd) DefaultGC((wd)->display,DefaultScreen((wd)->display))
+#define GetWidth(wd) DisplayWidth((wd)->display,DefaultScreen((wd)->display))
+#define GetHeight(wd) DisplayHeight((wd)->display,DefaultScreen((wd)->display))
+#define GetRoot(wd) DefaultRootWindow((wd)->display)
+
 /*
  * Global variables specific to X
  */
@@ -52,6 +64,8 @@ static void synch_net_wm_state(wsp ws, int desired_state);
 static void close_screen_win(wsp ws);
 static int get_shift(unsigned long mask);
 static struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int b);
+static void from_pixel(wdp wd, unsigned long c, int *r, int *g, int *b);
+static unsigned long to_pixel(wdp wd, int r, int g, int b);
 
 static stringint fillstyles[] = {
     {0, 3},
@@ -232,7 +246,7 @@ static struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int
     res->r = r;
     res->g = g;
     res->b = b;
-    res->c = ((r/256)<<wd->red_shift) | ((g/256)<<wd->green_shift) | (b/256<<wd->blue_shift);
+    res->c = to_pixel(wd, r, g, b);
     res->name = salloc(name);
     return res;
 }
@@ -687,9 +701,9 @@ int wopen(wbp w)
     /*
      * Create the pixmap
      */
-    ws->pix = XCreatePixmap(wd->display, DefaultRootWindow(wd->display),
+    ws->pix = XCreatePixmap(wd->display, GetRoot(wd),
                             ws->width, ws->height,
-                            DefaultDepth(wd->display, wd->screen));
+                            GetDepth(wd));
     ws->pixwidth = ws->width;
     ws->pixheight = ws->height;
 
@@ -792,16 +806,16 @@ static void wmap(wbp w)
 
     switch (ws->state) {
         case RootState:
-            ws->win = DefaultRootWindow(stddpy);
+            ws->win = GetRoot(wd);
             break;
         case PopupState: {
             attr.override_redirect = True;
-            ws->win = XCreateWindow(stddpy, DefaultRootWindow(stddpy),
+            ws->win = XCreateWindow(stddpy, GetRoot(wd),
                                     ws->x < 0 ? 0 : ws->x,
                                     ws->y < 0 ? 0 : ws->y, 
                                     ws->width, ws->height, 
                                     0,
-                                    DefaultDepth(stddpy,wd->screen),
+                                    GetDepth(wd),
                                     InputOutput,
                                     CopyFromParent,
                                     CWBackPixel|CWOverrideRedirect,
@@ -809,12 +823,12 @@ static void wmap(wbp w)
             break;
         }
         default: {
-            ws->win = XCreateWindow(stddpy, DefaultRootWindow(stddpy),
+            ws->win = XCreateWindow(stddpy, GetRoot(wd),
                                     ws->x < 0 ? 0 : ws->x,
                                     ws->y < 0 ? 0 : ws->y, 
                                     ws->width, ws->height, 
                                     0,
-                                    DefaultDepth(stddpy,wd->screen),
+                                    GetDepth(wd),
                                     InputOutput,
                                     CopyFromParent,
                                     CWBackPixel,
@@ -969,11 +983,11 @@ static void synch_net_wm_state(wsp ws, int desired_state)
         e.xclient.data.l[0] = _NET_WM_STATE_REMOVE;
         e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_VERT);
         e.xclient.data.l[2] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_HORZ);
-        XSendEvent(wd->display, DefaultRootWindow(wd->display), False,
+        XSendEvent(wd->display, GetRoot(wd), False,
                    SubstructureNotifyMask | SubstructureRedirectMask, &e);
         e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_FULLSCREEN);
         e.xclient.data.l[2] = 0;
-        XSendEvent(wd->display, DefaultRootWindow(wd->display), False,
+        XSendEvent(wd->display, GetRoot(wd), False,
                    SubstructureNotifyMask | SubstructureRedirectMask, &e);
     } else {
         e.xclient.data.l[0] = _NET_WM_STATE_ADD;
@@ -985,7 +999,7 @@ static void synch_net_wm_state(wsp ws, int desired_state)
             e.xclient.data.l[2] = 0;
         } else
             syserr("Invalid desired_state");
-        XSendEvent(wd->display, DefaultRootWindow(wd->display), False,
+        XSendEvent(wd->display, GetRoot(wd), False,
                    SubstructureNotifyMask | SubstructureRedirectMask, &e);
     }
     XSync(wd->display, False);
@@ -1356,7 +1370,7 @@ int setcanvas(wbp w, char *s)
         case IconicState: {
             if (ws->state == RootState || ws->state == PopupState)
                 return Failed;
-            XIconifyWindow(ws->display->display, ws->win, ws->display->screen);
+            XIconifyWindow(ws->display->display, ws->win, DefaultScreen(ws->display));
             break;
         }
 
@@ -1515,14 +1529,14 @@ char *getwindowlabel(wbp w)
 
 int getdisplaysize(wbp w, int *width, int *height)
 {
-    *width = DisplayWidth(w->window->display->display, w->window->display->screen);
-    *height = DisplayHeight(w->window->display->display, w->window->display->screen);
+    *width = GetWidth(w->window->display);
+    *height = GetHeight(w->window->display);
     return Succeeded;
 }
 
 int getdepth(wbp w, int *res)
 {
-    *res = DefaultDepth(w->window->display->display, w->window->display->screen);
+    *res = GetDepth(w->window->display);
     return Succeeded;
 }
 
@@ -1637,7 +1651,7 @@ static void handle_exposures(wsp ws, XExposeEvent *event)
     if (ws->win) {
         wdp wd = ws->display;
         XCopyArea(wd->display, ws->pix, ws->win, 
-                  DefaultGC(wd->display, wd->screen), event->x,event->y,
+                  GetGC(wd), event->x,event->y,
                   event->width,event->height, event->x,event->y);
     }
 }
@@ -1661,8 +1675,8 @@ static void resizepixmap(wbp w, int width, int height)
 
         ws->pixheight = Max(ws->pixheight, height);
         ws->pixwidth  = Max(ws->pixwidth, width);
-        p = XCreatePixmap(stddpy, DefaultRootWindow(stddpy), ws->pixwidth,
-                          ws->pixheight, DefaultDepth(stddpy,wd->screen));
+        p = XCreatePixmap(stddpy, GetRoot(wd), ws->pixwidth,
+                          ws->pixheight, GetDepth(wd));
         /*
          * This staggering amount of redudancy manages to make sure the new
          * pixmap gets initialized including areas not in the old pixmap.
@@ -2046,7 +2060,7 @@ void copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2
         if (x<0 || y<0 || x+width > ws1->pixwidth || y+height > ws1->pixheight)
             return;		/*#%#%# BOGUS, NEEDS FIXING */
         xim = XGetImage(d1, ws1->pix, x, y, width, height,
-                        (1<<DefaultDepth(d1,wd1->screen))-1,XYPixmap);
+                        (1<<GetDepth(wd1))-1,XYPixmap);
         XSetFunction(stddpy, stdgc, GXcopy);
         for (i=0; i < width; i++) {
             for (j=0; j < height; j++) {
@@ -2134,20 +2148,55 @@ void loadimgmem(wbp w, struct imgmem *imem, int copy)
     imem->wd = wd;
 }
 
+static void from_pixel(wdp wd, unsigned long c, int *r, int *g, int *b)
+{
+    switch (wd->vtype) {
+        case RGB24: {
+            *b = ((c>>wd->blue_shift)&0xff)*257;
+            *g = ((c>>wd->green_shift)&0xff)*257;
+            *r = ((c>>wd->red_shift)&0xff)*257;
+            break;
+        }
+        case RGB48: {
+            *b = (c>>wd->blue_shift)&0xffff;
+            *g = (c>>wd->green_shift)&0xffff;
+            *r = (c>>wd->red_shift)&0xffff;
+            break;
+        }
+        case GRAY8: {
+            *b = *g = *r = (c & 0xff) * 257;
+            break;
+        }
+        default:
+            syserr("Invalid type");
+    }
+}
+
+static unsigned long to_pixel(wdp wd, int r, int g, int b)
+{
+    switch (wd->vtype) {
+        case RGB24:
+            return ((r/256)<<wd->red_shift) | ((g/256)<<wd->green_shift) | ((b/256)<<wd->blue_shift);
+        case RGB48:
+            return (r<<wd->red_shift) | (g<<wd->green_shift) | (b<<wd->blue_shift);
+        case GRAY8:
+            return (0.299 * r + 0.587 * g + 0.114 * b) / 256;
+        default: {
+            syserr("Invalid type");
+            /* not reached */
+            return 0;
+        }
+    }
+}
+
 void getpixel(struct imgmem *imem, int *r, int *g, int *b)
 {
-    unsigned long c;
-    c = XGetPixel(imem->im, imem->xoff, imem->yoff);
-    *b = ((c>>imem->wd->blue_shift)&0xff)*257;
-    *g = ((c>>imem->wd->green_shift)&0xff)*257;
-    *r = ((c>>imem->wd->red_shift)&0xff)*257;
+    from_pixel(imem->wd, XGetPixel(imem->im, imem->xoff, imem->yoff), r, g, b);
 }
 
 void setpixel(struct imgmem *imem, int r, int g, int b)
 {
-    unsigned long c = ((r/256)<<imem->wd->red_shift) | ((g/256)<<imem->wd->green_shift) | 
-        ((b/256)<<imem->wd->blue_shift);
-    XPutPixel(imem->im, imem->xoff, imem->yoff, c);
+    XPutPixel(imem->im, imem->xoff, imem->yoff, to_pixel(imem->wd, r, g, b));
 }
 
 void saveimgmem(wbp w, struct imgmem *imem)
@@ -2167,35 +2216,26 @@ void freeimgmem(struct imgmem *imem)
 
 int querypointer(wbp w, int *x, int *y)
 {
-    Display *theDisplay;
-    Window theWindow;
+    wsp ws = w->window;
+    wdp wd = ws->display;
     Window garbage1, garbage2;
     int root_x, root_y;
     unsigned int key_buttons;
-
-    theDisplay = w->window->display->display;
-    theWindow  = w->window->win;
-    if (!theWindow)
+    if (!ws->win)
         return Failed;
-
-    XQueryPointer(theDisplay, theWindow, &garbage1, &garbage2,
+    XQueryPointer(wd->display, ws->win, &garbage1, &garbage2,
                   &root_x, &root_y, x, y, &key_buttons);
     return Succeeded;
 }
 
 int queryrootpointer(wbp w, int *x, int *y)
 {
-    Display *theDisplay;
-    Window theWindow;
+    wsp ws = w->window;
+    wdp wd = ws->display;
     Window garbage1, garbage2;
     int win_x, win_y;
     unsigned int key_buttons;
-
-    theDisplay = w->window->display->display;
-    theWindow  = DefaultRootWindow(theDisplay);
-    if (!theWindow)
-        return Failed;
-    XQueryPointer(theDisplay, theWindow, &garbage1, &garbage2,
+    XQueryPointer(wd->display, GetRoot(wd), &garbage1, &garbage2,
                   x, y, &win_x, &win_y, &key_buttons);
     return Succeeded;
 }
@@ -2313,14 +2353,14 @@ void drawstring(wbp w, int x, int y, char *str, int slen)
     if (ws->win && !ws->winDraw)
         ws->winDraw = XftDrawCreate(ws->display->display,
                                     ws->win,
-                                    ws->display->vis,
-                                    ws->display->cmap);
+                                    GetVisual(ws->display),
+                                    GetColormap(ws->display));
 
     if (!ws->pixDraw)
         ws->pixDraw = XftDrawCreate(ws->display->display,
                                     ws->pix,
-                                    ws->display->vis,
-                                    ws->display->cmap);
+                                    GetVisual(ws->display),
+                                    GetColormap(ws->display));
     color.pixel = wc->fg->c;
     color.color.red = wc->fg->r;
     color.color.green = wc->fg->g;
@@ -2375,14 +2415,14 @@ void drawutf8(wbp w, int x, int y, char *str, int slen, int nchars)
     if (ws->win && !ws->winDraw)
         ws->winDraw = XftDrawCreate(ws->display->display,
                                     ws->win,
-                                    ws->display->vis,
-                                    ws->display->cmap);
+                                    GetVisual(ws->display),
+                                    GetColormap(ws->display));
 
     if (!ws->pixDraw)
         ws->pixDraw = XftDrawCreate(ws->display->display,
                                     ws->pix,
-                                    ws->display->vis,
-                                    ws->display->cmap);
+                                    GetVisual(ws->display),
+                                    GetColormap(ws->display));
     color.pixel = wc->fg->c;
     color.color.red = wc->fg->r;
     color.color.green = wc->fg->g;
@@ -2476,13 +2516,14 @@ char *atom_names[NUMATOMS] = {
 
 static int get_shift(unsigned long mask)
 {
-    switch (mask) {
-        case 0xff000000: return 24;
-        case 0xff0000: return 16;
-        case 0xff00: return 8;
-        case 0xff: return 0;
-        default: return -1;
+    int i = 0;
+    if (mask == 0)
+        syserr("Zero mask passed to get_shift()");
+     while ((mask & 1) == 0) {
+        mask >>= 1;
+        ++i;
     }
+    return i;
 }
 
 /*
@@ -2491,6 +2532,7 @@ static int get_shift(unsigned long mask)
 static wdp alcdisplay(char *s)
 {
     wdp wd;
+    Visual *vis;
     XVisualInfo xvi, *xvi_ret;
     int nitems_return;
 
@@ -2512,35 +2554,33 @@ static wdp alcdisplay(char *s)
         return NULL;
     }
 
-    wd->screen = DefaultScreen(wd->display);
-    wd->vis = DefaultVisual(wd->display, wd->screen);
+    vis = GetVisual(wd);
 
     /*
      * Get info about the default visual, check it's suitbale and
      * extract the rgb shift masks.
      */
-    xvi.visualid = XVisualIDFromVisual(wd->vis);
+    xvi.visualid = XVisualIDFromVisual(vis);
     xvi_ret = XGetVisualInfo(wd->display, VisualIDMask, &xvi, &nitems_return);
     if (nitems_return != 1) {
         LitWhy("Couldn't get default visual's info");
         free(wd);
         return NULL;
     }
-    if (xvi_ret->class != TrueColor) {
-        LitWhy("Only TrueColor displays are supported");
-        free(wd);
-        return NULL;
-    }
-    if (xvi_ret->depth != 24 || xvi_ret->bits_per_rgb != 8) {
-        LitWhy("Only 24-bit depth, 8 bits/rgb displays are supported");
-        free(wd);
-        return NULL;
-    }
-    wd->red_shift = get_shift(xvi_ret->red_mask);
-    wd->green_shift = get_shift(xvi_ret->green_mask);
-    wd->blue_shift = get_shift(xvi_ret->blue_mask);
-    if (wd->red_shift < 0 || wd->green_shift < 0 || wd->blue_shift < 0) {
-        LitWhy("Couldn't translate Visual color mask into shift");
+    if (xvi_ret->class == StaticGray && xvi_ret->depth == 8 && xvi_ret->bits_per_rgb == 8)
+        wd->vtype = GRAY8;
+    else if (xvi_ret->class == TrueColor && xvi_ret->depth == 24 && xvi_ret->bits_per_rgb == 8) {
+        wd->vtype = RGB24;
+        wd->red_shift = get_shift(xvi_ret->red_mask);
+        wd->green_shift = get_shift(xvi_ret->green_mask);
+        wd->blue_shift = get_shift(xvi_ret->blue_mask);
+    } else if (xvi_ret->class == TrueColor && xvi_ret->depth == 48 && xvi_ret->bits_per_rgb == 16) {
+        wd->vtype = RGB48;
+        wd->red_shift = get_shift(xvi_ret->red_mask);
+        wd->green_shift = get_shift(xvi_ret->green_mask);
+        wd->blue_shift = get_shift(xvi_ret->blue_mask);
+    } else {
+        LitWhy("Unsupported display type");
         free(wd);
         return NULL;
     }
@@ -2548,7 +2588,6 @@ static wdp alcdisplay(char *s)
 
     wd->black = new_sharedcolor(wd, "black", 0, 0, 0);
     wd->white = new_sharedcolor(wd, "white", 65535, 65535, 65535);
-    wd->cmap = DefaultColormap(wd->display, wd->screen);
     wd->defaultfont = loadfont(wd, getdefaultfont());
     if (wd->defaultfont == NULL) {
         unlink_sharedcolor(wd->white);
@@ -2974,7 +3013,7 @@ static wfp newfont(wdp wd, char *s)
     wfp rv;
     GRFX_ALLOC(rv, _wfont);
 #ifdef HAVE_LIBXFT
-    rv->fsp = XftFontOpenName(wd->display, wd->screen, s);
+    rv->fsp = XftFontOpenName(wd->display, DefaultScreen(wd->display), s);
 #else
     rv->fsp = XLoadQueryFont(wd->display, s);
 #endif

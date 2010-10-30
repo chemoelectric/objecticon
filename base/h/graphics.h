@@ -190,12 +190,10 @@ struct imgmem {
 typedef struct _wdisplay {
   char		name[MAXDISPLAYNAME];
   Display *	display;
-  Visual	*vis;
+  int           vtype;
   int           red_shift, blue_shift, green_shift;
   struct progstate *program;           /* owning program */
   struct SharedColor *black, *white;
-  Colormap	cmap;
-  int		screen;
   wfp		fonts, defaultfont;
 #ifdef HAVE_LIBXFT
   XFontStruct   *xfont;
