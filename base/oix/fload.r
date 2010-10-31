@@ -34,24 +34,6 @@ char *dlerror(void)
 }
 #endif					/* MSWIN32 */
 
-#ifdef FreeBSD
-/*
- * If DL_GETERRNO exists, this is an FreeBSD 1.1.5 or 2.0 
- * which lacks dlerror(); supply a substitute.
- */
-#passthru #ifdef DL_GETERRNO
-char *dlerror(void)
-{
-    int no;
-   
-    if (0 == dlctl(NULL, DL_GETERRNO, &no))
-        return(strerror(no));
-    else
-        return(NULL);
-}
-#passthru #endif
-#endif					/* __FreeBSD__ */
-
 function lang_Proc_load(filename,funcname)
     if !cnv:C_string(filename) then
         runerr(103, filename)

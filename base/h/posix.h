@@ -48,10 +48,6 @@
 #if defined(SUN) || defined(HP) || defined(IRIS4D)
 #include <sys/file.h>
 
-extern int sys_nerr;
-extern char *sys_errlist[];
-
-
 #ifdef SYSV
 #define bcopy(a, b, n) memcopy(b, a, n)
 #endif
@@ -70,8 +66,6 @@ extern char *sys_errlist[];
 #else
 #define Setpgrp() setpgrp()
 #endif
-
-extern stringint signalnames[];
 
 #ifdef IRIS4D
 #include <limits.h>

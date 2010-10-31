@@ -54,6 +54,9 @@
 /* define as 1 if vfork exists */
 #undef HAVE_VFORK
 
+/* define as 1 if wait4 exists */
+#undef HAVE_WAIT4
+
 /* define as 1 if sys_nerr exists */
 #undef HAVE_SYS_NERR
 
