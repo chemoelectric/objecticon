@@ -43,7 +43,11 @@ class System()
    public static defer kill(pid, signal)
 
    # wait for process to terminate or stop.
-   public static defer wait(pid, options)
+   public static wait(pid, options)
+      return ExitInfo!wait_impl(pid, options)
+   end
+
+   private static defer wait_impl()
 
    # generate the environment values as key=pair strings
    public static defer environ()
@@ -85,4 +89,15 @@ class UtsName()
    end
 end
 
+# Provides info about an exited process
+class ExitInfo()
+   public const
+      pid,
+      reason
 
+   package new(pid, reason)
+      self.pid := pid
+      self.reason := reason
+      return
+   end
+end
