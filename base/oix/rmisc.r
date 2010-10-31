@@ -1711,7 +1711,7 @@ void errno2why()
     char buff[32];
     int len;
 
-    #ifdef HAVE_STRERROR
+    #if HAVE_STRERROR
        msg = strerror(errno);
     #elif HAVE_SYS_NERR && HAVE_SYS_ERRLIST
        if (errno > 0 && errno <= sys_nerr)

@@ -197,7 +197,7 @@ end
 keyword host
    body {
        tended struct descrip result;
-#ifdef HAVE_UNAME
+#if HAVE_UNAME
        struct utsname utsn;
        if (uname(&utsn) < 0) {
            errno2why();

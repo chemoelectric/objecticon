@@ -3,7 +3,7 @@
  *
  */
 
-#ifdef Graphics
+#if Graphics
 
 /*
  * Global variables.

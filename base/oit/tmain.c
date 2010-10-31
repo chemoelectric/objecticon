@@ -63,7 +63,7 @@ long scriptsize;		/* size of iconx header script */
  * Prototypes.
  */
 
-#ifdef HAVE_LIBZ
+#if HAVE_LIBZ
 static void file_comp(void);
 #endif
 static void bundle_iconx(void);
@@ -320,7 +320,7 @@ int main(int argc, char **argv)
     ilink(link_files, &errors, &warnings);	/* link .u files to make icode file */
 
     if (!errors) {
-#ifdef HAVE_LIBZ
+#if HAVE_LIBZ
         /*
          * Optional gz compression
          */
@@ -439,7 +439,7 @@ static void bundle_iconx()
     unlink(tmp);
 }
 
-#ifdef HAVE_LIBZ
+#if HAVE_LIBZ
 
 static void file_comp() 
 {

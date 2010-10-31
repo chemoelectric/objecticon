@@ -64,7 +64,7 @@
    #define Graphics 1
 #endif
 
-#ifdef HAVE_LIBX11
+#if HAVE_LIBX11
    #define Graphics 1
    #define XWindows 1
 #endif

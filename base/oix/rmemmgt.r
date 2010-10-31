@@ -371,7 +371,7 @@ void collect(int region)
    PostDescrip(maps2u);
    PostDescrip(maps3u);
 
-#ifdef Graphics
+#if Graphics
    /*
     * Mark file and list values for windows
     */

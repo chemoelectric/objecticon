@@ -4,7 +4,7 @@
  *  This file simply includes an appropriate r*win.ri file.
  */
 
-#ifdef Graphics
+#if Graphics
 
 #if XWindows
   #include "rxwin.ri"

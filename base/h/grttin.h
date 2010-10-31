@@ -136,7 +136,7 @@ typedef int DIR;
 typedef int size_t;
 typedef long time_t;
 
-#ifdef HAVE_LIBZ
+#if HAVE_LIBZ
 typedef int gzFile;
 #endif					/* HAVE_LIBZ */
 
@@ -155,11 +155,11 @@ typedef int STARTUPINFO, PROCESS_INFORMATION, SECURITY_ATTRIBUTES;
 #endif
 #endif					/* MSWIN32 */
 
-#ifdef HAVE_LIBJPEG
+#if HAVE_LIBJPEG
 typedef int j_common_ptr, JSAMPARRAY, JSAMPROW;
 #endif					/* HAVE_LIBJPEG */
 
-#ifdef HAVE_LIBPNG
+#if HAVE_LIBPNG
 typedef int png_structp, png_infop, png_bytep, png_byte;
 #endif
 
@@ -182,7 +182,7 @@ typedef int siptr, stringint, inst;
 /*
  * graphics
  */
-#ifdef Graphics
+#if Graphics
    typedef int wbp, wsp, wcp, wdp, wclrp, wfp, wtp;
    typedef int wbinding, wstate, wcontext, wfont;
    typedef int XRectangle, XPoint, XSegment, XArc, SysColor, LinearColor;

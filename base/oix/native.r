@@ -1335,7 +1335,7 @@ function lang_Class_set_method(field, pr)
    }
 end
 
-#ifdef HAVE_LIBDL
+#if HAVE_LIBDL
 
 static struct b_proc *try_load(void *handle, struct b_class *class0,  struct class_field *cf)
 {
@@ -1864,7 +1864,7 @@ function io_SocketStream_out(self, s)
         * If possible use MSG_NOSIGNAL so that we get the EPIPE error
         * code, rather than the SIGPIPE signal.
         */
-#ifdef HAVE_MSG_NOSIGNAL
+#if HAVE_MSG_NOSIGNAL
        rc = send(self_fd, StrLoc(s), StrLen(s), MSG_NOSIGNAL);
 #else
        rc = send(self_fd, StrLoc(s), StrLen(s), 0);
@@ -2179,7 +2179,7 @@ end
 
 function io_DescStream_poll(l, timeout)
    body {
-#ifdef HAVE_POLL
+#if HAVE_POLL
        static struct pollfd *ufds = 0;
        unsigned int nfds;
        word tw;

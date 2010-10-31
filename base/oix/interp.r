@@ -308,7 +308,7 @@ void skip_descrip()
     char *t;
     int size, i;
     size = pb->framesize + (argc + pb->ntend) * sizeof(struct descrip);
-#ifdef HAVE_ALLOCA
+#if HAVE_ALLOCA
     p = alloca(size);
 #else
     MemProtect(p = malloc(size));
@@ -342,7 +342,7 @@ void skip_descrip()
 #enddef
 
 #begdef quick_free_frame(p)
-#ifndef HAVE_ALLOCA
+#if !HAVE_ALLOCA
     free(p);
 #endif
 #enddef

@@ -8,7 +8,7 @@
  *     p(arg1, arg2, ...)
  */
 
-#ifdef HAVE_LIBDL
+#if HAVE_LIBDL
 
 #ifndef RTLD_LAZY	/* normally from <dlfcn.h> */
 #define RTLD_LAZY 1

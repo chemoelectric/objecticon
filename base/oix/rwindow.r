@@ -3,7 +3,7 @@
  *  non window-system-specific window support routines
  */
 
-#ifdef Graphics
+#if Graphics
 
 /*
  * global variables.
@@ -13,17 +13,19 @@ wcp wcntxts = NULL;
 wsp wstates = NULL;
 wbp wbndngs = NULL;
 
-#ifdef HAVE_LIBJPEG
+#if HAVE_LIBJPEG
 static int  readjpegdata       (dptr data, struct imgdata *d);
 static int  writejpegfile       (wbp w, char *filename, int x, int y, int width, int height);
 static int  readjpegfile        (char *fname, struct imgdata *d);
 #endif                                  /* HAVE_LIBJPEG */
-#ifdef HAVE_LIBPNG
+#if HAVE_LIBPNG
 static int readpngdata         (dptr data, struct imgdata *imd);
 static int readpngfile          (char *filename, struct imgdata *imd);
 static int writepngfile         (wbp w, char *filename, int x, int y, int width, int height);
 #endif
+#if HAVE_LIBJPEG || HAVE_LIBPNG
 static int datatofile(dptr data, char *fn);
+#endif
 static int readgifdata        (dptr data, struct imgdata *imd);
 static int readgiffile         (char *fname, struct imgdata *d);
 
@@ -913,6 +915,7 @@ static int tryimagestring(wbp w, dptr d,  struct imgdata *imd)
     return Succeeded;
 }
 
+#if HAVE_LIBJPEG || HAVE_LIBPNG
 /*
  * Write string data to a temporary file.
  */
@@ -928,6 +931,7 @@ static int datatofile(dptr data, char *fn)
     fclose(f);
     return 1;
 }
+#endif
 
 static int tryimagedata(dptr data, struct imgdata *imd)
 {
@@ -937,12 +941,12 @@ static int tryimagedata(dptr data, struct imgdata *imd)
     if (is_gif(data))
         return readgifdata(data, imd);
 
-#ifdef HAVE_LIBPNG
+#if HAVE_LIBPNG
     if (is_png(data))
         return readpngdata(data, imd);
 #endif
 
-#ifdef HAVE_LIBJPEG
+#if HAVE_LIBJPEG
     if (is_jpeg(data))
         return readjpegdata(data, imd);
 #endif
@@ -963,12 +967,12 @@ static int tryimagefile(char *filename, struct imgdata *imd)
     if (strcasecmp(fp->ext, ".gif") == 0)
         return readgiffile(filename, imd);
 
-#ifdef HAVE_LIBPNG
+#if HAVE_LIBPNG
     if (strcasecmp(fp->ext, ".png") == 0)
         return readpngfile(filename, imd);
 #endif
 
-#ifdef HAVE_LIBJPEG
+#if HAVE_LIBJPEG
     if (strcasecmp(fp->ext, ".jpg") == 0 || strcasecmp(fp->ext, ".jpeg") == 0)
         return readjpegfile(filename, imd);
 #endif
@@ -1320,7 +1324,7 @@ typedef struct lzwnode {	/* structure of LZW encoding tree node */
     unsigned short sibling;	/* next sibling */
 } lzwnode;
 
-#ifdef HAVE_LIBJPEG
+#if HAVE_LIBJPEG
 struct my_error_mgr { /* a part of JPEG error handling */
     struct jpeg_error_mgr pub;	/* "public" fields */
     jmp_buf setjmp_buffer;	/* for return to caller */
@@ -1822,7 +1826,7 @@ static void gfput(int b)
 }
 
 
-#ifdef HAVE_LIBJPEG
+#if HAVE_LIBJPEG
 
 void my_error_exit (j_common_ptr cinfo);
 
@@ -1994,7 +1998,7 @@ int writejpegfile(wbp w, char *filename, int x, int y, int width,int height)
 
 #endif
 
-#ifdef HAVE_LIBPNG
+#if HAVE_LIBPNG
 
 static int readpngdata(dptr data, struct imgdata *imd)
 {
@@ -2870,12 +2874,12 @@ int writeimagefile(wbp w, char *filename, int x, int y, int width, int height)
 
     fp = fparse(filename);
 
-#ifdef HAVE_LIBPNG
+#if HAVE_LIBPNG
     if (strcasecmp(fp->ext, ".png") == 0)
         return writepngfile(w, filename, x, y, width, height);
 #endif		
 
-#ifdef HAVE_LIBJPEG
+#if HAVE_LIBJPEG
     if (strcasecmp(fp->ext, ".jpg") == 0 || strcasecmp(fp->ext, ".jpeg") == 0)
         return writejpegfile(w, filename, x, y, width, height);
 #endif
