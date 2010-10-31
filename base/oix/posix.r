@@ -176,12 +176,7 @@ function posix_System_execve(f, argv, envp)
    }
 end
 
-
-
-"wait() - wait for process to terminate or stop."
-"the return value is `status' from the wait(2) manpage."
-
-function posix_System_wait(pid, options)
+function posix_System_wait_impl(pid, options)
    if !def:C_integer(pid, -1) then
       runerr(101, pid)
    if !def:C_integer(options, 0) then 
