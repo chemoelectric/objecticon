@@ -731,7 +731,7 @@ function lang_Prog_get_runtime_millis(c)
        struct progstate *prog;
        struct timeval tp;
        struct descrip ls, lm;
-       tended struct descrip lt1, lt2, result;
+       tended struct descrip lt, result;
 
        if (!(prog = get_program_for(&c)))
           runerr(0);
@@ -741,14 +741,14 @@ function lang_Prog_get_runtime_millis(c)
 	 fail;
       }
       if (tp.tv_sec - prog->start_time.tv_sec < (MaxWord/1000)) {
+          /* On 32 bits, max possible into result should be 2147482999 */
           MakeInt((tp.tv_sec - prog->start_time.tv_sec) * 1000 + 
                   (tp.tv_usec - prog->start_time.tv_usec) / 1000, &result);
       } else {
           MakeInt(tp.tv_sec - prog->start_time.tv_sec, &ls);
-          MakeInt(tp.tv_usec - prog->start_time.tv_usec, &lm);
-          bigmul(&ls, &thousanddesc, &lt1);
-          bigdiv(&lm, &thousanddesc ,&lt2);
-          bigadd(&lt1, &lt2, &result);
+          MakeInt((tp.tv_usec - prog->start_time.tv_usec) / 1000, &lm);
+          bigmul(&ls, &thousanddesc, &lt);
+          bigadd(&lt, &lm, &result);
       }
       return result;
    }
@@ -758,15 +758,15 @@ function lang_Prog_get_startup_micros(c)
    body {
        struct progstate *prog;
        struct descrip ls, lm;
-       tended struct descrip lt1, result;
+       tended struct descrip lt, result;
 
        if (!(prog = get_program_for(&c)))
           runerr(0);
 
        MakeInt(prog->start_time.tv_sec, &ls);
        MakeInt(prog->start_time.tv_usec, &lm);
-       bigmul(&ls, &milliondesc, &lt1);
-       bigadd(&lt1, &lm, &result);
+       bigmul(&ls, &milliondesc, &lt);
+       bigadd(&lt, &lm, &result);
        return result;
    }
 end
@@ -2696,16 +2696,15 @@ function util_Time_get_system_millis()
    body {
       struct timeval tp;
       struct descrip lm;
-      tended struct descrip ls, lt1, lt2, result;
+      tended struct descrip ls, lt, result;
       if (gettimeofday(&tp, 0) < 0) {
 	 errno2why();
 	 fail;
       }
       convert_from_time_t(tp.tv_sec, &ls);
-      MakeInt(tp.tv_usec, &lm);
-      bigmul(&ls, &thousanddesc, &lt1);
-      bigdiv(&lm, &thousanddesc ,&lt2);
-      bigadd(&lt1, &lt2, &result);
+      MakeInt(tp.tv_usec / 1000, &lm);
+      bigmul(&ls, &thousanddesc, &lt);
+      bigadd(&lt, &lm, &result);
       return result;
    }
 end
@@ -2714,31 +2713,50 @@ function util_Time_get_system_micros()
    body {
       struct timeval tp;
       struct descrip lm;
-      tended struct descrip ls, lt1, result;
+      tended struct descrip ls, lt, result;
       if (gettimeofday(&tp, 0) < 0) {
 	 errno2why();
 	 fail;
       }
       convert_from_time_t(tp.tv_sec, &ls);
       MakeInt(tp.tv_usec, &lm);
-      bigmul(&ls, &milliondesc, &lt1);
-      bigadd(&lt1, &lm, &result);
+      bigmul(&ls, &milliondesc, &lt);
+      bigadd(&lt, &lm, &result);
       return result;
    }
 end
 
-function util_Timezone_get_system_timezone()
+function util_Timezone_get_system_timezone_offset()
    body {
-      time_t t;
-      struct tm *ct;
+     #if HAVE_STRUCT_TM_TM_GMTOFF
+     {
+          time_t t;
+          struct tm *ct;
+          time(&t);
+          ct = localtime(&t);
+          return C_integer ct->tm_gmtoff;
+     }
+     #elif HAVE_TIMEZONE      
+     {
+          tzset();
+          return C_integer -timezone;
+     }
+     #else
+          return zerodesc;
+     #endif
+   }
+end
+
+function util_Timezone_get_system_timezone_impl()
+   body {
       tended struct descrip tmp, result;
-
-      tzset();
-      time(&t);
-      ct = localtime(&t);
-
       create_list(2, &result);
       #if HAVE_STRUCT_TM_TM_GMTOFF
+      {
+         time_t t;
+         struct tm *ct;
+         time(&t);
+         ct = localtime(&t);
          MakeInt(ct->tm_gmtoff, &tmp);
          list_put(&result, &tmp);
          #if HAVE_TZNAME && HAVE_STRUCT_TM_TM_ISDST
@@ -2747,19 +2765,13 @@ function util_Timezone_get_system_timezone()
              list_put(&result, &tmp);
          }
          #endif
+      }
       #elif HAVE_TIMEZONE      
-         #if MSWIN32
-         MakeInt(timezone - _dstbias, &tmp);
-         #else
-         MakeInt(timezone, &tmp);
-         #endif
+      {
+         tzset();
+         MakeInt(-timezone, &tmp);
          list_put(&result, &tmp);
-         #if HAVE_TZNAME && HAVE_STRUCT_TM_TM_ISDST
-         if (ct->tm_isdst >= 0) {
-             cstr2string(tzname[ct->tm_isdst ? 1 : 0], &tmp);
-             list_put(&result, &tmp);
-         }
-         #endif
+      }
       #else
          list_put(&result, &zerodesc);
       #endif
