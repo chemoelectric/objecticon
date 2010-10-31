@@ -142,6 +142,15 @@
    #define alloca _alloca
    #define qsort myqsort
    typedef int mode_t;
+   #include <sys/timeb.h>
+   #include <sys/locking.h>
+   #include <sys/utime.h>
+   #include <io.h>
+   #include <time.h>
+   extern WORD wVersionRequested;
+   extern WSADATA wsaData;
+   extern int werr;
+   extern int WINSOCK_INITIAL;
 #endif					/* MSWIN32 */
 
 #if UNIX
@@ -155,6 +164,20 @@
    #include <termios.h>
    #include <sys/utsname.h>
    #include <sys/select.h>
+   #include <sys/wait.h>
+   #if HAVE_POLL
+   #include <sys/poll.h>
+   #endif
+   #include <utime.h>
+   #include <sys/resource.h>
+   #include <fcntl.h>
+   #include <sys/socket.h>
+   #include <sys/un.h>
+   #include <netinet/in.h>
+   #include <arpa/inet.h>
+   #include <netdb.h>
+   #include <pwd.h>
+   #include <grp.h>
 #endif					/* UNIX */
 
 #if XWindows
