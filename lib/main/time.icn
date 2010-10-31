@@ -521,7 +521,7 @@ class Time()
    #
    public set_seconds(n, zone)
       self.seconds := n
-      self.zone := \zone | Timezone.SYSTEM_TIMEZONE
+      self.zone := \zone | Timezone.get_system_timezone()
       self.compute_broken_down_fields()
    end
 
@@ -703,7 +703,7 @@ class Time()
          if tab(upto(TZCHARS)) then
             z := Timezone.get_known_timezone(tab(many(TZCHARS))) | return error("No timezone")
          else
-            z := Timezone.SYSTEM_TIMEZONE
+            z := Timezone.get_system_timezone()
       }
       return Time(y, m, d, hh, mm, ss, z)
    end
@@ -737,7 +737,7 @@ class Time()
       self.hour := \hour | 0
       self.min := \min | 0
       self.sec := \sec | 0
-      self.zone := \zone | Timezone.SYSTEM_TIMEZONE
+      self.zone := \zone | Timezone.get_system_timezone()
       compute_seconds()
    end
 
