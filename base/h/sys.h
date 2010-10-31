@@ -89,6 +89,7 @@
    #endif
    #include <utime.h>
    #include <sys/resource.h>
+   #include <fcntl.h>
    #include <sys/socket.h>
    #include <sys/un.h>
    #include <netinet/in.h>
