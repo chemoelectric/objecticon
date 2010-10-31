@@ -738,12 +738,6 @@ end
 
 static int trefcmp(dptr d1, dptr d2)
    {
-
-#ifdef DeBug
-   if (d1->dword != D_List || d2->dword != D_List)
-      syserr("trefcmp: internal consistency check fails.");
-#endif					/* DeBug */
-
    return (anycmp(&(ListBlk(*d1).listhead->lelem.lslots[0]),
                   &(ListBlk(*d2).listhead->lelem.lslots[0])));
    }
@@ -754,12 +748,6 @@ static int trefcmp(dptr d1, dptr d2)
 
 static int tvalcmp(dptr d1, dptr d2)
    {
-
-#ifdef DeBug
-   if (d1->dword != D_List || d2->dword != D_List)
-      syserr("tvalcmp: internal consistency check fails.");
-#endif					/* DeBug */
-
    return (anycmp(&(ListBlk(*d1).listhead->lelem.lslots[1]),
       &(ListBlk(*d2).listhead->lelem.lslots[1])));
    }

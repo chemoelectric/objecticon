@@ -67,9 +67,8 @@ end
 
 function posix_System_fork()
    body {
-      int pid;
-      
 #if UNIX
+      int pid;
       if ((pid = fork()) < 0) {
 	 errno2why();
 	 fail;
@@ -208,57 +207,9 @@ function posix_System_wait(pid, options)
    if !def:C_integer(options, 0) then 
       runerr(103, options)
    body {
+#if PLAN9
       tended struct descrip result;
-      char retval[256];
-      int status = 0, wpid;
-#if UNIX
-#if defined(BSD) || defined(Linux) || defined(BSD_4_4_LITE)
-      struct rusage rusage;
-      if ((wpid = wait4(pid, &status, options, &rusage)) < 0) {
-	 errno2why();
-	 fail;
-      }
-
-#else					/* BSD || Linux */
-
-      /* HP and Solaris */
-      if (pid == -1) {
-	 
-	 if ((wpid = wait(&status)) < 0) {
-	    errno2why();
-	    fail;
-	 }
-      } else {
-	 if ((wpid = waitpid(pid, &status, options)) < 0) {
-	    errno2why();
-	    fail;
-	 }
-      }
-#endif					/* BSD || Linux */
-
-      /* Unpack all the fields */
-      if (WIFSTOPPED(status))
-          sprintf(retval, "%d stopped:%d", wpid, WSTOPSIG(status));
-
-      else if (WIFSIGNALED(status))
-          sprintf(retval, "%d terminated:%d", wpid, WTERMSIG(status));
-
-      else if (WIFEXITED(status))
-	 sprintf(retval, "%d exited:%d", wpid, WEXITSTATUS(status));
-      else
-	 sprintf(retval, "???");
-#ifdef Linux
-      if (WIFSIGNALED(status) && status & 0200 )	/* core dump */
-#else
-#if defined(BSD) && defined(SUN)
-      if (WIFSIGNALED(status) && ((union __wait*)&status)->w_T.w_Coredump)
-#else
-      if (WIFSIGNALED(status) && WCOREDUMP(status))
-#endif
-#endif
-	 strcat(retval, ":core");
-
-#elif PLAN9
+      char retval[64];
       Waitmsg *w = waitforpid(pid);
       if (!w) {
           LitWhy("process has no children");
@@ -269,20 +220,56 @@ function posix_System_wait(pid, options)
       else
           snprint(retval, sizeof(retval), "%d exited: %s", w->pid, w->msg);
       free(w);
-
+      cstr2string(retval, &result);
+      return result;
+#elif UNIX
+      tended struct descrip result;
+      char retval[64];
+      int status = 0, wpid;
+#if HAVE_WAIT4
+      struct rusage rusage;
+      if ((wpid = wait4(pid, &status, options, &rusage)) < 0) {
+	 errno2why();
+	 fail;
+      }
+#else
+      if (pid == -1) {
+	 if ((wpid = wait(&status)) < 0) {
+	    errno2why();
+	    fail;
+	 }
+      } else {
+	 if ((wpid = waitpid(pid, &status, options)) < 0) {
+	    errno2why();
+	    fail;
+	 }
+      }
+#endif
+      /* Unpack all the fields */
+      if (WIFSTOPPED(status))
+          sprintf(retval, "%d stopped:%d", wpid, WSTOPSIG(status));
+      else if (WIFSIGNALED(status))
+          sprintf(retval, "%d terminated:%d", wpid, WTERMSIG(status));
+      else if (WIFEXITED(status))
+	 sprintf(retval, "%d exited:%d", wpid, WEXITSTATUS(status));
+      else
+	 sprintf(retval, "???");
+      cstr2string(retval, &result);
+      return result;
 #elif MSWIN32
-      int termstat;
+      tended struct descrip result;
+      char retval[64];
+      int wpid, termstat;
       if ((wpid = _cwait(&termstat, pid, options)) < 0) {
 	 errno2why();
 	 fail;
 	 }
       sprintf(retval, "%d terminated:%d", wpid, termstat);
+      cstr2string(retval, &result);
+      return result;
 #else
       Unsupported;
 #endif
-
-      cstr2string(retval, &result);
-      return result;
    }
 end
 
