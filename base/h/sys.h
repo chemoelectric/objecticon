@@ -85,7 +85,7 @@
    #include <X11/Xatom.h>
    #include <X11/cursorfont.h>
    #include <X11/keysym.h>
-   #ifdef HAVE_LIBXFT
+   #if HAVE_LIBXFT
    #include <X11/Xft/Xft.h>
    #endif
 #endif					/* XWindows */
@@ -93,7 +93,7 @@
 /*
  * Include this after Xlib stuff, jmorecfg.h expects this.
  */
-#ifdef HAVE_LIBJPEG
+#if HAVE_LIBJPEG
 #include "jpeglib.h"
 #include "jerror.h"
 /* we do not use their definitions of GLOBAL, LOCAL, or OF; we use our own */
@@ -102,12 +102,12 @@
 #undef OF
 #endif					/* HAVE_LIBJPEG */
 
-#ifdef HAVE_LIBPNG
+#if HAVE_LIBPNG
 #define PNG_SKIP_SETJMP_CHECK 1
 #include "png.h"
 #endif
 
-#ifdef HAVE_LIBDL
+#if HAVE_LIBDL
 #if MSWIN32
    void *dlopen(char *, int); /* LoadLibrary */
    void *dlsym(void *, char *sym); /* GetProcAddress */
@@ -118,7 +118,7 @@
 #endif					/* HAVE_LIBDL */
 
 
-#ifdef HAVE_LIBZ
+#if HAVE_LIBZ
 			
 #  ifdef STDC
 #    define OF(args)  args

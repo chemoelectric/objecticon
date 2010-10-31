@@ -55,7 +55,7 @@ struct errtab errtab[] = {
     {139, "cannot activate a co-expression that has caused a runtime error"},
     {140, "&handler co-expression cannot be an unactivated co-expression"},
 
-#ifdef Graphics
+#if Graphics
     {141, "program terminated by window manager"},
     {142, "attempt to read/write on closed window"},
     {143, "malformed event queue"},

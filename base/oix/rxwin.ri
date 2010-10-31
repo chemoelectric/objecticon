@@ -39,7 +39,7 @@ static void wmap(wbp w);
 static void synch_cursor(wsp ws);
 static int convert_KeySym_to_code_point(KeySym k);
 static char *convertspec(wdp wd, char *s);
-#ifdef HAVE_LIBXFT
+#if HAVE_LIBXFT
 int xft_stringwidth(wbp w, char *s, int n);
 #else
 static char *findfont(wdp wd, char *fam, int size, int flags);
@@ -580,7 +580,7 @@ static void close_screen_win(wsp ws)
     wdp wd = ws->display;
     XDestroyWindow(wd->display, ws->win);
     XFlush(wd->display);
-#ifdef HAVE_LIBXFT
+#if HAVE_LIBXFT
     if (ws->winDraw) {
         XftDrawDestroy(ws->winDraw);
         ws->winDraw = NULL;
@@ -712,7 +712,7 @@ int wopen(wbp w)
      */
     gcv.foreground = wc->fg->c;
     gcv.background = wc->bg->c;
-#ifdef HAVE_LIBXFT
+#if HAVE_LIBXFT
     gcv.font       = wd->xfont->fid;
 #else
     gcv.font       = wc->font->fsp->fid;
@@ -1633,7 +1633,7 @@ int setfont(wbp w, char *s)
         return Failed;
     wc->font = tmp;
 
-#ifndef HAVE_LIBXFT
+#if !HAVE_LIBXFT
     if (stdgc != NULL)
         XSetFont(stddpy, stdgc, wc->font->fsp->fid);
 #endif
@@ -1711,7 +1711,7 @@ static void resizepixmap(wbp w, int width, int height)
 
         XFreePixmap(stddpy, stdpix);	/* free old pixmap */
         ws->pix = p;
-#ifdef HAVE_LIBXFT
+#if HAVE_LIBXFT
         if (ws->pixDraw) {
             XftDrawDestroy(ws->pixDraw);
             ws->pixDraw = NULL;
@@ -2317,7 +2317,7 @@ int walert(wbp w, int volume)
     return Succeeded;
 }
 
-#ifdef HAVE_LIBXFT
+#if HAVE_LIBXFT
 int textwidth(wbp w, char *s, int n)
 {
     XGlyphInfo	extents; 
@@ -2596,7 +2596,7 @@ static wdp alcdisplay(char *s)
         LitWhy("Couldn't load default font");
         return NULL;
     }
-#ifdef HAVE_LIBXFT
+#if HAVE_LIBXFT
     wd->xfont = XLoadQueryFont(wd->display, "fixed");
 #endif
 
@@ -2605,7 +2605,7 @@ static wdp alcdisplay(char *s)
     return wd;
 }
 
-#ifdef HAVE_LIBXFT
+#if HAVE_LIBXFT
 
 /*
  * Convert a given font spec, which may or may not be in icon font spec format,
@@ -2987,7 +2987,7 @@ static wfp loadfont(wdp wd, char *s)
      * see if the font is already loaded on this display
      */
     for(rv = wd->fonts; rv; rv = rv->next) {
-#ifdef HAVE_LIBXFT
+#if HAVE_LIBXFT
         if (!strcmp(s, rv->name + 3)) return rv;
 #else
         if (!strcmp(s, rv->name + 4)) return rv;
@@ -3012,7 +3012,7 @@ static wfp newfont(wdp wd, char *s)
 {
     wfp rv;
     GRFX_ALLOC(rv, _wfont);
-#ifdef HAVE_LIBXFT
+#if HAVE_LIBXFT
     rv->fsp = XftFontOpenName(wd->display, DefaultScreen(wd->display), s);
 #else
     rv->fsp = XLoadQueryFont(wd->display, s);
@@ -3022,7 +3022,7 @@ static wfp newfont(wdp wd, char *s)
         return NULL;
     }
 
-#ifdef HAVE_LIBXFT
+#if HAVE_LIBXFT
     MemProtect(rv->name = malloc(strlen(s) + 3 + 1));
     sprintf(rv->name, "fc:%s", s);
     {
@@ -3110,7 +3110,7 @@ wcp clonecontext(wbp w)
 
     gcv.foreground = rv->fg->c;
     gcv.background = rv->bg->c;
-#ifdef HAVE_LIBXFT
+#if HAVE_LIBXFT
     gcv.font       = wd->xfont->fid;
 #else
     gcv.font       = rv->font->fsp->fid;
@@ -3150,7 +3150,7 @@ static wsp alcwinstate()
     ws->x = ws->y = -INT_MAX;
     ws->minwidth = ws->minheight = 1;
     ws->maxwidth = ws->maxheight = INT_MAX;
-#ifdef HAVE_LIBXFT
+#if HAVE_LIBXFT
     ws->pixDraw = ws->winDraw = NULL;
 #endif
     ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
@@ -3168,7 +3168,7 @@ void freewindow(wsp ws)
         struct imgdata *imd;
         if (ws->win)
             close_screen_win(ws);
-#ifdef HAVE_LIBXFT
+#if HAVE_LIBXFT
         if (ws->pixDraw) {
             XftDrawDestroy(ws->pixDraw);
             ws->pixDraw = NULL;

@@ -56,7 +56,7 @@ function posix_System_fork()
 	 errno2why();
 	 fail;
 	 }
-#ifdef Graphics
+#if Graphics
       /* A child process can't interact with the graphics system */
       if (pid == 0)
         wdsplys = 0;
@@ -257,7 +257,7 @@ function posix_System_unsetenv(name)
    if !cnv:C_string(name) then
       runerr(103, name)
    body {
-#ifdef HAVE_UNSETENV_INT_RETURN
+#if HAVE_UNSETENV_INT_RETURN
        if (unsetenv(name) < 0) {
 	 errno2why();
 	 fail;
@@ -308,7 +308,7 @@ end
 
 function posix_System_uname_impl()
     body {
-#ifdef HAVE_UNAME
+#if HAVE_UNAME
        tended struct descrip tmp, result;
        struct utsname utsn;
        if (uname(&utsn) < 0) {

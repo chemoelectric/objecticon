@@ -172,7 +172,7 @@ char *buffstr(dptr d);
 void buffnstr(dptr d, char **s, ...);
 
 
-#ifdef Graphics
+#if Graphics
    /*
     * portable graphics routines in rwindow.r and rwinrsc.r
     */

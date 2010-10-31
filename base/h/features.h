@@ -36,11 +36,11 @@
    Feature("_PIPES", "pipes")
    Feature("_SYSTEM_FUNCTION", "system function")
 
-#ifdef HAVE_LIBDL
+#if HAVE_LIBDL
    Feature("_DYNAMIC_LOADING", "dynamic loading")
 #endif					/* HAVE_LIBDL */
 
-#ifdef Graphics
+#if Graphics
    Feature("_GRAPHICS", "graphics")
 #endif					/* Graphics */
 
@@ -48,14 +48,14 @@
    Feature("_X_WINDOW_SYSTEM", "X Windows")
 #endif					/* XWindows */
 
-#ifdef HAVE_LIBZ
+#if HAVE_LIBZ
    Feature("_LIBZ_COMPRESSION", "libz file compression")
 #endif					/* HAVE_LIBZ */
 
-#ifdef HAVE_LIBJPEG
+#if HAVE_LIBJPEG
    Feature("_JPEG", "JPEG images")
 #endif					/* HAVE_LIBJPEG */
 
-#ifdef HAVE_LIBPNG
+#if HAVE_LIBPNG
    Feature("_PNG", "PNG images")
 #endif					/* HAVE_LIBPNG */

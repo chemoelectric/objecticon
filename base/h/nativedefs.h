@@ -8,7 +8,7 @@
  * The entries must be grouped by class, but beyond that order is not
  * significant.
  */
-#ifdef Graphics
+#if Graphics
 NativeDef(graphics.Window,alert,graphics_Window_alert)
 NativeDef(graphics.Window,can_resize,graphics_Window_can_resize)
 NativeDef(graphics.Window,clip,graphics_Window_clip)

@@ -136,7 +136,7 @@
    /*
     * Get floating-point number from real block.
     */
-   #ifdef DOUBLE_HAS_WORD_ALIGNMENT
+   #if DOUBLE_HAS_WORD_ALIGNMENT
       #define BGetReal(b, r)      r = (b).realval
       #define BSetReal(r, b)      (b).realval = r
    #else

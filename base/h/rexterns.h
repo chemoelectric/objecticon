@@ -98,7 +98,7 @@ extern int xnargs;
 /*
  * graphics
  */
-#ifdef Graphics
+#if Graphics
    
 extern int wconfig, inattr;
 extern wbp wbndngs;

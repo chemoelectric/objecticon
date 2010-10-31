@@ -1435,7 +1435,7 @@ int brace;
                ForceNl();
                ret_value(t, n->u[0].child, indent);
                ForceNl();
-#ifdef HAVE_COMPUTED_GOTO
+#if HAVE_COMPUTED_GOTO
                prt_str("frame->pc = (word)&&Lab", indent);
 #else
                prt_str("frame->pc = ", indent);
@@ -3408,7 +3408,7 @@ struct node *n;
    if (op_generator) {
        if (lab_seq == 0)
            err1("rtt internal error detected: expected some suspensions with op_generator flag set");
-#ifdef HAVE_COMPUTED_GOTO
+#if HAVE_COMPUTED_GOTO
        fprintf(out_file, "       if (frame->pc)\n");
        fprintf(out_file, "          goto *((void *)(frame->pc));\n");
 #else

@@ -17,7 +17,7 @@
 #include "../h/rmacros.h"
 #include "../h/rstructs.h"
 
-#ifdef Graphics
+#if Graphics
    #include "../h/graphics.h"
 #endif					/* Graphics */
 

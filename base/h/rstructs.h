@@ -50,7 +50,7 @@ struct b_bignum {		/* large integer block */
 #if !RealInDesc
 struct b_real {			/* real block */
     word title;			/*   T_Real */
-#ifdef DOUBLE_HAS_WORD_ALIGNMENT
+#if DOUBLE_HAS_WORD_ALIGNMENT
     double realval;		/*   value */
 #else
     word realval[DoubleWords];

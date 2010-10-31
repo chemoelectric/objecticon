@@ -251,7 +251,7 @@ void check_version(struct header *hdr, char *name,FILE *fname)
 static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codeptr)
 {
     word cbread;
-#ifdef HAVE_LIBZ
+#if HAVE_LIBZ
     if (strchr((char *)(hdr->config), 'Z')) { /* to decompress */
         gzFile zfd;
         int tmp = open(name, O_RDONLY);
