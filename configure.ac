@@ -59,7 +59,7 @@ if test "$enable_largefile" != no; then
 fi
 
 AC_FUNC_ALLOCA()
-AC_CHECK_FUNCS(gethostent getrlimit setrlimit strerror vfork poll uname truncate wait4)
+AC_CHECK_FUNCS(gethostent getrlimit setrlimit strerror vfork poll uname truncate)
 AC_CHECK_GLOBAL(sys_nerr)
 AC_CHECK_GLOBAL(sys_errlist)
 AC_VAR_TIMEZONE_EXTERNALS()
