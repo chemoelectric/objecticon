@@ -21,7 +21,6 @@
    #include "../h/graphics.h"
 #endif					/* Graphics */
 
-#include "../h/posix.h"
 #include "../h/rexterns.h"
 #include "../h/rproto.h"
 
