@@ -66,6 +66,7 @@ static int get_shift(unsigned long mask);
 static struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int b);
 static void from_pixel(wdp wd, unsigned long c, int *r, int *g, int *b);
 static unsigned long to_pixel(wdp wd, int r, int g, int b);
+static void setpattern_in_gc(wbp w, int width, int height, int *rowdata);
 
 static stringint fillstyles[] = {
     {0, 3},
@@ -736,8 +737,11 @@ int wopen(wbp w)
     /* Set pattern and clip in the gc, if needed */
     if (wc->clipw >= 0)
         setclip(w);
-    if (wc->patternname != NULL)
-        setpattern(w, wc->patternname);
+    if (wc->patternname) {
+        int width, height, *rowdata;
+        if (parsepattern(wc->patternname, &width, &height, &rowdata))
+            setpattern_in_gc(w, width, height, rowdata);
+    }
 
     /* Open the window unless it is hidden */
     if (ws->state != HiddenState)
@@ -2240,38 +2244,40 @@ int queryrootpointer(wbp w, int *x, int *y)
     return Succeeded;
 }
 
+static void setpattern_in_gc(wbp w, int width, int height, int *rowdata)
+{
+    int i, j, v;
+    Pixmap p;
+    char *t, data[4 * MAX_PATTERN_HEIGHT];
+    STDLOCALS(w);
+    t = data;
+    for(i = 0; i < height; i++) {
+        v = rowdata[i];
+        for(j = 0; j < width; j += 8) {
+            *t++ = v;
+            v >>= 8;
+        }
+    }
+    p = XCreateBitmapFromData(stddpy, stdpix, data, width, height);
+    XSetStipple(stddpy, stdgc, p);
+    XSync(stddpy, False);
+    XFreePixmap(stddpy, p);
+}
+
 /*
  * setpattern
  */
 int setpattern(wbp w, char *name)
 {
-    int i, j, v, width, height, *rowdata;
-    Pixmap p;
-    char *t, data[4 * MAX_PATTERN_HEIGHT];
-    STDLOCALS(w);
-
+    int width, height, *rowdata;
+    wcp wc = w->context;
     if (!parsepattern(name, &width, &height, &rowdata))
         return Failed;
-    if (stdgc) {
-        t = data;
-        for(i = 0; i < height; i++) {
-            v = rowdata[i];
-            for(j = 0; j < width; j += 8) {
-                *t++ = v;
-                v >>= 8;
-            }
-        }
-        p = XCreateBitmapFromData(stddpy, stdpix, data, width, height);
-        XSetStipple(stddpy, stdgc, p);
-        XSync(stddpy, False);
-        XFreePixmap(stddpy, p);
-    }
-
-    t = salloc(name);
+    if (wc->gc)
+        setpattern_in_gc(w, width, height, rowdata);
     if (wc->patternname)
         free(wc->patternname);
-    wc->patternname = t;
-   
+    wc->patternname = salloc(name);
     return Succeeded;
 }
 
