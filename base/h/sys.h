@@ -66,6 +66,12 @@
       int tz_minuteswest;     /* minutes west of Greenwich */
       int tz_dsttime;         /* type of DST correction */
    };
+   struct tzinfo {
+        char    stname[4];
+        char    dlname[4];
+        long    stdiff;
+        long    dldiff;
+   };
    void be2vlong(vlong *to, uchar *f);
    int system(const char *command);
    char *getcwd(char *buf, size_t size);

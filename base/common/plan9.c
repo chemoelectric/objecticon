@@ -5,6 +5,9 @@ char **environ = &xyz;
 
 static uvlong order = 0x0001020304050607ULL;
 
+static rd_name(char **f, char *p);
+static rd_long(char **f, long *p);
+
 void be2vlong(vlong *to, uchar *f)
 {
     uchar *t, *o;
@@ -326,4 +329,89 @@ Waitmsg *waitforpid(int pid)
     }
 
     return w;
+}
+
+#define	TZSIZE	150
+
+/* Adapted from libc/9sys/ctime.c */
+int readtzinfo(struct tzinfo *tz)
+{
+    char buf[TZSIZE*11+30], *p;
+    int i;
+    memset(buf, 0, sizeof(buf));
+    i = open("/env/timezone", 0);
+    if(i < 0)
+        return 0;
+    if(read(i, buf, sizeof(buf)) >= sizeof(buf)){
+        close(i);
+        return 0;
+    }
+    close(i);
+    p = buf;
+    if(rd_name(&p, tz->stname))
+        return 0;
+    if(rd_long(&p, &tz->stdiff))
+        return 0;
+    if(rd_name(&p, tz->dlname))
+        return 0;
+    if(rd_long(&p, &tz->dldiff))
+        return 0;
+    return 1;
+}
+
+static
+rd_name(char **f, char *p)
+{
+    int c, i;
+
+    for(;;) {
+        c = *(*f)++;
+        if(c != ' ' && c != '\n')
+            break;
+    }
+    for(i=0; i<3; i++) {
+        if(c == ' ' || c == '\n')
+            return 1;
+        *p++ = c;
+        c = *(*f)++;
+    }
+    if(c != ' ' && c != '\n')
+        return 1;
+    *p = 0;
+    return 0;
+}
+
+static
+rd_long(char **f, long *p)
+{
+    int c, s;
+    long l;
+
+    s = 0;
+    for(;;) {
+        c = *(*f)++;
+        if(c == '-') {
+            s++;
+            continue;
+        }
+        if(c != ' ' && c != '\n')
+            break;
+    }
+    if(c == 0) {
+        *p = 0;
+        return 0;
+    }
+    l = 0;
+    for(;;) {
+        if(c == ' ' || c == '\n')
+            break;
+        if(c < '0' || c > '9')
+            return 1;
+        l = l*10 + c-'0';
+        c = *(*f)++;
+    }
+    if(s)
+        l = -l;
+    *p = l;
+    return 0;
 }
