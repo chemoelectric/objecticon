@@ -3056,73 +3056,115 @@ function util_Time_get_system_micros()
    }
 end
 
-function util_Timezone_get_system_timezone_impl(n)
+function util_Timezone_get_local_timezones()
    body {
 #if PLAN9
-      static struct tzinfo tz;
-      static int state;
-      tended struct descrip tmp, result;
+      struct tzinfo tz;
+      tended struct descrip tmp1, tmp2, result;
+      if (!readtzinfo(&tz))
+         fail;
       create_list(2, &result);
-      if (!is:null(n)) {
-          word t;
-          if (!is:integer(n))
-             runerr(101, n);
-          if (cnv:C_integer(n, t)) {
-              struct Tm *ct = localtime((long)t);
-              MakeInt(ct->tzoff, &tmp);
-              list_put(&result, &tmp);
-              cstr2string(ct->zone, &tmp);
-              list_put(&result, &tmp);
-              return result;
-          }
-      }
-      if (state == 0)
-          /* First time */
-          state = readtzinfo(&tz) ? 1:-1;
-      if (state == 1) {
-          /* Read okay */
-          MakeInt(tz.stdiff, &tmp);
-          list_put(&result, &tmp);
-          cstr2string(tz.stname, &tmp);
-          list_put(&result, &tmp);
-          return result;
-      }
-      fail;
-#else
-      tended struct descrip tmp, result;
-      create_list(2, &result);
-      if (!is:null(n)) {
-          time_t t;
-          if (!is:integer(n))
-             runerr(101, n);
-          if (convert_to_time_t(&n, &t)) {
-              #if HAVE_STRUCT_TM_TM_GMTOFF
-              struct tm *ct;
-              ct = localtime(&t);
-              MakeInt(ct->tm_gmtoff, &tmp);
-              list_put(&result, &tmp);
-              #if HAVE_TZNAME && HAVE_STRUCT_TM_TM_ISDST
-              if (ct->tm_isdst >= 0) {
-                  cstr2string(tzname[ct->tm_isdst ? 1 : 0], &tmp);
-                  list_put(&result, &tmp);
-              }
-              #endif
-              return result;
-              #endif
-          }
-      }      
-      #if HAVE_TIMEZONE      
-      tzset();
-      MakeInt(-timezone, &tmp);
-      list_put(&result, &tmp);
-      #if HAVE_TZNAME
-      cstr2string(tzname[0], &tmp);
-      list_put(&result, &tmp);
-      #endif
+      create_list(2, &tmp1);
+      MakeInt(tz.stdiff, &tmp2);
+      list_put(&tmp1, &tmp2);
+      cstr2string(tz.stname, &tmp2);
+      list_put(&tmp1, &tmp2);
+      list_put(&result, &tmp1);
+      create_list(2, &tmp1);
+      MakeInt(tz.dldiff, &tmp2);
+      list_put(&tmp1, &tmp2);
+      cstr2string(tz.dlname, &tmp2);
+      list_put(&tmp1, &tmp2);
+      list_put(&result, &tmp1);
       return result;
-      #else
-      fail;
-      #endif
+#else
+#if HAVE_STRUCT_TM_TM_GMTOFF
+    tended struct descrip tmp1, tmp2, result;
+    struct tm *pt;
+    time_t t;
+    int i, dstoff = 0, stdoff = 0, seen = 0;
+    time(&t);
+    for (i = 0; seen != 3 && i < 366; ++i) {
+        pt = localtime(&t);
+        if (pt->tm_isdst) {
+            if (!(seen & 1)) {
+                dstoff = pt->tm_gmtoff;
+                seen |= 1;
+            }
+        } else {
+            if (!(seen & 2)) {
+                stdoff = pt->tm_gmtoff;
+                seen |= 2;
+            }
+        }
+        t += 86400;
+    }
+    if (!(seen & 2))
+        fail;
+    create_list(2, &result);
+    create_list(2, &tmp1);
+    MakeInt(stdoff, &tmp2);
+    list_put(&tmp1, &tmp2);
+    #if HAVE_TZNAME
+    cstr2string(tzname[0], &tmp2);
+    list_put(&tmp1, &tmp2);
+    #endif
+    list_put(&result, &tmp1);
+    if (seen & 1) {
+        create_list(2, &tmp1);
+        MakeInt(dstoff, &tmp2);
+        list_put(&tmp1, &tmp2);
+        #if HAVE_TZNAME
+        cstr2string(tzname[1], &tmp2);
+        list_put(&tmp1, &tmp2);
+        #endif
+        list_put(&result, &tmp1);
+    }
+    return result;
+#elif HAVE_TIMEZONE
+    tended struct descrip tmp1, tmp2, result;
+    tzset();
+    create_list(1, &result);
+    create_list(2, &tmp1);
+    MakeInt(-timezone, &tmp2);
+    list_put(&tmp1, &tmp2);
+     #if HAVE_TZNAME
+    cstr2string(tzname[0], &tmp2);
+    list_put(&tmp1, &tmp2);
+     #endif
+    list_put(&result, &tmp1);
+    return result;
+#else
+    fail;
+#endif
+#endif
+   }
+end
+
+function util_Timezone_get_gm_offset_at(n)
+   if !cnv:integer(n) then
+      runerr(101, n)
+   body {
+#if PLAN9
+       word t;
+       struct Tm *ct;
+       if (!cnv:C_integer(n, t))
+           fail;
+       ct = localtime((long)t);
+       return C_integer ct->tzoff;
+#else
+#if HAVE_STRUCT_TM_TM_GMTOFF
+       struct descrip result;
+       time_t t;
+       struct tm *ct;
+       if (!convert_to_time_t(&n, &t))
+           fail;
+       ct = localtime(&t);
+       MakeInt(ct->tm_gmtoff, &result);
+       return result;
+#else
+       fail;
+#endif
 #endif
    }
 end
