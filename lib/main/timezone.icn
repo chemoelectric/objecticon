@@ -11,19 +11,26 @@ package util
 class Timezone()
    public static const 
       KNOWN_TIMEZONES,
-      UTC_TIMEZONE
+      UTC_TIMEZONE,
+      LOCAL_STANDARD_TIMEZONE,
+      LOCAL_DAYLIGHT_SAVINGS_TIMEZONE
 
    private static
       system_timezone
 
-   private readable
+   public const
       offset,
       id
 
    private static init()
-      local t
+      local t, l
       KNOWN_TIMEZONES := table()
-      UTC_TIMEZONE := Timezone(0, "UTC")
+      UTC_TIMEZONE := Timezone()
+      if l := get_local_timezones() then {
+         LOCAL_STANDARD_TIMEZONE := Timezone!l[1]
+         LOCAL_DAYLIGHT_SAVINGS_TIMEZONE := Timezone!l[2]
+      } else
+         LOCAL_STANDARD_TIMEZONE := UTC_TIMEZONE
 
       every t := 
          UTC_TIMEZONE |
@@ -45,20 +52,30 @@ class Timezone()
          Timezone(-25200, "MST") | Timezone(-9000, "NDT") | Timezone(41400, "NFT") |
          Timezone(-12600, "NST") | Timezone(-25200, "PDT") | Timezone(-28800, "PST") |
          Timezone(0, "UT") | Timezone(32400, "WDT") | Timezone(3600, "WEDT") |
-         Timezone(3600, "WEST") | Timezone(0, "WET") | Timezone(28800, "WST") do 
+         Timezone(3600, "WEST") | Timezone(0, "WET") | Timezone(28800, "WST") |
+         LOCAL_STANDARD_TIMEZONE | \LOCAL_DAYLIGHT_SAVINGS_TIMEZONE do
       {
          insert(KNOWN_TIMEZONES, t.id, t)
       }
    end
 
-   # Return the local system Timezone in force at the given time {n},
-   # which is the number of seconds past the Unix epoch.  If {n} is
-   # omitted, the non-daylight-saving local Timezone is returned.
-   public static get_system_timezone(n)
-      return Timezone!get_system_timezone_impl(n) | UTC_TIMEZONE
-   end
+   private static defer get_local_timezones()
+   private static defer get_gm_offset_at(n)
 
-   private static defer get_system_timezone_impl()
+   # Return the local system Timezone in force at the given time {n},
+   # which is the number of seconds past the Unix epoch.
+   public static get_timezone_at(n)
+      local o
+      o := get_gm_offset_at(n) | return LOCAL_STANDARD_TIMEZONE
+      return case o of {
+         LOCAL_STANDARD_TIMEZONE.offset:
+            LOCAL_STANDARD_TIMEZONE
+         (\LOCAL_DAYLIGHT_SAVINGS_TIMEZONE).offset:
+            LOCAL_DAYLIGHT_SAVINGS_TIMEZONE
+         default:
+            Timezone(o)
+      }
+   end
 
    #
    # Convert a zone id into a Timezone
@@ -82,11 +99,17 @@ class Timezone()
    end
 
    public get_id()
-      return .id
+      return id
    end
 
    public get_offset()
-      return .offset
+      return offset
+   end
+
+   public format_offset()
+      return (if offset < 0 then "-" else "+") ||
+         right(abs(offset) / 3600, 2, "0") || 
+         right((abs(offset) % 3600) / 60, 2, "0")
    end
 
    public new(a[])
@@ -95,17 +118,14 @@ class Timezone()
          offset := 0
       }
       else if *a = 1 then {
-         if type(a[1]) == "integer" then {
-            offset := a[1]
-            id := (if offset < 0 then "-" else "+") ||
-               right(abs(offset) / 3600, 2, "0") || 
-               right((abs(offset) % 3600) / 60, 2, "0") 
+         if offset := integer(a[1]) then {
+            id := format_offset()
          } else {
             id := a[1]
             offset := get_known_timezone(id).get_offset() | fail
          }
       } else {
-         offset := a[1]
+         offset := integer(a[1]) | runerr(101, a[1])
          id := a[2]
       }
       return
