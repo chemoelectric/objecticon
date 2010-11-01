@@ -3080,7 +3080,7 @@ function util_Timezone_get_local_timezones()
    }
 end
 
-function util_Timezone_get_gm_offset_at(n)
+function util_Timezone_get_gmt_offset_at(n)
    if !cnv:integer(n) then
       runerr(101, n)
    body {
