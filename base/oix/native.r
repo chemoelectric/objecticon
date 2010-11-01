@@ -3057,12 +3057,12 @@ function util_Time_get_system_micros()
 end
 
 #if PLAN9
+static struct tzinfo tz;
+
 function util_Timezone_get_local_timezones()
    body {
-      struct tzinfo tz;
       tended struct descrip tmp1, tmp2, result;
-      if (!readtzinfo(&tz))
-         fail;
+      readtzinfo(&tz);
       create_list(2, &result);
       create_list(2, &tmp1);
       MakeInt(tz.stdiff, &tmp2);
@@ -3070,12 +3070,14 @@ function util_Timezone_get_local_timezones()
       cstr2string(tz.stname, &tmp2);
       list_put(&tmp1, &tmp2);
       list_put(&result, &tmp1);
-      create_list(2, &tmp1);
-      MakeInt(tz.dldiff, &tmp2);
-      list_put(&tmp1, &tmp2);
-      cstr2string(tz.dlname, &tmp2);
-      list_put(&tmp1, &tmp2);
-      list_put(&result, &tmp1);
+      if (tz.dlname) {
+          create_list(2, &tmp1);
+          MakeInt(tz.dldiff, &tmp2);
+          list_put(&tmp1, &tmp2);
+          cstr2string(tz.dlname, &tmp2);
+          list_put(&tmp1, &tmp2);
+          list_put(&result, &tmp1);
+      }
       return result;
    }
 end
@@ -3085,11 +3087,16 @@ function util_Timezone_get_gmt_offset_at(n)
       runerr(101, n)
    body {
        word t;
-       struct Tm *ct;
+       long *p;
        if (!cnv:C_integer(n, t))
            fail;
-       ct = localtime((long)t);
-       return C_integer ct->tzoff;
+       /* See localtime() in libc/9sys/ctime.c */
+       t += tz.stdiff;
+       for (p = tz.dlpairs; *p; p += 2) {
+           if (t >= p[0] && t < p[1])
+               return C_integer tz.dldiff;
+       }
+       return C_integer tz.stdiff;
    }
 end
 

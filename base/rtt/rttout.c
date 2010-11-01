@@ -3412,6 +3412,7 @@ struct node *n;
        fprintf(out_file, "       if (frame->pc)\n");
        fprintf(out_file, "          goto *((void *)(frame->pc));\n");
 #else
+       {
        int i;
        fprintf(out_file, "   switch (frame->pc) {\n");
        fprintf(out_file, "      case 0: break;\n");
@@ -3419,6 +3420,7 @@ struct node *n;
            fprintf(out_file, "      case %d: goto Lab%d;\n", i, i);
        fprintf(out_file, "      default: syserr(\"Invalid pc in %s\");\n", name);
        fprintf(out_file, "   }\n");
+       }
 #endif
    } else
        print_func_vars();

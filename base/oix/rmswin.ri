@@ -1954,6 +1954,7 @@ wbp w;
    {
    int i;
    wcp wc;
+   wbinding tmp;
 
    GRFX_ALLOC(wc, _wcontext);
    wc->bkmode = OPAQUE;        /* at present, only used in line drawing */
@@ -1980,8 +1981,10 @@ wbp w;
 	 OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,
 	 DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
 	 getenv("ICONFONT"));
-
    wc->font->maxwidth = 8; /* looks like a bug */
+   tmp.window = w->window;
+   tmp.context = wc;
+   setfont(&tmp, getdefaultfont());
    wc->clipx = wc->clipy = 0;
    wc->clipw = wc->cliph = -1;
 
@@ -2002,8 +2005,6 @@ wbp w;
 
    GRFX_ALLOC(wc, _wcontext);
 
-   tmp.window = ws;
-   tmp.context = wc;
    /*
     * copy over some stuff
     */
@@ -2047,6 +2048,8 @@ wbp w;
 	 OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,
 	 DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
 	 getenv("ICONFONT"));
+   tmp.window = ws;
+   tmp.context = wc;
    setfont(&tmp, wc2->font->name);  /*rpp:check*/
 
 

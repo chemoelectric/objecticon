@@ -331,32 +331,41 @@ Waitmsg *waitforpid(int pid)
     return w;
 }
 
-#define	TZSIZE	150
-
 /* Adapted from libc/9sys/ctime.c */
-int readtzinfo(struct tzinfo *tz)
+void readtzinfo(struct tzinfo *tz)
 {
     char buf[TZSIZE*11+30], *p;
     int i;
+
     memset(buf, 0, sizeof(buf));
     i = open("/env/timezone", 0);
     if(i < 0)
-        return 0;
+        goto error;
     if(read(i, buf, sizeof(buf)) >= sizeof(buf)){
         close(i);
-        return 0;
+        goto error;
     }
     close(i);
     p = buf;
     if(rd_name(&p, tz->stname))
-        return 0;
+        goto error;
     if(rd_long(&p, &tz->stdiff))
-        return 0;
+        goto error;
     if(rd_name(&p, tz->dlname))
-        return 0;
+        goto error;
     if(rd_long(&p, &tz->dldiff))
-        return 0;
-    return 1;
+        goto error;
+    for(i=0; i<TZSIZE; i++) {
+        if(rd_long(&p, &tz->dlpairs[i]))
+            goto error;
+        if(tz->dlpairs[i] == 0)
+            return;
+    }
+
+  error:
+    tz->stdiff = 0;
+    strcpy(tz->stname, "GMT");
+    tz->dlpairs[0] = 0;
 }
 
 static
