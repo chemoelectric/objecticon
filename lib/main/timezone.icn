@@ -8,6 +8,8 @@
 
 package util
 
+import lang
+
 class Timezone()
    public static const 
       KNOWN_TIMEZONES,
@@ -28,7 +30,8 @@ class Timezone()
       UTC_TIMEZONE := Timezone()
       if l := get_local_timezones() then {
          LOCAL_STANDARD_TIMEZONE := Timezone!l[1]
-         LOCAL_DAYLIGHT_SAVINGS_TIMEZONE := Timezone!l[2]
+         equals(l[1], l[2]) |
+            (LOCAL_DAYLIGHT_SAVINGS_TIMEZONE := Timezone!l[2])
       } else
          LOCAL_STANDARD_TIMEZONE := UTC_TIMEZONE
 
