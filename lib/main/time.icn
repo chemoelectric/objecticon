@@ -517,11 +517,12 @@ class Time()
    #
    # @param n the seconds past the base point
    # @param z the zone, as a {Timezone} object, or &null, in which chase
-   # @        the system timezone is used.
+   # @        the local system timezone corresponding to the seconds
+   # @        is used.
    #
    public set_seconds(n, zone)
       self.seconds := n
-      self.zone := \zone | Timezone.get_system_timezone()
+      self.zone := \zone | Timezone.get_system_timezone(n - SYSTEM_BASE_OFFSET)
       self.compute_broken_down_fields()
    end
 
@@ -689,7 +690,8 @@ class Time()
    # An alternative more liberal form of parsing.  The numeric fields are taken
    # as successive ints in the input: all else is ignored.  The year, month and
    # day are mandatory, but hours, mins, secs are optional. Finally, an optional
-   # timezone is allowed.
+   # timezone is allowed.  If omitted, the local (non-daylight savings) zone is
+   # used.
    #
    public static simple_parse(s)
       local y, d, m, hh, mm, ss, z
@@ -728,7 +730,8 @@ class Time()
    # Set the fields, and then recompute the seconds.  Any omitted
    # fields are set to a default, which is the smallest legal value
    # for that field, except the zone, which is set to the default zone
-   # if omitted.
+   # if omitted.  Note that the default zone will never be a daylight
+   # saving Timezone.
    #
    public set_fields(year, month, mday, hour, min, sec, zone)   
       self.year := \year | BASE_YEAR

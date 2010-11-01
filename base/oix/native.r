@@ -270,6 +270,7 @@ static void convert_from_##TYPE(TYPE src, dptr dest)
 #enddef
 convert_to_macro(off_t)
 convert_from_macro(off_t)
+convert_to_macro(time_t)
 convert_from_macro(time_t)
 convert_to_macro(mode_t)
 convert_from_macro(mode_t)
@@ -2726,57 +2727,42 @@ function util_Time_get_system_micros()
    }
 end
 
-function util_Timezone_get_system_timezone_offset()
-   body {
-     #if HAVE_STRUCT_TM_TM_GMTOFF
-     {
-          time_t t;
-          struct tm *ct;
-          time(&t);
-          ct = localtime(&t);
-          return C_integer ct->tm_gmtoff;
-     }
-     #elif HAVE_TIMEZONE      
-     {
-          tzset();
-          return C_integer -timezone;
-     }
-     #else
-          return zerodesc;
-     #endif
-   }
-end
-
-function util_Timezone_get_system_timezone_impl()
+function util_Timezone_get_system_timezone_impl(n)
    body {
       tended struct descrip tmp, result;
       create_list(2, &result);
-      #if HAVE_STRUCT_TM_TM_GMTOFF
-      {
-         time_t t;
-         struct tm *ct;
-         time(&t);
-         ct = localtime(&t);
-         MakeInt(ct->tm_gmtoff, &tmp);
-         list_put(&result, &tmp);
-         #if HAVE_TZNAME && HAVE_STRUCT_TM_TM_ISDST
-         if (ct->tm_isdst >= 0) {
-             cstr2string(tzname[ct->tm_isdst ? 1 : 0], &tmp);
-             list_put(&result, &tmp);
-         }
-         #endif
-      }
-      #elif HAVE_TIMEZONE      
-      {
-         tzset();
-         MakeInt(-timezone, &tmp);
-         list_put(&result, &tmp);
-      }
-      #else
-         list_put(&result, &zerodesc);
+      if (!is:null(n)) {
+          time_t t;
+          if (!is:integer(n))
+             runerr(101, n);
+          if (convert_to_time_t(&n, &t)) {
+              #if HAVE_STRUCT_TM_TM_GMTOFF
+              struct tm *ct;
+              ct = localtime(&t);
+              MakeInt(ct->tm_gmtoff, &tmp);
+              list_put(&result, &tmp);
+              #if HAVE_TZNAME && HAVE_STRUCT_TM_TM_ISDST
+              if (ct->tm_isdst >= 0) {
+                  cstr2string(tzname[ct->tm_isdst ? 1 : 0], &tmp);
+                  list_put(&result, &tmp);
+              }
+              #endif
+              return result;
+              #endif
+          }
+      }      
+      #if HAVE_TIMEZONE      
+      tzset();
+      MakeInt(-timezone, &tmp);
+      list_put(&result, &tmp);
+      #if HAVE_TZNAME
+      cstr2string(tzname[0], &tmp);
+      list_put(&result, &tmp);
       #endif
-
       return result;
+      #else
+      fail;
+      #endif
    }
 end
 

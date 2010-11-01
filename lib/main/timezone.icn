@@ -51,35 +51,23 @@ class Timezone()
       }
    end
 
-   public static get_system_timezone()
-      local l, t
-      # Check if we need to update the cached system timezone value.
-      (\system_timezone).offset = get_system_timezone_offset() | {
-         l := get_system_timezone_impl()
-         # If possible, use a symbolic representation, eg "EST" instead of -0500.
-         # Only use a known symbol, whose offset agrees with the one just calculated
-         system_timezone :=  if (t := \KNOWN_TIMEZONES[l[2]]) & (t.offset = l[1]) then
-            t
-         else
-            Timezone(l[1])
-      }
-      return .system_timezone
+   # Return the local system Timezone in force at the given time {n},
+   # which is the number of seconds past the Unix epoch.  If {n} is
+   # omitted, the non-daylight-saving local Timezone is returned.
+   public static get_system_timezone(n)
+      return Timezone!get_system_timezone_impl(n) | UTC_TIMEZONE
    end
 
    private static defer get_system_timezone_impl()
-   private static defer get_system_timezone_offset()
 
    #
    # Convert a zone id into a Timezone
    #
    public static get_known_timezone(id)
-      local s, sign, x
-
+      local s, sign, t
       id := string(id) | runerr(103, id)
-
-      if x := member(KNOWN_TIMEZONES, id) then
-         return x
-
+      if t := member(KNOWN_TIMEZONES, id) then
+         return t
       id ? {
          if any('+\-') then {
             if any('\-') then 
