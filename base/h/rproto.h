@@ -460,3 +460,8 @@ void set_curpstate(struct progstate *p);
 void set_curr_pf(struct p_frame *x);
 void synch_ipc(void);
 
+void f_add(dptr x, dptr y, dptr result);
+void f_subtract(dptr x, dptr y, dptr result);
+void f_multiply(dptr x, dptr y, dptr result);
+void f_divide(dptr x, dptr y, dptr result);
+

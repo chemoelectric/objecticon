@@ -741,16 +741,10 @@ function lang_Prog_get_runtime_millis(c)
 	 errno2why();
 	 fail;
       }
-      if (tp.tv_sec - prog->start_time.tv_sec < (MaxWord/1000)) {
-          /* On 32 bits, max possible into result should be 2147482999 */
-          MakeInt((tp.tv_sec - prog->start_time.tv_sec) * 1000 + 
-                  (tp.tv_usec - prog->start_time.tv_usec) / 1000, &result);
-      } else {
-          MakeInt(tp.tv_sec - prog->start_time.tv_sec, &ls);
-          MakeInt((tp.tv_usec - prog->start_time.tv_usec) / 1000, &lm);
-          bigmul(&ls, &thousanddesc, &lt);
-          bigadd(&lt, &lm, &result);
-      }
+      MakeInt(tp.tv_sec - prog->start_time.tv_sec, &ls);
+      MakeInt((tp.tv_usec - prog->start_time.tv_usec) / 1000, &lm);
+      f_multiply(&ls, &thousanddesc, &lt);
+      f_add(&lt, &lm, &result);
       return result;
    }
 end
@@ -766,8 +760,8 @@ function lang_Prog_get_startup_micros(c)
 
        MakeInt(prog->start_time.tv_sec, &ls);
        MakeInt(prog->start_time.tv_usec, &lm);
-       bigmul(&ls, &milliondesc, &lt);
-       bigadd(&lt, &lm, &result);
+       f_multiply(&ls, &milliondesc, &lt);
+       f_add(&lt, &lm, &result);
        return result;
    }
 end
@@ -2704,8 +2698,8 @@ function util_Time_get_system_millis()
       }
       convert_from_time_t(tp.tv_sec, &ls);
       MakeInt(tp.tv_usec / 1000, &lm);
-      bigmul(&ls, &thousanddesc, &lt);
-      bigadd(&lt, &lm, &result);
+      f_multiply(&ls, &thousanddesc, &lt);
+      f_add(&lt, &lm, &result);
       return result;
    }
 end
@@ -2721,8 +2715,8 @@ function util_Time_get_system_micros()
       }
       convert_from_time_t(tp.tv_sec, &ls);
       MakeInt(tp.tv_usec, &lm);
-      bigmul(&ls, &milliondesc, &lt);
-      bigadd(&lt, &lm, &result);
+      f_multiply(&ls, &milliondesc, &lt);
+      f_add(&lt, &lm, &result);
       return result;
    }
 end

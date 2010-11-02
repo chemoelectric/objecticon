@@ -7,7 +7,7 @@
 
 int over_flow = 0;
 
-#begdef ArithOp(icon_op, func_name, c_int_op, c_real_op, c_list_op)
+#begdef ArithOp(icon_op, func_name, c_int_op, c_real_op)
 
    operator icon_op func_name(x, y)
       declare {
@@ -81,7 +81,7 @@ end
 #enddef
 
 
-ArithOp( / , divide , Divide , RealDivide, list_add /* bogus */)
+ArithOp( / , divide , Divide , RealDivide)
 
 /*
  * x - y
@@ -107,7 +107,7 @@ ArithOp( / , divide , Divide , RealDivide, list_add /* bogus */)
 
 #define RealSub(x,y) return C_double (x - y);
 
-ArithOp( - , minus , Sub , RealSub, list_add /* bogus */)
+ArithOp( - , minus , Sub , RealSub)
 
 
 /*
@@ -157,7 +157,7 @@ ArithOp( - , minus , Sub , RealSub, list_add /* bogus */)
 }
 #enddef
 
-ArithOp( % , mod , IntMod , RealMod, list_add /* bogus */ )
+ArithOp( % , mod , IntMod , RealMod)
 
 /*
  * x * y
@@ -184,7 +184,7 @@ ArithOp( % , mod , IntMod , RealMod, list_add /* bogus */ )
 
 #define RealMpy(x,y) return C_double ((long double)x * (long double)y);
 
-ArithOp( * , mult , Mpy , RealMpy, list_add /* bogus */ )
+ArithOp( * , mult , Mpy , RealMpy)
 
 
 "-x - negate x."
@@ -272,7 +272,7 @@ end
 
 #define RealAdd(x,y) return C_double (x + y);
 
-ArithOp( + , plus , Add , RealAdd, list_add )
+ArithOp( + , plus , Add , RealAdd)
 
 
 
@@ -367,3 +367,140 @@ int ripow(double r, word n, dptr drslt)
    MakeReal(retval, drslt);
    return Succeeded;
    }
+
+
+/*
+ * Some arithmetic utility functions based on the operators above.
+ */
+
+#begdef ArithFunc(func_name, c_int_op, c_real_op)
+   void func_name(dptr x, dptr y, dptr result)
+   {
+      tended struct descrip lx, ly;
+      word xi, yi, irslt;
+      double xd, yd;
+      if (cnv:(exact)C_integer(*x, xi) && cnv:(exact)C_integer(*y, yi)) {
+          c_int_op(xi, yi);
+      } else if (cnv:(exact)integer(*x,lx) && cnv:(exact)integer(*y,ly)) {
+         /* large integers only */
+         big_ ## c_int_op(lx,ly);
+      } else if (cnv:C_double(*x,xd) && cnv:C_double(*y,yd)) {
+         c_real_op(xd, yd);
+      } else
+         syserr("Non-numeric parameter to arithmetic function");
+   }
+
+#enddef
+
+/* Add */
+
+#begdef big_f_Add(x,y)
+{
+   bigadd(&x,&y,result);
+}
+#enddef
+
+#begdef f_Add(x,y)
+   irslt = add(x,y);
+   if (over_flow) {
+      MakeInt(x,&lx);
+      MakeInt(y,&ly);
+      bigadd(&lx, &ly, result);
+      }
+   else 
+      MakeInt(irslt, result);
+#enddef
+
+#define f_RealAdd(x,y) MakeReal(x + y, result);
+
+ArithFunc( f_add , f_Add , f_RealAdd )
+
+/* Subtract */
+
+#begdef big_f_Sub(x,y)
+{
+   bigsub(&x,&y,result);
+}
+#enddef
+
+#begdef f_Sub(x,y)
+   irslt = sub(x,y);
+   if (over_flow) {
+      MakeInt(x,&lx);
+      MakeInt(y,&ly);
+      bigsub(&lx,&ly,result);
+      }
+   else
+      MakeInt(irslt, result);
+#enddef
+
+#define f_RealSub(x,y) MakeReal(x - y, result);
+
+ArithFunc(f_subtract , f_Sub , f_RealSub)
+
+/* Multiply */
+
+#begdef big_f_Mpy(x,y)
+{
+   bigmul(&x,&y,result);
+}
+#enddef
+
+#begdef f_Mpy(x,y)
+   irslt = mul(x,y);
+   if (over_flow) {
+      MakeInt(x,&lx);
+      MakeInt(y,&ly);
+      bigmul(&lx,&ly,result);
+      }
+   else
+      MakeInt(irslt, result);
+#enddef
+
+#define f_RealMpy(x,y) MakeReal((long double)x * (long double)y, result);
+
+ArithFunc( f_multiply , f_Mpy , f_RealMpy)
+
+/* Division */
+
+#begdef big_f_Divide(x,y)
+{
+   if ( ( Type ( y ) == T_Integer ) && ( IntVal ( y ) == 0 ) )
+      syserr("Divide by zero to f_divide");  /* divide fix */
+
+   bigdiv(&x,&y,result);
+}
+#enddef
+#begdef f_Divide(x,y)
+{
+   if (y == 0)
+      syserr("Divide by zero to f_divide");  /* divide fix */
+
+   irslt = div3(x,y);
+   if (over_flow) {
+      MakeInt(x,&lx);
+      MakeInt(y,&ly);
+      bigdiv(&lx,&ly,result);
+      }
+   else
+      MakeInt(irslt, result);
+}
+#enddef
+#begdef f_RealDivide(x,y)
+{
+   double z;
+
+   if (y == 0.0)
+      syserr("Divide by zero to f_divide");  /* divide fix */
+
+   z = x / y;
+#ifdef SUN
+   if (z >= HUGE || z <= -HUGE) {
+      kill(getpid(), SIGFPE);
+   }
+#endif
+   MakeReal(z, result);
+}
+#enddef
+
+ArithFunc( f_divide , f_Divide , f_RealDivide)
