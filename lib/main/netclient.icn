@@ -219,7 +219,7 @@ class NetClient(Connectable, SetFields)
                return line
             }
          }
-         sbuff ||:= recv(1024) | fail
+         sbuff ||:= recv(1048576) | fail
       }
    end
 

@@ -375,7 +375,7 @@ class HttpClient(NetClient)
          if \request.post_stream then {
             # Just fail; the whole request will surely fail anyway.
             request.post_stream.seek(1) | fail
-            while s := request.post_stream.reads(8192) do
+            while s := request.post_stream.reads(1048576) do
                t.update(s)
             request.post_stream.eof() | fail
          }
@@ -830,7 +830,7 @@ class HttpClient(NetClient)
          write_request_headers() | fail
          write_line() | fail
          request.post_stream.seek(1) | fail
-         while s := request.post_stream.reads(8192) do {
+         while s := request.post_stream.reads(1048576) do {
             if not write_str(s) then {
                f.close()
                fail
@@ -915,7 +915,7 @@ class HttpClient(NetClient)
             break
          while chunk > 0 do {
             if \abort_flag then fail
-            s := read_str(min(1024, chunk)) | fail
+            s := read_str(min(1048576, chunk)) | fail
             add_some(s) | fail
             chunk -:= *s
          }
@@ -944,7 +944,7 @@ class HttpClient(NetClient)
       #
       # No content length.  Read until eof, then close.
       #
-      while s := read_str(1024) do {
+      while s := read_str(1048576) do {
          if \abort_flag then fail
          add_some(s) | fail
       }
@@ -969,7 +969,7 @@ class HttpClient(NetClient)
       #
       while self.read < length do {
          if \abort_flag then fail
-         s := read_str(min(1024, length - self.read)) | fail
+         s := read_str(min(1048576, length - self.read)) | fail
          add_some(s) | fail
       }
 
