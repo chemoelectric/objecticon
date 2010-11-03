@@ -548,3 +548,17 @@ procedure past(s)
    suspend find(s) + *s
 end
 
+# Invoke co-expression e, saving the scanning environment first, and
+# restoring it afterwards.  This is potentially useful when using
+# co-operating scheduled tasks (see {io.Task}), which switch from
+# within a scanning expression.
+#
+procedure save_scan(e)
+   local ss, sp, v
+   ss := &subject
+   sp := &pos
+   v := @e
+   &subject := ss
+   &pos := sp
+   return v
+end
