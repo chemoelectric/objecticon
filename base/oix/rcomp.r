@@ -9,9 +9,8 @@
 int anycmp(dptr dp1, dptr dp2)
    {
    int o1, o2;
-   long v1, v2, lresult;
+   long lresult;
    int iresult;
-   double rres1, rres2, rresult;
 
    /*
     * Get a collating number for dp1 and dp2.
@@ -32,27 +31,10 @@ int anycmp(dptr dp1, dptr dp2)
       return lexcmp(dp1,dp2);
 
    switch (Type(*dp1)) {
-
-
       case T_Integer:
-	 if (Type(*dp2) != T_Lrgint) {
-            v1 = IntVal(*dp1);
-            v2 = IntVal(*dp2);
-            if (v1 < v2)
-               return Less;
-            else if (v1 == v2)
-               return Equal;
-            else
-               return Greater;
-            }
-	 /* if dp2 is a Lrgint, flow into next case */
-
       case T_Lrgint:
-	 lresult = bigcmp(dp1, dp2);
-	 if (lresult == 0)
-	    return Equal;
-	 return ((lresult > 0) ? Greater : Less);
-
+      case T_Real:
+         return numcmp(dp1, dp2);
 
       case T_Coexpr:
          /*
@@ -117,14 +99,6 @@ int anycmp(dptr dp1, dptr dp2)
          return lexcmp(&(UcsBlk(*dp1).utf8),
             &(UcsBlk(*dp2).utf8));
 
-      case T_Real:
-         DGetReal(*dp1,rres1);
-         DGetReal(*dp2,rres2);
-         rresult = rres1 - rres2;
-	 if (rresult == 0.0)
-	    return Equal;
-	 return ((rresult > 0.0) ? Greater : Less);
-
       case T_Class:
           /*
            * Collate on class name.
@@ -145,12 +119,9 @@ int anycmp(dptr dp1, dptr dp2)
                           RecordBlk(*dp2).constructor->name);
          if (iresult == Equal) {
             lresult = (RecordBlk(*dp1).id - RecordBlk(*dp2).id);
-            if (lresult > 0)	/* coded this way because of code-generation */
-               return Greater;  /* bug in MSC++ 7.0A;  do not change. */
-            else if (lresult < 0)
-               return Less;
-            else
-               return Equal;
+            if (lresult == 0)
+                return Equal;
+            return ((lresult > 0) ? Greater : Less);
             }
         return iresult;
 
@@ -162,12 +133,9 @@ int anycmp(dptr dp1, dptr dp2)
                           ObjectBlk(*dp2).class->name);
          if (iresult == Equal) {
             lresult = (ObjectBlk(*dp1).id - ObjectBlk(*dp2).id);
-            if (lresult > 0)	/* coded this way because of code-generation */
-               return Greater;  /* bug in MSC++ 7.0A;  do not change. */
-            else if (lresult < 0)
-               return Less;
-            else
-               return Equal;
+            if (lresult == 0)
+                return Equal;
+            return ((lresult > 0) ? Greater : Less);
             }
         return iresult;
 
@@ -179,16 +147,10 @@ int anycmp(dptr dp1, dptr dp2)
                            CastBlk(*dp2).object->class->name);
           if (iresult == Equal) {
               lresult = (CastBlk(*dp1).object->id - CastBlk(*dp2).object->id);
-              if (lresult > 0)	/* coded this way because of code-generation */
-                  iresult = Greater;  /* bug in MSC++ 7.0A;  do not change. */
-              else if (lresult < 0)
-                  iresult = Less;
-              else
-                  iresult = Equal;
-              if (iresult == Equal) {
+              if (lresult == 0)
                   return lexcmp(CastBlk(*dp1).class->name,
                                 CastBlk(*dp2).class->name);
-              }
+              return ((lresult > 0) ? Greater : Less);
           }
           return iresult;
 
@@ -200,16 +162,10 @@ int anycmp(dptr dp1, dptr dp2)
                            MethpBlk(*dp2).object->class->name);
           if (iresult == Equal) {
               lresult = (MethpBlk(*dp1).object->id - MethpBlk(*dp2).object->id);
-              if (lresult > 0)	/* coded this way because of code-generation */
-                  iresult = Greater;  /* bug in MSC++ 7.0A;  do not change. */
-              else if (lresult < 0)
-                  iresult = Less;
-              else
-                  iresult = Equal;
-              if (iresult == Equal) {
+              if (lresult == 0)
                   return lexcmp(MethpBlk(*dp1).proc->name,
                                 MethpBlk(*dp2).proc->name);
-              }
+              return ((lresult > 0) ? Greater : Less);
           }
           return iresult;
 
@@ -420,9 +376,37 @@ int lexcmp(dptr dp1, dptr dp2)
     */
    if (l1 == l2)
       return Equal;
-   else if (l1 > l2)
-      return Greater;
-   else
-      return Less;
+   return ( (l1 > l2) ? Greater : Less);
 
    }
+
+
+/*
+ * Compare two numeric quantities.
+ */
+
+int numcmp(dptr x, dptr y)
+{
+    tended struct descrip lx, ly;
+    word xi, yi;
+    double xd, yd;
+    if (cnv:(exact)C_integer(*x, xi) && cnv:(exact)C_integer(*y, yi)) {
+        if (xi == yi)
+            return Equal;
+        return ((xi > yi) ? Greater : Less);
+    } else if (cnv:(exact)integer(*x, lx) && cnv:(exact)integer(*y, ly)) {
+        /* large integers only */
+        word lresult = bigcmp(&lx, &ly);
+        if (lresult == 0)
+	    return Equal;
+        return ((lresult > 0) ? Greater : Less);
+    } else if (cnv:C_double(*x, xd) && cnv:C_double(*y, yd)) {
+        if (xd == yd)
+            return Equal;
+        return ((xd > yd) ? Greater : Less);
+    } else {
+        syserr("Non-numeric parameter to numcmp function");
+        /* not reached */
+        return Equal;
+    }
+}

@@ -413,7 +413,7 @@ int ripow(double r, word n, dptr drslt)
 
 #define f_RealAdd(x,y) MakeReal(x + y, result);
 
-ArithFunc( f_add , f_Add , f_RealAdd )
+ArithFunc( numadd , f_Add , f_RealAdd )
 
 /* Subtract */
 
@@ -436,7 +436,7 @@ ArithFunc( f_add , f_Add , f_RealAdd )
 
 #define f_RealSub(x,y) MakeReal(x - y, result);
 
-ArithFunc(f_subtract , f_Sub , f_RealSub)
+ArithFunc(numsubtract , f_Sub , f_RealSub)
 
 /* Multiply */
 
@@ -459,7 +459,7 @@ ArithFunc(f_subtract , f_Sub , f_RealSub)
 
 #define f_RealMpy(x,y) MakeReal((long double)x * (long double)y, result);
 
-ArithFunc( f_multiply , f_Mpy , f_RealMpy)
+ArithFunc( nummultiply , f_Mpy , f_RealMpy)
 
 /* Division */
 
@@ -503,4 +503,4 @@ ArithFunc( f_multiply , f_Mpy , f_RealMpy)
 }
 #enddef
 
-ArithFunc( f_divide , f_Divide , f_RealDivide)
+ArithFunc( numdivide , f_Divide , f_RealDivide)

@@ -743,8 +743,8 @@ function lang_Prog_get_runtime_millis(c)
       }
       MakeInt(tp.tv_sec - prog->start_time.tv_sec, &ls);
       MakeInt((tp.tv_usec - prog->start_time.tv_usec) / 1000, &lm);
-      f_multiply(&ls, &thousanddesc, &lt);
-      f_add(&lt, &lm, &result);
+      nummultiply(&ls, &thousanddesc, &lt);
+      numadd(&lt, &lm, &result);
       return result;
    }
 end
@@ -760,8 +760,8 @@ function lang_Prog_get_startup_micros(c)
 
        MakeInt(prog->start_time.tv_sec, &ls);
        MakeInt(prog->start_time.tv_usec, &lm);
-       f_multiply(&ls, &milliondesc, &lt);
-       f_add(&lt, &lm, &result);
+       nummultiply(&ls, &milliondesc, &lt);
+       numadd(&lt, &lm, &result);
        return result;
    }
 end
@@ -1656,8 +1656,8 @@ function io_FileStream_seek(self, offset)
        tended struct descrip t, result;
        GetSelfFd();
 
-       if (bigcmp(&offset, &zerodesc) > 0) {
-           bigsub(&offset, &onedesc, &t);
+       if (numcmp(&offset, &zerodesc) > 0) {
+           numsubtract(&offset, &onedesc, &t);
            offset = t;
            whence = SEEK_SET;
        } else
@@ -1671,7 +1671,7 @@ function io_FileStream_seek(self, offset)
            fail;
        }
        convert_from_off_t(rc, &t);      
-       bigadd(&t, &onedesc, &result);
+       numadd(&t, &onedesc, &result);
        return result;
    }
 end
@@ -1687,7 +1687,7 @@ function io_FileStream_tell(self)
            fail;
        }
        convert_from_off_t(rc, &t);       
-       bigadd(&t, &onedesc, &result);
+       numadd(&t, &onedesc, &result);
        return result;
    }
 end
@@ -2698,8 +2698,8 @@ function util_Time_get_system_millis()
       }
       convert_from_time_t(tp.tv_sec, &ls);
       MakeInt(tp.tv_usec / 1000, &lm);
-      f_multiply(&ls, &thousanddesc, &lt);
-      f_add(&lt, &lm, &result);
+      nummultiply(&ls, &thousanddesc, &lt);
+      numadd(&lt, &lm, &result);
       return result;
    }
 end
@@ -2715,8 +2715,8 @@ function util_Time_get_system_micros()
       }
       convert_from_time_t(tp.tv_sec, &ls);
       MakeInt(tp.tv_usec, &lm);
-      f_multiply(&ls, &milliondesc, &lt);
-      f_add(&lt, &lm, &result);
+      nummultiply(&ls, &milliondesc, &lt);
+      numadd(&lt, &lm, &result);
       return result;
    }
 end

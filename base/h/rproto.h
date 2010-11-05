@@ -120,7 +120,7 @@ void            mksubs          (dptr var,dptr val,word i,word j, dptr result);
 word            mod3            (word a,word b);
 word            mul             (word a,word b);
 word            neg             (word a);
-int             numcmp          (dptr dp1,dptr dp2,dptr dp3);
+int             numcmp          (dptr dp1,dptr dp2);
 void            outimage        (FILE *f,dptr dp,int noimage);
 longlong        physicalmemorysize(void);
 word            prescan         (dptr d);
@@ -460,8 +460,8 @@ void set_curpstate(struct progstate *p);
 void set_curr_pf(struct p_frame *x);
 void synch_ipc(void);
 
-void f_add(dptr x, dptr y, dptr result);
-void f_subtract(dptr x, dptr y, dptr result);
-void f_multiply(dptr x, dptr y, dptr result);
-void f_divide(dptr x, dptr y, dptr result);
+void numadd(dptr x, dptr y, dptr result);
+void numsubtract(dptr x, dptr y, dptr result);
+void nummultiply(dptr x, dptr y, dptr result);
+void numdivide(dptr x, dptr y, dptr result);
 
