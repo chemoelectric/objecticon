@@ -1514,11 +1514,11 @@ void bigshift(dptr da, dptr db, dptr dx)
 
 word bigcmp(dptr da, dptr db)
 {
-    struct b_bignum *a = &BignumBlk(*da);
-    struct b_bignum *b = &BignumBlk(*db);
-    word alen, blen; 
-
     if (Type(*da) == T_Lrgint && Type(*db) == T_Lrgint) {
+        struct b_bignum *a = &BignumBlk(*da);
+        struct b_bignum *b = &BignumBlk(*db);
+        word alen, blen; 
+
         if (a->sign != b->sign)
             return (b->sign - a->sign);
         alen = LEN(a);

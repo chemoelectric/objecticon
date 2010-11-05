@@ -250,9 +250,9 @@ operator ... toby(from, to, by)
    }
    else if (cnv:(exact)integer(by,by1) && cnv:(exact)integer(from,from1) && cnv:integer(to,to1)) {
        word sn = bigcmp(&by1, &zerodesc);
-       if (sn == 0) {
+       if (sn == 0)
            runerr(211, by1);
-       }
+
        if (sn > 0) {
            for ( ; bigcmp(&from1, &to1) <= 0;) {
                suspend from1;

@@ -438,10 +438,9 @@ function seq(from, by)
         fail;
    }
    else if (cnv:(exact)integer(by,by1) && cnv:(exact)integer(from,from1)) {
-       word sn = bigcmp(&by1, &zerodesc);
-       if (sn == 0) {
+       if (bigcmp(&by1, &zerodesc) == 0)
            runerr(211, by1);
-       }
+
        for (;;) {
            suspend from1;
            bigadd(&from1, &by1, &from1);
