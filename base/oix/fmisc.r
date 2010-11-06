@@ -137,8 +137,7 @@ end
  *  of a macro.
  */
 
-#begdef  bitop(func_name, c_op, operation)
-#func_name "(i,j) - produce bitwise " operation " of i and j."
+#begdef  bitop(func_name, op)
 function func_name(i, j, a[n])
    /*
     * i and j must be integers
@@ -151,11 +150,7 @@ function func_name(i, j, a[n])
    body {
       int k ;
       tended struct descrip result;
-      if ((Type(i)==T_Lrgint) || (Type(j)==T_Lrgint)) {
-         big_ ## c_op(i, j);
-      }
-      else
-          MakeInt(IntVal(i) c_op IntVal(j), &result);
+      op(i, j, result);
 
       /*
        * Process any optional additonal params.
@@ -163,11 +158,7 @@ function func_name(i, j, a[n])
       for (k = 0; k < n; ++k) {
           if (!cnv:integer(a[k], a[k]))
               runerr(101, a[k]);
-          if ((Type(result) == T_Lrgint) || (Type(a[k]) == T_Lrgint)) {
-              big_ ## c_op(result, a[k]);
-          }
-          else
-              MakeInt(IntVal(result) c_op IntVal(a[k]), &result);
+          op(result, a[k], result);
       }
 
       return result;
@@ -175,28 +166,13 @@ function func_name(i, j, a[n])
 end
 #enddef
 
-#define bitand &
-#define bitor  |
-#define bitxor ^
-#begdef big_bitand(x,y)
-{
-    bigand(&x, &y, &result);
-}
-#enddef
-#begdef big_bitor(x,y)
-{
-    bigor(&x, &y, &result);
-}
-#enddef
-#begdef big_bitxor(x,y)
-{
-    bigxor(&x, &y, &result);
-}
-#enddef
+#define bitand(x,y,result) bigand(&x, &y, &result);
+#define bitor(x,y,result) bigor(&x, &y, &result);
+#define bitxor(x,y,result) bigxor(&x, &y, &result);
 
-bitop(iand, bitand, "AND")          /* iand(i,j) bitwise "and" of i and j */
-bitop(ior,  bitor, "inclusive OR")  /* ior(i,j) bitwise "or" of i and j */
-bitop(ixor, bitxor, "exclusive OR") /* ixor(i,j) bitwise "xor" of i and j */
+bitop(iand, bitand)          /* iand(i,j) bitwise "and" of i and j */
+bitop(ior,  bitor)  /* ior(i,j) bitwise "or" of i and j */
+bitop(ixor, bitxor) /* ixor(i,j) bitwise "xor" of i and j */
 
 
 "icom(i) - produce bitwise complement (one's complement) of i."
@@ -239,36 +215,14 @@ function ishift(i,j)
 
    if !cnv:integer(i) then
       runerr(101, i)
-   if !cnv:integer(j) then
+   if !cnv:C_integer(j) then
       runerr(101, j)
 
    body {
-      uword ci;			 /* shift in 0s, even if negative */
-      word cj;
-      if (Type(j) == T_Lrgint)
-         runerr(101,j);
-      cj = IntVal(j);
-      if (Type(i) == T_Lrgint || cj >= WordBits
-      || ((ci=(uword)IntVal(i))!=0 && cj>0 && (ci >= (1<<(WordBits-cj-1))))) {
-         tended struct descrip result;
-         bigshift(&i, &j, &result);
-         return result;
-         }
-      /*
-       * Check for a shift of WordSize or greater; handle specially because
-       *  this is beyond C's defined behavior.  Otherwise shift as requested.
-       */
-      if (cj >= WordBits)
-         return C_integer 0;
-      if (cj <= -WordBits)
-         return C_integer ((IntVal(i) >= 0) ? 0 : -1);
-      if (cj >= 0)
-         return C_integer ci << cj;
-      if (IntVal(i) >= 0)
-         return C_integer ci >> -cj;
-      /*else*/
-         return C_integer ~(~ci >> -cj);	/* sign extending shift */
-      }
+       tended struct descrip result;
+       bigshift(&i, j, &result);
+       return result;
+    }
 end
 
 
@@ -438,7 +392,7 @@ function seq(from, by)
         fail;
    }
    else if (cnv:(exact)integer(by,by1) && cnv:(exact)integer(from,from1)) {
-       if (bigcmp(&by1, &zerodesc) == 0)
+       if (bigsign(&by1) == 0)
            runerr(211, by1);
 
        for (;;) {
@@ -923,7 +877,7 @@ static dptr nth(dptr d)
          * Find the nth field of a record.
          */
         bp = BlkLoc(*d);
-        i = cvpos((long)sort_field, (long)(bp->record.constructor->n_fields));
+        i = cvpos(sort_field, bp->record.constructor->n_fields);
         if (i != CvtFail && i <= bp->record.constructor->n_fields)
             rv = &bp->record.fields[i-1];
     }
@@ -933,7 +887,7 @@ static dptr nth(dptr d)
          * Find the nth element of a list.
          */
         lp = &ListBlk(*d);
-        i = cvpos ((long)sort_field, (long)lp->size);
+        i = cvpos (sort_field, lp->size);
         if (i != CvtFail && i <= lp->size) {
             struct b_lelem *le;
             word pos;

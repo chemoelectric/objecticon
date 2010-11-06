@@ -79,7 +79,7 @@ void            cptable_0       (dptr dp1,dptr dp2,word size);
 void            cptable_1       (dptr dp1,dptr dp2,word size);
 void            cpslots         (dptr dp1,dptr slotptr,word i, word j);
 int             csetcmp         (unsigned int *cs1,unsigned int *cs2);
-word            cvpos           (long pos,long len);
+word            cvpos           (word pos,word len);
 void            dealcblk_0      (union block *bp);
 void            dealcblk_1      (union block *bp);
 void            dealcstr_0      (char *p);
@@ -120,7 +120,6 @@ void            mksubs          (dptr var,dptr val,word i,word j, dptr result);
 word            mod3            (word a,word b);
 word            mul             (word a,word b);
 word            neg             (word a);
-int             numcmp          (dptr dp1,dptr dp2);
 void            outimage        (FILE *f,dptr dp,int noimage);
 longlong        physicalmemorysize(void);
 word            prescan         (dptr d);
@@ -164,9 +163,10 @@ int   bigpowri        (double a, dptr db, dptr drslt);
 void  bigand          (dptr da, dptr db, dptr dx);
 void  bigor           (dptr da, dptr db, dptr dx);
 void  bigxor          (dptr da, dptr db, dptr dx);
-void  bigshift        (dptr da, dptr db, dptr dx);
-word  bigcmp          (dptr da, dptr db);
+void  bigshift        (dptr da, word n, dptr dx);
+int   bigcmp          (dptr da, dptr db);
 void  bigrand         (dptr da, dptr dx);
+int   bigsign         (dptr da);
 
 char *buffstr(dptr d);
 void buffnstr(dptr d, char **s, ...);
@@ -348,7 +348,6 @@ word iipow         (word n1, word n2);
 void    init            (char *name, int *argcp, char *argv[], int trc_init);
 int     kbhit           (void);
 int     order           (dptr dp);
-int     ripow           (double r, word n, dptr rslt);
 void    rtos            (double n,dptr dp,char *s);
 
 struct progstate *alcprog(long icodesize);
@@ -459,9 +458,3 @@ struct b_proc *clone_b_proc(struct b_proc *bp);
 void set_curpstate(struct progstate *p);
 void set_curr_pf(struct p_frame *x);
 void synch_ipc(void);
-
-void numadd(dptr x, dptr y, dptr result);
-void numsubtract(dptr x, dptr y, dptr result);
-void nummultiply(dptr x, dptr y, dptr result);
-void numdivide(dptr x, dptr y, dptr result);
-

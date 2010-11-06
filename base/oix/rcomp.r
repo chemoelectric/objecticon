@@ -33,8 +33,7 @@ int anycmp(dptr dp1, dptr dp2)
    switch (Type(*dp1)) {
       case T_Integer:
       case T_Lrgint:
-      case T_Real:
-         return numcmp(dp1, dp2);
+         return bigcmp(dp1, dp2);
 
       case T_Coexpr:
          /*
@@ -98,6 +97,16 @@ int anycmp(dptr dp1, dptr dp2)
           */
          return lexcmp(&(UcsBlk(*dp1).utf8),
             &(UcsBlk(*dp2).utf8));
+
+      case T_Real: {
+         double rres1, rres2, rresult;
+         DGetReal(*dp1,rres1);
+         DGetReal(*dp2,rres2);
+         rresult = rres1 - rres2;
+         if (rresult == 0.0)
+            return Equal;
+         return ((rresult > 0.0) ? Greater : Less);
+      }
 
       case T_Class:
           /*
@@ -379,34 +388,3 @@ int lexcmp(dptr dp1, dptr dp2)
    return ( (l1 > l2) ? Greater : Less);
 
    }
-
-
-/*
- * Compare two numeric quantities.
- */
-
-int numcmp(dptr x, dptr y)
-{
-    tended struct descrip lx, ly;
-    word xi, yi;
-    double xd, yd;
-    if (cnv:(exact)C_integer(*x, xi) && cnv:(exact)C_integer(*y, yi)) {
-        if (xi == yi)
-            return Equal;
-        return ((xi > yi) ? Greater : Less);
-    } else if (cnv:(exact)integer(*x, lx) && cnv:(exact)integer(*y, ly)) {
-        /* large integers only */
-        word lresult = bigcmp(&lx, &ly);
-        if (lresult == 0)
-	    return Equal;
-        return ((lresult > 0) ? Greater : Less);
-    } else if (cnv:C_double(*x, xd) && cnv:C_double(*y, yd)) {
-        if (xd == yd)
-            return Equal;
-        return ((xd > yd) ? Greater : Less);
-    } else {
-        syserr("Non-numeric parameter to numcmp function");
-        /* not reached */
-        return Equal;
-    }
-}

@@ -35,7 +35,7 @@ function delete(s,x)
                 runerr(101, x);
             }
             size = ListBlk(s).size;
-            i = cvpos((long)cnv_x, size);
+            i = cvpos(cnv_x, size);
             if (i == CvtFail || i > size)
                 fail;
 
@@ -143,7 +143,7 @@ function insert(s, x, y)
                 runerr(101, x);
             }
             size = ListBlk(s).size;
-            i = cvpos((long)cnv_x, size);
+            i = cvpos(cnv_x, size);
             if (i == CvtFail || i > size + 1)
                 fail;
             if (i == size + 1) {

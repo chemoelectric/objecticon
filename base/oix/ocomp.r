@@ -5,85 +5,75 @@
 /*
  * NumComp is a macro that defines the form of a numeric comparisons.
  */
-#begdef NumComp(icon_op, func_name, c_op, descript)
-"x " #icon_op " y - test if x is numerically " #descript " y."
-   operator icon_op func_name(x,y)
+#begdef NumComp(icon_op, func_name, int_op, real_op)
 
-   arith_case (x, y) of {
-      C_integer: {
-         body {
-            if c_op(x, y)
-               return C_integer y;
-            fail;
-            }
-         }
-      integer: { /* large integers only */
-         body {
-            if (big_ ## c_op (x,y)) {
-               return y;
-   	    }
-            fail;
-            }
-         }
-      C_double: {
-         body {
-            if c_op (x, y)
-               return C_double y;
-            fail;
-            }
-         }
+operator icon_op func_name(x,y)
+   body {
+      tended struct descrip ix, iy;
+      if (cnv:(exact)integer(x, ix) && cnv:(exact)integer(y, iy)) {
+          if (int_op (ix, iy))
+             return iy;
+      } else {
+          double dx, dy;
+          if (!cnv:C_double(x, dx))
+              runerr(102, x);
+          if (!cnv:C_double(y, dy))
+              runerr(102, y);
+          if real_op (dx, dy)
+               return C_double dy;
       }
+      fail;
+   }
 end
-
 #enddef
 
 /*
  * x = y
  */
-#define NumEq(x,y) (x == y)
-#define big_NumEq(x,y) (bigcmp(&x,&y) == 0)
-NumComp( = , numeq, NumEq, equal to)
+#define RealNumEq(x,y) (x == y)
+#define IntNumEq(x,y) (bigcmp(&x,&y) == 0)
+NumComp( = , numeq, IntNumEq, RealNumEq)
 
 /*
  * x >= y
  */
-#define NumGe(x,y) (x >= y)
-#define big_NumGe(x,y) (bigcmp(&x,&y) >= 0)
-NumComp( >=, numge, NumGe, greater than or equal to)
+#define RealNumGe(x,y) (x >= y)
+#define IntNumGe(x,y) (bigcmp(&x,&y) >= 0)
+NumComp( >=, numge, IntNumGe, RealNumGe)
 
 /*
  * x > y
  */
-#define NumGt(x,y) (x > y)
-#define big_NumGt(x,y) (bigcmp(&x,&y) > 0)
-NumComp( > , numgt, NumGt,  greater than)
+#define RealNumGt(x,y) (x > y)
+#define IntNumGt(x,y) (bigcmp(&x,&y) > 0)
+NumComp( > , numgt, IntNumGt, RealNumGt)
 
 /*
  * x <= y
  */
-#define NumLe(x,y) (x <= y)
-#define big_NumLe(x,y) (bigcmp(&x,&y) <= 0)
-NumComp( <=, numle, NumLe, less than or equal to)
+#define RealNumLe(x,y) (x <= y)
+#define IntNumLe(x,y) (bigcmp(&x,&y) <= 0)
+NumComp( <=, numle, IntNumLe, RealNumLe)
 
 /*
  * x < y
  */
-#define NumLt(x,y) (x < y)
-#define big_NumLt(x,y) (bigcmp(&x,&y) < 0)
-NumComp( < , numlt, NumLt,  less than)
+#define RealNumLt(x,y) (x < y)
+#define IntNumLt(x,y) (bigcmp(&x,&y) < 0)
+NumComp( < , numlt, IntNumLt, RealNumLt)
 
 /*
  * x ~= y
  */
-#define NumNe(x,y) (x != y)
-#define big_NumNe(x,y) (bigcmp(&x,&y) != 0)
-NumComp( ~=, numne, NumNe, not equal to)
+#define RealNumNe(x,y) (x != y)
+#define IntNumNe(x,y) (bigcmp(&x,&y) != 0)
+NumComp( ~=, numne, IntNumNe, RealNumNe)
 
 /*
  * StrComp is a macro that defines the form of a string comparisons.
  */
-#begdef StrComp(icon_op, func_name, special_test_str, special_test_ucs, c_comp, comp_value, descript)
-"x " #icon_op " y - test if x is lexically " #descript " y."
+#begdef StrComp(icon_op, func_name, special_test_str, special_test_ucs, c_comp, comp_value)
+
 operator icon_op func_name(x, y)
    body {
      if (need_ucs(&x) || need_ucs(&y)) {
@@ -122,13 +112,13 @@ end
 #enddef
 
 StrComp(==,  lexeq, (StrLen(x) == StrLen(y)) &&, 
-        (StrLen(UcsBlk(x).utf8) == StrLen(UcsBlk(y).utf8)) &&,==, Equal, equal to) 
+        (StrLen(UcsBlk(x).utf8) == StrLen(UcsBlk(y).utf8)) &&,==, Equal) 
 StrComp(~==, lexne, (StrLen(x) != StrLen(y)) ||, 
-        (StrLen(UcsBlk(x).utf8) != StrLen(UcsBlk(y).utf8)) ||, !=, Equal, not equal to)
-StrComp(>>=, lexge, , , !=, Less,    greater than or equal to) 
-StrComp(>>,  lexgt, , , ==, Greater, greater than)
-StrComp(<<=, lexle, , , !=, Greater, less than or equal to)
-StrComp(<<,  lexlt, , , ==, Less,    less than)
+        (StrLen(UcsBlk(x).utf8) != StrLen(UcsBlk(y).utf8)) ||, !=, Equal)
+StrComp(>>=, lexge, , , !=, Less    ) 
+StrComp(>>,  lexgt, , , ==, Greater )
+StrComp(<<=, lexle, , , !=, Greater )
+StrComp(<<,  lexlt, , , ==, Less    )
 
 
 "x === y - test equivalence of x and y."

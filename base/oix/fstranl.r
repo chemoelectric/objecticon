@@ -12,7 +12,7 @@
    declare {
       word cnv_ ## i;
       word cnv_ ## j;
-      int slen;
+      word slen;
       }
 
    body {   

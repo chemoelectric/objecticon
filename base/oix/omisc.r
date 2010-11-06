@@ -249,7 +249,7 @@ operator ... toby(from, to, by)
         fail;
    }
    else if (cnv:(exact)integer(by,by1) && cnv:(exact)integer(from,from1) && cnv:integer(to,to1)) {
-       word sn = bigcmp(&by1, &zerodesc);
+       int sn = bigsign(&by1);
        if (sn == 0)
            runerr(211, by1);
 

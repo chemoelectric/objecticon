@@ -171,7 +171,7 @@ static void extract_package(dptr s, dptr d)
 #begdef convert_to_macro(TYPE)
 static int convert_to_##TYPE(dptr src, TYPE *dest)
 {
-    struct descrip bits, intneg16, int65535, digs;
+    struct descrip bits, int65535;
     tended struct descrip i, t, u, pwr;
     TYPE res = 0;
     int pos = 0, k;
@@ -187,17 +187,15 @@ static int convert_to_##TYPE(dptr src, TYPE *dest)
         return 1;
     }
 
-    MakeInt(-16, &intneg16);
     MakeInt(65535, &int65535);
     /* pwr = 2 ^ "n bits in TYPE" */
-    MakeInt(sizeof(TYPE) * 8, &digs);
-    bigshift(&onedesc, &digs, &pwr);
+    bigshift(&onedesc, sizeof(TYPE) * 8, &pwr);
     i = *src;
-    if (bigcmp(&i, &zerodesc) < 0) {
+    if (bigsign(&i) < 0) {
         /* Check TYPE is signed */
         if ((TYPE)-1 > 0)
             ReturnErrVal(101, *src, 0);
-        bigshift(&pwr, &minusonedesc, &t);
+        bigshift(&pwr, -1, &t);
         /* src must be >= -ve pwr/2 */
         bigneg(&t, &u);
         if (bigcmp(&i, &u) < 0)
@@ -210,7 +208,7 @@ static int convert_to_##TYPE(dptr src, TYPE *dest)
             ReturnErrVal(101, *src, 0);
     } else {
         /* TYPE signed - src must be < pwr/2 */
-        bigshift(&pwr, &minusonedesc, &t);
+        bigshift(&pwr, -1, &t);
         if (bigcmp(&i, &t) >= 0)
             ReturnErrVal(101, *src, 0);
     }
@@ -221,7 +219,7 @@ static int convert_to_##TYPE(dptr src, TYPE *dest)
      */
     for (k = 0; k < sizeof(TYPE) / 2; ++k) {
         bigand(&i, &int65535, &bits);
-        bigshift(&i, &intneg16, &i);
+        bigshift(&i, -16, &i);
         res |= ((ulonglong)IntVal(bits) << pos);
         pos += 16;
     }
@@ -235,7 +233,7 @@ static void convert_from_##TYPE(TYPE src, dptr dest)
 {
     TYPE j = src;
     int k;
-    struct descrip pos = zerodesc, digs;
+    word pos = 0;
     tended struct descrip res, chunk, pwr;
 
     /* See if it fits in a word.  For an unsigned type, just compare
@@ -254,14 +252,13 @@ static void convert_from_##TYPE(TYPE src, dptr dest)
         int bits = j & 0xffff;
         j = j >> 16;
         MakeInt(bits, &chunk);
-        bigshift(&chunk, &pos, &chunk);
+        bigshift(&chunk, pos, &chunk);
         bigadd(&res, &chunk, &res);
-        IntVal(pos) += 16;
+        pos += 16;
     }
     if (src < 0) {
         /* pwr = 2 ^ "n bits in TYPE" */
-        MakeInt(sizeof(TYPE) * 8, &digs);
-        bigshift(&onedesc, &digs, &pwr);
+        bigshift(&onedesc, sizeof(TYPE) * 8, &pwr);
         /* Convert from two's complement to true value - res := res - pwr */
         bigsub(&res, &pwr, &res);
     }
@@ -743,8 +740,8 @@ function lang_Prog_get_runtime_millis(c)
       }
       MakeInt(tp.tv_sec - prog->start_time.tv_sec, &ls);
       MakeInt((tp.tv_usec - prog->start_time.tv_usec) / 1000, &lm);
-      nummultiply(&ls, &thousanddesc, &lt);
-      numadd(&lt, &lm, &result);
+      bigmul(&ls, &thousanddesc, &lt);
+      bigadd(&lt, &lm, &result);
       return result;
    }
 end
@@ -760,8 +757,8 @@ function lang_Prog_get_startup_micros(c)
 
        MakeInt(prog->start_time.tv_sec, &ls);
        MakeInt(prog->start_time.tv_usec, &lm);
-       nummultiply(&ls, &milliondesc, &lt);
-       numadd(&lt, &lm, &result);
+       bigmul(&ls, &milliondesc, &lt);
+       bigadd(&lt, &lm, &result);
        return result;
    }
 end
@@ -1656,8 +1653,8 @@ function io_FileStream_seek(self, offset)
        tended struct descrip t, result;
        GetSelfFd();
 
-       if (numcmp(&offset, &zerodesc) > 0) {
-           numsubtract(&offset, &onedesc, &t);
+       if (bigsign(&offset) > 0) {
+           bigsub(&offset, &onedesc, &t);
            offset = t;
            whence = SEEK_SET;
        } else
@@ -1671,7 +1668,7 @@ function io_FileStream_seek(self, offset)
            fail;
        }
        convert_from_off_t(rc, &t);      
-       numadd(&t, &onedesc, &result);
+       bigadd(&t, &onedesc, &result);
        return result;
    }
 end
@@ -1687,7 +1684,7 @@ function io_FileStream_tell(self)
            fail;
        }
        convert_from_off_t(rc, &t);       
-       numadd(&t, &onedesc, &result);
+       bigadd(&t, &onedesc, &result);
        return result;
    }
 end
@@ -2698,8 +2695,8 @@ function util_Time_get_system_millis()
       }
       convert_from_time_t(tp.tv_sec, &ls);
       MakeInt(tp.tv_usec / 1000, &lm);
-      nummultiply(&ls, &thousanddesc, &lt);
-      numadd(&lt, &lm, &result);
+      bigmul(&ls, &thousanddesc, &lt);
+      bigadd(&lt, &lm, &result);
       return result;
    }
 end
@@ -2715,8 +2712,8 @@ function util_Time_get_system_micros()
       }
       convert_from_time_t(tp.tv_sec, &ls);
       MakeInt(tp.tv_usec, &lm);
-      nummultiply(&ls, &milliondesc, &lt);
-      numadd(&lt, &lm, &result);
+      bigmul(&ls, &milliondesc, &lt);
+      bigadd(&lt, &lm, &result);
       return result;
    }
 end
