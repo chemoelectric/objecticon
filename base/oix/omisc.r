@@ -203,55 +203,12 @@ end
 
 operator ... toby(from, to, by)
    body {
-    word by0, from0, to0;
     tended struct descrip by1, from1, to1;
     double by2, from2, to2;
-    if (cnv:(exact)C_integer(by,by0) && cnv:(exact)C_integer(from,from0) && cnv:C_integer(to,to0)) {
-        /*
-         * by must not be zero.
-         */
-        if (by0 == 0)
-            Irunerr(211, by0);
-
-        if (by0 > 0) {
-            if (to0 + by0 > to0) {
-                while (from0 <= to0) {
-                    suspend C_integer from0;
-                    from0 += by0;
-                }
-            } else {
-                word t;
-                while (from0 <= to0) {
-                    suspend C_integer from0;
-                    t = from0;
-                    from0 += by0;
-                    if (from0 < t)
-                        break;
-                }
-            }
-        } else {     /* by < 0 */
-            if (to0 + by0 < to0) {
-                while (from0 >= to0) {
-                    suspend C_integer from0;
-                    from0 += by0;
-                }
-            } else {
-                word t;
-                while (from0 >= to0) {
-                    suspend C_integer from0;
-                    t = from0;
-                    from0 += by0;
-                    if (from0 > t)
-                        break;
-                }
-            }
-        }
-        fail;
-   }
-   else if (cnv:(exact)integer(by,by1) && cnv:(exact)integer(from,from1) && cnv:integer(to,to1)) {
+    if (cnv:(exact)integer(by,by1) && cnv:(exact)integer(from,from1) && cnv:integer(to,to1)) {
        int sn = bigsign(&by1);
        if (sn == 0)
-           runerr(211, by1);
+           runerr(211);
 
        if (sn > 0) {
            for ( ; bigcmp(&from1, &to1) <= 0;) {
@@ -268,7 +225,7 @@ operator ... toby(from, to, by)
    }
    else if (cnv:C_double(from,from2) && cnv:C_double(to,to2) && cnv:C_double(by,by2)) {
        if (by2 == 0)
-           Irunerr(211, (int)by2);
+           runerr(211);
 
        if (by2 > 0)
            for ( ; from2 <= to2; from2 += by2) {
