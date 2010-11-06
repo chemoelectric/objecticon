@@ -114,7 +114,7 @@ static struct rangeset *rangeset_diff(struct rangeset *r1, struct rangeset *r2);
 static struct rangeset *rangeset_compl(struct rangeset *x);
 static int cset_range_of_pos(struct rangeset *rs, word pos, int *count);
 static int cset_size(struct rangeset *rs);
-static word ucs_length(char *utf8, int utf8_len);
+static int ucs_length(char *utf8, int utf8_len);
 
 static struct str_buf opt_sbuf;
 
@@ -2748,7 +2748,7 @@ static void fold_subsc(struct lnode *n)
 
     switch (l1.type) {
         case UCS: {
-            word len = ucs_length(l1.u.str.s, l1.u.str.len);
+            int len = ucs_length(l1.u.str.s, l1.u.str.len);
             char *p = l1.u.str.s, *t;
             i = cvpos(l2.u.i, len);
             if (i == CvtFail || i > len)
@@ -2864,7 +2864,7 @@ static void fold_sect(struct lnode *n, int op)
 
     switch (l1.type) {
         case UCS: {
-            word len = ucs_length(l1.u.str.s, l1.u.str.len);
+            int len = ucs_length(l1.u.str.s, l1.u.str.len);
             char *start = l1.u.str.s, *end;
             i = cvpos(i, len);
             if (i == CvtFail)
@@ -3102,7 +3102,7 @@ static int cset_size(struct rangeset *rs)
     return len;
 }
 
-static word ucs_length(char *utf8, int utf8_len)
+static int ucs_length(char *utf8, int utf8_len)
 {
     int len = 0;
     char *e = utf8 + utf8_len;
