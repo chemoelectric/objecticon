@@ -29,7 +29,7 @@ struct literal {
 #define Equal           0
 #define Greater         1
 
-static word cvpos(long pos, long len);
+static word cvpos(word pos, word len);
 static int changes(struct lnode *n);
 static int lexcmp(struct literal *x, struct literal *y);
 static int equiv(struct literal *x, struct literal *y);
@@ -114,7 +114,7 @@ static struct rangeset *rangeset_diff(struct rangeset *r1, struct rangeset *r2);
 static struct rangeset *rangeset_compl(struct rangeset *x);
 static int cset_range_of_pos(struct rangeset *rs, word pos, int *count);
 static int cset_size(struct rangeset *rs);
-static int ucs_length(char *utf8, int utf8_len);
+static word ucs_length(char *utf8, int utf8_len);
 
 static struct str_buf opt_sbuf;
 
@@ -2748,7 +2748,7 @@ static void fold_subsc(struct lnode *n)
 
     switch (l1.type) {
         case UCS: {
-            int len = ucs_length(l1.u.str.s, l1.u.str.len);
+            word len = ucs_length(l1.u.str.s, l1.u.str.len);
             char *p = l1.u.str.s, *t;
             i = cvpos(l2.u.i, len);
             if (i == CvtFail || i > len)
@@ -2864,7 +2864,7 @@ static void fold_sect(struct lnode *n, int op)
 
     switch (l1.type) {
         case UCS: {
-            int len = ucs_length(l1.u.str.s, l1.u.str.len);
+            word len = ucs_length(l1.u.str.s, l1.u.str.len);
             char *start = l1.u.str.s, *end;
             i = cvpos(i, len);
             if (i == CvtFail)
@@ -3059,27 +3059,20 @@ static void fold_neqv(struct lnode *n)
     free_literal(&l2);
 }
 
-static word cvpos(long pos, long len)
+static word cvpos(word pos, word len)
 {
-    word p;
-
-    /*
-     * Make sure the position is in the range of an int. (?)
-     */
-    if ((long)(p = pos) != pos)
-        return CvtFail;
     /*
      * Make sure the position is within range.
      */
-    if (p < -len || p > len + 1)
+    if (pos < -len || pos > len + 1)
         return CvtFail;
     /*
      * If the position is greater than zero, just return it.  Otherwise,
      *  convert the zero/negative position.
      */
     if (pos > 0)
-        return p;
-    return (len + p + 1);
+        return pos;
+    return (len + pos + 1);
 }
 
 static int cset_range_of_pos(struct rangeset *rs, word pos, int *count)
@@ -3109,7 +3102,7 @@ static int cset_size(struct rangeset *rs)
     return len;
 }
 
-static int ucs_length(char *utf8, int utf8_len)
+static word ucs_length(char *utf8, int utf8_len)
 {
     int len = 0;
     char *e = utf8 + utf8_len;
