@@ -111,7 +111,6 @@ void init_lex()
        */
       sym_add(All_fields,    spec_str("all_fields"),    OtherDcl, 0);
       sym_add(Any_value,     spec_str("any_value"),     OtherDcl, 0);
-      sym_add(Arith_case,    spec_str("arith_case"),    OtherDcl, 0);
       sym_add(Body,          spec_str("body"),          OtherDcl, 0);
       sym_add(C_Double,      spec_str("C_double"),      OtherDcl, 0);
       sym_add(C_Integer,     spec_str("C_integer"),     OtherDcl, 0);
@@ -122,13 +121,11 @@ void init_lex()
       sym_add(Def,           spec_str("def"),           OtherDcl, 0);
       sym_add(Empty_type,    spec_str("empty_type"),    OtherDcl, 0);
       sym_add(End,           spec_str("end"),           OtherDcl, 0);
-      sym_add(Errorfail,     spec_str("errorfail"),     OtherDcl, 0);
       sym_add(Exact,         spec_str("exact"),         OtherDcl, 0);
       sym_add(Fail,          spec_str("fail"),          OtherDcl, 0);
       sym_add(TokFunction,   spec_str("function"),      OtherDcl, 0);
       sym_add(Is,            spec_str("is"),            OtherDcl, 0);
       sym_add(Keyword,       spec_str("keyword"),       OtherDcl, 0);
-      sym_add(Len_case,      spec_str("len_case"),      OtherDcl, 0);
       sym_add(Named_var,     spec_str("named_var"),     OtherDcl, 0);
       sym_add(New,           spec_str("new"),           OtherDcl, 0);
       sym_add(Of,            spec_str("of"),            OtherDcl, 0);

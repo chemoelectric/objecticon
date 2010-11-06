@@ -138,51 +138,6 @@ struct node *stmts;
    return n;
    }
 
-/*
- * arith_nd - create a node for an arith_case statement.
- */
-struct node *arith_nd(tok, p1, p2, c_int, ci_act, intgr, i_act, dbl, d_act)
-struct token *tok;
-struct node *p1;
-struct node *p2;
-struct node *c_int;
-struct node *ci_act;
-struct node *intgr;
-struct node *i_act;
-struct node *dbl;
-struct node *d_act;
-   {
-   struct node *n;
-
-   /*
-    * Insure the cases are what we expect.
-    */
-   if (c_int->tok->tok_id != C_Integer)
-      errt3(c_int->tok, "expected \"C_integer\", found \"", c_int->tok->image,
-         "\"");
-   if (intgr->tok->image != icontypes[int_typ].id)
-      errt3(intgr->tok, "expected \"integer\", found \"", intgr->tok->image,
-         "\"");
-   if (dbl->tok->tok_id != C_Double)
-      errt3(dbl->tok, "expected \"C_double\", found \"", dbl->tok->image,
-         "\"");
-
-   /*
-    * Indicate in the symbol table that the arguments are converted to C
-    *  values.
-    */
-   dst_alloc(c_int, p1);
-   dst_alloc(c_int, p2);
-   dst_alloc(dbl, p1);
-   dst_alloc(dbl, p2);
-
-   free_tree(c_int);
-   free_tree(intgr);
-   free_tree(dbl);
-
-   n = node3(TrnryNd, NULL, ci_act, i_act, d_act);
-   return node3(TrnryNd, tok, p1, p2, n);
-   }
 
 struct node *dest_node(tok)
 struct token *tok;

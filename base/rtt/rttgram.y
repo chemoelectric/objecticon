@@ -33,10 +33,10 @@
 %token <t> '^' ':' ';' '<' '=' '>' '?' '!' '@' '\\'
 
 %token <t> Runerr Is Cnv Def Exact Empty_type IconType Component Variable
-%token <t> Any_value Named_var Struct_var C_Integer Arith_case Str_Or_Ucs
+%token <t> Any_value Named_var Struct_var C_Integer Str_Or_Ucs
 %token <t> C_Double C_String Tmp_string Body End TokFunction Keyword
 %token <t> Operator Underef Declare Suspend Fail
-%token <t> TokType New All_fields Then Type_case Of Len_case Errorfail
+%token <t> TokType New All_fields Then Type_case Of
 
 %type <t> unary_op assign_op struct_or_union typedefname
 %type <t> identifier op_name
@@ -64,7 +64,7 @@
 %type <n> runerr variable checking_conversions label
 %type <n> type_check type_select_lst opt_default type_select selector_lst
 %type <n> c_opt_default c_type_select c_type_select_lst non_lbl_stmt
-%type <n> simple_check_conj simple_check len_select_lst len_select
+%type <n> simple_check_conj simple_check
 
 
 /* Get rid of shift/reduce conflict on Else. Use precedence to force shift of
@@ -681,7 +681,6 @@ jump_stmt
    | Return ret_val ';'  {$$ = node1(PrefxNd, $1, $2); free_t($3);}
    | Suspend ret_val ';' {$$ = node1(PrefxNd, $1, $2); op_generator = 1; free_t($3);}
    | Fail ';'            {$$ = node1(PrimryNd, $1, NULL); free_t($2);}
-   | Errorfail ';'       {$$ = node1(PrimryNd, $1, NULL); free_t($2);}
    ;
 
 translation_unit
@@ -804,7 +803,6 @@ op_name
    | Doubl
    | Else
    | TokEnum
-   | Errorfail
    | Extern
    | Fail
    | Float
@@ -884,14 +882,6 @@ checking_conversions
       {$$ = node3(TrnryNd, $1, $2, $4, $6); free_t($3); free_t($5);}
    | Type_case variable Of '{' type_select_lst opt_default '}'
       {$$ = node3(TrnryNd, $1, $2, $5, $6); free_t($3); free_t($4); free_t($7);}
-   | Len_case identifier Of '{' len_select_lst Default ':' action '}'
-      {$$ = node3(TrnryNd, $1, sym_node($2), $5, $8); free_t($3), free_t($4);
-       free_t($6); free_t($7); free_t($9);}
-   | Arith_case '(' variable ',' variable ')' Of '{'
-      dest_type ':' action dest_type ':' action dest_type ':' action '}'
-      {$$ = arith_nd($1, $3, $5, $9, $11, $12, $14, $15, $17); free_t($2);
-       free_t($4), free_t($6); free_t($7); free_t($8); free_t($10);
-       free_t($13); free_t($16); free_t($18);}
    ;
 
 type_select_lst
@@ -913,15 +903,6 @@ selector_lst
                                    free_t($2);}
    | selector_lst i_type_name ':' {$$ = node2(ConCatNd, NULL,   $1, $2);
                                    free_t($3);}
-   ;
-
-len_select_lst
-   : len_select
-   | len_select_lst len_select {$$ = node2(ConCatNd, NULL, $1, $2);}
-   ;
-
-len_select
-   : IntConst ':' action {$$ = node1(PrefxNd, $1, $3); free_t($2);}
    ;
 
 type_check

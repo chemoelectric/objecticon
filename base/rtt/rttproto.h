@@ -1,9 +1,4 @@
 int               alloc_tnd (int typ, struct node *init, int lvl);
-struct node      *arith_nd (struct token *tok, struct node *p1,
-                             struct node *p2, struct node *c_int,
-                             struct node *ci_act, struct node *intgr,
-                             struct node *i_act, struct node *dbl,
-                             struct node *d_act);
 int               c_walk    (struct node *n, int indent, int brace);
 int               call_ret  (struct node *n);
 struct token     *chk_exct  (struct token *tok);
