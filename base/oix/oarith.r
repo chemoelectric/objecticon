@@ -7,30 +7,25 @@
 
 int over_flow = 0;
 
-#begdef ArithOp(icon_op, func_name, c_int_op, c_real_op, c_list_op)
+#begdef ArithOp(icon_op, func_name, int_op, real_op)
 
-   operator icon_op func_name(x, y)
-      declare {
-         tended struct descrip lx, ly, result;
-	 word irslt;
-         }
-      arith_case (x, y) of {
-         C_integer: {
-            body {
-               c_int_op(x,y);
-               }
-            }
-         integer: { /* large integers only */
-            body {
-               big_ ## c_int_op(x,y);
-               }
-            }
-         C_double: {
-            body {
-               c_real_op(x, y);
-               }
-            }
-         }
+operator icon_op func_name(x, y)
+   body {
+      tended struct descrip ix, iy;
+      if (cnv:(exact)integer(x, ix) && cnv:(exact)integer(y, iy)) {
+          tended struct descrip iresult;
+          int_op(ix, iy, iresult);
+          return iresult;
+      } else {
+          double dx, dy, dresult;
+          if (!cnv:C_double(x, dx))
+              runerr(102, x);
+          if (!cnv:C_double(y, dy))
+              runerr(102, y);
+          real_op(dx, dy, dresult);
+          return C_double dresult;
+      }
+   }
 end
 
 #enddef
@@ -38,174 +33,78 @@ end
 /*
  * x / y
  */
-
-#begdef big_Divide(x,y)
+#begdef IntDivide(x,y,result)
 {
-   if ( ( Type ( y ) == T_Integer ) && ( IntVal ( y ) == 0 ) )
+   if (bigsign(&y) == 0)
       runerr(201);  /* Divide fix */
-
    bigdiv(&x,&y,&result);
-   return result;
 }
 #enddef
-#begdef Divide(x,y)
+#begdef RealDivide(x,y,result)
 {
-   if (y == 0)
-      runerr(201);  /* divide fix */
-
-   irslt = div3(x,y);
-   if (over_flow) {
-      MakeInt(x,&lx);
-      MakeInt(y,&ly);
-      bigdiv(&lx,&ly,&result);
-      return result;
-      }
-   else return C_integer irslt;
-}
-#enddef
-#begdef RealDivide(x,y)
-{
-   double z;
-
    if (y == 0.0)
       runerr(204);
-
-   z = x / y;
-#ifdef SUN
-   if (z >= HUGE || z <= -HUGE) {
-      kill(getpid(), SIGFPE);
-   }
-#endif
-   return C_double z;
+   result = x / y;
 }
 #enddef
-
-
-ArithOp( / , divide , Divide , RealDivide, list_add /* bogus */)
+ArithOp( / , divide , IntDivide , RealDivide)
 
 /*
  * x - y
  */
-
-#begdef big_Sub(x,y)
-{
-   bigsub(&x,&y,&result);
-   return result;
-}
-#enddef
-
-#begdef Sub(x,y)
-   irslt = sub(x,y);
-   if (over_flow) {
-      MakeInt(x,&lx);
-      MakeInt(y,&ly);
-      bigsub(&lx,&ly,&result);
-      return result;
-      }
-   else return C_integer irslt;
-#enddef
-
-#define RealSub(x,y) return C_double (x - y);
-
-ArithOp( - , minus , Sub , RealSub, list_add /* bogus */)
+#define IntSub(x,y,result) bigsub(&x,&y,&result);
+#define RealSub(x,y,result) result = x - y;
+ArithOp( - , minus , IntSub , RealSub)
 
 
 /*
  * x % y
  */
-
-#define Abs(x) ((x) > 0 ? (x) : -(x))
-
-#begdef big_IntMod(x,y)
+#begdef IntMod(x,y,result)
 {
-   if ( ( Type ( y ) == T_Integer ) && ( IntVal ( y ) == 0 ) ) {
-      Irunerr(202,0);
-      }
+   if (bigsign(&y) == 0)
+      runerr(202);
    bigmod(&x,&y,&result);
-   return result;
 }
 #enddef
-
-#begdef IntMod(x,y)
+#begdef RealMod(x,y,result)
 {
-   irslt = mod3(x,y);
-   if (over_flow) {
-      Irunerr(202,y);
-      }
-   return C_integer irslt;
-}
-#enddef
-
-#begdef RealMod(x,y)
-{
-   double d;
-
    if (y == 0.0)
       runerr(204);
-
-   d = fmod(x, y);
-   /* d must have the same sign as x */
+   result = fmod(x, y);
+   /* result must have the same sign as x */
    if (x < 0.0) {
-      if (d > 0.0) {
-         d -= Abs(y);
+      if (result > 0.0) {
+         result -= Abs(y);
          }
       }
-   else if (d < 0.0) {
-      d += Abs(y);
+   else if (result < 0.0) {
+      result += Abs(y);
       }
-   return C_double d;
 }
 #enddef
-
-ArithOp( % , mod , IntMod , RealMod, list_add /* bogus */ )
+ArithOp( % , mod , IntMod , RealMod)
 
 /*
  * x * y
  */
-
-#begdef big_Mpy(x,y)
-{
-   bigmul(&x,&y,&result);
-   return result;
-}
-#enddef
-
-#begdef Mpy(x,y)
-   irslt = mul(x,y);
-   if (over_flow) {
-      MakeInt(x,&lx);
-      MakeInt(y,&ly);
-      bigmul(&lx,&ly,&result);
-      return result;
-      }
-   else return C_integer irslt;
-#enddef
+#define IntMpy(x,y,result) bigmul(&x,&y,&result);
+#define RealMpy(x,y,result) result = (double)((long double)x * (long double)y);
+ArithOp( * , mult , IntMpy , RealMpy)
 
 
-#define RealMpy(x,y) return C_double ((long double)x * (long double)y);
-
-ArithOp( * , mult , Mpy , RealMpy, list_add /* bogus */ )
+/*
+ * x + y
+ */
+#define IntAdd(x,y,result) bigadd(&x,&y,&result);
+#define RealAdd(x,y,result) result = x + y;
+ArithOp( + , plus , IntAdd , RealAdd)
 
 
 "-x - negate x."
 
 operator - neg(x)
-   if cnv:(exact)C_integer(x) then {
-      body {
-	    word i;
-
-	    i = neg(x);
-	    if (over_flow) {
-               tended struct descrip result;
-	       struct descrip tmp;
-	       MakeInt(x,&tmp);
-	       bigneg(&tmp, &result);
-               return result;
-               }
-         return C_integer i;
-         }
-      }
-   else if cnv:(exact) integer(x) then {
+   if cnv:(exact) integer(x) then {
       body {
          tended struct descrip result;
          bigneg(&x, &result);
@@ -229,12 +128,7 @@ end
  *  Operational definition: generate runerr if x is not numeric.
  */
 operator + number(x)
-   if cnv:(exact)C_integer(x) then {
-       body {
-          return C_integer x;
-          }
-      }
-   else if cnv:(exact) integer(x) then {
+   if cnv:(exact) integer(x) then {
        body {
           return x;
           }
@@ -248,59 +142,11 @@ operator + number(x)
       runerr(102, x)
 end
 
-/*
- * x + y
- */
-
-#begdef big_Add(x,y)
-{
-   bigadd(&x,&y,&result);
-   return result;
-}
-#enddef
-
-#begdef Add(x,y)
-   irslt = add(x,y);
-   if (over_flow) {
-      MakeInt(x,&lx);
-      MakeInt(y,&ly);
-      bigadd(&lx, &ly, &result);
-      return result;
-      }
-   else return C_integer irslt;
-#enddef
-
-#define RealAdd(x,y) return C_double (x + y);
-
-ArithOp( + , plus , Add , RealAdd, list_add )
-
-
 
 "x ^ y - raise x to the y power."
 
 operator ^ powr(x, y)
-   if cnv:(exact)C_integer(y) then {
-      if cnv:(exact)integer(x) then {
-	 body {
-            tended struct descrip ly, result;
-	    MakeInt ( y, &ly );
-	    if (bigpow(&x, &ly, &result) == Error)
-	       runerr(0);
-	    return result;
-	   }
-	 }
-      else {
-	 if !cnv:C_double(x) then
-	    runerr(102, x)
-	 body {
-            tended struct descrip result;
-	    if (ripow( x, y, &result) ==  Error)
-	       runerr(0);
-	    return result;
-	    }
-	 }
-      }
-   else if cnv:(exact)integer(y) then {
+   if cnv:(exact)integer(y) then {
       if cnv:(exact)integer(x) then {
 	 body {
             tended struct descrip result;
@@ -334,36 +180,3 @@ operator ^ powr(x, y)
 	 }
       }
 end
-
-/*
- * ripow - raise a real number to an integral power.
- */
-int ripow(double r, word n, dptr drslt)
-   {
-   double retval;
-
-   if (r == 0.0 && n <= 0) 
-      ReturnErrNum(204, Error);
-   if (n < 0) {
-      /*
-       * r ^ n = ( 1/r ) * ( ( 1/r ) ^ ( -1 - n ) )
-       *
-       * (-1) - n never overflows, even when n == MinWord.
-       */
-      n = (-1) - n;
-      r = 1.0 / r;
-      retval = r;
-      }
-   else 	
-      retval = 1.0;
-
-   /* multiply retval by r ^ n */
-   while (n > 0) {
-      if (n & 01L)
-	 retval *= r;
-      r *= r;
-      n >>= 1;
-      }
-   MakeReal(retval, drslt);
-   return Succeeded;
-   }

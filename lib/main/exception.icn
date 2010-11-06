@@ -32,3 +32,27 @@ procedure try(code)
    else
       return v
 end
+
+# Invoke co-expression e, saving the value of {throw_handler} before,
+# and restoring it afterwards.  This is potentially useful when using
+# co-operating scheduled tasks (see {io.Task}), which switch from
+# within a try block.
+#
+procedure save_throw_handler(e)
+   local sh, v
+   sh := throw_handler
+   v := @e
+   throw_handler := sh
+   return v
+end
+
+# Like {save_throw_handler}, but saves the value of {&handler}
+# instead.
+#
+procedure save_handler(e)
+   local sh, v
+   sh := &handler
+   v := @e
+   &handler := sh
+   return v
+end

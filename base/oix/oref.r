@@ -369,39 +369,15 @@ operator ? random(underef x -> dx)
          }
 
       default: {
-          double rval;
-          word v;
+          tended struct descrip result;
 
           if (!cnv:integer(dx,dx))
               runerr(113, dx);
 
-          if (Type(dx) == T_Lrgint) {
-              tended struct descrip result;
-              bigrand(&dx, &result);
-              return result;
-          }
-
-          v = IntVal(dx);
-          /*
-           * x is an integer, be sure that it's non-negative.
-           */
-          if (v < 0) 
+          if (bigsign(&dx) < 0)
               runerr(205, dx);
-
-          /*
-           * val contains the integer value of x. If val is 0, return
-           *	a real in the range [0,1), else return an integer in the
-           *	range [1,val].
-           */
-          if (v == 0) {
-              rval = RandVal;
-              return C_double rval;
-          }
-          else {
-              rval = RandVal;
-              rval *= v;
-              return C_integer (long)rval + 1;
-          }
+          bigrand(&dx, &result);
+          return result;
       }
    }
 }
@@ -568,7 +544,7 @@ operator [] subsc(underef x -> dx,y)
            * Make sure that subscript y is in range.
            */
           lp = &ListBlk(dx);
-          i = cvpos(yi, (long)lp->size);
+          i = cvpos(yi, lp->size);
           if (i == CvtFail || i > lp->size)
               fail;
 

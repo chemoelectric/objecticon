@@ -168,7 +168,7 @@ $endif
       local res, f
       f := FileStream.open(fn, FileOpt.RDONLY) | return error("Couldn't open " || fn || ": " || &why)
       res := ""
-      while res ||:= f.reads(8192)
+      while res ||:= f.reads(1048576)
       f.close()
       f.eof() | fail
       return res
@@ -245,8 +245,8 @@ $endif
    private static equal_files1(f1, f2)
       local b1, b2
 
-      while b1 := f1.reads(8192) do {
-         b2 := f2.reads(8192) | fail
+      while b1 := f1.reads(1048576) do {
+         b2 := f2.reads(1048576) | fail
          b1 == b2 | fail
       }
       f1.eof() | fail
@@ -393,7 +393,7 @@ $endif
          f1.close()
          return error("Couldn't open " || s2 || ": " || &why)
       }
-      while s := f1.reads(8192) do {
+      while s := f1.reads(1048576) do {
          f2.writes(s) | {
             f1.close()
             f2.close()
@@ -418,7 +418,7 @@ $endif
          f1.close()
          return error("Couldn't open " || s2 || ": " || &why)
       }
-      while s := f1.reads(8192) do {
+      while s := f1.reads(1048576) do {
          f2.writes(s) | {
             f1.close()
             f2.close()

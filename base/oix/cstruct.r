@@ -566,7 +566,7 @@ dptr get_element(dptr d, word i)
          struct b_list *lp;        /* doesn't need to be tended */
          word j;
          lp = &ListBlk(*d);
-         i = cvpos(i, (long)lp->size);
+         i = cvpos(i, lp->size);
          if (i == CvtFail || i > lp->size)
              return 0;
          /*

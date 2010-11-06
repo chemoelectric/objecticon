@@ -52,9 +52,9 @@ static int subs_asgn	(dptr dest, dptr src);
 
             sub = VarLoc(x)+1;
             if (is:string(*sub))
-                i = cvpos((long)i, StrLen(*sub));
+                i = cvpos(i, StrLen(*sub));
             else
-                i = cvpos((long)i, UcsBlk(*sub).length);
+                i = cvpos(i, UcsBlk(*sub).length);
 
             if (i == CvtFail)
                fail;

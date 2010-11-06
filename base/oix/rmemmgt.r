@@ -825,7 +825,7 @@ static int qlcmp(dptr *q1, dptr *q2)
 #if IntBits == WordBits
     return DiffPtrs(StrLoc(**q1),StrLoc(**q2));
 #else
-    long l = (long)DiffPtrs(StrLoc(**q1),StrLoc(**q2));
+    word l = DiffPtrs(StrLoc(**q1),StrLoc(**q2));
     if (l < 0)
         return -1;
     else if (l > 0)

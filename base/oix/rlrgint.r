@@ -97,7 +97,7 @@ static void bigdivi	(dptr da, word i, dptr dx);
 static void bigmodi	(dptr da, word i, dptr dx);
 static int bigpowi	(dptr da, word i, dptr dx);
 static int bigpowii	(word a, word i, dptr dx);
-static word bigcmpi	(dptr da, word i);
+static int bigcmpi	(dptr da, word i);
 
 static DIGIT add1	(DIGIT *u, DIGIT *v, DIGIT *w, word n);
 static word sub1	(DIGIT *u, DIGIT *v, DIGIT *w, word n);
@@ -105,13 +105,13 @@ static void mul1	(DIGIT *u, DIGIT *v, DIGIT *w, word n, word m);
 static void div1	
 (DIGIT *a, DIGIT *b, DIGIT *q, DIGIT *r, word m, word n, struct b_bignum *b1, struct b_bignum *b2);
 static void compl1	(DIGIT *u, DIGIT *w, word n);
-static word cmp1	(DIGIT *u, DIGIT *v, word n);
+static int cmp1	(DIGIT *u, DIGIT *v, word n);
 static DIGIT addi1	(DIGIT *u, word k, DIGIT *w, word n);
 static void subi1	(DIGIT *u, word k, DIGIT *w, word n);
 static DIGIT muli1	(DIGIT *u, word k, int c, DIGIT *w, word n);
 static DIGIT divi1	(DIGIT *u, word k, DIGIT *w, word n);
 static DIGIT shifti1	(DIGIT *u, word k, DIGIT c, DIGIT *w, word n);
-static word cmpi1	(DIGIT *u, word k, word n);
+static int cmpi1	(DIGIT *u, word k, word n);
 
 #define bdzero(dest,l)  memset(dest, '\0', (l) * sizeof(DIGIT))
 #define bdcopy(src, dest, l)  memcpy(dest, src, (l) * sizeof(DIGIT))
@@ -149,7 +149,7 @@ static void mkdesc(struct b_bignum *x, dptr dx)
     if (xlen < WORDLEN ||
         (xlen == WORDLEN &&
          ((cmp = cmp1(DIG(x,0), maxword, (word)WORDLEN)) < 0 ||
-          (cmp == (word)0 && x->sign)))) {
+          (cmp == 0 && x->sign)))) {
         word val = -(word)*DIG(x,0);
         word i;
 
@@ -546,11 +546,14 @@ void bigadd(dptr da, dptr db, dptr dx)
     else if (Type(*db) == T_Lrgint)    /* integer + bignum */
         bigaddi(db, IntVal(*da), dx);
     else {                             /* integer + integer */
-        struct descrip td;
-        union word_b_bignum tdigits;
-
-        itobig(IntVal(*da), &tdigits.blk, &td);
-        bigaddi(&td, IntVal(*db), dx);
+        word irslt = add(IntVal(*da), IntVal(*db));
+        if (over_flow) {
+            struct descrip td;
+            union word_b_bignum tdigits;
+            itobig(IntVal(*da), &tdigits.blk, &td);
+            bigaddi(&td, IntVal(*db), dx);
+        } else
+            MakeInt(irslt, dx);
     }
 }
 
@@ -721,10 +724,13 @@ void bigsub(dptr da, dptr db, dptr dx)
         mkdesc(x, dx);
     }
     else {                              /* integer - integer */
-        itobig(IntVal(*da), &tdigits.blk, &td);
-        bigsubi(&td, IntVal(*db), dx);
+        word irslt = sub(IntVal(*da), IntVal(*db));
+        if (over_flow) {
+            itobig(IntVal(*da), &tdigits.blk, &td);
+            bigsubi(&td, IntVal(*db), dx);
+        } else
+            MakeInt(irslt, dx);
     }
-      
 }
 
 /*
@@ -755,11 +761,14 @@ void bigmul(dptr da, dptr db, dptr dx)
     else if (Type(*db) == T_Lrgint)    /* integer * bignum */
         bigmuli(db, IntVal(*da), dx);
     else {                             /* integer * integer */
-        struct descrip td;
-        union word_b_bignum tdigits;
-
-        itobig(IntVal(*da), &tdigits.blk, &td);
-        bigmuli(&td, IntVal(*db), dx);
+        word irslt = mul(IntVal(*da), IntVal(*db));
+        if (over_flow) {
+            struct descrip td;
+            union word_b_bignum tdigits;
+            itobig(IntVal(*da), &tdigits.blk, &td);
+            bigmuli(&td, IntVal(*db), dx);
+        } else
+            MakeInt(irslt, dx);
     }
 }
 
@@ -769,18 +778,12 @@ void bigmul(dptr da, dptr db, dptr dx)
  
 void bigdiv(dptr da, dptr db, dptr dx)
 {
-    tended struct b_bignum *a, *b, *x, *tu, *tv;
-    word alen, blen;
     struct descrip td;
     union word_b_bignum tdigits;
 
-    /* Put *da into large integer format. */
-    if (Type(*da) != T_Lrgint) {
-        itobig(IntVal(*da), &tdigits.blk, &td);
-        da = &td;
-    }
-
-    if (Type(*db) == T_Lrgint) {         /* bignum / bignum */
+    if (Type(*da) == T_Lrgint && Type(*db) == T_Lrgint) {      /* bignum / bignum */
+        tended struct b_bignum *a, *b, *x, *tu, *tv;
+        word alen, blen;
         alen = LEN(&BignumBlk(*da));
         blen = LEN(&BignumBlk(*db));
         if (alen < blen) {
@@ -806,8 +809,21 @@ void bigdiv(dptr da, dptr db, dptr dx)
         x->sign = a->sign ^ b->sign;
         mkdesc(x, dx);
     }
-    else                                 /* bignum / integer */
+    else if (Type(*da) == T_Lrgint)    /* bignum / integer */
         bigdivi(da, IntVal(*db), dx);
+    else if (Type(*db) == T_Lrgint) {   /* integer / bignum */
+        /* Put *da into large integer format, recurse */
+        itobig(IntVal(*da), &tdigits.blk, &td);
+        bigdiv(&td, db, dx);
+    } else {                             /* integer / integer */
+        word irslt = div3(IntVal(*da), IntVal(*db));
+        if (over_flow) {
+            itobig(IntVal(*da), &tdigits.blk, &td);
+            bigdivi(&td, IntVal(*db), dx);
+        }
+        else
+            MakeInt(irslt, dx);
+    }
 }
 
 /*
@@ -816,18 +832,12 @@ void bigdiv(dptr da, dptr db, dptr dx)
 
 void bigmod(dptr da, dptr db, dptr dx)
 {
-    tended struct b_bignum *a, *b, *x, *temp, *tu, *tv;
-    word alen, blen;
     struct descrip td;
     union word_b_bignum tdigits;
 
-    /* Put *da into large integer format. */
-    if (Type(*da) != T_Lrgint) {
-        itobig(IntVal(*da), &tdigits.blk, &td);
-        da = &td;
-    }
-
-    if (Type(*db) == T_Lrgint) {        /* bignum % bignum */
+    if (Type(*da) == T_Lrgint && Type(*db) == T_Lrgint) {      /* bignum % bignum */
+        tended struct b_bignum *a, *b, *x, *temp, *tu, *tv;
+        word alen, blen;
         alen = LEN(&BignumBlk(*da));
         blen = LEN(&BignumBlk(*db));
         if (alen < blen) {
@@ -857,8 +867,21 @@ void bigmod(dptr da, dptr db, dptr dx)
         x->sign = a->sign;
         mkdesc(x, dx);
     }
-    else				       /* bignum % integer */
+    else if (Type(*da) == T_Lrgint)    /* bignum % integer */
         bigmodi(da, IntVal(*db), dx);
+    else if (Type(*db) == T_Lrgint) {   /* integer % bignum */
+        /* Put *da into large integer format, recurse */
+        itobig(IntVal(*da), &tdigits.blk, &td);
+        bigmod(&td, db, dx);
+    } else {                             /* integer % integer */
+        word irslt = mod3(IntVal(*da), IntVal(*db));
+        if (over_flow) {
+            itobig(IntVal(*da), &tdigits.blk, &td);
+            bigmodi(&td, IntVal(*db), dx);
+        }
+        else
+            MakeInt(irslt, dx);
+    }
 }
 
 /*
@@ -867,17 +890,20 @@ void bigmod(dptr da, dptr db, dptr dx)
 
 void bigneg(dptr da, dptr dx)
 {
-    struct descrip td;
-    union word_b_bignum tdigits;
-
-    /* Put *da into large integer format. */
-    if (Type(*da) != T_Lrgint) {
-        itobig(IntVal(*da), &tdigits.blk, &td);
-        da = &td;
+    if (Type(*da) == T_Lrgint) {
+        BignumBlk(*da).sign ^= 1;       /* Temporarily change the sign */
+        cpbignum(da, dx);
+        BignumBlk(*da).sign ^= 1;       /* Change it back */
+    } else {                /* - integer */
+        word irslt = neg(IntVal(*da));
+        if (over_flow) {
+            struct descrip td;
+            union word_b_bignum tdigits;
+            itobig(IntVal(*da), &tdigits.blk, &td);
+            bigneg(&td, dx);
+        } else
+            MakeInt(irslt, dx);
     }
-    BignumBlk(*da).sign ^= 1;       /* Temporarily change the sign */
-    cpbignum(da, dx);
-    BignumBlk(*da).sign ^= 1;       /* Change it back */
 }
 
 /*
@@ -956,42 +982,73 @@ int bigpow(dptr da, dptr db, dptr dx)
         return bigpowii(IntVal(*da), IntVal(*db), dx);
 }
 
-int bigpowri(double a, dptr db, dptr drslt)
+
+/*
+ *  a ^ db -> dx
+ */
+
+int bigpowri(double a, dptr db, dptr dx)
 {
     double retval;
-    word n;
-    DIGIT nth_dig, mask;
-    struct b_bignum *b;
-    word blen;
 
-    b = &BignumBlk(*db);
-    blen = LEN(b);
-    if ( b->sign ) {
-        if ( a == 0.0 )
+    if (Type(*db) == T_Integer) {   /* real ^ integer */
+        word n = IntVal(*db);
+        if (a == 0.0 && n <= 0) 
             ReturnErrNum(204, Error);
-        else
+        if (n < 0) {
+            /*
+             * a ^ n = ( 1/a ) * ( ( 1/a ) ^ ( -1 - n ) )
+             *
+             * (-1) - n never overflows, even when n == MinWord.
+             */
+            n = (-1) - n;
             a = 1.0 / a;
-    }
+            retval = a;
+        }
+        else 	
+            retval = 1.0;
 
-    /* We scan the bits of b from the most to least significant.
-     * The bit position in b is represented by the pair ( n, mask )
-     * where n is the DIGIT number (0 = most sig.) and mask is the
-     * the bit mask for the current bit.
-     *
-     * For each bit (most sig to least) in b,
-     *  for each zero, square the partial result;
-     *  for each one, square it and multiply it by a */
-    retval = 1.0;
-    for ( n = 0; n < blen; ++n ) {
-        nth_dig = *DIG ( b, n );
-        for ( mask = 1 << ( DigitBits - 1 ); mask; mask >>= 1 ) {
-            retval *= retval;
-            if ( nth_dig & mask )
+        /* multiply retval by a ^ n */
+        while (n > 0) {
+            if (n & 01L)
                 retval *= a;
+            a *= a;
+            n >>= 1;
+        }
+    } else {                    /* real ^ bignum */
+        word n;
+        DIGIT nth_dig, mask;
+        struct b_bignum *b;
+        word blen;
+        b = &BignumBlk(*db);
+        blen = LEN(b);
+        if ( b->sign ) {
+            if ( a == 0.0 )
+                ReturnErrNum(204, Error);
+            else
+                a = 1.0 / a;
+        }
+
+        /* We scan the bits of b from the most to least significant.
+         * The bit position in b is represented by the pair ( n, mask )
+         * where n is the DIGIT number (0 = most sig.) and mask is the
+         * the bit mask for the current bit.
+         *
+         * For each bit (most sig to least) in b,
+         *  for each zero, square the partial result;
+         *  for each one, square it and multiply it by a */
+        retval = 1.0;
+        for ( n = 0; n < blen; ++n ) {
+            nth_dig = *DIG ( b, n );
+            for ( mask = 1 << ( DigitBits - 1 ); mask; mask >>= 1 ) {
+                retval *= retval;
+                if ( nth_dig & mask )
+                    retval *= a;
+            }
         }
     }
 
-    MakeReal(retval, drslt);
+    MakeReal(retval, dx);
     return Succeeded;
 }
 
@@ -1452,89 +1509,108 @@ void bigxor(dptr da, dptr db, dptr dx)
 }
 
 /*
- *  bigshift(da, db) -> dx
+ *  bigshift(da, n) -> dx
  */
 
-void bigshift(dptr da, dptr db, dptr dx)
+void bigshift(dptr da, word n, dptr dx)
 {
-    tended struct b_bignum *a, *x, *tad;
-    word alen;
-    word r = IntVal(*db) % DigitBits;
-    word q = (r >= 0 ? IntVal(*db) : (IntVal(*db) - (r += DigitBits))) / DigitBits;
-    word xlen;
-    DIGIT *ad;
-    struct descrip td;
-    union word_b_bignum tdigits;
+    if (Type(*da) == T_Lrgint) {
+        tended struct b_bignum *a, *x, *tad;
+        word alen;
+        word r = n % DigitBits;
+        word q = (r >= 0 ? n : (n - (r += DigitBits))) / DigitBits;
+        word xlen;
+        DIGIT *ad;
 
-    if (Type(*da) == T_Integer) {
-        itobig(IntVal(*da), &tdigits.blk, &td);
-        da = &td;
-    }
-
-    alen = LEN(&BignumBlk(*da));
-    xlen = alen + q + 1;
-    if (xlen <= 0) {
-        MakeInt(-BignumBlk(*da).sign, dx);
-        return;
-    }
-    else {
-        a = &BignumBlk(*da);
-        MemProtect(x = alcbignum(xlen));
-
-        if (a->sign) {
-            MemProtect(tad = alcbignum(alen));
-            ad = DIG(tad,0);
-            bdcopy(DIG(a,0),
-                   ad, alen);
-            compl1(ad, ad, alen);
+        alen = LEN(&BignumBlk(*da));
+        xlen = alen + q + 1;
+        if (xlen <= 0) {
+            MakeInt(-BignumBlk(*da).sign, dx);
+            return;
         }
-        else
-            ad = DIG(a,0);
+        else {
+            a = &BignumBlk(*da);
+            MemProtect(x = alcbignum(xlen));
 
-        if (q >= 0) {
-            *DIG(x,0) =
-                shifti1(ad, r, (DIGIT)0,
-                        DIG(x,1),
-                        alen);
-            bdzero(DIG(x,alen+1),
-                   q);
-        }
-        else
-            *DIG(x,0) =
-                shifti1(ad, r, (DIGIT)(ad[alen+q] >> (DigitBits-r)),
-                        DIG(x,1), alen+q);
+            if (a->sign) {
+                MemProtect(tad = alcbignum(alen));
+                ad = DIG(tad,0);
+                bdcopy(DIG(a,0),
+                       ad, alen);
+                compl1(ad, ad, alen);
+            }
+            else
+                ad = DIG(a,0);
 
-        if (a->sign) {
-            x->sign = 1;
-            *DIG(x,0) |=
-                B - (1 << r);
-            compl1(DIG(x,0),
-                   DIG(x,0),
-                   xlen);
+            if (q >= 0) {
+                *DIG(x,0) =
+                    shifti1(ad, r, (DIGIT)0,
+                            DIG(x,1),
+                            alen);
+                bdzero(DIG(x,alen+1),
+                       q);
+            }
+            else
+                *DIG(x,0) =
+                    shifti1(ad, r, (DIGIT)(ad[alen+q] >> (DigitBits-r)),
+                            DIG(x,1), alen+q);
+
+            if (a->sign) {
+                x->sign = 1;
+                *DIG(x,0) |=
+                    B - (1 << r);
+                compl1(DIG(x,0),
+                       DIG(x,0),
+                       xlen);
+            }
+            mkdesc(x, dx);
         }
-        mkdesc(x, dx);
+    } else {                     /* shift( integer, n ) */
+        uword ci;			 /* shift in 0s, even if negative */
+        struct descrip td;
+        union word_b_bignum tdigits;
+        if (n >= WordBits || 
+            ((ci = (uword)IntVal(*da)) != 0 && n > 0 && (ci >= (1 << (WordBits - n -1))))) {
+            /* Convert to bignum and recurse */
+            itobig(IntVal(*da), &tdigits.blk, &td);
+            bigshift(&td, n, dx);
+        } else {
+            /* Result will fit in a word */
+            if (n <= -WordBits)
+                MakeInt(IntVal(*da) >= 0 ? 0 : -1, dx);
+            else if (n >= 0)
+                MakeInt(ci << n, dx);
+            else if (IntVal(*da) >= 0)
+                MakeInt(ci >> -n, dx);
+            else
+                MakeInt(~(~ci >> -n), dx);	/* sign extending shift */
+        }
     }
 }
 
 /*
- *  negative if da < db
- *  zero if da == db
- *  positive if da > db
+ *  Less if da < db
+ *  Equal if da == db
+ *  Greater if da > db
  */
 
-word bigcmp(dptr da, dptr db)
+int bigcmp(dptr da, dptr db)
 {
-    struct b_bignum *a = &BignumBlk(*da);
-    struct b_bignum *b = &BignumBlk(*db);
-    word alen, blen; 
-
     if (Type(*da) == T_Lrgint && Type(*db) == T_Lrgint) {
+        struct b_bignum *a = &BignumBlk(*da);
+        struct b_bignum *b = &BignumBlk(*db);
+        word alen, blen; 
+
         if (a->sign != b->sign)
-            return (b->sign - a->sign);
+            return (b->sign > a->sign) ? Greater : Less;
         alen = LEN(a);
         blen = LEN(b);
-        if (alen != blen)
-            return (a->sign ? blen - alen : alen - blen);
+        if (alen != blen) {
+            if (a->sign)
+                return blen > alen ? Greater : Less;
+            else
+                return alen > blen ? Greater : Less;
+        }
 
         if (a->sign)
             return cmp1(DIG(b,0),
@@ -1550,11 +1626,26 @@ word bigcmp(dptr da, dptr db)
     else if (Type(*db) == T_Lrgint)    /* cmp(integer, bignum) */
         return -bigcmpi(db, IntVal(*da));
     else { /* Two integers */
-        if (IntVal(*da) > IntVal(*db))
-            return 1;
-        if (IntVal(*da) < IntVal(*db))
-            return -1;
-        return 0;
+        if (IntVal(*da) == IntVal(*db))
+            return Equal;
+        return (IntVal(*da) > IntVal(*db)) ? Greater : Less;
+    }
+}
+
+/*
+ *  Less if da < 0
+ *  Equal if da == 0
+ *  Greater if da > 0
+ */
+
+int bigsign(dptr da)
+{
+    if (Type(*da) == T_Lrgint)
+        return bigcmpi(da, 0);
+    else {
+        if (IntVal(*da) == 0)
+            return Equal;
+        return (IntVal(*da) > 0) ? Greater : Less;
     }
 }
 
@@ -1564,33 +1655,53 @@ word bigcmp(dptr da, dptr db)
 
 void bigrand(dptr da, dptr dx)
 {
-    tended struct b_bignum *x, *a, *td, *tu, *tv;
-    word alen = LEN(&BignumBlk(*da));
-    DIGIT *d;
-    word i;
-    double rval;
+    if (Type(*da) == T_Lrgint) {
+        tended struct b_bignum *x, *a, *td, *tu, *tv;
+        word alen = LEN(&BignumBlk(*da));
+        DIGIT *d;
+        word i;
+        double rval;
 
-    MemProtect(x = alcbignum(alen));
-    MemProtect(td = alcbignum(alen + 1));
-    d = DIG(td,0);
-    a = &BignumBlk(*da);
+        MemProtect(x = alcbignum(alen));
+        MemProtect(td = alcbignum(alen + 1));
+        d = DIG(td,0);
+        a = &BignumBlk(*da);
 
-    for (i = alen; i >= 0; i--) {
-        rval = RandVal;
-        d[i] = rval * B;
-    }
+        for (i = alen; i >= 0; i--) {
+            rval = RandVal;
+            d[i] = rval * B;
+        }
     
-    MemProtect(tu = alcbignum(alen + 2));
-    MemProtect(tv = alcbignum(alen));
-    div1(d, DIG(a,0),
-         NULL,
-         DIG(x,0),
-         (word)1, alen, tu, tv);
-    addi1(DIG(x,0),
-          (word)1,
-          DIG(x,0),
-          alen);
-    mkdesc(x, dx);
+        MemProtect(tu = alcbignum(alen + 2));
+        MemProtect(tv = alcbignum(alen));
+        div1(d, DIG(a,0),
+             NULL,
+             DIG(x,0),
+             (word)1, alen, tu, tv);
+        addi1(DIG(x,0),
+              (word)1,
+              DIG(x,0),
+              alen);
+        mkdesc(x, dx);
+    } else {
+        double rval;
+        word v = IntVal(*da);
+
+        /*
+         * v contains the integer value of da. If v is 0, return a
+         * real in the range [0,1), else return an integer in the
+         * range [1,v].
+         */
+        if (v == 0) {
+            rval = RandVal;
+            MakeReal(rval, dx);
+        }
+        else {
+            rval = RandVal;
+            rval *= v;
+            MakeInt((word)rval + 1, dx);
+        }
+    }
 }
 
 /*
@@ -1888,12 +1999,12 @@ static int bigpowii(word a, word i, dptr dx)
 }
 
 /*
- *  negative if da < i
- *  zero if da == i
- *  positive if da > i
+ *  Less if da < i
+ *  Equal if da == i
+ *  Greater if da > i
  */  
   
-static word bigcmpi(dptr da, word i)
+static int bigcmpi(dptr da, word i)
 {
     struct b_bignum *a = &BignumBlk(*da);
     word alen = LEN(a);
@@ -1901,7 +2012,7 @@ static word bigcmpi(dptr da, word i)
     if (i > -B && i < B) {
         if (i >= 0)
             if (a->sign)
-                return -1;
+                return Less;
             else
                 return cmpi1(DIG(a,0),
                              i, alen);
@@ -1910,12 +2021,11 @@ static word bigcmpi(dptr da, word i)
                 return -cmpi1(DIG(a,0),
                               -i, alen);
             else
-                return 1;
+                return Greater;
     }
     else {
         struct descrip td;
         union word_b_bignum tdigits;
-
         itobig(i, &tdigits.blk, &td);
         return bigcmp(da, &td);
     }
@@ -2088,14 +2198,14 @@ static void compl1(DIGIT *u, DIGIT *w, word n)
  *  (u,n) : (v,n)
  */
 
-static word cmp1(DIGIT *u, DIGIT *v, word n)
+static int cmp1(DIGIT *u, DIGIT *v, word n)
 {
     word i;
 
     for (i = 0; i < n; i++)
         if (u[i] != v[i])
-            return u[i] > v[i] ? 1 : -1;
-    return 0;
+            return u[i] > v[i] ? Greater : Less;
+    return Equal;
 }
 
 /*
@@ -2213,15 +2323,15 @@ static DIGIT shifti1(DIGIT *u, word k, DIGIT c, DIGIT *w, word n)
  *  k in 0 .. B-1
  */
 
-static word cmpi1(DIGIT *u, word k, word n)
+static int cmpi1(DIGIT *u, word k, word n)
 {
     word i;
 
     for (i = 0; i < n-1; i++)
         if (u[i])
-            return 1;
+            return Greater;
     if (u[n - 1] == (DIGIT)k)
-        return 0;
-    return u[n - 1] > (DIGIT)k ? 1 : -1;
+        return Equal;
+    return u[n - 1] > (DIGIT)k ? Greater : Less;
 }
 

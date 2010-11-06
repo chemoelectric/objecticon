@@ -1021,27 +1021,20 @@ static int ston(dptr sp, union numeric *result)
  *  given length.
  */
 
-word cvpos(long pos, long len)
+word cvpos(word pos, word len)
    {
-   word p;
-
-   /*
-    * Make sure the position is in the range of an int. (?)
-    */
-   if ((long)(p = pos) != pos)
-      return CvtFail;
    /*
     * Make sure the position is within range.
     */
-   if (p < -len || p > len + 1)
+   if (pos < -len || pos > len + 1)
       return CvtFail;
    /*
     * If the position is greater than zero, just return it.  Otherwise,
     *  convert the zero/negative position.
     */
    if (pos > 0)
-      return p;
-   return (len + p + 1);
+      return pos;
+   return (len + pos + 1);
    }
 
 /*
