@@ -45,6 +45,16 @@ static int curr_line,
 static struct centry *const_desc_first, *const_desc_last;
 int const_desc_count;  
 
+/* Some defs from rlrgint.r */
+#define B            ((word)1 << DigitBits)
+#define lo(d)        ((d) & (B - 1))
+#define hi(d)        ((uword)(d) >> DigitBits)
+#define DIG(b,i)     (&(b)->digits[(b)->msd+(i)])
+#undef ceil
+#define ceil(x)      ((word)((x) + 1.01))
+#define ln(n)        (log((double)n))
+#define bdzero(dest,l)  memset(dest, '\0', (l) * sizeof(DIGIT))
+
 /*
  * Prototypes.
  */
@@ -59,6 +69,10 @@ static void	patchrefs       (void);
 static void     lemitcon(struct centry *ce);
 static void outword(word oword);
 static struct centry *inst_sdescrip(char *s);
+
+
+static DIGIT muli1	(DIGIT *u, word k, int c, DIGIT *w, word n);
+static struct b_bignum * bigradix(char *input, int input_len);
 
 
 static word pc = 0;		/* simulated program counter */
@@ -460,6 +474,15 @@ struct b_real {			/* real block */
 };
 #endif
 
+struct b_bignum {		/* large integer block */
+    word title;			/*   T_Lrgint */
+    word blksize;		/*   block size */
+    word msd, lsd;		/*   most and least significant digits */
+    int sign;			/*   sign; 0 positive, 1 negative */
+    DIGIT digits[1];		/*   digits */
+};
+
+
 static void lemitcon(struct centry *ce)
 {
     int i;
@@ -513,10 +536,20 @@ static void lemitcon(struct centry *ce)
      */
 
     if (ce->c_flag & F_LrgintLit) {
-        struct strconst *str = inst_strconst(ce->data, ce->length);;
+        struct b_bignum *bn;
+        word *p;
         ce->pc = pc;
+        bn = bigradix(ce->data, ce->length);
+        if (!bn)
+            quit("unable to parse bignum data");
+        if (bn->blksize % WordSize != 0)
+            quit("bigint blksize wrong");
         outwordx(T_Lrgint, "T_Lrgint");
-        outstr(str, "   String rep");
+        outwordx(bn->blksize, "   Blksize");
+        p = ((word *)bn) + 2;
+        for (i = 2; i < bn->blksize / sizeof(word); ++i)
+            outwordx(*p++, "   Large integer data");
+        free(bn);
     } else if (ce->c_flag & F_RealLit) {
 #if !RealInDesc
         static struct b_real d;
@@ -529,9 +562,9 @@ static void lemitcon(struct centry *ce)
         memcpy(&dval, ce->data, sizeof(double));
         outwordx(T_Real, "T_Real");
         p = (word *)&d + 1;
-        outwordx(*p++, "   double data (%.*g)", Precision, dval);
+        outwordx(*p++, "   Double data (%.*g)", Precision, dval);
         for (i = 2; i < sizeof(d) / sizeof(word); ++i)
-            outwordx(*p++, "   double data");
+            outwordx(*p++, "   Double data");
 #endif
     }
     else if (ce->c_flag & F_CsetLit) {
@@ -1285,7 +1318,7 @@ static void genclasses(void)
                 /* Method, with definition in the icode file  */
                 cf->dpc = pc;
                 outwordx(D_Proc, "D_Proc, Method %s.%s", cl->global->name, cf->name);
-                outwordz(cf->func->pc, "   Icode");
+                outwordz(cf->func->pc, "   Block");
             }
         }
     }
@@ -1510,7 +1543,7 @@ static void gentables()
         }
         else if (gp->g_flag & F_Proc) {		/* Icon procedure */
             outwordx(D_Proc, "D_Proc, global %s", gp->name);
-            outwordz(gp->func->pc, "   Icode");
+            outwordz(gp->func->pc, "   Block");
         }
         else if (gp->g_flag & F_Record) {		/* record constructor */
             outwordx(D_Constructor, "D_Constructor, global %s", gp->name);
@@ -2168,3 +2201,92 @@ static void writescript()
 }
 
 
+struct b_bignum * bigradix(char *input, int input_len)
+{
+    struct b_bignum *b;   /* Doesn't need to be tended */
+    DIGIT *bd;
+    word len;
+    int r, c;
+    char *s, *end_s;     /* Don't need to be tended */
+    word size;
+
+    /* Extract radix, setting r and adjusting input and input_len */
+    s = input;
+    end_s = s + input_len;
+    r = 0;
+    while (s < end_s) {
+        if (*s == 'r' || *s == 'R') {
+            if (r == 0 || r < 2 || r > 36)
+                return 0;
+            input_len -= (s + 1 - input);
+            input = s + 1;
+            break;
+        }
+        r = r * 10 + (*s - '0');
+        ++s;
+    }
+    if (s == end_s)
+        r = 10;
+
+    /* printf("r=%d len=%d s='%.*s'\n",r,input_len,input_len,input); */
+
+    s = input;
+    len = ceil(input_len * ln(r) / ln(B));
+
+    /* See ralc.r : MemProtect(b = alcbignum(len)); */
+    size = sizeof(struct b_bignum) + ((len - 1) * sizeof(DIGIT));
+    size = (size + WordSize - 1) & -WordSize;
+    b = safe_malloc(size);
+    b->blksize = size;
+    b->msd = b->sign = 0;
+    b->lsd = len - 1;
+
+    bd = DIG(b,0);
+
+    bdzero(bd, len);
+
+    for (c = ((s < end_s) ? *s++ : ' '); isalnum((unsigned char)c);
+         c = ((s < end_s) ? *s++ : ' ')) {
+        c = isdigit((unsigned char)c) ? (c)-'0' : 10+(((c)|(040))-'a');
+        if (c >= r)
+            return 0;
+        muli1(bd, (word)r, c, bd, len);
+    }
+
+    /*
+     * Skip trailing white space and make sure there is nothing else left
+     *  in the string. Note, if we have already reached end-of-string,
+     *  c has been set to a space.
+     */
+    while (isspace((unsigned char)c) && s < end_s)
+        c = *s++;
+    if (!isspace((unsigned char)c))
+        return 0;
+
+    /* see mkdesc() */
+    while (b->msd != b->lsd && *DIG(b,0) == 0)
+        b->msd++;
+
+    return b;
+}
+
+/*
+ *  (u,n) * k + c -> (w,n)
+ *
+ *  k in 0 .. B-1
+ *  returns carry, 0 .. B-1
+ */
+
+static DIGIT muli1(DIGIT *u, word k, int c, DIGIT *w, word n)
+{
+    uword dig, carry;
+    word i;
+
+    carry = c;
+    for (i = n; --i >= 0; ) {
+        dig = (uword)k * u[i] + carry;
+        w[i] = lo(dig);
+        carry = hi(dig);
+    }
+    return carry;
+}
