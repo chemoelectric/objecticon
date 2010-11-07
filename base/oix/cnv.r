@@ -1065,7 +1065,8 @@ void rtos(double n, dptr dp, char *s)
        strcat(s, "0");
 
      /* Convert e+0dd -> e+dd */
-     if ((p = strchr(s, 'e')) && p[2] == '0' && isdigit(p[3]) && isdigit(p[4]))
+     if ((p = strchr(s, 'e')) && p[2] == '0' && 
+         isdigit((unsigned char)p[3]) && isdigit((unsigned char)p[4]))
        strcpy(p + 2, p + 3);
    }
    StrLen(*dp) = strlen(s);
