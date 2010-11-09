@@ -58,6 +58,6 @@ int strcasecmp(char *s1, char *s2);
 int strncasecmp(char *s1, char *s2, int n);
 #endif
 
-char *double2str(double n);
-char *word2str(word n);
+char *double2cstr(double n);
+char *word2cstr(word n);
 

@@ -395,7 +395,7 @@ int ucs_char(struct b_ucs *b, word pos);
 int in_cset(struct b_cset *b, int c);
 char *ucs_utf8_ptr(struct b_ucs *b, word pos);
 struct b_ucs *cset_to_ucs_block(struct b_cset *b0, word pos, word len);
-void cset_to_str(struct b_cset *b, word pos, word len, dptr res);
+void cset_to_string(struct b_cset *b, word pos, word len, dptr res);
 struct b_ucs *make_ucs_substring(struct b_ucs *b, word pos, word len);
 int cset_range_of_pos(struct b_cset *b, word pos);
 int need_ucs(dptr s);
