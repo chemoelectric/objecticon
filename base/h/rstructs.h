@@ -470,7 +470,6 @@ struct progstate {
     int (*Cnvint)(dptr,dptr);
     int (*Cnvreal)(dptr,dptr);
     int (*Cnvstr)(dptr,dptr);
-    int (*Cnvtstr)(char *,dptr,dptr);
     void (*Deref)(dptr,dptr);
     struct b_bignum * (*Alcbignum)(word);
     struct b_cset * (*Alccset)(word);

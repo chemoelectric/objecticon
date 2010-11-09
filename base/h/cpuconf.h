@@ -19,7 +19,6 @@
    #define LogWordBits	6			/* log of WordBits */
    #define MinWord  ((word)0x8000000000000000) /* smallest word */
    #define MaxWord  ((word)0x7fffffffffffffff) /* largest word */
-   #define MinWordStr "-9223372036854775808"
 
    #define F_Nqual      0x8000000000000000	/* set if NOT string qualifier*/
    #define F_Var	0x4000000000000000	/* set if variable */
@@ -35,7 +34,6 @@
    #define LogWordBits	        5		/* log of WordBits */
    #define MaxWord  ((word)0x7fffffff)   /* largest word */
    #define MinWord  ((word)0x80000000)   /* smallest word */
-   #define MinWordStr "-2147483648"
    
    #define F_Nqual	0x80000000	/* set if NOT string qualifier */
    #define F_Var	0x40000000	/* set if variable */
@@ -57,7 +55,8 @@
 
 #ifndef MaxCvtLen
    #define MaxCvtLen	    32	        /* sufficient for holding result of real to string (using  */
-#endif                                  /* printf("%.*g", Precision, n)) and int to string conversions */
+#endif                                  /* printf("%.*g", Precision, n)) and word to string conversions */
+                                        /* using %ld */
 
 /*
  * Parameters that configure tables and sets:

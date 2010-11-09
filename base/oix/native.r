@@ -935,7 +935,7 @@ function proc(x, n, c)
          }
       }
 
-   else if cnv:tmp_string(x) then {
+   else if cnv:string(x) then {
       /*
        * n must be 1, 2, or 3; it defaults to 1.
        */

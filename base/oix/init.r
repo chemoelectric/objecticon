@@ -529,7 +529,6 @@ static void initprogstate(struct progstate *p)
     p->Cnvint = cnv_int_0;
     p->Cnvreal = cnv_real_0;
     p->Cnvstr = cnv_str_0;
-    p->Cnvtstr = cnv_tstr_0;
     p->Deref = deref_0;
     p->Alccoexp = alccoexp_0;
     p->Alcbignum = alcbignum_0;
@@ -775,25 +774,6 @@ void resolve(struct progstate *p)
                 struct b_ucs *ub = (struct b_ucs *)b;
                 /* Relocate the utf8 string */
                 StrLoc(ub->utf8) = p->Strcons + (uword)StrLoc(ub->utf8);
-            } else if (p->Constants[j].dword == D_Lrgint) {
-                struct descrip id;
-                dptr sd = (dptr)((word *)b + 1);
-                StrLoc(*sd) = p->Strcons + (uword)StrLoc(*sd);
-                /* Convert the string data to an integer */
-                if (!cnv:integer(*sd, id)) {
-                    ffatalerr("Couldn't convert large integer constant: %.*s", 
-                        (int)StrLen(*sd), StrLoc(*sd));
-                }
-                /* It could be either a simple integer or a large int. */
-                if (id.dword == D_Integer)
-                    p->Constants[j] = id;
-                else {
-                    /* It must be a large int; copy the block from the block region to the heap
-                     * since constants are not swept during collection.
-                     */
-                    MemProtect(BlkLoc(p->Constants[j]) = malloc(BignumBlk(id).blksize));
-                    memcpy(BlkLoc(p->Constants[j]), BlkLoc(id), BignumBlk(id).blksize);
-                }
             }
         }
     }

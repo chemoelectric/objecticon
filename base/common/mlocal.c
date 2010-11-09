@@ -981,3 +981,48 @@ int strncasecmp(char *s1, char *s2, int n)
     return 0;
 }
 #endif					/* MSWIN32 */
+
+static char sbuf[MaxCvtLen];
+
+/*
+ * Convert a double to a C string.  A pointer into a static buffer is returned.
+ */
+char *double2str(double n)
+{
+    char *p, *s = sbuf;
+    if (n == 0.0)                        /* ensure -0.0 (which == 0.0), prints as "0.0" */
+        strcpy(s, "0.0");
+    else {
+        s++; 				/* leave room for leading zero */
+        sprintf(s, "%.*g", Precision, n);
+
+        /*
+         * Now clean up possible messes.
+         */
+        while (*s == ' ')			/* delete leading blanks */
+            s++;
+        if (*s == '.') {			/* prefix 0 to initial period */
+            s--;
+            *s = '0';
+        }
+        else if (!strchr(s, '.') && !strchr(s, 'e') && !strchr(s, 'E'))
+            strcat(s, ".0");		/* if no decimal point or exp. */
+        if (s[strlen(s) - 1] == '.')		/* if decimal point is at end ... */
+            strcat(s, "0");
+
+        /* Convert e+0dd -> e+dd */
+        if ((p = strchr(s, 'e')) && p[2] == '0' && 
+            isdigit((unsigned char)p[3]) && isdigit((unsigned char)p[4]))
+            strcpy(p + 2, p + 3);
+    }
+    return s;
+}
+
+/*
+ * Convert a word to a C string.  A pointer into a static buffer is returned.
+ */
+char *word2str(word n)
+{
+    sprintf(sbuf, "%ld", (long)n);
+    return sbuf;
+}

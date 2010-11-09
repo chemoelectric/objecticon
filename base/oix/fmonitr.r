@@ -111,7 +111,6 @@ void set_event_mask(struct progstate *p, struct b_cset *cs)
       p->Cnvint = cnv_int_1;
       p->Cnvreal = cnv_real_1;
       p->Cnvstr = cnv_str_1;
-      p->Cnvtstr = cnv_tstr_1;
       }
    else {
       p->Cnvcset = cnv_cset_0;
@@ -119,7 +118,6 @@ void set_event_mask(struct progstate *p, struct b_cset *cs)
       p->Cnvint = cnv_int_0;
       p->Cnvreal = cnv_real_0;
       p->Cnvstr = cnv_str_0;
-      p->Cnvtstr = cnv_tstr_0;
       }
 
    if ((Testb((word)(E_Objectref), bits)) ||

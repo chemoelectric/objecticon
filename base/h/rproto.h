@@ -72,8 +72,6 @@ int             cnv_real_0      (dptr s, dptr d);
 int             cnv_real_1      (dptr s, dptr d);
 int             cnv_str_0       (dptr s, dptr d);
 int             cnv_str_1       (dptr s, dptr d);
-int             cnv_tstr_0      (char *sbuf, dptr s, dptr d);
-int             cnv_tstr_1      (char *sbuf, dptr s, dptr d);
 void            cplist_0        (dptr dp1,dptr dp2,word i,word j);
 void            cplist_1        (dptr dp1,dptr dp2,word i,word j);
 void            cpset_0         (dptr dp1,dptr dp2,word size);
@@ -97,7 +95,6 @@ int             def_eint        (dptr s, word df, dptr d);
 int             def_int         (dptr s, word df, dptr d);
 int             def_real        (dptr s, double df, dptr d);
 int             def_str         (dptr s, dptr df, dptr d);
-int             def_tstr        (char *sbuf, dptr s, dptr df, dptr d);
 word            div3            (word a,word b);
 int             doasgn          (dptr dp1,dptr dp2);
 int             doimage         (int c,int q);
@@ -351,7 +348,7 @@ word iipow         (word n1, word n2);
 void    init            (char *name, int *argcp, char *argv[], int trc_init);
 int     kbhit           (void);
 int     order           (dptr dp);
-void    rtos            (double n,dptr dp,char *s);
+
 
 struct progstate *alcprog(long icodesize);
 

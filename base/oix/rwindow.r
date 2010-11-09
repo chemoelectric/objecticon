@@ -551,7 +551,7 @@ static int colorphrase(char *buf, int *r, int *g, int *b)
      * copy spec, lowering case and replacing spaces and hyphens with NULs
      */
     for(p = cbuffer; (c = *buf) != 0; p++, buf++) {
-        if ((unsigned char)isupper(c)) *p = tolower((unsigned char)c);
+        if (isupper((unsigned char)c)) *p = tolower((unsigned char)c);
         else if (c == ' ' || c == '-') *p = '\0';
         else *p = c;
     }

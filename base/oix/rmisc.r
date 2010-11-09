@@ -466,7 +466,6 @@ static int cset_do_range(int from, int to)
     return 1;
 }
 
-
 #define StringLimit	16		/* limit on length of imaged string */
 #define ListLimit	 6		/* limit on list items in image */
 
@@ -482,7 +481,6 @@ void outimage(FILE *f, dptr dp, int noimage)
    union block *bp;
    char *csn;
    struct descrip q;
-   double rresult;
    tended struct descrip tdp;
    char cbuf[CHAR_CVT_LEN];
 
@@ -533,12 +531,9 @@ void outimage(FILE *f, dptr dp, int noimage)
             fprintf(f, "%ld", (long)IntVal(*dp));
 
       real: {
-         char s[30];
-         struct descrip rd;
-
+         double rresult;
          DGetReal(*dp,rresult);
-         rtos(rresult, &rd, s);
-	 fprintf(f, "%.*s", (int)StrLen(rd), StrLoc(rd));
+	 fputs(double2str(rresult),f);
          }
 
       cset: {

@@ -112,7 +112,6 @@ extern char *op_sym;               /* For an op, its symbol (eg ">=") */
 extern int op_generator;           /* Does this op generate a sequence */
 extern char *fname;                /* current source file name */
 extern struct token *comment;      /* descriptive comment for current oper */
-extern int n_tmp_str;              /* total number of string buffers needed */
 extern char *progname;
 extern struct sym_entry *params;   /* current list of parameters */
 extern struct sym_entry *decl_lst; /* declarations from "declare {...}" */
@@ -209,7 +208,6 @@ struct node {
 #define TypCStr   -6
 #define TypEInt   -7
 #define TypECInt  -8
-#define TypTStr   -9
 #define TypStrOrUcs -11
 #define TypNamedVar -12
 #define TypStructVar -13

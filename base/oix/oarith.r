@@ -89,7 +89,7 @@ ArithOp( % , mod , IntMod , RealMod)
  * x * y
  */
 #define IntMpy(x,y,result) bigmul(&x,&y,&result);
-#define RealMpy(x,y,result) result = (double)((long double)x * (long double)y);
+#define RealMpy(x,y,result) result = x * y;
 ArithOp( * , mult , IntMpy , RealMpy)
 
 

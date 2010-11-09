@@ -15,7 +15,6 @@
 /*
  * Prototypes for static functions.
  */
-static void itos (word num, dptr dp, char *s);
 static int ston (dptr sp, union numeric *result);
 
 static int cset2str(dptr src, dptr dest)
@@ -583,8 +582,6 @@ cnv_real_macro(cnv_real_1,E_Aconv,E_Tconv,E_Sconv,E_Fconv)
  */
 int f(dptr s, dptr d)
    {
-   char sbuf[MaxCvtLen];
-
    EVValD(s, e_aconv);
    EVValD(&emptystr, e_tconv);
 
@@ -602,21 +599,22 @@ int f(dptr s, dptr d)
       integer: {
 
          if (Type(*s) == T_Lrgint) {
-            word slen;
-            word dlen;
-            slen = (BignumBlk(*s).lsd - BignumBlk(*s).msd +1);
-            dlen = slen * DigitBits * 0.3010299956639812;	/* 1 / log2(10) */
 	    bigtos(s,d);
             EVValD(d, e_sconv);
             return 1;
           }
-         else
-            itos(IntVal(*s), d, sbuf);
+         else {
+            cstr2string(word2str(IntVal(*s)), d);
+            EVValD(d, e_sconv);
+            return 1;
+         }
        }
       real: {
          double res;
          DGetReal(*s, res);
-         rtos(res, d, sbuf);
+         cstr2string(double2str(res), d);
+         EVValD(d, e_sconv);
+         return 1;
          }
      cset: {
            if (cset2str(s, d)) {
@@ -633,54 +631,12 @@ int f(dptr s, dptr d)
          return 0;
          }
       }
-   MemProtect(StrLoc(*d) = alcstr(StrLoc(*d), StrLen(*d)));
-   EVValD(d, e_sconv);
-   return 1;
    }
 #enddef
 
 cnv_str_macro(cnv_str_0,0,0,0,0,0)
 cnv_str_macro(cnv_str_1,E_Aconv,E_Tconv,E_Nconv,E_Sconv,E_Fconv)
 
-
-#begdef cnv_tstr_macro(f,e_aconv,e_tconv,e_nconv,e_sconv,e_fconv)
-/*
- * cnv_tstr - cnv:tmp_string(*s, *d), convert to a temporary string
- */
-int f(char *sbuf, dptr s, dptr d)
-   {
-   type_case *s of {
-      string:
-         *d = *s;
-      ucs:
-         *d = UcsBlk(*s).utf8;
-      integer: {
-         if (Type(*s) == T_Lrgint) {
-            word slen;
-            word dlen;
-
-            slen = (BignumBlk(*s).lsd - BignumBlk(*s).msd +1);
-            dlen = slen * DigitBits * 0.3010299956639812;	/* 1 / log2(10) */
-	    bigtos(s,d);
-           }
-         else
-            itos(IntVal(*s), d, sbuf);
-      }
-      real: {
-         double res;
-         DGetReal(*s, res);
-         rtos(res, d, sbuf);
-         }
-     cset: {
-        if (!cset2str(s, d))
-           return 0;
-      }
-      default:
-         return 0;
-      }
-   return 1;
-   }
-#enddef
 
 static void deref_tvsubs(dptr s, dptr d)
 {
@@ -739,8 +695,6 @@ static void deref_tvtbl(dptr s, dptr d)
         *d = bp->tvtbl.clink->table.defvalue;	/* nope; use default */
 }
 
-cnv_tstr_macro(cnv_tstr_0,0,0,0,0,0)
-cnv_tstr_macro(cnv_tstr_1,E_Aconv,E_Tconv,E_Nconv,E_Sconv,E_Fconv)
 
 #begdef deref_macro(f, e_deref)
 /*
@@ -782,46 +736,6 @@ void f(dptr s, dptr d)
 
 deref_macro(deref_0,0)
 deref_macro(deref_1,E_Deref)
-
-/*
- * Service routines
- */
-
-/*
- * itos - convert the integer num into a string using s as a buffer and
- *  making q a descriptor for the resulting string.
- */
-
-static void itos(word num, dptr dp, char *s)
-   {
-   char *p;
-
-   p = s + MaxCvtLen - 1;
-
-   *p = '\0';
-   if (num >= 0L)
-      do {
-	 *--p = num % 10L + '0';
-	 num /= 10L;
-	 } while (num != 0L);
-   else {
-      if (num == MinWord) {      /* max negative value */
-	 p -= strlen (MinWordStr);
-	 strcpy (p, MinWordStr);
-         }
-      else {
-	num = -num;
-	do {
-	   *--p = '0' + (num % 10L);
-	   num /= 10L;
-	   } while (num != 0L);
-	*--p = '-';
-	}
-      }
-
-   StrLen(*dp) = s + MaxCvtLen - 1 - p;
-   StrLoc(*dp) = p;
-   }
 
 
 /*
@@ -1035,39 +949,4 @@ word cvpos(word pos, word len)
    if (pos > 0)
       return pos;
    return (len + pos + 1);
-   }
-
-/*
- * rtos - convert the real number n into a string using s as a buffer and
- *  making a descriptor for the resulting string.
- */
-void rtos(double n, dptr dp, char *s)
-   {
-   char *p;
-   if (n == 0.0)                        /* ensure -0.0 (which == 0.0), prints as "0.0" */
-     strcpy(s, "0.0");
-   else {
-     s++; 				/* leave room for leading zero */
-     sprintf(s, "%.*g", Precision, n);
-
-     /*
-      * Now clean up possible messes.
-      */
-     while (*s == ' ')			/* delete leading blanks */
-       s++;
-     if (*s == '.') {			/* prefix 0 to initial period */
-       s--;
-       *s = '0';
-     }
-     else if (!strchr(s, '.') && !strchr(s, 'e') && !strchr(s, 'E'))
-       strcat(s, ".0");		/* if no decimal point or exp. */
-     if (s[strlen(s) - 1] == '.')		/* if decimal point is at end ... */
-       strcat(s, "0");
-
-     /* Convert e+0dd -> e+dd */
-     if ((p = strchr(s, 'e')) && p[2] == '0' && isdigit(p[3]) && isdigit(p[4]))
-       strcpy(p + 2, p + 3);
-   }
-   StrLen(*dp) = strlen(s);
-   StrLoc(*dp) = s;
    }

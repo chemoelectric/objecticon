@@ -62,3 +62,6 @@ int strncasecmp(char *s1, char *s2, int n);
 Waitmsg *waitforpid(int pid);
 void readtzinfo(struct tzinfo *tz);
 #endif
+
+char *double2str(double n);
+char *word2str(word n);

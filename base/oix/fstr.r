@@ -960,7 +960,7 @@ function left(s1,n,s2)
           word slen;
           char *sbuf, *s3;
 
-          if (!def:tmp_string(s2, blank, s2))
+          if (!def:string(s2, blank, s2))
               runerr(103, s2);
 
           /*
@@ -1098,7 +1098,7 @@ function right(s1,n,s2)
           word slen;
           char *sbuf, *s3;
 
-          if (!def:tmp_string(s2, blank, s2))
+          if (!def:string(s2, blank, s2))
               runerr(103, s2);
 
           /*
@@ -1255,7 +1255,7 @@ function center(s1,n,s2)
           char *sbuf, *s3;
           word hcnt;
 
-          if (!def:tmp_string(s2,blank,s2))
+          if (!def:string(s2,blank,s2))
               runerr(103, s2);
 
           /*

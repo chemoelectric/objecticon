@@ -141,21 +141,6 @@ DefConvert(def_real, double, dptr, cnv_real, RealAsgn)
 
 DefConvert(def_str, dptr, dptr, cnv_str, StrAsgn)
 
-/*
- * def_tstr - def:tmp_string(*s, *df, *d), conversion to temporary string
- *  with a default value. Default is of type "struct descrip *"; if used,
- *  copy it to destination descriptor. Note that this routine needs
- *  a string buffer to perform an actual conversion.
- */
-int def_tstr(char *sbuf, dptr s, dptr df, dptr d)
-   {
-   if (is:null(*s)) {
-      *d = *df;
-      return 1;
-      }
-   return cnv_tstr(sbuf, s, d);
-   }
-
 
 /*
  * def_string_or_ucs - def:string_or_ucs(*s, *df, *d), convert to string/ucs with a default

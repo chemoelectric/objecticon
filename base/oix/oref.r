@@ -174,7 +174,7 @@ operator ! bang(underef x -> dx)
        }
 
        default: {
-           if (cnv:tmp_string(dx,dx)) {
+           if (cnv:string(dx,dx)) {
                char ch;
                /*
                 * A (converted or non-variable) string is being banged.
@@ -606,7 +606,7 @@ operator [] subsc(underef x -> dx,y)
             struct b_constructor *bp2; /* doesn't need to be tended */
             word i;
 
-            if (!cnv:tmp_string(y,y))
+            if (!cnv:string(y,y))
                runerr(101,y);
 
             bp = BlkLoc(dx);
@@ -712,7 +712,7 @@ operator [] subsc(underef x -> dx,y)
           */
          if (is:variable(x) && is:string(dx) && !frame->rval)
             use_trap = 1;
-         else if (!cnv:tmp_string(dx,dx))
+         else if (!cnv:string(dx,dx))
             runerr(114, dx);
 
          /*
@@ -883,7 +883,7 @@ function back(underef x -> dx)
             }
 
        default: {
-           if (cnv:tmp_string(dx,dx)) {
+           if (cnv:string(dx,dx)) {
                char ch;
                /*
                 * A (converted or non-variable) string is being banged.

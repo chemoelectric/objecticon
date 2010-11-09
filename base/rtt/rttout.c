@@ -26,9 +26,6 @@ static void chk_nl        (int indent);
 static int     does_call     (struct node *expr);
 static void failure       (int indent, int brace);
 static void interp_def    (struct node *n);
-static int     len_sel       (struct node *sel,
-                               struct parminfo *strt_prms,
-                               struct parminfo *end_prms, int indent);
 static void line_dir      (int nxt_line, char *new_fname);
 static int     only_proto    (struct node *n);
 static void parm_locs     (struct sym_entry *op_params);
@@ -46,7 +43,6 @@ static void ret_1_arg     (struct token *t, struct node *args,
                                int typcd, char *vwrd_asgn, char *arg_rep,
                                int indent);
 static int     rt_walk       (struct node *n, int indent, int brace);
-static void spcl_start    (struct sym_entry *op_params);
 static int     tdef_or_extr  (struct node *n);
 static void tend_ary      (int n);
 static void tend_init     (void);
@@ -731,12 +727,6 @@ int indent;
       case TypCStr:
          is_cstr = 1;
          break;
-      case TypTStr:
-          if (op_type != OrdFunc && op_generator)
-              fprintf(out_file, "frame->r_sbuf[%d], ", nxt_sbuf++);
-          else
-              fprintf(out_file, "r_sbuf[%d], ", nxt_sbuf++);
-         break;
       }
 
    /*
@@ -840,10 +830,6 @@ int *dflt_to_ptr;
          break;
       case TypCStr:
          strcat(buf, "c_str");
-         break;
-      case TypTStr:
-         strcat(buf, "tstr");
-         by_ref = 1;
          break;
       case TypEInt:
          strcat(buf, "eint");
@@ -1247,12 +1233,6 @@ int brace;
                if (op_type == OrdFunc)
                   errt1(t, "'fail' may not be used in an ordinary C function");
                failure(indent, brace);
-	       return 0;
-	    case Errorfail:
-	       if (op_type == OrdFunc)
-		  errt1(t,
-		      "'errorfail' may not be used in an ordinary C function");
-	       failure(indent, brace);
 	       return 0;
             case Break:
 	       prt_tok(t, indent);
@@ -2337,38 +2317,6 @@ struct node *n;
    fprintf(stderr, "\tundone on subsequent failure.\n");
    }
 
-/*
- * len_sel - translate a clause form a len_case statement into a C case
- *  clause. Return an indication of whether execution falls through the
- *  clause.
- */
-static int len_sel(sel, strt_prms, end_prms, indent)
-struct node *sel;
-struct parminfo *strt_prms;
-struct parminfo *end_prms;
-int indent;
-   {
-   int fall_thru;
-
-   prt_str("case ", indent);
-   prt_tok(sel->tok, indent + IndentInc);           /* integer selection */
-   prt_str(":", indent + IndentInc);
-   fall_thru = rt_walk(sel->u[0].child, indent + IndentInc, 0);/* clause body */
-   ForceNl();
-
-   if (fall_thru) {
-      prt_str("break;", indent + IndentInc);
-      ForceNl();
-      /*
-       * Remember any changes to paramter locations caused by type conversions
-       *  within the clause.
-       */
-      mrg_prmloc(end_prms);
-      }
-
-   ld_prmloc(strt_prms);
-   return fall_thru;
-   }
 
 /*
  * rt_walk - walk the part of the syntax tree containing rtt code, producing
@@ -2379,8 +2327,8 @@ struct node *n;
 int indent;
 int brace;
    {
-   struct token *t, *t1;
-   struct node *n1, *errnum;
+   struct token *t;
+   struct node *n1;
    int fall_thru;
 
    if (n == NULL)
@@ -2552,68 +2500,6 @@ int brace;
                   free(else_prms);
                }
                return fall_thru;
-            case Len_case: {
-               /*
-                * RTL code:
-                *   len_case <variable> of {
-                *      <integer>: <action>
-                *        ...
-                *      default: <action>
-                *      }
-                */
-               struct parminfo *strt_prms;
-               struct parminfo *end_prms;
-
-               /*
-                * A case may contain parameter conversions that create new
-                *  scopes. Remember the parameter locations at the start
-                *  of the len_case statement.
-                */
-               strt_prms = new_prmloc();
-               sv_prmloc(strt_prms);
-               end_prms = new_prmloc();
-
-               n1 = n->u[0].child;
-               if (!(n1->u[0].sym->id_type & VArgLen)) 
-	          errt1(t, "len_case must select on length of vararg"); 
-               /*
-                * The len_case statement is implemented as a C switch
-                *  statement.
-                */
-               prt_str("switch (", indent);
-               prt_var(n1, indent);
-               prt_str(") {", indent);
-               ForceNl();
-               fall_thru = 0;
-               for (n1 = n->u[1].child; n1->nd_id == ConCatNd;
-                  n1 = n1->u[0].child)
-                     fall_thru |= len_sel(n1->u[1].child, strt_prms, end_prms,
-                        indent + IndentInc);
-               fall_thru |= len_sel(n1, strt_prms, end_prms,
-                  indent + IndentInc);
-
-               /*
-                * Handle default clause.
-                */
-               prt_str("default:", indent + IndentInc);
-               ForceNl();
-               fall_thru |= rt_walk(n->u[2].child, indent + 2 * IndentInc, 0);
-               ForceNl();
-               prt_str("}", indent + IndentInc);
-               ForceNl();
-
-               /*
-                * Put into effect the location of parameters at the end
-                *  of the len_case statement.
-                */
-               mrg_prmloc(end_prms);
-               ld_prmloc(end_prms);
-               if (strt_prms != NULL)
-                  free(strt_prms);
-               if (end_prms != NULL)
-                  free(end_prms);
-               }
-               return fall_thru;
             case Type_case: {
                /*
                 * RTL code:
@@ -2665,117 +2551,6 @@ int brace;
                cnv_fnc(t, icn_typ(n->u[0].child), n->u[1].child, NULL,
                   n->u[2].child, indent);
                return 1;
-            case Arith_case: {
-               /*
-                * arith_case (<variable>, <variable>) of {
-                *   C_integer: <statement>
-                *   integer: <statement>
-                *   C_double: <statement>
-                *   }
-                *
-                * This construct does type conversions and provides
-                *  alternate execution paths. It is necessary to keep
-                *  track of parameter locations.
-                */
-               struct parminfo *strt_prms;
-               struct parminfo *end_prms;
-               struct parminfo *tmp_prms;
-
-               strt_prms = new_prmloc();
-               sv_prmloc(strt_prms);
-               end_prms = new_prmloc();
-               tmp_prms = new_prmloc();
-
-               fall_thru = 0;
-
-               n1 = n->u[2].child;   /* contains actions for the 3 cases */
-
-               /*
-                * Set up an error number node for use in runerr().
-                */
-               t1 = copy_t(t);
-               t1->tok_id = IntConst;
-               t1->image = "102";
-               errnum = node1(PrimryNd, t1, NULL);
-
-               /*
-                * Try converting both arguments to a C_integer.
-                */
-               tok_line(t, indent);
-               prt_str("if (", indent);
-               cnv_fnc(t, TypECInt, n->u[0].child, NULL, NULL, indent);
-               prt_str(" && ", indent);
-               cnv_fnc(t, TypECInt, n->u[1].child, NULL, NULL, indent);
-               prt_str(") ", indent);
-               ForceNl();
-               if (rt_walk(n1->u[0].child, indent + IndentInc, 0)) {
-                  fall_thru |= 1;
-                  mrg_prmloc(end_prms);
-                  }
-               ForceNl();
-
-               /*
-                * Try converting both arguments to an integer.
-                */
-
-               ForceNl();
-               ld_prmloc(strt_prms);
-               tok_line(t, indent);
-               prt_str("else if (", indent);
-               cnv_fnc(t, TypEInt, n->u[0].child, NULL, NULL, indent);
-               prt_str(" && ", indent);
-               cnv_fnc(t, TypEInt, n->u[1].child, NULL, NULL, indent);
-               prt_str(") ", indent);
-               ForceNl();
-               if (rt_walk(n1->u[1].child, indent + IndentInc, 0)) {
-                  fall_thru |= 1;
-                  mrg_prmloc(end_prms);
-                  }
-               ForceNl();
-
-               ForceNl();
-
-               /*
-                * Try converting both arguments to a C_double
-                */
-               ld_prmloc(strt_prms);
-               prt_str("else {", indent);
-               ForceNl();
-               tok_line(t, indent + IndentInc);
-               prt_str("if (!", indent + IndentInc);
-               cnv_fnc(t, TypCDbl, n->u[0].child, NULL, NULL,
-                  indent + IndentInc);
-               prt_str(")", indent + IndentInc);
-               ForceNl();
-               sv_prmloc(tmp_prms);   /* use original parm locs for error */
-               ld_prmloc(strt_prms);
-               prt_runerr(t, errnum, n->u[0].child, indent + 2 * IndentInc);
-               ld_prmloc(tmp_prms);
-               tok_line(t, indent + IndentInc);
-               prt_str("if (!", indent + IndentInc);
-               cnv_fnc(t, TypCDbl, n->u[1].child, NULL, NULL,
-                  indent + IndentInc);
-               prt_str(") ", indent + IndentInc);
-               ForceNl();
-               sv_prmloc(tmp_prms);   /* use original parm locs for error */
-               ld_prmloc(strt_prms);
-               prt_runerr(t, errnum, n->u[1].child, indent + 2 * IndentInc);
-               ld_prmloc(tmp_prms);
-               if (rt_walk(n1->u[2].child, indent + IndentInc, 0)) {
-                  fall_thru |= 1;
-                  mrg_prmloc(end_prms);
-                  }
-               ForceNl();
-               prt_str("}", indent + IndentInc);
-               ForceNl();
-
-               ld_prmloc(end_prms);
-               free(strt_prms);
-               free(end_prms);
-               free(tmp_prms);
-               free_tree(errnum);
-               return fall_thru;
-               }
             }
       case QuadNd:
          /*
@@ -2796,12 +2571,6 @@ int brace;
  */
 void spcl_dcls()
 {
-    /*
-     * Output declarations for buffers and locations to hold conversions
-     *  to C values.
-     */
-    spcl_start(NULL);
-
     varargs = 0;
     tend_ary(ntend);
 
@@ -2831,22 +2600,6 @@ void spcl_dcls()
     }
 }
 
-/*
- * spcl_start - do initial work for outputing special declarations. Output
- *  declarations for buffers and locations to hold conversions to C values.
- *  Determine what tended locations are needed for parameters.
- */
-static void spcl_start(op_params)
-struct sym_entry *op_params;
-   {
-   ForceNl();
-   if (op_type == OrdFunc && n_tmp_str > 0) {
-      prt_str("char r_sbuf[", IndentInc);
-      fprintf(out_file, "%d][MaxCvtLen];", n_tmp_str);
-      ForceNl();
-      }
-   parm_locs(op_params); /* see what parameter conversion there are */
-   }
 
 /*
  * tend_ary - write struct containing array of tended descriptors.
@@ -3230,8 +2983,6 @@ static void print_func_vars()
        }
        t = t->u.param_info.next;
    }
-   if (n_tmp_str > 0)
-       fprintf(out_file, "   char r_sbuf[%d][MaxCvtLen];", n_tmp_str);
 }
 
 /*
@@ -3331,7 +3082,8 @@ struct node *n;
    /*
     * Output special declarations and initial processing.
     */
-   spcl_start(params);
+   ForceNl();
+   parm_locs(params);
 
    if (has_underef && params != NULL && params->id_type == (VarPrm | DrfPrm))
       prt_str("int r_n;\n", IndentInc);
