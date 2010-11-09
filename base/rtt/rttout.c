@@ -43,7 +43,6 @@ static void ret_1_arg     (struct token *t, struct node *args,
                                int typcd, char *vwrd_asgn, char *arg_rep,
                                int indent);
 static int     rt_walk       (struct node *n, int indent, int brace);
-static void spcl_start    (struct sym_entry *op_params);
 static int     tdef_or_extr  (struct node *n);
 static void tend_ary      (int n);
 static void tend_init     (void);
@@ -728,12 +727,6 @@ int indent;
       case TypCStr:
          is_cstr = 1;
          break;
-      case TypTStr:
-          if (op_type != OrdFunc && op_generator)
-              fprintf(out_file, "frame->r_sbuf[%d], ", nxt_sbuf++);
-          else
-              fprintf(out_file, "r_sbuf[%d], ", nxt_sbuf++);
-         break;
       }
 
    /*
@@ -837,10 +830,6 @@ int *dflt_to_ptr;
          break;
       case TypCStr:
          strcat(buf, "c_str");
-         break;
-      case TypTStr:
-         strcat(buf, "tstr");
-         by_ref = 1;
          break;
       case TypEInt:
          strcat(buf, "eint");
@@ -2582,12 +2571,6 @@ int brace;
  */
 void spcl_dcls()
 {
-    /*
-     * Output declarations for buffers and locations to hold conversions
-     *  to C values.
-     */
-    spcl_start(NULL);
-
     varargs = 0;
     tend_ary(ntend);
 
@@ -2617,22 +2600,6 @@ void spcl_dcls()
     }
 }
 
-/*
- * spcl_start - do initial work for outputing special declarations. Output
- *  declarations for buffers and locations to hold conversions to C values.
- *  Determine what tended locations are needed for parameters.
- */
-static void spcl_start(op_params)
-struct sym_entry *op_params;
-   {
-   ForceNl();
-   if (op_type == OrdFunc && n_tmp_str > 0) {
-      prt_str("char r_sbuf[", IndentInc);
-      fprintf(out_file, "%d][MaxCvtLen];", n_tmp_str);
-      ForceNl();
-      }
-   parm_locs(op_params); /* see what parameter conversion there are */
-   }
 
 /*
  * tend_ary - write struct containing array of tended descriptors.
@@ -3016,8 +2983,6 @@ static void print_func_vars()
        }
        t = t->u.param_info.next;
    }
-   if (n_tmp_str > 0)
-       fprintf(out_file, "   char r_sbuf[%d][MaxCvtLen];", n_tmp_str);
 }
 
 /*
@@ -3117,7 +3082,8 @@ struct node *n;
    /*
     * Output special declarations and initial processing.
     */
-   spcl_start(params);
+   ForceNl();
+   parm_locs(params);
 
    if (has_underef && params != NULL && params->id_type == (VarPrm | DrfPrm))
       prt_str("int r_n;\n", IndentInc);

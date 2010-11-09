@@ -1,6 +1,5 @@
 #include "rtt.h"
 
-int n_tmp_str  = 0;
 struct sym_entry *params = NULL;
 
 /*
@@ -10,7 +9,6 @@ void clr_def()
    {
    struct sym_entry *sym;
 
-   n_tmp_str = 0;
    while (params != NULL) {
       sym = params;
       params = params->u.param_info.next;
@@ -57,8 +55,6 @@ struct node *typ;
                return TypCDbl;
             case C_String:
                return TypCStr;
-            case Tmp_string:
-               return TypTStr;
             case Str_Or_Ucs:
                return TypStrOrUcs;
             case Named_var:

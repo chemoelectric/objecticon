@@ -516,7 +516,6 @@ static void initprogstate(struct progstate *p)
     p->Cnvint = cnv_int_0;
     p->Cnvreal = cnv_real_0;
     p->Cnvstr = cnv_str_0;
-    p->Cnvtstr = cnv_tstr_0;
     p->Deref = deref_0;
     p->Alccoexp = alccoexp_0;
     p->Alcbignum = alcbignum_0;

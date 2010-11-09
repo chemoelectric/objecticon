@@ -106,7 +106,6 @@ static word mul(word a, word b);
 static word mod3(word a, word b);
 static word div3(word a, word b);
 static word neg(word a);
-static char *rtos(double n);
 
 static struct rangeset *rangeset_union(struct rangeset *r1, struct rangeset *r2);
 static struct rangeset *rangeset_inter(struct rangeset *r1, struct rangeset *r2);
@@ -993,15 +992,14 @@ static int cnv_string(struct literal *s)
             break;
         }
         case INTEGER: {
-            char buf[MaxCvtLen];
-            sprintf(buf, "%ld", (long)s->u.i);
+            char *t = word2str(s->u.i);
             s->type = STRING;
-            s->u.str.len = strlen(buf);
-            s->u.str.s = intern(buf);
+            s->u.str.len = strlen(t);
+            s->u.str.s = intern(t);
             return 1;
         }
         case REAL: {
-            char *t = rtos(s->u.d);
+            char *t = double2str(s->u.d);
             s->type = STRING;
             s->u.str.len = strlen(t);
             s->u.str.s = intern(t);
@@ -3244,39 +3242,4 @@ static int equiv(struct literal *x, struct literal *y)
     }
     quit("Bad type to equiv()");
     return 0;
-}
-
-/*
- * rtos - convert the real number n into a string; a static buffer pointer is returned
- */
-static char *rtos(double n)
-{
-    static char buf[MaxCvtLen];
-    char *p, *s = buf;
-    if (n == 0.0)                        /* ensure -0.0 (which == 0.0), prints as "0.0" */
-      strcpy(s, "0.0");
-    else {
-      s++; 				/* leave room for leading zero */
-      sprintf(s, "%.*g", Precision, n);
-
-      /*
-       * Now clean up possible messes.
-       */
-      while (*s == ' ')			/* delete leading blanks */
-        s++;
-      if (*s == '.') {			/* prefix 0 to initial period */
-        s--;
-        *s = '0';
-      }
-      else if (!strchr(s, '.') && !strchr(s, 'e') && !strchr(s, 'E'))
-        strcat(s, ".0");		/* if no decimal point or exp. */
-      if (s[strlen(s) - 1] == '.')		/* if decimal point is at end ... */
-        strcat(s, "0");
-
-      /* Convert e+0dd -> e+dd */
-      if ((p = strchr(s, 'e')) && p[2] == '0' && 
-          isdigit((unsigned char)p[3]) && isdigit((unsigned char)p[4]))
-        strcpy(p + 2, p + 3);
-    }
-    return s;
 }

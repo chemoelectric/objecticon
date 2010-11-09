@@ -85,7 +85,7 @@ operator * size(x)
          /*
           * Try to convert it to a string.
           */
-         if (!cnv:tmp_string(x,x))
+         if (!cnv:string(x,x))
             runerr(112, x);	/* no notion of size */
          return C_integer StrLen(x);
       }

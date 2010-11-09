@@ -593,7 +593,6 @@
 #define cnv_int	    (curpstate->Cnvint)
 #define cnv_real	    (curpstate->Cnvreal)
 #define cnv_str	    (curpstate->Cnvstr)
-#define cnv_tstr	    (curpstate->Cnvtstr)
 #define deref	    (curpstate->Deref)
 #define alcbignum	    (curpstate->Alcbignum)
 #define alccoexp	    (curpstate->Alccoexp)

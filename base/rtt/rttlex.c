@@ -135,7 +135,6 @@ void init_lex()
       sym_add(Suspend,       spec_str("suspend"),       OtherDcl, 0);
       sym_add(Tended,        spec_str("tended"),        OtherDcl, 0);
       sym_add(Then,          spec_str("then"),          OtherDcl, 0);
-      sym_add(Tmp_string,    spec_str("tmp_string"),    OtherDcl, 0);
       sym_add(TokType,       spec_str("type"),          OtherDcl, 0);
       sym_add(Type_case,     spec_str("type_case"),     OtherDcl, 0);
       sym_add(Underef,       spec_str("underef"),       OtherDcl, 0);

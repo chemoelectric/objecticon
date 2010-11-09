@@ -273,7 +273,7 @@ function match(s1,s2,i,j)
       char *str1, *str2;
 
       if (is:string(s2)) {
-          if (!cnv:tmp_string(s1,s1))
+          if (!cnv:string(s1,s1))
               runerr(103,s1);
 
           /*

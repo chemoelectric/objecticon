@@ -34,7 +34,7 @@
 
 %token <t> Runerr Is Cnv Def Exact Empty_type IconType Component Variable
 %token <t> Any_value Named_var Struct_var C_Integer Str_Or_Ucs
-%token <t> C_Double C_String Tmp_string Body End TokFunction Keyword
+%token <t> C_Double C_String Body End TokFunction Keyword
 %token <t> Operator Underef Declare Suspend Fail
 %token <t> TokType New All_fields Then Type_case Of
 
@@ -778,7 +778,6 @@ identifier
    | Of
    | Struct_var
    | Then
-   | Tmp_string
    | TokType
    | Underef
    | Variable
@@ -963,7 +962,6 @@ dest_type
    | C_Double                {$$ = node1(PrimryNd, $1, NULL);}
    | C_String                {$$ = node1(PrimryNd, $1, NULL);}
    | Str_Or_Ucs              {$$ = node1(PrimryNd, $1, NULL);}
-   | Tmp_string              {$$ = node1(PrimryNd, $1, NULL); ++n_tmp_str;}
    | '(' Exact ')' IconType  {$$ = node0(ExactCnv, chk_exct($4)); free_t($1);
                               free_t($2); free_t($3);}
    | '(' Exact ')' C_Integer {$$ = node0(ExactCnv, $4); free_t($1); free_t($2);
