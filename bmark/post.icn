@@ -64,6 +64,7 @@ procedure Term__()
       writes := Saves__
       }
    v := (&version ? (tab(find("Version ")) || move(8) || tab(upto(' '))))
+   if any('.,', v[-1]) then v[-1] := ""
 
    # final information
    write(left(v, 32),": ",right(Time__(),8))
