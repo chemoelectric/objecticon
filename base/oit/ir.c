@@ -86,10 +86,7 @@ static void init_loop(struct ir_info *info, struct ir_stack *st, struct ir_var *
 {
     struct loop_info *l = IRAlloc(struct loop_info);
     info->loop = l;
-    if (bounded)
-        l->continue_tmploc = -1;
-    else
-        l->continue_tmploc = make_tmploc(st);
+    l->continue_tmploc = make_tmploc(st);
     l->next_chunk = get_extra_chunk();
     l->loop_st = branch_stack(st);
     l->loop_mk = make_mark(l->loop_st);
@@ -1027,7 +1024,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 tmp = target ? target : make_tmp(st);
 
             left = ir_traverse(x->child1, st, lv, 0, is_rval(n->op, 1, rval));
-            right = ir_traverse(x->child2, st, rv, 0, is_rval(n->op, 2, rval));
+            right = ir_traverse(x->child2, st, rv, bounded && !aaop, is_rval(n->op, 2, rval));
             chunk1(res->start, ir_goto(n, left->start));
             chunk1(left->success, ir_goto(n, right->start));
             chunk1(left->failure, ir_goto(n, res->failure));
@@ -1844,9 +1841,9 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             int count, i;
             struct ir_info **info;
             struct ir_stack *expr_st, *tst;
-            int tl = -1;
-            if (!bounded)
-                tl = make_tmploc(st);
+            int tl;
+
+            tl = make_tmploc(st);
 
             /*
              * We generate code for a tree of Uop_Alts all in one go.  If they
@@ -2334,10 +2331,9 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             int expr_mk;
             struct ir_stack *expr_st, *then_st, *else_st;
             struct ir_info *expr, *then, *els;
-            int tl = -1;
-            if (!bounded)
-                tl = make_tmploc(st);
+            int tl;
 
+            tl = make_tmploc(st);
             expr_st = branch_stack(st);
             expr_mk = make_mark(expr_st);
             expr = ir_traverse(x->child1, expr_st, 0, 1, 1);
@@ -2381,13 +2377,12 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             struct ir_info *expr, *def = 0, **selector, **clause;
             struct ir_stack *case_st, *clause_st;
             int i, need_mark, mk;
-            int tl = -1;
+            int tl;
 
             selector = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
             clause = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
 
-            if (!bounded)
-                tl = make_tmploc(st);
+            tl = make_tmploc(st);
 
             /* Stack for the expression and selectors */
             case_st = branch_stack(st);
@@ -2476,10 +2471,9 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         case Uop_Rptalt: {                      /* repeated alternation */
             struct lnode_1 *x = (struct lnode_1 *)n;
             struct ir_info *expr;
-            int tl = -1;
-            if (!bounded)
-                tl = make_tmploc(st);
+            int tl;
 
+            tl = make_tmploc(st);
             expr = ir_traverse(x->child, st, target, bounded, rval);
 
             if (bounded) {
@@ -2529,24 +2523,56 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             struct lnode_2 *x = (struct lnode_2 *)n;
             struct ir_info *expr, *limit;
             struct ir_var *t;
+            int mk;
+
+            /* Generate nicer code for the common case expr \ 1 */
+            if (x->child1->op == Uop_Const &&
+                ((struct lnode_const *)x->child1)->con->c_flag == F_IntLit) {
+                word w;
+                memcpy(&w, ((struct lnode_const *)x->child1)->con->data, sizeof(word));
+                if (w == 1) {
+                    /* expr \ 1.  In contrast to the general case, treat expr as bounded */
+                    mk = make_mark(st);
+                    expr = ir_traverse(x->child2, st, target, 1, rval);
+                    chunk2(res->start, 
+                           OptIns(expr->uses_stack, ir_mark(n, mk)),
+                           ir_goto(n, expr->start));
+                    chunk2(expr->success, 
+                           OptIns(expr->uses_stack, ir_unmark(n, mk)),
+                           ir_goto(n, res->success));
+                    chunk1(expr->failure, ir_goto(n, res->failure));
+                    if (!bounded)
+                        chunk1(res->resume, ir_goto(n, res->failure));
+                    break;
+                }
+            }
+
+            /* General case */
+
             t = make_tmp(st);
+            mk = make_mark(st);
 
             limit = ir_traverse(x->child1, st, t, 0, 1);
             expr = ir_traverse(x->child2, st, target, bounded, rval);
 
             chunk1(res->start, ir_goto(n, limit->start));
-            if (!bounded)
+            if (!bounded) {
+                int xc = get_extra_chunk();
                 chunk3(res->resume, 
-                       ir_op(n, 0, Uop_Numgt, t, make_word(1), 0, 1, limit->resume),
-                       ir_mgop(n, t, Uop_Minus, t, make_word(1), 1),
+                       ir_op(n, 0, Uop_Numgt, t, make_word(1), 0, 1, xc),  /* if t<=1 goto xc */
+                       ir_mgop(n, t, Uop_Minus, t, make_word(1), 1),  /* else --t; resume expr */
                        ir_goto(n, expr->resume));
-
+                chunk2(xc, 
+                       OptIns(expr->uses_stack, ir_unmark(n, mk)),
+                       ir_goto(n, limit->resume));
+            }
             chunk1(expr->failure, ir_goto(n, limit->resume));
             chunk1(limit->failure, ir_goto(n, res->failure));
             chunk1(expr->success, ir_goto(n, res->success));
-            chunk3(limit->success, 
+            chunk4(limit->success, 
                    ir_limit(n, t),
                    ir_op(n, 0, Uop_Numgt, t, make_word(0), 0, 1, limit->resume),  /* Check for expr \ 0 */
+                   OptIns(!bounded && expr->uses_stack, ir_mark(n, mk)),
                    ir_goto(n, expr->start));
 
             res->uses_stack = (limit->uses_stack || expr->uses_stack);
