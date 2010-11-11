@@ -982,12 +982,12 @@ int strncasecmp(char *s1, char *s2, int n)
 }
 #endif					/* MSWIN32 */
 
-static char sbuf[MaxCvtLen];
+static char sbuf[Precision+32];
 
 /*
  * Convert a double to a C string.  A pointer into a static buffer is returned.
  */
-char *double2str(double n)
+char *double2cstr(double n)
 {
     char *p, *s = sbuf;
     if (n == 0.0)                        /* ensure -0.0 (which == 0.0), prints as "0.0" */
@@ -1021,7 +1021,7 @@ char *double2str(double n)
 /*
  * Convert a word to a C string.  A pointer into a static buffer is returned.
  */
-char *word2str(word n)
+char *word2cstr(word n)
 {
     sprintf(sbuf, "%ld", (long)n);
     return sbuf;

@@ -63,5 +63,5 @@ Waitmsg *waitforpid(int pid);
 void readtzinfo(struct tzinfo *tz);
 #endif
 
-char *double2str(double n);
-char *word2str(word n);
+char *double2cstr(double n);
+char *word2cstr(word n);

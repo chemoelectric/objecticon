@@ -533,7 +533,7 @@ void outimage(FILE *f, dptr dp, int noimage)
       real: {
          double rresult;
          DGetReal(*dp,rresult);
-	 fputs(double2str(rresult),f);
+	 fputs(double2cstr(rresult),f);
          }
 
       cset: {

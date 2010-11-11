@@ -474,7 +474,7 @@ operator [:] sect(underef x -> dx, i, j)
          k = cset_range_of_pos(&CsetBlk(dx), last);
          if (CsetBlk(dx).range[k].from + last - 1 - CsetBlk(dx).range[k].index < 256) {
              tended struct descrip result;
-             cset_to_str(&CsetBlk(dx), i, j, &result);
+             cset_to_string(&CsetBlk(dx), i, j, &result);
              return result;
          } else
              return ucs(cset_to_ucs_block(&CsetBlk(dx), i, j));

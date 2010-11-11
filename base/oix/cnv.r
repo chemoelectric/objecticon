@@ -17,11 +17,11 @@
  */
 static int ston (dptr sp, union numeric *result);
 
-static int cset2str(dptr src, dptr dest)
+static int cset2string(dptr src, dptr dest)
 {
     struct b_cset *c = &CsetBlk(*src);  /* Doesn't need to be tended */
     if (c->n_ranges == 0 || c->range[c->n_ranges - 1].to < 256) {
-        cset_to_str(c, 1, c->size, dest);
+        cset_to_string(c, 1, c->size, dest);
         return 1;
     } else
         return 0;
@@ -58,7 +58,7 @@ int cnv_c_dbl(dptr s, double *d)
           s = &UcsBlk(*s).utf8;
          }
       cset: {
-        if (!cset2str(s, &cnvstr))
+        if (!cset2string(s, &cnvstr))
            return 0;
         s = &cnvstr;
         }
@@ -124,7 +124,7 @@ int cnv_c_int(dptr s, word *d)
           s = &UcsBlk(*s).utf8;
          }
       cset: {
-        if (!cset2str(s, &cnvstr))
+        if (!cset2string(s, &cnvstr))
            return 0;
         s = &cnvstr;
         }
@@ -385,7 +385,7 @@ int cnv_ec_int(dptr s, word *d)
           s = &UcsBlk(*s).utf8;
          }
       cset: {
-        if (!cset2str(s, &cnvstr))
+        if (!cset2string(s, &cnvstr))
            return 0;
         s = &cnvstr;
         }
@@ -426,7 +426,7 @@ int cnv_eint(dptr s, dptr d)
           s = &UcsBlk(*s).utf8;
          }
       cset: {
-       if (!cset2str(s, &cnvstr))
+       if (!cset2string(s, &cnvstr))
            return 0;
         s = &cnvstr;
         }
@@ -496,7 +496,7 @@ int f(dptr s, dptr d)
           s = &UcsBlk(*s).utf8;
          }
       cset: {
-        if (!cset2str(s, &cnvstr)) {
+        if (!cset2string(s, &cnvstr)) {
            EVValD(s, e_fconv);
            return 0;
         }
@@ -604,7 +604,7 @@ int f(dptr s, dptr d)
             return 1;
           }
          else {
-            cstr2string(word2str(IntVal(*s)), d);
+            cstr2string(word2cstr(IntVal(*s)), d);
             EVValD(d, e_sconv);
             return 1;
          }
@@ -612,12 +612,12 @@ int f(dptr s, dptr d)
       real: {
          double res;
          DGetReal(*s, res);
-         cstr2string(double2str(res), d);
+         cstr2string(double2cstr(res), d);
          EVValD(d, e_sconv);
          return 1;
          }
      cset: {
-           if (cset2str(s, d)) {
+           if (cset2string(s, d)) {
                EVValD(d, e_sconv);
                return 1;
            } else {

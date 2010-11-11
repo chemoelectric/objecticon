@@ -53,11 +53,6 @@
    #define Precision 10			/* digits in string from real */
 #endif					/* Precision */
 
-#ifndef MaxCvtLen
-   #define MaxCvtLen	    32	        /* sufficient for holding result of real to string (using  */
-#endif                                  /* printf("%.*g", Precision, n)) and word to string conversions */
-                                        /* using %ld */
-
 /*
  * Parameters that configure tables and sets:
  *

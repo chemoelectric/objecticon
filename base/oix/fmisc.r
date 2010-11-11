@@ -1246,7 +1246,7 @@ struct b_ucs *cset_to_ucs_block(struct b_cset *b0, word pos, word len)
     return make_ucs_block(&utf8, len);
 }
 
-void cset_to_str(struct b_cset *b, word pos, word len, dptr res)
+void cset_to_string(struct b_cset *b, word pos, word len, dptr res)
 {
     int i;
     word j, from, to, out_len;
@@ -1269,13 +1269,13 @@ void cset_to_str(struct b_cset *b, word pos, word len, dptr res)
                 c[out_len++] = (char)j;
                 --len;
             } else
-                syserr("attempt to convert cset_to_str with chars > 255");
+                syserr("attempt to convert cset_to_string with chars > 255");
         }
         pos = 0;
     }
     /* Ensure we found len chars. */
     if (len)
-        syserr("cset_to_str inconsistent parameters");
+        syserr("cset_to_string inconsistent parameters");
     MemProtect(StrLoc(*res) = alcstr(c, out_len));
     StrLen(*res) = out_len;
 }

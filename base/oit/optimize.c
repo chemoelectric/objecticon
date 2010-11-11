@@ -1010,14 +1010,14 @@ static int cnv_string(struct literal *s)
             break;
         }
         case INTEGER: {
-            char *t = word2str(s->u.i);
+            char *t = word2cstr(s->u.i);
             s->type = STRING;
             s->u.str.len = strlen(t);
             s->u.str.s = intern(t);
             return 1;
         }
         case REAL: {
-            char *t = double2str(s->u.d);
+            char *t = double2cstr(s->u.d);
             s->type = STRING;
             s->u.str.len = strlen(t);
             s->u.str.s = intern(t);

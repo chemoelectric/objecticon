@@ -1186,7 +1186,7 @@ void print_vword(FILE *f, dptr d) {
 
 #if RealInDesc
             case D_Real : {
-                fputs(double2str(d->vword.realval), f);
+                fputs(double2cstr(d->vword.realval), f);
                 break;
             }
 #endif
