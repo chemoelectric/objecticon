@@ -42,21 +42,21 @@
 
 package ipl.seqimage
 
-procedure Seqimage(L)
-   local seq, result, i, j, resid
+procedure Seqimage(e, i, j)
+   local seq, result, resid
 
    seq := ""
-   i := @L[2]
-   j := @L[3]
-   while result := image(@L[1]) do
-      if *L[1] > \i then {
+   i := @\i
+   j := @\j
+   while result := image(@e) do
+      if *e > \i then {
          if /j then {
             seq ||:= ", ..."
             break
             }
          else {
             resid := [", " || result]
-            every put(resid,", " || image(|@L[1]))
+            every put(resid,", " || image(|@e))
             if *resid > j then seq ||:= ", ..."
             every seq ||:= resid[*resid -j + 1 to *resid]
             }
