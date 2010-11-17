@@ -775,10 +775,10 @@ class HttpClient(NetClient)
          find("100", response.get_status()) | break
       }
 
-      if request.method ~=== "HEAD" then
-         read_data() | fail
-      else
+      if request.method === "HEAD" then
          maybe_close()
+      else
+         read_data() | fail
 
       return
    end
