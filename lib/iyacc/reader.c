@@ -209,17 +209,17 @@ int keyword(void)
     char *t_cptr = cptr;
 
     c = *++cptr;
-    if (isalpha(c))
+    if (isalpha((unsigned char)c))
     {
 	cinc = 0;
 	for (;;)
 	{
-	    if (isalpha(c))
+	    if (isalpha((unsigned char)c))
 	    {
-		if (isupper(c)) c = tolower(c);
+		if (isupper((unsigned char)c)) c = tolower((unsigned char)c);
 		cachec(c);
 	    }
-	    else if (isdigit(c) || c == '_' || c == '.' || c == '$')
+	    else if (isdigit((unsigned char)c) || c == '_' || c == '.' || c == '$')
 		cachec(c);
 	    else
 		break;
@@ -686,7 +686,7 @@ bucket *get_literal(void)
 	    cachec('\\');
 	    cachec(c);
 	}
-	else if (isprint(c))
+	else if (isprint((unsigned char)c))
 	    cachec(c);
 	else
 	{
@@ -734,10 +734,10 @@ int is_reserved(char *name)
 	    strcmp(name, "$end") == 0)
 	return (1);
 
-    if (name[0] == '$' && name[1] == '$' && isdigit(name[2]))
+    if (name[0] == '$' && name[1] == '$' && isdigit((unsigned char)name[2]))
     {
 	s = name + 3;
-	while (isdigit(*s)) ++s;
+	while (isdigit((unsigned char)*s)) ++s;
 	if (*s == NUL) return (1);
     }
 
@@ -766,7 +766,7 @@ int get_number(void)
     register int n;
 
     n = 0;
-    for (c = *cptr; isdigit(c); c = *++cptr)
+    for (c = *cptr; isdigit((unsigned char)c); c = *++cptr)
 	n = 10*n + (c - '0');
 
     return (n);
@@ -785,7 +785,7 @@ char *get_tag(void)
     ++cptr;
     c = nextc();
     if (c == EOF) unexpected_EOF();
-    if (!isalpha(c) && c != '_' && c != '$')
+    if (!isalpha((unsigned char)c) && c != '_' && c != '$')
 	illegal_tag(t_lineno, t_line, t_cptr);
 
     cinc = 0;
@@ -843,7 +843,7 @@ void declare_tokens(int assoc)
 
     for (;;)
     {
-	if (isalpha(c) || c == '_' || c == '.' || c == '$')
+	if (isalpha((unsigned char)c) || c == '_' || c == '.' || c == '$')
 	    bp = get_name();
 	else if (c == '\'' || c == '"')
 	    bp = get_literal();
@@ -871,7 +871,7 @@ void declare_tokens(int assoc)
 	c = nextc();
 	if (c == EOF) unexpected_EOF();
 	value = UNDEFINED;
-	if (isdigit(c))
+	if (isdigit((unsigned char)c))
 	{
 	    value = get_number();
 	    if (bp->value != UNDEFINED && value != bp->value)
@@ -898,7 +898,7 @@ void declare_types(void)
     for (;;)
     {
 	c = nextc();
-	if (isalpha(c) || c == '_' || c == '.' || c == '$')
+	if (isalpha((unsigned char)c) || c == '_' || c == '.' || c == '$')
 	    bp = get_name();
 	else if (c == '\'' || c == '"')
 	    bp = get_literal();
@@ -919,7 +919,7 @@ void declare_start(void)
 
     c = nextc();
     if (c == EOF) unexpected_EOF();
-    if (!isalpha(c) && c != '_' && c != '.' && c != '$')
+    if (!isalpha((unsigned char)c) && c != '_' && c != '.' && c != '$')
 	syntax_error(lineno, line, cptr);
     bp = get_name();
     if (bp->class == TERM)
@@ -1061,7 +1061,7 @@ void advance_to_start(void)
     }
 
     c = nextc();
-    if (!isalpha(c) && c != '_' && c != '.' && c != '_')
+    if (!isalpha((unsigned char)c) && c != '_' && c != '.' && c != '_')
 	syntax_error(lineno, line, cptr);
     bp = get_name();
     if (goal == 0)
@@ -1231,7 +1231,7 @@ loop:
 		FREE(d_line);
 		goto loop;
 	    }
-	    else if (isdigit(c))
+	    else if (isdigit((unsigned char)c))
 	    {
 		i = get_number();
 		if (i > n) dollar_warning(d_lineno, i);
@@ -1244,7 +1244,7 @@ loop:
 		FREE(d_line);
 		goto loop;
 	    }
-	    else if (c == '-' && isdigit(cptr[1]))
+	    else if (c == '-' && isdigit((unsigned char)cptr[1]))
 	    {
 		++cptr;
 		i = -get_number() - n;
@@ -1273,7 +1273,7 @@ loop:
 	    cptr += 2;
 	    goto loop;
 	}
-	else if (isdigit(cptr[1]))
+	else if (isdigit((unsigned char)cptr[1]))
 	{
 	    ++cptr;
 	    i = get_number();
@@ -1318,13 +1318,13 @@ loop:
 	    goto loop;
 	}
     }
-    if (isalpha(c) || c == '_' || c == '$')
+    if (isalpha((unsigned char)c) || c == '_' || c == '$')
     {
 	do
 	{
 	    putc(c, f);
 	    c = *++cptr;
-	} while (isalnum(c) || c == '_' || c == '$');
+	} while (isalnum((unsigned char)c) || c == '_' || c == '$');
 	goto loop;
     }
 
@@ -1471,7 +1471,7 @@ int mark_symbol(void)
 	syntax_error(lineno, line, cptr);
 
     c = nextc();
-    if (isalpha(c) || c == '_' || c == '.' || c == '$')
+    if (isalpha((unsigned char)c) || c == '_' || c == '.' || c == '$')
 	bp = get_name();
     else if (c == '\'' || c == '"')
 	bp = get_literal();
@@ -1501,7 +1501,7 @@ void read_grammar(void)
     {
 	c = nextc();
 	if (c == EOF) break;
-	if (isalpha(c) || c == '_' || c == '.' || c == '$' || c == '\'' ||
+	if (isalpha((unsigned char)c) || c == '_' || c == '.' || c == '$' || c == '\'' ||
 		c == '"')
 	    add_symbol();
 	else if (c == '{' || c == '=')

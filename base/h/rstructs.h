@@ -572,7 +572,7 @@ struct frame_vars {
      word *failure_label;    /* Caller's failure label */  \
      struct frame *parent_sp;  /* Parent in the stack chain */ \
      int rval;               /* Set if source location is an rval (ie cannot be assigned to) */  \
-     int exhausted;          /* Set after a return, indicating thatf a further request for a result */ \
+     int exhausted;          /* Set after a return, indicating that a further request for a result */ \
                              /*    would be bound to fail */
 
 #define C_FRAME \
