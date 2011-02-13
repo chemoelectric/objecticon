@@ -138,6 +138,8 @@ tar :
 		$(T)/lib/main/posixconsts.icn \
 		$(T)/lib/main/ioconsts.icn \
 		$(T)/lib/main/evmonconsts.icn \
-		$(T)/lib/main/ucodeconsts.icn
+		$(T)/lib/main/ucodeconsts.icn \
+		$(T)/lib/incl/oigram_tab.icn \
+		$(T)/lib/parser/oigram.icn
 	tar cfz $(T).tar.gz $(T)
 	@rm -rf $(T)
