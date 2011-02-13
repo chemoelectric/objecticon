@@ -30,9 +30,9 @@ global Save__, Saves__, Name__
 
 procedure Getenv__(s)
 $ifdef _OBJECT_ICON
-   return System.getenv(s)
+   return "" ~== System.getenv(s)
 $else
-   return getenv(s)
+   return "" ~== getenv(s)
 $endif
 end
 
