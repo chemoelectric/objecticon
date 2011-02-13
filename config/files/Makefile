@@ -135,6 +135,9 @@ tar :
 	done
 	@cp README configure config.guess config.sub install-sh $(T)
 	@rm -f $(T)/base/h/auto.h $(T)/base/h/version.h $(T)/base/h/define.h \
-		$(T)/base/common/rswitch.?
+		$(T)/lib/main/posixconsts.icn \
+		$(T)/lib/main/ioconsts.icn \
+		$(T)/lib/main/evmonconsts.icn \
+		$(T)/lib/main/ucodeconsts.icn
 	tar cfz $(T).tar.gz $(T)
 	@rm -rf $(T)
