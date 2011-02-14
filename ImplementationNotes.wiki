@@ -4,8 +4,11 @@
 This page gives some details about how Object Icon is implemented, with particular reference to how the core virtual machine operates, which differs markedly to the traditional Icon implementation.
 
 == Frames ==
+The Object Icon interpreter doesn't use a conventional stack structure to implement procedure and generator calls.  Rather, a chain of frames is used.  Each frame represents an invocation of a procedure, method, function or operator invocation.  Each co-expression represents a separate thread of execution, and thus each co-expression has its own chain of frames.
 
-Consider the following program :-
+There are two types of frames, namely `c_frame`s and `p_frame`s.  The former are for frames whose code body is implemented in C; the latter for those whose body is implemented in virtual machine instructions.  The C structs for these two types are found in `rstructs.h`.
+
+One interesting point to note about the frame chain is that the currently executing procedure's frame isn't necessarily at the end of the chain, as one might expect.  Instead, frames which represent currently suspended generators may be present, and these will appear further along the chain from the present procedure.  To illustrate this, consider the following program :-
 {{{
 import io
 
@@ -21,13 +24,62 @@ procedure main()
 end
 }}}
 
-Just before the call to `write`, the state of the chain of frames will look like as follows :-
-
+Just before the call to `write`, the state of the chain of frames will look like this :-
 http://objecticon.googlecode.com/svn/wiki/frame1.png
 
-= Details =
+The leftmost frame is a frame used to "bootstrap" the interpreter and call the `main` method.  Then comes the frame for `main`.  Note that the local variables are kept in a separate structure.  As explained below, these variables may be shared by frames in other co-expressions.  This frame for `main` is the current frame, indicated by the global variable `curr_pf`.  To the right of it are two frames representing the suspended generators used in the generator expression of the `every` loop.  The first is a `c_frame`, since the `!` operator is implemented by a C function.  The other is another `p_frame`, since `f1` is another procedure.
 
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+=== Popping used frames ===
+As described above, frames remain on the chain of frames even after they have produced a result, since they may be required to produce further results.  This raises the question of when these frames are actually removed from the chain.  In fact there are two points at which frames are removed.  Firstly, when a frame is resumed, but fails.  Clearly the frame cannot be resumed again, and all the frames to the right of the failing frame, and that frame itself, are discarded.  Secondly, a frame (or frames) may be discarded by the `unmark` virtual machine instruction.  These instructions are inserted into the VM code at points when, due to the semantics of Icon, a particular frame is no longer needed.  For example, consider the following :-
+{{{
+   if f() then ...
+}}}
+Prior to invoking `f()`, a `mark` instruction is executed to note the top of the stack.  If `f()` fails, its corresponding frame is simply discarded as described above.  If it succeeds however, an `unmark` instruction is used to pop the stack upto the point of the corresponding `mark` instruction, thus discarding the now unwanted frame and any frames left by the invocation of `f`.
+
+=== Co-expressions ===
+Each co-expression has its own chain of frames.  
+
+When a co-expression is created with the `create` operator, a new chain of frames is created.  The single starting frame is a `p_frame` for the procedure in which the co-expression was created.
+
+For example, in the following program
+{{{
+import io
+
+procedure f1()
+   suspend "hello" | "goodbye"
+end
+
+procedure main()
+   local s, t, e
+   s := "the quick brown fox"
+   every t := !s || f1() do {
+      e := create f1()
+      @e
+      write(t)
+   }
+end
+}}}
+just before the call to `write`, the state of the chain of frames will look as follows :-
+
+http://objecticon.googlecode.com/svn/wiki/frame2.png
+
+The top row of blue boxes shows the `&main` co-expressions chain of frames, whilst the lower row shows the chain for `e`.  Note that the base frame of `e` shares the local variable block with its creator.  This means that changes to the local variables in the co-expression will be seen by the creator co-expression.
+
+=== Switching co-expressions ===
+
+Switching between co-expressions essentially just involves copying the values of `curr_pf` and `ipc` (the current VM program counter) to the old and from the new co-expression.
+
+=== How `c_frame`s generate results ===
+
+It is pretty obvious how a `p_frame` can generate results: just make that frame the `curr_pf` frame and continue executing.  Eventually a `suspend`, `fail` or `return` will return us back (perhaps with a suspended value) to the calling `p_frame`.  But for a `c_frame`, the situation is not so clear.  The implementation of a `c_frame` is in C, and C does not easily support the idea of generating a sequence of results from a function.
+
+
+=== Special internal `p_frame`s ===
+
+
+
+== Inline caching ==
+
+== Translation ==
+
+== Code generation ==

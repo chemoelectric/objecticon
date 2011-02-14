@@ -70,6 +70,11 @@ See also: `ord()`
 
 If `o` is a class, object or cast, the corresponding class is returned.  If `o` is a record or a constructor, then the corresponding constructor is returned.
 
+== clear ==
+`clear (X) : X` -- clear structure
+
+Clears all the elements from `X` which must be a set, list or table. Produces `X`.
+
 == coact ==
 `coact (value,ce,activator,failto) : x` -- general co-expression transmission
 

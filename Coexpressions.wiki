@@ -419,3 +419,74 @@ co-expression#2 activated by co-expression#1
    at line 7 in eg.icn
 }}}
 Note that attempting to resume the co-expression which caused the runtime error for another value will produce a runtime error.  This particular runtime error is in the "fatal" category, meaning it cannot be handled and always causes immediate termination.
+
+=== Background tasks ===
+
+Co-expressions are a very useful tool when used to perform I/O on multiple streams at the same time, in a non-blocking fashion. They provide an alternative to the conventional rather clumsy techniques of callbacks and state-machines.
+
+The co-expression technique uses a scheduler class and several worker co-expressions, each of which performs non-blocking I/O.  The worker co-expressions are created by the main client program, but activated by the scheduler.  A worker then runs until it wishes to do some I/O, and before it does so it re-activates the scheduler.  The scheduler notes the streams which each worker wants to read from or write to, and uses the `poll()` function to determine which of them are ready.  The appropriate workers are then re-activated so that they can read or write data and continue their execution until the next piece of I/O, or they exit.  In either case, control returns again to the scheduler.  
+
+An implementation of a scheduler along these lines can be found in the `io` package.  The scheduler is called `IoGroup`.  The most important method is `work()`, which does a slice of work, possibly calling `poll()` or activating one or more workers, and then returns, allowing its caller to do other things.
+
+The worker threads using `IoGroup` must use a custom `Stream` implementation to perform I/O.  This class is called `WorkerStream`, and simply wraps another `Stream` (normally a `SocketStream`).  The implementation of `WorkerStream` defines the `in` and `out` methods so that they re-activate the scheduler before performing the I/O on the underlying `Stream`.  The advantage of wrapping a `Stream` in this way is that it allows conventional synchronous I/O code to be re-used using non-blocking I/O.  For example, consider the `HttpClient` class, which provides a way to retrieve data over HTTP.  It has a `retrieve()` method which creates a `SocketStream` to communicate with the server and tries to retrieve a page of data, using conventional synchronous logic.  However, it has an option to use an `IoGroup`, which tells it to wrap the `SocketStream` in a `WorkerStream`.  With no further alteration to the logic of the class, it can now be used asynchronously.  To see how, consider the following program :-
+{{{
+import io, http, net
+
+global sched
+
+procedure download(x)
+   local cl, req, resp, s
+   s := RamStream()
+   cl := HttpClient("io_group=",sched, "timeout=10000")
+   req := HttpRequest("url=",URL.parse(x), "data_stream=",s)
+   if resp := cl.retrieve(req) then
+      write("\nRetrieved ", *s.str(), " bytes from ", x)
+   else
+      write("\nFailed to retrieve ", x, ": ", &why)
+   s.close()
+   @sched.coex
+end
+
+procedure main()
+   sched := IoGroup()
+   sched.add_starter{download("http://www.google.com")}
+   sched.add_starter{download("http://www.yahoo.com")}
+   sched.add_starter{download("http://news.bbc.co.uk")}
+   sched.add_starter{download("http://www.telegraph.co.uk")}
+   sched.add_starter{download("http://www.dailymail.co.uk")}
+   sched.add_starter{download("http://www.independent.co.uk/")}
+   sched.add_starter{download("http://www.guardian.co.uk/")}
+   sched.add_starter{download("http://www.thesun.co.uk/")}
+   sched.add_starter{download("http://www.express.co.uk/")}
+
+   until sched.empty() do {
+      sched.work(-1)
+      delay(50)
+      writes(".")
+   }
+   write("\nExiting")
+end
+}}}
+The main method creates an `IoGroup` and adds nine worker co-expressions.  Then it repeatedly calls `work`, until there is nothing left to do.  When idle, it sleeps a bit and prints a dot.  Example output is as follows :-
+{{{
+.........
+Retrieved 9322 bytes from http://www.google.com
+....
+Retrieved 66657 bytes from http://www.telegraph.co.uk
+................................................
+Retrieved 149757 bytes from http://www.independent.co.uk/
+.......
+Retrieved 86404 bytes from http://news.bbc.co.uk
+................
+Retrieved 172325 bytes from http://www.guardian.co.uk/
+.....................
+Retrieved 159736 bytes from http://www.express.co.uk/
+....
+Retrieved 136184 bytes from http://www.yahoo.com
+...........
+Retrieved 137302 bytes from http://www.thesun.co.uk/
+..............
+Retrieved 195233 bytes from http://www.dailymail.co.uk
+.
+Exiting
+}}}
