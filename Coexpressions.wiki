@@ -426,67 +426,80 @@ Co-expressions are a very useful tool when used to perform I/O on multiple strea
 
 The co-expression technique uses a scheduler class and several worker co-expressions, each of which performs non-blocking I/O.  The worker co-expressions are created by the main client program, but activated by the scheduler.  A worker then runs until it wishes to do some I/O, and before it does so it re-activates the scheduler.  The scheduler notes the streams which each worker wants to read from or write to, and uses the `poll()` function to determine which of them are ready.  The appropriate workers are then re-activated so that they can read or write data and continue their execution until the next piece of I/O, or they exit.  In either case, control returns again to the scheduler.  
 
-An implementation of a scheduler along these lines can be found in the `io` package.  The scheduler is called `IoGroup`.  The most important method is `work()`, which does a slice of work, possibly calling `poll()` or activating one or more workers, and then returns, allowing its caller to do other things.
+An implementation of a scheduler along these lines can be found in the `io` package.  The scheduler is called `Scheduler`.  The worker co-expressions are wrapped in instances of a class called `Task`.  The most important method in `Scheduler` is `work()`, which does a slice of work, possibly calling `poll()` or activating one or more worker `Task`s, and then returns, allowing its caller to do other things.
 
-The worker threads using `IoGroup` must use a custom `Stream` implementation to perform I/O.  This class is called `WorkerStream`, and simply wraps another `Stream` (normally a `SocketStream`).  The implementation of `WorkerStream` defines the `in` and `out` methods so that they re-activate the scheduler before performing the I/O on the underlying `Stream`.  The advantage of wrapping a `Stream` in this way is that it allows conventional synchronous I/O code to be re-used using non-blocking I/O.  For example, consider the `HttpClient` class, which provides a way to retrieve data over HTTP.  It has a `retrieve()` method which creates a `SocketStream` to communicate with the server and tries to retrieve a page of data, using conventional synchronous logic.  However, it has an option to use an `IoGroup`, which tells it to wrap the `SocketStream` in a `WorkerStream`.  With no further alteration to the logic of the class, it can now be used asynchronously.  To see how, consider the following program :-
+The worker threads using `Scheduler` must use a custom `Stream` implementation to perform I/O.  This class is called `TaskStream`, and simply wraps another `Stream` (normally a `SocketStream`).  The implementation of `TaskStream` defines the `in` and `out` methods so that they re-activate the scheduler before performing the I/O on the underlying `Stream`.  The advantage of wrapping a `Stream` in this way is that it allows conventional synchronous I/O code to be re-used using non-blocking I/O.  For example, consider the `HttpClient` class, which provides a way to retrieve data over HTTP.  It has a `retrieve()` method which creates a `SocketStream` to communicate with the server and tries to retrieve a page of data, using conventional synchronous logic.  However, it has an option to use a `Task`, which tells it to do asynchronouse I/O using the `Task`'s associated `Scheduler`.  With no further alteration to the logic of the class, it can now be used asynchronously.  To see how, consider the following program :-
 {{{
 import io, http, net
 
 global sched
 
-procedure download(x)
+procedure download(x, t)
    local cl, req, resp, s
    s := RamStream()
-   cl := HttpClient("io_group=",sched, "timeout=10000")
+   cl := HttpClient("task=",t, "timeout=10000")
    req := HttpRequest("url=",URL.parse(x), "data_stream=",s)
    if resp := cl.retrieve(req) then
-      write("\nRetrieved ", *s.str(), " bytes from ", x)
+      write("Retrieved ", *s.str(), " bytes from ", x)
    else
-      write("\nFailed to retrieve ", x, ": ", &why)
+      write("Failed to retrieve ", x, ": ", &why)
    s.close()
    @sched.coex
 end
 
+procedure new_task(s)
+   local t
+   t := Task(sched, create download(s, t))
+   t.start()
+end
+
 procedure main()
-   sched := IoGroup()
-   sched.add_starter{download("http://www.google.com")}
-   sched.add_starter{download("http://www.yahoo.com")}
-   sched.add_starter{download("http://news.bbc.co.uk")}
-   sched.add_starter{download("http://www.telegraph.co.uk")}
-   sched.add_starter{download("http://www.dailymail.co.uk")}
-   sched.add_starter{download("http://www.independent.co.uk/")}
-   sched.add_starter{download("http://www.guardian.co.uk/")}
-   sched.add_starter{download("http://www.thesun.co.uk/")}
-   sched.add_starter{download("http://www.express.co.uk/")}
+   local x
+   # Use a 50ms delay in the Scheduler's call to poll.
+   sched := Scheduler(50)
+   new_task("http://www.google.com")
+   new_task("http://www.yahoo.com")
+   new_task("http://news.bbc.co.uk")
+   new_task("http://www.telegraph.co.uk")
+   new_task("http://www.herald.co.zw/")
+   new_task("http://www.dailymail.co.uk")
+   new_task("http://www.independent.co.uk/")
+   new_task("http://www.guardian.co.uk/")
+   new_task("http://www.thesun.co.uk/")
+   new_task("http://www.express.co.uk/")
+
+   x := Task(sched, create {
+      x.sleep(1000)
+      every 1 to 5 do {
+         write("Woke up")
+         x.sleep(1000)
+      }
+   })
+   x.start()
 
    until sched.empty() do {
-      sched.work(-1)
-      delay(50)
-      writes(".")
+      sched.work()
+      # Could do some extra work between polls.
    }
-   write("\nExiting")
+   write("Exiting")
 end
 }}}
-The main method creates an `IoGroup` and adds nine worker co-expressions.  Then it repeatedly calls `work`, until there is nothing left to do.  When idle, it sleeps a bit and prints a dot.  Example output is as follows :-
+The main method creates an `Scheduler` and adds ten `Task`s which each download some data, and one `Task` which simply prints a message and sleeps for a second, and does this five times.  Then it repeatedly calls `work`, until there is nothing left to do.  Example output is as follows :-
 {{{
-.........
-Retrieved 9322 bytes from http://www.google.com
-....
-Retrieved 66657 bytes from http://www.telegraph.co.uk
-................................................
-Retrieved 149757 bytes from http://www.independent.co.uk/
-.......
-Retrieved 86404 bytes from http://news.bbc.co.uk
-................
-Retrieved 172325 bytes from http://www.guardian.co.uk/
-.....................
-Retrieved 159736 bytes from http://www.express.co.uk/
-....
-Retrieved 136184 bytes from http://www.yahoo.com
-...........
-Retrieved 137302 bytes from http://www.thesun.co.uk/
-..............
-Retrieved 195233 bytes from http://www.dailymail.co.uk
-.
+Woke up
+Retrieved 73626 bytes from http://www.telegraph.co.uk
+Retrieved 8996 bytes from http://www.google.com
+Woke up
+Woke up
+Woke up
+Retrieved 153818 bytes from http://www.independent.co.uk/
+Woke up
+Retrieved 89881 bytes from http://news.bbc.co.uk
+Retrieved 188627 bytes from http://www.guardian.co.uk/
+Retrieved 51553 bytes from http://www.herald.co.zw/
+Retrieved 137557 bytes from http://www.thesun.co.uk/
+Retrieved 142448 bytes from http://www.yahoo.com
+Retrieved 160034 bytes from http://www.express.co.uk/
+Retrieved 196393 bytes from http://www.dailymail.co.uk
 Exiting
 }}}
