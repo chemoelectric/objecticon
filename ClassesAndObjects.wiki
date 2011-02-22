@@ -8,6 +8,9 @@ class ClassName(Super1, Super2, ...)
 end
 }}}
 
+Declaring a class causes a global variable having the name of the class to be included in the program.  The initial value of the variable is a value of type `class`, representing the class itself.  The value of the variable can be changed using assignment, since it is just a normal global variable.  This sounds complicated, but it works in the same way that conventional Icon treats procedures and built-in functions.  Classes cannot be created or changed dynamically; they are hardwired into the icode file.
+
+The `lang.Class` class contains many static methods which allow the inner structure of a class to be examined at runtime.
 = Superclasses =
 A class can have zero, one or several superclasses, from which it inherits fields.  Full details of how Object Icon implements inheritance can be found [Inheritance here].
 
