@@ -1,0 +1,40 @@
+#summary Describes the lang package
+<wiki:toc max_depth="3" />
+= Introduction =
+
+This page gives an overview of the `lang` package, which provides some basic language-related utilities.
+
+= Classes =
+The following are the notable classes in the `lang` package.  Most just contain static methods.
+
+== Class ==
+Contains methods to look inside a class and get information about its members, superclasses, etc.
+
+== Coexpression ==
+contains methods to manipulate co-expressions, including printing stack traces.
+
+== Constructor ==
+The equivalent of `Class`, but for record constructors.
+
+== Proc ==
+Contains methods to get information about a procedure, function or operator.
+
+== Prog ==
+Contains methods to manipulate and get information about loaded programs.
+
+== Text ==
+Contains methods for manipulating csets.
+
+= Procedures =
+
+== encode, decode ==
+Transform arbitrary objects to and from strings.
+
+== to_stderr, to_stdout, to_string ==
+Output arbitrary objects in a human-readable format.
+
+== clone ==
+Clone an arbitrary object, ie perform a deep copy.
+
+== equals ==
+Compare arbitrary objects for equality.
