@@ -53,10 +53,12 @@ class NetClient(Connectable, SetFields)
       server,
       port,
       timeout,
-      task
+      task,
+      ssl_flag
 
    private
       connection,
+      ssl_connection,
       sbuff
 
    # 
@@ -96,9 +98,11 @@ class NetClient(Connectable, SetFields)
       } else
          runerr("Neither server/port nor path set")
 
-      close() | fail
+      close()
       connection := SocketStream.socket(domain)
-      connection.flag(FileOpt.NONBLOCK) | fail
+      # Connecting in non-blocking mode is too complicated for SSL.
+      if /ssl_flag then
+         connection.flag(FileOpt.NONBLOCK) | fail
       fire(CONNECTING_EVENT)
       connection.connect(addr) | {
          if errno() = Errno.EINPROGRESS then {
@@ -119,6 +123,12 @@ class NetClient(Connectable, SetFields)
             return error("Couldn't connect to " || addr || ": " || &why)
          }
       }
+      if \ssl_flag then
+         ssl_connection := SslStream(connection) | {
+            close()
+            return error("Couldn't open SSL connection: " || &why)
+         }
+
       sbuff := ""
       fire(CONNECTED_EVENT)
       return
@@ -128,8 +138,12 @@ class NetClient(Connectable, SetFields)
    # Close the connection
    #
    public close()
-      if \connection then {
-         connection.close() | return error("Failed to close connection: " || &why)
+      if \ssl_connection then {
+         ssl_connection.close()
+         fire(CLOSED_EVENT)
+         ssl_connection := connection := &null
+      } else if \connection then {
+         connection.close()
          fire(CLOSED_EVENT)
          connection := &null
       }
@@ -167,7 +181,10 @@ class NetClient(Connectable, SetFields)
          r := do_poll(Poll.OUT) | return error("Send poll failed: " || &why)
          if /r then return error("Send failed (timeout)")
          r[1] = Poll.OUT | return error("Send failed (socket error)")
-         i := connection.out(s) | fail
+         i := if \ssl_connection then
+            ssl_connection.out(s) | fail
+         else
+            connection.out(s) | fail
          s := s[i+1 : 0]
       }
       return
@@ -181,7 +198,10 @@ class NetClient(Connectable, SetFields)
       r := do_poll(Poll.IN) | return error("Receive poll failed: " || &why)
       if /r then return error("Receive failed (timeout)")
       r[1] = Poll.IN | return error("Receive failed (socket error)")
-      return connection.in(len)
+      return if \ssl_connection then
+         ssl_connection.in(len)
+      else
+         connection.in(len)
    end
 
    #
@@ -249,7 +269,10 @@ class NetClient(Connectable, SetFields)
    end
 
    protected eof()
-      return connection.eof()
+      return if \ssl_connection then
+         ssl_connection.eof()
+      else
+         connection.eof()
    end
 
    #
@@ -261,6 +284,14 @@ class NetClient(Connectable, SetFields)
       self.task := g
    end
 
+   #
+   # A flag value.  When set, indicate that the connection should be wrapped in
+   # an SslStream.
+   #
+   public set_ssl(s)
+      self.ssl_flag := check_flag(s)
+   end
+
    protected set_one(f)
       case f.attr of {
          "timeout": set_timeout(f.int_val())
@@ -268,6 +299,7 @@ class NetClient(Connectable, SetFields)
          "path": set_path(f.string_val())
          "port": set_port(f.int_val())
          "task": set_task(f.object_val(Task))
+         "ssl": set_ssl(f.flag_val())
          default: return try_event(f, EVENT_TABLE)
       }
       return

@@ -182,6 +182,12 @@ NativeDef(io.WindowsFileSystem,get_roots,io_WindowsFileSystem_get_roots)
 NativeDef(io.Keyboard,getch,io_Keyboard_getch)
 NativeDef(io.Keyboard,getche,io_Keyboard_getche)
 NativeDef(io.Keyboard,kbhit,io_Keyboard_kbhit)
+#if HAVE_LIBOPENSSL
+NativeDef(io.SslStream,new_impl,io_SslStream_new_impl)
+NativeDef(io.SslStream,in,io_SslStream_in)
+NativeDef(io.SslStream,out,io_SslStream_out)
+NativeDef(io.SslStream,close_impl,io_SslStream_close_impl)
+#endif
 NativeDef(lang.Class,complete_raw,lang_Class_complete_raw)
 NativeDef(lang.Class,create_raw,lang_Class_create_raw)
 NativeDef(lang.Class,ensure_initialized,lang_Class_ensure_initialized)

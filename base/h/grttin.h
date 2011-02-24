@@ -159,6 +159,10 @@ typedef int j_common_ptr, JSAMPARRAY, JSAMPROW;
 typedef int png_structp, png_infop, png_bytep, png_byte;
 #endif
 
+#if HAVE_LIBOPENSSL
+typedef int SSL_CTX, SSL, SSL_METHOD, BIO;
+#endif
+
 typedef int SOCKET;
 typedef int u_short;
 typedef int fd_set;

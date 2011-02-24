@@ -42,6 +42,8 @@ fi
 OI_ADD_LIB(dl)
 
 AX_LIB_MYSQL()
+AX_CHECK_OPENSSL()
+
 AC_FLAG_MSG_NOSIGNAL()
 
 AC_PROG_INSTALL()
@@ -155,6 +157,12 @@ else
 fi
 echo -n "mysql lib              : "
 if test -z "$MYSQL_VERSION"; then
+        echo no
+else
+        echo yes
+fi
+echo -n "ssl lib                : "
+if test -z "$found_openssl"; then
         echo no
 else
         echo yes

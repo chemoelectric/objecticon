@@ -688,6 +688,10 @@ class HttpClient(NetClient)
          close()
          set_server(request.url.get_address())
          set_port(request.url.get_port())
+         if request.url.get_protocol() == "https" then
+            set_ssl(&yes)
+         else
+            set_ssl(&no)
          open() | fail
          open_url := clone(request.url)
       }
@@ -955,6 +959,8 @@ class HttpClient(NetClient)
          close()
          fail
       }
+
+      close()
 
       return
    end

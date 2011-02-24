@@ -23,7 +23,7 @@ int gensym;
 char last_was_action;
 
 int maxitems;
-bucket **pitem;
+bucket **pqitem;
 
 int maxrules;
 bucket **plhs;
@@ -983,12 +983,12 @@ void initialize_grammar(void)
 {
     nitems = 4;
     maxitems = 300;
-    pitem = (bucket **) MALLOC(maxitems*sizeof(bucket *));
-    if (pitem == 0) no_space();
-    pitem[0] = 0;
-    pitem[1] = 0;
-    pitem[2] = 0;
-    pitem[3] = 0;
+    pqitem = (bucket **) MALLOC(maxitems*sizeof(bucket *));
+    if (pqitem == 0) no_space();
+    pqitem[0] = 0;
+    pqitem[1] = 0;
+    pqitem[2] = 0;
+    pqitem[3] = 0;
 
     nrules = 3;
     maxrules = 100;
@@ -1013,8 +1013,8 @@ void initialize_grammar(void)
 void expand_items(void)
 {
     maxitems += 300;
-    pitem = (bucket **) REALLOC(pitem, maxitems*sizeof(bucket *));
-    if (pitem == 0) no_space();
+    pqitem = (bucket **) REALLOC(pqitem, maxitems*sizeof(bucket *));
+    if (pqitem == 0) no_space();
 }
 
 
@@ -1099,14 +1099,14 @@ void end_rule(void)
 
     if (!last_was_action && plhs[nrules]->tag)
     {
-	for (i = nitems - 1; pitem[i]; --i) continue;
-	if (pitem[i+1] == 0 || pitem[i+1]->tag != plhs[nrules]->tag)
+	for (i = nitems - 1; pqitem[i]; --i) continue;
+	if (pqitem[i+1] == 0 || pqitem[i+1]->tag != plhs[nrules]->tag)
 	    default_action_warning();
     }
 
     last_was_action = 0;
     if (nitems >= maxitems) expand_items();
-    pitem[nitems] = 0;
+    pqitem[nitems] = 0;
     ++nitems;
     ++nrules;
 }
@@ -1126,7 +1126,7 @@ void insert_empty_rule(void)
 
     if ((nitems += 2) > maxitems)
 	expand_items();
-    bpp = pitem + nitems - 1;
+    bpp = pqitem + nitems - 1;
     *bpp-- = bp;
     while ((bpp[0] = bpp[-1]) != 0) --bpp;
 
@@ -1169,7 +1169,7 @@ void add_symbol(void)
 
     if (++nitems > maxitems)
 	expand_items();
-    pitem[nitems-1] = bp;
+    pqitem[nitems-1] = bp;
 }
 
 
@@ -1203,7 +1203,7 @@ void copy_action(void)
     if (*cptr == '=') ++cptr;
 
     n = 0;
-    for (i = nitems - 1; pitem[i]; --i) ++n;
+    for (i = nitems - 1; pqitem[i]; --i) ++n;
 
     depth = 0;
 	if (iflag && (cptr[0] == '{'))  {
@@ -1281,8 +1281,8 @@ loop:
 	    {
 		if (i <= 0 || i > n)
 		    unknown_rhs(i);
-		tag = pitem[nitems + i - n - 1]->tag;
-		if (tag == 0) untyped_rhs(i, pitem[nitems + i - n - 1]->name);
+		tag = pqitem[nitems + i - n - 1]->tag;
+		if (tag == 0) untyped_rhs(i, pqitem[nitems + i - n - 1]->name);
 		if (jflag) /*rwj*/
                   fprintf(f, "val_peek(%d).%s", n - i, tag);
                 else if (iflag)
@@ -1739,13 +1739,13 @@ void pack_grammar(void)
 	rrhs[i] = j;
 	assoc = TOKEN;
 	prec = 0;
-	while (pitem[j])
+	while (pqitem[j])
 	{
-	    ritem[j] = pitem[j]->index;
-	    if (pitem[j]->class == TERM)
+	    ritem[j] = pqitem[j]->index;
+	    if (pqitem[j]->class == TERM)
 	    {
-		prec = pitem[j]->prec;
-		assoc = pitem[j]->assoc;
+		prec = pqitem[j]->prec;
+		assoc = pqitem[j]->assoc;
 	    }
 	    ++j;
 	}
@@ -1760,7 +1760,7 @@ void pack_grammar(void)
     rrhs[i] = j;
 
     FREE(plhs);
-    FREE(pitem);
+    FREE(pqitem);
 }
 
 

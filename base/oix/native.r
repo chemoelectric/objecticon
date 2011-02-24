@@ -3499,3 +3499,203 @@ function lang_Coexpression_get_stack_info_impl(ce, lim)
        fail;
    }
 end
+
+#if HAVE_LIBOPENSSL
+
+struct sslstream {
+    SSL_CTX *ctx;
+    SSL *ssl;
+    char *password;
+};
+
+#begdef GetSelfSsl()
+struct sslstream *self_ssl;
+dptr self_ssl_dptr;
+static struct inline_field_cache self_ssl_ic;
+self_ssl_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_ssl_ic);
+if (!self_ssl_dptr)
+    syserr("Missing ptr field");
+self_ssl = (struct sslstream*)IntVal(*self_ssl_dptr);
+if (!self_ssl)
+    runerr(219, self);
+#enddef
+
+static int password_cb(char *buf, int num, int rwflag, void *userdata)
+{
+    struct sslstream *p = (struct sslstream *)userdata;
+    if (num < strlen(p->password) + 1)
+        return 0;
+    strcpy(buf, p->password);
+    return strlen(p->password);
+}
+
+static void ssl_why(unsigned long e)
+{
+    why(ERR_error_string(e, 0));
+}
+
+function io_SslStream_new_impl(other, keyfile, ca_list, password)
+   body {
+       struct sslstream *p;
+       SSL_METHOD *meth;
+       SSL_CTX *ctx;
+       SSL *ssl;
+       BIO *sbio;
+       int rc;
+       FdStaticParam(other, fd);
+
+       SSL_library_init();
+       SSL_load_error_strings();
+
+       /* Create our context*/
+       meth = SSLv23_method();
+       ctx = SSL_CTX_new(meth);
+
+       MemProtect(p = malloc(sizeof(*p)));
+       p->ctx = ctx;
+
+       if (is:null(keyfile)) {
+           p->password = 0;
+       } else {
+           /* Load our keys and certificates*/
+           tended char *c_keyfile;
+           tended char *c_password;
+           tended char *c_ca_list;
+           if (!cnv:C_string(keyfile, c_keyfile))
+               runerr(103, keyfile);
+           if (!cnv:C_string(password, c_password))
+               runerr(103, password);
+           if (!cnv:C_string(ca_list, c_ca_list))
+               runerr(103, ca_list);
+           if (!(SSL_CTX_use_certificate_chain_file(ctx, c_keyfile))) {
+               ssl_why(ERR_get_error());
+               SSL_CTX_free(ctx);
+               free(p);
+               fail;
+           }
+
+           p->password = salloc(c_password);
+           SSL_CTX_set_default_passwd_cb(ctx, password_cb);
+           SSL_CTX_set_default_passwd_cb_userdata(ctx, p);
+
+           if (!(SSL_CTX_use_PrivateKey_file(ctx, c_keyfile, SSL_FILETYPE_PEM))) {
+               ssl_why(ERR_get_error());
+               SSL_CTX_free(ctx);
+               free(p->password);
+               free(p);
+               fail;
+           }
+
+           /* Load the CAs we trust*/
+           if (!(SSL_CTX_load_verify_locations(ctx, c_ca_list, 0))) {
+               ssl_why(ERR_get_error());
+               SSL_CTX_free(ctx);
+               free(p->password);
+               free(p);
+               fail;
+           }
+       }
+
+#if (OPENSSL_VERSION_NUMBER < 0x00905100L)
+       SSL_CTX_set_verify_depth(ctx,1);
+#endif
+
+       /* Connect the SSL socket */
+       ssl = SSL_new(ctx);
+       sbio = BIO_new_socket(fd, BIO_NOCLOSE);
+       SSL_set_bio(ssl, sbio, sbio);
+
+       if ((rc = SSL_connect(ssl)) <= 0) {
+           ssl_why(SSL_get_error(ssl, rc));
+           SSL_free(ssl);
+           SSL_CTX_free(ctx);
+           free(p->password);
+           free(p);
+           fail;
+       }
+       p->ssl = ssl;
+
+       return C_integer((word)p);
+   }
+end
+
+function io_SslStream_in(self, i)
+   if !cnv:C_integer(i) then
+      runerr(101, i)
+   body {
+       int nread;
+       tended struct descrip s;
+       GetSelfSsl();
+
+       if (i <= 0)
+           Irunerr(205, i);
+
+       /*
+        * For now, assume we can read the full number of bytes.
+        */
+       MemProtect(StrLoc(s) = alcstr(NULL, i));
+
+       nread = SSL_read(self_ssl->ssl, StrLoc(s), i);
+       if (nread <= 0) {
+           GetSelfEofFlag();
+
+           /* Reset the memory just allocated */
+           dealcstr(StrLoc(s));
+
+           if (nread < 0 || SSL_get_error(self_ssl->ssl, nread) != SSL_ERROR_ZERO_RETURN) {
+               *self_eof_flag = nulldesc;
+               ssl_why(SSL_get_error(self_ssl->ssl, nread));
+           } else {  /* nread == 0 */
+               *self_eof_flag = onedesc;
+               LitWhy("End of file");
+           }
+           fail;
+       }
+
+       StrLen(s) = nread;
+
+       /*
+        * We may not have used the entire amount of storage we reserved.
+        */
+       dealcstr(StrLoc(s) + nread);
+
+       return s;
+   }
+end
+
+function io_SslStream_out(self, s)
+   if !cnv:string(s) then
+      runerr(103, s)
+   body {
+       int rc;
+       GetSelfSsl();
+
+       rc = SSL_write(self_ssl->ssl, StrLoc(s), StrLen(s));
+
+       if (rc < 0 || (rc == 0 && SSL_get_error(self_ssl->ssl, rc) != SSL_ERROR_ZERO_RETURN)) {
+           ssl_why(SSL_get_error(self_ssl->ssl, rc));
+           fail;
+       }
+       return C_integer rc;
+   }
+end
+
+function io_SslStream_close_impl(self)
+   body {
+       int rc;
+       GetSelfSsl();
+
+       if ((rc = SSL_shutdown(self_ssl->ssl)) < 0) {
+           ssl_why(SSL_get_error(self_ssl->ssl, rc));
+           fail;
+       }
+       SSL_free(self_ssl->ssl);
+       SSL_CTX_free(self_ssl->ctx);
+       free(self_ssl->password);
+       free(self_ssl);
+       *self_ssl_dptr = zerodesc;
+       return nulldesc;
+   }
+end
+
+#endif

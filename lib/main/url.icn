@@ -148,6 +148,8 @@ class URL()
             port := integer(tab(many(&digits))) | return error("Bad port")
          } else if protocol == "http" then
             port := 80
+         else if protocol == "https" then
+            port := 443
          else
             return error("Port required")
 
