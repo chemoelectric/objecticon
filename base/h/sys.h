@@ -242,3 +242,7 @@
 
 #endif					/* HAVE_LIBZ */
 
+#if HAVE_LIBOPENSSL
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#endif

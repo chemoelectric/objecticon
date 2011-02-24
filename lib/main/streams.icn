@@ -1370,3 +1370,35 @@ class NetStream(FileStream)
    end
 end
 $endif
+
+#
+# A very simple SSL stream, using the openssl library.
+#
+class SslStream(Stream, NoCopy)
+   private
+      ptr,
+      other
+
+   public defer in(n)
+
+   public defer out(s)
+
+   public close()
+      close_impl() | fail
+      return other.close()
+   end
+
+   private defer close_impl()
+
+   public get_mode()
+      return other.get_mode()
+   end
+
+   private static defer new_impl(s)
+
+   public new(other, keyfile, ca_list, password)
+      ptr := new_impl(other, keyfile, ca_list, password) | fail
+      self.other := other
+      return
+   end
+end
