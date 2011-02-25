@@ -18,6 +18,10 @@ import
 # @field path=string: see {set_path}
 # @field port=integer: see {set_port}
 # @field task=object: see {set_task}
+# @field ssl=flag: see {set_ssl}
+# @field ssl_keyfile=string: see {set_ssl_keyfile}
+# @field ssl_ca_list=string: see {set_ssl_ca_list}
+# @field ssl_password=string: see {set_ssl_password}
 #
 class NetClient(Connectable, SetFields)
    public static const 
@@ -54,7 +58,10 @@ class NetClient(Connectable, SetFields)
       port,
       timeout,
       task,
-      ssl_flag
+      ssl_flag,
+      ssl_keyfile,
+      ssl_ca_list,
+      ssl_password
 
    private
       connection,
@@ -124,7 +131,7 @@ class NetClient(Connectable, SetFields)
          }
       }
       if \ssl_flag then
-         ssl_connection := SslStream(connection) | {
+         ssl_connection := SslStream(connection, ssl_keyfile, ssl_ca_list, ssl_password) | {
             close()
             return error("Couldn't open SSL connection: " || &why)
          }
@@ -292,6 +299,27 @@ class NetClient(Connectable, SetFields)
       self.ssl_flag := check_flag(s)
    end
 
+   #
+   # Specify an optional key file to use with any ssl connections.
+   #
+   public set_ssl_keyfile(s)
+      self.ssl_keyfile := s
+   end
+
+   #
+   # Specify an optional certificate list file to use with any ssl connections.
+   #
+   public set_ssl_ca_list(s)
+      self.ssl_ca_list := s
+   end
+
+   #
+   # Specify an optional key file password to use with any ssl connections.
+   #
+   public set_ssl_password(s)
+      self.ssl_password := s
+   end
+
    protected set_one(f)
       case f.attr of {
          "timeout": set_timeout(f.int_val())
@@ -300,6 +328,9 @@ class NetClient(Connectable, SetFields)
          "port": set_port(f.int_val())
          "task": set_task(f.object_val(Task))
          "ssl": set_ssl(f.flag_val())
+         "ssl_keyfile": set_ssl_keyfile(f.string_val())
+         "ssl_ca_list": set_ssl_ca_list(f.string_val())
+         "ssl_password": set_ssl_password(f.string_val())
          default: return try_event(f, EVENT_TABLE)
       }
       return
