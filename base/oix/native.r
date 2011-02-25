@@ -4217,7 +4217,25 @@ function io_SslStream_new_impl(other, keyfile, ca_list, password)
        SSL *ssl;
        BIO *sbio;
        int rc;
+       tended char *c_password;
+       tended char *c_keyfile;
+       tended char *c_ca_list;
        FdStaticParam(other, fd);
+
+       if (is:null(password))
+           c_password = 0;
+       else if (!cnv:C_string(password, c_password))
+           runerr(103, password);
+
+       if (is:null(keyfile))
+           c_keyfile = 0;
+       else if (!cnv:C_string(keyfile, c_keyfile))
+           runerr(103, keyfile);
+
+       if (is:null(ca_list))
+           c_ca_list = 0;
+       else if (!cnv:C_string(ca_list, c_ca_list))
+           runerr(103, password);
 
        SSL_library_init();
        SSL_load_error_strings();
@@ -4229,30 +4247,21 @@ function io_SslStream_new_impl(other, keyfile, ca_list, password)
        MemProtect(p = malloc(sizeof(*p)));
        p->ctx = ctx;
 
-       if (is:null(keyfile)) {
-           p->password = 0;
-       } else {
-           /* Load our keys and certificates*/
-           tended char *c_keyfile;
-           tended char *c_password;
-           tended char *c_ca_list;
-           if (!cnv:C_string(keyfile, c_keyfile))
-               runerr(103, keyfile);
-           if (!cnv:C_string(password, c_password))
-               runerr(103, password);
-           if (!cnv:C_string(ca_list, c_ca_list))
-               runerr(103, ca_list);
-           if (!(SSL_CTX_use_certificate_chain_file(ctx, c_keyfile))) {
-               ssl_why(ERR_get_error());
-               SSL_CTX_free(ctx);
-               free(p);
-               fail;
-           }
-
+       if (c_password) {
            p->password = salloc(c_password);
            SSL_CTX_set_default_passwd_cb(ctx, password_cb);
            SSL_CTX_set_default_passwd_cb_userdata(ctx, p);
+       } else
+           p->password = 0;
 
+       if (c_keyfile) {
+           if (!(SSL_CTX_use_certificate_chain_file(ctx, c_keyfile))) {
+               ssl_why(ERR_get_error());
+               SSL_CTX_free(ctx);
+               free(p->password);
+               free(p);
+               fail;
+           }
            if (!(SSL_CTX_use_PrivateKey_file(ctx, c_keyfile, SSL_FILETYPE_PEM))) {
                ssl_why(ERR_get_error());
                SSL_CTX_free(ctx);
@@ -4260,7 +4269,9 @@ function io_SslStream_new_impl(other, keyfile, ca_list, password)
                free(p);
                fail;
            }
+       }
 
+       if (c_ca_list) {
            /* Load the CAs we trust*/
            if (!(SSL_CTX_load_verify_locations(ctx, c_ca_list, 0))) {
                ssl_why(ERR_get_error());

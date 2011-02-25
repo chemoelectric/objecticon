@@ -824,21 +824,21 @@ x$B" | sed 's/^ *//' | sort -r | sed "s/x${A}/true/;s/x${B}/false/;1q"`
 
 #serial 7
 
-AU_ALIAS([CHECK_SSL], [AX_CHECK_OPENSSL])
 AC_DEFUN([AX_CHECK_OPENSSL], [
     found=false
+    AC_MSG_CHECKING(if OpenSSL is wanted)
     AC_ARG_WITH(openssl,
-        AS_HELP_STRING([--with-openssl=DIR],
-            [root of the OpenSSL directory]),
-        [
-            case "$withval" in
-            "" | y | ye | yes | n | no)
-            AC_MSG_ERROR([Invalid --with-openssl value])
-              ;;
-            *) ssldirs="$withval"
-              ;;
-            esac
-        ], [
+        [  --with-openssl=DIR root of the OpenSSL directory
+  --without-openssl to disable OpenSSL usage completely],
+
+[if test "$withval" != no ; then
+  AC_MSG_RESULT(yes)
+  ssldirs="$withval"
+else
+  AC_MSG_RESULT(no)
+fi], 
+       [
+AC_MSG_RESULT(yes)
             # if pkg-config is installed and openssl has installed a .pc file,
             # then use that information and don't search ssldirs
             AC_PATH_PROG(PKG_CONFIG, pkg-config)
@@ -861,6 +861,7 @@ AC_DEFUN([AX_CHECK_OPENSSL], [
 
     # note that we #include <openssl/foo.h>, so the OpenSSL headers have to be in
     # an 'openssl' subdirectory
+if test "$withval" != no ; then
 
     if ! $found; then
         OPENSSL_INCLUDES=
@@ -901,14 +902,12 @@ AC_DEFUN([AX_CHECK_OPENSSL], [
             AC_DEFINE(HAVE_LIBOPENSSL)
             AC_MSG_RESULT([yes])
             found_openssl=yes
-            $1
         ], [
             AC_MSG_RESULT([no])
             CPPFLAGS="$save_CPPFLAGS"
             LDFLAGS="$save_LDFLAGS"
             LIBS="$save_LIBS"
-            $2
         ])
 
-
+fi
 ])
