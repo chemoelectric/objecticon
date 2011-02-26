@@ -2,6 +2,22 @@
  * graphics.h - macros and types used in Icon's graphics interface.
  */
 
+/*
+ * Entry in palette table.
+ */
+struct palentry {
+   int r, g, b;                         /* RGB value of color */
+   char valid;                          /* nonzero if entry is valid & opaque */
+   char transpt;                        /* nonzero if char is transparent */
+};
+
+#define TCH1 '~'			/* usual transparent character */
+#define TCH2 0377			/* alternate transparent character */
+
+#define MAXCOLORNAME 40
+
+#if Graphics
+
 #define MAX_PATTERN_WIDTH  32
 #define MAX_PATTERN_HEIGHT 32
 
@@ -12,8 +28,6 @@
 #elif PLAN9
    #include "../h/p9win.h"
 #endif
-
-#define MAXCOLORNAME 40
 
 #ifndef MAXFONTWORD
    #define MAXFONTWORD 40
@@ -134,15 +148,6 @@ typedef struct _wfont {
 #define FHEIGHT(w) ((w)->context->font->height)
 #define FWIDTH(w) ((w)->context->font->maxwidth)
 
-/*
- * Entry in palette table.
- */
-struct palentry {
-   int r, g, b;                         /* RGB value of color */
-   char valid;                          /* nonzero if entry is valid & opaque */
-   char transpt;                        /* nonzero if char is transparent */
-};
-
 #define IMGDATA_RGB24      1
 #define IMGDATA_BGR24      2
 #define IMGDATA_RGBA32     3
@@ -178,9 +183,6 @@ struct imgmem {
    COLORREF *crp;
 #endif
    };
-
-#define TCH1 '~'			/* usual transparent character */
-#define TCH2 0377			/* alternate transparent character */
 
 #if XWindows
 
@@ -379,3 +381,5 @@ struct filter {
 #define MOD_META4       64
 #define MOD_META5       128
 #define MOD_RELEASE     256
+
+#endif					/* Graphics */

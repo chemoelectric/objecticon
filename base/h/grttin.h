@@ -86,6 +86,14 @@
        fail; \
        }
 
+#begdef UnsupportedFunc(name)
+function name()
+    body {
+      Unsupported;
+    }
+end
+#enddef
+
 #begdef EVVal(value,event)
 #if event
    do {
@@ -164,7 +172,7 @@ typedef int png_structp, png_infop, png_bytep, png_byte;
 #endif
 
 #if HAVE_LIBOPENSSL
-typedef int SSL_CTX, SSL, SSL_METHOD, BIO;
+typedef int SSL_CTX, SSL, SSL_METHOD, BIO, X509;
 #endif
 
 typedef int SOCKET;

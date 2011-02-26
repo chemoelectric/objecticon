@@ -118,41 +118,6 @@ function graphics_Window_clone_impl(self)
    }
 end
 
-function graphics_Window_color_value(s)
-    if !cnv:string(s) then
-       runerr(103, s);
-   body {
-      int r, g, b;
-      tended struct descrip result;
-      char tmp[32];
-      if (!parsecolor(buffstr(&s), &r, &g, &b))
-          fail;
-      sprintf(tmp,"%d,%d,%d", r, g, b);
-      cstr2string(tmp, &result);
-      return result;
-   }
-end
-
-function graphics_Window_parse_color(s)
-    if !cnv:string(s) then
-       runerr(103, s);
-   body {
-      int r, g, b;
-      tended struct descrip result;
-      struct descrip t;
-      if (!parsecolor(buffstr(&s), &r, &g, &b))
-          fail;
-      create_list(3, &result);
-      MakeInt(r, &t);
-      list_put(&result, &t);
-      MakeInt(g, &t);
-      list_put(&result, &t);
-      MakeInt(b, &t);
-      list_put(&result, &t);
-      return result;
-   }
-end
-
 function graphics_Window_copy_to(self, dest, x0, y0, w0, h0, x1, y1)
    body {
       word x, y, width, height, x2, y2;
@@ -618,77 +583,6 @@ function graphics_Window_lower(self)
       GetSelfW();
       lowerwindow(self_w);
       return self;
-   }
-end
-
-function graphics_Window_palette_chars(pal)
-   if !cnv:string(pal) then
-       runerr(103, pal)
-   body {
-      int n;
-      if (!parsepalette(buffstr(&pal), &n))
-          fail;
-      switch (n) {
-          case  1:  return string(90, c1list);			/* c1 */
-          case  2:  return string(9, c2list);			/* c2 */
-          case  3:  return string(31, c3list);			/* c3 */
-          case  4:  return string(73, c4list);			/* c4 */
-          case  5:  return string(141, allchars);	/* c5 */
-          case  6:  return string(241, allchars);	/* c6 */
-          default:					/* gn */
-              if (n >= -64)
-                  return string(-n, c4list);
-              else
-                  return string(-n, allchars);
-      }
-      fail; /* NOTREACHED */ /* avoid spurious rtt warning message */
-   }
-end
-
-function graphics_Window_palette_color(s1, s2)
-   if !cnv:string(s1) then
-       runerr(103, s1)
-   if !cnv:string(s2) then
-       runerr(103, s2)
-   body {
-      int p;
-      char tmp[32];
-      struct palentry *e;
-      tended struct descrip result;
-      if (!parsepalette(buffstr(&s1), &p)) {
-          LitWhy("Invalid palette");
-          fail;
-      }
-      if (StrLen(s2) != 1)
-          runerr(205, s2);
-      e = palsetup(p); 
-      e += *StrLoc(s2) & 0xFF;
-      if (!e->valid) {
-          LitWhy("Invalid character");
-          fail;
-      }
-      sprintf(tmp, "%d,%d,%d", e->r, e->g, e->b);
-      cstr2string(tmp, &result);
-      return result;
-   }
-end
-
-function graphics_Window_palette_key(s1, s2)
-   if !cnv:string(s1) then
-       runerr(103, s1)
-   if !cnv:string(s2) then
-       runerr(103, s2)
-   body {
-      int p, r, g, b;
-      if (!parsepalette(buffstr(&s1), &p)) {
-          LitWhy("Invalid palette");
-          fail;
-      }
-      if (!parsecolor(buffstr(&s2), &r, &g, &b)) {
-          LitWhy("Invalid color");
-          fail;
-      }
-      return string(1, rgbkey(p, r, g, b));
    }
 end
 
@@ -2035,4 +1929,116 @@ function graphics_Window_set_transient_for_impl(self, val)
    }
 end
 
-#endif   /* Graphics */
+#else    /* Graphics */
+
+UnsupportedFunc(graphics_Window_wcreate)
+UnsupportedFunc(graphics_Window_sync)
+
+#endif   
+
+function graphics_Window_color_value(s)
+    if !cnv:string(s) then
+       runerr(103, s);
+   body {
+      int r, g, b;
+      tended struct descrip result;
+      char tmp[32];
+      if (!parsecolor(buffstr(&s), &r, &g, &b))
+          fail;
+      sprintf(tmp,"%d,%d,%d", r, g, b);
+      cstr2string(tmp, &result);
+      return result;
+   }
+end
+
+function graphics_Window_parse_color(s)
+    if !cnv:string(s) then
+       runerr(103, s);
+   body {
+      int r, g, b;
+      tended struct descrip result;
+      struct descrip t;
+      if (!parsecolor(buffstr(&s), &r, &g, &b))
+          fail;
+      create_list(3, &result);
+      MakeInt(r, &t);
+      list_put(&result, &t);
+      MakeInt(g, &t);
+      list_put(&result, &t);
+      MakeInt(b, &t);
+      list_put(&result, &t);
+      return result;
+   }
+end
+
+function graphics_Window_palette_chars(pal)
+   if !cnv:string(pal) then
+       runerr(103, pal)
+   body {
+      int n;
+      if (!parsepalette(buffstr(&pal), &n))
+          fail;
+      switch (n) {
+          case  1:  return string(90, c1list);			/* c1 */
+          case  2:  return string(9, c2list);			/* c2 */
+          case  3:  return string(31, c3list);			/* c3 */
+          case  4:  return string(73, c4list);			/* c4 */
+          case  5:  return string(141, allchars);	/* c5 */
+          case  6:  return string(241, allchars);	/* c6 */
+          default:					/* gn */
+              if (n >= -64)
+                  return string(-n, c4list);
+              else
+                  return string(-n, allchars);
+      }
+      fail; /* NOTREACHED */ /* avoid spurious rtt warning message */
+   }
+end
+
+function graphics_Window_palette_color(s1, s2)
+   if !cnv:string(s1) then
+       runerr(103, s1)
+   if !cnv:string(s2) then
+       runerr(103, s2)
+   body {
+      int p;
+      char tmp[32];
+      struct palentry *e;
+      tended struct descrip result;
+      if (!parsepalette(buffstr(&s1), &p)) {
+          LitWhy("Invalid palette");
+          fail;
+      }
+      if (StrLen(s2) != 1)
+          runerr(205, s2);
+      e = palsetup(p); 
+      e += *StrLoc(s2) & 0xFF;
+      if (!e->valid) {
+          LitWhy("Invalid character");
+          fail;
+      }
+      sprintf(tmp, "%d,%d,%d", e->r, e->g, e->b);
+      cstr2string(tmp, &result);
+      return result;
+   }
+end
+
+function graphics_Window_palette_key(s1, s2)
+   if !cnv:string(s1) then
+       runerr(103, s1)
+   if !cnv:string(s2) then
+       runerr(103, s2)
+   body {
+      int p, r, g, b;
+      if (!parsepalette(buffstr(&s1), &p)) {
+          LitWhy("Invalid palette");
+          fail;
+      }
+      if (!parsecolor(buffstr(&s2), &r, &g, &b)) {
+          LitWhy("Invalid color");
+          fail;
+      }
+      return string(1, rgbkey(p, r, g, b));
+   }
+end
+

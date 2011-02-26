@@ -1242,7 +1242,7 @@ class RamStream(Stream, NoCopy)
       return s
    end
 
-   private static defer new_impl(s)
+   private static defer new_impl(s, wiggle)
 
    public get_mode()
       return ALL
@@ -1394,10 +1394,17 @@ class SslStream(Stream, NoCopy)
       return other.get_mode()
    end
 
-   private static defer new_impl(s)
+   private static defer new_impl(other, verify_host)
 
-   public new(other, keyfile, ca_list, password)
-      ptr := new_impl(other, keyfile, ca_list, password) | fail
+   #
+   # Create a new SslStream.
+   #
+   # @param other an already connected {SocketStream} over which the connection
+   #              will operate
+   # @param verify_host if set, the remote host's certificate will be verified
+   #              and its hostname checked against this value.
+   public new(other, verify_host)
+      ptr := new_impl(other, verify_host) | fail
       self.other := other
       return
    end
