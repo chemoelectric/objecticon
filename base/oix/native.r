@@ -3695,5 +3695,6 @@ function io_SslStream_close_impl(self)
        return nulldesc;
    }
 end
-
+#else
+UnsupportedFunc(io_SslStream_new_impl)
 #endif

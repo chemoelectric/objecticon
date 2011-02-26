@@ -16,11 +16,7 @@
 #include "../h/monitor.h"
 #include "../h/rmacros.h"
 #include "../h/rstructs.h"
-
-#if Graphics
-   #include "../h/graphics.h"
-#endif					/* Graphics */
-
+#include "../h/graphics.h"
 #include "../h/rexterns.h"
 #include "../h/rproto.h"
 

@@ -98,6 +98,7 @@ extern int xnargs;
 /*
  * graphics
  */
+extern char c1list[], c2list[], c3list[], c4list[];
 #if Graphics
    
 extern int wconfig, inattr;
@@ -105,7 +106,6 @@ extern wbp wbndngs;
 extern wcp wcntxts;
 extern wsp wstates;
 extern clock_t starttime;		/* start time in milliseconds */
-extern char c1list[], c2list[], c3list[], c4list[];
 
 #if XWindows
       extern struct _wdisplay * wdsplys;

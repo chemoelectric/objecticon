@@ -169,6 +169,11 @@ char *buffstr(dptr d);
 void buffnstr(dptr d, char **s, ...);
 
 
+int  parsecolor      (char *s, int *r, int *g, int *b);
+int  parsepalette    (char *s, int *p);
+struct palentry *palsetup(int p);
+char *rgbkey         (int p, int r, int g, int b);
+
 #if Graphics
    /*
     * portable graphics routines in rwindow.r and rwinrsc.r
@@ -179,10 +184,7 @@ void buffnstr(dptr d, char **s, ...);
    int  docircle        (wbp w, dptr argv, int fill);
    void drawCurve       (wbp w, XPoint *p, int n);
    void genCurve        (wbp w, XPoint *p, int n, void (*h)(wbp, XPoint [], int));
-   struct palentry *palsetup(int p);
-   int  parsepalette    (char *s, int *p);
    int  parsefilter     (wbp w, char *s, struct filter *res);
-   int  parsecolor      (char *s, int *r, int *g, int *b);
    int  parsefont       (char *s, char *fam, int *sty, int *sz);
    int  parsepattern    (char *s, int *w, int *height, int **data);
    int  parseinputmask  (char *s, int *res);
@@ -194,7 +196,6 @@ void buffnstr(dptr d, char **s, ...);
    int  writeimagefile  (wbp w, char *filename, int x, int y, int width, int height);
    int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph);
    int pointargs(wbp w, dptr argv, word *px, word *py);
-   char *rgbkey         (int p, int r, int g, int b);
 
    int  initimgmem      (wbp w, struct imgmem *i, int copy, int clip, int x, int y, int width, int height);
    int  gotopixel       (struct imgmem *i, int x, int y);

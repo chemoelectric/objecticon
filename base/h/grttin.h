@@ -86,6 +86,14 @@
        fail; \
        }
 
+#begdef UnsupportedFunc(name)
+function name()
+    body {
+      Unsupported;
+    }
+end
+#enddef
+
 #begdef EVVal(value,event)
 #if event
    do {
