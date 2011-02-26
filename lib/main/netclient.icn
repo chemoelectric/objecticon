@@ -20,10 +20,6 @@ import
 # @field task=object: see {set_task}
 # @field ssl=flag: see {set_ssl}
 # @field ssl_verify=flag: see {set_ssl_verify}
-# @field ssl_key_file=string: see {set_ssl_key_file}
-# @field ssl_password=string: see {set_ssl_password}
-# @field ssl_ca_file=string: see {set_ssl_ca_file}
-# @field ssl_ca_path=string: see {set_ssl_ca_path}
 #
 class NetClient(Connectable, SetFields)
    public static const 
@@ -61,11 +57,7 @@ class NetClient(Connectable, SetFields)
       timeout,
       task,
       ssl_flag,
-      ssl_verify_flag,
-      ssl_key_file,
-      ssl_ca_file,
-      ssl_ca_path,
-      ssl_password
+      ssl_verify_flag
 
    private
       connection,
@@ -136,8 +128,6 @@ class NetClient(Connectable, SetFields)
          # Connecting in non-blocking mode is too complicated for SSL.
          connection.flag(, FileOpt.NONBLOCK) | fail
          ssl_connection := SslStream(connection, 
-                                     ssl_key_file, ssl_password, 
-                                     ssl_ca_file, ssl_ca_path,
                                      if \ssl_verify_flag then server else &null) | {
             close()
             return error("Couldn't open SSL connection: " || &why)
@@ -315,34 +305,6 @@ class NetClient(Connectable, SetFields)
       self.ssl_verify_flag := check_flag(s)
    end
 
-   #
-   # Specify an optional key file to use with any ssl connections.
-   #
-   public set_ssl_key_file(s)
-      self.ssl_key_file := s
-   end
-
-   #
-   # Specify an optional certificate list file to use with any ssl connections.
-   #
-   public set_ssl_ca_file(s)
-      self.ssl_ca_file := s
-   end
-
-   #
-   # Specify an optional certificate list path to use with any ssl connections.
-   #
-   public set_ssl_ca_path(s)
-      self.ssl_ca_path := s
-   end
-
-   #
-   # Specify an optional key file password to use with any ssl connections.
-   #
-   public set_ssl_password(s)
-      self.ssl_password := s
-   end
-
    protected set_one(f)
       case f.attr of {
          "timeout": set_timeout(f.int_val())
@@ -352,10 +314,6 @@ class NetClient(Connectable, SetFields)
          "task": set_task(f.object_val(Task))
          "ssl": set_ssl(f.flag_val())
          "ssl_verify": set_ssl_verify(f.flag_val())
-         "ssl_key_file": set_ssl_key_file(f.string_val())
-         "ssl_password": set_ssl_password(f.string_val())
-         "ssl_ca_file": set_ssl_ca_file(f.string_val())
-         "ssl_ca_path": set_ssl_ca_path(f.string_val())
          default: return try_event(f, EVENT_TABLE)
       }
       return

@@ -3505,7 +3505,6 @@ end
 struct sslstream {
     SSL_CTX *ctx;
     SSL *ssl;
-    char *password;
 };
 
 #begdef GetSelfSsl()
@@ -3519,20 +3518,6 @@ self_ssl = (struct sslstream*)IntVal(*self_ssl_dptr);
 if (!self_ssl)
     runerr(219, self);
 #enddef
-
-static int password_cb(char *buf, int num, int rwflag, void *userdata)
-{
-    struct sslstream *p = (struct sslstream *)userdata;
-    if (num < strlen(p->password) + 1)
-        return 0;
-    strcpy(buf, p->password);
-    return strlen(p->password);
-}
-
-static void ssl_why(unsigned long e)
-{
-    why(ERR_error_string(e, 0));
-}
 
 static int
 pattern_match (char *pattern, char *string)
@@ -3559,7 +3544,7 @@ pattern_match (char *pattern, char *string)
     return *n == '\0';
 }
 
-function io_SslStream_new_impl(other, key_file, password, ca_file, ca_path, verify_host)
+function io_SslStream_new_impl(other, verify_host)
    body {
        struct sslstream *p;
        SSL_METHOD *meth;
@@ -3567,32 +3552,8 @@ function io_SslStream_new_impl(other, key_file, password, ca_file, ca_path, veri
        SSL *ssl;
        BIO *sbio;
        int rc;
-       tended char *c_key_file;
-       tended char *c_password;
-       tended char *c_ca_file;
-       tended char *c_ca_path;
        tended char *c_verify_host;
        FdStaticParam(other, fd);
-
-       if (is:null(key_file))
-           c_key_file = 0;
-       else if (!cnv:C_string(key_file, c_key_file))
-           runerr(103, key_file);
-
-       if (is:null(password))
-           c_password = 0;
-       else if (!cnv:C_string(password, c_password))
-           runerr(103, password);
-
-       if (is:null(ca_file))
-           c_ca_file = 0;
-       else if (!cnv:C_string(ca_file, c_ca_file))
-           runerr(103, ca_file);
-
-       if (is:null(ca_path))
-           c_ca_path = 0;
-       else if (!cnv:C_string(ca_path, c_ca_path))
-           runerr(103, ca_path);
 
        if (is:null(verify_host))
            c_verify_host = 0;
@@ -3603,47 +3564,13 @@ function io_SslStream_new_impl(other, key_file, password, ca_file, ca_path, veri
        SSL_load_error_strings();
 
        /* Create our context*/
-       meth = SSLv23_method();
+       meth = SSLv23_client_method();
        ctx = SSL_CTX_new(meth);
 
        MemProtect(p = malloc(sizeof(*p)));
        p->ctx = ctx;
 
-       if (c_password) {
-           p->password = salloc(c_password);
-           SSL_CTX_set_default_passwd_cb(ctx, password_cb);
-           SSL_CTX_set_default_passwd_cb_userdata(ctx, p);
-       } else
-           p->password = 0;
-
-       if (c_key_file) {
-           if (!(SSL_CTX_use_certificate_chain_file(ctx, c_key_file))) {
-               ssl_why(ERR_get_error());
-               SSL_CTX_free(ctx);
-               free(p->password);
-               free(p);
-               fail;
-           }
-           if (!(SSL_CTX_use_PrivateKey_file(ctx, c_key_file, SSL_FILETYPE_PEM))) {
-               ssl_why(ERR_get_error());
-               SSL_CTX_free(ctx);
-               free(p->password);
-               free(p);
-               fail;
-           }
-       }
-
-       /* Load the CAs we trust*/
        SSL_CTX_set_default_verify_paths(ctx);
-       if (c_ca_file || c_ca_path) {
-           if (!(SSL_CTX_load_verify_locations(ctx, c_ca_file, c_ca_path))) {
-               ssl_why(ERR_get_error());
-               SSL_CTX_free(ctx);
-               free(p->password);
-               free(p);
-               fail;
-           }
-       }
 
        /* Connect the SSL socket */
        ssl = SSL_new(ctx);
@@ -3651,10 +3578,9 @@ function io_SslStream_new_impl(other, key_file, password, ca_file, ca_path, veri
        SSL_set_bio(ssl, sbio, sbio);
 
        if ((rc = SSL_connect(ssl)) <= 0) {
-           ssl_why(SSL_get_error(ssl, rc));
+           whyf("SSL_connect: %s", ERR_error_string(SSL_get_error(ssl, rc), 0));
            SSL_free(ssl);
            SSL_CTX_free(ctx);
-           free(p->password);
            free(p);
            fail;
        }
@@ -3667,7 +3593,6 @@ function io_SslStream_new_impl(other, key_file, password, ca_file, ca_path, veri
                whyf("Certificate doesn't verify: %s", X509_verify_cert_error_string(l));
                SSL_free(ssl);
                SSL_CTX_free(ctx);
-               free(p->password);
                free(p);
                fail;
            }
@@ -3682,7 +3607,6 @@ function io_SslStream_new_impl(other, key_file, password, ca_file, ca_path, veri
                LitWhy("Common name doesn't match host name");
                SSL_free(ssl);
                SSL_CTX_free(ctx);
-               free(p->password);
                free(p);
                fail;
            }
@@ -3719,7 +3643,7 @@ function io_SslStream_in(self, i)
 
            if (nread < 0 || SSL_get_error(self_ssl->ssl, nread) != SSL_ERROR_ZERO_RETURN) {
                *self_eof_flag = nulldesc;
-               ssl_why(SSL_get_error(self_ssl->ssl, nread));
+               whyf("SSL_read: %s", ERR_error_string(SSL_get_error(self_ssl->ssl, nread), 0));
            } else {  /* nread == 0 */
                *self_eof_flag = onedesc;
                LitWhy("End of file");
@@ -3748,7 +3672,7 @@ function io_SslStream_out(self, s)
        rc = SSL_write(self_ssl->ssl, StrLoc(s), StrLen(s));
 
        if (rc < 0 || (rc == 0 && SSL_get_error(self_ssl->ssl, rc) != SSL_ERROR_ZERO_RETURN)) {
-           ssl_why(SSL_get_error(self_ssl->ssl, rc));
+           whyf("SSL_write: %s", ERR_error_string(SSL_get_error(self_ssl->ssl, rc), 0));
            fail;
        }
        return C_integer rc;
@@ -3761,12 +3685,11 @@ function io_SslStream_close_impl(self)
        GetSelfSsl();
 
        if ((rc = SSL_shutdown(self_ssl->ssl)) < 0) {
-           ssl_why(SSL_get_error(self_ssl->ssl, rc));
+           whyf("SSL_shutdown: %s", ERR_error_string(SSL_get_error(self_ssl->ssl, rc), 0));
            fail;
        }
        SSL_free(self_ssl->ssl);
        SSL_CTX_free(self_ssl->ctx);
-       free(self_ssl->password);
        free(self_ssl);
        *self_ssl_dptr = zerodesc;
        return nulldesc;
