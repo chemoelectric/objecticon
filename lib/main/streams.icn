@@ -1153,8 +1153,8 @@ class SslStream(Stream, NoCopy)
 
    private static defer new_impl(s)
 
-   public new(other, keyfile, ca_list, password)
-      ptr := new_impl(other, keyfile, ca_list, password) | fail
+   public new(other, key_file, password, ca_file, ca_path, verify_host)
+      ptr := new_impl(other, key_file, password, ca_file, ca_path, verify_host) | fail
       self.other := other
       return
    end

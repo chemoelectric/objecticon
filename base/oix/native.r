@@ -3534,7 +3534,32 @@ static void ssl_why(unsigned long e)
     why(ERR_error_string(e, 0));
 }
 
-function io_SslStream_new_impl(other, keyfile, ca_list, password)
+static int
+pattern_match (char *pattern, char *string)
+{
+    char *p = pattern, *n = string;
+    char c;
+    for (; (c = tolower((unsigned char)(*p++))) != '\0'; n++)
+        if (c == '*')
+        {
+            for (c = tolower((unsigned char)(*p)); c == '*'; c = tolower((unsigned char)(*++p)))
+                ;
+            for (; *n != '\0'; n++)
+                if (tolower((unsigned char)(*n)) == c && pattern_match (p, n))
+                    return 1;
+                else if (*n == '.')
+                    return 0;
+            return c == '\0';
+        }
+        else
+        {
+            if (c != tolower((unsigned char)(*n)))
+                return 0;
+        }
+    return *n == '\0';
+}
+
+function io_SslStream_new_impl(other, key_file, password, ca_file, ca_path, verify_host)
    body {
        struct sslstream *p;
        SSL_METHOD *meth;
@@ -3542,25 +3567,37 @@ function io_SslStream_new_impl(other, keyfile, ca_list, password)
        SSL *ssl;
        BIO *sbio;
        int rc;
+       tended char *c_key_file;
        tended char *c_password;
-       tended char *c_keyfile;
-       tended char *c_ca_list;
+       tended char *c_ca_file;
+       tended char *c_ca_path;
+       tended char *c_verify_host;
        FdStaticParam(other, fd);
+
+       if (is:null(key_file))
+           c_key_file = 0;
+       else if (!cnv:C_string(key_file, c_key_file))
+           runerr(103, key_file);
 
        if (is:null(password))
            c_password = 0;
        else if (!cnv:C_string(password, c_password))
            runerr(103, password);
 
-       if (is:null(keyfile))
-           c_keyfile = 0;
-       else if (!cnv:C_string(keyfile, c_keyfile))
-           runerr(103, keyfile);
+       if (is:null(ca_file))
+           c_ca_file = 0;
+       else if (!cnv:C_string(ca_file, c_ca_file))
+           runerr(103, ca_file);
 
-       if (is:null(ca_list))
-           c_ca_list = 0;
-       else if (!cnv:C_string(ca_list, c_ca_list))
-           runerr(103, password);
+       if (is:null(ca_path))
+           c_ca_path = 0;
+       else if (!cnv:C_string(ca_path, c_ca_path))
+           runerr(103, ca_path);
+
+       if (is:null(verify_host))
+           c_verify_host = 0;
+       else if (!cnv:C_string(verify_host, c_verify_host))
+           runerr(103, verify_host);
 
        SSL_library_init();
        SSL_load_error_strings();
@@ -3579,26 +3616,15 @@ function io_SslStream_new_impl(other, keyfile, ca_list, password)
        } else
            p->password = 0;
 
-       if (c_keyfile) {
-           if (!(SSL_CTX_use_certificate_chain_file(ctx, c_keyfile))) {
+       if (c_key_file) {
+           if (!(SSL_CTX_use_certificate_chain_file(ctx, c_key_file))) {
                ssl_why(ERR_get_error());
                SSL_CTX_free(ctx);
                free(p->password);
                free(p);
                fail;
            }
-           if (!(SSL_CTX_use_PrivateKey_file(ctx, c_keyfile, SSL_FILETYPE_PEM))) {
-               ssl_why(ERR_get_error());
-               SSL_CTX_free(ctx);
-               free(p->password);
-               free(p);
-               fail;
-           }
-       }
-
-       if (c_ca_list) {
-           /* Load the CAs we trust*/
-           if (!(SSL_CTX_load_verify_locations(ctx, c_ca_list, 0))) {
+           if (!(SSL_CTX_use_PrivateKey_file(ctx, c_key_file, SSL_FILETYPE_PEM))) {
                ssl_why(ERR_get_error());
                SSL_CTX_free(ctx);
                free(p->password);
@@ -3607,9 +3633,17 @@ function io_SslStream_new_impl(other, keyfile, ca_list, password)
            }
        }
 
-#if (OPENSSL_VERSION_NUMBER < 0x00905100L)
-       SSL_CTX_set_verify_depth(ctx,1);
-#endif
+       /* Load the CAs we trust*/
+       SSL_CTX_set_default_verify_paths(ctx);
+       if (c_ca_file || c_ca_path) {
+           if (!(SSL_CTX_load_verify_locations(ctx, c_ca_file, c_ca_path))) {
+               ssl_why(ERR_get_error());
+               SSL_CTX_free(ctx);
+               free(p->password);
+               free(p);
+               fail;
+           }
+       }
 
        /* Connect the SSL socket */
        ssl = SSL_new(ctx);
@@ -3624,6 +3658,36 @@ function io_SslStream_new_impl(other, keyfile, ca_list, password)
            free(p);
            fail;
        }
+
+       if (c_verify_host) {
+           X509 *peer;
+           char peer_CN[256];
+           long l;
+           if ((l = SSL_get_verify_result(ssl)) != X509_V_OK) {
+               whyf("Certificate doesn't verify: %s", X509_verify_cert_error_string(l));
+               SSL_free(ssl);
+               SSL_CTX_free(ctx);
+               free(p->password);
+               free(p);
+               fail;
+           }
+           /*Check the cert chain. The chain length is automatically
+             checked by OpenSSL when we set the verify depth in the
+             ctx */
+           /*Check the common name*/
+           peer = SSL_get_peer_certificate(ssl);
+           X509_NAME_get_text_by_NID(X509_get_subject_name(peer),
+                                     NID_commonName, peer_CN, 256);
+           if (!pattern_match(peer_CN, c_verify_host)) {
+               LitWhy("Common name doesn't match host name");
+               SSL_free(ssl);
+               SSL_CTX_free(ctx);
+               free(p->password);
+               free(p);
+               fail;
+           }
+       }
+
        p->ssl = ssl;
 
        return C_integer((word)p);

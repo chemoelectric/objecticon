@@ -19,9 +19,11 @@ import
 # @field port=integer: see {set_port}
 # @field task=object: see {set_task}
 # @field ssl=flag: see {set_ssl}
-# @field ssl_keyfile=string: see {set_ssl_keyfile}
-# @field ssl_ca_list=string: see {set_ssl_ca_list}
+# @field ssl_verify=flag: see {set_ssl_verify}
+# @field ssl_key_file=string: see {set_ssl_key_file}
 # @field ssl_password=string: see {set_ssl_password}
+# @field ssl_ca_file=string: see {set_ssl_ca_file}
+# @field ssl_ca_path=string: see {set_ssl_ca_path}
 #
 class NetClient(Connectable, SetFields)
    public static const 
@@ -59,8 +61,10 @@ class NetClient(Connectable, SetFields)
       timeout,
       task,
       ssl_flag,
-      ssl_keyfile,
-      ssl_ca_list,
+      ssl_verify_flag,
+      ssl_key_file,
+      ssl_ca_file,
+      ssl_ca_path,
       ssl_password
 
    private
@@ -107,9 +111,7 @@ class NetClient(Connectable, SetFields)
 
       close()
       connection := SocketStream.socket(domain)
-      # Connecting in non-blocking mode is too complicated for SSL.
-      if /ssl_flag then
-         connection.flag(FileOpt.NONBLOCK) | fail
+      connection.flag(FileOpt.NONBLOCK) | fail
       fire(CONNECTING_EVENT)
       connection.connect(addr) | {
          if errno() = Errno.EINPROGRESS then {
@@ -130,11 +132,17 @@ class NetClient(Connectable, SetFields)
             return error("Couldn't connect to " || addr || ": " || &why)
          }
       }
-      if \ssl_flag then
-         ssl_connection := SslStream(connection, ssl_keyfile, ssl_ca_list, ssl_password) | {
+      if \ssl_flag then {
+         # Connecting in non-blocking mode is too complicated for SSL.
+         connection.flag(, FileOpt.NONBLOCK) | fail
+         ssl_connection := SslStream(connection, 
+                                     ssl_key_file, ssl_password, 
+                                     ssl_ca_file, ssl_ca_path,
+                                     if \ssl_verify_flag then server else &null) | {
             close()
             return error("Couldn't open SSL connection: " || &why)
          }
+      }
 
       sbuff := ""
       fire(CONNECTED_EVENT)
@@ -300,17 +308,32 @@ class NetClient(Connectable, SetFields)
    end
 
    #
+   # A flag value.  When set, indicate that the remote host's identity should be
+   # verified.  By default, this flag is on.
+   #
+   public set_ssl_verify(s)
+      self.ssl_verify_flag := check_flag(s)
+   end
+
+   #
    # Specify an optional key file to use with any ssl connections.
    #
-   public set_ssl_keyfile(s)
-      self.ssl_keyfile := s
+   public set_ssl_key_file(s)
+      self.ssl_key_file := s
    end
 
    #
    # Specify an optional certificate list file to use with any ssl connections.
    #
-   public set_ssl_ca_list(s)
-      self.ssl_ca_list := s
+   public set_ssl_ca_file(s)
+      self.ssl_ca_file := s
+   end
+
+   #
+   # Specify an optional certificate list path to use with any ssl connections.
+   #
+   public set_ssl_ca_path(s)
+      self.ssl_ca_path := s
    end
 
    #
@@ -328,9 +351,11 @@ class NetClient(Connectable, SetFields)
          "port": set_port(f.int_val())
          "task": set_task(f.object_val(Task))
          "ssl": set_ssl(f.flag_val())
-         "ssl_keyfile": set_ssl_keyfile(f.string_val())
-         "ssl_ca_list": set_ssl_ca_list(f.string_val())
+         "ssl_verify": set_ssl_verify(f.flag_val())
+         "ssl_key_file": set_ssl_key_file(f.string_val())
          "ssl_password": set_ssl_password(f.string_val())
+         "ssl_ca_file": set_ssl_ca_file(f.string_val())
+         "ssl_ca_path": set_ssl_ca_path(f.string_val())
          default: return try_event(f, EVENT_TABLE)
       }
       return
@@ -339,6 +364,7 @@ class NetClient(Connectable, SetFields)
    protected new(a[])
       cast(self,Connectable).new()
       sbuff := ""
+      ssl_verify_flag := &yes
       set_fields(a)
       return
    end
