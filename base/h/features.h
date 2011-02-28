@@ -20,11 +20,11 @@
 
 #if MSWIN32
    Feature("_MS_WIN32", "MS Win32")
-#endif					/* MSWIN32 */
+#endif
 
 #if UNIX
    Feature("_UNIX", "UNIX")
-#endif					/* VM */
+#endif
 
    Feature("_POSIX", "POSIX")
    Feature("_ASCII", "ASCII")
@@ -38,24 +38,29 @@
 
 #if HAVE_LIBDL
    Feature("_DYNAMIC_LOADING", "dynamic loading")
-#endif					/* HAVE_LIBDL */
+#endif
 
 #if Graphics
    Feature("_GRAPHICS", "graphics")
-#endif					/* Graphics */
+#endif
 
 #if XWindows
    Feature("_X_WINDOW_SYSTEM", "X Windows")
-#endif					/* XWindows */
+#endif
 
 #if HAVE_LIBZ
    Feature("_LIBZ_COMPRESSION", "libz file compression")
-#endif					/* HAVE_LIBZ */
+#endif
 
 #if HAVE_LIBJPEG
    Feature("_JPEG", "JPEG images")
-#endif					/* HAVE_LIBJPEG */
+#endif
 
 #if HAVE_LIBPNG
    Feature("_PNG", "PNG images")
-#endif					/* HAVE_LIBPNG */
+#endif
+
+#if HAVE_LIBOPENSSL
+   Feature("_SSL", "SSL networking")
+#endif
+
