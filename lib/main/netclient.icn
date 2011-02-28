@@ -103,7 +103,10 @@ class NetClient(Connectable, SetFields)
 
       close()
       connection := SocketStream.socket(domain)
-      connection.flag(FileOpt.NONBLOCK) | fail
+      connection.flag(FileOpt.NONBLOCK) | {
+         close()
+         return error("Couldn't put socket in non-blocking mode: " || &why)
+      }
       fire(CONNECTING_EVENT)
       connection.connect(addr) | {
          if errno() = Errno.EINPROGRESS then {
@@ -126,7 +129,10 @@ class NetClient(Connectable, SetFields)
       }
       if \ssl_flag then {
          # Connecting in non-blocking mode is too complicated for SSL.
-         connection.flag(, FileOpt.NONBLOCK) | fail
+         connection.flag(, FileOpt.NONBLOCK) | {
+            close()
+            return error("Couldn't put socket out of non-blocking mode: " || &why)
+         }
          ssl_connection := SslStream(connection, 
                                      if \ssl_verify_flag then server else &null) | {
             close()
