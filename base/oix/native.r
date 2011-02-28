@@ -4087,13 +4087,12 @@ function io_NetStream_listen_impl(dir)
    }
 end
 
-function io_NetStream_accept_impl(cfd, dir)
-   if !cnv:C_integer(cfd) then
-       runerr(101, cfd)
+function io_NetStream_accept_impl(cf, dir)
    if !cnv:C_string(dir) then
        runerr(103, dir)
    body {
        int fd;
+       FdStaticParam(cf, cfd);
        if ((fd = accept(cfd, dir)) < 0) {
            errno2why();
            fail;
@@ -4102,14 +4101,13 @@ function io_NetStream_accept_impl(cfd, dir)
    }
 end
 
-function io_NetStream_reject_impl(cfd, dir, cause)
-   if !cnv:C_integer(cfd) then
-       runerr(101, cfd)
+function io_NetStream_reject_impl(cf, dir, cause)
    if !cnv:C_string(dir) then
        runerr(103, dir)
    if !cnv:C_string(cause) then
        runerr(103, cause)
    body {
+       FdStaticParam(cf, cfd);
        if (reject(cfd, dir, cause) < 0) {
            errno2why();
            fail;
@@ -4118,14 +4116,13 @@ function io_NetStream_reject_impl(cfd, dir, cause)
    }
 end
 
-function io_NetStream_get_connection_info_impl(cfd, dir)
-   if !cnv:C_integer(cfd) then
-       runerr(101, cfd)
+function io_NetStream_get_connection_info_impl(cf, dir)
    if !cnv:C_string(dir) then
        runerr(103, dir)
    body {
        tended struct descrip result, t;
        struct NetConnInfo *x;
+       FdStaticParam(cf, cfd);
        if (!(x = getnetconninfo(dir, cfd))) {
            errno2why();
            fail;

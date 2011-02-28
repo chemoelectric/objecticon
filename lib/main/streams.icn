@@ -1334,12 +1334,12 @@ class NetStream(FileStream)
    end
 
    public accept()
-      self.fd := accept_impl(self.ctrl.get_fd(), self.dir) | fail
+      self.fd := accept_impl(self.ctrl, self.dir) | fail
       return
    end
 
    public reject(cause)
-      return reject_impl(self.ctrl.get_fd(), self.dir, cause)
+      return reject_impl(self.ctrl, self.dir, cause)
    end
 
    public close()
@@ -1350,17 +1350,17 @@ class NetStream(FileStream)
    end
 
    public get_connection_info()
-      return ConnectionInfo!get_connection_info_impl(self.ctrl.get_fd(), self.dir)
+      return ConnectionInfo!get_connection_info_impl(self.ctrl, self.dir)
    end
 
    public static defer mkaddr(addr, defnet, defservice)
 
-   private static defer get_connection_info_impl(cfd, dir)
+   private static defer get_connection_info_impl(cf, dir)
    private static defer dial_impl(addr, loc)
    private static defer announce_impl(addr)
    private static defer listen_impl(dir)
-   private static defer accept_impl(cfd, dir)
-   private static defer reject_impl(cfd, dir, cause)
+   private static defer accept_impl(cf, dir)
+   private static defer reject_impl(cf, dir, cause)
 
    private new(fd, cfd, dir)
       cast(self,FileStream).new(fd, READ_WRITE)
