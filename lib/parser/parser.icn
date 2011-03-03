@@ -55,14 +55,14 @@ class Parser(Connectable, SetFields)
          DEFAULT_SYMBOLS[case s of {
             "Object Icon": "_OBJECT_ICON"
             "V2": "_V2"
-            "PORT": "_PORT"
             "keyboard functions": "_KEYBOARD_FUNCTIONS"
             "libz file compression": "_LIBZ_COMPRESSION"
             "JPEG images": "_JPEG"
-            "XPM images": "_XPM"
-            "Macintosh":"_MACINTOSH"
+            "PNG images": "_PNG"
+            "SSL networking": "_SSL"
             "MS Win32":"_MS_WIN32"
             "UNIX":"_UNIX"
+            "PLAN9": "_PLAN9"
             "POSIX":"_POSIX"
             "ASCII":"_ASCII"
             "co-expressions":"_CO_EXPRESSIONS"
@@ -74,7 +74,6 @@ class Parser(Connectable, SetFields)
             "system function":"_SYSTEM_FUNCTION"
             "graphics":"_GRAPHICS"
             "X Windows":"_X_WINDOW_SYSTEM"
-            "MS Windows":"_MS_WINDOWS"
          }] := "1"
       }
    end
