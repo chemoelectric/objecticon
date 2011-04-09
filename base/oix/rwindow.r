@@ -1582,11 +1582,21 @@ static int readjpegfile(char *filename, struct imgdata *imd)
 
     fclose(fp);
 
+    switch (cinfo.out_color_space) {
+        case JCS_GRAYSCALE: imd->format = IMGDATA_G8; break;
+        case JCS_RGB: imd->format = IMGDATA_RGB24; break;
+        default: {
+            free(data);
+            whyf("readjpegfile: Unknown color_space");
+            return Failed;
+        }
+    }
+
     imd->width = cinfo.output_width;
     imd->height = cinfo.output_height;
     imd->paltbl = 0;
     imd->data = data;
-    imd->format = IMGDATA_RGB24;
+
     return Succeeded;
 }
 
