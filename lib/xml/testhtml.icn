@@ -22,7 +22,7 @@ procedure main(a)
       d := p.parse(s) | stop("couldnt parse " || e)
       fmt.format(d)
       write("--- Document structure")
-      ObjectOutputStream("indent=3",).show(d)
+      to_stdout(d, "indent=3")
       write("------------")
    }
 end

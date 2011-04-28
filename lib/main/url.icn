@@ -180,9 +180,13 @@ class URL()
          set_ref(s[2:0])
       else {
          #
-         # File name and possibly reference.  First check whether relative to current directory.
+         # File name and possibly reference.
          #
-         if s[1] ~== "/" then
+         if s[1] == "?" then
+            # eg http://a/b/c?d + ?e -> http://a/b/c?e
+            s := (self.file ? tab(upto('?') | 0)) || s
+         else if s[1] ~== "/" then
+            # eg http://a/b/c?d + e -> http://a/b/e
             s := get_file_dir() || s
 
          s ? {

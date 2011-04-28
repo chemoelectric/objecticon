@@ -180,7 +180,7 @@ class Task()
    # {fail}, or {return}.
    #
    public revert()
-      self === scheduler.curr_task | runerr("sleep called on task which is not current")
+      self === scheduler.curr_task | runerr("revert called on task which is not current")
       scheduler.now_revert()
    end
 

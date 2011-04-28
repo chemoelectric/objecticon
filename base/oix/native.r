@@ -830,7 +830,7 @@ function lang_Prog_get_region_info_impl(c)
            ++n;
        for (rp = prog->stringregion->prev; rp; rp = rp->prev)
            ++n;
-       create_list(2 * (n + 1), &l);
+       create_list(2 * n, &l);
        list_put(&result, &l);
        for (rp = prog->stringregion; rp; rp = rp->next) {
            MakeInt(DiffPtrs(rp->free,rp->base), &tmp);
@@ -850,7 +850,7 @@ function lang_Prog_get_region_info_impl(c)
            ++n;
        for (rp = prog->blockregion->prev; rp; rp = rp->prev)
            ++n;
-       create_list(2 * (n + 1), &l);
+       create_list(2 * n, &l);
        list_put(&result, &l);
        for (rp = prog->blockregion; rp; rp = rp->next) {
            MakeInt(DiffPtrs(rp->free,rp->base), &tmp);

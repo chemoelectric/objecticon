@@ -871,7 +871,8 @@ class HttpClient(NetClient)
                # Add current header and start a new one.
                response.add_header(\key, val)
                key := tab(upto(':') | 0)
-               =": "
+               =":"
+               tab(many(' \t'))
                val := tab(0)
             }
          }
