@@ -797,7 +797,6 @@ static void wmap(wbp w)
     XWindowAttributes attrs;
     XSetWindowAttributes attr;
     int i;
-    struct descrip progname;
     char *p, *s, sbuf[256];
     XWMHints wmhints;
     XClassHint clhints;
@@ -921,15 +920,15 @@ static void wmap(wbp w)
      * Set the class hints that name the program (for reference by the
      * window manager) following conventions given in O'Reilly.
      */
-    cnv:string(kywd_prog, progname);
     if (! (s = getenv("RESOURCE_NAME"))) {
-        p = StrLoc(progname);
-        s = p + StrLen(progname);
+        p = StrLoc(kywd_prog);
+        s = p + StrLen(kywd_prog);
         while (s > p && s[-1] != '/')
             s--;				/* find tail of prog_name */
         clhints.res_name = sbuf;
         clhints.res_class = "IconProg";
-        for (i=0; s < p+StrLen(progname); ) clhints.res_name[i++] = *s++;
+        for (i = 0; s < p + StrLen(kywd_prog); ) 
+            clhints.res_name[i++] = *s++;
         clhints.res_name[i] = '\0';
         XSetClassHint(stddpy, stdwin, &clhints);
     }
