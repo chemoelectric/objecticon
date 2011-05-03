@@ -1929,6 +1929,7 @@ function io_SocketStream_bind(self, addr)
       runerr(103, addr)
    body {
        struct sockaddr *sa;
+       int optval = 1;
        int len;
        GetSelfFd();
 
@@ -1937,6 +1938,10 @@ function io_SocketStream_bind(self, addr)
            /* &why already set by parse_sockaddr */
            fail;
        }
+
+       /* This prevents a TIME_WAIT expiring connection blocking a server listening on
+        * the same port */
+       setsockopt(self_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval);
 
        if (bind(self_fd, sa, len) < 0) {
            errno2why();
