@@ -420,15 +420,15 @@ co-expression#2 activated by co-expression#1
 }}}
 Note that attempting to resume the co-expression which caused the runtime error for another value will produce a runtime error.  This particular runtime error is in the "fatal" category, meaning it cannot be handled and always causes immediate termination.
 
-=== Background tasks ===
+=== Non-blocking I/O and background tasks ===
 
 Co-expressions are a very useful tool when used to perform I/O on multiple streams at the same time, in a non-blocking fashion. They provide an alternative to the conventional rather clumsy techniques of callbacks and state-machines.
 
 The co-expression technique uses a scheduler class and several worker co-expressions, each of which performs non-blocking I/O.  The worker co-expressions are created by the main client program, but activated by the scheduler.  A worker then runs until it wishes to do some I/O, and before it does so it re-activates the scheduler.  The scheduler notes the streams which each worker wants to read from or write to, and uses the `poll()` function to determine which of them are ready.  The appropriate workers are then re-activated so that they can read or write data and continue their execution until the next piece of I/O, or they exit.  In either case, control returns again to the scheduler.  
 
-An implementation of a scheduler along these lines can be found in the `io` package.  The scheduler is called `Scheduler`.  The worker co-expressions are wrapped in instances of a class called `Task`.  The most important method in `Scheduler` is `work()`, which does a slice of work, possibly calling `poll()` or activating one or more worker `Task`s, and then returns, allowing its caller to do other things.
+An implementation of a scheduler along these lines can be found in the `io` package.  The scheduler is called `Scheduler`.  The worker co-expressions are wrapped in instances of a class called `Task`.  This class has methods to let the task sleep for a time, or to poll streams.  Both these methods activate the scheduler rather than blocking the program.  The most important method in `Scheduler` is `work()`, which does a slice of work on a ready `Task`, if one is ready.
 
-The worker threads using `Scheduler` must use a custom `Stream` implementation to perform I/O.  This class is called `TaskStream`, and simply wraps another `Stream` (normally a `SocketStream`).  The implementation of `TaskStream` defines the `in` and `out` methods so that they re-activate the scheduler before performing the I/O on the underlying `Stream`.  The advantage of wrapping a `Stream` in this way is that it allows conventional synchronous I/O code to be re-used using non-blocking I/O.  For example, consider the `HttpClient` class, which provides a way to retrieve data over HTTP.  It has a `retrieve()` method which creates a `SocketStream` to communicate with the server and tries to retrieve a page of data, using conventional synchronous logic.  However, it has an option to use a `Task`, which tells it to do asynchronouse I/O using the `Task`'s associated `Scheduler`.  With no further alteration to the logic of the class, it can now be used asynchronously.  To see how, consider the following program :-
+As an example consider the following program which uses the `HttpClient` class, which provides a way to retrieve data over HTTP.  It has a `retrieve()` method which creates a `SocketStream` to communicate with the server and tries to retrieve a page of data, using conventional synchronous logic.  However, it has an option to use a `Task`, which tells it to use the `Task`'s `poll` method, rather than the normal `poll` method in `DescStream`.  With no further alteration to the logic of the class, it can now be used asynchronously.  To see how, consider the following program :-
 {{{
 import io, http, net
 
@@ -444,7 +444,6 @@ procedure download(x, t)
    else
       write("Failed to retrieve ", x, ": ", &why)
    s.close()
-   @sched.coex
 end
 
 procedure new_task(s)
@@ -454,7 +453,6 @@ procedure new_task(s)
 end
 
 procedure main()
-   local x
    # Use a 50ms delay in the Scheduler's call to poll.
    sched := Scheduler(50)
    new_task("http://www.google.com")
@@ -468,15 +466,6 @@ procedure main()
    new_task("http://www.thesun.co.uk/")
    new_task("http://www.express.co.uk/")
 
-   x := Task(sched, create {
-      x.sleep(1000)
-      every 1 to 5 do {
-         write("Woke up")
-         x.sleep(1000)
-      }
-   })
-   x.start()
-
    until sched.empty() do {
       sched.work()
       # Could do some extra work between polls.
@@ -484,22 +473,77 @@ procedure main()
    write("Exiting")
 end
 }}}
-The main method creates an `Scheduler` and adds ten `Task`s which each download some data, and one `Task` which simply prints a message and sleeps for a second, and does this five times.  Then it repeatedly calls `work`, until there is nothing left to do.  Example output is as follows :-
+The main method creates an `Scheduler` and adds ten `Task`s which each download some data.  Then it repeatedly calls `work`, until there is nothing left to do.  Example output is as follows :-
 {{{
-Woke up
-Retrieved 73626 bytes from http://www.telegraph.co.uk
-Retrieved 8996 bytes from http://www.google.com
-Woke up
-Woke up
-Woke up
-Retrieved 153818 bytes from http://www.independent.co.uk/
-Woke up
-Retrieved 89881 bytes from http://news.bbc.co.uk
-Retrieved 188627 bytes from http://www.guardian.co.uk/
-Retrieved 51553 bytes from http://www.herald.co.zw/
-Retrieved 137557 bytes from http://www.thesun.co.uk/
-Retrieved 142448 bytes from http://www.yahoo.com
-Retrieved 160034 bytes from http://www.express.co.uk/
-Retrieved 196393 bytes from http://www.dailymail.co.uk
+Retrieved 73010 bytes from http://www.telegraph.co.uk
+Retrieved 190705 bytes from http://www.guardian.co.uk/
+Retrieved 150044 bytes from http://www.independent.co.uk/
+Retrieved 9558 bytes from http://www.google.com
+Retrieved 102355 bytes from http://news.bbc.co.uk
+Retrieved 153377 bytes from http://www.yahoo.com
+Retrieved 56454 bytes from http://www.herald.co.zw/
+Retrieved 131933 bytes from http://www.thesun.co.uk/
+Retrieved 154414 bytes from http://www.express.co.uk/
+Retrieved 203773 bytes from http://www.dailymail.co.uk
 Exiting
 }}}
+As a further example, here is a simple server that can handle several clients simultaneously.  One task listens for incoming connections, each of which is serviced by a new task created in the `handle` procedure.  These tasks make use of a useful utility class called `TaskStream` which simply wraps another `Stream` (in this case a `SocketStream`).  The implementation of `TaskStream` defines the `in` and `out` methods so that they call the task's `poll` method, and hence re-activate the scheduler before performing the I/O on the underlying `Stream`.  Thus the `read` and `write` methods used in the `handle` procedure do not block the program, but allow other tasks to be scheduled instead.
+{{{
+import io
+
+global sched, x_flag
+
+procedure handle(a)
+   local t, s
+   t := Task(sched, create {
+      # Service the client with a 30s timeout
+      a := TaskStream(a, t, 30000) 
+      write("\tHandling...")
+      repeat {
+         s := a.read() | {
+            write("\tRead failed ", &why)
+            break
+         }
+         # An input of "x" shuts down the server
+         if s == "x" then {
+            x_flag := 1
+            break
+         }
+         # An input of "q" ends this client's session
+         if s == "q" then 
+            break
+         a.write(map(s))
+      } 
+      write("\tEnd of handling.")
+      a.close()
+   })
+   t.start()
+end
+
+procedure main()
+   local f, x
+   # Use a 50ms delay in the Scheduler's call to poll.
+   sched := Scheduler(50)
+
+   x := Task(sched, create {
+      f := SocketStream.socket(ProtocolFormat.INET, SocketType.STREAM) | stop(&why)
+      f.bind("inet:INADDR_ANY:7000") | stop(&why)
+      f.listen(5)  | stop(&why)
+      write("Listening...")
+      repeat {
+         x.poll([f, Poll.IN]) | stop(&why)
+         handle(f.accept())
+      }
+   })
+   x.start()
+
+   until \x_flag do {
+      sched.work()
+      # Could do some extra work between polls.
+   }
+
+   f.close()
+   write("Exiting")
+end
+}}}
+The scheduler class is also used by the `gui` library.  Rather than performing I/O, these tasks typically perform background updates of the user interface.  For example the logic to make the cursor flash in a textfield is encapsulated in a `Task`.  The task sleeps for a while, then updates the cursor, and repeats process indefinitely until the task is stopped when the textfield is disposed of.
