@@ -397,9 +397,22 @@ class Window(SetFields,NoCopy)
    public defer draw_arc(x, y, width, height, angle1, angle2)
 
    #
-   # event() - return an event from this window, waiting if necessary.
+   # event() - return an event from this window, failing if none is available.
    #
    public defer event()
+
+   #
+   # Like {event()}, but wait until an event is available
+   #
+   public wait_for_event(n)
+      local e
+      /n := 20
+      repeat {
+         if e := event() then
+            return e
+         delay(n)
+      }
+   end
 
    #
    # draw_circle(x, y, r, theta, alpha)
