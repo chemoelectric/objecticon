@@ -370,8 +370,6 @@ struct filter {
 #define IM_KEY_RELEASE     1
 #define IM_POINTER_MOTION  2
 
-#define XICONSLEEP	20 /* milliseconds */
-
 #define MOD_SHIFT       1
 #define MOD_LOCK        2
 #define MOD_CTRL        4

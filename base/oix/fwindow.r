@@ -452,6 +452,11 @@ function graphics_Window_event(self)
    body {
       tended struct descrip d;
       GetSelfW();
+      if (ListBlk(self_w->window->listp).size == 0) {
+        pollevent(self_w);
+        if (ListBlk(self_w->window->listp).size == 0)
+            fail;
+      }
       wgetevent(self_w, &d);
       return d;
    }

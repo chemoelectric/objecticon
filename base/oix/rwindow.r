@@ -70,11 +70,6 @@ void wgetevent(wbp w, dptr res)
     tended struct descrip qval;
     int i;
 
-    while (ListBlk(w->window->listp).size == 0) {
-        pollevent(w);				/* poll all windows */
-        idelay(XICONSLEEP);
-    }
-
     wgetq(w, &qval);
     create_list(5, res);
     list_put(res, &qval);
