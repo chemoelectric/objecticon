@@ -174,13 +174,15 @@ class Task()
 
    # Suspend this task, which must be the currently scheduled task,
    # but do not resume it.  Control reverts to the scheduler.  The
-   # task may be subsequently restarted with {start}.  It is not
-   # normally necessary to call this method, since it has the same
-   # effect as suspending the task's co-expression using {suspend},
-   # {fail}, or {return}.
+   # task may be subsequently restarted with {start}.  Note that to
+   # end a task, it is normally simply sufficient to fall off the end
+   # of the task's co-expression.  Using {revert} would only be
+   # necessary if the task were to be re-started, or its
+   # co-expression's activator was not the scheduler co-expression.
    #
    public revert()
       self === scheduler.curr_task | runerr("revert called on task which is not current")
+      self.coex := &current
       scheduler.now_revert()
    end
 

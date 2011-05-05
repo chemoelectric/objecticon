@@ -2585,14 +2585,6 @@ void wfreersc()
    mciSendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, 0, (DWORD)NULL);
 }
 
-void wflush(wbp w)
-{
-}
-
-void wsync(wbp w)
-{
-}
-
 int  readimagefileimpl(char *filename, struct imgdata *imd) 
 {
     return NoCvt;

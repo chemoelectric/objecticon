@@ -390,7 +390,7 @@ static void handle_misc(wdp wd)
     XEvent event;
     Window evwin;
     wsp ws = 0;
-
+    XSync(wd->display, False);
     while (XPending(wd->display)) {
 
         XNextEvent(wd->display, &event);
@@ -611,46 +611,11 @@ void pollevent()
 void wclose(wbp w)
 {
     STDLOCALS(w);
-
-    XSync(stddpy, False);
-
     handle_misc(ws->display);
     if (ws->win && ws->refcount > 1) {
         /* Turn into hidden window */
         close_screen_win(ws);
     }
-}
-/*
- * flush a window
- */
-void wflush(wbp w)
-{
-    STDLOCALS(w);
-    XFlush(stddpy);
-}
-/*
- * flush all windows
- */
-void wflushall()
-{
-    wdp wd;
-    for (wd = wdsplys; wd != NULL; wd = wd->next) {
-        XFlush(wd->display);
-    }
-}
-/*
- * sync all the servers
- */
-void wsync(wbp w)
-{
-    wdp wd;
-    if (w == NULL) {
-        for (wd = wdsplys; wd != NULL; wd = wd->next) {
-            XSync(wd->display, False);
-        }
-    }
-    else
-        XSync(w->window->display->display, False);
 }
 
 /*
@@ -797,7 +762,6 @@ static void wmap(wbp w)
     XWindowAttributes attrs;
     XSetWindowAttributes attr;
     int i;
-    struct descrip progname;
     char *p, *s, sbuf[256];
     XWMHints wmhints;
     XClassHint clhints;
@@ -921,15 +885,15 @@ static void wmap(wbp w)
      * Set the class hints that name the program (for reference by the
      * window manager) following conventions given in O'Reilly.
      */
-    cnv:string(kywd_prog, progname);
     if (! (s = getenv("RESOURCE_NAME"))) {
-        p = StrLoc(progname);
-        s = p + StrLen(progname);
+        p = StrLoc(kywd_prog);
+        s = p + StrLen(kywd_prog);
         while (s > p && s[-1] != '/')
             s--;				/* find tail of prog_name */
         clhints.res_name = sbuf;
         clhints.res_class = "IconProg";
-        for (i=0; s < p+StrLen(progname); ) clhints.res_name[i++] = *s++;
+        for (i = 0; s < p + StrLen(kywd_prog); ) 
+            clhints.res_name[i++] = *s++;
         clhints.res_name[i] = '\0';
         XSetClassHint(stddpy, stdwin, &clhints);
     }

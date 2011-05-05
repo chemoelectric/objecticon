@@ -274,8 +274,6 @@ char *rgbkey         (int p, int r, int g, int b);
    int  wopen           (wbp w);
    int  grabpointer      (wbp w);
    int  ungrabpointer    (wbp w);
-   void wflush          (wbp w);
-   void wsync           (wbp w);
    void xdis            (wbp w, char *s, int n);
    void fillarc         (wbp w, int x, int y, int width, int height, double angle1, double angle2);
    void drawarc         (wbp w, int x, int y, int width, int height, double angle1, double angle2);

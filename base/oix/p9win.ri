@@ -902,10 +902,6 @@ void erasearea(wbp w, int x, int y, int width, int height)
     flushimage(display, 1);
 }
 
-void wsync (wbp w)
-{
-}
-
 void pollevent(void)
 {
     wsp ws;
@@ -1325,10 +1321,6 @@ void doconfig(wbp w, int status)
             freeimgdata(imd);
         }
     }
-}
-
-void wflush(wbp w)
-{
 }
 
 int ownselection(wbp w, char *selection)
