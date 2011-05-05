@@ -247,7 +247,7 @@ char *rgbkey         (int p, int r, int g, int b);
    char *getpointer     (wbp w);
    int  getpos          (wbp w);
    int  lowerwindow     (wbp w);
-   void pollevent       (void);
+   void pollevent       (wbp w);
    int  querypointer    (wbp w, int *x, int *y);
    int  queryrootpointer(wbp w, int *x, int *y);
    int  getdisplaysize  (wbp w, int *width, int *height);

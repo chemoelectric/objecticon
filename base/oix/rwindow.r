@@ -71,7 +71,7 @@ void wgetevent(wbp w, dptr res)
     int i;
 
     while (ListBlk(w->window->listp).size == 0) {
-        pollevent();				/* poll all windows */
+        pollevent(w);				/* poll all windows */
         idelay(XICONSLEEP);
     }
 

@@ -16,7 +16,6 @@ static void synch_pattern_image(struct SharedPattern *pat, int fg_rgb, int bg_rg
 static void mouse_loop(int in_fd, int out_fd);
 static Rune *utf8_to_runes(char *str, int nchars);
 static void cons_loop(int in_fd, int out_fd, int screeninfo_fd);
-static void flush_event_pipe(wsp ws);
 static wfp load_font(char *s);
 static void synch_cursor(wsp ws);
 static vlong get_time(void);
@@ -481,8 +480,9 @@ static void handle_reshape(wsp ws)
     }
 }
 
-static void flush_event_pipe(wsp ws)
+void pollevent(wbp w)
 {
+    wsp ws = w->window;
     Dir *st;
     vlong length;
     int n, mx, my;
@@ -900,15 +900,6 @@ void erasearea(wbp w, int x, int y, int width, int height)
         impl_erasearea(wc, ws->win, x, y, width, height);
     impl_erasearea(wc, ws->pix, x, y, width, height);
     flushimage(display, 1);
-}
-
-void pollevent(void)
-{
-    wsp ws;
-    for (ws = vwstates; ws; ws = ws->vnext) {
-        if (ws->program == curpstate)
-            flush_event_pipe(ws);
-    }
 }
 
 int setfg(wbp w, char *val)
@@ -1702,7 +1693,7 @@ static void close_pix_win(wsp ws)
 void wclose(wbp w)
 {
     wsp ws = w->window;
-    pollevent();
+    pollevent(w);
     if (ws->win && ws->refcount > 1) {
         /* Turn into hidden window */
         close_screen_win(ws);

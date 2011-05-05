@@ -476,7 +476,7 @@ function graphics_Window_pending(self, argv[argc])
        * retrieve any events that might be relevant before returning the
        * pending queue.
        */
-      pollevent();
+      pollevent(self_w);
 
       return ws->listp;
    }
@@ -732,7 +732,7 @@ function graphics_Window_query_root_pointer(self)
       tended struct descrip result;
       struct descrip t;
       GetSelfW();
-      pollevent();
+      pollevent(self_w);
       if (queryrootpointer(self_w, &x, &y) != Succeeded)
           fail;
       create_list(2, &result);
@@ -750,7 +750,7 @@ function graphics_Window_query_pointer(self)
       tended struct descrip result;
       struct descrip t;
       GetSelfW();
-      pollevent();
+      pollevent(self_w);
       if (querypointer(self_w, &x, &y) != Succeeded)
           fail;
       create_list(2, &result);
