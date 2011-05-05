@@ -29,7 +29,6 @@ static wsp vwstates;
  */
 static wcp alccontext(wbp w);
 static wsp alcwinstate(void);
-static void handle_misc(wdp display);
 static void handle_config(wsp w, XConfigureEvent *event);
 static void handle_exposures(wsp ws, XExposeEvent *event);
 static void handle_mouse(wsp ws, XButtonEvent *event);
@@ -380,13 +379,9 @@ static char* property_to_string(wdp wd, Atom target, int number_items, void* dat
 
 }
 
-/*
- * handle_misc processes pending events on display.
- * if w is non-null, block until a returnable event arrives.
- * returns 1 on success, 0 on failure.
- */
-static void handle_misc(wdp wd)
+void pollevent(wbp w)
 {
+    wdp wd = w->window->display;
     XEvent event;
     Window evwin;
     wsp ws = 0;
@@ -593,25 +588,12 @@ static void close_screen_win(wsp ws)
 }
 
 /*
- * poll for available events on all opened displays.
- * this is where the interpreter calls into the X interface.
- */
-void pollevent()
-{
-    wdp wd;
-    for (wd = wdsplys; wd; wd = wd->next) {
-        if (wd->program == curpstate)
-            handle_misc(wd);
-    }
-}
-
-/*
  * wclose - close a window.
  */
 void wclose(wbp w)
 {
     STDLOCALS(w);
-    handle_misc(ws->display);
+    pollevent(w);
     if (ws->win && ws->refcount > 1) {
         /* Turn into hidden window */
         close_screen_win(ws);
@@ -2261,7 +2243,7 @@ int raisewindow(wbp w)
         if (attr.map_state == IsViewable)
             break;
         /* Not viewable yet, so wait for a MapNotify event. */
-        handle_misc(ws->display);
+        pollevent(w);
     }
 
     /* Now it is viewable, so give it the focus. */

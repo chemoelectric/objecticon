@@ -735,7 +735,7 @@ void wclose(wbp w)
    wbp tmp_wb;
    struct wbind_list *wbl, *t, *b;
    
-   pollevent();
+   pollevent(w);
 
    if (ws->win && ws->refcount > 1) {
       /*
@@ -748,11 +748,11 @@ void wclose(wbp w)
        */
       DestroyWindow(ws->win);
       while (ws->win)
-	 pollevent();
+	 pollevent(w);
       }
    }
 
-void pollevent()
+void pollevent(wbp w)
    {
    wbp w;
    MSG m;
@@ -2094,9 +2094,6 @@ wsp ws;
          else DestroyWindow(ws->iconwin);
 	 }
 /*      ws->iconwin = 0;*/
-/*      while (ws->win)
-	 if (pollevent() == -1) return -1;
-*/
       if (ws->windowlabel) { free(ws->windowlabel); ws->windowlabel=0;}
       if (ws->pix)
 	 DeleteObject(ws->pix);
@@ -2290,7 +2287,7 @@ void doconfig(w, status)
     if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE)) {
         resizePixmap(w, wid, ht);
         if (ws->win) {
-            pollevent();
+            pollevent(w);
             switch (status & (C_POS|C_SIZE)) {
                 case C_POS|C_SIZE: {
                     SetWindowPos(ws->win, ws->win, posx, posy,
