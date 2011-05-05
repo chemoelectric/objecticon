@@ -549,11 +549,6 @@ class Window(SetFields,NoCopy)
    public defer raise()
 
    #
-   # Synchronize with server
-   #
-   public static defer sync()
-
-   #
    # Returns the width of string s, in pixels, as drawn using the
    # current font.
    #
@@ -564,12 +559,6 @@ class Window(SetFields,NoCopy)
    # the window is closed.
    #
    public defer uncouple()
-
-   #
-   # Forces the execution of any window commands that have been
-   # buffered internally and not yet executed.
-   #
-   public defer flush()
 
    #
    # Writes an image of the rectangular area (x,y,w,h) to the file

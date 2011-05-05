@@ -56,7 +56,6 @@ import
 procedure WDelay(window, n)
    /n := 1
    integer(n) | runerr(101, n)
-   window.flush()
    delay(n)
 
    return window

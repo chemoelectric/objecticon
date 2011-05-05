@@ -390,7 +390,7 @@ static void handle_misc(wdp wd)
     XEvent event;
     Window evwin;
     wsp ws = 0;
-
+    XSync(wd->display, False);
     while (XPending(wd->display)) {
 
         XNextEvent(wd->display, &event);
@@ -611,46 +611,11 @@ void pollevent()
 void wclose(wbp w)
 {
     STDLOCALS(w);
-
-    XSync(stddpy, False);
-
     handle_misc(ws->display);
     if (ws->win && ws->refcount > 1) {
         /* Turn into hidden window */
         close_screen_win(ws);
     }
-}
-/*
- * flush a window
- */
-void wflush(wbp w)
-{
-    STDLOCALS(w);
-    XFlush(stddpy);
-}
-/*
- * flush all windows
- */
-void wflushall()
-{
-    wdp wd;
-    for (wd = wdsplys; wd != NULL; wd = wd->next) {
-        XFlush(wd->display);
-    }
-}
-/*
- * sync all the servers
- */
-void wsync(wbp w)
-{
-    wdp wd;
-    if (w == NULL) {
-        for (wd = wdsplys; wd != NULL; wd = wd->next) {
-            XSync(wd->display, False);
-        }
-    }
-    else
-        XSync(w->window->display->display, False);
 }
 
 /*

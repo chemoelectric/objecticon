@@ -464,7 +464,6 @@ function graphics_Window_pending(self, argv[argc])
       GetSelfW();
 
       ws = self_w->window;
-      wsync(self_w);
 
       /*
        * put additional arguments to Pending on the pending list in
@@ -802,14 +801,6 @@ function graphics_Window_raise(self)
    }
 end
 
-function graphics_Window_sync()
-   body {
-      wsync(0);
-      pollevent();
-      return nulldesc;
-   }
-end
-
 function graphics_Window_text_width(self, s)
    if !cnv:string_or_ucs(s) then
       runerr(129, s)
@@ -834,14 +825,6 @@ function graphics_Window_uncouple(self)
       GetSelfW();
       *self_w_dptr = zerodesc;
       freewbinding(self_w);
-      return self;
-   }
-end
-
-function graphics_Window_flush(self)
-   body {
-      GetSelfW();
-      wflush(self_w);
       return self;
    }
 end
@@ -1919,7 +1902,6 @@ end
 #else    /* Graphics */
 
 UnsupportedFunc(graphics_Window_wcreate)
-UnsupportedFunc(graphics_Window_sync)
 
 #endif   
 
