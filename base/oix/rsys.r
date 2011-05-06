@@ -22,34 +22,6 @@ int putn(FILE *f, char *s, int n)
         return Succeeded;
 }
 
-/*
- * idelay(n) - delay for n milliseconds
- */
-int idelay(int n)
-{
-   if (n <= 0) return Succeeded; /* delay < 0 = no delay */
-
-/*
- * The following code is operating-system dependent [@fsys.01].
- */
-
-#if UNIX
-   {
-   struct timeval t;
-   t.tv_sec = n / 1000;
-   t.tv_usec = (n % 1000) * 1000;
-   select(1, NULL, NULL, NULL, &t);
-   return Succeeded;
-   }
-#elif MSWIN32
-   Sleep(n);
-   return Succeeded;
-#else					/* MSWIN32 */
-   return Failed;
-#endif					/* MSWIN32 */
-
-}
-
 
 /*
  * millisec - returns execution time in milliseconds. Time is measured

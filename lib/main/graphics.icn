@@ -402,19 +402,6 @@ class Window(SetFields,NoCopy)
    public defer event()
 
    #
-   # Like {event()}, but wait until an event is available
-   #
-   public wait_for_event(n)
-      local e
-      /n := 20
-      repeat {
-         if e := event() then
-            return e
-         delay(n)
-      }
-   end
-
-   #
    # draw_circle(x, y, r, theta, alpha)
    #
    public defer draw_circle(x, y, r, theta, alpha)

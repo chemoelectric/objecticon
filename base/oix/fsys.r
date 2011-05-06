@@ -98,13 +98,23 @@ end
 "delay(i) - delay for i milliseconds."
 
 function delay(n)
-
    if !cnv:C_integer(n) then
       runerr(101,n)
-
    body {
-      if (idelay(n) == Failed)
-        fail;
+      if (n <= 0) 
+          return nulldesc; /* delay < 0 = no delay */
+
+#if UNIX
+      {
+      struct timeval t;
+      t.tv_sec = n / 1000;
+      t.tv_usec = (n % 1000) * 1000;
+      select(1, NULL, NULL, NULL, &t);
+      }
+#elif MSWIN32
+      Sleep(n);
+#endif
+
       return nulldesc;
       }
 end
@@ -118,8 +128,6 @@ function system(s)
     */
    if !cnv:C_string(s) then
       runerr(103,s)
-
-
    body {
        return C_integer (word)system(s);
       }
