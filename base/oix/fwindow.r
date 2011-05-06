@@ -737,7 +737,6 @@ function graphics_Window_query_root_pointer(self)
       tended struct descrip result;
       struct descrip t;
       GetSelfW();
-      pollevent(self_w);
       if (queryrootpointer(self_w, &x, &y) != Succeeded)
           fail;
       create_list(2, &result);
@@ -755,7 +754,6 @@ function graphics_Window_query_pointer(self)
       tended struct descrip result;
       struct descrip t;
       GetSelfW();
-      pollevent(self_w);
       if (querypointer(self_w, &x, &y) != Succeeded)
           fail;
       create_list(2, &result);

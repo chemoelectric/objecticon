@@ -113,7 +113,6 @@ union block     **hchain        (union block *pb,uword hn);
 union block     *hgfirst        (union block *bp, struct hgstate *state);
 union block     *hgnext         (union block*b,struct hgstate*s,union block *e);
 union block     *hmake          (int tcode,word nslots,word nelem);
-int             idelay          (int n);
 int             lexcmp          (dptr dp1,dptr dp2);
 union block     **memb          (union block *pb,dptr x,uword hn, int *res);
 void            mksubs          (dptr var,dptr val,word i,word j, dptr result);
