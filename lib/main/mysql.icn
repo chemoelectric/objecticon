@@ -10,7 +10,7 @@ $define LIB "objecticonmysqllib.so"
 
 package mysql
 
-import lang
+import lang, util
 
 #
 # This class provides a wrapper around the MySql C API.  Nearly all the
@@ -263,6 +263,20 @@ class MySql(NoCopy)
    # for inclusion in an SQL statement as a DATETIME.
    #
    public esc_datetime(d)
+      if /d then
+         return "NULL"
+      else {
+         # Convert to UTC, since no way to store zone information in a DATETIME.
+         d := Time(d.seconds, Timezone.UTC_TIMEZONE)
+         return "\'" || d.format("yyyy-MM-dd HH:mm:ss") || "\'"
+      }
+   end
+
+   #
+   # Convenience method to convert a {Time} instance to a string
+   # for inclusion in an SQL statement as a TIMESTAMP.
+   #
+   public esc_timestamp(d)
       if /d then
          return "NULL"
       else

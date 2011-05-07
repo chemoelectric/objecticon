@@ -116,6 +116,9 @@ class MySqlRes(NoCopy)
    #
    public get_row()
       local row, res, f, t, o
+      static zone
+      initial
+         zone := Time().zone
 
       /fields := fetch_fields() | fail
       row := fetch_row() | fail
@@ -153,11 +156,20 @@ class MySqlRes(NoCopy)
                   put(res, t)
                }
 
-               MySql.FIELD_TYPE_DATETIME |
-                  MySql.FIELD_TYPE_TIMESTAMP: {
-                     t := Time.parse(o, "yyyy-MM-dd HH:mm:ss") | runerr("mysql client: expected timestamp:", o)
-                     put(res, t)
-                  }
+               MySql.FIELD_TYPE_DATETIME: {
+                  # Expect a string in UTC
+                  t := Time.parse(o || " UTC", "yyyy-MM-dd HH:mm:ss zzz") | runerr("mysql client: expected datetime:", o)
+                  # Convert to appropriate local timezone
+                  t := Time(t.seconds)
+                  put(res, t)
+               }
+
+               MySql.FIELD_TYPE_TIMESTAMP: {
+                  # Expect a string converted to the local current timezone
+                  t := Time.parse(o || " " || zone, 
+                                  "yyyy-MM-dd HH:mm:ss zzz") | runerr("mysql client: expected timestamp:", o)
+                  put(res, t)
+               }
 
                MySql.FIELD_TYPE_ENUM |
                   MySql.FIELD_TYPE_SET |
