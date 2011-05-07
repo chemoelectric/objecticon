@@ -2061,30 +2061,36 @@ function io_DescStream_wstat(self, mode, uid, gid)
                fail;
            }
        }
-       if (!is:null(uid)) {
-           tended char *c_uid;
-           struct passwd *pwd;
-           if (!cnv:C_string(uid, c_uid))
-               runerr(103, uid);
-           if (!(pwd = getpwnam(c_uid))) {
-               LitWhy("No such user");
-               fail;
+       if (!is:null(uid) || !is:null(gid)) {
+           uid_t owner;
+           gid_t group;
+           if (is:null(uid))
+               owner = (uid_t)-1;
+           else {
+               tended char *c_uid;
+               struct passwd *pwd;
+               if (!cnv:C_string(uid, c_uid))
+                   runerr(103, uid);
+               if (!(pwd = getpwnam(c_uid))) {
+                   LitWhy("No such user");
+                   fail;
+               }
+               owner = pwd->pw_uid;
            }
-           if (fchown(self_fd, pwd->pw_uid, (gid_t)-1) < 0) {
-               errno2why();
-               fail;
+           if (is:null(gid))
+               group = (gid_t)-1;
+           else {
+               tended char *c_gid;
+               struct group *grp;
+               if (!cnv:C_string(gid, c_gid))
+                   runerr(103, gid);
+               if (!(grp = getgrnam(c_gid))) {
+                   LitWhy("No such group");
+                   fail;
+               }
+               group = grp->gr_gid;
            }
-       }
-       if (!is:null(gid)) {
-           tended char *c_gid;
-           struct group *grp;
-           if (!cnv:C_string(gid, c_gid))
-               runerr(103, gid);
-           if (!(grp = getgrnam(c_gid))) {
-               LitWhy("No such group");
-               fail;
-           }
-           if (fchown(self_fd, (uid_t)-1, grp->gr_gid) < 0) {
+           if (fchown(self_fd, owner, group) < 0) {
                errno2why();
                fail;
            }
@@ -2712,7 +2718,7 @@ function io_Files_lstat_impl(s)
    }
 end
 
-function io_Files_wstat(path, mode, mtime, uid, gid)
+function io_Files_wstat(path, mode, atime, mtime, uid, gid)
    if !cnv:C_string(path) then
       runerr(103, path)
    body {
@@ -2728,43 +2734,66 @@ function io_Files_wstat(path, mode, mtime, uid, gid)
                fail;
            }
        }
-       if (!is:null(mtime)) {
-           time_t c_mtime;
+       if (!is:null(atime) || !is:null(mtime)) {
            struct utimbuf u;
-           if (!cnv:integer(mtime, mtime))
-               runerr(101, mtime);
-           if (!convert_to_time_t(&mtime, &c_mtime))
-               runerr(0);
-           u.actime = u.modtime = c_mtime;
+           struct stat st;
+           if (is:null(atime) || is:null(mtime)) {
+               if (stat(path, &st) < 0) {
+                   errno2why();
+                   fail;
+               }
+           }
+           if (is:null(atime)) 
+               u.actime = st.st_atime;
+           else {
+               if (!cnv:integer(atime, atime))
+                   runerr(101, atime);
+               if (!convert_to_time_t(&atime, &u.actime))
+                   runerr(0);
+           }
+           if (is:null(mtime)) 
+               u.modtime = st.st_mtime;
+           else {
+               if (!cnv:integer(mtime, mtime))
+                   runerr(101, mtime);
+               if (!convert_to_time_t(&mtime, &u.modtime))
+                   runerr(0);
+           }
            if (utime(path, &u) < 0) {
                errno2why();
                fail;
            }
        }
-       if (!is:null(uid)) {
-           tended char *c_uid;
-           struct passwd *pwd;
-           if (!cnv:C_string(uid, c_uid))
-               runerr(103, uid);
-           if (!(pwd = getpwnam(c_uid))) {
-               LitWhy("No such user");
-               fail;
+       if (!is:null(uid) || !is:null(gid)) {
+           uid_t owner;
+           gid_t group;
+           if (is:null(uid))
+               owner = (uid_t)-1;
+           else {
+               tended char *c_uid;
+               struct passwd *pwd;
+               if (!cnv:C_string(uid, c_uid))
+                   runerr(103, uid);
+               if (!(pwd = getpwnam(c_uid))) {
+                   LitWhy("No such user");
+                   fail;
+               }
+               owner = pwd->pw_uid;
            }
-           if (chown(path, pwd->pw_uid, (gid_t)-1) < 0) {
-               errno2why();
-               fail;
+           if (is:null(gid))
+               group = (gid_t)-1;
+           else {
+               tended char *c_gid;
+               struct group *grp;
+               if (!cnv:C_string(gid, c_gid))
+                   runerr(103, gid);
+               if (!(grp = getgrnam(c_gid))) {
+                   LitWhy("No such group");
+                   fail;
+               }
+               group = grp->gr_gid;
            }
-       }
-       if (!is:null(gid)) {
-           tended char *c_gid;
-           struct group *grp;
-           if (!cnv:C_string(gid, c_gid))
-               runerr(103, gid);
-           if (!(grp = getgrnam(c_gid))) {
-               LitWhy("No such group");
-               fail;
-           }
-           if (chown(path, (uid_t)-1, grp->gr_gid) < 0) {
+           if (chown(path, owner, group) < 0) {
                errno2why();
                fail;
            }
