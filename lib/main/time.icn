@@ -18,9 +18,8 @@ import io(write)
 # date.
 #
 # The "seconds" viewpoint is always in UTC, whilst the "broken down"
-# viewpoint is always in the local timezone.
-#
-# The timezone is specified as a timezone object.
+# viewpoint is always relative to a timezone, represented as a
+# {Timezone} object.
 #
 # The wday and yday fields are calculated when any of the "broken
 # down" fields or the seconds are changed.
