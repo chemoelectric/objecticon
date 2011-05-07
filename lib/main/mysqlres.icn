@@ -157,8 +157,9 @@ class MySqlRes(NoCopy)
                   MySql.FIELD_TYPE_TIMESTAMP: {
                   # Expect a string in a local timezone (may or may not be dst).
                   t := Time.parse(o, "yyyy-MM-dd HH:mm:ss") | runerr("mysql client: expected datetime:", o)
-                  # Guess the timezone
-                  t := Time(t.year, t.month, t.mday, t.hour, t.min, t.sec, Time(t.seconds).zone)
+                  # Guess the timezone and recompute
+                  t := Time(t.year, t.month, t.mday, t.hour, t.min, t.sec, 
+                            Timezone.get_timezone_at(t.get_unix_seconds()))
                   put(res, t)
                }
 
