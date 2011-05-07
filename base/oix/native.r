@@ -2048,6 +2048,7 @@ end
 
 function io_DescStream_wstat(self, mode, uid, gid)
    body {
+#if UNIX
        GetSelfFd();
        if (!is:null(mode)) {
            mode_t c_mode;
@@ -2089,6 +2090,9 @@ function io_DescStream_wstat(self, mode, uid, gid)
            }
        }
        return nulldesc;
+#else
+        Unsupported;
+#endif
    }
 end
 
@@ -2712,6 +2716,7 @@ function io_Files_wstat(path, mode, mtime, uid, gid)
    if !cnv:C_string(path) then
       runerr(103, path)
    body {
+#if UNIX
        if (!is:null(mode)) {
            mode_t c_mode;
            if (!cnv:integer(mode, mode))
@@ -2766,6 +2771,9 @@ function io_Files_wstat(path, mode, mtime, uid, gid)
        }
 
        return nulldesc;
+#else
+        Unsupported;
+#endif
    }
 end
 
