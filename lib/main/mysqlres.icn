@@ -145,6 +145,9 @@ class MySqlRes(NoCopy)
 
                MySql.FIELD_TYPE_DATE : {
                   t := Time.parse(o, "yyyy-MM-dd") | runerr("mysql client: expected date:", o)
+                  # Guess the timezone and recompute
+                  t := Time(t.year, t.month, t.mday, t.hour, t.min, t.sec, 
+                            Timezone.get_timezone_at(t.get_unix_seconds()))
                   put(res, t)
                }
                
