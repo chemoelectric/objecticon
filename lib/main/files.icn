@@ -339,6 +339,18 @@ $endif
    private static defer lstat_impl(s)
 
    #
+   # Write selected attributes about a file.  If any of the parameters
+   # are {&null}, they are left unchanged.
+   #
+   # @param s the file
+   # @param mode the mode (an integer)
+   # @param mtime the access/modification time (an integer)
+   # @param uid the owner name
+   # @param gid the group name
+   #
+   public static defer wstat(s, mode, mtime, uid, gid)
+
+   #
    # Check whether the given file can be accessed in the given mode.
    #
    public static defer access(s, mode)
