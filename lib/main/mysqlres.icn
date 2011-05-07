@@ -116,9 +116,6 @@ class MySqlRes(NoCopy)
    #
    public get_row()
       local row, res, f, t, o
-      static zone
-      initial
-         zone := Time().zone
 
       /fields := fetch_fields() | fail
       row := fetch_row() | fail
@@ -164,10 +161,13 @@ class MySqlRes(NoCopy)
                   put(res, t)
                }
 
+               # A more accurate way to extract this type of column is to use UNIX_TIMESTAMP() in the query
+               # and convert to a Time manually using Time(val+Time.Time.SYSTEM_BASE_OFFSET)
                MySql.FIELD_TYPE_TIMESTAMP: {
-                  # Expect a string converted to the local current timezone
-                  t := Time.parse(o || " " || zone, 
-                                  "yyyy-MM-dd HH:mm:ss zzz") | runerr("mysql client: expected timestamp:", o)
+                  # Expect a string converted to a local timezone (may or may not be dst).
+                  t := Time.parse(o, "yyyy-MM-dd HH:mm:ss") | runerr("mysql client: expected timestamp:", o)
+                  # Guess the timezone
+                  t := Time(t.year, t.month, t.mday, t.hour, t.min, t.sec, Time(t.seconds).zone)
                   put(res, t)
                }
 
