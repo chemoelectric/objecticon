@@ -2128,6 +2128,54 @@ function io_DescStream_stat_impl(self)
    }
 end
 
+#if !PLAN9
+function io_DescStream_wstat(self, mode, uid, gid)
+   body {
+       GetSelfFd();
+       if (!is:null(mode)) {
+           mode_t c_mode;
+           if (!cnv:integer(mode, mode))
+               runerr(101, mode);
+           if (!convert_to_mode_t(&mode, &c_mode))
+               runerr(0);
+           if (fchmod(self_fd, c_mode) < 0) {
+               errno2why();
+               fail;
+           }
+       }
+       if (!is:null(uid)) {
+           tended char *c_uid;
+           struct passwd *pwd;
+           if (!cnv:C_string(uid, c_uid))
+               runerr(103, uid);
+           if (!(pwd = getpwnam(c_uid))) {
+               LitWhy("No such user");
+               fail;
+           }
+           if (fchown(self_fd, pwd->pw_uid, (gid_t)-1) < 0) {
+               errno2why();
+               fail;
+           }
+       }
+       if (!is:null(gid)) {
+           tended char *c_gid;
+           struct group *grp;
+           if (!cnv:C_string(gid, c_gid))
+               runerr(103, gid);
+           if (!(grp = getgrnam(c_gid))) {
+               LitWhy("No such group");
+               fail;
+           }
+           if (fchown(self_fd, (uid_t)-1, grp->gr_gid) < 0) {
+               errno2why();
+               fail;
+           }
+       }
+       return nulldesc;
+   }
+end
+#endif
+
 function io_DescStream_select(rl, wl, el, timeout)
     body {
 #if PLAN9
@@ -2987,6 +3035,69 @@ function io_Files_dir_read_impl(s)
       }
       free(st);
       return result;
+   }
+end
+#endif
+
+#if !PLAN9
+function io_Files_wstat(path, mode, mtime, uid, gid)
+   if !cnv:C_string(path) then
+      runerr(103, path)
+   body {
+       if (!is:null(mode)) {
+           mode_t c_mode;
+           if (!cnv:integer(mode, mode))
+               runerr(101, mode);
+           if (!convert_to_mode_t(&mode, &c_mode))
+               runerr(0);
+           if (chmod(path, c_mode) < 0) {
+               errno2why();
+               fail;
+           }
+       }
+       if (!is:null(mtime)) {
+           time_t c_mtime;
+           struct utimbuf u;
+           if (!cnv:integer(mtime, mtime))
+               runerr(101, mtime);
+           if (!convert_to_time_t(&mtime, &c_mtime))
+               runerr(0);
+           u.actime = u.modtime = c_mtime;
+           if (utime(path, &u) < 0) {
+               errno2why();
+               fail;
+           }
+       }
+       if (!is:null(uid)) {
+           tended char *c_uid;
+           struct passwd *pwd;
+           if (!cnv:C_string(uid, c_uid))
+               runerr(103, uid);
+           if (!(pwd = getpwnam(c_uid))) {
+               LitWhy("No such user");
+               fail;
+           }
+           if (chown(path, pwd->pw_uid, (gid_t)-1) < 0) {
+               errno2why();
+               fail;
+           }
+       }
+       if (!is:null(gid)) {
+           tended char *c_gid;
+           struct group *grp;
+           if (!cnv:C_string(gid, c_gid))
+               runerr(103, gid);
+           if (!(grp = getgrnam(c_gid))) {
+               LitWhy("No such group");
+               fail;
+           }
+           if (chown(path, (uid_t)-1, grp->gr_gid) < 0) {
+               errno2why();
+               fail;
+           }
+       }
+
+       return nulldesc;
    }
 end
 #endif

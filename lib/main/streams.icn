@@ -641,6 +641,16 @@ class DescStream(Stream, NoCopy)
 $ifdef _PLAN9
    public defer wstat(mode, mtime, length, name, gid)
    public defer length()
+$else
+   #
+   # Write selected attributes about a file.  If any of the parameters
+   # are {&null}, they are left unchanged.
+   #
+   # @param mode the mode (an integer)
+   # @param uid the owner name
+   # @param gid the group name
+   #
+   public defer wstat(mode, uid, gid)
 $endif
 
    protected new(fd, mode)

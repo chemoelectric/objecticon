@@ -539,7 +539,7 @@ class Time()
    # Set seconds and zone field; re-compute broken down fields
    #
    # @param n the seconds past the base point
-   # @param z the zone, as a {Timezone} object, or &null, in which chase
+   # @param z the zone, as a {Timezone} object, or &null, in which case
    # @        the local system timezone corresponding to the seconds
    # @        is used.
    #
@@ -749,12 +749,20 @@ class Time()
 
    #
    # Set to a time based on the number of seconds past the Unix base epoch.
-   # @param z an optional {Timezone}.  If omitted, the system timezone is used.
+   # @param z an optional {Timezone}.  If omitted, an appropriate local
+   #          timezone is used.
    #
-   public set_system_seconds(t, z)
+   public set_unix_seconds(t, z)
       set_seconds(SYSTEM_BASE_OFFSET + t, z)
    end
 
+   #
+   # Return this time as the number of seconds past the Unix base epoch.
+   #
+   public get_unix_seconds()
+      return self.seconds - SYSTEM_BASE_OFFSET
+   end
+   
    #
    # Return the difference in seconds between the current system time and the
    # time represented by this object.
