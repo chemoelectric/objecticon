@@ -2131,18 +2131,20 @@ end
 #if PLAN9
 #begdef WstatBody()
 {
-   tended char *c_name, *c_uid, *c_gid;
+   tended char *c_name, *c_gid;
+   if (!is:null(uid)) {
+       LitWhy("Cannot set uid in a wstat");
+       fail;
+   }
+   if (!is:null(atime)) {
+       LitWhy("Cannot set atime in a wstat");
+       fail;
+   }
    nulldir(&st);
    if (!is:null(mode)) {
        if (!cnv:integer(mode, mode))
            runerr(101, mode);
        if (!convert_to_ulong(&mode, &st.mode))
-           runerr(0);
-   }
-   if (!is:null(atime)) {
-       if (!cnv:integer(atime, atime))
-           runerr(101, atime);
-       if (!convert_to_ulong(&atime, &st.atime))
            runerr(0);
    }
    if (!is:null(mtime)) {
@@ -2161,10 +2163,6 @@ end
        if (!cnv:C_string(name, c_name))
            runerr(103, name);
    }
-   if (!is:null(uid)) {
-       if (!cnv:C_string(uid, c_uid))
-           runerr(103, uid);
-   }
    if (!is:null(gid)) {
        if (!cnv:C_string(gid, c_gid))
            runerr(103, gid);
@@ -2172,8 +2170,6 @@ end
    /* Now safe to put tended strings into struct */
    if (!is:null(name)) 
        st.name = c_name;
-   if (!is:null(uid)) 
-       st.uid = c_uid;
    if (!is:null(gid)) 
        st.gid = c_gid;
 }
