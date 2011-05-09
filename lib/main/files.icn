@@ -344,12 +344,12 @@ $endif
    #
    # @param s the file
    # @param mode the mode (an integer)
-   # @param atime the access time (an integer)
-   # @param mtime the modification time (an integer)
    # @param uid the owner name
    # @param gid the group name
+   # @param atime the access time (an integer)
+   # @param mtime the modification time (an integer)
    #
-   public static defer wstat(s, mode, atime, mtime, uid, gid)
+   public static defer wstat(s, mode, uid, gid, atime, mtime)
 
    #
    # Check whether the given file can be accessed in the given mode.
