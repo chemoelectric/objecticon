@@ -2128,7 +2128,58 @@ function io_DescStream_stat_impl(self)
    }
 end
 
-#if !PLAN9
+#if PLAN9
+#begdef WstatBody()
+{
+   tended char *c_name, *c_gid;
+   nulldir(&st);
+   if (!is:null(mode)) {
+       if (!cnv:integer(mode, mode))
+           runerr(101, mode);
+       if (!convert_to_ulong(&mode, &st.mode))
+           runerr(0);
+   }
+   if (!is:null(mtime)) {
+       if (!cnv:integer(mtime, mtime))
+           runerr(101, mtime);
+       if (!convert_to_ulong(&mtime, &st.mtime))
+           runerr(0);
+   }
+   if (!is:null(length)) {
+       if (!cnv:integer(length, length))
+           runerr(101, length);
+       if (!convert_to_vlong(&length, &st.length))
+           runerr(0);
+   }
+   if (!is:null(name)) {
+       if (!cnv:C_string(name, c_name))
+           runerr(103, name);
+   }
+   if (!is:null(gid)) {
+       if (!cnv:C_string(gid, c_gid))
+           runerr(103, gid);
+   }
+   /* Now safe to put tended strings into struct */
+   if (!is:null(name)) 
+       st.name = c_name;
+   if (!is:null(gid)) 
+       st.gid = c_gid;
+}
+#enddef
+
+function io_DescStream_wstat(self, mode, mtime, length, name, gid)
+   body {
+       struct Dir st;
+       GetSelfFd();
+       WstatBody();
+       if (dirfwstat(self_fd, &st) < 0) {
+           errno2why();
+           fail;
+       }
+       return nulldesc;
+   }
+end
+#else
 function io_DescStream_wstat(self, mode, uid, gid)
    body {
 #if UNIX
@@ -3049,7 +3100,21 @@ function io_Files_dir_read_impl(s)
 end
 #endif
 
-#if !PLAN9
+#if PLAN9
+function io_Files_wstat(path, mode, mtime, length, name, gid)
+   if !cnv:C_string(path) then
+      runerr(103, path)
+   body {
+       struct Dir st;
+       WstatBody();
+       if (dirwstat(path, &st) < 0) {
+           errno2why();
+           fail;
+       }
+       return nulldesc;
+   }
+end
+#else
 function io_Files_wstat(path, mode, atime, mtime, uid, gid)
    if !cnv:C_string(path) then
       runerr(103, path)
@@ -4086,71 +4151,6 @@ function io_Files_unmount(name, old)
            runerr(103, name);
 
        if (unmount(s, old) < 0) {
-           errno2why();
-           fail;
-       }
-       return nulldesc;
-   }
-end
-
-#begdef WstatBody()
-{
-   tended char *c_name, *c_gid;
-   nulldir(&st);
-   if (!is:null(mode)) {
-       if (!cnv:integer(mode, mode))
-           runerr(101, mode);
-       if (!convert_to_ulong(&mode, &st.mode))
-           runerr(0);
-   }
-   if (!is:null(mtime)) {
-       if (!cnv:integer(mtime, mtime))
-           runerr(101, mtime);
-       if (!convert_to_ulong(&mtime, &st.mtime))
-           runerr(0);
-   }
-   if (!is:null(length)) {
-       if (!cnv:integer(length, length))
-           runerr(101, length);
-       if (!convert_to_vlong(&length, &st.length))
-           runerr(0);
-   }
-   if (!is:null(name)) {
-       if (!cnv:C_string(name, c_name))
-           runerr(103, name);
-   }
-   if (!is:null(gid)) {
-       if (!cnv:C_string(gid, c_gid))
-           runerr(103, gid);
-   }
-   /* Now safe to put tended strings into struct */
-   if (!is:null(name)) 
-       st.name = c_name;
-   if (!is:null(gid)) 
-       st.gid = c_gid;
-}
-#enddef
-
-function io_Files_wstat(path, mode, mtime, length, name, gid)
-   if !cnv:C_string(path) then
-      runerr(103, path)
-   body {
-       struct Dir st;
-       WstatBody();
-       if (dirwstat(path, &st) < 0) {
-           errno2why();
-           fail;
-       }
-       return nulldesc;
-   }
-end
-
-function io_DescStream_wstat(self, mode, mtime, length, name, gid)
-   body {
-       struct Dir st;
-       GetSelfFd();
-       WstatBody();
-       if (dirfwstat(self_fd, &st) < 0) {
            errno2why();
            fail;
        }

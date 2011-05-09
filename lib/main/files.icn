@@ -78,7 +78,6 @@ $ifdef _PLAN9
    public static defer bind(name, old, flag)
    public static defer mount(f, af, old, flag, aname)
    public static defer unmount(name, old)
-   public static defer wstat(path, mode, mtime, length, name, gid)
 $else
    #
    # Read the given directory returning a list of [name, {Stat}] pairs.
@@ -376,7 +375,20 @@ $endif
 
    private static defer lstat_impl(s)
 
-$ifndef _PLAN9
+$ifdef _PLAN9
+   #
+   # Write selected attributes about a file.  If any of the parameters
+   # are {&null}, they are left unchanged.
+   #
+   # @param s the file
+   # @param mode the mode (an integer)
+   # @param mtime the modification time (an integer)
+   # @param length the file length
+   # @param name the file name
+   # @param gid the group name
+   #
+   public static defer wstat(s, mode, mtime, length, name, gid)
+$else
    #
    # Write selected attributes about a file.  If any of the parameters
    # are {&null}, they are left unchanged.
