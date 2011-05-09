@@ -260,7 +260,7 @@ class MySql(NoCopy)
 
    #
    # Convenience method to convert a {Time} instance to a string
-   # for inclusion in an SQL statement as a DATETIME.
+   # for inclusion in an SQL statement as a DATETIME or TIMESTAMP.
    #
    public esc_datetime(d)
       if /d then

@@ -183,13 +183,7 @@ struct timeval {
    long    tv_sec;
    long    tv_usec;
 };
-typedef int time_t;
-typedef int DIR;
-
-typedef int pthread_t, sem_t, pthread_attr_t, pthread_mutex_t, ucontext_t, stack_t,
-    pth_uctx_t;
-
-typedef int siptr, stringint, inst;
+typedef int time_t, DIR, uid_t, gid_t, stringint;
 
 /*
  * graphics

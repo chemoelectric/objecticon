@@ -155,9 +155,9 @@ class MySqlRes(NoCopy)
 
                MySql.FIELD_TYPE_DATETIME |
                   MySql.FIELD_TYPE_TIMESTAMP: {
-                     t := Time.parse(o, "yyyy-MM-dd HH:mm:ss") | runerr("mysql client: expected timestamp:", o)
-                     put(res, t)
-                  }
+                  t := Time.parse(o, "yyyy-MM-dd HH:mm:ss") | runerr("mysql client: expected datetime:", o)
+                  put(res, t)
+               }
 
                MySql.FIELD_TYPE_ENUM |
                   MySql.FIELD_TYPE_SET |

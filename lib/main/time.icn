@@ -18,9 +18,8 @@ import io(write)
 # date.
 #
 # The "seconds" viewpoint is always in UTC, whilst the "broken down"
-# viewpoint is always in the local timezone.
-#
-# The timezone is specified as a timezone object.
+# viewpoint is always relative to a timezone, represented as a
+# {Timezone} object.
 #
 # The wday and yday fields are calculated when any of the "broken
 # down" fields or the seconds are changed.
@@ -538,14 +537,14 @@ class Time()
    #
    # Set seconds and zone field; re-compute broken down fields
    #
-   # @param n the seconds past the base point
-   # @param z the zone, as a {Timezone} object, or &null, in which case
-   # @        the local system timezone corresponding to the seconds
-   # @        is used.
+   # @param n     the seconds past the base point
+   # @param zone  the zone, as a {Timezone} object, or &null, in which case
+   # @            the local system timezone corresponding to the seconds
+   # @            is used.
    #
    public set_seconds(n, zone)
       self.seconds := n
-      self.zone := \zone | Timezone.get_timezone_at(n - SYSTEM_BASE_OFFSET)
+      self.zone := \zone | Timezone.get_timezone_at(get_unix_seconds())
       self.compute_broken_down_fields()
    end
 
@@ -616,7 +615,9 @@ class Time()
    end
 
    #
-   # Set the time zone offset.  The zone is a Timezone object.
+   # Set the time zone offset; recompute seconds past the base date.  To keep the
+   # seconds constant and recompute the broken-down fields, use {set_seconds}.
+   # @param z a {Timezone} object.
    #
    public set_zone(z)
       self.zone := z
@@ -749,11 +750,13 @@ class Time()
 
    #
    # Set to a time based on the number of seconds past the Unix base epoch.
-   # @param z an optional {Timezone}.  If omitted, an appropriate local
-   #          timezone is used.
+   # @param t     the number of seconds
+   # @param zone  the zone, as a {Timezone} object, or &null, in which case
+   # @            the local system timezone corresponding to the seconds
+   # @            is used.
    #
-   public set_unix_seconds(t, z)
-      set_seconds(SYSTEM_BASE_OFFSET + t, z)
+   public set_unix_seconds(t, zone)
+      set_seconds(SYSTEM_BASE_OFFSET + t, zone)
    end
 
    #
@@ -768,15 +771,28 @@ class Time()
    # time represented by this object.
    #
    public get_age()
-      return SYSTEM_BASE_OFFSET + get_system_seconds() - self.seconds
+      return get_system_seconds() - get_unix_seconds()
+   end
+
+   #
+   # Set the timezone to an appropriate local timezone, depending on
+   # the other fields.  If it is changed, then the seconds are recomputed.
+   #
+   # @example
+   # @    t := Time(2003,6,3)     # midnight, 3 June 2003 BST
+   # @    t.set_month(2)          # midnight, 3 Feb 2003 BST
+   # @    t.normalize_zone()      # midnight, 3 Feb 2003 GMT
+   #
+   public normalize_zone()
+      if self.zone ~===:= Timezone.get_timezone_at(get_unix_seconds()) then
+         compute_seconds()
    end
 
    #
    # Set the fields, and then recompute the seconds.  Any omitted
    # fields are set to a default, which is the smallest legal value
-   # for that field, except the zone, which is set to the default zone
-   # if omitted.  Note that the default zone will never be a daylight
-   # saving Timezone.
+   # for that field, except the zone, which is set to an appropriate
+   # local timezone, depending on the other fields.
    #
    public set_fields(year, month, mday, hour, min, sec, zone)   
       self.year := \year | BASE_YEAR
@@ -787,6 +803,8 @@ class Time()
       self.sec := \sec | 0
       self.zone := \zone | Timezone.LOCAL_STANDARD_TIMEZONE
       compute_seconds()
+      if /zone then
+         normalize_zone()
    end
 
    #

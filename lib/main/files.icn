@@ -383,11 +383,12 @@ $ifndef _PLAN9
    #
    # @param s the file
    # @param mode the mode (an integer)
-   # @param mtime the access/modification time (an integer)
+   # @param atime the access time (an integer)
+   # @param mtime the modification time (an integer)
    # @param uid the owner name
    # @param gid the group name
    #
-   public static defer wstat(s, mode, mtime, uid, gid)
+   public static defer wstat(s, mode, atime, mtime, uid, gid)
 $endif
 
    #
