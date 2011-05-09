@@ -382,12 +382,14 @@ $ifdef _PLAN9
    #
    # @param s the file
    # @param mode the mode (an integer)
+   # @param uid the owner name
+   # @param gid the group name
+   # @param atime the access time (an integer)
    # @param mtime the modification time (an integer)
    # @param length the file length
    # @param name the file name
-   # @param gid the group name
    #
-   public static defer wstat(s, mode, mtime, length, name, gid)
+   public static defer wstat(s, mode, uid, gid, atime, mtime, length, name)
 $else
    #
    # Write selected attributes about a file.  If any of the parameters
@@ -395,12 +397,12 @@ $else
    #
    # @param s the file
    # @param mode the mode (an integer)
-   # @param atime the access time (an integer)
-   # @param mtime the modification time (an integer)
    # @param uid the owner name
    # @param gid the group name
+   # @param atime the access time (an integer)
+   # @param mtime the modification time (an integer)
    #
-   public static defer wstat(s, mode, atime, mtime, uid, gid)
+   public static defer wstat(s, mode, uid, gid, atime, mtime)
 $endif
 
    #

@@ -2131,12 +2131,18 @@ end
 #if PLAN9
 #begdef WstatBody()
 {
-   tended char *c_name, *c_gid;
+   tended char *c_name, *c_uid, *c_gid;
    nulldir(&st);
    if (!is:null(mode)) {
        if (!cnv:integer(mode, mode))
            runerr(101, mode);
        if (!convert_to_ulong(&mode, &st.mode))
+           runerr(0);
+   }
+   if (!is:null(atime)) {
+       if (!cnv:integer(atime, atime))
+           runerr(101, atime);
+       if (!convert_to_ulong(&atime, &st.atime))
            runerr(0);
    }
    if (!is:null(mtime)) {
@@ -2155,6 +2161,10 @@ end
        if (!cnv:C_string(name, c_name))
            runerr(103, name);
    }
+   if (!is:null(uid)) {
+       if (!cnv:C_string(uid, c_uid))
+           runerr(103, uid);
+   }
    if (!is:null(gid)) {
        if (!cnv:C_string(gid, c_gid))
            runerr(103, gid);
@@ -2162,12 +2172,14 @@ end
    /* Now safe to put tended strings into struct */
    if (!is:null(name)) 
        st.name = c_name;
+   if (!is:null(uid)) 
+       st.uid = c_uid;
    if (!is:null(gid)) 
        st.gid = c_gid;
 }
 #enddef
 
-function io_DescStream_wstat(self, mode, mtime, length, name, gid)
+function io_DescStream_wstat(self, mode, uid, gid, atime, mtime, length, name)
    body {
        struct Dir st;
        GetSelfFd();
@@ -3101,13 +3113,13 @@ end
 #endif
 
 #if PLAN9
-function io_Files_wstat(path, mode, mtime, length, name, gid)
-   if !cnv:C_string(path) then
-      runerr(103, path)
+function io_Files_wstat(s, mode, uid, gid, atime, mtime, length, name)
+   if !cnv:C_string(s) then
+      runerr(103, s)
    body {
        struct Dir st;
        WstatBody();
-       if (dirwstat(path, &st) < 0) {
+       if (dirwstat(s, &st) < 0) {
            errno2why();
            fail;
        }
@@ -3115,9 +3127,9 @@ function io_Files_wstat(path, mode, mtime, length, name, gid)
    }
 end
 #else
-function io_Files_wstat(path, mode, atime, mtime, uid, gid)
-   if !cnv:C_string(path) then
-      runerr(103, path)
+function io_Files_wstat(s, mode, uid, gid, atime, mtime)
+   if !cnv:C_string(s) then
+      runerr(103, s)
    body {
 #if UNIX
        if (!is:null(mode)) {
@@ -3126,37 +3138,7 @@ function io_Files_wstat(path, mode, atime, mtime, uid, gid)
                runerr(101, mode);
            if (!convert_to_mode_t(&mode, &c_mode))
                runerr(0);
-           if (chmod(path, c_mode) < 0) {
-               errno2why();
-               fail;
-           }
-       }
-       if (!is:null(atime) || !is:null(mtime)) {
-           struct utimbuf u;
-           struct stat st;
-           if (is:null(atime) || is:null(mtime)) {
-               if (stat(path, &st) < 0) {
-                   errno2why();
-                   fail;
-               }
-           }
-           if (is:null(atime)) 
-               u.actime = st.st_atime;
-           else {
-               if (!cnv:integer(atime, atime))
-                   runerr(101, atime);
-               if (!convert_to_time_t(&atime, &u.actime))
-                   runerr(0);
-           }
-           if (is:null(mtime)) 
-               u.modtime = st.st_mtime;
-           else {
-               if (!cnv:integer(mtime, mtime))
-                   runerr(101, mtime);
-               if (!convert_to_time_t(&mtime, &u.modtime))
-                   runerr(0);
-           }
-           if (utime(path, &u) < 0) {
+           if (chmod(s, c_mode) < 0) {
                errno2why();
                fail;
            }
@@ -3190,7 +3172,37 @@ function io_Files_wstat(path, mode, atime, mtime, uid, gid)
                }
                group = grp->gr_gid;
            }
-           if (chown(path, owner, group) < 0) {
+           if (chown(s, owner, group) < 0) {
+               errno2why();
+               fail;
+           }
+       }
+       if (!is:null(atime) || !is:null(mtime)) {
+           struct utimbuf u;
+           struct stat st;
+           if (is:null(atime) || is:null(mtime)) {
+               if (stat(s, &st) < 0) {
+                   errno2why();
+                   fail;
+               }
+           }
+           if (is:null(atime)) 
+               u.actime = st.st_atime;
+           else {
+               if (!cnv:integer(atime, atime))
+                   runerr(101, atime);
+               if (!convert_to_time_t(&atime, &u.actime))
+                   runerr(0);
+           }
+           if (is:null(mtime)) 
+               u.modtime = st.st_mtime;
+           else {
+               if (!cnv:integer(mtime, mtime))
+                   runerr(101, mtime);
+               if (!convert_to_time_t(&mtime, &u.modtime))
+                   runerr(0);
+           }
+           if (utime(s, &u) < 0) {
                errno2why();
                fail;
            }
