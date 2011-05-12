@@ -183,7 +183,7 @@ function posix_System_wait_impl(pid, options)
       runerr(103, options)
    body {
 #if UNIX
-      struct descrip tmp, reason, param;
+      struct descrip tmp;
       tended struct descrip result;
       int status = 0, wpid;
       if ((wpid = waitpid(pid, &status, options)) < 0) {
@@ -195,27 +195,31 @@ function posix_System_wait_impl(pid, options)
       list_put(&result, &tmp);
       /* Unpack all the fields */
       if (WIFSTOPPED(status)) {
-          LitStr("stopped", &reason);
-          MakeInt(WSTOPSIG(status), &param);
+          LitStr("stopped", &tmp);
+          list_put(&result, &tmp);
+          MakeInt(WSTOPSIG(status), &tmp);
+          list_put(&result, &tmp);
       } else if (WIFSIGNALED(status)) {
 #ifdef WCOREDUMP
           if (WCOREDUMP(status))
-              LitStr("terminated:core", &reason);
+              LitStr("coredump", &tmp);
           else
-              LitStr("terminated", &reason);
+              LitStr("terminated", &tmp);
 #else
-          LitStr("terminated", &reason);
+          LitStr("terminated", &tmp);
 #endif
-          MakeInt(WTERMSIG(status), &param);
+          list_put(&result, &tmp);
+          MakeInt(WTERMSIG(status), &tmp);
+          list_put(&result, &tmp);
       } else if (WIFEXITED(status)) {
-          LitStr("exited", &reason);
-          MakeInt(WEXITSTATUS(status), &param);
+          LitStr("exited", &tmp);
+          list_put(&result, &tmp);
+          MakeInt(WEXITSTATUS(status), &tmp);
+          list_put(&result, &tmp);
       } else {
-          LitStr("unknown", &reason);
-          param = zerodesc;
+          LitStr("unknown", &tmp);
+          list_put(&result, &tmp);
       }
-      list_put(&result, &reason);
-      list_put(&result, &param);
       return result;
 #elif MSWIN32
       struct descrip tmp;
