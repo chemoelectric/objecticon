@@ -93,11 +93,13 @@ end
 class ExitInfo()
    public const
       pid,
-      reason
+      reason,
+      param
 
-   package new(pid, reason)
+   package new(pid, reason, param)
       self.pid := pid
       self.reason := reason
+      self.param := param
       return
    end
 end

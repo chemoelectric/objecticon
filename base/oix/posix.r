@@ -183,45 +183,54 @@ function posix_System_wait_impl(pid, options)
       runerr(103, options)
    body {
 #if UNIX
-      tended struct descrip tmp, result;
-      char retval[64];
+      struct descrip tmp, reason, param;
+      tended struct descrip result;
       int status = 0, wpid;
       if ((wpid = waitpid(pid, &status, options)) < 0) {
           errno2why();
           fail;
       }
-      create_list(2, &result);
+      create_list(3, &result);
       MakeInt(wpid, &tmp);
       list_put(&result, &tmp);
       /* Unpack all the fields */
-      if (WIFSTOPPED(status))
-          sprintf(retval, "stopped:%d", WSTOPSIG(status));
-      else if (WIFSIGNALED(status))
-          sprintf(retval, "terminated:%d", WTERMSIG(status));
-      else if (WIFEXITED(status))
-	 sprintf(retval, "exited:%d", WEXITSTATUS(status));
-      else
-	 sprintf(retval, "???");
+      if (WIFSTOPPED(status)) {
+          LitStr("stopped", &reason);
+          MakeInt(WSTOPSIG(status), &param);
+      } else if (WIFSIGNALED(status)) {
 #ifdef WCOREDUMP
-      if (WIFSIGNALED(status) && WCOREDUMP(status))
-	 strcat(retval, ":core");
+          if (WCOREDUMP(status))
+              LitStr("terminated:core", &reason);
+          else
+              LitStr("terminated", &reason);
+#else
+          LitStr("terminated", &reason);
 #endif
-      cstr2string(retval, &tmp);
-      list_put(&result, &tmp);
+          MakeInt(WTERMSIG(status), &param);
+      } else if (WIFEXITED(status)) {
+          LitStr("exited", &reason);
+          MakeInt(WEXITSTATUS(status), &param);
+      } else {
+          LitStr("unknown", &reason);
+          param = zerodesc;
+      }
+      list_put(&result, &reason);
+      list_put(&result, &param);
       return result;
 #elif MSWIN32
-      tended struct descrip tmp, result;
-      char retval[64];
+      struct descrip tmp;
+      tended struct descrip result;
       int wpid, termstat;
       if ((wpid = _cwait(&termstat, pid, options)) < 0) {
 	 errno2why();
 	 fail;
       }
-      create_list(2, &result);
+      create_list(3, &result);
       MakeInt(wpid, &tmp);
       list_put(&result, &tmp);
-      sprintf(retval, "terminated:%d", termstat);
-      cstr2string(retval, &tmp);
+      LitStr("terminated", &tmp);
+      list_put(&result, &tmp);
+      MakeInt(termstat, &tmp);
       list_put(&result, &tmp);
       return result;
 #else
