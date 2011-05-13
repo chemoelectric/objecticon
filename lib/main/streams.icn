@@ -959,7 +959,7 @@ class DirStream(Stream, NoCopy)
 
    public read()
       local t
-      if (*\line > 0) then {
+      if *line > 0 then {
          t := line[1:-1]
          line := ""
          return t
@@ -969,7 +969,7 @@ class DirStream(Stream, NoCopy)
 
    public in(n)
       local t
-      if (*\line > 0) | (line := read_impl() || Files.EOL) then {
+      if (*line > 0) | (line := read_impl() || Files.EOL) then {
          line ? {
             t := move(n) | tab(0)
             line := tab(0)
@@ -990,6 +990,7 @@ class DirStream(Stream, NoCopy)
 
    private new(dd)
       self.dd := dd
+      self.line := ""
       return
    end
 end
