@@ -859,6 +859,30 @@ class FileStream(DescStream)
 
    private static defer pipe_impl()
 
+   #
+   # Return a {FileStream} which, when read, will produce the given string.
+   #
+   public static from_string(s)
+      local l, pid
+      l := pipe() | fail
+      pid := System.fork() | {
+         l[1].close()
+         l[2].close()
+         fail
+      }
+      if pid > 0 then {
+         # Parent
+         l[2].close()
+         return l[1]
+      } else {
+         # Child
+         l[1].close()
+         l[2].writes(s)
+         l[2].close()
+         exit(0)
+      }
+   end
+
    public defer in(n)
 
    public defer out(s)
