@@ -6,7 +6,6 @@ import
    ipl.convert,
    ipl.datetime,
    ipl.factors,
-   ipl.io,
    ipl.lists,
    ipl.math,
    ipl.numbers,
@@ -83,8 +82,8 @@ procedure main()
 
    write()
    write("io:")				# io
-   gen(exists, "/foo/bar/baz/not/very/likely")
-   gen(directory, "/tmp")
+   gen(Files.access, "/foo/bar/baz/not/very/likely")
+   gen(Files.is_directory, "/tmp")
    # several others omitted
 
    write()
