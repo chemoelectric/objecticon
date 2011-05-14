@@ -66,8 +66,11 @@
 package ipl.io
 
 import
-   io(Files, close, open, read,
-      stop, write)
+   io(DescStream, FileOpt, FileStream, Files,
+      Poll, close, open, read,
+      stop, write),
+   posix(System),
+   util(error)
 
 global buffer_in, buffer_out, Eof
 
@@ -208,4 +211,121 @@ procedure splitline(file,line,limit)
 
    return
 
+end
+
+# The {posix.ExitInfo} of the last child process started by {filter} or {gather}
+global last_exit_info
+
+#
+# Gather the output of an external command that takes no input.
+#
+# @param cmd the name of the command
+# @param args the arg list
+# @param env the env list
+# @return the output of the command as a string
+# @example
+# @   gather("ls", ["/tmp"])
+#
+procedure gather(cmd, args, env)
+   local pid, t, in, l
+   l := FileStream.pipe() | fail
+   pid := System.fork() | {
+      every (!l).close()
+      fail
+   }
+   if pid > 0 then {
+      # Parent
+      l[2].close()
+      in := l[1]
+      t := ""
+      while t ||:= in.in(1048576)
+      in.close()
+      in.eof() | fail
+      last_exit_info := System.wait(pid) | fail
+      return t
+   } else {
+      # Child
+      l[2].dup2(FileStream.stdout) | stop(&why)
+      every (!l).close()
+      System.exec(cmd, args, env) | stop(&why)
+      syserr("Not reached")
+   }
+end
+
+#
+# Filter a string through an external command, which is expected to read
+# all of the provided data.
+#
+# @param data - a string which is fed as input to the command
+# @param cmd the name of the command
+# @param args the arg list
+# @param env the env list
+# @return the output of the command as a string
+# @example
+# @   filter(data, "gzip", ["-c"])
+#
+procedure filter(data, cmd, args, env)
+   local pid, t, in, out, l
+
+   l := FileStream.pipe() | fail
+   (l |||:= FileStream.pipe() &
+    pid := System.fork()) | {
+      every (!l).close()
+      fail
+   }
+   if pid > 0 then {
+      # Parent
+      l[2].close()
+      l[3].close()
+      in := l[1]
+      out := l[4]
+      t := filter1(data, in, out) | {
+         in.close()
+         out.close()
+         fail
+      }
+      out.close()
+      while t ||:= in.in(1048576)
+      in.close()
+      in.eof() | fail
+      last_exit_info := System.wait(pid) | fail
+      return t
+   } else {
+      # Child
+      l[2].dup2(FileStream.stdout) | stop(&why)
+      l[3].dup2(FileStream.stdin) | stop(&why)
+      every (!l).close()
+      System.exec(cmd, args, env) | stop(&why)
+      syserr("Not reached")
+   }
+end
+
+procedure filter1(data, in, out)
+   local t, x, n
+   data := string(data) | runerr(103, data)
+   in.flag(FileOpt.NONBLOCK) | fail
+   out.flag(FileOpt.NONBLOCK) | fail
+   t := ""
+   repeat {
+      x := DescStream.poll([in, Poll.IN, out, Poll.OUT]) | fail
+      if x[1] = Poll.IN then {
+         t ||:= in.in(1048576) | fail
+      } else if x[2] = Poll.OUT then {
+         n := out.out(data) | fail
+         data := data[n + 1:0]
+         if *data = 0 then {
+            in.flag(,FileOpt.NONBLOCK) | fail
+            return t
+         }
+      } else
+         return error("filter: child command i/o failed")
+   }
+end
+
+procedure gzip(data)
+   return filter(data, "gzip", ["-c"])
+end
+
+procedure gunzip(data)
+   return filter(data, "gunzip", ["-c"])
 end
