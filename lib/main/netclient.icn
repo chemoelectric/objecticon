@@ -187,7 +187,7 @@ class NetClient(Connectable, SetFields)
    #
    private send(s)
       local i, r
-
+      s := string(s) | runerr(103, s)
       while *s > 0 do {
          r := do_poll(Poll.OUT) | return error("Send poll failed: " || &why)
          if /r then return error("Send failed (timeout)")
