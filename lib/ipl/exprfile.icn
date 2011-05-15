@@ -53,9 +53,7 @@
 package ipl.exprfile
 
 import
-   io(FileOpt, Files, ProgStream, close,
-      write),
-   ipl.io(tempfile)
+   io(Files, close, open, write)
 
 global expr_error
 
@@ -69,22 +67,18 @@ procedure exprfile(exp, links[])
    Files.remove(\name)			# remove former executable
    close(\input)			# and close last pipe
 
-   output := tempfile("expr", ".icn", "/tmp")
+   name := Files.make_temp_filename("expr")
+   output := open(name || ".icn", "w") | fail
 
-   image(output) ? {
-      ="file("
-      name := tab(find(".icn"))
-      }
-
-   write(output, "invocable all")
-   every write(output, "link ", image(!links)) 
+   write(output, "import io(write)")
+   every write(output, "import ", image(!links)) 
    write(output, "procedure main(args)")
    write(output, "   every write(", exp, ")")
    write(output, "end")
 
    close(output)
 
-   if system("icont -o " || name || " -s " || name ||
+   if system("oit -o " || name || " -s " || name ||
       " >/dev/null 2>/dev/null") ~= 0 then {
           expr_error := 1
           Files.remove(name || ".icn")
@@ -95,7 +89,7 @@ procedure exprfile(exp, links[])
 
    #  Return a pipe for the executable.  Error messages are discarded.
 
-   return input := ProgStream.open(name || " 2>/dev/null", FileOpt.RDONLY)
+   return input := open(name || " 2>/dev/null", "pr")
    
 end
 
@@ -137,7 +131,7 @@ end
 # create ucode file
 procedure ucode(file)			
 
-   if system("icont -s -c " || file) ~= 0 then fail
+   if system("oit -s -c " || file) ~= 0 then fail
 
    return
 

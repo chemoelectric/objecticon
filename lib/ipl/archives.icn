@@ -1,0 +1,79 @@
+############################################################################
+#
+#	File:     archives.icn
+#
+#	Subject:  Procedures for reading files from archives
+#
+#	Author:   Gregg M. Townsend
+#
+#	Date:     March 5, 2000
+#
+############################################################################
+#
+#   This file is in the public domain.
+#
+############################################################################
+
+package ipl.archives
+
+import
+   io(FileOpt, FileStream, ProgStream)
+
+# iszip(zname) succeeds if the named file appears to be a ZIP format
+# archive file.
+#
+procedure iszip(fname)		
+   local f, s
+
+   f := FileStream.open(fname, FileOpt.RDONLY) | fail
+   s := f.reads(4)
+   f.close()
+   return s === "PK\03\04"
+end
+
+
+# zipdir(zname) returns a pipe from which the members of the ZIP
+# archive can be read, one per line, as if reading a directory.  It is
+# assumed that zname is a ZIP archive.
+#
+procedure zipdir(zname)			
+   local f, g
+   f := ProgStream.open_read("unzip", ["-l", zname]) | fail
+   g := ProgStream.open_read("sed", ["-n", "s/.*:..   //p"],, f)
+   f.close()
+   return \g
+end
+
+
+
+# zipfile(zname, fname) returns a pipe from which the file fname
+# within the ZIP archive zname can be read.  It is assumed that zname
+# and fname are valid.
+#
+procedure zipfile(zname, fname)		
+   return ProgStream.open_read("unzip", ["-p", zname, fname])
+end
+
+
+
+
+# rardir(rname) returns a pipe from which the members of the rar
+# archive can be read, one per line, as if reading a directory.  It is
+# assumed that zname is a rar archive.
+#
+procedure rardir(rname)			
+   local f, g
+   f := ProgStream.open_read("unrar", ["v", "-c-", rname]) | fail
+   g := ProgStream.open_read("sed", ["-n", "9~2{ s/^ \\(.*\\)$/\\1/p }"],, f)
+   f.close()
+   return \g
+end
+
+
+# rarfile(rname, fname) returns a pipe from which the file fname
+# within the rar archive rname can be read.  It is assumed that rname
+# and fname are valid.
+#
+procedure rarfile(rname, fname)		
+   return ProgStream.open_read("unrar", ["p", "-inul", rname, fname])
+end

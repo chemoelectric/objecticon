@@ -1,7 +1,9 @@
 package io
 
 import 
+$ifndef _PLAN9
    util,
+$endif
    posix,
    lang,
    ipl.random
@@ -56,7 +58,7 @@ $ifdef _PLAN9
    public static list(s)
       local l, t, e, st
       l := [[".", stat(s)],
-            ["..", stat(FS.get_path(s).child("..").str())]] | fail
+            ["..", stat(get_path(s).child("..").str())]] | fail
       t := dir_read_impl(s) | fail
       every e := !t do {
          st := Stat!e
@@ -83,19 +85,22 @@ $else
    # Read the given directory returning a list of [name, {Stat}] pairs.
    #
    public static list(s)
-      local l, p, s2, sr, path, path2
-      path := FS.get_path(s)
-      p := DirStream.open(path.str()) | return error("Can't open " || image(path.str()) || ": " || &why)
-      l := []
-      while s2 := read(p) do {
-         path2 := path.child(s2)
-         sr := lstat(path2.str()) | {
-            p.close()
-            return error("Can't stat " || image(path2.str()) || ": " || &why)
-         }
-         put(l, [s2, sr])
+      local p
+      return use {
+         p := DirStream.open(s),
+         list1(get_path(s), p)
       }
-      close(p)
+   end
+
+   private static list1(path, p)
+      local l, s, cpath
+      l := []
+      while s := p.read() do {
+         cpath := path.child(s)
+         put(l, [s, lstat(cpath.str())]) |
+            return error("Couldn't lstat " || cpath.str() || ": " || &why)
+      }
+      p.eof() | fail
       return l
    end
 $endif
@@ -164,13 +169,11 @@ $endif
    # Load a file into a string
    #
    public static file_to_string(fn)
-      local res, f
-      f := FileStream.open(fn, FileOpt.RDONLY) | return error("Couldn't open " || fn || ": " || &why)
-      res := ""
-      while res ||:= f.reads(1048576)
-      f.close()
-      f.eof() | fail
-      return res
+      local f
+      return use {
+         f := FileStream.open(fn, FileOpt.RDONLY),
+         f.read_all()
+      }
    end
 
    #
@@ -178,14 +181,10 @@ $endif
    #
    public static string_to_file(fn, s)
       local f
-      f := FileStream.open(fn, ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | 
-         return error("Couldn't open " || fn || ": " || &why)
-      f.writes(s) | {
-         f.close()
-         fail
+      return use {
+         f := FileStream.open(fn, ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)),
+         f.writes(s)
       }
-      f.close() | fail
-      return s
    end
 
    #
@@ -222,28 +221,19 @@ $endif
    # Succeed iff the two given files have the same content.
    #
    public static equal_files(s1, s2)
-      local f1, f2, r
-
+      local f1, f2
       stat(s1).size = stat(s2).size | fail
-
-      f1 := FileStream.open(s1, FileOpt.RDONLY) | return error("Couldn't open " || s1 || ": " || &why)
-      f2 := FileStream.open(s2, FileOpt.RDONLY) | {
-         f1.close()
-         return error("Couldn't open " || s2 || ": " || &why)
+      return use {
+         f1 := FileStream.open(s1, FileOpt.RDONLY),
+         use {
+            f2 := FileStream.open(s2, FileOpt.RDONLY),
+            equal_files1(f1, f2)
+         }
       }
-
-      if equal_files1(f1, f2) then
-         r := 1
-
-      f1.close()
-      f2.close()
-
-      return \r
    end
 
    private static equal_files1(f1, f2)
       local b1, b2
-
       while b1 := f1.reads(1048576) do {
          b2 := f2.reads(1048576) | fail
          b1 == b2 | fail
@@ -416,23 +406,14 @@ $endif
    # @param s2 the target filename
    #
    public static copy(s1, s2)
-      local f1, f2, s
-      f1 := FileStream.open(s1, FileOpt.RDONLY) | return error("Couldn't open " || s1 || ": " || &why)
-      f2 := FileStream.open(s2, ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | {
-         f1.close()
-         return error("Couldn't open " || s2 || ": " || &why)
-      }
-      while s := f1.reads(1048576) do {
-         f2.writes(s) | {
-            f1.close()
-            f2.close()
-            fail
+      local f1, f2
+      return use {
+         f1 := FileStream.open(s1, FileOpt.RDONLY),
+         use {
+            f2 := FileStream.open(s2, ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)),
+            f1.copy_to(f2)
          }
       }
-      f1.close()
-      f2.close() | return error("Failed to close " || s2 || ": " || &why)
-      f1.eof() | fail
-      return
    end
 
    #
@@ -441,23 +422,14 @@ $endif
    # @param s2 the target filename
    #
    public static append(s1, s2)
-      local f1, f2, s
-      f1 := FileStream.open(s1, FileOpt.RDONLY) | return error("Couldn't open " || s1 || ": " || &why)
-      f2 := FileStream.open(s2, ior(FileOpt.WRONLY, FileOpt.APPEND, FileOpt.CREAT)) | {
-         f1.close()
-         return error("Couldn't open " || s2 || ": " || &why)
-      }
-      while s := f1.reads(1048576) do {
-         f2.writes(s) | {
-            f1.close()
-            f2.close()
-            fail
+      local f1, f2
+      return use {
+         f1 := FileStream.open(s1, FileOpt.RDONLY),
+         use {
+            f2 := FileStream.open(s2, ior(FileOpt.WRONLY, FileOpt.APPEND, FileOpt.CREAT)),
+            f1.copy_to(f2)
          }
       }
-      f1.close()
-      f2.close() | return error("Failed to close " || s2 || ": " || &why)
-      f1.eof() | fail
-      return
    end
 
    #

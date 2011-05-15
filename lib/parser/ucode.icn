@@ -339,9 +339,15 @@ class UReader()
                 curr_func.add_local(ULocal(s, n))
              }
 
-             UcodeOp.Data: {
+             UcodeOp.Ldata: {
                 n := uin_32() | fail
-                s := uin_bin() | fail
+                s := uin_lbin() | fail
+                curr_func.add_const(UConst(s, n))
+             }
+
+             UcodeOp.Sdata: {
+                n := uin_32() | fail
+                s := uin_sbin() | fail
                 curr_func.add_const(UConst(s, n))
              }
 
@@ -376,34 +382,33 @@ class UReader()
 
    private uin_str()
       local s
-      s := tab(upto('\0')) | error("Unexpected EOF")
+      s := tab(upto('\0')) | return error("Unexpected EOF")
       move(1)
       return s
    end
 
    private uin_16()
-      local s, i
-      s := move(2) | return error("Unexpected EOF")
-      i := raw_convert(s)
+      local i
+      i := raw_convert(move(2)) | return error("Unexpected EOF")
       if i > 16r7fff then
          i -:= 16r10000
       return i
    end
 
    private uin_32()
-      local s, i
-      s := move(4) | return error("Unexpected EOF")
-      i := raw_convert(s)
+      local i
+      i := raw_convert(move(4)) | return error("Unexpected EOF")
       if i > 16r7fffffff then
          i -:= 16r100000000
       return i
    end
 
-   private uin_bin()
-      local s, i
-      s := move(2) | return error("Unexpected EOF")
-      i := raw_convert(s)
-      return move(i)
+   private uin_sbin()
+      return move(ord(move(1))) | error("Unexpected EOF")
+   end
+
+   private uin_lbin()
+      return move(raw_convert(move(4))) | error("Unexpected EOF")
    end
 
    private static defer raw_convert(s)
