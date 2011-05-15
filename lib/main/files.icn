@@ -49,13 +49,13 @@ $endif
    public static list(s)
       local l, p, s2, sr, path, path2
       path := FS.get_path(s)
-      p := DirStream.open(path.str()) | return error("Can't open " || image(path.str()) || ": " || &why)
+      p := DirStream.open(path.str()) | return error("Couldn't open " || path.str() || ": " || &why)
       l := []
       while s2 := read(p) do {
          path2 := path.child(s2)
          sr := lstat(path2.str()) | {
             p.close()
-            return error("Can't stat " || image(path2.str()) || ": " || &why)
+            return error("Couldn't stat " || path2.str() || ": " || &why)
          }
          put(l, [s2, sr])
       }
@@ -148,7 +148,7 @@ $endif
          f.close()
          fail
       }
-      f.close() | fail
+      f.close() | return error("Failed to close " || fn || ": " || &why)
       return s
    end
 
