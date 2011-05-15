@@ -237,10 +237,11 @@ procedure gather(cmd, args, env)
       # Parent
       l[2].close()
       in := l[1]
-      t := ""
-      while t ||:= in.in(1048576)
+      t := in.read_all() | {
+         in.close()
+         fail
+      }
       in.close()
-      in.eof() | fail
       last_exit_info := System.wait(pid) | fail
       return t
    } else {
@@ -285,9 +286,11 @@ procedure filter(data, cmd, args, env)
          fail
       }
       out.close()
-      while t ||:= in.in(1048576)
+      t ||:= in.read_all() | {
+         in.close()
+         fail
+      }
       in.close()
-      in.eof() | fail
       last_exit_info := System.wait(pid) | fail
       return t
    } else {

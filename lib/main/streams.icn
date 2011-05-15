@@ -191,6 +191,30 @@ class Stream()
       }
       return
    end
+
+   #
+   # Read from this stream until end-of-file, collecting the result as
+   # a string.
+   #
+   public read_all()
+      local s
+      s := ""
+      while s ||:= in(1048576)
+      eof() | fail
+      return s
+   end
+
+   #
+   # Read from this stream until end-of-file, copying the result to the
+   # given stream {f}.
+   #
+   public copy_to(f)
+      local s
+      while s := in(1048576) do
+         f.writes(s) | fail
+      eof() | fail
+      return
+   end
 end
 
 #

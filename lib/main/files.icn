@@ -127,13 +127,14 @@ $endif
    # Load a file into a string
    #
    public static file_to_string(fn)
-      local res, f
+      local s, f
       f := FileStream.open(fn, FileOpt.RDONLY) | return error("Couldn't open " || fn || ": " || &why)
-      res := ""
-      while res ||:= f.reads(1048576)
+      s := f.read_all() | {
+         f.close()
+         fail
+      }
       f.close()
-      f.eof() | fail
-      return res
+      return s
    end
 
    #
@@ -368,16 +369,13 @@ $endif
          f1.close()
          return error("Couldn't open " || s2 || ": " || &why)
       }
-      while s := f1.reads(1048576) do {
-         f2.writes(s) | {
-            f1.close()
-            f2.close()
-            fail
-         }
+      f1.copy_to(f2) | {
+         f1.close()
+         f2.close()
+         fail
       }
       f1.close()
       f2.close() | return error("Failed to close " || s2 || ": " || &why)
-      f1.eof() | fail
       return
    end
 
@@ -393,16 +391,13 @@ $endif
          f1.close()
          return error("Couldn't open " || s2 || ": " || &why)
       }
-      while s := f1.reads(1048576) do {
-         f2.writes(s) | {
-            f1.close()
-            f2.close()
-            fail
-         }
+      f1.copy_to(f2) | {
+         f1.close()
+         f2.close()
+         fail
       }
       f1.close()
       f2.close() | return error("Failed to close " || s2 || ": " || &why)
-      f1.eof() | fail
       return
    end
 
