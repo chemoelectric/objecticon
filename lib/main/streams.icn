@@ -809,6 +809,30 @@ procedure close(f)
 end
 
 #
+# This procedure is used to automatically close a {Stream} or other
+# resource.  The first expression {e1} produces the resource, the
+# second {e2} uses it, and the third expression {e3} then closes it.
+# The result of {e2} is returned, if all three expressions succeed,
+# otherwise the procedure fails.
+#
+# {e3} is optional and defaults to calling {close} on the resource.
+#
+# @example
+# @   s := use { f := open("some.txt"),
+# @              do_something_with(f) }
+procedure use(e1, e2, e3)
+   local f, r
+   f := @e1 | fail
+   /e3 := create f.close()
+   r := @e2 | {
+      @e3
+      fail
+   }
+   @e3 | fail
+   return r
+end
+
+#
 # This class represents a stream based on a local file.
 #
 class FileStream(DescStream)
