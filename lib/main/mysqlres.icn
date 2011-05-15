@@ -108,6 +108,13 @@ class MySqlRes(NoCopy)
    public defer get_num_rows()
 
    #
+   # Just calls {free()}
+   #
+   public close()
+      return free()
+   end
+
+   #
    # This uses {fetch_row()} and {fetch_fields()} together to provide a rather more
    # intelligent version of {fetch_row()}.   The column types are examined and the
    # strings are converted to appropriate Icon objects: integer for the integer types,
