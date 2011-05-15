@@ -199,11 +199,10 @@ $endif
          b2 := f2.reads(1048576) | fail
          b1 == b2 | fail
       }
-      f1.eof() | fail
-      # A further read of f2 should fail and set its eof flag.
-      if f2.reads(1) then
-         fail
-      return f2.eof()
+      # f1 should be at eof, and a further read of f2 should fail and
+      # set its eof flag.
+      (f1.eof() & not(f2.reads(1)) & f2.eof()) | fail
+      return 
    end
 
    #
