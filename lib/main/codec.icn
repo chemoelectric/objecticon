@@ -56,13 +56,14 @@ end
 #
 procedure encode(o, fast)
    local e, f
-   f := RamStream()
-   e := Encode("fast=",fast)
-   e.begin(o, f) | {
-      f.close()
-      fail
+   return use {
+      f := RamStream(),
+      {
+         e := Encode("fast=",fast)
+         if e.begin(o, f) then
+            f.str()
+      }
    }
-   return f.done()
 end
 
 #

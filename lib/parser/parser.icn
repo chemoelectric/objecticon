@@ -131,13 +131,15 @@ class Parser(Connectable, SetFields)
    public preprocess(fname, predefined_syms)
       local sb
       first_err := &null
-      sb := RamStream()
-      every sb.out(preprocess_gen(fname, predefined_syms) || "\n")
-      if preproc_err_count = 0 then
-         return sb.done()
-      else {
-         sb.close()
-         return error(first_err)
+      return use { 
+         sb := RamStream(),
+         {
+            every sb.out(preprocess_gen(fname, predefined_syms) || "\n")
+            if preproc_err_count = 0 then
+               sb.str()
+            else 
+               error(first_err)
+         }
       }
    end
 
