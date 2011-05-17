@@ -753,8 +753,14 @@ int main(void)
 #ifdef O_LARGEFILE
         Const(O_LARGEFILE)
 #endif
-
     end_class();
+
+    start_class("FileDescOpt", "FD_", 0, 0);
+#ifdef FD_CLOEXEC
+        Const(FD_CLOEXEC)
+#endif
+    end_class();
+
         start_class("Mode", "S_", 0, 0);
 
 #ifdef S_IFMT

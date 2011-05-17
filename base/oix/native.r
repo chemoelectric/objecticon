@@ -2236,6 +2236,37 @@ function io_DescStream_flag(self, on, off)
     }
 end
 
+function io_DescStream_dflag(self, on, off)
+    if !def:C_integer(on, 0) then
+      runerr(101, on)
+
+    if !def:C_integer(off, 0) then
+      runerr(101, off)
+
+    body {
+#if UNIX
+        int i;
+        GetSelfFd();
+
+        if ((i = fcntl(self_fd, F_GETFD, 0)) < 0) {
+           errno2why();
+           fail;
+        }
+        if (on || off) {
+            i = (i | on) & (~off);
+            if (fcntl(self_fd, F_SETFD, i) < 0) {
+                errno2why();
+                fail;
+            }
+        }
+
+        return C_integer i;
+#else
+        Unsupported;
+#endif
+    }
+end
+
 
 #if UNIX
 static struct sdescrip ddf = {2, "dd"};

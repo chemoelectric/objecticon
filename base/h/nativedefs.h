@@ -127,6 +127,7 @@ NativeDef(graphics.Window,wopen,graphics_Window_wopen)
 NativeDef(graphics.Window,write_image,graphics_Window_write_image)
 #endif
 NativeDef(io.DescStream,flag,io_DescStream_flag)
+NativeDef(io.DescStream,dflag,io_DescStream_dflag)
 NativeDef(io.DescStream,poll,io_DescStream_poll)
 NativeDef(io.DescStream,select,io_DescStream_select)
 NativeDef(io.DescStream,stat_impl,io_DescStream_stat_impl)

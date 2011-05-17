@@ -2,7 +2,7 @@ package io
 
 import
    util(error, check_flag, SetFields),
-   lang(NoCopy),
+   lang(NoCopy,to_string),
    posix(System)
 
 #
@@ -630,6 +630,16 @@ class DescStream(Stream, NoCopy)
    public defer flag(on, off)
 
    #
+   # Turn the specified descriptor flags on or off, and return the new
+   # set of flags.  The flags should be selected from the constants in
+   # {FileDescOpt}.
+   # @param on the flags to turn on
+   # @param off the flags to turn off
+   # @return the new flags
+   #
+   public defer dflag(on, off)
+
+   #
    # Invokes the system function dup2(oldfd, newfd), with oldfd set to
    # this instance's {fd}, and newfd set to the given parameter's {fd}.
    #
@@ -1166,6 +1176,228 @@ class ProgStream(FileStream)
       cast(self,FileStream).new(fd, mode)
       self.pid := pid
       return
+   end
+end
+
+#
+# This stream writes output from a background process to an arbitrary {Stream}.  Input
+# to the command is provided by writing to this {Stream}.
+# @example
+# @ # Encode s, putting the result in a RamStream
+# @ r := RamStream()
+# @ g := FilterOutputStream(r, "gzip", ["-c"])
+# @ g.write(s)
+#
+class FilterOutputStream(Stream)
+   private 
+      sink,
+      cin,
+      cout,
+      pid
+
+   private readable
+      # The {ExitInfo} of the child process, set by the {close()} method.
+      exit_info
+   
+   public out(s)
+      local x, n, l
+      s := string(s) | runerr(103, s)
+      l := *s
+      repeat {
+         x := DescStream.poll([cin, Poll.IN, cout, Poll.OUT]) | fail
+         #io.write(to_string(x))
+         if iand(x[1], Poll.IN) ~= 0 then
+            sink.out(cin.in(1048576)) | fail
+         else if iand(x[2], Poll.OUT) ~= 0 then {
+            n := cout.out(s) | fail
+            s := s[n + 1:0]
+            if *s = 0 then
+               return l
+         } else
+            return error("filter: child command i/o failed")
+      }
+   end
+
+   #
+   # Close the stream.  This waits for the child process to terminate, flushing any remaining
+   # output to {sink}, and sets {exit_info}.
+   #
+   public close()
+      cout.close() | fail
+      cin.flag(,FileOpt.NONBLOCK) | fail
+      cin.copy_to(sink) | fail
+      cin.close() | fail
+      exit_info := System.wait(pid) | fail
+      return
+   end
+
+   public get_mode()
+      return WRITE
+   end
+
+   #
+   # Create a new instance.
+   #
+   # @param sink the {Stream} to which data is output from the command                                    
+   # @param cmd the name of the command                                    
+   # @param args the arg list                                              
+   # @param env the env list                                               
+   # @param stderr optional standard error of the command; if "pipe" then
+   # @      stderr is sent to the same pipe as stdout.
+   public new(sink, cmd, args, env, stderr)
+      local l
+      self.sink := sink
+      l := FileStream.pipe() | fail
+      (l |||:= FileStream.pipe() &
+       l[1].flag(FileOpt.NONBLOCK) & 
+       l[4].dflag(FileDescOpt.CLOEXEC) &
+       l[4].flag(FileOpt.NONBLOCK) & 
+       pid := System.fork()) | {
+          every (!l).close()
+          fail
+       }
+      if pid > 0 then {
+         # Parent
+         cin := l[1]
+         cout := l[4]
+         l[2].close()
+         l[3].close()
+         return
+      } else {
+         # Child
+         if \stderr then {
+            if stderr === "pipe" then
+               l[2].dup2(FileStream.stderr) | stop(&why)
+            else {
+               stderr.dup2(FileStream.stderr) | stop(&why)
+               stderr.close()
+            }
+         }
+         l[2].dup2(FileStream.stdout) | stop(&why)
+         l[3].dup2(FileStream.stdin) | stop(&why)
+         every (!l).close()
+         System.exec(cmd, args, env) | stop(&why)
+         syserr("Not reached")
+      }
+   end
+end
+
+#
+# This stream reads input from an arbitrary source {Stream} and passes it to
+# a background process.  The output from that process can then be read as this
+# {Stream}.
+# @example
+# @ g := FilterInputStream(StringStream(s), "gzip", ["-c"])
+# @ # Reading from g will give the compressed value of the string s.
+# @ res := g.read_all()
+#
+class FilterInputStream(Stream)
+   private 
+      source,
+      cin,
+      cout,
+      pid,
+      buff
+
+   private readable
+      # The {ExitInfo} of the child process, set by the {close()} method.
+      exit_info
+   
+   public in(n)
+      local x, t
+      if /cout then
+         return read_cin(n)
+      repeat {
+         x := DescStream.poll([cin, Poll.IN, cout, Poll.OUT]) | fail
+         io.write(to_string(x))
+         if iand(x[1], Poll.IN) ~= 0 then
+            return read_cin(n)
+         else if iand(x[2], Poll.OUT) ~= 0 then {
+            if *buff = 0 then {
+               buff := source.in(1048576) | {
+                  source.eof() | fail
+                  cout.close() | fail
+                  cout := &null
+                  cin.flag(,FileOpt.NONBLOCK) | fail
+                  return read_cin(n)
+               }
+            }
+            t := cout.out(buff) | fail
+            buff := buff[t + 1:0]
+         } else
+            return error("filter: child command i/o failed")
+      }
+   end
+
+   private read_cin(n)
+      local s
+      if s := cin.in(n) then
+         return s
+      if cin.eof() then
+         eof_flag := 1
+   end
+
+   #
+   # Close the stream.  This waits for the child process to terminate, and sets
+   # {exit_info}.
+   #
+   public close()
+      if \cout then
+         cout.close() | fail
+      cin.close() | fail
+      exit_info := System.wait(pid) | fail
+      return
+   end
+
+   public get_mode()
+      return READ
+   end
+   
+   #
+   # Create a new instance.
+   #
+   # @param source the {Stream} from which data is given to the command                                    
+   # @param cmd the name of the command                                    
+   # @param args the arg list                                              
+   # @param env the env list                                               
+   # @param stderr optional standard error of the command; if "pipe" then
+   # @      stderr is sent to the same pipe as stdout.
+   public new(source, cmd, args, env, stderr)
+      local l
+      self.source := source
+      self.buff := ""
+      l := FileStream.pipe() | fail
+      (l |||:= FileStream.pipe() &
+       l[1].flag(FileOpt.NONBLOCK) & 
+       l[4].dflag(FileDescOpt.CLOEXEC) &
+       l[4].flag(FileOpt.NONBLOCK) & 
+       pid := System.fork()) | {
+          every (!l).close()
+          fail
+       }
+      if pid > 0 then {
+         # Parent
+         cin := l[1]
+         cout := l[4]
+         l[2].close()
+         l[3].close()
+         return
+      } else {
+         # Child
+         if \stderr then {
+            if stderr === "pipe" then
+               l[2].dup2(FileStream.stderr) | stop(&why)
+            else {
+               stderr.dup2(FileStream.stderr) | stop(&why)
+               stderr.close()
+            }
+         }
+         l[2].dup2(FileStream.stdout) | stop(&why)
+         l[3].dup2(FileStream.stdin) | stop(&why)
+         every (!l).close()
+         System.exec(cmd, args, env) | stop(&why)
+         syserr("Not reached")
+      }
    end
 end
 
