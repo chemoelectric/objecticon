@@ -17,7 +17,7 @@
 package ipl.archives
 
 import
-   io(FileOpt, FileStream, ProgStream)
+   io(FileOpt, FileStream, ProgInputStream)
 
 # iszip(zname) succeeds if the named file appears to be a ZIP format
 # archive file.
@@ -38,8 +38,8 @@ end
 #
 procedure zipdir(zname)			
    local f, g
-   f := ProgStream.open_read("unzip", ["-l", zname]) | fail
-   g := ProgStream.open_read("sed", ["-n", "s/.*:..   //p"],, f)
+   f := ProgInputStream("unzip", ["-l", zname]) | fail
+   g := ProgInputStream("sed", ["-n", "s/.*:..   //p"],, f)
    f.close()
    return \g
 end
@@ -51,7 +51,7 @@ end
 # and fname are valid.
 #
 procedure zipfile(zname, fname)		
-   return ProgStream.open_read("unzip", ["-p", zname, fname])
+   return ProgInputStream("unzip", ["-p", zname, fname])
 end
 
 
@@ -63,8 +63,8 @@ end
 #
 procedure rardir(rname)			
    local f, g
-   f := ProgStream.open_read("unrar", ["v", "-c-", rname]) | fail
-   g := ProgStream.open_read("sed", ["-n", "9~2{ s/^ \\(.*\\)$/\\1/p }"],, f)
+   f := ProgInputStream("unrar", ["v", "-c-", rname]) | fail
+   g := ProgInputStream("sed", ["-n", "9~2{ s/^ \\(.*\\)$/\\1/p }"],, f)
    f.close()
    return \g
 end
@@ -75,5 +75,5 @@ end
 # and fname are valid.
 #
 procedure rarfile(rname, fname)		
-   return ProgStream.open_read("unrar", ["p", "-inul", rname, fname])
+   return ProgInputStream("unrar", ["p", "-inul", rname, fname])
 end

@@ -100,7 +100,7 @@ procedure main ()
 
 #  test open(directory)
 
-   f := DirStream.open(".") | stop("can't open `.'")
+   f := DirStream(".") | stop("can't open `.'")
    fset := set()
    # try three kinds of reading in rotation
    while insert(fset, read(f))

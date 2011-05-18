@@ -56,6 +56,7 @@ end
 # @field retry_while_data=flag: see {set_retry_while_data}
 # @field keep_alive=flag : see {set_keep_alive}
 # @field cookies=table : see {set_cookies}
+# @field gzip=flag: see {set_gzip}
 # @field see also {NetClient}
 #
 class HttpClient(NetClient)
@@ -67,7 +68,8 @@ class HttpClient(NetClient)
       RETRYING_EVENT,
       HEADERS_EVENT,
       PROGRESS_EVENT,
-      EVENT_TABLE
+      EVENT_TABLE,
+      FOUND_GZIP
 
    private static init()
       TOKEN_CHAR := &ascii[33:128] -- '()<>@,;:\\\"/[]?={} \t'
@@ -84,6 +86,8 @@ class HttpClient(NetClient)
                            "retrying", RETRYING_EVENT,
                            "headers", HEADERS_EVENT,
                            "progress", PROGRESS_EVENT)
+      if Files.find_exe("gunzip") then
+         FOUND_GZIP := &yes
    end
 
    private readable 
@@ -110,7 +114,9 @@ class HttpClient(NetClient)
       qop,
       realm,
       cookies,
-      abort_flag
+      abort_flag,
+      gzip_flag,
+      inflater_stream
 
    #
    # Set the http version to use; by default "1.1"
@@ -157,6 +163,13 @@ class HttpClient(NetClient)
    end
 
    #
+   # A flag value.  When set, indicates that gzip compression may be used, if available.
+   #
+   public set_gzip(s)
+      self.gzip_flag := check_flag(s)
+   end
+
+   #
    # Get the current HttpRequest
    #
    public get_request()
@@ -177,8 +190,6 @@ class HttpClient(NetClient)
       self.abort_flag := 1
    end
 
-   #
-   # 
    private write_request_headers()
       local e, v
       every e := !request.headers.sort() do {
@@ -249,8 +260,6 @@ class HttpClient(NetClient)
       }
    end
 
-   #
-   # 
    private handle_redirect()
       local l, s, u
       #
@@ -285,8 +294,6 @@ class HttpClient(NetClient)
       return
    end
 
-   #
-   # 
    private handle_authentication()
       local s, t
       if /(request.username | request.password) then
@@ -312,15 +319,11 @@ class HttpClient(NetClient)
       return on_http_error("WWW-Authenticate header contained unknown authentication method.")
    end
 
-   #
-   # 
    private setup_basic_authentication(t)
       basic_auth_header := "Basic " || base64encode(request.username || ":" || request.password)
       return
    end
 
-   #
-   # 
    private setup_digest_authentication(t)
       local algorithm, md5, qop_options
 
@@ -357,8 +360,6 @@ class HttpClient(NetClient)
       return
    end
 
-   #
-   # 
    private create_digest_authorization_header()
       local md5, nc, h, t, hentity, ha2, s
 
@@ -407,8 +408,6 @@ class HttpClient(NetClient)
       return h
    end
 
-   #
-   # 
    private unq(s)
       if s[1] == "\"" then 
          s[1] := ""
@@ -417,8 +416,6 @@ class HttpClient(NetClient)
       return s
    end
 
-   #
-   # 
    private parse_generic_header(s)
       local t, k, v
 
@@ -468,8 +465,6 @@ class HttpClient(NetClient)
       return res
    end
 
-   #
-   # 
    private create_authorization_header()
       case auth_scheme of {
          "Basic":
@@ -481,14 +476,10 @@ class HttpClient(NetClient)
       }
    end
 
-   #
-   # 
    private create_basic_authorization_header()
       return basic_auth_header
    end
 
-   #
-   # 
    private parse_cookie_string(s)
       local c, k, v, t, d
 
@@ -610,8 +601,6 @@ class HttpClient(NetClient)
       }
    end
 
-   #
-   # 
    private create_cookie_header()
       local s, e, f, domain, path, c, now, ver
 
@@ -662,8 +651,6 @@ class HttpClient(NetClient)
       }
    end
 
-   #
-   # 
    private on_http_error(s)
       http_error := s
       return error(s)
@@ -713,12 +700,17 @@ class HttpClient(NetClient)
          prev_read := self.read
          if tryone() then {
             store_cookies()
+            close_inflater() | {
+               fire(FAILED_EVENT)
+               fail
+            }
             fire(COMPLETE_EVENT)
             return response
          }
 
          close()
          if \abort_flag then {
+            close_inflater()
             error("Aborted")
             fire(ABORTED_EVENT)
             fail
@@ -727,6 +719,7 @@ class HttpClient(NetClient)
          if prev_read ~=== self.read & \retry_while_data_flag then {
             i := retries
          } else if (i -:= 1) < 0 then {
+            close_inflater()
             if retries > 0 then
                error("Gave up after " || (1+retries) || " attempts - last reason: " || &why)
             fire(FAILED_EVENT)
@@ -797,13 +790,13 @@ class HttpClient(NetClient)
          close()
    end
 
-   #
-   # 
    private write_request()
       local rs, sz, s, f
       request.set_header("user-agent", user_agent)
       request.set_header("host", request.url.get_address())
       request.set_header("referer", \request.referer)
+      if \gzip_flag then
+         request.set_header("accept-encoding", "gzip")
       request.unset_header("cookie")
       request.set_header("cookie", create_cookie_header())
 
@@ -850,8 +843,6 @@ class HttpClient(NetClient)
       return
    end
 
-   #
-   # 
    private read_headers()
       local s, key, val
       repeat {
@@ -880,6 +871,36 @@ class HttpClient(NetClient)
       return
    end
 
+   private close_inflater()
+      local i
+      if \inflater_stream then {
+         inflater_stream.close() | {
+            inflater_stream := &null
+            fail
+         }
+         i := inflater_stream.exit_info.param
+         inflater_stream := &null
+         if i ~= 0 then
+            return error("Inflater stream returned non-zero exit status (" || i || ")")
+      }
+      return
+   end
+
+   private open_inflater()
+      local s, nul
+      if s := trim(map(response.get_first_header("content-encoding"))) then {
+         if s == "gzip" & \gzip_flag then {
+            use { 
+               nul := FileStream.open("/dev/null", FileOpt.WRONLY),
+               inflater_stream := FilterOutputStream(request.data_stream, "gunzip", ["-c"],, nul)
+            } | fail
+         }
+         else
+            return error("Unexpected content-encoding value")
+      }
+      return
+   end
+
    #
    # 
    private read_data()
@@ -890,7 +911,9 @@ class HttpClient(NetClient)
       # truncated.
       #
       if not(\self.read & find("206", response.get_status())) then {
+         close_inflater()
          request.data_stream.truncate(0) | fail
+         open_inflater() | fail
          self.length := integer(response.get_first_header("content-length")) | &null
          self.read := 0
       }
@@ -898,12 +921,12 @@ class HttpClient(NetClient)
       #
       # Read the data.
       #
-      if trim(map(response.get_first_header("transfer-encoding"))) == "chunked" then
-         return read_chunked()
+      return if trim(map(response.get_first_header("transfer-encoding"))) == "chunked" then
+         read_chunked()
       else if /length then
-         return read_to_eof()
+         read_to_eof()
       else
-         return read_length()
+         read_length()
    end
 
    #
@@ -942,8 +965,6 @@ class HttpClient(NetClient)
       return
    end
 
-   #
-   # 
    private read_to_eof()
       local s
       #
@@ -960,9 +981,7 @@ class HttpClient(NetClient)
          close()
          fail
       }
-
       close()
-
       return
    end
 
@@ -999,12 +1018,13 @@ class HttpClient(NetClient)
       return self.read
    end
 
-   #
-   # 
    private add_some(s)
       self.read +:= *s
       fire(PROGRESS_EVENT)
-      return request.data_stream.writes(s)
+      return if \inflater_stream then
+         inflater_stream.writes(s)
+      else
+         request.data_stream.writes(s)
    end
 
    public set_one(f)
@@ -1013,8 +1033,9 @@ class HttpClient(NetClient)
          "user_agent": set_user_agent(f.string_val())
          "retries": set_retries(f.int_val())
          "retry_while_data": set_retry_while_data(f.flag_val())
-         "keep_alive" : set_keep_alive(f.flag_val())
-         "cookies" : set_cookies(f.table_val())
+         "keep_alive": set_keep_alive(f.flag_val())
+         "cookies": set_cookies(f.table_val())
+         "gzip": set_gzip(f.flag_val())
          default: return try_event(f, EVENT_TABLE) | cast(self,NetClient).set_one(f)
       }
       return
@@ -1028,6 +1049,7 @@ class HttpClient(NetClient)
       retries := 2
       http_version := "1.1"
       user_agent := "httpclient.icn [en] (" || &host || ")"
+      gzip_flag := FOUND_GZIP
       set_fields(a)
       return
    end

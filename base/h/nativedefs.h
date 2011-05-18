@@ -130,6 +130,7 @@ NativeDef(graphics.Window,get_dir,graphics_Window_get_dir)
 #endif
 #endif
 NativeDef(io.DescStream,flag,io_DescStream_flag)
+NativeDef(io.DescStream,dflag,io_DescStream_dflag)
 NativeDef(io.DescStream,poll,io_DescStream_poll)
 NativeDef(io.DescStream,select,io_DescStream_select)
 NativeDef(io.DescStream,stat_impl,io_DescStream_stat_impl)
@@ -139,7 +140,7 @@ NativeDef(io.DescStream,length,io_DescStream_length)
 NativeDef(io.DescStream,dup2_impl,io_DescStream_dup2_impl)
 NativeDef(io.DescStream,wstat,io_DescStream_wstat)
 NativeDef(io.DirStream,close,io_DirStream_close)
-NativeDef(io.DirStream,open_impl,io_DirStream_open_impl)
+NativeDef(io.DirStream,new_impl,io_DirStream_new_impl)
 NativeDef(io.DirStream,read_impl,io_DirStream_read_impl)
 NativeDef(io.FileStream,close,io_FileStream_close)
 #if PLAN9

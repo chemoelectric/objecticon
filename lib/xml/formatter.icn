@@ -21,12 +21,11 @@ class Formatter()
 
    public format_to_string(n, level)
       local f
-      f := RamStream()
-      format(n, f) | {
-         f.close()
-         fail
+      return use { 
+         f := RamStream(),
+         if format(n, f) then
+            f.str()
       }
-      return f.done()
    end
 
    public format(n, out)
@@ -40,7 +39,7 @@ class Formatter()
    public format_node(n)
       local s, res
       level +:= 1
-      res := if s := text(n) then
+      if (res := if s := text(n) then
          format_content(s)
       else if is(n, Element) then
          format_element(n)
@@ -55,9 +54,14 @@ class Formatter()
       else if is(n, Document) then
          format_document(n)
       else if is(n, XmlDecl) then
-         format_xmldecl(n)
-      level -:= 1
-      return res
+         format_xmldecl(n)) then 
+      {
+         level -:= 1
+         return res
+      } else {
+         level -:= 1
+         fail
+      }
    end
 
    public defer format_document(n)
