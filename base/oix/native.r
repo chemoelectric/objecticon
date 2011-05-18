@@ -2471,15 +2471,15 @@ function io_DirStream_read_impl(self)
           struct Dir *st;
           long n;
           n = dirread(self_dir->fd, &st);
-          if (n == 0) {
+          if (n <= 0) {
               GetSelfEofFlag();
-              *self_eof_flag = onedesc;
-              LitWhy("End of file");
-              fail;
-          } else if (n < 0) {
-              GetSelfEofFlag();
-              *self_eof_flag = nulldesc;
-              errno2why();
+              if (n < 0) {
+                  *self_eof_flag = nulldesc;
+                  errno2why();
+              } else { /* n == 0 */
+                  *self_eof_flag = onedesc;
+                  LitWhy("End of file");
+              }
               fail;
           }
           free(self_dir->st);
