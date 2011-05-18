@@ -323,3 +323,23 @@ function posix_System_uname_impl()
 #endif
     }
 end
+
+function posix_System_getpid()
+   body {
+#if UNIX
+     return C_integer getpid();
+#else
+     Unsupported;
+#endif
+    }
+end
+
+function posix_System_getppid()
+   body {
+#if UNIX
+     return C_integer getppid();
+#else
+     Unsupported;
+#endif
+    }
+end

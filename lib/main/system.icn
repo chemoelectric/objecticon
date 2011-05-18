@@ -47,6 +47,12 @@ class System()
       return ExitInfo!wait_impl(pid, options)
    end
 
+   # returns the process ID of the calling process.
+   public static defer getpid()
+
+   # returns the process ID of the parent of the calling process.
+   public static defer getppid()
+
    private static defer wait_impl()
 
    # generate the environment values as key=pair strings
