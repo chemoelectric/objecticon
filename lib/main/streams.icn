@@ -1107,7 +1107,11 @@ class ProgInputStream(FileStream)
    public new(cmd, args, env, stdin, stderr)
       local l
       l := pipe() | fail
-      pid := System.fork() | fail
+      pid := System.fork() | {
+         l[1].close()
+         l[2].close()
+         fail
+      }
       if pid > 0 then {
          # Parent
          l[2].close()
@@ -1169,7 +1173,12 @@ class ProgOutputStream(FileStream)
    public new(cmd, args, env, stdout, stderr)
       local l
       l := pipe() | fail
-      pid := System.fork() | fail
+      (l[2].dflag(FileDescOpt.CLOEXEC) &
+       pid := System.fork()) | {
+          l[1].close()
+          l[2].close()
+          fail
+       }
       if pid > 0 then {
          # Parent
          l[1].close()
@@ -1189,8 +1198,9 @@ class ProgOutputStream(FileStream)
 end
 
 #
-# This stream writes output from a background process to an arbitrary {Stream}.  Input
-# to the command is provided by writing to this {Stream}.
+# This stream filters output written to it through a background
+# process and outputs the results to an arbitrary sink {Stream}.
+#
 # @example
 # @ # Encode s, putting the result in a RamStream
 # @ r := RamStream()
@@ -1214,7 +1224,6 @@ class FilterOutputStream(Stream)
       l := *s
       repeat {
          x := DescStream.poll([cin, Poll.IN, cout, Poll.OUT]) | fail
-         #io.write(to_string(x))
          if iand(x[1], Poll.IN) ~= 0 & iand(x[1], Poll.ERR) = 0 then
             sink.out(cin.in(1048576)) | fail
          else if iand(x[2], Poll.OUT) ~= 0 & iand(x[2], Poll.ERR) = 0 then {
@@ -1292,9 +1301,10 @@ class FilterOutputStream(Stream)
 end
 
 #
-# This stream reads input from an arbitrary source {Stream} and passes it to
-# a background process.  The output from that process can then be read as this
-# {Stream}.
+# This stream filters data taken from an arbitrary source {Stream}
+# through a background process.  The output from that process can then
+# be read as this {Stream}'s output.
+#
 # @example
 # @ g := FilterInputStream(StringStream(s), "gzip", ["-c"])
 # @ # Reading from g will give the compressed value of the string s.
@@ -1318,7 +1328,6 @@ class FilterInputStream(Stream)
          return read_cin(n)
       repeat {
          x := DescStream.poll([cin, Poll.IN, cout, Poll.OUT]) | fail
-         #io.write(to_string(x))
          if iand(x[1], Poll.IN) ~= 0 & iand(x[1], Poll.ERR) = 0 then
             return read_cin(n)
          else if iand(x[2], Poll.OUT) ~= 0 & iand(x[2], Poll.ERR) = 0 then {
