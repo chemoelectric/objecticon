@@ -1206,9 +1206,9 @@ class FilterOutputStream(Stream)
       repeat {
          x := DescStream.poll([cin, Poll.IN, cout, Poll.OUT]) | fail
          #io.write(to_string(x))
-         if iand(x[1], Poll.IN) ~= 0 then
+         if iand(x[1], Poll.IN) ~= 0 & iand(x[1], Poll.ERR) = 0 then
             sink.out(cin.in(1048576)) | fail
-         else if iand(x[2], Poll.OUT) ~= 0 then {
+         else if iand(x[2], Poll.OUT) ~= 0 & iand(x[2], Poll.ERR) = 0 then {
             n := cout.out(s) | fail
             s := s[n + 1:0]
             if *s = 0 then
@@ -1310,9 +1310,9 @@ class FilterInputStream(Stream)
       repeat {
          x := DescStream.poll([cin, Poll.IN, cout, Poll.OUT]) | fail
          io.write(to_string(x))
-         if iand(x[1], Poll.IN) ~= 0 then
+         if iand(x[1], Poll.IN) ~= 0 & iand(x[1], Poll.ERR) = 0 then
             return read_cin(n)
-         else if iand(x[2], Poll.OUT) ~= 0 then {
+         else if iand(x[2], Poll.OUT) ~= 0 & iand(x[2], Poll.ERR) = 0 then {
             if *buff = 0 then {
                buff := source.in(1048576) | {
                   source.eof() | fail
