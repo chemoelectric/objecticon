@@ -2283,7 +2283,7 @@ if (!self_dir)
     runerr(219, self);
 #enddef
 
-function io_DirStream_open_impl(path)
+function io_DirStream_new_impl(path)
    if !cnv:C_string(path) then
       runerr(103, path)
    body {
@@ -2354,7 +2354,7 @@ if (!self_dir)
     runerr(219, self);
 #enddef
 
-function io_DirStream_open_impl(path)
+function io_DirStream_new_impl(path)
    if !cnv:string(path) then
       runerr(103, path)
    body {

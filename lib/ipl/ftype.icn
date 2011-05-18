@@ -25,14 +25,16 @@
 package ipl.ftype
 
 import
-   io(FileOpt, ProgStream, read)
+   io(FileOpt, ProgInputStream, read, use)
 
 procedure ftype(file)
-   
-   read(ProgStream.open("file " || file, FileOpt.RDONLY)) ? {
-      tab(upto('\t'))
-      tab(many('\t'))
-      return tab(0)
+   local f
+   return use { 
+      f := ProgInputStream("file " || file, FileOpt.RDONLY),
+      f.read() ? {
+         tab(upto('\t'))
+         tab(many('\t'))
+         tab(0)
       }
-
+   }
 end

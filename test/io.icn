@@ -198,28 +198,28 @@ procedure tpipe()
 
    # very simple case
    write()
-   p := ProgStream.open_read("echo", ["hello", "world"]) | stop("can't open echo pipe")
+   p := ProgInputStream("echo", ["hello", "world"]) | stop("can't open echo pipe")
    write(imagex(p))
    while write("> ", read(p))
    close(p)
 
    # check unclosed pipe
    write()
-   p := ProgStream.open_read("sed",  ["s/^/=()= /", "io.dat"]) | stop("can't open od pipe")
+   p := ProgInputStream("sed",  ["s/^/=()= /", "io.dat"]) | stop("can't open od pipe")
    write(imagex(p))
    every 1 to 10 do write("> ", read(p))
    # p is deliberately left unclosed
 
    # check wildcarding, and also !pipe
    write()
-   p := ProgStream.open_read("sh", ["-c", "ls io.i?n io.d?t io.s?d"]) | stop("can't open ls pipe")
+   p := ProgInputStream("sh", ["-c", "ls io.i?n io.d?t io.s?d"]) | stop("can't open ls pipe")
    write(imagex(p))
    every write("> ", |read(p))
    close(p)
 
    # check output pipe
    write()
-   p := ProgStream.open_write("tr", ["aeiou", "oaeui"]) | stop("can't open tr pipe")
+   p := ProgOutputStream("tr", ["aeiou", "oaeui"]) | stop("can't open tr pipe")
    write(imagex(p))
    write(p, "once upon a midnight dreary")
    write(p, "two roads diverged in a yellow wood")

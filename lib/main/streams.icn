@@ -2,7 +2,7 @@ package io
 
 import
    util(error, check_flag, SetFields),
-   lang(NoCopy,to_string),
+   lang(NoCopy),
    posix(System)
 
 #
@@ -701,8 +701,8 @@ end
 # @    "crw"|"w+" - {FileStream.open} with {FileOpt.RDWR}, {FileOpt.TRUNC}, {FileOpt.CREAT}
 # @    "a" - {FileStream.open} with {FileOpt.WRONLY}, {FileOpt.APPEND}, {FileOpt.CREAT}
 # @    "a+" - {FileStream.open} with {FileOpt.RDWR}, {FileOpt.APPEND}, {FileOpt.CREAT}
-# @    "p"|"pr" - {ProgStream.open_read}, using shell interpreter
-# @    "pw" - {ProgStream.open_write}, using shell interpreter
+# @    "p"|"pr" - {ProgInputStream}, using shell interpreter
+# @    "pw" - {ProgOutputStream}, using shell interpreter
 #
 procedure open(name, mode)
    return BufferStream(case mode of {
@@ -713,8 +713,8 @@ procedure open(name, mode)
       "a" : FileStream.open(name, ior(FileOpt.WRONLY, FileOpt.APPEND, FileOpt.CREAT))
       "a+" : FileStream.open(name, ior(FileOpt.RDWR, FileOpt.APPEND, FileOpt.CREAT))
 $ifdef _UNIX
-      "p"|"pr" : ProgStream.open_read("/bin/sh", ["-c", name])
-      "pw" : ProgStream.open_write("/bin/sh", ["-c", name])
+      "p"|"pr" : ProgInputStream("/bin/sh", ["-c", name])
+      "pw" : ProgOutputStream("/bin/sh", ["-c", name])
 $else
       "p"|"pr"|"pw" : error("Mode not supported")
 $endif
@@ -1031,14 +1031,6 @@ class DirStream(Stream, NoCopy)
       dd,
       line
 
-   #
-   # Open the given directory.  Entries may be read one at a time
-   # using the stream's {read} method.
-   #
-   public static open(dir)
-      return DirStream(open_impl(dir))
-   end
-
    public read()
       local t
       if *line > 0 then {
@@ -1068,10 +1060,10 @@ class DirStream(Stream, NoCopy)
       return READ
    end
 
-   private static defer open_impl(path)
+   private static defer new_impl(path)
 
-   private new(dd)
-      self.dd := dd
+   public new(path)
+      self.dd := new_impl(path) | fail
       self.line := ""
       return
    end
@@ -1079,9 +1071,9 @@ end
 
 #
 # This stream represents a pipe to a command running in a forked child
-# process.  The pipe is either readable or writable, but not both.
+# process.
 #
-class ProgStream(FileStream)
+class ProgInputStream(FileStream)
    private
       pid
 
@@ -1089,41 +1081,17 @@ class ProgStream(FileStream)
       # The {ExitInfo} of the child process, set by the {close()} method.
       exit_info
 
-   # Open a new writeable {ProgStream} based on the given command. The
-   # first three parameters are the same as for the method
-   # {posix.System.exec}; the last two optionally give the standard
-   # output and standard error of the command; by default the command
-   # inherits these from the parent.
-   # @example
-   # @    g := FileStream.open("/tmp/result",ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
-   # @    f := ProgStream.open_write("wc", ["-l"],,g) | stop(&why)
-   # @    g.close()
-   # @    f.write("data")
-   # @    f.close()
-   # @    # Now /tmp/result contains "1" (ie, the output of wc -l applied to the data written to f)
    #
-   public static open_write(cmd, args, env, stdout, stderr)
-      local l, pid
-      l := pipe() | fail
-      pid := System.fork() | fail
-      if pid > 0 then {
-         # Parent
-         l[1].close()
-         return ProgStream(l[2].get_fd(), WRITE, pid)
-      } else {
-         if \stdout then
-            stdout.dup2(FileStream.stdout) | stop(&why)
-         if \stderr then
-            stderr.dup2(FileStream.stderr) | stop(&why)
-         l[1].dup2(FileStream.stdin) | stop(&why)
-         l[1].close()
-         l[2].close()
-         System.exec(cmd, args, env) | stop(&why)
-         syserr("Not reached")
-      }
+   # Close the stream.  This waits for the child process to terminate, and sets
+   # {exit_info}.
+   #
+   public close()
+      cast(self,FileStream).close() | fail
+      exit_info := System.wait(pid) | fail
+      return
    end
 
-   # Open a new readable {ProgStream} based on the given command.  The
+   # Open a new readable {Stream} based on the given command.  The
    # first three parameters are the same as for the method
    # {posix.System.exec};  the last two optionally give the standard
    # input and standard error of the command; by default the command
@@ -1131,19 +1099,19 @@ class ProgStream(FileStream)
    # "pipe", then stderr is sent to the pipe along with stdout.
    # @example
    # @   g := FileStream.open("/tmp/data",FileOpt.RDONLY) | stop(&why)
-   # @   f := ProgStream.open_read("wc", ["-l"],,g) | stop(&why)
+   # @   f := ProgInputStream("wc", ["-l"],,g) | stop(&why)
    # @   g.close()
    # @   while write(f.read())   # writes the number of lines in /tmp/data
    # @   f.close()
    #
-   public static open_read(cmd, args, env, stdin, stderr)
-      local l, pid
+   public new(cmd, args, env, stdin, stderr)
+      local l
       l := pipe() | fail
       pid := System.fork() | fail
       if pid > 0 then {
          # Parent
          l[2].close()
-         return ProgStream(l[1].get_fd(), READ, pid)
+         return cast(self,FileStream).new(l[1].get_fd(), READ, pid)
       } else {
          # Child
          if \stdin then
@@ -1161,6 +1129,19 @@ class ProgStream(FileStream)
          syserr("Not reached")
       }
    end
+end
+
+#
+# This stream represents a pipe from a command running in a forked child
+# process.
+#
+class ProgOutputStream(FileStream)
+   private
+      pid
+
+   private readable
+      # The {ExitInfo} of the child process, set by the {close()} method.
+      exit_info
 
    #
    # Close the stream.  This waits for the child process to terminate, and sets
@@ -1172,10 +1153,38 @@ class ProgStream(FileStream)
       return
    end
 
-   private new(fd, mode, pid)
-      cast(self,FileStream).new(fd, mode)
-      self.pid := pid
-      return
+   # Open a new writeable {Stream} based on the given command. The
+   # first three parameters are the same as for the method
+   # {posix.System.exec}; the last two optionally give the standard
+   # output and standard error of the command; by default the command
+   # inherits these from the parent.
+   # @example
+   # @    g := FileStream.open("/tmp/result",ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
+   # @    f := ProgOutputStream("wc", ["-l"],,g) | stop(&why)
+   # @    g.close()
+   # @    f.write("data")
+   # @    f.close()
+   # @    # Now /tmp/result contains "1" (ie, the output of wc -l applied to the data written to f)
+   #
+   public new(cmd, args, env, stdout, stderr)
+      local l
+      l := pipe() | fail
+      pid := System.fork() | fail
+      if pid > 0 then {
+         # Parent
+         l[1].close()
+         return cast(self,FileStream).new(l[2].get_fd(), WRITE, pid)
+      } else {
+         if \stdout then
+            stdout.dup2(FileStream.stdout) | stop(&why)
+         if \stderr then
+            stderr.dup2(FileStream.stderr) | stop(&why)
+         l[1].dup2(FileStream.stdin) | stop(&why)
+         l[1].close()
+         l[2].close()
+         System.exec(cmd, args, env) | stop(&why)
+         syserr("Not reached")
+      }
    end
 end
 
@@ -1309,7 +1318,7 @@ class FilterInputStream(Stream)
          return read_cin(n)
       repeat {
          x := DescStream.poll([cin, Poll.IN, cout, Poll.OUT]) | fail
-         io.write(to_string(x))
+         #io.write(to_string(x))
          if iand(x[1], Poll.IN) ~= 0 & iand(x[1], Poll.ERR) = 0 then
             return read_cin(n)
          else if iand(x[2], Poll.OUT) ~= 0 & iand(x[2], Poll.ERR) = 0 then {

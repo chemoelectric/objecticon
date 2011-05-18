@@ -75,19 +75,19 @@ procedure test_modes()
    f.close()
 
    write("Dir Read")
-   f := DirStream.open(".") | stop(&why)
+   f := DirStream(".") | stop(&why)
    do_mode(f)
    f.close()
 
 $ifdef _UNIX
    write("Prog Read")
-   f := ProgStream.open_read("echo", ["hello"]) | stop(&why)
+   f := ProgInputStream("echo", ["hello"]) | stop(&why)
    do_mode(f)
    while f.read()
    f.close()
 
    write("Prog write")
-   f := ProgStream.open_write("sh", ["-c", "cat >/dev/null"]) | stop(&why)
+   f := ProgOutputStream("sh", ["-c", "cat >/dev/null"]) | stop(&why)
    do_mode(f)
    f.close()
 $else
@@ -190,14 +190,14 @@ end
 
 procedure test_dir()
    local s, f, t
-   f := DirStream.open("testdir") | stop(&why)
+   f := DirStream("testdir") | stop(&why)
    s := f.reads(1000)
    t := set()
    s ? while insert(t, tab(find(Files.EOL))) do move(*Files.EOL)
    pr_seq{"Dir1", !sort(t)}
    f.close()
    t := set()
-   f := DirStream.open("testdir") | stop(&why)
+   f := DirStream("testdir") | stop(&why)
    while insert(t, f.read())
    pr_seq{"Dir2", !sort(t)}
    print{"eof()", f.eof()}

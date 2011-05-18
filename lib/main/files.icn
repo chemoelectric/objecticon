@@ -49,7 +49,7 @@ $endif
    public static list(s)
       local p
       return use {
-         p := DirStream.open(s),
+         p := DirStream(s),
          list1(get_path(s), p)
       }
    end
