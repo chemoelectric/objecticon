@@ -30,11 +30,7 @@ import
 procedure ftype(file)
    local f
    return use { 
-      f := ProgInputStream("file " || file, FileOpt.RDONLY),
-      f.read() ? {
-         tab(upto('\t'))
-         tab(many('\t'))
-         tab(0)
-      }
+      f := ProgInputStream("file", ["-b", file]),
+      f.read()
    }
 end

@@ -368,3 +368,23 @@ function posix_System_uname_impl()
 #endif
     }
 end
+
+function posix_System_getpid()
+   body {
+#if UNIX || PLAN9
+     return C_integer getpid();
+#else
+     Unsupported;
+#endif
+    }
+end
+
+function posix_System_getppid()
+   body {
+#if UNIX || PLAN9
+     return C_integer getppid();
+#else
+     Unsupported;
+#endif
+    }
+end
