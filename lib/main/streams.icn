@@ -1115,7 +1115,7 @@ class ProgInputStream(FileStream)
       if pid > 0 then {
          # Parent
          l[2].close()
-         return cast(self,FileStream).new(l[1].get_fd(), READ, pid)
+         return cast(self,FileStream).new(l[1].get_fd(), READ)
       } else {
          # Child
          if \stdin then
@@ -1182,7 +1182,7 @@ class ProgOutputStream(FileStream)
       if pid > 0 then {
          # Parent
          l[1].close()
-         return cast(self,FileStream).new(l[2].get_fd(), WRITE, pid)
+         return cast(self,FileStream).new(l[2].get_fd(), WRITE)
       } else {
          if \stdout then
             stdout.dup2(FileStream.stdout) | stop(&why)
