@@ -1784,7 +1784,10 @@ function io_FileStream_pipe_impl()
    }
 end
 
-#if !PLAN9
+#if PLAN9
+UnsupportedFunc(io_SocketStream_socket_impl)
+    UnsupportedFunc(io_SocketStream_socketpair_impl)
+#else
 function io_SocketStream_in(self, i)
    if !cnv:C_integer(i) then
       runerr(101, i)
