@@ -1219,26 +1219,22 @@ class FilterOutputStream(Stream)
       exit_info
    
    public out(s)
-      local x, n, l
+      local x
       s := string(s) | runerr(103, s)
-      l := *s
       repeat {
          x := DescStream.poll([cin, Poll.IN, cout, Poll.OUT]) | fail
          if iand(x[1], Poll.IN) ~= 0 & iand(x[1], Poll.ERR) = 0 then
             sink.out(cin.in(1048576)) | fail
-         else if iand(x[2], Poll.OUT) ~= 0 & iand(x[2], Poll.ERR) = 0 then {
-            n := cout.out(s) | fail
-            s := s[n + 1:0]
-            if *s = 0 then
-               return l
-         } else
+         else if iand(x[2], Poll.OUT) ~= 0 & iand(x[2], Poll.ERR) = 0 then
+            return cout.out(s)
+         else
             return error("filter: child command i/o failed")
       }
    end
 
    #
    # Close the stream.  This waits for the child process to terminate, flushing any remaining
-   # output to {sink}, and sets {exit_info}.
+   # output to {sink}, and sets {exit_info}.  NB: {sink} is not closed.
    #
    public close()
       cout.close() | fail
@@ -1357,7 +1353,7 @@ class FilterInputStream(Stream)
 
    #
    # Close the stream.  This waits for the child process to terminate, and sets
-   # {exit_info}.
+   # {exit_info}.  NB: {source} is not closed.
    #
    public close()
       if \cout then
@@ -1487,12 +1483,7 @@ class SslStream(Stream, NoCopy)
 
    public defer out(s)
 
-   public close()
-      close_impl() | fail
-      return other.close()
-   end
-
-   private defer close_impl()
+   public defer close()
 
    public get_mode()
       return other.get_mode()

@@ -187,7 +187,7 @@ NativeDef(io.SslStream,new_impl,io_SslStream_new_impl)
 #if HAVE_LIBOPENSSL
 NativeDef(io.SslStream,in,io_SslStream_in)
 NativeDef(io.SslStream,out,io_SslStream_out)
-NativeDef(io.SslStream,close_impl,io_SslStream_close_impl)
+NativeDef(io.SslStream,close,io_SslStream_close)
 #endif
 NativeDef(lang.Class,complete_raw,lang_Class_complete_raw)
 NativeDef(lang.Class,create_raw,lang_Class_create_raw)

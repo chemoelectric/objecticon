@@ -151,12 +151,13 @@ class NetClient(Connectable, SetFields)
    public close()
       if \ssl_connection then {
          ssl_connection.close()
-         fire(CLOSED_EVENT)
+         connection.close()
          ssl_connection := connection := &null
+         fire(CLOSED_EVENT)
       } else if \connection then {
          connection.close()
-         fire(CLOSED_EVENT)
          connection := &null
+         fire(CLOSED_EVENT)
       }
       return
    end
