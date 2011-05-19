@@ -48,10 +48,6 @@
    Feature("_X_WINDOW_SYSTEM", "X Windows")
 #endif
 
-#if HAVE_LIBZ
-   Feature("_LIBZ_COMPRESSION", "libz file compression")
-#endif
-
 #if HAVE_LIBJPEG
    Feature("_JPEG", "JPEG images")
 #endif
