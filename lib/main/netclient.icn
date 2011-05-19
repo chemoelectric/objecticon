@@ -209,7 +209,8 @@ class NetClient(Connectable, SetFields)
       local r
       r := do_poll(Poll.IN) | return error("Receive poll failed: " || &why)
       if /r then return error("Receive failed (timeout)")
-      r[1] = Poll.IN | return error("Receive failed (socket error)")
+      (iand(r[1], icom(Poll.HUP)) = Poll.IN) |
+         return error("Receive failed (socket error)")
       return if \ssl_connection then
          ssl_connection.in(len)
       else

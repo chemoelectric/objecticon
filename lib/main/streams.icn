@@ -527,8 +527,10 @@ class BufferStream(Stream, SetFields)
    end
 
    public close()
-      flush() | fail
-      return other.close()
+      local f
+      flush() | (f := 1)
+      other.close() | (f := 1)
+      return /f
    end
 
    public seek(offset)
@@ -1078,7 +1080,7 @@ class BgProc()
       exit_info
 
    protected do_wait()
-      return exit_info := System.wait(pid)
+      exit_info := System.wait(pid)
    end
 
    #
@@ -1106,8 +1108,8 @@ class ProgInputStream(FileStream, BgProc)
    # Close the stream.  This waits for the child process to terminate.
    #
    public close()
-      cast(self,FileStream).close() | fail
-      do_wait() | fail
+      cast(self,FileStream).close()
+      do_wait()
       return
    end
 
@@ -1164,8 +1166,8 @@ class ProgOutputStream(FileStream, BgProc)
    # Close the stream.  This waits for the child process to terminate.
    #
    public close()
-      cast(self,FileStream).close() | fail
-      do_wait() | fail
+      cast(self,FileStream).close()
+      do_wait()
       return
    end
 
@@ -1231,11 +1233,11 @@ class FilterOutputStream(Stream, BgProc)
       s := string(s) | runerr(103, s)
       repeat {
          x := DescStream.poll([cin, Poll.IN, cout, Poll.OUT]) | fail
-         if iand(x[1], Poll.IN) ~= 0 & iand(x[1], Poll.ERR) = 0 then {
+         if iand(x[1], icom(Poll.HUP)) = Poll.IN then {
             buff ||:= cin.in(1048576) | fail
             t := sink.out(buff) | fail
             buff := buff[t + 1:0]
-         } else if iand(x[2], Poll.OUT) ~= 0 & iand(x[2], Poll.ERR) = 0 then
+         } else if x[2] = Poll.OUT then
             return cout.out(s)
          else
             return error("filter: child command i/o failed")
@@ -1247,13 +1249,16 @@ class FilterOutputStream(Stream, BgProc)
    # output to {sink}.  NB: {sink} is not closed.
    #
    public close()
-      cout.close() | fail
-      sink.writes(buff) | fail
-      cin.flag(,FileOpt.NONBLOCK) | fail
-      cin.copy_to(sink) | fail
-      cin.close() | fail
-      do_wait() | fail
-      return
+      local f
+      cout.close()
+      sink.writes(buff) | (f := 1)
+      if /f then {
+         cin.flag(,FileOpt.NONBLOCK)
+         cin.copy_to(sink) | (f := 1)
+      }
+      cin.close()
+      do_wait()
+      return /f
    end
 
    public get_mode()
@@ -1331,13 +1336,13 @@ class FilterInputStream(Stream, BgProc)
          return read_cin(n)
       repeat {
          x := DescStream.poll([cin, Poll.IN, cout, Poll.OUT]) | fail
-         if iand(x[1], Poll.IN) ~= 0 & iand(x[1], Poll.ERR) = 0 then
+         if iand(x[1], icom(Poll.HUP)) = Poll.IN then
             return read_cin(n)
-         else if iand(x[2], Poll.OUT) ~= 0 & iand(x[2], Poll.ERR) = 0 then {
+         else if x[2] = Poll.OUT then {
             if *buff = 0 then {
                buff := source.in(1048576) | {
                   source.eof() | fail
-                  cout.close() | fail
+                  cout.close()
                   cout := &null
                   cin.flag(,FileOpt.NONBLOCK) | fail
                   return read_cin(n)
@@ -1363,10 +1368,9 @@ class FilterInputStream(Stream, BgProc)
    # NB: {source} is not closed.
    #
    public close()
-      if \cout then
-         cout.close() | fail
-      cin.close() | fail
-      do_wait() | fail
+      (\cout).close()
+      cin.close()
+      do_wait()
       return
    end
 
