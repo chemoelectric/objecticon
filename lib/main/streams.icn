@@ -1070,24 +1070,44 @@ class DirStream(Stream, NoCopy)
 end
 
 #
+# Common superclass of {Stream}s which use a background process.
+#
+class BgProc()
+   protected
+      pid,
+      exit_info
+
+   protected do_wait()
+      return exit_info := System.wait(pid)
+   end
+
+   #
+   # Return {ExitInfo} of the child process
+   #
+   public get_exit_info()
+      return .\exit_info
+   end
+
+   #
+   # Return process id of the child process
+   #
+   public get_pid()
+      return .pid
+   end
+end
+
+
+#
 # This stream represents a pipe to a command running in a forked child
 # process.
 #
-class ProgInputStream(FileStream)
-   private
-      pid
-
-   private readable
-      # The {ExitInfo} of the child process, set by the {close()} method.
-      exit_info
-
+class ProgInputStream(FileStream, BgProc)
    #
-   # Close the stream.  This waits for the child process to terminate, and sets
-   # {exit_info}.
+   # Close the stream.  This waits for the child process to terminate.
    #
    public close()
       cast(self,FileStream).close() | fail
-      exit_info := System.wait(pid) | fail
+      do_wait() | fail
       return
    end
 
@@ -1139,21 +1159,13 @@ end
 # This stream represents a pipe from a command running in a forked child
 # process.
 #
-class ProgOutputStream(FileStream)
-   private
-      pid
-
-   private readable
-      # The {ExitInfo} of the child process, set by the {close()} method.
-      exit_info
-
+class ProgOutputStream(FileStream, BgProc)
    #
-   # Close the stream.  This waits for the child process to terminate, and sets
-   # {exit_info}.
+   # Close the stream.  This waits for the child process to terminate.
    #
    public close()
       cast(self,FileStream).close() | fail
-      exit_info := System.wait(pid) | fail
+      do_wait() | fail
       return
    end
 
@@ -1207,25 +1219,23 @@ end
 # @ g := FilterOutputStream(r, "gzip", ["-c"])
 # @ g.write(s)
 #
-class FilterOutputStream(Stream)
+class FilterOutputStream(Stream, BgProc)
    private 
       sink,
       cin,
       cout,
-      pid
-
-   private readable
-      # The {ExitInfo} of the child process, set by the {close()} method.
-      exit_info
+      buff
    
    public out(s)
-      local x
+      local x, t
       s := string(s) | runerr(103, s)
       repeat {
          x := DescStream.poll([cin, Poll.IN, cout, Poll.OUT]) | fail
-         if iand(x[1], Poll.IN) ~= 0 & iand(x[1], Poll.ERR) = 0 then
-            sink.out(cin.in(1048576)) | fail
-         else if iand(x[2], Poll.OUT) ~= 0 & iand(x[2], Poll.ERR) = 0 then
+         if iand(x[1], Poll.IN) ~= 0 & iand(x[1], Poll.ERR) = 0 then {
+            buff ||:= cin.in(1048576) | fail
+            t := sink.out(buff) | fail
+            buff := buff[t + 1:0]
+         } else if iand(x[2], Poll.OUT) ~= 0 & iand(x[2], Poll.ERR) = 0 then
             return cout.out(s)
          else
             return error("filter: child command i/o failed")
@@ -1234,14 +1244,15 @@ class FilterOutputStream(Stream)
 
    #
    # Close the stream.  This waits for the child process to terminate, flushing any remaining
-   # output to {sink}, and sets {exit_info}.  NB: {sink} is not closed.
+   # output to {sink}.  NB: {sink} is not closed.
    #
    public close()
       cout.close() | fail
+      sink.writes(buff) | fail
       cin.flag(,FileOpt.NONBLOCK) | fail
       cin.copy_to(sink) | fail
       cin.close() | fail
-      exit_info := System.wait(pid) | fail
+      do_wait() | fail
       return
    end
 
@@ -1261,8 +1272,9 @@ class FilterOutputStream(Stream)
    public new(sink, cmd, args, env, stderr)
       local l
       self.sink := sink
-      l := FileStream.pipe() | fail
-      (l |||:= FileStream.pipe() &
+      self.buff := ""
+      l := SocketStream.socketpair() | fail
+      (l |||:= SocketStream.socketpair() &
        l[1].flag(FileOpt.NONBLOCK) & 
        l[4].dflag(FileDescOpt.CLOEXEC) &
        l[4].flag(FileOpt.NONBLOCK) & 
@@ -1306,18 +1318,13 @@ end
 # @ # Reading from g will give the compressed value of the string s.
 # @ res := g.read_all()
 #
-class FilterInputStream(Stream)
+class FilterInputStream(Stream, BgProc)
    private 
       source,
       cin,
       cout,
-      pid,
       buff
 
-   private readable
-      # The {ExitInfo} of the child process, set by the {close()} method.
-      exit_info
-   
    public in(n)
       local x, t
       if /cout then
@@ -1352,14 +1359,14 @@ class FilterInputStream(Stream)
    end
 
    #
-   # Close the stream.  This waits for the child process to terminate, and sets
-   # {exit_info}.  NB: {source} is not closed.
+   # Close the stream.  This waits for the child process to terminate.
+   # NB: {source} is not closed.
    #
    public close()
       if \cout then
          cout.close() | fail
       cin.close() | fail
-      exit_info := System.wait(pid) | fail
+      do_wait() | fail
       return
    end
 
@@ -1380,8 +1387,8 @@ class FilterInputStream(Stream)
       local l
       self.source := source
       self.buff := ""
-      l := FileStream.pipe() | fail
-      (l |||:= FileStream.pipe() &
+      l := SocketStream.socketpair() | fail
+      (l |||:= SocketStream.socketpair() &
        l[1].flag(FileOpt.NONBLOCK) & 
        l[4].dflag(FileDescOpt.CLOEXEC) &
        l[4].flag(FileOpt.NONBLOCK) & 
