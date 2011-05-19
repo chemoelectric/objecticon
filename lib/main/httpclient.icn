@@ -86,8 +86,10 @@ class HttpClient(NetClient)
                            "retrying", RETRYING_EVENT,
                            "headers", HEADERS_EVENT,
                            "progress", PROGRESS_EVENT)
+$ifndef _PLAN9
       if Files.find_exe("gunzip") then
          FOUND_GZIP := &yes
+$endif
    end
 
    private readable 
@@ -878,7 +880,7 @@ class HttpClient(NetClient)
             inflater_stream := &null
             fail
          }
-         i := inflater_stream.exit_info.param
+         i := inflater_stream.get_exit_info().param
          inflater_stream := &null
          if i ~= 0 then
             return error("Inflater stream returned non-zero exit status (" || i || ")")
