@@ -634,7 +634,7 @@ class DescStream(Stream, NoCopy)
    #
    # Turn the specified descriptor flags on or off, and return the new
    # set of flags.  The flags should be selected from the constants in
-   # {FileDescOpt}.
+   # {DescOpt}.
    # @param on the flags to turn on
    # @param off the flags to turn off
    # @return the new flags
@@ -1079,12 +1079,12 @@ end
 # This stream represents a pipe to a command running in a forked child
 # process.
 #
-class ProgInputStream(FileStream, BgProc)
+class ProgInputStream(SocketStream, BgProc)
    #
    # Close the stream.  This waits for the child process to terminate.
    #
    public close()
-      cast(self,FileStream).close()
+      cast(self,SocketStream).close()
       do_wait()
       return
    end
@@ -1104,7 +1104,7 @@ class ProgInputStream(FileStream, BgProc)
    #
    public new(cmd, args, env, stdin, stderr)
       local l
-      l := pipe() | fail
+      l := socketpair() | fail
       pid := System.fork() | {
          l[1].close()
          l[2].close()
@@ -1113,7 +1113,7 @@ class ProgInputStream(FileStream, BgProc)
       if pid > 0 then {
          # Parent
          l[2].close()
-         return cast(self,FileStream).new(l[1].get_fd(), READ)
+         return cast(self,SocketStream).new(l[1].get_fd(), READ)
       } else {
          # Child
          if \stdin then
@@ -1137,12 +1137,12 @@ end
 # This stream represents a pipe from a command running in a forked child
 # process.
 #
-class ProgOutputStream(FileStream, BgProc)
+class ProgOutputStream(SocketStream, BgProc)
    #
    # Close the stream.  This waits for the child process to terminate.
    #
    public close()
-      cast(self,FileStream).close()
+      cast(self,SocketStream).close()
       do_wait()
       return
    end
@@ -1162,8 +1162,8 @@ class ProgOutputStream(FileStream, BgProc)
    #
    public new(cmd, args, env, stdout, stderr)
       local l
-      l := pipe() | fail
-      (l[2].dflag(FileDescOpt.CLOEXEC) &
+      l := socketpair() | fail
+      (l[2].dflag(DescOpt.CLOEXEC) &
        pid := System.fork()) | {
           l[1].close()
           l[2].close()
@@ -1172,7 +1172,7 @@ class ProgOutputStream(FileStream, BgProc)
       if pid > 0 then {
          # Parent
          l[1].close()
-         return cast(self,FileStream).new(l[2].get_fd(), WRITE)
+         return cast(self,SocketStream).new(l[2].get_fd(), WRITE)
       } else {
          # Child
          if \stdout then
@@ -1258,7 +1258,7 @@ class FilterOutputStream(Stream, BgProc, NoCopy)
       l := SocketStream.socketpair() | fail
       (l |||:= SocketStream.socketpair() &
        l[1].flag(FileOpt.NONBLOCK) & 
-       l[4].dflag(FileDescOpt.CLOEXEC) &
+       l[4].dflag(DescOpt.CLOEXEC) &
        l[4].flag(FileOpt.NONBLOCK) & 
        pid := System.fork()) | {
           every (!l).close()
@@ -1371,7 +1371,7 @@ class FilterInputStream(Stream, BgProc, NoCopy)
       l := SocketStream.socketpair() | fail
       (l |||:= SocketStream.socketpair() &
        l[1].flag(FileOpt.NONBLOCK) & 
-       l[4].dflag(FileDescOpt.CLOEXEC) &
+       l[4].dflag(DescOpt.CLOEXEC) &
        l[4].flag(FileOpt.NONBLOCK) & 
        pid := System.fork()) | {
           every (!l).close()
