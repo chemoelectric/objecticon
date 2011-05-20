@@ -1599,6 +1599,7 @@ function io_FileStream_close(self)
        GetSelfFd();
        if (close(self_fd) < 0) {
            errno2why();
+           *self_fd_dptr = minusonedesc;
            fail;
        }
        *self_fd_dptr = minusonedesc;
@@ -1805,6 +1806,7 @@ function io_SocketStream_close(self)
        GetSelfFd();
        if (close(self_fd) < 0) {
            errno2why();
+           *self_fd_dptr = minusonedesc;
            fail;
        }
        *self_fd_dptr = minusonedesc;
@@ -2324,6 +2326,7 @@ function io_DirStream_close(self)
        GetSelfDir();
        if ((closedir(self_dir)) < 0) {
            errno2why();
+           *self_dir_dptr = zerodesc;
            fail;
        }
        *self_dir_dptr = zerodesc;
@@ -3848,9 +3851,7 @@ function io_SslStream_out(self, s)
    body {
        int rc;
        GetSelfSsl();
-
        rc = SSL_write(self_ssl->ssl, StrLoc(s), StrLen(s));
-
        if (rc < 0 || (rc == 0 && SSL_get_error(self_ssl->ssl, rc) != SSL_ERROR_ZERO_RETURN)) {
            whyf("SSL_write: %s", ERR_error_string(SSL_get_error(self_ssl->ssl, rc), 0));
            fail;
@@ -3863,16 +3864,17 @@ function io_SslStream_close(self)
    body {
        int rc;
        GetSelfSsl();
-
-       if ((rc = SSL_shutdown(self_ssl->ssl)) < 0) {
+       rc = SSL_shutdown(self_ssl->ssl);
+       if (rc < 0)
            whyf("SSL_shutdown: %s", ERR_error_string(SSL_get_error(self_ssl->ssl, rc), 0));
-           fail;
-       }
        SSL_free(self_ssl->ssl);
        SSL_CTX_free(self_ssl->ctx);
        free(self_ssl);
        *self_ssl_dptr = zerodesc;
-       return nulldesc;
+       if (rc < 0)
+           fail;
+       else
+           return nulldesc;
    }
 end
 #else
