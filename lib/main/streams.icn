@@ -845,6 +845,26 @@ procedure use(e1, e2, e3)
 end
 
 #
+# Utility to check whether the result of a {poll} for {Poll.IN} indicates
+# a call to {in}.
+#
+procedure poll_in_test(v)
+   local x
+   # Succeed if either IN or HUP is set, but no other.
+   x := iand(v, ior(Poll.IN,Poll.HUP))
+   return x ~= 0 & x = v
+end
+
+#
+# Utility to check whether the result of a {poll} for {Poll.OUT} indicates
+# a call to {out}.
+#
+procedure poll_out_test(v)
+   # Succeed if OUT is set, but no other.
+   return v = Poll.OUT
+end
+
+#
 # This class represents a stream based on a local file.
 #
 class FileStream(DescStream)
@@ -1210,11 +1230,11 @@ class FilterOutputStream(Stream, BgProc, NoCopy)
       s := string(s) | runerr(103, s)
       repeat {
          x := DescStream.poll([cin, Poll.IN, cout, Poll.OUT]) | fail
-         if iand(x[1], icom(Poll.HUP)) = Poll.IN then {
+         if poll_in_test(x[1]) then {
             buff ||:= cin.in(1048576) | fail
             t := sink.out(buff) | fail
             buff := buff[t + 1:0]
-         } else if x[2] = Poll.OUT then
+         } else if poll_out_test(x[2]) then
             return cout.out(s)
          else
             return error("filter: child command i/o failed")
@@ -1313,9 +1333,9 @@ class FilterInputStream(Stream, BgProc, NoCopy)
          return read_cin(n)
       repeat {
          x := DescStream.poll([cin, Poll.IN, cout, Poll.OUT]) | fail
-         if iand(x[1], icom(Poll.HUP)) = Poll.IN then
+         if poll_in_test(x[1]) then
             return read_cin(n)
-         else if x[2] = Poll.OUT then {
+         else if poll_out_test(x[2]) then {
             if *buff = 0 then {
                buff := source.in(1048576) | {
                   source.eof() | fail
