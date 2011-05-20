@@ -795,7 +795,7 @@ int main(void)
 #endif
     end_class();
 
-    start_class("FileDescOpt", "FD_", 0, 0);
+    start_class("DescOpt", "FD_", 0, 0);
 #ifdef FD_CLOEXEC
         Const(FD_CLOEXEC)
 #endif

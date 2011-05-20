@@ -634,7 +634,7 @@ class DescStream(Stream, NoCopy)
    #
    # Turn the specified descriptor flags on or off, and return the new
    # set of flags.  The flags should be selected from the constants in
-   # {FileDescOpt}.
+   # {DescOpt}.
    # @param on the flags to turn on
    # @param off the flags to turn off
    # @return the new flags
@@ -1067,30 +1067,6 @@ $endif
 
    private static defer pipe_impl()
 
-   #
-   # Return a {FileStream} which, when read, will produce the given string.
-   #
-   public static from_string(s)
-      local l, pid
-      l := pipe() | fail
-      pid := System.fork() | {
-         l[1].close()
-         l[2].close()
-         fail
-      }
-      if pid > 0 then {
-         # Parent
-         l[2].close()
-         return l[1]
-      } else {
-         # Child
-         l[1].close()
-         l[2].writes(s)
-         l[2].close()
-         exit(0)
-      }
-   end
-
    public defer in(n)
 
    public defer out(s)
@@ -1246,7 +1222,7 @@ class BgProc()
    end
 end
 
-
+$ifdef _PLAN9
 #
 # This stream represents a pipe to a command running in a forked child
 # process.
@@ -1335,20 +1311,11 @@ class ProgOutputStream(FileStream, BgProc)
    public new(cmd, args, env, stdout, stderr)
       local l
       l := pipe() | fail
-$ifdef _PLAN9
-       pid := System.fork() | {
-          l[1].close()
-          l[2].close()
-          fail
-       }
-$else
-      (l[2].dflag(FileDescOpt.CLOEXEC) &
-       pid := System.fork()) | {
-          l[1].close()
-          l[2].close()
-          fail
-       }
-$endif
+      pid := System.fork() | {
+         l[1].close()
+         l[2].close()
+         fail
+      }
       if pid > 0 then {
          # Parent
          l[1].close()
@@ -1366,6 +1333,120 @@ $endif
       }
    end
 end
+$else
+#
+# This stream represents a pipe to a command running in a forked child
+# process.
+#
+class ProgInputStream(SocketStream, BgProc)
+   #
+   # Close the stream.  This waits for the child process to terminate.
+   #
+   public close()
+      cast(self,SocketStream).close()
+      do_wait()
+      return
+   end
+
+   # Open a new readable {Stream} based on the given command.  The
+   # first three parameters are the same as for the method
+   # {posix.System.exec};  the last two optionally give the standard
+   # input and standard error of the command; by default the command
+   # inherits these from the parent.  If the stderr param is the string
+   # "pipe", then stderr is sent to the pipe along with stdout.
+   # @example
+   # @   g := FileStream.open("/tmp/data",FileOpt.RDONLY) | stop(&why)
+   # @   f := ProgInputStream("wc", ["-l"],,g) | stop(&why)
+   # @   g.close()
+   # @   while write(f.read())   # writes the number of lines in /tmp/data
+   # @   f.close()
+   #
+   public new(cmd, args, env, stdin, stderr)
+      local l
+      l := socketpair() | fail
+      pid := System.fork() | {
+         l[1].close()
+         l[2].close()
+         fail
+      }
+      if pid > 0 then {
+         # Parent
+         l[2].close()
+         return cast(self,SocketStream).new(l[1].get_fd(), READ)
+      } else {
+         # Child
+         if \stdin then
+            stdin.dup2(FileStream.stdin) | stop(&why)
+         if \stderr then {
+            if stderr === "pipe" then
+               l[2].dup2(FileStream.stderr) | stop(&why)
+            else
+               stderr.dup2(FileStream.stderr) | stop(&why)
+         }
+         l[2].dup2(FileStream.stdout) | stop(&why)
+         l[1].close()
+         l[2].close()
+         System.exec(cmd, args, env) | stop(&why)
+         syserr("Not reached")
+      }
+   end
+end
+
+#
+# This stream represents a pipe from a command running in a forked child
+# process.
+#
+class ProgOutputStream(SocketStream, BgProc)
+   #
+   # Close the stream.  This waits for the child process to terminate.
+   #
+   public close()
+      cast(self,SocketStream).close()
+      do_wait()
+      return
+   end
+
+   # Open a new writeable {Stream} based on the given command. The
+   # first three parameters are the same as for the method
+   # {posix.System.exec}; the last two optionally give the standard
+   # output and standard error of the command; by default the command
+   # inherits these from the parent.
+   # @example
+   # @    g := FileStream.open("/tmp/result",ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
+   # @    f := ProgOutputStream("wc", ["-l"],,g) | stop(&why)
+   # @    g.close()
+   # @    f.write("data")
+   # @    f.close()
+   # @    # Now /tmp/result contains "1" (ie, the output of wc -l applied to the data written to f)
+   #
+   public new(cmd, args, env, stdout, stderr)
+      local l
+      l := socketpair() | fail
+      (l[2].dflag(DescOpt.CLOEXEC) &
+       pid := System.fork()) | {
+          l[1].close()
+          l[2].close()
+          fail
+       }
+      if pid > 0 then {
+         # Parent
+         l[1].close()
+         return cast(self,SocketStream).new(l[2].get_fd(), WRITE)
+      } else {
+         # Child
+         if \stdout then
+            stdout.dup2(FileStream.stdout) | stop(&why)
+         if \stderr then
+            stderr.dup2(FileStream.stderr) | stop(&why)
+         l[1].dup2(FileStream.stdin) | stop(&why)
+         l[1].close()
+         l[2].close()
+         System.exec(cmd, args, env) | stop(&why)
+         syserr("Not reached")
+      }
+   end
+end
+$endif
 
 #
 # This stream filters output written to it through a background
@@ -1377,7 +1458,7 @@ end
 # @ g := FilterOutputStream(r, "gzip", ["-c"])
 # @ g.write(s)
 #
-class FilterOutputStream(Stream, BgProc)
+class FilterOutputStream(Stream, BgProc, NoCopy)
    private 
       sink,
       cin,
@@ -1437,7 +1518,7 @@ class FilterOutputStream(Stream, BgProc)
       l := SocketStream.socketpair() | fail
       (l |||:= SocketStream.socketpair() &
        l[1].flag(FileOpt.NONBLOCK) & 
-       l[4].dflag(FileDescOpt.CLOEXEC) &
+       l[4].dflag(DescOpt.CLOEXEC) &
        l[4].flag(FileOpt.NONBLOCK) & 
        pid := System.fork()) | {
           every (!l).close()
@@ -1479,7 +1560,7 @@ end
 # @ # Reading from g will give the compressed value of the string s.
 # @ res := g.read_all()
 #
-class FilterInputStream(Stream, BgProc)
+class FilterInputStream(Stream, BgProc, NoCopy)
    private 
       source,
       cin,
@@ -1550,7 +1631,7 @@ class FilterInputStream(Stream, BgProc)
       l := SocketStream.socketpair() | fail
       (l |||:= SocketStream.socketpair() &
        l[1].flag(FileOpt.NONBLOCK) & 
-       l[4].dflag(FileDescOpt.CLOEXEC) &
+       l[4].dflag(DescOpt.CLOEXEC) &
        l[4].flag(FileOpt.NONBLOCK) & 
        pid := System.fork()) | {
           every (!l).close()
