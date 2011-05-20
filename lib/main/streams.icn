@@ -1198,6 +1198,7 @@ class ProgOutputStream(FileStream, BgProc)
          l[1].close()
          return cast(self,FileStream).new(l[2].get_fd(), WRITE)
       } else {
+         # Child
          if \stdout then
             stdout.dup2(FileStream.stdout) | stop(&why)
          if \stderr then
@@ -1221,7 +1222,7 @@ end
 # @ g := FilterOutputStream(r, "gzip", ["-c"])
 # @ g.write(s)
 #
-class FilterOutputStream(Stream, BgProc)
+class FilterOutputStream(Stream, BgProc, NoCopy)
    private 
       sink,
       cin,
@@ -1323,7 +1324,7 @@ end
 # @ # Reading from g will give the compressed value of the string s.
 # @ res := g.read_all()
 #
-class FilterInputStream(Stream, BgProc)
+class FilterInputStream(Stream, BgProc, NoCopy)
    private 
       source,
       cin,
