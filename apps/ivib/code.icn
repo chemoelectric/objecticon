@@ -72,10 +72,16 @@ class Code()
       return s
    end
 
-   public wattrib_line(name, key, val)
+   private wattrib_val(key, val)
       val := convert_wattrib(key, val) | runerr("Invalid attribute sent to code")
-      line(name || ".set_" || key || "(" || 
-           (if type(val) == "list" then list2str(val) else txt_image(val)) || ")")
+      return if type(val) == "list" then list2str(val) 
+         else if key == "resize" then if \val then "&yes" else "&no"
+         else if type(val) == "integer" then val
+         else txt_image(val)
+   end
+
+   public wattrib_line(name, key, val)
+      line(name || ".set_" || key || "(" || wattrib_val(key, val) || ")")
    end
 
    #
@@ -422,8 +428,7 @@ class Code()
 
       every a := !sort(m) do {
          val := convert_wattrib(a[1], a[2]) | runerr("Invalid attribute sent to code")
-         body ||:= indent2 || "self.set_" || a[1] || "(" || 
-           (if type(val) == "list" then list2str(val) else txt_image(val)) || ")"
+         body ||:= indent2 || "self.set_" || a[1] || "(" || wattrib_val(a[1], a[2]) || ")"
       }
 
       #

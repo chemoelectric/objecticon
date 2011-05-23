@@ -270,8 +270,8 @@ $endif
 
    private setup()
       local layout_7, layout_4, panel_4, paint_1, layout_6, panel_3, paint
-      self.set_wattrib("label", "Select directory")
-      self.set_wattrib("resize", "on")
+      self.set_label("Select directory")
+      self.set_resize(&yes)
       panel_4 := Panel()
       panel_4.clear_constraints()
       panel_4.set_constraint("eol", "y")
@@ -392,7 +392,7 @@ $endif
       message_label := Label()
       message_label.set_size("130")
       message_label.set_align("l", "b")
-      message_label.set_wattrib("fg", "red")
+      message_label.set_fg("red")
       message_label.clear_constraints()
       message_label.set_constraint("x_align", "l")
       message_label.set_constraint("x_fill", "")
