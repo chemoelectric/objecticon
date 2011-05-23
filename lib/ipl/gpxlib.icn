@@ -114,8 +114,7 @@ procedure ScratchCanvas(win, w, h, id)
 
    d := win.get_display()
    s := d || "," || image(id)
-   /dpytab[s] := Window.open("width=" || w, "height=" || h, "canvas=hidden",
-      "display=" || d)
+   /dpytab[s] := Window.open(d).set_size(w, h)
    win := dpytab[s]
    if /win then
       fail
