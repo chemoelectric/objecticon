@@ -49,6 +49,7 @@ class TextDisplay(LineBasedScrollArea)
    #
    public set_contents_str(s)
       set_contents(str2list(s, '\n'))
+      return self
    end
 
    #
@@ -58,6 +59,7 @@ class TextDisplay(LineBasedScrollArea)
    public set_contents(x)
       self.contents := x
       contents_changed()
+      return self
    end
 
    public finally()
@@ -254,6 +256,7 @@ class TextDisplay(LineBasedScrollArea)
          clear_view_list()
          compute_and_invalidate()
       }
+      return self
    end
 
    public layout()
@@ -288,6 +291,7 @@ class TextDisplay(LineBasedScrollArea)
          clear_view_list()
          compute_and_invalidate()
       }
+      return self
    end
 
    #
@@ -299,6 +303,7 @@ class TextDisplay(LineBasedScrollArea)
          clear_view_list()
          compute_and_invalidate()
       }
+      return self
    end
 
    public set_one(f)

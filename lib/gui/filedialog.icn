@@ -130,7 +130,8 @@ class FileDialog(Dialog)
    # Set the initial directory.
    #
    public set_directory(s)
-      return self.init_dirs := [s]
+      self.init_dirs := [s]
+      return self
    end
 
    #
@@ -138,28 +139,32 @@ class FileDialog(Dialog)
    # the one initially shown.
    #
    public set_directories(l)
-      return self.init_dirs := l
+      self.init_dirs := l
+      return self
    end
 
    #
    # Set the initial file
    #
    public set_file(s)
-      return self.init_files := [s]
+      self.init_files := [s]
+      return self
    end
 
    #
    # Set the initial files
    #
    public set_files(l)
-      return self.init_files := l
+      self.init_files := l
+      return self
    end
 
    #
    # Set the file filter pattern list.
    #
    public set_filters(l)
-      return self.init_filters := l
+      self.init_filters := l
+      return self
    end
 
    #
@@ -173,7 +178,7 @@ class FileDialog(Dialog)
       else
          self.init_dirs := [Files.getcwd()]
       self.init_files := [l.get(-1)]
-      return s
+      return self
    end
 
    #

@@ -10,7 +10,7 @@ class CanvasIconUI(CanvasComponentUI)
    public create_canvas_component(canvas)
       local t
       t := CanvasIcon()
-      t.set_paint(CanvasImagePaint("image=ivib.icon"))
+      t.set_paint(CanvasImagePaint().set_image("ivib.icon"))
       return t
    end
 

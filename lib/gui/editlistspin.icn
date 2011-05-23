@@ -42,6 +42,7 @@ class EditListSpin(SelectionList,EditSpin)
          self.selection := &null
          self.view.set_contents(x)
       }
+      return self
    end
 
    public start_change(e)

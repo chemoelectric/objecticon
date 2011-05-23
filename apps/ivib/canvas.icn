@@ -136,14 +136,14 @@ class BorderOfCanvas(Component)
       #
       # Draw the border.
       #
-      cw := self.cbwin.clone("fg=black")
+      cw := self.cbwin.clone().set_fg("black")
       every i := 0 to EDGE - 1 do
          cw.draw_rectangle(self.x + i , self.y + i, self.w - 2 * i, self.h - 2 *i)
 
       #
       # Draw the resizing corner in the bottom right hand corner.
       #
-      cw.attrib("fg=red")
+      cw.set_fg("red")
       every i := 0 to EDGE - 1 do
          cw.draw_line(self.x + self.w - EDGE - 1 - RSW, self.y + self.h - EDGE + i, 
                       self.x + self.w - EDGE + i, self.y + self.h - EDGE + i, 
@@ -236,7 +236,8 @@ class Canvas(Component,SelectiveObjectCodec)
    # Set the class name, ie the name of the Dialog class in the generated  code
    #
    public set_name(x)
-      return self.name := x
+      self.name := x
+      return self
    end
 
    #
@@ -343,6 +344,7 @@ class Canvas(Component,SelectiveObjectCodec)
       selected := l[1] | &null
       synch_tree()
       invalidate()
+      return self
    end
 
    #
@@ -927,6 +929,7 @@ class Canvas(Component,SelectiveObjectCodec)
    public set_filename(s)
       self.filename := s
       self.parent_dialog.set_filename_label()
+      return self
    end
    
    public static get_template()
@@ -1035,7 +1038,7 @@ class Canvas(Component,SelectiveObjectCodec)
       # The size will be set up in resize()...
       wa := copy(self.dialog_struct.wattribs)
       default.delete(wa, "canvas")
-      item_buff_win := Window.open!(["canvas=hidden"] ||| wattribs_to_list(wa))
+      item_buff_win := open_win_with(wa)
       cast(self,Component).initially()
    end
 
@@ -1048,8 +1051,8 @@ class Canvas(Component,SelectiveObjectCodec)
    # Called on resize - resize temporary window.
    #
    public layout()
-      item_buff_win.attrib("size=" || self.parent_dialog.w || "," || 
-                           self.parent_dialog.h)
+      item_buff_win.set_size(self.parent_dialog.w,
+                             self.parent_dialog.h)
       cast(self,Component).layout()
    end
 
@@ -1066,9 +1069,8 @@ class Canvas(Component,SelectiveObjectCodec)
       t := item_buff_win
       wa := copy(self.dialog_struct.wattribs)
       default.delete(wa, "canvas")
-      item_buff_win := Window.open!(["canvas=hidden"] ||| wattribs_to_list(wa) |||
-               ["size=" || self.parent_dialog.w || "," || 
-                self.parent_dialog.h]) | stop("Couldn't open item_buff_win")
+      wa["size"] := [self.parent_dialog.w, self.parent_dialog.h]
+      item_buff_win := open_win_with(wa)  | stop("Couldn't open item_buff_win")
 
       # Switch all components to the new window
       reset_all()
@@ -1088,7 +1090,7 @@ class Canvas(Component,SelectiveObjectCodec)
 
    public show_moving()
       local cw
-      cw := item_buff_win.clone("fg=red","line_style=dashed")
+      cw := item_buff_win.clone().set_fg("red").set_line_style("dashed")
       cw.draw_rectangle(moving.mx, moving.my, moving.mw, moving.mh)
       cw.uncouple()
    end
@@ -1846,27 +1848,27 @@ class Canvas(Component,SelectiveObjectCodec)
       local m, i
 
       m := Menu()
-      i := TextMenuItem("label=Dialog")
+      i := TextMenuItem().set_label("Dialog")
       i.connect(self.op_dialog, Event.ACTION)
       m.add(i)
 
       if /self.layout_delegate then {
-         i := TextMenuItem("label=Gridify")
+         i := TextMenuItem().set_label("Gridify")
          i.connect(self.op_gridify, Event.ACTION)
          m.add(i)
       }
 
-      i := TextMenuItem("label=Paste")
+      i := TextMenuItem().set_label("Paste")
       i.connect(self.op_paste, Event.ACTION)
       m.add(i)
 
       if \self.modified | /self.filename then {
-         i := TextMenuItem("label=Save")
+         i := TextMenuItem().set_label("Save")
          i.connect(self.op_save, Event.ACTION)
          m.add(i)
       }
 
-      i := TextMenuItem("label=Load")
+      i := TextMenuItem().set_label("Load")
       i.connect(self.op_load_component, Event.ACTION)
       m.add(i)
 

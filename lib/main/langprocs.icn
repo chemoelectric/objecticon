@@ -436,6 +436,7 @@ class ObjectOutputStream(Stream, SetFields)
    #
    public set_indent(i)
       self.indent := i
+      return self
    end
 
    # The maximum depth into which strucutures are recursed; if null
@@ -443,6 +444,7 @@ class ObjectOutputStream(Stream, SetFields)
    #
    public set_depth(i)
       self.depth := i
+      return self
    end
 
    # If set, then any custom {object_output} methods in objects are
@@ -450,6 +452,7 @@ class ObjectOutputStream(Stream, SetFields)
    #
    public set_ignore_object_output(s)
       self.ignore_object_output_flag := check_flag(s)
+      return self
    end
 
    # When indent is set (ie output is over many lines and indented to
@@ -460,6 +463,7 @@ class ObjectOutputStream(Stream, SetFields)
    #
    public set_always_structure(s)
       self.always_structure_flag := check_flag(s)
+      return self
    end
 
    protected set_one(f)

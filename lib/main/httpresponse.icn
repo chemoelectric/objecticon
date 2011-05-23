@@ -23,6 +23,7 @@ class HttpResponse(MimeHeaders)
    #
    public set_url(url)
       self.url := url
+      return self
    end
 
    #
@@ -38,6 +39,7 @@ class HttpResponse(MimeHeaders)
    #
    public set_status(s)
       self.status := s
+      return self
    end
 
    #

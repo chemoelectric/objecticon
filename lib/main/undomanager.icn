@@ -53,6 +53,7 @@ class UndoManager(CompoundEdit)
 
    public set_limit(limit)
       self.limit := limit
+      return self
    end
 
    public add_edit(other)

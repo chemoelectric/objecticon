@@ -68,6 +68,7 @@ class CompoundEdit(UndoableEdit, SetFields)
    #
    public set_liberal(s)
       self.liberal_flag := check_flag(s)
+      return self
    end
 
    #
@@ -75,6 +76,7 @@ class CompoundEdit(UndoableEdit, SetFields)
    #
    public set_desc(s)
       self.desc := s
+      return self
    end
 
    #

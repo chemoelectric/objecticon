@@ -23,7 +23,7 @@ class BorderEdit(Dialog)
       set_b_inset_cb,
       set_x_align_cb,
       set_y_align_cb,
-      set_line_width,
+      set_line_width_cb,
       l_inset_field,
       r_inset_field,
       t_inset_field,
@@ -66,7 +66,7 @@ class BorderEdit(Dialog)
       y_align_list.toggle_is_shaded()
    end
 
-   public on_set_line_width()
+   public on_set_line_width_cb()
       line_width_field.toggle_is_shaded()
    end
 
@@ -80,35 +80,33 @@ class BorderEdit(Dialog)
          ="Canvas"
          label := tab(0) || " Setup"
       }
-      self.set_wattrib("label", label)
+      self.set_label(label)
 
       set_layout(GridLayout())
 
-      tabset := TabSet("c:eol")
+      tabset := TabSet().set_constraint("eol", &yes)
       add(tabset)
 
-      p := TabItem("layout=",GridLayout("extra=borders"))
+      p := TabItem().set_layout(GridLayout().set_extra("borders"))
       add_tab(p)
       p.set_label("General")
       if is(c, CanvasLineBorder) then {
-         use_empty_cb := CheckBox("label=Compound empty border")
+         use_empty_cb := CheckBox().set_label("Compound empty border")
          use_empty_cb.connect(self.on_use_empty_cb, Event.ACTION)
-         q := empty_panel := Panel("layout=",GridLayout())
-         p.add(Border("c:eol", "c:w=2",
-                      "title=",use_empty_cb,
-                      "content=",q))
+         q := empty_panel := Panel().set_layout(GridLayout())
+         p.add(Border().set_constraint("eol", &yes).set_constraint("w", 2).set_title(use_empty_cb).set_content(q))
          if /c.has_empty then
             empty_panel.set_is_shaded(&yes)
          else
             use_empty_cb.set_is_checked(&yes)
 
-         set_line_width := CheckBox("label=Border line_width : ")
-         set_line_width.connect(self.on_set_line_width, Event.ACTION)
-         p.add(set_line_width)
-         line_width_field := TextField("size=70", "c:eol", "filter=",&digits)
+         set_line_width_cb := CheckBox().set_label("Border line_width : ")
+         set_line_width_cb.connect(self.on_set_line_width_cb, Event.ACTION)
+         p.add(set_line_width_cb)
+         line_width_field := TextField().set_size(70).set_constraint("eol", &yes).set_filter(&digits)
          p.add(line_width_field)
          if \c.line_width_val then {
-            set_line_width.set_is_checked(&yes)
+            set_line_width_cb.set_is_checked(&yes)
             line_width_field.set_contents(c.line_width_val)
          } else {
             line_width_field.set_is_shaded(&yes)
@@ -117,10 +115,10 @@ class BorderEdit(Dialog)
       } else
          q := p
 
-      set_l_inset_cb := CheckBox("label=Left inset : ")
+      set_l_inset_cb := CheckBox().set_label("Left inset : ")
       set_l_inset_cb.connect(self.on_set_l_inset, Event.ACTION)
       q.add(set_l_inset_cb)
-      l_inset_field := TextField("size=70", "c:eol", "filter=",&digits)
+      l_inset_field := TextField().set_size(70).set_constraint("eol", &yes).set_filter(&digits)
       q.add(l_inset_field)
       if \c.empty_l_inset then {
          set_l_inset_cb.set_is_checked(&yes)
@@ -130,10 +128,10 @@ class BorderEdit(Dialog)
          l_inset_field.set_contents(Gui.X_INSET)
       }
 
-      set_r_inset_cb := CheckBox("label=Right inset : ")
+      set_r_inset_cb := CheckBox().set_label("Right inset : ")
       set_r_inset_cb.connect(self.on_set_r_inset, Event.ACTION)
       q.add(set_r_inset_cb)
-      r_inset_field := TextField("size=70", "c:eol", "filter=",&digits)
+      r_inset_field := TextField().set_size(70).set_constraint("eol", &yes).set_filter(&digits)
       q.add(r_inset_field)
       if \c.empty_r_inset then {
          set_r_inset_cb.set_is_checked(&yes)
@@ -143,10 +141,10 @@ class BorderEdit(Dialog)
          r_inset_field.set_contents(Gui.X_INSET)
       }
 
-      set_t_inset_cb := CheckBox("label=Top inset : ")
+      set_t_inset_cb := CheckBox().set_label("Top inset : ")
       set_t_inset_cb.connect(self.on_set_t_inset, Event.ACTION)
       q.add(set_t_inset_cb)
-      t_inset_field := TextField("size=70", "c:eol", "filter=",&digits)
+      t_inset_field := TextField().set_size(70).set_constraint("eol", &yes).set_filter(&digits)
       q.add(t_inset_field)
       if \c.empty_t_inset then {
          set_t_inset_cb.set_is_checked(&yes)
@@ -156,10 +154,10 @@ class BorderEdit(Dialog)
          t_inset_field.set_contents(Gui.Y_INSET)
       }
 
-      set_b_inset_cb := CheckBox("label=Bottom inset : ")
+      set_b_inset_cb := CheckBox().set_label("Bottom inset : ")
       set_b_inset_cb.connect(self.on_set_b_inset, Event.ACTION)
       q.add(set_b_inset_cb)
-      b_inset_field := TextField("size=70", "c:eol", "filter=",&digits)
+      b_inset_field := TextField().set_size(70).set_constraint("eol", &yes).set_filter(&digits)
       q.add(b_inset_field)
       if \c.empty_b_inset then {
          set_b_inset_cb.set_is_checked(&yes)
@@ -169,11 +167,10 @@ class BorderEdit(Dialog)
          b_inset_field.set_contents(Gui.Y_INSET)
       }
 
-      set_x_align_cb := CheckBox("label=X Alignment : ")
+      set_x_align_cb := CheckBox().set_label("X Alignment : ")
       set_x_align_cb.connect(self.on_set_x_align, Event.ACTION)
       p.add(set_x_align_cb)
-      x_align_list := List("c:eol", "size=50",
-                           "selection_list=",[Align.L, Align.C, Align.R])
+      x_align_list := List().set_constraint("eol", &yes).set_size(50).set_selection_list([Align.L, Align.C, Align.R])
       p.add(x_align_list)
       if \c.x_align_val then {
          set_x_align_cb.set_is_checked(&yes)
@@ -183,11 +180,10 @@ class BorderEdit(Dialog)
          x_align_list.object_set_selection(Align.C)
       }
 
-      set_y_align_cb := CheckBox("label=Y Alignment : ")
+      set_y_align_cb := CheckBox().set_label("Y Alignment : ")
       set_y_align_cb.connect(self.on_set_y_align, Event.ACTION)
       p.add(set_y_align_cb)
-      y_align_list := List("c:eol", "size=50",
-                           "selection_list=",[Align.T, Align.C, Align.B])
+      y_align_list := List().set_constraint("eol", &yes).set_size(50).set_selection_list([Align.T, Align.C, Align.B])
       p.add(y_align_list)
       if \c.y_align_val then {
          set_y_align_cb.set_is_checked(&yes)
@@ -248,8 +244,8 @@ class BorderEdit(Dialog)
             &null
       }
 
-      if \set_line_width then {
-         c.line_width_val := if set_line_width.is_checked() then 
+      if \set_line_width_cb then {
+         c.line_width_val := if set_line_width_cb.is_checked() then 
             integer(line_width_field.get_contents())
          else 
             &null

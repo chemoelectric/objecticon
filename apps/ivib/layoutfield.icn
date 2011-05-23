@@ -51,14 +51,15 @@ class LayoutField(Component)
          })
          layout_tbl[layouts.get_selection()] := c
       }
+      return self
    end
 
    public setup()
-      self.set_layout(GridLayout("flush"))
-      layouts :=  List("selection_list=&null,GridLayout")
+      self.set_layout(GridLayout().set_doi(0))
+      layouts :=  List().set_selection_list(["&null","GridLayout"])
       layouts.connect(self.on_layout_change, Event.SELECTION_CHANGED)
       self.add(layouts)
-      edit_layout_button := TextButton("label=Edit...", "c:x_align=l", "c:eol")
+      edit_layout_button := TextButton().set_label("Edit...").set_constraint("x_align", "l").set_constraint("eol", &yes)
       edit_layout_button.connect(self.on_edit_layout, Event.ACTION)
       self.add(edit_layout_button)
    end

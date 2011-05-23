@@ -22,12 +22,13 @@ class CodeTab(TabItem)
 
    public new(c)
       local l, p
-      cast(self,TabItem).new("label=Code")
+      cast(self,TabItem).new()
+      set_label("Code")
       self.c := c
 
-      set_layout(GridLayout("extra=borders"))
+      set_layout(GridLayout().set_extra("borders"))
 
-      p := Panel("c:eol", "layout=",GridLayout("flush"))
+      p := Panel().set_constraint("eol", &yes).set_layout(GridLayout().set_doi(0))
       self.add(p)
 
       var_category_cbg := CheckBoxGroup()
@@ -37,7 +38,7 @@ class CodeTab(TabItem)
       var_category_cbg.add(var_category0)
       p.add(var_category0)
 
-      var_category1 := CheckBox("c:eol")
+      var_category1 := CheckBox().set_constraint("eol", &yes)
       var_category1.set_label("Local setup variable")
       var_category_cbg.add(var_category1)
       p.add(var_category1)
@@ -47,13 +48,13 @@ class CodeTab(TabItem)
       else
          var_category_cbg.set_which_one(var_category1)
 
-      p := Panel("layout=",GridLayout("flush"), "c:eol")
+      p := Panel().set_layout(GridLayout().set_doi(0)).set_constraint("eol", &yes)
       self.add(p)
       l := Label()
       l.set_label("Import")
       p.add(l)
 
-      self.import_name := TextField("c:eol")
+      self.import_name := TextField().set_constraint("eol", &yes)
       self.import_name.set_size(150)
       p.add(self.import_name)
       self.import_name.set_contents(c.import_name)
@@ -62,7 +63,7 @@ class CodeTab(TabItem)
       l.set_label("Object name")
       p.add(l)
 
-      name := TextField("c:eol")
+      name := TextField().set_constraint("eol", &yes)
       name.set_size(150)
       p.add(name)
 
@@ -72,7 +73,7 @@ class CodeTab(TabItem)
       l.set_label("Class name")
       p.add(l)
 
-      self.class_name := TextField("c:eol")
+      self.class_name := TextField().set_constraint("eol", &yes)
       self.class_name.set_size(150)
       p.add(self.class_name)
 

@@ -51,7 +51,8 @@ class Border(Component)
    # ``l'', ``c'' or ``r''.
    #
    public set_internal_align(x)
-      return self.internal_align := x
+      self.internal_align := x
+      return self
    end
 
    #
@@ -61,6 +62,7 @@ class Border(Component)
       remove(\self.title)
       self.title := c
       add(\self.title)
+      return self
    end
    
    #
@@ -70,6 +72,7 @@ class Border(Component)
       remove(\self.content)
       self.content := c
       add(self.content)
+      return self
    end
 
    public initially()

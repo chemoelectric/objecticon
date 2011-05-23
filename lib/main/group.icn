@@ -19,6 +19,7 @@ class Group(Address)
 
    public set_phrase(x)
       phrase := x
+      return self
    end
 
    public get_mailboxes() 
@@ -27,10 +28,12 @@ class Group(Address)
 
    public set_mailboxes(x)
       mailboxes := x
+      return self
    end
 
    public add_mailbox(x)
       put(mailboxes, x)
+      return self
    end
 
    public to_rfc822()

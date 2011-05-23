@@ -127,8 +127,7 @@ class CanvasLineBorder(CanvasABorder)
    public create_visual_border()
       local b
       if \has_empty then {
-         b := CompoundBorder("outer=",create_outer_visual_border(),
-                             "inner=",EmptyBorder())
+         b := CompoundBorder().set_outer(create_outer_visual_border()).set_inner(EmptyBorder())
          b.inner.set_l_inset(\self.empty_l_inset)
          b.inner.set_r_inset(\self.empty_r_inset)
          b.inner.set_t_inset(\self.empty_t_inset)

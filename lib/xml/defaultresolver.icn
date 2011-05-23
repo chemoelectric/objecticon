@@ -45,6 +45,7 @@ class DefaultResolver(Resolver,SetFields)
    #
    public set_public_mapping(pub_id, uri)
       insert(public_mapping, pub_id, uri)
+      return self
    end
 
    #
@@ -53,6 +54,7 @@ class DefaultResolver(Resolver,SetFields)
    #
    public set_cache_uris(s)
       self.cache_uris_flag := check_flag(s)
+      return self
    end
 
    #
@@ -61,6 +63,7 @@ class DefaultResolver(Resolver,SetFields)
    #
    public set_http_client(hc)
       self.http_client := hc
+      return self
    end
 
    #

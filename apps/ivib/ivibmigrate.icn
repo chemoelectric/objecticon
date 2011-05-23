@@ -1112,7 +1112,7 @@ class ImgToPaintAction(Action)
    public new_key
 
    public apply(decode, proxy, key, val)
-      proxy.add(new_key, CanvasImagePaint("image=",\val))
+      proxy.add(new_key, CanvasImagePaint().set_image(\val))
    end
 
    public new(new_key)

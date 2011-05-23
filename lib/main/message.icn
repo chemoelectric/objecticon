@@ -39,6 +39,7 @@ class Message(SetFields, MimeHeaders)
    #
    public set_content(s)
       self.content := string(s) | runerr(103, s)
+      return self
    end
 
    #
@@ -80,7 +81,8 @@ class Message(SetFields, MimeHeaders)
       #
       # Use the handler to convert the data.
       #
-      return content := h.encode_data(self, s)
+      content := h.encode_data(self, s)
+      return self
    end
 
    #
@@ -315,7 +317,7 @@ class Message(SetFields, MimeHeaders)
    # @param t the {Time} from which to set the date field.
    #
    public set_date(t)
-      set_header("Date", t.to_rfc822())
+      return set_header("Date", t.to_rfc822())
    end
 
    #
@@ -338,7 +340,7 @@ class Message(SetFields, MimeHeaders)
    # @param a an {Address} or a list of {Address}es.
    #
    public set_to(a)
-      set_header("To", catenate_addresses(a))
+      return set_header("To", catenate_addresses(a))
    end
 
    #
@@ -347,7 +349,7 @@ class Message(SetFields, MimeHeaders)
    # @param a an {Address} or a list of {Address}es.
    #
    public add_to(a)
-      add_header("To", catenate_addresses(a))
+      return add_header("To", catenate_addresses(a))
    end
 
    #
@@ -370,7 +372,7 @@ class Message(SetFields, MimeHeaders)
    # @param a an {Address} or a list of {Address}es.
    #
    public set_reply_to(a)
-      set_header("Reply-To", catenate_addresses(a))
+      return set_header("Reply-To", catenate_addresses(a))
    end
 
    #
@@ -379,7 +381,7 @@ class Message(SetFields, MimeHeaders)
    # @param a an {Address} or a list of {Address}es.
    #
    public add_reply_to(a)
-      add_header("Reply-To", catenate_addresses(a))
+      return add_header("Reply-To", catenate_addresses(a))
    end
 
    #
@@ -402,7 +404,7 @@ class Message(SetFields, MimeHeaders)
    # @param a an {Address} or a list of {Address}es.
    #
    public set_resent_to(a)
-      set_header("Resent-To", catenate_addresses(a))
+      return set_header("Resent-To", catenate_addresses(a))
    end
 
    #
@@ -411,7 +413,7 @@ class Message(SetFields, MimeHeaders)
    # @param a an {Address} or a list of {Address}es.
    #
    public add_resent_to(a)
-      add_header("Resent-To", catenate_addresses(a))
+      return add_header("Resent-To", catenate_addresses(a))
    end
 
    #
@@ -434,7 +436,7 @@ class Message(SetFields, MimeHeaders)
    # @param a an {Address} or a list of {Address}es.
    #
    public set_cc(a)
-      set_header("cc", catenate_addresses(a))
+      return set_header("cc", catenate_addresses(a))
    end
 
    #
@@ -443,7 +445,7 @@ class Message(SetFields, MimeHeaders)
    # @param a an {Address} or a list of {Address}es.
    #
    public add_cc(a)
-      add_header("cc", catenate_addresses(a))
+      return add_header("cc", catenate_addresses(a))
    end
 
    #
@@ -466,7 +468,7 @@ class Message(SetFields, MimeHeaders)
    # @param a an {Address} or a list of {Address}es.
    #
    public set_resent_cc(a)
-      set_header("Resent-cc", catenate_addresses(a))
+      return set_header("Resent-cc", catenate_addresses(a))
    end
 
    #
@@ -475,7 +477,7 @@ class Message(SetFields, MimeHeaders)
    # @param a an {Address} or a list of {Address}es.
    #
    public add_resent_cc(a)
-      add_header("Resent-cc", catenate_addresses(a))
+      return add_header("Resent-cc", catenate_addresses(a))
    end
 
    #
@@ -498,7 +500,7 @@ class Message(SetFields, MimeHeaders)
    # @param a an {Address} or a list of {Address}es.
    #
    public set_bcc(a)
-      set_header("bcc", catenate_addresses(a))
+      return set_header("bcc", catenate_addresses(a))
    end
 
    #
@@ -507,7 +509,7 @@ class Message(SetFields, MimeHeaders)
    # @param a an {Address} or a list of {Address}es.
    #
    public add_bcc(a)
-      add_header("bcc", catenate_addresses(a))
+      return add_header("bcc", catenate_addresses(a))
    end
 
    #
@@ -530,7 +532,7 @@ class Message(SetFields, MimeHeaders)
    # @param a an {Address} or a list of {Address}es.
    #
    public set_resent_bcc(a)
-      set_header("Resent-bcc", catenate_addresses(a))
+      return set_header("Resent-bcc", catenate_addresses(a))
    end
 
    #
@@ -539,7 +541,7 @@ class Message(SetFields, MimeHeaders)
    # @param a an {Address} or a list of {Address}es.
    #
    public add_resent_bcc(a)
-      add_header("Resent-bcc", catenate_addresses(a))
+      return add_header("Resent-bcc", catenate_addresses(a))
    end
 
    #
@@ -562,7 +564,7 @@ class Message(SetFields, MimeHeaders)
    # @param a an {Mailbox} or a list of {Mailbox}es.
    #
    public set_from(m)
-      set_header("From", catenate_addresses(m))
+      return set_header("From", catenate_addresses(m))
    end
 
    #
@@ -571,7 +573,7 @@ class Message(SetFields, MimeHeaders)
    # @param a an {Mailbox} or a list of {Mailbox}es.
    #
    public add_from(m)
-      add_header("From", catenate_addresses(m))
+      return add_header("From", catenate_addresses(m))
    end
 
    #
@@ -592,7 +594,7 @@ class Message(SetFields, MimeHeaders)
    # @param m a {Mailbox}
    #
    public set_sender(m)
-      set_header("Sender", m.to_rfc822())
+      return set_header("Sender", m.to_rfc822())
    end
 
    #
@@ -614,7 +616,7 @@ class Message(SetFields, MimeHeaders)
    # @param a an {Mailbox} or a list of {Mailbox}es.
    #
    public set_resent_from(m)
-      set_header("Resent-From", catenate_addresses(m))
+      return set_header("Resent-From", catenate_addresses(m))
    end
 
    #
@@ -623,7 +625,7 @@ class Message(SetFields, MimeHeaders)
    # @param a an {Mailbox} or a list of {Mailbox}es.
    #
    public add_resent_from(m)
-      add_header("Resent-From", catenate_addresses(m))
+      return add_header("Resent-From", catenate_addresses(m))
    end
 
    #
@@ -644,7 +646,7 @@ class Message(SetFields, MimeHeaders)
    # @param m a {Mailbox}
    #
    public set_resent_sender(m)
-      set_header("Resent-Sender", m.to_rfc822())
+      return set_header("Resent-Sender", m.to_rfc822())
    end
 
    #
@@ -663,7 +665,7 @@ class Message(SetFields, MimeHeaders)
    # @param t a {Time}
    #
    public set_resent_date(t)
-      set_header("Resent-Date", t.to_rfc822())
+      return set_header("Resent-Date", t.to_rfc822())
    end
 
    #
@@ -683,7 +685,7 @@ class Message(SetFields, MimeHeaders)
    # @param ct a {ContentType}
    #
    public set_content_type(ct)
-      set_header("Content-Type", ct.to_rfc1521())
+      return set_header("Content-Type", ct.to_rfc1521())
    end
 
    #
@@ -703,7 +705,7 @@ class Message(SetFields, MimeHeaders)
    # @param cd a {ContentDisposition}
    #
    public set_content_disposition(cd)
-      set_header("Content-Disposition", cd.to_rfc1521())
+      return set_header("Content-Disposition", cd.to_rfc1521())
    end
 
    #
@@ -722,7 +724,7 @@ class Message(SetFields, MimeHeaders)
    # Set the "Content-Transfer-Encoding" from the given string.
    #
    public set_content_transfer_encoding(s)
-      set_header("Content-Transfer-Encoding", s)
+      return set_header("Content-Transfer-Encoding", s)
    end
 
    #
@@ -730,7 +732,7 @@ class Message(SetFields, MimeHeaders)
    # @param s a string
    #
    public set_subject(s)
-      set_header("Subject", s)
+      return set_header("Subject", s)
    end
 
    #

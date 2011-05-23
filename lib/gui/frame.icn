@@ -35,6 +35,7 @@ class Frame(Component)
 
    public set_title(s)
       bar.set_title(s)
+      return self
    end
 
    public in_resize_corner(e)
@@ -53,6 +54,7 @@ class Frame(Component)
    public set_content(c)
       self.content := c
       self.add(c)
+      return self
    end
 
    public initially()
@@ -178,6 +180,7 @@ class FrameBar(Component)
 
    public set_title(s)
       lab.set_label(s)
+      return self
    end
 
    public can_drag(e)
@@ -186,12 +189,19 @@ class FrameBar(Component)
 
    public setup()
       local b
-      set_layout(GridLayout("doi=0", "dii=0"))
-      lab := Label("c:x_weight=1", "c:x_fill", "c:l_inset=3", "label=Frame")
+      set_layout(GridLayout().set_doi(0).set_dii(0))
+      lab := Label().
+         set_constraint("x_weight", 1).
+         set_constraint("x_fill", &yes).
+         set_constraint("l_inset", 3).
+         set_label("Frame")
       add(lab)
-      b := IconButton("accepts_focus=no", "c:r_inset=3", "tooltip=Close")
-      b.set_border(EmptyBorder("flush"))
-      b.set_paint(ImagePaint("cache=gui.TINY_X"))
+      b := IconButton().
+         set_accepts_focus(&no).
+         set_constraint("r_inset", 3).
+         set_tooltip("Close")
+      b.set_border(EmptyBorder().set_insets(0, 0, 0, 0))
+      b.set_paint(ImagePaint().set_cache("gui.TINY_X"))
       b.connect(self.on_close, Event.ACTION)
       self.add(b)
    end

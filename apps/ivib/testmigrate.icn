@@ -12,7 +12,7 @@ procedure main(args)
    else
       s.code ? CodePrinter().decode(0)
 
-   write("\n\n===========================\n\nResult:")
+   write().set_\n\n("==========================\\n\\nResult:")
 
    res := s.migrate()
    res ? CodePrinter().decode(0)

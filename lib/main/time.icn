@@ -546,6 +546,7 @@ class Time()
       self.seconds := n
       self.zone := \zone | Timezone.get_timezone_at(get_unix_seconds())
       self.compute_broken_down_fields()
+      return self
    end
 
    #
@@ -554,6 +555,7 @@ class Time()
    public set_year(n)
       self.year := n
       self.compute_seconds()
+      return self
    end
 
    #
@@ -562,6 +564,7 @@ class Time()
    public set_month(n)
       self.month := n
       self.compute_seconds()
+      return self
    end
 
    #
@@ -580,6 +583,7 @@ class Time()
          t := d
       self.mday := t
       self.compute_seconds()
+      return self
    end
 
    #
@@ -588,6 +592,7 @@ class Time()
    public set_mday(n)
       self.mday := n
       self.compute_seconds()
+      return self
    end
 
    #
@@ -596,6 +601,7 @@ class Time()
    public set_hour(n)
       self.hour := n
       self.compute_seconds()
+      return self
    end
 
    #
@@ -604,6 +610,7 @@ class Time()
    public set_min(n)
       self.min := n
       self.compute_seconds()
+      return self
    end
 
    #
@@ -612,6 +619,7 @@ class Time()
    public set_sec(n)
       self.sec := n
       self.compute_seconds()
+      return self
    end
 
    #
@@ -622,6 +630,7 @@ class Time()
    public set_zone(z)
       self.zone := z
       self.compute_seconds()
+      return self
    end
 
    #
@@ -756,7 +765,7 @@ class Time()
    # @            is used.
    #
    public set_unix_seconds(t, zone)
-      set_seconds(SYSTEM_BASE_OFFSET + t, zone)
+      return set_seconds(SYSTEM_BASE_OFFSET + t, zone)
    end
 
    #
@@ -805,6 +814,7 @@ class Time()
       compute_seconds()
       if /zone then
          normalize_zone()
+      return self
    end
 
    #

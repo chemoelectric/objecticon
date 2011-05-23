@@ -47,6 +47,7 @@ class ProgressBar(Component)
       p >:= 100
       self.p := p
       self.invalidate()
+      return self
    end
 
    public set_one(f)

@@ -123,6 +123,7 @@ class HttpClient(NetClient)
    #
    public set_http_version(s)
       http_version := s
+      return self
    end
 
    #
@@ -130,6 +131,7 @@ class HttpClient(NetClient)
    #
    public set_user_agent(s)
       self.user_agent := s
+      return self
    end
 
    #
@@ -138,6 +140,7 @@ class HttpClient(NetClient)
    #
    public set_keep_alive(s)
       self.keep_alive_flag := check_flag(s)
+      return self
    end
 
    #
@@ -146,6 +149,7 @@ class HttpClient(NetClient)
    #
    public set_retry_while_data(s)
       self.retry_while_data_flag := check_flag(s)
+      return self
    end
 
    #
@@ -153,6 +157,7 @@ class HttpClient(NetClient)
    #
    public set_cookies(m)
       self.cookies := m
+      return self
    end
 
    #
@@ -167,6 +172,7 @@ class HttpClient(NetClient)
    #
    public set_gzip(s)
       self.gzip_flag := check_flag(s)
+      return self
    end
 
    #
@@ -205,6 +211,7 @@ class HttpClient(NetClient)
    #
    public set_retries(retries)
       self.retries := retries
+      return self
    end
 
    #

@@ -104,7 +104,8 @@ class MenuComponent(Rect,SetFields,Connectable)
    end
 
    public set_parent(x)
-      return self.parent := x
+      self.parent := x
+      return self
    end
 
    #
@@ -142,9 +143,11 @@ class MenuComponent(Rect,SetFields,Connectable)
    #
    public set_is_shaded(s)
       s := check_flag(s)
-      (s ~=== self.is_shaded_flag) | fail
-      self.is_shaded_flag := s
-      possibly_invalidate()
+      if (s ~=== self.is_shaded_flag) then {
+         self.is_shaded_flag := s
+         possibly_invalidate()
+      }
+      return self
    end
 
    #
@@ -174,6 +177,7 @@ class MenuComponent(Rect,SetFields,Connectable)
 
    public set_parent_component(x)
       self.parent_component := x
+      return self
    end
 
    #
@@ -183,6 +187,7 @@ class MenuComponent(Rect,SetFields,Connectable)
    #
    public set_component_link(x)
       self.component_link := x
+      return self
    end
 
    public is_sub_menu()
@@ -191,6 +196,7 @@ class MenuComponent(Rect,SetFields,Connectable)
 
    public set_is_decorative(s)
       self.is_decorative_flag := check_flag(s)
+      return self
    end
 
    public is_decorative()
@@ -207,6 +213,7 @@ class MenuComponent(Rect,SetFields,Connectable)
    #
    public set_tooltip(x)
       self.tooltip := x
+      return self
    end
 
    #
@@ -222,6 +229,7 @@ class MenuComponent(Rect,SetFields,Connectable)
    #
    public set_accel(k)
       self.accel := k
+      return self
    end
 
    #
@@ -237,6 +245,7 @@ class MenuComponent(Rect,SetFields,Connectable)
    public set_label_pos(x, y)
       self.label_x := x
       self.label_y := y
+      return self
    end
 
    #
@@ -325,6 +334,7 @@ class MenuComponent(Rect,SetFields,Connectable)
       if is_initialized() then {
          self.border.initially(self.parent_component)
       }
+      return self
    end
 
    protected create_proxy()
@@ -404,11 +414,14 @@ class MenuComponent(Rect,SetFields,Connectable)
          self.temp_win.resize()
          self.temp_win.invalidate()
       } else {
-         d := PureDialog("canvas=popup", 
-                         "w=", self.w, "h=",self.h,
-                         "w:dx=",-self.x, "w:dy=",-self.y,
-                         "w:x=", win.get_x() + win.get_dx() + self.x,
-                         "w:y=", win.get_y() + win.get_dy() + self.y)
+         d := PureDialog().
+            set_canvas("popup").
+            set_width(self.w).
+            set_height(self.h).
+            set_dx(-self.x).
+            set_dy(-self.y).
+            set_x(win.get_x() + win.get_dx() + self.x).
+            set_y(win.get_y() + win.get_dy() + self.y)
          self.temp_win := create_proxy()
          self.temp_win.set_pos(0, 0)
          self.temp_win.set_size(self.w, self.h)

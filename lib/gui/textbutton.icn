@@ -55,11 +55,11 @@ class TextButton(Button)
    # @param x   The label.
    #
    public set_label(x)
-      set_paint(paint_for_string(x))
+      return set_paint(paint_for_string(x))
    end
 
    public set_label_down(x)
-      set_paint_down(paint_for_string(x))
+      return set_paint_down(paint_for_string(x))
    end
 
    #
@@ -68,10 +68,10 @@ class TextButton(Button)
    # @param x   The down image
    #
    public set_image_down(x)
-      if /x then
+      return if /x then
          set_paint_down()
       else
-         set_paint_down(ImagePaint("image=",x))
+         set_paint_down(ImagePaint().set_image(x))
    end
 
    #
@@ -79,7 +79,7 @@ class TextButton(Button)
    # @param x   The image
    #
    public set_image(x)
-      set_paint(ImagePaint("image=",x))
+      return set_paint(ImagePaint().set_image(x))
    end
 
    #
@@ -91,6 +91,7 @@ class TextButton(Button)
    public set_images(x, y)
       set_image(x)
       set_image_down(y)
+      return self
    end
 
    public set_paint(p)
@@ -100,6 +101,7 @@ class TextButton(Button)
          self.paint.initially(self, self.accel)
          self.invalidate()
       }
+      return self
    end
 
    public set_paint_down(p)
@@ -109,6 +111,7 @@ class TextButton(Button)
          (\self.paint_down).initially(self, self.accel)
          self.invalidate()
       }
+      return self
    end
 
    public initially()

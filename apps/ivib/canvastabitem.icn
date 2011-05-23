@@ -24,7 +24,7 @@ class CanvasTabItem(CanvasComponent,TabItem)
       self.paint.gen_code(c)
       c.line(name || ".set_paint(" || self.paint.name || ")")
       every e := !sort(self.wattribs) do
-         c.line(name || ".set_wattrib(" || image(e[1]) || ", " || image(e[2]) || ")")
+         c.wattrib_line(name, e[1], e[2])
       if \self.is_shaded_flag then
          c.line(name || ".set_is_shaded(&yes)")
       if \self.layout_delegate then {
@@ -115,7 +115,7 @@ class CanvasTabItem(CanvasComponent,TabItem)
       local m, i
       m := cast(self,CanvasComponent).create_menu()
       if self ~=== parent.which_one then {
-         i := TextMenuItem("label=Which")
+         i := TextMenuItem().set_label("Which")
          i.connect(self.op_which, Event.ACTION)
          m.add(i)
       }

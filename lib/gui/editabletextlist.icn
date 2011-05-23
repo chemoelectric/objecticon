@@ -103,6 +103,7 @@ class EditableTextList(LineBasedScrollArea)
    #
    public set_contents_str(s)
       set_contents(str2list(s, '\n'))
+      return self
    end
 
    #
@@ -113,6 +114,7 @@ class EditableTextList(LineBasedScrollArea)
    public set_contents(x)
       self.contents := x
       contents_changed()
+      return self
    end
 
    #
@@ -254,6 +256,7 @@ class EditableTextList(LineBasedScrollArea)
    #
    public set_is_editable(s)
       self.is_editable_flag := check_flag(s)
+      return self
    end
 
    #
@@ -261,6 +264,7 @@ class EditableTextList(LineBasedScrollArea)
    #
    public set_move_on_rpress(s)
       self.move_on_rpress_flag := check_flag(s)
+      return self
    end
 
    #
@@ -933,7 +937,7 @@ class EditableTextList(LineBasedScrollArea)
       # Add the printable character at cursor position
       #
       if has_region() then {
-         ce := CompoundEdit("liberal=y")
+         ce := CompoundEdit().set_liberal(&yes)
          ed := EditableTextListDeleteRegionEdit(self)
          ed.doit()
          ce.add_edit(ed)
@@ -1236,6 +1240,7 @@ class EditableTextList(LineBasedScrollArea)
          compute_and_invalidate()
          constrain_line()
       }
+      return self
    end
 
    #
@@ -1248,6 +1253,7 @@ class EditableTextList(LineBasedScrollArea)
          compute_and_invalidate()
          constrain_line()
       }
+      return self
    end
 
    #
@@ -1260,6 +1266,7 @@ class EditableTextList(LineBasedScrollArea)
          compute_and_invalidate()
          constrain_line()
       }
+      return self
    end
 
    public set_one(f)

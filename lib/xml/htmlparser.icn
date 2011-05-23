@@ -21,6 +21,7 @@ class Tag(Node)
    #
    public set_name(s) 
       name := map(s, &lcase, &ucase)
+      return self
    end
 
    #
@@ -42,6 +43,7 @@ class Tag(Node)
    #
    public set_closed()
       closed := 1
+      return self
    end
 
    #
@@ -56,6 +58,7 @@ class Tag(Node)
    #
    public set_empty()
       empty := 1
+      return self
    end
 
    #
@@ -70,6 +73,7 @@ class Tag(Node)
    #
    public set_attribute(key, value)
       attributes[map(key, &lcase, &ucase)] := value
+      return self
    end
 
    public new()

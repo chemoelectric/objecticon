@@ -22,7 +22,8 @@ class XmlErrorHandler()
    # Set the output file
    #
    public set_out_file(x)
-      return self.out_file := x
+      self.out_file := x
+      return self
    end
 
    #
@@ -37,6 +38,7 @@ class XmlErrorHandler()
    #
    public set_level(n)
       self.level := n
+      return self
    end
 
    #

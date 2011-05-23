@@ -28,6 +28,7 @@ class ItemPaintTableColumn(TableColumn)
       self.item_paint := r
       if is_initialized() then
          self.item_paint.initially(self)
+      return self
    end
 
    #
@@ -38,11 +39,13 @@ class ItemPaintTableColumn(TableColumn)
       self.item_border := b
       if is_initialized() then
          self.item_border.initially(self)
+      return self
    end
 
    public set_column_align(x)
       cast(self,TableColumn).set_column_align(x)
       self.item_border.x_align := x
+      return self
    end
 
    public calculate_line_height(W)
@@ -80,7 +83,7 @@ class ItemPaintTableColumn(TableColumn)
 
    public new(a[])
       cast(self,TableColumn).new()
-      self.set_item_border(EmptyBorder("flush"))
+      self.set_item_border(EmptyBorder().set_insets(0, 0, 0, 0))
       set_fields(a)
       return
    end

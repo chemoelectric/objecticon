@@ -71,6 +71,7 @@ class List(DropDown)
    public set_constant_label(x)
       self.constant_label := x
       apply_selection()
+      return self
    end
 
    public create_view()

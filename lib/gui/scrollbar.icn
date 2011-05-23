@@ -116,7 +116,8 @@ class ScrollBar(Component)
    # Configure the orientation (default is vertical).
    #
    public set_is_horizontal(s)
-      return self.is_horizontal_flag := check_flag(s)
+      self.is_horizontal_flag := check_flag(s)
+      return self
    end
 
    #
@@ -126,6 +127,7 @@ class ScrollBar(Component)
    public set_total_size(x)
       self.total_size := x
       self.reconfigure()
+      return self
    end
 
    #
@@ -142,6 +144,7 @@ class ScrollBar(Component)
    public set_page_size(x)
       self.page_size := x
       self.reconfigure()
+      return self
    end
 
    #
@@ -170,6 +173,7 @@ class ScrollBar(Component)
          self.set_pos_from_value()
       } else
          self.value := x
+      return self
    end
 
    #
@@ -178,7 +182,8 @@ class ScrollBar(Component)
    # @param x   The increment size.
    #
    public set_increment_size(x)
-      return self.increment_size := x
+      self.increment_size := x
+      return self
    end
 
    #
@@ -192,6 +197,7 @@ class ScrollBar(Component)
       self.lo := lo
       self.hi := hi
       self.reconfigure()
+      return self
    end
 
    #
@@ -205,9 +211,10 @@ class ScrollBar(Component)
       if /self.wheel_component then 
          wu_listener := wd_listener := &null
       else {
-         wu_listener := self.wheel_component.connect(self.handle_wheel_up, Event.MOUSE_WHEEL_UP)
-         wd_listener := self.wheel_component.connect(self.handle_wheel_down, Event.MOUSE_WHEEL_DOWN)
+         wu_listener := self.wheel_component.connect_and_return(self.handle_wheel_up, Event.MOUSE_WHEEL_UP)
+         wd_listener := self.wheel_component.connect_and_return(self.handle_wheel_down, Event.MOUSE_WHEEL_DOWN)
       }
+      return self
    end
 
    #
@@ -216,6 +223,7 @@ class ScrollBar(Component)
    #
    public set_wheel_factor(n)
       self.wheel_factor := n
+      return self
    end
 
    #
@@ -462,11 +470,11 @@ class ScrollBar(Component)
       \self.value | runerr("Value not set")
 
       if /self.is_horizontal_flag then {
-         b1.set_paint(ImagePaint("cache=gui.ARROW_UP"))
-         b2.set_paint(ImagePaint("cache=gui.ARROW_DOWN"))
+         b1.set_paint(ImagePaint().set_cache("gui.ARROW_UP"))
+         b2.set_paint(ImagePaint().set_cache("gui.ARROW_DOWN"))
       } else {
-         b1.set_paint(ImagePaint("cache=gui.ARROW_LEFT"))
-         b2.set_paint(ImagePaint("cache=gui.ARROW_RIGHT"))
+         b1.set_paint(ImagePaint().set_cache("gui.ARROW_LEFT"))
+         b2.set_paint(ImagePaint().set_cache("gui.ARROW_RIGHT"))
       }
       cast(self,Component).initially()
    end
@@ -546,12 +554,12 @@ class ScrollBar(Component)
    public new(a[])
       cast(self,Component).new()
       repeat_ticker := Dispatcher.new_task{repeat_tick()}
-      self.b1 := IconButton("border=",EmptyBorder("flush"))
+      self.b1 := IconButton().set_border(EmptyBorder().set_insets(0, 0, 0, 0))
       self.b1.connect(self.handle_button_up, Event.BUTTON_PRESS)
       self.b1.connect(self.handle_button_up, Event.BUTTON_HELD)
       self.b1.set_accepts_focus(&no)
       add(self.b1)
-      self.b2 := IconButton("border=",EmptyBorder("flush"))
+      self.b2 := IconButton().set_border(EmptyBorder().set_insets(0, 0, 0, 0))
       self.b2.connect(self.handle_button_down, Event.BUTTON_PRESS)
       self.b2.connect(self.handle_button_down, Event.BUTTON_HELD)
       self.b2.set_accepts_focus(&no)

@@ -28,6 +28,7 @@ class URL()
    #
    public set_protocol(x)
       self.protocol := x
+      return self
    end
 
    #
@@ -42,6 +43,7 @@ class URL()
    #
    public set_port(x)
       self.port := x
+      return self
    end
 
    #
@@ -56,6 +58,7 @@ class URL()
    #
    public set_file(x)
       self.file := x
+      return self
    end
 
    #
@@ -70,6 +73,7 @@ class URL()
    #
    public set_ref(x)
       self.ref := x
+      return self
    end
 
    #
@@ -84,6 +88,7 @@ class URL()
    #
    public set_address(x)
       self.address := x
+      return self
    end
 
    #
@@ -131,6 +136,7 @@ class URL()
    #
    public set_cgi_parameters(cgi)
       self.file ?:= tab(upto('?') | 0) || "?" || make_cgi_string(cgi)
+      return self
    end
 
    #
@@ -198,6 +204,7 @@ class URL()
                set_ref()
          }
       }
+      return self
    end
 
    #

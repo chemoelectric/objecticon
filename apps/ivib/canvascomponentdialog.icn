@@ -131,20 +131,19 @@ class CanvasComponentDialog(Dialog)
          label := tab(0) || " Setup"
       }
 
-      tabset := ListTabSet("c:eol")
+      tabset := ListTabSet().set_constraint("eol", &yes)
       self.set_focus(tabset.dl)
       add(tabset)
 
       if c.allows_positioning() then {
-         pos_tab := TabItem("label=Pos & Size", 
-                            "layout=",GridLayout("extra=borders"))
+         pos_tab := TabItem().set_label("Pos & Size").set_layout(GridLayout().set_extra("borders"))
          add_tab(pos_tab)
 
          l := Label()
          l.set_label("Alignment : ")
          pos_tab.add(l)
 
-         align_spec := XYAlignList("c:eol")
+         align_spec := XYAlignList().set_constraint("eol", &yes)
          align_spec.set_align(c.x_align, c.y_align)
          pos_tab.add(align_spec)
 
@@ -158,7 +157,7 @@ class CanvasComponentDialog(Dialog)
          x_spec_list.set_contents(c.x_spec)
          pos_tab.add(x_spec_list)
 
-         set_x_fixed := CheckBox("c:eol")
+         set_x_fixed := CheckBox().set_constraint("eol", &yes)
          set_x_fixed.set_label("Fix")
          if \c.x_fixed then
             set_x_fixed.set_is_checked(&yes)
@@ -179,7 +178,7 @@ class CanvasComponentDialog(Dialog)
          y_spec_list.set_contents(c.y_spec)
          pos_tab.add(y_spec_list)
 
-         set_y_fixed := CheckBox("c:eol")
+         set_y_fixed := CheckBox().set_constraint("eol", &yes)
          set_y_fixed.set_label("Fix")
          if \c.y_fixed then
             set_y_fixed.set_is_checked(&yes)
@@ -205,7 +204,7 @@ class CanvasComponentDialog(Dialog)
             set_w_fixed.set_is_checked(&yes)
          pos_tab.add(set_w_fixed)
 
-         set_w_default := CheckBox("c:eol", "c:w=2")
+         set_w_default := CheckBox().set_constraint("eol", &yes).set_constraint("w", 2)
          set_w_default.connect(self.on_set_w_default, Event.ACTION)
          set_w_default.set_label("Default")
 
@@ -235,7 +234,7 @@ class CanvasComponentDialog(Dialog)
             set_h_fixed.set_is_checked(&yes)
          pos_tab.add(set_h_fixed)
 
-         set_h_default := CheckBox("c:eol", "c:w=2")
+         set_h_default := CheckBox().set_constraint("eol", &yes).set_constraint("w", 2)
          set_h_default.connect(self.on_set_h_default, Event.ACTION)
          set_h_default.set_label("Default")
          if /c.h_spec then {
@@ -253,22 +252,22 @@ class CanvasComponentDialog(Dialog)
          l.set_label("Z : ")
          pos_tab.add(l)
 
-         z_field := TextField("w=100", "filter=",&digits)
+         z_field := TextField().set_width(100).set_filter(&digits)
          z_field.set_contents(c.z)
          pos_tab.add(z_field)
       }
 
-      self.attrib_tab := MapTab("label=WAttribs", "table=",c.wattribs)
+      self.attrib_tab := MapTab().set_label("WAttribs").set_table(c.wattribs)
       add_tab(self.attrib_tab)
 
       code_tab := CodeTab(c)
       add_tab(code_tab)
 
-      other_tab := TabItem("label=Other")
+      other_tab := TabItem().set_label("Other")
       other_tab.set_layout(GridLayout())
       add_tab(other_tab)
 
-      tooltip_field := PaintField("c:eol", "c:w=2", "title=",Label("label=Tooltip"))
+      tooltip_field := PaintField().set_constraint("eol", &yes).set_constraint("w", 2).set_title(Label().set_label("Tooltip"))
       other_tab.add(tooltip_field)
       tooltip_field.set_contents(c.tooltip)
 
@@ -277,7 +276,7 @@ class CanvasComponentDialog(Dialog)
       accel_flag.set_label("Set Accelerator")
       other_tab.add(accel_flag)
 
-      accel_tf := TextField("c:eol")
+      accel_tf := TextField().set_constraint("eol", &yes)
       accel_tf.set_size(125)
       other_tab.add(accel_tf)
 
@@ -288,13 +287,13 @@ class CanvasComponentDialog(Dialog)
          accel_tf.set_contents(c.accel)
       }
 
-      shaded := CheckBox("c:eol", "c:w=2")
+      shaded := CheckBox().set_constraint("eol", &yes).set_constraint("w", 2)
       shaded.set_label("Is shaded")
       if \c.is_shaded_flag then
          shaded.set_is_checked(&yes)
       other_tab.add(shaded)
 
-      has_initial_focus := CheckBox("c:eol", "c:w=2")
+      has_initial_focus := CheckBox().set_constraint("eol", &yes).set_constraint("w", 2)
       has_initial_focus.set_label("Has initial focus")
       if c.parent_Canvas.initial_focus === c then
          has_initial_focus.set_is_checked(&yes)
@@ -302,22 +301,22 @@ class CanvasComponentDialog(Dialog)
 
       orig_layout := c.layout_delegate
       if c.allows_add() then {
-         other_tab.add(Label("label=Layout"))
-         layout_field := LayoutField("c:eol")
+         other_tab.add(Label().set_label("Layout"))
+         layout_field := LayoutField().set_constraint("eol", &yes)
          layout_field.set_contents(c.layout_delegate)
          layout_field.connect(self.on_layout_change, Event.SELECTION_CHANGED)
          other_tab.add(layout_field)
       }
 
       if \c.border then {
-         other_tab.add(Label("label=Border"))
-         border_field := BorderField("c:eol")
+         other_tab.add(Label().set_label("Border"))
+         border_field := BorderField().set_constraint("eol", &yes)
          border_field.set_contents(c.border_opts)
          other_tab.add(border_field)
       }
 
-      other_tab.add(Label("label=Tab order:"))
-      tab_field := TextField("w=100", "filter=",&digits)
+      other_tab.add(Label().set_label("Tab order:"))
+      tab_field := TextField().set_width(100).set_filter(&digits)
       tab_field.set_contents(c.tab_ord)
       other_tab.add(tab_field)
 
@@ -325,7 +324,7 @@ class CanvasComponentDialog(Dialog)
       add_tab(event_tab)
 
       if c.allows_positioning() then {
-         constraint_tab := MapTab("label=Constraints", "table=",c.constraints)
+         constraint_tab := MapTab().set_label("Constraints").set_table(c.constraints)
          add_tab(constraint_tab)
       }
 
@@ -334,7 +333,7 @@ class CanvasComponentDialog(Dialog)
       self.add(oc)
 
       # Default title.
-      self.set_wattrib("label", label)
+      self.set_label(label)
    end
 
    #

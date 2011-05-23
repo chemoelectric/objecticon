@@ -155,16 +155,16 @@ class CanvasPreferencesDialog(Dialog)
       cast(self,Dialog).new()
       self.c := c
       label := "Dialog Preferences"
-      self.set_wattrib("label",  label)
+      self.set_label(label)
 
       set_layout(GridLayout())
 
-      tabset := ListTabSet("c:eol")
+      tabset := ListTabSet().set_constraint("eol", &yes)
       self.set_focus(tabset.dl)
       add(tabset)
 
       pos_tab := TabItem()
-      pos_tab.set_layout(GridLayout("extra=borders"))
+      pos_tab.set_layout(GridLayout().set_extra("borders"))
       pos_tab.set_label("Size")
       add_tab(pos_tab)
 
@@ -176,7 +176,7 @@ class CanvasPreferencesDialog(Dialog)
       w_spec_tf.set_size(130)
       pos_tab.add(w_spec_tf)
 
-      set_w_default := CheckBox("c:eol")
+      set_w_default := CheckBox().set_constraint("eol", &yes)
       set_w_default.connect(self.on_set_w_default, Event.ACTION)
       set_w_default.set_label("Default")
       if /c.dialog_iw then {
@@ -197,7 +197,7 @@ class CanvasPreferencesDialog(Dialog)
       h_spec_tf.set_size(130)
       pos_tab.add(h_spec_tf)
 
-      set_h_default := CheckBox("c:eol")
+      set_h_default := CheckBox().set_constraint("eol", &yes)
       set_h_default.connect(self.on_set_h_default, Event.ACTION)
       set_h_default.set_label("Default")
       if /c.dialog_ih then {
@@ -210,34 +210,34 @@ class CanvasPreferencesDialog(Dialog)
          set_h_default.set_is_shaded(&yes)
       pos_tab.add(set_h_default)
 
-      pos_tab.add(Label("label=Layout"))
-      layout_field := LayoutField("c:eol", "c:w=2")
+      pos_tab.add(Label().set_label("Layout"))
+      layout_field := LayoutField().set_constraint("eol", &yes).set_constraint("w", 2)
       layout_field.set_contents(c.layout_delegate)
       layout_field.connect(self.on_layout_change, Event.SELECTION_CHANGED)
       pos_tab.add(layout_field)
       orig_layout := c.layout_delegate
      
-      self.attrib_tab := MapTab("label=WAttribs", "table=",c.dialog_struct.wattribs)
+      self.attrib_tab := MapTab().set_label("WAttribs").set_table(c.dialog_struct.wattribs)
       add_tab(self.attrib_tab)
 
       methods_tab := TabItem()
-      methods_tab.set_layout(GridLayout("extra=borders"))
+      methods_tab.set_layout(GridLayout().set_extra("borders"))
       methods_tab.set_label("Methods")
       add_tab(methods_tab)
 
-      gen_main := CheckBox("c:eol", "c:w=2")
+      gen_main := CheckBox().set_constraint("eol", &yes).set_constraint("w", 2)
       gen_main.set_label("Generate main() procedure")
       methods_tab.add(gen_main)
 
-      gen_component_setup := CheckBox("c:eol", "c:w=2")
+      gen_component_setup := CheckBox().set_constraint("eol", &yes).set_constraint("w", 2)
       gen_component_setup.set_label("Generate component_setup() method")
       methods_tab.add(gen_component_setup)
 
-      gen_init_dialog := CheckBox("c:eol", "c:w=2")
+      gen_init_dialog := CheckBox().set_constraint("eol", &yes).set_constraint("w", 2)
       gen_init_dialog.set_label("Generate init_dialog() & end_dialog() methods")
       methods_tab.add(gen_init_dialog)
 
-      gen_constructor := CheckBox("c:eol", "c:w=2")
+      gen_constructor := CheckBox().set_constraint("eol", &yes).set_constraint("w", 2)
       gen_constructor.set_label("Generate constructor")
       methods_tab.add(gen_constructor)
 
@@ -264,7 +264,7 @@ class CanvasPreferencesDialog(Dialog)
       gen_indent.set_contents(c.gen_indent)
       
       code_tab := TabItem()
-      code_tab.set_layout(GridLayout("extra=borders"))
+      code_tab.set_layout(GridLayout().set_extra("borders"))
       code_tab.set_label("Code")
       add_tab(code_tab)
 
@@ -272,7 +272,7 @@ class CanvasPreferencesDialog(Dialog)
       l.set_label("Name")
       code_tab.add(l)
 
-      name := TextField("c:eol")
+      name := TextField().set_constraint("eol", &yes)
       name.set_size(200)
       code_tab.add(name)
 
@@ -282,13 +282,12 @@ class CanvasPreferencesDialog(Dialog)
       l.set_label("Superclass")
       code_tab.add(l)
 
-      self.superclass_name := TextField("c:eol")
+      self.superclass_name := TextField().set_constraint("eol", &yes)
       self.superclass_name.set_size(200)
       code_tab.add(self.superclass_name)
       self.superclass_name.set_contents(c.superclass_name)
 
-      self.is_component_cb := CheckBox("label=Subclass of component",
-                                       "c:tab=1", "c:eol")
+      self.is_component_cb := CheckBox().set_label("Subclass of component").set_constraint("tab", 1).set_constraint("eol", &yes)
       if \c.is_component then {
          self.is_component_cb.set_is_checked(&yes)
          self.gen_init_dialog.set_is_shaded(&yes)
@@ -297,14 +296,14 @@ class CanvasPreferencesDialog(Dialog)
       self.is_component_cb.connect(self.on_is_component_cb, Event.ACTION)
       code_tab.add(self.is_component_cb)
 
-      code_tab.add(Label("label=Import"))
-      self.import_name := TextField("c:eol", "size=200")
+      code_tab.add(Label().set_label("Import"))
+      self.import_name := TextField().set_constraint("eol", &yes).set_size(200)
       code_tab.add(self.import_name)
       self.import_name.set_contents(c.import_name)
 
-      self.layout_filename_cb := CheckBox("label=Save layout in")
+      self.layout_filename_cb := CheckBox().set_label("Save layout in")
       code_tab.add(self.layout_filename_cb)
-      self.layout_filename := TextField("c:eol", "size=200")
+      self.layout_filename := TextField().set_constraint("eol", &yes).set_size(200)
       code_tab.add(self.layout_filename)
       if \c.layout_filename then {
          self.layout_filename_cb.set_is_checked(&yes)

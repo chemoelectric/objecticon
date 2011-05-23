@@ -8,7 +8,7 @@
  * The entries must be grouped by class, but beyond that order is not
  * significant.
  */
-NativeDef(graphics.Window,wcreate,graphics_Window_wcreate)
+NativeDef(graphics.Window,open_impl,graphics_Window_open_impl)
 NativeDef(graphics.Window,color_value,graphics_Window_color_value)
 NativeDef(graphics.Window,parse_color,graphics_Window_parse_color)
 NativeDef(graphics.Window,palette_chars,graphics_Window_palette_chars)
@@ -80,8 +80,6 @@ NativeDef(graphics.Window,ungrab_pointer,graphics_Window_ungrab_pointer)
 NativeDef(graphics.Window,lower,graphics_Window_lower)
 NativeDef(graphics.Window,own_selection,graphics_Window_own_selection)
 NativeDef(graphics.Window,pending,graphics_Window_pending)
-NativeDef(graphics.Window,post_attrib,graphics_Window_post_attrib)
-NativeDef(graphics.Window,pre_attrib,graphics_Window_pre_attrib)
 NativeDef(graphics.Window,query_pointer,graphics_Window_query_pointer)
 NativeDef(graphics.Window,query_root_pointer,graphics_Window_query_root_pointer)
 NativeDef(graphics.Window,raise,graphics_Window_raise)
@@ -123,7 +121,6 @@ NativeDef(graphics.Window,text_width,graphics_Window_text_width)
 NativeDef(graphics.Window,unclip,graphics_Window_unclip)
 NativeDef(graphics.Window,uncouple,graphics_Window_uncouple)
 NativeDef(graphics.Window,warp_pointer,graphics_Window_warp_pointer)
-NativeDef(graphics.Window,wopen,graphics_Window_wopen)
 NativeDef(graphics.Window,write_image,graphics_Window_write_image)
 #endif
 NativeDef(io.DescStream,flag,io_DescStream_flag)

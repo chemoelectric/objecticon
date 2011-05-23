@@ -32,6 +32,7 @@ class SmtpClient(NetClient)
    #
    public set_hostname(s)
       hostname := s
+      return self
    end
 
    public open_connection()

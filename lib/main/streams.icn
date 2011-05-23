@@ -230,6 +230,7 @@ class Stream()
    #
    public set_close_underlying(s)
       self.close_underlying_flag := check_flag(s)
+      return self
    end
 end
 
@@ -409,6 +410,7 @@ class BufferStream(Stream, SetFields)
    #
    public set_flush_on_nl(s)
       self.flush_on_nl_flag := check_flag(s)
+      return self
    end
 
    #
@@ -416,6 +418,7 @@ class BufferStream(Stream, SetFields)
    #
    public set_buff_size(n)
       self.buff_size := n
+      return self
    end
 
    public read()

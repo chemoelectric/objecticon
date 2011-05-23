@@ -55,6 +55,7 @@ class CheckBox(Button)
          unchecked_paint.w = checked_paint.h | runerr("Image widths differ")
          unchecked_paint.h = checked_paint.h | runerr("Image heights differ")
       }
+      return self
    end
 
    #
@@ -62,7 +63,7 @@ class CheckBox(Button)
    # @param x   The label.
    #
    public set_label(x)
-      set_paint(paint_for_string(x))
+      return set_paint(paint_for_string(x))
    end
 
    public set_paint(p)
@@ -72,6 +73,7 @@ class CheckBox(Button)
          self.paint.initially(self, self.accel)
          self.invalidate()
       }
+      return self
    end
 
    public initially()
@@ -80,9 +82,9 @@ class CheckBox(Button)
       #
       if /self.unchecked_paint then {
          if /self.parent_check_box_group then
-            self.set_box_paint(ImagePaint("cache=gui.BOX_UP"), ImagePaint("cache=gui.BOX_DOWN"))
+            self.set_box_paint(ImagePaint().set_cache("gui.BOX_UP"), ImagePaint().set_cache("gui.BOX_DOWN"))
          else
-            self.set_box_paint(ImagePaint("cache=gui.DIAMOND_UP"), ImagePaint("cache=gui.DIAMOND_DOWN"))
+            self.set_box_paint(ImagePaint().set_cache("gui.DIAMOND_UP"), ImagePaint().set_cache("gui.DIAMOND_DOWN"))
       }
       \self.paint | runerr("no label specified")
       cast(self,Component).initially()

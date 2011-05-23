@@ -97,6 +97,7 @@ class TreeNode(SetFields)
    #
    public set_label(x)
       self.label := x
+      return self
    end
 
    #
@@ -113,6 +114,7 @@ class TreeNode(SetFields)
    #
    public set_icon_paint(i1, i2, i3)
       self.icon_paint := [i1, i2, i3]
+      return self
    end
 
    #
@@ -169,6 +171,7 @@ class TreeNode(SetFields)
    #
    public set_always_expandable(s)
       self.always_expandable_flag := check_flag(s)
+      return self
    end
 
    #
@@ -177,6 +180,7 @@ class TreeNode(SetFields)
    #
    public set_expanded(s)
       self.is_expanded_flag := check_flag(s)
+      return self
    end
       
    #

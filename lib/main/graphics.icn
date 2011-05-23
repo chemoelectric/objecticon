@@ -57,42 +57,19 @@ class Window(SetFields,NoCopy)
    end
 
    #
-   # Open a new window.  The parameters should be key=value attributes according to
-   # the available fields described above.
+   # Open a new window.
    #
-   public static open(a[])
-      local f, w, t, display
-      t := []
-      every f := generate_fields(a) do {
-         case f.attr of {
-            "display": display := f.val
-            default: put(t, f)
-         }
-      }
-      w := Window(wcreate(display)) | fail
-      every w.apply_field(!t)
-      w.wopen() | fail
-      return w
+   public static open(display)
+      return Window(open_impl(display))
    end
 
    #
    # Produces a new window value that combines the canvas of
    # {self} with a new graphics context. The new graphics attributes
-   # are copied from {self} and modified by the field arguments {a}.
+   # are copied from {self}.
    #
-   public clone(a[])
-      local w
-      w := Window(clone_impl())
-      w.pre_attrib()
-      w.set_fields(a)
-      w.post_attrib()
-      return w
-   end
-
-   public attrib(a[])
-      pre_attrib()
-      cast(self,SetFields).attrib!a
-      post_attrib()
+   public clone()
+      return Window(clone_impl())
    end
 
    #
@@ -103,10 +80,7 @@ class Window(SetFields,NoCopy)
       return Window(couple_impl(other))
    end
 
-   private static defer wcreate(display)
-   private defer wopen()
-   private defer pre_attrib()
-   private defer post_attrib()
+   private static defer open_impl(display)
    private defer clone_impl(a[])
    private defer couple_impl(other)
 
@@ -613,11 +587,12 @@ class Window(SetFields,NoCopy)
    public static open_image(img, win)
       local w
       w := if /win then
-         Window.open("canvas=hidden")
+         Window.open()
       else
-         Window.open("canvas=hidden", 
-                     "fg=",win.get_fg(),
-                     "bg=",win.get_bg())
+         Window.open().
+           set_fg(win.get_fg()).
+           set_bg(win.get_bg()).
+           erase_area()
       w.set_image(img) | {
          w.close()
          fail

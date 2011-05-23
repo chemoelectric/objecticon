@@ -29,6 +29,7 @@ class PopClient(NetClient)
    #
    public set_username(s)
       username := s
+      return self
    end
 
    #
@@ -36,6 +37,7 @@ class PopClient(NetClient)
    #
    public set_password(s)
       password := s
+      return self
    end
 
    #

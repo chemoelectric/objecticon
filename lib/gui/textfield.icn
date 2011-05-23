@@ -71,6 +71,7 @@ class TextField(Component)
    #
    public set_displaychar(c)
       displaychar := c
+      return self
    end
 
    #
@@ -81,7 +82,8 @@ class TextField(Component)
    # @ set_filter('0987654321abcdefABCDEF')
    #
    public set_filter(c)
-      return self.filter := c ** Gui.PRINTABLE_1
+      self.filter := c ** Gui.PRINTABLE_1
+      return self
    end
 
    #
@@ -89,6 +91,7 @@ class TextField(Component)
    #
    public set_is_editable(s)
       self.is_editable_flag := check_flag(s)
+      return self
    end
 
    #
@@ -96,6 +99,7 @@ class TextField(Component)
    #
    public set_move_on_rpress(s)
       self.move_on_rpress_flag := check_flag(s)
+      return self
    end
 
    #
@@ -134,6 +138,7 @@ class TextField(Component)
          constrain_line()
          undo_manager.clear()
       }
+      return self
    end
 
    public start_handle(e)
@@ -549,7 +554,7 @@ class TextField(Component)
       # Add the printable character at cursor position
       #
       if has_region() then {
-         ce := CompoundEdit("liberal=y")
+         ce := CompoundEdit().set_liberal(&yes)
          ed := TextFieldDeleteRegionEdit(self)
          ed.doit()
          ce.add_edit(ed)

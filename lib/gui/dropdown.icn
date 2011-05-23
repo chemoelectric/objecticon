@@ -48,6 +48,7 @@ class DropDown(SelectionList,Component)
    #
    public set_direction(s)
       self.direction := s
+      return self
    end
 
    public on_button_press(ev)
@@ -97,6 +98,7 @@ class DropDown(SelectionList,Component)
    #
    public set_max_height(n)
       self.max_height := n
+      return self
    end
 
    #
@@ -105,6 +107,7 @@ class DropDown(SelectionList,Component)
    #
    public set_max_width(n)
       self.max_width := n
+      return self
    end
 
    public go_up(e)
@@ -222,19 +225,23 @@ class DropDown(SelectionList,Component)
          self.parent_dialog.remove(tl)
 
          d := if use_direction == DOWN then 
-            PureDialog("canvas=popup", 
-                       "w=", tl.w_spec, "h=",tl.h_spec,
-                       "w:dx=", -self.x,
-                       "w:dy=", -(self.y + self.h),
-                       "w:x=", win.get_x() + win.get_dx() + self.x,
-                       "w:y=", win.get_y() + win.get_dy() + self.y + self.h)
+            PureDialog().
+               set_canvas("popup").
+               set_width( tl.w_spec).
+               set_height(tl.h_spec).
+               set_dx(-self.x).
+               set_dy(-(self.y + self.h)).
+               set_x(win.get_x() + win.get_dx() + self.x).
+               set_y(win.get_y() + win.get_dy() + self.y + self.h)
          else
-            PureDialog("canvas=popup", 
-                       "w=", tl.w_spec, "h=",tl.h_spec,
-                       "w:dx=", -self.x,
-                       "w:dy=", -(self.y - tl.h_spec),
-                       "w:x=", win.get_x() + win.get_dx() + self.x,
-                       "w:y=", win.get_y() + win.get_dy() + self.y - tl.h_spec)
+            PureDialog().
+               set_canvas("popup").
+               set_width( tl.w_spec).
+               set_height(tl.h_spec).
+               set_dx(-self.x).
+               set_dy(-(self.y - tl.h_spec)).
+               set_x(win.get_x() + win.get_dx() + self.x).
+               set_y(win.get_y() + win.get_dy() + self.y - tl.h_spec)
 
          d.add(tl)
          self.tl.set_pos(0, 0)
@@ -367,10 +374,10 @@ class DropDown(SelectionList,Component)
       cast(self,Component).new()
       self.set_border(SunkenBorder())
       # Make the same width as the button in the scrollbar of the dropdown.
-      self.b := IconButton("w=",ScrollArea.predict_scrollbar_size())
+      self.b := IconButton().set_width(ScrollArea.predict_scrollbar_size())
       self.b.set_parent(self)
       self.b.connect(self.on_button_press, Event.BUTTON_PRESS)
-      self.b.set_paint(ImagePaint("cache=gui.ARROW_DOWN"))
+      self.b.set_paint(ImagePaint().set_cache("gui.ARROW_DOWN"))
       self.b.set_accepts_focus(&no)
       self.direction := BEST
       self.add(b)

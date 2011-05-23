@@ -115,12 +115,13 @@ class MenuBar(Component)
       # Do nothing if x presently open
       #
       if self.which_open === x then
-         return
+         return self
 
       set_which_highlight(x)
       self.which_open := x
       self.which_open.show(self.which_open.label_x -self.which_open.border.get_l_inset(),
                            self.y + self.h,, self.y)
+      return self
    end
 
    #
@@ -132,7 +133,7 @@ class MenuBar(Component)
       # Do nothing if already in desired state.
       #
       if (self.which_highlight === x) & /self.which_open then
-         return
+         return self
 
       if /self.which_highlight then
          self.parent_dialog.enter_menu_mode(self)
@@ -149,6 +150,7 @@ class MenuBar(Component)
 
       if /self.which_highlight then
          self.parent_dialog.exit_menu_mode()
+      return self
    end
 
    public handle_key_left(e)

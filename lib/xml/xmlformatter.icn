@@ -34,6 +34,7 @@ class XmlFormatter(Formatter,SetFields)
    #
    public set_indent(n)
       self.indent := n
+      return self
    end
 
    #
@@ -42,6 +43,7 @@ class XmlFormatter(Formatter,SetFields)
    #
    public set_no_whitespace(s)
       self.no_whitespace_flag := check_flag(s)
+      return self
    end
 
    #
@@ -51,6 +53,7 @@ class XmlFormatter(Formatter,SetFields)
    #
    public set_text_trim(s)
       self.text_trim_flag := check_flag(s)
+      return self
    end
 
    #
@@ -60,6 +63,7 @@ class XmlFormatter(Formatter,SetFields)
    #
    public set_as_read(s)
       as_read_flag := check_flag(s)
+      return self
    end
 
    public format_document(n)

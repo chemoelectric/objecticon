@@ -98,7 +98,8 @@ class XmlParser(Connectable,SetFields)
    # Set the resolver
    #
    public set_resolver(r)
-      return self.resolver := r
+      self.resolver := r
+      return self
    end
 
    #
@@ -114,6 +115,7 @@ class XmlParser(Connectable,SetFields)
    #
    public set_do_namespaces(s)
       self.do_namespaces_flag := check_flag(s)
+      return self
    end
 
    #
@@ -121,6 +123,7 @@ class XmlParser(Connectable,SetFields)
    #
    public set_validate(s)
       self.validate_flag := check_flag(s)
+      return self
    end
 
    #
@@ -128,6 +131,7 @@ class XmlParser(Connectable,SetFields)
    #
    public set_preserve_comments(s)
       preserve_comments_flag := check_flag(s)
+      return self
    end
 
    #
@@ -140,6 +144,7 @@ class XmlParser(Connectable,SetFields)
    #
    public set_preserve_insignificant_whitespace(s)
       preserve_insignificant_whitespace_flag := check_flag(s)
+      return self
    end
 
    #

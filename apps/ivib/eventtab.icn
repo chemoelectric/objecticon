@@ -89,13 +89,14 @@ class EventTab(TabItem)
 
    public new(l, name_field)
       local c1, c2, p
-      cast(self,TabItem).new("label=Events")
+      cast(self,TabItem).new()
+      set_label("Events")
 
       set_layout(GridLayout())
 
       self.name_field := name_field
       self.contents := \l | []
-      tbl := Table("c:eol")
+      tbl := Table().set_constraint("eol", &yes)
       tbl.connect(self.on_tbl, Event.SELECTION_CHANGED)
       tbl.set_select_mode(Select.ONE)
       tbl.set_size("200", "100")
@@ -111,8 +112,8 @@ class EventTab(TabItem)
       c2.set_label("Handler")
       tbl.add_column(c2)
 
-      p := Panel("c:eol", "c:y_weight=0")
-      p.set_layout(GridLayout("doi=0"))
+      p := Panel().set_constraint("eol", &yes).set_constraint("y_weight", 0)
+      p.set_layout(GridLayout().set_doi(0))
       event :=  EditList()
       event.set_size(95)
       l := ["&null",
@@ -161,8 +162,8 @@ class EventTab(TabItem)
       p.add(handler)
       add(p)
 
-      p := Panel("c:eol","c:y_weight=0")
-      p.set_layout(GridLayout("doi=0"))
+      p := Panel().set_constraint("eol", &yes).set_constraint("y_weight", 0)
+      p.set_layout(GridLayout().set_doi(0))
       add_button := TextButton()
       add_button.connect(self.on_add, Event.ACTION)
       add_button.set_label("Add")

@@ -62,6 +62,7 @@ class CgiParams(SetFields)
 
    public set_stdin_limit(n)
       self.stdin_limit := n
+      return self
    end
 
    protected set_one(f)

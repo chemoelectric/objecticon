@@ -372,6 +372,7 @@ class Grid(SetFields)
    #
    public set_dii(n)
       self.dii := n
+      return self
    end
 
    #
@@ -379,6 +380,7 @@ class Grid(SetFields)
    #
    public set_doi(n)
       self.doi := n
+      return self
    end
 
    #
@@ -388,6 +390,7 @@ class Grid(SetFields)
    #
    public set_extra(s)
       self.extra := s
+      return self
    end
 
    public set_one(f)

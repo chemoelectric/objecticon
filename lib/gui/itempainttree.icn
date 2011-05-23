@@ -28,6 +28,7 @@ class ItemPaintTree(Tree)
       self.item_paint := r
       if is_initialized() then
          self.item_paint.initially(self)
+      return self
    end
 
    #
@@ -38,6 +39,7 @@ class ItemPaintTree(Tree)
       self.item_border := b
       if is_initialized() then
          self.item_border.initially(self)
+      return self
    end
 
    public calculate_line_height()
@@ -106,7 +108,7 @@ class ItemPaintTree(Tree)
 
    public new(a[])
       cast(self,Tree).new()
-      self.set_item_border(EmptyBorder("flush"))
+      self.set_item_border(EmptyBorder().set_insets(0, 0, 0, 0))
       set_fields(a)
       return
    end

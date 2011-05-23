@@ -27,6 +27,7 @@ class Comment(Node)
    #
    public set_comment(comment)
       self.comment := comment
+      return self
    end
 
    public new(s)

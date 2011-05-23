@@ -314,6 +314,7 @@ class Encode(SetFields)
    #
    public set_fast(s)
       self.fast_flag := check_flag(s)
+      return self
    end
 
    protected set_one(f)

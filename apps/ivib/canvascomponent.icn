@@ -111,7 +111,7 @@ class CanvasComponent(CanvasObject)
          c.line(name || ".set_is_shaded(&yes)")
 
       every e := !sort(self.wattribs) do
-         c.line(name || ".set_wattrib(" || image(e[1]) || ", " || txt_image(e[2]) || ")")
+         c.wattrib_line(name, e[1], e[2])
 
       c.line(name || ".clear_constraints()")
       every e := !sort(self.constraints) do
@@ -265,11 +265,11 @@ class CanvasComponent(CanvasObject)
    public do_highlight(W)
       local cw, i, r
       r := self.get_clip_rect() | fail
-      cw := W.clone("line_style=dashed")
+      cw := W.clone().set_line_style("dashed")
       cw.clip(r.x, r.y, r.w, r.h)
-      cw.attrib("line_style=solid")
+      cw.set_line_style("solid")
       if self === self.parent_Canvas.selected then
-         cw.attrib("fg=red")
+         cw.set_fg("red")
 
       every i := 0 to RST - 1 do {
          cw.draw_line(self.x + i, self.y + RSW, self.x + i, self.y + i, self.x + RSW, self.y + i)
@@ -284,10 +284,11 @@ class CanvasComponent(CanvasObject)
       }
 
       if *self.parent_Canvas.selections > 1 then {
-         cw.attrib("fg=blue")
+         cw.set_fg("blue")
          cw.unclip()
          cw.fill_circle(self.x + self.w, self.y, 8)
-         cw.attrib("fg=white", "font=serif,10")
+         cw.set_fg("white")
+         cw.set_font("serif,10")
          center_string(cw, self.x + self.w, self.y, 
                        keyof(self.parent_Canvas.selections, self))
       }
@@ -484,22 +485,22 @@ class CanvasComponent(CanvasObject)
       local m, i, c, cm, csm, key, fm
 
       m := Menu()
-      i := TextMenuItem("label=Dialog")
+      i := TextMenuItem().set_label("Dialog")
       i.connect(self.op_dialog, Event.ACTION)
       m.add(i)
 
       if self.allows_add() & /self.layout_delegate then {
-         i := TextMenuItem("label=Gridify")
+         i := TextMenuItem().set_label("Gridify")
          i.connect(self.op_gridify, Event.ACTION)
          m.add(i)
       }
 
       if \self.parent.layout_delegate then {
          c := self.constraints
-         cm := Menu("label=Constraints")
+         cm := Menu().set_label("Constraints")
          m.add(cm)
 
-         csm := Menu("label=Position")
+         csm := Menu().set_label("Position")
          cm.add(csm)
          if /flag(c["eol"]) then
             csm.add(SetConstraintItem(self, "eol", 1))
@@ -524,7 +525,7 @@ class CanvasComponent(CanvasObject)
          } else
             csm.add(SetConstraintItem(self, "w", 2))
 
-         csm := Menu("label=X layout")
+         csm := Menu().set_label("X layout")
          cm.add(csm)
          if /flag(c["x_fill"]) then
             csm.add(SetConstraintItem(self, "x_fill", 1))
@@ -546,7 +547,7 @@ class CanvasComponent(CanvasObject)
          }            
          csm.add(SetConstraintItem(self, "x_weight", if real(c["x_weight"]) = 1.0 then 0.0 else 1.0))
 
-         csm := Menu("label=Y layout")
+         csm := Menu().set_label("Y layout")
          cm.add(csm)
          if /flag(c["y_fill"]) then
             csm.add(SetConstraintItem(self, "y_fill", 1))
@@ -568,7 +569,7 @@ class CanvasComponent(CanvasObject)
          }
          csm.add(SetConstraintItem(self, "y_weight", if real(c["y_weight"]) = 1.0 then 0.0 else 1.0))
 
-         csm := Menu("label=Insets")
+         csm := Menu().set_label("Insets")
          cm.add(csm)
          every key := "l_inset"|"r_inset"|"t_inset"|"b_inset" do {
             if i := integer(c[key]) then
@@ -579,14 +580,14 @@ class CanvasComponent(CanvasObject)
       }
 
       # File sub-menu
-      fm := Menu("label=File")
+      fm := Menu().set_label("File")
       if self.allows_copy() then {
-         i := TextMenuItem("label=Save")
+         i := TextMenuItem().set_label("Save")
          i.connect(self.op_save, Event.ACTION)
          fm.add(i)
       }
       if self.allows_add() then {
-         i := TextMenuItem("label=Load")
+         i := TextMenuItem().set_label("Load")
          i.connect(self.op_load, Event.ACTION)
          fm.add(i)
       }
@@ -594,28 +595,28 @@ class CanvasComponent(CanvasObject)
          m.add(fm)
 
       # Edit sub-menu
-      fm := Menu("label=Edit")
+      fm := Menu().set_label("Edit")
       if self.allows_copy() then {
-         i := TextMenuItem("label=Duplicate")
+         i := TextMenuItem().set_label("Duplicate")
          i.connect(self.op_duplicate, Event.ACTION)
          fm.add(i)
       }
       if self.allows_copy() & self.allows_delete() then {
-         i := TextMenuItem("label=Cut")
+         i := TextMenuItem().set_label("Cut")
          i.connect(self.op_cut, Event.ACTION)
          fm.add(i)
       }
       if self.allows_copy() then {
-         i := TextMenuItem("label=Copy")
+         i := TextMenuItem().set_label("Copy")
          i.connect(self.op_copy, Event.ACTION)
          fm.add(i)
       }
-      i := TextMenuItem("label=Paste")
+      i := TextMenuItem().set_label("Paste")
       i.connect(self.op_paste, Event.ACTION)
       fm.add(i)
 
       if allows_delete() then {
-         i := TextMenuItem("label=Delete")
+         i := TextMenuItem().set_label("Delete")
          i.connect(self.op_delete, Event.ACTION)
          fm.add(i)
       }

@@ -25,8 +25,7 @@ class EditListTextField(TextField)
    public new(a[])
       cast(self,TextField).new()
       self.connect(self.on_key, Event.KEY_PRESS)
-      self.set_border(EmptyBorder("l_inset=",Gui.TEXT_INSET,
-                                  "r_inset=",0))
+      self.set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(0))
       set_fields(a)
       return
    end
@@ -57,7 +56,8 @@ class EditList(DropDown)
    # @param c  The filter
    #
    public set_filter(c)
-      return self.view.set_filter(c)
+      self.view.set_filter(c)
+      return self
    end
 
    #
@@ -89,6 +89,7 @@ class EditList(DropDown)
          self.selection := &null
          self.view.set_contents(x)
       }
+      return self
    end
 
    public apply_selection(ev)

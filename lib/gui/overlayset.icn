@@ -34,7 +34,7 @@ class OverlaySet(Component)
          self.invalidate()
       } else
          self.which_one := x
-      return x
+      return self
    end
 
    public set_hidden_flags()

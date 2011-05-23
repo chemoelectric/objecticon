@@ -38,6 +38,7 @@ class ListTabSet(Component)
       self.dl.object_set_selections([x])
       self.dl.object_set_cursor(x)
       synch()
+      return self
    end
 
    public add_tab(t, i)
@@ -85,8 +86,8 @@ class ListTabSet(Component)
       self.set_constraint("y_fill", &yes)
       self.set_constraint("x_weight", 1.0)
       self.set_constraint("y_weight",  1.0)
-      set_layout(GridLayout("flush"))
-      self.dl := ListTabSetList("select_mode=one", "x_weight=0")
+      set_layout(GridLayout().set_doi(0))
+      self.dl := ListTabSetList().set_select_mode("one").set_constraint("x_weight", 0)
       self.dl.connect(self.on_sel_change, Event.SELECTION_CHANGED)
       self.add(dl)
       b := Border()

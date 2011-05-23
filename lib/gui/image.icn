@@ -44,6 +44,7 @@ class Image(Component)
          self.invalidate()
       } else
          self.image_str := x
+      return self
    end
 
    #
@@ -59,6 +60,7 @@ class Image(Component)
          self.invalidate()
       } else
          self.image_cache := x
+      return self
    end
 
    #
@@ -74,6 +76,7 @@ class Image(Component)
          self.invalidate()
       } else
          self.image_window := x
+      return self
    end
 
    #
@@ -113,6 +116,7 @@ class Image(Component)
    #
    public set_scale_up(s)
       self.scale_up_flag := check_flag(s)
+      return self
    end
 
    public close_image()
@@ -181,8 +185,7 @@ class Image(Component)
                zoom_win.copy_to(self.cbwin, , , , , pt.x, pt.y)
          else {
             (\zoom_win).close()
-            zoom_win := Window.open("size=" || zoom_w || "," || zoom_h, 
-                              "canvas=hidden") | syserr("Couldn't open temp window")
+            zoom_win := Window.open().set_size(zoom_w, zoom_h) | syserr("Couldn't open temp window")
             Zoom(win, zoom_win, 0, 0, img_w, img_h, 0, 0, zoom_w, zoom_h)
             zoom_win.copy_to(self.cbwin, , , , , pt.x, pt.y)
          }

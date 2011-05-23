@@ -22,13 +22,26 @@ class Connectable()
    # Create and connect a Listener to this object.
    # @return the Listener created and added.
    #
-   public connect(proc, etype)
+   public connect_and_return(proc, etype)
       local l
       l := Listener(proc,
                     etype)
       listeners := copy(listeners)
       put(listeners, l)
       return l
+   end
+
+   #
+   # Create and connect a Listener to this object.
+   # @return self
+   #
+   public connect(proc, etype)
+      local l
+      l := Listener(proc,
+                    etype)
+      listeners := copy(listeners)
+      put(listeners, l)
+      return self
    end
 
    #

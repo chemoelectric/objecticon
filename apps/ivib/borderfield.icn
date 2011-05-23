@@ -57,11 +57,12 @@ class BorderField(Component)
          })
          border_tbl[borders.get_selection()] := c
       }
+      return self
    end
 
    public setup()
-      self.set_layout(GridLayout("flush"))
-      borders :=  List("selection_list=",
+      self.set_layout(GridLayout().set_doi(0))
+      borders :=  List().set_selection_list(
                        ["Default",
                         "EmptyBorder",
                         "RaisedBorder",
@@ -70,7 +71,7 @@ class BorderField(Component)
                         "PlainBorder"])
       borders.connect(self.on_border_change, Event.SELECTION_CHANGED)
       self.add(borders)
-      edit_border_button := TextButton("label=Edit...", "c:x_align=l", "c:eol")
+      edit_border_button := TextButton().set_label("Edit...").set_constraint("x_align", "l").set_constraint("eol", &yes)
       edit_border_button.connect(self.on_edit_border, Event.ACTION)
       self.add(edit_border_button)
    end

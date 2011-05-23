@@ -35,6 +35,7 @@ class CheckBoxMenuItem(Toggle,TextMenuItem)
       self.unchecked_paint := x
       self.checked_paint := y
       synch_left_image()
+      return self
    end
 
    public initially()
@@ -43,9 +44,9 @@ class CheckBoxMenuItem(Toggle,TextMenuItem)
       #
       if /self.unchecked_paint then {
          if /self.parent_check_box_group then
-            self.set_box_paint(ImagePaint("cache=gui.BOX_UP"), ImagePaint("cache=gui.BOX_DOWN"))
+            self.set_box_paint(ImagePaint().set_cache("gui.BOX_UP"), ImagePaint().set_cache("gui.BOX_DOWN"))
          else
-            self.set_box_paint(ImagePaint("cache=gui.DIAMOND_UP"), ImagePaint("cache=gui.DIAMOND_DOWN"))
+            self.set_box_paint(ImagePaint().set_cache("gui.DIAMOND_UP"), ImagePaint().set_cache("gui.DIAMOND_DOWN"))
       }
       synch_left_image()
       cast(self,TextMenuItem).initially()

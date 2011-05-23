@@ -38,6 +38,7 @@ class ComponentScrollAreaView(Component)
       remove(\self.inner)
       self.inner := inner
       add(inner)
+      return self
    end
 end
 
@@ -54,6 +55,7 @@ end
 class ComponentScrollArea(ScrollArea)
    public set_inner(inner)
       view.set_inner(inner)
+      return self
    end
 
    public layout()

@@ -83,6 +83,7 @@ class TableColumn(TextButton)
    #
    public set_column_width(x)
       self.column_width := x
+      return self
    end
 
    #
@@ -90,6 +91,7 @@ class TableColumn(TextButton)
    # @param x A constant from {Align}
    public set_column_align(x)
       self.border.x_align := x
+      return self
    end
 
    public display()

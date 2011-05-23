@@ -26,12 +26,12 @@ class InfoDialog(Dialog)
       /alignment := "l"
       attrib("label=" || title)
       set_layout(GridLayout())
-      l := Label("c:eol", "c:y_weight=1")
+      l := Label().set_constraint("eol", &yes).set_constraint("y_weight", 1)
       s := ".cell x_align=" || alignment || "\n"
       every s ||:= !lines || "\n.br\n"
       l.set_label(s)
       add(l)
-      add(Line("c:eol", "size=100", "c:x_fill"))
+      add(Line().set_constraint("eol", &yes).set_size(100).set_constraint("x_fill", &yes))
       b := TextButton()
       b.set_label(button_text)
       b.connect(self.dispose, Event.ACTION)

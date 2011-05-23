@@ -56,6 +56,7 @@ class SelectableScrollArea(LineBasedScrollArea)
    public set_contents(x)
       self.contents := x
       contents_changed()
+      return self
    end
 
    #
@@ -107,6 +108,7 @@ class SelectableScrollArea(LineBasedScrollArea)
    #
    public set_draggable_cursor(s)
       self.draggable_cursor := check_flag(s)
+      return self
    end
 
    #
@@ -114,6 +116,7 @@ class SelectableScrollArea(LineBasedScrollArea)
    #
    public set_motion_cursor(s)
       self.motion_cursor := check_flag(s)
+      return self
    end
 
    #
@@ -122,6 +125,7 @@ class SelectableScrollArea(LineBasedScrollArea)
    #
    public set_selection_on_key_moves(s)
       self.selection_on_key_moves := check_flag(s)
+      return self
    end
 
    #
@@ -130,6 +134,7 @@ class SelectableScrollArea(LineBasedScrollArea)
    #
    public set_select_mode(s)
       self.select_mode := s
+      return self
    end
 
    #
@@ -227,6 +232,7 @@ class SelectableScrollArea(LineBasedScrollArea)
          self.selections := elementset(l)
          constrain_selections()
       }
+      return self
    end
 
    #
@@ -301,6 +307,7 @@ class SelectableScrollArea(LineBasedScrollArea)
       self.cursor := line
       invalidate_line(\self.cursor)
       constrain_cursor()
+      return self
    end
 
    #
@@ -357,6 +364,7 @@ class SelectableScrollArea(LineBasedScrollArea)
       invalidate_subject_width()
       invalidate_line_height()
       compute_and_invalidate()
+      return self
    end
 
    #

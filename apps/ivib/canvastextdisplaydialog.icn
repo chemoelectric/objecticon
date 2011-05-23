@@ -41,12 +41,12 @@ class CanvasTextDisplayDialog(CanvasComponentDialog)
       add_tab_at_front(p)
       p.set_label("Contents")
 
-      contents := EditableTextList("c:eol")
+      contents := EditableTextList().set_constraint("eol", &yes)
       contents.set_size(200, 200)
       contents.set_contents(copy(c.get_contents()))
       p.add(contents)
 
-      ucs_cb := CheckBox("label=Ucs content")
+      ucs_cb := CheckBox().set_label("Ucs content")
       if type(c.contents[1]) == "ucs" then
          ucs_cb.set_is_checked(&yes)
       ucs_cb.connect(self.on_ucs_cb, Event.ACTION)

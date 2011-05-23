@@ -41,6 +41,7 @@ class Sizer(Component)
    public set_range(lo, hi)
       self.lo := lo
       self.hi := hi
+      return self
    end
 
    #
@@ -63,6 +64,7 @@ class Sizer(Component)
    #
    public set_is_horizontal(s)
       self.is_horizontal_flag := check_flag(s)
+      return self
    end
 
    #
@@ -71,6 +73,7 @@ class Sizer(Component)
    #
    public set_show_inter(s)
       self.show_inter_flag := check_flag(s)
+      return self
    end
 
    public display()
@@ -88,7 +91,7 @@ class Sizer(Component)
       }
    end
 
-   public set_curr_pos(e)
+   private set_curr_pos(e)
       if \self.is_horizontal_flag then
          curr_pos := e.y - drag_offset - parent.y
       else
@@ -192,7 +195,7 @@ class Sizer(Component)
       connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
       connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
-      gp := ImagePaint("cache=gui.GRID")
+      gp := ImagePaint().set_cache("gui.GRID")
       set_fields(a)
       return
    end
@@ -205,7 +208,9 @@ class SliderDragComponent(Component)
    end
 
    public new()
-      cast(self,Component).new("pattern=gray", "fill_style=masked")
+      cast(self,Component).new()
+      set_pattern("gray")
+      set_fill_style("masked")
       return
    end
 end

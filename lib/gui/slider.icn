@@ -104,6 +104,7 @@ class Slider(Component)
    #
    public set_is_horizontal(s)
       self.is_horizontal_flag := check_flag(s)
+      return self
    end
 
    #
@@ -112,6 +113,7 @@ class Slider(Component)
    #
    public set_snaps(n)
       self.snaps := n
+      return self
    end
 
    #
@@ -119,6 +121,7 @@ class Slider(Component)
    #
    public set_ticks(n)
       self.ticks := n
+      return self
    end
 
    #
@@ -126,6 +129,7 @@ class Slider(Component)
    #
    public set_labels(n)
       self.labels := n
+      return self
    end
 
    #
@@ -135,6 +139,7 @@ class Slider(Component)
    public set_increment_size(x)
       self.increment_size := x
       self.invalidate()
+      return self
    end
 
    #
@@ -150,6 +155,7 @@ class Slider(Component)
    #
    public set_wheel_factor(n)
       self.wheel_factor := n
+      return self
    end
 
    #
@@ -168,6 +174,7 @@ class Slider(Component)
          self.set_pos_from_value()
       } else 
          self.value := x
+      return self
    end
 
    public move_value(x)
@@ -237,6 +244,7 @@ class Slider(Component)
       else
          self.discrete_vals := &null
       self.reconfigure()
+      return self
    end
 
    public handle_lpress(e)
@@ -507,7 +515,7 @@ class Slider(Component)
       self.slider_area := SliderArea()
       self.increment_size := 1
       self.wheel_factor := 1
-      self.set_border(EmptyBorder("flush"))
+      self.set_border(EmptyBorder().set_insets(0, 0, 0, 0))
       add(self.slider_area)
       self.slider_area.connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       self.slider_area.connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)

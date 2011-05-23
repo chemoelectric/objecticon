@@ -172,7 +172,8 @@ class Table(Component)
    end
 
    public set_checked(l)
-      return self.table_content.set_checked(l)
+      self.table_content.set_checked(l)
+      return self
    end
 
    public get_checked()
@@ -202,7 +203,8 @@ class Table(Component)
    # @param x   The contents
    #
    public set_contents(x)
-      return self.table_content.set_contents(x)
+      self.table_content.set_contents(x)
+      return self
    end
 
    #
@@ -231,7 +233,8 @@ class Table(Component)
    # @param l   The list of item numbers.
    #
    public set_selections(l)
-      return self.table_content.set_selections(l)
+      self.table_content.set_selections(l)
+      return self
    end
 
    #
@@ -240,6 +243,7 @@ class Table(Component)
    # @p
    public set_cursor(line)
       self.table_content.set_cursor(line)
+      return self
    end
 
    #
@@ -303,6 +307,7 @@ class Table(Component)
    # @param m a constant from {Select}
    public set_select_mode(m)
       self.table_content.set_select_mode(m)
+      return self
    end
 
    #
@@ -426,7 +431,7 @@ class Table(Component)
    public new(a[])
       cast(self,Component).new()
       self.preferred_focus := self.table_content := create_table_content()
-      self.table_content.set_border(EmptyBorder("flush"))
+      self.table_content.set_border(EmptyBorder().set_insets(0, 0, 0, 0))
       self.set_border(SunkenBorder())
       every self.table_content.connect(self.on_table_content,
                                        Event.CURSOR_MOVED | Event.SELECTION_CHANGED)

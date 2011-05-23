@@ -108,6 +108,7 @@ class Tree(SelectableScrollArea)
       self.default_icon_paint := [i1, i2, i3]
       if is_initialized() then
          every (!default_icon_paint).initially(self)
+      return self
    end
    
    #
@@ -123,7 +124,7 @@ class Tree(SelectableScrollArea)
          set_contents(flatten())
          set_selections([])
       }
-      return root_node
+      return self
    end
 
    #
@@ -148,6 +149,7 @@ class Tree(SelectableScrollArea)
    public set_show_root_handles(s)
       self.show_root_handles_flag := check_flag(s)
       self.tree_structure_changed()
+      return self
    end
 
    #
@@ -156,6 +158,7 @@ class Tree(SelectableScrollArea)
    public set_show_root(s)
       self.show_root_flag := check_flag(s)
       self.tree_structure_changed()
+      return self
    end
 
    public compute_img_wh()
@@ -266,7 +269,7 @@ class Tree(SelectableScrollArea)
       y0 := yp + lh / 2
 
       N := contents[i]
-      dashed := view.cbwin.clone("fill_style=masked", "pattern=gray")
+      dashed := view.cbwin.clone().set_fill_style("masked").set_pattern("gray")
       lp := xp
       every j := 1 to N.depth - 1 do {
          if N.draw_line[j] == ("f"|"d") then
@@ -323,11 +326,11 @@ class Tree(SelectableScrollArea)
 
    public new(a[])
       cast(self,SelectableScrollArea).new()
-      plus := ImagePaint("cache=gui.PLUS")
-      minus := ImagePaint("cache=gui.MINUS")
-      set_default_icon_paint(ImagePaint("cache=gui.CLOSED_FOLDER"), 
-                             ImagePaint("cache=gui.OPEN_FOLDER"),
-                             ImagePaint("cache=gui.FILE"))
+      plus := ImagePaint().set_cache("gui.PLUS")
+      minus := ImagePaint().set_cache("gui.MINUS")
+      set_default_icon_paint(ImagePaint().set_cache("gui.CLOSED_FOLDER"), 
+                             ImagePaint().set_cache("gui.OPEN_FOLDER"),
+                             ImagePaint().set_cache("gui.FILE"))
       show_root_flag := show_root_handles_flag := 1
       set_fields(a)
       return

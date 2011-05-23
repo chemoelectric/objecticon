@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import gui, io, graphics, ipl.lists, ipl.strings
+import gui, io, graphics, ipl.lists, ipl.strings, util
 
 #
 # Convert a list l to a string representation.
@@ -26,28 +26,16 @@ procedure util_check_attribs(dialog, t, valid_set)
    local s, e
    static test_win
    initial
-      test_win := Window.open("canvas=hidden") | stop("couldn't open window")
+      test_win := Window.open().set_canvas("hidden") | stop("couldn't open window")
 
    # Check for attrib names
    every s := !sort(t) do {
       if not member(valid_set, s[1]) then
          return alert_error(dialog, "Invalid attribute " || s[1])
+      if not convert_wattrib(s[1], s[2]) then
+         return alert_error(dialog, "Invalid value " || s[2] || " for attrib " || s[1])
    }
 
-   # Check no attrib values give runtime errors when set.
-   &handler := &current
-   errorclear()
-   e := create {
-      every s := !sort(t) do {
-         if s[1] == "canvas" then
-            next
-         test_win.attrib(s[1] || "=" || s[2])
-      }
-   }
-   @e
-   &handler := &null
-   if &errornumber then
-      return alert_error(dialog, "Invalid value " || s[2] || " for attrib " || s[1])
 
    return
 end
@@ -102,4 +90,39 @@ procedure txt_image(s)
       return image(s)
    else
       return image(string(s))
+end
+
+procedure try_list(val, len)
+   local l, t
+   l := []
+   val ? {
+      while t := tab(find(",")) do {
+         put(l, integer(t)) | fail
+         move(1)
+      }
+      t := tab(0)
+      put(l, integer(t)) | fail
+   }
+   if *l = len then
+      return l
+end
+
+procedure convert_wattrib(key, val)
+   case key of {
+      "pos"|"size"|"min_size"|"max_size":
+         return try_list(val, 2)
+      "geometry"|"clip":
+         return try_list(val, 4)
+      "resize": 
+         return flag(val)
+
+      "x"|"y"|"height"|"width"|"w"|"h"|
+         "depth"|"line_width"|"dx"|"dy"|"min_width"|
+         "min_height"|"max_width"|"max_height":
+         return integer(val)
+
+      "image"|"pointer"|"label"|"fg"|"bg"|"draw_op"|"icon"|"font"|
+         "line_style"|"fill_style"|"pattern"|"input_mask": 
+         return val
+   }
 end

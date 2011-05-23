@@ -170,8 +170,8 @@ class CanvasOverlaySetDialog(CanvasComponentDialog)
       struct.set_contents(c.string_rep())
       p.add(struct)
 
-      q := Panel("c:x_weight=0")
-      q.set_layout(GridLayout("doi=0"))
+      q := Panel().set_constraint("x_weight", 0)
+      q.set_layout(GridLayout().set_doi(0))
 
       add_col := TextButton("eol")
       add_col.connect(self.on_add_col, Event.ACTION)
@@ -188,15 +188,15 @@ class CanvasOverlaySetDialog(CanvasComponentDialog)
       edit.set_label("Edit")
       q.add(edit)
 
-      which_one := TextButton("label=Which", "c:eol")
+      which_one := TextButton().set_label("Which").set_constraint("eol", &yes)
       which_one.connect(self.on_which_one, Event.ACTION)
       q.add(which_one)
 
-      up := TextButton("label=Up", "c:eol")
+      up := TextButton().set_label("Up").set_constraint("eol", &yes)
       up.connect(self.on_up, Event.ACTION)
       q.add(up)
 
-      down := TextButton("label=Down")
+      down := TextButton().set_label("Down")
       down.connect(self.on_down, Event.ACTION)
       q.add(down)
 

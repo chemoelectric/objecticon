@@ -32,21 +32,21 @@ class CanvasTreeDialog(CanvasComponentDialog)
       cast(self,CanvasComponentDialog).setup()
 
       p := TabItem()
-      p.set_layout(GridLayout("extra=borders"))
+      p.set_layout(GridLayout().set_extra("borders"))
       add_tab_at_front(p)
       p.set_label("General")
 
-      show_root := CheckBox("label=Show root", "c:eol")
+      show_root := CheckBox().set_label("Show root").set_constraint("eol", &yes)
       if \c.show_root_flag then
          show_root.set_is_checked(&yes)
       p.add(show_root)
 
-      show_root_handles := CheckBox("label=Show root handles", "c:eol")
+      show_root_handles := CheckBox().set_label("Show root handles").set_constraint("eol", &yes)
       if \c.show_root_handles_flag then
          show_root_handles.set_is_checked(&yes)
       p.add(show_root_handles)
 
-      select_group := SelectModeList("c:eol")
+      select_group := SelectModeList().set_constraint("eol", &yes)
       p.add(select_group)
       select_group.set_select_mode(c.select_mode)
    end

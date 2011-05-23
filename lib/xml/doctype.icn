@@ -27,7 +27,8 @@ class DocType(Node)
    # Set the name
    #
    public set_name(s)
-      return name := s
+      name := s
+      return self
    end
 
    #
@@ -41,7 +42,8 @@ class DocType(Node)
    # Set the external ID as an ExternalID object.
    #
    public set_external_id(x)
-      return external_id := x
+      external_id := x
+      return self
    end
 
    public new(n, i)
