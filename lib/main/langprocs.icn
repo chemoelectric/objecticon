@@ -9,12 +9,11 @@ import io, util, ipl.tables
 # @param o       The object to be converted.
 #
 procedure to_string(o, indent, always_structure)
-   local sb, oo
+   local sb
    sb := RamStream()
-   oo := ObjectOutputStream().
+   ObjectOutputStream(sb).
       set_indent(indent).
-      set_always_structure(always_structure)
-   oo.show(o, sb)
+      set_always_structure(always_structure).show(o)
    return sb.done()
 end
 
@@ -25,10 +24,10 @@ end
 # @param o       The object to be output.
 #
 procedure to_stdout(o, indent, always_structure)
-   return ObjectOutputStream().
+   return ObjectOutputStream(FileStream.stdout).
       set_indent(indent).
       set_always_structure(always_structure).
-      show(o, FileStream.stdout)
+      show(o)
 end
 
 #
@@ -38,10 +37,10 @@ end
 # @param o       The object to be output.
 #
 procedure to_stderr(o, indent, always_structure)
-   return ObjectOutputStream().
+   return ObjectOutputStream(FileStream.stderr).
       set_indent(indent).
       set_always_structure(always_structure).
-      show(o, FileStream.stderr)
+      show(o)
 end
 
 #
@@ -49,9 +48,9 @@ end
 # arbitrary icon object.
 #
 # @example
-# @  oo := ObjectOutputStream()
-# @  oo.show(my_object, FileStream.stdout)
-# @  oo.show(another_object, FileStream.stdout)
+# @  oo := ObjectOutputStream(FileStream.stdout)
+# @  oo.show(my_object)
+# @  oo.show(another_object)
 #
 # Note that most of the public methods in this class are intended for
 # use by other classes which implement custom output (by having an
@@ -78,10 +77,7 @@ class ObjectOutputStream(Stream)
    #
    # Reset everything and output a new object.
    #
-   public show(o, file)
-      /file := FileStream.stdout
-      self.file := file
-      file.can(Stream.WRITE) | runerr("ObjectOutputStream: stream not writable: ", file)
+   public show(o)
       self.seen := table()
       self.level := 0
       self.ilevel := 0
@@ -464,6 +460,19 @@ class ObjectOutputStream(Stream)
    public set_always_structure(s)
       self.always_structure_flag := check_flag(s)
       return self
+   end
+
+   public close()
+      if \close_underlying_flag then
+         return file.close()
+      return
+   end
+
+   public new(file)
+      /file := FileStream.stdout
+      self.file := file
+      file.can(Stream.WRITE) | runerr("ObjectOutputStream: stream not writable: ", file)
+      return
    end
 end
 

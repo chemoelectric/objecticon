@@ -59,8 +59,8 @@ procedure encode(o, fast)
    return use {
       f := RamStream(),
       {
-         e := Encode("fast=",fast)
-         if e.begin(o, f) then
+         e := Encode(f).set_fast(fast)
+         if e.begin(o) then
             f.str()
       }
    }
@@ -86,10 +86,7 @@ class Encode()
    #
    # Reset everything and output a new object.
    #
-   public begin(o, file)
-      /file := FileStream.stdout
-      self.file := file
-      file.can(Stream.WRITE) | runerr("Encode: stream not writable: ", file)
+   public begin(o)
       self.tag_count := 0
       self.seen := table()
       if \fast_flag then
@@ -312,6 +309,13 @@ class Encode()
    public set_fast(s)
       self.fast_flag := check_flag(s)
       return self
+   end
+
+   public new(file)
+      /file := FileStream.stdout
+      self.file := file
+      file.can(Stream.WRITE) | runerr("Encode: stream not writable: ", file)
+      return
    end
 end
 
