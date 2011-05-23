@@ -32,11 +32,6 @@ import
 # delay between the initial repeat event and subsequent repeat
 # events is set in the {Style} object.
 #
-# @field is_checked=flag : see {set_is_checked}
-# @field toggles=flag : see {set_toggles}
-# @field no_click_focus=flag : see {set_no_click_focus}
-# @field see also {Component}
-#
 class Button(Toggle,Component)
    public 
       is_down,
@@ -198,17 +193,7 @@ class Button(Toggle,Component)
       return self
    end
 
-   public set_one(f)
-      case f.attr of {
-         "is_checked" : set_is_checked(f.flag_val())
-         "toggles" : set_toggles(f.flag_val())
-         "no_click_focus" : set_no_click_focus(f.flag_val())
-         default: return cast(self,Component).set_one(f)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,Component).new()
       repeat_ticker := Dispatcher.new_task{repeat_tick()}
       self.accepts_focus_flag := 1
@@ -216,7 +201,6 @@ class Button(Toggle,Component)
       connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
       connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
       connect(self.handle_key, Event.KEY_PRESS)
-      set_fields(a)
       return
    end
 end

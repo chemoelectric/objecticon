@@ -31,12 +31,11 @@ class XYAlignList(List)
       }
    end
 
-   public new(a[])
+   public new()
       cast(self,List).new()
       set_selection_list(["(l, t)", "(l, c)", "(l, b)", 
                           "(c, t)", "(c, c)", "(c, b)", 
                           "(r, t)", "(r, c)", "(r, b)"])
-      set_fields(a)
       return
    end
 end

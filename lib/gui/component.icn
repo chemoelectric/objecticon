@@ -16,35 +16,7 @@ import
 # This is the parent class of all the GUI components.  All of
 # its methods and variables therefore apply to its sub-classes.
 #
-# @field tooltip=val: see {set_tooltip}
-# @field tooltip_start_delay=integer: see {set_tooltip_start_delay}
-# @field tooltip_end_delay=integer: see {set_tooltip_end_delay}
-# @field tooltip_follows_mouse=flag: see {set_tooltip_follows_mouse}
-# @field pointer=string : see {set_pointer}
-# @field show_layout=flag : see {set_show_layout}
-# @field allow_drop=flag : see {set_allow_drop}
-# @field allow_drag=flag : see {set_allow_drag}
-# @field is_shaded=flag : see {set_is_shaded}
-# @field accepts_focus=flag : see {set_accepts_focus}
-# @field pos=string,string : see {set_pos}
-# @field x=string : see {set_x}
-# @field y=string : see {set_y}
-# @field width or w=string : see {set_width}
-# @field height or h=string : see {set_height}
-# @field size=string,string : see {set_size}
-# @field align=string,string : see {set_align}
-# @field x_align=string : see {set_x_align}
-# @field y_align=string : see {set_y_align}
-# @field z=integer : see {set_z}
-# @field tab_ord=integer : see {set_tab_ord}
-# @field accel=string : see {set_accel}
-# @field layout={gui.Layout}: see {set_layout}
-# @field border={gui.ABorder}: see {set_border}
-# @field c:<constraint>=value: set a constraint, see {set_constraint}
-# @field w:<attrib>=value: set a window attribute, see {set_wattrib}
-# @field e:<event>=value: connects value to the matching event
-#
-class Component(Rect,Align,SetFields,Connectable)
+class Component(Rect,Align,Connectable)
    public 
       #
       # x position as specified by {set_pos()}, eg "50%"
@@ -1313,38 +1285,7 @@ class Component(Rect,Align,SetFields,Connectable)
       return
    end
 
-   public set_one(f)
-      case f.attr of {
-         "tooltip" : set_tooltip(f.val)
-         "tooltip_start_delay" : set_tooltip_start_delay(f.int_val())
-         "tooltip_end_delay" : set_tooltip_end_delay(f.int_val())
-         "tooltip_follows_mouse" : set_tooltip_follows_mouse(f.flag_val())
-         "pointer" : set_pointer(f.string_val())
-         "show_layout" : set_show_layout(f.flag_val()) 
-         "allow_drop" : set_allow_drop(f.flag_val()) 
-         "allow_drag" : set_allow_drag(f.flag_val()) 
-         "is_shaded" : set_is_shaded(f.flag_val()) 
-         "accepts_focus" : set_accepts_focus(f.flag_val()) 
-         "pos" : set_pos!(f.string_list_val())
-         "x" : set_x(f.string_val())
-         "y" : set_y(f.string_val())
-         "width"|"w" : set_width(f.string_val())
-         "height"|"h" : set_height(f.string_val())
-         "size" : set_size!(f.string_list_val())
-         "align" : set_align!(f.string_list_val())
-         "x_align" : set_x_align(f.string_val())
-         "y_align" : set_y_align(f.string_val())
-         "z" : set_z(f.int_val())
-         "tab_ord" : set_tab_ord(f.int_val())
-         "accel" : set_accel(f.string_val())
-         "layout" : set_layout(f.object_val(gui.Layout))
-         "border" : set_border(f.object_val(gui.ABorder))
-         default : return try_constraint(f) | try_wattrib(f) | try_event(f, Gui.EVENT_TABLE)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,Connectable).new()
       self.wattribs := table()
       self.children := []
@@ -1355,7 +1296,6 @@ class Component(Rect,Align,SetFields,Connectable)
       self.z := self.tab_ord := 0
       self.tooltip_start_delay := Dialog.TOOLTIP_START_DELAY
       self.tooltip_end_delay := Dialog.TOOLTIP_END_DELAY
-      set_fields(a)
       return
    end
 end

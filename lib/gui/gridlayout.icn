@@ -3,14 +3,7 @@ package gui
 import 
    util, ipl.graphics
 
-#
-# @field dii=integer : see {set_dii}
-# @field doi=integer : see {set_doi}
-# @field flush=: equivalent to {set_doi(0)}
-# @field extra=string : see {set_extra}
-# @field debug=flag : see {set_debug}
-#
-class GridLayout(Layout,SetFields)
+class GridLayout(Layout)
    public 
       g,
       dii,          # Default inner padding, ie not at edge of grid
@@ -124,23 +117,10 @@ class GridLayout(Layout,SetFields)
       return self
    end
 
-   public set_one(f)
-      case f.attr of {
-         "dii" : set_dii(f.int_val())
-         "doi" : set_doi(f.int_val())
-         "flush" : set_doi(0)
-         "extra" : set_extra(f.string_val())
-         "debug" : set_debug(f.flag_val())
-         default : fail
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       self.dii := DEFAULT_INNER_INSET
       self.doi := DEFAULT_OUTER_INSET
       self.extra := "cells"
-      set_fields(a)
       return
    end
 end

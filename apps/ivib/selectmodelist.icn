@@ -18,10 +18,9 @@ class SelectModeList(List)
       }
    end
 
-   public new(a[])
+   public new()
       cast(self,List).new()
       set_selection_list(["No selection", "Select one", "Select many"])
-      set_fields(a)
       return
    end
 end

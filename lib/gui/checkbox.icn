@@ -24,11 +24,6 @@ package gui
 # @ c.set_label("Checkbox")
 # @ self.add(c)
 #
-# @field box_paint=s1,s2 : see {set_box_paint}
-# @field label=text : see {set_label}
-# @field paint={Paint} : see {set_paint}
-# @field see also {Button}
-#
 class CheckBox(Button)
    public
       unchecked_paint,
@@ -145,21 +140,10 @@ class CheckBox(Button)
                                         self.tw + 2 * Gui.TEXT_INSET, self.h)
    end
 
-   public set_one(f)
-      case f.attr of {
-         "box_paint" : set_box_paint!(f.list_val(2))
-         "label" : set_label(f.text_val())
-         "paint" : set_paint(f.object_val(gui.Paint))
-         default: return cast(self,Button).set_one(f)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,Button).new()
       self.toggles_flag := 1
       self.set_constraint("x_align", Align.L)
-      set_fields(a)
       return
    end
 end

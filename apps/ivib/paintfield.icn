@@ -150,13 +150,12 @@ class PaintField(Border)
       os.add(grid_label)
    end
 
-   public new(a[])
+   public new()
       cast(self,Border).new()
       setup()
       self.clear_constraints()
       self.set_constraint("x_fill", &yes)
       self.set_constraint("x_weight", "1")
-      set_fields(a)
       return
    end
 end

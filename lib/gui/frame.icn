@@ -145,28 +145,13 @@ class Frame(Component)
       self.held_flag := &null
    end
 
-   protected set_one(f)
-      case f.attr of {
-         "content" : set_content(f.object_val(gui.Component))
-         "title" : set_title(f.text_val())
-         default: return cast(self,Component).set_one(f)
-      }
-      return
-   end
-
-   protected set_special(a)
-      if is(a[1], Component) then
-         set_content(pop(a))
-   end
-
-   public new(a[])
+   public new()
       cast(self,Component).new()
       set_border(RaisedBorder())
       setup()
       connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
       connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
-      set_fields(a)
       return
    end
 end
@@ -206,10 +191,9 @@ class FrameBar(Component)
       self.add(b)
    end
 
-   public new(a[])
+   public new()
       cast(self,Component).new()
       setup()
-      set_fields(a)
       return
    end
 end

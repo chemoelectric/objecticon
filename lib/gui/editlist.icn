@@ -22,11 +22,10 @@ class EditListTextField(TextField)
       }
    end
 
-   public new(a[])
+   public new()
       cast(self,TextField).new()
       self.connect(self.on_key, Event.KEY_PRESS)
       self.set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(0))
-      set_fields(a)
       return
    end
 end
@@ -42,10 +41,6 @@ end
 # list is selected and a CONTENT_CHANGED event is generated
 # when the value displayed in the field changes, either by
 # selection from the list or user edit of the text.
-#
-# @field filter=cset : see {set_filter}
-# @field contents=text : see {set_contents}
-# @field see also {DropDown}
 #
 class EditList(DropDown)
    public 
@@ -118,15 +113,6 @@ class EditList(DropDown)
       # Max string length + space for cursor (cf TextField's get_view() method)
       every t <:= self.cbwin.text_width((view.contents | !self.selection_list) || " ")
       return border.get_total_width() + b.get_preferred_width() + t + view.border.get_total_width()
-   end
-
-   public set_one(f)
-      case f.attr of {
-         "filter" : set_filter(f.cset_val())
-         "contents" : set_contents(f.text_val())
-         default: return cast(self,DropDown).set_one(f)
-      }
-      return
    end
 end
 

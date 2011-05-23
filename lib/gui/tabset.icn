@@ -18,11 +18,6 @@ $define X_PADDING_INC 5
 # A Event.SELECTION_CHANGED is fired whenever the tab is changed via
 # user interaction.
 #
-# @field prefer_one_row=flag : see {set_prefer_one_row}
-# @field no_click_focus=flag : see {set_no_click_focus}
-# @field tabs_at_bottom=flag : see {set_tabs_at_bottom}
-# @field see also {Component}
-#
 class TabSet(Component)
    public 
       which_one,                                
@@ -663,17 +658,7 @@ class TabSet(Component)
       }
    end
 
-   public set_one(f)
-      case f.attr of {
-         "prefer_one_row" : set_prefer_one_row(f.flag_val())
-         "no_click_focus" : set_no_click_focus(f.flag_val())
-         "tabs_at_bottom" : set_tabs_at_bottom(f.flag_val())
-         default: return cast(self,Component).set_one(f)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,Component).new()
       self.accepts_focus_flag := 1
       self.set_constraint("x_fill", &yes)
@@ -683,7 +668,6 @@ class TabSet(Component)
       connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       connect(self.handle_key, Event.KEY_PRESS)
       set_border(RaisedBorder())
-      set_fields(a)
       return
    end
 end

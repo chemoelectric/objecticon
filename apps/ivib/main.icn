@@ -90,13 +90,12 @@ class CustomToolBar(Component)
       }
    end
 
-   public new(a[])
+   public new()
       cast(self,Component).new()
       x1 := y1 := 0
       bg := ButtonGroup()
       img_w := img_h := 44
       set_size(16 * img_w, 2 * img_h)
-      set_fields(a)
       return
    end
 end

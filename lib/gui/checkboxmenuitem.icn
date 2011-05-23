@@ -14,10 +14,6 @@ package gui
 # Several {CheckBoxMenuItems} may be added to a {CheckBoxGroup}
 # structure to give "radio buttons" within menus.
 #
-# @field box_paint=s1,s2 : see {set_box_paint}
-# @field is_checked=flag : see {set_is_checked}
-# @field see also {TextMenuItem}
-#
 class CheckBoxMenuItem(Toggle,TextMenuItem)
    public 
       curr_paint,                                            
@@ -80,15 +76,6 @@ class CheckBoxMenuItem(Toggle,TextMenuItem)
       } else
          self.toggle_is_checked()      
       cast(self,TextMenuItem).succeed(e)
-   end
-
-   public set_one(f)
-      case f.attr of {
-         "box_paint" : set_box_paint!(f.list_val(2))
-         "is_checked" : set_is_checked(f.flag_val())
-         default: return cast(self,TextMenuItem).set_one(f)
-      }
-      return
    end
 end
 

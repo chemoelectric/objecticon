@@ -97,10 +97,9 @@ class PopupMenu(Component)
       self.menu.show(x, y, xa, ya)
    end
 
-   public new(a[])
+   public new()
       cast(self,Component).new()
       self.x_spec := self.y_spec := self.w_spec := self.h_spec := 0
-      set_fields(a)
       return
    end
 end

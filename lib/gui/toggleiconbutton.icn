@@ -14,10 +14,9 @@ package gui
 # {IconButton}.
 #
 class ToggleIconButton(IconButton)
-   public new(a[])
+   public new()
       cast(self,IconButton).new()
       self.toggles_flag := 1
-      set_fields(a)
       return
    end
 end

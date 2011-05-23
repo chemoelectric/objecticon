@@ -1,7 +1,7 @@
 package io
 
 import
-   util(error, check_flag, SetFields),
+   util(error, check_flag),
    lang(NoCopy),
    posix(System)
 
@@ -392,10 +392,7 @@ end
 # that input/output to the inner stream tends to take place in larger
 # chunks.
 #
-# @field buff_size=integer : see {set_buff_size}
-# @field flush_on_nl=flag : see {set_flush_on_nl}
-#
-class BufferStream(Stream, SetFields)
+class BufferStream(Stream)
    private
       other,
       rpos,
@@ -569,23 +566,13 @@ class BufferStream(Stream, SetFields)
       return other.get_mode()
    end
 
-   protected set_one(f)
-      case f.attr of {
-         "buff_size" : set_buff_size(f.int_val())
-         "flush_on_nl" : set_flush_on_nl(f.flag_val())
-         default: fail
-      }
-      return
-   end
-
-   public new(other, a[])
+   public new(other)
       self.other := other
       self.rbuff := ""
       self.wbuff := []
       self.wbuff_len := 0
       self.buff_size := 1024
       self.close_underlying_flag := &yes
-      set_fields(a)
       return
    end
 end

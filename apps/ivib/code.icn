@@ -316,9 +316,8 @@ class Code()
             else
                put(body, "self.component_setup()")
          }
-         put(body, "set_fields(a)")
          put(body, "return")
-         add_method("public", "new", ["a[]"], body)
+         add_method("public", "new", [], body)
       }
       self.methods_out(cl)
       self.setup_out(cl)
@@ -414,7 +413,7 @@ class Code()
          else if /self.parent_Canvas.dialog_ih then
             insert(m, "width", self.parent_Canvas.dialog_iw)
          else
-            insert(m, "size", self.parent_Canvas.dialog_iw || "," || self.parent_Canvas.dialog_ih)
+            insert(m, "size", [self.parent_Canvas.dialog_iw, self.parent_Canvas.dialog_ih])
       }
       body := ""
 

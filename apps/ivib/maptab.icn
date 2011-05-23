@@ -102,7 +102,7 @@ class MapTab(TabItem)
       return
    end
 
-   public new(a[])
+   public new()
       local c1, c2, p
       cast(self,TabItem).new()
 
@@ -155,7 +155,6 @@ class MapTab(TabItem)
 
       update_grey()
 
-      set_fields(a)
       return
    end
 end

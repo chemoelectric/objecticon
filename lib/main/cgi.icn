@@ -1,11 +1,8 @@
 package cgi
 
-import io, net, mail, util(error,SetFields), posix(System)
+import io, net, mail, util(error), posix(System)
 
-#
-# @field stdin_limit=integer: see {set_stdin_limit}
-#
-class CgiParams(SetFields)
+class CgiParams()
    private readable
       stdin,
       stdin_limit,
@@ -63,13 +60,5 @@ class CgiParams(SetFields)
    public set_stdin_limit(n)
       self.stdin_limit := n
       return self
-   end
-
-   protected set_one(f)
-      case f.attr of {
-         "stdin_limit": set_stdin_limit(f.int_val())
-         default : fail
-      }
-      return
    end
 end

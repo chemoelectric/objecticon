@@ -95,8 +95,9 @@ class Style()
          set_bg("pale yellow").
          set_font("sans,10").
          set_fg("black").
-         set_border(CompoundBorder(PlainBorder().set_line_width(1),
-                                   EmptyBorder().set_insets(3,3,2,2)))
+         set_border(CompoundBorder().
+                      set_outer(PlainBorder().set_line_width(1)).
+                      set_inner(EmptyBorder().set_insets(3,3,2,2)))
    end
 
    public polish(obj)

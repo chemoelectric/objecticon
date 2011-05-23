@@ -53,16 +53,6 @@ end
 # @ s.set_snaps(1)
 # @ self.add(s)
 #
-# @field is_horizontal=flag : see {set_is_horizontal}
-# @field value=numeric : see {set_value}
-# @field range=n1,n2 : see {set_range}
-# @field ticks=numeric : see {set_ticks}
-# @field labels=numeric : see {set_labels}
-# @field snaps=numeric : see {set_snaps}
-# @field increment_size=numeric : see {set_increment_size}
-# @field wheel_factor=integer: see {set_wheel_factor}
-# @field see also {Component}
-#
 class Slider(Component)
    public 
       value,                   
@@ -494,22 +484,7 @@ class Slider(Component)
       cast(self,Component).finally()
    end
 
-   public set_one(f)
-      case f.attr of {
-         "is_horizontal" : set_is_horizontal(f.flag_val())
-         "value" : set_value(f.numeric_val())
-         "range" : set_range!(f.numeric_list_val(2))
-         "ticks" : set_ticks(f.numeric_val())
-         "labels" : set_labels(f.numeric_val())
-         "snaps" : set_snaps(f.numeric_val())
-         "increment_size" : set_increment_size(f.numeric_val())
-         "wheel_factor": set_wheel_factor(f.int_val())
-         default: return cast(self,Component).set_one(f)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,Component).new()
       repeat_ticker := Dispatcher.new_task{repeat_tick()}
       self.slider_area := SliderArea()
@@ -522,7 +497,6 @@ class Slider(Component)
       self.slider_area.connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
       connect(self.handle_wheel_up, Event.MOUSE_WHEEL_UP)
       connect(self.handle_wheel_down, Event.MOUSE_WHEEL_DOWN)
-      set_fields(a)
       return
    end
 end

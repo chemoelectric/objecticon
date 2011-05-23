@@ -47,13 +47,7 @@ class CellInfo(Insets,Align)
    end
 end
 
-#
-# @field dii=integer : see {set_dii}
-# @field doi=integer : see {set_doi}
-# @field flush=: invokes {set_doi(0)}
-# @field extra=string : see {set_extra}
-#
-class Grid(SetFields)
+class Grid()
    public static const 
       EXTRA_CELLS,
       EXTRA_BORDERS,
@@ -393,31 +387,19 @@ class Grid(SetFields)
       return self
    end
 
-   public set_one(f)
-      case f.attr of {
-         "dii" : set_dii(f.int_val())
-         "doi" : set_doi(f.int_val())
-         "flush" : set_doi(0)
-         "extra" : set_extra(f.string_val())
-         default : fail
-      }
-      return
-   end
-
    private static init()
       EXTRA_CELLS := "cells"
       EXTRA_BORDERS := "borders"
       EXTRA_IGNORE := "ignore"
    end
 
-   public new(a[])
+   public new()
       self.dii := self.doi := 0
       self.extra := EXTRA_CELLS
       self.id_str := string(&ucase)
       self.add_y := self.add_x := 1
       self.add_row_h := 0
       self.info := []
-      set_fields(a)
       return
    end
 end

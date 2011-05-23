@@ -24,13 +24,6 @@ import undo, util, graphics
 # a Event.CURSOR_MOVED when the cursor moves, and a
 # Event.SELECTION_CHANGED whenver the selection changes.
 #
-# @field filter=cset : see {set_filter}
-# @field displaychar=text : see {set_displaychar}
-# @field contents=text : see {set_contents}
-# @field is_editable=flag : see {set_is_editable}
-# @field move_on_rpress=flag : see {set_move_on_rpress}
-# @field see also {Component}
-#
 # @example
 # @ t := TextField()
 # @ t.set_pos(50, 250)
@@ -694,19 +687,7 @@ class TextField(Component)
       border.draw_rect(self.cbwin, self)
    end
 
-   public set_one(f)
-      case f.attr of {
-         "filter" : set_filter(f.cset_val())
-         "displaychar" : set_displaychar(f.text_val())
-         "contents" : set_contents(f.text_val())
-         "is_editable" :  set_is_editable(f.flag_val()) 
-         "move_on_rpress" :  set_move_on_rpress(f.flag_val()) 
-         default: return cast(self,Component).set_one(f)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,Component).new()
       scroll_ticker := Dispatcher.new_task{scroll_tick()}
       cursor_ticker := Dispatcher.new_task{cursor_tick()}
@@ -715,7 +696,9 @@ class TextField(Component)
       filter := Gui.PRINTABLE_1
       self.accepts_focus_flag := 1
       self.set_contents("")
-      self.set_border(CompoundBorder(SunkenBorder(), EmptyBorder()))
+      self.set_border(CompoundBorder().
+                          set_outer(SunkenBorder()).
+                          set_inner(EmptyBorder()))
       self.border.inner.set_l_inset(Gui.TEXT_INSET)
       self.border.inner.set_r_inset(0)
       self.is_editable_flag := 1
@@ -727,15 +710,12 @@ class TextField(Component)
       self.loff := 0
       self.primary_selection_owner := TextFieldPrimarySelectionOwner(self)
       self.clipboard_selection_owner := TextFieldClipboardSelectionOwner(self)
-
       connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS)
       connect(self.handle_mpress, Event.MOUSE_MIDDLE_PRESS)
       connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
       connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
       connect(self.handle_key, Event.KEY_PRESS)
-
-      set_fields(a)
       return
    end
 end

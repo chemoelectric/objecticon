@@ -9,10 +9,6 @@ import
 #
 # Directory dialog class.  This class provides a standard directory selection dialog.
 #
-# @field directory=string : see {set_directory}
-# @field directories=s1,s2,s3,... : see {set_directories}
-# @field see also {Dialog}
-# 
 # @example
 # @ d := DirectoryDialog()
 # @ d.show_modal()
@@ -251,21 +247,6 @@ $endif
 
    public clear_msg()
       msg("")
-   end
-
-   public set_one(f)
-      case f.attr of {
-         "directory" : set_directory(f.ucs_val())
-         "directories" : set_directories(f.ucs_list_val())
-         default: return cast(self,Dialog).set_one(f)
-      }
-      return
-   end
-
-   public new(a[])
-      cast(self,Dialog).new()
-      set_fields(a)
-      return
    end
 
    private setup()

@@ -357,16 +357,7 @@ class GridPaint(Paint)
    end
 end
 
-#
-# @field image=string : see {set_image}
-# @field cache=string : see {set_cache}
-# @field window={Window} : see {set_window}
-# @field scale_up=flag : see {set_scale_up}
-# @field max_w=integer : see {set_max_w}
-# @field max_h=integer : see {set_max_h}
-# @field max_size=i1,i2 : see {set_max_size}
-#
-class ImagePaint(Paint,SetFields)
+class ImagePaint(Paint)
    public 
       image_str,
       image_window,
@@ -524,25 +515,6 @@ class ImagePaint(Paint,SetFields)
 
    public draw(W, x, y)
       (\win).copy_to(W,,,,, x, y)
-   end
-
-   public set_one(f)
-      case f.attr of {
-         "image" : set_image(f.string_val())
-         "cache" : set_cache(f.string_val())
-         "window" : set_window(f.object_val(Window))
-         "scale_up" : set_scale_up(f.flag_val())
-         "max_w" : set_max_w(f.int_val())
-         "max_h" : set_max_h(f.int_val())
-         "max_size" : set_max_size!(f.int_list_val(2))
-         default: fail
-      }
-      return
-   end
-
-   public new(a[])
-      set_fields(a)
-      return
    end
 end
 

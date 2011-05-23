@@ -97,7 +97,7 @@ class Spin(Component)
       end_change(e)
    end
 
-   public new(a[])
+   public new()
       cast(self,Component).new()
       self.set_border(SunkenBorder())
       self.up := IconButton().set_width(ScrollArea.predict_scrollbar_size())  # Consistent with DropDown
@@ -119,7 +119,6 @@ class Spin(Component)
       self.set_constraint("x_weight", 1.0)
       connect(self.go_up, Event.MOUSE_WHEEL_UP)
       connect(self.go_down, Event.MOUSE_WHEEL_DOWN)
-      set_fields(a)
       return
    end
 end

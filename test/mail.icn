@@ -265,60 +265,60 @@ procedure test_message()
    mb := Mailbox.parse("robert@abc.com")
    dt := Time(2003, 3, 1, 9, 45, 30, Timezone.UTC_TIMEZONE)
 
-   m := Message("content=123")
+   m := Message().set_content(123)
    print{"M1.content", m.content}
 
-   m := Message("date=",dt)
+   m := Message().set_date(dt)
    yes_no{"M2.date header", m.get_first_header("Date")}
 
-   m := Message("to=",mb)
+   m := Message().set_to(mb)
    yes_no{"M3.rfc check", m.get_first_header("To") == mb.to_rfc822()}
 
-   m := Message("reply_to=",mb)
+   m := Message().set_reply_to(mb)
    yes_no{"M4.rfc check",    m.get_first_header("Reply-To") == mb.to_rfc822()}
 
-   m := Message("resent_to=",mb)
+   m := Message().set_resent_to(mb)
    yes_no{"M5.rfc check",    m.get_first_header("Resent-To") == mb.to_rfc822()}
 
-   m := Message("cc=",mb)
+   m := Message().set_cc(mb)
    yes_no{"M6.rfc check",    m.get_first_header("CC") == mb.to_rfc822()}
 
-   m := Message("resent_cc=",mb)
+   m := Message().set_resent_cc(mb)
    yes_no{"M7.rfc check",    m.get_first_header("Resent-CC") == mb.to_rfc822()}
 
-   m := Message("bcc=",mb)
+   m := Message().set_bcc(mb)
    yes_no{"M8.rfc check",    m.get_first_header("BCC") == mb.to_rfc822()}
 
-   m := Message("resent_bcc=",mb)
+   m := Message().set_resent_bcc(mb)
    yes_no{"M9.rfc check",    m.get_first_header("Resent-BCC") == mb.to_rfc822()}
 
-   m := Message("from=",mb)
+   m := Message().set_from(mb)
    yes_no{"M10.rfc check",    m.get_first_header("From") == mb.to_rfc822()}
 
-   m := Message("sender=",mb)
+   m := Message().set_sender(mb)
    yes_no{"M11.rfc check",    m.get_first_header("Sender") == mb.to_rfc822()}
 
-   m := Message("resent_from=",mb)
+   m := Message().set_resent_from(mb)
    yes_no{"M12.rfc check",    m.get_first_header("Resent-from") == mb.to_rfc822()}
 
-   m := Message("resent_sender=",mb)
+   m := Message().set_resent_sender(mb)
    yes_no{"M13.rfc check",    m.get_first_header("Resent-sender") == mb.to_rfc822()}
 
-   m := Message("resent_date=",dt)
+   m := Message().set_resent_date(dt)
    print{"M14.date header", m.get_first_header("Resent-Date")}
 
-   m := Message("content_type=",ContentType.parse("text/html"))
+   m := Message().set_content_type(ContentType.parse("text/html"))
    print{"M15.content type", m.get_first_header("Content-type")}
 
-   m := Message("content_disposition=",ContentDisposition.parse("attachment ; filename=abc.xml")) |
+   m := Message().set_content_disposition(ContentDisposition.parse("attachment ; filename=abc.xml")) |
       stop("Failed to create Message")
    print{"M16.content disposition", 
             m.get_first_header("Content-disposition")}
 
-   m := Message("content_transfer_encoding=quoted-printable")
+   m := Message().set_content_transfer_encoding("quoted-printable")
    print{"M17.content transfer encoding", m.get_first_header("Content-Transfer-Encoding")}
 
-   m := Message("subject=ABCD")
+   m := Message().set_subject("ABCD")
    print{"M18.subject", m.get_subject()}
 
    m := Message()

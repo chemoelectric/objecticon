@@ -154,12 +154,11 @@ class BorderOfCanvas(Component)
       display_children()
    end
 
-   public new(a[])
+   public new()
       cast(self,Component).new()
       connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
       connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
-      set_fields(a)
       return
    end
 end

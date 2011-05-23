@@ -21,14 +21,7 @@ import util
 # conventional submenu, which does contain children, is in the
 # {Menu} class.
 #
-# @field tooltip=val: see {set_tooltip}
-# @field accel=string : see {set_accel}
-# @field border={ABorder} : see {set_border}
-# @field is_shaded=flag : see {set_is_shaded}
-# @field is_decorative=flag : see {set_is_decorative}
-# @field e:<event>=value: connects value to the matching event
-#
-class MenuComponent(Rect,SetFields,Connectable)
+class MenuComponent(Rect,Connectable)
    public 
       label_x,                                
       label_y,                                
@@ -450,22 +443,9 @@ class MenuComponent(Rect,SetFields,Connectable)
       self.temp_win := &null
    end
 
-   public set_one(f)
-      case f.attr of {
-         "tooltip" : set_tooltip(f.val)
-         "accel" : set_accel(f.string_val())
-         "border" : set_border(f.object_val(gui.ABorder))
-         "is_shaded" :  set_is_shaded(f.flag_val())
-         "is_decorative" :  set_is_decorative(f.flag_val())
-         default : return try_event(f, Gui.EVENT_TABLE)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,Connectable).new()
       self.children := []
-      set_fields(a)
       return
    end
 end

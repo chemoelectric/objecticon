@@ -84,11 +84,10 @@ class CanvasImagePaint(CanvasPaint,ImagePaint)
       c.add_import(self.import_name, self.class_name)
    end
 
-   public new(a[])
+   public new()
       cast(self,ImagePaint).new()
       cast(self,CanvasPaint).new()
       self.class_name := "ImagePaint"
-      set_fields(a)
       return
    end
 end

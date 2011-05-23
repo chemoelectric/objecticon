@@ -13,14 +13,6 @@ import graphics
 #
 # This class is just a superclass of {List} and {EditList}.
 #
-# @field selection=integer : see {set_selection}
-# @field selection_list=t1,t2,t3,... : see {set_selection_list}.  This may
-# @ also be given (as a list) as the first parameter to the constructor.
-# @field direction=string : see {set_direction}
-# @field max_height=integer : see {set_max_height}
-# @field max_width=integer : see {set_max_width}
-# @field see also {Component}
-#
 class DropDown(SelectionList,Component)
    public 
       b,                           
@@ -353,24 +345,7 @@ class DropDown(SelectionList,Component)
       view.layout()
    end
 
-   protected set_one(f)
-      case f.attr of {
-         "selection_list" : set_selection_list(f.text_list_val())
-         "selection" : set_selection(f.int_val())
-         "direction" : set_direction(f.string_val())
-         "max_height" : set_max_height(f.int_val())
-         "max_width" : set_max_width(f.int_val())
-         default: return cast(self,Component).set_one(f)
-      }
-      return
-   end
-
-   protected set_special(a)
-      if type(a[1]) == "list" then
-         set_selection_list(pop(a))
-   end
-
-   public new(a[])
+   public new()
       cast(self,Component).new()
       self.set_border(SunkenBorder())
       # Make the same width as the button in the scrollbar of the dropdown.
@@ -388,7 +363,6 @@ class DropDown(SelectionList,Component)
       self.set_constraint("x_weight", 1.0)
       connect(self.go_up, Event.MOUSE_WHEEL_UP)
       connect(self.go_down, Event.MOUSE_WHEEL_DOWN)
-      set_fields(a)
       return
    end
 end

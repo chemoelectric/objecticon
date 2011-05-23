@@ -14,11 +14,10 @@ package gui
 # image rather than text.
 #
 class Icon(Label)
-   public new(a[])
+   public new()
       # Bypass Label's constructor to save creating a border twice.
       cast(self,Component).new()
       self.set_border(EmptyBorder().set_insets(0, 0, 0, 0))
-      set_fields(a)
       return
    end
 end

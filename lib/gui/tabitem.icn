@@ -21,11 +21,6 @@ package gui
 # also inherit any window attributes of the {TabSet}, such as
 # font, colour and so on.
 #
-# @field label=text : see {set_label}
-# @field label_border={ABorder} : see {set_label_border}
-# @field paint={Paint} : see {set_paint}
-# @field see also {Component}
-#
 class TabItem(Component)
    public 
       paint,
@@ -92,20 +87,9 @@ class TabItem(Component)
          label_border.draw_focus_rect(W, r)
    end
 
-   public set_one(f)
-      case f.attr of {
-         "label" : set_label(f.text_val())
-         "label_border" : set_label_border(f.object_val(gui.ABorder))
-         "paint" : set_paint(f.object_val(gui.Paint))
-         default: return cast(self,Component).set_one(f)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,Component).new()
       self.label_border := EmptyBorder()
-      set_fields(a)
       return
    end
 end

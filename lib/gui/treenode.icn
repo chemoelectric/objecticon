@@ -13,12 +13,7 @@ import util, ipl.pdco
 #
 # This class represents a node in a {Tree} object.
 #
-# @field icon_paint=s1,s2,s3 : see {set_icon_paint}
-# @field label=value : see {set_label}
-# @field always_expandable=flag : see {set_always_expandable}
-# @field expanded=flag : see {set_expanded}
-#
-class TreeNode(SetFields)
+class TreeNode()
    public 
       label,
       icon_paint,
@@ -127,6 +122,7 @@ class TreeNode(SetFields)
       /i := 0
       insert(self.children, i, n)
       n.parent := self
+      return self
    end
 
    #
@@ -141,6 +137,7 @@ class TreeNode(SetFields)
    #
    public remove(n)
       delete(self.children, get_index(n))
+      return self
    end
 
    #
@@ -149,6 +146,7 @@ class TreeNode(SetFields)
    #
    public remove_index(i)
       delete(self.children, i)
+      return self
    end
 
    #
@@ -189,6 +187,7 @@ class TreeNode(SetFields)
    #
    public toggle_expanded()
       self.is_expanded_flag := toggle_flag(self.is_expanded_flag)
+      return self
    end
 
    #
@@ -203,6 +202,7 @@ class TreeNode(SetFields)
    #
    public clear_children()
       children := []
+      return self
    end
 
    #
@@ -210,22 +210,11 @@ class TreeNode(SetFields)
    #
    public delete_node(n)
       remove(n)
+      return self
    end
 
-   public set_one(f)
-      case f.attr of {
-         "icon_paint" : set_icon_paint!(f.list_val(3))
-         "label" : set_label(f.val)  # Any type - we may have a custom renderer.
-         "always_expandable" : set_always_expandable(f.flag_val()) 
-         "expanded" : set_expanded(f.flag_val()) 
-         default : fail
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       children := []
-      set_fields(a)
       return
    end
 end

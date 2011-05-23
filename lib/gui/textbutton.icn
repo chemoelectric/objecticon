@@ -14,15 +14,6 @@ package gui
 # The size of the button can either be set using {set_size()},
 # be left to default to a size based on the given label.
 #
-# @field image=string : see {set_image}
-# @field image_down=string : see {set_image_down}
-# @field images=s1,s2 : see {set_images}
-# @field label=text : see {set_label}
-# @field label_down=text : see {set_label_down}
-# @field paint={Paint} : see {set_paint}
-# @field paint_down={Paint} : see {set_paint_down}
-# @field see also {Button}
-#
 class TextButton(Button)
    public 
       paint,
@@ -141,24 +132,11 @@ class TextButton(Button)
       return t + border.get_total_height()
    end
 
-   public set_one(f)
-      case f.attr of {
-         "image" : set_image(f.string_val())
-         "image_down" : set_image_down(f.string_val())
-         "images" : set_images!(f.string_list_val(2))
-         "label" : set_label(f.text_val())
-         "label_down" : set_label_down(f.text_val())
-         "paint" : set_paint(f.object_val(gui.Paint))
-         "paint_down" : set_paint_down(f.object_val(gui.Paint))
-         default: return cast(self,Button).set_one(f)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,Button).new()
-      self.border := CompoundBorder(RaisedBorder(), EmptyBorder())
-      set_fields(a)
+      self.border := CompoundBorder().
+                       set_outer(RaisedBorder()).
+                       set_inner(EmptyBorder())
       return
    end
 end

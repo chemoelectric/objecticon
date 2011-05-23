@@ -12,11 +12,6 @@ package gui
 #
 # This is a Spin for numeric values, optionally within a fixed range.
 #
-# @field value=numeric : see {set_value}
-# @field increment_size=numeric : see {set_increment_size}
-# @field range=numeric1,numeric2 : see {set_range}
-# @field see also {EditSpin}
-#
 class RangeSpin(EditSpin)
    public
       lo,
@@ -89,21 +84,10 @@ class RangeSpin(EditSpin)
       return border.get_total_width() + up.get_preferred_width() + t + view.border.get_total_width()
    end
 
-   public set_one(f)
-      case f.attr of {
-         "value" : set_value(f.numeric_val())
-         "increment_size" : set_increment_size(f.numeric_val())
-         "range" : set_range!(f.numeric_list_val(2))
-         default: return cast(self,EditSpin).set_one(f)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,EditSpin).new()
       view.set_filter(&digits ++ '.\-')
       self.increment_size := 1
-      set_fields(a)
       return
    end
 end

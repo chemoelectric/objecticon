@@ -1244,7 +1244,7 @@ class Dialog(Component)
       ROOT_WATTRIBS := table()
    end
 
-   public new(a[])
+   public new()
       cast(self,Component).new()
       self.set_all_wattribs(ROOT_WATTRIBS)
       self.child_dialogs := set()
@@ -1252,7 +1252,6 @@ class Dialog(Component)
       self.selections := table()
       self.selection_requests := table()
       self.tooltip_ticker := Dispatcher.new_task{self.process_tooltip_tick()}
-      set_fields(a)
       return
    end
 end
@@ -1263,10 +1262,9 @@ end
 # empty set of attribs.
 #
 class PureDialog(Dialog)
-   public new(a[])
+   public new()
       cast(self,Dialog).new()
       self.clear_wattribs()
-      set_fields(a)
       return
    end
 end
@@ -1374,10 +1372,9 @@ class Accelerator(Component)
       fire(Event.ACTION, e)
    end
 
-   public new(a[])
+   public new()
       cast(self,Component).new()
       self.x_spec := self.y_spec := self.w_spec := self.h_spec := 0
-      set_fields(a)
       return
    end
 end
@@ -1395,7 +1392,7 @@ class WindowControl(Component)
       parent_dialog.win.set_canvas("iconic")
    end
 
-   public new(a[])
+   public new()
       cast(self,Component).new()
       set_layout(GridLayout().set_doi(0).set_dii(0))
       set_pos("100%","0")
@@ -1412,7 +1409,6 @@ class WindowControl(Component)
           set_accepts_focus(&no).
           set_tooltip("Close").
           connect(close_window, Event.ACTION))
-      set_fields(a)
       return
    end
 end

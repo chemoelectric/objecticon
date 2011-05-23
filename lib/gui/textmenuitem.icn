@@ -3,17 +3,6 @@ package gui
 #
 # This class encapsulates a single text item in a Menu.
 #
-# @field label=text : see {set_label}
-# @field label_left=text : see {set_label_left}
-# @field label_right=text : see {set_label_right}
-# @field paint or paint_mid={Paint} : see {set_paint_mid}
-# @field paint_left={Paint} : see {set_paint_left}
-# @field paint_right={Paint} : see {set_paint_right}
-# @field border_mid={ABorder} : see {set_border_mid}
-# @field border_left={ABorder} : see {set_border_left}
-# @field border_right={ABorder} : see {set_border_right}
-# @field see also {MenuComponent}
-#
 class TextMenuItem(MenuComponent)
    public 
       paint_mid,
@@ -191,23 +180,7 @@ class TextMenuItem(MenuComponent)
       }
    end
 
-   public set_one(f)
-      case f.attr of {
-         "label" : set_label(f.text_val())
-         "label_left" : set_label_left(f.text_val())
-         "label_right" : set_label_right(f.text_val())
-         "paint"|"paint_mid" : set_paint_mid(f.object_val(gui.Paint))
-         "paint_left" : set_paint_left(f.object_val(gui.Paint))
-         "paint_right" : set_paint_right(f.object_val(gui.Paint))
-         "border_mid" : set_border_mid(f.object_val(gui.ABorder))
-         "border_left" : set_border_left(f.object_val(gui.ABorder))
-         "border_right" : set_border_right(f.object_val(gui.ABorder))
-         default : return cast(self,MenuComponent).set_one(f)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,MenuComponent).new()
       #
       # The three labels use the following X insets by default :-
@@ -218,7 +191,6 @@ class TextMenuItem(MenuComponent)
       self.border_mid := EmptyBorder().set_x_align("l")
       self.border_left := EmptyBorder().set_r_inset(0).set_x_align("l")
       self.border_right := EmptyBorder().set_l_inset(0).set_x_align("l")
-      set_fields(a)
       return
    end
 end

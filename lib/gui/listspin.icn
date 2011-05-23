@@ -11,11 +11,6 @@ package gui
 #
 # Selection from a list
 #
-# @field selection=integer : see {set_selection}
-# @field selection_list=t1,t2,t3,... : see {set_selection_list}.  This may
-# @ also be given (as a list) as the first parameter to the constructor.
-# @field see also {Component}
-#
 class ListSpin(SelectionList,StaticSpin)
    public old_selection
 
@@ -62,20 +57,6 @@ class ListSpin(SelectionList,StaticSpin)
       t := 0
       every t <:= self.cbwin.text_width(!self.selection_list)
       return border.get_total_width() + up.get_preferred_width() + t + view.border.get_total_width()
-   end
-
-   protected set_one(f)
-      case f.attr of {
-         "selection" : set_selection(f.int_val())
-         "selection_list" : set_selection_list(f.text_list_val())
-         default: return cast(self,StaticSpin).set_one(f)
-      }
-      return
-   end
-
-   protected set_special(a)
-      if type(a[1]) == "list" then
-         set_selection_list(pop(a))
    end
 end
 

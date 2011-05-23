@@ -84,12 +84,12 @@ class CanvasComponent(CanvasObject)
       }
 
       if \self.w_spec | \self.h_spec then {
-         t := name || ".set_size("
-         if \self.w_spec then
-            t ||:= image(self.w_spec)
-         if \self.h_spec then
-            t ||:= ", " || image(self.h_spec)
-         t ||:= ")"
+         if \self.w_spec & \self.h_spec then
+            t := name || ".set_size(" || self.w_spec || ", " || self.h_spec || ")"
+         else if \self.w_spec then
+            t := name || ".set_width(" || self.w_spec || ")"
+         else
+            t := name || ".set_height(" || self.h_spec || ")"
          c.line(t)
       }
 

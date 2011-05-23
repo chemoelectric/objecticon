@@ -79,7 +79,7 @@ class ListTabSet(Component)
       }
    end
 
-   public new(a[])
+   public new()
       local b
       cast(self,Component).new()
       self.set_constraint("x_fill", &yes)
@@ -96,7 +96,6 @@ class ListTabSet(Component)
       self.oa := OverlaySet()
       self.dl.set_contents(self.oa.children)
       b.set_content(oa)
-      set_fields(a)
       return
    end
 end

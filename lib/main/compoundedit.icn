@@ -14,10 +14,7 @@ import util
 # An UndoableEdit which groups several edits together in a list.  The
 # undo and redo methods are implemented to undo the edits in the list together.
 #
-# @field desc=string: see {set_desc}
-# @field liberal=flag: see {set_liberal}
-#
-class CompoundEdit(UndoableEdit, SetFields)
+class CompoundEdit(UndoableEdit)
    protected l
 
    private readable
@@ -86,19 +83,9 @@ class CompoundEdit(UndoableEdit, SetFields)
       return desc
    end
 
-   public set_one(f)
-      case f.attr of {
-         "desc" : set_desc(f.string_val())
-         "liberal":  set_liberal(f.flag_val())
-         default : fail
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       desc := "Compound edit"
       l := []
-      set_fields(a)
       return
    end
 end

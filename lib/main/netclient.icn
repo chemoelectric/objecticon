@@ -13,15 +13,7 @@ import
 # Common base class for a client class which holds a connection to a
 # server and communicates using CRLF-terminated lines.
 #
-# @field timeout=integer: see {set_timeout}
-# @field server=string: see {set_server}
-# @field path=string: see {set_path}
-# @field port=integer: see {set_port}
-# @field task=object: see {set_task}
-# @field ssl=flag: see {set_ssl}
-# @field ssl_verify=flag: see {set_ssl_verify}
-#
-class NetClient(Connectable, SetFields)
+class NetClient(Connectable)
    public static const 
       CONNECTING_EVENT,
       CONNECTED_EVENT,
@@ -29,8 +21,7 @@ class NetClient(Connectable, SetFields)
       WRITING_STRING_EVENT,
       WRITING_LINE_EVENT,
       READ_LINE_EVENT,
-      READ_STRING_EVENT,
-      EVENT_TABLE
+      READ_STRING_EVENT
    
    private static init()
       CONNECTING_EVENT := "Connecting"
@@ -40,14 +31,6 @@ class NetClient(Connectable, SetFields)
       WRITING_LINE_EVENT := "Writing line"
       READ_LINE_EVENT := "Read line"
       READ_STRING_EVENT := "Read string"
-      EVENT_TABLE := table(,
-                           "connecting", CONNECTING_EVENT,
-                           "connected", CONNECTED_EVENT,
-                           "closed", CLOSED_EVENT,
-                           "writing_string", WRITING_STRING_EVENT,
-                           "writing_line", WRITING_LINE_EVENT,
-                           "read_line", READ_LINE_EVENT,
-                           "read_string", READ_STRING_EVENT)
    end
 
    private readable
@@ -319,25 +302,10 @@ class NetClient(Connectable, SetFields)
       return self
    end
 
-   protected set_one(f)
-      case f.attr of {
-         "timeout": set_timeout(f.int_val())
-         "server": set_server(f.string_val())
-         "path": set_path(f.string_val())
-         "port": set_port(f.int_val())
-         "task": set_task(f.object_val(Task))
-         "ssl": set_ssl(f.flag_val())
-         "ssl_verify": set_ssl_verify(f.flag_val())
-         default: return try_event(f, EVENT_TABLE)
-      }
-      return
-   end
-
-   protected new(a[])
+   protected new()
       cast(self,Connectable).new()
       sbuff := ""
       ssl_verify_flag := &yes
-      set_fields(a)
       return
    end
 end

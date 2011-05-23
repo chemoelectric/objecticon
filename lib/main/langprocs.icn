@@ -7,12 +7,14 @@ import io, util, ipl.tables
 # also {ObjectOutputStream}.
 #
 # @param o       The object to be converted.
-# @param a[]     The field options to pass to the {ObjectOutputStream} constructor
 #
-procedure to_string(o, a[])
-   local sb
+procedure to_string(o, indent, always_structure)
+   local sb, oo
    sb := RamStream()
-   (ObjectOutputStream!a).show(o, sb)
+   oo := ObjectOutputStream().
+      set_indent(indent).
+      set_always_structure(always_structure)
+   oo.show(o, sb)
    return sb.done()
 end
 
@@ -21,10 +23,12 @@ end
 # also {ObjectOutputStream}.
 #
 # @param o       The object to be output.
-# @param a[]     The field options to pass to the {ObjectOutputStream} constructor
 #
-procedure to_stdout(o, a[])
-   return (ObjectOutputStream!a).show(o, FileStream.stdout)
+procedure to_stdout(o, indent, always_structure)
+   return ObjectOutputStream().
+      set_indent(indent).
+      set_always_structure(always_structure).
+      show(o, FileStream.stdout)
 end
 
 #
@@ -32,10 +36,12 @@ end
 # also {ObjectOutputStream}.
 #
 # @param o       The object to be output.
-# @param a[]     The field options to pass to the {ObjectOutputStream} constructor
 #
-procedure to_stderr(o, a[])
-   return (ObjectOutputStream!a).show(o, FileStream.stderr)
+procedure to_stderr(o, indent, always_structure)
+   return ObjectOutputStream().
+      set_indent(indent).
+      set_always_structure(always_structure).
+      show(o, FileStream.stderr)
 end
 
 #
@@ -43,7 +49,7 @@ end
 # arbitrary icon object.
 #
 # @example
-# @  oo := ObjectOutputStream("indent=3")
+# @  oo := ObjectOutputStream()
 # @  oo.show(my_object, FileStream.stdout)
 # @  oo.show(another_object, FileStream.stdout)
 #
@@ -55,13 +61,7 @@ end
 # For simpler procedure interfaces to this class, see {to_string},
 # {to_stdout} and {to_stderr}.
 #
-# @field indent=integer : see {set_indent}
-# @field depth=integer : see {set_depth}
-# @field ignore_object_output=flag : see {set_ignore_object_output}
-# @field always_structure=flag : see {set_always_structure}
-# @field always_indent=integer : short for indent=integer, always_structure=&yes
-#
-class ObjectOutputStream(Stream, SetFields)
+class ObjectOutputStream(Stream)
    private readable
       depth,
       indent,
@@ -464,21 +464,6 @@ class ObjectOutputStream(Stream, SetFields)
    public set_always_structure(s)
       self.always_structure_flag := check_flag(s)
       return self
-   end
-
-   protected set_one(f)
-      case f.attr of {
-         "indent" : set_indent(f.int_val())
-         "depth" : set_depth(f.int_val())
-         "ignore_object_output" : set_ignore_object_output(f.flag_val())
-         "always_structure" : set_always_structure(f.flag_val())
-         "always_indent" : {
-            set_indent(f.int_val())
-            set_always_structure(&yes)
-         }
-         default: fail
-      }
-      return
    end
 end
 

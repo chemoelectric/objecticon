@@ -13,12 +13,6 @@ import util, ipl.lists
 #
 # This class displays a list of strings.
 #
-# @field wrap_mode=string: see {set_wrap_mode}
-# @field split_words=flag: see {set_split_words}
-# @field tab_width=integer: see {set_tab_width}
-# @field contents=t1,t2,t3,... : see {set_contents}
-# @field see also {ScrollArea}
-#
 class TextDisplay(LineBasedScrollArea)
    public
       contents, 
@@ -306,24 +300,12 @@ class TextDisplay(LineBasedScrollArea)
       return self
    end
 
-   public set_one(f)
-      case f.attr of {
-         "wrap_mode": set_wrap_mode(f.string_val())
-         "split_words": set_split_words(f.flag_val())
-         "tab_width": set_tab_width(f.int_val())
-         "contents" : set_contents(f.text_list_val())
-         default: return cast(self,LineBasedScrollArea).set_one(f)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,LineBasedScrollArea).new()
       tab_width := Gui.TAB_WIDTH
       set_contents([])
       set_wrap_mode("off")
       use_default_keys()
-      set_fields(a)
       return
    end
 end

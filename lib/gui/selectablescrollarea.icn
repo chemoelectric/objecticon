@@ -18,14 +18,6 @@ import
 # This class extends LineBasedScrollArea to provide selection on lines,
 # event handling and selection handling.
 #
-# @field select_mode=string : see {set_select_mode}
-# @field draggable_cursor=flag : see {set_draggable_cursor}
-# @field motion_cursor=flag : see {set_motion_cursor}
-# @field selection_on_key_moves=flag : see {set_selection_on_key_moves}
-# @field contents=list : see {set_contents}
-# @field selections=i1,i2,i3,... : see {set_selections}
-# @field see also {ScrollArea}
-#
 class SelectableScrollArea(LineBasedScrollArea)
    public 
       contents,
@@ -748,19 +740,6 @@ class SelectableScrollArea(LineBasedScrollArea)
       }
    end
 
-   public set_one(f)
-      case f.attr of {
-         "select_mode" : set_select_mode(f.string_val())
-         "draggable_cursor" : set_draggable_cursor(f.flag_val())
-         "motion_cursor" : set_motion_cursor(f.flag_val())
-         "selection_on_key_moves" : set_selection_on_key_moves(f.flag_val())
-         "contents" : set_contents(f.list_val())
-         "selections" : set_selections(f.int_list_val())
-         default: return cast(self,LineBasedScrollArea).set_one(f)
-      }
-      return
-   end
-
    #
    # This method is overridden by the subclass to draw the given 
    # line at the given position, as well as the selection drawing.
@@ -863,7 +842,7 @@ class SelectableScrollArea(LineBasedScrollArea)
       cast(self,LineBasedScrollArea).finally()
    end
 
-   public new(a[])
+   public new()
       cast(self,LineBasedScrollArea).new()
       scroll_ticker := Dispatcher.new_task{scroll_tick()}
       self.set_accepts_focus(&yes)
@@ -877,7 +856,6 @@ class SelectableScrollArea(LineBasedScrollArea)
       view.connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
       view.connect(self.handle_move, Event.MOUSE_MOVEMENT)
       connect(self.handle_key, Event.KEY_PRESS)
-      set_fields(a)
       return
    end
 end

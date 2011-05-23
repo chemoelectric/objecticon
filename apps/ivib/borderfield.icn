@@ -76,12 +76,11 @@ class BorderField(Component)
       self.add(edit_border_button)
    end
 
-   public new(a[])
+   public new()
       cast(self,Component).new()
       setup()
       self.set_constraint("x_fill", &yes)
       self.set_constraint("x_weight", "1")
-      set_fields(a)
       return
    end
 end

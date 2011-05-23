@@ -75,10 +75,7 @@ procedure decode(s)
    return d.parse(s)
 end
 
-#
-# @field fast=flag : see {set_fast}
-#
-class Encode(SetFields)
+class Encode()
    private
       tag_count,
       seen, 
@@ -315,14 +312,6 @@ class Encode(SetFields)
    public set_fast(s)
       self.fast_flag := check_flag(s)
       return self
-   end
-
-   protected set_one(f)
-      case f.attr of {
-         "fast" : set_fast(f.flag_val())
-         default: fail
-      }
-      return
    end
 end
 

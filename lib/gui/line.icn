@@ -13,10 +13,6 @@ import util
 #
 # This class implements an etched Line, drawn within its region.
 #
-# @field is_horizontal=flag : see {set_is_horizontal}
-# @field line_width=integer : see {set_line_width}
-# @field see also {Component}
-#
 class Line(Component)
    public
       is_horizontal_flag,
@@ -71,20 +67,10 @@ class Line(Component)
       }
    end
 
-   public set_one(f)
-      case f.attr of {
-         "is_horizontal" : set_is_horizontal(f.flag_val())
-         "line_width" : set_line_width(f.int_val())
-         default: return cast(self,Component).set_one(f)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,Component).new()
       self.line_width := Gui.BORDER_WIDTH
       self.is_horizontal_flag := 1
-      set_fields(a)
       return
    end
 end

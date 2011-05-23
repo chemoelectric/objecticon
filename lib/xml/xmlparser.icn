@@ -56,15 +56,7 @@ class IdAttributeRef()
    end
 end
 
-
-#
-# @field do_namespaces=flag : see {set_do_namespaces}
-# @field validate=flag : see {set_validate}
-# @field preserve_comments=flag : see {set_preserve_comments}
-# @field preserve_insignificant_whitespace=flag : see {set_preserve_insignificant_whitespace}
-# @field resolver={Resolver} : see {set_resolver}
-#
-class XmlParser(Connectable,SetFields)
+class XmlParser(Connectable)
    public static const
       XML_SPACE,
       XML_CHAR,
@@ -74,8 +66,7 @@ class XmlParser(Connectable,SetFields)
       XML_PUBID_CHAR,
       WARNING_EVENT,
       VALIDITY_ERROR_EVENT, 
-      FATAL_ERROR_EVENT,
-      EVENT_TABLE
+      FATAL_ERROR_EVENT
 
    private
       doc,
@@ -2322,18 +2313,6 @@ class XmlParser(Connectable,SetFields)
       return t
    end
 
-   protected set_one(f)
-      case f.attr of {
-         "do_namespaces" : set_do_namespaces(f.flag_val())
-         "validate" : set_validate(f.flag_val())
-         "preserve_comments" : set_preserve_comments(f.flag_val())
-         "preserve_insignificant_whitespace" : set_preserve_insignificant_whitespace(f.flag_val())
-         "resolver" : set_resolver(f.object_val(Resolver))
-         default: return try_event(f, EVENT_TABLE)
-      }
-      return
-   end
-
    private static init()
       #
       # [3] S ::= (#x20 | #x9 | #xD | #xA)+
@@ -2367,20 +2346,14 @@ class XmlParser(Connectable,SetFields)
       WARNING_EVENT := "Warning"
       VALIDITY_ERROR_EVENT := "Validity error"
       FATAL_ERROR_EVENT := "Fatal error"
-
-      EVENT_TABLE := table(,
-                           "warning", WARNING_EVENT,
-                           "validity_error",  VALIDITY_ERROR_EVENT, 
-                           "fatal_error", FATAL_ERROR_EVENT)
    end
 
-   public new(a[])
+   public new()
       cast(self,Connectable).new()
       resolver := DefaultResolver()
       do_namespaces_flag := 1
       validate_flag := 1
       preserve_comments_flag := 1
-      set_fields(a)
       return
    end
 end

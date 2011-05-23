@@ -149,10 +149,6 @@ end
 # This class displays a table, the columns of which are set up
 # using TableColumns.
 #
-# @field select_mode=string : see {set_select_mode}
-# @field contents=list : see {set_contents}
-# @field selections=i1,i2,i3,... : see {set_selections}
-#
 class Table(Component)
    public 
    table_header,
@@ -410,16 +406,6 @@ class Table(Component)
       return self.table_content
    end
 
-   public set_one(f)
-      case f.attr of {
-         "select_mode" : set_select_mode(f.string_val())
-         "contents" : set_contents(f.list_val())
-         "selections" : set_selections(f.int_list_val())
-         default: return cast(self,Component).set_one(f)
-      }
-      return
-   end
-
    public create_table_content()
       return TableContent()
    end
@@ -428,7 +414,7 @@ class Table(Component)
       return TableHeader()
    end
 
-   public new(a[])
+   public new()
       cast(self,Component).new()
       self.preferred_focus := self.table_content := create_table_content()
       self.table_content.set_border(EmptyBorder().set_insets(0, 0, 0, 0))
@@ -442,7 +428,6 @@ class Table(Component)
       self.set_constraint("y_fill", &yes)
       self.set_constraint("x_weight", 1.0)
       self.set_constraint("y_weight",  1.0)
-      set_fields(a)
       return
    end
 end

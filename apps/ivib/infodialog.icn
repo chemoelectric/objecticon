@@ -24,7 +24,7 @@ class InfoDialog(Dialog)
       /button_text := "Close"
       /title := "Information"
       /alignment := "l"
-      attrib("label=" || title)
+      set_label(title)
       set_layout(GridLayout())
       l := Label().set_constraint("eol", &yes).set_constraint("y_weight", 1)
       s := ".cell x_align=" || alignment || "\n"

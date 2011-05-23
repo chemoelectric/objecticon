@@ -116,7 +116,6 @@ class Gui()
       CONSTRAINT_SET,
       WATTRIB_SET,
       CONTEXT_WATTRIB_SET,      # attribs that affect the graphical drawing context
-      EVENT_TABLE,
       PRINTABLE_1,              # Printable on a single line of text
       PRINTABLE_N               # Printable on multi lines of text
 
@@ -144,41 +143,6 @@ class Gui()
                          "max_height", "max_size")
       CONTEXT_WATTRIB_SET := set("fg", "bg", "draw_op", "font", "line_width", "line_style", "fill_style", 
                                  "pattern")
-      EVENT_TABLE := table(,
-                         "mouse_left_press", Event.MOUSE_LEFT_PRESS,
-                         "mouse_middle_press", Event.MOUSE_MIDDLE_PRESS,
-                         "mouse_right_press", Event.MOUSE_RIGHT_PRESS,
-                         "mouse_left_release", Event.MOUSE_LEFT_RELEASE,
-                         "mouse_middle_release", Event.MOUSE_MIDDLE_RELEASE,
-                         "mouse_right_release", Event.MOUSE_RIGHT_RELEASE,
-                         "mouse_left_drag", Event.MOUSE_LEFT_DRAG,
-                         "mouse_middle_drag", Event.MOUSE_MIDDLE_DRAG,
-                         "mouse_right_drag", Event.MOUSE_RIGHT_DRAG,
-                         "mouse_movement", Event.MOUSE_MOVEMENT,
-                         "mouse_wheel_up", Event.MOUSE_WHEEL_UP,
-                         "mouse_wheel_down", Event.MOUSE_WHEEL_DOWN,
-                         "window_resize", Event.WINDOW_RESIZE,
-                         "window_close_button", Event.WINDOW_CLOSE_BUTTON,
-                         "icon", Event.ICON,
-                         "button_release", Event.BUTTON_RELEASE,
-                         "button_press", Event.BUTTON_PRESS,
-                         "button_held", Event.BUTTON_HELD,
-                         "selection_changed", Event.SELECTION_CHANGED,
-                         "content_changed", Event.CONTENT_CHANGED,
-                         "cursor_moved", Event.CURSOR_MOVED,
-                         "value_changed", Event.VALUE_CHANGED,
-                         "action", Event.ACTION,
-                         "tree_node_expansion", Event.TREE_NODE_EXPANSION,
-                         "sizer_press", Event.SIZER_PRESS,
-                         "sizer_drag", Event.SIZER_DRAG,
-                         "sizer_release", Event.SIZER_RELEASE,
-                         "mouse_enter", Event.MOUSE_ENTER,
-                         "mouse_exit", Event.MOUSE_EXIT,
-                         "key_press", Event.KEY_PRESS,
-                         "key_release", Event.KEY_RELEASE,
-                         "got_focus", Event.GOT_FOCUS,
-                         "lost_focus", Event.LOST_FOCUS,
-                         "dialog_close", Event.DIALOG_CLOSED)
    end
 
    public static is_constraint(s)
@@ -187,10 +151,6 @@ class Gui()
 
    public static is_window_attrib(s)
       return member(WATTRIB_SET, s)
-   end
-
-   public static is_event(s)
-      return member(EVENT_TABLE, s)
    end
 end
 

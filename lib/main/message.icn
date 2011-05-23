@@ -9,28 +9,7 @@ import util, io
 #
 # This class represents an email message
 #
-# @field content=string: see {set_content}
-# @field decoded_content=string: see {set_decoded_content}
-# @field content_object=value: see {set_content_object}
-# @field date={Time}: see {set_date}
-# @field to=value: see {set_to}
-# @field reply_to=value: see {set_reply_to}
-# @field resent_to=value: see {set_resent_to}
-# @field cc=value: see {set_cc}
-# @field resent_cc=value: see {set_resent_cc}
-# @field bcc=value: see {set_bcc}
-# @field resent_bcc=value: see {set_resent_bcc}
-# @field from=value: see {set_from}
-# @field sender={Mailbox}: see {set_sender}
-# @field resent_from=value: see {set_resent_from}
-# @field resent_sender={Mailbox}: see {set_resent_sender}
-# @field resent_date={Time}: see {set_resent_date}
-# @field content_type={ContentType}: see {set_content_type}
-# @field content_disposition={ContentDisposition}: see {set_content_disposition}
-# @field content_transfer_encoding=string: see {set_content_transfer_encoding}
-# @field subject=string: see {set_subject}
-#
-class Message(SetFields, MimeHeaders)
+class Message(MimeHeaders)
    private readable 
       content
 
@@ -742,37 +721,9 @@ class Message(SetFields, MimeHeaders)
       return get_first_header("Subject")
    end
 
-   public set_one(f)
-      case f.attr of {
-         "content": set_content(f.string_val())
-         "decoded_content": set_decoded_content(f.string_val())
-         "content_object": set_content_object(f.val)
-         "date": set_date(f.object_val(Time))
-         "to": set_to(f.val)
-         "reply_to": set_reply_to(f.val)
-         "resent_to": set_resent_to(f.val)
-         "cc": set_cc(f.val)
-         "resent_cc": set_resent_cc(f.val)
-         "bcc": set_bcc(f.val)
-         "resent_bcc": set_resent_bcc(f.val)
-         "from": set_from(f.val)
-         "sender": set_sender(f.object_val(Mailbox))
-         "resent_from": set_resent_from(f.val)
-         "resent_sender": set_resent_sender(f.object_val(Mailbox))
-         "resent_date": set_resent_date(f.object_val(Time))
-         "content_type": set_content_type(f.object_val(ContentType))
-         "content_disposition": set_content_disposition(f.object_val(ContentDisposition))
-         "content_transfer_encoding": set_content_transfer_encoding(f.string_val())
-         "subject": set_subject(f.string_val())
-         default: fail
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,MimeHeaders).new()
       content := ""
-      set_fields(a)
       return
    end
 end

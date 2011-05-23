@@ -21,14 +21,6 @@ import
 # are changed by the user, a Event.CURSOR_MOVED when the cursor moves,
 # and a Event.SELECTION_CHANGED whenver the selection changes.
 #
-# @field wrap_mode=string: see {set_wrap_mode}
-# @field split_words=flag: see {set_split_words}
-# @field tab_width=integer: see {set_tab_width}
-# @field contents=t1,t2,t3,... : see {set_contents}
-# @field is_editable=flag : see {set_is_editable}
-# @field move_on_rpress=flag : see {set_move_on_rpress}
-# @field see also {ScrollArea}
-#
 class EditableTextList(LineBasedScrollArea)
    public 
       contents,                                     
@@ -1269,20 +1261,7 @@ class EditableTextList(LineBasedScrollArea)
       return self
    end
 
-   public set_one(f)
-      case f.attr of {
-         "wrap_mode": set_wrap_mode(f.string_val())
-         "split_words": set_split_words(f.flag_val())
-         "tab_width": set_tab_width(f.int_val())
-         "contents" : set_contents(f.text_list_val())
-         "is_editable" : set_is_editable(f.flag_val()) 
-         "move_on_rpress" : set_move_on_rpress(f.flag_val()) 
-         default: return cast(self,LineBasedScrollArea).set_one(f)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,LineBasedScrollArea).new()
       scroll_ticker := Dispatcher.new_task{scroll_tick()}
       cursor_ticker := Dispatcher.new_task{cursor_tick()}
@@ -1304,7 +1283,6 @@ class EditableTextList(LineBasedScrollArea)
       view.connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
       view.set_pointer("xterm")
       connect(self.handle_key, Event.KEY_PRESS)
-      set_fields(a)
       return
    end
 end

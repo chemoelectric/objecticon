@@ -6,11 +6,6 @@ package mail
 
 import net, util(error)
 
-#
-# @field username=string: see {set_username}
-# @field password=string: see {set_password}
-# @field see also {NetClient}
-#
 class PopClient(NetClient)
    private
       username,
@@ -228,20 +223,10 @@ class PopClient(NetClient)
       return error_and_close("Got an unrecognized response: " || s)
    end
 
-   public set_one(f)
-      case f.attr of {
-         "username": set_username(f.string_val())
-         "password": set_password(f.string_val())
-         default: return cast(self,NetClient).set_one(f)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,NetClient).new()
       set_port(110)
       set_server("localhost")
-      set_fields(a)
       return
    end
 end

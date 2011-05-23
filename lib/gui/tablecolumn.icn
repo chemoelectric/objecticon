@@ -17,10 +17,6 @@ package gui
 #
 # The label is set by calling the {set_label(x)} method of the
 # parent class, {TextButton}.
-#
-# @field column_align=string : see {set_column_align}
-# @field column_width=integer : see {set_column_width}
-# @field see also {TextButton}
 # 
 class TableColumn(TextButton)
    public 
@@ -101,15 +97,6 @@ class TableColumn(TextButton)
                              self.x + self.w - 1, self.y + self.h - 1)
    end
 
-   public set_one(f)
-      case f.attr of {
-         "column_align" : set_column_align(f.string_val())
-         "column_width" : set_column_width(f.int_val())
-         default: return cast(self,TextButton).set_one(f)
-      }
-      return
-   end
-
    #
    # Return the table content
    #
@@ -183,14 +170,13 @@ class TableColumn(TextButton)
       return W.get_font_height()
    end
 
-   public new(a[])
+   public new()
       cast(self,TextButton).new()
       self.set_accepts_focus(&no)
       self.set_border(EmptyBorder())
       border.set_l_inset(Gui.TEXT_INSET)
       border.set_r_inset(Gui.TEXT_INSET)
       border.set_x_align(Align.L)
-      set_fields(a)
       return
    end
 end

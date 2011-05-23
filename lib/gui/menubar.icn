@@ -399,12 +399,11 @@ class MenuBar(Component)
       }
    end
 
-   public new(a[])
+   public new()
       cast(self,Component).new()
       self.set_border(RaisedBorder())
       set_tooltip_follows_mouse(&yes)
       self.menus := []
-      set_fields(a)
       return
    end
 end

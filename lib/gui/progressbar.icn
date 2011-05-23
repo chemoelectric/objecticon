@@ -7,9 +7,6 @@ package gui
 #
 # A progress bar
 #
-# @field percentage=integer : see {set_percentage}
-# @field see also {Component}
-#
 class ProgressBar(Component)
    public p
 
@@ -50,19 +47,12 @@ class ProgressBar(Component)
       return self
    end
 
-   public set_one(f)
-      case f.attr of {
-         "percentage" : set_percentage(f.int_val())
-         default: return cast(self,Component).set_one(f)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,Component).new()
-      self.set_border(CompoundBorder(RaisedBorder(), EmptyBorder()))
+      self.set_border(CompoundBorder().
+                           set_outer(RaisedBorder()).
+                           set_inner(EmptyBorder()))
       self.set_percentage(0)
-      set_fields(a)
       return
    end
 end

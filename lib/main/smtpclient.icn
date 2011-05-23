@@ -6,10 +6,6 @@ package mail
 
 import net, util(error)
 
-#
-# @field hostname=string: see {set_hostname}
-# @field see also {NetClient}
-#
 class SmtpClient(NetClient)
    private static const 
       RFC822_HEADERS
@@ -167,20 +163,11 @@ class SmtpClient(NetClient)
       return
    end
 
-   public set_one(f)
-      case f.attr of {
-         "hostname": set_hostname(f.string_val())
-         default: return cast(self,NetClient).set_one(f)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,NetClient).new()
       set_port(25)
       set_server("localhost")
       set_hostname(&host)
-      set_fields(a)
       return
    end
 end

@@ -1,46 +1,9 @@
 package graphics
 
 import 
-   lang(NoCopy),
-   util(SetFields)
+   lang(NoCopy)
 
-#
-# @field bg=string : see {set_bg}
-# @field canvas=string : see {set_canvas}
-# @field display=string : X11 display to use (for {open} only)
-# @field clip=i1,i2,i3,i4  : see {clip}
-# @field unclip=: see {unclip}
-# @field draw_op=string : see {set_draw_op}
-# @field dx=integer : see {set_dx}
-# @field dy=integer : see {set_dy}
-# @field fg=string : see {set_fg}
-# @field fill_style=string : see {set_fill_style}
-# @field font=string : see {set_font}
-# @field geometry=i1,i2,i3,i4 : see {set_geometry}
-# @field height=integer : see {set_height}
-# @field icon=string : see {set_icon}
-# @field image=string : see {set_image}
-# @field input_mask=string : see {set_input_mask}
-# @field label=string : see {set_label}
-# @field line_style=string : see {set_line_style}
-# @field line_width=integer : see {set_line_width}
-# @field max_height=integer : see {set_max_height}
-# @field max_size=i1,i2 : see {set_max_size}
-# @field max_width=integer : see {set_max_width}
-# @field min_height=integer : see {set_min_height}
-# @field min_size=i1,i2 : see {set_min_size}
-# @field min_width=integer : see {set_min_width}
-# @field pattern=string : see {set_pattern}
-# @field pointer=string : see {set_pointer}
-# @field pos=i1,i2 : see {set_pos}
-# @field transient_for=W : see {set_transient_for}
-# @field x=integer : see {set_x}
-# @field y=integer : see {set_y}
-# @field resize=flag : see {set_resize}
-# @field size=i1,i2 : see {set_size}
-# @field width=integer : see {set_width}
-#
-class Window(SetFields,NoCopy)
+class Window(NoCopy)
    private
       wbp,
       transient_for
@@ -598,46 +561,6 @@ class Window(SetFields,NoCopy)
          fail
       }
       return w
-   end
-
-   protected set_one(f)
-      case f.attr of {
-         "bg": set_bg(f.val)
-         "canvas": set_canvas(f.val)
-         "clip" : clip!(f.int_list_val())
-         "unclip" : unclip()
-         "draw_op": set_draw_op(f.val)
-         "dx": set_dx(f.val)
-         "dy": set_dy(f.val)
-         "fg": set_fg(f.val)
-         "fill_style": set_fill_style(f.val)
-         "font": set_font(f.val)
-         "geometry": set_geometry!(f.int_list_val())
-         "height"|"h": set_height(f.val)
-         "icon": set_icon(f.val)
-         "image": set_image(f.val)
-         "input_mask": set_input_mask(f.val)
-         "label": set_label(f.val)
-         "line_style": set_line_style(f.val)
-         "line_width": set_line_width(f.val)
-         "max_height": set_max_height(f.val)
-         "max_size": set_max_size!(f.int_list_val())
-         "max_width": set_max_width(f.val)
-         "min_height": set_min_height(f.val)
-         "min_size": set_min_size!(f.int_list_val())
-         "min_width": set_min_width(f.val)
-         "pattern": set_pattern(f.val)
-         "pointer": set_pointer(f.val)
-         "pos": set_pos!(f.int_list_val())
-         "transient_for": set_transient_for(f.object_val(Window))
-         "x": set_x(f.val)
-         "y": set_y(f.val)
-         "resize": set_resize(f.flag_val())
-         "size": set_size!(f.int_list_val())
-         "width"|"w": set_width(f.val)
-         default : fail
-      }
-      return
    end
 
    private new(wbp)

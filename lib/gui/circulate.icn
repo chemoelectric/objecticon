@@ -30,14 +30,13 @@ class CirculateLabel(Label)
       }
    end
 
-   public new(a[])
+   public new()
       cast(self,Label).new()
       self.set_label("")
       connect(self.on_key, Event.KEY_PRESS)
       connect(self.go_up, Event.MOUSE_WHEEL_UP)
       connect(self.go_down, Event.MOUSE_WHEEL_DOWN)
       self.border.set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, Gui.Y_INSET, Gui.Y_INSET)
-      set_fields(a)
       return
    end
 end
@@ -45,11 +44,6 @@ end
 
 #
 # Selection from a list
-#
-# @field selection=integer : see {set_selection}
-# @field selection_list=t1,t2,t3,... : see {set_selection_list}.  This may
-# @ also be given (as a list) as the first parameter to the constructor.
-# @field see also {Component}
 #
 class Circulate(SelectionList,Component)
    public
@@ -140,21 +134,7 @@ class Circulate(SelectionList,Component)
       cast(self,Component).initially()
    end
 
-   protected set_one(f)
-      case f.attr of {
-         "selection" : set_selection(f.int_val())
-         "selection_list" : set_selection_list(f.text_list_val())
-         default: return cast(self,Component).set_one(f)
-      }
-      return
-   end
-
-   protected set_special(a)
-      if type(a[1]) == "list" then
-         set_selection_list(pop(a))
-   end
-
-   public new(a[]) 
+   public new() 
       cast(self,Component).new()
       self.set_border(SunkenBorder())
       self.preferred_focus := self.l := CirculateLabel()
@@ -183,7 +163,6 @@ class Circulate(SelectionList,Component)
 ~~~000000~~~~_
 ~~~~0000~~~~~_
 ")
-      set_fields(a)
       return
    end
 end
