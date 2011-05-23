@@ -1245,7 +1245,7 @@ class FixAttribsAction(Action)
       fixone(t, "maxwidth", "max_width")
       fixone(t, "minsize", "min_size")
       fixone(t, "maxsize", "max_size")
-      proxy.add("WAttribs", t)
+      proxy.add("WAttribs", normalize_wattribs(t))
    end
 end
 

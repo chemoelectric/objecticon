@@ -792,7 +792,7 @@ class Main(Dialog)
          else if /t.dialog_ih then
             insert(m, "width", t.dialog_iw)
          else
-            insert(m, "size", t.dialog_iw || "," || t.dialog_ih)
+            insert(m, "size", [t.dialog_iw, t.dialog_ih])
       }
       d.set_all_wattribs(m)
 

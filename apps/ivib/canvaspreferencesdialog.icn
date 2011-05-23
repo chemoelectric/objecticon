@@ -78,7 +78,7 @@ class CanvasPreferencesDialog(Dialog)
       #
       # Set the attribs list.
       #
-      c.dialog_struct.wattribs := attrib_tab.get_table()
+      c.dialog_struct.wattribs := normalize_wattribs(attrib_tab.get_table())
 
       c.event_handlers := event_tab.get_contents()
       c.gen_main := if self.gen_main.is_checked() then 1 else &null
@@ -217,7 +217,7 @@ class CanvasPreferencesDialog(Dialog)
       pos_tab.add(layout_field)
       orig_layout := c.layout_delegate
      
-      self.attrib_tab := MapTab().set_label("WAttribs").set_table(c.dialog_struct.wattribs)
+      self.attrib_tab := MapTab().set_label("WAttribs").set_table(stringify_wattribs(c.dialog_struct.wattribs))
       add_tab(self.attrib_tab)
 
       methods_tab := TabItem()

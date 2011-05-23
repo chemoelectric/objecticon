@@ -257,7 +257,7 @@ class CanvasComponentDialog(Dialog)
          pos_tab.add(z_field)
       }
 
-      self.attrib_tab := MapTab().set_label("WAttribs").set_table(c.wattribs)
+      self.attrib_tab := MapTab().set_label("WAttribs").set_table(stringify_wattribs(c.wattribs))
       add_tab(self.attrib_tab)
 
       code_tab := CodeTab(c)
@@ -404,7 +404,7 @@ class CanvasComponentDialog(Dialog)
       }
 
       code_tab.set_vals()
-      c.wattribs := attrib_tab.get_table()
+      c.wattribs := normalize_wattribs(attrib_tab.get_table())
 
       c.event_handlers := event_tab.get_contents()
 
