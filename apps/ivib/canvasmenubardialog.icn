@@ -126,7 +126,7 @@ class CanvasMenuBarDialog(CanvasComponentDialog)
       l := struct.get_selections()
       n := c.parent_Canvas.new_checkbox_group()
       every e := struct.get_rec(!l) do {
-         e.owner.set_box_paint(ImagePaint("cache=gui.DIAMOND_UP"), ImagePaint("cache=gui.DIAMOND_DOWN"))
+         e.owner.set_box_paint(ImagePaint().set_cache("gui.DIAMOND_UP"), ImagePaint().set_cache("gui.DIAMOND_DOWN"))
          e.owner.set_parent_check_box_group(n)
          e.owner.set_is_checked(&no)
       }
@@ -148,7 +148,7 @@ class CanvasMenuBarDialog(CanvasComponentDialog)
       local new
       new := CanvasMenu()
       new.set_paint_mid(CanvasTextPaint("Edit me"))
-      new.set_paint_right(CanvasImagePaint("cache=gui.ARROW_RIGHT"))
+      new.set_paint_right(CanvasImagePaint().set_cache("gui.ARROW_RIGHT"))
       update(new)
       update_grey()
    end
@@ -324,49 +324,49 @@ class CanvasMenuBarDialog(CanvasComponentDialog)
       struct.set_select_mode(Select.MANY)
       p.add(struct)
 
-      q := Panel("c:x_weight=0")
-      q.set_layout(GridLayout("doi=0","extra=borders"))
+      q := Panel().set_constraint("x_weight", 0)
+      q.set_layout(GridLayout().set_doi(0).set_extra("borders"))
 
-      add_label := TextButton("c:eol")
+      add_label := TextButton().set_constraint("eol", &yes)
       add_label.connect(self.on_add_label, Event.ACTION)
       add_label.set_label("Add label")
       q.add(add_label)
 
-      add_separator := TextButton("c:eol")
+      add_separator := TextButton().set_constraint("eol", &yes)
       add_separator.connect(self.on_add_separator, Event.ACTION)
       add_separator.set_label("Add separator")
       q.add(add_separator)
  
-      add_menu := TextButton("c:eol")
+      add_menu := TextButton().set_constraint("eol", &yes)
       add_menu.connect(self.on_add_menu, Event.ACTION)
       add_menu.set_label("Add Menu")
       q.add(add_menu)
      
-      add_checkbox := TextButton("c:eol")
+      add_checkbox := TextButton().set_constraint("eol", &yes)
       add_checkbox.connect(self.on_add_checkbox, Event.ACTION)
       add_checkbox.set_label("Add checkbox")
       q.add(add_checkbox)
 
-      delete := TextButton("c:eol")
+      delete := TextButton().set_constraint("eol", &yes)
       delete.connect(self.on_delete, Event.ACTION)
       delete.set_label("Delete")
       q.add(delete)
 
-      edit := TextButton("c:eol")
+      edit := TextButton().set_constraint("eol", &yes)
       edit.connect(self.on_edit, Event.ACTION)
       edit.set_label("Edit")
       q.add(edit)
 
-      new_cbg := TextButton("c:eol")
+      new_cbg := TextButton().set_constraint("eol", &yes)
       new_cbg.connect(self.on_new_cbg, Event.ACTION)
       new_cbg.set_label("CheckBoxGroup")
       q.add(new_cbg)
 
-      up := TextButton("label=Up", "c:eol")
+      up := TextButton().set_label("Up").set_constraint("eol", &yes)
       up.connect(self.on_up, Event.ACTION)
       q.add(up)
 
-      down := TextButton("label=Down")
+      down := TextButton().set_label("Down")
       down.connect(self.on_down, Event.ACTION)
       q.add(down)
 

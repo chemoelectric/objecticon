@@ -18,9 +18,6 @@ package gui
 # @ n := TreeTableNode("label=Col A label")
 # @ n.set_contents(["Col B data", "Col C data"])
 #
-# @field contents=list: see {set_contents}
-# @field see also {TreeNode}
-#
 class TreeTableNode(TreeNode)
    public contents
 
@@ -29,14 +26,7 @@ class TreeTableNode(TreeNode)
    #
    public set_contents(l)
       self.contents := l
-   end
-
-   public set_one(f)
-      case f.attr of {
-         "contents" : set_contents(f.list_val())
-         default: return cast(self,TreeNode).set_one(f)
-      }
-      return
+      return self
    end
 end
 

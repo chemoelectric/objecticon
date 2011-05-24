@@ -143,7 +143,7 @@ class CanvasPluginDialog(CanvasComponentDialog)
 
    public setup()
       cast(self,CanvasComponentDialog).setup()
-      config_tab := MapTab("label=Config", "table=",c.config)
+      config_tab := MapTab().set_label("Config").set_table(c.config)
       add_tab_at_front(config_tab)
    end
 

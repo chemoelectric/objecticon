@@ -44,13 +44,10 @@ if (!self_w)
     runerr(142, self);
 #enddef
 
-function graphics_Window_wcreate(display)
+function graphics_Window_open_impl(display)
    body {
       wbp w;
       char *s2;
-      inattr = 1;
-      wconfig = 0;
-
       if (is:null(display))
           s2 = 0;
       else {
@@ -58,23 +55,10 @@ function graphics_Window_wcreate(display)
              runerr(103, display);
          s2 = buffstr(&display);
       }
-      w = wcreate(s2);
+      w = wopen(s2);
       if (!w)
           fail;
       return C_integer (word) w;
-   }
-end
-
-function graphics_Window_wopen(self)
-   body {
-      GetSelfW();
-      if (wopen(self_w) != Succeeded) {
-          *self_w_dptr = zerodesc;
-          freewbinding(self_w);
-          fail;
-      }
-      inattr = wconfig = 0;
-      return self;
    }
 end
 
@@ -1369,8 +1353,6 @@ function graphics_Window_get_width(self)
    }
 end
 
-int wconfig, inattr;
-
 #begdef AttemptAttr(operation, reason)
 do {
    LitWhy("");
@@ -1380,10 +1362,6 @@ do {
            break;
        }
        case Succeeded: {
-           if (!inattr && wconfig) {
-               doconfig(self_w, wconfig);
-               wconfig = 0;
-           }
            break;
        }
        case Failed: {
@@ -1399,32 +1377,12 @@ do {
 } while(0)
 #enddef
 
-#begdef SimpleAttr()
+#begdef SimpleAttr(wconfig)
 do {
-   if (!inattr && wconfig) {
-       doconfig(self_w, wconfig);
-       wconfig = 0;
-   }
+    doconfig(self_w, wconfig);
 } while(0)
 #enddef
 
-function graphics_Window_pre_attrib(self)
-   body {
-      inattr = 1;
-      wconfig = 0;
-      fail;
-   }
-end
-
-function graphics_Window_post_attrib(self)
-   body {
-      GetSelfW();
-      inattr = 0;
-      SimpleAttr();
-      fail;
-   }
-end
-  
 function graphics_Window_set_bg(self, val)
    if !cnv:string(val) then
       runerr(103, val)
@@ -1458,8 +1416,7 @@ function graphics_Window_clip(self, x0, y0, w0, h0)
       wc->clipy = y;
       wc->clipw = width;
       wc->cliph = height;
-      wconfig |= C_CLIP;
-      SimpleAttr();
+      SimpleAttr(C_CLIP);
       return self;
    }
 end
@@ -1471,8 +1428,7 @@ function graphics_Window_unclip(self)
       wc = self_w->context;
       wc->clipx = wc->clipy = 0;
       wc->clipw = wc->cliph = -1;
-      wconfig |= C_CLIP;
-      SimpleAttr();
+      SimpleAttr(C_CLIP);
       return self;
    }
 end
@@ -1547,8 +1503,7 @@ function graphics_Window_set_geometry(self, x0, y0, w0, h0)
        self_w->window->y = y;
        self_w->window->width = width;
        self_w->window->height = height;
-       wconfig |= C_SIZE | C_POS;
-       SimpleAttr();
+       SimpleAttr(C_SIZE | C_POS);
        return self;
    }
 end
@@ -1561,8 +1516,7 @@ function graphics_Window_set_height(self, height)
        if (height < 1)
            Irunerr(148, height);
        self_w->window->height = height;
-       wconfig |= C_SIZE;
-       SimpleAttr();
+       SimpleAttr(C_SIZE);
        return self;
    }
 end
@@ -1578,8 +1532,7 @@ function graphics_Window_set_image(self, d)
            fail;
        self_w->window->width = ws->initimage.width;
        self_w->window->height = ws->initimage.height;
-       wconfig |= C_SIZE | C_IMAGE;
-       SimpleAttr();
+       SimpleAttr(C_SIZE | C_IMAGE);
        return self;
    }
 end
@@ -1663,8 +1616,7 @@ function graphics_Window_set_max_height(self, height)
                runerr(148, height);
        }
        self_w->window->maxheight = i;
-       wconfig |= C_MAXSIZE;
-       SimpleAttr();
+       SimpleAttr(C_MAXSIZE);
        return self;
    }
 end
@@ -1691,8 +1643,7 @@ function graphics_Window_set_max_size(self, width, height)
        }
        self_w->window->maxwidth = i;
        self_w->window->maxheight = j;
-       wconfig |= C_MAXSIZE;
-       SimpleAttr();
+       SimpleAttr(C_MAXSIZE);
        return self;
    }
 end
@@ -1710,8 +1661,7 @@ function graphics_Window_set_max_width(self, width)
                runerr(148, width);
        }
        self_w->window->maxwidth = i;
-       wconfig |= C_MAXSIZE;
-       SimpleAttr();
+       SimpleAttr(C_MAXSIZE);
        return self;
    }
 end
@@ -1724,8 +1674,7 @@ function graphics_Window_set_min_height(self, height)
        if (height < 1)
            Irunerr(148, height);
        self_w->window->minheight = height;
-       wconfig |= C_MINSIZE;
-       SimpleAttr();
+       SimpleAttr(C_MINSIZE);
        return self;
    }
 end
@@ -1743,8 +1692,7 @@ function graphics_Window_set_min_size(self, width, height)
            Irunerr(148, height);
        self_w->window->minwidth = width;
        self_w->window->minheight = height;
-       wconfig |= C_MINSIZE;
-       SimpleAttr();
+       SimpleAttr(C_MINSIZE);
        return self;
    }
 end
@@ -1757,8 +1705,7 @@ function graphics_Window_set_min_width(self, width)
        if (width < 1)
            Irunerr(148, width);
        self_w->window->minwidth = width;
-       wconfig |= C_MINSIZE;
-       SimpleAttr();
+       SimpleAttr(C_MINSIZE);
        return self;
    }
 end
@@ -1801,8 +1748,7 @@ function graphics_Window_set_pos(self, x, y)
        }
        self_w->window->x = i;
        self_w->window->y = j;
-       wconfig |= C_POS;
-       SimpleAttr();
+       SimpleAttr(C_POS);
        return self;
    }
 end
@@ -1818,8 +1764,7 @@ function graphics_Window_set_x(self, x)
                runerr(101, x);
        }
        self_w->window->x = i;
-       wconfig |= C_POS;
-       SimpleAttr();
+       SimpleAttr(C_POS);
        return self;
    }
 end
@@ -1835,8 +1780,7 @@ function graphics_Window_set_y(self, y)
                runerr(101, y);
        }
        self_w->window->y = i;
-       wconfig |= C_POS;
-       SimpleAttr();
+       SimpleAttr(C_POS);
        return self;
    }
 end
@@ -1848,8 +1792,7 @@ function graphics_Window_set_resize(self, val)
            CLRRESIZABLE(self_w->window);
        else
            SETRESIZABLE(self_w->window);
-       wconfig |= C_RESIZE;
-       SimpleAttr();
+       SimpleAttr(C_RESIZE);
        return self;
    }
 end
@@ -1867,8 +1810,7 @@ function graphics_Window_set_size(self, width, height)
            Irunerr(148, height);
        self_w->window->width = width;
        self_w->window->height = height;
-       wconfig |= C_SIZE;
-       SimpleAttr();
+       SimpleAttr(C_SIZE);
        return self;
    }
 end
@@ -1881,8 +1823,7 @@ function graphics_Window_set_width(self, width)
        if (width < 1)
            Irunerr(148, width);
        self_w->window->width = width;
-       wconfig |= C_SIZE;
-       SimpleAttr();
+       SimpleAttr(C_SIZE);
        return self;
    }
 end

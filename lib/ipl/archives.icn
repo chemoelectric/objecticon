@@ -17,34 +17,41 @@
 package ipl.archives
 
 import
-   io(FileOpt, FileStream, ProgInputStream)
+   io(BufferStream, FileOpt, FileStream, LineFilterStream,
+      ProgInputStream)
 
 # iszip(zname) succeeds if the named file appears to be a ZIP format
 # archive file.
 #
 procedure iszip(fname)		
    local f, s
-
    f := FileStream.open(fname, FileOpt.RDONLY) | fail
    s := f.reads(4)
    f.close()
    return s === "PK\03\04"
 end
 
-
-# zipdir(zname) returns a pipe from which the members of the ZIP
-# archive can be read, one per line, as if reading a directory.  It is
-# assumed that zname is a ZIP archive.
 #
-procedure zipdir(zname)			
-   local f, g
-   f := ProgInputStream("unzip", ["-l", zname]) | fail
-   g := ProgInputStream("sed", ["-n", "s/.*:..   //p"],, f)
-   f.close()
-   return \g
+# {Stream} for reading the entries in a zip archive, one per line of the stream.
+#
+class ZipDirStream(LineFilterStream)
+   protected gen()
+      local s, marker
+      every 1 to 3 do
+         expect_line() | fail
+      marker := "---------                     -------"
+      repeat {
+         s := expect_line() | fail
+         if s == marker then
+            return at_eof()
+         suspend s[31:0]
+      }
+   end
+
+   public new(zname)
+      return cast(self,LineFilterStream).new(BufferStream(ProgInputStream("unzip", ["-l", zname])))
+   end
 end
-
-
 
 # zipfile(zname, fname) returns a pipe from which the file fname
 # within the ZIP archive zname can be read.  It is assumed that zname
@@ -54,21 +61,28 @@ procedure zipfile(zname, fname)
    return ProgInputStream("unzip", ["-p", zname, fname])
 end
 
-
-
-
-# rardir(rname) returns a pipe from which the members of the rar
-# archive can be read, one per line, as if reading a directory.  It is
-# assumed that zname is a rar archive.
 #
-procedure rardir(rname)			
-   local f, g
-   f := ProgInputStream("unrar", ["v", "-c-", rname]) | fail
-   g := ProgInputStream("sed", ["-n", "9~2{ s/^ \\(.*\\)$/\\1/p }"],, f)
-   f.close()
-   return \g
-end
+# {Stream} for reading the entries in a rar archive, one per line of the stream.
+#
+class RarDirStream(LineFilterStream)
+   protected gen()
+      local s, marker
+      every 1 to 8 do
+         expect_line() | fail
+      marker := repl("-", 79)
+      repeat {
+         s := expect_line() | fail
+         if s == marker then
+            return at_eof()
+         suspend s[2:0]
+         expect_line() | fail
+      }
+   end
 
+   public new(rname)
+      return cast(self,LineFilterStream).new(BufferStream(ProgInputStream("unrar", ["v", "-c-", rname])))
+   end
+end
 
 # rarfile(rname, fname) returns a pipe from which the file fname
 # within the rar archive rname can be read.  It is assumed that rname

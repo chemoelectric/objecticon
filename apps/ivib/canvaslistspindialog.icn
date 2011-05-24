@@ -71,8 +71,8 @@ class CanvasListSpinDialog(CanvasComponentDialog)
       selection_list.set_contents(copy(c.selection_list))
       p.add(selection_list)
 
-      q := Panel("c:x_weight=0")
-      q.set_layout(GridLayout("doi=0","extra=borders"))
+      q := Panel().set_constraint("x_weight", 0)
+      q.set_layout(GridLayout().set_doi(0).set_extra("borders"))
 
       group := CheckBoxGroup()
 
@@ -82,18 +82,18 @@ class CanvasListSpinDialog(CanvasComponentDialog)
       q.add(set_selection)
       group.add(set_selection)
 
-      selection := TextField("c:eol","filter=",&digits)
+      selection := TextField().set_constraint("eol", &yes).set_filter(&digits)
       selection.set_size(100)
       selection.set_contents(c.selection)
       q.add(selection)
 
-      default_setting := CheckBox("c:eol")
+      default_setting := CheckBox().set_constraint("eol", &yes)
       default_setting.connect(self.on_default_setting, Event.ACTION)
       default_setting.set_label("Default")
       q.add(default_setting)
       group.add(default_setting)
 
-      ucs_cb := CheckBox("label=Ucs content")
+      ucs_cb := CheckBox().set_label("Ucs content")
       if type(c.selection_list[1]) == "ucs" then
          ucs_cb.set_is_checked(&yes)
       ucs_cb.connect(self.on_ucs_cb, Event.ACTION)

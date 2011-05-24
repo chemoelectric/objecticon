@@ -12,9 +12,6 @@ package gui
 #
 # This class displays a list of strings.
 #
-# @field contents=t1,t2,t3,... : see {set_contents}
-# @field see also {SelectableScrollArea}
-#
 class TextList(SelectableScrollArea)
    public calculate_line_height()
       return view.cbwin.get_font_height()
@@ -34,14 +31,6 @@ class TextList(SelectableScrollArea)
       # with the cursor, selection and highlight.
       #
       draw_string_ex(view.cbwin, xp + Gui.TEXT_INSET, yp, detab(contents[i]))
-   end
-
-   public set_one(f)
-      case f.attr of {
-         "contents" : set_contents(f.text_list_val())
-         default: return cast(self,SelectableScrollArea).set_one(f)
-      }
-      return
    end
 end
 

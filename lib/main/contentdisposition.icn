@@ -19,6 +19,7 @@ class ContentDisposition()
    #
    public set_type(t)
       self.type := t
+      return self
    end
 
    #
@@ -43,6 +44,7 @@ class ContentDisposition()
    # @param value the value
    public set_parameter(key, value)
       parameters.insert(key, value)
+      return self
    end
 
    private parameter_error(h, s)
@@ -61,6 +63,7 @@ class ContentDisposition()
    #
    public set_filename(v)
       set_parameter("filename", v)
+      return self
    end
 
    #
@@ -80,7 +83,7 @@ class ContentDisposition()
    # @param t the {Time} from which to set the date field.
    #
    public set_creation_date(t)
-      set_parameter("creation-date", t.to_rfc822())
+      return set_parameter("creation-date", t.to_rfc822())
    end
 
    #
@@ -100,7 +103,7 @@ class ContentDisposition()
    # @param t the {Time} from which to set the date field.
    #
    public set_modification_date(t)
-      set_parameter("modification-date", t.to_rfc822())
+      return set_parameter("modification-date", t.to_rfc822())
    end
 
    #
@@ -120,7 +123,7 @@ class ContentDisposition()
    # @param t the {Time} from which to set the date field.
    #
    public set_read_date(t)
-      set_parameter("read-date", t.to_rfc822())
+      return set_parameter("read-date", t.to_rfc822())
    end
 
    #
@@ -137,7 +140,7 @@ class ContentDisposition()
    # Set the "size" parameter from the given integer.
    #
    public set_size(n)
-      set_parameter("size", string(integer(n)))
+      return set_parameter("size", string(integer(n)))
    end
 
    public static parse(s)

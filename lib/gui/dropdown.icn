@@ -13,14 +13,6 @@ import graphics
 #
 # This class is just a superclass of {List} and {EditList}.
 #
-# @field selection=integer : see {set_selection}
-# @field selection_list=t1,t2,t3,... : see {set_selection_list}.  This may
-# @ also be given (as a list) as the first parameter to the constructor.
-# @field direction=string : see {set_direction}
-# @field max_height=integer : see {set_max_height}
-# @field max_width=integer : see {set_max_width}
-# @field see also {Component}
-#
 class DropDown(SelectionList,Component)
    public 
       b,                           
@@ -48,6 +40,7 @@ class DropDown(SelectionList,Component)
    #
    public set_direction(s)
       self.direction := s
+      return self
    end
 
    public on_button_press(ev)
@@ -97,6 +90,7 @@ class DropDown(SelectionList,Component)
    #
    public set_max_height(n)
       self.max_height := n
+      return self
    end
 
    #
@@ -105,6 +99,7 @@ class DropDown(SelectionList,Component)
    #
    public set_max_width(n)
       self.max_width := n
+      return self
    end
 
    public go_up(e)
@@ -222,19 +217,23 @@ class DropDown(SelectionList,Component)
          self.parent_dialog.remove(tl)
 
          d := if use_direction == DOWN then 
-            PureDialog("canvas=popup", 
-                       "w=", tl.w_spec, "h=",tl.h_spec,
-                       "w:dx=", -self.x,
-                       "w:dy=", -(self.y + self.h),
-                       "w:x=", win.get_x() + win.get_dx() + self.x,
-                       "w:y=", win.get_y() + win.get_dy() + self.y + self.h)
+            PureDialog().
+               set_canvas("popup").
+               set_width( tl.w_spec).
+               set_height(tl.h_spec).
+               set_dx(-self.x).
+               set_dy(-(self.y + self.h)).
+               set_x(win.get_x() + win.get_dx() + self.x).
+               set_y(win.get_y() + win.get_dy() + self.y + self.h)
          else
-            PureDialog("canvas=popup", 
-                       "w=", tl.w_spec, "h=",tl.h_spec,
-                       "w:dx=", -self.x,
-                       "w:dy=", -(self.y - tl.h_spec),
-                       "w:x=", win.get_x() + win.get_dx() + self.x,
-                       "w:y=", win.get_y() + win.get_dy() + self.y - tl.h_spec)
+            PureDialog().
+               set_canvas("popup").
+               set_width( tl.w_spec).
+               set_height(tl.h_spec).
+               set_dx(-self.x).
+               set_dy(-(self.y - tl.h_spec)).
+               set_x(win.get_x() + win.get_dx() + self.x).
+               set_y(win.get_y() + win.get_dy() + self.y - tl.h_spec)
 
          d.add(tl)
          self.tl.set_pos(0, 0)
@@ -346,31 +345,14 @@ class DropDown(SelectionList,Component)
       view.layout()
    end
 
-   protected set_one(f)
-      case f.attr of {
-         "selection_list" : set_selection_list(f.text_list_val())
-         "selection" : set_selection(f.int_val())
-         "direction" : set_direction(f.string_val())
-         "max_height" : set_max_height(f.int_val())
-         "max_width" : set_max_width(f.int_val())
-         default: return cast(self,Component).set_one(f)
-      }
-      return
-   end
-
-   protected set_special(a)
-      if type(a[1]) == "list" then
-         set_selection_list(pop(a))
-   end
-
-   public new(a[])
+   public new()
       cast(self,Component).new()
       self.set_border(SunkenBorder())
       # Make the same width as the button in the scrollbar of the dropdown.
-      self.b := IconButton("w=",ScrollArea.predict_scrollbar_size())
+      self.b := IconButton().set_width(ScrollArea.predict_scrollbar_size())
       self.b.set_parent(self)
       self.b.connect(self.on_button_press, Event.BUTTON_PRESS)
-      self.b.set_paint(ImagePaint("cache=gui.ARROW_DOWN"))
+      self.b.set_paint(ImagePaint().set_cache("gui.ARROW_DOWN"))
       self.b.set_accepts_focus(&no)
       self.direction := BEST
       self.add(b)
@@ -381,7 +363,6 @@ class DropDown(SelectionList,Component)
       self.set_constraint("x_weight", 1.0)
       connect(self.go_up, Event.MOUSE_WHEEL_UP)
       connect(self.go_down, Event.MOUSE_WHEEL_DOWN)
-      set_fields(a)
       return
    end
 end

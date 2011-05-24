@@ -12,12 +12,6 @@ package gui
 # This class implements a Text label.  The default width and 
 # height are determined by dimensions of text
 #
-# @field image=string : see {set_image}
-# @field label=text : see {set_label}
-# @field paint={Paint} : see {set_paint}
-# @field linked_accel={Component} : see {set_linked_accel}
-# @field see also {Component}
-#
 class Label(Component)
    public 
       linked_accel,
@@ -29,6 +23,7 @@ class Label(Component)
    #
    public set_label(x)
       set_paint(paint_for_string(x))
+      return self
    end
 
    #
@@ -36,7 +31,8 @@ class Label(Component)
    # @param x  The image to be displayed
    #
    public set_image(x)
-      set_paint(ImagePaint("image=",x))
+      set_paint(ImagePaint().set_image(x))
+      return self
    end
 
    public set_paint(p)
@@ -48,6 +44,7 @@ class Label(Component)
          self.paint.initially(self, key)
          self.invalidate()
       }
+      return self
    end
 
    #
@@ -56,6 +53,7 @@ class Label(Component)
    #
    public set_linked_accel(c)
       self.linked_accel := c
+      return self
    end
 
    public initially()
@@ -86,22 +84,10 @@ class Label(Component)
          border.draw_focus_rect(self.cbwin, self)
    end
 
-   public set_one(f)
-      case f.attr of {
-         "image" : set_image(f.string_val())
-         "label" : set_label(f.text_val())
-         "paint" : set_paint(f.object_val(Paint))
-         "linked_accel": set_linked_accel(f.object_val(Component))
-         default: return cast(self,Component).set_one(f)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,Component).new()
       self.set_constraint("x_align", Align.L)
-      self.set_border(EmptyBorder("flush", "align=l,c"))
-      set_fields(a)
+      self.set_border(EmptyBorder().set_insets(0, 0, 0, 0).set_align(Align.L, Align.C))
       return
    end
 end

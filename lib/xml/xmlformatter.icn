@@ -16,12 +16,7 @@ import util
 # removed depending on whether validation against a DTD occured), and without
 # indentation.
 #
-# @field indent=integer : see {set_indent}
-# @field no_whitespace=flag : see {set_no_whitespace}
-# @field text_trim=flag : see {set_text_trim}
-# @field as_read=flag : see {set_as_read}
-#
-class XmlFormatter(Formatter,SetFields)
+class XmlFormatter(Formatter)
    public
       indent, 
       no_whitespace_flag, 
@@ -34,6 +29,7 @@ class XmlFormatter(Formatter,SetFields)
    #
    public set_indent(n)
       self.indent := n
+      return self
    end
 
    #
@@ -42,6 +38,7 @@ class XmlFormatter(Formatter,SetFields)
    #
    public set_no_whitespace(s)
       self.no_whitespace_flag := check_flag(s)
+      return self
    end
 
    #
@@ -51,6 +48,7 @@ class XmlFormatter(Formatter,SetFields)
    #
    public set_text_trim(s)
       self.text_trim_flag := check_flag(s)
+      return self
    end
 
    #
@@ -60,6 +58,7 @@ class XmlFormatter(Formatter,SetFields)
    #
    public set_as_read(s)
       as_read_flag := check_flag(s)
+      return self
    end
 
    public format_document(n)
@@ -171,22 +170,6 @@ class XmlFormatter(Formatter,SetFields)
          s ||:= "standalone='" || n.standalone || "' "
       s ||:= "?>"
       return out.writes(s)
-   end
-
-   public set_one(f)
-      case f.attr of {
-         "indent" : set_indent(f.int_val())
-         "no_whitespace" : set_no_whitespace(f.flag_val())
-         "text_trim" : set_text_trim(f.flag_val())
-         "as_read" : set_as_read(f.flag_val())
-         default : fail
-      }
-      return
-   end
-
-   public new(a[])
-      set_fields(a)
-      return
    end
 end
 

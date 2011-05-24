@@ -1,7 +1,7 @@
 package io
 
 import
-   util(error, check_flag, SetFields),
+   util(error, check_flag),
    lang(NoCopy),
    posix(System)
 
@@ -26,7 +26,8 @@ class Stream()
       ALL
 
    protected
-      eof_flag
+      eof_flag,
+      close_underlying_flag
 
    private static init()
       READ := 8r01
@@ -215,6 +216,22 @@ class Stream()
       eof() | fail
       return
    end
+
+   #
+   # Convenient method to set {eof_flag} and {&why}.
+   #
+   protected at_eof()
+      eof_flag := 1
+      error("End of file")
+   end
+
+   #
+   # If set, the stream will close any underlying {Stream}s when it is closed.
+   #
+   public set_close_underlying(s)
+      self.close_underlying_flag := check_flag(s)
+      return self
+   end
 end
 
 #
@@ -230,10 +247,8 @@ class StringStream(Stream)
 
    public in(n)
       local t, e
-      if pos > *subj then {
-         eof_flag := 1
-         return error("End of file")
-      }
+      if pos > *subj then
+         return at_eof()
       e := min(pos + n, *subj + 1)
       t := subj[pos:e]
       pos := e
@@ -308,8 +323,7 @@ end
 #
 class NullStream(Stream)
    public in(n)
-      eof_flag := 1
-      return error("End of file")
+      at_eof()
    end
 
    public out(s)
@@ -378,10 +392,7 @@ end
 # that input/output to the inner stream tends to take place in larger
 # chunks.
 #
-# @field buff_size=integer : see {set_buff_size}
-# @field flush_on_nl=flag : see {set_flush_on_nl}
-#
-class BufferStream(Stream, SetFields)
+class BufferStream(Stream)
    private
       other,
       rpos,
@@ -396,6 +407,7 @@ class BufferStream(Stream, SetFields)
    #
    public set_flush_on_nl(s)
       self.flush_on_nl_flag := check_flag(s)
+      return self
    end
 
    #
@@ -403,6 +415,7 @@ class BufferStream(Stream, SetFields)
    #
    public set_buff_size(n)
       self.buff_size := n
+      return self
    end
 
    public read()
@@ -529,7 +542,8 @@ class BufferStream(Stream, SetFields)
    public close()
       local f
       flush() | (f := 1)
-      other.close() | (f := 1)
+      if \close_underlying_flag then
+         other.close() | (f := 1)
       return /f
    end
 
@@ -552,22 +566,13 @@ class BufferStream(Stream, SetFields)
       return other.get_mode()
    end
 
-   protected set_one(f)
-      case f.attr of {
-         "buff_size" : set_buff_size(f.int_val())
-         "flush_on_nl" : set_flush_on_nl(f.flag_val())
-         default: fail
-      }
-      return
-   end
-
-   public new(other, a[])
+   public new(other)
       self.other := other
       self.rbuff := ""
       self.wbuff := []
       self.wbuff_len := 0
       self.buff_size := 1024
-      set_fields(a)
+      self.close_underlying_flag := &yes
       return
    end
 end
@@ -866,6 +871,26 @@ procedure use(e1, e2, e3)
    }
    @e3 | fail
    return r
+end
+
+#
+# Utility to check whether the result of a {poll} for {Poll.IN} indicates
+# a call to {in}.
+#
+procedure poll_in_test(v)
+   local x
+   # Succeed if either IN or HUP is set, but no other.
+   x := iand(v, ior(Poll.IN,Poll.HUP))
+   return x ~= 0 & x = v
+end
+
+#
+# Utility to check whether the result of a {poll} for {Poll.OUT} indicates
+# a call to {out}.
+#
+procedure poll_out_test(v)
+   # Succeed if OUT is set, but no other.
+   return v = Poll.OUT
 end
 
 #
@@ -1462,19 +1487,16 @@ class FilterOutputStream(Stream, BgProc, NoCopy)
    private 
       sink,
       cin,
-      cout,
-      buff
+      cout
    
    public out(s)
-      local x, t
+      local x
       s := string(s) | runerr(103, s)
       repeat {
          x := DescStream.poll([cin, Poll.IN, cout, Poll.OUT]) | fail
-         if iand(x[1], icom(Poll.HUP)) = Poll.IN then {
-            buff ||:= cin.in(1048576) | fail
-            t := sink.out(buff) | fail
-            buff := buff[t + 1:0]
-         } else if x[2] = Poll.OUT then
+         if poll_in_test(x[1]) then
+            sink.writes(cin.in(1048576)) | fail
+         else if poll_out_test(x[2]) then
             return cout.out(s)
          else
             return error("filter: child command i/o failed")
@@ -1483,17 +1505,18 @@ class FilterOutputStream(Stream, BgProc, NoCopy)
 
    #
    # Close the stream.  This waits for the child process to terminate, flushing any remaining
-   # output to {sink}.  NB: {sink} is not closed.
+   # output to {sink}.  NB: {sink} is not closed unless the {set_close_underlying} has been
+   # set to {&yes}.
    #
    public close()
       local f
       cout.close()
-      sink.writes(buff) | (f := 1)
-      if /f then {
-         cin.flag(,FileOpt.NONBLOCK)
+      cin.flag(,FileOpt.NONBLOCK) | (f := 1)
+      if /f then
          cin.copy_to(sink) | (f := 1)
-      }
       cin.close()
+      if \close_underlying_flag then
+         sink.close() | (f := 1)
       do_wait()
       return /f
    end
@@ -1514,7 +1537,6 @@ class FilterOutputStream(Stream, BgProc, NoCopy)
    public new(sink, cmd, args, env, stderr)
       local l
       self.sink := sink
-      self.buff := ""
       l := SocketStream.socketpair() | fail
       (l |||:= SocketStream.socketpair() &
        l[1].flag(FileOpt.NONBLOCK) & 
@@ -1573,9 +1595,9 @@ class FilterInputStream(Stream, BgProc, NoCopy)
          return read_cin(n)
       repeat {
          x := DescStream.poll([cin, Poll.IN, cout, Poll.OUT]) | fail
-         if iand(x[1], icom(Poll.HUP)) = Poll.IN then
+         if poll_in_test(x[1]) then
             return read_cin(n)
-         else if x[2] = Poll.OUT then {
+         else if poll_out_test(x[2]) then {
             if *buff = 0 then {
                buff := source.in(1048576) | {
                   source.eof() | fail
@@ -1605,10 +1627,13 @@ class FilterInputStream(Stream, BgProc, NoCopy)
    # NB: {source} is not closed.
    #
    public close()
+      local f
       (\cout).close()
       cin.close()
+      if \close_underlying_flag then
+         source.close() | (f := 1)
       do_wait()
-      return
+      return /f
    end
 
    public get_mode()
@@ -1840,7 +1865,15 @@ class SslStream(Stream, NoCopy)
 
    public defer out(s)
 
-   public defer close()
+   public close()
+      local f
+      close_impl() | (f := 1)
+      if \close_underlying_flag then
+         other.close() | (f := 1)
+      return /f
+   end
+
+   private defer close_impl()
 
    public get_mode()
       return other.get_mode()
@@ -1859,5 +1892,190 @@ class SslStream(Stream, NoCopy)
       ptr := new_impl(other, verify_host) | fail
       self.other := other
       return
+   end
+end
+
+#
+# This stream takes a list of other streams.  Its output is the concatenation of
+# the output of those streams.
+#
+class SequenceStream(Stream)
+   private
+      a, ac
+
+   public in(n)
+      local s
+      repeat {
+         if *a = 0 then
+            return at_eof()
+         if s := a[1].in(n) then
+            return s
+         a[1].eof() | fail
+         pop(a)
+      }
+   end
+
+   public get_mode()
+      return READ
+   end
+
+   public close()
+      local e, f
+      if \close_underlying_flag then {
+         every e := !ac do
+            e.close() | (f := 1)
+      }
+      return /f
+   end
+
+   public new(a[])
+      self.a := a
+      self.ac := copy(a)
+      return
+   end
+end
+
+#
+# Subclasses of this stream implement the {gen} method.  The results
+# sequence of that method represent the output of the stream, with
+# each result being one line.
+#
+class GeneratorStream(Stream, NoCopy)
+   private
+      coex,
+      line
+
+   public read()
+      local t
+      if *line > 0 then {
+         t := line[1:-1]
+         line := ""
+         return t
+      }
+      (t := @coex) | fail
+      t := string(t) | runerr(103, t)
+      return t
+   end
+
+   public in(n)
+      local t
+      if (*line > 0) | (line := read() || Files.EOL) then {
+         line ? {
+            t := move(n) | tab(0)
+            line := tab(0)
+         }
+         return t
+      }
+   end
+   
+   public get_mode()
+      return READ
+   end
+
+   public close()
+      return
+   end
+
+   #
+   # Generates the lines of the stream.
+   #
+   protected defer gen()
+
+   public new()
+      self.coex := create gen()
+      line := ""
+      return
+   end
+end
+
+#
+# A {Stream} which takes its data from a co-expression.  Each result provides
+# one line of output.
+#
+# @example
+# @   # A stream with 10 lines
+# @   e := ExprStream{1 to 10}
+#
+class ExprStream(GeneratorStream)
+   private
+      x
+
+   protected gen()
+      suspend |@x
+      at_eof()
+   end
+
+   public new(x)
+      self.x := x
+      return cast(self,GeneratorStream).new()
+   end
+end
+
+#
+# This {Stream} takes a list of other {Stream}s.  Their lines of
+# output are interspersed together to form the output.
+#
+class IntersperseStream(GeneratorStream)
+   private
+      a
+
+   protected gen()
+      local e, s, t, u
+      u := a
+      while *u > 0 do {
+         t := []
+         every e := !u do {
+            if s := e.read() then {
+               put(t, e)
+               suspend s
+            } else
+               e.eof() | fail
+         }
+         u := t
+      }
+      at_eof()
+   end
+
+   public close()
+      local e, f
+      if \close_underlying_flag then {
+         every e := !a do
+            e.close() | (f := 1)
+      }
+      return /f
+   end
+
+   public new(a[])
+      self.a := a
+      return cast(self,GeneratorStream).new()
+   end
+end
+
+#
+# Useful parent class for filtering the lines from a particular
+# {Stream}.
+#
+class LineFilterStream(GeneratorStream)
+   protected
+      other
+
+   public close()
+      if \close_underlying_flag then
+         return other.close()
+      return
+   end
+
+   protected expect_line()
+      local s
+      if s := other.read() then
+         return s
+      if other.eof() then
+         error("Unexpected eof")
+   end
+
+   public new(other)
+      self.other := other
+      self.close_underlying_flag := &yes
+      return cast(self,GeneratorStream).new()
    end
 end

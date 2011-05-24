@@ -184,8 +184,8 @@ class CanvasTabSetDialog(CanvasComponentDialog)
       struct.set_contents(c.string_rep())
       p.add(struct)
 
-      q := Panel("c:x_weight=0", "c:eol")
-      q.set_layout(GridLayout("doi=0"))
+      q := Panel().set_constraint("x_weight", 0).set_constraint("eol", &yes)
+      q.set_layout(GridLayout().set_doi(0))
 
       add_col := TextButton("eol")
       add_col.set_label("Add")
@@ -202,34 +202,34 @@ class CanvasTabSetDialog(CanvasComponentDialog)
       edit.set_label("Edit")
       q.add(edit)
 
-      which_one := TextButton("label=Which", "c:eol")
+      which_one := TextButton().set_label("Which").set_constraint("eol", &yes)
       which_one.connect(self.on_which_one, Event.ACTION)
       q.add(which_one)
 
-      up := TextButton("label=Up", "c:eol")
+      up := TextButton().set_label("Up").set_constraint("eol", &yes)
       up.connect(self.on_up, Event.ACTION)
       q.add(up)
 
-      down := TextButton("label=Down")
+      down := TextButton().set_label("Down")
       down.connect(self.on_down, Event.ACTION)
       q.add(down)
 
       p.add(q)
 
-      p := TabItem("label=Misc", "layout=",GridLayout())
+      p := TabItem().set_label("Misc").set_layout(GridLayout())
       self.add_tab(p, 2)
 
-      tabs_at_bottom_cb := CheckBox("label=Tabs at bottom", "c:eol")
+      tabs_at_bottom_cb := CheckBox().set_label("Tabs at bottom").set_constraint("eol", &yes)
       p.add(tabs_at_bottom_cb)
       if \c.tabs_at_bottom_flag then
          tabs_at_bottom_cb.set_is_checked(&yes)
 
-      prefer_one_row_cb := CheckBox("label=Prefer one row of tabs", "c:eol")
+      prefer_one_row_cb := CheckBox().set_label("Prefer one row of tabs").set_constraint("eol", &yes)
       p.add(prefer_one_row_cb)
       if \c.prefer_one_row_flag then
          prefer_one_row_cb.set_is_checked(&yes)
 
-      no_click_focus_cb := CheckBox("label=No click focus")
+      no_click_focus_cb := CheckBox().set_label("No click focus")
       p.add(no_click_focus_cb)
       if \c.no_click_focus_flag then
          no_click_focus_cb.set_is_checked(&yes)

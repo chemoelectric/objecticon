@@ -1,13 +1,6 @@
 package gui
 
-import util
-
-#
-# @field x_align=string : see {set_x_align}
-# @field y_align=string : see {set_y_align}
-# @field align=s1,s2 : see {set_align}
-#
-class ABorder(Insets,Align,SetFields)
+class ABorder(Insets,Align)
    public defer initially(c)
    public defer draw(W, x, y, w, h)
 
@@ -45,43 +38,26 @@ class ABorder(Insets,Align,SetFields)
 
    public set_x_align(x)
       self.x_align := x
+      return self
    end
       
    public set_y_align(y)
       self.y_align := y
+      return self
    end
       
    public set_align(x, y)
       set_x_align(x)
       set_y_align(y)
+      return self
    end
 
-   public set_one(f)
-      case f.attr of {
-         "x_align" : set_x_align(f.string_val())
-         "y_align" : set_y_align(f.string_val())
-         "align" : set_align!(f.string_list_val(2))
-         default : fail
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       x_align := y_align := Align.C
-      set_fields(a)
       return
    end
 end
 
-#
-# @field l_inset=integer : see {set_l_inset}
-# @field r_inset=integer : see {set_r_inset}
-# @field t_inset=integer : see {set_t_inset}
-# @field b_inset=integer : see {set_b_inset}
-# @field insets=i1,i2,i3,i4 : see {set_insets}
-# @field flush=: invokes {set_insets(0,0,0,0)}
-# @field see also {ABorder}
-#
 class EmptyBorder(ABorder)
    public initially(c)
    end
@@ -97,51 +73,37 @@ class EmptyBorder(ABorder)
       set_r_inset(r)
       set_t_inset(t)
       set_b_inset(b)
+      return self
    end
 
    public set_l_inset(n)
       self.l_inset := n
+      return self
    end
 
    public set_r_inset(n)
       self.r_inset := n
+      return self
    end
 
    public set_t_inset(n)
       self.t_inset := n
+      return self
    end
 
    public set_b_inset(n)
       self.b_inset := n
+      return self
    end
 
-   public set_one(f)
-      case f.attr of {
-         "l_inset" : set_l_inset(f.int_val())
-         "r_inset" : set_r_inset(f.int_val())
-         "t_inset" : set_t_inset(f.int_val())
-         "b_inset" : set_b_inset(f.int_val())
-         "insets" : set_insets!(f.int_list_val(4))
-         "flush" : set_insets(0, 0, 0, 0)
-         default : return cast(self,ABorder).set_one(f)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,ABorder).new()
       l_inset := r_inset := Gui.X_INSET
       t_inset := b_inset := Gui.Y_INSET
-      set_fields(a)
       return
    end
 end
 
-
-#
-# @field line_width=integer : see {set_line_width}
-# @field see also {ABorder}
-#
 class LineBorder(ABorder)
    public line_width
 
@@ -164,20 +126,12 @@ class LineBorder(ABorder)
 
    public set_line_width(n)
       self.line_width := n
+      return self
    end
 
-   public set_one(f)
-      case f.attr of {
-         "line_width" : set_line_width(f.int_val())
-         default : return cast(self,ABorder).set_one(f)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,ABorder).new()
       line_width := Gui.BORDER_WIDTH
-      set_fields(a)
       return
    end
 end
@@ -223,11 +177,6 @@ class PlainBorder(LineBorder)
 end
 
 
-#
-# @field inner={ABorder} : see {set_inner}
-# @field outer={ABorder} : see {set_outer}
-# @field see also {ABorder}
-#
 class CompoundBorder(ABorder)
    public
       outer,
@@ -267,25 +216,11 @@ class CompoundBorder(ABorder)
 
    public set_inner(inner)
       self.inner := inner
+      return self
    end
 
    public set_outer(outer)
       self.outer := outer
-   end
-
-   protected set_special(a)
-      if is(a[1], ABorder) & is(a[2], ABorder) then {
-         set_outer(pop(a))
-         set_inner(pop(a))
-      }
-   end
-
-   public set_one(f)
-      case f.attr of {
-         "inner" : set_inner(f.object_val(gui.ABorder))
-         "outer" : set_outer(f.object_val(gui.ABorder))
-         default : return cast(self,ABorder).set_one(f)
-      }
-      return
+      return self
    end
 end

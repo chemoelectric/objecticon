@@ -46,10 +46,9 @@ class MenuSeparator(MenuComponent)
                                   HEIGHT / 2)
    end
 
-   public new(a[])
+   public new()
       cast(self,MenuComponent).new()
       self.is_decorative_flag := 1
-      set_fields(a)
       return
    end
 end

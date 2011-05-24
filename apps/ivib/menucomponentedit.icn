@@ -79,18 +79,18 @@ class MenuComponentEdit(Dialog)
          ="Canvas"
          label := tab(0) || " Setup"
       }
-      self.set_wattrib("label", label)
+      self.set_label(label)
 
       set_layout(GridLayout())
 
-      tabset := TabSet("c:eol")
+      tabset := TabSet().set_constraint("eol", &yes)
       add(tabset)
 
       code_tab := CodeTab(c)
       tabset.add(code_tab)
 
-      other_tab := TabItem("label=Other")
-      other_tab.set_layout(GridLayout("extra=borders"))
+      other_tab := TabItem().set_label("Other")
+      other_tab.set_layout(GridLayout().set_extra("borders"))
       tabset.add(other_tab)
 
       event_flag := CheckBox()
@@ -98,7 +98,7 @@ class MenuComponentEdit(Dialog)
       event_flag.set_label("Event handler")
       other_tab.add(event_flag)
 
-      event_method := TextField("c:eol")
+      event_method := TextField().set_constraint("eol", &yes)
       event_method.set_size(120)
       other_tab.add(event_method)
 
@@ -109,7 +109,7 @@ class MenuComponentEdit(Dialog)
          event_method.set_contents(c.event_method)
       }
 
-      shaded := CheckBox("c:eol")
+      shaded := CheckBox().set_constraint("eol", &yes)
       shaded.set_label("Is shaded")
       if \c.is_shaded_flag then
          shaded.set_is_checked(&yes)
@@ -120,7 +120,7 @@ class MenuComponentEdit(Dialog)
       accel_flag.set_label("Set Accelerator")
       other_tab.add(accel_flag)
 
-      accel_tf := TextField("c:eol")
+      accel_tf := TextField().set_constraint("eol", &yes)
       accel_tf.set_size(100)
       other_tab.add(accel_tf)
 
@@ -131,7 +131,7 @@ class MenuComponentEdit(Dialog)
          accel_tf.set_contents(c.accel)
       }
 
-      tooltip_field := PaintField("c:eol", "c:w=2", "title=",Label("label=Tooltip"))
+      tooltip_field := PaintField().set_constraint("eol", &yes).set_constraint("w", 2).set_title(Label().set_label("Tooltip"))
       other_tab.add(tooltip_field)
       tooltip_field.set_contents(c.tooltip)
 

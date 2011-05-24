@@ -9,9 +9,9 @@ procedure flag(s)
       return s
 
    s := map(string(s)) | fail
-   if s == ("y" | "yes" | "t" | "true" | "on" | "1") then
+   if s == ("y" | "&yes" | "yes" | "t" | "true" | "on" | "1") then
       return &yes
-   if s == ("n" | "no" | "f" | "false" | "off" | "0") then
+   if s == ("n" | "&no" | "no" | "f" | "false" | "off" | "0") then
       return &no
 
    fail

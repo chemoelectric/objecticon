@@ -25,6 +25,7 @@ class Multipart()
    #
    public set_preamble(s)
       preamble := s
+      return self
    end
 
    #
@@ -39,6 +40,7 @@ class Multipart()
    #
    public set_epilogue(s)
       epilogue := s
+      return self
    end
 
    public get_parts()

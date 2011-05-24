@@ -4547,7 +4547,7 @@ function io_SslStream_out(self, s)
    }
 end
 
-function io_SslStream_close(self)
+function io_SslStream_close_impl(self)
    body {
        int rc;
        GetSelfSsl();

@@ -1,7 +1,7 @@
 package parser
 
 import 
-   util(Connectable, SetFields, error), 
+   util(Connectable, error), 
    lang(),
    io,
    posix
@@ -256,10 +256,7 @@ class ImportDec()
    end
 end
 
-#
-# @field file_mode=string : see {set_file_mode}
-#
-class SymbolTable(Connectable,SetFields)
+class SymbolTable(Connectable)
    private
       package_db,
       symbol_table, 
@@ -272,16 +269,13 @@ class SymbolTable(Connectable,SetFields)
       PREFER_SRC,
       PREFER_U,
       ALWAYS_SRC,
-      ALWAYS_U,
-      EVENT_TABLE
+      ALWAYS_U
 
    private static const
       BUILTINS
 
    private static init()
       SCANNING_EVENT := "scanning"
-      EVENT_TABLE := table(,
-                           "scanning", SCANNING_EVENT)
       PREFER_SRC := "prefer_src"
       PREFER_U := "prefer_u"
       ALWAYS_SRC := "always_src"
@@ -664,21 +658,12 @@ class SymbolTable(Connectable,SetFields)
       self.file_mode := s
    end
 
-   protected set_one(f)
-      case f.attr of {
-         "file_mode" : set_file_mode(f.string_val())
-         default: return try_event(f, EVENT_TABLE)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,Connectable).new()
       symbol_table := table()
       scanned_files := table()
       scanned_packages := set()
       file_mode := PREFER_SRC
-      set_fields(a)
       return
    end
 end

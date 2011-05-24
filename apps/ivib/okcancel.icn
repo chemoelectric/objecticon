@@ -11,17 +11,16 @@ class OkCancel(Component)
       cancel.connect(obj.on_cancel, Event.ACTION)
    end
 
-   public new(a[])
-      cast(self,Component).new("c:x_align=l")
-      set_layout(GridLayout("flush"))
+   public new()
+      cast(self,Component).new()
+      set_constraint("x_align", "l")
+      set_layout(GridLayout().set_doi(0))
 
-      okay := TextButton("label=Okay")
+      okay := TextButton().set_label("Okay")
       add(okay)
 
-      cancel := TextButton("label=Cancel")
+      cancel := TextButton().set_label("Cancel")
       add(cancel)
-
-      set_fields(a)
       return
    end
 end

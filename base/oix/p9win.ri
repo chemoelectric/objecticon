@@ -9,7 +9,6 @@ static int read_screeninfo(wsp ws, int *mx, int *my, int *sx, int *sy, int *sw, 
 static int open_winfile(wsp ws, char *s, int mode);
 static struct FontInfo *match_font(char *s);
 static void load_font_info(void);
-static wsp alcwinstate(void);
 static wcp alccontext(wbp w);
 static wfp alcfont(wbp w, char **s);
 static void synch_pattern_image(struct SharedPattern *pat, int fg_rgb, int bg_rgb, int style);
@@ -291,10 +290,11 @@ static void show_square(Image *dest, Rectangle r)
     flushimage(display, 1);
 }
 
-wbp wcreate(char *display)
+wbp wopen(char *display)
 {
     wbp w;
     wsp ws;
+    struct imgdata *imd;
 
     if (!inited) {
         init_window_system();
@@ -302,7 +302,24 @@ wbp wcreate(char *display)
     }
 
     w = alcwbinding();
-    ws = w->window = alcwinstate();
+
+    GRFX_ALLOC(ws, _wstate);
+    ws->program = curpstate;
+    ws->listp = nulldesc;    /* set to [] after linked into global context list */
+    ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
+        ws->screeninfo_fd = ws->cursor_fd = ws->mouse_pid = ws->cons_pid = ws->wsys_fd = 
+        ws->wctl_fd = ws->winid = ws->transientfor_winid = -1;
+    ws->cursor = stringint_lookup(cursors, "left ptr");
+    ws->x = ws->y = -INT_MAX;
+    ws->minwidth = ws->minheight = 1;
+    ws->maxwidth = ws->maxheight = INT_MAX;
+    ws->width = ws->height = 1;
+    ws->state = HiddenCanvas;
+    ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
+    GRFX_LINK(ws, wstates);
+
+    w->window = ws;
+
     if (display)
         ws->wsys = salloc(display);
     else {
@@ -315,31 +332,10 @@ wbp wcreate(char *display)
     }
     w->context = alccontext(w);
     create_list(64, &ws->listp);
-    return w;
-}
-
-int wopen(wbp w)
-{
-    wsp ws = w->window;
-    struct imgdata *imd;
-
-    /*
-     * Set the size if unset by the user.  The default varies on whether the
-     * window is hidden or not.
-     */
-    if (ws->width == 0)
-        ws->width = (ws->state == HiddenCanvas ? 1 : 200);
-    if (ws->height == 0)
-        ws->height = (ws->state == HiddenCanvas ? 1 : 200);
 
     open_pix_win(ws);
     /* Fill pixmap with bg color */
     clear_pix_win(w);
-
-    if (ws->state != HiddenCanvas) {
-        if (open_screen_win(ws) == Failed)
-            return Failed;
-    }
 
     imd = &ws->initimage;
     if (imd->width) {
@@ -347,7 +343,7 @@ int wopen(wbp w)
         freeimgdata(imd);
     }
 
-    return Succeeded;
+    return w;
 }
 
 static void clear_pix_win(wbp w)
@@ -2037,25 +2033,6 @@ int getdepth(wbp w, int *res)
 char *getwindowlabel(wbp w)
 {
     return w->window->windowlabel;
-}
-
-static wsp alcwinstate()
-{
-    wsp ws;
-    GRFX_ALLOC(ws, _wstate);
-    ws->program = curpstate;
-    ws->listp = nulldesc;    /* set to [] after linked into global context list */
-    ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
-        ws->screeninfo_fd = ws->cursor_fd = ws->mouse_pid = ws->cons_pid = ws->wsys_fd = 
-        ws->wctl_fd = ws->winid = ws->transientfor_winid = -1;
-    ws->cursor = stringint_lookup(cursors, "left ptr");
-    ws->x = ws->y = -INT_MAX;
-    ws->minwidth = ws->minheight = 1;
-    ws->maxwidth = ws->maxheight = INT_MAX;
-    ws->state = NormalCanvas;
-    ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
-    GRFX_LINK(ws, wstates);
-    return ws;
 }
 
 wcp clonecontext(wbp w)

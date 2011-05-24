@@ -38,26 +38,26 @@ class SaveChangesDialog(Dialog)
    public new()
       local l, p, yes, no, cancel
       cast(self,Dialog).new()
-      self.attrib("label=Save changes?")
+      set_label("Save changes?")
 
       set_layout(GridLayout())
 
-      l := Label("c:eol", "c:y_weight=1", "c:x_align=c")
+      l := Label().set_constraint("eol", &yes).set_constraint("y_weight", 1).set_constraint("x_align", "c")
       l.set_label(".cell\nThe canvas has been modified.\n.br\nDo you wish to save these changes?\n.br")
       add(l)
-      add(Line("c:eol", "size=100", "c:x_fill"))
+      add(Line().set_constraint("eol", &yes).set_size(100).set_constraint("x_fill", &yes))
 
-      p := Panel("c:y_weight=0")
-      p.set_layout(GridLayout("flush"))
-      yes := TextButton("label=Yes", "accel=y")
+      p := Panel().set_constraint("y_weight", 0)
+      p.set_layout(GridLayout().set_doi(0))
+      yes := TextButton().set_label("Yes").set_accel("y")
       yes.connect(self.on_yes, Event.ACTION)
       p.add(yes)
 
-      no := TextButton("label=No", "accel=n")
+      no := TextButton().set_label("No").set_accel("n")
       no.connect(self.on_no, Event.ACTION)
       p.add(no)
 
-      cancel := TextButton("label=Cancel", "accel=c")
+      cancel := TextButton().set_label("Cancel").set_accel("c")
       cancel.connect(self.on_cancel, Event.ACTION)
       p.add(cancel)
 

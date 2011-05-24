@@ -36,34 +36,25 @@ class CanvasSplitDialog(CanvasComponentDialog)
       cast(self,CanvasComponentDialog).setup()
       
       p := TabItem()
-      p.set_layout(GridLayout("extra=borders"))
+      p.set_layout(GridLayout().set_extra("borders"))
       p.set_label("General")
       add_tab_at_front(p)
 
-      show_inter := CheckBox("label=Show intermediate sizer bar", "c:eol", "c:w=2")
+      show_inter := CheckBox().set_label("Show intermediate sizer bar").set_constraint("eol", &yes).set_constraint("w", 2)
       if \c.sizer.show_inter_flag then
          show_inter.set_is_checked(&yes)
       p.add(show_inter)
 
-      p.add(Label("label=Min left/top size:"))
-      min_first := TextField("size=100", 
-                             "filter=",&digits, 
-                             "contents=",c.min_first,
-                             "c:eol")
+      p.add(Label().set_label("Min left/top size:"))
+      min_first := TextField().set_size(100).set_filter(&digits).set_contents(c.min_first).set_constraint("eol", &yes)
       p.add(min_first)
 
-      p.add(Label("label=Min right/bottom size:"))
-      min_second := TextField("size=100", 
-                              "filter=",&digits, 
-                              "contents=",c.min_second,
-                              "c:eol")
+      p.add(Label().set_label("Min right/bottom size:"))
+      min_second := TextField().set_size(100).set_filter(&digits).set_contents(c.min_second).set_constraint("eol", &yes)
       p.add(min_second)
 
-      p.add(Label("label=Weight:"))
-      weight := TextField("size=100", 
-                          "filter=",&digits ++ '.', 
-                          "contents=",c.weight,
-                          "c:eol")
+      p.add(Label().set_label("Weight:"))
+      weight := TextField().set_size(100).set_filter(&digits ++ '.').set_contents(c.weight).set_constraint("eol", &yes)
       p.add(weight)
    end
 end

@@ -34,7 +34,7 @@ class OverlaySet(Component)
          self.invalidate()
       } else
          self.which_one := x
-      return x
+      return self
    end
 
    public set_hidden_flags()
@@ -89,13 +89,12 @@ class OverlaySet(Component)
       return self.which_one
    end
 
-   public new(a[])
+   public new()
       cast(self,Component).new()
       self.set_constraint("x_fill", &yes)
       self.set_constraint("y_fill", &yes)
       self.set_constraint("x_weight", 1.0)
       self.set_constraint("y_weight",  1.0)
-      set_fields(a)
       return
    end
 end

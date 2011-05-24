@@ -3,17 +3,6 @@ package gui
 #
 # This class encapsulates a single text item in a Menu.
 #
-# @field label=text : see {set_label}
-# @field label_left=text : see {set_label_left}
-# @field label_right=text : see {set_label_right}
-# @field paint or paint_mid={Paint} : see {set_paint_mid}
-# @field paint_left={Paint} : see {set_paint_left}
-# @field paint_right={Paint} : see {set_paint_right}
-# @field border_mid={ABorder} : see {set_border_mid}
-# @field border_left={ABorder} : see {set_border_left}
-# @field border_right={ABorder} : see {set_border_right}
-# @field see also {MenuComponent}
-#
 class TextMenuItem(MenuComponent)
    public 
       paint_mid,
@@ -48,14 +37,14 @@ class TextMenuItem(MenuComponent)
    # Set the centre label to the given string.
    #
    public set_label(x)
-      set_paint_mid(paint_for_string(x))
+      return set_paint_mid(paint_for_string(x))
    end
 
    #
    # Set the middle {Paint} instance.
    #
    public set_paint(p)
-      set_paint_mid(p)      
+      return set_paint_mid(p)      
    end
 
    #
@@ -68,13 +57,14 @@ class TextMenuItem(MenuComponent)
          (\self.paint_mid).initially(parent_component, self.accel)
          possibly_invalidate()
       }
+      return self
    end
 
    #
    # Set the optional left label to the given string.
    #
    public set_label_left(x)
-      set_paint_left(paint_for_string(x))
+      return set_paint_left(paint_for_string(x))
    end
 
    public set_paint_left(p)
@@ -84,13 +74,14 @@ class TextMenuItem(MenuComponent)
          (\self.paint_left).initially(parent_component)
          possibly_invalidate()
       }
+      return self
    end
 
    #
    # Set the optional right label to the given string.
    #
    public set_label_right(x)
-      set_paint_right(paint_for_string(x))
+      return set_paint_right(paint_for_string(x))
    end
 
    public set_paint_right(p)
@@ -100,14 +91,15 @@ class TextMenuItem(MenuComponent)
          (\self.paint_right).initially(parent_component)
          possibly_invalidate()
       }
+      return self
    end
 
    public set_image_left(x)
-      set_paint_left(ImagePaint("image=",x))
+      return set_paint_left(ImagePaint().set_image(x))
    end
 
    public set_image_right(x)
-      set_paint_right(ImagePaint("image=",x))
+      return set_paint_right(ImagePaint().set_image(x))
    end
 
    public set_border_left(x)
@@ -117,6 +109,7 @@ class TextMenuItem(MenuComponent)
          self.border_left.initially(parent_component)
          possibly_invalidate()
       }
+      return self
    end
 
    public set_border_right(x)
@@ -126,6 +119,7 @@ class TextMenuItem(MenuComponent)
          self.border_right.initially(parent_component)
          possibly_invalidate()
       }
+      return self
    end
 
    public set_border_mid(x)
@@ -135,6 +129,7 @@ class TextMenuItem(MenuComponent)
          self.border_mid.initially(parent_component)
          possibly_invalidate()
       }
+      return self
    end
 
    public get_label_left_width()
@@ -185,23 +180,7 @@ class TextMenuItem(MenuComponent)
       }
    end
 
-   public set_one(f)
-      case f.attr of {
-         "label" : set_label(f.text_val())
-         "label_left" : set_label_left(f.text_val())
-         "label_right" : set_label_right(f.text_val())
-         "paint"|"paint_mid" : set_paint_mid(f.object_val(gui.Paint))
-         "paint_left" : set_paint_left(f.object_val(gui.Paint))
-         "paint_right" : set_paint_right(f.object_val(gui.Paint))
-         "border_mid" : set_border_mid(f.object_val(gui.ABorder))
-         "border_left" : set_border_left(f.object_val(gui.ABorder))
-         "border_right" : set_border_right(f.object_val(gui.ABorder))
-         default : return cast(self,MenuComponent).set_one(f)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,MenuComponent).new()
       #
       # The three labels use the following X insets by default :-
@@ -209,10 +188,9 @@ class TextMenuItem(MenuComponent)
       #      <-l-><-m-><-r->
       # where X is Gui.X_INSET
       #
-      self.border_mid := EmptyBorder("x_align=l")
-      self.border_left := EmptyBorder("r_inset=0", "x_align=l")
-      self.border_right := EmptyBorder("l_inset=0", "x_align=l")
-      set_fields(a)
+      self.border_mid := EmptyBorder().set_x_align("l")
+      self.border_left := EmptyBorder().set_r_inset(0).set_x_align("l")
+      self.border_right := EmptyBorder().set_l_inset(0).set_x_align("l")
       return
    end
 end

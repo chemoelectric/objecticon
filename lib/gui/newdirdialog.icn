@@ -28,16 +28,10 @@ class NewDirectoryDialog(Dialog)
       dispose()
    end
 
-   public new(a[])
-      cast(self,Dialog).new()
-      set_fields(a)
-      return
-   end
-
    private setup()
       local panel_2, layout_4, line_1, layout_1, panel_1, label_1, paint, layout_2
-      self.set_wattrib("label", "New directory")
-      self.set_wattrib("resize", "on")
+      self.set_label("New directory")
+      self.set_resize(&yes)
       panel_1 := Panel()
       panel_1.clear_constraints()
       panel_1.set_constraint("eol", "")

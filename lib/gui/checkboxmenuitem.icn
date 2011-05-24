@@ -14,10 +14,6 @@ package gui
 # Several {CheckBoxMenuItems} may be added to a {CheckBoxGroup}
 # structure to give "radio buttons" within menus.
 #
-# @field box_paint=s1,s2 : see {set_box_paint}
-# @field is_checked=flag : see {set_is_checked}
-# @field see also {TextMenuItem}
-#
 class CheckBoxMenuItem(Toggle,TextMenuItem)
    public 
       curr_paint,                                            
@@ -35,6 +31,7 @@ class CheckBoxMenuItem(Toggle,TextMenuItem)
       self.unchecked_paint := x
       self.checked_paint := y
       synch_left_image()
+      return self
    end
 
    public initially()
@@ -43,9 +40,9 @@ class CheckBoxMenuItem(Toggle,TextMenuItem)
       #
       if /self.unchecked_paint then {
          if /self.parent_check_box_group then
-            self.set_box_paint(ImagePaint("cache=gui.BOX_UP"), ImagePaint("cache=gui.BOX_DOWN"))
+            self.set_box_paint(ImagePaint().set_cache("gui.BOX_UP"), ImagePaint().set_cache("gui.BOX_DOWN"))
          else
-            self.set_box_paint(ImagePaint("cache=gui.DIAMOND_UP"), ImagePaint("cache=gui.DIAMOND_DOWN"))
+            self.set_box_paint(ImagePaint().set_cache("gui.DIAMOND_UP"), ImagePaint().set_cache("gui.DIAMOND_DOWN"))
       }
       synch_left_image()
       cast(self,TextMenuItem).initially()
@@ -79,15 +76,6 @@ class CheckBoxMenuItem(Toggle,TextMenuItem)
       } else
          self.toggle_is_checked()      
       cast(self,TextMenuItem).succeed(e)
-   end
-
-   public set_one(f)
-      case f.attr of {
-         "box_paint" : set_box_paint!(f.list_val(2))
-         "is_checked" : set_is_checked(f.flag_val())
-         default: return cast(self,TextMenuItem).set_one(f)
-      }
-      return
    end
 end
 

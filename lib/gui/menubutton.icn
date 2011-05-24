@@ -15,9 +15,6 @@ import graphics
 # drop-down menu, rather than several.  It may be placed anywhere on
 # the dialog, whereas a {MenuBar} would invariably be placed along the top.
 #
-# @field menu= : see {set_menu}
-# @field see also {Component}
-#
 class MenuButton(Component)
    public 
       menu, 
@@ -31,6 +28,7 @@ class MenuButton(Component)
    public set_menu(c)
       self.menu := c
       c.set_component_link(self)         
+      return self
    end
 
    public initially()
@@ -146,23 +144,9 @@ class MenuButton(Component)
       self.menu.label_h := self.h - border.get_total_height()
    end
 
-   public set_one(f)
-      case f.attr of {
-         "menu" : set_menu(f.object_val(MenuComponent))
-         default: return cast(self,Component).set_one(f)
-      }
-      return
-   end
-
-   protected set_special(a)
-      if is(a[1], MenuComponent) then
-         set_menu(pop(a))
-   end
-
-   public new(a[])
+   public new()
       cast(self,Component).new()
       self.set_border(RaisedBorder())
-      set_fields(a)
       return
    end
 end

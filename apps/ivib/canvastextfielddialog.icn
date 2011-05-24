@@ -45,7 +45,7 @@ class CanvasTextFieldDialog(CanvasComponentDialog)
       cast(self,CanvasComponentDialog).setup()
 
       p := TabItem()
-      p.set_layout(GridLayout("extra=cells"))
+      p.set_layout(GridLayout().set_extra("cells"))
       p.set_label("General")
       add_tab_at_front(p)
 
@@ -53,7 +53,7 @@ class CanvasTextFieldDialog(CanvasComponentDialog)
       l.set_label("Initial contents : ")
       p.add(l)
       
-      contents := TextField("c:eol")
+      contents := TextField().set_constraint("eol", &yes)
       contents.set_contents(c.contents)
       p.add(contents)
 
@@ -61,21 +61,21 @@ class CanvasTextFieldDialog(CanvasComponentDialog)
       l.set_label("Filter : ")
       p.add(l)
       
-      filter := TextField("c:eol")
+      filter := TextField().set_constraint("eol", &yes)
       filter.set_contents(c.filter_str)
       p.add(filter)
 
-      is_editable_cb := CheckBox("label=Is editable", "c:eol", "c:w=2")
+      is_editable_cb := CheckBox().set_label("Is editable").set_constraint("eol", &yes).set_constraint("w", 2)
       if \c.is_editable_flag then
          is_editable_cb.set_is_checked(&yes)
       p.add(is_editable_cb)
 
-      move_on_rpress_cb := CheckBox("label=Move cursor on &rpress", "c:eol", "c:w=2")
+      move_on_rpress_cb := CheckBox().set_label("Move cursor on &rpress").set_constraint("eol", &yes).set_constraint("w", 2)
       if \c.move_on_rpress_flag then
          move_on_rpress_cb.set_is_checked(&yes)
       p.add(move_on_rpress_cb)
 
-      ucs_cb := CheckBox("label=Ucs content", "c:w=2")
+      ucs_cb := CheckBox().set_label("Ucs content").set_constraint("w", 2)
       if type(c.contents) == "ucs" then
          ucs_cb.set_is_checked(&yes)
       ucs_cb.connect(self.on_ucs_cb, Event.ACTION)

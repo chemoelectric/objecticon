@@ -63,6 +63,7 @@ class Process()
    #
    public set_proc(p)
       self.p := p
+      return self
    end
 
    public new(p)
@@ -189,6 +190,7 @@ $endif
    #
    public set_proc(p)
       self.p := p
+      return self
    end
 
    public new(p)

@@ -9,10 +9,6 @@ import
 #
 # Directory dialog class.  This class provides a standard directory selection dialog.
 #
-# @field directory=string : see {set_directory}
-# @field directories=s1,s2,s3,... : see {set_directories}
-# @field see also {Dialog}
-# 
 # @example
 # @ d := DirectoryDialog()
 # @ d.show_modal()
@@ -50,8 +46,7 @@ class DirectoryDialog(Dialog)
       dir.set_selection_list(init_dirs)
       root_node := TreeNode()
       every d := Files.get_roots() do
-         root_node.add(TreeNode("label=",ucs(d),
-                                "always_expandable=t"))
+         root_node.add(TreeNode().set_label(ucs(d)).set_always_expandable(&yes))
       tree.set_root_node(root_node)
    end
 
@@ -74,8 +69,8 @@ class DirectoryDialog(Dialog)
       s := get_full_path(n).str()
       l := list_directory(s)
       n.clear_children()
-      every n.add(TreeNode("label=",!l,
-                           "always_expandable=t"))
+      every s := !l do
+         n.add(TreeNode().set_label(s).set_always_expandable(&yes))
    end
 
    public list_directory(s)
@@ -147,7 +142,8 @@ class DirectoryDialog(Dialog)
    # Set the initial directory.
    #
    public set_directory(s)
-      return self.init_dirs := [s]
+      self.init_dirs := [s]
+      return self
    end
 
    #
@@ -155,7 +151,8 @@ class DirectoryDialog(Dialog)
    # the one initially shown.
    #
    public set_directories(l)
-      return self.init_dirs := l
+      self.init_dirs := l
+      return self
    end
 
    public get_dir_path()
@@ -252,25 +249,10 @@ $endif
       msg("")
    end
 
-   public set_one(f)
-      case f.attr of {
-         "directory" : set_directory(f.ucs_val())
-         "directories" : set_directories(f.ucs_list_val())
-         default: return cast(self,Dialog).set_one(f)
-      }
-      return
-   end
-
-   public new(a[])
-      cast(self,Dialog).new()
-      set_fields(a)
-      return
-   end
-
    private setup()
       local layout_7, layout_4, panel_4, paint_1, layout_6, panel_3, paint
-      self.set_wattrib("label", "Select directory")
-      self.set_wattrib("resize", "on")
+      self.set_label("Select directory")
+      self.set_resize(&yes)
       panel_4 := Panel()
       panel_4.clear_constraints()
       panel_4.set_constraint("eol", "y")
@@ -391,7 +373,7 @@ $endif
       message_label := Label()
       message_label.set_size("130")
       message_label.set_align("l", "b")
-      message_label.set_wattrib("fg", "red")
+      message_label.set_fg("red")
       message_label.clear_constraints()
       message_label.set_constraint("x_align", "l")
       message_label.set_constraint("x_fill", "")

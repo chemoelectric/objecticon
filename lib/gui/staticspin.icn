@@ -22,13 +22,12 @@ class SpinLabel(Label)
       }
    end
 
-   public new(a[])
+   public new()
       cast(self,Label).new()
       self.set_label("")
       self.connect(self.on_key, Event.KEY_PRESS)
       self.set_accepts_focus(&yes)
       self.border.set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, Gui.Y_INSET, Gui.Y_INSET)
-      set_fields(a)
       return
    end
 end

@@ -15,12 +15,6 @@ import util, ipl.graphics(Zoom), graphics
 # be an image string, an external file, or another window, and
 # can be changed at any time.
 #
-# @field image=string : see {set_image}
-# @field cache=string : see {set_cache}
-# @field window={Window} : see {set_window}
-# @field scale_up=flag : see {set_scale_up}
-# @field see also {Component}
-#
 class Image(Component)
    public 
       image_str,
@@ -44,6 +38,7 @@ class Image(Component)
          self.invalidate()
       } else
          self.image_str := x
+      return self
    end
 
    #
@@ -59,6 +54,7 @@ class Image(Component)
          self.invalidate()
       } else
          self.image_cache := x
+      return self
    end
 
    #
@@ -74,6 +70,7 @@ class Image(Component)
          self.invalidate()
       } else
          self.image_window := x
+      return self
    end
 
    #
@@ -113,6 +110,7 @@ class Image(Component)
    #
    public set_scale_up(s)
       self.scale_up_flag := check_flag(s)
+      return self
    end
 
    public close_image()
@@ -181,23 +179,11 @@ class Image(Component)
                zoom_win.copy_to(self.cbwin, , , , , pt.x, pt.y)
          else {
             (\zoom_win).close()
-            zoom_win := Window.open("size=" || zoom_w || "," || zoom_h, 
-                              "canvas=hidden") | syserr("Couldn't open temp window")
+            zoom_win := Window.open().set_size(zoom_w, zoom_h) | syserr("Couldn't open temp window")
             Zoom(win, zoom_win, 0, 0, img_w, img_h, 0, 0, zoom_w, zoom_h)
             zoom_win.copy_to(self.cbwin, , , , , pt.x, pt.y)
          }
       }
-   end
-
-   public set_one(f)
-      case f.attr of {
-         "image" : set_image(f.string_val())
-         "cache" : set_cache(f.string_val())
-         "window" : set_window(f.object_val(Window))
-         "scale_up" : set_scale_up(f.flag_val())
-         default: return cast(self,Component).set_one(f)
-      }
-      return
    end
 
    public finally()
@@ -205,14 +191,13 @@ class Image(Component)
       close_image()
    end
 
-   public new(a[])
+   public new()
       cast(self,Component).new()
       self.set_constraint("x_fill", &yes)
       self.set_constraint("y_fill", &yes)
       self.set_constraint("x_weight", 1.0)
       self.set_constraint("y_weight",  1.0)
       set_border(RaisedBorder())
-      set_fields(a)
       return
    end
 end

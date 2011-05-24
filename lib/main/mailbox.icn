@@ -21,6 +21,7 @@ class Mailbox(Address)
 
    public set_local_part(x)
       local_part := x
+      return self
    end
 
    public get_domain()
@@ -29,6 +30,7 @@ class Mailbox(Address)
    
    public set_domain(x)
       domain := x
+      return self
    end
 
    public get_phrase() 
@@ -37,6 +39,7 @@ class Mailbox(Address)
 
    public set_phrase(x)
       phrase := x
+      return self
    end
 
    public get_route() 
@@ -45,6 +48,7 @@ class Mailbox(Address)
 
    public set_route(x)
       route := x
+      return self
    end
 
    public to_rfc822()

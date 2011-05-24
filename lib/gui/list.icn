@@ -22,14 +22,13 @@ class ListLabel(Label)
       }
    end
 
-   public new(a[])
+   public new()
       cast(self,Label).new()
       self.set_label("")
       self.set_accepts_focus(&yes)
       self.connect(self.on_key, Event.KEY_PRESS)
       # Align with the text in the textlist.
       self.border.set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, Gui.Y_INSET, Gui.Y_INSET)
-      set_fields(a)
       return
    end
 end
@@ -42,9 +41,6 @@ end
 # 
 # A Event.SELECTION_CHANGED is generated whenever an item is selected from the
 # list.
-# 
-# @field constant_label=string : see {set_constant_label}
-# @field see also {DropDown}
 #
 # @example
 # @ l := List()
@@ -71,6 +67,7 @@ class List(DropDown)
    public set_constant_label(x)
       self.constant_label := x
       apply_selection()
+      return self
    end
 
    public create_view()
@@ -86,14 +83,6 @@ class List(DropDown)
          every t <:= self.cbwin.text_width(!self.selection_list)
       }
       return border.get_total_width() + b.get_preferred_width() + t + view.border.get_total_width()
-   end
-
-   public set_one(f)
-      case f.attr of {
-         "constant_label" : set_constant_label(f.text_val())
-         default: return cast(self,DropDown).set_one(f)
-      }
-      return
    end
 end
 

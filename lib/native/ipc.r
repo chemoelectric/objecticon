@@ -276,7 +276,7 @@ function ipc_Shm_set_value_impl(self, str)
    
        shmdt(tp);
 
-       return nulldesc;
+       return self;
    }
 end
 

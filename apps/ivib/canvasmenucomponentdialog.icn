@@ -42,17 +42,17 @@ class CanvasMenuComponentDialog(MenuComponentEdit)
       main_panel := TabItem()
       add_tab_at_front(main_panel)
       main_panel.set_label("General")
-      main_panel.set_layout(GridLayout("extra=borders"))
+      main_panel.set_layout(GridLayout().set_extra("borders"))
 
-      paint_field := PaintField("title=",Label("label=Label"), "c:eol", "c:w=2")
+      paint_field := PaintField().set_title(Label().set_label("Label")).set_constraint("eol", &yes).set_constraint("w", 2)
       paint_field.set_contents(c.paint_mid)
       main_panel.add(paint_field)
 
-      paint_field_l := PaintField("title=",Label("label=Label(L)"), "c:eol", "c:w=2")
+      paint_field_l := PaintField().set_title(Label().set_label("Label(L)")).set_constraint("eol", &yes).set_constraint("w", 2)
       paint_field_l.set_contents(c.paint_left)
       main_panel.add(paint_field_l)
 
-      paint_field_r := PaintField("title=",Label("label=Label(R)"), "c:eol", "c:w=2")
+      paint_field_r := PaintField().set_title(Label().set_label("Label(R)")).set_constraint("eol", &yes).set_constraint("w", 2)
       paint_field_r.set_contents(c.paint_right)
       main_panel.add(paint_field_r)
    end

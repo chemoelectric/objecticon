@@ -8,11 +8,6 @@
 
 package gui
 
-#
-# @field item_paint={ItemPaint} : see {set_item_paint}
-# @field item_border={ABorder} : see {set_item_border}
-# @field see also {SelectableScrollArea}
-#
 class ItemPaintList(SelectableScrollArea)
    public
       item_border,
@@ -39,6 +34,7 @@ class ItemPaintList(SelectableScrollArea)
       self.item_border := b
       if is_initialized() then
          self.item_border.initially(self)
+      return self
    end
 
    public set_item_paint(r)
@@ -46,6 +42,7 @@ class ItemPaintList(SelectableScrollArea)
       self.item_paint := r
       if is_initialized() then
          self.item_paint.initially(self)
+      return self
    end
 
    public calculate_line_height()
@@ -79,24 +76,9 @@ class ItemPaintList(SelectableScrollArea)
       item_border.draw_rect(view.cbwin, r)
    end
 
-   protected set_one(f)
-      case f.attr of {
-         "item_paint" : set_item_paint(f.object_val(ItemPaint))
-         "item_border" : set_item_border(f.object_val(ABorder))
-         default: return cast(self,SelectableScrollArea).set_one(f)
-      }
-      return
-   end
-
-   protected set_special(a)
-      if is(a[1], ItemPaint) then
-         set_item_paint(pop(a))
-   end
-
-   public new(a[])
+   public new()
       cast(self,SelectableScrollArea).new()
-      self.set_item_border(EmptyBorder("flush"))
-      set_fields(a)
+      self.set_item_border(EmptyBorder().set_insets(0, 0, 0, 0))
       return
    end
 end

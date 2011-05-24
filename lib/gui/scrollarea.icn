@@ -15,11 +15,6 @@ import graphics
 # using a pair of scroll bars.  This specification of the object is
 # provided by implementing methods in a subclass.
 #
-# @field wheel_factor=integer : see {set_wheel_factor}
-# @field vertical_increment=integer : see {set_vertical_increment}
-# @field horizontal_increment=integer : see {set_horizontal_increment}
-# @field see also {Component}
-#
 class ScrollArea(Component)
    public 
       hsb,              
@@ -97,10 +92,12 @@ class ScrollArea(Component)
    #
    public set_area_x(horiz)
       local t
-      t := (\self.hsb).value | fail
-      self.hsb.set_value(horiz)
-      if hsb.value ~= t then
-         self.refresh()
+      if t := (\self.hsb).value then {
+         self.hsb.set_value(horiz)
+         if hsb.value ~= t then
+            self.refresh()
+      }
+      return self
    end
 
    #
@@ -108,10 +105,12 @@ class ScrollArea(Component)
    #
    public set_area_y(vert)
       local t
-      t := (\self.vsb).value | fail
-      self.vsb.set_value(vert)
-      if vsb.value ~= t then
-         self.refresh()
+      if t := (\self.vsb).value then {
+         self.vsb.set_value(vert)
+         if vsb.value ~= t then
+            self.refresh()
+      }
+      return self
    end
 
    #
@@ -121,6 +120,7 @@ class ScrollArea(Component)
    #
    public set_wheel_factor(n)
       self.wheel_factor := n
+      return self
    end
 
    #
@@ -137,6 +137,7 @@ class ScrollArea(Component)
    #
    public set_vertical_increment(n)
       self.vertical_increment := n
+      return self
    end
 
    public get_vertical_increment()
@@ -150,6 +151,7 @@ class ScrollArea(Component)
    #
    public set_horizontal_increment(n)
       self.horizontal_increment := n
+      return self
    end
 
    public get_horizontal_increment()
@@ -255,6 +257,7 @@ class ScrollArea(Component)
 
       w_spec <:= min_w
       h_spec <:= min_h
+      return self
    end
 
    #
@@ -512,17 +515,7 @@ class ScrollArea(Component)
    #
    public defer create_view()
 
-   public set_one(f)
-      case f.attr of {
-         "wheel_factor": set_wheel_factor(f.int_val())
-         "vertical_increment" : set_vertical_increment(f.int_val())
-         "horizontal_increment" : set_horizontal_increment(f.int_val())
-         default: return cast(self,Component).set_one(f)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,Component).new()
       self.set_border(SunkenBorder())
       self.view := create_view()
@@ -531,7 +524,6 @@ class ScrollArea(Component)
       self.set_constraint("y_fill", &yes)
       self.set_constraint("x_weight", 1.0)
       self.set_constraint("y_weight",  1.0)
-      set_fields(a)
       return
    end
 end

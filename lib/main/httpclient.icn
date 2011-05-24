@@ -50,15 +50,6 @@ end
 #
 # An http client
 #
-# @field http_version=string: see {set_http_version}
-# @field user_agent=string: see {set_user_agent}
-# @field retries=integer: see {set_retries}
-# @field retry_while_data=flag: see {set_retry_while_data}
-# @field keep_alive=flag : see {set_keep_alive}
-# @field cookies=table : see {set_cookies}
-# @field gzip=flag: see {set_gzip}
-# @field see also {NetClient}
-#
 class HttpClient(NetClient)
    public static const
       TOKEN_CHAR,
@@ -68,7 +59,6 @@ class HttpClient(NetClient)
       RETRYING_EVENT,
       HEADERS_EVENT,
       PROGRESS_EVENT,
-      EVENT_TABLE,
       FOUND_GZIP
 
    private static init()
@@ -79,13 +69,6 @@ class HttpClient(NetClient)
       RETRYING_EVENT := "Retrying"
       HEADERS_EVENT := "Headers"
       PROGRESS_EVENT := "Progress"
-      EVENT_TABLE := table(,
-                           "complete", COMPLETE_EVENT,
-                           "failed", FAILED_EVENT,
-                           "aborted", ABORTED_EVENT,
-                           "retrying", RETRYING_EVENT,
-                           "headers", HEADERS_EVENT,
-                           "progress", PROGRESS_EVENT)
 $ifndef _PLAN9
       if Files.find_exe("gunzip") then
          FOUND_GZIP := &yes
@@ -125,6 +108,7 @@ $endif
    #
    public set_http_version(s)
       http_version := s
+      return self
    end
 
    #
@@ -132,6 +116,7 @@ $endif
    #
    public set_user_agent(s)
       self.user_agent := s
+      return self
    end
 
    #
@@ -140,6 +125,7 @@ $endif
    #
    public set_keep_alive(s)
       self.keep_alive_flag := check_flag(s)
+      return self
    end
 
    #
@@ -148,6 +134,7 @@ $endif
    #
    public set_retry_while_data(s)
       self.retry_while_data_flag := check_flag(s)
+      return self
    end
 
    #
@@ -155,6 +142,7 @@ $endif
    #
    public set_cookies(m)
       self.cookies := m
+      return self
    end
 
    #
@@ -169,6 +157,7 @@ $endif
    #
    public set_gzip(s)
       self.gzip_flag := check_flag(s)
+      return self
    end
 
    #
@@ -207,6 +196,7 @@ $endif
    #
    public set_retries(retries)
       self.retries := retries
+      return self
    end
 
    #
@@ -1029,21 +1019,7 @@ $endif
          request.data_stream.writes(s)
    end
 
-   public set_one(f)
-      case f.attr of {
-         "http_version": set_http_version(f.string_val())
-         "user_agent": set_user_agent(f.string_val())
-         "retries": set_retries(f.int_val())
-         "retry_while_data": set_retry_while_data(f.flag_val())
-         "keep_alive": set_keep_alive(f.flag_val())
-         "cookies": set_cookies(f.table_val())
-         "gzip": set_gzip(f.flag_val())
-         default: return try_event(f, EVENT_TABLE) | cast(self,NetClient).set_one(f)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,NetClient).new()
       cookies := table()
       set_timeout(12000)
@@ -1052,7 +1028,6 @@ $endif
       http_version := "1.1"
       user_agent := "httpclient.icn [en] (" || &host || ")"
       gzip_flag := FOUND_GZIP
-      set_fields(a)
       return
    end
 end

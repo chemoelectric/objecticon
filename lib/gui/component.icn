@@ -16,35 +16,7 @@ import
 # This is the parent class of all the GUI components.  All of
 # its methods and variables therefore apply to its sub-classes.
 #
-# @field tooltip=val: see {set_tooltip}
-# @field tooltip_start_delay=integer: see {set_tooltip_start_delay}
-# @field tooltip_end_delay=integer: see {set_tooltip_end_delay}
-# @field tooltip_follows_mouse=flag: see {set_tooltip_follows_mouse}
-# @field pointer=string : see {set_pointer}
-# @field show_layout=flag : see {set_show_layout}
-# @field allow_drop=flag : see {set_allow_drop}
-# @field allow_drag=flag : see {set_allow_drag}
-# @field is_shaded=flag : see {set_is_shaded}
-# @field accepts_focus=flag : see {set_accepts_focus}
-# @field pos=string,string : see {set_pos}
-# @field x=string : see {set_x}
-# @field y=string : see {set_y}
-# @field width or w=string : see {set_width}
-# @field height or h=string : see {set_height}
-# @field size=string,string : see {set_size}
-# @field align=string,string : see {set_align}
-# @field x_align=string : see {set_x_align}
-# @field y_align=string : see {set_y_align}
-# @field z=integer : see {set_z}
-# @field tab_ord=integer : see {set_tab_ord}
-# @field accel=string : see {set_accel}
-# @field layout={gui.Layout}: see {set_layout}
-# @field border={gui.ABorder}: see {set_border}
-# @field c:<constraint>=value: set a constraint, see {set_constraint}
-# @field w:<attrib>=value: set a window attribute, see {set_wattrib}
-# @field e:<event>=value: connects value to the matching event
-#
-class Component(Rect,Align,SetFields,Connectable)
+class Component(Rect,Align,Connectable)
    public 
       #
       # x position as specified by {set_pos()}, eg "50%"
@@ -162,6 +134,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public set_tooltip(x)
       self.tooltip := x
+      return self
    end
 
    #
@@ -176,6 +149,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public set_tooltip_start_delay(x)
       self.tooltip_start_delay := x
+      return self
    end
 
    #
@@ -191,6 +165,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public set_tooltip_end_delay(x)
       self.tooltip_end_delay := x
+      return self
    end
 
    #
@@ -207,6 +182,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public set_tooltip_follows_mouse(s)
       self.tooltip_follows_mouse_flag := check_flag(s)
+      return self
    end
 
    #
@@ -232,6 +208,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public set_pointer(x)
       self.pointer := x
+      return self
    end
 
    #
@@ -251,6 +228,7 @@ class Component(Rect,Align,SetFields,Connectable)
          self.border.initially(self)
          self.invalidate()
       }
+      return self
    end
 
    #
@@ -302,7 +280,7 @@ class Component(Rect,Align,SetFields,Connectable)
    # Swap the hidden status of the component.
    #
    public toggle_is_hidden()
-      set_is_hidden(toggle_flag(self.is_hidden_flag))
+      return set_is_hidden(toggle_flag(self.is_hidden_flag))
    end
 
    #
@@ -310,13 +288,15 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public set_is_hidden(s)
       s := check_flag(s)
-      (s ~=== self.is_hidden_flag) | fail
-      # NB - try invalidate before and after, since invalidating a hidden
-      # component is a no-op.
-      self.invalidate()
-      self.is_hidden_flag := s
-      self.hidden_change()
-      self.invalidate()
+      if s ~=== self.is_hidden_flag then {
+         # NB - try invalidate before and after, since invalidating a hidden
+         # component is a no-op.
+         self.invalidate()
+         self.is_hidden_flag := s
+         self.hidden_change()
+         self.invalidate()
+      }
+      return self
    end
 
    #
@@ -386,6 +366,7 @@ class Component(Rect,Align,SetFields,Connectable)
       self.is_shaded_flag := toggle_flag(self.is_shaded_flag)
       self.shaded_change()
       self.invalidate()
+      return self
    end
 
    #
@@ -393,10 +374,12 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public set_is_shaded(s)
       s := check_flag(s)
-      (s ~=== self.is_shaded_flag) | fail
-      self.is_shaded_flag := s
-      self.shaded_change()
-      self.invalidate()
+      if s ~=== self.is_shaded_flag then {
+         self.is_shaded_flag := s
+         self.shaded_change()
+         self.invalidate()
+      }
+      return self
    end
 
    #
@@ -404,6 +387,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public set_accepts_focus(s)
       self.accepts_focus_flag := check_flag(s)
+      return self
    end
 
    #
@@ -444,6 +428,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public set_wattrib(attr, val)
       insert(self.wattribs, attr, val)
+      return self
    end
 
    #
@@ -451,6 +436,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public remove_wattrib(attr)
       delete(self.wattribs, attr)
+      return self
    end
 
    #
@@ -466,6 +452,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public clear_wattribs()
       self.wattribs := table()
+      return self
    end
 
    #
@@ -473,6 +460,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public set_all_wattribs(t)
       self.wattribs := copy(t)
+      return self
    end
 
    #
@@ -480,6 +468,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public set_constraint(key, val)
       insert(self.constraints, key, val)
+      return self
    end
 
    #
@@ -487,6 +476,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public remove_constraint(key)
       delete(self.constraints, key)
+      return self
    end
 
    #
@@ -501,6 +491,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public clear_constraints()
       self.constraints := table()
+      return self
    end      
 
    #
@@ -618,6 +609,7 @@ class Component(Rect,Align,SetFields,Connectable)
    public set_pos(x_spec, y_spec)
       self.x_spec := x_spec
       self.y_spec := y_spec
+      return self
    end
 
    #
@@ -626,6 +618,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public set_x(x_spec)
       self.x_spec := x_spec
+      return self
    end
 
    #
@@ -634,6 +627,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public set_y(y_spec)
       self.y_spec := y_spec
+      return self
    end
 
    #
@@ -642,6 +636,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public set_z(z)
       self.z := z
+      return self
    end
 
    #
@@ -654,6 +649,7 @@ class Component(Rect,Align,SetFields,Connectable)
    public set_size(w_spec, h_spec)
       self.w_spec := w_spec
       self.h_spec := h_spec
+      return self
    end
 
    #
@@ -662,6 +658,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public set_width(w_spec)
       self.w_spec := w_spec
+      return self
    end
 
    #
@@ -670,6 +667,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public set_height(h_spec)
       self.h_spec := h_spec
+      return self
    end
 
    #
@@ -684,6 +682,7 @@ class Component(Rect,Align,SetFields,Connectable)
    public set_align(x_align, y_align)
       self.x_align := x_align
       self.y_align := y_align
+      return self
    end
 
    #
@@ -692,6 +691,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public set_x_align(x_align)
       self.x_align := x_align
+      return self
    end
 
    #
@@ -700,6 +700,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public set_y_align(y_align)
       self.y_align := y_align
+      return self
    end
 
    #
@@ -707,6 +708,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public set_tab_ord(x)
       self.tab_ord := x
+      return self
    end
 
    #
@@ -715,6 +717,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public set_accel(k)
       self.accel := k
+      return self
    end
 
    #
@@ -736,6 +739,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public set_parent(c)
       self.parent := c
+      return self
    end
 
    #
@@ -758,8 +762,7 @@ class Component(Rect,Align,SetFields,Connectable)
       }
       self.compute_z_order()
       self.compute_tab_order()
-      cbwin := parent.get_cbwin().clone!wattribs_to_list(self.wattribs) | 
-         runerr("Failed to clone window:" || &why)
+      cbwin := clone_win_with(parent.get_cbwin(), self.wattribs) | runerr("Failed to clone window:" || &why)
       (\self.border).initially(self)
       every (!self.children).initially()
    end
@@ -778,6 +781,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public set_parent_dialog(c)
       self.parent_dialog := c
+      return self
    end
 
    #
@@ -848,6 +852,7 @@ class Component(Rect,Align,SetFields,Connectable)
    public set_layout(l)
       self.layout_delegate := l
       (\l).set_parent(self)
+      return self
    end
 
    #
@@ -1195,20 +1200,63 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public set_allow_drag(s)
       self.allow_drag_flag := check_flag(s)
+      return self
    end
 
    #
    # Configure whether the component allows drops, if it is so capable.
    #
    public set_allow_drop(s)
-      return self.allow_drop_flag := check_flag(s)
+      self.allow_drop_flag := check_flag(s)
+      return self
    end
 
    #
    # Set whether the component will show the layout grid, if any.
    #
    public set_show_layout(s)
-      return self.show_layout_flag := check_flag(s)
+      self.show_layout_flag := check_flag(s)
+      return self
+   end
+
+   public set_bg(v)
+      set_wattrib("bg", v)
+      return self
+   end
+
+   public set_fg(v)
+      set_wattrib("fg", v)
+      return self
+   end
+
+   public set_draw_op(v)
+      set_wattrib("draw_op", v)
+      return self
+   end
+
+   public set_font(v)
+      set_wattrib("font", v)
+      return self
+   end
+
+   public set_line_width(v)
+      set_wattrib("line_width", v)
+      return self
+   end
+
+   public set_line_style(v)
+      set_wattrib("line_style", v)
+      return self
+   end
+
+   public set_fill_style(v)
+      set_wattrib("fill_style", v)
+      return self
+   end
+
+   public set_pattern(v)
+      set_wattrib("pattern", v)
+      return self
    end
 
    public try_constraint(f)
@@ -1237,38 +1285,7 @@ class Component(Rect,Align,SetFields,Connectable)
       return
    end
 
-   public set_one(f)
-      case f.attr of {
-         "tooltip" : set_tooltip(f.val)
-         "tooltip_start_delay" : set_tooltip_start_delay(f.int_val())
-         "tooltip_end_delay" : set_tooltip_end_delay(f.int_val())
-         "tooltip_follows_mouse" : set_tooltip_follows_mouse(f.flag_val())
-         "pointer" : set_pointer(f.string_val())
-         "show_layout" : set_show_layout(f.flag_val()) 
-         "allow_drop" : set_allow_drop(f.flag_val()) 
-         "allow_drag" : set_allow_drag(f.flag_val()) 
-         "is_shaded" : set_is_shaded(f.flag_val()) 
-         "accepts_focus" : set_accepts_focus(f.flag_val()) 
-         "pos" : set_pos!(f.string_list_val())
-         "x" : set_x(f.string_val())
-         "y" : set_y(f.string_val())
-         "width"|"w" : set_width(f.string_val())
-         "height"|"h" : set_height(f.string_val())
-         "size" : set_size!(f.string_list_val())
-         "align" : set_align!(f.string_list_val())
-         "x_align" : set_x_align(f.string_val())
-         "y_align" : set_y_align(f.string_val())
-         "z" : set_z(f.int_val())
-         "tab_ord" : set_tab_ord(f.int_val())
-         "accel" : set_accel(f.string_val())
-         "layout" : set_layout(f.object_val(gui.Layout))
-         "border" : set_border(f.object_val(gui.ABorder))
-         default : return try_constraint(f) | try_wattrib(f) | try_event(f, Gui.EVENT_TABLE)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,Connectable).new()
       self.wattribs := table()
       self.children := []
@@ -1279,7 +1296,6 @@ class Component(Rect,Align,SetFields,Connectable)
       self.z := self.tab_ord := 0
       self.tooltip_start_delay := Dialog.TOOLTIP_START_DELAY
       self.tooltip_end_delay := Dialog.TOOLTIP_END_DELAY
-      set_fields(a)
       return
    end
 end

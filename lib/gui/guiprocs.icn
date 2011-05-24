@@ -116,7 +116,6 @@ class Gui()
       CONSTRAINT_SET,
       WATTRIB_SET,
       CONTEXT_WATTRIB_SET,      # attribs that affect the graphical drawing context
-      EVENT_TABLE,
       PRINTABLE_1,              # Printable on a single line of text
       PRINTABLE_N               # Printable on multi lines of text
 
@@ -144,41 +143,6 @@ class Gui()
                          "max_height", "max_size")
       CONTEXT_WATTRIB_SET := set("fg", "bg", "draw_op", "font", "line_width", "line_style", "fill_style", 
                                  "pattern")
-      EVENT_TABLE := table(,
-                         "mouse_left_press", Event.MOUSE_LEFT_PRESS,
-                         "mouse_middle_press", Event.MOUSE_MIDDLE_PRESS,
-                         "mouse_right_press", Event.MOUSE_RIGHT_PRESS,
-                         "mouse_left_release", Event.MOUSE_LEFT_RELEASE,
-                         "mouse_middle_release", Event.MOUSE_MIDDLE_RELEASE,
-                         "mouse_right_release", Event.MOUSE_RIGHT_RELEASE,
-                         "mouse_left_drag", Event.MOUSE_LEFT_DRAG,
-                         "mouse_middle_drag", Event.MOUSE_MIDDLE_DRAG,
-                         "mouse_right_drag", Event.MOUSE_RIGHT_DRAG,
-                         "mouse_movement", Event.MOUSE_MOVEMENT,
-                         "mouse_wheel_up", Event.MOUSE_WHEEL_UP,
-                         "mouse_wheel_down", Event.MOUSE_WHEEL_DOWN,
-                         "window_resize", Event.WINDOW_RESIZE,
-                         "window_close_button", Event.WINDOW_CLOSE_BUTTON,
-                         "icon", Event.ICON,
-                         "button_release", Event.BUTTON_RELEASE,
-                         "button_press", Event.BUTTON_PRESS,
-                         "button_held", Event.BUTTON_HELD,
-                         "selection_changed", Event.SELECTION_CHANGED,
-                         "content_changed", Event.CONTENT_CHANGED,
-                         "cursor_moved", Event.CURSOR_MOVED,
-                         "value_changed", Event.VALUE_CHANGED,
-                         "action", Event.ACTION,
-                         "tree_node_expansion", Event.TREE_NODE_EXPANSION,
-                         "sizer_press", Event.SIZER_PRESS,
-                         "sizer_drag", Event.SIZER_DRAG,
-                         "sizer_release", Event.SIZER_RELEASE,
-                         "mouse_enter", Event.MOUSE_ENTER,
-                         "mouse_exit", Event.MOUSE_EXIT,
-                         "key_press", Event.KEY_PRESS,
-                         "key_release", Event.KEY_RELEASE,
-                         "got_focus", Event.GOT_FOCUS,
-                         "lost_focus", Event.LOST_FOCUS,
-                         "dialog_close", Event.DIALOG_CLOSED)
    end
 
    public static is_constraint(s)
@@ -187,10 +151,6 @@ class Gui()
 
    public static is_window_attrib(s)
       return member(WATTRIB_SET, s)
-   end
-
-   public static is_event(s)
-      return member(EVENT_TABLE, s)
    end
 end
 
@@ -294,18 +254,6 @@ procedure image_height(s)
 end
 
 #
-# Convert a table to an attribute list in the form
-#    ["key1=val1", "key2=val2", ...]
-#
-procedure wattribs_to_list(t)
-   local l, e
-   l := []
-   every e := !sort(t) do
-      put(l, e[1] || "=" || e[2])
-   return l
-end
-
-#
 # This utility takes a string or ucs and returns a string or ucs
 # according to the target parameter.  Strings are assumed to be in
 # iso-8859 format, rather than utf8 format.
@@ -345,3 +293,60 @@ procedure selection_convert(target_type, data)
       default: fail
    }
 end
+
+procedure open_win_with(t)
+   local w
+   w := Window.open(t["display"]) | fail
+   return apply_attrs(w, t)
+end
+
+procedure clone_win_with(w, t)
+   return apply_attrs(w.clone(), t)
+end
+
+procedure apply_attrs(w, t)
+   local e, v
+   every e := !sort(t) do {
+      v := e[2]
+      case e[1] of {
+         "label": w.set_label(v)
+         "x": w.set_x(v)
+         "pos":  w.set_pos(v[1],v[2])
+         "y": w.set_y(v)
+         "resize": w.set_resize(v)
+         "size": w.set_size(v[1],v[2])
+         "height": w.set_height(v)
+         "width": w.set_width(v)
+         "w": w.set_width(v)
+         "h": w.set_height(v)
+         "image": w.set_image(v)
+         "pointer": w.set_pointer(v)
+         "depth": w.set_depth(v)
+         "fg": w.set_fg(v)
+         "bg": w.set_bg(v)
+         "draw_op": w.set_draw_op(v)
+         "icon": w.set_icon(v)
+         "font": w.set_font(v)
+         "line_width": w.set_line_width(v)
+         "geometry": w.set_geometry(v[1],v[2],v[3],v[4])
+         "transient_for": w.set_transient_for(v)
+         "line_style": w.set_line_style(v)
+         "fill_style": w.set_fill_style(v)
+         "pattern": w.set_pattern(v)
+         "clip": w.set_clip(v[1],v[2],v[3],v[4])
+         "unclip": w.set_unclip()
+         "dx": w.set_dx(v)
+         "dy": w.set_dy(v)
+         "input_mask": w.set_input_mask(v)
+         "min_width": w.set_min_width(v)
+         "min_height": w.set_min_height(v)
+         "min_size": w.set_min_size(v[1],v[2])
+         "max_width": w.set_max_width(v)
+         "max_height": w.set_max_height(v)
+         "max_size": w.set_max_size(v[1],v[2])
+      }
+   }
+   w.set_canvas(\t["canvas"])
+   return w
+end
+

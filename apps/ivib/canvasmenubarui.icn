@@ -12,7 +12,7 @@ class CanvasMenuBarUI(CanvasComponentUI)
       t := CanvasMenuBar()
       t1 := CanvasMenu()
       t1.set_paint_mid(CanvasTextPaint("Edit me"))
-      t1.set_paint_right(CanvasImagePaint("cache=gui.ARROW_RIGHT"))
+      t1.set_paint_right(CanvasImagePaint().set_cache("gui.ARROW_RIGHT"))
       t.add(t1)
       return t
    end

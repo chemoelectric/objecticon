@@ -98,35 +98,35 @@ class CanvasButtonDialog(CanvasComponentDialog)
    public setup()
       cast(self,CanvasComponentDialog).setup()
 
-      tab_basic := TabItem("label=General")
+      tab_basic := TabItem().set_label("General")
       tab_basic.set_layout(GridLayout())
-      paint_field := PaintField("title=",Label("label=Label"), "c:eol")
+      paint_field := PaintField().set_title(Label().set_label("Label")).set_constraint("eol", &yes)
       paint_field.set_contents(c.paint)
       tab_basic.add(paint_field)
 
       if \has_label_down then {
-         paint_down_field := PaintField("title=",Label("label=Label down"), "c:eol")
+         paint_down_field := PaintField().set_title(Label().set_label("Label down")).set_constraint("eol", &yes)
          paint_down_field.set_contents(c.paint_down)
          tab_basic.add(paint_down_field)
       }
 
-      keyboard := CheckBox("c:eol")
+      keyboard := CheckBox().set_constraint("eol", &yes)
       keyboard.set_label("Don't accept focus at all")
       if /c.accepts_focus_flag then
          keyboard.set_is_checked(&yes)
       tab_basic.add(keyboard)
 
-      no_click_focus := CheckBox("c:eol")
+      no_click_focus := CheckBox().set_constraint("eol", &yes)
       no_click_focus.set_label("Don't accept focus on mouse click")
       if \c.no_click_focus_flag then
          no_click_focus.set_is_checked(&yes)
       tab_basic.add(no_click_focus)
 
-      initially_checked := CheckBox("c:eol")
+      initially_checked := CheckBox().set_constraint("eol", &yes)
       initially_checked.set_label("Initially checked")
       tab_basic.add(initially_checked)
 
-      toggles := CheckBox("c:eol")
+      toggles := CheckBox().set_constraint("eol", &yes)
       toggles.set_align("l", "c")
       toggles.set_label("Toggles state")
       if \c.toggles_flag then
@@ -134,13 +134,13 @@ class CanvasButtonDialog(CanvasComponentDialog)
       tab_basic.add(toggles)
       add_tab_at_front(tab_basic)
 
-      tab_groups := TabItem("label=Groups")
-      tab_groups.set_layout(GridLayout("extra=borders"))
+      tab_groups := TabItem().set_label("Groups")
+      tab_groups.set_layout(GridLayout().set_extra("borders"))
       in_button_group := CheckBox()
       in_button_group.connect(self.on_in_button_group, Event.ACTION)
       in_button_group.set_label("Button Group")
       tab_groups.add(in_button_group)
-      button_group_list := List("c:eol")
+      button_group_list := List().set_constraint("eol", &yes)
       button_group_list.set_size(175)
       button_group_list.set_selection_list(cos_names(c.parent_Canvas.button_groups))
       tab_groups.add(button_group_list)
@@ -149,13 +149,13 @@ class CanvasButtonDialog(CanvasComponentDialog)
       in_checkbox_group.connect(self.on_in_checkbox_group, Event.ACTION)
       in_checkbox_group.set_label("CheckBox Group")
       tab_groups.add(in_checkbox_group)
-      checkbox_group_list := List("c:eol")
+      checkbox_group_list := List().set_constraint("eol", &yes)
       checkbox_group_list.set_size(175)
       checkbox_group_list.set_selection_list(cos_names(c.parent_Canvas.checkbox_groups))
       tab_groups.add(checkbox_group_list)
       add_tab(tab_groups)
 
-      self.set_wattrib("label", label)
+      self.set_label(label)
 
       if *c.parent_Canvas.checkbox_groups = 0 then {
          in_checkbox_group.set_is_shaded(&yes)

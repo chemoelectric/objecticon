@@ -28,7 +28,6 @@ static wsp vwstates;
  * function prototypes
  */
 static wcp alccontext(wbp w);
-static wsp alcwinstate(void);
 static void handle_config(wsp w, XConfigureEvent *event);
 static void handle_exposures(wsp ws, XExposeEvent *event);
 static void handle_mouse(wsp ws, XButtonEvent *event);
@@ -603,57 +602,50 @@ void wclose(wbp w)
 /*
  * open a window
  */
-wbp wcreate(char *display)
+wbp wopen(char *display)
 {
     wbp w;
     wsp ws;
-    w = alcwbinding();
-    w->window = alcwinstate();
-    if ((w->window->display = alcdisplay(display)) == NULL) {
-        /* alcdisplay will have set &why */
-        freewbinding(w);
-        return 0;
-    }
-    ws = w->window;
-    create_list(64, &ws->listp);
-
-    /*
-     * some attributes of the display and window are used in the context
-     */
-	
-    w->context = alccontext(w);
-
-    return w;
-}
-
-int wopen(wbp w)
-{
-    wsp ws = w->window;
-    wcp wc = w->context;
-    wdp wd = ws->display;
-    struct imgdata *imd;
+    wcp wc;
+    wdp wd;
     XGCValues gcv;
     unsigned long gcmask =
         GCGraphicsExposures | GCFont | GCForeground | GCBackground | GCFillStyle | 
         GCLineWidth | GCLineStyle | GCCapStyle;
 
-    /*
-     * Set the size if unset by the user.  The default varies on whether the
-     * window is hidden or not.
-     */
-    if (ws->width == 0)
-        ws->width = (ws->state == HiddenState ? 1 : 200);
-    if (ws->height == 0)
-        ws->height = (ws->state == HiddenState ? 1 : 200);
+    if ((wd = alcdisplay(display)) == NULL) {
+        /* alcdisplay will have set &why */
+        return 0;
+    }
 
+    w = alcwbinding();
+
+    GRFX_ALLOC(ws, _wstate);
+    ws->listp = nulldesc;
+    ws->cursor = stringint_lookup(cursors, "left ptr");
+    ws->state = HiddenState;
+    ws->x = ws->y = -INT_MAX;
+    ws->minwidth = ws->minheight = 1;
+    ws->maxwidth = ws->maxheight = INT_MAX;
+    ws->width = ws->height = ws->pixwidth = ws->pixheight = 1;
+#if HAVE_LIBXFT
+    ws->pixDraw = ws->winDraw = NULL;
+#endif
+    ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
+    ws->display = wd;
+    GRFX_LINK(ws, wstates);
+
+    w->window = ws;
+
+    create_list(64, &ws->listp);
+
+    wc = w->context = alccontext(w);
     /*
      * Create the pixmap
      */
     ws->pix = XCreatePixmap(wd->display, GetRoot(wd),
-                            ws->width, ws->height,
+                            1, 1, 
                             GetDepth(wd));
-    ws->pixwidth = ws->width;
-    ws->pixheight = ws->height;
 
     /*
      * Create graphics context
@@ -668,10 +660,6 @@ int wopen(wbp w)
     gcv.fill_style = wc->fillstyle->i;
     gcv.line_width = wc->linewidth;
     gcv.line_style = wc->linestyle->i;
-    if (wc->linewidth > 1) {
-        gcv.dashes = 3 * wc->linewidth;
-        gcmask |= GCDashList;
-    }
     gcv.cap_style = CapProjecting;
     gcv.graphics_exposures = False;
     wc->gc = XCreateGC(wd->display, ws->pix, gcmask, &gcv);
@@ -681,26 +669,7 @@ int wopen(wbp w)
     XFillRectangle(wd->display, ws->pix, wc->gc, 0, 0, ws->width, ws->height);
     XSetForeground(wd->display, wc->gc, wc->fg->c);
 
-    /* Set pattern and clip in the gc, if needed */
-    if (wc->clipw >= 0)
-        setclip(w);
-    if (wc->patternname) {
-        int width, height, *rowdata;
-        if (parsepattern(wc->patternname, &width, &height, &rowdata))
-            setpattern_in_gc(w, width, height, rowdata);
-    }
-
-    /* Open the window unless it is hidden */
-    if (ws->state != HiddenState)
-        wmap(w);
-
-    imd = &ws->initimage;
-    if (imd->width) {
-        drawimgdata(w, 0, 0, imd);
-        freeimgdata(imd);
-    }
-
-    return Succeeded;
+    return w;
 }
 
 int setwindowicon(wbp w, struct imgdata *imd)
@@ -970,6 +939,7 @@ void doconfig(wbp w, int status)
     }
 
     if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE)) {
+        /*printf("doconfig status=%d size=%d,%d\n",status,ws->width,ws->height);*/
         resizepixmap(w, ws->width, ws->height);
 
         if (ws->win) {
@@ -1620,13 +1590,16 @@ static void resizepixmap(wbp w, int width, int height)
     STDLOCALS(w);
     if (ws->pix == (Pixmap) NULL) 
         return;
+
+    /*printf("resizepixmap from %d,%d to %d,%d\n",ws->pixwidth,ws->pixheight,width,height);*/
+
     if ((width > ws->pixwidth) || (height > ws->pixheight)) {
         int x = ws->pixwidth, y = ws->pixheight;
 
         ws->pixheight = Max(ws->pixheight, height);
         ws->pixwidth  = Max(ws->pixwidth, width);
-        p = XCreatePixmap(stddpy, GetRoot(wd), ws->pixwidth,
-                          ws->pixheight, GetDepth(wd));
+        p = XCreatePixmap(stddpy, GetRoot(wd), ws->pixwidth+1,
+                          ws->pixheight+1, GetDepth(wd));
         /*
          * This staggering amount of redudancy manages to make sure the new
          * pixmap gets initialized including areas not in the old pixmap.
@@ -3087,27 +3060,6 @@ wcp clonecontext(wbp w)
     if (wc->patternname)
         rv->patternname = salloc(wc->patternname);
     return rv;
-}
-
-/*
- * allocate a window state structure
- */
-static wsp alcwinstate()
-{
-    wsp ws;
-    GRFX_ALLOC(ws, _wstate);
-    ws->listp = nulldesc;
-    ws->cursor = stringint_lookup(cursors, "left ptr");
-    ws->state = NormalState;
-    ws->x = ws->y = -INT_MAX;
-    ws->minwidth = ws->minheight = 1;
-    ws->maxwidth = ws->maxheight = INT_MAX;
-#if HAVE_LIBXFT
-    ws->pixDraw = ws->winDraw = NULL;
-#endif
-    ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
-    GRFX_LINK(ws, wstates);
-    return ws;
 }
 
 /*

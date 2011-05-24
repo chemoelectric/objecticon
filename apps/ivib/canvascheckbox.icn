@@ -19,10 +19,11 @@ class CanvasCheckBox(CanvasButton,CheckBox)
       # Set the images to the standard ones, unless custom images already set.
       #  
       if \x then
-         self.set_box_paint(ImagePaint("cache=gui.DIAMOND_UP"), ImagePaint("cache=gui.DIAMOND_DOWN"))
+         self.set_box_paint(ImagePaint().set_cache("gui.DIAMOND_UP"), ImagePaint().set_cache("gui.DIAMOND_DOWN"))
       else
-         self.set_box_paint(ImagePaint("cache=gui.BOX_UP"), ImagePaint("cache=gui.BOX_DOWN"))
+         self.set_box_paint(ImagePaint().set_cache("gui.BOX_UP"), ImagePaint().set_cache("gui.BOX_DOWN"))
       cast(self,CheckBox).set_parent_check_box_group(x)
+      return self
    end
 
    #

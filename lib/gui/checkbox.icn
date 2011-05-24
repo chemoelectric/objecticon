@@ -24,11 +24,6 @@ package gui
 # @ c.set_label("Checkbox")
 # @ self.add(c)
 #
-# @field box_paint=s1,s2 : see {set_box_paint}
-# @field label=text : see {set_label}
-# @field paint={Paint} : see {set_paint}
-# @field see also {Button}
-#
 class CheckBox(Button)
    public
       unchecked_paint,
@@ -55,6 +50,7 @@ class CheckBox(Button)
          unchecked_paint.w = checked_paint.h | runerr("Image widths differ")
          unchecked_paint.h = checked_paint.h | runerr("Image heights differ")
       }
+      return self
    end
 
    #
@@ -62,7 +58,7 @@ class CheckBox(Button)
    # @param x   The label.
    #
    public set_label(x)
-      set_paint(paint_for_string(x))
+      return set_paint(paint_for_string(x))
    end
 
    public set_paint(p)
@@ -72,6 +68,7 @@ class CheckBox(Button)
          self.paint.initially(self, self.accel)
          self.invalidate()
       }
+      return self
    end
 
    public initially()
@@ -80,9 +77,9 @@ class CheckBox(Button)
       #
       if /self.unchecked_paint then {
          if /self.parent_check_box_group then
-            self.set_box_paint(ImagePaint("cache=gui.BOX_UP"), ImagePaint("cache=gui.BOX_DOWN"))
+            self.set_box_paint(ImagePaint().set_cache("gui.BOX_UP"), ImagePaint().set_cache("gui.BOX_DOWN"))
          else
-            self.set_box_paint(ImagePaint("cache=gui.DIAMOND_UP"), ImagePaint("cache=gui.DIAMOND_DOWN"))
+            self.set_box_paint(ImagePaint().set_cache("gui.DIAMOND_UP"), ImagePaint().set_cache("gui.DIAMOND_DOWN"))
       }
       \self.paint | runerr("no label specified")
       cast(self,Component).initially()
@@ -143,21 +140,10 @@ class CheckBox(Button)
                                         self.tw + 2 * Gui.TEXT_INSET, self.h)
    end
 
-   public set_one(f)
-      case f.attr of {
-         "box_paint" : set_box_paint!(f.list_val(2))
-         "label" : set_label(f.text_val())
-         "paint" : set_paint(f.object_val(gui.Paint))
-         default: return cast(self,Button).set_one(f)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,Button).new()
       self.toggles_flag := 1
       self.set_constraint("x_align", Align.L)
-      set_fields(a)
       return
    end
 end

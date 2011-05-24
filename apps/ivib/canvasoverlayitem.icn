@@ -22,7 +22,7 @@ class CanvasOverlayItem(CanvasComponent,OverlayItem)
       c.add_import(self.import_name, self.class_name)
       c.line(name || " := " || self.class_name || "()")
       every e := !sort(self.wattribs) do
-         c.line(name || ".set_wattrib(" || image(e[1]) || ", " || image(e[2]) || ")")
+         c.wattrib_line(name, e[1], e[2])
       if \self.layout_delegate then {
          self.layout_delegate.gen_code(c)
          c.line(name || ".set_layout(" || self.layout_delegate.name || ")")
@@ -121,7 +121,7 @@ class CanvasOverlayItem(CanvasComponent,OverlayItem)
       local m, i
       m := cast(self,CanvasComponent).create_menu()
       if self ~=== parent.which_one then {
-         i := TextMenuItem("label=Which")
+         i := TextMenuItem().set_label("Which")
          i.connect(self.op_which, Event.ACTION)
          m.add(i)
       }

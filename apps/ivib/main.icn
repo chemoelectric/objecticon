@@ -80,7 +80,7 @@ class CustomToolBar(Component)
    public add_button(t)
       t.set_pos(x1, y1)
       t.set_accepts_focus(&no)
-      t.set_border(EmptyBorder("flush"))
+      t.set_border(EmptyBorder().set_insets(0, 0, 0, 0))
       bg.add(t)
       self.add(t)
       x1 +:= img_w
@@ -90,13 +90,12 @@ class CustomToolBar(Component)
       }
    end
 
-   public new(a[])
+   public new()
       cast(self,Component).new()
       x1 := y1 := 0
       bg := ButtonGroup()
       img_w := img_h := 44
       set_size(16 * img_w, 2 * img_h)
-      set_fields(a)
       return
    end
 end
@@ -226,6 +225,7 @@ class Main(Dialog)
       if \self.canvas.modified then
          s ||:= " *"
       self.filename_label.set_label(Files.get_path(s).get(-1))
+      return self
    end      
 
    public init_dialog()
@@ -791,7 +791,7 @@ class Main(Dialog)
          else if /t.dialog_ih then
             insert(m, "width", t.dialog_iw)
          else
-            insert(m, "size", t.dialog_iw || "," || t.dialog_ih)
+            insert(m, "size", [t.dialog_iw, t.dialog_ih])
       }
       d.set_all_wattribs(m)
 
@@ -1041,157 +1041,157 @@ class Main(Dialog)
          order_sub_menu, f, ce, plugin, pp, fn, i, fp, ext
 
       cast(self,Dialog).new()
-      set_layout(GridLayout("flush", "dii=0"))
+      set_layout(GridLayout().set_doi(0).set_dii(0))
       connect(self.dialog_event, Event.ICON)
 
       self.clipboard_selection_owner := IvibClipboardSelectionOwner(self)
 
-      mb := MenuBar("c:eol", "c:x_fill")
+      mb := MenuBar().set_constraint("eol", &yes).set_constraint("x_fill", &yes)
       self.add(mb)
 
       #
       # Set up the menu structure.
       #
-      file := Menu("label=File", "accel=f")
+      file := Menu().set_label("File").set_accel("f")
       mb.add(file)
 
-      i := TextMenuItem("label=Open", "label_right=Ctrl-o")
+      i := TextMenuItem().set_label("Open").set_label_right("Ctrl-o")
       i.connect(self.op_open_file, Event.ACTION)
       file.add(i)
 
-      save := TextMenuItem("label=Save")
+      save := TextMenuItem().set_label("Save")
       save.set_label_right("Ctrl-s")
       save.connect(self.op_save, Event.ACTION)
       file.add(save)
 
-      i := TextMenuItem("label=Save as", "label_right=Ctrl-w")
+      i := TextMenuItem().set_label("Save as").set_label_right("Ctrl-w")
       i.connect(self.op_save_as, Event.ACTION)
       file.add(i)
 
-      i := TextMenuItem("label=New")
+      i := TextMenuItem().set_label("New")
       i.set_label_right("Ctrl-n")
       i.connect(self.op_new, Event.ACTION)
       file.add(i)
 
-      i := TextMenuItem("label=Preferences...")
+      i := TextMenuItem().set_label("Preferences...")
       i.connect(self.op_prog_preferences, Event.ACTION)
       file.add(i)
 
-      i := TextMenuItem("label=About ivib...")
+      i := TextMenuItem().set_label("About ivib...")
       i.connect(self.op_about, Event.ACTION)
       file.add(i)
 
-      i := TextMenuItem("label=Quit", "label_right=Ctrl-q")
+      i := TextMenuItem().set_label("Quit").set_label_right("Ctrl-q")
       i.connect(self.op_quit, Event.ACTION)
       file.add(i)
 
-      edit := Menu("label=Canvas", "accel=c")
+      edit := Menu().set_label("Canvas").set_accel("c")
       mb.add(edit)
 
-      i := TextMenuItem("label=Tree...", "label_right=Ctrl-t")
+      i := TextMenuItem().set_label("Tree...").set_label_right("Ctrl-t")
       i.connect(self.op_tree, Event.ACTION)
       edit.add(i)
 
-      i := TextMenuItem("label=Preview...")
+      i := TextMenuItem().set_label("Preview...")
       i.connect(self.op_preview, Event.ACTION)
       edit.add(i)
 
-      i := TextMenuItem("label=Dialog prefs...")
+      i := TextMenuItem().set_label("Dialog prefs...")
       i.connect(self.op_preferences, Event.ACTION)
       edit.add(i)
 
-      i := TextMenuItem("label=Groups...")
+      i := TextMenuItem().set_label("Groups...")
       i.connect(self.op_groups, Event.ACTION)
       edit.add(i)
 
-      undo := TextMenuItem("label=Undo", "label_right=Ctrl-z")
+      undo := TextMenuItem().set_label("Undo").set_label_right("Ctrl-z")
       undo.connect(self.op_undo, Event.ACTION)
       edit.add(undo)
 
-      redo := TextMenuItem("label=Redo", "label_right=Ctrl-y")
+      redo := TextMenuItem().set_label("Redo").set_label_right("Ctrl-y")
       redo.connect(self.op_redo, Event.ACTION)
       edit.add(redo)
 
-      selections_menu := Menu("label=Selections", "accel=s")
+      selections_menu := Menu().set_label("Selections").set_accel("s")
       mb.add(selections_menu)
 
-      alignment_sub_menu := Menu("label=Alignment")
+      alignment_sub_menu := Menu().set_label("Alignment")
       selections_menu.add(alignment_sub_menu)
 
-      copy_sub_menu := Menu("label=Copy")
+      copy_sub_menu := Menu().set_label("Copy")
       selections_menu.add(copy_sub_menu)
 
-      order_sub_menu := Menu("label=Order")
+      order_sub_menu := Menu().set_label("Order")
       selections_menu.add(order_sub_menu)
 
-      group_sub_menu := Menu("label=Group")
+      group_sub_menu := Menu().set_label("Group")
       selections_menu.add(group_sub_menu)
 
-      i := TextMenuItem("label=Centre horizontally")
+      i := TextMenuItem().set_label("Centre horizontally")
       i.connect(self.op_centre_horiz_selections, Event.ACTION)
       alignment_sub_menu.add(i)
 
-      i := TextMenuItem("label=Centre vertically")
+      i := TextMenuItem().set_label("Centre vertically")
       i.connect(self.op_centre_vert_selections, Event.ACTION)
       alignment_sub_menu.add(i)
 
-      i := TextMenuItem("label=Align horizontally")
+      i := TextMenuItem().set_label("Align horizontally")
       i.connect(self.op_align_horiz_selections, Event.ACTION)
       alignment_sub_menu.add(i)
 
-      i := TextMenuItem("label=Align vertically")
+      i := TextMenuItem().set_label("Align vertically")
       i.connect(self.op_align_vert_selections, Event.ACTION)
       alignment_sub_menu.add(i)
 
-      i := TextMenuItem("label=End to end horizontally")
+      i := TextMenuItem().set_label("End to end horizontally")
       i.connect(self.op_end_to_end_selections_horizontally, Event.ACTION)
       alignment_sub_menu.add(i)
 
-      i := TextMenuItem("label=End to end vertically")
+      i := TextMenuItem().set_label("End to end vertically")
       i.connect(self.op_end_to_end_selections_vertically, Event.ACTION)
       alignment_sub_menu.add(i)
 
-      i := TextMenuItem("label=Equalize widths")
+      i := TextMenuItem().set_label("Equalize widths")
       i.connect(self.op_equalize_width_selections, Event.ACTION)
       copy_sub_menu.add(i)
 
-      i := TextMenuItem("label=Equalize heights")
+      i := TextMenuItem().set_label("Equalize heights")
       i.connect(self.op_equalize_height_selections, Event.ACTION)
       copy_sub_menu.add(i)
 
-      i := TextMenuItem("label=Copy attribs")
+      i := TextMenuItem().set_label("Copy attribs")
       i.connect(self.op_copy_attribs, Event.ACTION)
       copy_sub_menu.add(i)
 
-      i := TextMenuItem("label=Reorder in container")
+      i := TextMenuItem().set_label("Reorder in container")
       i.connect(self.op_reorder_selections, Event.ACTION)
       order_sub_menu.add(i)
 
-      i := TextMenuItem("label=Set tab order")
+      i := TextMenuItem().set_label("Set tab order")
       i.connect(self.op_set_tab_order_from_selections, Event.ACTION)
       order_sub_menu.add(i)
 
-      i := TextMenuItem("label=Set Z order")
+      i := TextMenuItem().set_label("Set Z order")
       i.connect(self.op_set_z_order_from_selections, Event.ACTION)
       order_sub_menu.add(i)
 
-      i := TextMenuItem("label=CheckBoxGroup")
+      i := TextMenuItem().set_label("CheckBoxGroup")
       i.connect(self.op_selections_to_cbg, Event.ACTION)
       group_sub_menu.add(i)
 
-      i := TextMenuItem("label=ButtonGroup")
+      i := TextMenuItem().set_label("ButtonGroup")
       i.connect(self.op_selections_to_bg, Event.ACTION)
       group_sub_menu.add(i)
 
-      i := TextMenuItem("label=Fix")
+      i := TextMenuItem().set_label("Fix")
       i.connect(self.op_fix_selections, Event.ACTION)
       selections_menu.add(i)
 
-      i := TextMenuItem("label=Unfix")
+      i := TextMenuItem().set_label("Unfix")
       i.connect(self.op_unfix_selections, Event.ACTION)
       selections_menu.add(i)
 
-      i := TextMenuItem("label=Delete")
+      i := TextMenuItem().set_label("Delete")
       i.connect(self.op_delete_selections, Event.ACTION)
       selections_menu.add(i)
 
@@ -1235,10 +1235,10 @@ class Main(Dialog)
               CanvasVSplitUI()
               ]
 
-      objects_menu := Menu("label=Objects", "accel=o")
+      objects_menu := Menu().set_label("Objects").set_accel("o")
       mb.add(objects_menu)
 
-      tb := CustomToolBar("c:eol", "c:x_align=l")
+      tb := CustomToolBar().set_constraint("eol", &yes).set_constraint("x_align", "l")
 
       every ui := !uis do {
          listener := ObjectActionListener(self, ui)
@@ -1272,57 +1272,57 @@ class Main(Dialog)
          }
       }
 
-      save_button := IconButton("tooltip=Save")
+      save_button := IconButton().set_tooltip("Save")
       save_button.set_image("ivib.icn35")
       save_button.connect(self.op_save_button, Event.ACTION)
       tb.add_button(save_button)
 
-      i := IconButton("tooltip=New")
+      i := IconButton().set_tooltip("New")
       i.set_image("ivib.icn40")
       i.connect(self.op_new, Event.ACTION)
       tb.add_button(i)
 
-      checkboxgroup_button := IconButton("tooltip=CheckBoxGroup")
+      checkboxgroup_button := IconButton().set_tooltip("CheckBoxGroup")
       checkboxgroup_button.set_image("ivib.icn22")
       checkboxgroup_button.connect(self.op_selections_to_cbg, Event.ACTION)
       tb.add_button(checkboxgroup_button)
 
-      buttongroup_button := IconButton("tooltip=ButtonGroup")
+      buttongroup_button := IconButton().set_tooltip("ButtonGroup")
       buttongroup_button.set_image("ivib.icn23")
       buttongroup_button.connect(self.op_selections_to_bg, Event.ACTION)
       tb.add_button(buttongroup_button)
 
-      delete_button := IconButton("tooltip=Delete")
+      delete_button := IconButton().set_tooltip("Delete")
       delete_button.set_image("ivib.icn24")
       delete_button.connect(self.op_delete_selections, Event.ACTION)
       tb.add_button(delete_button)
 
-      undo_button := IconButton("tooltip=Undo")
+      undo_button := IconButton().set_tooltip("Undo")
       undo_button.set_image("ivib.icn25")
       undo_button.connect(self.op_undo, Event.ACTION)
       tb.add_button(undo_button)
 
-      redo_button := IconButton("tooltip=Redo")
+      redo_button := IconButton().set_tooltip("Redo")
       redo_button.set_image("ivib.icn26")
       redo_button.connect(self.op_redo, Event.ACTION)
       tb.add_button(redo_button)
 
-      move_selection_up_order_button := IconButton("tooltip=Order Up")
+      move_selection_up_order_button := IconButton().set_tooltip("Order Up")
       move_selection_up_order_button.set_image("ivib.icn33")
       move_selection_up_order_button.connect(self.op_move_selection_up_order_button, Event.ACTION)
       tb.add_button(move_selection_up_order_button)
 
-      move_selection_down_order_button := IconButton("tooltip=Order Down")
+      move_selection_down_order_button := IconButton().set_tooltip("Order Down")
       move_selection_down_order_button.set_image("ivib.icn34")
       move_selection_down_order_button.connect(self.op_move_selection_down_order_button, Event.ACTION)
       tb.add_button(move_selection_down_order_button)
 
-      i := IconButton("tooltip=Preview")
+      i := IconButton().set_tooltip("Preview")
       i.set_image("ivib.icn38")
       i.connect(self.op_preview, Event.ACTION)
       tb.add_button(i)
 
-      i := IconButton("tooltip=Tree view")
+      i := IconButton().set_tooltip("Tree view")
       i.set_image("ivib.icn39")
       i.connect(self.op_tree, Event.ACTION)
       tb.add_button(i)
@@ -1332,27 +1332,20 @@ class Main(Dialog)
       #
       # Create the three text labels below the tool bar.
       #
-      p := Component("c:eol", "c:x_fill", "layout=",GridLayout("flush", "dii=0"))
+      p := Component().set_constraint("eol", &yes).set_constraint("x_fill", &yes).set_layout(GridLayout().set_doi(0).set_dii(0))
 
-      filename_label := Label("size=200", "c:y_fill")
-      filename_label.set_border(CompoundBorder("outer=",SunkenBorder(),
-                                               "inner=",EmptyBorder("l_inset=",Gui.TEXT_INSET),
-                                               "x_align=l"))
+      filename_label := Label().set_size(200).set_constraint("y_fill", &yes)
+      filename_label.set_border(CompoundBorder().set_outer(SunkenBorder()).set_inner(EmptyBorder().set_l_inset(Gui.TEXT_INSET)).set_x_align("l"))
       filename_label.set_label("")
       p.add(filename_label)
 
-      info_label := Label("c:x_weight=1", "c:x_fill", "c:y_fill")
-      info_label.set_border(CompoundBorder("outer=",SunkenBorder(),
-                                              "inner=",EmptyBorder("l_inset=",Gui.TEXT_INSET),
-                                              "x_align=l"))
+      info_label := Label().set_constraint("x_weight", 1).set_constraint("x_fill", &yes).set_constraint("y_fill", &yes)
+      info_label.set_border(CompoundBorder().set_outer(SunkenBorder()).set_inner(EmptyBorder().set_l_inset(Gui.TEXT_INSET)).set_x_align("l"))
       info_label.set_label("")
       p.add(info_label)
 
-      pos_label := Label("size=200", "c:y_fill")
-      pos_label.set_wattrib("font", "serif,10")
-      pos_label.set_border(CompoundBorder("outer=",SunkenBorder(),
-                                              "inner=",EmptyBorder("l_inset=",Gui.TEXT_INSET),
-                                              "x_align=l"))
+      pos_label := Label().set_size(200).set_constraint("y_fill", &yes).set_font("serif,10")
+      pos_label.set_border(CompoundBorder().set_outer(SunkenBorder()).set_inner(EmptyBorder().set_l_inset(Gui.TEXT_INSET)).set_x_align("l"))
       pos_label.set_label("")
       p.add(pos_label)
 
@@ -1360,8 +1353,10 @@ class Main(Dialog)
 
       self.connect(self.op_quit, Event.WINDOW_CLOSE_BUTTON)
 
-      self.attrib("label=Ivib", "height=600", "min_height=400")
-      canvas_zone := Panel("bg=blue", "size=50,50")
+      set_label("Ivib")
+      set_height(600)
+      set_min_height(400)
+      canvas_zone := Panel().set_bg("blue").set_size(50,50)
       self.add(canvas_zone)
 
       #
@@ -1425,28 +1420,27 @@ class Preferences(Dialog)
       local tabset, t, oc
       cast(self,Dialog).new()
       self.c := c
-      self.set_wattrib("label", "Program Preferences")
+      self.set_label("Program Preferences")
 
       set_layout(GridLayout())
 
-      tabset := TabSet("c:eol")
+      tabset := TabSet().set_constraint("eol", &yes)
       add(tabset)
-      t := TabItem("label=General")
+      t := TabItem().set_label("General")
       tabset.add(t)
 
       t.set_layout(GridLayout())
 
-      t.add(Label("label=Undo buffer size"))
-      undo_size := TextField("c:eol", "c:w=2", "size=100")
+      t.add(Label().set_label("Undo buffer size"))
+      undo_size := TextField().set_constraint("eol", &yes).set_constraint("w", 2).set_size(100)
       undo_size.set_contents(c.undo_size)
       t.add(undo_size)
 
-      t.add(Label("label=Plugin directory"))
-      plugin_dir_field := TextField("size=150")
+      t.add(Label().set_label("Plugin directory"))
+      plugin_dir_field := TextField().set_size(150)
       plugin_dir_field.set_contents(c.plugin_directory)
       t.add(plugin_dir_field)
-      t.add(TextButton("label=...", "c:eol",
-                       "e:action=",on_plugin_dir_browse))
+      t.add(TextButton().set_label("...").set_constraint("eol", &yes).connect(on_plugin_dir_browse, Event.ACTION))
 
       path_tab := PathTab(c)
       tabset.add(path_tab)
@@ -1543,25 +1537,22 @@ class PathTab(TabItem)
       set_layout(GridLayout())
       set_label("Named Image Paths")
 
-      path_list := TextList("size=250,150", 
-                            "c:eol",
-                            "select_mode=one",
-                            "contents=",contents)
+      path_list := TextList().set_size(250,150).set_constraint("eol", &yes).set_select_mode("one").set_contents(contents)
       path_list.connect(self.on_list, Event.SELECTION_CHANGED)
       add(path_list)
 
-      p := Panel("c:eol", "c:y_weight=0", "layout=",GridLayout("flush"))
-      path := TextField("size=150")
+      p := Panel().set_constraint("eol", &yes).set_constraint("y_weight", 0).set_layout(GridLayout().set_doi(0))
+      path := TextField().set_size(150)
       path.connect(self.on_apply, Event.ACTION)
       p.add(path)
 
-      browse := TextButton("label=...", "c:eol")
+      browse := TextButton().set_label("...").set_constraint("eol", &yes)
       browse.connect(self.on_browse, Event.ACTION)
       p.add(browse)
 
       add(p)
     
-      p := Panel("c:eol", "c:y_weight=0", "layout=",GridLayout("flush"))
+      p := Panel().set_constraint("eol", &yes).set_constraint("y_weight", 0).set_layout(GridLayout().set_doi(0))
       add_button := TextButton()
       add_button.connect(self.on_add, Event.ACTION)
       add_button.set_label("Add")

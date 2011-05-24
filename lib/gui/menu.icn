@@ -106,13 +106,14 @@ class Menu(TextMenuItem)
       # Do nothing if x presently open
       #
       if self.which_open === x then
-         return
+         return self
 
       set_which_highlight(x)
       self.which_open := x
       self.which_open.show(self.x + self.w, 
                            self.which_open.label_y - self.which_open.border.get_t_inset(),
                            self.x)
+      return self
    end
 
    #
@@ -124,7 +125,7 @@ class Menu(TextMenuItem)
       # Do nothing if already in desired state.
       #
       if (self.which_highlight === x) & /self.which_open then
-         return
+         return self
 
       (\self.which_open).hide()
       # Just invalidate the bits that have changed.
@@ -132,6 +133,7 @@ class Menu(TextMenuItem)
       self.which_highlight := x
       self.temp_win.invalidate((\self.which_highlight).get_label_rect())
       self.which_open := &null
+      return self
    end
 
    public handle_key_up(e)
@@ -359,14 +361,13 @@ class Menu(TextMenuItem)
       cast(self,TextMenuItem).hide()
    end
 
-   public new(a[])
+   public new()
       cast(self,TextMenuItem).new()
       self.set_border(RaisedBorder())
       self.is_sub_menu_flag := 1
-      self.set_paint_right(ImagePaint("cache=gui.ARROW_RIGHT"))
+      self.set_paint_right(ImagePaint().set_cache("gui.ARROW_RIGHT"))
       # The little arrow is to the right of its area.
       self.border_right.x_align := Align.R
-      set_fields(a)
       return
    end
 end

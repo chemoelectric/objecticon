@@ -42,22 +42,22 @@ class CanvasEditableTextListDialog(CanvasComponentDialog)
       p.set_layout(GridLayout())
       add_tab_at_front(p)
       p.set_label("Contents")
-      contents := EditableTextList("c:eol")
+      contents := EditableTextList().set_constraint("eol", &yes)
       contents.set_size(200, 200)
       contents.set_contents(copy(c.get_contents()))
       p.add(contents)
 
-      is_editable_cb := CheckBox("label=Is editable", "c:eol")
+      is_editable_cb := CheckBox().set_label("Is editable").set_constraint("eol", &yes)
       if \c.is_editable_flag then
          is_editable_cb.set_is_checked(&yes)
       p.add(is_editable_cb)
 
-      move_on_rpress_cb := CheckBox("label=Move on &rpress", "c:eol")
+      move_on_rpress_cb := CheckBox().set_label("Move on &rpress").set_constraint("eol", &yes)
       if \c.move_on_rpress_flag then
          move_on_rpress_cb.set_is_checked(&yes)
       p.add(move_on_rpress_cb)
 
-      ucs_cb := CheckBox("label=Ucs content")
+      ucs_cb := CheckBox().set_label("Ucs content")
       if type(c.contents[1]) == "ucs" then
          ucs_cb.set_is_checked(&yes)
       ucs_cb.connect(self.on_ucs_cb, Event.ACTION)

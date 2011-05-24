@@ -4,24 +4,12 @@
 
 package http
 
-import util, net, mail, io
+import util, net, io
 
 #
 # Encapsulate one request to {HttpClient}.
 #
-# @field url={URL}: see {set_url}
-# @field data_stream={Stream}: see {set_data_stream}
-# @field post_stream={Stream}: see {set_post_stream}
-# @field range=i1,i2: see {set_range}
-# @field method=string: see {set_method}
-# @field referer=string: see {set_referer}
-# @field username=string: see {set_username}
-# @field password=string: see {set_password}
-# @field content_type=string: see {set_content_type}
-# @field html_form_data=table: see {set_html_form_data}
-# @field multipart_form_data={Message}: see {set_multipart_form_data}
-#
-class HttpRequest(SetFields, MimeHeaders)
+class HttpRequest(MimeHeaders)
    private readable 
       url,
       post_stream,
@@ -39,6 +27,7 @@ class HttpRequest(SetFields, MimeHeaders)
    #
    public set_url(url)
       self.url := url
+      return self
    end
 
    #
@@ -48,6 +37,7 @@ class HttpRequest(SetFields, MimeHeaders)
    public set_range(s, e)
       self.range_start := s
       self.range_end := e
+      return self
    end
 
    #
@@ -60,6 +50,7 @@ class HttpRequest(SetFields, MimeHeaders)
       self.post_stream := post_stream
       if \self.post_stream then
          set_method("POST")
+      return self
    end
 
    #
@@ -70,6 +61,7 @@ class HttpRequest(SetFields, MimeHeaders)
    public set_html_form_data(t)
       set_post_stream(StringStream(URL.make_cgi_string(t)))
       set_content_type("application/x-www-form-urlencoded")
+      return self
    end
 
    #
@@ -83,6 +75,7 @@ class HttpRequest(SetFields, MimeHeaders)
    public set_multipart_form_data(m)
       set_post_stream(StringStream(m.to_rfc822()))
       set_content_type(m.get_content_type().to_rfc1521())
+      return self
    end
 
    #
@@ -90,6 +83,7 @@ class HttpRequest(SetFields, MimeHeaders)
    #
    public set_content_type(content_type)
       self.content_type := content_type
+      return self
    end
 
    #
@@ -98,6 +92,7 @@ class HttpRequest(SetFields, MimeHeaders)
    #
    public set_method(method)
       self.method := method
+      return self
    end
 
    #
@@ -105,6 +100,7 @@ class HttpRequest(SetFields, MimeHeaders)
    #
    public set_referer(s)
       self.referer := s
+      return self
    end
 
    #
@@ -112,6 +108,7 @@ class HttpRequest(SetFields, MimeHeaders)
    #
    public set_username(s)
       self.username := s
+      return self
    end
 
    #
@@ -119,6 +116,7 @@ class HttpRequest(SetFields, MimeHeaders)
    #
    public set_password(s)
       self.password := s
+      return self
    end
 
    #
@@ -126,30 +124,12 @@ class HttpRequest(SetFields, MimeHeaders)
    #
    public set_data_stream(f)
       self.data_stream := f
+      return self
    end
 
-   public set_one(f)
-      case f.attr of {
-         "url": set_url(f.object_val(URL))
-         "data_stream": set_data_stream(f.object_val(Stream))
-         "post_stream": set_post_stream(f.object_val(Stream))
-         "range": set_range!(f.int_list_val(2))
-         "method": set_method(f.string_val())
-         "referer": set_referer(f.string_val())
-         "username": set_username(f.string_val())
-         "password": set_password(f.string_val())
-         "content_type": set_content_type(f.string_val())
-         "html_form_data": set_html_form_data(f.table_val())
-         "multipart_form_data": set_multipart_form_data(f.object_val(Message))
-         default: fail
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,MimeHeaders).new()
       method := "GET"
-      set_fields(a)
       return
    end
 end

@@ -39,7 +39,7 @@ class CanvasTableColumn(CanvasComponent,TableColumn)
          c.line(name || ".set_column_width(" || self.column_width || ")")
 
       every e := !sort(self.wattribs) do
-         c.line(name || ".set_wattrib(" || image(e[1]) || ", " || image(e[2]) || ")")
+         c.wattrib_line(name, e[1], e[2])
 
       c.add_event_handlers(self.name, \self.event_handlers)
    end
@@ -47,6 +47,7 @@ class CanvasTableColumn(CanvasComponent,TableColumn)
    public set_column_align(x)
       self.column_align := x
       cast(self,TableColumn).set_column_align(x)
+      return self
    end
 
    #

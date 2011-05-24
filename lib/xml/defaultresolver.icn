@@ -22,10 +22,7 @@ import http, net, util, io
 #
 # Otherwise, the system id is treated as a filename.
 #
-# @field cache_uris=flag: see {set_cache_uris}
-# @field http_client={HttpClient}: see {set_http_client}
-#
-class DefaultResolver(Resolver,SetFields)
+class DefaultResolver(Resolver)
    private
       public_mapping,
       uri_cache,
@@ -45,6 +42,7 @@ class DefaultResolver(Resolver,SetFields)
    #
    public set_public_mapping(pub_id, uri)
       insert(public_mapping, pub_id, uri)
+      return self
    end
 
    #
@@ -53,6 +51,7 @@ class DefaultResolver(Resolver,SetFields)
    #
    public set_cache_uris(s)
       self.cache_uris_flag := check_flag(s)
+      return self
    end
 
    #
@@ -61,6 +60,7 @@ class DefaultResolver(Resolver,SetFields)
    #
    public set_http_client(hc)
       self.http_client := hc
+      return self
    end
 
    #
@@ -123,21 +123,11 @@ class DefaultResolver(Resolver,SetFields)
       }
    end
 
-   protected set_one(f)
-      case f.attr of {
-         "cache_uris": set_cache_uris(f.flag_val())
-         "http_client": set_http_client(f.object_val(HttpClient))
-         default : fail
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       public_mapping := table()
       uri_cache := table()
       cache_uris_flag := 1
       self.http_client := HttpClient()
-      set_fields(a)
       return
    end
 end

@@ -27,6 +27,7 @@ class Toggle()
    public set_parent_check_box_group(x)
       self.parent_check_box_group := x
       synch_cbg()
+      return self
    end
 
    #
@@ -64,6 +65,7 @@ class Toggle()
    public set_is_checked(s)
       self.is_checked_flag := check_flag(s)
       synch_cbg()
+      return self
    end
 
    #

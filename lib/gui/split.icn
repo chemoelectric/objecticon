@@ -7,14 +7,6 @@ package gui
 # This {Component} contains two children whose sizes can be adjusted with
 # a {Sizer} component between them.
 #
-# @field show_inter=flag : see {set_show_inter}
-# @field min=int1,int2 : see {set_min}
-# @field weight=numeric : see {set_weight}
-# @field left={Component} : see {set_left}
-# @field top={Component} : see {set_top}
-# @field right={Component} : see {set_right}
-# @field bottom={Component} : see {set_bottom}
-#
 class Split(Component)
    public 
       first,
@@ -34,6 +26,7 @@ class Split(Component)
       self.first := c
       add(self.first, 1)
       self.sizer.set_is_horizontal(&no)
+      return self
    end
 
    #
@@ -44,6 +37,7 @@ class Split(Component)
       self.first := c
       add(self.first, 1)
       self.sizer.set_is_horizontal(&yes)
+      return self
    end
 
    #
@@ -53,6 +47,7 @@ class Split(Component)
       remove(\self.second)
       self.second := c
       add(self.second)
+      return self
    end
 
    #
@@ -62,6 +57,7 @@ class Split(Component)
       remove(\self.second)
       self.second := c
       add(self.second)
+      return self
    end
 
    public initially()
@@ -144,6 +140,7 @@ class Split(Component)
    public set_min(f, s)
       self.min_first := f
       self.min_second := s
+      return self
    end
 
    #
@@ -153,6 +150,7 @@ class Split(Component)
    #
    public set_weight(w)
       self.weight := w
+      return self
    end
 
    #
@@ -162,6 +160,7 @@ class Split(Component)
    #
    public set_show_inter(s)
       sizer.set_show_inter(s)
+      return self
    end
 
    public on_sizer_press(ev)
@@ -201,21 +200,7 @@ class Split(Component)
       invalidate()
    end
 
-   public set_one(f)
-      case f.attr of {
-         "show_inter" : set_show_inter(f.flag_val())
-         "min" : set_min!(f.int_list_val(2))
-         "weight" : set_weight(f.numeric_val())
-         "left" : set_left(f.object_val(gui.Component))
-         "top" : set_top(f.object_val(gui.Component))
-         "right" : set_right(f.object_val(gui.Component))
-         "bottom" : set_bottom(f.object_val(gui.Component))
-         default: return cast(self,Component).set_one(f)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,Component).new()
       sizer := Sizer()
       add(sizer)
@@ -227,7 +212,6 @@ class Split(Component)
       self.set_constraint("y_fill", &yes)
       self.set_constraint("x_weight", 1.0)
       self.set_constraint("y_weight",  1.0)
-      set_fields(a)
       return
    end
 end

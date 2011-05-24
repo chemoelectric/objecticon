@@ -104,9 +104,11 @@ class GridPaint(Paint)
       local attribs
 
       /win | syserr("init called out of sequence")
-      attribs := wattribs_to_list(c.get_effective_wattribs())
-      win := Window.open!(attribs ||| ["size=1,1", "canvas=hidden"]) | runerr("Couldn't open window")
-      g := Grid("extra=ignore")
+      attribs := copy(c.get_effective_wattribs())
+      attribs["size"] := [1, 1]
+      attribs["canvas"] := "hidden"
+      win := open_win_with(attribs) | runerr("Couldn't open window")
+      g := Grid().set_extra("ignore")
       pass := 1
       ia_x := ia_y := Align.C
       lines(fmt)
@@ -116,8 +118,8 @@ class GridPaint(Paint)
       w := g.get_preferred_width()
       h := g.get_preferred_height()
       if (w > 0) & (h > 0) then {
-         win := Window.open!(attribs ||| ["size=" || w || "," || h, 
-                                    "canvas=hidden"]) | runerr("Couldn't open window")
+         attribs["size"] := [w, h]
+         win := open_win_with(attribs) | runerr("Couldn't open window")
          pass := 2
          curr_cell := &null
          ii := 0
@@ -335,7 +337,7 @@ class GridPaint(Paint)
       if /win then
          return
 
-      cw := bev_lookup(win).shadow.clone("fill_style=masked", "pattern=gray")
+      cw := bev_lookup(win).shadow.clone().set_fill_style("masked").set_pattern("gray")
 
       cw.draw_rectangle(0, 0, w, h)
 
@@ -355,16 +357,7 @@ class GridPaint(Paint)
    end
 end
 
-#
-# @field image=string : see {set_image}
-# @field cache=string : see {set_cache}
-# @field window={Window} : see {set_window}
-# @field scale_up=flag : see {set_scale_up}
-# @field max_w=integer : see {set_max_w}
-# @field max_h=integer : see {set_max_h}
-# @field max_size=i1,i2 : see {set_max_size}
-#
-class ImagePaint(Paint,SetFields)
+class ImagePaint(Paint)
    public 
       image_str,
       image_window,
@@ -381,6 +374,7 @@ class ImagePaint(Paint,SetFields)
    #
    public set_cache(x)
       self.image_cache := x
+      return self
    end
 
    #
@@ -389,6 +383,7 @@ class ImagePaint(Paint,SetFields)
    #
    public set_image(x)
       self.image_str := x
+      return self
    end
 
    #
@@ -396,6 +391,7 @@ class ImagePaint(Paint,SetFields)
    #
    public set_window(x)
       self.image_window := x
+      return self
    end
 
    #
@@ -403,6 +399,7 @@ class ImagePaint(Paint,SetFields)
    #
    public set_max_w(w)
       self.max_w := w
+      return self
    end
 
    #
@@ -410,6 +407,7 @@ class ImagePaint(Paint,SetFields)
    #
    public set_max_h(h)
       self.max_h := h
+      return self
    end
 
    #
@@ -418,6 +416,7 @@ class ImagePaint(Paint,SetFields)
    public set_max_size(w, h)
       self.max_w := w
       self.max_h := h
+      return self
    end
    
    #
@@ -429,6 +428,7 @@ class ImagePaint(Paint,SetFields)
    #
    public set_scale_up(s)
       self.scale_up_flag := check_flag(s)
+      return self
    end
 
    public initially(c)
@@ -505,8 +505,7 @@ class ImagePaint(Paint,SetFields)
       zoom_w <:= 1
       zoom_h <:= 1
 
-      zoom_win := Window.open("size=" || zoom_w || "," || zoom_h, 
-                              "canvas=hidden") | runerr("Couldn't open temp window")
+      zoom_win := Window.open().set_size(zoom_w, zoom_h) | runerr("Couldn't open temp window")
       Zoom(win, zoom_win, 0, 0, img_w, img_h, 0, 0, zoom_w, zoom_h)
 
       # Now swap the zoomed window into win.
@@ -516,25 +515,6 @@ class ImagePaint(Paint,SetFields)
 
    public draw(W, x, y)
       (\win).copy_to(W,,,,, x, y)
-   end
-
-   public set_one(f)
-      case f.attr of {
-         "image" : set_image(f.string_val())
-         "cache" : set_cache(f.string_val())
-         "window" : set_window(f.object_val(Window))
-         "scale_up" : set_scale_up(f.flag_val())
-         "max_w" : set_max_w(f.int_val())
-         "max_h" : set_max_h(f.int_val())
-         "max_size" : set_max_size!(f.int_list_val(2))
-         default: fail
-      }
-      return
-   end
-
-   public new(a[])
-      set_fields(a)
-      return
    end
 end
 

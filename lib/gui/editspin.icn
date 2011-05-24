@@ -22,12 +22,10 @@ class SpinTextField(TextField)
       }
    end
 
-   public new(a[])
+   public new()
       cast(self,TextField).new()
       self.connect(self.on_key, Event.KEY_PRESS)
-      self.set_border(EmptyBorder("l_inset=",Gui.TEXT_INSET,
-                                  "r_inset=",0))
-      set_fields(a)
+      self.set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(0))
       return
    end
 end
@@ -36,9 +34,6 @@ end
 #
 # This class is the base class for editable spin components which use a
 # TextField to display/edit the current value.
-#
-# @field filter=cset : see {set_filter}
-# @field see also {Component}
 #
 class EditSpin(Spin)
    public 
@@ -54,7 +49,8 @@ class EditSpin(Spin)
    # @param c  The filter
    #
    public set_filter(c)
-      return self.view.set_filter(c)
+      self.view.set_filter(c)
+      return self
    end
 
    #
@@ -79,14 +75,6 @@ class EditSpin(Spin)
       tf := SpinTextField()
       every tf.connect(self.on_textfield, Event.CONTENT_CHANGED|Event.ACTION)
       return tf
-   end
-
-   public set_one(f)
-      case f.attr of {
-         "filter" : set_filter(f.cset_val())
-         default: return cast(self,Spin).set_one(f)
-      }
-      return
    end
 end
 

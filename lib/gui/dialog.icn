@@ -246,6 +246,7 @@ class Dialog(Component)
    private set_owning_dialog(d)
       insert(d.child_dialogs, self)
       self.owning_dialog := d
+      return self
    end
 
    #
@@ -273,7 +274,8 @@ class Dialog(Component)
       }
       self.compute_z_order()
       self.compute_tab_order()
-      self.cbwin := self.buffer_win.clone!wattribs_to_list(self.effective_wattribs) | 
+      self.cbwin := clone_win_with(self.buffer_win,
+                                   self.effective_wattribs) | 
          runerr("Failed to open clone window:" || &why)
       every (!self.children).initially()
    end
@@ -286,11 +288,11 @@ class Dialog(Component)
       # with say "bg=blue", then delete that attrib and call reset().
       # We wouldn't then want "bg=blue" to still be stuck in the root
       # buffer window's context.
-      t := ["canvas=hidden"]
-      put(t, "display=" || get_wattrib("display"))
-      put(t, "dx=" || get_wattrib("dx"))
-      put(t, "dy=" || get_wattrib("dy"))
-      self.buffer_win := Window.open!t | runerr("couldn't open buffer window:" || &why)
+      t := table()
+      t["display"] := get_wattrib("display")
+      t["dx"] := get_wattrib("dx")
+      t["dy"] :=  get_wattrib("dy")
+      self.buffer_win := open_win_with(t) | runerr("couldn't open buffer window:" || &why)
    end
 
    #
@@ -309,17 +311,18 @@ class Dialog(Component)
          set_wattrib("width", get_preferred_width())
       else
          # Need both
-         set_wattrib("size", get_preferred_width() || "," || get_preferred_height())
+         set_wattrib("size", [get_preferred_width(), get_preferred_height()])
    end
 
    public open_visible_win()
       local t, pw
       ensure_size()
-      t := wattribs_to_list(self.wattribs)
-      put(t, "input_mask=mk")
+      t := copy(self.wattribs)
+      t["input_mask"] := "mk"
       if pw := (\owning_dialog).win then
-         every put(t, "transient_for=" | pw)
-      self.win := Window.open!t | runerr("Couldn't open window:" || &why)
+         t["transient_for"] := pw
+      self.win := open_win_with(t) | runerr("Couldn't open window:" || &why)
+      self.win.set_canvas("normal")
       # Make the buffer the same size as the visible win.
       self.buffer_win.set_size(self.win.get_width(), self.win.get_height())
    end
@@ -809,11 +812,14 @@ $endif
       if \use_popup_win then {
          self.tooltip_component.finally()
          self.remove(self.tooltip_component)
-         d := PureDialog("canvas=popup", 
-                         "w=", self.tooltip_component.w, "h=",self.tooltip_component.h,
-                         "w:dx=", -self.tooltip_component.x, "w:dy=",-self.tooltip_component.y,
-                         "w:x=", win.get_x() + win.get_dx() + self.tooltip_component.x,
-                         "w:y=", win.get_y() + win.get_dy() + self.tooltip_component.y)
+         d := PureDialog().
+            set_canvas("popup").
+            set_width( self.tooltip_component.w).
+            set_height(self.tooltip_component.h).
+            set_dx(-self.tooltip_component.x).
+            set_dy(-self.tooltip_component.y).
+            set_x(win.get_x() + win.get_dx() + self.tooltip_component.x).
+            set_y(win.get_y() + win.get_dy() + self.tooltip_component.y)
          self.tooltip_component.set_pos(0, 0)
          d.add(self.tooltip_component)
          d.show_modeless()
@@ -1133,6 +1139,111 @@ $endif
       self.win.pending(Window.INVOKE_LATER, proc, param)
    end
 
+   public set_label(v)
+      set_wattrib("label", v)
+      return self
+   end
+
+   public set_canvas(v)
+      set_wattrib("canvas", v)
+      return self
+   end
+
+   public set_x(v)
+      set_wattrib("x", v)
+      return self
+   end
+
+   public set_pos(v1, v2)
+      set_wattrib("pos", [v1, v2])
+      return self
+   end
+
+   public set_y(v)
+      set_wattrib("y", v)
+      return self
+   end
+
+   public set_resize(v)
+      set_wattrib("resize", v)
+      return self
+   end
+
+   public set_size(v1, v2)
+      set_wattrib("size", [v1, v2])
+      return self
+   end
+
+   public set_height(v)
+      set_wattrib("height", v)
+      return self
+   end
+
+   public set_width(v)
+      set_wattrib("width", v)
+      return self
+   end
+
+   public set_display(v)
+      set_wattrib("display", v)
+      return self
+   end
+
+   public set_icon(v)
+      set_wattrib("icon", v)
+      return self
+   end
+
+   public set_geometry(v1, v2, v3, v4)
+      set_wattrib("geometry", [v1, v2, v3, v4])
+      return self
+   end
+
+   public set_dx(v)
+      set_wattrib("dx", v)
+      return self
+   end
+
+   public set_dy(v)
+      set_wattrib("dy", v)
+      return self
+   end
+
+   public set_input_mask(v)
+      set_wattrib("input_mask", v)
+      return self
+   end
+
+   public set_min_width(v)
+      set_wattrib("min_width", v)
+      return self
+   end
+
+   public set_min_height(v)
+      set_wattrib("min_height", v)
+      return self
+   end
+
+   public set_min_size(v1, v2)
+      set_wattrib("min_size", [v1, v2])
+      return self
+   end
+
+   public set_max_width(v)
+      set_wattrib("max_width", v)
+      return self
+   end
+
+   public set_max_height(v)
+      set_wattrib("max_height", v)
+      return self
+   end
+
+   public set_max_size(v1, v2)
+      set_wattrib("max_size", [v1, v2])
+      return self
+   end
+
    private static init()
       DOUBLE_CLICK_DELAY := 500
       TOOLTIP_START_DELAY := 1000
@@ -1146,7 +1257,7 @@ $endif
       ROOT_WATTRIBS := table()
    end
 
-   public new(a[])
+   public new()
       cast(self,Component).new()
       self.set_all_wattribs(ROOT_WATTRIBS)
       self.child_dialogs := set()
@@ -1154,7 +1265,6 @@ $endif
       self.selections := table()
       self.selection_requests := table()
       self.tooltip_ticker := Dispatcher.new_task{self.process_tooltip_tick()}
-      set_fields(a)
       return
    end
 end
@@ -1165,10 +1275,9 @@ end
 # empty set of attribs.
 #
 class PureDialog(Dialog)
-   public new(a[])
+   public new()
       cast(self,Dialog).new()
       self.clear_wattribs()
-      set_fields(a)
       return
    end
 end
@@ -1276,10 +1385,9 @@ class Accelerator(Component)
       fire(Event.ACTION, e)
    end
 
-   public new(a[])
+   public new()
       cast(self,Component).new()
       self.x_spec := self.y_spec := self.w_spec := self.h_spec := 0
-      set_fields(a)
       return
    end
 end
@@ -1297,25 +1405,27 @@ class WindowControl(Component)
       parent_dialog.win.set_canvas("iconic")
    end
 
-   public new(a[])
+   public new()
       cast(self,Component).new()
-      set_layout(GridLayout("flush", "dii=0"))
-      attrib("pos=100%,0", "align=r,t")
-      add(IconButton("paint=",ImagePaint("cache=gui.WINDOW_ICONIFY_BUTTON"),
-                     "border=",EmptyBorder("flush"),
-                     "accepts_focus=no",
+      set_layout(GridLayout().set_doi(0).set_dii(0))
+      set_pos("100%","0")
+      set_align("r","t")
+      add(IconButton().
+          set_paint(ImagePaint().set_cache("gui.WINDOW_ICONIFY_BUTTON")).
+          set_border(EmptyBorder().set_insets(0, 0, 0, 0)).
+          set_accepts_focus(&no).
 $ifdef _PLAN9
-                     "tooltip=Hide",
+          set_tooltip("Hide").
 $else
-                     "tooltip=Iconify",
+          set_tooltip("Iconify").
 $endif
-                     "e:action=", iconify_window))
-      add(IconButton("paint=",ImagePaint("cache=gui.WINDOW_CLOSE_BUTTON"),
-                     "border=",EmptyBorder("flush"),
-                     "accepts_focus=no",
-                     "tooltip=Close",
-                     "e:action=", close_window))
-      set_fields(a)
+          connect(iconify_window, Event.ACTION))
+      add(IconButton().
+          set_paint(ImagePaint().set_cache("gui.WINDOW_CLOSE_BUTTON")).
+          set_border(EmptyBorder().set_insets(0, 0, 0, 0)).
+          set_accepts_focus(&no).
+          set_tooltip("Close").
+          connect(close_window, Event.ACTION))
       return
    end
 end

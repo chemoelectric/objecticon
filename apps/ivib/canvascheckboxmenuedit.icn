@@ -74,15 +74,15 @@ class CanvasCheckBoxMenuEdit(MenuComponentEdit)
       cast(self,MenuComponentEdit).setup()
 
       main_panel := TabItem()
-      main_panel.set_layout(GridLayout("extra=borders"))
+      main_panel.set_layout(GridLayout().set_extra("borders"))
       add_tab_at_front(main_panel)
       main_panel.set_label("General")
 
-      paint_field := PaintField("title=",Label("label=Label"), "c:eol", "c:w=2")
+      paint_field := PaintField().set_title(Label().set_label("Label")).set_constraint("eol", &yes).set_constraint("w", 2)
       paint_field.set_contents(c.paint_mid)
       main_panel.add(paint_field)
 
-      paint_field_r := PaintField("title=",Label("label=Label(R)"), "c:eol", "c:w=2")
+      paint_field_r := PaintField().set_title(Label().set_label("Label(R)")).set_constraint("eol", &yes).set_constraint("w", 2)
       paint_field_r.set_contents(c.paint_right)
       main_panel.add(paint_field_r)
 
@@ -91,12 +91,12 @@ class CanvasCheckBoxMenuEdit(MenuComponentEdit)
       in_checkbox_group.set_label("CheckBox Group")
       main_panel.add(in_checkbox_group)
 
-      group_list := List("c:eol")
+      group_list := List().set_constraint("eol", &yes)
       group_list.set_size(200)
       group_list.set_selection_list(cos_names(c.parent_component.parent_Canvas.checkbox_groups))
       main_panel.add(group_list)
 
-      initially_checked := CheckBox("c:eol")
+      initially_checked := CheckBox().set_constraint("eol", &yes)
       initially_checked.set_label("Initially checked")
       main_panel.add(initially_checked)
 

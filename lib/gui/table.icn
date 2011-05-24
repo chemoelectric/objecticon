@@ -149,10 +149,6 @@ end
 # This class displays a table, the columns of which are set up
 # using TableColumns.
 #
-# @field select_mode=string : see {set_select_mode}
-# @field contents=list : see {set_contents}
-# @field selections=i1,i2,i3,... : see {set_selections}
-#
 class Table(Component)
    public 
    table_header,
@@ -172,7 +168,8 @@ class Table(Component)
    end
 
    public set_checked(l)
-      return self.table_content.set_checked(l)
+      self.table_content.set_checked(l)
+      return self
    end
 
    public get_checked()
@@ -202,7 +199,8 @@ class Table(Component)
    # @param x   The contents
    #
    public set_contents(x)
-      return self.table_content.set_contents(x)
+      self.table_content.set_contents(x)
+      return self
    end
 
    #
@@ -231,7 +229,8 @@ class Table(Component)
    # @param l   The list of item numbers.
    #
    public set_selections(l)
-      return self.table_content.set_selections(l)
+      self.table_content.set_selections(l)
+      return self
    end
 
    #
@@ -240,6 +239,7 @@ class Table(Component)
    # @p
    public set_cursor(line)
       self.table_content.set_cursor(line)
+      return self
    end
 
    #
@@ -303,6 +303,7 @@ class Table(Component)
    # @param m a constant from {Select}
    public set_select_mode(m)
       self.table_content.set_select_mode(m)
+      return self
    end
 
    #
@@ -405,16 +406,6 @@ class Table(Component)
       return self.table_content
    end
 
-   public set_one(f)
-      case f.attr of {
-         "select_mode" : set_select_mode(f.string_val())
-         "contents" : set_contents(f.list_val())
-         "selections" : set_selections(f.int_list_val())
-         default: return cast(self,Component).set_one(f)
-      }
-      return
-   end
-
    public create_table_content()
       return TableContent()
    end
@@ -423,10 +414,10 @@ class Table(Component)
       return TableHeader()
    end
 
-   public new(a[])
+   public new()
       cast(self,Component).new()
       self.preferred_focus := self.table_content := create_table_content()
-      self.table_content.set_border(EmptyBorder("flush"))
+      self.table_content.set_border(EmptyBorder().set_insets(0, 0, 0, 0))
       self.set_border(SunkenBorder())
       every self.table_content.connect(self.on_table_content,
                                        Event.CURSOR_MOVED | Event.SELECTION_CHANGED)
@@ -437,7 +428,6 @@ class Table(Component)
       self.set_constraint("y_fill", &yes)
       self.set_constraint("x_weight", 1.0)
       self.set_constraint("y_weight",  1.0)
-      set_fields(a)
       return
    end
 end

@@ -38,6 +38,7 @@ class ComponentScrollAreaView(Component)
       remove(\self.inner)
       self.inner := inner
       add(inner)
+      return self
    end
 end
 
@@ -47,13 +48,10 @@ end
 # the ScrollArea.  The component is set with the {set_inner()}
 # method.
 #
-# @field inner={Component} : see {set_inner}.
-# @ inner may also be passed as the first parameter to the constructor.
-# @field see also {ScrollArea}
-#
 class ComponentScrollArea(ScrollArea)
    public set_inner(inner)
       view.set_inner(inner)
+      return self
    end
 
    public layout()
@@ -89,19 +87,6 @@ class ComponentScrollArea(ScrollArea)
 
    public create_view()
       return ComponentScrollAreaView()
-   end
-
-   protected set_one(f)
-      case f.attr of {
-         "inner" : set_inner(f.object_val(gui.Component))
-         default: return cast(self,ScrollArea).set_one(f)
-      }
-      return
-   end
-
-   protected set_special(a)
-      if is(a[1], Component) then
-         set_inner(pop(a))
    end
 end
 

@@ -25,7 +25,7 @@ class ErrorDetail()
    end
 end
 
-class Parser(Connectable, SetFields)
+class Parser(Connectable)
    public
       preproc_sym_table,preproc_if_stack,preproc_file_stack,preproc_if_state,
       preproc_file,preproc_filename,preproc_line,
@@ -39,16 +39,12 @@ class Parser(Connectable, SetFields)
    public static const 
       DEFAULT_SYMBOLS, 
       PREPROCESSOR_ERROR_EVENT, 
-      PARSER_ERROR_EVENT,
-      EVENT_TABLE
+      PARSER_ERROR_EVENT
 
    private static init()
       local s
       PREPROCESSOR_ERROR_EVENT := "preprocessor error"
       PARSER_ERROR_EVENT := "parser error"
-      EVENT_TABLE := table(,
-                           "preprocessor_error",  PREPROCESSOR_ERROR_EVENT, 
-                           "parser_error", PARSER_ERROR_EVENT)
       DEFAULT_SYMBOLS := table()
       # reverse engineer the predefined symbols list from our predefined symbols
       every s := &features do {
@@ -699,15 +695,5 @@ class Parser(Connectable, SetFields)
          n := n * r + i
       }
       return char(n)
-   end
-
-   protected set_one(f)
-      return try_event(f, EVENT_TABLE)
-   end
-
-   public new(a[])
-      cast(self,Connectable).new()
-      set_fields(a)
-      return
    end
 end

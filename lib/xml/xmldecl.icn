@@ -29,6 +29,7 @@ class XmlDecl(Node)
    #
    public set_version(version)
       self.version := version
+      return self
    end
 
    #
@@ -43,6 +44,7 @@ class XmlDecl(Node)
    #
    public set_encoding(encoding)
       self.encoding := encoding
+      return self
    end
 
    #
@@ -57,6 +59,7 @@ class XmlDecl(Node)
    #
    public set_standalone(standalone)
       self.standalone := standalone
+      return self
    end
 
    public new(v, e, s)

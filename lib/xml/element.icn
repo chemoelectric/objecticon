@@ -22,7 +22,8 @@ class Element(Node)
    # Set the name of the tag
    #
    public set_name(s)
-      return name := s
+      name := s
+      return self
    end
 
    #
@@ -43,7 +44,8 @@ class Element(Node)
    # Set an attribute for this tag.
    #
    public set_attribute(key, value)
-      return attributes[key] := value
+      attributes[key] := value
+      return self
    end
 
    #

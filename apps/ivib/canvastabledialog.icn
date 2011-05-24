@@ -146,8 +146,8 @@ class CanvasTableDialog(CanvasComponentDialog)
       t3.set_column_width(60)
       struct.add_column(t3)
 
-      q := Panel("c:x_weight=0")
-      q.set_layout(GridLayout("doi=0"))
+      q := Panel().set_constraint("x_weight", 0)
+      q.set_layout(GridLayout().set_doi(0))
 
       add_col := TextButton("eol")
       add_col.connect(self.on_add_col, Event.ACTION)
@@ -159,22 +159,22 @@ class CanvasTableDialog(CanvasComponentDialog)
       delete.set_label("Delete")
       q.add(delete)
 
-      edit := TextButton("label=Edit", "c:eol")
+      edit := TextButton().set_label("Edit").set_constraint("eol", &yes)
       edit.connect(self.on_edit, Event.ACTION)
       q.add(edit)
 
-      up := TextButton("label=Up", "c:eol")
+      up := TextButton().set_label("Up").set_constraint("eol", &yes)
       up.connect(self.on_up, Event.ACTION)
       q.add(up)
 
-      down := TextButton("label=Down")
+      down := TextButton().set_label("Down")
       down.connect(self.on_down, Event.ACTION)
       q.add(down)
 
       p.add(q)
 
       p := TabItem()
-      p.set_layout(GridLayout("extra=borders"))
+      p.set_layout(GridLayout().set_extra("borders"))
       add_tab(p)
       p.set_label("Selection")
 

@@ -48,6 +48,7 @@ class CheckBoxGroup(Connectable)
    #
    public set_which_one(x)
       x.set_is_checked(&yes)
+      return self
    end
 
    public new()

@@ -89,6 +89,7 @@ class PaintField(Border)
          paint_tbl[paints.get_selection()] := c
          os.set_which_one(os.children[paints.get_selection()])
       }
+      return self
    end
 
    public get_contents()
@@ -119,43 +120,42 @@ class PaintField(Border)
       cc.set_layout(GridLayout())
       os := OverlaySet()
       cc.add(os)
-      paints := List("c:x_weight=0", "selection_list=&null,Text,Text(Ucs),Image,Grid")
+      paints := List().set_constraint("x_weight", 0).set_selection_list(["&null","Text","Text(Ucs)","Image","Grid"])
       paints.connect(self.on_sel_change, Event.SELECTION_CHANGED)
       cc.add(paints)
-      edit_paint_button := TextButton("label=Edit...")
+      edit_paint_button := TextButton().set_label("Edit...")
       cc.add(edit_paint_button)
       edit_paint_button.connect(self.on_edit_paint, Event.ACTION)
 
-      os.add(Component("size=0,0"))
+      os.add(Component().set_size(0,0))
 
-      p := Panel("layout=",GridLayout("flush"))
-      tf1 := TextField("size=120")
+      p := Panel().set_layout(GridLayout().set_doi(0))
+      tf1 := TextField().set_size(120)
       tf1.connect(self.on_tf1, Event.CONTENT_CHANGED)
       p.add(tf1)
       os.add(p)
 
-      p := Panel("layout=",GridLayout("flush"))
-      tf2 := TextField("size=120", "contents=",u"")
+      p := Panel().set_layout(GridLayout().set_doi(0))
+      tf2 := TextField().set_size(120).set_contents(u"")
       tf2.connect(self.on_tf2, Event.CONTENT_CHANGED)
       p.add(tf2)
       os.add(p)
 
-      p := Panel("layout=",GridLayout("flush"))
-      img := Image("size=40,40", "border=",PlainBorder())
+      p := Panel().set_layout(GridLayout().set_doi(0))
+      img := Image().set_size(40,40).set_border(PlainBorder())
       p.add(img)
       os.add(p)
 
-      grid_label := Label("c:x_weight=1", "c:x_fill=y", "label=No format set.")
+      grid_label := Label().set_constraint("x_weight", 1).set_constraint("x_fill", "y").set_label("No format set.")
       os.add(grid_label)
    end
 
-   public new(a[])
+   public new()
       cast(self,Border).new()
       setup()
       self.clear_constraints()
       self.set_constraint("x_fill", &yes)
       self.set_constraint("x_weight", "1")
-      set_fields(a)
       return
    end
 end

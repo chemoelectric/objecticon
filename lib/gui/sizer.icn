@@ -16,11 +16,6 @@ import util
 # generated when the {Sizer} has been dragged and released.  The new position
 # may then be obtained and the dialog adjusted accordingly.
 #
-# @field is_horizontal=flag : see {set_is_horizontal}
-# @field show_inter=flag : see {set_show_inter}
-# @field range=i1,i2 : see {set_range}
-# @field see also {Component}
-#
 class Sizer(Component)
    public 
       is_horizontal_flag, 
@@ -41,6 +36,7 @@ class Sizer(Component)
    public set_range(lo, hi)
       self.lo := lo
       self.hi := hi
+      return self
    end
 
    #
@@ -63,6 +59,7 @@ class Sizer(Component)
    #
    public set_is_horizontal(s)
       self.is_horizontal_flag := check_flag(s)
+      return self
    end
 
    #
@@ -71,6 +68,7 @@ class Sizer(Component)
    #
    public set_show_inter(s)
       self.show_inter_flag := check_flag(s)
+      return self
    end
 
    public display()
@@ -88,7 +86,7 @@ class Sizer(Component)
       }
    end
 
-   public set_curr_pos(e)
+   private set_curr_pos(e)
       if \self.is_horizontal_flag then
          curr_pos := e.y - drag_offset - parent.y
       else
@@ -177,23 +175,12 @@ class Sizer(Component)
       fire(Event.SIZER_RELEASE, e)
    end
 
-   public set_one(f)
-      case f.attr of {
-         "is_horizontal" : set_is_horizontal(f.flag_val())
-         "show_inter" : set_show_inter(f.flag_val())
-         "range" : set_range!(f.int_list_val(2))
-         default: return cast(self,Component).set_one(f)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,Component).new()
       connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
       connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
-      gp := ImagePaint("cache=gui.GRID")
-      set_fields(a)
+      gp := ImagePaint().set_cache("gui.GRID")
       return
    end
 end
@@ -205,7 +192,9 @@ class SliderDragComponent(Component)
    end
 
    public new()
-      cast(self,Component).new("pattern=gray", "fill_style=masked")
+      cast(self,Component).new()
+      set_pattern("gray")
+      set_fill_style("masked")
       return
    end
 end

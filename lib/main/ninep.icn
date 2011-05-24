@@ -35,7 +35,7 @@ record Tinvalid()
 record Info(mode, atime, mtime, length, name, uid, gid, muid)
 record Qid(type, version, path)
 
-class File9P(SetFields)
+class File9P()
    private readable
       parent,
       name,
@@ -64,6 +64,7 @@ class File9P(SetFields)
       self.qversion +:= 1
       self.muid := uid
       self.mtime := Time.get_system_seconds()
+      return self
    end
 
    public open(mode)
@@ -90,75 +91,68 @@ class File9P(SetFields)
       set_name(\x.name)
       set_length(\x.length)
       set_gid(\x.gid)
+      return self
    end
 
    package set_parent(x)
       self.parent := x
+      return self
    end
 
    public set_name(x)
       if \parent & (\self.name ~== x) then
          parent.rename_child(self, x)
       self.name := x
+      return self
    end
 
    public set_perm(x, y)
       iand(perm, Mode9.DMDIR) = iand(x, Mode9.DMDIR) | runerr("Cannot change directory bit")
       self.perm := x
       self.fixed := y
+      return self
    end
 
    public set_qversion(x)
       self.qversion := x
+      return self
    end
 
    public set_mtime(x)
       self.mtime := x
+      return self
    end
 
    public set_atime(x)
       self.atime := x
+      return self
    end
 
    public set_uid(x)
       self.uid := x
+      return self
    end
 
    public set_gid(x)
       self.gid := x
+      return self
    end
 
    public set_muid(x)
       self.muid := x
+      return self
    end
 
    public get_qid()
       return Qid(ishift(perm, -24), qversion, qpath)
    end
 
-   protected set_one(f)
-      case f.attr of {
-         "name" : set_name(f.string_val())
-         "perm" : set_perm(f.int_val())
-         "fixed_perm" : set_perm(f.int_val(), &yes)
-         "qversion" : set_qversion(f.int_val())
-         "mtime" : set_mtime(f.int_val())
-         "atime" : set_atime(f.int_val())
-         "uid" : set_uid(f.string_val())
-         "gid" : set_gid(f.string_val())
-         "muid" : set_muid(f.string_val())
-         default: fail
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       self.qversion := 0
       self.qpath := (qpath_seq +:= 1)
       self.mtime := self.atime := Time.get_system_seconds()
       self.uid := self.gid := self.muid := user
       self.perm := if is(self,Dir9P) then ior(8r777, Mode9.DMDIR) else 8r666
-      set_fields(a)
       return
    end
 end
@@ -181,11 +175,13 @@ class Dir9PImpl(Dir9P)
       \x.name | runerr("Child name not set")
       (/ent[x.name] := x) | runerr("Can't add child named " || x.name || " - already exists")
       x.set_parent(self)
+      return self
    end
 
    public delete_child(x)
       delete(ent, x.name)
       x.set_parent()
+      return self
    end
 
    public get_child(x)
@@ -204,6 +200,7 @@ class Dir9PImpl(Dir9P)
       /ent[s] | runerr("Can't change name to " || s || " - already exists")
       delete(ent, x.name)
       ent[s] := x
+      return self
    end
 
    protected new_dir_child(name, uid, perm)
@@ -237,6 +234,7 @@ class Dir9PImpl(Dir9P)
    end
 
    public set_length(len)
+      return self
    end
 
    public new(a[])
@@ -261,6 +259,7 @@ class Regular9PImpl(Regular9P)
       if iand(self.perm, Mode9.DMAPPEND) = 0 &
          iand(mode, FileOpt9.OTRUNC) ~= 0 then
          data := ""
+      return self
    end
 
    public set_length(len)
@@ -268,6 +267,7 @@ class Regular9PImpl(Regular9P)
          data ||:= repl("\0", len - *data)
       else
          data := data[1+:len]
+      return self
    end
 
    public write(s, pos)
@@ -278,6 +278,7 @@ class Regular9PImpl(Regular9P)
             data[pos:min(pos + *s, *data + 1)] := s
       } else
          data ||:= s
+      return self
    end
 
    public read(pos, count)
@@ -293,20 +294,12 @@ class Regular9PImpl(Regular9P)
 
    public set_data(s)
       data := s
+      return self
    end
 
-   protected set_one(f)
-      case f.attr of {
-         "data" : set_data(f.string_val())
-         default: return cast(self,Regular9P).set_one(f)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,Regular9P).new()
       data := ""
-      set_fields(a)
       return
    end
 end
@@ -750,7 +743,7 @@ class TreeData9P(Data9P)
    end
 
    public delete_child(p1, p2)
-      p1.delete_child(p2)
+      return p1.delete_child(p2)
    end
 
    public create_child(p, name, uid, perm)
@@ -762,7 +755,7 @@ class TreeData9P(Data9P)
    end
    
    public modified(p, uid)
-      p.modified(uid)
+      return p.modified(uid)
    end
 
    public open(p, mode)
@@ -787,6 +780,7 @@ class TreeData9P(Data9P)
 
    public set_info(p, x)
       p.set_info(x)
+      return self
    end
 
    public get_qid(p)
@@ -805,7 +799,7 @@ end
 
 record Fid(path, uid, omode, dir)
 
-class Session9P(SetFields)
+class Session9P()
    private
       fids,        # table mapping fid numbers to Fid() records
       data, 
@@ -1096,30 +1090,17 @@ class Session9P(SetFields)
 
    public set_data(d)
       data := d
+      return self
    end
 
    public set_verbose(x)
       self.verbose := x
+      return self
    end
 
-   protected set_one(f)
-      case f.attr of {
-         "data": set_data(f.object_val(Data9P))
-         "verbose": set_verbose(f.flag_val())
-         default: fail
-      }
-      return
-   end
-
-   protected set_special(a)
-      if is(a[1], Data9P) then
-         set_data(pop(a))
-   end
-
-   public new(a[])
+   public new()
       self.fids := table()
       self.paths := table()
-      set_fields(a)
       return
    end
 end

@@ -14,9 +14,6 @@ package undo
 #
 # Once closed, it behaves just like a closed CompoundEdit.
 #
-# @field limit=integer: see {set_limit}
-# @field see also {CompoundEdit}
-#
 class UndoManager(CompoundEdit)
    private
       limit,
@@ -53,6 +50,7 @@ class UndoManager(CompoundEdit)
 
    public set_limit(limit)
       self.limit := limit
+      return self
    end
 
    public add_edit(other)
@@ -98,19 +96,10 @@ class UndoManager(CompoundEdit)
       self.index := 1
    end
 
-   public set_one(f)
-      case f.attr of {
-         "limit": set_limit(f.int_val())
-         default: return cast(self,CompoundEdit).set_one(f)
-      }
-      return
-   end
-
-   public new(a[])
+   public new()
       cast(self,CompoundEdit).new()
       self.limit := 100
       self.index := 1
-      set_fields(a)
       return
    end
 end
