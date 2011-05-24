@@ -84,12 +84,12 @@ class CanvasComponent(CanvasObject)
       }
 
       if \self.w_spec | \self.h_spec then {
-         if \self.w_spec & \self.h_spec then
-            t := name || ".set_size(" || self.w_spec || ", " || self.h_spec || ")"
-         else if \self.w_spec then
-            t := name || ".set_width(" || self.w_spec || ")"
-         else
-            t := name || ".set_height(" || self.h_spec || ")"
+         t := name || ".set_size("
+         if \self.w_spec then
+            t ||:= image(self.w_spec)
+         if \self.h_spec then
+            t ||:= ", " || image(self.h_spec)
+         t ||:= ")"
          c.line(t)
       }
 
@@ -115,7 +115,7 @@ class CanvasComponent(CanvasObject)
 
       c.line(name || ".clear_constraints()")
       every e := !sort(self.constraints) do
-         c.line(name || ".set_constraint(" || image(e[1]) || ", " || txt_image(e[2]) || ")")
+         c.constraint_line(name, e[1], e[2])
 
       if \self.tooltip then {
          self.tooltip.gen_code(c)
@@ -504,7 +504,7 @@ class CanvasComponent(CanvasObject)
          csm := Menu().set_label("Position")
          cm.add(csm)
          if /flag(c["eol"]) then
-            csm.add(SetConstraintItem(self, "eol", 1))
+            csm.add(SetConstraintItem(self, "eol", &yes))
          else
             csm.add(RemoveConstraintItem(self, "eol"))
 
@@ -529,7 +529,7 @@ class CanvasComponent(CanvasObject)
          csm := Menu().set_label("X layout")
          cm.add(csm)
          if /flag(c["x_fill"]) then
-            csm.add(SetConstraintItem(self, "x_fill", 1))
+            csm.add(SetConstraintItem(self, "x_fill", &yes))
          else
             csm.add(RemoveConstraintItem(self, "x_fill"))
          case c["x_align"] of {
@@ -551,7 +551,7 @@ class CanvasComponent(CanvasObject)
          csm := Menu().set_label("Y layout")
          cm.add(csm)
          if /flag(c["y_fill"]) then
-            csm.add(SetConstraintItem(self, "y_fill", 1))
+            csm.add(SetConstraintItem(self, "y_fill", &yes))
          else
             csm.add(RemoveConstraintItem(self, "y_fill"))
          case c["y_align"] of {

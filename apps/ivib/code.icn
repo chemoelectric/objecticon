@@ -76,6 +76,10 @@ class Code()
       line(name || ".set_" || key || "(" || stringify_wattrib(key, val, 1) || ")")
    end
 
+   public constraint_line(name, key, val)
+      line(name || ".set_constraint(" || image(key) || ", " || stringify_constraint(key, val, 1) || ")")
+   end
+
    #
    # Add a method to the methods list
    #
@@ -405,6 +409,7 @@ class Code()
       # Dialog attribs.
       #
       m := copy(self.parent_Canvas.dialog_struct.wattribs)
+      every delete(m, "height" | "width" | "size")
       if /self.parent_Canvas.is_component & 
          \ (self.parent_Canvas.dialog_iw | self.parent_Canvas.dialog_ih) then 
       {
