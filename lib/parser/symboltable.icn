@@ -656,6 +656,7 @@ class SymbolTable(Connectable)
 
    public set_file_mode(s)
       self.file_mode := s
+      return self
    end
 
    public new()

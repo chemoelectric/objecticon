@@ -38,7 +38,7 @@ procedure stringify_wattrib(key, val, quote)
    return if type(val) == "list" then list2str(val) 
       else if key == "resize" then if \val then "&yes" else "&no"
       else if type(val) == "integer" then string(val)
-      else if /quote then string(val) else txt_image(val)
+      else if /quote then text(val) else txt_image(val)
 end
 
 procedure stringify_wattribs(t)

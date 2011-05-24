@@ -2,7 +2,7 @@ import xml
 
 procedure main()
    local fmt, d, decl, dt, el, el2
-   fmt := XmlFormatter("indent=2")
+   fmt := XmlFormatter().set_indent(2)
 
    d := XmlDocument()
 

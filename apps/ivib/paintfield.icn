@@ -146,7 +146,7 @@ class PaintField(Border)
       p.add(img)
       os.add(p)
 
-      grid_label := Label().set_constraint("x_weight", 1).set_constraint("x_fill", "y").set_label("No format set.")
+      grid_label := Label().set_constraint("x_weight", 1).set_constraint("x_fill", &yes).set_label("No format set.")
       os.add(grid_label)
    end
 

@@ -1643,46 +1643,6 @@ class ExprStream(GeneratorStream)
 end
 
 #
-# This {Stream} takes a list of other {Stream}s.  Their lines of
-# output are interspersed together to form the output.
-#
-class IntersperseStream(GeneratorStream)
-   private
-      a
-
-   protected gen()
-      local e, s, t, u
-      u := a
-      while *u > 0 do {
-         t := []
-         every e := !u do {
-            if s := e.read() then {
-               put(t, e)
-               suspend s
-            } else
-               e.eof() | fail
-         }
-         u := t
-      }
-      at_eof()
-   end
-
-   public close()
-      local e, f
-      if \close_underlying_flag then {
-         every e := !a do
-            e.close() | (f := 1)
-      }
-      return /f
-   end
-
-   public new(a[])
-      self.a := a
-      return cast(self,GeneratorStream).new()
-   end
-end
-
-#
 # Useful parent class for filtering the lines from a particular
 # {Stream}.
 #
