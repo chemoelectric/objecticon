@@ -505,6 +505,7 @@ class EditableTextList(LineBasedScrollArea)
 
    public clear_mark()
       mark_x := mark_y := &null
+      return self
    end
 
    public has_region()

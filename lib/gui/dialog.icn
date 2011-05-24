@@ -375,11 +375,12 @@ class Dialog(Component)
    #
    public set_focus(c, e)
       if \self.focus === c then
-         return
+         return self
 
       (\self.focus).lost_focus(e)
       self.focus := c
       (\self.focus).got_focus(e)
+      return self
    end
 
    #
@@ -388,6 +389,7 @@ class Dialog(Component)
    public clear_focus(e)
       (\self.focus).lost_focus(e)
       self.focus := &null
+      return self
    end
 
    #

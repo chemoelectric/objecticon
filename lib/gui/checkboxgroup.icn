@@ -40,6 +40,7 @@ class CheckBoxGroup(Connectable)
    public add(c)
       put(self.checkboxes, c)
       c.set_parent_check_box_group(self)
+      return self
    end
 
    #
