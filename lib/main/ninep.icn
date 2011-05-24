@@ -106,6 +106,10 @@ class File9P()
       return self
    end
 
+   public set_fixed_perm(x)
+      return set_perm(x, &yes)
+   end
+
    public set_perm(x, y)
       iand(perm, Mode9.DMDIR) = iand(x, Mode9.DMDIR) | runerr("Cannot change directory bit")
       self.perm := x
@@ -237,10 +241,9 @@ class Dir9PImpl(Dir9P)
       return self
    end
 
-   public new(a[])
+   public new()
       cast(self,Dir9P).new()
       ent := table()
-      set_fields(a)
       return
    end
 end
