@@ -321,7 +321,7 @@ class GridPaintEdit(PaintEdit)
       p.set_layout(GridLayout())
       add_tab_at_front(p)
 
-      input := EditableTextList().set_constraint("x_weight", 0).set_size(250,200).set_move_on_rpress("no")
+      input := EditableTextList().set_constraint("x_weight", 0).set_size(250,200).set_move_on_rpress(&no)
       self.set_focus(input.find_focus())
       input.connect(self.on_input, Event.CONTENT_CHANGED)
       input.connect(self.on_input_press, Event.MOUSE_RIGHT_PRESS)

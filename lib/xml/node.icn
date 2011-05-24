@@ -45,7 +45,7 @@ class Node()
       insert(children, pos, obj)
       if not text(obj) then
          obj.parent := self
-      return obj
+      return self
    end
 
    #
@@ -72,7 +72,7 @@ class Node()
          else
             insert(children, pos, s)
       }
-      return s
+      return self
    end
 
    #
@@ -100,6 +100,7 @@ class Node()
    #
    public remove_whitespace_children()
       self.children := get_children_no_whitespace()
+      return self
    end
 
    #
@@ -198,7 +199,7 @@ class Node()
       local i, j, e
       /indent := 0
       i := repl(" ", indent * 5)
-      write(f, i || to_string(self, "indent=3"))
+      write(f, i || to_string(self, 3))
       every j := 1 to *children do {
          writes(i || j || ":")
          e := children[j]

@@ -1260,8 +1260,7 @@ char *getcanvas(wbp w)
 }
 
 /*
- *  Set the canvas type, either during open (pixmap is null, set a flag)
- *   or change an existing canvas to a different type.
+ *  Set the canvas type
  */
 int setcanvas(wbp w, char *s)
 {
@@ -1272,11 +1271,6 @@ int setcanvas(wbp w, char *s)
         return Failed;
     if (e->i == ws->state)
         return Succeeded;
-
-    if (ws->pix == (Pixmap)NULL) {
-        ws->state = e->i;
-        return Succeeded;
-    }
 
     if (ws->win == (Window) NULL) {
         if (e->i != HiddenState) {
@@ -1588,8 +1582,6 @@ static void resizepixmap(wbp w, int width, int height)
 {
     Pixmap p;
     STDLOCALS(w);
-    if (ws->pix == (Pixmap) NULL) 
-        return;
 
     /*printf("resizepixmap from %d,%d to %d,%d\n",ws->pixwidth,ws->pixheight,width,height);*/
 

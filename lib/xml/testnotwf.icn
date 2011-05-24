@@ -10,7 +10,7 @@ import xml, ipl.options, io
 
 procedure main(a)
    local p, s, d, opt
-   p := XmlParser("do_namespaces=f")
+   p := XmlParser().set_do_namespaces(&no)
 
    opt := options(a, "-u!")
    *a = 1 | stop("usage: testnotwf source")

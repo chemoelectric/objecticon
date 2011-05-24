@@ -1,6 +1,6 @@
 package gui
 
-import util, graphics, ipl.graphics(Zoom,bev_lookup), ipl.pdco(Safe)
+import util, graphics, ipl.graphics(Zoom,bev_lookup)
 
 class Paint(Size)
    public defer initially(c, accel)
@@ -203,7 +203,18 @@ class GridPaint(Paint)
                   val := tab(0)
                else
                   val := ""
-               insert(t, key, val)
+               t[key] := case key of {
+                  "tab"|"x"|"y"|"w"|"h"|"l_inset"|"r_inset"|"t_inset"|"b_inset":
+                     integer(val)
+                  "x_align":
+                     val == (Align.L | Align.R | Align.C)
+                  "y_align":
+                     val == (Align.T | Align.B | Align.C)
+                  "eol"|"x_fill"|"y_fill":
+                     if *val = 0 then &yes else flag(val)
+                  "x_weight"|"y_weight":
+                     real(val)
+               }
             }
          }
          curr_cell := g.create_cell(t)
@@ -262,11 +273,12 @@ class GridPaint(Paint)
             else
                val := ""
          }
-         if member(Gui.CONTEXT_WATTRIB_SET, key) & (*val > 0) then
-            Safe{win.attrib(a)}
-         else case key of {
-            "ia_x" : ia_x := (val === (Align.L | Align.R)) | Align.C
-            "ia_y" : ia_y := (val === (Align.T | Align.B)) | Align.C
+         case key of {
+            "fg": win.set_fg(val)
+            "bg": win.set_bg(val)
+            "font": win.set_font(val)
+            "ia_x" : ia_x := (val == (Align.L | Align.R | Align.C))
+            "ia_y" : ia_y := (val == (Align.T | Align.B | Align.C))
          }
       }
    end

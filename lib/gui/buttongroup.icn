@@ -35,6 +35,7 @@ class ButtonGroup()
    public add(c)
       put(self.buttons, c)
       c.set_parent_button_group(self)
+      return self
    end
 
    public new()

@@ -11,7 +11,7 @@ cd ../lib/ipl
 grep -h ^package\ ipl *.icn | sort | uniq | cut -c13- | while read pack ; do
     echo -n "Testing package $pack..."
     # Get a symbol in the package, to avoid an unused import warning
-    proc=$( cat `grep -l "package ipl.${pack}$" *.icn` | grep ^\\\(procedure\\\|record\\\).*\( |  awk '{ print substr($2,0,index($2,"(")-1) }' | head -1)
+    proc=$( cat `grep -l "package ipl.${pack}$" *.icn` | grep ^\\\(procedure\\\|record\\\|class\\\).*\( |  awk '{ print substr($2,0,index($2,"(")-1) }' | head -1)
 
     cat >/tmp/oi_ipl_test.icn <<EOF
 import ipl.$pack

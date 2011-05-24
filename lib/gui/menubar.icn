@@ -38,6 +38,7 @@ class MenuBar(Component)
       /i := 0
       insert(self.menus, i, c)
       c.set_component_link(self)
+      return self
    end
 
    #
@@ -53,6 +54,7 @@ class MenuBar(Component)
    #
    public remove(c)
       remove_index(get_index(c))
+      return self
    end
 
    #
@@ -61,6 +63,7 @@ class MenuBar(Component)
    #
    public remove_index(i)
       delete(self.menus, i)
+      return self
    end
 
    public initially()

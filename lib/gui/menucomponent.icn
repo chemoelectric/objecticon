@@ -62,6 +62,7 @@ class MenuComponent(Rect,Connectable)
       /i := 0
       insert(self.children, i, c)
       c.set_parent(self)
+      return self
    end
 
    #
@@ -77,6 +78,7 @@ class MenuComponent(Rect,Connectable)
    #
    public remove(c)
       remove_index(get_index(c))
+      return self
    end
 
    #
@@ -86,6 +88,7 @@ class MenuComponent(Rect,Connectable)
    public remove_index(i)
       self.children[i].set_parent(&null)
       delete(self.children, i)
+      return self
    end
 
    #
@@ -129,6 +132,7 @@ class MenuComponent(Rect,Connectable)
    public toggle_is_shaded()
       self.is_shaded_flag := toggle_flag(self.is_shaded_flag)
       possibly_invalidate()
+      return self
    end
 
    #

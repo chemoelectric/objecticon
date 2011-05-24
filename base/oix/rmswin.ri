@@ -4,7 +4,6 @@
  */
 
 static wcp           alc_context      (wbp w);
-static wsp           alc_winstate     (void);
 
 static int setpatternbits(wbp w, int width, int height, int *bits);
 static HFONT mkfont              (char *s);
@@ -232,42 +231,9 @@ int mswinsystem(char *s)
 /*
  * wopen
  */
-wbp wcreate(char *display)
+wbp wopen(char *display)
    {
    wbp w;
-   wsp ws;
-
-   if (! winInitialized++) {
-      BORDWIDTH = FRAMEWIDTH * 2;
-      BORDHEIGHT = TITLEHEIGHT + FRAMEHEIGHT * 2;
-      CLIENT_XOFF = FRAMEWIDTH;
-      CLIENT_YOFF = TITLEHEIGHT + FRAMEHEIGHT;
-      GetCPInfo(CP_ACP, &cpinfo);
-      MAXBYTESPERCHAR = cpinfo.MaxCharSize;
-      }
-   /*
-    * allocate a binding, a window state, and a context
-    */
-   w = alcwbinding();
-   w->window = alc_winstate();
-   w->context = alc_context(w);
-   ws = w->window;
-   create_list(64, &ws->listp);
-   ws->width = ws->height = 0;
-   /*
-    * set the title
-    */
-   ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
-
-   return w;
-   }
-
-
-/*
- * wopen
- */
-int wopen(wbp w)
-   {
    wsp ws;
    wcp wc;
    struct imgdata *imd;
@@ -284,7 +250,39 @@ int wopen(wbp w)
    HBITMAP oldpix, oldpix2;
    HFONT oldfont;
 
+   if (! winInitialized++) {
+      BORDWIDTH = FRAMEWIDTH * 2;
+      BORDHEIGHT = TITLEHEIGHT + FRAMEHEIGHT * 2;
+      CLIENT_XOFF = FRAMEWIDTH;
+      CLIENT_YOFF = TITLEHEIGHT + FRAMEHEIGHT;
+      GetCPInfo(CP_ACP, &cpinfo);
+      MAXBYTESPERCHAR = cpinfo.MaxCharSize;
+      }
+   /*
+    * allocate a binding, a window state, and a context
+    */
+   w = alcwbinding();
+
+   GRFX_ALLOC(ws, _wstate);
+   ws->listp = nulldesc;
+   ws->cursorname = salloc("arrow");
+   ws->curcursor = LoadCursor(NULL, IDC_ARROW);
+   ws->minwidth = ws->minheight = 1;
+   ws->maxwidth = ws->maxheight = INT_MAX;
+   /*SETTITLEBAR(ws);*/
+   GRFX_LINK(ws, wstates);
+
+   w->window = ws;
+   w->context = alc_context(w);
    ws = w->window;
+   create_list(64, &ws->listp);
+   ws->width = ws->height = 1;
+   /*
+    * set the title
+    */
+   ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
+   SETTOBEHIDDEN(ws);
+
    wc = w->context;
 
    if (ws->x < 0) ws->x = 0;
@@ -366,15 +364,9 @@ int wopen(wbp w)
       }
    ws->pixwidth = ws->width;
    ws->pixheight = ws->height;
+   ws->win = 0;
 
-
-   if (!ISTOBEHIDDEN(ws)) {
-      ws->win = ws->iconwin;
-      ShowWindow(ws->win, ncmdShow);
-      }
-   else ws->win = 0;
-
-   BringWindowToTop(ws->win);
+   /*BringWindowToTop(ws->win);*/
    /*
     * initialize the image with the background color
     */
@@ -391,8 +383,6 @@ int wopen(wbp w)
       RealizePalette(hdc2);
    }
    brush = CreateBrushIndirect(&(wc->bgbrush));
-   if (ws->win)
-      FillRect(hdc, &rec, brush);
    FillRect(hdc2, &rec, brush);
    DeleteObject(brush);
    SelectObject(hdc2, oldpix);
@@ -404,9 +394,6 @@ int wopen(wbp w)
       drawimgdata(w, 0, 0, imd);
       freeimgdata(imd);
    }
-
-   if (ws->win)
-      UpdateWindow(ws->win);
 
    return Succeeded;
    }
@@ -2057,24 +2044,6 @@ wbp w;
    return wc;
    }
 
-/*
- * allocate a window state structure
- */
-static wsp alc_winstate()
-   {
-   int i;
-   wsp ws;
-   
-   GRFX_ALLOC(ws, _wstate);
-   ws->listp = nulldesc;
-   ws->cursorname = salloc("arrow");
-   ws->curcursor = LoadCursor(NULL, IDC_ARROW);
-   ws->minwidth = ws->minheight = 1;
-   ws->maxwidth = ws->maxheight = INT_MAX;
-   /*SETTITLEBAR(ws);*/
-   GRFX_LINK(ws, wstates);
-   return ws;
-   }
 
 /*
  * free a window state

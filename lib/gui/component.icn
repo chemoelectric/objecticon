@@ -1055,6 +1055,7 @@ class Component(Rect,Align,Connectable)
          compute_z_order()
          compute_tab_order()
       }
+      return self
    end
 
    #
@@ -1070,6 +1071,7 @@ class Component(Rect,Align,Connectable)
    #
    public remove(c)
       remove_index(get_index(c))
+      return self
    end
 
    #
@@ -1083,6 +1085,7 @@ class Component(Rect,Align,Connectable)
          compute_z_order()
          compute_tab_order()
       }
+      return self
    end
 
    #

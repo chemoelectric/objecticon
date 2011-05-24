@@ -297,10 +297,10 @@ class Source2(Source)
       c.add_action("Tooltip", FixTooltipAction())
       c.add_extra(FixDefaultDimensionsAction())
       c.add_extra(FixAttribsAction())
+      c.add_extra(FixConstraintsAction())
       c.add_extra(FixEventsAction())
       c.add_extra(AddMissingKeyAction("Z", 0))
       c.add_extra(AddMissingKeyAction("Tab ord", 0))
-      c.add_extra(AddMissingKeyAction("Constraints", table()))
       return c
    end
 
@@ -402,8 +402,11 @@ class Source2(Source)
       c.add_action("Label", StringToPaintAction("Paint"))
       cs.add(c)
 
-      c := createcc_converter("CanvasToolBar", "CanvasBorder")
-      cs.add(c)
+      cs.add(createcc_converter("CanvasToolBar", "CanvasBorder"))
+      cs.add(createcc_converter("CanvasSplit"))
+      cs.add(createcc_converter("CanvasSplitContent"))
+      cs.add(createcc_converter("CanvasLine"))
+      cs.add(createcc_converter("CanvasTextDisplay"))
 
       return cs
    end
@@ -1210,6 +1213,18 @@ class FixDefaultDimensionsAction(Action)
    end
 end
 
+
+class FixConstraintsAction(Action)
+   public apply(decode, proxy)
+      local t, s
+      t := proxy.get("Constraints")
+      /t := table()
+      # Empty strings for these meant "on"
+      every s := "eol"|"x_fill"|"y_fill" do
+         if t[s] === "" then t[s] := &yes
+      proxy.add("Constraints", normalize_constraints(t))
+   end
+end
 
 class FixAttribsAction(Action)
    private fixone(t, oldk, newk)

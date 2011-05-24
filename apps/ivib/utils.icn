@@ -20,7 +20,7 @@ procedure is_image_file(s)
 end
 
 #
-# Check that the window attributes in list l are valid.
+# Check that the window attributes are valid.
 #
 procedure util_check_attribs(dialog, t, valid_set)
    local s
@@ -35,10 +35,10 @@ procedure util_check_attribs(dialog, t, valid_set)
 end
 
 procedure stringify_wattrib(key, val, quote)
-   return if type(val) == "list" then list2str(val) 
+   return if type(val) == "list" then list2str(val, ", ") 
       else if key == "resize" then if \val then "&yes" else "&no"
       else if type(val) == "integer" then string(val)
-      else if /quote then string(val) else txt_image(val)
+      else if /quote then text(val) else image(text(val))
 end
 
 procedure stringify_wattribs(t)
@@ -101,11 +101,12 @@ procedure alert_error(d, a)
    InfoDialog(a, "Information", "Okay").show_modal(d)
 end
 
-procedure txt_image(s)
+# Don't use ucs for a string unless needed.
+procedure best_text(s)
    if ord(s) > 127 then
-      return image(s)
+      return s
    else
-      return image(string(s))
+      return string(s)
 end
 
 procedure try_list(val, len)
@@ -143,8 +144,69 @@ procedure normalize_wattrib(key, val)
          "min_height"|"max_width"|"max_height":
          return integer(val)
 
-      "image"|"pointer"|"label"|"fg"|"bg"|"draw_op"|"icon"|"font"|
+      "image"|"pointer"|"fg"|"bg"|"draw_op"|"icon"|"font"|"label"|
          "line_style"|"fill_style"|"pattern"|"input_mask": 
-         return val
+         return best_text(val)
    }
+end
+
+procedure normalize_constraints(t)
+   local e, r
+   r := table()
+   every e := !sort(t) do
+      insert(r, e[1], normalize_constraint(e[1], e[2]))
+   return r
+end
+
+procedure normalize_constraint(key, val)
+   case key of {
+      "tab"|"x"|"y"|"w"|"h"|"l_inset"|"r_inset"|"t_inset"|"b_inset":
+         return integer(val)
+      "x_align":
+         return (string(val) == (Align.L | Align.R | Align.C))
+      "y_align":
+         return (string(val) == (Align.T | Align.B | Align.C))
+      "eol"|"x_fill"|"y_fill":
+         return flag(val)
+      "x_weight"|"y_weight":
+         return real(val)
+      default:
+         return best_text(val)
+   }
+end
+
+procedure stringify_constraint(key, val, quote)
+   case key of {
+      "tab"|"x"|"y"|"w"|"h"|"l_inset"|"r_inset"|"t_inset"|"b_inset":
+         return string(val)
+      "x_align"|"y_align":
+         return if /quote then val else image(val)
+      "eol"|"x_fill"|"y_fill":
+         return if \val then "&yes" else "&no"
+      "x_weight"|"y_weight":
+         return string(val)
+      default:
+         return if /quote then text(val) else image(text(val))
+   }
+end
+
+procedure stringify_constraints(t)
+   local e, r
+   r := table()
+   every e := !sort(t) do
+      insert(r, e[1], stringify_constraint(e[1], e[2]))
+   return r
+end
+
+#
+# Check that the window attributes are valid.
+#
+procedure util_check_constraints(dialog, t)
+   local s
+   # Check for attrib names
+   every s := !sort(t) do {
+      if not normalize_constraint(s[1], s[2]) then
+         return alert_error(dialog, "Invalid value " || s[2] || " for constraint " || s[1])
+   }
+   return
 end

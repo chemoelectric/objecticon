@@ -330,34 +330,8 @@ class HtmlOutputter(Outputter)
    end
 
    private html_fields(f, c, key, vals)
-      local name, l, type
+      local name, l
       case key of {
-         "field" : {
-            write(f, "<dt>Constructor fields :</dt>")
-            every l := !vals do {
-               l[1] ? {
-                  if name := trim(tab(upto('=')), WHITESPACE) then {
-                     ="="
-                     type := trim(tab(upto(':') | 0), WHITESPACE)
-                     =":"
-                     tab(many(WHITESPACE))
-                     l[1] := tab(0)
-                     writes(f, "<dd>")
-                     if *type > 0 then 
-                        write(f, html_unbracket(name, c), "=<i>", html_unbracket(type, c), "</i> - ")
-                     else
-                        write(f, html_unbracket(name, c), " - ")
-                     every write(f, html_unbracket(!l, c))
-                     write(f, "</dd>")
-                  } else {
-                     writes(f, "<dd>")
-                     every write(f, html_unbracket(!l, c))
-                     write(f, "</dd>")
-                  }
-               }
-            }
-         }
-
          "param" : {
             write(f, "<dt>Parameters :</dt>")
             every l := !vals do {

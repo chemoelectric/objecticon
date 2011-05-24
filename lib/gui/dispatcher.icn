@@ -26,8 +26,9 @@ class Dispatcher()
       BLOCKED_QUIET
 
    private static init()
-      BLOCKED_ALLOW := Selection.EVENTS ++ set(Window.INVOKE_LATER, Window.RESIZE)
-      BLOCKED_QUIET := Mouse.DRAG_OR_MOVEMENT ++ Mouse.CROSSING ++ set(Mouse.RELEASE)
+      BLOCKED_ALLOW := Selection.EVENTS ++ 
+         set(Window.INVOKE_LATER, Window.RESIZE, Mouse.MOVEMENT) ++ Mouse.CROSSING
+      BLOCKED_QUIET := set(Mouse.RELEASE)
       dialogs := set()
       scheduler := Scheduler(Gui.IDLE_SLEEP)
    end
@@ -92,23 +93,17 @@ class Dispatcher()
    end
 
    public static do_event()
-      local d, bag, e
+      local d, bag, l
       every d := !dialogs do {
-         if *d.win.pending() > 0 then {
+         l := d.win.pending()
+         if *l > 0 then {
             /bag := []
-            if /d.is_blocked_flag then
+            if /d.is_blocked_flag | member(BLOCKED_ALLOW, l[1]) then
                put(bag, d)
             else {
-               while *d.win.pending() > 0 do {
-                  #
-                  # Process selection events; discard others and beep in the window.
-                  # 
-                  e := d.win.event()
-                  if member(BLOCKED_ALLOW, e[1]) then
-                     d.process_event(e)
-                  else
-                     member(BLOCKED_QUIET, e[1]) | d.win.alert()
-               }
+               # Discard and maybe beep in the window.
+               member(BLOCKED_QUIET, l[1]) | d.win.alert()
+               d.win.event()
             }
          }
       }
