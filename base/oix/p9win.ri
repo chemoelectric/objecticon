@@ -9,7 +9,6 @@ static int read_screeninfo(wsp ws, int *mx, int *my, int *sx, int *sy, int *sw, 
 static int open_winfile(wsp ws, char *s, int mode);
 static struct FontInfo *match_font(char *s);
 static void load_font_info(void);
-static wcp alccontext(wbp w);
 static wfp alcfont(wbp w, char **s);
 static void synch_pattern_image(struct SharedPattern *pat, int fg_rgb, int bg_rgb, int style);
 static void mouse_loop(int in_fd, int out_fd);
@@ -294,6 +293,7 @@ wbp wopen(char *display)
 {
     wbp w;
     wsp ws;
+    wcp wc;
     struct imgdata *imd;
 
     if (!inited) {
@@ -330,7 +330,18 @@ wbp wopen(char *display)
             return 0;
         }
     }
-    w->context = alccontext(w);
+
+    GRFX_ALLOC(wc, _wcontext);
+    wc->clipx = wc->clipy = 0;
+    wc->clipw = wc->cliph = -1;
+    wc->fg = link_sharedcolor(black);
+    wc->bg = link_sharedcolor(white);
+    wc->pattern = link_sharedpattern(black_pattern);
+    wc->font = default_font;
+    wc->fillstyle = stringint_lookup(fillstyles, "solid");
+    GRFX_LINK(wc, wcntxts);
+
+    w->context = wc;
     create_list(64, &ws->listp);
 
     open_pix_win(ws);
@@ -2057,21 +2068,6 @@ wcp clonecontext(wbp w)
 }
 
 static int black_pattern_data[] =  {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-
-static wcp alccontext(wbp w)
-{
-    wcp wc;
-    GRFX_ALLOC(wc, _wcontext);
-    wc->clipx = wc->clipy = 0;
-    wc->clipw = wc->cliph = -1;
-    wc->fg = link_sharedcolor(black);
-    wc->bg = link_sharedcolor(white);
-    wc->pattern = link_sharedpattern(black_pattern);
-    wc->font = default_font;
-    wc->fillstyle = stringint_lookup(fillstyles, "solid");
-    GRFX_LINK(wc, wcntxts);
-    return wc;
-}
 
 static char Ebad[] = "something bad happened";
 
