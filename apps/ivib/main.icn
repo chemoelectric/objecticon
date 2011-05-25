@@ -243,11 +243,8 @@ class Main(Dialog)
          s := ucs(self.args[1]) | return alert_error(self, "Invalid (non-utf8) filename")
          if Files.access(s, Access.R_OK) then {
             c := load_canvas(s) | fail
-            c.set_parent_dialog(self)
             c.set_pos(Canvas.SURROUND, Canvas.SURROUND)
             c.clear_selections()
-            # Ensure all canvas fields set (may not be for older versions).
-            every c.gen_cos().change_canvas(c)
             self.undo_to(c)
          } else {
             #
@@ -267,6 +264,30 @@ class Main(Dialog)
    end
 
    #
+   # Load fname and show output to stdout.
+   #         
+   public test(fname)
+      local s, c, code
+      s := ucs(fname) | return alert_error(self, "Invalid (non-utf8) filename")
+      Files.access(s, Access.R_OK) | return alert_error(self, "Couldn't open " || s)
+      c := load_canvas(s) | fail
+      code := c.gen_code()
+      code.interpose_code(s, FileStream.stdout)
+   end
+
+   #
+   # Load fname and save it again.
+   #         
+   public load_and_save(fname)
+      local s, c, code
+      s := ucs(fname) | return alert_error(self, "Invalid (non-utf8) filename")
+      Files.access(s, Access.R_OK) | return alert_error(self, "Couldn't open " || s)
+      c := load_canvas(s) | fail
+      code := c.gen_code()
+      code.interpose_code(s, s)
+   end
+
+   #
    # Load a layout.
    #
    public load_canvas(fname)
@@ -277,22 +298,26 @@ class Main(Dialog)
       s := src.migrate() | return alert_error(self, "Couldn't migrate " || fname)
       c := lang.decode(s) | return alert_error(self, "Couldn't decode " || fname)
       c.layout_filename := l.lname
-      if src.version > 1 then
-         return c
-
-      d := InfoDialog(["Ivib v1 file successfully loaded.",
-                       "",
-                       "NB - some manual editing may be needed after",
-                       "the file is next saved."],
-                       "Ivib v1 import",
-                       "Close",
-                       "c")
-      #
-      # The canvas is set as modified - so that the v2 changes can
-      # simply be saved.
-      #
-      c.modified := 1
-      d.show_modal(self)
+      if src.version = 1 then {
+         d := InfoDialog(["Ivib v1 file successfully loaded.",
+                          "",
+                          "NB - some manual editing may be needed after",
+                          "the file is next saved."],
+                          "Ivib v1 import",
+                          "Close",
+                          "c")
+         #
+         # The canvas is set as modified - so that the v2 changes can
+         # simply be saved.
+         #
+         c.modified := 1
+         d.show_modal(self)
+      }
+      c.set_parent_dialog(self)
+      # Ensure all canvas fields set (may not be for older versions).
+      every c.gen_cos().change_canvas(c)
+      # Ensure all names are unique
+      c.ensure_all_names_unique()
       return c
    end
 
@@ -661,7 +686,7 @@ class Main(Dialog)
             return
          }
          c := self.canvas.gen_code()
-         c.interpose_code(self.canvas.filename) | fail
+         c.interpose_code(self.canvas.filename, self.canvas.filename) | fail
          self.canvas.clear_modified()
          self.info_label.set_label("Wrote " || self.canvas.filename)
          #

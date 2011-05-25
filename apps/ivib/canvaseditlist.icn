@@ -27,15 +27,15 @@ class CanvasEditList(CanvasComponent,EditList)
 
       s := self.get_contents()
       t := \self.selection | 1
-      c.line(name || ".set_selection_list(" || contents_string(self.selection_list) || ")")
+      c.chain("set_selection_list(" || contents_string(self.selection_list) || ")")
 
       if s ~== self.selection_list[t] then
-         c.line(name || ".set_contents(" || image(s) || ")")
+         c.chain("set_contents(" || image(s) || ")")
       else if t ~= 1 then
-         c.line(name || ".set_selection(" || self.selection || ")")
+         c.chain("set_selection(" || self.selection || ")")
 
       if *\filter_str > 0 then
-         c.line(name || ".set_filter(" || image(cset(self.filter_str)) || ")")
+         c.chain("set_filter(" || image(cset(self.filter_str)) || ")")
    end
 
    #

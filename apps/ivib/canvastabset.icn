@@ -18,20 +18,16 @@ class CanvasTabSet(CanvasComponent,TabSet)
    # Generate code into Code object c.
    #
    public gen_code(c)
-      local i
+      every (!self.children).gen_code(c)
       cast(self,CanvasComponent).gen_code(c)
-      every i := !self.children do {
-         i.gen_code(c)
-         c.line(self.name || ".add(" || i.name || ")")
-      }
       if \self.no_click_focus_flag then
-         c.line(name || ".set_no_click_focus(&yes)")
+         c.chain("set_no_click_focus(&yes)")
       if \self.prefer_one_row_flag then
-         c.line(name || ".set_prefer_one_row(&yes)")
+         c.chain("set_prefer_one_row(&yes)")
       if \self.tabs_at_bottom_flag then
-         c.line(name || ".set_tabs_at_bottom(&yes)")
-
-      c.line(self.name || ".set_which_one(" || self.which_one.name || ")")
+         c.chain("set_tabs_at_bottom(&yes)")
+      c.chain("add(" || (!self.children).name || ")")
+      c.chain("set_which_one(" || self.which_one.name || ")")
    end
 
    #

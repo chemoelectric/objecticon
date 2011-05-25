@@ -19,10 +19,10 @@ class CanvasImage(CanvasComponent,Image)
    #
    public gen_code(c)
       cast(self,CanvasComponent).gen_code(c)
-      c.line(name || ".set_image(" || image(\self.image_str) || ")")
-      c.line(name || ".set_cache(" || image(\self.image_cache) || ")")
+      c.chain("set_image(" || image(\self.image_str) || ")")
+      c.chain("set_cache(" || image(\self.image_cache) || ")")
       if \self.scale_up_flag then
-         c.line(name || ".set_scale_up(&yes)")
+         c.chain("set_scale_up(&yes)")
    end
 
    #

@@ -30,9 +30,9 @@ class CanvasCheckBox(CanvasButton,CheckBox)
    # Generate code into Code object c.
    #
    public gen_code(c)
-      cast(self,CanvasButton).gen_code(c)
       self.paint.gen_code(c)
-      c.line(name || ".set_paint(" || self.paint.name || ")")
+      cast(self,CanvasButton).gen_code(c)
+      c.chain("set_paint(" || self.paint.name || ")")
    end
 
    #

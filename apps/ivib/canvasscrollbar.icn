@@ -19,16 +19,16 @@ class CanvasScrollBar(CanvasComponent,ScrollBar)
    #
    public gen_code(c)
       cast(self,CanvasComponent).gen_code(c)
-      c.line(name || ".set_value(" || self.value || ")")
-      c.line(name || ".set_increment_size(" || self.increment_size || ")")
+      c.chain("set_value(" || self.value || ")")
+      c.chain("set_increment_size(" || self.increment_size || ")")
       if \self.is_range_flag then
-         c.line(name || ".set_range(" || self.lo || ", " || self.hi || ")")
+         c.chain("set_range(" || self.lo || ", " || self.hi || ")")
       else {
-         c.line(name || ".set_total_size(" || self.total_size || ")")
-         c.line(name || ".set_page_size(" || self.page_size || ")")
+         c.chain("set_total_size(" || self.total_size || ")")
+         c.chain("set_page_size(" || self.page_size || ")")
       }
       if \self.is_horizontal_flag then
-         c.line(name || ".set_is_horizontal(&yes)")
+         c.chain("set_is_horizontal(&yes)")
    end
 
    #

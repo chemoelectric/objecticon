@@ -17,20 +17,17 @@ class CanvasOverlayItem(CanvasComponent,OverlayItem)
    # Generate code into Code object c.
    #
    public gen_code(c)
-      local i, e
+      local e
+      (\self.layout_delegate).gen_code(c)
+      every (!self.children).gen_code(c)
       c.add_var(self.name, class_variable)
       c.add_import(self.import_name, self.class_name)
       c.line(name || " := " || self.class_name || "()")
       every e := !sort(self.wattribs) do
-         c.wattrib_line(name, e[1], e[2])
-      if \self.layout_delegate then {
-         self.layout_delegate.gen_code(c)
-         c.line(name || ".set_layout(" || self.layout_delegate.name || ")")
-      }
-      every i := !self.children do {
-         i.gen_code(c)
-         c.line(self.name || ".add(" || i.name || ")")
-      }
+         c.wattrib_line(e[1], e[2])
+      if \self.layout_delegate then
+         c.chain("set_layout(" || self.layout_delegate.name || ")")
+      every c.chain("add(" || (!self.children).name || ")")
    end
 
    #

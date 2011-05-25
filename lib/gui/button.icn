@@ -173,7 +173,7 @@ class Button(Toggle,Component)
    end
 
    public accepts_focus(e)
-      if e.code === Mouse.LEFT_PRESS & \self.no_click_focus_flag then
+      if (\e).code === Mouse.LEFT_PRESS & \self.no_click_focus_flag then
          fail
       return cast(self,Component).accepts_focus(e)
    end

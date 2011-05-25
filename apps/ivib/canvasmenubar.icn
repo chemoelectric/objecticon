@@ -21,12 +21,9 @@ class CanvasMenuBar(CanvasComponent,MenuBar)
    # Generate code into Code object c.
    #
    public gen_code(c)
-      local i
+      every (!self.menus).gen_code(c)
       cast(self,CanvasComponent).gen_code(c)
-      every i := !self.menus do {
-         i.gen_code(c)
-         c.line(self.name || ".add(" || i.name || ")")
-      }
+      every c.chain("add(" || (!self.menus).name || ")")
    end
 
    #

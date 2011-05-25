@@ -19,15 +19,15 @@ class CanvasBorder(CanvasComponent,Border)
    # Generate code into Code object c.
    #
    public gen_code(c)
+      if \self.title then
+         self.title.gen_code(c)
+      self.content.gen_code(c)
       cast(self,CanvasComponent).gen_code(c)
       if self.internal_align ~== Align.L then
-         c.line(name || ".set_internal_align(" || image(self.internal_align) || ")")
-      if \self.title then {
-         self.title.gen_code(c)
-         c.line(self.name || ".set_title(" || self.title.name || ")")
-      }
-      self.content.gen_code(c)
-      c.line(self.name || ".set_content(" || self.content.name || ")")
+         c.chain("set_internal_align(" || align_str(self.internal_align) || ")")
+      if \self.title then
+         c.chain("set_title(" || self.title.name || ")")
+      c.chain("set_content(" || self.content.name || ")")
    end
 
    public post_decode()
@@ -180,12 +180,9 @@ class CanvasBorderContent(CanvasComponent,Component)
    # Generate code into Code object c.
    #
    public gen_code(c)
-      local i
+      every (!self.children).gen_code(c)
       cast(self,CanvasComponent).gen_code(c)
-      every i := !self.children do {
-         i.gen_code(c)
-         c.line(self.name || ".add(" || i.name || ")")
-      }
+      every c.chain("add(" || (!self.children).name || ")")
    end
 
    #

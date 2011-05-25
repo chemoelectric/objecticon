@@ -18,21 +18,22 @@ class CanvasMenuComponent(CanvasObject)
    # Generate code into Code object c.
    #
    public gen_code(c)
+      if \self.tooltip then
+         self.tooltip.gen_code(c)
+
       c.line(name || " := " || self.class_name || "()")
 
       if \self.is_shaded_flag then
-         c.line(name || ".set_is_shaded(&yes)")
+         c.chain("set_is_shaded(&yes)")
 
-      if \self.tooltip then {
-         self.tooltip.gen_code(c)
-         c.line(name || ".set_tooltip(" || self.tooltip.name || ")")
-      }
+      if \self.tooltip then
+         c.chain("set_tooltip(" || self.tooltip.name || ")")
 
       if \self.accel then
-         c.line(name || ".set_accel(" || image(self.accel) || ")")
+         c.chain("set_accel(" || image(self.accel) || ")")
 
       if \self.event_method then {
-         c.line(name || ".connect(" || self.event_method || ", Event.ACTION)")
+         c.chain("connect(" || self.event_method || ", Event.ACTION)")
          c.add_method("private", self.event_method, ["ev"])
          c.add_import("gui", "Event")
       }

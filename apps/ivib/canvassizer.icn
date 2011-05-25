@@ -35,12 +35,12 @@ class CanvasSizer(CanvasComponent,Sizer)
       local s
       cast(self,CanvasComponent).gen_code(c)
       if \self.lo | \self.hi then {
-         s := name || ".set_range(" || (\self.lo|"&null") || ", " ||
+         s := "set_range(" || (\self.lo|"&null") || ", " ||
             (\self.hi|"&null") || ")" 
-         c.line(s)
+         c.chain(s)
       }
       if \self.is_horizontal_flag then
-         c.line(name || ".set_is_horizontal(&yes)")
+         c.chain("set_is_horizontal(&yes)")
    end
 
    #

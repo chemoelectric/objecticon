@@ -13,22 +13,22 @@ class CanvasSplit(CanvasComponent,Split)
    # Generate code into Code object c.
    #
    public gen_code(c)
-      cast(self,CanvasComponent).gen_code(c)
       self.first.gen_code(c)
       self.second.gen_code(c)
+      cast(self,CanvasComponent).gen_code(c)
       if /self.sizer.is_horizontal_flag then {
-         c.line(self.name || ".set_left(" || self.first.name || ")")
-         c.line(self.name || ".set_right(" || self.second.name || ")")
+         c.chain("set_left(" || self.first.name || ")")
+         c.chain("set_right(" || self.second.name || ")")
       } else {
-         c.line(self.name || ".set_top(" || self.first.name || ")")
-         c.line(self.name || ".set_bottom(" || self.second.name || ")")
+         c.chain("set_top(" || self.first.name || ")")
+         c.chain("set_bottom(" || self.second.name || ")")
       }
       if (self.min_first | self.min_second) ~= 0 then
-         c.line(self.name || ".set_min(" || self.min_first || ", " || self.min_second || ")")
+         c.chain("set_min(" || self.min_first || ", " || self.min_second || ")")
       if self.weight ~= 0 then
-         c.line(self.name || ".set_weight(" || self.weight || ")")
+         c.chain("set_weight(" || self.weight || ")")
       if \self.sizer.show_inter_flag then
-         c.line(self.name || ".set_show_inter(&yes)")
+         c.chain("set_show_inter(&yes)")
    end
 
    #
@@ -157,12 +157,9 @@ class CanvasSplitContent(CanvasComponent,Component)
    # Generate code into Code object c.
    #
    public gen_code(c)
-      local i
+      every (!self.children).gen_code(c)
       cast(self,CanvasComponent).gen_code(c)
-      every i := !self.children do {
-         i.gen_code(c)
-         c.line(self.name || ".add(" || i.name || ")")
-      }
+      every c.chain("add(" || (!self.children).name || ")")
    end
 
    #

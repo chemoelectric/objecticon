@@ -17,13 +17,12 @@ class CanvasIconButton(CanvasButton,IconButton)
    # Generate code into Code object c.
    #
    public gen_code(c)
-      cast(self,CanvasButton).gen_code(c)
       self.paint.gen_code(c)
-      c.line(name || ".set_paint(" || self.paint.name || ")")
-      if \self.paint_down then {
-         self.paint_down.gen_code(c)
-         c.line(name || ".set_paint_down(" || self.paint_down.name || ")")
-      }
+      (\self.paint_down).gen_code(c)
+      cast(self,CanvasButton).gen_code(c)
+      c.chain("set_paint(" || self.paint.name || ")")
+      if \self.paint_down then
+         c.chain("set_paint_down(" || self.paint_down.name || ")")
    end
 
    #
