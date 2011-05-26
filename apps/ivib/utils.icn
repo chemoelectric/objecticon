@@ -197,12 +197,12 @@ procedure select_str(val)
    }
 end
 
-procedure stringify_constraint(key, val, quote)
+procedure stringify_constraint(key, val, quote, c)
    case key of {
       "tab"|"x"|"y"|"w"|"h"|"l_inset"|"r_inset"|"t_inset"|"b_inset":
          return string(val)
       "x_align"|"y_align":
-         return if /quote then val else align_str(val)
+         return if /quote then val else if /c then align_str(val) else c.align_str(val)
       "eol"|"x_fill"|"y_fill":
          return if \val then "&yes" else "&no"
       "x_weight"|"y_weight":

@@ -887,17 +887,17 @@ class Canvas(Component,SelectiveObjectCodec)
       #
       every i := !self.children do {
          i.gen_code(c)
-         c.line("add(" || i.name || ")")
+         c.line("self.add(" || i.name || ")")
       }
 
       c.add_self_event_handlers(\self.event_handlers)
 
       if \self.layout_delegate then {
          self.layout_delegate.gen_code(c)
-         c.line("set_layout(" || self.layout_delegate.name || ")")
+         c.line("self.set_layout(" || self.layout_delegate.name || ")")
       }
 
-      c.line("set_focus(" || (\self.parent_Canvas.initial_focus).name || ".find_focus())")
+      c.line("self.set_focus(" || (\self.parent_Canvas.initial_focus).name || ".find_focus())")
 
       every (!self.button_groups).gen_code(c)
       every (!self.checkbox_groups).gen_code(c)
