@@ -822,6 +822,26 @@ class Canvas(Component,SelectiveObjectCodec)
       invalidate()
    end
 
+   public ensure_all_names_unique()
+      local o, seen, cn, i
+      seen := set()
+      every o := Seq{gen_cos().traverse_tree()} do {
+         cn := o.get_name()
+         if member(seen, cn) then {
+            while any(&digits ++ "_", cn[-1]) do
+               cn[-1] := ""
+            cn ||:= "_"
+            i := 1
+            while member(seen, cn || i) do
+               i +:= 1
+            cn ||:= i
+            #write("renamed ", o.get_name(), "->", cn)
+            o.set_name(cn)
+         }
+         insert(seen, cn)
+      }
+   end
+
    #
    # Get a unique name based on the given root.
    #
@@ -862,9 +882,6 @@ class Canvas(Component,SelectiveObjectCodec)
       c := Code()
       c.set_parent_Canvas(self)
 
-      every (!self.button_groups).gen_code(c)
-      every (!self.checkbox_groups).gen_code(c)
-
       #
       # Generate code for all the items.
       #
@@ -873,12 +890,17 @@ class Canvas(Component,SelectiveObjectCodec)
          c.line("self.add(" || i.name || ")")
       }
 
-      c.add_event_handlers("self", \self.event_handlers)
+      c.add_self_event_handlers(\self.event_handlers)
 
       if \self.layout_delegate then {
          self.layout_delegate.gen_code(c)
          c.line("self.set_layout(" || self.layout_delegate.name || ")")
       }
+
+      c.line("self.set_focus(" || (\self.parent_Canvas.initial_focus).name || ".find_focus())")
+
+      every (!self.button_groups).gen_code(c)
+      every (!self.checkbox_groups).gen_code(c)
 
       c.add_import(self.import_name, self.superclass_name)
 

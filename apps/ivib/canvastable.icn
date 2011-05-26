@@ -36,20 +36,12 @@ class CanvasTable(CanvasComponent,Table)
    # Generate code into Code object c.
    #
    public gen_code(c)
-      local i
+      every (!self.get_columns()).gen_code(c)
       cast(self,CanvasComponent).gen_code(c)
-      case self.select_mode of {
-         Select.NONE : c.line(self.name || ".set_select_mode(Select.NONE)")
-         Select.ONE : c.line(self.name || ".set_select_mode(Select.ONE)")
-         Select.MANY : c.line(self.name || ".set_select_mode(Select.MANY)")
-      }
+      c.chain("set_select_mode(" || c.select_str(self.select_mode) || ")")
       c.add_import("gui", "Select")
-      c.line(self.name || ".set_contents([])")
-
-      every i := !self.get_columns() do {
-         i.gen_code(c)
-         c.line(self.name || ".add_column(" || i.name || ")")
-      }
+      c.chain("set_contents([])")
+      every c.chain("add_column(" || (!self.get_columns()).name || ")")
    end
 
    #
@@ -76,7 +68,7 @@ class CanvasTable(CanvasComponent,Table)
 
    public add_column(c)
       c.parent_Canvas := self.parent_Canvas
-      cast(self,Table).add_column(c)
+      return cast(self,Table).add_column(c)
    end
 
    #

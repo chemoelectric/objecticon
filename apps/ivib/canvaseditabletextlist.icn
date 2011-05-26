@@ -33,11 +33,11 @@ class CanvasEditableTextList(CanvasComponent,EditableTextList)
    #
    public gen_code(c)
       cast(self,CanvasComponent).gen_code(c)
-      c.line(name || ".set_contents(" || contents_string(self.contents) || ")")
+      c.chain("set_contents(" || contents_string(self.contents) || ")")
       if /self.is_editable_flag then
-         c.line(name || ".set_is_editable(&no)")
+         c.chain("set_is_editable(&no)")
       if /self.move_on_rpress_flag then
-         c.line(name || ".set_move_on_rpress(&no)")
+         c.chain("set_move_on_rpress(&no)")
    end
 
    #

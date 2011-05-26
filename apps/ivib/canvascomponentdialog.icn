@@ -344,6 +344,8 @@ class CanvasComponentDialog(Dialog)
       if \constraint_tab then
          util_check_constraints(self, constraint_tab.get_table()) | fail
 
+      code_tab.validate_input() | fail
+
       if \pos_tab then {
          if x_spec_list.is_unshaded() then
             parse_pos(0, x_spec_list.get_contents()) | return alert_error(self, "Invalid x specification")

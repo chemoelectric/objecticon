@@ -375,11 +375,13 @@ class TabSet(Component)
    end
 
    public accepts_focus(e)
-      if e.code === Mouse.LEFT_PRESS & \self.no_click_focus_flag then
-         fail
-      # Outside of tabs never gives focus.
-      if member(Mouse.PRESS, e.code) & not self.in_tab_region(e) then
-         fail
+      if \e then {
+         if e.code === Mouse.LEFT_PRESS & \self.no_click_focus_flag then
+            fail
+         # Outside of tabs never gives focus.
+         if member(Mouse.PRESS, e.code) & not self.in_tab_region(e) then
+            fail
+      }
       return cast(self,Component).accepts_focus(e)
    end
 

@@ -18,12 +18,9 @@ class CanvasPanel(CanvasComponent,Panel)
    # Generate code into Code object c.
    #
    public gen_code(c)
-      local i
+      every (!self.children).gen_code(c)
       cast(self,CanvasComponent).gen_code(c)
-      every i := !self.children do {
-         i.gen_code(c)
-         c.line(self.name || ".add(" || i.name || ")")
-      }
+      every c.chain("add(" || (!self.children).name || ")")
    end
 
    #

@@ -156,6 +156,12 @@ class Table(Component)
    head_h,
    no_more_sizing
 
+   public initially()
+      if *table_header.children = 0 then
+         runerr("no TableColumns in Table")
+      cast(self,Component).initially()
+   end
+
    #
    # Return the nth {TableColumn}.
    #

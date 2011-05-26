@@ -14,6 +14,19 @@ import gui, ipl.pdco
 # Class to represent a ButtonGroup on the canvas.
 #
 class CanvasButtonGroup(CanvasObject,ButtonGroup)
+   #
+   # Generate code into Code object c.
+   #
+   public gen_code(c)
+      local e
+      #
+      # Extend superclass method
+      #
+      cast(self,CanvasObject).gen_code(c)
+      every e := !get_members() do
+         c.chain("add(" || e.name || ")")
+   end
+
    public dup()
       local c
       c := CanvasButtonGroup()

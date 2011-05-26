@@ -34,7 +34,7 @@ class CanvasLine(CanvasComponent,Line)
    public gen_code(c)
       cast(self,CanvasComponent).gen_code(c)
       if /self.is_horizontal_flag then
-         c.line(name || ".set_is_horizontal(&no)")
+         c.chain("set_is_horizontal(&no)")
    end
 
    #

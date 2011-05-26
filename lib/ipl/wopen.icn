@@ -82,9 +82,18 @@ procedure WQuit(win)
    fail
 end
 
+#
+# Get the next event from {win}, waiting if necessary
+#
+procedure WEvent(win)
+   local e
+   until e := win.event() do
+      delay(50)
+   return e
+end
 
 procedure WDone(win)
-   until win.event()[1] === QuitEvents()
+   until WEvent(win)[1] === QuitEvents()
    exit()
 end
 

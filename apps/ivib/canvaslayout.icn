@@ -40,9 +40,9 @@ class CanvasGridLayout(CanvasLayout,GridLayout)
    public doi_val, dii_val
    public gen_code(c)
       cast(self,CanvasLayout).gen_code(c)
-      c.line(name || ".set_doi(" || \self.doi_val || ")")
-      c.line(name || ".set_dii(" || \self.dii_val || ")")
-      c.line(name || ".set_extra(" || image(self.extra) || ")")
+      c.chain("set_doi(" || \self.doi_val || ")")
+      c.chain("set_dii(" || \self.dii_val || ")")
+      c.chain("set_extra(" || image(self.extra) || ")")
    end
 
    #

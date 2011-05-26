@@ -67,7 +67,7 @@ function graphics_Window_grab_pointer(self)
       GetSelfW();
       if (grabpointer(self_w) != Succeeded)
           fail;
-      return nulldesc;
+      return self;
    }
 end
 
@@ -76,7 +76,7 @@ function graphics_Window_ungrab_pointer(self)
       GetSelfW();
       if (ungrabpointer(self_w) != Succeeded)
           fail;
-      return nulldesc;
+      return self;
    }
 end
 
@@ -86,7 +86,7 @@ function graphics_Window_alert(self, volume)
    body {
        GetSelfW();
        walert(self_w, volume);
-       return nulldesc;
+       return self;
    }
 end
 
@@ -127,7 +127,7 @@ function graphics_Window_copy_to(self, dest, x0, y0, w0, h0, x1, y1)
 
       copyarea(self_w, w2, x, y, width, height, x2, y2);
 
-      return nulldesc;
+      return self;
    }
 end
 
@@ -632,7 +632,7 @@ function graphics_Window_set_pixels(self, data, x0, y0, w0, h0)
           runerr(0);
 
       if (!initimgmem(self_w, &imem, 1, 1, x, y, width, height))
-          return nulldesc;
+          return self;
 
       le = lgfirst(&ListBlk(data), &state);
       for (j = y; le && j < y + height; j++) {
@@ -651,7 +651,7 @@ function graphics_Window_set_pixels(self, data, x0, y0, w0, h0)
 
       saveimgmem(self_w, &imem);
       freeimgmem(&imem);
-      return nulldesc;
+      return self;
    }
 end
 
@@ -700,7 +700,7 @@ function graphics_Window_filter(self, spec, x0, y0, w0, h0)
 
       if (!initimgmem(self_w, &imem, 1, 1, x, y, width, height)) {
           free(filter);
-          return nulldesc;
+          return self;
       }
 
       for (i = 0; i < nfilter; ++i) {
@@ -711,7 +711,7 @@ function graphics_Window_filter(self, spec, x0, y0, w0, h0)
       freeimgmem(&imem);
       free(filter);
 
-      return nulldesc;
+      return self;
    }
 end
 

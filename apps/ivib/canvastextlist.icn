@@ -33,13 +33,9 @@ class CanvasTextList(CanvasComponent,TextList)
    #
    public gen_code(c)
       cast(self,CanvasComponent).gen_code(c)
-      case self.select_mode of {
-         Select.NONE : c.line(self.name || ".set_select_mode(Select.NONE)")
-         Select.ONE : c.line(self.name || ".set_select_mode(Select.ONE)")
-         Select.MANY : c.line(self.name || ".set_select_mode(Select.MANY)")
-      }
+      c.chain("set_select_mode(" || c.select_str(self.select_mode) || ")")
       c.add_import("gui", "Select")
-      c.line(name || ".set_contents(" || contents_string(self.contents) || ")")
+      c.chain("set_contents(" || contents_string(self.contents) || ")")
    end
 
    #

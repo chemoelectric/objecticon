@@ -19,14 +19,14 @@ class CanvasSlider(CanvasComponent,Slider)
    #
    public gen_code(c)
       cast(self,CanvasComponent).gen_code(c)
-      c.line(name || ".set_range(" || self.lo || ", " || self.hi || ")")
-      c.line(name || ".set_value(" || self.value || ")")
-      c.line(name || ".set_increment_size(" || self.increment_size || ")")
-      c.line(name || ".set_ticks(" || \self.ticks || ")")
-      c.line(name || ".set_labels(" || \self.labels || ")")
-      c.line(name || ".set_snaps(" || \self.snaps || ")")
+      c.chain("set_range(" || self.lo || ", " || self.hi || ")")
+      c.chain("set_value(" || self.value || ")")
+      c.chain("set_increment_size(" || self.increment_size || ")")
+      c.chain("set_ticks(" || \self.ticks || ")")
+      c.chain("set_labels(" || \self.labels || ")")
+      c.chain("set_snaps(" || \self.snaps || ")")
       if \self.is_horizontal_flag then
-         c.line(name || ".set_is_horizontal(&yes)")
+         c.chain("set_is_horizontal(&yes)")
    end
 
    #

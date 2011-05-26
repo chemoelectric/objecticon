@@ -29,19 +29,19 @@ class CanvasTableColumn(CanvasComponent,TableColumn)
    public gen_code(c)
       local e
 
+      self.paint.gen_code(c)
       c.add_var(self.name, class_variable)
       c.add_import(self.import_name, self.class_name)
       c.line(name || " := " || self.class_name || "()")
-      self.paint.gen_code(c)
-      c.line(name || ".set_paint(" || self.paint.name || ")")
-      c.line(name || ".set_column_align(" || image(self.column_align) || ")")
+      c.chain("set_paint(" || self.paint.name || ")")
+      c.chain("set_column_align(" || c.align_str(self.column_align) || ")")
       if \self.column_width then
-         c.line(name || ".set_column_width(" || self.column_width || ")")
+         c.chain("set_column_width(" || self.column_width || ")")
 
       every e := !sort(self.wattribs) do
-         c.wattrib_line(name, e[1], e[2])
+         c.wattrib_line(e[1], e[2])
 
-      c.add_event_handlers(self.name, \self.event_handlers)
+      c.add_event_handlers(\self.event_handlers)
    end
 
    public set_column_align(x)

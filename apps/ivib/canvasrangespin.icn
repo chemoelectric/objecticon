@@ -23,13 +23,13 @@ class CanvasRangeSpin(CanvasComponent,RangeSpin)
       local s
       cast(self,CanvasComponent).gen_code(c)
       if \self.lo | \self.hi then {
-         s := name || ".set_range(" || (\self.lo|"&null") || ", " ||
+         s := "set_range(" || (\self.lo|"&null") || ", " ||
             (\self.hi|"&null") || ")" 
-         c.line(s)
+         c.chain(s)
       }
       
-      c.line(name || ".set_value(" || value || ")")
-      c.line(name || ".set_increment_size(" || self.increment_size || ")")
+      c.chain("set_value(" || value || ")")
+      c.chain("set_increment_size(" || self.increment_size || ")")
    end
 
    #

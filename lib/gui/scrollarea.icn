@@ -450,6 +450,7 @@ class ScrollArea(Component)
       self.set_accepts_focus(&yes)
       self.connect(self.default_on_key, Event.KEY_PRESS)
       self.use_default_keys_flag := 1
+      return self
    end
 
    public keeps(e)

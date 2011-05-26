@@ -27,7 +27,6 @@ static wsp vwstates;
 /*
  * function prototypes
  */
-static wcp alccontext(wbp w);
 static void handle_config(wsp w, XConfigureEvent *event);
 static void handle_exposures(wsp ws, XExposeEvent *event);
 static void handle_mouse(wsp ws, XButtonEvent *event);
@@ -636,15 +635,28 @@ wbp wopen(char *display)
     GRFX_LINK(ws, wstates);
 
     w->window = ws;
-
     create_list(64, &ws->listp);
 
-    wc = w->context = alccontext(w);
+    GRFX_ALLOC(wc, _wcontext);
+    wc->display = wd;
+    wc->bg = link_sharedcolor(wd->white);
+    wc->fg = link_sharedcolor(wd->black);
+    wc->font = wd->defaultfont;
+    wc->drawop = stringint_lookup(drawops, "copy");
+    wc->clipx = wc->clipy = 0;
+    wc->clipw = wc->cliph = -1;
+    wc->linewidth = 1;
+    wc->fillstyle = stringint_lookup(fillstyles, "solid");
+    wc->linestyle = stringint_lookup(linestyles, "solid");
+    GRFX_LINK(wc, wcntxts);
+
+    w->context = wc;
+
     /*
-     * Create the pixmap
+     * Create the 1x1 pixmap
      */
     ws->pix = XCreatePixmap(wd->display, GetRoot(wd),
-                            1, 1, 
+                            ws->pixwidth, ws->pixheight,
                             GetDepth(wd));
 
     /*
@@ -2970,31 +2982,6 @@ static wfp newfont(wdp wd, char *s)
     return rv;
 }
 
-
-/*
- * allocate a context.  Can't be called until w has a display and window.
- */
-static wcp alccontext(wbp w)
-{
-    wcp wc;
-    wdp wd = w->window->display;
-
-    GRFX_ALLOC(wc, _wcontext);
-    wc->display = wd;
-    wc->bg = link_sharedcolor(wd->white);
-    wc->fg = link_sharedcolor(wd->black);
-    wc->font = wd->defaultfont;
-    wc->drawop = stringint_lookup(drawops, "copy");
-    wc->clipx = wc->clipy = 0;
-    wc->clipw = wc->cliph = -1;
-    wc->linewidth = 1;
-    wc->fillstyle = stringint_lookup(fillstyles, "solid");
-    wc->linestyle = stringint_lookup(linestyles, "solid");
-
-    GRFX_LINK(wc, wcntxts);
-    return wc;
-}
-
 /*
  * allocate a context, cloning attributes from an existing context
  */
@@ -3009,8 +2996,9 @@ wcp clonecontext(wbp w)
 
     wc = w->context;
     wd = w->context->display;
-    rv = alccontext(w);
 
+    GRFX_ALLOC(rv, _wcontext);
+    rv->display = wd;
     rv->dx = wc->dx;
     rv->dy = wc->dy;
     rv->clipx = wc->clipx;
@@ -3024,6 +3012,7 @@ wcp clonecontext(wbp w)
     rv->linestyle = wc->linestyle;
     rv->linewidth = wc->linewidth;
     rv->drawop = wc->drawop;
+    GRFX_LINK(rv, wcntxts);
 
     gcv.foreground = rv->fg->c;
     gcv.background = rv->bg->c;

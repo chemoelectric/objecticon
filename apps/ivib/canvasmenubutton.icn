@@ -21,9 +21,9 @@ class CanvasMenuButton(CanvasComponent,MenuButton)
    # Generate code into Code object c.
    #
    public gen_code(c)
-      cast(self,CanvasComponent).gen_code(c)
       self.menu.gen_code(c)
-      c.line(self.name || ".set_menu(" || self.menu.name || ")")
+      cast(self,CanvasComponent).gen_code(c)
+      c.chain("set_menu(" || self.menu.name || ")")
    end
 
    #

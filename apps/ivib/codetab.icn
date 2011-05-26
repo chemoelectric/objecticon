@@ -20,6 +20,28 @@ class CodeTab(TabItem)
       }
    end
 
+   #
+   # Validate data
+   #
+   public validate_input()
+      local s
+      s := name.get_contents()
+      valid_id(s) | return alert_error(parent_dialog, "Invalid identifier:" || s)
+
+      if c.parent_Canvas.find_name(s) ~=== c then
+         return alert_error(parent_dialog, "Identifier not unique:" || s)
+
+      s := class_name.get_contents()
+      if *s > 0 then
+         valid_id(s) | return alert_error(parent_dialog, "Invalid identifier:" || s)
+
+      s := import_name.get_contents()
+      if *s > 0 then
+         valid_id(s) | return alert_error(parent_dialog, "Invalid identifier:" || s)
+
+      return
+   end
+
    public new(c)
       local l, p
       cast(self,TabItem).new()

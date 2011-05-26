@@ -56,7 +56,7 @@ class Toggle()
    # Toggle the status of the object.
    #
    public toggle_is_checked()
-      self.set_is_checked(toggle_flag(self.is_checked_flag))
+      return set_is_checked(toggle_flag(self.is_checked_flag))
    end
 
    #

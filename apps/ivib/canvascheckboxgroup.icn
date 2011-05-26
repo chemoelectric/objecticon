@@ -15,6 +15,23 @@ import gui, ipl.pdco
 #
 class CanvasCheckBoxGroup(CanvasObject,CheckBoxGroup)
    #
+   # Generate code into Code object c.
+   #
+   public gen_code(c)
+      local e, wo
+      #
+      # Extend superclass method
+      #
+      cast(self,CanvasObject).gen_code(c)
+      every e := !get_members() do {
+         c.chain("add(" || e.name || ")")
+         if e.is_checked() then
+            wo := e
+      }
+      c.chain("set_which_one(" || (\wo).name || ")")
+   end
+
+   #
    # Return the I/O template.
    #
    public static get_template()

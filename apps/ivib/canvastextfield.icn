@@ -22,13 +22,13 @@ class CanvasTextField(CanvasComponent,TextField)
    #
    public gen_code(c)
       cast(self,CanvasComponent).gen_code(c)
-      c.line(name || ".set_contents(" || image(self.contents) || ")")
+      c.chain("set_contents(" || image(self.contents) || ")")
       if *\filter_str > 0 then
-         c.line(name || ".set_filter(" || image(cset(self.filter_str)) || ")")
+         c.chain("set_filter(" || image(cset(self.filter_str)) || ")")
       if /self.is_editable_flag then
-         c.line(name || ".set_is_editable(&no)")
+         c.chain("set_is_editable(&no)")
       if /self.move_on_rpress_flag then
-         c.line(name || ".set_move_on_rpress(&no)")
+         c.chain("set_move_on_rpress(&no)")
    end
 
    #

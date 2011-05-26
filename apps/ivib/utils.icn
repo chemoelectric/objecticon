@@ -98,6 +98,8 @@ end
 procedure alert_error(d, a)
    if string(a) then
       a := [a]
+   if /d.win then 
+      stop!a
    InfoDialog(a, "Information", "Okay").show_modal(d)
 end
 
@@ -175,12 +177,32 @@ procedure normalize_constraint(key, val)
    }
 end
 
-procedure stringify_constraint(key, val, quote)
+procedure align_str(val)
+   return case val of {
+      Align.L: "Align.L"
+      Align.R: "Align.R"
+      Align.T: "Align.T"
+      Align.B: "Align.B"
+      Align.C: "Align.C"
+      default: image(val)
+   }
+end
+
+procedure select_str(val)
+   return case val of {
+      Select.NONE : "Select.NONE"
+      Select.ONE : "Select.ONE"
+      Select.MANY : "Select.MANY"
+      default: image(val)
+   }
+end
+
+procedure stringify_constraint(key, val, quote, c)
    case key of {
       "tab"|"x"|"y"|"w"|"h"|"l_inset"|"r_inset"|"t_inset"|"b_inset":
          return string(val)
       "x_align"|"y_align":
-         return if /quote then val else image(val)
+         return if /quote then val else if /c then align_str(val) else c.align_str(val)
       "eol"|"x_fill"|"y_fill":
          return if \val then "&yes" else "&no"
       "x_weight"|"y_weight":
@@ -209,4 +231,13 @@ procedure util_check_constraints(dialog, t)
          return alert_error(dialog, "Invalid value " || s[2] || " for constraint " || s[1])
    }
    return
+end
+
+#
+# Is an identifier valid?
+#
+procedure valid_id(s)
+   return *s > 0 &
+      any(&letters ++ '_', s) &
+      not(upto(~(&letters ++ &digits ++ '_'), s))
 end

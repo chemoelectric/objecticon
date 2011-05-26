@@ -68,10 +68,20 @@ class CanvasComponent(CanvasObject)
    #
    public gen_code(c)
       local t, e
+
+      if \self.layout_delegate then
+         self.layout_delegate.gen_code(c)
+
+      if \self.border_opts then
+         self.border_opts.gen_code(c)
+
+      if \self.tooltip then
+         self.tooltip.gen_code(c)
+
       c.line(name || " := " || self.class_name || "()")
 
       if \self.x_spec | \self.y_spec then {
-         t := name || ".set_pos("
+         t := "set_pos("
          if \self.x_spec then
             t ||:= image(self.x_spec)
          t ||:= ", "
@@ -80,65 +90,54 @@ class CanvasComponent(CanvasObject)
             t ||:= image(self.y_spec)
 
          t ||:= ")"
-         c.line(t)
+         c.chain(t)
       }
 
       if \self.w_spec | \self.h_spec then {
-         t := name || ".set_size("
+         t := "set_size("
          if \self.w_spec then
             t ||:= image(self.w_spec)
          if \self.h_spec then
             t ||:= ", " || image(self.h_spec)
          t ||:= ")"
-         c.line(t)
+         c.chain(t)
       }
 
-      if self.z ~= 0 then {
-         c.line(name || ".set_z(" || self.z || ")")
-      }
+      if self.z ~= 0 then
+         c.chain("set_z(" || self.z || ")")
 
-      if self.tab_ord ~= 0 then {
-         c.line(name || ".set_tab_ord(" || self.tab_ord || ")")
-      }
+      if self.tab_ord ~= 0 then
+         c.chain("set_tab_ord(" || self.tab_ord || ")")
 
       #
       # Output alignment unless using default of "l", "t"
       #
       if not(self.x_align == "l" & self.y_align == "t") then
-         c.line(name || ".set_align(" || image(self.x_align) || ", " || image(self.y_align) || ")")
+         c.chain("set_align(" || c.align_str(self.x_align) || ", " || c.align_str(self.y_align) || ")")
 
       if \self.is_shaded_flag then
-         c.line(name || ".set_is_shaded(&yes)")
+         c.chain("set_is_shaded(&yes)")
 
       every e := !sort(self.wattribs) do
-         c.wattrib_line(name, e[1], e[2])
+         c.wattrib_line(e[1], e[2])
 
-      c.line(name || ".clear_constraints()")
+      c.chain("clear_constraints()")
       every e := !sort(self.constraints) do
-         c.constraint_line(name, e[1], e[2])
+         c.constraint_line(e[1], e[2])
 
-      if \self.tooltip then {
-         self.tooltip.gen_code(c)
-         c.line(name || ".set_tooltip(" || self.tooltip.name || ")")
-      }
+      if \self.tooltip then
+         c.chain("set_tooltip(" || self.tooltip.name || ")")
 
       if \self.accel then
-         c.line(name || ".set_accel(" || image(self.accel) || ")")
+         c.chain("set_accel(" || image(self.accel) || ")")
 
-      if self === self.parent_Canvas.initial_focus then
-         c.line("self.set_focus(" || self.name || ".find_focus())")
+      c.add_event_handlers(\self.event_handlers)
 
-      c.add_event_handlers(self.name, \self.event_handlers)
+      if \self.layout_delegate then
+         c.chain("set_layout(" || self.layout_delegate.name || ")")
 
-      if \self.layout_delegate then {
-         self.layout_delegate.gen_code(c)
-         c.line(name || ".set_layout(" || self.layout_delegate.name || ")")
-      }
-
-      if \self.border_opts then {
-         self.border_opts.gen_code(c)
-         c.line(name || ".set_border(" || self.border_opts.name || ")")
-      }
+      if \self.border_opts then
+         c.chain("set_border(" || self.border_opts.name || ")")
 
       c.add_var(name, class_variable)
       c.add_import(self.import_name, self.class_name)

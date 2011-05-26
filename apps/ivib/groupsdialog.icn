@@ -182,6 +182,7 @@ class GroupEdit(Dialog)
    end
 
    public on_okay()
+      code_tab.validate_input() | fail
       code_tab.set_vals()
       self.okay_result := 1
       self.dispose()

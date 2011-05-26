@@ -206,6 +206,7 @@ class BorderEdit(Dialog)
    end
 
    public validate_input()
+      code_tab.validate_input() | fail
       return
    end
 
