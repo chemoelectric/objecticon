@@ -232,3 +232,12 @@ procedure util_check_constraints(dialog, t)
    }
    return
 end
+
+#
+# Is an identifier valid?
+#
+procedure valid_id(s)
+   return *s > 0 &
+      any(&letters ++ '_', s) &
+      not(upto(~(&letters ++ &digits ++ '_'), s))
+end
