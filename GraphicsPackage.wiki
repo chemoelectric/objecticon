@@ -16,53 +16,58 @@ http://www.cs.arizona.edu/icon/docs/ipd281.htm
 
 == Opening a window ==
 
-Use the static method `Window.open` to open a window.  This method takes as parameters several key-value attributes.  For example :-
+Use the static method `Window.open` to open a window.  This method returns a hidden window of size 1 pixel by 1 pixel, with default attributes.  These can then be modified using setter methods before the window is made visible by setting the canvas type to "normal".  For example :-
 {{{
-   w := Window.open("size=200,200", "fg=red", "bg=light grey", "font=serif,24") | stop(&why)
+   w := Window.open().
+      set_size(200,200).
+      set_fg("red").
+      set_bg("light grey").
+      set_font("serif,24").
+      erase_area().
+      set_canvas("normal") | stop(&why)
 }}}
-On success, a `Window` object is returned.  The `Window` class has methods for manipulating the window and drawing in it.
+The `Window` class has methods for manipulating the window and drawing in it.
 
-== Window attributes ==
+== Setting Window attributes ==
 
-The possible attributes for the `open` method described in detail in the API documentation for the `Window` class, but here is a summary.
+The various setter methods for setting window attributes are summarised in the following table.
 
-|| *Name* || *Type* || *Description* ||
-||bg||string||Background color||
-||canvas||string||Window visibility||
+|| *Method* || *Parameter(s)* || *Description* ||
+||set_bg||string||Background color||
+||set_canvas||string||Window visibility||
 ||clip||4xinteger||Clipping region||
-||display||string||X11 display to use||
 ||unclip||-||Unset clipping region||
-||draw_op||string||Pixel combination||
-||dx||integer||Window horizontal offset||
-||dy||integer||Window vertical offset||
-||fg||string||Foreground color||
-||fill_style||string||Fill style to use in drawing||
-||font||string||Current text font||
-||geometry||4xinteger||Window position and size||
-||height||integer||Window height||
-||icon||string||Window icon||
-||image||string||Load an image and set size||
-||input_mask||string||Mask of mouse/keyboard events||
-||label||string||Window label (title)||
-||line_style||string||Line style to use in drawing||
-||line_width||integer||Line style to use in drawing||
-||max_height||integer||Maximum window height||
-||max_size||2xinteger||Maximum window size||
-||max_width||integer||Maximum window width||
-||min_height||integer||Minimum window height||
-||min_size||2xinteger||Minimum window size||
-||min_width||integer||Minimum window width||
-||pattern||string||Pattern to use with fill_style||
-||pointer||string||Mouse pointer||
-||pos||2xinteger||Window position on screen||
-||transient_for||Window||Transient-for window||
-||x||integer||Window x position||
-||y||integer||Window y position||
-||resize||flag||Resizable flag||
-||size||2xinteger||Window size||
-||width||integer||Window width||
+||set_draw_op||string||Pixel combination||
+||set_dx||integer||Window horizontal offset||
+||set_dy||integer||Window vertical offset||
+||set_fg||string||Foreground color||
+||set_fill_style||string||Fill style to use in drawing||
+||set_font||string||Current text font||
+||set_geometry||4xinteger||Window position and size||
+||set_height||integer||Window height||
+||set_icon||string||Window icon||
+||set_image||string||Load an image and set size||
+||set_input_mask||string||Mask of mouse/keyboard events||
+||set_label||string||Window label (title)||
+||set_line_style||string||Line style to use in drawing||
+||set_line_width||integer||Line style to use in drawing||
+||set_max_height||integer||Maximum window height||
+||set_max_size||2xinteger||Maximum window size||
+||set_max_width||integer||Maximum window width||
+||set_min_height||integer||Minimum window height||
+||set_min_size||2xinteger||Minimum window size||
+||set_min_width||integer||Minimum window width||
+||set_pattern||string||Pattern to use with fill_style||
+||set_pointer||string||Mouse pointer||
+||set_pos||2xinteger||Window position on screen||
+||set_transient_for||Window||Transient-for window||
+||set_x||integer||Window x position||
+||set_y||integer||Window y position||
+||set_resize||flag||Resizable flag||
+||set_size||2xinteger||Window size||
+||set_width||integer||Window width||
 
-Most of the attributes have corresponding `get` and `set` methods.  There is also an `attrib` method which can be used to set several attributes at once.  Note however that this method, unlike Icon's `WAttrib` function, is only used to set attributes, never to retrieve existing values.
+Most of the attributes have corresponding `get` methods.
 
 == Fonts ==
 Fonts follow the same format as in Icon, with some minor enhancements.  The environment variable `OIFONT` specifies the default font to use in a window, and `OIFONTSIZE` specifies the default fontsize.  If Xft anti-aliased fonts are available, then further customization can be achieved by editing the `~/.fonts.conf` file and defining patterns for the following family names :-
@@ -170,11 +175,11 @@ The supported raw image formats depend on the underlying platform and its availa
 $load FLINTSTONES "/tmp/flintstones.jpg"
 
 ...
-   w := Window.open("image=",FLINTSTONES) | stop(&why)
+   w := Window.open().set_image(FLINTSTONES) | stop(&why)
 ...
 }}}
 The `$load` directive defines the preprocessor symbol `FLINTSTONES` with the value being a string containing the contents of the specified file.  This raw data is then supplied with the `image` attribute to define the image to be loaded into the window.  We could also have simply used
 {{{
-   w := Window.open("image=/tmp/flintstones.jpg") | stop(&why)
+   w := Window.open().set_image("/tmp/flintstones.jpg") | stop(&why)
 }}}
 but this would rely on the file being present at runtime (as opposed to compile-time).

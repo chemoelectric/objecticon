@@ -437,13 +437,18 @@ global sched
 procedure download(x, t)
    local cl, req, resp, s
    s := RamStream()
-   cl := HttpClient("task=",t, "timeout=10000")
-   req := HttpRequest("url=",URL.parse(x), "data_stream=",s)
+   cl := HttpClient().
+      set_task(t).
+      set_timeout(10000)
+   req := HttpRequest().
+      set_url(URL.parse(x)).
+      set_data_stream(s)
    if resp := cl.retrieve(req) then
       write("Retrieved ", *s.str(), " bytes from ", x)
    else
       write("Failed to retrieve ", x, ": ", &why)
    s.close()
+   cl.close()
 end
 
 procedure new_task(s)
