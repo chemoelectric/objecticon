@@ -24,7 +24,7 @@ class CanvasBorder(CanvasComponent,Border)
       self.content.gen_code(c)
       cast(self,CanvasComponent).gen_code(c)
       if self.internal_align ~== Align.L then
-         c.chain("set_internal_align(" || align_str(self.internal_align) || ")")
+         c.chain("set_internal_align(" || c.align_str(self.internal_align) || ")")
       if \self.title then
          c.chain("set_title(" || self.title.name || ")")
       c.chain("set_content(" || self.content.name || ")")

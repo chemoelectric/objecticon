@@ -33,7 +33,7 @@ class CanvasTree(CanvasComponent,Tree)
    #
    public gen_code(c)
       cast(self,CanvasComponent).gen_code(c)
-      c.chain("set_select_mode(" || select_str(self.select_mode) || ")")
+      c.chain("set_select_mode(" || c.select_str(self.select_mode) || ")")
       c.add_import("gui", "Select")
       if /self.show_root_flag then
          c.chain("set_show_root(&no)")

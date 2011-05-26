@@ -43,6 +43,16 @@ class Code()
       return self
    end
 
+   public align_str(val)
+      add_import("gui", "Align")
+      return default.align_str(val)
+   end
+
+   public select_str(val)
+      add_import("gui", "Select")
+      return default.select_str(val)
+   end
+
    #
    # Add a line of code to the setup method.
    #

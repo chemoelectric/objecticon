@@ -34,7 +34,7 @@ class CanvasTableColumn(CanvasComponent,TableColumn)
       c.add_import(self.import_name, self.class_name)
       c.line(name || " := " || self.class_name || "()")
       c.chain("set_paint(" || self.paint.name || ")")
-      c.chain("set_column_align(" || align_str(self.column_align) || ")")
+      c.chain("set_column_align(" || c.align_str(self.column_align) || ")")
       if \self.column_width then
          c.chain("set_column_width(" || self.column_width || ")")
 
