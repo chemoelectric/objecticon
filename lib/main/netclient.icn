@@ -64,10 +64,7 @@ class NetClient(Connectable)
    end
 
    private do_poll(for)
-      return if \task then
-         task.poll([connection, for], timeout)
-      else
-         DescStream.poll([connection, for], timeout)
+      return (if /task then DescStream else task).poll([connection, for], timeout)
    end
 
    #
@@ -275,12 +272,11 @@ class NetClient(Connectable)
    end
 
    #
-   # Set an {IoGroup} to use when creating the connection object.
-   # This allows several clients to be used together in a non-blocking
-   # fashion (using co-expressions for each task).
+   # Set a {Task} to use when polling the connection.  This allows
+   # several clients to be used together in a non-blocking fashion.
    #
-   public set_task(g)
-      self.task := g
+   public set_task(t)
+      self.task := t
       return self
    end
 
