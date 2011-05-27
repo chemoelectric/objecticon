@@ -1845,7 +1845,7 @@ end
 
 #else    /* Graphics */
 
-UnsupportedFunc(graphics_Window_wcreate)
+UnsupportedFunc(graphics_Window_open_impl)
 
 #endif   
 
