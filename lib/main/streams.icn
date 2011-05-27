@@ -1227,13 +1227,22 @@ class FilterOutputStream(Stream, BgProc, NoCopy)
    private 
       sink,
       cin,
-      cout
+      cout,
+      task
    
+   #
+   # Set a {Task} to use when polling the background task.
+   #
+   public set_task(t)
+      self.task := t
+      return self
+   end
+
    public out(s)
       local x
       s := string(s) | runerr(103, s)
       repeat {
-         x := DescStream.poll([cin, Poll.IN, cout, Poll.OUT]) | fail
+         x := (if /task then DescStream else task).poll([cin, Poll.IN, cout, Poll.OUT]) | fail
          if poll_in_test(x[1]) then
             sink.writes(cin.in(1048576)) | fail
          else if poll_out_test(x[2]) then
@@ -1327,14 +1336,23 @@ class FilterInputStream(Stream, BgProc, NoCopy)
       source,
       cin,
       cout,
-      buff
+      buff,
+      task
+
+   #
+   # Set a {Task} to use when polling the background task.
+   #
+   public set_task(t)
+      self.task := t
+      return self
+   end
 
    public in(n)
       local x, t
       if /cout then
          return read_cin(n)
       repeat {
-         x := DescStream.poll([cin, Poll.IN, cout, Poll.OUT]) | fail
+         x := (if /task then DescStream else task).poll([cin, Poll.IN, cout, Poll.OUT]) | fail
          if poll_in_test(x[1]) then
             return read_cin(n)
          else if poll_out_test(x[2]) then {
@@ -1364,7 +1382,8 @@ class FilterInputStream(Stream, BgProc, NoCopy)
 
    #
    # Close the stream.  This waits for the child process to terminate.
-   # NB: {source} is not closed.
+   # NB: {source} is not closed unless the {set_close_underlying} has been
+   # set to {&yes}.
    #
    public close()
       local f
