@@ -3,7 +3,7 @@ package parser
 #
 # A hand-written lex compatible icon lexer.
 #
-import io
+import io, util, lang
 
 $include "oigram_tab.icn"
 
@@ -21,7 +21,7 @@ $define Newline 4
 
 global yyin, yytoken, errors, debuglex, O, D, L, H, R, FS, IS, W, idchars,
        yylineno, yycolno, yyfilename, yyencoding, lastid, buffer, lastchar,
-       yyerror, yylexdebug
+       yyerror, yylexdebug, yytokval, yylinestart
 
 procedure init_csets()
    O  := '01234567'
@@ -82,9 +82,13 @@ procedure reswords()
    return t
 end
 
-procedure lex_error()
+procedure tok_not_recognized()
+   lex_error("token not recognized")
+end
+
+procedure lex_error(msg)
    yynerrs +:= 1
-   (\yyerror | write)("token not recognized")
+   (\yyerror | write)(msg)
 end
 
 procedure yylex2()
@@ -92,9 +96,9 @@ procedure yylex2()
    initial {
       init_csets()
       reswords := reswords()
-      punc_table := table(lex_error)
-      punc_table["'"] := do_literal
-      punc_table["\""] := do_literal
+      punc_table := table(tok_not_recognized)
+      punc_table["'"] := do_csetlit
+      punc_table["\""] := do_strlit
       punc_table["!"] := do_bang
       punc_table["%"] := do_mod
       punc_table["&"] := do_and
@@ -126,10 +130,11 @@ procedure yylex2()
       every punc_table["u"|"U"] := do_u
    }
 
-   yycolno +:= *yytext
-
    repeat {
-      if pos(0) then fail
+      if pos(0) then {
+         yycolno := &pos - yylinestart
+         fail
+      }
       if ="#" then {
          if ="line " then {
             if yylineno := integer(tab(many(&digits))) - 1 then {
@@ -152,47 +157,188 @@ procedure yylex2()
       }
       if ="\n" then {
          yylineno +:= 1
-         yycolno := 1
+         yylinestart := &pos - 1
          if tokflags < Newline then
             tokflags +:= Newline
          next
       }
-      if tab(any(' ')) then { yycolno +:= 1; next }
-      if tab(any('\v\^l')) then { next }
-      if tab(any('\t')) then {
-         yycolno +:= 1
-         while (yycolno-1) % 8 ~= 0 do yycolno +:= 1
+      if tab(any(' \t\v\^l')) then
          next
-      }
 
+      yycolno := &pos - yylinestart
       yytext := move(1)
       return punc_table[yytext]()
    }
 end
 
-procedure do_u()
-   if yytext ||:= ="\"" then {
-      until yytext ||:= ="\"" do {
-         yytext ||:= ="\\"
-         # need more logic here to eat escape chars
-         yytext ||:= move(1)
-         if yytext[-1] == "\n" then {
-            if not yytext[-2] == "_" then {
-               ewrite("unterminated string constant")
-            }
-            else {
-               yylineno +:= 1
-               yycolno := 1
-               yytext := yytext[1:-2]
-               tab(many(' \t'))
-            }
+procedure maxmany(c, max)
+   return min(many(c), &pos + max)
+end
+
+procedure get_strlit()
+   local res, ch
+   res := ""
+   repeat {
+      res ||:= tab(upto('\\\"_\n')) | {
+         lex_error("unclosed quote")
+         break
+      }
+      if any('\n') then {
+         lex_error("unclosed quote")
+         break
+      }
+      if any('\"') then {
+         move(1)
+         break
+      }
+      if any('_') then {
+         if ="_\n" then {
+            yylineno +:= 1
+            yylinestart := &pos - 1
+            tab(many(' \t'))
+            next
+         } else {
+            res ||:= move(1)
+            next
          }
       }
+      # must be at a \
+      move(1)
+      if any('01234567') then
+         res ||:= char("8r" || tab(maxmany('01234567', 3)))
+      else if ="x" then
+         res ||:= char(("16r" || tab(maxmany(&digits ++ 'abcdefABCDEF', 2))) | 0)
+      else if ="u" then
+         res ||:= string(uchar(("16r" || tab(maxmany(&digits ++ 'abcdefABCDEF', 4))) | 0))
+      else if ="U" then
+         res ||:= string(uchar(("16r" || tab(maxmany(&digits ++ 'abcdefABCDEF', 6))) | 0))
+      else if ="^" then
+         res ||:= char(iand(ord(move(1)), 8r37))
+      else {
+         res ||:= case ch := move(1) of {
+            "n" : "\n"
+            "l" : "\l"
+            "b" : "\b"
+            "d" : "\d"
+            "e" : "\e"
+            "r" : "\r"
+            "t" : "\t"
+            "v" : "\v"
+            "f" : "\f"
+            default  :  ch
+         }
+      }
+   }
+   return res
+end
+
+procedure do_u()
+   local res, spos
+   if yytext ||:= ="\"" then {
+      spos := &pos
+      res := get_strlit()
+      yytext ||:= &subject[spos:&pos]
       tokflags +:= Beginner + Ender
+      yytokval := ucs(Format.unescape(res)) | lex_error("invalid utf-8 sequence")
       return UCSLIT
    } else {
       return do_letters()
    }
+end
+
+procedure do_strlit()
+   local res, spos
+   spos := &pos
+   res := get_strlit()
+   yytext ||:= &subject[spos:&pos]
+   tokflags +:= Beginner + Ender
+   yytokval := res
+   return STRINGLIT
+end
+
+procedure do_csetlit()
+   local spos, l, ch, state, c, prev, esc_flag
+   spos := &pos
+   state := 0
+   l := []
+   repeat {
+      if pos(0) | any('\n') then {
+         lex_error("unclosed quote")
+         break
+      }
+      if any('\'') then {
+         move(1)
+         break
+      }
+      if ="_\n" then {
+         yylineno +:= 1
+         yylinestart := &pos - 1
+         tab(many(' \t'))
+         next
+      }
+      if any('\\') then {
+         esc_flag := &yes
+         move(1)
+         c := (if any('01234567') then
+            integer("8r" || tab(maxmany('01234567', 3)))
+         else if ="x" then
+            integer("16r" || tab(maxmany(&digits ++ 'abcdefABCDEF', 2)))
+         else if ="u" then
+            integer("16r" || tab(maxmany(&digits ++ 'abcdefABCDEF', 4)))
+         else if ="U" then
+            integer("16r" || tab(maxmany(&digits ++ 'abcdefABCDEF', 6)))
+         else if ="^" then
+            iand(ord(move(1)), 8r37)
+         else {
+            ord(case ch := move(1) of {
+               "n" : "\n"
+               "l" : "\l"
+               "b" : "\b"
+               "d" : "\d"
+               "e" : "\e"
+               "r" : "\r"
+               "t" : "\t"
+               "v" : "\v"
+               "f" : "\f"
+               default  :  ch
+            })
+         }) | 0
+      } else {
+         esc_flag := &no
+         c := ord(move(1))
+      }
+      case state of {
+         0: {
+            prev := c
+            state := 1
+         }
+         1 : {
+            if /esc_flag & (c = 45) then
+               state := 2
+            else {
+               put(l, prev)
+               put(l, prev)
+               prev := c
+            }                     
+         }
+         2 : {
+            put(l, prev)
+            put(l, c)
+            state := 0
+         }
+      }
+   }
+   if state = 1 then {
+      put(l, prev)
+      put(l, prev)
+   }
+   else if state = 2 then
+      lex_error("incomplete cset range");
+
+   yytext ||:= &subject[spos:&pos]
+   tokflags +:= Beginner + Ender
+   yytokval := Text.create_cset(l)
+   return CSETLIT
 end
 
 procedure do_letters()
@@ -212,17 +358,20 @@ procedure do_digits()
          yytext ||:= ="-"
          yytext ||:= tab(many(&digits))
       }
+      yytokval := real(yytext) | lex_error("invalid real literal")
       return REALLIT
    }
    else if yytext ||:= tab(any('eE')) then {
       yytext ||:= ="-"
       yytext ||:= tab(many(&digits))
+      yytokval := real(yytext) | lex_error("invalid real literal")
       return REALLIT
    }
    else {
       if yytext ||:= tab(any('rR')) then {
          yytext ||:= tab(many(R))
       }
+      yytokval := integer(yytext) | lex_error("invalid integer literal")
       return INTLIT
    }
 end
@@ -388,6 +537,7 @@ end
 procedure do_dot()
    if yytext ||:= tab(many(&digits)) then {
       tokflags +:= Beginner+Ender
+      yytokval := real(yytext) | lex_error("invalid real literal")
       return REALLIT
    }
    else {
@@ -447,43 +597,20 @@ procedure do_bang()
    return BANG
 end
 
-procedure do_literal()
-   until yytext ||:= =(yytext[1]) do {
-      yytext ||:= ="\\"
-      # need more logic here to eat escape chars
-      yytext ||:= move(1)
-      if yytext[-1] == "\n" then {
-         if not yytext[-2] == "_" then {
-            ewrite("unterminated string constant")
-         }
-         else {
-            yylineno +:= 1
-            yycolno := 1
-            yytext := yytext[1:-2]
-            tab(many(' \t'))
-         }
-      }
-   }
-   tokflags +:= Beginner + Ender
-   if yytext[1] == "'" then
-      return CSETLIT
-   else return STRINGLIT
-
-end
-
 procedure yylex_reinit()
    yytext := ""
+   yytokval := &null
    yyencoding := &null
    yyfilename := &null
    yylineno := 0
-   yycolno := 1
+   yylinestart := 0
    lastchar := ""
    buffer := yyin
    tokflags := 0
 end
 
 procedure yylex()
-   static saved_tok, saved_yytext, saved_chunk
+   static saved_tok, saved_yytext, saved_chunk, saved_yytokval
    local rv, ender, chunk
    initial {
       if /buffer then
@@ -498,24 +625,27 @@ procedure yylex()
       rv := saved_tok
       saved_tok := &null
       yytext := saved_yytext
-      yylval := yytoken := Token(rv, yytext, saved_chunk, yylineno, yycolno, yyfilename)
+      yytokval := saved_yytokval
+      yylval := yytoken := Token(rv, yytext, saved_chunk, yytokval, yylineno, yycolno, yyfilename)
       if \debuglex then
          write("yylex() : ",tokenstr(rv))
       return rv
    }
    ender := iand(tokflags, Ender)
    tokflags := 0
+   yytokval := &null
    if *buffer=0 then {
       chunk := buffer
       buffer := &null
       if \debuglex then
          write("yylex() : EOFX")
-      yylval := yytoken := Token(EOFX, yytext, chunk, yylineno, yycolno, yyfilename)
+      yylval := yytoken := Token(EOFX, yytext, chunk, yytokval, yylineno, yycolno, yyfilename)
       return EOFX
    }
    buffer ? {
       if rv := yylex2() then {
          chunk := buffer[1:&pos]
+         yylinestart -:= &pos - 1
          buffer := tab(0)
       }
       else {
@@ -524,19 +654,21 @@ procedure yylex()
 	 yytext := ""
 	 if \debuglex then
             write("yylex() : EOFX")
-         yylval := yytoken := Token(EOFX, yytext, chunk, yylineno, yycolno, yyfilename)
+         yylval := yytoken := Token(EOFX, yytext, chunk, yytokval, yylineno, yycolno, yyfilename)
          return EOFX
       }
    }
    if ender~=0 & iand(tokflags, Beginner)~=0 & iand(tokflags, Newline)~=0 then {
       saved_tok := rv
       saved_yytext := yytext
+      saved_yytokval := yytokval
       saved_chunk := chunk
       chunk := ""
       yytext := ";"
+      yytokval := &null
       rv := SEMICOL
    }
-   yylval := yytoken := Token(rv, yytext, chunk, yylineno, yycolno, yyfilename)
+   yylval := yytoken := Token(rv, yytext, chunk, yytokval, yylineno, yycolno, yyfilename)
    if \debuglex then
       write("yylex() : ", tokenstr(rv))
    return rv

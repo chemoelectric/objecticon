@@ -8,6 +8,7 @@ final class Token()
    public const
       tok, 
       s, 
+      val,
       line,
       column,
       filename
@@ -38,9 +39,10 @@ final class Token()
       return f.writes(chunk)
    end
 
-   public new(tok, s, chunk, line, column, filename)
+   public new(tok, s, chunk, val, line, column, filename)
       self.tok := tok
       self.s := s
+      self.val := val
       self.chunk := chunk
       self.line := line
       self.column := column
