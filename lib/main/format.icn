@@ -8,6 +8,8 @@
 
 package util
 
+import lang
+
 class Format()
    #
    # Convert a string to an integer.
@@ -169,6 +171,9 @@ class Format()
       return [m, e]
    end
 
+   private static maxmany(c, max)
+      return min(many(c), &pos + max)
+   end
 
    #
    # Remove escape sequences from the subject.
@@ -186,15 +191,18 @@ class Format()
                break
             move(1)
             if any('01234567') then
-               res ||:= char(string_to_int(move(3), 8))
+               res ||:= char("8r" || tab(maxmany('01234567', 3)))
             else if ="x" then
-               res ||:= char(string_to_int(move(2), 16))
+               res ||:= char(("16r" || tab(maxmany(&digits ++ 'abcdefABCDEF', 2))) | 0)
+            else if ="u" then
+               res ||:= string(uchar(("16r" || tab(maxmany(&digits ++ 'abcdefABCDEF', 4))) | 0))
+            else if ="U" then
+               res ||:= string(uchar(("16r" || tab(maxmany(&digits ++ 'abcdefABCDEF', 6))) | 0))
             else if ="^" then
-               res ||:= char(map(move(1)) + 1 - ord("a"))
+               res ||:= char(iand(ord(move(1)), 8r37))
             else {
                ch := move(1) | "\""
                res ||:= case ch of {
-                  "z" : ""
                   "n" : "\n"
                   "l" : "\l"
                   "b" : "\b"
@@ -204,8 +212,6 @@ class Format()
                   "t" : "\t"
                   "v" : "\v"
                   "f" : "\f"
-                  "w" : " "
-                  "s" : "\s"
                   default  :  ch
                }
             }
@@ -215,39 +221,79 @@ class Format()
    end
 
    #
-   # Add escape sequences to the subject.
+   # Remove escape sequences from the subject, but return the corresponding cset rather than
+   # a string.
    #
-   public static escape(subject)
-      local s, res, ch
-      static printable
-      initial
-         printable := '\x20-\x7e' -- '\\'
+   public static cset_unescape(subject)
+      local s, l, ch, state, c, prev, esc_flag
 
       s := string(subject) | runerr(103, subject)
-      
-      res := ""
+      state := 0
+      l := []
       s ? {
-         repeat {
-            res ||:= tab(many(printable))
-            if pos(0) then
-               break
-            ch := move(1)
-            res ||:= case ch of {
-               "\n" : "\\n"
-               "\l" : "\\l"
-               "\b" : "\\b"
-               "\d" : "\\d"
-               "\e" : "\\e"
-               "\r" : "\\r"
-               "\t" : "\\t"
-               "\v" : "\\v"
-               "\f" : "\\f"
-               "\\" : "\\\\"
-               default  :  "\\x" || int_to_string(ord(ch), 16, 2)
+         until pos(0) do {
+            if any('\\') then {
+               esc_flag := &yes
+               move(1)
+               c := if any('01234567') then
+                  integer("8r" || tab(maxmany('01234567', 3)))
+               else if ="x" then
+                  integer("16r" || tab(maxmany(&digits ++ 'abcdefABCDEF', 2))) | 0
+               else if ="u" then
+                  integer("16r" || tab(maxmany(&digits ++ 'abcdefABCDEF', 4))) | 0
+               else if ="U" then
+                  integer("16r" || tab(maxmany(&digits ++ 'abcdefABCDEF', 6)), 16) | 0
+               else if ="^" then
+                  iand(ord(move(1)), 8r37)
+               else {
+                  ch := move(1) | "\""
+                  ord(case ch of {
+                     "n" : "\n"
+                     "l" : "\l"
+                     "b" : "\b"
+                     "d" : "\d"
+                     "e" : "\e"
+                     "r" : "\r"
+                     "t" : "\t"
+                     "v" : "\v"
+                     "f" : "\f"
+                     default  :  ch
+                  })
+               }
+            } else {
+               esc_flag := &no
+               c := ord(move(1))
+            }
+
+            case state of {
+               0: {
+                  prev := c
+                  state := 1
+               }
+               1 : {
+                  if /esc_flag & (c = 45) then
+                     state := 2
+                  else {
+                     put(l, prev)
+                     put(l, prev)
+                     prev := c
+                  }                     
+               }
+               2 : {
+                  put(l, prev)
+                  put(l, c)
+                  state := 0
+               }
             }
          }
+         if state = 1 then {
+            put(l, prev)
+            put(l, prev)
+         }
+         else if state = 2 then
+            return error("incomplete cset range");
       }
-      return res
+      return Text.create_cset(l)
    end
 
    #
