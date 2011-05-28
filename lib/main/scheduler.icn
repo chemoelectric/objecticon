@@ -39,7 +39,9 @@ class TaskStream(Stream)
    end
 
    public close()
-      return other.close()
+      if \close_underlying_flag then
+         return other.close()
+      return
    end
 
    public eof()
@@ -64,6 +66,7 @@ class TaskStream(Stream)
 
    public new(other, task, timeout)
       self.other := other
+      self.close_underlying_flag := &yes
       self.task := task
       self.timeout := timeout
       return
