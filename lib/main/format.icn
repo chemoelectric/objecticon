@@ -12,25 +12,6 @@ import lang
 
 class Format()
    #
-   # Convert a string to an integer.
-   # @param base  The base to use for the conversion (default is 16).
-   #
-   public static string_to_int(subject, base)
-      local n, digs, s, c
-      n := 0
-      /base := 16
-      digs := "0123456789abcdef"[1:base + 1] | runerr("invalid base", base)
-
-      s := string(subject) | runerr(103, subject)
-      if s[1] == "-" then
-         return -string_to_int(s[2:0], base)
-
-      every c := !map(s) do
-         n := base * n + find(c, digs) - 1 | fail
-      return n
-   end
-
-   #
    # Convert an integer to a string.
    #
    # @param base   The desired base of the result.

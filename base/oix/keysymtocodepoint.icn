@@ -17,10 +17,10 @@ procedure main()
       l +:= 1
       s ? {
          if ="0x" then {
-            i := Format.string_to_int(move(4)) | stop("Bad format: line ", l)
+            i := integer("16r" || move(4)) | stop("Bad format: line ", l)
             tab(upto('U'))
             move(1)
-            j := Format.string_to_int(move(4)) | stop("Bad format: line ", l)
+            j := integer("16r" || move(4)) | stop("Bad format: line ", l)
             tab(many(' '))
             status := move(1) | stop("Bad format: line ", l)
             if status == "d" then

@@ -1490,7 +1490,7 @@ class XmlParser(Connectable)
          c := '0-9a-fA-F'
          any(c) | return err("Hex digit expected")
          digs := tab(many(c)) 
-         i := Format.string_to_int(digs, 16) | 63
+         i := integer("16r" || digs) | 63
       } else {
          c := &digits
          any(c) | return err("Digit expected")
