@@ -548,6 +548,13 @@ procedure past(s)
    suspend find(s) + *s
 end
 
+#
+# Like many, but limit number of characters matched to {max}.
+#
+procedure max_many(c, max)
+   return min(many(c), &pos + max)
+end
+
 # Invoke co-expression e, saving the scanning environment first, and
 # restoring it afterwards.  This is potentially useful when using
 # co-operating scheduled tasks (see {io.Task}), which switch from

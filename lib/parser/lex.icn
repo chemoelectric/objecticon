@@ -3,7 +3,7 @@ package parser
 #
 # A hand-written lex compatible icon lexer.
 #
-import io, util, lang
+import io, lang, ipl.scan(max_many)
 
 $include "oigram_tab.icn"
 
@@ -171,10 +171,6 @@ procedure yylex2()
    }
 end
 
-procedure maxmany(c, max)
-   return min(many(c), &pos + max)
-end
-
 procedure get_strlit()
    local res, ch
    res := ""
@@ -204,18 +200,18 @@ procedure get_strlit()
       }
       # must be at a \
       move(1)
-      if any('01234567') then
-         res ||:= char("8r" || tab(maxmany('01234567', 3)))
+      res ||:= (if any('01234567') then
+         char("8r" || tab(max_many('01234567', 3)))
       else if ="x" then
-         res ||:= char(("16r" || tab(maxmany(&digits ++ 'abcdefABCDEF', 2))) | 0)
+         char("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 2)))
       else if ="u" then
-         res ||:= string(uchar(("16r" || tab(maxmany(&digits ++ 'abcdefABCDEF', 4))) | 0))
+         string(uchar("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 4))))
       else if ="U" then
-         res ||:= string(uchar(("16r" || tab(maxmany(&digits ++ 'abcdefABCDEF', 6))) | 0))
+         string(uchar("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 6))))
       else if ="^" then
-         res ||:= char(iand(ord(move(1)), 8r37))
+         char(iand(ord(move(1)), 8r37))
       else {
-         res ||:= case ch := move(1) of {
+         case ch := move(1) of {
             "n" : "\n"
             "l" : "\l"
             "b" : "\b"
@@ -227,7 +223,7 @@ procedure get_strlit()
             "f" : "\f"
             default  :  ch
          }
-      }
+      }) | "\0"
    }
    return res
 end
@@ -239,7 +235,7 @@ procedure do_u()
       res := get_strlit()
       yytext ||:= &subject[spos:&pos]
       tokflags +:= Beginner + Ender
-      yytokval := ucs(Format.unescape(res)) | lex_error("invalid utf-8 sequence")
+      yytokval := ucs(res) | lex_error("invalid utf-8 sequence")
       return UCSLIT
    } else {
       return do_letters()
@@ -280,13 +276,13 @@ procedure do_csetlit()
          esc_flag := &yes
          move(1)
          c := (if any('01234567') then
-            integer("8r" || tab(maxmany('01234567', 3)))
+            integer("8r" || tab(max_many('01234567', 3)))
          else if ="x" then
-            integer("16r" || tab(maxmany(&digits ++ 'abcdefABCDEF', 2)))
+            integer("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 2)))
          else if ="u" then
-            integer("16r" || tab(maxmany(&digits ++ 'abcdefABCDEF', 4)))
+            integer("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 4)))
          else if ="U" then
-            integer("16r" || tab(maxmany(&digits ++ 'abcdefABCDEF', 6)))
+            integer("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 6)))
          else if ="^" then
             iand(ord(move(1)), 8r37)
          else {

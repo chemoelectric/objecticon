@@ -208,7 +208,7 @@ package ipl.xcode
 import
    io(close, open, read, stop,
       write),
-   ipl.escape(escape)
+   util(Format)
 
 record xcode_rec(file,ioProc,done,nextTag)
 
@@ -354,8 +354,8 @@ procedure xdecode_1(data)
       if tp := move(1) then {
 	 x := case tp of {
 	    "N": numeric(tab(0))
-	    "\"": escape(tab(-1))
-	    "'": cset(escape(tab(-1)))
+	    "\"": Format.escape(tab(-1))
+	    "'": Format.cset_escape(tab(-1))
 	    "p": proc(xdecode_1(data)) | fail
 	    "L": list(xdecode_1(data)) | fail
 	    "S": {sz := xdecode_1(data) | fail; set()}

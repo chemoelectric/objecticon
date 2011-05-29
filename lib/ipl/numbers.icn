@@ -89,13 +89,9 @@
 #
 #	mantissa(r)	mantissa (fractional part) of r.
 #
-#	max ! L		produces maximum of numbers in L.
-#
 #	mdp(i)		multiplicative digital persistence of i
 #
 #	mdr(i)		multiplicative digital root of i
-#
-#	min ! L		produces minimum of numbers in L.	
 #
 #	mod1(i, m)	residue for 1-based indexing.
 #
@@ -484,16 +480,6 @@ procedure mantissa(r)
 
 end
 
-#procedure max(values[])		#: maximum value
-#   local maximum
-#
-#   maximum := get(values) | fail
-#   every maximum <:= !values
-#
-#   return maximum
-#
-#end
-
 # multiplicative digital persistence
 procedure mdp(i)		
    local j
@@ -518,16 +504,6 @@ procedure mdr(i)
    return i
 
 end
-
-#procedure min(values[])		#: minimum value
-#   local minimum
-#
-#   minimum := get(values) | fail
-#   every minimum >:= !values
-#
-#   return minimum
-#
-#end
 
 # modulus for 1-based integers
 procedure mod1(i, m)		

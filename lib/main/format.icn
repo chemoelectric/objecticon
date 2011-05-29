@@ -8,7 +8,7 @@
 
 package util
 
-import lang
+import lang, ipl.scan(max_many)
 
 class Format()
    #
@@ -152,14 +152,10 @@ class Format()
       return [m, e]
    end
 
-   private static maxmany(c, max)
-      return min(many(c), &pos + max)
-   end
-
    #
    # Remove escape sequences from the subject.
    #
-   public static unescape(subject)
+   public static escape(subject)
       local s, res, ch
 
       s := string(subject) | runerr(103, subject)
@@ -171,19 +167,18 @@ class Format()
             if pos(0) then
                break
             move(1)
-            if any('01234567') then
-               res ||:= char("8r" || tab(maxmany('01234567', 3)))
+            res ||:= (if any('01234567') then
+               char("8r" || tab(max_many('01234567', 3)))
             else if ="x" then
-               res ||:= char(("16r" || tab(maxmany(&digits ++ 'abcdefABCDEF', 2))) | 0)
+               char("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 2)))
             else if ="u" then
-               res ||:= string(uchar(("16r" || tab(maxmany(&digits ++ 'abcdefABCDEF', 4))) | 0))
+               string(uchar("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 4))))
             else if ="U" then
-               res ||:= string(uchar(("16r" || tab(maxmany(&digits ++ 'abcdefABCDEF', 6))) | 0))
+               string(uchar("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 6))))
             else if ="^" then
-               res ||:= char(iand(ord(move(1)), 8r37))
+               char(iand(ord(move(1)), 8r37))
             else {
-               ch := move(1) | "\""
-               res ||:= case ch of {
+               case ch := move(1) of {
                   "n" : "\n"
                   "l" : "\l"
                   "b" : "\b"
@@ -195,7 +190,7 @@ class Format()
                   "f" : "\f"
                   default  :  ch
                }
-            }
+            }) | "\0"
          }
       }
       return res
@@ -205,7 +200,7 @@ class Format()
    # Remove escape sequences from the subject, but return the corresponding cset rather than
    # a string.
    #
-   public static cset_unescape(subject)
+   public static cset_escape(subject)
       local s, l, ch, state, c, prev, esc_flag
 
       s := string(subject) | runerr(103, subject)
@@ -216,19 +211,18 @@ class Format()
             if any('\\') then {
                esc_flag := &yes
                move(1)
-               c := if any('01234567') then
-                  integer("8r" || tab(maxmany('01234567', 3)))
+               c := (if any('01234567') then
+                  integer("8r" || tab(max_many('01234567', 3)))
                else if ="x" then
-                  integer("16r" || tab(maxmany(&digits ++ 'abcdefABCDEF', 2))) | 0
+                  integer("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 2)))
                else if ="u" then
-                  integer("16r" || tab(maxmany(&digits ++ 'abcdefABCDEF', 4))) | 0
+                  integer("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 4)))
                else if ="U" then
-                  integer("16r" || tab(maxmany(&digits ++ 'abcdefABCDEF', 6)), 16) | 0
+                  integer("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 6)))
                else if ="^" then
                   iand(ord(move(1)), 8r37)
                else {
-                  ch := move(1) | "\""
-                  ord(case ch of {
+                  ord(case ch := move(1) of {
                      "n" : "\n"
                      "l" : "\l"
                      "b" : "\b"
@@ -240,7 +234,7 @@ class Format()
                      "f" : "\f"
                      default  :  ch
                   })
-               }
+               }) | 0
             } else {
                esc_flag := &no
                c := ord(move(1))
