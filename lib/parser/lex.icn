@@ -91,6 +91,13 @@ procedure lex_error(msg)
    (\yyerror | write)(msg)
 end
 
+procedure set_encoding()
+   if any(&letters) then {
+      yyencoding := tab(many(&letters ++ &digits ++ '-'))
+      (yyencoding == ("ASCII" | "UTF-8" |"ISO-8859-1")) | lex_error("invalid encoding:" || yyencoding)
+   }
+end
+
 procedure yylex2()
    static punc_table
    initial {
@@ -143,8 +150,7 @@ procedure yylex2()
                   yyfilename := Files.get_path(tab(find("\"" | "\n") | 0)).canonical().str()
                   ="\""
                   tab(many(' \t'))
-                  if any(&letters) then
-                     yyencoding := tab(many(&letters ++ &digits ++ '-'))
+                  set_encoding()
                }
             }
          }
@@ -152,6 +158,11 @@ procedure yylex2()
          next
       }
       if ="$" then {
+         # Handle $encoding if we are parsing an unpreprocessed string.
+         if ="encoding" then {
+            tab(many(' \t'))
+            set_encoding()
+         }
          tab(find("\n") | 0)
          next
       }
@@ -177,7 +188,7 @@ end
 # u" or ', depending on the type.
 #
 procedure get_strlit()
-   local spos, cs, q
+   local spos, cs, q, val
    spos := &pos
    # Closing quote is last char of yytext (either ' or ")
    q := cset(yytext[-1])
@@ -219,16 +230,25 @@ procedure get_strlit()
       else
          move(1)
    }
+   val := if yytext[1] == "u" then yytext[3:-1] else yytext[2:-1]
+
+   # Check encodings for valid chars
+   if yyencoding == "UTF-8" then
+      val := ucs(val)  | lex_error("invalid utf-8 in string")
+   else if yyencoding == "ASCII" then {
+      if upto(~&ascii, val) then
+         lex_error("non-ascii character in string")
+   }
+
+   return val
 end
 
 procedure do_u()
    local val, t
    if yytext ||:= ="\"" then {
-      get_strlit()   
-      val := yytext[3:-1]
-      if \yyencoding == "UTF-8" then {
-         val := ucs(val)  | lex_error("invalid utf-8 in file")
-      } else {
+      val := get_strlit()   
+      if yyencoding ~== "UTF-8" then {
+         # Convert val to by-codepoint ucs equivalent
          t := ""
          every t ||:= Text.utf8_seq(ord(val))
          val := ucs(t)
@@ -243,13 +263,13 @@ end
 
 procedure do_strlit()
    local val, u, i
-   get_strlit()   
-   val := yytext[2:-1]
-   if \yyencoding == "UTF-8" then {
-      u := ucs(val) | lex_error("invalid utf-8 in file")
-      val := ""
-      every i := ord(\u) do
-         val ||:= char(i) | lex_error("code point out of range for string literal")
+   val := get_strlit()   
+   if yyencoding == "UTF-8" then {
+      # Convert val to by-codepoint string equivalent
+      u := ""
+      every i := ord(val) do
+         u ||:= char(i) | lex_error("code point out of range for string literal")
+      val := u
    }
    yytokval := Format.escape(val)
    tokflags +:= Beginner + Ender
@@ -258,10 +278,7 @@ end
 
 procedure do_csetlit()
    local val
-   get_strlit('\'')
-   val := yytext[2:-1]
-   if \yyencoding == "UTF-8" then
-      val := ucs(val) | lex_error("invalid utf-8 in file")
+   val := get_strlit()
    yytokval := Format.cset_escape(val) | lex_error(&why)
    tokflags +:= Beginner + Ender
    return CSETLIT

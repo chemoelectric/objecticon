@@ -489,7 +489,6 @@ static struct toktab *getstring(int ac, int *cc)
     int c, i, n;
     int len;
     char utf8[MAX_UTF8_SEQ_LEN];
-
     c = NextChar;
     while (c != '"' && c != '\n' && c != EOF) {
         /*
@@ -507,8 +506,6 @@ static struct toktab *getstring(int ac, int *cc)
 
         if (c == Escape) {
             c = NextChar;
-            if (c == EOF)
-                break;
             if (isoctal(c))
                 AppChar(lex_sbuf, octesc(c));
             else if (c == 'x')
@@ -531,8 +528,6 @@ static struct toktab *getstring(int ac, int *cc)
             }
             else if (c == '^') {
                 c = NextChar;
-                if (c == EOF)
-                    break;
                 if (c < 256) 
                     AppChar(lex_sbuf, ctlesc(c));
                 else
@@ -592,8 +587,6 @@ static struct toktab *getucs(int ac, int *cc)
 
         if (c == Escape) {
             c = NextChar;
-            if (c == EOF)
-                break;
             if (isoctal(c))
                 AppChar(lex_sbuf, octesc(c));
             else if (c == 'x')
@@ -616,8 +609,6 @@ static struct toktab *getucs(int ac, int *cc)
             }
             else if (c == '^') {
                 c = NextChar;
-                if (c == EOF)
-                    break;
                 AppChar(lex_sbuf, ctlesc(c));
             } else {
                 c = escchar(c);
@@ -702,8 +693,6 @@ static struct toktab *getcset(int ac, int *cc)
         esc_flag = (c == Escape);
         if (esc_flag) {
             c = NextChar;
-            if (c == EOF)
-                break;
             if (isoctal(c))
                 c = octesc(c);
             else if (c == 'x')
@@ -719,8 +708,6 @@ static struct toktab *getcset(int ac, int *cc)
             }
             else if (c == '^') {
                 c = NextChar;
-                if (c == EOF)
-                    break;
                 c = ctlesc(c);
             } else
                 c = escchar(c);
@@ -809,8 +796,6 @@ static int octesc(int ac)
     do {
         c = (c << 3) | (nc - '0');
         nc = NextChar;
-        if (nc == EOF)
-            return EOF;
     } while (isoctal(nc) && i++ < 3);
     PushChar(nc);
 
@@ -830,8 +815,6 @@ static int hexesc(int digs)
     i = 0;
     while (i++ < digs) {
         nc = NextChar;
-        if (nc == EOF)
-            return EOF;
         if (nc >= 'a' && nc <= 'f')
             nc -= 'a' - 10;
         else if (nc >= 'A' && nc <= 'F')
@@ -952,18 +935,8 @@ static int nextchar()
     c = ppch();
     switch (c) {
         case EOF:
-            if (incol) {
-                c = '\n';
-                in_line++;
-                incol = 0;
-                peekc = EOF;
-                break;
-	    }
-            else {
-                in_line = 0;
-                incol = 0;
-                break;
-	    }
+            /* Note that the preprocessor always gives a \n right before the EOF */
+            break;
         case '\n':
             in_line++;
             incol = 0;

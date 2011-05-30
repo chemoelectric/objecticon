@@ -152,14 +152,28 @@ class Format()
       return [m, e]
    end
 
+   private static escape_char(ch)
+      return case string(ch) of {
+         "n": "\n"
+         "l": "\l"
+         "b": "\b"
+         "d": "\d"
+         "e": "\e"
+         "r": "\r"
+         "t": "\t"
+         "v": "\v"
+         "f": "\f"
+         default:  ch
+      }
+   end
+
    #
    # Remove escape sequences from the subject.
    #
    public static escape(subject)
-      local s, res, ch
+      local s, res
 
       s := text(subject) | runerr(129, subject)
-      
       res := ""
       s ? {
          repeat {
@@ -172,26 +186,14 @@ class Format()
             else if ="x" then
                char("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 2)))
             else if ="u" then
-               string(uchar("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 4))))
+               uchar("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 4)))
             else if ="U" then
-               string(uchar("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 6)))) |
+               uchar("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 6))) |
                    return error("code point out of range")
             else if ="^" then
                char(iand(ord(move(1)), 8r37))
-            else {
-               case (ch := move(1), string(ch)) of {
-                  "n" : "\n"
-                  "l" : "\l"
-                  "b" : "\b"
-                  "d" : "\d"
-                  "e" : "\e"
-                  "r" : "\r"
-                  "t" : "\t"
-                  "v" : "\v"
-                  "f" : "\f"
-                  default  :  ch
-               }
-            }) | "\0"
+            else 
+               escape_char(move(1))) | "\0"
          }
       }
       return if type(subject) == "ucs" then ucs(res) | error("invalid utf-8 escape sequence") else res
@@ -202,7 +204,7 @@ class Format()
    # a string.
    #
    public static cset_escape(subject)
-      local s, l, ch, state, c, prev, esc_flag
+      local s, l, state, c, prev, esc_flag
 
       s := text(subject) | runerr(129, subject)
       state := 0
@@ -223,20 +225,8 @@ class Format()
                       return error("code point out of range")
                else if ="^" then
                   iand(ord(move(1)), 8r37)
-               else {
-                  ord(case (ch := move(1), string(ch)) of {
-                     "n" : "\n"
-                     "l" : "\l"
-                     "b" : "\b"
-                     "d" : "\d"
-                     "e" : "\e"
-                     "r" : "\r"
-                     "t" : "\t"
-                     "v" : "\v"
-                     "f" : "\f"
-                     default  :  ch
-                  })
-               }) | 0
+               else 
+                  ord(escape_char(move(1)))) | 0
             } else {
                esc_flag := &no
                c := ord(move(1))
