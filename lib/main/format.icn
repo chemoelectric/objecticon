@@ -158,16 +158,16 @@ class Format()
    public static escape(subject)
       local s, res, ch
 
-      s := string(subject) | runerr(103, subject)
+      s := text(subject) | runerr(129, subject)
       
       res := ""
       s ? {
          repeat {
-            res ||:= tab(upto('\\') | 0)
+            res ||:= string(tab(upto('\\') | 0))
             if pos(0) then
                break
             move(1)
-            res ||:= (if any('01234567') then
+            res ||:= string(if any('01234567') then
                char("8r" || tab(max_many('01234567', 3)))
             else if ="x" then
                char("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 2)))
@@ -178,7 +178,7 @@ class Format()
             else if ="^" then
                char(iand(ord(move(1)), 8r37))
             else {
-               case ch := move(1) of {
+               case (ch := move(1), string(ch)) of {
                   "n" : "\n"
                   "l" : "\l"
                   "b" : "\b"
@@ -193,7 +193,7 @@ class Format()
             }) | "\0"
          }
       }
-      return res
+      return if type(subject) == "ucs" then ucs(res) | error("invalid utf-8 escape sequence") else res
    end
 
    #
@@ -203,7 +203,7 @@ class Format()
    public static cset_escape(subject)
       local s, l, ch, state, c, prev, esc_flag
 
-      s := string(subject) | runerr(103, subject)
+      s := text(subject) | runerr(129, subject)
       state := 0
       l := []
       s ? {
@@ -222,7 +222,7 @@ class Format()
                else if ="^" then
                   iand(ord(move(1)), 8r37)
                else {
-                  ord(case ch := move(1) of {
+                  ord(case (ch := move(1), string(ch)) of {
                      "n" : "\n"
                      "l" : "\l"
                      "b" : "\b"

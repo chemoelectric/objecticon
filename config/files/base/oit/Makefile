@@ -38,7 +38,7 @@ resolve.o:	link.h
 ipp.o:		../h/features.h
 trans.o:	tsym.h ttoken.h tree.h ../h/version.h ../h/kdefs.h
 tparse.o:	lexdef.h tsym.h tree.h keyword.h
-tlex.o:		lexdef.h ttoken.h tree.h ../h/esctab.h  lextab.h
+tlex.o:		lexdef.h ttoken.h tree.h  lextab.h
 tmem.o:		tsym.h tree.h
 tree.o:		tree.h
 tsym.o:		tsym.h ttoken.h keyword.h ../h/kdefs.h

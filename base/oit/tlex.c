@@ -17,7 +17,6 @@ static void lexfatal(char *fmt, ...);
 
 #include "lexdef.h"
 #include "lextab.h"
-#include "../h/esctab.h"
 
 /*
  * Prototypes.
@@ -33,7 +32,8 @@ static	struct toktab   *getcset	(int ac,int *cc);
 static	int		setfilenm	(int c);
 static	int		setencoding	(int c);
 static	int		setlineno	(void);
-static	int	ctlesc		(void);
+static	int	ctlesc	(int c);
+static	int	escchar	(int c);
 static	int	hexesc		(int digs);
 static	int	octesc		(int ac);
 static  int     read_utf_char(int c);
@@ -529,10 +529,21 @@ static struct toktab *getstring(int ac, int *cc)
                 for (i = 0; i < n; ++i)
                     AppChar(lex_sbuf, utf8[i]);
             }
-            else if (c == '^')
-                AppChar(lex_sbuf, ctlesc());
-            else
-                AppChar(lex_sbuf, esctab[c]);
+            else if (c == '^') {
+                c = NextChar;
+                if (c == EOF)
+                    break;
+                if (c < 256) 
+                    AppChar(lex_sbuf, ctlesc(c));
+                else
+                    lexfatal("string literal character out of range (codepoint %d)", c);
+            } else {
+                c = escchar(c);
+                if (c < 256) 
+                    AppChar(lex_sbuf, c);
+                else
+                    lexfatal("string literal character out of range (codepoint %d)", c);
+            }
         } else {
             if (c < 256) 
                 AppChar(lex_sbuf, c);
@@ -603,10 +614,21 @@ static struct toktab *getucs(int ac, int *cc)
                 for (i = 0; i < n; ++i)
                     AppChar(lex_sbuf, utf8[i]);
             }
-            else if (c == '^')
-                AppChar(lex_sbuf, ctlesc());
-            else
-                AppChar(lex_sbuf, esctab[c]);
+            else if (c == '^') {
+                c = NextChar;
+                if (c == EOF)
+                    break;
+                AppChar(lex_sbuf, ctlesc(c));
+            } else {
+                c = escchar(c);
+                if (c > 127) {
+                    n = utf8_seq(c, utf8);
+                    for (i = 0; i < n; ++i)
+                        AppChar(lex_sbuf, utf8[i]);
+                } 
+                else 
+                    AppChar(lex_sbuf, c);
+            }
         } else {
             if (c > 127) {
                 n = utf8_seq(c, utf8);
@@ -695,10 +717,13 @@ static struct toktab *getcset(int ac, int *cc)
                     c = 0;
                 }
             }
-            else if (c == '^')
-                c = ctlesc();
-            else
-                c = esctab[c];
+            else if (c == '^') {
+                c = NextChar;
+                if (c == EOF)
+                    break;
+                c = ctlesc(c);
+            } else
+                c = escchar(c);
         }
 
         switch (state) {
@@ -747,15 +772,25 @@ static struct toktab *getcset(int ac, int *cc)
 }
 
 
-
-static int ctlesc()
+static int escchar(int c)
 {
-    int c;
+    switch(c) {
+        case 'n' : return '\n';
+        case 'l' : return '\n';
+        case 'b' : return '\b';
+        case 'd' : return 0177;
+        case 'e' : return '\e';
+        case 'r' : return '\r';
+        case 't' : return '\t';
+        case 'v' : return '\v';
+        case 'f' : return '\f';
+        default: return c;
+    }
+}
 
-    c = NextChar;
-    if (c == EOF)
-        return EOF;
 
+static int ctlesc(int c)
+{
     return (c & 037);
 }
 
