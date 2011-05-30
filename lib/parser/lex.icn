@@ -203,9 +203,9 @@ procedure get_strlit()
             yylinestart := &pos - 1
             tab(many(' \t'))
             spos := &pos
-            next
          } else
             move(1)
+         next
       }
       # must be at a \
       move(1)
