@@ -670,7 +670,7 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
       break;
    case WM_GETMINMAXINFO: {
       MINMAXINFO *mmi = (MINMAXINFO *)lp;
-      if (! ISRESIZABLE(wb->window)) {
+      if (!wb->window->resizable) {
 	 mmi->ptMinTrackSize.x = mmi->ptMaxTrackSize.x =
 	    ws->width + BORDWIDTH;
 	 mmi->ptMinTrackSize.y = mmi->ptMaxTrackSize.y =

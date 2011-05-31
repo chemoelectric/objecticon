@@ -798,7 +798,7 @@ static void wmap(wbp w)
             size_hints.x = ws->x;
             size_hints.y = ws->y;
         }
-        if (ISRESIZABLE(ws)) {
+        if (ws->resizable) {
             size_hints.min_width = ws->minwidth;
             size_hints.min_height = ws->minheight;
             size_hints.max_width = ws->maxwidth;
@@ -882,10 +882,8 @@ static void wmap(wbp w)
     }
 
 
-    if (ws->state != RootState) {
-        CLREXPOSED(ws);
+    if (ws->state != RootState)
         XMapWindow(stddpy, stdwin);
-    }
 
     XGetWindowAttributes(stddpy, stdwin, &attrs);
     ws->width = attrs.width;
@@ -958,7 +956,7 @@ void doconfig(wbp w, int status)
             if (status != C_POS) {
                 XSizeHints size_hints;
                 size_hints.flags = PMinSize | PMaxSize;
-                if (ISRESIZABLE(ws)) {
+                if (ws->resizable) {
                     size_hints.min_width = ws->minwidth;
                     size_hints.min_height = ws->minheight;
                     size_hints.max_width = ws->maxwidth;
@@ -1573,7 +1571,6 @@ int setfont(wbp w, char *s)
 
 static void handle_exposures(wsp ws, XExposeEvent *event)
 {
-    SETEXPOSED(ws);
     if (ws->win) {
         wdp wd = ws->display;
         XCopyArea(wd->display, ws->pix, ws->win, 
@@ -1730,13 +1727,6 @@ static void handle_config(wsp ws, XConfigureEvent *event)
     ws->height = event->height;
 
     resizepixmap(findwbp(ws), event->width, event->height);
-
-
-    /*
-     * The initial configure event generates no Icon-level "events"
-     */
-    if (!ISEXPOSED(ws))
-        return;
 
     qeventcode(ws, WINDOWRESIZED);
 }
