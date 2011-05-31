@@ -755,7 +755,7 @@ procedure write(a[])
       f := FileStream.stdout
    every e := \!a | Files.EOL do {
       if is(e, Stream) then {
-         f.out(Files.EOL) | fail
+         f.write() | fail
          f := e
       } else {
          e := string(e) | runerr(103, e)
@@ -1037,7 +1037,7 @@ class LineBasedStream(Stream)
    public read()
       local t
       if *line > 0 then {
-         t := line[1:-1]
+         t := line[1:-*Files.EOL]
          line := ""
          return t
       }
