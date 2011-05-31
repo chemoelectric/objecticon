@@ -243,7 +243,6 @@ typedef struct _wstate {
   int		refcount;		/* reference count */
   struct _wstate *previous, *next;
   int		inputmask;		/* user input mask */
-  char		*windowlabel;		/* window label */
   struct imgdata initimage;		/* initial image data */
   int		y, x;		        /* desired upper lefthand corner */
   int           height;                 /* window height, in pixels */
@@ -256,6 +255,7 @@ typedef struct _wstate {
   struct descrip listp;		        /* event list for this window */
   int           mousestate;             /* buttons down after last mouse event */
 #if XWindows
+  char		*windowlabel;		/* window label */
   wdp		display;
   struct _wstate *vprevious, *vnext;    /* List of states with win non-null */
   Window	win;			/* X window */
@@ -271,6 +271,7 @@ typedef struct _wstate {
   int		state;			/* window state; icon, window or root*/
   Window        transientfor;           /* transient-for hint */
 #elif MSWIN32
+  char		*windowlabel;		/* window label */
   int		bits;			/* window bits */
   HWND		win;			/* client window */
   HWND		iconwin;		/* client window when iconic */
