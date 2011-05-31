@@ -766,7 +766,7 @@ static int escchar(int c)
         case 'l' : return '\n';
         case 'b' : return '\b';
         case 'd' : return 0177;
-        case 'e' : return '\e';
+        case 'e' : return 033;
         case 'r' : return '\r';
         case 't' : return '\t';
         case 'v' : return '\v';
