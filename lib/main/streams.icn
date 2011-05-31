@@ -1671,7 +1671,7 @@ class LineFilterStream(GeneratorStream)
 
    public close()
       if \close_underlying_flag then
-         return other.close()
+         other.close() | fail
       return self
    end
 
