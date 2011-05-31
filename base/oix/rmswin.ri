@@ -320,7 +320,7 @@ wbp wopen(char *display)
       logpal[0].palPalEntry[1].peBlue = 255;
       palette = CreatePalette(logpal);
       if ((scp = malloc(2 * sizeof (struct wcolor))) == NULL) 
-	 return Failed;
+	 return 0;
       scp[0].c = RGB(0,0,0);
       scp[0].type = SHARED;
       strcpy(scp[0].name, "black");
@@ -357,10 +357,10 @@ wbp wopen(char *display)
       }
 
    if (alc_rgb(w, wc->fg) == Failed) {
-      return Failed;
+      return 0;
       }
    if (alc_rgb(w, wc->bg) == Failed) {
-      return Failed;
+      return 0;
       }
    ws->pixwidth = ws->width;
    ws->pixheight = ws->height;
@@ -395,7 +395,7 @@ wbp wopen(char *display)
       freeimgdata(imd);
    }
 
-   return Succeeded;
+   return w;
    }
 
 int handle_config(wbp w, UINT msg, WPARAM wp, LPARAM lp)
@@ -741,7 +741,6 @@ void wclose(wbp w)
 
 void pollevent(wbp w)
    {
-   wbp w;
    MSG m;
    extern jmp_buf mark_sj;
 
@@ -1698,17 +1697,6 @@ void drawpoint(wbp wb, int x, int y)
 }
 
 
-int allowresize(w, on)
-wbp w;
-int on;
-   {
-   if (on)
-      SETRESIZABLE(w->window);
-   else
-      CLRRESIZABLE(w->window);
-   return Succeeded;
-   }
-
 /*
  * drawstring()
  */
@@ -2285,12 +2273,14 @@ void doconfig(w, status)
 		   SetWindowPos(ws->iconwin, ws->iconwin,
 				posx,
 				posy,
-				wid, ht, SWP_NOZORDER|SWP_NOACTIVATE);
+                                wid + BORDWIDTH, ht + BORDHEIGHT,
+				SWP_NOZORDER|SWP_NOACTIVATE);
 		   break;
 		}
                 case C_SIZE: {
 		   SetWindowPos(ws->iconwin, ws->iconwin, 0, 0,
-				wid, ht, SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
+                                wid + BORDWIDTH, ht + BORDHEIGHT,
+                        	SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
 		   break;
 		}
                 case C_POS: {
