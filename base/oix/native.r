@@ -1944,8 +1944,9 @@ function io_SocketStream_bind(self, addr)
        /* This prevents a TIME_WAIT expiring connection blocking a server listening on
         * the same port */
        optval = 1;
+#if UNIX
        setsockopt(self_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval);
-
+#endif
        if (bind(self_fd, sa, len) < 0) {
            errno2why();
            fail;
