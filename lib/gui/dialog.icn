@@ -106,10 +106,12 @@ class Dialog(Component)
    public block()
       self.is_blocked_flag := 1
       change_pointer(DEFAULT_POINTER)
+      return self
    end
 
    public unblock()
       self.is_blocked_flag := &null
+      return self
    end
 
    #
@@ -117,6 +119,7 @@ class Dialog(Component)
    #
    public raise()
       self.win.raise()
+      return self
    end
 
    #
@@ -124,6 +127,7 @@ class Dialog(Component)
    #
    public lower()
       self.win.lower()
+      return self
    end
 
    #
@@ -156,6 +160,7 @@ class Dialog(Component)
    public change_pointer(s)
       if curr_pointer ~=== s then
          self.win.set_pointer(curr_pointer := s)
+      return self
    end
 
    #
@@ -259,6 +264,7 @@ class Dialog(Component)
    public resize_win(w, h)
       self.win.set_size(w, h)
       self.win.pending(Window.RESIZE)      
+      return self
    end
 
    public initially()
