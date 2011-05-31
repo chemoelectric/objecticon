@@ -89,13 +89,9 @@
 #
 #	mantissa(r)	mantissa (fractional part) of r.
 #
-#	max ! L		produces maximum of numbers in L.
-#
 #	mdp(i)		multiplicative digital persistence of i
 #
 #	mdr(i)		multiplicative digital root of i
-#
-#	min ! L		produces minimum of numbers in L.	
 #
 #	mod1(i, m)	residue for 1-based indexing.
 #
@@ -131,7 +127,7 @@ package ipl.numbers
 import
    io(stop),
    ipl.strings(palins),
-   util(Math)
+   util(Format, Math)
 
 # additive digital persistence
 procedure adp(i)		
@@ -342,7 +338,7 @@ end
 
 # format real number
 procedure fix(i, j, w, d)	
-   local r, int, dec, sign
+   local r
 
    /j := 1
    /w := 8
@@ -350,26 +346,9 @@ procedure fix(i, j, w, d)
    if j = 0 then fail
    w <:= 3
    d <:= 1
-   r := real(i) / j
-   if r < 0 then {
-      r  := -r
-      sign := "-"
-      }
-   else sign:=""
+   r := real(i) / j | runerr(102, i)
 
-   int := dec := "0"  # prepare for small number
-
-   if not(r < ("0." || repl("0", d - 1) || "1")) then { # formats as zero
-      string(r) ? {
-         if upto('eE') then fail # can't format
-         if int := tab(find(".")) then {
-            move(1)
-            dec := tab(0)
-            }
-         }
-      }
-
-   return right(sign || int || "." || left(dec, d, "0"), w)
+   return frn(r, w, d)
 end
 
 # floor
@@ -379,30 +358,14 @@ procedure floor(r)
 
 end
 
-$define MAXDECIMALS 25
-
 # format real number
 procedure frn(r, w, d)		
-
    local s
-   static mlist
-   initial every put(mlist := list(), 10.0 ^ (0 to MAXDECIMALS))
-
    r := real(r) | runerr(102, r)
-   (/d := 0) | (d >:= MAXDECIMALS)
-   if r >= 0.0 then {
-      s := string(integer(r * mlist[d + 1] + 0.5))
-      s := right(s, *s < d + 1, "0")
-      }
-   else {
-      s := string(integer(-r * mlist[d + 1] + 0.5))
-      s := right(s, *s < d + 1, "0")
-      s := "-" || s
-      }
-   s := right(s, *s < (\w - 1))
-
-   return s ? (tab(-d) || "." || tab(0))
-
+   /d := 0
+   s := Format.numeric_to_string(r, d)
+   s := right(s, *s < \w)
+   return s
 end
 
 # greatest common divisor
@@ -517,16 +480,6 @@ procedure mantissa(r)
 
 end
 
-#procedure max(values[])		#: maximum value
-#   local maximum
-#
-#   maximum := get(values) | fail
-#   every maximum <:= !values
-#
-#   return maximum
-#
-#end
-
 # multiplicative digital persistence
 procedure mdp(i)		
    local j
@@ -551,16 +504,6 @@ procedure mdr(i)
    return i
 
 end
-
-#procedure min(values[])		#: minimum value
-#   local minimum
-#
-#   minimum := get(values) | fail
-#   every minimum >:= !values
-#
-#   return minimum
-#
-#end
 
 # modulus for 1-based integers
 procedure mod1(i, m)		

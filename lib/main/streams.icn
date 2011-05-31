@@ -779,7 +779,7 @@ procedure write(a[])
       f := FileStream.stdout
    every e := \!a | Files.EOL do {
       if is(e, Stream) then {
-         f.out(Files.EOL) | fail
+         f.write() | fail
          f := e
       } else {
          e := string(e) | runerr(103, e)
@@ -1175,17 +1175,17 @@ class SocketStream(DescStream)
 end
 
 #
-# This class is used to read directory contents.
+# Parent class for classes which wish to define in() in terms of
+# read(), rather than the other way round.
 #
-class DirStream(Stream, NoCopy)
-   private 
-      dd,
+class LineBasedStream(Stream)
+   private
       line
 
    public read()
       local t
       if *line > 0 then {
-         t := line[1:-1]
+         t := line[1:-*Files.EOL]
          line := ""
          return t
       }
@@ -1203,19 +1203,37 @@ class DirStream(Stream, NoCopy)
       }
    end
 
-   private defer read_impl()
+   #
+   # Implemented to read a single line.  The EOL should not be included.
+   #
+   protected defer read_impl()
+
+   protected new()
+      self.line := ""
+      return
+   end
+end
+
+#
+# This class is used to read directory contents.
+#
+class DirStream(LineBasedStream, NoCopy)
+   private 
+      dd
+
+   protected defer read_impl()
 
    public defer close()
+
+   private static defer new_impl(path)
 
    public get_mode()
       return READ
    end
 
-   private static defer new_impl(path)
-
    public new(path)
+      cast(self,LineBasedStream).new()
       self.dd := new_impl(path) | fail
-      self.line := ""
       return
    end
 end
@@ -1487,13 +1505,22 @@ class FilterOutputStream(Stream, BgProc, NoCopy)
    private 
       sink,
       cin,
-      cout
+      cout,
+      task
    
+   #
+   # Set a {Task} to use when polling the background task.
+   #
+   public set_task(t)
+      self.task := t
+      return self
+   end
+
    public out(s)
       local x
       s := string(s) | runerr(103, s)
       repeat {
-         x := DescStream.poll([cin, Poll.IN, cout, Poll.OUT]) | fail
+         x := (if /task then DescStream else task).poll([cin, Poll.IN, cout, Poll.OUT]) | fail
          if poll_in_test(x[1]) then
             sink.writes(cin.in(1048576)) | fail
          else if poll_out_test(x[2]) then
@@ -1587,14 +1614,23 @@ class FilterInputStream(Stream, BgProc, NoCopy)
       source,
       cin,
       cout,
-      buff
+      buff,
+      task
+
+   #
+   # Set a {Task} to use when polling the background task.
+   #
+   public set_task(t)
+      self.task := t
+      return self
+   end
 
    public in(n)
       local x, t
       if /cout then
          return read_cin(n)
       repeat {
-         x := DescStream.poll([cin, Poll.IN, cout, Poll.OUT]) | fail
+         x := (if /task then DescStream else task).poll([cin, Poll.IN, cout, Poll.OUT]) | fail
          if poll_in_test(x[1]) then
             return read_cin(n)
          else if poll_out_test(x[2]) then {
@@ -1624,7 +1660,8 @@ class FilterInputStream(Stream, BgProc, NoCopy)
 
    #
    # Close the stream.  This waits for the child process to terminate.
-   # NB: {source} is not closed.
+   # NB: {source} is not closed unless the {set_close_underlying} has been
+   # set to {&yes}.
    #
    public close()
       local f
@@ -1940,34 +1977,17 @@ end
 # sequence of that method represent the output of the stream, with
 # each result being one line.
 #
-class GeneratorStream(Stream, NoCopy)
+class GeneratorStream(LineBasedStream, NoCopy)
    private
-      coex,
-      line
+      coex
 
-   public read()
+   protected read_impl()
       local t
-      if *line > 0 then {
-         t := line[1:-1]
-         line := ""
-         return t
-      }
       (t := @coex) | fail
       t := string(t) | runerr(103, t)
       return t
    end
 
-   public in(n)
-      local t
-      if (*line > 0) | (line := read() || Files.EOL) then {
-         line ? {
-            t := move(n) | tab(0)
-            line := tab(0)
-         }
-         return t
-      }
-   end
-   
    public get_mode()
       return READ
    end
@@ -1982,8 +2002,8 @@ class GeneratorStream(Stream, NoCopy)
    protected defer gen()
 
    public new()
+      cast(self,LineBasedStream).new()
       self.coex := create gen()
-      line := ""
       return
    end
 end

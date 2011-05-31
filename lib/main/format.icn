@@ -8,26 +8,9 @@
 
 package util
 
+import lang, ipl.scan(max_many)
+
 class Format()
-   #
-   # Convert a string to an integer.
-   # @param base  The base to use for the conversion (default is 16).
-   #
-   public static string_to_int(subject, base)
-      local n, digs, s, c
-      n := 0
-      /base := 16
-      digs := "0123456789abcdef"[1:base + 1] | runerr("invalid base", base)
-
-      s := string(subject) | runerr(103, subject)
-      if s[1] == "-" then
-         return -string_to_int(s[2:0], base)
-
-      every c := !map(s) do
-         n := base * n + find(c, digs) - 1 | fail
-      return n
-   end
-
    #
    # Convert an integer to a string.
    #
@@ -169,85 +152,115 @@ class Format()
       return [m, e]
    end
 
+   private static escape_char(ch)
+      return case string(ch) of {
+         "n": "\n"
+         "l": "\l"
+         "b": "\b"
+         "d": "\d"
+         "e": "\e"
+         "r": "\r"
+         "t": "\t"
+         "v": "\v"
+         "f": "\f"
+         default:  ch
+      }
+   end
 
    #
    # Remove escape sequences from the subject.
    #
-   public static unescape(subject)
-      local s, res, ch
+   public static escape(subject)
+      local s, res
 
-      s := string(subject) | runerr(103, subject)
-      
+      s := text(subject) | runerr(129, subject)
       res := ""
       s ? {
          repeat {
-            res ||:= tab(upto('\\') | 0)
+            res ||:= string(tab(upto('\\') | 0))
             if pos(0) then
                break
             move(1)
-            if any('01234567') then
-               res ||:= char(string_to_int(move(3), 8))
+            res ||:= string(if any('01234567') then
+               char(iand("8r" || tab(max_many('01234567', 3)), 8r377))
             else if ="x" then
-               res ||:= char(string_to_int(move(2), 16))
+               char("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 2)))
+            else if ="u" then
+               uchar("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 4)))
+            else if ="U" then
+               uchar("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 6))) |
+                   return error("code point out of range")
             else if ="^" then
-               res ||:= char(map(move(1)) + 1 - ord("a"))
-            else {
-               ch := move(1) | "\""
-               res ||:= case ch of {
-                  "z" : ""
-                  "n" : "\n"
-                  "l" : "\l"
-                  "b" : "\b"
-                  "d" : "\d"
-                  "e" : "\e"
-                  "r" : "\r"
-                  "t" : "\t"
-                  "v" : "\v"
-                  "f" : "\f"
-                  "w" : " "
-                  "s" : "\s"
-                  default  :  ch
-               }
-            }
+               char(iand(ord(move(1)), 8r37))
+            else 
+               escape_char(move(1))) | "\0"
          }
       }
-      return res
+      return if type(subject) == "ucs" then ucs(res) | error("invalid utf-8 escape sequence") else res
    end
 
    #
-   # Add escape sequences to the subject.
+   # Remove escape sequences from the subject, but return the corresponding cset rather than
+   # a string.
    #
-   public static escape(subject)
-      local s, res, ch
-      static printable
-      initial
-         printable := '\x20-\x7e' -- '\\'
+   public static cset_escape(subject)
+      local s, l, state, c, prev, esc_flag
 
-      s := string(subject) | runerr(103, subject)
-      
-      res := ""
+      s := text(subject) | runerr(129, subject)
+      state := 0
+      l := []
       s ? {
-         repeat {
-            res ||:= tab(many(printable))
-            if pos(0) then
-               break
-            ch := move(1)
-            res ||:= case ch of {
-               "\n" : "\\n"
-               "\l" : "\\l"
-               "\b" : "\\b"
-               "\d" : "\\d"
-               "\e" : "\\e"
-               "\r" : "\\r"
-               "\t" : "\\t"
-               "\v" : "\\v"
-               "\f" : "\\f"
-               "\\" : "\\\\"
-               default  :  "\\x" || int_to_string(ord(ch), 16, 2)
+         until pos(0) do {
+            if any('\\') then {
+               esc_flag := &yes
+               move(1)
+               c := (if any('01234567') then
+                  iand("8r" || tab(max_many('01234567', 3)), 8r377)
+               else if ="x" then
+                  integer("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 2)))
+               else if ="u" then
+                  integer("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 4)))
+               else if ="U" then
+                  (16r10FFFF >= integer("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 6)))) |
+                      return error("code point out of range")
+               else if ="^" then
+                  iand(ord(move(1)), 8r37)
+               else 
+                  ord(escape_char(move(1)))) | 0
+            } else {
+               esc_flag := &no
+               c := ord(move(1))
+            }
+
+            case state of {
+               0: {
+                  prev := c
+                  state := 1
+               }
+               1 : {
+                  if /esc_flag & (c = 45) then
+                     state := 2
+                  else {
+                     put(l, prev)
+                     put(l, prev)
+                     prev := c
+                  }                     
+               }
+               2 : {
+                  put(l, prev)
+                  put(l, c)
+                  state := 0
+               }
             }
          }
+         if state = 1 then {
+            put(l, prev)
+            put(l, prev)
+         }
+         else if state = 2 then
+            return error("incomplete cset range");
       }
-      return res
+      return Text.create_cset(l)
    end
 
    #

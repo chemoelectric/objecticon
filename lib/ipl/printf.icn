@@ -44,7 +44,8 @@
 package ipl.printf
 
 import
-   io(writes)
+   io(writes),
+   util(Format)
 
 procedure sprintf(format, args[])
 	return _doprnt(format, args)
@@ -89,7 +90,7 @@ procedure _doprnt(format, args)
 		    "o": v := octstr(v)
 		    "i": v := image(v)
 		    "r": v := fixnum(v,prec)
-		    "e": v := eformatstr(v, prec, width)
+		    "e": v := eformatstr(v, prec)
 		    default: {
 			push(args, v)
 			v := conv
@@ -164,153 +165,17 @@ procedure octstr(n)
 end
 
 procedure fixnum(x, prec)
-   local int, frac, f1, f2, p10
-
-	/prec := 6
-	x := real(x) | return image(x)
-	int := integer(x) | return image(x)
-	frac := image(x - int)
-	if find("e", frac) then {
-		frac ?:= {
-			f1 := tab(upto('.')) &
-			move(1) &
-			f2 := tab(upto('e')) &
-			move(1) &
-			p10 := -integer(tab(0)) &
-			repl("0",p10-1) || f1 || f2
-			}
-		}
-	else
-		frac ?:= (tab(upto('.')) & move(1) & tab(0))
-        frac := adjustfracprec(frac, prec)
-        int +:= if int >= 0 then frac[2] else -frac[2]
-	return int || "." || frac[1]
-end
-
-
-# e-format:  [-]m.dddddde(+|-)xx
-#
-# Differs from C and Fortran E formats primarily in the
-# details, among them:
-#
-# - Single-digit exponents are not padded out to two digits.
-#
-# - The precision (number of digits after the decimal point)
-#   is reduced if needed to make the number fit in the available
-#   width, if possible.  The precision is never reduced-to-fit
-#   below 1 digit after the decimal point.
-#
-procedure eformatstr(x, prec, width)
-   local signpart, wholepart, fracpart, exppart, shiftcount, rslt, s
-
    /prec := 6
-   /width := prec + 7
-
-   # Separate string representation of x into parts
-   #
-   s := string(real(x)) | return image(x)
-   s ? {
-      signpart  :=  (=("-" | "+") | "")
-      wholepart :=  1(tab(many(&digits)), any('.eE')) | return image(x) 
-      fracpart  :=  ((=".", tab(many(&digits)))  | "")
-      exppart   :=  integer((=("e"|"E"), tab(0))  | 0)
-      }
-
-   # When the integer part has more than 1 digit, shift it
-   #  right into fractional part and scale the exponent
-   #
-   if *wholepart > 1 then {
-      exppart +:= *wholepart -1
-      fracpart := wholepart[2:0] || fracpart
-      wholepart := wholepart[1]
-      }
-
-   # If the the number is unnormalized, shift the fraction
-   #   left into the whole part and scale the exponent
-   #
-   if wholepart == "0" then {
-      if shiftcount := upto('123456789', fracpart) then {
-         exppart -:= shiftcount
-         wholepart := fracpart[shiftcount] 
-         fracpart := fracpart[shiftcount+1:0]
-         }
-      }
-
-   # Adjust the fractional part to the requested precision.
-   # If the carry causes the whole part to overflow from
-   #    9 to 10 then renormalize.
-   #
-   fracpart := adjustfracprec(fracpart, prec)
-   wholepart +:= fracpart[2]
-   fracpart := fracpart[1]
-   if *wholepart > 1 then {
-      wholepart := wholepart[1]
-      exppart +:= 1
-      }
-
-   #  Assemble the final result.
-   #  - Leading "+" dropped in mantissa
-   #  - Leading "+" obligatory in exponent
-   #  - Decimal "." included iff fractional part is non-empty
-   #
-   wholepart := (signpart == "-", "-") || wholepart
-   exppart  :=  (exppart > 0, "+")   || exppart
-   fracpart :=  (*fracpart > 0, ".") || fracpart
-   rslt     := wholepart || fracpart || "e" || exppart
-
-   # Return the result.  
-   # -- If too short, pad on the left with blanks (not zeros!).
-   # -- If too long try to shrink the precision 
-   # -- If shrinking is not possible return a field of stars.
-   #
-   return (*rslt <= width,        right(rslt, width)) |  
-          (*rslt - width < prec,  eformatstr(x, prec + width - *rslt, width)) |
-          repl("*", width)
+   x := real(x) | return image(x)
+   return Format.numeric_to_string(x, prec)
 end
 
-#  Zero-extend or round the fractional part to 'prec' digits.
+
+# e-format:  [-]m.ddddddE(+|-)xxx
 #
-#  Returns a list: 
-#
-#     [ fracpart, carry ]
-#
-#  where the fracpart has been adjusted to the requested
-#  precision, and the carry (result of possible rounding)
-#  is to be added into the whole number.
-#
-procedure adjustfracprec(fracpart, prec)
-
-   local choppart, carryout
-
-   #  Zero-extend if needed.
-   if *fracpart < prec then return [left(fracpart, prec, "0"), 0]
-
-   # When the fractional part has more digits than the requested 
-   #   precision, chop off the extras and round.
-   #
-   carryout := 0
-   if *fracpart > prec then {
-      choppart := fracpart[prec+1:0]
-      fracpart := fracpart[1+:prec]
-
-      # If rounding up is needed...
-      #
-      if choppart[1] >>= "5" then {
-
-         #  When the fractional part is .999s or the precision is 0,
-         #     then round up overflows into the whole part.
-         #
-         if (prec = 0) | (string(cset(fracpart)) == "9") then {
-            fracpart := left("0", prec, "0")
-            carryout := 1
-            }
-         #  In the usual case, round up simply increments the
-         #     fractional part.  (We put back any trailing
-         #     zeros that got lost.) 
-         else {
-            fracpart := left(integer(fracpart)+1, prec, "0")
-            }
-         }
-      }
-   return [fracpart, carryout]
+procedure eformatstr(x, prec)
+   /prec := 6
+   x := real(x) | return image(x)
+   return Format.numeric_to_string(x, prec, 'e')
 end
+

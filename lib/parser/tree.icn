@@ -8,6 +8,7 @@ final class Token()
    public const
       tok, 
       s, 
+      val,
       line,
       column,
       filename
@@ -38,9 +39,10 @@ final class Token()
       return f.writes(chunk)
    end
 
-   public new(tok, s, chunk, line, column, filename)
+   public new(tok, s, chunk, val, line, column, filename)
       self.tok := tok
       self.s := s
+      self.val := val
       self.chunk := chunk
       self.line := line
       self.column := column
@@ -75,6 +77,7 @@ class Node()
 
    public set(i, x)
       self.children[i] := x
+      return self
    end
 
    public size()
@@ -128,10 +131,13 @@ class List(Tree)
    package index
 
    package defer flatten()
+   package defer unflatten()
    public defer put(o)
+   public defer push(o)
 
    public clear()
       pos.set(index, Node.EMPTY)
+      return self
    end
 
    public gen()
@@ -150,30 +156,68 @@ class List(Tree)
       local l
       l := flatten()
       l[i] := o
-      clear()
-      every put(!l)
+      unflatten(l)
+      return self
    end
 
    public insert(i, o)
       local l
       l := flatten()
       default.insert(l, i, o)
-      clear()
-      every put(!l)
+      unflatten(l)
+      return self
    end
 
    public delete(i)
       local l
       l := flatten()
       default.delete(l, i)
-      clear()
-      every put(!l)
+      unflatten(l)
+      return self
    end
 
    package new(pos, index)
       cast(self,Tree).new(pos)
       self.index := index
       return
+   end
+end
+
+#
+# Left-assoc list; define put and flatten
+#
+class LList(List)
+   package unflatten(l)
+      clear()
+      every put(!l)
+      return self
+   end
+
+   public push(o)
+      local l
+      l := flatten()
+      default.push(l, o)
+      unflatten(l)
+      return self
+   end
+end
+
+#
+# Right-assoc list; define push and flatten
+#
+class RList(List)
+   package unflatten(l)
+      clear()
+      every push(back(l))
+      return self
+   end
+
+   public put(s)
+      local l
+      l := flatten()
+      default.put(l, s)
+      unflatten(l)
+      return self
    end
 end
 
@@ -217,7 +261,7 @@ class Id(Tree)
    end
 end
 
-class IdList(List)
+class IdList(LList)
    private const lab
 
    package flatten()
@@ -226,11 +270,11 @@ class IdList(List)
       n := pos.child(index)
       while n ~=== Node.EMPTY do {
          if is(n, Node) & n.label == lab then {
-            push(l, Id(n.child(3), n.child(2)))
+            default.push(l, Id(n.child(3), n.child(2)))
             n := n.child(1)
          } else {
             # Leftmost token, or Node with non-matching label.
-            push(l, Id(n))
+            default.push(l, Id(n))
             break
          }
       }
@@ -245,27 +289,28 @@ class IdList(List)
                              pos.child(index),
                              s.comma,
                              s.pos))
+      return self
    end
 
    package new(pos, index, lab)
-      cast(self,List).new(pos, index)
+      cast(self,LList).new(pos, index)
       /lab := "idlist"
       self.lab := lab
       return
    end
 end
 
-class AccessList(List)
+class AccessList(LList)
    package flatten()
       local l, n
       l := []
       n := pos.child(index)
       while n ~=== Node.EMPTY do {
          if is(n, Node) then {
-            push(l, Leaf(n.child(2)))
+            default.push(l, Leaf(n.child(2)))
             n := n.child(1)
          } else {
-            push(l, Leaf(n))
+            default.push(l, Leaf(n))
             break
          }
       }
@@ -279,16 +324,17 @@ class AccessList(List)
          pos.set(index, Node("fieldaccess",
                              pos.child(index),
                              x.pos))
+      return self
    end
 end
 
-class LocalsList(List)
+class LocalsList(LList)
    package flatten()
       local l, n
       l := []
       n := pos.child(index)
       while n ~=== Node.EMPTY do {
-         push(l, Local(n))
+         default.push(l, Local(n))
          n := n.child(1)
       }
       return l
@@ -299,10 +345,11 @@ class LocalsList(List)
                           pos.child(index),
                           x.pos.child(2),
                           x.pos.child(3)))
+      return self
    end
 end
 
-class Invocable(List)
+class Invocable(LList)
    public get_first_token()
       return pos.child(1)
    end
@@ -313,10 +360,10 @@ class Invocable(List)
       n := pos.child(index)
       while n ~=== Node.EMPTY do {
          if is(n, Node) & n.label == "invoclist" then {
-            push(l, Id(n.child(3), n.child(2)))
+            default.push(l, Id(n.child(3), n.child(2)))
             n := n.child(1)
          } else {
-            push(l, Id(n))
+            default.push(l, Id(n))
             break
          }
       }
@@ -331,15 +378,16 @@ class Invocable(List)
                              pos.child(index),
                              x.comma,
                              x.pos))
+      return self
    end
 
    package new(pos)
-      cast(self,List).new(pos, 2)
+      cast(self,LList).new(pos, 2)
       return
    end
 end
 
-class Import(List)
+class Import(LList)
    public get_first_token()
       return pos.child(1)
    end
@@ -352,15 +400,15 @@ class Import(List)
          if is(n, Node) & n.label == "importlist" then {
             t := n.child(3)
             if is(t, Node) & t.label == "importspec" then
-               push(l, ImportSpec(t, n.child(2)))
+               default.push(l, ImportSpec(t, n.child(2)))
             else
-               push(l, Id(t, n.child(2)))
+               default.push(l, Id(t, n.child(2)))
             n := n.child(1)
          } else {
             if is(n, Node) & n.label == "importspec" then
-               push(l, ImportSpec(n))
+               default.push(l, ImportSpec(n))
             else
-               push(l, Id(n))
+               default.push(l, Id(n))
             break
          }
       }
@@ -375,21 +423,22 @@ class Import(List)
                              pos.child(index),
                              x.comma,
                              x.pos))
+      return self
    end
 
    package new(pos)
-      cast(self,List).new(pos, 2)
+      cast(self,LList).new(pos, 2)
       return
    end
 end
 
-class Imports(List)
+class Imports(LList)
    package flatten()
       local l, n
       l := []
       n := pos.child(index)
       while n ~=== Node.EMPTY do {
-         push(l, Import(n.child(2)))
+         default.push(l, Import(n.child(2)))
          n := n.child(1)
       }
       return l
@@ -399,17 +448,18 @@ class Imports(List)
       pos.set(index, Node("importdecls", 
                           pos.child(index),
                           x.pos))
+      return self
    end
 end
 
-class Body(List)
+class Body(LList)
    package flatten()
       local l, n, t
       l := []
       n := pos.child(index)
       while n ~=== Node.EMPTY do {
          t := n.child(2)
-         push(l, case t.label of {
+         default.push(l, case t.label of {
             "record" : Record(t)
             "class" :  Class(t)
             "proc" :  Procedure(t)
@@ -426,6 +476,7 @@ class Body(List)
       pos.set(index, Node("bodydecls", 
                           pos.child(index),
                           x.pos))
+      return self
    end
 end
 
@@ -443,6 +494,7 @@ class Prog(Tree)
 
    public clear_package(x)
       decls.set(1, Node.EMPTY)
+      return self
    end
 
    public get_imports()
@@ -744,7 +796,7 @@ class Factory()
    end
 end
 
-class Class(List)
+class Class(LList)
    public get_first_token()
       return Util.first_token(pos)
    end
@@ -755,7 +807,7 @@ class Class(List)
       n := pos.child(index)
       while n ~=== Node.EMPTY do {
          t := n.child(3)
-         push(l, 
+         default.push(l, 
               if is(t, Token) | t.label == "idlist" then
                  FieldList(n)
               else if t.label == "method" then
@@ -772,6 +824,7 @@ class Class(List)
                           pos.child(index),
                           x.pos.child(2),
                           x.pos.child(3)))
+      return self
    end
 
    public get_name()
@@ -811,7 +864,7 @@ class Class(List)
    end
 
    package new(pos)
-      cast(self,List).new(pos, 7)
+      cast(self,LList).new(pos, 7)
       return
    end
 end
@@ -1027,5 +1080,177 @@ class Package(Tree)
    public set_name(x)
       pos.set(2, x.pos)
       return self
+   end
+end
+
+#
+# Classes for handling lists in expression Nodes
+#
+
+class ExprListElement(Tree)
+   public const comma
+
+   public get_first_token()
+      return Util.first_token(pos)
+   end
+
+   public new(pos, comma)
+      cast(self,Tree).new(pos)
+      /comma := Token(COMMA, ",", ",")
+      self.comma := comma
+      return
+   end
+end
+
+#
+# List for handling a "exprlist" Node
+#
+class ExprList(LList)
+   package flatten()
+      local l, n
+      l := []
+      n := pos.child(index)
+      if n ~=== Node.EMPTY then {
+         repeat {
+            if is(n, Node) & n.label == "exprlist" then {
+               default.push(l, ExprListElement(n.child(3), n.child(2)))
+               n := n.child(1)
+            } else {
+               # Leftmost token, or Node with non-matching label.
+               default.push(l, ExprListElement(n))
+               break
+            }
+         }
+      }
+      return l
+   end
+
+   public put(s)
+      if pos.child(index) === Node.EMPTY then
+         pos.set(index, s.pos)
+      else
+         pos.set(index, Node("exprlist",
+                             pos.child(index),
+                             s.comma,
+                             s.pos))
+      return self
+   end
+
+   public new(pos, index)
+      cast(self,LList).new(pos, index)
+      return
+   end
+end
+
+
+class CompoundElement(Tree)
+   public const semi
+
+   public get_first_token()
+      return Util.first_token(pos)
+   end
+
+   public new(pos, semi)
+      cast(self,Tree).new(pos)
+      /semi := Token(SEMICOL, ";", ";")
+      self.semi := semi
+      return
+   end
+end
+
+#
+# List for handling a "compound" Node
+#
+class Compound(RList)
+   package flatten()
+      local l, n
+      l := []
+      n := pos.child(index)
+      if n ~=== Node.EMPTY then {
+         repeat {
+            if is(n, Node) & n.label == "compound" then {
+               default.put(l, CompoundElement(n.child(1), n.child(2)))
+               n := n.child(3)
+            } else {
+               # Rightmost token, or Node with non-matching label.
+               default.put(l, CompoundElement(n))
+               break
+            }
+         }
+      }
+      return l
+   end
+
+   public push(s)
+      local n
+      n := pos.child(index)
+      if n === Node.EMPTY then
+         pos.set(index, s.pos)
+      else
+         pos.set(index, Node("compound",
+                             s.pos,
+                             s.semi,
+                             pos.child(index)))
+      return self
+   end
+
+   public new(pos, index)
+      cast(self,RList).new(pos, index)
+      return
+   end
+end
+
+class CaseListElement(Tree)
+   public const semi
+
+   public get_first_token()
+      return Util.first_token(pos)
+   end
+
+   public new(pos, semi)
+      cast(self,Tree).new(pos)
+      /semi := Token(SEMICOL, ";", ";")
+      self.semi := semi
+      return
+   end
+end
+
+#
+# List for handling a "caselist" Node
+#
+class CaseList(LList)
+   package flatten()
+      local l, n
+      l := []
+      n := pos.child(index)
+      if n ~=== Node.EMPTY then {
+         repeat {
+            if is(n, Node) & n.label == "caselist" then {
+               default.push(l, CaseListElement(n.child(3), n.child(2)))
+               n := n.child(1)
+            } else {
+               # Leftmost token, or Node with non-matching label.
+               default.push(l, CaseListElement(n))
+               break
+            }
+         }
+      }
+      return l
+   end
+
+   public put(s)
+      if pos.child(index) === Node.EMPTY then
+         pos.set(index, s.pos)
+      else
+         pos.set(index, Node("caselist",
+                             pos.child(index),
+                             s.semi,
+                             s.pos))
+      return self
+   end
+
+   public new(pos, index)
+      cast(self,LList).new(pos, index)
+      return
    end
 end

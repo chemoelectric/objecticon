@@ -75,12 +75,13 @@ class Parser(Connectable)
 
    public parse(s)
       first_err := &null
-      yyin := s
+      yyin := string(s) | runerr(103, s)
       parser.yyerror := yyerror
       yylex_reinit()
       # Because we don't have the pp-generated # at the top of the file we start
-      # at line 1 not line 0
+      # at line 1 not line 0, and also in ascii encoding.
       yylineno := 1
+      yyencoding := "ASCII"
       yyparse()
       if yynerrs = 0 then
          return Prog(yyval)

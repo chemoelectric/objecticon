@@ -37,8 +37,8 @@
 package ipl.ivalue
 
 import
-   ipl.escape(escape),
-   lang(Prog)
+   lang(Prog),
+   util(Format)
 
 # convert string to Icon value
 procedure ivalue(___s___)			
@@ -74,8 +74,8 @@ procedure ivalue(___s___)
    return {
       numeric(___s___) | {				# integer or real
       ___s___ ? {
-         2(="\"", escape(tab(-1)), ="\"") |		# string literal
-         2(="'", cset(escape(tab(-1))), ="'")	# cset literal
+         2(="\"", Format.escape(tab(-1)), ="\"") |		# string literal
+         2(="'", Format.cset_escape(tab(-1)), ="'")	# cset literal
          }
       } |
       ((*___s___ = 0) & &null) |			# empty string = &null

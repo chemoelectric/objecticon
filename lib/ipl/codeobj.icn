@@ -106,10 +106,10 @@ package ipl.codeobj
 
 import
    io(stop),
-   ipl.escape(escape),
    ipl.gener(star),
    ipl.procname(procname),
-   ipl.typecode(typecode)
+   ipl.typecode(typecode),
+   util(Format)
 
 invocable all
 
@@ -166,8 +166,8 @@ procedure decode(s,level)
       suspend case p.type of {
          "l":  inlab[p.value]		# label for an object
          "i":  integer(p.value)
-         "s":  escape(p.value)
-         "c":  cset(escape(p.value))
+         "s":  Format.escape(p.value)
+         "c":  Format.cset_escape(p.value)
          "r":  real(p.value)
          "n":  &null
          "L":  delist(p.value,p.tag)

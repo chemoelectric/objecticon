@@ -275,7 +275,7 @@ procedure text_convert(s, target)
       "string": {
          t := ""
          every i := ord(s) do
-            t ||:= char(256 > i | 63)
+            t ||:= char(i | 63)
          return t
       }
       default: runerr("Bad target type", target)

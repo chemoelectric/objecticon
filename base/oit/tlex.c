@@ -17,7 +17,6 @@ static void lexfatal(char *fmt, ...);
 
 #include "lexdef.h"
 #include "lextab.h"
-#include "../h/esctab.h"
 
 /*
  * Prototypes.
@@ -33,7 +32,8 @@ static	struct toktab   *getcset	(int ac,int *cc);
 static	int		setfilenm	(int c);
 static	int		setencoding	(int c);
 static	int		setlineno	(void);
-static	int	ctlesc		(void);
+static	int	ctlesc	(int c);
+static	int	escchar	(int c);
 static	int	hexesc		(int digs);
 static	int	octesc		(int ac);
 static  int     read_utf_char(int c);
@@ -495,7 +495,6 @@ static struct toktab *getstring(int ac, int *cc)
     int c, i, n;
     int len;
     char utf8[MAX_UTF8_SEQ_LEN];
-
     c = NextChar;
     while (c != '"' && c != '\n' && c != EOF) {
         /*
@@ -513,8 +512,6 @@ static struct toktab *getstring(int ac, int *cc)
 
         if (c == Escape) {
             c = NextChar;
-            if (c == EOF)
-                break;
             if (isoctal(c))
                 AppChar(lex_sbuf, octesc(c));
             else if (c == 'x')
@@ -535,10 +532,19 @@ static struct toktab *getstring(int ac, int *cc)
                 for (i = 0; i < n; ++i)
                     AppChar(lex_sbuf, utf8[i]);
             }
-            else if (c == '^')
-                AppChar(lex_sbuf, ctlesc());
-            else
-                AppChar(lex_sbuf, esctab[c]);
+            else if (c == '^') {
+                c = NextChar;
+                if (c < 256) 
+                    AppChar(lex_sbuf, ctlesc(c));
+                else
+                    lexfatal("string literal character out of range (codepoint %d)", c);
+            } else {
+                c = escchar(c);
+                if (c < 256) 
+                    AppChar(lex_sbuf, c);
+                else
+                    lexfatal("string literal character out of range (codepoint %d)", c);
+            }
         } else {
             if (c < 256) 
                 AppChar(lex_sbuf, c);
@@ -587,8 +593,6 @@ static struct toktab *getucs(int ac, int *cc)
 
         if (c == Escape) {
             c = NextChar;
-            if (c == EOF)
-                break;
             if (isoctal(c))
                 AppChar(lex_sbuf, octesc(c));
             else if (c == 'x')
@@ -609,10 +613,19 @@ static struct toktab *getucs(int ac, int *cc)
                 for (i = 0; i < n; ++i)
                     AppChar(lex_sbuf, utf8[i]);
             }
-            else if (c == '^')
-                AppChar(lex_sbuf, ctlesc());
-            else
-                AppChar(lex_sbuf, esctab[c]);
+            else if (c == '^') {
+                c = NextChar;
+                AppChar(lex_sbuf, ctlesc(c));
+            } else {
+                c = escchar(c);
+                if (c > 127) {
+                    n = utf8_seq(c, utf8);
+                    for (i = 0; i < n; ++i)
+                        AppChar(lex_sbuf, utf8[i]);
+                } 
+                else 
+                    AppChar(lex_sbuf, c);
+            }
         } else {
             if (c > 127) {
                 n = utf8_seq(c, utf8);
@@ -686,8 +699,6 @@ static struct toktab *getcset(int ac, int *cc)
         esc_flag = (c == Escape);
         if (esc_flag) {
             c = NextChar;
-            if (c == EOF)
-                break;
             if (isoctal(c))
                 c = octesc(c);
             else if (c == 'x')
@@ -701,10 +712,11 @@ static struct toktab *getcset(int ac, int *cc)
                     c = 0;
                 }
             }
-            else if (c == '^')
-                c = ctlesc();
-            else
-                c = esctab[c];
+            else if (c == '^') {
+                c = NextChar;
+                c = ctlesc(c);
+            } else
+                c = escchar(c);
         }
 
         switch (state) {
@@ -753,15 +765,25 @@ static struct toktab *getcset(int ac, int *cc)
 }
 
 
-
-static int ctlesc()
+static int escchar(int c)
 {
-    int c;
+    switch(c) {
+        case 'n' : return '\n';
+        case 'l' : return '\n';
+        case 'b' : return '\b';
+        case 'd' : return 0177;
+        case 'e' : return 033;
+        case 'r' : return '\r';
+        case 't' : return '\t';
+        case 'v' : return '\v';
+        case 'f' : return '\f';
+        default: return c;
+    }
+}
 
-    c = NextChar;
-    if (c == EOF)
-        return EOF;
 
+static int ctlesc(int c)
+{
     return (c & 037);
 }
 
@@ -780,8 +802,6 @@ static int octesc(int ac)
     do {
         c = (c << 3) | (nc - '0');
         nc = NextChar;
-        if (nc == EOF)
-            return EOF;
     } while (isoctal(nc) && i++ < 3);
     PushChar(nc);
 
@@ -801,8 +821,6 @@ static int hexesc(int digs)
     i = 0;
     while (i++ < digs) {
         nc = NextChar;
-        if (nc == EOF)
-            return EOF;
         if (nc >= 'a' && nc <= 'f')
             nc -= 'a' - 10;
         else if (nc >= 'A' && nc <= 'F')
@@ -923,18 +941,8 @@ static int nextchar()
     c = ppch();
     switch (c) {
         case EOF:
-            if (incol) {
-                c = '\n';
-                in_line++;
-                incol = 0;
-                peekc = EOF;
-                break;
-	    }
-            else {
-                in_line = 0;
-                incol = 0;
-                break;
-	    }
+            /* Note that the preprocessor always gives a \n right before the EOF */
+            break;
         case '\n':
             in_line++;
             incol = 0;

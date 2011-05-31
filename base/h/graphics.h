@@ -87,15 +87,7 @@ struct palentry {
  * mode bits for the Icon window context (as opposed to X context)
  */
 
-#define ISRESIZABLE(ws)	((ws)->bits & 128)
-#define SETRESIZABLE(ws) ((ws)->bits |= 128)
-#define CLRRESIZABLE(ws) ((ws)->bits &= ~128)
-
-#if XWindows
-#define ISEXPOSED(ws)    ((ws)->bits & 256)
-#define SETEXPOSED(ws)   ((ws)->bits |= 256)
-#define CLREXPOSED(w)   ((ws)->bits &= ~256)
-#elif MSWIN32
+#if MSWIN32
 #define ISTOBEHIDDEN(ws)  ((ws)->bits & 4096)
 #define SETTOBEHIDDEN(ws)  ((ws)->bits |= 4096)
 #define CLRTOBEHIDDEN(ws)  ((ws)->bits &= ~4096)
@@ -273,7 +265,7 @@ typedef struct _wstate {
   int           minwidth;               /* minimum window width, in pixels */
   int           maxheight;              /* maximum window height, in pixels */
   int           maxwidth;               /* maximum window width, in pixels */
-  int		bits;			/* window bits */
+  int           resizable;              /* flag, is window resizable */
   struct descrip listp;		        /* event list for this window */
   int           mousestate;             /* buttons down after last mouse event */
 #if XWindows
@@ -310,6 +302,7 @@ typedef struct _wstate {
   int           using_win;
   int           border_width;
 #elif MSWIN32
+  int		bits;			/* window bits */
   HWND		win;			/* client window */
   HWND		iconwin;		/* client window when iconic */
   HBITMAP	pix;			/* backing bitmap */

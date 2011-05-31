@@ -1290,7 +1290,7 @@ void doconfig(wbp w, int status)
             fprint(ws->wctl_fd, "move  -minx %d -miny %d", ws->x, ws->y);
         if (status & (C_RESIZE|C_SIZE|C_MAXSIZE|C_MINSIZE)) {
             int minw, maxw, minh, maxh;
-            if (ISRESIZABLE(ws)) {
+            if (ws->resizable) {
                 minw = ws->minwidth;
                 minh = ws->minheight;
                 maxw = ws->maxwidth;
@@ -1417,7 +1417,7 @@ static int open_screen_win(wsp ws)
     int fd, n;
     int minw, maxw, minh, maxh;
 
-    if (ISRESIZABLE(ws)) {
+    if (ws->resizable) {
         minw = ws->minwidth;
         minh = ws->minheight;
         maxw = ws->maxwidth;
@@ -1760,15 +1760,6 @@ int setcanvas(wbp w, char *s)
 
     if (e->i == ws->state)
         return Succeeded;
-
-    /*
-     * If we're in the process of opening, just set state and leave to
-     * wopen.
-     */
-    if (!ws->pix) {
-        ws->state = e->i;
-        return Succeeded;
-    }
 
     /*
      * If we're presently hidden, just open the visible window.
