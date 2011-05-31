@@ -1931,7 +1931,7 @@ function io_SocketStream_bind(self, addr)
       runerr(103, addr)
    body {
        struct sockaddr *sa;
-       int optval = 1;
+       int optval;
        int len;
        GetSelfFd();
 
@@ -1943,6 +1943,7 @@ function io_SocketStream_bind(self, addr)
 
        /* This prevents a TIME_WAIT expiring connection blocking a server listening on
         * the same port */
+       optval = 1;
        setsockopt(self_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval);
 
        if (bind(self_fd, sa, len) < 0) {
