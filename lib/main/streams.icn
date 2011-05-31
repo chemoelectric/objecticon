@@ -1027,11 +1027,11 @@ class SocketStream(DescStream)
 end
 
 #
-# This class is used to read directory contents.
+# Parent class for classes which wish to define in() in terms of
+# read(), rather than the other way round.
 #
-class DirStream(Stream, NoCopy)
-   private 
-      dd,
+class LineBasedStream(Stream)
+   private
       line
 
    public read()
@@ -1055,19 +1055,37 @@ class DirStream(Stream, NoCopy)
       }
    end
 
-   private defer read_impl()
+   #
+   # Implemented to read a single line.  The EOL should not be included.
+   #
+   protected defer read_impl()
+
+   protected new()
+      self.line := ""
+      return
+   end
+end
+
+#
+# This class is used to read directory contents.
+#
+class DirStream(LineBasedStream, NoCopy)
+   private 
+      dd
+
+   protected defer read_impl()
 
    public defer close()
+
+   private static defer new_impl(path)
 
    public get_mode()
       return READ
    end
 
-   private static defer new_impl(path)
-
    public new(path)
+      cast(self,LineBasedStream).new()
       self.dd := new_impl(path) | fail
-      self.line := ""
       return
    end
 end
@@ -1590,34 +1608,17 @@ end
 # sequence of that method represent the output of the stream, with
 # each result being one line.
 #
-class GeneratorStream(Stream, NoCopy)
+class GeneratorStream(LineBasedStream, NoCopy)
    private
-      coex,
-      line
+      coex
 
-   public read()
+   protected read_impl()
       local t
-      if *line > 0 then {
-         t := line[1:-1]
-         line := ""
-         return t
-      }
       (t := @coex) | fail
       t := string(t) | runerr(103, t)
       return t
    end
 
-   public in(n)
-      local t
-      if (*line > 0) | (line := read() || Files.EOL) then {
-         line ? {
-            t := move(n) | tab(0)
-            line := tab(0)
-         }
-         return t
-      }
-   end
-   
    public get_mode()
       return READ
    end
@@ -1632,8 +1633,8 @@ class GeneratorStream(Stream, NoCopy)
    protected defer gen()
 
    public new()
+      cast(self,LineBasedStream).new()
       self.coex := create gen()
-      line := ""
       return
    end
 end
