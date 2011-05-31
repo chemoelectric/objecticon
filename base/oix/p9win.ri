@@ -304,7 +304,6 @@ wbp wopen(char *display)
     w = alcwbinding();
 
     GRFX_ALLOC(ws, _wstate);
-    ws->program = curpstate;
     ws->listp = nulldesc;    /* set to [] after linked into global context list */
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
         ws->screeninfo_fd = ws->cursor_fd = ws->mouse_pid = ws->cons_pid = ws->wsys_fd = 
