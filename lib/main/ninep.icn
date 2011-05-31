@@ -68,12 +68,15 @@ class File9P()
    end
 
    public open(mode)
+      return self
    end
 
    public close()
+      return self
    end
 
    public path_unreferenced()
+      return self
    end
 
    public get_parent()
@@ -208,19 +211,21 @@ class Dir9PImpl(Dir9P)
    end
 
    protected new_dir_child(name, uid, perm)
-      return Dir9PImpl("name=",name, 
-                       "uid=",uid,
-                       "muid=",uid,
-                       "gid=",self.gid,
-                       "perm=",iand(perm, ior(icom(8r777), iand(self.perm, 8r777))))
+      return Dir9PImpl().
+         set_name(name).
+         set_uid(uid).
+         set_muid(uid).
+         set_gid(self.gid).
+         set_perm(iand(perm, ior(icom(8r777), iand(self.perm, 8r777))))
    end
 
    protected new_regular_child(name, uid, perm)
-      return Regular9PImpl("name=",name, 
-                           "uid=",uid,
-                           "muid=",uid,
-                           "gid=",self.gid,
-                           "perm=",iand(perm, ior(icom(8r666), iand(self.perm, 8r666))))
+      return Regular9PImpl().
+         set_name(name).
+         set_uid(uid).
+         set_muid(uid).
+         set_gid(self.gid).
+         set_perm(iand(perm, ior(icom(8r666), iand(self.perm, 8r666))))
    end
 
    public create_child(name, uid, perm)
@@ -746,7 +751,8 @@ class TreeData9P(Data9P)
    end
 
    public delete_child(p1, p2)
-      return p1.delete_child(p2)
+      p1.delete_child(p2)
+      return self
    end
 
    public create_child(p, name, uid, perm)
@@ -758,15 +764,18 @@ class TreeData9P(Data9P)
    end
    
    public modified(p, uid)
-      return p.modified(uid)
+      p.modified(uid)
+      return self
    end
 
    public open(p, mode)
       p.open(mode)
+      return self
    end
 
    public write(p, s, pos)
       p.write(s, pos)
+      return self
    end
 
    public read(p, pos, count)
@@ -775,6 +784,7 @@ class TreeData9P(Data9P)
 
    public close(p)
       p.close()
+      return self
    end
 
    public get_info(p)
@@ -792,6 +802,7 @@ class TreeData9P(Data9P)
 
    public path_unreferenced(p)
       p.path_unreferenced()
+      return self
    end
 
    public new(root)
@@ -1101,9 +1112,10 @@ class Session9P()
       return self
    end
 
-   public new()
+   public new(d)
       self.fids := table()
       self.paths := table()
+      set_data(d)
       return
    end
 end
