@@ -452,3 +452,4 @@ struct b_proc *clone_b_proc(struct b_proc *bp);
 void set_curpstate(struct progstate *p);
 void set_curr_pf(struct p_frame *x);
 void synch_ipc(void);
+int isflag(dptr d);

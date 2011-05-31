@@ -1845,3 +1845,8 @@ void buffnstr(dptr d, char **s, ...)
     }
     va_end(ap);
 }
+
+int isflag(dptr d)
+{
+    return is:null(*d) || (d->dword == D_Integer && IntVal(*d) == 1);
+}

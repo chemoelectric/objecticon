@@ -1603,7 +1603,7 @@ function io_FileStream_close(self)
            fail;
        }
        *self_fd_dptr = minusonedesc;
-       return nulldesc;
+       return self;
    }
 end
 
@@ -1810,7 +1810,7 @@ function io_SocketStream_close(self)
            fail;
        }
        *self_fd_dptr = minusonedesc;
-       return nulldesc;
+       return self;
    }
 end
 
@@ -2332,7 +2332,7 @@ function io_DirStream_close(self)
            fail;
        }
        *self_dir_dptr = zerodesc;
-       return nulldesc;
+       return self;
    }
 end
 
@@ -2439,7 +2439,7 @@ function io_DirStream_close(self)
        FindClose(self_dir->handle);
        free(self_dir);
        *self_dir_dptr = zerodesc;
-       return nulldesc;
+       return self;
    }
 end
 
@@ -3004,7 +3004,7 @@ function io_RamStream_close(self)
        free(self_rs->data);
        free(self_rs);
        *self_rs_dptr = zerodesc;
-       return nulldesc;
+       return self;
    }
 end
 
@@ -3473,6 +3473,8 @@ function lang_Proc_get_name(c, flag)
         struct b_proc *proc0;
         if (!(proc0 = get_proc_for(&c)))
            runerr(0);
+        if (!isflag(&flag))
+           runerr(171, flag);
         if (proc0->field && is:null(flag)) {
             tended struct descrip result;
             int len;
@@ -3496,6 +3498,8 @@ function lang_Proc_get_package(c, flag)
         tended struct descrip result;
         if (!(proc0 = get_proc_for(&c)))
             runerr(0);
+        if (!isflag(&flag))
+           runerr(171, flag);
         if (proc0->field && is:null(flag)) {
             if (proc0->field->defining_class->package_id == 0)
                 fail;
@@ -3518,6 +3522,8 @@ function lang_Proc_get_program(c, flag)
         struct progstate *prog;
         if (!(proc0 = get_proc_for(&c)))
             runerr(0);
+        if (!isflag(&flag))
+           runerr(171, flag);
         if (proc0->field && is:null(flag))
             prog = proc0->field->defining_class->program;
         else {
@@ -3538,6 +3544,8 @@ function lang_Proc_get_location_impl(c, flag)
         struct loc *p;
         if (!(proc0 = get_proc_for(&c)))
             runerr(0);
+        if (!isflag(&flag))
+           runerr(171, flag);
         /* The check for M_Defer here is to avoid (if flag is 1), looking up a non-deferred
          * method's name in the global name table.
          */
@@ -3628,6 +3636,8 @@ function lang_Coexpression_traceback(ce, act_chain)
        tended struct b_coexpr *b;
        if (!(b = get_coexpr_for(&ce)))
           runerr(0);
+       if (!isflag(&act_chain))
+          runerr(171, act_chain);
        traceback(b, 0, !is:null(act_chain));
        return nulldesc;
    }
