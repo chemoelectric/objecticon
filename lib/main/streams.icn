@@ -752,7 +752,7 @@ end
 # This procedure emulates the old Icon builtin {write} function.
 #
 procedure write(a[])
-   local e, f, r, n
+   local e, f, r
    r := a[-1]
    if is(a[1], Stream) then
       f := pop(a)
@@ -772,16 +772,16 @@ end
 # This procedure emulates the old Icon builtin {writes} function.
 #
 procedure writes(a[])
-   local e, f, r, n
+   local e, f, r
    r := a[-1]
    if is(a[1], Stream) then
       f := pop(a)
    else
       f := FileStream.stdout
    every e := \!a do {
-      if is(e, Stream) then {
+      if is(e, Stream) then
          f := e
-      } else
+      else
          f.fully_out(e) | fail
    }
    return r
@@ -1673,6 +1673,10 @@ class LineFilterStream(GeneratorStream)
       if \close_underlying_flag then
          return other.close()
       return self
+   end
+
+   protected next_line()
+      return other.read()
    end
 
    protected expect_line()
