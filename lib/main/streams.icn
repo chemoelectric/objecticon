@@ -183,7 +183,7 @@ class Stream()
       local e
       every e := !a do
          fully_out(e) | fail
-      return self
+      return
    end
 
    #
@@ -194,7 +194,7 @@ class Stream()
       local e
       every e := !a | Files.EOL do
          fully_out(e) | fail
-      return self
+      return
    end
 
    #
@@ -218,7 +218,7 @@ class Stream()
       while s := in(1048576) do
          f.writes(s) | fail
       eof() | fail
-      return self
+      return
    end
 
    #
@@ -287,7 +287,7 @@ class StringStream(Stream)
    end
 
    public close()
-      return self
+      return
    end
 
    public get_mode()
@@ -300,7 +300,7 @@ class StringStream(Stream)
       else
          subj := subj[1:len + 1]
       pos := *subj + 1
-      return self
+      return
    end
 
    public str()
@@ -344,7 +344,7 @@ class NullStream(Stream)
    end
 
    public close()
-      return self
+      return
    end
 
    public get_mode()
@@ -352,7 +352,7 @@ class NullStream(Stream)
    end
 
    public truncate(len)
-      return self
+      return
    end
 end
 
@@ -379,7 +379,7 @@ class ZeroStream(Stream)
    end
 
    public close()
-      return self
+      return
    end
 
    public get_mode()
@@ -387,7 +387,7 @@ class ZeroStream(Stream)
    end
 
    public truncate(len)
-      return self
+      return
    end
 end
 
@@ -507,7 +507,7 @@ class BufferStream(Stream)
    public flush()
       local n, s
       if *wbuff = 0 then
-         return self
+         return
       s := ""
       every s ||:= !wbuff
       wbuff := []
@@ -516,7 +516,7 @@ class BufferStream(Stream)
          n := other.out(s) | fail
          s := s[n + 1:0]
       }
-      return self
+      return
    end
 
    #
@@ -531,7 +531,7 @@ class BufferStream(Stream)
          rbuff := ""
          rpos := &null
       }
-      return self
+      return
    end
 
    #
@@ -540,7 +540,7 @@ class BufferStream(Stream)
    public synch()
       unbuff() | fail
       flush() | fail
-      return self
+      return
    end
 
    public close()
@@ -548,8 +548,7 @@ class BufferStream(Stream)
       flush() | (f := 1)
       if \close_underlying_flag then
          other.close() | (f := 1)
-      if /f then
-         return self
+      return /f
    end
 
    public seek(offset)
@@ -670,7 +669,7 @@ class DescStream(Stream, NoCopy)
    public dup2(other)
       dup2_impl(other) | fail
       other.mode := self.mode
-      return self
+      return
    end
 
    private defer dup2_impl()
@@ -1124,7 +1123,7 @@ class ProgInputStream(SocketStream, BgProc)
    public close()
       cast(self,SocketStream).close()
       do_wait()
-      return self
+      return
    end
 
    # Open a new readable {Stream} based on the given command.  The
@@ -1182,7 +1181,7 @@ class ProgOutputStream(SocketStream, BgProc)
    public close()
       cast(self,SocketStream).close()
       do_wait()
-      return self
+      return
    end
 
    # Open a new writeable {Stream} based on the given command. The
@@ -1280,8 +1279,7 @@ class FilterOutputStream(Stream, BgProc, NoCopy)
       if \close_underlying_flag then
          sink.close() | (f := 1)
       do_wait()
-      if /f then
-         return self
+      return /f
    end
 
    public get_mode()
@@ -1406,8 +1404,7 @@ class FilterInputStream(Stream, BgProc, NoCopy)
       if \close_underlying_flag then
          source.close() | (f := 1)
       do_wait()
-      if /f then
-         return self
+      return /f
    end
 
    public get_mode()
@@ -1535,8 +1532,7 @@ class SslStream(Stream, NoCopy)
       close_impl() | (f := 1)
       if \close_underlying_flag then
          other.close() | (f := 1)
-      if /f then
-         return self
+      return /f
    end
 
    private defer close_impl()
@@ -1591,8 +1587,7 @@ class SequenceStream(Stream)
          every e := !ac do
             e.close() | (f := 1)
       }
-      if /f then
-         return self
+      return /f
    end
 
    public new(a[])
@@ -1623,7 +1618,7 @@ class GeneratorStream(LineBasedStream, NoCopy)
    end
 
    public close()
-      return self
+      return
    end
 
    #
@@ -1672,7 +1667,7 @@ class LineFilterStream(GeneratorStream)
    public close()
       if \close_underlying_flag then
          other.close() | fail
-      return self
+      return
    end
 
    protected next_line()

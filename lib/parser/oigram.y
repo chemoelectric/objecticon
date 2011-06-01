@@ -261,7 +261,7 @@ expr1   : expr2 ;
         | expr2 SWAP expr1      { $$ := Node("swap", $1,$2,$3);} ;
         | expr2 ASSIGN expr1    { $$ := Node("assign", $1,$2,$3);} ;
         | expr2 REVSWAP expr1   { $$ := Node("revswap", $1,$2,$3);} ;
-        | expr2 REVASSIGN expr1 { $$ := Node("revasgn", $1,$2,$3);} ;
+        | expr2 REVASSIGN expr1 { $$ := Node("revassign", $1,$2,$3);} ;
         | expr2 AUGCONCAT expr1 { $$ := Node("augconcat", $1,$2,$3);} ;
         | expr2 AUGLCONCAT expr1 { $$ := Node("auglconcat", $1,$2,$3);} ;
         | expr2 AUGDIFF expr1   { $$ := Node("augdiff", $1,$2,$3);} ;
