@@ -95,9 +95,9 @@ function io_Console_get_size()
            fail;
        }
        create_list(2, &result);
-       MakeInt(w.ws_row, &t);
-       list_put(&result, &t);
        MakeInt(w.ws_col, &t);
+       list_put(&result, &t);
+       MakeInt(w.ws_row, &t);
        list_put(&result, &t);
        return result;
 #else
