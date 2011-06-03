@@ -18,7 +18,7 @@ XOBJS=	cnv.o def.o errmsg.o fconv.o fload.o fmath.o\
 	fwindow.o imisc.o init.o interp.o invoke.o \
 	keyword.o oarith.o oasgn.o ocat.o ocomp.o native.o \
 	omisc.o oref.o oset.o ovalue.o ralc.o rcomp.o \
-	rdebug.o rlocal.o rlrgint.o rmemmgt.o rmisc.o rstruct.o rsys.o\
+	rdebug.o rlrgint.o rmemmgt.o rmisc.o rstruct.o rsys.o\
 	rwinsys.o rwindow.o posix.o cstruct.o
 
 RTTC=$(XOBJS:.o=.c)

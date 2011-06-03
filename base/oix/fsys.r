@@ -14,43 +14,97 @@ function exit(status)
       }
 end
 
+"get_char() - return a character from console."
 
-
-"getch() - return a character from console."
-
-function io_Keyboard_getch()
+function io_Console_get_char(echo)
    body {
-      int i;
-      i = getch();
-      if (i<0 || i>255)
-	 fail;
-      return string(1, &allchars[i & 0xFF]);
+#if UNIX
+#define STDIN 0
+      struct termios otty, tty;
+      char c;
+      int n;
+
+      if (!isflag(&echo))
+          runerr(171, echo);
+
+      tcgetattr(STDIN, &otty);		/* get current tty attributes */
+
+      tty = otty;
+      tty.c_lflag &= ~ICANON;
+      if (is:null(echo))
+          tty.c_lflag &= ~ECHO;
+      else
+          tty.c_lflag |= ECHO;
+
+      tcsetattr(STDIN, TCSANOW, &tty);	/* set temporary attributes */
+
+      n = read(STDIN, &c, 1);		/* read one char from stdin */
+
+      tcsetattr(STDIN, TCSANOW, &otty);	/* reset tty to original state */
+
+      if (n == 1)				/* if read succeeded */
+          return string(1, &allchars[c & 0xFF]);
+      else
+          fail;
+#else
+      Unsupported;
+#endif
       }
 end
 
-"getche() -- return a character from console with echo."
-
-function io_Keyboard_getche()
+function io_Console_wait_char()
    body {
-      int i;
-      i = getche();
-      if (i<0 || i>255)
-	 fail;
-      return string(1, &allchars[i & 0xFF]);
-      }
+#if UNIX
+#define STDIN 0
+      struct termios otty, tty;
+      fd_set fds;
+      struct timeval tv;
+      int rv;
+
+      tcgetattr(STDIN, &otty);		/* get current tty attributes */
+
+      tty = otty;
+      tty.c_lflag &= ~ICANON;		/* disable input batching */
+      tcsetattr(STDIN, TCSANOW, &tty);	/* set attribute temporarily */
+
+      FD_ZERO(&fds);			/* initialize fd struct */
+      FD_SET(STDIN, &fds);			/* set STDIN bit */
+      tv.tv_sec = tv.tv_usec = 0;		/* set immediate return */
+      rv = select(STDIN + 1, &fds, NULL, NULL, &tv);
+
+      tcsetattr(STDIN, TCSANOW, &otty);	/* reset tty to original state */
+
+      if (rv)
+          return nulldesc;
+      else 
+          fail;
+#else
+     Unsupported;
+#endif
+     }
 end
 
-
-"kbhit() -- Check to see if there is a keyboard character waiting to be read."
-
-function io_Keyboard_kbhit()
+function io_Console_get_size()
    body {
-      if (kbhit())
-	 return nulldesc;
-      else fail;
-      }
+#if UNIX
+       tended struct descrip result;
+       struct descrip t;
+       struct winsize w;
+       if (ioctl(0, TIOCGWINSZ, &w) < 0) {
+           errno2why();
+           fail;
+       }
+       create_list(2, &result);
+       MakeInt(w.ws_row, &t);
+       list_put(&result, &t);
+       MakeInt(w.ws_col, &t);
+       list_put(&result, &t);
+       return result;
+#else
+       Unsupported;
+#endif
+     }
 end
-
 
 "chdir(s) - change working directory to s."
 function io_Files_chdir(s)

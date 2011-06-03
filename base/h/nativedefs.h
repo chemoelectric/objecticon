@@ -177,9 +177,9 @@ NativeDef(io.SocketStream,socketpair_impl,io_SocketStream_socketpair_impl)
 NativeDef(io.WindowsFilePath,getdcwd,io_WindowsFilePath_getdcwd)
 NativeDef(io.WindowsFileSystem,get_roots,io_WindowsFileSystem_get_roots)
 #endif
-NativeDef(io.Keyboard,getch,io_Keyboard_getch)
-NativeDef(io.Keyboard,getche,io_Keyboard_getche)
-NativeDef(io.Keyboard,kbhit,io_Keyboard_kbhit)
+NativeDef(io.Console,get_char,io_Console_get_char)
+NativeDef(io.Console,wait_char,io_Console_wait_char)
+NativeDef(io.Console,get_size,io_Console_get_size)
 NativeDef(io.SslStream,new_impl,io_SslStream_new_impl)
 #if HAVE_LIBOPENSSL
 NativeDef(io.SslStream,in,io_SslStream_in)
