@@ -190,6 +190,13 @@ class Evaluator()
       suspend lang.Class.get(E(lhs), n.child(3).s)
    end
 
+   private do_keyword(n) 
+      local s, f
+      s := "&" || n.child(2).s
+      f := lang.Prog.get_keyword(s) | runerr("Invalid keyword: "|| s)
+      suspend f() 
+   end
+
    # expr
    private do_and(n) suspend E(n.child(1)) & E(n.child(3)) end
    # expr1a
@@ -303,7 +310,6 @@ class Evaluator()
    private do_break(n) chk_brk() ; return coact("break", brk) end
    private do_next(n) chk_brk() ; return coact("next", brk) end
    private do_breakexpr(n) chk_brk() ; return coact(n.child(2), brk) end
-   private do_keyword(n) suspend lang.Prog.get_keyword("&" || n.child(2).s)() end
    private do_return(n) runerr("return not allowed here") end
    private do_returnexpr(n) runerr("return not allowed here") end
    private do_suspend(n) runerr("suspend not allowed here") end
