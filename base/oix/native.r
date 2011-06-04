@@ -456,7 +456,7 @@ function lang_Prog_eval_keyword(s,c)
                   return coexpr(p->K_errorcoexpr);
               }
               if (strncmp(t,"errornumber",11) == 0) {
-                  if (p->K_errornumber == 0)
+                  if (p->K_errornumber <= 0)
                       fail;
                   return C_integer p->K_errornumber;
               }
