@@ -14,7 +14,46 @@ procedure main()
    &handler := &current
    e := create 1+&null
    @e
+   write("--------")
+   write(image(&handler))
+   write(&errornumber | "fail")
+   write(&errortext | "fail")
+   write(image(&errorvalue) | "fail")
+   write(image(&errorcoexpr) | "fail")
 
+   errorclear()
+   e := create runerr("the quick brown fox", 99)
+   @e
+   write("--------")
+   write(image(&handler))
+   write(&errornumber | "fail")
+   write(&errortext | "fail")
+   write(image(&errorvalue) | "fail")
+   write(image(&errorcoexpr) | "fail")
+
+   errorclear()
+   e := create runerr("the quick brown cat")
+   @e
+   write("--------")
+   write(image(&handler))
+   write(&errornumber | "fail")
+   write(&errortext | "fail")
+   write(image(&errorvalue) | "fail")
+   write(image(&errorcoexpr) | "fail")
+
+   errorclear()
+   e := create runerr(101, [])
+   @e
+   write("--------")
+   write(image(&handler))
+   write(&errornumber | "fail")
+   write(&errortext | "fail")
+   write(image(&errorvalue) | "fail")
+   write(image(&errorcoexpr) | "fail")
+
+   errorclear()
+   e := create runerr(101)
+   @e
    write("--------")
    write(image(&handler))
    write(&errornumber | "fail")
@@ -29,4 +68,6 @@ procedure main()
    write(&errortext | "fail")
    write(image(&errorvalue) | "fail")
    write(image(&errorcoexpr) | "fail")
+
+
 end
