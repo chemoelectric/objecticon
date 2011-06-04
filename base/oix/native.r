@@ -1603,7 +1603,7 @@ function io_FileStream_close(self)
            fail;
        }
        *self_fd_dptr = minusonedesc;
-       return self;
+       return nulldesc;
    }
 end
 
@@ -1810,7 +1810,7 @@ function io_SocketStream_close(self)
            fail;
        }
        *self_fd_dptr = minusonedesc;
-       return self;
+       return nulldesc;
    }
 end
 
@@ -2271,7 +2271,6 @@ function io_DescStream_dflag(self, on, off)
     }
 end
 
-
 #if UNIX
 static struct sdescrip ddf = {2, "dd"};
 
@@ -2332,7 +2331,7 @@ function io_DirStream_close(self)
            fail;
        }
        *self_dir_dptr = zerodesc;
-       return self;
+       return nulldesc;
    }
 end
 
@@ -2439,7 +2438,7 @@ function io_DirStream_close(self)
        FindClose(self_dir->handle);
        free(self_dir);
        *self_dir_dptr = zerodesc;
-       return self;
+       return nulldesc;
    }
 end
 
@@ -3004,7 +3003,7 @@ function io_RamStream_close(self)
        free(self_rs->data);
        free(self_rs);
        *self_rs_dptr = zerodesc;
-       return self;
+       return nulldesc;
    }
 end
 

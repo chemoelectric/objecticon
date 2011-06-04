@@ -1,0 +1,362 @@
+package io
+
+import undo, util
+
+class LineEditorStream(LineBasedStream)
+   package
+      subj,
+      pos
+   private
+      history,
+      hpos,
+      hmod,
+      prompt,
+      undo_manager,
+      line_no,
+      prev_nlines,
+      ctrl_d_flag,
+      tty,
+      isatty,
+      nul
+
+   public set_history(l)
+      self.history := l
+      return self
+   end
+
+   public set_prompt(s)
+      self.prompt := s
+      return self
+   end
+
+   public get_history()
+      return .history
+   end
+
+   public close()
+      nul.close()
+      return
+   end
+
+   public get_mode()
+      return READ
+   end
+
+   private move_hist(n)
+      (subj == history[hpos]) | (hmod[hpos] := subj)
+      hpos +:= n
+      subj := \hmod[hpos] | history[hpos]
+      pos := *subj + 1
+      undo_manager.clear()
+   end
+
+   private get_line_no()
+      local s
+      tty.writes("\e[6n")
+      s := ""
+      until s[-1] == "R" do
+         s ||:= tty.reads(1) | break
+      s ? {
+         move(2)
+         return integer(tab(upto(';'))) | error("Couldn't get line no from tty")
+      }
+   end
+
+   private get_console_size()
+      local w, h
+      return run_stty("size") ? {
+         if h := integer(tab(many(&digits))) &
+            tab(upto(&digits)) &
+            w := integer(tab(many(&digits))) then [w, h]
+         else error("Couldn't interpret stty size output")
+      }
+   end
+
+   private run_stty(params[])
+      local f, ss
+      ss := StringStream()
+      use {
+         f := ProgInputStream("stty", params,,, nul),
+         f.copy_to(ss)
+      } | fail
+      if f.get_exit_info().param = 0 then
+         return ss.str()
+   end
+
+   protected read_impl()
+      local s
+      \isatty | return tty.read()
+      if \ctrl_d_flag then
+         return at_eof()
+      run_stty("-icanon",  "-echo")
+      s := read_impl2()
+      run_stty("icanon",  "echo")
+      return \s
+   end
+
+   private read_impl2()
+      local ch, p, n, ed
+      subj := ""
+      pos := 1
+      hpos := *history + 1
+      hmod := table()
+      undo_manager.clear()
+      prev_nlines := &null
+      line_no := get_line_no() | fail
+      repeat {
+         show() | fail
+         ch := tty.reads(1) | fail
+         if ch == "\e" then {
+            ch := tty.reads(1) | fail
+            if ch == "[" then {
+               p := []
+               repeat {
+                  ch := tty.reads(1) | fail
+                  n := integer(ch) | break
+                  repeat {
+                     ch := tty.reads(1) | fail
+                     n := 10 * n + integer(ch) | break
+                  }
+                  put(p, n)
+                  ch == ";" | break
+               }
+
+               case ch of {
+                  "A": if hpos > 1 then move_hist(-1)
+                  "B": if hpos <= *history then move_hist(1)
+                  "C": pos := (*subj + 1 >= pos + 1)
+                  "D": pos := (1 <= pos - 1)
+                  "H": pos := 1
+                  "F": pos := *subj + 1
+                  "~": if p[1] = 3 & *p = 1 then {
+                     if pos <= *subj then {
+                        ed := LineEditorDeleteRightEdit(self)
+                        ed.doit()
+                        undo_manager.add_edit(ed)
+                     }
+                  }
+               }
+            }
+         } else case ch of {
+            "\^_": {
+               if undo_manager.can_undo() then
+                  undo_manager.undo()
+            }
+            "\^y": {
+               if undo_manager.can_redo() then
+                  undo_manager.redo()
+            }
+            "\^d": {
+               ctrl_d_flag := 1
+               tty.write()
+               if *subj > 0 then {
+                  put(history, subj)
+                  return subj
+               } else
+                  return at_eof()
+            }
+            "\^a": pos := 1
+            "\^e": pos := *subj + 1
+            "\^k": {
+               if pos < *subj + 1 then {
+                  ed := LineEditorDeleteToEndOfLineEdit(self)
+                  ed.doit()
+                  undo_manager.add_edit(ed)
+               }
+            }
+            "\d": {
+               if pos > 1 then {
+                  ed := LineEditorDeleteLeftEdit(self)
+                  ed.doit()
+                  undo_manager.add_edit(ed)
+               }
+            }
+            "\n": {
+               tty.write()
+               if *subj > 0 then
+                  put(history, subj)
+               return subj
+            }
+            default: {
+               if any('\x20-\x7e\x80-\U10ffff', ch) then {
+                  ed := LineEditorDefaultEdit(self, ch)
+                  ed.doit()
+                  undo_manager.add_edit(ed)
+               }
+            }
+         }
+      }
+   end
+
+   private show()
+      local dim, nlines, n, cursor_line, cursor_col
+      if \prev_nlines then {
+         # Clear the lines written the previous time show() was called
+         every tty.writes("\e[",
+                            line_no to line_no + prev_nlines - 1,
+                            "H", "\e[2K")
+      }
+
+      # The number of lines needed to display this line.
+      dim := get_console_size() | fail
+      nlines := 1 + (*prompt + *subj) / dim[1]
+
+      # Check if we need to scroll some lines
+      n := nlines + line_no - dim[2] - 1
+
+      if n > 0 then {
+         # Scroll n lines
+         tty.writes("\e[", n ,"S")
+         line_no -:= n
+      }
+      # Calculate position of cursor
+      cursor_line := line_no + (*prompt + pos - 1) / dim[1]
+      cursor_col := (*prompt + pos - 1) % dim[1] + 1
+
+      # First, goto line line_no, col 1, and write prompt, subj
+      # Then put cursor at correct position.
+      tty.writes("\e[", line_no, "H", prompt, subj,
+                  "\e[", cursor_line, ";", cursor_col, "H")
+      # Store nlines for erasing next time through.
+      prev_nlines := nlines
+
+      return
+   end
+
+   public new()
+      cast(self,LineBasedStream).new()
+      nul := FileStream.open("/dev/null", FileOpt.WRONLY) | stop(&why)
+      tty := FileStream.stdin
+      if run_stty() then
+         isatty := &yes
+      undo_manager := UndoManager()
+      history := []
+      prompt := ""
+      return
+   end
+end
+
+class LineEditorEdit(UndoableEdit)
+   protected
+      parent,
+      pos
+
+   public doit()
+      save()
+      self.redo_impl()
+   end
+
+   public redo()
+      restore()
+      self.redo_impl()
+   end
+
+   public undo()
+      self.undo_impl()
+      restore()
+   end
+
+   protected defer redo_impl()
+   protected defer undo_impl()
+
+   private save()
+      self.pos := parent.pos
+   end
+
+   private restore()
+      parent.pos := self.pos
+   end
+
+   protected new(parent)
+      self.parent := parent
+      return
+   end
+end
+
+class LineEditorDefaultEdit(LineEditorEdit)
+   private s
+
+   public add_edit(other)
+      if is(other, LineEditorDefaultEdit) &
+         (other.pos = self.pos + *s) then {
+            s ||:= other.s
+            return
+      }
+   end
+
+   protected redo_impl()
+      parent.subj := parent.subj[1:parent.pos] || s || parent.subj[parent.pos:0]
+      parent.pos +:= *s
+   end
+
+   protected undo_impl()
+      parent.subj[self.pos +: *s] := ""
+   end
+
+   public new(parent, e)
+      cast(self,LineEditorEdit).new(parent)
+      s := e
+      return
+   end
+end
+
+class LineEditorDeleteLeftEdit(LineEditorEdit)
+   private ch
+
+   protected redo_impl()
+      ch := parent.subj[parent.pos - 1]
+      parent.subj[parent.pos - 1] := ""
+      parent.pos -:= 1
+   end
+
+   protected undo_impl()
+      if self.pos - 1 > *parent.subj then
+         parent.subj ||:= ch
+      else
+         parent.subj[self.pos - 1] := ch || parent.subj[self.pos - 1]
+   end
+
+   public new(parent)
+      cast(self,LineEditorEdit).new(parent)
+      return
+   end
+end
+
+class LineEditorDeleteRightEdit(LineEditorEdit)
+   private ch
+
+   protected redo_impl()
+      ch := parent.subj[parent.pos]
+      parent.subj[parent.pos] := ""
+   end
+
+   protected undo_impl()
+      if self.pos > *parent.subj then
+         parent.subj ||:= ch
+      else
+         parent.subj[self.pos] := ch || parent.subj[self.pos]
+   end
+
+   public new(parent)
+      cast(self,LineEditorEdit).new(parent)
+      return
+   end
+end
+
+class LineEditorDeleteToEndOfLineEdit(LineEditorEdit)
+   private del
+
+   protected redo_impl()
+      del := parent.subj[parent.pos:0]
+      parent.subj[parent.pos:0] := ""
+   end
+
+   protected undo_impl()
+      parent.subj[self.pos:0] := del
+   end
+
+   public new(parent)
+      cast(self,LineEditorEdit).new(parent)
+      return
+   end
+end

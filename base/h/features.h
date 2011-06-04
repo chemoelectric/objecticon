@@ -30,7 +30,6 @@
    Feature("_ASCII", "ASCII")
    Feature("_CO_EXPRESSIONS", "co-expressions")
    Feature("_EVENT_MONITOR", "event monitoring")
-   Feature("_KEYBOARD_FUNCTIONS", "keyboard functions")
    Feature("_LARGE_INTEGERS", "large integers")
    Feature("_MULTITASKING", "multiple programs")
    Feature("_PIPES", "pipes")
