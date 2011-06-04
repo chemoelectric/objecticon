@@ -154,9 +154,9 @@ procedure getname()
     check_features()
 
     if not (term := System.getenv("TERM")) then {
-	tset_output := open("/bin/tset -","pr") |
+	tset_output := open("tset -","pr") |
 	    er("getname","can't find tset command",1)
-	term := !tset_output
+	term := tset_output.read()
 	close(tset_output)
     }
     return \term |
@@ -471,9 +471,9 @@ procedure getspeed()
 
     local stty_g, stty_output, c_cflag, o_speed
 
-    stty_g := open("/bin/stty -g 2>&1","pr") |
+    stty_g := open("stty -g 2>&1","pr") |
 	er("getspeed","Can't access your stty command.",4)
-    stty_output := !stty_g
+    stty_output := stty_g.read()
     close(stty_g)
 
     \stty_output ? {

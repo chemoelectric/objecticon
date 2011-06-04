@@ -13,11 +13,12 @@ class LineEditorStream(LineBasedStream)
       prompt,
       undo_manager,
       line_no,
-      prev_nlines,
+      nlines,
       ctrl_d_flag,
       tty,
       isatty,
-      nul
+      nul,
+      dim
 
    public set_history(l)
       self.history := l
@@ -101,10 +102,11 @@ class LineEditorStream(LineBasedStream)
       hpos := *history + 1
       hmod := table()
       undo_manager.clear()
-      prev_nlines := &null
+      nlines := &null
       line_no := get_line_no() | fail
+      dim := get_console_size() | fail
       repeat {
-         show() | fail
+         show()
          ch := tty.reads(1) | fail
          if ch == "\e" then {
             ch := tty.reads(1) | fail
@@ -189,16 +191,15 @@ class LineEditorStream(LineBasedStream)
    end
 
    private show()
-      local dim, nlines, n, cursor_line, cursor_col
-      if \prev_nlines then {
+      local n, cursor_line, cursor_col
+      if \nlines then {
          # Clear the lines written the previous time show() was called
          every tty.writes("\e[",
-                            line_no to line_no + prev_nlines - 1,
+                            line_no to line_no + nlines - 1,
                             "H", "\e[2K")
       }
 
       # The number of lines needed to display this line.
-      dim := get_console_size() | fail
       nlines := 1 + (*prompt + *subj) / dim[1]
 
       # Check if we need to scroll some lines
@@ -217,10 +218,6 @@ class LineEditorStream(LineBasedStream)
       # Then put cursor at correct position.
       tty.writes("\e[", line_no, "H", prompt, subj,
                   "\e[", cursor_line, ";", cursor_col, "H")
-      # Store nlines for erasing next time through.
-      prev_nlines := nlines
-
-      return
    end
 
    public new()
