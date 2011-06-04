@@ -1254,3 +1254,59 @@ class CaseList(LList)
       return
    end
 end
+
+class DottedIdentListElement(Tree)
+   public const dot
+
+   public get_first_token()
+      return Util.first_token(pos)
+   end
+
+   public new(pos, dot)
+      cast(self,Tree).new(pos)
+      /dot := Token(DOT, ".", ".")
+      self.dot := dot
+      return
+   end
+end
+
+
+#
+# List for handling a "dottedident" Node
+#
+class DottedIdentList(LList)
+   package flatten()
+      local l, n
+      l := []
+      n := pos.child(index)
+      if n ~=== Node.EMPTY then {
+         repeat {
+            if is(n, Node) & n.label == "dottedident" then {
+               default.push(l, DottedIdentListElement(n.child(3), n.child(2)))
+               n := n.child(1)
+            } else {
+               # Leftmost token, or Node with non-matching label.
+               default.push(l, DottedIdentListElement(n))
+               break
+            }
+         }
+      }
+      return l
+   end
+
+   public put(s)
+      if pos.child(index) === Node.EMPTY then
+         pos.set(index, s.pos)
+      else
+         pos.set(index, Node("dottedident",
+                             pos.child(index),
+                             s.dot,
+                             s.pos))
+      return self
+   end
+
+   public new(pos, index)
+      cast(self,LList).new(pos, index)
+      return
+   end
+end
