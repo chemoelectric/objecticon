@@ -113,6 +113,20 @@ class Stream()
    end
 
    #
+   # Output the string {s}, by calling {out} several times until it is
+   # fully output.
+   #
+   public fully_out(s)
+      local n
+      s := string(s) | runerr(103, s)
+      while *s > 0 do {
+         n := out(s) | fail
+         s := s[n + 1:0]
+      }
+      return self
+   end
+
+   #
    # Read a complete line from the stream, reading up to the next "\n"
    # or end-of-file.  In the former case, the "\n" and also any "\r"
    # immediately before it is stripped from the result.
@@ -166,14 +180,9 @@ class Stream()
    # case the method fails and sets &why.
    #
    public writes(a[])
-      local e, n
-      every e := !a do {
-         e := string(e) | runerr(103, e)
-         while *e > 0 do {
-            n := out(e) | fail
-            e := e[n + 1:0]
-         }
-      }
+      local e
+      every e := !a do
+         fully_out(e) | fail
       return
    end
 
@@ -182,14 +191,9 @@ class Stream()
    # appended after all the parameters are output.
    #
    public write(a[])
-      local e, n
-      every e := !a | Files.EOL do {
-         e := string(e) | runerr(103, e)
-         while *e > 0 do {
-            n := out(e) | fail
-            e := e[n + 1:0]
-         }
-      }
+      local e
+      every e := !a | Files.EOL do
+         fully_out(e) | fail
       return
    end
 
@@ -771,7 +775,7 @@ end
 # This procedure emulates the old Icon builtin {write} function.
 #
 procedure write(a[])
-   local e, f, r, n
+   local e, f, r
    r := a[-1]
    if is(a[1], Stream) then
       f := pop(a)
@@ -779,15 +783,10 @@ procedure write(a[])
       f := FileStream.stdout
    every e := \!a | Files.EOL do {
       if is(e, Stream) then {
-         f.write() | fail
+         f.fully_out(Files.EOL) | fail
          f := e
-      } else {
-         e := string(e) | runerr(103, e)
-         while *e > 0 do {
-            n := f.out(e) | fail
-            e := e[n + 1:0]
-         }
-      }
+      } else
+         f.fully_out(e) | fail
    }
    return r
 end
@@ -796,22 +795,17 @@ end
 # This procedure emulates the old Icon builtin {writes} function.
 #
 procedure writes(a[])
-   local e, f, r, n
+   local e, f, r
    r := a[-1]
    if is(a[1], Stream) then
       f := pop(a)
    else
       f := FileStream.stdout
    every e := \!a do {
-      if is(e, Stream) then {
+      if is(e, Stream) then
          f := e
-      } else {
-         e := string(e) | runerr(103, e)
-         while *e > 0 do {
-            n := f.out(e) | fail
-            e := e[n + 1:0]
-         }
-      }
+      else
+         f.fully_out(e) | fail
    }
    return r
 end
@@ -1522,7 +1516,7 @@ class FilterOutputStream(Stream, BgProc, NoCopy)
       repeat {
          x := (if /task then DescStream else task).poll([cin, Poll.IN, cout, Poll.OUT]) | fail
          if poll_in_test(x[1]) then
-            sink.writes(cin.in(1048576)) | fail
+            sink.fully_out(cin.in(1048576)) | fail
          else if poll_out_test(x[2]) then
             return cout.out(s)
          else
@@ -2041,8 +2035,12 @@ class LineFilterStream(GeneratorStream)
 
    public close()
       if \close_underlying_flag then
-         return other.close()
+         other.close() | fail
       return
+   end
+
+   protected next_line()
+      return other.read()
    end
 
    protected expect_line()

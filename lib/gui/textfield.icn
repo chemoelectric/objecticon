@@ -865,11 +865,10 @@ class TextFieldDeleteRegionEdit(TextFieldEdit)
    end
 
    public undo_impl()
-      if self.mark < self.cursor then {
+      if self.mark < self.cursor then
          parent.contents := parent.contents[1:self.mark] || pre || parent.contents[self.mark:0]
-      } else {
+      else
          parent.contents := parent.contents[1:self.cursor] || pre || parent.contents[self.cursor:0]
-      }
    end
 
    public new(parent)
@@ -911,10 +910,7 @@ class TextFieldDefaultEdit(TextFieldEdit)
    end
 
    public redo_impl()
-      if parent.cursor = 1 then
-         parent.contents := s || parent.contents
-      else
-         parent.contents[parent.cursor - 1] ||:= s
+      parent.contents := parent.contents[1:parent.cursor] || s || parent.contents[parent.cursor:0]
       parent.cursor +:= *s
       parent.clear_mark()
    end

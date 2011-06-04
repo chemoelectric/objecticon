@@ -1187,10 +1187,15 @@ procedure Wobble(e)
 
 end
 
+#
 # Evaluate the given expression, suspending its results, whilst
-# ignoring any non-fatal runtime errors
+# ignoring any non-fatal runtime errors.  After failure,
+# {&errortext} can be tested to see whether or not failure was
+# caused by a runtime error.
+#
 procedure Safe(e)
    local t, x
+   errorclear()
    repeat {
       t := &handler
       &handler := &current
@@ -1199,7 +1204,6 @@ procedure Safe(e)
          suspend x
       } else {
          &handler := t
-         errorclear()
          fail
       }
    }
@@ -1242,3 +1246,36 @@ end
 procedure Seq(e)
    suspend |@e
 end
+
+
+# Generate the results from the several expressions in the same
+# left-to-right order as in normal icon evaluation.
+# 
+# For example Generate{1 to 3, !"ab"} generates [1,"a"], [1,"b"], [2,
+# "a"] etc.
+#
+# Note that the same list instance is suspended each time, and should
+# not be altered.
+#
+procedure Generate(e[])
+   local vals, n
+   n := *e
+   vals := []
+   repeat {
+      # Invariant: vals contains valid values not suspended yet
+      if *vals < n then {
+         if put(vals, @e[*vals + 1]) then
+            next
+      } else # *vals=n
+         suspend vals
+      # Tab back to a good val:-
+      repeat {
+         if *vals = 0 then fail
+         if vals[-1] := @e[*vals] then
+            break
+         e[*vals] := ^e[*vals]
+         pull(vals)
+      }                 
+   }
+end
+

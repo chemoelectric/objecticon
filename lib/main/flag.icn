@@ -23,7 +23,7 @@ end
 procedure check_flag(f)
    if f === (&yes | &no) then
       return f
-   runerr("Flag value expected", f)
+   runerr(171, f)
 end
 
 #

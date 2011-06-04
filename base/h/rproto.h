@@ -335,15 +335,12 @@ void    deref_1         (dptr dp1, dptr dp2);
 void    envset          (void);
 int     eq              (dptr dp1,dptr dp2);
 int     get_name        (dptr dp1, dptr dp2);
-int     getch           (void);
-int     getche          (void);
 void    getimage        (dptr dp1, dptr dp2);
 
 void    hgrow           (union block *bp);
 void    hshrink         (union block *bp);
 word iipow         (word n1, word n2);
 void    init            (char *name, int *argcp, char *argv[], int trc_init);
-int     kbhit           (void);
 int     order           (dptr dp);
 
 
@@ -455,3 +452,4 @@ struct b_proc *clone_b_proc(struct b_proc *bp);
 void set_curpstate(struct progstate *p);
 void set_curr_pf(struct p_frame *x);
 void synch_ipc(void);
+int isflag(dptr d);

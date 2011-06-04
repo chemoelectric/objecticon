@@ -70,8 +70,8 @@ procedure try(s, e)
    if x := @e then
       write("Succeeded with ", imagex(x))
    else {
-      if &errornumber then
-         write("Error ", &errornumber)
+      if &errortext then
+         write("Error ", &errornumber|-1)
       else
          write("Failed")
    }

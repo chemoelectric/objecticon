@@ -173,6 +173,7 @@
    #include <sys/utsname.h>
    #include <sys/select.h>
    #include <sys/wait.h>
+   #include <sys/ioctl.h>
    #if HAVE_POLL
    #include <sys/poll.h>
    #endif

@@ -317,8 +317,8 @@ procedure change_tty_mode(switch)
 	getval("li")    # check to be sure itlib is set up
 	find("unix",map(&features)) |
 	    stop("change_tty_mode:  These routines must run under UNIX.")
-	get_term_params := open("/bin/stty -g 2>&1","pr")
-	reset_string := !get_term_params
+	get_term_params := open("stty -g 2>&1","pr")
+	reset_string := get_term_params.read()
 	close(get_term_params)
 	reset_string ? {
 	    # tab upto the fifth field of the output of the stty -g cmd
@@ -335,8 +335,8 @@ procedure change_tty_mode(switch)
     }
 
     if switch == "setup"
-    then system("/bin/stty -echo raw")
-    else system("/bin/stty "||reset_string)
+    then system("stty -echo raw")
+    else system("stty "||reset_string)
 
     return
 

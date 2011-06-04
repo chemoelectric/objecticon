@@ -132,7 +132,7 @@ end
 "&errornumber - error number of last error"
 keyword errornumber
    body {
-      if (k_errornumber == 0)
+      if (k_errornumber <= 0)
          fail;
       return C_integer k_errornumber;
       }

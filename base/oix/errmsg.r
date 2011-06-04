@@ -68,6 +68,7 @@ struct errtab errtab[] = {
 #endif					/* Graphics */
 
     {170, "string or integer expected"},
+    {171, "flag value expected"},
     {176, "exec requires at least one argument for the program"},
 
     {201, "division by zero"},

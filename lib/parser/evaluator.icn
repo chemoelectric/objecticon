@@ -1,0 +1,371 @@
+$include "oigram_tab.icn"
+
+package parser
+
+import io, ipl.pdco, lang, util
+
+class EvaluatorEnv()
+   public defer get()
+end
+
+class DefaultEvaluatorEnv(EvaluatorEnv)
+   private 
+      t,
+      write_globals_flag
+
+   public get(k)
+      return (if \write_globals_flag then lang.Prog.get_global(k)
+              else .lang.Prog.get_global(k)) | t[k]
+   end
+
+   public set_write_globals(f)
+      write_globals_flag := check_flag(f)
+      return self
+   end
+
+   public new(t)
+      /t := table()
+      self.t := t
+      return
+   end
+end
+
+class Evaluator()
+   private
+      brk,
+      dispatch,
+      par,
+      safe_flag,
+      env
+
+   private loop(ex)
+      local t, res, sub, pos
+      t := brk
+      brk := &current
+      sub := &subject
+      pos := &pos
+      while res := !ex do {
+         &subject := sub
+         &pos := pos
+         case res of {
+            "break": break
+            "next": next
+            default: {
+               brk := t
+               return res
+            }
+         }
+      }
+      brk := t
+   end
+
+   private do_everydo(n)
+      local e
+      e := create_E(n.child(2))
+      suspend E(loop { while @e do E(n.child(4)) })
+   end
+
+   private do_every(n)
+      local e
+      e := create_E(n.child(2))
+      suspend E(loop { while @e })
+   end
+
+   private chk_brk()
+      if /brk then runerr("break or next outside loop")
+   end
+
+   private create_E(e)
+      return create E(e)
+   end
+
+   private pos_list(x, i)
+      local l
+      l := []
+      every put(l, x.gen().pos)
+      return l
+   end
+
+   private do_invoke(n)
+      local l, m, x
+      x := pos_list(ExprList(n, 3))
+      case *x of {
+         0: suspend E(n.child(1))()
+         1: suspend E(n.child(1))(E(x[1]))
+         default: {
+            l := [create_E(n.child(1))]
+            every put(l, create_E(!x))
+            every m := Generate!l do
+               suspend m[1]!m[2:0]
+         }
+      }
+   end
+
+   private do_coinvoke(n)
+      local l, x
+      x := pos_list(ExprList(n, 3))
+      case *x of {
+         0: suspend E(n.child(1)){}
+         1: suspend E(n.child(1)){E(x[1])}
+         default: {
+            l := []
+            every put(l, create_E(!x))
+            suspend E(n.child(1))!l
+         }
+      }
+   end
+
+   private do_paren(n)
+      local x, l
+      x := pos_list(ExprList(n, 2))
+      suspend case *x of {
+         0:  &null
+         1:  E(x[1])
+         default: {
+            l := []
+            every put(l, create_E(!x))
+            (Generate!l)[-1]
+         }
+      }
+   end
+
+   private do_brack(n)
+      local x, l
+      x := pos_list(ExprList(n, 2))
+      suspend case *x of {
+         0:  []
+         1:  [E(x[1])]
+         default: {
+            l := []
+            every put(l, create_E(!x))
+            copy(Generate!l)
+         }
+      }
+   end
+
+   private do_brace(n)
+      local l, e, t
+      l := pos_list(Compound(n, 2))
+      suspend case *l of {
+         0:  &null
+         1:  E(l[1])
+         default: {
+            t := pull(l)
+            every e := !l do
+               E(e)
+            E(t)
+         }
+      }
+   end
+
+   private do_case(n)
+      local l, v, cc
+      l := pos_list(CaseList(n, 5))
+      every v := E(n.child(2)) do {
+         every cc := !l do {
+            if (cc.label == "cclause" &
+                v === E(cc.child(1))) |
+               (cc.label == "defaultcclause") then 
+            {
+               suspend E(cc.child(3))
+               fail
+            }
+         }
+      }
+   end
+
+   private do_section(n) 
+      suspend case n.child(4).tok of {
+         COLON : E(n.child(1))[E(n.child(3)):E(n.child(5))]
+         PCOLON : E(n.child(1))[E(n.child(3))+:E(n.child(5))]
+         MCOLON : E(n.child(1))[E(n.child(3))-:E(n.child(5))]
+      }
+   end
+
+   private do_dottedident(n)
+      local lhs
+      lhs := n.child(1)
+      if is(lhs, Token) & lhs.tok = DEFAULT then
+         runerr("default not allowed here")
+      suspend lang.Class.get(E(lhs), n.child(3).s)
+   end
+
+   # expr
+   private do_and(n) suspend E(n.child(1)) & E(n.child(3)) end
+   # expr1a
+   private do_Bqmark(n) suspend E(n.child(1)) ? E(n.child(3)) end
+   # expr1
+   private do_swap(n) suspend E(n.child(1)) :=: E(n.child(3)) end
+   private do_assign(n) suspend E(n.child(1)) := E(n.child(3)) end
+   private do_revswap(n) suspend E(n.child(1)) <-> E(n.child(3)) end
+   private do_revassign(n) suspend E(n.child(1)) <- E(n.child(3)) end
+   private do_auglconcat(n) suspend E(n.child(1)) |||:= E(n.child(3)) end
+   private do_augdiff(n) suspend E(n.child(1)) --:= E(n.child(3)) end
+   private do_augunion(n) suspend E(n.child(1)) ++:= E(n.child(3)) end
+   private do_augplus(n) suspend E(n.child(1)) +:= E(n.child(3)) end
+   private do_augminus(n) suspend E(n.child(1)) -:= E(n.child(3)) end
+   private do_augstar(n) suspend E(n.child(1)) *:= E(n.child(3)) end
+   private do_auginter(n) suspend E(n.child(1)) **:= E(n.child(3)) end
+   private do_augslash(n) suspend E(n.child(1)) /:= E(n.child(3)) end
+   private do_augmod(n) suspend E(n.child(1)) %:= E(n.child(3)) end
+   private do_augcaret(n) suspend E(n.child(1)) ^:= E(n.child(3)) end
+   private do_augnmeq(n) suspend E(n.child(1)) =:= E(n.child(3)) end
+   private do_augequiv(n) suspend E(n.child(1)) ===:= E(n.child(3)) end
+   private do_augnmge(n) suspend E(n.child(1)) >=:= E(n.child(3)) end
+   private do_augnmgt(n) suspend E(n.child(1)) >:= E(n.child(3)) end
+   private do_augnmle(n) suspend E(n.child(1)) := E(n.child(3)) end
+   private do_augnmlt(n) suspend E(n.child(1)) <:= E(n.child(3)) end
+   private do_augnmne(n) suspend E(n.child(1)) ~=:= E(n.child(3)) end
+   private do_augnequiv(n) suspend E(n.child(1)) ~===:= E(n.child(3)) end
+   private do_augseq(n) suspend E(n.child(1)) ==:= E(n.child(3)) end
+   private do_augsge(n) suspend E(n.child(1)) >>=:= E(n.child(3)) end
+   private do_augsgt(n) suspend E(n.child(1)) >>:= E(n.child(3)) end
+   private do_augsle(n) suspend E(n.child(1)) <<=:= E(n.child(3)) end
+   private do_augslt(n) suspend E(n.child(1)) <<:= E(n.child(3)) end
+   private do_augsne(n) suspend E(n.child(1)) ~==:= E(n.child(3)) end
+   private do_augqmark(n) suspend E(n.child(1)) ?:= E(n.child(3)) end
+   private do_augand(n) suspend E(n.child(1)) &:= E(n.child(3)) end
+   private do_augat(n) suspend E(n.child(1)) @:= E(n.child(3)) end
+   # expr2
+   private do_to(n) suspend E(n.child(1)) to E(n.child(3)) end
+   private do_toby(n) suspend E(n.child(1)) to E(n.child(3)) by E(n.child(5)) end
+   # expr3
+   private do_Bbar(n) suspend E(n.child(1)) | E(n.child(3)) end
+   # expr4
+   private do_Bseq(n) suspend E(n.child(1)) == E(n.child(3)) end
+   private do_Bsge(n) suspend E(n.child(1)) >>= E(n.child(3)) end
+   private do_Bsgt(n) suspend E(n.child(1)) >> E(n.child(3)) end
+   private do_Bsle(n) suspend E(n.child(1)) <<= E(n.child(3)) end
+   private do_Bslt(n) suspend E(n.child(1)) << E(n.child(3)) end
+   private do_Bsne(n) suspend E(n.child(1)) ~== E(n.child(3)) end
+   private do_Bnmeq(n) suspend E(n.child(1)) = E(n.child(3)) end
+   private do_Bnmge(n) suspend E(n.child(1)) >= E(n.child(3)) end
+   private do_Bnmgt(n) suspend E(n.child(1)) > E(n.child(3)) end
+   private do_Bnmle(n) suspend E(n.child(1)) <= E(n.child(3)) end
+   private do_Bnmlt(n) suspend E(n.child(1)) < E(n.child(3)) end
+   private do_Bnmne(n) suspend E(n.child(1)) ~= E(n.child(3)) end
+   private do_Bequiv(n) suspend E(n.child(1)) === E(n.child(3)) end
+   private do_Bnequiv(n) suspend E(n.child(1)) ~=== E(n.child(3)) end
+   # expr5 
+   private do_Bconcat(n) suspend E(n.child(1)) || E(n.child(3)) end
+   private do_Blconcat(n) suspend E(n.child(1)) ||| E(n.child(3)) end
+   # expr6
+   private do_Bplus(n) suspend E(n.child(1)) + E(n.child(3)) end
+   private do_Bdiff(n) suspend E(n.child(1)) -- E(n.child(3)) end
+   private do_Bunion(n) suspend E(n.child(1)) ++ E(n.child(3)) end
+   private do_Bminus(n) suspend E(n.child(1)) - E(n.child(3)) end
+   # expr7
+   private do_Bstar(n) suspend E(n.child(1)) * E(n.child(3)) end
+   private do_Binter(n) suspend E(n.child(1)) ** E(n.child(3)) end
+   private do_Bslash(n) suspend E(n.child(1)) / E(n.child(3)) end
+   private do_Bmod(n) suspend E(n.child(1)) % E(n.child(3)) end
+   # expr8
+   private do_Bcaret(n) suspend E(n.child(1)) ^ E(n.child(3)) end
+   # expr9
+   private do_Bbackslash(n) suspend E(n.child(1)) \ E(n.child(3)) end
+   private do_Bat(n) suspend E(n.child(1)) @ E(n.child(3)) end
+   private do_Bbang(n) suspend E(n.child(1)) ! E(n.child(3)) end
+   #expr10
+   private do_Uat(n) suspend  @E(n.child(2)) end
+   private do_Unot(n) suspend not E(n.child(2)) end
+   private do_Ubar(n) suspend |E(n.child(2)) end
+   private do_Uconcat(n) suspend |E(n.child(2)) end
+   private do_Ulconcat(n) suspend |E(n.child(2)) end
+   private do_Udot(n) suspend .E(n.child(2)) end
+   private do_Ubang(n) suspend !E(n.child(2)) end
+   private do_Udiff(n) suspend --E(n.child(2)) end
+   private do_Uplus(n) suspend +E(n.child(2)) end
+   private do_Ustar(n) suspend *E(n.child(2)) end
+   private do_Uslash(n) suspend /E(n.child(2)) end
+   private do_Ucaret(n) suspend ^E(n.child(2)) end
+   private do_Uinter(n) suspend **E(n.child(2)) end
+   private do_Utilde(n) suspend ~E(n.child(2)) end
+   private do_Uminus(n) suspend -E(n.child(2)) end
+   private do_Unmeq(n) suspend =E(n.child(2)) end
+   private do_Unmne(n) suspend ~=E(n.child(2)) end
+   private do_Useq(n) suspend ==E(n.child(2)) end
+   private do_Usne(n) suspend ~==E(n.child(2)) end
+   private do_Uequiv(n) suspend ===E(n.child(2)) end
+   private do_Uunion(n) suspend ++E(n.child(2)) end
+   private do_Uqmark(n) suspend ?E(n.child(2)) end
+   private do_Unequiv(n) suspend ~===E(n.child(2)) end
+   private do_Ubackslash(n) suspend \E(n.child(2)) end
+   private do_subscript(n) suspend E(n.child(1))[E(n.child(3))] end
+   private do_field(n) suspend lang.Class.get(E(n.child(1)), n.child(3).s) end
+   private do_if(n) suspend if E(n.child(2)) then E(n.child(4)) end
+   private do_ifelse(n) suspend if E(n.child(2)) then E(n.child(4)) else E(n.child(6)) end
+   private do_whiledo(n) suspend E( loop{ while E(n.child(2)) do E(n.child(4)) }) end
+   private do_while(n) suspend E( loop{ while E(n.child(2)) }) end
+   private do_untildo(n) suspend E( loop{ until E(n.child(2)) do E(n.child(4)) }) end
+   private do_until(n) suspend E( loop{ until E(n.child(2)) }) end
+   private do_repeat(n) suspend E( loop{ repeat E(n.child(2)) }) end
+   private do_create(n) return create_E(n.child(2)) end
+   private do_break(n) chk_brk() ; return coact("break", brk) end
+   private do_next(n) chk_brk() ; return coact("next", brk) end
+   private do_breakexpr(n) chk_brk() ; return coact(n.child(2), brk) end
+   private do_keyword(n) suspend lang.Prog.get_keyword("&" || n.child(2).s)() end
+   private do_return(n) runerr("return not allowed here") end
+   private do_returnexpr(n) runerr("return not allowed here") end
+   private do_suspend(n) runerr("suspend not allowed here") end
+   private do_suspendexpr(n) runerr("suspend not allowed here") end
+   private do_suspendexprdo(n) runerr("suspend not allowed here") end
+
+   private E(n)
+      local m
+      if is(n, Token) then
+         return case n.tok of {
+            IDENT: env.get(n.s)
+            INTLIT|REALLIT|STRINGLIT|CSETLIT|UCSLIT: n.val
+            default : stop("Not implemented yet: token ", to_string(n))
+         }
+
+      m := \dispatch[n.label] | stop("Not implemented: ", n.label)
+      suspend m(n)
+   end
+   
+   private parse(s)
+      s := "procedure main() { " || s || "\n}\nend\n"
+      return par.parse(s).get_body().get(1).get_body_node()
+   end
+
+   public eval(s)
+      brk := &null
+      if /safe_flag then
+         suspend E(parse(s))
+      else {
+         suspend Safe{E(parse(s))}
+         if &errortext then {
+            &why := if &errornumber then
+               "Runtime error " || &errornumber || ": " || &errortext
+            else
+               "Runtime error: " || &errortext
+            &why ||:= "; offending value: " || image(&errorvalue)
+            errorclear()
+            fail
+         }
+      }
+      &why := "No more results"
+   end
+
+   public set_safe(f)
+      safe_flag := check_flag(f)
+      return self
+   end
+
+   public set_env(env)
+      self.env := env
+      return self
+   end
+
+   public new(env)
+      /env := DefaultEvaluatorEnv()
+      self.env := env
+      self.dispatch := table()
+      self.par := Parser()
+      every lang.Class.get_class_field_names(self) ? {
+         if ="do_" then
+            dispatch[tab(0)] := lang.Class.get(self, &subject)
+      }
+      return
+   end
+end

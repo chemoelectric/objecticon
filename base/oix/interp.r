@@ -676,6 +676,9 @@ function coact(underef val, ce, activator, failto)
                 runerr(136, activator);
         }
 
+       if (!isflag(&failto))
+           runerr(171, failto);
+
         /*
          * If we're failing, the target must have a failure label.
          */

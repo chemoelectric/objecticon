@@ -34,42 +34,6 @@ end
 #endif
 
 
-"getch() - return a character from console."
-
-function io_Keyboard_getch()
-   body {
-      int i;
-      i = getch();
-      if (i<0 || i>255)
-	 fail;
-      return string(1, &allchars[i & 0xFF]);
-      }
-end
-
-"getche() -- return a character from console with echo."
-
-function io_Keyboard_getche()
-   body {
-      int i;
-      i = getche();
-      if (i<0 || i>255)
-	 fail;
-      return string(1, &allchars[i & 0xFF]);
-      }
-end
-
-
-"kbhit() -- Check to see if there is a keyboard character waiting to be read."
-
-function io_Keyboard_kbhit()
-   body {
-      if (kbhit())
-	 return nulldesc;
-      else fail;
-      }
-end
-
-
 "chdir(s) - change working directory to s."
 function io_Files_chdir(s)
    if !cnv:C_string(s) then

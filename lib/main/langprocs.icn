@@ -464,7 +464,7 @@ class ObjectOutputStream(Stream)
 
    public close()
       if \close_underlying_flag then
-         return file.close()
+         file.close() | fail
       return
    end
 

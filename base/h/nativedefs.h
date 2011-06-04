@@ -206,9 +206,6 @@ NativeDef(io.NetStream,mkaddr,io_NetStream_mkaddr)
 NativeDef(io.WindowsFilePath,getdcwd,io_WindowsFilePath_getdcwd)
 NativeDef(io.WindowsFileSystem,get_roots,io_WindowsFileSystem_get_roots)
 #endif
-NativeDef(io.Keyboard,getch,io_Keyboard_getch)
-NativeDef(io.Keyboard,getche,io_Keyboard_getche)
-NativeDef(io.Keyboard,kbhit,io_Keyboard_kbhit)
 NativeDef(io.SslStream,new_impl,io_SslStream_new_impl)
 #if HAVE_LIBOPENSSL
 NativeDef(io.SslStream,in,io_SslStream_in)
