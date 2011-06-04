@@ -1403,10 +1403,8 @@ class EditableTextListDefaultEdit(EditableTextListEdit)
    end
 
    public redo_impl()      
-      if parent.cursor_x = 1 then
-         parent.contents[parent.cursor_y] := s || parent.contents[parent.cursor_y]
-      else
-         parent.contents[parent.cursor_y][parent.cursor_x - 1] ||:= s
+      parent.contents[parent.cursor_y] := parent.contents[parent.cursor_y][1:parent.cursor_x] ||
+                     s || parent.contents[parent.cursor_y][parent.cursor_x:0]
       parent.cursor_x +:= *s
       parent.clear_mark()
       parent.update_view_list(parent.cursor_y, 1, 1)
