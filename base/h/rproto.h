@@ -351,6 +351,11 @@ void fail_trace(struct p_frame *pf);
 void suspend_trace(struct p_frame *pf, dptr val);
 void return_trace(struct p_frame *pf, dptr val);
 
+void c_call_trace(struct c_frame *cf);
+void c_fail_trace(struct c_frame *cf);
+void c_return_trace(struct c_frame *cf);
+
+
 void trace_coact(struct b_coexpr *from, struct b_coexpr *to, dptr val);
 void trace_coret(struct b_coexpr *from, struct b_coexpr *to, dptr val);
 void trace_cofail(struct b_coexpr *from, struct b_coexpr *to);
