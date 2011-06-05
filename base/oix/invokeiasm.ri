@@ -134,6 +134,7 @@ static word getf_impl_code[] = {
    2,
    Op_Custom,
    (word)handle_access_failure,
+   Op_CFail,
 };
 #passthru CustomProc(getf_impl,getf_impl_code,0,0,0,3,0,0,"getf_impl")
 static word getq_impl_code[] = {
