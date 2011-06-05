@@ -41,18 +41,11 @@ end
 procedure save_throw_handler(e)
    local sh, v
    sh := throw_handler
-   v := @e
-   throw_handler := sh
-   return v
-end
-
-# Like {save_throw_handler}, but saves the value of {&handler}
-# instead.
-#
-procedure save_handler(e)
-   local sh, v
-   sh := &handler
-   v := @e
-   &handler := sh
-   return v
+   if v := @e then {
+      throw_handler := sh
+      return v
+   } else {
+      throw_handler := sh
+      fail
+   }
 end
