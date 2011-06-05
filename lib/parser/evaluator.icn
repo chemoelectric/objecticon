@@ -115,6 +115,23 @@ class Evaluator()
       }
    end
 
+   private la(v, n)
+      suspend if *n = 1 then
+         v[E(n[1])]
+      else
+          la(v[E(n[1])], n[2:0])
+   end
+
+   private do_subscript(n)
+      local x
+      x := pos_list(ExprList(n, 3))
+      suspend case *x of {
+         0: E(n.child(1))[]
+         1: E(n.child(1))[E(x[1])]
+         default: la(E(n.child(1)), x)
+      }
+   end
+
    private do_paren(n)
       local x, l
       x := pos_list(ExprList(n, 2))
@@ -297,7 +314,6 @@ class Evaluator()
    private do_Uqmark(n) suspend ?E(n.child(2)) end
    private do_Unequiv(n) suspend ~===E(n.child(2)) end
    private do_Ubackslash(n) suspend \E(n.child(2)) end
-   private do_subscript(n) suspend E(n.child(1))[E(n.child(3))] end
    private do_field(n) suspend lang.Class.get(E(n.child(1)), n.child(3).s) end
    private do_if(n) suspend if E(n.child(2)) then E(n.child(4)) end
    private do_ifelse(n) suspend if E(n.child(2)) then E(n.child(4)) else E(n.child(6)) end
@@ -335,11 +351,13 @@ class Evaluator()
    end
 
    public eval(s)
+      local n
       brk := &null
+      n := parse(s) | fail
       if /safe_flag then
-         suspend E(parse(s))
+         suspend E(n)
       else {
-         suspend Safe{E(parse(s))}
+         suspend Safe{E(n)}
          if &errortext then {
             &why := if &errornumber then
                "Runtime error " || &errornumber || ": " || &errortext
