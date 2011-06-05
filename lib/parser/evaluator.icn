@@ -2,7 +2,7 @@ $include "oigram_tab.icn"
 
 package parser
 
-import io, ipl.pdco, lang, util
+import ipl.pdco, lang, util
 
 class EvaluatorEnv()
    public defer get()
@@ -36,6 +36,7 @@ class Evaluator()
       dispatch,
       par,
       safe_flag,
+      tracing_flag,
       env
 
    private loop(ex)
@@ -87,39 +88,65 @@ class Evaluator()
    end
 
    private do_invoke(n)
-      local l, m, x
+      local x
       x := pos_list(ExprList(n, 3))
       case *x of {
          0: suspend E(n.child(1))()
          1: suspend E(n.child(1))(E(x[1]))
-         default: {
-            l := [create_E(n.child(1))]
-            every put(l, create_E(!x))
-            every m := Generate!l do
-               suspend m[1]!m[2:0]
-         }
+         2: suspend E(n.child(1))(E(x[1]),E(x[2]))
+         3: suspend E(n.child(1))(E(x[1]),E(x[2]),E(x[3]))
+         4: suspend E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]))
+         5: suspend E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]))
+         6: suspend E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]))
+         7: suspend E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]))
+         8: suspend E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]))
+         9: suspend E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]))
+         10: suspend E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]))
+         11: suspend E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                                   E(x[11]))
+         12: suspend E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                                   E(x[11]),E(x[12]))
+         13: suspend E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                                   E(x[11]),E(x[12]),E(x[13]))
+         14: suspend E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                                   E(x[11]),E(x[12]),E(x[13]),E(x[14]))
+         15: suspend E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                                   E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15]))
+         16: suspend E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                                   E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15]),E(x[16]))
+         default: runerr("too many parameters")
       }
    end
 
    private do_coinvoke(n)
-      local l, x
+      local x
       x := pos_list(ExprList(n, 3))
       case *x of {
          0: suspend E(n.child(1)){}
          1: suspend E(n.child(1)){E(x[1])}
-         default: {
-            l := []
-            every put(l, create_E(!x))
-            suspend E(n.child(1))!l
-         }
+         2: suspend E(n.child(1)){E(x[1]),E(x[2])}
+         3: suspend E(n.child(1)){E(x[1]),E(x[2]),E(x[3])}
+         4: suspend E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4])}
+         5: suspend E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5])}
+         6: suspend E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6])}
+         7: suspend E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7])}
+         8: suspend E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8])}
+         9: suspend E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9])}
+         10: suspend E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10])}
+         11: suspend E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                                   E(x[11])}
+         12: suspend E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                                   E(x[11]),E(x[12])}
+         13: suspend E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                                   E(x[11]),E(x[12]),E(x[13])}
+         14: suspend E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                                   E(x[11]),E(x[12]),E(x[13]),E(x[14])}
+         15: suspend E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                                   E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15])}
+         16: suspend E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                                   E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15]),E(x[16])}
+         default: runerr("too many parameters")
       }
-   end
-
-   private la(v, n)
-      suspend if *n = 1 then
-         v[E(n[1])]
-      else
-          la(v[E(n[1])], n[2:0])
    end
 
    private do_subscript(n)
@@ -128,21 +155,59 @@ class Evaluator()
       suspend case *x of {
          0: E(n.child(1))[]
          1: E(n.child(1))[E(x[1])]
-         default: la(E(n.child(1)), x)
+         2: E(n.child(1))[E(x[1]),E(x[2])]
+         3: E(n.child(1))[E(x[1]),E(x[2]),E(x[3])]
+         4: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4])]
+         5: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5])]
+         6: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6])]
+         7: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7])]
+         8: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8])]
+         9: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9])]
+         10: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10])]
+         11: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                           E(x[11])]
+         12: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                           E(x[11]),E(x[12])]
+         13: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                           E(x[11]),E(x[12]),E(x[13])]
+         14: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                           E(x[11]),E(x[12]),E(x[13]),E(x[14])]
+         15: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                           E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15])]
+         16: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                           E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15]),E(x[16])]
+         default: runerr("too many subscripts")
       }
    end
 
    private do_paren(n)
-      local x, l
+      local x
       x := pos_list(ExprList(n, 2))
       suspend case *x of {
          0:  &null
          1:  E(x[1])
-         default: {
-            l := []
-            every put(l, create_E(!x))
-            (Generate!l)[-1]
-         }
+         2:  (E(x[1]),E(x[2]))
+         3:  (E(x[1]),E(x[2]),E(x[3]))
+         4:  (E(x[1]),E(x[2]),E(x[3]),E(x[4]))
+         5:  (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]))
+         6:  (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]))
+         7:  (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]))
+         8:  (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]))
+         9:  (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]))
+         10: (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]))
+         11: (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+              E(x[11]))
+         12: (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+              E(x[11]),E(x[12]))
+         13: (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+              E(x[11]),E(x[12]),E(x[13]))
+         14: (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+              E(x[11]),E(x[12]),E(x[13]),E(x[14]))
+         15: (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+              E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15]))
+         16: (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+              E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15]),E(x[16]))
+         default: runerr("too many parenthesized expressions")
       }
    end
 
@@ -152,6 +217,27 @@ class Evaluator()
       suspend case *x of {
          0:  []
          1:  [E(x[1])]
+         2:  [E(x[1]),E(x[2])]
+         3:  [E(x[1]),E(x[2]),E(x[3])]
+         4:  [E(x[1]),E(x[2]),E(x[3]),E(x[4])]
+         5:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5])]
+         6:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6])]
+         7:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7])]
+         8:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8])]
+         9:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9])]
+         10:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10])]
+         11:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+               E(x[11])]
+         12:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+               E(x[11]),E(x[12])]
+         13:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+               E(x[11]),E(x[12]),E(x[13])]
+         14:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+               E(x[11]),E(x[12]),E(x[13]),E(x[14])]
+         15:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+               E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15])]
+         16:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+               E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15]),E(x[16])]
          default: {
             l := []
             every put(l, create_E(!x))
@@ -210,15 +296,12 @@ class Evaluator()
    private do_keyword(n) 
       local s, f
       s := "&" || n.child(2).s
-      f := lang.Prog.get_keyword(s) | runerr("Invalid keyword: "|| s)
+      f := lang.Prog.get_keyword(s) | runerr("invalid keyword: "|| s)
       suspend f() 
    end
 
-   # expr
    private do_and(n) suspend E(n.child(1)) & E(n.child(3)) end
-   # expr1a
    private do_Bqmark(n) suspend E(n.child(1)) ? E(n.child(3)) end
-   # expr1
    private do_swap(n) suspend E(n.child(1)) :=: E(n.child(3)) end
    private do_assign(n) suspend E(n.child(1)) := E(n.child(3)) end
    private do_revswap(n) suspend E(n.child(1)) <-> E(n.child(3)) end
@@ -250,12 +333,9 @@ class Evaluator()
    private do_augqmark(n) suspend E(n.child(1)) ?:= E(n.child(3)) end
    private do_augand(n) suspend E(n.child(1)) &:= E(n.child(3)) end
    private do_augat(n) suspend E(n.child(1)) @:= E(n.child(3)) end
-   # expr2
    private do_to(n) suspend E(n.child(1)) to E(n.child(3)) end
    private do_toby(n) suspend E(n.child(1)) to E(n.child(3)) by E(n.child(5)) end
-   # expr3
    private do_Bbar(n) suspend E(n.child(1)) | E(n.child(3)) end
-   # expr4
    private do_Bseq(n) suspend E(n.child(1)) == E(n.child(3)) end
    private do_Bsge(n) suspend E(n.child(1)) >>= E(n.child(3)) end
    private do_Bsgt(n) suspend E(n.child(1)) >> E(n.child(3)) end
@@ -270,26 +350,20 @@ class Evaluator()
    private do_Bnmne(n) suspend E(n.child(1)) ~= E(n.child(3)) end
    private do_Bequiv(n) suspend E(n.child(1)) === E(n.child(3)) end
    private do_Bnequiv(n) suspend E(n.child(1)) ~=== E(n.child(3)) end
-   # expr5 
    private do_Bconcat(n) suspend E(n.child(1)) || E(n.child(3)) end
    private do_Blconcat(n) suspend E(n.child(1)) ||| E(n.child(3)) end
-   # expr6
    private do_Bplus(n) suspend E(n.child(1)) + E(n.child(3)) end
    private do_Bdiff(n) suspend E(n.child(1)) -- E(n.child(3)) end
    private do_Bunion(n) suspend E(n.child(1)) ++ E(n.child(3)) end
    private do_Bminus(n) suspend E(n.child(1)) - E(n.child(3)) end
-   # expr7
    private do_Bstar(n) suspend E(n.child(1)) * E(n.child(3)) end
    private do_Binter(n) suspend E(n.child(1)) ** E(n.child(3)) end
    private do_Bslash(n) suspend E(n.child(1)) / E(n.child(3)) end
    private do_Bmod(n) suspend E(n.child(1)) % E(n.child(3)) end
-   # expr8
    private do_Bcaret(n) suspend E(n.child(1)) ^ E(n.child(3)) end
-   # expr9
    private do_Bbackslash(n) suspend E(n.child(1)) \ E(n.child(3)) end
    private do_Bat(n) suspend E(n.child(1)) @ E(n.child(3)) end
    private do_Bbang(n) suspend E(n.child(1)) ! E(n.child(3)) end
-   #expr10
    private do_Uat(n) suspend  @E(n.child(2)) end
    private do_Unot(n) suspend not E(n.child(2)) end
    private do_Ubar(n) suspend |E(n.child(2)) end
@@ -332,16 +406,25 @@ class Evaluator()
    private do_suspendexpr(n) runerr("suspend not allowed here") end
    private do_suspendexprdo(n) runerr("suspend not allowed here") end
 
+   public set_tracing(f)
+      tracing_flag := check_flag(f)
+      return self
+   end
+
+   public toggle_tracing(f)
+      return set_tracing(toggle_flag(self.tracing_flag))
+   end
+
    private E(n)
       local m
       if is(n, Token) then
          return case n.tok of {
             IDENT: env.get(n.s)
             INTLIT|REALLIT|STRINGLIT|CSETLIT|UCSLIT: n.val
-            default : stop("Not implemented yet: token ", to_string(n))
+            default : fatalerr("not implemented yet: token " || to_string(n))
          }
 
-      m := \dispatch[n.label] | stop("Not implemented: ", n.label)
+      m := \dispatch[n.label] | fatalerr("not implemented: " || n.label)
       suspend m(n)
    end
    
@@ -354,6 +437,8 @@ class Evaluator()
       local n
       brk := &null
       n := parse(s) | fail
+      if \tracing_flag then 
+         &trace := -1
       if /safe_flag then
          suspend E(n)
       else {
@@ -365,10 +450,14 @@ class Evaluator()
                "Runtime error: " || &errortext
             &why ||:= "; offending value: " || image(&errorvalue)
             errorclear()
+            if \tracing_flag then 
+               &trace := 0
             fail
          }
       }
       &why := "No more results"
+      if \tracing_flag then 
+         &trace := 0
    end
 
    public set_safe(f)
