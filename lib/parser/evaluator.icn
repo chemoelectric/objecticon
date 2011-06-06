@@ -2,7 +2,7 @@ $include "oigram_tab.icn"
 
 package parser
 
-import ipl.pdco, lang, util
+import io, ipl.pdco, lang, util
 
 class EvaluatorEnv()
    public defer get()
@@ -433,16 +433,32 @@ class Evaluator()
       return par.parse(s).get_body().get(1).get_body_node()
    end
 
+   private tron()
+      if \tracing_flag then
+         &trace := -1
+      return
+   end
+
+   private troff()
+      if \tracing_flag then
+         &trace := 0
+      return
+   end
+
    public eval(s)
       local n
       brk := &null
+      troff()
       n := parse(s) | fail
-      if \tracing_flag then 
-         &trace := -1
+      if \tracing_flag then {
+         to_stderr(n, 3)
+         ewrite()
+      }
+      tron()
       if /safe_flag then
-         suspend E(n)
+         suspend 1(E(n), troff()) do tron()
       else {
-         suspend Safe{E(n)}
+         suspend 1(Safe{E(n)}, troff()) do tron()
          if &errortext then {
             &why := if &errornumber then
                "Runtime error " || &errornumber || ": " || &errortext
@@ -450,14 +466,12 @@ class Evaluator()
                "Runtime error: " || &errortext
             &why ||:= "; offending value: " || image(&errorvalue)
             errorclear()
-            if \tracing_flag then 
-               &trace := 0
+            troff()
             fail
          }
       }
       &why := "No more results"
-      if \tracing_flag then 
-         &trace := 0
+      troff()
    end
 
    public set_safe(f)
