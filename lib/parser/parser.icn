@@ -88,6 +88,14 @@ class Parser(Connectable)
          return error(first_err)
    end
 
+   #
+   # Parse {s}, as an expression (actually, a compound expression).
+   #
+   public parse_expression(s)
+      s := "procedure main() ; " || s || " end"
+      return parse(s).get_body().get(1).get_body_node()
+   end
+
    public parse_file(fname, predefined_syms)
       yyin := preprocess(fname, predefined_syms) | fail
       parser.yyerror := yyerror

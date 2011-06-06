@@ -2,7 +2,7 @@ $include "oigram_tab.icn"
 
 package parser
 
-import io, ipl.pdco, lang, util
+import ipl.pdco, lang, util
 
 class EvaluatorEnv()
    public defer get()
@@ -34,10 +34,9 @@ class Evaluator()
    private
       brk,
       dispatch,
-      par,
       safe_flag,
-      tracing_flag,
-      env
+      env,
+      node
 
    private loop(ex)
       local t, res, sub, pos
@@ -246,21 +245,6 @@ class Evaluator()
       }
    end
 
-   private do_brace(n)
-      local l, e, t
-      l := pos_list(Compound(n, 2))
-      suspend case *l of {
-         0:  &null
-         1:  E(l[1])
-         default: {
-            t := pull(l)
-            every e := !l do
-               E(e)
-            E(t)
-         }
-      }
-   end
-
    private do_case(n)
       local l, v, cc
       l := pos_list(CaseList(n, 5))
@@ -405,15 +389,9 @@ class Evaluator()
    private do_suspend(n) runerr("suspend not allowed here") end
    private do_suspendexpr(n) runerr("suspend not allowed here") end
    private do_suspendexprdo(n) runerr("suspend not allowed here") end
-
-   public set_tracing(f)
-      tracing_flag := check_flag(f)
-      return self
-   end
-
-   public toggle_tracing(f)
-      return set_tracing(toggle_flag(self.tracing_flag))
-   end
+   private do_brace(n) suspend E(n.child(2)) end
+   private do_compound(n) suspend { E(n.child(1)) ; E(n.child(3)) } end
+   private do_Empty(n) return end
 
    private E(n)
       local m
@@ -428,37 +406,13 @@ class Evaluator()
       suspend m(n)
    end
    
-   private parse(s)
-      s := "procedure main() { " || s || "\n}\nend\n"
-      return par.parse(s).get_body().get(1).get_body_node()
-   end
-
-   private tron()
-      if \tracing_flag then
-         &trace := -1
-      return
-   end
-
-   private troff()
-      if \tracing_flag then
-         &trace := 0
-      return
-   end
-
-   public eval(s)
-      local n
+   public eval()
+      (\env & \node) | runerr("eval() called without environment and/or node being set")
       brk := &null
-      troff()
-      n := parse(s) | fail
-      if \tracing_flag then {
-         to_stderr(n, 3)
-         ewrite()
-      }
-      tron()
       if /safe_flag then
-         suspend 1(E(n), troff()) do tron()
+         suspend E(node)
       else {
-         suspend 1(Safe{E(n)}, troff()) do tron()
+         suspend Safe{E(node)}
          if &errortext then {
             &why := if &errornumber then
                "Runtime error " || &errornumber || ": " || &errortext
@@ -466,12 +420,10 @@ class Evaluator()
                "Runtime error: " || &errortext
             &why ||:= "; offending value: " || image(&errorvalue)
             errorclear()
-            troff()
             fail
          }
       }
       &why := "No more results"
-      troff()
    end
 
    public set_safe(f)
@@ -484,11 +436,15 @@ class Evaluator()
       return self
    end
 
-   public new(env)
-      /env := DefaultEvaluatorEnv()
+   public set_node(node)
+      self.node := node
+      return self
+   end
+
+   public new(env, node)
       self.env := env
+      self.node := node
       self.dispatch := table()
-      self.par := Parser()
       every lang.Class.get_class_field_names(self) ? {
          if ="do_" then
             dispatch[tab(0)] := lang.Class.get(self, &subject)
