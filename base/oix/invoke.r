@@ -1143,12 +1143,7 @@ static void simple_access()
 
 static void handle_access_failure()
 {
-    struct p_frame *t = curr_pf;
     whyf("%s (error %d)", lookup_err_msg(t_errornumber), t_errornumber);
-    /* Act as though this frame AND the parent c_frame (ie the getf call) have failed */
-    set_curr_pf(curr_pf->caller);
-    ipc = t->parent_sp->failure_label;
-    pop_to(t->parent_sp->parent_sp);
 }
 
 function lang_Class_get(obj, field)

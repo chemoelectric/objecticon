@@ -83,9 +83,38 @@ void tail_invoke_frame(struct frame *f)
         case C_Frame: {
             curr_cf = (struct c_frame *)f;
             Desc_EVValD(curr_cf->proc, E_Pcall, D_Proc);
-            if (!curr_cf->proc->ccode(curr_cf)) {
-                ipc = f->failure_label;
-                pop_to(f->parent_sp);
+            if (k_trace && curr_cf->proc->field) {
+                /*
+                 * Same logic as below, but with tracing.
+                 */   
+                struct p_frame *old_curr_pf = curr_pf;
+                k_trace--;
+                c_call_trace(curr_cf);
+                if (curr_cf->proc->ccode(curr_cf)) {
+                    /*
+                     * If curr_pf != old_curr_pf, then the c function
+                     * has pushed a frame, called tail_invoke_frame,
+                     * and returned.  So we don't output the return
+                     * value here; that is done when we get a
+                     * Op_C[Return/Suspend/Fail].
+                     */
+                    if (k_trace && curr_pf == old_curr_pf) {
+                        k_trace--;
+                        c_return_trace(curr_cf);
+                    }
+                } else {
+                    if (k_trace) {
+                        k_trace--;
+                        c_fail_trace(curr_cf);
+                    }
+                    ipc = f->failure_label;
+                    pop_to(f->parent_sp);
+                }
+            } else {
+                if (!curr_cf->proc->ccode(curr_cf)) {
+                    ipc = f->failure_label;
+                    pop_to(f->parent_sp);
+                }
             }
             curr_cf = 0;
             break;
@@ -96,7 +125,7 @@ void tail_invoke_frame(struct frame *f)
             pf->caller = curr_pf;
             if (pf->proc->program) {
                 /*
-                 * If tracing is on, use ctrace to generate a message.
+                 * If tracing is on, generate a message.
                  */   
                 if (k_trace) {
                     k_trace--;
@@ -968,6 +997,10 @@ void interp()
                 else
                     skip_descrip();
                 set_curr_pf(curr_pf->caller);
+                if (k_trace && ((struct c_frame *)t->parent_sp)->proc->field) {
+                    k_trace--;
+                    c_return_trace((struct c_frame *)t->parent_sp);
+                }
                 /* Pop off this frame, leaving the C frame */
                 pop_to(t->parent_sp);
                 break;
@@ -985,6 +1018,10 @@ void interp()
                 else
                     skip_descrip();
                 set_curr_pf(curr_pf->caller);
+                if (k_trace && ((struct c_frame *)t->parent_sp)->proc->field) {
+                    k_trace--;
+                    c_return_trace((struct c_frame *)t->parent_sp);
+                }
                 break;
             }
 
@@ -994,6 +1031,10 @@ void interp()
             case Op_CFail: {
                 struct p_frame *t = curr_pf;
                 set_curr_pf(curr_pf->caller);
+                if (k_trace && ((struct c_frame *)t->parent_sp)->proc->field) {
+                    k_trace--;
+                    c_fail_trace((struct c_frame *)t->parent_sp);
+                }
                 /* Goto the failure_label stored in the C frame */
                 ipc = t->parent_sp->failure_label;
                 /* Pop off this frame AND the parent C frame */

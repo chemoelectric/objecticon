@@ -39,3 +39,56 @@ class SimpleConstructor()
       return
    end
 end
+
+# Invoke co-expression e, saving the value of {&handler} before,
+# and restoring it afterwards.  This is potentially useful when using
+# co-operating scheduled tasks (see {io.Task}), which switch from
+# within a try block.
+#
+procedure save_handler(e)
+   local sh, v
+   sh := &handler
+   if v := @e then {
+      &handler := sh
+      return v
+   } else {
+      &handler := sh
+      fail
+   }
+end
+
+# Like {save_handler}, but saves the value of {&why}
+# instead.
+#
+procedure save_why(e)
+   local sw, v
+   sw := &why
+   if v := @e then {
+      &why := sw
+      return v
+   } else {
+      &why := sw
+      fail
+   }
+end
+
+
+# Invoke co-expression e, saving the scanning environment first, and
+# restoring it afterwards.  This is potentially useful when using
+# co-operating scheduled tasks (see {io.Task}), which switch from
+# within a scanning expression.
+#
+procedure save_scan(e)
+   local ss, sp, v
+   ss := &subject
+   sp := &pos
+   if v := @e then {
+      &subject := ss
+      &pos := sp
+      return v
+   } else {
+      &subject := ss
+      &pos := sp
+      fail
+   }
+end

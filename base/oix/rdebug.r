@@ -966,6 +966,61 @@ void return_trace(struct p_frame *pf, dptr val)
     fflush(stderr);
 }
 
+
+
+void c_call_trace(struct c_frame *cf)
+{
+    int nargs;
+    dptr args;
+
+    showline(curr_pf);
+    showlevel(k_level);
+
+    procname(stderr, (struct b_proc *)cf->proc);
+    if (cf->pc)
+        fprintf(stderr, " resumed\n");
+    else {
+        putc('(', stderr);
+        nargs = cf->nargs;
+        args = cf->args;
+        while (nargs--) {
+            outimage(stderr, args++, 0);
+            if (nargs)
+                putc(',', stderr);
+        }
+        fprintf(stderr, ")\n");
+    }
+    fflush(stderr);
+}
+
+void c_fail_trace(struct c_frame *cf)
+{
+    showline(curr_pf);
+    showlevel(k_level);
+    procname(stderr, (struct b_proc *)cf->proc);
+    fprintf(stderr, " failed");
+    putc('\n', stderr);
+    fflush(stderr);
+}
+
+void c_return_trace(struct c_frame *cf)
+{
+    showline(curr_pf);
+    showlevel(k_level);
+    procname(stderr, (struct b_proc *)cf->proc);
+    if (cf->exhausted)
+        fprintf(stderr, " returned ");
+    else
+        fprintf(stderr, " suspended ");
+    if (cf->lhs)
+        outimage(stderr, cf->lhs, 0);
+    else
+        fprintf(stderr, "(value discarded)");
+    putc('\n', stderr);
+    fflush(stderr);
+}
+
+
 /*
  * Service routine to display variables in given number of
  *  procedure calls to file f.

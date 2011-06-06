@@ -65,6 +65,7 @@ class LineEditorStream(LineBasedStream)
 
    private get_console_size()
       local w, h
+      # Could also use tput cols and tput lines to do this.
       return run_stty("size") ? {
          if h := integer(tab(many(&digits))) &
             tab(upto(&digits)) &
@@ -80,8 +81,10 @@ class LineEditorStream(LineBasedStream)
          f := ProgInputStream("stty", params,,, nul),
          f.copy_to(ss)
       } | fail
-      if f.get_exit_info().param = 0 then
-         return ss.str()
+      return if f.get_exit_info().param = 0 then
+         ss.str()
+      else
+         error("stty returned non-zero status")
    end
 
    protected read_impl()
@@ -91,7 +94,8 @@ class LineEditorStream(LineBasedStream)
          return at_eof()
       run_stty("-icanon",  "-echo")
       s := read_impl2()
-      run_stty("icanon",  "echo")
+      # Save &why whilst resetting terminal
+      save_why{ run_stty("icanon",  "echo") }
       return \s
    end
 

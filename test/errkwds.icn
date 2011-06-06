@@ -5,69 +5,69 @@ import io
 
 procedure main()
    local e
-   write(image(&handler))
+   write(imagex(&handler))
    write(&errornumber | "fail")
    write(&errortext | "fail")
-   write(image(&errorvalue) | "fail")
-   write(image(&errorcoexpr) | "fail")
+   write(imagex(&errorvalue) | "fail")
+   write(imagex(&errorcoexpr) | "fail")
 
    &handler := &current
    e := create 1+&null
    @e
    write("--------")
-   write(image(&handler))
+   write(imagex(&handler))
    write(&errornumber | "fail")
    write(&errortext | "fail")
-   write(image(&errorvalue) | "fail")
-   write(image(&errorcoexpr) | "fail")
+   write(imagex(&errorvalue) | "fail")
+   write(imagex(&errorcoexpr) | "fail")
 
    errorclear()
    e := create runerr("the quick brown fox", 99)
    @e
    write("--------")
-   write(image(&handler))
+   write(imagex(&handler))
    write(&errornumber | "fail")
    write(&errortext | "fail")
-   write(image(&errorvalue) | "fail")
-   write(image(&errorcoexpr) | "fail")
+   write(imagex(&errorvalue) | "fail")
+   write(imagex(&errorcoexpr) | "fail")
 
    errorclear()
    e := create runerr("the quick brown cat")
    @e
    write("--------")
-   write(image(&handler))
+   write(imagex(&handler))
    write(&errornumber | "fail")
    write(&errortext | "fail")
-   write(image(&errorvalue) | "fail")
-   write(image(&errorcoexpr) | "fail")
+   write(imagex(&errorvalue) | "fail")
+   write(imagex(&errorcoexpr) | "fail")
 
    errorclear()
    e := create runerr(101, [])
    @e
    write("--------")
-   write(image(&handler))
+   write(imagex(&handler))
    write(&errornumber | "fail")
    write(&errortext | "fail")
-   write(image(&errorvalue) | "fail")
-   write(image(&errorcoexpr) | "fail")
+   write(imagex(&errorvalue) | "fail")
+   write(imagex(&errorcoexpr) | "fail")
 
    errorclear()
    e := create runerr(101)
    @e
    write("--------")
-   write(image(&handler))
+   write(imagex(&handler))
    write(&errornumber | "fail")
    write(&errortext | "fail")
-   write(image(&errorvalue) | "fail")
-   write(image(&errorcoexpr) | "fail")
+   write(imagex(&errorvalue) | "fail")
+   write(imagex(&errorcoexpr) | "fail")
 
    errorclear()
    write("--------")
-   write(image(&handler))
+   write(imagex(&handler))
    write(&errornumber | "fail")
    write(&errortext | "fail")
-   write(image(&errorvalue) | "fail")
-   write(image(&errorcoexpr) | "fail")
+   write(imagex(&errorvalue) | "fail")
+   write(imagex(&errorcoexpr) | "fail")
 
 
 end
