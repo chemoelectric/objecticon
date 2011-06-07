@@ -373,7 +373,7 @@ Note that this way of handling exceptions does not "unwind" any stack.  The stac
 === Handling runtime errors ===
 In a similar vein to the handling of exceptions, it is possible to handle runtime errors too.  However, this facility is built into the implementation, since that is where most runtime errors are generated.
 
-To set a runtime error handler, an assignment to the keyword variable `&handler` is made.  The value must be either `&null` (which turns handling off), or a co-expression, which is activated when a runtime error occurs.  When that happens, the keywords `&errornumber`, `&errortext`, `&errorvalue` and `&errorcoexpr` will also be set to give detail about the runtime error.  Note that `&errorvalue` will not be set if no value was associated with the error (evaluating it will fail).  `&errorcoexpr` is set to the value of `&current` when the error occurred.
+To set a runtime error handler, an assignment to the keyword variable `&handler` is made.  The value must be either `&null` (which turns handling off), or a co-expression, which is activated when a runtime error occurs.  When that happens, the keywords `&errornumber`, `&errortext`, `&errorvalue` and `&errorcoexpr` will be set to give detail about the runtime error.  Note that `&errorvalue` will not be set if no value was associated with the error (evaluating it will fail) and `&errornumber` will not be set if the error is not one of the standard numbered ones.  `&errortext` is always set to the error message, and `&errorcoexpr` is always set to the value of `&current` when the error occurred.
 
 Here is an example program which handles a runtime error caused by attempting to add 1 to the null value :-
 
@@ -393,7 +393,7 @@ procedure main()
    if @e then
       write("Evaluation succeeded")
    else {
-      if &errornumber then {
+      if &errortext then {
          write("Evaluation caused runtime error")
          write("\t&errornumber=",image(&errornumber))
          write("\t&errortext=",image(&errortext))
