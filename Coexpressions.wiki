@@ -349,7 +349,8 @@ end
 procedure main()
    try {
       p1()
-   } | {
+   }
+   if \thrown the {
       write("Caught:", image(thrown))
       Coexpression.traceback(thrower)
    }
