@@ -367,7 +367,7 @@ co-expression#2 activated by co-expression#1
    exception.throw("something") from line 4 in test9.icn
    at line 9 in exception.icn
 }}}
-The `try` procedure works as a PDCO.  It runs its body (`p1()` in this case) in a separate co-expression, but before doing so sets a global variable, `exception.throw_handler` to `&current`, ie the co-expression to re-activate on a throw.  In fact, all the procedure `throw` does is store its parameter in the global variable `exception.thrown`, `&current` in the global variable `exception.thrower`, and activates `exception.throw_handler`.  Having been activated again, `try` then simply succeeds or fails depending on whether or not it was activated by a `throw`.
+The `try` procedure works as a PDCO.  It runs its body (`p1()` in this case) in a separate co-expression, but before doing so sets a global variable, `exception.throw_handler` to `&current`, ie the co-expression to re-activate on a throw.  In fact, all the procedure `throw` does is store its parameter in the global variable `exception.thrown`, `&current` in the global variable `exception.thrower`, and activates `exception.throw_handler`.  After try returns, the caller can then check the global variable `exception.thrown` to see whether an exception was raised.
 
 Note that this way of handling exceptions does not "unwind" any stack.  The stack of `exception.thrower` remains fully intact, and can be printed.
 === Handling runtime errors ===
