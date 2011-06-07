@@ -95,7 +95,7 @@ class LineEditorStream(LineBasedStream)
       run_stty("-icanon",  "-echo")
       s := read_impl2()
       # Save &why whilst resetting terminal
-      save_why{ run_stty("icanon",  "echo") }
+      save_var{ run_stty("icanon",  "echo"), &why }
       return \s
    end
 

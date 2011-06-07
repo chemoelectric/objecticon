@@ -1194,18 +1194,15 @@ end
 # caused by a runtime error.
 #
 procedure Safe(e)
-   local t, x
-   errorclear()
+   local t
    repeat {
+      errorclear()
       t := &handler
       &handler := &current
-      if x := @e then {
-         &handler := t
-         suspend x
-      } else {
-         &handler := t
-         fail
-      }
+      suspend 1(@e, &handler := t) do
+         break next
+      &handler := t                                         
+      fail                                                  
    }
 end
 
