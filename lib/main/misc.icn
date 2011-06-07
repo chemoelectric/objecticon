@@ -40,13 +40,17 @@ class SimpleConstructor()
    end
 end
 
-# Invoke co-expression e, generating its results, saving the value of
-# {var} before, and restoring it after each result.  This is
-# potentially useful when using co-operating scheduled tasks (see
-# {io.Task}).
+# Invoke co-expression {e}, generating its results, in such a way that
+# changes to {var} made by {e} will not be seen by the caller, and
+# vice versa.
 #
 # @example
-# @ save_var{task.sleep(1000), exception.throw_handler}
+# @ # Sleep in a {io.Task}, within a try block.
+# @ save_var{ task.sleep(1000), exception.throw_handler }
+#
+# @example
+# @ # Cleanup some io stuff, without affecting {&why}
+# @ save_var{ io_cleanup(), &why }
 #
 procedure save_var(e, var)
    local t
@@ -56,6 +60,26 @@ procedure save_var(e, var)
          !var :=: t
          break next
       }
+      !var := t
+      fail
+   }
+end
+
+# Invoke co-expression e, generating its results, setting {var} to
+# {init} before each invocation.  Further, the value of {var} before
+# being set to {init} is saved and restored before each suspension or
+# failure.
+#
+# Safe() and try() follow this general pattern, but are implemented
+# separately for the sake of efficiency.
+#
+procedure with_var(e, var, init)
+   local t
+   repeat {
+      t := !var
+      !var := !init
+      suspend 1(@e, !var := t) do
+         break next
       !var := t
       fail
    }
