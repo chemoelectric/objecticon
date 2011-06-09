@@ -289,13 +289,9 @@ class XmlParser(Connectable)
    #
    # [5] Name ::= (Letter | '_' | ':') (NameChar)*
    #
-   # If quiet is non-null, just fail silently on error.
-   #
    private parse_name(quiet)
-      if any(XML_NAME_START) then
-         return move(1) || tab(opt(XML_NAME_CHAR))
-      else if /quiet then
-         throw("Valid name start character expected")
+      any(XML_NAME_START) | throw("Valid name start character expected")
+      return move(1) || tab(opt(XML_NAME_CHAR))
    end
 
    #
@@ -309,14 +305,12 @@ class XmlParser(Connectable)
    #
    # [6] Names ::= Name (S Name)*
    #
-   # If quiet is non-null, just fail silently on error.
-   #
-   private parse_names(quiet) 
+   private parse_names() 
       local l
 
       l := []
       repeat {
-         put(l, parse_name(quiet)) | fail
+         put(l, parse_name()) | fail
          looking_at_space_then_cset(XML_NAME_START) | break
          spaces()
       }
@@ -325,15 +319,25 @@ class XmlParser(Connectable)
    end
 
    #
+   # Succeed iff a string is a valid Name.
+   #
+   private valid_name(s)
+      return s ? 2(any(XML_NAME_START), parse_name(), pos(0))
+   end
+
+   #
+   # Succeed iff a string is a valid Names.
+   #
+   private valid_names(s)
+      return s ? 2(any(XML_NAME_START), parse_names(), pos(0))
+   end
+
+   #
    # [7] Nmtoken ::= (NameChar)+
    #
-   # If quiet is non-null, just fail silently on error.
-   #
-   private parse_nmtoken(quiet)
-      if any(XML_NAME_CHAR) then
-         return tab(many(XML_NAME_CHAR))
-      if /quiet then
-         throw("Valid name character expected")
+   private parse_nmtoken()
+      any(XML_NAME_CHAR) | throw("Valid name character expected")
+      return tab(many(XML_NAME_CHAR))
    end
 
    #
@@ -347,20 +351,33 @@ class XmlParser(Connectable)
    #
    # [8] Nmtokens ::=  Nmtoken (S Nmtoken)*
    #
-   # If quiet is non-null, just fail silently on error.
-   #
-   private parse_nmtokens(quiet) 
+   private parse_nmtokens() 
       local l
 
       l := []
       repeat {
-         put(l, parse_nmtoken(quiet)) | fail
+         put(l, parse_nmtoken()) | fail
          looking_at_space_then_cset(XML_NAME_CHAR) | break
          spaces()
       }
       
       return l
    end
+
+   #
+   # Succeed iff a string is a valid Nmtoken.
+   #
+   private valid_nmtoken(s)
+      return s ? 2(any(XML_NAME_CHAR), parse_nmtoken(), pos(0))
+   end
+
+   #
+   # Succeed iff a string is a valid Nmtokens.
+   #
+   private valid_nmtokens(s)
+      return s ? 2(any(XML_NAME_CHAR), parse_nmtokens(), pos(0))
+   end
+
 
    #
    # [9] EntityValue ::= '"' ([^%&"] | PEReference | Reference)* '"' |  "'" ([^%&'] | PEReference | Reference)* "'"
@@ -1394,31 +1411,31 @@ class XmlParser(Connectable)
             "CDATA" : {
             }
             "ID" : {
-               if val ? not(parse_name(1) & pos(0)) then
+               valid_name(val) |
                   invalid("default attribute value " || val || " must be a valid name")
             }
             "IDREF" : {
-               if val ? not(parse_name(1) & pos(0)) then
+               valid_name(val) |
                   invalid("default attribute value " || val || " must be a valid name")
             }
             "IDREFS" : {
-               if val ? not(parse_names(1) & pos(0)) then
+               valid_names(val) |
                   invalid("default attribute value " || val || " must be comprised of valid names")
             }
             "ENTITY" : {
-               if val ? not(parse_name(1) & pos(0)) then
+               valid_name(val) |
                   invalid("default attribute value " || val || " must be a valid name")
             }
             "ENTITIES" : {
-               if val ? not(parse_names(1) & pos(0)) then
+               valid_names(val) |
                   invalid("default attribute value " || val || " must be comprised of valid names")
             }
             "NMTOKEN" : {
-               if val ? not(parse_nmtoken(1) & pos(0)) then
+               valid_nmtoken(val) |
                   invalid("default attribute value " || val || " must be a valid nmtoken")
             }
             "NMTOKENS" : {
-               if val ? not(parse_nmtokens(1) & pos(0)) then
+               valid_nmtokens(val) |
                   invalid("default attribute value " || val || " must be comprised of valid nmtokens")
             }
             "ENUMERATION" : { 
@@ -1905,7 +1922,7 @@ class XmlParser(Connectable)
          "CDATA" : {
          }
          "ID" : {
-            if val ? not(parse_name(1) & pos(0)) then
+            valid_name(val) |
                invalid("attribute value " || val || " must be a valid name")
             # Store the value of the id
             if member(doc.id_attribute_values, val) then
@@ -1914,18 +1931,18 @@ class XmlParser(Connectable)
                insert(doc.id_attribute_values, val)
          }
          "IDREF" : {
-            if val ? not(parse_name(1) & pos(0)) then
+            valid_name(val) |
                invalid("attribute value " || val || " must be a valid name")
             put(id_attribute_refs, IdAttributeRef(val, where()))
          }
          "IDREFS" : {
-            if val ? (l := parse_names(1) & pos(0)) then
+            if l := valid_names(val) then
                every put(id_attribute_refs, IdAttributeRef(!l, where()))
             else
                invalid("attribute value " || val || " must be comprised of valid names")
          }
          "ENTITY" : {
-            if val ? (parse_name(1) & pos(0)) then {
+            if valid_name(val) then {
                if member(doc.general_entities, val) then {
                   entity_def := doc.general_entities[val]
                   if /entity_def.notation then
@@ -1936,7 +1953,7 @@ class XmlParser(Connectable)
                invalid("attribute value " || val || " must be a valid name")
          }
          "ENTITIES" : {
-            if val ? (l := parse_names(1) & pos(0)) then {
+            if l := valid_names(val) then {
                every n := !l do {
                   if member(doc.general_entities, n) then {
                      entity_def := doc.general_entities[n]
@@ -1949,11 +1966,11 @@ class XmlParser(Connectable)
                invalid("attribute value " || val || " must be comprised of valid names")
          }
          "NMTOKEN" : {
-            if val ? not(parse_nmtoken(1) & pos(0)) then
+            valid_nmtoken(val) |
                invalid("attribute value " || val || " must be a valid nmtoken")
          }
          "NMTOKENS" : {
-            if val ? not(parse_nmtokens(1) & pos(0)) then
+            valid_nmtokens(val) |
                invalid("attribute value " || val || " must be comprised of valid nmtokens")
          }
          "ENUMERATION" : { 
