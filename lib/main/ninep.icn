@@ -896,7 +896,7 @@ class Session9P()
    end
 
    public respond(x)
-      return try{respond_impl(x)} | RError(x.tag, &why)
+      return simple_try{respond_impl(x)} | RError(x.tag, &why)
    end
 
    private respond_impl(x)
