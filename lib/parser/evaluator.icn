@@ -42,7 +42,7 @@ class Evaluator()
    private compute_loops(n, loop)
       if is(n, Node) then {
          case n.label of {
-            "whiledo"|"while"|"untildo"|"until"|"repeat":  {
+            "everydo"|"every"|"whiledo"|"while"|"untildo"|"until"|"repeat":  {
                loops[n] := loop
                every compute_loops(n.gen(), n)
             }
@@ -53,8 +53,8 @@ class Evaluator()
                loops[n] := \loop | throw("break without loop")
                every compute_loops(n.gen(), loops[loop])
             }
-            "return"|"returnexpr"|"suspend"|"suspendexpr"|"suspendexprdo": 
-               throw("suspend/return not allowed")
+            "fail"|"return"|"returnexpr"|"suspend"|"suspendexpr"|"suspendexprdo": 
+               throw("suspend/return/fail not allowed")
             default: every compute_loops(n.gen(), loop)
          }
       }
@@ -397,11 +397,6 @@ class Evaluator()
    private do_break(n) return coact("break", brk[n]) end
    private do_next(n) return coact("next", brk[n]) end
    private do_breakexpr(n) return coact(n.child(2), brk[n]) end
-   private do_return(n) runerr("return not allowed here") end
-   private do_returnexpr(n) runerr("return not allowed here") end
-   private do_suspend(n) runerr("suspend not allowed here") end
-   private do_suspendexpr(n) runerr("suspend not allowed here") end
-   private do_suspendexprdo(n) runerr("suspend not allowed here") end
    private do_brace(n) suspend E(n.child(2)) end
    private do_compound(n) suspend { E(n.child(1)) ; E(n.child(3)) } end
    private do_Empty(n) return end
@@ -462,6 +457,7 @@ class Evaluator()
 
    public set_node(node)
       self.node := node
+      self.loops := &null
       return self
    end
 
