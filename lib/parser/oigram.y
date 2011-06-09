@@ -399,7 +399,7 @@ every   : EVERY expr { $$ := Node("every", $1,$2);} ;
 
 repeat  : REPEAT expr { $$ := Node("repeat", $1,$2);} ;
 
-return  : FAIL ;
+return  : FAIL { $$ := Node("fail", $1);} ;
         | RETURN { $$ := Node("return", $1);} ;
         | RETURN expr { $$ := Node("returnexpr", $1, $2);} ;
         | SUSPEND { $$ := Node("suspend", $1);} ;
