@@ -9,8 +9,8 @@
 import xml, ipl.options, io
 
 procedure main(a)
-   local fmt, p, s, d, t, x, opt
-   fmt := CanonicalXmlFormatter()
+   local fmt, p, s, d, t, x, opt, ss
+   fmt := CanonicalXmlFormatter(ss := RamStream())
    p := XmlParser().set_preserve_insignificant_whitespace(&yes).set_do_namespaces(&no)
 
    opt := options(a, "-u!")
@@ -34,7 +34,8 @@ procedure main(a)
 
       t := Files.file_to_string(a[2]) | stop("couldnt open" || a[2])
 
-      x := fmt.format_to_string(d)
+      fmt.format(d)
+      x := ss.done()
       if x == t then
          exit(0)
 

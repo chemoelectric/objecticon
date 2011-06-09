@@ -87,7 +87,7 @@ class Time()
    # Output object
    #
    private object_output(oo)
-      return oo.object_string(self, format("MMMM d, yyyy H:mm.ss z"))
+      oo.object_string(self, format("MMMM d, yyyy H:mm.ss z"))
    end
 
    #
@@ -358,16 +358,14 @@ class Time()
    # Encode just stores the seconds and zone information.
    #
    private object_encode(c)
-      c.encode(self.seconds) | fail
-      c.encode(self.zone) | fail
-      return
+      c.encode(self.seconds)
+      c.encode(self.zone)
    end
 
    private object_decode(c)
-      self.seconds := c.decode() | fail
-      self.zone := c.decode() | fail
+      self.seconds := c.decode()
+      self.zone := c.decode()
       compute_broken_down_fields()
-      return
    end
 
    #

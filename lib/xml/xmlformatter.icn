@@ -61,20 +61,19 @@ class XmlFormatter(Formatter)
       return self
    end
 
-   public format_document(n)
+   protected format_document(n)
       local c
       every c := !n.children do {
-         format_node(c) | fail
-         out.write() | fail
+         format_node(c)
+         write()
       }
-      return
    end
 
-   public format_content(s)
-      return out.writes(s)
+   protected format_content(s)
+      writes(s)
    end
 
-   public format_doctype(n)
+   protected format_doctype(n)
       local s, x
       s := "<!DOCTYPE "
       s ||:= \n.name
@@ -86,23 +85,23 @@ class XmlFormatter(Formatter)
             s ||:= " SYSTEM \"" || x.system_id || "\""
       }
       s ||:= ">"
-      return out.writes(s)
+      writes(s)
    end
 
-   public format_comment(n)
-      return out.writes("<!--" || n.comment || "-->")
+   protected format_comment(n)
+      writes("<!--" || n.comment || "-->")
    end
 
-   public format_pi(n)
+   protected format_pi(n)
       local s
       s := "<?" || n.target
       if \n.content then
          s ||:= " " || n.content 
       s ||:= "?>"
-      return out.writes(s)
+      writes(s)
    end
 
-   public format_element(n)
+   protected format_element(n)
       local s, istr1, istr2, x, l, e
 
       if \indent then {
@@ -121,30 +120,29 @@ class XmlFormatter(Formatter)
          s ||:= "/>"
       else
          s ||:= ">"
-      out.writes(s) | fail
+      writes(s)
 
       if *n.children > 0 then {
          l := get_children(n)
          if *l = 1 & text(l[1]) then {
-            out.writes(xml_escape(l[1], '&<>\"')) | fail
+            writes(xml_escape(l[1], '&<>\"'))
          } else {
             every e := !l do {
                if \indent then
-                  out.writes(istr1) | fail
+                  writes(istr1)
                if text(e) then
-                  out.writes(xml_escape(e, '&<>\"')) | fail
+                  writes(xml_escape(e, '&<>\"'))
                else
-                  format_node(e) | fail
+                  format_node(e)
             }
             if \indent then
-               out.writes(istr2) | fail
+               writes(istr2)
          }
-         out.writes("</" || n.name || ">") | fail
+         writes("</" || n.name || ">")
       }
-      return
    end
 
-   public get_children(el)
+   private get_children(el)
       if \as_read_flag then
          return \el.whitespace_children | el.children
       if \no_whitespace_flag then
@@ -155,11 +153,11 @@ class XmlFormatter(Formatter)
       return el.children
    end
 
-   public format_cdata(n)
-      return out.writes("<![CDATA[" || n.content || "]]>")
+   protected format_cdata(n)
+      writes("<![CDATA[" || n.content || "]]>")
    end
 
-   public format_xmldecl(n)
+   protected format_xmldecl(n)
       local s
       s := "<?xml "
       if \n.version then
@@ -169,7 +167,7 @@ class XmlFormatter(Formatter)
       if \n.standalone then
          s ||:= "standalone='" || n.standalone || "' "
       s ||:= "?>"
-      return out.writes(s)
+      writes(s)
    end
 end
 

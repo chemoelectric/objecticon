@@ -150,13 +150,13 @@ class ContentSpec()
    #
    private object_output(oo)
       local s, x
-      oo.object_start(self) | fail
+      oo.object_start(self)
       case string(op) of {
          "ANY" | "EMPTY" | "#PCDATA" :
-            oo.writes(op) | fail
+            oo.writes(op)
 
          "name" :
-            oo.writes(arg1) | fail
+            oo.writes(arg1)
 
          "," | "|" : {
             s := ""
@@ -168,21 +168,21 @@ class ContentSpec()
                   break
                x := x.arg2
             }
-            oo.writes("(" || s) | fail
-            oo.traverse(x.arg2) | fail
-            oo.writes(")") | fail
+            oo.writes("(" || s)
+            oo.traverse(x.arg2)
+            oo.writes(")")
          }
 
          "+" | "*" | "?" :  {
-            oo.traverse(arg1) | fail
-            oo.writes(op) | fail
+            oo.traverse(arg1)
+            oo.writes(op)
          }
 
          default:
-            oo.writes("?") | fail
+            oo.writes("?")
       }
 
-      return oo.object_end(self)
+      oo.object_end(self)
    end
 
    public new(op, arg1, arg2)

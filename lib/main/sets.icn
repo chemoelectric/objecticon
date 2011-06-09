@@ -87,30 +87,29 @@ class Set()
       local elements, e, sep
       elements := sort()
       if oo.simple{!!elements} then {
-         oo.object_start(self) | fail
+         oo.object_start(self)
          every e := !elements do {
             if \sep then
-               oo.writes(",") | fail
-            oo.traverse(e) | fail
+               oo.writes(",")
+            oo.traverse(e)
             sep := 1
          }
-         oo.object_end(self) | fail
+         oo.object_end(self)
       } else {
-         oo.nl() | fail
-         oo.object_start(self) | fail
+         oo.nl()
+         oo.object_start(self)
          oo.iplus()
          every e := !elements do {
             if \sep then
-               oo.writes(",") | fail
-            oo.nl() | fail
-            oo.traverse(e) | fail
+               oo.writes(",")
+            oo.nl()
+            oo.traverse(e)
             sep := 1
          }
          oo.iminus()
-         oo.nl() | fail
-         oo.object_end(self) | fail
+         oo.nl()
+         oo.object_end(self)
       }
-      return
    end
 end
 

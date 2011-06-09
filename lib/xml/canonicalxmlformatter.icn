@@ -13,20 +13,19 @@ package xml
 # is used for testing purposes.
 #
 class CanonicalXmlFormatter(XmlFormatter)
-   public format_cdata(n)
-      return out.writes(xml_escape(n.content, '\n\r\t&<>\"'))
+   protected format_cdata(n)
+      writes(xml_escape(n.content, '\n\r\t&<>\"'))
    end
 
-   public format_document(n)
+   protected format_document(n)
       local el
       every el := !n.children do {
          if is(el, DocType | ProcessingInstruction | Element) then
-            format_node(el) | fail
+            format_node(el)
       }
-      return
    end
 
-   public format_doctype(n)
+   protected format_doctype(n)
       local s, x
 
       if *n.parent.notation_declarations = 0 then
@@ -47,10 +46,10 @@ class CanonicalXmlFormatter(XmlFormatter)
          s ||:= ">\n"
       }
       s ||:= "]>\n"
-      return out.writes(s)
+      writes(s)
    end
 
-   public format_element(n)
+   protected format_element(n)
       local s, x, e
 
       s := "<" || n.name
@@ -62,26 +61,24 @@ class CanonicalXmlFormatter(XmlFormatter)
          s[-1] := ""
       }
       s ||:= ">"
-      out.writes(s) | fail
+      writes(s)
       every e := !n.children do {
          if text(e) then
-            out.writes(xml_escape(e, '\n\r\t&<>\"')) | fail
+            writes(xml_escape(e, '\n\r\t&<>\"'))
          else if not is(e, Comment) then
-            format_node(e) | fail
+            format_node(e)
       }
 
-      out.writes("</" || n.name || ">") | fail
-
-      return
+      writes("</" || n.name || ">")
    end
 
-   public format_pi(n)
+   protected format_pi(n)
       local s
       s := "<?" || n.target || " "
       if \n.content then
          s ||:= n.content
       s ||:= "?>"
-      return out.writes(s)
+      writes(s)
    end
 end
 

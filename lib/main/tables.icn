@@ -157,45 +157,44 @@ class Table()
       local pairs, e, sep
       pairs := sort()
       if oo.simple{!!pairs | def} then {
-         oo.object_start(self) | fail
+         oo.object_start(self)
          if \def then {
-            oo.writes("default=") | fail
-            oo.traverse(def) | fail
+            oo.writes("default=")
+            oo.traverse(def)
             sep := 1
          }
          every e := !pairs do {
             if \sep then
-               oo.writes(";") | fail
-            oo.traverse(e[1]) | fail
-            oo.writes("->") | fail
-            oo.traverse(e[2]) | fail
+               oo.writes(";")
+            oo.traverse(e[1])
+            oo.writes("->")
+            oo.traverse(e[2])
             sep := 1
          }
-         oo.object_end(self) | fail
+         oo.object_end(self)
       } else {
-         oo.nl() | fail
-         oo.object_start(self) | fail
+         oo.nl()
+         oo.object_start(self)
          oo.iplus()
          if \def then {
-            oo.nl() | fail
-            oo.writes("default=") | fail
+            oo.nl()
+            oo.writes("default=")
             oo.iplus()
-            oo.traverse(def) | fail
+            oo.traverse(def)
             oo.iminus()
          }
          every e := !pairs do {
-            oo.nl() | fail
-            oo.traverse(e[1]) | fail
-            oo.writes("->") | fail
+            oo.nl()
+            oo.traverse(e[1])
+            oo.writes("->")
             oo.iplus()
-            oo.traverse(e[2]) | fail
+            oo.traverse(e[2])
             oo.iminus()
          }
          oo.iminus()
-         oo.nl() | fail
-         oo.object_end(self) | fail
+         oo.nl()
+         oo.object_end(self)
       }
-      return
    end
 
    protected init_entries(entries)

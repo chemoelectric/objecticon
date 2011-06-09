@@ -2,7 +2,7 @@ $include "oigram_tab.icn"
 
 package parser
 
-import ipl.pdco, lang, util
+import ipl.pdco, lang, util, exception
 
 class EvaluatorEnv()
    public defer get()
@@ -32,17 +32,37 @@ end
 
 class Evaluator()
    private
+      loops,
       brk,
       dispatch,
-      par,
       safe_flag,
-      tracing_flag,
-      env
+      env,
+      node
 
-   private loop(ex)
-      local t, res, sub, pos
-      t := brk
-      brk := &current
+   private compute_loops(n, loop)
+      if is(n, Node) then {
+         case n.label of {
+            "everydo"|"every"|"whiledo"|"while"|"untildo"|"until"|"repeat":  {
+               loops[n] := loop
+               every compute_loops(n.gen(), n)
+            }
+            "create": every compute_loops(n.gen())
+            "break": loops[n] := \loop | throw("break without loop")
+            "next": loops[n] := \loop | throw("next without loop")
+            "breakexpr": {
+               loops[n] := \loop | throw("break without loop")
+               every compute_loops(n.gen(), loops[loop])
+            }
+            "fail"|"return"|"returnexpr"|"suspend"|"suspendexpr"|"suspendexprdo": 
+               throw("suspend/return/fail not allowed")
+            default: every compute_loops(n.gen(), loop)
+         }
+      }
+   end
+
+   private loop(n, ex)
+      local res, sub, pos
+      brk[n] := &current
       sub := &subject
       pos := &pos
       while res := !ex do {
@@ -51,29 +71,21 @@ class Evaluator()
          case res of {
             "break": break
             "next": next
-            default: {
-               brk := t
-               return res
-            }
+            default: return res
          }
       }
-      brk := t
    end
 
    private do_everydo(n)
       local e
       e := create_E(n.child(2))
-      suspend E(loop { while @e do E(n.child(4)) })
+      suspend E(loop(n, create while @e do E(n.child(4)) ))
    end
 
    private do_every(n)
       local e
       e := create_E(n.child(2))
-      suspend E(loop { while @e })
-   end
-
-   private chk_brk()
-      if /brk then runerr("break or next outside loop")
+      suspend E(loop(n, create while @e ))
    end
 
    private create_E(e)
@@ -246,21 +258,6 @@ class Evaluator()
       }
    end
 
-   private do_brace(n)
-      local l, e, t
-      l := pos_list(Compound(n, 2))
-      suspend case *l of {
-         0:  &null
-         1:  E(l[1])
-         default: {
-            t := pull(l)
-            every e := !l do
-               E(e)
-            E(t)
-         }
-      }
-   end
-
    private do_case(n)
       local l, v, cc
       l := pos_list(CaseList(n, 5))
@@ -391,29 +388,18 @@ class Evaluator()
    private do_field(n) suspend lang.Class.get(E(n.child(1)), n.child(3).s) end
    private do_if(n) suspend if E(n.child(2)) then E(n.child(4)) end
    private do_ifelse(n) suspend if E(n.child(2)) then E(n.child(4)) else E(n.child(6)) end
-   private do_whiledo(n) suspend E( loop{ while E(n.child(2)) do E(n.child(4)) }) end
-   private do_while(n) suspend E( loop{ while E(n.child(2)) }) end
-   private do_untildo(n) suspend E( loop{ until E(n.child(2)) do E(n.child(4)) }) end
-   private do_until(n) suspend E( loop{ until E(n.child(2)) }) end
-   private do_repeat(n) suspend E( loop{ repeat E(n.child(2)) }) end
+   private do_whiledo(n) suspend E( loop(n, create  while E(n.child(2)) do E(n.child(4)) )) end
+   private do_while(n) suspend E( loop(n, create  while E(n.child(2)) )) end
+   private do_untildo(n) suspend E( loop(n, create  until E(n.child(2)) do E(n.child(4)) )) end
+   private do_until(n) suspend E( loop(n, create  until E(n.child(2)) )) end
+   private do_repeat(n) suspend E( loop(n, create  repeat E(n.child(2)) )) end
    private do_create(n) return create_E(n.child(2)) end
-   private do_break(n) chk_brk() ; return coact("break", brk) end
-   private do_next(n) chk_brk() ; return coact("next", brk) end
-   private do_breakexpr(n) chk_brk() ; return coact(n.child(2), brk) end
-   private do_return(n) runerr("return not allowed here") end
-   private do_returnexpr(n) runerr("return not allowed here") end
-   private do_suspend(n) runerr("suspend not allowed here") end
-   private do_suspendexpr(n) runerr("suspend not allowed here") end
-   private do_suspendexprdo(n) runerr("suspend not allowed here") end
-
-   public set_tracing(f)
-      tracing_flag := check_flag(f)
-      return self
-   end
-
-   public toggle_tracing(f)
-      return set_tracing(toggle_flag(self.tracing_flag))
-   end
+   private do_break(n) return coact("break", brk[n]) end
+   private do_next(n) return coact("next", brk[n]) end
+   private do_breakexpr(n) return coact(n.child(2), brk[n]) end
+   private do_brace(n) suspend E(n.child(2)) end
+   private do_compound(n) suspend { E(n.child(1)) ; E(n.child(3)) } end
+   private do_Empty(n) return end
 
    private E(n)
       local m
@@ -428,21 +414,24 @@ class Evaluator()
       suspend m(n)
    end
    
-   private parse(s)
-      s := "procedure main() { " || s || "\n}\nend\n"
-      return par.parse(s).get_body().get(1).get_body_node()
-   end
+   public eval()
+      (\env & \node) | runerr("eval() called without environment and/or node being set")
+      if /loops then {
+         loops := table()
+         try { compute_loops(node) }
+         if \thrown then {
+            loops := &null
+            &why := thrown
+            exception.clear()
+            fail
+         }
+      }
 
-   public eval(s)
-      local n
-      brk := &null
-      n := parse(s) | fail
-      if \tracing_flag then 
-         &trace := -1
+      brk := table()
       if /safe_flag then
-         suspend E(n)
+         suspend E(node)
       else {
-         suspend Safe{E(n)}
+         suspend Safe{E(node)}
          if &errortext then {
             &why := if &errornumber then
                "Runtime error " || &errornumber || ": " || &errortext
@@ -450,14 +439,10 @@ class Evaluator()
                "Runtime error: " || &errortext
             &why ||:= "; offending value: " || image(&errorvalue)
             errorclear()
-            if \tracing_flag then 
-               &trace := 0
             fail
          }
       }
       &why := "No more results"
-      if \tracing_flag then 
-         &trace := 0
    end
 
    public set_safe(f)
@@ -470,11 +455,16 @@ class Evaluator()
       return self
    end
 
-   public new(env)
-      /env := DefaultEvaluatorEnv()
+   public set_node(node)
+      self.node := node
+      self.loops := &null
+      return self
+   end
+
+   public new(env, node)
       self.env := env
+      self.node := node
       self.dispatch := table()
-      self.par := Parser()
       every lang.Class.get_class_field_names(self) ? {
          if ="do_" then
             dispatch[tab(0)] := lang.Class.get(self, &subject)

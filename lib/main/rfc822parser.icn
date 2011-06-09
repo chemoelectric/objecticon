@@ -6,6 +6,7 @@ package mail
 
 import 
    util,
+   exception,
    ipl.caseless
 
 class RFC822Parser()
@@ -65,7 +66,7 @@ class RFC822Parser()
 
       repeat {
          if any('\\') then {
-            res ||:= move(2) | return error("Unterminated quoted string")
+            res ||:= move(2) | throw("Unterminated quoted string")
          } else if any(QTEXT_CHAR) then
             res ||:= tab(many(QTEXT_CHAR))
          else if any('\"') then {
@@ -73,7 +74,7 @@ class RFC822Parser()
             return res
          } else
             # Missing closing quote or illegal char
-            return error("Missing closing quote or illegal char")
+            throw("Missing closing quote or illegal char")
       }
    end
 
@@ -90,7 +91,7 @@ class RFC822Parser()
       repeat {
          if any('\\') then {
             move(1)
-            res ||:= move(1) | return error("Unterminated quoted string")
+            res ||:= move(1) | throw("Unterminated quoted string")
          } else if any(QTEXT_CHAR) then
             res ||:= tab(many(QTEXT_CHAR))
          else if any('\"') then {
@@ -98,7 +99,7 @@ class RFC822Parser()
             return res
          } else
             # Missing closing quote or illegal char
-            return error("Missing closing quote or illegal char")
+            throw("Missing closing quote or illegal char")
       }
    end
 
@@ -127,7 +128,7 @@ class RFC822Parser()
    # Must be preceded by a call to next_token()
    #
    private parse_atom()
-      return tab(many(ATOM_CHAR))
+      return tab(many(ATOM_CHAR)) | throw("Atom char expected")
    end
 
    #
@@ -141,14 +142,14 @@ class RFC822Parser()
       res := move(1)
       repeat {
          if any('\\') then
-            res ||:= move(2) | return error("Premature end of field")
+            res ||:= move(2) | throw("Premature end of field")
          else if any(DTEXT_CHAR) then
             res ||:= tab(many(DTEXT_CHAR))
          else if any(']') then 
             return res || move(1)
          else
             # Missing closing ] or illegal char
-            return error("Missing closing ] or illegal char")
+            throw("Missing closing ] or illegal char")
       }
    end
 
@@ -160,16 +161,16 @@ class RFC822Parser()
       res := move(1)
       repeat {
          if any('\\') then
-            res ||:= move(2) | return error("Premature end of field")
+            res ||:= move(2) | throw("Premature end of field")
          else if any(CTEXT_CHAR) then
             res ||:= tab(many(CTEXT_CHAR))
          else if any('(') then
-            res ||:= parse_comment() | fail
+            res ||:= parse_comment()
          else if any(')') then 
             return res || move(1)
          else
             # Missing closing ) or illegal char
-            return error("Missing closing ) or illegal char")
+            throw("Missing closing ) or illegal char")
       }
    end
 
@@ -177,7 +178,7 @@ class RFC822Parser()
       repeat {
          tab(many(LWSP_CHAR))
          if any('(') then
-            parse_comment() | fail
+            parse_comment()
          else
             return
       }
@@ -187,7 +188,7 @@ class RFC822Parser()
    # word =  atom / quoted-string
    #
    private parse_word() 
-      next_token() | fail
+      next_token()
       if any('\"') then
          return parse_quoted_string()
       else
@@ -199,9 +200,9 @@ class RFC822Parser()
    #
    private parse_local_part()
       local res
-      res := parse_word() | fail
+      res := parse_word()
       while res ||:= ="." do
-         res ||:= parse_word() | fail
+         res ||:= parse_word()
       return res
    end
 
@@ -210,9 +211,9 @@ class RFC822Parser()
    #
    private parse_domain()
       local res
-      res := parse_sub_domain() | fail
+      res := parse_sub_domain()
       while res ||:= ="." do
-         res ||:= parse_sub_domain() | fail
+         res ||:= parse_sub_domain()
       return res
    end
 
@@ -221,7 +222,7 @@ class RFC822Parser()
    # domain-ref  =  atom
    #
    private parse_sub_domain()
-      next_token() | fail
+      next_token()
       if any('[') then
          return parse_domain_literal()
       else
@@ -238,13 +239,13 @@ class RFC822Parser()
    private parse_phrase()
       local res
       res := ""
-      next_token() | fail
+      next_token()
       while any('\"' | ATOM_CHAR) do {
          # Single spaces between words
          if *res > 0 then
             res ||:= " "
-         res ||:= parse_word() | fail
-         next_token() | fail
+         res ||:= parse_word()
+         next_token()
       }
 
       # Strictly, this would be :-
@@ -259,11 +260,11 @@ class RFC822Parser()
    #
    private parse_addr_spec(mb)
       local t
-      t := parse_local_part() | fail
+      t := parse_local_part()
       mb.set_local_part(t)
-      next_token() | fail
-      ="@" | return error("@ expected")
-      t := parse_domain() | fail
+      next_token()
+      ="@" | throw("@ expected")
+      t := parse_domain()
       mb.set_domain(t)
       return
    end
@@ -276,15 +277,15 @@ class RFC822Parser()
       local t
       t := []
       repeat {
-         next_token() | fail
-         ="@" | return error("@ expected")
-         put(t, parse_domain()) | fail
-         next_token() | fail
+         next_token()
+         ="@" | throw("@ expected")
+         put(t, parse_domain())
+         next_token()
          ="," | break
-         next_token() | fail
+         next_token()
       }
-      next_token() | fail
-      =":" | return error(": expected")
+      next_token()
+      =":" | throw(": expected")
       mb.set_route(t)
       return
    end
@@ -293,16 +294,16 @@ class RFC822Parser()
    # route-addr  =  "<" [route] addr-spec ">"
    #
    private parse_route_addr(mb)
-      ="<" | return error("< expected")
-      next_token() | fail
+      ="<" | throw("< expected")
+      next_token()
       if any('@') then
-         parse_route(mb) | fail
+         parse_route(mb)
       else
          mb.set_route([])
-      next_token() | fail
-      parse_addr_spec(mb) | fail
-      next_token() | fail
-      =">" | return error("> expected")
+      next_token()
+      parse_addr_spec(mb)
+      next_token()
+      =">" | throw("> expected")
       return
    end
 
@@ -317,14 +318,15 @@ class RFC822Parser()
       # first, and if that fails try the more complex alternative.
       #
       x := &pos
-      if parse_addr_spec(mb) then {
+      if try { parse_addr_spec(mb) } then {
          mb.set_phrase("")
          mb.set_route([])
       } else {
+         exception.clear()
          tab(x)
-         t := parse_phrase() | fail
+         t := parse_phrase()
          mb.set_phrase(t)
-         parse_route_addr(mb) | fail
+         parse_route_addr(mb)
       }
 
       return mb
@@ -337,21 +339,21 @@ class RFC822Parser()
    private parse_group_impl()
       local mb, p, t
 
-      p := parse_phrase() | fail
+      p := parse_phrase()
       t := []
-      next_token() | fail
-      =":" | return error(": expected")
-      next_token() | fail
+      next_token()
+      =":" | throw(": expected")
+      next_token()
       if any(';') then # empty group
          move(1)
       else {
          repeat {
-            mb := parse_mailbox_impl() | fail
+            mb := parse_mailbox_impl()
             put(t, mb)
-            next_token() | fail
+            next_token()
             ="," | break
          }
-         =";" | return error("; expected")
+         =";" | throw("; expected")
       }
       return Group(t, p)
    end
@@ -360,8 +362,9 @@ class RFC822Parser()
       local x, a
 
       x := &pos
-      if a := parse_mailbox_impl() then
+      if try { a := parse_mailbox_impl() } then
          return a
+      exception.clear()
       tab(x)
 
       return parse_group_impl()
@@ -372,14 +375,14 @@ class RFC822Parser()
       l := []
 
       if \can_be_empty then {
-         next_token() | fail
+         next_token()
          if pos(0) then
             return l
       }
 
       repeat {
          put(l, parse_mailbox_or_group()) | fail
-         next_token() | fail
+         next_token()
          ="," | return l
       }
    end
@@ -389,14 +392,14 @@ class RFC822Parser()
       l := []
 
       if \can_be_empty then {
-         next_token() | fail
+         next_token()
          if pos(0) then
             return l
       }
 
       repeat {
-         put(l, parse_mailbox_impl()) | fail
-         next_token() | fail
+         put(l, parse_mailbox_impl())
+         next_token()
          ="," | return l
       }
    end
@@ -407,43 +410,44 @@ class RFC822Parser()
    #
    private parse_month()
       local i
-      next_token() | fail
+      next_token()
       every i := 1 to *MONTHS do
          if =MONTHS[i] then
             return i
+      throw("invalid month")
    end
 
    private parse_day()
       local s
-      next_token() | fail
-      s := tab(many(&digits)) | return error("digit expected")
+      next_token()
+      s := tab(many(&digits)) | throw("digit expected")
       if *s <= 2 then
          return integer(s)
-      return error("invalid day: " || s)
+      throw("invalid day: " || s)
    end
 
    private parse_year()
       local s
-      next_token() | fail
-      s := tab(many(&digits)) | return error("digit expected")
+      next_token()
+      s := tab(many(&digits)) | throw("digit expected")
       if *s = (2 | 4) then
          return integer(s)
-      return error("invalid year: " || s)
+      throw("invalid year: " || s)
    end
 
    private parse_2dig()
       local s
-      next_token() | fail
-      s := tab(many(&digits)) | return error("digit expected")
+      next_token()
+      s := tab(many(&digits)) | throw("digit expected")
       if *s = 2 then
          return integer(s)
-      return error("2 digit field expected")
+      throw("2 digit field expected")
    end
 
    private parse_zone()
-      next_token() | fail
-      tab(upto(TZ_CHARS)) | return error("Expected tz char")
-      return tab(many(TZ_CHARS)) | return error("Expected tz char")
+      next_token()
+      tab(upto(TZ_CHARS)) | throw("Expected tz char")
+      return tab(many(TZ_CHARS)) | throw("Expected tz char")
    end
 
    #
@@ -456,27 +460,27 @@ class RFC822Parser()
    private parse_date_time_impl()
       local d, m, y, s, hh, mm, ss, zz
 
-      next_token() | fail
+      next_token()
       if =(!DAYS) then {
-         next_token() | fail
-         ="," | return error(", expected")
+         next_token()
+         ="," | throw(", expected")
       }
-      d := parse_day() | fail
-      m := parse_month() | fail
-      y := parse_year() | fail
+      d := parse_day()
+      m := parse_month()
+      y := parse_year()
 
-      hh := parse_2dig() | fail
-      next_token() | fail
-      =":" | return error(": expected")
-      mm := parse_2dig() | fail
-      next_token() | fail
+      hh := parse_2dig()
+      next_token()
+      =":" | throw(": expected")
+      mm := parse_2dig()
+      next_token()
       if any(':') then {
          move(1)
-         ss := parse_2dig() | fail
+         ss := parse_2dig()
       } else
          ss := 0
 
-      s := parse_zone() | fail
+      s := parse_zone()
       zz := Timezone.get_known_timezone(s) | Timezone(0, s)
 
       return Time(y, m, d, hh, mm, ss, zz)
@@ -489,11 +493,11 @@ class RFC822Parser()
    #
    private parse_field_impl(message)
       local f, v
-      next_token() | fail
-      f := tab(many(FIELD_NAME_CHARS)) | return error("Expect fieldname chars")
-      next_token() | fail
-      =":" | return error(": expected")
-      next_token() | fail
+      next_token()
+      f := tab(many(FIELD_NAME_CHARS)) | throw("Expect fieldname chars")
+      next_token()
+      =":" | throw(": expected")
+      next_token()
       # The handling of folding is done by the caller, so we just take the
       # rest of the string as the field-body.
       v := tab(0)
@@ -587,7 +591,7 @@ class RFC822Parser()
    #
    private parse_extension_token()
       local s
-      s := =("X-"|"x-") | return error("X- or x- expected")
+      s := =("X-"|"x-") | throw("X- or x- expected")
       return s || parse_token_1521()
    end
 
@@ -602,7 +606,7 @@ class RFC822Parser()
    #            ; to use within parameter values
    #
    private parse_token_1521()
-      return tab(many(ATOM_CHAR_1521)) | error("RFC1521 Token expected")
+      return tab(many(ATOM_CHAR_1521)) | throw("RFC1521 Token expected")
    end
 
    #
@@ -626,11 +630,11 @@ class RFC822Parser()
    #
    private parse_parameter(o)
       local key, val
-      key := parse_token_1521() | fail
-      next_token() | fail
-      ="=" | return error("= expected")
-      next_token() | fail
-      val := parse_value() | fail
+      key := parse_token_1521()
+      next_token()
+      ="=" | throw("= expected")
+      next_token()
+      val := parse_value()
       o.set_parameter(key, val)
       return
    end
@@ -652,20 +656,20 @@ class RFC822Parser()
    private parse_content_type_impl()
       local ty, st, ct
 
-      next_token() | fail
+      next_token()
 
-      ty := parse_type() | fail
-      next_token() | fail
-      ="/" | return error("/ expected")
-      next_token() | fail
-      st := parse_subtype() | fail
+      ty := parse_type()
+      next_token()
+      ="/" | throw("/ expected")
+      next_token()
+      st := parse_subtype()
       ct := ContentType(ty, st)
 
       repeat {
-         next_token() | fail
+         next_token()
          =";" | break
-         next_token() | fail
-         parse_parameter(ct) | fail
+         next_token()
+         parse_parameter(ct)
       }
 
       return ct
@@ -685,7 +689,7 @@ class RFC822Parser()
       if match("X-"|"x-") then
          return parse_extension_token()
 
-      return error("Unknown Content-disposition type")
+      throw("Unknown Content-disposition type")
    end
 
    #
@@ -727,59 +731,59 @@ class RFC822Parser()
    private parse_content_disposition_impl()
       local ty, cd
 
-      next_token() | fail
-      ty := parse_disposition_type() | fail
+      next_token()
+      ty := parse_disposition_type()
       cd := ContentDisposition(ty)
 
       repeat {
-         next_token() | fail
+         next_token()
          =";" | break
-         next_token() | fail
-         parse_parameter(cd) | fail
+         next_token()
+         parse_parameter(cd)
       }
 
       return cd
    end
 
    private end_check(o)
-      next_token() | fail
-      pos(0) | return error("Extraneous input:" || tab(0))
+      next_token()
+      pos(0) | throw("Extraneous input:" || tab(0))
       return o
    end
 
    public parse_mailbox(s)
-      return s ? end_check(parse_mailbox_impl())
+      return s ? simple_try{ end_check(parse_mailbox_impl()) }
    end
 
    public parse_group(s)
-      return s ? end_check(parse_group_impl())
+      return s ? simple_try{ end_check(parse_group_impl()) }
    end
 
    public parse_address_list(s, can_be_empty)
-      return s ? end_check(parse_address_list_impl(can_be_empty))
+      return s ? simple_try{ end_check(parse_address_list_impl(can_be_empty)) }
    end
 
    public parse_mailbox_list(s, can_be_empty)
-      return s ? end_check(parse_mailbox_list_impl(can_be_empty))
+      return s ? simple_try{ end_check(parse_mailbox_list_impl(can_be_empty)) }
    end
 
    public parse_date_time(s)
-      return s ? end_check(parse_date_time_impl())
+      return s ? simple_try{ end_check(parse_date_time_impl()) }
    end
 
    public parse_field(s, message)
-      return s ? parse_field_impl(message)
+      return s ? simple_try{ parse_field_impl(message) }
    end
 
    public parse_content_type(s)
-      return s ? end_check(parse_content_type_impl())
+      return s ? simple_try{ end_check(parse_content_type_impl()) }
    end
 
    public parse_content_disposition(s)
-      return s ? end_check(parse_content_disposition_impl())
+      return s ? simple_try{ end_check(parse_content_disposition_impl()) }
    end
 
    public parse_content_transfer_encoding(s)
-      return s ? end_check(parse_content_transfer_encoding_impl())
+      return s ? simple_try{ end_check(parse_content_transfer_encoding_impl()) }
    end
 end
