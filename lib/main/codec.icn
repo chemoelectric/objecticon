@@ -1,6 +1,6 @@
 package lang
 
-import io, util
+import io, util, exception
 
 $define PUBLIC_STATIC_METHOD ior(Class.Public, Class.Static, Class.Method)
 
@@ -75,7 +75,7 @@ procedure decode(s)
    return d.parse(s)
 end
 
-class Encode()
+class Encode(Stream)
    private
       tag_count,
       seen, 
@@ -89,9 +89,7 @@ class Encode()
    public begin(o)
       self.tag_count := 0
       self.seen := table()
-      if \fast_flag then
-         chars_out(Codec.FAST_FLAG) | fail
-      if encode(o) then {
+      if simple_try{ begin1(o) } then {
          self.seen := &null
          return
       } else {
@@ -100,8 +98,28 @@ class Encode()
       }
    end
 
+   private begin1(o)
+      if \fast_flag then
+         writes(Codec.FAST_FLAG)
+      encode(o)      
+   end
+
    private note_seen(o)
       seen[o] := (tag_count +:= 1)
+   end
+
+   public out(s)
+      return file.out(s) | throw(&why)
+   end
+
+   public get_mode()
+      return WRITE
+   end
+
+   public close()
+      if \close_underlying_flag then
+         file.close() | fail
+      return
    end
 
    private encode_string(s)
@@ -140,11 +158,11 @@ class Encode()
             "method": {
                j := Class.get_field_flags(Proc.get_defining_class(f), Proc.get_field_name(f))
                iand(j, PUBLIC_STATIC_METHOD) = PUBLIC_STATIC_METHOD |
-                  return error("Can only encode a public static method")
+                  throw("Can only encode a public static method")
                "M"
             }
-            "deferred": return error("Can't encode a deferred method")
-            "internal": return error("Can't encode an internal procedure")
+            "deferred": throw("Can't encode a deferred method")
+            "internal": throw("Can't encode an internal procedure")
             default: syserr("Not a proc")
          }
          move(1)
@@ -156,148 +174,139 @@ class Encode()
       local ty, i, cname, p, n, e, l
 
       if i := \seen[o] then {
-         chars_out(Codec.REF_CODE) | fail
-         int_out(i) | fail
+         writes(Codec.REF_CODE)
+         writes(i)
          return
       }
 
       ty := type(o)
       case ty of {
          "object" : {
-            chars_out(Codec.OBJECT_CODE) | fail
+            writes(Codec.OBJECT_CODE)
             cname := Class.get_name(o)
-            line_out(cname) | fail
+            line_out(cname)
             note_seen(o)
             if p := Class.getq(o, "object_encode") then
-               p(self) | fail
+               p(self)
             else {
                n := Class.get_n_instance_fields(o)
                if \fast_flag then {
-                  int_out(n) | fail
+                  writes(n)
                   every e := Class.get(o, 1 to n) do
-                     encode(e) | fail
+                     encode(e)
                } else {
-                  encode(n) | fail
+                  encode(n)
                   every i := 1 to n do {
-                     encode(Class.get_field_name(o, i)) | fail
-                     encode(Class.get(o, i)) | fail
+                     encode(Class.get_field_name(o, i))
+                     encode(Class.get(o, i))
                   }
                }
             }
          }
 
          "class": {
-            chars_out(Codec.CLASS_CODE) | fail
-            line_out(Class.get_name(o)) | fail
+            writes(Codec.CLASS_CODE)
+            line_out(Class.get_name(o))
          }
 
          "cast": {
-            chars_out(Codec.CAST_CODE) | fail
-            encode(Class.get_cast_object(o)) | fail
-            encode(Class.get_cast_class(o)) | fail
+            writes(Codec.CAST_CODE)
+            encode(Class.get_cast_object(o))
+            encode(Class.get_cast_class(o))
          }
 
          "procedure" : {
-            chars_out(Codec.PROCEDURE_CODE) | fail
+            writes(Codec.PROCEDURE_CODE)
             # Need to encode string since can have eg binary operator "||"
-            line_out(encode_string(get_proc_code(o))) | fail
+            line_out(encode_string(get_proc_code(o)))
          }
 
          "constructor" : {
-            chars_out(Codec.CONSTRUCTOR_CODE) | fail
-            line_out(Constructor.get_name(o)) | fail
+            writes(Codec.CONSTRUCTOR_CODE)
+            line_out(Constructor.get_name(o))
          }
 
          "null" :
-            chars_out(Codec.NULL_CODE) | fail
+            writes(Codec.NULL_CODE)
 
          "string" : {
-            chars_out(Codec.STRING_CODE) | fail
-            line_out(encode_string(o)) | fail
+            writes(Codec.STRING_CODE)
+            line_out(encode_string(o))
          }
 
          "ucs": {
-            chars_out(Codec.UCS_CODE) | fail
-            line_out(encode_string(string(o))) | fail
+            writes(Codec.UCS_CODE)
+            line_out(encode_string(string(o)))
          }
 
          "cset" : {
-            chars_out(Codec.CSET_CODE) | fail
+            writes(Codec.CSET_CODE)
             l := []
             every put(l, Text.get_ord_range(o))
-            int_out(*l) | fail
+            writes(*l)
             every e := !l do
-               encode(e) | fail
+               encode(e)
          }
 
          "integer" : {
-            chars_out(Codec.INTEGER_CODE) | fail
-            int_out(string(o)) | fail
+            writes(Codec.INTEGER_CODE)
+            writes(string(o))
          }
 
          "real" : {
-            chars_out(Codec.REAL_CODE) | fail
-            line_out(string(o)) | fail
+            writes(Codec.REAL_CODE)
+            line_out(string(o))
          }
 
          "record" : {
-            chars_out(Codec.RECORD_CODE) | fail
-            line_out(Constructor.get_name(o)) | fail
+            writes(Codec.RECORD_CODE)
+            line_out(Constructor.get_name(o))
             note_seen(o)
-            int_out(*o) | fail
+            writes(*o)
             if \fast_flag then {
                every e := !o do
-                  encode(e) | fail
+                  encode(e)
             } else {
                every i := 1 to *o do {
-                  encode(Constructor.get_field_name(o, i)) | fail
-                  encode(o[i]) | fail
+                  encode(Constructor.get_field_name(o, i))
+                  encode(o[i])
                }
             }
          }
 
          "list" : {
-            chars_out(Codec.LIST_CODE) | fail
-            int_out(*o) | fail
+            writes(Codec.LIST_CODE)
+            writes(*o)
             note_seen(o)
             every e := !o do
-               encode(e) | fail
+               encode(e)
          }
 
          "set" : {
-            chars_out(Codec.SET_CODE) | fail
-            int_out(*o) | fail
+            writes(Codec.SET_CODE)
+            writes(*o)
             note_seen(o)
             every e := !o do
-               encode(e) | fail
+               encode(e)
          }
 
          "table" : {
-            chars_out(Codec.TABLE_CODE) | fail
-            int_out(*o) | fail
-            encode(o[[]]) | fail
+            writes(Codec.TABLE_CODE)
+            writes(*o)
+            encode(o[[]])
             note_seen(o)
             every e := keyval(o) do
-               encode(e) | fail
+               encode(e)
          }
 
          default : 
-            return error("Type not encodable: " || ty)
+            throw("Type not encodable: " || ty)
       }
-
       return
    end
 
    private line_out(s)
-      return file.writes(s, Codec.CODE_SEPARATOR)
-   end
-
-   private chars_out(s)
-      return file.writes(s)
-   end
-
-   private int_out(i)
-      return file.writes(string(i))
+      return writes(s, Codec.CODE_SEPARATOR)
    end
 
    #
@@ -339,7 +348,7 @@ class Decode()
       self.seen := table()
       s ? {
          self.fast_flag := if =Codec.FAST_FLAG then 1 else &null
-         if res := decode() then {
+         if res := simple_try{decode()} then {
             self.seen := &null
             return res
          } else {
@@ -372,14 +381,14 @@ class Decode()
          c := move(1)
          s := tab(0)
          case c of {
-            "F": return Prog.get_function(s) | error("No such function " || s)
-            "K": return Prog.get_keyword(s) | error("No such keyword " || s)
-            !"123": return Prog.get_operator(s, c) | error("No such function " || s || " arity " || c)
+            "F": return Prog.get_function(s) | throw("No such function " || s)
+            "K": return Prog.get_keyword(s) | throw("No such keyword " || s)
+            !"123": return Prog.get_operator(s, c) | throw("No such function " || s || " arity " || c)
             "P": {
                if g := Prog.get_global(s) &
                   match("procedure ", image(g)) then
                   return g
-               return error("No such procedure " || s)
+               throw("No such procedure " || s)
             }
             "M": {
                every i := find(".", s)
@@ -388,9 +397,9 @@ class Decode()
                   iand(j, PUBLIC_STATIC_METHOD) = PUBLIC_STATIC_METHOD 
                then
                   return Class.get(cl, s[i+1:0]) 
-               return error("No such public static method " || s)
+               throw("No such public static method " || s)
             }
-            default: return error("Unknown proc code")
+            default: throw("Unknown proc code")
          }
       }
    end
@@ -401,18 +410,15 @@ class Decode()
          move(1)
          return s
       }
-      error("missing separator")
+      throw("missing separator")
    end
 
    private int_in()
-      local s
-      if s := tab(many(&digits ++ '\-')) then
-         return integer(s)
-      error("int expected")
+      return integer(tab(many(&digits ++ '\-'))) | throw("int expected")
    end
 
    private char_in()
-      return move(1) | error("char expected")
+      return move(1) | throw("char expected")
    end
 
    private note_seen(o)
@@ -422,11 +428,11 @@ class Decode()
    public decode()
       local i, n, rname, t, res, def, con, cl, p, cname, l, v
 
-      t := char_in() | fail
+      t := char_in()
 
       case t of {
          Codec.REF_CODE : {
-            i := int_in() | fail
+            i := int_in()
             return \seen[i]
          }
 
@@ -434,42 +440,42 @@ class Decode()
             return
 
          Codec.CLASS_CODE : {
-            cname := line_in() | fail
-            return Class.for_name(cname) | error("No such class " || cname)
+            cname := line_in()
+            return Class.for_name(cname) | throw("No such class " || cname)
          }
 
          Codec.CONSTRUCTOR_CODE : {
-            rname := line_in() | fail
-            return Constructor.for_name(rname) | error("No such constructor " || rname)
+            rname := line_in()
+            return Constructor.for_name(rname) | throw("No such constructor " || rname)
          }
 
          Codec.PROCEDURE_CODE : {
-            t := decode_string(line_in()) | fail
-            return decode_proc_code(t) | fail
+            t := decode_string(line_in())
+            return decode_proc_code(t)
          }
 
          Codec.OBJECT_CODE : {
-            cname := line_in() | fail
+            cname := line_in()
             #
             # Create an instance
             #
-            cl := Class.for_name(cname) | return error("No such class " || cname)
+            cl := Class.for_name(cname) | throw("No such class " || cname)
             res := Class.create_raw(cl)
             note_seen(res)
             if p := Class.getq(res, "object_decode") then
-               p(self) | fail
+               p(self)
             else {
                if \fast_flag then {
-                  n := int_in() | fail
+                  n := int_in()
                   n = Class.get_n_instance_fields(res) | 
-                     return error("Inconsistent number of fields in " || image(res))
+                     throw("Inconsistent number of fields in " || image(res))
                   every i := 1 to n do
-                     Class.get(res, i) := decode() | fail
+                     Class.get(res, i) := decode()
                } else {
-                  n := integer(decode()) | fail
+                  n := integer(decode())
                   every 1 to n do {
                      (t := decode() &
-                      v := decode()) | fail
+                      v := decode())
                      Class.getq(res, t) := v
                   }
                }
@@ -488,10 +494,10 @@ class Decode()
             return real(line_in())
 
          Codec.CSET_CODE : {
-             n := int_in() | fail
+             n := int_in()
              l := []
              every 1 to n do 
-                put(l, decode()) | fail
+                put(l, decode())
              return Text.create_cset(l)
           }
 
@@ -499,19 +505,19 @@ class Decode()
             return ucs(decode_string(line_in()))
 
          Codec.RECORD_CODE : {
-            rname := line_in() | fail
-            con := Constructor.for_name(rname) | return error("No such constructor " || rname)
+            rname := line_in()
+            con := Constructor.for_name(rname) | throw("No such constructor " || rname)
             res := con() 
             note_seen(res)
-            n := int_in() | fail
+            n := int_in()
             if \fast_flag then {
-               n = *res | return error("Inconsistent number of fields in " || image(res))
+               n = *res | throw("Inconsistent number of fields in " || image(res))
                every i := 1 to n do
-                  res[i] := decode() | fail
+                  res[i] := decode()
             } else {
                every 1 to n do {
                   (t := decode() &
-                   v := decode()) | fail
+                   v := decode())
                   res[t] := v
                }
             }
@@ -519,42 +525,42 @@ class Decode()
          }
 
          Codec.LIST_CODE : {
-            n := int_in() | fail
+            n := int_in()
             res := []
             note_seen(res)
             every 1 to n do 
-               put(res, decode()) | fail
+               put(res, decode())
             return res
          }
 
          Codec.SET_CODE : {
-            n := int_in() | fail
+            n := int_in()
             res := set()
             note_seen(res)
             every 1 to n do 
-               insert(res, decode()) | fail
+               insert(res, decode())
             return res
          }
 
          Codec.TABLE_CODE : {
-            n := int_in() | fail
-            def := decode() | fail
+            n := int_in()
+            def := decode()
             res := table(def)
             note_seen(res)
             every 1 to n do
-               insert(res, decode(), decode()) | fail
+               insert(res, decode(), decode())
             return res
          }            
 
          Codec.CAST_CODE : {
-            t := decode() | fail
-            cl := decode() | fail
-            is(t, cl) | return error("Cast to " || image(cl) || " from " || image(t) || " not valid")
+            t := decode()
+            cl := decode()
+            is(t, cl) | throw("Cast to " || image(cl) || " from " || image(t) || " not valid")
             return cast(t, cl)
          }
 
          default :
-            return error("Unknown type code:" || image(t))
+            throw("Unknown type code:" || image(t))
       }            
    end
 end

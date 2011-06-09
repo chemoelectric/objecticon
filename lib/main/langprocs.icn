@@ -1,6 +1,6 @@
 package lang
 
-import io, util, ipl.tables
+import io, util, ipl.tables, exception
 
 #
 # Convert the object to string, descending structures to the given depth.  See
@@ -81,7 +81,7 @@ class ObjectOutputStream(Stream)
       self.seen := table()
       self.level := 0
       self.ilevel := 0
-      if traverse(o) then {
+      if simple_try{traverse(o)} then {
          self.seen := &null
          return
       } else {
@@ -92,7 +92,7 @@ class ObjectOutputStream(Stream)
 
    public out(s)
       stuff := 1
-      return file.out(s)
+      return file.out(s) | throw(&why)
    end
 
    public get_mode()
@@ -101,11 +101,10 @@ class ObjectOutputStream(Stream)
 
    public nl()
       if \stuff then {
-         write() | fail
-         writes(repl(" ", indent * ilevel)) | fail
+         write()
+         writes(repl(" ", indent * ilevel))
          stuff := &null
       }
-      return
    end
 
    public iplus()
@@ -132,34 +131,34 @@ class ObjectOutputStream(Stream)
             s := ty || " " || Constructor.get_name(o) || "#" || serial(o)
             seen[o] := s
             if /desc then 
-               writes(s) | fail
+               writes(s)
             else if simple{!o} then {
-               writes(s, "(") | fail
+               writes(s, "(")
                i := 1
                every s := Constructor.get_field_names(o) do {
                   if i > 1 then
-                     writes(";") | fail
-                  writes(s, "=") | fail
-                  traverse(o[i]) | fail
+                     writes(";")
+                  writes(s, "=")
+                  traverse(o[i])
                   i +:= 1
                }
-               writes(")") | fail
+               writes(")")
             } else {
-               nl() | fail
-               writes(s, "(") | fail
+               nl()
+               writes(s, "(")
                iplus()
                i := 1
                every s := Constructor.get_field_names(o) do {
-                  nl() | fail
+                  nl()
                   iplus()
-                  writes(s, "=") | fail
-                  traverse(o[i]) | fail
+                  writes(s, "=")
+                  traverse(o[i])
                   iminus()
                   i +:= 1
                }
                iminus()
-               nl() | fail
-               writes(")") | fail
+               nl()
+               writes(")")
             }
          }
 
@@ -167,34 +166,34 @@ class ObjectOutputStream(Stream)
             s := type(o) || " " || Class.get_name(o) || "#" || serial(o)
             seen[o] := s
             if /desc then
-               writes(s) | fail
+               writes(s)
             else if /ignore_object_output_flag & (mp := Class.getq(o, "object_output")) then
-               mp(self) | fail
+               mp(self)
             else if simple{Class.getf(o, 1 to Class.get_n_instance_fields(o))} then {
-               writes(s, "(") | fail
+               writes(s, "(")
                every i := 1 to Class.get_n_instance_fields(o) do {
                   if i > 1 then
-                     writes(";") | fail
-                  writes(Class.get_field_name(o, i), "=") | fail
-                  traverse(Class.getf(o, i)) | fail
+                     writes(";")
+                  writes(Class.get_field_name(o, i), "=")
+                  traverse(Class.getf(o, i))
                   i +:= 1
                }
-               writes(")") | fail
+               writes(")")
             } else {
-               nl() | fail
-               writes(s, "(") | fail
+               nl()
+               writes(s, "(")
                iplus()
                every i := 1 to Class.get_n_instance_fields(o) do {
-                  nl() | fail
-                  writes(Class.get_field_name(o, i), "=") | fail
+                  nl()
+                  writes(Class.get_field_name(o, i), "=")
                   iplus()
-                  traverse(Class.getf(o, i)) | fail
+                  traverse(Class.getf(o, i))
                   iminus()
                   i +:= 1
                }
                iminus()
-               nl() | fail
-               writes(")") | fail
+               nl()
+               writes(")")
             }
          }
 
@@ -202,30 +201,30 @@ class ObjectOutputStream(Stream)
             s := ty || "#" || serial(o)
             seen[o] := s
             if /desc then
-               writes(s) | fail
+               writes(s)
             else if simple{!o} then {
-               writes(s, "{") | fail
+               writes(s, "{")
                every e := !sort(o) do {
                   if \sep then
-                     writes(",") | fail
-                  traverse(e) | fail
+                     writes(",")
+                  traverse(e)
                   sep := 1
                }
-               writes("}") | fail
+               writes("}")
             } else {
-               nl() | fail
-               writes(s, "{") | fail
+               nl()
+               writes(s, "{")
                iplus()
                every e := !sort(o) do {
                   if \sep then
-                     writes(",") | fail
-                  nl() | fail
-                  traverse(e) | fail
+                     writes(",")
+                  nl()
+                  traverse(e)
                   sep := 1
                }
                iminus()
-               nl() | fail
-               writes("}") | fail
+               nl()
+               writes("}")
             }
          }
 
@@ -233,29 +232,29 @@ class ObjectOutputStream(Stream)
             s := ty || "#" || serial(o)
             seen[o] := s
             if /desc then
-               writes(s) | fail
+               writes(s)
             else if simple{!o} then {
-               writes(s, "[") | fail
+               writes(s, "[")
                every e := !o do {
                   if \sep then
-                     writes(",") | fail
-                  traverse(e) | fail
+                     writes(",")
+                  traverse(e)
                   sep := 1
                }
-               writes("]") | fail
+               writes("]")
             } else {
-               nl() | fail
-               writes(s, "[") | fail
+               nl()
+               writes(s, "[")
                iplus()
                every e := !o do {
                   if \sep then
-                     writes(",") | fail
-                  nl() | fail
-                  traverse(e) | fail
+                     writes(",")
+                  nl()
+                  traverse(e)
                   sep := 1
                }
                iminus()
-               nl() | fail
+               nl()
                writes("]")
             }
          }
@@ -264,149 +263,147 @@ class ObjectOutputStream(Stream)
             s := ty || "#" || serial(o)
             seen[o] := s
             if /desc then
-               writes(s) | fail
+               writes(s)
             else {
                def := o[[]]
                if simple{\def} then {
-                  writes(s) | fail
+                  writes(s)
                   if \def then {
-                     writes(";def=") | fail
-                     traverse(def) | fail
+                     writes(";def=")
+                     traverse(def)
                   }
                } else {
-                  nl() | fail
-                  writes(s) | fail
+                  nl()
+                  writes(s)
                   if \def then {
-                     writes(";def=") | fail
+                     writes(";def=")
                      iplus()
-                     traverse(def) | fail
+                     traverse(def)
                      iminus()
                   }
                }
 
                if simple{keyval(o)} then {
-                  writes("{") | fail
+                  writes("{")
                   every e := !sort(o) do {
                      if \sep then
-                        writes(";") | fail
-                     traverse(e[1]) | fail
-                     writes("->") | fail
-                     traverse(e[2]) | fail
+                        writes(";")
+                     traverse(e[1])
+                     writes("->")
+                     traverse(e[2])
                      sep := 1
                   }
-                  writes("}") | fail
+                  writes("}")
                } else {
-                  writes("{") | fail
+                  writes("{")
                   iplus()
                   every e := !sort(o) do {
-                     nl() | fail
-                     traverse(e[1]) | fail
-                     writes("->") | fail
+                     nl()
+                     traverse(e[1])
+                     writes("->")
                      iplus()
-                     traverse(e[2]) | fail
+                     traverse(e[2])
                      iminus()
                   }
                   iminus()
-                  nl() | fail
-                  writes("}") | fail
+                  nl()
+                  writes("}")
                }
             }
          }
 
          "methp" : {
             if /desc then 
-               writes("methp()") | fail
+               writes("methp()")
             else if simple{Class.get_methp_object(o)} then {
-               writes("methp(") | fail
-               traverse(Class.get_methp_object(o)) | fail
-               writes(",", image(Class.get_methp_proc(o)), ")") | fail
+               writes("methp(")
+               traverse(Class.get_methp_object(o))
+               writes(",", image(Class.get_methp_proc(o)), ")")
             } else {
-               nl() | fail
-               writes("methp(") | fail
+               nl()
+               writes("methp(")
                iplus()
-               nl() | fail
-               traverse(Class.get_methp_object(o)) | fail
-               writes(",") | fail
-               nl() | fail
-               writes(image(Class.get_methp_proc(o))) | fail
+               nl()
+               traverse(Class.get_methp_object(o))
+               writes(",")
+               nl()
+               writes(image(Class.get_methp_proc(o)))
                iminus()
-               nl() | fail
+               nl()
                writes(")")
             }
          }
 
          "cast" : {
             if /desc then 
-               writes("cast()") | fail
+               writes("cast()")
             else if simple{Class.get_cast_object(o)} then {
-               writes("cast(") | fail
-               traverse(Class.get_cast_object(o)) | fail
-               writes(",", image(Class.get_cast_class(o)), ")") | fail
+               writes("cast(")
+               traverse(Class.get_cast_object(o))
+               writes(",", image(Class.get_cast_class(o)), ")")
             } else {
-               nl() | fail
-               writes("cast(") | fail
+               nl()
+               writes("cast(")
                iplus()
-               nl() | fail
-               traverse(Class.get_cast_object(o)) | fail
-               writes(",") | fail
-               nl() | fail
-               writes(image(Class.get_cast_class(o))) | fail
+               nl()
+               traverse(Class.get_cast_object(o))
+               writes(",")
+               nl()
+               writes(image(Class.get_cast_class(o)))
                iminus()
-               nl() | fail
+               nl()
                writes(")")
             }
          }
 
          default : 
-            writes(image(o)) | fail
+            writes(image(o))
       }
 
       level -:= 1
-      return
    end
    
    public object_start(o)
-      return writes(type(o), " ", Class.get_name(o), "#", serial(o), "(")
+      writes(type(o), " ", Class.get_name(o), "#", serial(o), "(")
    end
 
    public object_end(o)
-      return writes(")")
+      writes(")")
    end
 
    public object_string(o, s)
-      object_start(o) | fail
-      writes(s) | fail
-      return object_end(o)
+      object_start(o)
+      writes(s)
+      object_end(o)
    end
 
    public object_selected(o, fields[])
       local s, sep
       if simple{Class.getf(o, !fields)} then {
-         object_start(o) | fail
+         object_start(o)
          every s := !fields do {
             if \sep then
-               writes(";") | fail
-            writes(s, "=") | fail
-            traverse(Class.getf(o, s)) | fail
+               writes(";")
+            writes(s, "=")
+            traverse(Class.getf(o, s))
             sep := 1
          }
-         object_end(o) | fail
+         object_end(o)
       } else {
-         nl() | fail
-         object_start(o) | fail
+         nl()
+         object_start(o)
          iplus()
          every s := !fields do {
-            nl() | fail
-            writes(s, "=") | fail
+            nl()
+            writes(s, "=")
             iplus()
-            traverse(Class.getf(o, s)) | fail
+            traverse(Class.getf(o, s))
             iminus()
          }
          iminus()
-         nl() | fail
-         object_end(o) | fail
+         nl()
+         object_end(o)
       }
-      return
    end
 
    public simple(x)
@@ -749,6 +746,6 @@ class NoCopy()
    end
 
    private final object_encode()
-      &why := "Not encodable: " || image(self)
+      throw("Not encodable: " || image(self))
    end
 end

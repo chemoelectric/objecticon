@@ -8,7 +8,7 @@
 
 package lang
 
-import util(error)
+import exception(throw)
 
 record ClassInfo(template_els, fnum_map)
 record TemplateElement(ident, fnum)
@@ -78,18 +78,17 @@ class SelectiveObjectCodec()
 
       pre_encode()
       m := p.fnum_map
-      e.encode(*p.template_els) | fail
+      e.encode(*p.template_els)
       if /e.fast_flag then {
          every x := !p.template_els do {
-            e.encode(x.ident) | fail
-            e.encode(Class.get(self, x.fnum)) | fail
+            e.encode(x.ident)
+            e.encode(Class.get(self, x.fnum))
          }
       } else {
          every x := !p.template_els do
-            e.encode(Class.get(self, x.fnum)) | fail
+            e.encode(Class.get(self, x.fnum))
       }
       post_encode()
-      return
    end
 
    private object_decode(e)
@@ -99,22 +98,21 @@ class SelectiveObjectCodec()
 
       pre_decode()
       m := p.fnum_map
-      n := integer(e.decode()) | fail
+      n := integer(e.decode())
       if /e.fast_flag then {
          every 1 to n do {
-            (f := e.decode() &
-             v := e.decode()) | fail
+            f := e.decode()
+            v := e.decode()
             Class.get(self, \m[f]) := v
          }
       } else {
-         n = *p.template_els | return error("Mismatch length versus template_els")
+         n = *p.template_els | throw("Mismatch length versus template_els")
          every x := !p.template_els do {
-            v := e.decode() | fail
+            v := e.decode()
             Class.get(self, x.fnum) := v
          }
       }
       post_decode()
-      return
    end
 
    #

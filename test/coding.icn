@@ -28,14 +28,12 @@ class Three()
       e.encode(x)
       e.encode(y)
       e.encode(z)
-      return
    end
 
    private object_decode(e)
-      x := e.decode() | fail
-      y := e.decode() | fail
-      z := e.decode() | fail
-      return
+      x := e.decode()
+      y := e.decode()
+      z := e.decode()
    end
 end
 

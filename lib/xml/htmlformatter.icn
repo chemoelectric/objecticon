@@ -12,20 +12,19 @@ package xml
 # A formatter for outputting HTML documents
 #
 class HtmlFormatter(Formatter)
-   public format_document(n)
+   protected format_document(n)
       local c
       every c := !n.children do {
-         format_node(c) | fail
-         out.write() | fail
+         format_node(c)
+         write()
       }
-      return
    end
 
-   public format_content(s)
-      return out.writes(s)
+   protected format_content(s)
+      writes(s)
    end
 
-   public format_doctype(n)
+   protected format_doctype(n)
       local s, x
       s := "<!DOCTYPE "
       s ||:= \n.name
@@ -40,14 +39,14 @@ class HtmlFormatter(Formatter)
             s ||:= " SYSTEM \"" || \x.system_id || "\""
       }
       s ||:= ">"
-      return out.writes(s)
+      writes(s)
    end
 
-   public format_comment(n)
-      return out.writes("<!--" || n.comment || "-->")
+   protected format_comment(n)
+      writes("<!--" || n.comment || "-->")
    end
 
-   public format_element(n)
+   protected format_element(n)
       local s, l, e
 
       s := "<" || n.name
@@ -60,19 +59,17 @@ class HtmlFormatter(Formatter)
       }
 
       s ||:= ">"
-      out.writes(s) | fail
+      writes(s)
 
       every e := !n.children do {
          if text(e) then
-            out.writes(xml_escape(e, '&<>\"')) | fail
+            writes(xml_escape(e, '&<>\"'))
          else
             format_node(e)
       }
 
       if not(HtmlParser.html_is_standalone_tag(n.name)) then
-         out.writes("</" || n.name || ">")
-
-      return
+         writes("</" || n.name || ">")
    end
 end
 

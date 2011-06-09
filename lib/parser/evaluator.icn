@@ -2,7 +2,7 @@ $include "oigram_tab.icn"
 
 package parser
 
-import ipl.pdco, lang, util
+import ipl.pdco, lang, util, exception
 
 class EvaluatorEnv()
    public defer get()
@@ -32,16 +32,37 @@ end
 
 class Evaluator()
    private
+      loops,
       brk,
       dispatch,
       safe_flag,
       env,
       node
 
-   private loop(ex)
-      local t, res, sub, pos
-      t := brk
-      brk := &current
+   private compute_loops(n, loop)
+      if is(n, Node) then {
+         case n.label of {
+            "whiledo"|"while"|"untildo"|"until"|"repeat":  {
+               loops[n] := loop
+               every compute_loops(n.gen(), n)
+            }
+            "create": every compute_loops(n.gen())
+            "break": loops[n] := \loop | throw("break without loop")
+            "next": loops[n] := \loop | throw("next without loop")
+            "breakexpr": {
+               loops[n] := \loop | throw("break without loop")
+               every compute_loops(n.gen(), loops[loop])
+            }
+            "return"|"returnexpr"|"suspend"|"suspendexpr"|"suspendexprdo": 
+               throw("suspend/return not allowed")
+            default: every compute_loops(n.gen(), loop)
+         }
+      }
+   end
+
+   private loop(n, ex)
+      local res, sub, pos
+      brk[n] := &current
       sub := &subject
       pos := &pos
       while res := !ex do {
@@ -50,29 +71,21 @@ class Evaluator()
          case res of {
             "break": break
             "next": next
-            default: {
-               brk := t
-               return res
-            }
+            default: return res
          }
       }
-      brk := t
    end
 
    private do_everydo(n)
       local e
       e := create_E(n.child(2))
-      suspend E(loop { while @e do E(n.child(4)) })
+      suspend E(loop(n, create while @e do E(n.child(4)) ))
    end
 
    private do_every(n)
       local e
       e := create_E(n.child(2))
-      suspend E(loop { while @e })
-   end
-
-   private chk_brk()
-      if /brk then runerr("break or next outside loop")
+      suspend E(loop(n, create while @e ))
    end
 
    private create_E(e)
@@ -375,15 +388,15 @@ class Evaluator()
    private do_field(n) suspend lang.Class.get(E(n.child(1)), n.child(3).s) end
    private do_if(n) suspend if E(n.child(2)) then E(n.child(4)) end
    private do_ifelse(n) suspend if E(n.child(2)) then E(n.child(4)) else E(n.child(6)) end
-   private do_whiledo(n) suspend E( loop{ while E(n.child(2)) do E(n.child(4)) }) end
-   private do_while(n) suspend E( loop{ while E(n.child(2)) }) end
-   private do_untildo(n) suspend E( loop{ until E(n.child(2)) do E(n.child(4)) }) end
-   private do_until(n) suspend E( loop{ until E(n.child(2)) }) end
-   private do_repeat(n) suspend E( loop{ repeat E(n.child(2)) }) end
+   private do_whiledo(n) suspend E( loop(n, create  while E(n.child(2)) do E(n.child(4)) )) end
+   private do_while(n) suspend E( loop(n, create  while E(n.child(2)) )) end
+   private do_untildo(n) suspend E( loop(n, create  until E(n.child(2)) do E(n.child(4)) )) end
+   private do_until(n) suspend E( loop(n, create  until E(n.child(2)) )) end
+   private do_repeat(n) suspend E( loop(n, create  repeat E(n.child(2)) )) end
    private do_create(n) return create_E(n.child(2)) end
-   private do_break(n) chk_brk() ; return coact("break", brk) end
-   private do_next(n) chk_brk() ; return coact("next", brk) end
-   private do_breakexpr(n) chk_brk() ; return coact(n.child(2), brk) end
+   private do_break(n) return coact("break", brk[n]) end
+   private do_next(n) return coact("next", brk[n]) end
+   private do_breakexpr(n) return coact(n.child(2), brk[n]) end
    private do_return(n) runerr("return not allowed here") end
    private do_returnexpr(n) runerr("return not allowed here") end
    private do_suspend(n) runerr("suspend not allowed here") end
@@ -408,7 +421,18 @@ class Evaluator()
    
    public eval()
       (\env & \node) | runerr("eval() called without environment and/or node being set")
-      brk := &null
+      if /loops then {
+         loops := table()
+         try { compute_loops(node) }
+         if \thrown then {
+            loops := &null
+            &why := thrown
+            exception.clear()
+            fail
+         }
+      }
+
+      brk := table()
       if /safe_flag then
          suspend E(node)
       else {
