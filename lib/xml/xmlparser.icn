@@ -180,9 +180,9 @@ class XmlParser(Connectable)
             validate_attribute_definitions()
             if \self.do_namespaces_flag then
                do_namespace_processing()
-            cleanup_source_refs()
          }}
       }
+      cleanup_source_refs()
       if \thrown then {
          &why := thrown
          exception.clear()
