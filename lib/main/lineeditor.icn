@@ -50,11 +50,15 @@ class LineEditorStream(LineBasedStream)
    end
 
    private move_hist(n)
-      (subj === history[hpos]) | (hmod[hpos] := subj)
-      hpos +:= n
-      subj := \hmod[hpos] | history[hpos]
-      if \utf8_flag then
-         subj := ucs(subj) | u"?? bad utf8"
+      if \utf8_flag then {
+         (subj == ucs(history[hpos])) | (hmod[hpos] := subj)
+         hpos +:= n
+         subj := \hmod[hpos] | ucs(history[hpos]) | u"?? bad utf8 in history"
+      } else {
+         (subj == string(history[hpos])) | (hmod[hpos] := subj)
+         hpos +:= n
+         subj := \hmod[hpos] | string(history[hpos])
+      }
       pos := *subj + 1
       undo_manager.clear()
    end
