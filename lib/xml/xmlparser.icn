@@ -168,28 +168,24 @@ class XmlParser(Connectable)
       divert_stack := []
       id_attribute_refs := []
 
-      normalize_eol(s) ? {
-         try {{
-            parse_prolog()
-            doc.add(parse_element())
-            parse_misc_star()
-            pos(0) | throw("Invalid content at end of input")
-            validate_docname()
-            validate_idrefs()
-            validate_ndata_decls()
-            validate_attribute_definitions()
-            if \self.do_namespaces_flag then
-               do_namespace_processing()
-         }}
-      }
-      cleanup_source_refs()
-      if \thrown then {
-         &why := thrown
-         exception.clear()
-         fire(FATAL_ERROR_EVENT, ProblemDetail(where(), s))
+      (normalize_eol(s) ? simple_try{{
+         parse_prolog()
+         doc.add(parse_element())
+         parse_misc_star()
+         pos(0) | throw("Invalid content at end of input")
+         validate_docname()
+         validate_idrefs()
+         validate_ndata_decls()
+         validate_attribute_definitions()
+         if \self.do_namespaces_flag then
+            do_namespace_processing()
+         cleanup_source_refs()
+      }}) | {
+         save_var{fire(FATAL_ERROR_EVENT, ProblemDetail(where(), s)), &why}
+         doc := id_attribute_refs := &null
          fail
       }
-      return doc
+      return 1(.doc, doc := &null)
    end
 
    #
