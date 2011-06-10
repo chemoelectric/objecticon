@@ -50,7 +50,7 @@ class LineEditorStream(LineBasedStream)
    end
 
    private move_hist(n)
-      (subj == history[hpos]) | (hmod[hpos] := subj)
+      (subj === history[hpos]) | (hmod[hpos] := subj)
       hpos +:= n
       subj := \hmod[hpos] | history[hpos]
       if \utf8_flag then
