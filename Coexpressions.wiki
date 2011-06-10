@@ -130,14 +130,10 @@ In Icon, refreshing a co-expression reset the local variables to their values wh
 Object Icon lets the unary ! operator be applied to co-expressions.  The effect is to generate the sequence of results from a refreshed copy of the given co-expression.  In other words, the result sequence of `!e` is the same as for `p(e)`, if `p` were defined as the following procedure :-
 {{{
 procedure p(e)
-   local t
    e := ^e
-   while t := @e do
-      suspend t
+   suspend |@e
 end
 }}}
-(In fact there is a slight difference between ! and the above procedure, namely that the above will always suspend dereferenced values, whilst ! will generate variables whenever possible.)
-
 Note that evaluating `!e` does not affect `e`, nor generate any results from it.
 
 == Co-expression "black holes" ==
