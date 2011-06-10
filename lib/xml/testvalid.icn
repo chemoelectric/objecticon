@@ -54,22 +54,4 @@ procedure main(a)
       write("End===============================================================")
       exit(1)
    }
-
 end
-
-
-procedure to_utf8(s)
-   local t, c
-write("fallback")
-   if type(s) == "ucs" then
-      return string(s)
-   t := ""
-   every c := !s do {
-      if ord(c) > 127 then
-         t ||:= string(uchar(ord(c)))
-      else
-         t ||:= c
-   }
-   return t
-end
-
