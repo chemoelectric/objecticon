@@ -136,6 +136,8 @@ procedure p(e)
       suspend t
 end
 }}}
+(In fact there is a slight difference between ! and the above procedure, namely that the above will always suspend dereferenced values, whilst ! will generate variables whenever possible.)
+
 Note that evaluating `!e` does not affect `e`, nor generate any results from it.
 
 == Co-expression "black holes" ==
