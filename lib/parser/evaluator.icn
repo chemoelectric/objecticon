@@ -50,7 +50,7 @@ class Evaluator()
             "everydo"|"every"|"whiledo"|"while"|"untildo"|"until"|"repeat":  {
                loops[n] := loop
                scans[n] := scan
-               every compute_loops(n.gen(), n, &null)
+               every compute_loops(n.gen(), n)
             }
             "create": every compute_loops(n.gen())
             "break": {
