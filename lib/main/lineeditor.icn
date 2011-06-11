@@ -248,7 +248,8 @@ class LineEditorStream(LineBasedStream)
 
    public new()
       cast(self,LineBasedStream).new()
-      nul := FileStream.open("/dev/null", FileOpt.WRONLY) | stop(&why)
+      nul := FileStream.open("/dev/null", FileOpt.WRONLY) | 
+         return error("Couldn't open /dev/null: " || &why)
       tty := FileStream.stdin
       if run_stty() then
          isatty := &yes
