@@ -32,48 +32,75 @@ end
 
 class Evaluator()
    private
+      # Map of nodes (loops, breaks) to the enclosing loop node.
       loops,
       brk,
+      subject,
+      pos,
+      # Map of nodes (loops, breaks) to the topmost scan node in the enclosing loop
+      scans,
       dispatch,
       safe_flag,
       env,
       node
 
-   private compute_loops(n, loop)
+   private compute_loops(n, loop, scan)
       if is(n, Node) then {
          case n.label of {
             "everydo"|"every"|"whiledo"|"while"|"untildo"|"until"|"repeat":  {
                loops[n] := loop
-               every compute_loops(n.gen(), n)
+               scans[n] := scan
+               every compute_loops(n.gen(), n, &null)
             }
             "create": every compute_loops(n.gen())
-            "break": loops[n] := \loop | throw("break without loop")
-            "next": loops[n] := \loop | throw("next without loop")
+            "break": {
+               loops[n] := \loop | throw("break without loop")
+               scans[n] := scan
+            }
+            "next": {
+               loops[n] := \loop | throw("next without loop")
+               scans[n] := scan
+            }
             "breakexpr": {
                loops[n] := \loop | throw("break without loop")
-               every compute_loops(n.gen(), loops[loop])
+               scans[n] := scan
+               every compute_loops(n.gen(), loops[loop], scans[loop])
             }
             "fail"|"return"|"returnexpr"|"suspend"|"suspendexpr"|"suspendexprdo": 
                throw("suspend/return/fail not allowed")
-            default: every compute_loops(n.gen(), loop)
+            "augqmark"|"Bqmark": {
+               every compute_loops(n.child(1), loop, scan)
+               /scan := n
+               every compute_loops(n.child(3), loop, scan)
+            }
+            default: every compute_loops(n.gen(), loop, scan)
          }
       }
    end
 
    private loop(n, ex)
-      local res, sub, pos
+      local res
       brk[n] := &current
-      sub := &subject
-      pos := &pos
       while res := !ex do {
-         &subject := sub
-         &pos := pos
          case res of {
             "break": break
             "next": next
             default: return res
          }
       }
+   end
+
+   private restore(n)
+      if \scans[n] then {
+         &subject := subject[scans[n]]
+         &pos := pos[scans[n]]
+      }
+   end
+
+   private save(n)
+      subject[n] := &subject
+      pos[n] := &pos
+      return
    end
 
    private do_everydo(n)
@@ -298,7 +325,7 @@ class Evaluator()
    end
 
    private do_and(n) suspend E(n.child(1)) & E(n.child(3)) end
-   private do_Bqmark(n) suspend E(n.child(1)) ? E(n.child(3)) end
+   private do_Bqmark(n) suspend 1(E(n.child(1)),save(n)) ? E(n.child(3)) end
    private do_swap(n) suspend E(n.child(1)) :=: E(n.child(3)) end
    private do_assign(n) suspend E(n.child(1)) := E(n.child(3)) end
    private do_revswap(n) suspend E(n.child(1)) <-> E(n.child(3)) end
@@ -327,7 +354,7 @@ class Evaluator()
    private do_augsle(n) suspend E(n.child(1)) <<=:= E(n.child(3)) end
    private do_augslt(n) suspend E(n.child(1)) <<:= E(n.child(3)) end
    private do_augsne(n) suspend E(n.child(1)) ~==:= E(n.child(3)) end
-   private do_augqmark(n) suspend E(n.child(1)) ?:= E(n.child(3)) end
+   private do_augqmark(n) suspend 1(E(n.child(1)),save(n)) ?:= E(n.child(3)) end
    private do_augand(n) suspend E(n.child(1)) &:= E(n.child(3)) end
    private do_augat(n) suspend E(n.child(1)) @:= E(n.child(3)) end
    private do_to(n) suspend E(n.child(1)) to E(n.child(3)) end
@@ -394,11 +421,11 @@ class Evaluator()
    private do_until(n) suspend E( loop(n, create  until E(n.child(2)) )) end
    private do_repeat(n) suspend E( loop(n, create  repeat E(n.child(2)) )) end
    private do_create(n) return create_E(n.child(2)) end
-   private do_break(n) return coact("break", brk[n]) end
-   private do_next(n) return coact("next", brk[n]) end
-   private do_breakexpr(n) return coact(n.child(2), brk[n]) end
    private do_brace(n) suspend E(n.child(2)) end
    private do_compound(n) suspend { E(n.child(1)) ; E(n.child(3)) } end
+   private do_break(n) restore(n) ; return coact("break", brk[n]) end
+   private do_next(n) restore(n) ; return coact("next", brk[n]) end
+   private do_breakexpr(n) restore(n) ; return coact(n.child(2), brk[n]) end
    private do_Empty(n) return end
 
    private E(n)
@@ -418,13 +445,16 @@ class Evaluator()
       (\env & \node) | runerr("eval() called without environment and/or node being set")
       if /loops then {
          loops := table()
+         scans := table()
          simple_try { compute_loops(node) } | {
-            loops := &null
+            loops := scans := &null
             fail
          }
       }
 
       brk := table()
+      subject := table()
+      pos := table()
       if /safe_flag then
          suspend E(node)
       else {
