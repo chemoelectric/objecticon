@@ -78,15 +78,12 @@ class ObjectOutputStream(Stream)
    # Reset everything and output a new object.
    #
    public show(o)
-      self.seen := table()
       self.level := 0
       self.ilevel := 0
-      if simple_try{traverse(o)} then {
+      return use {
+         self.seen := table(),
+         simple_try{traverse(o)},
          self.seen := &null
-         return
-      } else {
-         self.seen := &null
-         fail
       }
    end
 

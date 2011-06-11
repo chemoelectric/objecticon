@@ -73,15 +73,16 @@ class Parser(Connectable)
       }
    end
 
-   public parse(s)
+   public parse(s, encoding)
+      /encoding := "ASCII"
       first_err := &null
       yyin := string(s) | runerr(103, s)
       parser.yyerror := yyerror
       yylex_reinit()
       # Because we don't have the pp-generated # at the top of the file we start
-      # at line 1 not line 0, and also in ascii encoding.
+      # at line 1 not line 0, and also in the given encoding.
       yylineno := 1
-      yyencoding := "ASCII"
+      yyencoding := encoding
       yyparse()
       if yynerrs = 0 then
          return Prog(yyval)
@@ -92,9 +93,9 @@ class Parser(Connectable)
    #
    # Parse {s}, as an expression (actually, a compound expression).
    #
-   public parse_expression(s)
+   public parse_expression(s, encoding)
       s := "procedure main() ; " || s || " end"
-      return parse(s).get_body().get(1).get_body_node()
+      return parse(s, encoding).get_body().get(1).get_body_node()
    end
 
    public parse_file(fname, predefined_syms)

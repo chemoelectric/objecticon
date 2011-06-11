@@ -88,13 +88,10 @@ class Encode(Stream)
    #
    public begin(o)
       self.tag_count := 0
-      self.seen := table()
-      if simple_try{ begin1(o) } then {
+      return use{
+         self.seen := table(),
+         simple_try{begin1(o)},
          self.seen := &null
-         return
-      } else {
-         self.seen := &null
-         fail
       }
    end
 
@@ -343,17 +340,13 @@ class Decode()
    # Reset everything and parse a new object from s
    #
    public parse(s)
-      local res
       self.tag_count := 0
-      self.seen := table()
       s ? {
          self.fast_flag := if =Codec.FAST_FLAG then 1 else &null
-         if res := simple_try{decode()} then {
+         return use {
+            self.seen := table(),
+            simple_try{decode()},
             self.seen := &null
-            return res
-         } else {
-            self.seen := &null
-            fail
          }
       }
    end
