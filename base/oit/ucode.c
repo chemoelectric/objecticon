@@ -289,7 +289,7 @@ void uout_16(int n)
 {
     union {
         unsigned char c[2];
-        signed int s:16;
+        signed Integer16 s;
     } i;
     check_param(TYPE_16);
     if (n > 0x7fff || n < -0x8000)
@@ -303,11 +303,7 @@ void uout_32(word n)
 {
     union {
         unsigned char c[4];
-#if PLAN9 && SIZEOF_LONG == 4
-        signed long int w;
-#else
-        signed long int w:32;
-#endif
+        signed Integer32 w;
     } i;
     check_param(TYPE_32);
     i.w = n;
@@ -339,11 +335,7 @@ void uout_lbin(int len, char *s)
 {
     union {
         unsigned char c[4];
-#if PLAN9 && SIZEOF_INT == 4
-        unsigned int s;
-#else
-        unsigned int s:32;
-#endif
+        unsigned Integer32 s;
     } i;
     check_param(TYPE_LBIN);
     i.s = len;
@@ -367,11 +359,7 @@ word uin_32()
 {
     union {
         unsigned char c[4];
-#if PLAN9 && SIZEOF_LONG == 4
-        signed long int w;
-#else
-        signed long int w:32;
-#endif
+        signed Integer32 w;
     } i;
     check_param(TYPE_32);
     i.c[0] = uin_nextch();
@@ -385,7 +373,7 @@ int uin_16()
 {
     union {
         unsigned char c[2];
-        signed int s:16;
+        signed Integer16 s;
     } i;
     check_param(TYPE_16);
     i.c[0] = uin_nextch();
@@ -426,11 +414,7 @@ char *uin_lbin(int *n)
 {
     union {
         unsigned char c[4];
-#if PLAN9 && SIZEOF_INT == 4
-        unsigned int s;
-#else
-        unsigned int s:32;
-#endif
+        unsigned Integer32 s;
     } i;
     int c, l;
     check_param(TYPE_LBIN);

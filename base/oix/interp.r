@@ -25,7 +25,6 @@ static void fatalerr_139(void);
 
 word curr_op;  /* Last op read in interpreter loop */
 
-struct progstate *curpstate;
 struct b_coexpr *k_current;        /* Always == curpstate->K_current */
 struct p_frame *curr_pf;           /* Always == curpstate->K_current->curr_pf */
 word *ipc;                         /* Notionally curpstate->K_current->curr_pf->ipc, synchronized whenever

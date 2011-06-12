@@ -1416,7 +1416,7 @@ function parser_UReader_raw_convert(s)
        if (StrLen(s) == 2) {
            union {
                unsigned char c[2];
-               unsigned int s:16;
+               unsigned Integer16 s;
            } i;
            i.c[0] = p[0];
            i.c[1] = p[1];
@@ -1425,7 +1425,7 @@ function parser_UReader_raw_convert(s)
        if (StrLen(s) == 4) {
            union {
                unsigned char c[4];
-               unsigned long int w:32;
+               unsigned Integer32 w;
            } i;
            i.c[0] = p[0];
            i.c[1] = p[1];

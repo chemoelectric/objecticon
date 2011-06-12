@@ -32,12 +32,32 @@
    #define RealInDesc 1
 #endif
 
+#if IntBits == 32
+   #define Integer32 int
+#elif ShortBits == 32
+   #define Integer32 short
+#elif LongBits == 32
+   #define Integer32 long
+#else
+   #error "Either IntBits, ShortBits or LongBits must be 32"
+#endif
+
+#if IntBits == 16
+   #define Integer16 int
+#elif ShortBits == 16
+   #define Integer16 short
+#elif LongBits == 16
+   #define Integer16 long
+#else
+   #error "Either IntBits, ShortBits or LongBits must be 16"
+#endif
+
 /*
  * Typedefs to make some things easier.
  */
 
 typedef struct descrip *dptr;
-/*typedef word C_integer;*/
+
 #if SIZEOF_LONG_LONG != 0
 typedef long long longlong;
 typedef unsigned long long ulonglong;
