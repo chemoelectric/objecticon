@@ -619,8 +619,7 @@ class EditableTextList(LineBasedScrollArea)
       } else if self.cursor_x > v.first & e.x < self.tx then {
          direction := "left"
          check_scroll_ticker(self.tx - e.x)
-      } else if e.x >= self.tx + self.tw & 
-                self.cursor_x < v.last then {
+      } else if self.cursor_x < v.last & e.x >= self.tx + self.tw then {
          direction := "right"
          check_scroll_ticker(e.x - (self.tx + self.tw))
       } else {
