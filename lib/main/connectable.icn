@@ -116,17 +116,6 @@ class Connectable()
       put(listeners, l)
    end
 
-   protected try_event(f, evmap)
-      local ev
-      if map(f.attr[1:3]) == "e:" then
-         ev := f.attr[3:0]
-      else
-         ev := f.attr
-      ev := \evmap[ev] | fail
-      connect(f.val, ev)
-      return
-   end
-
    public new()
       listeners := []
       return
