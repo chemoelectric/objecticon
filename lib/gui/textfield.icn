@@ -251,7 +251,7 @@ class TextField(Component)
       d := e.x - self.tx + loff
       i := 1
       t := 0
-      while (i < *s) & ((.t + (t :=  self.cbwin.text_width(s[1:i + 1]))) / 2 < d) do
+      while (i <= *s) & ((.t + (t :=  self.cbwin.text_width(s[1+:i]))) / 2 < d) do
          i +:= 1
 
       return i
@@ -287,21 +287,16 @@ class TextField(Component)
    #
    # Move the text area displayed so that the cursor is on the screen.
    #
-   # @p
-   public constrain_line()
+   private constrain_line()
       local s, i
-
       s := get_view()
       i := self.cbwin.text_width(s[1:self.cursor])
       if loff > i then
          loff := i
-      else {
-         i := self.cbwin.text_width(s[1:self.cursor + 1])
-         if loff + self.tw < i then
-            loff := i - self.tw
-         else if self.cbwin.text_width(s) - self.tw < loff then
-            loff := max(0, self.cbwin.text_width(s) - self.tw)
-      }
+      else if loff + self.tw < i then
+         loff := i - self.tw
+      else if self.cbwin.text_width(s) - self.tw < loff then
+         loff := max(0, self.cbwin.text_width(s) - self.tw)
    end
 
    public scroll_tick()
@@ -314,8 +309,8 @@ class TextField(Component)
                self.cbwin.text_width(s[1:self.cursor]) >= loff do
                self.cursor -:= 1
          } else {
-            while self.cursor < *s &
-               self.cbwin.text_width(s[1:self.cursor]) < loff + self.tw do
+            while self.cursor <= *s &
+               self.cbwin.text_width(s[1:self.cursor]) <= loff + self.tw do
                self.cursor +:= 1
          }
          end_handle()
@@ -336,6 +331,16 @@ class TextField(Component)
       return self
    end
 
+   public set_mark(m)
+      self.mark := m
+      return self
+   end
+
+   public set_cursor(c)
+      self.cursor := c
+      return self
+   end
+
    public initially()
       cast(self,Component).initially()
       cursor_ticker.start()
@@ -350,7 +355,6 @@ class TextField(Component)
    #
    # Delete
    #
-   # @p
    public handle_delete_left(e)
       local ed
 
@@ -624,21 +628,20 @@ class TextField(Component)
    end
 
    public get_view()
-      #
-      # Space at end for cursor at end of string
-      #
       if \displaychar then
-         return repl(displaychar, *(self.contents)) || " "
+         return repl(displaychar, *(self.contents))
       else
-         return self.contents || " "
+         return self.contents
    end
 
    public cursor_tick()
       local t
       repeat {
-         if self.has_focus() & self.is_unshaded() & self.is_unhidden() then {
+         if (self.has_focus() | self === parent_dialog.in_menu_mode()) &
+                self.is_unshaded() & self.is_unhidden() then 
+         {
             t := cursor_on
-            cursor_on := if parent_dialog.is_blocked() | parent_dialog.in_menu_mode() then
+            cursor_on := if parent_dialog.is_blocked() | (self ~=== parent_dialog.in_menu_mode()) then
                0
             else
                (cursor_on + 1) % 3
@@ -677,7 +680,7 @@ class TextField(Component)
       #
       # If has focus display box cursor, else display outline cursor
       #
-      if self.has_focus() & self.is_unshaded() then {
+      if (self.has_focus() | self === parent_dialog.in_menu_mode()) & self.is_unshaded() then {
          if self.cursor_on ~= 2 then
             Gui.style.draw_text_cursor(self.cbwin,
                                        self.tx - loff + self.cbwin.text_width(s[1:cursor]), y1, fh)
@@ -701,7 +704,7 @@ class TextField(Component)
                           set_outer(SunkenBorder()).
                           set_inner(EmptyBorder()))
       self.border.inner.set_l_inset(Gui.TEXT_INSET)
-      self.border.inner.set_r_inset(0)
+      self.border.inner.set_r_inset(Gui.TEXT_INSET)
       self.is_editable_flag := 1
       self.move_on_rpress_flag := 1
       self.set_constraint("x_fill", &yes)
@@ -943,6 +946,46 @@ class TextFieldDeleteLineEdit(TextFieldEdit)
 
    public new(parent)
       cast(self,TextFieldEdit).new(parent)
+      return
+   end
+end
+
+
+class PopupTextField(TextField)
+   private ev
+
+   public popup(ev, dialog)
+      self.ev := ev
+      dialog.add(self)
+      initially()
+      resize()
+      parent_dialog.enter_menu_mode(self)
+      parent_dialog.connect(dialog_event, Event.ICON)
+      invalidate()
+   end
+
+   public close_all()
+      invalidate()
+      parent_dialog.exit_menu_mode()
+      parent_dialog.disconnect_object(self)
+      parent.remove(self)
+      finally()
+   end
+
+   public dialog_event(e)
+      if (e ~=== ev) & ((/e.release & (e.code === ("\e" | "\r"))) | 
+                       (member(Mouse.PRESS, e.code) & not(in_region(e)))) then 
+      {
+         #
+         # Mouse click outside field.  Close.
+         # 
+         close_all()
+      }
+   end
+
+   public new()
+      cast(self,TextField).new()
+      self.accepts_focus_flag := &no
       return
    end
 end
