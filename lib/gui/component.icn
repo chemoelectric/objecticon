@@ -704,6 +704,19 @@ class Component(Rect,Align,Connectable)
    end
 
    #
+   # Set the position and size of the component.
+   # @see set_pos
+   # @see set_size
+   #
+   public set_geometry(x_spec, y_spec, w_spec, h_spec)
+      self.x_spec := x_spec
+      self.y_spec := y_spec
+      self.w_spec := w_spec
+      self.h_spec := h_spec
+      return self
+   end
+
+   #
    # Set the tab priority, which affects the tab focus ordering of the parent.
    #
    public set_tab_ord(x)
