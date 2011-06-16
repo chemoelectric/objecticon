@@ -377,6 +377,14 @@ class Dialog(Component)
    end
 
    #
+   # Return the current keyboard focus of the dialog, or fail if there is no
+   # current focus.
+   #
+   public get_focus()
+      return \self.focus
+   end
+
+   #
    # Sets keyboard focus to the given component.
    #
    public set_focus(c, e)
