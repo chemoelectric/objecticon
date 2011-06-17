@@ -954,22 +954,30 @@ end
 class PopupTextField(TextField)
    private ev
 
-   public popup(ev, dialog)
+   public popup(comp, ev)
       self.ev := ev
-      dialog.add(self)
+      # Copy attribs of the parent component
+      set_all_wattribs(comp.get_effective_wattribs())
+      comp.parent_dialog.add(self)
       initially()
       resize()
       parent_dialog.enter_menu_mode(self)
       parent_dialog.connect(dialog_event, Event.ICON)
       invalidate()
+      return self
    end
 
    public close_all()
       invalidate()
+      finally()
+   end
+
+   public finally()
       parent_dialog.exit_menu_mode()
       parent_dialog.disconnect_object(self)
       parent.remove(self)
-      finally()
+      ev := &null
+      cast(self,TextField).finally()
    end
 
    public dialog_event(e)
