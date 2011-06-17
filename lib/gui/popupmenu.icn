@@ -25,20 +25,16 @@ class PopupMenu(Component)
       py
 
    public finally()
-      if \self.menu then
-         close_menu()
-      cast(self,Component).finally()
-   end
-
-   public display()
-   end
-
-   public close_menu()
       self.menu.hide()
       self.menu.finally()
       self.menu := &null
       self.parent_dialog.exit_menu_mode()
       self.parent_dialog.disconnect_object(self)
+      self.parent.remove(self)
+      cast(self,Component).finally()
+   end
+
+   public display()
    end
 
    public go_right()
@@ -48,22 +44,15 @@ class PopupMenu(Component)
    end
 
    public close_all()
-      cleanup()
+      finally()
    end
 
    public make_partial()
-      cleanup()
-   end
-
-   public cleanup()
-      close_menu()
-      self.parent.remove(self)
-      self.finally()
+      finally()
    end
 
    public dialog_event(e)
-      if \self.menu &
-         not(e.x = px & e.y = py & member(Mouse.PRESS | Mouse.RELEASE, e.code)) then
+      if not(e.x = px & e.y = py & member(Mouse.PRESS | Mouse.RELEASE, e.code)) then
          self.menu.handle_event(e)
    end
 
@@ -95,6 +84,7 @@ class PopupMenu(Component)
       self.menu.set_component_link(self)         
       self.menu.initially()
       self.menu.show(x, y, xa, ya)
+      return self
    end
 
    public new()

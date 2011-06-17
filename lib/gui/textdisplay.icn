@@ -136,6 +136,7 @@ class TextDisplay(LineBasedScrollArea)
             pos := j
             vi +:= 1
          }
+         view_list[vi - 1].last +:= 1
       }
 
       #
@@ -184,7 +185,7 @@ class TextDisplay(LineBasedScrollArea)
       if /view_list then
          create_view_list()
       # self.long_line will be null if contents is the empty list.
-      return Gui.TEXT_INSET + ((\self.long_line).tw | 0)
+      return 2 * Gui.TEXT_INSET + ((\self.long_line).tw | 0)
    end
 
    public draw_line(xp, yp, lh, i)
@@ -207,6 +208,7 @@ class TextDisplay(LineBasedScrollArea)
                                     text_width_ex(view.cbwin, p,,, self.tab_width)))
             pos := j
          }
+         view_list[-1].last +:= 1
       }
       find_long_line()
    end

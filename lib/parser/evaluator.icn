@@ -40,42 +40,54 @@ class Evaluator()
       # Map of nodes (loops, breaks) to the topmost scan node in the enclosing loop
       scans,
       dispatch,
+      cdispatch,
       safe_flag,
       env,
       node
 
    private compute_loops(n, loop, scan)
-      if is(n, Node) then {
-         case n.label of {
-            "everydo"|"every"|"whiledo"|"while"|"untildo"|"until"|"repeat":  {
-               loops[n] := loop
-               scans[n] := scan
-               every compute_loops(n.gen(), n)
-            }
-            "create": every compute_loops(n.gen())
-            "break": {
-               loops[n] := \loop | throw("break without loop")
-               scans[n] := scan
-            }
-            "next": {
-               loops[n] := \loop | throw("next without loop")
-               scans[n] := scan
-            }
-            "breakexpr": {
-               loops[n] := \loop | throw("break without loop")
-               scans[n] := scan
-               every compute_loops(n.gen(), loops[loop], scans[loop])
-            }
-            "fail"|"return"|"returnexpr"|"suspend"|"suspendexpr"|"suspendexprdo": 
-               throw("suspend/return/fail not allowed")
-            "augqmark"|"Bqmark": {
-               every compute_loops(n.child(1), loop, scan)
-               /scan := n
-               every compute_loops(n.child(3), loop, scan)
-            }
-            default: every compute_loops(n.gen(), loop, scan)
-         }
-      }
+      if is(n, Node) then
+         cdispatch[n.label](n, loop, scan)
+   end
+
+   private cdo_loop(n, loop, scan)
+      loops[n] := loop
+      scans[n] := scan
+      every compute_loops(n.gen(), n)
+   end
+
+   private cdo_create(n, loop, scan)
+      every compute_loops(n.gen())
+   end
+
+   private cdo_break(n, loop, scan)
+      loops[n] := \loop | throw("break without loop")
+      scans[n] := scan
+   end
+
+   private cdo_breakexpr(n, loop, scan)
+      loops[n] := \loop | throw("break without loop")
+      scans[n] := scan
+      every compute_loops(n.gen(), loops[loop], scans[loop])
+   end
+
+   private cdo_next(n, loop, scan)
+      loops[n] := \loop | throw("next without loop")
+      scans[n] := scan
+   end
+
+   private cdo_exit(n, loop, scan)
+      throw("suspend/return/fail not allowed")
+   end
+
+   private cdo_scan(n, loop, scan)
+      every compute_loops(n.child(1), loop, scan)
+      /scan := n
+      every compute_loops(n.child(3), loop, scan)
+   end
+
+   private cdo_default(n, loop, scan)
+      every compute_loops(n.gen(), loop, scan)
    end
 
    private loop(n, ex)
@@ -427,18 +439,16 @@ class Evaluator()
    private do_next(n) restore(n) ; return coact("next", brk[n]) end
    private do_breakexpr(n) restore(n) ; return coact(n.child(2), brk[n]) end
    private do_Empty(n) return end
+   private do_default(n) fatalerr("not implemented: " || n.label) end
 
    private E(n)
-      local m
       if is(n, Token) then
          return case n.tok of {
             IDENT: env.get(n.s)
             INTLIT|REALLIT|STRINGLIT|CSETLIT|UCSLIT: n.val
-            default : fatalerr("not implemented yet: token " || to_string(n))
+            default : fatalerr("not implemented: token " || to_string(n))
          }
-
-      m := \dispatch[n.label] | fatalerr("not implemented: " || n.label)
-      suspend m(n)
+      suspend dispatch[n.label](n)
    end
    
    public eval()
@@ -491,11 +501,19 @@ class Evaluator()
    public new(env, node)
       self.env := env
       self.node := node
-      self.dispatch := table()
+      self.dispatch := table(do_default)
       every lang.Class.get_class_field_names(self) ? {
          if ="do_" then
             dispatch[tab(0)] := lang.Class.get(self, &subject)
       }
+      self.cdispatch := table(cdo_default)
+      every cdispatch["everydo"|"every"|"whiledo"|"while"|"untildo"|"until"|"repeat"] := cdo_loop
+      cdispatch["create"] := cdo_create
+      cdispatch["break"] := cdo_break
+      cdispatch["breakexpr"] := cdo_breakexpr
+      cdispatch["next"] := cdo_next
+      every cdispatch["fail"|"return"|"returnexpr"|"suspend"|"suspendexpr"|"suspendexprdo"] := cdo_exit
+      every cdispatch["augqmark"|"Bqmark"] := cdo_scan
       return
    end
 end

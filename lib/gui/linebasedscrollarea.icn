@@ -201,10 +201,18 @@ class LineBasedScrollArea(DrawScrollArea)
       is_live() | fail
       /i := get_line_info()
       if \i & (i.first <= line <= i.last) then
-         view.invalidate(Rect(view.x, 
-                              view.y - get_area_y() + get_cum_line_height(line),
-                              view.w,
-                              get_height_for_line(line)))
+         view.invalidate(get_line_rect(line))
+   end
+
+   #
+   # Return a {Rect} indicating the area occupied by the line; note
+   # this may be outside of the view area.
+   #
+   public get_line_rect(line)
+      return Rect(view.x, 
+                  view.y - get_area_y() + get_cum_line_height(line),
+                  view.w,
+                  get_height_for_line(line))
    end
 
    #
