@@ -10,12 +10,36 @@ end
 
 class DefaultEvaluatorEnv(EvaluatorEnv)
    private 
-      t,
+      table,
       write_globals_flag
 
-   public get(k)
-      return (if \write_globals_flag then lang.Prog.get_global(k)
-              else .lang.Prog.get_global(k)) | t[k]
+   public get(k, ev)
+      return (if \write_globals_flag then lookup(k, ev) else .lookup(k, ev)) | table[k]
+   end
+
+   private lookup(k, ev)
+      return lang.Prog.get_global(k) | try_imports(k, ev)
+   end
+
+   private try_imports(k, ev)
+      local t, f, s
+      k ? if ="default." then
+         return lang.Prog.get_global(tab(0))
+      t := []
+      every s := !ev.get_imports() do {
+         f := s || "." || k
+         if lang.Prog.get_global(f) then
+            put(t, f)
+      }
+      if *t = 1 then
+         return lang.Prog.get_global(t[1])
+      if *t > 1 then
+         runerr("ambiguous name:" || k)
+   end
+
+   public set_table(t)
+      self.table := t
+      return self
    end
 
    public set_write_globals(f)
@@ -25,7 +49,7 @@ class DefaultEvaluatorEnv(EvaluatorEnv)
 
    public new(t)
       /t := table()
-      self.t := t
+      self.table := t
       return
    end
 end
@@ -36,6 +60,7 @@ class Evaluator()
       loops,
       brk,
       subject,
+      imports,
       pos,
       # Map of nodes (loops, breaks) to the topmost scan node in the enclosing loop
       scans,
@@ -322,11 +347,11 @@ class Evaluator()
    end
 
    private do_dottedident(n)
-      local lhs
-      lhs := n.child(1)
-      if is(lhs, Token) & lhs.tok = DEFAULT then
-         runerr("default not allowed here")
-      suspend lang.Class.get(E(lhs), n.child(3).s)
+      local ls
+      ls := Util.dottedid2string(n.child(1))
+      if (ls == "default") | member(\imports, ls) then
+         return env.get(ls || "." || n.child(3).s, self)
+      suspend lang.Class.get(E(n.child(1)), n.child(3).s)
    end
 
    private do_keyword(n) 
@@ -444,7 +469,7 @@ class Evaluator()
    private E(n)
       if is(n, Token) then
          return case n.tok of {
-            IDENT: env.get(n.s)
+            IDENT: env.get(n.s, self)
             INTLIT|REALLIT|STRINGLIT|CSETLIT|UCSLIT: n.val
             default : fatalerr("not implemented: token " || to_string(n))
          }
@@ -496,6 +521,15 @@ class Evaluator()
       self.node := node
       self.loops := &null
       return self
+   end
+
+   public set_imports(t)
+      self.imports := t
+      return self
+   end
+
+   public get_imports()
+      return .imports
    end
 
    public new(env, node)
