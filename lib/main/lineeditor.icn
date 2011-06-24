@@ -63,18 +63,6 @@ class LineEditorStream(LineBasedStream)
       undo_manager.clear()
    end
 
-   private get_line_no()
-      local s
-      tty.writes("\e[6n")
-      s := ""
-      until s[-1] == "R" do
-         s ||:= tty.reads(1) | break
-      s ? {
-         move(2)
-         return integer(tab(upto(';'))) | error("Couldn't get line no from tty")
-      }
-   end
-
    private get_console_size()
       local w, h
       # Could also use tput cols and tput lines to do this.
@@ -118,11 +106,13 @@ class LineEditorStream(LineBasedStream)
       hpos := *history + 1
       hmod := table()
       undo_manager.clear()
-      nlines := &null
-      line_no := get_line_no() | fail
+      line_no := nlines := &null
       dim := get_console_size() | fail
+      # Request line_no
+      tty.writes("\e[6n")
       repeat {
-         show()
+         if \line_no then 
+            show()
          ch := tty.reads(1) | fail
          if \utf8_flag then {
             # Read a utf8 sequence into ch.  On gibberish, just go round and try again.
@@ -156,6 +146,7 @@ class LineEditorStream(LineBasedStream)
                   "D": pos := (1 <= pos - 1)
                   "H": pos := 1
                   "F": pos := *subj + 1
+                  "R": line_no := p[1]
                   "~": if p[1] = 3 & *p = 1 then {
                      if pos <= *subj then {
                         ed := LineEditorDeleteRightEdit(self)
