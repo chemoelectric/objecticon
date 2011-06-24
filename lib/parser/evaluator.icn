@@ -2,7 +2,7 @@ $include "oigram_tab.icn"
 
 package parser
 
-import ipl.pdco, lang, util, exception
+import ipl.pdco, ipl.lists, lang, util, exception
 
 class EvaluatorEnv()
    public defer get()
@@ -14,10 +14,18 @@ class DefaultEvaluatorEnv(EvaluatorEnv)
       write_globals_flag
 
    public get(k, ev)
-      return (if \write_globals_flag then lookup(k, ev) else .lookup(k, ev)) | table[k]
+      return (if \write_globals_flag then glookup(k, ev) else .glookup(k, ev)) | tlookup(k)
    end
 
-   private lookup(k, ev)
+   private tlookup(k)
+      k ? if ="default." then
+         return table[tab(0)]
+      if upto('.', k) then
+         runerr("no such id: " || k)
+      return table[k]
+   end
+
+   private glookup(k, ev)
       return lang.Prog.get_global(k) | try_imports(k, ev)
    end
 
@@ -34,7 +42,7 @@ class DefaultEvaluatorEnv(EvaluatorEnv)
       if *t = 1 then
          return lang.Prog.get_global(t[1])
       if *t > 1 then
-         runerr("ambiguous name:" || k)
+         runerr("ambiguous name: " || k || "(" || list2str(t) || ")")
    end
 
    public set_table(t)
