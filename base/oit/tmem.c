@@ -343,7 +343,7 @@ struct node *convert_dottedidentexpr(struct node *n)
     }
     ls = dottedid2string(Tree0(n));
     if (ls == package_name || ls == default_string || lookup_import(ls)) {
-        struct node *r = IdNode(join(ls, ".", Str0(Tree1(n)), 0));
+        struct node *r = IdNode(join(ls, ".", Str0(Tree1(n)), NULL));
         Line(r) = Line(n);
         File(r) = File(n);
         l = put_local(Str0(r), 0, r, 0);
