@@ -5,7 +5,7 @@ package parser
 import ipl.pdco, ipl.lists, lang, util, exception
 
 class EvaluatorEnv()
-   public defer get()
+   public defer get(k, ev)
 end
 
 class DefaultEvaluatorEnv(EvaluatorEnv)
@@ -18,22 +18,25 @@ class DefaultEvaluatorEnv(EvaluatorEnv)
    end
 
    private tlookup(k)
-      k ? if ="default." then
-         return table[tab(0)]
-      if upto('.', k) then
+      if upto('.', k) then {
+         k ? if ="default." then
+            return table[tab(0)]
          runerr("no such id: " || k)
+      }
       return table[k]
    end
 
    private glookup(k, ev)
-      return lang.Prog.get_global(k) | try_imports(k, ev)
-   end
-
-   private try_imports(k, ev)
       local t, f, s
-      k ? if ="default." then
-         return lang.Prog.get_global(tab(0))
+      if upto('.', k) then {
+         return k ? if ="default." then
+            lang.Prog.get_global(tab(0))
+         else
+            lang.Prog.get_global(k)
+      }
       t := []
+      if lang.Prog.get_global(k) then
+         put(t, k)
       every s := !ev.get_imports() do {
          f := s || "." || k
          if lang.Prog.get_global(f) then
