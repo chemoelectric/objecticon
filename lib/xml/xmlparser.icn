@@ -181,7 +181,7 @@ class XmlParser(Connectable)
             do_namespace_processing()
          cleanup_source_refs()
       }}) | {
-         save_var{fire(FATAL_ERROR_EVENT, ProblemDetail(where(), s)), &why}
+         fire(FATAL_ERROR_EVENT, ProblemDetail(where(), s))
          doc := id_attribute_refs := &null
          fail
       }
