@@ -41,7 +41,7 @@ class Stream()
    # Return at least one, and up to n characters from the stream.  On
    # end-of-file, return {&null}.  On error, fail and set {&why}.
    #
-   # @param n the maximum number of chars to read.
+   # @param n the maximum number of chars to read; n must be > 0.
    #
    public defer in(n)
 
@@ -140,6 +140,30 @@ class Stream()
    end
 
    #
+   # Read {n} chars from the stream.  This method will try and return
+   # exactly {n} characters, and will only return less because of
+   # reaching the end-of-file.
+   #
+   # Returns {&null} on end-of-file
+   #
+   public read_exactly(n)
+      local s, t
+      s := ""
+      while n > 0 do {
+         t := in(n) | fail
+         if /t then {
+            if *s > 0 then
+               return s
+            else
+               return
+         }
+         s ||:= t
+         n -:= *t
+      }
+      return s
+   end
+
+   #
    # This method is the same as {read_line}, except that on end of
    # file it fails, setting {&why} to "End of file", rather than
    # returning {&null}.
@@ -155,28 +179,16 @@ class Stream()
    end
 
    #
-   # Read {n} chars from the stream.  This method will try and return
-   # exactly {n} characters, and will only return less because of
-   # reaching the end-of-file.
-   #
-   # Fails on error or end-of-file, in the latter case setting {&why}
-   # to "End of file".
+   # This method is the same as {read_exactly}, except that on end of
+   # file it fails, setting {&why} to "End of file", rather than
+   # returning {&null}.
    #
    public reads(n)
-      local s, t
-      s := ""
-      while n > 0 do {
-         t := in(n) | fail
-         if /t then {
-            if *s > 0 then
-               return s
-            else {
-               &why := "End of file"
-               fail
-            }
-         }
-         s ||:= t
-         n -:= *t
+      local s
+      s := read_exactly(n) | fail
+      if /s then {
+         &why := "End of file"
+         fail
       }
       return s
    end
@@ -1646,11 +1658,9 @@ class ExprStream(LineBasedStream)
 
    protected read_line_impl()
       local t
-      if t := @coex then {
+      if t := @coex then
          t := string(t) | runerr(103, t)
-         return t
-      }
-      return
+      return t
    end
 
    public close()
