@@ -84,8 +84,7 @@ void ilink(struct file_param *link_files, int *fatals, int *warnings)
     }
 
     /* Phase 1a - resolve invocables, superclass identifiers */
-    if (!strinv)
-        resolve_invocables();
+    resolve_invocables();
     resolve_supers();
     compute_inheritance();
 
@@ -100,7 +99,9 @@ void ilink(struct file_param *link_files, int *fatals, int *warnings)
     check_unused_imports();
 
     /* Phase II:  suppress unreferenced procs, unless "invocable all". */
-    if (!strinv) {
+    if (strinv)
+        add_functions();
+    else {
         scanrefs();
         if (lfatals > 0) {
             *warnings = lwarnings;

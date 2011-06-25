@@ -444,3 +444,9 @@ void resolve_invocables()
         inv->resolved = resolve_invocable(inv);
 }
 
+void add_functions()
+{
+#define FncDef(p) gb_locate(intern(Lit(p)));
+#include "../h/fdefs.h"
+#undef FncDef
+}
