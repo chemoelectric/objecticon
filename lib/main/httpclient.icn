@@ -366,9 +366,12 @@ class HttpClient(NetClient)
          if \request.post_stream then {
             # Just fail; the whole request will surely fail anyway.
             request.post_stream.seek(1) | fail
-            while s := request.post_stream.reads(1048576) do
+            repeat {
+               s := request.post_stream.in(1048576) | fail
+               if /s then
+                  break
                t.update(s)
-            request.post_stream.eof() | fail
+            }
          }
          hentity := t.final_str()
          md5.update(":" || hentity)
@@ -817,13 +820,15 @@ class HttpClient(NetClient)
          write_request_headers() | fail
          write_line() | fail
          request.post_stream.seek(1) | fail
-         while s := request.post_stream.reads(1048576) do {
-            if not write_str(s) then {
+         repeat {
+            s := request.post_stream.in(1048576) | fail
+            if /s then
+               break
+            write_str(s) | {
                f.close()
                fail
             }
          }
-         request.post_stream.eof() | fail
       } else {
          request.set_header("authorization", create_authorization_header())
          write_request_headers() | fail
@@ -967,7 +972,7 @@ class HttpClient(NetClient)
       # 
       # Make sure we actually read to the end of file
       #
-      eof() | {
+      &why == "End of file" | {
          close()
          fail
       }

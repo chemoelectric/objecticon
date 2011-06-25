@@ -44,10 +44,6 @@ class TaskStream(Stream)
       return
    end
 
-   public eof()
-      return other.eof()
-   end
-
    public get_mode()
       return other.get_mode()
    end

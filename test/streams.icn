@@ -164,11 +164,14 @@ procedure check_file(f, data)
 end
 
 procedure comp_with(f, data)
-   local s
+   local s, t
    f.seek(1) | stop(&why)
    s := ""
-   while s ||:= f.in(100)
-   f.eof() | stop(&why)
+   repeat {
+      t := f.in(100) | stop(&why)
+      if /t then break
+      s ||:= t
+   }
    yes_no{"Comparing", s == data}
 end
 
@@ -200,7 +203,6 @@ procedure test_dir()
    f := DirStream("testdir") | stop(&why)
    while insert(t, f.read())
    pr_seq{"Dir2", !sort(t)}
-   print{"eof()", f.eof()}
    f.close()
 end
 

@@ -79,7 +79,7 @@ class LineEditorStream(LineBasedStream)
       ss := StringStream()
       use {
          f := ProgInputStream("stty", params,,, nul),
-         protect_why{f.copy_to(ss)}
+         f.copy_to(ss)
       } | fail
       return if f.get_exit_info().param = 0 then
          ss.str()
@@ -91,11 +91,13 @@ class LineEditorStream(LineBasedStream)
       local s
       \isatty | return tty.read()
       if \ctrl_d_flag then
-         return at_eof()
+         return
       run_stty("-icanon",  "-echo")
-      s := read_impl2()
-      run_stty("icanon",  "echo")
-      return string(\s)
+      if s := read_impl2() then {
+         run_stty("icanon",  "echo")
+         return /s | string(s)
+      } else
+         run_stty("icanon",  "echo")
    end
 
    private read_impl2()
@@ -171,7 +173,7 @@ class LineEditorStream(LineBasedStream)
                   put(history, subj)
                   return subj
                } else
-                  return at_eof()
+                  return
             }
             "\^a": pos := 1
             "\^e": pos := *subj + 1
