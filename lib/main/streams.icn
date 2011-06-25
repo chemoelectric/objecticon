@@ -1605,8 +1605,12 @@ class GeneratorStream(LineBasedStream, NoCopy)
 
    protected read_impl()
       local t
+      if /coex then
+         return
       (t := @coex) | fail
-      if \t then
+      if /t then
+         coex := &null
+      else
          t := string(t) | runerr(103, t)
       return t
    end
