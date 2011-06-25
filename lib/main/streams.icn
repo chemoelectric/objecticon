@@ -140,11 +140,9 @@ class Stream()
    end
 
    #
-   # Read a complete line from the stream, reading up to the next "\n"
-   # or end-of-file.  In the former case, the "\n" and also any "\r"
-   # immediately before it is stripped from the result.
-   #
-   # Fails on end-of-file, setting {&why} to "End of file"
+   # This method is the same as {read_line}, except that on end of
+   # file it fails, setting {&why} to "End of file", rather than
+   # returning {&null}.
    #
    public read()
       local s
@@ -157,11 +155,12 @@ class Stream()
    end
 
    #
-   # Read {n} chars from the stream, failing on end-of-file or error.
-   # This method will try and return exactly {n} characters, and will
-   # only return less because of reaching the end-of-file.
+   # Read {n} chars from the stream.  This method will try and return
+   # exactly {n} characters, and will only return less because of
+   # reaching the end-of-file.
    #
-   # Fails on end-of-file, setting {&why} to "End of file"
+   # Fails on error or end-of-file, in the latter case setting {&why}
+   # to "End of file".
    #
    public reads(n)
       local s, t
