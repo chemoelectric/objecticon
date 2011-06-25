@@ -2280,7 +2280,7 @@ function io_DirStream_new_impl(path)
    }
 end
 
-function io_DirStream_read_impl(self)
+function io_DirStream_read_line_impl(self)
    body {
        struct dirent *de;
        tended struct descrip result;
@@ -2383,7 +2383,7 @@ function io_DirStream_new_impl(path)
    }
 end
 
-function io_DirStream_read_impl(self)
+function io_DirStream_read_line_impl(self)
    body {
        tended struct descrip result;
        GetSelfDir();

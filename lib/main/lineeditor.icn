@@ -93,18 +93,18 @@ class LineEditorStream(LineBasedStream)
          error("stty returned non-zero status")
    end
 
-   protected read_impl()
+   protected read_line_impl()
       \isatty | return tty.read()
       if \ctrl_d_flag then
          return
       return use {
          run_stty("-icanon",  "-echo"),
-         read_impl2(),
+         read_line_impl2(),
          run_stty("icanon",  "echo")
       }
    end
 
-   private read_impl2()
+   private read_line_impl2()
       local ch, p, n, ed, un
       subj := if \utf8_flag then u"" else ""
       pos := 1
