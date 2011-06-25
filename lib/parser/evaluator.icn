@@ -77,7 +77,6 @@ class Evaluator()
       scans,
       dispatch,
       cdispatch,
-      safe_flag,
       env,
       node
 
@@ -489,38 +488,10 @@ class Evaluator()
    
    public eval()
       (\env & \node) | runerr("eval() called without environment and/or node being set")
-      if /loops then {
-         loops := table()
-         scans := table()
-         simple_try { compute_loops(node) } | {
-            loops := scans := &null
-            fail
-         }
-      }
-
       brk := table()
       subject := table()
       pos := table()
-      if /safe_flag then
-         suspend E(node)
-      else {
-         suspend Safe{E(node)}
-         if &errortext then {
-            &why := if &errornumber then
-               "Runtime error " || &errornumber || ": " || &errortext
-            else
-               "Runtime error: " || &errortext
-            &why ||:= "; offending value: " || image(&errorvalue)
-            errorclear()
-            fail
-         }
-      }
-      &why := "No more results"
-   end
-
-   public set_safe(f)
-      safe_flag := check_flag(f)
-      return self
+      suspend E(node)
    end
 
    public set_env(env)
@@ -528,9 +499,14 @@ class Evaluator()
       return self
    end
 
-   public set_node(node)
-      self.node := node
-      self.loops := &null
+   public set_node(n)
+      loops := table()
+      scans := table()
+      node := n
+      simple_try { compute_loops(n) } | {
+         node := loops := scans := &null
+         fail
+      }
       return self
    end
 

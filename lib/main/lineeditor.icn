@@ -79,7 +79,7 @@ class LineEditorStream(LineBasedStream)
       ss := StringStream()
       use {
          f := ProgInputStream("stty", params,,, nul),
-         f.copy_to(ss)
+         protect_why{f.copy_to(ss)}
       } | fail
       return if f.get_exit_info().param = 0 then
          ss.str()
@@ -94,8 +94,7 @@ class LineEditorStream(LineBasedStream)
          return at_eof()
       run_stty("-icanon",  "-echo")
       s := read_impl2()
-      # Save &why whilst resetting terminal
-      save_var{ run_stty("icanon",  "echo"), &why }
+      run_stty("icanon",  "echo")
       return string(\s)
    end
 
