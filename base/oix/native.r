@@ -1479,16 +1479,7 @@ end
 #endif
 
 static struct sdescrip fdf = {2, "fd"};
-static struct sdescrip eof_flagf = {8, "eof_flag"};
 static struct sdescrip dsclassname = {13, "io.DescStream"};
-
-#begdef GetSelfEofFlag()
-dptr self_eof_flag;
-static struct inline_field_cache self_eof_flag_ic;
-self_eof_flag = c_get_instance_data(&self, (dptr)&eof_flagf, &self_eof_flag_ic);
-if (!self_eof_flag)
-   syserr("Missing eof_flag field");
-#enddef
 
 #begdef FdStaticParam(p, m)
 int m;
@@ -1604,19 +1595,14 @@ function io_FileStream_in(self, i)
 
        nread = read(self_fd, StrLoc(s), i);
        if (nread <= 0) {
-           GetSelfEofFlag();
-
            /* Reset the memory just allocated */
            dealcstr(StrLoc(s));
 
            if (nread < 0) {
-               *self_eof_flag = nulldesc;
                errno2why();
-           } else {  /* nread == 0 */
-               *self_eof_flag = onedesc;
-               LitWhy("End of file");
-           }
-           fail;
+               fail;
+           } else   /* nread == 0 */
+               return nulldesc;
        }
 
        StrLen(s) = nread;
@@ -1806,19 +1792,14 @@ function io_SocketStream_in(self, i)
 
        nread = recv(self_fd, StrLoc(s), i, 0);
        if (nread <= 0) {
-           GetSelfEofFlag();
-
            /* Reset the memory just allocated */
            dealcstr(StrLoc(s));
 
            if (nread < 0) {
-               *self_eof_flag = nulldesc;
                errno2why();
-           } else {  /* nread == 0 */
-               *self_eof_flag = onedesc;
-               LitWhy("End of file");
-           }
-           fail;
+               fail;
+           } else  /* nread == 0 */
+               return nulldesc;
        }
 
        StrLen(s) = nread;
@@ -2479,15 +2460,11 @@ function io_DirStream_read_impl(self)
           long n;
           n = dirread(self_dir->fd, &st);
           if (n <= 0) {
-              GetSelfEofFlag();
               if (n < 0) {
-                  *self_eof_flag = nulldesc;
                   errno2why();
-              } else { /* n == 0 */
-                  *self_eof_flag = onedesc;
-                  LitWhy("End of file");
-              }
-              fail;
+                  fail;
+              } else  /* n == 0 */
+                  return nulldesc;
           }
           free(self_dir->st);
           self_dir->st = st;
@@ -2549,15 +2526,11 @@ function io_DirStream_read_impl(self)
        errno = 0;
        de = readdir(self_dir);
        if (!de) {
-           GetSelfEofFlag();
            if (errno) {
-               *self_eof_flag = nulldesc;
                errno2why();
-           } else {
-               *self_eof_flag = onedesc;
-               LitWhy("End of file");
-           }
-           fail;
+               fail;
+           } else
+               return nulldesc;
        }
        cstr2string(de->d_name, &result);
        return result;
@@ -2650,23 +2623,15 @@ function io_DirStream_read_impl(self)
    body {
        tended struct descrip result;
        GetSelfDir();
-       if (self_dir->status == EMPTY) {
-           GetSelfEofFlag();
-	   *self_eof_flag = onedesc;
-	   LitWhy("End of file");
-           fail;
-       }
+       if (self_dir->status == EMPTY)
+           return nulldesc;
        if (self_dir->status == FIRST) {
 	  cstr2string(self_dir->fileData.cFileName, &result);
 	  self_dir->status = MORE;
 	  return result;
        }
-       if (!FindNextFile(self_dir->handle, &self_dir->fileData)) {
-           GetSelfEofFlag();
-	   *self_eof_flag = onedesc;
-	   LitWhy("End of file");
-           fail;
-       }
+       if (!FindNextFile(self_dir->handle, &self_dir->fileData))
+           return nulldesc;
        cstr2string(self_dir->fileData.cFileName, &result);
        return result;
    }
@@ -3476,12 +3441,8 @@ function io_RamStream_in(self, i)
        if (i <= 0)
            Irunerr(205, i);
 
-       if (self_rs->pos >= self_rs->size) {
-           GetSelfEofFlag();
-           *self_eof_flag = onedesc;
-           LitWhy("End of file");
-           fail;
-       }
+       if (self_rs->pos >= self_rs->size)
+           return nulldesc;
 
        i = Min(i, self_rs->size - self_rs->pos);
        bytes2string(&self_rs->data[self_rs->pos], i, &result);
@@ -4518,19 +4479,14 @@ function io_SslStream_in(self, i)
 
        nread = SSL_read(self_ssl->ssl, StrLoc(s), i);
        if (nread <= 0) {
-           GetSelfEofFlag();
-
            /* Reset the memory just allocated */
            dealcstr(StrLoc(s));
 
            if (nread < 0 || SSL_get_error(self_ssl->ssl, nread) != SSL_ERROR_ZERO_RETURN) {
-               *self_eof_flag = nulldesc;
                whyf("SSL_read: %s", ERR_error_string(SSL_get_error(self_ssl->ssl, nread), 0));
-           } else {  /* nread == 0 */
-               *self_eof_flag = onedesc;
-               LitWhy("End of file");
-           }
-           fail;
+               fail;
+           } else   /* nread == 0 */
+               return nulldesc;
        }
 
        StrLen(s) = nread;

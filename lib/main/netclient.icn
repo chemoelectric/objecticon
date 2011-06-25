@@ -233,14 +233,17 @@ $else
    # Low-level read on the connection. 
    #
    private recv(len)
-      local r
+      local r, s
       r := do_poll(Poll.IN) | return error("Receive poll failed: " || &why)
       if /r then return error("Receive failed (timeout)")
       poll_in_test(r[1]) | return error("Receive failed (socket error)")
-      return if \ssl_connection then
+      s := (if \ssl_connection then
          ssl_connection.in(len)
       else
-         connection.in(len)
+         connection.in(len)) | fail
+      if /s then
+         return error("End of file")
+      return s
    end
 $endif
 
@@ -306,13 +309,6 @@ $endif
    protected is_open()
       if \self.connection then
          return
-   end
-
-   protected eof()
-      return if \ssl_connection then
-         ssl_connection.eof()
-      else
-         connection.eof()
    end
 
    #

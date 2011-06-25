@@ -606,30 +606,31 @@ class SelectableScrollArea(LineBasedScrollArea)
    public scroll_tick()
       local i
       repeat {
-         start_handle()
-         i := get_line_info() | fail
-         if \self.highlight then {
-            if \going_up then {
-               self.highlight := i.first_whole - 1
-               self.highlight <:= 1
-               goto_first(self.highlight)
+         if i := get_line_info() then {
+            start_handle()
+            if \self.highlight then {
+               if \going_up then {
+                  self.highlight := i.first_whole - 1
+                  self.highlight <:= 1
+                  goto_first(self.highlight)
+               } else {
+                  self.highlight := i.last_whole + 1
+                  self.highlight >:= *self.contents 
+                  goto_last(self.highlight)
+               }
             } else {
-               self.highlight := i.last_whole + 1
-               self.highlight >:= *self.contents 
-               goto_last(self.highlight)
+               if \going_up then {
+                  self.cursor := i.first_whole - 1
+                  self.cursor <:= 1
+                  goto_first(self.cursor)
+               } else {
+                  self.cursor := i.last_whole + 1
+                  self.cursor >:= *self.contents 
+                  goto_last(self.cursor)
+               }
             }
-         } else {
-            if \going_up then {
-               self.cursor := i.first_whole - 1
-               self.cursor <:= 1
-               goto_first(self.cursor)
-            } else {
-               self.cursor := i.last_whole + 1
-               self.cursor >:= *self.contents 
-               goto_last(self.cursor)
-            }
+            end_handle()
          }
-         end_handle()
          scroll_ticker.sleep(scroll_ticker_interval)
       }
    end

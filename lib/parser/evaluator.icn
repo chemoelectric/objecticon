@@ -2,20 +2,55 @@ $include "oigram_tab.icn"
 
 package parser
 
-import ipl.pdco, lang, util, exception
+import ipl.pdco, ipl.lists, lang, util, exception
 
 class EvaluatorEnv()
-   public defer get()
+   public defer get(k, ev)
 end
 
 class DefaultEvaluatorEnv(EvaluatorEnv)
    private 
-      t,
+      table,
       write_globals_flag
 
-   public get(k)
-      return (if \write_globals_flag then lang.Prog.get_global(k)
-              else .lang.Prog.get_global(k)) | t[k]
+   public get(k, ev)
+      return (if \write_globals_flag then glookup(k, ev) else .glookup(k, ev)) | tlookup(k)
+   end
+
+   private tlookup(k)
+      if upto('.', k) then {
+         k ? if ="default." then
+            return table[tab(0)]
+         runerr("no such id: " || k)
+      }
+      return table[k]
+   end
+
+   private glookup(k, ev)
+      local t, f, s
+      if upto('.', k) then {
+         return k ? if ="default." then
+            lang.Prog.get_global(tab(0))
+         else
+            lang.Prog.get_global(k)
+      }
+      t := []
+      if lang.Prog.get_global(k) then
+         put(t, k)
+      every s := !ev.get_imports() do {
+         f := s || "." || k
+         if lang.Prog.get_global(f) then
+            put(t, f)
+      }
+      if *t = 1 then
+         return lang.Prog.get_global(t[1])
+      if *t > 1 then
+         runerr("ambiguous name: " || k || "(" || list2str(t) || ")")
+   end
+
+   public set_table(t)
+      self.table := t
+      return self
    end
 
    public set_write_globals(f)
@@ -25,7 +60,7 @@ class DefaultEvaluatorEnv(EvaluatorEnv)
 
    public new(t)
       /t := table()
-      self.t := t
+      self.table := t
       return
    end
 end
@@ -36,12 +71,12 @@ class Evaluator()
       loops,
       brk,
       subject,
+      imports,
       pos,
       # Map of nodes (loops, breaks) to the topmost scan node in the enclosing loop
       scans,
       dispatch,
       cdispatch,
-      safe_flag,
       env,
       node
 
@@ -322,11 +357,11 @@ class Evaluator()
    end
 
    private do_dottedident(n)
-      local lhs
-      lhs := n.child(1)
-      if is(lhs, Token) & lhs.tok = DEFAULT then
-         runerr("default not allowed here")
-      suspend lang.Class.get(E(lhs), n.child(3).s)
+      local ls
+      ls := Util.dottedid2string(n.child(1))
+      if (ls == "default") | member(\imports, ls) then
+         return env.get(ls || "." || n.child(3).s, self)
+      suspend lang.Class.get(E(n.child(1)), n.child(3).s)
    end
 
    private do_keyword(n) 
@@ -444,7 +479,7 @@ class Evaluator()
    private E(n)
       if is(n, Token) then
          return case n.tok of {
-            IDENT: env.get(n.s)
+            IDENT: env.get(n.s, self)
             INTLIT|REALLIT|STRINGLIT|CSETLIT|UCSLIT: n.val
             default : fatalerr("not implemented: token " || to_string(n))
          }
@@ -453,38 +488,10 @@ class Evaluator()
    
    public eval()
       (\env & \node) | runerr("eval() called without environment and/or node being set")
-      if /loops then {
-         loops := table()
-         scans := table()
-         simple_try { compute_loops(node) } | {
-            loops := scans := &null
-            fail
-         }
-      }
-
       brk := table()
       subject := table()
       pos := table()
-      if /safe_flag then
-         suspend E(node)
-      else {
-         suspend Safe{E(node)}
-         if &errortext then {
-            &why := if &errornumber then
-               "Runtime error " || &errornumber || ": " || &errortext
-            else
-               "Runtime error: " || &errortext
-            &why ||:= "; offending value: " || image(&errorvalue)
-            errorclear()
-            fail
-         }
-      }
-      &why := "No more results"
-   end
-
-   public set_safe(f)
-      safe_flag := check_flag(f)
-      return self
+      suspend E(node)
    end
 
    public set_env(env)
@@ -492,10 +499,24 @@ class Evaluator()
       return self
    end
 
-   public set_node(node)
-      self.node := node
-      self.loops := &null
+   public set_node(n)
+      loops := table()
+      scans := table()
+      node := n
+      simple_try { compute_loops(n) } | {
+         node := loops := scans := &null
+         fail
+      }
       return self
+   end
+
+   public set_imports(t)
+      self.imports := t
+      return self
+   end
+
+   public get_imports()
+      return .imports
    end
 
    public new(env, node)

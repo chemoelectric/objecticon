@@ -112,7 +112,7 @@ static void resolve_global(struct lfile *lf, char *name)
      * toplevel first.
      */
     if (lf->package)
-        rres_found = glocate(join(lf->package, ".", name, 0));
+        rres_found = glocate(join(lf->package, ".", name, NULL));
     else
         rres_found = gb_locate(name);
 
@@ -125,7 +125,7 @@ static void resolve_global(struct lfile *lf, char *name)
          * If it's unqualified, or has the symbol...
          */
         if (!fp->qualified || (is = lookup_fimport_symbol(fp, name))) {
-            abs = join(fp->name, ".", name, 0);
+            abs = join(fp->name, ".", name, NULL);
             gl = glocate(abs);
             if (gl) {
                 fp->used = 1;
@@ -444,3 +444,9 @@ void resolve_invocables()
         inv->resolved = resolve_invocable(inv);
 }
 
+void add_functions()
+{
+#define FncDef(p) gb_locate(intern(Lit(p)));
+#include "../h/fdefs.h"
+#undef FncDef
+}

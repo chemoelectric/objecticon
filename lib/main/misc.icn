@@ -105,3 +105,13 @@ procedure save_scan(e)
       fail
    }
 end
+
+# This function saves {&why} before evaluating {e}.  If {e} succeeds,
+# {&why} is restored, and the result returned; otherwise {&why} is not
+# restored and the procedure fails.
+#
+procedure protect_why(e)
+   local t
+   t := &why
+   return 1(@e, &why := t)
+end

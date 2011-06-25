@@ -26,7 +26,6 @@ class Stream()
       ALL
 
    protected
-      eof_flag,
       close_underlying_flag
 
    private static init()
@@ -39,10 +38,8 @@ class Stream()
    end
 
    #
-   # Return at least one, and up to n characters from the stream, or
-   # fail if either at end-of-file or on error.  After failure, the
-   # {eof()} method can be used to check for end-of-file, and {&why} is
-   # set in any case.
+   # Return at least one, and up to n characters from the stream.  On
+   # end-of-file, return {&null}.  On error, fail and set {&why}.
    #
    # @param n the maximum number of chars to read.
    #
@@ -95,17 +92,6 @@ class Stream()
    public defer close()
 
    #
-   # After an attempt to read from the stream (by calling {in},
-   # {read}, or {reads}) has failed, this method can be used to see if
-   # the failure was because the stream was at the end-of-file.  Note
-   # that this flag does not convey any meaningful information if the
-   # read succeeded, or at any other time.
-   #
-   public eof()
-      return \.eof_flag
-   end
-
-   #
    # Succeed iff the stream's mode has all the flags in {c}
    #
    public can(c)
@@ -131,45 +117,67 @@ class Stream()
    # or end-of-file.  In the former case, the "\n" and also any "\r"
    # immediately before it is stripped from the result.
    #
-   public read()
+   # Returns {&null} on end-of-file
+   #
+   public read_line()
       local s, c
       s := ""
       repeat {
-         if c := in(1) then {
-            if c == "\n" then {
-               if s[-1] == "\r" then
-                  s[-1] := ""
-               return s
-            } else
-               s ||:= c
-         } else {
-            if eof() & (*s > 0) then
+         c := in(1) | fail
+         if /c then {
+            if *s > 0 then
                return s
             else
-               fail
+               return
          }
+         if c == "\n" then {
+            if s[-1] == "\r" then
+               s[-1] := ""
+            return s
+         } else
+            s ||:= c
       }
    end
 
    #
-   # Read {n} chars from the stream.  The only difference between this
-   # and {in} is that this method will try and return exactly {n}
-   # characters, and will only return less because of reaching the
-   # end-of-file.
+   # Read a complete line from the stream, reading up to the next "\n"
+   # or end-of-file.  In the former case, the "\n" and also any "\r"
+   # immediately before it is stripped from the result.
+   #
+   # Fails on end-of-file, setting {&why} to "End of file"
+   #
+   public read()
+      local s
+      s := read_line() | fail
+      if /s then {
+         &why := "End of file"
+         fail
+      }
+      return s
+   end
+
+   #
+   # Read {n} chars from the stream, failing on end-of-file or error.
+   # This method will try and return exactly {n} characters, and will
+   # only return less because of reaching the end-of-file.
+   #
+   # Fails on end-of-file, setting {&why} to "End of file"
    #
    public reads(n)
       local s, t
       s := ""
       while n > 0 do {
-         if t := in(n) then {
-            s ||:= t
-            n -:= *t
-         } else {
-            if eof() & (*s > 0) then
+         t := in(n) | fail
+         if /t then {
+            if *s > 0 then
                return s
-            else
+            else {
+               &why := "End of file"
                fail
+            }
          }
+         s ||:= t
+         n -:= *t
       }
       return s
    end
@@ -202,11 +210,14 @@ class Stream()
    # a string.
    #
    public read_all()
-      local s
+      local s, t
       s := ""
-      while s ||:= in(1048576)
-      eof() | fail
-      return s
+      repeat {
+         t := in(1048576) | fail
+         if /t then
+            return s
+         s ||:= t
+      }
    end
 
    #
@@ -215,18 +226,12 @@ class Stream()
    #
    public copy_to(f)
       local s
-      while s := in(1048576) do
+      repeat {
+         s := in(1048576) | fail
+         if /s then
+            return
          f.writes(s) | fail
-      eof() | fail
-      return
-   end
-
-   #
-   # Convenient method to set {eof_flag} and {&why}.
-   #
-   protected at_eof()
-      eof_flag := 1
-      error("End of file")
+      }
    end
 
    #
@@ -252,7 +257,7 @@ class StringStream(Stream)
    public in(n)
       local t, e
       if pos > *subj then
-         return at_eof()
+         return
       e := min(pos + n, *subj + 1)
       t := subj[pos:e]
       pos := e
@@ -327,7 +332,7 @@ end
 #
 class NullStream(Stream)
    public in(n)
-      at_eof()
+      return
    end
 
    public out(s)
@@ -422,9 +427,8 @@ class BufferStream(Stream)
       return self
    end
 
-   public read()
+   public read_line()
       local t
-      eof_flag := &null
       flush() | fail
       repeat {
          rbuff ? {
@@ -437,19 +441,17 @@ class BufferStream(Stream)
          }
          if *rbuff = 0 & other.can(SEEK) then
             rpos := other.tell() | fail
-         rbuff ||:= other.in(buff_size) | {
-            other.eof() | fail
+         t := other.in(buff_size) | fail
+         if /t then {
             t := rbuff
             rbuff := ""
             rpos := &null
             break
          }
+         rbuff ||:= t
       }
-      if *t = 0 then {
-         # other.in should've set &why
-         eof_flag := 1
-         fail
-      }
+      if *t = 0 then
+         return
       if t[-1] == "\n" then {
          t[-1] := ""
          if t[-1] == "\r" then
@@ -460,7 +462,6 @@ class BufferStream(Stream)
 
    public in(n)
       local t
-      eof_flag := &null
       flush() | fail
       if *rbuff > 0 then {
          rbuff ? {
@@ -471,22 +472,18 @@ class BufferStream(Stream)
       } else if n < buff_size then {
          if other.can(SEEK) then
             rpos := other.tell() | fail
-         rbuff := other.in(buff_size) | {
-            if other.eof() then
-               eof_flag := 1
-            fail
-         }
-         rbuff ? {
+         t := other.in(buff_size) | fail
+         if /t then
+            return
+         t ? {
             t := move(n) | tab(0)
             rbuff := tab(0)
             \rpos +:= *t
          }
       } else {
-         t := other.in(n) | {
-            if other.eof() then
-               eof_flag := 1
-            fail
-         }
+         t := other.in(n) | fail
+         if /t then
+            return
       }
       return t
    end
@@ -1170,13 +1167,13 @@ end
 
 #
 # Parent class for classes which wish to define in() in terms of
-# read(), rather than the other way round.
+# reading one line at time, rather than the other way round.
 #
 class LineBasedStream(Stream)
    private
       line
 
-   public read()
+   public read_line()
       local t
       if *line > 0 then {
          t := line[1:-*Files.EOL]
@@ -1188,17 +1185,22 @@ class LineBasedStream(Stream)
 
    public in(n)
       local t
-      if (*line > 0) | (line := read_impl() || Files.EOL) then {
-         line ? {
-            t := move(n) | tab(0)
-            line := tab(0)
-         }
-         return t
+      if *line = 0 then {
+         t := read_impl() | fail
+         if /t then
+            return
+         line := t || Files.EOL
       }
+      line ? {
+         t := move(n) | tab(0)
+         line := tab(0)
+      }
+      return t
    end
 
    #
-   # Implemented to read a single line.  The EOL should not be included.
+   # Implemented to read a single line.  The EOL should not be
+   # included.  Fails on error and returns {&null} on end-of-file
    #
    protected defer read_impl()
 
@@ -1620,36 +1622,28 @@ class FilterInputStream(Stream, BgProc, NoCopy)
    end
 
    public in(n)
-      local x, t
+      local x, i
       if /cout then
-         return read_cin(n)
+         return cin.in(n)
       repeat {
          x := (if /task then DescStream else task).poll([cin, Poll.IN, cout, Poll.OUT]) | fail
          if poll_in_test(x[1]) then
-            return read_cin(n)
+            return cin.in(n)
          else if poll_out_test(x[2]) then {
             if *buff = 0 then {
-               buff := source.in(1048576) | {
-                  source.eof() | fail
+               buff := source.in(1048576) | fail
+               if /buff then {
                   cout.close()
                   cout := &null
                   cin.flag(,FileOpt.NONBLOCK) | fail
-                  return read_cin(n)
+                  return cin.in(n)
                }
             }
-            t := cout.out(buff) | fail
-            buff := buff[t + 1:0]
+            i := cout.out(buff) | fail
+            buff := buff[i + 1:0]
          } else
             return error("filter: child command i/o failed")
       }
-   end
-
-   private read_cin(n)
-      local s
-      if s := cin.in(n) then
-         return s
-      if cin.eof() then
-         eof_flag := 1
    end
 
    #
@@ -1938,10 +1932,10 @@ class SequenceStream(Stream)
       local s
       repeat {
          if *a = 0 then
-            return at_eof()
-         if s := a[1].in(n) then
+            return
+         s := a[1].in(n) | fail
+         if \s then
             return s
-         a[1].eof() | fail
          pop(a)
       }
    end
@@ -1978,7 +1972,8 @@ class GeneratorStream(LineBasedStream, NoCopy)
    protected read_impl()
       local t
       (t := @coex) | fail
-      t := string(t) | runerr(103, t)
+      if \t then
+         t := string(t) | runerr(103, t)
       return t
    end
 
@@ -2016,7 +2011,7 @@ class ExprStream(GeneratorStream)
 
    protected gen()
       suspend |@x
-      at_eof()
+      return
    end
 
    public new(x)
@@ -2045,10 +2040,10 @@ class LineFilterStream(GeneratorStream)
 
    protected expect_line()
       local s
-      if s := other.read() then
+      s := other.read() | fail
+      if \s then
          return s
-      if other.eof() then
-         error("Unexpected eof")
+      error("Unexpected eof")
    end
 
    public new(other)

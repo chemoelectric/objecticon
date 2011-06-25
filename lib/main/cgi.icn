@@ -12,7 +12,7 @@ class CgiParams()
       local rm, ct, msg, p, cd, key, multi, s
 
       stdin := ""
-      while stdin ||:= FileStream.stdin.in(1024) do
+      while stdin ||:= \FileStream.stdin.in(1024) do
          if *stdin > \stdin_limit then
             return error("Too much data read from stdin")
 

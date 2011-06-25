@@ -95,13 +95,14 @@ $else
    private static list1(path, p)
       local l, s, cpath
       l := []
-      while s := p.read() do {
+      repeat {
+         s := p.read_line() | fail
+         if /s then
+            return l
          cpath := path.child(s)
          put(l, [s, lstat(cpath.str())]) |
             return error("Couldn't lstat " || cpath.str() || ": " || &why)
       }
-      p.eof() | fail
-      return l
    end
 $endif
 
@@ -234,14 +235,15 @@ $endif
 
    private static equal_files1(f1, f2)
       local b1, b2
-      while b1 := f1.reads(1048576) do {
-         b2 := f2.reads(1048576) | fail
+      repeat {
+         b1 := f1.in(1048576) | fail
+         if /b1 then 
+            break
+         b2 := f2.reads(*b1) | fail
          b1 == b2 | fail
       }
-      # f1 should be at eof, and a further read of f2 should fail and
-      # set its eof flag.
-      (f1.eof() & not(f2.reads(1)) & f2.eof()) | fail
-      return 
+      # f1 is at eof, and a further read of f2 should be at eof.
+      return /f2.in(1)
    end
 
    #

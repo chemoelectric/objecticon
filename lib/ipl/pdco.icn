@@ -1206,6 +1206,26 @@ procedure Safe(e)
    }
 end
 
+# A useful wrapper around {Safe}.  {Safe} is called with {e} to get
+# its first result.  If no runerr occurs, then the result produced by
+# {e} is returned.  If {e} fails, {&null} is returned.  If a runerr
+# occurs, {errorclear} is called, {&why} is set and the procedure
+# fails.
+#
+procedure SimpleSafe(e)
+   local v
+   v := Safe(e)
+   if &errortext then {
+      &why := if &errornumber then
+         "Runtime error " || &errornumber || ": " || &errortext
+      else                                                     
+         "Runtime error: " || &errortext                       
+      &why ||:= "; offending value: " || image(&errorvalue)
+      errorclear()
+   } else
+      return v
+end
+
 # Dijkstra non-deterministic if construct
 procedure If(a[])
    local x, i

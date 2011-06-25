@@ -43,7 +43,7 @@ class ZipDirStream(LineFilterStream)
       repeat {
          s := expect_line() | fail
          if s == marker then
-            return at_eof()
+            return
          suspend s[31:0]
       }
    end
@@ -73,7 +73,7 @@ class RarDirStream(LineFilterStream)
       repeat {
          s := expect_line() | fail
          if s == marker then
-            return at_eof()
+            return
          suspend s[2:0]
          expect_line() | fail
       }
