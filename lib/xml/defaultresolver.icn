@@ -68,6 +68,7 @@ class DefaultResolver(Resolver)
    #
    public cache_uri(sys_id, val)
       insert(uri_cache, sys_id, val)
+      return self
    end
 
    public resolve(external_id)
