@@ -117,7 +117,7 @@ class DefaultResolver(Resolver)
          http_client,
          use {
             sb := RamStream(),
-            if http_client.retrieve(HttpRequest("url=",url, "data_stream=",sb)) then
+            if http_client.retrieve(HttpRequest().set_url(url).set_data_stream(sb)) then
                sb.str()
          }
       }
