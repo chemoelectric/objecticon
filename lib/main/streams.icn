@@ -41,7 +41,7 @@ class Stream()
    # Return at least one, and up to n characters from the stream.  On
    # end-of-file, return {&null}.  On error, fail and set {&why}.
    #
-   # @param n the maximum number of chars to read.
+   # @param n the maximum number of chars to read; n must be > 0.
    #
    public defer in(n)
 
@@ -140,11 +140,33 @@ class Stream()
    end
 
    #
-   # Read a complete line from the stream, reading up to the next "\n"
-   # or end-of-file.  In the former case, the "\n" and also any "\r"
-   # immediately before it is stripped from the result.
+   # Read {n} chars from the stream.  This method will try and return
+   # exactly {n} characters, and will only return less because of
+   # reaching the end-of-file.
    #
-   # Fails on end-of-file, setting {&why} to "End of file"
+   # Returns {&null} on end-of-file
+   #
+   public read_exactly(n)
+      local s, t
+      s := ""
+      while n > 0 do {
+         t := in(n) | fail
+         if /t then {
+            if *s > 0 then
+               return s
+            else
+               return
+         }
+         s ||:= t
+         n -:= *t
+      }
+      return s
+   end
+
+   #
+   # This method is the same as {read_line}, except that on end of
+   # file it fails, setting {&why} to "End of file", rather than
+   # returning {&null}.
    #
    public read()
       local s
@@ -157,27 +179,16 @@ class Stream()
    end
 
    #
-   # Read {n} chars from the stream, failing on end-of-file or error.
-   # This method will try and return exactly {n} characters, and will
-   # only return less because of reaching the end-of-file.
-   #
-   # Fails on end-of-file, setting {&why} to "End of file"
+   # This method is the same as {read_exactly}, except that on end of
+   # file it fails, setting {&why} to "End of file", rather than
+   # returning {&null}.
    #
    public reads(n)
-      local s, t
-      s := ""
-      while n > 0 do {
-         t := in(n) | fail
-         if /t then {
-            if *s > 0 then
-               return s
-            else {
-               &why := "End of file"
-               fail
-            }
-         }
-         s ||:= t
-         n -:= *t
+      local s
+      s := read_exactly(n) | fail
+      if /s then {
+         &why := "End of file"
+         fail
       }
       return s
    end
@@ -1180,13 +1191,13 @@ class LineBasedStream(Stream)
          line := ""
          return t
       }
-      return read_impl()
+      return read_line_impl()
    end
 
    public in(n)
       local t
       if *line = 0 then {
-         t := read_impl() | fail
+         t := read_line_impl() | fail
          if /t then
             return
          line := t || Files.EOL
@@ -1198,11 +1209,15 @@ class LineBasedStream(Stream)
       return t
    end
 
+   public get_mode()
+      return READ
+   end
+
    #
    # Implemented to read a single line.  The EOL should not be
    # included.  Fails on error and returns {&null} on end-of-file
    #
-   protected defer read_impl()
+   protected defer read_line_impl()
 
    protected new()
       self.line := ""
@@ -1217,15 +1232,11 @@ class DirStream(LineBasedStream, NoCopy)
    private 
       dd
 
-   protected defer read_impl()
+   protected defer read_line_impl()
 
    public defer close()
 
    private static defer new_impl(path)
-
-   public get_mode()
-      return READ
-   end
 
    public new(path)
       cast(self,LineBasedStream).new()
@@ -1513,16 +1524,19 @@ class FilterOutputStream(Stream, BgProc, NoCopy)
    end
 
    public out(s)
-      local x
+      local x, t
       s := string(s) | runerr(103, s)
       repeat {
          x := (if /task then DescStream else task).poll([cin, Poll.IN, cout, Poll.OUT]) | fail
-         if poll_in_test(x[1]) then
-            sink.fully_out(cin.in(1048576)) | fail
-         else if poll_out_test(x[2]) then
+         if poll_in_test(x[1]) then {
+            t := cin.in(1048576) | fail
+            if /t then
+               return error("child command gave unexpected eof")
+            sink.fully_out(t) | fail
+         } else if poll_out_test(x[2]) then
             return cout.out(s)
          else
-            return error("filter: child command i/o failed")
+            return error("child command i/o failed")
       }
    end
 
@@ -1642,7 +1656,7 @@ class FilterInputStream(Stream, BgProc, NoCopy)
             i := cout.out(buff) | fail
             buff := buff[i + 1:0]
          } else
-            return error("filter: child command i/o failed")
+            return error("child command i/o failed")
       }
    end
 
@@ -1969,16 +1983,16 @@ class GeneratorStream(LineBasedStream, NoCopy)
    private
       coex
 
-   protected read_impl()
+   protected read_line_impl()
       local t
-      (t := @coex) | fail
-      if \t then
+      if /coex then
+         return
+      t := @coex | fail
+      if /t then
+         coex := &null
+      else
          t := string(t) | runerr(103, t)
       return t
-   end
-
-   public get_mode()
-      return READ
    end
 
    public close()
@@ -1986,7 +2000,9 @@ class GeneratorStream(LineBasedStream, NoCopy)
    end
 
    #
-   # Generates the lines of the stream.
+   # Generates the lines of the stream.  End-of-file is signalled by
+   # returning {&null} and errors are signalled by failing and setting
+   # {&why}.
    #
    protected defer gen()
 
@@ -2005,18 +2021,24 @@ end
 # @   # A stream with 10 lines
 # @   e := ExprStream{1 to 10}
 #
-class ExprStream(GeneratorStream)
+class ExprStream(LineBasedStream)
    private
-      x
+      coex
 
-   protected gen()
-      suspend |@x
+   protected read_line_impl()
+      local t
+      if t := @coex then
+         t := string(t) | runerr(103, t)
+      return t
+   end
+
+   public close()
       return
    end
 
-   public new(x)
-      self.x := x
-      return cast(self,GeneratorStream).new()
+   public new(coex)
+      self.coex := coex
+      return cast(self,LineBasedStream).new()
    end
 end
 

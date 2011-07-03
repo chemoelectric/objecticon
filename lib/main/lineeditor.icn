@@ -7,6 +7,7 @@ class LineEditorStream(LineBasedStream)
       subj,
       pos
    private
+      history_limit,
       history,
       hpos,
       hmod,
@@ -20,6 +21,11 @@ class LineEditorStream(LineBasedStream)
       nul,
       dim,
       utf8_flag
+
+   public set_history_limit(n)
+      self.history_limit := n
+      return self
+   end
 
    public set_history(l)
       self.history := l
@@ -87,20 +93,18 @@ class LineEditorStream(LineBasedStream)
          error("stty returned non-zero status")
    end
 
-   protected read_impl()
-      local s
+   protected read_line_impl()
       \isatty | return tty.read()
       if \ctrl_d_flag then
          return
-      run_stty("-icanon",  "-echo")
-      if s := read_impl2() then {
+      return use {
+         run_stty("-icanon",  "-echo"),
+         read_line_impl2(),
          run_stty("icanon",  "echo")
-         return /s | string(s)
-      } else
-         run_stty("icanon",  "echo")
+      }
    end
 
-   private read_impl2()
+   private read_line_impl2()
       local ch, p, n, ed, un
       subj := if \utf8_flag then u"" else ""
       pos := 1
@@ -171,7 +175,9 @@ class LineEditorStream(LineBasedStream)
                tty.write()
                if *subj > 0 then {
                   put(history, subj)
-                  return subj
+                  if *history > \history_limit then
+                     pop(history)
+                  return string(subj)
                } else
                   return
             }
@@ -193,9 +199,12 @@ class LineEditorStream(LineBasedStream)
             }
             "\n": {
                tty.write()
-               if *subj > 0 then
+               if *subj > 0 then {
                   put(history, subj)
-               return subj
+                  if *history > \history_limit then
+                     pop(history)
+               }
+               return string(subj)
             }
             default: {
                if any('\x20-\x7e\x80-\U10ffff', ch) then {

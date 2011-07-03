@@ -66,6 +66,7 @@ procedure exprfile(exp, links[])
 
    Files.remove(\name)			# remove former executable
    close(\input)			# and close last pipe
+   if /exp then fail
 
    name := Files.make_temp_filename("expr")
    output := open(name || ".icn", "w") | fail

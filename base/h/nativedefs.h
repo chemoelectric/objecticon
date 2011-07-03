@@ -138,7 +138,7 @@ NativeDef(io.DescStream,dup2_impl,io_DescStream_dup2_impl)
 NativeDef(io.DescStream,wstat,io_DescStream_wstat)
 NativeDef(io.DirStream,close,io_DirStream_close)
 NativeDef(io.DirStream,new_impl,io_DirStream_new_impl)
-NativeDef(io.DirStream,read_impl,io_DirStream_read_impl)
+NativeDef(io.DirStream,read_line_impl,io_DirStream_read_line_impl)
 NativeDef(io.FileStream,close,io_FileStream_close)
 #if PLAN9
 NativeDef(io.FileStream,create_impl,io_FileStream_create_impl)

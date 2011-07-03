@@ -68,6 +68,7 @@ class DefaultResolver(Resolver)
    #
    public cache_uri(sys_id, val)
       insert(uri_cache, sys_id, val)
+      return self
    end
 
    public resolve(external_id)
@@ -117,7 +118,7 @@ class DefaultResolver(Resolver)
          http_client,
          use {
             sb := RamStream(),
-            if http_client.retrieve(HttpRequest("url=",url, "data_stream=",sb)) then
+            if http_client.retrieve(HttpRequest().set_url(url).set_data_stream(sb)) then
                sb.str()
          }
       }

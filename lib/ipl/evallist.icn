@@ -45,7 +45,7 @@ procedure evallist(expr, n, ucode[])
    input := exprfile ! ucode | fail
 
    result := []
-   every put(result, !input) \ n
+   every put(result, |input.read()) \ n
 
    exprfile()				# clean up
 

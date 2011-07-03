@@ -64,19 +64,15 @@ class File9P()
       self.qversion +:= 1
       self.muid := uid
       self.mtime := Time.get_system_seconds()
-      return self
    end
 
    public open(mode)
-      return self
    end
 
    public close()
-      return self
    end
 
    public path_unreferenced()
-      return self
    end
 
    public get_parent()
@@ -267,7 +263,6 @@ class Regular9PImpl(Regular9P)
       if iand(self.perm, Mode9.DMAPPEND) = 0 &
          iand(mode, FileOpt9.OTRUNC) ~= 0 then
          data := ""
-      return self
    end
 
    public set_length(len)
@@ -286,7 +281,6 @@ class Regular9PImpl(Regular9P)
             data[pos:min(pos + *s, *data + 1)] := s
       } else
          data ||:= s
-      return self
    end
 
    public read(pos, count)
@@ -752,7 +746,6 @@ class TreeData9P(Data9P)
 
    public delete_child(p1, p2)
       p1.delete_child(p2)
-      return self
    end
 
    public create_child(p, name, uid, perm)
@@ -765,17 +758,14 @@ class TreeData9P(Data9P)
    
    public modified(p, uid)
       p.modified(uid)
-      return self
    end
 
    public open(p, mode)
       p.open(mode)
-      return self
    end
 
    public write(p, s, pos)
       p.write(s, pos)
-      return self
    end
 
    public read(p, pos, count)
@@ -784,7 +774,6 @@ class TreeData9P(Data9P)
 
    public close(p)
       p.close()
-      return self
    end
 
    public get_info(p)
@@ -793,7 +782,6 @@ class TreeData9P(Data9P)
 
    public set_info(p, x)
       p.set_info(x)
-      return self
    end
 
    public get_qid(p)
@@ -802,7 +790,6 @@ class TreeData9P(Data9P)
 
    public path_unreferenced(p)
       p.path_unreferenced()
-      return self
    end
 
    public new(root)
