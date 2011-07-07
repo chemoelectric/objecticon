@@ -94,7 +94,7 @@ class LineEditorStream(LineBasedStream)
    end
 
    protected read_line_impl()
-      \isatty | return tty.read()
+      \isatty | return tty.read_line()
       if \ctrl_d_flag then
          return
       return use {
