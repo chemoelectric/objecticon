@@ -218,7 +218,7 @@ procedure getentry(name, termcap_string)
 
 	if find("/",\termcap_string)
 	then f := open(termcap_string)
-	/f := open("/etc/termcap") |
+	/f := open("/etc/termcap") | open("infocmp -C " || name, "pr") |
 	    er("getentry","I can't access your /etc/termcap file",1)
 
 	getline := create read_file(f)
@@ -240,7 +240,7 @@ procedure getentry(name, termcap_string)
 		    }
 		    else {
 			\line := &null # must precede the next line
-			entry ||:= trim(trim(tab(0),'\\'),':')
+			entry ||:= trim(tab(0),'\\')
 		    }
 		}
 	    }
