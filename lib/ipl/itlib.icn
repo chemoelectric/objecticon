@@ -91,7 +91,7 @@ package ipl.itlib
 
 import
    io(close, ewrite, open, read,
-      writes),
+      writes, Files),
    posix(System)
 
 global tc_table, tty_speed
@@ -218,7 +218,8 @@ procedure getentry(name, termcap_string)
 
 	if find("/",\termcap_string)
 	then f := open(termcap_string)
-	/f := open("/etc/termcap") | open("infocmp -C " || name, "pr") |
+	/f := open("/etc/termcap") | 
+           open(Files.find_exe("infocmp") || " -C " || name, "pr") |
 	    er("getentry","I can't access your /etc/termcap file",1)
 
 	getline := create read_file(f)
