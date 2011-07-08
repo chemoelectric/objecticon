@@ -1888,8 +1888,10 @@ function graphics_Window_palette_chars(pal)
        runerr(103, pal)
    body {
       int n;
-      if (!parsepalette(buffstr(&pal), &n))
+      if (!parsepalette(buffstr(&pal), &n)) {
+          LitWhy("Invalid palette");
           fail;
+      }
       switch (n) {
           case  1:  return string(90, c1list);			/* c1 */
           case  2:  return string(9, c2list);			/* c2 */

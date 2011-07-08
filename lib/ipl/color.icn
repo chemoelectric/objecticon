@@ -1,12 +1,12 @@
 ############################################################################
 #
-#	File:     color.icn
+#       File:     color.icn
 #
-#	Subject:  Procedures dealing with colors
+#       Subject:  Procedures dealing with colors
 #
-#	Author:   Gregg M. Townsend
+#       Author:   Gregg M. Townsend
 #
-#	Date:     April 1, 1997
+#       Date:     April 1, 1997
 #
 ############################################################################
 #
@@ -14,31 +14,31 @@
 #
 ############################################################################
 #
-#	These procedures deal with colors in various ways.
+#       These procedures deal with colors in various ways.
 #
-#	ScaleGamma(v, g)	scales a number with gamma correction.
+#       ScaleGamma(v, g)        scales a number with gamma correction.
 #
-#	Blend(k1, k2, ...)	generates a sequence of colors.
+#       Blend(k1, k2, ...)      generates a sequence of colors.
 #
-#	Contrast(win, k)	returns "white" or "black" contrasting with k.
+#       Contrast(k)             returns "white" or "black" contrasting with k.
 #
-#	Shade(win, k)		sets Fg(), with dithering on a bilevel screen.
+#       Shade(win, k)           sets Fg(), with dithering on a bilevel screen.
 #
-#	RandomColor(W, p)	returns a randomly chosen color from a palette.
+#       RandomColor(p)          returns a randomly chosen color from a palette.
 #
-#	PaletteGrays(W, p)	returns the gray entries of a palette.
+#       PaletteGrays(p)         returns the gray entries of a palette.
 #
-#	RGBKey(W, p, r, g, b)	returns the palette key closest to (r,g,b).
+#       RGBKey(p, r, g, b)      returns the palette key closest to (r,g,b).
 #
-#	HSVKey(W, p, h, s, v)	returns the palette key closest to (h/s/v).
+#       HSVKey(p, h, s, v)      returns the palette key closest to (h/s/v).
 #
-#	HSV(k)			returns the h/s/v interpretation of a color.
+#       HSV(k)                  returns the h/s/v interpretation of a color.
 #
-#	HSVValue(hsv)		returns the ColorValue() of an h/s/v string.
+#       HSVValue(hsv)           returns the ColorValue() of an h/s/v string.
 #
-#	HLS(k)			returns the h:l:s interpretation of a color.
+#       HLS(k)                  returns the h:l:s interpretation of a color.
 #
-#	HLSValue(hls)		returns the ColorValue() of an h:l:s string.
+#       HLSValue(hls)           returns the ColorValue() of an h:l:s string.
 #
 ############################################################################
 #
@@ -53,7 +53,7 @@
 #  point to set the number of steps (the default is four) from one color
 #  to the next.
 #
-#  Contrast(win, colr) returns either "white" or "black", depending
+#  Contrast(colr) returns either "white" or "black", depending
 #  on which provides the greater contrast with the specified color.
 #
 #  Shade(win, colr) sets the foreground for an area filling operation.
@@ -64,14 +64,14 @@
 #  (or "grey") then Shade simulates a multilevel grayscale monitor.
 #  If it is set to any other value, Shade simulates a bilevel monitor.
 #
-#  RandomColor(win, palette) returns a randomly chosen color from the
+#  RandomColor(palette) returns a randomly chosen color from the
 #  given image palette, excluding the "extra" grays of the palette, if
 #  any.  (Colors are selected from a small finite palette, rather than
 #  from the entire color space, to avoid running out of colors if a
 #  large number of random choices are desired.)  The default palette
 #  for this procedure is "c6".
 #
-#  PaletteGrays([win,] palette) is like PaletteChars but it returns only
+#  PaletteGrays(palette) is like PaletteChars but it returns only
 #  the characters corresponding to shades of gray.  The characters are
 #  ordered from black to white, and in all palettes the shades of gray
 #  are equally spaced.
@@ -107,7 +107,7 @@ import
    posix(System)
 
 # scale with gamma correction
-procedure ScaleGamma(v, g)		
+procedure ScaleGamma(v, g)              
    /g := 2.5
    return integer(65535 * v ^ (1.0 / g))
 end
@@ -116,11 +116,10 @@ end
 #  Blend(color1, color2, ...) -- generate sequence of colors
 
 # generate sequence of colors
-procedure Blend(args[])			
-   local win, n, s, a, i, f1, f2, r1, g1, b1, r2, g2, b2, r3, g3, b3
+procedure Blend(args[])                 
+   local n, s, a, i, f1, f2, r1, g1, b1, r2, g2, b2, r3, g3, b3
 
    n := 4
-   win := get(args)
 
    while a := get(args) do
       if integer(a) >= 0 then
@@ -150,23 +149,23 @@ procedure Blend(args[])
 end
 
 
-#  Contrast(win, color) -- return "white" or "black" to maximize contrast
+#  Contrast(color) -- return "white" or "black" to maximize contrast
 
 # choose contrasting color
-procedure Contrast(win, color)		
+procedure Contrast(color)               
    static l
    initial {
       l := ["white", "black"]
       }
        
-      return l[1 + win.palettekey("g2", color)]
+      return l[1 + Window.palette_key("g2", color)]
 end
 
 
 #  Shade(win, color) -- approximate a shade with a pattern if bilevel screen
 
 # dither shade using pattern
-procedure Shade(win, color)		
+procedure Shade(win, color)             
    local r, g, b
    static dmat, env
 
@@ -174,7 +173,7 @@ procedure Shade(win, color)
       env := ("" ~== map(System.getenv("XSHADE")))
       }
 
-   if win.get_depth() ~== "1" & /env then {
+   if win.get_depth() ~= 1 & /env then {
       win.set_fg( color) | fail
       return win
       }
@@ -209,21 +208,21 @@ procedure Shade(win, color)
       "4,8,0,0,0",
       "4,0,0,0,0",
       ]
-   win.attrib("fill_style=textured")
+   win.set_fill_style("textured")
    g := g / 3856 + 1
-   win.pattern(dmat[g])
+   win.set_pattern(dmat[g])
    return win
 end
 
 
-#   RandomColor(win, palette) -- choose random color
+#   RandomColor(palette) -- choose random color
 
 # choose random color
-procedure RandomColor(win, palette)	
+procedure RandomColor(palette)  
    local s, n
    /palette := "c6"
 
-   s := win.palette_chars(palette)
+   s := Window.palette_chars(palette)
    palette ?
       if ="c" & any('23456') then {
          n := integer(move(1))
@@ -234,36 +233,33 @@ procedure RandomColor(win, palette)
 end
 
 
-#  PaletteGrays(win, palette) -- return grayscale entries from palette.
+#  PaletteGrays(palette) -- return grayscale entries from palette.
 
 # grayscale entries from palette
-procedure PaletteGrays(win, palette)	
-   if (type(win) ~== "window") then
-      palette := win				# window not needed
-
+procedure PaletteGrays(palette)    
    palette := string(palette) | runerr(103, palette)
 
    if palette ? ="g" then
       return Window.palette_chars(palette)
 
    return case palette of {
-      "c1":	"0123456"
-      "c2":	"kxw"
-      "c3":	"@abMcdZ"
-      "c4":	"0$%&L*+-g/?@}"
-      "c5":	"\0}~\177\200\37\201\202\203\204>\205\206\207\210]_
+      "c1":     "0123456"
+      "c2":     "kxw"
+      "c3":     "@abMcdZ"
+      "c4":     "0$%&L*+-g/?@}"
+      "c5":     "\0}~\177\200\37\201\202\203\204>\205\206\207\210]_
                   \211\212\213\214|"
-      "c6":	"\0\330\331\332\333\334+\335\336\337\340\341V\342\343\344\345_
+      "c6":     "\0\330\331\332\333\334+\335\336\337\340\341V\342\343\344\345_
                   \346\201\347\350\351\352\353\254\354\355\356\357\360\327"
-      default:	fail
+      default:  fail
       }
 end
 
 
-#  RGBKey(win, palette, r, g, b) -- find key given real-valued color
+#  RGBKey(palette, r, g, b) -- find key given real-valued color
 
 # return palette key for color
-procedure RGBKey(win, palette, r, g, b)	
+procedure RGBKey(palette, r, g, b) 
    r := integer(r * 65535.99)
    g := integer(g * 65535.99)
    b := integer(b * 65535.99)
@@ -271,21 +267,18 @@ procedure RGBKey(win, palette, r, g, b)
 end
 
 
-#  HSVKey(win, palette, h, s, v) -- find nearest key from h,s,v in [0.0,1.0]
+#  HSVKey(palette, h, s, v) -- find nearest key from h,s,v in [0.0,1.0]
 #
 #  HSV conversion based on Foley et al, 2/e, p.593
 
 # nearest key from HSV specification
-procedure HSVKey(win, palette, h, s, v)	
+procedure HSVKey(palette, h, s, v) 
    local i, f, p, q, t, r, g, b
 
-   if type(win) ~== "window" then	# allow unused window argument
-      win :=: palette :=: h :=: s :=: v
-
-   if s = 0.0 then			# achromatic case
+   if s = 0.0 then                      # achromatic case
       return RGBKey(palette, v, v, v)
 
-   h *:= 6.0				# hue [0.0 - 6.0)
+   h *:= 6.0                            # hue [0.0 - 6.0)
    if h >= 6.0 then
       h := 0.0
 
@@ -296,12 +289,12 @@ procedure HSVKey(win, palette, h, s, v)
    t := v * (1.0 - (1.0 - f) * s)
 
    case i of {
-      0: { r := v;  g := t;  b := p }	# red - yellow
-      1: { r := q;  g := v;  b := p }	# yellow - green
-      2: { r := p;  g := v;  b := t }	# green - cyan
-      3: { r := p;  g := q;  b := v }	# cyan - blue
-      4: { r := t;  g := p;  b := v }	# blue - magenta
-      5: { r := v;  g := p;  b := q }	# magenta - red
+      0: { r := v;  g := t;  b := p }   # red - yellow
+      1: { r := q;  g := v;  b := p }   # yellow - green
+      2: { r := p;  g := v;  b := t }   # green - cyan
+      3: { r := p;  g := q;  b := v }   # cyan - blue
+      4: { r := t;  g := p;  b := v }   # blue - magenta
+      5: { r := v;  g := p;  b := q }   # magenta - red
       }
 
    return RGBKey(palette, r, g, b)
@@ -317,7 +310,7 @@ end
 #  based on Foley et al, 2/e, p.592
 
 # HSV interpretation of color
-procedure HSV(k)			
+procedure HSV(k)                        
    local r, g, b, h, s, v, min, max, d, t
 
    t := Window.parse_color(k) | fail
@@ -325,26 +318,26 @@ procedure HSV(k)
    g := t[2] / 65535.0
    b := t[3] / 65535.0
 
-   min := default.min(r, g, b)	# minimum
-   max := default.max(r, g, b)	# maximum
-   d := max - min				# difference
+   min := default.min(r, g, b)  # minimum
+   max := default.max(r, g, b)  # maximum
+   d := max - min                               # difference
 
-   v := max					# value is max of all values
+   v := max                                     # value is max of all values
    if max > 0 then
-      s := d / max				# saturation is (max-min)/max
+      s := d / max                              # saturation is (max-min)/max
    else
       s := 0.0
 
    if s = 0 then
-      h := 0.0					# use hue 0 if unsaturated
+      h := 0.0                                  # use hue 0 if unsaturated
    else if g = max then
-      h := 2 + (b - r) / d			# yellow through cyan
+      h := 2 + (b - r) / d                      # yellow through cyan
    else if b = max then
-      h := 4 + (r - g) / d			# cyan through magenta
+      h := 4 + (r - g) / d                      # cyan through magenta
    else if g < b then
-      h := 6 + (g - b) / d			# magenta through red
+      h := 6 + (g - b) / d                      # magenta through red
    else
-      h := (g - b) / d				# red through yellow
+      h := (g - b) / d                          # red through yellow
 
    return integer(60 * h + 0.5) || "/" ||
       integer(100 * s + 0.5) || "/" || integer(100 * v + 0.5)
@@ -360,7 +353,7 @@ end
 #  based on Foley et al, 2/e, p.593
 
 # color value of HSV specification
-procedure HSVValue(hsv)			
+procedure HSVValue(hsv)                 
    local h, s, v, r, g, b, i, f, p, q, t
 
    hsv ? {
@@ -373,12 +366,12 @@ procedure HSVValue(hsv)
       }
    if (h | s | v) > 1 then fail
 
-   if s = 0.0 then {			# achromatic case
+   if s = 0.0 then {                    # achromatic case
       v := integer(65535 * v + 0.499999)
       return v || "," || v || "," || v
       }
 
-   h *:= 6.0				# hue [0.0 - 6.0)
+   h *:= 6.0                            # hue [0.0 - 6.0)
    if h >= 6.0 then
       h := 0.0
 
@@ -389,12 +382,12 @@ procedure HSVValue(hsv)
    t := v * (1.0 - (1.0 - f) * s)
 
    case i of {
-      0: { r := v;  g := t;  b := p }	# red - yellow
-      1: { r := q;  g := v;  b := p }	# yellow - green
-      2: { r := p;  g := v;  b := t }	# green - cyan
-      3: { r := p;  g := q;  b := v }	# cyan - blue
-      4: { r := t;  g := p;  b := v }	# blue - magenta
-      5: { r := v;  g := p;  b := q }	# magenta - red
+      0: { r := v;  g := t;  b := p }   # red - yellow
+      1: { r := q;  g := v;  b := p }   # yellow - green
+      2: { r := p;  g := v;  b := t }   # green - cyan
+      3: { r := p;  g := q;  b := v }   # cyan - blue
+      4: { r := t;  g := p;  b := v }   # blue - magenta
+      5: { r := v;  g := p;  b := q }   # magenta - red
       }
 
    return integer(65535 * r + 0.499999) || "," ||
@@ -411,7 +404,7 @@ end
 #  based on Foley et al, 2/e, p.595
 
 # HLS interpretation of color
-procedure HLS(k)			
+procedure HLS(k)                        
    local r, g, b, h, l, s, min, max, delta, t
 
    t := Window.parse_color(k) | fail
@@ -419,30 +412,30 @@ procedure HLS(k)
    g := t[2] / 65535.0
    b := t[3] / 65535.0
 
-   min := default.min(r, g, b)	# minimum
-   max := default.max(r, g, b)	# maximum
-   delta := max - min			# difference
+   min := default.min(r, g, b)  # minimum
+   max := default.max(r, g, b)  # maximum
+   delta := max - min                   # difference
 
-   l := (max + min) / 2			# lightness
+   l := (max + min) / 2                 # lightness
 
    if max = min then 
-      h := s := 0			# achromatic
+      h := s := 0                       # achromatic
 
    else {
 
       if l <= 0.5 then
-         s := delta / (max + min)	# saturation
+         s := delta / (max + min)       # saturation
       else
          s := delta / (2 - max - min)
 
       if r = max then
-         h := (g - b) / delta		# yellow through magenta
+         h := (g - b) / delta           # yellow through magenta
       else if g = max then
-         h := 2 + (b - r) / delta	# cyan through yellow
+         h := 2 + (b - r) / delta       # cyan through yellow
       else # b = max
-         h := 4 + (r - g) / delta	# magenta through cyan
+         h := 4 + (r - g) / delta       # magenta through cyan
       if h < 0 then
-         h +:= 6			# ensure positive value
+         h +:= 6                        # ensure positive value
       }
 
    return integer(60 * h + 0.5) || ":" ||
@@ -459,7 +452,7 @@ end
 #  based on Foley & Van Dam, 1/e, p.619
 
 # color value of HLS specification
-procedure HLSValue(hls)			
+procedure HLSValue(hls)                 
    local h, l, s, r, g, b, m1, m2
 
    hls ? {
@@ -479,7 +472,7 @@ procedure HLSValue(hls)
    m1 := 2 * l - m2
 
    if s = 0.0 then
-      r := g := b := l			# achromatic
+      r := g := b := l                  # achromatic
    else {
       r := hls_rgb_val(m1, m2, h + 0.3333333)
       g := hls_rgb_val(m1, m2, h)
@@ -491,7 +484,7 @@ procedure HLSValue(hls)
 end
 
 # helper function for HLSValue
-procedure hls_rgb_val(n1, n2, hue)	
+procedure hls_rgb_val(n1, n2, hue)      
    hue *:= 6
    if hue >= 6 then
       hue -:= 6
