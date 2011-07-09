@@ -41,7 +41,7 @@ procedure win(width, height)
    /width := 500
    /height := 500
 
-   return Window.open("size=" || width || "," || height) |
+   return Window.open().set_size(width, height).set_canvas("normal") |
       stop("*** can't open window")
 
    return
@@ -53,6 +53,6 @@ procedure winf(width, height)
    /width := 500
    /height := 500
 
-   return Window.open("size=" || width || "," || height) | fail
+   return Window.open().set_size(width, height).set_canvas("normal")
 
 end

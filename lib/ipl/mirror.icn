@@ -54,7 +54,7 @@ procedure mirror(win, x, y, w, h)
    width := 2 * w
    height := 2 * h
 
-   sym := Window.open("canvas=hidden", "size=" || width || "," || height) | fail
+   sym := Window.open().set_size(width, height) | fail
 
    win.copy_to(sym, x, y, w, h)
 

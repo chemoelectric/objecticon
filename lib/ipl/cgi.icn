@@ -21,7 +21,6 @@ package ipl.cgi
 import
    io(open, read, reads, stop,
       write, writes),
-   ipl.optwindw(optwindow),
    posix(System)
 
 global cgi			# table of input fields
@@ -328,13 +327,6 @@ end
 
 procedure cgiRndImg(GifList, AltText)
    writes("<img src=\"",?GifList,"\"", " alt=\"",AltText,"\"", ">")
-end
-
-procedure cgiOptwindow(opts, args[])
-   if not System.getenv("DISPLAY") then {
-      /opts["D"] := System.getenv("REMOTE_ADDR") || ":0"
-      }
-   return optwindow ! push(args, opts)
 end
 
 #

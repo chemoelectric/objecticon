@@ -41,13 +41,13 @@ procedure repeats(name, i, j)
    /i := 1			# horizontal repeats
    /j := 1			# vertical repeats
 
-   win1 := Window.open("canvas=hidden", "image=" || name) | fail
+   win1 := Window.open().set_image(name) | fail
    width := win1.get_width()
    height := win1.get_height()
    hdim := height * i
    wdim := width * j
 
-   win2 := Window.open("canvas=hidden", "width=" || wdim, "height=" || hdim) |
+   win2 := Window.open().set_size(wdim, hdim) |
       stop("*** cannot open window for repeat")
 
    tile(win1, win2)

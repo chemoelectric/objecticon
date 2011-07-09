@@ -17,9 +17,6 @@
 #	These procedures provide window input and output using "W" names as
 #	substitutes for standard input and output functions.
 #
-#	WDelay(W, n)		flushes a window, then delays n milliseconds.
-#				default:  n = 1
-#
 #	WDone(), WQuit(), QuitCheck(), and QuitEvents() incorporate knowledge
 #	of the Icon standard set of "quit" events, currently the letters
 #	"q" or "Q".  The procedures themselves are trivial.
@@ -51,16 +48,7 @@
 package ipl.graphics
 
 import
-   graphics(Mouse, Window)
-
-procedure WDelay(window, n)
-   /n := 1
-   integer(n) | runerr(101, n)
-   delay(n)
-
-   return window
-
-end
+   graphics(Window)
 
 
 procedure QuitEvents()
@@ -107,18 +95,18 @@ procedure ZDone(win)
    y0 := -win.get_dy()
    w := win.get_width()
    h := win.get_height()
-   org := Window.open("width=" || w, "height=" || h, "canvas=hidden") | WDone()
+   org := Window.open().set_size(w, h) | WDone()
    win.copy_to(org, x0, y0)
-   win.attrib("resize=on")
-   while e := win.event()[1] do case e of {
+   win.set_resize(&yes)
+   while e := WEvent(win)[1] do case e of {
       QuitEvents():
          exit()
-      Mouse.WINDOW_RESIZE:
+      Window.RESIZE:
          Zoom(org, win, , , , , x0, y0)
       !"123456789": {
          ww := e * w
          hh := e * h
-         win.attrib( "width=" || ww, "height=" || hh)
+         win.set_size(ww, hh)
          Zoom(org, win, , , , , x0, y0, ww, hh)
          }
       }
@@ -135,9 +123,7 @@ procedure SubWindow(win, x, y, w, h)
    if h < 0 then
       y -:= (h := -h)
 
-   win := win.clone("dx=" || win.get_dx() + x,
-                    "dy=" || win.get_dy() + y)
+   win := win.clone().set_dx(win.get_dx() + x).set_dy(win.get_dy() + y)
    win.clip( 0, 0, w, h)
-   #GotoRC(win, 1, 1)
    return win
 end

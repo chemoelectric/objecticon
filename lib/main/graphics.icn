@@ -530,13 +530,14 @@ class Window(NoCopy)
    #
    # Enqueue a window event.
    #
-   public enqueue(eventcode, x, y, interval, mod)
+   public enqueue(eventcode, x, y, time, mod)
       /x := -1
       /y := -1
       x +:= get_dx()
       y +:= get_dy()
-      /interval := 0
-      return pending(eventcode, x, y, interval, mod)
+      /time := 0
+      /mod := 0
+      return pending(eventcode, x, y, time, mod)
    end
 
    #

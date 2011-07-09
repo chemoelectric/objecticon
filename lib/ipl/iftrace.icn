@@ -38,7 +38,8 @@
 package ipl.iftrace
 
 import 
-   lang(Proc, Prog)
+   lang(Proc, Prog),
+   ipl.ifncs
 
 invocable all
 
@@ -53,20 +54,16 @@ end
 
 procedure set_trace(vf)
    local vp
-   static traceset, case1, case2
+   static traceset
 
    initial {
       traceset := set()
       every insert(traceset, Proc.get_name(Prog.get_functions()))
-      case1 := &lcase || &ucase
-      case2 := &ucase || &lcase
       }
     
    if member(traceset,vf) then {
       &trace := -1		# have to also trace all procedures!
-      vp := vf
-				# reverse case of first letter
-      vp[1] := map(vp[1], case1, case2)
+      vp := "ipl.ifncs." || vf
       Prog.get_variable(vp) :=: Prog.get_variable(vf)
       return
       }

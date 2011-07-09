@@ -99,14 +99,15 @@ procedure ReadRaw(win, s, x, y)
 
    input := open(s) | stop("*** cannot read raw image file")
 
-   temp := Window.open("size=" || (size := read(input)), "canvas=hidden") |
-      stop("*** malformed raw image file")
+   size := read(input) | stop("*** malformed raw image file")
 
    size ? {
       width := integer(tab(upto(','))) &
       move(1) &
       height := integer(tab(0)) | stop("invalid raw image header")
       }
+
+   temp := Window.open().set_size(width, height)
 
    palette := table()
 

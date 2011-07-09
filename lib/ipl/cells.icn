@@ -78,8 +78,8 @@ procedure makepanel(n, m, cellsize, fg, bg, pg)
    width := (n * cellsize + 1)
    height := (m * cellsize + 1)
 
-   window := Window.open("width=" || width, "height=" || height,
-      "fg=" || fg, "bg=" || bg, "canvas=hidden") | fail
+   window := Window.open().set_size(width, height).
+      set_fg(fg).set_bg(bg)  | fail
 
    panel := Panel(window, n, m, cellsize, fg, bg, pg)
 
@@ -93,8 +93,8 @@ procedure clearpanel(panel)
    local width, height, x, y
    
    if \panel.pg then {			# default is textured
-      panel.window.attrib("fill_style=textured")
-      panel.window.pattern("checkers")
+      panel.window.set_fill_style("textured")
+      panel.window.set_pattern("checkers")
       panel.window.set_bg("very dark gray")
       }
    else panel.window.set_fg(panel.fg)
@@ -108,7 +108,7 @@ procedure clearpanel(panel)
    every y := 0 to height by panel.size do
       panel.window.draw_line(0, y, width, y)
 
-   panel.window.attrib("fill_style=solid")
+   panel.window.set_fill_style("solid")
 
    return panel
 
