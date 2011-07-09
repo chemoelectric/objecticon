@@ -64,7 +64,7 @@ procedure set_trace(vf)
    if member(traceset,vf) then {
       &trace := -1		# have to also trace all procedures!
       vp := "ipl.ifncs." || vf
-      Prog.get_variable(vp) :=: Prog.get_variable(vf)
+      Prog.get_global(vp) :=: Prog.get_global(vf)
       return
       }
    else fail
