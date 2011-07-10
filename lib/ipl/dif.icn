@@ -92,7 +92,7 @@
 package ipl.dif
 
 import
-   io(read),
+   io(Stream,read),
    lang(Prog)
 
 invocable all
@@ -224,10 +224,15 @@ end
 #
 procedure diffread(f)
   local x
-  return get(f.queue) | case type(x := f.stream) of {
-    "file" | "window": read(x)
+  if x := get(f.queue) then
+     return x
+  x := f.stream
+  if is(x, Stream) then
+     return x.read()
+  if is(x, diff_proc) then
+     return x.proc(x.arg)
+  return case type(x := f.stream) of {
     "co-expression": @x
-    "diff_proc": x.proc(x.arg)
     "list": get(x)
   }
 end
