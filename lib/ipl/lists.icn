@@ -185,11 +185,10 @@ package ipl.lists
 
 import
    io(open),
-   ipl.equiv(equiv),
    ipl.indices(indices),
    ipl.numbers(residue),
    ipl.sets(elementset),
-   lang(Prog)
+   lang(equals,Prog)
 
 # create list from lines in file
 procedure file2lst(s)			
@@ -291,7 +290,7 @@ end
 # close open palindrome
 procedure lclose(L)			
 
-   if equiv(L, lreverse(L)) then return L
+   if equals(L, lreverse(L)) then return L
    else {
       L := copy(L)
       put(L, L[1])
