@@ -25,13 +25,9 @@
 
 package ipl.created
 
-import
-   ipl.serial(serial)
-
 # number of structures created
 procedure created(kind)			
 
    return serial(proc(kind)())
-   fail
 
 end
