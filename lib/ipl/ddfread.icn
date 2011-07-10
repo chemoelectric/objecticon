@@ -128,7 +128,7 @@ procedure ddfopen(fname)
    if type(fname) == "file" then
       f := fname
    else
-      f := open(fname, "ru")	| fail
+      f := open(fname, "r")	| fail
 
    h := ddf_rhdr(f)		| fail
    p := ddf_rdata(f, h)		| fail
