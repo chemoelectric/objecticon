@@ -79,7 +79,7 @@ procedure _doprnt(format, args)
 
 		##write("just: ",image(just),", width: ", width, ", prec: ",
 		## prec, ", conv: ", conv)
-		case conv of {
+		case string(conv) of {
 		    "d": {
 			v := string(integer(v))
 			}
