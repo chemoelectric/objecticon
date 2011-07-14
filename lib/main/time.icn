@@ -199,7 +199,7 @@ class Time()
       
       /p := DEFAULT_FORMAT
 
-      res := ""
+      res := p[1:1]   # Empty string same type as p
       p ? {
          until pos(0) do {
             if any('EydHMhmsaAzZ') then {
