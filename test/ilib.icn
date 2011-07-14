@@ -22,8 +22,6 @@ import
 $define LSIZE 16
 $define GENLIMIT 25
 
-record DateRec(year,month,day,hour,min,sec,weekday)
-
 procedure main()
    local L, LR, T, r1, r2, r3, argv, SL
 
@@ -204,8 +202,6 @@ procedure main()
 
    write()
    write("records:")			# records
-   gen(field, DateRec(), 7)
-   gen(fieldnum, DateRec(), "weekday")
    lst(movecorr, date1(10,30,1952), date2(09,1956,0.97))
 
    write()

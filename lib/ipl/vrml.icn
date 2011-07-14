@@ -64,7 +64,7 @@ import
    io(close, open, read, stop,
       write, writes),
    ipl.ptutils(pt2coord),
-   ipl.records(field)
+   lang(Constructor)
 
 # create VRML point field
 procedure point_field(pts)	
@@ -145,7 +145,7 @@ procedure render(x, f)
             else if /x[i] then next		# skip empty fields
             else {
                writes(f, bar, "   ")
-               fieldname := field(x, i)
+               fieldname := Constructor.get_field_name(x, i)
                if fieldname ~== "null" then writes(f, fieldname)
                render(x[i], f)
                }
