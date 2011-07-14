@@ -22,6 +22,8 @@ import
 $define LSIZE 16
 $define GENLIMIT 25
 
+record DateRec(year,month,day,hour,min,sec,weekday)
+
 procedure main()
    local L, LR, T, r1, r2, r3, argv, SL
 
@@ -40,16 +42,6 @@ procedure main()
 
    write()
    write("datetime:")			# datetime
-   HoursFromGmt := 7
-   gen(ClockToSec, "14:27:43")
-   gen(DateLineToSec, "Friday, September 7, 1984  1:07 pm")
-   gen(DateToSec, "1984/09/07")
-   gen(SecToClock, 14 * 3600 + 27 * 60 + 43)
-   gen(SecToDate, 463338000)
-   gen(SecToDateLine, 463385237)
-   gen(SecToUnixDate, 463385237)
-   gen(IsLeapYear, 2004)
-   gen(dayoweek, 7, 9, 1984)
    gen(julian, 9, 7, 1984)
    gen(saytime, "15:00:47")
    # several procedures that return records omitted
