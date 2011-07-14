@@ -205,7 +205,7 @@ class Time()
             if any('EydHMhmsaAzZ') then {
                ch := p[&pos]
                w := *tab(many(ch))
-               res ||:= case ch of {
+               res ||:= case string(ch) of {
                   "E": format_weekday(w)
                   "y": format_year(w)
                   "M": format_month(w)
@@ -1019,7 +1019,7 @@ class TimeParser()
             if any('EydHMhmsaAz') then {
                ch := p[&pos]
                w := *tab(many(ch))
-               case ch of {
+               case string(ch) of {
                   "E": parse_weekday() | fail
                   "y": y := parse_year(w) | fail
                   "M": m := parse_month(w) | fail
