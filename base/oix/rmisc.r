@@ -517,7 +517,7 @@ void outimage(FILE *f, dptr dp, int noimage)
          }
          if (i > StringLimit)
              fprintf(f, "...");
-         fprintf(f, "\"");
+         putc('"', f);
          }
 
       null:
@@ -553,7 +553,6 @@ void outimage(FILE *f, dptr dp, int noimage)
              if (cset_do_range(from, to)) {
                  if (j <= 0) {
                      fprintf(f, "...");
-                     i = CsetBlk(*dp).n_ranges;
                      break;
                  }
                  n = cset_charstr(from, cbuf);
