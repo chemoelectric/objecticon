@@ -298,14 +298,14 @@ procedure do_digits()
    if yytext ||:= ="." then {
       yytext ||:= tab(many(&digits))
       if yytext ||:= tab(any('eE')) then {
-         yytext ||:= ="-"
+         yytext ||:= tab(any('+\-'))
          yytext ||:= tab(many(&digits))
       }
       yytokval := real(yytext) | lex_error("invalid real literal")
       return REALLIT
    }
    else if yytext ||:= tab(any('eE')) then {
-      yytext ||:= ="-"
+      yytext ||:= tab(any('+\-'))
       yytext ||:= tab(many(&digits))
       yytokval := real(yytext) | lex_error("invalid real literal")
       return REALLIT
