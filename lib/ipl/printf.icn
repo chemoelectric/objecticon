@@ -86,7 +86,8 @@ procedure _doprnt(format, args)
 		    "s": {
 			v := string(v[1:(\prec+1)|0])
 			}
-		    "x": v := hexstr(v)
+		    "x": v := map(hexstr(v))
+		    "X": v := hexstr(v)
 		    "o": v := octstr(v)
 		    "i": v := image(v)
 		    "r": v := fixnum(v,prec)
@@ -105,63 +106,14 @@ procedure _doprnt(format, args)
 	return out
 end
 
-procedure hexstr(n)
-   local h, neg
-   static BigNeg, hexdigs, hexfix
-
-	initial {
-		BigNeg := -2147483647-1
-		hexdigs := "0123456789abcdef"
-		hexfix := "89abcdef"
-		}
-
-	n := integer(n)
-	if n = BigNeg then
-		return "80000000"
-	h := ""
-	if n < 0 then {
-		n := -(BigNeg - n)
-		neg := 1
-		}
-	repeat {
-		h := hexdigs[n%16+1]||h
-		if (n /:= 16) = 0 then
-			break
-		}
-	if \neg then {
-		h := right(h,8,"0")
-		h[1] := hexfix[h[1]+1]
-		}
-	return h
+procedure hexstr(x)
+   x := integer(x) | return image(x)
+   return Format.int_to_string(x)
 end
-procedure octstr(n)
-   local h, neg
-   static BigNeg, octdigs, octfix
 
-	initial {
-		BigNeg := -2147483647-1
-		octdigs := "01234567"
-		octfix := "23"
-		}
-
-	n := integer(n)
-	if n = BigNeg then
-		return "20000000000"
-	h := ""
-	if n < 0 then {
-		n := -(BigNeg - n)
-		neg := 1
-		}
-	repeat {
-		h := octdigs[n%8+1]||h
-		if (n /:= 8) = 0 then
-			break
-		}
-	if \neg then {
-		h := right(h,11,"0")
-		h[1] := octfix[h[1]+1]
-		}
-	return h
+procedure octstr(x)
+   x := integer(x) | return image(x)
+   return Format.int_to_string(x, 8)
 end
 
 procedure fixnum(x, prec)
