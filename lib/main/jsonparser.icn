@@ -64,7 +64,7 @@ class JSONParser()
                "r": "\r"
                "t": "\t"
                "u": {
-                  many(&digits ++ 'ABCDEF', t := move(4)) = 5 | throw("Invalid \\u escape")
+                  many(&digits ++ 'ABCDEFabcdef', t := move(4)) = 5 | throw("Invalid \\u escape")
                   uchar(integer("16r" || t))
                }
                default: throw("Invalid escape char in string: " || ch)
