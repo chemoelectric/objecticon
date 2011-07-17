@@ -20,7 +20,7 @@ package ipl.cgi
 
 import
    io(open, read, reads, stop,
-      write, writes),
+      write, writes, Stream),
    posix(System)
 
 global cgi			# table of input fields
@@ -32,7 +32,7 @@ global cgi			# table of input fields
 #
 procedure cgiEcho(f, args[])
    push(args, f)
-   if type(f) == "file" then {	# if we have a file
+   if is(f, Stream) then {	# if we have a file
       write ! args		# write to it
       pop(args)			# and then discard it
       }

@@ -63,7 +63,7 @@
 package ipl.getmail
 
 import
-   io(close, open, read, stop)
+   io(close, open, read, stop, Stream)
 
 record message_record(
 
@@ -188,7 +188,7 @@ procedure getmail(folder_name)
     
     ws := ' \t'
     
-    if type(folder_name) == "file" then
+    if is(folder_name, Stream) then
         folder := folder_name
     else
         folder := open(folder_name, "r") |

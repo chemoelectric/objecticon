@@ -27,92 +27,92 @@
 package ipl.openchk
 
 import
-   io(close, ewrite, ewrites, open)
+   io(close, ewrite, ewrites, open, Stream)
 
 procedure OpenCheck(p,x)
 
-local    f, e
-static   openS
+   local    f, e
+   static   openS
 
-if type(p) == "procedure" then
-{
-   #  Internal use, by intercept routines
-
-   if /openS then
+   if type(p) == "procedure" then
    {
-      ewrite("OpenCheck has not been initialized.")
-      runerr(500)
-   }
+      #  Internal use, by intercept routines
 
-   case p of 
-   {
-      OpenCheck_open :  
+      if /openS then
       {
-         if ( f := p!x ) then 
-         {
-            ewrite( "Open of ", image(f), " succeeded." )
-            insert( openS, f )
-         }
-         else 
-         {
-            ewrites( "Open of ")
-            every ewrites( image(!x) )
-            ewrite( " failed." )
-         }
-      }
-
-      OpenCheck_close:  
-      {
-         e := 1
-#         &error :=: e
-         if ( f := p!x ) then 
-         {  
-#            &error :=: e
-            ewrite( "Close of ", image(f), " succeeded." )
-            delete( openS, f )
-         }
-         else 
-         {
-#            &error :=: e
-            ewrite( "Close of ", image(f), " failed." )
-         }
-      }
-
-      default:
+         ewrite("OpenCheck has not been initialized.")
          runerr(500)
+      }
+
+      case p of 
+      {
+         OpenCheck_open :  
+         {
+            if ( f := p!x ) then 
+            {
+               ewrite( "Open of ", image(f), " succeeded." )
+               insert( openS, f )
+            }
+            else 
+            {
+               ewrites( "Open of ")
+               every ewrites( image(!x) )
+               ewrite( " failed." )
+            }
+         }
+
+         OpenCheck_close:  
+         {
+            e := 1
+            #         &error :=: e
+            if ( f := p!x ) then 
+            {  
+               #            &error :=: e
+               ewrite( "Close of ", image(f), " succeeded." )
+               delete( openS, f )
+            }
+            else 
+            {
+               #            &error :=: e
+               ewrite( "Close of ", image(f), " failed." )
+            }
+         }
+
+         default:
+            runerr(500)
+      }
+      
+      ewrite( *openS, " objects are open:" )
+      every ewrite( "   ", image(!sort( openS )) )
+      
+      if is(f, Stream) then 
+         return f
+      else
+      {
+         runerr(&errornumber,&errorvalue)    # if error
+         fail
+      }
    }
-   
-   ewrite( *openS, " objects are open:" )
-   every ewrite( "   ", image(!sort( openS )) )
-   
-   if type(f) == "file" then 
-      return f
    else
    {
-      runerr(&errornumber,&errorvalue)    # if error
-      fail
-   }
-}
-else
-{
-   #  Setup call comes here
+      #  Setup call comes here
 
-   if /p & /x then   
-      if /openS := set() then
-      {
-         OpenCheck_open  :=: open
-         OpenCheck_close :=: close
-      }
-   else
-      runerr(123, \p | \x )
-}
-return
+      if /p & /x then   
+         if /openS := set() then
+         {
+            OpenCheck_open  :=: open
+            OpenCheck_close :=: close
+         }
+         else
+            runerr(123, \p | \x )
+   }
+   return
 end
 
 procedure OpenCheck_open( x[] )
-return OpenCheck(OpenCheck_open,x)
+   return OpenCheck(OpenCheck_open,x)
 end 
 
 procedure OpenCheck_close( x[] )
-return OpenCheck(OpenCheck_close,x)
+   return OpenCheck(OpenCheck_close,x)
 end 
