@@ -198,7 +198,7 @@ procedure file2lst(s)
 
    result := []
 
-   every x := |input.read() do {
+   while x := input.read() do {
       x := numeric(x)			# kludge
       put(result, x)
       }
