@@ -229,6 +229,7 @@ class ClTable(Table)
 
    public delete(key)
       default.delete(t, map(key))
+      return self
    end
 
    public sort()
@@ -254,6 +255,7 @@ class ClTable(Table)
 
    public clear()
       default.clear(t)
+      return self
    end
 
    public size()
@@ -374,6 +376,7 @@ class SortTable(Table)
 
    public delete(key)
       \root := root.delete(key, self)
+      return self
    end
 
    public sort()
@@ -411,6 +414,7 @@ class SortTable(Table)
    public clear()
       root := &null
       sz := 0
+      return self
    end
 
    public size()
@@ -475,6 +479,7 @@ class EqTable(Table)
          }
          i +:= 1
       }
+      return self
    end
 
    public sort()
@@ -505,6 +510,7 @@ class EqTable(Table)
    public clear()
       default.clear(t)
       sz := 0
+      return self
    end
 
    #
@@ -539,6 +545,7 @@ class BuiltinTable(Table)
 
    public delete(key)
       default.delete(t, key)
+      return self
    end
 
    public sort()
@@ -559,6 +566,7 @@ class BuiltinTable(Table)
 
    public clear()
       default.clear(t)
+      return self
    end
 
    public size()

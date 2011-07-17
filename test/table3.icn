@@ -86,7 +86,7 @@ procedure test_set()
    b := BuiltinSet(s, 1,100,2,200)
    b.insert(300)
    b.delete(2)
-   cmp_seq{"m1", member(s,1), b.member(1)}
+   cmp_seq{"m1", member(s,1) & &null, b.member(1) & &null}
    cmp_seq{"m2", member(s,999), b.member(999)}
    cmp_seq{"gen", !s, b.gen()}
    yes_no{"sort=", equals(sort(s), b.sort())}
