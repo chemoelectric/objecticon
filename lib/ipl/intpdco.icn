@@ -40,12 +40,12 @@ import
    io(stop)
 
 # PDCO to generate integers not in sequence
-procedure Compl(L)	
+procedure Compl(e)	
    local i, j
 
    j := 1
 
-   while i := @L[1] do {
+   while i := @e do {
       i := integer(i) | stop("*** invalid value in sequence to Compl{}")
       suspend j to i - 1
       j := i + 1
@@ -56,25 +56,25 @@ procedure Compl(L)
 end
 
 # PDCO to generate differences in sequences 
-procedure Delta(L)	
+procedure Delta(e1, e2)	
    local C, i
 
-   C := ^L[1]
-   every 1 to @L[2] do @C
+   C := ^e1
+   every 1 to @e2 do @C
 
-   while i := @C - @L[1] do
+   while i := @C - @e1 do
      suspend i
 
 end
 
 # PDCO to produce multiple of values in sequence
-procedure Selfrepl(L)	
+procedure Selfrepl(e1, e2)	
    local i, j
 
-   j := @L[2] | 1
+   j := @\e2 | 1
    j := integer(j) | stop("*** invalid second argument to Selfrepl{}")
 
-   while i := @L[1] do {
+   while i := @e1 do {
       i := integer(i) | stop("*** invalid value in Selfrepl{}")
       suspend (1 to i * j) & i
       }
@@ -82,14 +82,14 @@ procedure Selfrepl(L)
 end
 
 # PDCO to sum sequence to a limit
-procedure Sumlimit(L) 	
+procedure Sumlimit(e1, e2, e3) 	
    local sum, min, limit, i
 
-   limit := integer(@L[2]) | 2 ^ 31
-   min := integer(@L[3]) | 0
+   limit := integer(@\e2) | 2 ^ 31
+   min := integer(@\e3) | 0
    sum := 0
 
-   while i := @L[1] do {
+   while i := @e1 do {
       if i < min then next
       if (sum + i) > limit then fail
       sum +:= i
