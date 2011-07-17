@@ -37,11 +37,8 @@ static int subs_asgn	(dptr dest, dptr src);
            *VarLoc(x) = y;
          }
       kywdint:  {
-            word i;
-
-            if (!cnv:C_integer(y, i))
+            if (!cnv:C_integer(y, IntVal(*VarLoc(x))))
                runerr(101, y);
-            IntVal(*VarLoc(x)) = i;
 	}
       kywdpos: {
             word i;
