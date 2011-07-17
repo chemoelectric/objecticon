@@ -51,7 +51,7 @@ procedure save_image(win, x, y, w, h)
 
    initial seq_init(/prefix__)		# initialize if prefix__ null.
 
-   return win.write_image_file(prefix__ || right(count__ +:= 1, width__, "0") ||
+   return win.write_image(prefix__ || right(count__ +:= 1, width__, "0") ||
       ".gif", x, y, w, h)
 
 end
