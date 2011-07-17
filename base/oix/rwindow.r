@@ -28,7 +28,7 @@ static int readpngfile          (char *filename, struct imgdata *imd);
 static int writepngfile         (wbp w, char *filename, int x, int y, int width, int height);
 #endif
 #if HAVE_LIBJPEG || HAVE_LIBPNG
-static int datatofile(dptr data, char *fn);
+static char *datatofile(dptr data);
 #endif
 static int readgifdata        (dptr data, struct imgdata *imd);
 static int readgiffile         (char *fname, struct imgdata *d);
@@ -593,17 +593,29 @@ static int tryimagestring(wbp w, dptr d,  struct imgdata *imd)
 /*
  * Write string data to a temporary file.
  */
-static int datatofile(dptr data, char *fn)
+static char *datatofile(dptr data)
 {
-    FILE *f;
-    if ((f = fopen(fn, "wb")) == NULL)
-        return 0;
-    if (fwrite(StrLoc(*data), 1, StrLen(*data), f) != StrLen(*data)) {
-        fclose(f);
+    static char path[32];
+    int c, fd, n;
+    char *p;
+    strcpy(path, "/tmp/oi_imgXXXXXX");
+    if ((fd = mkstemp(path)) < 0) {
+        LitWhy("Couldn't create temp image file");
         return 0;
     }
-    fclose(f);
-    return 1;
+    n = StrLen(*data);
+    p = StrLoc(*data);
+    while (n > 0) {
+        if ((c = write(fd, p, n)) < 0) {
+            LitWhy("Couldn't write to temp image file");
+            close(fd);
+            return 0;
+        }
+        p += c;
+        n -= c;
+    }
+    close(fd);
+    return path;
 }
 #endif
 
@@ -1506,12 +1518,10 @@ void my_error_exit (j_common_ptr cinfo);
 
 static int readjpegdata(dptr data, struct imgdata *imd)
 {
-    static char *fn = "/tmp/oitmp.jpg";
+    char *fn;
     int r;
-    if (!datatofile(data, fn)) {
-        LitWhy("Couldn't write to temp image file");
+    if (!(fn = datatofile(data)))
         return Failed;
-    }
     r = readjpegfile(fn, imd);
     remove(fn);
     return r;
@@ -1686,12 +1696,10 @@ int writejpegfile(wbp w, char *filename, int x, int y, int width,int height)
 
 static int readpngdata(dptr data, struct imgdata *imd)
 {
-    static char *fn = "/tmp/oitmp.png";
+    char *fn;
     int r;
-    if (!datatofile(data, fn)) {
-        LitWhy("Couldn't write to temp image file");
+    if (!(fn = datatofile(data)))
         return Failed;
-    }
     r = readpngfile(fn, imd);
     remove(fn);
     return r;
