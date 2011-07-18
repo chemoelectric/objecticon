@@ -126,7 +126,7 @@ class TableSet(Set)
 
    public member(x)
       if t.member(x) then
-         return self
+         return x
    end
 
    public delete(x)
@@ -187,8 +187,7 @@ class BuiltinSet(Set)
    end
 
    public member(x)
-      if default.member(s, x) then
-         return self
+      return default.member(s, x)
    end
 
    public delete(x)
