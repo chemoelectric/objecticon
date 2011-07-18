@@ -32,7 +32,8 @@ package ipl.pixelmap
 
 import
    graphics(Window),
-   io(open, read, stop)
+   io(open, read),
+   util(error)
 
 procedure pixelmap(name, p, args[])
    local input, width, height, x, y, win
@@ -40,24 +41,31 @@ procedure pixelmap(name, p, args[])
    /p := 1
    push(args)			# place holder
 
-   input := open(name) | stop("*** cannot open pixel list")
+   input := open(name) | return error("*** cannot open pixel list")
 
    read(input) ? {
       ="width=" &
       width := tab(many(&digits)) &
       =" height=" &
       height := tab(many(&digits))
-      } | runerr("*** invalid pixel list header")
+      } | {
+         input.close()
+         return error("*** invalid pixel list header")
+      }
 
    win := Window.open().set_size(width, height).set_canvas("normal")
 
    every y := 0 to height - 1 do
       every x := 0 to width - 1 do {
-         args[1] := read(input) | stop("*** short data in pixel list")
+         args[1] := read(input) | {
+            input.close()
+            return error("*** short data in pixel list")
+         }
          win.set_fg(p ! args)
          win.draw_point(x, y)
          }
 
+   input.close()
    return win
 
 end
