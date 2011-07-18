@@ -125,7 +125,6 @@
 package ipl.numbers
 
 import
-   io(stop),
    ipl.strings(palins),
    util(Format, Math)
 
@@ -237,7 +236,7 @@ procedure decipos(r, i, j)
    /i := 3
    /j := 5
 
-   r := real(r) | stop("*** non-numeric in decipos()")
+   r := real(r) | runerr(102, r)
 
    if i < 1 then fail
 
@@ -584,7 +583,7 @@ end
 procedure spell(n)		
    local m
 
-   n := integer(n) | stop(image(n)," is not an integer")
+   n := integer(n) | runerr(101, n)
    if n <= 12 then return {
       "0zero,1one,2two,3three,4four,5five,6six,7seven,8eight,_
          9nine,10ten,11eleven,12twelve," ? {

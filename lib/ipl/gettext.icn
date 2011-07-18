@@ -106,7 +106,7 @@ procedure gettext(KEY,FNAME)
    local line, value
    static last_FNAME, intext, inidx, off_set, off_sets
 
-   (/KEY | /FNAME) & stop("error (gettext):  null argument")
+   (/KEY | /FNAME) & runerr("(gettext):  null argument")
 
    if FNAME == \last_FNAME then {
       intext.seek(1)

@@ -44,9 +44,6 @@
 
 package ipl.longstr
 
-import
-   io(stop)
-
 procedure longstr(l,s,i,j)
 
     local elem, tmp_table
@@ -67,7 +64,7 @@ procedure longstr(l,s,i,j)
     # Is l a list, set, or table?
     #
     type(l) == ("list"|"set"|"table") |
-	stop("longstr:  list, set, or table expected (arg 1)")
+	runerr("longstr:  list, set, or table expected (arg 1)", l)
 
     #
     # Sort l longest-to-shortest, and keep a copy of the resulting

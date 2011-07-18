@@ -71,7 +71,7 @@ procedure wreflect(win1, dir)
             else x2 -:= 1
             }
          }
-      default:  stop("*** invalid specification for reflect()")
+      default:  runerr("*** invalid specification for reflect()", dir)
       }
 
    return win2
@@ -127,8 +127,8 @@ procedure wrotate(win1, dir)
             else x2 -:= 1
             }
          }
-      default:  stop("*** invalid specification for rotate()")
-      } | stop("*** invalid specification for rotate()")
+      default:  runerr("*** invalid specification for rotate()", dir)
+      } | runerr("*** invalid specification for rotate()", dir)
 
    return win2
 
@@ -157,7 +157,7 @@ procedure wcatenate(win1, win2, dir)
          win1.copy_to(win3)
          win2.copy_to(win3, 0, 0, width2, height2, 0, height1)
          }
-      default:  stop("*** invalid specification for catenate()")
+      default:  runerr("*** invalid specification for catenate()", dir)
       }
 
    return win3

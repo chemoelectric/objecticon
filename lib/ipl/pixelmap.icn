@@ -47,7 +47,7 @@ procedure pixelmap(name, p, args[])
       width := tab(many(&digits)) &
       =" height=" &
       height := tab(many(&digits))
-      } | stop("*** invalid pixel list header")
+      } | runerr("*** invalid pixel list header")
 
    win := Window.open().set_size(width, height).set_canvas("normal")
 

@@ -27,8 +27,6 @@
 
 package ipl.convert
 
-import
-   io(stop)
 
 # convert base 10 to arbitrary base
 procedure exbase10(i, j)	
@@ -37,7 +35,7 @@ procedure exbase10(i, j)
 
    initial digits := &digits || &lcase || &ucase
 
-   if not(2 <= j <= *digits) then stop("*** base out of range")
+   if not(2 <= j <= *digits) then runerr("*** base out of range", j)
 
    if i = 0 then return 0
 
@@ -61,7 +59,7 @@ end
 # convert arbitrary base to base 10
 procedure inbase10(s, i)	
 
-   if i > 36 then stop("*** base too large for inbase10()")
+   if i > 36 then runerr("*** base too large for inbase10()", i)
 
    if s[1] == "-" then return "-" || integer(i || "r" || s[2:0])
    else return integer(i || "r" || s)

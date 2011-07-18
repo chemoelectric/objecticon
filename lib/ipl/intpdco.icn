@@ -36,9 +36,6 @@
 
 package ipl.intpdco
 
-import
-   io(stop)
-
 # PDCO to generate integers not in sequence
 procedure Compl(e)	
    local i, j
@@ -46,7 +43,7 @@ procedure Compl(e)
    j := 1
 
    while i := @e do {
-      i := integer(i) | stop("*** invalid value in sequence to Compl{}")
+      i := integer(i) | runerr("*** invalid value in sequence to Compl{}", i)
       suspend j to i - 1
       j := i + 1
       }
@@ -72,10 +69,10 @@ procedure Selfrepl(e1, e2)
    local i, j
 
    j := @\e2 | 1
-   j := integer(j) | stop("*** invalid second argument to Selfrepl{}")
+   j := integer(j) | runerr("*** invalid second argument to Selfrepl{}", j)
 
    while i := @e1 do {
-      i := integer(i) | stop("*** invalid value in Selfrepl{}")
+      i := integer(i) | runerr("*** invalid value in Selfrepl{}", i)
       suspend (1 to i * j) & i
       }
 

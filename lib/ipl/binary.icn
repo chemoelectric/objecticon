@@ -133,7 +133,7 @@
 package ipl.binary
 
 import
-   io(ewrite, stop),
+   io(ewrite),
    util(Math)
 
 global pack_short,pack_long,
@@ -414,7 +414,7 @@ procedure pack_hex_digit(s)
       "d": 2r1101
       "e": 2r1110
       "f": 2r1111
-      }) | stop("bad hex digit: ",image(s))
+      }) | runerr("bad hex digit: ",s)
 end
 
 #

@@ -31,15 +31,17 @@
 package ipl.partit
 
 import
-   io(stop),
    ipl.numbers(ceil),
    util(Math)
 
 procedure partit(i, min, max, k)
    local j
 
-   if not(integer(i)) | (i < 0) | (\min > \max) then
-      stop("*** illegal argument to partit(i)")
+   if not(integer(i)) | (i < 0) then
+      runerr("*** illegal argument to partit(i)", i)
+
+   if \min > \max then
+      runerr("*** illegal min/max argument to partit(i)")
 
    /min := 1
    /max := i

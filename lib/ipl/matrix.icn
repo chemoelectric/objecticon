@@ -25,7 +25,7 @@
 package ipl.matrix
 
 import
-   io(stop, write, writes),
+   io(write, writes),
    ipl.lu(lu_back_sub, lu_decomp)
 
 procedure matrix_width(M)
@@ -109,7 +109,7 @@ procedure add_matrix(M1, M2)
    local M3, r, c, n, m
 
    if ((n := *M1) ~= *M2) | ((m := *M1[1]) ~= *M2[1]) then
-      stop("*** incorrect matrix sizes")
+      runerr("*** incorrect matrix sizes")
 
    M3 := create_matrix(n, m)
 
@@ -124,7 +124,7 @@ end
 procedure mult_matrix(M1, M2)
    local M3, r, c, n, k
 
-   if (n := *M1[1]) ~= *M2 then stop("*** incorrect matrix sizes")
+   if (n := *M1[1]) ~= *M2 then runerr("*** incorrect matrix sizes")
 
    M3 := create_matrix(*M1,*M2[1])
    every r := 1 to *M1 do {
@@ -144,7 +144,7 @@ procedure invert_matrix(M)
    local M1, Y, I, d, i, n, B, j
 
    n := *M
-   if n ~= *M[1] then stop("*** matrix not square")
+   if n ~= *M[1] then runerr("*** matrix not square")
 
    M1 := copy_matrix(M)
    Y := identity_matrix(n, n)
@@ -153,7 +153,7 @@ procedure invert_matrix(M)
 #  First perform LH decomposition on M1 (which changes it and produces
 #  an index vector, I.
 
-   d := lu_decomp(M1, I) | stop("*** singular matrix")
+   d := lu_decomp(M1, I) | runerr("*** singular matrix")
 
    every j := 1 to n do {
       B := list(n)		# work on columns
@@ -172,12 +172,12 @@ procedure determinant(M)
    local M1, I, result, i, n
 
    n := *M
-   if n ~= *M[1] then stop("*** matrix not square")
+   if n ~= *M[1] then runerr("*** matrix not square")
 
    M1 := copy_matrix(M)
    I := list(n, 0)		# not used but required by lu_decomp()
 
-   result := lu_decomp(M1, I) | stop("*** singular matrix")
+   result := lu_decomp(M1, I) | runerr("*** singular matrix")
 
    every i := 1 to n do		# determinant is produce of diagonal
       result *:= M1[i][i]	# elements of the decomposed matrix

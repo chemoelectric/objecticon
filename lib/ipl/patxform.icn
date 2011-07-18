@@ -40,7 +40,6 @@
 package ipl.patxform
 
 import
-   io(stop),
    ipl.random(shuffle),
    ipl.strings(collate, decollate, rotate)
 
@@ -68,7 +67,7 @@ procedure pscramble(rows, dir)
             all[1 +: *rows[1]] := ""
             }
          }
-      default:   stop("*** illegal specification in scramble()")
+      default:   runerr("*** illegal specification in scramble()",dir)
       }
 
    return rows
@@ -101,7 +100,7 @@ procedure pshift(rows, shift, dir)
             every 1 to -shift do
                put(rows, pop(rows))
          }
-      default:  stop("*** illegal specification in pshift()")
+      default:  runerr("*** illegal specification in pshift()",dir)
       }
 
    return rows
@@ -263,7 +262,7 @@ procedure pflip(rows, dir)
          every i := 1 to *rows / 2 do
            newrows[i] :=: newrows[-i]
          }
-      default:  stop("*** illegal flip specification in pflip()")
+      default:  runerr("*** illegal flip specification in pflip()",dir)
       }
 
    return newrows
@@ -350,7 +349,7 @@ procedure protate(rows, dir)
          newrows := []
          every push(newrows, reverse(!rows))
          }
-      default:  stop("*** illegal rotation specification in protate()")
+      default:  runerr("*** illegal rotation specification in protate()",dir)
    }
 
    return newrows

@@ -21,7 +21,6 @@
 package ipl.hetero
 
 import
-   io(stop),
    lang(Prog)
 
 # types of structure elements
@@ -44,7 +43,7 @@ procedure stypes(X, ref)
       every insert(types, type(op(X)))
       return sort(types)
       }
-   else stop("*** invalid type to stypes()")
+   else runerr("*** invalid type to stypes()", X)
 
 end
 

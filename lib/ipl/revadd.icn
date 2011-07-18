@@ -37,13 +37,10 @@
 
 package ipl.revadd
 
-import
-   io(stop)
-
 procedure revadd(i)
    local j
 
-   i := integer(i) | stop("*** invalid type to revadd()")
+   i := integer(i) | runerr(101, i)
 
    repeat {
       j := reverse(i)
