@@ -125,7 +125,9 @@ class Grid()
       ci.grid := self
       ci.s := id_str[1]
       id_str[1] := ""
-      self.add_x +:= validate_int(t, "tab", 0)
+      self.add_x +:= validate_int(t, "x_tab")
+      if self.add_y +:= validate_int(t, "y_tab") then
+         add_row_h := 0
       ci.x := validate_int(t, "x", add_x)
       ci.y := validate_int(t, "y", add_y)
       ci.w := validate_int(t, "w", 1)

@@ -1222,6 +1222,10 @@ class FixConstraintsAction(Action)
       # Empty strings for these meant "on"
       every s := "eol"|"x_fill"|"y_fill" do
          if t[s] === "" then t[s] := &yes
+      if s := member(t, "tab") then {
+         delete(t, "tab")
+         insert(t, "x_tab", s)
+      }
       proxy.add("Constraints", normalize_constraints(t))
    end
 end

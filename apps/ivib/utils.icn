@@ -162,7 +162,7 @@ end
 
 procedure normalize_constraint(key, val)
    case key of {
-      "tab"|"x"|"y"|"w"|"h"|"l_inset"|"r_inset"|"t_inset"|"b_inset":
+      "x_tab"|"y_tab"|"x"|"y"|"w"|"h"|"l_inset"|"r_inset"|"t_inset"|"b_inset":
          return integer(val)
       "x_align":
          return (string(val) == (Align.L | Align.R | Align.C))
@@ -199,7 +199,7 @@ end
 
 procedure stringify_constraint(key, val, quote, c)
    case key of {
-      "tab"|"x"|"y"|"w"|"h"|"l_inset"|"r_inset"|"t_inset"|"b_inset":
+      "x_tab"|"y_tab"|"x"|"y"|"w"|"h"|"l_inset"|"r_inset"|"t_inset"|"b_inset":
          return string(val)
       "x_align"|"y_align":
          return if /quote then val else if /c then align_str(val) else c.align_str(val)

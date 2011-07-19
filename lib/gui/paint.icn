@@ -204,7 +204,7 @@ class GridPaint(Paint)
                else
                   val := ""
                t[key] := case key of {
-                  "tab"|"x"|"y"|"w"|"h"|"l_inset"|"r_inset"|"t_inset"|"b_inset":
+                  "x_tab"|"y_tab"|"x"|"y"|"w"|"h"|"l_inset"|"r_inset"|"t_inset"|"b_inset":
                      integer(val)
                   "x_align":
                      val == (Align.L | Align.R | Align.C)

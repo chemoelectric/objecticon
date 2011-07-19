@@ -702,10 +702,10 @@ class Canvas(Component,SelectiveObjectCodec)
             else {
                every e := !i do {
                   if tab > 0 then {
-                     e.set_constraint("tab", tab)
+                     e.set_constraint("x_tab", tab)
                      tab := 0
                   } else
-                     e.remove_constraint("tab")
+                     e.remove_constraint("x_tab")
                   e.remove_constraint("eol")
                   e.layout_safe()
                   last := e
