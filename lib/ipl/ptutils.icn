@@ -26,8 +26,9 @@
 package ipl.ptutils
 
 import
-   io(open, read, stop),
-   ipl.gobject(Point)
+   io(open, read),
+   ipl.gobject(Point),
+   util(error)
 
 # convert point to coordinate
 procedure pt2coord(p)		
@@ -72,7 +73,7 @@ end
 procedure getpts(s)			
    local input, pts
 
-   input := open(s) | stop("*** cannot open ", image(s))
+   input := open(s) | return error("*** cannot open " || image(s) || ": " || &why)
 
    pts := []
 
