@@ -255,8 +255,8 @@ class ScrollArea(Component)
          h_spec := predict_total_height(get_subject_height(), 1)
       }
 
-      w_spec <:= min_w
-      h_spec <:= min_h
+      w_spec <:= \min_w
+      h_spec <:= \min_h
       return self
    end
 
