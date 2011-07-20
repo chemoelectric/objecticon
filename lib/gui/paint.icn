@@ -142,7 +142,7 @@ class GridPaint(Paint)
       }
 
       # Move over any preliminary junk before the first .cell
-      while *buff > 0 & not(match(".cell", buff[1])) do
+      while *buff > 0 & not(buff[1] ? (=".cell" & (pos(0) | any(' ')))) do
          pop(buff)
 
       while s := pop(buff) do {
@@ -154,7 +154,12 @@ class GridPaint(Paint)
                   tab(many(' '))
                   if pos(0) then
                      break
-                  t := tab(upto(' ') | 0)
+                  if any('\'') then {
+                     move(1)
+                     t := tab(upto('\'') | 0)
+                     move(1)
+                  } else
+                     t := tab(upto(' ') | 0)
                   put(args, string(t))
                }
                case string(cmd) of {
