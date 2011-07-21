@@ -199,13 +199,13 @@ class Time()
       
       /p := DEFAULT_FORMAT
 
-      res := ""
+      res := p[1:1]   # Empty string same type as p
       p ? {
          until pos(0) do {
             if any('EydHMhmsaAzZ') then {
                ch := p[&pos]
                w := *tab(many(ch))
-               res ||:= case ch of {
+               res ||:= case string(ch) of {
                   "E": format_weekday(w)
                   "y": format_year(w)
                   "M": format_month(w)
@@ -1019,7 +1019,7 @@ class TimeParser()
             if any('EydHMhmsaAz') then {
                ch := p[&pos]
                w := *tab(many(ch))
-               case ch of {
+               case string(ch) of {
                   "E": parse_weekday() | fail
                   "y": y := parse_year(w) | fail
                   "M": m := parse_month(w) | fail

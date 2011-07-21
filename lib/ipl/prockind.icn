@@ -18,25 +18,31 @@
 #
 #	"p"	(declared) procedure
 #	"f"	(built-in) function
+#	"m"	static method
+#	"n"	static native method
 #	"o"	operator
+#	"k"	keyword
 #	"c"	record constructor
 #
-#  It fails if p is not of type procedure.
+#  It fails if p is not of type procedure or constructor.
 #
 ############################################################################
 
 package ipl.prockind
 
+import lang(Proc)
+
 procedure prockind(p)
+
+   if type(p) == "constructor" then return "c"
 
    if type(p) ~== "procedure" then fail
 
-   image(p) ? {
-      if find("procedure") then return "p"
-      if find("record constructor") then return "c"
-      ="function "
-      if upto(&letters) then return "f" else return "o"
-      }
-
+   return case Proc.get_kind(p) of {
+      Proc.Procedure: if Proc.get_defining_class(p) then "m" else "p"
+      Proc.Function:  if Proc.get_defining_class(p) then "n" else "f"
+      Proc.Keyword: "k"
+      Proc.Operator: "o"
+   }
 end
 

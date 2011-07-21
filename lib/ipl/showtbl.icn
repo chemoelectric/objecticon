@@ -54,7 +54,7 @@
 package ipl.showtbl
 
 import
-   io(stop, write)
+   io(write)
 
 # show table contents
 procedure showtbl(title, tbl, sort_type,	
@@ -63,22 +63,22 @@ procedure showtbl(title, tbl, sort_type,
 
    /title := ""
    if type(tbl) ~== "table" then
-      stop("*** invalid table argument to showtbl()")
+      runerr("*** invalid table argument to showtbl()", tbl)
    sort_type := case sort_type of {
       "ref" | &null:  3
       "val": 4
-      default:  stop("*** invalid sort type in showtbl()")
+      default:  runerr("*** invalid sort type in showtbl()", sort_type)
       }
    /limit := 2 ^ 30			# essentially infinite
    sort_order := case sort_order of {
       "incr" | &null:  "incr"
       "decr":  "decr"
-      default:  stop("*** invalid sort order in showtbl()")
+      default:  runerr("*** invalid sort order in showtbl()", sort_order)
       }
    posit := case posit of {
       "val" | &null:   "val"
       "ref":  "ref"
-      default:  stop("*** invalid column position in showtbl()")
+      default:  runerr("*** invalid column position in showtbl()", posit)
       }
    /w1 := 10
    /w2 := 10

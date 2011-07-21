@@ -40,9 +40,6 @@
 
 package ipl.wipe
 
-import
-   io(stop)
-
 procedure wipe(window, color, direction, x1, y1, w, h)
    local x, y, x2, y2, fg
 
@@ -59,7 +56,7 @@ procedure wipe(window, color, direction, x1, y1, w, h)
    window.set_fg(color)				# set foreground for wiping
 
    if not(integer(x1) & integer(x2) & integer(y1) & integer(y2)) |
-      (x1 > x2) | (y1 > y2) then stop("*** illegal coordinates in wipe()")
+      (x1 > x2) | (y1 > y2) then runerr("*** illegal coordinates in wipe()")
 
    case direction of {
       "right": {
@@ -107,7 +104,7 @@ procedure wipe(window, color, direction, x1, y1, w, h)
             y2 -:= 1
             }
          }
-      default: stop("*** illegal direction specificaion in wipe()")
+      default: runerr("*** illegal direction specificaion in wipe()", direction)
       }
 
    window.set_fg(fg)			# restore foreground color

@@ -39,8 +39,6 @@
 #
 #  dressseq(i)		dress sequence with increment i, default 1 (Schroeder)
 #
-#  eisseq(i)		EIS A sequence for i
-#
 #  factseq()		factorial sequence
 #
 #  fareyseq(i, k)	Farey fraction sequence; k = 0, the default, produces
@@ -149,7 +147,6 @@ import
    ipl.polynom(poly2profile, polyadd, polyexp, polymul,
                polysub, str2poly),
    ipl.strings(csort, deletec),
-   ipl.xcode(xdecode),
    util(Math)
 
 # arithmetic sequence with random intervals
@@ -315,22 +312,6 @@ procedure dressseq(i)
 
 end
 
-# EIS A sequence
-procedure eisseq(i)		
-   local input, seq
-   static lst
-
-   initial {
-      input := dopen("eis.seq") | fail
-      lst := xdecode(input) | fail
-      close(input)
-      }
-
-   seq := \lst[integer(i)] | fail
-
-   suspend !seq
-
-end
 
 # factorial sequence
 procedure factseq()		

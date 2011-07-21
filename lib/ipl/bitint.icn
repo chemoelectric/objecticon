@@ -25,7 +25,7 @@ package ipl.bitint
 procedure int2bit(i)
    local s, sign
 
-   if i = 0 then return 0
+   if i = 0 then return "0"
    if i < 0 then {
       sign := "-"
       i := -i

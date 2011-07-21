@@ -382,7 +382,7 @@ class XmlParser(Connectable)
       local res, c
       any('\'\"') | throw("\' or \" expected")
       c := move(1)
-      res := ""
+      res := move(0)  # Empty string, same type as &subject
       repeat {
          if any('%') then {
             # Can't reference a pe in the internal subset; see ibm test ibm29n04.xml
@@ -412,7 +412,7 @@ class XmlParser(Connectable)
       local res, c
       any('\'\"') | throw("\' or \" expected")
       c := move(1)
-      res := ""
+      res := move(0)  # Empty string, same type as &subject
       repeat {
          if any('&') then
             res ||:= parse_reference()

@@ -14,14 +14,14 @@
 #
 ############################################################################
 #
-#	BestFont(W, s, ...) generates X-windows font names matching a
+#	BestFont(s, ...) generates X-windows font names matching a
 #	given specification, beginning with the closest match.  The
 #	ranking algorithm is similar to that used in Font() but it is
 #	not identical.
 #
 ############################################################################
 #
-#      BestFont(window, spec, ...) returns the name of whichever available
+#      BestFont(spec, ...) returns the name of whichever available
 #   X-Windows font most closely matches the given specification.  Note that
 #   matching is done using a slightly different algorithm from that of the
 #   Icon runtime system; this procedure preceded Icon's font selection
@@ -82,8 +82,8 @@
 #   are cached, so this overhead is only incurred once.
 #
 #      Examples:
-#         Font(w, BestFont(w, "times bold italic 20"))
-#         s := BestFont(w, size, family, "italic")
+#         Font(w, BestFont("times bold italic 20"))
+#         s := BestFont(size, family, "italic")
 #
 ############################################################################
 #
@@ -118,10 +118,10 @@ procedure BestFont(args[])
 end
 
 
-#  XRankFont(window, spec...) - generate sequence of (name,score) tuples
+#  RankFonts(spec...) - generate sequence of (name,score) tuples
 
 # generate scores for X fonts
-procedure RankFonts(w, args[])		
+procedure RankFonts(args[])		
    local tokens, cklist, sclist, fspec, ranks, r
 
    XBF_defaults()			# set default values
@@ -132,7 +132,7 @@ procedure RankFonts(w, args[])
 
    # make a list of (fontname,score) tuples, and sort it
    sclist := []
-   every fspec := XBF_fontlist(w) do
+   every fspec := XBF_fontlist() do
       put(sclist, XBF_rec(fspec, XBF_eval(fspec, cklist)))
    ranks := sortf(sclist, 2)
 
@@ -259,21 +259,16 @@ end
 
 # XBF_fontlist(w) - generate list of font names for window (or list) w
 
-procedure XBF_fontlist(w)
+procedure XBF_fontlist()
    static fontlist
    local pipe
-
-   if type(w) == "list" then
-      suspend !w
-   else {
-      if /fontlist then {
-         fontlist := []
-         pipe := open("xlsfonts", "rp") | stop("can't open xlsfonts pipe")
-         while put(fontlist, trim(read(pipe)))
-         close(pipe)
-         }
-      suspend !fontlist
-      }
+   if /fontlist then {
+      fontlist := []
+      pipe := open("xlsfonts", "pr") | stop("can't open xlsfonts pipe")
+      while put(fontlist, trim(read(pipe)))
+      close(pipe)
+   }
+   suspend !fontlist
 end
 
 

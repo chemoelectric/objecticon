@@ -319,12 +319,12 @@ class Window(NoCopy)
    public defer unclip()
 
    #
-   # Return the r,g,b,a values of the given color, as a color string
+   # Return the r,g,b values of the given color, as a color string
    #
    public static defer color_value(k)
 
    #
-   # Return the r,g,b,a values of the given color, as a list of 4 integers.
+   # Return the r,g,b values of the given color, as a list of 3 integers.
    #
    public static defer parse_color(k)
 
@@ -534,13 +534,14 @@ $endif
    #
    # Enqueue a window event.
    #
-   public enqueue(eventcode, x, y, interval, mod)
+   public enqueue(eventcode, x, y, time, mod)
       /x := -1
       /y := -1
       x +:= get_dx()
       y +:= get_dy()
-      /interval := 0
-      return pending(eventcode, x, y, interval, mod)
+      /time := 0
+      /mod := 0
+      return pending(eventcode, x, y, time, mod)
    end
 
    #

@@ -507,14 +507,23 @@ class CanvasComponent(CanvasObject)
          else
             csm.add(RemoveConstraintItem(self, "eol"))
 
-         if i := integer(c["tab"]) then {
-            csm.add(SetConstraintItem(self, "tab", i + 1))
+         if i := integer(c["x_tab"]) then {
+            csm.add(SetConstraintItem(self, "x_tab", i + 1))
             if i = 1 then
-               csm.add(RemoveConstraintItem(self, "tab"))
+               csm.add(RemoveConstraintItem(self, "x_tab"))
             else
-               csm.add(SetConstraintItem(self, "tab", i - 1))
+               csm.add(SetConstraintItem(self, "x_tab", i - 1))
          } else
-            csm.add(SetConstraintItem(self, "tab", 1))
+            csm.add(SetConstraintItem(self, "x_tab", 1))
+
+         if i := integer(c["y_tab"]) then {
+            csm.add(SetConstraintItem(self, "y_tab", i + 1))
+            if i = 1 then
+               csm.add(RemoveConstraintItem(self, "y_tab"))
+            else
+               csm.add(SetConstraintItem(self, "y_tab", i - 1))
+         } else
+            csm.add(SetConstraintItem(self, "y_tab", 1))
 
          if i := integer(c["w"]) then {
             csm.add(SetConstraintItem(self, "w", i + 1))

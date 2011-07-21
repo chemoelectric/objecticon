@@ -39,7 +39,8 @@ package ipl.unsigned
 
 procedure unsigned(s)
    local i
+   s := string(s) | runerr(103, s)
    i := 0
-   every i := ior(ord(!s),ishift(i,8))
+   every i := ior(ord(s),ishift(i,8))
    return i
 end

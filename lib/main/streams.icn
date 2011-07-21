@@ -438,6 +438,23 @@ class BufferStream(Stream)
       return self
    end
 
+   #
+   # Push the string s onto the read buffer, so that it is read next.
+   #
+   public push(s)
+      s := string(s) | runerr(103, s)
+      unbuff() | fail
+      rbuff := s || rbuff
+      return
+   end
+
+   #
+   # Push the string s followed by an end-of-line.
+   #
+   public push_line(s)
+      return push(s || Files.EOL)
+   end
+
    public read_line()
       local t
       flush() | fail
@@ -513,18 +530,14 @@ class BufferStream(Stream)
    # Flush the write buffer.
    #
    public flush()
-      local n, s
+      local s
       if *wbuff = 0 then
          return
       s := ""
       every s ||:= !wbuff
       wbuff := []
       wbuff_len := 0
-      while *s > 0 do {
-         n := other.out(s) | fail
-         s := s[n + 1:0]
-      }
-      return
+      return other.fully_out(s)
    end
 
    #

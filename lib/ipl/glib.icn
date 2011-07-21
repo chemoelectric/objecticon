@@ -42,7 +42,7 @@
 package ipl.glib
 
 import
-   io(stop, write, writes),
+   io(write, writes),
    util(Math)
 
 record point(x,y)
@@ -406,7 +406,7 @@ end
 procedure mmult(m1,m2)		
    local m3, r, c, nk, k
 
-   if (nk := *m1[1]) ~= *m2 then stop("Matrices are wrong size to multiply")
+   if (nk := *m1[1]) ~= *m2 then runerr("Matrices are wrong size to multiply")
 
    m3 := newmat(*m1,*m2[1])
    every r := 1 to *m1 do {
@@ -596,7 +596,7 @@ end
 procedure add_vectors(v1,v2)
    local v3, i
 
-   if *v1 ~= *v2 then stop("cannot add vectors of differing sizes")
+   if *v1 ~= *v2 then runerr("cannot add vectors of differing sizes")
 
    v3 := copy(v1)
    every i := 1 to *v3 do
@@ -608,7 +608,7 @@ end
 procedure sub_vectors(v1,v2)
    local v3, i
 
-   if *v1 ~= *v2 then stop("cannot subtract vectors of differing sizes")
+   if *v1 ~= *v2 then runerr("cannot subtract vectors of differing sizes")
 
    v3 := copy(v1)
    every i := 1 to *v3 do
@@ -642,7 +642,7 @@ end
 procedure dot(v1,v2)
    local sum, i
 
-   if *v1 ~= *v2 then stop("dot product: vectors of differing sizes")
+   if *v1 ~= *v2 then runerr("dot product: vectors of differing sizes")
    sum := 0
    every i := 1 to *v1 do
       sum +:= v1[i]*v2[i]

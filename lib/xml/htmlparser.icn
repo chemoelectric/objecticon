@@ -337,7 +337,7 @@ class HtmlParser()
       local res, s, t
       res := Comment()
       ="<!" | fail
-      s := ""
+      s := move(0)  # Empty string, same type as &subject
       repeat {
          tab(upto('->'))
          if =">" then

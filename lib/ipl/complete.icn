@@ -74,9 +74,6 @@
 
 package ipl.complete
 
-import
-   io(stop)
-
 procedure complete(s,st)
 
     local dfstn, c, l, old_chr, chr, newtbl, str, strset
@@ -91,7 +88,7 @@ procedure complete(s,st)
 	fail
     }
     type(st) == ("list"|"set") |
-	stop("error (complete):  list or set expected for arg2")
+	runerr("error (complete):  list or set expected for arg2", st)
 
     # Seriously, all that's being done here is that possible states
     # are being represented by sets containing possible completions of

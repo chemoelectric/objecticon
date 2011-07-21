@@ -16,13 +16,12 @@
 #
 #  inserts() -- Inserts values into a table in which the same key can
 #  have more than one value (i.e., duplicate keys).  The value of each
-#  element is a list of inserted values.  The table must be created
-#  with default value &null.
+#  element is a list of inserted values.
 #
 
 package ipl.inserts
 
 procedure inserts(tabl,key,value)
-   (/tabl[key] := [value]) | put(tabl[key],value)
+   put(member(tabl, key), value) | insert(tabl, key, [value])
    return tabl
 end

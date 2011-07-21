@@ -66,16 +66,15 @@ procedure primelist(l, m)
 
 end
 
-# called as List{e, l, m}
-procedure List(L)		
-   local l, m, result
+procedure List(e, l, m)		
+   local result
 
-   l := \@L[2] | 128		# length
-   m := \@L[3] | 8		# modulus
+   l := @\l | 128	# length
+   m := @\m | 8		# modulus
 
    result := []
 
-   every put(result, residue(|@L[1], m, 1)) \ l
+   every put(result, residue(|@e, m, 1)) \ l
 
    return result
 

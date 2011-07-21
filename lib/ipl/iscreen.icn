@@ -52,8 +52,8 @@
 package ipl.iscreen
 
 import
-   io(stop, writes),
-   ipl.itlib(er, getval, igoto, iputs)
+   io(writes),
+   ipl.iolib(er, getval, igoto, iputs)
 
 procedure clear()
 
@@ -229,7 +229,7 @@ procedure status_line(s,s2,p)
 	"c"    : s := center(s,width)
 	"l"    : s := left(s,width)
 	"r"    : s := right(s,width)
-	default: stop("status_line:  Unknown option "||string(p),4)
+	default: runerr("status_line:  Unknown option", p)
     }
 
     iputs(igoto(getval("cm"), 1, getval("li")-2))

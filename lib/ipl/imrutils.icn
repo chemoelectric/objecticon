@@ -225,8 +225,7 @@ end
 procedure imropen(imr)			
    local win
 
-   win := Window.open("canvas=hidden","size=" || imr.width || "," ||
-      *imr.pixels / imr.width)
+   win := Window.open().set_size(imr.width, *imr.pixels / imr.width)
 
    imrdraw(win, 0, 0, imr) | {
       win.close()

@@ -44,8 +44,8 @@ import
 
 $define LineLen 64
 
-procedure WriteRaw(win, x, y, w, h)
-   local nextid, palette, line, c, temp, tempname
+procedure WriteRaw(win, s, x, y, w, h)
+   local nextid, palette, line, c, temp, tempname, f
 
 
    /w := win.get_width()
@@ -53,9 +53,9 @@ procedure WriteRaw(win, x, y, w, h)
    /x := 0
    /y := 0
 
-   tempname := "/tmp/reg." || map("mmhhss", "mm:hh:ss", &clock)
+   f := open(s, "w")  | stop("*** cannot open output file ", s, ": ", &why)
+   tempname := Files.make_temp_filename("writeraw")
    temp := open(tempname, "w") | stop("*** cannot open temporary file")
-
 
    line := ""
 
@@ -64,7 +64,7 @@ procedure WriteRaw(win, x, y, w, h)
    nextid := create !"0123456789abcdef" || !"0123456789abcdef"
 
    every c := !win.get_pixels(x, y, w, h) do {
-      /palette[c] := @nextid
+      /palette[c] := @nextid | runerr("WriteRaw: image has too many (>256) colours")
       line ||:= palette[c]
       line ?:= {
          write(temp, move(LineLen)) & tab(0)
@@ -73,40 +73,42 @@ procedure WriteRaw(win, x, y, w, h)
 
    write(temp, "" ~== line)
 
-   write(w, ",", h)
+   write(f, w, ",", h)
 
    palette := sort(palette, 4)
 
    while c := get(palette) do
-      write(get(palette), " ", c)
+      write(f, get(palette), " ", c)
 
-   write()			# separator
+   write(f)			# separator
 
    close(temp)
    temp := open(tempname) | stop("*** cannot find temporary file")
 
-   while writes(reads(temp, 10000))	# copy image data
+   while writes(f, reads(temp, 10000))	# copy image data
 
    close(temp)
    Files.remove(tempname)
+   close(f)
 
    return 
 
 end
 
-procedure ReadRaw(win, s, x, y)
-   local input, palette, c, temp, size, width, height, line
+procedure ReadRaw(s)
+   local input, palette, c, temp, size, width, height, line, x, y
 
    input := open(s) | stop("*** cannot read raw image file")
 
-   temp := Window.open("size=" || (size := read(input)), "canvas=hidden") |
-      stop("*** malformed raw image file")
+   size := read(input) | stop("*** malformed raw image file")
 
    size ? {
       width := integer(tab(upto(','))) &
       move(1) &
       height := integer(tab(0)) | stop("invalid raw image header")
       }
+
+   temp := Window.open().set_size(width, height)
 
    palette := table()
 
@@ -132,8 +134,6 @@ procedure ReadRaw(win, s, x, y)
          }
       }
 
-   temp.copy_to(win, 0, 0, width, height, x, y)
-
-   return
+   return temp
            
 end

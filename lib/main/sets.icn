@@ -121,15 +121,17 @@ class TableSet(Set)
 
    public insert(x)
       t.insert(x, t.def)
+      return self
    end
 
    public member(x)
       if t.member(x) then
-         return
+         return x
    end
 
    public delete(x)
       t.delete(x)
+      return self
    end
 
    public sort()
@@ -153,6 +155,7 @@ class TableSet(Set)
 
    public clear()
       t.clear()
+      return self
    end
 
    #
@@ -180,6 +183,7 @@ class BuiltinSet(Set)
 
    public insert(x)
       default.insert(s, x)
+      return self
    end
 
    public member(x)
@@ -188,6 +192,7 @@ class BuiltinSet(Set)
 
    public delete(x)
       default.delete(s, x)
+      return self
    end
 
    public sort()
@@ -204,6 +209,7 @@ class BuiltinSet(Set)
 
    public clear()
       default.clear(s)
+      return self
    end
 
    #

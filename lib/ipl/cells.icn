@@ -60,8 +60,7 @@
 package ipl.cells
 
 import
-   graphics(Window),
-   io(stop)
+   graphics(Window)
 
 record Cell(n, m, color)
 record Panel(window, n, m, size, fg, bg, pg)
@@ -78,8 +77,8 @@ procedure makepanel(n, m, cellsize, fg, bg, pg)
    width := (n * cellsize + 1)
    height := (m * cellsize + 1)
 
-   window := Window.open("width=" || width, "height=" || height,
-      "fg=" || fg, "bg=" || bg, "canvas=hidden") | fail
+   window := Window.open().set_size(width, height).
+      set_fg(fg).set_bg(bg)  | fail
 
    panel := Panel(window, n, m, cellsize, fg, bg, pg)
 
@@ -93,8 +92,8 @@ procedure clearpanel(panel)
    local width, height, x, y
    
    if \panel.pg then {			# default is textured
-      panel.window.attrib("fill_style=textured")
-      panel.window.pattern("checkers")
+      panel.window.set_fill_style("textured")
+      panel.window.set_pattern("checkers")
       panel.window.set_bg("very dark gray")
       }
    else panel.window.set_fg(panel.fg)
@@ -108,7 +107,7 @@ procedure clearpanel(panel)
    every y := 0 to height by panel.size do
       panel.window.draw_line(0, y, width, y)
 
-   panel.window.attrib("fill_style=solid")
+   panel.window.set_fill_style("solid")
 
    return panel
 
@@ -124,8 +123,8 @@ end
 procedure colorcell(panel, n, m, color)		
    local cellsize
 
-   if not(integer(n) & integer(m)) then
-      stop("Non-integer value to colorcell(). n=", image(n), " m=", image(m))
+   n := integer(n) | runerr(101, n)
+   m := integer(m) | runerr(101, m)
 
    cellsize := panel.size
 
@@ -152,8 +151,8 @@ procedure colorcells(panel, matrix)
          # fudge 0/1 matrix
          if matrix[i, j] === "1" then matrix[i, j] := "white"
          else if matrix[i, j] === "0" then matrix[i, j] := "black"
-         panel.window.set_fg(matrix[i, j])
-            stop("Fg() failed in colorcells() with matrix[" ||
+         panel.window.set_fg(matrix[i, j]) |
+            runerr("set_fg() failed in colorcells() with matrix[" ||
               i || "," || j || "]=" || matrix[i, j] || ".")
          panel.window.fill_rectangle((j - 1) * cellsize + 1, (i - 1) * cellsize + 1,
             cellsize - 1, cellsize - 1)

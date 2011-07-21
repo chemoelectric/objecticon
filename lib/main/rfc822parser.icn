@@ -85,7 +85,7 @@ class RFC822Parser()
    private parse_and_convert_quoted_string()
       local res
 
-      res := ""
+      res := move(0)  # Empty string, same type as &subject
       move(1)
 
       repeat {

@@ -39,7 +39,7 @@
 package ipl.lsystem
 
 import
-   io(read, stop, write),
+   io(read, write),
    ipl.glib(Left, Line_Forward, Move_Forward, Right)
 
 record Lsys(order, dist, delta, axiom, rewrite)
@@ -51,7 +51,7 @@ procedure lsmap(s1,T)
    local s
 
    if type(T) ~== "table" then
-      stop("lsmap() - second argument not a table!")
+      runerr("lsmap() - second argument not a table!", T)
 
    s := ""
    s1 ? while s ||:= (\T[move(1)] | move(1))

@@ -40,7 +40,8 @@ package ipl.signed
 
 procedure signed(s)
    local i
+   s := string(s) | runerr(103, s)
    i := if ord(s[1]) >= 128 then -1 else 0
-   every i := ior(ord(!s),ishift(i,8))
+   every i := ior(ord(s),ishift(i,8))
    return i
 end

@@ -3,7 +3,6 @@ package parser
 $include "oigram_tab.icn"
 
 procedure tokenstr(t)
-   if type(t) == "compiler__token" then t := t.tok
    return case t of {
    IDENT : "IDENT"
    INTLIT : "INTLIT"

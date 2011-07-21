@@ -18,8 +18,6 @@
 #
 #	ScratchCanvas(w, h, id)	  creates a temporary, hidden window.
 #
-#	PushWin(L)		  adds a default window to an argument list.
-#
 #	Distance(x1, y1, x2, y2)  computes the distance between two points.
 #
 #	InBounds(x, y, w, h)	  succeeds if (AmperX,AmperY) is within (x,y,w,h).
@@ -39,10 +37,6 @@
 ############################################################################
 #
 #   The following procedures do not accept a window argument:
-#
-#   PushWin(L) pushes amper_window onto the front of list L if the first
-#   element of the list is not a window.  This aids in constructing
-#   variable-argument procedures with an optional window argument.
 #
 #   Distance(x1, y1, x2, y2) returns the distance between two points
 #   as a real number.
@@ -67,12 +61,6 @@ import
    graphics(Window),
    util(Math)
 
-#   PushWin(L) -- push amper_window on list if no window already there.
-
-procedure PushWin(a)
-   return a
-end
-
 
 #   Distance(x1, y1, x2, y2) -- compute distance between two points.
 
@@ -96,7 +84,7 @@ procedure InBounds(x, y, w, h, AmperX, AmperY)
 end
 
 
-#  ScratchCanvas([win,] w, h, id) -- return hidden window for temporary use.
+#  ScratchCanvas(win, w, h, id) -- return hidden window for temporary use.
 
 # return scratch canvas
 procedure ScratchCanvas(win, w, h, id)		

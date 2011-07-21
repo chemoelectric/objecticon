@@ -19,8 +19,7 @@
 #  letter of the type, as "i" for the integer type. Structure types
 #  are in uppercase, as "L" for the list type. All records have the
 #  code "R".  The code "C" is used for the co-expression type to avoid
-#  conflict for the "c" for the cset type. In the case of graphics, "w"
-#  is produced for windows.
+#  conflict for the "c" for the cset type.
 #
 ############################################################################
 
@@ -28,16 +27,13 @@ package ipl.typecode
 
 procedure typecode(x)
    local code
-				# be careful of records and their constructors
-   image(x) ? {
-      if ="record constructor " then return "p"
-      if ="record" then return "R"
-      }
 
    code := type(x)
-
-   if code == ("list" | "set" | "table" | "co-expression") then
-      code := map(code,&lcase,&ucase)
-
-   return code[1]
+   return case code of {
+      "constructor" : "p"
+      "cast" : "a"
+      "class" : "q"
+      "object" | "record" | "list" | "set" | "table" | "co-expression": map(code[1],&lcase,&ucase)
+      default: code[1]
+   }
 end

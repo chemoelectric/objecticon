@@ -30,7 +30,6 @@
 package ipl.imxform
 
 import
-   io(stop),
    ipl.factors(pfactors),
    ipl.random(shuffle),
    ipl.strings(collate, decollate, rotate)
@@ -156,7 +155,7 @@ procedure imxscramb(rows, dir)
             all[1 +: *rows[1]] := ""
             }
          }
-      default:   stop("*** illegal specification in scramble()")
+      default:   runerr("*** illegal specification in scramble()", dir)
       }
 
    return rows
@@ -189,7 +188,7 @@ procedure imxshift(rows, shift, dir)
             every 1 to -shift do
                put(rows, pop(rows))
          }
-      default:  stop("*** illegal specification in imxshift()")
+      default:  runerr("*** illegal specification in imxshift()", dir)
       }
 
    return rows
@@ -345,7 +344,7 @@ procedure imxflip(rows, dir)
          every i := 1 to *rows / 2 do
            newrows[i] :=: newrows[-i]
          }
-      default:  stop("*** illegal flip specification in imxflip()")
+      default:  runerr("*** illegal flip specification in imxflip()", dir)
       }
 
    return newrows
@@ -429,7 +428,7 @@ procedure imxrotate(rows, dir)
          newrows := []
          every push(newrows, reverse(!rows))
          }
-      default:  stop("*** illegal rotation specification in imxrotate()")
+      default:  runerr("*** illegal rotation specification in imxrotate()", dir)
    }
 
    return newrows

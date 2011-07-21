@@ -154,7 +154,7 @@
 package ipl.bufread
 
 import
-   io(close, open, read, stop)
+   io(close, open, read, Stream)
 
 global __buf
 
@@ -191,8 +191,8 @@ procedure bufread(file)
     if /__buf then
         __buf := table(&null)
         
-    type(file) == "file" | stop("bufread: Parameter is not a file")
-    buf := \__buf[file] | stop("bufread: File not open for buffered reads")
+    is(file, Stream) | runerr("bufread: Parameter is not a file", file)
+    buf := \__buf[file] | runerr("bufread: File not open for buffered reads", file)
     return get(buf) | read(file)
 
 end
@@ -207,10 +207,10 @@ procedure bufnext(file, n)
     if /n then
         n := 1
         
-    type(file) == "file" | stop("bufnext: Parameter is not a file")
-    integer(n) | stop("bufnext: Look ahead count was not convertible to integer")
-    (n > 0) | stop("bufnext: Look ahead count was non-positive")
-    buf := \__buf[file] | stop("bufnext: File not open for buffered reads")
+    is(file, Stream) | runerr("bufnext: Parameter is not a file", file)
+    integer(n) | runerr("bufnext: Look ahead count was not convertible to integer", n)
+    (n > 0) | runerr("bufnext: Look ahead count was non-positive", n)
+    buf := \__buf[file] | runerr("bufnext: File not open for buffered reads", file)
 
     return buf[n] |
         (

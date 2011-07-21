@@ -218,7 +218,7 @@ function list(n, x)
 end
 
 
-"member(s, x) - if x is a set, return x if it is a member of s; if x is a table "
+"member(s, x) - if s is a set, return x if it is a member of s; if s is a table "
 " return s[x] (a variable) if x is a key of s.  Fails otherwise."
 
 function member(s, x)

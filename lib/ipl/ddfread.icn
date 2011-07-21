@@ -73,7 +73,7 @@ $define AnySep	'!\x1E\x1F'	# any separator, as cset
 package ipl.ddfread
 
 import
-   io(close, open, reads)
+   io(close, open, reads, Stream)
 
 record ddf_info(	# basic DDF file handle
    file,		# underlying file
@@ -125,10 +125,10 @@ record ddf_decoder(	# field decoder record
 procedure ddfopen(fname)		
    local f, h, p, l, t, e
 
-   if type(fname) == "file" then
+   if is(fname, Stream) then
       f := fname
    else
-      f := open(fname, "ru")	| fail
+      f := open(fname, "r")	| fail
 
    h := ddf_rhdr(f)		| fail
    p := ddf_rdata(f, h)		| fail

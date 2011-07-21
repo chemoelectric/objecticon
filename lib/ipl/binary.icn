@@ -133,7 +133,6 @@
 package ipl.binary
 
 import
-   io(ewrite, stop),
    util(Math)
 
 global pack_short,pack_long,
@@ -414,7 +413,7 @@ procedure pack_hex_digit(s)
       "d": 2r1101
       "e": 2r1110
       "f": 2r1111
-      }) | stop("bad hex digit: ",image(s))
+      }) | runerr("bad hex digit: ",s)
 end
 
 #
@@ -924,10 +923,7 @@ end
 #
 procedure UUDecodeQuad(s)
   local v1,v2,v3,v4
-  *s = 4 | {
-    ewrite("Input string not of length 4")
-    runerr(500,s)
-  }
+  *s = 4 | runerr("Input string not of length 4",s)
   v1 := UUDecodeChar(s[1])
   v2 := UUDecodeChar(s[2])
   v3 := UUDecodeChar(s[3])

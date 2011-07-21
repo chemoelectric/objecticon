@@ -27,11 +27,7 @@ procedure digitcnt(file)
 
    result := list(10, 0)
 
-   #  If the file contains only digits, remove the # on the next line and add
-   # to the following one.
-
-#  every result[!!file + 1] +:= 1
-   every result[integer(!!file) + 1] +:= 1
+   every result[integer(!|file.read()) + 1] +:= 1
 
    return result
 

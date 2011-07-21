@@ -405,7 +405,7 @@ procedure pix2pat(window, x, y, cols, rows)
    every y0 := 0 to rows - 1 do {
       pixels := ""
       every c := !window.get_pixels(x, y0 + y, cols, 1) do
-         pixels ||:= (if c == "0,0,0" then "1" else "0")
+         pixels ||:= (if c === "0,0,0" then "1" else "0")
       pattern ||:= bits2hex(pixels)
       }
 

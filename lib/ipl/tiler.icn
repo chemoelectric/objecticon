@@ -38,7 +38,7 @@ import
 procedure tileimg(win, img)		
    local hidden
 
-   hidden := Window.open("canvas=hidden", "image=" || img) | {
+   hidden := Window.open().set_image(img) | {
       ewrite("*** cannot open image ", img)
       fail
       }
@@ -61,8 +61,8 @@ procedure tileims(win, ims)
    if ims ? {
       tab(many(&digits)) & =",#"
       } then {
-         win.attrib("pattern=" || ims)
-         win.attrib("fill_style=textured")
+         win.set_pattern(ims)
+         win.set_fill_style("textured")
          win.fill_rectangle()
          }
    

@@ -84,7 +84,7 @@
 
 package ipl.graphics
 
-import graphics(Window), io(RamStream)
+import graphics(Mouse,Window), io(RamStream)
 
 #   LeftString(x, y, s) -- draw string left-justified at (x,y).
 
@@ -139,7 +139,7 @@ end
 
 # add translation
 procedure Translate(win, dx, dy, w, h)		
-   win.attrib("dx=" || win.get_dx()+dx, "dy=" || win.get_dy()+dy)
+   win.set_dx(win.get_dx()+dx).set_dy(win.get_dy()+dy)
    win.clip( 0, 0, \w, \h)
    return win
 end
@@ -149,6 +149,38 @@ end
 
 # sweep area with mouse
 procedure Sweep(win)				
+   local l, e, x, y, w, h, wmin, wmax, hmin, hmax
+
+   win := win.clone().set_draw_op("xor").set_fg(win.get_bg()) | fail
+
+   l := win.query_pointer()
+   x := l[1]                                      # set initial rect bounds
+   y := l[2]
+   w := h := 0
+
+   wmin := -win.get_dx() - x              # calc coordinate limits
+   hmin := -win.get_dy() - y
+   wmax := wmin + win.get_width() - 1
+   hmax := hmin + win.get_height() - 1
+
+   win.draw_rectangle(x, y, w, h)               # draw initial bounding rect
+   until member(Mouse.RELEASE, (e := WEvent(win))[1]) do {
+      win.draw_rectangle(x, y, w, h)            # erase old bounds
+      w := e[2] - x                               # calc new width & height
+      h := e[3] - y
+      w <:= wmin                                # clip to stay on window
+      w >:= wmax
+      h <:= hmin
+      h >:= hmax
+      win.draw_rectangle(x, y, w, h)            # draw new bounds
+      }
+   win.draw_rectangle(x, y, w, h)               # erase bounding rectangle
+
+   if w < 0 then x -:= (w := -w)                # ensure nonnegative sizes
+   if h < 0 then y -:= (h := -h)
+
+   win.uncouple()
+   return [x, y, w + 1, h + 1]                  # return FillRectangle bounds
 end
 
 

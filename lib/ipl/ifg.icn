@@ -29,7 +29,7 @@ procedure ifg()
    local win
 
    if (&features == "graphics") &
-      win := Window.open("canvas=hidden") then {
+      win := Window.open() then {
          close(win)
          return
          }

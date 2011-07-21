@@ -175,7 +175,7 @@ package ipl.iolib
 
 import
    io(close, ewrite, open, read,
-      stop, writes),
+      stop, writes, Files),
    posix(System)
 
 global tc_table, isDOS
@@ -241,9 +241,9 @@ procedure getname()
     }
     else {
 	if not (term := System.getenv("TERM")) then {
-	    tset_output := open("/bin/tset -","pr") |
+	    tset_output := open("tset -","pr") |
 		er("getname","can't find tset command",1)
-	    term := !tset_output
+	    term := tset_output.read()
 	    close(tset_output)
 	}
     }
@@ -344,6 +344,7 @@ procedure getentry(name, termcap_string)
     if \isFILE			# if find(slash, \termcap_string)
     then f := open(\termcap_string)
     /f := open(!termcap_names) |
+        open(Files.find_exe("infocmp") || " -C " || name, "pr") |
 	er("getentry","I can't access your termcap file.  Read iolib.icn.",1)
     
     getline := create read_file(f)
@@ -365,7 +366,7 @@ procedure getentry(name, termcap_string)
 		}
 		else {
 		    \line := &null # must precede the next line
-		    entry ||:= trim(trim(tab(0),'\\'),':')
+		    entry ||:= trim(tab(0),'\\')
 		}
 	    }
 	}

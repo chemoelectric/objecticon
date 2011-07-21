@@ -64,7 +64,8 @@ import
    io(close, open, read, stop,
       write, writes),
    ipl.ptutils(pt2coord),
-   ipl.records(field)
+   ipl.types(itype),
+   lang(Constructor)
 
 # create VRML point field
 procedure point_field(pts)	
@@ -125,7 +126,7 @@ procedure render(x, f)
    bar := repl(" ", indent)
 
    if x := string(x) then write(f, " ", x)
-   else case type(x) of {
+   else case itype(x) of {
       "USE": write(f, bar, "USE ", x.name)
       "DEF": {
          writes(f, bar, "DEF ", x.name)
@@ -138,14 +139,14 @@ procedure render(x, f)
          close(input)
          }
       default: {				# all other nodes
-         write(f, bar, type(x), " {")		# must be record for VRML node
+         write(f, bar, itype(x), " {")		# must be record for VRML node
          every i := 1 to *x do {
            if type(x[i]) == "list" then		# list of children
                every render(!x[i], f)
             else if /x[i] then next		# skip empty fields
             else {
                writes(f, bar, "   ")
-               fieldname := field(x, i)
+               fieldname := Constructor.get_field_name(x, i)
                if fieldname ~== "null" then writes(f, fieldname)
                render(x[i], f)
                }

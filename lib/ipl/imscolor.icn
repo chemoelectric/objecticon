@@ -29,7 +29,7 @@
 #	pickpalette(W, p, dx, dy, w, h, n)      maps window coordinates
 #				to a palette drawn by drawpalette().
 #
-#	XPMImage(W, f, p)	reads an XPM file, returning an image string.
+#	XPMImage(f, p)	reads an XPM file, returning an image string.
 #
 ############################################################################
 #
@@ -58,7 +58,7 @@
 #  pickpalette([win,] p, dx, dy, w, h, n) returns the character at (dx,dy)
 #  within a region drawn by drawpalette(win, p, x, y, w, h, f, n).
 #
-#  XPMImage([win,] f, palette) reads an XPM (X Pixmap) format image from
+#  XPMImage(f, palette) reads an XPM (X Pixmap) format image from
 #  the open file f and returns an Icon image specification that uses the
 #  specified palette.  XPMImage() fails if it cannot decode the file.
 #   if palette is omitted, "c1" is used.
@@ -82,7 +82,7 @@ package ipl.imscolor
 
 import
    graphics(Window),
-   io(read, write),
+   io(read, write, Stream),
    ipl.graphics(CenterString, Contrast),
    util(Math)
 
@@ -194,7 +194,7 @@ procedure drawpalette(win, p, x, y, w, h, f, n)
    static cs
    initial cs := &ascii[33+:95] -- '\\'
 
-   win := win.clone("fg=black")
+   win := win.clone().set_fg("black")
    ret := win
 
    /p := "c1"
@@ -251,10 +251,10 @@ procedure drawpalette(win, p, x, y, w, h, f, n)
       y1 := y + i * h / nh
       x2 := x + w
       y2 := y + h
-      win.attrib("fg=black", "pattern=diagonal", "fill_style=textured")
+      win.set_fg("black").set_pattern("diagonal").set_fill_style("textured")
       win.fill_rectangle(x1, y1, x2 - x1, y2 - y1)
       if upto('o', f) then {
-         win.attrib("fill_style=solid")
+         win.set_fill_style("solid")
          win.draw_rectangle(x1, y1, x2 - x1, y2 - y1)
          }
       }
@@ -348,11 +348,11 @@ end
 #  XPMImage(win, f, palette) -- read XPM file and return Icon image spec
 
 # image string for XPM file
-procedure XPMImage(win, f, pal)			
+procedure XPMImage(f, pal)			
    local w, h, nc, cpp, i, im, c, k, s1, s2
 
    /pal := "c1"
-   #type(f) == "file" | runerr(105, f)
+   is(f, Stream) | runerr("File expected", f)
    Window.palette_chars(pal) | runerr(205, f)
 
    (read(f) ? find("XPM")) | fail
@@ -374,7 +374,7 @@ procedure XPMImage(win, f, pal)
       k := &null
       # find a color key we can decipher; try color, then grayscale, then mono
       (c := !"cgm") & tab(upto(' \t') + 1) & =c & tab(many(' \t')) &
-         (k := XPM_Key(win, pal, (tab(upto(' \t') | 0))))
+         (k := XPM_Key(pal, (tab(upto(' \t') | 0))))
       # use first color found, or default if none
       s2 ||:= \k | Window.palette_key(pal, "gray")
       }
@@ -389,7 +389,7 @@ procedure XPMImage(win, f, pal)
 end
 
 # return key corresponding to color s
-procedure XPM_Key(win, pal, s)	
+procedure XPM_Key(pal, s)	
 
    if s == "None" then {		# if transparent
       if Window.palette_color(pal, "~") then	# if "~" is in palette

@@ -287,7 +287,7 @@ class CanvasPreferencesDialog(Dialog)
       code_tab.add(self.superclass_name)
       self.superclass_name.set_contents(c.superclass_name)
 
-      self.is_component_cb := CheckBox().set_label("Subclass of component").set_constraint("tab", 1).set_constraint("eol", &yes)
+      self.is_component_cb := CheckBox().set_label("Subclass of component").set_constraint("x_tab", 1).set_constraint("eol", &yes)
       if \c.is_component then {
          self.is_component_cb.set_is_checked(&yes)
          self.gen_init_dialog.set_is_shaded(&yes)

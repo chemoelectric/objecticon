@@ -94,7 +94,7 @@ class LineEditorStream(LineBasedStream)
    end
 
    protected read_line_impl()
-      \isatty | return tty.read()
+      \isatty | return tty.read_line()
       if \ctrl_d_flag then
          return
       return use {
@@ -122,10 +122,8 @@ class LineEditorStream(LineBasedStream)
          if \utf8_flag then {
             # Read a utf8 sequence into ch.  On gibberish, just go round and try again.
             un := Text.get_utf8_seq_len(ch) | next
-            while un > 1 do {
+            every 2 to un do
                ch ||:= tty.reads(1) | fail
-               un -:= 1
-            }
             ch := ucs(ch) | next
          }
 

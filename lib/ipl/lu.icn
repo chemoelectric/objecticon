@@ -51,8 +51,8 @@ procedure lu_decomp(M, I)
    d := 1.0
 
    n := *M
-   if n ~= *M[1] then stop("*** non-square matrix")
-   if n ~= *I then stop("*** index vector incorrect length")
+   if n ~= *M[1] then runerr("*** non-square matrix")
+   if n ~= *I then runerr("*** index vector incorrect length")
 
    vv := list(n, 0.0)			# scaling vector
 
@@ -119,9 +119,9 @@ procedure lu_back_sub(M, I, B)
    local n, ii, i, ip, sum, j
 
    n := *M
-   if n ~= *M[1] then stop("*** matrix not square")
-   if n ~= *I then stop("*** index vector wrong length")
-   if n ~= *B then stop("*** output vector wrong length")
+   if n ~= *M[1] then runerr("*** matrix not square")
+   if n ~= *I then runerr("*** index vector wrong length")
+   if n ~= *B then runerr("*** output vector wrong length")
 
    ii := 0
 

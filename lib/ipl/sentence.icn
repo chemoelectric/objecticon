@@ -128,7 +128,7 @@ procedure read_line(intext)
     static last_ilevel, blank_flag
     last_ilevel := 0
 
-    while line := trim(!intext,'\t ') do {
+    while line := trim(intext.read(),'\t ') do {
 
 	# Check to see if line is blank; if so, set blank_flag.
 	if line == "" then

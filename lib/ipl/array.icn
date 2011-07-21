@@ -24,15 +24,12 @@
 
 package ipl.array
 
-import
-   io(stop)
-
 record array(structure, lbs)
 
 procedure create_array(lbs, ubs, value)
    local lengths, i
 
-   if (*lbs ~= *ubs) | (*lbs = 0) then stop("*** bad specification")
+   if (*lbs ~= *ubs) | (*lbs = 0) then runerr("*** bad specification")
 
    lengths :=list(*lbs)
 
@@ -61,7 +58,7 @@ procedure ref_array(A, subscrs[])
    local lbs, i, A1
 
    if *A.lbs ~= *subscrs then
-      stop("*** bad specification")
+      runerr("*** bad specification")
 
    lbs := A.lbs
    A1 := A.structure

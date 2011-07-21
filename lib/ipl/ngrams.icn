@@ -29,22 +29,22 @@
 package ipl.ngrams
 
 import
-   io(reads, stop)
+   io(reads, Stream)
 
 # n-grams with count
 procedure ngrams(s, i, c, t)		
-   local line, grams, a, count, f
+   local line, grams, a, count
 
-   if not (integer(i) > 0) then stop("*** invalid ngrams specification")
+   if not (integer(i) > 0) then runerr("*** invalid ngrams specification", i)
 
    /c := &lcase || &ucase
-   if not (c := cset(c)) then stop("*** invalid cset specification")
+   if not (c := cset(c)) then runerr("*** invalid cset specification", c)
 
    grams := table(0)
 
-   if type(s) == "file" then {
+   if is(s, Stream) then {
       line := ""
-      while line ||:= reads(f, 1000)
+      while line ||:= reads(s, 1000)
       }
    else line := s
    line ? while tab(upto(c)) do
@@ -63,18 +63,18 @@ end
 
 # n-grams set
 procedure ngramset(s, i, c)		
-   local line, grams,   f
+   local line, grams
 
-   if not (integer(i) > 0) then stop("*** invalid ngrams specification")
+   if not (integer(i) > 0) then runerr("*** invalid ngrams specification", i)
 
    /c := &lcase || &ucase
-   if not (c := cset(c)) then stop("*** invalid cset specification")
+   if not (c := cset(c)) then runerr("*** invalid cset specification", c)
 
    grams := set()
 
-   if type(s) == "file" then {
+   if is(s, Stream) then {
       line := ""
-      while line ||:= reads(f, 1000)
+      while line ||:= reads(s, 1000)
       }
    else line := s
 

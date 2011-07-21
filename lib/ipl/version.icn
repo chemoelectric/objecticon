@@ -26,7 +26,7 @@ procedure version()
 
    &version ? {
       tab(find("Version ") + 8) | fail
-      tab(many('0123456789.')) ? return tab(-1)
+      tab(upto(' ')) ? return tab(-1)
       }
 
 end

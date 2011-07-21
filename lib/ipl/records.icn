@@ -25,40 +25,13 @@
 
 package ipl.records
 
-import lang(Prog)
-
-# return name of field R[i]
-procedure field(R, i)			
-
-   Prog.get_variable_name(R[i]) ? {
-      while tab(upto('.')) do
-         move(1)
-      return tab(0)
-      }
-
-end
-
-# return index of field R.s
-procedure fieldnum(R, s)		
-   local i
-
-   R := copy(R)
-   every i := 1 to *R do
-      R[i] := i
-   return R[s]
-end
+import lang(Constructor)
 
 # move corresponding record fields
 procedure movecorr(R1, R2)
    local s
 
-   every s := Prog.get_variable_name(!R1) do {
-      s ? {
-         while tab(upto('.')) do
-            move(1)
-         s := tab(0)
-      }
+   every s := Constructor.get_field_names(R1) do
       R2[s] := R1[s]
-   }
    return R2
 end
