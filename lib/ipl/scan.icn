@@ -554,3 +554,91 @@ end
 procedure max_many(c, max)
    return min(many(c), &pos + max)
 end
+
+#
+# String scanning encapsulated in a class
+#
+class Scan()
+   private readable
+      ksubject, kpos
+
+   public move(i)
+      suspend tab(kpos + i)
+   end
+
+   public tab(i)
+      local oldpos
+      i := cvpos(i) | fail
+      oldpos := kpos
+      kpos := i
+      suspend .ksubject[oldpos:kpos]
+      if oldpos > *ksubject + 1 then
+         runerr(205, kpos)
+      kpos := oldpos
+   end
+
+   public pos(i)
+      return kpos = cvpos(i) 
+   end
+
+   public set_subject(s)
+      s := text(s) | runerr(129, s)
+      ksubject := s
+      kpos := 1
+      return self
+   end
+
+   public set_pos(i)
+      kpos := cvpos(i) | fail
+      return self
+   end
+
+   private cvpos(i)
+      i := integer(i) | runerr(101, i)
+      if i <= 0 then
+         i +:= *ksubject + 1
+      if i <= i <= *ksubject + 1 then
+         return i
+   end
+
+   public tabmat(s)
+      suspend tab(match(s))
+   end
+
+   public many(c)
+      suspend default.many(c, ksubject, kpos)
+   end
+
+   public match(s)
+      suspend default.match(s, ksubject, kpos)
+   end
+
+   public upto(c)
+      suspend default.upto(c, ksubject, kpos)
+   end
+
+   public any(c)
+      suspend default.upto(c, ksubject, kpos)
+   end
+
+   public bal(c1, c2, c3)
+      suspend default.bal(c1, c2, c3, ksubject, kpos)
+   end
+
+   public find(s)
+      suspend default.find(s, ksubject, kpos)
+   end
+
+   public f(e)
+      ksubject ? {
+         &pos := kpos
+         suspend 1(|@e, ksubject := &subject, kpos := &pos)
+      }
+   end
+
+   public new(s)
+      set_subject(s)
+      self.kpos := 1
+      return
+   end
+end
