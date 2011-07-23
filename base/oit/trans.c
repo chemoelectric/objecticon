@@ -186,7 +186,7 @@ static void trans1(char *filename)
     if (strcmp(filename,"-") == 0)
         filename = stdin_string;
 
-    outname = intern(makename(SourceDir, filename, USuffix));
+    outname = intern(makename(0, filename, USuffix));
 
     report("%s:", filename);
 

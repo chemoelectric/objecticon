@@ -109,17 +109,6 @@
    #define SourceSuffix ".icn"
 #endif					/* SourceSuffix */
 
-/*
- * Representations of directories. LocalDir is the "current working directory".
- *  SourceDir is where the source file is.
- */
-
-#define LocalDir ""
-#define SourceDir (char *)NULL
-
-#ifndef TargetDir
-   #define TargetDir LocalDir
-#endif					/* TargetDir */
 
 /*
  * Default sizing and such.

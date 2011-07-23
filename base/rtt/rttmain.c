@@ -214,20 +214,20 @@ void trans(src_file)
      */
     if (strcmp(cur_src, "-") == 0) {
         source("-"); /* tell preprocessor to read standard input */
-        cname = salloc(makename(TargetDir, "stdin", CSuffix));
-        tname = salloc(makename(TargetDir, "stdin", TmpSuffix));
+        cname = salloc(makename(0, "stdin", CSuffix));
+        tname = salloc(makename(0, "stdin", TmpSuffix));
     }
     else {
         fp = fparse(cur_src);
         if (*fp->ext == '\0')
-            cur_src = salloc(makename(SourceDir, cur_src, RttSuffix));
+            cur_src = salloc(makename(0, cur_src, RttSuffix));
         else if (!smatch(fp->ext, RttSuffix))
             err2("unknown file suffix ", cur_src);
         cur_src = spec_str(cur_src);
 
         source(cur_src);  /* tell preprocessor to read source file */
-        cname = salloc(makename(TargetDir, cur_src, CSuffix));
-        tname = salloc(makename(TargetDir, cur_src, TmpSuffix));
+        cname = salloc(makename(0, cur_src, CSuffix));
+        tname = salloc(makename(0, cur_src, TmpSuffix));
     }
 
     if (pp_only)
