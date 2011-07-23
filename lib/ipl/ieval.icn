@@ -4,7 +4,7 @@
 
 package ipl.ieval
 
-import io, lang, ipl.colmize
+import io, lang, ipl.colmize, parser, util, ipl.lists, ipl.pdco
 
 procedure show_env(env)
    local e
@@ -19,4 +19,70 @@ procedure list_syms(imports, width)
       if e ? ((not upto('.')) | match(!imports)) then
          insert(s, e)
    every write(colmize(sort(s), width))
+end
+
+procedure main_impl(imports, files)
+   local env, s, t, eval, prompt, f, in, quiet_flag, par, n, tr_flag, tv, last_runerr
+
+   par := Parser()
+   env := table()
+   eval := Evaluator().
+      set_env(DefaultEvaluatorEnv(env)).
+      set_imports(imports)
+
+   env["env"] := create show_env(env)
+   env["tt"] := create tr_flag := toggle_flag(tr_flag)
+   env["tb"] := create Coexpression.traceback(\\last_runerr, &yes)
+   env["q"] := create quiet_flag := toggle_flag(quiet_flag)
+   env["ls"] := create list_syms(imports, LineEditorStream.get_console_size()[1])
+
+   every f := !files do {
+      s := Files.file_to_string(f) | stop("Couldn't load ", f, ": ", &why)
+      n := par.parse_expression(s) | stop("Couldn't parse ", f,  ": ", &why)
+      eval.set_node(n) | stop("Couldn't parse ", f,  ": ", &why) 
+      eval.eval()
+   }
+
+   s := ""
+   prompt := "> "
+   in := LineEditorStream()
+   repeat {
+      in.set_prompt(prompt)
+      t := in.read_line() | stop("Failed to read file: ", &why)
+      if /t then break
+      s ||:= t
+      if s[-1] == "\\" then {
+         prompt := ">> "
+         next
+      }
+      if n := par.parse_expression(s, "UTF-8") then {
+         if \\tr_flag then {
+            to_stdout(n, 3)
+            write()
+            tv := -1
+         } else
+            tv := 0
+         if eval.set_node(n) then {
+            if \\quiet_flag then
+               save_var{{ &trace := tv ; Safe{eval.eval()}}, &trace}
+            else
+               every to_stdout(save_var{{ &trace := tv ; Safe{eval.eval()}}, &trace}, 3) do 
+                  write()
+            if &errortext then {
+               if &errornumber then
+                  write("Runtime error ", &errornumber, ": ", &errortext)
+               else
+                  write("Runtime error: ", &errortext)
+               write("offending value: ", image(&errorvalue))
+               last_runerr := &errorcoexpr
+               errorclear()
+            }
+         } else
+            write("Couldn't parse: ", &why)
+      } else
+         write("Couldn't parse: ", &why)
+      prompt := "> "
+      s := ""
+   }
+   write("Ciao")
 end
