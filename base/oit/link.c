@@ -77,7 +77,7 @@ void ilink(struct file_param *link_files, int *fatals, int *warnings)
      * Open the .ux file if debugging is on.
      */
     if (Dflag) {
-        dbgname = intern(makename(TargetDir, lfiles->name, UXSuffix));
+        dbgname = intern(makename(0, ofile, UXSuffix));
         dbgfile = fopen(dbgname, WriteText);
         if (dbgfile == NULL)
             quit("cannot create %s", dbgname);

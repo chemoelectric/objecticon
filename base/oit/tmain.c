@@ -264,14 +264,13 @@ int main(int argc, char **argv)
             fp = fparse(argv[optind]);		/* parse file name */
             if (*fp->ext == '\0' || smatch(fp->ext, SourceSuffix)) {
                 char *t;
-                add_trans_file(makename(SourceDir, argv[optind],  SourceSuffix));
-                t = makename(SourceDir, argv[optind], USuffix);
+                add_trans_file(makename(0, argv[optind],  SourceSuffix));
+                t = makename(0, argv[optind], USuffix);
                 add_link_file(t);
                 add_remove_file(t);
             }
-            else if (smatch(fp->ext, USuffix)) {
-                add_link_file(makename(TargetDir, argv[optind], USuffix));
-            }
+            else if (smatch(fp->ext, USuffix))
+                add_link_file(makename(0, argv[optind], USuffix));
             else
                 quit("bad argument %s", argv[optind]);
         }
@@ -302,7 +301,7 @@ int main(int argc, char **argv)
 
 #if MSWIN32
     if (ofile == NULL)  {		/* if no -o file, synthesize a name */
-       ofile = intern(makename(SourceDir,link_files->name, ".exe"));
+       ofile = intern(makename(0,link_files->name, ".exe"));
     } else {				/* add extension in necessary */
         fp = fparse(ofile);
         if (*fp->ext == '\0') /* if no ext given */
@@ -311,7 +310,7 @@ int main(int argc, char **argv)
 #else                                   /* MSWIN32 */
 
     if (ofile == NULL)  {		/* if no -o file, synthesize a name */
-        ofile = intern(makename(SourceDir,link_files->name,""));
+        ofile = intern(makename(0,link_files->name,""));
     }
 
 #endif					/* MSWIN32 */

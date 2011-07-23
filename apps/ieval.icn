@@ -4,85 +4,11 @@ procedure create_prog(imps, links)
    local tf, prog
 
    prog := ""
-
-   imps ++:= set("io", "parser", "lang", "util", "ipl.lists", "ipl.pdco")
+   insert(imps, "ipl.ieval")
    every prog ||:= "import " || !imps || "\n"
-   prog ||:= "invocable all\n"
-
-   prog ||:= "\n_
-procedure show_env(env)\n_
-   local e\n_
-   every e := !sort(env) do\n_
-      write(left(e[1], 32), to_string(e[2]))\n_
-end\n_
-\n_
+   prog ||:= "invocable all\n_
 procedure main(imports, files)\n_
-   local env, s, t, eval, prompt, f, in, quiet_flag, par, n, tr_flag, tv, last_runerr\n_
-\n_
-   par := Parser()\n_
-   env := table()\n_
-   eval := Evaluator().\n_
-      set_env(DefaultEvaluatorEnv(env)).\n_
-      set_imports(imports)\n_
-\n_
-   env[\"env\"] := create show_env(env)\n_
-   env[\"tt\"] := create tr_flag := toggle_flag(tr_flag)\n_
-   env[\"tb\"] := create Coexpression.traceback(\\last_runerr, &yes)\n_
-   env[\"q\"] := create quiet_flag := toggle_flag(quiet_flag)\n_
-\n_
-   every f := !files do {\n_
-      s := Files.file_to_string(f) | stop(\"Couldn't load \", f, \": \", &why)\n_
-      n := par.parse_expression(s) | stop(\"Couldn't parse \", f,  \": \", &why)\n_
-      eval.set_node(n)\n_
-      eval.eval() | {\n_
-         if &why ~== \"No more results\" then\n_
-            write(\"Error in file \", f, \": \", &why)\n_
-      }\n_
-   }\n_
-\n_
-   s := \"\"\n_
-   prompt := \"> \"\n_
-   in := LineEditorStream()\n_
-   repeat {\n_
-      in.set_prompt(prompt)\n_
-      t := in.read_line() | stop(\"Failed to read file: \", &why)\n_
-      if /t then break\n_
-      s ||:= t\n_
-      if s[-1] == \"\\\\\" then {\n_
-         prompt := \">> \"\n_
-         next\n_
-      }\n_
-      if n := par.parse_expression(s, \"UTF-8\") then {\n_
-         if \\tr_flag then {\n_
-            to_stdout(n, 3)\n_
-            write()\n_
-            tv := -1\n_
-         } else\n_
-            tv := 0\n_
-         if eval.set_node(n) then {\n_
-            if \\quiet_flag then\n_
-               2(&trace <-> tv, Safe{eval.eval()}, &trace <-> tv)\n_
-            else\n_
-               every to_stdout(2(&trace <-> tv, Safe{eval.eval()}, &trace <-> tv), 3) do \n_
-                  write()\n_
-            if &errortext then {\n_
-               if &errornumber then\n_
-                  write(\"Runtime error \", &errornumber, \": \", &errortext)\n_
-               else\n_
-                  write(\"Runtime error: \", &errortext)\n_
-               write(\"offending value: \", image(&errorvalue))\n_
-               last_runerr := &errorcoexpr\n_
-               errorclear()\n_
-            }\n_
-         } else\n_
-            write(\"Couldn't set node: \", &why)\n_
-      } else\n_
-         write(\"Couldn't parse: \", &why)\n_
-      prompt := \"> \"\n_
-      s := \"\"\n_
-   }\n_
-\n_
-   write(\"Ciao\")\n_
+    ipl.ieval.main_impl(imports, files)\n_
 end\n"
    return use {
       tf := Files.make_temp_filename("ieval"),
