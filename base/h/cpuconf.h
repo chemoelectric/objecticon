@@ -133,3 +133,7 @@
 #ifndef MinAbrSize
    #define MinAbrSize  (1250 * WordSize) /* min size of a block region in bytes */
 #endif					/* MinAbrSize */
+
+#ifndef StackCushion
+   #define StackCushion 150		/* % limit factor to avoid thrashing*/
+#endif					
