@@ -618,7 +618,7 @@ class Scan()
    end
 
    public any(c)
-      suspend default.upto(c, ksubject, kpos)
+      suspend default.any(c, ksubject, kpos)
    end
 
    public bal(c1, c2, c3)
