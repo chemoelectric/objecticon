@@ -53,6 +53,7 @@ install :
 	$(INSTALL) -d "$(OILIB)/h"
 	$(INSTALL) -d "$(OILIB)/ivib_plugins"
 	$(INSTALL) -m 755 bin/ivib "$(OIBIN)"
+	$(INSTALL) -m 755 bin/ieval "$(OIBIN)"
 	$(INSTALL) -m 755 bin/oidoc "$(OIBIN)"
 	$(INSTALL) -m 755 bin/iyacc "$(OIBIN)"
 	$(INSTALL) -m 755 bin/oit "$(OIBIN)"
@@ -94,7 +95,7 @@ install :
 	fi
 	@echo "export TRACE OIMAXLEVEL" >>"$(PATHS)" ; \
 
-	@echo rm -f \"$(OIBIN)/ivib\" \"$(OIBIN)/oidoc\" \"$(OIBIN)/iyacc\" \"$(OIBIN)/oit\" \"$(OIBIN)/oix\" \"$(OIBIN)/udis\" \"$(OIBIN)/rtt\" >"$(UNINST)"
+	@echo rm -f \"$(OIBIN)/ivib\" \"$(OIBIN)/ieval\" \"$(OIBIN)/oidoc\" \"$(OIBIN)/iyacc\" \"$(OIBIN)/oit\" \"$(OIBIN)/oix\" \"$(OIBIN)/udis\" \"$(OIBIN)/rtt\" >"$(UNINST)"
 	@echo rm -f \"$(SOLIB)/objecticonipclib.so\"  \"$(SOLIB)/objecticonmysqllib.so\" >>"$(UNINST)"
 	@echo rm -rf \"$(OILIB)\" >>"$(UNINST)"
 	@echo rm -rf \"$(LIBREF)\" >>"$(UNINST)"
