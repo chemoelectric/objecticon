@@ -633,6 +633,8 @@ class Scan()
       ksubject ? {
          &pos := kpos
          suspend 1(|@e, ksubject := &subject, kpos := &pos)
+         ksubject := &subject
+         kpos := &pos
       }
    end
 
