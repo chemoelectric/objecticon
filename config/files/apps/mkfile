@@ -1,9 +1,19 @@
+< ../mkdefs
+
+PROGS=  ieval
+PROGSRC=${PROGS:%=%.icn}
+
 default:V:	all
 
-all :
+all :   $PROGS
 	@{ cd ivib ; mk all }
 	@{ cd oidoc ; mk all }
 
 clean :
+	rm -f $PROGS *.u packages.txt
 	@{ cd ivib ; mk clean }
 	@{ cd oidoc ; mk clean }
+
+%: %.icn
+	oit -so $stem $stem.icn
+	cp $stem ../bin

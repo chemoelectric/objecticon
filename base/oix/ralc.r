@@ -812,7 +812,7 @@ static struct region *newregion(word nbytes, word stdsize)
          rp->size = (rp->size + nbytes)/2 - 1;
          }
       while (rp->size >= minSize);
-      free((char *)rp);
+      free(rp);
       }
    return NULL;
 }
@@ -825,6 +825,7 @@ static struct region *newregion(word nbytes, word stdsize)
  */
 
 uword stacklim;
+word stackcushion = StackCushion;
 
 static void check_stack_usage()
 {
@@ -851,9 +852,9 @@ static void check_stack_usage()
 
     /* Now total_stackcurr shows how much referenced stack use
      * remains.  To prevent thrashing, don't collect again until at
-     * least 50% more that that amount is in use.
+     * least stackcushion % of that amount is in use.
      */
-    stacklim = Max(stacklim, 3 * (total_stackcurr / 2));
+    stacklim = Max(stacklim, stackcushion * (total_stackcurr / 100));
 }
 
 struct p_frame *alc_p_frame(struct p_proc *pb, struct frame_vars *fvars)

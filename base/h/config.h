@@ -55,6 +55,14 @@
    #define OIFONTSIZE "OIFONTSIZE"
 #endif
 
+#ifndef OISTKLIM
+   #define OISTKLIM "OISTKLIM"
+#endif
+
+#ifndef OISTKCUSHION
+   #define OISTKCUSHION "OISTKCUSHION"
+#endif
+
 #if MSWIN32
    #undef Graphics
    #define Graphics 1

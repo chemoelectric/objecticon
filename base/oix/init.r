@@ -1265,8 +1265,9 @@ int main(int argc, char **argv)
     env_int(OIMEMCUSHION, &memcushion, 1, 100);	/* max 100 % */
     env_int(OIMEMGROWTH, &memgrowth, 1, 10000);	/* max 100x growth */
     env_int(OICORE, &dodump, 1, 2);
-
     stacklim = rootblock.size / 2;
+    env_int(OISTKLIM, (word *)&stacklim, 1, MaxWord);
+    env_int(OISTKCUSHION, &stackcushion, 1, 10000);
 
     Protect(rootpstate.Code = malloc(hdr.icodesize), fatalerr(315, NULL));
 
