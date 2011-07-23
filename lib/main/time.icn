@@ -8,7 +8,10 @@
 
 package util
 
-import io(write)
+import 
+   io(write), 
+   ipl.scan(Scan), 
+   exception
 
 #
 # This class is used to represent a date/time.  The representation may
@@ -876,8 +879,7 @@ end
 #
 class TimeParser()
    private
-      psub,
-      ppos
+      ss
 
    #
    # Convert a month string to an month number, eg "feb"->2
@@ -895,30 +897,26 @@ class TimeParser()
    # Get the next parsed int
    #
    private parse_int(w)
-      local j, n
-      j := many(&digits, psub, ppos) | return error("Digit expected")
+      local j
+      j := ss.many(&digits) | throw("Digit expected")
       #
       # If there is a numeric field immediately following, limit
       # the length of this field.  This allows for example yyyyMMdd to
       # parse 20001201.
       #
       if any('ydHMhms') then 
-         j >:= ppos + w
+         j >:= ss.kpos + w
 
-      n := integer(psub[ppos:j])
-      ppos := j
-      return n
+      return integer(ss.tab(j))
    end
 
    # 
    # Get the next parsed timezone
    #
    private parse_timezone()
-      local j, z
-      j := many(Time.TZCHARS, psub, ppos) | return error("Timezone expected")
-      z := Timezone.get_known_timezone(psub[ppos:j]) | return error("Invalid timezone")
-      ppos := j
-      return z
+      local s
+      s := ss.tab(ss.many(Time.TZCHARS)) | throw("Timezone expected")
+      return Timezone.get_known_timezone(s) | throw("Invalid timezone")
    end
 
    # 
@@ -926,9 +924,8 @@ class TimeParser()
    #
    private parse_ampm()
       local s
-      s := map(psub[ppos+:2]) | return error("am/pm expected")
-      s == ("am" | "pm") | return error("am/pm expected")
-      ppos +:= 2
+      s := map(ss.move(2)) | throw("am/pm expected")
+      s == ("am" | "pm") | throw("am/pm expected")
       return s
    end
 
@@ -936,22 +933,18 @@ class TimeParser()
    # Get the next parsed month
    # 
    private parse_month(w)
-      local j, m
+      local s
       if w < 3 then
          return parse_int(w)
-      j := many(&ucase ++ &lcase, psub, ppos) | return error("Month expected")
-      m := month_to_num(psub[ppos:j]) | return error("Invalid month")
-      ppos := j
-      return m
+      s := ss.tab(ss.many(&ucase ++ &lcase)) | throw("Month expected")
+      return month_to_num(s) | throw("Invalid month")
    end
 
    # 
    # Get the next parsed weekday
    # 
    private parse_weekday()
-      local j
-      j := many(&ucase ++ &lcase, psub, ppos) | return error("Weekday expected")
-      ppos := j
+      ss.tab(ss.many(&ucase ++ &lcase)) | throw("Weekday expected")
       return
    end
 
@@ -960,7 +953,7 @@ class TimeParser()
    # 
    private parse_year(w)
       local n
-      n := parse_int(w) | fail
+      n := parse_int(w)
       if n < 70 then
          return 2000 + n
       else if n < 100 then
@@ -1009,41 +1002,39 @@ class TimeParser()
    # z - The timezone (eg UTC or +0400).
    #
    public parse(s, p)
-      local y, d, m, hh, mm, ss, z, ampm, lit, ch, w
-      
-      psub := s
-      ppos := 1
+      ss := Scan(s)
+      return p ? simple_try{ parse_impl() }
+   end
 
-      p ? {
-         until pos(0) do {
-            if any('EydHMhmsaAz') then {
-               ch := p[&pos]
-               w := *tab(many(ch))
-               case string(ch) of {
-                  "E": parse_weekday() | fail
-                  "y": y := parse_year(w) | fail
-                  "M": m := parse_month(w) | fail
-                  "d": d := parse_int(w) | fail
-                  "h"|"H": hh := parse_int(w) | fail
-                  "m": mm := parse_int(w) | fail
-                  "s": ss := parse_int(w) | fail
-                  "z": z := parse_timezone() | fail
-                  "A"|"a": {
-                     ampm := parse_ampm() | fail
-                     if ampm == "pm" & (0 < \hh < 12) then 
-                        hh +:= 12
-                  }
+   private parse_impl()
+      local y, d, m, hh, mm, sec, z, ampm, lit, ch, w
+      until pos(0) do {
+         if any('EydHMhmsaAz') then {
+            ch := &subject[&pos]
+            w := *tab(many(ch))
+            case string(ch) of {
+               "E": parse_weekday()
+               "y": y := parse_year(w)
+               "M": m := parse_month(w)
+               "d": d := parse_int(w)
+               "h"|"H": hh := parse_int(w)
+               "m": mm := parse_int(w)
+               "s": sec := parse_int(w)
+               "z": z := parse_timezone()
+               "A"|"a": {
+                  ampm := parse_ampm()
+                  if ampm == "pm" & (0 < \hh < 12) then 
+                     hh +:= 12
                }
-            } else if any('\'') then {
-               lit := Time.match_literal()
-               ppos := match(lit, psub, ppos) | return error("Expected literal:" || lit)
-            } else {
-               ch := move(1)
-               while psub[ppos] == ch do
-                  ppos +:= 1
             }
+         } else if any('\'') then {
+            lit := Time.match_literal()
+            ss.tabmat(lit) | throw("Expected literal:" || lit)
+         } else {
+            ch := move(1)
+            ss.tab(ss.many(ch))
          }
       }
-      return Time(y, m, d, hh, mm, ss, z)
+      return Time(y, m, d, hh, mm, sec, z)
    end
 end
