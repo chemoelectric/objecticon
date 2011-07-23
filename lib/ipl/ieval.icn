@@ -1,0 +1,22 @@
+#
+# Support procedures for ieval.
+#
+
+package ipl.ieval
+
+import io, lang, ipl.colmize
+
+procedure show_env(env)
+   local e
+   every e := !sort(env) do
+      write(left(e[1], 16), to_string(e[2]))
+end
+
+procedure list_syms(imports, width)
+   local s, e
+   s := set()
+   every e := lang.Prog.get_global_names() do
+      if e ? ((not upto('.')) | match(!imports)) then
+         insert(s, e)
+   every write(colmize(sort(s), width))
+end

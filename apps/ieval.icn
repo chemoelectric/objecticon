@@ -5,17 +5,9 @@ procedure create_prog(imps, links)
 
    prog := ""
 
-   imps ++:= set("io", "parser", "lang", "util", "ipl.lists", "ipl.pdco")
+   imps ++:= set("io", "parser", "lang", "util", "ipl.lists", "ipl.pdco", "ipl.ieval")
    every prog ||:= "import " || !imps || "\n"
-   prog ||:= "invocable all\n"
-
-   prog ||:= "\n_
-procedure show_env(env)\n_
-   local e\n_
-   every e := !sort(env) do\n_
-      write(left(e[1], 32), to_string(e[2]))\n_
-end\n_
-\n_
+   prog ||:= "invocable all\n_
 procedure main(imports, files)\n_
    local env, s, t, eval, prompt, f, in, quiet_flag, par, n, tr_flag, tv, last_runerr\n_
 \n_
@@ -29,15 +21,13 @@ procedure main(imports, files)\n_
    env[\"tt\"] := create tr_flag := toggle_flag(tr_flag)\n_
    env[\"tb\"] := create Coexpression.traceback(\\last_runerr, &yes)\n_
    env[\"q\"] := create quiet_flag := toggle_flag(quiet_flag)\n_
+   env[\"ls\"] := create list_syms(imports, LineEditorStream.get_console_size()[1])\n_
 \n_
    every f := !files do {\n_
       s := Files.file_to_string(f) | stop(\"Couldn't load \", f, \": \", &why)\n_
       n := par.parse_expression(s) | stop(\"Couldn't parse \", f,  \": \", &why)\n_
-      eval.set_node(n)\n_
-      eval.eval() | {\n_
-         if &why ~== \"No more results\" then\n_
-            write(\"Error in file \", f, \": \", &why)\n_
-      }\n_
+      eval.set_node(n) | stop(\"Couldn't parse \", f,  \": \", &why) \n_
+      eval.eval()\n_
    }\n_
 \n_
    s := \"\"\n_
@@ -61,9 +51,9 @@ procedure main(imports, files)\n_
             tv := 0\n_
          if eval.set_node(n) then {\n_
             if \\quiet_flag then\n_
-               2(&trace <-> tv, Safe{eval.eval()}, &trace <-> tv)\n_
+               save_var{{ &trace := tv ; Safe{eval.eval()}}, &trace}\n_
             else\n_
-               every to_stdout(2(&trace <-> tv, Safe{eval.eval()}, &trace <-> tv), 3) do \n_
+               every to_stdout(save_var{{ &trace := tv ; Safe{eval.eval()}}, &trace}, 3) do \n_
                   write()\n_
             if &errortext then {\n_
                if &errornumber then\n_
@@ -75,7 +65,7 @@ procedure main(imports, files)\n_
                errorclear()\n_
             }\n_
          } else\n_
-            write(\"Couldn't set node: \", &why)\n_
+            write(\"Couldn't parse: \", &why)\n_
       } else\n_
          write(\"Couldn't parse: \", &why)\n_
       prompt := \"> \"\n_
