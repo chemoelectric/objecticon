@@ -276,6 +276,7 @@ convert_from_macro(ino_t)
 convert_from_macro(blkcnt_t)
 #endif
 convert_from_macro(ulonglong)
+convert_from_macro(uword)
 
 function lang_Prog_get_event_mask(ce)
    body {
@@ -862,9 +863,11 @@ end
 function lang_Prog_get_stack_used(c)
    body {
        struct progstate *prog;
+       tended struct descrip result;
        if (!(prog = get_program_for(&c)))
           runerr(0);
-       return C_integer prog->stackcurr;
+       convert_from_uword(prog->stackcurr, &result);
+       return result;
    }
 end
 
