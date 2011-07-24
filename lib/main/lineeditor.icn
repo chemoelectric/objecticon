@@ -25,7 +25,7 @@ class LineEditorStream(LineBasedStream)
       nul
 
    private static init()
-      nul := FileStream.open("/dev/null", FileOpt.WRONLY)
+      nul := FileStream.open("/dev/null", FileOpt.WRONLY) | stop("Can't open /dev/null: ", &why)
    end
 
    public set_history_limit(n)
