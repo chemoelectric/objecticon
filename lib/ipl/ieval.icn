@@ -6,10 +6,16 @@ package ipl.ieval
 
 import io, lang, ipl.colmize, parser, util, ipl.pdco, ipl.sort
 
+procedure map1(x)
+   return map(x[1])
+end
+
 procedure show_env(env)
-   local e
-   every e := !sort(env) do
-      write(left(e[1], 16), to_string(e[2]))
+   local t, k
+   t := []
+   every k := key(env) do
+      put(t, [k, to_string(env[k], 3)])
+   print_table(isort(t, map1))
 end
 
 procedure list_syms(imports)
@@ -50,28 +56,24 @@ procedure flags_string(f)
    return s
 end
 
-procedure supers_string(c)
+procedure comma_string(e)
    local s
    s := ""
-   every s ||:= lang.Class.get_name(lang.Class.get_supers(c)) || ", "
+   while s ||:= @e || ", "
    s[-2:0] := ""
    return s
+end
+
+procedure supers_string(c)
+   return comma_string{lang.Class.get_name(lang.Class.get_supers(c))} 
 end
 
 procedure implements_string(c)
-   local s
-   s := ""
-   every s ||:= lang.Class.get_name(lang.Class.get_implemented_classes(c)) || ", "
-   s[-2:0] := ""
-   return s
+   return comma_string{lang.Class.get_name(lang.Class.get_implemented_classes(c))}
 end
 
 procedure fields_string(c)
-   local s
-   s := ""
-   every s ||:= Constructor.get_field_names(c) || ", "
-   s[-2:0] := ""
-   return s
+   return comma_string{Constructor.get_field_names(c)}
 end
 
 procedure locn_string(l)
@@ -128,11 +130,11 @@ procedure dir(c)
          write("   ", locn_string(lang.Class.get_location(c))) 
          write("   implements ", implements_string(c))
          t := []
-         every f := !isort(ipl.pdco.List{lang.Class.get_field_names(c)}, map) do
+         every f := lang.Class.get_field_names(c) do
             put(t, [f, 
                     lang.Class.get_name(lang.Class.get_field_defining_class(c, f)), 
                     flags_string(lang.Class.get_field_flags(c, f))])
-         print_table(t)
+         print_table(isort(t, map1))
       }
       "procedure"|"methp": {
          write(kind_string(Proc.get_kind(c)), " ", Proc.get_name(c), "(", args_string(c), ")")
