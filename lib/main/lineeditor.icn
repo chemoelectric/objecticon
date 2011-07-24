@@ -19,7 +19,8 @@ class LineEditorStream(LineBasedStream)
       tty,
       isatty,
       dim,
-      utf8_flag
+      utf8_flag,
+      dbg
 
    public set_history_limit(n)
       self.history_limit := n
@@ -142,7 +143,6 @@ class LineEditorStream(LineBasedStream)
                   put(p, n)
                   ch == ";" | break
                }
-
                case string(ch) of {
                   "A": if hpos > 1 then move_hist(-1)
                   "B": if hpos <= *history then move_hist(1)
@@ -222,7 +222,7 @@ class LineEditorStream(LineBasedStream)
          # Clear the lines written the previous time show() was called
          every tty.writes("\e[",
                           line_no to line_no + nlines - 1,
-                          "H", "\e[2K")
+                          ";1H", "\e[2K")
       }
 
       # The number of lines needed to display this line.
@@ -242,7 +242,7 @@ class LineEditorStream(LineBasedStream)
 
       # First, goto line line_no, col 1, and write prompt, subj
       # Then put cursor at correct position.
-      tty.writes("\e[", line_no, "H", prompt, subj,
+      tty.writes("\e[", line_no, ";1H", prompt, subj,
                  "\e[", cursor_line, ";", cursor_col, "H")
    end
 
@@ -255,6 +255,7 @@ class LineEditorStream(LineBasedStream)
       undo_manager := UndoManager()
       history := []
       prompt := ""
+      #/dbg := FileStream.open("/tmp/dbg.txt",ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
       return
    end
 end
