@@ -3,8 +3,8 @@ import io, lang, util, ipl.options, ipl.lists
 procedure create_prog(imps, links)
    local tf, prog
 
+   imps ++:= set("ipl.ieval")  # Avoid changing imps parameter
    prog := ""
-   insert(imps, "ipl.ieval")
    every prog ||:= "import " || !imps || "\n"
    prog ||:= "invocable all\n_
 procedure main(imports, files)\n_

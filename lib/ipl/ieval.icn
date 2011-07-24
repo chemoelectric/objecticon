@@ -12,13 +12,13 @@ procedure show_env(env)
       write(left(e[1], 16), to_string(e[2]))
 end
 
-procedure list_syms(imports, width)
+procedure list_syms(imports)
    local s, e
    s := set()
    every e := lang.Prog.get_global_names() do
-      if e ? ((not upto('.')) | match(!imports)) then
+      if e ? ((not upto('.')) | (=!imports & ="." & (not upto('.')))) then
          insert(s, e)
-   every write(colmize(sort(s), width))
+   every write(colmize(sort(s), LineEditorStream.get_console_size()[1]))
 end
 
 procedure main_impl(imports, files)
@@ -34,7 +34,7 @@ procedure main_impl(imports, files)
    env["tt"] := create tr_flag := toggle_flag(tr_flag)
    env["tb"] := create Coexpression.traceback(\\last_runerr, &yes)
    env["q"] := create quiet_flag := toggle_flag(quiet_flag)
-   env["ls"] := create list_syms(imports, LineEditorStream.get_console_size()[1])
+   env["ls"] := create list_syms(imports)
 
    every f := !files do {
       s := Files.file_to_string(f) | stop("Couldn't load ", f, ": ", &why)
