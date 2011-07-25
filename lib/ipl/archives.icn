@@ -18,7 +18,8 @@ package ipl.archives
 
 import
    io(BufferStream, FileOpt, FileStream, LineFilterStream,
-      ProgInputStream)
+      ProgInputStream),
+   ipl.strings(endswith)
 
 # iszip(zname) succeeds if the named file appears to be a ZIP format
 # archive file.
@@ -90,4 +91,29 @@ end
 #
 procedure rarfile(rname, fname)		
    return ProgInputStream("unrar", ["p", "-inul", rname, fname])
+end
+
+procedure tartype(tname)
+   local s
+   s := map(tname)
+   if endswith(s, ".tar.gz" | ".tgz") then
+      return "z"
+   if endswith(s, ".tar.bz2") then
+      return "j"
+   return ""
+end
+
+#
+# Return a {Stream} for reading the entries in a tar archive, one per line of the stream.
+#
+procedure tarlist(tname)
+   return BufferStream(ProgInputStream("tar", ["tf" || tartype(tname), tname]))
+end
+
+# tarfile(tname, fname) returns a pipe from which the file fname
+# within the tar archive rname can be read.  It is assumed that tname
+# and fname are valid.
+#
+procedure tarfile(tname, fname)		
+   return ProgInputStream("tar", ["xOf" || tartype(tname), tname, fname])
 end
