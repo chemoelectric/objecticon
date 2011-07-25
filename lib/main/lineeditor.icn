@@ -125,33 +125,38 @@ class LineEditorStream(LineBasedStream)
    private static parse_terminfo(f)
       local desc, t, s, k, v
       t := table()
-      while s := f.read() do s ? {
-         if any('#') then 
-            next
-         if /desc then {
-            desc := s
-            next
-         }
-         repeat {
-            tab(many(' \t'))
-            k := tab(upto(',=#')) | break
-            if any(',') then
-               v := &yes
-            else if any('#') then {
-               move(1)
-               v := integer(tab(many(&digits)))
-            } else {
-               move(1)
-               v := ""
-               repeat {
-                  v ||:= tab(upto('\\^,')) | break
-                  if any(',') then
-                     break
-                  v ||:= read_terminfo_escape()
-               }
+      repeat {
+         s := f.read_line() | fail
+         if /s then
+            break
+         s ? {
+            if any('#') then 
+               next
+            if /desc then {
+               desc := s
+               next
             }
-            =","
-            insert(t, k, v)
+            repeat {
+               tab(many(' \t'))
+               k := tab(upto(',=#')) | break
+               if any(',') then
+                  v := &yes
+               else if any('#') then {
+                  move(1)
+                  v := integer(tab(many(&digits)))
+               } else {
+                  move(1)
+                  v := ""
+                  repeat {
+                     v ||:= tab(upto('\\^,')) | break
+                     if any(',') then
+                        break
+                     v ||:= read_terminfo_escape()
+                  }
+               }
+               =","
+               insert(t, k, v)
+            }
          }
       }
       return t

@@ -1701,15 +1701,13 @@ class LineFilterStream(GeneratorStream)
    end
 
    protected next_line()
-      return other.read()
+      return other.read_line()
    end
 
    protected expect_line()
       local s
-      s := other.read() | fail
-      if \s then
-         return s
-      error("Unexpected eof")
+      s := other.read_line() | fail
+      return \s | error("Unexpected eof")
    end
 
    public new(other)
