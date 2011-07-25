@@ -1,6 +1,6 @@
 package io
 
-import undo, util, lang
+import undo, util, lang, ipl.streams(get_null)
 
 class LineEditorStream(LineBasedStream)
    package
@@ -21,12 +21,6 @@ class LineEditorStream(LineBasedStream)
       dim,
       utf8_flag,
       ti
-   private static
-      nul
-
-   private static init()
-      nul := FileStream.open("/dev/null", FileOpt.WRONLY) | stop("Can't open /dev/null: ", &why)
-   end
 
    public set_history_limit(n)
       self.history_limit := n
@@ -89,7 +83,7 @@ class LineEditorStream(LineBasedStream)
       local f, ss
       ss := StringStream()
       use {
-         f := ProgInputStream("stty", params,,, nul),
+         f := ProgInputStream("stty", params,,, get_null()),
          f.copy_to(ss)
       } | fail
       return if f.get_exit_info().param = 0 then
@@ -167,7 +161,7 @@ class LineEditorStream(LineBasedStream)
       params := ["-L"]
       put(params, \name)
       use {
-         f := ProgInputStream("infocmp", params,,, nul),
+         f := ProgInputStream("infocmp", params,,, get_null()),
          t := parse_terminfo(f)
       } | fail
       return if f.get_exit_info().param = 0 then
