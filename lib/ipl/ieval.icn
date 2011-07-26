@@ -188,9 +188,15 @@ procedure main_impl(imports, files, opts)
 
    s := ""
    prompt := "> "
-   in := LineEditorStream()
+   if \opts["s"] then
+      in := FileStream.stdin
+   else
+      in := LineEditorStream() | stop("Failed to create LineEditorStream: ", &why)
    repeat {
-      in.set_prompt(prompt)
+      if \opts["s"] then
+         writes(prompt)
+      else
+         in.set_prompt(prompt)
       t := in.read_line() | stop("Failed to read file: ", &why)
       if /t then break
       s ||:= t
