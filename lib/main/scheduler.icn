@@ -9,7 +9,7 @@ import lang, util
 # the {Scheduler} determines the socket is ready for i/o (or has timed
 # out).
 #
-class TaskStream(Stream)
+class TaskStream(Stream, HasUnderlyingStream)
    private readable
       timeout,
       other,

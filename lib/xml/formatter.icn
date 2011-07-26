@@ -15,7 +15,7 @@ import io, exception
 # object (or a Node within a Document), and output that document to a
 # stream.
 #
-class Formatter(Stream)
+class Formatter(Stream, HasUnderlyingStream)
    private
       file
    protected 

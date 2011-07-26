@@ -75,7 +75,7 @@ procedure decode(s)
    return d.parse(s)
 end
 
-class Encode(Stream)
+class Encode(Stream, HasUnderlyingStream)
    private
       tag_count,
       seen, 

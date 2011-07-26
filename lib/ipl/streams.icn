@@ -1,14 +1,14 @@
 package ipl.streams
 
 import
-   io(FileOpt, FileStream, GeneratorStream, stop)
+   io(FileOpt, FileStream, GeneratorStream, HasUnderlyingStream, stop)
 
 
 #
 # This {Stream} takes a list of other {Stream}s.  Their lines of
 # output are interspersed together to form the output.
 #
-class IntersperseStream(GeneratorStream)
+class IntersperseStream(GeneratorStream, HasUnderlyingStream)
    private
       a
 
