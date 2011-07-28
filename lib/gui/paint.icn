@@ -1,6 +1,10 @@
 package gui
 
-import util, graphics, ipl.graphics(Zoom,bev_lookup)
+import 
+   util,
+   graphics,
+   ipl.graphics(Zoom,bev_lookup),
+   ipl.strings(separate_lines)
 
 class Paint(Size)
    public defer initially(c, accel)
@@ -93,7 +97,6 @@ class GridPaint(Paint)
       lheight, 
       lno,          # Line no. in cell 
       ii,           # Cell index counter.
-      buff,         # Input as a list of strings.
       accel
 
    public draw(W, x, y)
@@ -130,24 +133,14 @@ class GridPaint(Paint)
    end
 
    public lines(s)
-      local t, cmd, args
-
-      buff := []
-      s ? repeat {
-         t := tab(upto('\n') | 0)
-         put(buff, t)
-         if pos(0) then
-            break
-         move(1)
-      }
-
-      # Move over any preliminary junk before the first .cell
-      while *buff > 0 & not(buff[1] ? (=".cell" & (pos(0) | any(' ')))) do
-         pop(buff)
-
-      while s := pop(buff) do {
-         s ? {
-            if ="." then {
+      local t, cmd, args, got_cell
+      every t := separate_lines(s) do t ? {
+         if ="." then {
+            if any('.') then {
+               t := tab(0)
+               if \got_cell then
+                  str(t)
+            } else {
                cmd := tab(upto(' ') | 0)
                args := []
                repeat {
@@ -162,8 +155,10 @@ class GridPaint(Paint)
                      t := tab(upto(' ') | 0)
                   put(args, string(t))
                }
-               case string(cmd) of {
-                  "cell" : do_cell(args)
+               if cmd == "cell" then {
+                  do_cell(args)
+                  got_cell := 1
+               } else if \got_cell then case string(cmd) of {
                   "br" : do_brk(args)
                   "img" : do_img(args)
                   "imgl" : do_imgl(args)
@@ -171,9 +166,9 @@ class GridPaint(Paint)
                   "ys" : do_ys(args)
                   "attr" : do_attr(args)
                }
-            } else
-               str(s)
-         }
+            }
+         } else if \got_cell then
+            str(t)
       }
    end
 
@@ -534,7 +529,3 @@ class ImagePaint(Paint)
       (\win).copy_to(W,,,,, x, y)
    end
 end
-
-
-
-

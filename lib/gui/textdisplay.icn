@@ -31,18 +31,18 @@ class TextDisplay(LineBasedScrollArea)
 
    #
    # Useful method to get the contents as a string, with each line
-   # separated by \n.
+   # separated by the end-of-line character.
    #
    public get_contents_str()
-      return list2str(self.contents, "\n")
+      return cat_lines(self.contents)
    end
 
    #
    # Useful method to set the contents from a string in which each line
-   # is seperated by \n.
+   # is separated by the end-of-line character.
    #
    public set_contents_str(s)
-      set_contents(str2list(s, '\n'))
+      set_contents(break_lines(s))
       return self
    end
 

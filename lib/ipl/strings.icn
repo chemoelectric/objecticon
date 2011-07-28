@@ -757,3 +757,39 @@ end
 procedure endswith(s1, s2)
    return s1[-*s2:0] == s2
 end
+
+#
+# Separate a string into parts separated by (single) chars in {sep}.
+#
+# @param s the string to convert
+# @param sep cset of the separator chars, default ','
+#
+procedure separate(s, sep)
+   local t
+   /sep := ','
+   s ? repeat {
+      if t := tab(upto(sep)) then {
+         suspend t
+         move(1)
+      } else
+         return tab(0)
+   }
+end
+
+#
+# Separate a string into parts separated by end-of-line characters.
+#
+# @param s the string to convert
+#
+procedure separate_lines(s)
+   local t
+   s ? repeat {
+      if t := tab(upto('\n')) then {
+         if t[-1] == "\r" then
+            t[-1] := ""
+         suspend t
+         move(1)
+      } else
+         return tab(0)
+   }
+end
