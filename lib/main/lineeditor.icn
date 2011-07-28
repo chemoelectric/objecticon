@@ -179,12 +179,20 @@ class LineEditorStream(LineBasedStream)
          use {
             # Enter/exit keyboard-transmit mode, see 
             # http://www.mpimf-heidelberg.mpg.de/~rohm/computing/mpimf/notes/terminal.html
-            tty.writes("\e[?1h"),
+            opt_write("keypad_xmit"),
             read_line_impl2(),
-            tty.writes("\e[?1l")
+            opt_write("keypad_local")
          },
          run_stty("icanon",  "echo")
       }
+   end
+
+   private opt_write(key, def)
+      local s
+      if s := \ti[key] | \def then
+         return tty.writes(s)
+      else
+         return
    end
 
    private read1()
