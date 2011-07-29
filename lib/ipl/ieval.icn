@@ -6,6 +6,8 @@ package ipl.ieval
 
 import io, lang, ipl.colmize, parser, util, ipl.pdco, ipl.sort
 
+global in, hist_line
+
 procedure map1(x)
    return map(x[1])
 end
@@ -157,11 +159,25 @@ procedure dir(c)
          write()
       }
    }
+end
 
+procedure show_history()
+   local i, e
+   is(in, LineEditorStream) | fail
+   i := in.get_history_start_no()
+   every e := !in.get_history() do {
+      write(right(i, 4), "  ", e)
+      i +:= 1
+   }
+end
+
+procedure cmd(n)
+   if is(in, LineEditorStream) then
+      hist_line := in.get_history_item(n)
 end
 
 procedure main_impl(imports, files, opts)
-   local env, s, t, eval, prompt, f, in, quiet_flag, par, n, tr_flag, tv, last_runerr, ee
+   local env, s, t, eval, prompt, f, quiet_flag, par, n, tr_flag, tv, last_runerr, ee
 
    par := Parser()
    env := table()
@@ -178,6 +194,8 @@ procedure main_impl(imports, files, opts)
    env["q"] := create quiet_flag := toggle_flag(quiet_flag)
    env["ls"] := create list_syms(imports)
    env["dir"] := dir
+   env["cmd"] := cmd
+   env["hist"] := create show_history()
 
    every f := !files do {
       s := Files.file_to_string(f) | stop("Couldn't load ", f, ": ", &why)
@@ -191,14 +209,21 @@ procedure main_impl(imports, files, opts)
    if \opts["s"] then
       in := FileStream.stdin
    else
-      in := LineEditorStream() | stop("Failed to create LineEditorStream: ", &why)
+      in := LineEditorStream().
+         set_history_limit(500) | stop("Failed to create LineEditorStream: ", &why)
    repeat {
-      if \opts["s"] then
-         writes(prompt)
-      else
-         in.set_prompt(prompt)
-      t := in.read_line() | stop("Failed to read file: ", &why)
-      if /t then break
+      if \hist_line then {
+         write(prompt, hist_line)
+         t := hist_line
+         hist_line := &null
+      } else {
+         if \opts["s"] then
+            writes(prompt)
+         else
+            in.set_prompt(prompt)
+         t := in.read_line() | stop("Failed to read file: ", &why)
+         if /t then break
+      }
       s ||:= t
       if s[-1] == "\\" then {
          prompt := ">> "

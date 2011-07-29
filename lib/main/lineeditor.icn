@@ -9,6 +9,7 @@ class LineEditorStream(LineBasedStream)
    private
       history_limit,
       history,
+      history_start_no,
       hpos,
       hmod,
       prompt,
@@ -20,7 +21,9 @@ class LineEditorStream(LineBasedStream)
       isatty,
       dim,
       utf8_flag,
-      ti
+      ti,
+      buff_flag,
+      buff
 
    public set_history_limit(n)
       self.history_limit := n
@@ -29,6 +32,7 @@ class LineEditorStream(LineBasedStream)
 
    public set_history(l)
       self.history := l
+      self.history_start_no := 1
       return self
    end
 
@@ -44,6 +48,14 @@ class LineEditorStream(LineBasedStream)
 
    public get_history()
       return .history
+   end
+
+   public get_history_item(n)
+      return .history[0 < n - history_start_no + 1]
+   end
+
+   public get_history_start_no()
+      return .history_start_no
    end
 
    public close()
@@ -197,8 +209,24 @@ class LineEditorStream(LineBasedStream)
 
    private read1()
       local ch
+      if /buff_flag & (*buff > 0) then {
+         ch := buff[1]
+         buff := buff[2:0]
+         return ch
+      }
       ch := tty.in(1) | fail
       return \ch | error("Unexpected eof on tty")
+   end
+
+   private got()
+      if *subj > 0 then {
+         put(history, subj)
+         while *history > \history_limit do {
+            pop(history)
+            history_start_no +:= 1
+         }
+      }
+      return string(subj)
    end
 
    private read_line_impl2()
@@ -208,7 +236,7 @@ class LineEditorStream(LineBasedStream)
       hpos := *history + 1
       hmod := table()
       undo_manager.clear()
-      line_no := nlines := &null
+      buff_flag := line_no := nlines := &null
       dim := get_console_size() | fail
       # Request line_no
       tty.writes("\e[6n")
@@ -242,8 +270,12 @@ class LineEditorStream(LineBasedStream)
                }
             }
             # Line no request response
-            if cmd[2] == "[" & cmd[-1] == "R" then
+            if cmd[2] == "[" & cmd[-1] == "R" then {
                line_no := p[1]
+               if \buff_flag then
+                  return got()
+            } else if \buff_flag then
+               buff ||:= string(cmd)
             else case string(cmd) of {
                ti["key_up"]: if hpos > 1 then move_hist(-1)
                ti["key_down"]: if hpos <= *history then move_hist(1)
@@ -259,7 +291,9 @@ class LineEditorStream(LineBasedStream)
                   }
                }
             }
-         } else case string(ch) of {
+         } else if \buff_flag then
+            buff ||:= string(ch)
+         else case string(ch) of {
             "\^_": {
                if undo_manager.can_undo() then
                   undo_manager.undo()
@@ -270,13 +304,12 @@ class LineEditorStream(LineBasedStream)
             }
             "\^d": {
                ctrl_d_flag := 1
+               if /line_no then
+                  tty.writes(prompt, subj)
                tty.write()
-               if *subj > 0 then {
-                  put(history, subj)
-                  if *history > \history_limit then
-                     pop(history)
-                  return string(subj)
-               } else
+               if *subj > 0 then
+                  return got()
+               else
                   return
             }
             "\^a": pos := 1
@@ -296,13 +329,14 @@ class LineEditorStream(LineBasedStream)
                }
             }
             "\n": {
-               tty.write()
-               if *subj > 0 then {
-                  put(history, subj)
-                  if *history > \history_limit then
-                     pop(history)
+               if /line_no then {
+                  tty.write(prompt, subj)
+                  # Buffer input until got line no request response, which is now out-of-date.
+                  buff_flag := 1
+               } else {
+                  tty.write()
+                  return got()
                }
-               return string(subj)
             }
             default: {
                if any('\x20-\x7e\x80-\U10ffff', ch) then {
@@ -353,7 +387,9 @@ class LineEditorStream(LineBasedStream)
       utf8_flag := &yes
       undo_manager := UndoManager()
       history := []
+      history_start_no := 1
       prompt := ""
+      buff := ""
       ti := read_terminfo() | fail
       return
    end
