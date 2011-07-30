@@ -4,9 +4,7 @@
 
 package ipl.ieval
 
-import io, lang, ipl.colmize, parser, util, ipl.pdco, ipl.sort
-
-global in, hist_line
+import io, lang, ipl.colmize, parser, util, ipl.pdco, ipl.sort, ipl.lambda
 
 procedure map1(x)
    return map(x[1])
@@ -111,15 +109,15 @@ end
 procedure print_table(t)
    local w, widths, col, row
    widths := []
-   every col := 1 to *t[1] do {
+   every col := 1 to *t[1] - 1 do {
       w := 0
       every w <:= *(!t)[col]
       put(widths, w)
    }
    every row := !t do {
-      every col := 1 to *t[1] do
+      every col := 1 to *t[1] - 1 do
          every writes(left(row[col], 4 + widths[col]))
-      write()
+      write(row[-1])
    }
 end
 
@@ -161,7 +159,7 @@ procedure dir(c)
    }
 end
 
-procedure show_history()
+procedure show_history(in)
    local i, e
    is(in, LineEditorStream) | fail
    i := in.get_history_start_no()
@@ -171,13 +169,8 @@ procedure show_history()
    }
 end
 
-procedure cmd(n)
-   if is(in, LineEditorStream) then
-      hist_line := in.get_history_item(n)
-end
-
 procedure main_impl(imports, files, opts)
-   local env, s, t, eval, prompt, f, quiet_flag, par, n, tr_flag, tv, last_runerr, ee
+   local env, s, t, eval, prompt, f, quiet_flag, par, n, tr_flag, tv, last_runerr, ee, in, hist_line
 
    par := Parser()
    env := table()
@@ -190,12 +183,11 @@ procedure main_impl(imports, files, opts)
 
    env["env"] := create show_env(env)
    env["tt"] := create tr_flag := toggle_flag(tr_flag)
-   env["tb"] := create Coexpression.traceback(\\last_runerr, &yes)
+   env["tb"] := create Coexpression.traceback(\last_runerr, &yes)
    env["q"] := create quiet_flag := toggle_flag(quiet_flag)
-   env["ls"] := create list_syms(imports)
-   env["dir"] := dir
-   env["cmd"] := cmd
-   env["hist"] := create show_history()
+   env["dir"] := Lambda.make{ if *_a = 0 then list_syms(imports) else dir(_a[1]) }
+   env["hist"] := create show_history(in)
+   env["cmd"] := Lambda.make{{ if is(in, LineEditorStream) then hist_line := in.get_history_item(_a[1]) ; &fail}}
 
    every f := !files do {
       s := Files.file_to_string(f) | stop("Couldn't load ", f, ": ", &why)
@@ -206,10 +198,10 @@ procedure main_impl(imports, files, opts)
 
    s := ""
    prompt := "> "
-   if \opts["s"] then
-      in := FileStream.stdin
+   in := if \opts["s"] then
+      FileStream.stdin
    else
-      in := LineEditorStream().
+      LineEditorStream().
          set_history_limit(500) | stop("Failed to create LineEditorStream: ", &why)
    repeat {
       if \hist_line then {
@@ -217,10 +209,10 @@ procedure main_impl(imports, files, opts)
          t := hist_line
          hist_line := &null
       } else {
-         if \opts["s"] then
-            writes(prompt)
-         else
+         if is(in, LineEditorStream) then
             in.set_prompt(prompt)
+         else
+            writes(prompt)
          t := in.read_line() | stop("Failed to read file: ", &why)
          if /t then break
       }
