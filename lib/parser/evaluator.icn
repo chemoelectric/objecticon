@@ -37,7 +37,7 @@ class DefaultEvaluatorEnv(EvaluatorEnv)
       t := []
       if lang.Prog.get_global(k) then
          put(t, k)
-      every s := !ev.get_imports() do {
+      every s := !\ev.get_imports() do {
          f := s || "." || k
          if lang.Prog.get_global(f) then
             put(t, f)
