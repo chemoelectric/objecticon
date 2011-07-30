@@ -1,8 +1,5 @@
 package ipl.lambda
 
-import
-   util(with_var)
-
 global _a
 
 #
@@ -21,7 +18,14 @@ class Lambda()
    private e
 
    private f(a[])
-      suspend with_var(^e, create _a, create a)
+      local t
+      t := _a
+      _a := a
+      suspend 1(!e, _a := t) do {
+         t := _a
+         _a := a
+      }
+      _a := t
    end
 
    public static make(e)
