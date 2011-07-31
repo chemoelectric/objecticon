@@ -169,8 +169,13 @@ procedure show_history(in)
    }
 end
 
+procedure exit_repl(n)
+   runerr("exit(" || n || ") invoked")
+end
+
 procedure main_impl(imports, files, opts)
-   local env, s, t, eval, prompt, f, quiet_flag, par, n, tr_flag, tv, last_runerr, ee, in, hist_line
+   local env, s, t, eval, prompt, f, quiet_flag, par, 
+      n, tr_flag, last_runerr, ee, in, hist_line, run, tv
 
    par := Parser()
    env := table()
@@ -188,6 +193,9 @@ procedure main_impl(imports, files, opts)
    env["dir"] := Lambda.make{ if *_a = 0 then list_syms(imports) else dir(_a[1]) }
    env["hist"] := create show_history(in)
    env["cmd"] := Lambda.make{{ if is(in, LineEditorStream) then hist_line := in.get_history_item(_a[1]) ; &fail}}
+
+   run := create
+      with_var{ with_var{ Safe{eval.eval()}, &trace, tv }, exit, exit_repl}
 
    every f := !files do {
       s := Files.file_to_string(f) | stop("Couldn't load ", f, ": ", &why)
@@ -222,17 +230,17 @@ procedure main_impl(imports, files, opts)
          next
       }
       if n := par.parse_expression(s, "UTF-8") then {
-         if \\tr_flag then {
+         if \tr_flag then {
             to_stdout(n, 3)
             write()
             tv := -1
          } else
             tv := 0
          if eval.set_node(n) then {
-            if \\quiet_flag then
-               save_var{{ &trace := tv ; Safe{eval.eval()}}, &trace}
+            if \quiet_flag then
+               !run
             else
-               every to_stdout(save_var{{ &trace := tv ; Safe{eval.eval()}}, &trace}, 3) do 
+               every to_stdout(!run, 3) do 
                   write()
             if &errortext then {
                if &errornumber then
