@@ -33,6 +33,7 @@ struct lnode_3 {
 struct lnode_field {
     LNODE_SUB
     char *fname;
+    struct fentry *ftab_entry;
     struct lnode *child;
 };
 

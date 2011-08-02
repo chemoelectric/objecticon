@@ -9,6 +9,7 @@
 #include "lsym.h"
 #include "resolve.h"
 #include "tmain.h"
+#include "ltree.h"
 
 #include "../h/opdefs.h"
 
@@ -441,6 +442,18 @@ static int fieldtable_sort_compare(struct fentry **p1, struct fentry **p2)
     return strcmp((*p1)->name, (*p2)->name);
 }
 
+static int add_field_use(struct lnode *n)
+{
+    switch (n->op) {
+        case Uop_Field: {
+            struct lnode_field *x = (struct lnode_field *)n;
+            x->ftab_entry = add_fieldtable_entry(x->fname);
+            break;
+        }
+    }
+    return 1;
+}
+
 void build_fieldtable()
 {
     struct lfield *fd;
@@ -461,6 +474,8 @@ void build_fieldtable()
     for (cl = lclasses; cl; cl = cl->next)
         for (cf = cl->fields; cf; cf = cf->next)
             cf->ftab_entry = add_fieldtable_entry(cf->name);
+
+    visit_post(add_field_use);
 
     /*
      * Now create a sorted index of the field table.
