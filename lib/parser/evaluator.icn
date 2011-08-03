@@ -377,6 +377,7 @@ class Evaluator()
    private do_assign(n) suspend E(n.child(1)) := E(n.child(3)) end
    private do_revswap(n) suspend E(n.child(1)) <-> E(n.child(3)) end
    private do_revassign(n) suspend E(n.child(1)) <- E(n.child(3)) end
+   private do_augconcat(n) suspend E(n.child(1)) ||:= E(n.child(3)) end
    private do_auglconcat(n) suspend E(n.child(1)) |||:= E(n.child(3)) end
    private do_augdiff(n) suspend E(n.child(1)) --:= E(n.child(3)) end
    private do_augunion(n) suspend E(n.child(1)) ++:= E(n.child(3)) end
