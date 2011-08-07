@@ -16,10 +16,10 @@
 #
 #     Descriptions:
 #
-#     ReAssign( s ) : s2
+#     ReAssign( s, l ) : s2
 #
 #        Replaces sequences of \n in s with the corresponding parenthesis
-#        groups from the last regular expression match/find (if one exists).
+#        groups from the given list l.
 #
 #        Special characters:
 #        \n	use nth parenthesis group
@@ -28,17 +28,10 @@
 #
 #
 #############################################################################
-#
-#  Links:  regexp
-#
-############################################################################
 
 package ipl.reassign
 
-import
-   ipl.regexp(Re_ParenGroups)
-
-procedure ReAssign( s )
+procedure ReAssign( s, l )
 local s1, n
 
 s1 := ""
@@ -50,7 +43,7 @@ s ?
          if s1 ||:= ="\\" then next
          if n := integer(tab(many(&digits))) then
          {
-            n := Re_ParenGroups[n]
+            n := l[n]
             s1 ||:= n 
             if ( =".", tab(any(&digits)) ) then move(-1)
          }
