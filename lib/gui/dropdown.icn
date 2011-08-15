@@ -166,15 +166,15 @@ class DropDown(SelectionList,Component)
       max_w >:= \self.max_width
       max_h >:= \self.max_height
 
-      self.tl := create_popup()
-      self.tl.set_all_wattribs(self.get_effective_wattribs())
-      self.tl.connect(self.on_textlist_selection, Event.SELECTION_CHANGED)
-      self.tl.set_contents(self.selection_list)
-      self.tl.set_draggable_cursor(&yes)
-      self.tl.set_motion_cursor(&yes)
-      self.tl.set_select_mode(Select.ONE)
-      self.tl.set_selection_on_key_moves(&no)
-      self.tl.set_z(self.parent_dialog.get_top_z())
+      self.tl := create_popup().
+         set_all_wattribs(self.get_effective_wattribs()).
+         connect(self.on_textlist_selection, Event.SELECTION_CHANGED).
+         set_contents(self.selection_list).
+         set_draggable_cursor(&yes).
+         set_motion_cursor(&yes).
+         set_select_mode(Select.ONE).
+         set_selection_on_key_moves(&no).
+         set_z(self.parent_dialog.get_top_z())
       self.parent_dialog.add(tl)
       self.tl.initially()
       self.tl.set_ideal_size(self.w, 
@@ -349,11 +349,12 @@ class DropDown(SelectionList,Component)
       cast(self,Component).new()
       self.set_border(SunkenBorder())
       # Make the same width as the button in the scrollbar of the dropdown.
-      self.b := IconButton().set_width(ScrollArea.predict_scrollbar_size())
-      self.b.set_parent(self)
-      self.b.connect(self.on_button_press, Event.BUTTON_PRESS)
-      self.b.set_paint(ImagePaint().set_cache("gui.ARROW_DOWN"))
-      self.b.set_accepts_focus(&no)
+      self.b := IconButton().
+         set_width(ScrollArea.predict_scrollbar_size()).
+         set_parent(self).
+         connect(self.on_button_press, Event.BUTTON_PRESS).
+         set_paint(ImagePaint().set_cache("gui.ARROW_DOWN")).
+         set_accepts_focus(&no)
       self.direction := BEST
       self.add(b)
       self.preferred_focus := self.view := create_view()
