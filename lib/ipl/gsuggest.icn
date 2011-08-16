@@ -1,0 +1,68 @@
+package ipl.gsuggest
+
+import
+   gui(Dispatcher, Event, SuggestField),
+   http(HttpClient, HttpRequest),
+   io(StringStream),
+   ipl.pdco(List),
+   json(JSONParser),
+   net(URL)
+
+class GoogleSuggestField(SuggestField)
+   private hc, req, last
+
+   public finally()
+      req.stop()
+      hc.close()
+      cast(self,SuggestField).finally()
+   end
+
+   public initially()
+      cast(self,SuggestField).initially()
+      req.start()
+   end
+
+   private requests()
+      repeat {
+         while last === self.contents do
+            req.sleep()
+         do_req()
+      }
+   end
+
+   private do_req()
+      local hr, data, jp, v, s, u
+      data := StringStream()
+      u := URL.parse("http://google.co.uk/complete/search").
+         set_cgi_parameters(table(, "q", last := self.contents))
+      hr := HttpRequest().
+         set_url(u).
+         set_data_stream(data).
+         set_header("Accept-Charset", "utf-8")
+      if hc.retrieve(hr) then {
+         last == self.contents | fail
+         s := ucs(data.str()) | fail
+         s ? {
+            tab(upto('['))
+            s := tab(-1)
+         }
+         jp := JSONParser()
+         v := jp.parse(s) | fail
+         open_textlist(List{(!v[2])[1]})
+      }
+   end
+
+   public on_change(ev)
+      req.change_sleep(0)
+   end
+
+   public new()
+      cast(self,SuggestField).new()
+      connect(on_change, Event.CONTENT_CHANGED)
+      req := Dispatcher.new_task{requests()}
+      hc := HttpClient().
+         set_task(req).
+         set_user_agent("AppleWebKit/534.24 (KHTML, like Gecko) Chrome/11.0.696.57")
+      return
+   end
+end
