@@ -23,20 +23,9 @@ class DropDown(SelectionList,Component)
       max_height,
       max_width
 
-   public static const
-      UP,
-      DOWN,
-      BEST
-
-   private static init()
-      UP := "up"
-      DOWN := "down"
-      BEST := "best"
-   end
-
    #
-   # Set the direction to pop-up in.  Options are {UP}, {DOWN} or
-   # {BEST} (the default).
+   # Set the direction to pop-up in.  Options are {Direction.UP}, {Direction.DOWN} or
+   # {Direction.BEST} (the default).
    #
    public set_direction(s)
       self.direction := s
@@ -157,9 +146,9 @@ class DropDown(SelectionList,Component)
       }
 
       max_h := case self.direction of {
-         UP: spc_above
-         DOWN: spc_below
-         BEST: max(spc_above, spc_below)
+         Direction.UP: spc_above
+         Direction.DOWN: spc_below
+         Direction.BEST: max(spc_above, spc_below)
          default: runerr("Unknown direction", self.direction)
       }
       max_w := spc_right
@@ -184,28 +173,28 @@ class DropDown(SelectionList,Component)
       if tl.w_spec > win_spc_right then
          use_popup_win := 1
       case self.direction of {
-         UP: {
+         Direction.UP: {
             if tl.h_spec > win_spc_above then
                use_popup_win := 1
-            use_direction := UP
+            use_direction := Direction.UP
          }
-         DOWN: {
+         Direction.DOWN: {
             if tl.h_spec > win_spc_below then
                use_popup_win := 1
-            use_direction := DOWN
+            use_direction := Direction.DOWN
          }
-         BEST: {
+         Direction.BEST: {
             if tl.h_spec > win_spc_below then
                if tl.h_spec <= spc_below then {
                   use_popup_win := 1
-                  use_direction := DOWN
+                  use_direction := Direction.DOWN
                } else if tl.h_spec > win_spc_above then {
                   use_popup_win := 1
-                  use_direction := UP
+                  use_direction := Direction.UP
                } else
-                  use_direction := UP
+                  use_direction := Direction.UP
             else
-               use_direction := DOWN
+               use_direction := Direction.DOWN
          }
       }
 
@@ -216,7 +205,7 @@ class DropDown(SelectionList,Component)
          self.tl.finally()
          self.parent_dialog.remove(tl)
 
-         d := if use_direction == DOWN then 
+         d := if use_direction == Direction.DOWN then 
             PureDialog().
                set_canvas("popup").
                set_width( tl.w_spec).
@@ -243,7 +232,7 @@ class DropDown(SelectionList,Component)
          d.set_focus(tl)
          d.held[ev.code] := [tl.view, tl, d]
       } else {
-         if use_direction == DOWN then 
+         if use_direction == Direction.DOWN then 
             self.tl.set_pos(self.x + win.get_dx(), self.y + self.h + win.get_dy())
          else
             self.tl.set_pos(self.x + win.get_dx(), self.y - self.tl.h_spec + win.get_dy())
@@ -355,7 +344,7 @@ class DropDown(SelectionList,Component)
          connect(self.on_button_press, Event.BUTTON_PRESS).
          set_paint(ImagePaint().set_cache("gui.ARROW_DOWN")).
          set_accepts_focus(&no)
-      self.direction := BEST
+      self.direction := Direction.BEST
       self.add(b)
       self.preferred_focus := self.view := create_view()
       self.add(view)
