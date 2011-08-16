@@ -10,7 +10,7 @@ import
    net(URL)
 
 class GSuggestField(SuggestField)
-   protected hc
+   protected hc, domain
    private req, last, mod
 
    public finally()
@@ -27,6 +27,11 @@ class GSuggestField(SuggestField)
    public synch_contents()
       cast(self,SuggestField).synch_contents()
       mod := &null
+   end
+
+   public set_domain(s)
+      domain := s
+      return self
    end
 
    private requests()
@@ -55,6 +60,7 @@ class GSuggestField(SuggestField)
       cast(self,SuggestField).new()
       connect(on_change, Event.CONTENT_CHANGED)
       req := Dispatcher.new_task{requests()}
+      domain := "www.google.com"
       hc := HttpClient().
          set_task(req).
          set_user_agent("AppleWebKit/534.24 (KHTML, like Gecko) Chrome/11.0.696.57")
@@ -66,7 +72,7 @@ class GoogleSuggestField(GSuggestField)
    protected do_req(query)
       local hr, data, jp, v, s, u
       data := StringStream()
-      u := URL.parse("http://google.co.uk/complete/search").
+      u := URL.parse("http://" || domain || "/complete/search").
          set_cgi_parameters(table(, "q", query))
       hr := HttpRequest().
          set_url(u).
@@ -74,10 +80,7 @@ class GoogleSuggestField(GSuggestField)
          set_header("Accept-Charset", "utf-8")
       hc.retrieve(hr) | fail
       s := ucs(data.str()) | fail
-      s ? {
-         tab(upto('['))
-         s := tab(-1)
-      }
+      s ?:= (tab(upto('[')) & tab(-1))
       jp := JSONParser()
       v := jp.parse(s) | fail
       return List{(!v[2])[1]}
@@ -86,17 +89,13 @@ end
 
 class TickerSuggestField(GSuggestField)
    public extract_selection()
-      local s
-      if s := tl.object_get_selections()[1] then {
-         s ?:= tab(find(" ("))
-         return s
-      }
+      return tl.object_get_selections()[1] ? tab(find(" ("))
    end
 
    protected do_req(query)
       local hr, data, jp, v, s, u, e, l
       data := StringStream()
-      u := URL.parse("http://www.google.com/finance/match").
+      u := URL.parse("http://" || domain || "/finance/match").
          set_cgi_parameters(table(, "q", query))
       hr := HttpRequest().
          set_url(u).
