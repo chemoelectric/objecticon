@@ -272,7 +272,7 @@ class URL()
       static convert_chars
       initial 
          convert_chars := &lcase ++ &ucase ++ &digits ++ '_*.\- '
-
+      s := string(s) | runerr(103, s)
       res := ""
       s ? repeat {
          res ||:= tab(many(convert_chars))
