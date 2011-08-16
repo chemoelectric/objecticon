@@ -30,9 +30,10 @@ end
 
 procedure main(a)
    local opts, prog, imports, links
-   opts := options(a, "-i:-l:-w!-s!")
-   imports := set!str2list(\opts["i"]) | set()
-   links := str2list(\opts["l"]) | []
+   opts := options(a, "-i:*-l:*-w!-s!")
+   imports := set()
+   every insert(imports, !str2list(!\opts["i"]))
+   links := \opts["l"] | []
    prog := create_prog(imports, links) | stop(&why)
    Prog.get_global("main", prog)(imports, a, opts)
 end
