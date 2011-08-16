@@ -36,7 +36,7 @@ class JSONParser()
    private parse_number()
       local s
       s := =("-" | "") || 
-         (="0" | (tab(any('123456789')) || tab(many(&digits)))) ||
+         (="0" | (tab(any('123456789')) || (tab(many(&digits)) | ""))) ||
          ((="." || tab(many(&digits))) | "") ||
          ((="e" || (tab(any('+\-')) | "") || tab(many(&digits))) | "") | throw("Invalid number")
       return numeric(s) | throw("Number out of range")
