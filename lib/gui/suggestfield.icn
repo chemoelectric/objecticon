@@ -46,7 +46,11 @@ class SuggestField(TextField)
    end
 
    public synch_contents()
-      set_contents(text(tl.object_get_selections()[1]))
+      set_contents(extract_selection())
+   end
+
+   public extract_selection()
+      return text(tl.object_get_selections()[1])
    end
 
    public open_textlist(data)
@@ -222,10 +226,8 @@ class SuggestField(TextField)
    end
 
    public handle_return(e)
-      if \tl then {
-         synch_contents()
+      if \tl then
          self.close_textlist()
-      }
       cast(self,TextField).handle_return(e)
    end
 
