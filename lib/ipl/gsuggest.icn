@@ -5,6 +5,7 @@ import
    http(HttpClient, HttpRequest),
    io(StringStream),
    ipl.pdco(List),
+   ipl.strings(replace),
    json(JSONParser),
    net(URL)
 
@@ -49,6 +50,76 @@ class GoogleSuggestField(SuggestField)
          jp := JSONParser()
          v := jp.parse(s) | fail
          open_textlist(List{(!v[2])[1]})
+      }
+   end
+
+   public on_change(ev)
+      req.change_sleep(0)
+   end
+
+   public new()
+      cast(self,SuggestField).new()
+      connect(on_change, Event.CONTENT_CHANGED)
+      req := Dispatcher.new_task{requests()}
+      hc := HttpClient().
+         set_task(req).
+         set_user_agent("AppleWebKit/534.24 (KHTML, like Gecko) Chrome/11.0.696.57")
+      return
+   end
+end
+
+class TickerSuggestField(SuggestField)
+   private hc, req, last
+
+   public finally()
+      req.stop()
+      hc.close()
+      cast(self,SuggestField).finally()
+   end
+
+   public initially()
+      cast(self,SuggestField).initially()
+      req.start()
+   end
+
+   public synch_contents()
+      local s
+      if s := tl.object_get_selections()[1] then {
+         s ?:= tab(find(" ("))
+         set_contents(text(s))
+      }
+   end
+
+   private requests()
+      repeat {
+         while last === self.contents do
+            req.sleep()
+         do_req()
+      }
+   end
+
+   private do_req()
+      local hr, data, jp, v, s, u, e, l
+      data := StringStream()
+      u := URL.parse("http://www.google.com/finance/match").
+         set_cgi_parameters(table(, "q", last := self.contents))
+      hr := HttpRequest().
+         set_url(u).
+         set_data_stream(data).
+         set_header("Accept-Charset", "utf-8")
+      if hc.retrieve(hr) then {
+         last == self.contents | fail
+         s := ucs(data.str()) | fail
+         # Google has a habit of using illegal \x escape sequences
+         s := replace(s, "\\x", "\\u00")
+         jp := JSONParser()
+         v := jp.parse(s) | fail
+
+         l := []
+         every e := !\v[u"matches"] do
+            put(l, (u"" ~== e[u"t"]) || " (" || e[u"n"] || ")")
+
+         open_textlist(l)
       }
    end
 
