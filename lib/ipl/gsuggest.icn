@@ -9,67 +9,9 @@ import
    json(JSONParser),
    net(URL)
 
-class GoogleSuggestField(SuggestField)
-   private hc, req, last
-
-   public finally()
-      req.stop()
-      hc.close()
-      cast(self,SuggestField).finally()
-   end
-
-   public initially()
-      cast(self,SuggestField).initially()
-      req.start()
-   end
-
-   private requests()
-      repeat {
-         while last === self.contents do
-            req.sleep()
-         do_req()
-      }
-   end
-
-   private do_req()
-      local hr, data, jp, v, s, u
-      data := StringStream()
-      u := URL.parse("http://google.co.uk/complete/search").
-         set_cgi_parameters(table(, "q", last := self.contents))
-      hr := HttpRequest().
-         set_url(u).
-         set_data_stream(data).
-         set_header("Accept-Charset", "utf-8")
-      if hc.retrieve(hr) then {
-         last == self.contents | fail
-         s := ucs(data.str()) | fail
-         s ? {
-            tab(upto('['))
-            s := tab(-1)
-         }
-         jp := JSONParser()
-         v := jp.parse(s) | fail
-         open_textlist(List{(!v[2])[1]})
-      }
-   end
-
-   public on_change(ev)
-      req.change_sleep(0)
-   end
-
-   public new()
-      cast(self,SuggestField).new()
-      connect(on_change, Event.CONTENT_CHANGED)
-      req := Dispatcher.new_task{requests()}
-      hc := HttpClient().
-         set_task(req).
-         set_user_agent("AppleWebKit/534.24 (KHTML, like Gecko) Chrome/11.0.696.57")
-      return
-   end
-end
-
-class TickerSuggestField(SuggestField)
-   private hc, req, last
+class GSuggestField(SuggestField)
+   protected hc
+   private req, last, mod
 
    public finally()
       req.stop()
@@ -83,48 +25,30 @@ class TickerSuggestField(SuggestField)
    end
 
    public synch_contents()
-      local s
-      if s := tl.object_get_selections()[1] then {
-         s ?:= tab(find(" ("))
-         set_contents(text(s))
-      }
+      cast(self,SuggestField).synch_contents()
+      mod := &null
    end
 
    private requests()
+      local l, last
       repeat {
-         while last === self.contents do
+         while /mod do
             req.sleep()
-         do_req()
+         last := self.contents
+         if l := do_req(last) then {
+            # If contents have changed, or user has selected from list, skip.
+            (last == self.contents & \mod) | next
+            open_textlist(l)
+         }
+         mod := &null
       }
    end
 
-   private do_req()
-      local hr, data, jp, v, s, u, e, l
-      data := StringStream()
-      u := URL.parse("http://www.google.com/finance/match").
-         set_cgi_parameters(table(, "q", last := self.contents))
-      hr := HttpRequest().
-         set_url(u).
-         set_data_stream(data).
-         set_header("Accept-Charset", "utf-8")
-      if hc.retrieve(hr) then {
-         last == self.contents | fail
-         s := ucs(data.str()) | fail
-         # Google has a habit of using illegal \x escape sequences
-         s := replace(s, "\\x", "\\u00")
-         jp := JSONParser()
-         v := jp.parse(s) | fail
-
-         l := []
-         every e := !\v[u"matches"] do
-            put(l, (u"" ~== e[u"t"]) || " (" || e[u"n"] || ")")
-
-         open_textlist(l)
-      }
-   end
+   protected defer do_req()
 
    public on_change(ev)
       req.change_sleep(0)
+      mod := 1
    end
 
    public new()
@@ -135,5 +59,58 @@ class TickerSuggestField(SuggestField)
          set_task(req).
          set_user_agent("AppleWebKit/534.24 (KHTML, like Gecko) Chrome/11.0.696.57")
       return
+   end
+end
+
+class GoogleSuggestField(GSuggestField)
+   protected do_req(query)
+      local hr, data, jp, v, s, u
+      data := StringStream()
+      u := URL.parse("http://google.co.uk/complete/search").
+         set_cgi_parameters(table(, "q", query))
+      hr := HttpRequest().
+         set_url(u).
+         set_data_stream(data).
+         set_header("Accept-Charset", "utf-8")
+      hc.retrieve(hr) | fail
+      s := ucs(data.str()) | fail
+      s ? {
+         tab(upto('['))
+         s := tab(-1)
+      }
+      jp := JSONParser()
+      v := jp.parse(s) | fail
+      return List{(!v[2])[1]}
+   end
+end
+
+class TickerSuggestField(GSuggestField)
+   public extract_selection()
+      local s
+      if s := tl.object_get_selections()[1] then {
+         s ?:= tab(find(" ("))
+         return s
+      }
+   end
+
+   protected do_req(query)
+      local hr, data, jp, v, s, u, e, l
+      data := StringStream()
+      u := URL.parse("http://www.google.com/finance/match").
+         set_cgi_parameters(table(, "q", query))
+      hr := HttpRequest().
+         set_url(u).
+         set_data_stream(data).
+         set_header("Accept-Charset", "utf-8")
+      hc.retrieve(hr) | fail
+      s := ucs(data.str()) | fail
+      # Google has a habit of using illegal \x escape sequences
+      s := replace(s, "\\x", "\\u00")
+      jp := JSONParser()
+      v := jp.parse(s) | fail
+      l := []
+      every e := !\v[u"matches"] do
+         put(l, (u"" ~== e[u"t"]) || " (" || e[u"n"] || ")")
+      return l
    end
 end
