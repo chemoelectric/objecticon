@@ -109,7 +109,7 @@ import
    io(open, read, stop)
 
 procedure options(arg,optstring,errproc)
-   local f,fList,fileArg,fn,ignore,optname,opttable,opttype,p,x,option,optcs
+   local f,fList,fileArg,fn,ignore,optname,opttable,opttype,p,x,option,optcs,v
    #
    #  Initialize.
    #
@@ -128,6 +128,7 @@ procedure options(arg,optstring,errproc)
 	 if optname == "-" then
 	    optname := tab(many(optcs)) | move(1) | break
 	 opttype := tab(any('!:+.')) | "!"
+         opttype ||:= tab(any('*'))
 	 opttable[optname] := opttype
 	 }
       }
@@ -143,12 +144,12 @@ procedure options(arg,optstring,errproc)
 	       tab(0) ? until pos(0) do {
 		  if opttype := \opttable[
 			optname := ((pos(1),tab(0)) | move(1))] then {
-		     option[optname] :=
+                     v :=
 			if any(':+.',opttype) then {
 			   p := "" ~== tab(0) | get(arg) |
 			      return errproc(
 				    "No parameter following -" || optname)
-			   case opttype of {
+			   case opttype[1] of {
 			      ":": p
 			      "+": integer(p) |
 				 return errproc("-" || optname ||
@@ -159,6 +160,11 @@ procedure options(arg,optstring,errproc)
 			      }
 			   }
 			else 1
+                     if upto('*',opttype) then {
+                        /option[optname] := []
+                        put(option[optname], v)
+                     } else
+                        option[optname] := v
 		     }
 		  else return errproc("Unrecognized option: -" || optname)
 		  }
