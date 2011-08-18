@@ -2,12 +2,20 @@ package gui
 
 import graphics
 
+# This class is a {TextField} which provides suggested completions in
+# a popup list based on partial input.
+#
 class SuggestField(TextField)
    public 
       tl,
       direction,
       max_height,
       max_width
+
+   protected
+      req, 
+      last,
+      mod
 
    #
    # Set the direction to pop-up in.  Options are {Direction.UP}, {Direction.DOWN} or
@@ -47,10 +55,37 @@ class SuggestField(TextField)
 
    public synch_contents()
       set_contents(extract_selection())
+      mod := &null
    end
 
    public extract_selection()
       return text(tl.object_get_selections()[1])
+   end
+
+   private requests()
+      local l, last
+      repeat {
+         while /mod do
+            req.sleep()
+         last := self.contents
+         if l := do_request() then {
+            # If contents have changed, or user has selected from list, skip.
+            (last == self.contents & \mod) | next
+            open_textlist(l)
+         }
+         mod := &null
+      }
+   end
+
+   #
+   # This method is implemented to provide the list of suggestions, based on
+   # the current contents of the textfield.
+   #
+   protected defer do_request()
+
+   public on_change(ev)
+      req.change_sleep(0)
+      mod := 1
    end
 
    public open_textlist(data)
@@ -216,7 +251,13 @@ class SuggestField(TextField)
       }
    end
 
+   public initially()
+      cast(self,TextField).initially()
+      req.start()
+   end
+
    public finally()
+      req.stop()
       #
       # Disposed with text list showing, just get rid of it
       #
@@ -257,6 +298,8 @@ class SuggestField(TextField)
 
    public new()
       cast(self,TextField).new()
+      connect(on_change, Event.CONTENT_CHANGED)
+      req := Dispatcher.new_task{requests()}
       self.direction := Direction.BEST
       return
    end
