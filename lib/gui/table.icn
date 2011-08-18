@@ -84,7 +84,7 @@ class TableContent(SelectableScrollArea)
    end
 
    public draw()
-      local xp, yp, i, j, info, h, lh, r, cols, col, cc
+      local yp, i, j, info, h, lh, r, cols, col, cc
 
       r := view.get_cbwin_clip()
 
@@ -99,7 +99,6 @@ class TableContent(SelectableScrollArea)
             # Clip on the column.
             view.cbwin.clip!cc
             yp := r.y - info.offset
-            xp := view.x - get_area_x()
             # Write each line in this column
             every i := info.first to info.last do {
                lh := integer(h) | h[i]
@@ -188,14 +187,14 @@ class Table(Component)
    # @param horiz  The left offset to move to
    #
    public goto_pos(line, horiz)
-      return self.table_content.goto_pos(line, horiz)
+      self.table_content.goto_pos(line, horiz)
    end
 
    #
    # Ensure the given line is visible
    #
    public ensure_line_visible(line) 
-      return self.table_content.ensure_line_visible(line) 
+      self.table_content.ensure_line_visible(line) 
    end
 
    #
@@ -214,11 +213,27 @@ class Table(Component)
    # set with {set_contents()}, has changed.
    #
    public contents_changed()
-      return self.table_content.contents_changed()
+      self.table_content.contents_changed()
    end
 
    public clear_selections()
-      return self.table_content.clear_selections()
+      self.table_content.clear_selections()
+      return self
+   end
+
+   public set_draggable_cursor(s)
+      self.table_content.set_draggable_cursor(s)
+      return self
+   end
+
+   public set_motion_cursor(s)
+      self.table_content.set_motion_cursor(s)
+      return self
+   end
+
+   public set_selection_on_key_moves(s)
+      self.table_content.set_selection_on_key_moves(s)
+      return self
    end
 
    #
@@ -438,7 +453,3 @@ class Table(Component)
       return
    end
 end
-
-
-
-
