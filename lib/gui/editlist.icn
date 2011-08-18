@@ -89,8 +89,12 @@ class EditList(DropDown)
 
    public apply_selection(ev)
       local s 
-      s := self.selection_list[\self.selection] | ""
+      s := extract_selection() | ""
       self.view.set_contents(s)
+   end
+
+   public extract_selection()
+      return self.selection_list[\self.selection] 
    end
 
    public on_textfield(ev, src, type)

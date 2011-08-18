@@ -56,8 +56,12 @@ class List(DropDown)
 
    public apply_selection()
       local s
-      s := \self.constant_label | self.selection_list[\self.selection] | ""
+      s := \self.constant_label | extract_selection() | ""
       self.view.set_label(s)
+   end
+
+   public extract_selection()
+      return text(self.selection_list[\self.selection])
    end
 
    #
