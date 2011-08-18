@@ -99,6 +99,19 @@ class Select()
    end
 end
 
+class Direction()
+   public static const
+      UP,
+      DOWN,
+      BEST
+
+   private static init()
+      UP := "up"
+      DOWN := "down"
+      BEST := "best"
+   end
+end
+
 class Gui()
    public static 
       BORDER_WIDTH,
@@ -363,9 +376,3 @@ procedure clone_win_with(w, t)
    }
    return w
 end
-
-procedure apply_attrs(w, t)
-
-   return w
-end
-

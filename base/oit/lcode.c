@@ -95,12 +95,6 @@ static void *expand_table(void * table,      /* table to be realloc()ed */
                           int min_units,      /* the minimum number of units that must be allocated. */
                           char *tbl_name);     /* name of the table */
 
-struct unref {
-    char *name;
-    int num;
-    struct unref *next, *b_next;
-};
-
 struct strconst {
     char *s;
     word len;
@@ -122,7 +116,6 @@ struct ipc_line {
     int line;           /* line number */
 };
 
-static struct unref *first_unref, *unref_hash[128];
 static struct strconst *first_strconst, *last_strconst, *strconst_hash[128];
 static int strconst_offset;
 static struct centry *constblock_hash[128];
@@ -225,24 +218,6 @@ static void emit_ir_var(struct ir_var *v, char *desc)
     }
 }
 
-static struct unref *get_unref(char *s)
-{
-    int i = hasher(s, unref_hash);
-    struct unref *p = unref_hash[i];
-    while (p && p->name != s)
-        p = p->b_next;
-    if (!p) {
-        p = Alloc(struct unref);
-        p->b_next = unref_hash[i];
-        unref_hash[i] = p;
-        p->name = s;
-        p->num = (first_unref ? (first_unref->num - 1) : -1);
-        p->next = first_unref;
-        first_unref = p;
-    }
-    return p;
-}
-
 static struct centry *inst_sdescrip(char *s)
 {
     int i;
@@ -333,8 +308,6 @@ void generate_code()
     strconst_offset = 0;
     first_strconst = last_strconst = 0;
     ArrClear(strconst_hash);
-    first_unref = 0;
-    ArrClear(unref_hash);
     curr_file = last_fnmtbl_filen = 0;
     curr_line = last_lntable_line = 0;
 
@@ -830,20 +803,12 @@ static void lemitcode()
                 }
                 case Ir_Invokef: {
                     struct ir_invokef *x = (struct ir_invokef *)ir;
-                    struct fentry *fp;
                     int i;
                     out_op(Op_Invokef);
                     word_field(x->clo, "clo");
                     emit_ir_var(x->lhs, "lhs");
                     emit_ir_var(x->expr, "expr");
-                    fp = flocate(x->fname);
-                    if (fp)
-                        word_field(fp->field_id, "field number");
-                    else {
-                        /* Get or create an unref record */
-                        struct unref *p = get_unref(x->fname);
-                        word_field(p->num, "field number");
-                    }
+                    word_field(x->ftab_entry->field_id, "field number");
                     word_field(0, "inline cache");
                     word_field(0, "inline cache");
                     word_field(x->argc, "argc");
@@ -866,19 +831,11 @@ static void lemitcode()
                 }
                 case Ir_Applyf: {
                     struct ir_applyf *x = (struct ir_applyf *)ir;
-                    struct fentry *fp;
                     out_op(Op_Applyf);
                     word_field(x->clo, "clo");
                     emit_ir_var(x->lhs, "lhs");
                     emit_ir_var(x->arg1, "arg1");
-                    fp = flocate(x->fname);
-                    if (fp)
-                        word_field(fp->field_id, "field number");
-                    else {
-                        /* Get or create an unref record */
-                        struct unref *p = get_unref(x->fname);
-                        word_field(p->num, "field number");
-                    }
+                    word_field(x->ftab_entry->field_id, "field number");
                     word_field(0, "inline cache");
                     word_field(0, "inline cache");
                     emit_ir_var(x->arg2, "arg2");
@@ -888,18 +845,10 @@ static void lemitcode()
                 }
                 case Ir_Field: {
                     struct ir_field *x = (struct ir_field *)ir;
-                    struct fentry *fp;
                     out_op(Op_Field);
                     emit_ir_var(x->lhs, "lhs");
                     emit_ir_var(x->expr, "expr");
-                    fp = flocate(x->fname);
-                    if (fp)
-                        word_field(fp->field_id, "field number");
-                    else {
-                        /* Get or create an unref record */
-                        struct unref *p = get_unref(x->fname);
-                        word_field(p->num, "field number");
-                    }
+                    word_field(x->ftab_entry->field_id, "field number");
                     word_field(0, "inline cache");
                     word_field(0, "inline cache");
                     break;
@@ -1406,7 +1355,6 @@ static void gentables()
     struct lrecord *rec;
     struct fentry *fp;
     struct lfield *fd;
-    struct unref *up;
     struct strconst *sp;
     struct ipc_fname *fnptr;
     struct ipc_line *lnptr;
@@ -1523,10 +1471,6 @@ static void gentables()
     for (fp = lffirst; fp; fp = fp->next) {
         ce = inst_sdescrip(fp->name);
         outsdescrip(ce, "Field %s", fp->name);
-    }
-    for(up = first_unref; up; up = up->next) {
-        ce = inst_sdescrip(up->name);
-        outsdescrip(ce, "Unref field %s", up->name);
     }
     flushcode();
 

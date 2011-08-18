@@ -1,6 +1,6 @@
 package io
 
-import undo, util, lang
+import undo, util, lang, ipl.streams(get_null)
 
 class LineEditorStream(LineBasedStream)
    package
@@ -9,6 +9,7 @@ class LineEditorStream(LineBasedStream)
    private
       history_limit,
       history,
+      history_start_no,
       hpos,
       hmod,
       prompt,
@@ -19,7 +20,10 @@ class LineEditorStream(LineBasedStream)
       tty,
       isatty,
       dim,
-      utf8_flag
+      utf8_flag,
+      ti,
+      buff_flag,
+      buff
 
    public set_history_limit(n)
       self.history_limit := n
@@ -28,6 +32,7 @@ class LineEditorStream(LineBasedStream)
 
    public set_history(l)
       self.history := l
+      self.history_start_no := 1
       return self
    end
 
@@ -43,6 +48,14 @@ class LineEditorStream(LineBasedStream)
 
    public get_history()
       return .history
+   end
+
+   public get_history_item(n)
+      return .history[0 < n - history_start_no + 1]
+   end
+
+   public get_history_start_no()
+      return .history_start_no
    end
 
    public close()
@@ -79,19 +92,94 @@ class LineEditorStream(LineBasedStream)
    end
 
    private static run_stty(params[])
-      local f, ss, nul
+      local f, ss
       ss := StringStream()
       use {
-         nul := FileStream.open("/dev/null", FileOpt.WRONLY),
-         use {
-            f := ProgInputStream("stty", params,,, nul),
-            f.copy_to(ss)
-         }
+         f := ProgInputStream("stty", params,,, get_null()),
+         f.copy_to(ss)
       } | fail
       return if f.get_exit_info().param = 0 then
          ss.str()
       else
          error("stty returned non-zero status")
+   end
+
+   private static read_terminfo_escape()
+      local ch, v
+      return case move(1) of {
+         "^":  char(iand(ord(move(1)), 8r37))
+         "\\": {
+            if any('01234567') & (v := char(iand("8r" || move(3), 8r377))) then
+               v
+            else case ch := move(1) of {
+               "0": "\200"
+               "E": "\e"
+               "e": "\e"
+               "n": "\n"
+               "l": "\l"
+               "r": "\r"
+               "t": "\t"
+               "b": "\b"
+               "f": "\f"
+               "s": " "
+               default: ch
+            }
+         }
+      }
+   end
+
+   private static parse_terminfo(f)
+      local desc, t, s, k, v
+      t := table()
+      repeat {
+         s := f.read_line() | fail
+         if /s then
+            break
+         s ? {
+            if any('#') then 
+               next
+            if /desc then {
+               desc := s
+               next
+            }
+            repeat {
+               tab(many(' \t'))
+               k := tab(upto(',=#')) | break
+               if any(',') then
+                  v := &yes
+               else if any('#') then {
+                  move(1)
+                  v := integer(tab(many(&digits)))
+               } else {
+                  move(1)
+                  v := ""
+                  repeat {
+                     v ||:= tab(upto('\\^,')) | break
+                     if any(',') then
+                        break
+                     v ||:= read_terminfo_escape()
+                  }
+               }
+               =","
+               insert(t, k, v)
+            }
+         }
+      }
+      return t
+   end
+
+   public static read_terminfo(name)
+      local f, params, t
+      params := ["-L"]
+      put(params, \name)
+      use {
+         f := ProgInputStream("infocmp", params,,, get_null()),
+         t := parse_terminfo(f)
+      } | fail
+      return if f.get_exit_info().param = 0 then
+         t
+      else
+         error("infocmp returned non-zero status")
    end
 
    protected read_line_impl()
@@ -100,67 +188,112 @@ class LineEditorStream(LineBasedStream)
          return
       return use {
          run_stty("-icanon",  "-echo"),
-         read_line_impl2(),
+         use {
+            # Enter/exit keyboard-transmit mode, see 
+            # http://www.mpimf-heidelberg.mpg.de/~rohm/computing/mpimf/notes/terminal.html
+            opt_write("keypad_xmit"),
+            read_line_impl2(),
+            opt_write("keypad_local")
+         },
          run_stty("icanon",  "echo")
       }
    end
 
+   private opt_write(key, def)
+      local s
+      if s := \ti[key] | \def then
+         return tty.writes(s)
+      else
+         return
+   end
+
+   private read1()
+      local ch
+      if /buff_flag & (*buff > 0) then {
+         ch := buff[1]
+         buff := buff[2:0]
+         return ch
+      }
+      ch := tty.in(1) | fail
+      return \ch | error("Unexpected eof on tty")
+   end
+
+   private got()
+      if *subj > 0 then {
+         put(history, subj)
+         while *history > \history_limit do {
+            pop(history)
+            history_start_no +:= 1
+         }
+      }
+      return string(subj)
+   end
+
    private read_line_impl2()
-      local ch, p, n, ed, un
+      local ch, p, n, ed, un, cmd
       subj := if \utf8_flag then u"" else ""
       pos := 1
       hpos := *history + 1
       hmod := table()
       undo_manager.clear()
-      line_no := nlines := &null
+      buff_flag := line_no := nlines := &null
       dim := get_console_size() | fail
       # Request line_no
       tty.writes("\e[6n")
       repeat {
          if \line_no then 
             show()
-         ch := tty.reads(1) | fail
+         ch := read1() | fail
          if \utf8_flag then {
             # Read a utf8 sequence into ch.  On gibberish, just go round and try again.
             un := Text.get_utf8_seq_len(ch) | next
             every 2 to un do
-               ch ||:= tty.reads(1) | fail
+               ch ||:= read1() | fail
             ch := ucs(ch) | next
          }
 
          if ch == "\e" then {
-            ch := tty.reads(1) | fail
-            if ch == "[" then {
-               p := []
+            cmd := .ch || (ch := read1()) | fail
+            p := []
+            if ch == "O" then
+               cmd ||:= read1() | fail
+            else if ch == "[" then {
                repeat {
-                  ch := tty.reads(1) | fail
+                  cmd ||:= (ch := read1()) | fail
                   n := integer(ch) | break
                   repeat {
-                     ch := tty.reads(1) | fail
+                     cmd ||:= (ch := read1()) | fail
                      n := 10 * n + integer(ch) | break
                   }
                   put(p, n)
                   ch == ";" | break
                }
-
-               case string(ch) of {
-                  "A": if hpos > 1 then move_hist(-1)
-                  "B": if hpos <= *history then move_hist(1)
-                  "C": pos := (*subj + 1 >= pos + 1)
-                  "D": pos := (1 <= pos - 1)
-                  "H": pos := 1
-                  "F": pos := *subj + 1
-                  "R": line_no := p[1]
-                  "~": if p[1] = 3 & *p = 1 then {
-                     if pos <= *subj then {
-                        ed := LineEditorDeleteRightEdit(self)
-                        ed.doit()
-                        undo_manager.add_edit(ed)
-                     }
+            }
+            # Line no request response
+            if cmd[2] == "[" & cmd[-1] == "R" then {
+               line_no := p[1]
+               if \buff_flag then
+                  return got()
+            } else if \buff_flag then
+               buff ||:= string(cmd)
+            else case string(cmd) of {
+               ti["key_up"]: if hpos > 1 then move_hist(-1)
+               ti["key_down"]: if hpos <= *history then move_hist(1)
+               ti["key_right"]: pos := (*subj + 1 >= pos + 1)
+               ti["key_left"]: pos := (1 <= pos - 1)
+               ti["key_home"]: pos := 1
+               ti["key_end"]: pos := *subj + 1
+               ti["key_dc"]: {
+                  if pos <= *subj then {
+                     ed := LineEditorDeleteRightEdit(self)
+                     ed.doit()
+                     undo_manager.add_edit(ed)
                   }
                }
             }
-         } else case string(ch) of {
+         } else if \buff_flag then
+            buff ||:= string(ch)
+         else case string(ch) of {
             "\^_": {
                if undo_manager.can_undo() then
                   undo_manager.undo()
@@ -171,13 +304,12 @@ class LineEditorStream(LineBasedStream)
             }
             "\^d": {
                ctrl_d_flag := 1
+               if /line_no then
+                  tty.writes(prompt, subj)
                tty.write()
-               if *subj > 0 then {
-                  put(history, subj)
-                  if *history > \history_limit then
-                     pop(history)
-                  return string(subj)
-               } else
+               if *subj > 0 then
+                  return got()
+               else
                   return
             }
             "\^a": pos := 1
@@ -197,13 +329,14 @@ class LineEditorStream(LineBasedStream)
                }
             }
             "\n": {
-               tty.write()
-               if *subj > 0 then {
-                  put(history, subj)
-                  if *history > \history_limit then
-                     pop(history)
+               if /line_no then {
+                  tty.write(prompt, subj)
+                  # Buffer input until got line no request response, which is now out-of-date.
+                  buff_flag := 1
+               } else {
+                  tty.write()
+                  return got()
                }
-               return string(subj)
             }
             default: {
                if any('\x20-\x7e\x80-\U10ffff', ch) then {
@@ -222,7 +355,7 @@ class LineEditorStream(LineBasedStream)
          # Clear the lines written the previous time show() was called
          every tty.writes("\e[",
                           line_no to line_no + nlines - 1,
-                          "H", "\e[2K")
+                          ";1H", "\e[2K")
       }
 
       # The number of lines needed to display this line.
@@ -242,7 +375,7 @@ class LineEditorStream(LineBasedStream)
 
       # First, goto line line_no, col 1, and write prompt, subj
       # Then put cursor at correct position.
-      tty.writes("\e[", line_no, "H", prompt, subj,
+      tty.writes("\e[", line_no, ";1H", prompt, subj,
                  "\e[", cursor_line, ";", cursor_col, "H")
    end
 
@@ -254,7 +387,10 @@ class LineEditorStream(LineBasedStream)
       utf8_flag := &yes
       undo_manager := UndoManager()
       history := []
+      history_start_no := 1
       prompt := ""
+      buff := ""
+      ti := read_terminfo() | fail
       return
    end
 end

@@ -198,7 +198,7 @@ struct ir_invokef {
     int clo;
     struct ir_var *lhs;
     struct ir_var *expr;
-    char *fname;
+    struct fentry *ftab_entry;
     int argc;
     struct ir_var **args;
     int rval;
@@ -210,7 +210,7 @@ struct ir_applyf {
     int clo;
     struct ir_var *lhs;
     struct ir_var *arg1;
-    char *fname;
+    struct fentry *ftab_entry;
     struct ir_var *arg2;
     int rval;
     int fail_label;
@@ -220,7 +220,7 @@ struct ir_field {
     IR_SUB
     struct ir_var *lhs;
     struct ir_var *expr;
-    char *fname;
+    struct fentry *ftab_entry;
 };
 
 struct ir_makelist {

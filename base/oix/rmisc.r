@@ -18,6 +18,11 @@ static char *proc_kinds[] = { "procedure",
                               "operator",
                               "internal"};
 
+static char *op_arity[] = { NULL,
+                            "unary",
+                            "binary",
+                            "ternary"};
+
 
 /* 
  * eq - compare two Icon strings for equality
@@ -603,7 +608,11 @@ void outimage(FILE *f, dptr dp, int noimage)
          } else if (&ProcBlk(*dp) == (struct b_proc *)&Bdeferred_method_stub)
              fprintf(f, "deferred method");
          else {
-             fprintf(f, "%s ", proc_kinds[get_proc_kind(&ProcBlk(*dp))]);
+             int kind = get_proc_kind(&ProcBlk(*dp));
+             if (kind == Operator)
+                 fprintf(f, "%s %s ", proc_kinds[kind], op_arity[ProcBlk(*dp).nparam]);
+             else
+                 fprintf(f, "%s ", proc_kinds[kind]);
              putstr(f, ProcBlk(*dp).name);
          }
       }
@@ -1221,13 +1230,26 @@ void getimage(dptr dp1, dptr dp2)
          } else if (&ProcBlk(*dp1) == (struct b_proc *)&Bdeferred_method_stub)
              LitStr("deferred method", dp2);
          else {
-             char *type0 = proc_kinds[get_proc_kind(&ProcBlk(*dp1))];
-             len = strlen(type0) + 1 + StrLen(*ProcBlk(*dp1).name);
-             MemProtect (StrLoc(*dp2) = reserve(Strings, len));
-             StrLen(*dp2) = len;
-             alcstr(type0, strlen(type0));
-             alcstr(" ", 1);
-             alcstr(StrLoc(*ProcBlk(*dp1).name), StrLen(*ProcBlk(*dp1).name));
+             int kind = get_proc_kind(&ProcBlk(*dp1));
+             char *type0 = proc_kinds[kind];
+             if (kind == Operator) {
+                 char *arity = op_arity[ProcBlk(*dp1).nparam];
+                 len = strlen(type0) + 1 + strlen(arity) + 1 + StrLen(*ProcBlk(*dp1).name);
+                 MemProtect (StrLoc(*dp2) = reserve(Strings, len));
+                 StrLen(*dp2) = len;
+                 alcstr(type0, strlen(type0));
+                 alcstr(" ", 1);
+                 alcstr(arity, strlen(arity));
+                 alcstr(" ", 1);
+                 alcstr(StrLoc(*ProcBlk(*dp1).name), StrLen(*ProcBlk(*dp1).name));
+             } else {
+                 len = strlen(type0) + 1 + StrLen(*ProcBlk(*dp1).name);
+                 MemProtect (StrLoc(*dp2) = reserve(Strings, len));
+                 StrLen(*dp2) = len;
+                 alcstr(type0, strlen(type0));
+                 alcstr(" ", 1);
+                 alcstr(StrLoc(*ProcBlk(*dp1).name), StrLen(*ProcBlk(*dp1).name));
+             }
          }
       }
 

@@ -37,7 +37,7 @@ class CodeTab(TabItem)
 
       s := import_name.get_contents()
       if *s > 0 then
-         valid_id(s) | return alert_error(parent_dialog, "Invalid identifier:" || s)
+         valid_dotted_id(s) | return alert_error(parent_dialog, "Invalid identifier:" || s)
 
       return
    end

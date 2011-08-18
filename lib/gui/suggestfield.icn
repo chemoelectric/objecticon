@@ -1,27 +1,21 @@
-#
-# $Id$
-#
-# This file is in the public domain.
-#
-# Author: Robert Parlett (parlett@dial.pipex.com)
-#
-
 package gui
 
 import graphics
 
+# This class is a {TextField} which provides suggested completions in
+# a popup list based on partial input.
 #
-# This class is just a superclass of {List} and {EditList}.
-#
-class DropDown(SelectionList,Component)
+class SuggestField(TextField)
    public 
-      b,                           
-      view,
       tl,
-      old_selection,
       direction,
       max_height,
       max_width
+
+   protected
+      req, 
+      last,
+      mod
 
    #
    # Set the direction to pop-up in.  Options are {Direction.UP}, {Direction.DOWN} or
@@ -31,43 +25,6 @@ class DropDown(SelectionList,Component)
       self.direction := s
       return self
    end
-
-   public on_button_press(ev)
-      if \tl then
-         #
-         # Button pressed whilst list open; just close
-         #
-         self.close_textlist()
-      else
-         #
-         # Button pressed whilst no list; open list
-         #
-         self.open_textlist(ev)
-   end
-
-   public on_textlist_selection(ev)
-      local tmp
-      #
-      # Selection in list - close textlist, amend label.
-      #
-      tmp := tl.get_selections()[1]
-      self.close_textlist()
-      go_to(\tmp, ev)
-   end
-
-   public start_change(e)
-      self.old_selection := self.selection
-   end
-
-   public end_change(e)
-      if self.old_selection ~=== self.selection then
-         fire(Event.SELECTION_CHANGED, e)
-   end
-
-   #
-   # Create the view component
-   #
-   public defer create_view()
 
    public create_popup()
       return TextList()
@@ -91,37 +48,55 @@ class DropDown(SelectionList,Component)
       return self
    end
 
-   public go_up(e)
-      if *selection_list = 0 then
-         fail
-      start_change(e)
-      if /self.selection | (self.selection = 1) then
-         set_selection(*self.selection_list)
-      else
-         set_selection(self.selection - 1)
-      end_change(e)
+   public on_textlist_selection(ev)
+      synch_contents()
+      member(Key.CURSOR, ev.code) | close_textlist()
    end
 
-   public go_down(e)
-      if *selection_list = 0 then
-         fail
-      start_change(e)
-      if /self.selection then
-         set_selection(1)
-      else
-         set_selection(1 + self.selection % *self.selection_list)
-      end_change(e)
+   public synch_contents()
+      set_contents(extract_selection())
+      mod := &null
    end
 
-   public go_to(x, e)
-      start_change(e)
-      set_selection(x)
-      end_change(e)
+   public extract_selection()
+      return text(tl.object_get_selections()[1])
    end
 
-   public open_textlist(ev)
+   private requests()
+      local l, last
+      repeat {
+         while /mod do
+            req.sleep()
+         last := self.contents
+         if l := do_request() then {
+            # If contents have changed, or user has selected from list, skip.
+            (last == self.contents & \mod) | next
+            open_textlist(l)
+         }
+         mod := &null
+      }
+   end
+
+   #
+   # This method is implemented to provide the list of suggestions, based on
+   # the current contents of the textfield.
+   #
+   protected defer do_request()
+
+   public on_change(ev)
+      req.change_sleep(0)
+      mod := 1
+   end
+
+   public open_textlist(data)
       local max_h, max_w, spc_below, spc_above, spc_right, d, dim, win, win_spc_above, 
          win_spc_below, win_spc_right, use_popup_win, use_direction, rs, r
+
+      if \tl then
+         close_textlist()
+
+      if *data = 0 then
+         return
 
       win := parent_dialog.win
       dim := win.get_display_size()
@@ -158,11 +133,12 @@ class DropDown(SelectionList,Component)
       self.tl := create_popup().
          set_all_wattribs(self.get_effective_wattribs()).
          connect(self.on_textlist_selection, Event.SELECTION_CHANGED).
-         set_contents(self.selection_list).
+         set_contents(data).
+         set_accepts_focus(&no).
          set_draggable_cursor(&yes).
          set_motion_cursor(&yes).
          set_select_mode(Select.ONE).
-         set_selection_on_key_moves(&no).
+         set_selection_on_key_moves(&yes).
          set_z(self.parent_dialog.get_top_z())
       self.parent_dialog.add(tl)
       self.tl.initially()
@@ -226,11 +202,8 @@ class DropDown(SelectionList,Component)
 
          d.add(tl)
          self.tl.set_pos(0, 0)
-         self.parent_dialog.set_focus()
          self.parent_dialog.add_popup(d)
          d.show_modeless()
-         d.set_focus(tl)
-         d.held[ev.code] := [tl.view, tl, d]
       } else {
          if use_direction == Direction.DOWN then 
             self.tl.set_pos(self.x + win.get_dx(), self.y + self.h + win.get_dy())
@@ -239,20 +212,9 @@ class DropDown(SelectionList,Component)
 
          self.tl.resize()
          self.tl.invalidate()
-         self.parent_dialog.hold(tl.view, ev.code)
-         self.parent_dialog.set_focus(tl)
-         # Since we are in menu mode, key events are forwarded to this
-         # component, rather than the text list, regardless of the
-         # focus.  So we must forward them on to the text list
-         # ourselves.
-         every self.parent_dialog.connect(self.forward_key_press, Event.KEY_PRESS | Event.KEY_RELEASE)
       } 
 
       self.parent_dialog.connect(self.dialog_event, Event.ICON)
-      if \self.selection then {
-         self.tl.set_cursor(self.selection)
-         self.tl.center_line(self.selection)
-      }
    end
 
    private forward_key_press(ev, src, type)
@@ -261,14 +223,10 @@ class DropDown(SelectionList,Component)
 
    public close_textlist()
       if /tl.parent_dialog.popup_manager then {
-         if self.parent_dialog.focus === tl then
-            self.parent_dialog.set_focus(view)
          self.tl.invalidate()
          self.tl.finally()
          self.parent_dialog.remove(tl)
       } else {
-         if /self.parent_dialog.focus then
-            self.parent_dialog.set_focus(view)
          self.parent_dialog.remove_popup(self.tl.parent_dialog)
          self.tl.parent_dialog.dispose()
       }
@@ -284,7 +242,7 @@ class DropDown(SelectionList,Component)
    public dialog_event(e)
       if (/e.release & (e.code === "\e")) | 
           (member(Mouse.PRESS, e.code) & 
-                not(tl.in_region(e)) & not(b.in_region(e))) then 
+                not(tl.in_region(e))) then 
       {
          #
          # Mouse click outside textlist.  Close.
@@ -294,71 +252,55 @@ class DropDown(SelectionList,Component)
    end
 
    public initially()
-      \self.selection_list | runerr("no selection list specified")
-      cast(self,Component).initially()
+      cast(self,TextField).initially()
+      req.start()
    end
 
    public finally()
+      req.stop()
       #
       # Disposed with text list showing, just get rid of it
       #
       if \self.tl then 
          self.close_textlist()
-      cast(self,Component).finally()
+      cast(self,TextField).finally()
    end
 
-   public get_default_height()
-      return border.get_total_height() + view.get_default_height()
+   public handle_return(e)
+      if \tl then
+         self.close_textlist()
+      cast(self,TextField).handle_return(e)
    end
 
-   public display()
-      border.draw_rect(self.cbwin, self)
-      display_children()
+   public handle_key_up(e)
+      if \tl then
+         tl.fire(Event.KEY_PRESS, e)
    end
 
-   public layout()
-      local bw
+   public handle_key_down(e)
+      if \tl then {
+         if *tl.get_selections() = 0 then {
+            tl.set_selections([1])
+            synch_contents()
+         } else
+            tl.fire(Event.KEY_PRESS, e)
+      }
+   end
 
-      bw := b.get_preferred_width()
-      #
-      # Set button position and size
-      #
-      b.x := self.x + self.w - bw - border.get_r_inset()
-      b.y := self.y + border.get_t_inset()
-      b.w := bw
-      view.x := self.x + border.get_l_inset()
-      view.y := self.y + border.get_t_inset()
-      view.w := self.w - border.get_total_width() - bw
-      b.h := view.h := self.h - border.get_total_height()
-      b.layout()
-      view.layout()
+   public handle_key(e)
+      case e.code of {
+         Key.UP : handle_key_up(e)
+         Key.DOWN : handle_key_down(e)
+         default:
+            cast(self,TextField).handle_key(e)
+      }
    end
 
    public new()
-      cast(self,Component).new()
-      self.set_border(SunkenBorder())
-      # Make the same width as the button in the scrollbar of the dropdown.
-      self.b := IconButton().
-         set_width(ScrollArea.predict_scrollbar_size()).
-         set_parent(self).
-         connect(self.on_button_press, Event.BUTTON_PRESS).
-         set_paint(ImagePaint().set_cache("gui.ARROW_DOWN")).
-         set_accepts_focus(&no)
+      cast(self,TextField).new()
+      connect(on_change, Event.CONTENT_CHANGED)
+      req := Dispatcher.new_task{requests()}
       self.direction := Direction.BEST
-      self.add(b)
-      self.preferred_focus := self.view := create_view()
-      self.add(view)
-      self.set_constraint("x_fill", &yes)
-      self.set_constraint("x_align", Align.L)
-      self.set_constraint("x_weight", 1.0)
-      connect(self.go_up, Event.MOUSE_WHEEL_UP)
-      connect(self.go_down, Event.MOUSE_WHEEL_DOWN)
       return
    end
 end
-
-
-
-
-
-

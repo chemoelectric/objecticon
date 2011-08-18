@@ -83,18 +83,18 @@ class EditableTextList(LineBasedScrollArea)
 
    #
    # Useful method to get the contents as a string, with each line
-   # separated by \n.
+   # separated by the end-of-line character.
    #
    public get_contents_str()
-      return list2str(self.contents, "\n")
+      return cat_lines(self.contents)
    end
 
    #
    # Useful method to set the contents from a string in which each line
-   # is seperated by \n.
+   # is separated by the end-of-line character.
    #
    public set_contents_str(s)
-      set_contents(str2list(s, '\n'))
+      set_contents(break_lines(s))
       return self
    end
 
@@ -856,10 +856,10 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    #
-   # Get the region as a string, with lines separated by the \n character.
+   # Get the region as a string, with lines separated by the end-of-line character.
    #
    public get_region()
-      return list2str(get_region_list(), "\n")
+      return cat_lines(get_region_list())
    end
 
    public delete_region(e)
@@ -1300,7 +1300,7 @@ class EditableTextListPrimarySelectionOwner(TextSelectionOwner)
    private parent
 
    protected get_text()
-      return parent.get_region() | list2str(\parent.remembered_region, "\n")
+      return parent.get_region() | cat_lines(\parent.remembered_region)
    end
 
    public lost_ownership()
@@ -1319,7 +1319,7 @@ class EditableTextListClipboardSelectionOwner(TextSelectionOwner)
    private parent
 
    protected get_text()
-      return list2str(\parent.clipboard, "\n")
+      return cat_lines(\parent.clipboard)
    end
 
    public lost_ownership()
@@ -1635,6 +1635,8 @@ class EditableTextListPasteEdit(EditableTextListEdit)
       s ? repeat {
          t := tab(upto('\n') | 0)
          if any('\n') then {
+            if t[-1] == "\r" then
+               t[-1] := ""
             nl := parent.contents[parent.cursor_y][parent.cursor_x:0]
             parent.contents[parent.cursor_y] := parent.contents[parent.cursor_y][1:parent.cursor_x] || t
             insert(parent.contents, parent.cursor_y + 1, nl)

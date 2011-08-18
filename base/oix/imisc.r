@@ -164,31 +164,19 @@ int lookup_class_field(struct b_class *class, dptr query, struct inline_field_ca
          * Query is a field number (from an Op_field).
          */
         fnum = IntVal(*query);
-        if (fnum < 0) {
-            /*
-             * This means the field was not encountered as a field of
-             * a class/record during linking.  The field lookup may
-             * still work however, if the class is in another program.
-             * 
-             * The field name is stored in the field names table and
-             * the offset from the end is the given number, so we look
-             * up by string comparison.
-             */
-            index = lookup_class_field_by_name(class, efnames[fnum]);
-        } else if (class->program != curpstate) {
-            /*
-             * The class was defined in another program, but the field
-             * just happens to match one defined in this program.  We
-             * can't lookup by field number - the target class will
-             * have a different set of field numbers.  So we do string
-             * lookup here too.
-             */
-            index = lookup_class_field_by_name(class, fnames[fnum]);
-        } else {
+        if (class->program == curpstate) {
             /*
              * Lookup by fnum in the sorted field table.
              */
             index = lookup_class_field_by_fnum(class, fnum);
+        } else {
+            /*
+             * The class was defined in another program.  We can't
+             * lookup by field number - the target class will have a
+             * different set of field numbers.  So we do string lookup
+             * here instead.
+             */
+            index = lookup_class_field_by_name(class, fnames[fnum]);
         }
 
         /*
@@ -274,12 +262,10 @@ int lookup_record_field(struct b_constructor *recdef, dptr query, struct inline_
 
         fnum = IntVal(*query);
 
-        if (fnum < 0)
-            index = lookup_record_field_by_name(recdef, efnames[fnum]);
-        else if (recdef->program != curpstate)
-            index = lookup_record_field_by_name(recdef, fnames[fnum]);
-        else
+        if (recdef->program == curpstate)
             index = lookup_record_field_by_fnum(recdef, fnum);
+        else
+            index = lookup_record_field_by_name(recdef, fnames[fnum]);
 
         ic->class = (union block *)recdef;
         ic->index = index;

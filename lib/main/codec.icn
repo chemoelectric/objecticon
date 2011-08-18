@@ -75,7 +75,7 @@ procedure decode(s)
    return d.parse(s)
 end
 
-class Encode(Stream)
+class Encode(Stream, HasUnderlyingStream)
    private
       tag_count,
       seen, 
@@ -150,7 +150,7 @@ class Encode(Stream)
          s := case tab(upto(' ')) of {
             "function": "F"
             "keyword": "K"
-            "operator": string(Proc.get_n_arguments(f))
+            "operator": "O"
             "procedure": "P"
             "method": {
                j := Class.get_field_flags(Proc.get_defining_class(f), Proc.get_field_name(f))
@@ -376,7 +376,14 @@ class Decode()
          case c of {
             "F": return Prog.get_function(s) | throw("No such function " || s)
             "K": return Prog.get_keyword(s) | throw("No such keyword " || s)
-            !"123": return Prog.get_operator(s, c) | throw("No such function " || s || " arity " || c)
+            "O": s ? {
+               i := if ="unary " then 1 
+               else if ="binary " then 2
+               else if ="ternary " then 3
+               else throw("Expected arity for operator")
+               s := tab(0)
+               return Prog.get_operator(s, i) | throw("No such function " || s || " arity " || i)
+            }
             "P": {
                if g := Prog.get_global(s) &
                   match("procedure ", image(g)) then

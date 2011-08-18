@@ -3,12 +3,12 @@ import io, lang, util, ipl.options, ipl.lists
 procedure create_prog(imps, links)
    local tf, prog
 
+   imps ++:= set("ipl.ieval")  # Avoid changing imps parameter
    prog := ""
-   insert(imps, "ipl.ieval")
    every prog ||:= "import " || !imps || "\n"
    prog ||:= "invocable all\n_
-procedure main(imports, files)\n_
-    ipl.ieval.main_impl(imports, files)\n_
+procedure main(imports, files, opts)\n_
+    ipl.ieval.main_impl(imports, files, opts)\n_
 end\n"
    return use {
       tf := Files.make_temp_filename("ieval"),
@@ -21,7 +21,7 @@ procedure compile(prog, tf, links)
    local p, ss
    ss := StringStream()
    use {
-      p := FilterOutputStream(ss, "oit", ["-s", "-o", tf, "-"] ||| links,, "pipe"),
+      p := FilterOutputStream(ss, "oit", ["-s", "-l", "2", "-o", tf, "-"] ||| links,, "pipe"),
       p.write(prog)
    } | fail
    p.get_exit_info().param = 0 | return error(ss.str())
@@ -30,9 +30,10 @@ end
 
 procedure main(a)
    local opts, prog, imports, links
-   opts := options(a, "-i:-l:")
-   imports := set!str2list(\opts["i"]) | set()
-   links := str2list(\opts["l"]) | []
+   opts := options(a, "-i:*-l:*-w!-s!")
+   imports := set()
+   every insert(imports, !str2list(!\opts["i"]))
+   links := \opts["l"] | []
    prog := create_prog(imports, links) | stop(&why)
-   Prog.get_global("main", prog)(imports, a)
+   Prog.get_global("main", prog)(imports, a, opts)
 end

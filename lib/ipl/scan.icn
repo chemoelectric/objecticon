@@ -594,11 +594,7 @@ class Scan()
    end
 
    private cvpos(i)
-      i := integer(i) | runerr(101, i)
-      if i <= 0 then
-         i +:= *ksubject + 1
-      if 1 <= i <= *ksubject + 1 then
-         return i
+      return default.match("", ksubject, i)
    end
 
    public tabmat(s)

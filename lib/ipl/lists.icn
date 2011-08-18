@@ -184,10 +184,11 @@
 package ipl.lists
 
 import
-   io(open),
+   io(Files,open),
    ipl.indices(indices),
    ipl.numbers(residue),
    ipl.sets(elementset),
+   ipl.strings(separate,separate_lines),
    lang(equals,Prog)
 
 # create list from lines in file
@@ -846,7 +847,8 @@ end
 # Convert a string to a list.
 #
 # @param s the string to convert
-# @param sep cset of the separator chars, default ','
+# @param sep cset of the separator chars, default ',' - note each separator
+# @      in the string is always one character wide.
 # @param f func to apply to each element before adding to list
 #
 procedure str2list(s, sep, f)
@@ -854,13 +856,8 @@ procedure str2list(s, sep, f)
    /sep := ','
    /f := 1
    l := []
-   s ? repeat {
-      t := tab(upto(sep) | 0)
+   every t := separate(s, sep) do
       put(l, f(t)) | runerr("str2list: conversion proc failed")
-      if pos(0) then
-         break
-      move(1)
-   }
    return l
 end
 
@@ -880,6 +877,38 @@ procedure list2str(l, sep, f)
    every e := !l do
       s ||:= f(e) || sep | runerr("list2str: conversion proc failed")
    s[-*sep:0] := ""
+   return s
+end
+
+#
+# Convert a string to a list, breaking on lines ending with \n or \r\n.
+#
+# @param s the string to convert
+# @param f func to apply to each element before adding to list
+#
+procedure break_lines(s, f)
+   local l, t
+   /f := 1
+   l := []
+   every t := separate_lines(s) do
+      put(l, f(t)) | runerr("break_lines: conversion proc failed")
+   return l
+end
+
+#
+# Convert a list to a string, separating elements by the platform's
+# end-of-line character(s).
+#
+# @param l the list
+# @param f func to apply to each element before appending to result
+#
+procedure cat_lines(l, f)
+   local s, e
+   /f := 1
+   s := ""
+   every e := !l do
+      s ||:= f(e) || Files.EOL | runerr("cat_lines: conversion proc failed")
+   s[-*Files.EOL:0] := ""
    return s
 end
 

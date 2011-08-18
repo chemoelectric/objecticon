@@ -60,7 +60,7 @@ end
 # For simpler procedure interfaces to this class, see {to_string},
 # {to_stdout} and {to_stderr}.
 #
-class ObjectOutputStream(Stream)
+class ObjectOutputStream(Stream, HasUnderlyingStream)
    private readable
       depth,
       indent,

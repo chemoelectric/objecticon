@@ -36,11 +36,11 @@ procedure io.write
 every write("image"(write)) ----> none
 "[:]"("abcdef",3,5) ----> "cd"
 "[]"(&lcase,3) ----> "c"
-image(proc("^",1)) ----> "operator ^"
-image(proc("^",2)) ----> "operator ^"
+image(proc("^",1)) ----> "operator unary ^"
+image(proc("^",2)) ----> "operator binary ^"
 proc("+",2)(3,4) ----> 7
 proc(proc)("write") ----> none
-proc("+") ----> operator +
+proc("+") ----> operator unary +
 ?10 ----> 3
 ?10 ----> 5
 ?10 ----> 4

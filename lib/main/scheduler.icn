@@ -9,7 +9,7 @@ import lang, util
 # the {Scheduler} determines the socket is ready for i/o (or has timed
 # out).
 #
-class TaskStream(Stream)
+class TaskStream(Stream, HasUnderlyingStream)
    private readable
       timeout,
       other,
@@ -89,8 +89,10 @@ class Task()
    # will sleep for, behaving as though the original call to {sleep}
    # had given {n} as its parameter.
    #
+   # @param n The time to wait for.  If {&null}, wait forever.
+   #
    public change_sleep(n)
-      sleep_until := \last_sleep + n
+      sleep_until := (\last_sleep + \n) | &null
    end
 
    # Succeed iff the task is currently active.
@@ -108,6 +110,16 @@ class Task()
    #
    public is_current()
       return self === scheduler.curr_task
+   end
+
+   # Succeed iff the task is currently sleeping
+   public is_sleeping()
+      return scheduler.is_sleeping(self)
+   end
+
+   # Succeed iff the task is currently polling
+   public is_polling()
+      return scheduler.is_polling(self)
    end
 
    # Suspend this task, which must be the currently scheduled task, in
@@ -141,13 +153,14 @@ class Task()
    # Suspend this task, which must be the currently scheduled task,
    # for {n} milliseconds.
    #
-   # @param n The time to wait for.
+   # @param n The time to wait for.  If {&null}, wait forever (or until
+   # @        interrupted).
    #
    public sleep(n)
       self === scheduler.curr_task | runerr("sleep called on task which is not current")
       self.coex := &current
       last_sleep := Prog.get_runtime_millis()
-      sleep_until := last_sleep + n
+      sleep_until := (last_sleep + \n) | &null
       self.interrupt_flag := &null
       scheduler.now_sleep(self)
    end
@@ -246,6 +259,14 @@ class Scheduler()
       delete(\t.state, t)
    end
 
+   package is_sleeping(t)
+      return member(sleeping, t)
+   end
+
+   package is_polling(t)
+      return member(polling, t)
+   end
+
    private set_state(t, x)
       delete(\t.state, t)
       t.state := x
@@ -313,7 +334,7 @@ class Scheduler()
          if *sleeping > 0 then {
             curr_time := Prog.get_runtime_millis()
             every t := !sleeping do {
-               if \t.interrupt_flag | (curr_time >= t.sleep_until) then
+               if \t.interrupt_flag | (curr_time >= \t.sleep_until) then
                   set_state(t, ready)
             }
             if *ready > 0 then

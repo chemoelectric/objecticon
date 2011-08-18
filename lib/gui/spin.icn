@@ -100,17 +100,19 @@ class Spin(Component)
    public new()
       cast(self,Component).new()
       self.set_border(SunkenBorder())
-      self.up := IconButton().set_width(ScrollArea.predict_scrollbar_size())  # Consistent with DropDown
-      self.up.connect(self.on_up, Event.BUTTON_PRESS)
-      self.up.connect(self.on_up, Event.BUTTON_HELD)
-      self.up.set_paint(ImagePaint().set_cache("gui.TINY_ARROW_UP"))
-      self.up.set_accepts_focus(&no)
+      self.up := IconButton().
+         set_width(ScrollArea.predict_scrollbar_size()).  # Consistent with DropDown
+         connect(self.on_up, Event.BUTTON_PRESS).
+         connect(self.on_up, Event.BUTTON_HELD).
+         set_paint(ImagePaint().set_cache("gui.TINY_ARROW_UP")).
+         set_accepts_focus(&no)
       self.add(up)
-      self.down := IconButton().set_width(ScrollArea.predict_scrollbar_size())
-      self.down.connect(self.on_down, Event.BUTTON_PRESS)
-      self.down.connect(self.on_down, Event.BUTTON_HELD)
-      self.down.set_paint(ImagePaint().set_cache("gui.TINY_ARROW_DOWN"))
-      self.down.set_accepts_focus(&no)
+      self.down := IconButton().
+         set_width(ScrollArea.predict_scrollbar_size()).
+         connect(self.on_down, Event.BUTTON_PRESS).
+         connect(self.on_down, Event.BUTTON_HELD).
+         set_paint(ImagePaint().set_cache("gui.TINY_ARROW_DOWN")).
+         set_accepts_focus(&no)
       self.add(down)
       self.preferred_focus := self.view := create_view()
       self.add(view)

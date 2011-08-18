@@ -1,5 +1,7 @@
 package gui
 
+import lang
+
 class ItemPaint()
    public initially(c)
    end
@@ -64,6 +66,52 @@ class TextItemPaint(ItemPaint)
 
    public draw(W, data, x, y)
       draw_string_ex(W, x, y, detab(data))
+   end
+end
+
+
+class WithCloneItemPaint(ItemPaint)
+   private cw, wt, ct
+
+   protected defer make_clone(W)
+
+   protected get_clone(W, ignore_clip)
+      (W === wt & (\ignore_clip | equals(ct, W.get_clip()))) | {
+         wt := W
+         ct := W.get_clip()
+         (\cw).uncouple()
+         cw := make_clone(W)
+      }
+      return cw
+   end
+
+   public finally()
+      (\cw).uncouple()
+      wt := ct := cw := &null
+   end
+end
+
+class AttributedTextItemPaint(WithCloneItemPaint)
+   private fh
+
+   public initially(c)
+      fh := get_clone(c.cbwin, 1).get_font_height()
+   end
+
+   public get_width(W, data)
+      return get_clone(W, 1).text_width(detab(data))
+   end
+
+   public get_constant_height(W)
+      return fh
+   end
+
+   public get_size(W, data)
+      return Size(get_clone(W, 1).text_width(detab(data)), fh)
+   end
+
+   public draw(W, data, x, y)
+      draw_string_ex(get_clone(W), x, y, detab(data))
    end
 end
 

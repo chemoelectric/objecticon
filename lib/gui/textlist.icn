@@ -20,8 +20,7 @@ class TextList(SelectableScrollArea)
    public calculate_subject_width()
       local s, mw
       mw := 0
-      every s := !self.contents do
-         mw <:= view.cbwin.text_width(detab(s))
+      every mw <:= view.cbwin.text_width(detab(!self.contents))
       return mw + 2 * Gui.TEXT_INSET
    end
 

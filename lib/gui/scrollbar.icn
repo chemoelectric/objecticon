@@ -531,23 +531,25 @@ class ScrollBar(Component)
    public new()
       cast(self,Component).new()
       repeat_ticker := Dispatcher.new_task{repeat_tick()}
-      self.b1 := IconButton().set_border(EmptyBorder().set_insets(0, 0, 0, 0))
-      self.b1.connect(self.handle_button_up, Event.BUTTON_PRESS)
-      self.b1.connect(self.handle_button_up, Event.BUTTON_HELD)
-      self.b1.set_accepts_focus(&no)
+      self.b1 := IconButton().
+         set_border(EmptyBorder().set_insets(0, 0, 0, 0)).
+         connect(self.handle_button_up, Event.BUTTON_PRESS).
+         connect(self.handle_button_up, Event.BUTTON_HELD).
+         set_accepts_focus(&no)
       add(self.b1)
-      self.b2 := IconButton().set_border(EmptyBorder().set_insets(0, 0, 0, 0))
-      self.b2.connect(self.handle_button_down, Event.BUTTON_PRESS)
-      self.b2.connect(self.handle_button_down, Event.BUTTON_HELD)
-      self.b2.set_accepts_focus(&no)
+      self.b2 := IconButton().
+         set_border(EmptyBorder().set_insets(0, 0, 0, 0)).
+         connect(self.handle_button_down, Event.BUTTON_PRESS).
+         connect(self.handle_button_down, Event.BUTTON_HELD).
+         set_accepts_focus(&no)
       add(self.b2)
-      self.bar_area := BarArea()
+      self.bar_area := BarArea().
+         connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS).
+         connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG).
+         connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
       add(self.bar_area)
       self.wheel_factor := DEFAULT_WHEEL_FACTOR
       set_wheel_component(self)
-      self.bar_area.connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
-      self.bar_area.connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
-      self.bar_area.connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
       set_border(RaisedBorder())
       return
    end
