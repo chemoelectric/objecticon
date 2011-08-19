@@ -92,22 +92,16 @@ end
 # A simple {ItemPaint} in which each piece of data is a string.
 #
 class TextItemPaint(ItemPaint)
-   public fh
-
-   public initially(c)
-      fh := c.cbwin.get_font_height()
-   end
-
    public get_width(W, data)
       return W.text_width(detab(data))
    end
 
    public get_constant_height(W)
-      return fh
+      return W.get_font_height()
    end
 
    public get_size(W, data)
-      return Size(W.text_width(detab(data)), fh)
+      return Size(W.text_width(detab(data)), W.get_font_height())
    end
 
    public draw(W, data, x, y)
@@ -145,22 +139,17 @@ end
 # subclassed in order to provide the {make_clone} method.
 #
 class AttributedTextItemPaint(WithCloneItemPaint)
-   private fh
-
-   public initially(c)
-      fh := get_clone(c.cbwin, 1).get_font_height()
-   end
-
    public get_width(W, data)
       return get_clone(W, 1).text_width(detab(data))
    end
 
    public get_constant_height(W)
-      return fh
+      return get_clone(W, 1).get_font_height()
    end
 
    public get_size(W, data)
-      return Size(get_clone(W, 1).text_width(detab(data)), fh)
+      W := get_clone(W, 1)
+      return Size(W.text_width(detab(data)), W.get_font_height())
    end
 
    public draw(W, data, x, y)

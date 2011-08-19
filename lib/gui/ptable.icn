@@ -160,7 +160,7 @@ class ItemPaintPTableColumn(PTableColumn)
    public calculate_line_height(W)
       local h
       if not(h := item_paint.get_constant_height(W) +
-             + item_border.get_total_height()) then
+                   item_border.get_total_height()) then
       {
          h := []
          every put(h, item_paint.get_height(W, slice()) +
@@ -188,8 +188,8 @@ class ItemPaintPTableColumn(PTableColumn)
    public new()
       cast(self,PTableColumn).new()
       self.set_item_border(EmptyBorder().
-                              set_insets(0, 0, 0, 0).
-                              set_x_align(Align.L))
+                           set_insets(0, 0, 0, 0).
+                           set_x_align(Align.L))
       return
    end
 end
