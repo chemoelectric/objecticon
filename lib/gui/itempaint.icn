@@ -2,30 +2,75 @@ package gui
 
 import lang
 
+#
+# An {ItemPaint} is an object which can be used in a component which
+# needs to display many pieces of data in a similar way (for example
+# the nodes in a tree or the rows in a table column.  An single
+# instance of {ItemPaint} is used to give size information about each
+# piece data, and to draw it.
+#
 class ItemPaint()
+   #
+   # Initialize the instance
+   # @param c The owning {Component}
    public initially(c)
    end
 
+   # Return the width of the given data.
+   # @param W The window to use for text metrics
+   # @param data The data item
+   #
    public defer get_width(W, data)
+
+   # Return the height of the given data.
+   # @param W The window to use for text metrics
+   # @param data The data item
+   #
    public defer get_height(W, data)
+
+   # Return the size of the given data, as a {Size} instance.
+   # @param W The window to use for text metrics
+   # @param data The data item
+   #
    public defer get_size(W, data)
+
+   # Draw the given data item
+   # @param W The window to draw into
+   # @param data The data item
+   # @param x The x position
+   # @param y The y position
    public defer draw(W, data, x, y)
 
+   # This method should be implemented if it is known that all data
+   # items will have the same width.
+   # @param W The window to use for text metrics
+   #
    public get_constant_width(W)
    end
 
+   # This method should be implemented if it is known that all data
+   # items will have the same height.
+   # @param W The window to use for text metrics
+   #
    public get_constant_height(W)
    end
 
+   # Convenient method to draw at a given point; just calls {draw}.
+   # @param W The window to draw into
+   # @param data The data item
+   # @param p The {Point} to draw at
    public draw_point(W, data, p)
       self.draw(W, data, p.x, p.y)
    end
 
+   # Cleanup any resources used by this instance.
    public finally()
    end
 end
 
-
+# An {ItemPaint} in which each piece of data is an instance of
+# {Paint}.
+#
 class PaintAdapter(ItemPaint)
    public get_width(W, data)
       return data.w
@@ -44,7 +89,8 @@ class PaintAdapter(ItemPaint)
    end
 end
 
-
+# A simple {ItemPaint} in which each piece of data is a string.
+#
 class TextItemPaint(ItemPaint)
    public fh
 
@@ -69,10 +115,14 @@ class TextItemPaint(ItemPaint)
    end
 end
 
-
+# A parent class for {ItemPaint}s which wish to calculate sizes and
+# draw with a cloned window.
+#
 class WithCloneItemPaint(ItemPaint)
    private cw, wt, ct
 
+   # This method must be implemented to create the cloned window
+   # @param W the base window to clone from
    protected defer make_clone(W)
 
    protected get_clone(W, ignore_clip)
@@ -91,6 +141,9 @@ class WithCloneItemPaint(ItemPaint)
    end
 end
 
+# An {ItemPaint} which draws text using a cloned window.  It must be
+# subclassed in order to provide the {make_clone} method.
+#
 class AttributedTextItemPaint(WithCloneItemPaint)
    private fh
 
@@ -115,7 +168,8 @@ class AttributedTextItemPaint(WithCloneItemPaint)
    end
 end
 
-
+# An {ItemPaint} in which each piece of data is an icon image string.
+#
 class ImageStringItemPaint(ItemPaint)
    public get_width(W, data)
       return image_width(data)
@@ -134,7 +188,10 @@ class ImageStringItemPaint(ItemPaint)
    end
 end
 
-
+# An {ItemPaint} in which each piece of data is a window containing an
+# image to be copied to the destination.  It is the responsibility of
+# the user to initialize and dispose of the windows.
+#
 class ImageWindowItemPaint(ItemPaint)
    public get_width(W, data)
       return data.get_width()
@@ -153,19 +210,25 @@ class ImageWindowItemPaint(ItemPaint)
    end
 end
 
+# An {ItemPaint} in which each piece of data is a key to be given to
+# {ImageCache.get}.  The resulting image is the copied to the
+# destination.
+#
 class ImageCacheItemPaint(ItemPaint)
    public get_width(W, data)
-      return ImageCache.get(data, W).get_width()
+      return ImageCache.get(data, W).get_width() | 0
    end
 
    public get_height(W, data)
-      return ImageCache.get(data, W).get_height()
+      return ImageCache.get(data, W).get_height() | 0
    end
 
    public get_size(W, data)
       local i
-      if i := ImageCache.get(data, W) then
-         return Size(i.get_width(), i.get_height())
+      return if i := ImageCache.get(data, W) then
+         Size(i.get_width(), i.get_height())
+      else
+         Size(0, 0)
    end
 
    public draw(W, data, x, y)
