@@ -64,10 +64,9 @@ class Text()
       t := ""
       i := 1
       while i <= *s do {
-         if n := get_utf8_seq_len(s[i]) then {
-            t ||:= string(ucs(s[i+:n])) | subst
+         if n := get_utf8_seq_len(s[i]) & t ||:= string(ucs(s[i+:n])) then
             i +:= n
-         } else {
+         else {
             t ||:= subst
             i +:= 1
          }
