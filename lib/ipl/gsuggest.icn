@@ -25,6 +25,7 @@ class GSuggestField(SuggestField)
 
    public new()
       cast(self,SuggestField).new()
+      set_contents(u"")
       domain := "www.google.com"
       hc := HttpClient().
          set_task(req).
