@@ -1,0 +1,172 @@
+import parser, ipl.options, io
+
+$include "oigram_tab.icn"
+
+global symbol_table, scanned_file, need, opts
+
+procedure note(s)
+   write("Scanning ", s)
+end
+
+procedure main(a)
+   local s
+   opts := options(a, "-d! -c!")
+   symbol_table := SymbolTable().set_file_mode(SymbolTable.PREFER_U)
+   if \opts["d"] then
+      symbol_table.connect(note, SymbolTable.SCANNING_EVENT)
+
+   every s := !a do
+      symbol_table.scan_file(s) | stop(&why)
+   symbol_table.resolve_classes() | stop(&why)
+
+   every do_one(!a)
+end
+
+procedure do_one(s)
+   local par, o, prog
+   map(s[-4:0]) == ".icn" | fail
+   scanned_file := symbol_table.get_scanned_file(s) | stop("Couldn't get scanned file for ", s)
+   if is(scanned_file.obj, Prog) then
+      prog := scanned_file.obj
+   else {
+      # We scanned the ucode file, so we must parse the source file now.
+      par := Parser()
+      prog := par.parse_file(s) | stop("Couldn't parse ", s, ": ", &why)
+   }
+   need := table()
+   every o := prog.get_body().gen() do {
+      case classof(o) of {
+         Class: do_class(o)
+         Procedure: do_proc(o)
+         Invocable: do_invocable(o)
+      }
+   }
+   print(s)
+end
+
+procedure gen_idents(n)
+   if is(n, Token) then {
+      if n.tok = IDENT then
+         return n.s
+   } else case n.label of {
+      "dottedident" : return scanned_file.convert_dottedidentexpr(n)
+      "field" : suspend gen_idents(n.child(1))
+      "keyword": fail
+      default : suspend gen_idents(n.gen())
+   }
+end
+
+procedure get_locals(f)
+   local s
+   s := set()
+   every insert(s, f.get_args().gen().str() | f.get_locals_list().gen().gen().str())
+   return s
+end
+
+procedure print(s)
+   local e, f, p, im, ispec, pad, k, par, tname
+
+   # Re-parse, but without preprocessing
+   par := Parser()
+   p := par.parse(Files.file_to_string(s)) |  stop("Couldn't reparse ", s, ": ", &why)
+   #
+   # Delete the current imports, saving the index and padding of the first.
+   pad := p.get_imports().get(1).get_first_token().get_pad() | ""
+   p.get_imports().clear()
+
+   if *need = 0 then {
+      # If needed, create an dummy id containing the old comment.
+      p.get_imports().put(Factory.new_id(pad, ""))
+   } else {
+      # Create and insert new imports.
+      im := Factory.new_import(pad, [])
+      p.get_imports().put(im)
+      every e := !sort(need) do {
+         ispec := Factory.new_import_spec("\n   ", e[1], [])
+         im.put(ispec)
+         k := 0
+         pad := ""
+         every f := !sort(e[2]) do {
+            ispec.put(Factory.new_id(pad, f))
+            k +:= 1
+            if k % 4 = 0 then
+               pad := "\n" || repl(" ", 4 + *e[1])
+            else
+               pad := " "
+         }
+      }
+   }
+   # just output to stdout
+   if \opts["c"] then {
+      p.pos.output(FileStream.stdout) | stop(&why)
+      return
+   }
+
+   # Save the result
+   tname := s || ".temp"
+   use {
+      f := open(tname, "w") | stop("Couldn't open ", tname),
+      p.pos.output(f) | stop(&why)
+   }
+   Files.remove(s)
+   Files.move(tname, s) | stop("Couldn't rename new source file ",
+                               tname, " to ", s)
+end
+
+procedure seen(id)
+   local x
+
+   x := symbol_table.resolve(scanned_file, id) | 
+      stop(scanned_file.filename, ": ", &why)
+
+   # Builtin, top-level global, or in our package
+   if /x.scanned_file | (x.scanned_file.pack === (&null | scanned_file.pack)) then
+      return
+
+   # If id was fully qualified, import the package, but don't add a symbol,
+   # eg "... gui.Button ..." -> import gui().
+   /need[x.scanned_file.pack] := set()
+   upto('.', id) | insert(need[x.scanned_file.pack], x.name)
+end
+
+procedure do_class(c)
+   local csym, o, id
+   csym := scanned_file.get_symbol(c.get_name().str()) | stop("internal error")
+   every id := c.get_supers().gen().str() do {
+      seen(id)
+   }
+   every o := c.gen() do {
+      if is(o, Method) then
+         do_method(csym, o)
+   }
+end
+
+procedure do_method(csym, f)
+   local loc, id
+   loc := get_locals(f)
+   if not(f.get_access().gen().str() == "static") then
+      insert(loc, "self")
+   every id := gen_idents(f.get_initial_node() | f.get_body_node()) do {
+      member(loc, id) | csym.get_implemented_field(id) | seen(id)
+   }
+end
+
+procedure do_proc(f)
+   local loc, id
+   loc := get_locals(f)
+   every id := gen_idents(f.get_initial_node() | f.get_body_node()) do {
+      member(loc, id) | seen(id)
+   }
+end
+
+procedure do_invocable(o)
+   local i, id
+   every i := o.gen() do {
+      if is(i, Id) then {
+         id := i.str()
+         if id[1] == "\"" then
+            id := id[2:-1]
+         (id == "all") | seen(id)
+      }
+   }
+end
