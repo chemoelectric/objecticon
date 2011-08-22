@@ -128,6 +128,10 @@ tar :
 		-regex ".*\.\(icn\|std\|stde\|dat\|gif\|sh\)" ) ; do \
 		cp --parents $$f $(T) ;\
 	done
+	@for f in $$( find examples \
+		-regex ".*\.\(icn\|gif\|jpg\|png\)" ) ; do \
+		cp --parents $$f $(T) ;\
+	done
 	@for f in $$( find bmark \
 		-regex ".*\.\(icn\|dat\|sh\)" ) ; do \
 		cp --parents $$f $(T) ;\

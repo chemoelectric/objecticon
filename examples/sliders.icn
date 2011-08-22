@@ -1,0 +1,184 @@
+import gui
+
+class Untitled(Dialog)
+   public slider1, label1, slider2,label2,slider3,label3
+   public component_setup()
+      self.setup()
+
+      slider1.set_range(0,5)
+      slider1.set_value(2)
+      slider1.set_ticks(1)
+      slider1.set_labels(1)
+      slider1.set_snaps(1)
+      slider1.set_is_horizontal(&yes)
+
+      slider2.set_range(0,5000)
+      slider2.set_value(2500)
+      slider2.set_ticks(500)
+      slider2.set_labels(1000)
+      slider2.set_snaps(500)
+      slider2.set_increment_size(500)
+      slider2.set_is_horizontal(&yes)
+
+      slider3.set_range(0.0,3.0)
+      slider3.set_value(2.0)
+      slider3.set_ticks(0.5)
+      slider3.set_labels(0.5)
+      slider3.set_snaps(0.5)
+      slider3.set_is_horizontal(&yes)
+
+      slider1.connect(self.on_slider1, Event.VALUE_CHANGED)
+      slider2.connect(self.on_slider2, Event.VALUE_CHANGED)
+      slider3.connect(self.on_slider3, Event.VALUE_CHANGED)
+
+      # Init the labels
+      on_slider1()
+      on_slider2()
+      on_slider3()
+   end
+
+   public on_slider1()
+      label1.set_label(slider1.get_value())
+   end
+
+   public on_slider2()
+      label2.set_label(slider2.get_value())
+   end
+
+   public on_slider3()
+      label3.set_label(slider3.get_value())
+   end
+
+   public end_dialog()
+   end
+
+   public init_dialog()
+   end
+
+   public on_qb(ev)
+      dispose()
+   end
+
+   public new()
+      cast(self,Dialog).new()
+      return
+   end
+
+   private handle_v2_events(ev, src, type)
+   end
+
+   private setup()
+      local paint_2, layout_1, paint_1, qb, paint_3, paint
+      slider1 := Slider().
+         set_size("224", 100).
+         clear_constraints()
+      self.add(slider1)
+      paint_1 := TextPaint("Label")
+      label1 := Label().
+         set_size("88").
+         set_align(Align.C, Align.T).
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_paint(paint_1)
+      self.add(label1)
+      slider2 := Slider().
+         set_size("224", 100).
+         clear_constraints()
+      self.add(slider2)
+      paint_2 := TextPaint("Label")
+      label2 := Label().
+         set_size("88", "14").
+         set_align(Align.C, Align.T).
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_paint(paint_2)
+      self.add(label2)
+      slider3 := Slider().
+         set_size("224", 100).
+         clear_constraints()
+      self.add(slider3)
+      paint_3 := TextPaint("Label")
+      label3 := Label().
+         set_size("88", "14").
+         set_align(Align.C, Align.T).
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_paint(paint_3)
+      self.add(label3)
+      paint := TextPaint("Quit")
+      qb := TextButton().
+         set_align(Align.C, Align.T).
+         clear_constraints().
+         connect(self.on_qb, Event.ACTION).
+         set_toggles(&no).
+         set_paint(paint)
+      self.add(qb)
+      self.connect(self.handle_v2_events, &null)
+      layout_1 := GridLayout().
+         set_extra("cells")
+      self.set_layout(layout_1)
+   end
+end
+
+
+procedure main()
+   local d
+   d := Untitled()
+   d.show_modal()
+end
+
+### Ivib-v2 layout ##
+#CCanvas|I18SSuperClass Name|SDialog|SImport Name|Sgui|SButton Groups|L
+#0SCheckbox Groups|L0SGen Indent|I3SGen Main|I1SGen Component Setup|I1S
+#Gen Init Dialog|I1SGen Constructor|I1SDialog Struct|CCDialog|I1SWAttri
+#bs|T0NSName|SUntitled|SIs Component|NSWidth|NSHeight|NSChildren|L7CCan
+#vasCustom|I27SParent Canvas|X1SName|Sslider1|SClass Name|SSlider|SImpo
+#rt Name|Sgui|SClass Variable|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec
+#|NSY Spec|NSW Spec|S224|SH Spec|I100SX Align|Sl|SY Align|St|SZ|I0STab 
+#ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T0NSTooltip|NSAccel|NSLayo
+#ut delegate|NSBorder opts|NSEvent Handlers|L0SClass Variable|I1SParent
+# Component|X1CCanvasLabel|I28SParent Canvas|X1SName|Slabel1|SClass Nam
+#e|SLabel|SImport Name|Sgui|SClass Variable|I1SX Fix|NSY Fix|NSW Fix|NS
+#H Fix|NSX Spec|NSY Spec|NSW Spec|S88|SH Spec|NSX Align|Sc|SY Align|St|
+#SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T1NSeol|I1SToolt
+#ip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent Handlers|L0SClass V
+#ariable|I1SParent Component|X1SPaint|CCanvasTextPaint|I6SParent Canvas
+#|X1SName|Spaint_1|SClass Name|STextPaint|SImport Name|Sgui|SClass Vari
+#able|NSStr|SLabel|CCanvasCustom|I27SParent Canvas|X1SName|Sslider2|SCl
+#ass Name|SSlider|SImport Name|Sgui|SClass Variable|I1SX Fix|NSY Fix|NS
+#W Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|S224|SH Spec|I100SX Align|Sl|
+#SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T0NS
+#Tooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent Handlers|L0SCl
+#ass Variable|I1SParent Component|X1CCanvasLabel|I28SParent Canvas|X1SN
+#ame|Slabel2|SClass Name|SLabel|SImport Name|Sgui|SClass Variable|I1SX 
+#Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|S88|SH Spec|S14
+#|SX Align|Sc|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSCon
+#straints|T1NSeol|I1STooltip|NSAccel|NSLayout delegate|NSBorder opts|NS
+#Event Handlers|L0SClass Variable|I1SParent Component|X1SPaint|CCanvasT
+#extPaint|I6SParent Canvas|X1SName|Spaint_2|SClass Name|STextPaint|SImp
+#ort Name|Sgui|SClass Variable|NSStr|SLabel|CCanvasCustom|I27SParent Ca
+#nvas|X1SName|Sslider3|SClass Name|SSlider|SImport Name|Sgui|SClass Var
+#iable|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|S224
+#|SH Spec|I100SX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAtt
+#ribs|T0NSConstraints|T0NSTooltip|NSAccel|NSLayout delegate|NSBorder op
+#ts|NSEvent Handlers|L0SClass Variable|I1SParent Component|X1CCanvasLab
+#el|I28SParent Canvas|X1SName|Slabel3|SClass Name|SLabel|SImport Name|S
+#gui|SClass Variable|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec
+#|NSW Spec|S88|SH Spec|S14|SX Align|Sc|SY Align|St|SZ|I0STab ord|I0SIs 
+#shaded|NSWAttribs|T0NSConstraints|T1NSeol|I1STooltip|NSAccel|NSLayout 
+#delegate|NSBorder opts|NSEvent Handlers|L0SClass Variable|I1SParent Co
+#mponent|X1SPaint|CCanvasTextPaint|I6SParent Canvas|X1SName|Spaint_3|SC
+#lass Name|STextPaint|SImport Name|Sgui|SClass Variable|NSStr|SLabel|CC
+#anvasTextButton|I35SParent Canvas|X1SName|Sqb|SClass Name|STextButton|
+#SImport Name|Sgui|SClass Variable|NSX Fix|I1SY Fix|NSW Fix|NSH Fix|NSX
+# Spec|NSY Spec|NSW Spec|NSH Spec|NSX Align|Sc|SY Align|St|SZ|I0STab or
+#d|I0SIs shaded|NSWAttribs|T0NSConstraints|T0NSTooltip|NSAccel|NSLayout
+# delegate|NSBorder opts|NSEvent Handlers|L1L2SEvent.ACTION|Son_qb|SCla
+#ss Variable|NSParent Component|X1SNo click focus|NSAccepts focus Flag|
+#I1SIs Checked Flag|NSIs Checkbox Flag|NSParent CheckBoxGroup|NSParent 
+#Button Group|NSPaint|CCanvasTextPaint|I6SParent Canvas|X1SName|Spaint|
+#SClass Name|STextPaint|SImport Name|Sgui|SClass Variable|NSStr|SQuit|S
+#Paint down|NSInitial Focus|NSEvent Handlers|L1L2S&null|Shandle_v2_even
+#ts|SLayout delegate|CCanvasGridLayout|I8SDII val|NSDOI val|NSExtra|Sce
+#lls|SName|Slayout_1|SClass Name|SGridLayout|SImport Name|Sgui|SClass V
+#ariable|NSParent|X1
