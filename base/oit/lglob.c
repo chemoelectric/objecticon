@@ -195,7 +195,8 @@ void readglob(struct lfile *lf)
                 char *data;
                 k = uin_32();
                 data = uin_sbin(&len);
-                add_constant(curr_func, k, data, len);
+                if (curr_func)
+                    add_constant(curr_func, k, data, len);
                 break;
             }
 
@@ -204,7 +205,8 @@ void readglob(struct lfile *lf)
                 char *data;
                 k = uin_32();
                 data = uin_lbin(&len);
-                add_constant(curr_func, k, data, len);
+                if (curr_func)
+                    add_constant(curr_func, k, data, len);
                 break;
             }
 

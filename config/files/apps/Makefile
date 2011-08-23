@@ -1,6 +1,6 @@
 include ../Makedefs
 
-PROGS=  ieval
+PROGS=  ieval fiximports
 PROGSRC=$(PROGS:=.icn)
 
 all :	$(PROGS)

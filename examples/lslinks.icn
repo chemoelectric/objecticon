@@ -1,0 +1,170 @@
+#
+# $Id: lslinks.icn 1696 2011-05-23 21:02:25Z jimmymeeker $
+#
+
+import
+   http(HttpClient, HttpRequest),
+   lang(clone, decode),
+   net(URL),
+   xml(HtmlParser),
+   ipl.scan(past),
+   ipl.options,
+   posix(System),
+   io
+
+global opts, hc
+
+procedure main(args)
+   local t, cookies
+   opts := options(args, "-a: -e: -agent: -i! -b! -tee: -t+ -r+ -k: -text! -utf8! -help!")
+   if \opts["help"] then {
+      write(FileStream.stderr, "Usage: lslinks [URL]... [OPTIONS]")
+      write(FileStream.stderr, "  -a USER:PASS            Specify authorization")
+      write(FileStream.stderr, "  -e URL                  Set referer header")
+      write(FileStream.stderr, "  -agent STRING           Set user agent field")
+      write(FileStream.stderr, "  -i                      Search for IMG links")
+      write(FileStream.stderr, "  -b                      Search for IMG and A links")
+      write(FileStream.stderr, "  -tee FILE               Redirect retrieved page to FILE")
+      write(FileStream.stderr, "  -t TIMEOUT              Specify timeout (in seconds) to use")
+      write(FileStream.stderr, "  -r RETRIES              Specify number of retries to use")
+      write(FileStream.stderr, "  -k FILE                 Load cookies from file")
+      write(FileStream.stderr, "  -text                   Do text search for tags rather than parse")
+      write(FileStream.stderr, "  -utf8                   Retrieved data is in utf8 format")
+      write(FileStream.stderr, "  -help                   Help message")
+      exit(1)
+   }
+
+   hc := HttpClient()
+   hc.set_timeout(\opts["t"] * 1000)
+   hc.set_retries(\opts["r"])
+   hc.set_user_agent(\opts["agent"])
+   cookies := \opts["k"] | System.getenv("GETURL_COOKIES")
+   if \cookies then {
+      t := decode(Files.file_to_string(cookies)) | {
+         write(FileStream.stderr, "Couldn't read/decode cookie file ", cookies, ": ", &why)
+         t := table()
+      }
+      hc.set_cookies(t)
+   }
+
+   every do_one(!args)
+
+   hc.close()
+end
+
+procedure do_one(a)
+   local url, hr, u, p, page, src, parser, doc, sb
+   
+   url := URL.parse(a) | stop("Invalid url:" || a)
+
+   sb := RamStream()
+   hr := HttpRequest().set_data_stream(sb)
+   if \opts["a"] then {
+      opts["a"] ? {
+         u := tab(upto(':')) | stop("Bad -a option")
+         move(1)
+         p := tab(0)
+      }
+      hr.set_username(u)
+      hr.set_password(p)
+   }
+
+   hr.set_referer(\opts["e"])
+   hr.set_url(url)
+   page := hc.retrieve(hr) | stop("Couldn't get: reason ", &why)
+
+   src := sb.done()
+
+   # Optionally save page source
+   if \opts["tee"] then
+      Files.string_to_file(opts["tee"], src) | stop("Couldn't dump file to ", opts["tee"])
+
+   if \opts["utf8"] then
+      src := ucs(src) | stop("Couldn't convert utf8: ", &why)
+
+   parser := HtmlParser()
+   doc := parser.parse(src) | stop("couldnt parse page")
+   if \opts["i"] then
+      do_search(url, src, doc, "IMG", "SRC", "")
+   else if \opts["b"] then {
+      do_search(url, src, doc, "IMG", "SRC", "IMG:")
+      do_search(url, src, doc, "A", "HREF", "A:")
+   } else
+      do_search(url, src, doc, "A", "HREF", "")
+end
+
+
+procedure do_search(url, src, doc, tag, attr, pfx)
+   local base, n, s, l_url
+
+   base := url
+   if n := doc.get_root_element().search_tree("BASE") then {
+      base := URL.parse(n.get_attribute("HREF"))
+   }
+
+   if \opts["text"] then {
+      map(src) ? {
+         while tab(past("<" || map(tag) || " ")) do {
+            if tab(past(map(attr) || "=\"")) then {
+               if s := tab(upto("\"")) then {
+                  s := remove_entities(s)
+                  if match("http://", s) then
+                     write(pfx, s)
+                  else {
+                     l_url := clone(base)
+                     l_url.set_relative(s)
+                     write(pfx, l_url.str())
+                  }
+               }
+            }
+         }
+
+      }
+   } else {
+      every n := doc.get_root_element().search_tree(tag) do {
+         if s := n.get_attribute(attr) then {
+            if match("http://", s) then
+               write(pfx, s)
+            else {
+               l_url := clone(base)
+               l_url.set_relative(s)
+               write(pfx, l_url.str())
+            }
+         }
+      }
+   }
+end
+
+procedure remove_entities(s)
+   local res, i
+
+   res := ""
+   s ? {
+      repeat {
+         res ||:= tab(upto('&') | 0)
+         if pos(0) then
+            break
+         ="&"
+         if ="#" then {
+            if i := (256 > integer(tab(many(&digits)))) then {
+               if \opts["utf8"] then
+                  res ||:= uchar(i)
+               else
+                  res ||:= char(i)
+               =";"
+            } else
+               res ||:= "&#"
+         } else {
+            if i := \HtmlParser.HTML_ENTITIES[string(tab(many(&ucase ++ &lcase)))] then {
+               if \opts["utf8"] then
+                  res ||:= uchar(i)
+               else
+                  res ||:= char(i)
+               =";"
+            } else
+               res ||:= "&"
+         }
+      }
+   }
+   return res
+end

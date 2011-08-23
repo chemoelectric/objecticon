@@ -1,0 +1,12 @@
+< ../mkdefs
+
+PROGSRC=`{ls *.icn}
+PROGS=${PROGSRC:%.icn=%}
+
+all:V: $PROGS
+
+clean :
+	rm -f *.u packages.txt $PROGS
+
+%: %.icn
+	oit -s $stem.icn

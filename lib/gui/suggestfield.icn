@@ -84,7 +84,9 @@ class SuggestField(TextField)
    protected defer do_request()
 
    public on_change(ev)
-      req.change_sleep(0)
+      # Check here since req may be polling, which we don't want to interrupt.
+      if req.is_sleeping() then
+         req.interrupt()
       mod := 1
    end
 

@@ -91,6 +91,7 @@ AC_CONFIG_FILES([apps/ivib/plugins/Makefile:config/files/apps/ivib/plugins/Makef
 AC_CONFIG_FILES([apps/ivib/Makefile:config/files/apps/ivib/Makefile])
 AC_CONFIG_FILES([apps/oidoc/Makefile:config/files/apps/oidoc/Makefile])
 AC_CONFIG_FILES([apps/Makefile:config/files/apps/Makefile])
+AC_CONFIG_FILES([examples/Makefile:config/files/examples/Makefile])
 AC_CONFIG_FILES([lib/xml/Makefile:config/files/lib/xml/Makefile])
 AC_CONFIG_FILES([lib/gui/Makefile:config/files/lib/gui/Makefile])
 AC_CONFIG_FILES([lib/main/Makefile:config/files/lib/main/Makefile])

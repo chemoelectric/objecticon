@@ -1,0 +1,235 @@
+$load FLINTSTONES "flintstones10-hp.jpg"
+
+import
+   gui,graphics
+
+class Untitled(Dialog)
+   private
+      text_button_1,
+      text_button_2,
+      text_field_1, other,
+      label_1,
+      text_button_3,
+      text_button_4,
+      text_button_5,
+      text_button_6,
+      text_button_7,
+      t
+
+   public component_setup()
+      self.setup()
+      t := Dispatcher.new_task{tick()}
+      t.start()
+      set_pos(200,200)
+      other := Window.open().
+         set_pos(500,200).
+         set_resize(&yes).
+         set_image(FLINTSTONES).
+         set_canvas("normal")
+   end
+
+   public tick()
+      local d
+      repeat {
+         d := other.get_size()
+         label_1.set_label(other.get_canvas() || " (" || d[1] || "x" || d[2] || ")")
+         t.sleep(1000)
+      }
+   end
+
+   public end_dialog()
+      other.close()
+   end
+
+   public init_dialog()
+   end
+
+   private on_text_button_1(ev)
+      other.set_canvas("iconic")
+   end
+
+   private on_text_button_2(ev)
+      dispose()
+   end
+
+   private on_text_button_3(ev)
+      other.set_canvas("hidden")
+   end
+
+   private on_text_button_4(ev)
+      other.set_canvas("normal")
+   end
+
+   private on_text_button_5(ev)
+      other.set_canvas("maximized")
+   end
+
+   private on_text_button_6(ev)
+      other.set_canvas("popup")
+   end
+
+   private on_text_button_7(ev)
+      other.set_canvas("fullscreen")
+      #other.raise()
+   end
+
+   private setup()
+      local paint_2, paint_7, paint_4, layout_1, paint_1, paint_6, paint_3, paint_8, paint_5
+      paint_1 := TextPaint("->Iconic")
+      text_button_1 := TextButton().
+         clear_constraints().
+         set_constraint("eol", &yes).
+         connect(on_text_button_1, Event.ACTION).
+         set_toggles(&no).
+         set_paint(paint_1)
+      add(text_button_1)
+      paint_3 := TextPaint("->Hidden")
+      text_button_3 := TextButton().
+         clear_constraints().
+         set_constraint("eol", &yes).
+         connect(on_text_button_3, Event.ACTION).
+         set_toggles(&no).
+         set_paint(paint_3)
+      add(text_button_3)
+      paint_4 := TextPaint("->Normal")
+      text_button_4 := TextButton().
+         clear_constraints().
+         set_constraint("eol", &yes).
+         connect(on_text_button_4, Event.ACTION).
+         set_toggles(&no).
+         set_paint(paint_4)
+      add(text_button_4)
+      paint_6 := TextPaint("->Maximized")
+      text_button_5 := TextButton().
+         clear_constraints().
+         set_constraint("eol", &yes).
+         connect(on_text_button_5, Event.ACTION).
+         set_toggles(&no).
+         set_paint(paint_6)
+      add(text_button_5)
+      paint_8 := TextPaint("->Fullscreen")
+      text_button_7 := TextButton().
+         clear_constraints().
+         set_constraint("eol", &yes).
+         connect(on_text_button_7, Event.ACTION).
+         set_toggles(&no).
+         set_paint(paint_8)
+      add(text_button_7)
+      paint_7 := TextPaint("->Popup")
+      text_button_6 := TextButton().
+         clear_constraints().
+         set_constraint("eol", &yes).
+         connect(on_text_button_6, Event.ACTION).
+         set_toggles(&no).
+         set_paint(paint_7)
+      add(text_button_6)
+      paint_5 := TextPaint("Label")
+      label_1 := Label().
+         set_size(176, 26).
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_align", Align.L).
+         set_paint(paint_5)
+      add(label_1)
+      paint_2 := TextPaint("Quit")
+      text_button_2 := TextButton().
+         clear_constraints().
+         connect(on_text_button_2, Event.ACTION).
+         set_toggles(&no).
+         set_paint(paint_2)
+      add(text_button_2)
+      layout_1 := GridLayout().
+         set_extra("cells")
+      set_layout(layout_1)
+   end
+end
+
+procedure main()
+   local d
+   d := Untitled()
+   d.show_modal()
+end
+
+### Ivib-v2 layout ##
+#CCanvas|I18SSuperClass Name|SDialog|SImport Name|Sgui|SButton Groups|L
+#0SCheckbox Groups|L0SGen Indent|I3SGen Main|I1SGen Component Setup|I1S
+#Gen Init Dialog|I1SGen Constructor|NSDialog Struct|CCDialog|I1SWAttrib
+#s|T0NSName|SUntitled|SIs Component|NSWidth|NSHeight|NSChildren|L8CCanv
+#asTextButton|I35SParent Canvas|X1SName|Stext_button_1|SClass Name|STex
+#tButton|SImport Name|Sgui|SClass Variable|I1SX Fix|NSY Fix|NSW Fix|NSH
+# Fix|NSX Spec|NSY Spec|NSW Spec|NSH Spec|NSX Align|Sl|SY Align|St|SZ|I
+#0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T1NSeol|I1STooltip|N
+#SAccel|NSLayout delegate|NSBorder opts|NSEvent Handlers|L1L2SEvent.ACT
+#ION|Son_text_button_1|SClass Variable|I1SParent Component|X1SNo click 
+#focus|NSAccepts focus Flag|I1SIs Checked Flag|NSIs Checkbox Flag|NSPar
+#ent CheckBoxGroup|NSParent Button Group|NSPaint|CCanvasTextPaint|I6SPa
+#rent Canvas|X1SName|Spaint_1|SClass Name|STextPaint|SImport Name|Sgui|
+#SClass Variable|NSStr|S->Iconic|SPaint down|NCCanvasTextButton|I35SPar
+#ent Canvas|X1SName|Stext_button_3|SClass Name|STextButton|SImport Name
+#|Sgui|SClass Variable|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Sp
+#ec|NSW Spec|NSH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shad
+#ed|NSWAttribs|T0NSConstraints|T1NSeol|I1STooltip|NSAccel|NSLayout dele
+#gate|NSBorder opts|NSEvent Handlers|L1L2SEvent.ACTION|Son_text_button_
+#3|SClass Variable|I1SParent Component|X1SNo click focus|NSAccepts focu
+#s Flag|I1SIs Checked Flag|NSIs Checkbox Flag|NSParent CheckBoxGroup|NS
+#Parent Button Group|NSPaint|CCanvasTextPaint|I6SParent Canvas|X1SName|
+#Spaint_3|SClass Name|STextPaint|SImport Name|Sgui|SClass Variable|NSSt
+#r|S->Hidden|SPaint down|NCCanvasTextButton|I35SParent Canvas|X1SName|S
+#text_button_4|SClass Name|STextButton|SImport Name|Sgui|SClass Variabl
+#e|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH Spec
+#|NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSCo
+#nstraints|T1NSeol|I1STooltip|NSAccel|NSLayout delegate|NSBorder opts|N
+#SEvent Handlers|L1L2SEvent.ACTION|Son_text_button_4|SClass Variable|I1
+#SParent Component|X1SNo click focus|NSAccepts focus Flag|I1SIs Checked
+# Flag|NSIs Checkbox Flag|NSParent CheckBoxGroup|NSParent Button Group|
+#NSPaint|CCanvasTextPaint|I6SParent Canvas|X1SName|Spaint_4|SClass Name
+#|STextPaint|SImport Name|Sgui|SClass Variable|NSStr|S->Normal|SPaint d
+#own|NCCanvasTextButton|I35SParent Canvas|X1SName|Stext_button_5|SClass
+# Name|STextButton|SImport Name|Sgui|SClass Variable|I1SX Fix|NSY Fix|N
+#SW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH Spec|NSX Align|Sl|SY Ali
+#gn|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T1NSeol|I1
+#STooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent Handlers|L1L2
+#SEvent.ACTION|Son_text_button_5|SClass Variable|I1SParent Component|X1
+#SNo click focus|NSAccepts focus Flag|I1SIs Checked Flag|NSIs Checkbox 
+#Flag|NSParent CheckBoxGroup|NSParent Button Group|NSPaint|CCanvasTextP
+#aint|I6SParent Canvas|X1SName|Spaint_6|SClass Name|STextPaint|SImport 
+#Name|Sgui|SClass Variable|NSStr|S->Maximized|SPaint down|NCCanvasTextB
+#utton|I35SParent Canvas|X1SName|Stext_button_7|SClass Name|STextButton
+#|SImport Name|Sgui|SClass Variable|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|NS
+#X Spec|NSY Spec|NSW Spec|NSH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab o
+#rd|I0SIs shaded|NSWAttribs|T0NSConstraints|T1NSeol|I1STooltip|NSAccel|
+#NSLayout delegate|NSBorder opts|NSEvent Handlers|L1L2SEvent.ACTION|Son
+#_text_button_7|SClass Variable|I1SParent Component|X1SNo click focus|N
+#SAccepts focus Flag|I1SIs Checked Flag|NSIs Checkbox Flag|NSParent Che
+#ckBoxGroup|NSParent Button Group|NSPaint|CCanvasTextPaint|I6SParent Ca
+#nvas|X1SName|Spaint_8|SClass Name|STextPaint|SImport Name|Sgui|SClass 
+#Variable|NSStr|S->Fullscreen|SPaint down|NCCanvasTextButton|I35SParent
+# Canvas|X1SName|Stext_button_6|SClass Name|STextButton|SImport Name|Sg
+#ui|SClass Variable|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|
+#NSW Spec|NSH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|
+#NSWAttribs|T0NSConstraints|T1NSeol|I1STooltip|NSAccel|NSLayout delegat
+#e|NSBorder opts|NSEvent Handlers|L1L2SEvent.ACTION|Son_text_button_6|S
+#Class Variable|I1SParent Component|X1SNo click focus|NSAccepts focus F
+#lag|I1SIs Checked Flag|NSIs Checkbox Flag|NSParent CheckBoxGroup|NSPar
+#ent Button Group|NSPaint|CCanvasTextPaint|I6SParent Canvas|X1SName|Spa
+#int_7|SClass Name|STextPaint|SImport Name|Sgui|SClass Variable|NSStr|S
+#->Popup|SPaint down|NCCanvasLabel|I28SParent Canvas|X1SName|Slabel_1|S
+#Class Name|SLabel|SImport Name|Sgui|SClass Variable|I1SX Fix|NSY Fix|N
+#SW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|I176SH Spec|I26SX Align|Sl|S
+#Y Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T2NSx
+#_align|Sl|Seol|I1STooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEv
+#ent Handlers|NSClass Variable|I1SParent Component|X1SPaint|CCanvasText
+#Paint|I6SParent Canvas|X1SName|Spaint_5|SClass Name|STextPaint|SImport
+# Name|Sgui|SClass Variable|NSStr|SLabel|CCanvasTextButton|I35SParent C
+#anvas|X1SName|Stext_button_2|SClass Name|STextButton|SImport Name|Sgui
+#|SClass Variable|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NS
+#W Spec|NSH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NS
+#WAttribs|T0NSConstraints|T0NSTooltip|NSAccel|NSLayout delegate|NSBorde
+#r opts|NSEvent Handlers|L1L2SEvent.ACTION|Son_text_button_2|SClass Var
+#iable|I1SParent Component|X1SNo click focus|NSAccepts focus Flag|I1SIs
+# Checked Flag|NSIs Checkbox Flag|NSParent CheckBoxGroup|NSParent Butto
+#n Group|NSPaint|CCanvasTextPaint|I6SParent Canvas|X1SName|Spaint_2|SCl
+#ass Name|STextPaint|SImport Name|Sgui|SClass Variable|NSStr|SQuit|SPai
+#nt down|NSInitial Focus|NSEvent Handlers|L0SLayout delegate|CCanvasGri
+#dLayout|I8SDII val|NSDOI val|NSExtra|Scells|SName|Slayout_1|SClass Nam
+#e|SGridLayout|SImport Name|Sgui|SClass Variable|NSParent|X1

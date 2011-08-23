@@ -6,12 +6,14 @@ all:V:
 	@{ cd base ; mk }
 	@{ cd lib ; mk }
 	@{ cd apps ; mk }
+	@{ cd examples ; mk }
 	@{ cd riox ; mk }
 
 clean:V:
 	@{ cd base ; mk clean }
 	@{ cd lib ; mk clean }
 	@{ cd apps ; mk clean }
+	@{ cd examples ; mk clean }
 	@{ cd riox ; mk clean }
 
 test:V:

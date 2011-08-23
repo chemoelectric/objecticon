@@ -6,13 +6,29 @@ import
    ipl.graphics(Zoom,bev_lookup),
    ipl.strings(separate_lines)
 
+# A {Paint} represents an arbitrary object which has a size and can be
+# drawn.
+#
 class Paint(Size)
+   #
+   # Initialize the instance.  This should set the size of the instance.
+   # @param c The owning {Component}
+   # @param accel The keyboard accelerator to be drawn
    public defer initially(c, accel)
+
+   # Draw the instance
+   # @param W The window to draw into
+   # @param x The x position
+   # @param y The y position
    public defer draw(W, x, y)
 
+   # Cleanup any resources used by this instance.
    public finally()
    end
 
+   # Convenient method to draw at a given point; just calls {draw}.
+   # @param W The window to draw into
+   # @param p The {Point} to draw at
    public draw_point(W, p)
       self.draw(W, p.x, p.y)
    end
@@ -27,6 +43,8 @@ procedure paint_for_string(s)
       return TextPaint(s)
 end
 
+# A simple {Paint} instance which draws a string.
+#
 class TextPaint(Paint)
    public str, accel
 
@@ -40,12 +58,16 @@ class TextPaint(Paint)
       draw_string_ex(W, x, y, str, accel)
    end
 
+   # Create a new instance.
+   # @param s The string to draw
    public new(s)
       self.str := s
       return
    end
 end
 
+# A simple {Paint} instance which draws an icon image string.
+#
 class ImageStringPaint(Paint)
    public str
 
@@ -58,12 +80,17 @@ class ImageStringPaint(Paint)
       draw_image_ex(W, x, y, str)
    end
 
+   # Create a new instance.
+   # @param s The icon image string to draw
    public new(s)
       self.str := s
       return
    end
 end
 
+# A {Paint} instance which copies an image from another window.  The user is
+# responsible for opening and closing the other window.
+#
 class ImageWindowPaint(Paint)
    public win
 
@@ -76,12 +103,17 @@ class ImageWindowPaint(Paint)
       (\win).copy_to(W,,,,, x, y)
    end
 
+   # Create a new instance.
+   # @param w The source window
    public new(w)
       self.win := w
       return
    end
 end
 
+# A {Paint} instance which draws its output using a {Grid}.  The input is a format
+# string specifying the grid and its contents.
+#
 class GridPaint(Paint)
    public 
       fmt,          # Format string
@@ -363,12 +395,17 @@ class GridPaint(Paint)
       cw.uncouple()
    end
 
+   # Create a new instance.
+   # @param s The format string
    public new(s)
       self.fmt := s
       return
    end
 end
 
+# A {Paint} instance which draws an image, which can come from a
+# number of sources.  The image can also be scaled.
+#
 class ImagePaint(Paint)
    public 
       image_str,
