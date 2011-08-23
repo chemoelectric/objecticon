@@ -6,11 +6,13 @@ all :
 	$(MAKE) -C base all
 	$(MAKE) -C lib all
 	$(MAKE) -C apps all
+	$(MAKE) -C examples all
 
 clean :
 	$(MAKE) -C base clean
 	$(MAKE) -C lib clean
 	$(MAKE) -C apps clean
+	$(MAKE) -C examples clean
 
 etags :
 	$(MAKE) -C base etags
