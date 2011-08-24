@@ -138,9 +138,10 @@ class Evaluator()
    end
 
    private restore(n)
-      if \scans[n] then {
-         &subject := subject[scans[n]]
-         &pos := pos[scans[n]]
+      local x
+      if x := \scans[n] then {
+         &subject := subject[x]
+         &pos := pos[x]
       }
    end
 
