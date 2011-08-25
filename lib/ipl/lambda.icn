@@ -37,3 +37,10 @@ class Lambda()
       return
    end
 end
+
+#
+# Shorthand for {Lambda.make}
+#
+procedure lambda(e)
+   return Lambda.make(e)
+end

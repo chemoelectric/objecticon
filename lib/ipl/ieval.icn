@@ -190,9 +190,9 @@ procedure main_impl(imports, files, opts)
    env["tt"] := create tr_flag := toggle_flag(tr_flag)
    env["tb"] := create Coexpression.traceback(\last_runerr, &yes)
    env["q"] := create quiet_flag := toggle_flag(quiet_flag)
-   env["dir"] := Lambda.make{ if *_a = 0 then list_syms(imports) else dir(_a[1]) }
+   env["dir"] := lambda{ if *_a = 0 then list_syms(imports) else dir(_a[1]) }
    env["hist"] := create show_history(in)
-   env["cmd"] := Lambda.make{{ if is(in, LineEditorStream) then hist_line := in.get_history_item(_a[1]) ; &fail}}
+   env["cmd"] := lambda{{ if is(in, LineEditorStream) then hist_line := in.get_history_item(_a[1]) ; &fail}}
 
    run := create
       with_var{ with_var{ Safe{eval.eval()}, &trace, tv }, exit, exit_repl}
