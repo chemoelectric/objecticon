@@ -145,12 +145,13 @@ tar :
 		cp --parents $$f $(T) ;\
 	done
 	@cp README configure config.guess config.sub install-sh $(T)
-	@rm -f $(T)/base/h/auto.h $(T)/base/h/version.h $(T)/base/h/define.h \
+	@rm -rf $(T)/base/h/auto.h $(T)/base/h/version.h $(T)/base/h/define.h \
 		$(T)/lib/main/posixconsts.icn \
 		$(T)/lib/main/ioconsts.icn \
 		$(T)/lib/main/evmonconsts.icn \
 		$(T)/lib/main/ucodeconsts.icn \
 		$(T)/lib/incl/oigram_tab.icn \
-		$(T)/lib/parser/oigram.icn
+		$(T)/lib/parser/oigram.icn \
+		$(T)/lib/xml/xmlconf
 	tar cfz $(T).tar.gz $(T)
 	@rm -rf $(T)
