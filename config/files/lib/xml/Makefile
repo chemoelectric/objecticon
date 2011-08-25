@@ -23,8 +23,11 @@ etags:
 clean:
 	$(RM) $(PROGS) *.u packages.txt
 
-$(LIBU) $(PROGU): %.u: %.icn
-	oit -snc $(LIBSRC) $(PROGSRC)
+$(LIBU): %.u: %.icn
+	oit -snc $(LIBSRC)
+
+%: 	%.icn
+	oit -s $<
 
 %: %.u $(LIBU)
 	oit -so $@ $@.u
