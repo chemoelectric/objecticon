@@ -1,7 +1,7 @@
 #summary ieval - an interactive icon expression evaluator
 
 = ieval =
-`ieval` is a program to interactively evaluate icon expressions.  Input is read from the terminal until end-of-file (control-D) is entered.  Each expression has its results sequence evaluated and printed (although see the {!q} option below).  Variables may be assigned to, and they are stored in a local environment, which may be printed by entering {!env}.  To link with library packages, use the {-i} command line option.  Packages can't be imported interactively.
+`ieval` is a program to interactively evaluate icon expressions.  Input is read from the terminal until end-of-file (control-D) is entered.  Each expression has its results sequence evaluated and printed (although see the `!q` option below).  Variables may be assigned to, and they are stored in a local environment, which may be printed by entering `!env`.  To link with library packages, use the `-i` command line option.  Packages can't be imported interactively.
 
 An example session
 {{{
@@ -25,8 +25,8 @@ $
 = Command line options =
 `ieval` accepts the following command-line options :-
 
- * *-i* Import the given package(s).  Several packages may be comma-separated, or several {-i} options may be given.
- * *-l* Link the given source file.  Several {-l} options may be given.
+ * *-i* Import the given package(s).  Several packages may be comma-separated, or several `-i` options may be given.
+ * *-l* Link the given source file.  Several `-l` options may be given.
  * *-w* If given, then assignments to global variables (eg procedures) are allowed.
  * *-s* Read commands from standard input rather than using a line editor.
 
@@ -38,4 +38,4 @@ $
  * *!q* Don't force evaluation of all of the values in the expression, and don't output any expression value
  * *dir(x)* With no parameter, show all global variables.  With a parameter, show information about it.
  * *!hist* Show the command line history
- * *cmd(x)* Run command number {x} again.
+ * *cmd(x)* Run command number `x` again.
