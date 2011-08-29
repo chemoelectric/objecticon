@@ -65,21 +65,40 @@ http://objecticon.googlecode.com/svn/wiki/frame2.png
 
 The top row of blue boxes shows the `&main` co-expressions chain of frames, whilst the lower row shows the chain for `e`.  Note that the base frame of `e` shares the local variable block with its creator.  This means that changes to the local variables in the co-expression will be seen by the creator co-expression.
 
+Note that the memory resources used by a new co-expression are very small, and grow (and shrink) dynamically as frames are allocated and popped.
 === Switching co-expressions ===
 
 Switching between co-expressions essentially just involves copying the values of `curr_pf` and `ipc` (the current VM program counter) to the old and from the new co-expression.
 
+Note that, in contrast to the class Icon implementation, no interpreter state is stored in the C stack.  In other words, the interpreter loop (`interp()` in interp.r) is never called recursively.   This means no low-level context-switch or C stack manipulation is necessary in order to switch co-expressions.
 === How `c_frame`s generate results ===
 
-It is pretty obvious how a `p_frame` can generate results: just make that frame the `curr_pf` frame and continue executing.  Eventually a `suspend`, `fail` or `return` will return us back (perhaps with a suspended value) to the calling `p_frame`.  But for a `c_frame`, the situation is not so clear.  The implementation of a `c_frame` is in C, and C does not easily support the idea of generating a sequence of results from a function.
+It is pretty obvious how a `p_frame` can generate results: just make that frame the `curr_pf` frame and continue executing.  Eventually a `suspend`, `fail` or `return` will return us back (perhaps with a suspended value) to the calling `p_frame`.  But for a `c_frame`, the situation is not so clear.  The implementation of a `c_frame` is in C, and C does not easily support the idea of generating a sequence of results from a function.  The solution is to store the C function's local variables in the `c_frame`, rather than on the C stack in the normal way, so that they are available when the C function is resumed.  It is also necessary to store the position in the C function reached at the last suspension, so that the C function can be resumed at the correct point.  This can be achieved with labels and a `switch` statement.  GCC supports computed gotos, and these are used instead if they are available.
 
+Fortunately, this complexity is hidden from the C programmer, since the preprocessor `rtt` is used to translate code in its dialect of C, which includes `suspend` constructs, into code using the technique described above.
 
 === Special internal `p_frame`s ===
 
+Some operations require special `p_frame`s to be pushed onto the chain of frames.  These run VM instructions like normal `p_frame`s, but the VM code is hand-written rather than being translated from user source code.  A simple "assembler" is provided, called `iasm`, and this can be found in the `oix` directory.  The source files have the ending ".in".  A few VM instructions are provided which are only used by these special `p_frames`, most notably `Op_Custom`, which calls an arbitrary given C function (effectively providing an instruction which can do anything).
 
+An example of a situation where an internal `p_frame` is used is object creation.  This involves invoking the class's `new` method, as well as perhaps its static `init` method, and any of its parent classes' `init` methods.  Without the use of an internal `p_frame` it would be necessary to recursively call the main interpreter loop.  But we cannot do that, since we don't want any interpreter state to exist on the C stack.
 
 == Inline caching ==
 
+The classic Icon implementation uses a field table to map fields to record offsets.  For example, in the expression `rec.x`, if `x` was field number 10 and rec was of type number 20 then entry (10, 20) in the field table would give the offset of the field `x` in `rec`.
+
+The problem with the field table technique is that it grows to an unmanageable size as the number of records and fields increases.  If the number of records and fields double, the field table quadruples in size.
+
+For this reason, Object Icon takes a different approach to field lookup, namely inline caching.  In this scheme, every field access instruction is compiled with a two-word gap in the generated code, initially set to zero.  These two fields constitute the inline cache for that particular instruction.  The first time the field instruction is executed, we lookup the requested field in the class using binary search, in order to determine the offset.  Then we store in the cache two things, namely the type of the object, and the calculated offset.  The field is of course constant for that instruction.  Next time the instruction is executed, we compare the type of the object with the last calculated type.  If they are the same, we can use the last calculated offset again, so we are saved a binary search.  Otherwise, we perform the search and store the new values.  Typically, the types match about 90% of the time.
+
 == Translation ==
 
+In contrast to classic Icon, `.u` files are in a binary format.  Further, they bear no relation to the final output code format, and they retain the original nested structure of the original source code.  They are restored into a tree-like data structure (see `ltree.h`) at the linking phase.
+
+== Optimisations ==
+
+During linking, simple optimisations are performed on the code trees.  These include constant folding and dead code elmination.
+
 == Code generation ==
+
+The code generation technique is derived from that used in the Jcon implementation of Icon (see http://www.cs.arizona.edu/icon/jcon/).  The file `ir.c` is based on Jcon's `irgen.icn`.  The most significant difference is the addition of "mark" and "unmark" instructions, which are used for manipulation of the frame chain, as described above.
