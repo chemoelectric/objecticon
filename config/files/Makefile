@@ -141,6 +141,9 @@ tar :
 		-regex ".*\.\(icn\|gif\|jpg\|png\)" ) ; do \
 		cp --parents $$f $(T) ;\
 	done
+	@for f in $$( find misc -type f -not -regex ".*\.svn.*" ) ; do \
+		cp --parents $$f $(T) ;\
+	done
 	@for f in $$( find bmark \
 		-regex ".*\.\(icn\|dat\|sh\)" ) ; do \
 		cp --parents $$f $(T) ;\
@@ -149,12 +152,13 @@ tar :
 		cp --parents $$f $(T) ;\
 	done
 	@cp README configure configure.rc config.guess config.sub install-sh $(T)
-	@rm -f $(T)/base/h/auto.h $(T)/base/h/version.h $(T)/base/h/define.h \
+	@rm -rf $(T)/base/h/auto.h $(T)/base/h/version.h $(T)/base/h/define.h \
 		$(T)/lib/main/posixconsts.icn \
 		$(T)/lib/main/ioconsts.icn \
 		$(T)/lib/main/evmonconsts.icn \
 		$(T)/lib/main/ucodeconsts.icn \
 		$(T)/lib/incl/oigram_tab.icn \
-		$(T)/lib/parser/oigram.icn
+		$(T)/lib/parser/oigram.icn \
+		$(T)/lib/xml/xmlconf
 	tar cfz $(T).tar.gz $(T)
 	@rm -rf $(T)
