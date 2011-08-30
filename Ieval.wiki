@@ -22,6 +22,7 @@ object graphics.Window#1(wbp=0;transient_for=&null)
 $
 }}}
 
+Input of an expression over several lines can be achieved by ending a line with a backslash character.  The prompt changes to `>>` and the next line is concatenated to the previous one.
 = Command line options =
 `ieval` accepts the following command-line options :-
 
@@ -30,6 +31,7 @@ $
  * *-w* If given, then assignments to global variables (eg procedures) are allowed.
  * *-s* Read commands from standard input rather than using a line editor.
 
+Remaining arguments specify files which are processed before command line input commences.  They should contain valid expressions (which may be compound expressions).
 = Useful built-in expressions =
 
  * *!env* Show the values stored in the environment
