@@ -929,8 +929,7 @@ struct p_frame *alc_p_frame(struct p_proc *pb, struct frame_vars *fvars)
             fvars->desc_end = fvars->desc + ndesc;
             fvars->refcnt = 1;
             fvars->seen = 0;
-        } else
-            fvars = 0;
+        } /* else leave fvars == 0 */
     }
     curpstate->stackcurr += size;
     p->creator = curpstate;
