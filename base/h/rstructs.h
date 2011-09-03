@@ -110,6 +110,7 @@ struct b_proc {			/* procedure block */
 struct p_proc {
     PROC_BASE
     word *icode;		/*   pointer to icode */
+    word creates;               /*   flag, set if has any create ops in it */
     word ndynam;		/*   number of dynamic locals */
     word nstatic;		/*   number of static locals */
     dptr fstatic;		/*   pointer to first static, or null if there are none */

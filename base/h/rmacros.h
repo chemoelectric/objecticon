@@ -489,7 +489,7 @@
         0};
 
 
-#define CustomProc(f,code,nparam,ndynam,nclo,ntmp,nlab,nmark,sname)\
+#define CustomProc(f,code,creates,nparam,ndynam,nclo,ntmp,nlab,nmark,sname) \
     static struct sdescrip Cat(f,_name_desc) = {sizeof(sname) - 1, sname};\
     struct p_proc Cat(B,f) = {\
    	T_Proc,\
@@ -499,6 +499,7 @@
    	0,\
       	(dptr)&Cat(f,_name_desc), \
         code,\
+        creates,\
    	ndynam,\
         0,0,0,\
         nclo,ntmp,nlab,nmark,\

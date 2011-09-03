@@ -1,7 +1,7 @@
 import io, ipl.strings(words)
 
 procedure main(a)
-   local l, i, s, r, title, t, export, e,
+   local l, i, s, r, title, t, export, e, creates,
       nparam,ndynam,nclo,ntmp,nlab,nmark
    while r := read() do {
       if i := find("#", r) then
@@ -13,7 +13,7 @@ procedure main(a)
             l := []
             t := table()
             export := set()
-            nparam := ndynam := nclo := ntmp := nlab := nmark := 0
+            creates := nparam := ndynam := nclo := ntmp := nlab := nmark := 0
             repeat {
                r := read() | stop("unexpected eof")
                if i := find("#", r) then
@@ -54,6 +54,8 @@ procedure main(a)
                         stop("unexpected : in word")
                      else
                         put(l, s)
+                     if s == "Op_Create" then
+                        creates := 1
                   }
                }
             }
@@ -66,6 +68,7 @@ procedure main(a)
             write("#passthru CustomProc(", 
                   title, ",",
                   title, "_code,",
+                  creates, ",", 
                   nparam, ",", 
                   ndynam, ",", 
                   nclo, ",", 
