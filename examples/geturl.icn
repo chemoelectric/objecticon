@@ -92,7 +92,7 @@ procedure main(args)
    local l, f, t, cookies
 
    opts := options(args, "-over! -i: -form:* -type: -o: -k: -q! -t+ -r+ -p: -d: -a: -f: -e: -l! -n: _
-                         -head! -sslnv! -help! -c! -skip! -agent: -while! -close! -x:*")
+                         -head! -sslnv! -help! -c! -skip! -agent: -while! -close! -x:* -nz!")
    if \opts["help"] then {
       write(FileStream.stderr, "Usage: geturl [URL]... [OPTIONS]")
       write(FileStream.stderr, "Retrieve URL(s)")
@@ -140,6 +140,9 @@ procedure main(args)
 
    if \opts["head"] then 
       opts["l"] := 1
+
+   if \opts["nz"] then
+      hc.set_gzip(&no)
 
    if \opts["close"] then
       hc.set_keep_alive(&no)
