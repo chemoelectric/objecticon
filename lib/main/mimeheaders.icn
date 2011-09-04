@@ -38,6 +38,15 @@ class MimeHeaders()
    end
 
    #
+   # Generate all the headers for the key, or fail if the key has no headers
+   # @generate all the headers for the key
+   # @fail if no headers for the key have been defined
+   #
+   public gen_headers(key)
+      suspend !get_headers(key)
+   end
+
+   #
    # Get all the headers matching the given key as a string separated
    # by the given delimeter, which defaults to ","
    # @fail if there is no header with the given key
