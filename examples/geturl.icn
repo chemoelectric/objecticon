@@ -2,7 +2,7 @@
 # Retrieve http pages.
 #
 
-import util, http, net, mail, lang, ipl.options, io, posix
+import util, http, net, lang, ipl.options, io, posix
 
 global total, ok, err, failed, hc, opts, stdin, skipped, out
 
@@ -77,9 +77,7 @@ class Monitor()
       if \opts["head"|"c"] then
          fail
 
-      if fname := ContentDisposition.parse(hc.get_response().get_first_header("content-disposition")).
-                           get_filename() then 
-      {
+      if fname := hc.get_response().get_content_disposition_filename() then {
          get_out(fname)
          if check_skip() then
             hc.abort()
