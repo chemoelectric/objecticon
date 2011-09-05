@@ -555,7 +555,7 @@ class HttpClient(NetClient)
    private store_cookies()
       local c, domain, path, paths, vals, s
 
-      every s := !response.get_headers("set-cookie") do {
+      every s := response.gen_headers("set-cookie") do {
          if (c := parse_cookie_string(s)) & valid_cookie(c) then {
             domain := map(\c.domain | request.url.get_address())
             (paths := member(cookies, domain)) | insert(cookies, domain, paths := table())
