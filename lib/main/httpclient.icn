@@ -9,7 +9,8 @@ import util,
    net,
    io,
    ipl.base64,
-   ipl.strings
+   ipl.strings,
+   ipl.streams
 
 #
 # Little helper class to store cookie details
@@ -883,7 +884,6 @@ class HttpClient(NetClient)
    end
 
    private open_inflater()
-      local nul
       # x-gzip is equivalent to gzip - see
       # http://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html#sec3.5
       #
@@ -895,12 +895,9 @@ class HttpClient(NetClient)
       #
       if \gzip_flag &
          trim(map(response.get_first_header("content-encoding"))) == ("gzip" | "x-gzip") &
-         not endswith(response.get_filename(), ".gz" | ".tgz" | ".svgz" | ".gzip") then 
+         not endswith(map(response.get_filename()), ".gz" | ".tgz" | ".svgz" | ".gzip") then 
       {
-         use { 
-            nul := FileStream.open("/dev/null", FileOpt.WRONLY),
-                 inflater_stream := FilterOutputStream(request.data_stream, "gunzip", ["-c"],, nul)
-         } | fail
+         inflater_stream := FilterOutputStream(request.data_stream, "gunzip", ["-c"],, get_null()) | fail
       }
       return
    end

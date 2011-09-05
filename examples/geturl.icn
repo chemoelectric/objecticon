@@ -90,7 +90,7 @@ procedure main(args)
    local l, f, t, cookies
 
    opts := options(args, "-over! -i: -form:* -type: -o: -k: -q! -t+ -r+ -p: -d: -a: -f: -e: -l! -n: _
-                         -head! -sslnv! -help! -c! -skip! -agent: -while! -close! -x:* -nz!")
+                         -head! -nsslv! -help! -c! -skip! -agent: -while! -close! -x:* -nz!")
    if \opts["help"] then {
       write(FileStream.stderr, "Usage: geturl [URL]... [OPTIONS]")
       write(FileStream.stderr, "Retrieve URL(s)")
@@ -112,12 +112,13 @@ procedure main(args)
       write(FileStream.stderr, "  -close                  Use Connection: Close")
       write(FileStream.stderr, "  -agent STRING           Set user agent field")
       write(FileStream.stderr, "  -head                   Do an HTTP HEAD")
-      write(FileStream.stderr, "  -sslnv                  Don't verify SSL certificates")
+      write(FileStream.stderr, "  -nsslv                  Don't verify SSL certificates")
       write(FileStream.stderr, "  -n FILE                 Append to the given partial file")
       write(FileStream.stderr, "  -k FILE                 Load cookies from file")
       write(FileStream.stderr, "  -skip                   Skip over any existing files")
       write(FileStream.stderr, "  -over                   Overwrite any existing files")
       write(FileStream.stderr, "  -x HEADER:VALUE         Set extra HTTP header; multiple uses allowed")
+      write(FileStream.stderr, "  -nz                     Don't use gzip compression")
       write(FileStream.stderr, "  -help                   Help message")
       write(FileStream.stderr, "URL may contain range expansions eg {1-2+8-11}")
       exit(1)
@@ -130,7 +131,7 @@ procedure main(args)
    hc.set_timeout(\opts["t"] * 1000)
    hc.set_retries(\opts["r"])
    hc.set_user_agent(\opts["agent"])
-   if \opts["sslnv"] then
+   if \opts["nsslv"] then
       hc.set_ssl_verify(&no)
 
    if \opts["c"] then
