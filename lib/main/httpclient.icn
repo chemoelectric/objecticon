@@ -9,8 +9,7 @@ import util,
    net,
    io,
    ipl.base64,
-   ipl.strings,
-   ipl.streams
+   ipl.strings
 
 #
 # Little helper class to store cookie details
@@ -101,7 +100,8 @@ class HttpClient(NetClient)
       cookies,
       abort_flag,
       gzip_flag,
-      inflater_stream
+      inflater_stream,
+      inflater_err
 
    #
    # Set the http version to use; by default "1.1"
@@ -878,7 +878,7 @@ class HttpClient(NetClient)
          i := inflater_stream.get_exit_info().param
          inflater_stream := &null
          if i ~= 0 then
-            return error("Inflater stream returned non-zero exit status (" || i || ")")
+            return error("Inflater stream returned non-zero exit status (" || i || ") errout=" || image(inflater_err.str()))
       }
       return
    end
@@ -897,7 +897,8 @@ class HttpClient(NetClient)
          trim(map(response.get_first_header("content-encoding"))) == ("gzip" | "x-gzip") &
          not endswith(map(response.get_filename()), ".gz" | ".tgz" | ".svgz" | ".gzip") then 
       {
-         inflater_stream := FilterOutputStream(request.data_stream, "gunzip", ["-c"],, get_null()) | fail
+         inflater_err := StringStream()
+         inflater_stream := FilterOutputStream(request.data_stream, "gunzip", ["-c"],, inflater_err) | fail
       }
       return
    end
