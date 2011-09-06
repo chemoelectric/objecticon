@@ -2155,7 +2155,8 @@ function io_DescStream_poll(l, timeout)
 
        nfds = ListBlk(l).size / 2;
 
-       MemProtect(ufds = realloc(ufds, nfds * sizeof(struct pollfd)));
+       if (nfds > 0)
+           MemProtect(ufds = realloc(ufds, nfds * sizeof(struct pollfd)));
 
        le = lgfirst(&ListBlk(l), &state);
        for (i = 0; i < nfds; ++i) {
