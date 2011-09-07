@@ -1162,6 +1162,7 @@ class ProgInputStream(SocketStream, BgProc)
    # Close the stream.  This waits for the child process to terminate.
    #
    public close()
+      shutdown(Shut.RD)
       cast(self,SocketStream).close()
       do_wait()
       return
@@ -1183,7 +1184,8 @@ class ProgInputStream(SocketStream, BgProc)
    public new(cmd, args, env, stdin, stderr)
       local l
       l := socketpair() | fail
-      pid := System.fork() | {
+      (l[1].shutdown(Shut.WR) &
+       pid := System.fork()) | {
          l[1].close()
          l[2].close()
          fail
@@ -1220,6 +1222,7 @@ class ProgOutputStream(SocketStream, BgProc)
    # Close the stream.  This waits for the child process to terminate.
    #
    public close()
+      shutdown(Shut.WR)
       cast(self,SocketStream).close()
       do_wait()
       return
@@ -1242,6 +1245,7 @@ class ProgOutputStream(SocketStream, BgProc)
       local l
       l := socketpair() | fail
       (l[2].dflag(DescOpt.CLOEXEC) &
+       l[2].shutdown(Shut.RD) &
        pid := System.fork()) | {
           l[1].close()
           l[2].close()
@@ -1314,6 +1318,30 @@ class FilterStreamBase(Stream, BgProc, HasUnderlyingStream, NoCopy)
          err_sink.fully_out(s)
    end
 
+   protected close_cin()
+      if \cin then {
+         cin.shutdown(Shut.RD)
+         cin.close()
+         cin := &null
+      }
+   end
+
+   protected close_cerr()
+      if \cerr then {
+         cerr.shutdown(Shut.RD)
+         cerr.close()
+         cerr := &null
+      }
+   end
+
+   protected close_cout()
+      if \cout then {
+         cout.shutdown(Shut.WR)
+         cout.close()
+         cout := &null
+      }
+   end
+
    protected setup(cmd, args, env, err_sink)
       local l
       self.err_sink := err_sink
@@ -1324,6 +1352,12 @@ class FilterStreamBase(Stream, BgProc, HasUnderlyingStream, NoCopy)
        l[4].dflag(DescOpt.CLOEXEC) &
        l[4].flag(FileOpt.NONBLOCK) & 
        l[5].flag(FileOpt.NONBLOCK) &
+       l[1].shutdown(Shut.WR) &
+       l[3].shutdown(Shut.WR) &
+       l[5].shutdown(Shut.WR) &
+       l[2].shutdown(Shut.RD) &
+       l[4].shutdown(Shut.RD) &
+       l[6].shutdown(Shut.RD) &
        pid := System.fork()) | {
           every (!l).close()
           fail
@@ -1371,18 +1405,16 @@ class FilterOutputStream(FilterStreamBase)
          case x of {
             cin: {
                t := cin.in(1048576) | fail
-               if /t then {
-                  cin.close()
-                  cin := &null
-               } else
+               if /t then
+                  close_cin()
+               else
                   sink.fully_out(t) | fail
             }
             cerr: {
                t := cerr.in(1048576) | fail
-               if /t then {
-                  cerr.close()
-                  cerr := &null
-               } else
+               if /t then
+                  close_cerr()
+               else
                   err_out(t) | fail
             }
             cout:
@@ -1398,18 +1430,16 @@ class FilterOutputStream(FilterStreamBase)
          case x of {
             cin: {
                t := cin.in(1048576) | fail
-               if /t then {
-                  cin.close()
-                  cin := &null
-               } else
+               if /t then
+                  close_cin()
+               else
                   sink.fully_out(t) | fail
             }
             cerr: {
                t := cerr.in(1048576) | fail
-               if /t then {
-                  cerr.close()
-                  cerr := &null
-               } else
+               if /t then
+                  close_cerr()
+               else
                   err_out(t) | fail
             }
          }
@@ -1424,11 +1454,10 @@ class FilterOutputStream(FilterStreamBase)
    #
    public close()
       local f
-      cout.close()
-      cout := &null
+      close_cout()
       flush_remaining() | (f := 1)
-      (\cin).close()
-      (\cerr).close()
+      close_cin()
+      close_cerr()
       if \close_underlying_flag then {
          sink.close() | (f := 1)
          /err_sink | (err_sink === sink) | err_sink.close() | (f := 1)
@@ -1480,8 +1509,7 @@ class FilterInputStream(FilterStreamBase)
                # The child has exited, but the data has yet to reach
                # the input pipes; close cout and go round again to
                # wait for input or hup on cin/cerr.
-               cout.close()
-               cout := &null
+               close_cout()
                next
             }
             fail
@@ -1489,18 +1517,15 @@ class FilterInputStream(FilterStreamBase)
          case x of {
             cin: {
                t := cin.in(1048576) | fail
-               if /t then {
-                  (\cout).close()
-                  cout := &null
-               }
+               if /t then
+                  close_cout()
                return t
             }
             cerr: {
                t := cerr.in(1048576) | fail
                if /t then {
-                  (\cout).close()
-                  cerr.close()
-                  cout := cerr := &null
+                  close_cout()
+                  close_cerr()
                } else
                   err_out(t) | fail
             }
@@ -1508,16 +1533,14 @@ class FilterInputStream(FilterStreamBase)
                if *buff = 0 then {
                   buff := source.in(1048576) | fail
                   if /buff then {
-                     cout.close()
-                     cout := &null
+                     close_cout()
                      next
                   }
                }
                i := cout.out(buff) | {
                   # Broken pipe; this is caused by the command exiting
                   # between the do_poll() and the out() call.
-                  cout.close()
-                  cout := &null
+                  close_cout()
                   next
                }
                buff := buff[i + 1:0]
@@ -1533,10 +1556,9 @@ class FilterInputStream(FilterStreamBase)
          case x of {
             cerr: {
                t := cerr.in(1048576) | fail
-               if /t then {
-                  cerr.close()
-                  cerr := &null
-               } else
+               if /t then
+                  close_cerr()
+               else
                   err_out(t) | fail
             }
             default:
@@ -1553,11 +1575,10 @@ class FilterInputStream(FilterStreamBase)
    #
    public close()
       local f
-      (\cout).close()
-      cin.close()
-      cin := cout := &null
+      close_cout()
+      close_cin()
       flush_cerr() | (f := 1)
-      (\cerr).close()
+      close_cerr()
       if \close_underlying_flag then {
          source.close() | (f := 1)
          /err_sink | err_sink.close() | (f := 1)
