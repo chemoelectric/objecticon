@@ -41,6 +41,11 @@ void synch_ipc()
  */
 void set_curpstate(struct progstate *p)
 {
+    struct p_frame *pf = get_current_user_frame_of(p->K_current);
+    /* Ensure that p can validly be made current, ie that one of its
+     * own procedures is current */
+    if (pf && pf->proc->program != p)
+        fatalerr(636, NULL);
     curr_pf->ipc = ipc;
     curpstate = p;
     k_current = p->K_current;
@@ -1254,8 +1259,9 @@ static void get_child_prog_result()
        ipc = failure_label;
        return;
     }
+    /* Could happen if two programs tried to monitor one another */
     if (!prog->event_queue_head)
-        syserr("Expected a prog event in the queue");
+        fatalerr(636, NULL);
 
     pop_from_prog_event_queue(prog, res);
 }

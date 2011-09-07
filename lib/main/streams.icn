@@ -899,6 +899,8 @@ end
 #
 procedure poll_in_test(v)
    local x
+   # Ignore OUT
+   v := iand(v, icom(Poll.OUT))
    # Succeed if either IN or HUP is set, but no other.
    x := iand(v, ior(Poll.IN,Poll.HUP))
    return x ~= 0 & x = v
@@ -909,6 +911,8 @@ end
 # a call to {out}.
 #
 procedure poll_out_test(v)
+   # Ignore IN
+   v := iand(v, icom(Poll.IN))
    # Succeed if OUT is set, but no other.
    return v = Poll.OUT
 end
@@ -1182,6 +1186,12 @@ class SocketStream(DescStream)
    public accept()
       return SocketStream(accept_impl(), READ_WRITE)
    end
+
+   #
+   # Perform a shutdown on the socket.
+   # @param how one of the constants in {Shut}
+   #
+   public defer shutdown(how)
 
    private defer accept_impl()
 
@@ -1517,6 +1527,89 @@ end
 $endif
 
 #
+# Base class for FilterOutputStream and FilterInputStream
+#
+class FilterStreamBase(Stream, BgProc, HasUnderlyingStream, NoCopy)
+   protected
+      err_sink,
+      cin,
+      cout,
+      cerr,
+      task
+
+   #
+   # Set a {Task} to use when polling the background task.
+   #
+   public set_task(t)
+      self.task := t
+      return self
+   end
+
+   protected do_poll()
+      local x, l, t
+      l := []
+      t := table()
+      if l |||:= [\cin, Poll.IN] then
+         t[cin] := 1
+      if l |||:= [\cerr, Poll.IN] then
+         t[cerr] := *l/2
+      if l |||:= [\cout, Poll.OUT] then
+         t[cout] := *l/2
+      if *l = 0 then
+         syserr("do_poll, but all descriptors closed")
+      x := (if /task then DescStream else task).poll(l) | fail
+      if poll_in_test(x[t[\cin]]) then
+         return cin
+      if poll_in_test(x[t[\cerr]]) then
+         return cerr
+      if poll_out_test(x[t[\cout]]) then
+         return cout
+      return error("child command i/o failed")
+   end
+
+   protected err_out(s)
+      return if /err_sink then 
+         FileStream.stderr.fully_out(s)
+      else 
+         err_sink.fully_out(s)
+   end
+
+   protected setup(cmd, args, env, err_sink)
+      local l
+      self.err_sink := err_sink
+      l := SocketStream.socketpair() | fail
+      (l |||:= SocketStream.socketpair() &
+       l |||:= SocketStream.socketpair() &
+       l[1].flag(FileOpt.NONBLOCK) & 
+       l[4].dflag(DescOpt.CLOEXEC) &
+       l[4].flag(FileOpt.NONBLOCK) & 
+       l[5].flag(FileOpt.NONBLOCK) &
+       pid := System.fork()) | {
+          every (!l).close()
+          fail
+       }
+      if pid > 0 then {
+         # Parent
+         cin := l[1]
+         cout := l[4]
+         cerr := l[5]
+         l[2].close()
+         l[3].close()
+         l[6].close()
+         return
+      } else {
+         # Child
+         l[2].dup2(FileStream.stdout) | stop(&why)
+         l[3].dup2(FileStream.stdin) | stop(&why)
+         l[6].dup2(FileStream.stderr) | stop(&why)
+         every (!l).close()
+         System.exec(cmd, args, env) | stop(&why)
+         syserr("Not reached")
+      }
+   end
+end
+
+#
 # This stream filters output written to it through a background
 # process and outputs the results to an arbitrary sink {Stream}.
 #
@@ -1526,52 +1619,80 @@ $endif
 # @ g := FilterOutputStream(r, "gzip", ["-c"])
 # @ g.write(s)
 #
-class FilterOutputStream(Stream, BgProc, HasUnderlyingStream, NoCopy)
+class FilterOutputStream(FilterStreamBase)
    private 
-      sink,
-      cin,
-      cout,
-      task
+      sink
    
-   #
-   # Set a {Task} to use when polling the background task.
-   #
-   public set_task(t)
-      self.task := t
-      return self
-   end
-
    public out(s)
       local x, t
       s := string(s) | runerr(103, s)
       repeat {
-         x := (if /task then DescStream else task).poll([cin, Poll.IN, cout, Poll.OUT]) | fail
-         if poll_in_test(x[1]) then {
-            t := cin.in(1048576) | fail
-            if /t then
-               return error("child command gave unexpected eof")
-            sink.fully_out(t) | fail
-         } else if poll_out_test(x[2]) then
-            return cout.out(s)
-         else
-            return error("child command i/o failed")
+         x := do_poll() | fail
+         case x of {
+            cin: {
+               t := cin.in(1048576) | fail
+               if /t then {
+                  cin.close()
+                  cin := &null
+               } else
+                  sink.fully_out(t) | fail
+            }
+            cerr: {
+               t := cerr.in(1048576) | fail
+               if /t then {
+                  cerr.close()
+                  cerr := &null
+               } else
+                  err_out(t) | fail
+            }
+            cout:
+               return cout.out(s)
+         }
       }
    end
 
-   #
-   # Close the stream.  This waits for the child process to terminate, flushing any remaining
-   # output to {sink}.  NB: {sink} is not closed unless the {set_close_underlying} has been
-   # set to {&yes}.
+   private flush_remaining()
+      local x, t
+      while \cin | \cerr do {
+         x := do_poll() | fail
+         case x of {
+            cin: {
+               t := cin.in(1048576) | fail
+               if /t then {
+                  cin.close()
+                  cin := &null
+               } else
+                  sink.fully_out(t) | fail
+            }
+            cerr: {
+               t := cerr.in(1048576) | fail
+               if /t then {
+                  cerr.close()
+                  cerr := &null
+               } else
+                  err_out(t) | fail
+            }
+         }
+      }
+      return
+   end
+
+   # Close the stream.  This waits for the child process to terminate,
+   # flushing any remaining output to {sink}.  NB: {sink} and
+   # {err_sink} are not closed unless the {set_close_underlying} has
+   # been set to {&yes}.
    #
    public close()
       local f
       cout.close()
-      cin.flag(,FileOpt.NONBLOCK) | (f := 1)
-      if /f then
-         cin.copy_to(sink) | (f := 1)
-      cin.close()
-      if \close_underlying_flag then
+      cout := &null
+      flush_remaining() | (f := 1)
+      (\cin).close()
+      (\cerr).close()
+      if \close_underlying_flag then {
          sink.close() | (f := 1)
+         /err_sink | (err_sink === sink) | err_sink.close() | (f := 1)
+      }
       do_wait()
       return /f
    end
@@ -1587,43 +1708,12 @@ class FilterOutputStream(Stream, BgProc, HasUnderlyingStream, NoCopy)
    # @param cmd the name of the command                                    
    # @param args the arg list                                              
    # @param env the env list                                               
-   # @param stderr optional standard error of the command; if "pipe" then
-   # @      stderr is sent to the same pipe as stdout.
-   public new(sink, cmd, args, env, stderr)
-      local l
+   # @param err_sink optional stream to send standard error to.  If omitted,
+   # @      goes to FileStream.stderr
+   public new(sink, cmd, args, env, err_sink)
       self.sink := sink
-      l := SocketStream.socketpair() | fail
-      (l |||:= SocketStream.socketpair() &
-       l[1].flag(FileOpt.NONBLOCK) & 
-       l[4].dflag(DescOpt.CLOEXEC) &
-       l[4].flag(FileOpt.NONBLOCK) & 
-       pid := System.fork()) | {
-          every (!l).close()
-          fail
-       }
-      if pid > 0 then {
-         # Parent
-         cin := l[1]
-         cout := l[4]
-         l[2].close()
-         l[3].close()
-         return
-      } else {
-         # Child
-         if \stderr then {
-            if stderr === "pipe" then
-               l[2].dup2(FileStream.stderr) | stop(&why)
-            else {
-               stderr.dup2(FileStream.stderr) | stop(&why)
-               stderr.close()
-            }
-         }
-         l[2].dup2(FileStream.stdout) | stop(&why)
-         l[3].dup2(FileStream.stdin) | stop(&why)
-         every (!l).close()
-         System.exec(cmd, args, env) | stop(&why)
-         syserr("Not reached")
-      }
+      setup(cmd, args, env, err_sink) | fail
+      return
    end
 end
 
@@ -1637,58 +1727,101 @@ end
 # @ # Reading from g will give the compressed value of the string s.
 # @ res := g.read_all()
 #
-class FilterInputStream(Stream, BgProc, HasUnderlyingStream, NoCopy)
+class FilterInputStream(FilterStreamBase)
    private 
       source,
-      cin,
-      cout,
-      buff,
-      task
-
-   #
-   # Set a {Task} to use when polling the background task.
-   #
-   public set_task(t)
-      self.task := t
-      return self
-   end
+      buff
 
    public in(n)
-      local x, i
-      if /cout then
-         return cin.in(n)
+      local x, i, t
       repeat {
-         x := (if /task then DescStream else task).poll([cin, Poll.IN, cout, Poll.OUT]) | fail
-         if poll_in_test(x[1]) then
-            return cin.in(n)
-         else if poll_out_test(x[2]) then {
-            if *buff = 0 then {
-               buff := source.in(1048576) | fail
-               if /buff then {
+         x := do_poll() | {
+            if \cout then {
+               # The child has exited, but the data has yet to reach
+               # the input pipes; close cout and go round again to
+               # wait for input or hup on cin/cerr.
+               cout.close()
+               cout := &null
+               next
+            }
+            fail
+         }
+         case x of {
+            cin: {
+               t := cin.in(1048576) | fail
+               if /t then {
+                  (\cout).close()
+                  cout := &null
+               }
+               return t
+            }
+            cerr: {
+               t := cerr.in(1048576) | fail
+               if /t then {
+                  (\cout).close()
+                  cerr.close()
+                  cout := cerr := &null
+               } else
+                  err_out(t) | fail
+            }
+            cout: {
+               if *buff = 0 then {
+                  buff := source.in(1048576) | fail
+                  if /buff then {
+                     cout.close()
+                     cout := &null
+                     next
+                  }
+               }
+               i := cout.out(buff) | {
+                  # Broken pipe; this is caused by the command exiting
+                  # between the do_poll() and the out() call.
                   cout.close()
                   cout := &null
-                  cin.flag(,FileOpt.NONBLOCK) | fail
-                  return cin.in(n)
+                  next
                }
+               buff := buff[i + 1:0]
             }
-            i := cout.out(buff) | fail
-            buff := buff[i + 1:0]
-         } else
-            return error("child command i/o failed")
+         }
       }
+   end
+
+   private flush_cerr()
+      local x, t
+      while \cerr do {
+         x := do_poll() | fail
+         case x of {
+            cerr: {
+               t := cerr.in(1048576) | fail
+               if /t then {
+                  cerr.close()
+                  cerr := &null
+               } else
+                  err_out(t) | fail
+            }
+            default:
+               syserr("Unexpected result from do_poll")
+         }
+      }
+      return
    end
 
    #
    # Close the stream.  This waits for the child process to terminate.
-   # NB: {source} is not closed unless the {set_close_underlying} has been
-   # set to {&yes}.
+   # NB: {source} and {err_sink} are not closed unless the
+   # {set_close_underlying} has been set to {&yes}.
    #
    public close()
       local f
       (\cout).close()
       cin.close()
-      if \close_underlying_flag then
+      cin := cout := &null
+      flush_cerr() | (f := 1)
+      (\cerr).close()
+      if \close_underlying_flag then {
          source.close() | (f := 1)
+         /err_sink | err_sink.close() | (f := 1)
+      }
       do_wait()
       return /f
    end
@@ -1704,44 +1837,13 @@ class FilterInputStream(Stream, BgProc, HasUnderlyingStream, NoCopy)
    # @param cmd the name of the command                                    
    # @param args the arg list                                              
    # @param env the env list                                               
-   # @param stderr optional standard error of the command; if "pipe" then
-   # @      stderr is sent to the same pipe as stdout.
-   public new(source, cmd, args, env, stderr)
-      local l
+   # @param err_sink optional stream to send standard error to.  If omitted,
+   # @      goes to FileStream.stderr
+   public new(source, cmd, args, env, err_sink)
       self.source := source
       self.buff := ""
-      l := SocketStream.socketpair() | fail
-      (l |||:= SocketStream.socketpair() &
-       l[1].flag(FileOpt.NONBLOCK) & 
-       l[4].dflag(DescOpt.CLOEXEC) &
-       l[4].flag(FileOpt.NONBLOCK) & 
-       pid := System.fork()) | {
-          every (!l).close()
-          fail
-       }
-      if pid > 0 then {
-         # Parent
-         cin := l[1]
-         cout := l[4]
-         l[2].close()
-         l[3].close()
-         return
-      } else {
-         # Child
-         if \stderr then {
-            if stderr === "pipe" then
-               l[2].dup2(FileStream.stderr) | stop(&why)
-            else {
-               stderr.dup2(FileStream.stderr) | stop(&why)
-               stderr.close()
-            }
-         }
-         l[2].dup2(FileStream.stdout) | stop(&why)
-         l[3].dup2(FileStream.stdin) | stop(&why)
-         every (!l).close()
-         System.exec(cmd, args, env) | stop(&why)
-         syserr("Not reached")
-      }
+      setup(cmd, args, env, err_sink) | fail
+      return
    end
 end
 

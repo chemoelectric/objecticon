@@ -125,6 +125,7 @@ struct errtab errtab[] = {
     {633, "given program not a child of this program"},
     {634, "class or constructor expected"},
     {635, "class, cast, object, constructor or record expected"},
+    {636, "invalid program monitoring sequence"},
    };
 
 

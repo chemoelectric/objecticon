@@ -1098,7 +1098,20 @@ int main(void)
 #endif
 
     end_class();
-        start_class("Lock", "LOCK_", 0, 0);
+
+    start_class("Shut", "SHUT_", 0, 0);
+#ifdef SHUT_RD
+        Const(SHUT_RD)
+#endif
+#ifdef SHUT_WR
+        Const(SHUT_WR)
+#endif
+#ifdef SHUT_RDWR
+        Const(SHUT_RDWR)
+#endif
+    end_class();
+
+    start_class("Lock", "LOCK_", 0, 0);
 
 #ifdef LOCK_SH
         Const(LOCK_SH)

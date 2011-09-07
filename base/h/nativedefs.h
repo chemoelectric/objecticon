@@ -190,6 +190,7 @@ NativeDef(io.SocketStream,connect,io_SocketStream_connect)
 NativeDef(io.SocketStream,in,io_SocketStream_in)
 NativeDef(io.SocketStream,listen,io_SocketStream_listen)
 NativeDef(io.SocketStream,out,io_SocketStream_out)
+NativeDef(io.SocketStream,shutdown,io_SocketStream_shutdown)
 NativeDef(io.SocketStream,socket_impl,io_SocketStream_socket_impl)
 NativeDef(io.SocketStream,socketpair_impl,io_SocketStream_socketpair_impl)
 #endif

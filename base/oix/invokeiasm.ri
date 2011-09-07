@@ -47,7 +47,7 @@ static word ensure_class_initialized_impl_code[] = {
    Initialized,
    Op_Fail,
 };
-#passthru CustomProc(ensure_class_initialized_impl,ensure_class_initialized_impl_code,0,0,0,3,0,1,"ensure_class_initialized_impl")
+#passthru CustomProc(ensure_class_initialized_impl,ensure_class_initialized_impl_code,0,0,0,0,3,0,1,"ensure_class_initialized_impl")
 static word construct_object_impl_code[] = {
    Op_Custom,
    (word)ensure_class_initialized,
@@ -72,7 +72,7 @@ static word construct_object_impl_code[] = {
    Initialized,
    Op_Fail,
 };
-#passthru CustomProc(construct_object_impl,construct_object_impl_code,0,0,1,2,0,0,"construct_object_impl")
+#passthru CustomProc(construct_object_impl,construct_object_impl_code,0,0,0,1,2,0,0,"construct_object_impl")
 static word *construct_object_impl_NewFail = &construct_object_impl_code[15];
 static word construct_object0_impl_code[] = {
    Op_Custom,
@@ -89,13 +89,13 @@ static word construct_object0_impl_code[] = {
    Op_Tmp,
    1,
 };
-#passthru CustomProc(construct_object0_impl,construct_object0_impl_code,0,0,0,2,0,0,"construct_object0_impl")
+#passthru CustomProc(construct_object0_impl,construct_object0_impl_code,0,0,0,0,2,0,0,"construct_object0_impl")
 static word generate_arg_code[] = {
    Op_Return,
    Op_Tmp,
    0,
 };
-#passthru CustomProc(generate_arg,generate_arg_code,0,0,0,1,0,0,"generate_arg")
+#passthru CustomProc(generate_arg,generate_arg_code,0,0,0,0,1,0,0,"generate_arg")
 static word initialize_class_and_repeat_code[] = {
    Op_Custom,
    (word)ensure_class_initialized,
@@ -103,7 +103,7 @@ static word initialize_class_and_repeat_code[] = {
    0,
    Op_PopRepeat,
 };
-#passthru CustomProc(initialize_class_and_repeat,initialize_class_and_repeat_code,0,0,0,1,0,0,"initialize_class_and_repeat")
+#passthru CustomProc(initialize_class_and_repeat,initialize_class_and_repeat_code,0,0,0,0,1,0,0,"initialize_class_and_repeat")
 static word get_impl_code[] = {
    Op_Custom,
    (word)simple_access,
@@ -118,7 +118,7 @@ static word get_impl_code[] = {
    Op_Tmp,
    2,
 };
-#passthru CustomProc(get_impl,get_impl_code,0,0,0,3,0,0,"get_impl")
+#passthru CustomProc(get_impl,get_impl_code,0,0,0,0,3,0,0,"get_impl")
 static word getf_impl_code[] = {
    Op_Custom,
    (word)simple_access,
@@ -136,7 +136,7 @@ static word getf_impl_code[] = {
    (word)handle_access_failure,
    Op_CFail,
 };
-#passthru CustomProc(getf_impl,getf_impl_code,0,0,0,3,0,0,"getf_impl")
+#passthru CustomProc(getf_impl,getf_impl_code,0,0,0,0,3,0,0,"getf_impl")
 static word getq_impl_code[] = {
    Op_Custom,
    (word)simple_access,
@@ -152,7 +152,7 @@ static word getq_impl_code[] = {
    2,
    Op_CFail,
 };
-#passthru CustomProc(getq_impl,getq_impl_code,0,0,0,3,0,0,"getq_impl")
+#passthru CustomProc(getq_impl,getq_impl_code,0,0,0,0,3,0,0,"getq_impl")
 static word lang_Class_ensure_initialized_impl_code[] = {
    Op_Custom,
    (word)ensure_class_initialized,
@@ -162,7 +162,7 @@ static word lang_Class_ensure_initialized_impl_code[] = {
    Op_Tmp,
    0,
 };
-#passthru CustomProc(lang_Class_ensure_initialized_impl,lang_Class_ensure_initialized_impl_code,0,0,0,1,0,0,"lang_Class_ensure_initialized_impl")
+#passthru CustomProc(lang_Class_ensure_initialized_impl,lang_Class_ensure_initialized_impl_code,0,0,0,0,1,0,0,"lang_Class_ensure_initialized_impl")
 static word lang_Class_create_raw_impl_code[] = {
    Op_Custom,
    (word)ensure_class_initialized,
@@ -178,4 +178,4 @@ static word lang_Class_create_raw_impl_code[] = {
    Op_Tmp,
    1,
 };
-#passthru CustomProc(lang_Class_create_raw_impl,lang_Class_create_raw_impl_code,0,0,0,2,0,0,"lang_Class_create_raw_impl")
+#passthru CustomProc(lang_Class_create_raw_impl,lang_Class_create_raw_impl_code,0,0,0,0,2,0,0,"lang_Class_create_raw_impl")

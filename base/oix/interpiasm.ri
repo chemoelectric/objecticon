@@ -17,7 +17,7 @@ static word coact_impl_code[] = {
    4,
    Op_CFail,
 };
-#passthru CustomProc(coact_impl,coact_impl_code,0,0,0,5,0,0,"coact_impl")
+#passthru CustomProc(coact_impl,coact_impl_code,0,0,0,0,5,0,0,"coact_impl")
 static word lang_Prog_get_event_impl_impl_code[] = {
    Op_Custom,
    (word)activate_child_prog,
@@ -35,7 +35,7 @@ static word lang_Prog_get_event_impl_impl_code[] = {
    1,
    Op_CFail,
 };
-#passthru CustomProc(lang_Prog_get_event_impl_impl,lang_Prog_get_event_impl_impl_code,0,0,0,2,0,0,"lang_Prog_get_event_impl_impl")
+#passthru CustomProc(lang_Prog_get_event_impl_impl,lang_Prog_get_event_impl_impl_code,0,0,0,0,2,0,0,"lang_Prog_get_event_impl_impl")
 static word activate_handler_impl_code[] = {
    Op_Custom,
    (word)coact_handler,
@@ -43,4 +43,4 @@ static word activate_handler_impl_code[] = {
    Op_Custom,
    (word)fatalerr_139,
 };
-#passthru CustomProc(activate_handler_impl,activate_handler_impl_code,0,0,0,0,0,0,"activate_handler_impl")
+#passthru CustomProc(activate_handler_impl,activate_handler_impl_code,0,0,0,0,0,0,0,"activate_handler_impl")

@@ -861,13 +861,18 @@ struct p_frame *alc_p_frame(struct p_proc *pb, struct frame_vars *fvars)
 {
     struct p_frame *p;
     char *t;
-    int i, size;
+    int i, size, lsize, ndesc;
     size = sizeof(struct p_frame) +
         pb->nclo * sizeof(struct frame *) +
         pb->ntmp * sizeof(struct descrip) +
         pb->nlab * sizeof(word *) + 
         pb->nmark * sizeof(struct frame *);
-    p = malloc(size);
+    ndesc = pb->ndynam + pb->nparam;
+    lsize = sizeof(struct frame_vars) + (ndesc - 1) * sizeof(struct descrip);
+    if (!fvars && !pb->creates && ndesc)
+        p = malloc(size + lsize);
+    else
+        p = malloc(size);
     if (!p)
         return 0;
     p->size = size;
@@ -898,6 +903,7 @@ struct p_frame *alc_p_frame(struct p_proc *pb, struct frame_vars *fvars)
         p->mark = (struct frame **)t;
         for (i = 0; i < pb->nmark; ++i)
             p->mark[i] = 0;
+        t += pb->nmark * sizeof(struct frame *);
     } else
         p->mark = 0;
     p->type = P_Frame;
@@ -912,26 +918,24 @@ struct p_frame *alc_p_frame(struct p_proc *pb, struct frame_vars *fvars)
     p->caller = 0;
     if (fvars)
         ++fvars->refcnt;
-    else {
-        int ndesc = pb->ndynam + pb->nparam;
-        if (ndesc) {
-            int lsize = sizeof(struct frame_vars) + (ndesc - 1) * sizeof(struct descrip);
+    else if (ndesc) {
+        if (pb->creates) {
             fvars = malloc(lsize);
             if (!fvars) {
                 free(p);
                 return 0;
             }
-            curpstate->stackcurr += lsize;
-            fvars->size = lsize;
-            fvars->creator = curpstate;
-            for (i = 0; i < ndesc; ++i)
-                fvars->desc[i] = nulldesc;
-            fvars->desc_end = fvars->desc + ndesc;
-            fvars->refcnt = 1;
-            fvars->seen = 0;
-        } else
-            fvars = 0;
-    }
+        } else  /* !fvars && ndesc && !pb->creates => frame_vars allocated above */
+            fvars = (struct frame_vars *)t;
+        curpstate->stackcurr += lsize;
+        fvars->size = lsize;
+        fvars->creator = curpstate;
+        for (i = 0; i < ndesc; ++i)
+            fvars->desc[i] = nulldesc;
+        fvars->desc_end = fvars->desc + ndesc;
+        fvars->refcnt = 1;
+        fvars->seen = 0;
+    } /* else just leave fvars == 0 */
     curpstate->stackcurr += size;
     p->creator = curpstate;
     p->fvars = fvars;
@@ -987,14 +991,22 @@ void free_frame(struct frame *f)
         case P_Frame: {
             struct frame_vars *l = ((struct p_frame *)f)->fvars;
             f->creator->stackcurr -= f->size;
-            free(f);
-            if (l) {
-                --l->refcnt;
-                if (l->refcnt == 0) {
+            if (((struct p_frame *)f)->proc->creates) {
+                if (l) {
+                    --l->refcnt;
+                    if (l->refcnt == 0) {
+                        l->creator->stackcurr -= l->size;
+                        free(l);
+                    }
+                }
+            } else {
+                if (l) {
+                    if (l->refcnt != 1)
+                        syserr("Expected refcnt==1 in free_frame");
                     l->creator->stackcurr -= l->size;
-                    free(l);
                 }
             }
+            free(f);
             break;
         }
         default:

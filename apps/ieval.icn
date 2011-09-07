@@ -21,7 +21,7 @@ procedure compile(prog, tf, links)
    local p, ss
    ss := StringStream()
    use {
-      p := FilterOutputStream(ss, "oit", ["-s", "-l", "2", "-o", tf, "-"] ||| links,, "pipe"),
+      p := FilterOutputStream(ss, "oit", ["-s", "-l", "2", "-o", tf, "-"] ||| links,, ss),
       p.write(prog)
    } | fail
    p.get_exit_info().param = 0 | return error(ss.str())

@@ -65,6 +65,7 @@ static void labout(int i, char *desc);
 static void	flushcode	(void);
 static void	lemitproc       (void);
 static void	lemitcode       (void);
+static int      has_op_create(void);
 static void	patchrefs       (void);
 static void     lemitcon(struct centry *ce);
 static void outword(word oword);
@@ -644,6 +645,23 @@ static void patchrefs()
     }
 }
 
+static int has_op_create()
+{
+    int i, j;
+    for (i = 0; i <= hi_chunk; ++i) {
+        struct chunk *chunk;
+        chunk = chunks[i];
+        if (!chunk)
+            continue;
+        for (j = 0; j < chunk->n_inst; ++j) {
+            struct ir *ir = chunk->inst[j];
+            if (ir->op == Ir_Create)
+                return 1;
+        }
+    }
+    return 0;
+}
+
 static void lemitcode()
 {
     int i, j;
@@ -932,7 +950,7 @@ static void lemitproc()
     struct lentry *le;
     struct centry *ce;
 
-    size = (18*WordSize) + WordSize * (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics);
+    size = (19*WordSize) + WordSize * (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics);
     if (loclevel > 1)
         size += 2*WordSize * (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics);
 
@@ -950,6 +968,7 @@ static void lemitproc()
     outwordx(0, "   Field");
     outsdescrip(ce, "   Procedure name (%s)", p);
     outwordx(curr_lfunc->pc + size, "   Entry point");
+    outwordx(has_op_create(), "   Creates flag");
     outwordx(curr_lfunc->ndynamic, "   Num dynamic");
     outwordx(curr_lfunc->nstatics, "   Num static");
     outwordx(nstatics, "   First static");

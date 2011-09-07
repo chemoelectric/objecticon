@@ -1870,6 +1870,19 @@ function io_SocketStream_close(self)
    }
 end
 
+function io_SocketStream_shutdown(self, how)
+   if !cnv:C_integer(how) then
+      runerr(101, how)
+   body {
+       GetSelfFd();
+       if (shutdown(self_fd, how) < 0) {
+           errno2why();
+           fail;
+       }
+       return nulldesc;
+   }
+end
+
 function io_SocketStream_socketpair_impl(typ)
    if !def:C_integer(typ, SOCK_STREAM) then
       runerr(101, typ)
@@ -2305,7 +2318,8 @@ function io_DescStream_poll(l, timeout)
 
        nfds = ListBlk(l).size / 2;
 
-       MemProtect(ufds = realloc(ufds, nfds * sizeof(struct pollfd)));
+       if (nfds > 0)
+           MemProtect(ufds = realloc(ufds, nfds * sizeof(struct pollfd)));
 
        le = lgfirst(&ListBlk(l), &state);
        for (i = 0; i < nfds; ++i) {

@@ -116,7 +116,7 @@ procedure print_table(t)
    }
    every row := !t do {
       every col := 1 to *t[1] - 1 do
-         every writes(left(row[col], 4 + widths[col]))
+         writes(left(row[col], 4 + widths[col]))
       write(row[-1])
    }
 end
@@ -133,6 +133,7 @@ procedure dir(c)
          every f := lang.Class.get_field_names(c) do
             put(t, [f, 
                     lang.Class.get_name(lang.Class.get_field_defining_class(c, f)), 
+                    right(lang.Class.get_field_index(c, f), *lang.Class.get_n_fields(c)),
                     flags_string(lang.Class.get_field_flags(c, f))])
          print_table(isort(t, map1))
       }
