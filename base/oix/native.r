@@ -1798,6 +1798,19 @@ function io_SocketStream_close(self)
    }
 end
 
+function io_SocketStream_shutdown(self, how)
+   if !cnv:C_integer(how) then
+      runerr(101, how)
+   body {
+       GetSelfFd();
+       if (shutdown(self_fd, how) < 0) {
+           errno2why();
+           fail;
+       }
+       return nulldesc;
+   }
+end
+
 function io_SocketStream_socketpair_impl(typ)
    if !def:C_integer(typ, SOCK_STREAM) then
       runerr(101, typ)

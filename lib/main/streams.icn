@@ -1039,6 +1039,12 @@ class SocketStream(DescStream)
       return SocketStream(accept_impl(), READ_WRITE)
    end
 
+   #
+   # Perform a shutdown on the socket.
+   # @param how one of the constants in {Shut}
+   #
+   public defer shutdown(how)
+
    private defer accept_impl()
 
    public defer out(s)
