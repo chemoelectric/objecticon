@@ -861,7 +861,7 @@ procedure use(e1, e2, e3)
    local f, r
    f := @e1 | fail
    /e3 := create f.close()
-   r := @e2 | {
+   /e2 | (r := @e2) | {
       @e3
       fail
    }
@@ -1516,7 +1516,7 @@ class FilterInputStream(FilterStreamBase)
          }
          case x of {
             cin: {
-               t := cin.in(1048576) | fail
+               t := cin.in(n) | fail
                if /t then
                   close_cout()
                return t

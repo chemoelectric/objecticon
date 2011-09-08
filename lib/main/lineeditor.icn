@@ -1,6 +1,6 @@
 package io
 
-import undo, util, lang, ipl.streams(get_null)
+import undo, util, lang, ipl.strings, ipl.streams
 
 class LineEditorStream(LineBasedStream)
    package
@@ -92,16 +92,14 @@ class LineEditorStream(LineBasedStream)
    end
 
    private static run_stty(params[])
-      local f, ss
-      ss := StringStream()
-      use {
-         f := ProgInputStream("stty", params,,, get_null()),
-         f.copy_to(ss)
-      } | fail
+      local f, out, err
+      out := StringStream()
+      err := StringStream()
+      use { f := FilterOutputStream(out, "stty", ["-F", "/dev/tty"] ||| params,, err) } | fail
       return if f.get_exit_info().param = 0 then
-         ss.str()
+         out.str()
       else
-         error("stty returned non-zero status")
+         error(trim_stderr(err.str()))
    end
 
    private static read_terminfo_escape()
@@ -131,10 +129,7 @@ class LineEditorStream(LineBasedStream)
    private static parse_terminfo(f)
       local desc, t, s, k, v
       t := table()
-      repeat {
-         s := f.read_line() | fail
-         if /s then
-            break
+      every s := separate_lines(f) do {
          s ? {
             if any('#') then 
                next
@@ -169,17 +164,16 @@ class LineEditorStream(LineBasedStream)
    end
 
    public static read_terminfo(name)
-      local f, params, t
+      local f, params, out, err
       params := ["-L"]
       put(params, \name)
-      use {
-         f := ProgInputStream("infocmp", params,,, get_null()),
-         t := parse_terminfo(f)
-      } | fail
+      out := StringStream()
+      err := StringStream()
+      use { f := FilterOutputStream(out, "infocmp", params,, err) } | fail
       return if f.get_exit_info().param = 0 then
-         t
+         parse_terminfo(out.str())
       else
-         error("infocmp returned non-zero status")
+         error(trim_stderr(err.str()))
    end
 
    protected read_line_impl()
