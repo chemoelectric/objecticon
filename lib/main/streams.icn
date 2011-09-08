@@ -3,7 +3,8 @@ package io
 import
    util(error, check_flag),
    lang(NoCopy),
-   posix(System)
+   posix(System),
+   ipl.strings(replace)
 
 #
 # This is the top-level stream class.  It is not instantiated
@@ -1275,6 +1276,7 @@ end
 #
 class FilterStreamBase(Stream, BgProc, HasUnderlyingStream, NoCopy)
    protected
+      cmd,
       err_sink,
       cin,
       cout,
@@ -1287,6 +1289,21 @@ class FilterStreamBase(Stream, BgProc, HasUnderlyingStream, NoCopy)
    public set_task(t)
       self.task := t
       return self
+   end
+
+   # Convenient function to check that the command exited
+   # successfully.  If it did, this function returns, otherwise it
+   # fails and sets {&why} appropriately, based on the exit code and
+   # stderr output.  The error sink must be set to a {StringStream} to
+   # use this function.
+   #
+   public succeeded()
+      local i
+      is(err_sink, StringStream) | runerr("Must use a StringStream as error sink with check_result()")
+      i := get_exit_info().param | runerr("You can only call succeeded() after close()")
+      if i ~= 0 then
+         return error(cmd || " failed (exit code " || i || "): " || trim(replace(err_sink.str(), "\n", " ")))
+      return
    end
 
    protected do_poll()
@@ -1309,13 +1326,6 @@ class FilterStreamBase(Stream, BgProc, HasUnderlyingStream, NoCopy)
       if poll_out_test(x[t[\cout]]) then
          return cout
       return error("child command i/o failed")
-   end
-
-   protected err_out(s)
-      return if /err_sink then 
-         FileStream.stderr.fully_out(s)
-      else 
-         err_sink.fully_out(s)
    end
 
    protected close_cin()
@@ -1344,6 +1354,8 @@ class FilterStreamBase(Stream, BgProc, HasUnderlyingStream, NoCopy)
 
    protected setup(cmd, args, env, err_sink)
       local l
+      self.cmd := cmd
+      /err_sink := StringStream()
       self.err_sink := err_sink
       l := SocketStream.socketpair() | fail
       (l |||:= SocketStream.socketpair() &
@@ -1415,7 +1427,7 @@ class FilterOutputStream(FilterStreamBase)
                if /t then
                   close_cerr()
                else
-                  err_out(t) | fail
+                  err_sink.fully_out(t) | fail
             }
             cout:
                return cout.out(s)
@@ -1440,7 +1452,7 @@ class FilterOutputStream(FilterStreamBase)
                if /t then
                   close_cerr()
                else
-                  err_out(t) | fail
+                  err_sink.fully_out(t) | fail
             }
          }
       }
@@ -1460,7 +1472,7 @@ class FilterOutputStream(FilterStreamBase)
       close_cerr()
       if \close_underlying_flag then {
          sink.close() | (f := 1)
-         /err_sink | (err_sink === sink) | err_sink.close() | (f := 1)
+         (err_sink === (sink | FileStream.stderr)) | err_sink.close() | (f := 1)
       }
       do_wait()
       return /f
@@ -1473,13 +1485,16 @@ class FilterOutputStream(FilterStreamBase)
    #
    # Create a new instance.
    #
-   # @param sink the {Stream} to which data is output from the command                                    
+   # @param sink the {Stream} to which data is output from the command.
+   # @      Defaults to a {NullStream}.
    # @param cmd the name of the command                                    
    # @param args the arg list                                              
    # @param env the env list                                               
    # @param err_sink optional stream to send standard error to.  If omitted,
-   # @      goes to FileStream.stderr
+   # @      defaults to a {StringStream}, which can then be used together
+   # @      with {succeeded()} to check the command's exit status.
    public new(sink, cmd, args, env, err_sink)
+      /sink := NullStream()
       self.sink := sink
       setup(cmd, args, env, err_sink) | fail
       return
@@ -1527,7 +1542,7 @@ class FilterInputStream(FilterStreamBase)
                   close_cout()
                   close_cerr()
                } else
-                  err_out(t) | fail
+                  err_sink.fully_out(t) | fail
             }
             cout: {
                if *buff = 0 then {
@@ -1549,6 +1564,16 @@ class FilterInputStream(FilterStreamBase)
       }
    end
 
+   #
+   # Exchange the handling of the command's stdout and stderr, so that
+   # stdout goes to the stderr sink and stderr is read by calling
+   # {in()}
+   #
+   public swap_outputs()
+      cin :=: cerr
+      return self
+   end
+
    private flush_cerr()
       local x, t
       while \cerr do {
@@ -1559,7 +1584,7 @@ class FilterInputStream(FilterStreamBase)
                if /t then
                   close_cerr()
                else
-                  err_out(t) | fail
+                  err_sink.fully_out(t) | fail
             }
             default:
                syserr("Unexpected result from do_poll")
@@ -1581,7 +1606,7 @@ class FilterInputStream(FilterStreamBase)
       close_cerr()
       if \close_underlying_flag then {
          source.close() | (f := 1)
-         /err_sink | err_sink.close() | (f := 1)
+         (err_sink === FileStream.stderr) | err_sink.close() | (f := 1)
       }
       do_wait()
       return /f
@@ -1594,13 +1619,16 @@ class FilterInputStream(FilterStreamBase)
    #
    # Create a new instance.
    #
-   # @param source the {Stream} from which data is given to the command                                    
+   # @param source the {Stream} from which data is given to the command.
+   # @      Defaults to a {NullStream}.
    # @param cmd the name of the command                                    
    # @param args the arg list                                              
    # @param env the env list                                               
    # @param err_sink optional stream to send standard error to.  If omitted,
-   # @      goes to FileStream.stderr
+   # @      defaults to a {StringStream}, which can then be used together
+   # @      with {succeeded()} to check the command's exit status.
    public new(source, cmd, args, env, err_sink)
+      /source := NullStream()
       self.source := source
       self.buff := ""
       setup(cmd, args, env, err_sink) | fail

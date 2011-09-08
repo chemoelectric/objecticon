@@ -1,6 +1,6 @@
 package io
 
-import undo, util, lang, ipl.strings, ipl.streams
+import undo, util, lang, ipl.strings
 
 class LineEditorStream(LineBasedStream)
    package
@@ -92,14 +92,11 @@ class LineEditorStream(LineBasedStream)
    end
 
    private static run_stty(params[])
-      local f, out, err
+      local f, out
       out := StringStream()
-      err := StringStream()
-      use { f := FilterOutputStream(out, "stty", ["-F", "/dev/tty"] ||| params,, err) } | fail
-      return if f.get_exit_info().param = 0 then
-         out.str()
-      else
-         error(trim_stderr(err.str()))
+      use { f := FilterOutputStream(out, "stty", ["-F", "/dev/tty"] ||| params) } | fail
+      f.succeeded() | fail
+      return out.str()
    end
 
    private static read_terminfo_escape()
@@ -164,16 +161,13 @@ class LineEditorStream(LineBasedStream)
    end
 
    public static read_terminfo(name)
-      local f, params, out, err
+      local f, params, out
       params := ["-L"]
       put(params, \name)
       out := StringStream()
-      err := StringStream()
-      use { f := FilterOutputStream(out, "infocmp", params,, err) } | fail
-      return if f.get_exit_info().param = 0 then
-         parse_terminfo(out.str())
-      else
-         error(trim_stderr(err.str()))
+      use { f := FilterOutputStream(out, "infocmp", params) } | fail
+      f.succeeded() | fail
+      return parse_terminfo(out.str())
    end
 
    protected read_line_impl()

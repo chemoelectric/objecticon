@@ -17,8 +17,8 @@
 package ipl.archives
 
 import
-   io(BufferStream, FileOpt, FileStream, LineFilterStream,
-      ProgInputStream),
+   io(BufferStream, FileOpt, FileStream, FilterInputStream,
+      LineFilterStream),
    ipl.strings(endswith)
 
 # iszip(zname) succeeds if the named file appears to be a ZIP format
@@ -33,9 +33,25 @@ procedure iszip(fname)
 end
 
 #
+# {Stream} for reading the entries in an archive, one per line of the stream.
+#
+class ArchiveListerStream(LineFilterStream)
+   private
+      f
+
+   public succeeded()
+      return f.succeeded()
+   end
+
+   protected new(prog, args)
+      return cast(self,LineFilterStream).new(BufferStream(f := FilterInputStream(, prog, args)))
+   end
+end
+
+#
 # {Stream} for reading the entries in a zip archive, one per line of the stream.
 #
-class ZipDirStream(LineFilterStream)
+class ZipDirStream(ArchiveListerStream)
    protected gen()
       local s, marker
       every 1 to 3 do
@@ -50,7 +66,7 @@ class ZipDirStream(LineFilterStream)
    end
 
    public new(zname)
-      return cast(self,LineFilterStream).new(BufferStream(ProgInputStream("unzip", ["-l", zname])))
+      return cast(self,ArchiveListerStream).new("unzip", ["-l", zname])
    end
 end
 
@@ -59,13 +75,13 @@ end
 # and fname are valid.
 #
 procedure zipfile(zname, fname)		
-   return ProgInputStream("unzip", ["-p", zname, fname])
+   return FilterInputStream(, "unzip", ["-p", zname, fname])
 end
 
 #
 # {Stream} for reading the entries in a rar archive, one per line of the stream.
 #
-class RarDirStream(LineFilterStream)
+class RarDirStream(ArchiveListerStream)
    protected gen()
       local s, marker
       every 1 to 8 do
@@ -81,7 +97,7 @@ class RarDirStream(LineFilterStream)
    end
 
    public new(rname)
-      return cast(self,LineFilterStream).new(BufferStream(ProgInputStream("unrar", ["v", "-c-", rname])))
+      return cast(self,ArchiveListerStream).new("unrar", ["v", "-c-", rname])
    end
 end
 
@@ -90,12 +106,11 @@ end
 # and fname are valid.
 #
 procedure rarfile(rname, fname)		
-   return ProgInputStream("unrar", ["p", "-inul", rname, fname])
+   return FilterInputStream(, "unrar", ["p", "-inul", rname, fname])
 end
 
-procedure tartype(tname)
-   local s
-   s := map(tname)
+procedure tartype(s)
+   s := map(s)
    if endswith(s, ".tar.gz" | ".tgz") then
       return "z"
    if endswith(s, ".tar.bz2") then
@@ -104,10 +119,16 @@ procedure tartype(tname)
 end
 
 #
-# Return a {Stream} for reading the entries in a tar archive, one per line of the stream.
+# {Stream} for reading the entries in a tar archive, one per line of the stream.
 #
-procedure tarlist(tname)
-   return BufferStream(ProgInputStream("tar", ["tf" || tartype(tname), tname]))
+class TarDirStream(ArchiveListerStream)
+   protected gen()
+      suspend |next_line()
+   end
+
+   public new(tname)
+      return cast(self,ArchiveListerStream).new("tar", ["tf" || tartype(tname), tname])
+   end
 end
 
 # tarfile(tname, fname) returns a pipe from which the file fname
@@ -115,5 +136,5 @@ end
 # and fname are valid.
 #
 procedure tarfile(tname, fname)		
-   return ProgInputStream("tar", ["xOf" || tartype(tname), tname, fname])
+   return FilterInputStream(, "tar", ["xOf" || tartype(tname), tname, fname])
 end

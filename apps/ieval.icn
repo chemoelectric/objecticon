@@ -1,4 +1,4 @@
-import io, lang, util, ipl.options, ipl.lists, ipl.streams
+import io, lang, util, ipl.options, ipl.lists
 
 procedure create_prog(imps, links)
    local tf, prog
@@ -18,16 +18,13 @@ end\n"
 end
 
 procedure compile(prog, tf, links)
-   local p, ss
-   ss := StringStream()
+   local p
    use {
-      p := FilterOutputStream(ss, "oit", ["-s", "-l", "2", "-o", tf, "-"] ||| links,, ss),
+      p := FilterOutputStream(, "oit", ["-s", "-l", "2", "-o", tf, "-"] ||| links),
       p.write(prog)
    } | fail
-   return if p.get_exit_info().param = 0 then
-      lang.Prog.load(tf)
-   else
-      error(trim_stderr(ss.str()))
+   p.succeeded() | fail
+   return lang.Prog.load(tf)
 end
 
 procedure main(a)
