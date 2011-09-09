@@ -1329,7 +1329,7 @@ class FilterStreamBase(Stream, BgProc, HasUnderlyingStream, NoCopy)
       if l |||:= [\cout, Poll.OUT] then
          t[cout] := *l/2
       if *l = 0 then
-         syserr("do_poll, but all descriptors closed")
+         runerr("i/o on closed stream")
       x := (if /task then DescStream else task).poll(l) | fail
       if poll_in_test(x[t[\cin]]) then
          return cin
