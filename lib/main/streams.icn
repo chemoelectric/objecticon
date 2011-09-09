@@ -3,7 +3,7 @@ package io
 import
    util(error, check_flag),
    lang(NoCopy),
-   posix(System),
+   posix(ExitInfo, System),
    ipl.strings(replace)
 
 #
@@ -1298,12 +1298,24 @@ class FilterStreamBase(Stream, BgProc, HasUnderlyingStream, NoCopy)
    # use this function.
    #
    public succeeded()
-      local i
+      local x
       is(err_sink, StringStream) | runerr("Must use a StringStream as error sink with check_result()")
-      i := get_exit_info().param | runerr("You can only call succeeded() after close()")
-      if i ~= 0 then
-         return error(cmd || " failed (exit code " || i || "): " || trim(replace(err_sink.str(), "\n", " ")))
-      return
+      x := get_exit_info() | runerr("You can only call succeeded() after close()")
+      case x.reason of {
+         ExitInfo.EXITED: {
+            if x.param = 0 then
+               return
+            return error(cmd || " exited with status " || x.param || ": " || trim(replace(err_sink.str(), "\n", " ")))
+         }
+         ExitInfo.STOPPED:
+            return error(cmd || " stopped with signal " || x.param)
+         ExitInfo.TERMINATED:
+            return error(cmd || " terminated with signal " || x.param)
+         ExitInfo.COREDUMP:
+            return error(cmd || " dumped core with signal " || x.param)
+         default:
+            return error(cmd || " finished for unknown reason " || x.reason || "; param " || x.param)
+      }
    end
 
    protected do_poll()
@@ -1472,7 +1484,7 @@ class FilterOutputStream(FilterStreamBase)
       close_cerr()
       if \close_underlying_flag then {
          sink.close() | (f := 1)
-         (err_sink === (sink | FileStream.stderr)) | err_sink.close() | (f := 1)
+         (err_sink === sink) | err_sink.close() | (f := 1)
       }
       do_wait()
       return /f
@@ -1606,7 +1618,7 @@ class FilterInputStream(FilterStreamBase)
       close_cerr()
       if \close_underlying_flag then {
          source.close() | (f := 1)
-         (err_sink === FileStream.stderr) | err_sink.close() | (f := 1)
+         err_sink.close() | (f := 1)
       }
       do_wait()
       return /f
