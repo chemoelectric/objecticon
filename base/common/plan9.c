@@ -150,27 +150,6 @@ void *bsearch(const void *key, const void *base,
     return 0;
 }
 
-int system(const char *command)
-{
-    int pid, rc;
-    Waitmsg *w;
-    switch (pid = rfork(RFPROC|RFFDG)) {
-        case 0: {
-            execl("/bin/rc", "rc", "-c", command, 0);
-            exits("execl returned in system()");
-            return -1;
-        }
-        case -1:
-            return -1;
-    }
-    w = waitforpid(pid);
-    if (!w)
-        return -1;
-    rc = (w->msg[0] == 0 ? 0 : 1);
-    free(w);
-    return rc;
-}
-
 int gethostname(char *name, size_t len)
 {
     int n, fd;
@@ -268,67 +247,6 @@ int rename(const char *from, const char *to)
 int unlink(const char *path)
 {
     return 0;
-}
-
-
-/*
- * status not yet collected for processes that have exited
- */
-typedef struct Waited Waited;
-struct Waited {
-   Waitmsg*        msg;
-   Waited* next;
-};
-static Waited *wd;
-
-static Waitmsg *lookpid(int pid)
-{
-    Waited **wl, *w;
-    Waitmsg *msg;
-
-    for(wl = &wd; (w = *wl) != nil; wl = &w->next)
-        if(pid <= 0 || w->msg->pid == pid){
-            msg = w->msg;
-            *wl = w->next;
-            free(w);
-            return msg;
-        }
-    return 0;
-}
-
-static void addpid(Waitmsg *msg)
-{
-    Waited *w;
-
-    w = malloc(sizeof(*w));
-    if(w == nil){
-        /* lost it; what can we do? */
-        free(msg);
-        return;
-    }
-    w->msg = msg;
-    w->next = wd;
-    wd = w;
-}
-
-Waitmsg *waitforpid(int pid)
-{
-    Waitmsg *w;
-    
-    w = lookpid(pid);
-    if (w)
-        return w;
-
-    for (;;) {
-        w = wait();
-        if (!w)
-            return 0;
-        if (pid == -1 || w->pid == pid)
-            break;
-        addpid(w);
-    }
-
-    return w;
 }
 
 /* Adapted from libc/9sys/ctime.c */

@@ -59,7 +59,6 @@ int strncasecmp(char *s1, char *s2, int n);
 #endif
 
 #if PLAN9
-Waitmsg *waitforpid(int pid);
 void readtzinfo(struct tzinfo *tz);
 #endif
 
