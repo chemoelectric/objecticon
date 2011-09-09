@@ -97,10 +97,23 @@ end
 
 # Provides info about an exited process
 class ExitInfo()
+   public static const
+      STOPPED,
+      COREDUMP,
+      TERMINATED,
+      EXITED
+
    public const
       pid,
       reason,
       param
+
+   private static init()
+      STOPPED := "stopped"
+      COREDUMP := "coredump"
+      TERMINATED := "terminated"
+      EXITED := "exited"
+   end
 
    package new(pid, reason, param)
       self.pid := pid
