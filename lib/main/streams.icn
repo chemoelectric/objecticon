@@ -537,6 +537,7 @@ class BufferStream(Stream, HasUnderlyingStream)
    #
    public flush()
       local s
+      \wbuff | runerr(219, self)
       if *wbuff = 0 then
          return
       s := ""
@@ -553,6 +554,7 @@ class BufferStream(Stream, HasUnderlyingStream)
    # stream, this call has no effect.
    #
    public unbuff()
+      \rbuff | runerr(219, self)
       if *rbuff > 0 & \rpos & other.can(SEEK) then {
          other.seek(rpos) | fail
          rbuff := ""
@@ -575,6 +577,7 @@ class BufferStream(Stream, HasUnderlyingStream)
       flush() | (f := 1)
       if \close_underlying_flag then
          other.close() | (f := 1)
+      rbuff := wbuff := &null
       return /f
    end
 
@@ -1194,6 +1197,11 @@ class SocketStream(DescStream)
    #
    public defer shutdown(how)
 
+   #
+   # Return a list of numerical addresses for the given host.
+   #
+   public static defer dns_query(host)
+
    private defer accept_impl()
 
    public defer out(s)
@@ -1283,7 +1291,9 @@ class BgProc()
       exit_info
 
    protected do_wait()
-      exit_info := System.wait(pid)
+      exit_info := System.wait(\pid) | fail
+      pid := &null
+      return
    end
 
    #
@@ -1297,7 +1307,7 @@ class BgProc()
    # Return process id of the child process
    #
    public get_pid()
-      return .pid
+      return .\pid
    end
 end
 
@@ -1559,8 +1569,8 @@ class FilterStreamBase(Stream, BgProc, HasUnderlyingStream, NoCopy)
    #
    public succeeded()
       local x
-      is(err_sink, StringStream) | runerr("Must use a StringStream as error sink with check_result()")
-      x := get_exit_info() | runerr("You can only call succeeded() after close()")
+      is(err_sink, StringStream) | runerr("Must use a StringStream as error sink with check_result()", err_sink)
+      x := get_exit_info() | runerr("You can only call succeeded() after close()", self)
       case x.reason of {
          ExitInfo.EXITED: {
             if x.param = 0 then
@@ -1589,7 +1599,7 @@ class FilterStreamBase(Stream, BgProc, HasUnderlyingStream, NoCopy)
       if l |||:= [\cout, Poll.OUT] then
          t[cout] := *l/2
       if *l = 0 then
-         syserr("do_poll, but all descriptors closed")
+         runerr(219, self)
       x := (if /task then DescStream else task).poll(l) | fail
       if poll_in_test(x[t[\cin]]) then
          return cin
@@ -1738,6 +1748,7 @@ class FilterOutputStream(FilterStreamBase)
    #
    public close()
       local f
+      \pid | runerr(219, self)
       close_cout()
       flush_remaining() | (f := 1)
       close_cin()
@@ -1872,6 +1883,7 @@ class FilterInputStream(FilterStreamBase)
    #
    public close()
       local f
+      \pid | runerr(219, self)
       close_cout()
       close_cin()
       flush_cerr() | (f := 1)
@@ -1881,6 +1893,7 @@ class FilterInputStream(FilterStreamBase)
          err_sink.close() | (f := 1)
       }
       do_wait()
+      self.buff := &null
       return /f
    end
 
