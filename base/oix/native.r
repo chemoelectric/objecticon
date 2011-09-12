@@ -1867,38 +1867,38 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
 #endif
     if (strncmp(s, "inet:", 5) == 0) {
         static struct sockaddr_in iss;
-        char *t = s + 5, host[128], *port;
+        struct addrinfo hints;
+        struct addrinfo *res;
+        int error;
+        char *t = s + 5, buf[128], *host, *port;
 
-        if (strlen(t) >= sizeof(host)) {
+        if (strlen(t) >= sizeof(buf)) {
             LitWhy("Name too long");
             return 0;
         }
-        strcpy(host, t);
-        port = strchr(host, ':');
+        strcpy(buf, t);
+        port = strchr(buf, ':');
         if (!port) {
             LitWhy("Bad socket address format");
             return 0;
         }
         *port++ = 0;
 
-        if (strcmp(host, "INADDR_ANY") == 0) {
-            iss.sin_addr.s_addr = INADDR_ANY;
-            iss.sin_family = AF_INET;
-            iss.sin_port = htons((u_short)atoi(port));
-        } else {
-            static struct addrinfo hints;
-            struct addrinfo *res;
-            int error;
-            hints.ai_family = AF_INET;
-            hints.ai_socktype = SOCK_STREAM;
-            error = getaddrinfo(host, port, &hints, &res);
-            if (error != 0) {
-                getaddrinfo_error2why(error);
-                return 0;
-            }
-            memcpy(&iss, res->ai_addr, res->ai_addrlen);
-            freeaddrinfo(res);
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_family = AF_INET;
+        hints.ai_socktype = SOCK_STREAM;
+        if (strcmp(buf, "INADDR_ANY") == 0) {
+            hints.ai_flags = AI_PASSIVE;
+            host = 0;
+        } else
+            host = buf;
+        error = getaddrinfo(host, port, &hints, &res);
+        if (error != 0) {
+            getaddrinfo_error2why(error);
+            return 0;
         }
+        memcpy(&iss, res->ai_addr, res->ai_addrlen);
+        freeaddrinfo(res);
         *len = sizeof(iss);
         return (struct sockaddr *)&iss;
     }
@@ -1911,10 +1911,11 @@ function io_SocketStream_dns_query(host)
    if !cnv:C_string(host) then
       runerr(103, host)
    body {
-      static struct addrinfo hints;
+      struct addrinfo hints;
       struct addrinfo *res, *t;
       tended struct descrip tmp, result;
       int error, n;
+      memset(&hints, 0, sizeof(hints));
       hints.ai_family = AF_INET;
       hints.ai_socktype = SOCK_STREAM;
       error = getaddrinfo(host, NULL, &hints, &res);
@@ -1928,7 +1929,7 @@ function io_SocketStream_dns_query(host)
 
       create_list(n, &result);
       for (t = res; t; t = t->ai_next) {
-          static char buf[INET_ADDRSTRLEN];
+          char buf[INET_ADDRSTRLEN];
           struct sockaddr_in *p = (struct sockaddr_in *)t->ai_addr;
           inet_ntop(AF_INET, &p->sin_addr, buf, sizeof(buf));
           cstr2string(buf, &tmp);
