@@ -343,7 +343,6 @@ int     order           (dptr dp);
 
 struct progstate *alcprog(long icodesize);
 
-struct sockaddr *parse_sockaddr(char *s, int *size);
 int get_proc_kind(struct b_proc *bp);
 
 void call_trace(struct p_frame *pf);

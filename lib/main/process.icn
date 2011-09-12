@@ -10,77 +10,18 @@ package util
 
 import lang, posix, io
 
-#
-# This class is a convenient way of creating a sub-process in a program,
+# This class is a convenient way of creating a sub-process in a
+# program.  It sets up a socket connection between the parent and
+# child processes to allow them to communicate in a bi-directional
+# fashion.
 #
 class Process()
    private readable
       pid,
-      p
-
-   #
-   # Called by the parent process to start the child
-   #
-   public start()
-      pid := System.fork() | fail
-      if pid = 0 then {
-         run()
-         exit(0)
-      }
-      return
-   end
-   
-   #
-   # Called by the parent.  The method waits for the child to terminate.  The
-   # child process will no longer exist after this call, so it resets pid to
-   # &null.
-   #
-   public join()
-      System.wait(\pid) | fail
-      pid := &null
-      return
-   end
-
-   #
-   # Called by the parent to kill the child.  Then the {join} method is invoked.
-   #
-   public stop()
-      System.kill(\pid, Signal.SIGTERM) | fail
-      join() | fail
-      return
-   end
-
-   #
-   # Invoke the code of the process.
-   #
-   public run()
-      p()
-   end
-
-   #
-   # Set the procedure to run as the body of the process; alternatively
-   # subclass and override the {run()} method.
-   #
-   public set_proc(p)
-      self.p := p
-      return self
-   end
-
-   public new(p)
-      self.p := p
-      return
-   end
-end
-
-# This class is similar to {Process}, but it sets up a socket
-# connection between the parent and child processes to allow them to
-# communicate in a bi-directional fashion.
-#
-class CommProcess()
-   private readable
-      pid,
       p,
-      sock
+      sock,
+      task,
+      exit_info
 
    #
    # Called by the parent process to start the child
@@ -88,16 +29,25 @@ class CommProcess()
    public start()
       local l
       l := SocketStream.socketpair() | fail
-      pid := System.fork() | fail
-      if pid = 0 then {
+      (l[1].dflag(DescOpt.CLOEXEC) &
+       l[2].dflag(DescOpt.CLOEXEC) &
+       pid := System.fork()) | {
+          l[1].close()
+          l[2].close()
+          fail
+       }
+      if pid > 0 then {
+         # Parent
+         sock := l[2]
+         l[1].close()
+      } else {
+         # Child
+         task := &null
          sock := l[1]
          l[2].close()
          run()
-         sock.close()
+         close_sock()
          exit(0)
-      } else {
-         sock := l[2]
-         l[1].close()
       }
    end
 
@@ -139,17 +89,46 @@ class CommProcess()
    #
    public poll(t)
       local r
-      r := DescStream.poll([sock, Poll.IN], t) | fail
+      r := do_poll(Poll.IN, t) | fail
       if /r then
          return error("Timeout")
-      return receive()
+      if poll_in_test(r[1]) then
+         return receive()
+      return error("i/o error on reading from socket")
+   end
+
+   #
+   # Do a {poll} on the socket.
+   #
+   protected do_poll(for, timeout)
+      return (if /task then DescStream else task).poll([sock, for], timeout)
    end
 
    #
    # Return the socket
    #
    public get_sock()
-      return .sock
+      return .\sock
+   end
+
+   #
+   # Return {ExitInfo} of the child process
+   #
+   public get_exit_info()
+      return .\exit_info
+   end
+
+   #
+   # Return process id of the child process
+   #
+   public get_pid()
+      return .\pid
+   end
+
+   private close_sock()
+      sock.shutdown(Shut.RDWR)
+      sock.close()
+      sock := &null
    end
 
    #
@@ -158,8 +137,8 @@ class CommProcess()
    # &null and closes the socket.
    #
    public join()
-      System.wait(\pid) | fail
-      sock.close()
+      exit_info := System.wait(\pid) | fail
+      close_sock()
       pid := &null
       return
    end
@@ -176,8 +155,17 @@ class CommProcess()
    #
    # Invoke the code of the process.
    #
-   public run()
-      p()
+   protected run()
+      return p()
+   end
+
+   #
+   # Set a {Task} to use when polling the connection.  This allows
+   # several clients to be used together in a non-blocking fashion.
+   #
+   public set_task(t)
+      self.task := t
+      return self
    end
 
    #

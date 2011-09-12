@@ -67,45 +67,63 @@ class NetClient(Connectable)
       return (if /task then DescStream else task).poll([connection, for], timeout)
    end
 
+   private do_dns_query()
+      local p, v
+      if /task then
+         return SocketStream.dns_query(server)
+      p := BgDns(server).
+         set_task(task)
+      p.start()
+      v := p.poll()
+      p.join()
+      return if type(v) == "list" then
+         v
+      else
+         error(v)
+   end
+
    #
    # Open the connection.
    #
    protected open()
-      local r, domain, addr
+      local r, domain, addr, msg_addr
+
+      close()
+      fire(CONNECTING_EVENT)
 
       if \server then {
          domain := ProtocolFormat.INET
-         addr := "inet:" || server || ":" || port
+         addr := "inet:" || do_dns_query()[1] || ":" || port | fail
+         msg_addr := server || " (" || addr || ")"
       } else if \path then {
          domain := ProtocolFormat.UNIX
-         addr := "unix:" || path
+         msg_addr := addr := "unix:" || path
       } else
          runerr("Neither server/port nor path set")
 
-      close()
       connection := SocketStream.socket(domain)
       connection.flag(FileOpt.NONBLOCK) | {
          close()
          return error("Couldn't put socket in non-blocking mode: " || &why)
       }
-      fire(CONNECTING_EVENT)
+
       connection.connect(addr) | {
          if errno() = Errno.EINPROGRESS then {
             r := do_poll(Poll.OUT) | {
                close()
-               return error("Couldn't connect to " || addr || ": " || &why)
+               return error("Couldn't connect to " || msg_addr || ": " || &why)
             }
             if /r then {
                close()
-               return error("Couldn't connect to " || addr || " (timeout)")
+               return error("Couldn't connect to " || msg_addr || ": timeout")
             }
             poll_out_test(r[1]) | {
                close()
-               return error("Couldn't connect to " || addr || " (socket error)")
+               return error("Couldn't connect to " || msg_addr || ": socket error")
             }
          } else {
             close()
-            return error("Couldn't connect to " || addr || ": " || &why)
+            return error("Couldn't connect to " || msg_addr || ": " || &why)
          }
       }
       if \ssl_flag then {
@@ -298,6 +316,23 @@ class NetClient(Connectable)
       cast(self,Connectable).new()
       sbuff := ""
       ssl_verify_flag := &yes
+      return
+   end
+end
+
+class BgDns(Process)
+   private host
+
+   public run()
+      local r
+      if r := SocketStream.dns_query(host) then
+         send(r)
+      else
+         send(&why)
+   end
+
+   public new(host)
+      self.host := host
       return
    end
 end

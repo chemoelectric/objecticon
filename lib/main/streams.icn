@@ -1049,6 +1049,11 @@ class SocketStream(DescStream)
    #
    public defer shutdown(how)
 
+   #
+   # Return a list of numerical addresses for the given host.
+   #
+   public static defer dns_query(host)
+
    private defer accept_impl()
 
    public defer out(s)
@@ -1138,8 +1143,9 @@ class BgProc()
       exit_info
 
    protected do_wait()
-      exit_info := System.wait(\pid)
+      exit_info := System.wait(\pid) | fail
       pid := &null
+      return
    end
 
    #

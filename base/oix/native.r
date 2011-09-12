@@ -1841,7 +1841,15 @@ function io_SocketStream_socketpair_impl(typ)
    }
 end
 
-struct sockaddr *parse_sockaddr(char *s, int *len)
+static void getaddrinfo_error2why(int error)
+{
+    if (error == EAI_SYSTEM)
+        errno2why();
+    else
+        whyf("Name lookup failure: %s", gai_strerror(error));
+}
+
+static struct sockaddr *parse_sockaddr(char *s, int *len)
 {
 #if UNIX
     if (strncmp(s, "unix:", 5) == 0) {
@@ -1859,38 +1867,37 @@ struct sockaddr *parse_sockaddr(char *s, int *len)
 #endif
     if (strncmp(s, "inet:", 5) == 0) {
         static struct sockaddr_in iss;
-        char *t = s + 5, host[128], *p;
-        int port;
-        struct hostent *hp;
+        char *t = s + 5, host[128], *port;
 
         if (strlen(t) >= sizeof(host)) {
             LitWhy("Name too long");
             return 0;
         }
         strcpy(host, t);
-        p = strchr(host, ':');
-        if (!p) {
+        port = strchr(host, ':');
+        if (!port) {
             LitWhy("Bad socket address format");
             return 0;
         }
-        *p++ = 0;
-        port = atoi(p);
-        iss.sin_family = AF_INET;
-        iss.sin_port = htons((u_short)port);
-        if (strcmp(host, "INADDR_ANY") == 0)
+        *port++ = 0;
+
+        if (strcmp(host, "INADDR_ANY") == 0) {
             iss.sin_addr.s_addr = INADDR_ANY;
-        else {
-            if ((hp = gethostbyname(host)) == NULL) {
-                switch (h_errno) {
-                    case HOST_NOT_FOUND: LitWhy("Name lookup failure: host not found"); break;
-                    case NO_DATA: LitWhy("Name lookup failure: no IP address for host") ; break;
-                    case NO_RECOVERY: LitWhy("Name lookup failure: name server error") ; break;
-                    case TRY_AGAIN: LitWhy("Name lookup failure: temporary name server error") ; break;
-                    default: LitWhy("Name lookup failure") ; break;
-                }
+            iss.sin_family = AF_INET;
+            iss.sin_port = htons((u_short)atoi(port));
+        } else {
+            static struct addrinfo hints;
+            struct addrinfo *res;
+            int error;
+            hints.ai_family = AF_INET;
+            hints.ai_socktype = SOCK_STREAM;
+            error = getaddrinfo(host, port, &hints, &res);
+            if (error != 0) {
+                getaddrinfo_error2why(error);
                 return 0;
             }
-            memcpy(&iss.sin_addr, hp->h_addr, hp->h_length);
+            memcpy(&iss, res->ai_addr, res->ai_addrlen);
+            freeaddrinfo(res);
         }
         *len = sizeof(iss);
         return (struct sockaddr *)&iss;
@@ -1899,6 +1906,38 @@ struct sockaddr *parse_sockaddr(char *s, int *len)
     LitWhy("Bad socket address format");
     return 0;
 }
+
+function io_SocketStream_dns_query(host)
+   if !cnv:C_string(host) then
+      runerr(103, host)
+   body {
+      static struct addrinfo hints;
+      struct addrinfo *res, *t;
+      tended struct descrip tmp, result;
+      int error, n;
+      hints.ai_family = AF_INET;
+      hints.ai_socktype = SOCK_STREAM;
+      error = getaddrinfo(host, NULL, &hints, &res);
+      if (error != 0) {
+          getaddrinfo_error2why(error);
+          fail;
+      }
+      n = 0;
+      for (t = res; t; t = t->ai_next)
+          ++n;
+
+      create_list(n, &result);
+      for (t = res; t; t = t->ai_next) {
+          static char buf[INET_ADDRSTRLEN];
+          struct sockaddr_in *p = (struct sockaddr_in *)t->ai_addr;
+          inet_ntop(AF_INET, &p->sin_addr, buf, sizeof(buf));
+          cstr2string(buf, &tmp);
+          list_put(&result, &tmp);
+      }
+      freeaddrinfo(res);
+      return result;
+   }
+end
 
 function io_SocketStream_connect(self, addr)
    if !cnv:C_string(addr) then
