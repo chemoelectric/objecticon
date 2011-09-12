@@ -10,11 +10,11 @@ The RTL/C portion of the library is contained in a shared library `objecticonipc
 
 = Creating a sub-process =
 
-Creating a sub-process is easy, and can be done with the `System.fork()` function, or alternatively using the `lang.Process` class, which is just a wrapper around `System.fork()` and some other common commands.  Here is a simple use of the `Process` class.
+Creating a sub-process is easy, and can be done with the `System.fork()` function, or alternatively using the `util.Process` class, which is just a wrapper around `System.fork()` and some other common commands.  Here is a simple use of the `Process` class.
 {{{
 import
    io(write),
-   lang(Process)
+   util(Process)
 
 class Child(Process)
    public run()
@@ -49,7 +49,7 @@ This is very straightforward, but for things become more complicated when the ch
 {{{
 import
    io(write),
-   lang(Process)
+   util(Process)
 
 global var
 
@@ -90,7 +90,7 @@ To solve this problem, shared memory can be used.  Here is the same program, but
 import
    io(write),
    ipc(Shm),
-   lang(Process)
+   util(Process)
 
 global var
 
@@ -150,7 +150,7 @@ Here is an example in which a child process creates some information and puts in
 import
    io(write),
    ipc(Sem, Shm),
-   lang(Process)
+   util(Process)
 
 global var, sem1, sem2
 
@@ -211,7 +211,7 @@ The third IPC facility is message queues.  One process adds messages to the queu
 import
    io(write),
    ipc(Msg),
-   lang(Process)
+   util(Process)
 
 global mq
 
