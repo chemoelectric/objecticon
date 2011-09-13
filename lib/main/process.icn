@@ -15,19 +15,17 @@ import lang, posix, io
 # child processes to allow them to communicate in a bi-directional
 # fashion.
 #
-class Process()
+class Process(HasTask, HasBgProc)
    private readable
-      pid,
       p,
-      sock,
-      task,
-      exit_info
+      sock
 
    #
    # Called by the parent process to start the child
    #
    public start()
       local l
+      /pid | runerr("start() called out of sequence", self)
       l := SocketStream.socketpair() | fail
       (l[1].dflag(DescOpt.CLOEXEC) &
        l[2].dflag(DescOpt.CLOEXEC) &
@@ -101,7 +99,7 @@ class Process()
    # Do a {poll} on the socket.
    #
    protected do_poll(for, timeout)
-      return (if /task then DescStream else task).poll([sock, for], timeout)
+      return choose_poll([sock, for], timeout)
    end
 
    #
@@ -109,20 +107,6 @@ class Process()
    #
    public get_sock()
       return .\sock
-   end
-
-   #
-   # Return {ExitInfo} of the child process
-   #
-   public get_exit_info()
-      return .\exit_info
-   end
-
-   #
-   # Return process id of the child process
-   #
-   public get_pid()
-      return .\pid
    end
 
    private close_sock()
@@ -137,9 +121,8 @@ class Process()
    # &null and closes the socket.
    #
    public join()
-      exit_info := System.wait(\pid) | fail
+      do_wait() | fail
       close_sock()
-      pid := &null
       return
    end
 
@@ -157,15 +140,6 @@ class Process()
    #
    protected run()
       return p()
-   end
-
-   #
-   # Set a {Task} to use when polling the connection.  This allows
-   # several clients to be used together in a non-blocking fashion.
-   #
-   public set_task(t)
-      self.task := t
-      return self
    end
 
    #
