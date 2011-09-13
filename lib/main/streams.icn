@@ -1145,7 +1145,8 @@ class HasBgProc()
    # Wait for the child to exit, setting {exit_info}.
    #
    protected do_wait()
-      exit_info := System.wait(\pid) | fail
+      \pid | runerr("do_wait() called out of sequence", self)
+      exit_info := System.wait(pid) | fail
       pid := &null
       return
    end
