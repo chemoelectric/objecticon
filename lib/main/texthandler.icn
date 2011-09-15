@@ -20,9 +20,7 @@ class TextHandler(TypeHandler)
       res := ""
       data ? repeat {
          res ||:= tab(find("\r\n") | 0)
-         if pos(0) then
-            break
-         move(2)
+         move(2) | break
          res ||:= "\n"
       }
 
@@ -43,9 +41,7 @@ class TextHandler(TypeHandler)
       res := ""
       obj ? repeat {
          res ||:= tab(upto('\n') | 0)
-         if pos(0) then
-            break
-         move(1)
+         move(1) | break
          res ||:= "\r\n"
       }
       return res

@@ -432,9 +432,7 @@ class HtmlParser()
       s ? {
          repeat {
             res ||:= tab(upto('&') | 0)
-            if pos(0) then
-               break
-            ="&"
+            ="&" | break
             if ="#" then {
                if i := (256 > integer(tab(many(&digits)))) then {
                   if \utf8_flag then

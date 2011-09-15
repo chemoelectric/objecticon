@@ -353,16 +353,11 @@ class Decode()
 
    private decode_string(s)
       local r
-      static esc
-      initial
-         esc := ~'\\'
       r := ""
       s ? {
          repeat {
-            r ||:= tab(many(esc))
-            if pos(0) then
-               return r
-            move(1)
+            r ||:= tab(many(~'\\'))
+            move(1) | return r
             r ||:= char(move(3))
          }
       }

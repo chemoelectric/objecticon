@@ -1031,9 +1031,7 @@ class XmlParser(Connectable)
    private parse_content(parent, circle)
       local s, o, c2, ref, cd
 
-      repeat {
-         if pos(0) then
-            break
+      until pos(0) do {
          if any('&') then {
             if match("&#") then
                parent.add_string(parse_char_ref(1))

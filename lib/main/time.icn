@@ -256,9 +256,7 @@ class Time()
       s := ""
       repeat {
          s ||:= tab(upto('\'') | 0)
-         if pos(0) then
-            break
-         move(1)
+         move(1) | break
          # Two ''s in a row mean a single ' and press on - else break.
          s ||:= ="'" | break
       }

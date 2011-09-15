@@ -178,9 +178,7 @@ class Format()
       s ? {
          repeat {
             res ||:= string(tab(upto('\\') | 0))
-            if pos(0) then
-               break
-            move(1)
+            move(1) | break
             res ||:= string(if any('01234567') then
                char(iand("8r" || tab(max_many('01234567', 3)), 8r377))
             else if ="x" then

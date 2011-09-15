@@ -199,9 +199,7 @@ procedure get_extended_image(W, img)
       s1 := s2 := ""
       spec ? repeat {
          tab(many('; '))
-         if pos(0) then 
-            break
-         s1 ||:= move(1) | return error("Invalid extended image (bad palette spec)")
+         s1 ||:= move(1) | break
          ="=" | return error("Invalid extended image (expected '=' in spec)")
          spec := tab(upto(';') | 0)
          s2 ||:= palette_key_ex(W, palette, spec) | 

@@ -99,11 +99,8 @@ procedure xml_escape(s, c)
    r := ""
    s ? repeat {
       r ||:= tab(upto(c) | 0)
-
-      if pos(0) then
-         break
-
-      r ||:= case string(ch := move(1)) of {
+      ch := move(1) | break
+      r ||:= case string(ch) of {
          "&" : "&amp;"
          "<" : "&lt;"
          ">" : "&gt;"
