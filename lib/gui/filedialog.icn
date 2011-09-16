@@ -271,10 +271,10 @@ class FileDialog(Dialog)
       local pat, pats
       pats := []
       filter.get_contents() ? {
-         until pos(0) do {
+         repeat {
             pat := tab(upto(';') | 0)
             put(pats, wild_pat(pat))
-            move(1)
+            move(1) | break
          }
       }
       return pats

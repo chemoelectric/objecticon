@@ -869,9 +869,7 @@ class UnixFileSystem(FileSystem)
          if *t = 0 then
             t := "."
          suspend t
-         if pos(0) then
-            break
-         move(1)
+         move(1) | break
       }
    end
 end
@@ -995,9 +993,7 @@ class WindowsFileSystem(FileSystem)
          if *t = 0 then
             t := "."
          suspend t
-         if pos(0) then
-            break
-         move(1)
+         move(1) | break
       }
    end
 end

@@ -316,9 +316,7 @@ class URL()
       s := map(s, "+", " ") 
       s ? repeat {
          res ||:= tab(upto('%') | 0)
-         if pos(0) then
-            break
-         move(1)
+         move(1) | break
          res ||:= char("16r" || move(2))
       }
       return res

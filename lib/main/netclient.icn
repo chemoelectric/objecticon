@@ -19,7 +19,7 @@ $endif
 # Common base class for a client class which holds a connection to a
 # server and communicates using CRLF-terminated lines.
 #
-class NetClient(Connectable)
+class NetClient(Connectable, HasTask)
    public static const 
       CONNECTING_EVENT,
       CONNECTED_EVENT,
@@ -44,7 +44,6 @@ class NetClient(Connectable)
       server,
       port,
       timeout,
-      task,
       ssl_flag,
       ssl_verify_flag
 
@@ -86,7 +85,7 @@ $ifdef _PLAN9
    end
 $else
    private do_poll(for)
-      return (if /task then DescStream else task).poll([connection, for], timeout)
+      return choose_poll([connection, for], timeout)
    end
 
    private do_dns_query()
@@ -327,15 +326,6 @@ $endif
    protected is_open()
       if \self.connection then
          return
-   end
-
-   #
-   # Set a {Task} to use when polling the connection.  This allows
-   # several clients to be used together in a non-blocking fashion.
-   #
-   public set_task(t)
-      self.task := t
-      return self
    end
 
    #

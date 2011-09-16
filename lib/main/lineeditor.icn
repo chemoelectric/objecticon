@@ -1,6 +1,6 @@
 package io
 
-import undo, util, lang, ipl.strings
+import undo, util, lang, ipl.strings, ipl.streams(get_null)
 
 class LineEditorStream(LineBasedStream)
    package
@@ -92,12 +92,17 @@ class LineEditorStream(LineBasedStream)
    end
 
    private static run_stty(params[])
-      local f, out
-      out := StringStream()
-      use { f := FilterOutputStream(out, "stty", ["-F", "/dev/tty"] ||| params) } | fail
-      f.succeeded() | fail
-      return out.str()
-   end
+      local f, ss                   
+      ss := StringStream()          
+      use {                         
+         f := ProgInputStream("stty", params,,, get_null()),
+         f.copy_to(ss)                                      
+      } | fail                                              
+      return if f.get_exit_info().param = 0 then            
+         ss.str()                                           
+      else                                                  
+         error("stty returned non-zero status")             
+   end                                                      
 
    private static read_terminfo_escape()
       local ch, v
