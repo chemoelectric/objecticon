@@ -307,7 +307,10 @@ procedure process_one(a)
             post_stream.close() | stop("Couldn't close post_stream: ", &why)
          data_stream.close() | stop("Couldn't close data_stream: ", &why)
          if \opts["c"] then {
-            Files.copy(tmp_file, "/dev/stdout") | stop("Couldn't copy ", tmp_file, " to stdout: ", &why)
+            Files.copy(tmp_file, "/dev/stdout") | {
+               save_var{Files.remove(tmp_file), &why}
+               stop("Couldn't copy ", tmp_file, " to stdout: ", &why)
+            }
             Files.remove(tmp_file)
          } else {
             end_t := Prog.get_runtime_millis()
@@ -318,18 +321,27 @@ procedure process_one(a)
                Files.remove(tmp_file)
                msg ||:= " -> " || out
             } else if \opts["n"] then {
-               Files.append(tmp_file, out) | stop("Unable to append ", tmp_file, " to ", out, ": ", &why)
+               Files.append(tmp_file, out) | {
+                  save_var{Files.remove(tmp_file), &why}
+                  stop("Unable to append ", tmp_file, " to ", out, ": ", &why)
+               }
                Files.remove(tmp_file)
                msg ||:= " ->> " || out
             } else if \opts["over"] then {
-               Files.move(tmp_file, out) | stop("Unable to move ", tmp_file, " to ", out, ": ", &why)
+               Files.move(tmp_file, out) | {
+                  save_var{every Files.remove(tmp_file | out), &why}
+                  stop("Unable to move ", tmp_file, " to ", out, ": ", &why)
+               }
                msg ||:= " -> " || out
             } else if Files.equal_files(tmp_file, out) then {
                msg ||:= " : Existing file " || out || " is identical."
                Files.remove(tmp_file)
             } else {
                out := Files.ensure_unique_filename(out)
-               Files.move(tmp_file, out)  | stop("Unable to move ", tmp_file, " to ", out, ": ", &why)
+               Files.move(tmp_file, out)  | {
+                  save_var{every Files.remove(tmp_file | out), &why}
+                  stop("Unable to move ", tmp_file, " to ", out, ": ", &why)
+               }
                msg ||:= " -> " || out
             }
 
@@ -393,15 +405,12 @@ end
 procedure expand_arg(s)
    local s1, s2, s3
    s ? {
-      s1 := tab(upto('{') | 0)
-      if any('{') then {
-         move(1)
-         s2 := tab(upto('}')) | fail
-         move(1)
-         s3 := tab(0)
-         suspend s1 || expand_braces(s2) || expand_arg(s3)
-      } else
-         return s1
+      s1 := tab(upto('{')) | return s
+      move(1)
+      s2 := tab(upto('}')) | fail
+      move(1)
+      s3 := tab(0)
+      suspend s1 || expand_braces(s2) || expand_arg(s3)
    }
 end
 
@@ -425,8 +434,6 @@ procedure expand_braces(s)
             suspend string(integer(s1) to integer(s2) by integer(s3))
       } else
          suspend s1
-      move(1)
-      if pos(0) then
-         break
+      move(1) | break
    }
 end
