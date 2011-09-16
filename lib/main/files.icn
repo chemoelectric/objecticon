@@ -694,11 +694,11 @@ class UnixFileSystem(FileSystem)
       l := []
       s ? {
          put(l, ="/")
-         repeat {
+         until pos(0) do {
             t := tab(upto('/') | 0)
             if *t > 0 then
                put(l, t)
-            move(1) | break
+            move(1)
          }
       }
       return UnixFilePath(l)
@@ -802,11 +802,11 @@ class WindowsFileSystem(FileSystem)
             put(l, move(2))
          else if &subject[1] == "\\" then     # \X
             put(l, move(1))                
-         repeat {
+         until pos(0) do {
             t := tab(upto('\\') | 0)
             if *t > 0 then
                put(l, t)
-            move(1) | break
+            move(1)
          }
       }
       return WindowsFilePath(l)
