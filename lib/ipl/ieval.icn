@@ -245,17 +245,17 @@ procedure main_impl(imports, files, opts)
                   write()
             if &errortext then {
                if &errornumber then
-                  write("Runtime error ", &errornumber, ": ", &errortext)
+                  ewrite("Runtime error ", &errornumber, ": ", &errortext)
                else
-                  write("Runtime error: ", &errortext)
-               write("offending value: ", image(&errorvalue))
+                  ewrite("Runtime error: ", &errortext)
+               ewrite("offending value: ", image(&errorvalue))
                last_runerr := &errorcoexpr
                errorclear()
             }
          } else
-            write("Couldn't parse: ", &why)
+            ewrite("Couldn't parse: ", &why)
       } else
-         write("Couldn't parse: ", &why)
+         ewrite("Couldn't parse: ", &why)
       prompt := "> "
       s := ""
    }
