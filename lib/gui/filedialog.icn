@@ -273,7 +273,7 @@ class FileDialog(Dialog)
       filter.get_contents() ? {
          repeat {
             pat := tab(upto(';') | 0)
-            put(pats, wild_pat(pat))
+            put(pats, Wildcard(pat))
             move(1) | break
          }
       }
@@ -349,7 +349,7 @@ class FileDialog(Dialog)
             if e[2].mode_str[1] == "d" then
                Files.is_relative_dir(t) | put(dir_list, t)
             else {
-               if wild_match(!pats, t) = *t + 1 then
+               if (!pats).match(t) = *t + 1 then
                   put(file_list, t)
             }
          }
