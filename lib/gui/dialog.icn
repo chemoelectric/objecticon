@@ -209,6 +209,7 @@ class Dialog(Component)
    # words, window events to any other open dialogs are blocked
    # until the dialog is closed.  This method doesn't return
    # until the dialog is closed.
+   #
    # @param d   The parent dialog.  It will not normally be
    # @ needed.
    #
@@ -231,12 +232,36 @@ class Dialog(Component)
    # @param d   This optional parameter specifies the parent dialog.
    #
    public show_modeless_and_sleep(task, d)
-      local l
-      l := connect(create {
+      local x
+      x := connect_and_return(create {
          task.interrupt()
-         disconnect(l)
+         disconnect(x)
       }, Event.DIALOG_CLOSED)
       show_modeless(d)
+      while \is_open_flag do
+         task.sleep()
+   end
+
+   #
+   # Called from a {Task}, this method is like {show_modal}, except
+   # that it blocks by sleeping, rather than a recursive call to
+   # {Dispatcher.message_loop}.
+   #
+   # @param task The current task
+   # @param d   This optional parameter specifies the parent dialog.
+   #
+   public show_modal_and_sleep(task, d)
+      local x, l
+      x := connect_and_return(create {
+         task.interrupt()
+         disconnect(x)
+         every (!l).unblock()
+      }, Event.DIALOG_CLOSED)
+      set_owning_dialog(\d)
+      self.show()
+      l := Dispatcher.list_unblocked()
+      every (!l).block()
+      Dispatcher.add_dialog(self)
       while \is_open_flag do
          task.sleep()
    end
