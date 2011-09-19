@@ -190,25 +190,6 @@ class Dialog(Component)
    end
 
    #
-   # This is a variation on the conventional modal and modeless
-   # methods.  The dialog is opened, input to other windows is not blocked, but
-   # the call does not return until the window is closed.
-   # @param d   The parent dialog, if specified, is blocked until
-   # @ the window is closed.
-   #
-   public show_child(d)
-      set_owning_dialog(\d)
-      self.show()
-      Dispatcher.add_dialog(self)
-      if \d then {
-         d.block()
-         Dispatcher.message_loop(self)
-         d.unblock()
-      } else
-         Dispatcher.message_loop(self)
-   end
-
-   #
    # Displays the dialog as a modeless dialog.  This 
    # means that window events are processed by this dialog
    # and other open dialogs concurrently.  The call to
@@ -221,8 +202,6 @@ class Dialog(Component)
       set_owning_dialog(\d)
       self.show()
       Dispatcher.add_dialog(self)
-      if \d then
-         self.is_blocked_flag := d.is_blocked_flag
    end
 
    #
@@ -242,6 +221,24 @@ class Dialog(Component)
       Dispatcher.add_dialog(self)
       Dispatcher.message_loop(self)
       every (!l).unblock()
+   end
+
+   #
+   # Called from a {Task}, this method calls {show_modeless}, and then
+   # sleeps until the dialog is closed.
+   #
+   # @param task The current task
+   # @param d   This optional parameter specifies the parent dialog.
+   #
+   public show_modeless_and_sleep(task, d)
+      local l
+      l := connect(create {
+         task.interrupt()
+         disconnect(l)
+      }, Event.DIALOG_CLOSED)
+      show_modeless(d)
+      while \is_open_flag do
+         task.sleep()
    end
 
    #

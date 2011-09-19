@@ -19,12 +19,6 @@ class ChildDialog(Dialog)
       d.show_modeless()
    end
 
-   public handle_create_child(ev)
-      local d
-      d := ChildDialog().set_label("Blocking Child Dialog")
-      d.show_child(self)
-   end
-
    public handle_create_modal(ev)
       local d
       d := ChildDialog().set_label("Modal Dialog")
@@ -68,8 +62,6 @@ class ChildDialog(Dialog)
       add(TextButton().set_label("Create Child Modal Dialog").set_constraint("eol", &yes).connect(handle_create_modal, Event.ACTION))
 
       add(TextButton().set_label("Create Orphan Modal Dialog").set_constraint("eol", &yes).connect(handle_create_orphan_modal, Event.ACTION))
-
-      add(TextButton().set_label("Create Child Blocking Dialog").set_constraint("eol", &yes).connect(handle_create_child, Event.ACTION))
 
       p := Component().set_layout(GridLayout().set_doi(0))
       p.add(TextButton().set_label("Close").connect(dispose, Event.ACTION))
