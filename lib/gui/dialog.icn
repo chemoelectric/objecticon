@@ -105,7 +105,6 @@ class Dialog(Component)
 
    public block()
       self.is_blocked_flag := 1
-      change_pointer(DEFAULT_POINTER)
       return self
    end
 
@@ -988,9 +987,11 @@ class Dialog(Component)
    public synch_pointer(e)
       local c, ptr
       ptr := DEFAULT_POINTER
-      every c := !\self.point_chain do {
-         if c.is_unshaded() & (ptr := c.get_pointer(e)) then
-            break
+      if /is_blocked_flag then {
+         every c := !\self.point_chain do {
+            if c.is_unshaded() & (ptr := c.get_pointer(e)) then
+               break
+         }
       }
       change_pointer(ptr)
    end
