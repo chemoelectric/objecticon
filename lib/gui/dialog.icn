@@ -189,21 +189,6 @@ class Dialog(Component)
    end
 
    #
-   # Displays the dialog as a modeless dialog.  This 
-   # means that window events are processed by this dialog
-   # and other open dialogs concurrently.  The call to
-   # {show_modeless()} opens the dialog and returns immediately.
-   #
-   # @param d   This optional parameter specifies the parent dialog.
-   # @ When a parent dialog is closed, its child dialogs are automatically closed.
-   #
-   public show_modeless(d)
-      set_owning_dialog(\d)
-      self.show()
-      Dispatcher.add_dialog(self)
-   end
-
-   #
    # Displays the dialog as a modal dialog.  In other
    # words, window events to any other open dialogs are blocked
    # until the dialog is closed.  This method doesn't return
@@ -214,65 +199,29 @@ class Dialog(Component)
    #
    public show_modal(d)
       local l
-      set_owning_dialog(\d)
-      self.show()
       l := Dispatcher.list_unblocked()
+      self.show(d)
       every (!l).block()
-      Dispatcher.add_dialog(self)
       Dispatcher.message_loop(self)
       every (!l).unblock()
    end
 
    #
-   # Called from a {Task}, this method calls {show_modeless}, and then
+   # Called from a {Task}, this method calls {show}, and then
    # sleeps until the dialog is closed.
    #
    # @param task The current task
    # @param d   This optional parameter specifies the parent dialog.
    #
-   public show_modeless_and_sleep(task, d)
+   public show_and_sleep(task, d)
       local x
       x := connect_and_return(create {
          task.interrupt()
          disconnect(x)
       }, Event.DIALOG_CLOSED)
-      show_modeless(d)
+      show(d)
       while \is_open_flag do
          task.sleep()
-   end
-
-   #
-   # Called from a {Task}, this method is like {show_modal}, except
-   # that it blocks by sleeping, rather than a recursive call to
-   # {Dispatcher.message_loop}.
-   #
-   # @param task The current task
-   # @param d   This optional parameter specifies the parent dialog.
-   #
-   public show_modal_and_sleep(task, d)
-      local x, l
-      x := connect_and_return(create {
-         task.interrupt()
-         disconnect(x)
-         every (!l).unblock()
-      }, Event.DIALOG_CLOSED)
-      set_owning_dialog(\d)
-      self.show()
-      l := Dispatcher.list_unblocked()
-      every (!l).block()
-      Dispatcher.add_dialog(self)
-      while \is_open_flag do
-         task.sleep()
-   end
-
-   #
-   # Set the owning dialog to d, and insert this dialog into
-   # the parent's set of child dialogs.
-   # 
-   private set_owning_dialog(d)
-      insert(d.child_dialogs, self)
-      self.owning_dialog := d
-      return self
    end
 
    #
@@ -294,6 +243,10 @@ class Dialog(Component)
       self.effective_is_hidden_flag := self.is_hidden_flag
       self.effective_is_shaded_flag := self.is_shaded_flag
       Gui.style.polish(self)
+      self.held := table()
+      self.crossing := set()
+      self.selections := table()
+      self.selection_requests := table()
       self.effective_wattribs := table()
       every t := key(self.wattribs) do {
          if member(Gui.CONTEXT_WATTRIB_SET, t) then
@@ -448,7 +401,17 @@ class Dialog(Component)
    public end_dialog()
    end
 
-   public show()
+   #
+   # Opens the dialog and returns immediately.
+   #
+   # @param d   This optional parameter specifies the parent dialog.
+   # @ When a parent dialog is closed, its child dialogs are automatically closed.
+   #
+   public show(d)
+      if \d then {
+         insert(d.child_dialogs, self)
+         self.owning_dialog := d
+      }
       self.component_setup()
       self.open_buffer_win()
       self.initially()
@@ -458,6 +421,7 @@ class Dialog(Component)
       self.invalidate()
       self.tooltip_init()
       self.init_dialog()
+      Dispatcher.add_dialog(self)
    end
 
    public dispose()
@@ -475,6 +439,7 @@ class Dialog(Component)
          self.owning_dialog.raise()
          self.owning_dialog := &null
       }
+      self.held := self.crossing := self.selections := self.selection_requests := &null
       fire(Event.DIALOG_CLOSED)
    end
 
@@ -514,9 +479,7 @@ class Dialog(Component)
    end
 
    public dispose_selections()
-      local e
-      every e := !selections do
-         e.lost_ownership()
+      every (!selections).lost_ownership()
       selections := table()
    end
 
@@ -706,29 +669,30 @@ class Dialog(Component)
    end
 
    public generate_events(e)
-      local ec, ke, s1, s2, t
+      local ec, ke, t
 
       ec := e.code
       if integer(ec) < 0 then {
          # Mouse event
-         s1 := elementset(\crossing) | set()
-         s2 := elementset(point_chain)
-         crossing := copy(point_chain)
-         fire_list(s1 -- s2, Event.MOUSE_EXIT, e)
-         fire_list(s2 -- s1, Event.MOUSE_ENTER, e)
+         t := crossing
+         crossing := elementset(point_chain)
+         fire_list(t -- crossing, Event.MOUSE_EXIT, e)
+         fire_list(crossing -- t, Event.MOUSE_ENTER, e)
          if member(Mouse.WHEEL, ec) then {
             fire_list(point_chain, ec, e)
          } else if member(Mouse.PRESS, ec) then {
-            held[ec] := copy(point_chain)
-            fire_list(held[ec], ec, e)
+            held[ec] := point_chain
+            fire_list(point_chain, ec, e)
          } else if ec === Mouse.DRAG then {
             every t := key(held) do
                fire_list(held[t], 10 - t, e)
          } else if ec === Mouse.MOVEMENT then {
             fire_list(point_chain, ec, e)
          } else if member(Mouse.RELEASE, ec) then {
-            fire_list(\held[ec + 3], ec, e)
-            delete(held, ec + 3)
+            if t := \held[ec + 3] then {
+               delete(held, ec + 3)
+               fire_list(t, ec, e)
+            }
          }
       } else {
          # Keyboard event
@@ -846,7 +810,7 @@ class Dialog(Component)
             set_y(win.get_y() + win.get_dy() + self.tooltip_component.y)
          self.tooltip_component.set_pos(0, 0)
          d.add(self.tooltip_component)
-         d.show_modeless()
+         d.show()
       } else
          self.tooltip_component.invalidate()
    end
@@ -1294,9 +1258,6 @@ class Dialog(Component)
       cast(self,Component).new()
       self.set_all_wattribs(ROOT_WATTRIBS)
       self.child_dialogs := set()
-      self.held := table()
-      self.selections := table()
-      self.selection_requests := table()
       self.tooltip_ticker := Dispatcher.new_task{self.process_tooltip_tick()}
       return
    end
