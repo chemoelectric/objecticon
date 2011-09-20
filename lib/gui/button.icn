@@ -148,6 +148,7 @@ class Button(Toggle,Component)
          t.sleep(50)
          self.is_down := &null
          on_action(e)
+         t.revert()
       }}
       t.start()
    end
