@@ -228,7 +228,7 @@ class DropDown(SelectionList,Component)
          self.tl.set_pos(0, 0)
          self.parent_dialog.set_focus()
          self.parent_dialog.add_popup(d)
-         d.show_modeless()
+         d.show()
          d.set_focus(tl)
          d.held[ev.code] := [tl.view, tl, d]
       } else {

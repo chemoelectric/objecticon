@@ -426,7 +426,7 @@ class MenuComponent(Rect,Connectable)
          self.temp_win.set_all_wattribs(self.parent_component.get_effective_wattribs())
          d.add(self.temp_win)
          pd.add_popup(d)
-         d.show_modeless()
+         d.show()
       }
    end
 

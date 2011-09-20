@@ -238,7 +238,7 @@ class Main(Dialog)
    public custom_show(a)
       local s, c
       self.args := a
-      show_modeless()
+      show()
       if *self.args > 0  then {
          s := ucs(self.args[1]) | return alert_error(self, "Invalid (non-utf8) filename")
          if Files.access(s, Access.R_OK) then {
@@ -723,7 +723,7 @@ class Main(Dialog)
       d := InfoDialog(["Ivib Version : " || version_number, 
                        "Date : " || version_date, 
                        "Author : " || version_author], "About ivib")
-      d.show_modeless(self)
+      d.show(self)
 
       return
    end
@@ -795,7 +795,7 @@ class Main(Dialog)
       } else {
          component_tree_dialog := ComponentTreeDialog(self)
          component_tree_dialog.connect(self.on_component_tree_dialog_close, Event.DIALOG_CLOSED)
-         component_tree_dialog.show_modeless(self)
+         component_tree_dialog.show(self)
       }
    end
 

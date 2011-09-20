@@ -205,7 +205,7 @@ class SuggestField(TextField)
          d.add(tl)
          self.tl.set_pos(0, 0)
          self.parent_dialog.add_popup(d)
-         d.show_modeless()
+         d.show()
       } else {
          if use_direction == Direction.DOWN then 
             self.tl.set_pos(self.x + win.get_dx(), self.y + self.h + win.get_dy())

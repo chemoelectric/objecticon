@@ -10,13 +10,13 @@ class ChildDialog(Dialog)
    public handle_create_modeless(ev)
       local d
       d := ChildDialog().set_label("Modeless Dialog")
-      d.show_modeless(self)
+      d.show(self)
    end
 
    public handle_create_orphan_modeless(ev)
       local d
       d := ChildDialog().set_label("Orphan modeless Dialog")
-      d.show_modeless()
+      d.show()
    end
 
    public handle_create_modal(ev)
