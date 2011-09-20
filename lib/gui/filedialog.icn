@@ -44,8 +44,6 @@ class FileDialog(Dialog)
    end
 
    public component_setup()
-      self.setup()
-
       #
       # Defaults and extra dirs.
       #
@@ -359,6 +357,7 @@ class FileDialog(Dialog)
 
    public new()
       cast(self,Dialog).new()
+      self.setup()
       return
    end
 

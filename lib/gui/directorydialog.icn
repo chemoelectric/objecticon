@@ -31,8 +31,6 @@ class DirectoryDialog(Dialog)
 
    public component_setup()
       local root_node, d
-      self.setup()
-
       #
       # Defaults and extra dirs.
       #
@@ -251,6 +249,7 @@ $endif
 
    public new()
       cast(self,Dialog).new()
+      self.setup()
       return
    end
 
