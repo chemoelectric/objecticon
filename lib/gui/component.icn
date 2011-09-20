@@ -551,7 +551,7 @@ class Component(Rect,Align,Connectable)
 
    #
    # Succeed if this component is held with the given button press.
-   # @param e The mouse press event code - Mouse_LeftPress, Mouse_RightPress or Mouse_MiddlePress
+   # @param e The mouse press event code - Mouse.LEFT_PRESS, Mouse.RIGHT_PRESS or Mouse.MIDDLE_PRESS
    #
    public is_held(e)
       return keyof(\parent_dialog.held[e], self)
