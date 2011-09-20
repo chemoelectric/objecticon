@@ -318,6 +318,7 @@ class Scheduler()
          coact(, t.coex)
       else
          @t.coex
+      coex === &current | runerr("scheduler resumed with wrong co-expression", &current)
       t.active := &null
       coex := sc
       curr_task := st
