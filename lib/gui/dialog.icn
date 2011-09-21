@@ -310,6 +310,7 @@ class Dialog(Component)
    public close_win()
       self.buffer_win.close()
       self.win.close()
+      self.buffer_win := self.win := &null
    end
 
    public get_buffer_win()
@@ -408,6 +409,8 @@ class Dialog(Component)
    # @ When a parent dialog is closed, its child dialogs are automatically closed.
    #
    public show(d)
+      if \is_open_flag then
+         runerr("show() called on open Dialog", self)
       if \d then {
          insert(d.child_dialogs, self)
          self.owning_dialog := d
@@ -425,11 +428,16 @@ class Dialog(Component)
    end
 
    public dispose()
+      if /is_open_flag then
+         runerr("dispose() called on closed Dialog", self)
+      if \curr_drag then
+         exit_dnd()
       self.end_dialog()
       every (!child_dialogs).dispose()
       self.dispose_selections()
       self.tooltip_dispose()
       self.finally()
+      /self.menu_mode | syserr("internal error - still in menu mode after finally()")
       Gui.style.dispose_all()
       self.close_win()
       self.is_open_flag := &null
@@ -439,7 +447,8 @@ class Dialog(Component)
          self.owning_dialog.raise()
          self.owning_dialog := &null
       }
-      self.held := self.crossing := self.selections := self.selection_requests := &null
+      self.point_chain := self.point_chain_source := self.held := self.prev_event :=
+         self.crossing := self.selections := self.selection_requests := &null
       fire(Event.DIALOG_CLOSED)
    end
 
@@ -731,6 +740,7 @@ class Dialog(Component)
       self.tooltip_ticker.stop()
       if self.tooltip_state = 2 then
          hide_tooltip()
+      self.tooltip_last_obj := self.tooltip_last_tip := self.tooltip_last_event := &null
    end
 
    #
