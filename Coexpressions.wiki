@@ -448,6 +448,7 @@ procedure download(x, t)
       write("Failed to retrieve ", x, ": ", &why)
    s.close()
    cl.close()
+   t.revert()
 end
 
 procedure new_task(s)
@@ -520,6 +521,7 @@ procedure handle(a)
       } 
       write("\tEnd of handling.")
       a.close()
+      t.revert()
    })
    t.start()
 end
