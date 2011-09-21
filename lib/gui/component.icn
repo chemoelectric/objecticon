@@ -806,12 +806,7 @@ class Component(Rect,Align,Connectable)
       Gui.style.dispose(self.cbwin)
       self.cbwin.uncouple()
       self.cbwin := &null
-      #
-      # Can't use !self.children here because some finally() methods
-      # can cause deletion of one of the parent dialog's children, (eg
-      # DropDown).  This messes up the usual iterator.
-      #
-      every self.children[1 to *self.children].finally()
+      every (!self.children).finally()
       self.parent_dialog := &null
    end
 
