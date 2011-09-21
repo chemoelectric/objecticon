@@ -1314,7 +1314,7 @@ class FixEventsAction(Action)
          insert(t, "TICK_EVENT", "999")
          insert(t, "GOT_FOCUS_EVENT", "Event.GOT_FOCUS")
          insert(t, "LOST_FOCUS_EVENT", "Event.LOST_FOCUS")
-         insert(t, "DIALOG_CLOSED_EVENT" , "Event.DIALOG_CLOSED")
+         insert(t, "DIALOG_CLOSED_EVENT" , "Event.DIALOG_DISPOSED")
       }
       every e := !\proxy.get("Event Handlers") do
          e[1] := \t[e[1]]

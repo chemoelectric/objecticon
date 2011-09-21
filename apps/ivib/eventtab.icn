@@ -150,7 +150,7 @@ class EventTab(TabItem)
             "Event.KEY_RELEASE",
             "Event.GOT_FOCUS",
             "Event.LOST_FOCUS",
-            "Event.DIALOG_CLOSED"
+            "Event.DIALOG_DISPOSED"
             ]
       event.set_selection_list(l)
       event.connect(self.on_apply, Event.ACTION)

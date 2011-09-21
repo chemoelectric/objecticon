@@ -794,7 +794,7 @@ class Main(Dialog)
          component_tree_dialog.raise()
       } else {
          component_tree_dialog := ComponentTreeDialog(self)
-         component_tree_dialog.connect(self.on_component_tree_dialog_close, Event.DIALOG_CLOSED)
+         component_tree_dialog.connect(self.on_component_tree_dialog_close, Event.DIALOG_DISPOSED)
          component_tree_dialog.show(self)
       }
    end

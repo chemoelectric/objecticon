@@ -46,7 +46,7 @@ class Event()
       KEY_RELEASE,
       GOT_FOCUS,
       LOST_FOCUS,
-      DIALOG_CLOSED
+      DIALOG_DISPOSED
 
    private static init()
       MOUSE_LEFT_PRESS := Mouse.LEFT_PRESS
@@ -82,7 +82,7 @@ class Event()
       KEY_RELEASE := 101
       GOT_FOCUS := 400
       LOST_FOCUS := 401
-      DIALOG_CLOSED := 500
+      DIALOG_DISPOSED := 500
    end
 end
 
