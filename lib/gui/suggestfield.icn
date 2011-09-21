@@ -242,9 +242,9 @@ class SuggestField(TextField)
    end
 
    public dialog_event(e)
-      if (/e.release & (e.code === "\e")) | 
+      if \tl & ((/e.release & (e.code === "\e")) | 
           (member(Mouse.PRESS, e.code) & 
-                not(tl.in_region(e))) then 
+                not(tl.in_region(e)))) then 
       {
          #
          # Mouse click outside textlist.  Close.

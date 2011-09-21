@@ -981,7 +981,7 @@ class PopupTextField(TextField)
    end
 
    public dialog_event(e)
-      if (e ~=== ev) & ((/e.release & (e.code === ("\e" | "\r"))) | 
+      if \cbwin & (e ~=== ev) & ((/e.release & (e.code === ("\e" | "\r"))) | 
                        (member(Mouse.PRESS, e.code) & not(in_region(e)))) then 
       {
          #
