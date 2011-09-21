@@ -34,7 +34,6 @@ class Dialog(Component)
 
    public 
       win,                     # The dialog's window.
-      is_open_flag,            # Flag indicates whether window is open              
       owning_dialog,
       child_dialogs,
       focus,                   # Component with current focus            
@@ -147,13 +146,6 @@ class Dialog(Component)
    end
 
    #
-   # Succeed iff the dialog is open.
-   #
-   public is_open()
-      return \self.is_open_flag
-   end
-
-   #
    # Change pointer
    #
    public change_pointer(s)
@@ -218,9 +210,9 @@ class Dialog(Component)
       x := connect_and_return(create {
          task.interrupt()
          disconnect(x)
-      }, Event.DIALOG_CLOSED)
+      }, Event.DIALOG_DISPOSED)
       show(d)
-      while \is_open_flag do
+      while \win do
          task.sleep()
    end
 
@@ -319,9 +311,8 @@ class Dialog(Component)
 
    public enter_menu_mode(c)
       # If already in menu mode, force ourselves out of it.
-      if \self.menu_mode then
-         self.menu_mode.close_all()
-      (/self.menu_mode := c) | syserr("internal error - already in menu mode")
+      (\self.menu_mode).close_all()
+      self.menu_mode := c
       popups := []
       win.grab_pointer()
    end
@@ -409,8 +400,7 @@ class Dialog(Component)
    # @ When a parent dialog is closed, its child dialogs are automatically closed.
    #
    public show(d)
-      if \is_open_flag then
-         runerr("show() called on open Dialog", self)
+      /win | runerr("show() called on open Dialog", self)
       if \d then {
          insert(d.child_dialogs, self)
          self.owning_dialog := d
@@ -419,7 +409,6 @@ class Dialog(Component)
       self.open_buffer_win()
       self.initially()
       self.open_visible_win()
-      self.is_open_flag := 1
       self.resize()
       self.invalidate()
       self.tooltip_init()
@@ -428,8 +417,8 @@ class Dialog(Component)
    end
 
    public dispose()
-      if /is_open_flag then
-         runerr("dispose() called on closed Dialog", self)
+      \win | runerr("dispose() called on closed Dialog", self)
+      (\self.menu_mode).close_all()
       if \curr_drag then
          exit_dnd()
       self.end_dialog()
@@ -437,10 +426,8 @@ class Dialog(Component)
       self.dispose_selections()
       self.tooltip_dispose()
       self.finally()
-      /self.menu_mode | syserr("internal error - still in menu mode after finally()")
       Gui.style.dispose_all()
       self.close_win()
-      self.is_open_flag := &null
       Dispatcher.remove_dialog(self)
       if \self.owning_dialog then {
          delete(self.owning_dialog.child_dialogs, self)
@@ -449,7 +436,7 @@ class Dialog(Component)
       }
       self.point_chain := self.point_chain_source := self.held := self.prev_event :=
          self.crossing := self.selections := self.selection_requests := &null
-      fire(Event.DIALOG_CLOSED)
+      fire(Event.DIALOG_DISPOSED)
    end
 
    public create_point_chain(e)
@@ -616,7 +603,7 @@ class Dialog(Component)
       #
       # If a handler closed us, do no more.
       #
-      if /self.is_open_flag then
+      if /self.win then
          return
 
       #
@@ -719,8 +706,7 @@ class Dialog(Component)
    private fire_list(l, t, p)
       local c
       every c := !l do {
-         if c.is_unshaded() & c.is_unhidden() &
-            \c.cbwin & \self.is_open_flag then
+         if c.is_unshaded() & c.is_unhidden() & \c.cbwin then
             c.fire(t, p)
       }
    end
