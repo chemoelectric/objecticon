@@ -200,20 +200,20 @@ class Dialog(Component)
 
    #
    # Called from a {Task}, this method calls {show}, and then
-   # sleeps until the dialog is closed.
+   # waits until the dialog is closed before returning.
    #
    # @param task The current task
    # @param d   This optional parameter specifies the parent dialog.
    #
-   public show_and_sleep(task, d)
+   public show_and_wait(task, d)
       local x
       x := connect_and_return(create {
-         task.interrupt()
+         task.start()
          disconnect(x)
       }, Event.DIALOG_DISPOSED)
       show(d)
       while \win do
-         task.sleep()
+         task.revert()
    end
 
    #
