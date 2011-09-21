@@ -351,8 +351,7 @@ class MenuBar(Component)
    public dialog_event(e)
       local ec
 
-      (self.is_unshaded() & self.is_unhidden() &
-            \self.cbwin & \self.parent_dialog.is_open_flag) | fail
+      (self.is_unshaded() & self.is_unhidden() & \self.cbwin) | fail
 
       ec := e.code
 
