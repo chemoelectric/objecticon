@@ -706,7 +706,7 @@ class Dialog(Component)
    private fire_list(l, t, p)
       local c
       every c := !l do {
-         if c.is_unshaded() & c.is_unhidden() & \c.cbwin then
+         if \c.cbwin & c.is_unshaded() & c.is_unhidden() then
             c.fire(t, p)
       }
    end

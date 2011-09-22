@@ -219,10 +219,6 @@ class SuggestField(TextField)
       self.parent_dialog.connect(self.dialog_event, Event.ICON)
    end
 
-   private forward_key_press(ev, src, type)
-      tl.fire(type, ev)
-   end
-
    public close_textlist()
       if /tl.parent_dialog.popup_manager then {
          self.tl.invalidate()
@@ -242,9 +238,9 @@ class SuggestField(TextField)
    end
 
    public dialog_event(e)
-      if \tl & ((/e.release & (e.code === "\e")) | 
+      if (/e.release & (e.code === "\e")) | 
           (member(Mouse.PRESS, e.code) & 
-                not(tl.in_region(e)))) then 
+                not(tl.in_region(e))) then 
       {
          #
          # Mouse click outside textlist.  Close.
