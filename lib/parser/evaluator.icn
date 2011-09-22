@@ -1,8 +1,8 @@
 $include "oigram_tab.icn"
 
-package parser
+package eval
 
-import ipl.pdco, ipl.lists, lang, util, exception
+import ipl.pdco, ipl.lists, lang, util, exception, parser
 
 class EvaluatorEnv()
    public defer get(k, ev)
