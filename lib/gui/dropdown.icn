@@ -241,11 +241,6 @@ class DropDown(SelectionList,Component)
          self.tl.invalidate()
          self.parent_dialog.hold(tl.view, ev.code)
          self.parent_dialog.set_focus(tl)
-         # Since we are in menu mode, key events are forwarded to this
-         # component, rather than the text list, regardless of the
-         # focus.  So we must forward them on to the text list
-         # ourselves.
-         every self.parent_dialog.connect(self.forward_key_press, Event.KEY_PRESS | Event.KEY_RELEASE)
       } 
 
       self.parent_dialog.connect(self.dialog_event, Event.ICON)
@@ -255,8 +250,12 @@ class DropDown(SelectionList,Component)
       }
    end
 
-   private forward_key_press(ev, src, type)
-      tl.fire(type, ev)
+   private forward_key(ev, src, type)
+      # In menu mode key events are forwarded to this component,
+      # rather than the text list, regardless of the focus.  So we
+      # must forward them ourselves.  This is not necessary if we are
+      # using a popup however (in which case focus is &null).
+      (self ~=== \parent_dialog.focus).fire(type, ev)
    end
 
    public close_textlist()
@@ -353,6 +352,7 @@ class DropDown(SelectionList,Component)
       self.set_constraint("x_weight", 1.0)
       connect(self.go_up, Event.MOUSE_WHEEL_UP)
       connect(self.go_down, Event.MOUSE_WHEEL_DOWN)
+      every connect(self.forward_key, Event.KEY_PRESS | Event.KEY_RELEASE)
       return
    end
 end

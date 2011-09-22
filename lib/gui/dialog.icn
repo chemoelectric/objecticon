@@ -434,8 +434,9 @@ class Dialog(Component)
          self.owning_dialog.raise()
          self.owning_dialog := &null
       }
-      self.point_chain := self.point_chain_source := self.held := self.prev_event :=
-         self.crossing := self.selections := self.selection_requests := &null
+      self.point_chain := self.point_chain_source := self.held := 
+         self.prev_event := self.copy_rect := self.crossing := 
+         self.selections := self.selection_requests := &null
       fire(Event.DIALOG_DISPOSED)
    end
 
@@ -665,7 +666,7 @@ class Dialog(Component)
    end
 
    public generate_events(e)
-      local ec, ke, t
+      local ec, t
 
       ec := e.code
       if integer(ec) < 0 then {
@@ -692,12 +693,9 @@ class Dialog(Component)
          }
       } else {
          # Keyboard event
-         ke := if \e.release then Event.KEY_RELEASE else Event.KEY_PRESS
-         if \self.menu_mode then
-            fire_list([self.menu_mode], ke, e)
-         else
-            fire_list([\self.focus], ke, e)
-         self.fire(ke, e)
+         fire_list([\self.menu_mode | \self.focus] \ 1,
+                   if \e.release then Event.KEY_RELEASE else Event.KEY_PRESS,
+                   e)
       }
       fire(Event.ICON, e)
    end
