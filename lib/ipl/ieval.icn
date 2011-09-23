@@ -124,7 +124,7 @@ end
 procedure dir(c)
    local f, t
    case type(c) of {
-      "cast"|"class": {
+      "object"|"cast"|"class": {
          write(if iand(lang.Class.get_class_flags(c), lang.Class.Final) ~= 0 then "final class " else "class ",
                lang.Class.get_name(c), "(", supers_string(c), ")")
          write("   ", locn_string(lang.Class.get_location(c))) 
@@ -147,7 +147,7 @@ procedure dir(c)
                     var_string(Proc.get_local_kind(c, f))])
          print_table(t)
       }
-      "constructor": {
+      "record"|"constructor": {
          write("constructor ",
                Constructor.get_name(c), "(", fields_string(c), ")")
          write("   ", locn_string(Constructor.get_location(c))) 
