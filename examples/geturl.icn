@@ -90,7 +90,7 @@ procedure main(args)
    local l, f, t, cookies
 
    opts := options(args, "-over! -i: -form:* -type: -o: -k: -q! -t+ -r+ -p: -d: -a: -f: -e: -l! -n: _
-                         -head! -nsslv! -help! -c! -skip! -agent: -while! -close! -x:* -nz!")
+                         -head! -nsslv! -help! -c! -skip! -agent: -while! -close! -x:* -nz! -v1!")
    if \opts["help"] then {
       write(FileStream.stderr, "Usage: geturl [URL]... [OPTIONS]")
       write(FileStream.stderr, "Retrieve URL(s)")
@@ -119,6 +119,7 @@ procedure main(args)
       write(FileStream.stderr, "  -over                   Overwrite any existing files")
       write(FileStream.stderr, "  -x HEADER:VALUE         Set extra HTTP header; multiple uses allowed")
       write(FileStream.stderr, "  -nz                     Don't use gzip compression")
+      write(FileStream.stderr, "  -v1                     Use HTTP 1.0")
       write(FileStream.stderr, "  -help                   Help message")
       write(FileStream.stderr, "URL may contain range expansions eg {1-2+8-11}")
       exit(1)
@@ -145,6 +146,9 @@ procedure main(args)
 
    if \opts["close"] then
       hc.set_keep_alive(&no)
+
+   if \opts["v1"] then
+      hc.set_http_version("1.0")
 
    if \opts["while"] then
       hc.set_retry_while_data(&yes)
