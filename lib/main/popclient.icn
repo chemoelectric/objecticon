@@ -165,7 +165,7 @@ class PopClient(NetClient)
       local l, s
       l := []
       repeat {
-         s := read_line() | fail
+         s := expect_line() | fail
          if s[1:3] == ".." then
             s[1:3] := "."
          if s == "." then
@@ -206,8 +206,10 @@ class PopClient(NetClient)
    private read_response()
       local s
 
-      s := read_line() | return error_and_close("Unexpected EOF from server")
-
+      s := expect_line() | {
+         close()
+         fail
+      }
       s ? {
          if ="+OK" then {
             =" "

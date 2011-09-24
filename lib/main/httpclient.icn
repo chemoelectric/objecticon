@@ -747,7 +747,7 @@ class HttpClient(NetClient)
          #
          response := HttpResponse()
          response.set_url(request.url)
-         s := read_line() | fail
+         s := expect_line() | fail
          response.set_status(s)
 
          #
@@ -842,7 +842,7 @@ class HttpClient(NetClient)
    private read_headers()
       local s, key, val
       repeat {
-         s := read_line() | fail
+         s := expect_line() | fail
          if *s = 0 then {
             # Add last header (if any).
             response.add_header(\key, val)
@@ -930,7 +930,7 @@ class HttpClient(NetClient)
    private read_chunked()
       local l, chunk, s
       repeat {
-         l := read_line() | fail
+         l := expect_line() | fail
          l ? {
             chunk := integer("16r" || tab(many('0987654321abcdefABCDEF'))) |
                return error("Expected chunk-length specifier; got " || l)
@@ -939,11 +939,11 @@ class HttpClient(NetClient)
             break
          while chunk > 0 do {
             if \abort_flag then fail
-            s := read_str(min(1048576, chunk)) | fail
+            s := expect_str(min(1048576, chunk)) | fail
             add_some(s) | fail
             chunk -:= *s
          }
-         l := read_line() | fail
+         l := expect_line() | fail
          if *l > 0 then
             return error("Expected empty line at end of chunk")
       }
@@ -951,7 +951,7 @@ class HttpClient(NetClient)
       # Read any trailing lines, upto an empty line.
       #
       repeat {
-         l := read_line() | fail
+         l := expect_line() | fail
          if *l = 0 then
             break
       }
@@ -966,19 +966,16 @@ class HttpClient(NetClient)
       #
       # No content length.  Read until eof, then close.
       #
-      while s := read_str(1048576) do {
-         if \abort_flag then fail
+      repeat {
+         s := read_str(1048576) | fail
+         if /s then {
+            close()
+            return
+         }
+         if \abort_flag then
+            fail
          add_some(s) | fail
       }
-      # 
-      # Make sure we actually read to the end of file
-      #
-      &why == "End of file" | {
-         close()
-         fail
-      }
-      close()
-      return
    end
 
    #
@@ -991,7 +988,7 @@ class HttpClient(NetClient)
       #
       while self.read < length do {
          if \abort_flag then fail
-         s := read_str(min(1048576, length - self.read)) | fail
+         s := expect_str(min(1048576, length - self.read)) | fail
          add_some(s) | fail
       }
 
