@@ -162,6 +162,13 @@ class Stream()
    end
 
    #
+   # Generate all the remaining lines in the file
+   #
+   public gen()
+      suspend |\read_line()
+   end
+
+   #
    # This method is the same as {read_line}, except that on end of
    # file it fails, setting {&why} to "End of file", rather than
    # returning {&null}.
@@ -169,11 +176,7 @@ class Stream()
    public read()
       local s
       s := read_line() | fail
-      if /s then {
-         &why := "End of file"
-         fail
-      }
-      return s
+      return \s | error("End of file")
    end
 
    #
@@ -184,11 +187,7 @@ class Stream()
    public reads(n)
       local s
       s := read_exactly(n) | fail
-      if /s then {
-         &why := "End of file"
-         fail
-      }
-      return s
+      return \s | error("End of file")
    end
 
    #
@@ -467,31 +466,27 @@ class BufferStream(Stream, HasUnderlyingStream)
       repeat {
          rbuff ? {
             if t := tab(upto('\n')) then {
-               t ||:= move(1)
+               move(1)
                rbuff := tab(0)
-               \rpos +:= *t
-               break
+               \rpos +:= *t + 1
+               if t[-1] == "\r" then
+                  t[-1] := ""
+               return t
             }
          }
          if *rbuff = 0 & other.can(SEEK) then
             rpos := other.tell() | fail
          t := other.in(buff_size) | fail
          if /t then {
+            rpos := &null
+            if *rbuff = 0 then
+               return
             t := rbuff
             rbuff := ""
-            rpos := &null
-            break
+            return t
          }
          rbuff ||:= t
       }
-      if *t = 0 then
-         return
-      if t[-1] == "\n" then {
-         t[-1] := ""
-         if t[-1] == "\r" then
-            t[-1] := ""
-      }
-      return t
    end
 
    public in(n)
