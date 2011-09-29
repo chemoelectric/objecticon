@@ -4,7 +4,7 @@
 
 package ipl.ieval
 
-import io, lang, ipl.colmize, parser, util, ipl.pdco, ipl.sort, ipl.lambda
+import io, lang, ipl.colmize, parser, eval, util, ipl.pdco, ipl.sort, ipl.lambda
 
 procedure map1(x)
    return map(x[1])
@@ -124,7 +124,7 @@ end
 procedure dir(c)
    local f, t
    case type(c) of {
-      "cast"|"class": {
+      "object"|"cast"|"class": {
          write(if iand(lang.Class.get_class_flags(c), lang.Class.Final) ~= 0 then "final class " else "class ",
                lang.Class.get_name(c), "(", supers_string(c), ")")
          write("   ", locn_string(lang.Class.get_location(c))) 
@@ -147,7 +147,7 @@ procedure dir(c)
                     var_string(Proc.get_local_kind(c, f))])
          print_table(t)
       }
-      "constructor": {
+      "record"|"constructor": {
          write("constructor ",
                Constructor.get_name(c), "(", fields_string(c), ")")
          write("   ", locn_string(Constructor.get_location(c))) 
@@ -175,7 +175,7 @@ procedure exit_repl(n)
 end
 
 procedure main_impl(imports, files, opts)
-   local env, s, t, eval, prompt, f, quiet_flag, par, 
+   local env, s, t, ev, prompt, f, quiet_flag, par, 
       n, tr_flag, last_runerr, ee, in, hist_line, run, tv
 
    par := Parser()
@@ -183,7 +183,7 @@ procedure main_impl(imports, files, opts)
    ee := DefaultEvaluatorEnv(env)
    if \opts["w"] then
       ee.set_write_globals(&yes)
-   eval := Evaluator().
+   ev := Evaluator().
       set_env(ee).
       set_imports(imports)
 
@@ -196,13 +196,13 @@ procedure main_impl(imports, files, opts)
    env["cmd"] := lambda{{ if is(in, LineEditorStream) then hist_line := in.get_history_item(_a[1]) ; &fail}}
 
    run := create
-      with_var{ with_var{ Safe{eval.eval()}, &trace, tv }, exit, exit_repl}
+      with_var{ with_var{ Safe{ev.eval()}, &trace, tv }, exit, exit_repl}
 
    every f := !files do {
       s := Files.file_to_string(f) | stop("Couldn't load ", f, ": ", &why)
       n := par.parse_expression(s) | stop("Couldn't parse ", f,  ": ", &why)
-      eval.set_node(n) | stop("Couldn't parse ", f,  ": ", &why) 
-      eval.eval()
+      ev.set_node(n) | stop("Couldn't parse ", f,  ": ", &why) 
+      ev.eval()
    }
 
    s := ""
@@ -237,7 +237,7 @@ procedure main_impl(imports, files, opts)
             tv := -1
          } else
             tv := 0
-         if eval.set_node(n) then {
+         if ev.set_node(n) then {
             if \quiet_flag then
                !run
             else
@@ -245,17 +245,17 @@ procedure main_impl(imports, files, opts)
                   write()
             if &errortext then {
                if &errornumber then
-                  write("Runtime error ", &errornumber, ": ", &errortext)
+                  ewrite("Runtime error ", &errornumber, ": ", &errortext)
                else
-                  write("Runtime error: ", &errortext)
-               write("offending value: ", image(&errorvalue))
+                  ewrite("Runtime error: ", &errortext)
+               ewrite("offending value: ", image(&errorvalue))
                last_runerr := &errorcoexpr
                errorclear()
             }
          } else
-            write("Couldn't parse: ", &why)
+            ewrite("Couldn't parse: ", &why)
       } else
-         write("Couldn't parse: ", &why)
+         ewrite("Couldn't parse: ", &why)
       prompt := "> "
       s := ""
    }

@@ -1355,13 +1355,17 @@ end
 
 #begdef AttemptAttr(operation, reason)
 do {
-   LitWhy("");
+   tended struct descrip saved_why;
+   saved_why = kywd_why;
+   kywd_why = emptystr;
    switch (operation) { 
        case Error: {
+           kywd_why = saved_why;
            runerr(145, val); 
            break;
        }
        case Succeeded: {
+           kywd_why = saved_why;
            break;
        }
        case Failed: {

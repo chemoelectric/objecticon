@@ -106,7 +106,7 @@ end
 # and fname are valid.
 #
 procedure rarfile(rname, fname)		
-   return FilterInputStream(, "unrar", ["p", "-inul", rname, fname])
+   return FilterInputStream(, "unrar", ["p", "-ierr", rname, fname])
 end
 
 procedure tartype(s)

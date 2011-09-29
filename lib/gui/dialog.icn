@@ -34,7 +34,6 @@ class Dialog(Component)
 
    public 
       win,                     # The dialog's window.
-      is_open_flag,            # Flag indicates whether window is open              
       owning_dialog,
       child_dialogs,
       focus,                   # Component with current focus            
@@ -105,7 +104,6 @@ class Dialog(Component)
 
    public block()
       self.is_blocked_flag := 1
-      change_pointer(DEFAULT_POINTER)
       return self
    end
 
@@ -148,13 +146,6 @@ class Dialog(Component)
    end
 
    #
-   # Succeed iff the dialog is open.
-   #
-   public is_open()
-      return \self.is_open_flag
-   end
-
-   #
    # Change pointer
    #
    public change_pointer(s)
@@ -190,68 +181,39 @@ class Dialog(Component)
    end
 
    #
-   # This is a variation on the conventional modal and modeless
-   # methods.  The dialog is opened, input to other windows is not blocked, but
-   # the call does not return until the window is closed.
-   # @param d   The parent dialog, if specified, is blocked until
-   # @ the window is closed.
-   #
-   public show_child(d)
-      set_owning_dialog(\d)
-      self.show()
-      Dispatcher.add_dialog(self)
-      if \d then {
-         d.block()
-         Dispatcher.message_loop(self)
-         d.unblock()
-      } else
-         Dispatcher.message_loop(self)
-   end
-
-   #
-   # Displays the dialog as a modeless dialog.  This 
-   # means that window events are processed by this dialog
-   # and other open dialogs concurrently.  The call to
-   # {show_modeless()} opens the dialog and returns immediately.
-   #
-   # @param d   This optional parameter specifies the parent dialog.
-   # @ When a parent dialog is closed, its child dialogs are automatically closed.
-   #
-   public show_modeless(d)
-      set_owning_dialog(\d)
-      self.show()
-      Dispatcher.add_dialog(self)
-      if \d then
-         self.is_blocked_flag := d.is_blocked_flag
-   end
-
-   #
    # Displays the dialog as a modal dialog.  In other
    # words, window events to any other open dialogs are blocked
    # until the dialog is closed.  This method doesn't return
    # until the dialog is closed.
+   #
    # @param d   The parent dialog.  It will not normally be
    # @ needed.
    #
    public show_modal(d)
       local l
-      set_owning_dialog(\d)
-      self.show()
       l := Dispatcher.list_unblocked()
+      self.show(d)
       every (!l).block()
-      Dispatcher.add_dialog(self)
       Dispatcher.message_loop(self)
       every (!l).unblock()
    end
 
    #
-   # Set the owning dialog to d, and insert this dialog into
-   # the parent's set of child dialogs.
-   # 
-   private set_owning_dialog(d)
-      insert(d.child_dialogs, self)
-      self.owning_dialog := d
-      return self
+   # Called from a {Task}, this method calls {show}, and then
+   # waits until the dialog is closed before returning.
+   #
+   # @param task The current task
+   # @param d   This optional parameter specifies the parent dialog.
+   #
+   public show_and_wait(task, d)
+      local x
+      x := connect_and_return(create {
+         task.start()
+         disconnect(x)
+      }, Event.DIALOG_DISPOSED)
+      show(d)
+      while \win do
+         task.revert()
    end
 
    #
@@ -273,6 +235,10 @@ class Dialog(Component)
       self.effective_is_hidden_flag := self.is_hidden_flag
       self.effective_is_shaded_flag := self.is_shaded_flag
       Gui.style.polish(self)
+      self.held := table()
+      self.crossing := set()
+      self.selections := table()
+      self.selection_requests := table()
       self.effective_wattribs := table()
       every t := key(self.wattribs) do {
          if member(Gui.CONTEXT_WATTRIB_SET, t) then
@@ -336,6 +302,7 @@ class Dialog(Component)
    public close_win()
       self.buffer_win.close()
       self.win.close()
+      self.buffer_win := self.win := &null
    end
 
    public get_buffer_win()
@@ -344,9 +311,8 @@ class Dialog(Component)
 
    public enter_menu_mode(c)
       # If already in menu mode, force ourselves out of it.
-      if \self.menu_mode then
-         self.menu_mode.close_all()
-      (/self.menu_mode := c) | syserr("internal error - already in menu mode")
+      (\self.menu_mode).close_all()
+      self.menu_mode := c
       popups := []
       win.grab_pointer()
    end
@@ -427,19 +393,34 @@ class Dialog(Component)
    public end_dialog()
    end
 
-   public show()
+   #
+   # Opens the dialog and returns immediately.
+   #
+   # @param d   This optional parameter specifies the parent dialog.
+   # @ When a parent dialog is closed, its child dialogs are automatically closed.
+   #
+   public show(d)
+      /win | runerr("show() called on open Dialog", self)
+      if \d then {
+         insert(d.child_dialogs, self)
+         self.owning_dialog := d
+      }
       self.component_setup()
       self.open_buffer_win()
       self.initially()
       self.open_visible_win()
-      self.is_open_flag := 1
       self.resize()
       self.invalidate()
       self.tooltip_init()
       self.init_dialog()
+      Dispatcher.add_dialog(self)
    end
 
    public dispose()
+      \win | runerr("dispose() called on closed Dialog", self)
+      (\self.menu_mode).close_all()
+      if \curr_drag then
+         exit_dnd()
       self.end_dialog()
       every (!child_dialogs).dispose()
       self.dispose_selections()
@@ -447,14 +428,16 @@ class Dialog(Component)
       self.finally()
       Gui.style.dispose_all()
       self.close_win()
-      self.is_open_flag := &null
       Dispatcher.remove_dialog(self)
       if \self.owning_dialog then {
          delete(self.owning_dialog.child_dialogs, self)
          self.owning_dialog.raise()
          self.owning_dialog := &null
       }
-      fire(Event.DIALOG_CLOSED)
+      self.point_chain := self.point_chain_source := self.held := 
+         self.prev_event := self.copy_rect := self.crossing := 
+         self.selections := self.selection_requests := &null
+      fire(Event.DIALOG_DISPOSED)
    end
 
    public create_point_chain(e)
@@ -493,9 +476,7 @@ class Dialog(Component)
    end
 
    public dispose_selections()
-      local e
-      every e := !selections do
-         e.lost_ownership()
+      every (!selections).lost_ownership()
       selections := table()
    end
 
@@ -636,7 +617,7 @@ $endif
       #
       # If a handler closed us, do no more.
       #
-      if /self.is_open_flag then
+      if /self.win then
          return
 
       #
@@ -698,38 +679,36 @@ $endif
    end
 
    public generate_events(e)
-      local ec, ke, s1, s2, t
+      local ec, t
 
       ec := e.code
       if integer(ec) < 0 then {
          # Mouse event
-         s1 := elementset(\crossing) | set()
-         s2 := elementset(point_chain)
-         crossing := copy(point_chain)
-         fire_list(s1 -- s2, Event.MOUSE_EXIT, e)
-         fire_list(s2 -- s1, Event.MOUSE_ENTER, e)
+         t := crossing
+         crossing := elementset(point_chain)
+         fire_list(t -- crossing, Event.MOUSE_EXIT, e)
+         fire_list(crossing -- t, Event.MOUSE_ENTER, e)
          if member(Mouse.WHEEL, ec) then {
             fire_list(point_chain, ec, e)
          } else if member(Mouse.PRESS, ec) then {
-            held[ec] := copy(point_chain)
-            fire_list(held[ec], ec, e)
+            held[ec] := point_chain
+            fire_list(point_chain, ec, e)
          } else if ec === Mouse.DRAG then {
             every t := key(held) do
                fire_list(held[t], 10 - t, e)
          } else if ec === Mouse.MOVEMENT then {
             fire_list(point_chain, ec, e)
          } else if member(Mouse.RELEASE, ec) then {
-            fire_list(\held[ec + 3], ec, e)
-            delete(held, ec + 3)
+            if t := \held[ec + 3] then {
+               delete(held, ec + 3)
+               fire_list(t, ec, e)
+            }
          }
       } else {
          # Keyboard event
-         ke := if \e.release then Event.KEY_RELEASE else Event.KEY_PRESS
-         if \self.menu_mode then
-            fire_list([self.menu_mode], ke, e)
-         else
-            fire_list([\self.focus], ke, e)
-         self.fire(ke, e)
+         fire_list([\self.menu_mode | \self.focus] \ 1,
+                   if \e.release then Event.KEY_RELEASE else Event.KEY_PRESS,
+                   e)
       }
       fire(Event.ICON, e)
    end
@@ -738,8 +717,7 @@ $endif
    private fire_list(l, t, p)
       local c
       every c := !l do {
-         if c.is_unshaded() & c.is_unhidden() &
-            \c.cbwin & \self.is_open_flag then
+         if \c.cbwin & c.is_unshaded() & c.is_unhidden() then
             c.fire(t, p)
       }
    end
@@ -759,6 +737,7 @@ $endif
       self.tooltip_ticker.stop()
       if self.tooltip_state = 2 then
          hide_tooltip()
+      self.tooltip_last_obj := self.tooltip_last_tip := self.tooltip_last_event := &null
    end
 
    #
@@ -838,7 +817,7 @@ $endif
             set_y(win.get_y() + win.get_dy() + self.tooltip_component.y)
          self.tooltip_component.set_pos(0, 0)
          d.add(self.tooltip_component)
-         d.show_modeless()
+         d.show()
       } else
          self.tooltip_component.invalidate()
    end
@@ -979,9 +958,11 @@ $endif
    public synch_pointer(e)
       local c, ptr
       ptr := DEFAULT_POINTER
-      every c := !\self.point_chain do {
-         if c.is_unshaded() & (ptr := c.get_pointer(e)) then
-            break
+      if /is_blocked_flag then {
+         every c := !\self.point_chain do {
+            if c.is_unshaded() & (ptr := c.get_pointer(e)) then
+               break
+         }
       }
       change_pointer(ptr)
    end
@@ -1284,9 +1265,6 @@ $endif
       cast(self,Component).new()
       self.set_all_wattribs(ROOT_WATTRIBS)
       self.child_dialogs := set()
-      self.held := table()
-      self.selections := table()
-      self.selection_requests := table()
       self.tooltip_ticker := Dispatcher.new_task{self.process_tooltip_tick()}
       return
    end

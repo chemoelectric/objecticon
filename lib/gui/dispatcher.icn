@@ -60,7 +60,7 @@ class Dispatcher()
          while *dialogs > 0 do
             work() | delay(Gui.IDLE_SLEEP)
       } else {
-         while \r.is_open_flag do
+         while \r.win do
             work() | delay(Gui.IDLE_SLEEP)
       }
    end
@@ -77,7 +77,7 @@ class Dispatcher()
          while *dialogs > 0 do
             work() | break
       } else {
-         while \r.is_open_flag do
+         while \r.win do
             work() | break
       }
    end

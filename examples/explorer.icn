@@ -1,7 +1,3 @@
-#
-# $Id: explorer.icn 1696 2011-05-23 21:02:25Z jimmymeeker $
-#
-
 import gui, ipl.sort, io, util
 
 #
@@ -148,7 +144,7 @@ class Explorer(Dialog)
 
       set_size(750,440).set_resize(&yes).set_label("Explorer")
       connect(self.dispose, Event.WINDOW_CLOSE_BUTTON)
-      connect(self.quit_check, Event.KEY_PRESS)
+      connect(self.quit_check, Event.ICON)
 
       set_layout(GridLayout())
 

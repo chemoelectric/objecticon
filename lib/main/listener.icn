@@ -15,7 +15,15 @@ class Listener()
    private readable 
       proc,
       coex,
-      type
+      type,
+      saved_type
+
+   private static const
+      NO_TYPE
+
+   private static init()
+      NO_TYPE := []
+   end
 
    #
    # Return the procedure (or method pointer) which is invoked on an
@@ -35,6 +43,30 @@ class Listener()
 
    private fire_coex()
       @^coex
+   end
+
+   #
+   # Disable this listener, so that it doesn't fire on any event, but
+   # remains connected.
+   #
+   public disable()
+      if type ~=== NO_TYPE then {
+         saved_type := type
+         type := NO_TYPE
+      }
+      return self
+   end
+
+   #
+   # After a call to {disable}, reset the listener so that it can
+   # begin firing again.
+   #
+   public reenable()
+      if type === NO_TYPE then {
+         type := saved_type
+         saved_type := &null
+      }
+      return self
    end
 
    package new(proc, type)

@@ -1,8 +1,8 @@
 $include "oigram_tab.icn"
 
-package parser
+package eval
 
-import ipl.pdco, ipl.lists, lang, util, exception
+import ipl.pdco, ipl.lists, lang, util, exception, parser
 
 class EvaluatorEnv()
    public defer get(k, ev)
@@ -336,7 +336,7 @@ class Evaluator()
    private do_case(n)
       local l, v, cc
       l := pos_list(CaseList(n, 5))
-      every v := E(n.child(2)) do {
+      if v := E(n.child(2)) then {
          every cc := !l do {
             if (cc.label == "cclause" &
                 v === E(cc.child(1))) |

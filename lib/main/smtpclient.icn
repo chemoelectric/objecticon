@@ -109,7 +109,7 @@ class SmtpClient(NetClient)
 
       t := ""
       repeat {
-         s := read_line() | fail
+         s := expect_line() | fail
 
          t ||:= s || "\n"
 

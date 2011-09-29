@@ -1,7 +1,7 @@
 #SRC: JCON
 #  I/O test -- writes ./tmp1 and ./tmp2 as well as stdout
 
-import io
+import io, ipl.test
 $ifdef _MS_WIN32
 import ipl.strings(replace)
 $endif

@@ -24,7 +24,6 @@ class CDialog(Dialog,SelectiveObjectCodec)
    public new()
       cast(self,Dialog).new()
       self.clear_wattribs()
-      self.is_open_flag := 1
       return
    end
 end

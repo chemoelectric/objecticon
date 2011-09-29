@@ -95,7 +95,6 @@ static void fold_case(struct lnode *n);
 static void fold_to(struct lnode *n);
 static void fold_toby(struct lnode *n);
 static void fold_invoke(struct lnode *n);
-static void fold_coinvoke(struct lnode *n);
 static void fold_apply(struct lnode *n);
 static void fold_keyword(struct lnode *n);
 static void fold_return(struct lnode *n);
@@ -177,11 +176,6 @@ static int fold_consts(struct lnode *n)
 
         case Uop_Invoke: {
             fold_invoke(n);
-            break;
-        }
-
-        case Uop_CoInvoke: {
-            fold_coinvoke(n);
             break;
         }
 
@@ -592,16 +586,6 @@ static int changes(struct lnode *n)
             case Uop_Sectp: {
                 struct lnode_3 *x = (struct lnode_3 *)n->parent;
                 return x->child1 == n;
-            }
-
-            case Uop_CoInvoke: {
-                struct lnode_invoke *x = (struct lnode_invoke *)n->parent;
-                int i;
-                for (i = 0; i < x->n; ++i) {
-                    if (x->child[i] == n)
-                        return 1;
-                }
-                return 0;
             }
 
             case Uop_Breakexpr: 
@@ -1371,17 +1355,6 @@ static void fold_invoke(struct lnode *n)
         }
         free_literal(&l);
     }
-}
-
-static void fold_coinvoke(struct lnode *n)
-{
-    struct lnode_invoke *x = (struct lnode_invoke *)n;
-    struct literal l;
-    if (!get_literal(x->expr, &l))
-        return;
-    if (l.type == FAIL)
-        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
-    free_literal(&l);
 }
 
 static void fold_apply(struct lnode *n)
@@ -2804,8 +2777,10 @@ static void fold_subsc(struct lnode *n)
             int len = ucs_length(l1.u.str.s, l1.u.str.len);
             char *p = l1.u.str.s, *t;
             i = cvpos(l2.u.i, len);
-            if (i == CvtFail || i > len)
+            if (i == CvtFail || i > len) {
+                replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
                 break;
+            }
             p = l1.u.str.s;
             while (i-- > 1) 
                 utf8_iter(&p);
@@ -2821,9 +2796,10 @@ static void fold_subsc(struct lnode *n)
         case CSET: {
             int k, ch, count, len = cset_size(l1.u.rs);
             i = cvpos(l2.u.i, len);
-            if (i == CvtFail || i > len)
+            if (i == CvtFail || i > len) {
+                replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
                 break;
-
+            }
             k = cset_range_of_pos(l1.u.rs, i, &count);
             ch = l1.u.rs->range[k].from + i - 1 - count;
             if (ch < 256) {
@@ -2849,8 +2825,10 @@ static void fold_subsc(struct lnode *n)
             if (!cnv_string(&l1))
                 break;
             i = cvpos(l2.u.i, l1.u.str.len);
-            if (i == CvtFail || i > l1.u.str.len)
+            if (i == CvtFail || i > l1.u.str.len) {
+                replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
                 break;
+            }
             t = l1.u.str.s[i - 1];
             replace_node(n, (struct lnode*)
                          lnode_const(&n->loc,
@@ -2909,9 +2887,8 @@ static void fold_sect(struct lnode *n, int op)
 
     i = l2.u.i;
     j = l3.u.i;
-
     if (op == Uop_Sectm)
-        j -= i;
+        j = i - j;
     else if (op == Uop_Sectp)
         j += i;
 
@@ -2920,11 +2897,11 @@ static void fold_sect(struct lnode *n, int op)
             int len = ucs_length(l1.u.str.s, l1.u.str.len);
             char *start = l1.u.str.s, *end;
             i = cvpos(i, len);
-            if (i == CvtFail)
-                break;
             j = cvpos(j, len);
-            if (j == CvtFail)
+            if (i == CvtFail || j == CvtFail) {
+                replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
                 break;
+            }
             if (i > j) { 			/* convert section to substring */
                 t = i;
                 i = j;
@@ -2950,11 +2927,11 @@ static void fold_sect(struct lnode *n, int op)
             int k, last, ch, count, len = cset_size(l1.u.rs), type;
             word from, to, m, out_len;
             i = cvpos(i, len);
-            if (i == CvtFail)
-                break;
             j = cvpos(j, len);
-            if (j == CvtFail)
+            if (i == CvtFail || j == CvtFail) {
+                replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
                 break;
+            }
             if (i > j) { 			/* convert section to substring */
                 t = i;
                 i = j;
@@ -3021,13 +2998,11 @@ static void fold_sect(struct lnode *n, int op)
             if (!cnv_string(&l1))
                 break;
             i = cvpos(i, l1.u.str.len);
-            if (i == CvtFail)
-                break;
-
             j = cvpos(j, l1.u.str.len);
-            if (j == CvtFail) 
+            if (i == CvtFail || j == CvtFail) {
+                replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
                 break;
-
+            }
             if (i > j) { 			/* convert section to substring */
                 t = i;
                 i = j;

@@ -250,17 +250,14 @@ $else
    # Low-level read on the connection. 
    #
    private recv(len)
-      local r, s
+      local r
       r := do_poll(Poll.IN) | return error("Receive poll failed: " || &why)
       if /r then return error("Receive failed (timeout)")
       poll_in_test(r[1]) | return error("Receive failed (socket error)")
-      s := (if \ssl_connection then
+      return if \ssl_connection then
          ssl_connection.in(len)
       else
-         connection.in(len)) | fail
-      if /s then
-         return error("End of file")
-      return s
+         connection.in(len)
    end
 $endif
 
@@ -282,10 +279,10 @@ $endif
    end
 
    #
-   # Read a single line from the connection, and return it.
+   # Read a single line from the connection, and return it.  Returns {&null} on eof.
    #
    protected read_line()
-      local line
+      local line, s
 
       repeat {
          #
@@ -299,12 +296,31 @@ $endif
                return line
             }
          }
-         sbuff ||:= recv(1048576) | fail
+         s := recv(1048576) | fail
+         if /s then {
+            if *sbuff = 0 then
+               return
+            line := sbuff
+            sbuff := ""
+            fire(READ_LINE_EVENT, line)
+            return line
+         }
+         sbuff ||:= s
       }
    end
 
    #
-   # Read up to len bytes on the connection.
+   # This method is the same as {read_line}, except that on end of
+   # file it fails, setting {&why}, rather than returning {&null}.
+   #
+   protected expect_line()
+      local s
+      s := read_line() | fail
+      return \s | error("Unexpected eof")
+   end
+
+   #
+   # Read up to len bytes on the connection, returning {&null} on eof.
    #
    protected read_str(len)
       local t
@@ -318,9 +334,20 @@ $endif
          }
       } else {
          t := recv(len) | fail
+         if /t then
+            return
       }
       fire(READ_STRING_EVENT, t)
       return t
+   end
+
+   # This method is the same as {read_str}, except that on end of file
+   # it fails, setting {&why}, rather than returning {&null}.
+   #
+   protected expect_str(len)
+      local s
+      s := read_str(len) | fail
+      return \s | error("Unexpected eof")
    end
 
    protected is_open()

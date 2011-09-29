@@ -73,15 +73,14 @@ class Task()
    public const
       scheduler
    private readable
-      coex,
       sleep_until,
       last_sleep,
       poll_until,
       poll_req,
       interrupt_flag
    package readable
+      coex,
       state,
-      active,
       poll_err,
       poll_res
 
@@ -98,7 +97,7 @@ class Task()
    # Succeed iff the task is currently active.
    #
    public is_active()
-      return .\active
+      return ./coex
    end
 
    # Succeed iff the task is the current task.  Note that a task may
@@ -171,7 +170,7 @@ class Task()
    # flag causes the original {poll} call to fail, setting {&why}.
    #
    public interrupt()
-      /active | runerr("interrupt called on a currently active task")
+      \coex | runerr("interrupt called on a currently active task")
       self.interrupt_flag := 1
    end
 
@@ -187,10 +186,8 @@ class Task()
    # Suspend this task, which must be the currently scheduled task,
    # but do not resume it.  Control reverts to the scheduler.  The
    # task may be subsequently restarted with {start}.  Note that to
-   # end a task, it is normally simply sufficient to fall off the end
-   # of the task's co-expression.  Using {revert} would only be
-   # necessary if the task were to be re-started, or its
-   # co-expression's activator was not the scheduler co-expression.
+   # end a task, it is not simply sufficient to fall off the end of
+   # the task's co-expression, {revert} must be used.
    #
    public revert()
       self === scheduler.curr_task | runerr("revert called on task which is not current")
@@ -203,7 +200,7 @@ class Task()
    # it continues from that same state.
    #
    public start()
-      /active | runerr("start called on a currently active task")
+      \coex | runerr("start called on a currently active task")
       scheduler.start(self)
    end
 
@@ -213,7 +210,7 @@ class Task()
    # {start}.
    #
    public stop()
-      /active | runerr("stop called on a currently active task")
+      \coex | runerr("stop called on a currently active task")
       scheduler.stop(self)
    end
 
@@ -304,21 +301,23 @@ class Scheduler()
    end
 
    private run(t)
-      local sc, st
+      local sc, st, te
       delete(t.state, t)
       t.state := &null
       sc := coex
       st := curr_task
       coex := &current
       curr_task := t
-      t.active := 1
+      te := t.coex
+      t.coex := &null
       # Don't specify an activator unless we have to (ie if this is a
       # new co-expression).
-      if Coexpression.get_activator(t.coex) then
-         coact(, t.coex)
+      if Coexpression.get_activator(te) then
+         coact(, te)
       else
-         @t.coex
-      t.active := &null
+         @te
+      \t.coex | runerr("incorrect reversion to scheduler, task co-expression not set", t)
+      coex === &current | syserr("scheduler co-expression not &current")
       coex := sc
       curr_task := st
     end

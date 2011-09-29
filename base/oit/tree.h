@@ -111,6 +111,7 @@ extern struct node tok_loc;     /* "model" token holding current location */
 #define N_Mutual	55		/* (x, y, ...) */
 #define N_If		56		/* if-then statement */
 #define N_Ifelse	57		/* if-then-else statement */
+#define N_Subsc         58              /* a[i, j, k, ....] */
 
 /*
  * Macros for constructing basic nodes.
@@ -136,8 +137,6 @@ struct  node *tree5             (int type,struct node *loc_model,
 struct  node *tree6             (int type,struct node *loc_model,
                                    struct node *c, struct node *d,
                                    struct node *e,struct node *f);
-struct node *buildarray         (struct node *a,struct node *lb,
-                                        struct node *e, struct node *rb);
 struct  node *int_leaf          (int type,struct node *loc_model,int c);
 struct  node *c_str_leaf        (int type,struct node *loc_model, char *c);
 struct  node *i_str_leaf        (int type,struct node *loc_model,char *c,int d);

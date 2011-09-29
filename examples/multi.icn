@@ -1,7 +1,3 @@
-#
-# $Id: multi.icn 1704 2011-05-26 18:20:53Z jimmymeeker $
-#
-
 import gui
 
 class ChildDialog(Dialog)
@@ -10,19 +6,13 @@ class ChildDialog(Dialog)
    public handle_create_modeless(ev)
       local d
       d := ChildDialog().set_label("Modeless Dialog")
-      d.show_modeless(self)
+      d.show(self)
    end
 
    public handle_create_orphan_modeless(ev)
       local d
       d := ChildDialog().set_label("Orphan modeless Dialog")
-      d.show_modeless()
-   end
-
-   public handle_create_child(ev)
-      local d
-      d := ChildDialog().set_label("Blocking Child Dialog")
-      d.show_child(self)
+      d.show()
    end
 
    public handle_create_modal(ev)
@@ -68,8 +58,6 @@ class ChildDialog(Dialog)
       add(TextButton().set_label("Create Child Modal Dialog").set_constraint("eol", &yes).connect(handle_create_modal, Event.ACTION))
 
       add(TextButton().set_label("Create Orphan Modal Dialog").set_constraint("eol", &yes).connect(handle_create_orphan_modal, Event.ACTION))
-
-      add(TextButton().set_label("Create Child Blocking Dialog").set_constraint("eol", &yes).connect(handle_create_child, Event.ACTION))
 
       p := Component().set_layout(GridLayout().set_doi(0))
       p.add(TextButton().set_label("Close").connect(dispose, Event.ACTION))

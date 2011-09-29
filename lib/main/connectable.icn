@@ -52,8 +52,12 @@ class Connectable()
       local t, l
       t := []
       every l := !listeners do
-         is_methp_with_object(l.proc, obj) | put(t, l)
+         if is_methp_with_object(l.proc, obj) then
+            l.disable()
+         else 
+            put(t, l)
       listeners := t
+      return self
    end
 
    private static defer is_methp_with_object(mp, o)
@@ -65,10 +69,13 @@ class Connectable()
       local t, l
       t := []
       every l := !listeners do {
-         if l.proc ~=== proc then
+         if l.proc === proc then
+            l.disable()
+         else 
             put(t, l)
       }
       listeners := t
+      return self
    end
 
    #
@@ -78,10 +85,13 @@ class Connectable()
       local t, l
       t := []
       every l := !listeners do {
-         if l.coex ~=== coex then
+         if l.coex === coex then
+            l.disable()
+         else 
             put(t, l)
       }
       listeners := t
+      return self
    end
 
    #
@@ -91,10 +101,13 @@ class Connectable()
       local t, l
       t := []
       every l := !listeners do {
-         if l.type ~=== type then
+         if l.type === type then
+            l.disable()
+         else 
             put(t, l)
       }
       listeners := t
+      return self
    end
 
    #
@@ -104,7 +117,9 @@ class Connectable()
       local t
       t := []
       every put(t, l ~=== !listeners)
+      l.disable()
       listeners := t
+      return self
    end
 
    #
@@ -113,7 +128,9 @@ class Connectable()
    #
    public reconnect(l)
       listeners := copy(listeners)
+      l.reenable()
       put(listeners, l)
+      return self
    end
 
    public new()

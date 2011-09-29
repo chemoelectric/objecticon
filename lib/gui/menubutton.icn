@@ -116,8 +116,7 @@ class MenuButton(Component)
 
    public dialog_event(e)
       local ec
-      (self.is_unshaded() & self.is_unhidden() &
-            \self.cbwin & \self.parent_dialog.is_open_flag) | fail
+      (self.is_unshaded() & self.is_unhidden()) | fail
       ec := e.code
       if e === accel_skip then
          accel_skip := &null

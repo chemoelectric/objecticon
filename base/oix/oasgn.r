@@ -281,7 +281,6 @@ int subs_asgn(dptr dest, dptr src)
    tended struct descrip deststr, srcstr, rsltstr;
    tended struct b_tvsubs *tvsub;
 
-   char *s;
    word len;
    word prelen;   /* length of portion of string before substring */
    word poststrt; /* start of portion of string following substring */
@@ -319,26 +318,53 @@ int subs_asgn(dptr dest, dptr src)
            poststrt = prelen + StrLen(utf8_mid);
        }
        postlen = StrLen(UcsBlk(deststr).utf8) - poststrt;
-       /*
-        * Form the result string.
-        *  Start by allocating space for the entire result.
-        */
-       len = prelen + StrLen(UcsBlk(srcstr).utf8) + postlen;
-       MemProtect(StrLoc(utf8_new) = reserve(Strings, len));
-       StrLen(utf8_new) = len;
 
        /*
-        * Copy the three sections into the reserved space.
+        * Check for various cases where we don't need to construct a new utf8 string.
         */
-       alcstr(StrLoc(UcsBlk(deststr).utf8), prelen);
-       alcstr(StrLoc(UcsBlk(srcstr).utf8), StrLen(UcsBlk(srcstr).utf8));
-       alcstr(StrLoc(UcsBlk(deststr).utf8) + poststrt, postlen);
+       if (tvsub->sslen == 0 && UcsBlk(srcstr).length == 0) {
+           rsltstr = deststr;
+       } else if (prelen == 0 && UcsBlk(srcstr).length == 0) {
+           StrLoc(utf8_new) = StrLoc(UcsBlk(deststr).utf8) + poststrt;
+           StrLen(utf8_new) = postlen;
+           rsltstr.dword = D_Ucs;
+           BlkLoc(rsltstr) = (union block *)make_ucs_block(&utf8_new, 
+                                                           UcsBlk(deststr).length - tvsub->sslen);
+       } else if (postlen == 0 && UcsBlk(srcstr).length == 0) {
+           StrLoc(utf8_new) = StrLoc(UcsBlk(deststr).utf8);
+           StrLen(utf8_new) = prelen;
+           rsltstr.dword = D_Ucs;
+           BlkLoc(rsltstr) = (union block *)make_ucs_block(&utf8_new, 
+                                                           UcsBlk(deststr).length - tvsub->sslen);
+       } else if (prelen == 0 && postlen == 0) {
+           rsltstr = srcstr;
+       } else {
+           /*
+            * Form the result string.
+            *  Start by allocating space for the entire result.
+            */
+           len = prelen + StrLen(UcsBlk(srcstr).utf8) + postlen;
+           MemProtect(StrLoc(utf8_new) = alcstr(NULL, len));
+           StrLen(utf8_new) = len;
 
-       rsltstr.dword = D_Ucs;
-       BlkLoc(rsltstr) = (union block *)
-           make_ucs_block(&utf8_new,
-                          UcsBlk(deststr).length - tvsub->sslen + UcsBlk(srcstr).length);
+           /*
+            * Copy the three sections into the reserved space.
+            */
+           memcpy(StrLoc(utf8_new), 
+                  StrLoc(UcsBlk(deststr).utf8), 
+                  prelen);
+           memcpy(StrLoc(utf8_new) + prelen, 
+                  StrLoc(UcsBlk(srcstr).utf8), 
+                  StrLen(UcsBlk(srcstr).utf8));
+           memcpy(StrLoc(utf8_new) + prelen + StrLen(UcsBlk(srcstr).utf8), 
+                  StrLoc(UcsBlk(deststr).utf8) + poststrt, 
+                  postlen);
 
+           rsltstr.dword = D_Ucs;
+           BlkLoc(rsltstr) = (union block *)
+               make_ucs_block(&utf8_new,
+                              UcsBlk(deststr).length - tvsub->sslen + UcsBlk(srcstr).length);
+       }
        newsslen = UcsBlk(srcstr).length;
    } else {
        /* deststr must be a string, so ensure src is too */
@@ -352,42 +378,39 @@ int subs_asgn(dptr dest, dptr src)
         */
        prelen = tvsub->sspos - 1;
        poststrt = prelen + tvsub->sslen;
+       postlen = StrLen(deststr) - poststrt;
        if (poststrt > StrLen(deststr))
            ReturnErrNum(205, Error);
 
        /*
-        * Form the result string.
-        *  Start by allocating space for the entire result.
+        * Check for various cases where we don't need to construct a new string.
         */
-       len = prelen + StrLen(srcstr) + StrLen(deststr) - poststrt;
-       MemProtect(s = alcstr(NULL, len));
-       StrLoc(rsltstr) = s;
-       StrLen(rsltstr) = len;
-       /*
-        * First, copy the portion of the substring string to the left of
-        *  the substring into the string space.
-        */
-   
-       memcpy(StrLoc(rsltstr), StrLoc(deststr), prelen);
-   
-       /*
-        * Copy the string to be assigned into the string space,
-        *  effectively concatenating it.
-        */
-   
-       memcpy(StrLoc(rsltstr)+prelen, StrLoc(srcstr), StrLen(srcstr));
-   
-       /*
-        * Copy the portion of the substring to the right of
-        *  the substring into the string space, completing the
-        *  result.
-        */
-    
-   
-       postlen = StrLen(deststr) - poststrt;
-   
-       memcpy(StrLoc(rsltstr)+prelen+StrLen(srcstr), StrLoc(deststr)+poststrt, postlen);
+       if (tvsub->sslen == 0 && StrLen(srcstr) == 0) {
+           rsltstr = deststr;
+       } else if (prelen == 0 && StrLen(srcstr) == 0) {
+           StrLoc(rsltstr) = StrLoc(deststr) + poststrt;
+           StrLen(rsltstr) = postlen;
+       } else if (postlen == 0 && StrLen(srcstr) == 0) {
+           StrLoc(rsltstr) = StrLoc(deststr);
+           StrLen(rsltstr) = prelen;
+       } else if (prelen == 0 && postlen == 0) {
+           rsltstr = srcstr;
+       } else {
+           /*
+            * Form the result string.
+            *  Start by allocating space for the entire result.
+            */
+           len = prelen + StrLen(srcstr) + postlen;
+           MemProtect(StrLoc(rsltstr) = alcstr(NULL, len));
+           StrLen(rsltstr) = len;
 
+           /*
+            * Copy the three sections into the reserved space.
+            */
+           memcpy(StrLoc(rsltstr), StrLoc(deststr), prelen);
+           memcpy(StrLoc(rsltstr) + prelen, StrLoc(srcstr), StrLen(srcstr));
+           memcpy(StrLoc(rsltstr) + prelen + StrLen(srcstr), StrLoc(deststr) + poststrt, postlen);
+       }
        newsslen = StrLen(srcstr);
    }
 

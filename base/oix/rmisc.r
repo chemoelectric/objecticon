@@ -1752,7 +1752,8 @@ void errno2why()
  */
 void why(char *s)
 {
-    cstr2string(s, &kywd_why);
+    if (s)
+        cstr2string(s, &kywd_why);
 }
 
 /*
