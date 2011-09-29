@@ -5,6 +5,7 @@
 #include "tsym.h"
 #include "lsym.h"
 #include "lmem.h"
+#include "keyword.h"
 
 static struct loc curr_loc;
 static struct lfile *lf;
@@ -219,7 +220,6 @@ static struct lnode *buildtree(void)
         case Uop_Diff:
         case Uop_Eqv:
         case Uop_Inter:
-        case Uop_Subsc:
         case Uop_Lconcat:
         case Uop_Lexeq:
         case Uop_Lexge:
@@ -334,7 +334,35 @@ static struct lnode *buildtree(void)
             return (struct lnode *)lnode_field(&t, c, s);
         }
 
-        case Uop_CoInvoke:                      /* e{x1, x2.., xn} */
+        case Uop_Subsc: {                      /* e[x1, x2.., xn] */
+            int i, n = uin_16();
+            struct loc t = curr_loc;
+            struct lnode *e = buildtree();
+            struct lnode_2 *x;
+            if (n == 0)
+                x = lnode_2(op, &t, e, (struct lnode *)lnode_keyword(&t, K_NULL));
+            else {
+                x = lnode_2(op, &t, e, buildtree());
+                for (i = 1; i < n; ++i)
+                    x = lnode_2(op, &t, (struct lnode *)x, buildtree());
+            }
+            return (struct lnode *)x;
+        }
+
+        case Uop_CoInvoke: {                    /* e{x1, x2.., xn} */
+            int i, n = uin_16();
+            struct loc t = curr_loc;
+            struct lnode *e = buildtree();
+            struct lnode_invoke *x = lnode_invoke(Uop_Invoke, &t, e, n);
+            for (i = 0; i < n; ++i) {
+                struct lnode *y = buildtree();
+                struct lnode_1 *z = lnode_1(Uop_Create, &y->loc, y);
+                x->child[i] = (struct lnode *)z;
+                z->parent = (struct lnode *)x;
+            }
+            return (struct lnode *)x;
+        }
+
         case Uop_Invoke: {                      /* e(x1, x2.., xn) */
             int i, n = uin_16();
             struct loc t = curr_loc;

@@ -111,7 +111,7 @@ struct ucode_op ucode_op_table[] = {
     /* 103 */         { Uop_Diff, "diff", {0,0}, "\t%-12s" },
     /* 104 */         { Uop_Eqv, "eqv", {0,0}, "\t%-12s" },
     /* 105 */         { Uop_Inter, "inter", {0,0}, "\t%-12s" },
-    /* 106 */         { Uop_Subsc, "subsc", {0,0}, "\t%-12s" },
+    /* 106 */         { Uop_Subsc, "subsc", { TYPE_16,0 }, "\t%-12s %d" },
     /* 107 */         { Uop_Lconcat, "lconcat", {0,0}, "\t%-12s" },
     /* 108 */         { Uop_Lexeq, "lexeq", {0,0}, "\t%-12s" },
     /* 109 */         { Uop_Lexge, "lexge", {0,0}, "\t%-12s" },

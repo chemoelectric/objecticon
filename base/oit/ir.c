@@ -1206,7 +1206,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             v1 = get_var(x->child1, st, 0);
             v2 = get_var(x->child2, st, 0);
             v3 = get_var(x->child3, st, target);
-            tmp = make_tmp(st);
+            tmp = target ? target : make_tmp(st);
 
             e1 = ir_traverse(x->child1, st, v1, 0, 0);
             e2 = ir_traverse(x->child2, st, v2, 0, 1);
@@ -2081,16 +2081,6 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             chunk1(operand->failure, ir_goto(n, res->failure));
             res->uses_stack = 1;
             break;
-        }
-
-        case Uop_CoInvoke: {                      /* e{x1, x2.., xn} */
-            struct lnode_invoke *x = (struct lnode_invoke *)n;
-            int i;
-            /* Transform into an invoke node: e(create x1, create x2, ... create xn) */
-            x->op = Uop_Invoke;
-            for (i = 0; i < x->n; ++i)
-                x->child[i] = (struct lnode *)lnode_1(Uop_Create, &x->child[i]->loc, x->child[i]);
-            /* Fall through */
         }
 
         case Uop_Invoke: {                      /* e(x1, x2.., xn) */

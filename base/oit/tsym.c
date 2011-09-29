@@ -527,6 +527,16 @@ static void nodegen(nodeptr t)
             break;
         }
 
+        case N_Subsc: {             /* a[i, j, k, ...] */
+            int len = elist_len(Tree1(t));
+            uout_op(Uop_Subsc);
+            uout_16(len);
+            nodegen(Tree0(t));
+            if (len > 0)
+                nodegen(Tree1(t));
+            break;
+        }
+
         case N_Slist:	{		/* semicolon-separated expr list */
             int len = 1;
             nodeptr u = t;
@@ -755,10 +765,6 @@ static void binop(int op)
 
         case INTER:
             uout_op(Uop_Inter);
-            break;
-
-        case LBRACK:
-            uout_op(Uop_Subsc);
             break;
 
         case LCONCAT:

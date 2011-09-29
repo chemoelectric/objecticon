@@ -2863,7 +2863,7 @@ case 200:
 break;
 case 201:
 #line 426 "tgram.g"
-	{yyval = buildarray(yyvsp[-3],yyvsp[-2],yyvsp[-1],yyvsp[0]);}
+	{yyval = tree4(N_Subsc,yyvsp[-2],yyvsp[-3],yyvsp[-1]);}
 break;
 case 202:
 #line 427 "tgram.g"

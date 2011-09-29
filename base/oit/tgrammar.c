@@ -195,7 +195,7 @@ int modflag;
 #define Section(x1,x2,x3,x4,x5,x6) $$ = tree6(N_Sect,x4,x4,x1,x3,x5) 
 #define Sliter(x)		Val0(x) = putlit(Str0(x),F_StrLit,(int)Val1(x))
 #define Static(x)		idflag = F_Static
-#define Subscript(x1,x2,x3,x4)	$$ = buildarray(x1,x2,x3,x4)
+#define Subscript(x1,x2,x3,x4)	$$ = tree4(N_Subsc,x2,x1,x3)
 #define Suspend0(x1)		$$ = tree3(N_Suspend,x1,x1) 
 #define Suspend1(x1,x2)		$$ = tree4(N_Suspendexpr,x1,x1,x2) 
 #define Suspend2(x1,x2,x3,x4)	$$ = tree5(N_Suspenddo,x1,x1,x2,x4) 

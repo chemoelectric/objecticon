@@ -99,20 +99,6 @@ nodeptr tree6(int type, nodeptr loc_model, nodeptr c, nodeptr d, nodeptr e, node
    return t;
    }
 
-nodeptr buildarray(nodeptr a, nodeptr lb, nodeptr e,nodeptr rb)
-   {
-   nodeptr t, t2;
-   if (e->n_type == N_Elist) {
-      t2 = int_leaf(lb->n_type, lb, (int)lb->n_field[0].n_val);
-      t = tree5(N_Binop, t2, t2, buildarray(a,lb,e->n_field[0].n_ptr,rb),
-		e->n_field[1].n_ptr);
-      /*free(e);*/
-      }
-   else
-      t = tree5(N_Binop, lb, lb, a, e);
-   return t;
-   }
-
 nodeptr int_leaf(int type, nodeptr loc_model, int c)
    {
    nodeptr t;
