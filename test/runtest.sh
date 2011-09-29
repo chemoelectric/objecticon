@@ -36,7 +36,7 @@ for FNAME; do
     fi
 
     # compile program; abort on failure
-    if ! oit -s $BASE utils.icn; then
+    if ! oit -s $BASE ; then
         FAILED="$FAILED $BASE"
         exit 1
         continue
