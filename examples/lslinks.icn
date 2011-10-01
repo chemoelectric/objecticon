@@ -85,8 +85,11 @@ procedure do_one(a)
    else if \opts["b"] then {
       do_search(url, src, doc, "IMG", "SRC", "IMG:")
       do_search(url, src, doc, "A", "HREF", "A:")
-   } else
+      do_search(url, src, doc, "AREA", "HREF", "A:")
+   } else {
       do_search(url, src, doc, "A", "HREF", "")
+      do_search(url, src, doc, "AREA", "HREF", "")
+   }
 end
 
 
@@ -104,7 +107,7 @@ procedure do_search(url, src, doc, tag, attr, pfx)
             if tab(past(map(attr) || "=\"")) then {
                if s := tab(upto("\"")) then {
                   s := remove_entities(s)
-                  if match("http://", s) then
+                  if match("http://" | "https://", s) then
                      write(pfx, s)
                   else {
                      l_url := clone(base)
@@ -119,7 +122,7 @@ procedure do_search(url, src, doc, tag, attr, pfx)
    } else {
       every n := doc.get_root_element().search_tree(tag) do {
          if s := n.get_attribute(attr) then {
-            if match("http://", s) then
+            if match("http://" | "https://", s) then
                write(pfx, s)
             else {
                l_url := clone(base)
