@@ -319,7 +319,7 @@ class Dialog(Component)
 
    public exit_menu_mode()
       (\self.menu_mode := &null) | syserr("internal error - not  in menu mode.")
-      parent_dialog.win.ungrab_pointer()
+      win.ungrab_pointer()
       popups := &null
    end
 
