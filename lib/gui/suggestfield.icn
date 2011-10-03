@@ -97,7 +97,7 @@ class SuggestField(TextField)
       if \tl then
          close_textlist()
 
-      if *data = 0 then
+      if (*data = 0) | (parent_dialog.focus ~=== self) then
          return
 
       win := parent_dialog.win
