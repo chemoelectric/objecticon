@@ -240,13 +240,14 @@ class DNDTest(Dialog)
       local s, r, tf
       s := lst.object_get_cursor() | fail
       r := lst.get_line_rect(lst.get_cursor())
-      tf := PopupTextField().
-         set_geometry(r.x, r.y, r.w, r.h).
+      tf := TextField().
          set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(Gui.TEXT_INSET)).
          set_contents(s).
          set_mark(1).
          connect(on_list_edit, Event.ACTION)
-      tf.popup(lst, ev)
+      PopupEditor(tf).
+         set_geometry(r.x, r.y, r.w, r.h).
+         popup(lst, ev)
    end
 
    private on_tree_edit(ev, src)
@@ -264,13 +265,14 @@ class DNDTest(Dialog)
       r.x +:= cw
       r.w -:= cw
       if r.w < 10 then fail
-      tf := PopupTextField().
-         set_geometry(r.x, r.y, r.w, r.h).
+      tf := TextField().
          set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(Gui.TEXT_INSET)).
          set_contents(n.label).
          set_mark(1).
          connect(on_tree_edit, Event.ACTION)
-      tf.popup(tree, ev)
+      PopupEditor(tf).
+         set_geometry(r.x, r.y, r.w, r.h).
+         popup(tree, ev)
    end
 
    #

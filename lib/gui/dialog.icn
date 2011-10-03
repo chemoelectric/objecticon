@@ -319,7 +319,7 @@ class Dialog(Component)
 
    public exit_menu_mode()
       (\self.menu_mode := &null) | syserr("internal error - not  in menu mode.")
-      parent_dialog.win.ungrab_pointer()
+      win.ungrab_pointer()
       popups := &null
    end
 
@@ -597,6 +597,9 @@ $endif
    private process_normal(e)
       local c, ec
 
+      if /self.win then
+         return
+
       ec := e.code
 
       if member(Mouse.PRESS, ec) then {
@@ -606,8 +609,7 @@ $endif
       }
       else if \e.meta & /e.release & type(ec) == ("string" | "ucs") then {
          if c := self.find_accel(ec) then {
-            if \self.menu_mode then
-               self.menu_mode.close_all()
+            (\self.menu_mode).close_all()
             c.handle_accel(e)
          }
       }
@@ -704,7 +706,7 @@ $endif
                fire_list(t, ec, e)
             }
          }
-      } else {
+      } else if /popup_manager then {
          # Keyboard event
          fire_list([\self.menu_mode | \self.focus] \ 1,
                    if \e.release then Event.KEY_RELEASE else Event.KEY_PRESS,

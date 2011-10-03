@@ -253,9 +253,8 @@ class DropDown(SelectionList,Component)
    private forward_key(ev, src, type)
       # In menu mode key events are forwarded to this component,
       # rather than the text list, regardless of the focus.  So we
-      # must forward them ourselves.  This is not necessary if we are
-      # using a popup however (in which case focus is &null).
-      (self ~=== \parent_dialog.focus).fire(type, ev)
+      # must forward them ourselves.
+      (\tl).fire(type, ev)
    end
 
    public close_textlist()
