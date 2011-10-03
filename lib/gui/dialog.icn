@@ -584,6 +584,9 @@ class Dialog(Component)
    private process_normal(e)
       local c, ec
 
+      if /self.win then
+         return
+
       ec := e.code
 
       if member(Mouse.PRESS, ec) then {
@@ -593,8 +596,7 @@ class Dialog(Component)
       }
       else if \e.meta & /e.release & type(ec) == ("string" | "ucs") then {
          if c := self.find_accel(ec) then {
-            if \self.menu_mode then
-               self.menu_mode.close_all()
+            (\self.menu_mode).close_all()
             c.handle_accel(e)
          }
       }
