@@ -29,7 +29,7 @@ end
 
 procedure main(a)
    local opts, prog, imports, links
-   opts := options(a, "-i:*-l:*-w!-s!")
+   opts := options(a, "-i:*-l:*-w!-s!-h+")
    imports := set()
    every insert(imports, !str2list(!\opts["i"]))
    links := \opts["l"] | []

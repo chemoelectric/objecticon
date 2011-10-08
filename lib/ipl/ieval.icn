@@ -176,7 +176,8 @@ end
 
 procedure main_impl(imports, files, opts)
    local env, s, t, ev, prompt, f, quiet_flag, par, 
-      n, tr_flag, last_runerr, ee, in, hist_line, run, tv
+      n, tr_flag, last_runerr, ee, in, hist_line, run, tv, hlim,
+      hfile
 
    par := Parser()
    env := table()
@@ -194,7 +195,6 @@ procedure main_impl(imports, files, opts)
    env["dir"] := lambda{ if *_a = 0 then list_syms(imports) else dir(_a[1]) }
    env["hist"] := create show_history(in)
    env["cmd"] := lambda{{ if is(in, LineEditorStream) then hist_line := in.get_history_item(_a[1]) ; &fail}}
-
    run := create
       with_var{ with_var{ Safe{ev.eval()}, &trace, tv }, exit, exit_repl}
 
@@ -207,11 +207,15 @@ procedure main_impl(imports, files, opts)
 
    s := ""
    prompt := "> "
-   in := if \opts["s"] then
-      FileStream.stdin
-   else
-      LineEditorStream().
-         set_history_limit(500) | stop("Failed to create LineEditorStream: ", &why)
+   if \opts["s"] then
+      in := FileStream.stdin
+   else {
+      hlim := (10 < \opts["h"]) | 500
+      in := LineEditorStream().
+         set_history_limit(hlim) | stop("Failed to create LineEditorStream: ", &why)
+      hfile := Files.get_path(Files.get_home()).child(".ieval_history").str()
+      in.set_history(decode(Files.file_to_string(hfile)))
+   }
    repeat {
       if \hist_line then {
          write(prompt, hist_line)
@@ -259,5 +263,7 @@ procedure main_impl(imports, files, opts)
       prompt := "> "
       s := ""
    }
+   if \hfile then
+      Files.string_to_file(hfile, encode(in.get_history())) | ewrite("History not saved: ", &why)
    write("Ciao")
 end
