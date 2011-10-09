@@ -121,7 +121,7 @@ class TreeTableContent(Tree)
             # Clip on the column.
             view.cbwin.clip!cc
             yp := r.y - info.offset
-            xp := view.x - get_area_x()
+            xp := get_subject_x()
             # Write each line in this column
             every i := info.first to info.last do {
                lh := integer(h) | h[i]
@@ -142,8 +142,8 @@ class TreeTableContent(Tree)
 
    # Re-override draw_line so that call to SelectableScrollArea.draw() above draws
    # the selections etc (rather than displaying the tree column again).
-   public draw_line(xp, yp, lh, i, sel, cur)
-      draw_line_sel_cur(self.view.x, yp, self.view.w, lh, sel, cur)
+   public draw_line(xp, yp, lh, i, sel, cur, hi)
+      draw_line_sel_cur(self.view.x, yp, self.view.w, lh, sel, cur, hi)
    end
 end
 

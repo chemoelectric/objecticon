@@ -1,4 +1,4 @@
-import gui
+import gui, ipl.pdco
 
 #
 # A Dnd-enabled list
@@ -9,29 +9,34 @@ class CustomList(TextList)
    #
    public perform_drop(drag, drop)
       local l, ll, el
+      # Calculate insertion index
       if l := self.get_highlight() then {
-         if drag.get_source() === self then {
+         if get_highlight_part() === BOTTOM then
+            l +:= 1
+      } else
+         l := 1    # Empty list
+
+      if drag.get_source() === self then {
+         #
+         # Move within the list itself
+         #
+         self.move_lines(self.get_gesture_selections(), l)
+      } else {
+         #
+         # Copy from tree to list.  drag.get_content() gives
+         # a list of the nodes being dragged.
+         #
+         ll := []
+         every el := !drag.get_content() do {
             #
-            # Move within the list itself
+            # Don't drag folders.
             #
-            self.move_lines(self.get_gesture_selections(), l)
-         } else {
-            #
-            # Copy from tree to list.  drag.get_content() gives
-            # a list of the nodes being dragged.
-            #
-            ll := []
-            every el := !drag.get_content() do {
-               #
-               # Don't drag folders.
-               #
-               if /el.is_folder_flag then
-                  put(ll, el.get_label())
-            }
-            self.insert_lines(ll, l)
+            if /el.is_folder_flag then
+               put(ll, el.get_label())
          }
-         return
+         self.insert_lines(ll, l)
       }
+      return
    end
 
    #
@@ -51,26 +56,36 @@ end
 #
 class CustomTree(Tree)
    #
-   # Called during a drag event
+   # Override so that we can't drop directly on non-folders (just between them).
    #
-   public can_drop(d,e)
-      #
-      # We succeed if and only if the user is dragging over a row
-      # AND the thing we're over is a folder.
-      #
-      if cast(self,SelectableScrollArea).can_drop(d,e) then
-         return \self.object_get_highlight().is_folder_flag
+   protected get_dnd_mode_for_highlight()
+      return if /object_get_highlight().is_folder_flag then
+         EDGES_ONLY
+      else
+         MIDDLE_AND_EDGES
    end
 
    #
    # A drop has occurred; we succeed iff we accept it
    #
    public perform_drop(drag, drop)
-      local other, n, el
+      local other, n, el, l
       #
       # Only consider a drop on a folder
       #
-      if other := self.object_get_highlight() & \other.is_folder_flag then {
+      if other := self.object_get_highlight() then {
+         # Calculate destination folder and index.
+         if get_highlight_part() ~=== MIDDLE then {
+            l := other.get_parent().get_index(other) | fail
+            if get_highlight_part() === BOTTOM then
+               l +:= 1
+            other := other.get_parent()
+         }
+
+         # Shouldn't happen since we overrode get_dnd_mode_for_highlight() above
+         if /other.is_folder_flag then
+            fail
+
          if drag.get_source() === self then {
             #
             # If self is the drop source, then we have a dnd from 
@@ -78,19 +93,35 @@ class CustomTree(Tree)
             # d.get_content() will be a list of the nodes that were
             # dragged.
             #
-            every el := !drag.get_content() do {
-               el.get_parent().remove(el)
-               other.add(el)
+
+            #
+            # Can't drag a node onto one of its children.
+            #
+            if other === Seq{(!drag.get_content()).traverse_all_postorder()} then
+               fail
+
+            if \l then {
+               # Adjust target index to take into account removed nodes.
+               every el := other.children[1 to l - 1] do
+                  if keyof(drag.get_content(), el) then
+                     l -:= 1
             }
+
+            # Delete nodes to move
+            every el := !drag.get_content() do
+               el.get_parent().remove(el)
+
+            # Add them again
+            every other.add(back(drag.get_content()), l)
          } else {
             #
             # Drop from list.  In this case d.get_content() will
             # be a list of strings.
             #
-            every el := !drag.get_content() do {
+            every el := back(drag.get_content()) do {
                n := FolderNode()
                n.set_label(el)
-               other.add(n)
+               other.add(n, l)
             }
          }
 
@@ -115,9 +146,8 @@ class CustomTree(Tree)
          # Delete all the nodes which will have been dragged.
          #
          every n := !self.object_get_gesture_selections() do {
-            if /n.is_folder_flag then {
+            if /n.is_folder_flag then 
                n.get_parent().delete_node(n)
-            }
          }
 
          #
@@ -307,8 +337,6 @@ class DNDTest(Dialog)
    private get_list_sel()
       local t
       t := lst.get_gesture_selections() | []
-      if t[-1] = *lst.get_contents() then
-         pull(t)
       return t
    end
 
@@ -363,9 +391,10 @@ class DNDTest(Dialog)
          set_allow_drag(&yes).
          set_allow_drop(&yes).
          set_select_mode("many").
+         set_dnd_mode(SelectableScrollArea.EDGES_ONLY).
          set_contents(["one","two","three","four","five","six",
                        "seven","eight","nine","ten","eleven","twelve",
-                       "thirteen","fourteen","fifteen","sixteen","red","blue","green",""]).
+                       "thirteen","fourteen","fifteen","sixteen","red","blue","green"]).
          connect(self.on_list_press, Event.MOUSE_RIGHT_PRESS)
 
       split := Split().

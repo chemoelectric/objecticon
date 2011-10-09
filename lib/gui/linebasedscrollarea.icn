@@ -79,7 +79,7 @@ class LineBasedScrollArea(DrawScrollArea)
       local s, h, a, n, e, t, res, lc
       /r := view
       (r.h > 0) | fail
-      a := get_area_y() + r.y - view.y
+      a := r.y - get_subject_y()
       res := LineBasedScrollAreaRangeInfo()
       if integer(h := get_line_height()) then {
          lc := get_line_count()
@@ -210,7 +210,7 @@ class LineBasedScrollArea(DrawScrollArea)
    #
    public get_line_rect(line)
       return Rect(view.x, 
-                  view.y - get_area_y() + get_cum_line_height(line),
+                  get_subject_y() + get_cum_line_height(line),
                   view.w,
                   get_height_for_line(line))
    end
@@ -222,7 +222,7 @@ class LineBasedScrollArea(DrawScrollArea)
    # @p
    public pointer_to_line(e)
       local s, h, a, r, i
-      a := e.y - self.view.y + get_area_y()
+      a := e.y - get_subject_y()
       if integer(h := get_line_height()) then 
          return a / h + 1
       else {
@@ -281,7 +281,7 @@ class LineBasedScrollArea(DrawScrollArea)
       #
       # Left offset
       #
-      xp := view.x - get_area_x()
+      xp := get_subject_x()
 
       #
       # Write the lines

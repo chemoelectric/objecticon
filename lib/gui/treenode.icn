@@ -136,7 +136,7 @@ class TreeNode()
    # Delete the given {TreeNode} from the children.
    #
    public remove(n)
-      delete(self.children, get_index(n))
+      remove_index(get_index(n))
       return self
    end
 
@@ -145,6 +145,7 @@ class TreeNode()
    # @param i    The index
    #
    public remove_index(i)
+      self.children[i].parent := &null
       delete(self.children, i)
       return self
    end
