@@ -58,7 +58,7 @@ class CustomTree(Tree)
    #
    # Override so that we can't drop directly on non-folders (just between them).
    #
-   protected get_dnd_mode_for_highlight()
+   protected get_dnd_mode()
       return if /object_get_highlight().is_folder_flag then
          EDGES_ONLY
       else
@@ -82,7 +82,7 @@ class CustomTree(Tree)
             other := other.get_parent()
          }
 
-         # Shouldn't happen since we overrode get_dnd_mode_for_highlight() above
+         # Shouldn't happen since we overrode get_dnd_mode() above
          if /other.is_folder_flag then
             fail
 

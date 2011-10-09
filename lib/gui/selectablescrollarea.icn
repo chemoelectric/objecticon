@@ -151,7 +151,10 @@ class SelectableScrollArea(LineBasedScrollArea)
 
    #
    # Configure the dnd mode, which indicates whether drags should be
-   # be over whole lines, edges of lines, or both.
+   # be over whole lines, edges of lines, or both.  As a more flexible
+   # alternative, which allows the mode to change depending on the
+   # line, the {get_dnd_mode} method may be overridden.
+   # 
    # @param s a constant, one of {MIDDLE_ONLY}, {EDGES_ONLY}, or {MIDDLE_AND_EDGES}
    #
    public set_dnd_mode(s)
@@ -654,12 +657,12 @@ class SelectableScrollArea(LineBasedScrollArea)
                   self.highlight := i.first_whole - 1
                   self.highlight <:= 1
                   goto_first(self.highlight)
-                  highlight_part := if get_dnd_mode_for_highlight() === MIDDLE_ONLY then MIDDLE else TOP
+                  highlight_part := if get_dnd_mode() === MIDDLE_ONLY then MIDDLE else TOP
                } else {
                   self.highlight := i.last_whole + 1
                   self.highlight >:= *self.contents 
                   goto_last(self.highlight)
-                  highlight_part := if get_dnd_mode_for_highlight() === MIDDLE_ONLY then MIDDLE else BOTTOM
+                  highlight_part := if get_dnd_mode() === MIDDLE_ONLY then MIDDLE else BOTTOM
                }
             } else {
                if \going_up then {
@@ -832,18 +835,19 @@ class SelectableScrollArea(LineBasedScrollArea)
          return self.object_get_gesture_selections()
    end
 
+   #
    # Given the highlight is set, return the dnd_mode for that line.
    # By default just returns {dnd_mode}, but may be overridden to
    # return different modes for different rows (eg in a Tree, a folder
    # may allow {MIDDLE_AND_EDGES}, but a leaf {EDGES_ONLY}.
    #
-   protected get_dnd_mode_for_highlight()
+   protected get_dnd_mode()
       return dnd_mode
    end
 
    private calc_highlight_part(e)
       local a, b
-      highlight_part := case get_dnd_mode_for_highlight() of {
+      highlight_part := case get_dnd_mode() of {
          MIDDLE_ONLY:
             MIDDLE
          EDGES_ONLY: {
