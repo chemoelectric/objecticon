@@ -30,14 +30,18 @@ Input of an expression over several lines can be achieved by ending a line with 
  * *-l* Link the given source file.  Several `-l` options may be given.
  * *-w* If given, then assignments to global variables (eg procedures) are allowed.
  * *-s* Read commands from standard input rather than using a line editor.
+ * *-hlim* Set the history limit for the line editor (default is 500).
+ * *-elim* Set the expression limit for evaluation (default is 35).
 
 Remaining arguments specify files which are processed before command line input commences.  They should contain valid expressions (which may be compound expressions).
 = Useful built-in expressions =
 
  * *!env* Show the values stored in the environment
  * *!tt* Toggle tracing
- * *!tb* Show the backtrace of the last command that gave a runtime error
+ * *!tb* Show the traceback of the last command that gave a runtime error
  * *!q* Don't force evaluation of all of the values in the expression, and don't output any expression value
  * *dir(x)* With no parameter, show all global variables.  With a parameter, show information about it.
  * *!hist* Show the command line history
- * *cmd(x)* Run command number `x` again.
+ * *cmd(n)* Run command number `n` again.
+ * *hlim(n)* Set the history limit to `n`.
+ * *elim(n)* Set the expression limit to `n`.
