@@ -195,8 +195,8 @@ procedure main_impl(imports, files, opts)
    env["dir"] := lambda{ if *_a = 0 then list_syms(imports) else dir(_a[1]) }
    env["hist"] := create show_history(in)
    env["cmd"] := lambda{{ if is(in, LineEditorStream) then hist_line := in.get_history_item(_a[1]) ; &fail}}
-   env["elim"] := lambda{{ elim := (10 < integer(_a[1])) ; elim }}
-   env["hlim"] := lambda{{ hlim := (10 < integer(_a[1])) ; hlim }}
+   env["elim"] := lambda{{ elim := (10 < _a[1]) ; elim }}
+   env["hlim"] := lambda{{ hlim := (10 < _a[1]) ; hlim }}
    run := create
       with_var{ with_var{ Safe{ev.eval()}, &trace, tv }, exit, exit_repl}
 
