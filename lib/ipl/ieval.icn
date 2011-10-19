@@ -176,7 +176,8 @@ end
 
 procedure main_impl(imports, files, opts)
    local env, s, t, ev, prompt, f, quiet_flag, par, 
-      n, tr_flag, last_runerr, ee, in, hist_line, run, tv
+      n, tr_flag, last_runerr, ee, in, hist_line, run, tv, hlim,
+      hfile, elim, i, v
 
    par := Parser()
    env := table()
@@ -194,10 +195,17 @@ procedure main_impl(imports, files, opts)
    env["dir"] := lambda{ if *_a = 0 then list_syms(imports) else dir(_a[1]) }
    env["hist"] := create show_history(in)
    env["cmd"] := lambda{{ if is(in, LineEditorStream) then hist_line := in.get_history_item(_a[1]) ; &fail}}
-
+   env["elim"] := lambda{{ elim := (10 < _a[1]) ; elim }}
+   env["hlim"] := lambda{{ hlim := (10 < _a[1]) ; hlim }}
    run := create
       with_var{ with_var{ Safe{ev.eval()}, &trace, tv }, exit, exit_repl}
 
+   hlim := (10 < \opts["hlim"]) | 500
+   elim := (10 < \opts["elim"]) | 35
+
+   f := Files.get_path(Files.get_home()).child(".ieval").str()
+   if Files.access(f) then
+      push(files, f)
    every f := !files do {
       s := Files.file_to_string(f) | stop("Couldn't load ", f, ": ", &why)
       n := par.parse_expression(s) | stop("Couldn't parse ", f,  ": ", &why)
@@ -207,11 +215,14 @@ procedure main_impl(imports, files, opts)
 
    s := ""
    prompt := "> "
-   in := if \opts["s"] then
-      FileStream.stdin
-   else
-      LineEditorStream().
-         set_history_limit(500) | stop("Failed to create LineEditorStream: ", &why)
+   if \opts["s"] then
+      in := FileStream.stdin
+   else {
+      in := LineEditorStream().
+         set_history_limit(hlim) | stop("Failed to create LineEditorStream: ", &why)
+      hfile := Files.get_path(Files.get_home()).child(".ieval_history").str()
+      in.set_history(decode(Files.file_to_string(hfile)))
+   }
    repeat {
       if \hist_line then {
          write(prompt, hist_line)
@@ -240,9 +251,18 @@ procedure main_impl(imports, files, opts)
          if ev.set_node(n) then {
             if \quiet_flag then
                !run
-            else
-               every to_stdout(!run, 3) do 
+            else {
+               i := elim
+               every v := !run do {
+                  i -:= 1
+                  if i < 0 then {
+                     write(".... (result sequence truncated)")
+                     break
+                  }
+                  to_stdout(v, 3)
                   write()
+               }
+            }
             if &errortext then {
                if &errornumber then
                   ewrite("Runtime error ", &errornumber, ": ", &errortext)
@@ -259,5 +279,7 @@ procedure main_impl(imports, files, opts)
       prompt := "> "
       s := ""
    }
+   if \hfile then
+      Files.string_to_file(hfile, encode(in.get_history())) | ewrite("History not saved: ", &why)
    write("Ciao")
 end

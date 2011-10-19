@@ -27,12 +27,14 @@ class LineEditorStream(LineBasedStream)
 
    public set_history_limit(n)
       self.history_limit := n
+      limit_history()
       return self
    end
 
    public set_history(l)
       self.history := l
       self.history_start_no := 1
+      limit_history()
       return self
    end
 
@@ -211,13 +213,17 @@ class LineEditorStream(LineBasedStream)
       return \ch | error("Unexpected eof on tty")
    end
 
+   private limit_history()
+      while *history > \history_limit do {
+         pop(history)
+         history_start_no +:= 1
+      }
+   end
+
    private got()
       if *subj > 0 then {
          put(history, subj)
-         while *history > \history_limit do {
-            pop(history)
-            history_start_no +:= 1
-         }
+         limit_history()
       }
       return string(subj)
    end

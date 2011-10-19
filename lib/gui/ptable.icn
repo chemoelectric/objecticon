@@ -315,7 +315,7 @@ class PTable(SelectableScrollArea)
    public get_column_under_pointer(e)
       local c, colx
       in_region(e) | fail
-      colx := view.x - get_area_x() + inset
+      colx := get_subject_x() + inset
       every c := !cols do {
          if colx <= e.x < colx + c.width then
             return c
@@ -331,7 +331,7 @@ class PTable(SelectableScrollArea)
       info := get_line_info(r) | fail
       h := get_line_height()
 
-      colx := view.x - get_area_x() + inset
+      colx := get_subject_x() + inset
       every j := 1 to *cols do {
          col := cols[j]
          # If the column is visible

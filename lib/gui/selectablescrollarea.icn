@@ -22,20 +22,40 @@ class SelectableScrollArea(LineBasedScrollArea)
    public 
       contents,
       select_mode,
+      dnd_mode,
       cursor,                                
       selections,
       old_cursor,
       old_highlight,
+      old_highlight_part,
       old_selections,
       going_up,
       prev_cursor,
       on_a_line,
       highlight,
+      highlight_part,
       draggable_cursor,
       motion_cursor,
       selection_on_key_moves,
       scroll_ticker,
       scroll_ticker_interval
+
+   public static const
+      TOP,
+      MIDDLE,
+      BOTTOM,
+      MIDDLE_ONLY,
+      EDGES_ONLY,
+      MIDDLE_AND_EDGES
+
+   private static init()
+      TOP := "t"
+      MIDDLE := "m"
+      BOTTOM := "b"
+      MIDDLE_ONLY := 1
+      EDGES_ONLY := 2
+      MIDDLE_AND_EDGES := 3
+   end
 
    public calculate_line_count()
       return *self.contents
@@ -130,6 +150,19 @@ class SelectableScrollArea(LineBasedScrollArea)
    end
 
    #
+   # Configure the dnd mode, which indicates whether drags should be
+   # be over whole lines, edges of lines, or both.  As a more flexible
+   # alternative, which allows the mode to change depending on the
+   # line, the {get_dnd_mode} method may be overridden.
+   # 
+   # @param s a constant, one of {MIDDLE_ONLY}, {EDGES_ONLY}, or {MIDDLE_AND_EDGES}
+   #
+   public set_dnd_mode(s)
+      self.dnd_mode := s
+      return self
+   end
+
+   #
    # Return item currently under the clicked cursor
    # @return The item number
    #
@@ -151,6 +184,14 @@ class SelectableScrollArea(LineBasedScrollArea)
    #
    public get_highlight()
       return \self.highlight
+   end
+
+   #
+   # Return the part of the item currently under the dnd highlight;
+   # one of {TOP}, {MIDDLE} or {BOTTOM}.
+   #
+   public get_highlight_part()
+      return \self.highlight_part
    end
 
    #
@@ -430,6 +471,7 @@ class SelectableScrollArea(LineBasedScrollArea)
    public start_handle(e)
       self.old_cursor := self.cursor
       self.old_highlight := self.highlight
+      self.old_highlight_part := self.highlight_part
       self.old_selections := copy(self.selections)
    end
 
@@ -444,6 +486,8 @@ class SelectableScrollArea(LineBasedScrollArea)
       if self.highlight ~=== self.old_highlight then {
          invalidate_line(\self.highlight, i)
          invalidate_line(\self.old_highlight, i)
+      } else if self.highlight_part ~=== self.old_highlight_part then {
+         invalidate_line(\self.highlight, i)
       }
       if not lang.equals(self.old_selections, self.selections) then {
          every invalidate_line(!(old_selections -- selections) | !(selections -- old_selections), i)
@@ -613,10 +657,12 @@ class SelectableScrollArea(LineBasedScrollArea)
                   self.highlight := i.first_whole - 1
                   self.highlight <:= 1
                   goto_first(self.highlight)
+                  highlight_part := if get_dnd_mode() === MIDDLE_ONLY then MIDDLE else TOP
                } else {
                   self.highlight := i.last_whole + 1
                   self.highlight >:= *self.contents 
                   goto_last(self.highlight)
+                  highlight_part := if get_dnd_mode() === MIDDLE_ONLY then MIDDLE else BOTTOM
                }
             } else {
                if \going_up then {
@@ -708,22 +754,24 @@ class SelectableScrollArea(LineBasedScrollArea)
    end
 
    public draw()
-      local xp, yp, i, info, h, lh, sel, cur, r
+      local xp, yp, i, info, h, lh, sel, cur, r, hi
 
       r := view.get_cbwin_clip()
 
       info := get_line_info(r) | fail
       h := get_line_height()
       yp := r.y - info.offset
-      xp := view.x - get_area_x()
+      xp := get_subject_x()
 
       #
       # Write the lines
       #
       every i := info.first to info.last do {
-         cur := if i = \self.highlight then
-            "h"
-         else if i = \self.cursor then {
+         hi := if i = \self.highlight then
+            self.highlight_part
+         else
+            &null
+         cur := if i = \self.cursor then {
             if self.has_focus() & self.is_unshaded() then
                "f"
             else
@@ -736,7 +784,7 @@ class SelectableScrollArea(LineBasedScrollArea)
          lh := integer(h) | h[i]
          
          # Draw the line
-         draw_line(xp, yp, lh, i, sel, cur)
+         draw_line(xp, yp, lh, i, sel, cur, hi)
          yp +:= lh
       }
    end
@@ -753,24 +801,30 @@ class SelectableScrollArea(LineBasedScrollArea)
    # @param lh  The line height allowed for this line
    # @param i   The line number to draw
    # @param sel If non-null, the line must be drawn as selected
-   # @param cur Indicates the cursor for this row; &null indicates none, "h" indicates the
-   # @          highlight cursor, "f" indicates focus cursor "d" indicates disabled cursor.
+   # @param cur Indicates the cursor for this row; &null indicates none, "f" indicates 
+   # @          focus cursor "d" indicates disabled cursor.
+   # @param hi  Indicates the dnd highlight for this row; &null indicates none, "t" indicates top
+   # @          highlight, "m" indicates middle highlight, "b" indicates bottom highlight.
    #
-   public draw_line(xp, yp, lh, i, sel, cur)
+   public draw_line(xp, yp, lh, i, sel, cur, hi)
       draw_line_data(xp, yp, lh, i)
-      draw_line_sel_cur(self.view.x, yp, self.view.w, lh, sel, cur)
+      draw_line_sel_cur(self.view.x, yp, self.view.w, lh, sel, cur, hi)
    end
 
    #
    # A helper method to draw the selection and cursor in the given rectangle.
    #
-   public draw_line_sel_cur(x, y, w, h, sel, cur)
+   public draw_line_sel_cur(x, y, w, h, sel, cur, hi)
       if \sel then
          Gui.style.selection_rectangle(view.cbwin, x, y, w, h)
       case \cur of {
-         "h": Gui.style.draw_highlight_rectangle(view.cbwin, x, y, w, h)
          "f": Gui.style.draw_focus_rectangle(view.cbwin, x, y, w, h)
          "d": Gui.style.draw_dashed_rectangle(view.cbwin, x, y, w, h)
+      }
+      case \hi of {
+         "t": Gui.style.draw_highlight_rectangle(view.cbwin, x, y, w, 2)
+         "b": Gui.style.draw_highlight_rectangle(view.cbwin, x, y + h - 2, w, 2)
+         "m": Gui.style.draw_highlight_rectangle(view.cbwin, x, y, w, h)
       }
    end
 
@@ -781,58 +835,98 @@ class SelectableScrollArea(LineBasedScrollArea)
          return self.object_get_gesture_selections()
    end
 
+   #
+   # Given the highlight is set, return the dnd_mode for that line.
+   # By default just returns {dnd_mode}, but may be overridden to
+   # return different modes for different rows (eg in a Tree, a folder
+   # may allow {MIDDLE_AND_EDGES}, but a leaf {EDGES_ONLY}.
+   #
+   protected get_dnd_mode()
+      return dnd_mode
+   end
+
+   private calc_highlight_part(e)
+      local a, b
+      highlight_part := case get_dnd_mode() of {
+         MIDDLE_ONLY:
+            MIDDLE
+         EDGES_ONLY: {
+            a := e.y - get_subject_y() - get_cum_line_height(highlight)
+            b := get_height_for_line(highlight)
+            if a < b / 2 then
+               TOP
+            else
+               BOTTOM
+         }
+         MIDDLE_AND_EDGES: {
+            a := e.y - get_subject_y() - get_cum_line_height(highlight)
+            b := get_height_for_line(highlight)
+            if a < b / 4 then
+               TOP
+            else if a > b - b / 4 then
+               BOTTOM
+            else
+               MIDDLE
+         }
+         default:
+            runerr("Invalid value for dnd_mode", dnd_mode)
+      }
+   end
+
    public drag_event(drag, e)
+      local hold
       start_handle(e)
 
-      # Do we already have the highlight, ie are we drag holder?
+      # Where are we in relation to the view?
       #
-      if \self.highlight then {
-         # Yes - are we above, below or in the view?
-         #
-         if self.view.x <= e.x < self.view.x + self.view.w then {
-            # Yes - move the highlight just like we drag the cursor.
+      if self.view.x <= e.x < self.view.x + self.view.w then {
+         if e.y < self.view.y then {
+            # Above the view, start going up if we have a vsb and a highlight.
             #
-            if e.y < self.view.y then {
+            if \vsb & \highlight then {
                self.going_up := 1
                check_ticker(self.view.y - e.y)
+               hold := 1
             }
-            else if e.y >= self.view.y + self.view.h then {
+         } else if e.y >= self.view.y + self.view.h then {
+            # Below the view, start going down if we have a vsb and a highlight.
+            #
+            if \vsb & \highlight then {
                self.going_up := &null
                check_ticker(e.y - (self.view.y + self.view.h))
-            } else {
-               self.highlight := get_nearest_line_to_pointer(e)
-               ensure_line_visible(self.highlight)
-               scroll_ticker.stop()
+               hold := 1
             }
          } else {
-            # We've gone to the left or right of the view, so stop being drag holder.
+            # In the view
+            if self.highlight := get_nearest_line_to_pointer(e) then {
+               calc_highlight_part(e)
+               ensure_line_visible(self.highlight)
+            } else
+               self.highlight := self.highlight_part := &null
+            hold := 1
             scroll_ticker.stop()
-            self.highlight := &null
          }
       } else {
-         # We're not drag holder.  We require drag over a line to get started.
-         if self.highlight := self.get_line_under_pointer(e) then
-            ensure_line_visible(self.highlight)
-         else
-            self.highlight := &null
+         # We've gone to the left or right of the view, so stop being drag holder.
+         scroll_ticker.stop()
       }
-      end_handle(e)
 
-      return \self.highlight
+      # If not holding, then we clear the highlight
+      if /hold then
+         self.highlight := self.highlight_part := &null
+
+      end_handle(e)
+      return \hold
    end
 
    public can_drop(drag, e)
-      # Only permit a drop if the highlight is actually over a line, as opposed to
-      # scrolling,  in which case we will stay as drag holder, but not allow
-      # a drop.
-      if self.highlight === self.get_line_under_pointer(e) then
-         return self.object_get_highlight()
+      return self.object_get_highlight() | &null
    end
 
    public drag_reset(e)
       if \self.highlight then {
          start_handle(e)
-         self.highlight := &null
+         self.highlight := self.highlight_part := &null
          scroll_ticker.stop()
          end_handle(e)
       }
@@ -848,6 +942,7 @@ class SelectableScrollArea(LineBasedScrollArea)
       scroll_ticker := Dispatcher.new_task{scroll_tick()}
       self.set_accepts_focus(&yes)
       self.select_mode := Select.NONE
+      self.dnd_mode := MIDDLE_ONLY
       self.contents := []
       self.selections := set()
       self.selection_on_key_moves := 1

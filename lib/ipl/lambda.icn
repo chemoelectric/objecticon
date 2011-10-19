@@ -44,3 +44,10 @@ end
 procedure lambda(e)
    return Lambda.make(e)
 end
+
+#
+# Partial application to function f
+#
+procedure partial(f, l[])
+   return lambda{f!(l ||| _a)}
+end
