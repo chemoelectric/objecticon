@@ -394,6 +394,7 @@ static void nodegen(nodeptr t)
             break;
         }
 
+        case N_TCase:
         case N_Case: {
             nodeptr case_default = 0;
             nodeptr u = Tree1(t);
@@ -416,11 +417,17 @@ static void nodegen(nodeptr t)
                 case_default = u;
             } else if (TType(u) == N_Ccls) 
                 ++len;
-
-            if (case_default)
-                uout_op(Uop_Casedef);
-            else
-                uout_op(Uop_Case);
+            if (TType(t) == N_Case) {
+                if (case_default)
+                    uout_op(Uop_Casedef);
+                else
+                    uout_op(Uop_Case);
+            } else {
+                if (case_default)
+                    uout_op(Uop_TCasedef);
+                else
+                    uout_op(Uop_TCase);
+            }
             uout_16(len);
             nodegen(Tree0(t));        /* The control expression */
             if (len > 0)

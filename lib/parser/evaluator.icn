@@ -78,7 +78,8 @@ class Evaluator()
       dispatch,
       cdispatch,
       env,
-      node
+      node,
+      tcases
 
    private compute_loops(n, loop, scan)
       if is(n, Node) then
@@ -351,6 +352,27 @@ class Evaluator()
       }
    end
 
+   private do_tcase(n)
+      local l, v, cc, def, t
+      if /tcases[n] then {
+         l := pos_list(CaseList(n, 5))
+         every cc := !l do {
+            if cc.label == "defaultcclause" then {
+               def := cc
+               break
+            }
+         }
+         t := table(def)
+         every cc := !l do {
+            if cc.label == "cclause" then
+               every t[E(cc.child(1))] := cc
+         }
+         tcases[n] := t
+      }
+      if v := E(n.child(2)) then
+         suspend E(tcases[n, v].child(3))
+   end
+
    private do_section(n) 
       suspend case n.child(4).tok of {
          COLON : E(n.child(1))[E(n.child(3)):E(n.child(5))]
@@ -532,6 +554,7 @@ class Evaluator()
             dispatch[tab(0)] := lang.Class.get(self, &subject)
       }
       self.cdispatch := table(cdo_default)
+      self.tcases := table()
       every cdispatch["everydo"|"every"|"whiledo"|"while"|"untildo"|"until"|"repeat"] := cdo_loop
       cdispatch["create"] := cdo_create
       cdispatch["break"] := cdo_break

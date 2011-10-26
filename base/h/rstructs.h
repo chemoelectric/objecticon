@@ -411,8 +411,9 @@ struct progstate {
     dptr *Gnames, *Egnames;
     struct loc *Glocs, *Eglocs;
     dptr Statics, Estatics;
+    dptr TCaseTables, ETCaseTables;
     dptr Constants, Econstants;
-    int NGlobals, NStatics, NConstants;
+    int NGlobals, NStatics, NConstants, NTCaseTables;
     char *Strcons, *Estrcons;
     struct ipc_fname *Filenms, *Efilenms;
     struct ipc_line *Ilines, *Elines;

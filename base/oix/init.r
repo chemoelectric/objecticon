@@ -569,8 +569,11 @@ static void initptrs(struct progstate *p, struct header *h)
     p->Eglocs = (struct loc *)(p->Code + h->Statics);
     p->NGlobals = p->Eglobals - p->Globals;
     p->Statics = (dptr)(p->Eglocs);
-    p->Estatics = (dptr)(p->Code + h->Filenms);
+    p->Estatics = (dptr)(p->Code + h->TCaseTables);
     p->NStatics = p->Estatics - p->Statics;
+    p->TCaseTables = (dptr)(p->Estatics);
+    p->ETCaseTables = (dptr)(p->Code + h->Filenms);
+    p->NTCaseTables = p->ETCaseTables - p->TCaseTables;
     p->Filenms = (struct ipc_fname *)(p->Estatics);
     p->Efilenms = (struct ipc_fname *)(p->Code + h->linenums);
     p->Ilines = (struct ipc_line *)(p->Efilenms);
@@ -1678,6 +1681,44 @@ static void relocate_code(struct progstate *ps, word *c)
             }
 
             case Op_Cofail: {
+                break;
+            }
+
+            case Op_TCaseInit: {
+                *pc = (word)&prog->TCaseTables[*pc]; 
+                ++pc;
+                ++pc;        /* def */
+                break;
+            }
+
+            case Op_TCaseInsert: {
+                *pc = (word)&prog->TCaseTables[*pc]; 
+                ++pc;
+                conv_var();  /* val */
+                ++pc;        /* entry */
+                break;
+            }
+
+            case Op_TCaseChoose: {
+                int n;
+                *pc = (word)&prog->TCaseTables[*pc]; 
+                ++pc;
+                conv_var();  /* val */
+                n = *pc++;   /* tblc */
+                while (n--)
+                    conv_addr(); /* dest */
+                break;
+            }
+
+            case Op_TCaseChoosex: {
+                int n;
+                *pc = (word)&prog->TCaseTables[*pc]; 
+                ++pc;
+                conv_var();  /* val */
+                ++pc;        /* labno */
+                n = *pc++;   /* tblc */
+                while (n--)
+                    conv_addr(); /* dest */
                 break;
             }
 

@@ -1210,6 +1210,65 @@ void interp()
                 break;
             }
 
+            case Op_TCaseInit: {
+                dptr tbl = (dptr)GetAddr;
+                word d = GetWord;
+                MemProtect(BlkLoc(*tbl) = hmake(T_Table, 0, d));
+                tbl->dword = D_Table;
+                MakeInt(d, &TableBlk(*tbl).defvalue);
+                break;
+            }
+
+            case Op_TCaseInsert: {
+                tended struct descrip val;
+                dptr tbl = (dptr)GetAddr;
+                struct descrip entry;
+                get_deref(&val);
+                MakeInt(GetWord, &entry);
+                table_insert(tbl, &val, &entry, 0);
+                break;
+            }
+
+            case Op_TCaseChoose: {
+                tended struct descrip val;
+                uword hn;
+                word off;
+                int res;
+                union block **dp1;
+                dptr tbl = (dptr)GetAddr;
+                get_deref(&val);
+                ++ipc;            /* tblc */
+                hn = hash(&val);
+                dp1 = memb(BlkLoc(*tbl), &val, hn, &res);
+                if (res)
+                    off = IntVal((*dp1)->telem.tval);
+                else
+                    off = IntVal(TableBlk(*tbl).defvalue);
+                ipc = (word *)ipc[off];
+                break;
+            }
+
+            case Op_TCaseChoosex: {
+                tended struct descrip val;
+                uword hn;
+                word off, labno;
+                int res;
+                union block **dp1;
+                dptr tbl = (dptr)GetAddr;
+                get_deref(&val);
+                labno = GetWord;
+                ++ipc;            /* tblc */
+                hn = hash(&val);
+                dp1 = memb(BlkLoc(*tbl), &val, hn, &res);
+                if (res)
+                    off = IntVal((*dp1)->telem.tval);
+                else
+                    off = IntVal(TableBlk(*tbl).defvalue);
+                curr_pf->lab[labno] = (word *)ipc[2 * off + 1];
+                ipc = (word *)ipc[2 * off];
+                break;
+            }
+
             case Op_Exit: {
                 /* The main procedure has returned/failed */
                 return;

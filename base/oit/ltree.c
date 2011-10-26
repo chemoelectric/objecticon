@@ -400,8 +400,10 @@ static struct lnode *buildtree(void)
             return (struct lnode *)lnode_keyword(&curr_loc, n);
         }
 
-        case Uop_Case:			/* case expression */
-        case Uop_Casedef: {
+        case Uop_Case:			/* case/tcase expression */
+        case Uop_Casedef:
+        case Uop_TCase:
+        case Uop_TCasedef: {
             int n = uin_16(), i;
             struct loc t = curr_loc;
             struct lnode *expr = buildtree();
@@ -414,7 +416,7 @@ static struct lnode *buildtree(void)
                 x->clause[i] = z;
                 z->parent = (struct lnode *)x;
             }
-            if (op == Uop_Casedef) {        /* evaluate default clause */
+            if (op == Uop_Casedef || op == Uop_TCasedef) {        /* evaluate default clause */
                 x->def = buildtree();
                 x->def->parent = (struct lnode *)x;
             }
@@ -697,8 +699,10 @@ static void visitnode_pre(struct lnode *n, visitf v)
             break;
         }
 
-        case Uop_Case:			/* case expression */
-        case Uop_Casedef: {
+        case Uop_Case:			/* case/tcase expression */
+        case Uop_Casedef:
+        case Uop_TCase:
+        case Uop_TCasedef: {
             struct lnode_case *x = (struct lnode_case *)n;
             int i;
             visitnode_pre(x->expr, v);
@@ -706,7 +710,7 @@ static void visitnode_pre(struct lnode *n, visitf v)
                 visitnode_pre(x->selector[i], v);
                 visitnode_pre(x->clause[i], v);
             }
-            if (n->op == Uop_Casedef)
+            if (n->op == Uop_Casedef || n->op == Uop_TCasedef)
                 visitnode_pre(x->def, v);
 
             break;
@@ -882,8 +886,10 @@ static void visitnode_post(struct lnode *n, visitf v)
             break;
         }
 
-        case Uop_Case:			/* case expression */
-        case Uop_Casedef: {
+        case Uop_Case:			/* case/tcase expression */
+        case Uop_Casedef:
+        case Uop_TCase:
+        case Uop_TCasedef: {
             struct lnode_case *x = (struct lnode_case *)n;
             int i;
             visitnode_post(x->expr, v);
@@ -891,7 +897,7 @@ static void visitnode_post(struct lnode *n, visitf v)
                 visitnode_post(x->selector[i], v);
                 visitnode_post(x->clause[i], v);
             }
-            if (n->op == Uop_Casedef)
+            if (n->op == Uop_Casedef || n->op == Uop_TCasedef)
                 visitnode_post(x->def, v);
 
             break;

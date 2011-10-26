@@ -214,7 +214,7 @@ int list_get(dptr l, dptr res)
    return 1;
 }
 
-void table_insert(dptr t, dptr key, dptr val)
+void table_insert(dptr t, dptr key, dptr val, int overwrite)
 {
     union block **pd;
     struct b_telem *te;
@@ -245,8 +245,10 @@ void table_insert(dptr t, dptr key, dptr val)
          * We found an existing entry; just change its value.
          */
         dealcblk((union block *)te);
-        te = (struct b_telem *) *pd;
-        te->tval = *val;
+        if (overwrite) {
+            te = (struct b_telem *) *pd;
+            te->tval = *val;
+        }
     }
 }
 

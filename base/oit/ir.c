@@ -166,6 +166,8 @@ static struct chunk *chunk(int line, char *desc, int id, int n, ...)
         case Ir_IGoto:
         case Ir_Fail:
         case Ir_Return:
+        case Ir_TCaseChoose:
+        case Ir_TCaseChoosex:
         case Ir_SysErr:
             break;
         default:
@@ -584,6 +586,51 @@ static struct ir_limit *ir_limit(struct lnode *n, struct ir_var *limit)
     res->node = n;
     res->op = Ir_Limit;
     res->limit = limit;
+    return res;
+}
+
+static struct ir_tcaseinit *ir_tcaseinit(struct lnode *n, int def)
+{
+    struct ir_tcaseinit *res = IRAlloc(struct ir_tcaseinit);
+    res->node = n;
+    res->op = Ir_TCaseInit;
+    res->def = def;
+    return res;
+}
+
+static struct ir_tcaseinsert *ir_tcaseinsert(struct lnode *n, struct ir_tcaseinit *tci, struct ir_var *val, int entry)
+{
+    struct ir_tcaseinsert *res = IRAlloc(struct ir_tcaseinsert);
+    res->node = n;
+    res->op = Ir_TCaseInsert;
+    res->tci = tci;
+    res->val = val;
+    res->entry = entry;
+    return res;
+}
+
+static struct ir_tcasechoosex *ir_tcasechoosex(struct lnode *n, struct ir_tcaseinit *tci, struct ir_var *val, int labno, int tblc, int *tbl)
+{
+    struct ir_tcasechoosex *res = IRAlloc(struct ir_tcasechoosex);
+    res->node = n;
+    res->op = Ir_TCaseChoosex;
+    res->tci = tci;
+    res->val = val;
+    res->labno = labno;
+    res->tblc = tblc;
+    res->tbl = tbl;
+    return res;
+}
+
+static struct ir_tcasechoose *ir_tcasechoose(struct lnode *n, struct ir_tcaseinit *tci, struct ir_var *val, int tblc, int *tbl)
+{
+    struct ir_tcasechoose *res = IRAlloc(struct ir_tcasechoose);
+    res->node = n;
+    res->op = Ir_TCaseChoose;
+    res->tci = tci;
+    res->val = val;
+    res->tblc = tblc;
+    res->tbl = tbl;
     return res;
 }
 
@@ -2459,6 +2506,128 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             break;
         }
 
+        case Uop_TCase:                  /* tcase expression */
+        case Uop_TCasedef: {
+            struct lnode_case *x = (struct lnode_case *)n;
+            struct ir_var *e, *v;
+            struct ir_info *expr, *def = 0, **selector, **clause;
+            struct ir_stack *case_st, *clause_st, *expr_st, *selector_st;
+            struct ir_tcaseinit *ci;
+            int i, j, mk;
+            int tl;
+            int *tbl;
+
+            selector = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
+            clause = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
+            tbl = mb_alloc(&ir_func_mb, 2 * (x->n + 1) * sizeof(int));
+
+            tl = make_tmploc(st);
+
+            /* Parent stack for the expression and selectors */
+            case_st = branch_stack(st);
+            mk = make_mark(case_st);
+
+            expr_st = branch_stack(case_st);
+            selector_st = branch_stack(case_st);
+            e = get_var(x->expr, expr_st, 0);
+            v = target ? target : make_tmp(selector_st);
+
+            expr = ir_traverse(x->expr, expr_st, e, 1, 1);
+
+            clause_st = branch_stack(st);
+
+            for (i = 0; i < x->n; ++i) {                /* The n non-default cases */
+                struct ir_stack *tst;
+                selector[i] = ir_traverse(x->selector[i], branch_stack(selector_st), v, 0, 1);
+                tst = branch_stack(st);
+                clause[i] = ir_traverse(x->clause[i], tst, target, bounded, rval);
+                union_stack(clause_st, tst);
+                if (clause[i]->uses_stack)
+                    res->uses_stack = 1;
+            }
+            if (n->op == Uop_TCasedef) {        /* evaluate default clause */
+                def = ir_traverse(x->def, st, target, bounded, rval);
+                if (def->uses_stack)
+                    res->uses_stack = 1;
+            }
+
+            union_stack(st, clause_st);
+            ci = ir_tcaseinit(n, x->n);
+
+            if (x->n == 0) {
+                chunk2(res->start,
+                       OptIns(expr->uses_stack, ir_mark(n, mk)),
+                       ir_goto(n, expr->start));
+            } else {
+                chunk4(res->start,
+                       OptIns(expr->uses_stack, ir_mark(n, mk)),
+                       ir_enterinit(n, expr->start), 
+                       ci,
+                       ir_goto(n, selector[0]->start));
+
+                for (i = 0; i < x->n; ++i) {
+                    chunk2(selector[i]->success,
+                           ir_tcaseinsert(n, ci, v, i),
+                           ir_goto(n, selector[i]->resume));
+
+                    if (i < x->n - 1)
+                        chunk1(selector[i]->failure,
+                               ir_goto(n, selector[i + 1]->start));
+                    else
+                        chunk1(selector[i]->failure,
+                               ir_goto(n, expr->start));
+                }
+            }
+
+            if (!bounded)
+                chunk1(res->resume, ir_igoto(n, tl));
+
+            chunk1(expr->failure,
+                   ir_goto(n, res->failure));
+            if (x->n == 0) {
+                /* Must have a default clause if no other clauses */
+                chunk3(expr->success,
+                       OptIns(expr->uses_stack, ir_unmark(n, mk)),
+                       OptIns(!bounded, ir_movelabel(n, tl, def->resume)), 
+                       ir_goto(n, def->start));
+            } else {
+                j = 0;
+                for (i = 0; i < x->n; ++i) {
+                    chunk1(clause[i]->success,
+                           ir_goto(n, res->success));
+                    chunk1(clause[i]->failure,
+                           ir_goto(n, res->failure));
+                    tbl[j++] = clause[i]->start;
+                    if (!bounded)
+                        tbl[j++] = clause[i]->resume;
+                }
+                if (def) {
+                    tbl[j++] = def->start;
+                    if (!bounded)
+                        tbl[j++] = def->resume;
+                } else {
+                    tbl[j++] = res->failure;
+                    if (!bounded)
+                        tbl[j++] = res->failure;
+                }
+                if (bounded)
+                    chunk2(expr->success,
+                           OptIns(expr->uses_stack, ir_unmark(n, mk)),
+                           ir_tcasechoose(n, ci, e, x->n + 1, tbl));
+                else
+                    chunk2(expr->success,
+                           OptIns(expr->uses_stack, ir_unmark(n, mk)),
+                           ir_tcasechoosex(n, ci, e, tl, 2*(x->n + 1), tbl));
+            }
+            if (def) {
+                chunk1(def->success,
+                       ir_goto(n, res->success));
+                chunk1(def->failure,
+                       ir_goto(n, res->failure));
+            }
+            break;
+        }
+
         case Uop_Rptalt: {                      /* repeated alternation */
             struct lnode_1 *x = (struct lnode_1 *)n;
             struct ir_info *expr;
@@ -3036,6 +3205,51 @@ static void print_chunk(struct chunk *chunk)
                 print_ir_var(x->limit);
                 break;
             }
+
+            case Ir_TCaseInit: {
+                struct ir_tcaseinit *x = (struct ir_tcaseinit *)ir;
+                indentf("\tIr_TCaseInit def=%d", x->def);
+                fprintf(stderr, "\n");
+                break;
+            }
+
+            case Ir_TCaseInsert: {
+                struct ir_tcaseinsert *x = (struct ir_tcaseinsert *)ir;
+                indentf("\tIr_TCaseInsert tci=%p", x->tci);
+                fprintf(stderr, " val=");
+                print_ir_var(x->val);
+                fprintf(stderr, ", entry=%d\n", x->entry);
+                break;
+            }
+
+            case Ir_TCaseChoose: {
+                struct ir_tcasechoose *x = (struct ir_tcasechoose *)ir;
+                int i;
+                indentf("\tIr_TCaseChoose tci=%p", x->tci);
+                fprintf(stderr, " val=");
+                print_ir_var(x->val);
+                fprintf(stderr, ", tblc=%d tbl=", x->tblc);
+                for (i = 0; i < x->tblc; ++i) {
+                    fprintf(stderr, "%d ", x->tbl[i]);
+                }
+                fprintf(stderr, "\n");
+                break;
+            }
+
+            case Ir_TCaseChoosex: {
+                struct ir_tcasechoosex *x = (struct ir_tcasechoosex *)ir;
+                int i;
+                indentf("\tIr_TCaseChoosex tci=%p", x->tci);
+                fprintf(stderr, " val=");
+                print_ir_var(x->val);
+                fprintf(stderr, ", labno=%d tblc=%d tbl=", x->labno, x->tblc);
+                for (i = 0; i < x->tblc; ++i) {
+                    fprintf(stderr, "%d ", x->tbl[i]);
+                }
+                fprintf(stderr, "\n");
+                break;
+            }
+
             case Ir_SysErr: {
                 indentf("\tIr_SysErr\n");
                 break;
@@ -3363,6 +3577,24 @@ static void optimize_goto1(int i)
                 optimize_goto1(x->start_label);
                 break;
             }
+            case Ir_TCaseChoose: {
+                struct ir_tcasechoose *x = (struct ir_tcasechoose *)ir;
+                int i;
+                for (i = 0; i < x->tblc; ++i) {
+                    optimize_goto_chain(&x->tbl[i]);
+                    optimize_goto1(x->tbl[i]);
+                }
+                break;
+            }
+            case Ir_TCaseChoosex: {
+                struct ir_tcasechoosex *x = (struct ir_tcasechoosex *)ir;
+                int i;
+                for (i = 0; i < x->tblc; ++i) {
+                    optimize_goto_chain(&x->tbl[i]);
+                    optimize_goto1(x->tbl[i]);
+                }
+                break;
+            }
         }
     }
 }
@@ -3432,19 +3664,18 @@ static void renumber_ir()
         for (j = 0; j < chunk->n_inst; ++j) {
             struct ir *ir = chunk->inst[j];
             switch (ir->op) {
-                case Ir_Goto:
-                    break;
-
                 case Ir_IGoto: {
                     struct ir_igoto *x = (struct ir_igoto *)ir;
                     renumber_lab(&x->no);
                     break;
                 }
 
+                case Ir_Goto:
                 case Ir_SysErr:
                 case Ir_EnterInit:
                 case Ir_Fail:
                 case Ir_Cofail:
+                case Ir_TCaseInit:
                     break;
 
                 case Ir_Mark: {
@@ -3602,6 +3833,23 @@ static void renumber_ir()
                     renumber_var(x->limit);
                     break;
                 }
+                case Ir_TCaseInsert: {
+                    struct ir_tcaseinsert *x = (struct ir_tcaseinsert *)ir;
+                    renumber_var(x->val);
+                    break;
+                }
+                case Ir_TCaseChoose: {
+                    struct ir_tcasechoose *x = (struct ir_tcasechoose *)ir;
+                    renumber_var(x->val);
+                    break;
+                }
+                case Ir_TCaseChoosex: {
+                    struct ir_tcasechoosex *x = (struct ir_tcasechoosex *)ir;
+                    renumber_var(x->val);
+                    renumber_lab(&x->labno);
+                    break;
+                }
+
                 default: {
                     quit("renumber: illegal ir opcode(%d)\n", ir->op);
                     break;

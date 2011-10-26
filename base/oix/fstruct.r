@@ -158,7 +158,7 @@ function insert(s, x, y)
             return s;
         }
       table: {
-            table_insert(&s, &x, &y);
+            table_insert(&s, &x, &y, 1);
             EVValD(&s, E_Tinsert);
             EVValD(&x, E_Tsub);
             return s;
@@ -364,7 +364,7 @@ function table(x, v[n])
           runerr(134);
 
       for(argc = 0; argc < n; argc += 2)
-          table_insert(&result, &v[argc], &v[argc + 1]);
+          table_insert(&result, &v[argc], &v[argc + 1], 1);
 
       EVValD(&result, E_Tcreate);
       return result;

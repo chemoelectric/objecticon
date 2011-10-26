@@ -45,6 +45,7 @@
 %token  RETURN      /* return    */
 %token  STATIC      /* static    */
 %token  SUSPEND     /* suspend   */
+%token  TCASE       /* tcase     */
 %token  THEN        /* then      */
 %token  TO          /* to        */
 %token  UNTIL       /* until     */
@@ -410,6 +411,7 @@ if      : IF expr THEN expr { $$ := Node("if", $1,$2,$3,$4);} ;
         | IF expr THEN expr ELSE expr { $$ := Node("ifelse", $1,$2,$3,$4,$5,$6);} ;
 
 case    : CASE expr OF LBRACE caselist RBRACE { $$ := Node("case", $1,$2,$3,$4,$5,$6);} ;
+	| TCASE expr OF LBRACE caselist RBRACE { $$ := Node("tcase", $1,$2,$3,$4,$5,$6);} ;
 
 caselist: cclause ;
         | caselist SEMICOL cclause { $$ := Node("caselist", $1,$2,$3);} ;

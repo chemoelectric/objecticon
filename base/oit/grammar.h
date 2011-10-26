@@ -276,6 +276,7 @@ if	: IF expr THEN expr {If0($1,$2,$3,$4);} ;
 	| IF expr THEN expr ELSE expr {If1($1,$2,$3,$4,$5,$6);} ;
 
 case	: CASE expr OF LBRACE caselist RBRACE {Case($1,$2,$3,$4,$5,$6);} ;
+	| TCASE expr OF LBRACE caselist RBRACE {TCase($1,$2,$3,$4,$5,$6);} ;
 
 caselist: cclause ;
 	| caselist SEMICOL cclause {Caselist($1,$2,$3);} ;

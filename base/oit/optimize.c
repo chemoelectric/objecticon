@@ -162,8 +162,11 @@ static int fold_consts(struct lnode *n)
             fold_nonnull(n);
             break;
         }
+
         case Uop_Case:
-        case Uop_Casedef: {
+        case Uop_Casedef:
+        case Uop_TCase:
+        case Uop_TCasedef: {
             fold_case(n);
             break;
         }

@@ -102,6 +102,7 @@ int modflag;
 #define Bunion(x1,x2,x3)	$$ = tree5(N_Binop,x2,x2,x1,x3)
 #define Buniona(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3)
 #define Case(x1,x2,x3,x4,x5,x6) $$ = tree4(N_Case,x1,x2,x5) 
+#define TCase(x1,x2,x3,x4,x5,x6) $$ = tree4(N_TCase,x1,x2,x5) 
 #define Caselist(x1,x2,x3)	$$ = tree4(N_Clist,x2,x1,x3) 
 #define Cclause0(x1,x2,x3)	$$ = tree4(N_Cdef,x2,x1,x3) 
 #define Cclause1(x1,x2,x3)	$$ = tree4(N_Ccls,x2,x1,x3) 

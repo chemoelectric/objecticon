@@ -46,7 +46,7 @@ void            list_del        (dptr l, word pos);
 
 int             set_del         (dptr s, dptr key);
 int             table_del       (dptr t, dptr key);
-void            table_insert    (dptr t, dptr key, dptr val);
+void            table_insert    (dptr t, dptr key, dptr val, int overwrite);
 void            set_insert      (dptr s, dptr entry);
 
 void            list_clear       (dptr l);
