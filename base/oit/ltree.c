@@ -1181,8 +1181,10 @@ void replace_node(struct lnode *old, struct lnode *new)
             break;
         }
 
-        case Uop_Case:			/* case expression */
-        case Uop_Casedef: {
+        case Uop_Case:			/* case/tcase expression */
+        case Uop_Casedef:
+        case Uop_TCase:
+        case Uop_TCasedef: {
             struct lnode_case *x = (struct lnode_case *)n;
             int i;
             if (x->expr == old) {
@@ -1199,7 +1201,7 @@ void replace_node(struct lnode *old, struct lnode *new)
                     return;
                 }
             }
-            if (n->op == Uop_Casedef) {
+            if (n->op == Uop_Casedef || n->op == Uop_TCasedef) {
                 if (x->def == old) {
                     x->def = new;
                     return;
