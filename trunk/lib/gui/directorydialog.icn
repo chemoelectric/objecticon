@@ -1,0 +1,395 @@
+package gui
+
+import 
+   ipl.sort,
+   ipl.lists,
+   io
+
+#
+#
+# Directory dialog class.  This class provides a standard directory selection dialog.
+#
+# @example
+# @ d := DirectoryDialog()
+# @ d.show_modal()
+# @ write(d.get_result() | "cancelled")
+#
+class DirectoryDialog(Dialog)
+   public
+      home_button, 
+      new_button, 
+      refresh_button, 
+      up_button, 
+      cancel_button, 
+      okay_button,
+      init_dirs,         # Directory choices
+      res,               # Resulting file path          
+      message_label, 
+      tree, 
+      dir, 
+      show_hidden_cb
+
+   public component_setup()
+      local root_node, d
+      #
+      # Defaults and extra dirs.
+      #
+      /init_dirs := []
+      every put(init_dirs, ucs(Files.getcwd() | 
+                               Files.get_home() | 
+                               Files.get_temp() | 
+                               Files.get_roots()))
+      init_dirs := lunique(FileDialog.ucs_list(init_dirs))
+
+      dir.set_selection_list(init_dirs)
+      root_node := TreeNode()
+      every d := Files.get_roots() do
+         root_node.add(TreeNode().set_label(ucs(d)).set_always_expandable(&yes))
+      tree.set_root_node(root_node)
+   end
+
+   public init_dialog()
+      win.set_min_size(win.get_width(), win.get_height())
+      # Do this here as we need the tree to be setup so that we
+      # can scroll to the selected dir.
+      goto_dir(dir.get_contents())
+   end
+
+   public end_dialog()
+   end
+
+   #
+   # Given a TreeNode n, load its children with the sub-directories.
+   #
+   public load_subtree(n)
+      local s, l
+
+      s := get_full_path(n).str()
+      l := list_directory(s)
+      n.clear_children()
+      every s := !l do
+         n.add(TreeNode().set_label(s).set_always_expandable(&yes))
+   end
+
+   public list_directory(s)
+      local e, dir_list, l, t
+      if l := Files.list(s) then 
+         clear_msg()
+      else {
+         msg(&why)
+         return []
+      }
+      dir_list := []
+      every e := !l do {
+         if e[2].mode_str[1] == "d" &
+            t := ucs(e[1]) &
+            not(Files.is_relative_dir(t)) &
+            (show_hidden_cb.is_checked() | 
+               not(Files.is_hidden(t))) then
+            put(dir_list, t)
+      }
+      return isort(dir_list, map)
+   end
+
+   #
+   # Given a TreeNode n, return a {FilePath} path it represents by traversing
+   # up the tree structure to the root and converting to a {FilePath}.
+   #
+   public get_full_path(n)
+      local l
+      l := []
+      repeat {
+         push(l, n.get_label())
+         n := n.get_parent()
+         if n === tree.get_root_node() then
+            break
+      }
+      return Files.get_path_from_list(l)
+   end
+
+   public on_tree_expansion()
+      local n
+      n := tree.get_last_expanded()
+      #
+      # Check whether it was an expansion or a contraction.  If
+      # an expansion, load the subtree and refresh the tree.
+      #
+      if n.is_expanded() then {
+         load_subtree(n)
+         tree.tree_structure_changed()
+      }
+   end
+
+   public on_tree_selection(ev)
+      clear_msg()
+      dir.set_contents(get_full_path(tree.object_get_selections()[1]).str())
+   end
+
+   public on_dir(ev)
+      goto_dir(dir.get_contents())
+   end
+
+   #
+   # Get the result, (will fail if cancel was pressed).
+   #
+   public get_result()
+      return (\self.res).str()
+   end
+
+   #
+   # Set the initial directory.
+   #
+   public set_directory(s)
+      self.init_dirs := [s]
+      return self
+   end
+
+   #
+   # Set the initial directories as a list; the first is
+   # the one initially shown.
+   #
+   public set_directories(l)
+      self.init_dirs := l
+      return self
+   end
+
+   public get_dir_path()
+      return Files.get_path(dir.get_contents())
+   end
+
+   public goto_dir(d)
+      local n, s, p, ps
+      p := Files.get_path(d).canonical()
+      n := tree.get_root_node()
+      every s := p.gen() do {
+         n := find_child(n, s) | break
+         load_subtree(n)
+         n.set_expanded(&yes)
+      }
+      tree.tree_structure_changed()
+      tree.object_set_selections([n])
+      tree.object_set_cursor(n)
+      tree.center_line(tree.find_line(n))
+      ps := p.str()
+      if Files.is_directory(ps) then
+         clear_msg()
+      else
+         msg("Not a dir: " || ps)
+      dir.set_contents(ps)
+   end
+
+   public find_child(n, s)
+      local n1
+      every n1 := !n.children do {
+$ifdef _MS_WIN32
+         if map(n1.label) == map(s) then
+            return n1
+$else
+         if n1.label == s then
+            return n1
+$endif
+      }
+   end
+
+   public on_okay_button()
+      self.res := get_dir_path()
+      self.dispose()
+   end
+
+   public on_cancel_button()
+      self.dispose()
+   end
+
+   public on_show_hidden_cb(ev)
+      local n
+      n := tree.object_get_selections()[1] | fail
+      goto_dir(get_full_path(n).str())
+   end
+
+   public on_up_button(ev)
+      local t
+      t := self.get_dir_path()
+      if t.size() > 1 then
+         goto_dir(t.parent().str())
+      else
+         msg("At root")
+   end
+
+   public on_home_button(ev)
+      goto_dir(Files.get_home())
+   end
+
+   public on_refresh_button(ev)
+      local n
+      n := tree.object_get_selections()[1] | fail
+      load_subtree(n)
+      tree.tree_structure_changed()
+   end
+
+   public on_new_button(ev)
+      local d, s
+      d := NewDirectoryDialog()
+      d.show_modal(self)
+      if \d.okay then {
+         s := self.get_dir_path().child(d.result).str()
+         if Files.mkdir(s) then
+            goto_dir(s)
+         else
+            msg("mkdir failed: " || &why)
+      }
+   end
+
+   public msg(s)
+      message_label.set_label(s)
+   end
+
+   public clear_msg()
+      msg("")
+   end
+
+   public new()
+      cast(self,Dialog).new()
+      self.setup()
+      return
+   end
+
+   private setup()
+      local paint_2, layout_7, paint_7, paint_11, layout_4, paint_4, panel_4, paint_1, paint_9, layout_6, paint_6, paint_10, paint_3, panel_3, paint, paint_8, paint_5
+      set_label("Select directory")
+      set_resize(&yes)
+      paint_1 := ImagePaint().
+         set_cache("gui.HOME_24")
+      paint := TextPaint("Home")
+      home_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint).
+         connect(on_home_button, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(paint_1)
+      paint_3 := ImagePaint().
+         set_cache("gui.UP_24")
+      paint_2 := TextPaint("Up")
+      up_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_2).
+         connect(on_up_button, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(paint_3)
+      paint_5 := ImagePaint().
+         set_cache("gui.NEW_FOLDER_24")
+      paint_4 := TextPaint("New dir")
+      new_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_4).
+         connect(on_new_button, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(paint_5)
+      paint_7 := ImagePaint().
+         set_cache("gui.REFRESH_24")
+      paint_6 := TextPaint("Refresh")
+      refresh_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_6).
+         connect(on_refresh_button, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(paint_7)
+      layout_6 := GridLayout().
+         set_doi(0).
+         set_dii(2).
+         set_extra("cells")
+      panel_4 := Panel().
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_align", Align.L).
+         set_layout(layout_6).
+         add(home_button).
+         add(up_button).
+         add(new_button).
+         add(refresh_button)
+      add(panel_4)
+      tree := Tree().
+         set_size(390, 272).
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_constraint("y_fill", &yes).
+         set_constraint("y_weight", 1.0).
+         connect(on_tree_expansion, Event.TREE_NODE_EXPANSION).
+         connect(on_tree_selection, Event.SELECTION_CHANGED).
+         set_select_mode(Select.ONE).
+         set_show_root(&no)
+      add(tree)
+      dir := EditList().
+         set_size("150").
+         set_align(Align.L, Align.B).
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_align", Align.L).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         connect(on_dir, Event.ACTION).
+         connect(on_dir, Event.SELECTION_CHANGED).
+         set_selection_list([""])
+      add(dir)
+      paint_8 := TextPaint("Show hidden directories")
+      show_hidden_cb := CheckBox().
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_align", Align.L).
+         connect(on_show_hidden_cb, Event.ACTION).
+         set_toggles(&yes).
+         set_paint(paint_8)
+      add(show_hidden_cb)
+      paint_9 := TextPaint("Okay")
+      okay_button := TextButton().
+         set_align(Align.L, Align.B).
+         clear_constraints().
+         connect(on_okay_button, Event.ACTION).
+         set_toggles(&no).
+         set_paint(paint_9)
+      paint_10 := TextPaint("Cancel")
+      cancel_button := TextButton().
+         set_align(Align.L, Align.B).
+         clear_constraints().
+         connect(on_cancel_button, Event.ACTION).
+         set_toggles(&no).
+         set_paint(paint_10)
+      paint_11 := TextPaint("")
+      message_label := Label().
+         set_size("130").
+         set_align(Align.L, Align.B).
+         set_fg("red").
+         clear_constraints().
+         set_constraint("x_align", Align.L).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_paint(paint_11)
+      layout_4 := GridLayout().
+         set_doi(0).
+         set_extra("cells")
+      panel_3 := Panel().
+         clear_constraints().
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_layout(layout_4).
+         add(okay_button).
+         add(cancel_button).
+         add(message_label)
+      add(panel_3)
+      layout_7 := GridLayout().
+         set_extra("cells")
+      set_layout(layout_7)
+      set_focus(dir.find_focus())
+   end
+end
+
+### Ivib-v2 layout: layouts/$.layout

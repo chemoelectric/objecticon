@@ -1,0 +1,30 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+class CanvasTextListUI(CanvasComponentUI)
+   public create_canvas_component(canvas)
+      local t
+      t := CanvasTextList()
+      t.set_contents([])
+      t.set_size(200, 150)
+      return t
+   end
+
+   public get_category()
+      return "Text"
+   end
+
+   public get_name()
+      return "TextList"
+   end
+
+   public get_icon()
+      return "ivib.icn16"
+   end
+end
+

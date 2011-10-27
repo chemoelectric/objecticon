@@ -1,0 +1,568 @@
+package gui
+
+import 
+   util,
+   graphics,
+   ipl.graphics(Zoom,bev_lookup),
+   ipl.strings(separate_lines)
+
+# A {Paint} represents an arbitrary object which has a size and can be
+# drawn.
+#
+class Paint(Size)
+   #
+   # Initialize the instance.  This should set the size of the instance.
+   # @param c The owning {Component}
+   # @param accel The keyboard accelerator to be drawn
+   public defer initially(c, accel)
+
+   # Draw the instance
+   # @param W The window to draw into
+   # @param x The x position
+   # @param y The y position
+   public defer draw(W, x, y)
+
+   # Cleanup any resources used by this instance.
+   public finally()
+   end
+
+   # Convenient method to draw at a given point; just calls {draw}.
+   # @param W The window to draw into
+   # @param p The {Point} to draw at
+   public draw_point(W, p)
+      self.draw(W, p.x, p.y)
+   end
+end
+
+procedure paint_for_string(s)
+   if /s then
+      return
+   if match(".cell", s) then
+      return GridPaint(s)
+   else
+      return TextPaint(s)
+end
+
+# A simple {Paint} instance which draws a string.
+#
+class TextPaint(Paint)
+   public str, accel
+
+   public initially(c, accel)
+      self.accel := accel
+      self.h := c.cbwin.get_font_height()
+      self.w := c.cbwin.text_width(str)
+   end
+
+   public draw(W, x, y)
+      draw_string_ex(W, x, y, str, accel)
+   end
+
+   # Create a new instance.
+   # @param s The string to draw
+   public new(s)
+      self.str := s
+      return
+   end
+end
+
+# A simple {Paint} instance which draws an icon image string.
+#
+class ImageStringPaint(Paint)
+   public str
+
+   public initially()
+      self.w := image_width(str)
+      self.h := image_height(str)
+   end
+
+   public draw(W, x, y)
+      draw_image_ex(W, x, y, str)
+   end
+
+   # Create a new instance.
+   # @param s The icon image string to draw
+   public new(s)
+      self.str := s
+      return
+   end
+end
+
+# A {Paint} instance which copies an image from another window.  The user is
+# responsible for opening and closing the other window.
+#
+class ImageWindowPaint(Paint)
+   public win
+
+   public initially()
+      self.w := win.get_width()
+      self.h := win.get_height()
+   end
+
+   public draw(W, x, y)
+      (\win).copy_to(W,,,,, x, y)
+   end
+
+   # Create a new instance.
+   # @param w The source window
+   public new(w)
+      self.win := w
+      return
+   end
+end
+
+# A {Paint} instance which draws its output using a {Grid}.  The input is a format
+# string specifying the grid and its contents.
+#
+class GridPaint(Paint)
+   public 
+      fmt,          # Format string
+      g,            # Grid object
+      win,          # Window buffer
+      pass,         # Pass number
+      curr_cell,    # Current cell being read
+      x,            # Text 'cursor' location in cell
+      y, 
+      ia_x,         # Alignment of lines in a cell
+      ia_y,
+      llen,         # Current line len, height
+      lheight, 
+      lno,          # Line no. in cell 
+      ii,           # Cell index counter.
+      accel
+
+   public draw(W, x, y)
+      (\win).copy_to(W,,,,, x, y)
+   end
+
+   public initially(c, accel)
+      local attribs
+
+      /win | syserr("init called out of sequence")
+      attribs := copy(c.get_effective_wattribs())
+      attribs["size"] := [1, 1]
+      attribs["canvas"] := "hidden"
+      win := open_win_with(attribs) | runerr("Couldn't open window")
+      g := Grid().set_extra("ignore")
+      pass := 1
+      ia_x := ia_y := Align.C
+      lines(fmt)
+      close_win()
+      g.dimension()
+      g.compute_locations()
+      w := g.get_preferred_width()
+      h := g.get_preferred_height()
+      if (w > 0) & (h > 0) then {
+         attribs["size"] := [w, h]
+         win := open_win_with(attribs) | runerr("Couldn't open window")
+         pass := 2
+         curr_cell := &null
+         ii := 0
+         ia_x := ia_y := Align.C
+         self.accel := accel
+         lines(fmt)
+      }
+   end
+
+   public lines(s)
+      local t, cmd, args, got_cell
+      every t := separate_lines(s) do t ? {
+         if ="." then {
+            if any('.') then {
+               t := tab(0)
+               if \got_cell then
+                  str(t)
+            } else {
+               cmd := tab(upto(' ') | 0)
+               args := []
+               repeat {
+                  tab(many(' '))
+                  if pos(0) then
+                     break
+                  if any('\'') then {
+                     move(1)
+                     t := tab(upto('\'') | 0)
+                     move(1)
+                  } else
+                     t := tab(upto(' ') | 0)
+                  put(args, string(t))
+               }
+               if cmd == "cell" then {
+                  do_cell(args)
+                  got_cell := 1
+               } else if \got_cell then case string(cmd) of {
+                  "br" : do_brk(args)
+                  "img" : do_img(args)
+                  "imgl" : do_imgl(args)
+                  "xs" : do_xs(args)
+                  "ys" : do_ys(args)
+                  "attr" : do_attr(args)
+               }
+            }
+         } else if \got_cell then
+            str(t)
+      }
+   end
+
+   public do_xs(args)
+      local n
+      n := integer(args[1]) | 0
+      if pass = 1 then {
+         llen +:= n
+      } else {
+         ready_to_output() | fail
+         x +:= n
+      }
+   end
+
+   public do_ys(args)
+      local n
+      n := integer(args[1]) | 0
+      if pass = 1 then {
+         lheight <:= n
+      }
+   end
+
+   public do_cell(args)
+      local t, key, val, a
+
+      if pass = 1 then {
+         t := table()
+         every a := !args do {
+            a ? {
+               key := tab(upto('=') | 0)
+               if ="=" then
+                  val := tab(0)
+               else
+                  val := ""
+               t[key] := case key of {
+                  "x_tab"|"y_tab"|"x"|"y"|"w"|"h"|"l_inset"|"r_inset"|"t_inset"|"b_inset":
+                     integer(val)
+                  "x_align":
+                     val == (Align.L | Align.R | Align.C)
+                  "y_align":
+                     val == (Align.T | Align.B | Align.C)
+                  "eol"|"x_fill"|"y_fill":
+                     if *val = 0 then &yes else flag(val)
+                  "x_weight"|"y_weight":
+                     real(val)
+               }
+            }
+         }
+         curr_cell := g.create_cell(t)
+         curr_cell.pw := curr_cell.ph := 0
+         curr_cell.obj := []
+         llen := lheight := 0
+      } else {
+         ii +:= 1
+         curr_cell := g.info[ii]
+         lno := 1
+         x := &null
+         y := curr_cell.ay
+      }
+   end
+
+   public str(s)
+      local y1
+      if pass = 1 then {
+         llen +:= win.text_width(s)
+         lheight <:= win.get_font_height()
+      } else {
+         ready_to_output() | fail
+         y1 := case ia_y of {
+            Align.T : y
+            Align.C : y + (curr_cell.obj[lno].h - win.get_font_height()) / 2
+            Align.B : y + curr_cell.obj[lno].h - win.get_font_height()
+         }
+         draw_string_ex(win, x, y1, s, accel)
+         # Just print the accelerator once.
+         if upto(\accel, map(s)) then
+            accel := &null
+         x +:= win.text_width(s)
+      }
+   end
+
+   public do_brk(args)
+      if pass = 1 then {
+         curr_cell.pw <:= llen
+         curr_cell.ph +:= lheight
+         put(curr_cell.obj, Size(llen, lheight))
+         llen := lheight := 0
+      } else {
+         x := &null
+         y +:= curr_cell.obj[lno].h
+         lno +:= 1
+      }
+   end
+
+   public do_attr(args)
+      local a, key, val
+      every a := !args do {
+         a ? {
+            key := tab(upto('=') | 0)
+            if ="=" then
+               val := tab(0)
+            else
+               val := ""
+         }
+         case key of {
+            "fg": win.set_fg(val)
+            "bg": win.set_bg(val)
+            "font": win.set_font(val)
+            "ia_x" : ia_x := (val == (Align.L | Align.R | Align.C))
+            "ia_y" : ia_y := (val == (Align.T | Align.B | Align.C))
+         }
+      }
+   end
+
+   public do_img(args)
+      local W, y1
+      W := ImageCache.get(args[1], win) | fail
+      if pass = 1 then {
+         llen +:= W.get_width()
+         lheight <:= W.get_height()
+      } else {
+         ready_to_output() | fail
+         y1 := case ia_y of {
+            Align.T : y
+            Align.C : y + (curr_cell.obj[lno].h - W.get_height()) / 2
+            Align.B : y + curr_cell.obj[lno].h - W.get_height()
+         }
+         W.copy_to(win,,,,, x, y1)
+         x +:= W.get_width()
+      }
+   end
+
+   public do_imgl(args)
+      local W, y1
+      W := ImageCache.load(args[1], win) | fail
+      if pass = 1 then {
+         llen +:= W.get_width()
+         lheight <:= W.get_height()
+      } else {
+         ready_to_output() | fail
+         y1 := case ia_y of {
+            Align.T : y
+            Align.C : y + (curr_cell.obj[lno].h - W.get_height()) / 2
+            Align.B : y + curr_cell.obj[lno].h - W.get_height()
+         }
+         W.copy_to(win,,,,, x, y1)
+         x +:= W.get_width()
+      }
+      W.close()
+   end
+
+   public ready_to_output()
+      if lno > *curr_cell.obj then
+         fail
+      /x :=  case ia_x of {
+         Align.L : curr_cell.ax
+         Align.R : curr_cell.ax + curr_cell.aw - curr_cell.obj[lno].w
+         Align.C : curr_cell.ax + (curr_cell.aw - curr_cell.obj[lno].w) / 2
+      }
+      return
+   end
+
+   public finally()
+      close_win()
+   end
+
+   public close_win()
+      if \win then {
+         Gui.style.dispose(win)
+         win.close()
+      }
+      win := &null
+   end
+
+   public draw_grid()
+      local i, cw
+
+      if /win then
+         return
+
+      cw := bev_lookup(win).shadow.clone().set_fill_style("masked").set_pattern("gray")
+
+      cw.draw_rectangle(0, 0, w, h)
+
+      every i := !(\g).info do {
+         cw.draw_rectangle(g.col_x[i.x],
+                           g.row_y[i.y],
+                           g.slice(i.x, i.w, g.a_col_w),
+                           g.slice(i.y, i.h, g.a_row_h))
+      }
+
+      cw.uncouple()
+   end
+
+   # Create a new instance.
+   # @param s The format string
+   public new(s)
+      self.fmt := s
+      return
+   end
+end
+
+# A {Paint} instance which draws an image, which can come from a
+# number of sources.  The image can also be scaled.
+#
+class ImagePaint(Paint)
+   public 
+      image_str,
+      image_window,
+      image_cache,
+      win,
+      scale_up_flag,
+      dont_close,
+      max_w,
+      max_h
+
+   #
+   # Set an image to use; the parameter is passed to {ImageCache.get}
+   # to load the image.
+   #
+   public set_cache(x)
+      self.image_cache := x
+      return self
+   end
+
+   #
+   # Set an image to use; the parameter is passed to {ImageCache.load}
+   # to load the image.
+   #
+   public set_image(x)
+      self.image_str := x
+      return self
+   end
+
+   #
+   # Set a window to use as the image source.  It will not be closed.
+   #
+   public set_window(x)
+      self.image_window := x
+      return self
+   end
+
+   #
+   # Set the maximum allowed width; the image will be scaled if necessary.
+   #
+   public set_max_w(w)
+      self.max_w := w
+      return self
+   end
+
+   #
+   # Set the maximum allowed height; the image will be scaled if necessary.
+   #
+   public set_max_h(h)
+      self.max_h := h
+      return self
+   end
+
+   #
+   # Set the maximum allowed size; the image will be scaled if necessary.
+   #
+   public set_max_size(w, h)
+      self.max_w := w
+      self.max_h := h
+      return self
+   end
+   
+   #
+   # If set, then the image will be scaled up to fit in the space
+   # specified by {set_max_size()}.  The image will not be distorted, 
+   # but will be expanded to fill one of the dimensions depending 
+   # on its shape.  If the image is bigger than the specified size 
+   # then it will always be scaled down.
+   #
+   public set_scale_up(s)
+      self.scale_up_flag := check_flag(s)
+      return self
+   end
+
+   public initially(c)
+      /win | syserr("init called out of sequence")
+      load_image(c)
+      zoom_image()
+      if \win then {
+         self.w := win.get_width()
+         self.h := win.get_height()
+      } else
+         self.w := self.h := 0
+   end
+
+   public finally()
+      close_image()
+   end
+
+   public close_image()
+      if \win & /dont_close then {
+         Gui.style.dispose(win)
+         win.close()
+      }
+      dont_close := win := &null
+   end
+
+   public load_image(c)
+      if \self.image_str then
+         win := ImageCache.load(self.image_str, c.cbwin)
+      else if \self.image_cache then {
+         if win := ImageCache.get(self.image_cache, c.cbwin) then
+            dont_close := 1
+      } else if \self.image_window then {
+         win := self.image_window
+         dont_close := 1
+      }
+   end
+
+   public zoom_image()
+      local zoom_win, img_w, img_h,
+         asp_r, asp_max, zoom_w, zoom_h
+
+      if /win | (/max_w & /max_h) then
+         fail
+
+      img_w := win.get_width()
+      img_h := win.get_height()
+      if /self.scale_up_flag & 
+         (/max_w | img_w <= max_w)\1 & (/max_h | img_h <= \max_h) then
+         return
+
+      asp_r := real(img_w) / real(img_h)
+
+      if \max_w then {
+         if \max_h then {
+            asp_max := real(max_w) / real(max_h)
+            if asp_r > asp_max then {
+               zoom_w := max_w
+               zoom_h := integer(max_w / asp_r)
+            } else {
+               zoom_w := integer(max_h * asp_r)
+               zoom_h := max_h
+            }
+         } else {
+            # \max_w & /max_h
+            zoom_w := max_w
+            zoom_h := integer(max_w / asp_r)
+         }
+      } else {
+         # /max_w & \max_h
+         zoom_w := integer(max_h * asp_r)
+         zoom_h := max_h
+      }
+
+      zoom_w <:= 1
+      zoom_h <:= 1
+
+      zoom_win := Window.open().set_size(zoom_w, zoom_h) | runerr("Couldn't open temp window")
+      Zoom(win, zoom_win, 0, 0, img_w, img_h, 0, 0, zoom_w, zoom_h)
+
+      # Now swap the zoomed window into win.
+      close_image()
+      win := zoom_win
+   end
+
+   public draw(W, x, y)
+      (\win).copy_to(W,,,,, x, y)
+   end
+end

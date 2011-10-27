@@ -1,0 +1,95 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+#
+# This class implements a Text label.  The default width and 
+# height are determined by dimensions of text
+#
+class Label(Component)
+   public 
+      linked_accel,
+      paint
+
+   #
+   # Set the label.
+   # @param x   The label.
+   #
+   public set_label(x)
+      set_paint(paint_for_string(x))
+      return self
+   end
+
+   #
+   # Set an image for the label
+   # @param x  The image to be displayed
+   #
+   public set_image(x)
+      set_paint(ImagePaint().set_image(x))
+      return self
+   end
+
+   public set_paint(p)
+      local key
+      (\self.paint).finally()
+      self.paint := p
+      if is_initialized() then {
+         key := (\linked_accel).accel
+         self.paint.initially(self, key)
+         self.invalidate()
+      }
+      return self
+   end
+
+   #
+   # Link this label to a component; the label will be displayed
+   # with the component's accelerator key underlined.
+   #
+   public set_linked_accel(c)
+      self.linked_accel := c
+      return self
+   end
+
+   public initially()
+      local key
+      \self.paint | runerr("no label specified")
+      cast(self,Component).initially()
+      key := (\linked_accel).accel
+      paint.initially(self, key)
+   end
+
+   public finally()
+      cast(self,Component).finally()
+      paint.finally()
+   end
+
+   public get_default_width()
+      return paint.w + border.get_total_width()
+   end
+
+   public get_default_height()
+      return paint.h + border.get_total_height()
+   end
+
+   public display()
+      paint.draw_point(self.cbwin, border.float(self, paint))
+      border.draw_rect(self.cbwin, self)
+      if self.has_focus() & self.is_unshaded() then
+         border.draw_focus_rect(self.cbwin, self)
+   end
+
+   public new()
+      cast(self,Component).new()
+      self.set_constraint("x_align", Align.L)
+      self.set_border(EmptyBorder().set_insets(0, 0, 0, 0).set_align(Align.L, Align.C))
+      return
+   end
+end
+
+

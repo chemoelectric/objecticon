@@ -1,0 +1,3126 @@
+/*
+ * File: rxwin.ri - X11 system-specific graphics interface code.
+ */
+
+#define CONVERT_ANGLE(ang) (-(ang) * 180 / Pi * 64)
+
+#define RGB24 1
+#define RGB48 2
+#define GRAY8 3
+
+#define GetDepth(wd) DefaultDepth((wd)->display,DefaultScreen((wd)->display))
+#define GetVisual(wd) DefaultVisual((wd)->display,DefaultScreen((wd)->display))
+#define GetColormap(wd) DefaultColormap((wd)->display,DefaultScreen((wd)->display))
+#define GetGC(wd) DefaultGC((wd)->display,DefaultScreen((wd)->display))
+#define GetWidth(wd) DisplayWidth((wd)->display,DefaultScreen((wd)->display))
+#define GetHeight(wd) DisplayHeight((wd)->display,DefaultScreen((wd)->display))
+#define GetRoot(wd) DefaultRootWindow((wd)->display)
+
+/*
+ * Global variables specific to X
+ */
+wdp wdsplys;
+
+/* List of windows with win non-null */
+static wsp vwstates;
+
+/*
+ * function prototypes
+ */
+static void handle_config(wsp w, XConfigureEvent *event);
+static void handle_exposures(wsp ws, XExposeEvent *event);
+static void handle_mouse(wsp ws, XButtonEvent *event);
+static void handle_keypress(wsp ws, XKeyEvent *event);
+static void handle_crossing(wsp ws, XCrossingEvent *event);
+static void wmap(wbp w);
+static void synch_cursor(wsp ws);
+static int convert_KeySym_to_code_point(KeySym k);
+static char *convertspec(wdp wd, char *s);
+#if HAVE_LIBXFT
+int xft_stringwidth(wbp w, char *s, int n);
+#else
+static char *findfont(wdp wd, char *fam, int size, int flags);
+static int okfont(char *spec, int flags);
+static int fontcmp(char *font1, char *font2, int size, int flags);
+static int fieldcmp(char *font1, char *font2, char *value, int field);
+static char *xlfd_field(char *s, int i);
+static int xlfd_size(char *s, int n);
+#endif
+static wfp newfont(wdp wd, char *s);
+static wdp alcdisplay (char *s);
+static wfp loadfont(wdp wd, char *s);
+static void resizepixmap(wbp w, int width, int height);
+static void setclip(wbp w);
+static void unsetclip(wbp w);
+static int make_mod(unsigned int state);
+static char* property_to_string(wdp wd, Atom target, int number_items, void* data);
+static Atom convert_target(wdp wd, Atom desired_target);
+static void get_atom_descriptor(wsp ws, Atom a, dptr dest);
+static void synch_state(wsp ws);
+static void synch_net_wm_state(wsp ws, int desired_state);
+static void close_screen_win(wsp ws);
+static int get_shift(unsigned long mask);
+static struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int b);
+static void from_pixel(wdp wd, unsigned long c, int *r, int *g, int *b);
+static unsigned long to_pixel(wdp wd, int r, int g, int b);
+static void setpattern_in_gc(wbp w, int width, int height, int *rowdata);
+
+static stringint fillstyles[] = {
+    {0, 3},
+    {"masked", FillStippled },
+    {"solid", FillSolid },
+    {"textured", FillOpaqueStippled },
+};
+
+static stringint drawops[] = {
+   { 0, 16},
+   {"and",		GXand},
+   {"andInverted",	GXandInverted},
+   {"andReverse",	GXandReverse},
+   {"clear",		GXclear},
+   {"copy",		GXcopy},
+   {"copyInverted",	GXcopyInverted},
+   {"equiv",		GXequiv},
+   {"invert",		GXinvert},
+   {"nand",		GXnand},
+   {"noop",		GXnoop},
+   {"nor",		GXnor},
+   {"or",		GXor},
+   {"orInverted",	GXorInverted},
+   {"orReverse",	GXorReverse},
+   {"set",		GXset},
+   {"xor",		GXxor},
+};
+
+static stringint linestyles[] = {
+    {0, 5},
+    {"dashed",      LineOnOffDash},
+    {"doubledash",  LineDoubleDash},
+    {"onoff",       LineOnOffDash},
+    {"solid",       LineSolid},
+    {"striped",     LineDoubleDash},
+};
+
+static stringint canvastypes[] = {
+    {0, 7},
+    {"fullscreen",  FullScreenState},
+    {"hidden",      HiddenState},
+    {"iconic",      IconicState},
+    {"maximized",   MaximizedState},
+    {"normal",      NormalState},
+    {"popup",       PopupState},
+    {"root",        RootState},
+};
+
+static stringint cursors[] = {
+  { 0, NUMCURSORSYMS},
+  {"X cursor",		XC_X_cursor},
+  {"arrow",		XC_arrow},
+  {"based arrow down",	XC_based_arrow_down},
+  {"based arrow up",	XC_based_arrow_up},
+  {"boat",		XC_boat},
+  {"bogosity",		XC_bogosity},
+  {"bottom left corner",XC_bottom_left_corner},
+  {"bottom right corner",XC_bottom_right_corner},
+  {"bottom side",	XC_bottom_side},
+  {"bottom tee",	XC_bottom_tee},
+  {"box spiral",	XC_box_spiral},
+  {"center ptr",	XC_center_ptr},
+  {"circle",		XC_circle},
+  {"clock",		XC_clock},
+  {"coffee mug",	XC_coffee_mug},
+  {"cross",		XC_cross},
+  {"cross reverse",	XC_cross_reverse},
+  {"crosshair",		XC_crosshair},
+  {"diamond cross",	XC_diamond_cross},
+  {"dot",		XC_dot},
+  {"dotbox",		XC_dotbox},
+  {"double arrow",	XC_double_arrow},
+  {"draft large",	XC_draft_large},
+  {"draft small",	XC_draft_small},
+  {"draped box",	XC_draped_box},
+  {"exchange",		XC_exchange},
+  {"fleur",		XC_fleur},
+  {"gobbler",		XC_gobbler},
+  {"gumby",		XC_gumby},
+  {"hand1",		XC_hand1},
+  {"hand2",		XC_hand2},
+  {"heart",		XC_heart},
+  {"icon",		XC_icon},
+  {"iron cross",	XC_iron_cross},
+  {"left ptr",		XC_left_ptr},
+  {"left side",		XC_left_side},
+  {"left tee",		XC_left_tee},
+  {"leftbutton",	XC_leftbutton},
+  {"ll angle",		XC_ll_angle},
+  {"lr angle",		XC_lr_angle},
+  {"man",		XC_man},
+  {"middlebutton",	XC_middlebutton},
+  {"mouse",		XC_mouse},
+  {"pencil",		XC_pencil},
+  {"pirate",		XC_pirate},
+  {"plus",		XC_plus},
+  {"question arrow",	XC_question_arrow},
+  {"right ptr",		XC_right_ptr},
+  {"right side",	XC_right_side},
+  {"right tee",		XC_right_tee},
+  {"rightbutton",	XC_rightbutton},
+  {"rtl logo",		XC_rtl_logo},
+  {"sailboat",		XC_sailboat},
+  {"sb down arrow",	XC_sb_down_arrow},
+  {"sb h double arrow",	XC_sb_h_double_arrow},
+  {"sb left arrow",	XC_sb_left_arrow},
+  {"sb right arrow",	XC_sb_right_arrow},
+  {"sb up arrow",	XC_sb_up_arrow},
+  {"sb v double arrow",	XC_sb_v_double_arrow},
+  {"shuttle",		XC_shuttle},
+  {"sizing",		XC_sizing},
+  {"spider",		XC_spider},
+  {"spraycan",		XC_spraycan},
+  {"star",		XC_star},
+  {"target",		XC_target},
+  {"tcross",		XC_tcross},
+  {"top left arrow",	XC_top_left_arrow},
+  {"top left corner",	XC_top_left_corner},
+  {"top right corner",	XC_top_right_corner},
+  {"top side",		XC_top_side},
+  {"top tee",		XC_top_tee},
+  {"trek",		XC_trek},
+  {"ul angle",		XC_ul_angle},
+  {"umbrella",		XC_umbrella},
+  {"ur angle",		XC_ur_angle},
+  {"watch",		XC_watch},
+  {"xterm",		XC_xterm},
+  {"num glyphs",	XC_num_glyphs},
+};
+
+
+static int selection_debug = 0;
+
+#if 0
+static void dump_all(void)
+{
+    int i,j,k;
+    wsp x;
+    wbp y;
+    i = 0;
+    for (y = wbndngs; y; y = y->next) {
+        printf("Binding %p\n",y);
+        printf("\tcanvas %p\n",y->window);
+        printf("\tcontext %p\n",y->context);
+        ++i;
+    }
+    printf("============\n");
+    j = 0;
+    for (x = wstates; x; x = x->next) {
+        printf("Canvas %p\n",x);
+        printf("\trefcount=%d\n", x->refcount);
+        printf("\tlabel=%s\n", x->windowlabel);
+        printf("\tgeometry=%d,%d %dx%d\n", x->x,x->y,x->width,x->height);
+        printf("\twin=%d\n", (int)x->win);
+        ++j; 
+    }
+    printf("============\n");
+    k = 0;
+    for (x = vwstates; x; x = x->vnext) {
+        printf("Non-hidden Canvas %p\n",x);
+        printf("\trefcount=%d\n", x->refcount);
+        printf("\tlabel=%s\n", x->windowlabel);
+        printf("\tgeometry=%d,%d %dx%d\n", x->x,x->y,x->width,x->height);
+        printf("\twin=%d\n", (int)x->win);
+        ++k; 
+    }
+
+    printf("Total %d bindings %d canvases (%d non-hidden)\n",i,j,k);
+}
+#endif
+
+#define ATOM(d, x) ((d)->atoms[Cat(ATOM_,x)])
+
+static struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int b)
+{
+    struct SharedColor *res;
+    GRFX_ALLOC(res, SharedColor);
+    res->r = r;
+    res->g = g;
+    res->b = b;
+    res->c = to_pixel(wd, r, g, b);
+    res->name = salloc(name);
+    return res;
+}
+
+static struct SharedColor *link_sharedcolor(struct SharedColor *x)
+{
+    ++x->refcount;
+    return x;
+}
+
+static void unlink_sharedcolor(struct SharedColor *x)
+{
+    --x->refcount;
+    if (x->refcount == 0) {
+        free(x->name);
+        free(x);
+    }
+}
+
+static char *atom_fmt(wsp ws,Atom a) {
+    static int n = 0;
+    static char buff[8][96];
+    char *s, *r;
+    r = buff[n];
+    if (a == None)
+        return "None(0)";
+
+    s = XGetAtomName(ws->display->display, a);
+    if (s) {
+        sprintf(r, "%.64s(%ld)", s, (long)a);
+        XFree(s);
+    } else {
+        sprintf(r, "?unknown atom(%ld)", (long)a);
+    }
+
+    n = (n + 1) % 8;
+    return r;
+}
+
+/*
+ * Get the string name of the given Atom into dest.  The string is
+ * allocated in the string region.
+ */
+static void get_atom_descriptor(wsp ws, Atom a, dptr dest)
+{
+    char *s = XGetAtomName(ws->display->display, a);
+    cstr2string(s, dest);
+    XFree(s);
+}
+
+static Atom convert_target(wdp wd, Atom desired_target)
+{
+    /* Check for common cases. */
+    if ( (desired_target == ATOM(wd, TIMESTAMP))    ||
+         (desired_target == ATOM(wd, LIST_LENGTH) ) ||
+         (desired_target == ATOM(wd, SPAN) ) ||
+         (desired_target == ATOM(wd, CHARACTER_POSITION) ) ||
+         (desired_target == ATOM(wd, LENGTH) ) ) {
+        return XA_INTEGER;
+    }
+
+    if ( desired_target == ATOM(wd, TARGETS) ) {
+        return XA_ATOM;
+    }
+
+    if ( desired_target == ATOM(wd, CLIENT_WINDOW) ) {
+        return XA_WINDOW;
+    }
+
+    /* Otherwise, no need to convert target. */
+    return desired_target;
+}
+
+static char* property_to_string(wdp wd, Atom target, int number_items, void* data)
+{
+    char*           result = 0;
+    int             i, length;
+
+
+    /* Convert target, if necessary. */
+    target = convert_target(wd, target);
+
+    switch (target) {
+        case XA_ATOM: {
+            int curr_len, total_len;
+            unsigned long *long_array = (unsigned long*) data;
+
+            length = 32;
+            MemProtect(result = malloc(length));
+            *result = 0;
+            total_len = 0;
+
+            /* Convert to atom names. */
+            for (i = 0; i < number_items; i++) {
+                char *atom_name = XGetAtomName(wd->display, long_array[i] );
+                if (atom_name) {
+                    curr_len = strlen(atom_name) + 1;    /* +1 for the \n */
+                    if (total_len + curr_len + 1 > length) {  /* +1 for the \0 */
+                        length = total_len + curr_len + 1;
+                        MemProtect(result = realloc(result, length));
+                    }
+                    sprintf(result + total_len, "%s\n", atom_name);
+                    total_len += curr_len;
+                    XFree(atom_name);
+                }
+            }
+            break;
+        }
+        case XA_INTEGER: {
+            long *int_array = (long*) data;
+            length = number_items * 20 + 1;
+            MemProtect(result = malloc(length));
+            *result = 0;
+            for (i = 0; i < number_items; i++)
+                sprintf(result + strlen(result), "%ld ", int_array[i]);
+            break;
+        }
+        case XA_WINDOW: {
+            unsigned long *long_array = (unsigned long*) data;
+            length = number_items * 12 + 1;
+            MemProtect(result = malloc(length));
+            *result = 0;
+            for (i = 0; i < number_items; i++)
+                sprintf(result + strlen(result), "0x%8.8lu ", long_array[i]);
+            break;
+        }
+    }
+
+    return result;
+
+}
+
+void pollevent(wbp w)
+{
+    wdp wd = w->window->display;
+    XEvent event;
+    Window evwin;
+    wsp ws = 0;
+    XSync(wd->display, False);
+    while (XPending(wd->display)) {
+
+        XNextEvent(wd->display, &event);
+        evwin = event.xexpose.window;  /* go ahead, criticize all you like */
+
+        for (ws = vwstates; ws; ws = ws->vnext) {
+            if (ws->display == wd) {
+                if (ws->win == evwin) break;
+	    }
+        }
+        if (!ws) continue;
+
+        switch (event.type) {
+            case SelectionRequest: {
+                tended struct descrip tmp;
+                if (selection_debug)
+                    printf("SelectionRequest event:\n\towner=%lx requestor=%lx "
+                           "property=%s target=%s selection=%s\n",
+                           (long)event.xselectionrequest.owner,
+                           (long)event.xselectionrequest.requestor,
+                           atom_fmt(ws, event.xselectionrequest.property),
+                           atom_fmt(ws, event.xselectionrequest.target),
+                           atom_fmt(ws, event.xselectionrequest.selection)
+                        );
+
+                MakeInt(SELECTIONREQUEST, &tmp);
+                list_put(&ws->listp, &tmp);
+                MakeInt((word)event.xselectionrequest.requestor, &tmp);
+                list_put(&ws->listp, &tmp);
+                get_atom_descriptor(ws, event.xselectionrequest.property, &tmp);
+                list_put(&ws->listp, &tmp);
+                get_atom_descriptor(ws, event.xselectionrequest.selection, &tmp);
+                list_put(&ws->listp, &tmp);
+                get_atom_descriptor(ws, event.xselectionrequest.target, &tmp);
+                list_put(&ws->listp, &tmp);
+                MakeInt(event.xselectionrequest.time, &tmp);
+                list_put(&ws->listp, &tmp);
+                break;
+            }
+
+            case SelectionClear: {
+                tended struct descrip tmp;
+                if (selection_debug)
+                    printf("SelectionClear event win=%lx selection=%s\n",
+                           (long)event.xselectionclear.window,
+                           atom_fmt(ws, event.xselectionclear.selection));
+                MakeInt(SELECTIONCLEAR, &tmp);
+                list_put(&ws->listp, &tmp);
+                get_atom_descriptor(ws, event.xselectionclear.selection, &tmp);
+                list_put(&ws->listp, &tmp);
+                break;
+            }
+
+            case SelectionNotify: {
+                Atom actual_type;
+                int actual_format;
+                unsigned long bytes_after, nitems;
+                unsigned char *prop;
+                word bytes_read;
+                tended struct descrip tmp;
+                int status;
+                char *conv_str;
+
+                if (selection_debug)
+                    printf("SelectionNotify: requestor=%lx selection=%s target=%s property=%s\n",
+                           (long)event.xselection.requestor,
+                           atom_fmt(ws, event.xselection.selection),
+                           atom_fmt(ws, event.xselection.target),
+                           atom_fmt(ws, event.xselection.property));
+
+                MakeInt(SELECTIONRESPONSE, &tmp);
+                list_put(&ws->listp, &tmp);
+                get_atom_descriptor(ws, event.xselection.selection, &tmp);
+                list_put(&ws->listp, &tmp);
+                get_atom_descriptor(ws, event.xselection.target, &tmp);
+                list_put(&ws->listp, &tmp);
+
+                if (event.xselection.property == None) {
+                    if (selection_debug)
+                        printf("XGetWindowProperty xselection.property == None\n");
+                    list_put(&ws->listp, &nulldesc);
+                    break;
+                }
+
+                status = XGetWindowProperty(ws->display->display,
+                                            ws->win,
+                                            ATOM(ws->display, _OBJECTICON_PROP),
+                                            0,
+                                            8192,   /* Means we won't get back > 32kb of stuff */
+                                            True,
+                                            AnyPropertyType,
+                                            &actual_type,
+                                            &actual_format,
+                                            &nitems,
+                                            &bytes_after,
+                                            &prop);
+
+                if (status != Success) {
+                    if (selection_debug)
+                        printf("XGetWindowProperty failed\n");
+                    list_put(&ws->listp, &nulldesc);
+                    break;
+                }
+
+                if (actual_type == None) {
+                    if (selection_debug)
+                        printf("XGetWindowProperty returned actual_type == None\n");
+                    list_put(&ws->listp, &nulldesc);
+                    break;
+                }
+
+                /* Shouldn't ever happen */
+                if (!prop) {
+                    if (selection_debug)
+                        printf("XGetWindowProperty set prop to null\n");
+                    list_put(&ws->listp, &nulldesc);
+                    break;
+                }
+
+                bytes_read = nitems * (actual_format/8);
+                if (selection_debug)
+                    printf("Got %lu items x %d bits -> %ld bytes\n",nitems, actual_format, (long)bytes_read);
+
+                conv_str = property_to_string(ws->display,
+                                              actual_type,
+                                              nitems,
+                                              prop);
+                if (conv_str) {
+                    /* Make an Icon string out of the data */
+                    cstr2string(conv_str, &tmp);
+                    free(conv_str);
+                } else {
+                    /* Make an Icon string out of the data */
+                    bytes2string((char *)prop, bytes_read, &tmp);
+                }
+                list_put(&ws->listp, &tmp);
+
+                XFree(prop);
+                    
+                break;
+            }
+
+            case KeyRelease: {
+                if (ws->inputmask & IM_KEY_RELEASE)
+                    handle_keypress(ws, (XKeyEvent *)&event);
+                break;
+            }
+            case KeyPress:
+                handle_keypress(ws, (XKeyEvent *)&event);
+                break;
+            case ButtonPress:
+            case ButtonRelease:
+            case MotionNotify:
+                handle_mouse(ws, (XButtonEvent *)&event);
+                break;
+            case LeaveNotify:
+            case EnterNotify:
+                handle_crossing(ws, (XCrossingEvent *)&event);
+                break;
+            case NoExpose:
+                break;
+            case Expose:
+                handle_exposures(ws, (XExposeEvent *)&event);
+                break;
+            case UnmapNotify:
+            case MapNotify:
+                synch_state(ws);
+                break;
+            case ConfigureNotify:
+                handle_config(ws, (XConfigureEvent *)&event);
+                break;
+            case ClientMessage: {
+                /*
+                 * only client message we handle at present are destroy requests
+                 */
+                if (event.xclient.data.l[0] == ATOM(ws->display, WM_DELETE_WINDOW))
+                    qeventcode(ws, WINDOWCLOSED);
+                break;
+            }
+            default:
+                break;
+        }
+    }
+}
+
+static void close_screen_win(wsp ws)
+{
+    wdp wd = ws->display;
+    XDestroyWindow(wd->display, ws->win);
+    XFlush(wd->display);
+#if HAVE_LIBXFT
+    if (ws->winDraw) {
+        XftDrawDestroy(ws->winDraw);
+        ws->winDraw = NULL;
+    }
+#endif
+    ws->win = (Window) NULL;
+    GRFX_GENUNLINK(ws, vwstates, vnext, vprevious);
+    synch_state(ws);
+}
+
+/*
+ * wclose - close a window.
+ */
+void wclose(wbp w)
+{
+    STDLOCALS(w);
+    pollevent(w);
+    if (ws->win && ws->refcount > 1) {
+        /* Turn into hidden window */
+        close_screen_win(ws);
+    }
+}
+
+/*
+ * open a window
+ */
+wbp wopen(char *display)
+{
+    wbp w;
+    wsp ws;
+    wcp wc;
+    wdp wd;
+    XGCValues gcv;
+    unsigned long gcmask =
+        GCGraphicsExposures | GCFont | GCForeground | GCBackground | GCFillStyle | 
+        GCLineWidth | GCLineStyle | GCCapStyle;
+
+    if ((wd = alcdisplay(display)) == NULL) {
+        /* alcdisplay will have set &why */
+        return 0;
+    }
+
+    w = alcwbinding();
+
+    GRFX_ALLOC(ws, _wstate);
+    ws->listp = nulldesc;
+    ws->cursor = stringint_lookup(cursors, "left ptr");
+    ws->state = HiddenState;
+    ws->x = ws->y = -INT_MAX;
+    ws->minwidth = ws->minheight = 1;
+    ws->maxwidth = ws->maxheight = INT_MAX;
+    ws->width = ws->height = ws->pixwidth = ws->pixheight = 1;
+#if HAVE_LIBXFT
+    ws->pixDraw = ws->winDraw = NULL;
+#endif
+    ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
+    ws->display = wd;
+    GRFX_LINK(ws, wstates);
+
+    w->window = ws;
+    create_list(64, &ws->listp);
+
+    GRFX_ALLOC(wc, _wcontext);
+    wc->display = wd;
+    wc->bg = link_sharedcolor(wd->white);
+    wc->fg = link_sharedcolor(wd->black);
+    wc->font = wd->defaultfont;
+    wc->drawop = stringint_lookup(drawops, "copy");
+    wc->clipx = wc->clipy = 0;
+    wc->clipw = wc->cliph = -1;
+    wc->linewidth = 1;
+    wc->fillstyle = stringint_lookup(fillstyles, "solid");
+    wc->linestyle = stringint_lookup(linestyles, "solid");
+    GRFX_LINK(wc, wcntxts);
+
+    w->context = wc;
+
+    /*
+     * Create the 1x1 pixmap
+     */
+    ws->pix = XCreatePixmap(wd->display, GetRoot(wd),
+                            ws->pixwidth, ws->pixheight,
+                            GetDepth(wd));
+
+    /*
+     * Create graphics context
+     */
+    gcv.foreground = wc->fg->c;
+    gcv.background = wc->bg->c;
+#if HAVE_LIBXFT
+    gcv.font       = wd->xfont->fid;
+#else
+    gcv.font       = wc->font->fsp->fid;
+#endif
+    gcv.fill_style = wc->fillstyle->i;
+    gcv.line_width = wc->linewidth;
+    gcv.line_style = wc->linestyle->i;
+    gcv.cap_style = CapProjecting;
+    gcv.graphics_exposures = False;
+    wc->gc = XCreateGC(wd->display, ws->pix, gcmask, &gcv);
+
+    /* Fill pixmap with background colour */
+    XSetForeground(wd->display, wc->gc, wc->bg->c);
+    XFillRectangle(wd->display, ws->pix, wc->gc, 0, 0, ws->width, ws->height);
+    XSetForeground(wd->display, wc->gc, wc->fg->c);
+
+    return w;
+}
+
+int setwindowicon(wbp w, struct imgdata *imd)
+{
+    wsp ws = w->window;
+    unsigned char *s;
+    int i, j, k;
+    if (ws->icondata)
+        free(ws->icondata);
+    ws->iconlen = 2 + imd->width * imd->height;
+    MemProtect(ws->icondata = malloc(ws->iconlen * sizeof(unsigned long)));
+    k = 0;
+    ws->icondata[k++] = imd->width;
+    ws->icondata[k++] = imd->height;
+    s = imd->data;
+    for (j = 0; j < imd->height; ++j) {
+        for (i = 0; i < imd->width; ++i) {
+            int r, g, b, a;
+            nextimgdata(imd, &s, &r, &g, &b, &a);
+            ws->icondata[k++] = ((a/256)<<24) | ((r/256)<<16) | ((g/256)<<8) | (b/256);
+        }
+    }
+    if (ws->win) {
+        XChangeProperty(ws->display->display, ws->win,
+                        ATOM(ws->display, _NET_WM_ICON), 
+                        XA_CARDINAL, 
+                        32,
+                        PropModeReplace, 
+                        (unsigned char *)ws->icondata,
+                        ws->iconlen);
+    }
+    return Succeeded;
+}
+
+
+/*
+ *  Open the X window for a non-hidden icon window.
+ */
+static void wmap(wbp w)
+{
+    XWindowAttributes attrs;
+    XSetWindowAttributes attr;
+    int i;
+    char *p, *s, sbuf[256];
+    XWMHints wmhints;
+    XClassHint clhints;
+    STDLOCALS(w);
+
+    /*
+     * create the X window (or use the DefaultRootWindow if requested)
+     */
+    attr.background_pixel = wc->bg->c;
+
+    switch (ws->state) {
+        case RootState:
+            ws->win = GetRoot(wd);
+            break;
+        case PopupState: {
+            attr.override_redirect = True;
+            ws->win = XCreateWindow(stddpy, GetRoot(wd),
+                                    ws->x < 0 ? 0 : ws->x,
+                                    ws->y < 0 ? 0 : ws->y, 
+                                    ws->width, ws->height, 
+                                    0,
+                                    GetDepth(wd),
+                                    InputOutput,
+                                    CopyFromParent,
+                                    CWBackPixel|CWOverrideRedirect,
+                                    &attr);
+            break;
+        }
+        default: {
+            ws->win = XCreateWindow(stddpy, GetRoot(wd),
+                                    ws->x < 0 ? 0 : ws->x,
+                                    ws->y < 0 ? 0 : ws->y, 
+                                    ws->width, ws->height, 
+                                    0,
+                                    GetDepth(wd),
+                                    InputOutput,
+                                    CopyFromParent,
+                                    CWBackPixel,
+                                    &attr);
+            break;
+        }
+    }
+
+    /* If the window has a parent, set the WM_TRANSIENT_FOR hint. */
+    if (ws->transientfor)
+        XSetTransientForHint(stddpy, ws->win, ws->transientfor);
+
+    /* Turn off background; this prevents X filling the background on an expose
+       and hence prevents unsightly flicker on a resize. */
+    XSetWindowBackgroundPixmap(stddpy, ws->win, None);
+
+    XSetWMProtocols(ws->display->display, ws->win, &ATOM(ws->display, WM_DELETE_WINDOW), 1);
+
+    stdwin = ws->win;
+    XClearWindow(stddpy, stdwin);
+
+    GRFX_GENLINK(ws, vwstates, vnext, vprevious);
+
+    /* For RootState, need to fill since XClearWindow above fills with a pixmap */
+    if (ws->state == RootState) {
+        XSetForeground(stddpy, stdgc, wc->bg->c);
+        XFillRectangle(stddpy, ws->win, stdgc, 0, 0, ws->width, ws->height);
+        XSetForeground(stddpy, stdgc, wc->fg->c);
+    } else {
+        XSizeHints size_hints;
+        size_hints.flags = PSize | PMinSize | PMaxSize;
+        size_hints.width = ws->width;
+        size_hints.height= ws->height;
+        if (ws->x != -INT_MAX && ws->y != -INT_MAX) {
+            size_hints.flags |= USPosition;
+            size_hints.x = ws->x;
+            size_hints.y = ws->y;
+        }
+        if (ws->resizable) {
+            size_hints.min_width = ws->minwidth;
+            size_hints.min_height = ws->minheight;
+            size_hints.max_width = ws->maxwidth;
+            size_hints.max_height = ws->maxheight;
+        }
+        else {
+            size_hints.min_width = size_hints.max_width = ws->width;
+            size_hints.min_height = size_hints.max_height = ws->height;
+        }
+        XChangeProperty(stddpy, stdwin,
+                        ATOM(ws->display, _NET_WM_NAME), 
+                        ATOM(ws->display, UTF8_STRING),
+                        8,
+                        PropModeReplace, 
+                        (unsigned char *)ws->windowlabel,
+                        strlen(ws->windowlabel));
+
+        XSetWMNormalHints(stddpy, stdwin, &size_hints);
+        XSelectInput(stddpy, stdwin, 
+                     ExposureMask | KeyPressMask | EnterWindowMask | LeaveWindowMask |
+                     ButtonPressMask | ButtonReleaseMask | ButtonMotionMask |
+                     StructureNotifyMask | PointerMotionMask | KeyReleaseMask);
+
+        if (ws->icondata) {
+            XChangeProperty(stddpy, stdwin,
+                            ATOM(ws->display, _NET_WM_ICON), 
+                            XA_CARDINAL, 
+                            32,
+                            PropModeReplace, 
+                            (unsigned char *)ws->icondata,
+                            ws->iconlen);
+        }
+    }
+
+    wmhints.input = True;
+    wmhints.flags = InputHint;
+    if (ws->state == IconicState) {
+        wmhints.flags |= StateHint;
+        wmhints.initial_state = IconicState;
+    } else if (ws->state != RootState) {
+        wmhints.flags |= StateHint;
+        wmhints.initial_state = NormalState;
+    }
+    XSetWMHints(stddpy, stdwin, &wmhints);
+
+    /*
+     * Set the class hints that name the program (for reference by the
+     * window manager) following conventions given in O'Reilly.
+     */
+    if (! (s = getenv("RESOURCE_NAME"))) {
+        p = StrLoc(kywd_prog);
+        s = p + StrLen(kywd_prog);
+        while (s > p && s[-1] != '/')
+            s--;				/* find tail of prog_name */
+        clhints.res_name = sbuf;
+        clhints.res_class = "IconProg";
+        for (i = 0; s < p + StrLen(kywd_prog); ) 
+            clhints.res_name[i++] = *s++;
+        clhints.res_name[i] = '\0';
+        XSetClassHint(stddpy, stdwin, &clhints);
+    }
+    XSync(stddpy, False);
+
+    if (ws->state == MaximizedState) {
+        Atom atoms[2];
+        atoms[0] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_VERT);
+        atoms[1] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_HORZ);
+        XChangeProperty(stddpy, stdwin,
+                        ATOM(wd, _NET_WM_STATE),
+                        XA_ATOM, 32,
+                        PropModeReplace, (unsigned char *)atoms, 2);
+    }
+
+    if (ws->state == FullScreenState) {
+        Atom atoms[1];
+        atoms[0] = ATOM(wd, _NET_WM_STATE_FULLSCREEN);
+        XChangeProperty(stddpy, stdwin,
+                        ATOM(wd, _NET_WM_STATE),
+                        XA_ATOM, 32,
+                        PropModeReplace, (unsigned char *)atoms, 1);
+    }
+
+
+    if (ws->state != RootState)
+        XMapWindow(stddpy, stdwin);
+
+    XGetWindowAttributes(stddpy, stdwin, &attrs);
+    ws->width = attrs.width;
+    ws->height = attrs.height;
+    resizepixmap(w, ws->width, ws->height);
+
+    synch_cursor(ws);
+
+    XSetFunction(stddpy, stdgc, wc->drawop->i);
+    XSync(stddpy, False);
+}
+
+static void synch_net_wm_state(wsp ws, int desired_state)
+{
+    XEvent e;
+    wdp wd = ws->display;
+    e.xclient.type = ClientMessage;
+    e.xclient.serial = 0;
+    e.xclient.send_event = True;
+    e.xclient.display = wd->display;
+    e.xclient.message_type = ATOM(wd, _NET_WM_STATE);
+    e.xclient.format = 32;
+    e.xclient.window = ws->win;
+    e.xclient.data.l[3] = 0;
+    if (desired_state == NormalState) {
+        e.xclient.data.l[0] = _NET_WM_STATE_REMOVE;
+        e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_VERT);
+        e.xclient.data.l[2] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_HORZ);
+        XSendEvent(wd->display, GetRoot(wd), False,
+                   SubstructureNotifyMask | SubstructureRedirectMask, &e);
+        e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_FULLSCREEN);
+        e.xclient.data.l[2] = 0;
+        XSendEvent(wd->display, GetRoot(wd), False,
+                   SubstructureNotifyMask | SubstructureRedirectMask, &e);
+    } else {
+        e.xclient.data.l[0] = _NET_WM_STATE_ADD;
+        if (desired_state == MaximizedState) {
+            e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_VERT);
+            e.xclient.data.l[2] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_HORZ);
+        } else if (desired_state == FullScreenState) { 
+            e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_FULLSCREEN);
+            e.xclient.data.l[2] = 0;
+        } else
+            syserr("Invalid desired_state");
+        XSendEvent(wd->display, GetRoot(wd), False,
+                   SubstructureNotifyMask | SubstructureRedirectMask, &e);
+    }
+    XSync(wd->display, False);
+}
+
+void doconfig(wbp w, int status)
+{
+    wsp ws = w->window;
+    wcp wc = w->context;
+    wdp wd = ws->display;
+    XTextProperty textprop;
+
+    if (status & C_CLIP) {
+        if (wc->clipw >= 0)
+            setclip(w);
+        else
+            unsetclip(w);
+    }
+
+    if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE)) {
+        /*printf("doconfig status=%d size=%d,%d\n",status,ws->width,ws->height);*/
+        resizepixmap(w, ws->width, ws->height);
+
+        if (ws->win) {
+            if (status != C_POS) {
+                XSizeHints size_hints;
+                size_hints.flags = PMinSize | PMaxSize;
+                if (ws->resizable) {
+                    size_hints.min_width = ws->minwidth;
+                    size_hints.min_height = ws->minheight;
+                    size_hints.max_width = ws->maxwidth;
+                    size_hints.max_height = ws->maxheight;
+                }
+                else {
+                    size_hints.min_width = size_hints.max_width = ws->width;
+                    size_hints.min_height = size_hints.max_height = ws->height;
+                }
+                XSetWMNormalHints(wd->display, ws->win, &size_hints);
+            }
+
+            switch (status & (C_POS|C_SIZE)) {
+                case C_POS: {
+                    XMoveWindow(wd->display, ws->win, ws->x, ws->y);
+                    break;
+                }
+                case C_SIZE: {
+                    XResizeWindow(wd->display, ws->win, ws->width, ws->height);
+                    break;
+                }
+                case C_POS|C_SIZE: {
+                    XMoveResizeWindow(wd->display, ws->win, ws->x, ws->y, ws->width, ws->height);
+                    break;
+                }
+            }
+            /* XSync is not enough because the window manager gets involved here. */
+            XFlush(wd->display);			      /* force out request */
+            XGetWMName(wd->display, ws->win, &textprop);    /* force WM round trip */
+            XSync(wd->display, False);		      /* NOW sync */
+        }
+    }
+
+    if (status & C_IMAGE) {
+        struct imgdata *imd = &ws->initimage;
+        if (imd->width) {
+            drawimgdata(w, 0, 0, imd);
+            freeimgdata(imd);
+        }
+    }
+}
+
+/*
+ * data is a safe pointer into a frame.
+ */
+int sendselectionresponse(wbp w, word requestor, char *property, char *selection, char *target, word time, dptr data)
+{
+    Atom property_atom, target_atom, selection_atom, XA_TARGETS, target_list[32];
+    XEvent theevent;
+    struct lgstate state;
+    tended struct b_lelem *le;
+    tended char *cstr_target;
+    int target_cnt = 1;
+    STDLOCALS(w);
+
+    if (selection_debug)
+        printf("sendselectionresponse:\n\trequestor=%lx "
+               "property=%s target=%s selection=%s time=%ld\n",
+               (long)requestor, property, target, selection, (long)time);
+
+    property_atom = XInternAtom(ws->display->display, property, False);
+    target_atom = XInternAtom(ws->display->display, target, False);
+    selection_atom = XInternAtom(ws->display->display, selection, False);
+    XA_TARGETS = ATOM(ws->display, TARGETS);
+
+    if (target_atom == XA_TARGETS) {
+        if (!is:list(*data))
+            ReturnErrVal(108, *data, Error);
+        target_list[0] = XA_TARGETS;
+        for (le = lgfirst(&ListBlk(*data), &state); le;
+             le = lgnext(&ListBlk(*data), &state, le)) {
+            if (!cnv:C_string(le->lslots[state.result], cstr_target))
+                ReturnErrVal(148, le->lslots[state.result], Error);
+            target_list[target_cnt++] = XInternAtom(ws->display->display, cstr_target, False);
+            if (selection_debug)
+                printf("\tAdding target:%s\n", cstr_target);
+        }
+        XChangeProperty(ws->display->display,
+                        requestor,
+                        property_atom,
+                        target_atom,
+                        32,
+                        PropModeReplace,
+                        (unsigned char *)target_list,
+                        target_cnt);
+        theevent.xselection.property = property_atom;
+    } else if (is:null(*data)) {
+        /* Can't handle this target type */
+        if (selection_debug)
+            printf("\tSetting property to None\n");
+        theevent.xselection.property = None;
+    } else {
+        if (!cnv:string(*data, *data))
+            ReturnErrVal(103, *data, Error);
+        if (selection_debug)
+            printf("\tSetting property to %d bytes of data\n", (int)StrLen(*data));
+        XChangeProperty(ws->display->display,
+                        requestor,
+                        property_atom,
+                        target_atom,
+                        8,
+                        PropModeReplace,
+                        (unsigned char *)StrLoc(*data),
+                        StrLen(*data));
+        theevent.xselection.property = property_atom;
+    }
+
+    theevent.type = SelectionNotify;
+    theevent.xselection.serial = 0; /*event.xselectionrequest.serial;*/
+    theevent.xselection.send_event = True;
+    theevent.xselection.requestor = requestor;
+    theevent.xselection.selection = selection_atom;
+    theevent.xselection.target = target_atom;
+    theevent.xselection.time = time;
+
+    XSendEvent(ws->display->display,
+               requestor,
+               False, NoEventMask, &theevent);
+
+    return Succeeded;
+}
+
+int ownselection(wbp w, char *selname)
+{
+    Atom selection;
+    Window curr;
+    STDLOCALS(w);
+
+    if (!ws->win)
+        return Failed;
+
+    selection = XInternAtom(ws->display->display, selname, False);
+
+    curr = XGetSelectionOwner(ws->display->display, selection);
+    /* Check for no change in selection */
+    if (curr == ws->win)
+        return Succeeded;
+
+    if (selection_debug)
+        printf("Owner of selection %s set from %lx -> %lx\n", 
+               atom_fmt(ws, selection),
+               (long)curr,
+               (long)ws->win);
+
+    /*
+     * X doesn't send a SelectionClear event to us when the selection
+     * changes between our own windows, so if the current owner is one
+     * our windows, send it a "clear" message.
+     */
+    if (curr) {
+        wsp x;
+        for (x = vwstates; x; x = x->vnext) {
+            if (x->win == curr) {
+                tended struct descrip tmp;
+                if (selection_debug)
+                    printf("Enqueueing artificial SELECTIONCLEAR to current owner %lx\n",(long)curr);
+                MakeInt(SELECTIONCLEAR, &tmp);
+                list_put(&x->listp, &tmp);
+                get_atom_descriptor(x, selection, &tmp);
+                list_put(&x->listp, &tmp);
+                break;
+            }
+        }
+    }
+
+    XSetSelectionOwner(ws->display->display, 
+                       selection,
+                       ws->win,
+                       CurrentTime);
+
+    return Succeeded;
+}
+
+int requestselection(wbp w, char *selname, char *targetname)
+{
+    Atom selection, target;
+    STDLOCALS(w);
+    if (!ws->win)
+        return Failed;
+    selection = XInternAtom(ws->display->display, selname, False);
+    target = XInternAtom(ws->display->display, targetname, False);
+    if (selection_debug)
+        printf("getselectioncontent: calling XConvertSelection selection=%s target=%s requestor=%lx\n",
+               atom_fmt(ws, selection),
+               atom_fmt(ws, target),
+               (long)ws->win);
+
+    XConvertSelection(ws->display->display,
+                      selection, 
+                      target, 
+                      ATOM(ws->display, _OBJECTICON_PROP), 
+                      ws->win,
+                      CurrentTime);
+
+    return Succeeded;
+}
+
+int warppointer(wbp w, int x, int y)
+{
+    wsp ws = w->window;
+    if (!ws->win)
+        return Failed;
+    XWarpPointer(ws->display->display, None, ws->win, 0,0,0,0, x, y);
+    return Succeeded;
+}
+
+/*
+ * setwindowlabel
+ */
+int setwindowlabel(wbp w, char *s)
+{
+    wsp ws = w->window;
+    if (ws->windowlabel)
+        free(ws->windowlabel);
+    ws->windowlabel = salloc(s);
+
+    if (ws->win)
+        XChangeProperty(ws->display->display, ws->win,
+                        ATOM(ws->display, _NET_WM_NAME), 
+                        ATOM(ws->display, UTF8_STRING),
+                        8,
+                        PropModeReplace, 
+                        (unsigned char *)ws->windowlabel,
+                        strlen(ws->windowlabel));
+
+    return Succeeded;
+}
+
+static void synch_cursor(wsp ws)
+{
+    int i;
+    wdp wd = ws->display;
+    i = ws->cursor->i >> 1;
+    if (!wd->cursors[i])
+        wd->cursors[i] = XCreateFontCursor(wd->display, 2 * i);
+    XDefineCursor(wd->display, ws->win, wd->cursors[i]);
+}
+
+/*
+ * setpointer() - define a mouse pointer shape
+ */
+int setpointer(wbp w, char *val)
+{
+    stringint *e;
+    STDLOCALS(w);
+    e = stringint_lookup(cursors, val);
+    if (!e)
+        return Failed;
+    ws->cursor = e;
+    if (stdwin)
+        synch_cursor(ws);
+    return Succeeded;
+}
+
+/*
+ * setdrawop() - set the drawing operation
+ */
+int setdrawop(wbp w, char *val)
+{
+    stringint *e;
+    STDLOCALS(w);
+    XSync(stddpy, False);
+    e = stringint_lookup(drawops, val);
+    if (!e)
+        return Failed;
+    wc->drawop = e;
+    if (stdgc) XSetFunction(stddpy, stdgc, wc->drawop->i);
+    return Succeeded;
+}
+
+/*
+ * rebind() - bind w's context to that of w2.
+ */
+int rebind(wbp w, wbp w2)
+{
+    if (w->window->display != w2->context->display) {
+        LitWhy("Can't couple between different displays");
+        return Failed;
+    }
+    w->context = w2->context;
+    return Succeeded;
+}
+
+
+static void setclip(wbp w)
+{
+    wcp wc = w->context;
+    XRectangle rec;
+    if (wc->gc) {
+        rec.x = wc->clipx;
+        rec.y = wc->clipy;
+        rec.width = wc->clipw;
+        rec.height = wc->cliph;
+        XSetClipRectangles(wc->display->display, wc->gc, 0, 0, &rec, 1,Unsorted);
+    }
+}
+
+static void unsetclip(wbp w)
+{
+    wcp wc = w->context;
+    if (wc->gc) 
+        XSetClipMask(wc->display->display, wc->gc, None);
+}
+
+char *getcanvas(wbp w)
+{
+    char *v = stringint_int2str(canvastypes, w->window->state);
+    if (!v)
+        syserr("Invalid value of state");
+    return v;
+}
+
+/*
+ *  Set the canvas type
+ */
+int setcanvas(wbp w, char *s)
+{
+    stringint *e;
+    STDLOCALS(w);
+    e = stringint_lookup(canvastypes, s);
+    if (!e)
+        return Failed;
+    if (e->i == ws->state)
+        return Succeeded;
+
+    if (ws->win == (Window) NULL) {
+        if (e->i != HiddenState) {
+            ws->state = e->i;
+            wmap(w);
+        }
+        return Succeeded;
+    }
+
+    switch (e->i) {
+        case IconicState: {
+            if (ws->state == RootState || ws->state == PopupState)
+                return Failed;
+            XIconifyWindow(ws->display->display, ws->win, DefaultScreen(ws->display));
+            break;
+        }
+
+        case NormalState: {
+            if (ws->state == RootState || ws->state == PopupState)
+                return Failed;
+            XMapWindow(stddpy, stdwin);
+            synch_net_wm_state(ws, e->i);
+            break;
+        }
+
+        case PopupState:
+        case RootState:
+            return Failed;
+
+        case MaximizedState:
+        case FullScreenState: {
+            if (ws->state == RootState || ws->state == PopupState)
+                return Failed;
+            XMapWindow(stddpy, stdwin);
+            synch_net_wm_state(ws, e->i);
+            break;
+        }
+
+        case HiddenState: {
+            close_screen_win(ws);
+            break;
+        }
+        default:
+            syserr("Unexpected canvas state");
+    }
+    return Succeeded;
+}
+
+
+/*
+ * Set the context's fill style by name.
+ */
+int setfillstyle(wbp w, char *val)
+{
+    stringint *e;
+    STDLOCALS(w);
+    e = stringint_lookup(fillstyles, val);
+    if (!e)
+        return Failed;
+    wc->fillstyle = e;
+    if (stdpix)
+        XSetFillStyle(stddpy, stdgc, wc->fillstyle->i);
+    return Succeeded;
+}
+
+char *getfillstyle(wbp w)
+{
+    return w->context->fillstyle->s;
+}
+
+
+/*
+ * Set the context's line style by name.
+ */
+int setlinestyle(wbp w, char *val)
+{
+    stringint *e;
+    STDLOCALS(w);
+    e = stringint_lookup(linestyles, val);
+    if (!e)
+        return Failed;
+    wc->linestyle = e;
+    if (stdpix) 
+        XSetLineAttributes(stddpy, stdgc,
+                           wc->linewidth, wc->linestyle->i, CapProjecting, JoinMiter);
+    return Succeeded;
+}
+
+/*
+ * Set the context's line width
+ */
+int setlinewidth(wbp w, int linewid)
+{
+    unsigned long gcmask;
+    XGCValues gcv;
+    STDLOCALS(w);
+
+    if (linewid < 0) return Error;
+    wc->linewidth = linewid;
+    if (stdpix) {
+        gcv.line_width = linewid;
+        gcv.line_style = wc->linestyle->i;
+        if (linewid > 1)
+            gcv.dashes = 3 * wc->linewidth;
+        else
+            gcv.dashes = 4;
+        gcmask = GCLineWidth | GCLineStyle | GCDashList;
+        XChangeGC(stddpy, stdgc, gcmask, &gcv);
+    }
+    return Succeeded;
+}
+
+int getlinewidth(wbp w)
+{
+    return w->context->linewidth;
+}
+
+/*
+ * Set the context's foreground color by name.
+ */
+int setfg(wbp w, char *s)
+{
+    int r, g, b;
+    wcp wc = w->context;
+    if (!parsecolor(s, &r, &g, &b))
+        return Failed;
+    if (wc->fg)
+        unlink_sharedcolor(wc->fg);
+    wc->fg = new_sharedcolor(wc->display, s, r, g, b);
+    if (wc->gc)
+        XSetForeground(wc->display->display, wc->gc, wc->fg->c);
+    return Succeeded;
+}
+
+
+/*
+ * Set the window context's background color by name.
+ */
+int setbg(wbp w, char *s)
+{
+    int r, g, b;
+    wcp wc = w->context;
+    if (!parsecolor(s, &r, &g, &b))
+        return Failed;
+    if (wc->bg)
+        unlink_sharedcolor(wc->bg);
+    wc->bg = new_sharedcolor(wc->display, s, r, g, b);
+    if (wc->gc)
+        XSetBackground(wc->display->display, wc->gc, wc->bg->c);
+    return Succeeded;
+}
+
+char *getdisplay(wbp w)
+{
+    char *tmp;
+    wdp wd = w->window->display;
+    if (!strcmp(wd->name, "")) {
+        if ((tmp = getenv("DISPLAY")) != NULL)
+            return tmp;
+        else
+            return "";
+    }
+    else return wd->name;
+}
+
+char *getwindowlabel(wbp w)
+{
+    return w->window->windowlabel;
+}
+
+int getdisplaysize(wbp w, int *width, int *height)
+{
+    *width = GetWidth(w->window->display);
+    *height = GetHeight(w->window->display);
+    return Succeeded;
+}
+
+int getdepth(wbp w, int *res)
+{
+    *res = GetDepth(w->window->display);
+    return Succeeded;
+}
+
+/*
+ * getpos() - update the window state's notion of its current position
+ */
+int getpos(wbp w)
+{
+    Window garbage1, garbage2;
+    int root_x, root_y, win_x, win_y;
+    unsigned int key_buttons;
+    STDLOCALS(w);
+    if (!stdwin) return Failed;
+    /*
+     * This call is made because it is guaranteed to generate
+     * a synchronous request of the server, not just ask Xlib
+     * what the window position was last it knew.
+     */
+    if (XQueryPointer(stddpy, stdwin, &garbage1, &garbage2,
+                      &root_x, &root_y, &win_x, &win_y, &key_buttons) ==
+        False) {
+        return Failed;
+    }
+    ws->x = root_x - win_x;
+    ws->y = root_y - win_y;
+    return Succeeded;
+}
+
+char *getpattern(wbp w)
+{
+    if (w->context->patternname)
+        return w->context->patternname;
+    else 
+        return "black";
+}
+
+char *getfg(wbp w)
+{
+    return w->context->fg->name;
+}
+
+char *getbg(wbp w)
+{
+    return w->context->bg->name;
+}
+
+char *getlinestyle(wbp w)
+{
+    return w->context->linestyle->s;
+}
+
+char *getpointer(wbp w)
+{
+    return w->window->cursor->s;
+}
+
+char *getdrawop(wbp w)
+{
+    return w->context->drawop->s;
+}
+
+int grabpointer(wbp w)
+{
+    wsp ws = w->window;
+    if (!ws->win)
+        return Failed;
+    if (XGrabPointer(ws->display->display, ws->win,False, 
+                     ButtonPressMask | ButtonReleaseMask | ButtonMotionMask | PointerMotionMask,
+                     GrabModeAsync, GrabModeAsync, None, None, CurrentTime) == GrabSuccess)
+        return Succeeded;
+    else
+        return Failed;
+}
+
+int ungrabpointer(wbp w)
+{
+    wsp ws = w->window;
+    if (!ws->win)
+        return Failed;
+    XUngrabPointer(ws->display->display, CurrentTime);
+    return Succeeded;
+}
+
+/*
+ * Set the window's font by name.
+ */
+int setfont(wbp w, char *s)
+{
+    wfp tmp;
+    STDLOCALS(w);
+
+    tmp = loadfont(wd, s);
+    if (!tmp)
+        return Failed;
+    wc->font = tmp;
+
+#if !HAVE_LIBXFT
+    if (stdgc != NULL)
+        XSetFont(stddpy, stdgc, wc->font->fsp->fid);
+#endif
+
+    return Succeeded;
+}
+
+/*
+ * callback procedures
+ */
+
+static void handle_exposures(wsp ws, XExposeEvent *event)
+{
+    if (ws->win) {
+        wdp wd = ws->display;
+        XCopyArea(wd->display, ws->pix, ws->win, 
+                  GetGC(wd), event->x,event->y,
+                  event->width,event->height, event->x,event->y);
+    }
+}
+
+/*
+ * resizepixmap(w,width,height) -- ensure w's backing pixmap is at least
+ * width x height pixels.
+ *
+ * Resizes the backing pixmap, if needed.  Called when X resize events
+ * arrive, as well as when programs make explicit resize requests.
+ *
+ */
+static void resizepixmap(wbp w, int width, int height)
+{
+    Pixmap p;
+    STDLOCALS(w);
+
+    /*printf("resizepixmap from %d,%d to %d,%d\n",ws->pixwidth,ws->pixheight,width,height);*/
+
+    if ((width > ws->pixwidth) || (height > ws->pixheight)) {
+        int x = ws->pixwidth, y = ws->pixheight;
+
+        ws->pixheight = Max(ws->pixheight, height);
+        ws->pixwidth  = Max(ws->pixwidth, width);
+        p = XCreatePixmap(stddpy, GetRoot(wd), ws->pixwidth+1,
+                          ws->pixheight+1, GetDepth(wd));
+        /*
+         * This staggering amount of redudancy manages to make sure the new
+         * pixmap gets initialized including areas not in the old pixmap.
+         * The window is redrawn.
+         */
+        XSetForeground(stddpy, stdgc, wc->bg->c);
+        if (wc->drawop->i != GXcopy)
+            XSetFunction(stddpy, stdgc, GXcopy);
+        if (wc->fillstyle != FillSolid)
+            XSetFillStyle(stddpy, stdgc, FillSolid);
+        if (wc->clipw >= 0)
+            unsetclip(w);
+	   
+        if (width > x) {
+            XFillRectangle(stddpy, p, stdgc, x, 0, width-x, ws->pixheight);
+            if (stdwin != (Window) NULL)
+                XFillRectangle(stddpy,stdwin,stdgc, x, 0, width-x, ws->pixheight);
+        }
+        if (height > y) {
+            XFillRectangle(stddpy, p, stdgc, 0, y, x, height - y);
+            if (stdwin != (Window) NULL)
+                XFillRectangle(stddpy, stdwin, stdgc, 0, y, x, height - y);
+        }
+        XSetForeground(stddpy, stdgc, wc->fg->c);
+        XCopyArea(stddpy, stdpix, p, stdgc, 0, 0, x, y, 0, 0);
+        if (wc->drawop->i != GXcopy)
+            XSetFunction(stddpy,stdgc,wc->drawop->i);
+        if (wc->fillstyle->i != FillSolid)
+            XSetFillStyle(stddpy, stdgc, wc->fillstyle->i);
+        if (wc->clipw >= 0)
+            setclip(w);
+
+        XFreePixmap(stddpy, stdpix);	/* free old pixmap */
+        ws->pix = p;
+#if HAVE_LIBXFT
+        if (ws->pixDraw) {
+            XftDrawDestroy(ws->pixDraw);
+            ws->pixDraw = NULL;
+        }
+#endif
+    }
+}
+
+static void synch_state(wsp ws)
+{
+    Atom actual_type;
+    int actual_format;
+    unsigned long bytes_after, nitems;
+    unsigned char *prop;
+    XWindowAttributes attr;
+
+    if (ws->win == (Window) NULL) {
+        ws->state = HiddenState;
+        return;
+    }
+
+    if (ws->state == PopupState || ws->state == RootState)
+        return;
+
+    XGetWindowAttributes(ws->display->display,
+                         ws->win,
+                         &attr);
+    if (attr.map_state == IsUnmapped) {
+        ws->state = IconicState;
+        return;
+    }
+
+    if (XGetWindowProperty(ws->display->display,
+                           ws->win,
+                           ATOM(ws->display, _NET_WM_STATE),
+                           0,
+                           8192,
+                           False,
+                           XA_ATOM,
+                           &actual_type,
+                           &actual_format,
+                           &nitems,
+                           &bytes_after,
+                           &prop) == Success) {
+        Atom *atoms = (Atom *)prop;
+        int i, max = 0;
+        for (i = 0; i < nitems; ++i) {
+            if (atoms[i] == ATOM(ws->display, _NET_WM_STATE_MAXIMIZED_VERT))
+                max |= 1;
+            else if (atoms[i] == ATOM(ws->display, _NET_WM_STATE_MAXIMIZED_HORZ))
+                max |= 2;
+            else if (atoms[i] == ATOM(ws->display, _NET_WM_STATE_FULLSCREEN))
+                max |= 4;
+        }
+        if (max == 3)
+            ws->state = MaximizedState;
+        else if (max == 4)
+            ws->state = FullScreenState;
+        else
+            ws->state = NormalState;
+
+        XFree(prop);
+    }        
+}
+
+/*
+ * Resize operations are made as painless as possible, but the
+ * user program is informed anyhow.  The integer coordinates are
+ * the new size of the window, in pixels.
+ */
+static void handle_config(wsp ws, XConfigureEvent *event)
+{
+    synch_state(ws);
+
+    /*
+     * Update X-Icon's information about the window's configuration
+     */
+
+    ws->x = event->x;
+    ws->y = event->y;
+
+    /*
+     * If this was not a resize, drop it
+     */
+    if ((event->width == ws->width) && (event->height == ws->height))
+        return;
+
+    ws->width = event->width;
+    ws->height = event->height;
+
+    resizepixmap(findwbp(ws), event->width, event->height);
+
+    qeventcode(ws, WINDOWRESIZED);
+}
+
+static int make_mod(unsigned int state)
+{
+    int x = 0;
+
+    if (state & ShiftMask)
+        x |= MOD_SHIFT;
+    if (state & LockMask)
+        x |= MOD_LOCK;
+    if (state & ControlMask)
+        x |= MOD_CTRL;
+    if (state & Mod1Mask)
+        x |= MOD_META;
+    if (state & Mod2Mask)
+        x |= MOD_META2;
+    if (state & Mod3Mask)
+        x |= MOD_META3;
+    if (state & Mod4Mask)
+        x |= MOD_META4;
+    if (state & Mod5Mask)
+        x |= MOD_META5;
+    return x;
+}
+
+static void handle_crossing(wsp ws, XCrossingEvent *event)
+{
+    struct descrip d;
+    if (event->mode != NotifyNormal)
+        return;
+    MakeInt(event->type == EnterNotify ? MOUSEENTERED:MOUSEEXITED, &d);
+    qevent(ws, &d, event->x, event->y,
+           (uword)event->time, 
+           make_mod(event->state));
+}
+
+/*
+ * Queue up characters for keypress events.
+ */
+static void handle_keypress(wsp ws, XKeyEvent *event)
+{
+    int i, j, fl;
+    char s[10];
+    tended struct descrip d;
+    KeySym k;
+
+    fl = make_mod(event->state);
+    if (event->type == KeyRelease)
+        fl |= MOD_RELEASE;
+    /* First try to convert the event to a simple char string, and a KeySym */
+    i = XLookupString(event, s, sizeof(s), &k, NULL);
+    if (i > 0) {
+        /* Found a char string, so generate string event(s) */
+        StrLen(d) = 1;
+        for (j = 0; j < i; j++) {
+            StrLoc(d) = &allchars[s[j] & 0xFF];
+            qevent(ws, &d, event->x, event->y,
+                   (uword)event->time, fl);
+        }
+        return;
+    }
+
+    /* Second try is to convert to a unicode char; if found generate a 1-char
+     * ucs/string */
+    i = convert_KeySym_to_code_point(k);
+    if (i > 0) {
+        if (i < 256) {
+            StrLen(d) = 1;
+            StrLoc(d) = &allchars[i];
+        } else {
+            d.dword = D_Ucs;
+            BlkLoc(d) = (union block *)make_one_char_ucs_block(i);
+        }
+        qevent(ws, &d, event->x, event->y,
+               (uword)event->time, fl);
+        return;
+    }
+
+    /* Neither of those worked, so it must be a non-character key (cursor key, etc).
+     * So just generate the numerical value of the KeySym as an integer.
+     */
+    MakeInt(k, &d);
+    qevent(ws, &d, event->x, event->y,
+           (uword)event->time, fl);
+}
+
+#include "rxkeysyms.ri"
+
+/*
+ * Handle button presses and drag events.  In the case of drags, we should
+ * really be looking at an XMotionEvent instead of an XButtonEvent, but
+ * the structures are identical up to the button field (which we do not
+ * examine for drag events).  Mouse coordinates are queued up after the event.
+ */
+static void handle_mouse(wsp ws, XButtonEvent *event)
+{
+    int state = 0;
+    if (event->state & Button1Mask) state |= 1;
+    if (event->state & Button2Mask) state |= 2;
+    if (event->state & Button3Mask) state |= 4;
+    if (event->state & Button4Mask) state |= 8;
+    if (event->state & Button5Mask) state |= 16;
+    switch (event->type) {
+        case ButtonPress: {
+            switch (event->button) {
+                case Button1: state |= 1; break;
+                case Button2: state |= 2; break;
+                case Button3: state |= 4; break;
+                case Button4: state |= 8; break;
+                case Button5: state |= 16; break;
+            }
+            break;
+        }
+        case ButtonRelease: {
+            switch (event->button) {
+                case Button1: state &= ~1; break;
+                case Button2: state &= ~2; break;
+                case Button3: state &= ~4; break;
+                case Button4: state &= ~8; break;
+                case Button5: state &= ~16; break;
+            }
+            break;
+        }
+    }
+    qmouseevents(ws, state, 
+                 event->x, event->y, 
+                 (uword)event->time, 
+                 make_mod(event->state));
+}
+
+
+void drawarc(wbp w, int x, int y, int width, int height, double angle1, double angle2)
+{
+    XArc arc;
+    STDLOCALS(w); 
+    arc.x = x;
+    arc.y = y;
+    arc.width = width;
+    arc.height = height;
+    arc.angle1 = CONVERT_ANGLE(angle1);
+    arc.angle2 = CONVERT_ANGLE(angle2);
+    RENDER2(XDrawArcs,&arc,1);
+}
+
+void drawlines(wbp w, XPoint *points, int npoints)
+{
+    STDLOCALS(w); 
+    RENDER3(XDrawLines,points,npoints,CoordModeOrigin);
+}
+
+void drawpoint(wbp w, int x, int y)
+{
+    XPoint p;
+    STDLOCALS(w);
+    p.x = x;
+    p.y = y;
+    RENDER3(XDrawPoints,&p,1,CoordModeOrigin);
+}
+
+void drawrectangle(wbp w, int x, int y, int width, int height)
+{
+   STDLOCALS(w);
+   if (width > 0 && height > 0)
+       RENDER4(XDrawRectangle,x,y,width-1,height-1);
+}
+
+void fillarc(wbp w, int x, int y, int width, int height, double angle1, double angle2)
+{ 
+    XArc arc;
+    STDLOCALS(w); 
+    arc.x = x;
+    arc.y = y;
+    arc.width = width;
+    arc.height = height;
+    arc.angle1 = CONVERT_ANGLE(angle1);
+    arc.angle2 = CONVERT_ANGLE(angle2);
+    RENDER2(XFillArcs, &arc, 1);
+}
+
+void fillpolygon(wbp w, XPoint *points, int npoints)
+{
+    STDLOCALS(w); 
+    RENDER4(XFillPolygon, points, npoints, Complex, CoordModeOrigin);
+}
+
+/*
+ * fill a rectangle
+ */
+void fillrectangle(wbp w, int x, int y, int width, int height)
+{
+    XRectangle rec;
+    STDLOCALS(w);
+    rec.x = x;
+    rec.y = y;
+    rec.width = width;
+    rec.height = height;
+    RENDER2(XFillRectangles, &rec, 1);
+}
+
+/*
+ * erase an area
+ */
+void erasearea(wbp w, int x, int y, int width, int height)
+{
+    STDLOCALS(w);
+
+    /*
+     * if width >= window width or height >= window height, clear any
+     * offscreen portion as well in order to allow the freeing of colors.
+     */
+    if (x + width  >= ws->width)  width  = ws->pixwidth - x;
+    if (y + height >= ws->height) height = ws->pixheight - y;
+
+    /*
+     * fill the rectangle with the background color
+     */
+    XSetForeground(stddpy, stdgc, wc->bg->c);
+    if (wc->drawop->i != GXcopy) XSetFunction(stddpy, stdgc, GXcopy);
+    if (wc->fillstyle->i != FillSolid) XSetFillStyle(stddpy, stdgc, FillSolid);
+
+    RENDER4(XFillRectangle, x, y, width, height);
+    XSetForeground(stddpy, stdgc, wc->fg->c);
+    if (wc->drawop->i != GXcopy) XSetFunction(stddpy, stdgc, wc->drawop->i);
+    if (wc->fillstyle->i != FillSolid) XSetFillStyle(stddpy, stdgc, wc->fillstyle->i);
+}
+
+/*
+ * copy an area
+ */
+void copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2)
+{
+    int lpad, rpad, tpad, bpad;
+    Pixmap src;
+    wsp ws1 = w->window;
+    STDLOCALS(w2);
+
+    if (w->window->display->display != w2->window->display->display) {
+        wdp wd1 = ws1->display;
+        int i, j;
+        Display *d1 = wd1->display;
+        XImage *xim;
+
+        /*
+         * Copying is between windows on two different displays.
+         */
+        if (x<0 || y<0 || x+width > ws1->pixwidth || y+height > ws1->pixheight)
+            return;		/*#%#%# BOGUS, NEEDS FIXING */
+        xim = XGetImage(d1, ws1->pix, x, y, width, height,
+                        (1<<GetDepth(wd1))-1,XYPixmap);
+        XSetFunction(stddpy, stdgc, GXcopy);
+        for (i=0; i < width; i++) {
+            for (j=0; j < height; j++) {
+                XSetForeground(stddpy, stdgc, XGetPixel(xim, i, j));
+                RENDER2(XDrawPoint, i + x2, j + y2);
+	    }
+        }
+        XSetForeground(stddpy, stdgc, wc->fg->c);
+        XSetFunction(stddpy, stdgc, wc->drawop->i);
+        XSync(stddpy,False);
+        XDestroyImage(xim);
+    }
+    else {
+        /*
+         * Copying is between windows on one display, perhaps the same window.
+         */
+        src = ws1->pix;
+        XSetForeground(stddpy, stdgc, wc->bg->c);
+        XSetFunction(stddpy, stdgc, GXcopy);
+
+        if (x+width<0 || y+height<0 || x>=ws1->pixwidth || y>=ws1->pixheight) {
+            /* source is entirely offscreen */
+            RENDER4(XFillRectangle, x2, y2, width, height);
+        }
+        else {
+            /*
+             * Check for source partially offscreen, but copy first and
+             * fill later in case the source and destination overlap.
+             */
+            lpad = rpad = tpad = bpad = 0;
+            if (x < 0) {			/* source extends past left edge */
+                lpad = -x;
+                width -= lpad;
+                x2 += lpad;
+                x = 0;
+            }
+            if (x + width > ws1->pixwidth) {  /* source extends past right edge */
+                rpad = x + width - ws1->pixwidth;
+                width -= rpad;
+            }
+            if (y < 0) {			/* source extends above top edge */
+                tpad = -y;
+                height -= tpad;
+                y2 += tpad;
+                y = 0;
+            }
+            if (y + height > ws1->pixheight) {  /* source extends below bottom */
+                bpad = y + height - ws1->pixheight;
+                height -= bpad;
+            }
+            /*
+             * Copy the area.
+             */
+            if (stdwin)
+                XCopyArea(stddpy, src, stdwin, stdgc, x, y, width, height, x2, y2);
+            XCopyArea(stddpy, src, stdpix, stdgc, x, y, width, height, x2, y2);
+            /*
+             * Fill any edges not provided by source.
+             */
+            if (lpad > 0)
+                RENDER4(XFillRectangle, x2-lpad, y2-tpad, lpad, tpad+height+bpad);
+            if (rpad > 0)
+                RENDER4(XFillRectangle, x2+width, y2-tpad, rpad, tpad+height+bpad);
+            if (tpad > 0)
+                RENDER4(XFillRectangle, x2, y2-tpad, width, tpad);
+            if (bpad > 0)
+                RENDER4(XFillRectangle, x2, y2+height, width, bpad);
+        }
+
+        XSetForeground(stddpy,stdgc, wc->fg->c);
+        XSetFunction(stddpy, stdgc, wc->drawop->i);
+    }
+}
+
+
+/*
+ * Client for producing pixels from a window
+ */
+void loadimgmem(wbp w, struct imgmem *imem, int copy)
+{
+    STDLOCALS(w);
+    MemProtect(imem->im = XGetImage(stddpy, stdpix,
+                                    imem->x, imem->y, imem->width, imem->height,
+                                    AllPlanes, ZPixmap));
+    imem->wd = wd;
+}
+
+static void from_pixel(wdp wd, unsigned long c, int *r, int *g, int *b)
+{
+    switch (wd->vtype) {
+        case RGB24: {
+            *b = ((c>>wd->blue_shift)&0xff)*257;
+            *g = ((c>>wd->green_shift)&0xff)*257;
+            *r = ((c>>wd->red_shift)&0xff)*257;
+            break;
+        }
+        case RGB48: {
+            *b = (c>>wd->blue_shift)&0xffff;
+            *g = (c>>wd->green_shift)&0xffff;
+            *r = (c>>wd->red_shift)&0xffff;
+            break;
+        }
+        case GRAY8: {
+            *b = *g = *r = (c & 0xff) * 257;
+            break;
+        }
+        default:
+            syserr("Invalid type");
+    }
+}
+
+static unsigned long to_pixel(wdp wd, int r, int g, int b)
+{
+    switch (wd->vtype) {
+        case RGB24:
+            return ((r/256)<<wd->red_shift) | ((g/256)<<wd->green_shift) | ((b/256)<<wd->blue_shift);
+        case RGB48:
+            return (r<<wd->red_shift) | (g<<wd->green_shift) | (b<<wd->blue_shift);
+        case GRAY8:
+            return (0.299 * r + 0.587 * g + 0.114 * b) / 256;
+        default: {
+            syserr("Invalid type");
+            /* not reached */
+            return 0;
+        }
+    }
+}
+
+void getpixel(struct imgmem *imem, int *r, int *g, int *b)
+{
+    from_pixel(imem->wd, XGetPixel(imem->im, imem->xoff, imem->yoff), r, g, b);
+}
+
+void setpixel(struct imgmem *imem, int r, int g, int b)
+{
+    XPutPixel(imem->im, imem->xoff, imem->yoff, to_pixel(imem->wd, r, g, b));
+}
+
+void saveimgmem(wbp w, struct imgmem *imem)
+{
+    STDLOCALS(w);
+    if (wc->drawop->i != GXcopy) XSetFunction(stddpy, stdgc, GXcopy);
+    RENDER7(XPutImage, imem->im, 0, 0, imem->x, imem->y, imem->width, imem->height);
+    if (wc->drawop->i != GXcopy) XSetFunction(stddpy, stdgc, wc->drawop->i);
+}
+
+void freeimgmem(struct imgmem *imem)
+{
+    XDestroyImage(imem->im);
+    imem->im = 0;
+}
+
+
+int querypointer(wbp w, int *x, int *y)
+{
+    wsp ws = w->window;
+    wdp wd = ws->display;
+    Window garbage1, garbage2;
+    int root_x, root_y;
+    unsigned int key_buttons;
+    if (!ws->win)
+        return Failed;
+    XQueryPointer(wd->display, ws->win, &garbage1, &garbage2,
+                  &root_x, &root_y, x, y, &key_buttons);
+    return Succeeded;
+}
+
+int queryrootpointer(wbp w, int *x, int *y)
+{
+    wsp ws = w->window;
+    wdp wd = ws->display;
+    Window garbage1, garbage2;
+    int win_x, win_y;
+    unsigned int key_buttons;
+    XQueryPointer(wd->display, GetRoot(wd), &garbage1, &garbage2,
+                  x, y, &win_x, &win_y, &key_buttons);
+    return Succeeded;
+}
+
+static void setpattern_in_gc(wbp w, int width, int height, int *rowdata)
+{
+    int i, j, v;
+    Pixmap p;
+    char *t, data[4 * MAX_PATTERN_HEIGHT];
+    STDLOCALS(w);
+    t = data;
+    for(i = 0; i < height; i++) {
+        v = rowdata[i];
+        for(j = 0; j < width; j += 8) {
+            *t++ = v;
+            v >>= 8;
+        }
+    }
+    p = XCreateBitmapFromData(stddpy, stdpix, data, width, height);
+    XSetStipple(stddpy, stdgc, p);
+    XSync(stddpy, False);
+    XFreePixmap(stddpy, p);
+}
+
+/*
+ * setpattern
+ */
+int setpattern(wbp w, char *name)
+{
+    int width, height, *rowdata;
+    wcp wc = w->context;
+    if (!parsepattern(name, &width, &height, &rowdata))
+        return Failed;
+    if (wc->gc)
+        setpattern_in_gc(w, width, height, rowdata);
+    if (wc->patternname)
+        free(wc->patternname);
+    wc->patternname = salloc(name);
+    return Succeeded;
+}
+
+int raisewindow(wbp w)
+{
+    wsp ws = w->window;
+    if (!ws->win)
+        return Failed;
+
+    XMapRaised(ws->display->display, ws->win);
+
+    /* Wait for the window to become viewable before giving
+       it the focus. */
+    for (;;) {
+        XWindowAttributes attr;
+        XGetWindowAttributes(ws->display->display, ws->win, &attr);
+        if (attr.map_state == IsViewable)
+            break;
+        /* Not viewable yet, so wait for a MapNotify event. */
+        pollevent(w);
+    }
+
+    /* Now it is viewable, so give it the focus. */
+    XSetInputFocus(ws->display->display, ws->win, RevertToParent, CurrentTime);
+
+    return Succeeded;
+}
+
+int lowerwindow(wbp w)
+{
+    wsp ws = w->window;
+    if (!ws->win)
+        return Failed;
+    XLowerWindow(ws->display->display, ws->win);
+    return Succeeded;
+}
+
+int walert(wbp w, int volume)
+{
+    STDLOCALS(w);
+    XBell(stddpy, volume);    
+    XFlush(stddpy);
+    return Succeeded;
+}
+
+#if HAVE_LIBXFT
+int textwidth(wbp w, char *s, int n)
+{
+    XGlyphInfo	extents; 
+
+    XftTextExtents8 (w->window->display->display,
+                     w->context->font->fsp,
+                     (FcChar8 *)s,
+                     n,
+                     &extents);
+    return extents.xOff;
+}
+
+int utf8width(wbp w, char *s, int n, int nchars)
+{
+    XGlyphInfo	extents; 
+
+    XftTextExtentsUtf8 (w->window->display->display,
+                        w->context->font->fsp,
+                        (FcChar8 *)s,
+                        n,
+                        &extents);
+    return extents.xOff;
+}
+
+
+void drawstring(wbp w, int x, int y, char *str, int slen)
+{
+    XftColor color;
+    Region r;
+    XRectangle rec;
+    STDLOCALS(w);
+
+    if (ws->win && !ws->winDraw)
+        ws->winDraw = XftDrawCreate(ws->display->display,
+                                    ws->win,
+                                    GetVisual(ws->display),
+                                    GetColormap(ws->display));
+
+    if (!ws->pixDraw)
+        ws->pixDraw = XftDrawCreate(ws->display->display,
+                                    ws->pix,
+                                    GetVisual(ws->display),
+                                    GetColormap(ws->display));
+    color.pixel = wc->fg->c;
+    color.color.red = wc->fg->r;
+    color.color.green = wc->fg->g;
+    color.color.blue = wc->fg->b;
+    color.color.alpha = 0xffff;
+
+    if (wc->clipw >= 0 && wc->cliph >=0) {
+        r = XCreateRegion();
+        rec.x = wc->clipx;
+        rec.y = wc->clipy;
+        rec.width = wc->clipw;
+        rec.height = wc->cliph;
+        XUnionRectWithRegion(&rec, r, r);
+        if (ws->winDraw) 
+            XftDrawSetClip(w->window->winDraw, r);
+        if (ws->pixDraw) 
+            XftDrawSetClip(w->window->pixDraw, r);
+        XDestroyRegion(r);
+    } else {
+        if (ws->winDraw) 
+            XftDrawSetClip(w->window->winDraw, 0);
+        if (ws->pixDraw) 
+            XftDrawSetClip(w->window->pixDraw, 0);
+    }
+
+    if (ws->winDraw)
+        XftDrawString8 (ws->winDraw,
+                        &color,
+                        wc->font->fsp,
+                        x,
+                        y,
+                        (FcChar8 *)str,
+                        slen);
+
+    if (ws->pixDraw)
+        XftDrawString8 (ws->pixDraw,
+                        &color,
+                        wc->font->fsp,
+                        x,
+                        y,
+                        (FcChar8 *)str,
+                        slen);
+}
+
+void drawutf8(wbp w, int x, int y, char *str, int slen, int nchars)
+{
+    XftColor color;
+    Region r;
+    XRectangle rec;
+    STDLOCALS(w);
+
+    if (ws->win && !ws->winDraw)
+        ws->winDraw = XftDrawCreate(ws->display->display,
+                                    ws->win,
+                                    GetVisual(ws->display),
+                                    GetColormap(ws->display));
+
+    if (!ws->pixDraw)
+        ws->pixDraw = XftDrawCreate(ws->display->display,
+                                    ws->pix,
+                                    GetVisual(ws->display),
+                                    GetColormap(ws->display));
+    color.pixel = wc->fg->c;
+    color.color.red = wc->fg->r;
+    color.color.green = wc->fg->g;
+    color.color.blue = wc->fg->b;
+    color.color.alpha = 0xffff;
+
+    if (wc->clipw >= 0 && wc->cliph >=0) {
+        r = XCreateRegion();
+        rec.x = wc->clipx;
+        rec.y = wc->clipy;
+        rec.width = wc->clipw;
+        rec.height = wc->cliph;
+        XUnionRectWithRegion(&rec, r, r);
+        if (ws->winDraw) 
+            XftDrawSetClip(w->window->winDraw, r);
+        if (ws->pixDraw) 
+            XftDrawSetClip(w->window->pixDraw, r);
+        XDestroyRegion(r);
+    } else {
+        if (ws->winDraw) 
+            XftDrawSetClip(w->window->winDraw, 0);
+        if (ws->pixDraw) 
+            XftDrawSetClip(w->window->pixDraw, 0);
+    }
+
+    if (ws->winDraw)
+        XftDrawStringUtf8 (ws->winDraw,
+                           &color,
+                           wc->font->fsp,
+                           x,
+                           y,
+                           (FcChar8 *)str,
+                           slen);
+
+    if (ws->pixDraw)
+        XftDrawStringUtf8 (ws->pixDraw,
+                           &color,
+                           wc->font->fsp,
+                           x,
+                           y,
+                           (FcChar8 *)str,
+                           slen);
+}
+#else
+int textwidth(wbp w, char *s, int n)
+{
+    return XTextWidth(w->context->font->fsp, s, n);
+}
+
+int utf8width(wbp w, char *s, int n, int nchars)
+{
+    return textwidth(w, s, n);
+}
+
+void drawstring(wbp w, int x, int y, char *s, int slen)
+{ 
+    STDLOCALS(w); 
+    RENDER4(XDrawString, x, y, s, slen); 
+}
+void drawutf8(wbp w, int x, int y, char *s, int slen, int nchars)
+{
+    STDLOCALS(w); 
+    RENDER4(XDrawString, x, y, s, slen);
+}
+#endif            /* HAVE_LIBXFT */
+
+/* This array must correspond with the NUMATOMS and ATOM_xxx constants defined in xwin.h. */
+char *atom_names[NUMATOMS] = {
+    "CHARACTER_POSITION",
+    "CLIENT_WINDOW",
+    "HOSTNAME",
+    "HOST_NAME",
+    "LENGTH",
+    "LIST_LENGTH",
+    "NAME",
+    "OWNER_OS",
+    "SPAN",
+    "TARGETS",
+    "TIMESTAMP",
+    "USER",
+    "WM_DELETE_WINDOW",
+    "_OBJECTICON_PROP",
+    "_NET_WM_STATE_MAXIMIZED_VERT",
+    "_NET_WM_STATE_MAXIMIZED_HORZ",
+    "_NET_WM_STATE_FULLSCREEN",
+    "_NET_WM_STATE",
+    "_NET_WM_ICON",
+    "_NET_WM_NAME",
+    "UTF8_STRING",
+};
+
+static int get_shift(unsigned long mask)
+{
+    int i = 0;
+    if (mask == 0)
+        syserr("Zero mask passed to get_shift()");
+     while ((mask & 1) == 0) {
+        mask >>= 1;
+        ++i;
+    }
+    return i;
+}
+
+/*
+ * allocate a display on machine s
+ */
+static wdp alcdisplay(char *s)
+{
+    wdp wd;
+    Visual *vis;
+    XVisualInfo xvi, *xvi_ret;
+    int nitems_return;
+
+    if (s == NULL) s = getenv("DISPLAY");
+    if (s == NULL) s = "";
+    for(wd = wdsplys; wd; wd = wd->next)
+        if (wd->program == curpstate && !strcmp(wd->name,s)) {
+            return wd;
+        }
+
+    MemProtect(wd = calloc(1, sizeof(struct _wdisplay)));
+
+    strcpy(wd->name,s);
+    wd->program = curpstate;
+    wd->display = XOpenDisplay((*s=='\0') ? NULL : s);
+    if (wd->display == NULL) {
+        LitWhy("Couldn't connect to display");
+        free(wd);
+        return NULL;
+    }
+
+    vis = GetVisual(wd);
+
+    /*
+     * Get info about the default visual, check it's suitbale and
+     * extract the rgb shift masks.
+     */
+    xvi.visualid = XVisualIDFromVisual(vis);
+    xvi_ret = XGetVisualInfo(wd->display, VisualIDMask, &xvi, &nitems_return);
+    if (nitems_return != 1) {
+        LitWhy("Couldn't get default visual's info");
+        free(wd);
+        return NULL;
+    }
+    if (xvi_ret->class == StaticGray && xvi_ret->depth == 8 && xvi_ret->bits_per_rgb == 8)
+        wd->vtype = GRAY8;
+    else if (xvi_ret->class == TrueColor && xvi_ret->depth == 24 && xvi_ret->bits_per_rgb == 8) {
+        wd->vtype = RGB24;
+        wd->red_shift = get_shift(xvi_ret->red_mask);
+        wd->green_shift = get_shift(xvi_ret->green_mask);
+        wd->blue_shift = get_shift(xvi_ret->blue_mask);
+    } else if (xvi_ret->class == TrueColor && xvi_ret->depth == 48 && xvi_ret->bits_per_rgb == 16) {
+        wd->vtype = RGB48;
+        wd->red_shift = get_shift(xvi_ret->red_mask);
+        wd->green_shift = get_shift(xvi_ret->green_mask);
+        wd->blue_shift = get_shift(xvi_ret->blue_mask);
+    } else {
+        LitWhy("Unsupported display type");
+        free(wd);
+        return NULL;
+    }
+    XFree(xvi_ret);
+
+    wd->black = new_sharedcolor(wd, "black", 0, 0, 0);
+    wd->white = new_sharedcolor(wd, "white", 65535, 65535, 65535);
+    wd->defaultfont = loadfont(wd, getdefaultfont());
+    if (wd->defaultfont == NULL) {
+        unlink_sharedcolor(wd->white);
+        unlink_sharedcolor(wd->black);
+        free(wd);
+        LitWhy("Couldn't load default font");
+        return NULL;
+    }
+#if HAVE_LIBXFT
+    wd->xfont = XLoadQueryFont(wd->display, "fixed");
+#endif
+
+    XInternAtoms(wd->display, atom_names, NUMATOMS, False, wd->atoms);
+    GRFX_LINK(wd, wdsplys);
+    return wd;
+}
+
+#if HAVE_LIBXFT
+
+/*
+ * Convert a given font spec, which may or may not be in icon font spec format,
+ * into fontconfig (used by Xft) style format.  The result is never null.
+ * 
+ * To avoid ambiguity, a spec can start with "fc:" to indicate it's in fontconfig
+ * format; otherwise parsefont is called to decide the format.
+ */
+static char *convertspec(wdp wd, char *s)
+{
+    static char res[256];
+    int flags, size;
+    char family[MAXFONTWORD];
+    XftPattern *p;
+
+    if (!strncmp(s, "fc:", 3))
+        return s + 3;
+
+    if (!parsefont(s, family, &flags, &size))
+        return s;
+
+    p = XftPatternCreate();
+
+    /*
+     * Check first for special "standard" family names.
+     */
+    if (!strcmp(family, "fixed")) {
+        XftPatternAddString(p, XFT_FAMILY, "Object Icon fixed");
+        XftPatternAddString(p, XFT_FAMILY, "mono");
+        flags |= FONTFLAG_MONO;
+    }
+    else if (!strcmp(family, "mono")) {
+        XftPatternAddString(p, XFT_FAMILY, "Object Icon mono");
+        XftPatternAddString(p, XFT_FAMILY, "mono");
+        flags |= FONTFLAG_MONO;
+    }
+    else if (!strcmp(family, "typewriter")) {
+        XftPatternAddString(p, XFT_FAMILY, "Object Icon typewriter");
+        XftPatternAddString(p, XFT_FAMILY, "courier");
+        flags |= FONTFLAG_MONO;
+    }
+    else if (!strcmp(family, "sans")) {
+        XftPatternAddString(p, XFT_FAMILY, "Object Icon sans");
+        XftPatternAddString(p, XFT_FAMILY, "helvetica");
+        flags |= FONTFLAG_PROPORTIONAL;
+    }
+    else if (!strcmp(family, "serif")) {
+        XftPatternAddString(p, XFT_FAMILY, "Object Icon serif");
+        XftPatternAddString(p, XFT_FAMILY, "times");
+        flags |= FONTFLAG_PROPORTIONAL;
+    }
+    else
+        XftPatternAddString(p, XFT_FAMILY, family);
+
+    if (size > 0)
+        XftPatternAddDouble(p, XFT_SIZE, (double)size);
+    else {
+        /* Only use a default font size if explicitly set via OIFONTSIZE */
+        int t = getdefaultfontsize(-1);
+        if (t > 0)
+            XftPatternAddDouble(p, XFT_SIZE, (double)t);
+    }
+    if (flags & FONTFLAG_MEDIUM)
+        XftPatternAddInteger(p, XFT_WEIGHT, XFT_WEIGHT_MEDIUM);
+    else if ((flags & FONTFLAG_DEMI) && (flags & FONTFLAG_BOLD))
+        XftPatternAddInteger(p, XFT_WEIGHT, XFT_WEIGHT_DEMIBOLD);
+    else if (flags & FONTFLAG_BOLD)
+        XftPatternAddInteger(p, XFT_WEIGHT, XFT_WEIGHT_BOLD);
+    else if (flags & FONTFLAG_LIGHT)
+        XftPatternAddInteger(p, XFT_WEIGHT, XFT_WEIGHT_LIGHT);
+
+    if (flags & FONTFLAG_ITALIC)
+        XftPatternAddInteger(p, XFT_SLANT, XFT_SLANT_ITALIC);
+    else if (flags & FONTFLAG_OBLIQUE)
+        XftPatternAddInteger(p, XFT_SLANT, XFT_SLANT_OBLIQUE);
+    else if (flags & FONTFLAG_ROMAN)
+        XftPatternAddInteger(p, XFT_SLANT, XFT_SLANT_ROMAN);
+
+    if (flags & FONTFLAG_PROPORTIONAL)
+        XftPatternAddInteger(p, XFT_SPACING, XFT_PROPORTIONAL);
+    if (flags & FONTFLAG_MONO)
+        XftPatternAddInteger(p, XFT_SPACING, XFT_MONO);
+
+    XftNameUnparse(p, res, sizeof(res) - 1);
+    XftPatternDestroy(p);
+
+    return res;
+}
+
+#else /* HAVE_LIBXFT */
+
+static char *convertspec(wdp wd, char *s)
+{
+    int flags, size;
+    char *rv = 0;
+    char family[MAXFONTWORD];
+    char *stdfam;
+
+    /* Explicit X11 font name */
+    if (!strncmp(s, "x11:", 4))
+        return s + 4;
+
+    if (!parsefont(s, family, &flags, &size))
+        return s;
+
+    /*
+     * This is a legal Icon font spec.  Check first for special
+     * "standard" family names.
+     */
+    if (!strcmp(family, "fixed")) {
+        stdfam = "fixed";
+        flags |= FONTFLAG_MONO + FONTFLAG_SANS;
+    } 
+    else if (!strcmp(family, "mono")) {
+        stdfam = "lucidatypewriter";
+        flags |= FONTFLAG_MONO + FONTFLAG_SANS;
+    }
+    else if (!strcmp(family, "typewriter")) {
+        stdfam = "courier";
+        flags |= FONTFLAG_MONO + FONTFLAG_SERIF;
+    }
+    else if (!strcmp(family, "sans")) {
+        stdfam = "helvetica";
+        flags |= FONTFLAG_PROPORTIONAL + FONTFLAG_SANS;
+    }
+    else if (!strcmp(family, "serif")) {
+        stdfam = "times";
+        flags |= FONTFLAG_PROPORTIONAL + FONTFLAG_SERIF;
+    }
+    else stdfam = NULL;
+
+    if (stdfam) {
+        /*
+         * Standard name: first try preferred family, then generalize.
+         */
+        rv = findfont(wd, stdfam, size, flags);
+        if (!rv)
+            rv = findfont(wd, "*", size, flags);
+    }
+    else {
+        /*
+         * Any other name: must match as specified.
+         */
+        rv = findfont(wd, family, size, flags);
+    }
+    if (rv)
+        return rv;
+
+    /*
+     * Not found as an Icon name; may be an X font name.
+     */
+    return s;
+}
+
+/*
+ * return pointer to field i inside XLFD (X Logical Font Description) s.
+ */
+static char *xlfd_field(char *s, int i)
+{
+    int j = 0;
+    while (j < i) {
+        if (*s == '\0') return "";	/* if no such field */
+        if (*s++ == '-') j++;
+    }
+    return s;
+}
+
+/*
+ * return size of font, treating a scalable font as having size n
+ */
+static int xlfd_size(char *s, int n)
+{
+    char *f;
+    int z;
+
+    f = xlfd_field(s, XLFD_Size);
+    if (!*f)
+        return 0;
+    z = atoi(f);
+    if (z != 0)
+        return z;
+    else
+        return n;
+}
+
+/*
+ * Find the best font matching a set of specifications.
+ */
+static char *findfont(wdp wd, char *family, int size, int flags)
+{
+    static char fontspec[MAXFONTWORD+100];
+    char *p, *weight, *slant, *width, *spacing, **fontlist;
+    int n, champ, challenger, bestsize;
+
+    /*
+     * Construct a font specification that enforces any stated requirements
+     * of size, weight, slant, set width, or proportionality.
+     */
+    if (size > 0)
+        bestsize = size;
+    else
+        bestsize = getdefaultfontsize(14);
+
+    if (flags & FONTFLAG_MEDIUM)
+        weight = "medium";
+    else if ((flags & FONTFLAG_DEMI) && (flags & FONTFLAG_BOLD))
+        weight = "demibold";
+    else if (flags & FONTFLAG_BOLD)
+        weight = "bold";
+    else if (flags & FONTFLAG_DEMI)
+        weight = "demi";
+    else if (flags & FONTFLAG_LIGHT)
+        weight = "light";
+    else
+        weight = "*";
+
+    if (flags & FONTFLAG_ITALIC)
+        slant = "i";
+    else if (flags & FONTFLAG_OBLIQUE)
+        slant = "o";
+    else if (flags & FONTFLAG_ROMAN)
+        slant = "r";
+    else
+        slant = "*";
+
+    if (flags & FONTFLAG_NARROW)
+        width = "narrow";
+    else if (flags & FONTFLAG_CONDENSED)
+        width = "condensed";
+    else if (flags & FONTFLAG_NORMAL)
+        width = "normal";
+    else if (flags & FONTFLAG_WIDE)
+        width = "wide";
+    else if (flags & FONTFLAG_EXTENDED)
+        width = "extended";
+    else
+        width = "*";
+
+    if (flags & FONTFLAG_PROPORTIONAL)
+        spacing = "p";
+    else
+        spacing = "*";			/* can't specify {m or c} to X */
+
+    if (size > 0)
+        sprintf(fontspec, "-*-%s-%s-%s-%s-*-%d-*-*-*-%s-*-*-*",
+                family, weight, slant, width, size, spacing);
+    else
+        sprintf(fontspec, "-*-%s-%s-%s-%s-*-*-*-*-*-%s-*-*-*",
+                family, weight, slant, width, spacing);
+
+    /*
+     * Get a list of matching fonts from the X server and find the best one.
+     */
+    fontlist = XListFonts(wd->display, fontspec, 2500, &n);
+    champ = 0;
+    while (champ < n && !okfont(fontlist[champ], flags))
+        champ++;
+    if (champ >= n) {
+        XFreeFontNames(fontlist);
+        return NULL;			/* nothing acceptable */
+    }
+    for (challenger = champ + 1; challenger < n; challenger++) 
+        if (okfont(fontlist[challenger], flags)
+            && fontcmp(fontlist[challenger], fontlist[champ], bestsize, flags) < 0)
+            champ = challenger;
+
+    /*
+     * Set the scaling field, if needed, and load the font.
+     */
+    p = xlfd_field(fontlist[champ], XLFD_Size);
+    if (p[0] == '0' && p[1] == '-')
+        sprintf(fontspec, "%.*s%d%s", (int)(p - fontlist[champ]),
+                fontlist[champ], bestsize, p + 1);
+    else
+        strcpy(fontspec, fontlist[champ]);
+    XFreeFontNames(fontlist);
+    return fontspec;
+}
+
+/*
+ * check for minimum acceptability of a font
+ * (things that couldn't be filtered by the XLFD pattern):
+ * -- not monospaced (can't set pattern to match m or c but not p)
+ */
+static int okfont(char *spec, int flags)
+{
+    if ((flags & FONTFLAG_MONO) && xlfd_field(spec, XLFD_Spacing)[0] == 'p')
+        return 0;			/* requested mono, but this isn't */
+    return 1;
+}
+
+/*
+ * rank two fonts based on whether XLFD field n matches a preferred value.
+ * returns <0 if font1 is better, >0 if font2 is better, else 0.
+ */
+static int fieldcmp(char *font1, char *font2, char *value, int field)
+{
+    int len, r1, r2;
+
+    len = strlen(value);
+    r1 = (strncmp(xlfd_field(font1, field), value, len) == 0);
+    r2 = (strncmp(xlfd_field(font2, field), value, len) == 0);
+    return r2 - r1;			/* -1, 0, or 1 */
+}
+
+/*
+ * rank two fonts.
+ * returns <0 if font1 is better, >0 if font2 is better, else 0.
+ *
+ * Note that explicit requests for size, slant, weight, and width caused
+ * earlier filtering in findfont(), so all those flags aren't checked
+ * again here; normal values are just favored in case nothing was specified.
+ */
+static int fontcmp(char *font1, char *font2, int size, int flags)
+{
+    int n;
+
+/* return if exactly one of the fonts matches value s in field n */
+#define PREFER(s,n)                                                     \
+    do { int r = fieldcmp(font1, font2, s, n); if (r != 0) return r; } while (0)
+
+/* return if exactly one of the fonts does NOT match value s in field n */
+#define SPURN(s,n)                                                      \
+    do { int r = fieldcmp(font1, font2, s, n); if (r != 0) return -r; } while (0)
+
+    /*
+     * Prefer the font that is closest to the desired size.
+     */
+    n = abs(size - xlfd_size(font1, size)) - abs(size - xlfd_size(font2, size));
+    if (n != 0)
+        return n;
+
+    /*
+     * try to check serifs (though not always indicated in X font description)
+     */
+    if (flags & FONTFLAG_SANS) {
+        PREFER("sans", XLFD_AddStyle);
+        SPURN("serif", XLFD_AddStyle);
+    }
+    else if (flags & FONTFLAG_SERIF) {
+        PREFER("serif", XLFD_AddStyle);
+        SPURN("sans", XLFD_AddStyle);
+    }
+
+    /*
+     * prefer normal values for other fields.  These only have an effect
+     * for fields that were wildcarded when requesting the font list.
+     */
+    PREFER("r", XLFD_Slant);		/* prefer roman slant */
+    PREFER("medium", XLFD_Weight);	/* prefer medium weight */
+    SPURN("demi", XLFD_Weight);		/* prefer non-demi if no medium */
+    PREFER("normal", XLFD_SetWidth);	/* prefer normal width */
+    PREFER("iso8859", XLFD_CharSet);	/* prefer font of ASCII chars */
+    SPURN("0", XLFD_AverageWidth);	/* prefer tuned font to scaled */
+    PREFER("adobe", XLFD_Foundry);	/* these look better than others */
+
+    /* no significant difference */
+    return 0;
+}
+
+
+#endif /* HAVE_LIBXFT */
+
+
+/*
+ * load a font and return a font structure.
+ */
+
+static wfp loadfont(wdp wd, char *s)
+{
+    wfp rv;
+
+    /*
+     * Convert to a system font name (without the fc: or x11: prefix)
+     */
+    s = convertspec(wd, s);
+
+    /*
+     * see if the font is already loaded on this display
+     */
+    for(rv = wd->fonts; rv; rv = rv->next) {
+#if HAVE_LIBXFT
+        if (!strcmp(s, rv->name + 3)) return rv;
+#else
+        if (!strcmp(s, rv->name + 4)) return rv;
+#endif
+    }
+
+    /*
+     * load a new font
+     */
+    rv = newfont(wd, s);
+    if (rv == NULL)
+        return NULL;
+
+    /*
+     * link the font into this display's fontlist
+     */
+    GRFX_LINK(rv, wd->fonts);
+    return rv;
+}
+
+static wfp newfont(wdp wd, char *s)
+{
+    wfp rv;
+    GRFX_ALLOC(rv, _wfont);
+#if HAVE_LIBXFT
+    rv->fsp = XftFontOpenName(wd->display, DefaultScreen(wd->display), s);
+#else
+    rv->fsp = XLoadQueryFont(wd->display, s);
+#endif
+    if (rv->fsp == NULL){
+        free(rv);
+        return NULL;
+    }
+
+#if HAVE_LIBXFT
+    MemProtect(rv->name = malloc(strlen(s) + 3 + 1));
+    sprintf(rv->name, "fc:%s", s);
+    {
+        XGlyphInfo	extents; 
+        /*
+         * Xft seems to sometimes give too-small values in its font
+         * ascent/descent fields; therefore calculate the GlyphInfo
+         * for the first 256 chars and take the maximum ascent/descent
+         * of the sample and the font's reported values.
+         */
+        XftTextExtents8 (wd->display,
+                         rv->fsp,
+                         (FcChar8 *)allchars,
+                         256,
+                         &extents);
+        rv->ascent = Max(rv->fsp->ascent, extents.y);
+        rv->descent = Max(rv->fsp->descent, extents.height - extents.y);
+        rv->maxwidth = rv->fsp->max_advance_width;
+    }
+#else
+    MemProtect(rv->name = malloc(strlen(s) + 4 + 1));
+    sprintf(rv->name, "x11:%s", s);
+    rv->ascent = rv->fsp->ascent;
+    rv->descent = rv->fsp->descent;
+    rv->maxwidth = rv->fsp->max_bounds.width;
+#endif
+    rv->height = rv->ascent + rv->descent;
+    return rv;
+}
+
+/*
+ * allocate a context, cloning attributes from an existing context
+ */
+wcp clonecontext(wbp w)
+{
+    wcp wc, rv;
+    wdp wd;
+    XGCValues gcv;
+    XRectangle rec;
+    unsigned long gcmask = GCGraphicsExposures | GCFont | GCForeground | GCBackground |
+        GCFillStyle | GCCapStyle | GCLineWidth | GCLineStyle;
+
+    wc = w->context;
+    wd = w->context->display;
+
+    GRFX_ALLOC(rv, _wcontext);
+    rv->display = wd;
+    rv->dx = wc->dx;
+    rv->dy = wc->dy;
+    rv->clipx = wc->clipx;
+    rv->clipy = wc->clipy;
+    rv->clipw = wc->clipw;
+    rv->cliph = wc->cliph;
+    rv->fg = link_sharedcolor(wc->fg);
+    rv->bg = link_sharedcolor(wc->bg);
+    rv->font = wc->font;
+    rv->fillstyle = wc->fillstyle;
+    rv->linestyle = wc->linestyle;
+    rv->linewidth = wc->linewidth;
+    rv->drawop = wc->drawop;
+    GRFX_LINK(rv, wcntxts);
+
+    gcv.foreground = rv->fg->c;
+    gcv.background = rv->bg->c;
+#if HAVE_LIBXFT
+    gcv.font       = wd->xfont->fid;
+#else
+    gcv.font       = rv->font->fsp->fid;
+#endif
+    gcv.line_style = rv->linestyle->i;
+    gcv.line_width = rv->linewidth;
+    if (rv->linewidth > 1) {
+        gcv.dashes = 3 * rv->linewidth;
+        gcmask |= GCDashList;
+    }
+    gcv.fill_style = rv->fillstyle->i;
+    gcv.cap_style  = CapProjecting;
+    gcv.graphics_exposures = False;
+    rv->gc = XCreateGC(w->window->display->display,w->window->pix,gcmask,&gcv);
+    if (rv->clipw >= 0) {
+        rec.x = rv->clipx;
+        rec.y = rv->clipy;
+        rec.width = rv->clipw;
+        rec.height = rv->cliph;
+        XSetClipRectangles(rv->display->display, rv->gc, 0, 0, &rec, 1,Unsorted);
+    }
+    if (wc->patternname)
+        rv->patternname = salloc(wc->patternname);
+    return rv;
+}
+
+/*
+ * free a window state
+ */
+void freewindow(wsp ws)
+{
+    ws->refcount--;
+    if(ws->refcount == 0) {
+        struct imgdata *imd;
+        if (ws->win)
+            close_screen_win(ws);
+#if HAVE_LIBXFT
+        if (ws->pixDraw) {
+            XftDrawDestroy(ws->pixDraw);
+            ws->pixDraw = NULL;
+        }
+#endif
+        if (ws->pix) {
+            XFreePixmap(ws->display->display, ws->pix);
+            ws->pix = (Pixmap) NULL;
+        }
+
+        imd = &ws->initimage;
+        if (imd->width) {
+            free(imd->paltbl);
+            free(imd->data);
+            imd->width = 0;
+        }
+
+        if (ws->icondata) {
+            free(ws->icondata);
+            ws->icondata = 0;
+        }
+
+        if (ws->windowlabel) { 
+           free(ws->windowlabel); 
+           ws->windowlabel = 0;
+        }
+
+        GRFX_UNLINK(ws, wstates);
+        free(ws);
+    }
+}
+
+/*
+ * free a window context
+ */
+void freecontext(wcp wc)
+{
+    wc->refcount--;
+    if(wc->refcount == 0) {
+        if (wc->gc != NULL)
+            XFreeGC(wc->display->display, wc->gc);
+        if (wc->patternname)
+            free(wc->patternname);
+        if (wc->fg)
+            unlink_sharedcolor(wc->fg);
+        if (wc->bg)
+            unlink_sharedcolor(wc->bg);
+        GRFX_UNLINK(wc, wcntxts);
+        free(wc);
+    }
+}
+
+int  readimagefileimpl(char *filename, struct imgdata *imd) 
+{
+    return NoCvt;
+}
+
+int  writeimagefileimpl(wbp w, char *filename, int x, int y, int width, int height)
+{
+    return NoCvt;
+}
+
+int  readimagedataimpl(dptr data, struct imgdata *imd)
+{
+    return NoCvt;
+}
+
+int settransientfor(wbp w, wbp other)
+{
+    STDLOCALS(w);
+    if (ws->win)
+        return Failed;
+    if (other) {
+        if (!other->window->win)
+            return Failed;
+        ws->transientfor = other->window->win;
+    } else
+        ws->transientfor = (Window) NULL;
+    return Succeeded;
+}

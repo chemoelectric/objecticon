@@ -1,0 +1,14 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+class CanvasCheckBoxDialog(CanvasButtonDialog)
+   public on_in_checkbox_group()
+      cast(self,CanvasButtonDialog).on_in_checkbox_group()
+   end
+end
+

@@ -1,0 +1,97 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import graphics
+
+#
+# This is a class for popup menus.  It is an invisible placeholder
+# component, with zero size, from which a Menu can be popped up
+# using the {popup()} method.
+#
+# Note that instances should never be added or removed from a dialog;
+# that is done automatically.
+#
+class PopupMenu(Component)
+   public 
+      menu,
+      px,
+      py
+
+   public finally()
+      self.menu.hide()
+      self.menu.finally()
+      self.menu := &null
+      self.parent_dialog.exit_menu_mode()
+      self.parent_dialog.disconnect_object(self)
+      self.parent.remove(self)
+      cast(self,Component).finally()
+   end
+
+   public display()
+   end
+
+   public go_right()
+   end
+
+   public go_left()
+   end
+
+   public close_all()
+      finally()
+   end
+
+   public make_partial()
+      finally()
+   end
+
+   public dialog_event(e)
+      if not(e.x = px & e.y = py & member(Mouse.PRESS | Mouse.RELEASE, e.code)) then
+         self.menu.handle_event(e)
+   end
+
+   #
+   # Popup a menu.  The use of the alternate positions is described in
+   # {MenuComponent.show()}.
+   #
+   # @param dialog The dialog in which to show the menu
+   # @param menu  The menu to show
+   # @param x The x position to show
+   # @param y The y position to show
+   # @param xa The alternate x position to show; defaults to {x}.
+   # @param ya The alternate y position to show; defaults to {&null}).
+   # @param px The current mouse x position; defaults to {x}.
+   # @param py The current mouse y position; defaults to {y}).
+   #
+   public popup(dialog, menu, x, y, a[])
+      local xa, ya
+      xa := a[1] | x
+      ya := a[2]
+      px := a[3] | x
+      py := a[4] | y
+      dialog.add(self)
+      self.initially()
+      self.resize()
+      self.parent_dialog.enter_menu_mode(self)
+      self.parent_dialog.connect(self.dialog_event, Event.ICON)
+      self.menu := menu
+      self.menu.set_component_link(self)         
+      self.menu.initially()
+      self.menu.show(x, y, xa, ya)
+      return self
+   end
+
+   public new()
+      cast(self,Component).new()
+      self.x_spec := self.y_spec := self.w_spec := self.h_spec := 0
+      return
+   end
+end
+
+

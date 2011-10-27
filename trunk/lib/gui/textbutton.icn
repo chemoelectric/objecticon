@@ -1,0 +1,144 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+#
+# A button with a text label.
+#
+# The size of the button can either be set using {set_size()},
+# be left to default to a size based on the given label.
+#
+class TextButton(Button)
+   public 
+      paint,
+      paint_down
+
+   public display()
+      local p
+
+      p := if /paint_down | (self.is_down === self.is_checked_flag) then
+         paint
+      else
+         paint_down
+
+      p.draw_point(self.cbwin, border.float(self, p))
+
+      if \self.is_down then {
+         Gui.style.down_rectangle(self.cbwin, self.x, self.y, self.w, self.h)
+         border.draw_rev_rect(self.cbwin, self)
+      } else if /self.is_checked_flag then
+         border.draw_rect(self.cbwin, self)
+      else
+         border.draw_rev_rect(self.cbwin, self)
+
+      if self.has_focus() & self.is_unshaded() then
+         border.draw_focus_rect(self.cbwin, self)
+   end
+
+   #
+   # Set the label.
+   # @param x   The label.
+   #
+   public set_label(x)
+      return set_paint(paint_for_string(x))
+   end
+
+   public set_label_down(x)
+      return set_paint_down(paint_for_string(x))
+   end
+
+   #
+   # Set down image to use in the button
+   #
+   # @param x   The down image
+   #
+   public set_image_down(x)
+      return if /x then
+         set_paint_down()
+      else
+         set_paint_down(ImagePaint().set_image(x))
+   end
+
+   #
+   # Set an image to use in the button
+   # @param x   The image
+   #
+   public set_image(x)
+      return set_paint(ImagePaint().set_image(x))
+   end
+
+   #
+   # Set the up/down images (if any) to the strings provided.
+   # The two images must have the same dimensions.
+   # @param x   The up image
+   # @param y   The down image
+   #
+   public set_images(x, y)
+      set_image(x)
+      set_image_down(y)
+      return self
+   end
+
+   public set_paint(p)
+      (\self.paint).finally()
+      self.paint := p
+      if is_initialized() then {
+         self.paint.initially(self, self.accel)
+         self.invalidate()
+      }
+      return self
+   end
+
+   public set_paint_down(p)
+      (\self.paint_down).finally()
+      self.paint_down := p
+      if is_initialized() then {
+         (\self.paint_down).initially(self, self.accel)
+         self.invalidate()
+      }
+      return self
+   end
+
+   public initially()
+      \self.paint | runerr("no label specified")
+      cast(self,Component).initially()
+      self.paint.initially(self, self.accel)
+      (\self.paint_down).initially(self, self.accel)
+   end
+
+   public finally()
+      cast(self,Component).finally()
+      paint.finally()
+      (\paint_down).finally()
+   end
+
+   public get_default_width()
+      local t
+      t := paint.w
+      t <:= (\paint_down).w
+      return t + border.get_total_width()
+   end
+
+   public get_default_height()
+      local t
+      t := paint.h
+      t <:= (\paint_down).h
+      return t + border.get_total_height()
+   end
+
+   public new()
+      cast(self,Button).new()
+      self.border := CompoundBorder().
+                       set_outer(RaisedBorder()).
+                       set_inner(EmptyBorder())
+      return
+   end
+end
+
+

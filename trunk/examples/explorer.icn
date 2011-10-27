@@ -1,0 +1,185 @@
+import gui, ipl.sort, io, util
+
+#
+# A very simple filesystem explorer with a tree and a table.
+#
+class Explorer(Dialog)
+   public tree, 
+      tbl
+
+   #
+   # Given a TreeNode n, get the full file path it represents by traversing
+   # up the tree structure to the root.
+   #
+   public get_full_path(n)
+      local l
+      l := []
+      repeat {
+         push(l, n.get_label())
+         n := n.get_parent() | break
+      }
+      return Files.get_path_from_list(l).str()
+   end
+
+   #
+   # Invoked when a sub-tree is expanded (ie: the little + is
+   # clicked).  An expansion event also includes contractions
+   # too.
+   #
+   public handle_tree_expansion()
+      local n
+
+      n := tree.get_last_expanded()
+      #
+      # Check whether it was an expansion or a contraction.  If
+      # an expansion, load the subtree and refresh the tree.
+      #
+      if n.is_expanded() then {
+         load_subtree(n)
+         tree.tree_structure_changed()
+      }
+   end
+
+   #
+   # Invoked when a row in the tree is selected (or de-selected).
+   #
+   public handle_tree_selection()
+      local n
+
+      #
+      # If we have something selected, load the table.  We may not
+      # have something selected if the user contracted the parent
+      # node of the selected node.
+      #
+      if n := tree.object_get_selections()[1] then {
+         load_table(n)
+      }
+   end
+
+   #
+   # Given a TreeNode n, load its children with the sub-directories.
+   #
+   public load_subtree(n)
+      local s, name, r1, l
+
+      s := get_full_path(n)
+
+      l := get_directory_list(s)[1]
+      l := isort(l, name_sort)
+
+      n.clear_children()
+      every name := (!l)[1] do {
+         if (name ~== "./") & (name ~== "../") then {
+            r1 := TreeNode().set_always_expandable(&yes)
+            r1.set_label(name)
+            n.add(r1)
+         }
+      }
+   end
+
+   private static name_sort(x)
+      return x[1]
+   end
+
+   private fmt_time(t)
+      local x
+      x := Time()
+      x.set_unix_seconds(t)
+      return x.format("MMM dd HH:mm:ss")
+   end
+
+   #
+   # Given a TreeNode n, load the table with the sub-files and
+   # sub-directories.
+   #
+   public load_table(n)
+      local s, l, t, el
+
+      s := get_full_path(n)
+
+      t := get_directory_list(s) | fail
+      t := isort(t[1] ||| t[2], name_sort)
+
+      l := []
+      every el := !t do {
+         put(l, [el[1], el[2].size, fmt_time(el[2].mtime), el[2].mode_str])
+      }
+
+      tbl.set_contents(l)
+      if is_live() then
+         tbl.goto_pos(1, 0)
+   end
+
+   #
+   # Catch Alt-q to close the dialog.
+   #
+   public quit_check(ev)
+      if ev.code === "q" & \ev.meta then
+         dispose()
+   end
+
+   #
+   # Read a directory.
+   #
+   public get_directory_list(s)
+      local e, dir_list, file_list, l
+      if not(l := Files.list(s)) then {
+         return [[],[]]
+      }
+      dir_list := []
+      file_list := []
+      every e := !l do {
+         if not(Files.is_hidden(e[1])) then {
+            if e[2].mode_str[1] == "d" then
+               put(dir_list, e)
+            else
+               put(file_list, e)
+         }
+      }
+      return [dir_list, file_list]
+   end
+
+   public component_setup()
+      local root_node, split
+
+      set_size(750,440).set_resize(&yes).set_label("Explorer")
+      connect(self.dispose, Event.WINDOW_CLOSE_BUTTON)
+      connect(self.quit_check, Event.ICON)
+
+      set_layout(GridLayout())
+
+      tree := Tree().set_size(250,420).set_select_mode("one")
+      tree.connect(self.handle_tree_expansion, Event.TREE_NODE_EXPANSION)
+      tree.connect(self.handle_tree_selection, Event.SELECTION_CHANGED)
+
+      tbl := Table().set_size(470,420).set_select_mode("none")
+      tbl.add_column(TableColumn().set_label("File"))
+      tbl.add_column(TableColumn().set_label("Size").set_column_width(75).set_column_align("r"))
+      tbl.add_column(TableColumn().set_label("Date").set_column_width(100))
+      tbl.add_column(TableColumn().set_label("Bits").set_column_width(100))
+
+      split := Split().set_left(tree).set_right(tbl).set_min(50,50)
+      add(split)
+
+      #
+      # Initialize the tree data structure.
+      #
+      root_node := TreeNode().set_label("/")
+      load_subtree(root_node)
+      tree.set_root_node(root_node)
+      tree.object_set_selections([root_node])
+      load_table(root_node)
+   end
+end
+
+
+
+procedure main()
+   local d
+   d := Explorer()
+   d.show_modal()
+end
+
+
+
+

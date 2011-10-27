@@ -1,0 +1,919 @@
+package graphics
+
+import 
+   lang(NoCopy)
+
+class Window(NoCopy)
+   private
+      wbp,
+      transient_for
+
+   public static const
+      RESIZE,
+      CLOSE_BUTTON,
+      INVOKE_LATER
+
+   private static init()
+      RESIZE :=       -10
+      CLOSE_BUTTON := -11
+      INVOKE_LATER := -40
+   end
+
+   #
+   # Open a new window.
+   #
+   public static open(display)
+      return Window(open_impl(display))
+   end
+
+   #
+   # Produces a new window value that combines the canvas of
+   # {self} with a new graphics context. The new graphics attributes
+   # are copied from {self}.
+   #
+   public clone()
+      return Window(clone_impl())
+   end
+
+   #
+   # Produces a new window value that binds the canvas of {self} with
+   # the graphics context of {other}.
+   #
+   public couple(other)
+      return Window(couple_impl(other))
+   end
+
+   private static defer open_impl(display)
+   private defer clone_impl(a[])
+   private defer couple_impl(other)
+
+   #
+   # Grab the pointer so that all mouse events are directed to this window.
+   #
+   public defer grab_pointer()
+
+   #
+   # Undoes the effect of {grab_pointer}.
+   #
+   public defer ungrab_pointer()
+
+   public defer get_font_ascent()
+   public defer get_bg()
+   public defer get_canvas()
+   public defer get_clip()
+   public defer get_depth()
+   public defer get_font_descent()
+   public defer get_display()
+   public defer get_draw_op()
+   public defer get_dx()
+   public defer get_dy()
+   public defer get_fg()
+   public defer get_font_height()
+   public defer get_fill_style()
+   public defer get_font()
+   public defer get_font_width()
+   public defer get_geometry()
+   public defer get_height()
+   public defer get_image()
+   public defer get_input_mask()
+   public defer get_label()
+   public defer get_line_style()
+   public defer get_line_width()
+   public defer get_max_height()
+   public defer get_max_size()
+   public defer get_max_width()
+   public defer get_min_height()
+   public defer get_min_size()
+   public defer get_min_width()
+   public defer get_pattern()
+   public defer get_pointer()
+   public defer get_pos()
+   public defer get_x()
+   public defer get_y()
+   public defer can_resize()
+   public defer get_size()
+   public defer get_width()
+
+   #
+   # The graphics context attribute bg specifies current background
+   # color.
+   #
+   public defer set_bg(v)
+
+   #
+   # The canvas attribute canvas specifies the window visibility.
+   # Possible values include "hidden", "iconic", "normal", "popup"
+   #
+   public defer set_canvas(v)
+
+   #
+   # The graphics context attribute draw_op specifies the way in which
+   # newly drawn pixels are combined with the pixels that are already
+   # in a window.
+   #
+   public defer set_draw_op(v)
+
+   #
+   # The graphics context attribute dx specifies a horizontal offset
+   # that is added to the x value of every coordinate pair before
+   # interpretation.
+   #
+   public defer set_dx(v)
+
+   #
+   # The graphics context attribute dy specifies a vertical offset
+   # that is added to the y value of every coordinate pair before
+   # interpretation.
+   #
+   public defer set_dy(v)
+
+   #
+   # The graphics context attribute fg specifies the current
+   # foreground color.
+   #
+   public defer set_fg(v)
+
+   #
+   # The graphics context attribute fill_style specifies whether a
+   # pattern is to be used when drawing. The fill style affects lines
+   # and text as well as solid figures. The pattern itself is set by
+   # the pattern attribute.
+   # Possible values: "solid", "textured", "masked"
+   #
+   public defer set_fill_style(v)
+
+   #
+   # The graphics context attribute font specifies the current text font.
+   #
+   public defer set_font(v)
+
+   #
+   # Specifies the position and size of the window.
+   #
+   public defer set_geometry(x, y, width, height)
+
+   #
+   # Set the height of the window in pixels.
+   #
+   public defer set_height(height)
+
+   #
+   # Specifies an image to load into the window.  On success, the
+   # window is resized to the size of the image.  The given parameter
+   # {v} may be an Icon image string, raw binary image data (eg a gif
+   # file), or the name of a file containing an image.
+   #
+   public defer set_image(v)
+
+   #
+   # Set the input mask for the window.  If the string {v} contains
+   # "k" then key release events are reported; if it contains "m" then
+   # mouse motion events are reported.
+   #
+   public defer set_input_mask(v)
+
+   #
+   # The canvas attribute icon specifies an image used to identify the
+   # window.  The parameter takes the same format as {set_image}.
+   #
+   public defer set_icon(v)
+
+   #
+   # The canvas attribute label specifies a title used to identify the
+   # window.
+   #
+   public defer set_label(v)
+
+   #
+   # The graphics context attribute line_style specifies the form of
+   # drawn lines.  Possible values may include: "solid", "dashed",
+   # "striped", although this is system dependent.
+   #
+   public defer set_line_style(v)
+
+   #
+   # The graphics context attribute linewidth specifies the width of
+   # drawn lines.
+   #
+   public defer set_line_width(v)
+
+   #
+   # Set the maximum height of the window in pixels.
+   #
+   public defer set_max_height(height)
+
+   #
+   # Set the maximum size of the window in pixels.
+   #
+   public defer set_max_size(width, height)
+
+   #
+   # Set the maximum width of the window in pixels.
+   #
+   public defer set_max_width(width)
+
+   #
+   # Set the minimum height of the window in pixels.
+   #
+   public defer set_min_height(height)
+
+   #
+   # Set the minimum size of the window in pixels.
+   #
+   public defer set_min_size(width, height)
+
+   #
+   # Set the minimum width of the window in pixels.
+   #
+   public defer set_min_width(width)
+
+   #
+   # The graphics context attribute pattern specifies the particular
+   # pattern to be used for drawing when the fill_style attribute is
+   # set to "textured" or "masked".  Possible values: "black",
+   # "verydark", "darkgray", "gray", "lightgray", "verylight",
+   # "white", "vertical", "diagonal", "horizontal", "grid", "trellis",
+   # "checkers", "grains", "scales", "waves", "width,#hexdigits"
+   #
+   public defer set_pattern(v)
+
+   #
+   # The canvas attribute pointer specifies the shape of the figure
+   # that represents the mouse position.
+   #
+   public defer set_pointer(v)
+
+   #
+   # Set the position of the window on the screen.
+   #
+   public defer set_pos(x, y)
+
+   #
+   # Set the x position of the window on the screen.
+   #
+   public defer set_x(v)
+
+   #
+   # Set the y position of the window on the screen.
+   #
+   public defer set_y(v)
+
+   #
+   # Configure whether the window can or cannot be resized by the
+   # user.  The parameter should be a flag value.
+   #
+   public defer set_resize(v)
+
+   #
+   # Set the size of the window in pixels.
+   #
+   public defer set_size(width, height)
+
+   #
+   # Set the width of the window in pixels.
+   #
+   public defer set_width(width)
+
+   #
+   # Configure this window so that it is transient in respect of the
+   # given window {w}.  This generally means that the transient window
+   # stays on top of the other window, although the exact behaviour
+   # depends on the window system.
+   # 
+   # When calling this method, this window must not be visible, and
+   # the other window must be visible; if that is not the case this
+   # method fails.
+   #
+   public set_transient_for(w)
+      if set_transient_for_impl(w) then {
+         self.transient_for := w
+         return self
+      }
+   end
+
+   private defer set_transient_for_impl(v)
+
+   #
+   # Get the transient-for window, or fail if none is set.
+   #
+   public get_transient_for()
+      return \self.transient_for
+   end
+
+   #
+   # Produces a beep or other signal to attract attention.
+   #
+   public defer alert(volume)
+
+   #
+   # Sets the clipping region to the specified rectangle; subsequent
+   # output extending outside its bounds is discarded. If clip() is
+   # called with no arguments, clipping is disabled and the entire
+   # canvas is writable.
+   #
+   public defer clip(x, y, w, h)
+
+   #
+   # Clear the clip settings
+   #
+   public defer unclip()
+
+   #
+   # Return the r,g,b values of the given color, as a color string
+   #
+   public static defer color_value(k)
+
+   #
+   # Return the r,g,b values of the given color, as a list of 3 integers.
+   #
+   public static defer parse_color(k)
+
+   #
+   # draw_arc(x, y, width, height, angle1, angle2)
+   #
+   public defer draw_arc(x, y, width, height, angle1, angle2)
+
+   #
+   # event() - return an event from this window, failing if none is available.
+   #
+   public defer event()
+
+   #
+   # draw_circle(x, y, r, theta, alpha)
+   #
+   public defer draw_circle(x, y, r, theta, alpha)
+
+   #
+   # draw_curve(x1,y1,...xN,yN)
+   # Draw a smooth curve through the given points.
+   #
+   public defer draw_curve(a[])
+
+   #
+   # Draw an image.  The image can be in icon image string format, raw image data, or
+   # a filename.
+   #
+   public defer draw_image(x, y, d)
+
+   #
+   # Copy an area from this window to another window.
+   #
+   public defer copy_to(dest, x1, y1, w, h, x2, y2)
+
+   #
+   # draw_line(x1,y1,...xN,yN)
+   #
+   public defer draw_line(a[])
+
+   #
+   # draw_point(x, y)
+   #
+   public defer draw_point(x, y)
+
+   #
+   # draw_polygon(x1,y1,...xN,yN)
+   #
+   public defer draw_polygon(a[])
+
+   #
+   # draw_rectangle(x, y, width, height)
+   #
+   public defer draw_rectangle(x, y, width, height)
+
+   #
+   # draw_string(x, y, s)
+   #
+   public defer draw_string(x, y, s)
+
+   #
+   # erase_area(x,y,width,height) - clear an area of the window
+   #
+   public defer erase_area(x, y, width, height)
+
+   #
+   # pending(x[]) - add to and then produce a list of events pending on window
+   #
+   public defer pending(a[])
+
+   #
+   # fill_arc(x, y, width, height, angle1, angle2)
+   #
+   public defer fill_arc(x, y, width, height, angle1, angle2)
+
+   #
+   # fill_circle(x, y, r, theta, alpha)
+   #
+   public defer fill_circle(x, y, r, theta, alpha)
+
+   #
+   # fill_polygon(x1, y1, ...xN, yN)
+   #
+   public defer fill_polygon(a[])
+
+   #
+   # fill_rectangle(x, y, width, height)
+   #
+   public defer fill_rectangle(x, y, width, height)
+
+   #
+   # Lower this window to the bottom of the window stack
+   #
+   public defer lower()
+
+   #
+   # Return the characters forming keys to palette p
+   #
+   public static defer palette_chars(p)
+
+   #
+   # Return color of key s1 in palette s2
+   #
+   public static defer palette_color(s1, s2)
+
+   #
+   # Return key of closest color to s in palette p
+   #
+   public static defer palette_key(s1, s2)
+
+   #
+   # Get the contents of some pixels as a list of colours
+   #
+   public defer get_pixels(x, y, width, height)
+
+   #
+   # Set the contents of some pixels from a list of colours
+   #
+   public defer set_pixels(data, x, y, width, height)
+
+   #
+   # Filter the given pixels according to the given filter spec.
+   #
+   public defer filter(filter, x, y, width, height)
+
+   #
+   # Return a rectangle (as a list of four integers), representing
+   # that part of the given rectangle which would be drawable on the
+   # canvas; ie the intersection of the rectangle, the window and the
+   # clip area if set.  If the result would be an empty area, the
+   # method fails.
+   #
+   public defer drawable(x, y, width, height)
+
+   #
+   # Return the current root x, y position as a two-element list.
+   #
+   public defer query_root_pointer()
+
+   #
+   # Return the current display size. as a two-element list.
+   #
+   public defer get_display_size()
+
+   #
+   # Return the current x, y position as a two-element list, relative to
+   # this window.
+   #
+   public defer query_pointer()
+
+   #
+   # Warp the pointer to the given location, relative to this window.
+   #
+   public defer warp_pointer(x, y)
+
+   #
+   # Raise window to the top of the window stack
+   #
+   public defer raise()
+
+   #
+   # Returns the width of string s, in pixels, as drawn using the
+   # current font.
+   #
+   public defer text_width(s)
+
+   #
+   # Frees the window. If no other bindings to the same canvas exist,
+   # the window is closed.
+   #
+   public defer uncouple()
+
+   #
+   # Writes an image of the rectangular area (x,y,w,h) to the file
+   # s. It fails if s cannot be written or if the specified area,
+   # after clipping by the window's edges, has a width or height of
+   # zero. The file is normally written in GIF format, but some forms
+   # of file names may select different formats on some graphics
+   # systems.
+   #
+   public defer write_image(s, x, y, w, h)
+
+   #
+   # Set the window system's selection
+   #
+   public defer own_selection(selection)
+
+   #
+   # Send a response to a selection request event.
+   #
+   public defer send_selection_response(requestor, property, target, selection, data)
+
+   #
+   # Get the window system's selection
+   #
+   public defer request_selection(selection, target_type)
+
+   #
+   # Close this window.
+   #
+   public defer close()
+
+   #
+   # Enqueue a window event.
+   #
+   public enqueue(eventcode, x, y, time, mod)
+      /x := -1
+      /y := -1
+      x +:= get_dx()
+      y +:= get_dy()
+      /time := 0
+      /mod := 0
+      return pending(eventcode, x, y, time, mod)
+   end
+
+   #
+   # Convenient method to open an image and return a hidden window with
+   # its contents.
+   # @param img the image
+   # @param win an optional window from which to get the background and
+   #            foreground colours (only relevant with bi-level icon
+   #            strings and transparent images).
+   #
+   public static open_image(img, win)
+      local w
+      w := if /win then
+         Window.open()
+      else
+         Window.open().
+           set_fg(win.get_fg()).
+           set_bg(win.get_bg()).
+           erase_area()
+      w.set_image(img) | {
+         w.close()
+         fail
+      }
+      return w
+   end
+
+   private new(wbp)
+      self.wbp := wbp
+      return
+   end
+end
+
+#
+# Event codes for selection events.
+#
+class Selection()
+   public static const
+      # Selection request event
+      REQUEST,     
+      # Selection response event
+      RESPONSE,
+      # Selection clear event
+      CLEAR,
+      # Set of any of the three event types
+      EVENTS,
+      PRIMARY,
+      SECONDARY,
+      CLIPBOARD,
+      UTF8_STRING_TARGET,
+      STRING_TARGET,
+      TARGETS_TARGET
+
+   private static init()
+      REQUEST := -30
+      CLEAR := -31
+      RESPONSE := -32
+      EVENTS := set(REQUEST, CLEAR, RESPONSE)
+      PRIMARY := "PRIMARY"      # These 3 must correspond to X Atom names.
+      SECONDARY := "SECONDARY"
+      CLIPBOARD := "CLIPBOARD"
+      STRING_TARGET := "STRING"
+      UTF8_STRING_TARGET := "UTF8_STRING"
+      TARGETS_TARGET := "TARGETS"
+   end
+end
+
+#
+# Event codes for mouse events.
+#
+class Mouse()
+   public static const
+      LEFT_PRESS,
+      MIDDLE_PRESS,
+      RIGHT_PRESS,
+      PRESS,
+      LEFT_RELEASE,
+      MIDDLE_RELEASE,
+      RIGHT_RELEASE,
+      RELEASE,
+      DRAG,
+      MOVEMENT,
+      WHEEL_UP,
+      WHEEL_DOWN,
+      WHEEL,
+      DRAG_OR_MOVEMENT,
+      ENTER,
+      EXIT,
+      CROSSING
+
+   private static init()
+      LEFT_PRESS :=           -1
+      MIDDLE_PRESS :=         -2
+      RIGHT_PRESS :=          -3
+      PRESS := set(LEFT_PRESS, MIDDLE_PRESS, RIGHT_PRESS)
+      LEFT_RELEASE :=         -4
+      MIDDLE_RELEASE :=       -5
+      RIGHT_RELEASE :=        -6
+      RELEASE := set(LEFT_RELEASE, MIDDLE_RELEASE, RIGHT_RELEASE)
+      MOVEMENT :=            -12
+      WHEEL_UP :=            -16
+      WHEEL_DOWN :=          -17
+      WHEEL := set(WHEEL_UP, WHEEL_DOWN)
+      ENTER :=               -18
+      EXIT :=                -19
+      CROSSING := set(ENTER, EXIT)
+      DRAG :=                -20
+      DRAG_OR_MOVEMENT := set(DRAG, MOVEMENT)
+   end
+end
+
+#
+# Event codes for key events.
+#
+class Key()
+   public static const
+      # Modifier flags
+      MOD_SHIFT,
+      MOD_LOCK,
+      MOD_CTRL,
+      MOD_META,
+      MOD_META2,
+      MOD_META3,
+      MOD_META4,
+      MOD_META5,
+      MOD_RELEASE,
+      # Key event codes
+      SHIFT_TAB,
+      COMPOSE,
+      DO,
+      DOWN,
+      END,
+      F1,
+      F2,
+      F3,
+      F4,
+      F5,
+      F6,
+      F7,
+      F8,
+      F9,
+      F10,
+      F11,
+      F12,
+      F13,
+      F14,
+      F15,
+      F16,
+      F17,
+      F18,
+      F19,
+      F20,
+      F21,
+      F22,
+      F23,
+      F24,
+      FIND,
+      HELP,
+      HOME,
+      INSERT,
+      KP_DOWN,
+      KP_LEFT,
+      KP_RIGHT,
+      KP_UP,
+      L1,
+      L2,
+      L3,
+      L4,
+      L5,
+      L6,
+      L7,
+      L8,
+      L9,
+      L10,
+      LEFT,
+      PF1,
+      PF2,
+      PF3,
+      PF4,
+      PAUSE,
+      PGDN,
+      PGUP,
+      PRSC,
+      R1,
+      R2,
+      R3,
+      R4,
+      R5,
+      R6,
+      R7,
+      R8,
+      R9,
+      R10,
+      R11,
+      R12,
+      R13,
+      R14,
+      R15,
+      RIGHT,
+      SCROLL_LOCK,
+      SELECT,
+      UP,
+      CURSOR,
+      CURSOR_V,
+      CURSOR_H,
+      SUPER_L,
+      SUPER_R,
+      MENU
+
+   private static init()
+      MOD_SHIFT :=    1
+      MOD_LOCK :=     2
+      MOD_CTRL :=     4
+      MOD_META :=     8 
+      MOD_META2 :=   16
+      MOD_META3 :=   32
+      MOD_META4 :=   64
+      MOD_META5 :=   128
+      MOD_RELEASE := 256
+$ifdef _X_WINDOW_SYSTEM
+      SHIFT_TAB :=           65056
+      COMPOSE :=             65312
+      DO :=                  65383
+      DOWN :=                65364
+      END :=                 65367
+      F1 :=                  65470
+      F2 :=                  65471
+      F3 :=                  65472
+      F4 :=                  65473
+      F5 :=                  65474
+      F6 :=                  65475
+      F7 :=                  65476
+      F8 :=                  65477
+      F9 :=                  65478
+      F10 :=                 65479
+      F11 :=                 65480
+      F12 :=                 65481
+      F13 :=                 65482
+      F14 :=                 65483
+      F15 :=                 65484
+      F16 :=                 65485
+      F17 :=                 65486
+      F18 :=                 65487
+      F19 :=                 65488
+      F20 :=                 65489
+      FIND :=                65384
+      HELP :=                65386
+      HOME :=                65360
+      INSERT :=              65379
+      KP_DOWN :=             65433
+      KP_LEFT :=             65430
+      KP_RIGHT :=            65432
+      KP_UP :=               65431
+      L1 :=                  65480  # clash with f11
+      L2 :=                  65481  # clash with f12
+      L3 :=                  65482
+      L4 :=                  65483
+      L5 :=                  65484
+      L6 :=                  65485
+      L7 :=                  65486
+      L8 :=                  65487
+      L9 :=                  65488
+      L10 :=                 65489
+      LEFT :=                65361
+      PF1 :=                 65425
+      PF2 :=                 65426
+      PF3 :=                 65427
+      PF4 :=                 65428
+      PAUSE :=               65299
+      PGDN :=                65366
+      PGUP :=                65365
+      PRSC :=                65377
+      R1 :=                  65490
+      R2 :=                  65491
+      R3 :=                  65492
+      R4 :=                  65493
+      R5 :=                  65494
+      R6 :=                  65495
+      R7 :=                  65496
+      R8 :=                  65497
+      R9 :=                  65498
+      R10 :=                 65499
+      R11 :=                 65500
+      R12 :=                 65501
+      R13 :=                 65502
+      R14 :=                 65503
+      R15 :=                 65504
+      RIGHT :=               65363
+      SCROLL_LOCK :=         65300
+      SELECT :=              65376
+      UP :=                  65362
+      SUPER_L :=             65515
+      SUPER_R :=             65516
+      MENU :=                65383
+$elsifdef _MS_WIN32
+      DOWN :=               40
+      END :=                35
+      SCROLL_LOCK :=        145
+      F1 :=                 112
+      F2 :=                 113
+      F3 :=                 114
+      F4 :=                 115
+      F5 :=                 116
+      F6 :=                 117
+      F7 :=                 118
+      F8 :=                 119
+      F9 :=                 120
+      F10 :=                121
+      F11 :=                122
+      F12 :=                123
+      F13 :=                124
+      F14 :=                125
+      F15 :=                126
+      F16 :=                127
+      F17 :=                128
+      F18 :=                129
+      F19 :=                130
+      F20 :=                131
+      F21 :=                132
+      F22 :=                133
+      F23 :=                134
+      F24 :=                135
+      HELP :=               47
+      HOME :=               36
+      INSERT :=             45
+      LEFT :=               37
+      PAUSE :=              19
+      PGDN :=               34
+      PGUP :=               33
+      PRSC :=               44
+      RIGHT :=              39
+      SELECT :=             41
+      UP :=                 38
+      SHIFT_TAB :=          0
+      COMPOSE :=            0
+      DO :=                 0
+      FIND :=               0
+      KP_DOWN :=            0
+      KP_LEFT :=            0
+      KP_RIGHT :=           0
+      KP_UP :=              0
+      L1 :=                 0
+      L2 :=                 0
+      L3 :=                 0
+      L4 :=                 0
+      L5 :=                 0
+      L6 :=                 0
+      L7 :=                 0
+      L8 :=                 0
+      L9 :=                 0
+      L10 :=                0
+      PF1 :=                0
+      PF2 :=                0
+      PF3 :=                0
+      PF4 :=                0
+      R1 :=                 0
+      R2 :=                 0
+      R3 :=                 0
+      R4 :=                 0
+      R5 :=                 0
+      R6 :=                 0
+      R7 :=                 0
+      R8 :=                 0
+      R9 :=                 0
+      R10 :=                0
+      R11 :=                0
+      R12 :=                0
+      R13 :=                0
+      R14 :=                0
+      R15 :=                0
+      SUPER_L :=            0
+      SUPER_R :=            0
+      MENU :=               0
+$endif
+
+      CURSOR := set(UP, DOWN, LEFT, RIGHT)
+      CURSOR_V := set(UP, DOWN)
+      CURSOR_H := set(LEFT, RIGHT)
+   end
+end

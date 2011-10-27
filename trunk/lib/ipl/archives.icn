@@ -1,0 +1,140 @@
+############################################################################
+#
+#	File:     archives.icn
+#
+#	Subject:  Procedures for reading files from archives
+#
+#	Author:   Gregg M. Townsend
+#
+#	Date:     March 5, 2000
+#
+############################################################################
+#
+#   This file is in the public domain.
+#
+############################################################################
+
+package ipl.archives
+
+import
+   io(BufferStream, FileOpt, FileStream, FilterInputStream,
+      LineFilterStream),
+   ipl.strings(endswith)
+
+# iszip(zname) succeeds if the named file appears to be a ZIP format
+# archive file.
+#
+procedure iszip(fname)		
+   local f, s
+   f := FileStream.open(fname, FileOpt.RDONLY) | fail
+   s := f.reads(4)
+   f.close()
+   return s === "PK\03\04"
+end
+
+#
+# {Stream} for reading the entries in an archive, one per line of the stream.
+#
+class ArchiveListerStream(LineFilterStream)
+   private
+      f
+
+   public succeeded()
+      return f.succeeded()
+   end
+
+   protected new(prog, args)
+      return cast(self,LineFilterStream).new(BufferStream(f := FilterInputStream(, prog, args)))
+   end
+end
+
+#
+# {Stream} for reading the entries in a zip archive, one per line of the stream.
+#
+class ZipDirStream(ArchiveListerStream)
+   protected gen()
+      local s, marker
+      every 1 to 3 do
+         expect_line() | fail
+      marker := "---------                     -------"
+      repeat {
+         s := expect_line() | fail
+         if s == marker then
+            return
+         suspend s[31:0]
+      }
+   end
+
+   public new(zname)
+      return cast(self,ArchiveListerStream).new("unzip", ["-l", zname])
+   end
+end
+
+# zipfile(zname, fname) returns a pipe from which the file fname
+# within the ZIP archive zname can be read.  It is assumed that zname
+# and fname are valid.
+#
+procedure zipfile(zname, fname)		
+   return FilterInputStream(, "unzip", ["-p", zname, fname])
+end
+
+#
+# {Stream} for reading the entries in a rar archive, one per line of the stream.
+#
+class RarDirStream(ArchiveListerStream)
+   protected gen()
+      local s, marker
+      every 1 to 8 do
+         expect_line() | fail
+      marker := repl("-", 79)
+      repeat {
+         s := expect_line() | fail
+         if s == marker then
+            return
+         suspend s[2:0]
+         expect_line() | fail
+      }
+   end
+
+   public new(rname)
+      return cast(self,ArchiveListerStream).new("unrar", ["v", "-c-", rname])
+   end
+end
+
+# rarfile(rname, fname) returns a pipe from which the file fname
+# within the rar archive rname can be read.  It is assumed that rname
+# and fname are valid.
+#
+procedure rarfile(rname, fname)		
+   return FilterInputStream(, "unrar", ["p", "-ierr", rname, fname])
+end
+
+procedure tartype(s)
+   s := map(s)
+   if endswith(s, ".tar.gz" | ".tgz") then
+      return "z"
+   if endswith(s, ".tar.bz2") then
+      return "j"
+   return ""
+end
+
+#
+# {Stream} for reading the entries in a tar archive, one per line of the stream.
+#
+class TarDirStream(ArchiveListerStream)
+   protected gen()
+      suspend |next_line()
+   end
+
+   public new(tname)
+      return cast(self,ArchiveListerStream).new("tar", ["tf" || tartype(tname), tname])
+   end
+end
+
+# tarfile(tname, fname) returns a pipe from which the file fname
+# within the tar archive rname can be read.  It is assumed that tname
+# and fname are valid.
+#
+procedure tarfile(tname, fname)		
+   return FilterInputStream(, "tar", ["xOf" || tartype(tname), tname, fname])
+end

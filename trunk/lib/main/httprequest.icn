@@ -1,0 +1,137 @@
+#
+# $Id$
+#
+
+package http
+
+import util, net, io
+
+#
+# Encapsulate one request to {HttpClient}.
+#
+class HttpRequest(MimeHeaders)
+   private readable 
+      url,
+      post_stream,
+      method,
+      data_stream,
+      username,
+      password,
+      referer,
+      range_start,
+      range_end,
+      content_type
+
+   #
+   # Set the desired url.
+   #
+   public set_url(url)
+      self.url := url
+      return self
+   end
+
+   #
+   # Set the range of data to get; either being &null implies the
+   # start or end of data respectively.
+   #
+   public set_range(s, e)
+      self.range_start := s
+      self.range_end := e
+      return self
+   end
+
+   #
+   # Set the data to be used in a POST request, as a stream to be read, and set
+   # the method to "POST" (if post_stream is not null).
+   #
+   # @param post_stream A Stream instance
+   #
+   public set_post_stream(post_stream)
+      self.post_stream := post_stream
+      if \self.post_stream then
+         set_method("POST")
+      return self
+   end
+
+   #
+   # Convenience method to set the post data from a table
+   # which represents html form post data.  The content type
+   # is set appropriately too.
+   #
+   public set_html_form_data(t)
+      set_post_stream(StringStream(URL.make_cgi_string(t)))
+      set_content_type("application/x-www-form-urlencoded")
+      return self
+   end
+
+   #
+   # Convenience method to set the post data from a Message
+   # which represents html form post data.  The content type
+   # is set appropriately too.
+   #
+   # The Message object must have content type multipart/form-data,
+   # and have an appropriate MultiPart set as its content object.
+   #
+   public set_multipart_form_data(m)
+      set_post_stream(StringStream(m.to_rfc822()))
+      set_content_type(m.get_content_type().to_rfc1521())
+      return self
+   end
+
+   #
+   # Set the content type of the post data.
+   #
+   public set_content_type(content_type)
+      self.content_type := content_type
+      return self
+   end
+
+   #
+   # Set the request method type.  The default is {GET}, unless post data is set, in which
+   # case the default is {POST}.
+   #
+   public set_method(method)
+      self.method := method
+      return self
+   end
+
+   #
+   # Set the referer page.
+   #
+   public set_referer(s)
+      self.referer := s
+      return self
+   end
+
+   #
+   # Set the username to use for authentication
+   #
+   public set_username(s)
+      self.username := s
+      return self
+   end
+
+   #
+   # Set the password to use for authentication
+   #
+   public set_password(s)
+      self.password := s
+      return self
+   end
+
+   #
+   # Set a stream to use to receive the data.
+   #
+   public set_data_stream(f)
+      self.data_stream := f
+      return self
+   end
+
+   public new()
+      cast(self,MimeHeaders).new()
+      method := "GET"
+      return
+   end
+end
+
+

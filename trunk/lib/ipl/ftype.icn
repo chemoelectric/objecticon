@@ -1,0 +1,36 @@
+############################################################################
+#
+#	File:     ftype.icn
+#
+#	Subject:  Procedure to produce type for file
+#
+#	Author:   Ralph E. Griswold
+#
+#	Date:     March 10, 1998
+#
+############################################################################
+#
+#   This file is in the public domain.
+#
+############################################################################
+#
+#  This procedure returns the file identification produced by file(1).
+#
+############################################################################
+#
+#  Requires:  UNIX
+#
+############################################################################
+
+package ipl.ftype
+
+import
+   io(ProgInputStream, use)
+
+procedure ftype(file)
+   local f
+   return use { 
+      f := ProgInputStream("file", ["-b", file]),
+      f.read()
+   }
+end

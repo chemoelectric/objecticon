@@ -1,0 +1,38 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package xml
+
+#
+# This class represents a CDATA section.
+#
+class CData(Node)
+   public content
+
+   #
+   # Get the content
+   #
+   public get_content()
+      return content
+   end
+
+   #
+   # Set the content
+   #
+   public set_content(content)
+      self.content := content
+      return self
+   end
+
+   public new(s)
+      cast(self,Node).new()
+      content := s
+      return
+   end
+end
+

@@ -1,0 +1,36 @@
+$start coact_impl
+    Op_Custom c:coact_ex
+         Op_Tmp tmp:4
+         Op_Tmp tmp:0
+         Op_Tmp tmp:1
+         Op_Tmp tmp:2
+         Op_Tmp tmp:3
+         FailureTransmitted
+    Op_CReturn
+         Op_Tmp tmp:4
+
+FailureTransmitted:
+    Op_CFail
+$end
+
+$start lang_Prog_get_event_impl_impl
+   Op_Custom c:activate_child_prog
+         Op_Tmp tmp:0
+   Op_Custom c:get_child_prog_result
+         Op_Tmp tmp:0
+         Op_Tmp tmp:1
+         ChildExited
+    Op_CReturn
+         Op_Tmp tmp:1
+
+ChildExited:
+    Op_CFail
+$end
+
+$start activate_handler_impl
+    Op_Custom c:coact_handler
+         Coactfail
+
+Coactfail:
+    Op_Custom c:fatalerr_139
+$end

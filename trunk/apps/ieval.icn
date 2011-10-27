@@ -1,0 +1,38 @@
+import io, lang, util, ipl.options, ipl.lists
+
+procedure create_prog(imps, links)
+   local tf, prog
+
+   imps ++:= set("ipl.ieval")  # Avoid changing imps parameter
+   prog := ""
+   every prog ||:= "import " || !imps || "\n"
+   prog ||:= "invocable all\n_
+procedure main(imports, files, opts)\n_
+    ipl.ieval.main_impl(imports, files, opts)\n_
+end\n"
+   return use {
+      tf := Files.make_temp_filename("ieval"),
+      compile(prog, tf, links),
+      save_var{Files.remove(tf), &why}
+   }
+end
+
+procedure compile(prog, tf, links)
+   local p
+   use {
+      p := FilterOutputStream(, "oit", ["-s", "-l", "2", "-o", tf, "-"] ||| links),
+      p.write(prog)
+   } | fail
+   p.succeeded() | fail
+   return lang.Prog.load(tf)
+end
+
+procedure main(a)
+   local opts, prog, imports, links
+   opts := options(a, "-i:*-l:*-w!-s!-hlim+-elim+")
+   imports := set()
+   every insert(imports, !str2list(!\opts["i"]))
+   links := \opts["l"] | []
+   prog := create_prog(imports, links) | stop(&why)
+   Prog.get_global("main", prog)(imports, a, opts)
+end

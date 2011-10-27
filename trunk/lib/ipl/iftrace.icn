@@ -1,0 +1,72 @@
+############################################################################
+#
+#	File:     iftrace.icn
+#
+#	Subject:  Procedures to trace Icon function calls
+#
+#	Author:   Stephen B. Wampler
+#
+#	Date:     July 14, 1997
+#
+############################################################################
+#
+#   This file is in the public domain.
+#
+############################################################################
+#
+#	Contributor:  Ralph E. Griswold
+#
+############################################################################
+#
+#    These procedures provide tracing for Icon functions by using procedure
+#  wrappers to call the functions.
+#
+#     iftrace(fncs[]) sets tracing for a list of function names.
+#
+############################################################################
+#
+#    Note: The functions that can be traced and their procedure wrappers should
+#  be organized and coordinated to assure consistency and to allow for
+#  extended function repertoire.
+#
+############################################################################
+#
+#  Links:  ifncs
+#
+############################################################################
+
+package ipl.iftrace
+
+import 
+   lang(Proc, Prog),
+   ipl.ifncs
+
+invocable all
+
+# trace built-in functions
+procedure iftrace(args[])		
+
+
+   every set_trace(!args)
+
+   return
+end
+
+procedure set_trace(vf)
+   local vp
+   static traceset
+
+   initial {
+      traceset := set()
+      every insert(traceset, Proc.get_name(Prog.get_functions()))
+      }
+    
+   if member(traceset,vf) then {
+      &trace := -1		# have to also trace all procedures!
+      vp := "ipl.ifncs." || vf
+      Prog.get_global(vp) :=: Prog.get_global(vf)
+      return
+      }
+   else fail
+
+end

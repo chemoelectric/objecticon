@@ -1,0 +1,141 @@
+package util
+
+class Connectable()
+   private listeners
+
+   #
+   # Helper method to create and fire an Event object from the given parameters.
+   #
+   public fire(type, param)
+      local l
+
+      if /type then 
+         runerr("null type to fire")
+
+      every l := !listeners do {
+         if /l.type | l.type === type then
+            l.proc(param, self, type)
+      }
+   end
+
+   #
+   # Create and connect a Listener to this object.
+   # @return the Listener created and added.
+   #
+   public connect_and_return(proc, etype)
+      local l
+      l := Listener(proc,
+                    etype)
+      listeners := copy(listeners)
+      put(listeners, l)
+      return l
+   end
+
+   #
+   # Create and connect a Listener to this object.
+   # @return self
+   #
+   public connect(proc, etype)
+      local l
+      l := Listener(proc,
+                    etype)
+      listeners := copy(listeners)
+      put(listeners, l)
+      return self
+   end
+
+   #
+   # Remove all {Listener}s with method pointers associated
+   # with the given object.
+   #
+   public disconnect_object(obj)
+      local t, l
+      t := []
+      every l := !listeners do
+         if is_methp_with_object(l.proc, obj) then
+            l.disable()
+         else 
+            put(t, l)
+      listeners := t
+      return self
+   end
+
+   private static defer is_methp_with_object(mp, o)
+
+   #
+   # Remove all {Listener}s with the given proc field.
+   #
+   public disconnect_proc(proc)
+      local t, l
+      t := []
+      every l := !listeners do {
+         if l.proc === proc then
+            l.disable()
+         else 
+            put(t, l)
+      }
+      listeners := t
+      return self
+   end
+
+   #
+   # Remove all {Listener}s created with the given co-expression
+   #
+   public disconnect_coexpression(coex)
+      local t, l
+      t := []
+      every l := !listeners do {
+         if l.coex === coex then
+            l.disable()
+         else 
+            put(t, l)
+      }
+      listeners := t
+      return self
+   end
+
+   #
+   # Remove all {Listener}s with the given type field.
+   #
+   public disconnect_type(type)
+      local t, l
+      t := []
+      every l := !listeners do {
+         if l.type === type then
+            l.disable()
+         else 
+            put(t, l)
+      }
+      listeners := t
+      return self
+   end
+
+   #
+   # Remove a Listener previously returned by {connect}
+   #
+   public disconnect(l)
+      local t
+      t := []
+      every put(t, l ~=== !listeners)
+      l.disable()
+      listeners := t
+      return self
+   end
+
+   #
+   # Reconnect a Listener previously returned by {connect} and
+   # then removed by {disconnect}.
+   #
+   public reconnect(l)
+      listeners := copy(listeners)
+      l.reenable()
+      put(listeners, l)
+      return self
+   end
+
+   public new()
+      listeners := []
+      return
+   end
+end
+

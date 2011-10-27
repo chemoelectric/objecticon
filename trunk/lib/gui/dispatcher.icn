@@ -1,0 +1,172 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import graphics, io
+
+#
+#
+# This class handles Icon events, dispatching them to
+# the appropriate dialog.  It also controls any active Tasks,
+# activating them between events as and when appropriate.
+#
+class Dispatcher()
+   public static const 
+      dialogs,
+      scheduler
+
+   private static const
+      BLOCKED_ALLOW,
+      BLOCKED_QUIET
+
+   private static init()
+      BLOCKED_ALLOW := Selection.EVENTS ++ 
+         set(Window.INVOKE_LATER, Window.RESIZE, Mouse.MOVEMENT) ++ Mouse.CROSSING
+      BLOCKED_QUIET := set(Mouse.RELEASE)
+      dialogs := set()
+      scheduler := Scheduler(Gui.IDLE_SLEEP)
+   end
+
+   #
+   # Add a dialog
+   #
+   public static add_dialog(d)
+      insert(dialogs, d)
+   end
+
+   #
+   # Delete a dialog
+   #
+   public static remove_dialog(d)
+      delete(dialogs, d)
+   end
+
+   public static work()
+      return do_event() | do_validate() | do_scheduler()
+   end
+
+   #
+   # Loop until dialog r is closed processing events and {Task}s.  If r
+   # is omitted, then loop until there are no open dialogs.
+   #
+   public static message_loop(r)
+      if /r then {
+         while *dialogs > 0 do
+            work() | delay(Gui.IDLE_SLEEP)
+      } else {
+         while \r.win do
+            work() | delay(Gui.IDLE_SLEEP)
+      }
+   end
+
+   #
+   # This is similar to the normal {message_loop} method, but instead
+   # of returning only when there are no dialogs open, this method
+   # will also return when it first finds it has no work to do,
+   # allowing the caller to undertake some activity before calling it
+   # again.
+   #
+   public static service(r)
+      if /r then {
+         while *dialogs > 0 do
+            work() | break
+      } else {
+         while \r.win do
+            work() | break
+      }
+   end
+
+   #
+   # A further variant of the message loop which never returns.  Even
+   # when there are no dialogs open, {Task}s continue to be activated.
+   #
+   public static message_loop_forever()
+      repeat {
+         work() | delay(Gui.IDLE_SLEEP)
+      }
+   end
+
+   public static do_event()
+      local d, bag, l
+      every d := !dialogs do {
+         l := d.win.pending()
+         if *l > 0 then {
+            /bag := []
+            if /d.is_blocked_flag | member(BLOCKED_ALLOW, l[1]) then
+               put(bag, d)
+            else {
+               # Discard and maybe beep in the window.
+               member(BLOCKED_QUIET, l[1]) | d.win.alert()
+               d.win.event()
+            }
+         }
+      }
+      if d := ?\bag then {
+         d.process_event(d.win.event())
+         return
+      }
+   end
+
+   public static do_validate()
+      local d, bag
+      every d := !dialogs do {
+         if d.needs_validate() then {
+            /bag := []
+            put(bag, d)
+         }
+      }
+      if d := ?\bag then {
+         d.validate()
+         return
+      }
+   end
+
+   public static do_scheduler()
+      return scheduler.work()
+   end
+
+   #
+   # Return a list of unblocked dialogs.
+   #
+   public static list_unblocked()
+      local d, res
+
+      res := []
+      every d := !dialogs do
+         if /d.is_blocked_flag then
+            put(res, d)
+
+      return res
+   end
+
+   #
+   # Generate any (unblocked) dialogs which are instances of
+   # the given class.  If the parameter is omitted, all unblocked
+   # dialogs are generated.
+   #
+   public static find_dialog(cl)
+      local d
+      every d := !dialogs do {
+         if /d.is_blocked_flag & 
+            (/cl | is(d, cl)) then
+             suspend d
+      }
+   end
+
+   public static new_task(e)
+      return Task(scheduler, e)
+   end
+
+   public static get_curr_task()
+      return \scheduler.curr_task
+   end
+
+   final private new()
+   end
+end

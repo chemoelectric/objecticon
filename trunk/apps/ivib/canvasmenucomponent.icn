@@ -1,0 +1,83 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+############################################################################
+#
+#
+#
+class CanvasMenuComponent(CanvasObject)
+   public 
+      event_method
+
+   #
+   # Generate code into Code object c.
+   #
+   public gen_code(c)
+      if \self.tooltip then
+         self.tooltip.gen_code(c)
+
+      c.line(name || " := " || self.class_name || "()")
+
+      if \self.is_shaded_flag then
+         c.chain("set_is_shaded(&yes)")
+
+      if \self.tooltip then
+         c.chain("set_tooltip(" || self.tooltip.name || ")")
+
+      if \self.accel then
+         c.chain("set_accel(" || image(self.accel) || ")")
+
+      if \self.event_method then {
+         c.chain("connect(" || self.event_method || ", Event.ACTION)")
+         c.add_method("private", self.event_method, ["ev"])
+         c.add_import("gui", "Event")
+      }
+
+      c.add_var(name, class_variable)
+      c.add_import(self.import_name, self.class_name)
+   end    
+
+   #
+   # Copy fields from self to c.
+   #
+   public dup_fields(c)
+      cast(self,CanvasObject).dup_fields(c)
+      c.accel := self.accel
+      c.event_method := self.event_method
+   end
+
+   private pre_decode()
+      new()
+   end
+
+   #
+   # Return the I/O template.
+   #
+   public static get_template()
+      suspend ["Name", "name"] |
+              ["Class Name", "class_name"] |
+              ["Import Name", "import_name"] |
+              ["Tooltip", "tooltip"] |
+              ["Accel", "accel"] |
+              ["Is shaded", "is_shaded_flag"] |
+              ["Event Method", "event_method"] |
+              ["Class Variable", "class_variable"] |
+              ["Parent", "parent"]
+   end
+
+   public gen_cos()
+      suspend !self.children
+   end
+
+   public new()
+      class_variable := 1
+      return
+   end
+end
+
+

@@ -1,0 +1,29 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+class CanvasTreeUI(CanvasComponentUI)
+   public create_canvas_component(canvas)
+      local t
+      t := CanvasTree()
+      t.set_size(180, 120)
+      return t
+   end
+
+   public get_category()
+      return "Other"
+   end
+
+   public get_name()
+      return "Tree"
+   end
+
+   public get_icon()
+      return "ivib.icn36"
+   end
+end
+

@@ -1,0 +1,35 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import xml, ipl.options, io
+
+procedure main(a)
+   local p, s, d, opt
+   p := XmlParser().set_do_namespaces(&no)
+
+   opt := options(a, "-u!")
+   *a = 1 | stop("usage: testnotwf source")
+   s := Files.file_to_string(a[1]) | stop("couldnt open" || a[1])
+   if \opt["u"] then
+      s := ucs(s) | exit(0) # stop("Invalid utf-8 in notwf case ", a[1], ": ",  &why)
+
+   if d := p.parse(s) then {
+      write("A not-wf case parsed successfully : ", a[1])
+      write("there were ", d.validity_errors, " validitiy errors")
+      write("Parsed:")
+      write(s)
+      write("Failure")
+      write("End===============================================================")
+      exit(1)
+   } else {
+      exit(0)
+   }
+
+end
+
+

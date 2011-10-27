@@ -1,0 +1,520 @@
+package io
+
+import undo, util, lang, ipl.strings, ipl.streams(get_null)
+
+class LineEditorStream(LineBasedStream)
+   package
+      subj,
+      pos
+   private
+      history_limit,
+      history,
+      history_start_no,
+      hpos,
+      hmod,
+      prompt,
+      undo_manager,
+      line_no,
+      nlines,
+      ctrl_d_flag,
+      tty,
+      isatty,
+      dim,
+      utf8_flag,
+      ti,
+      buff_flag,
+      buff
+
+   public set_history_limit(n)
+      self.history_limit := n
+      limit_history()
+      return self
+   end
+
+   public set_history(l)
+      self.history := l
+      self.history_start_no := 1
+      limit_history()
+      return self
+   end
+
+   public set_prompt(s)
+      self.prompt := s
+      return self
+   end
+
+   public set_utf8(f)
+      utf8_flag := check_flag(f)
+      return self
+   end
+
+   public get_history()
+      return .history
+   end
+
+   public get_history_item(n)
+      return .history[0 < n - history_start_no + 1]
+   end
+
+   public get_history_start_no()
+      return .history_start_no
+   end
+
+   public close()
+      return
+   end
+
+   public get_mode()
+      return READ
+   end
+
+   private move_hist(n)
+      if \utf8_flag then {
+         (subj == ucs(history[hpos])) | (hmod[hpos] := subj)
+         hpos +:= n
+         subj := \hmod[hpos] | ucs(history[hpos]) | u"?? bad utf8 in history"
+      } else {
+         (subj == string(history[hpos])) | (hmod[hpos] := subj)
+         hpos +:= n
+         subj := \hmod[hpos] | string(history[hpos])
+      }
+      pos := *subj + 1
+      undo_manager.clear()
+   end
+
+   public static get_console_size()
+      local w, h
+      # Could also use tput cols and tput lines to do this.
+      return run_stty("size") ? {
+         if h := integer(tab(many(&digits))) &
+            tab(upto(&digits)) &
+            w := integer(tab(many(&digits))) then [w, h]
+         else error("Couldn't interpret stty size output")
+      }
+   end
+
+   private static run_stty(params[])
+      local f, ss                   
+      ss := StringStream()          
+      use {                         
+         f := ProgInputStream("stty", params,,, get_null()),
+         f.copy_to(ss)                                      
+      } | fail                                              
+      return if f.get_exit_info().param = 0 then            
+         ss.str()                                           
+      else                                                  
+         error("stty returned non-zero status")             
+   end                                                      
+
+   private static read_terminfo_escape()
+      local ch, v
+      return case move(1) of {
+         "^":  char(iand(ord(move(1)), 8r37))
+         "\\": {
+            if any('01234567') & (v := char(iand("8r" || move(3), 8r377))) then
+               v
+            else case ch := move(1) of {
+               "0": "\200"
+               "E": "\e"
+               "e": "\e"
+               "n": "\n"
+               "l": "\l"
+               "r": "\r"
+               "t": "\t"
+               "b": "\b"
+               "f": "\f"
+               "s": " "
+               default: ch
+            }
+         }
+      }
+   end
+
+   private static parse_terminfo(f)
+      local desc, t, s, k, v
+      t := table()
+      every s := separate_lines(f) do {
+         s ? {
+            if any('#') then 
+               next
+            if /desc then {
+               desc := s
+               next
+            }
+            repeat {
+               tab(many(' \t'))
+               k := tab(upto(',=#')) | break
+               if any(',') then
+                  v := &yes
+               else if any('#') then {
+                  move(1)
+                  v := integer(tab(many(&digits)))
+               } else {
+                  move(1)
+                  v := ""
+                  repeat {
+                     v ||:= tab(upto('\\^,')) | break
+                     if any(',') then
+                        break
+                     v ||:= read_terminfo_escape()
+                  }
+               }
+               =","
+               insert(t, k, v)
+            }
+         }
+      }
+      return t
+   end
+
+   public static read_terminfo(name)
+      local f, params, out
+      params := ["-L"]
+      put(params, \name)
+      out := StringStream()
+      use { f := FilterOutputStream(out, "infocmp", params) } | fail
+      f.succeeded() | fail
+      return parse_terminfo(out.str())
+   end
+
+   protected read_line_impl()
+      \isatty | return tty.read_line()
+      if \ctrl_d_flag then
+         return
+      return use {
+         run_stty("-icanon",  "-echo"),
+         use {
+            # Enter/exit keyboard-transmit mode, see 
+            # http://www.mpimf-heidelberg.mpg.de/~rohm/computing/mpimf/notes/terminal.html
+            opt_write("keypad_xmit"),
+            read_line_impl2(),
+            opt_write("keypad_local")
+         },
+         run_stty("icanon",  "echo")
+      }
+   end
+
+   private opt_write(key, def)
+      local s
+      if s := \ti[key] | \def then
+         return tty.writes(s)
+      else
+         return
+   end
+
+   private read1()
+      local ch
+      if /buff_flag & (*buff > 0) then {
+         ch := buff[1]
+         buff := buff[2:0]
+         return ch
+      }
+      ch := tty.in(1) | fail
+      return \ch | error("Unexpected eof on tty")
+   end
+
+   private limit_history()
+      while *history > \history_limit do {
+         pop(history)
+         history_start_no +:= 1
+      }
+   end
+
+   private got()
+      if *subj > 0 then {
+         put(history, subj)
+         limit_history()
+      }
+      return string(subj)
+   end
+
+   private read_line_impl2()
+      local ch, p, n, ed, un, cmd
+      subj := if \utf8_flag then u"" else ""
+      pos := 1
+      hpos := *history + 1
+      hmod := table()
+      undo_manager.clear()
+      buff_flag := line_no := nlines := &null
+      dim := get_console_size() | fail
+      # Request line_no
+      tty.writes("\e[6n")
+      repeat {
+         if \line_no then 
+            show()
+         ch := read1() | fail
+         if \utf8_flag then {
+            # Read a utf8 sequence into ch.  On gibberish, just go round and try again.
+            un := Text.get_utf8_seq_len(ch) | next
+            every 2 to un do
+               ch ||:= read1() | fail
+            ch := ucs(ch) | next
+         }
+
+         if ch == "\e" then {
+            cmd := .ch || (ch := read1()) | fail
+            p := []
+            if ch == "O" then
+               cmd ||:= read1() | fail
+            else if ch == "[" then {
+               repeat {
+                  cmd ||:= (ch := read1()) | fail
+                  n := integer(ch) | break
+                  repeat {
+                     cmd ||:= (ch := read1()) | fail
+                     n := 10 * n + integer(ch) | break
+                  }
+                  put(p, n)
+                  ch == ";" | break
+               }
+            }
+            # Line no request response
+            if cmd[2] == "[" & cmd[-1] == "R" then {
+               line_no := p[1]
+               if \buff_flag then
+                  return got()
+            } else if \buff_flag then
+               buff ||:= string(cmd)
+            else case string(cmd) of {
+               ti["key_up"]: if hpos > 1 then move_hist(-1)
+               ti["key_down"]: if hpos <= *history then move_hist(1)
+               ti["key_right"]: pos := (*subj + 1 >= pos + 1)
+               ti["key_left"]: pos := (1 <= pos - 1)
+               ti["key_home"]: pos := 1
+               ti["key_end"]: pos := *subj + 1
+               ti["key_dc"]: {
+                  if pos <= *subj then {
+                     ed := LineEditorDeleteRightEdit(self)
+                     ed.doit()
+                     undo_manager.add_edit(ed)
+                  }
+               }
+            }
+         } else if \buff_flag then
+            buff ||:= string(ch)
+         else case string(ch) of {
+            "\^_": {
+               if undo_manager.can_undo() then
+                  undo_manager.undo()
+            }
+            "\^y": {
+               if undo_manager.can_redo() then
+                  undo_manager.redo()
+            }
+            "\^d": {
+               ctrl_d_flag := 1
+               if /line_no then
+                  tty.writes(prompt, subj)
+               tty.write()
+               if *subj > 0 then
+                  return got()
+               else
+                  return
+            }
+            "\^a": pos := 1
+            "\^e": pos := *subj + 1
+            "\^k": {
+               if pos < *subj + 1 then {
+                  ed := LineEditorDeleteToEndOfLineEdit(self)
+                  ed.doit()
+                  undo_manager.add_edit(ed)
+               }
+            }
+            "\d": {
+               if pos > 1 then {
+                  ed := LineEditorDeleteLeftEdit(self)
+                  ed.doit()
+                  undo_manager.add_edit(ed)
+               }
+            }
+            "\n": {
+               if /line_no then {
+                  tty.write(prompt, subj)
+                  # Buffer input until got line no request response, which is now out-of-date.
+                  buff_flag := 1
+               } else {
+                  tty.write()
+                  return got()
+               }
+            }
+            default: {
+               if any('\x20-\x7e\x80-\U10ffff', ch) then {
+                  ed := LineEditorDefaultEdit(self, ch)
+                  ed.doit()
+                  undo_manager.add_edit(ed)
+               }
+            }
+         }
+      }
+   end
+
+   private show()
+      local n, cursor_line, cursor_col
+      if \nlines then {
+         # Clear the lines written the previous time show() was called
+         every tty.writes("\e[",
+                          line_no to line_no + nlines - 1,
+                          ";1H", "\e[2K")
+      }
+
+      # The number of lines needed to display this line.
+      nlines := 1 + (*prompt + *subj) / dim[1]
+
+      # Check if we need to scroll some lines
+      n := nlines + line_no - dim[2] - 1
+
+      if n > 0 then {
+         # Scroll n lines
+         tty.writes("\e[", n ,"S")
+         line_no -:= n
+      }
+      # Calculate position of cursor
+      cursor_line := line_no + (*prompt + pos - 1) / dim[1]
+      cursor_col := (*prompt + pos - 1) % dim[1] + 1
+
+      # First, goto line line_no, col 1, and write prompt, subj
+      # Then put cursor at correct position.
+      tty.writes("\e[", line_no, ";1H", prompt, subj,
+                 "\e[", cursor_line, ";", cursor_col, "H")
+   end
+
+   public new()
+      cast(self,LineBasedStream).new()
+      tty := FileStream.stdin
+      if run_stty() then
+         isatty := &yes
+      utf8_flag := &yes
+      undo_manager := UndoManager()
+      history := []
+      history_start_no := 1
+      prompt := ""
+      buff := ""
+      ti := read_terminfo() | fail
+      return
+   end
+end
+
+class LineEditorEdit(UndoableEdit)
+   protected
+      parent,
+      pos
+
+   public doit()
+      save()
+      self.redo_impl()
+   end
+
+   public redo()
+      restore()
+      self.redo_impl()
+   end
+
+   public undo()
+      self.undo_impl()
+      restore()
+   end
+
+   protected defer redo_impl()
+   protected defer undo_impl()
+
+   private save()
+      self.pos := parent.pos
+   end
+
+   private restore()
+      parent.pos := self.pos
+   end
+
+   protected new(parent)
+      self.parent := parent
+      return
+   end
+end
+
+class LineEditorDefaultEdit(LineEditorEdit)
+   private s
+
+   public add_edit(other)
+      if is(other, LineEditorDefaultEdit) &
+         (other.pos = self.pos + *s) then {
+            s ||:= other.s
+            return
+      }
+   end
+
+   protected redo_impl()
+      parent.subj := parent.subj[1:parent.pos] || s || parent.subj[parent.pos:0]
+      parent.pos +:= *s
+   end
+
+   protected undo_impl()
+      parent.subj[self.pos +: *s] := ""
+   end
+
+   public new(parent, e)
+      cast(self,LineEditorEdit).new(parent)
+      s := e
+      return
+   end
+end
+
+class LineEditorDeleteLeftEdit(LineEditorEdit)
+   private ch
+
+   protected redo_impl()
+      ch := parent.subj[parent.pos - 1]
+      parent.subj[parent.pos - 1] := ""
+      parent.pos -:= 1
+   end
+
+   protected undo_impl()
+      if self.pos - 1 > *parent.subj then
+         parent.subj ||:= ch
+      else
+         parent.subj[self.pos - 1] := ch || parent.subj[self.pos - 1]
+   end
+
+   public new(parent)
+      cast(self,LineEditorEdit).new(parent)
+      return
+   end
+end
+
+class LineEditorDeleteRightEdit(LineEditorEdit)
+   private ch
+
+   protected redo_impl()
+      ch := parent.subj[parent.pos]
+      parent.subj[parent.pos] := ""
+   end
+
+   protected undo_impl()
+      if self.pos > *parent.subj then
+         parent.subj ||:= ch
+      else
+         parent.subj[self.pos] := ch || parent.subj[self.pos]
+   end
+
+   public new(parent)
+      cast(self,LineEditorEdit).new(parent)
+      return
+   end
+end
+
+class LineEditorDeleteToEndOfLineEdit(LineEditorEdit)
+   private del
+
+   protected redo_impl()
+      del := parent.subj[parent.pos:0]
+      parent.subj[parent.pos:0] := ""
+   end
+
+   protected undo_impl()
+      parent.subj[self.pos:0] := del
+   end
+
+   public new(parent)
+      cast(self,LineEditorEdit).new(parent)
+      return
+   end
+end

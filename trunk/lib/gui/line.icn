@@ -1,0 +1,79 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import util
+
+#
+# This class implements an etched Line, drawn within its region.
+#
+class Line(Component)
+   public
+      is_horizontal_flag,
+      line_width
+
+   public set_line_width(n)
+      self.line_width := n
+      return self
+   end
+
+   #
+   # Configure the orientation of the {Line}; the default is horizontal.
+   #
+   public set_is_horizontal(s)
+      self.is_horizontal_flag := check_flag(s)
+      self.invalidate()
+      return self
+   end
+
+   public get_default_width()
+      if /self.is_horizontal_flag then
+         return line_width
+   end
+
+   public get_default_height()
+      if \self.is_horizontal_flag then
+         return line_width
+   end
+
+   public display()
+      local i, x1, y1
+      if \self.is_horizontal_flag then {
+         y1 := self.y + (self.h - line_width) / 2 
+         every i := 0 to line_width / 2 - 1 do
+            Gui.style.draw_shadow_line(self.cbwin, 
+                                   self.x, y1 + i,
+                                   self.x + self.w - 1, y1 + i)
+         every i := line_width / 2 to line_width - 1 do
+            Gui.style.draw_hilite_line(self.cbwin, 
+                                   self.x, y1 + i,
+                                   self.x + self.w - 1, y1 + i)
+      } else {
+         x1 := self.x + (self.w - line_width) / 2
+         every i := 0 to line_width / 2 - 1 do
+            Gui.style.draw_shadow_line(self.cbwin, 
+                                   x1 + i, self.y,
+                                   x1 + i, self.y + self.h - 1)
+         every i := line_width / 2 to line_width - 1 do
+            Gui.style.draw_hilite_line(self.cbwin, 
+                                   x1 + i, self.y,
+                                   x1 + i, self.y + self.h - 1)
+      }
+   end
+
+   public new()
+      cast(self,Component).new()
+      self.line_width := Gui.BORDER_WIDTH
+      self.is_horizontal_flag := 1
+      return
+   end
+end
+
+
+

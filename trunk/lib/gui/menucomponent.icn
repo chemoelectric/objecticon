@@ -1,0 +1,481 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import util
+
+#
+# This is the superclass of all the objects that make up the
+# menu system (other than the top level {Components} of course).
+#
+# It encapsulates the position and space of labels in the parent
+# menu, as well as methods which allow this item to be a popup
+# submenu. A submenu need not necessarily contain other
+# {MenuComponent}s; see for example the {Palette} class.  A
+# conventional submenu, which does contain children, is in the
+# {Menu} class.
+#
+class MenuComponent(Rect,Connectable)
+   public 
+      label_x,                                
+      label_y,                                
+      label_w,  
+      label_h,                                
+      is_sub_menu_flag,                                
+      is_decorative_flag,                                
+      component_link,
+      parent_component,                               
+      is_shaded_flag,                                
+      parent,                  
+      tooltip,         
+      accel,
+      children,
+      border,
+      temp_win
+
+   public initially()
+      self.parent_component := (\parent).parent_component | component_link
+      (\self.border).initially(self.parent_component)
+      every (!self.children).initially()
+   end
+
+   public finally()
+      (\self.border).finally()
+      every (!self.children).finally()
+      self.parent_component := &null
+   end
+
+   #
+   # Add the given {MenuComponent} to the Menu.
+   #
+   # @param c   The {MenuComponent} to add.
+   # @param i   The index to add at; if omitted then the new component
+   # @          is appended to the end.
+   #
+   public add(c, i)
+      /i := 0
+      insert(self.children, i, c)
+      c.set_parent(self)
+      return self
+   end
+
+   #
+   # Get the index of the given child component
+   #
+   public get_index(c)
+      return keyof(self.children, c)
+   end
+
+   #
+   # Remove the {MenuComponent} from the menu.
+   # @param c   The {MenuComponent} to remove.
+   #
+   public remove(c)
+      remove_index(get_index(c))
+      return self
+   end
+
+   #
+   # Remove the {MenuComponent} at the given index from the list of children.
+   # @param i    The index
+   #
+   public remove_index(i)
+      self.children[i].set_parent(&null)
+      delete(self.children, i)
+      return self
+   end
+
+   #
+   # Succeed iff the component has been initialized with {init()}, but
+   # not yet cleaned up with {finally()}.
+   #
+   public is_initialized()
+      return \self.parent_component
+   end
+
+   public set_parent(x)
+      self.parent := x
+      return self
+   end
+
+   #
+   # Get the parent {MenuComponent}, or fail if there is none.
+   #
+   public get_parent()
+      return \self.parent
+   end
+
+   #
+   # Succeed iff the component is shaded
+   #
+   public is_shaded()
+      return \self.is_shaded_flag
+   end
+
+   #
+   # Succeed if the component is not shaded.
+   #
+   public is_unshaded()
+      return /self.is_shaded_flag
+   end
+
+   #
+   # Toggle whether or not the item is shaded.  If it is, it is
+   # displayed in a filtered way and will not accept input.
+   #
+   public toggle_is_shaded()
+      self.is_shaded_flag := toggle_flag(self.is_shaded_flag)
+      possibly_invalidate()
+      return self
+   end
+
+   #
+   # Set the shaded status of the component.
+   #
+   public set_is_shaded(s)
+      s := check_flag(s)
+      if (s ~=== self.is_shaded_flag) then {
+         self.is_shaded_flag := s
+         possibly_invalidate()
+      }
+      return self
+   end
+
+   #
+   # Invalidate the parent {Component} if this is the root of the menu hierarchy, or
+   # the parent menu if it is open.
+   #
+   public possibly_invalidate()
+      if /self.parent then
+         (\self.parent_component).invalidate()
+      else
+         (\parent.temp_win).invalidate(get_label_rect())
+   end
+
+   #
+   # The label's area as a {Rect}
+   #
+   public get_label_rect()
+      return Rect(label_x, label_y, label_w, label_h)
+   end
+
+   #
+   # Return the parent {Component}, for example a {MenuBar}.
+   #
+   public get_parent_component()
+      return \self.parent_component
+   end
+
+   public set_parent_component(x)
+      self.parent_component := x
+      return self
+   end
+
+   #
+   # Set the link to the parent component for the root of a tree of
+   # {MenuComponent}s.  The tree's {parent_component} links will then
+   # be set in the {initially} method.
+   #
+   public set_component_link(x)
+      self.component_link := x
+      return self
+   end
+
+   public is_sub_menu()
+      return \self.is_sub_menu_flag
+   end
+
+   public set_is_decorative(s)
+      self.is_decorative_flag := check_flag(s)
+      return self
+   end
+
+   public is_decorative()
+      return \self.is_decorative_flag
+   end
+
+   public in_label_region(e)
+      return (self.label_y <= e.y < self.label_y + self.label_h) & 
+         (self.label_x <= e.x < self.label_x + self.label_w)
+   end
+
+   #
+   # Set the tooltip.
+   #
+   public set_tooltip(x)
+      self.tooltip := x
+      return self
+   end
+
+   #
+   # Return the tooltip, if any.
+   #
+   public get_tooltip()
+      return \self.tooltip
+   end
+
+   #
+   # Set the mnemonic key, which will be used with the Alt key to provide keyboard
+   # shortcuts.
+   #
+   public set_accel(k)
+      self.accel := k
+      return self
+   end
+
+   #
+   # Get the mnemonic key, if present, or fail otherwise.
+   #
+   public get_accel()
+      return \self.accel
+   end
+
+   #
+   # Invoked by the menu system to set the component's label position.
+   #
+   public set_label_pos(x, y)
+      self.label_x := x
+      self.label_y := y
+      return self
+   end
+
+   #
+   # Close the menu system.
+   #
+   public close_all()
+      parent_component.close_all()
+   end
+
+   #
+   # Called when the menu component is selected
+   #
+   public succeed(ev)
+      close_all()
+      fire(Event.ACTION, ev)
+   end
+
+   #
+   # Abstract methods for the label sizes.
+   #
+   public defer get_label_left_width()
+   public defer get_label_left_height()
+   public defer get_label_mid_width()
+   public defer get_label_mid_height()
+   public defer get_label_right_width()
+   public defer get_label_right_height()
+
+   #
+   # Abstract method for the display of the labels.
+   #
+   public defer draw_label(W, lw, mw, rw)
+
+   #
+   # The following methods are only called for a MenuComponent which pops up
+   # a sub-menu, ie is_sub_menu_flag is non-null.
+   #
+
+   #
+   # Deduce which child label is under pointer, if any, given we're in the region.
+   #
+   public which_item(e)
+      local m
+      every m := !self.children do {
+         if /m.is_shaded_flag & /m.is_decorative_flag & m.in_label_region(e) then
+            return m
+      }
+   end
+
+   #
+   # Invoked after the x,y co-ordinates are set, this method should be implemented
+   # so that the submenu may initialize its size.  The method should leave the
+   # instance variables w and h initialized.
+   #
+   public defer resize()
+
+   #
+   # Invoked by the parent menu when the right cursor key is pressed.
+   #
+   public cursor_on()
+   end
+
+   #
+   # Display the submenu
+   #
+   public defer display(w)
+
+   #
+   # Handle the given event.
+   #
+   public defer handle_event(e)
+
+   #
+   # Is the cursor over us?
+   # 
+   public in_region(e)
+      return temp_win.in_region(e)
+   end
+
+   #
+   # Set the border to use - this relates to the popup submenu, 
+   # not the label.
+   #
+   public set_border(b)
+      (\self.border).finally()
+      self.border := b
+      if is_initialized() then {
+         self.border.initially(self.parent_component)
+      }
+      return self
+   end
+
+   protected create_proxy()
+      return SubMenuProxyComponent(self)
+   end
+
+   #
+   # Display the submenu. The preferred position is x, y.  If that is
+   # not possible, then xa, ya give another position to try, but this
+   # time the values are right-adjusted.  These params default to the
+   # right and bottom of the screen respectively.
+   #
+   public show(x, y, xa, ya)
+      local d, win, x1, y1, pd, dim, use_popup_win, rs, r, r0
+      /self.temp_win | fail
+
+      pd := self.parent_component.parent_dialog
+      win := pd.win
+
+      dim := win.get_display_size()
+      # Screen rectangle, in adjusted co-ordinates
+      rs := Rect(-win.get_x() - win.get_dx(), -win.get_y() - win.get_dy(), dim[1], dim[2])
+      # Intersection of dialog and screen, since it may be partly off-screen.
+      r := r0 := pd.intersect(rs)
+      self.x := x
+      self.y := y
+      self.resize()
+
+      # Note the first test that we must use a popup for the menu if
+      # the parent's menu is a popup; otherwise it may appear below
+      # one of the parent popups.
+      if Gui.style.allow_popup(self) &
+         (\ (\parent).temp_win.parent_dialog.popup_manager |
+          not r.contains(self)) then
+      {
+         # Use screen dimensions for calculations.
+         r := rs
+         use_popup_win := 1
+      }
+
+      /xa := r.x + r.w
+      /ya := r.y + r.h
+      if self.x < r.x then
+         x1 := r.x
+      else if self.x + self.w > r.x + r.w then
+         x1 := r.x <= xa - self.w
+      if self.y < r.y then
+         y1 := r.y
+      else if self.y + self.h > r.y + r.h then
+         y1 := r.y <= ya - self.h
+      if \x1 | \y1 then {
+         /x1 := self.x
+         /y1 := self.y
+         self.x := x1
+         self.y := y1
+         self.resize()
+      }
+
+      # The above calculations may still let us avoid a popup window.
+      if \use_popup_win &
+         not (\ (\parent).temp_win.parent_dialog.popup_manager) &
+         r0.contains(self) then 
+      {
+         use_popup_win := &null
+      }
+
+      if /use_popup_win then {
+         self.temp_win := create_proxy()
+         self.temp_win.set_pos(self.x + win.get_dx(), 
+                               self.y + win.get_dy())
+         self.temp_win.set_size(self.w, self.h)
+         self.temp_win.set_z(pd.get_top_z())
+         # Copy attribs of the parent component
+         self.temp_win.set_all_wattribs(self.parent_component.get_effective_wattribs())
+         pd.add(self.temp_win)
+         self.temp_win.initially()
+         self.temp_win.resize()
+         self.temp_win.invalidate()
+      } else {
+         d := PureDialog().
+            set_canvas("popup").
+            set_width(self.w).
+            set_height(self.h).
+            set_dx(-self.x).
+            set_dy(-self.y).
+            set_x(win.get_x() + win.get_dx() + self.x).
+            set_y(win.get_y() + win.get_dy() + self.y)
+         self.temp_win := create_proxy()
+         self.temp_win.set_pos(0, 0)
+         self.temp_win.set_size(self.w, self.h)
+         # Copy attribs of the parent component
+         self.temp_win.set_all_wattribs(self.parent_component.get_effective_wattribs())
+         d.add(self.temp_win)
+         pd.add_popup(d)
+         d.show()
+      }
+   end
+
+   #
+   # Hide the submenu.
+   #
+   public hide()
+      \self.temp_win | fail
+
+      if /self.temp_win.parent_dialog.popup_manager then {
+         self.temp_win.invalidate()
+         self.parent_component.parent_dialog.remove(self.temp_win)
+         self.temp_win.finally()
+      } else {
+         parent_component.parent_dialog.remove_popup(self.temp_win.parent_dialog)
+         self.temp_win.parent_dialog.dispose()
+      }
+      self.temp_win := &null
+   end
+
+   public new()
+      cast(self,Connectable).new()
+      self.children := []
+      return
+   end
+end
+
+
+class SubMenuProxyComponent(Component)
+   public menu
+
+   public display()
+      menu.display(self.cbwin)
+   end
+
+   public get_tooltip(e)
+      local m
+      every m := !menu.children do {
+         if m.in_label_region(e) then
+            return m.get_tooltip(e)
+      }
+   end
+
+   public new(m)
+      cast(self,Component).new()
+      self.menu := m
+      set_tooltip_follows_mouse(&yes)
+      return
+   end
+end
+
+

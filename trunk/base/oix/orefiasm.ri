@@ -1,0 +1,23 @@
+static word coexp_bang_impl_code[] = {
+   Op_Refresh,
+   Op_Tmp,
+   0,
+   Op_Tmp,
+   0,
+   1,
+   Op_Activate,
+   Op_Tmp,
+   1,
+   Op_Knull,
+   Op_Tmp,
+   0,
+   0,
+   (word)&coexp_bang_impl_code[19],
+   Op_CSuspend,
+   Op_Tmp,
+   1,
+   Op_Goto,
+   (word)&coexp_bang_impl_code[6],
+   Op_CFail,
+};
+#passthru CustomProc(coexp_bang_impl,coexp_bang_impl_code,0,0,0,0,2,0,0,"coexp_bang_impl")

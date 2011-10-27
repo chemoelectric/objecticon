@@ -1,0 +1,81 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import xml, ipl.options, io, lang
+
+procedure main(a)
+   local p, fmt, t, e, s, d, eh
+   if *a = 0 then {
+      write("Usage: testxml [FILE]... [OPTIONS]")
+      write("Test parse FILE(s)")
+      write("  -u                      Input is utf8")
+      write("  -g                      Show global names")
+      write("  -nc                     Don't preserve comments")
+      write("  -nv                     Don't validate")
+      write("  -fnw                    Format output with no whitespace")
+      write("  -ftt                    Format output with text trim")
+      write("  -far                    Format output as read")
+      write("  -fi INT                 Format output with given indent")
+      exit(0)
+   }
+
+   p := XmlParser()
+
+   eh := XmlErrorHandler()
+   eh.connect(p)
+
+   fmt := XmlFormatter()
+
+   t := options(a, "-u!-g!-nc!-nv!-fnw!-fi+-ftt!-far!")
+
+   if \t["nv"] then
+      p.set_validate(&no)
+
+   if \t["nc"] then
+      p.set_preserve_comments(&no)
+
+   if /t["g"] then
+      p.set_do_namespaces(&no)
+
+   #
+   # Setup formatter options
+   #
+   if \t["fnw"] then
+      fmt.set_no_whitespace(&yes)
+   if \t["ftt"] then
+      fmt.set_text_trim(&yes)
+   if \t["far"] then
+      fmt.set_as_read(&yes)
+   fmt.set_indent(\t["fi"])
+
+
+   every e := !a do {
+      s := Files.file_to_string(e) | stop("couldnt open" || e)
+      if \t["u"] then
+         s := ucs(s) | stop("Couldn't convert utf8: ", &why)
+
+      write("--- Parsing ", e)
+      if d := p.parse(s) then {
+         write("--- Parsing complete.  Document was well-formed")
+         write("--- Formatted input")
+         fmt.format(d)
+         write("--- Document structure")
+         to_stdout(d, 3)
+         d.show_entities()
+         d.show_element_declarations()
+         d.show_notation_declarations()
+         d.show_attribute_lists()
+         d.show_id_attributes()
+      } else {
+         write("--- Parsing failed: ", &why)
+      }
+
+   }
+end
+
+

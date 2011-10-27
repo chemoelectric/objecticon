@@ -1,0 +1,207 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import util, ipl.graphics(Zoom), graphics
+
+#
+# This class scales and displays an image.  The image source can
+# be an image string, an external file, or another window, and
+# can be changed at any time.
+#
+class Image(Component)
+   public 
+      image_str,
+      image_window,
+      image_cache,
+      win,
+      zoom_win,
+      scale_up_flag,
+      dont_close
+
+   #
+   # Set an image to use; the parameter is passed to {ImageCache.load}
+   # to load the image.
+   #
+   public set_image(x)
+      self.image_str := self.image_cache := self.image_window := &null
+      if is_initialized() then {
+         close_image()
+         self.image_str := x
+         load_image()
+         self.invalidate()
+      } else
+         self.image_str := x
+      return self
+   end
+
+   #
+   # Set an image to use; the parameter is passed to {ImageCache.get}
+   # to load the image.
+   #
+   public set_cache(x)
+      self.image_str := self.image_cache := self.image_window := &null
+      if is_initialized() then {
+         close_image()
+         self.image_cache := x
+         load_image()
+         self.invalidate()
+      } else
+         self.image_cache := x
+      return self
+   end
+
+   #
+   # Set a window to use as the image source.  It will not be closed
+   # by this Component.
+   #
+   public set_window(x)
+      self.image_str := self.image_cache := self.image_window := &null
+      if is_initialized() then {
+         close_image()
+         self.image_window := x
+         load_image()
+         self.invalidate()
+      } else
+         self.image_window := x
+      return self
+   end
+
+   #
+   # Blank the image
+   #
+   public clear_image()
+      self.image_str := self.image_cache := self.image_window := &null
+      if is_initialized() then {
+         close_image()
+         self.invalidate()
+      }
+      return self
+   end
+
+   public initially()
+      cast(self,Component).initially()
+      load_image()
+   end
+
+   public load_image()
+      if \self.image_str then
+         win := ImageCache.load(self.image_str, self.cbwin)
+      else if \self.image_cache then {
+         if win := ImageCache.get(self.image_cache, self.cbwin) then
+            dont_close := 1
+      } else if \self.image_window then {
+         win := self.image_window
+         dont_close := 1
+      }
+   end
+
+   #
+   # If set, then the image will be scaled up to fit in the space
+   # specified by {set_size()}.  The image will not be distorted, 
+   # but will be expanded to fill one of the dimensions depending 
+   # on its shape.  If the image is bigger than the specified size 
+   # then it will always be scaled down.
+   #
+   public set_scale_up(s)
+      self.scale_up_flag := check_flag(s)
+      return self
+   end
+
+   public close_image()
+      if \win & /dont_close then {
+         Gui.style.dispose(win)
+         win.close()
+      }
+      (\zoom_win).close()
+      dont_close := win := zoom_win := &null
+   end
+
+   public get_default_width()
+      return (\win).get_width() + border.get_total_width()
+   end
+
+   public get_default_height()
+      return (\win).get_height() + border.get_total_height()
+   end
+
+   public display()
+      local ir, img_w, img_h,
+         asp_r, asp_max, zoom_w, zoom_h, pt
+
+      border.draw_rect(self.cbwin, self)
+
+      \win | fail
+
+      ir := border.get_inner_rect(self)
+
+      img_w := win.get_width()
+      img_h := win.get_height()
+
+      if img_w = ir.w & img_h = ir.h then {
+         win.copy_to(self.cbwin,,,,, 
+                     self.x + border.get_l_inset(),
+                     self.y + border.get_l_inset())
+      } else {
+         #
+         # Scale the image to the desired size
+         #
+
+         asp_r := real(img_w) / real(img_h)
+         asp_max := real(ir.w) / real(ir.h)
+
+         if /self.scale_up_flag & (img_w <= ir.w) & (img_h <= ir.h) then {
+            zoom_w := img_w
+            zoom_h := img_h
+         } else {
+            if asp_r > asp_max then {
+               zoom_w := ir.w
+               zoom_h := integer(ir.w / asp_r)
+            } else {
+               zoom_w := integer(ir.h * asp_r)
+               zoom_h := ir.h
+            }
+         }
+
+         pt := ir.float(Size(zoom_w, zoom_h), border)
+
+         zoom_w <:= 1
+         zoom_h <:= 1
+
+         if \zoom_win &
+            zoom_win.get_width() = zoom_w & 
+            zoom_win.get_height() = zoom_h then
+               zoom_win.copy_to(self.cbwin, , , , , pt.x, pt.y)
+         else {
+            (\zoom_win).close()
+            zoom_win := Window.open().set_size(zoom_w, zoom_h) | syserr("Couldn't open temp window")
+            Zoom(win, zoom_win, 0, 0, img_w, img_h, 0, 0, zoom_w, zoom_h)
+            zoom_win.copy_to(self.cbwin, , , , , pt.x, pt.y)
+         }
+      }
+   end
+
+   public finally()
+      cast(self,Component).finally()
+      close_image()
+   end
+
+   public new()
+      cast(self,Component).new()
+      self.set_constraint("x_fill", &yes)
+      self.set_constraint("y_fill", &yes)
+      self.set_constraint("x_weight", 1.0)
+      self.set_constraint("y_weight",  1.0)
+      set_border(RaisedBorder())
+      return
+   end
+end
+
+
+

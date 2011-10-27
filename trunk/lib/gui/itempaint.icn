@@ -1,0 +1,226 @@
+package gui
+
+import lang
+
+#
+# An {ItemPaint} is an object which can be used in a component which
+# needs to display many pieces of data in a similar way (for example
+# the nodes in a tree or the rows in a table column.  An single
+# instance of {ItemPaint} is used to give size information about each
+# piece data, and to draw it.
+#
+class ItemPaint()
+   #
+   # Initialize the instance
+   # @param c The owning {Component}
+   public initially(c)
+   end
+
+   # Return the width of the given data.
+   # @param W The window to use for text metrics
+   # @param data The data item
+   #
+   public defer get_width(W, data)
+
+   # Return the height of the given data.
+   # @param W The window to use for text metrics
+   # @param data The data item
+   #
+   public defer get_height(W, data)
+
+   # Return the size of the given data, as a {Size} instance.
+   # @param W The window to use for text metrics
+   # @param data The data item
+   #
+   public defer get_size(W, data)
+
+   # Draw the given data item
+   # @param W The window to draw into
+   # @param data The data item
+   # @param x The x position
+   # @param y The y position
+   public defer draw(W, data, x, y)
+
+   # This method should be implemented if it is known that all data
+   # items will have the same width.
+   # @param W The window to use for text metrics
+   #
+   public get_constant_width(W)
+   end
+
+   # This method should be implemented if it is known that all data
+   # items will have the same height.
+   # @param W The window to use for text metrics
+   #
+   public get_constant_height(W)
+   end
+
+   # Convenient method to draw at a given point; just calls {draw}.
+   # @param W The window to draw into
+   # @param data The data item
+   # @param p The {Point} to draw at
+   public draw_point(W, data, p)
+      self.draw(W, data, p.x, p.y)
+   end
+
+   # Cleanup any resources used by this instance.
+   public finally()
+   end
+end
+
+# An {ItemPaint} in which each piece of data is an instance of
+# {Paint}.
+#
+class PaintAdapter(ItemPaint)
+   public get_width(W, data)
+      return data.w
+   end
+
+   public get_height(W, data)
+      return data.h
+   end
+
+   public get_size(W, data)
+      return data
+   end
+
+   public draw(W, data, x, y)
+      data.draw(W, x, y)
+   end
+end
+
+# A simple {ItemPaint} in which each piece of data is a string.
+#
+class TextItemPaint(ItemPaint)
+   public get_width(W, data)
+      return W.text_width(detab(data))
+   end
+
+   public get_constant_height(W)
+      return W.get_font_height()
+   end
+
+   public get_size(W, data)
+      return Size(W.text_width(detab(data)), W.get_font_height())
+   end
+
+   public draw(W, data, x, y)
+      draw_string_ex(W, x, y, detab(data))
+   end
+end
+
+# A parent class for {ItemPaint}s which wish to calculate sizes and
+# draw with a cloned window.
+#
+class WithCloneItemPaint(ItemPaint)
+   private cw, wt, ct
+
+   # This method must be implemented to create the cloned window
+   # @param W the base window to clone from
+   protected defer make_clone(W)
+
+   protected get_clone(W, ignore_clip)
+      (W === wt & (\ignore_clip | equals(ct, W.get_clip()))) | {
+         wt := W
+         ct := W.get_clip()
+         (\cw).uncouple()
+         cw := make_clone(W)
+      }
+      return cw
+   end
+
+   public finally()
+      (\cw).uncouple()
+      wt := ct := cw := &null
+   end
+end
+
+# An {ItemPaint} which draws text using a cloned window.  It must be
+# subclassed in order to provide the {make_clone} method.
+#
+class AttributedTextItemPaint(WithCloneItemPaint)
+   public get_width(W, data)
+      return get_clone(W, 1).text_width(detab(data))
+   end
+
+   public get_constant_height(W)
+      return get_clone(W, 1).get_font_height()
+   end
+
+   public get_size(W, data)
+      W := get_clone(W, 1)
+      return Size(W.text_width(detab(data)), W.get_font_height())
+   end
+
+   public draw(W, data, x, y)
+      draw_string_ex(get_clone(W), x, y, detab(data))
+   end
+end
+
+# An {ItemPaint} in which each piece of data is an icon image string.
+#
+class ImageStringItemPaint(ItemPaint)
+   public get_width(W, data)
+      return image_width(data)
+   end
+
+   public get_height(W, data)
+      return image_height(data)
+   end
+
+   public get_size(W, data)
+      return Size(image_width(data), image_height(data))
+   end
+
+   public draw(W, data, x, y)
+      draw_image_ex(W, x, y, data)
+   end
+end
+
+# An {ItemPaint} in which each piece of data is a window containing an
+# image to be copied to the destination.  It is the responsibility of
+# the user to initialize and dispose of the windows.
+#
+class ImageWindowItemPaint(ItemPaint)
+   public get_width(W, data)
+      return data.get_width()
+   end
+
+   public get_height(W, data)
+      return data.get_height()
+   end
+
+   public get_size(W, data)
+      return Size(data.get_width(), data.get_height())
+   end
+
+   public draw(W, data, x, y)
+      data.copy_to(W,,,,, x, y)
+   end
+end
+
+# An {ItemPaint} in which each piece of data is a key to be given to
+# {ImageCache.get}.  The resulting image is the copied to the
+# destination.
+#
+class ImageCacheItemPaint(ItemPaint)
+   public get_width(W, data)
+      return ImageCache.get(data, W).get_width() | 0
+   end
+
+   public get_height(W, data)
+      return ImageCache.get(data, W).get_height() | 0
+   end
+
+   public get_size(W, data)
+      local i
+      return if i := ImageCache.get(data, W) then
+         Size(i.get_width(), i.get_height())
+      else
+         Size(0, 0)
+   end
+
+   public draw(W, data, x, y)
+      ImageCache.get(data, W).copy_to(W,,,,, x, y)
+   end
+end

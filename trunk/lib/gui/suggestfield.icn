@@ -1,0 +1,304 @@
+package gui
+
+import graphics
+
+# This class is a {TextField} which provides suggested completions in
+# a popup list based on partial input.
+#
+class SuggestField(TextField)
+   public 
+      tl,
+      direction,
+      max_height,
+      max_width
+
+   protected
+      req, 
+      last,
+      mod
+
+   #
+   # Set the direction to pop-up in.  Options are {Direction.UP}, {Direction.DOWN} or
+   # {Direction.BEST} (the default).
+   #
+   public set_direction(s)
+      self.direction := s
+      return self
+   end
+
+   public create_popup()
+      return TextList()
+   end
+
+   #
+   # Set the maximum height of the dropdown list; by default it is as large as is necessary
+   # and can be accommodated on the screen.
+   #
+   public set_max_height(n)
+      self.max_height := n
+      return self
+   end
+
+   #
+   # Set the maximum width of the dropdown list; by default it is as wide as is necessary
+   # and can be accommodated on the screen.
+   #
+   public set_max_width(n)
+      self.max_width := n
+      return self
+   end
+
+   public on_textlist_selection(ev)
+      synch_contents()
+      member(Key.CURSOR, ev.code) | close_textlist()
+   end
+
+   public synch_contents()
+      set_contents(extract_selection())
+      mod := &null
+   end
+
+   public extract_selection()
+      return text(tl.object_get_selections()[1])
+   end
+
+   private requests()
+      local l, last
+      repeat {
+         while /mod do
+            req.sleep()
+         last := self.contents
+         if l := do_request() then {
+            # If contents have changed, or user has selected from list, skip.
+            (last == self.contents & \mod) | next
+            open_textlist(l)
+         }
+         mod := &null
+      }
+   end
+
+   #
+   # This method is implemented to provide the list of suggestions, based on
+   # the current contents of the textfield.
+   #
+   protected defer do_request()
+
+   public on_change(ev)
+      # Check here since req may be polling, which we don't want to interrupt.
+      if req.is_sleeping() then
+         req.interrupt()
+      mod := 1
+   end
+
+   public open_textlist(data)
+      local max_h, max_w, spc_below, spc_above, spc_right, d, dim, win, win_spc_above, 
+         win_spc_below, win_spc_right, use_popup_win, use_direction, rs, r
+
+      if \tl then
+         close_textlist()
+
+      if (*data = 0) | (parent_dialog.focus ~=== self) then
+         return
+
+      win := parent_dialog.win
+      dim := win.get_display_size()
+      # Screen rectangle, in adjusted co-ordinates
+      rs := Rect(-win.get_x() - win.get_dx(), -win.get_y() - win.get_dy(), dim[1], dim[2])
+      r := parent_dialog.intersect(rs)
+
+      win_spc_above := self.y - r.y
+      win_spc_below := r.y + r.h - self.y - self.h
+      win_spc_right := r.x + r.w - self.x
+
+      if Gui.style.allow_popup(self) then {
+         # Space available for popup limited by screen size
+         spc_above := self.y - rs.y
+         spc_below := rs.y + rs.h - self.y - self.h
+         spc_right := rs.x + rs.w - self.x
+      } else {
+         # Space available limited by window size (and screen size, if window is off screen)
+         spc_above := win_spc_above
+         spc_below := win_spc_below
+         spc_right := win_spc_right
+      }
+
+      max_h := case self.direction of {
+         Direction.UP: spc_above
+         Direction.DOWN: spc_below
+         Direction.BEST: max(spc_above, spc_below)
+         default: runerr("Unknown direction", self.direction)
+      }
+      max_w := spc_right
+      max_w >:= \self.max_width
+      max_h >:= \self.max_height
+
+      self.tl := create_popup().
+         set_all_wattribs(self.get_effective_wattribs()).
+         connect(self.on_textlist_selection, Event.SELECTION_CHANGED).
+         set_contents(data).
+         set_accepts_focus(&no).
+         set_draggable_cursor(&yes).
+         set_motion_cursor(&yes).
+         set_select_mode(Select.ONE).
+         set_selection_on_key_moves(&yes).
+         set_z(self.parent_dialog.get_top_z())
+      self.parent_dialog.add(tl)
+      self.tl.initially()
+      self.tl.set_ideal_size(self.w, 
+                             max_w,
+                             0, max_h)
+
+      if tl.w_spec > win_spc_right then
+         use_popup_win := 1
+      case self.direction of {
+         Direction.UP: {
+            if tl.h_spec > win_spc_above then
+               use_popup_win := 1
+            use_direction := Direction.UP
+         }
+         Direction.DOWN: {
+            if tl.h_spec > win_spc_below then
+               use_popup_win := 1
+            use_direction := Direction.DOWN
+         }
+         Direction.BEST: {
+            if tl.h_spec > win_spc_below then
+               if tl.h_spec <= spc_below then {
+                  use_popup_win := 1
+                  use_direction := Direction.DOWN
+               } else if tl.h_spec > win_spc_above then {
+                  use_popup_win := 1
+                  use_direction := Direction.UP
+               } else
+                  use_direction := Direction.UP
+            else
+               use_direction := Direction.DOWN
+         }
+      }
+
+      self.parent_dialog.enter_menu_mode(self)
+
+      if Gui.style.allow_popup(self) & \use_popup_win then {
+         # Remove tl from dialog and use add to popup window.
+         self.tl.finally()
+         self.parent_dialog.remove(tl)
+
+         d := if use_direction == Direction.DOWN then 
+            PureDialog().
+               set_canvas("popup").
+               set_width( tl.w_spec).
+               set_height(tl.h_spec).
+               set_dx(-self.x).
+               set_dy(-(self.y + self.h)).
+               set_x(win.get_x() + win.get_dx() + self.x).
+               set_y(win.get_y() + win.get_dy() + self.y + self.h)
+         else
+            PureDialog().
+               set_canvas("popup").
+               set_width( tl.w_spec).
+               set_height(tl.h_spec).
+               set_dx(-self.x).
+               set_dy(-(self.y - tl.h_spec)).
+               set_x(win.get_x() + win.get_dx() + self.x).
+               set_y(win.get_y() + win.get_dy() + self.y - tl.h_spec)
+
+         d.add(tl)
+         self.tl.set_pos(0, 0)
+         self.parent_dialog.add_popup(d)
+         d.show()
+      } else {
+         if use_direction == Direction.DOWN then 
+            self.tl.set_pos(self.x + win.get_dx(), self.y + self.h + win.get_dy())
+         else
+            self.tl.set_pos(self.x + win.get_dx(), self.y - self.tl.h_spec + win.get_dy())
+
+         self.tl.resize()
+         self.tl.invalidate()
+      } 
+
+      self.parent_dialog.connect(self.dialog_event, Event.ICON)
+   end
+
+   public close_textlist()
+      if /tl.parent_dialog.popup_manager then {
+         self.tl.invalidate()
+         self.tl.finally()
+         self.parent_dialog.remove(tl)
+      } else {
+         self.parent_dialog.remove_popup(self.tl.parent_dialog)
+         self.tl.parent_dialog.dispose()
+      }
+      self.tl := &null
+      self.parent_dialog.exit_menu_mode()
+      self.parent_dialog.disconnect_object(self)
+   end
+
+   public close_all()
+      close_textlist()
+   end
+
+   public dialog_event(e)
+      if (/e.release & (e.code === "\e")) | 
+          (member(Mouse.PRESS, e.code) & 
+                not(tl.in_region(e))) then 
+      {
+         #
+         # Mouse click outside textlist.  Close.
+         # 
+         self.close_textlist()
+      }
+   end
+
+   public initially()
+      cast(self,TextField).initially()
+      req.start()
+   end
+
+   public finally()
+      req.stop()
+      #
+      # Disposed with text list showing, just get rid of it
+      #
+      if \self.tl then 
+         self.close_textlist()
+      cast(self,TextField).finally()
+   end
+
+   public handle_return(e)
+      if \tl then
+         self.close_textlist()
+      cast(self,TextField).handle_return(e)
+   end
+
+   public handle_key_up(e)
+      if \tl then
+         tl.fire(Event.KEY_PRESS, e)
+   end
+
+   public handle_key_down(e)
+      if \tl then {
+         if *tl.get_selections() = 0 then {
+            tl.set_selections([1])
+            synch_contents()
+         } else
+            tl.fire(Event.KEY_PRESS, e)
+      }
+   end
+
+   public handle_key(e)
+      case e.code of {
+         Key.UP : handle_key_up(e)
+         Key.DOWN : handle_key_down(e)
+         default:
+            cast(self,TextField).handle_key(e)
+      }
+   end
+
+   public new()
+      cast(self,TextField).new()
+      connect(on_change, Event.CONTENT_CHANGED)
+      req := Dispatcher.new_task{requests()}
+      self.direction := Direction.BEST
+      return
+   end
+end

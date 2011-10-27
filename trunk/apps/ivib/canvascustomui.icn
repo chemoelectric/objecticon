@@ -1,0 +1,29 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+class CanvasCustomUI(CanvasComponentUI)
+   public create_canvas_component(canvas)
+      local t
+      t := CanvasCustom()
+      t.set_size(100, 100)
+      return t
+   end
+
+   public get_category()
+      return "Other"
+   end
+
+   public get_name()
+      return "Custom"
+   end
+
+   public get_icon()
+      return "ivib.icn21"
+   end
+end
+

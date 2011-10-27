@@ -1,0 +1,79 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+
+############################################################################
+#
+# Class for representing a Image on the canvas.
+#
+class CanvasImage(CanvasComponent,Image)
+   #
+   # Generate code into Code object c.
+   #
+   public gen_code(c)
+      cast(self,CanvasComponent).gen_code(c)
+      c.chain("set_image(" || image(\self.image_str) || ")")
+      c.chain("set_cache(" || image(\self.image_cache) || ")")
+      if \self.scale_up_flag then
+         c.chain("set_scale_up(&yes)")
+   end
+
+   #
+   # Duplicate object.
+   #
+   public dup()
+      local c
+      c := CanvasImage()
+      cast(self,CanvasComponent).dup_fields(c)
+      c.scale_up_flag := self.scale_up_flag
+      c.image_str := self.image_str
+      c.image_cache := self.image_cache
+      return c
+   end
+
+   #
+   # Return the I/O template.
+   #
+   public static get_template()
+      suspend CanvasComponent.get_template() |
+         ["Image Str", "image_str"] |
+         ["Image Cache", "image_cache"] |
+         ["Scale Up Flag", "scale_up_flag"]
+   end
+
+   #
+   # Overrides Image.display() 
+   #
+   public display()
+      if in_preview() | \self.win then
+         cast(self,Image).display()
+      else {
+         self.cbwin.draw_rectangle(self.x, self.y, self.w, self.h)
+         center_string(self.cbwin, self.x + self.w / 2, self.y + 10, "<Image>")
+      }
+   end
+
+   #
+   # Open the configuration dialog box.
+   #
+   public dialog()
+      return CanvasImageDialog(self)
+   end
+
+   public new()
+      cast(self,Image).new()
+      cast(self,CanvasComponent).new()
+      self.class_name := "Image"
+      self.import_name := "gui"
+      self.name := "image"
+      return
+   end
+end
+

@@ -1,0 +1,94 @@
+package ipl.gsuggest
+
+import
+   gui(Align, AttributedTextItemPaint, ItemPaintPTableColumn, PTable,
+       PTableColumn, SuggestField),
+   http(HttpClient, HttpRequest),
+   io(StringStream),
+   ipl.pdco(),
+   ipl.strings(replace),
+   json(JSONParser),
+   net(URL)
+
+class GSuggestField(SuggestField)
+   protected hc, domain
+
+   public finally()
+      cast(self,SuggestField).finally()
+      hc.close()
+   end
+
+   public set_domain(s)
+      domain := s
+      return self
+   end
+
+   public new()
+      cast(self,SuggestField).new()
+      set_contents(u"")
+      domain := "www.google.com"
+      hc := HttpClient().
+         set_task(req).
+         set_user_agent("AppleWebKit/534.24 (KHTML, like Gecko) Chrome/11.0.696.57")
+      return
+   end
+end
+
+class GoogleSuggestField(GSuggestField)
+   protected do_request()
+      local hr, data, jp, v, s, u
+      data := StringStream()
+      u := URL.parse("http://" || domain || "/complete/search").
+         set_cgi_parameters(table(, "q", contents))
+      hr := HttpRequest().
+         set_url(u).
+         set_data_stream(data).
+         set_header("Accept-Charset", "utf-8")
+      hc.retrieve(hr) | fail
+      s := ucs(data.str()) | fail
+      s ?:= (tab(upto('[')) & tab(-1))
+      jp := JSONParser()
+      v := jp.parse(s) | fail
+      return ipl.pdco.List{(!v[2])[1]}
+   end
+end
+
+class SymbolItemPaint(AttributedTextItemPaint)
+   protected make_clone(W)
+      return W.clone().set_fg("blue")
+   end
+end
+
+class TickerSuggestField(GSuggestField)
+   public create_popup()
+      return PTable().
+         add_column(ItemPaintPTableColumn().set_item_paint(SymbolItemPaint())).
+         add_column(PTableColumn()).
+         add_column(PTableColumn().set_weight(1).set_align(Align.R))
+   end
+
+   public extract_selection()
+      return tl.object_get_selections()[1][1]
+   end
+
+   protected do_request()
+      local hr, data, jp, v, s, u, e, l
+      data := StringStream()
+      u := URL.parse("http://" || domain || "/finance/match").
+         set_cgi_parameters(table(, "q", contents))
+      hr := HttpRequest().
+         set_url(u).
+         set_data_stream(data).
+         set_header("Accept-Charset", "utf-8")
+      hc.retrieve(hr) | fail
+      s := ucs(data.str()) | fail
+      # Google has a habit of using illegal \x escape sequences
+      s := replace(s, "\\x", "\\u00")
+      jp := JSONParser()
+      v := jp.parse(s) | fail
+      l := []
+      every e := !\v[u"matches"] do
+         put(l, [(u"" ~== e[u"t"]), e[u"n"], e[u"e"]])
+      return l
+   end
+end

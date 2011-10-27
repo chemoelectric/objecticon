@@ -1,0 +1,34 @@
+package util
+
+#
+# Convert to flag value (&yes/&no)
+#
+procedure flag(s)
+   # Flag values just return themselves
+   if s === (&yes | &no) then
+      return s
+
+   s := map(string(s)) | fail
+   if s == ("y" | "&yes" | "yes" | "t" | "true" | "on" | "1") then
+      return &yes
+   if s == ("n" | "&no" | "no" | "f" | "false" | "off" | "0") then
+      return &no
+
+   fail
+end
+
+#
+# Check if a flag is &yes or &no, or give a runtime error message.
+#
+procedure check_flag(f)
+   if f === (&yes | &no) then
+      return f
+   runerr(171, f)
+end
+
+#
+# Toggle the value of a flag.
+#
+procedure toggle_flag(f)
+   return if /f then &yes else &no
+end

@@ -1,0 +1,168 @@
+#
+# $Id$
+#
+
+package mail
+
+import datastruct(ClTable), util(error)
+
+#
+# This class represents a content disposition
+#
+class ContentDisposition()
+   private readable
+      type,
+      parameters
+
+   #
+   # Set type type
+   #
+   public set_type(t)
+      self.type := t
+      return self
+   end
+
+   #
+   # Get the type
+   #
+   public get_type()
+      return .type
+   end
+
+   #
+   # Get the parameter for the given key.
+   #
+   # @param key the key
+   public get_parameter(key)
+      if parameters.member(key) then
+         return parameters.get(key)
+   end
+
+   #
+   # Set the parameter to the given value
+   # @param key the key
+   # @param value the value
+   public set_parameter(key, value)
+      parameters.insert(key, value)
+      return self
+   end
+
+   private parameter_error(h, s)
+      return error("Error parsing " || h || " parameter: " || image(s) || ": " || &why)
+   end
+
+   #
+   # Get the "filename" parameter, or fail if absent
+   #
+   public get_filename()
+      return get_parameter("filename") | error("Missing parameter: filename")
+   end
+
+   #
+   # Set the "filename" parameter.
+   #
+   public set_filename(v)
+      set_parameter("filename", v)
+      return self
+   end
+
+   #
+   # Get the "creation-date" parameter as a {Time} object.
+   # @fail if the parameter is absent or cannot be parsed.
+   # @return a {Time} instance
+   #
+   public get_creation_date()
+      local s, p
+      s := get_parameter("creation-date") | return error("Missing parameter: creation-date")
+      p := RFC822Parser()
+      return p.parse_date_time(s) | parameter_error("creation-date", s)
+   end
+
+   #
+   # Set the "creation-date" parameter from the given {Time} object.
+   # @param t the {Time} from which to set the date field.
+   #
+   public set_creation_date(t)
+      return set_parameter("creation-date", t.to_rfc822())
+   end
+
+   #
+   # Get the "modification-date" parameter as a {Time} object.
+   # @fail if the parameter is absent or cannot be parsed.
+   # @return a {Time} instance
+   #
+   public get_modification_date()
+      local s, p
+      s := get_parameter("modification-date") | return error("Missing parameter: modification-date")
+      p := RFC822Parser()
+      return p.parse_date_time(s) | parameter_error("modification-date", s)
+   end
+
+   #
+   # Set the "modification-date" parameter from the given {Time} object.
+   # @param t the {Time} from which to set the date field.
+   #
+   public set_modification_date(t)
+      return set_parameter("modification-date", t.to_rfc822())
+   end
+
+   #
+   # Get the "read-date" parameter as a {Time} object.
+   # @fail if the parameter is absent or cannot be parsed.
+   # @return a {Time} instance
+   #
+   public get_read_date()
+      local s, p
+      s := get_parameter("read-date") | return error("Missing parameter: read-date")
+      p := RFC822Parser()
+      return p.parse_date_time(s) | parameter_error("read-date", s)
+   end
+
+   #
+   # Set the "read-date" parameter from the given {Time} object.
+   # @param t the {Time} from which to set the date field.
+   #
+   public set_read_date(t)
+      return set_parameter("read-date", t.to_rfc822())
+   end
+
+   #
+   # Get the "size" parameter as an integer, or fail if it's absent or
+   # not an integer.
+   #
+   public get_size()
+      local s
+      s := get_parameter("size") | return error("Missing parameter: size")
+      return integer(s) | error("Parameter size: " || image(s) || ": Not an integer")
+   end
+
+   #
+   # Set the "size" parameter from the given integer.
+   #
+   public set_size(n)
+      return set_parameter("size", string(integer(n)))
+   end
+
+   public static parse(s)
+      local p
+      p := RFC822Parser()
+      return p.parse_content_disposition(s)
+   end   
+
+   public to_rfc1521()
+      local s, e
+      s := type 
+      every e := !parameters.sort() do
+         s ||:= "; " || e[1] || "=" || RFC822Parser.escape_1521_value(e[2])
+      return s
+   end
+
+   public new(type, parameters)
+      /parameters := ClTable()
+      self.type := type
+      self.parameters := parameters
+      return
+   end
+end
+
+

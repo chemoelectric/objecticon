@@ -1,0 +1,119 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+
+############################################################################
+#
+# Class for representing a OverlaySet on the canvas.
+#
+class CanvasOverlaySet(CanvasComponent,OverlaySet)
+   #
+   # Generate code into Code object c.
+   #
+   public gen_code(c)
+      every (!self.children).gen_code(c)
+      cast(self,CanvasComponent).gen_code(c)
+      c.chain("add(" || (!self.children).name || ")")
+      c.chain("set_which_one(" || self.which_one.name || ")")
+   end
+
+   #
+   # Duplicate object.
+   #
+   public dup()
+      local c, e, e1
+      c := CanvasOverlaySet()
+      cast(self,CanvasComponent).dup_fields(c)
+      every e := !self.children do {
+         e1 := e.dup()
+         c.add(e1)
+         if self.which_one === e then
+            c.set_which_one(e1)
+      }
+      return c
+   end
+      
+   #
+   # Return the I/O template.
+   #
+   public static get_template()
+      suspend CanvasComponent.get_template() |
+         ["Children", "children"] |
+         ["Which One", "which_one"]
+   end
+
+   #
+   # Overrides CanvasComponent.is_inside()
+   #
+   public is_inside(c)
+      return (c ~=== self) & self.which_one.is_inside(c)
+   end
+
+   #
+   # Overrides CanvasComponent.which_cursor_over() 
+   #
+   public which_cursor_over(e)
+      local o
+      cast(self,CanvasComponent).which_cursor_over(e) | fail
+      if in_resize_region(e) then
+         return self
+      if o := self.which_one.which_cursor_over(e) then
+         return o
+      return self
+   end
+
+   #
+   # Open the configuration dialog box.
+   #
+   public dialog()
+      return CanvasOverlaySetDialog(self)
+   end
+
+   public allows_null_width()
+      local c
+      every c := !self.children do
+         c.allows_null_width() | fail
+      return
+   end
+
+   public allows_null_height()
+      local c
+      every c := !self.children do
+         c.allows_null_height() | fail
+      return
+   end
+
+   public string_rep()
+      local l, c, s
+      l := []
+      every c := !self.children do {
+         s := c.name
+         if c === self.which_one then
+            s ||:= "*"
+         put(l, s)
+      }
+      put(l, "")
+      return l
+   end
+
+   public gen_cos()
+      suspend cast(self,CanvasComponent).gen_cos() | !self.children
+   end
+
+   public new()
+      cast(self,OverlaySet).new()
+      cast(self,CanvasComponent).new()
+      self.class_name := "OverlaySet"
+      self.import_name := "gui"
+      self.name := "overlay_set"
+      return
+   end
+end
+

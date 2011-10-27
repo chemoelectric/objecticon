@@ -1,0 +1,63 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+#
+# Selection from a list
+#
+class ListSpin(SelectionList,StaticSpin)
+   public old_selection
+
+   public apply_selection()
+      local s
+      s := self.selection_list[\self.selection] | ""
+      self.view.set_label(s)
+   end
+
+   public start_change(e)
+      self.old_selection := self.selection
+   end
+
+   public end_change(e)
+      if self.old_selection ~=== self.selection then
+         fire(Event.SELECTION_CHANGED, e)
+   end
+
+   public do_increment()
+      if *selection_list = 0 then
+         fail
+      if /self.selection | self.selection = *self.selection_list then
+         self.set_selection(1)
+      else
+         self.set_selection(self.selection + 1)
+   end
+
+   public do_decrement()
+      if *selection_list = 0 then
+         fail
+      if /self.selection | (self.selection = 1) then
+         self.set_selection(*self.selection_list)
+      else
+         self.set_selection(self.selection - 1)
+   end
+
+   public initially()
+      \self.selection_list | runerr("no selection list specified")
+      cast(self,StaticSpin).initially()
+   end
+
+   public get_default_width()
+      local t
+      t := 0
+      every t <:= self.cbwin.text_width(!self.selection_list)
+      return border.get_total_width() + up.get_preferred_width() + t + view.border.get_total_width()
+   end
+end
+
+

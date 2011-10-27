@@ -1,0 +1,24 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+#
+# This class displays an icon.  It is just a {Label}, with
+# different border alignment settings, suitable for displaying an
+# image rather than text.
+#
+class Icon(Label)
+   public new()
+      # Bypass Label's constructor to save creating a border twice.
+      cast(self,Component).new()
+      self.set_border(EmptyBorder().set_insets(0, 0, 0, 0))
+      return
+   end
+end
+

@@ -1,0 +1,154 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import graphics
+
+#
+# This is similar to {MenuBar}, but holds just a single
+# drop-down menu, rather than several.  It may be placed anywhere on
+# the dialog, whereas a {MenuBar} would invariably be placed along the top.
+#
+class MenuButton(Component)
+   public 
+      menu, 
+      which_open,
+      accel_skip
+
+   #
+   # Set the menu to be displayed when the component is clicked.
+   # @param c   The {Menu}.
+   #
+   public set_menu(c)
+      self.menu := c
+      c.set_component_link(self)         
+      return self
+   end
+
+   public initially()
+      \self.menu | runerr("no menu set")
+      cast(self,Component).initially()
+      self.parent_dialog.connect(self.dialog_event, Event.ICON)
+      self.menu.initially()
+   end
+
+   public finally()
+      self.parent_dialog.disconnect_object(self)
+      if \self.which_open then
+         self.close_menu()
+      self.menu.finally()
+      cast(self,Component).finally()
+   end
+
+   public display()
+      menu.draw_label(self.cbwin, 0, menu.label_w, 0)
+      if menu.is_shaded() then
+         Gui.style.shade_rectangle(self.cbwin,
+                                    self.x, self.y, self.w, self.h)
+      border.draw_rect(self.cbwin, self)
+   end
+
+   public open_menu()
+      self.parent_dialog.enter_menu_mode(self)
+      self.which_open := self.menu
+      self.menu.show(self.x,
+                     self.y + self.h,, self.y)
+   end
+
+   public close_menu()
+      self.menu.hide()
+      self.which_open := &null
+      self.parent_dialog.exit_menu_mode()
+   end
+
+   public close_all()
+      close_menu()
+   end
+
+   public make_partial()
+      close_menu()
+   end
+
+   public go_right()
+   end
+
+   public go_left()
+   end
+
+   public handle_press(e)
+      if self.in_region(e) then {
+         if /self.which_open then {
+            if menu.is_unshaded() then
+               self.open_menu()
+         } else
+            self.close_menu()
+      } else
+         (\self.which_open).handle_event(e)
+   end
+
+   public handle_release(e)
+      if not in_region(e) then
+         (\self.which_open).handle_event(e)
+   end
+
+   public handle_accel(e)
+      if /self.which_open then
+         self.open_menu()
+      self.menu.cursor_on()
+      # See comment in MenuBar.handle_accel
+      accel_skip := e
+   end
+
+   public match_accel(e)
+      return self.menu.accel === e & menu.is_unshaded()
+   end
+
+   public get_tooltip(e)
+      return \self.tooltip | 
+         (menu.in_label_region(e) & menu.get_tooltip(e))
+   end
+
+   public dialog_event(e)
+      local ec
+      (self.is_unshaded() & self.is_unhidden()) | fail
+      ec := e.code
+      if e === accel_skip then
+         accel_skip := &null
+      else if member(Mouse.PRESS, ec) then 
+         handle_press(e)
+      else if member(Mouse.RELEASE, ec) then 
+         handle_release(e)
+      else
+         (\self.which_open).handle_event(e)
+   end
+
+   public get_default_width()
+      return self.menu.get_label_mid_width() + border.get_total_width()
+   end
+
+   public get_default_height()
+      return self.menu.get_label_mid_height() + border.get_total_height()
+   end
+
+   public layout()
+      self.menu.label_x := self.x + border.get_l_inset()
+      self.menu.label_y := self.y + border.get_t_inset()
+      self.menu.label_w := self.w - border.get_total_width()
+      self.menu.label_h := self.h - border.get_total_height()
+   end
+
+   public new()
+      cast(self,Component).new()
+      self.set_border(RaisedBorder())
+      return
+   end
+end
+
+
+

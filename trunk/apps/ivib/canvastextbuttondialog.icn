@@ -1,0 +1,19 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+############################################################################
+#
+#
+#
+class CanvasTextButtonDialog(CanvasButtonDialog)
+   public setup()
+      has_label_down := 1
+      cast(self,CanvasButtonDialog).setup()
+   end
+end
+

@@ -1,0 +1,355 @@
+#
+# $Id$
+#
+
+package net
+
+import 
+   util, 
+   io,
+   posix
+
+#
+# Common base class for a client class which holds a connection to a
+# server and communicates using CRLF-terminated lines.
+#
+class NetClient(Connectable, HasTask)
+   public static const 
+      CONNECTING_EVENT,
+      CONNECTED_EVENT,
+      CLOSED_EVENT,
+      WRITING_STRING_EVENT,
+      WRITING_LINE_EVENT,
+      READ_LINE_EVENT,
+      READ_STRING_EVENT
+   
+   private static init()
+      CONNECTING_EVENT := "Connecting"
+      CONNECTED_EVENT := "Connected"
+      CLOSED_EVENT := "Closed"
+      WRITING_STRING_EVENT := "Writing string"
+      WRITING_LINE_EVENT := "Writing line"
+      READ_LINE_EVENT := "Read line"
+      READ_STRING_EVENT := "Read string"
+   end
+
+   private readable
+      path,
+      server,
+      port,
+      timeout,
+      ssl_flag,
+      ssl_verify_flag
+
+   private
+      connection,
+      ssl_connection,
+      sbuff
+
+   # 
+   # Fail and set the error code, and close the connection.
+   #
+   protected error_and_close(a)
+      error(a)
+      close()
+   end
+
+   # Set the timeout in ms to use.  If {&null}, then no timeout will
+   # be used.
+   #
+   public set_timeout(timeout)
+      self.timeout := timeout
+      return self
+   end
+
+   private do_poll(for)
+      return choose_poll([connection, for], timeout)
+   end
+
+   private do_dns_query()
+      local p, v
+      if /task then
+         return SocketStream.dns_query(server)
+      p := BgDns(server).
+         set_task(task)
+      p.start()
+      v := p.poll()
+      p.join()
+      return if type(v) == "list" then
+         v
+      else
+         error(v)
+   end
+
+   #
+   # Open the connection.
+   #
+   protected open()
+      local r, domain, addr, msg_addr
+
+      close()
+      fire(CONNECTING_EVENT)
+
+      if \server then {
+         domain := ProtocolFormat.INET
+         addr := "inet:" || do_dns_query()[1] || ":" || port | fail
+         msg_addr := server || " (" || addr || ")"
+      } else if \path then {
+         domain := ProtocolFormat.UNIX
+         msg_addr := addr := "unix:" || path
+      } else
+         runerr("Neither server/port nor path set")
+
+      connection := SocketStream.socket(domain)
+      connection.flag(FileOpt.NONBLOCK) | {
+         close()
+         return error("Couldn't put socket in non-blocking mode: " || &why)
+      }
+
+      connection.connect(addr) | {
+         if errno() = Errno.EINPROGRESS then {
+            r := do_poll(Poll.OUT) | {
+               close()
+               return error("Couldn't connect to " || msg_addr || ": " || &why)
+            }
+            if /r then {
+               close()
+               return error("Couldn't connect to " || msg_addr || ": timeout")
+            }
+            poll_out_test(r[1]) | {
+               close()
+               return error("Couldn't connect to " || msg_addr || ": socket error")
+            }
+         } else {
+            close()
+            return error("Couldn't connect to " || msg_addr || ": " || &why)
+         }
+      }
+      if \ssl_flag then {
+         # Connecting in non-blocking mode is too complicated for SSL.
+         connection.flag(, FileOpt.NONBLOCK) | {
+            close()
+            return error("Couldn't put socket out of non-blocking mode: " || &why)
+         }
+         ssl_connection := SslStream(connection, 
+                                     if \ssl_verify_flag then server else &null) | {
+            close()
+            return error("Couldn't open SSL connection: " || &why)
+         }
+      }
+
+      sbuff := ""
+      fire(CONNECTED_EVENT)
+      return
+   end
+
+   #
+   # Close the connection
+   #
+   public close()
+      if \ssl_connection then {
+         ssl_connection.close()
+         connection.close()
+         ssl_connection := connection := &null
+         fire(CLOSED_EVENT)
+      } else if \connection then {
+         connection.close()
+         connection := &null
+         fire(CLOSED_EVENT)
+      }
+      return
+   end
+
+   #
+   # Set the path to use (implies using PF_UNIX socket domain)
+   #
+   public set_path(s)
+      path := s
+      return self
+   end
+
+   #
+   # Set the server to use (implies using PF_INET socket domain)
+   #
+   public set_server(s)
+      server := s
+      return self
+   end
+
+   #
+   # Set the port
+   #
+   public set_port(n)
+      port := n
+      return self
+   end
+
+   #
+   # Low-level write on the connection. 
+   #
+   private send(s)
+      local i, r
+      s := string(s) | runerr(103, s)
+      while *s > 0 do {
+         r := do_poll(Poll.OUT) | return error("Send poll failed: " || &why)
+         if /r then return error("Send failed (timeout)")
+         poll_out_test(r[1]) | return error("Send failed (socket error)")
+         i := if \ssl_connection then
+            ssl_connection.out(s) | fail
+         else
+            connection.out(s) | fail
+         s := s[i+1 : 0]
+      }
+      return
+   end
+
+   #
+   # Low-level read on the connection. 
+   #
+   private recv(len)
+      local r
+      r := do_poll(Poll.IN) | return error("Receive poll failed: " || &why)
+      if /r then return error("Receive failed (timeout)")
+      poll_in_test(r[1]) | return error("Receive failed (socket error)")
+      return if \ssl_connection then
+         ssl_connection.in(len)
+      else
+         connection.in(len)
+   end
+
+   #
+   # Write the given string to the connection.
+   #
+   protected write_str(s)
+      fire(WRITING_STRING_EVENT, s)
+      return send(s)
+   end
+
+   #
+   # Write a single line to the connection, appending CRLF to the output stream.
+   # 
+   protected write_line(s)
+      /s := ""
+      fire(WRITING_LINE_EVENT, s)
+      return send(s || "\r\n") 
+   end
+
+   #
+   # Read a single line from the connection, and return it.  Returns {&null} on eof.
+   #
+   protected read_line()
+      local line, s
+
+      repeat {
+         #
+         # Look for a line and if found return it.
+         #
+         sbuff ? {
+            if line := tab(find("\r\n")) then {
+               move(2)
+               sbuff := tab(0)
+               fire(READ_LINE_EVENT, line)
+               return line
+            }
+         }
+         s := recv(1048576) | fail
+         if /s then {
+            if *sbuff = 0 then
+               return
+            line := sbuff
+            sbuff := ""
+            fire(READ_LINE_EVENT, line)
+            return line
+         }
+         sbuff ||:= s
+      }
+   end
+
+   #
+   # This method is the same as {read_line}, except that on end of
+   # file it fails, setting {&why}, rather than returning {&null}.
+   #
+   protected expect_line()
+      local s
+      s := read_line() | fail
+      return \s | error("Unexpected eof")
+   end
+
+   #
+   # Read up to len bytes on the connection, returning {&null} on eof.
+   #
+   protected read_str(len)
+      local t
+      #
+      # Use the line buffer if it has anything in it.
+      #
+      if *sbuff > 0 then {
+         sbuff ? {
+            t := move(len) | tab(0)
+            sbuff := tab(0)
+         }
+      } else {
+         t := recv(len) | fail
+         if /t then
+            return
+      }
+      fire(READ_STRING_EVENT, t)
+      return t
+   end
+
+   # This method is the same as {read_str}, except that on end of file
+   # it fails, setting {&why}, rather than returning {&null}.
+   #
+   protected expect_str(len)
+      local s
+      s := read_str(len) | fail
+      return \s | error("Unexpected eof")
+   end
+
+   protected is_open()
+      if \self.connection then
+         return
+   end
+
+   #
+   # A flag value.  When set, indicate that the connection should be wrapped in
+   # an SslStream.
+   #
+   public set_ssl(s)
+      self.ssl_flag := check_flag(s)
+      return self
+   end
+
+   #
+   # A flag value.  When set, indicate that the remote host's identity should be
+   # verified.  By default, this flag is on.
+   #
+   public set_ssl_verify(s)
+      self.ssl_verify_flag := check_flag(s)
+      return self
+   end
+
+   protected new()
+      cast(self,Connectable).new()
+      sbuff := ""
+      ssl_verify_flag := &yes
+      return
+   end
+end
+
+class BgDns(Process)
+   private host
+
+   public run()
+      local r
+      if r := SocketStream.dns_query(host) then
+         send(r)
+      else
+         send(&why)
+   end
+
+   public new(host)
+      self.host := host
+      return
+   end
+end

@@ -1,0 +1,567 @@
+$include "oigram_tab.icn"
+
+package eval
+
+import ipl.pdco, ipl.lists, lang, util, exception, parser
+
+class EvaluatorEnv()
+   public defer get(k, ev)
+end
+
+class DefaultEvaluatorEnv(EvaluatorEnv)
+   private 
+      table,
+      write_globals_flag
+
+   public get(k, ev)
+      return (if \write_globals_flag then glookup(k, ev) else .glookup(k, ev)) | tlookup(k)
+   end
+
+   private tlookup(k)
+      if upto('.', k) then {
+         k ? if ="default." then
+            return table[tab(0)]
+         runerr("no such id: " || k)
+      }
+      return table[k]
+   end
+
+   private glookup(k, ev)
+      local t, f, s
+      if upto('.', k) then {
+         return k ? if ="default." then
+            lang.Prog.get_global(tab(0))
+         else
+            lang.Prog.get_global(k)
+      }
+      t := []
+      if lang.Prog.get_global(k) then
+         put(t, k)
+      every s := !\ev.get_imports() do {
+         f := s || "." || k
+         if lang.Prog.get_global(f) then
+            put(t, f)
+      }
+      if *t = 1 then
+         return lang.Prog.get_global(t[1])
+      if *t > 1 then
+         runerr("ambiguous name: " || k || "(" || list2str(t) || ")")
+   end
+
+   public set_table(t)
+      self.table := t
+      return self
+   end
+
+   public set_write_globals(f)
+      write_globals_flag := check_flag(f)
+      return self
+   end
+
+   public new(t)
+      /t := table()
+      self.table := t
+      return
+   end
+end
+
+class Evaluator()
+   private
+      # Map of nodes (loops, breaks) to the enclosing loop node.
+      loops,
+      brk,
+      subject,
+      imports,
+      pos,
+      # Map of nodes (loops, breaks) to the topmost scan node in the enclosing loop
+      scans,
+      dispatch,
+      cdispatch,
+      env,
+      node,
+      tcases
+
+   private compute_loops(n, loop, scan)
+      if is(n, Node) then
+         cdispatch[n.label](n, loop, scan)
+   end
+
+   private cdo_loop(n, loop, scan)
+      loops[n] := loop
+      scans[n] := scan
+      every compute_loops(n.gen(), n)
+   end
+
+   private cdo_create(n, loop, scan)
+      every compute_loops(n.gen())
+   end
+
+   private cdo_break(n, loop, scan)
+      loops[n] := \loop | throw("break without loop")
+      scans[n] := scan
+   end
+
+   private cdo_breakexpr(n, loop, scan)
+      loops[n] := \loop | throw("break without loop")
+      scans[n] := scan
+      every compute_loops(n.gen(), loops[loop], scans[loop])
+   end
+
+   private cdo_next(n, loop, scan)
+      loops[n] := \loop | throw("next without loop")
+      scans[n] := scan
+   end
+
+   private cdo_exit(n, loop, scan)
+      throw("suspend/return/fail not allowed")
+   end
+
+   private cdo_scan(n, loop, scan)
+      every compute_loops(n.child(1), loop, scan)
+      /scan := n
+      every compute_loops(n.child(3), loop, scan)
+   end
+
+   private cdo_default(n, loop, scan)
+      every compute_loops(n.gen(), loop, scan)
+   end
+
+   private loop(n, ex)
+      local res
+      brk[n] := &current
+      while res := !ex do {
+         case res of {
+            "break": break
+            "next": next
+            default: return res
+         }
+      }
+   end
+
+   private restore(n)
+      local x
+      if x := \scans[n] then {
+         &subject := subject[x]
+         &pos := pos[x]
+      }
+   end
+
+   private save(n)
+      subject[n] := &subject
+      pos[n] := &pos
+      return
+   end
+
+   private do_everydo(n)
+      local e
+      e := create_E(n.child(2))
+      suspend E(loop(n, create while @e do E(n.child(4)) ))
+   end
+
+   private do_every(n)
+      local e
+      e := create_E(n.child(2))
+      suspend E(loop(n, create while @e ))
+   end
+
+   private create_E(e)
+      return create E(e)
+   end
+
+   private pos_list(x, i)
+      local l
+      l := []
+      every put(l, x.gen().pos)
+      return l
+   end
+
+   private do_invoke(n)
+      local x
+      x := pos_list(ExprList(n, 3))
+      suspend case *x of {
+         0: E(n.child(1))()
+         1: E(n.child(1))(E(x[1]))
+         2: E(n.child(1))(E(x[1]),E(x[2]))
+         3: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]))
+         4: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]))
+         5: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]))
+         6: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]))
+         7: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]))
+         8: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]))
+         9: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]))
+         10: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]))
+         11: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                                   E(x[11]))
+         12: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                                   E(x[11]),E(x[12]))
+         13: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                                   E(x[11]),E(x[12]),E(x[13]))
+         14: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                                   E(x[11]),E(x[12]),E(x[13]),E(x[14]))
+         15: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                                   E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15]))
+         16: E(n.child(1))(E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                                   E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15]),E(x[16]))
+         default: runerr("too many parameters")
+      }
+   end
+
+   private do_coinvoke(n)
+      local x
+      x := pos_list(ExprList(n, 3))
+      suspend case *x of {
+         0: E(n.child(1)){}
+         1: E(n.child(1)){E(x[1])}
+         2: E(n.child(1)){E(x[1]),E(x[2])}
+         3: E(n.child(1)){E(x[1]),E(x[2]),E(x[3])}
+         4: E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4])}
+         5: E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5])}
+         6: E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6])}
+         7: E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7])}
+         8: E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8])}
+         9: E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9])}
+         10: E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10])}
+         11: E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                                   E(x[11])}
+         12: E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                                   E(x[11]),E(x[12])}
+         13: E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                                   E(x[11]),E(x[12]),E(x[13])}
+         14: E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                                   E(x[11]),E(x[12]),E(x[13]),E(x[14])}
+         15: E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                                   E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15])}
+         16: E(n.child(1)){E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                                   E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15]),E(x[16])}
+         default: runerr("too many parameters")
+      }
+   end
+
+   private do_subscript(n)
+      local x
+      x := pos_list(ExprList(n, 3))
+      suspend case *x of {
+         0: E(n.child(1))[]
+         1: E(n.child(1))[E(x[1])]
+         2: E(n.child(1))[E(x[1]),E(x[2])]
+         3: E(n.child(1))[E(x[1]),E(x[2]),E(x[3])]
+         4: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4])]
+         5: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5])]
+         6: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6])]
+         7: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7])]
+         8: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8])]
+         9: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9])]
+         10: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10])]
+         11: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                           E(x[11])]
+         12: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                           E(x[11]),E(x[12])]
+         13: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                           E(x[11]),E(x[12]),E(x[13])]
+         14: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                           E(x[11]),E(x[12]),E(x[13]),E(x[14])]
+         15: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                           E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15])]
+         16: E(n.child(1))[E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+                           E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15]),E(x[16])]
+         default: runerr("too many subscripts")
+      }
+   end
+
+   private do_paren(n)
+      local x
+      x := pos_list(ExprList(n, 2))
+      suspend case *x of {
+         0:  &null
+         1:  E(x[1])
+         2:  (E(x[1]),E(x[2]))
+         3:  (E(x[1]),E(x[2]),E(x[3]))
+         4:  (E(x[1]),E(x[2]),E(x[3]),E(x[4]))
+         5:  (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]))
+         6:  (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]))
+         7:  (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]))
+         8:  (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]))
+         9:  (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]))
+         10: (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]))
+         11: (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+              E(x[11]))
+         12: (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+              E(x[11]),E(x[12]))
+         13: (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+              E(x[11]),E(x[12]),E(x[13]))
+         14: (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+              E(x[11]),E(x[12]),E(x[13]),E(x[14]))
+         15: (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+              E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15]))
+         16: (E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+              E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15]),E(x[16]))
+         default: runerr("too many parenthesized expressions")
+      }
+   end
+
+   private do_brack(n)
+      local x, l
+      x := pos_list(ExprList(n, 2))
+      suspend case *x of {
+         0:  []
+         1:  [E(x[1])]
+         2:  [E(x[1]),E(x[2])]
+         3:  [E(x[1]),E(x[2]),E(x[3])]
+         4:  [E(x[1]),E(x[2]),E(x[3]),E(x[4])]
+         5:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5])]
+         6:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6])]
+         7:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7])]
+         8:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8])]
+         9:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9])]
+         10:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10])]
+         11:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+               E(x[11])]
+         12:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+               E(x[11]),E(x[12])]
+         13:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+               E(x[11]),E(x[12]),E(x[13])]
+         14:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+               E(x[11]),E(x[12]),E(x[13]),E(x[14])]
+         15:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+               E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15])]
+         16:  [E(x[1]),E(x[2]),E(x[3]),E(x[4]),E(x[5]),E(x[6]),E(x[7]),E(x[8]),E(x[9]),E(x[10]),
+               E(x[11]),E(x[12]),E(x[13]),E(x[14]),E(x[15]),E(x[16])]
+         default: {
+            l := []
+            every put(l, create_E(!x))
+            copy(Generate!l)
+         }
+      }
+   end
+
+   private do_case(n)
+      local l, v, cc, def
+      l := pos_list(CaseList(n, 5))
+      if v := E(n.child(2)) then {
+         every cc := !l do {
+            if cc.label == "cclause" then {
+               if v === E(cc.child(1)) then {
+                  suspend E(cc.child(3))
+                  fail
+               }
+            } else # Default clause
+               def := cc
+         }
+         if \def then
+            suspend E(def.child(3))
+      }
+   end
+
+   private do_tcase(n)
+      local l, v, cc, def, t
+      if /tcases[n] then {
+         l := pos_list(CaseList(n, 5))
+         every cc := !l do {
+            if cc.label == "defaultcclause" then {
+               def := cc
+               break
+            }
+         }
+         t := table(def)
+         every cc := !l do {
+            if cc.label == "cclause" then
+               every t[E(cc.child(1))] := cc
+         }
+         tcases[n] := t
+      }
+      if v := E(n.child(2)) then
+         suspend E(tcases[n, v].child(3))
+   end
+
+   private do_section(n) 
+      suspend case n.child(4).tok of {
+         COLON : E(n.child(1))[E(n.child(3)):E(n.child(5))]
+         PCOLON : E(n.child(1))[E(n.child(3))+:E(n.child(5))]
+         MCOLON : E(n.child(1))[E(n.child(3))-:E(n.child(5))]
+      }
+   end
+
+   private do_dottedident(n)
+      local ls
+      ls := Util.dottedid2string(n.child(1))
+      if (ls == "default") | member(\imports, ls) then
+         return env.get(ls || "." || n.child(3).s, self)
+      suspend lang.Class.get(E(n.child(1)), n.child(3).s)
+   end
+
+   private do_keyword(n) 
+      local s, f
+      s := "&" || n.child(2).s
+      f := lang.Prog.get_keyword(s) | runerr("invalid keyword: "|| s)
+      suspend f() 
+   end
+
+   private do_and(n) suspend E(n.child(1)) & E(n.child(3)) end
+   private do_Bqmark(n) suspend 1(E(n.child(1)),save(n)) ? E(n.child(3)) end
+   private do_swap(n) suspend E(n.child(1)) :=: E(n.child(3)) end
+   private do_assign(n) suspend E(n.child(1)) := E(n.child(3)) end
+   private do_revswap(n) suspend E(n.child(1)) <-> E(n.child(3)) end
+   private do_revassign(n) suspend E(n.child(1)) <- E(n.child(3)) end
+   private do_augconcat(n) suspend E(n.child(1)) ||:= E(n.child(3)) end
+   private do_auglconcat(n) suspend E(n.child(1)) |||:= E(n.child(3)) end
+   private do_augdiff(n) suspend E(n.child(1)) --:= E(n.child(3)) end
+   private do_augunion(n) suspend E(n.child(1)) ++:= E(n.child(3)) end
+   private do_augplus(n) suspend E(n.child(1)) +:= E(n.child(3)) end
+   private do_augminus(n) suspend E(n.child(1)) -:= E(n.child(3)) end
+   private do_augstar(n) suspend E(n.child(1)) *:= E(n.child(3)) end
+   private do_auginter(n) suspend E(n.child(1)) **:= E(n.child(3)) end
+   private do_augslash(n) suspend E(n.child(1)) /:= E(n.child(3)) end
+   private do_augmod(n) suspend E(n.child(1)) %:= E(n.child(3)) end
+   private do_augcaret(n) suspend E(n.child(1)) ^:= E(n.child(3)) end
+   private do_augnmeq(n) suspend E(n.child(1)) =:= E(n.child(3)) end
+   private do_augequiv(n) suspend E(n.child(1)) ===:= E(n.child(3)) end
+   private do_augnmge(n) suspend E(n.child(1)) >=:= E(n.child(3)) end
+   private do_augnmgt(n) suspend E(n.child(1)) >:= E(n.child(3)) end
+   private do_augnmle(n) suspend E(n.child(1)) := E(n.child(3)) end
+   private do_augnmlt(n) suspend E(n.child(1)) <:= E(n.child(3)) end
+   private do_augnmne(n) suspend E(n.child(1)) ~=:= E(n.child(3)) end
+   private do_augnequiv(n) suspend E(n.child(1)) ~===:= E(n.child(3)) end
+   private do_augseq(n) suspend E(n.child(1)) ==:= E(n.child(3)) end
+   private do_augsge(n) suspend E(n.child(1)) >>=:= E(n.child(3)) end
+   private do_augsgt(n) suspend E(n.child(1)) >>:= E(n.child(3)) end
+   private do_augsle(n) suspend E(n.child(1)) <<=:= E(n.child(3)) end
+   private do_augslt(n) suspend E(n.child(1)) <<:= E(n.child(3)) end
+   private do_augsne(n) suspend E(n.child(1)) ~==:= E(n.child(3)) end
+   private do_augqmark(n) suspend 1(E(n.child(1)),save(n)) ?:= E(n.child(3)) end
+   private do_augand(n) suspend E(n.child(1)) &:= E(n.child(3)) end
+   private do_augat(n) suspend E(n.child(1)) @:= E(n.child(3)) end
+   private do_to(n) suspend E(n.child(1)) to E(n.child(3)) end
+   private do_toby(n) suspend E(n.child(1)) to E(n.child(3)) by E(n.child(5)) end
+   private do_Bbar(n) suspend E(n.child(1)) | E(n.child(3)) end
+   private do_Bseq(n) suspend E(n.child(1)) == E(n.child(3)) end
+   private do_Bsge(n) suspend E(n.child(1)) >>= E(n.child(3)) end
+   private do_Bsgt(n) suspend E(n.child(1)) >> E(n.child(3)) end
+   private do_Bsle(n) suspend E(n.child(1)) <<= E(n.child(3)) end
+   private do_Bslt(n) suspend E(n.child(1)) << E(n.child(3)) end
+   private do_Bsne(n) suspend E(n.child(1)) ~== E(n.child(3)) end
+   private do_Bnmeq(n) suspend E(n.child(1)) = E(n.child(3)) end
+   private do_Bnmge(n) suspend E(n.child(1)) >= E(n.child(3)) end
+   private do_Bnmgt(n) suspend E(n.child(1)) > E(n.child(3)) end
+   private do_Bnmle(n) suspend E(n.child(1)) <= E(n.child(3)) end
+   private do_Bnmlt(n) suspend E(n.child(1)) < E(n.child(3)) end
+   private do_Bnmne(n) suspend E(n.child(1)) ~= E(n.child(3)) end
+   private do_Bequiv(n) suspend E(n.child(1)) === E(n.child(3)) end
+   private do_Bnequiv(n) suspend E(n.child(1)) ~=== E(n.child(3)) end
+   private do_Bconcat(n) suspend E(n.child(1)) || E(n.child(3)) end
+   private do_Blconcat(n) suspend E(n.child(1)) ||| E(n.child(3)) end
+   private do_Bplus(n) suspend E(n.child(1)) + E(n.child(3)) end
+   private do_Bdiff(n) suspend E(n.child(1)) -- E(n.child(3)) end
+   private do_Bunion(n) suspend E(n.child(1)) ++ E(n.child(3)) end
+   private do_Bminus(n) suspend E(n.child(1)) - E(n.child(3)) end
+   private do_Bstar(n) suspend E(n.child(1)) * E(n.child(3)) end
+   private do_Binter(n) suspend E(n.child(1)) ** E(n.child(3)) end
+   private do_Bslash(n) suspend E(n.child(1)) / E(n.child(3)) end
+   private do_Bmod(n) suspend E(n.child(1)) % E(n.child(3)) end
+   private do_Bcaret(n) suspend E(n.child(1)) ^ E(n.child(3)) end
+   private do_Bbackslash(n) suspend E(n.child(1)) \ E(n.child(3)) end
+   private do_Bat(n) suspend E(n.child(1)) @ E(n.child(3)) end
+   private do_Bbang(n) suspend E(n.child(1)) ! E(n.child(3)) end
+   private do_Uat(n) suspend  @E(n.child(2)) end
+   private do_Unot(n) suspend not E(n.child(2)) end
+   private do_Ubar(n) suspend |E(n.child(2)) end
+   private do_Uconcat(n) suspend |E(n.child(2)) end
+   private do_Ulconcat(n) suspend |E(n.child(2)) end
+   private do_Udot(n) suspend .E(n.child(2)) end
+   private do_Ubang(n) suspend !E(n.child(2)) end
+   private do_Udiff(n) suspend --E(n.child(2)) end
+   private do_Uplus(n) suspend +E(n.child(2)) end
+   private do_Ustar(n) suspend *E(n.child(2)) end
+   private do_Uslash(n) suspend /E(n.child(2)) end
+   private do_Ucaret(n) suspend ^E(n.child(2)) end
+   private do_Uinter(n) suspend **E(n.child(2)) end
+   private do_Utilde(n) suspend ~E(n.child(2)) end
+   private do_Uminus(n) suspend -E(n.child(2)) end
+   private do_Unmeq(n) suspend =E(n.child(2)) end
+   private do_Unmne(n) suspend ~=E(n.child(2)) end
+   private do_Useq(n) suspend ==E(n.child(2)) end
+   private do_Usne(n) suspend ~==E(n.child(2)) end
+   private do_Uequiv(n) suspend ===E(n.child(2)) end
+   private do_Uunion(n) suspend ++E(n.child(2)) end
+   private do_Uqmark(n) suspend ?E(n.child(2)) end
+   private do_Unequiv(n) suspend ~===E(n.child(2)) end
+   private do_Ubackslash(n) suspend \E(n.child(2)) end
+   private do_field(n) suspend lang.Class.get(E(n.child(1)), n.child(3).s) end
+   private do_if(n) suspend if E(n.child(2)) then E(n.child(4)) end
+   private do_ifelse(n) suspend if E(n.child(2)) then E(n.child(4)) else E(n.child(6)) end
+   private do_whiledo(n) suspend E( loop(n, create  while E(n.child(2)) do E(n.child(4)) )) end
+   private do_while(n) suspend E( loop(n, create  while E(n.child(2)) )) end
+   private do_untildo(n) suspend E( loop(n, create  until E(n.child(2)) do E(n.child(4)) )) end
+   private do_until(n) suspend E( loop(n, create  until E(n.child(2)) )) end
+   private do_repeat(n) suspend E( loop(n, create  repeat E(n.child(2)) )) end
+   private do_create(n) return create_E(n.child(2)) end
+   private do_brace(n) suspend E(n.child(2)) end
+   private do_compound(n) suspend { E(n.child(1)) ; E(n.child(3)) } end
+   private do_break(n) restore(n) ; return coact("break", brk[n]) end
+   private do_next(n) restore(n) ; return coact("next", brk[n]) end
+   private do_breakexpr(n) restore(n) ; return coact(n.child(2), brk[n]) end
+   private do_Empty(n) return end
+   private do_default(n) fatalerr("not implemented: " || n.label) end
+
+   private E(n)
+      if is(n, Token) then
+         return case n.tok of {
+            IDENT: env.get(n.s, self)
+            INTLIT|REALLIT|STRINGLIT|CSETLIT|UCSLIT: n.val
+            default : fatalerr("not implemented: token " || to_string(n))
+         }
+      suspend dispatch[n.label](n)
+   end
+   
+   public eval()
+      (\env & \node) | runerr("eval() called without environment and/or node being set")
+      brk := table()
+      subject := table()
+      pos := table()
+      suspend E(node)
+   end
+
+   public set_env(env)
+      self.env := env
+      return self
+   end
+
+   public set_node(n)
+      loops := table()
+      scans := table()
+      node := n
+      simple_try { compute_loops(n) } | {
+         node := loops := scans := &null
+         fail
+      }
+      return self
+   end
+
+   public set_imports(t)
+      self.imports := t
+      return self
+   end
+
+   public get_imports()
+      return .imports
+   end
+
+   public new(env, node)
+      self.env := env
+      self.node := node
+      self.dispatch := table(do_default)
+      every lang.Class.get_class_field_names(self) ? {
+         if ="do_" then
+            dispatch[tab(0)] := lang.Class.get(self, &subject)
+      }
+      self.cdispatch := table(cdo_default)
+      self.tcases := table()
+      every cdispatch["everydo"|"every"|"whiledo"|"while"|"untildo"|"until"|"repeat"] := cdo_loop
+      cdispatch["create"] := cdo_create
+      cdispatch["break"] := cdo_break
+      cdispatch["breakexpr"] := cdo_breakexpr
+      cdispatch["next"] := cdo_next
+      every cdispatch["fail"|"return"|"returnexpr"|"suspend"|"suspendexpr"|"suspendexprdo"] := cdo_exit
+      every cdispatch["augqmark"|"Bqmark"] := cdo_scan
+      return
+   end
+end

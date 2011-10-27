@@ -1,0 +1,17 @@
+import gui,io
+
+procedure main()
+   local d
+   d :=  FileDialog().
+      set_label("A File Dialog").
+      set_filters(["*","*.icn","*.c","*.txt"]).
+      set_files(["fig.icn","jim.icn","laldy"]).
+      set_directories(["/tmp","/home","/home/rparlett"])
+
+   d.show_modal()
+
+   write("d.result=",d.get_result() | "FAILED")
+   write("d.directory=",d.get_directory())
+   write("d.file=",d.get_file())
+end
+

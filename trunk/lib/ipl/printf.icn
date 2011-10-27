@@ -1,0 +1,133 @@
+############################################################################
+#
+#	File:     printf.icn
+#
+#	Subject:  Procedures for printf-style formatting
+#
+#	Author:   William H. Mitchell
+#
+#	Date:     July 20, 2005
+#
+############################################################################
+#
+#   This file is in the public domain.
+#
+############################################################################
+#
+#	Contributors:   Cheyenne Wills, Phillip Lee Thomas, Michael Glass
+#
+############################################################################
+#
+#     This procedure behaves somewhat like the standard printf.
+#  Supports d, e, s, o, and x formats like printf.  An "r" format
+#  prints real numbers in a manner similar to that of printf's "f",
+#  but will produce a result in an exponential format if the number
+#  is larger than the largest integer plus one.  Though "e" differs
+#  from printf in some details, it always produces exponential format.
+#
+#     Left or right justification and field width control are pro-
+#  vided as in printf.   %s, %r, and %e handle precision specifications.
+#
+#     The %r format is quite a bit of a hack, but it meets the
+#  author's requirements for accuracy and speed.  Code contributions
+#  for %f, %e, and %g formats that work like printf are welcome.
+#
+#     Possible new formats:
+#
+#	   %t -- print a real number as a time in hh:mm
+#	   %R -- roman numerals
+#	   %w -- integers in English
+#	   %b -- binary
+#
+############################################################################
+
+package ipl.printf
+
+import
+   io(writes),
+   util(Format)
+
+procedure sprintf(format, args[])
+	return _doprnt(format, args)
+end
+
+procedure fprintf(file, format, args[])
+	writes(file, _doprnt(format, args))
+	return
+end
+
+procedure printf(format, args[])
+	writes(, _doprnt(format, args))
+	return
+end
+
+procedure _doprnt(format, args)
+   local out, v, just, width, conv, prec, pad
+
+	out := ""
+	format ? repeat {
+		(out ||:= tab(upto('%'))) | (out ||:= tab(0) & break)
+		v := get(args)
+		move(1)
+		just := right
+		width := conv := prec := pad := &null
+		="-" & just := left
+		width := tab(many(&digits))
+		(\width)[1] == "0" & pad := "0"
+		="." & prec := tab(many(&digits))
+		conv := move(1)
+
+		##write("just: ",image(just),", width: ", width, ", prec: ",
+		## prec, ", conv: ", conv)
+		case string(conv) of {
+		    "d": {
+			v := string(integer(v))
+			}
+		    "s": {
+			v := string(v[1:(\prec+1)|0])
+			}
+		    "x": v := map(hexstr(v))
+		    "X": v := hexstr(v)
+		    "o": v := octstr(v)
+		    "i": v := image(v)
+		    "r": v := fixnum(v,prec)
+		    "e": v := eformatstr(v, prec)
+		    default: {
+			push(args, v)
+			v := conv
+			}
+		    }
+		if \width & *v < width then {
+			v := just(v, width, pad)
+			}
+		out ||:= v
+		}
+
+	return out
+end
+
+procedure hexstr(x)
+   x := integer(x) | return image(x)
+   return Format.int_to_string(x)
+end
+
+procedure octstr(x)
+   x := integer(x) | return image(x)
+   return Format.int_to_string(x, 8)
+end
+
+procedure fixnum(x, prec)
+   /prec := 6
+   x := real(x) | return image(x)
+   return Format.numeric_to_string(x, prec)
+end
+
+
+# e-format:  [-]m.ddddddE(+|-)xxx
+#
+procedure eformatstr(x, prec)
+   /prec := 6
+   x := real(x) | return image(x)
+   return Format.numeric_to_string(x, prec, 'e')
+end
+

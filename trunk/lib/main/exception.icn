@@ -1,0 +1,71 @@
+package exception
+
+global 
+   # The co-expression currently ready to handle an exception
+   throw_handler, 
+   # The last value thrown
+   thrown,
+   # The co-expression of the last thrower
+   thrower
+
+#
+# "throw" an exception, setting {thrown} to {x} and {thrower} to
+# {&current}, before invoking the {throw_handler} co-expression.
+#
+procedure throw(x)
+   \throw_handler | runerr("throw(): no handler set")
+   thrown := x
+   thrower := &current
+   coact(, throw_handler,, 1)
+   runerr("throw(): code co-expression reactivated unexpectedly")
+end
+
+#
+# Re-throw an exception, by invoking {throw_handler} without changing
+# {thrown} or {thrower}.
+#
+procedure rethrow()
+   \throw_handler | runerr("rethrow(): no handler set")
+   coact(, throw_handler,, 1)
+   runerr("rethrow(): code co-expression reactivated unexpectedly")
+end
+
+#
+# Clear the exception global variables {thrower} and {thrown}.
+#
+procedure clear()
+   thrower := thrown := &null
+end
+
+#
+# Generate the results of {e}, whilst "catching" any exceptions
+# thrown.  On an exception, failure occurs, and the caller can check
+# for an exception by testing the values of {thrown} and/or {thrower}.
+#
+procedure try(e)
+   local t
+   repeat {
+      clear()
+      t := throw_handler
+      throw_handler := &current
+      suspend 1(@e, throw_handler := t) do
+         break next
+      throw_handler := t
+      fail
+   }
+end
+
+# A useful wrapper around {try}.  {try} is called with {e} to get its
+# first result.  If no exception is thrown, then the result produced
+# by {e} is returned.  If {e} fails, {&null} is returned.  If an
+# exception was thrown, {clear} is called, {&why} is set and the
+# procedure fails.
+#
+procedure simple_try(e)
+   local v
+   v := try(e)
+   if /thrown then
+      return v
+   &why := string(thrown) | image(thrown)
+   clear()
+end

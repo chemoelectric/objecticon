@@ -1,0 +1,472 @@
+############################################################################
+#
+#	File:     ifncs.icn
+#
+#	Subject:  Procedure wrappers for function tracing
+#
+#	Author:   Ralph E. Griswold
+#
+#	Date:     September 28, 1996
+#
+############################################################################
+#
+#   This file is in the public domain.
+#
+############################################################################
+#
+#  These are procedure wrappers for use in Icon function tracing.  Don't let
+#  the apparent recursion fool you.
+#
+############################################################################
+#
+#  See also:  iftrace.icn
+#
+############################################################################
+
+package ipl.ifncs
+
+import lang(Prog)
+
+procedure abs(a1)
+   static __fnc_abs
+   initial __fnc_abs := Prog.get_function("abs")
+   suspend __fnc_abs(a1)
+end
+
+procedure any(a1, a2, a3, a4)
+   static __fnc_any
+   initial __fnc_any := Prog.get_function("any")
+   suspend __fnc_any(a1, a2, a3, a4)
+end
+
+procedure back(a1)
+   static __fnc_back
+   initial __fnc_back := Prog.get_function("back")
+   suspend __fnc_back(a1)
+end
+
+procedure bal(a1, a2, a3, a4, a5, a6)
+   static __fnc_bal
+   initial __fnc_bal := Prog.get_function("bal")
+   suspend __fnc_bal(a1, a2, a3, a4, a5, a6)
+end
+
+procedure cast(a1, a2)
+   static __fnc_cast
+   initial __fnc_cast := Prog.get_function("cast")
+   suspend __fnc_cast(a1, a2)
+end
+
+procedure center(a1, a2, a3)
+   static __fnc_center
+   initial __fnc_center := Prog.get_function("center")
+   suspend __fnc_center(a1, a2, a3)
+end
+
+procedure char(a1)
+   static __fnc_char
+   initial __fnc_char := Prog.get_function("char")
+   suspend __fnc_char(a1)
+end
+
+procedure classof(a1)
+   static __fnc_classof
+   initial __fnc_classof := Prog.get_function("classof")
+   suspend __fnc_classof(a1)
+end
+
+procedure clear(a1)
+   static __fnc_clear
+   initial __fnc_clear := Prog.get_function("clear")
+   suspend __fnc_clear(a1)
+end
+
+procedure coact(a1, a2, a3, a4)
+   static __fnc_coact
+   initial __fnc_coact := Prog.get_function("coact")
+   suspend __fnc_coact(a1, a2, a3, a4)
+end
+
+procedure cocopy(a1)
+   static __fnc_cocopy
+   initial __fnc_cocopy := Prog.get_function("cocopy")
+   suspend __fnc_cocopy(a1)
+end
+
+procedure collect(a1, a2)
+   static __fnc_collect
+   initial __fnc_collect := Prog.get_function("collect")
+   suspend __fnc_collect(a1, a2)
+end
+
+procedure copy(a1)
+   static __fnc_copy
+   initial __fnc_copy := Prog.get_function("copy")
+   suspend __fnc_copy(a1)
+end
+
+procedure cset(a1)
+   static __fnc_cset
+   initial __fnc_cset := Prog.get_function("cset")
+   suspend __fnc_cset(a1)
+end
+
+procedure delay(a1)
+   static __fnc_delay
+   initial __fnc_delay := Prog.get_function("delay")
+   suspend __fnc_delay(a1)
+end
+
+procedure delete(a1, a2)
+   static __fnc_delete
+   initial __fnc_delete := Prog.get_function("delete")
+   suspend __fnc_delete(a1, a2)
+end
+
+procedure detab(a[])
+   static __fnc_detab
+   initial __fnc_detab := Prog.get_function("detab")
+   suspend __fnc_detab ! a
+end
+
+procedure display(a1, a2)
+   static __fnc_display
+   initial __fnc_display := Prog.get_function("display")
+   suspend __fnc_display(a1, a2)
+end
+
+procedure entab(a[])
+   static __fnc_entab
+   initial __fnc_entab := Prog.get_function("entab")
+   suspend __fnc_entab ! a
+end
+
+procedure errorclear()
+   static __fnc_errorclear
+   initial __fnc_errorclear := Prog.get_function("errorclear")
+   suspend __fnc_errorclear()
+end
+
+procedure exit(a1)
+   static __fnc_exit
+   initial __fnc_exit := Prog.get_function("exit")
+   suspend __fnc_exit(a1)
+end
+
+procedure fatalerr(a[])
+   static __fnc_fatalerr
+   initial __fnc_fatalerr := Prog.get_function("fatalerr")
+   suspend __fnc_fatalerr ! a
+end
+
+procedure find(a1, a2, a3, a4)
+   static __fnc_find
+   initial __fnc_find := Prog.get_function("find")
+   suspend __fnc_find(a1, a2, a3, a4)
+end
+
+procedure get(a1)
+   static __fnc_get
+   initial __fnc_get := Prog.get_function("get")
+   suspend __fnc_get(a1)
+end
+
+procedure iand(a[])
+   static __fnc_iand
+   initial __fnc_iand := Prog.get_function("iand")
+   suspend __fnc_iand ! a
+end
+
+procedure icom(a1)
+   static __fnc_icom
+   initial __fnc_icom := Prog.get_function("icom")
+   suspend __fnc_icom(a1)
+end
+
+procedure image(a1)
+   static __fnc_image
+   initial __fnc_image := Prog.get_function("image")
+   suspend __fnc_image(a1)
+end
+
+procedure insert(a1, a2, a3)
+   static __fnc_insert
+   initial __fnc_insert := Prog.get_function("insert")
+   suspend __fnc_insert(a1, a2, a3)
+end
+
+procedure integer(a1)
+   static __fnc_integer
+   initial __fnc_integer := Prog.get_function("integer")
+   suspend __fnc_integer(a1)
+end
+
+procedure ior(a[])
+   static __fnc_ior
+   initial __fnc_ior := Prog.get_function("ior")
+   suspend __fnc_ior ! a
+end
+
+procedure is(a1, a2)
+   static __fnc_is
+   initial __fnc_is := Prog.get_function("is")
+   suspend __fnc_is(a1, a2)
+end
+
+procedure ishift(a1, a2)
+   static __fnc_ishift
+   initial __fnc_ishift := Prog.get_function("ishift")
+   suspend __fnc_ishift(a1, a2)
+end
+
+procedure ixor(a[])
+   static __fnc_ixor
+   initial __fnc_ixor := Prog.get_function("ixor")
+   suspend __fnc_ixor ! a
+end
+
+procedure key(a1)
+   static __fnc_key
+   initial __fnc_key := Prog.get_function("key")
+   suspend __fnc_key(a1)
+end
+
+procedure keyof(a1, a2)
+   static __fnc_keyof
+   initial __fnc_keyof := Prog.get_function("keyof")
+   suspend __fnc_keyof(a1, a2)
+end
+
+procedure keyval(a1)
+   static __fnc_keyval
+   initial __fnc_keyval := Prog.get_function("keyval")
+   suspend __fnc_keyval(a1)
+end
+
+procedure left(a1, a2, a3)
+   static __fnc_left
+   initial __fnc_left := Prog.get_function("left")
+   suspend __fnc_left(a1, a2, a3)
+end
+
+procedure list(a1, a2)
+   static __fnc_list
+   initial __fnc_list := Prog.get_function("list")
+   suspend __fnc_list(a1, a2)
+end
+
+procedure many(a1, a2, a3, a4)
+   static __fnc_many
+   initial __fnc_many := Prog.get_function("many")
+   suspend __fnc_many(a1, a2, a3, a4)
+end
+
+procedure map(a1, a2, a3)
+   static __fnc_map
+   initial __fnc_map := Prog.get_function("map")
+   suspend __fnc_map(a1, a2, a3)
+end
+
+procedure match(a1, a2, a3, a4)
+   static __fnc_match
+   initial __fnc_match := Prog.get_function("match")
+   suspend __fnc_match(a1, a2, a3, a4)
+end
+
+procedure max(a[])
+   static __fnc_max
+   initial __fnc_max := Prog.get_function("max")
+   suspend __fnc_max ! a
+end
+
+procedure member(a1, a2)
+   static __fnc_member
+   initial __fnc_member := Prog.get_function("member")
+   suspend __fnc_member(a1, a2)
+end
+
+procedure min(a[])
+   static __fnc_min
+   initial __fnc_min := Prog.get_function("min")
+   suspend __fnc_min ! a
+end
+
+procedure move(a1)
+   static __fnc_move
+   initial __fnc_move := Prog.get_function("move")
+   suspend __fnc_move(a1)
+end
+
+procedure numeric(a1)
+   static __fnc_numeric
+   initial __fnc_numeric := Prog.get_function("numeric")
+   suspend __fnc_numeric(a1)
+end
+
+procedure ord(a1)
+   static __fnc_ord
+   initial __fnc_ord := Prog.get_function("ord")
+   suspend __fnc_ord(a1)
+end
+
+procedure pop(a1)
+   static __fnc_pop
+   initial __fnc_pop := Prog.get_function("pop")
+   suspend __fnc_pop(a1)
+end
+
+procedure pos(a1)
+   static __fnc_pos
+   initial __fnc_pos := Prog.get_function("pos")
+   suspend __fnc_pos(a1)
+end
+
+procedure proc(a1, a2, a3)
+   static __fnc_proc
+   initial __fnc_proc := Prog.get_function("proc")
+   suspend __fnc_proc(a1, a2, a3)
+end
+
+procedure pull(a1)
+   static __fnc_pull
+   initial __fnc_pull := Prog.get_function("pull")
+   suspend __fnc_pull(a1)
+end
+
+procedure push(a[])
+   static __fnc_push
+   initial __fnc_push := Prog.get_function("push")
+   suspend __fnc_push ! a
+end
+
+procedure put(a[])
+   static __fnc_put
+   initial __fnc_put := Prog.get_function("put")
+   suspend __fnc_put ! a
+end
+
+procedure real(a1)
+   static __fnc_real
+   initial __fnc_real := Prog.get_function("real")
+   suspend __fnc_real(a1)
+end
+
+procedure repl(a1, a2)
+   static __fnc_repl
+   initial __fnc_repl := Prog.get_function("repl")
+   suspend __fnc_repl(a1, a2)
+end
+
+procedure reverse(a1)
+   static __fnc_reverse
+   initial __fnc_reverse := Prog.get_function("reverse")
+   suspend __fnc_reverse(a1)
+end
+
+procedure right(a1, a2, a3)
+   static __fnc_right
+   initial __fnc_right := Prog.get_function("right")
+   suspend __fnc_right(a1, a2, a3)
+end
+
+procedure runerr(a[])
+   static __fnc_runerr
+   initial __fnc_runerr := Prog.get_function("runerr")
+   suspend __fnc_runerr ! a
+end
+
+procedure seq(a1, a2)
+   static __fnc_seq
+   initial __fnc_seq := Prog.get_function("seq")
+   suspend __fnc_seq(a1, a2)
+end
+
+procedure serial(a1)
+   static __fnc_serial
+   initial __fnc_serial := Prog.get_function("serial")
+   suspend __fnc_serial(a1)
+end
+
+procedure set(a[])
+   static __fnc_set
+   initial __fnc_set := Prog.get_function("set")
+   suspend __fnc_set ! a
+end
+
+procedure sort(a1, a2)
+   static __fnc_sort
+   initial __fnc_sort := Prog.get_function("sort")
+   suspend __fnc_sort(a1, a2)
+end
+
+procedure sortf(a1, a2)
+   static __fnc_sortf
+   initial __fnc_sortf := Prog.get_function("sortf")
+   suspend __fnc_sortf(a1, a2)
+end
+
+procedure string(a1)
+   static __fnc_string
+   initial __fnc_string := Prog.get_function("string")
+   suspend __fnc_string(a1)
+end
+
+procedure syserr(a1)
+   static __fnc_syserr
+   initial __fnc_syserr := Prog.get_function("syserr")
+   suspend __fnc_syserr(a1)
+end
+
+procedure system(a1)
+   static __fnc_system
+   initial __fnc_system := Prog.get_function("system")
+   suspend __fnc_system(a1)
+end
+
+procedure tab(a1)
+   static __fnc_tab
+   initial __fnc_tab := Prog.get_function("tab")
+   suspend __fnc_tab(a1)
+end
+
+procedure table(a[])
+   static __fnc_table
+   initial __fnc_table := Prog.get_function("table")
+   suspend __fnc_table ! a
+end
+
+procedure text(a1)
+   static __fnc_text
+   initial __fnc_text := Prog.get_function("text")
+   suspend __fnc_text(a1)
+end
+
+procedure trim(a1, a2)
+   static __fnc_trim
+   initial __fnc_trim := Prog.get_function("trim")
+   suspend __fnc_trim(a1, a2)
+end
+
+procedure type(a1)
+   static __fnc_type
+   initial __fnc_type := Prog.get_function("type")
+   suspend __fnc_type(a1)
+end
+
+procedure uchar(a1)
+   static __fnc_uchar
+   initial __fnc_uchar := Prog.get_function("uchar")
+   suspend __fnc_uchar(a1)
+end
+
+procedure ucs(a1)
+   static __fnc_ucs
+   initial __fnc_ucs := Prog.get_function("ucs")
+   suspend __fnc_ucs(a1)
+end
+
+procedure upto(a1, a2, a3, a4)
+   static __fnc_upto
+   initial __fnc_upto := Prog.get_function("upto")
+   suspend __fnc_upto(a1, a2, a3, a4)
+end

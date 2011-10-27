@@ -1,0 +1,1911 @@
+package io
+
+import
+   util(error, check_flag),
+   lang(NoCopy),
+   posix(ExitInfo, System),
+   ipl.strings(replace)
+
+#
+# This is the top-level stream class.  It is not instantiated
+# directly.
+#
+class Stream()
+   public static const
+      # Constant indicating read capability
+      READ,
+      # Constant indicating write capability
+      WRITE,
+      # Constant indicating seek (and tell) capability
+      SEEK,
+      # Constant indicating truncate capability
+      TRUNCATE,
+      # Constant indicating read and write capability
+      READ_WRITE,
+      # Constant representing all capabilities (read, write, seek and
+      # truncate).
+      ALL
+
+   private static init()
+      READ := 8r01
+      WRITE := 8r02
+      SEEK := 8r04
+      TRUNCATE := 8r010
+      READ_WRITE := READ + WRITE
+      ALL := READ + WRITE + SEEK + TRUNCATE
+   end
+
+   #
+   # Return at least one, and up to n characters from the stream.  On
+   # end-of-file, return {&null}.  On error, fail and set {&why}.
+   #
+   # @param n the maximum number of chars to read; n must be > 0.
+   #
+   public defer in(n)
+
+   #
+   # Output the given string to the stream.  The number of characters
+   # output is returned, which will always be greater than zero, but may
+   # be less than {*s}.  Fails on an error, setting {&why}.
+   #
+   # @param s the string to write
+   #
+   public defer out(s)
+
+   #
+   # Seek to the given offset.  Icon-style offsets are used, so 1 is
+   # the beginning of the stream, and 0 the end.  Not all types of stream
+   # support {seek} - see {get_mode}.
+   #
+   # @param offset the position to seek to
+   # @return the new position.
+   #
+   public defer seek(offset)
+
+   #
+   # Return the current position of the stream.
+   #
+   public defer tell()
+
+   #
+   # Truncate this stream to the given length, and set the position to the
+   # new end of the stream (ie, len + 1).
+   #
+   public defer truncate(len)
+
+   #
+   # Return an integer indicating which functions the stream supports.
+   # The possible bits which can be set are listed as constants above.
+   # If the integer has the {READ} bit set, the stream is readable;
+   # {WRITE} indicates the stream is writable, {SEEK} indicates that
+   # it is seekable (and supports {tell} too), and {TRUNCATE} that it
+   # is truncatable.
+   #
+   public defer get_mode()
+
+   #
+   # Close the stream.  After being closed, any further calls on the
+   # stream may stop with a runtime error.
+   #
+   public defer close()
+
+   #
+   # Succeed iff the stream's mode has all the flags in {c}
+   #
+   public can(c)
+      return iand(get_mode(), c) = c
+   end
+
+   #
+   # Output the string {s}, by calling {out} several times until it is
+   # fully output.
+   #
+   public fully_out(s)
+      local n
+      s := string(s) | runerr(103, s)
+      while *s > 0 do {
+         n := out(s) | fail
+         s := s[n + 1:0]
+      }
+      return
+   end
+
+   #
+   # Read a complete line from the stream, reading up to the next "\n"
+   # or end-of-file.  In the former case, the "\n" and also any "\r"
+   # immediately before it is stripped from the result.
+   #
+   # Returns {&null} on end-of-file
+   #
+   public read_line()
+      local s, c
+      s := ""
+      repeat {
+         c := in(1) | fail
+         if /c then {
+            if *s > 0 then
+               return s
+            else
+               return
+         }
+         if c == "\n" then {
+            if s[-1] == "\r" then
+               s[-1] := ""
+            return s
+         } else
+            s ||:= c
+      }
+   end
+
+   #
+   # Read {n} chars from the stream.  This method will try and return
+   # exactly {n} characters, and will only return less because of
+   # reaching the end-of-file.
+   #
+   # Returns {&null} on end-of-file
+   #
+   public read_exactly(n)
+      local s, t
+      s := ""
+      while n > 0 do {
+         t := in(n) | fail
+         if /t then {
+            if *s > 0 then
+               return s
+            else
+               return
+         }
+         s ||:= t
+         n -:= *t
+      }
+      return s
+   end
+
+   #
+   # Generate all the remaining lines in the file
+   #
+   public gen()
+      suspend |\read_line()
+   end
+
+   #
+   # This method is the same as {read_line}, except that on end of
+   # file it fails, setting {&why} to "End of file", rather than
+   # returning {&null}.
+   #
+   public read()
+      local s
+      s := read_line() | fail
+      return \s | error("End of file")
+   end
+
+   #
+   # This method is the same as {read_exactly}, except that on end of
+   # file it fails, setting {&why} to "End of file", rather than
+   # returning {&null}.
+   #
+   public reads(n)
+      local s
+      s := read_exactly(n) | fail
+      return \s | error("End of file")
+   end
+
+   #
+   # This writes each parameter to the stream.  Each parameter is
+   # guaranteed to be completely output, except on error, in which
+   # case the method fails and sets &why.
+   #
+   public writes(a[])
+      local e
+      every e := !a do
+         fully_out(e) | fail
+      return
+   end
+
+   #
+   # This behaves just like {writes}, except that a newline is
+   # appended after all the parameters are output.
+   #
+   public write(a[])
+      local e
+      every e := !a | Files.EOL do
+         fully_out(e) | fail
+      return
+   end
+
+   #
+   # Read from this stream until end-of-file, collecting the result as
+   # a string.
+   #
+   public read_all()
+      local s, t
+      s := ""
+      repeat {
+         t := in(1048576) | fail
+         if /t then
+            return s
+         s ||:= t
+      }
+   end
+
+   #
+   # Read from this stream until end-of-file, copying the result to the
+   # given stream {f}.
+   #
+   public copy_to(f)
+      local s
+      repeat {
+         s := in(1048576) | fail
+         if /s then
+            return
+         f.writes(s) | fail
+      }
+   end
+end
+
+#
+# This class simply adds the close_underlying_flag to a {Stream}.
+#
+class HasUnderlyingStream()
+   protected
+      close_underlying_flag
+
+   #
+   # If set, the stream will close any underlying {Stream}s when it is closed.
+   #
+   public set_close_underlying(s)
+      self.close_underlying_flag := check_flag(s)
+      return self
+   end
+end
+
+#
+# This is a stream based on an Icon string.  An initial string can be
+# provided to the constructor.  Reading from the stream will be quite
+# efficient, but writing will be relatively slow, particularly if the
+# string is long.  For a much faster alternative, see {RamStream}.
+#
+class StringStream(Stream)
+   private 
+      subj,
+      pos
+
+   public in(n)
+      local t, e
+      if pos > *subj then
+         return
+      e := min(pos + n, *subj + 1)
+      t := subj[pos:e]
+      pos := e
+      return t
+   end
+
+   public out(s)
+      local e
+      s := string(s) | runerr(103, s)
+      if pos > *subj then {
+         subj ||:= repl("\0", pos - *subj - 1) || s
+         pos := *subj + 1
+      } else {
+         e := min(pos + *s, *subj + 1)
+         subj[pos:e] := s
+         pos +:= *s
+      }
+      return *s
+   end
+
+   public seek(offset)
+      return if offset > 0 then
+         pos := offset
+      else if -offset <= *subj then
+         pos := *subj + 1 + offset
+      else
+         error("Seek out of range")
+   end
+
+   public tell()
+      return pos
+   end
+
+   public close()
+      return
+   end
+
+   public get_mode()
+      return ALL
+   end
+
+   public truncate(len)
+      if len > *subj then
+         subj ||:= repl("\0", len - *subj)
+      else
+         subj := subj[1:len + 1]
+      pos := *subj + 1
+      return
+   end
+
+   public str()
+      return .subj
+   end
+
+   #
+   # Create a new {StringStream}, with initial value of {subj}.
+   #
+   # @param subj the initial value of the stream; defaults to empty 
+   # @      string.
+   #
+   public new(subj)
+      /subj := ""
+      self.subj := string(subj) | runerr(103, subj)
+      self.pos := 1
+      return
+   end
+end
+
+#
+# This is a stream that mimics /dev/null.  Writes always succeed with
+# no effect, and reads always fail with end of file.
+#
+class NullStream(Stream)
+   public in(n)
+      return
+   end
+
+   public out(s)
+      s := string(s) | runerr(103, s)
+      return *s
+   end
+
+   public seek(offset)
+      return 1
+   end
+
+   public tell()
+      return 1
+   end
+
+   public close()
+      return
+   end
+
+   public get_mode()
+      return ALL
+   end
+
+   public truncate(len)
+      return
+   end
+end
+
+#
+# This is a stream that mimics /dev/zero.  Writes always succeed with
+# no effect, and reads return however many zero bytes were requested.
+#
+class ZeroStream(Stream)
+   public in(n)
+      return repl("\0", n)
+   end
+
+   public out(s)
+      s := string(s) | runerr(103, s)
+      return *s
+   end
+
+   public seek(offset)
+      return 1
+   end
+
+   public tell()
+      return 1
+   end
+
+   public close()
+      return
+   end
+
+   public get_mode()
+      return ALL
+   end
+
+   public truncate(len)
+      return
+   end
+end
+
+#
+# This class takes another stream and provides read/write buffers so
+# that input/output to the inner stream tends to take place in larger
+# chunks.
+#
+class BufferStream(Stream, HasUnderlyingStream)
+   private
+      other,
+      rpos,
+      wbuff,
+      wbuff_len,
+      rbuff,
+      flush_on_nl_flag,
+      buff_size
+
+   #
+   # If set, the stream is flushed whenever a newline is written.
+   #
+   public set_flush_on_nl(s)
+      self.flush_on_nl_flag := check_flag(s)
+      return self
+   end
+
+   #
+   # Set the buffer size to use.
+   #
+   public set_buff_size(n)
+      self.buff_size := n
+      return self
+   end
+
+   #
+   # Push the string s onto the read buffer, so that it is read next.
+   #
+   public push(s)
+      s := string(s) | runerr(103, s)
+      unbuff() | fail
+      rbuff := s || rbuff
+      return
+   end
+
+   #
+   # Push the string s followed by an end-of-line.
+   #
+   public push_line(s)
+      return push(s || Files.EOL)
+   end
+
+   public read_line()
+      local t
+      flush() | fail
+      repeat {
+         rbuff ? {
+            if t := tab(upto('\n')) then {
+               move(1)
+               rbuff := tab(0)
+               \rpos +:= *t + 1
+               if t[-1] == "\r" then
+                  t[-1] := ""
+               return t
+            }
+         }
+         if *rbuff = 0 & other.can(SEEK) then
+            rpos := other.tell() | fail
+         t := other.in(buff_size) | fail
+         if /t then {
+            rpos := &null
+            if *rbuff = 0 then
+               return
+            t := rbuff
+            rbuff := ""
+            return t
+         }
+         rbuff ||:= t
+      }
+   end
+
+   public in(n)
+      local t
+      flush() | fail
+      if *rbuff > 0 then {
+         rbuff ? {
+            t := move(n) | tab(0)
+            rbuff := tab(0)
+            \rpos +:= *t
+         }
+      } else if n < buff_size then {
+         if other.can(SEEK) then
+            rpos := other.tell() | fail
+         t := other.in(buff_size) | fail
+         if /t then
+            return
+         t ? {
+            t := move(n) | tab(0)
+            rbuff := tab(0)
+            \rpos +:= *t
+         }
+      } else {
+         t := other.in(n) | fail
+         if /t then
+            return
+      }
+      return t
+   end
+
+   public out(s)
+      s := string(s) | runerr(103, s)
+      unbuff() | fail
+      put(wbuff, s)
+      wbuff_len +:= *s
+      if wbuff_len > buff_size | (\flush_on_nl_flag & upto('\n', s)) then
+         flush() | fail
+      return *s
+   end
+
+   #
+   # Flush the write buffer.
+   #
+   public flush()
+      local s
+      \wbuff | runerr(219, self)
+      if *wbuff = 0 then
+         return
+      s := ""
+      every s ||:= !wbuff
+      wbuff := []
+      wbuff_len := 0
+      return other.fully_out(s)
+   end
+
+   #
+   # Un-buffer the read buffer.  For a seekable stream this involves
+   # discarding the read buffer and seeking to the position
+   # corresponding to the start of the buffer.  For a non-seekable
+   # stream, this call has no effect.
+   #
+   public unbuff()
+      \rbuff | runerr(219, self)
+      if *rbuff > 0 & \rpos & other.can(SEEK) then {
+         other.seek(rpos) | fail
+         rbuff := ""
+         rpos := &null
+      }
+      return
+   end
+
+   #
+   # Calls {unbuff} and {flush}
+   #
+   public synch()
+      unbuff() | fail
+      flush() | fail
+      return
+   end
+
+   public close()
+      local f
+      flush() | (f := 1)
+      if \close_underlying_flag then
+         other.close() | (f := 1)
+      rbuff := wbuff := &null
+      return /f
+   end
+
+   public seek(offset)
+      synch() | fail
+      return other.seek(offset)
+   end
+
+   public tell()
+      synch() | fail
+      return other.tell()
+   end
+
+   public truncate(len)
+      synch() | fail
+      return other.truncate(len)
+   end
+
+   public get_mode()
+      return other.get_mode()
+   end
+
+   public new(other)
+      self.other := other
+      self.rbuff := ""
+      self.wbuff := []
+      self.wbuff_len := 0
+      self.buff_size := 1024
+      self.close_underlying_flag := &yes
+      return
+   end
+end
+
+#
+# This is the parent class of streams based on a posix-style
+# integer-based file descriptor.
+#
+class DescStream(Stream, NoCopy)
+   protected 
+      fd,
+      mode
+
+   #
+   # Return the integer file descriptor.
+   #
+   public get_fd()
+      return .fd
+   end
+
+   public get_mode()
+      return .mode
+   end
+
+   #
+   # Performs a select on the given lists of streams, each of which
+   # must be a {DescStream}.  The lists are changed by the method,
+   # and the modified lists indicate which streams are ready to read,
+   # write or have an error.
+   # 
+   # On an error this method fails and sets {&why}.  On a timeout it
+   # returns 0, with all lists empty.
+   #
+   # @param rl the read list of streams
+   # @param wl the write list of streams
+   # @param el the error list of streams
+   # @param timeout the timeout; if omitted waits indefinitely
+   # @return the number of items in the three lists, always >= 0.
+   #
+   public static defer select(rl, wl, el, timeout)
+
+   #
+   # Performs a poll on one or more streams, each of which must be a
+   # {DescStream}.  The parameter {l} is a list of pairs.  Each pair
+   # is a {Stream} followed by flags, which should be selected from
+   # those constants in the {Poll} class.  The last argument is the
+   # optional timeout. The result is a list of the flags corresponding
+   # to each {Stream} provided.  This method fails on error, setting
+   # {&why} accordingly.  On a timeout, it succeeds and returns
+   # {&null}.
+   #
+   public static defer poll(l, timeout)
+
+   #
+   # Turn the specified flags on or off, and return the new set of
+   # flags.  The flags should be selected from the constants in
+   # {FileOpt}.
+   # @param on the flags to turn on
+   # @param off the flags to turn off
+   # @return the new flags
+   #
+   public defer flag(on, off)
+
+   #
+   # Turn the specified descriptor flags on or off, and return the new
+   # set of flags.  The flags should be selected from the constants in
+   # {DescOpt}.
+   # @param on the flags to turn on
+   # @param off the flags to turn off
+   # @return the new flags
+   #
+   public defer dflag(on, off)
+
+   #
+   # Invokes the system function dup2(oldfd, newfd), with oldfd set to
+   # this instance's {fd}, and newfd set to the given parameter's {fd}.
+   #
+   # On error this method fails and sets {&why}.  On success, it sets
+   # the mode of the target to this instances's mode (since they both
+   # now point to the same file), and returns {&null}.
+   #
+   # @param other - a {DescStream}
+   # @example
+   # @ f := FileStream.open("/tmp/xyz", 
+   # @     ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
+   # @ f.dup2(FileStream.stdout) | stop(&why)
+   # @ f.close()
+   # @ write("hello world")  # writes to /tmp/xyz
+   #
+   public dup2(other)
+      dup2_impl(other) | fail
+      other.mode := self.mode
+      return
+   end
+
+   private defer dup2_impl()
+
+   #
+   # Return a {Stat} object with info about this file.
+   #
+   public stat()
+      return Stat!stat_impl()
+   end
+
+   private defer stat_impl()
+
+   #
+   # Write selected attributes about a file.  If any of the parameters
+   # are {&null}, they are left unchanged.
+   #
+   # @param mode the mode (an integer)
+   # @param uid the owner name
+   # @param gid the group name
+   #
+   public defer wstat(mode, uid, gid)
+
+   protected new(fd, mode)
+      self.fd := fd
+      self.mode := mode
+      return
+   end
+end
+
+#
+# This procedure emulates the old Icon builtin function of the same
+# name.  It always returns a {BufferStream} or fails and sets {&why}.
+# 
+# @param name The file name
+# @param mode The mode; possible values are :-
+# @    "r" - {FileStream.open} with {FileOpt.RDONLY}
+# @    "w" - {FileStream.open} with {FileOpt.WRONLY}, {FileOpt.TRUNC}, {FileOpt.CREAT}
+# @    "b"|"rw"|"r+" - {FileStream.open} with {FileOpt.RDWR}
+# @    "crw"|"w+" - {FileStream.open} with {FileOpt.RDWR}, {FileOpt.TRUNC}, {FileOpt.CREAT}
+# @    "a" - {FileStream.open} with {FileOpt.WRONLY}, {FileOpt.APPEND}, {FileOpt.CREAT}
+# @    "a+" - {FileStream.open} with {FileOpt.RDWR}, {FileOpt.APPEND}, {FileOpt.CREAT}
+# @    "p"|"pr" - {ProgInputStream}, using shell interpreter
+# @    "pw" - {ProgOutputStream}, using shell interpreter
+#
+procedure open(name, mode)
+   return BufferStream(case mode of {
+      &null | "r" : FileStream.open(name, FileOpt.RDONLY)
+      "w" : FileStream.open(name, ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT))
+      "b"|"rw"|"r+" : FileStream.open(name, FileOpt.RDWR)
+      "crw"|"w+" : FileStream.open(name, ior(FileOpt.RDWR, FileOpt.TRUNC, FileOpt.CREAT))
+      "a" : FileStream.open(name, ior(FileOpt.WRONLY, FileOpt.APPEND, FileOpt.CREAT))
+      "a+" : FileStream.open(name, ior(FileOpt.RDWR, FileOpt.APPEND, FileOpt.CREAT))
+$ifdef _UNIX
+      "p"|"pr" : ProgInputStream("/bin/sh", ["-c", name])
+      "pw" : ProgOutputStream("/bin/sh", ["-c", name])
+$else
+      "p"|"pr"|"pw" : error("Mode not supported")
+$endif
+      default: runerr("Invalid mode flag: " || mode)
+   })
+end
+
+#
+# Convenient method to call {write} with standard error as output.
+#
+procedure ewrite(a[])
+   return write!push(a, FileStream.stderr)
+end
+
+#
+# Convenient method to call {writes} with standard error as output.
+#
+procedure ewrites(a[])
+   return writes!push(a, FileStream.stderr)
+end
+
+#
+# This procedure emulates the old Icon builtin {write} function.
+#
+procedure write(a[])
+   local e, f, r
+   r := a[-1]
+   if is(a[1], Stream) then
+      f := pop(a)
+   else
+      f := FileStream.stdout
+   every e := \!a | Files.EOL do {
+      if is(e, Stream) then {
+         f.fully_out(Files.EOL) | fail
+         f := e
+      } else
+         f.fully_out(e) | fail
+   }
+   return r
+end
+
+#
+# This procedure emulates the old Icon builtin {writes} function.
+#
+procedure writes(a[])
+   local e, f, r
+   r := a[-1]
+   if is(a[1], Stream) then
+      f := pop(a)
+   else
+      f := FileStream.stdout
+   every e := \!a do {
+      if is(e, Stream) then
+         f := e
+      else
+         f.fully_out(e) | fail
+   }
+   return r
+end
+
+#
+# This procedure emulates the old Icon builtin {stop} function.
+#
+procedure stop(a[])
+   write!push(a, FileStream.stderr)
+   exit(1)
+end
+
+#
+# This procedure emulates the old Icon builtin {read} function.
+#
+procedure read(f)
+   /f := FileStream.stdin
+   return f.read()
+end
+
+#
+# This procedure emulates the old Icon builtin {reads} function.
+#
+procedure reads(f, n)
+   /f := FileStream.stdin
+   /n := 1
+   return f.reads(n)
+end
+
+#
+# This procedure emulates the old Icon builtin {close} function.
+#
+procedure close(f)
+   f.close() | fail
+   return f
+end
+
+#
+# This procedure is used to automatically close a {Stream} or other
+# resource.  The first expression {e1} produces the resource, the
+# second {e2} uses it, and the third expression {e3} then closes it.
+# The result of {e2} is returned, if all three expressions succeed,
+# otherwise the procedure fails.
+#
+# {e3} is optional and defaults to calling {close} on the resource.
+#
+# @example
+# @   s := use { f := open("some.txt"),
+# @              do_something_with(f) }
+procedure use(e1, e2, e3)
+   local f, r
+   f := @e1 | fail
+   /e3 := create f.close()
+   /e2 | (r := @e2) | {
+      @e3
+      fail
+   }
+   @e3 | fail
+   return r
+end
+
+#
+# Utility to check whether the result of a {poll} for {Poll.IN} indicates
+# a call to {in}.
+#
+procedure poll_in_test(v)
+   local x
+   # Ignore OUT
+   v := iand(v, icom(Poll.OUT))
+   # Succeed if either IN or HUP is set, but no other.
+   x := iand(v, ior(Poll.IN,Poll.HUP))
+   return x ~= 0 & x = v
+end
+
+#
+# Utility to check whether the result of a {poll} for {Poll.OUT} indicates
+# a call to {out}.
+#
+procedure poll_out_test(v)
+   # Ignore IN
+   v := iand(v, icom(Poll.IN))
+   # Succeed if OUT is set, but no other.
+   return v = Poll.OUT
+end
+
+#
+# This class represents a stream based on a local file.
+#
+class FileStream(DescStream)
+   public static const
+      # A {FileStream} representing standard input
+      stdin, 
+      # A {FileStream} representing standard output
+      stdout,
+      # A {FileStream} representing standard error
+      stderr
+
+   #
+   # Open a new {FileStream} using the underlying system open
+   # function.
+   # @param name the file name
+   # @param flags the flags, selected from {FileOpt}
+   # @param perm the create permissions to use if a file is
+   # @      created, selected from {Mode}.
+   # @param mode the resulting {Stream}'s mode; if omitted
+   # @      this is deduced from {flags} parameter and the
+   # @      type of file being opened.
+   #
+   public static open(name, flags, perm, mode)
+      if \mode then
+         return FileStream(open_impl(name, flags, perm), mode)
+
+      #
+      # Set the READ/WRITE mode flags based on the FileOpt flags.
+      #
+      if iand(flags, FileOpt.WRONLY) ~= 0 then
+         mode := WRITE
+      else if iand(flags, FileOpt.RDWR) ~= 0 then
+         mode := READ_WRITE
+      else
+         mode := READ
+
+      return create_and_set_mode(open_impl(name, flags, perm), mode)
+   end
+
+   #
+   # Create a new FileStream instance, and then adjust its mode based
+   # on the file type returned by stat().  If it is a regular file,
+   # add SEEK capability, and TRUNCATE too for a writable file.
+   #
+   private static create_and_set_mode(fd, mode)
+      local f
+      f := FileStream(fd, mode)
+      if f.stat().mode_str[1] == "-" then {
+         if f.can(WRITE) then
+            f.mode := ior(f.mode, TRUNCATE)
+         f.mode := ior(f.mode, SEEK)
+      }
+      return f
+   end
+
+   private static defer open_impl(path, flags, perm)
+
+   private static init()
+      stdin := create_and_set_mode(0, READ)
+      stdout := create_and_set_mode(1, WRITE)
+      stderr := create_and_set_mode(2, WRITE)
+   end
+
+   #
+   # Create a pair of {FileStream}s using the pipe system call.
+   #
+   public static pipe()
+      local t
+      t := pipe_impl() | fail
+      return [FileStream(t[1], READ), FileStream(t[2], WRITE)]
+   end
+
+   private static defer pipe_impl()
+
+   public defer in(n)
+
+   public defer out(s)
+
+   public defer seek(offset)
+
+   public defer tell()
+
+   public defer truncate(len)
+
+   public defer chdir()
+
+   public defer close()
+end
+
+#
+# This class represents a stream based on a socket.
+#
+class SocketStream(DescStream)
+   #
+   # Create a socket with the given domain and type.
+   #
+   # @param domain from {ProtocolFormat}.  The default is
+   # @    {ProtocolFormat.INET} 
+   # @param typ the type from {SocketType}.  The default is
+   # @    {SocketType.STREAM}.
+   #
+   public static socket(domain, typ)
+      return SocketStream(socket_impl(domain, typ), READ_WRITE)
+   end
+
+   #
+   # Create a pair of sockets of the given type
+   #
+   # @param typ the type from {SocketType}.  The default is
+   # {SocketType.STREAM}.
+   #
+   public static socketpair(typ)
+      local t
+      t := socketpair_impl(typ) | fail
+      return [SocketStream(t[1], READ_WRITE), SocketStream(t[2], READ_WRITE)]
+   end
+
+   public defer in(n)
+
+   #
+   # Connect a socket previously created with {Socket} to the given
+   # address.  The address is a string in the form "unix:<filename>"
+   # for an {AF_UNIX} address, or "inet:<host>:<port>" for an
+   # {AF_INET} address.  The host can be "INADDR_ANY" if desired.
+   #
+   public defer connect(addr)
+
+   #
+   # Bind a socket to the given address, which is in the same form as
+   # for {connect}.
+   #
+   public defer bind(addr)
+
+   #
+   # Listen for connections with the given backlog.
+   #
+   public defer listen(backlog)
+
+   #
+   # Accept a new connection, returning a new {SocketStream}.
+   #
+   public accept()
+      return SocketStream(accept_impl(), READ_WRITE)
+   end
+
+   #
+   # Perform a shutdown on the socket.
+   # @param how one of the constants in {Shut}
+   #
+   public defer shutdown(how)
+
+   #
+   # Return a list of numerical addresses for the given host.
+   #
+   public static defer dns_query(host)
+
+   private defer accept_impl()
+
+   public defer out(s)
+
+   public defer close()
+
+   private static defer socketpair_impl(typ)
+
+   private static defer socket_impl(domain, typ)
+end
+
+#
+# Parent class for classes which wish to define in() in terms of
+# reading one line at time, rather than the other way round.
+#
+class LineBasedStream(Stream)
+   private
+      line
+
+   public read_line()
+      local t
+      if *line > 0 then {
+         t := line[1:-*Files.EOL]
+         line := ""
+         return t
+      }
+      return read_line_impl()
+   end
+
+   public in(n)
+      local t
+      if *line = 0 then {
+         t := read_line_impl() | fail
+         if /t then
+            return
+         line := t || Files.EOL
+      }
+      line ? {
+         t := move(n) | tab(0)
+         line := tab(0)
+      }
+      return t
+   end
+
+   public get_mode()
+      return READ
+   end
+
+   #
+   # Implemented to read a single line.  The EOL should not be
+   # included.  Fails on error and returns {&null} on end-of-file
+   #
+   protected defer read_line_impl()
+
+   protected new()
+      self.line := ""
+      return
+   end
+end
+
+#
+# This class is used to read directory contents.
+#
+class DirStream(LineBasedStream, NoCopy)
+   private 
+      dd
+
+   protected defer read_line_impl()
+
+   public defer close()
+
+   private static defer new_impl(path)
+
+   public new(path)
+      cast(self,LineBasedStream).new()
+      self.dd := new_impl(path) | fail
+      return
+   end
+end
+
+# Convenient superclass of classes which use a background process.
+#
+class HasBgProc()
+   protected
+      pid,
+      exit_info
+
+   #
+   # Wait for the child to exit, setting {exit_info}.
+   #
+   protected do_wait()
+      \pid | runerr("do_wait() called out of sequence", self)
+      exit_info := System.wait(pid) | fail
+      pid := &null
+      return
+   end
+
+   #
+   # Return {ExitInfo} of the child process
+   #
+   public get_exit_info()
+      return .\exit_info
+   end
+
+   #
+   # Return process id of the child process
+   #
+   public get_pid()
+      return .\pid
+   end
+end
+
+# Convenient superclass of classes which have an optional {Task} to
+# use for polling.
+#
+class HasTask()
+   protected
+      task
+
+   #
+   # Set a {Task} to use when polling
+   #
+   public set_task(t)
+      self.task := t
+      return self
+   end
+
+   #
+   # Poll, either using the task's poll, or {DescStream.poll} if task
+   # is unset.
+   #
+   protected choose_poll(l, timeout)
+      return (if /task then DescStream else task).poll(l, timeout)
+   end
+end
+
+#
+# This stream represents a pipe to a command running in a forked child
+# process.
+#
+class ProgInputStream(SocketStream, HasBgProc)
+   #
+   # Close the stream.  This waits for the child process to terminate.
+   #
+   public close()
+      shutdown(Shut.RD)
+      cast(self,SocketStream).close()
+      do_wait()
+      return
+   end
+
+   # Open a new readable {Stream} based on the given command.  The
+   # first three parameters are the same as for the method
+   # {posix.System.exec};  the last two optionally give the standard
+   # input and standard error of the command; by default the command
+   # inherits these from the parent.  If the stderr param is the string
+   # "pipe", then stderr is sent to the pipe along with stdout.
+   # @example
+   # @   g := FileStream.open("/tmp/data",FileOpt.RDONLY) | stop(&why)
+   # @   f := ProgInputStream("wc", ["-l"],,g) | stop(&why)
+   # @   g.close()
+   # @   while write(f.read())   # writes the number of lines in /tmp/data
+   # @   f.close()
+   #
+   public new(cmd, args, env, stdin, stderr)
+      local l
+      l := socketpair() | fail
+      (l[1].shutdown(Shut.WR) &
+       pid := System.fork()) | {
+         l[1].close()
+         l[2].close()
+         fail
+      }
+      if pid > 0 then {
+         # Parent
+         l[2].close()
+         return cast(self,SocketStream).new(l[1].get_fd(), READ)
+      } else {
+         # Child
+         if \stdin then
+            stdin.dup2(FileStream.stdin) | stop(&why)
+         if \stderr then {
+            if stderr === "pipe" then
+               l[2].dup2(FileStream.stderr) | stop(&why)
+            else
+               stderr.dup2(FileStream.stderr) | stop(&why)
+         }
+         l[2].dup2(FileStream.stdout) | stop(&why)
+         l[1].close()
+         l[2].close()
+         System.exec(cmd, args, env) | stop(&why)
+         syserr("Not reached")
+      }
+   end
+end
+
+#
+# This stream represents a pipe from a command running in a forked child
+# process.
+#
+class ProgOutputStream(SocketStream, HasBgProc)
+   #
+   # Close the stream.  This waits for the child process to terminate.
+   #
+   public close()
+      shutdown(Shut.WR)
+      cast(self,SocketStream).close()
+      do_wait()
+      return
+   end
+
+   # Open a new writeable {Stream} based on the given command. The
+   # first three parameters are the same as for the method
+   # {posix.System.exec}; the last two optionally give the standard
+   # output and standard error of the command; by default the command
+   # inherits these from the parent.
+   # @example
+   # @    g := FileStream.open("/tmp/result",ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
+   # @    f := ProgOutputStream("wc", ["-l"],,g) | stop(&why)
+   # @    g.close()
+   # @    f.write("data")
+   # @    f.close()
+   # @    # Now /tmp/result contains "1" (ie, the output of wc -l applied to the data written to f)
+   #
+   public new(cmd, args, env, stdout, stderr)
+      local l
+      l := socketpair() | fail
+      (l[2].dflag(DescOpt.CLOEXEC) &
+       l[2].shutdown(Shut.RD) &
+       pid := System.fork()) | {
+          l[1].close()
+          l[2].close()
+          fail
+       }
+      if pid > 0 then {
+         # Parent
+         l[1].close()
+         return cast(self,SocketStream).new(l[2].get_fd(), WRITE)
+      } else {
+         # Child
+         if \stdout then
+            stdout.dup2(FileStream.stdout) | stop(&why)
+         if \stderr then
+            stderr.dup2(FileStream.stderr) | stop(&why)
+         l[1].dup2(FileStream.stdin) | stop(&why)
+         l[1].close()
+         l[2].close()
+         System.exec(cmd, args, env) | stop(&why)
+         syserr("Not reached")
+      }
+   end
+end
+
+#
+# Base class for FilterOutputStream and FilterInputStream
+#
+class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask, NoCopy)
+   protected
+      cmd,
+      err_sink,
+      cin,
+      cout,
+      cerr
+
+   # Convenient function to check that the command exited
+   # successfully.  If it did, this function returns, otherwise it
+   # fails and sets {&why} appropriately, based on the exit code and
+   # stderr output.  The error sink must be set to a {StringStream} to
+   # use this function.
+   #
+   public succeeded()
+      local x
+      is(err_sink, StringStream) | runerr("Must use a StringStream as error sink with check_result()", err_sink)
+      x := get_exit_info() | runerr("You can only call succeeded() after close()", self)
+      case x.reason of {
+         ExitInfo.EXITED: {
+            if x.param = 0 then
+               return
+            return error(cmd || " exited with status " || x.param || ": " || trim(replace(err_sink.str(), "\n", " ")))
+         }
+         ExitInfo.STOPPED:
+            return error(cmd || " stopped with signal " || x.param)
+         ExitInfo.TERMINATED:
+            return error(cmd || " terminated with signal " || x.param)
+         ExitInfo.COREDUMP:
+            return error(cmd || " dumped core with signal " || x.param)
+         default:
+            return error(cmd || " finished for unknown reason " || x.reason || "; param " || x.param)
+      }
+   end
+
+   protected do_poll()
+      local x, l, t
+      l := []
+      t := table()
+      if l |||:= [\cin, Poll.IN] then
+         t[cin] := 1
+      if l |||:= [\cerr, Poll.IN] then
+         t[cerr] := *l/2
+      if l |||:= [\cout, Poll.OUT] then
+         t[cout] := *l/2
+      if *l = 0 then
+         runerr(219, self)
+      x := choose_poll(l) | fail
+      if poll_in_test(x[t[\cin]]) then
+         return cin
+      if poll_in_test(x[t[\cerr]]) then
+         return cerr
+      if poll_out_test(x[t[\cout]]) then
+         return cout
+      return error("child command i/o failed")
+   end
+
+   protected close_cin()
+      if \cin then {
+         cin.shutdown(Shut.RD)
+         cin.close()
+         cin := &null
+      }
+   end
+
+   protected close_cerr()
+      if \cerr then {
+         cerr.shutdown(Shut.RD)
+         cerr.close()
+         cerr := &null
+      }
+   end
+
+   protected close_cout()
+      if \cout then {
+         cout.shutdown(Shut.WR)
+         cout.close()
+         cout := &null
+      }
+   end
+
+   protected setup(cmd, args, env, err_sink)
+      local l
+      self.cmd := cmd
+      /err_sink := StringStream()
+      self.err_sink := err_sink
+      l := SocketStream.socketpair() | fail
+      (l |||:= SocketStream.socketpair() &
+       l |||:= SocketStream.socketpair() &
+       l[1].flag(FileOpt.NONBLOCK) & 
+       l[4].dflag(DescOpt.CLOEXEC) &
+       l[4].flag(FileOpt.NONBLOCK) & 
+       l[5].flag(FileOpt.NONBLOCK) &
+       l[1].shutdown(Shut.WR) &
+       l[3].shutdown(Shut.WR) &
+       l[5].shutdown(Shut.WR) &
+       l[2].shutdown(Shut.RD) &
+       l[4].shutdown(Shut.RD) &
+       l[6].shutdown(Shut.RD) &
+       pid := System.fork()) | {
+          every (!l).close()
+          fail
+       }
+      if pid > 0 then {
+         # Parent
+         cin := l[1]
+         cout := l[4]
+         cerr := l[5]
+         l[2].close()
+         l[3].close()
+         l[6].close()
+         return
+      } else {
+         # Child
+         l[2].dup2(FileStream.stdout) | stop(&why)
+         l[3].dup2(FileStream.stdin) | stop(&why)
+         l[6].dup2(FileStream.stderr) | stop(&why)
+         every (!l).close()
+         System.exec(cmd, args, env) | stop(&why)
+         syserr("Not reached")
+      }
+   end
+end
+
+#
+# This stream filters output written to it through a background
+# process and outputs the results to an arbitrary sink {Stream}.
+#
+# @example
+# @ # Encode s, putting the result in a RamStream
+# @ r := RamStream()
+# @ g := FilterOutputStream(r, "gzip", ["-c"])
+# @ g.write(s)
+#
+class FilterOutputStream(FilterStreamBase)
+   private 
+      sink
+   
+   public out(s)
+      local x, t
+      s := string(s) | runerr(103, s)
+      repeat {
+         x := do_poll() | fail
+         case x of {
+            cin: {
+               t := cin.in(1048576) | fail
+               if /t then
+                  close_cin()
+               else
+                  sink.fully_out(t) | fail
+            }
+            cerr: {
+               t := cerr.in(1048576) | fail
+               if /t then
+                  close_cerr()
+               else
+                  err_sink.fully_out(t) | fail
+            }
+            cout:
+               return cout.out(s)
+         }
+      }
+   end
+
+   private flush_remaining()
+      local x, t
+      while \cin | \cerr do {
+         x := do_poll() | fail
+         case x of {
+            cin: {
+               t := cin.in(1048576) | fail
+               if /t then
+                  close_cin()
+               else
+                  sink.fully_out(t) | fail
+            }
+            cerr: {
+               t := cerr.in(1048576) | fail
+               if /t then
+                  close_cerr()
+               else
+                  err_sink.fully_out(t) | fail
+            }
+         }
+      }
+      return
+   end
+
+   # Close the stream.  This waits for the child process to terminate,
+   # flushing any remaining output to {sink}.  NB: {sink} and
+   # {err_sink} are not closed unless the {set_close_underlying} has
+   # been set to {&yes}.
+   #
+   public close()
+      local f
+      \pid | runerr(219, self)
+      close_cout()
+      flush_remaining() | (f := 1)
+      close_cin()
+      close_cerr()
+      if \close_underlying_flag then {
+         sink.close() | (f := 1)
+         (err_sink === sink) | err_sink.close() | (f := 1)
+      }
+      do_wait()
+      return /f
+   end
+
+   public get_mode()
+      return WRITE
+   end
+
+   #
+   # Create a new instance.
+   #
+   # @param sink the {Stream} to which data is output from the command.
+   # @      Defaults to a {NullStream}.
+   # @param cmd the name of the command                                    
+   # @param args the arg list                                              
+   # @param env the env list                                               
+   # @param err_sink optional stream to send standard error to.  If omitted,
+   # @      defaults to a {StringStream}, which can then be used together
+   # @      with {succeeded()} to check the command's exit status.
+   public new(sink, cmd, args, env, err_sink)
+      /sink := NullStream()
+      self.sink := sink
+      setup(cmd, args, env, err_sink) | fail
+      return
+   end
+end
+
+#
+# This stream filters data taken from an arbitrary source {Stream}
+# through a background process.  The output from that process can then
+# be read as this {Stream}'s output.
+#
+# @example
+# @ g := FilterInputStream(StringStream(s), "gzip", ["-c"])
+# @ # Reading from g will give the compressed value of the string s.
+# @ res := g.read_all()
+#
+class FilterInputStream(FilterStreamBase)
+   private 
+      source,
+      buff
+
+   public in(n)
+      local x, i, t
+      repeat {
+         x := do_poll() | {
+            if \cout then {
+               # The child has exited, but the data has yet to reach
+               # the input pipes; close cout and go round again to
+               # wait for input or hup on cin/cerr.
+               close_cout()
+               next
+            }
+            fail
+         }
+         case x of {
+            cin: {
+               t := cin.in(n) | fail
+               if /t then
+                  close_cout()
+               return t
+            }
+            cerr: {
+               t := cerr.in(1048576) | fail
+               if /t then {
+                  close_cout()
+                  close_cerr()
+               } else
+                  err_sink.fully_out(t) | fail
+            }
+            cout: {
+               if *buff = 0 then {
+                  buff := source.in(1048576) | fail
+                  if /buff then {
+                     close_cout()
+                     next
+                  }
+               }
+               i := cout.out(buff) | {
+                  # Broken pipe; this is caused by the command exiting
+                  # between the do_poll() and the out() call.
+                  close_cout()
+                  next
+               }
+               buff := buff[i + 1:0]
+            }
+         }
+      }
+   end
+
+   #
+   # Exchange the handling of the command's stdout and stderr, so that
+   # stdout goes to the stderr sink and stderr is read by calling
+   # {in()}
+   #
+   public swap_outputs()
+      cin :=: cerr
+      return self
+   end
+
+   private flush_cerr()
+      local x, t
+      while \cerr do {
+         x := do_poll() | fail
+         case x of {
+            cerr: {
+               t := cerr.in(1048576) | fail
+               if /t then
+                  close_cerr()
+               else
+                  err_sink.fully_out(t) | fail
+            }
+            default:
+               syserr("Unexpected result from do_poll")
+         }
+      }
+      return
+   end
+
+   #
+   # Close the stream.  This waits for the child process to terminate.
+   # NB: {source} and {err_sink} are not closed unless the
+   # {set_close_underlying} has been set to {&yes}.
+   #
+   public close()
+      local f
+      \pid | runerr(219, self)
+      close_cout()
+      close_cin()
+      flush_cerr() | (f := 1)
+      close_cerr()
+      if \close_underlying_flag then {
+         source.close() | (f := 1)
+         err_sink.close() | (f := 1)
+      }
+      do_wait()
+      self.buff := &null
+      return /f
+   end
+
+   public get_mode()
+      return READ
+   end
+   
+   #
+   # Create a new instance.
+   #
+   # @param source the {Stream} from which data is given to the command.
+   # @      Defaults to a {NullStream}.
+   # @param cmd the name of the command                                    
+   # @param args the arg list                                              
+   # @param env the env list                                               
+   # @param err_sink optional stream to send standard error to.  If omitted,
+   # @      defaults to a {StringStream}, which can then be used together
+   # @      with {succeeded()} to check the command's exit status.
+   public new(source, cmd, args, env, err_sink)
+      /source := NullStream()
+      self.source := source
+      self.buff := ""
+      setup(cmd, args, env, err_sink) | fail
+      return
+   end
+end
+
+#
+# This class provides a {Stream} which stores its data in memory.  It
+# can be used to efficiently concatenate together many strings, or as
+# a convenient temporary stream.
+#
+class RamStream(Stream, NoCopy)
+   private
+      ptr
+
+   public defer in(n)
+
+   public defer out(s)
+
+   public defer seek(offset)
+
+   public defer tell()
+
+   public defer truncate(len)
+
+   #
+   # Return the current content of the {RamStream} as a string.
+   #
+   public defer str()
+
+   public defer close()
+
+   #
+   # Close the stream and return the finished content as a string.
+   #
+   public done()
+      local s
+      s := str()
+      close()
+      return s
+   end
+
+   private static defer new_impl(s, wiggle)
+
+   public get_mode()
+      return ALL
+   end
+
+   #
+   # Create a new {RamStream}, with initial value of {s}.
+   #
+   # @param s the initial value of the stream; defaults to empty 
+   # @      string.
+   # @param wiggle the extra space to reserve for growth of the buffer,
+   # @      default is 512 bytes.
+   #
+   public new(s, wiggle)
+      ptr := new_impl(s, wiggle)
+      return
+   end
+end
+
+#
+# A very simple SSL stream, using the openssl library.
+#
+class SslStream(Stream, HasUnderlyingStream, NoCopy)
+   private
+      ptr,
+      other
+
+   public defer in(n)
+
+   public defer out(s)
+
+   public close()
+      local f
+      close_impl() | (f := 1)
+      if \close_underlying_flag then
+         other.close() | (f := 1)
+      return /f
+   end
+
+   private defer close_impl()
+
+   public get_mode()
+      return other.get_mode()
+   end
+
+   private static defer new_impl(other, verify_host)
+
+   #
+   # Create a new SslStream.
+   #
+   # @param other an already connected {SocketStream} over which the connection
+   #              will operate
+   # @param verify_host if set, the remote host's certificate will be verified
+   #              and its hostname checked against this value.
+   public new(other, verify_host)
+      ptr := new_impl(other, verify_host) | fail
+      self.other := other
+      return
+   end
+end
+
+#
+# This stream takes a list of other streams.  Its output is the concatenation of
+# the output of those streams.
+#
+class SequenceStream(Stream, HasUnderlyingStream)
+   private
+      a, ac
+
+   public in(n)
+      local s
+      repeat {
+         if *a = 0 then
+            return
+         s := a[1].in(n) | fail
+         if \s then
+            return s
+         pop(a)
+      }
+   end
+
+   public get_mode()
+      return READ
+   end
+
+   public close()
+      local e, f
+      if \close_underlying_flag then {
+         every e := !ac do
+            e.close() | (f := 1)
+      }
+      return /f
+   end
+
+   public new(a[])
+      self.a := a
+      self.ac := copy(a)
+      return
+   end
+end
+
+#
+# Subclasses of this stream implement the {gen} method.  The results
+# sequence of that method represent the output of the stream, with
+# each result being one line.
+#
+class GeneratorStream(LineBasedStream, NoCopy)
+   private
+      coex
+
+   protected read_line_impl()
+      local t
+      if /coex then
+         return
+      t := @coex | fail
+      if /t then
+         coex := &null
+      else
+         t := string(t) | runerr(103, t)
+      return t
+   end
+
+   public close()
+      return
+   end
+
+   #
+   # Generates the lines of the stream.  End-of-file is signalled by
+   # returning {&null} and errors are signalled by failing and setting
+   # {&why}.
+   #
+   protected defer gen()
+
+   public new()
+      cast(self,LineBasedStream).new()
+      self.coex := create gen()
+      return
+   end
+end
+
+#
+# A {Stream} which takes its data from a co-expression.  Each result provides
+# one line of output.
+#
+# @example
+# @   # A stream with 10 lines
+# @   e := ExprStream{1 to 10}
+#
+class ExprStream(LineBasedStream)
+   private
+      coex
+
+   protected read_line_impl()
+      local t
+      if t := @coex then
+         t := string(t) | runerr(103, t)
+      return t
+   end
+
+   public close()
+      return
+   end
+
+   public new(coex)
+      self.coex := coex
+      return cast(self,LineBasedStream).new()
+   end
+end
+
+#
+# Useful parent class for filtering the lines from a particular
+# {Stream}.
+#
+class LineFilterStream(GeneratorStream, HasUnderlyingStream)
+   protected
+      other
+
+   public close()
+      if \close_underlying_flag then
+         other.close() | fail
+      return
+   end
+
+   protected next_line()
+      return other.read_line()
+   end
+
+   protected expect_line()
+      local s
+      s := other.read_line() | fail
+      return \s | error("Unexpected eof")
+   end
+
+   public new(other)
+      self.other := other
+      self.close_underlying_flag := &yes
+      return cast(self,GeneratorStream).new()
+   end
+end

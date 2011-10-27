@@ -1,0 +1,61 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import util
+
+#
+# This class is simply a container for several objects
+# which then act together as ``radio buttons''.  The objects
+# should be subclasses of {Toggle}, but are normally checkboxes.
+#
+# An {Event.SELECTION_CHANGED} is fired when  the user changes the
+# selection (but not when the selection is changed programatically).
+#
+# NB - the objects in the group must be added to both the {CheckBoxGroup}
+# and the dialog box too; a {CheckBoxGroup} is not a {Component}.
+#
+class CheckBoxGroup(Connectable)
+   public 
+      checkboxes,              #                  
+      which_one
+
+   #
+   # Returns the object is currently down.
+   #
+   public get_which_one()
+      return self.which_one
+   end
+
+   #
+   # Add the object to the CheckBoxGroup.
+   # @param c   The object to add, which must be a subclass of {Toggle}.
+   #
+   public add(c)
+      put(self.checkboxes, c)
+      c.set_parent_check_box_group(self)
+      return self
+   end
+
+   #
+   # Set which CheckBox which is down.
+   # @param x   The object which is down.
+   #
+   public set_which_one(x)
+      x.set_is_checked(&yes)
+      return self
+   end
+
+   public new()
+      cast(self,Connectable).new()
+      self.checkboxes := []
+      return
+   end
+end
+

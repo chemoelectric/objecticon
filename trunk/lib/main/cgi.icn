@@ -1,0 +1,63 @@
+package cgi
+
+import io, net, mail, util(error), posix(System)
+
+class CgiParams()
+   private readable
+      stdin,
+      stdin_limit,
+      params
+
+   public process()
+      local rm, ct, msg, p, cd, key, multi, s
+
+      stdin := FileStream.stdin.read_all() | fail
+      if *stdin > \stdin_limit then
+         return error("Too much data read from stdin")
+
+      rm := System.getenv("REQUEST_METHOD")
+      case rm of {
+         "GET": {
+            params := URL.make_cgi_table(System.getenv("QUERY_STRING"))
+         }
+         "POST": {
+            p := RFC822Parser()
+            s := System.getenv("CONTENT_TYPE")
+            ct := p.parse_content_type(s) | return error("Couldn't parse CONTENT_TYPE param: " || &why)
+            if ct.type == "application" & ct.subtype == "x-www-form-urlencoded" then {
+               params := URL.make_cgi_table(stdin)
+            } else if ct.type == "multipart" & ct.subtype == "form-data" then {
+               msg := Message()
+               msg.set_header("Content-Type", s)
+               msg.set_content(stdin)
+               multi := msg.get_content_object() | return error("Couldn't decode multipart: " || &why)
+               params := table()
+               every p := !multi.parts do {
+                  cd := p.get_content_disposition() | return error("No Content-Disposition")
+                  key := cd.get_parameter("name")
+                  /params[key] := []
+                  put(params[key], p)
+               }
+            } else 
+               params := table()
+         }
+         default:
+            return error("Unknown request method: " || image(rm))
+      }
+
+      return
+   end
+
+   public get_params(key)
+      return \params[key]
+   end
+
+   public get_first_param(key)
+      return get_params(key)[1]
+   end
+
+   public set_stdin_limit(n)
+      self.stdin_limit := n
+      return self
+   end
+end

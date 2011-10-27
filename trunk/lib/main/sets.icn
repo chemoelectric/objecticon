@@ -1,0 +1,227 @@
+#
+# $Id$
+#
+
+package datastruct
+
+import lang
+
+#
+# This is a common superclass for a set-like data structure.
+#
+class Set()
+   #
+   # Insert a new member.
+   #
+   public defer insert(x)
+
+   #
+   # Succeed iff {x} is a member of the set.
+   #
+   public defer member(x)
+
+   #
+   # Delete {x} from the set.
+   #
+   public defer delete(x)
+
+   #
+   # Return a sorted list of members.
+   #
+   public defer sort()
+
+   #
+   # Generate the members.
+   #
+   public defer gen()
+
+   #
+   # Generate the members in reverse order.  Only implemented for sets which store their
+   # members in sorted order.
+   #
+   public defer back()
+
+   #
+   # Return the size of the set.
+   #
+   public defer size()
+
+   #
+   # Clear the set of all elements.
+   #
+   public defer clear()
+
+   #
+   # Return a list of the members, in the order produced by {gen()}.
+   #
+   public member_list()
+      local l
+      l := []
+      every put(l, gen())
+      return l
+   end
+
+   #
+   # Custom equals mirrors the {equals()} behaviour for builtin sets.
+   #
+   private object_equals(other, seen)
+      other.size() = self.size() | fail
+      return hash_and_check(other.member_list(), self.member_list(), seen)
+   end
+
+   #
+   # Custom hash mirrors the {hash()} behaviour for builtin sets.
+   #
+   private object_hash(depth)
+      local n
+      n := size()
+      if depth > 1 then
+         every n +:= hash(gen(), depth - 1)
+      return n
+   end
+
+   #
+   # Output object
+   #
+   private object_output(oo)
+      local elements, e, sep
+      elements := sort()
+      if oo.simple{!!elements} then {
+         oo.object_start(self)
+         every e := !elements do {
+            if \sep then
+               oo.writes(",")
+            oo.traverse(e)
+            sep := 1
+         }
+         oo.object_end(self)
+      } else {
+         oo.nl()
+         oo.object_start(self)
+         oo.iplus()
+         every e := !elements do {
+            if \sep then
+               oo.writes(",")
+            oo.nl()
+            oo.traverse(e)
+            sep := 1
+         }
+         oo.iminus()
+         oo.nl()
+         oo.object_end(self)
+      }
+   end
+end
+
+#
+# A Set which is a view of the keys of a {Table}.
+#
+class TableSet(Set)
+   private t
+
+   public insert(x)
+      t.insert(x, t.def)
+      return self
+   end
+
+   public member(x)
+      if t.member(x) then
+         return x
+   end
+
+   public delete(x)
+      t.delete(x)
+      return self
+   end
+
+   public sort()
+      local l
+      l := []
+      every put(l, (!t.sort())[1])
+      return l
+   end
+
+   public gen()
+      suspend t.key()
+   end
+
+   public back()
+      suspend t.back_key()
+   end
+
+   public size()
+      return t.size()
+   end
+
+   public clear()
+      t.clear()
+      return self
+   end
+
+   #
+   # Create a new instance.
+   #
+   # @param t either the {Table} to wrap, or a class indicating the class of
+   # @   a new {Table}, which will be instantiated by calling its
+   # @   constructor with no parameters.
+   # @param entries initial entries to insert.
+   #
+   public new(t, entries[])
+      if type(t) == "class" then
+         t := t()
+      self.t := t
+      every insert(!entries)
+      return
+   end
+end
+
+#
+# A {Set} that is just a wrapper around a builtin set
+#
+class BuiltinSet(Set)
+   private s
+
+   public insert(x)
+      default.insert(s, x)
+      return self
+   end
+
+   public member(x)
+      return default.member(s, x)
+   end
+
+   public delete(x)
+      default.delete(s, x)
+      return self
+   end
+
+   public sort()
+      return default.sort(s)
+   end
+
+   public gen()
+      suspend !s
+   end
+
+   public size()
+      return *s
+   end
+
+   public clear()
+      default.clear(s)
+      return self
+   end
+
+   #
+   # Create a new instance.
+   #
+   # @param s the set to wrap; if omitted a new set is created.
+   # @param entries initial entries to insert.
+   #
+   public new(s, entries[])
+      /s := set()
+      self.s := s
+      every insert(!entries)
+      return
+   end
+end

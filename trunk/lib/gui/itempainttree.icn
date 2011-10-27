@@ -1,0 +1,98 @@
+package gui
+
+class ItemPaintTree(Tree)
+   public
+      item_paint,
+      item_border
+
+   public initially()
+      \self.item_paint | runerr("ItemPaint not set")
+      cast(self,Tree).initially()
+      self.item_paint.initially(self)
+      self.item_border.initially(self)
+   end
+
+   public finally()
+      cast(self,Tree).finally()
+      self.item_paint.finally()
+      self.item_border.finally()
+   end
+
+   public set_item_paint(r)
+      (\self.item_paint).finally()
+      self.item_paint := r
+      if is_initialized() then
+         self.item_paint.initially(self)
+      return self
+   end
+
+   #
+   # Set a border to draw along with each Paint instance.
+   #
+   public set_item_border(b)
+      (\self.item_border).finally()
+      self.item_border := b
+      if is_initialized() then
+         self.item_border.initially(self)
+      return self
+   end
+
+   public calculate_line_height()
+      local h, h1
+      if /col_w then
+         compute_img_wh()
+      if h := item_paint.get_constant_height(view.cbwin) +
+         item_border.get_total_height() then 
+      {
+         #
+         # Ensure the line height is slightly greater than the
+         # bitmap height
+         #
+         h <:= \img_h + 4
+      } else {
+         h := []
+         every h1 := item_paint.get_height(view.cbwin, (!self.contents).label) + 
+                   item_border.get_total_height() do 
+         {
+            h1 <:= \img_h + 4
+            put(h, h1)
+         }
+      }
+      return h
+   end
+
+   public calculate_subject_width()
+      local cw, mw, n
+      mw := 0
+      if cw := item_paint.get_constant_width(self.cbwin) then {
+         every n := !self.contents do
+            mw <:= col_w * n.depth + col_w + cw
+      } else {
+         every n := !self.contents do
+            mw <:= col_w * n.depth + col_w + item_paint.get_width(view.cbwin, n.label)
+      }
+      return mw + item_border.get_total_width()
+   end
+
+   public get_node_data_width(n)
+      return (item_paint.get_constant_width(self.cbwin) | 
+              item_paint.get_width(view.cbwin, n.label)) + item_border.get_total_width()
+   end
+
+   public draw_node_data(n, xp, yp, lh)
+      local r, s
+      s := item_paint.get_size(view.cbwin, n.label)
+      r := Rect(xp, yp, s.w + item_border.get_total_width(), lh)
+      item_paint.draw_point(view.cbwin, n.label, item_border.float(r, s))
+      item_border.draw_rect(view.cbwin, r)
+   end
+
+   public new()
+      cast(self,Tree).new()
+      self.set_item_border(EmptyBorder().
+                           set_insets(0, 0, 0, 0).
+                           set_x_align(Align.L))
+      return
+   end
+end
+

@@ -1,0 +1,68 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package http
+
+import util, mail
+
+#
+# This class encapsulates an HTTP response.
+#
+class HttpResponse(MimeHeaders)
+   private readable 
+      url, 
+      status
+
+   #
+   # Set the url
+   #
+   public set_url(url)
+      self.url := url
+      return self
+   end
+
+   #
+   # Return the status of the page
+   # @return  The status eg "HTTP/1.1 200 OK"
+   #
+   public get_status()
+      return status
+   end
+
+   #
+   # Set the status
+   #
+   public set_status(s)
+      self.status := s
+      return self
+   end
+
+   #
+   # Succeed iff the status was an HTTP OK status.
+   #
+   public status_okay()
+      return find("200", status)
+   end
+
+   #
+   # Return the filename contained in the Content-Disposition header, if
+   # present; fail otherwise.
+   #
+   public get_content_disposition_filename()
+      return ContentDisposition.parse(get_first_header("content-disposition")).get_filename()
+   end
+
+   #
+   # Return the result of {get_content_disposition_filename()}, or
+   # failing that the filename contained in the {url} (which may be
+   # the empty string).
+   #
+   public get_filename()
+      return get_content_disposition_filename() | url.get_file_last(1)
+   end
+end

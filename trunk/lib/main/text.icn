@@ -1,0 +1,81 @@
+package lang
+
+class Text()
+   # Generate the ranges in a cset, as a sequence of from-to pairs.
+   #
+   public static defer get_ord_range(c)
+
+   # Produce a cset consisting of characters in the range x[1]-x[2], x[3]-x[4] etc
+   #
+   public static defer create_cset(x[])
+
+   # Succeed if the cset c contains the code point x, returning its
+   # index in the cset
+   #
+   public static defer has_ord(c, x)
+
+   # Produce a string containing the utf-8 sequence of chars for
+   # character i.
+   #
+   public static defer utf8_seq(i)
+
+   # Succeed if all the chars in x are in cset y.
+   #
+   public static subset(x, y)
+      local c
+      y := cset(y) | runerr(104, y)
+      every c := ord(x) do
+         Text.has_ord(y, c) | fail
+      return
+   end
+
+   # Given an initial character, return the number of characters
+   # making up a valid utf8 sequence beginning with that character, or
+   # fail if it is not a valid initial character.
+   #
+   public static get_utf8_seq_len(ch)
+      static utf8_seq_len_arr
+      initial utf8_seq_len_arr := [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+                                   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+                                   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+                                   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+                                   1,1,1,1,1,1,1,,,,,,,,,,,,,,,,,,
+                                   ,,,,,,,,,,,,,,,,,,,,,
+                                   ,,,,,,,,,,,,,,,,,,,,,
+                                   ,,,,,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+                                   2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,
+                                   5,5,5,5,6,6,,]
+      return \utf8_seq_len_arr[ord(ch)\1 + 1]
+   end
+
+   # A more liberal way of parsing a utf-8 string than the builtin
+   # {ucs} function.  Any errors in the input result in the substitute
+   # character (by default U+FFFD) being put into the resulting
+   # string.
+   # @param s the string to parse into a ucs
+   # @param subst the substitute character
+   public static liberal_ucs(s, subst)
+      local t, i, n
+      if s := ucs(s) then
+         return s
+      s := string(s) | runerr(103, s)
+      /subst := "\uFFFD"
+      subst := string(subst) | runerr(103, subst)
+      t := ""
+      i := 1
+      while i <= *s do {
+         if n := get_utf8_seq_len(s[i]) & t ||:= string(ucs(s[i+:n])) then
+            i +:= n
+         else {
+            t ||:= subst
+            i +:= 1
+         }
+      }
+      return ucs(t)
+   end
+
+   # Given a cset {c}, produce another cset containing those characters in 
+   # positions {i}:{j}.
+   #
+   public static defer slice(c, i, j)
+end

@@ -1,0 +1,124 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import graphics
+
+class EditListTextField(TextField)
+   public keeps(e)
+      return member(Key.CURSOR, e.code)
+   end
+
+   public on_key(e)
+      case e.code of {
+         Key.UP : parent.go_up(e)
+         Key.DOWN : parent.go_down(e)
+      }
+   end
+
+   public new()
+      cast(self,TextField).new()
+      self.connect(self.on_key, Event.KEY_PRESS)
+      self.set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(0))
+      return
+   end
+end
+
+
+#
+# This component functions in the same way as List above, but
+# the item selected may be edited by the user.  An extra
+# method is therefore supplied to get the content, as it may
+# not correspond to an element of the list.
+#
+# A Event.SELECTION_CHANGED is generated when an item in the
+# list is selected and a CONTENT_CHANGED event is generated
+# when the value displayed in the field changes, either by
+# selection from the list or user edit of the text.
+#
+class EditList(DropDown)
+   public 
+      old_contents
+
+   #
+   # Set the text field's filter (see {TextField} for details).
+   # @param c  The filter
+   #
+   public set_filter(c)
+      self.view.set_filter(c)
+      return self
+   end
+
+   #
+   # Return the contents of the selected item (which may have
+   # been edited).
+   #
+   public get_contents()
+      return self.view.get_contents()
+   end
+
+   public start_change(e)
+      cast(self,DropDown).start_change(e)
+      self.old_contents := get_contents()
+   end
+
+   public end_change(e)
+      cast(self,DropDown).end_change(e)
+      if self.old_contents ~=== get_contents() then
+         fire(Event.CONTENT_CHANGED, e)
+   end
+
+   #
+   # Set the contents of the text to the given string; the
+   # selection is set to any matching item in the list, or
+   # &null if there is no match.
+   #
+   public set_contents(x)
+      if not object_set_selection(x) then {
+         self.selection := &null
+         self.view.set_contents(x)
+      }
+      return self
+   end
+
+   public apply_selection(ev)
+      local s 
+      s := extract_selection() | ""
+      self.view.set_contents(s)
+   end
+
+   public extract_selection()
+      return self.selection_list[\self.selection] 
+   end
+
+   public on_textfield(ev, src, type)
+      # Fire the event with self as source.
+      if type = Event.CONTENT_CHANGED then
+         self.selection := &null
+      fire(type, ev)
+   end
+
+   public create_view()
+      local tf
+      tf := EditListTextField()
+      every tf.connect(self.on_textfield, Event.CONTENT_CHANGED|Event.ACTION)
+      return tf
+   end
+
+   public get_default_width()
+      local t
+      t := 0
+      # Max string length + space for cursor (cf TextField's get_view() method)
+      every t <:= self.cbwin.text_width((view.contents | !self.selection_list) || " ")
+      return border.get_total_width() + b.get_preferred_width() + t + view.border.get_total_width()
+   end
+end
+
+
+

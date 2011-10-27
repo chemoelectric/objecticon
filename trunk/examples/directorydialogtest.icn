@@ -1,0 +1,10 @@
+import gui,io
+
+procedure main()
+   local d
+   d :=  DirectoryDialog().set_label("A Dir Dialog").set_directories(["/tmp","/home","/home/rparlett"])
+   d.show_modal()
+
+   write("d.result=",d.get_result() | "FAILED")
+end
+

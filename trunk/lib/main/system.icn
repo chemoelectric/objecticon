@@ -1,0 +1,124 @@
+package posix
+
+import 
+   io(Files),
+   util(error)
+
+class System()
+   # This provides a slightly easier to use interface to {execve}.
+   # The first argument is searched on the PATH and if found pushed
+   # onto the arg list (making the arg0 of the target program).  Then
+   # {execve} is called.
+   # @param cmd the name of the command
+   # @param args the arg list, excluding the command name.  Defaults to []
+   # @param env the env list, defaults to the current environment
+   # @           if omitted
+   # @example
+   # @   System.exec("ls", ["-l", "/home"])
+   #
+   public static exec(cmd, args, env)
+      cmd := Files.find_exe(cmd) | return error("Not found on PATH:" || cmd)
+      /args := []
+      push(args, cmd)
+      return execve(cmd, args, env)
+   end
+
+   # Replace the executing Icon program with a new program, using the
+   # execve system call.  The first parameter is the file to execute,
+   # the second parameter is a list of strings which must have at least
+   # one parameter, and the third optional parameter is also a list of
+   # strings, which provide the environment variables - if omitted then
+   # the current program's environment is passed (obtained via the 
+   # environ variable).
+   # @example 
+   # @        System.execve("/bin/ls", ["/bin/ls", "-l", "/home"],
+   # @                                 ["ABC=DEF", "NUM=123"])
+   #
+   public static defer execve(f, args, env)
+
+   # spawn a new identical process.
+   public static defer fork()
+
+   # send a signal to a process.
+   public static defer kill(pid, signal)
+
+   # wait for process to terminate or stop.
+   public static wait(pid, options)
+      return ExitInfo!wait_impl(pid, options)
+   end
+
+   # returns the process ID of the calling process.
+   public static defer getpid()
+
+   # returns the process ID of the parent of the calling process.
+   public static defer getppid()
+
+   private static defer wait_impl()
+
+   # generate the environment values as key=pair strings
+   public static defer environ()
+
+   # return contents of environment variable s.
+   public static defer getenv(s)
+   
+   # set an environment variable.
+   public static defer setenv(name, value)
+
+   # unset an environment variable.
+   public static defer unsetenv(name)
+
+   # Get name and information about current kernel.  A UtsName object is returned, with
+   # fields corresponding to the posix utsname structure.
+   public static uname()
+      return UtsName!uname_impl()
+   end
+
+   private static defer uname_impl()
+end
+
+# A structure returned by the {System.uname} method.
+class UtsName()
+   public const
+      sysname,
+      nodename,
+      release,
+      version,
+      machine
+
+   package new(sysname, nodename, release, version, machine)
+      self.sysname := sysname
+      self.nodename := nodename
+      self.release := release
+      self.version := version
+      self.machine := machine
+      return
+   end
+end
+
+# Provides info about an exited process
+class ExitInfo()
+   public static const
+      STOPPED,
+      COREDUMP,
+      TERMINATED,
+      EXITED
+
+   public const
+      pid,
+      reason,
+      param
+
+   private static init()
+      STOPPED := "stopped"
+      COREDUMP := "coredump"
+      TERMINATED := "terminated"
+      EXITED := "exited"
+   end
+
+   package new(pid, reason, param)
+      self.pid := pid
+      self.reason := reason
+      self.param := param
+      return
+   end
+end

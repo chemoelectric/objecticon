@@ -1,0 +1,252 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui, io, ipl.lists, ipl.strings, util
+
+#
+# Convert a list l to a string representation.
+#
+procedure contents_string(l)
+   return "[" || list2str(l, ", ", image) || "]"
+end
+
+procedure is_image_file(s)
+   return endswith(map(s), ".gif" | ".png" | ".jpeg" |".jpg")
+end
+
+#
+# Check that the window attributes are valid.
+#
+procedure util_check_attribs(dialog, t, valid_set)
+   local s
+   # Check for attrib names
+   every s := !sort(t) do {
+      if not member(valid_set, s[1]) then
+         return alert_error(dialog, "Invalid attribute " || s[1])
+      if not normalize_wattrib(s[1], s[2]) then
+         return alert_error(dialog, "Invalid value " || s[2] || " for attrib " || s[1])
+   }
+   return
+end
+
+procedure stringify_wattrib(key, val, quote)
+   return if type(val) == "list" then list2str(val, ", ") 
+      else if key == "resize" then if \val then "&yes" else "&no"
+      else if type(val) == "integer" then string(val)
+      else if /quote then text(val) else image(text(val))
+end
+
+procedure stringify_wattribs(t)
+   local e, r
+   r := table()
+   every e := !sort(t) do
+      insert(r, e[1], stringify_wattrib(e[1], e[2]))
+   return r
+end
+
+procedure normalize_wattribs(t)
+   local e, r
+   r := table()
+   every e := !sort(t) do
+      insert(r, e[1], normalize_wattrib(e[1], e[2]))
+   return r
+end
+
+procedure resolve_layout_filename(src, layout)
+   local t, xl
+
+   t := Files.get_path(src)
+
+   # Work out the expanded layout, with $ expanded to the
+   # file name, less the .icn extension.
+   layout ? {
+      if xl := tab(upto('$')) then {
+         xl ||:= t.get(-1)
+         if xl[-4:0] == ".icn" then
+            xl[-4:0] := ""
+         move(1)
+         xl ||:= tab(0)
+      } else
+         xl := layout
+   }
+
+   # Append the expanded layout string to the directory
+   # part of the src file.
+   if t := t.parent() then
+      return t.append(Files.get_path(xl)).str()
+   else
+      return xl
+end
+
+
+procedure center_string(win, x, y, s, k)
+   draw_string_ex(win, 
+                x - win.text_width(s) / 2, 
+                y - win.get_font_height() / 2, 
+                s, k)
+end
+
+
+#
+# Display an error message
+#
+procedure alert_error(d, a)
+   if string(a) then
+      a := [a]
+   if /d.win then 
+      stop!a
+   InfoDialog(a, "Information", "Okay").show_modal(d)
+end
+
+# Don't use ucs for a string unless needed.
+procedure best_text(s)
+   if ord(s) > 127 then
+      return s
+   else
+      return string(s)
+end
+
+procedure try_list(val, len)
+   local l, t
+   if type(val) == "list" then {
+      if *val = len then
+         return val
+      fail
+   }
+
+   l := []
+   val ? {
+      while t := tab(find(",")) do {
+         put(l, integer(t)) | fail
+         move(1)
+      }
+      t := tab(0)
+      put(l, integer(t)) | fail
+   }
+   if *l = len then
+      return l
+end
+
+procedure normalize_wattrib(key, val)
+   case key of {
+      "pos"|"size"|"min_size"|"max_size":
+         return try_list(val, 2)
+      "geometry"|"clip":
+         return try_list(val, 4)
+      "resize": 
+         return flag(val)
+
+      "x"|"y"|"height"|"width"|"w"|"h"|
+         "depth"|"line_width"|"dx"|"dy"|"min_width"|
+         "min_height"|"max_width"|"max_height":
+         return integer(val)
+
+      "image"|"pointer"|"fg"|"bg"|"draw_op"|"icon"|"font"|"label"|
+         "line_style"|"fill_style"|"pattern"|"input_mask": 
+         return best_text(val)
+   }
+end
+
+procedure normalize_constraints(t)
+   local e, r
+   r := table()
+   every e := !sort(t) do
+      insert(r, e[1], normalize_constraint(e[1], e[2]))
+   return r
+end
+
+procedure normalize_constraint(key, val)
+   case key of {
+      "x_tab"|"y_tab"|"x"|"y"|"w"|"h"|"l_inset"|"r_inset"|"t_inset"|"b_inset":
+         return integer(val)
+      "x_align":
+         return (string(val) == (Align.L | Align.R | Align.C))
+      "y_align":
+         return (string(val) == (Align.T | Align.B | Align.C))
+      "eol"|"x_fill"|"y_fill":
+         return flag(val)
+      "x_weight"|"y_weight":
+         return real(val)
+      default:
+         return best_text(val)
+   }
+end
+
+procedure align_str(val)
+   return case val of {
+      Align.L: "Align.L"
+      Align.R: "Align.R"
+      Align.T: "Align.T"
+      Align.B: "Align.B"
+      Align.C: "Align.C"
+      default: image(val)
+   }
+end
+
+procedure select_str(val)
+   return case val of {
+      Select.NONE : "Select.NONE"
+      Select.ONE : "Select.ONE"
+      Select.MANY : "Select.MANY"
+      default: image(val)
+   }
+end
+
+procedure stringify_constraint(key, val, quote, c)
+   case key of {
+      "x_tab"|"y_tab"|"x"|"y"|"w"|"h"|"l_inset"|"r_inset"|"t_inset"|"b_inset":
+         return string(val)
+      "x_align"|"y_align":
+         return if /quote then val else if /c then align_str(val) else c.align_str(val)
+      "eol"|"x_fill"|"y_fill":
+         return if \val then "&yes" else "&no"
+      "x_weight"|"y_weight":
+         return string(val)
+      default:
+         return if /quote then text(val) else image(text(val))
+   }
+end
+
+procedure stringify_constraints(t)
+   local e, r
+   r := table()
+   every e := !sort(t) do
+      insert(r, e[1], stringify_constraint(e[1], e[2]))
+   return r
+end
+
+#
+# Check that the window attributes are valid.
+#
+procedure util_check_constraints(dialog, t)
+   local s
+   # Check for attrib names
+   every s := !sort(t) do {
+      if not normalize_constraint(s[1], s[2]) then
+         return alert_error(dialog, "Invalid value " || s[2] || " for constraint " || s[1])
+   }
+   return
+end
+
+#
+# Is an identifier valid?
+#
+procedure valid_id(s)
+   return *s > 0 &
+      any(&letters ++ '_', s) &
+      not(upto(~(&letters ++ &digits ++ '_'), s))
+end
+
+#
+# Is an identifier valid?
+#
+procedure valid_dotted_id(s)
+   return *s > 0 &
+      any(&letters ++ '_', s) &
+      not(upto(~(&letters ++ &digits ++ '_.'), s))
+end

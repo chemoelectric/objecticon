@@ -1,0 +1,305 @@
+package gui
+
+import graphics
+
+$load HOME "images/gui.HOME_24.gif"
+$load NEW_FOLDER "images/gui.NEW_FOLDER_24.gif"
+$load REFRESH "images/gui.REFRESH_24.gif"
+$load UP "images/gui.UP_24.gif"
+
+class ImageCache()
+   public static 
+      imap,
+      names
+
+   private static init()
+      names := table()
+      imap := table()
+      name_image("gui.HOME_24", HOME)
+      name_image("gui.NEW_FOLDER_24", NEW_FOLDER)
+      name_image("gui.REFRESH_24", REFRESH)
+      name_image("gui.UP_24", UP)
+      name_image("gui.BOX_UP", "(0=shadow;1=hilite;~=trans)13,c6,_
+~~~~~~~~~~~~~_
+~11111111111~_
+~11111111110~_
+~11~~~~~~~00~_
+~11~~~~~~~00~_
+~11~~~~~~~00~_
+~11~~~~~~~00~_
+~11~~~~~~~00~_
+~11~~~~~~~00~_
+~11~~~~~~~00~_
+~11000000000~_
+~10000000000~_
+~~~~~~~~~~~~~_
+")
+      name_image("gui.BOX_DOWN", "(b=black;0=shadow;1=hilite;~=trans)13,c6,_
+~~~~~~~~~~~~~_
+~00000000001~_
+~00000000001~_
+~00~~~~~~~11~_
+~00~bbbbb~11~_
+~00~bbbbb~11~_
+~00~bbbbb~11~_
+~00~bbbbb~11~_
+~00~bbbbb~11~_
+~00~~~~~~~11~_
+~01111111111~_
+~11111111111~_
+~~~~~~~~~~~~~_
+")
+      name_image("gui.DIAMOND_UP", "(0=shadow;1=hilite;~=trans)13,c6,_
+~~~~~~1~~~~~~_
+~~~~~111~~~~~_
+~~~~11~11~~~~_
+~~~11~~~11~~~_
+~~11~~~~~11~~_
+~11~~~~~~~11~_
+11~~~~~~~~~11_
+~00~~~~~~~00~_
+~~00~~~~~00~~_
+~~~00~~~00~~~_
+~~~~00~00~~~~_
+~~~~~000~~~~~_
+~~~~~~0~~~~~~_
+")
+      name_image("gui.DIAMOND_DOWN", "(b=black;0=shadow;1=hilite;~=trans)13,c6,_
+~~~~~~0~~~~~~_
+~~~~~000~~~~~_
+~~~~00~00~~~~_
+~~~00~b~00~~~_
+~~00~bbb~00~~_
+~00~bbbbb~00~_
+00~bbbbbbb~00_
+~11~bbbbb~11~_
+~~11~bbb~11~~_
+~~~11~b~11~~~_
+~~~~11~11~~~~_
+~~~~~111~~~~~_
+~~~~~~1~~~~~~_
+")
+      name_image("gui.ARROW_UP", "11,c1,_
+~~~~~0~~~~~_
+~~~~000~~~~_
+~~~00000~~~_
+~~0000000~~_
+~000000000~_
+00000000000_
+")
+      name_image("gui.ARROW_DOWN", "11,c1,_
+00000000000_
+~000000000~_
+~~0000000~~_
+~~~00000~~~_
+~~~~000~~~~_
+~~~~~0~~~~~_
+")
+      name_image("gui.ARROW_LEFT", "9,c1,_
+~~~~~~~~0_
+~~~~~~000_
+~~~~00000_
+~~0000000_
+000000000_
+~~0000000_
+~~~~00000_
+~~~~~~000_
+~~~~~~~~0_
+")
+      name_image("gui.ARROW_RIGHT", "9,c1,_
+0~~~~~~~~_
+000~~~~~~_
+00000~~~~_
+0000000~~_
+000000000_
+0000000~~_
+00000~~~~_
+000~~~~~~_
+0~~~~~~~~_
+")
+      name_image("gui.TINY_ARROW_UP", "7,c1,_
+~~~0~~~_
+~~000~~_
+~00000~_
+0000000_
+")
+      name_image("gui.TINY_ARROW_DOWN", "7,c1,_
+0000000_
+~00000~_
+~~000~~_
+~~~0~~~_
+")
+      name_image("gui.PLUS", "9,g2,_
+000000000_
+0~~~~~~~0_
+0~~~0~~~0_
+0~~~0~~~0_
+0~00000~0_
+0~~~0~~~0_
+0~~~0~~~0_
+0~~~~~~~0_
+000000000_
+")
+      name_image("gui.MINUS", "9,g2,_
+000000000_
+0~~~~~~~0_
+0~~~~~~~0_
+0~~~~~~~0_
+0~00000~0_
+0~~~~~~~0_
+0~~~~~~~0_
+0~~~~~~~0_
+000000000_
+")
+      name_image("gui.CLOSED_FOLDER", "16,c1,_
+~~~~~~~~~~~~~~~~_
+~~~~0000~~~~~~~~_
+~~~0;;;;0~~~~~~~_
+~~0;;;;;;0~~~~~~_
+~0000000000000~~_
+~0;;;;;;;;;;;0~~_
+~0;;;;;;;;;;;0~~_
+~0;;;;;;;;;;;0~~_
+~0;;;;;;;;;;;0~~_
+~0;;;;;;;;;;;0~~_
+~0;;;;;;;;;;;0~~_
+~0;;;;;;;;;;;0~~_
+~0000000000000~~_
+~~~~~~~~~~~~~~~~_
+")
+      name_image("gui.OPEN_FOLDER", "16,c1,_
+~~~~~~~~~~~~~~~~_
+~~~0000~~~~~~~~~_
+~~0DDDD0~~~~~~~~_
+~0DDDDDD0~~~~~~~_
+0000000000000~~~_
+02D2D2D2D2D20~~~_
+0D2D000000000000_
+02D0DDDDDDDDDDD0_
+0D20DDDDDDDDDD0~_
+020DDDDDDDDDDD0~_
+0D0DDDDDDDDDDD0~_
+00DDDDDDDDDD00~~_
+0000000000000~~~_
+~~~~~~~~~~~~~~~~_
+")
+      name_image("gui.FILE", "16,c1,_
+~~~~~~~~~~~~~~~~_
+~~~0000000~~~~~~_
+~~~06666600~~~~~_
+~~~0606060~0~~~~_
+~~~0666660000~~~_
+~~~0600606660~~~_
+~~~0666666660~~~_
+~~~0600600060~~~_
+~~~0666666660~~~_
+~~~0600060660~~~_
+~~~0666666660~~~_
+~~~0666666660~~~_
+~~~0000000000~~~_
+~~~~~~~~~~~~~~~~_
+")
+      name_image("gui.TINY_X", "8,c1,_
+00~~~~00_
+~00~~00~_
+~~~00~~~_
+~00~~00~_
+00~~~~00_
+")
+      name_image("gui.GRID", "(0=shadow;1=hilite;~=trans)4,c6,_
+~00~_
+0011_
+0111_
+~11~_
+")
+      name_image("gui.WINDOW_CLOSE_BUTTON", "16,c1,_
+~>>>>>>>>>>>>>>~_
+>>iiiiiiiiiiii>>_
+>iiiiiiiiiiiiii>_
+>iiiiiiiiiiiiii>_
+>iii<<iiii<<iii>_
+>iii<6<ii<6<iii>_
+>iiii<6<<6<iiii>_
+>iiiii<66<iiiii>_
+>iiiii<66<iiiii>_
+>iiii<6<<6<iiii>_
+>iii<6<ii<6<iii>_
+>iii(<iiii<(iii>_
+>iiiiiiiiiiiiii>_
+>iiiiiiiiiiiiii>_
+>>iiiiiiiiiiii>>_
+~>>>>>>>>>>>>>>~_
+")
+      name_image("gui.WINDOW_ICONIFY_BUTTON", "16,c1,_
+~>>>>>>>>>>>>>>~_
+>>iiiiiiiiiiii>>_
+>iiiiiiiiiiiiii>_
+>iiiiiiiiiiiiii>_
+>iiiiiiiiiiiiii>_
+>iiiiiiiiiiiiii>_
+>iiiiiiiiiiiiii>_
+>iiiiiiiiiiiiii>_
+>iiiiiiiiiiiiii>_
+>iiiiiiiiiiiiii>_
+>iiiiiiiiiiiiii>_
+>iiiiiiiiiiiiii>_
+>ii<<<<<<<<<<ii>_
+>ii6666666666ii>_
+>>iiiiiiiiiiii>>_
+~>>>>>>>>>>>>>>~_
+")
+   end
+
+   # Associate arbitrary image data (eg gif file data), with a name.
+   # The name can then be passed to {get} or {load} to retrieve a
+   # window with the corresponding image.
+   #
+   public static name_image(name, data)
+      insert(names, name, data)
+   end
+
+   #
+   # Return the data previously set with {name_image}.  Fails if the
+   # name is unknown.
+   #
+   public static get_named_image(name)
+      return \names[name]
+   end
+
+   # Load an image, using the cache if possible.  The parameter should
+   # be either in Icon image format, a file name, or the name of an
+   # image set by {name_image()}.  On a successful load, the image is
+   # stored in the cache for future use, and thus should not be
+   # closed after use.
+   #
+   public static get(s, win)
+      local w, key, col
+      col := if /win then
+         "0,0,0/65535,65535,65535"
+      else
+         Window.color_value(win.get_fg()) || "/" || Window.color_value(win.get_bg())
+      key := col || "#" || s
+      if w := \imap[key] then
+         return w
+      w := load(s, win) | fail
+      insert(imap, key, w)
+      return w
+   end
+
+   #
+   # Load an image without using the cache.  The parameter {s} should
+   # be either in Icon image format, a file name, or the name of an
+   # image set by {name_image()}.  The returned image shoud be closed
+   # after use.
+   #
+   public static load(s, win)
+      s := \names[s]
+      if s[1] == "(" then
+         s := get_extended_image(win, s) | fail
+      return Window.open_image(s, win)
+   end
+   
+   final private new()
+   end
+end
+
