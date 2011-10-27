@@ -3,7 +3,7 @@ package parser
 $include "oigram_tab.icn"
 
 procedure tokenstr(t)
-   return case t of {
+   return tcase t of {
    IDENT : "IDENT"
    INTLIT : "INTLIT"
    REALLIT : "REALLIT"

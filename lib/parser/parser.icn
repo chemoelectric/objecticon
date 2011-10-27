@@ -48,7 +48,7 @@ class Parser(Connectable)
       DEFAULT_SYMBOLS := table()
       # reverse engineer the predefined symbols list from our predefined symbols
       every s := &features do {
-         DEFAULT_SYMBOLS[case s of {
+         DEFAULT_SYMBOLS[tcase s of {
             "Object Icon": "_OBJECT_ICON"
             "V2": "_V2"
             "keyboard functions": "_KEYBOARD_FUNCTIONS"
@@ -234,7 +234,7 @@ class Parser(Connectable)
          }
       }
       preproc_space()
-      case preproc_command of {
+      tcase preproc_command of {
          "define": {
             if /preproc_if_state then {
                if sym := preproc_word() &
@@ -343,7 +343,7 @@ class Parser(Connectable)
                   preproc_error("no corresponding $if...")
                } else {
                   preproc_if_state := {
-                     case preproc_if_state of {
+                     tcase preproc_if_state of {
                         "false": &null
                         "off": "off"
                         default: "false"
@@ -477,7 +477,7 @@ class Parser(Connectable)
             &pos := q := 1
             result := ""
             while tab(upto('#"\'_' ++ &letters)) do {
-               case move(1) of {
+               tcase move(1) of {
                   "#": {
                      move(-1)
                      tab(0)
@@ -662,7 +662,7 @@ class Parser(Connectable)
       s ? {
          while r ||:= tab(upto('\\')) do {
             move(1)
-            r ||:= case c := map(move(1)) of {
+            r ||:= tcase c := map(move(1)) of {
                "b": "\b"       # backspace
                "d": "\d"       # delete (rubout)
                "e": "\e"       # escape (altmode)

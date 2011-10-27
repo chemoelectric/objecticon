@@ -83,7 +83,7 @@ class ContentSpec()
    public pattern_match(subject, pos)
       local x, y, b
 
-      case string(op) of {
+      tcase string(op) of {
          "ANY" :
             return *subject - pos + 1
 
@@ -151,7 +151,7 @@ class ContentSpec()
    private object_output(oo)
       local s, x
       oo.object_start(self)
-      case string(op) of {
+      tcase string(op) of {
          "ANY" | "EMPTY" | "#PCDATA" :
             oo.writes(op)
 

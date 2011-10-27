@@ -577,7 +577,7 @@ operator [] subsc(underef x -> dx,y)
 
             hn = hash(&y);
             dp1 = memb(BlkLoc(dx), &y, hn, &res);
-            if (res == 1) {
+            if (res) {
                bp = *dp1;
                return struct_var(&bp->telem.tval, bp);
             }

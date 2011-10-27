@@ -54,7 +54,7 @@ class JSONParser()
             break
          if ="\\" then {
             ch := move(1) | throw("Unclosed quote")
-            s ||:= case string(ch) of {
+            s ||:= tcase string(ch) of {
                "\"": "\""
                "\\": "\\"
                "/": "/"

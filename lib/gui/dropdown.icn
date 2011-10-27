@@ -145,7 +145,7 @@ class DropDown(SelectionList,Component)
          spc_right := win_spc_right
       }
 
-      max_h := case self.direction of {
+      max_h := tcase self.direction of {
          Direction.UP: spc_above
          Direction.DOWN: spc_below
          Direction.BEST: max(spc_above, spc_below)
@@ -172,7 +172,7 @@ class DropDown(SelectionList,Component)
 
       if tl.w_spec > win_spc_right then
          use_popup_win := 1
-      case self.direction of {
+      tcase self.direction of {
          Direction.UP: {
             if tl.h_spec > win_spc_above then
                use_popup_win := 1

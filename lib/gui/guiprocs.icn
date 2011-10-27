@@ -173,7 +173,7 @@ end
 
 procedure palette_key_ex(W, palette, spec)
    local color
-   color := case spec of {
+   color := tcase spec of {
       "hilite" : Gui.style.get_hilite_color(W)
       "shadow" : Gui.style.get_shadow_color(W)
       "fg" : W.get_fg()
@@ -277,7 +277,7 @@ procedure text_convert(s, target)
    if type(s) == target then
       return s
 
-   case target of {
+   tcase target of {
       "ucs": {
          t := ""
          every t ||:= Text.utf8_seq(ord(s))
@@ -298,7 +298,7 @@ end
 # a corresponding string or a ucs as appropriate.
 #
 procedure selection_convert(target_type, data)
-   case target_type of {
+   tcase target_type of {
       Selection.UTF8_STRING_TARGET : return ucs(data)
       Selection.STRING_TARGET : return string(data)
       default: fail
@@ -310,7 +310,7 @@ procedure open_win_with(t)
    w := Window.open(t["display"]) | fail
    every e := !sort(t) do {
       v := e[2]
-      case e[1] of {
+      tcase e[1] of {
          "label": w.set_label(v)
          "x": w.set_x(v)
          "pos":  w.set_pos(v[1],v[2])
@@ -357,7 +357,7 @@ procedure clone_win_with(w, t)
    w := w.clone()
    every e := !sort(t) do {
       v := e[2]
-      case e[1] of {
+      tcase e[1] of {
          "fg": w.set_fg(v)
          "bg": w.set_bg(v)
          "draw_op": w.set_draw_op(v)

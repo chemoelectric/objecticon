@@ -336,7 +336,7 @@ class Grid()
       a_col_w := copy(p_col_w)
       a_row_h := copy(p_row_h)
 
-      case self.extra of {
+      tcase self.extra of {
          EXTRA_CELLS : {
             # Extra width
             ew := w1 - total(p_col_w)
@@ -392,13 +392,13 @@ class Grid()
          i.aw := if \i.x_fill then w else i.pw
          i.ah := if \i.y_fill then h else i.ph
 
-         i.ax := case i.x_align of {
+         i.ax := tcase i.x_align of {
             Align.L : x
             Align.R : x + w - i.aw
             Align.C : x + (w - i.aw) / 2
          }
 
-         i.ay := case i.y_align of {
+         i.ay := tcase i.y_align of {
             Align.T : y
             Align.B : y + h - i.ah
             Align.C : y + (h - i.ah) / 2

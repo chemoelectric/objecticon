@@ -98,7 +98,7 @@ class Frame(Component)
 
    public handle_ldrag(e)
       \self.held_flag | fail
-      case self.held_flag of {
+      tcase self.held_flag of {
          1: {
             self.x_spec := e.x - drag_x_offset - parent.x
             self.y_spec := e.y - drag_y_offset - parent.y

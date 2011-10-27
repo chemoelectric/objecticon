@@ -94,7 +94,7 @@ class PTableColumn()
    #
    public draw_cell(W, data, line, col, cx, cy, ch)
       local x1, y1
-      x1 := case align of {
+      x1 := tcase align of {
          Align.R : cx + width - W.text_width(data)
          Align.C : cx + (width - W.text_width(data)) / 2
          Align.L : cx

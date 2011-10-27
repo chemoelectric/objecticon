@@ -192,7 +192,7 @@ class TextField(Component)
          /self.mark := self.cursor
          self.cursor := whereis_x(e)
       } else {
-         case (parent_dialog.get_click_count() - 1) % 3 of {
+         tcase (parent_dialog.get_click_count() - 1) % 3 of {
             0 : {
                self.cursor := whereis_x(e)
                self.mark := self.cursor
@@ -588,7 +588,7 @@ class TextField(Component)
    end
 
    public handle_key(e)
-      case e.code of {
+      tcase e.code of {
          "\b" : handle_delete_left(e)
          "\r" | "\l": handle_return(e)
          "\^k" : handle_delete_line(e)
@@ -600,8 +600,9 @@ class TextField(Component)
          "\^e" : handle_end_of_line(e)
          "\d" | "\^d" : handle_delete_right(e)
          "\^x" :  handle_cut(e)
-         (\e.ctrl & Key.INSERT) | "\^c" :  handle_copy(e)
-         (\e.shift & Key.INSERT) | "\^v" :  handle_paste(e)
+         "\^c" :  handle_copy(e)
+         "\^v" :  handle_paste(e)
+         Key.INSERT :  if \e.ctrl then handle_copy(e) else if \e.shift then handle_paste(e)
          "\^z" :  handle_undo(e)
          "\^y" :  handle_redo(e)
          default : handle_default(e)

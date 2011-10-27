@@ -16,7 +16,7 @@ class ListLabel(Label)
    end
 
    public on_key(e)
-      case e.code of {
+      tcase e.code of {
          Key.UP : parent.go_up(e)
          Key.DOWN : parent.go_down(e)
       }

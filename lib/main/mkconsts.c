@@ -74,39 +74,27 @@ void end_class(void)
                 fprintf(out, "      %s,\n", buff[i].name);
         }
     }
-    if (tab_flag) {
-        fprintf(out, "   private static const\n      map\n\n");
-    }
-    if (desc_flag) {
-        fprintf(out, "   private static const\n      desc\n\n");
-    }
-
     fprintf(out, "   private static init()\n");
     for (i = 0; i < n_entries; ++i) {
         fprintf(out, "      %s := %s\n", buff[i].name, buff[i].val);
     }
-    if (tab_flag) {
-        fprintf(out, "      map := table()\n");
-        for (i = 0; i < n_entries; ++i) {
-            fprintf(out, "      map[%s] := \"%s\"\n", buff[i].val, buff[i].origname);
-        }
-    }
-    if (desc_flag) {
-        fprintf(out, "      desc := table()\n");
-        for (i = 0; i < n_entries; ++i) {
-            if (buff[i].comment)
-                fprintf(out, "      desc[%s] := \"%s\"\n", buff[i].val, buff[i].comment);
-        }
-    }
     fprintf(out, "   end\n");
     if (tab_flag) {
         fprintf(out, "\n   public static get_sym(k)\n");
-        fprintf(out, "      return .\\map[k]\n");
+        fprintf(out, "      return tcase k of {\n");
+        for (i = 0; i < n_entries; ++i) {
+            fprintf(out, "         %s : \"%s\"\n", buff[i].val, buff[i].origname);
+        }
+        fprintf(out, "      }\n");
         fprintf(out, "   end\n");
     }
     if (desc_flag) {
         fprintf(out, "\n   public static get_desc(k)\n");
-        fprintf(out, "      return .\\desc[k]\n");
+        fprintf(out, "      return tcase k of {\n");
+        for (i = 0; i < n_entries; ++i) {
+            fprintf(out, "         %s : \"%s\"\n", buff[i].val, buff[i].comment);
+        }
+        fprintf(out, "      }\n");
         fprintf(out, "   end\n");
     }
     fprintf(out, "end\n\n");

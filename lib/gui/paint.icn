@@ -190,7 +190,7 @@ class GridPaint(Paint)
                if cmd == "cell" then {
                   do_cell(args)
                   got_cell := 1
-               } else if \got_cell then case string(cmd) of {
+               } else if \got_cell then tcase string(cmd) of {
                   "br" : do_brk(args)
                   "img" : do_img(args)
                   "imgl" : do_imgl(args)
@@ -235,7 +235,7 @@ class GridPaint(Paint)
                   val := tab(0)
                else
                   val := ""
-               t[key] := case key of {
+               t[key] := tcase key of {
                   "x_tab"|"y_tab"|"x"|"y"|"w"|"h"|"l_inset"|"r_inset"|"t_inset"|"b_inset":
                      integer(val)
                   "x_align":
@@ -269,7 +269,7 @@ class GridPaint(Paint)
          lheight <:= win.get_font_height()
       } else {
          ready_to_output() | fail
-         y1 := case ia_y of {
+         y1 := tcase ia_y of {
             Align.T : y
             Align.C : y + (curr_cell.obj[lno].h - win.get_font_height()) / 2
             Align.B : y + curr_cell.obj[lno].h - win.get_font_height()
@@ -305,7 +305,7 @@ class GridPaint(Paint)
             else
                val := ""
          }
-         case key of {
+         tcase key of {
             "fg": win.set_fg(val)
             "bg": win.set_bg(val)
             "font": win.set_font(val)
@@ -323,7 +323,7 @@ class GridPaint(Paint)
          lheight <:= W.get_height()
       } else {
          ready_to_output() | fail
-         y1 := case ia_y of {
+         y1 := tcase ia_y of {
             Align.T : y
             Align.C : y + (curr_cell.obj[lno].h - W.get_height()) / 2
             Align.B : y + curr_cell.obj[lno].h - W.get_height()
@@ -341,7 +341,7 @@ class GridPaint(Paint)
          lheight <:= W.get_height()
       } else {
          ready_to_output() | fail
-         y1 := case ia_y of {
+         y1 := tcase ia_y of {
             Align.T : y
             Align.C : y + (curr_cell.obj[lno].h - W.get_height()) / 2
             Align.B : y + curr_cell.obj[lno].h - W.get_height()
@@ -355,7 +355,7 @@ class GridPaint(Paint)
    public ready_to_output()
       if lno > *curr_cell.obj then
          fail
-      /x :=  case ia_x of {
+      /x :=  tcase ia_x of {
          Align.L : curr_cell.ax
          Align.R : curr_cell.ax + curr_cell.aw - curr_cell.obj[lno].w
          Align.C : curr_cell.ax + (curr_cell.aw - curr_cell.obj[lno].w) / 2

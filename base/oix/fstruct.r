@@ -233,7 +233,7 @@ function member(s, x)
 
             hn = hash(&x);
             memb(BlkLoc(s), &x, hn, &res);
-            if (res == 1)
+            if (res)
                return x;
             else
                fail;
@@ -249,7 +249,7 @@ function member(s, x)
 
             hn = hash(&x);
             p = memb(BlkLoc(s), &x, hn, &res);
-            if (res == 1) {
+            if (res) {
                bp = *p;
                return struct_var(&bp->telem.tval, bp);
             } else

@@ -147,7 +147,7 @@ class Encode(Stream, HasUnderlyingStream)
    private get_proc_code(f)
       local s, j
       image(f) ? {
-         s := case tab(upto(' ')) of {
+         s := tcase tab(upto(' ')) of {
             "function": "F"
             "keyword": "K"
             "operator": "O"
@@ -177,7 +177,7 @@ class Encode(Stream, HasUnderlyingStream)
       }
 
       ty := type(o)
-      case ty of {
+      tcase ty of {
          "object" : {
             writes(Codec.OBJECT_CODE)
             cname := Class.get_name(o)
@@ -368,7 +368,7 @@ class Decode()
       fn ? {
          c := move(1)
          s := tab(0)
-         case c of {
+         tcase c of {
             "F": return Prog.get_function(s) | throw("No such function " || s)
             "K": return Prog.get_keyword(s) | throw("No such keyword " || s)
             "O": s ? {
@@ -425,7 +425,7 @@ class Decode()
 
       t := char_in()
 
-      case t of {
+      tcase t of {
          Codec.REF_CODE : {
             i := int_in()
             return \seen[i]

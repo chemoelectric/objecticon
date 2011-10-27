@@ -912,13 +912,13 @@ class Component(Rect,Align,Connectable)
       #
       # Adjust x, y based on alignments
       #
-      case self.x_align of {
+      tcase self.x_align of {
          Align.C : self.x -:= self.w / 2
          Align.R : self.x -:= self.w
          Align.L : &null
          default : runerr("incorrect x alignment specifier", self.x_align)
       }
-      case self.y_align of {
+      tcase self.y_align of {
          Align.C : self.y -:= self.h / 2
          Align.B : self.y -:= self.h
          Align.T : &null

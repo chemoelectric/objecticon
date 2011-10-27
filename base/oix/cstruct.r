@@ -136,7 +136,7 @@ int set_del(dptr s, dptr key)
 
     hn = hash(key);
     pd = memb(BlkLoc(*s), key, hn, &res);
-    if (res == 1) {
+    if (res) {
         /*
          * The element is there so delete it.
          */
@@ -154,7 +154,7 @@ int table_del(dptr t, dptr key)
 
     hn = hash(key);
     pd = memb(BlkLoc(*t), key, hn, &res);
-    if (res == 1) {
+    if (res) {
         /*
          * The element is there so delete it.
          */
@@ -227,7 +227,7 @@ void table_insert(dptr t, dptr key, dptr val, int overwrite)
     MemProtect(te = alctelem());
 
     pd = memb(BlkLoc(*t), key, hn, &res);	/* search table for key */
-    if (res == 0) {
+    if (!res) {
         /*
          * The element is not in the table - insert it.
          */
@@ -275,7 +275,7 @@ void set_insert(dptr s, dptr entry)
     MemProtect(se = alcselem());
 
     pd = memb(BlkLoc(*s), entry, hn, &res);
-    if (res == 0) {
+    if (!res) {
         /*
          * The element is not in the set - insert it.
          */

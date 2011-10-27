@@ -130,7 +130,7 @@ class Evaluator()
       local res
       brk[n] := &current
       while res := !ex do {
-         case res of {
+         tcase res of {
             "break": break
             "next": next
             default: return res
@@ -178,7 +178,7 @@ class Evaluator()
    private do_invoke(n)
       local x
       x := pos_list(ExprList(n, 3))
-      suspend case *x of {
+      suspend tcase *x of {
          0: E(n.child(1))()
          1: E(n.child(1))(E(x[1]))
          2: E(n.child(1))(E(x[1]),E(x[2]))
@@ -209,7 +209,7 @@ class Evaluator()
    private do_coinvoke(n)
       local x
       x := pos_list(ExprList(n, 3))
-      suspend case *x of {
+      suspend tcase *x of {
          0: E(n.child(1)){}
          1: E(n.child(1)){E(x[1])}
          2: E(n.child(1)){E(x[1]),E(x[2])}
@@ -240,7 +240,7 @@ class Evaluator()
    private do_subscript(n)
       local x
       x := pos_list(ExprList(n, 3))
-      suspend case *x of {
+      suspend tcase *x of {
          0: E(n.child(1))[]
          1: E(n.child(1))[E(x[1])]
          2: E(n.child(1))[E(x[1]),E(x[2])]
@@ -271,7 +271,7 @@ class Evaluator()
    private do_paren(n)
       local x
       x := pos_list(ExprList(n, 2))
-      suspend case *x of {
+      suspend tcase *x of {
          0:  &null
          1:  E(x[1])
          2:  (E(x[1]),E(x[2]))
@@ -302,7 +302,7 @@ class Evaluator()
    private do_brack(n)
       local x, l
       x := pos_list(ExprList(n, 2))
-      suspend case *x of {
+      suspend tcase *x of {
          0:  []
          1:  [E(x[1])]
          2:  [E(x[1]),E(x[2])]
@@ -374,7 +374,7 @@ class Evaluator()
    end
 
    private do_section(n) 
-      suspend case n.child(4).tok of {
+      suspend tcase n.child(4).tok of {
          COLON : E(n.child(1))[E(n.child(3)):E(n.child(5))]
          PCOLON : E(n.child(1))[E(n.child(3))+:E(n.child(5))]
          MCOLON : E(n.child(1))[E(n.child(3))-:E(n.child(5))]
@@ -504,7 +504,7 @@ class Evaluator()
 
    private E(n)
       if is(n, Token) then
-         return case n.tok of {
+         return tcase n.tok of {
             IDENT: env.get(n.s, self)
             INTLIT|REALLIT|STRINGLIT|CSETLIT|UCSLIT: n.val
             default : fatalerr("not implemented: token " || to_string(n))
