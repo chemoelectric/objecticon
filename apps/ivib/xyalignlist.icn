@@ -2,7 +2,7 @@ import gui
 
 class XYAlignList(List)
    public set_align(xa, ya)
-      set_selection(case xa || ya of {
+      set_selection(tcase xa || ya of {
          "lt" : 1
          "lc" : 2
          "lb" : 3
@@ -16,7 +16,7 @@ class XYAlignList(List)
    end
 
    public get_x_align()
-      return case get_selection() of {
+      return tcase get_selection() of {
          1|2|3 : "l"
          4|5|6 : "c"
          7|8|9 : "r"
@@ -24,7 +24,7 @@ class XYAlignList(List)
    end
 
    public get_y_align()
-      return case get_selection() of {
+      return tcase get_selection() of {
          1|4|7 : "t"
          2|5|8 : "c"
          3|6|9 : "b"

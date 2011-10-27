@@ -16,7 +16,7 @@ class BorderField(Component)
          return &null
       b := border_tbl[i] 
       if /b then {
-         b := case i of {
+         b := tcase i of {
             2 : CanvasEmptyBorder()
             3 : CanvasRaisedBorder()
             4 : CanvasSunkenBorder()

@@ -331,7 +331,7 @@ class HtmlOutputter(Outputter)
 
    private html_fields(f, c, key, vals)
       local name, l
-      case key of {
+      tcase key of {
          "param" : {
             write(f, "<dt>Parameters :</dt>")
             every l := !vals do {
@@ -472,7 +472,7 @@ class HtmlOutputter(Outputter)
    private output_other(c)
       local s, f, fname, type, fullname
       fullname := c.name
-      case classof(c) of {
+      tcase classof(c) of {
          ProcedureSymbol : {
             type := "procedure"
             fullname := c.name || "(" || get_param_string(c.obj) || ")"

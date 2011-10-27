@@ -2,7 +2,7 @@ import gui
 
 class SelectModeList(List)
    public set_select_mode(x)
-      case x of {
+      tcase x of {
          Select.NONE : set_selection(1)
          Select.ONE : set_selection(2)
          Select.MANY : set_selection(3)
@@ -11,7 +11,7 @@ class SelectModeList(List)
    end
 
    public get_select_mode()
-      return case get_selection() of {
+      return tcase get_selection() of {
          1 :  Select.NONE
          2 :  Select.ONE
          3 :  Select.MANY
