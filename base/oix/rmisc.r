@@ -1811,23 +1811,19 @@ struct loc *lookup_global_loc(dptr name, struct progstate *prog)
     return prog->Glocs + (p - prog->Gnames);
 }
 
-static int named_global_cmp(dptr p1, dptr p2)
-{
-    type_case *p2 of {
-      proc: return lexcmp(p1, ProcBlk(*p2).name);
-      constructor: return lexcmp(p1, ConstructorBlk(*p2).name);
-      class: return lexcmp(p1, ClassBlk(*p2).name);
-      default: syserr("named_global_cmp: unknown type");
-    }
-    /* not reached */
-    return 0;
-}
-
 dptr lookup_named_global(dptr name, struct progstate *prog)
 {
-    return (dptr)bsearch(name, prog->NamedGlobals, prog->NNamedGlobals,
-                         sizeof(struct descrip),
-                         (BSearchFncCast)named_global_cmp);
+    dptr r, *p = (dptr *)bsearch(name, prog->Gnames, prog->NGlobals, 
+                                 sizeof(dptr), 
+                                 (BSearchFncCast)pdptr_cmp);
+    if (!p)
+        return 0;
+
+    /* Convert from pointer into names array to pointer into cpglobals array */
+    r = prog->CpGlobals + (p - prog->Gnames);
+    if (is:null(*r))
+        return 0;
+    return r;
 }
 
 

@@ -516,8 +516,10 @@ function lang_Prog_get_named_globals(c)
        dptr dp;
        if (!(prog = get_program_for(&c)))
           runerr(0);
-       for (dp = prog->NamedGlobals; dp != prog->ENamedGlobals; dp++)
-           suspend *dp;
+       for (dp = prog->CpGlobals; dp != prog->ECpGlobals; dp++) {
+           if (!is:null(*dp))
+               suspend *dp;
+       }
        fail;
    }
 end
