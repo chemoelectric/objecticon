@@ -595,6 +595,7 @@ static struct ir_tcaseinit *ir_tcaseinit(struct lnode *n, int def)
     res->node = n;
     res->op = Ir_TCaseInit;
     res->def = def;
+    res->no = -1;
     return res;
 }
 

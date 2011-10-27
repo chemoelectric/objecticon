@@ -137,6 +137,13 @@ static void outsdescrip(struct centry *ce, char *fmt, ...);
 
 static struct header hdr;
 
+static int get_tcaseno(struct ir_tcaseinit *x)
+{
+    if (x->no < 0)
+        x->no = ntcase++;
+    return x->no;
+}
+
 static void out_op(word op)
 {
     outwordx(op, op_names[op]);
@@ -935,16 +942,15 @@ static void lemitcode()
                 }
                 case Ir_TCaseInit: {
                     struct ir_tcaseinit *x = (struct ir_tcaseinit *)ir;
-                    x->no = ntcase++;
                     out_op(Op_TCaseInit);
-                    word_field(x->no, "no");
+                    word_field(get_tcaseno(x), "no");
                     word_field(x->def, "def");
                     break;
                 }
                 case Ir_TCaseInsert: {
                     struct ir_tcaseinsert *x = (struct ir_tcaseinsert *)ir;
                     out_op(Op_TCaseInsert);
-                    word_field(x->tci->no, "no");
+                    word_field(get_tcaseno(x->tci), "no");
                     emit_ir_var(x->val, "val");
                     word_field(x->entry, "entry");
                     break;
@@ -953,7 +959,7 @@ static void lemitcode()
                     struct ir_tcasechoose *x = (struct ir_tcasechoose *)ir;
                     int i;
                     out_op(Op_TCaseChoose);
-                    word_field(x->tci->no, "no");
+                    word_field(get_tcaseno(x->tci), "no");
                     emit_ir_var(x->val, "val");
                     word_field(x->tblc, "tblc");
                     for (i = 0; i < x->tblc; ++i)
@@ -964,7 +970,7 @@ static void lemitcode()
                     struct ir_tcasechoosex *x = (struct ir_tcasechoosex *)ir;
                     int i;
                     out_op(Op_TCaseChoosex);
-                    word_field(x->tci->no, "no");
+                    word_field(get_tcaseno(x->tci), "no");
                     emit_ir_var(x->val, "val");
                     word_field(x->labno, "labno");
                     word_field(x->tblc, "tblc");
