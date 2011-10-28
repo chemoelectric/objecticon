@@ -107,7 +107,7 @@ class Border(Component)
          #
          title.w := title.get_preferred_width()
          title.h := title.get_preferred_height()
-         title.x := self.x + tcase self.internal_align of {
+         title.x := self.x + case self.internal_align of {
             Align.C : (self.w - title.w) / 2
             Align.L : TITLE_OFFSET
             Align.R : self.w - title.w - TITLE_OFFSET

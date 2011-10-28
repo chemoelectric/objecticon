@@ -35,7 +35,7 @@ procedure do_one(s)
    }
    need := table()
    every o := prog.get_body().gen() do {
-      tcase classof(o) of {
+      case classof(o) of {
          Class: do_class(o)
          Procedure: do_proc(o)
          Invocable: do_invocable(o)
@@ -48,7 +48,7 @@ procedure gen_idents(n)
    if is(n, Token) then {
       if n.tok = IDENT then
          return n.s
-   } else tcase n.label of {
+   } else case n.label of {
       "dottedident" : return scanned_file.convert_dottedidentexpr(n)
       "field" : suspend gen_idents(n.child(1))
       "keyword": fail

@@ -265,7 +265,7 @@ class UReader()
       uf.set_version(s)
       repeat {
          uop := uin_expectop() | fail
-         tcase uop of {
+         case uop of {
             UcodeOp.Filen:
                file := uin_str() | fail
 

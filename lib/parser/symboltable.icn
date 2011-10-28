@@ -335,7 +335,7 @@ class SymbolTable(Connectable)
       local fu, fi
       fu := f || ".u"
       fi := f || ".icn"
-      tcase file_mode of {
+      case file_mode of {
          PREFER_SRC : {
             if Files.access(fi, Access.R_OK) then 
                return fi
@@ -406,7 +406,7 @@ class SymbolTable(Connectable)
 
       # All other decs.
       every d := prog.get_body().gen() do {
-         tcase classof(d) of {
+         case classof(d) of {
             Global : {
                every s := d.gen() do
                   add_symbol(GlobalSymbol(sf, s, s.str(), d)) | fail
@@ -416,7 +416,7 @@ class SymbolTable(Connectable)
                c := ClassSymbol(sf, d, d.get_name().str())
                every c.add_super(d.get_supers().gen().str())
                every e := d.gen() do {
-                  tcase classof(e) of {
+                  case classof(e) of {
                      FieldList: {
                         every f := e.gen() do
                            c.add_field(ClassVariable(c, f, f.str(), e))
@@ -460,14 +460,14 @@ class SymbolTable(Connectable)
       sf.set_strinv(uf.strinv)
       every sf.add_invocable(uf.get_invocables())
       every d := uf.get_symbols() do {
-         tcase classof(d) of {
+         case classof(d) of {
             UGlobal : add_symbol(GlobalSymbol(sf, d, d.name, d)) | fail
             UProcedure : add_symbol(ProcedureSymbol(sf, d, d.name)) | fail
             UClass : {
                c := ClassSymbol(sf, d, d.name)
                every c.add_super(d.get_supers())
                every e := d.get_fields() do {
-                  tcase classof(e) of {
+                  case classof(e) of {
                      UMethod :
                         c.add_field(ClassMethod(c, e, e.name))
                      UVariable :

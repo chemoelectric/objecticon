@@ -2414,217 +2414,200 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             struct lnode_case *x = (struct lnode_case *)n;
             struct ir_var *e, *v;
             struct ir_info *expr, *def = 0, **selector, **clause;
-            struct ir_stack *case_st, *clause_st;
-            int i, need_mark, mk;
-            int tl;
+            struct ir_stack *case_st, *clause_st, *expr_st;
+            int i, j, mk, tl, *tbl, xc, need_mark;
 
             selector = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
             clause = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
 
-            tl = make_tmploc(st);
+            if (x->use_tcase) {
+                tbl = mb_alloc(&ir_func_mb, 2 * (x->n + 1) * sizeof(int));
 
-            /* Stack for the expression and selectors */
-            case_st = branch_stack(st);
+                xc = get_extra_chunk();
+                tl = make_tmploc(st);
 
-            mk = make_mark(case_st);
-            e = get_var(x->expr, case_st, 0);
-            v = target ? target : make_tmp(case_st);
+                /* Stack for the expression and selectors */
+                case_st = branch_stack(st);
+                e = get_var(x->expr, case_st, 0);
 
-            expr = ir_traverse(x->expr, branch_stack(case_st), e, 1, 1);
+                /* The mark is only needed for the expression, not the selectors */
+                expr_st = branch_stack(case_st);
+                mk = make_mark(expr_st);
 
-            /* Set to 1 if the expression or any selector uses stack */
-            need_mark = expr->uses_stack;
+                v = target ? target : make_tmp(case_st);
+                expr = ir_traverse(x->expr, expr_st, e, 1, 1);
+                clause_st = branch_stack(st);
 
-            clause_st = branch_stack(st);
-            for (i = 0; i < x->n; ++i) {                /* The n non-default cases */
-                struct ir_stack *tst;
-                selector[i] = ir_traverse(x->selector[i], branch_stack(case_st), v, 0, 1);
-                if (selector[i]->uses_stack)
-                    need_mark = 1;
-                tst = branch_stack(st);
-                clause[i] = ir_traverse(x->clause[i], tst, target, bounded, rval);
-                union_stack(clause_st, tst);
-                if (clause[i]->uses_stack)
-                    res->uses_stack = 1;
-            }
-            if (n->op == Uop_Casedef) {        /* evaluate default clause */
-                def = ir_traverse(x->def, st, target, bounded, rval);
-                if (def->uses_stack)
-                    res->uses_stack = 1;
-            }
-
-            union_stack(st, clause_st);
-
-            chunk2(res->start,
-                   OptIns(need_mark, ir_mark(n, mk)),
-                   ir_goto(n, expr->start));
-            if (!bounded)
-                chunk1(res->resume, ir_igoto(n, tl));
-
-            chunk1(expr->failure,
-                   ir_goto(n, res->failure));
-            if (x->n == 0) {
-                /* Must have a default clause if no other clauses */
-                chunk3(expr->success,
-                       OptIns(expr->uses_stack, ir_unmark(n, mk)),
-                       OptIns(!bounded, ir_movelabel(n, tl, def->resume)), 
-                       ir_goto(n, def->start));
-            } else {
-                chunk2(expr->success,
-                       OptIns(expr->uses_stack, ir_unmark(n, mk)),
-                       ir_goto(n, selector[0]->start));
-                for (i = 0; i < x->n; ++i) {
-                    chunk4(selector[i]->success,
-                           ir_op(n, 0, Uop_Eqv, e, v, 0, 1, selector[i]->resume),
-                           OptIns(selector[i]->uses_stack, ir_unmark(n, mk)),
-                           OptIns(!bounded, ir_movelabel(n, tl, clause[i]->resume)), 
-                           ir_goto(n, clause[i]->start));
-
-                    if (i < x->n - 1)
-                        chunk1(selector[i]->failure,
-                               ir_goto(n, selector[i + 1]->start));
-                    else if (def)
-                        chunk2(selector[i]->failure,
-                               OptIns(!bounded, ir_movelabel(n, tl, def->resume)), 
-                               ir_goto(n, def->start));
-                    else
-                        chunk1(selector[i]->failure,
-                               ir_goto(n, res->failure));
-
-                    chunk1(clause[i]->success,
-                           ir_goto(n, res->success));
-
-                    chunk1(clause[i]->failure,
-                           ir_goto(n, res->failure));
+                for (i = 0; i < x->n; ++i) {                /* The n non-default cases */
+                    struct ir_stack *tst;
+                    selector[i] = ir_traverse(x->selector[i], branch_stack(case_st), v, 0, 1);
+                    tst = branch_stack(st);
+                    clause[i] = ir_traverse(x->clause[i], tst, target, bounded, rval);
+                    union_stack(clause_st, tst);
+                    if (clause[i]->uses_stack)
+                        res->uses_stack = 1;
                 }
-            }
-            if (def) {
-                chunk1(def->success,
-                       ir_goto(n, res->success));
-                chunk1(def->failure,
-                       ir_goto(n, res->failure));
-            }
-            break;
-        }
+                if (n->op == Uop_Casedef) {        /* evaluate default clause */
+                    def = ir_traverse(x->def, st, target, bounded, rval);
+                    if (def->uses_stack)
+                        res->uses_stack = 1;
+                }
 
-        case Uop_TCase:                  /* tcase expression */
-        case Uop_TCasedef: {
-            struct lnode_case *x = (struct lnode_case *)n;
-            struct ir_var *e, *v;
-            struct ir_info *expr, *def = 0, **selector, **clause;
-            struct ir_stack *case_st, *clause_st, *expr_st, *selector_st;
-            struct ir_tcaseinit *ci;
-            int i, j, mk;
-            int tl;
-            int *tbl;
+                union_stack(st, clause_st);
 
-            selector = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
-            clause = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
-            tbl = mb_alloc(&ir_func_mb, 2 * (x->n + 1) * sizeof(int));
-
-            tl = make_tmploc(st);
-
-            /* Parent stack for the expression and selectors */
-            case_st = branch_stack(st);
-            mk = make_mark(case_st);
-
-            expr_st = branch_stack(case_st);
-            selector_st = branch_stack(case_st);
-            e = get_var(x->expr, expr_st, 0);
-            v = target ? target : make_tmp(selector_st);
-
-            expr = ir_traverse(x->expr, expr_st, e, 1, 1);
-
-            clause_st = branch_stack(st);
-
-            for (i = 0; i < x->n; ++i) {                /* The n non-default cases */
-                struct ir_stack *tst;
-                selector[i] = ir_traverse(x->selector[i], branch_stack(selector_st), v, 0, 1);
-                tst = branch_stack(st);
-                clause[i] = ir_traverse(x->clause[i], tst, target, bounded, rval);
-                union_stack(clause_st, tst);
-                if (clause[i]->uses_stack)
-                    res->uses_stack = 1;
-            }
-            if (n->op == Uop_TCasedef) {        /* evaluate default clause */
-                def = ir_traverse(x->def, st, target, bounded, rval);
-                if (def->uses_stack)
-                    res->uses_stack = 1;
-            }
-
-            union_stack(st, clause_st);
-            ci = ir_tcaseinit(n, x->n);
-
-            if (x->n == 0) {
                 chunk2(res->start,
                        OptIns(expr->uses_stack, ir_mark(n, mk)),
                        ir_goto(n, expr->start));
-            } else {
-                chunk4(res->start,
-                       OptIns(expr->uses_stack, ir_mark(n, mk)),
-                       ir_enterinit(n, expr->start), 
-                       ci,
-                       ir_goto(n, selector[0]->start));
+                if (!bounded)
+                    chunk1(res->resume, ir_igoto(n, tl));
 
-                for (i = 0; i < x->n; ++i) {
-                    chunk2(selector[i]->success,
-                           ir_tcaseinsert(n, ci, v, i),
-                           ir_goto(n, selector[i]->resume));
+                chunk1(expr->failure,
+                       ir_goto(n, res->failure));
 
-                    if (i < x->n - 1)
-                        chunk1(selector[i]->failure,
-                               ir_goto(n, selector[i + 1]->start));
+                if (x->n == 0) {
+                    /* Must have a default clause if no other clauses */
+                    chunk3(expr->success,
+                           OptIns(expr->uses_stack, ir_unmark(n, mk)),
+                           OptIns(!bounded, ir_movelabel(n, tl, def->resume)), 
+                           ir_goto(n, def->start));
+                } else {
+                    struct ir_tcaseinit *ci = ir_tcaseinit(n, x->n);
+                    chunk4(expr->success,
+                           OptIns(expr->uses_stack, ir_unmark(n, mk)),
+                           ir_enterinit(n, xc), 
+                           ci,
+                           ir_goto(n, selector[0]->start));
+
+                    j = 0;
+                    for (i = 0; i < x->n; ++i) {
+                        chunk2(selector[i]->success,
+                               ir_tcaseinsert(n, ci, v, i),
+                               ir_goto(n, selector[i]->resume));
+
+                        if (i < x->n - 1)
+                            chunk1(selector[i]->failure,
+                                   ir_goto(n, selector[i + 1]->start));
+                        else
+                            chunk1(selector[i]->failure,
+                                   ir_goto(n, xc));
+
+                        chunk1(clause[i]->success,
+                               ir_goto(n, res->success));
+                        chunk1(clause[i]->failure,
+                               ir_goto(n, res->failure));
+                        tbl[j++] = clause[i]->start;
+                        if (!bounded)
+                            tbl[j++] = clause[i]->resume;
+                    }
+                    if (def) {
+                        tbl[j++] = def->start;
+                        if (!bounded)
+                            tbl[j++] = def->resume;
+                    } else {
+                        tbl[j++] = res->failure;
+                        if (!bounded)
+                            tbl[j++] = res->failure;
+                    }
+                    if (bounded)
+                        chunk1(xc,
+                               ir_tcasechoose(n, ci, e, x->n + 1, tbl));
                     else
-                        chunk1(selector[i]->failure,
-                               ir_goto(n, expr->start));
-                }
-            }
-
-            if (!bounded)
-                chunk1(res->resume, ir_igoto(n, tl));
-
-            chunk1(expr->failure,
-                   ir_goto(n, res->failure));
-            if (x->n == 0) {
-                /* Must have a default clause if no other clauses */
-                chunk3(expr->success,
-                       OptIns(expr->uses_stack, ir_unmark(n, mk)),
-                       OptIns(!bounded, ir_movelabel(n, tl, def->resume)), 
-                       ir_goto(n, def->start));
-            } else {
-                j = 0;
-                for (i = 0; i < x->n; ++i) {
-                    chunk1(clause[i]->success,
-                           ir_goto(n, res->success));
-                    chunk1(clause[i]->failure,
-                           ir_goto(n, res->failure));
-                    tbl[j++] = clause[i]->start;
-                    if (!bounded)
-                        tbl[j++] = clause[i]->resume;
+                        chunk1(xc,
+                               ir_tcasechoosex(n, ci, e, tl, 2*(x->n + 1), tbl));
                 }
                 if (def) {
-                    tbl[j++] = def->start;
-                    if (!bounded)
-                        tbl[j++] = def->resume;
-                } else {
-                    tbl[j++] = res->failure;
-                    if (!bounded)
-                        tbl[j++] = res->failure;
+                    chunk1(def->success,
+                           ir_goto(n, res->success));
+                    chunk1(def->failure,
+                           ir_goto(n, res->failure));
                 }
-                if (bounded)
-                    chunk2(expr->success,
-                           OptIns(expr->uses_stack, ir_unmark(n, mk)),
-                           ir_tcasechoose(n, ci, e, x->n + 1, tbl));
-                else
-                    chunk2(expr->success,
-                           OptIns(expr->uses_stack, ir_unmark(n, mk)),
-                           ir_tcasechoosex(n, ci, e, tl, 2*(x->n + 1), tbl));
-            }
-            if (def) {
-                chunk1(def->success,
-                       ir_goto(n, res->success));
-                chunk1(def->failure,
+            } else {
+                tl = make_tmploc(st);
+
+                /* Stack for the expression and selectors */
+                case_st = branch_stack(st);
+
+                /* Mark used for both expression and selectors */
+                mk = make_mark(case_st);
+                e = get_var(x->expr, case_st, 0);
+
+                expr_st = branch_stack(case_st);
+
+                v = target ? target : make_tmp(case_st);
+                expr = ir_traverse(x->expr, expr_st, e, 1, 1);
+
+                /* Set to 1 if the expression or any selector uses stack */
+                need_mark = expr->uses_stack;
+
+                clause_st = branch_stack(st);
+                for (i = 0; i < x->n; ++i) {                /* The n non-default cases */
+                    struct ir_stack *tst;
+                    selector[i] = ir_traverse(x->selector[i], branch_stack(case_st), v, 0, 1);
+                    if (selector[i]->uses_stack)
+                        need_mark = 1;
+                    tst = branch_stack(st);
+                    clause[i] = ir_traverse(x->clause[i], tst, target, bounded, rval);
+                    union_stack(clause_st, tst);
+                    if (clause[i]->uses_stack)
+                        res->uses_stack = 1;
+                }
+                if (n->op == Uop_Casedef) {        /* evaluate default clause */
+                    def = ir_traverse(x->def, st, target, bounded, rval);
+                    if (def->uses_stack)
+                        res->uses_stack = 1;
+                }
+
+                union_stack(st, clause_st);
+
+                chunk2(res->start,
+                       OptIns(need_mark, ir_mark(n, mk)),
+                       ir_goto(n, expr->start));
+                if (!bounded)
+                    chunk1(res->resume, ir_igoto(n, tl));
+
+                chunk1(expr->failure,
                        ir_goto(n, res->failure));
+                if (x->n == 0) {
+                    /* Must have a default clause if no other clauses */
+                    chunk3(expr->success,
+                           OptIns(expr->uses_stack, ir_unmark(n, mk)),
+                           OptIns(!bounded, ir_movelabel(n, tl, def->resume)), 
+                           ir_goto(n, def->start));
+                } else {
+                    chunk2(expr->success,
+                           OptIns(expr->uses_stack, ir_unmark(n, mk)),
+                           ir_goto(n, selector[0]->start));
+                    for (i = 0; i < x->n; ++i) {
+                        chunk4(selector[i]->success,
+                               ir_op(n, 0, Uop_Eqv, e, v, 0, 1, selector[i]->resume),
+                               OptIns(selector[i]->uses_stack, ir_unmark(n, mk)),
+                               OptIns(!bounded, ir_movelabel(n, tl, clause[i]->resume)), 
+                               ir_goto(n, clause[i]->start));
+
+                        if (i < x->n - 1)
+                            chunk1(selector[i]->failure,
+                                   ir_goto(n, selector[i + 1]->start));
+                        else if (def)
+                            chunk2(selector[i]->failure,
+                                   OptIns(!bounded, ir_movelabel(n, tl, def->resume)), 
+                                   ir_goto(n, def->start));
+                        else
+                            chunk1(selector[i]->failure,
+                                   ir_goto(n, res->failure));
+
+                        chunk1(clause[i]->success,
+                               ir_goto(n, res->success));
+
+                        chunk1(clause[i]->failure,
+                               ir_goto(n, res->failure));
+                    }
+                }
+                if (def) {
+                    chunk1(def->success,
+                           ir_goto(n, res->success));
+                    chunk1(def->failure,
+                           ir_goto(n, res->failure));
+                }
             }
             break;
         }

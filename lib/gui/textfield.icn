@@ -192,7 +192,7 @@ class TextField(Component)
          /self.mark := self.cursor
          self.cursor := whereis_x(e)
       } else {
-         tcase (parent_dialog.get_click_count() - 1) % 3 of {
+         case (parent_dialog.get_click_count() - 1) % 3 of {
             0 : {
                self.cursor := whereis_x(e)
                self.mark := self.cursor
@@ -588,7 +588,7 @@ class TextField(Component)
    end
 
    public handle_key(e)
-      tcase e.code of {
+      case e.code of {
          "\b" : handle_delete_left(e)
          "\r" | "\l": handle_return(e)
          "\^k" : handle_delete_line(e)

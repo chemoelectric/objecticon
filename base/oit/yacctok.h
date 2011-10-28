@@ -50,7 +50,6 @@
 %token	RETURN      /* return    */
 %token	STATIC      /* static    */
 %token	SUSPEND     /* suspend   */
-%token	TCASE       /* tcase     */
 %token	THEN        /* then      */
 %token	TO          /* to        */
 %token	UNTIL       /* until     */

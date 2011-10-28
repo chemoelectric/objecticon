@@ -434,7 +434,7 @@ class ScrollArea(Component)
    end
 
    public default_on_key(e)
-      tcase e.code of {
+      case e.code of {
          Key.HOME : set_area_y(0)
          Key.END : set_area_y((\self.vsb).total_size)
          Key.PGUP : set_area_y(get_area_y() - (\self.vsb).page_size)

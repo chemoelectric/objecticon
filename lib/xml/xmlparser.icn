@@ -213,7 +213,7 @@ class XmlParser(Connectable)
       local x, y, z
       every x := !sort(doc.attribute_lists) do  {
          every y := !sort(x[2].attribute_defs) do {
-            tcase y[2].def_type of {
+            case y[2].def_type of {
                "NOTATION": {
                   # Check for EMPTY/NOTATION clash.
                   if (\doc.element_declarations[x[1]]).content_spec.op == "EMPTY" then
@@ -1401,7 +1401,7 @@ class XmlParser(Connectable)
          #
          # Validate default value
          #
-         tcase attribute_def.def_type of {
+         case attribute_def.def_type of {
             "CDATA" : {
             }
             "ID" : {
@@ -1912,7 +1912,7 @@ class XmlParser(Connectable)
 
    private validate_attribute_value(element_name, attdef, name, val) 
       local l, entity_def, n
-      tcase attdef.def_type of {
+      case attdef.def_type of {
          "CDATA" : {
          }
          "ID" : {

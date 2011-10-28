@@ -138,7 +138,7 @@ class WebScraper()
 
       every e := !l do {
          #write("Doing:",to_string(e))
-         tcase e[1] of {
+         case e[1] of {
             "R" : {
                n := d.get_root_element()
             }

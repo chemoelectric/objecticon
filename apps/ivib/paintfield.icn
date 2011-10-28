@@ -33,7 +33,7 @@ class PaintField(Border)
       d := c.dialog()
       d.show_modal(self.parent_dialog)
       if \d.okay_result then {
-         tcase paints.get_selection() of {
+         case paints.get_selection() of {
             4: {
                img.clear_image()
                img.set_cache(\c.image_cache)
@@ -49,7 +49,7 @@ class PaintField(Border)
    public validate_input()
       local t
       t := get_contents()
-      tcase paints.get_selection() of {
+      case paints.get_selection() of {
          4 : 
             if /t.image_str & /t.image_cache then
                return alert_error(parent_dialog, "No image provided")
@@ -65,7 +65,7 @@ class PaintField(Border)
       if /c then
          edit_paint_button.set_is_shaded(&yes)
       else {
-         tcase classof(c) of {
+         case classof(c) of {
             CanvasTextPaint: {
                if type(c.str) == "string" then {
                   paints.set_selection(2)
@@ -100,7 +100,7 @@ class PaintField(Border)
          return &null
       p := paint_tbl[i]
       if /p then {
-         p := tcase i of {
+         p := case i of {
             2 : CanvasTextPaint(tf1.get_contents())
             3 : CanvasTextPaint(tf2.get_contents())
             4 : CanvasImagePaint()

@@ -100,7 +100,7 @@ procedure xml_escape(s, c)
    s ? repeat {
       r ||:= tab(upto(c) | 0)
       ch := move(1) | break
-      r ||:= tcase string(ch) of {
+      r ||:= case string(ch) of {
          "&" : "&amp;"
          "<" : "&lt;"
          ">" : "&gt;"

@@ -90,7 +90,7 @@ class CheckBoxTableColumn(TableColumn)
 
    public draw_cell(W, data, line, col, cy, ch)
       local x1, y1, i
-      x1 := tcase border.x_align of {
+      x1 := case border.x_align of {
          Align.R : self.tx + self.tw - unchecked_paint.w
          Align.C : self.tx + (self.tw - unchecked_paint.w)/2
          Align.L : self.tx

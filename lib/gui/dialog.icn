@@ -549,7 +549,7 @@ class Dialog(Component)
 
    public process_event(l)
       local e
-      tcase l[1] of {
+      case l[1] of {
          Selection.REQUEST: process_selection_request(l)
          Selection.CLEAR: process_selection_clear(l)
          Selection.RESPONSE: process_selection_response(l)
@@ -840,7 +840,7 @@ class Dialog(Component)
             tooltip_state := 0
          } else {
             t := Prog.get_runtime_millis()
-            tcase self.tooltip_state of {
+            case self.tooltip_state of {
                1 : 
                   if t >= self.tooltip_start_time then {
                      show_tooltip(self.tooltip_last_obj, self.tooltip_last_tip, self.tooltip_last_event)
@@ -893,7 +893,7 @@ class Dialog(Component)
       }
 
       t := Prog.get_runtime_millis()
-      tcase self.tooltip_state of {
+      case self.tooltip_state of {
          0 : {
             if (\obj ~=== self.tooltip_last_obj) |
                (\tip ~=== self.tooltip_last_tip) then {
@@ -1334,7 +1334,7 @@ class TextSelectionOwner(SelectionOwner)
    end
 
    public get_content(target)
-      tcase target of {
+      case target of {
          Selection.STRING_TARGET: return string(text_convert(get_text(), "string"))
          Selection.UTF8_STRING_TARGET: return string(text_convert(get_text(), "ucs"))
       }

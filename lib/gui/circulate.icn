@@ -24,7 +24,7 @@ class CirculateLabel(Label)
    end
 
    public on_key(e)
-      tcase e.code of {
+      case e.code of {
          Key.UP : parent.go_up(e)
          Key.DOWN : parent.go_down(e)
       }

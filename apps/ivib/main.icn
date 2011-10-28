@@ -760,7 +760,7 @@ class Main(Dialog)
       local d
       d := SaveChangesDialog()
       d.show_modal(self)
-      tcase d.result() of {
+      case d.result() of {
          "cancel" : fail
          "no" : return
          "yes" : {
@@ -872,7 +872,7 @@ class Main(Dialog)
       if member(Mouse.PRESS, e.code) then
          info_label.set_label("")
 
-      tcase /self.menu_mode & /e.release & e.code of {
+      case /self.menu_mode & /e.release & e.code of {
          "\r" : op_dialog()
          "\^q" : op_quit()
          "\^o" : op_open_file()

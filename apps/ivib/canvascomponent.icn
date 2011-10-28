@@ -38,7 +38,7 @@ class CanvasComponent(CanvasObject)
    # depending upon its alignment.
    # 
    public get_x_alignment_offset()
-      return tcase self.x_align of {
+      return case self.x_align of {
          "l" : 0
          "c" : self.w / 2
          "r" : self.w
@@ -49,7 +49,7 @@ class CanvasComponent(CanvasObject)
    # As above, for the y value.
    #
    public get_y_alignment_offset()
-      return tcase self.y_align of {
+      return case self.y_align of {
          "t" : 0
          "c" : self.h / 2
          "b" : self.h
@@ -540,7 +540,7 @@ class CanvasComponent(CanvasObject)
             csm.add(SetConstraintItem(self, "x_fill", &yes))
          else
             csm.add(RemoveConstraintItem(self, "x_fill"))
-         tcase c["x_align"] of {
+         case c["x_align"] of {
             Align.L : {
                csm.add(SetConstraintItem(self, "x_align", Align.C))
                csm.add(SetConstraintItem(self, "x_align", Align.R))
@@ -562,7 +562,7 @@ class CanvasComponent(CanvasObject)
             csm.add(SetConstraintItem(self, "y_fill", &yes))
          else
             csm.add(RemoveConstraintItem(self, "y_fill"))
-         tcase c["y_align"] of {
+         case c["y_align"] of {
             Align.T : {
                csm.add(SetConstraintItem(self, "y_align", Align.C))
                csm.add(SetConstraintItem(self, "y_align", Align.B))

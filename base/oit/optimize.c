@@ -164,9 +164,7 @@ static int fold_consts(struct lnode *n)
         }
 
         case Uop_Case:
-        case Uop_Casedef:
-        case Uop_TCase:
-        case Uop_TCasedef: {
+        case Uop_Casedef: {
             fold_case(n);
             break;
         }
@@ -484,6 +482,7 @@ static int compute_global_pure(struct lnode *n)
     switch (n->op) {
         case Uop_Global: {
             struct lnode_global *x = (struct lnode_global *)n;
+            /*printf("changes ? %s (%s:%d)\n",x->global->name,               n->loc.file, n->loc.line);*/
             if (changes(n)) {
                 if (verbose > 3) {
                     fprintf(stderr,
@@ -501,6 +500,7 @@ static int compute_global_pure(struct lnode *n)
 static int changes(struct lnode *n)
 {
     while (n->parent) {
+        /*printf("%s\n",ucode_op_table[n->parent->op].name);*/
         switch (n->parent->op) {
             case Uop_To: 
             case Uop_Toby: 
@@ -599,6 +599,17 @@ static int changes(struct lnode *n)
                 return x->child == n;
             }
 
+            case Uop_Case:
+            case Uop_Casedef: {
+                int i;
+                struct lnode_case *x = (struct lnode_case *)n->parent;
+                if (x->expr == n)
+                    return 0;
+                for (i = 0; i < x->n; ++i) {
+                    if (x->selector[i] == n)
+                        return 0;
+                }
+            } 
         }
         n = n->parent;
     }
@@ -1258,10 +1269,193 @@ static void fold_toby(struct lnode *n)
     free_literal(&l);
 }
 
+static int is_repeatable(struct lnode *n)
+{
+    switch (n->op) {
+        case Uop_Keyword: {
+            int k = ((struct lnode_keyword *)n)->num;
+            switch (k) {
+                case K_NULL:
+                case K_FAIL:
+                    return 1;
+                default:
+                    return 0;
+            }
+        }
+        case Uop_Empty:
+        case Uop_Const: 
+            return 1;
+        case Uop_Global: {
+            struct lnode_global *x = (struct lnode_global *)n;
+            return x->global->pure;
+        }
+
+        case Uop_Mutual:
+        case Uop_Slist: {
+            struct lnode_n *x = (struct lnode_n *)n;
+            int i;
+            for (i = 0; i < x->n; ++i) {
+                if (!is_repeatable(x->child[i]))
+                    return 0;
+            }
+            return 1;
+        }
+
+        case Uop_Value:
+        case Uop_Nonnull:
+        case Uop_Bang:
+        case Uop_Refresh:
+        case Uop_Number:
+        case Uop_Compl:
+        case Uop_Neg:
+        case Uop_Tabmat:
+        case Uop_Size:
+        case Uop_Random:
+        case Uop_Repeat: 
+        case Uop_While: 
+        case Uop_Null: 
+        case Uop_Until: 
+        case Uop_Every: 
+        case Uop_Rptalt: 
+        case Uop_Not: {		
+            struct lnode_1 *x = (struct lnode_1 *)n;
+            return is_repeatable(x->child);
+        }
+
+        case Uop_Asgn:
+        case Uop_Power:
+        case Uop_Cat:
+        case Uop_Diff:
+        case Uop_Eqv:
+        case Uop_Inter:
+        case Uop_Subsc:
+        case Uop_Lconcat:
+        case Uop_Lexeq:
+        case Uop_Lexge:
+        case Uop_Lexgt:
+        case Uop_Lexle:
+        case Uop_Lexlt:
+        case Uop_Lexne:
+        case Uop_Minus:
+        case Uop_Mod:
+        case Uop_Neqv:
+        case Uop_Numeq:
+        case Uop_Numge:
+        case Uop_Numgt:
+        case Uop_Numle:
+        case Uop_Numlt:
+        case Uop_Numne:
+        case Uop_Plus:
+        case Uop_Rasgn:
+        case Uop_Rswap:
+        case Uop_Div:
+        case Uop_Mult:
+        case Uop_Swap:
+        case Uop_Unions:
+        case Uop_Augpower:
+        case Uop_Augcat:
+        case Uop_Augdiff:
+        case Uop_Augeqv:
+        case Uop_Auginter:
+        case Uop_Auglconcat:
+        case Uop_Auglexeq:
+        case Uop_Auglexge:
+        case Uop_Auglexgt:
+        case Uop_Auglexle:
+        case Uop_Auglexlt:
+        case Uop_Auglexne:
+        case Uop_Augminus:
+        case Uop_Augmod:
+        case Uop_Augneqv:
+        case Uop_Augnumeq:
+        case Uop_Augnumge:
+        case Uop_Augnumgt:
+        case Uop_Augnumle:
+        case Uop_Augnumlt:
+        case Uop_Augnumne:
+        case Uop_Augplus:
+        case Uop_Augdiv:
+        case Uop_Augmult:
+        case Uop_Augunions: 
+        case Uop_Conj: 
+        case Uop_Augconj: 
+        case Uop_If: 
+        case Uop_Whiledo: 
+        case Uop_Alt: 
+        case Uop_Untildo: 
+        case Uop_Everydo: 
+        case Uop_Suspenddo: 
+        case Uop_Bactivate: 
+        case Uop_Augactivate: 
+        case Uop_Limit:
+        case Uop_To: 
+        case Uop_Scan:
+        case Uop_Augscan: {
+            struct lnode_2 *x = (struct lnode_2 *)n;
+            return is_repeatable(x->child1) && is_repeatable(x->child2);
+        }
+
+        case Uop_Toby: 
+        case Uop_Sect:
+        case Uop_Sectp:
+        case Uop_Sectm:
+        case Uop_Ifelse: {
+            struct lnode_3 *x = (struct lnode_3 *)n;
+            return is_repeatable(x->child1) && is_repeatable(x->child2) && is_repeatable(x->child3);
+        }
+
+        case Uop_Suspendexpr: 
+        case Uop_Returnexpr: 
+        case Uop_Breakexpr: 
+        case Uop_Create: 
+        case Uop_Uactivate: 
+        case Uop_List: 
+        case Uop_Local: 
+        case Uop_Next:
+        case Uop_End:
+        case Uop_Break:
+        case Uop_Suspend:
+        case Uop_Return:
+        case Uop_Fail:
+        case Uop_Field: 			/* field reference */
+        case Uop_CoInvoke:                      /* e{x1, x2.., xn} */
+        case Uop_Invoke:                       /* e(x1, x2.., xn) */
+        case Uop_Apply:			/* application e!l */
+        case Uop_Case:			/* case expression */
+        case Uop_Casedef:
+            return 0;
+
+        default:
+            quit("is_repeatable: illegal opcode(%d)", n->op);
+
+    }
+    return 0;
+}
+
+static int is_repeatable_case(struct lnode_case *x)
+{
+    int i;
+    for (i = 0; i < x->n; ++i) {
+        if (!is_repeatable(x->selector[i]))
+            return 0;
+    }
+    return 1;
+}
+
 static void fold_case(struct lnode *n)
 {
     struct lnode_case *x = (struct lnode_case *)n;
     struct literal l;
+
+    if (is_repeatable_case(x)) {
+        x->use_tcase = 1;
+        if (verbose > 3)
+            fprintf(stderr, "Case at %s:%d will use tcase optimization\n", n->loc.file,n->loc.line);
+    } else {
+        if (verbose > 3)
+            fprintf(stderr, "Case at %s:%d won't tcase optimization\n", n->loc.file,n->loc.line);
+    }
+
     if (!get_literal(x->expr, &l))
         return;
     if (l.type == FAIL)

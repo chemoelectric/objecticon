@@ -47,7 +47,7 @@ class LegacyCodePrinter(LegacyDecode)
          return
       }
 
-      tcase t of {
+      case t of {
          "null":{
             print(l,"&null")
             return
@@ -190,7 +190,7 @@ class CodePrinter(Decode)
       local i, n, rname, t, res, s
 
       t := char_in() | fail
-      tcase t of {
+      case t of {
          Codec.REF_CODE : {
             i := int_in() | fail
             print(l, "REF to " || i)

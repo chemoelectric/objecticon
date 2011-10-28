@@ -169,7 +169,7 @@ class CanvasMenuBarDialog(CanvasComponentDialog)
    end
 
    public on_edit()
-      tcase classof(select_rec.owner) of {
+      case classof(select_rec.owner) of {
          CanvasMenu | CanvasTextMenuItem : CanvasMenuComponentDialog(select_rec.owner).show_modal(self)
          CanvasCheckBoxMenuItem : CanvasCheckBoxMenuEdit(select_rec.owner).show_modal(self)
          CanvasMenuSeparator : CanvasMenuSeparatorEdit(select_rec.owner).show_modal(self)
@@ -189,7 +189,7 @@ class CanvasMenuBarDialog(CanvasComponentDialog)
    public can_go_up()
       local t, i
       t := select_rec.owner
-      tcase select_rec.depth of {
+      case select_rec.depth of {
          1 : # Top-level, parent is c
             return c.get_index(t) > 1
          2 : {
@@ -208,7 +208,7 @@ class CanvasMenuBarDialog(CanvasComponentDialog)
    public can_go_down()
       local t, i
       t := select_rec.owner
-      tcase select_rec.depth of {
+      case select_rec.depth of {
          1 : # Top-level, parent is c
             return c.get_index(t) < *c.menus
          2 : {
@@ -228,7 +228,7 @@ class CanvasMenuBarDialog(CanvasComponentDialog)
       local t, p, pp, i, pc
       t := select_rec.owner
       # Get the parent and the parent-of-the-parent
-      tcase select_rec.depth of {
+      case select_rec.depth of {
          1 : {
             p := c
             pc := c.menus
@@ -269,7 +269,7 @@ class CanvasMenuBarDialog(CanvasComponentDialog)
       local t, p, pp, i, pc
       t := select_rec.owner
       # Get the parent and the parent-of-the-parent
-      tcase select_rec.depth of {
+      case select_rec.depth of {
          1 : {
             p := c
             pc := c.menus

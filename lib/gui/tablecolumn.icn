@@ -150,7 +150,7 @@ class TableColumn(TextButton)
    #
    public draw_cell(W, data, line, col, cy, ch)
       local x1, y1
-      x1 := tcase border.x_align of {
+      x1 := case border.x_align of {
          Align.R : self.tx + self.tw - W.text_width(data)
          Align.C : self.tx + (self.tw - W.text_width(data)) / 2
          Align.L : self.tx

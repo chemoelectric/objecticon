@@ -99,13 +99,13 @@ class Rect(Point,Size)
    #
    public float(s, a)
       local x1, y1
-      x1 := tcase a.x_align of {
+      x1 := case a.x_align of {
          Align.C : self.x + (self.w - s.w) / 2
          Align.L : self.x
          Align.R : self.x + self.w - s.w
          default : runerr("incorrect x_align specifier", a.x_align)
       }         
-      y1 := tcase a.y_align of {
+      y1 := case a.y_align of {
          Align.C : self.y + (self.h - s.h) / 2
          Align.T : self.y
          Align.B : self.y + self.h - s.h

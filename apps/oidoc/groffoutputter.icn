@@ -79,7 +79,7 @@ class GroffOutputter(Outputter)
 
    private groff_fields(key, vals)
       local l, name
-      tcase key of {
+      case key of {
          "param" : {
             write(output_file, ".P")
             write(output_file, "Parameters :")

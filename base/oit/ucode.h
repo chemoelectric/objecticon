@@ -187,8 +187,6 @@ extern struct ucode_op ucode_op_table[];
 #define Uop_Global      193
 #define Uop_Local       194
 #define Uop_Var         196
-#define Uop_TCase       197
-#define Uop_TCasedef    198
 #define Uop_Field       200
 #define Uop_Const       201
 #define Uop_Declend	202

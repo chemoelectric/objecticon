@@ -133,7 +133,7 @@ procedure try_list(val, len)
 end
 
 procedure normalize_wattrib(key, val)
-   tcase key of {
+   case key of {
       "pos"|"size"|"min_size"|"max_size":
          return try_list(val, 2)
       "geometry"|"clip":
@@ -161,7 +161,7 @@ procedure normalize_constraints(t)
 end
 
 procedure normalize_constraint(key, val)
-   tcase key of {
+   case key of {
       "x_tab"|"y_tab"|"x"|"y"|"w"|"h"|"l_inset"|"r_inset"|"t_inset"|"b_inset":
          return integer(val)
       "x_align":
@@ -178,7 +178,7 @@ procedure normalize_constraint(key, val)
 end
 
 procedure align_str(val)
-   return tcase val of {
+   return case val of {
       Align.L: "Align.L"
       Align.R: "Align.R"
       Align.T: "Align.T"
@@ -189,7 +189,7 @@ procedure align_str(val)
 end
 
 procedure select_str(val)
-   return tcase val of {
+   return case val of {
       Select.NONE : "Select.NONE"
       Select.ONE : "Select.ONE"
       Select.MANY : "Select.MANY"
@@ -198,7 +198,7 @@ procedure select_str(val)
 end
 
 procedure stringify_constraint(key, val, quote, c)
-   tcase key of {
+   case key of {
       "x_tab"|"y_tab"|"x"|"y"|"w"|"h"|"l_inset"|"r_inset"|"t_inset"|"b_inset":
          return string(val)
       "x_align"|"y_align":

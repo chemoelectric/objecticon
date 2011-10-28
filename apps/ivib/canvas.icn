@@ -1180,14 +1180,14 @@ class Canvas(Component,SelectiveObjectCodec)
       h_new := orig_h_spec := moving.h_spec
 
       if \e.shift then {
-         tcase ec of {
+         case ec of {
             Key.UP : resize_down(orig_y + orig_h - 1)
             Key.DOWN : resize_down(orig_y + orig_h + 1)
             Key.LEFT : resize_right(orig_x + orig_w - 1)
             Key.RIGHT : resize_right(orig_x + orig_w + 1)
          }
       } else {
-         tcase ec of {
+         case ec of {
             Key.UP : move_vertically(orig_y - 1)
             Key.DOWN : move_vertically(orig_y + 1)
             Key.LEFT : move_horizontally(orig_x - 1)
@@ -1368,7 +1368,7 @@ class Canvas(Component,SelectiveObjectCodec)
             return "fleur"
       } else
          i := self.which_cursor_over(e).in_resize_region(e)
-      return tcase i of {
+      return case i of {
          1 : "top left corner"
          2 : "top right corner"
          3 : "bottom left corner" 
@@ -1418,7 +1418,7 @@ class Canvas(Component,SelectiveObjectCodec)
          # Set up the offsets depending on what we're doing; also change
          # the pointer to an appropriate image.
          #
-         tcase self.resize_mode of {
+         case self.resize_mode of {
             #
             # Resizing from top left corner
             #
@@ -1495,7 +1495,7 @@ class Canvas(Component,SelectiveObjectCodec)
          #
          # Calculate new x position and width
          #  
-         tcase self.resize_mode of {
+         case self.resize_mode of {
             #
             # Resizing x from left hand side of object.
             #
@@ -1515,7 +1515,7 @@ class Canvas(Component,SelectiveObjectCodec)
          #
          # Calculate new y position and height
          #  
-         tcase self.resize_mode of {
+         case self.resize_mode of {
             #
             # Resizing y from top of object.
             #

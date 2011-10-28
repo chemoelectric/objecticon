@@ -122,7 +122,7 @@ class SuggestField(TextField)
          spc_right := win_spc_right
       }
 
-      max_h := tcase self.direction of {
+      max_h := case self.direction of {
          Direction.UP: spc_above
          Direction.DOWN: spc_below
          Direction.BEST: max(spc_above, spc_below)
@@ -150,7 +150,7 @@ class SuggestField(TextField)
 
       if tl.w_spec > win_spc_right then
          use_popup_win := 1
-      tcase self.direction of {
+      case self.direction of {
          Direction.UP: {
             if tl.h_spec > win_spc_above then
                use_popup_win := 1
@@ -286,7 +286,7 @@ class SuggestField(TextField)
    end
 
    public handle_key(e)
-      tcase e.code of {
+      case e.code of {
          Key.UP : handle_key_up(e)
          Key.DOWN : handle_key_down(e)
          default:

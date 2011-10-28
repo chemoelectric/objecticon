@@ -323,7 +323,7 @@ class Menu(TextMenuItem)
          self.which_open.handle_event(e)
          return
       }
-      tcase /e.release & e.code of {
+      case /e.release & e.code of {
          Key.UP: handle_key_up(e)
          Key.DOWN: handle_key_down(e)
          Key.RIGHT: handle_key_right(e)

@@ -81,7 +81,7 @@ void end_class(void)
     fprintf(out, "   end\n");
     if (tab_flag) {
         fprintf(out, "\n   public static get_sym(k)\n");
-        fprintf(out, "      return tcase k of {\n");
+        fprintf(out, "      return case k of {\n");
         for (i = 0; i < n_entries; ++i) {
             fprintf(out, "         %s : \"%s\"\n", buff[i].val, buff[i].origname);
         }
@@ -90,7 +90,7 @@ void end_class(void)
     }
     if (desc_flag) {
         fprintf(out, "\n   public static get_desc(k)\n");
-        fprintf(out, "      return tcase k of {\n");
+        fprintf(out, "      return case k of {\n");
         for (i = 0; i < n_entries; ++i) {
             fprintf(out, "         %s : \"%s\"\n", buff[i].val, buff[i].comment);
         }

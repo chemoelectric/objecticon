@@ -214,7 +214,7 @@ class TabSet(Component)
       if len < Gui.BORDER_WIDTH then
          fail
       every i := 0 to Gui.BORDER_WIDTH - 1 do {
-         tcase loc of {
+         case loc of {
             "e": Gui.style.draw_shadow_line(self.cbwin, 
                                         x - i, y + i,
                                         x - i, y + len - 1 - i)
@@ -236,7 +236,7 @@ class TabSet(Component)
       if len < Gui.BORDER_WIDTH then
          fail
       every i := 0 to Gui.BORDER_WIDTH - 1 do {
-         tcase loc of {
+         case loc of {
             "e": Gui.style.draw_hilite_line(self.cbwin, 
                                         x - i, y + i,
                                         x - i, y + len - 1 - i)
