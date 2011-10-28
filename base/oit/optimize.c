@@ -541,6 +541,13 @@ static int changes(struct lnode *n)
             case Uop_Unions:
             case Uop_Scan:
             case Uop_Bactivate:
+            case Uop_While:
+            case Uop_Whiledo: 
+            case Uop_Repeat: 
+            case Uop_Every: 
+            case Uop_Everydo: 
+            case Uop_Until: 
+            case Uop_Untildo:
                 return 0;
 
             case Uop_Subsc:
@@ -595,8 +602,13 @@ static int changes(struct lnode *n)
             case Uop_Create: 
             case Uop_Suspendexpr: 
             case Uop_Returnexpr: {
-                struct lnode_1 *x = (struct lnode_1 *)n->parent;
-                return x->child == n;
+                /* x->child should = n */
+                return 1;
+            }
+
+            case Uop_Suspenddo: {
+                struct lnode_2 *x = (struct lnode_2 *)n;
+                return x->child1 == n;
             }
 
             case Uop_Case:
@@ -609,7 +621,23 @@ static int changes(struct lnode *n)
                     if (x->selector[i] == n)
                         return 0;
                 }
+                /* n must be one of the clauses, so continue up */
+                break;
             } 
+
+            case Uop_If: {
+                struct lnode_2 *x = (struct lnode_2 *)n->parent;
+                if (x->child1 == n)
+                    return 0;
+                break;
+            }
+
+            case Uop_Ifelse: {
+                struct lnode_3 *x = (struct lnode_3 *)n->parent;
+                if (x->child1 == n)
+                    return 0;
+                break;
+            }
         }
         n = n->parent;
     }
@@ -1453,7 +1481,7 @@ static void fold_case(struct lnode *n)
             fprintf(stderr, "Case at %s:%d will use tcase optimization\n", n->loc.file,n->loc.line);
     } else {
         if (verbose > 3)
-            fprintf(stderr, "Case at %s:%d won't tcase optimization\n", n->loc.file,n->loc.line);
+            fprintf(stderr, "Case at %s:%d won't use tcase optimization\n", n->loc.file,n->loc.line);
     }
 
     if (!get_literal(x->expr, &l))
