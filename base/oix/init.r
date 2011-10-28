@@ -582,9 +582,12 @@ static void initptrs(struct progstate *p, struct header *h)
     p->Eglocs = (struct loc *)(p->Code + h->Statics);
     p->NGlobals = p->Eglobals - p->Globals;
     p->Statics = (dptr)(p->Eglocs);
-    p->Estatics = (dptr)(p->Code + h->Filenms);
+    p->Estatics = (dptr)(p->Code + h->TCaseTables);
     p->NStatics = p->Estatics - p->Statics;
-    p->Filenms = (struct ipc_fname *)(p->Estatics);
+    p->TCaseTables = (dptr)(p->Estatics);
+    p->ETCaseTables = (dptr)(p->Code + h->Filenms);
+    p->NTCaseTables = p->ETCaseTables - p->TCaseTables;
+    p->Filenms = (struct ipc_fname *)(p->ETCaseTables);
     p->Efilenms = (struct ipc_fname *)(p->Code + h->linenums);
     p->Ilines = (struct ipc_line *)(p->Efilenms);
     p->Elines = (struct ipc_line *)(p->Code + h->Constants);
@@ -880,7 +883,6 @@ void resolve(struct progstate *p)
      * note the main procedure if found, and create the table of named globals.
      */
     p->MainProc = 0;
-    MemProtect(p->NamedGlobals = p->ENamedGlobals = malloc(p->NGlobals * sizeof(struct descrip)));
     for (j = 0; j < p->NGlobals; j++) {
         switch (p->Globals[j].dword) {
             case D_Class: {
@@ -905,7 +907,6 @@ void resolve(struct progstate *p)
                 for (i = 0; i < n_fields; ++i) 
                     cb->fields[i] = (struct class_field*)(p->Code + (uword)cb->fields[i]);
                 cb->sorted_fields = (short *)(p->Code + (uword)cb->sorted_fields);
-                *(p->ENamedGlobals++) = p->Globals[j];
                 break;
             }
 
@@ -927,7 +928,6 @@ void resolve(struct progstate *p)
                     for (i = 0; i < c->n_fields; i++) 
                         c->field_locs[i].fname = p->Constants + (uword)c->field_locs[i].fname;
                 }
-                *(p->ENamedGlobals++) = p->Globals[j];
                 break;
             }
             case D_Proc: {
@@ -995,12 +995,14 @@ void resolve(struct progstate *p)
 
                     pp->program = p;
                 }
-                *(p->ENamedGlobals++) = p->Globals[j];
                 break;
             }
         }
     }
-    p->NNamedGlobals = p->ENamedGlobals - p->NamedGlobals;
+
+    MemProtect(p->CpGlobals = malloc(p->NGlobals * sizeof(struct descrip)));
+    memcpy(p->CpGlobals, p->Globals, p->NGlobals * sizeof(struct descrip));
+    p->ECpGlobals = p->CpGlobals + p->NGlobals;
 
     /*
      * Relocate the names of the files in the ipc->filename table.
@@ -1696,6 +1698,44 @@ static void relocate_code(struct progstate *ps, word *c)
             }
 
             case Op_Cofail: {
+                break;
+            }
+
+            case Op_TCaseInit: {
+                *pc = (word)&prog->TCaseTables[*pc]; 
+                ++pc;
+                ++pc;        /* def */
+                break;
+            }
+
+            case Op_TCaseInsert: {
+                *pc = (word)&prog->TCaseTables[*pc]; 
+                ++pc;
+                conv_var();  /* val */
+                ++pc;        /* entry */
+                break;
+            }
+
+            case Op_TCaseChoose: {
+                int n;
+                *pc = (word)&prog->TCaseTables[*pc]; 
+                ++pc;
+                conv_var();  /* val */
+                n = *pc++;   /* tblc */
+                while (n--)
+                    conv_addr(); /* dest */
+                break;
+            }
+
+            case Op_TCaseChoosex: {
+                int n;
+                *pc = (word)&prog->TCaseTables[*pc]; 
+                ++pc;
+                conv_var();  /* val */
+                ++pc;        /* labno */
+                n = *pc++;   /* tblc */
+                while (n--)
+                    conv_addr(); /* dest */
                 break;
             }
 

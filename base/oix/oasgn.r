@@ -475,7 +475,7 @@ void tvtbl_asgn(dptr dest, dptr src)
     */
    slot = memb(bp->clink, &bp->tref, bp->hashnum, &res);
 
-   if (res == 1) {
+   if (res) {
       /*
        * Do not need new te, just update existing entry.
        */

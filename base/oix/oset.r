@@ -67,7 +67,7 @@ operator -- diff(x,y)
                ep = (struct b_selem *)seg->hslots[slotnum];
                while (ep != NULL) {
                   memb(tstp, &ep->setmem, ep->hashnum, &res);
-                  if (res == 0) {
+                  if (!res) {
                      hook = memb(dstp, &ep->setmem, ep->hashnum, &res);
 		     np->setmem = ep->setmem;
 		     np->hashnum = ep->hashnum;
@@ -178,7 +178,7 @@ operator ** inter(x,y)
                ep = (struct b_selem *)seg->hslots[slotnum];
                while (ep != NULL) {
                   memb(tstp, &ep->setmem, ep->hashnum, &res);
-                  if (res != 0) {
+                  if (res) {
                      hook = memb(dstp, &ep->setmem, ep->hashnum, &res);
 		     np->setmem = ep->setmem;
 		     np->hashnum = ep->hashnum;
@@ -275,7 +275,7 @@ operator ++ union(x,y)
                ep = (struct b_selem *)seg->hslots[slotnum];
                while (ep != NULL) {
                   hook = memb(dstp, &ep->setmem, ep->hashnum, &res);
-                  if (res == 0) {
+                  if (!res) {
 		     np->setmem = ep->setmem;
 		     np->hashnum = ep->hashnum;
                      addmem(&dstp->set, np, hook);

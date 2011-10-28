@@ -464,6 +464,9 @@ static void markprogram(struct progstate *pstate)
     for (dp = pstate->Statics; dp < pstate->Estatics; dp++)
         PostDescrip(*dp);
 
+    for (dp = pstate->TCaseTables; dp < pstate->ETCaseTables; dp++)
+        PostDescrip(*dp);
+
     for (dp = pstate->ClassStatics; dp < pstate->EClassStatics; dp++)
         PostDescrip(*dp);
 

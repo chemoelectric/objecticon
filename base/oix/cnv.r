@@ -689,7 +689,7 @@ static void deref_tvtbl(dptr s, dptr d)
      */
     bp = BlkLoc(*s);
     ep = memb(bp->tvtbl.clink,&bp->tvtbl.tref,bp->tvtbl.hashnum,&res);
-    if (res == 1)
+    if (res)
         *d = (*ep)->telem.tval;			/* found; use value */
     else
         *d = bp->tvtbl.clink->table.defvalue;	/* nope; use default */

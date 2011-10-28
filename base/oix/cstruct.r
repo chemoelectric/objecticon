@@ -136,7 +136,7 @@ int set_del(dptr s, dptr key)
 
     hn = hash(key);
     pd = memb(BlkLoc(*s), key, hn, &res);
-    if (res == 1) {
+    if (res) {
         /*
          * The element is there so delete it.
          */
@@ -154,7 +154,7 @@ int table_del(dptr t, dptr key)
 
     hn = hash(key);
     pd = memb(BlkLoc(*t), key, hn, &res);
-    if (res == 1) {
+    if (res) {
         /*
          * The element is there so delete it.
          */
@@ -214,7 +214,7 @@ int list_get(dptr l, dptr res)
    return 1;
 }
 
-void table_insert(dptr t, dptr key, dptr val)
+void table_insert(dptr t, dptr key, dptr val, int overwrite)
 {
     union block **pd;
     struct b_telem *te;
@@ -227,7 +227,7 @@ void table_insert(dptr t, dptr key, dptr val)
     MemProtect(te = alctelem());
 
     pd = memb(BlkLoc(*t), key, hn, &res);	/* search table for key */
-    if (res == 0) {
+    if (!res) {
         /*
          * The element is not in the table - insert it.
          */
@@ -245,8 +245,10 @@ void table_insert(dptr t, dptr key, dptr val)
          * We found an existing entry; just change its value.
          */
         dealcblk((union block *)te);
-        te = (struct b_telem *) *pd;
-        te->tval = *val;
+        if (overwrite) {
+            te = (struct b_telem *) *pd;
+            te->tval = *val;
+        }
     }
 }
 
@@ -273,7 +275,7 @@ void set_insert(dptr s, dptr entry)
     MemProtect(se = alcselem());
 
     pd = memb(BlkLoc(*s), entry, hn, &res);
-    if (res == 0) {
+    if (!res) {
         /*
          * The element is not in the set - insert it.
          */

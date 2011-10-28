@@ -1295,25 +1295,3 @@ procedure Generate(e[])
       }                 
    }
 end
-
-#
-# Make a table for use like a case statement, with constant case values.  For example,
-# @example
-# @ static t
-# @ ...
-# @ /t := CaseTable{def(),    # "default" clause
-# @                 1,    one(),
-# @                 2,    {write("it's two"); two()},
-# @                 3|33, three_or_thirtythree(),
-# @                 4,    {i := 4 ; four()}
-# @                }
-# @ !t[n]     # if n=1, calls one() etc.
-procedure CaseTable(a[])
-   local t, e, v
-   t := table(pop(a))
-   while e := pop(a) do {
-      v := pop(a)
-      while insert(t, @e, v)
-   }
-   return t
-end

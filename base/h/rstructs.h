@@ -411,8 +411,9 @@ struct progstate {
     dptr *Gnames, *Egnames;
     struct loc *Glocs, *Eglocs;
     dptr Statics, Estatics;
+    dptr TCaseTables, ETCaseTables;
     dptr Constants, Econstants;
-    int NGlobals, NStatics, NConstants;
+    int NGlobals, NStatics, NConstants, NTCaseTables;
     char *Strcons, *Estrcons;
     struct ipc_fname *Filenms, *Efilenms;
     struct ipc_line *Ilines, *Elines;
@@ -420,8 +421,7 @@ struct progstate {
     struct ipc_fname * Current_fname_ptr;
     dptr MainProc;
 
-    dptr NamedGlobals, ENamedGlobals;
-    int NNamedGlobals;
+    dptr CpGlobals, ECpGlobals;         /* a copy of Globals in its original state */
 
     word Coexp_ser;			/* this program's serial numbers */
     word List_ser;

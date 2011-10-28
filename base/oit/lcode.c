@@ -21,6 +21,7 @@
 #undef constants
 
 static int nstatics = 0;               /* Running count of static variables */
+static int ntcase = 0;                 /* Running count of tcase tables */
 
 /*
  * Array sizes for various linker tables that can be expanded with realloc().
@@ -135,6 +136,13 @@ static void outsdescrip(struct centry *ce, char *fmt, ...);
 #define ShortFmt "%04lx"
 
 static struct header hdr;
+
+static int get_tcaseno(struct ir_tcaseinit *x)
+{
+    if (x->no < 0)
+        x->no = ntcase++;
+    return x->no;
+}
 
 static void out_op(word op)
 {
@@ -932,6 +940,44 @@ static void lemitcode()
                     emit_ir_var(x->limit, "limit");
                     break;
                 }
+                case Ir_TCaseInit: {
+                    struct ir_tcaseinit *x = (struct ir_tcaseinit *)ir;
+                    out_op(Op_TCaseInit);
+                    word_field(get_tcaseno(x), "no");
+                    word_field(x->def, "def");
+                    break;
+                }
+                case Ir_TCaseInsert: {
+                    struct ir_tcaseinsert *x = (struct ir_tcaseinsert *)ir;
+                    out_op(Op_TCaseInsert);
+                    word_field(get_tcaseno(x->tci), "no");
+                    emit_ir_var(x->val, "val");
+                    word_field(x->entry, "entry");
+                    break;
+                }
+                case Ir_TCaseChoose: {
+                    struct ir_tcasechoose *x = (struct ir_tcasechoose *)ir;
+                    int i;
+                    out_op(Op_TCaseChoose);
+                    word_field(get_tcaseno(x->tci), "no");
+                    emit_ir_var(x->val, "val");
+                    word_field(x->tblc, "tblc");
+                    for (i = 0; i < x->tblc; ++i)
+                        labout(x->tbl[i], "dest");
+                    break;
+                }
+                case Ir_TCaseChoosex: {
+                    struct ir_tcasechoosex *x = (struct ir_tcasechoosex *)ir;
+                    int i;
+                    out_op(Op_TCaseChoosex);
+                    word_field(get_tcaseno(x->tci), "no");
+                    emit_ir_var(x->val, "val");
+                    word_field(x->labno, "labno");
+                    word_field(x->tblc, "tblc");
+                    for (i = 0; i < x->tblc; ++i)
+                        labout(x->tbl[i], "dest");
+                    break;
+                }
                 default: {
                     quit("lemitcode: illegal ir opcode(%d)\n", ir->op);
                     break;
@@ -1567,6 +1613,18 @@ static void gentables()
     }
     flushcode();
 
+    /*
+     * Output a null descriptor for each tcase table.
+     */
+    if (Dflag)
+        fprintf(dbgfile, "\n# TCase table null descriptors\n");
+    hdr.TCaseTables = pc;
+    for (i = 0; i < ntcase; ++i) {
+        outwordx(D_Null, "D_Null");
+        outwordx(0, "");
+    }
+    flushcode();
+
     if (Dflag)
         fprintf(dbgfile, "\n# File names table\n");
     hdr.Filenms = pc;
@@ -1673,6 +1731,7 @@ static void gentables()
         fprintf(dbgfile, "gnames:           " WordFmt "\n", (long)hdr.Gnames);
         fprintf(dbgfile, "glocs:            " WordFmt "\n", (long)hdr.Glocs);
         fprintf(dbgfile, "statics:          " WordFmt "\n", (long)hdr.Statics);
+        fprintf(dbgfile, "tcasetables:      " WordFmt "\n", (long)hdr.TCaseTables);
         fprintf(dbgfile, "filenms:          " WordFmt "\n", (long)hdr.Filenms);
         fprintf(dbgfile, "linenums:         " WordFmt "\n", (long)hdr.linenums);
         fprintf(dbgfile, "constants:        " WordFmt "\n", (long)hdr.Constants);
@@ -1701,7 +1760,8 @@ static void gentables()
         report("  Globals         %7ld", (long)(hdr.Gnames  - hdr.Globals));
         report("  Global names    %7ld", (long)(hdr.Glocs - hdr.Gnames));
         report("  Global locs     %7ld", (long)(hdr.Statics - hdr.Glocs));
-        report("  Statics         %7ld", (long)(hdr.Filenms - hdr.Statics));
+        report("  Statics         %7ld", (long)(hdr.TCaseTables - hdr.Statics));
+        report("  TCaseTables     %7ld", (long)(hdr.Filenms - hdr.TCaseTables));
         report("  Filenms         %7ld", (long)(hdr.linenums - hdr.Filenms));
         report("  Linenums        %7ld", (long)(hdr.Constants - hdr.linenums));
         report("  Constants       %7ld", (long)(hdr.Strcons - hdr.Constants));

@@ -102,3 +102,7 @@
 #define Op_CSuspend      91
 #define Op_CReturn       92
 #define Op_CFail         93
+#define Op_TCaseInit     94
+#define Op_TCaseInsert   95
+#define Op_TCaseChoose   96
+#define Op_TCaseChoosex  97

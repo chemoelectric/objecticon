@@ -58,6 +58,7 @@ struct lnode_keyword {
 struct lnode_case {
     LNODE_SUB
     int n;
+    int use_tcase;
     struct lnode *expr;
     struct lnode **selector;
     struct lnode **clause;
