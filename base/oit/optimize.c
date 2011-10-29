@@ -1474,6 +1474,7 @@ static void fold_case(struct lnode *n)
 {
     struct lnode_case *x = (struct lnode_case *)n;
     struct literal l;
+    int i;
 
     if (is_repeatable_case(x)) {
         x->use_tcase = 1;
@@ -1484,11 +1485,22 @@ static void fold_case(struct lnode *n)
             fprintf(stderr, "Case at %s:%d won't use tcase optimization\n", n->loc.file,n->loc.line);
     }
 
-    if (!get_literal(x->expr, &l))
-        return;
-    if (l.type == FAIL)
-        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
-    free_literal(&l);
+    if (get_literal(x->expr, &l)) {
+        if (l.type == FAIL) {
+            replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+            free_literal(&l);
+            return;
+        }
+        free_literal(&l);
+    }
+
+    for (i = 0; i < x->n; ++i) {
+        if (get_literal(x->selector[i], &l)) {
+            if (l.type == FAIL)
+                replace_node(x->clause[i], (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+            free_literal(&l);
+        }
+    }
 }
 
 static void fold_simple1(struct lnode *n)
