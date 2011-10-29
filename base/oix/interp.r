@@ -330,13 +330,13 @@ void skip_descrip()
 }
 
 /*
- * A quick version of alc_c_frame which allocates on the C stack using
- * alloca, instead of malloc.  It is used for operators whose frames
- * are allocated and then immediately deallocated after the operator
- * is called (do_op and do_keyop).
+ * A quick method of allocating a c_frame which allocates on the C
+ * stack using alloca, instead of malloc.  It is used for operators
+ * whose frames are allocated and then immediately deallocated after
+ * the operator is called (do_op, do_mgop and do_keyop).
  */
 
-#begdef quick_alc_c_frame(p, pb, argc)
+#begdef quick_begin(p, pb, argc)
 {
     char *t;
     int size, i;
@@ -371,13 +371,24 @@ void skip_descrip()
             p->tend[i] = nulldesc;
     } else
         p->tend = 0;
+    push_frame((struct frame *)p);
 }
 #enddef
 
-#begdef quick_free_frame(p)
+#begdef quick_end(p)
+{
+    if (k_current->sp == (struct frame *)p)
+        /* Pop the C frame */
+        k_current->sp = p->parent_sp;
+    else
+        /* We must have pushed a p_frame on a runerr
+         * (activate_handler), so just unlink the c_frame from the
+         * chain */
+        k_current->sp->parent_sp = p->parent_sp;
 #if !HAVE_ALLOCA
     free(p);
 #endif
+}
 #enddef
 
 static void do_op(int nargs)
@@ -385,8 +396,7 @@ static void do_op(int nargs)
     struct c_frame *cf;
     struct c_proc *bp = opblks[curr_op];
     int i;
-    quick_alc_c_frame(cf, bp, nargs);
-    push_frame((struct frame *)cf);
+    quick_begin(cf, bp, nargs);
     cf->lhs = get_dptr();
     if (bp->underef) {
         for (i = 0; i < nargs; ++i)
@@ -402,9 +412,7 @@ static void do_op(int nargs)
     if (!bp->ccode(cf))
         ipc = cf->failure_label;
     curr_cf = 0;
-    /* Pop the C frame */
-    k_current->sp = cf->parent_sp;
-    quick_free_frame(cf);
+    quick_end(cf);
 }
 
 static void do_mgop(int nargs)
@@ -412,8 +420,7 @@ static void do_mgop(int nargs)
     struct c_frame *cf;
     struct c_proc *bp = opblks[curr_op];
     int i;
-    quick_alc_c_frame(cf, bp, nargs);
-    push_frame((struct frame *)cf);
+    quick_begin(cf, bp, nargs);
     cf->lhs = get_dptr();
     if (bp->underef) {
         for (i = 0; i < nargs; ++i)
@@ -428,9 +435,7 @@ static void do_mgop(int nargs)
     if (!bp->ccode(cf))
         syserr("Monogenic op failed");
     curr_cf = 0;
-    /* Pop the C frame */
-    k_current->sp = cf->parent_sp;
-    quick_free_frame(cf);
+    quick_end(cf);
 }
 
 static void do_opclo(int nargs)
@@ -460,8 +465,7 @@ static void do_keyop()
 {
     struct c_frame *cf;
     struct c_proc *bp = keyblks[GetWord];
-    quick_alc_c_frame(cf, bp, 0);
-    push_frame((struct frame *)cf);
+    quick_begin(cf, bp, 0);
     cf->lhs = get_dptr();
     cf->failure_label = GetAddr;
     Desc_EVValD(bp, E_Pcall, D_Proc);
@@ -469,9 +473,7 @@ static void do_keyop()
     if (!bp->ccode(cf))
         ipc = cf->failure_label;
     curr_cf = 0;
-    /* Pop the C frame */
-    k_current->sp = cf->parent_sp;
-    quick_free_frame(cf);
+    quick_end(cf);
 }
 
 static void do_keyclo()
