@@ -1329,6 +1329,9 @@ static int is_repeatable(struct lnode *n)
             return 1;
         }
 
+        case Uop_Random:
+            return 0;
+
         case Uop_Value:
         case Uop_Nonnull:
         case Uop_Bang:
@@ -1338,7 +1341,6 @@ static int is_repeatable(struct lnode *n)
         case Uop_Neg:
         case Uop_Tabmat:
         case Uop_Size:
-        case Uop_Random:
         case Uop_Repeat: 
         case Uop_While: 
         case Uop_Null: 
