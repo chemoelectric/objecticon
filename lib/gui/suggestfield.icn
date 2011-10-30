@@ -14,6 +14,7 @@ class SuggestField(TextField)
 
    protected
       req, 
+      req_held, 
       last,
       mod
 
@@ -65,8 +66,11 @@ class SuggestField(TextField)
    private requests()
       local l, last
       repeat {
-         while /mod do
+         while /mod do {
+            req_held := 1
             req.sleep()
+            req_held := &null
+         }
          last := self.contents
          if l := do_request() then {
             # If contents have changed, or user has selected from list, skip.
@@ -84,9 +88,9 @@ class SuggestField(TextField)
    protected defer do_request()
 
    public on_change(ev)
-      # Check here since req may be polling, which we don't want to interrupt.
-      if req.is_sleeping() then
-         req.interrupt()
+      # Wakeup req if waiting
+      if \req_held then
+         req.notify()
       mod := 1
    end
 
