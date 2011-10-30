@@ -94,6 +94,12 @@ class Task()
       sleep_until := (\last_sleep + \n) | &null
    end
 
+   # Just equivalent to {change_sleep(0)}
+   #
+   public notify()
+      change_sleep(0)
+   end
+
    # Succeed iff the task is currently active.
    #
    public is_active()
@@ -150,7 +156,8 @@ class Task()
    end
 
    # Suspend this task, which must be the currently scheduled task,
-   # for {n} milliseconds.
+   # for {n} milliseconds.  If the task is interrupted this method
+   # fails, setting {&why}, otherwise it succeeds and returns {&null}.
    #
    # @param n The time to wait for.  If {&null}, wait forever (or until
    # @        interrupted).
@@ -162,6 +169,9 @@ class Task()
       sleep_until := (last_sleep + \n) | &null
       self.interrupt_flag := &null
       scheduler.now_sleep(self)
+      if \interrupt_flag then
+         return error("Interrupted")
+      return
    end
 
    # Interrupt the task, which may not be currently active.  If the
