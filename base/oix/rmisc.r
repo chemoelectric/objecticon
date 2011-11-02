@@ -654,9 +654,7 @@ void outimage(FILE *f, dptr dp, int noimage)
      }
 
      methp: {
-             struct b_proc *proc0;
              bp = BlkLoc(*dp);
-             proc0 = bp->methp.proc;
              fprintf(f, "methp(");
              tdp.dword = D_Object;
              BlkLoc(tdp) = (union block*)bp->methp.object;
