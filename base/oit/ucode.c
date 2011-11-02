@@ -575,9 +575,8 @@ static void read_params(struct ucode_op *op)
                 args[i] = (long)uin_str();
                 break;
             case TYPE_SBIN: {
-                int l, t;
+                int l;
                 char *s1 = uin_sbin(&l);
-                t = l;
                 zero_sbuf(&ucode_sbuf);
                 while (l-- > 0) {
                     if (isprint((unsigned char)*s1))
@@ -590,9 +589,8 @@ static void read_params(struct ucode_op *op)
                 break;
             }
             case TYPE_LBIN: {
-                int l, t;
+                int l;
                 char *s1 = uin_lbin(&l);
-                t = l;
                 zero_sbuf(&ucode_sbuf);
                 while (l-- > 0) {
                     if (isprint((unsigned char)*s1))
