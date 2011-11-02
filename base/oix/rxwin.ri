@@ -390,9 +390,8 @@ void pollevent(wbp w)
         evwin = event.xexpose.window;  /* go ahead, criticize all you like */
 
         for (ws = vwstates; ws; ws = ws->vnext) {
-            if (ws->display == wd) {
-                if (ws->win == evwin) break;
-	    }
+            if (ws->display == wd && ws->win == evwin) 
+                break;
         }
         if (!ws) continue;
 
@@ -590,7 +589,7 @@ static void close_screen_win(wsp ws)
  */
 void wclose(wbp w)
 {
-    STDLOCALS(w);
+    wsp ws = w->window;
     pollevent(w);
     if (ws->win && ws->refcount > 1) {
         /* Turn into hidden window */
@@ -728,7 +727,9 @@ static void wmap(wbp w)
     char *p, *s, sbuf[256];
     XWMHints wmhints;
     XClassHint clhints;
-    STDLOCALS(w);
+    wcp wc = w->context;
+    wsp ws = w->window;
+    wdp wd = ws->display;
 
     /*
      * create the X window (or use the DefaultRootWindow if requested)
@@ -741,7 +742,7 @@ static void wmap(wbp w)
             break;
         case PopupState: {
             attr.override_redirect = True;
-            ws->win = XCreateWindow(stddpy, GetRoot(wd),
+            ws->win = XCreateWindow(wd->display, GetRoot(wd),
                                     ws->x < 0 ? 0 : ws->x,
                                     ws->y < 0 ? 0 : ws->y, 
                                     ws->width, ws->height, 
@@ -754,7 +755,7 @@ static void wmap(wbp w)
             break;
         }
         default: {
-            ws->win = XCreateWindow(stddpy, GetRoot(wd),
+            ws->win = XCreateWindow(wd->display, GetRoot(wd),
                                     ws->x < 0 ? 0 : ws->x,
                                     ws->y < 0 ? 0 : ws->y, 
                                     ws->width, ws->height, 
@@ -770,24 +771,23 @@ static void wmap(wbp w)
 
     /* If the window has a parent, set the WM_TRANSIENT_FOR hint. */
     if (ws->transientfor)
-        XSetTransientForHint(stddpy, ws->win, ws->transientfor);
+        XSetTransientForHint(wd->display, ws->win, ws->transientfor);
 
     /* Turn off background; this prevents X filling the background on an expose
        and hence prevents unsightly flicker on a resize. */
-    XSetWindowBackgroundPixmap(stddpy, ws->win, None);
+    XSetWindowBackgroundPixmap(wd->display, ws->win, None);
 
-    XSetWMProtocols(ws->display->display, ws->win, &ATOM(ws->display, WM_DELETE_WINDOW), 1);
+    XSetWMProtocols(wd->display, ws->win, &ATOM(wd, WM_DELETE_WINDOW), 1);
 
-    stdwin = ws->win;
-    XClearWindow(stddpy, stdwin);
+    XClearWindow(wd->display, ws->win);
 
     GRFX_GENLINK(ws, vwstates, vnext, vprevious);
 
     /* For RootState, need to fill since XClearWindow above fills with a pixmap */
     if (ws->state == RootState) {
-        XSetForeground(stddpy, stdgc, wc->bg->c);
-        XFillRectangle(stddpy, ws->win, stdgc, 0, 0, ws->width, ws->height);
-        XSetForeground(stddpy, stdgc, wc->fg->c);
+        XSetForeground(wd->display, wc->gc, wc->bg->c);
+        XFillRectangle(wd->display, ws->win, wc->gc, 0, 0, ws->width, ws->height);
+        XSetForeground(wd->display, wc->gc, wc->fg->c);
     } else {
         XSizeHints size_hints;
         size_hints.flags = PSize | PMinSize | PMaxSize;
@@ -808,22 +808,22 @@ static void wmap(wbp w)
             size_hints.min_width = size_hints.max_width = ws->width;
             size_hints.min_height = size_hints.max_height = ws->height;
         }
-        XChangeProperty(stddpy, stdwin,
-                        ATOM(ws->display, _NET_WM_NAME), 
-                        ATOM(ws->display, UTF8_STRING),
+        XChangeProperty(wd->display, ws->win,
+                        ATOM(wd, _NET_WM_NAME), 
+                        ATOM(wd, UTF8_STRING),
                         8,
                         PropModeReplace, 
                         (unsigned char *)ws->windowlabel,
                         strlen(ws->windowlabel));
 
-        XSetWMNormalHints(stddpy, stdwin, &size_hints);
-        XSelectInput(stddpy, stdwin, 
+        XSetWMNormalHints(wd->display, ws->win, &size_hints);
+        XSelectInput(wd->display, ws->win, 
                      ExposureMask | KeyPressMask | EnterWindowMask | LeaveWindowMask |
                      ButtonPressMask | ButtonReleaseMask | ButtonMotionMask |
                      StructureNotifyMask | PointerMotionMask | KeyReleaseMask);
 
         if (ws->icondata) {
-            XChangeProperty(stddpy, stdwin,
+            XChangeProperty(wd->display, ws->win,
                             ATOM(ws->display, _NET_WM_ICON), 
                             XA_CARDINAL, 
                             32,
@@ -842,7 +842,7 @@ static void wmap(wbp w)
         wmhints.flags |= StateHint;
         wmhints.initial_state = NormalState;
     }
-    XSetWMHints(stddpy, stdwin, &wmhints);
+    XSetWMHints(wd->display, ws->win, &wmhints);
 
     /*
      * Set the class hints that name the program (for reference by the
@@ -858,15 +858,15 @@ static void wmap(wbp w)
         for (i = 0; s < p + StrLen(kywd_prog); ) 
             clhints.res_name[i++] = *s++;
         clhints.res_name[i] = '\0';
-        XSetClassHint(stddpy, stdwin, &clhints);
+        XSetClassHint(wd->display, ws->win, &clhints);
     }
-    XSync(stddpy, False);
+    XSync(wd->display, False);
 
     if (ws->state == MaximizedState) {
         Atom atoms[2];
         atoms[0] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_VERT);
         atoms[1] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_HORZ);
-        XChangeProperty(stddpy, stdwin,
+        XChangeProperty(wd->display, ws->win,
                         ATOM(wd, _NET_WM_STATE),
                         XA_ATOM, 32,
                         PropModeReplace, (unsigned char *)atoms, 2);
@@ -875,7 +875,7 @@ static void wmap(wbp w)
     if (ws->state == FullScreenState) {
         Atom atoms[1];
         atoms[0] = ATOM(wd, _NET_WM_STATE_FULLSCREEN);
-        XChangeProperty(stddpy, stdwin,
+        XChangeProperty(wd->display, ws->win,
                         ATOM(wd, _NET_WM_STATE),
                         XA_ATOM, 32,
                         PropModeReplace, (unsigned char *)atoms, 1);
@@ -883,17 +883,17 @@ static void wmap(wbp w)
 
 
     if (ws->state != RootState)
-        XMapWindow(stddpy, stdwin);
+        XMapWindow(wd->display, ws->win);
 
-    XGetWindowAttributes(stddpy, stdwin, &attrs);
+    XGetWindowAttributes(wd->display, ws->win, &attrs);
     ws->width = attrs.width;
     ws->height = attrs.height;
     resizepixmap(w, ws->width, ws->height);
 
     synch_cursor(ws);
 
-    XSetFunction(stddpy, stdgc, wc->drawop->i);
-    XSync(stddpy, False);
+    XSetFunction(wd->display, wc->gc, wc->drawop->i);
+    XSync(wd->display, False);
 }
 
 static void synch_net_wm_state(wsp ws, int desired_state)
@@ -1010,17 +1010,18 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
     tended struct b_lelem *le;
     tended char *cstr_target;
     int target_cnt = 1;
-    STDLOCALS(w);
+    wsp ws = w->window;
+    wdp wd = ws->display;
 
     if (selection_debug)
         printf("sendselectionresponse:\n\trequestor=%lx "
                "property=%s target=%s selection=%s time=%ld\n",
                (long)requestor, property, target, selection, (long)time);
 
-    property_atom = XInternAtom(ws->display->display, property, False);
-    target_atom = XInternAtom(ws->display->display, target, False);
-    selection_atom = XInternAtom(ws->display->display, selection, False);
-    XA_TARGETS = ATOM(ws->display, TARGETS);
+    property_atom = XInternAtom(wd->display, property, False);
+    target_atom = XInternAtom(wd->display, target, False);
+    selection_atom = XInternAtom(wd->display, selection, False);
+    XA_TARGETS = ATOM(wd, TARGETS);
 
     if (target_atom == XA_TARGETS) {
         if (!is:list(*data))
@@ -1030,11 +1031,11 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
              le = lgnext(&ListBlk(*data), &state, le)) {
             if (!cnv:C_string(le->lslots[state.result], cstr_target))
                 ReturnErrVal(148, le->lslots[state.result], Error);
-            target_list[target_cnt++] = XInternAtom(ws->display->display, cstr_target, False);
+            target_list[target_cnt++] = XInternAtom(wd->display, cstr_target, False);
             if (selection_debug)
                 printf("\tAdding target:%s\n", cstr_target);
         }
-        XChangeProperty(ws->display->display,
+        XChangeProperty(wd->display,
                         requestor,
                         property_atom,
                         target_atom,
@@ -1053,7 +1054,7 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
             ReturnErrVal(103, *data, Error);
         if (selection_debug)
             printf("\tSetting property to %d bytes of data\n", (int)StrLen(*data));
-        XChangeProperty(ws->display->display,
+        XChangeProperty(wd->display,
                         requestor,
                         property_atom,
                         target_atom,
@@ -1072,7 +1073,7 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
     theevent.xselection.target = target_atom;
     theevent.xselection.time = time;
 
-    XSendEvent(ws->display->display,
+    XSendEvent(wd->display,
                requestor,
                False, NoEventMask, &theevent);
 
@@ -1083,14 +1084,15 @@ int ownselection(wbp w, char *selname)
 {
     Atom selection;
     Window curr;
-    STDLOCALS(w);
+    wsp ws = w->window;
+    wdp wd = ws->display;
 
     if (!ws->win)
         return Failed;
 
-    selection = XInternAtom(ws->display->display, selname, False);
+    selection = XInternAtom(wd->display, selname, False);
 
-    curr = XGetSelectionOwner(ws->display->display, selection);
+    curr = XGetSelectionOwner(wd->display, selection);
     /* Check for no change in selection */
     if (curr == ws->win)
         return Succeeded;
@@ -1122,7 +1124,7 @@ int ownselection(wbp w, char *selname)
         }
     }
 
-    XSetSelectionOwner(ws->display->display, 
+    XSetSelectionOwner(wd->display, 
                        selection,
                        ws->win,
                        CurrentTime);
@@ -1133,21 +1135,22 @@ int ownselection(wbp w, char *selname)
 int requestselection(wbp w, char *selname, char *targetname)
 {
     Atom selection, target;
-    STDLOCALS(w);
+    wsp ws = w->window;
+    wdp wd = ws->display;
     if (!ws->win)
         return Failed;
-    selection = XInternAtom(ws->display->display, selname, False);
-    target = XInternAtom(ws->display->display, targetname, False);
+    selection = XInternAtom(wd->display, selname, False);
+    target = XInternAtom(wd->display, targetname, False);
     if (selection_debug)
         printf("getselectioncontent: calling XConvertSelection selection=%s target=%s requestor=%lx\n",
                atom_fmt(ws, selection),
                atom_fmt(ws, target),
                (long)ws->win);
 
-    XConvertSelection(ws->display->display,
+    XConvertSelection(wd->display,
                       selection, 
                       target, 
-                      ATOM(ws->display, _OBJECTICON_PROP), 
+                      ATOM(wd, _OBJECTICON_PROP), 
                       ws->win,
                       CurrentTime);
 
@@ -1169,14 +1172,15 @@ int warppointer(wbp w, int x, int y)
 int setwindowlabel(wbp w, char *s)
 {
     wsp ws = w->window;
+    wdp wd = ws->display;
     if (ws->windowlabel)
         free(ws->windowlabel);
     ws->windowlabel = salloc(s);
 
     if (ws->win)
-        XChangeProperty(ws->display->display, ws->win,
-                        ATOM(ws->display, _NET_WM_NAME), 
-                        ATOM(ws->display, UTF8_STRING),
+        XChangeProperty(wd->display, ws->win,
+                        ATOM(wd, _NET_WM_NAME), 
+                        ATOM(wd, UTF8_STRING),
                         8,
                         PropModeReplace, 
                         (unsigned char *)ws->windowlabel,
@@ -1201,12 +1205,12 @@ static void synch_cursor(wsp ws)
 int setpointer(wbp w, char *val)
 {
     stringint *e;
-    STDLOCALS(w);
+    wsp ws = w->window;
     e = stringint_lookup(cursors, val);
     if (!e)
         return Failed;
     ws->cursor = e;
-    if (stdwin)
+    if (ws->win)
         synch_cursor(ws);
     return Succeeded;
 }
@@ -1217,13 +1221,15 @@ int setpointer(wbp w, char *val)
 int setdrawop(wbp w, char *val)
 {
     stringint *e;
-    STDLOCALS(w);
-    XSync(stddpy, False);
+    wcp wc = w->context;
+    wsp ws = w->window;
+    wdp wd = ws->display;
+    XSync(wd->display, False);
     e = stringint_lookup(drawops, val);
     if (!e)
         return Failed;
     wc->drawop = e;
-    if (stdgc) XSetFunction(stddpy, stdgc, wc->drawop->i);
+    if (wc->gc) XSetFunction(wd->display, wc->gc, wc->drawop->i);
     return Succeeded;
 }
 
@@ -1275,7 +1281,8 @@ char *getcanvas(wbp w)
 int setcanvas(wbp w, char *s)
 {
     stringint *e;
-    STDLOCALS(w);
+    wsp ws = w->window;
+    wdp wd = ws->display;
     e = stringint_lookup(canvastypes, s);
     if (!e)
         return Failed;
@@ -1294,14 +1301,14 @@ int setcanvas(wbp w, char *s)
         case IconicState: {
             if (ws->state == RootState || ws->state == PopupState)
                 return Failed;
-            XIconifyWindow(ws->display->display, ws->win, DefaultScreen(ws->display));
+            XIconifyWindow(wd->display, ws->win, DefaultScreen(wd));
             break;
         }
 
         case NormalState: {
             if (ws->state == RootState || ws->state == PopupState)
                 return Failed;
-            XMapWindow(stddpy, stdwin);
+            XMapWindow(wd->display, ws->win);
             synch_net_wm_state(ws, e->i);
             break;
         }
@@ -1314,7 +1321,7 @@ int setcanvas(wbp w, char *s)
         case FullScreenState: {
             if (ws->state == RootState || ws->state == PopupState)
                 return Failed;
-            XMapWindow(stddpy, stdwin);
+            XMapWindow(wd->display, ws->win);
             synch_net_wm_state(ws, e->i);
             break;
         }
@@ -1336,13 +1343,15 @@ int setcanvas(wbp w, char *s)
 int setfillstyle(wbp w, char *val)
 {
     stringint *e;
-    STDLOCALS(w);
+    wcp wc = w->context;
+    wsp ws = w->window;
+    wdp wd = ws->display;
     e = stringint_lookup(fillstyles, val);
     if (!e)
         return Failed;
     wc->fillstyle = e;
-    if (stdpix)
-        XSetFillStyle(stddpy, stdgc, wc->fillstyle->i);
+    if (ws->pix)
+        XSetFillStyle(wd->display, wc->gc, wc->fillstyle->i);
     return Succeeded;
 }
 
@@ -1358,13 +1367,15 @@ char *getfillstyle(wbp w)
 int setlinestyle(wbp w, char *val)
 {
     stringint *e;
-    STDLOCALS(w);
+    wcp wc = w->context;
+    wsp ws = w->window;
+    wdp wd = ws->display;
     e = stringint_lookup(linestyles, val);
     if (!e)
         return Failed;
     wc->linestyle = e;
-    if (stdpix) 
-        XSetLineAttributes(stddpy, stdgc,
+    if (ws->pix) 
+        XSetLineAttributes(wd->display, wc->gc,
                            wc->linewidth, wc->linestyle->i, CapProjecting, JoinMiter);
     return Succeeded;
 }
@@ -1376,11 +1387,13 @@ int setlinewidth(wbp w, int linewid)
 {
     unsigned long gcmask;
     XGCValues gcv;
-    STDLOCALS(w);
+    wcp wc = w->context;
+    wsp ws = w->window;
+    wdp wd = ws->display;
 
     if (linewid < 0) return Error;
     wc->linewidth = linewid;
-    if (stdpix) {
+    if (ws->pix) {
         gcv.line_width = linewid;
         gcv.line_style = wc->linestyle->i;
         if (linewid > 1)
@@ -1388,7 +1401,7 @@ int setlinewidth(wbp w, int linewid)
         else
             gcv.dashes = 4;
         gcmask = GCLineWidth | GCLineStyle | GCDashList;
-        XChangeGC(stddpy, stdgc, gcmask, &gcv);
+        XChangeGC(wd->display, wc->gc, gcmask, &gcv);
     }
     return Succeeded;
 }
@@ -1472,14 +1485,15 @@ int getpos(wbp w)
     Window garbage1, garbage2;
     int root_x, root_y, win_x, win_y;
     unsigned int key_buttons;
-    STDLOCALS(w);
-    if (!stdwin) return Failed;
+    wsp ws = w->window;
+    wdp wd = ws->display;
+    if (!ws->win) return Failed;
     /*
      * This call is made because it is guaranteed to generate
      * a synchronous request of the server, not just ask Xlib
      * what the window position was last it knew.
      */
-    if (XQueryPointer(stddpy, stdwin, &garbage1, &garbage2,
+    if (XQueryPointer(wd->display, ws->win, &garbage1, &garbage2,
                       &root_x, &root_y, &win_x, &win_y, &key_buttons) ==
         False) {
         return Failed;
@@ -1550,7 +1564,9 @@ int ungrabpointer(wbp w)
 int setfont(wbp w, char *s)
 {
     wfp tmp;
-    STDLOCALS(w);
+    wcp wc = w->context;
+    wsp ws = w->window;
+    wdp wd = ws->display;
 
     tmp = loadfont(wd, s);
     if (!tmp)
@@ -1558,8 +1574,8 @@ int setfont(wbp w, char *s)
     wc->font = tmp;
 
 #if !HAVE_LIBXFT
-    if (stdgc != NULL)
-        XSetFont(stddpy, stdgc, wc->font->fsp->fid);
+    if (wc->gc != NULL)
+        XSetFont(wd->display, wc->gc, wc->font->fsp->fid);
 #endif
 
     return Succeeded;
@@ -1590,7 +1606,9 @@ static void handle_exposures(wsp ws, XExposeEvent *event)
 static void resizepixmap(wbp w, int width, int height)
 {
     Pixmap p;
-    STDLOCALS(w);
+    wcp wc = w->context;
+    wsp ws = w->window;
+    wdp wd = ws->display;
 
     /*printf("resizepixmap from %d,%d to %d,%d\n",ws->pixwidth,ws->pixheight,width,height);*/
 
@@ -1599,41 +1617,41 @@ static void resizepixmap(wbp w, int width, int height)
 
         ws->pixheight = Max(ws->pixheight, height);
         ws->pixwidth  = Max(ws->pixwidth, width);
-        p = XCreatePixmap(stddpy, GetRoot(wd), ws->pixwidth+1,
+        p = XCreatePixmap(wd->display, GetRoot(wd), ws->pixwidth+1,
                           ws->pixheight+1, GetDepth(wd));
         /*
          * This staggering amount of redudancy manages to make sure the new
          * pixmap gets initialized including areas not in the old pixmap.
          * The window is redrawn.
          */
-        XSetForeground(stddpy, stdgc, wc->bg->c);
+        XSetForeground(wd->display, wc->gc, wc->bg->c);
         if (wc->drawop->i != GXcopy)
-            XSetFunction(stddpy, stdgc, GXcopy);
+            XSetFunction(wd->display, wc->gc, GXcopy);
         if (wc->fillstyle != FillSolid)
-            XSetFillStyle(stddpy, stdgc, FillSolid);
+            XSetFillStyle(wd->display, wc->gc, FillSolid);
         if (wc->clipw >= 0)
             unsetclip(w);
 	   
         if (width > x) {
-            XFillRectangle(stddpy, p, stdgc, x, 0, width-x, ws->pixheight);
-            if (stdwin != (Window) NULL)
-                XFillRectangle(stddpy,stdwin,stdgc, x, 0, width-x, ws->pixheight);
+            XFillRectangle(wd->display, p, wc->gc, x, 0, width-x, ws->pixheight);
+            if (ws->win != (Window) NULL)
+                XFillRectangle(wd->display,ws->win,wc->gc, x, 0, width-x, ws->pixheight);
         }
         if (height > y) {
-            XFillRectangle(stddpy, p, stdgc, 0, y, x, height - y);
-            if (stdwin != (Window) NULL)
-                XFillRectangle(stddpy, stdwin, stdgc, 0, y, x, height - y);
+            XFillRectangle(wd->display, p, wc->gc, 0, y, x, height - y);
+            if (ws->win != (Window) NULL)
+                XFillRectangle(wd->display, ws->win, wc->gc, 0, y, x, height - y);
         }
-        XSetForeground(stddpy, stdgc, wc->fg->c);
-        XCopyArea(stddpy, stdpix, p, stdgc, 0, 0, x, y, 0, 0);
+        XSetForeground(wd->display, wc->gc, wc->fg->c);
+        XCopyArea(wd->display, ws->pix, p, wc->gc, 0, 0, x, y, 0, 0);
         if (wc->drawop->i != GXcopy)
-            XSetFunction(stddpy,stdgc,wc->drawop->i);
+            XSetFunction(wd->display,wc->gc,wc->drawop->i);
         if (wc->fillstyle->i != FillSolid)
-            XSetFillStyle(stddpy, stdgc, wc->fillstyle->i);
+            XSetFillStyle(wd->display, wc->gc, wc->fillstyle->i);
         if (wc->clipw >= 0)
             setclip(w);
 
-        XFreePixmap(stddpy, stdpix);	/* free old pixmap */
+        XFreePixmap(wd->display, ws->pix);	/* free old pixmap */
         ws->pix = p;
 #if HAVE_LIBXFT
         if (ws->pixDraw) {
@@ -1651,6 +1669,7 @@ static void synch_state(wsp ws)
     unsigned long bytes_after, nitems;
     unsigned char *prop;
     XWindowAttributes attr;
+    wdp wd = ws->display;
 
     if (ws->win == (Window) NULL) {
         ws->state = HiddenState;
@@ -1660,7 +1679,7 @@ static void synch_state(wsp ws)
     if (ws->state == PopupState || ws->state == RootState)
         return;
 
-    XGetWindowAttributes(ws->display->display,
+    XGetWindowAttributes(wd->display,
                          ws->win,
                          &attr);
     if (attr.map_state == IsUnmapped) {
@@ -1668,9 +1687,9 @@ static void synch_state(wsp ws)
         return;
     }
 
-    if (XGetWindowProperty(ws->display->display,
+    if (XGetWindowProperty(wd->display,
                            ws->win,
-                           ATOM(ws->display, _NET_WM_STATE),
+                           ATOM(wd, _NET_WM_STATE),
                            0,
                            8192,
                            False,
@@ -1683,11 +1702,11 @@ static void synch_state(wsp ws)
         Atom *atoms = (Atom *)prop;
         int i, max = 0;
         for (i = 0; i < nitems; ++i) {
-            if (atoms[i] == ATOM(ws->display, _NET_WM_STATE_MAXIMIZED_VERT))
+            if (atoms[i] == ATOM(wd, _NET_WM_STATE_MAXIMIZED_VERT))
                 max |= 1;
-            else if (atoms[i] == ATOM(ws->display, _NET_WM_STATE_MAXIMIZED_HORZ))
+            else if (atoms[i] == ATOM(wd, _NET_WM_STATE_MAXIMIZED_HORZ))
                 max |= 2;
-            else if (atoms[i] == ATOM(ws->display, _NET_WM_STATE_FULLSCREEN))
+            else if (atoms[i] == ATOM(wd, _NET_WM_STATE_FULLSCREEN))
                 max |= 4;
         }
         if (max == 3)
@@ -1863,55 +1882,49 @@ static void handle_mouse(wsp ws, XButtonEvent *event)
 void drawarc(wbp w, int x, int y, int width, int height, double angle1, double angle2)
 {
     XArc arc;
-    STDLOCALS(w); 
     arc.x = x;
     arc.y = y;
     arc.width = width;
     arc.height = height;
     arc.angle1 = CONVERT_ANGLE(angle1);
     arc.angle2 = CONVERT_ANGLE(angle2);
-    RENDER2(XDrawArcs,&arc,1);
+    RENDER2(w,XDrawArcs,&arc,1);
 }
 
 void drawlines(wbp w, XPoint *points, int npoints)
 {
-    STDLOCALS(w); 
-    RENDER3(XDrawLines,points,npoints,CoordModeOrigin);
+    RENDER3(w,XDrawLines,points,npoints,CoordModeOrigin);
 }
 
 void drawpoint(wbp w, int x, int y)
 {
     XPoint p;
-    STDLOCALS(w);
     p.x = x;
     p.y = y;
-    RENDER3(XDrawPoints,&p,1,CoordModeOrigin);
+    RENDER3(w,XDrawPoints,&p,1,CoordModeOrigin);
 }
 
 void drawrectangle(wbp w, int x, int y, int width, int height)
 {
-   STDLOCALS(w);
    if (width > 0 && height > 0)
-       RENDER4(XDrawRectangle,x,y,width-1,height-1);
+       RENDER4(w,XDrawRectangle,x,y,width-1,height-1);
 }
 
 void fillarc(wbp w, int x, int y, int width, int height, double angle1, double angle2)
 { 
     XArc arc;
-    STDLOCALS(w); 
     arc.x = x;
     arc.y = y;
     arc.width = width;
     arc.height = height;
     arc.angle1 = CONVERT_ANGLE(angle1);
     arc.angle2 = CONVERT_ANGLE(angle2);
-    RENDER2(XFillArcs, &arc, 1);
+    RENDER2(w,XFillArcs, &arc, 1);
 }
 
 void fillpolygon(wbp w, XPoint *points, int npoints)
 {
-    STDLOCALS(w); 
-    RENDER4(XFillPolygon, points, npoints, Complex, CoordModeOrigin);
+    RENDER4(w,XFillPolygon, points, npoints, Complex, CoordModeOrigin);
 }
 
 /*
@@ -1920,12 +1933,11 @@ void fillpolygon(wbp w, XPoint *points, int npoints)
 void fillrectangle(wbp w, int x, int y, int width, int height)
 {
     XRectangle rec;
-    STDLOCALS(w);
     rec.x = x;
     rec.y = y;
     rec.width = width;
     rec.height = height;
-    RENDER2(XFillRectangles, &rec, 1);
+    RENDER2(w,XFillRectangles, &rec, 1);
 }
 
 /*
@@ -1933,7 +1945,9 @@ void fillrectangle(wbp w, int x, int y, int width, int height)
  */
 void erasearea(wbp w, int x, int y, int width, int height)
 {
-    STDLOCALS(w);
+    wcp wc = w->context;
+    wsp ws = w->window;
+    wdp wd = ws->display;
 
     /*
      * if width >= window width or height >= window height, clear any
@@ -1945,14 +1959,14 @@ void erasearea(wbp w, int x, int y, int width, int height)
     /*
      * fill the rectangle with the background color
      */
-    XSetForeground(stddpy, stdgc, wc->bg->c);
-    if (wc->drawop->i != GXcopy) XSetFunction(stddpy, stdgc, GXcopy);
-    if (wc->fillstyle->i != FillSolid) XSetFillStyle(stddpy, stdgc, FillSolid);
+    XSetForeground(wd->display, wc->gc, wc->bg->c);
+    if (wc->drawop->i != GXcopy) XSetFunction(wd->display, wc->gc, GXcopy);
+    if (wc->fillstyle->i != FillSolid) XSetFillStyle(wd->display, wc->gc, FillSolid);
 
-    RENDER4(XFillRectangle, x, y, width, height);
-    XSetForeground(stddpy, stdgc, wc->fg->c);
-    if (wc->drawop->i != GXcopy) XSetFunction(stddpy, stdgc, wc->drawop->i);
-    if (wc->fillstyle->i != FillSolid) XSetFillStyle(stddpy, stdgc, wc->fillstyle->i);
+    RENDER4(w, XFillRectangle, x, y, width, height);
+    XSetForeground(wd->display, wc->gc, wc->fg->c);
+    if (wc->drawop->i != GXcopy) XSetFunction(wd->display, wc->gc, wc->drawop->i);
+    if (wc->fillstyle->i != FillSolid) XSetFillStyle(wd->display, wc->gc, wc->fillstyle->i);
 }
 
 /*
@@ -1963,7 +1977,9 @@ void copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2
     int lpad, rpad, tpad, bpad;
     Pixmap src;
     wsp ws1 = w->window;
-    STDLOCALS(w2);
+    wcp wc2 = w2->context;
+    wsp ws2 = w2->window;
+    wdp wd2 = ws2->display;
 
     if (w->window->display->display != w2->window->display->display) {
         wdp wd1 = ws1->display;
@@ -1978,16 +1994,16 @@ void copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2
             return;		/*#%#%# BOGUS, NEEDS FIXING */
         xim = XGetImage(d1, ws1->pix, x, y, width, height,
                         (1<<GetDepth(wd1))-1,XYPixmap);
-        XSetFunction(stddpy, stdgc, GXcopy);
+        XSetFunction(wd2->display, wc2->gc, GXcopy);
         for (i=0; i < width; i++) {
             for (j=0; j < height; j++) {
-                XSetForeground(stddpy, stdgc, XGetPixel(xim, i, j));
-                RENDER2(XDrawPoint, i + x2, j + y2);
+                XSetForeground(wd2->display, wc2->gc, XGetPixel(xim, i, j));
+                RENDER2(w2, XDrawPoint, i + x2, j + y2);
 	    }
         }
-        XSetForeground(stddpy, stdgc, wc->fg->c);
-        XSetFunction(stddpy, stdgc, wc->drawop->i);
-        XSync(stddpy,False);
+        XSetForeground(wd2->display, wc2->gc, wc2->fg->c);
+        XSetFunction(wd2->display, wc2->gc, wc2->drawop->i);
+        XSync(wd2->display,False);
         XDestroyImage(xim);
     }
     else {
@@ -1995,12 +2011,12 @@ void copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2
          * Copying is between windows on one display, perhaps the same window.
          */
         src = ws1->pix;
-        XSetForeground(stddpy, stdgc, wc->bg->c);
-        XSetFunction(stddpy, stdgc, GXcopy);
+        XSetForeground(wd2->display, wc2->gc, wc2->bg->c);
+        XSetFunction(wd2->display, wc2->gc, GXcopy);
 
         if (x+width<0 || y+height<0 || x>=ws1->pixwidth || y>=ws1->pixheight) {
             /* source is entirely offscreen */
-            RENDER4(XFillRectangle, x2, y2, width, height);
+            RENDER4(w2, XFillRectangle, x2, y2, width, height);
         }
         else {
             /*
@@ -2031,24 +2047,24 @@ void copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2
             /*
              * Copy the area.
              */
-            if (stdwin)
-                XCopyArea(stddpy, src, stdwin, stdgc, x, y, width, height, x2, y2);
-            XCopyArea(stddpy, src, stdpix, stdgc, x, y, width, height, x2, y2);
+            if (ws2->win)
+                XCopyArea(wd2->display, src, ws2->win, wc2->gc, x, y, width, height, x2, y2);
+            XCopyArea(wd2->display, src, ws2->pix, wc2->gc, x, y, width, height, x2, y2);
             /*
              * Fill any edges not provided by source.
              */
             if (lpad > 0)
-                RENDER4(XFillRectangle, x2-lpad, y2-tpad, lpad, tpad+height+bpad);
+                RENDER4(w2, XFillRectangle, x2-lpad, y2-tpad, lpad, tpad+height+bpad);
             if (rpad > 0)
-                RENDER4(XFillRectangle, x2+width, y2-tpad, rpad, tpad+height+bpad);
+                RENDER4(w2, XFillRectangle, x2+width, y2-tpad, rpad, tpad+height+bpad);
             if (tpad > 0)
-                RENDER4(XFillRectangle, x2, y2-tpad, width, tpad);
+                RENDER4(w2, XFillRectangle, x2, y2-tpad, width, tpad);
             if (bpad > 0)
-                RENDER4(XFillRectangle, x2, y2+height, width, bpad);
+                RENDER4(w2, XFillRectangle, x2, y2+height, width, bpad);
         }
 
-        XSetForeground(stddpy,stdgc, wc->fg->c);
-        XSetFunction(stddpy, stdgc, wc->drawop->i);
+        XSetForeground(wd2->display,wc2->gc, wc2->fg->c);
+        XSetFunction(wd2->display, wc2->gc, wc2->drawop->i);
     }
 }
 
@@ -2058,8 +2074,9 @@ void copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2
  */
 void loadimgmem(wbp w, struct imgmem *imem, int copy)
 {
-    STDLOCALS(w);
-    MemProtect(imem->im = XGetImage(stddpy, stdpix,
+    wsp ws = w->window;
+    wdp wd = ws->display;
+    MemProtect(imem->im = XGetImage(wd->display, ws->pix,
                                     imem->x, imem->y, imem->width, imem->height,
                                     AllPlanes, ZPixmap));
     imem->wd = wd;
@@ -2118,10 +2135,12 @@ void setpixel(struct imgmem *imem, int r, int g, int b)
 
 void saveimgmem(wbp w, struct imgmem *imem)
 {
-    STDLOCALS(w);
-    if (wc->drawop->i != GXcopy) XSetFunction(stddpy, stdgc, GXcopy);
-    RENDER7(XPutImage, imem->im, 0, 0, imem->x, imem->y, imem->width, imem->height);
-    if (wc->drawop->i != GXcopy) XSetFunction(stddpy, stdgc, wc->drawop->i);
+    wcp wc = w->context;
+    wsp ws = w->window;
+    wdp wd = ws->display;
+    if (wc->drawop->i != GXcopy) XSetFunction(wd->display, wc->gc, GXcopy);
+    RENDER7(w, XPutImage, imem->im, 0, 0, imem->x, imem->y, imem->width, imem->height);
+    if (wc->drawop->i != GXcopy) XSetFunction(wd->display, wc->gc, wc->drawop->i);
 }
 
 void freeimgmem(struct imgmem *imem)
@@ -2162,7 +2181,9 @@ static void setpattern_in_gc(wbp w, int width, int height, int *rowdata)
     int i, j, v;
     Pixmap p;
     char *t, data[4 * MAX_PATTERN_HEIGHT];
-    STDLOCALS(w);
+    wcp wc = w->context;
+    wsp ws = w->window;
+    wdp wd = ws->display;
     t = data;
     for(i = 0; i < height; i++) {
         v = rowdata[i];
@@ -2171,10 +2192,10 @@ static void setpattern_in_gc(wbp w, int width, int height, int *rowdata)
             v >>= 8;
         }
     }
-    p = XCreateBitmapFromData(stddpy, stdpix, data, width, height);
-    XSetStipple(stddpy, stdgc, p);
-    XSync(stddpy, False);
-    XFreePixmap(stddpy, p);
+    p = XCreateBitmapFromData(wd->display, ws->pix, data, width, height);
+    XSetStipple(wd->display, wc->gc, p);
+    XSync(wd->display, False);
+    XFreePixmap(wd->display, p);
 }
 
 /*
@@ -2197,16 +2218,17 @@ int setpattern(wbp w, char *name)
 int raisewindow(wbp w)
 {
     wsp ws = w->window;
+    wdp wd = ws->display;
     if (!ws->win)
         return Failed;
 
-    XMapRaised(ws->display->display, ws->win);
+    XMapRaised(wd->display, ws->win);
 
     /* Wait for the window to become viewable before giving
        it the focus. */
     for (;;) {
         XWindowAttributes attr;
-        XGetWindowAttributes(ws->display->display, ws->win, &attr);
+        XGetWindowAttributes(wd->display, ws->win, &attr);
         if (attr.map_state == IsViewable)
             break;
         /* Not viewable yet, so wait for a MapNotify event. */
@@ -2214,7 +2236,7 @@ int raisewindow(wbp w)
     }
 
     /* Now it is viewable, so give it the focus. */
-    XSetInputFocus(ws->display->display, ws->win, RevertToParent, CurrentTime);
+    XSetInputFocus(wd->display, ws->win, RevertToParent, CurrentTime);
 
     return Succeeded;
 }
@@ -2230,9 +2252,10 @@ int lowerwindow(wbp w)
 
 int walert(wbp w, int volume)
 {
-    STDLOCALS(w);
-    XBell(stddpy, volume);    
-    XFlush(stddpy);
+    wsp ws = w->window;
+    wdp wd = ws->display;
+    XBell(wd->display, volume);    
+    XFlush(wd->display);
     return Succeeded;
 }
 
@@ -2267,19 +2290,21 @@ void drawstring(wbp w, int x, int y, char *str, int slen)
     XftColor color;
     Region r;
     XRectangle rec;
-    STDLOCALS(w);
+    wcp wc = w->context;
+    wsp ws = w->window;
+    wdp wd = ws->display;
 
     if (ws->win && !ws->winDraw)
-        ws->winDraw = XftDrawCreate(ws->display->display,
+        ws->winDraw = XftDrawCreate(wd->display,
                                     ws->win,
-                                    GetVisual(ws->display),
-                                    GetColormap(ws->display));
+                                    GetVisual(wd),
+                                    GetColormap(wd));
 
     if (!ws->pixDraw)
-        ws->pixDraw = XftDrawCreate(ws->display->display,
+        ws->pixDraw = XftDrawCreate(wd->display,
                                     ws->pix,
-                                    GetVisual(ws->display),
-                                    GetColormap(ws->display));
+                                    GetVisual(wd),
+                                    GetColormap(wd));
     color.pixel = wc->fg->c;
     color.color.red = wc->fg->r;
     color.color.green = wc->fg->g;
@@ -2329,19 +2354,21 @@ void drawutf8(wbp w, int x, int y, char *str, int slen, int nchars)
     XftColor color;
     Region r;
     XRectangle rec;
-    STDLOCALS(w);
+    wcp wc = w->context;
+    wsp ws = w->window;
+    wdp wd = ws->display;
 
     if (ws->win && !ws->winDraw)
-        ws->winDraw = XftDrawCreate(ws->display->display,
+        ws->winDraw = XftDrawCreate(wd->display,
                                     ws->win,
-                                    GetVisual(ws->display),
-                                    GetColormap(ws->display));
+                                    GetVisual(wd),
+                                    GetColormap(wd));
 
     if (!ws->pixDraw)
-        ws->pixDraw = XftDrawCreate(ws->display->display,
+        ws->pixDraw = XftDrawCreate(wd->display,
                                     ws->pix,
-                                    GetVisual(ws->display),
-                                    GetColormap(ws->display));
+                                    GetVisual(wd),
+                                    GetColormap(wd));
     color.pixel = wc->fg->c;
     color.color.red = wc->fg->r;
     color.color.green = wc->fg->g;
@@ -2398,13 +2425,11 @@ int utf8width(wbp w, char *s, int n, int nchars)
 
 void drawstring(wbp w, int x, int y, char *s, int slen)
 { 
-    STDLOCALS(w); 
-    RENDER4(XDrawString, x, y, s, slen); 
+    RENDER4(w, XDrawString, x, y, s, slen); 
 }
 void drawutf8(wbp w, int x, int y, char *s, int slen, int nchars)
 {
-    STDLOCALS(w); 
-    RENDER4(XDrawString, x, y, s, slen);
+    RENDER4(w, XDrawString, x, y, s, slen);
 }
 #endif            /* HAVE_LIBXFT */
 
@@ -3113,7 +3138,7 @@ int  readimagedataimpl(dptr data, struct imgdata *imd)
 
 int settransientfor(wbp w, wbp other)
 {
-    STDLOCALS(w);
+    wsp ws = w->window;
     if (ws->win)
         return Failed;
     if (other) {
