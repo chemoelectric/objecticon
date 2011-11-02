@@ -313,9 +313,9 @@ void copy_text(void)
     }
     if (!lflag) {
       if (jflag)
-        fprintf(f, jline_format, lineno, input_file_name);
+        fprintf(f, jline_format, lineno+1, input_file_name);
       else
-        fprintf(f, line_format, lineno, input_file_name);
+        fprintf(f, line_format, lineno+1, input_file_name);
     }
 
 loop:
@@ -445,9 +445,9 @@ void copy_union(void)
 
     if (!lflag) {
       if (jflag)
-        fprintf(text_file, jline_format, lineno, input_file_name);
+        fprintf(text_file, jline_format, lineno+1, input_file_name);
       else
-        fprintf(text_file, line_format, lineno, input_file_name);
+        fprintf(text_file, line_format, lineno+1, input_file_name);
     }
 
     fprintf(text_file, "typedef union");
@@ -1196,9 +1196,9 @@ void copy_action(void)
 
     if (!lflag) {
       if (jflag)
-        fprintf(f, jline_format, lineno, input_file_name);
+        fprintf(f, jline_format, lineno+1, input_file_name);
       else
-        fprintf(f, line_format, lineno, input_file_name);
+        fprintf(f, line_format, lineno+1, input_file_name);
     }
     if (*cptr == '=') ++cptr;
 
