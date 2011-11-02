@@ -478,12 +478,10 @@ void hshrink(union block *bp)
 
 union block **memb(union block *pb, dptr x, uword hn, int *res)
    {
-   struct b_set *ps;
    union block **lp;
    struct b_selem *pe;
    uword eh;
 
-   ps = (struct b_set *)pb;
    lp = hchain(pb, hn);
    /*
     * Look for x in the hash chain.
