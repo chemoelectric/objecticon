@@ -2080,7 +2080,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             struct ir_var *v;
             struct ir_info *operand;
             v = get_var(x->child, st, target);
-            operand = ir_traverse(x->child, st, v, 0, is_rval(n->op, 1, rval));
+            operand = ir_traverse(x->child, st, v, bounded, is_rval(n->op, 1, rval));
             chunk1(res->start, ir_goto(n, operand->start));
             if (!bounded)
                 chunk1(res->resume, ir_goto(n, operand->resume));
@@ -2120,9 +2120,10 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             v = get_var(x->child, st, target);
             operand = ir_traverse(x->child, st, v, 0, is_rval(n->op, 1, rval));
             chunk1(res->start, ir_goto(n, operand->start));
-            chunk2(res->resume, 
-                  ir_resume(n, clo),
-                  ir_goto(n, res->success));
+            if (!bounded) 
+                chunk2(res->resume, 
+                       ir_resume(n, clo),
+                       ir_goto(n, res->success));
             chunk2(operand->success, 
                    ir_opclo(n, clo, target, n->op, v, 0, 0, rval, operand->resume),
                    ir_goto(n, res->success));
