@@ -3782,7 +3782,7 @@ function io_SslStream_new_impl(other, verify_host)
        SSL_load_error_strings();
 
        /* Create our context*/
-       meth = SSLv23_client_method();
+       meth = (SSL_METHOD *)SSLv23_client_method();
        ctx = SSL_CTX_new(meth);
 
        MemProtect(p = malloc(sizeof(*p)));
