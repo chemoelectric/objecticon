@@ -1125,11 +1125,9 @@ static int in_frame(struct node *tqual)
 static void decl_walk3(struct node *tqual, struct node *dcltor, int indent)
    {
    struct node *part_dcltor;
-   struct node *init = NULL;
    struct token *t;
 
    if (dcltor->nd_id == BinryNd && dcltor->tok->tok_id == '=') {
-      init = dcltor->u[1].child;
       dcltor = dcltor->u[0].child;
       }
    part_dcltor = dcltor;
