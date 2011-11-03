@@ -22,7 +22,8 @@ bm()
         ./$name "$@"
     fi
     rm -f $name
-    echo "\n\n"
+    echo
+    echo
 }
 
 . ../paths.sh
