@@ -2616,16 +2616,15 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         case Uop_Rptalt: {                      /* repeated alternation */
             struct lnode_1 *x = (struct lnode_1 *)n;
             struct ir_info *expr;
-            int tl;
-
-            tl = make_tmploc(st);
-            expr = ir_traverse(x->child, st, target, bounded, rval);
 
             if (bounded) {
+                expr = ir_traverse(x->child, st, target, bounded, rval);
                 chunk1(res->start, ir_goto(n, expr->start));
                 chunk1(expr->success, ir_goto(n, res->success));
                 chunk1(expr->failure, ir_goto(n, res->failure));
             } else {
+                int tl = make_tmploc(st);
+                expr = ir_traverse(x->child, st, target, bounded, rval);
                 chunk1(res->resume, ir_goto(n, expr->resume));
                 chunk2(res->start, 
                        ir_movelabel(n, tl, res->failure),
