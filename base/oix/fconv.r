@@ -44,13 +44,7 @@ function abs(n)
 
    else if cnv:C_double(n) then {
       body {
-
-#if SASC
-         return C_double __builtin_fabs(n);
-#else
          return C_double Abs(n);
-#endif					/* SASC */
-
          }
       }
    else
