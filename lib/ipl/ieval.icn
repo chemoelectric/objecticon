@@ -190,7 +190,7 @@ procedure main_impl(imports, files, opts)
 
    env["env"] := create show_env(env)
    env["tt"] := create tr_flag := toggle_flag(tr_flag)
-   env["tb"] := create Coexpression.traceback(\last_runerr, &yes)
+   env["tb"] := create { Coexpression.traceback(\last_runerr, &yes) ; &fail }
    env["q"] := create quiet_flag := toggle_flag(quiet_flag)
    env["dir"] := lambda{ if *_a = 0 then list_syms(imports) else dir(_a[1]) }
    env["hist"] := create show_history(in)
