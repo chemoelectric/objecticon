@@ -1402,6 +1402,7 @@ static void relocate_code(struct progstate *ps, word *c)
                 ++pc;
                 break;
             }
+            case Op_Deref:
             case Op_Move: {
                 conv_var();
                 conv_var();

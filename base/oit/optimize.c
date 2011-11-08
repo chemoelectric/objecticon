@@ -578,7 +578,6 @@ static int changes(struct lnode *n)
             case Uop_Augdiv:
             case Uop_Augmult:
             case Uop_Augunions: 
-            case Uop_Augconj: 
             case Uop_Augactivate: 
             case Uop_Augscan: {
                 struct lnode_2 *x = (struct lnode_2 *)n->parent;
@@ -1408,7 +1407,6 @@ static int is_repeatable(struct lnode *n)
         case Uop_Augmult:
         case Uop_Augunions: 
         case Uop_Conj: 
-        case Uop_Augconj: 
         case Uop_If: 
         case Uop_Whiledo: 
         case Uop_Alt: 

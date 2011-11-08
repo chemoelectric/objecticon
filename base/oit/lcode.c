@@ -749,6 +749,13 @@ static void lemitcode()
                     emit_ir_var(x->rhs, "rhs");
                     break;
                 }
+                case Ir_Deref: {
+                    struct ir_deref *x = (struct ir_deref *)ir;
+                    out_op(Op_Deref);
+                    emit_ir_var(x->lhs, "lhs");
+                    emit_ir_var(x->rhs, "rhs");
+                    break;
+                }
                 case Ir_MoveLabel: {
                     struct ir_movelabel *x = (struct ir_movelabel *)ir;
                     out_op(Op_MoveLabel);

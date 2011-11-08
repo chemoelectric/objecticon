@@ -82,6 +82,7 @@
 #endif
 #define Op_Move          70
 #define Op_MoveLabel     71
+#define Op_Deref         72
 #define Op_Keyop         73
 #define Op_Keyclo        74
 #define Op_Resume        75

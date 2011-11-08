@@ -866,6 +866,10 @@ void interp()
                 get_variable(get_dptr());
                 break;
             }
+            case Op_Deref: {
+                get_deref(get_dptr());
+                break;
+            }
             case Op_MoveLabel: {
                 word i = GetWord;
                 curr_pf->lab[i] = GetAddr;

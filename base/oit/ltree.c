@@ -274,7 +274,6 @@ static struct lnode *buildtree(void)
         case Uop_Augscan:
         case Uop_Bactivate:
         case Uop_Augactivate:
-        case Uop_Augconj: 
         case Uop_If: 
         case Uop_Whiledo: 
         case Uop_Untildo: 
@@ -286,6 +285,14 @@ static struct lnode *buildtree(void)
             struct lnode *c1 = buildtree();
             struct lnode *c2 = buildtree();
             return (struct lnode *)lnode_2(op, &t, c1, c2);
+        }
+
+        case Uop_Augconj: {
+            struct loc t = curr_loc;
+            struct lnode *c1 = buildtree();
+            struct lnode *c2 = buildtree();
+            /* e1 &:= e2 -> e1 := e2 */
+            return (struct lnode *)lnode_2(Uop_Asgn, &t, c1, c2);
         }
 
         case Uop_Value:
@@ -643,7 +650,6 @@ static void visitnode_pre(struct lnode *n, visitf v)
         case Uop_Augmult:
         case Uop_Augunions: 
         case Uop_Conj: 
-        case Uop_Augconj: 
         case Uop_If: 
         case Uop_Whiledo: 
         case Uop_Alt: 
@@ -828,7 +834,6 @@ static void visitnode_post(struct lnode *n, visitf v)
         case Uop_Augmult:
         case Uop_Augunions: 
         case Uop_Conj: 
-        case Uop_Augconj: 
         case Uop_If: 
         case Uop_Whiledo: 
         case Uop_Alt: 
@@ -1089,7 +1094,6 @@ void replace_node(struct lnode *old, struct lnode *new)
         case Uop_Augmult:
         case Uop_Augunions: 
         case Uop_Conj: 
-        case Uop_Augconj: 
         case Uop_If: 
         case Uop_Whiledo: 
         case Uop_Alt: 

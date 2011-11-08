@@ -76,7 +76,7 @@ static char *op_names[] = {
 #endif
     /*  70 */         "move",
     /*  71 */         "movelabel",
-    /*  72 */         INVALID,
+    /*  72 */         "deref",
     /*  73 */         "keyop",
     /*  74 */         "keyclo",
     /*  75 */         "resume",
