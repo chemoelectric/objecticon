@@ -772,7 +772,7 @@ static int is_rval(int op, int arg, int parent)
         case Uop_Rasgn:
         case Uop_Augdiv:
         case Uop_Augmult:
-        case Uop_Augunions: {
+        case Uop_Augunion: {
             return (arg == 2);
         }
 
@@ -1080,7 +1080,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         case Uop_Augmult:
         case Uop_Augplus:
         case Uop_Augpower:
-        case Uop_Augunions:
+        case Uop_Augunion:
         case Uop_Cat:
         case Uop_Diff:
         case Uop_Div:
@@ -1091,7 +1091,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         case Uop_Mult:
         case Uop_Plus:
         case Uop_Power:
-        case Uop_Unions: {
+        case Uop_Union: {
             struct lnode_2 *x = (struct lnode_2 *)n;
             struct ir_var *lv, *rv, *tmp = 0;
             struct ir_info *left, *right;
@@ -1208,7 +1208,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                     x->child2->op == Uop_Mult ||
                     x->child2->op == Uop_Plus ||
                     x->child2->op == Uop_Power ||
-                    x->child2->op == Uop_Unions ||
+                    x->child2->op == Uop_Union ||
                     x->child2->op == Uop_Value ||
                     x->child2->op == Uop_Size ||
                     x->child2->op == Uop_Refresh ||
@@ -3500,8 +3500,8 @@ static int augop(int n)
             opcode = Uop_Mult;
             break;
 
-        case Uop_Augunions:
-            opcode = Uop_Unions;
+        case Uop_Augunion:
+            opcode = Uop_Union;
             break;
     }
 

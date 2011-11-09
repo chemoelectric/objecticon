@@ -949,7 +949,7 @@ void interp()
 
             /* Monogenic binary ops */
             case Op_Cat: {
-                quick_binary_mgop(Qcater);
+                quick_binary_mgop(Qcat);
                 break;
             }
             case Op_Diff: {
@@ -957,7 +957,7 @@ void interp()
                 break;
             }
             case Op_Div: {
-                quick_binary_mgop(Qdivide);
+                quick_binary_mgop(Qdiv);
                 break;
             }
             case Op_Inter: {
@@ -985,10 +985,10 @@ void interp()
                 break;
             }
             case Op_Power: {
-                quick_binary_mgop(Qpowr);
+                quick_binary_mgop(Qpower);
                 break;
             }
-            case Op_Unions: {
+            case Op_Union: {
                 quick_binary_mgop(Qunion);
                 break;
             }

@@ -47,7 +47,7 @@ end
    result = x / y;
 }
 #enddef
-ArithOp( / , divide , IntDivide , RealDivide)
+ArithOp( / , div , IntDivide , RealDivide)
 
 /*
  * x - y
@@ -145,7 +145,7 @@ end
 
 "x ^ y - raise x to the y power."
 
-operator ^ powr(x, y)
+operator ^ power(x, y)
    if cnv:(exact)integer(y) then {
       if cnv:(exact)integer(x) then {
 	 body {

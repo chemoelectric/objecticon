@@ -831,7 +831,7 @@ static void xtrace()
         case Op_Mult: 
         case Op_Plus: 
         case Op_Power: 
-        case Op_Unions: 
+        case Op_Union: 
         case Op_Eqv: 
         case Op_Lexeq: 
         case Op_Lexge: 

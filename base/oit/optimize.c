@@ -342,7 +342,7 @@ static int fold_consts(struct lnode *n)
             break;
         }
             
-        case Uop_Unions: {
+        case Uop_Union: {
             fold_union(n);
             break;
         }
@@ -538,7 +538,7 @@ static int changes(struct lnode *n)
             case Uop_Plus:
             case Uop_Div:
             case Uop_Mult:
-            case Uop_Unions:
+            case Uop_Union:
             case Uop_Scan:
             case Uop_Bactivate:
             case Uop_While:
@@ -577,7 +577,7 @@ static int changes(struct lnode *n)
             case Uop_Augplus:
             case Uop_Augdiv:
             case Uop_Augmult:
-            case Uop_Augunions: 
+            case Uop_Augunion: 
             case Uop_Augactivate: 
             case Uop_Augscan: {
                 struct lnode_2 *x = (struct lnode_2 *)n->parent;
@@ -1380,7 +1380,7 @@ static int is_repeatable(struct lnode *n)
         case Uop_Div:
         case Uop_Mult:
         case Uop_Swap:
-        case Uop_Unions:
+        case Uop_Union:
         case Uop_Augpower:
         case Uop_Augcat:
         case Uop_Augdiff:
@@ -1405,7 +1405,7 @@ static int is_repeatable(struct lnode *n)
         case Uop_Augplus:
         case Uop_Augdiv:
         case Uop_Augmult:
-        case Uop_Augunions: 
+        case Uop_Augunion: 
         case Uop_Conj: 
         case Uop_If: 
         case Uop_Whiledo: 

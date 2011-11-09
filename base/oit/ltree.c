@@ -242,7 +242,7 @@ static struct lnode *buildtree(void)
         case Uop_Div:
         case Uop_Mult:
         case Uop_Swap:
-        case Uop_Unions:
+        case Uop_Union:
         case Uop_Augpower:
         case Uop_Augcat:
         case Uop_Augdiff:
@@ -267,7 +267,7 @@ static struct lnode *buildtree(void)
         case Uop_Augplus:
         case Uop_Augdiv:
         case Uop_Augmult:
-        case Uop_Augunions: 
+        case Uop_Augunion: 
         case Uop_Alt: 
         case Uop_Conj: 
         case Uop_Scan:
@@ -623,7 +623,7 @@ static void visitnode_pre(struct lnode *n, visitf v)
         case Uop_Div:
         case Uop_Mult:
         case Uop_Swap:
-        case Uop_Unions:
+        case Uop_Union:
         case Uop_Augpower:
         case Uop_Augcat:
         case Uop_Augdiff:
@@ -648,7 +648,7 @@ static void visitnode_pre(struct lnode *n, visitf v)
         case Uop_Augplus:
         case Uop_Augdiv:
         case Uop_Augmult:
-        case Uop_Augunions: 
+        case Uop_Augunion: 
         case Uop_Conj: 
         case Uop_If: 
         case Uop_Whiledo: 
@@ -807,7 +807,7 @@ static void visitnode_post(struct lnode *n, visitf v)
         case Uop_Div:
         case Uop_Mult:
         case Uop_Swap:
-        case Uop_Unions:
+        case Uop_Union:
         case Uop_Augpower:
         case Uop_Augcat:
         case Uop_Augdiff:
@@ -832,7 +832,7 @@ static void visitnode_post(struct lnode *n, visitf v)
         case Uop_Augplus:
         case Uop_Augdiv:
         case Uop_Augmult:
-        case Uop_Augunions: 
+        case Uop_Augunion: 
         case Uop_Conj: 
         case Uop_If: 
         case Uop_Whiledo: 
@@ -1067,7 +1067,7 @@ void replace_node(struct lnode *old, struct lnode *new)
         case Uop_Div:
         case Uop_Mult:
         case Uop_Swap:
-        case Uop_Unions:
+        case Uop_Union:
         case Uop_Augpower:
         case Uop_Augcat:
         case Uop_Augdiff:
@@ -1092,7 +1092,7 @@ void replace_node(struct lnode *old, struct lnode *new)
         case Uop_Augplus:
         case Uop_Augdiv:
         case Uop_Augmult:
-        case Uop_Augunions: 
+        case Uop_Augunion: 
         case Uop_Conj: 
         case Uop_If: 
         case Uop_Whiledo: 

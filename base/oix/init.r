@@ -1426,7 +1426,7 @@ static void relocate_code(struct progstate *ps, word *c)
             case Op_Mult:
             case Op_Plus:
             case Op_Power:
-            case Op_Unions: {
+            case Op_Union: {
                 conv_var();  /* lhs */
                 conv_var();  /* arg1 */
                 conv_var();  /* arg2 */
