@@ -664,9 +664,9 @@ static void xtrace()
             break;
 
         case Op_Invokef:
-            fprintf(stderr, "   ");
             if (curr_cf) {
                 /* Will happen if a builtin proc calls runnerr */
+                fprintf(stderr, "   ");
                 procname(stderr, (struct b_proc *)curr_cf->proc);
                 xnargs = curr_cf->nargs;
                 xargp = curr_cf->args;
@@ -679,6 +679,7 @@ static void xtrace()
                 putc(')', stderr);
             } else if (xexpr) {
                 /* Error to do with the type of expr */
+                fprintf(stderr, "   ");
                 outimage(stderr, xexpr, 0);
                 fprintf(stderr, " . ");
                 outfield();
@@ -687,9 +688,9 @@ static void xtrace()
             break;
 
         case Op_Applyf:
-            fprintf(stderr, "   ");
             if (curr_cf) {
                 /* Will happen if a builtin proc calls runnerr */
+                fprintf(stderr, "   ");
                 procname(stderr, (struct b_proc *)curr_cf->proc);
                 xnargs = curr_cf->nargs;
                 xargp = curr_cf->args;
@@ -702,6 +703,7 @@ static void xtrace()
                 fprintf(stderr," ]");
             } else if (xexpr) {
                 /* Error to do with the type of expr */
+                fprintf(stderr, "   ");
                 outimage(stderr, xexpr, 0);
                 fprintf(stderr, " . ");
                 outfield();
@@ -714,9 +716,9 @@ static void xtrace()
             break;
 
         case Op_Apply:
-            fprintf(stderr, "   ");
             if (curr_cf) {
                 /* Will happen if a builtin proc calls runnerr */
+                fprintf(stderr, "   ");
                 procname(stderr, (struct b_proc *)curr_cf->proc);
                 xnargs = curr_cf->nargs;
                 xargp = curr_cf->args;
@@ -729,6 +731,7 @@ static void xtrace()
                 fprintf(stderr," ]");
             } else if (xexpr) {
                 /* Error to do with the type of expr */
+                fprintf(stderr, "   ");
                 outimage(stderr, xexpr, 0);
                 fprintf(stderr, " ! ");
                 if (xargp)
@@ -739,9 +742,9 @@ static void xtrace()
             break;
 
         case Op_Invoke:
-            fprintf(stderr, "   ");
             if (curr_cf) {
                 /* Will happen if a builtin proc calls runnerr */
+                fprintf(stderr, "   ");
                 procname(stderr, (struct b_proc *)curr_cf->proc);
                 xnargs = curr_cf->nargs;
                 xargp = curr_cf->args;
@@ -754,6 +757,7 @@ static void xtrace()
                 putc(')', stderr);
             } else if (xexpr) {
                 /* Error to do with the type of expr */
+                fprintf(stderr, "   ");
                 outimage(stderr, xexpr, 0);
                 fprintf(stderr," ( .. )");
             }
@@ -771,37 +775,45 @@ static void xtrace()
             break;
 
         case Op_Subsc:
-            fprintf(stderr, "   {");
-            outimage(stderr, xarg1, 0);
-            putc('[', stderr);
-            outimage(stderr, xarg2, 0);
-            putc(']', stderr);
-            putc('}', stderr);
+            if (xarg1 && xarg2) {
+                fprintf(stderr, "   {");
+                outimage(stderr, xarg1, 0);
+                putc('[', stderr);
+                outimage(stderr, xarg2, 0);
+                putc(']', stderr);
+                putc('}', stderr);
+            }
             break;
 
         case Op_Sect:
-            fprintf(stderr, "   {");
-            outimage(stderr, xarg1, 0);
-            putc('[', stderr);
-            outimage(stderr, xarg2, 0);
-            putc(':', stderr);
-            outimage(stderr, xarg3, 0);
-            putc(']', stderr);
-            putc('}', stderr);
+            if (xarg1 && xarg2 && xarg3) {
+                fprintf(stderr, "   {");
+                outimage(stderr, xarg1, 0);
+                putc('[', stderr);
+                outimage(stderr, xarg2, 0);
+                putc(':', stderr);
+                outimage(stderr, xarg3, 0);
+                putc(']', stderr);
+                putc('}', stderr);
+            }
             break;
 
         case Op_ScanSave:
-            fprintf(stderr, "   {");
-            outimage(stderr, xarg1, 0);
-            fputs(" ? ..}", stderr);
+            if (xarg1) {
+                fprintf(stderr, "   {");
+                outimage(stderr, xarg1, 0);
+                fputs(" ? ..}", stderr);
+            }
             break;
 
         case Op_Activate:
-            fprintf(stderr, "   {");
-            outimage(stderr, xarg1, 0);
-            fprintf(stderr, " @ ");
-            outimage(stderr, xarg2, 0);
-            putc('}', stderr);
+            if (xarg1 && xarg2) {
+                fprintf(stderr, "   {");
+                outimage(stderr, xarg1, 0);
+                fprintf(stderr, " @ ");
+                outimage(stderr, xarg2, 0);
+                putc('}', stderr);
+            }
             break;
 
         case Op_Create:
@@ -809,16 +821,20 @@ static void xtrace()
             break;
 
         case Op_Field:
-            fprintf(stderr, "   {");
-            outimage(stderr, xexpr, 0);
-            fprintf(stderr, " . ");
-            outfield();
-            putc('}', stderr);
+            if (xexpr) {
+                fprintf(stderr, "   {");
+                outimage(stderr, xexpr, 0);
+                fprintf(stderr, " . ");
+                outfield();
+                putc('}', stderr);
+            }
             break;
 
         case Op_Limit:
-            fprintf(stderr, "   limit counter: ");
-            outimage(stderr, xarg1, 0);
+            if (xarg1) {
+                fprintf(stderr, "   limit counter: ");
+                outimage(stderr, xarg1, 0);
+            }
             break;
 
         case Op_Cat: 
@@ -848,13 +864,15 @@ static void xtrace()
         case Op_Numne:  
         case Op_Asgn: 
         case Op_Swap: 
-            fprintf(stderr, "   {");
-            outimage(stderr, xarg1, 0);
-            putc(' ', stderr);
-            putstr(stderr, opblks[curr_op]->name);
-            putc(' ', stderr);
-            outimage(stderr, xarg2, 0);
-            putc('}', stderr);
+            if (xarg1 && xarg2) {
+                fprintf(stderr, "   {");
+                outimage(stderr, xarg1, 0);
+                putc(' ', stderr);
+                putstr(stderr, opblks[curr_op]->name);
+                putc(' ', stderr);
+                outimage(stderr, xarg2, 0);
+                putc('}', stderr);
+            }
             break;
 
         case Op_Value: 
@@ -866,11 +884,13 @@ static void xtrace()
         case Op_Null: 
         case Op_Nonnull:
         case Op_Random: 
-            fprintf(stderr, "   {");
-            putstr(stderr, opblks[curr_op]->name);
-            putc(' ', stderr);
-            outimage(stderr, xarg1, 0);
-            putc('}', stderr);
+            if (xarg1) {
+                fprintf(stderr, "   {");
+                putstr(stderr, opblks[curr_op]->name);
+                putc(' ', stderr);
+                outimage(stderr, xarg1, 0);
+                putc('}', stderr);
+            }
             break;
 
         default: {
