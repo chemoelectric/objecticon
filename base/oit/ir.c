@@ -2212,9 +2212,21 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             chunk1(res->start, ir_goto(n, operand->start));
             if (!bounded)
                 chunk1(res->resume, ir_goto(n, operand->resume));
-            chunk2(operand->success,
-                  ir_mgop(n, target, n->op, v, 0, rval),
-                  ir_goto(n, res->success));
+            /*
+             * Optimisation: unary . can be done with the deref
+             * instruction, rather than as an operator.  Note that we
+             * must have a target; deref with a nil target is a no-op,
+             * whilst the . operator will deref its argument (which
+             * may give an error), and then throw it away.
+             */
+            if (n->op == Uop_Value && target)
+                chunk2(operand->success,
+                       ir_deref(n, target, v),
+                       ir_goto(n, res->success));
+            else
+                chunk2(operand->success,
+                       ir_mgop(n, target, n->op, v, 0, rval),
+                       ir_goto(n, res->success));
             chunk1(operand->failure, ir_goto(n, res->failure));
             res->uses_stack = operand->uses_stack;
             break;
