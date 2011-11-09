@@ -1420,6 +1420,7 @@ static void relocate_code(struct progstate *ps, word *c)
                 ++pc;
                 break;
             }
+            case Op_Deref:
             case Op_Move: {
                 conv_var();
                 conv_var();
@@ -1447,7 +1448,6 @@ static void relocate_code(struct progstate *ps, word *c)
                 conv_var();  /* lhs */
                 conv_var();  /* arg1 */
                 conv_var();  /* arg2 */
-                ++pc;        /* rval */
                 break;
             }
 
@@ -1455,7 +1455,6 @@ static void relocate_code(struct progstate *ps, word *c)
             case Op_Asgn:
             case Op_Activate:
             case Op_Eqv:
-            case Op_Subsc:
             case Op_Lexeq:
             case Op_Lexge:
             case Op_Lexgt:
@@ -1473,6 +1472,14 @@ static void relocate_code(struct progstate *ps, word *c)
                 conv_var();  /* lhs */
                 conv_var();  /* arg1 */
                 conv_var();  /* arg2 */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            case Op_Subsc: {
+                conv_var();  /* lhs */
+                conv_var();  /* arg1 */
+                conv_var();  /* arg2 */
                 ++pc;        /* rval */
                 conv_addr(); /* failure label */
                 break;
@@ -1487,14 +1494,18 @@ static void relocate_code(struct progstate *ps, word *c)
             case Op_Neg: {
                 conv_var();  /* lhs */
                 conv_var();  /* arg1 */
-                ++pc;        /* rval */
                 break;
             }
 
             /* Unary ops */
             case Op_Nonnull:
-            case Op_Random:
             case Op_Null: {
+                conv_var();  /* lhs */
+                conv_var();  /* arg1 */
+                conv_addr(); /* failure label */
+                break;
+            }
+            case Op_Random: {
                 conv_var();  /* lhs */
                 conv_var();  /* arg1 */
                 ++pc;        /* rval */

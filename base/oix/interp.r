@@ -1,14 +1,20 @@
 #include "../h/opdefs.h"
 #include "../h/opnames.h"
 
+static void quick_unary_mgop(int (*f)(dptr, dptr));
+static void quick_binary_mgop(int (*f)(dptr, dptr, dptr));
+static void quick_unary_op_underef(int (*f)(dptr, dptr));
+static void quick_unary_op_underef_rval(int (*f)(dptr, dptr, int));
+static void quick_binary_op(int (*f)(dptr, dptr, dptr));
+static void quick_binary_op_underef(int (*f)(dptr, dptr, dptr));
+static void quick_binary_op_underef_rval(int (*f)(dptr, dptr, dptr, int));
+static void quick_ternary_op_underef_rval(int (*f)(dptr, dptr, dptr, dptr, int));
 static void coact_ex(void);
 static void coact_handler();
 static void get_child_prog_result(void);
 static void activate_child_prog(void);
 static void do_cofail(void);
 static void do_activate(void);
-static void do_op(int nargs);
-static void do_mgop(int nargs);
 static void do_opclo(int nargs);
 static void do_keyop(void);
 static void do_keyclo(void);
@@ -17,6 +23,10 @@ static void do_create(void);
 static void do_coret(void);
 static void do_limit(void);
 static void do_scansave(void);
+static void do_tcaseinit(void);
+static void do_tcaseinsert(void);
+static void do_tcasechoose(void);
+static void do_tcasechoosex(void);
 static void pop_from_prog_event_queue(struct progstate *prog, dptr res);
 static void fatalerr_139(void);
 
@@ -329,108 +339,120 @@ void skip_descrip()
     }
 }
 
-/*
- * A quick version of alc_c_frame which allocates on the C stack using
- * alloca, instead of malloc.  It is used for operators whose frames
- * are allocated and then immediately deallocated after the operator
- * is called (do_op and do_keyop).
- */
+static int Rfeatures(dptr d) { return 0; }
 
-#begdef quick_alc_c_frame(p, pb, argc)
+#define KDef(p,n) extern int Cat(R,p)(dptr);
+#include "../h/kdefs.h"
+#undef KDef
+#define KDef(p,n) Cat(R,p),
+int (*keyword_qfuncs[])(dptr) = {
+    NULL,
+#include "../h/kdefs.h"
+};
+#undef KDef
+
+static void quick_unary_mgop(int (*f)(dptr, dptr))
 {
-    char *t;
-    int size, i;
-    size = pb->framesize + (argc + pb->ntend) * sizeof(struct descrip);
-#if HAVE_ALLOCA
-    p = alloca(size);
-#else
-    MemProtect(p = malloc(size));
-#endif
-    p->size = size;
-    p->creator = 0;
-    p->type = C_Frame;
-    p->lhs = 0;
-    p->proc = pb;
-    p->parent_sp = 0;
-    p->failure_label = 0;
-    p->rval = 0;
-    p->exhausted = 0;
-    p->pc = 0;
-    p->nargs = argc;
-    t = (char *)p + pb->framesize;
-    if (argc) {
-        p->args = (dptr)t;
-        for (i = 0; i < argc; ++i)
-            p->args[i] = nulldesc;
-        t += argc * sizeof(struct descrip);
-    } else
-        p->args = 0;
-    if (pb->ntend) {
-        p->tend = (dptr)t;
-        for (i = 0; i < pb->ntend; ++i)
-            p->tend[i] = nulldesc;
-    } else
-        p->tend = 0;
-}
-#enddef
-
-#begdef quick_free_frame(p)
-#if !HAVE_ALLOCA
-    free(p);
-#endif
-#enddef
-
-static void do_op(int nargs)
-{
-    struct c_frame *cf;
-    struct c_proc *bp = opblks[curr_op];
-    int i;
-    quick_alc_c_frame(cf, bp, nargs);
-    push_frame((struct frame *)cf);
-    cf->lhs = get_dptr();
-    if (bp->underef) {
-        for (i = 0; i < nargs; ++i)
-            get_variable(&cf->args[i]);
-    } else {
-        for (i = 0; i < nargs; ++i)
-            get_deref(&cf->args[i]);
-    }
-    cf->rval = GetWord;
-    cf->failure_label = GetAddr;
-    Desc_EVValD(bp, E_Pcall, D_Proc);
-    curr_cf = cf;
-    if (!bp->ccode(cf))
-        ipc = cf->failure_label;
-    curr_cf = 0;
-    /* Pop the C frame */
-    k_current->sp = cf->parent_sp;
-    quick_free_frame(cf);
-}
-
-static void do_mgop(int nargs)
-{
-    struct c_frame *cf;
-    struct c_proc *bp = opblks[curr_op];
-    int i;
-    quick_alc_c_frame(cf, bp, nargs);
-    push_frame((struct frame *)cf);
-    cf->lhs = get_dptr();
-    if (bp->underef) {
-        for (i = 0; i < nargs; ++i)
-            get_variable(&cf->args[i]);
-    } else {
-        for (i = 0; i < nargs; ++i)
-            get_deref(&cf->args[i]);
-    }
-    cf->rval = GetWord;
-    Desc_EVValD(bp, E_Pcall, D_Proc);
-    curr_cf = cf;
-    if (!bp->ccode(cf))
+    dptr lhs;
+    tended struct descrip arg;
+    lhs = get_dptr();
+    get_deref(&arg);
+    if (!f(lhs, &arg))
         syserr("Monogenic op failed");
-    curr_cf = 0;
-    /* Pop the C frame */
-    k_current->sp = cf->parent_sp;
-    quick_free_frame(cf);
+}
+
+static void quick_unary_op_underef(int (*f)(dptr, dptr))
+{
+    dptr lhs;
+    tended struct descrip arg;
+    word *failure_label;
+    lhs = get_dptr();
+    get_variable(&arg);
+    failure_label = GetAddr;
+    if (!f(lhs, &arg))
+        ipc = failure_label;
+}
+
+static void quick_unary_op_underef_rval(int (*f)(dptr, dptr, int))
+{
+    dptr lhs;
+    tended struct descrip arg;
+    word *failure_label;
+    int rval;
+    lhs = get_dptr();
+    get_variable(&arg);
+    rval = GetWord;
+    failure_label = GetAddr;
+    if (!f(lhs, &arg, rval))
+        ipc = failure_label;
+}
+
+static void quick_binary_mgop(int (*f)(dptr, dptr, dptr))
+{
+    dptr lhs;
+    tended struct descrip arg1, arg2;
+    lhs = get_dptr();
+    get_deref(&arg1);
+    get_deref(&arg2);
+    if (!f(lhs, &arg1, &arg2))
+        syserr("Monogenic op failed");
+}
+
+static void quick_binary_op(int (*f)(dptr, dptr, dptr))
+{
+    dptr lhs;
+    tended struct descrip arg1, arg2;
+    word *failure_label;
+    lhs = get_dptr();
+    get_deref(&arg1);
+    get_deref(&arg2);
+    failure_label = GetAddr;
+    if (!f(lhs, &arg1, &arg2))
+        ipc = failure_label;
+}
+
+static void quick_binary_op_underef(int (*f)(dptr, dptr, dptr))
+{
+    dptr lhs;
+    tended struct descrip arg1, arg2;
+    word *failure_label;
+    lhs = get_dptr();
+    get_variable(&arg1);
+    get_variable(&arg2);
+    failure_label = GetAddr;
+    if (!f(lhs, &arg1, &arg2))
+        ipc = failure_label;
+}
+
+static void quick_binary_op_underef_rval(int (*f)(dptr, dptr, dptr, int))
+{
+    dptr lhs;
+    tended struct descrip arg1, arg2;
+    word *failure_label;
+    int rval;
+    lhs = get_dptr();
+    get_variable(&arg1);
+    get_variable(&arg2);
+    rval = GetWord;
+    failure_label = GetAddr;
+    if (!f(lhs, &arg1, &arg2, rval))
+        ipc = failure_label;
+}
+
+static void quick_ternary_op_underef_rval(int (*f)(dptr, dptr, dptr, dptr, int))
+{
+    dptr lhs;
+    tended struct descrip arg1, arg2, arg3;
+    word *failure_label;
+    int rval;
+    lhs = get_dptr();
+    get_variable(&arg1);
+    get_variable(&arg2);
+    get_variable(&arg3);
+    rval = GetWord;
+    failure_label = GetAddr;
+    if (!f(lhs, &arg1, &arg2, &arg3, rval))
+        ipc = failure_label;
 }
 
 static void do_opclo(int nargs)
@@ -458,20 +480,13 @@ static void do_opclo(int nargs)
 
 static void do_keyop()
 {
-    struct c_frame *cf;
-    struct c_proc *bp = keyblks[GetWord];
-    quick_alc_c_frame(cf, bp, 0);
-    push_frame((struct frame *)cf);
-    cf->lhs = get_dptr();
-    cf->failure_label = GetAddr;
-    Desc_EVValD(bp, E_Pcall, D_Proc);
-    curr_cf = cf;
-    if (!bp->ccode(cf))
-        ipc = cf->failure_label;
-    curr_cf = 0;
-    /* Pop the C frame */
-    k_current->sp = cf->parent_sp;
-    quick_free_frame(cf);
+    dptr lhs;
+    word *failure_label;
+    int (*f)(dptr) = keyword_qfuncs[GetWord];
+    lhs = get_dptr();
+    failure_label = GetAddr;
+    if (!f(lhs))
+        ipc = failure_label;
 }
 
 static void do_keyclo()
@@ -535,18 +550,17 @@ static void do_activate()
 
     get_variable(&arg1);   /* Value */
     get_deref(&arg2);      /* Coexp */
-    ipc++;                 /* rval */
     failure_label = GetAddr;
     if (!is:coexpr(arg2)) {
-        xargp = &arg1;
-        xexpr = &arg2;
+        xarg1 = &arg1;
+        xarg2 = &arg2;
         err_msg(118, &arg2);
         return;
     }
     pf = get_current_user_frame_of(&CoexprBlk(arg2));
     if (!pf) {
-        xargp = &arg1;
-        xexpr = &arg2;
+        xarg1 = &arg1;
+        xarg2 = &arg2;
         err_msg(138, &arg2);
         return;
     }
@@ -800,13 +814,13 @@ static void do_limit()
     limit = get_dptr();
     Deref(*limit);
     if (!cnv:C_integer(*limit, tmp)) {
-        xargp = limit;
+        xarg1 = limit;
         err_msg(101, limit);
         return;
     }
     MakeInt(tmp, limit);
     if (tmp < 0) {
-        xargp = limit;
+        xarg1 = limit;
         err_msg(205, limit);
         return;
     }
@@ -821,7 +835,7 @@ static void do_scansave()
     s = GetWord;
     p = GetWord;
     if (!cnv:string_or_ucs(new_subject, new_subject)) {
-        xargp = &new_subject;
+        xarg1 = &new_subject;
         err_msg(129, &new_subject);
         return;
     }
@@ -830,6 +844,65 @@ static void do_scansave()
     curpstate->Kywd_subject = new_subject;
     MakeInt(1, &curpstate->Kywd_pos);
     EVValD(&new_subject, E_Scan);
+}
+
+static void do_tcaseinit(void)
+{
+    dptr tbl = (dptr)GetAddr;
+    word d = GetWord;
+    MemProtect(BlkLoc(*tbl) = hmake(T_Table, 0, d));
+    tbl->dword = D_Table;
+    MakeInt(d, &TableBlk(*tbl).defvalue);
+}
+
+static void do_tcaseinsert(void)
+{
+    tended struct descrip val;
+    dptr tbl = (dptr)GetAddr;
+    struct descrip entry;
+    get_deref(&val);
+    MakeInt(GetWord, &entry);
+    table_insert(tbl, &val, &entry, 0);
+}
+
+static void do_tcasechoose(void)
+{
+    tended struct descrip val;
+    uword hn;
+    word off;
+    int res;
+    union block **dp1;
+    dptr tbl = (dptr)GetAddr;
+    get_deref(&val);
+    ++ipc;            /* tblc */
+    hn = hash(&val);
+    dp1 = memb(BlkLoc(*tbl), &val, hn, &res);
+    if (res)
+        off = IntVal((*dp1)->telem.tval);
+    else
+        off = IntVal(TableBlk(*tbl).defvalue);
+    ipc = (word *)ipc[off];
+}
+
+static void do_tcasechoosex(void)
+{
+    tended struct descrip val;
+    uword hn;
+    word off, labno;
+    int res;
+    union block **dp1;
+    dptr tbl = (dptr)GetAddr;
+    get_deref(&val);
+    labno = GetWord;
+    ++ipc;            /* tblc */
+    hn = hash(&val);
+    dp1 = memb(BlkLoc(*tbl), &val, hn, &res);
+    if (res)
+        off = IntVal((*dp1)->telem.tval);
+    else
+        off = IntVal(TableBlk(*tbl).defvalue);
+    curr_pf->lab[labno] = (word *)ipc[2 * off + 1];
+    ipc = (word *)ipc[2 * off];
 }
 
 void interp()
@@ -864,6 +937,10 @@ void interp()
                 get_variable(get_dptr());
                 break;
             }
+            case Op_Deref: {
+                get_deref(get_dptr());
+                break;
+            }
             case Op_MoveLabel: {
                 word i = GetWord;
                 curr_pf->lab[i] = GetAddr;
@@ -871,59 +948,158 @@ void interp()
             }
 
             /* Monogenic binary ops */
-            case Op_Cat:
-            case Op_Diff:
-            case Op_Div:
-            case Op_Inter:
-            case Op_Lconcat:
-            case Op_Minus:
-            case Op_Mod:
-            case Op_Mult:
-            case Op_Plus:
-            case Op_Power:
+            case Op_Cat: {
+                quick_binary_mgop(Qcater);
+                break;
+            }
+            case Op_Diff: {
+                quick_binary_mgop(Qdiff);
+                break;
+            }
+            case Op_Div: {
+                quick_binary_mgop(Qdivide);
+                break;
+            }
+            case Op_Inter: {
+                quick_binary_mgop(Qinter);
+                break;
+            }
+            case Op_Lconcat: {
+                quick_binary_mgop(Qlconcat);
+                break;
+            }
+            case Op_Minus: {
+                quick_binary_mgop(Qminus);
+                break;
+            }
+            case Op_Mod: {
+                quick_binary_mgop(Qmod);
+                break;
+            }
+            case Op_Mult: {
+                quick_binary_mgop(Qmult);
+                break;
+            }
+            case Op_Plus: {
+                quick_binary_mgop(Qplus);
+                break;
+            }
+            case Op_Power: {
+                quick_binary_mgop(Qpowr);
+                break;
+            }
             case Op_Unions: {
-                do_mgop(2);
+                quick_binary_mgop(Qunion);
                 break;
             }
 
             /* Binary ops */
-            case Op_Asgn:
-            case Op_Eqv:
-            case Op_Subsc:
-            case Op_Lexeq:
-            case Op_Lexge:
-            case Op_Lexgt:
-            case Op_Lexle:
-            case Op_Lexlt:
-            case Op_Lexne:
-            case Op_Neqv:
-            case Op_Numeq:
-            case Op_Numge:
-            case Op_Numgt:
-            case Op_Numle:
-            case Op_Numlt:
-            case Op_Numne: 
+            case Op_Eqv: {
+                quick_binary_op(Qeqv);
+                break;
+            }
+            case Op_Lexeq: {
+                quick_binary_op(Qlexeq);
+                break;
+            }
+            case Op_Lexge: {
+                quick_binary_op(Qlexge);
+                break;
+            }
+            case Op_Lexgt: {
+                quick_binary_op(Qlexgt);
+                break;
+            }
+            case Op_Lexle: {
+                quick_binary_op(Qlexle);
+                break;
+            }
+            case Op_Lexlt: {
+                quick_binary_op(Qlexlt);
+                break;
+            }
+            case Op_Lexne: {
+                quick_binary_op(Qlexne);
+                break;
+            }
+            case Op_Neqv: {
+                quick_binary_op(Qneqv);
+                break;
+            }
+            case Op_Numeq: {
+                quick_binary_op(Qnumeq);
+                break;
+            }
+            case Op_Numge: {
+                quick_binary_op(Qnumge);
+                break;
+            }
+            case Op_Numgt: {
+                quick_binary_op(Qnumgt);
+                break;
+            }
+            case Op_Numle: {
+                quick_binary_op(Qnumle);
+                break;
+            }
+            case Op_Numlt: {
+                quick_binary_op(Qnumlt);
+                break;
+            }
+            case Op_Numne:  {
+                quick_binary_op(Qnumne);
+                break;
+            }
+            case Op_Asgn: {
+                quick_binary_op_underef(Qasgn);
+                break;
+            }
             case Op_Swap: {
-                do_op(2);
+                quick_binary_op_underef(Qswap);
+                break;
+            }
+            case Op_Subsc: {
+                quick_binary_op_underef_rval(Qsubsc);
                 break;
             }
 
             /* Monogenic unary ops */
-            case Op_Value:
-            case Op_Size:
-            case Op_Refresh:
-            case Op_Number:
-            case Op_Compl:
+            case Op_Value: {
+                quick_unary_mgop(Qvalue);
+                break;
+            }
+            case Op_Size: {
+                quick_unary_mgop(Qsize);
+                break;
+            }
+            case Op_Refresh: {
+                quick_unary_mgop(Qrefresh);
+                break;
+            }
+            case Op_Number: {
+                quick_unary_mgop(Qnumber);
+                break;
+            }
+            case Op_Compl: {
+                quick_unary_mgop(Qcompl);
+                break;
+            }
             case Op_Neg: {
-                do_mgop(1);
+                quick_unary_mgop(Qneg);
                 break;
             }
 
             /* Unary ops */
-            case Op_Nonnull:
-            case Op_Random:
             case Op_Null: {
-                do_op(1);
+                quick_unary_op_underef(Qnull);
+                break;
+            }
+            case Op_Nonnull:{
+                quick_unary_op_underef(Qnonnull);
+                break;
+            }
+            case Op_Random: {
+                quick_unary_op_underef_rval(Qrandom);
                 break;
             }
 
@@ -947,7 +1123,7 @@ void interp()
             }
 
             case Op_Sect: {
-                do_op(3);
+                quick_ternary_op_underef_rval(Qsect);
                 break;
             }
 
@@ -1211,61 +1387,22 @@ void interp()
             }
 
             case Op_TCaseInit: {
-                dptr tbl = (dptr)GetAddr;
-                word d = GetWord;
-                MemProtect(BlkLoc(*tbl) = hmake(T_Table, 0, d));
-                tbl->dword = D_Table;
-                MakeInt(d, &TableBlk(*tbl).defvalue);
+                do_tcaseinit();
                 break;
             }
 
             case Op_TCaseInsert: {
-                tended struct descrip val;
-                dptr tbl = (dptr)GetAddr;
-                struct descrip entry;
-                get_deref(&val);
-                MakeInt(GetWord, &entry);
-                table_insert(tbl, &val, &entry, 0);
+                do_tcaseinsert();
                 break;
             }
 
             case Op_TCaseChoose: {
-                tended struct descrip val;
-                uword hn;
-                word off;
-                int res;
-                union block **dp1;
-                dptr tbl = (dptr)GetAddr;
-                get_deref(&val);
-                ++ipc;            /* tblc */
-                hn = hash(&val);
-                dp1 = memb(BlkLoc(*tbl), &val, hn, &res);
-                if (res)
-                    off = IntVal((*dp1)->telem.tval);
-                else
-                    off = IntVal(TableBlk(*tbl).defvalue);
-                ipc = (word *)ipc[off];
+                do_tcasechoose();
                 break;
             }
 
             case Op_TCaseChoosex: {
-                tended struct descrip val;
-                uword hn;
-                word off, labno;
-                int res;
-                union block **dp1;
-                dptr tbl = (dptr)GetAddr;
-                get_deref(&val);
-                labno = GetWord;
-                ++ipc;            /* tblc */
-                hn = hash(&val);
-                dp1 = memb(BlkLoc(*tbl), &val, hn, &res);
-                if (res)
-                    off = IntVal((*dp1)->telem.tval);
-                else
-                    off = IntVal(TableBlk(*tbl).defvalue);
-                curr_pf->lab[labno] = (word *)ipc[2 * off + 1];
-                ipc = (word *)ipc[2 * off];
+                do_tcasechoosex();
                 break;
             }
 

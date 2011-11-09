@@ -69,38 +69,21 @@
 /*
  * Macros to ease coding in which every X call must be done twice.
  */
-#define RENDER2(func,v1,v2) {\
-   if (stdwin) func(stddpy, stdwin, stdgc, v1, v2); \
-   func(stddpy, stdpix, stdgc, v1, v2);}
-#define RENDER3(func,v1,v2,v3) {\
-   if (stdwin) func(stddpy, stdwin, stdgc, v1, v2, v3); \
-   func(stddpy, stdpix, stdgc, v1, v2, v3);}
-#define RENDER4(func,v1,v2,v3,v4) {\
-   if (stdwin) func(stddpy, stdwin, stdgc, v1, v2, v3, v4); \
-   func(stddpy, stdpix, stdgc, v1, v2, v3, v4);}
-#define RENDER6(func,v1,v2,v3,v4,v5,v6) {\
-   if (stdwin) func(stddpy, stdwin, stdgc, v1, v2, v3, v4, v5, v6); \
-   func(stddpy, stdpix, stdgc, v1, v2, v3, v4, v5, v6);}
-#define RENDER7(func,v1,v2,v3,v4,v5,v6,v7) {\
-   if (stdwin) func(stddpy, stdwin, stdgc, v1, v2, v3, v4, v5, v6, v7); \
-   func(stddpy, stdpix, stdgc, v1, v2, v3, v4, v5, v6, v7);}
-
-
-/*
- * Macros to perform direct window system calls from graphics routines
- */
-#define STDLOCALS(w) \
-   GC      stdgc;   \
-   Display *stddpy; \
-   Window  stdwin; \
-   Pixmap  stdpix;\
-   wcp wc = (w)->context; \
-   wsp ws = (w)->window; \
-   wdp wd = ws->display; \
-   stdgc  = wc->gc; \
-   stddpy = wd->display; \
-   stdwin  = ws->win; \
-   stdpix  = ws->pix;
+#define RENDER2(W,func,v1,v2) {                    \
+   if (W->window->win) func(W->window->display->display, W->window->win, W->context->gc, v1, v2); \
+   func(W->window->display->display, W->window->pix, W->context->gc, v1, v2);}
+#define RENDER3(W,func,v1,v2,v3) {                     \
+   if (W->window->win) func(W->window->display->display, W->window->win, W->context->gc, v1, v2, v3); \
+   func(W->window->display->display, W->window->pix, W->context->gc, v1, v2, v3);}
+#define RENDER4(W,func,v1,v2,v3,v4) {                      \
+   if (W->window->win) func(W->window->display->display, W->window->win, W->context->gc, v1, v2, v3, v4); \
+   func(W->window->display->display, W->window->pix, W->context->gc, v1, v2, v3, v4);}
+#define RENDER6(W,func,v1,v2,v3,v4,v5,v6) {                        \
+   if (W->window->win) func(W->window->display->display, W->window->win, W->context->gc, v1, v2, v3, v4, v5, v6); \
+   func(W->window->display->display, W->window->pix, W->context->gc, v1, v2, v3, v4, v5, v6);}
+#define RENDER7(W,func,v1,v2,v3,v4,v5,v6,v7) {                         \
+   if (W->window->win) func(W->window->display->display, W->window->win, W->context->gc, v1, v2, v3, v4, v5, v6, v7); \
+   func(W->window->display->display, W->window->pix, W->context->gc, v1, v2, v3, v4, v5, v6, v7);}
 
 struct SharedColor {
    int r, g, b;         /* rgb of c */

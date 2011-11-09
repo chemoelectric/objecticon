@@ -1,0 +1,41 @@
+package ipl.tasks
+
+# A semaphore implementation using {Task}s.
+#
+class Semaphore()
+   private readable n
+   private wl
+
+   # Perform a wait on the semaphore.
+   # @param t the current {Task} which may be put to sleep
+   # @param timeout the optional timeout
+   # @return {&null}, but fails on timeout/interrupt to {t}
+   public wait(t, timeout)
+      local i
+      if (n -:= 1) < 0 then {
+         put(wl, t)
+         t.sleep(timeout)
+         if i := keyof(wl, t) then {
+            # Interrupted/timeout
+            delete(wl, i)
+            n +:= 1
+            fail
+         }
+      }
+      return
+   end
+
+   # Perform a signal on the semaphore.
+   public signal()
+      n +:= 1
+      get(wl).notify()
+   end
+
+   # Create a new semaphore with initial value {n}, default 0.
+   public new(n)
+      /n := 0
+      self.n := n
+      wl := []
+      return
+   end
+end

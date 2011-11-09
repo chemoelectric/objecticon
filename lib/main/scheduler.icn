@@ -76,13 +76,13 @@ class Task()
       sleep_until,
       last_sleep,
       poll_until,
-      poll_req,
-      interrupt_flag
+      poll_req
    package readable
       coex,
       state,
       poll_err,
-      poll_res
+      poll_res,
+      interrupt_flag
 
    # If a task is currently sleeping, then this alters the time it
    # will sleep for, behaving as though the original call to {sleep}
@@ -91,7 +91,9 @@ class Task()
    # @param n The time to wait for.  If {&null}, wait forever.
    #
    public change_sleep(n)
-      sleep_until := (\last_sleep + \n) | &null
+      \coex | runerr("change_sleep called on a currently active task")
+      if is_sleeping() then
+         sleep_until := (last_sleep + \n) | &null
    end
 
    # Succeed iff the task is currently active.
@@ -141,19 +143,21 @@ class Task()
       self.poll_req := l
       self.interrupt_flag := &null
       scheduler.now_poll(self)
-      return if \poll_err then
-         error(poll_err)
-      else if \interrupt_flag then
+      return if \interrupt_flag then
          error("Interrupted")
+      else if \poll_err then
+         error(poll_err)
       else
          .self.poll_res
    end
 
    # Suspend this task, which must be the currently scheduled task,
-   # for {n} milliseconds.
+   # for {n} milliseconds.  If the task is interrupted this method
+   # fails, setting {&why}, otherwise it succeeds and returns {&null}.
    #
    # @param n The time to wait for.  If {&null}, wait forever (or until
    # @        interrupted).
+   # @return {&null} when the task awakes; fails on interrupt
    #
    public sleep(n)
       self === scheduler.curr_task | runerr("sleep called on task which is not current")
@@ -162,16 +166,27 @@ class Task()
       sleep_until := (last_sleep + \n) | &null
       self.interrupt_flag := &null
       scheduler.now_sleep(self)
+      if \interrupt_flag then
+         return error("Interrupted")
+      return
    end
 
    # Interrupt the task, which may not be currently active.  If the
    # task is currently sleeping or polling, then it is placed back in
-   # the ready state by the scheduler at the next opportunity.  The
-   # flag causes the original {poll} call to fail, setting {&why}.
+   # the ready state.  This causes the original {poll} or {sleep} call
+   # to fail, setting {&why}.
    #
    public interrupt()
       \coex | runerr("interrupt called on a currently active task")
-      self.interrupt_flag := 1
+      scheduler.interrupt(self)
+   end
+
+   # If the task is sleeping, then place it immediately back into the
+   # ready state.  The task must not be currently active.
+   #
+   public notify()
+      \coex | runerr("notify called on a currently active task")
+      scheduler.notify(self)
    end
 
    # Suspend this task, which must be the currently scheduled task,
@@ -233,7 +248,6 @@ class Scheduler()
    private readable 
       coex,
       curr_task
-
    private
       ready,
       sleeping,
@@ -268,6 +282,18 @@ class Scheduler()
       delete(\t.state, t)
       t.state := x
       insert(t.state, t)
+   end
+
+   package interrupt(t)
+      if member(sleeping | polling, t) then {
+         t.interrupt_flag := 1
+         set_state(t, ready)
+      }
+   end
+
+   package notify(t)
+      if member(sleeping, t) then
+         set_state(t, ready)
    end
 
    package now_sleep(t)
@@ -333,7 +359,7 @@ class Scheduler()
          if *sleeping > 0 then {
             curr_time := Prog.get_runtime_millis()
             every t := !sleeping do {
-               if \t.interrupt_flag | (curr_time >= \t.sleep_until) then
+               if curr_time >= \t.sleep_until then
                   set_state(t, ready)
             }
             if *ready > 0 then
@@ -349,7 +375,7 @@ class Scheduler()
                if /r then {
                   # Process timeout for each task.
                   every t := !polling do {
-                     if \t.interrupt_flag | (curr_time > \t.poll_until) then {
+                     if curr_time > \t.poll_until then {
                         set_state(t, ready)
                         t.poll_err := t.poll_res := &null
                      }
@@ -365,7 +391,7 @@ class Scheduler()
                         set_state(t, ready)
                         t.poll_res := x
                         t.poll_err := &null
-                     } else if \t.interrupt_flag | (curr_time > \t.poll_until) then {
+                     } else if curr_time > \t.poll_until then {
                         set_state(t, ready)
                         t.poll_err := t.poll_res := &null
                      }

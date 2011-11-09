@@ -749,6 +749,13 @@ static void lemitcode()
                     emit_ir_var(x->rhs, "rhs");
                     break;
                 }
+                case Ir_Deref: {
+                    struct ir_deref *x = (struct ir_deref *)ir;
+                    out_op(Op_Deref);
+                    emit_ir_var(x->lhs, "lhs");
+                    emit_ir_var(x->rhs, "rhs");
+                    break;
+                }
                 case Ir_MoveLabel: {
                     struct ir_movelabel *x = (struct ir_movelabel *)ir;
                     out_op(Op_MoveLabel);
@@ -766,7 +773,10 @@ static void lemitcode()
                         emit_ir_var(x->arg2, "arg2");
                     if (x->arg3)
                         emit_ir_var(x->arg3, "arg3");
-                    word_field(x->rval, "rval");
+                    if (x->operation == Uop_Subsc ||
+                        x->operation == Uop_Random ||
+                        x->operation == Uop_Sect)
+                        word_field(x->rval, "rval");
                     labout(x->fail_label, "fail");
                     break;
                 }
@@ -778,7 +788,6 @@ static void lemitcode()
                     emit_ir_var(x->arg1, "arg1");
                     if (x->arg2)
                         emit_ir_var(x->arg2, "arg2");
-                    word_field(x->rval, "rval");
                     break;
                 }
                 case Ir_OpClo: {

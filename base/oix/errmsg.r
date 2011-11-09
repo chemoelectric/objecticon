@@ -224,7 +224,7 @@ void err_msg(int n, dptr v)
         }
         else {
             /* Clear the x* variables for the next error */
-            xexpr = xargp = xfield = 0;
+            xarg1 = xarg2 = xarg3 = xexpr = xargp = xfield = 0;
             /* Push the frame for the error handler and return to the interpreter loop */
             activate_handler();
             return;

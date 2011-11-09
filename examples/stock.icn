@@ -205,7 +205,7 @@ class StockDialog(Dialog)
       add_sym(symbol_field.get_contents())
       symbol_field.set_contents("")
       # If the ticker is sleeping, wake it up.
-      ticker.change_sleep(0)
+      ticker.notify()
    end
 
    private setup()

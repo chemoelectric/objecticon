@@ -82,10 +82,6 @@ procedure reswords()
    return t
 end
 
-procedure tok_not_recognized()
-   lex_error("token not recognized")
-end
-
 procedure lex_error(msg)
    yynerrs +:= 1
    (\yyerror | write)(msg)
@@ -99,42 +95,9 @@ procedure set_encoding()
 end
 
 procedure yylex2()
-   static punc_table
    initial {
       init_csets()
       reswords := reswords()
-      punc_table := table(tok_not_recognized)
-      punc_table["'"] := do_csetlit
-      punc_table["\""] := do_strlit
-      punc_table["!"] := do_bang
-      punc_table["%"] := do_mod
-      punc_table["&"] := do_and
-      punc_table["*"] := do_star
-      punc_table["+"] := do_plus
-      punc_table["-"] := do_minus
-      punc_table["."] := do_dot
-      punc_table["/"] := do_slash
-      punc_table[":"] := do_colon
-      punc_table["<"] := do_less
-      punc_table["="] := do_equal
-      punc_table[">"] := do_greater
-      punc_table["?"] := do_qmark
-      punc_table["@"] := do_at
-      punc_table["\\"] := do_backslash
-      punc_table["^"] := do_caret
-      punc_table["|"] := do_or
-      punc_table["~"] := do_tilde
-      punc_table["("] := do_lparen
-      punc_table[")"] := do_rparen
-      punc_table["["] := do_lbrack
-      punc_table["]"] := do_rbrack
-      punc_table["{"] := do_lbrace
-      punc_table["}"] := do_rbrace
-      punc_table[","] := do_comma
-      punc_table[";"] := do_semi
-      every punc_table[!&digits] := do_digits
-      every punc_table["_" | !&letters] := do_letters
-      every punc_table["u"|"U"] := do_u
    }
 
    repeat {
@@ -178,7 +141,40 @@ procedure yylex2()
 
       yycolno := &pos - yylinestart
       yytext := move(1)
-      return punc_table[yytext]()
+      return case yytext of {
+         "'": do_csetlit()
+         "\"": do_strlit()
+         "!": do_bang()
+         "%": do_mod()
+         "&": do_and()
+         "*": do_star()
+         "+": do_plus()
+         "-": do_minus()
+         ".": do_dot()
+         "/": do_slash()
+         ":": do_colon()
+         "<": do_less()
+         "=": do_equal()
+         ">": do_greater()
+         "?": do_qmark()
+         "@": do_at()
+         "\\": do_backslash()
+         "^": do_caret()
+         "|": do_or()
+         "~": do_tilde()
+         "(": do_lparen()
+         ")": do_rparen()
+         "[": do_lbrack()
+         "]": do_rbrack()
+         "{": do_lbrace()
+         "}": do_rbrace()
+         ",": do_comma()
+         ";": do_semi()
+         !&digits: do_digits()
+         "u"|"U" : do_u()
+         "_" | !&letters: do_letters()
+         default: lex_error("token not recognized")
+      }
    }
 end
 

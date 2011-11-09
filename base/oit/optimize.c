@@ -578,7 +578,6 @@ static int changes(struct lnode *n)
             case Uop_Augdiv:
             case Uop_Augmult:
             case Uop_Augunions: 
-            case Uop_Augconj: 
             case Uop_Augactivate: 
             case Uop_Augscan: {
                 struct lnode_2 *x = (struct lnode_2 *)n->parent;
@@ -1347,6 +1346,9 @@ static int is_repeatable(struct lnode *n)
             return 1;
         }
 
+        case Uop_Random:
+            return 0;
+
         case Uop_Value:
         case Uop_Nonnull:
         case Uop_Bang:
@@ -1356,7 +1358,6 @@ static int is_repeatable(struct lnode *n)
         case Uop_Neg:
         case Uop_Tabmat:
         case Uop_Size:
-        case Uop_Random:
         case Uop_Repeat: 
         case Uop_While: 
         case Uop_Null: 
@@ -1424,7 +1425,6 @@ static int is_repeatable(struct lnode *n)
         case Uop_Augmult:
         case Uop_Augunions: 
         case Uop_Conj: 
-        case Uop_Augconj: 
         case Uop_If: 
         case Uop_Whiledo: 
         case Uop_Alt: 
@@ -1492,6 +1492,7 @@ static void fold_case(struct lnode *n)
 {
     struct lnode_case *x = (struct lnode_case *)n;
     struct literal l;
+    int i;
 
     if (is_repeatable_case(x)) {
         x->use_tcase = 1;
@@ -1502,11 +1503,22 @@ static void fold_case(struct lnode *n)
             fprintf(stderr, "Case at %s:%d won't use tcase optimization\n", n->loc.file,n->loc.line);
     }
 
-    if (!get_literal(x->expr, &l))
-        return;
-    if (l.type == FAIL)
-        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
-    free_literal(&l);
+    if (get_literal(x->expr, &l)) {
+        if (l.type == FAIL) {
+            replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+            free_literal(&l);
+            return;
+        }
+        free_literal(&l);
+    }
+
+    for (i = 0; i < x->n; ++i) {
+        if (get_literal(x->selector[i], &l)) {
+            if (l.type == FAIL)
+                replace_node(x->clause[i], (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+            free_literal(&l);
+        }
+    }
 }
 
 static void fold_simple1(struct lnode *n)

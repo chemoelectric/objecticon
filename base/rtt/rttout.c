@@ -63,6 +63,7 @@ static void copy_tmp(void);
 static void print_func_vars(void);
 
 static int in_struct = 0;
+static int in_quick = 0;
 static int lab_seq = 0;
  
 int op_type = OrdFunc;  /* type of operation */
@@ -76,14 +77,12 @@ static int nxt_cbuf;           /* next cset buffer index */
 #define ForceNl() nl = 1;
 static int nl = 0;             /* flag indicating the a new-line should be output */
 static int no_nl = 0;   /* flag to suppress line directives */
+static int nparms = 0;     /* number of params for operator/function */
 
 static int ntend;       /* number of tended descriptor needed */
 static char *tend_struct_loc; /* expression to access struct of tended descriptors */
 static char *tend_loc; /* expression to access array tended descriptors */
-static char *args_loc;  /* expression to access args array */
 static char *n_args;    /* expression for num args */
-static int args_off;  /* index in args_loc of first arg (0 or 1) */
-static int varargs = 0; /* flag: operation takes variable number of arguments */
 
 static int no_ret_val;  /* function has return statement with no value */
 static struct node *fnc_head; /* header of function being "copied" to output */
@@ -253,21 +252,12 @@ int indent;
 static void untend(indent)
 int indent;
    {
-   if (op_type != OrdFunc)
+   if (op_type != OrdFunc && !in_quick)
        return;
    ForceNl();
    prt_str("tend = ", indent);
    fprintf(out_file, "%s.previous;", tend_struct_loc);
    ForceNl();
-   /*
-    * For varargs operations, the tended structure might have been
-    *  malloced. If so, it must be freed.
-    */
-   if (varargs) {
-      prt_str("if (r_tendp != (struct tend_desc *)&r_tend)", indent);
-      ForceNl();
-      prt_str("free((pointer)r_tendp);", 2 * indent);
-      }
    }
 
 /*
@@ -312,8 +302,10 @@ int indent;
          /*
           * This is a direct access to an operation parameter.
           */
-         prt_str(args_loc, indent);
-         fprintf(out_file, "[%d]", sym->u.param_info.param_num + args_off);
+          if (in_quick)
+              fprintf(out_file, "(*_arg%d)", sym->u.param_info.param_num);
+          else
+              fprintf(out_file, "frame->args[%d]", sym->u.param_info.param_num);
          }
       }
    prt_str(access, indent);  /* access the vword for tended pointers */
@@ -334,7 +326,6 @@ int indent;
    t = n->tok;
    tok_line(t, indent); /* synchronize file name and line nuber */
    sym = n->u[0].sym;
-
    switch (sym->id_type & ~ByRef) {
       case TndDesc:
          /*
@@ -390,8 +381,9 @@ int indent;
                else
                    fprintf(out_file, "r_d%d", sym->u.param_info.param_num);
                break;
-            default:
+             default: {
                errt2(t, "Conflicting conversions for: ", t->image);
+             }
             }
          break;
       case RtParm | VarPrm:
@@ -403,7 +395,7 @@ int indent;
          if (sym->t_indx >= 0)
             fprintf(out_file, "%s[%d])", tend_loc, sym->t_indx);
          else
-            fprintf(out_file, "%s[%d])", args_loc, sym->u.param_info.param_num + args_off);
+            fprintf(out_file, "frame->args[%d])", sym->u.param_info.param_num);
          break;
       case VArgLen:
          /*
@@ -507,6 +499,15 @@ int indent;
    tok_line(t, indent);  /* synchronize file name and line number */
    prt_str("{", indent);
    ForceNl();
+   if (in_quick) {
+       int i;
+       for (i = 0; i < nparms; ++i) {
+           prt_str("xarg", indent);
+           fprintf(out_file, "%d = _arg%d;", i+1, i);
+           ForceNl();
+       }
+       ForceNl();
+   }
    prt_str("err_msg(", indent);
    c_walk(num, indent, 0);                /* error number */
    if (val == NULL)
@@ -519,7 +520,10 @@ int indent;
    /*
     * Now do a return so that any error handler is run (err_msg pushes the frame).
     */
-   prt_str("frame->exhausted = 1;", indent);
+   if (ntend != 0)
+       untend(indent);
+   ForceNl();
+   if (!in_quick) prt_str("frame->exhausted = 1;", indent);
    ForceNl();
    prt_str("return 1;", indent);
    ForceNl();
@@ -876,7 +880,10 @@ static void ret_value(struct token *t, struct node *n, int indent)
     ForceNl();
     ret_value1(t, n, indent);
     ForceNl();
-    prt_str("if (frame->lhs) *frame->lhs = result;", indent);
+    if (in_quick)
+        prt_str("if (_lhs) *_lhs = result;", indent);
+    else
+        prt_str("if (frame->lhs) *frame->lhs = result;", indent);
 }
 
 static void ret_value1(struct token *t, struct node *n, int indent)
@@ -1087,6 +1094,8 @@ int brace;
       if (!brace)
          prt_str("{", indent);
       ForceNl();
+      untend(indent);
+      ForceNl();
       prt_str("return 0;", indent);
       if (!brace) {
          ForceNl();
@@ -1125,11 +1134,9 @@ static int in_frame(struct node *tqual)
 static void decl_walk3(struct node *tqual, struct node *dcltor, int indent)
    {
    struct node *part_dcltor;
-   struct node *init = NULL;
    struct token *t;
 
    if (dcltor->nd_id == BinryNd && dcltor->tok->tok_id == '=') {
-      init = dcltor->u[1].child;
       dcltor = dcltor->u[0].child;
       }
    part_dcltor = dcltor;
@@ -1251,8 +1258,12 @@ int brace;
                     /* Must be an identifier as a declaration which added an entry to the sym table */
                     tok_line(t, indent);
                     fprintf(out_file, "L%d_%s", n->u[0].sym->f_indx,t->image);
-                } else if (t->tok_id != TokRegister || !in_struct)  /* Don't print "register" in header */
-                    prt_tok(t, indent);
+                } else if (t->tok_id != TokRegister || !in_struct) { /* Don't print "register" in header */
+                    if (strcmp(t->image, "_rval") == 0 && op_type != OrdFunc && !in_quick)
+                        fprintf(out_file, "frame->rval");
+                    else
+                        prt_tok(t, indent);
+                }
 	       if (t->tok_id == Continue)
 		  prt_str(";", indent);
                return 1;
@@ -1390,7 +1401,7 @@ int brace;
                   if (ntend != 0)
                      untend(indent);
                   ForceNl();
-                  prt_str("frame->exhausted = 1;", indent);
+                  if (!in_quick) prt_str("frame->exhausted = 1;", indent);
                   ForceNl();
                   prt_str("return 1;", indent);
                   ForceNl();
@@ -2571,7 +2582,6 @@ int brace;
  */
 void spcl_dcls()
 {
-    varargs = 0;
     tend_ary(ntend);
 
     tend_struct_loc = "r_tend";
@@ -2992,21 +3002,19 @@ static void interp_def(n)
 struct node *n;
    {
    struct sym_entry *sym;
-   int nparms;
    int has_underef;
    int vararg = 0;
    char letter = 0;
    char *name;
    char *s;
+   struct parminfo *saved;
 
    /*
     * Note how result location is accessed in generated code.
     */
    tend_struct_loc = "???";
    tend_loc = "frame->tend";
-   args_loc = "frame->args";
    n_args = "frame->nargs";
-   args_off = 0;
 
    /*
     * Determine if the operation has any undereferenced parameters.
@@ -3122,12 +3130,12 @@ struct node *n;
              */
             if (sym->t_indx == -1) {
                 chk_nl(IndentInc * 2);
-                fprintf(out_file, "Deref(%s[%d]);", args_loc, sym->u.param_info.param_num + args_off);
+                fprintf(out_file, "Deref(frame->args[%d]);", sym->u.param_info.param_num);
                }
             else {
                 chk_nl(IndentInc * 2);
-                fprintf(out_file, "deref(&%s[%d], &%s[%d]);",
-                        args_loc, sym->u.param_info.param_num + args_off, 
+                fprintf(out_file, "deref(&frame->args[%d], &%s[%d]);",
+                        sym->u.param_info.param_num, 
                         tend_loc, sym->t_indx);
                }
             }
@@ -3135,6 +3143,9 @@ struct node *n;
          sym = sym->u.param_info.next;
          }
       }
+
+   saved = new_prmloc();
+   sv_prmloc(saved);
 
    /*
     * Finish setting up the tended array structure and link it into the tended
@@ -3209,7 +3220,59 @@ struct node *n;
    }
 
 
-   }
+   if ((op_type == Operator || op_type == Keyword) && !op_generator) {
+       int i;
+       if (op_type == Keyword)
+           fprintf(out_file, "int R%s(dptr _lhs)\n{\n", name);
+       else {
+           fprintf(out_file, "int Q%s(dptr _lhs", name);
+           for (i = 0; i < nparms; ++i)
+               fprintf(out_file, ", dptr _arg%d", i);
+           if (strcmp(name, "random") == 0 ||
+                strcmp(name, "sect") == 0 ||
+                strcmp(name, "subsc") == 0)
+               fprintf(out_file, ", int _rval");
+           fprintf(out_file, ")\n{\n");
+       }
+       ForceNl();
+       print_func_vars();
+       ForceNl();
+       ld_prmloc(saved);
+       in_quick = 1;
+       spcl_dcls();                         /* tended declarations */
+       if (has_underef) {
+           sym = params;
+           /*
+            * Produce code to dereference any fixed parameters that need to be.
+            */
+           while (sym != NULL) {
+               if (sym->id_type & DrfPrm) {
+                   /*
+                    * Tended index of -1 indicates that the parameter can be
+                    *  dereferened in-place (this is the usual case).
+                    */
+                   if (sym->t_indx == -1) {
+                       chk_nl(IndentInc * 2);
+                       fprintf(out_file, "Deref(*_arg%d);", sym->u.param_info.param_num);
+                   }
+                   else {
+                       chk_nl(IndentInc * 2);
+                       fprintf(out_file, "deref(_arg%d, &%s[%d]);",
+                               sym->u.param_info.param_num, 
+                               tend_loc, sym->t_indx);
+                   }
+               }
+               ForceNl();
+               sym = sym->u.param_info.next;
+           }
+       }
+
+       rt_walk(n, IndentInc, 0);
+       in_quick = 0;
+       fprintf(out_file, "\n}\n");
+
+   }       
+}
 
 
 /*
