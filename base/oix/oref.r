@@ -34,7 +34,7 @@ operator ! bang(underef x -> dx)
      string : {
             char ch;
             if (is:variable(x)) {
-                if (frame->rval) {
+                if (_rval) {
                     for (i = 1; i <= StrLen(dx); i++) {
                         ch = *(StrLoc(dx) + i - 1);
                         suspend string(1, &allchars[ch & 0xFF]);
@@ -117,7 +117,7 @@ operator ! bang(underef x -> dx)
 
      ucs: {
           if (is:variable(x)) {
-              if (frame->rval) {
+              if (_rval) {
                   for (i = 1; i <= UcsBlk(dx).length; i++) {
                       suspend ucs(make_ucs_substring(&UcsBlk(dx), i, 1));
                       deref(&x, &dx);
@@ -208,7 +208,7 @@ operator ? random(underef x -> dx)
                fail;
             rval = RandVal;
             rval *= val;
-            if (is:variable(x) && !frame->rval)
+            if (is:variable(x) && !_rval)
                 return tvsubs(make_tvsubs(&x, (word)rval + 1, 1));
             else
                 return string(1, StrLoc(dx)+(word)rval);
@@ -224,7 +224,7 @@ operator ? random(underef x -> dx)
             rval = RandVal;
             rval *= val;
             i = (word)rval + 1;
-            if (is:variable(x) && !frame->rval)
+            if (is:variable(x) && !_rval)
                 return tvsubs(make_tvsubs(&x, i, 1));
             else
                 return ucs(make_ucs_substring(&UcsBlk(dx), i, 1));
@@ -424,7 +424,7 @@ operator [:] sect(underef x -> dx, i, j)
 
      ucs: {
          word t;
-         if (is:variable(x) && !frame->rval)
+         if (is:variable(x) && !_rval)
                use_trap = 1;
 
          i = cvpos(i, UcsBlk(dx).length);
@@ -487,7 +487,7 @@ operator [:] sect(underef x -> dx, i, j)
          * x should be a string. If x is a variable, we must create a
          *  substring trapped variable.
          */
-         if (is:variable(x) && is:string(dx) && !frame->rval)
+         if (is:variable(x) && is:string(dx) && !_rval)
              use_trap = 1;
          else if (!cnv:string(dx,dx))
              runerr(131, dx);
@@ -581,7 +581,7 @@ operator [] subsc(underef x -> dx,y)
                bp = *dp1;
                return struct_var(&bp->telem.tval, bp);
             }
-            if (frame->rval)
+            if (_rval)
                 return TableBlk(dx).defvalue;
             else {
                /*
@@ -643,7 +643,7 @@ operator [] subsc(underef x -> dx,y)
 
      ucs: {
         word i;
-        if (is:variable(x) && !frame->rval)
+        if (is:variable(x) && !_rval)
             use_trap = 1;
          /*
           * Make sure that y is a C integer.
@@ -710,7 +710,7 @@ operator [] subsc(underef x -> dx,y)
           * dx must either be a string or be convertible to one. Decide
           *  whether a substring trapped variable can be created.
           */
-         if (is:variable(x) && is:string(dx) && !frame->rval)
+         if (is:variable(x) && is:string(dx) && !_rval)
             use_trap = 1;
          else if (!cnv:string(dx,dx))
             runerr(114, dx);
@@ -766,7 +766,7 @@ function back(underef x -> dx)
      string : {
             char ch;
             if (is:variable(x)) {
-                if (frame->rval) {
+                if (_rval) {
                     for (i = StrLen(dx); i > 0; i--) {
                         if (i > StrLen(dx)) {
                             i = StrLen(dx);
@@ -829,7 +829,7 @@ function back(underef x -> dx)
 
      ucs: {
           if (is:variable(x)) {
-              if (frame->rval) {
+              if (_rval) {
                   for (i = UcsBlk(dx).length; i > 0; i--) {
                       if (i > UcsBlk(dx).length) {
                           i = UcsBlk(dx).length;

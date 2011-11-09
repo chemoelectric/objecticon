@@ -28,6 +28,7 @@ dptr xexpr;
 dptr xfield;
 dptr xargp;
 int xnargs;
+dptr xarg1, xarg2, xarg3;   /* Operator args */
 
 struct ipc_line *frame_ipc_line(struct p_frame *pf)
 {
@@ -770,43 +771,36 @@ static void xtrace()
             break;
 
         case Op_Subsc:
-            xargp = curr_cf->args;
             fprintf(stderr, "   {");
-            outimage(stderr, xargp++, 0);
+            outimage(stderr, xarg1, 0);
             putc('[', stderr);
-            outimage(stderr, xargp, 0);
+            outimage(stderr, xarg2, 0);
             putc(']', stderr);
-
             putc('}', stderr);
             break;
 
         case Op_Sect:
-            xargp = curr_cf->args;
             fprintf(stderr, "   {");
-            outimage(stderr, xargp++, 0);
-
+            outimage(stderr, xarg1, 0);
             putc('[', stderr);
-
-            outimage(stderr, xargp++, 0);
+            outimage(stderr, xarg2, 0);
             putc(':', stderr);
-            outimage(stderr, xargp, 0);
-
+            outimage(stderr, xarg3, 0);
             putc(']', stderr);
-
             putc('}', stderr);
             break;
 
         case Op_ScanSave:
             fprintf(stderr, "   {");
-            outimage(stderr, xargp, 0);
+            outimage(stderr, xarg1, 0);
             fputs(" ? ..}", stderr);
             break;
 
         case Op_Activate:
             fprintf(stderr, "   {");
-            outimage(stderr, xargp, 0);
+            outimage(stderr, xarg1, 0);
             fprintf(stderr, " @ ");
-            outimage(stderr, xexpr, 0);
+            outimage(stderr, xarg2, 0);
             putc('}', stderr);
             break;
 
@@ -824,7 +818,59 @@ static void xtrace()
 
         case Op_Limit:
             fprintf(stderr, "   limit counter: ");
-            outimage(stderr, xargp, 0);
+            outimage(stderr, xarg1, 0);
+            break;
+
+        case Op_Cat: 
+        case Op_Diff: 
+        case Op_Div: 
+        case Op_Inter: 
+        case Op_Lconcat: 
+        case Op_Minus: 
+        case Op_Mod: 
+        case Op_Mult: 
+        case Op_Plus: 
+        case Op_Power: 
+        case Op_Unions: 
+        case Op_Eqv: 
+        case Op_Lexeq: 
+        case Op_Lexge: 
+        case Op_Lexgt: 
+        case Op_Lexle: 
+        case Op_Lexlt: 
+        case Op_Lexne: 
+        case Op_Neqv: 
+        case Op_Numeq: 
+        case Op_Numge: 
+        case Op_Numgt: 
+        case Op_Numle: 
+        case Op_Numlt: 
+        case Op_Numne:  
+        case Op_Asgn: 
+        case Op_Swap: 
+            fprintf(stderr, "   {");
+            outimage(stderr, xarg1, 0);
+            putc(' ', stderr);
+            putstr(stderr, opblks[curr_op]->name);
+            putc(' ', stderr);
+            outimage(stderr, xarg2, 0);
+            putc('}', stderr);
+            break;
+
+        case Op_Value: 
+        case Op_Size: 
+        case Op_Refresh: 
+        case Op_Number: 
+        case Op_Compl: 
+        case Op_Neg: 
+        case Op_Null: 
+        case Op_Nonnull:
+        case Op_Random: 
+            fprintf(stderr, "   {");
+            putstr(stderr, opblks[curr_op]->name);
+            putc(' ', stderr);
+            outimage(stderr, xarg1, 0);
+            putc('}', stderr);
             break;
 
         default: {
