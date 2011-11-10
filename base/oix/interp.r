@@ -1,14 +1,6 @@
 #include "../h/opdefs.h"
 #include "../h/opnames.h"
 
-static void quick_unary_mgop(int (*f)(dptr, dptr));
-static void quick_binary_mgop(int (*f)(dptr, dptr, dptr));
-static void quick_unary_op_underef(int (*f)(dptr, dptr));
-static void quick_unary_op_underef_rval(int (*f)(dptr, dptr, int));
-static void quick_binary_op(int (*f)(dptr, dptr, dptr));
-static void quick_binary_op_underef(int (*f)(dptr, dptr, dptr));
-static void quick_binary_op_underef_rval(int (*f)(dptr, dptr, dptr, int));
-static void quick_ternary_op_underef_rval(int (*f)(dptr, dptr, dptr, dptr, int));
 static void coact_ex(void);
 static void coact_handler();
 static void get_child_prog_result(void);
@@ -339,118 +331,14 @@ void skip_descrip()
     }
 }
 
-int Rfeatures(dptr d) { return 0; }
+void do_key_features() { syserr("Dummy func"); }
 
-#define KDef(p,n) Cat(R,p),
-int (*keyword_qfuncs[])(dptr) = {
+#define KDef(p,n) Cat(do_key_,p),
+void (*keyword_qfuncs[])(void) = {
     NULL,
 #include "../h/kdefs.h"
 };
 #undef KDef
-
-static void quick_unary_mgop(int (*f)(dptr, dptr))
-{
-    dptr lhs;
-    tended struct descrip arg;
-    lhs = get_dptr();
-    get_deref(&arg);
-    if (!f(lhs, &arg))
-        syserr("Monogenic op failed");
-}
-
-static void quick_unary_op_underef(int (*f)(dptr, dptr))
-{
-    dptr lhs;
-    tended struct descrip arg;
-    word *failure_label;
-    lhs = get_dptr();
-    get_variable(&arg);
-    failure_label = GetAddr;
-    if (!f(lhs, &arg))
-        ipc = failure_label;
-}
-
-static void quick_unary_op_underef_rval(int (*f)(dptr, dptr, int))
-{
-    dptr lhs;
-    tended struct descrip arg;
-    word *failure_label;
-    int rval;
-    lhs = get_dptr();
-    get_variable(&arg);
-    rval = GetWord;
-    failure_label = GetAddr;
-    if (!f(lhs, &arg, rval))
-        ipc = failure_label;
-}
-
-static void quick_binary_mgop(int (*f)(dptr, dptr, dptr))
-{
-    dptr lhs;
-    tended struct descrip arg1, arg2;
-    lhs = get_dptr();
-    get_deref(&arg1);
-    get_deref(&arg2);
-    if (!f(lhs, &arg1, &arg2))
-        syserr("Monogenic op failed");
-}
-
-static void quick_binary_op(int (*f)(dptr, dptr, dptr))
-{
-    dptr lhs;
-    tended struct descrip arg1, arg2;
-    word *failure_label;
-    lhs = get_dptr();
-    get_deref(&arg1);
-    get_deref(&arg2);
-    failure_label = GetAddr;
-    if (!f(lhs, &arg1, &arg2))
-        ipc = failure_label;
-}
-
-static void quick_binary_op_underef(int (*f)(dptr, dptr, dptr))
-{
-    dptr lhs;
-    tended struct descrip arg1, arg2;
-    word *failure_label;
-    lhs = get_dptr();
-    get_variable(&arg1);
-    get_variable(&arg2);
-    failure_label = GetAddr;
-    if (!f(lhs, &arg1, &arg2))
-        ipc = failure_label;
-}
-
-static void quick_binary_op_underef_rval(int (*f)(dptr, dptr, dptr, int))
-{
-    dptr lhs;
-    tended struct descrip arg1, arg2;
-    word *failure_label;
-    int rval;
-    lhs = get_dptr();
-    get_variable(&arg1);
-    get_variable(&arg2);
-    rval = GetWord;
-    failure_label = GetAddr;
-    if (!f(lhs, &arg1, &arg2, rval))
-        ipc = failure_label;
-}
-
-static void quick_ternary_op_underef_rval(int (*f)(dptr, dptr, dptr, dptr, int))
-{
-    dptr lhs;
-    tended struct descrip arg1, arg2, arg3;
-    word *failure_label;
-    int rval;
-    lhs = get_dptr();
-    get_variable(&arg1);
-    get_variable(&arg2);
-    get_variable(&arg3);
-    rval = GetWord;
-    failure_label = GetAddr;
-    if (!f(lhs, &arg1, &arg2, &arg3, rval))
-        ipc = failure_label;
-}
 
 static void do_opclo(int nargs)
 {
@@ -477,13 +365,8 @@ static void do_opclo(int nargs)
 
 static void do_keyop()
 {
-    dptr lhs;
-    word *failure_label;
-    int (*f)(dptr) = keyword_qfuncs[GetWord];
-    lhs = get_dptr();
-    failure_label = GetAddr;
-    if (!f(lhs))
-        ipc = failure_label;
+    void (*f)(void) = keyword_qfuncs[GetWord];
+    f();
 }
 
 static void do_keyclo()
@@ -946,157 +829,157 @@ void interp()
 
             /* Monogenic binary ops */
             case Op_Cat: {
-                quick_binary_mgop(Qcat);
+                do_op_cat();
                 break;
             }
             case Op_Diff: {
-                quick_binary_mgop(Qdiff);
+                do_op_diff();
                 break;
             }
             case Op_Div: {
-                quick_binary_mgop(Qdiv);
+                do_op_div();
                 break;
             }
             case Op_Inter: {
-                quick_binary_mgop(Qinter);
+                do_op_inter();
                 break;
             }
             case Op_Lconcat: {
-                quick_binary_mgop(Qlconcat);
+                do_op_lconcat();
                 break;
             }
             case Op_Minus: {
-                quick_binary_mgop(Qminus);
+                do_op_minus();
                 break;
             }
             case Op_Mod: {
-                quick_binary_mgop(Qmod);
+                do_op_mod();
                 break;
             }
             case Op_Mult: {
-                quick_binary_mgop(Qmult);
+                do_op_mult();
                 break;
             }
             case Op_Plus: {
-                quick_binary_mgop(Qplus);
+                do_op_plus();
                 break;
             }
             case Op_Power: {
-                quick_binary_mgop(Qpower);
+                do_op_power();
                 break;
             }
             case Op_Union: {
-                quick_binary_mgop(Qunion);
+                do_op_union();
                 break;
             }
 
             /* Binary ops */
             case Op_Eqv: {
-                quick_binary_op(Qeqv);
+                do_op_eqv();
                 break;
             }
             case Op_Lexeq: {
-                quick_binary_op(Qlexeq);
+                do_op_lexeq();
                 break;
             }
             case Op_Lexge: {
-                quick_binary_op(Qlexge);
+                do_op_lexge();
                 break;
             }
             case Op_Lexgt: {
-                quick_binary_op(Qlexgt);
+                do_op_lexgt();
                 break;
             }
             case Op_Lexle: {
-                quick_binary_op(Qlexle);
+                do_op_lexle();
                 break;
             }
             case Op_Lexlt: {
-                quick_binary_op(Qlexlt);
+                do_op_lexlt();
                 break;
             }
             case Op_Lexne: {
-                quick_binary_op(Qlexne);
+                do_op_lexne();
                 break;
             }
             case Op_Neqv: {
-                quick_binary_op(Qneqv);
+                do_op_neqv();
                 break;
             }
             case Op_Numeq: {
-                quick_binary_op(Qnumeq);
+                do_op_numeq();
                 break;
             }
             case Op_Numge: {
-                quick_binary_op(Qnumge);
+                do_op_numge();
                 break;
             }
             case Op_Numgt: {
-                quick_binary_op(Qnumgt);
+                do_op_numgt();
                 break;
             }
             case Op_Numle: {
-                quick_binary_op(Qnumle);
+                do_op_numle();
                 break;
             }
             case Op_Numlt: {
-                quick_binary_op(Qnumlt);
+                do_op_numlt();
                 break;
             }
             case Op_Numne:  {
-                quick_binary_op(Qnumne);
+                do_op_numne();
                 break;
             }
             case Op_Asgn: {
-                quick_binary_op_underef(Qasgn);
+                do_op_asgn();
                 break;
             }
             case Op_Swap: {
-                quick_binary_op_underef(Qswap);
+                do_op_swap();
                 break;
             }
             case Op_Subsc: {
-                quick_binary_op_underef_rval(Qsubsc);
+                do_op_subsc();
                 break;
             }
 
             /* Monogenic unary ops */
             case Op_Value: {
-                quick_unary_mgop(Qvalue);
+                do_op_value();
                 break;
             }
             case Op_Size: {
-                quick_unary_mgop(Qsize);
+                do_op_size();
                 break;
             }
             case Op_Refresh: {
-                quick_unary_mgop(Qrefresh);
+                do_op_refresh();
                 break;
             }
             case Op_Number: {
-                quick_unary_mgop(Qnumber);
+                do_op_number();
                 break;
             }
             case Op_Compl: {
-                quick_unary_mgop(Qcompl);
+                do_op_compl();
                 break;
             }
             case Op_Neg: {
-                quick_unary_mgop(Qneg);
+                do_op_neg();
                 break;
             }
 
             /* Unary ops */
             case Op_Null: {
-                quick_unary_op_underef(Qnull);
+                do_op_null();
                 break;
             }
             case Op_Nonnull:{
-                quick_unary_op_underef(Qnonnull);
+                do_op_nonnull();
                 break;
             }
             case Op_Random: {
-                quick_unary_op_underef_rval(Qrandom);
+                do_op_random();
                 break;
             }
 
@@ -1120,7 +1003,7 @@ void interp()
             }
 
             case Op_Sect: {
-                quick_ternary_op_underef_rval(Qsect);
+                do_op_sect();
                 break;
             }
 
