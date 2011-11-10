@@ -1124,6 +1124,14 @@ class DirStream(LineBasedStream, NoCopy)
 
    public new(path)
       cast(self,LineBasedStream).new()
+$ifdef _MS_WIN32
+      if *path = 0 then
+         path := "*"
+      else if any('\\/:', path[-1]) then
+         path ||:= "*"
+      else if not upto('*?', path) then
+         path ||:= "\\*"
+$endif
       self.dd := new_impl(path) | fail
       return
    end
