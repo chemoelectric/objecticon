@@ -339,11 +339,8 @@ void skip_descrip()
     }
 }
 
-static int Rfeatures(dptr d) { return 0; }
+int Rfeatures(dptr d) { return 0; }
 
-#define KDef(p,n) extern int Cat(R,p)(dptr);
-#include "../h/kdefs.h"
-#undef KDef
 #define KDef(p,n) Cat(R,p),
 int (*keyword_qfuncs[])(dptr) = {
     NULL,

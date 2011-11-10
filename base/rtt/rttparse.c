@@ -3004,7 +3004,7 @@ case 275:
 break;
 case 276:
 #line 682 "rttgram.y"
-	{yyval.n = node1(PrefxNd, yyvsp[-2].t, yyvsp[-1].n); op_generator = 1; free_t(yyvsp[0].t);}
+	{yyval.n = node1(PrefxNd, yyvsp[-2].t, yyvsp[-1].n); ++op_generator; free_t(yyvsp[0].t);}
 break;
 case 277:
 #line 683 "rttgram.y"

@@ -58,8 +58,6 @@ static int     typ_case      (struct node *var, struct node *slct_lst,
 static void just_type(struct node *typ, int indent, int ilc);
 static void untend        (int indent);
 static void count_ntend(void);
-static void swap_files(void);
-static void copy_tmp(void);
 static void print_func_vars(void);
 
 static int in_struct = 0;
@@ -2943,26 +2941,6 @@ struct node *n;
    clr_def();
    }
 
-static void swap_files()
-{
-    FILE *t = out_file;
-    out_file = tmp_file;
-    tmp_file = t;
-}
-
-static void copy_tmp()
-{
-    long p;
-    fflush(tmp_file);
-    p = ftell(tmp_file);
-    rewind(tmp_file);
-    while (p--) {
-        int c = getc(tmp_file);
-        putc(c, out_file);
-    }
-    rewind(tmp_file);
-}
-
 static void print_func_vars()
 {
    struct sym_entry *t;
@@ -3007,8 +2985,8 @@ struct node *n;
    char letter = 0;
    char *name;
    char *s;
-   struct parminfo *saved;
-
+   int i;
+   
    /*
     * Note how result location is accessed in generated code.
     */
@@ -3073,155 +3051,33 @@ struct node *n;
 
    in_struct = 0;
 
-
-   /* Divert output to temporary file */
-   swap_files();
-   /* Force a line directive at next token */
-   line = 0;
-
-   /*
-    * Output ordinary declarations from the declare clause.
-    */
-   ForceNl();
-   for (sym = decl_lst; sym != NULL; sym = sym->u.declare_var.next) {
-       decl_walk3(sym->u.declare_var.tqual, sym->u.declare_var.dcltor, IndentInc);
-   }
-
-   /*
-    * Output special declarations and initial processing.
-    */
-   ForceNl();
-   parm_locs(params);
-
-   if (has_underef && params != NULL && params->id_type == (VarPrm | DrfPrm))
-      prt_str("int r_n;\n", IndentInc);
-   tend_init();
-
-   /*
-    * See which parameters need to be dereferenced. If all are dereferenced,
-    *  it is done by before the routine is called.
-    */
-   if (has_underef) {
-      sym = params;
-      if (sym != NULL && sym->id_type & VarPrm) {
-         if (sym->id_type & DrfPrm) {
-            /*
-             * There is a variable part of the parameter list and it
-             *  must be dereferenced.
-             */
-            prt_str("for (r_n = ", IndentInc);
-            fprintf(out_file, "%d; r_n <= r_nargs; ++r_n)",
-                sym->u.param_info.param_num + 1);
-            ForceNl();
-            prt_str("Deref(r_args[r_n]);", IndentInc * 2);
-            ForceNl();
-            }
-         sym = sym->u.param_info.next;
-         }
-
-      /*
-       * Produce code to dereference any fixed parameters that need to be.
-       */
-      while (sym != NULL) {
-         if (sym->id_type & DrfPrm) {
-            /*
-             * Tended index of -1 indicates that the parameter can be
-             *  dereferened in-place (this is the usual case).
-             */
-            if (sym->t_indx == -1) {
-                chk_nl(IndentInc * 2);
-                fprintf(out_file, "Deref(frame->args[%d]);", sym->u.param_info.param_num);
-               }
-            else {
-                chk_nl(IndentInc * 2);
-                fprintf(out_file, "deref(&frame->args[%d], &%s[%d]);",
-                        sym->u.param_info.param_num, 
-                        tend_loc, sym->t_indx);
-               }
-            }
-         ForceNl();
-         sym = sym->u.param_info.next;
-         }
-      }
-
-   saved = new_prmloc();
-   sv_prmloc(saved);
-
-   /*
-    * Finish setting up the tended array structure and link it into the tended
-    *  list.
-    */
-   if (rt_walk(n, IndentInc, 0)) { /* body of operation */
-      if (n->nd_id == ConCatNd)
-         s = n->u[1].child->tok->fname;
-      else
-         s = n->tok->fname;
-      fprintf(stderr, "%s: file %s, warning: ", progname, s);
-      fprintf(stderr, "execution may fall off end of operation \"%s\"\n",
-          op_name);
-      }
-   ForceNl();
-   swap_files();
-
-   /*
-    * Output function header.
-    */
-   fprintf(out_file, "int %c%s(struct %s_frame *frame)\n{\n", letter, name, name);
-
-   if (op_generator) {
-       if (lab_seq == 0)
-           err1("rtt internal error detected: expected some suspensions with op_generator flag set");
-#if HAVE_COMPUTED_GOTO
-       fprintf(out_file, "       if (frame->pc)\n");
-       fprintf(out_file, "          goto *((void *)(frame->pc));\n");
-#else
-       {
-       int i;
-       fprintf(out_file, "   switch (frame->pc) {\n");
-       fprintf(out_file, "      case 0: break;\n");
-       for (i = 1; i <= lab_seq; ++i)
-           fprintf(out_file, "      case %d: goto Lab%d;\n", i, i);
-       fprintf(out_file, "      default: syserr(\"Invalid pc in %s\");\n", name);
-       fprintf(out_file, "   }\n");
-       }
-#endif
-   } else
-       print_func_vars();
-
-
-   /* Copy function body from temp diversion */
-   copy_tmp();
-   /* Force a line directive at next token */
-   line = 0;
-   prt_str("}\n", IndentInc);
-
-   /*
-    * Output procedure block.
-    */
-   switch (op_type) {
-      case Keyword:
-           fprintf(out_file, "KeywordBlock(%s, %d)\n\n", name, ntend);
-           line += 2;
-           break;
-
-       case TokFunction:
-           fprintf(out_file, "FncBlock(%s, %d, %d, %d, %d)\n\n", name, nparms, vararg, ntend, has_underef);
-           line += 2;
-           break;
-
-       case Operator:
-           if (strcmp(op_sym,"\\") == 0)
-               fprintf(out_file, "OpBlock(%s, %d, %d, \"%s\", %d)\n\n", name, nparms, 
-                       ntend, "\\\\", has_underef);
-           else
-               fprintf(out_file, "OpBlock(%s, %d, %d, \"%s\", %d)\n\n", name, nparms, 
-                       ntend, op_sym, has_underef);
-           line += 2;
-   }
-
-
    if ((op_type == Operator || op_type == Keyword) && !op_generator) {
-       int i;
+       /*
+        * Output function header.
+        */
+       fprintf(out_file, "int %c%s(struct %s_frame *frame)\n{\n", letter, name, name);
+
+       if (op_type == Keyword) {
+           fprintf(out_file, "   if (R%s(frame->lhs)) {\n", name);
+       } else {
+           fprintf(out_file, "   if (Q%s(frame->lhs", name);
+           for (i = 0; i < nparms; ++i)
+               fprintf(out_file, ", &frame->args[%d]", i);
+           if (strcmp(name, "random") == 0 ||
+                strcmp(name, "sect") == 0 ||
+                strcmp(name, "subsc") == 0)
+               fprintf(out_file, ", frame->rval");
+           fprintf(out_file, ")) {\n");
+       }
+       fprintf(out_file, "      frame->exhausted = 1;\n");
+       fprintf(out_file, "      return 1;\n");
+       fprintf(out_file, "   } else return 0;\n");
+       fprintf(out_file, "}\n");
+
+
+       /*
+        * Output quick function.
+        */
        if (op_type == Keyword)
            fprintf(out_file, "int R%s(dptr _lhs)\n{\n", name);
        else {
@@ -3234,11 +3090,28 @@ struct node *n;
                fprintf(out_file, ", int _rval");
            fprintf(out_file, ")\n{\n");
        }
+       in_quick = 1;
        ForceNl();
        print_func_vars();
        ForceNl();
-       ld_prmloc(saved);
-       in_quick = 1;
+
+       /* Force a line directive at next token */
+       line = 0;
+
+       /*
+        * Output ordinary declarations from the declare clause.
+        */
+       ForceNl();
+       for (sym = decl_lst; sym != NULL; sym = sym->u.declare_var.next) {
+           decl_walk3(sym->u.declare_var.tqual, sym->u.declare_var.dcltor, IndentInc);
+       }
+
+       /*
+        * Output special declarations and initial processing.
+        */
+       ForceNl();
+       parm_locs(params);
+
        spcl_dcls();                         /* tended declarations */
        if (has_underef) {
            sym = params;
@@ -3267,11 +3140,178 @@ struct node *n;
            }
        }
 
-       rt_walk(n, IndentInc, 0);
+       if (rt_walk(n, IndentInc, 0)) { /* body of operation */
+           if (n->nd_id == ConCatNd)
+               s = n->u[1].child->tok->fname;
+           else
+               s = n->tok->fname;
+           fprintf(stderr, "%s: file %s, warning: ", progname, s);
+           fprintf(stderr, "execution may fall off end of operation \"%s\"\n",
+                   op_name);
+       }
+
        in_quick = 0;
        fprintf(out_file, "\n}\n");
 
-   }       
+       /*
+        * Output procedure block.
+        */
+       switch (op_type) {
+           case Keyword:
+               fprintf(out_file, "KeywordBlock(%s, %d)\n\n", name, ntend);
+               line += 2;
+               break;
+
+           case Operator: {
+               if (strcmp(op_sym,"\\") == 0)
+                   fprintf(out_file, "OpBlock(%s, %d, %d, \"%s\", %d)\n\n", name, nparms, 
+                           0, "\\\\", has_underef);
+               else
+                   fprintf(out_file, "OpBlock(%s, %d, %d, \"%s\", %d)\n\n", name, nparms, 
+                           0, op_sym, has_underef);
+               line += 2;
+           }
+       }
+
+   } else {
+       /*
+        * Output function header.
+        */
+       fprintf(out_file, "int %c%s(struct %s_frame *frame)\n{\n", letter, name, name);
+
+       if (op_generator) {
+#if HAVE_COMPUTED_GOTO
+           fprintf(out_file, "       if (frame->pc)\n");
+           fprintf(out_file, "          goto *((void *)(frame->pc));\n");
+#else
+           {
+               int i;
+               fprintf(out_file, "   switch (frame->pc) {\n");
+               fprintf(out_file, "      case 0: break;\n");
+               for (i = 1; i <= op_generator; ++i)
+                   fprintf(out_file, "      case %d: goto Lab%d;\n", i, i);
+               fprintf(out_file, "      default: syserr(\"Invalid pc in %s\");\n", name);
+               fprintf(out_file, "   }\n");
+           }
+#endif
+       } else
+           print_func_vars();
+
+       /* Force a line directive at next token */
+       line = 0;
+
+       /*
+        * Output ordinary declarations from the declare clause.
+        */
+       ForceNl();
+       for (sym = decl_lst; sym != NULL; sym = sym->u.declare_var.next) {
+           decl_walk3(sym->u.declare_var.tqual, sym->u.declare_var.dcltor, IndentInc);
+       }
+
+       /*
+        * Output special declarations and initial processing.
+        */
+       ForceNl();
+       parm_locs(params);
+
+       if (has_underef && params != NULL && params->id_type == (VarPrm | DrfPrm))
+           prt_str("int r_n;\n", IndentInc);
+       tend_init();
+
+       /*
+        * See which parameters need to be dereferenced. If all are dereferenced,
+        *  it is done by before the routine is called.
+        */
+       if (has_underef) {
+           sym = params;
+           if (sym != NULL && sym->id_type & VarPrm) {
+               if (sym->id_type & DrfPrm) {
+                   /*
+                    * There is a variable part of the parameter list and it
+                    *  must be dereferenced.
+                    */
+                   prt_str("for (r_n = ", IndentInc);
+                   fprintf(out_file, "%d; r_n <= r_nargs; ++r_n)",
+                           sym->u.param_info.param_num + 1);
+                   ForceNl();
+                   prt_str("Deref(r_args[r_n]);", IndentInc * 2);
+                   ForceNl();
+               }
+               sym = sym->u.param_info.next;
+           }
+
+           /*
+            * Produce code to dereference any fixed parameters that need to be.
+            */
+           while (sym != NULL) {
+               if (sym->id_type & DrfPrm) {
+                   /*
+                    * Tended index of -1 indicates that the parameter can be
+                    *  dereferened in-place (this is the usual case).
+                    */
+                   if (sym->t_indx == -1) {
+                       chk_nl(IndentInc * 2);
+                       fprintf(out_file, "Deref(frame->args[%d]);", sym->u.param_info.param_num);
+                   }
+                   else {
+                       chk_nl(IndentInc * 2);
+                       fprintf(out_file, "deref(&frame->args[%d], &%s[%d]);",
+                               sym->u.param_info.param_num, 
+                               tend_loc, sym->t_indx);
+                   }
+               }
+               ForceNl();
+               sym = sym->u.param_info.next;
+           }
+       }
+
+       /*
+        * Finish setting up the tended array structure and link it into the tended
+        *  list.
+        */
+       if (rt_walk(n, IndentInc, 0)) { /* body of operation */
+           if (n->nd_id == ConCatNd)
+               s = n->u[1].child->tok->fname;
+           else
+               s = n->tok->fname;
+           fprintf(stderr, "%s: file %s, warning: ", progname, s);
+           fprintf(stderr, "execution may fall off end of operation \"%s\"\n",
+                   op_name);
+       }
+       ForceNl();
+
+       if (op_generator != lab_seq)
+           err1("internal error, lab_seq should end up == op_generator");
+
+       /* Force a line directive at next token */
+       line = 0;
+       prt_str("}\n", IndentInc);
+
+       /*
+        * Output procedure block.
+        */
+       switch (op_type) {
+           case Keyword:
+               fprintf(out_file, "KeywordBlock(%s, %d)\n\n", name, ntend);
+               line += 2;
+               break;
+
+           case TokFunction:
+               fprintf(out_file, "FncBlock(%s, %d, %d, %d, %d)\n\n", name, nparms, vararg, ntend, has_underef);
+               line += 2;
+               break;
+
+           case Operator: {
+               if (strcmp(op_sym,"\\") == 0)
+                   fprintf(out_file, "OpBlock(%s, %d, %d, \"%s\", %d)\n\n", name, nparms, 
+                           ntend, "\\\\", has_underef);
+               else
+                   fprintf(out_file, "OpBlock(%s, %d, %d, \"%s\", %d)\n\n", name, nparms, 
+                           ntend, op_sym, has_underef);
+               line += 2;
+           }
+       }
+   }
 }
 
 

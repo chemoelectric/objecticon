@@ -456,6 +456,7 @@ void synch_ipc(void);
 int isflag(dptr d);
 
 extern int Qcat(dptr, dptr, dptr);
+extern int Qconj(dptr, dptr, dptr);
 extern int Qdiff(dptr, dptr, dptr);
 extern int Qdiv(dptr, dptr, dptr);
 extern int Qinter(dptr, dptr, dptr);
@@ -493,3 +494,8 @@ extern int Qnonnull(dptr, dptr);
 extern int Qrandom(dptr, dptr, int);
 extern int Qsect(dptr, dptr, dptr, dptr, int);
 extern int Qsubsc(dptr, dptr, dptr, int);
+extern int Qactivate(dptr, dptr, dptr);
+
+#define KDef(p,n) extern int Cat(R,p)(dptr);
+#include "../h/kdefs.h"
+#undef KDef

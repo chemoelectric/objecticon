@@ -32,11 +32,9 @@ struct srcfile {
 
 extern int lex_state;      /* state of operator recognition */
 extern FILE *out_file;     /* output file */
-extern FILE *tmp_file;     /* temp file */
 extern int def_fnd;        /* C input defines something concrete */
 extern char *inclname;     /* include file to be included by C compiler */
 extern char *cname;        /* current C filename */
-extern char *tname;        /* current temp filename */
 extern int enable_out;     /* enable output of C code */
 
 
