@@ -679,7 +679,7 @@ jump_stmt
    | Continue ';'        {$$ = node1(PrimryNd, $1, NULL); free_t($2);}
    | Break ';'           {$$ = node1(PrimryNd, $1, NULL); free_t($2);}
    | Return ret_val ';'  {$$ = node1(PrefxNd, $1, $2); free_t($3);}
-   | Suspend ret_val ';' {$$ = node1(PrefxNd, $1, $2); op_generator = 1; free_t($3);}
+   | Suspend ret_val ';' {$$ = node1(PrefxNd, $1, $2); ++op_generator; free_t($3);}
    | Fail ';'            {$$ = node1(PrimryNd, $1, NULL); free_t($2);}
    ;
 

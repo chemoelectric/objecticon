@@ -2113,8 +2113,8 @@ static word cnv_op(int n)
             opcode = Op_Swap;
             break;
 
-        case Uop_Unions:
-            opcode = Op_Unions;
+        case Uop_Union:
+            opcode = Op_Union;
             break;
 
         case Uop_Value:			/* unary . operator */

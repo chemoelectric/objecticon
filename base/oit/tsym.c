@@ -856,7 +856,7 @@ static void binop(int op)
             break;
 
         case UNION:
-            uout_op(Uop_Unions);
+            uout_op(Uop_Union);
             break;
 
         case AND:
@@ -976,7 +976,7 @@ static void augop(int op)
             break;
 
         case AUGUNION:
-            uout_op(Uop_Augunions);
+            uout_op(Uop_Augunion);
             break;
 
         case AUGAND:

@@ -48,7 +48,7 @@
 #define Op_Swap		 39
 #define Op_Tabmat	 40
 #define Op_Toby		 41
-#define Op_Unions	 42
+#define Op_Union	 42
 #define Op_Value	 43
 #define Op_Activate      44
 /*

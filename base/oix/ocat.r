@@ -3,7 +3,7 @@
  */
 "x || y - concatenate strings x and y." 
 
-operator || cater(x, y)
+operator || cat(x, y)
    body {
      if (need_ucs(&x) || need_ucs(&y)) {
          tended struct descrip utf8_x, utf8_y, utf8;

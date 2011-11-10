@@ -42,7 +42,7 @@ static char *op_names[] = {
     /*  39 */         "swap",
     /*  40 */         "tabmat",
     /*  41 */         "toby",
-    /*  42 */         "unions",
+    /*  42 */         "union",
     /*  43 */         "value",
     /*  44 */         "activate",
     /*  45 */         INVALID,

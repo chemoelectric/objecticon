@@ -116,7 +116,7 @@ extern struct ucode_op ucode_op_table[];
 #define Uop_Div         126
 #define Uop_Mult        127
 #define Uop_Swap        128
-#define Uop_Unions      129
+#define Uop_Union       129
 
 /*
  * Augmented ops
@@ -145,7 +145,7 @@ extern struct ucode_op ucode_op_table[];
 #define Uop_Augplus     151
 #define Uop_Augdiv      152
 #define Uop_Augmult     153
-#define Uop_Augunions   154
+#define Uop_Augunion    154
 
 /*
  * Unary ops

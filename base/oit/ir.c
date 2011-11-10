@@ -772,7 +772,7 @@ static int is_rval(int op, int arg, int parent)
         case Uop_Rasgn:
         case Uop_Augdiv:
         case Uop_Augmult:
-        case Uop_Augunions: {
+        case Uop_Augunion: {
             return (arg == 2);
         }
 
@@ -1080,7 +1080,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         case Uop_Augmult:
         case Uop_Augplus:
         case Uop_Augpower:
-        case Uop_Augunions:
+        case Uop_Augunion:
         case Uop_Cat:
         case Uop_Diff:
         case Uop_Div:
@@ -1091,7 +1091,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         case Uop_Mult:
         case Uop_Plus:
         case Uop_Power:
-        case Uop_Unions: {
+        case Uop_Union: {
             struct lnode_2 *x = (struct lnode_2 *)n;
             struct ir_var *lv, *rv, *tmp = 0;
             struct ir_info *left, *right;
@@ -1208,7 +1208,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                     x->child2->op == Uop_Mult ||
                     x->child2->op == Uop_Plus ||
                     x->child2->op == Uop_Power ||
-                    x->child2->op == Uop_Unions ||
+                    x->child2->op == Uop_Union ||
                     x->child2->op == Uop_Value ||
                     x->child2->op == Uop_Size ||
                     x->child2->op == Uop_Refresh ||
@@ -2212,9 +2212,21 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             chunk1(res->start, ir_goto(n, operand->start));
             if (!bounded)
                 chunk1(res->resume, ir_goto(n, operand->resume));
-            chunk2(operand->success,
-                  ir_mgop(n, target, n->op, v, 0, rval),
-                  ir_goto(n, res->success));
+            /*
+             * Optimisation: unary . can be done with the deref
+             * instruction, rather than as an operator.  Note that we
+             * must have a target; deref with a nil target is a no-op,
+             * whilst the . operator will deref its argument (which
+             * may give an error), and then throw it away.
+             */
+            if (n->op == Uop_Value && target)
+                chunk2(operand->success,
+                       ir_deref(n, target, v),
+                       ir_goto(n, res->success));
+            else
+                chunk2(operand->success,
+                       ir_mgop(n, target, n->op, v, 0, rval),
+                       ir_goto(n, res->success));
             chunk1(operand->failure, ir_goto(n, res->failure));
             res->uses_stack = operand->uses_stack;
             break;
@@ -3500,8 +3512,8 @@ static int augop(int n)
             opcode = Uop_Mult;
             break;
 
-        case Uop_Augunions:
-            opcode = Uop_Unions;
+        case Uop_Augunion:
+            opcode = Uop_Union;
             break;
     }
 

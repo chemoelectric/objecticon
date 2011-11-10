@@ -373,7 +373,7 @@ int get_proc_kind(struct b_proc *bp)
         case C_Proc: {
             /* Builtin */
             char c = *StrLoc(*bp->name);
-            if (c == '&')
+            if (c == '&' && StrLen(*bp->name) > 1)
                 return Keyword;
             if (c == '_' || isalpha((unsigned char)c))
                 return Function;

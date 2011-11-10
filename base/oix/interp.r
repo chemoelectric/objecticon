@@ -339,11 +339,8 @@ void skip_descrip()
     }
 }
 
-static int Rfeatures(dptr d) { return 0; }
+int Rfeatures(dptr d) { return 0; }
 
-#define KDef(p,n) extern int Cat(R,p)(dptr);
-#include "../h/kdefs.h"
-#undef KDef
 #define KDef(p,n) Cat(R,p),
 int (*keyword_qfuncs[])(dptr) = {
     NULL,
@@ -949,7 +946,7 @@ void interp()
 
             /* Monogenic binary ops */
             case Op_Cat: {
-                quick_binary_mgop(Qcater);
+                quick_binary_mgop(Qcat);
                 break;
             }
             case Op_Diff: {
@@ -957,7 +954,7 @@ void interp()
                 break;
             }
             case Op_Div: {
-                quick_binary_mgop(Qdivide);
+                quick_binary_mgop(Qdiv);
                 break;
             }
             case Op_Inter: {
@@ -985,10 +982,10 @@ void interp()
                 break;
             }
             case Op_Power: {
-                quick_binary_mgop(Qpowr);
+                quick_binary_mgop(Qpower);
                 break;
             }
-            case Op_Unions: {
+            case Op_Union: {
                 quick_binary_mgop(Qunion);
                 break;
             }
