@@ -1915,6 +1915,7 @@ function io_SocketStream_socketpair_impl(typ)
    }
 end
 
+#if UNIX
 static void getaddrinfo_error2why(int error)
 {
     if (error == EAI_SYSTEM)
@@ -1922,6 +1923,7 @@ static void getaddrinfo_error2why(int error)
     else
         whyf("Name lookup failure: %s", gai_strerror(error));
 }
+#endif
 
 static struct sockaddr *parse_sockaddr(char *s, int *len)
 {
@@ -1938,7 +1940,6 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
         *len = sizeof(us.sun_family) + strlen(us.sun_path);
         return (struct sockaddr *)&us;
     } 
-#endif
     if (strncmp(s, "inet:", 5) == 0) {
         static struct sockaddr_in iss;
         struct addrinfo hints;
@@ -1979,12 +1980,17 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
 
     LitWhy("Bad socket address format");
     return 0;
+#else
+    LitWhy("Unsuppoted");
+    return 0;
+#endif
 }
 
 function io_SocketStream_dns_query(host)
    if !cnv:C_string(host) then
       runerr(103, host)
    body {
+#if UNIX
       struct addrinfo hints;
       struct addrinfo *res, *t;
       tended struct descrip tmp, result;
@@ -2011,6 +2017,9 @@ function io_SocketStream_dns_query(host)
       }
       freeaddrinfo(res);
       return result;
+#else
+      Unsupported;
+#endif
    }
 end
 
@@ -2631,39 +2640,12 @@ if (!self_dir)
 #enddef
 
 function io_DirStream_new_impl(path)
-   if !cnv:string(path) then
+   if !cnv:C_string(path) then
       runerr(103, path)
    body {
        struct DirData *fd;
-       tended char *cpath;
-       if (StrLen(path) == 0) {
-	  cpath = "*";
-       } else {
-	  char last = StrLoc(path)[StrLen(path) - 1];
-	  if (last == '\\' || last == '/' || last == ':') {
-	     MemProtect(cpath = reserve(Strings, StrLen(path) + 2));
-	     alcstr(StrLoc(path), StrLen(path));
-	     alcstr("*\0", 2);
-	  } else {
-	     int i;
-	     for (i = 0; i < StrLen(path); ++i) {
-		char ch = StrLoc(path)[i];
-		if (ch == '*' || ch == '?')
-		   break;
-	     }
-	     if (i == StrLen(path)) {
-		MemProtect(cpath = reserve(Strings, StrLen(path) + 3));
-		alcstr(StrLoc(path), StrLen(path));
-		alcstr("\\*\0", 3);
-	     } else {
-		MemProtect(cpath = reserve(Strings, StrLen(path) + 1));
-		alcstr(StrLoc(path), StrLen(path));
-		alcstr("\0", 1);
-	     }
-	  }
-       }
        MemProtect(fd = malloc(sizeof(struct DirData)));
-       fd->handle = FindFirstFile(cpath, &fd->fileData);
+       fd->handle = FindFirstFile(path, &fd->fileData);
        if (fd->handle == INVALID_HANDLE_VALUE) {
 	  if (GetLastError() == ERROR_FILE_NOT_FOUND) {
 	     fd->status = EMPTY;

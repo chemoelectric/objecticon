@@ -28,7 +28,6 @@
    #define vsnprint vsnprint
    #define vsnprintf vsnprint
 
-   #define Rversion oi_Rversion
    #define readimage oi_readimage
    #define fillarc oi_fillarc
    #define EXIT_FAILURE 1
