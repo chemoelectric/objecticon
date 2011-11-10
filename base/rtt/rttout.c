@@ -3286,11 +3286,20 @@ struct node *n;
         * Output special declarations and initial processing.
         */
        ForceNl();
+#if __GNUC__
+       /* Avoid spurious unused variable warnings if using gcc. */
+       fprintf(out_file, "\n   dptr __attribute__((unused)) _lhs;\n");
+       if (!monogenic)
+           fprintf(out_file, "   word __attribute__((unused)) *_failure_label;\n");
+       if (has_rval)
+           fprintf(out_file, "   int __attribute__((unused)) _rval;");
+#else
        fprintf(out_file, "\n   dptr _lhs;\n");
        if (!monogenic)
            fprintf(out_file, "   word *_failure_label;\n");
        if (has_rval)
            fprintf(out_file, "   int _rval;");
+#endif
 
        spcl_dcls();                         /* tended declarations */
        ForceNl();

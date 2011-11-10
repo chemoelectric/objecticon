@@ -1907,8 +1907,11 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
     }
 
     LitWhy("Bad socket address format");
-#endif
     return 0;
+#else
+    LitWhy("Unsuppoted");
+    return 0;
+#endif
 }
 
 function io_SocketStream_dns_query(host)
@@ -1943,7 +1946,7 @@ function io_SocketStream_dns_query(host)
       freeaddrinfo(res);
       return result;
 #else
-       Unsupported;
+      Unsupported;
 #endif
    }
 end
