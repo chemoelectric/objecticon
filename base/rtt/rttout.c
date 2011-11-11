@@ -1180,11 +1180,12 @@ static void decl_walk3(struct node *tqual, struct node *dcltor, int indent)
                     /*printf("FOUND L%d_%s\n",part_dcltor->u[0].sym->f_indx,t->image);*/
                     if (sym->id_type == OtherDcl &&
                         sym->u.declare_var.init) {
+                        chk_nl(indent);
                         if (op_generator)
-                            fprintf(out_file, "   frame->L%d_%s =",sym->f_indx,t->image);
+                            fprintf(out_file, "frame->L%d_%s =",sym->f_indx,t->image);
                         else
-                            fprintf(out_file, "   L%d_%s =",sym->f_indx,t->image);
-                        c_walk(sym->u.declare_var.init, indent, 0);
+                            fprintf(out_file, "L%d_%s =",sym->f_indx,t->image);
+                        c_walk(sym->u.declare_var.init, 2 * IndentInc, 0);
                         prt_str(";", indent);
                     }
                 } else
@@ -2663,8 +2664,10 @@ int n;
 static void tend_init()
 {
     register struct init_tend *tnd;
+    int n = 0;
 
     for (tnd = tend_lst; tnd != NULL; tnd = tnd->next) {
+        n++;
         switch (tnd->init_typ) {
             case TndDesc:
                 /*
@@ -2721,12 +2724,16 @@ static void tend_init()
     }
 
     if (in_quick) {
-        int i;
-       /* Init params to nulldesc */
-        for (i = 0; i < nparms; ++i) {
+       /* Init remaining tended descs to nulldesc.  These will be
+        * dereferenced params in an underef operator, and operator
+        * params.  Eg operator / null(underef x -> dx) has two extra, 
+        * one for x and dx.
+        */
+        while (n < ntend) {
             prt_str(tend_loc, IndentInc);
-            fprintf(out_file, "[%d] = nulldesc;", ntend - nparms + i);
+            fprintf(out_file, "[%d] = nulldesc;", n);
             ForceNl();
+            ++n;
         }
     }
 }
@@ -3112,14 +3119,6 @@ struct node *n;
    line = 0;
 
    /*
-    * Output ordinary declarations from the declare clause.
-    */
-   ForceNl();
-   for (sym = decl_lst; sym != NULL; sym = sym->u.declare_var.next) {
-       decl_walk3(sym->u.declare_var.tqual, sym->u.declare_var.dcltor, IndentInc);
-   }
-
-   /*
     * Output special declarations and initial processing.
     */
    ForceNl();
@@ -3127,7 +3126,9 @@ struct node *n;
 
    if (has_underef && params != NULL && params->id_type == (VarPrm | DrfPrm))
        prt_str("int r_n;\n", IndentInc);
+
    tend_init();
+   ForceNl();
 
    /*
     * See which parameters need to be dereferenced. If all are dereferenced,
@@ -3142,10 +3143,10 @@ struct node *n;
                 *  must be dereferenced.
                 */
                prt_str("for (r_n = ", IndentInc);
-               fprintf(out_file, "%d; r_n <= r_nargs; ++r_n)",
-                       sym->u.param_info.param_num + 1);
+               fprintf(out_file, "%d; r_n <= frame->nargs; ++r_n)",
+                       sym->u.param_info.param_num);
                ForceNl();
-               prt_str("Deref(r_args[r_n]);", IndentInc * 2);
+               prt_str("Deref(frame->args[r_n]);", IndentInc * 2);
                ForceNl();
            }
            sym = sym->u.param_info.next;
@@ -3161,11 +3162,11 @@ struct node *n;
                 *  dereferened in-place (this is the usual case).
                 */
                if (sym->t_indx == -1) {
-                   chk_nl(IndentInc * 2);
+                   chk_nl(IndentInc);
                    fprintf(out_file, "Deref(frame->args[%d]);", sym->u.param_info.param_num);
                }
                else {
-                   chk_nl(IndentInc * 2);
+                   chk_nl(IndentInc);
                    fprintf(out_file, "deref(&frame->args[%d], &%s[%d]);",
                            sym->u.param_info.param_num, 
                            tend_loc, sym->t_indx);
@@ -3174,6 +3175,13 @@ struct node *n;
            ForceNl();
            sym = sym->u.param_info.next;
        }
+   }
+
+   /*
+    * Output ordinary declarations from the declare clause.
+    */
+   for (sym = decl_lst; sym != NULL; sym = sym->u.declare_var.next) {
+       decl_walk3(sym->u.declare_var.tqual, sym->u.declare_var.dcltor, IndentInc);
    }
 
    saved = new_prmloc();
@@ -3248,14 +3256,6 @@ struct node *n;
        /* Force a line directive at next token */
        line = 0;
 
-       /*
-        * Output ordinary declarations from the declare clause.
-        */
-       ForceNl();
-       for (sym = decl_lst; sym != NULL; sym = sym->u.declare_var.next) {
-           decl_walk3(sym->u.declare_var.tqual, sym->u.declare_var.dcltor, IndentInc);
-       }
-
        if (op_type == Operator) {
            if (strcmp(name, "cat") == 0 ||
                strcmp(name, "diff") == 0 ||
@@ -3303,6 +3303,7 @@ struct node *n;
 
        spcl_dcls();                         /* tended declarations */
        ForceNl();
+
        fprintf(out_file, "\n   _lhs = get_dptr();\n");
        for (i = 0; i < nparms; ++i) {
            if (has_underef)
@@ -3327,11 +3328,11 @@ struct node *n;
                     *  dereferened in-place (this is the usual case).
                     */
                    if (sym->t_indx == -1) {
-                       chk_nl(IndentInc * 2);
+                       chk_nl(IndentInc);
                        fprintf(out_file, "Deref(r_tend.d[%d]);", ntend - nparms + sym->u.param_info.param_num);
                    }
                    else {
-                       chk_nl(IndentInc * 2);
+                       chk_nl(IndentInc);
                        fprintf(out_file, "deref(&r_tend.d[%d], &%s[%d]);",
                                ntend - nparms + sym->u.param_info.param_num, 
                                tend_loc, sym->t_indx);
@@ -3340,6 +3341,13 @@ struct node *n;
                ForceNl();
                sym = sym->u.param_info.next;
            }
+       }
+
+       /*
+        * Output ordinary declarations from the declare clause.
+        */
+       for (sym = decl_lst; sym != NULL; sym = sym->u.declare_var.next) {
+           decl_walk3(sym->u.declare_var.tqual, sym->u.declare_var.dcltor, IndentInc);
        }
 
        if (rt_walk(n, IndentInc, 0)) { /* body of operation */

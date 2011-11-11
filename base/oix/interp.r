@@ -333,7 +333,7 @@ void skip_descrip()
 
 void do_key_features() { syserr("Dummy func"); }
 
-#define KDef(p,n) Cat(do_key_,p),
+#define KDef(p,n) do_key_##p,
 void (*keyword_qfuncs[])(void) = {
     NULL,
 #include "../h/kdefs.h"

@@ -299,7 +299,7 @@ void collect(int region)
    struct progstate *prog;
    struct region *br;
 
-#if defined(HAVE_GETRLIMIT) && defined(HAVE_SETRLIMIT)
+#if HAVE_GETRLIMIT && HAVE_SETRLIMIT
    {
        struct rlimit rl;
 

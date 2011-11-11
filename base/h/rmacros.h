@@ -444,16 +444,16 @@
  * Procedure block for a function.
  */
 #define FncBlock(f,nargs,vararg,ntend,underef)                          \
-        static struct sdescrip Cat(f,_name_desc) = {sizeof(Lit(f))-1,Lit(f)}; \
-      	struct c_proc Cat(B,f) = {\
+        static struct sdescrip f##_name_desc = {sizeof(#f)-1,#f}; \
+      	struct c_proc B##f = {\
       	T_Proc,\
         C_Proc, \
       	nargs,\
         vararg,\
         0,\
-      	(dptr)&Cat(f,_name_desc), \
-        (int (*)(struct c_frame *))Cat(Z,f),     \
-        sizeof(struct Cat(f,_frame)),\
+      	(dptr)&f##_name_desc, \
+        (int (*)(struct c_frame *))Z##f,     \
+        sizeof(struct f##_frame),\
         ntend,\
         underef};
 
@@ -461,43 +461,43 @@
  * Procedure block for an operator.
  */
 #define OpBlock(f,nargs,ntend,sname,underef)                            \
-        static struct sdescrip Cat(f,_name_desc) = {sizeof(sname)-1,sname}; \
-   	struct c_proc Cat(B,f) = {\
+        static struct sdescrip f##_name_desc = {sizeof(sname)-1,sname}; \
+   	struct c_proc B##f = {\
    	T_Proc,\
         C_Proc, \
    	nargs,\
         0,\
         0,\
-      	(dptr)&Cat(f,_name_desc), \
-   	(int (*)(struct c_frame *))Cat(O,f),\
-        sizeof(struct Cat(f,_frame)),\
+      	(dptr)&f##_name_desc, \
+   	(int (*)(struct c_frame *))O##f,\
+        sizeof(struct f##_frame),\
         ntend,\
         underef};
 
 #define KeywordBlock(f,ntend)                                           \
-        static struct sdescrip Cat(f,_name_desc) = {sizeof("&" Lit(f))-1, "&" Lit(f)}; \
-   	struct c_proc Cat(L,f) = {\
+        static struct sdescrip f##_name_desc = {sizeof("&" #f)-1, "&" #f}; \
+   	struct c_proc L##f = {\
    	T_Proc,\
         C_Proc, \
         0,\
         0,\
         0,\
-      	(dptr)&Cat(f,_name_desc), \
-   	(int (*)(struct c_frame *))Cat(K,f),\
-        sizeof(struct Cat(f,_frame)),\
+      	(dptr)&f##_name_desc, \
+   	(int (*)(struct c_frame *))K##f,\
+        sizeof(struct f##_frame),\
         ntend,\
         0};
 
 
 #define CustomProc(f,code,creates,nparam,ndynam,nclo,ntmp,nlab,nmark,sname) \
-    static struct sdescrip Cat(f,_name_desc) = {sizeof(sname) - 1, sname};\
-    struct p_proc Cat(B,f) = {\
+    static struct sdescrip f##_name_desc = {sizeof(sname) - 1, sname};\
+    struct p_proc B##f = {\
    	T_Proc,\
         P_Proc,\
    	nparam,\
    	0,\
    	0,\
-      	(dptr)&Cat(f,_name_desc), \
+      	(dptr)&f##_name_desc, \
         code,\
         creates,\
    	ndynam,\

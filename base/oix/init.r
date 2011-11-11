@@ -24,22 +24,22 @@ static void    conv_var(void);
  * External declarations for operator and function blocks.
  */
 
-#define OpDef(f)  extern struct c_proc Cat(B,f);
+#define OpDef(f)  extern struct c_proc B##f;
 #include "../h/odefs.h"
 #undef OpDef
 
-#define FncDef(f)  extern struct c_proc Cat(B,f);
+#define FncDef(f)  extern struct c_proc B##f;
 #include "../h/fdefs.h"
 #undef FncDef
 
-#define KDef(p,n) extern struct c_proc Cat(L,p);
+#define KDef(p,n) extern struct c_proc L##p;
 #include "../h/kdefs.h"
 #undef KDef
 
 /* 
  * operators table
  */
-#define OpDef(f)  Cat(&B,f),
+#define OpDef(f)  &B##f,
 struct c_proc *op_tbl[] = {
 #include "../h/odefs.h"
 };
@@ -48,7 +48,7 @@ struct c_proc *op_tbl[] = {
 /*
  * function table
  */
-#define FncDef(f)  Cat(&B,f),
+#define FncDef(f)  &B##f,
 struct c_proc *fnc_tbl[] = {
 #include "../h/fdefs.h"
 };
@@ -57,7 +57,7 @@ struct c_proc *fnc_tbl[] = {
 /*
  * keyword table
  */
-#define KDef(p,n) Cat(&L,p),
+#define KDef(p,n) &L##p,
 struct c_proc *keyword_tbl[] = {
 #include "../h/kdefs.h"
 };
@@ -68,7 +68,7 @@ struct c_proc *keyword_tbl[] = {
  */
 struct c_proc *opblks[] = {
 	NULL,
-#define OpDef(p) Cat(&B,p),
+#define OpDef(p) &B##p,
 #include "../h/odefs.h"
 #undef OpDef
    };
@@ -78,7 +78,7 @@ struct c_proc *opblks[] = {
  */
 struct c_proc *keyblks[] = {
     NULL,
-#define KDef(p,n) Cat(&L,p),
+#define KDef(p,n) &L##p,
 #include "../h/kdefs.h"
 #undef KDef
 };

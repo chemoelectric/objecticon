@@ -501,6 +501,6 @@ extern void do_op_sect(void);
 extern void do_op_subsc(void);
 extern void do_op_activate(void);
 
-#define KDef(p,n) extern void Cat(do_key_,p)(void);
+#define KDef(p,n) extern void do_key_##p(void);
 #include "../h/kdefs.h"
 #undef KDef

@@ -123,8 +123,6 @@
 /*
  *  The following definitions assume ANSI C.
  */
-#define Cat(x,y) x##y
-#define Lit(x) #x
 #define Bell '\a'
 
 
