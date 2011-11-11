@@ -2663,8 +2663,10 @@ int n;
 static void tend_init()
 {
     register struct init_tend *tnd;
+    int n = 0;
 
     for (tnd = tend_lst; tnd != NULL; tnd = tnd->next) {
+        n++;
         switch (tnd->init_typ) {
             case TndDesc:
                 /*
@@ -2721,12 +2723,16 @@ static void tend_init()
     }
 
     if (in_quick) {
-        int i;
-       /* Init params to nulldesc */
-        for (i = 0; i < nparms; ++i) {
+       /* Init remaining tended descs to nulldesc.  These will be
+        * dereferenced params in an underef operator, and operator
+        * params.  Eg operator / null(underef x -> dx) has two extra, 
+        * one for x and dx.
+        */
+        while (n < ntend) {
             prt_str(tend_loc, IndentInc);
-            fprintf(out_file, "[%d] = nulldesc;", ntend - nparms + i);
+            fprintf(out_file, "[%d] = nulldesc;", n);
             ForceNl();
+            ++n;
         }
     }
 }
@@ -3112,14 +3118,6 @@ struct node *n;
    line = 0;
 
    /*
-    * Output ordinary declarations from the declare clause.
-    */
-   ForceNl();
-   for (sym = decl_lst; sym != NULL; sym = sym->u.declare_var.next) {
-       decl_walk3(sym->u.declare_var.tqual, sym->u.declare_var.dcltor, IndentInc);
-   }
-
-   /*
     * Output special declarations and initial processing.
     */
    ForceNl();
@@ -3127,7 +3125,15 @@ struct node *n;
 
    if (has_underef && params != NULL && params->id_type == (VarPrm | DrfPrm))
        prt_str("int r_n;\n", IndentInc);
+
    tend_init();
+   ForceNl();
+   /*
+    * Output ordinary declarations from the declare clause.
+    */
+   for (sym = decl_lst; sym != NULL; sym = sym->u.declare_var.next) {
+       decl_walk3(sym->u.declare_var.tqual, sym->u.declare_var.dcltor, IndentInc);
+   }
 
    /*
     * See which parameters need to be dereferenced. If all are dereferenced,
@@ -3248,14 +3254,6 @@ struct node *n;
        /* Force a line directive at next token */
        line = 0;
 
-       /*
-        * Output ordinary declarations from the declare clause.
-        */
-       ForceNl();
-       for (sym = decl_lst; sym != NULL; sym = sym->u.declare_var.next) {
-           decl_walk3(sym->u.declare_var.tqual, sym->u.declare_var.dcltor, IndentInc);
-       }
-
        if (op_type == Operator) {
            if (strcmp(name, "cat") == 0 ||
                strcmp(name, "diff") == 0 ||
@@ -3302,7 +3300,15 @@ struct node *n;
 #endif
 
        spcl_dcls();                         /* tended declarations */
+
+       /*
+        * Output ordinary declarations from the declare clause.
+        */
        ForceNl();
+       for (sym = decl_lst; sym != NULL; sym = sym->u.declare_var.next) {
+           decl_walk3(sym->u.declare_var.tqual, sym->u.declare_var.dcltor, IndentInc);
+       }
+
        fprintf(out_file, "\n   _lhs = get_dptr();\n");
        for (i = 0; i < nparms; ++i) {
            if (has_underef)
