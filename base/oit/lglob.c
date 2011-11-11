@@ -545,7 +545,7 @@ struct native_method {
 };
 
 struct native_method native_methods[] = {
-#define NativeDef(class,field,func) {Lit(class),Lit(field)},
+#define NativeDef(class,field,func) {#class,#field},
 #include "../h/nativedefs.h"
 #undef NativeDef
 };

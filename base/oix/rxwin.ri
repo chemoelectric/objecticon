@@ -235,7 +235,7 @@ static void dump_all(void)
 }
 #endif
 
-#define ATOM(d, x) ((d)->atoms[Cat(ATOM_,x)])
+#define ATOM(d, x) ((d)->atoms[ATOM_##x])
 
 static struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int b)
 {
