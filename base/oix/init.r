@@ -172,7 +172,6 @@ char *allchars =
 
 int set_up = 0;				/* set-up switch */
 char *currend = NULL;			/* current end of memory region */
-word qualsize = QualLstSize;		/* size of quallist for fixed regions */
 word memcushion = RegionCushion;	/* memory region cushion factor */
 word memgrowth = RegionGrowth;		/* memory region growth factor */
 
@@ -1245,7 +1244,6 @@ int main(int argc, char **argv)
     env_int(OIMAXLEVEL, &k_maxlevel, 1, MaxWord);
     env_int(OISTRSIZE, &rootstring.size, 1, MaxWord);
     env_int(OIBLKSIZE, &rootblock.size, 1, MaxWord); 
-    env_int(OIQLSIZE, &qualsize, 1, MaxWord);
     env_int(OIMEMCUSHION, &memcushion, 1, 100);	/* max 100 % */
     env_int(OIMEMGROWTH, &memgrowth, 1, 10000);	/* max 100x growth */
     env_int(OICORE, &dodump, 1, 2);

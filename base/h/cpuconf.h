@@ -118,10 +118,6 @@
    #define MinDefAbrSize (125000 * WordSize) /* minimum default size of the block region in bytes */
 #endif					/* (default size may be larger if memory is ample) */
 
-#ifndef QualLstSize
-   #define QualLstSize	(1250 * WordSize) /* size of qualifier pointer region */
-#endif					/* QualLstSize */
-
 #ifndef RegionCushion
    #define RegionCushion 10		/* % memory cushion to avoid thrashing*/
 #endif					/* RegionCushion */

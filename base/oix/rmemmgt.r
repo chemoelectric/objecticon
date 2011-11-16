@@ -18,11 +18,18 @@ static void markprogram  (struct progstate *pstate);
 static void sweep_stack  (struct frame *f);
 static void unmark_region(struct region *br);
 static void free_stack   (struct b_coexpr *c);
+static union block **ptrq_get(void);
+static void ptrq_add(union block **ptr);
+static void ptrq_clear(void);
+static void ptrq_markptrs(void);
+
+
+
 
 /*
  * Variables
  */
-
+static int quallistsize;
 static dptr *quallist;                 /* string qualifier list */
 static dptr *qualfree;                 /* qualifier list free pointer */
 static dptr *equallist;                /* end of qualifier list */
@@ -288,7 +295,7 @@ uword segsize[] = {
    if (Qual(d)) \
       postqual(&(d)); \
    else if (Pointer(d))\
-      markptr(&BlkLoc(d));
+      ptrq_add(&BlkLoc(d));
 
 /*
  * collect - do a garbage collection of currently active regions.
@@ -343,8 +350,9 @@ void collect(int region)
     * First time through init quallist
     */
     if (!quallist) {
-        Protect(quallist = malloc(qualsize), fatalerr(304, NULL));
-        equallist = (dptr *)((char *)quallist + qualsize);
+        quallistsize = 1024;
+        Protect(quallist = malloc(quallistsize * sizeof(dptr)), fatalerr(304, NULL));
+        equallist = quallist + quallistsize;
     }
 
    /*
@@ -352,10 +360,15 @@ void collect(int region)
     */
    qualfree = quallist;
 
+   /*
+    * Reset/init ptrq
+    */
+   ptrq_clear();
+
    for (prog = progs; prog; prog = prog->next)
        markprogram(prog);
 
-   markptr((union block **)&k_current);
+   ptrq_add((union block **)&k_current);
 
    /*
     * Sweep the tended list on the C stack.
@@ -383,6 +396,9 @@ void collect(int region)
      }
    }
 #endif					/* Graphics */
+
+   /* Process all block ptrs */
+   ptrq_markptrs();
 
    reclaim();
 
@@ -440,7 +456,7 @@ static void markprogram(struct progstate *pstate)
     struct descrip *dp;
     struct prog_event *pe;
 
-    markptr((union block **)&pstate->eventmask);
+    ptrq_add((union block **)&pstate->eventmask);
     for (pe = pstate->event_queue_head; pe; pe = pe->next) {
         PostDescrip(pe->eventcode);
         PostDescrip(pe->eventval);
@@ -475,10 +491,10 @@ static void markprogram(struct progstate *pstate)
     PostDescrip(pstate->T_errorvalue);
     PostDescrip(pstate->T_errortext);
     if (pstate->K_errorcoexpr)
-        markptr((union block **)&pstate->K_errorcoexpr);
+        ptrq_add((union block **)&pstate->K_errorcoexpr);
 
-    markptr((union block **)&pstate->K_main);
-    markptr((union block **)&pstate->K_current);
+    ptrq_add((union block **)&pstate->K_main);
+    ptrq_add((union block **)&pstate->K_current);
 }
 
 
@@ -489,8 +505,6 @@ static void markprogram(struct progstate *pstate)
 
 static void postqual(dptr dp)
 {
-    char *newqual;
-
     if (InRange(strbase,StrLoc(*dp),strfree + 1)) { 
 
         /*
@@ -500,17 +514,72 @@ static void postqual(dptr dp)
          */
         if (qualfree >= equallist) {
             /* reallocate a new qualifier list that's twice as large */
-            Protect(newqual = realloc(quallist, 2 * qualsize), fatalerr(304, NULL));
-            quallist = (dptr *)newqual;
-            qualfree = (dptr *)(newqual + qualsize);
-            qualsize *= 2;
-            equallist = (dptr *)(newqual + qualsize);
-
+            Protect(quallist = realloc(quallist, 2 * quallistsize * sizeof(dptr)), fatalerr(304, NULL));
+            qualfree = quallist + quallistsize;
+            quallistsize *= 2;
+            equallist = quallist + quallistsize;
         }
         *qualfree++ = dp;
     }
 }
 
+/*
+ * Structure for holding a circular list of union block ** items.
+ */
+struct {
+   int bufsize;
+   union block ***buf, ***ebuf, ***front, ***back;
+   int n;
+} ptrq;
+
+/* Get from queue, assumes it's not empty */
+static union block **ptrq_get()
+{
+    union block **ptr;
+    ptr = *ptrq.front++;
+    if (ptrq.front == ptrq.ebuf)
+        ptrq.front = ptrq.buf;
+    ptrq.n--;
+    return ptr;
+}
+
+/* Reset pointer queue */
+static void ptrq_clear()
+{
+    if (!ptrq.buf) {
+        ptrq.bufsize = 1024;
+        Protect(ptrq.buf = malloc(ptrq.bufsize * sizeof(union block **)), fatalerr(306, NULL));
+        ptrq.ebuf = ptrq.buf + ptrq.bufsize;
+    }
+    ptrq.n = 0;
+    ptrq.front = ptrq.back = ptrq.buf;
+}
+
+/* Add to pointer queue */
+static void ptrq_add(union block **ptr)
+{
+    if (ptrq.n == ptrq.bufsize) {
+        union block ***t = ptrq.buf;
+        Protect(ptrq.buf = realloc(ptrq.buf, ptrq.bufsize * 2 * sizeof(union block **)), fatalerr(306, NULL));
+        ptrq.front = ptrq.buf + (ptrq.front - t);
+        ptrq.back = ptrq.buf + (ptrq.back - t);
+        memcpy(ptrq.front + ptrq.bufsize, ptrq.front, ((ptrq.buf + ptrq.bufsize) - ptrq.front) * sizeof(union block **));
+        ptrq.front += ptrq.bufsize;
+        ptrq.bufsize *= 2;
+        ptrq.ebuf = ptrq.buf + ptrq.bufsize;
+    }
+    *ptrq.back++ = ptr;
+    if (ptrq.back == ptrq.ebuf)
+        ptrq.back = ptrq.buf;
+    ptrq.n++;
+}
+
+/* Process pointers in queue until it's empty */
+static void ptrq_markptrs()
+{
+    while (ptrq.n > 0)
+        markptr(ptrq_get());
+}
 
 static void markptr(union block **ptr)
 {
@@ -555,7 +624,7 @@ static void markptr(union block **ptr)
                  * Mark the activator of this co-expression.
                  */
                 if (cp->activator)
-                    markptr((union block **)&cp->activator);
+                    ptrq_add((union block **)&cp->activator);
                 /*
                  * Mark its stack
                  */
@@ -573,7 +642,7 @@ static void markptr(union block **ptr)
                         lastptr = (union block **)endblock;
                     for (; ptr1 < lastptr; ptr1++)
                         if (*ptr1 != NULL)
-                            markptr(ptr1);
+                            ptrq_add(ptr1);
                 }
                 if ((fdesc = firstd[type0]) > 0) {
                     /*
@@ -638,7 +707,7 @@ static void markptr(union block **ptr)
              * Mark the activator of this co-expression.
              */
             if (cp->activator)
-                markptr((union block **)&cp->activator);
+                ptrq_add((union block **)&cp->activator);
             /*
              * Mark its stack
              */
@@ -656,7 +725,7 @@ static void markptr(union block **ptr)
                     lastptr = (union block **)endblock;
                 for (; ptr1 < lastptr; ptr1++)
                     if (*ptr1 != NULL)
-                        markptr(ptr1);
+                        ptrq_add(ptr1);
             }
             if ((fdesc = firstd[type0]) > 0) {
                 /*
