@@ -35,4 +35,7 @@ procedure rgbrec(s)
    return rgb!Window.parse_color(s)
 end
 
+procedure rgbtocolor(rgb)
+   return rgb.r || "," || rgb.g || "," || rgb.b
+end
 

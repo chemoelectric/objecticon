@@ -67,7 +67,7 @@ package ipl.io
 
 import
    io(Files, close, open, read,
-      stop, write)
+      write)
 
 global buffer_in, buffer_out, Eof
 
@@ -156,7 +156,7 @@ end
 procedure filetext(f)			
    local input, text
 
-   input := open(f) | stop("cannot open input file")
+   input := open(f) | fail
 
    text := []
 

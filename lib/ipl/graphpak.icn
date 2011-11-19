@@ -39,7 +39,8 @@
 package ipl.graphpak
 
 import
-   io(read, stop, write)
+   io(read, write),
+   util(error)
 
 record graph(nodes, lookup)
 
@@ -53,7 +54,7 @@ procedure read_graph(f)
    nodes := []				# list of the graph nodes
    lookup := table()			# two-way table of names and nodes
 
-   node_list := read(f) | stop("*** empty specification file")
+   node_list := read(f) | return error("*** empty specification file")
 
    node_list ? {			# process list of node names
       while name := tab(upto('\t ') | 0) do {
@@ -67,11 +68,11 @@ procedure read_graph(f)
 
    while arc := read(f) do {		# process arcs
       arc ? {
-         from_name := tab(find("->")) | stop("*** bad arc specification")
+         from_name := tab(find("->")) | return error("*** bad arc specification")
          move(2)
          to_name := tab(0)
          insert(\lookup[from_name], \lookup[to_name]) |
-            stop("*** non-existent node")
+            return error("*** non-existent node")
          }
       }
          

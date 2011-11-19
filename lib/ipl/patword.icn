@@ -22,9 +22,6 @@
 
 package ipl.patword
 
-import
-   io(stop)
-
 procedure patword(s)
     local numbering, orderS, orderset, patlbls
     static labels, revnum
@@ -41,10 +38,10 @@ procedure patword(s)
 #
 # Next map each of these new characters into contiguous letters.
 
-    numbering := revnum[1 : *s + 1] | stop("word too long")
+    numbering := revnum[1 : *s + 1] | runerr("word too long")
     orderS := map(s, reverse(s), numbering)
     orderset := string(cset(orderS))
-    patlbls := labels[1 : *orderset + 1] | stop("too many characters")
+    patlbls := labels[1 : *orderset + 1] | runerr("too many characters")
 
     return map(orderS, orderset, patlbls)
 
