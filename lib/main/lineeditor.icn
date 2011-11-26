@@ -304,8 +304,15 @@ class LineEditorStream(LineBasedStream)
             "\^d": {
                ctrl_d_flag := 1
                if /line_no then
-                  tty.writes(prompt, subj)
-               tty.write()
+                  tty.write(prompt, subj)
+               else {
+                  # Since we may be on a multiline input, but not on
+                  # the last line of it, move the cursor to the end of
+                  # the subject before printing the new line.
+                  pos := *subj + 1
+                  show()
+                  tty.write()
+               }
                if *subj > 0 then
                   return got()
                else
@@ -333,6 +340,9 @@ class LineEditorStream(LineBasedStream)
                   # Buffer input until got line no request response, which is now out-of-date.
                   buff_flag := 1
                } else {
+                  # See ^d above
+                  pos := *subj + 1
+                  show()
                   tty.write()
                   return got()
                }

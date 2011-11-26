@@ -29,8 +29,9 @@
 package ipl.readcpt
 
 import
-   io(read, stop),
-   ipl.matrix(create_matrix)
+   io(read),
+   ipl.matrix(create_matrix),
+   util(error)
 
 # convert numerical carpet to matrix
 procedure read_cpt(input)	
@@ -41,16 +42,16 @@ procedure read_cpt(input)
       width := integer(tab(many(&digits))) &
       =" height=" &
       height := integer(tab(many(&digits)))
-      } | stop("*** invalid carpet file")
+      } | return error("*** invalid carpet file")
 
    carpet := create_matrix(height, width)
 
    every j := 1 to height do {
-      line := read(input) | stop("*** short carpet data")
+      line := read(input) | return error("*** short carpet data")
       i := 0
       line ? {
          while carpet[j, i +:= 1] := tab(upto(' ')) do
-            move(1) | stop("*** narrow carpet data")
+            move(1) | return error("*** narrow carpet data")
          }
       }
 

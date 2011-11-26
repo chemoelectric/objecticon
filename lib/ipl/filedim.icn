@@ -25,7 +25,7 @@
 package ipl.filedim
 
 import
-   io(close, open, read, stop)
+   io(close, open, read)
 
 record textdim(cols, rows)
 
@@ -34,7 +34,7 @@ procedure filedim(s, p)
 
    /p := detab
 
-   input := open(s) | stop("*** cannot open ", s)
+   input := open(s) | fail
 
    rows := cols := 0
 

@@ -23,10 +23,6 @@
    #define OIBLKSIZE "OIBLKSIZE"
 #endif
 
-#ifndef OIQLSIZE
-   #define OIQLSIZE "OIQLSIZE"
-#endif
-
 #ifndef OIMEMGROWTH
    #define OIMEMGROWTH "OIMEMGROWTH"
 #endif

@@ -40,7 +40,8 @@ package ipl.rawimage
 import
    graphics(Window),
    io(Files, close, open, read,
-      reads, stop, write, writes)
+      reads, write, writes),
+   util(error)
 
 $define LineLen 64
 
@@ -53,9 +54,9 @@ procedure WriteRaw(win, s, x, y, w, h)
    /x := 0
    /y := 0
 
-   f := open(s, "w")  | stop("*** cannot open output file ", s, ": ", &why)
+   f := open(s, "w")  | return error("*** cannot open output file " || s || ": " || &why)
    tempname := Files.make_temp_filename("writeraw")
-   temp := open(tempname, "w") | stop("*** cannot open temporary file")
+   temp := open(tempname, "w") | return error("*** cannot open temporary file")
 
    line := ""
 
@@ -83,7 +84,7 @@ procedure WriteRaw(win, s, x, y, w, h)
    write(f)			# separator
 
    close(temp)
-   temp := open(tempname) | stop("*** cannot find temporary file")
+   temp := open(tempname) | return error("*** cannot find temporary file")
 
    while writes(f, reads(temp, 10000))	# copy image data
 
@@ -98,14 +99,14 @@ end
 procedure ReadRaw(s)
    local input, palette, c, temp, size, width, height, line, x, y
 
-   input := open(s) | stop("*** cannot read raw image file")
+   input := open(s) | return error("*** cannot read raw image file")
 
-   size := read(input) | stop("*** malformed raw image file")
+   size := read(input) | return error("*** malformed raw image file")
 
    size ? {
       width := integer(tab(upto(','))) &
       move(1) &
-      height := integer(tab(0)) | stop("invalid raw image header")
+      height := integer(tab(0)) | return error("invalid raw image header")
       }
 
    temp := Window.open().set_size(width, height)
@@ -123,7 +124,7 @@ procedure ReadRaw(s)
       line := read(input) | break
       line ? {
          while c := move(2) do {
-            temp.set_fg(palette[c]) | stop("***invalid color: ", c)
+            temp.set_fg(palette[c]) | return error("***invalid color: ", c)
             temp.draw_point(x, y)
             x +:= 1
             if x = width then {

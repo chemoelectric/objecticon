@@ -89,6 +89,7 @@ struct errtab errtab[] = {
     {303, "inadequate space for main co-expression"},
     {304, "inadequate space for qualifier list during garbage collection"},
     {305, "inadequate space for static allocation"},
+    {306, "inadequate space for block pointer queue during garbage collection"},
     {309, "out of memory, allocation returned null"},
     {311, "recursion too deep"},
     {313, "inadequate space for string region"},

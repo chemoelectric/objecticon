@@ -40,7 +40,6 @@
 package ipl.colrmodl
 
 import
-   io(stop),
    ipl.matrix(create_matrix, mult_matrix),
    ipl.numbers(floor)
 
@@ -182,7 +181,7 @@ procedure hsv2rgb(color)
       if color.h = -1 then {
          return rgb(color.v, color.v, color.v)
          }
-      else stop("*** error in HSV to RGB conversion")
+      else runerr("*** error in HSV to RGB conversion")
       }
    else {
       h := color.h
@@ -202,7 +201,7 @@ procedure hsv2rgb(color)
          3:  rgb(p, q, v)
          4:  rgb(t, p, v)
          5:  rgb(v, p, q)
-         default:  stop("*** error in HSV to RGB conversion")
+         default:  runerr("*** error in HSV to RGB conversion")
          }
       }
 
@@ -253,7 +252,7 @@ procedure hls2rgb(color)
    m1 := 2 * l - m2
    if s = 0 then {			# achromatic case
       if h = -1.0 then return rgb(l, l, l)
-      else stop("*** error in HLS specification")
+      else runerr("*** error in HLS specification")
       }
    else {
       return rgb(

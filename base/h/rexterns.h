@@ -52,7 +52,6 @@ extern struct descrip milliondesc;	/* 1000000 */
 
 extern struct c_proc Bdeferred_method_stub;  /* Deferred method block */
 
-extern word qualsize;		/* size of string qualifier list */
 extern word memcushion;		/* memory region cushion factor */
 extern word memgrowth;		/* memory region growth factor */
 
