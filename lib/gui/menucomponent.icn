@@ -377,11 +377,11 @@ class MenuComponent(Rect,Connectable)
       if self.x < r.x then
          x1 := r.x
       else if self.x + self.w > r.x + r.w then
-         x1 := r.x <= xa - self.w
+         x1 := max(r.x, xa - self.w)
       if self.y < r.y then
          y1 := r.y
       else if self.y + self.h > r.y + r.h then
-         y1 := r.y <= ya - self.h
+         y1 := max(r.y, ya - self.h)
       if \x1 | \y1 then {
          /x1 := self.x
          /y1 := self.y
