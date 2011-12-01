@@ -123,6 +123,11 @@ class Task()
       return scheduler.is_polling(self)
    end
 
+   # Succeed iff the task is currently in the ready state
+   public is_ready()
+      return scheduler.is_ready(self)
+   end
+
    # Suspend this task, which must be the currently scheduled task, in
    # order to carry out a {DescStream.poll}.  The parameters and
    # result are in the same form as for {DescStream.poll}.  The
@@ -276,6 +281,10 @@ class Scheduler()
 
    package is_polling(t)
       return member(polling, t)
+   end
+
+   package is_ready(t)
+      return member(ready, t)
    end
 
    private set_state(t, x)
