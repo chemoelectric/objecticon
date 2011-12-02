@@ -71,12 +71,12 @@ class EditSpin(Spin)
    end
 
    public create_view()
-      local tf
-      tf := SpinTextField()
-      every tf.connect(self.on_textfield, Event.CONTENT_CHANGED|Event.ACTION)
-      return tf
+      return SpinTextField()
+   end
+
+   public new()
+      cast(self,Spin).new()
+      every view.connect(self.on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
+      return
    end
 end
-
-
-

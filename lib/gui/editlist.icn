@@ -105,10 +105,7 @@ class EditList(DropDown)
    end
 
    public create_view()
-      local tf
-      tf := EditListTextField()
-      every tf.connect(self.on_textfield, Event.CONTENT_CHANGED|Event.ACTION)
-      return tf
+      return EditListTextField()
    end
 
    public get_default_width()
@@ -118,7 +115,10 @@ class EditList(DropDown)
       every t <:= self.cbwin.text_width((view.contents | !self.selection_list) || " ")
       return border.get_total_width() + b.get_preferred_width() + t + view.border.get_total_width()
    end
+
+   public new()
+      cast(self,DropDown).new()
+      every view.connect(self.on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
+      return
+   end
 end
-
-
-
