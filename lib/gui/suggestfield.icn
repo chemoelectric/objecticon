@@ -281,7 +281,7 @@ class SuggestField(TextField)
 
    public handle_key_down(e)
       if \tl then {
-         if *tl.get_selections() = 0 then {
+         if *tl.get_selections() = 0 & tl.get_cursor() = 1 then {
             tl.set_selections([1])
             synch_contents()
          } else
