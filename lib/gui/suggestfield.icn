@@ -51,7 +51,7 @@ class SuggestField(TextField)
 
    public on_textlist_selection(ev)
       synch_contents()
-      member(Key.CURSOR, ev.code) | close_textlist()
+      member(Key.NAVIGATE, ev.code) | close_textlist()
    end
 
    public synch_contents()
@@ -279,6 +279,16 @@ class SuggestField(TextField)
          tl.fire(Event.KEY_PRESS, e)
    end
 
+   public handle_key_page_up(e)
+      if \tl then
+         tl.fire(Event.KEY_PRESS, e)
+   end
+
+   public handle_key_page_down(e)
+      if \tl then
+         tl.fire(Event.KEY_PRESS, e)
+   end
+
    public handle_key_down(e)
       if \tl then {
          if *tl.get_selections() = 0 & tl.get_cursor() = 1 then {
@@ -289,10 +299,26 @@ class SuggestField(TextField)
       }
    end
 
+   public handle_key_home(e)
+      if \tl then
+         tl.fire(Event.KEY_PRESS, e)
+      else
+         cast(self,TextField).handle_key_home(e)
+   end
+
+   public handle_key_end(e)
+      if \tl then
+         tl.fire(Event.KEY_PRESS, e)
+      else
+         cast(self,TextField).handle_key_end(e)
+   end
+
    public handle_key(e)
       case e.code of {
          Key.UP : handle_key_up(e)
          Key.DOWN : handle_key_down(e)
+         Key.PGUP : handle_key_page_up(e)
+         Key.PGDN : handle_key_page_down(e)
          default:
             cast(self,TextField).handle_key(e)
       }
