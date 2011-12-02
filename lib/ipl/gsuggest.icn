@@ -39,7 +39,7 @@ class GoogleSuggestField(GSuggestField)
       local hr, data, jp, v, s, u
       data := StringStream()
       u := URL.parse("http://" || domain || "/complete/search").
-         set_cgi_parameters(table(, "q", contents))
+         set_cgi_parameters(table(, "q", contents, "client", "suggest"))
       hr := HttpRequest().
          set_url(u).
          set_data_stream(data).
