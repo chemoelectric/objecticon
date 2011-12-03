@@ -8,7 +8,6 @@
 
 package gui
 
-
 #
 # This is a Spin for numeric values, optionally within a fixed range.
 #
@@ -18,12 +17,12 @@ class RangeSpin(EditSpin)
       hi,
       increment_size
 
-   public do_increment()
-      set_value(get_value() + self.increment_size)
+   public do_increment(ev)
+      set_value(get_value() + self.increment_size, ev)
    end
 
-   public do_decrement()
-      set_value(get_value() - self.increment_size)
+   public do_decrement(ev)
+      set_value(get_value() - self.increment_size, ev)
    end
 
    #
@@ -42,10 +41,13 @@ class RangeSpin(EditSpin)
    #
    # Set the value
    #
-   public set_value(x)
+   public set_value(x, ev)
       x <:= \self.lo
       x >:= \self.hi
-      view.set_contents(x)
+      if /ev then
+         view.set_contents(x)
+      else
+         view.assign_contents(x, ev)
       return self
    end
 
@@ -60,6 +62,8 @@ class RangeSpin(EditSpin)
    public on_textfield(ev, src, type)
       local x
       if x := get_value() then {
+         # No point using assign_contents, since an invalid value is in the
+         # undo list.
          if x < \self.lo then
             view.set_contents(self.lo)
          else if x > \self.hi then

@@ -96,9 +96,9 @@ class DropDown(SelectionList,Component)
          fail
       start_change(e)
       if /self.selection | (self.selection = 1) then
-         set_selection(*self.selection_list)
+         set_selection(*self.selection_list, e)
       else
-         set_selection(self.selection - 1)
+         set_selection(self.selection - 1, e)
       end_change(e)
    end
 
@@ -107,15 +107,15 @@ class DropDown(SelectionList,Component)
          fail
       start_change(e)
       if /self.selection then
-         set_selection(1)
+         set_selection(1, e)
       else
-         set_selection(1 + self.selection % *self.selection_list)
+         set_selection(1 + self.selection % *self.selection_list, e)
       end_change(e)
    end
 
    public go_to(x, e)
       start_change(e)
-      set_selection(x)
+      set_selection(x, e)
       end_change(e)
    end
 

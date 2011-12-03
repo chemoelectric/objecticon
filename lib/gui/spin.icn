@@ -23,13 +23,13 @@ class Spin(Component)
    # This method must be overridden to do something to the component when the
    # up button is pressed.
    #
-   public defer do_increment()
+   public defer do_increment(ev)
 
    #
    # This method must be overridden to do something to the component when the
    # down button is pressed.
    #
-   public defer do_decrement()
+   public defer do_decrement(ev)
 
    #
    # Create the view component
@@ -87,13 +87,13 @@ class Spin(Component)
 
    public go_up(e)
       start_change(e)
-      do_increment()
+      do_increment(e)
       end_change(e)
    end
 
    public go_down(e)
       start_change(e)
-      do_decrement()
+      do_decrement(e)
       end_change(e)
    end
 

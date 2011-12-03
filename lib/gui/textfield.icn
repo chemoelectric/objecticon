@@ -122,7 +122,7 @@ class TextField(Component)
    # @param x   The contents
    #
    public set_contents(x)
-      self.contents := text(x)
+      self.contents := text(x) | runerr(129, x)
       self.cursor := *self.contents + 1
       self.loff := 0
       clear_mark()
@@ -132,6 +132,25 @@ class TextField(Component)
          undo_manager.clear()
       }
       return self
+   end
+
+   #
+   # Set the contents of the field, allowing the user to undo the
+   # change, and firing events on the change.
+   #
+   # @param x   The new contents
+   # @param e   The event causing the change
+   #
+   public assign_contents(x, e)
+      local ed
+      x := text(x) | runerr(129, x)
+      start_handle(e)
+      if self.contents ~== x then {
+         ed := TextFieldAssignEdit(self, x)
+         ed.doit()
+         undo_manager.add_edit(ed)
+      }
+      end_handle(e)
    end
 
    public start_handle(e)
@@ -744,7 +763,6 @@ class TextFieldPrimarySelectionOwner(TextSelectionOwner)
    end
 end
 
-
 class TextFieldClipboardSelectionOwner(TextSelectionOwner)
    private parent
 
@@ -760,7 +778,6 @@ class TextFieldClipboardSelectionOwner(TextSelectionOwner)
       return
    end
 end
-
 
 class TextFieldEdit(UndoableEdit)
    public 
@@ -805,7 +822,6 @@ class TextFieldEdit(UndoableEdit)
    end
 end
 
-
 class TextFieldDeleteRightEdit(TextFieldEdit)
    public ch
 
@@ -827,7 +843,6 @@ class TextFieldDeleteRightEdit(TextFieldEdit)
       return
    end
 end
-
 
 class TextFieldDeleteLeftEdit(TextFieldEdit)
    public ch
@@ -851,7 +866,6 @@ class TextFieldDeleteLeftEdit(TextFieldEdit)
       return
    end
 end
-
 
 class TextFieldDeleteRegionEdit(TextFieldEdit)
    public pre
@@ -881,7 +895,6 @@ class TextFieldDeleteRegionEdit(TextFieldEdit)
    end
 end
 
-
 class TextFieldPasteEdit(TextFieldEdit)
    public s
 
@@ -900,7 +913,6 @@ class TextFieldPasteEdit(TextFieldEdit)
       return
    end
 end
-
 
 class TextFieldDefaultEdit(TextFieldEdit)
    public s
@@ -930,7 +942,6 @@ class TextFieldDefaultEdit(TextFieldEdit)
    end
 end
 
-
 class TextFieldDeleteLineEdit(TextFieldEdit)
    public pre
 
@@ -947,6 +958,27 @@ class TextFieldDeleteLineEdit(TextFieldEdit)
 
    public new(parent)
       cast(self,TextFieldEdit).new(parent)
+      return
+   end
+end
+
+class TextFieldAssignEdit(TextFieldEdit)
+   public s, pre
+
+   public redo_impl()
+      pre := parent.contents
+      parent.contents := s
+      parent.cursor := *s + 1
+      parent.clear_mark()
+   end
+
+   public undo_impl()
+      parent.contents := pre
+   end
+
+   public new(parent, s)
+      cast(self,TextFieldEdit).new(parent)
+      self.s := s
       return
    end
 end

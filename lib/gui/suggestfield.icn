@@ -49,13 +49,13 @@ class SuggestField(TextField)
       return self
    end
 
-   public on_textlist_selection(ev)
-      synch_contents()
-      member(Key.NAVIGATE, ev.code) | close_textlist()
+   public on_textlist_selection(e)
+      synch_contents(e)
+      member(Key.NAVIGATE, e.code) | close_textlist()
    end
 
-   public synch_contents()
-      set_contents(extract_selection())
+   public synch_contents(e)
+      assign_contents(extract_selection(), e)
       mod := &null
    end
 
@@ -293,7 +293,7 @@ class SuggestField(TextField)
       if \tl then {
          if *tl.get_selections() = 0 & tl.get_cursor() = 1 then {
             tl.set_selections([1])
-            synch_contents()
+            synch_contents(e)
          } else
             tl.fire(Event.KEY_PRESS, e)
       }

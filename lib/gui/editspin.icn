@@ -36,9 +36,6 @@ end
 # TextField to display/edit the current value.
 #
 class EditSpin(Spin)
-   public 
-      old_contents
-
    public on_textfield(ev, src, type)
       # Fire the event with self as source.
       fire(type, ev)
@@ -59,15 +56,6 @@ class EditSpin(Spin)
    #
    public get_contents()
       return view.get_contents()
-   end
-
-   public start_change(e)
-      self.old_contents := get_contents()
-   end
-
-   public end_change(e)
-      if self.old_contents ~=== get_contents() then
-         fire(Event.CONTENT_CHANGED, e)
    end
 
    public create_view()
