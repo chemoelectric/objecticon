@@ -122,6 +122,7 @@ class TextField(Component)
    # @param x   The contents
    #
    public set_contents(x)
+      /x := ""
       self.contents := text(x) | runerr(129, x)
       self.cursor := *self.contents + 1
       self.loff := 0
@@ -143,6 +144,7 @@ class TextField(Component)
    #
    public assign_contents(x, e)
       local ed
+      /x := ""
       x := text(x) | runerr(129, x)
       start_handle(e)
       if self.contents ~== x then {
