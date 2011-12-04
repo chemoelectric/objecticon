@@ -949,7 +949,7 @@ class TextFieldDeleteLineEdit(TextFieldEdit)
 
    public redo_impl()
       pre := parent.contents
-      parent.contents := ""
+      parent.contents[1:0] := ""     # Preserves text type of contents
       parent.cursor := 1
       parent.clear_mark()
    end
@@ -966,6 +966,13 @@ end
 
 class TextFieldAssignEdit(TextFieldEdit)
    public s, pre
+
+   public add_edit(other)
+      if is(other, gui.TextFieldAssignEdit) then {
+         self.s := other.s
+         return
+      }
+   end
 
    public redo_impl()
       pre := parent.contents
