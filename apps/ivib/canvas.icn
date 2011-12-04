@@ -1788,7 +1788,7 @@ class Canvas(Component,SelectiveObjectCodec)
       #
       # For all selections...
       #
-      every e := !selections do
+      every e := !selections do {
          if \e.cbwin then {
             #
             # Take it out of its container, effectively disconnecting it.
@@ -1801,6 +1801,9 @@ class Canvas(Component,SelectiveObjectCodec)
             e.finally()
          }
 
+         if initial_focus === e then
+            initial_focus := &null
+      }
 
       #
       # Clear selections. 
@@ -1832,6 +1835,9 @@ class Canvas(Component,SelectiveObjectCodec)
          #
          cc.finally()
       }
+
+      if initial_focus === cc then
+         initial_focus := &null
 
       #
       # Clear selections. 

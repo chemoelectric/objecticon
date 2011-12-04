@@ -22,10 +22,10 @@ class SelectionList()
    # Set the selected item.
    # @param x   An index into the list of selectable items.
    #
-   public set_selection(x)
+   public set_selection(x, ev)
       self.selection := x
       constrain_selection()
-      apply_selection()
+      apply_selection(ev)
       return self
    end
 

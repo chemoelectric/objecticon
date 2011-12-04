@@ -44,7 +44,7 @@ end
 #
 class EditList(DropDown)
    public 
-      old_contents
+      cc_ev
 
    #
    # Set the text field's filter (see {TextField} for details).
@@ -63,17 +63,6 @@ class EditList(DropDown)
       return self.view.get_contents()
    end
 
-   public start_change(e)
-      cast(self,DropDown).start_change(e)
-      self.old_contents := get_contents()
-   end
-
-   public end_change(e)
-      cast(self,DropDown).end_change(e)
-      if self.old_contents ~=== get_contents() then
-         fire(Event.CONTENT_CHANGED, e)
-   end
-
    #
    # Set the contents of the text to the given string; the
    # selection is set to any matching item in the list, or
@@ -90,7 +79,13 @@ class EditList(DropDown)
    public apply_selection(ev)
       local s 
       s := extract_selection() | ""
-      self.view.set_contents(s)
+      if /ev then
+         self.view.set_contents(s)
+      else {
+         # Note the event so that we don't set selection to &null in on_textfield below.
+         cc_ev := ev
+         self.view.assign_contents(s, ev)
+      }
    end
 
    public extract_selection()
@@ -99,16 +94,13 @@ class EditList(DropDown)
 
    public on_textfield(ev, src, type)
       # Fire the event with self as source.
-      if type = Event.CONTENT_CHANGED then
+      if type = Event.CONTENT_CHANGED & ev ~=== cc_ev then
          self.selection := &null
       fire(type, ev)
    end
 
    public create_view()
-      local tf
-      tf := EditListTextField()
-      every tf.connect(self.on_textfield, Event.CONTENT_CHANGED|Event.ACTION)
-      return tf
+      return EditListTextField()
    end
 
    public get_default_width()
@@ -118,7 +110,10 @@ class EditList(DropDown)
       every t <:= self.cbwin.text_width((view.contents | !self.selection_list) || " ")
       return border.get_total_width() + b.get_preferred_width() + t + view.border.get_total_width()
    end
+
+   public new()
+      cast(self,DropDown).new()
+      every view.connect(self.on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
+      return
+   end
 end
-
-
-

@@ -43,7 +43,7 @@ done
 shift $((OPTIND-1))
 
 if [ $# -eq 0 ] ; then
-    set tgrlink geddump deal ipxref queens rsg concord cochain case
+    set tgrlink geddump deal ipxref queens rsg concord cochain case operators
 fi
 
 while [ $# -gt 0 ] ; do
@@ -57,6 +57,7 @@ while [ $# -gt 0 ] ; do
         concord) bm concord concord.dat;;
         cochain) bm cochain 2000;;
         case) bm case ;;
+        operators) bm operators ;;
         *) echo "Unknown prog: $1"
             exit 1;;
     esac

@@ -1545,7 +1545,7 @@ class EditableTextListDeleteLineEdit(EditableTextListEdit)
    public redo_impl()
       s := parent.contents[parent.cursor_y]
       if parent.cursor_y = *parent.contents then {
-         parent.contents[parent.cursor_y] := ""
+         parent.contents[parent.cursor_y][1:0] := ""
          parent.update_view_list(parent.cursor_y, 1, 1)
          self.last := 1
       } else {

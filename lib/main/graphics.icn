@@ -748,7 +748,8 @@ class Key()
       CURSOR_H,
       SUPER_L,
       SUPER_R,
-      MENU
+      MENU,
+      NAVIGATE
 
    private static init()
       MOD_SHIFT :=    1
@@ -914,8 +915,7 @@ $elsifdef _MS_WIN32
       SUPER_L :=            0
       SUPER_R :=            0
       MENU :=               0
-$endif
-$ifdef _PLAN9
+$elsifdef _PLAN9
       DOWN :=               63488
       END :=                61464
       SCROLL_LOCK :=        0
@@ -996,6 +996,7 @@ $ifdef _PLAN9
       MENU :=               0
 $endif
 
+      NAVIGATE := set(UP, DOWN, LEFT, RIGHT, PGUP, PGDN, HOME, END)
       CURSOR := set(UP, DOWN, LEFT, RIGHT)
       CURSOR_V := set(UP, DOWN)
       CURSOR_H := set(LEFT, RIGHT)

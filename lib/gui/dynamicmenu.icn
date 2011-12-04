@@ -1,7 +1,9 @@
 package gui
 
 class DynamicMenu(Menu)
-   public resize()
+   public show(x, y, xa, ya)
+      /self.temp_win | fail
+
       # Clear current menu contents.
       every (!self.children).finally()
 
@@ -11,7 +13,7 @@ class DynamicMenu(Menu)
       # Init new ones
       every (!self.children).initially()
 
-      cast(self,Menu).resize()
+      cast(self,Menu).show(x, y, xa, ya)
    end
 
    public defer populate()

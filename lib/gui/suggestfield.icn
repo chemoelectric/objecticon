@@ -1,6 +1,6 @@
 package gui
 
-import graphics
+import graphics, util
 
 # This class is a {TextField} which provides suggested completions in
 # a popup list based on partial input.
@@ -10,13 +10,15 @@ class SuggestField(TextField)
       tl,
       direction,
       max_height,
-      max_width
+      max_width,
+      forward_home_end_flag     # Forward home/end key to list?
 
    protected
       req, 
       req_held, 
       last,
-      mod
+      mod,
+      synch_ev
 
    #
    # Set the direction to pop-up in.  Options are {Direction.UP}, {Direction.DOWN} or
@@ -24,6 +26,14 @@ class SuggestField(TextField)
    #
    public set_direction(s)
       self.direction := s
+      return self
+   end
+
+   #
+   # Forward home/end key to list?  Default is yes.
+   #
+   public set_forward_home_end(s)
+      self.forward_home_end_flag := check_flag(s)
       return self
    end
 
@@ -49,35 +59,36 @@ class SuggestField(TextField)
       return self
    end
 
-   public on_textlist_selection(ev)
-      synch_contents()
-      member(Key.CURSOR, ev.code) | close_textlist()
+   public on_textlist_selection(e)
+      synch_contents(e)
+      member(Key.NAVIGATE, e.code) | close_textlist()
    end
 
-   public synch_contents()
-      set_contents(extract_selection())
-      mod := &null
+   public synch_contents(ev)
+      synch_ev := ev
+      assign_contents(extract_selection(), ev)
    end
 
    public extract_selection()
-      return text(tl.object_get_selections()[1])
+      return tl.object_get_selections()[1]
    end
 
    private requests()
-      local l, last
+      local l
       repeat {
-         while /mod do {
+         until mod === 1 do {
             req_held := 1
             req.sleep()
             req_held := &null
          }
-         last := self.contents
+         mod := &null
          if l := do_request() then {
-            # If contents have changed, or user has selected from list, skip.
-            (last == self.contents & \mod) | next
+            # If contents have changed, skip, and repeat request if
+            # mod = 1, or go to sleep if mod = 2
+            if \mod then
+               next
             open_textlist(l)
          }
-         mod := &null
       }
    end
 
@@ -88,10 +99,14 @@ class SuggestField(TextField)
    protected defer do_request()
 
    public on_change(ev)
-      # Wakeup req if waiting
-      if \req_held then
-         req.notify()
-      mod := 1
+      if synch_ev === ev then
+         mod := 2
+      else {
+         mod := 1
+         # Wakeup req if waiting
+         if \req_held then
+            req.notify()
+      }
    end
 
    public open_textlist(data)
@@ -279,20 +294,46 @@ class SuggestField(TextField)
          tl.fire(Event.KEY_PRESS, e)
    end
 
+   public handle_key_page_up(e)
+      if \tl then
+         tl.fire(Event.KEY_PRESS, e)
+   end
+
+   public handle_key_page_down(e)
+      if \tl then
+         tl.fire(Event.KEY_PRESS, e)
+   end
+
    public handle_key_down(e)
       if \tl then {
-         if *tl.get_selections() = 0 then {
+         if *tl.get_selections() = 0 & tl.get_cursor() = 1 then {
             tl.set_selections([1])
-            synch_contents()
+            synch_contents(e)
          } else
             tl.fire(Event.KEY_PRESS, e)
       }
+   end
+
+   public handle_key_home(e)
+      if \tl & \forward_home_end_flag then
+         tl.fire(Event.KEY_PRESS, e)
+      else
+         cast(self,TextField).handle_key_home(e)
+   end
+
+   public handle_key_end(e)
+      if \tl & \forward_home_end_flag then
+         tl.fire(Event.KEY_PRESS, e)
+      else
+         cast(self,TextField).handle_key_end(e)
    end
 
    public handle_key(e)
       case e.code of {
          Key.UP : handle_key_up(e)
          Key.DOWN : handle_key_down(e)
+         Key.PGUP : handle_key_page_up(e)
+         Key.PGDN : handle_key_page_down(e)
          default:
             cast(self,TextField).handle_key(e)
       }
@@ -303,6 +344,7 @@ class SuggestField(TextField)
       connect(on_change, Event.CONTENT_CHANGED)
       req := Dispatcher.new_task{requests()}
       self.direction := Direction.BEST
+      self.forward_home_end_flag := &yes
       return
    end
 end
