@@ -27,6 +27,14 @@ procedure list_syms(imports)
    every write(colmize(isort(s, map), LineEditorStream.get_console_size()[1]))
 end
 
+procedure show_parse(x, level)
+   /level := 0
+   if is(x, Token) then
+      write(repl("\t", level), x.s)
+   else
+      every show_parse(x.gen(), level + 1)
+end
+
 procedure flags_string(f)
    local s
    s := ""
@@ -176,7 +184,7 @@ end
 
 procedure main_impl(imports, files, opts)
    local env, s, t, ev, prompt, f, quiet_flag, par, 
-      n, tr_flag, last_runerr, ee, in, hist_line, run, tv, hlim,
+      n, trace_flag, parse_flag, last_runerr, ee, in, hist_line, run, tv, hlim,
       hfile, elim, i, v
 
    par := Parser()
@@ -189,9 +197,10 @@ procedure main_impl(imports, files, opts)
       set_imports(imports)
 
    env["env"] := create show_env(env)
-   env["tt"] := create tr_flag := toggle_flag(tr_flag)
-   env["tb"] := create { Coexpression.traceback(\last_runerr, &yes) ; &fail }
-   env["q"] := create quiet_flag := toggle_flag(quiet_flag)
+   env["trace"] := create trace_flag := toggle_flag(trace_flag)
+   env["parse"] := create parse_flag := toggle_flag(parse_flag)
+   env["quiet"] := create quiet_flag := toggle_flag(quiet_flag)
+   env["traceback"] := create { Coexpression.traceback(\last_runerr, &yes) ; &fail }
    env["dir"] := lambda{ if *_a = 0 then list_syms(imports) else dir(_a[1]) }
    env["hist"] := create show_history(in)
    env["cmd"] := lambda{{ if is(in, LineEditorStream) then hist_line := in.get_history_item(_a[1]) ; &fail}}
@@ -242,38 +251,37 @@ procedure main_impl(imports, files, opts)
          next
       }
       if n := par.parse_expression(s, "UTF-8") then {
-         if \tr_flag then {
-            to_stdout(n, 3)
-            write()
-            tv := -1
-         } else
-            tv := 0
-         if ev.set_node(n) then {
-            if \quiet_flag then
-               !run
-            else {
-               i := elim
-               every v := !run do {
-                  i -:= 1
-                  if i < 0 then {
-                     write(".... (result sequence truncated)")
-                     break
+         if \parse_flag & s ~== "!parse" then
+            show_parse(n)
+         else {
+            tv := if \trace_flag then -1 else 0
+            if ev.set_node(n) then {
+               if \quiet_flag then
+                  !run
+               else {
+                  i := elim
+                  every v := !run do {
+                     i -:= 1
+                     if i < 0 then {
+                        write(".... (result sequence truncated)")
+                        break
+                     }
+                     to_stdout(v, 3)
+                     write()
                   }
-                  to_stdout(v, 3)
-                  write()
                }
-            }
-            if &errortext then {
-               if &errornumber then
-                  ewrite("Runtime error ", &errornumber, ": ", &errortext)
-               else
-                  ewrite("Runtime error: ", &errortext)
-               ewrite("offending value: ", image(&errorvalue))
-               last_runerr := &errorcoexpr
-               errorclear()
-            }
-         } else
-            ewrite("Couldn't parse: ", &why)
+               if &errortext then {
+                  if &errornumber then
+                     ewrite("Runtime error ", &errornumber, ": ", &errortext)
+                  else
+                     ewrite("Runtime error: ", &errortext)
+                  ewrite("offending value: ", image(&errorvalue))
+                  last_runerr := &errorcoexpr
+                  errorclear()
+               }
+            } else
+               ewrite("Couldn't parse: ", &why)
+         }
       } else
          ewrite("Couldn't parse: ", &why)
       prompt := "> "
