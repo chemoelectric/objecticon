@@ -37,9 +37,10 @@ Remaining arguments specify files which are processed before command line input 
 = Useful built-in expressions =
 
  * *!env* Show the values stored in the environment
- * *!tt* Toggle tracing
- * *!tb* Show the traceback of the last command that gave a runtime error
- * *!q* Don't force evaluation of all of the values in the expression, and don't output any expression value
+ * *!parse* Toggle parse mode, in which just the syntax structure of the command is printed
+ * *!trace* Toggle tracing
+ * *!traceback* Show the traceback of the last command that gave a runtime error
+ * *!quiet* Don't force evaluation of all of the values in the expression, and don't output any expression value
  * *dir(x)* With no parameter, show all global variables.  With a parameter, show information about it.
  * *!hist* Show the command line history
  * *cmd(n)* Run command number `n` again.
