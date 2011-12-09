@@ -1329,7 +1329,7 @@ class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask, NoCopy)
    #
    public succeeded()
       local x
-      is(err_sink, StringStream) | runerr("Must use a StringStream as error sink with check_result()", err_sink)
+      is(err_sink, StringStream) | runerr("Must use a StringStream as error sink with succeeded()", err_sink)
       x := get_exit_info() | runerr("You can only call succeeded() after close()", self)
       case x.reason of {
          ExitInfo.EXITED: {

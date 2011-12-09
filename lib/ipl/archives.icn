@@ -18,7 +18,7 @@ package ipl.archives
 
 import
    io(BufferStream, FileOpt, FileStream, FilterInputStream,
-      LineFilterStream),
+      LineFilterStream, StringStream, use),
    ipl.strings(endswith)
 
 # iszip(zname) succeeds if the named file appears to be a ZIP format
@@ -137,4 +137,24 @@ end
 #
 procedure tarfile(tname, fname)		
    return FilterInputStream(, "tar", ["xOf" || tartype(tname), tname, fname])
+end
+
+# Perform gzip on a string, returning the gzipped string.
+procedure gzip(s)
+   local f, r
+   if r := use {
+      f := FilterInputStream(StringStream(s), "gzip", ["-c"]),
+      f.read_all()
+   } & f.succeeded() then
+      return r
+end
+
+# Perform gunzip on a string, returning the unzipped string.
+procedure gunzip(s)
+   local f, r
+   if r := use {
+      f := FilterInputStream(StringStream(s), "gunzip", ["-c"]),
+      f.read_all()
+   } & f.succeeded() then
+      return r
 end
