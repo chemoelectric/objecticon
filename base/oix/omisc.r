@@ -11,20 +11,18 @@ operator ^ refresh(x)
        runerr(118, x)
 
    body {
-       tended struct b_coexpr *curr, *coex;
+       tended struct b_coexpr *coex;
 
-       curr = &CoexprBlk(x);
-
-       if (curr->main_of)	/* &main cannot be refreshed */
+       if (CoexprBlk(x).main_of)	/* &main cannot be refreshed */
            runerr(215, x);
 
        MemProtect(coex = alccoexp());
-       MemProtect(coex->base_pf = alc_p_frame(curr->base_pf->proc, curr->base_pf->fvars));
+       MemProtect(coex->base_pf = alc_p_frame(CoexprBlk(x).base_pf->proc, CoexprBlk(x).base_pf->fvars));
        coex->main_of = 0;
        coex->tvalloc = 0;
        coex->size = 0;
        coex->level = 1;
-       coex->failure_label = coex->start_label = coex->base_pf->ipc = curr->start_label;
+       coex->failure_label = coex->start_label = coex->base_pf->ipc = CoexprBlk(x).start_label;
        coex->curr_pf = coex->base_pf;
        coex->sp = (struct frame *)coex->base_pf;
        return coexpr(coex);
@@ -38,27 +36,25 @@ function cocopy(x)
        runerr(118, x)
 
    body {
-       tended struct b_coexpr *curr, *coex;
+       tended struct b_coexpr *coex;
        dptr dp1, dp2;
 
-       curr = &CoexprBlk(x);
-
-       if (curr->main_of)	/* &main cannot be copied */
+       if (CoexprBlk(x).main_of)	/* &main cannot be copied */
            runerr(216, x);
 
        MemProtect(coex = alccoexp());
-       MemProtect(coex->base_pf = alc_p_frame(curr->base_pf->proc, 0));
+       MemProtect(coex->base_pf = alc_p_frame(CoexprBlk(x).base_pf->proc, 0));
        coex->main_of = 0;
        coex->tvalloc = 0;
        coex->size = 0;
        coex->level = 1;
-       coex->failure_label = coex->start_label = coex->base_pf->ipc = curr->start_label;
+       coex->failure_label = coex->start_label = coex->base_pf->ipc = CoexprBlk(x).start_label;
        coex->curr_pf = coex->base_pf;
        coex->sp = (struct frame *)coex->base_pf;
-       if (curr->base_pf->fvars) {
-           dp1 = curr->base_pf->fvars->desc;
+       if (CoexprBlk(x).base_pf->fvars) {
+           dp1 = CoexprBlk(x).base_pf->fvars->desc;
            dp2 = coex->base_pf->fvars->desc;
-           while (dp1 < curr->base_pf->fvars->desc_end)
+           while (dp1 < CoexprBlk(x).base_pf->fvars->desc_end)
                *dp2++ = *dp1++;
        }
        return coexpr(coex);
