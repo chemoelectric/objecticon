@@ -572,11 +572,9 @@ class Parser(Connectable)
    # a_Scans a possibly-quoted word (e.g. a file name).
    #
    private preproc_qword()
-      local result
-      suspend (="\"" &
-               result := tab(find("\"")) &
-               not match("\\",,&pos - 1) &
-               move(1) & preproc_istring(result)) |
+      suspend 2(="\"",
+                tab(find("\"")),
+                move(1)) |
          preproc_word()
    end
 
@@ -648,61 +646,8 @@ class Parser(Connectable)
       {
          preproc_print_encoding := preproc_encoding
          preproc_print_filename := preproc_filename
-         return "#line " || (preproc_line + 1) || " " || image(preproc_filename) || " " || preproc_encoding
+         return "#line " || (preproc_line + 1) || " \"" || preproc_filename || "\" " || preproc_encoding
       }
       return "#line " || (preproc_line + 1)
-   end
-
-   #
-   # Makes escape-sequence substitutions in an Icon-type string literal.
-   #
-   private preproc_istring(s)
-      local r,c
-      r := ""
-      s ? {
-         while r ||:= tab(upto('\\')) do {
-            move(1)
-            r ||:= case c := map(move(1)) of {
-               "b": "\b"       # backspace
-               "d": "\d"       # delete (rubout)
-               "e": "\e"       # escape (altmode)
-               "f": "\f"       # formfeed
-               "l": "\l"       # linefeed (newline)
-               "n": "\n"       # newline (linefeed)
-               "r": "\r"       # carriage return
-               "t": "\t"       # horizontal tab
-               "v": "\v"       # vertical tab
-               "x": preproc_istring_radix(16,2)# hexadecimal code
-               "^": char(ord(move(1)) % 32) | break # control code
-               default: {      # either octal code or non-escaped character
-                  if any('01234567',c) then { # if octal digit
-                     move(-1)
-                     preproc_istring_radix(8,3)
-                  }
-                  else c          # else non-escaped character
-               } | break
-            }
-         }
-         r ||:= tab(0)
-      }
-      return r
-   end
-
-   #
-   # Handles character-code specification in string literal.
-   #
-   private preproc_istring_radix(r,max)
-      local n,d,i,c
-      d := "0123456789abcdef"[1:r + 1]
-      n := 0
-      every 1 to max do {
-         c := move(1) | break
-         if not (i := find(map(c),d) - 1) then {
-            move(-1)
-            break
-         }
-         n := n * r + i
-      }
-      return char(n)
    end
 end
