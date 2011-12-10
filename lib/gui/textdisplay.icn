@@ -147,13 +147,15 @@ class TextDisplay(LineBasedScrollArea)
    end
 
    #
-   # Append a line of text and go to the bottom of the content.
+   # Append lines of text and go to the bottom of the content.
+   # @param l a list of lines to append
+   # @param max optional maximum length of resulting contents
    #
-   public log(s, max)
+   public log(l, max)
       local n
       if is_live() then {
-         put(self.contents, s)
-         update_view_list(*self.contents, 0, 1)
+         every put(self.contents, !l)
+         update_view_list(*self.contents - *l + 1, 0, *l)
          if (n := *self.contents - \max) > 0 then {
             every 1 to n do
                pop(self.contents)
@@ -164,7 +166,7 @@ class TextDisplay(LineBasedScrollArea)
          compute_and_invalidate()
          goto_last(get_line_count())
       } else {
-         put(self.contents, s)
+         every put(self.contents, !l)
          while *self.contents > \max do
             pop(self.contents)
       }
