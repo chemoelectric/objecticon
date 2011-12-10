@@ -147,7 +147,10 @@ class TextField(Component)
       /x := ""
       x := text(x) | runerr(129, x)
       start_handle(e)
-      if self.contents ~== x then {
+      if self.contents == x then {
+         clear_mark()
+         cursor := *contents + 1
+      } else {
          ed := TextFieldAssignEdit(self, x)
          ed.doit()
          undo_manager.add_edit(ed)
