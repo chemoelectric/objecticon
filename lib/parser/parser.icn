@@ -5,6 +5,19 @@ import util, io
 class ErrorDetail()
    public const src, line, msg
 
+   # Does the same as abbreviate() in tmain.c
+   private abbreviate(name)
+      local l
+      l := Files.get_path(name).get(-1)
+      return if Files.access(name, Access.R_OK) then {
+         if Files.get_path(l).canonical().str() == name then
+            l
+         else
+            name
+      } else
+      l
+   end
+
    #
    # Produce a string version of the message in the same form
    # as produced by the compiler.
@@ -13,7 +26,7 @@ class ErrorDetail()
       local s
       s := "Line " || line || " # " || msg
       if \src then
-         s := "File " || src || "; " || s
+         s := "File " || abbreviate(src) || "; " || s
       return s
    end
 
