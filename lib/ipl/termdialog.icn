@@ -1,0 +1,190 @@
+package ipl.termdialog
+
+import
+   gui, io, graphics
+
+
+class TermTextField(TextField)
+   public keeps(e)
+      return member(Key.CURSOR, e.code)
+   end
+end
+
+class TermDialog(Dialog, LineBasedOutputStream)
+   private
+      input,
+      history_limit,
+      history,
+      history_start_no,
+      hpos,
+      hmod,
+      text
+   private readable
+      line
+
+   protected write_line_impl(s)
+      text.log([s])
+      return
+   end
+
+   public log(s[])
+      text.log(s)
+      return self
+   end
+
+   public set_history_limit(n)
+      self.history_limit := n
+      limit_history()
+      return self
+   end
+
+   public set_history(l)
+      self.history := l
+      self.history_start_no := 1
+      limit_history()
+      return self
+   end
+
+   public get_history()
+      return .history
+   end
+
+   public get_history_item(n)
+      return .history[0 < n - history_start_no + 1]
+   end
+
+   public get_history_start_no()
+      return .history_start_no
+   end
+
+   private move_hist(n)
+      local subj
+      subj := input.get_contents()
+      (subj == history[hpos]) | (hmod[hpos] := subj)
+      hpos +:= n
+      subj := \hmod[hpos] | history[hpos]
+      input.set_contents(subj)
+   end
+
+   private limit_history()
+      while *history > \history_limit do {
+         pop(history)
+         history_start_no +:= 1
+      }
+   end
+
+   public component_setup()
+      self.setup()
+      reset()
+   end
+
+   public end_dialog()
+   end
+
+   public init_dialog()
+   end
+
+   public get_term_width()
+      return text.w / text.cbwin.text_width("m")
+   end
+
+   public new()
+      cast(self,Dialog).new()
+      cast(self,LineBasedOutputStream).new()
+      history := []
+      history_start_no := 1
+      return
+   end
+
+   private on_close_button(ev)
+      dispose()
+   end
+
+   private reset()
+      hpos := *history + 1
+      hmod := table()
+      input.set_contents()
+   end
+
+   private on_input(ev)
+      line := input.get_contents()
+      if *line > 0 then {
+         put(history, line)
+         limit_history()
+      }
+      reset()
+      fire(Event.ACTION, ev)
+   end
+
+   private handle_key_up(e)
+      if hpos > 1 then move_hist(-1)
+   end
+
+   private handle_key_down(e)
+      if hpos <= *history then move_hist(1)
+   end
+
+   private on_input_key(ev)
+      case ev.code of {
+         Key.UP : handle_key_up(ev)
+         Key.DOWN : handle_key_down(ev)
+      }
+   end
+
+   private setup()
+      local layout_1
+      self.set_resize(&yes)
+      text := EditableTextList().
+         set_size("465", "256").
+         set_font("fixed").
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_constraint("y_fill", &yes).
+         set_constraint("y_weight", 1.0).
+         set_contents([""]).
+         set_is_editable(&no)
+      self.add(text)
+      input := TermTextField().
+         set_size("458").
+         clear_constraints().
+         set_constraint("x_align", Align.L).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         connect(self.on_input, Event.ACTION).
+         connect(self.on_input_key, Event.KEY_PRESS).
+         set_contents("")
+      self.add(input)
+      self.connect(self.on_close_button, Event.WINDOW_CLOSE_BUTTON)
+      layout_1 := GridLayout().
+         set_extra("cells")
+      self.set_layout(layout_1)
+      self.set_focus(input.find_focus())
+   end
+end
+
+### Ivib-v2 layout ##
+#CCanvas|I18SSuperClass Name|SDialog|SImport Name|Sgui|SButton Groups|L
+#0SCheckbox Groups|L0SGen Indent|I3SGen Main|NSGen Component Setup|I1SG
+#en Init Dialog|I1SGen Constructor|I1SDialog Struct|CCDialog|I1SWAttrib
+#s|T1NSresize|I1SName|STermDialog|SIs Component|NSWidth|NSHeight|NSChil
+#dren|L2CCanvasEditableTextList|I30SParent Canvas|X1SName|Stext|SClass 
+#Name|SEditableTextList|SImport Name|Sgui|SClass Variable|I1SX Fix|NSY 
+#Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|S465|SH Spec|S256|SX Al
+#ign|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T1NSfont|Sfix
+#ed|SConstraints|T5NSx_weight|B1.0|Sx_fill|I1Sy_weight|B1.0|Sy_fill|I1S
+#eol|I1STooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent Handler
+#s|L0SClass Variable|I1SParent Component|X1SContents|L1S|SIs editable f
+#lag|NSMove on rpress flag|I1CCanvasTextField|I31SParent Canvas|X1SName
+#|Sinput|SClass Name|STermTextField|SImport Name|Sgui|SClass Variable|I
+#1SX Fix|NSY Fix|NSW Fix|NSH Fix|I1SX Spec|NSY Spec|NSW Spec|S458|SH Sp
+#ec|NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NS
+#Constraints|T3NSx_align|Sl|Sx_weight|B1.0|Sx_fill|I1STooltip|NSAccel|N
+#SLayout delegate|NSBorder opts|NSEvent Handlers|L2L2SEvent.ACTION|Son_
+#input|L2SEvent.KEY_PRESS|Son_input_key|SClass Variable|I1SParent Compo
+#nent|X1SContents|S|SFilter String|S|SIs editable flag|I1SMove on rpres
+#s flag|I1SInitial Focus|X12SEvent Handlers|L1L2SEvent.WINDOW_CLOSE_BUT
+#TON|Son_close_button|SLayout delegate|CCanvasGridLayout|I8SDII val|NSD
+#OI val|NSExtra|Scells|SName|Slayout_1|SClass Name|SGridLayout|SImport 
+#Name|Sgui|SClass Variable|NSParent|X1
