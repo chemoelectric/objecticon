@@ -6,6 +6,8 @@ package ipl.ieval
 
 import io, gui, lang, ipl.colmize, parser, eval, util, ipl.pdco, ipl.sort, ipl.lambda, ipl.termdialog
 
+$load IEVAL_LOGO "rpp.IEVAL_LOGO.png"
+
 class Ieval()
    private 
       input, output, error, env, ev, quiet_flag, par, 
@@ -286,11 +288,6 @@ class Ieval()
       }
    end
 
-   private quit_check(ev)
-      if ev.code === "\^q" then 
-         input.dispose()
-   end
-
    private body(s)
       local n, i, v, tv, run
 
@@ -338,11 +335,10 @@ class Ieval()
 
       input := TermDialog().
          set_label("ieval").
+         set_icon(IEVAL_LOGO).
          set_history_limit(hlim).
          set_log_limit(llim).
-         set_history(history).
-         connect(create input.dispose(), Event.WINDOW_CLOSE_BUTTON).
-         connect(quit_check, Event.ICON)
+         set_history(history)
       error := output := input
       s := ""
       prompt := "> "

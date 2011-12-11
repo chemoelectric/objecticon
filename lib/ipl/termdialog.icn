@@ -3,7 +3,6 @@ package ipl.termdialog
 import
    gui, io, graphics
 
-
 class TermTextField(TextField)
    public keeps(e)
       return member(Key.CURSOR, e.code)
@@ -129,9 +128,40 @@ class TermDialog(Dialog, LineBasedOutputStream)
       }
    end
 
+   private on_word_wrap(ev, src)
+      text.set_wrap_mode(if src.is_checked() then "width" else "off")
+   end
+
+   private on_text_rpress(ev)
+      local pm, m
+      pm := PopupMenu()
+      m := Menu().
+         add(CheckBoxMenuItem().
+             set_label("Word wrap").
+             set_is_checked(if text.wrap_mode === "width" then &yes else &no).
+             connect(on_word_wrap, Event.ACTION)).
+         add(TextMenuItem().
+               set_label("Clear").
+               connect(create text.set_contents([u""]), Event.ACTION)).
+         add(TextMenuItem().
+             set_label("Quit").
+             connect(create dispose(), Event.ACTION))
+      pm.popup(self, m, ev.x, ev.y)
+   end
+
+   private on_close_button(ev)
+      dispose()
+   end
+
+   private on_icon_event(ev)
+      if ev.code === "\^q" then 
+         dispose()
+   end
+
    private setup()
       local layout_1
       self.set_resize(&yes)
+      self.set_size(735, 510)
       text := EditableTextList().
          set_size("465", "256").
          set_font("fixed").
@@ -141,8 +171,10 @@ class TermDialog(Dialog, LineBasedOutputStream)
          set_constraint("x_weight", 1.0).
          set_constraint("y_fill", &yes).
          set_constraint("y_weight", 1.0).
+         connect(self.on_text_rpress, Event.MOUSE_RIGHT_PRESS).
          set_contents([u""]).
-         set_is_editable(&no)
+         set_is_editable(&no).
+         set_move_on_rpress(&no)
       self.add(text)
       input := TermTextField().
          set_size("458").
@@ -154,6 +186,8 @@ class TermDialog(Dialog, LineBasedOutputStream)
          connect(self.on_input_key, Event.KEY_PRESS).
          set_contents(u"")
       self.add(input)
+      self.connect(self.on_close_button, Event.WINDOW_CLOSE_BUTTON)
+      self.connect(self.on_icon_event, Event.ICON)
       layout_1 := GridLayout().
          set_extra("cells")
       self.set_layout(layout_1)
@@ -165,22 +199,24 @@ end
 #CCanvas|I18SSuperClass Name|SDialog|SImport Name|Sgui|SButton Groups|L
 #0SCheckbox Groups|L0SGen Indent|I3SGen Main|NSGen Component Setup|I1SG
 #en Init Dialog|I1SGen Constructor|I1SDialog Struct|CCDialog|I1SWAttrib
-#s|T1NSresize|I1SName|STermDialog|SIs Component|NSWidth|NSHeight|NSChil
-#dren|L2CCanvasEditableTextList|I30SParent Canvas|X1SName|Stext|SClass 
-#Name|SEditableTextList|SImport Name|Sgui|SClass Variable|I1SX Fix|NSY 
-#Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|S465|SH Spec|S256|SX Al
-#ign|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T1NSfont|Sfix
-#ed|SConstraints|T5NSx_weight|B1.0|Sx_fill|I1Sy_weight|B1.0|Sy_fill|I1S
-#eol|I1STooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent Handler
-#s|L0SClass Variable|I1SParent Component|X1SContents|L1U|SIs editable f
-#lag|NSMove on rpress flag|I1CCanvasTextField|I31SParent Canvas|X1SName
-#|Sinput|SClass Name|STermTextField|SImport Name|Sgui|SClass Variable|I
-#1SX Fix|NSY Fix|NSW Fix|NSH Fix|I1SX Spec|NSY Spec|NSW Spec|S458|SH Sp
-#ec|NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NS
-#Constraints|T3NSx_align|Sl|Sx_weight|B1.0|Sx_fill|I1STooltip|NSAccel|N
-#SLayout delegate|NSBorder opts|NSEvent Handlers|L2L2SEvent.ACTION|Son_
-#input|L2SEvent.KEY_PRESS|Son_input_key|SClass Variable|I1SParent Compo
-#nent|X1SContents|U|SFilter String|U|SIs editable flag|I1SMove on rpres
-#s flag|I1SInitial Focus|X12SEvent Handlers|L0SLayout delegate|CCanvasG
-#ridLayout|I8SDII val|NSDOI val|NSExtra|Scells|SName|Slayout_1|SClass N
-#ame|SGridLayout|SImport Name|Sgui|SClass Variable|NSParent|X1
+#s|T1NSresize|I1SName|STermDialog|SIs Component|NSWidth|I735SHeight|I51
+#0SChildren|L2CCanvasEditableTextList|I30SParent Canvas|X1SName|Stext|S
+#Class Name|SEditableTextList|SImport Name|Sgui|SClass Variable|I1SX Fi
+#x|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|S465|SH Spec|S256
+#|SX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T1NSfon
+#t|Sfixed|SConstraints|T5NSx_weight|B1.0|Sx_fill|I1Sy_weight|B1.0|Sy_fi
+#ll|I1Seol|I1STooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent H
+#andlers|L1L2SEvent.MOUSE_RIGHT_PRESS|Son_text_rpress|SClass Variable|I
+#1SParent Component|X1SContents|L1U|SIs editable flag|NSMove on rpress 
+#flag|NCCanvasTextField|I31SParent Canvas|X1SName|Sinput|SClass Name|ST
+#ermTextField|SImport Name|Sgui|SClass Variable|I1SX Fix|NSY Fix|NSW Fi
+#x|NSH Fix|I1SX Spec|NSY Spec|NSW Spec|S458|SH Spec|NSX Align|Sl|SY Ali
+#gn|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T3NSx_alig
+#n|Sl|Sx_weight|B1.0|Sx_fill|I1STooltip|NSAccel|NSLayout delegate|NSBor
+#der opts|NSEvent Handlers|L2L2SEvent.ACTION|Son_input|L2SEvent.KEY_PRE
+#SS|Son_input_key|SClass Variable|I1SParent Component|X1SContents|U|SFi
+#lter String|U|SIs editable flag|I1SMove on rpress flag|I1SInitial Focu
+#s|X13SEvent Handlers|L2L2SEvent.WINDOW_CLOSE_BUTTON|Son_close_button|L
+#2SEvent.ICON|Son_icon_event|SLayout delegate|CCanvasGridLayout|I8SDII 
+#val|NSDOI val|NSExtra|Scells|SName|Slayout_1|SClass Name|SGridLayout|S
+#Import Name|Sgui|SClass Variable|NSParent|X1
