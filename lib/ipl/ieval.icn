@@ -228,8 +228,7 @@ class Ieval()
          hist_line := input.get_history_item(n)
    end
 
-   public run(imports, files, opts)
-      local hfile
+   public new(imports, files, opts)
       self.imports := imports
       self.files := files
       self.opts := opts
@@ -259,6 +258,11 @@ class Ieval()
       llim := (10 < \opts["llim"]) | 600
       elim := (10 < \opts["elim"]) | 35
 
+      return
+   end
+
+   public run()
+      local hfile
       prelim()
       if \opts["s"] then
          do_stdin()
