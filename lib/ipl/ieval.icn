@@ -228,7 +228,7 @@ class Ieval()
          hist_line := input.get_history_item(n)
    end
 
-   public new(imports, files, opts)
+   public run(imports, files, opts)
       local hfile
       self.imports := imports
       self.files := files
@@ -272,7 +272,6 @@ class Ieval()
          Files.string_to_file(hfile, encode(input.get_history())) | ewrite("History not saved: ", &why)
       }
       write("Ciao")
-      return
    end
 
    private prelim()

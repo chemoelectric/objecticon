@@ -8,7 +8,7 @@ procedure create_prog(imps, links)
    every prog ||:= "import " || !imps || "\n"
    prog ||:= "invocable all\n_
 procedure main(imports, files, opts)\n_
-    ipl.ieval.Ieval(imports, files, opts)\n_
+    ipl.ieval.Ieval().run(imports, files, opts)\n_
 end\n"
    return use {
       tf := Files.make_temp_filename("ieval"),
