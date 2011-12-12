@@ -20,8 +20,7 @@ end
 procedure compile(prog, tf, links)
    local p
    use {
-      #p := FilterOutputStream(, "oit", ["-s", "-l", "2", "-o", tf, "-"] ||| links),
-      p := FilterOutputStream(, "oit", ["-l", "2", "-o", tf, "-"] ||| links),
+      p := FilterOutputStream(, "oit", ["-s", "-l", "2", "-o", tf, "-"] ||| links),
       p.write(prog)
    } | fail
    p.succeeded() | fail
