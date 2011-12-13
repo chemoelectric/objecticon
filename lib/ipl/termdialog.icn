@@ -145,6 +145,7 @@ class TermDialog(Dialog, LineBasedOutputStream)
                connect(create text.set_contents([u""]), Event.ACTION)).
          add(TextMenuItem().
              set_label("Quit").
+             set_label_right("^Q").
              connect(create dispose(), Event.ACTION))
       pm.popup(self, m, ev.x, ev.y)
    end
