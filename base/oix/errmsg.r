@@ -91,7 +91,7 @@ struct errtab errtab[] = {
     {305, "inadequate space for static allocation"},
     {306, "inadequate space for block pointer queue during garbage collection"},
     {309, "out of memory, allocation returned null"},
-    {311, "recursion too deep"},
+    {311, "invocation level too deep"},
     {313, "inadequate space for string region"},
     {314, "inadequate space for block region"},
     {315, "inadequate space for main program icode"},
