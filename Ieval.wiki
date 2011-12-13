@@ -29,9 +29,11 @@ Input of an expression over several lines can be achieved by ending a line with 
  * *-i* Import the given package(s).  Several packages may be comma-separated, or several `-i` options may be given.
  * *-l* Link the given source file.  Several `-l` options may be given.
  * *-w* If given, then assignments to global variables (eg procedures) are allowed.
+ * *-g* Use a gui interface rather than the console.
  * *-s* Read commands from standard input rather than using a line editor.
  * *-hlim* Set the history limit for the line editor (default is 500).
  * *-elim* Set the expression limit for evaluation (default is 35).
+ * *-llim* Set the gui interface's log area line limit (default is 600).
 
 Remaining arguments specify files which are processed before command line input commences.  They should contain valid expressions (which may be compound expressions).
 = Useful built-in expressions =
