@@ -4,9 +4,11 @@
 
 package ipl.ieval
 
-import io, gui, lang, ipl.colmize, parser, eval, util, ipl.pdco, ipl.sort, ipl.termdialog
+import io, gui, lang, ipl.colmize, parser, eval, util, ipl.pdco, ipl.sort, ipl.termdialog, ipl.lists
 
 $load IEVAL_LOGO "rpp.IEVAL_LOGO.png"
+
+record Activation(coex, info)
 
 class Ieval()
    private 
@@ -220,7 +222,53 @@ class Ieval()
    end
 
    private traceback()
-      Coexpression.traceback(\last_runerr, &yes)
+      local act_chain, depth, fe2, LIMIT, ae, fe, ce
+      
+      # Produce similar output to:-
+      #    Coexpression.traceback(\last_runerr, &yes)
+
+      ce := \last_runerr | fail
+      act_chain := []
+      until (!act_chain).coex === ce do {
+         push(act_chain, Activation(ce, Coexpression.get_stack_info(ce)))
+         ce := Coexpression.get_activator(ce) | break
+      }
+
+      depth := 0
+      every depth +:= *(!act_chain).info
+
+      LIMIT := 100
+      output.write("Traceback:")
+      every ae := !act_chain do {
+         if depth - LIMIT >= *ae.info then
+            depth -:= *ae.info
+         else {
+            if ce := Coexpression.get_activator(ae.coex) then
+               output.write("co-expression#", serial(ae.coex), " activated by co-expression#", serial(ce))
+            else
+               output.write("co-expression#", serial(ae.coex), "  (never activated)")
+            if depth > LIMIT then {
+               if depth = LIMIT + 1 then
+                  depth := LIMIT
+               else
+                  output.write("   ... ", depth - LIMIT, " calls omitted")
+            }
+            fe2 := &null
+            every fe := back(ae.info) do {
+               if depth <= LIMIT then {
+                  output.writes("   ", fe.proc, "(", list2str(fe.args), ")")
+                  if \fe2 then
+                     output.write(" from line ", fe2.line, " in ", Files.get_path(fe2.file).get(-1))
+                  else
+                     output.write()
+               }
+               depth -:= 1
+               fe2 := fe
+            }
+            if \fe2 then
+               output.write("   at line ", fe2.line, " in ", Files.get_path(fe2.file).get(-1))
+         }
+      }
    end
 
    private cmd(n)
