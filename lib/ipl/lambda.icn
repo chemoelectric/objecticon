@@ -91,3 +91,31 @@ end
 procedure rpb(s, x)
    return rpartial(callable(s, 2), x)
 end
+
+# Evaluates coexpression {e}, saving the value of {_a} and {_l}.  This
+# can be necessary if a lambda calls another lambda which exits via an
+# exception or a runtime error.
+#
+# @example
+# @   f := lambda{
+# @      throw("Something bad")
+# @   }
+# @
+# @   g := lambda{{
+# @      write("a[1]=",_a[1])
+# @      save_lambda{try{ f(102) }}
+# @      # Without save_lambda, _a[1] would now still be 102 (ie the arg given to f)
+# @      write("a[1]=",_a[1])
+# @   }}
+#
+procedure save_lambda(e)
+   local ta, tl
+   ta := _a
+   tl := _l
+   suspend 1(|@e, _a :=: ta, _l :=: tl) do {
+      _a :=: ta
+      _l :=: tl
+   }
+   _a := ta
+   _l := tl
+end
