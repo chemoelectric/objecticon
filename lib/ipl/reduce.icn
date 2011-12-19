@@ -25,9 +25,12 @@
 
 package ipl.reduce
 
+import
+   ipl.callable(callable)
+
 procedure reduce(op, init, args[])
 
-   op := proc(op, 2) | runerr("*** invalid operator for reduce()", op)
+   op := callable(op, 2) | runerr("*** invalid operator for reduce()", op)
 
    every init := op(init, !args)
 

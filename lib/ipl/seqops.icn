@@ -102,6 +102,7 @@ package ipl.seqops
 
 import
    io(write),
+   ipl.callable(callable),
    ipl.factors(divisors),
    ipl.numbers(residue),
    ipl.sets(elementset)
@@ -435,7 +436,7 @@ procedure sbinop(op, xargs[])
    x1 := spromote(xargs[1])
    x2 := spromote(xargs[2])
 
-   op := proc(op, 2) | fail
+   op := callable(op, 2) | fail
 
    lseq := []
 
@@ -1350,7 +1351,7 @@ procedure sunop(op, xargs[])
 
    x := spromote(xargs[1])
 
-   op := proc(op, 1) | fail
+   op := callable(op, 1) | fail
 
    lseq := []
 
