@@ -1,5 +1,7 @@
 package ipl.lambda
 
+import lang(Prog)
+
 global _a, _l
 
 #
@@ -53,8 +55,38 @@ procedure lambda(e)
 end
 
 #
-# Partial application to function f
+# Partial application to function f, prepending l to the arguments.
 #
-procedure partial(f, l[])
+procedure lpartial(f, l[])
    return lambda{f!(l ||| _a)}
+end
+
+#
+# Partial application to function f, appending l to the arguments.
+#
+procedure rpartial(f, l[])
+   return lambda{f!(_a ||| l)}
+end
+
+#
+# Compose functions f and g
+#
+procedure compose(f, g)
+   return lambda{f(g!_a)}
+end
+
+# Convenient function to get the named binary operator, partially
+# applied with x, using lpartial.  For example lpb("*", 2) returns a
+# function which doubles its argument.
+#
+procedure lpb(s, x)
+   return lpartial(Prog.get_operator(s, 2), x)
+end
+
+# Convenient function to get the named binary operator, partially
+# applied with x, using rpartial.  For example rpb("/", 2) returns a
+# function which halves its argument.
+#
+procedure rpb(s, x)
+   return rpartial(Prog.get_operator(s, 2), x)
 end
