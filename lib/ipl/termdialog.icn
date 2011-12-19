@@ -196,28 +196,4 @@ class TermDialog(Dialog, LineBasedOutputStream)
    end
 end
 
-### Ivib-v2 layout ##
-#CCanvas|I18SSuperClass Name|SDialog|SImport Name|Sgui|SButton Groups|L
-#0SCheckbox Groups|L0SGen Indent|I3SGen Main|NSGen Component Setup|I1SG
-#en Init Dialog|I1SGen Constructor|I1SDialog Struct|CCDialog|I1SWAttrib
-#s|T1NSresize|I1SName|STermDialog|SIs Component|NSWidth|I735SHeight|I51
-#0SChildren|L2CCanvasEditableTextList|I30SParent Canvas|X1SName|Stext|S
-#Class Name|SEditableTextList|SImport Name|Sgui|SClass Variable|I1SX Fi
-#x|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|S465|SH Spec|S256
-#|SX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T1NSfon
-#t|Sfixed|SConstraints|T5NSx_weight|B1.0|Sx_fill|I1Sy_weight|B1.0|Sy_fi
-#ll|I1Seol|I1STooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent H
-#andlers|L1L2SEvent.MOUSE_RIGHT_PRESS|Son_text_rpress|SClass Variable|I
-#1SParent Component|X1SContents|L1U|SIs editable flag|NSMove on rpress 
-#flag|NCCanvasTextField|I31SParent Canvas|X1SName|Sinput|SClass Name|ST
-#ermTextField|SImport Name|Sgui|SClass Variable|I1SX Fix|NSY Fix|NSW Fi
-#x|NSH Fix|I1SX Spec|NSY Spec|NSW Spec|S458|SH Spec|NSX Align|Sl|SY Ali
-#gn|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T3NSx_alig
-#n|Sl|Sx_weight|B1.0|Sx_fill|I1STooltip|NSAccel|NSLayout delegate|NSBor
-#der opts|NSEvent Handlers|L2L2SEvent.ACTION|Son_input|L2SEvent.KEY_PRE
-#SS|Son_input_key|SClass Variable|I1SParent Component|X1SContents|U|SFi
-#lter String|U|SIs editable flag|I1SMove on rpress flag|I1SInitial Focu
-#s|X13SEvent Handlers|L2L2SEvent.WINDOW_CLOSE_BUTTON|Son_close_button|L
-#2SEvent.ICON|Son_icon_event|SLayout delegate|CCanvasGridLayout|I8SDII 
-#val|NSDOI val|NSExtra|Scells|SName|Slayout_1|SClass Name|SGridLayout|S
-#Import Name|Sgui|SClass Variable|NSParent|X1
+### Ivib-v2 layout: layouts/$.layout
