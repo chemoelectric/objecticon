@@ -512,7 +512,7 @@ static void postqual(dptr dp)
          *  list, but before adding it, expand the string qualifier list if
          *  necessary.
          */
-        if (qual.free >= qual.elist) {
+        if (qual.free == qual.elist) {
             /* reallocate a new qualifier list that's twice as large */
             Protect(qual.list = realloc(qual.list, 2 * qual.listsize * sizeof(dptr)), fatalerr(304, NULL));
             qual.free = qual.list + qual.listsize;
@@ -819,7 +819,7 @@ static void scollect()
     dptr *qptr;
     char *cend;
 
-    if (qual.free <= qual.list) {
+    if (qual.free == qual.list) {
         /*
          * There are no accessible strings.  Thus, there are none to
          *  collect and the whole string space is free.
