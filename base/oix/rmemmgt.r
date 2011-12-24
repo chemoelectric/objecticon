@@ -6,6 +6,7 @@
 /*
  * Prototypes
  */
+static void qual_clear   (void);
 static void postqual     (dptr dp);
 static void markptr      (union block **ptr);
 static void sweep_tended (void);
@@ -18,21 +19,17 @@ static void markprogram  (struct progstate *pstate);
 static void sweep_stack  (struct frame *f);
 static void unmark_region(struct region *br);
 static void free_stack   (struct b_coexpr *c);
-static union block **ptrq_get(void);
-static void ptrq_add(union block **ptr);
-static void ptrq_clear(void);
-static void ptrq_markptrs(void);
+static union block **stk_get(void);
+static void stk_add(union block **ptr);
+static void stk_clear(void);
+static void stk_markptrs(void);
 
 
-
-
-/*
- * Variables
- */
-static int quallistsize;
-static dptr *quallist;                 /* string qualifier list */
-static dptr *qualfree;                 /* qualifier list free pointer */
-static dptr *equallist;                /* end of qualifier list */
+/* string qualifier list */
+static struct {
+   int listsize;
+   dptr *list, *elist, *free;
+} qual;
 
 int collecting;                        /* flag indicating whether collection in progress */
 static int current_collection;         /* collection id for checking whether local blocks marked yet */
@@ -295,7 +292,7 @@ uword segsize[] = {
    if (Qual(d)) \
       postqual(&(d)); \
    else if (Pointer(d))\
-      ptrq_add(&BlkLoc(d));
+      stk_add(&BlkLoc(d));
 
 /*
  * collect - do a garbage collection of currently active regions.
@@ -347,28 +344,19 @@ void collect(int region)
    ++current_collection;
 
    /*
-    * First time through init quallist
-    */
-    if (!quallist) {
-        quallistsize = 1024;
-        Protect(quallist = malloc(quallistsize * sizeof(dptr)), fatalerr(304, NULL));
-        equallist = quallist + quallistsize;
-    }
-
-   /*
     * Reset qualifier list.
     */
-   qualfree = quallist;
+   qual_clear();
 
    /*
-    * Reset/init ptrq
+    * Reset/init stk
     */
-   ptrq_clear();
+   stk_clear();
 
    for (prog = progs; prog; prog = prog->next)
        markprogram(prog);
 
-   ptrq_add((union block **)&k_current);
+   stk_add((union block **)&k_current);
 
    /*
     * Sweep the tended list on the C stack.
@@ -398,7 +386,7 @@ void collect(int region)
 #endif					/* Graphics */
 
    /* Process all block ptrs */
-   ptrq_markptrs();
+   stk_markptrs();
 
    reclaim();
 
@@ -456,7 +444,7 @@ static void markprogram(struct progstate *pstate)
     struct descrip *dp;
     struct prog_event *pe;
 
-    ptrq_add((union block **)&pstate->eventmask);
+    stk_add((union block **)&pstate->eventmask);
     for (pe = pstate->event_queue_head; pe; pe = pe->next) {
         PostDescrip(pe->eventcode);
         PostDescrip(pe->eventval);
@@ -491,18 +479,30 @@ static void markprogram(struct progstate *pstate)
     PostDescrip(pstate->T_errorvalue);
     PostDescrip(pstate->T_errortext);
     if (pstate->K_errorcoexpr)
-        ptrq_add((union block **)&pstate->K_errorcoexpr);
+        stk_add((union block **)&pstate->K_errorcoexpr);
 
-    ptrq_add((union block **)&pstate->K_main);
-    ptrq_add((union block **)&pstate->K_current);
+    stk_add((union block **)&pstate->K_main);
+    stk_add((union block **)&pstate->K_current);
 }
 
+static void qual_clear()
+{
+   /*
+    * First time through init qual.list
+    */
+    if (!qual.list) {
+        qual.listsize = 1024;
+        Protect(qual.list = malloc(qual.listsize * sizeof(dptr)), fatalerr(304, NULL));
+        qual.elist = qual.list + qual.listsize;
+    }
+
+   qual.free = qual.list;
+}
 
 /*
  * postqual - mark a string qualifier.  Strings outside the string space
  *  are ignored.
  */
-
 static void postqual(dptr dp)
 {
     if (InRange(strbase,StrLoc(*dp),strfree + 1)) { 
@@ -512,73 +512,59 @@ static void postqual(dptr dp)
          *  list, but before adding it, expand the string qualifier list if
          *  necessary.
          */
-        if (qualfree >= equallist) {
+        if (qual.free == qual.elist) {
             /* reallocate a new qualifier list that's twice as large */
-            Protect(quallist = realloc(quallist, 2 * quallistsize * sizeof(dptr)), fatalerr(304, NULL));
-            qualfree = quallist + quallistsize;
-            quallistsize *= 2;
-            equallist = quallist + quallistsize;
+            Protect(qual.list = realloc(qual.list, 2 * qual.listsize * sizeof(dptr)), fatalerr(304, NULL));
+            qual.free = qual.list + qual.listsize;
+            qual.listsize *= 2;
+            qual.elist = qual.list + qual.listsize;
         }
-        *qualfree++ = dp;
+        *qual.free++ = dp;
     }
 }
 
 /*
- * Structure for holding a circular list of union block ** items.
+ * Structure for holding a stack of union block ** items.
  */
-struct {
+static struct {
    int bufsize;
-   union block ***buf, ***ebuf, ***front, ***back;
-   int n;
-} ptrq;
+   union block ***buf, ***ebuf, ***top;
+} stk;
 
-/* Get from queue, assumes it's not empty */
-static union block **ptrq_get()
+/* Get from stack, assumes it's not empty */
+static union block **stk_get()
 {
-    union block **ptr;
-    ptr = *ptrq.front++;
-    if (ptrq.front == ptrq.ebuf)
-        ptrq.front = ptrq.buf;
-    ptrq.n--;
-    return ptr;
+    return *--stk.top;
 }
 
-/* Reset pointer queue */
-static void ptrq_clear()
+/* Reset pointer stack */
+static void stk_clear()
 {
-    if (!ptrq.buf) {
-        ptrq.bufsize = 1024;
-        Protect(ptrq.buf = malloc(ptrq.bufsize * sizeof(union block **)), fatalerr(306, NULL));
-        ptrq.ebuf = ptrq.buf + ptrq.bufsize;
+    if (!stk.buf) {
+        stk.bufsize = 1024;
+        Protect(stk.buf = malloc(stk.bufsize * sizeof(union block **)), fatalerr(306, NULL));
+        stk.ebuf = stk.buf + stk.bufsize;
     }
-    ptrq.n = 0;
-    ptrq.front = ptrq.back = ptrq.buf;
+    stk.top = stk.buf;
 }
 
-/* Add to pointer queue */
-static void ptrq_add(union block **ptr)
+/* Add to pointer stack */
+static void stk_add(union block **ptr)
 {
-    if (ptrq.n == ptrq.bufsize) {
-        union block ***t = ptrq.buf;
-        Protect(ptrq.buf = realloc(ptrq.buf, ptrq.bufsize * 2 * sizeof(union block **)), fatalerr(306, NULL));
-        ptrq.front = ptrq.buf + (ptrq.front - t);
-        ptrq.back = ptrq.buf + (ptrq.back - t);
-        memcpy(ptrq.front + ptrq.bufsize, ptrq.front, ((ptrq.buf + ptrq.bufsize) - ptrq.front) * sizeof(union block **));
-        ptrq.front += ptrq.bufsize;
-        ptrq.bufsize *= 2;
-        ptrq.ebuf = ptrq.buf + ptrq.bufsize;
+    if (stk.top == stk.ebuf) {
+        Protect(stk.buf = realloc(stk.buf, stk.bufsize * 2 * sizeof(union block **)), fatalerr(306, NULL));
+        stk.top = stk.buf + stk.bufsize;
+        stk.bufsize *= 2;
+        stk.ebuf = stk.buf + stk.bufsize;
     }
-    *ptrq.back++ = ptr;
-    if (ptrq.back == ptrq.ebuf)
-        ptrq.back = ptrq.buf;
-    ptrq.n++;
+    *stk.top++ = ptr;
 }
 
-/* Process pointers in queue until it's empty */
-static void ptrq_markptrs()
+/* Process pointers in stack until it's empty */
+static void stk_markptrs()
 {
-    while (ptrq.n > 0)
-        markptr(ptrq_get());
+    while (stk.top != stk.buf)
+        markptr(stk_get());
 }
 
 static void markptr(union block **ptr)
@@ -624,7 +610,7 @@ static void markptr(union block **ptr)
                  * Mark the activator of this co-expression.
                  */
                 if (cp->activator)
-                    ptrq_add((union block **)&cp->activator);
+                    stk_add((union block **)&cp->activator);
                 /*
                  * Mark its stack
                  */
@@ -642,7 +628,7 @@ static void markptr(union block **ptr)
                         lastptr = (union block **)endblock;
                     for (; ptr1 < lastptr; ptr1++)
                         if (*ptr1 != NULL)
-                            ptrq_add(ptr1);
+                            stk_add(ptr1);
                 }
                 if ((fdesc = firstd[type0]) > 0) {
                     /*
@@ -707,7 +693,7 @@ static void markptr(union block **ptr)
              * Mark the activator of this co-expression.
              */
             if (cp->activator)
-                ptrq_add((union block **)&cp->activator);
+                stk_add((union block **)&cp->activator);
             /*
              * Mark its stack
              */
@@ -725,7 +711,7 @@ static void markptr(union block **ptr)
                     lastptr = (union block **)endblock;
                 for (; ptr1 < lastptr; ptr1++)
                     if (*ptr1 != NULL)
-                        ptrq_add(ptr1);
+                        stk_add(ptr1);
             }
             if ((fdesc = firstd[type0]) > 0) {
                 /*
@@ -821,7 +807,7 @@ static void reclaim()
 
 
 /*
- * scollect - collect the string space.  quallist is a list of pointers to
+ * scollect - collect the string space.  qual.list is a list of pointers to
  *  descriptors for all the reachable strings in the string space.  For
  *  ease of description, it is referred to as if it were composed of
  *  descriptors rather than pointers to them.
@@ -833,7 +819,7 @@ static void scollect()
     dptr *qptr;
     char *cend;
 
-    if (qualfree <= quallist) {
+    if (qual.free == qual.list) {
         /*
          * There are no accessible strings.  Thus, there are none to
          *  collect and the whole string space is free.
@@ -842,21 +828,21 @@ static void scollect()
         return;
     }
     /*
-     * Sort the pointers on quallist in ascending order of string
+     * Sort the pointers on qual.list in ascending order of string
      *  locations.
      */
-    qsort(quallist, qualfree - quallist, sizeof(dptr), (QSortFncCast)qlcmp);
+    qsort(qual.list, qual.free - qual.list, sizeof(dptr), (QSortFncCast)qlcmp);
 
     /*
      * The string qualifiers are now ordered by starting location.
      */
     dest = strbase;
-    source = cend = StrLoc(**quallist);
+    source = cend = StrLoc(**qual.list);
 
     /*
      * Loop through qualifiers for accessible strings.
      */
-    for (qptr = quallist; qptr < qualfree; qptr++) {
+    for (qptr = qual.list; qptr < qual.free; qptr++) {
         if (StrLoc(**qptr) > cend) {
 
             /*

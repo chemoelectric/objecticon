@@ -1,0 +1,199 @@
+package ipl.termdialog
+
+import
+   gui, io, graphics
+
+class TermTextField(TextField)
+   public keeps(e)
+      return member(Key.CURSOR, e.code)
+   end
+end
+
+class TermDialog(Dialog, LineBasedOutputStream)
+   private
+      input,
+      log_limit,
+      history_limit,
+      history,
+      history_start_no,
+      hpos,
+      hmod,
+      text
+   private readable
+      line
+
+   protected write_line_impl(s)
+      text.log([ucs(s)], log_limit)
+      return
+   end
+
+   public set_log_limit(n)
+      self.log_limit := n
+      return self
+   end
+
+   public set_history_limit(n)
+      self.history_limit := n
+      limit_history()
+      return self
+   end
+
+   public set_history(l)
+      self.history := l
+      self.history_start_no := 1
+      limit_history()
+      return self
+   end
+
+   public get_history()
+      return .history
+   end
+
+   public get_history_item(n)
+      return .history[0 < n - history_start_no + 1]
+   end
+
+   public get_history_start_no()
+      return .history_start_no
+   end
+
+   private move_hist(n)
+      local subj
+      subj := input.get_contents()
+      (subj == ucs(history[hpos])) | (hmod[hpos] := subj)
+      hpos +:= n
+      subj := \hmod[hpos] | ucs(history[hpos]) | u"?? bad utf8 in history"
+      input.set_contents(subj)
+   end
+
+   private limit_history()
+      while *history > \history_limit do {
+         pop(history)
+         history_start_no +:= 1
+      }
+   end
+
+   public component_setup()
+      self.setup()
+      reset()
+   end
+
+   public end_dialog()
+   end
+
+   public init_dialog()
+   end
+
+   public get_term_width()
+      return text.w / text.cbwin.text_width("m")
+   end
+
+   public new()
+      cast(self,Dialog).new()
+      cast(self,LineBasedOutputStream).new()
+      history := []
+      history_start_no := 1
+      log_limit := 600
+      return
+   end
+
+   private reset()
+      hpos := *history + 1
+      hmod := table()
+      input.set_contents(u"")
+   end
+
+   private on_input(ev)
+      line := input.get_contents()
+      if *line > 0 then {
+         put(history, line)
+         limit_history()
+      }
+      reset()
+      fire(Event.ACTION, ev)
+   end
+   
+   private handle_key_up(e)
+      if hpos > 1 then move_hist(-1)
+   end
+
+   private handle_key_down(e)
+      if hpos <= *history then move_hist(1)
+   end
+
+   private on_input_key(ev)
+      case ev.code of {
+         Key.UP : handle_key_up(ev)
+         Key.DOWN : handle_key_down(ev)
+      }
+   end
+
+   private on_word_wrap(ev, src)
+      text.set_wrap_mode(if src.is_checked() then "width" else "off")
+   end
+
+   private on_text_rpress(ev)
+      local pm, m
+      pm := PopupMenu()
+      m := Menu().
+         add(CheckBoxMenuItem().
+             set_label("Word wrap").
+             set_is_checked(if text.wrap_mode === "width" then &yes else &no).
+             connect(on_word_wrap, Event.ACTION)).
+         add(TextMenuItem().
+               set_label("Clear").
+               connect(create text.set_contents([u""]), Event.ACTION)).
+         add(TextMenuItem().
+             set_label("Quit").
+             set_label_right("^Q").
+             connect(create dispose(), Event.ACTION))
+      pm.popup(self, m, ev.x, ev.y)
+   end
+
+   private on_close_button(ev)
+      dispose()
+   end
+
+   private on_icon_event(ev)
+      if ev.code === "\^q" then 
+         dispose()
+   end
+
+   private setup()
+      local layout_1
+      self.set_resize(&yes)
+      self.set_size(735, 510)
+      text := EditableTextList().
+         set_size("465", "256").
+         set_font("fixed").
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_constraint("y_fill", &yes).
+         set_constraint("y_weight", 1.0).
+         connect(self.on_text_rpress, Event.MOUSE_RIGHT_PRESS).
+         set_contents([u""]).
+         set_is_editable(&no).
+         set_move_on_rpress(&no)
+      self.add(text)
+      input := TermTextField().
+         set_size("458").
+         clear_constraints().
+         set_constraint("x_align", Align.L).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         connect(self.on_input, Event.ACTION).
+         connect(self.on_input_key, Event.KEY_PRESS).
+         set_contents(u"")
+      self.add(input)
+      self.connect(self.on_close_button, Event.WINDOW_CLOSE_BUTTON)
+      self.connect(self.on_icon_event, Event.ICON)
+      layout_1 := GridLayout().
+         set_extra("cells")
+      self.set_layout(layout_1)
+      self.set_focus(input.find_focus())
+   end
+end
+
+### Ivib-v2 layout: layouts/$.layout

@@ -1097,18 +1097,20 @@ static char *getencoding(char *dst, char *src)
  */
 static char *getfnm(char *dst, char *src)
    {
-   char *lim;
+       char *lim, c;
 
    if (*src != '"')
       return getidt(dst, src);
-   lim = matchq(src);
+
+   lim = src;
+   while ((c = *++lim) != '"' && c != '\0');
+
    if (*lim != '"') {
       *dst = '\0';
       return lim;
       }
    while (++src < lim)
-      if ((*dst++ = *src) == '\\')
-         dst[-1] = *++src;
+       *dst++ = *src;
    *dst = '\0';
    return lim + 1;
    }

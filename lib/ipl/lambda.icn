@@ -1,5 +1,8 @@
 package ipl.lambda
 
+import
+   ipl.callable(callable)
+
 global _a, _l
 
 #
@@ -53,8 +56,66 @@ procedure lambda(e)
 end
 
 #
-# Partial application to function f
+# Partial application to function f, prepending l to the arguments.
 #
-procedure partial(f, l[])
+procedure lpartial(f, l[])
    return lambda{f!(l ||| _a)}
+end
+
+#
+# Partial application to function f, appending l to the arguments.
+#
+procedure rpartial(f, l[])
+   return lambda{f!(_a ||| l)}
+end
+
+#
+# Compose functions f and g
+#
+procedure compose(f, g)
+   return lambda{f(g!_a)}
+end
+
+# Convenient function to get the named binary operator, partially
+# applied with x, using lpartial.  For example lpb("*", 2) returns a
+# function which doubles its argument.
+#
+procedure lpb(s, x)
+   return lpartial(callable(s, 2), x)
+end
+
+# Convenient function to get the named binary operator, partially
+# applied with x, using rpartial.  For example rpb("/", 2) returns a
+# function which halves its argument.
+#
+procedure rpb(s, x)
+   return rpartial(callable(s, 2), x)
+end
+
+# Evaluates coexpression {e}, saving the value of {_a} and {_l}.  This
+# can be necessary if a lambda calls another lambda which exits via an
+# exception or a runtime error.
+#
+# @example
+# @   f := lambda{
+# @      throw("Something bad")
+# @   }
+# @
+# @   g := lambda{{
+# @      write("a[1]=",_a[1])
+# @      save_lambda{try{ f(102) }}
+# @      # Without save_lambda, _a[1] would now still be 102 (ie the arg given to f)
+# @      write("a[1]=",_a[1])
+# @   }}
+#
+procedure save_lambda(e)
+   local ta, tl
+   ta := _a
+   tl := _l
+   suspend 1(|@e, _a :=: ta, _l :=: tl) do {
+      _a :=: ta
+      _l :=: tl
+   }
+   _a := ta
+   _l := tl
 end

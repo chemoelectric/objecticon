@@ -121,6 +121,17 @@ procedure setlt(set1, set2)
 
 end
 
+# set subset
+procedure setle(set1, set2)		
+   local x
+
+   if *set1 > *set2 then fail
+   every x := !set1 do
+      if not member(set2, x) then fail
+   return set2
+
+end
+
 # string image of set
 procedure simage(set)			
    local result

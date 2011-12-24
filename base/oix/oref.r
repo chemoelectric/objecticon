@@ -337,10 +337,8 @@ operator ? random(underef x -> dx)
             for (i = 0; i < HSegs && (seg = bp->table.hdir[i]) != NULL; i++)
                for (j = segsize[i] - 1; j >= 0; j--)
                   for (ep = seg->hslots[j]; ep != NULL; ep = ep->telem.clink)
-                     if (--n <= 0) {
-			EVValD(&ep->selem.setmem, E_Selem);
+                     if (--n <= 0)
                         return ep->selem.setmem;
-			}
             syserr("set reference out of bounds in random");
          }
 

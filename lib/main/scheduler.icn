@@ -128,6 +128,13 @@ class Task()
       return scheduler.is_ready(self)
    end
 
+   # Succeed iff the task is dormant, meaning it is not active, and is
+   # not sleeping, polling or ready, meaning it won't be scheduled by
+   # the scheduler, at least until {start} is called on it.
+   public is_dormant()
+      return scheduler.is_dormant(self)
+   end
+
    # Suspend this task, which must be the currently scheduled task, in
    # order to carry out a {DescStream.poll}.  The parameters and
    # result are in the same form as for {DescStream.poll}.  The
@@ -285,6 +292,10 @@ class Scheduler()
 
    package is_ready(t)
       return member(ready, t)
+   end
+
+   package is_dormant(t)
+      return \t.coex & not member(ready | polling | sleeping, t)
    end
 
    private set_state(t, x)

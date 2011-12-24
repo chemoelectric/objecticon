@@ -370,7 +370,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
 
    public object_string(o, s)
       object_start(o)
-      writes(s)
+      writes(\s)
       object_end(o)
    end
 

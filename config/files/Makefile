@@ -41,8 +41,6 @@ LIBREF=@htmldir@/@PACKAGE_TARNAME@-libref-@PACKAGE_VERSION@
 PATHS=$(OILIB)/paths.sh
 MKDEFS=$(OILIB)/Makedefs
 UNINST=$(OILIB)/uninstall.sh
-TAB="\t"
-NL="\n"
 
 install :
 	$(INSTALL) -d "$(OIBIN)"
@@ -88,8 +86,9 @@ install :
 	@echo "export OIPATH:=\$$(OILIB)/main:\$$(OILIB)/gui:\$$(OILIB)/xml:\$$(OILIB)/parser:\$$(OILIB)/ipl" >>"$(MKDEFS)"
 	@echo "export OIINCL:=\$$(OILIB)/incl" >>"$(MKDEFS)"
 	@echo "export PATH:=\$$(OIBIN):\$$(PATH)" >>"$(MKDEFS)"
-	@echo $(NL)"%.u: %.icn" >>"$(MKDEFS)"
-	@echo $(TAB)"oit -c -s \$$<" >>"$(MKDEFS)"
+	@echo
+	@echo "%.u: %.icn" >>"$(MKDEFS)"
+	@echo "	oit -c -s \$$<" >>"$(MKDEFS)"
 	@echo "export OIPATH=\"\$$OILIB/main:\$$OILIB/gui:\$$OILIB/xml:\$$OILIB/parser:\$$OILIB/ipl\"" >>"$(PATHS)"
 	@echo "export OIINCL=\"\$$OILIB/incl\"" >>"$(PATHS)"
 	@if [ "$(prefix)" != /usr/local ] ; then \
@@ -103,7 +102,8 @@ install :
 	@echo rm -rf \"$(OILIB)\" >>"$(UNINST)"
 	@echo rm -rf \"$(LIBREF)\" >>"$(UNINST)"
 
-	@echo $(NL)"Installation complete.  Some helpful files :-"
+	@echo
+	@echo "Installation complete.  Some helpful files :-"
 	@echo "   $(PATHS) - environment variables"
 	@echo "   $(MKDEFS) - useful Makefile definitions"
 	@echo "   $(UNINST) - uninstallation script"
@@ -111,7 +111,8 @@ install :
 install-libref :
 	$(INSTALL) -d "$(LIBREF)"
 	oidoc -html -d -o "$(LIBREF)" -a
-	@echo $(NL)"Installation complete to file://$(LIBREF)/index.html"
+	@echo
+	@echo "Installation complete to file://$(LIBREF)/index.html"
 
 libref :
 	rm -rf libref
@@ -123,7 +124,7 @@ tar :
 	@rm -rf $(T)
 	@mkdir -p $(T)
 	@for f in $$( find apps base lib \
-		-regex ".*\.\(icn\|c\|r\|ri\|h\|y\|gif\)" ) ; do \
+		-regex ".*\.\(icn\|c\|r\|ri\|h\|y\|gif\|png\)" ) ; do \
 		cp --parents $$f $(T) ;\
 	done
 	@for f in $$( find riox \

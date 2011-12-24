@@ -213,6 +213,7 @@
 package ipl.pdco
 
 import
+   ipl.callable(callable),
    ipl.lists(lmap, lrotate),
    ipl.numbers(residue),
    ipl.periodic(repeater),
@@ -259,7 +260,7 @@ procedure Binop(e1, e2, e3)
 
    repeat {
       op := @e1
-      op := proc(op, 2) | fail
+      op := callable(op, 2) | runerr("*** invalid operation for Binop{}")
       (x := @e2 & y := @e3) | fail
       suspend op(x, y)
       }
@@ -936,7 +937,7 @@ end
 procedure Reduce(e1, e2, e3)	
    local op, x
 
-   op := proc(@e1, 2) | runerr("*** invalid operation for Reduce{}")
+   op := callable(@e1, 2) | runerr("*** invalid operation for Reduce{}")
    x := @e2 | fail
 
    while x := op(x, @e3)
@@ -1123,8 +1124,9 @@ procedure Trinop(e1, e2, e3, e4)
    local op, x, y, z
 
    repeat {
-      op := proc(@e1, 3) | fail
-       x := @e2 & y := @e3 & z := @e4 | fail
+      op := @e1
+      op := callable(op, 3) | runerr("*** invalid operation for Trinop{}")
+      x := @e2 & y := @e3 & z := @e4 | fail
       suspend op(x, y, z)
       }
 
@@ -1151,7 +1153,7 @@ procedure Unop(e1, e2)
 
    repeat {
       op := @e1
-      op := proc(op, 1) | fail
+      op := callable(op, 1) | runerr("*** invalid operation for Unop{}")
       x := @e2  | fail
       suspend op(x)
       }

@@ -1212,7 +1212,7 @@ end
 # Parent class for classes which wish to define in() in terms of
 # reading one line at time, rather than the other way round.
 #
-class LineBasedStream(Stream)
+class LineBasedInputStream(Stream)
    private
       line
 
@@ -1258,9 +1258,46 @@ class LineBasedStream(Stream)
 end
 
 #
+# Parent class for classes which wish to define out() in terms of
+# writing one line at time, rather than the other way round.
+#
+class LineBasedOutputStream(Stream)
+   private
+      buff
+
+   public out(s)
+      local t
+      buff ||:= s
+      repeat {
+         buff ? {
+            t := tab(upto('\n')) | break
+            buff := (move(1), tab(0))
+            write_line_impl(t) | fail
+         }
+      }
+      return *s
+   end
+
+   #
+   # Implemented to output a single line.  The EOL is not included in
+   # {s}.
+   #
+   protected defer write_line_impl(s)
+   
+   public get_mode()
+      return WRITE
+   end
+
+   protected new()
+      self.buff := ""
+      return
+   end
+end
+
+#
 # This class is used to read directory contents.
 #
-class DirStream(LineBasedStream, NoCopy)
+class DirStream(LineBasedInputStream, NoCopy)
    private 
       dd
 
@@ -1271,7 +1308,7 @@ class DirStream(LineBasedStream, NoCopy)
    private static defer new_impl(path)
 
    public new(path)
-      cast(self,LineBasedStream).new()
+      cast(self,LineBasedInputStream).new()
 $ifdef _MS_WIN32
       if *path = 0 then
          path := "*"
@@ -1590,7 +1627,7 @@ class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask, NoCopy)
    #
    public succeeded()
       local x
-      is(err_sink, StringStream) | runerr("Must use a StringStream as error sink with check_result()", err_sink)
+      is(err_sink, StringStream) | runerr("Must use a StringStream as error sink with succeeded()", err_sink)
       x := get_exit_info() | runerr("You can only call succeeded() after close()", self)
       case x.reason of {
          ExitInfo.EXITED: {
@@ -2194,7 +2231,7 @@ end
 # sequence of that method represent the output of the stream, with
 # each result being one line.
 #
-class GeneratorStream(LineBasedStream, NoCopy)
+class GeneratorStream(LineBasedInputStream, NoCopy)
    private
       coex
 
@@ -2222,7 +2259,7 @@ class GeneratorStream(LineBasedStream, NoCopy)
    protected defer gen()
 
    public new()
-      cast(self,LineBasedStream).new()
+      cast(self,LineBasedInputStream).new()
       self.coex := create gen()
       return
    end
@@ -2236,7 +2273,7 @@ end
 # @   # A stream with 10 lines
 # @   e := ExprStream{1 to 10}
 #
-class ExprStream(LineBasedStream)
+class ExprStream(LineBasedInputStream)
    private
       coex
 
@@ -2253,7 +2290,7 @@ class ExprStream(LineBasedStream)
 
    public new(coex)
       self.coex := coex
-      return cast(self,LineBasedStream).new()
+      return cast(self,LineBasedInputStream).new()
    end
 end
 

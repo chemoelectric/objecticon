@@ -2,7 +2,7 @@ package io
 
 import undo, util, lang, ipl.strings, ipl.streams(get_null)
 
-class LineEditorStream(LineBasedStream)
+class LineEditorStream(LineBasedInputStream)
    package
       subj,
       pos
@@ -389,7 +389,7 @@ class LineEditorStream(LineBasedStream)
    end
 
    public new()
-      cast(self,LineBasedStream).new()
+      cast(self,LineBasedInputStream).new()
       tty := FileStream.stdin
       if run_stty() then
          isatty := &yes

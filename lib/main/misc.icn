@@ -92,18 +92,14 @@ procedure save_scan(e)
    local ss, sp, tp
    ss := &subject
    sp := &pos
-   repeat {
-      suspend 1(@e, tp := &pos, &subject :=: ss, &pos := sp, sp := tp) do {
-         tp := &pos
-         &subject :=: ss
-         &pos := sp
-         sp := tp
-         break next
-      }
-      &subject := ss
+   suspend 1(|@e, tp := &pos, &subject :=: ss, &pos := sp, sp := tp) do {
+      tp := &pos
+      &subject :=: ss
       &pos := sp
-      fail
+      sp := tp
    }
+   &subject := ss
+   &pos := sp
 end
 
 # This function saves {&why} before evaluating {e}.  If {e} succeeds,

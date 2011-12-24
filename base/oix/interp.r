@@ -144,7 +144,8 @@ void tail_invoke_frame(struct frame *f)
                     t.dword = D_Proc;
                     BlkLoc(t) = (union block *)pf->proc;
                     xexpr = &t;
-                    fatalerr(311, NULL);
+                    err_msg(311, NULL);
+                    break;
                 }
             }
             set_curr_pf(pf);

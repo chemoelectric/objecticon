@@ -392,12 +392,9 @@ void list_push(dptr l, dptr val)
 void list_insert(dptr l, word index, dptr val)
 {
     word i, j, k, pos;
-    tended struct b_list *lb;
     tended struct b_lelem *le, *le2;
 
-    lb = &ListBlk(*l);
-
-    le = get_lelem_for_index(lb, index, &pos);
+    le = get_lelem_for_index(&ListBlk(*l), index, &pos);
     if (!le)
         syserr("Invalid index to list_insert");
 
@@ -437,18 +434,18 @@ void list_insert(dptr l, word index, dptr val)
         le2->listnext = le->listnext;
         le2->first = 0;
         le2->nused = le->nused + 1;
-        if (lb->listhead == (union block *)le)
-            lb->listhead = (union block *)le2;
+        if (ListBlk(*l).listhead == (union block *)le)
+            ListBlk(*l).listhead = (union block *)le2;
         else
             le->listprev->lelem.listnext = (union block *)le2;
-        if (lb->listtail == (union block *)le)
-            lb->listtail = (union block *)le2;
+        if (ListBlk(*l).listtail == (union block *)le)
+            ListBlk(*l).listtail = (union block *)le2;
         else
             le->listnext->lelem.listprev = (union block *)le2;
     }
 
-    ++lb->size;
-    ++lb->changecount;
+    ++ListBlk(*l).size;
+    ++ListBlk(*l).changecount;
 }
 
 void list_del(dptr l, word index)
