@@ -2,8 +2,6 @@
 
 include ../../Makedefs
 
-CWARN = -Wall -fno-strict-aliasing
-
 HDRS = ../h/define.h ../h/config.h ../h/typedefs.h ../h/monitor.h\
 	  ../h/cstructs.h ../h/cpuconf.h ../h/grttin.h\
 	  ../h/rmacros.h ../h/rexterns.h ../h/rstructs.h \

@@ -24,6 +24,15 @@ CONFIG_DATE=$(date)
 
 AC_CONFIG_SRCDIR([base/oix/init.r])
 
+AC_PROG_CC
+
+CCVER=`$CC --version`
+case $CCVER in
+    gcc*) CFLAGS="$CFLAGS -Wall -fno-strict-aliasing" ;;
+    pcc*) CFLAGS="$CFLAGS -Wall" ;;
+    clang*) CFLAGS="$CFLAGS -Wall -Wno-parentheses-equality -Wno-tautological-compare" ;;
+esac
+
 CHECK_XLIB()
 if test "$ac_cv_lib_X11_main" = yes; then
    CHECK_FREETYPE()
@@ -34,6 +43,7 @@ if test "$ac_cv_lib_X11_main" = yes; then
         AC_MSG_ERROR([*** Xft needs freetype to work])
    fi
 fi
+
 CHECK_ZLIB()
 OI_ADD_LIB(m)
 if ! test "$ac_cv_lib_m_main" = yes; then

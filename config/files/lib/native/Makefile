@@ -1,8 +1,6 @@
 include ../../Makedefs
 
-CWARN=-Wall -fno-strict-aliasing
 CFLAGS:=-fPIC $(CFLAGS)
-CPPFLAGS:=$(CPPFLAGS) @MYSQL_CFLAGS@
 
 ifeq (@CYGWIN@, yes)
 all :
@@ -14,17 +12,17 @@ else
 all : objecticonipclib.so objecticonmysqllib.so
 
 objecticonmysqllib.so : mysql.o
-	$(CC) $(CFLAGS) $(LDFLAGS) -shared -fPIC -o objecticonmysqllib.so mysql.o @MYSQL_LDFLAGS@
+	$(CC) $(CFLAGS) $(LDFLAGS) -shared -o objecticonmysqllib.so mysql.o @MYSQL_LDFLAGS@
 
 mysql.o : mysql.r
 	$(RTT) -h gmysql.h mysql.r
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c mysql.c -o mysql.o
+	$(CC) $(CPPFLAGS) @MYSQL_CFLAGS@ $(CFLAGS) -c mysql.c -o mysql.o
 	$(RM) mysql.c
 endif
 endif
 
 objecticonipclib.so : ipc.o
-	$(CC) $(CFLAGS) $(LDFLAGS) -shared -fPIC -o objecticonipclib.so ipc.o
+	$(CC) $(CFLAGS) $(LDFLAGS) -shared -o objecticonipclib.so ipc.o
 
 ipc.o : ipc.r
 	$(RTT) -h gipc.h ipc.r
