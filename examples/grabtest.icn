@@ -100,7 +100,7 @@ class Untitled(Dialog)
 
    private on_event(ev)
       if not text_button_10.is_checked() then
-         text_display_1.log(ev_to_str(ev),100)
+         text_display_1.log([ev_to_str(ev)],100)
    end
 
    public component_setup()
@@ -124,7 +124,7 @@ class Untitled(Dialog)
 
    private on_test_button_event(ev,src,type)
       if not text_button_10.is_checked() then
-         text_display_1.log("B:t="||type_to_str(type)||" e="||ev_to_str(ev),100)
+         text_display_1.log(["B:t="||type_to_str(type)||" e="||ev_to_str(ev)],100)
    end
 
    private on_text_button_8(ev)
