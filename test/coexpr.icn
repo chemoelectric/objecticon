@@ -53,6 +53,7 @@ procedure main()
    write(imagex(trim) | "failed")
    write(imagex(abs) | "failed")
    write(imagex(main) | "failed")
+   init_serial()
    &trace := -1
    dummy{1,2,3,4}
    dummy{}

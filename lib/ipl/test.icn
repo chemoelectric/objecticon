@@ -152,3 +152,11 @@ procedure cmp_seq(s, e1, e2)
       return
    }
 end
+
+procedure init_serial()
+   local e
+   repeat {
+      e := create {}
+      if serial(e) = 100 then break
+   }
+end

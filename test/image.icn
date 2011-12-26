@@ -63,7 +63,7 @@ end
 
 procedure dump(x)
    if type(x) == ("list"|"set"|"table"|"record"|"object"|"co-expression") then
-      writes("#", serial(x), "  ", "*", *x)
+      writes("#", type(serial(x)), "  ", "*", *x)
    else if type(x) === ("string" | "cset" | "real" | "integer") then
       writes("    *", *x)
    write("\t", type(x), " : ", imagex(x))
