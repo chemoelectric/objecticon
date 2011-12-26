@@ -317,7 +317,7 @@ procedure process_one(a)
          output_stream.close() | stop("Couldn't close output_stream: ", &why)
          if \opts["c"] then {
             Files.copy(tmp_file, "/dev/stdout") | {
-               save_var{Files.remove(tmp_file), &why}
+               save_why{Files.remove(tmp_file)}
                stop("Couldn't copy ", tmp_file, " to stdout: ", &why)
             }
             Files.remove(tmp_file)
@@ -331,14 +331,14 @@ procedure process_one(a)
                msg ||:= " -> " || out
             } else if \opts["n"] then {
                Files.append(tmp_file, out) | {
-                  save_var{Files.remove(tmp_file), &why}
+                  save_why{Files.remove(tmp_file)}
                   stop("Unable to append ", tmp_file, " to ", out, ": ", &why)
                }
                Files.remove(tmp_file)
                msg ||:= " ->> " || out
             } else if \opts["over"] then {
                Files.move(tmp_file, out) | {
-                  save_var{every Files.remove(tmp_file | out), &why}
+                  save_why{every Files.remove(tmp_file | out)}
                   stop("Unable to move ", tmp_file, " to ", out, ": ", &why)
                }
                msg ||:= " -> " || out
@@ -348,7 +348,7 @@ procedure process_one(a)
             } else {
                out := Files.ensure_unique_filename(out)
                Files.move(tmp_file, out)  | {
-                  save_var{every Files.remove(tmp_file | out), &why}
+                  save_why{every Files.remove(tmp_file | out)}
                   stop("Unable to move ", tmp_file, " to ", out, ": ", &why)
                }
                msg ||:= " -> " || out

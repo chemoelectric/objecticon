@@ -65,6 +65,17 @@ procedure save_var(e, var)
    }
 end
 
+#
+# A common case, having the same effect as save_var{e, &why}.
+#
+procedure save_why(e)
+   local t
+   t := &why
+   suspend 1(|@e, &why :=: t) do
+      &why :=: t
+   &why := t
+end
+
 # Invoke co-expression e, generating its results, setting {var} to
 # {init} before each invocation.  Further, the value of {var} before
 # being set to {init} is saved and restored before each suspension or
