@@ -121,10 +121,15 @@ class TermDialog(Dialog, LineBasedOutputStream)
       if hpos <= *history then move_hist(1)
    end
 
+   private handle_history_recall(ev)
+      input.assign_contents(get_history_item(integer(input.get_contents())), ev)
+   end
+
    private on_input_key(ev)
       case ev.code of {
          Key.UP : handle_key_up(ev)
          Key.DOWN : handle_key_down(ev)
+         "\^p": handle_history_recall(ev)
       }
    end
 
