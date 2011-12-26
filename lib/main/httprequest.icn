@@ -12,7 +12,7 @@ import util, net, io
 class HttpRequest(MimeHeaders)
    private readable 
       url,
-      post_stream,
+      input_stream,
       method,
       data_stream,
       username,
@@ -42,14 +42,29 @@ class HttpRequest(MimeHeaders)
 
    #
    # Set the data to be used in a POST request, as a stream to be read, and set
-   # the method to "POST" (if post_stream is not null).
+   # the method to "POST" (if post_stream is not null).  The content type must
+   # be specified separately with {set_content_type}.
    #
    # @param post_stream A Stream instance
    #
    public set_post_stream(post_stream)
-      self.post_stream := post_stream
-      if \self.post_stream then
+      self.input_stream := post_stream
+      if \self.input_stream then
          set_method("POST")
+      return self
+   end
+
+   #
+   # Set the data to be used in a PUT request, as a stream to be read, and set
+   # the method to "PUT" (if put_stream is not null).  The content type must
+   # be specified separately with {set_content_type}.
+   #
+   # @param put_stream A Stream instance
+   #
+   public set_put_stream(put_stream)
+      self.input_stream := put_stream
+      if \self.input_stream then
+         set_method("PUT")
       return self
    end
 
@@ -79,7 +94,7 @@ class HttpRequest(MimeHeaders)
    end
 
    #
-   # Set the content type of the post data.
+   # Set the content type of the post/put data.
    #
    public set_content_type(content_type)
       self.content_type := content_type
@@ -116,6 +131,14 @@ class HttpRequest(MimeHeaders)
    #
    public set_password(s)
       self.password := s
+      return self
+   end
+
+   #
+   # For a POST or PUT, set the stream to read data from.
+   #
+   public set_input_stream(f)
+      self.input_stream := f
       return self
    end
 

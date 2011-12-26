@@ -205,6 +205,7 @@ class HttpClient(NetClient)
    # @param request - an {HttpRequest} instance
    # @return an {HttpResponse} object.
    public retrieve(request)
+      \request.url | runerr("URL not set")
       # Create our own copy of the request as we may modify it during
       # redirects
       self.request := HttpRequest()
@@ -215,20 +216,21 @@ class HttpClient(NetClient)
       self.request.set_password(request.password)
       self.request.set_referer(request.referer)
       self.request.set_range(request.range_start, request.range_end)
-      self.request.set_content_type(request.content_type)
       if /request.data_stream then
-         request.method === "HEAD" | runerr("No data stream set")
+         request.method == "HEAD" | runerr("No data stream set")
       else {
          request.data_stream.can(Stream.WRITE + Stream.TRUNCATE) | 
                         runerr("Data stream not writable and truncatable", request.data_stream)
          self.request.set_data_stream(request.data_stream)
       }
-      if /request.post_stream then
-         request.method ~=== "POST" | runerr("No data stream set on a POST")
-      else {
-         request.post_stream.can(Stream.READ + Stream.SEEK) | 
-                        runerr("Post stream not readable and seekable", request.post_stream)
-         self.request.set_post_stream(request.post_stream)
+      if /request.input_stream then {
+         if request.method == ("POST" | "PUT") then runerr("No input stream set on a POST or PUT")
+      } else {
+         \request.content_type | runerr("Content-type not set with an input stream")
+         self.request.set_content_type(request.content_type)
+         request.input_stream.can(Stream.READ + Stream.SEEK) | 
+                        runerr("Input stream not readable and seekable", request.input_stream)
+         self.request.set_input_stream(request.input_stream)
       }
 
       auth_req_count := 0
@@ -364,11 +366,11 @@ class HttpClient(NetClient)
       if \qop == "auth-int" then {
          # Calculate H(entity)
          t := MD5()
-         if \request.post_stream then {
+         if \request.input_stream then {
             # Just fail; the whole request will surely fail anyway.
-            request.post_stream.seek(1) | fail
+            request.input_stream.seek(1) | fail
             repeat {
-               s := request.post_stream.in(1048576) | fail
+               s := request.input_stream.in(1048576) | fail
                if /s then
                   break
                t.update(s)
@@ -812,23 +814,19 @@ class HttpClient(NetClient)
       write_line(request.method || " " || request.url.get_file() || 
                  " HTTP/" || http_version) | fail
 
-      if \request.post_stream then {
-         \request.content_type | runerr("Content-type header not set on a POST")
+      if \request.input_stream then {
          request.set_header("content-type", request.content_type)
-         sz := request.post_stream.seek(0) - 1 | fail
+         sz := request.input_stream.seek(0) - 1 | fail
          request.set_header("content-length", sz)
          request.set_header("authorization", create_authorization_header())
          write_request_headers() | fail
          write_line() | fail
-         request.post_stream.seek(1) | fail
+         request.input_stream.seek(1) | fail
          repeat {
-            s := request.post_stream.in(1048576) | fail
+            s := request.input_stream.in(1048576) | fail
             if /s then
                break
-            write_str(s) | {
-               f.close()
-               fail
-            }
+            write_str(s) | fail
          }
       } else {
          request.set_header("authorization", create_authorization_header())

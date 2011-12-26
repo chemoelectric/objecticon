@@ -90,12 +90,13 @@ procedure main(args)
    local l, f, t, cookies
 
    opts := options(args, "-over! -i: -form:* -type: -o: -k: -q! -t+ -r+ -p: -d: -a: -f: -e: -l! -n: _
-                         -head! -nsslv! -help! -c! -skip! -agent: -while! -close! -x:* -nz! -v1!")
+                         -head! -nsslv! -help! -c! -put! -skip! -agent: -while! -close! -x:* -nz! -v1!")
    if \opts["help"] then {
       write(FileStream.stderr, "Usage: geturl [URL]... [OPTIONS]")
       write(FileStream.stderr, "Retrieve URL(s)")
       write(FileStream.stderr, "  -o OUTPUT FILE/DIR      Output file or directory")
       write(FileStream.stderr, "  -i INPUT FILE           Input file for a POST request")
+      write(FileStream.stderr, "  -put                    With -i, do a PUT instead of a POST")
       write(FileStream.stderr, "  -form K=V               Post an HTTP form with entry K=V; multiple uses allowed")
       write(FileStream.stderr, "  -type TYPE              Content type for a POST request")
       write(FileStream.stderr, "  -c                      Output to stdout (implies -q)")
@@ -276,7 +277,10 @@ procedure process_one(a)
    if \opts["i"] then {
       /opts["head"] | stop("Can't have -head and -i options together")
       post_stream := FileStream.open(opts["i"], FileOpt.RDONLY) | stop("Couldn't open ", opts["i"], ": ", &why)
-      hr.set_post_stream(post_stream)
+      if \opts["put"] then
+         hr.set_put_stream(post_stream)
+      else
+         hr.set_post_stream(post_stream)
       content_type := \opts["type"] | "application/x-www-form-urlencoded"
       hr.set_content_type(content_type)
    }
