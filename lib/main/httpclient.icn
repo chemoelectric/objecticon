@@ -216,12 +216,12 @@ class HttpClient(NetClient)
       self.request.set_password(request.password)
       self.request.set_referer(request.referer)
       self.request.set_range(request.range_start, request.range_end)
-      if /request.data_stream then
-         request.method == "HEAD" | runerr("No data stream set")
+      if /request.output_stream then
+         request.method == "HEAD" | runerr("No output stream set")
       else {
-         request.data_stream.can(Stream.WRITE + Stream.TRUNCATE) | 
-                        runerr("Data stream not writable and truncatable", request.data_stream)
-         self.request.set_data_stream(request.data_stream)
+         request.output_stream.can(Stream.WRITE + Stream.TRUNCATE) | 
+                        runerr("Output stream not writable and truncatable", request.output_stream)
+         self.request.set_output_stream(request.output_stream)
       }
       if /request.input_stream then {
          if request.method == ("POST" | "PUT") then runerr("No input stream set on a POST or PUT")
@@ -890,7 +890,7 @@ class HttpClient(NetClient)
          trim(map(response.get_first_header("content-encoding"))) == ("gzip" | "x-gzip") &
          not endswith(map(response.get_filename()), ".gz" | ".tgz" | ".svgz" | ".gzip") then 
       {
-         inflater_stream := FilterOutputStream(request.data_stream, "gunzip", ["-c"]) | fail
+         inflater_stream := FilterOutputStream(request.output_stream, "gunzip", ["-c"]) | fail
       }
       return
    end
@@ -906,7 +906,7 @@ class HttpClient(NetClient)
       #
       if not(\self.read & find("206", response.get_status())) then {
          close_inflater()
-         request.data_stream.truncate(0) | fail
+         request.output_stream.truncate(0) | fail
          open_inflater() | fail
          self.length := integer(response.get_first_header("content-length")) | &null
          self.read := 0
@@ -1015,7 +1015,7 @@ class HttpClient(NetClient)
       return if \inflater_stream then
          inflater_stream.writes(s)
       else
-         request.data_stream.writes(s)
+         request.output_stream.writes(s)
    end
 
    public new()

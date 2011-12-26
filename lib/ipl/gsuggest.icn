@@ -42,7 +42,7 @@ class GoogleSuggestField(GSuggestField)
          set_cgi_parameters(table(, "q", contents, "client", "suggest"))
       hr := HttpRequest().
          set_url(u).
-         set_data_stream(data).
+         set_output_stream(data).
          set_header("Accept-Charset", "utf-8")
       hc.retrieve(hr) | fail
       s := ucs(data.str()) | fail
@@ -78,7 +78,7 @@ class TickerSuggestField(GSuggestField)
          set_cgi_parameters(table(, "q", contents))
       hr := HttpRequest().
          set_url(u).
-         set_data_stream(data).
+         set_output_stream(data).
          set_header("Accept-Charset", "utf-8")
       hc.retrieve(hr) | fail
       s := ucs(data.str()) | fail

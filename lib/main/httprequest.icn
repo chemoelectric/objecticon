@@ -14,7 +14,7 @@ class HttpRequest(MimeHeaders)
       url,
       input_stream,
       method,
-      data_stream,
+      output_stream,
       username,
       password,
       referer,
@@ -145,8 +145,8 @@ class HttpRequest(MimeHeaders)
    #
    # Set a stream to use to receive the data.
    #
-   public set_data_stream(f)
-      self.data_stream := f
+   public set_output_stream(f)
+      self.output_stream := f
       return self
    end
 

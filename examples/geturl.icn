@@ -305,7 +305,7 @@ procedure process_one(a)
       data_stream := BufferStream(FileStream.open(tmp_file, 
                                                   ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT))).
                       set_buff_size(8192) | stop("Couldn't open ", tmp_file, ": ", &why)
-      hr.set_data_stream(data_stream)
+      hr.set_output_stream(data_stream)
    }
 
    start_t := Prog.get_runtime_millis()
