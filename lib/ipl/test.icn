@@ -159,4 +159,8 @@ procedure init_serial()
       e := create {}
       if serial(e) = 100 then break
    }
+   repeat {
+      e := []
+      if serial(e) = 100 then break
+   }
 end
