@@ -41,40 +41,13 @@ class HttpRequest(MimeHeaders)
    end
 
    #
-   # Set the data to be used in a POST request, as a stream to be read, and set
-   # the method to "POST" (if post_stream is not null).  The content type must
-   # be specified separately with {set_content_type}.
-   #
-   # @param post_stream A Stream instance
-   #
-   public set_post_stream(post_stream)
-      self.input_stream := post_stream
-      if \self.input_stream then
-         set_method("POST")
-      return self
-   end
-
-   #
-   # Set the data to be used in a PUT request, as a stream to be read, and set
-   # the method to "PUT" (if put_stream is not null).  The content type must
-   # be specified separately with {set_content_type}.
-   #
-   # @param put_stream A Stream instance
-   #
-   public set_put_stream(put_stream)
-      self.input_stream := put_stream
-      if \self.input_stream then
-         set_method("PUT")
-      return self
-   end
-
-   #
    # Convenience method to set the post data from a table
    # which represents html form post data.  The content type
    # is set appropriately too.
    #
    public set_html_form_data(t)
-      set_post_stream(StringStream(URL.make_cgi_string(t)))
+      set_input_stream(StringStream(URL.make_cgi_string(t)))
+      set_method("POST")
       set_content_type("application/x-www-form-urlencoded")
       return self
    end
@@ -88,7 +61,8 @@ class HttpRequest(MimeHeaders)
    # and have an appropriate MultiPart set as its content object.
    #
    public set_multipart_form_data(m)
-      set_post_stream(StringStream(m.to_rfc822()))
+      set_input_stream(StringStream(m.to_rfc822()))
+      set_method("POST")
       set_content_type(m.get_content_type().to_rfc1521())
       return self
    end
@@ -143,7 +117,8 @@ class HttpRequest(MimeHeaders)
    end
 
    #
-   # Set a stream to use to receive the data.
+   # Set a stream to use to receive the data; always required except
+   # on a "HEAD" method.
    #
    public set_output_stream(f)
       self.output_stream := f
@@ -156,5 +131,3 @@ class HttpRequest(MimeHeaders)
       return
    end
 end
-
-

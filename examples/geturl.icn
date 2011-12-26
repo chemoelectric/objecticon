@@ -224,8 +224,8 @@ end
 
 
 procedure process_one(a)
-   local hr, url, u, p, start_t, res, end_t, kbps, s, msg, tmp_file, data_stream, 
-      post_stream, content_type, t, k, v
+   local hr, url, u, p, start_t, res, end_t, kbps, s, msg, tmp_file, output_stream, 
+      input_stream, content_type, t, k, v
 
    total +:= 1
 
@@ -276,11 +276,12 @@ procedure process_one(a)
 
    if \opts["i"] then {
       /opts["head"] | stop("Can't have -head and -i options together")
-      post_stream := FileStream.open(opts["i"], FileOpt.RDONLY) | stop("Couldn't open ", opts["i"], ": ", &why)
+      input_stream := FileStream.open(opts["i"], FileOpt.RDONLY) | stop("Couldn't open ", opts["i"], ": ", &why)
+      hr.set_input_stream(input_stream)
       if \opts["put"] then
-         hr.set_put_stream(post_stream)
+         hr.set_method("PUT")
       else
-         hr.set_post_stream(post_stream)
+         hr.set_method("POST")
       content_type := \opts["type"] | "application/x-www-form-urlencoded"
       hr.set_content_type(content_type)
    }
@@ -302,18 +303,18 @@ procedure process_one(a)
 
    if /opts["head"] then {
       tmp_file := Files.make_temp_filename("http_geturl.", ".bin") | stop("Couldn't create temp file: ", &why)
-      data_stream := BufferStream(FileStream.open(tmp_file, 
+      output_stream := BufferStream(FileStream.open(tmp_file, 
                                                   ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT))).
                       set_buff_size(8192) | stop("Couldn't open ", tmp_file, ": ", &why)
-      hr.set_output_stream(data_stream)
+      hr.set_output_stream(output_stream)
    }
 
    start_t := Prog.get_runtime_millis()
    if res := hc.retrieve(hr) then {
       if /opts["head"] then {
-         if \post_stream then
-            post_stream.close() | stop("Couldn't close post_stream: ", &why)
-         data_stream.close() | stop("Couldn't close data_stream: ", &why)
+         if \input_stream then
+            input_stream.close() | stop("Couldn't close input_stream: ", &why)
+         output_stream.close() | stop("Couldn't close output_stream: ", &why)
          if \opts["c"] then {
             Files.copy(tmp_file, "/dev/stdout") | {
                save_var{Files.remove(tmp_file), &why}
@@ -360,9 +361,9 @@ procedure process_one(a)
       ok +:= 1
    } else {
       if /opts["head"] then {
-         if \post_stream then
-            post_stream.close() | stop("Couldn't close post_stream: ", &why)
-         data_stream.close() | stop("Couldn't close data_stream: ", &why)
+         if \input_stream then
+            input_stream.close() | stop("Couldn't close input_stream: ", &why)
+         output_stream.close() | stop("Couldn't close output_stream: ", &why)
          Files.remove(tmp_file)
       }
       if /hc.abort_flag then {

@@ -208,14 +208,14 @@ class HttpClient(NetClient)
       \request.url | runerr("URL not set")
       # Create our own copy of the request as we may modify it during
       # redirects
-      self.request := HttpRequest()
-      self.request.set_url(clone(request.url))
-      self.request.set_method(request.method)
-      self.request.set_headers(clone(request.headers))
-      self.request.set_username(request.username)
-      self.request.set_password(request.password)
-      self.request.set_referer(request.referer)
-      self.request.set_range(request.range_start, request.range_end)
+      self.request := HttpRequest().
+         set_url(clone(request.url)).
+         set_method(request.method).
+         set_headers(clone(request.headers)).
+         set_username(request.username).
+         set_password(request.password).
+         set_referer(request.referer).
+         set_range(request.range_start, request.range_end)
       if /request.output_stream then
          request.method == "HEAD" | runerr("No output stream set")
       else {
@@ -278,10 +278,11 @@ class HttpClient(NetClient)
       # On a redirect, a POST becomes a GET.
       #
       if request.method == "POST" then {
-         request.set_method("GET")
-         request.set_post_stream()
-         request.unset_header("content-length")
-         request.unset_header("content-type")
+         request.set_method("GET").
+            set_input_stream().
+            set_content_type().
+            unset_header("content-length").
+            unset_header("content-type")
       }
       auth_req_count := 0
       return
