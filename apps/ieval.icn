@@ -13,7 +13,7 @@ end\n"
    return use {
       tf := Files.make_temp_filename("ieval"),
       compile(prog, tf, links),
-      save_var{Files.remove(tf), &why}
+      save_why{Files.remove(tf)}
    }
 end
 

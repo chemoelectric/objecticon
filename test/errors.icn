@@ -216,7 +216,7 @@ procedure fun(eline, e)
    &handler := &null
    if &errornumber then {
       write("\nerror in line ",line,":")
-      write("   &errorcoexpr = ", image(&errorcoexpr))
+      write("   &errorcoexpr = ", imagex(&errorcoexpr))
       write("   &errornumber = ",&errornumber)
       write("   &errortext = ", image(&errortext))
       write("   &errorvalue = ", imagex(&errorvalue))

@@ -13,9 +13,6 @@ end
 
 procedure main()
    local e,foo,x,input
-$ifdef _PLAN9
-image([],[],[])
-$endif
    if not(&features == "co-expressions") then
       stop("co-expressions not supported")
    write(imagex(&main))
@@ -56,6 +53,7 @@ $endif
    write(imagex(trim) | "failed")
    write(imagex(abs) | "failed")
    write(imagex(main) | "failed")
+   init_serial()
    &trace := -1
    dummy{1,2,3,4}
    dummy{}

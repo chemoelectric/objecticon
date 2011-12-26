@@ -1,4 +1,4 @@
-import io
+import io, ipl.test
 
 global datain, dataout, words, lines, writer, line
 
@@ -8,7 +8,7 @@ procedure main()
    dataout := []
    datain := []
    while put(datain, read())
-
+   init_serial()
    &trace := -1
 
    words := create word()

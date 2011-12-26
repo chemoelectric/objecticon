@@ -1,7 +1,7 @@
 package io
 
 import
-   util(error, check_flag),
+   util(error, check_flag, save_why),
    lang(NoCopy),
    posix(ExitInfo, System),
    ipl.strings(replace)
@@ -1029,12 +1029,11 @@ $ifdef _PLAN9
    private static create_and_set_mode(fd, mode)
       local f
       f := FileStream(fd, mode)
-      if f.tell() then {
+      if save_why{f.tell()} then {
          if f.can(WRITE) then
             f.mode := ior(f.mode, TRUNCATE)
          f.mode := ior(f.mode, SEEK)
-      } else
-         &why := ""
+      }
       return f
    end
 
@@ -1091,6 +1090,9 @@ $else
          if f.can(WRITE) then
             f.mode := ior(f.mode, TRUNCATE)
          f.mode := ior(f.mode, SEEK)
+      } else {
+         if save_why{f.tell()} then
+            f.mode := ior(f.mode, SEEK)
       }
       return f
    end

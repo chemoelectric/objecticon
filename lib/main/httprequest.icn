@@ -12,9 +12,9 @@ import util, net, io
 class HttpRequest(MimeHeaders)
    private readable 
       url,
-      post_stream,
+      input_stream,
       method,
-      data_stream,
+      output_stream,
       username,
       password,
       referer,
@@ -41,25 +41,13 @@ class HttpRequest(MimeHeaders)
    end
 
    #
-   # Set the data to be used in a POST request, as a stream to be read, and set
-   # the method to "POST" (if post_stream is not null).
-   #
-   # @param post_stream A Stream instance
-   #
-   public set_post_stream(post_stream)
-      self.post_stream := post_stream
-      if \self.post_stream then
-         set_method("POST")
-      return self
-   end
-
-   #
    # Convenience method to set the post data from a table
    # which represents html form post data.  The content type
    # is set appropriately too.
    #
    public set_html_form_data(t)
-      set_post_stream(StringStream(URL.make_cgi_string(t)))
+      set_input_stream(StringStream(URL.make_cgi_string(t)))
+      set_method("POST")
       set_content_type("application/x-www-form-urlencoded")
       return self
    end
@@ -73,13 +61,14 @@ class HttpRequest(MimeHeaders)
    # and have an appropriate MultiPart set as its content object.
    #
    public set_multipart_form_data(m)
-      set_post_stream(StringStream(m.to_rfc822()))
+      set_input_stream(StringStream(m.to_rfc822()))
+      set_method("POST")
       set_content_type(m.get_content_type().to_rfc1521())
       return self
    end
 
    #
-   # Set the content type of the post data.
+   # Set the content type of the post/put data.
    #
    public set_content_type(content_type)
       self.content_type := content_type
@@ -120,10 +109,19 @@ class HttpRequest(MimeHeaders)
    end
 
    #
-   # Set a stream to use to receive the data.
+   # For a POST or PUT, set the stream to read data from.
    #
-   public set_data_stream(f)
-      self.data_stream := f
+   public set_input_stream(f)
+      self.input_stream := f
+      return self
+   end
+
+   #
+   # Set a stream to use to receive the data; always required except
+   # on a "HEAD" method.
+   #
+   public set_output_stream(f)
+      self.output_stream := f
       return self
    end
 
@@ -133,5 +131,3 @@ class HttpRequest(MimeHeaders)
       return
    end
 end
-
-
