@@ -131,6 +131,20 @@ procedure p10()
    pr_seq{"back(empty)", back("")}
 end
 
+procedure p11()
+   local s, i
+   every i := 1 to 8 do {
+      s := "1234567890"
+      write("s[",i,"+:2] :=: s[",(9-i),"+:3] -> ", 
+            if s[i+:2] :=: s[(9-i)+:3] then image(s) else "failed")
+   }
+   every i := 1 to 8 do {
+      s := "1234567890"
+      every s[i+:2] <-> s[(9-i)+:3]
+      write("every s[",i,"+:2] <-> s[",(9-i),"+:3] -> ", image(s))
+   }
+end
+
 procedure main()
    p1()
    p2()
@@ -142,6 +156,7 @@ procedure main()
    p8()
    p9()
    p10()
+   p11()
 end
 
 global s
