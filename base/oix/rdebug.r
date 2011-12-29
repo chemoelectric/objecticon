@@ -1235,7 +1235,7 @@ void print_vword(FILE *f, dptr d) {
 
             case D_Tvtbl : {
                 struct b_tvtbl *p = &TvtblBlk(*d);
-                fprintf(f, "%p -> tref=", p);
+                fprintf(f, "clink=%p %p -> tref=", p->clink, p);
                 print_desc(f, &p->tref);
                 break;
             }
@@ -1269,7 +1269,11 @@ void print_vword(FILE *f, dptr d) {
             case D_Lelem :
             case D_Selem :
             case D_Telem :
-            case D_Slots :
+            case D_Slots : {
+                outimage(f, d, 1);
+                break;
+            }
+
             case D_Proc : {
                 struct b_proc *p = &ProcBlk(*d);
                 switch (p->type) {
