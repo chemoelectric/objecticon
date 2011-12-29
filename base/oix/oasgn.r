@@ -4,6 +4,7 @@
 
 static void tvtbl_asgn	(dptr dest, dptr src);
 static int subs_asgn	(dptr dest, dptr src);
+static int overlap      (struct b_tvsubs *tv1, struct b_tvsubs *tv2);
 
 
 /*
@@ -126,78 +127,52 @@ operator <-> rswap(underef x -> dx, underef y -> dy)
       runerr(111, y)
 
    body {
-      tended union block *bp_x, *bp_y;
-      word adj1 = 0;
-      word adj2 = 0;
+      if (is:tvsubs(x) && is:tvsubs(y) && EqlDesc(TvsubsBlk(x).ssvar, TvsubsBlk(y).ssvar)) {
+         word adj;
+         /*
+          * See comments in :=: below.
+          */
+         if (overlap(&TvsubsBlk(x), &TvsubsBlk(y)))
+             fail;
+         adj = TvsubsBlk(x).sslen;
+         GeneralAsgn(x, dy)
+         if (TvsubsBlk(y).sspos > TvsubsBlk(x).sspos)
+             TvsubsBlk(y).sspos += TvsubsBlk(x).sslen - adj;
+         adj = TvsubsBlk(y).sslen;
+         GeneralAsgn(y, dx)
+         if (TvsubsBlk(x).sspos > TvsubsBlk(y).sspos)
+             TvsubsBlk(x).sspos += TvsubsBlk(y).sslen - adj;
 
-      if (is:tvsubs(x) && is:tvsubs(y)) {
-         bp_x = BlkLoc(x);
-         bp_y = BlkLoc(y);
-         if (EqlDesc(bp_x->tvsubs.ssvar, bp_y->tvsubs.ssvar)) {
-            /*
-             * x and y are both substrings of the same string, set
-             *  adj1 and adj2 for use in locating the substrings after
-             *  an assignment has been made.  If x is to the right of y,
-             *  set adj1 := *x - *y, otherwise if y is to the right of
-             *  x, set adj2 := *y - *x.  Note that the adjustment
-             *  values may be negative.
-             */
-            if (bp_x->tvsubs.sspos > bp_y->tvsubs.sspos)
-               adj1 = bp_x->tvsubs.sslen - bp_y->tvsubs.sslen;
-            else if (bp_y->tvsubs.sspos > bp_x->tvsubs.sspos)
-               adj2 = bp_y->tvsubs.sslen - bp_x->tvsubs.sslen;
-   	    }
+         suspend x;
+
+         /*
+          * As above, but with dx, dy exchanged.
+          */
+         if (overlap(&TvsubsBlk(x), &TvsubsBlk(y)))
+             fail;
+         adj = TvsubsBlk(x).sslen;
+         GeneralAsgn(x, dx)
+         if (TvsubsBlk(y).sspos > TvsubsBlk(x).sspos)
+             TvsubsBlk(y).sspos += TvsubsBlk(x).sslen - adj;
+         adj = TvsubsBlk(y).sslen;
+         GeneralAsgn(y, dy)
+         if (TvsubsBlk(x).sspos > TvsubsBlk(y).sspos)
+             TvsubsBlk(x).sspos += TvsubsBlk(y).sslen - adj;
+      } else {
+          /*
+           * Do x := y, then y := x
+           */
+          GeneralAsgn(x, dy)
+          GeneralAsgn(y, dx)
+
+          suspend x;
+
+          /*
+           * If resumed, the assignments are undone.
+           */
+          GeneralAsgn(x, dx)
+          GeneralAsgn(y, dy)
       }
-
-      /*
-       * Do x := y
-       */
-      GeneralAsgn(x, dy)
-
-      if (is:tvsubs(x) && is:tvsubs(y)) {
-         if (adj2 != 0)
-            /*
-             * Arg2 is to the right of Arg1 and the assignment Arg1 := Arg2 has
-             *  shifted the position of Arg2.  Add adj2 to the position of Arg2
-             *  to account for the replacement of Arg1 by Arg2.
-             */
-            bp_y->tvsubs.sspos += adj2;
-      }
-
-      /*
-       * Do y := x
-       */
-       GeneralAsgn(y, dx)
-
-       if (is:tvsubs(x) && is:tvsubs(y)) {
-         if (adj1 != 0)
-            /*
-             * Arg1 is to the right of Arg2 and the assignment Arg2 := Arg1
-             *  has shifted the position of Arg1.  Add adj2 to the position
-             *  of Arg1 to account for the replacement of Arg2 by Arg1.
-             */
-            bp_x->tvsubs.sspos += adj1;
-       }
-
-
-      suspend x;
-
-      /*
-       * If resumed, the assignments are undone.  Note that the string position
-       *  adjustments are opposite those done earlier.
-       */
-      GeneralAsgn(x, dx)
-      if (is:tvsubs(x) && is:tvsubs(y)) {
-         if (adj2 != 0)
-           bp_y->tvsubs.sspos -= adj2;
-      }
-
-      GeneralAsgn(y, dy)
-      if (is:tvsubs(x) && is:tvsubs(y)) {
-         if (adj1 != 0)
-            bp_x->tvsubs.sspos -= adj1;
-      }
-
       fail;
    }
 end
@@ -215,57 +190,31 @@ operator :=: swap(underef x -> dx, underef y -> dy)
       runerr(111, y)
 
    body {
-      tended union block *bp_x, *bp_y;
-      word adj1 = 0;
-      word adj2 = 0;
-
-      if (is:tvsubs(x) && is:tvsubs(y)) {
-         bp_x = BlkLoc(x);
-         bp_y = BlkLoc(y);
-         if (EqlDesc(bp_x->tvsubs.ssvar, bp_y->tvsubs.ssvar)) {
-            /*
-             * x and y are both substrings of the same string, set
-             *  adj1 and adj2 for use in locating the substrings after
-             *  an assignment has been made.  If x is to the right of y,
-             *  set adj1 := *x - *y, otherwise if y is to the right of
-             *  x, set adj2 := *y - *x.  Note that the adjustment
-             *  values may be negative.
-             */
-            if (bp_x->tvsubs.sspos > bp_y->tvsubs.sspos)
-               adj1 = bp_x->tvsubs.sslen - bp_y->tvsubs.sslen;
-            else if (bp_y->tvsubs.sspos > bp_x->tvsubs.sspos)
-               adj2 = bp_y->tvsubs.sslen - bp_x->tvsubs.sslen;
-   	    }
-      }
-
-      /*
-       * Do x := y
-       */
-      GeneralAsgn(x, dy)
-
-      if (is:tvsubs(x) && is:tvsubs(y)) {
-         if (adj2 != 0)
-            /*
-             * Arg2 is to the right of Arg1 and the assignment Arg1 := Arg2 has
-             *  shifted the position of Arg2.  Add adj2 to the position of Arg2
-             *  to account for the replacement of Arg1 by Arg2.
-             */
-            bp_y->tvsubs.sspos += adj2;
-      }
-
-      /*
-       * Do y := x
-       */
-      GeneralAsgn(y, dx)
-
-      if (is:tvsubs(x) && is:tvsubs(y)) {
-         if (adj1 != 0)
-            /*
-             * Arg1 is to the right of Arg2 and the assignment Arg2 := Arg1
-             *  has shifted the position of Arg1.  Add adj2 to the position
-             *  of Arg1 to account for the replacement of Arg2 by Arg1.
-             */
-            bp_x->tvsubs.sspos += adj1;
+      if (is:tvsubs(x) && is:tvsubs(y) && EqlDesc(TvsubsBlk(x).ssvar, TvsubsBlk(y).ssvar)) {
+         word adj;
+         /*
+          * x and y are both substrings of the same string, check
+          * whether substrings overlap (in which case fail), and
+          * adjust substring positions as necessary after each
+          * assignment, since the variable pointed to will have
+          * changed its contents.
+          */
+         if (overlap(&TvsubsBlk(x), &TvsubsBlk(y)))
+             fail;
+         adj = TvsubsBlk(x).sslen;
+         GeneralAsgn(x, dy)
+         if (TvsubsBlk(y).sspos > TvsubsBlk(x).sspos)
+             TvsubsBlk(y).sspos += TvsubsBlk(x).sslen - adj;
+         adj = TvsubsBlk(y).sslen;
+         GeneralAsgn(y, dx)
+         if (TvsubsBlk(x).sspos > TvsubsBlk(y).sspos)
+             TvsubsBlk(x).sspos += TvsubsBlk(y).sslen - adj;
+      } else {
+          /*
+           * Do x := y, then y := x
+           */
+          GeneralAsgn(x, dy)
+          GeneralAsgn(y, dx)
       }
 
       return x;
@@ -276,11 +225,10 @@ end
  * subs_asgn - perform assignment to a substring. Leave the updated substring
  *  in dest in case it is needed as the result of the assignment.
  */
-int subs_asgn(dptr dest, dptr src)
+static int subs_asgn(dptr dest, dptr src)
    {
    tended struct descrip deststr, srcstr, rsltstr;
    tended struct b_tvsubs *tvsub;
-
    word len;
    word prelen;   /* length of portion of string before substring */
    word poststrt; /* start of portion of string following substring */
@@ -435,7 +383,8 @@ int subs_asgn(dptr dest, dptr src)
          k_pos = 1;
          }
       tvtbl: {
-         tvtbl_asgn(&tvsub->ssvar, &rsltstr);
+         tended struct descrip tmp = tvsub->ssvar;
+         tvtbl_asgn(&tmp, &rsltstr);
          }
       default: {
          syserr("Unknown variable type");
@@ -452,10 +401,8 @@ int subs_asgn(dptr dest, dptr src)
  * tvtbl_asgn - perform an assignment to a table element trapped variable,
  *  inserting the element in the table if needed.
  */
-void tvtbl_asgn(dptr dest, dptr src)
+static void tvtbl_asgn(dptr dest, dptr src)
    {
-   tended struct b_tvtbl *bp;
-   tended struct descrip tval;
    struct b_telem *te;
    union block **slot;
    struct b_table *tp;
@@ -465,38 +412,50 @@ void tvtbl_asgn(dptr dest, dptr src)
     * Allocate te now (even if we may not need it)
     * because slot cannot be tended.
     */
-   bp = &TvtblBlk(*dest);	/* Save params to tended vars */
-   tval = *src;
    MemProtect(te = alctelem());
 
    /*
     * First see if reference is in the table; if it is, just update
     *  the value.  Otherwise, allocate a new table entry.
     */
-   slot = memb(bp->clink, &bp->tref, bp->hashnum, &res);
+   slot = memb(TvtblBlk(*dest).clink, &TvtblBlk(*dest).tref, TvtblBlk(*dest).hashnum, &res);
 
    if (res) {
       /*
        * Do not need new te, just update existing entry.
        */
       dealcblk((union block *) te);
-      (*slot)->telem.tval = tval;
+      (*slot)->telem.tval = *src;
       }
    else {
       /*
        * Link te into table, fill in entry.
        */
-      tp = (struct b_table *) bp->clink;
+      tp = (struct b_table *) TvtblBlk(*dest).clink;
       tp->size++;
 
       te->clink = *slot;
       *slot = (union block *) te;
 
-      te->hashnum = bp->hashnum;
-      te->tref = bp->tref;
-      te->tval = tval;
+      te->hashnum = TvtblBlk(*dest).hashnum;
+      te->tref = TvtblBlk(*dest).tref;
+      te->tval = *src;
       
       if (TooCrowded(tp))		/* grow hash table if now too full */
          hgrow((union block *)tp);
       }
    }
+
+/*
+ * Return true iff the extent of the given substrings overlap.
+ */
+static int overlap(struct b_tvsubs *tv1, struct b_tvsubs *tv2)
+{
+    if (tv1->sspos > tv2->sspos)
+        return (tv1->sspos < tv2->sspos + tv2->sslen);
+    else if (tv2->sspos > tv1->sspos)
+        return (tv2->sspos < tv1->sspos + tv1->sslen);
+    else /* Same pos'ns, overlap if both are non-zero length */
+        return (tv1->sslen > 0 && tv2->sslen > 0);
+}
+
