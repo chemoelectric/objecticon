@@ -640,34 +640,34 @@ cnv_str_macro(cnv_str_1,E_Aconv,E_Tconv,E_Nconv,E_Sconv,E_Fconv)
 
 static void deref_tvsubs(dptr s, dptr d)
 {
-    tended union block *bp;
+    tended struct b_tvsubs *tvsub;
     tended struct descrip v;
 
     /*
      * A substring trapped variable is being dereferenced.
-     *  Point bp to the trapped variable block and v to
+     *  Point tvsub to the trapped variable block and v to
      *  the string.
      */
-    bp = BlkLoc(*s);
-    deref(&bp->tvsubs.ssvar, &v);
+    tvsub = &TvsubsBlk(*s);
+    deref(&tvsub->ssvar, &v);
     type_case v of {
       string: {
-            if (bp->tvsubs.sspos + bp->tvsubs.sslen - 1 > StrLen(v))
+            if (tvsub->sspos + tvsub->sslen - 1 > StrLen(v))
                 fatalerr(205, NULL);
             /*
              * Make a descriptor for the substring by getting the
              *  length and pointing into the string.
              */
-            StrLen(*d) = bp->tvsubs.sslen;
-            StrLoc(*d) = StrLoc(v) + bp->tvsubs.sspos - 1;
+            StrLen(*d) = tvsub->sslen;
+            StrLoc(*d) = StrLoc(v) + tvsub->sspos - 1;
         }
       ucs: {
-            if (bp->tvsubs.sspos + bp->tvsubs.sslen - 1 > UcsBlk(v).length)
+            if (tvsub->sspos + tvsub->sslen - 1 > UcsBlk(v).length)
                 fatalerr(205, NULL);
             d->dword = D_Ucs;
             BlkLoc(*d) = (union block *)make_ucs_substring(&UcsBlk(v), 
-                                                           bp->tvsubs.sspos, 
-                                                           bp->tvsubs.sslen);
+                                                           tvsub->sspos, 
+                                                           tvsub->sslen);
         }
       default: {
             fatalerr(129, &v);
@@ -680,19 +680,19 @@ static void deref_tvtbl(dptr s, dptr d)
    /*
     * no allocation is done, so nothing need be tended.
     */
-    union block *bp;
+    struct b_tvtbl *bp;
     union block **ep;
     int res;
 
     /*
      * Look up the element in the table.
      */
-    bp = BlkLoc(*s);
-    ep = memb(bp->tvtbl.clink,&bp->tvtbl.tref,bp->tvtbl.hashnum,&res);
+    bp = &TvtblBlk(*s);
+    ep = memb(bp->clink, &bp->tref, bp->hashnum, &res);
     if (res)
         *d = (*ep)->telem.tval;			/* found; use value */
     else
-        *d = bp->tvtbl.clink->table.defvalue;	/* nope; use default */
+        *d = bp->clink->table.defvalue;	/* nope; use default */
 }
 
 
