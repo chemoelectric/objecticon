@@ -1282,12 +1282,6 @@ int main(int argc, char **argv)
     fclose(ifile);
 
     /*
-     * Initialize the event monitoring system, if configured.
-     */
-
-    EVInit();
-
-    /*
      * Resolve references from icode to run-time system.
      */
     resolve(&rootpstate);
