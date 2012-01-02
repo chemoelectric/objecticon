@@ -51,7 +51,7 @@ rttparse.o : ../h/gsupport.h ../h/config.h ../h/cstructs.h \
 #
 ifeq ($(TYPES),Y)
 icontype.c: typespec.txt typespec
-	typespec <typespec.txt >icontype.c
+	./typespec <typespec.txt >icontype.c
 
 typespec: typespec.icn
 	oit -s typespec
