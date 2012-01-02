@@ -386,7 +386,11 @@
 #define D_Null		(T_Null     | D_Typecode)
 #define D_Integer	(T_Integer  | D_Typecode)
 #define D_Lrgint	(T_Lrgint | D_Typecode | F_Ptr)
+#if RealInDesc
+#define D_Real		(T_Real     | D_Typecode)
+#else
 #define D_Real		(T_Real     | D_Typecode | F_Ptr)
+#endif
 #define D_Cset		(T_Cset     | D_Typecode | F_Ptr)
 #define D_Proc		(T_Proc     | D_Typecode)
 #define D_Class		(T_Class    | D_Typecode)
