@@ -1322,94 +1322,74 @@ void getimage(dptr dp1, dptr dp2)
          alcstr(sbuf, strlen(sbuf));
          }
 
-  
-     cast: {
-           struct b_object *obj;
-           struct b_class *cast_class, *obj_class;
-           /*
-            * Produce:
-            *  "cast(object objectname#m(n),class classname)"     
-            */
-           obj = CastBlk(*dp1).object;
-           obj_class = obj->class;
-           cast_class = CastBlk(*dp1).class;
-
-           sprintf(sbuf, "#%ld(%ld),class ", (long)obj->id, (long)obj_class->n_instance_fields);
-           len = StrLen(*obj_class->name) + StrLen(*cast_class->name) + strlen(sbuf) + 13;
-
-           MemProtect (StrLoc(*dp2) = reserve(Strings, len));
-           StrLen(*dp2) = len;
-           /* No need to refresh pointers, everything is static data */
-           alcstr("cast(object ", 12);
-           alcstr(StrLoc(*obj_class->name),StrLen(*obj_class->name));
-           alcstr(sbuf, strlen(sbuf));
-           alcstr(StrLoc(*cast_class->name),StrLen(*cast_class->name));
-           alcstr(")", 1);
-       }
-
      methp: {
-           struct b_object *obj;
-           struct class_field *field;
-           struct b_class *obj_class;
-           struct b_proc *proc0;
-           obj = MethpBlk(*dp1).object;
-           obj_class = obj->class;
-           sprintf(sbuf, "#%ld(%ld),", (long)obj->id, (long)obj_class->n_instance_fields);
-           proc0 = MethpBlk(*dp1).proc;
-           field = proc0->field;
-           if (field) {
-               /*
-                * Produce:
-                *  "methp(object objectname#m(n),method classname.fieldname)"
-                */
-               struct b_class * field_class = field->defining_class;
-               dptr field_name = field_class->program->Fnames[field->fnum];
-               len = StrLen(*obj_class->name) + StrLen(*field_class->name) + StrLen(*field_name) + strlen(sbuf) + 22;
-               MemProtect (StrLoc(*dp2) = reserve(Strings, len));
-               StrLen(*dp2) = len;
-               /* No need to refresh pointers, everything is static data */
-               alcstr("methp(object ", 13);
-               alcstr(StrLoc(*obj_class->name),StrLen(*obj_class->name));
-               alcstr(sbuf, strlen(sbuf));
-               alcstr("method ", 7);
-               alcstr(StrLoc(*field_class->name),StrLen(*field_class->name));
-               alcstr(".", 1);
-               alcstr(StrLoc(*field_name),StrLen(*field_name));
-               alcstr(")", 1);
-           } else {
-               /* No field - it should only be possible to be the deferred method stub here */
-               if (proc0 != (struct b_proc *)&Bdeferred_method_stub)
-                   syserr("Expected deferred_method_stub");
-               len = StrLen(*obj_class->name) + strlen(sbuf) + 29;
-               MemProtect (StrLoc(*dp2) = reserve(Strings, len));
-               StrLen(*dp2) = len;
-               /* No need to refresh pointers, everything is static data */
-               alcstr("methp(object ", 13);
-               alcstr(StrLoc(*obj_class->name), StrLen(*obj_class->name));
-               alcstr(sbuf, strlen(sbuf));
-               alcstr("deferred method)", 16);
-           }
-       }
+         /*
+          * Produce:
+          *  "methp(object image,method image)"
+          */
+         tended struct descrip td1, td2, td3;
+         td1.dword = D_Object;
+         BlkLoc(td1) = (union block*)MethpBlk(*dp1).object;
+         getimage(&td1, &td2);
+         td1.dword = D_Proc;
+         BlkLoc(td1) = (union block*)MethpBlk(*dp1).proc;
+         getimage(&td1, &td3);
+         len = 6 + StrLen(td2) + 1 + StrLen(td3) + 1;
+         MemProtect (StrLoc(*dp2) = reserve(Strings, len));
+         StrLen(*dp2) = len;
+         alcstr("methp(", 6);
+         alcstr(StrLoc(td2),StrLen(td2));
+         alcstr(",", 1);
+         alcstr(StrLoc(td3),StrLen(td3));
+         alcstr(")", 1);
+     }
+
+     cast: {
+         /*
+          * Produce:
+          *  "cast(object image,class image)"
+          */
+         tended struct descrip td1, td2, td3;
+         td1.dword = D_Object;
+         BlkLoc(td1) = (union block*)CastBlk(*dp1).object;
+         getimage(&td1, &td2);
+         td1.dword = D_Class;
+         BlkLoc(td1) = (union block*)CastBlk(*dp1).class;
+         getimage(&td1, &td3);
+         len = 5 + StrLen(td2) + 1 + StrLen(td3) + 1;
+         MemProtect (StrLoc(*dp2) = reserve(Strings, len));
+         StrLen(*dp2) = len;
+         alcstr("cast(", 5);
+         alcstr(StrLoc(td2),StrLen(td2));
+         alcstr(",", 1);
+         alcstr(StrLoc(td3),StrLen(td3));
+         alcstr(")", 1);
+     }
 
      weakref: {
-           tended struct descrip td1, td2;
-           td1 = WeakrefBlk(*dp1).val;
-           if (is:null(td1)) {
-               sprintf(sbuf, "weakref#%ld()", (long)WeakrefBlk(*dp1).id);
-               len = strlen(sbuf);
-               MemProtect(StrLoc(*dp2) = alcstr(sbuf, len));
-               StrLen(*dp2) = len;
-           } else {
-               sprintf(sbuf, "weakref#%ld(", (long)WeakrefBlk(*dp1).id);
-               getimage(&td1, &td2);
-               len = strlen(sbuf) + StrLen(td2) + 1;
-               MemProtect (StrLoc(*dp2) = reserve(Strings, len));
-               StrLen(*dp2) = len;
-               alcstr(sbuf, strlen(sbuf));
-               alcstr(StrLoc(td2),StrLen(td2));
-               alcstr(")", 1);
-           }
-       }
+         /*
+          * Produce:
+          *  "weakref#n(val image) or weakref#n() for a collected val"
+          */
+         tended struct descrip td1, td2;
+         td1 = WeakrefBlk(*dp1).val;
+         if (is:null(td1)) {
+             sprintf(sbuf, "weakref#%ld()", (long)WeakrefBlk(*dp1).id);
+             len = strlen(sbuf);
+             MemProtect(StrLoc(*dp2) = alcstr(sbuf, len));
+             StrLen(*dp2) = len;
+         } else {
+             sprintf(sbuf, "weakref#%ld(", (long)WeakrefBlk(*dp1).id);
+             getimage(&td1, &td2);
+             len = strlen(sbuf) + StrLen(td2) + 1;
+             MemProtect (StrLoc(*dp2) = reserve(Strings, len));
+             StrLen(*dp2) = len;
+             alcstr(sbuf, strlen(sbuf));
+             alcstr(StrLoc(td2),StrLen(td2));
+             alcstr(")", 1);
+         }
+     }
+
      object: {
            /*
             * Produce:
