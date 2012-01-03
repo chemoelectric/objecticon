@@ -542,13 +542,13 @@ Defaults:
 
 See also: `bal() and find()`
 
-== weakref(x) ==
+== weakref ==
 `weakref (x) : w` -- create a weak reference
 
 Creates a `weakref` to `x`.  This means that the reference to `x` inside the `weakref` will not prevent `x` being garbage collected.  `x` must be a list,
 set, table, record, methp, cast, object or coexpression.   Any other type causes `weakref` to fail.
 
-== weakrefval(w) ==
+== weakrefval ==
 `weakrefval (w) : x` -- get weak reference value
 
 Given a weak reference, return the value inside it.  If a garbage collection has taken place and the value has been collected (because this was the last reference), then `weakrefval` fails.
