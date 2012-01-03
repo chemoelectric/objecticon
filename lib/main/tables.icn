@@ -588,3 +588,127 @@ class BuiltinTable(Table)
       return
    end
 end
+
+#
+# A {Table} which uses weak references
+#
+class WeakrefTable(Table)
+   private 
+      t, sz, last_purge
+
+   public insert(key, val)
+      local h, e, n, wkey
+      maybe_purge()
+      h := Internal.hash(key)%20
+      every e := !\t[h] do {
+         if weakrefval(e[1]) === key then
+            return e[2] := val
+      }
+      wkey := weakref(key) | runerr("Type of key cannot be used with weakref")
+      sz +:= 1
+      (/t[h] := [n := [wkey, val]]) | put(t[h], n := [wkey, val])
+      return n[2]
+   end
+
+   public member(key)
+      local h, e
+      maybe_purge()
+      h := Internal.hash(key)%20
+      every e := !\t[h] do {
+         if weakrefval(e[1]) === key then
+            return e[2]
+      }
+   end
+
+   public delete(key)
+      local h, e, i
+      maybe_purge()
+      h := Internal.hash(key)%20
+      i := 1
+      every e := !\t[h] do {
+         if weakrefval(e[1]) === key then {
+            default.delete(t[h], i)
+            sz -:= 1
+            break
+         }
+         i +:= 1
+      }
+      return self
+   end
+
+   public sort()
+      local e, x
+      maybe_purge()
+      x := table()
+      every e := !!t do
+         default.insert(x, weakrefval(e[1]), e[2])
+      return default.sort(x)
+   end
+
+   public key()
+      maybe_purge()
+      suspend weakrefval((!!t)[1])
+   end
+
+   public keyval()
+      local e
+      maybe_purge()
+      every e := !!t do
+         suspend weakrefval(e[1]) | e[2]
+   end
+
+   public gen()
+      maybe_purge()
+      suspend (!!t)[2]
+   end
+
+   public clear()
+      default.clear(t)
+      sz := 0
+      return self
+   end
+
+   public size()
+      maybe_purge()
+      return sz
+   end
+
+   public maybe_purge()
+      if last_purge ~=== Prog.get_global_collection_count() then {
+         last_purge := Prog.get_global_collection_count()
+         purge()
+      }
+   end
+
+   private purge()
+      local h, l, i
+      every h := default.key(t) do {
+         l := t[h]
+         i := 1
+         while i <= *l do {
+            if weakrefval(l[i][1]) then
+               i +:= 1
+            else {
+               default.delete(l, i)
+               sz -:= 1
+            }
+         }
+         if *l = 0 then
+            default.delete(t, h)
+      }
+   end
+
+   #
+   # Create a new instance.
+   #
+   # @param def the default value
+   # @param entries initial key-value entries.
+   #
+   public new(def, entries[])
+      cast(self,Table).new(def)
+      self.t := table()
+      self.sz := 0
+      init_entries(entries)
+      return
+   end
+end

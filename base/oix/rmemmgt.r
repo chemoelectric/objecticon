@@ -33,8 +33,9 @@ static struct {
 } qual;
 
 int collecting;                        /* flag indicating whether collection in progress */
-static int current_collection;         /* collection id for checking whether local blocks marked yet */
-static struct b_weakref *weakrefs;
+int collection_count;                  /* global collection count of all collections */
+
+static struct b_weakref *weakrefs;     /* head of list of weakrefs encountered during mark phase */
 
 /*
  * Allocated block size table (sizes given in bytes).  A size of -1 is used
@@ -348,7 +349,7 @@ void collect(int region)
    }
 
    collecting = 1;
-   ++current_collection;
+   ++collection_count;
 
    /*
     * Reset qualifier list.
@@ -757,7 +758,6 @@ static void sweep_stack(struct frame *f)
 {
     int i;
     while (f) {
-        /*printf("sweep stack frame %p\n",f);*/
         switch (f->type) {
             case C_Frame: {
                 struct c_frame *cf = (struct c_frame *)f;
@@ -772,9 +772,9 @@ static void sweep_stack(struct frame *f)
                 struct frame_vars *l = pf->fvars;
                 for (i = 0; i < pf->proc->ntmp; ++i)
                     PostDescrip(pf->tmp[i]);
-                if (l && l->seen != current_collection) {
+                if (l && l->seen != collection_count) {
                     dptr d;
-                    l->seen = current_collection;
+                    l->seen = collection_count;
                     for (d = l->desc; d < l->desc_end; ++d)
                         PostDescrip(*d);
                 }

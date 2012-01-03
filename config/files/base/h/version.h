@@ -23,5 +23,5 @@
  * and icode is compatible with the run-time system.
  */
    
-#define UVersion "U2.0.76"
-#define IVersion "I2.0.76"
+#define UVersion "U2.0.77"
+#define IVersion "I2.0.77"

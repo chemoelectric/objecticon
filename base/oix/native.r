@@ -788,6 +788,14 @@ function lang_Prog_get_collection_info_impl(c)
    }
 end
 
+function lang_Prog_get_global_collection_count()
+   body {
+       struct descrip result;
+       MakeInt(collection_count, &result);
+       return result;
+   }
+end
+
 function lang_Prog_get_allocation_info_impl(c)
    body {
        struct progstate *prog;
