@@ -3892,3 +3892,36 @@ end
 #else
 UnsupportedFunc(io_SslStream_new_impl)
 #endif
+
+function weakref(val)
+   body {
+      type_case val of {
+        list:
+        set:   
+        table: 
+        record:
+        methp:
+        cast:
+        object:
+        coexpr: {
+              struct b_weakref *p;
+              MemProtect(p = alcweakref());
+              p->val = val;
+              return weakref(p);
+          }
+       default:
+           fail;
+     }
+  }
+end
+
+function weakrefval(wr)
+   if !is:weakref(wr) then
+       runerr(630, wr)
+   body {
+       struct descrip t = WeakrefBlk(wr).val;
+       if (is:null(t))
+           fail;
+       return t;
+    }
+end

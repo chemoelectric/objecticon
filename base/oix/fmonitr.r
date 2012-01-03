@@ -72,6 +72,8 @@ void set_event_mask(struct progstate *p, struct b_cset *cs)
       ((Testb((word)(E_Methp), bits)) ? alcmethp_1 : alcmethp_0);
    p->Alcucs =
       ((Testb((word)(E_Ucs), bits)) ? alcucs_1 : alcucs_0);
+   p->Alcweakref =
+      ((Testb((word)(E_Weakref), bits)) ? alcweakref_1 : alcweakref_0);
 
    /*
     * A few functions enable more than one event code.

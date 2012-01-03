@@ -178,6 +178,15 @@ int anycmp(dptr dp1, dptr dp2)
           }
           return iresult;
 
+      case T_Weakref:
+         /*
+          * Collate on id.
+          */
+         lresult = (WeakrefBlk(*dp1).id - WeakrefBlk(*dp2).id);
+         if (lresult == 0)
+            return Equal;
+         return ((lresult > 0) ? Greater : Less);
+
       case T_Set:
          /*
           * Collate on set id.
@@ -251,6 +260,8 @@ int order(dptr dp)
          return 15;
       case T_Methp:
          return 16;
+      case T_Weakref:
+         return 17;
       default:
 	 syserr("order: unknown datatype.");
 	 /*NOTREACHED*/

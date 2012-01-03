@@ -464,6 +464,28 @@ alcmethp_macro(alcmethp_1,E_Methp)
 
 
 
+#begdef alcweakref_macro(f,e_weakref)
+/*
+ * alcweakref - allocate a weakref value in the block region.
+ */
+
+struct b_weakref *f()
+   {
+   struct b_weakref *blk;
+
+   AlcFixBlk(blk, b_weakref, T_Weakref, e_weakref)
+   blk->id = weakref_ser++;
+   blk->chain = 0;
+   blk->val = nulldesc;
+   return blk;
+   }
+#enddef
+
+alcweakref_macro(alcweakref_0,0)
+alcweakref_macro(alcweakref_1,E_Weakref)
+
+
+
 #begdef alcucs_macro(f,e_ucs)
 /*
  * alcucs - allocate a ucs value in the block region.

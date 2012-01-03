@@ -23,6 +23,7 @@ static union block **stk_get(void);
 static void stk_add(union block **ptr);
 static void stk_clear(void);
 static void stk_markptrs(void);
+static void do_weakrefs(void);
 
 
 /* string qualifier list */
@@ -33,7 +34,7 @@ static struct {
 
 int collecting;                        /* flag indicating whether collection in progress */
 static int current_collection;         /* collection id for checking whether local blocks marked yet */
-
+static struct b_weakref *weakrefs;
 
 /*
  * Allocated block size table (sizes given in bytes).  A size of -1 is used
@@ -76,6 +77,7 @@ int bsizes[] = {
      0,                       /* T_Object (26), object */
      sizeof(struct b_cast),   /* T_Cast (27), cast */
      -1,                      /* T_Kywdhandler (28), error handler keyword variable */
+     sizeof(struct b_weakref),/* T_Weakref (29), weak reference block */
     };
 
 /*
@@ -116,6 +118,7 @@ int firstd[] = {
      5*WordSize,              /* T_Object (26), object */
      0,                       /* T_Cast (27), cast */
      -1,                      /* T_Kywdhandler (28), error handler keyword variable */
+     0,                       /* T_Weakref (29), weak reference block */
     };
 
 /*
@@ -156,6 +159,7 @@ int firstp[] = {
      0,                       /* T_Object (26), object, just a pointer to the class, which is static */
      1*WordSize,              /* T_Cast (27), cast */
      -1,                      /* T_Kywdhandler (28), error handler keyword variable */
+     0,                       /* T_Weakref (29), weak reference block */
     };
 
 /*
@@ -192,6 +196,7 @@ int ptrno[] = {
     -1,                       /* T_Object (26), object */
      1,                       /* T_Cast (27), cast */
     -1,                       /* T_Kywdhandler (28), error handler keyword variable */
+    -1,                       /* T_Weakref (29), weak reference block */
     };
 
 /*
@@ -228,6 +233,7 @@ int descno[] = {
      0,                       /* T_Object (26), object */
     -1,                       /* T_Cast (27), cast */
     -1,                       /* T_Kywdhandler (28), error handler keyword variable */
+    -1,                       /* T_Weakref (29), weak reference block */
 };
 
 /*
@@ -267,6 +273,7 @@ char *blkname[] = {
    "object",                            /* T_Object (26) */
    "cast",                              /* T_Cast (27) */
    "&handler",                          /* T_Kywdhandler (28), error handler keyword variable */
+   "weak reference",                    /* T_Weakref (29), weak reference block */
    };
 
 /*
@@ -353,6 +360,8 @@ void collect(int region)
     */
    stk_clear();
 
+   weakrefs = 0;
+
    for (prog = progs; prog; prog = prog->next)
        markprogram(prog);
 
@@ -387,6 +396,9 @@ void collect(int region)
 
    /* Process all block ptrs */
    stk_markptrs();
+
+   /* Process weakref list */
+   do_weakrefs();
 
    reclaim();
 
@@ -567,6 +579,36 @@ static void stk_markptrs()
         markptr(stk_get());
 }
 
+static void do_weakrefs()
+{
+    while (weakrefs) {
+        struct b_weakref *t = weakrefs;
+        union block **ptr = &BlkLoc(t->val);
+        char *block = (char *)*ptr;
+        word type0 = BlkType(block);
+        if ((uword)type0 > MaxType) {
+            /*
+             * The block was marked, so it remains referenced.  If in
+             * the collecting region, add the pointer to the pointer
+             * list as we would have done if we had processed it
+             * earlier in markptr().
+             */
+            if (InRange(blkbase, block, blkfree)) {
+                *ptr = (union block *)type0;
+                BlkType(block) = (uword)ptr;
+            }
+        } else {
+            /*
+             * The block was not marked, therefore this is the last
+             * reference to it, so we delete that reference.
+             */
+            t->val = nulldesc;
+        }
+        weakrefs = weakrefs->chain;
+        t->chain = 0;
+    }
+}
+
 static void markptr(union block **ptr)
 {
     dptr dp, lastdesc;
@@ -580,16 +622,26 @@ static void markptr(union block **ptr)
      */
     block = (char *)*ptr;
 
-    if (InRange(blkbase,block,blkfree)) {
+    if (InRange(blkbase, block, blkfree)) {
         type0 = BlkType(block);
-        if ((uword)type0 <= MaxType) {
+        if ((uword)type0 > MaxType) {
             /*
-             * The type is valid, which indicates that this block has not
-             *  been marked.  Point endblock to the byte past the end
-             *  of the block.
+             * The type is not valid, which indicates that this block
+             * has been marked.  Just add ptr to the back chain for
+             * the block and point the block (via the type field) to
+             * ptr.
              */
-            endblock = block + BlkSize(block);
+            *ptr = (union block *)type0;
+            BlkType(block) = (uword)ptr;
+            return;
         }
+
+        /*
+         * The type is valid, which indicates that this block has not
+         *  been marked.  Point endblock to the byte past the end
+         *  of the block.
+         */
+        endblock = block + BlkSize(block);
 
         /*
          * Add ptr to the back chain for the block and point the
@@ -597,54 +649,6 @@ static void markptr(union block **ptr)
          */
         *ptr = (union block *)type0;
         BlkType(block) = (uword)ptr;
-
-        if ((uword)type0 <= MaxType) {
-            /*
-             * The block was not marked; process pointers and descriptors
-             *  within the block.
-             */
-            if (type0 == T_Coexpr) {
-                struct b_coexpr *cp;
-                cp = (struct b_coexpr *)block;
-                /*
-                 * Mark the activator of this co-expression.
-                 */
-                if (cp->activator)
-                    stk_add((union block **)&cp->activator);
-                /*
-                 * Mark its stack
-                 */
-                sweep_stack(cp->sp);
-            } else {
-                if ((fdesc = firstp[type0]) > 0) {
-                    /*
-                     * The block contains pointers; mark each pointer.
-                     */
-                    ptr1 = (union block **)(block + fdesc);
-                    numptr = ptrno[type0];
-                    if (numptr > 0)
-                        lastptr = ptr1 + numptr;
-                    else
-                        lastptr = (union block **)endblock;
-                    for (; ptr1 < lastptr; ptr1++)
-                        if (*ptr1 != NULL)
-                            stk_add(ptr1);
-                }
-                if ((fdesc = firstd[type0]) > 0) {
-                    /*
-                     * The block contains descriptors; mark each descriptor.
-                     */
-                    dp = (dptr)(block + fdesc);
-                    numdesc = descno[type0];
-                    if (numdesc > 0)
-                        lastdesc = dp + numdesc;
-                    else
-                        lastdesc = (dptr)endblock;
-                    for (; dp < lastdesc; dp++)
-                        PostDescrip(*dp);
-                }
-            }
-        }
     }
     else {
         struct region *rp;
@@ -653,11 +657,11 @@ static void markptr(union block **ptr)
          * Look for this block in other allocated block regions.
          */
         for (rp = curblock->Gnext;rp;rp = rp->Gnext)
-            if (InRange(rp->base,block,rp->free)) break;
+            if (InRange(rp->base, block, rp->free)) break;
 
         if (rp == NULL)
             for (rp = curblock->Gprev;rp;rp = rp->Gprev)
-                if (InRange(rp->base,block,rp->free)) break;
+                if (InRange(rp->base, block, rp->free)) break;
 
         /*
          * If this block is not in a block region, its something else
@@ -684,11 +688,15 @@ static void markptr(union block **ptr)
         endblock = block + BlkSize(block);
 
         BlkType(block) |= F_Mark;			/* mark the block */
+    }
 
-        if (type0 == T_Coexpr) {
-            struct b_coexpr *cp;
-            /*fprintf(stderr,"Yes, coexpr\n");fflush(stderr);*/
-            cp = (struct b_coexpr *)block;
+    /*
+     * If we have fallen through to here, we have a block in a block
+     * region, which has not yet been processed.
+     */
+    switch (type0) {
+        case T_Coexpr: {
+            struct b_coexpr *cp = (struct b_coexpr *)block;
             /*
              * Mark the activator of this co-expression.
              */
@@ -698,7 +706,21 @@ static void markptr(union block **ptr)
              * Mark its stack
              */
             sweep_stack(cp->sp);
-        } else {
+            break;
+        }
+        case T_Weakref: {
+            struct b_weakref *wr = (struct b_weakref *)block;
+            /*
+             * If it's a "dead" weakref, do nothing, otherwise add the
+             * block to the list of weakrefs; they are processed last.
+             */
+            if (!is:null(wr->val)) {
+                wr->chain = weakrefs;
+                weakrefs = wr;
+            }
+            break;
+        }
+        default: {
             if ((fdesc = firstp[type0]) > 0) {
                 /*
                  * The block contains pointers; mark each pointer.
@@ -726,6 +748,7 @@ static void markptr(union block **ptr)
                 for (; dp < lastdesc; dp++)
                     PostDescrip(*dp);
             }
+            break;
         }
     }
 }

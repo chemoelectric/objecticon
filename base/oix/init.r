@@ -502,6 +502,7 @@ static void initprogstate(struct progstate *p)
     p->List_ser = 1;
     p->Set_ser = 1;
     p->Table_ser = 1;
+    p->Weakref_ser = 1;
     gettimeofday(&p->start_time, 0);
 
     p->stringtotal = p->blocktotal = p->stackcurr = p->colluser = 
@@ -531,6 +532,7 @@ static void initprogstate(struct progstate *p)
     p->Alcobject = alcobject_0;
     p->Alccast = alccast_0;
     p->Alcmethp = alcmethp_0;
+    p->Alcweakref = alcweakref_0;
     p->Alcucs = alcucs_0;
     p->Alcselem = alcselem_0;
     p->Alcstr = alcstr_0;

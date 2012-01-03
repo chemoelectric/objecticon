@@ -1325,6 +1325,7 @@ void print_vword(FILE *f, dptr d) {
 #endif
             case D_Cset :
             case D_Methp :
+            case D_Weakref :
             case D_Ucs :
             case D_Cast :
             case D_Object : {
@@ -1376,6 +1377,7 @@ void print_dword(FILE *f, dptr d) {
             case D_Cast : fputs("D_Cast", f); break;
             case D_Constructor : fputs("D_Constructor", f); break;
             case D_Methp : fputs("D_Methp", f); break;
+            case D_Weakref : fputs("D_Weakref", f); break;
             case D_Ucs : fputs("D_Ucs", f); break;
             case D_Kywdhandler: fputs("D_Kywdhandler", f); break;
             default : fputs("?", f);

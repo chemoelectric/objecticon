@@ -307,6 +307,10 @@ uword hash(dptr dp)
             i = (13255 * CoexprBlk(*dp).id) >> 10;
             break;
 
+	 case T_Weakref:
+            i = (13255 * WeakrefBlk(*dp).id) >> 10;
+            break;
+
          case T_Class:
 	    dp = ClassBlk(*dp).name;
 	    goto hashstring;
@@ -694,6 +698,19 @@ void outimage(FILE *f, dptr dp, int noimage)
                  putc(')', f);
              }
          }
+
+     weakref: {
+             fprintf(f, "weakref#");
+             fprintf(f, "#%ld", (long)WeakrefBlk(*dp).id);
+             tdp = WeakrefBlk(*dp).val;
+             if (is:null(tdp))
+                 fprintf(f, "()");
+             else {
+                 putc('(', f);
+                 outimage(f, &tdp, noimage);
+                 putc(')', f);
+             }
+     }
 
       record: {
          /*
@@ -1374,6 +1391,25 @@ void getimage(dptr dp1, dptr dp2)
            }
        }
 
+     weakref: {
+           tended struct descrip td1, td2;
+           td1 = WeakrefBlk(*dp1).val;
+           if (is:null(td1)) {
+               sprintf(sbuf, "weakref#%ld()", (long)WeakrefBlk(*dp1).id);
+               len = strlen(sbuf);
+               MemProtect(StrLoc(*dp2) = alcstr(sbuf, len));
+               StrLen(*dp2) = len;
+           } else {
+               sprintf(sbuf, "weakref#%ld(", (long)WeakrefBlk(*dp1).id);
+               getimage(&td1, &td2);
+               len = strlen(sbuf) + StrLen(td2) + 1;
+               MemProtect (StrLoc(*dp2) = reserve(Strings, len));
+               StrLen(*dp2) = len;
+               alcstr(sbuf, strlen(sbuf));
+               alcstr(StrLoc(td2),StrLen(td2));
+               alcstr(")", 1);
+           }
+       }
      object: {
            /*
             * Produce:

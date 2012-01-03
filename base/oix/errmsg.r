@@ -121,6 +121,7 @@ struct errtab errtab[] = {
     {624, "record, class, cast or object expected"},
     {625, "record or constructor expected"},
     {628, "attempt to access non-method via a cast"},
+    {630, "weakref expected"},
     {631, "procedure or methp expected"},
     {632, "co-expression which is a program's &main expected"},
     {633, "given program not a child of this program"},
