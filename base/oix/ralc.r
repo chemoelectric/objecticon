@@ -6,7 +6,6 @@
 /*
  * Prototypes.
  */
-static struct region *findgap	(struct region *curr, word nbytes);
 static struct region *newregion	(word nbytes, word stdsize);
 static void check_stack_usage(void);
 
@@ -679,19 +678,7 @@ dealcstr_macro(dealcstr_1,E_StrDeAlc)
 #begdef reserve_macro(f,e_tenurestring,e_tenureblock)
 /*
  * reserve -- ensure space in either string or block region.
- *
- *   1. check for space in current region.
- *   2. check for space in older regions.
- *   3. check for space in newer regions.
- *   4. set goal of 10% of size of newest region.
- *   5. collect regions, newest to oldest, until goal met.
- *   6. allocate new region at 200% the size of newest existing.
- *   7. reset goal back to original request.
- *   8. collect regions that were too small to bother with before.
- *   9. search regions, newest to oldest.
- *  10. give up and signal error.
  */
-
 char *f(int region, word nbytes)
 {
    struct region **pcurr, *curr, *rp;
@@ -709,16 +696,21 @@ char *f(int region, word nbytes)
    if (DiffPtrs(curr->end, curr->free) >= nbytes)
       return curr->free;		/* quick return: current region is OK */
 
-   if ((rp = findgap(curr, nbytes)) != 0) {    /* check all regions on chain */
-      *pcurr = rp;			/* switch regions */
-      return rp->free;
-      }
-
    /*
     * Set "curr" to point to newest region.
     */
    while (curr->next)
       curr = curr->next;
+
+   /*
+    * Check all regions for availability of nbytes.
+    */
+   for (rp = curr; rp; rp = rp->prev) {
+       if (DiffPtrs(rp->end, rp->free) >= nbytes) {
+           *pcurr = rp;			/* switch regions */
+           return rp->free;
+       }
+   }
 
    /*
     * Need to collect garbage.  To reduce thrashing, set a minimum requirement
@@ -729,13 +721,14 @@ char *f(int region, word nbytes)
    if (want < nbytes)
       want = nbytes;
 
-   for (rp = curr; rp; rp = rp->prev)
+   for (rp = curr; rp; rp = rp->prev) {
       if (rp->size >= want) {	/* if large enough to possibly succeed */
          *pcurr = rp;
          collect(region);
-         if (DiffPtrs(rp->end,rp->free) >= want)
+         if (DiffPtrs(rp->end, rp->free) >= want)
             return rp->free;
-         }
+      }
+   }
 
    /*
     * That didn't work.  Allocate a new region with a size based on the
@@ -763,28 +756,25 @@ char *f(int region, word nbytes)
          EVVal(rp->size, e_tenureblock);
 #endif					/* e_tenurestring || e_tenureblock */
       return rp->free;
-      }
+   }
 
    /*
-    * Allocation failed.  Try to continue, probably thrashing all the way.
-    *  Collect the regions that weren't collected before and see if any
-    *  region has enough to satisfy the original request.
+    * Allocation failed.  Try to continue by satisfying the original request of nbytes.
     */
    for (rp = curr; rp; rp = rp->prev) {
-      if (rp->size < want) {         /* if not collected earlier */
-          if (rp->size >= nbytes) {   /* and if large enough to possibly succeed */
-              *pcurr = rp;
-              collect(region);
-              if (DiffPtrs(rp->end,rp->free) >= nbytes)
-                  return rp->free;
-          }
-      } else {
-          /* already collected, but may have sufficient if want > nbytes */
-          if (DiffPtrs(rp->end,rp->free) >= nbytes) {
-              *pcurr = rp;
-              return rp->free;
-          }
-      }
+       if (DiffPtrs(rp->end, rp->free) >= nbytes) {
+           *pcurr = rp;
+           return rp->free;
+       }
+   }
+   for (rp = curr; rp; rp = rp->prev) {
+         /* if not collected earlier and if large enough to possibly succeed */
+       if (rp->size < want && rp->size >= nbytes) {
+           *pcurr = rp;
+           collect(region);
+           if (DiffPtrs(rp->end, rp->free) >= nbytes)
+               return rp->free;
+       }
    }
 
    /*
@@ -796,22 +786,6 @@ char *f(int region, word nbytes)
 
 reserve_macro(reserve_0,0,0)
 reserve_macro(reserve_1,E_TenureString,E_TenureBlock)
-
-/*
- * findgap - search region chain for a region having at least nbytes available
- */
-static struct region *findgap(struct region *curr, word nbytes)
-   {
-   struct region *rp;
-
-   for (rp = curr; rp; rp = rp->prev)
-      if (DiffPtrs(rp->end, rp->free) >= nbytes)
-         return rp;
-   for (rp = curr->next; rp; rp = rp->next)
-      if (DiffPtrs(rp->end, rp->free) >= nbytes)
-         return rp;
-   return NULL;
-   }
 
 /*
  * newregion - try to malloc a new region and tenure the old one,
