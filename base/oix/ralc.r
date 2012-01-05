@@ -770,17 +770,22 @@ char *f(int region, word nbytes)
     *  Collect the regions that weren't collected before and see if any
     *  region has enough to satisfy the original request.
     */
-   for (rp = curr; rp; rp = rp->prev)
-      if (rp->size < want) {		/* if not collected earlier */
-         *pcurr = rp;
-         collect(region);
-         if (DiffPtrs(rp->end,rp->free) >= want)
-            return rp->free;
-         }
-   if ((rp = findgap(curr, nbytes)) != 0) {
-      *pcurr = rp;
-      return rp->free;
+   for (rp = curr; rp; rp = rp->prev) {
+      if (rp->size < want) {         /* if not collected earlier */
+          if (rp->size >= nbytes) {   /* and if large enough to possibly succeed */
+              *pcurr = rp;
+              collect(region);
+              if (DiffPtrs(rp->end,rp->free) >= nbytes)
+                  return rp->free;
+          }
+      } else {
+          /* already collected, but may have sufficient if want > nbytes */
+          if (DiffPtrs(rp->end,rp->free) >= nbytes) {
+              *pcurr = rp;
+              return rp->free;
+          }
       }
+   }
 
    /*
     * All attempts failed.
