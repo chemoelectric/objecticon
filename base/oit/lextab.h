@@ -180,7 +180,7 @@ int minus_loc = 13;
 
 int getopr(int ac, int *cc)
    {
-   char c;
+   int c;
 
    *cc = ' ';
    switch (c = ac) {
