@@ -52,9 +52,10 @@ function copy(x)
       object:
       class:
       constructor:
+      weakref:
       coexpr: {
             /*
-             * Copy the null value, integers, long integers, reals, files,
+             * Copy the null value, integers, long integers, reals,
              *	csets, procedures, and such by copying the descriptor.
              *	Note that for integers, this results in the assignment
              *	of a value, for the other types, a pointer is directed to
@@ -392,6 +393,7 @@ function serial(x)
       record:   return C_integer RecordBlk(x).id;
       object:   return C_integer ObjectBlk(x).id;
       coexpr:   return C_integer CoexprBlk(x).id;
+      weakref:  return C_integer WeakrefBlk(x).id;
       default:  runerr(123,x);
     }
   }
@@ -891,6 +893,7 @@ function type(x)
          cast:        return C_string "cast";
          ucs:         return C_string "ucs";
          coexpr:      return C_string "co-expression";
+         weakref:     return C_string "weakref";
          default:     runerr(123,x);
       }
    }

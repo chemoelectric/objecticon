@@ -390,13 +390,18 @@ static void do_makelist()
     dptr dest = get_dptr();
     word argc = GetWord;
     int i;
-    create_list(argc, dest);
-    for (i = 0; i < argc; ++i) {
-        tended struct descrip tmp;
-        get_deref(&tmp);
-        list_put(dest, &tmp);
+    tended struct descrip tmp;
+    if (dest) {
+        create_list(argc, dest);
+        for (i = 0; i < argc; ++i) {
+            get_deref(&tmp);
+            list_put(dest, &tmp);
+        }
+        EVValD(dest, E_Lcreate);
+    } else {
+        for (i = 0; i < argc; ++i)
+            get_deref(&tmp);
     }
-    EVValD(dest, E_Lcreate);
 }
 
 static void do_create()

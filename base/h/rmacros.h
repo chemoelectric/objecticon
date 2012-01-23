@@ -341,8 +341,9 @@
 #define T_Class         25      /* class */
 #define T_Object        26      /* object */
 #define T_Cast          27      /* cast */
-#define T_Kywdhandler   28      /* cast */
-#define MaxType		28	/* maximum type number */
+#define T_Kywdhandler   28      /* keyword &handler */
+#define T_Weakref       29      /* weak reference */
+#define MaxType		29	/* maximum type number */
 
 /*
  * Convenient macros for access to a block from a descriptor
@@ -368,6 +369,7 @@
 #define ConstructorBlk(x) BlkLoc(x)->constructor
 #define UcsBlk(x) BlkLoc(x)->ucs
 #define BignumBlk(x) BlkLoc(x)->bignum
+#define WeakrefBlk(x) BlkLoc(x)->weakref
 
 /*
  * Definitions for keywords.
@@ -386,7 +388,11 @@
 #define D_Null		(T_Null     | D_Typecode)
 #define D_Integer	(T_Integer  | D_Typecode)
 #define D_Lrgint	(T_Lrgint | D_Typecode | F_Ptr)
+#if RealInDesc
+#define D_Real		(T_Real     | D_Typecode)
+#else
 #define D_Real		(T_Real     | D_Typecode | F_Ptr)
+#endif
 #define D_Cset		(T_Cset     | D_Typecode | F_Ptr)
 #define D_Proc		(T_Proc     | D_Typecode)
 #define D_Class		(T_Class    | D_Typecode)
@@ -412,6 +418,7 @@
 #define D_Kywdany	(T_Kywdany  | D_Typecode | F_Var)
 #define D_Ucs   	(T_Ucs      | D_Typecode | F_Ptr)
 #define D_Kywdhandler	(T_Kywdhandler | D_Typecode | F_Var)
+#define D_Weakref 	(T_Weakref  | D_Typecode | F_Ptr)
 
 #define D_StructVar	(F_Var | F_Nqual | F_Ptr)
 #define D_NamedVar     	(F_Var | F_Nqual)
@@ -563,6 +570,7 @@
 #define list_ser  (curpstate->List_ser)
 #define set_ser   (curpstate->Set_ser)
 #define table_ser (curpstate->Table_ser)
+#define weakref_ser (curpstate->Weakref_ser)
       
 #define curstring (curpstate->stringregion)
 #define curblock  (curpstate->blockregion)
@@ -608,6 +616,7 @@
 #define alcobject	    (curpstate->Alcobject)
 #define alccast  	    (curpstate->Alccast)
 #define alcmethp      (curpstate->Alcmethp)
+#define alcweakref    (curpstate->Alcweakref)
 #define alcucs        (curpstate->Alcucs)
 #define alcselem      (curpstate->Alcselem)
 #define alcstr        (curpstate->Alcstr)

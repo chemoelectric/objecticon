@@ -252,7 +252,7 @@ repeat {
    wrt(toktab, 0, " */\n")
    wrt(toktab, 0, "int getopr(int ac, int *cc)")
    wrt(toktab, 1, "{")
-   wrt(toktab, 1, "char c;\n")
+   wrt(toktab, 1, "int c;\n")
    wrt(toktab, 1, "*cc = ' ';")
    bld_slct(op_trie, "", "ac", toktab, 1)
    wrt(toktab, 1, "lexfatal(\"invalid character\");")

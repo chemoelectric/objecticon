@@ -229,7 +229,7 @@ class LineEditorStream(LineBasedInputStream)
    end
 
    private read_line_impl2()
-      local ch, p, n, ed, un, cmd
+      local ch, p, n, ed, un, cmd, s
       subj := if \utf8_flag then u"" else ""
       pos := 1
       hpos := *history + 1
@@ -323,6 +323,13 @@ class LineEditorStream(LineBasedInputStream)
             "\^k": {
                if pos < *subj + 1 then {
                   ed := LineEditorDeleteToEndOfLineEdit(self)
+                  ed.doit()
+                  undo_manager.add_edit(ed)
+               }
+            }
+            "\^p": {
+               if s := get_history_item(integer(subj)) then {
+                  ed := LineEditorAssignEdit(self, s)
                   ed.doit()
                   undo_manager.add_edit(ed)
                }
@@ -525,6 +532,33 @@ class LineEditorDeleteToEndOfLineEdit(LineEditorEdit)
 
    public new(parent)
       cast(self,LineEditorEdit).new(parent)
+      return
+   end
+end
+
+class LineEditorAssignEdit(LineEditorEdit)
+   public s, pre
+
+   public add_edit(other)
+      if is(other, LineEditorAssignEdit) then {
+         self.s := other.s
+         return
+      }
+   end
+
+   public redo_impl()
+      pre := parent.subj
+      parent.subj := s
+      parent.pos := *s + 1
+   end
+
+   public undo_impl()
+      parent.subj := pre
+   end
+
+   public new(parent, s)
+      cast(self,LineEditorEdit).new(parent)
+      self.s := s
       return
    end
 end

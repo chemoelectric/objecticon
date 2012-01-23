@@ -72,6 +72,8 @@ void set_event_mask(struct progstate *p, struct b_cset *cs)
       ((Testb((word)(E_Methp), bits)) ? alcmethp_1 : alcmethp_0);
    p->Alcucs =
       ((Testb((word)(E_Ucs), bits)) ? alcucs_1 : alcucs_0);
+   p->Alcweakref =
+      ((Testb((word)(E_Weakref), bits)) ? alcweakref_1 : alcweakref_0);
 
    /*
     * A few functions enable more than one event code.
@@ -156,60 +158,3 @@ void set_event_mask(struct progstate *p, struct b_cset *cs)
        p->GeneralCall = general_call_0;
    }
 }
-
-
-/*
- * Prototypes.
- */
-
-
-#define evforget()
-
-
-char typech[MaxType+1];	/* output character for each type */
-
-
-
-/*
- *  EVInit() - initialization.
- */
-
-void EVInit()
-   {
-   int i;
-
-   /*
-    * Initialize the typech array, which is used if either file-based
-    * or MT-based event monitoring is enabled.
-    */
-
-   for (i = 0; i <= MaxType; i++)
-      typech[i] = '?';	/* initialize with error character */
-
-   typech[T_Lrgint]  = E_Lrgint;	/* long integer */
-   typech[T_Real]    = E_Real;		/* real number */
-   typech[T_Cset]    = E_Cset;		/* cset */
-   typech[T_Record]  = E_Record;	/* record block */
-   typech[T_Tvsubs]  = E_Tvsubs;	/* substring trapped variable */
-   typech[T_List]    = E_List;		/* list header block */
-   typech[T_Lelem]   = E_Lelem;		/* list element block */
-   typech[T_Table]   = E_Table;		/* table header block */
-   typech[T_Telem]   = E_Telem;		/* table element block */
-   typech[T_Tvtbl]   = E_Tvtbl;		/* table elem trapped variable*/
-   typech[T_Set]     = E_Set;		/* set header block */
-   typech[T_Selem]   = E_Selem;		/* set element block */
-   typech[T_Slots]   = E_Slots;		/* set/table hash slots */
-   typech[T_Coexpr]  = E_Coexpr;	/* co-expression block (static) */
-   typech[T_Object]  = E_Object;        /* object */
-   typech[T_Cast ]   = E_Cast;          /* cast */
-   typech[T_Methp]   = E_Methp;         /* method pointer */
-   typech[T_Ucs]     = E_Ucs;	        /* ucs block */
-
-   /*
-    * codes used elsewhere but not shown here:
-    *    in the static region: E_Alien = alien (malloc block)
-    *    in the static region: E_Free = free
-    *    in the string region: E_String = string
-    */
-   }
-

@@ -226,6 +226,16 @@ struct b_ucs {
     word off[1];                /*   offsets: ((length-1) / index_step) are allocated */
 };
 
+/*
+ * Block for a weak reference.
+ */
+struct b_weakref {              /* weakref */
+    word title;                 /*   T_Weakref */
+    word id;			/*   identification number */
+    struct b_weakref *chain;    /*   link used during gc */
+    struct descrip val;         /*   the referenced value */
+};
+
 struct b_selem {		/* set-element block */
     word title;			/*   T_Selem */
     union block *clink;		/*   hash chain link */
@@ -427,6 +437,7 @@ struct progstate {
     word List_ser;
     word Set_ser;
     word Table_ser;
+    word Weakref_ser;
 
     word Kywd_time_elsewhere;		/* &time spent in other programs */
     word Kywd_time_out;			/* &time at last program switch out */
@@ -493,6 +504,7 @@ struct progstate {
     struct b_tvsubs *(*Alcsubs)(void);
     struct b_telem *(*Alctelem)(void);
     struct b_tvtbl *(*Alctvtbl)(void);
+    struct b_weakref *(*Alcweakref)(void);
     void (*Dealcblk)(union block *);
     void (*Dealcstr)(char *);
     char * (*Reserve)(int, word);
@@ -546,6 +558,7 @@ union block {			/* general block */
     struct b_constructor constructor;
     struct b_ucs ucs;
     struct b_bignum bignum;
+    struct b_weakref weakref;
 };
 
 /*

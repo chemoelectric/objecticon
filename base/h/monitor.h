@@ -34,6 +34,7 @@
 #define E_Alien		'\172'		/* Alien allocation */
 #define E_Free		'\132'		/* Free region */
 #define E_String	'\163'		/* String allocation */
+#define E_Weakref	'\162'		/* Weakref allocation */
 
 #define E_Prog          '\177'          /* Loaded program allocation */
 
@@ -174,7 +175,7 @@
 124 126 127 130 131 133 134 135 136
 137 140 141 142 143 146 147
 152 154
-162 165 166
+165 166
 173 174 175 
 204 205 206 207 217 220 221
 226 227

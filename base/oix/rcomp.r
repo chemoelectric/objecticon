@@ -7,7 +7,7 @@
  */
 
 int anycmp(dptr dp1, dptr dp2)
-   {
+{
    int o1, o2;
    long lresult;
    int iresult;
@@ -24,18 +24,17 @@ int anycmp(dptr dp1, dptr dp2)
    if (o1 != o2)
       return (o1 > o2 ? Greater : Less);
 
-   if (o1 == 3)
-      /*
-       * dp1 and dp2 are strings, use lexcmp to compare them.
-       */
-      return lexcmp(dp1,dp2);
+   type_case *dp1 of {
+      string:
+         /*
+          * dp1 and dp2 are strings, use lexcmp to compare them.
+          */
+         return lexcmp(dp1,dp2);
 
-   switch (Type(*dp1)) {
-      case T_Integer:
-      case T_Lrgint:
+      integer:
          return bigcmp(dp1, dp2);
 
-      case T_Coexpr:
+      coexpr: {
          /*
           * Collate on co-expression id.
           */
@@ -43,8 +42,9 @@ int anycmp(dptr dp1, dptr dp2)
          if (lresult == 0)
             return Equal;
          return ((lresult > 0) ? Greater : Less);
+         }
 
-      case T_Cset: {
+      cset: {
           int i = 0, j = 0;
           while (i < CsetBlk(*dp1).n_ranges &&
                  j < CsetBlk(*dp2).n_ranges) {
@@ -72,7 +72,7 @@ int anycmp(dptr dp1, dptr dp2)
           return Equal;
       }
 
-      case T_List:
+      list: {
          /*
           * Collate on list id.
           */
@@ -80,25 +80,24 @@ int anycmp(dptr dp1, dptr dp2)
          if (lresult == 0)
             return Equal;
          return ((lresult > 0) ? Greater : Less);
+      }
 
-      case T_Null:
+      null:
          return Equal;
 
-      case T_Proc:
+      proc:
          /*
           * Collate on procedure name.
           */
-         return lexcmp(ProcBlk(*dp1).name,
-                       ProcBlk(*dp2).name);
+         return lexcmp(ProcBlk(*dp1).name, ProcBlk(*dp2).name);
 
-      case T_Ucs:
+      ucs:
          /*
           * Collate on utf8 data.
           */
-         return lexcmp(&(UcsBlk(*dp1).utf8),
-            &(UcsBlk(*dp2).utf8));
+         return lexcmp(&(UcsBlk(*dp1).utf8), &(UcsBlk(*dp2).utf8));
 
-      case T_Real: {
+      real: {
          double rres1, rres2, rresult;
          DGetReal(*dp1,rres1);
          DGetReal(*dp2,rres2);
@@ -108,19 +107,19 @@ int anycmp(dptr dp1, dptr dp2)
          return ((rresult > 0.0) ? Greater : Less);
       }
 
-      case T_Class:
+      class:
           /*
            * Collate on class name.
            */
          return lexcmp(ClassBlk(*dp1).name, ClassBlk(*dp2).name);
 
-      case T_Constructor:
+      constructor:
           /*
            * Collate on type name.
            */
          return lexcmp(ConstructorBlk(*dp1).name, ConstructorBlk(*dp2).name);
 
-      case T_Record:
+      record: {
          /*
           * Collate on record id within record name.
           */
@@ -131,10 +130,11 @@ int anycmp(dptr dp1, dptr dp2)
             if (lresult == 0)
                 return Equal;
             return ((lresult > 0) ? Greater : Less);
-            }
-        return iresult;
+         }
+         return iresult;
+      }
 
-      case T_Object:
+      object: {
          /*
           * Collate on object id within class name.
           */
@@ -145,10 +145,11 @@ int anycmp(dptr dp1, dptr dp2)
             if (lresult == 0)
                 return Equal;
             return ((lresult > 0) ? Greater : Less);
-            }
-        return iresult;
+         }
+         return iresult;
+      }
 
-      case T_Cast:
+      cast: {
          /*
           * Collate on cast class name within cast object id within cast object class name.
           */
@@ -162,8 +163,9 @@ int anycmp(dptr dp1, dptr dp2)
               return ((lresult > 0) ? Greater : Less);
           }
           return iresult;
+      }
 
-      case T_Methp:
+      methp: {
          /*
           * Collate on methp proc name within methp object id within methp object class name.
           */
@@ -177,8 +179,19 @@ int anycmp(dptr dp1, dptr dp2)
               return ((lresult > 0) ? Greater : Less);
           }
           return iresult;
+      }
 
-      case T_Set:
+      weakref: {
+         /*
+          * Collate on id.
+          */
+         lresult = (WeakrefBlk(*dp1).id - WeakrefBlk(*dp2).id);
+         if (lresult == 0)
+            return Equal;
+         return ((lresult > 0) ? Greater : Less);
+      }
+
+      set: {
          /*
           * Collate on set id.
           */
@@ -186,8 +199,9 @@ int anycmp(dptr dp1, dptr dp2)
          if (lresult == 0)
             return Equal;
          return ((lresult > 0) ? Greater : Less);
+      }
 
-      case T_Table:
+      table: {
          /*
           * Collate on table id.
           */
@@ -195,68 +209,48 @@ int anycmp(dptr dp1, dptr dp2)
          if (lresult == 0)
             return Equal;
          return ((lresult > 0) ? Greater : Less);
+      }
 
-      default:
+      default: {
 	 syserr("anycmp: unknown datatype.");
 	 /*NOTREACHED*/
 	 return 0;  /* avoid gcc warning */
       }
    }
+}
 
 /*
  * order(x) - return collating number for object x.
  */
 
 int order(dptr dp)
-   {
-   if (Qual(*dp))
-      return 3; 	     /* string */
-   switch (Type(*dp)) {
-      case T_Null:
-	 return 0;
-      case T_Integer:
-	 return 1;
-
-      case T_Lrgint:
-	 return 1;
-
-      case T_Real:
-	 return 2;
-
-      /* string: return 3 (see above) */
-
-      case T_Cset:
-	 return 4;
-      case T_Constructor:
-         return 5;
-      case T_Coexpr:
-	 return 6;
-      case T_Proc:
-	 return 7;
-      case T_List:
-	 return 8;
-      case T_Set:
-	 return 9;
-      case T_Table:
-	 return 10;
-      case T_Record:
-	 return 11;
-      case T_Ucs:
-         return 12;
-      case T_Class:
-         return 13;
-      case T_Object:
-         return 14;
-      case T_Cast:
-         return 15;
-      case T_Methp:
-         return 16;
-      default:
+{
+   type_case *dp of {
+     null:        return 0;
+     integer:     return 1;
+     real:        return 2;
+     string:      return 3;
+     cset:        return 4;
+     constructor: return 5;
+     coexpr:      return 6;
+     proc:        return 7;
+     list:        return 8;
+     set:         return 9;
+     table:       return 10;
+     record:      return 11;
+     ucs:         return 12;
+     class:       return 13;
+     object:      return 14;
+     cast:        return 15;
+     methp:       return 16;
+     weakref:     return 17;
+     default: {
 	 syserr("order: unknown datatype.");
 	 /*NOTREACHED*/
 	 return 0;  /* avoid gcc warning */
-      }
+     }
    }
+}
 
 /*
  * equiv - test equivalence of two objects.
@@ -308,7 +302,6 @@ int equiv(dptr dp1, dptr dp2)
 	 case T_Lrgint:
 	    result = (bigcmp(dp1, dp2) == 0);
 	    break;
-
 
 	 case T_Real:
             DGetReal(*dp1, rres1);

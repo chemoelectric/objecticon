@@ -1235,7 +1235,7 @@ void print_vword(FILE *f, dptr d) {
 
             case D_Tvtbl : {
                 struct b_tvtbl *p = &TvtblBlk(*d);
-                fprintf(f, "%p -> tref=", p);
+                fprintf(f, "clink=%p %p -> tref=", p->clink, p);
                 print_desc(f, &p->tref);
                 break;
             }
@@ -1269,7 +1269,11 @@ void print_vword(FILE *f, dptr d) {
             case D_Lelem :
             case D_Selem :
             case D_Telem :
-            case D_Slots :
+            case D_Slots : {
+                outimage(f, d, 1);
+                break;
+            }
+
             case D_Proc : {
                 struct b_proc *p = &ProcBlk(*d);
                 switch (p->type) {
@@ -1321,6 +1325,7 @@ void print_vword(FILE *f, dptr d) {
 #endif
             case D_Cset :
             case D_Methp :
+            case D_Weakref :
             case D_Ucs :
             case D_Cast :
             case D_Object : {
@@ -1372,6 +1377,7 @@ void print_dword(FILE *f, dptr d) {
             case D_Cast : fputs("D_Cast", f); break;
             case D_Constructor : fputs("D_Constructor", f); break;
             case D_Methp : fputs("D_Methp", f); break;
+            case D_Weakref : fputs("D_Weakref", f); break;
             case D_Ucs : fputs("D_Ucs", f); break;
             case D_Kywdhandler: fputs("D_Kywdhandler", f); break;
             default : fputs("?", f);

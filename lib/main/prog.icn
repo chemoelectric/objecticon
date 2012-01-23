@@ -147,6 +147,12 @@ class Prog()
    private static defer get_collection_info_impl(P)
 
    #
+   # Return the number of collections of any type triggered by any
+   # program.
+   #
+   public static defer get_global_collection_count()
+
+   #
    # Return info about the allocations in the given program.
    # @return a {AllocationInfo} object
    #

@@ -353,6 +353,30 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
             }
          }
 
+         "weakref" : {
+            s := ty || "#" || serial(o)
+            seen[o] := s
+            if /desc then
+               writes(s)
+            else if e := weakrefval(o) then {
+               if simple{e} then {
+                  writes(s, "(")
+                  traverse(e)
+                  writes(")")
+               } else {
+                  nl()
+                  writes(s, "(")
+                  iplus()
+                  nl()
+                  traverse(e)
+                  iminus()
+                  nl()
+                  writes(")")
+               }
+            } else
+               writes(s, "()")
+         }
+
          default : 
             writes(image(o))
       }

@@ -283,7 +283,13 @@ static struct ir_movelabel *ir_movelabel(struct lnode *n, int destno, int lab)
 static struct ir_makelist *ir_makelist(struct lnode *n, struct ir_var *lhs, int argc, struct ir_var **args)
 {
     struct ir_makelist *res;
-    if (!lhs)
+    /*
+     * Note that we must still have a makelist instruction even if lhs
+     * is nil, since it dereferences its arguments, which may cause a
+     * runtime error.  If the list is empty obviously this doesn't
+     * apply.
+     */
+    if (!lhs && argc == 0)
         return 0;
     res = IRAlloc(struct ir_makelist);
     res->node = n;

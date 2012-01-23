@@ -385,10 +385,10 @@ void bigtos(dptr da, dptr dx)
 
 void bigprint(FILE *f, dptr da)
 {
-    struct b_bignum *a, *temp;
+    struct b_bignum *temp;
     word alen = LEN(&BignumBlk(*da));
     word slen, dlen;
-    struct b_bignum *blk = &BignumBlk(*da);
+    tended struct b_bignum *blk = &BignumBlk(*da);
 
     slen = blk->lsd - blk->msd;
     dlen = slen * DigitBits * 0.3010299956639812	/* 1 / log2(10) */
@@ -401,12 +401,10 @@ void bigprint(FILE *f, dptr da)
 
     /* not worth passing this one back */
     MemProtect(temp = alcbignum(alen));
-
-    a = &BignumBlk(*da);
-    bdcopy(DIG(a,0),
+    bdcopy(DIG(blk,0),
            DIG(temp,0),
            alen);
-    if (a->sign)
+    if (blk->sign)
         putc('-', f);
     decout(f,
            DIG(temp,0),

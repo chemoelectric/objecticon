@@ -313,6 +313,8 @@ struct b_ucs    *alcucs_0     (int n);
 struct b_ucs    *alcucs_1     (int n);
 struct b_tvsubs *alcsubs_0      (void);
 struct b_tvsubs *alcsubs_1      (void);
+struct b_weakref  *alcweakref_0     (void);
+struct b_weakref  *alcweakref_1     (void);
 int     check_access(struct class_field *cf, struct b_class *instance_class);
 dptr    lookup_global(dptr name, struct progstate *prog);
 dptr    lookup_named_global(dptr name, struct progstate *prog);
