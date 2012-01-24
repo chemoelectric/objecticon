@@ -700,8 +700,7 @@ void outimage(FILE *f, dptr dp, int noimage)
          }
 
      weakref: {
-             fprintf(f, "weakref#");
-             fprintf(f, "#%ld", (long)WeakrefBlk(*dp).id);
+             fprintf(f, "weakref#%ld", (long)WeakrefBlk(*dp).id);
              tdp = WeakrefBlk(*dp).val;
              if (is:null(tdp))
                  fprintf(f, "()");
