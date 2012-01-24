@@ -474,6 +474,8 @@ class EqTable(Table)
       every e := !\t[h] do {
          if equals(e[1], key) then {
             default.delete(t[h], i)
+            if *t[h] = 0 then
+               default.delete(t, h)
             sz -:= 1
             break
          }
@@ -599,7 +601,7 @@ class WeakrefTable(Table)
    public insert(key, val)
       local h, e, n, wkey
       maybe_purge()
-      h := Internal.hash(key)%20
+      h := Internal.hash(key)
       every e := !\t[h] do {
          if weakrefval(e[1]) === key then
             return e[2] := val
@@ -613,7 +615,7 @@ class WeakrefTable(Table)
    public member(key)
       local h, e
       maybe_purge()
-      h := Internal.hash(key)%20
+      h := Internal.hash(key)
       every e := !\t[h] do {
          if weakrefval(e[1]) === key then
             return e[2]
@@ -623,11 +625,13 @@ class WeakrefTable(Table)
    public delete(key)
       local h, e, i
       maybe_purge()
-      h := Internal.hash(key)%20
+      h := Internal.hash(key)
       i := 1
       every e := !\t[h] do {
          if weakrefval(e[1]) === key then {
             default.delete(t[h], i)
+            if *t[h] = 0 then
+               default.delete(t, h)
             sz -:= 1
             break
          }
