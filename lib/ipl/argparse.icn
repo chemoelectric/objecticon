@@ -27,7 +27,7 @@ procedure argparse(s)
    local arglist
    static nonblank
 
-   initial nonblank := &cset -- ' \t\n'
+   initial nonblank := ~' \t\n'
 
    arglist := []
 
