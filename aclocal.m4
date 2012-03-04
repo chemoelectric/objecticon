@@ -406,7 +406,7 @@ then
         OI_ADD_INCLUDE_DIR(${XFT_HOME}/include)
         AC_LANG_SAVE
         AC_LANG_C
-        AC_CHECK_LIB(Xft, FcPatternCreate, [xft_cv_libxft=yes], [xft_cv_libxft=no])
+        AC_CHECK_LIB(Xft, XftFontOpen, [xft_cv_libxft=yes], [xft_cv_libxft=no])
         AC_CHECK_HEADER(X11/Xft/Xft.h, [xft_cv_xft_h=yes], [xft_cv_xft_h=no])
         AC_LANG_RESTORE
         if test "$xft_cv_libxft" = "yes" -a "$xft_cv_xft_h" = "yes"
@@ -897,7 +897,7 @@ if test "$withval" != no ; then
     LIBS="$OPENSSL_LIBS $LIBS"
     CPPFLAGS="$OPENSSL_INCLUDES $CPPFLAGS"
     AC_LINK_IFELSE(
-        AC_LANG_PROGRAM([#include <openssl/ssl.h>], [SSL_new(NULL)]),
+        [AC_LANG_PROGRAM([#include <openssl/ssl.h>], [SSL_new(NULL)])],
         [
             AC_DEFINE(HAVE_LIBOPENSSL)
             AC_MSG_RESULT([yes])
