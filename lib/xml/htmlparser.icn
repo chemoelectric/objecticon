@@ -323,7 +323,7 @@ class HtmlParser()
       else
          fail
       c := move(1)
-      res := tab(many(t)) | ""
+      res := tab(many(t)) | move(0)  # move(0) gives an empty string of the right sort.
       =c | fail
       return res
    end
