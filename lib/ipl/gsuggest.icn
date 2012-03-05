@@ -5,10 +5,10 @@ import
        PTableColumn, SuggestField),
    http(HttpClient, HttpRequest),
    io(StringStream),
-   ipl.pdco(),
    ipl.strings(replace),
    json(JSONParser),
-   net(URL)
+   net(URL),
+   xml(HtmlParser)
 
 class GSuggestField(SuggestField)
    protected hc, domain
@@ -43,8 +43,16 @@ class GoogleSuggestField(GSuggestField)
       return self
    end
 
+   private textify(n)
+      local e, s
+      s := u""
+      every e := !n.children do
+         s ||:= text(e) | textify(e)
+      return s
+   end
+
    protected do_request()
-      local hr, data, jp, v, s, u
+      local hr, data, jp, v, s, u, hp, t, d, l
       data := StringStream()
       u := URL.parse("http://" || domain || "/complete/search").
          set_cgi_parameters(table(, 
@@ -57,12 +65,16 @@ class GoogleSuggestField(GSuggestField)
          set_header("Accept-Charset", "utf-8")
       hc.retrieve(hr) | fail
       s := ucs(data.str()) | fail
-      # Get rid of html bold tags
-      s := replace(replace(s, "\\u003Cb\\u003E", ""), "\\u003C\\/b\\u003E", "")
       s ?:= (tab(upto('[')) & tab(-1))
       jp := JSONParser()
       v := jp.parse(s) | fail
-      return ipl.pdco.List{(!v[2])[1]}
+      hp := HtmlParser()
+      l := []
+      every t := (!v[2])[1] do {
+         d := hp.parse("<html>" || t || "</html>")
+         put(l, textify(d))
+      }
+      return l
    end
 
    public new()
