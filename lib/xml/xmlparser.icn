@@ -1140,10 +1140,10 @@ class XmlParser(Connectable)
          # Awkward lookahead.
          i := &pos
          if tab(dtd_match("(")) & tab(dtd_opt(XML_SPACE)) & dtd_match("#PCDATA") then {
-            tab(i)
+            &pos := i
             return parse_mixed()
          } else {
-            tab(i)
+            &pos := i
             return parse_children()
          }
       } else
@@ -2025,7 +2025,7 @@ class XmlParser(Connectable)
       i := &pos
       tab(many(XML_SPACE))
       res := match(s)
-      tab(i)
+      &pos := i
       return \res
    end
 
@@ -2038,7 +2038,7 @@ class XmlParser(Connectable)
       i := &pos
       tab(dtd_many(XML_SPACE))
       res := dtd_match(s)
-      tab(i)
+      &pos := i
       return \res
    end
 
@@ -2051,7 +2051,7 @@ class XmlParser(Connectable)
       i := &pos
       tab(many(XML_SPACE))
       res := any(c)
-      tab(i)
+      &pos := i
       return \res
    end
 
@@ -2064,7 +2064,7 @@ class XmlParser(Connectable)
       i := &pos
       tab(dtd_many(XML_SPACE))
       res := dtd_any(c)
-      tab(i)
+      &pos := i
       return \res
    end
 
@@ -2103,14 +2103,10 @@ class XmlParser(Connectable)
    private dtd_many(c)
       local i, x
       i := &pos
-
       repeat {
          if x := many(c) then {
             tab(x)
-            if not try_dtd_insert(i) then {
-               &pos := i
-               return x
-            }
+            try_dtd_insert(i) | return x
          }
          else
             try_dtd_insert(i) | fail
@@ -2121,10 +2117,7 @@ class XmlParser(Connectable)
    # Equivalent to opt(), but checks for pe expansions
    #
    private dtd_opt(c)
-      if dtd_any(c) then
-         return dtd_many(c)
-      else
-         return &pos
+      return dtd_many(c) | .&pos
    end
 
    #
@@ -2140,6 +2133,7 @@ class XmlParser(Connectable)
             if /dtd_insert_shown_error then 
                invalid("Cannot reference a pe except in the external dtd")
             dtd_insert_shown_error := 1
+            &pos := i
             fail
          }
 

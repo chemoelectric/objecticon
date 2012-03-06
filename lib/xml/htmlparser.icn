@@ -8,6 +8,8 @@
 
 package xml
 
+import ipl.scan
+
 class Tag(Node)
    public
       name,
@@ -323,7 +325,7 @@ class HtmlParser()
       else
          fail
       c := move(1)
-      res := tab(many(t)) | move(0)  # move(0) gives an empty string of the right sort.
+      res := tab(opt(t))  # opt() so that res may be an empty string
       =c | fail
       return res
    end
