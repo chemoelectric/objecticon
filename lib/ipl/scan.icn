@@ -534,10 +534,7 @@ end
 # one or more.
 #
 procedure opt(c)
-   if any(c) then
-      return many(c)
-   else
-      return &pos
+   return many(c) | .&pos
 end
 
 #
