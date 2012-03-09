@@ -383,7 +383,6 @@ void pollevent(wbp w)
     XEvent event;
     Window evwin;
     wsp ws = 0;
-    XSync(wd->display, False);
     while (XPending(wd->display)) {
 
         XNextEvent(wd->display, &event);
