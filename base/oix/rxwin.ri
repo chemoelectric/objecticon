@@ -722,8 +722,7 @@ static void wmap(wbp w)
 {
     XWindowAttributes attrs;
     XSetWindowAttributes attr;
-    int i;
-    char *p, *s, sbuf[256];
+    char *s;
     XWMHints wmhints;
     XClassHint clhints;
     wcp wc = w->context;
@@ -847,18 +846,22 @@ static void wmap(wbp w)
      * Set the class hints that name the program (for reference by the
      * window manager) following conventions given in O'Reilly.
      */
-    if (! (s = getenv("RESOURCE_NAME"))) {
+    if ((s = getenv("RESOURCE_NAME")))
+        clhints.res_name = s;
+    else {
+        int i;
+        char *p, sbuf[256];
         p = StrLoc(kywd_prog);
         s = p + StrLen(kywd_prog);
         while (s > p && s[-1] != '/')
             s--;				/* find tail of prog_name */
+        for (i = 0; i < sizeof(sbuf) - 1 && s < p + StrLen(kywd_prog); ) 
+            sbuf[i++] = *s++;
+        sbuf[i] = '\0';
         clhints.res_name = sbuf;
-        clhints.res_class = "IconProg";
-        for (i = 0; s < p + StrLen(kywd_prog); ) 
-            clhints.res_name[i++] = *s++;
-        clhints.res_name[i] = '\0';
-        XSetClassHint(wd->display, ws->win, &clhints);
     }
+    clhints.res_class = "ObjectIconProg";
+    XSetClassHint(wd->display, ws->win, &clhints);
     XSync(wd->display, False);
 
     if (ws->state == MaximizedState) {
@@ -879,7 +882,6 @@ static void wmap(wbp w)
                         XA_ATOM, 32,
                         PropModeReplace, (unsigned char *)atoms, 1);
     }
-
 
     if (ws->state != RootState)
         XMapWindow(wd->display, ws->win);
