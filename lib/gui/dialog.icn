@@ -155,32 +155,6 @@ class Dialog(Component)
    end
 
    #
-   # Return the window width from the "width" or "size" attrib.
-   #
-   public get_width_attrib()
-      local n
-      if n := integer(get_wattrib("width")) then
-         return n
-      get_wattrib("size") ? {
-         return integer(tab(upto(',')))
-      }
-   end
-
-   #
-   # Return the window height from the "height" or "size" attrib.
-   #
-   public get_height_attrib()
-      local n
-      if n := integer(get_wattrib("height")) then
-         return n
-      get_wattrib("size") ? {
-         tab(upto(','))
-         move(1)
-         return integer(tab(0))
-      }
-   end
-
-   #
    # Displays the dialog as a modal dialog.  In other
    # words, window events to any other open dialogs are blocked
    # until the dialog is closed.  This method doesn't return
@@ -271,30 +245,30 @@ class Dialog(Component)
    # Ensure we have size attributes, setting from the preferred width/height if
    # absent
    # 
-   private ensure_size()
-      if get_wattrib("size") | (get_wattrib("width") & get_wattrib("height")) then
+   private ensure_size(t)
+      if member(t, "size" | "geometry") | (member(t, "width") & member(t, "height")) then
          return
 
-      if get_wattrib("width") then 
+      if member(t, "width") then 
          # Got width, need height
-         set_wattrib("height", get_preferred_height())
-      else if get_wattrib("height") then
+         t["height"] := get_preferred_height()
+      else if member(t, "height") then
          # Got height, need width
-         set_wattrib("width", get_preferred_width())
+         t["width"] :=  get_preferred_width()
       else
          # Need both
-         set_wattrib("size", [get_preferred_width(), get_preferred_height()])
+         t["size"] := [get_preferred_width(), get_preferred_height()]
    end
 
    public open_visible_win()
       local t, pw
-      ensure_size()
       t := copy(self.wattribs)
+      ensure_size(t)
       t["input_mask"] := "mk"
       if pw := (\owning_dialog).win then
          t["transient_for"] := pw
+      /t["canvas"] := "normal"
       self.win := open_win_with(t) | runerr("Couldn't open window:" || &why)
-      self.win.set_canvas("normal")
       # Make the buffer the same size as the visible win.
       self.buffer_win.set_size(self.win.get_width(), self.win.get_height())
    end
