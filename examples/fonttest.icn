@@ -100,17 +100,9 @@ class FontTestDialog(Dialog)
    end
 
    public on_get_list(ev)
-      local p, l, cmd, args
-      args := []
-      command_field.get_contents() ? repeat {
-         tab(many(' '))
-         if pos(0) then 
-            break
-         put(args, tab(upto(' ') | 0))
-      }
-      cmd := pop(args) | fail
+      local p, l
+      p := open(command_field.get_contents(), "pr") | fail
       l := []
-      p := ProgInputStream(cmd, args) | fail
       while put(l, ucs(p.read()))
       p.close()
       native_list.set_contents(l)
