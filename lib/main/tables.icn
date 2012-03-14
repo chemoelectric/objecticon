@@ -448,14 +448,19 @@ class EqTable(Table)
    private t, sz
 
    public insert(key, val)
-      local h, e, n
+      local h, l, e, n
       h := hash(key)
-      every e := !\t[h] do {
+      l := t[h]
+      every e := !\l do {
          if equals(e[1], key) then
             return e[2] := val
       }
+      n := [key, val]
+      if \l then
+         put(l, n)
+      else
+         default.insert(t, h, [n])
       sz +:= 1
-      (/t[h] := [n := [key, val]]) | put(t[h], n := [key, val])
       return n[2]
    end
 
@@ -468,12 +473,15 @@ class EqTable(Table)
    end
 
    public delete(key)
-      local h, e, i
+      local h, l, e, i
       h := hash(key)
+      l := t[h]
       i := 1
-      every e := !\t[h] do {
+      every e := !\l do {
          if equals(e[1], key) then {
-            default.delete(t[h], i)
+            default.delete(l, i)
+            if *l = 0 then
+               default.delete(t, h)
             sz -:= 1
             break
          }
@@ -597,37 +605,43 @@ class WeakrefTable(Table)
       t, sz, last_purge
 
    public insert(key, val)
-      local h, e, n, wkey
+      local h, l, e, n
       maybe_purge()
-      h := Internal.hash(key)%20
-      every e := !\t[h] do {
+      h := Internal.hash(key)
+      l := t[h]
+      every e := !\l do {
          if weakrefval(e[1]) === key then
             return e[2] := val
       }
-      wkey := weakref(key) | runerr("Type of key cannot be used with weakref")
+      n := [weakref(key), val] | runerr("Type of key cannot be used with weakref")
+      if \l then
+         put(l, n)
+      else
+         default.insert(t, h, [n])
       sz +:= 1
-      (/t[h] := [n := [wkey, val]]) | put(t[h], n := [wkey, val])
       return n[2]
    end
 
    public member(key)
-      local h, e
+      local e
       maybe_purge()
-      h := Internal.hash(key)%20
-      every e := !\t[h] do {
+      every e := !\t[Internal.hash(key)] do {
          if weakrefval(e[1]) === key then
             return e[2]
       }
    end
 
    public delete(key)
-      local h, e, i
+      local h, l, e, i
       maybe_purge()
-      h := Internal.hash(key)%20
+      h := Internal.hash(key)
+      l := t[h]
       i := 1
-      every e := !\t[h] do {
+      every e := !\l do {
          if weakrefval(e[1]) === key then {
-            default.delete(t[h], i)
+            default.delete(l, i)
+            if *l = 0 then
+               default.delete(t, h)
             sz -:= 1
             break
          }

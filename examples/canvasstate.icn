@@ -31,9 +31,10 @@ class Untitled(Dialog)
    public tick()
       local d
       repeat {
+         other.event()
          d := other.get_size()
          label_1.set_label(other.get_canvas() || " (" || d[1] || "x" || d[2] || ")")
-         t.sleep(1000)
+         t.sleep(200)
       }
    end
 

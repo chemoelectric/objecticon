@@ -345,11 +345,8 @@ int equiv(dptr dp1, dptr dp2)
  */
 
 int lexcmp(dptr dp1, dptr dp2)
-   {
-
-
+{
    char *s1, *s2;
-   word minlen;
    word l1, l2;
 
    /*
@@ -360,19 +357,22 @@ int lexcmp(dptr dp1, dptr dp2)
    l2 = StrLen(*dp2);
    s2 = StrLoc(*dp2);
 
-   /*
-    * Set minlen to length of the shorter string.
-    */
-   minlen = Min(l1, l2);
+   if (s1 != s2) {
+       /*
+        * Set minlen to length of the shorter string.
+        */
+       word minlen = Min(l1, l2);
 
-   /*
-    * Compare as many bytes as are in the smaller string.  If an
-    *  inequality is found, compare the differing bytes.
-    */
-   while (minlen--)
-      if (*s1++ != *s2++)
-         return ((*--s1 & 0377) > (*--s2 & 0377) ?
-                 Greater : Less);
+       /*
+        * Compare as many bytes as are in the smaller string.  If an
+        *  inequality is found, compare the differing bytes.
+        */
+       while (minlen--)
+           if (*s1++ != *s2++)
+               return ((*--s1 & 0377) > (*--s2 & 0377) ?
+                       Greater : Less);
+   }
+
    /*
     * The strings compared equal for the length of the shorter.
     */
@@ -380,4 +380,4 @@ int lexcmp(dptr dp1, dptr dp2)
       return Equal;
    return ( (l1 > l2) ? Greater : Less);
 
-   }
+}
