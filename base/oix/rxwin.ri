@@ -492,6 +492,7 @@ void pollevent(wbp w)
                     if (selection_debug)
                         printf("XGetWindowProperty returned actual_type == None\n");
                     list_put(&ws->listp, &nulldesc);
+                    if (prop) XFree(prop);
                     break;
                 }
 
@@ -553,7 +554,6 @@ void pollevent(wbp w)
                 break;
             case UnmapNotify:
             case MapNotify:
-                synch_state(ws);
                 break;
             case ConfigureNotify:
                 handle_config(ws, (XConfigureEvent *)&event);
@@ -891,7 +891,7 @@ static void wmap(wbp w)
                         PropModeReplace, (unsigned char *)atoms, 1);
     }
 
-    if (ws->state != RootState)
+    if (ws->state != RootState && ws->state != WithdrawnState)
         XMapWindow(wd->display, ws->win);
 
     XGetWindowAttributes(wd->display, ws->win, &attrs);
@@ -1690,7 +1690,7 @@ static void synch_state(wsp ws)
     int actual_format;
     unsigned long bytes_after, nitems;
     unsigned char *prop;
-    XWindowAttributes attr;
+    unsigned long state;
     wdp wd = ws->display;
 
     if (ws->win == (Window) NULL) {
@@ -1701,38 +1701,34 @@ static void synch_state(wsp ws)
     if (ws->state == PopupState || ws->state == RootState)
         return;
 
-    XGetWindowAttributes(wd->display,
-                         ws->win,
-                         &attr);
-    if (attr.map_state == IsUnmapped) {
-        printf("unmapped\n");
-        if (XGetWindowProperty(wd->display,
-                               ws->win,
-                               ATOM(wd, WM_STATE),
-                               0,
-                               1,
-                               False,
-                               ATOM(wd, WM_STATE),
-                               &actual_type,
-                               &actual_format,
-                               &nitems,
-                               &bytes_after,
-                               &prop) == Success) {
-            if (actual_type == None) {
-                printf("none->widhtrawn\n");
-                ws->state = WithdrawnState;
-            } else {
-                unsigned long state = *((unsigned long *)prop);
-                printf("got %ld\n",state);
-                switch (state) {
-                    case WithdrawnState: ws->state = WithdrawnState; break;
-                    case IconicState: ws->state = IconicState; break;
-                }
-                XFree(prop);
-            }
-        }
+    if (XGetWindowProperty(wd->display,
+                           ws->win,
+                           ATOM(wd, WM_STATE),
+                           0,
+                           1,
+                           False,
+                           ATOM(wd, WM_STATE),
+                           &actual_type,
+                           &actual_format,
+                           &nitems,
+                           &bytes_after,
+                           &prop) != Success)
+        return;
+    
+    if (actual_type == ATOM(wd, WM_STATE))
+        state = *((unsigned long *)prop);
+    else 
+        /* WM_STATE absent => withdrawn */
+        state = WithdrawnState;
+
+    if (prop) XFree(prop);
+
+    if (state == WithdrawnState || state == IconicState) {
+        ws->state = state;
         return;
     }
+
+    /* Normal state, so check if maximized, etc */
 
     if (XGetWindowProperty(wd->display,
                            ws->win,
@@ -1745,9 +1741,12 @@ static void synch_state(wsp ws)
                            &actual_format,
                            &nitems,
                            &bytes_after,
-                           &prop) == Success) {
-        Atom *atoms = (Atom *)prop;
+                           &prop) != Success)
+        return;
+
+    if (actual_type == XA_ATOM) {
         int i, max = 0;
+        Atom *atoms = (Atom *)prop;
         for (i = 0; i < nitems; ++i) {
             if (atoms[i] == ATOM(wd, _NET_WM_STATE_MAXIMIZED_VERT))
                 max |= 1;
@@ -1762,9 +1761,11 @@ static void synch_state(wsp ws)
             ws->state = FullScreenState;
         else
             ws->state = NormalState;
+    } else
+        /* Unexpected, assume normal state */
+        ws->state = NormalState;
 
-        XFree(prop);
-    }        
+    if (prop) XFree(prop);
 }
 
 static void handle_property(wsp ws, XPropertyEvent *event)
@@ -1781,8 +1782,6 @@ static void handle_property(wsp ws, XPropertyEvent *event)
  */
 static void handle_config(wsp ws, XConfigureEvent *event)
 {
-    synch_state(ws);
-
     /*
      * Update X-Icon's information about the window's configuration
      */
