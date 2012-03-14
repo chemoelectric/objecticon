@@ -198,7 +198,7 @@ typedef int time_t, DIR, uid_t, gid_t, stringint;
       typedef int XGCValues, XColor, XFontStruct, XWindowAttributes, XEvent;
       typedef int XExposeEvent, XKeyEvent, XButtonEvent, XConfigureEvent;
       typedef int XSizeHints, XWMHints, XClassHint, XTextProperty;
-      typedef int Colormap, XVisualInfo, XCrossingEvent;
+      typedef int Colormap, XVisualInfo, XCrossingEvent, XPropertyEvent;
       typedef int *Display, Cursor, GC, Window, Pixmap, Visual, KeySym;
       typedef int WidgetClass, XImage, XpmAttributes, XSetWindowAttributes;
       typedef int XGlyphInfo, XftColor, Region, XftDraw, FcChar8;
