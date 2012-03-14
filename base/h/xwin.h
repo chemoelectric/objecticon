@@ -40,7 +40,7 @@
 #define NUMCURSORSYMS	78
 
 /* Interned atoms array */
-#define NUMATOMS        21
+#define NUMATOMS        22
 #define ATOM_CHARACTER_POSITION    0
 #define ATOM_CLIENT_WINDOW         1
 #define ATOM_HOSTNAME              2
@@ -62,6 +62,7 @@
 #define ATOM__NET_WM_ICON                 18
 #define ATOM__NET_WM_NAME                 19
 #define ATOM_UTF8_STRING                  20
+#define ATOM_WM_STATE                     21
 
 #define _NET_WM_STATE_ADD            1
 #define _NET_WM_STATE_REMOVE         0

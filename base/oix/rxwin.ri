@@ -28,6 +28,7 @@ static wsp vwstates;
  * function prototypes
  */
 static void handle_config(wsp w, XConfigureEvent *event);
+static void handle_property(wsp ws, XPropertyEvent *event);
 static void handle_exposures(wsp ws, XExposeEvent *event);
 static void handle_mouse(wsp ws, XButtonEvent *event);
 static void handle_keypress(wsp ws, XKeyEvent *event);
@@ -102,7 +103,7 @@ static stringint linestyles[] = {
 };
 
 static stringint canvastypes[] = {
-    {0, 7},
+    {0, 8},
     {"fullscreen",  FullScreenState},
     {"hidden",      HiddenState},
     {"iconic",      IconicState},
@@ -110,6 +111,7 @@ static stringint canvastypes[] = {
     {"normal",      NormalState},
     {"popup",       PopupState},
     {"root",        RootState},
+    {"withdrawn",   WithdrawnState},
 };
 
 static stringint cursors[] = {
@@ -546,6 +548,9 @@ void pollevent(wbp w)
             case Expose:
                 handle_exposures(ws, (XExposeEvent *)&event);
                 break;
+            case PropertyNotify:
+                handle_property(ws, (XPropertyEvent *)&event);
+                break;
             case UnmapNotify:
             case MapNotify:
                 synch_state(ws);
@@ -817,7 +822,7 @@ static void wmap(wbp w)
         XSetWMNormalHints(wd->display, ws->win, &size_hints);
         XSelectInput(wd->display, ws->win, 
                      ExposureMask | KeyPressMask | EnterWindowMask | LeaveWindowMask |
-                     ButtonPressMask | ButtonReleaseMask | ButtonMotionMask |
+                     ButtonPressMask | ButtonReleaseMask | ButtonMotionMask | PropertyChangeMask |
                      StructureNotifyMask | PointerMotionMask | KeyReleaseMask);
 
         if (ws->icondata) {
@@ -836,6 +841,9 @@ static void wmap(wbp w)
     if (ws->state == IconicState) {
         wmhints.flags |= StateHint;
         wmhints.initial_state = IconicState;
+    } else if (ws->state == WithdrawnState) {
+        wmhints.flags |= StateHint;
+        wmhints.initial_state = WithdrawnState;
     } else if (ws->state != RootState) {
         wmhints.flags |= StateHint;
         wmhints.initial_state = NormalState;
@@ -1302,13 +1310,35 @@ int setcanvas(wbp w, char *s)
         case IconicState: {
             if (ws->state == RootState || ws->state == PopupState)
                 return Failed;
-            XIconifyWindow(wd->display, ws->win, DefaultScreen(wd));
+            if (ws->state == WithdrawnState) {
+                XWMHints wmhints;
+                wmhints.flags = StateHint;
+                wmhints.initial_state = IconicState;
+                XSetWMHints(wd->display, ws->win, &wmhints);
+                XMapWindow(wd->display, ws->win);
+            } else
+                XIconifyWindow(wd->display, ws->win, DefaultScreen(wd));
             break;
         }
 
-        case NormalState: {
+        case WithdrawnState: {
             if (ws->state == RootState || ws->state == PopupState)
                 return Failed;
+            XWithdrawWindow(wd->display, ws->win, DefaultScreen(wd));
+            break;
+        }
+
+        case NormalState:
+        case MaximizedState:
+        case FullScreenState: {
+            if (ws->state == RootState || ws->state == PopupState)
+                return Failed;
+            if (ws->state == WithdrawnState) {
+                XWMHints wmhints;
+                wmhints.flags = StateHint;
+                wmhints.initial_state = NormalState;
+                XSetWMHints(wd->display, ws->win, &wmhints);
+            }
             XMapWindow(wd->display, ws->win);
             synch_net_wm_state(ws, e->i);
             break;
@@ -1317,15 +1347,6 @@ int setcanvas(wbp w, char *s)
         case PopupState:
         case RootState:
             return Failed;
-
-        case MaximizedState:
-        case FullScreenState: {
-            if (ws->state == RootState || ws->state == PopupState)
-                return Failed;
-            XMapWindow(wd->display, ws->win);
-            synch_net_wm_state(ws, e->i);
-            break;
-        }
 
         case HiddenState: {
             close_screen_win(ws);
@@ -1684,7 +1705,32 @@ static void synch_state(wsp ws)
                          ws->win,
                          &attr);
     if (attr.map_state == IsUnmapped) {
-        ws->state = IconicState;
+        printf("unmapped\n");
+        if (XGetWindowProperty(wd->display,
+                               ws->win,
+                               ATOM(wd, WM_STATE),
+                               0,
+                               1,
+                               False,
+                               ATOM(wd, WM_STATE),
+                               &actual_type,
+                               &actual_format,
+                               &nitems,
+                               &bytes_after,
+                               &prop) == Success) {
+            if (actual_type == None) {
+                printf("none->widhtrawn\n");
+                ws->state = WithdrawnState;
+            } else {
+                unsigned long state = *((unsigned long *)prop);
+                printf("got %ld\n",state);
+                switch (state) {
+                    case WithdrawnState: ws->state = WithdrawnState; break;
+                    case IconicState: ws->state = IconicState; break;
+                }
+                XFree(prop);
+            }
+        }
         return;
     }
 
@@ -1719,6 +1765,13 @@ static void synch_state(wsp ws)
 
         XFree(prop);
     }        
+}
+
+static void handle_property(wsp ws, XPropertyEvent *event)
+{
+    if (event->atom == ATOM(ws->display, WM_STATE) ||
+        event->atom == ATOM(ws->display, _NET_WM_STATE))
+        synch_state(ws);
 }
 
 /*
@@ -2457,6 +2510,7 @@ char *atom_names[NUMATOMS] = {
     "_NET_WM_ICON",
     "_NET_WM_NAME",
     "UTF8_STRING",
+    "WM_STATE",
 };
 
 static int get_shift(unsigned long mask)
