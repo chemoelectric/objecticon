@@ -168,7 +168,7 @@ class XmlParser(Connectable)
       divert_stack := []
       id_attribute_refs := []
 
-      (normalize_eol(s) ? simple_try{{
+      normalize_eol(s) ? simple_try{{
          parse_prolog()
          doc.add(parse_element())
          parse_misc_star()
@@ -180,8 +180,8 @@ class XmlParser(Connectable)
          if \self.do_namespaces_flag then
             do_namespace_processing()
          cleanup_source_refs()
-      }}) | {
-         fire(FATAL_ERROR_EVENT, ProblemDetail(where(), s))
+      }} | {
+         save_why{fire(FATAL_ERROR_EVENT, ProblemDetail(where(), &why))}
          doc := id_attribute_refs := &null
          fail
       }
