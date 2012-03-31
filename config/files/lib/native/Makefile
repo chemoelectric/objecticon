@@ -33,4 +33,4 @@ clean :
 	rm -f *.u *.o *.so *.a mysql.c ipc.c
 
 etags:
-	etags --lang=c *.r *.h
+	etags $(RTLTAGS) *.r *.h

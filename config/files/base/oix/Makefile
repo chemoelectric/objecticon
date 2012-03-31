@@ -48,7 +48,7 @@ clean:
 	rm -f *.o $(RTTC) $(RTTTMP) rt.db rt.a rttcur.lst rttfull.lst oix keysymtocodepoint iasm
 
 etags:
-	etags --lang=c $(RFILES) rmswin.ri rxrsc.ri  rxwin.ri
+	etags $(RTLTAGS) $(RFILES) rmswin.ri rxwin.ri
 
 # Compile with make IASM=Y
 ifeq ($(IASM),Y)
