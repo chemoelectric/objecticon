@@ -55,7 +55,7 @@ Notes :-
  * The use of the macro $(RTT) is important because it points `rtt` to the location of the necessary header files (via the `-r` option).
 
 == Loading the library ==
-Here is a sample program to load the library and run the `bits()` function.
+Here is a sample program to load the library and run the `bits()` function.  Save this as `prog.icn`.
 
 {{{
 import io, lang
@@ -82,9 +82,11 @@ okay, loaded function bits
 
 Note that the library name in the first parameter of `loadfunc` is passed unaltered to the underlying system's dynamic load function (on Unix, `dlopen`).  This means that the library must either be an absolute path, relative to the current directory, or in one of the places that the system normally looks for shared libraries.
 
-There are some functions available to help search for files on paths.  In particular see :-
- * `pathload()` and `pathfind()` in the package `ipl.io`.
- *  `Files.path_find()` in the package `util`.
+There are some functions available to help search for files on paths.  In particular see `Files.path_find()` and `Files.find_native_lib()` in the package `io`.   This latter function is used to load the shared libraries included in the distribution, using the path given by the environment variable `OINATIVE`.
+
+== Class.load_library() ==
+
+This function can be used to define several deferred methods at once in a class, using a shared library.  It should be called from the class's static `init` method, with the shared library as a parameter.  It goes through each deferred method in the class, looking for a matching function defined in the shared library.  Any not found are just ignored.  This means a class with numerous native methods can resolve them all at once with a single convenient call.
 
 == External headers and symbols ==
 It is possible that the RTL code in a dynamic library will need to refer to another existing library and its associated C header files.  For example, the mysql library needs to reference `"mysql.h"` and link to the mysqlclient library.  These external header files are normally _not_ processed by RTT - rather they are passed through RTT to be processed by the C compiler.  For example
