@@ -10,7 +10,7 @@ $define LIB "objecticonmysqllib.so"
 
 package mysql
 
-import lang
+import lang, io
 
 #
 # This class provides a wrapper around the MySql C API.  Nearly all the
@@ -422,7 +422,7 @@ class MySql(NoCopy)
       CLIENT_MULTI_RESULTS :=    131072  
       CLIENT_REMEMBER_OPTIONS := 2147483648  # ((ulong) (1L << 31))
 
-      Class.load_library(LIB) | runerr("Couldn't load dynamic library " || &why)
+      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
    end
 
    public new()
