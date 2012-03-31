@@ -3095,7 +3095,7 @@ struct node *n;
    /*
     * Output function header.
     */
-   fprintf(out_file, "int %c%s(struct %s_frame *frame)\n{\n", letter, name, name);
+   fprintf(out_file, "static int %c%s(struct %s_frame *frame)\n{\n", letter, name, name);
 
    if (op_generator) {
 #if HAVE_COMPUTED_GOTO

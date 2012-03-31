@@ -155,17 +155,17 @@ class Dialog(Component)
    end
 
    #
-   # Displays the dialog as a modal dialog.  In other
-   # words, window events to any other open dialogs are blocked
-   # until the dialog is closed.  This method doesn't return
-   # until the dialog is closed.
+   # Displays the dialog as a modal dialog.  In other words, window
+   # events to any other open dialogs are blocked until the dialog is
+   # closed, although the actual dialogs to block is configurable.
+   # This method doesn't return until the dialog is closed.
    #
-   # @param d   The parent dialog.  It will not normally be
-   # @ needed.
+   # @param d   The parent dialog.
+   # @param l   A list of other dialogs to block; defaults to all
+   # @          currently unblocked dialogs.
    #
-   public show_modal(d)
-      local l
-      l := Dispatcher.list_unblocked()
+   public show_modal(d, l)
+      /l := Dispatcher.list_unblocked()
       self.show(d)
       every (!l).block()
       Dispatcher.message_loop(self)

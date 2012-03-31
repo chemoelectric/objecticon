@@ -504,16 +504,25 @@ $endif
    # but a little more strict.  In particular, the cd isn't tried before
    # the directories on $PATH.
    #
-   public static find_exe(f)
+   # @param n the name of the environment variable holding the path,
+   # @        by default "PATH"
+   # @param mode the access mode to check for; by default {Access.X_OK}
+   public static find_exe(f, n, mode)
       local p, s, path
 
+$ifdef _PLAN9
+      /n := "path"
+$else
+      /n := "PATH"
+$endif
+      /mode := Access.X_OK
       p := get_path(f)
 
       # Anything with separators in, we just look up and ignore the
       # path.
       if p.is_absolute() | (p.size() > 1) then {
          s := p.str()
-         if access(s, Access.X_OK) then
+         if access(s, mode) then
             return s
          else
             fail
@@ -523,12 +532,29 @@ $endif
 $ifdef _PLAN9
       path := System.getenv("path") | ". /bin"
 $else
-      path := System.getenv("PATH") | ""
+      path := System.getenv(n) | ""
 $endif
       every s := get_path(split_paths(path)).append(p).str() do {
-         if access(s, Access.X_OK) then
+         if access(s, mode) then
             return s
       }
+   end
+
+   #
+   # Search for a native (.so) library on the OINATIVE path.
+   #
+   public static find_native_lib(f)
+      static seen
+      local t
+      initial
+         seen := table()
+      if t := member(seen, f) then
+         return t
+      if t := find_exe(f, "OINATIVE") then {
+         insert(seen, f, t)
+         return t
+      }
+      &why := f || " not found on OINATIVE path"
    end
 
    final private new()

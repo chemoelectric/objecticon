@@ -82,6 +82,7 @@ static	char *	elsif	(char *s);
 static	char *	endif	(char *s);
 static	char *	encoding(char *s);
 static  char *  load    (char *s);
+static  char *  uload   (char *s);
 static	char *	errdir	(char *s);
 static	char *	include	(char *s);
 static	char *	setline	(char *s);
@@ -115,6 +116,7 @@ pplist[] = {
    { "error",   errdir  },
    { "encoding",encoding  },
    { "load",    load  },
+   { "uload",   uload  },
    { 0,         0       }};
 
 static infile nofile;			/* ancestor of all files; all zero */
@@ -661,7 +663,7 @@ static int charstr(int c, char *b)
     }
 }
 
-static char *loadfile(char *fname, int *vlen)
+static char *loadfile(char *fname, int *vlen, int ucs)
 {
     FILE *f;
     int ch;
@@ -674,8 +676,14 @@ static char *loadfile(char *fname, int *vlen)
 
     len = 1024;
     s = safe_alloc(len);
-    *s = '\"';
-    i = 1;
+    if (ucs) {
+        *s = 'u';
+        *(s + 1) = '\"';
+        i = 2;
+    } else {
+        *s = '\"';
+        i = 1;
+    }
     while ((ch = getc(f)) != EOF) {
         /* Ensure enough room for maximum 4 bytes from charstr + 2 for
          * the closing quote and null byte */
@@ -712,7 +720,33 @@ static char *load(char *s)
    if (*wskip(s) != '\0')
       return "$load: too many arguments";
    fullpath = pathfind(intern(getdir(curfile->fname)), lpath, fname, 0);
-   if (fullpath && (val = loadfile(fullpath, &vlen)))
+   if (fullpath && (val = loadfile(fullpath, &vlen, 0)))
+       dinsert_pre(name, val, vlen);		/* install in table */
+   else
+       pfatal("cannot open: %s", fname);
+   return NULL;
+   }
+
+/*
+ * uload(s) -- handle $uload directive.
+ */
+static char *uload(char *s)
+   {
+   char c, *name, *val, *fname, *fullpath;
+   int vlen = 0;
+
+   if (isalpha((unsigned char)(c = *s)) || c == '_')
+      s = getidt(name = s - 1, s);		/* get name */
+   else
+      return "$uload: missing name";
+   s = wskip(s);
+   s = getfnm(fname = s - 1, s);
+   if (*fname == '\0')
+      return "$uload: invalid file name";
+   if (*wskip(s) != '\0')
+      return "$uload: too many arguments";
+   fullpath = pathfind(intern(getdir(curfile->fname)), lpath, fname, 0);
+   if (fullpath && (val = loadfile(fullpath, &vlen, 1)))
        dinsert_pre(name, val, vlen);		/* install in table */
    else
        pfatal("cannot open: %s", fname);

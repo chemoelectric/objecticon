@@ -66,6 +66,6 @@ procedure simple_try(e)
    v := try(e)
    if /thrown then
       return v
-   &why := string(thrown) | image(thrown)
+   &why := text(thrown) | image(thrown)
    clear()
 end

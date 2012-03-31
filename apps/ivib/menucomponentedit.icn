@@ -22,6 +22,7 @@ class MenuComponentEdit(Dialog)
       event_flag,
       event_method,
       shaded,                  #
+      decorative,
       accel_flag,              # Accel on/off
       accel_tf,
       tooltip_field,           # PaintField - tooltip
@@ -116,6 +117,12 @@ class MenuComponentEdit(Dialog)
          shaded.set_is_checked(&yes)
       other_tab.add(shaded)
 
+      decorative := CheckBox().set_constraint("eol", &yes)
+      decorative.set_label("Is decorative")
+      if \c.is_decorative_flag then
+         decorative.set_is_checked(&yes)
+      other_tab.add(decorative)
+
       accel_flag := CheckBox()
       accel_flag.connect(self.on_accel_flag, Event.ACTION)
       accel_flag.set_label("Set Accelerator")
@@ -145,6 +152,7 @@ class MenuComponentEdit(Dialog)
       code_tab.set_vals()
       c.event_method := if event_flag.is_checked() then event_method.get_contents() else &null
       c.is_shaded_flag := shaded.get_status()
+      c.is_decorative_flag := decorative.get_status()
       c.accel := if accel_flag.is_checked() then accel_tf.get_contents() else &null
       c.tooltip := tooltip_field.get_contents()
    end

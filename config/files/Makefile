@@ -36,7 +36,6 @@ datarootdir=@datarootdir@
 docdir=@docdir@
 OIBIN=@bindir@
 OILIB=@libdir@/@PACKAGE_TARNAME@-@PACKAGE_VERSION@
-SOLIB=@libdir@
 LIBREF=@htmldir@/@PACKAGE_TARNAME@-libref-@PACKAGE_VERSION@
 PATHS=$(OILIB)/paths.sh
 MKDEFS=$(OILIB)/Makedefs
@@ -48,6 +47,7 @@ install :
 	$(INSTALL) -d "$(OILIB)/incl"
 	$(INSTALL) -d "$(OILIB)/ipl"
 	$(INSTALL) -d "$(OILIB)/main"
+	$(INSTALL) -d "$(OILIB)/native"
 	$(INSTALL) -d "$(OILIB)/parser"
 	$(INSTALL) -d "$(OILIB)/xml"
 	$(INSTALL) -d "$(OILIB)/h"
@@ -65,7 +65,7 @@ install :
 	$(INSTALL) -m 644 lib/incl/*.icn "$(OILIB)/incl"
 	$(INSTALL) -m 644 lib/ipl/*.u lib/ipl/packages.txt "$(OILIB)/ipl"
 	$(INSTALL) -m 644 lib/main/*.u lib/main/packages.txt "$(OILIB)/main"
-	$(INSTALL) -m 755 lib/native/*.so "$(SOLIB)"
+	$(INSTALL) -m 755 lib/native/*.so "$(OILIB)/native"
 	$(INSTALL) -m 644 lib/parser/*.u lib/parser/packages.txt "$(OILIB)/parser"
 	$(INSTALL) -m 644 lib/xml/*.u lib/xml/packages.txt "$(OILIB)/xml"
 	$(INSTALL) -m 755 apps/ivib/plugins/okcancelplugin "$(OILIB)/ivib_plugins"
@@ -93,12 +93,11 @@ install :
 	@echo "export OIINCL=\"\$$OILIB/incl\"" >>"$(PATHS)"
 	@if [ "$(prefix)" != /usr/local ] ; then \
 		echo "PATH=\"\$$PATH:\$$OIBIN\"" >>"$(PATHS)" ; \
-		echo "LD_LIBRARY_PATH=\"\$$LD_LIBRARY_PATH:$(SOLIB)\"" >>"$(PATHS)" ; \
 	fi
+	@echo "export OINATIVE=\"$(OILIB)/native\"" >>"$(PATHS)"
 	@echo "export TRACE OIMAXLEVEL" >>"$(PATHS)" ; \
 
 	@echo rm -f \"$(OIBIN)/ivib\" \"$(OIBIN)/ieval\" \"$(OIBIN)/fiximports\" \"$(OIBIN)/oidoc\" \"$(OIBIN)/iyacc\" \"$(OIBIN)/oit\" \"$(OIBIN)/oix\" \"$(OIBIN)/udis\" \"$(OIBIN)/rtt\" >"$(UNINST)"
-	@echo rm -f \"$(SOLIB)/objecticonipclib.so\"  \"$(SOLIB)/objecticonmysqllib.so\" >>"$(UNINST)"
 	@echo rm -rf \"$(OILIB)\" >>"$(UNINST)"
 	@echo rm -rf \"$(LIBREF)\" >>"$(UNINST)"
 

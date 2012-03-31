@@ -301,6 +301,31 @@ class Parser(Connectable)
                return ""
             }
          }
+         "uload": {
+            if /preproc_if_state then {
+               if sym := preproc_word() &
+                  preproc_opt_space() &
+                  fname := preproc_qword() & *fname > 0 & preproc_at_end() then 
+               {
+                  if value := "u" || image(Files.file_to_string(Files.path_find(fname, 
+                                                                "OIINCL",
+                                                                Files.get_path(preproc_filename).parent().str()))) then 
+                  {
+                     if \ (old := preproc_sym_table[sym]) ~=== value then {
+                        preproc_error("redefinition of " || sym || " = " ||
+                                      old)
+                     } else {
+                        preproc_sym_table[sym] := value
+                     }
+                  } else {
+                     preproc_error("cannot open " || image(fname))
+                  }
+               } else {
+                  preproc_error()
+               }
+               return ""
+            }
+         }
          "ifdef" | "ifndef": {
             push(preproc_if_stack,preproc_if_state)
             if sym := preproc_word() & preproc_at_end() then {

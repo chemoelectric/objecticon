@@ -880,9 +880,7 @@ static void wmap(wbp w)
                         ATOM(wd, _NET_WM_STATE),
                         XA_ATOM, 32,
                         PropModeReplace, (unsigned char *)atoms, 2);
-    }
-
-    if (ws->state == FullScreenState) {
+    } else if (ws->state == FullScreenState) {
         Atom atoms[1];
         atoms[0] = ATOM(wd, _NET_WM_STATE_FULLSCREEN);
         XChangeProperty(wd->display, ws->win,
@@ -917,28 +915,49 @@ static void synch_net_wm_state(wsp ws, int desired_state)
     e.xclient.format = 32;
     e.xclient.window = ws->win;
     e.xclient.data.l[3] = 0;
-    if (desired_state == NormalState) {
-        e.xclient.data.l[0] = _NET_WM_STATE_REMOVE;
-        e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_VERT);
-        e.xclient.data.l[2] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_HORZ);
-        XSendEvent(wd->display, GetRoot(wd), False,
-                   SubstructureNotifyMask | SubstructureRedirectMask, &e);
-        e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_FULLSCREEN);
-        e.xclient.data.l[2] = 0;
-        XSendEvent(wd->display, GetRoot(wd), False,
-                   SubstructureNotifyMask | SubstructureRedirectMask, &e);
-    } else {
-        e.xclient.data.l[0] = _NET_WM_STATE_ADD;
-        if (desired_state == MaximizedState) {
+    switch (desired_state) {
+        case NormalState: {
+            e.xclient.data.l[0] = _NET_WM_STATE_REMOVE;
             e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_VERT);
             e.xclient.data.l[2] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_HORZ);
-        } else if (desired_state == FullScreenState) { 
+            XSendEvent(wd->display, GetRoot(wd), False,
+                       SubstructureNotifyMask | SubstructureRedirectMask, &e);
             e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_FULLSCREEN);
             e.xclient.data.l[2] = 0;
-        } else
+            XSendEvent(wd->display, GetRoot(wd), False,
+                       SubstructureNotifyMask | SubstructureRedirectMask, &e);
+            break;
+        }
+        case MaximizedState: {
+            e.xclient.data.l[0] = _NET_WM_STATE_REMOVE;
+            e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_FULLSCREEN);
+            e.xclient.data.l[2] = 0;
+            XSendEvent(wd->display, GetRoot(wd), False,
+                       SubstructureNotifyMask | SubstructureRedirectMask, &e);
+            e.xclient.data.l[0] = _NET_WM_STATE_ADD;
+            e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_VERT);
+            e.xclient.data.l[2] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_HORZ);
+            XSendEvent(wd->display, GetRoot(wd), False,
+                       SubstructureNotifyMask | SubstructureRedirectMask, &e);
+            break;
+        }
+        case FullScreenState: { 
+            e.xclient.data.l[0] = _NET_WM_STATE_REMOVE;
+            e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_VERT);
+            e.xclient.data.l[2] = ATOM(wd, _NET_WM_STATE_MAXIMIZED_HORZ);
+            XSendEvent(wd->display, GetRoot(wd), False,
+                       SubstructureNotifyMask | SubstructureRedirectMask, &e);
+            e.xclient.data.l[0] = _NET_WM_STATE_ADD;
+            e.xclient.data.l[1] = ATOM(wd, _NET_WM_STATE_FULLSCREEN);
+            e.xclient.data.l[2] = 0;
+            XSendEvent(wd->display, GetRoot(wd), False,
+                       SubstructureNotifyMask | SubstructureRedirectMask, &e);
+            break;
+        }
+        default: {
             syserr("Invalid desired_state");
-        XSendEvent(wd->display, GetRoot(wd), False,
-                   SubstructureNotifyMask | SubstructureRedirectMask, &e);
+            break;
+        }
     }
     XSync(wd->display, False);
 }
