@@ -1,4 +1,4 @@
 include ../../Makedefs
 
 etags:
-		etags --lang=c *.h
+		etags $(RTLTAGS) *.h

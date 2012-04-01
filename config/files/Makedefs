@@ -24,6 +24,9 @@ ICNTAGS=--lang=none \
 	--regex='/[ \t]*\(final[ \t]+\)?class[ \t]+\([a-zA-Z0-9_]+\)[ \t]*(/\2/' \
 	--regex='/[ \t]*\(\(public\|private\|package\|protected\|final\|static\|defer\)[ \t]+\)+\([a-zA-Z0-9_]+\)[ \t]*(/\3/'
 
+RTLTAGS=--lang=c \
+	--regex='/[ \t]*\#begdef[ \t]+\([a-zA-Z0-9_]+\)[ \t]*(/\2/'
+
 export OIPATH:=$(OILIB)/main:$(OILIB)/gui:$(OILIB)/xml:$(OILIB)/parser:$(OILIB)/ipl
 export OIINCL:=$(OILIB)/incl
 export PATH:=$(OIBIN):$(PATH)

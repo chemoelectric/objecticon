@@ -1375,6 +1375,22 @@ static struct b_proc *try_load(void *handle, struct b_class *class0,  struct cla
     return blk;
 }
 
+static void *get_handle(char *filename)
+{
+    static char *curfile;
+    static void *handle;
+    /*
+     * Get a library handle, reusing it over successive calls.
+     */
+    if (!handle || !curfile || strcmp(filename, curfile) != 0) {
+        if (curfile)
+            free(curfile);	/* free the old file name */
+        curfile = salloc(filename);	/* save the new name */
+        handle = dlopen(filename, RTLD_LAZY);	/* get the handle */
+    }
+    return handle;
+}
+
 function lang_Class_load_library(lib)
    if !cnv:C_string(lib) then
       runerr(103, lib)
@@ -1389,7 +1405,7 @@ function lang_Class_load_library(lib)
             runerr(616);
         class0 = caller_proc->field->defining_class;
 
-        handle = dlopen(lib, RTLD_LAZY);
+        handle = get_handle(lib);
         if (!handle) {
             why(dlerror());
             fail;
@@ -1413,8 +1429,49 @@ function lang_Class_load_library(lib)
    }
 end
 
+function lang_Proc_load(filename, funcname)
+    if !cnv:C_string(filename) then
+        runerr(103, filename)
+    if !cnv:C_string(funcname) then
+        runerr(103, funcname)
+    body {
+       struct b_proc *blk;
+       char *tname;
+       void *handle;
+
+       handle = get_handle(filename);
+       if (!handle) {
+           why(dlerror());
+           fail;
+       }
+       /*
+        * Load the function.  Diagnose both library and function errors here.
+        */
+       MemProtect(tname = malloc(strlen(funcname) + 2));
+       sprintf(tname, "B%s", funcname);
+       blk = (struct b_proc *)dlsym(handle, tname);
+       if (!blk) {
+           free(tname);
+           whyf("Symbol '%s' not found in library", funcname);
+           fail;
+       }
+       /* Sanity check. */
+       if (blk->title != T_Proc)
+           ffatalerr("lang.Proc.load - symbol %s not a procedure block\n", tname);
+
+       free(tname);
+       return proc(blk);
+    }
+end
+
 #else						/* HAVE_LIBDL */
 function lang_Class_load_library(lib)
+   body {
+     Unsupported;
+   }
+end
+
+function lang_Proc_load(filename,funcname)
    body {
      Unsupported;
    }
