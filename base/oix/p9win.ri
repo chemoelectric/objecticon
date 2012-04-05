@@ -1454,13 +1454,22 @@ static int open_screen_win(wsp ws)
                 ws->state = NormalCanvas;
         }
 
-        fprint(ws->wctl_fd, "resize -dx %d -dy %d -mindx %d -maxdx %d -mindy %d -maxdy %d", 
-               adjust(ws, ws->width), 
-               adjust(ws, ws->height),
-               adjust(ws, minw),
-               adjust(ws, maxw),
-               adjust(ws, minh),
-               adjust(ws, maxh));
+        /* OIUSEWIN=2 -> take over size of enclosing window */
+        if (ws->using_win == 2) {
+            fprint(ws->wctl_fd, "resize -mindx %d -maxdx %d -mindy %d -maxdy %d", 
+                   adjust(ws, minw),
+                   adjust(ws, maxw),
+                   adjust(ws, minh),
+                   adjust(ws, maxh));
+        } else {
+            fprint(ws->wctl_fd, "resize -dx %d -dy %d -mindx %d -maxdx %d -mindy %d -maxdy %d", 
+                   adjust(ws, ws->width), 
+                   adjust(ws, ws->height),
+                   adjust(ws, minw),
+                   adjust(ws, maxw),
+                   adjust(ws, minh),
+                   adjust(ws, maxh));
+        }
 
         if (ws->x != -INT_MAX && ws->y != -INT_MAX)
             fprint(ws->wctl_fd, "move  -minx %d -miny %d", ws->x, ws->y);
@@ -2094,6 +2103,7 @@ static void init_window_system(void)
 {
     Dir *fs;
     int fd;
+    char *s;
 
     load_font_info();
 
@@ -2147,7 +2157,8 @@ static void init_window_system(void)
     if (!default_font)
         ffatalerr("Couldn't load default font");
 
-    use_win = (getenv("OIUSEWIN") != 0);
+    use_win = 0;
+    env_int("OIUSEWIN", &use_win, 0, 2);
 
     memimageinit();
 

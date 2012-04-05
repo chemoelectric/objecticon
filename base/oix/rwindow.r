@@ -1898,22 +1898,13 @@ static int writepngfile(wbp w, char *filename, int x, int y, int width, int heig
 
 #endif
 
-
-
 int getdefaultfontsize(int deflt)
 {
     static int t;
     if (!t) {
-        char *s = getenv(OIFONTSIZE);
-        if (s) {
-            char ch;
-            if (sscanf(s, "%d%c", &t, &ch) != 1 || t <= 0)
-                t = -1;
-        } else
-            t = -1;
+        env_int(OIFONTSIZE, &deflt, 1, MaxWord);
+        t = deflt;
     }
-    if (t < 0)
-        return deflt;
     return t;
 }
 

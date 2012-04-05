@@ -295,7 +295,7 @@ class StringStream(Stream)
    end
 
    public seek(offset)
-      return if offset > 0 then
+      return .if offset > 0 then
          pos := offset
       else if -offset <= *subj then
          pos := *subj + 1 + offset
@@ -304,7 +304,7 @@ class StringStream(Stream)
    end
 
    public tell()
-      return pos
+      return .pos
    end
 
    public close()

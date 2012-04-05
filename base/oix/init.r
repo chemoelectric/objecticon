@@ -14,7 +14,6 @@ static void    initprogstate(struct progstate *p);
 static void    initalloc(struct progstate *p);
 static void    handle_prog_exit(void);
 static void    relocate_code(struct progstate *ps, word *c);
-static void    env_int(char *name,word *variable,int non_neg, uword limit);
 static void    startuperr(char *fmt, ...);
 static void    conv_addr(void);
 static void    conv_var(void);
@@ -310,38 +309,33 @@ static struct b_cset *make_static_cset_block(int n_ranges, ...)
 /*
  * env_int - get the value of an integer-valued environment variable.
  */
-static void env_int(char *name, word *variable, int non_neg, uword limit)
+void env_int(char *name, int *variable, int min, int max)
 {
-    char *value;
-    char *s;
-    uword n = 0;
-    uword d;
-    int sign = 1;
-
+    int t;
+    char *value, ch;
     if ((value = getenv(name)) == NULL || *value == '\0')
         return;
-
-    s = value;
-    if (*s == '-') {
-        if (non_neg)
-            ffatalerr("environment variable out of range: %s=%s", name, value);
-        sign = -1;
-        ++s;
-    }
-    else if (*s == '+')
-        ++s;
-    while (isdigit((unsigned char)*s)) {
-        d = *s++ - '0';
-        /*
-         * See if 10 * n + d > limit, but do it so there can be no overflow.
-         */
-        if (limit && (d > (uword)(limit / 10 - n) * 10 + limit % 10))
-            ffatalerr("environment variable out of range: %s=%s", name, value);
-        n = n * 10 + d;
-    }
-    if (*s != '\0')
+    if (sscanf(value, "%d%c", &t, &ch) != 1)
         ffatalerr("environment variable not numeric: %s=%s", name, value);
-    *variable = sign * n;
+    if (t < min || t > max)
+        ffatalerr("environment variable out of range: %s=%s", name, value);
+    *variable = t;
+}
+
+/*
+ * env_int - get the value of an integer-valued environment variable.
+ */
+void env_word(char *name, word *variable, word min, word max)
+{
+    long t;
+    char *value, ch;
+    if ((value = getenv(name)) == NULL || *value == '\0')
+        return;
+    if (sscanf(value, "%ld%c", &t, &ch) != 1)
+        ffatalerr("environment variable not numeric: %s=%s", name, value);
+    if (t < min || t > max)
+        ffatalerr("environment variable out of range: %s=%s", name, value);
+    *variable = t;
 }
 
 /*
@@ -1260,16 +1254,16 @@ int main(int argc, char **argv)
     /*
      * Examine the environment and make appropriate settings.    [[I?]]
      */
-    env_int(TRACE, &k_trace, 0, MaxWord);
-    env_int(OIMAXLEVEL, &k_maxlevel, 1, MaxWord);
-    env_int(OISTRSIZE, &rootstring.size, 1, MaxWord);
-    env_int(OIBLKSIZE, &rootblock.size, 1, MaxWord); 
-    env_int(OIMEMCUSHION, &memcushion, 1, 100);	/* max 100 % */
-    env_int(OIMEMGROWTH, &memgrowth, 1, 10000);	/* max 100x growth */
-    env_int(OICORE, &dodump, 1, 2);
+    env_word(TRACE, &k_trace, MinWord, MaxWord);
+    env_word(OIMAXLEVEL, &k_maxlevel, 16, MaxWord);
+    env_word(OISTRSIZE, &rootstring.size, 1024, MaxWord);
+    env_word(OIBLKSIZE, &rootblock.size, 1024, MaxWord); 
+    env_word(OIMEMCUSHION, &memcushion, 0, 100);   /* max 100 % */
+    env_word(OIMEMGROWTH, &memgrowth, 0, 10000);   /* max 100x growth */
+    env_word(OICORE, &dodump, 0, 2);
     stacklim = rootblock.size / 2;
-    env_int(OISTKLIM, (word *)&stacklim, 1, MaxWord);
-    env_int(OISTKCUSHION, &stackcushion, 1, 10000);
+    env_word(OISTKLIM, (word *)&stacklim, 1024, MaxWord);
+    env_word(OISTKCUSHION, &stackcushion, 0, 10000);
 
     Protect(rootpstate.Code = malloc(hdr.icodesize), fatalerr(315, NULL));
 
