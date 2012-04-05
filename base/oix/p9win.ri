@@ -2157,7 +2157,6 @@ static void init_window_system(void)
     if (!default_font)
         ffatalerr("Couldn't load default font");
 
-    use_win = 0;
     env_int("OIUSEWIN", &use_win, 0, 2);
 
     memimageinit();
