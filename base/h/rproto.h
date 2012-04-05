@@ -375,6 +375,8 @@ void bytes2string(char *s, word len, dptr d);
 void cstrs2string(char **s, char *delim, dptr d);
 int eq(dptr d1, dptr d2);
 int ceq(dptr dp, char *s);
+void env_int(char *name, int *variable, int min, int max);
+void env_word(char *name, word *variable, word min, word max);
 
 int stringint_str2int(stringint * sip, char *s);
 char *stringint_int2str(stringint * sip, int i);
