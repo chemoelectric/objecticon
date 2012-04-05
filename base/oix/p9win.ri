@@ -454,14 +454,11 @@ static void handle_reshape(wsp ws)
 {
     char buff[128];
     wbp w;
-    int tw, th;
     sprintf(buff, "%s/winname", ws->mount_dir);
     if (gengetwindow(display, buff, &ws->win, &ws->screen, Refnone) < 0)
         syserr("Failed to reconnect to window on a resize");
     synch_state(ws);
-    tw = Dx(ws->win->r);
-    th = Dy(ws->win->r);
-    if (tw == ws->width && th == ws->height) {
+    if (Dx(ws->win->r) == ws->width && Dy(ws->win->r) == ws->height) {
         /*
          * If the new size matches the existing canvas size, just copy the
          * pix win and adjust the pos.  Don't fire an event.
@@ -473,8 +470,8 @@ static void handle_reshape(wsp ws)
          * Here we accept the resize, resize the pix win, copy it to the visible
          * win and fire an event.
          */
-        ws->width = tw;
-        ws->height = th;
+        ws->width = Dx(ws->win->r);
+        ws->height = Dy(ws->win->r);
         synch_pos(ws);
         w = findwbp(ws);
 
@@ -1536,10 +1533,13 @@ static int open_screen_win(wsp ws)
     }
     GRFX_GENLINK(ws, vwstates, vnext, vprevious);
 
-    /* Ensure size matches the opened window */
-    ws->width =  Dx(ws->win->r);
-    ws->height = Dy(ws->win->r);
-    resize_pix_win(findwbp(ws));
+    /* Ensure size matches the opened window; if not resize pix win and queue event */
+    if (Dx(ws->win->r) != ws->width || Dy(ws->win->r) != ws->height) {
+        ws->width =  Dx(ws->win->r);
+        ws->height = Dy(ws->win->r);
+        resize_pix_win(findwbp(ws));
+        qeventcode(ws, WINDOWRESIZED);
+    }
 
     if ((fd = open_winfile(ws, "winid", OREAD)) < 0) {
         whyf("Can't open winid file %r");
