@@ -1292,12 +1292,22 @@ whide(Window *w)
         return whideimpl(w);
 }
 
+static
+int
+unhide_transient(Window *w)
+{
+    int j;
+    for(j=0; j<nhidden; j++)
+        if(hidden[j]->transientfor == w->id)
+            return wunhide(j);
+    return 0;
+}
+
 int
 wunhide(int h)
 {
 	Image *i;
 	Window *w;
-	int j;
 
 	w = hidden[h];
 	i = allocwindow(wscreen, w->i->r, Refbackup, DWhite);
@@ -1305,10 +1315,7 @@ wunhide(int h)
 		--nhidden;
 		memmove(hidden+h, hidden+h+1, (nhidden-h)*sizeof(Window*));
 		wsendctlmesg(w, Reshaped, w->i->r, i);
-
-                for(j=0; j<nhidden; j++)
-                    if(hidden[j]->transientfor == w->id)
-                        wunhide(j);
+                while (unhide_transient(w));
 
 		return 1;
 	}
