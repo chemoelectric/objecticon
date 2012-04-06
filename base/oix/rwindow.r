@@ -2249,9 +2249,9 @@ int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph)
      * Correct negative w/h values.
      */
     if (*pw < 0)
-        *px -= (*pw = -*pw);
+        *pw = 0;
     if (*ph < 0)
-        *py -= (*ph = -*ph);
+        *ph = 0;
 
     return Succeeded;
 }
