@@ -2093,10 +2093,19 @@ static void close_window_system(void)
            close_screen_win(ws);
     }
     closedisplay(display);
-    if ((fd = open("/dev/wctl", OWRITE)) >= 0) {
-        fprint(fd, "top"); 
-        fprint(fd, "current"); 
-        fprint(fd, "refresh"); 
+    /* Bring the current window to the top and refresh it, unless it's hidden */
+    if ((fd = open("/dev/wctl", ORDWR)) >= 0) {
+        char buff[256];
+        int n = read(fd, buff, sizeof(buff) - 1);
+        if (n > 0) {
+            buff[n] = 0;
+            /* Don't do anything if our window is hidden */
+            if (!strstr(buff, "hidden")) {
+                fprint(fd, "top"); 
+                fprint(fd, "current"); 
+                fprint(fd, "refresh");
+            }
+        }
         close(fd);
     }
 }
@@ -2133,11 +2142,12 @@ static void init_window_system(void)
     if (initdraw(draw_error, 0, 0) < 0)
         ffatalerr("Couldn't initialize window system: %r");
 
-    /* initdraw seems to mess up the current window (the scrollbar
-     * disappears and it is blanked entirely when the program exits).
-     * Refreshing the current window fixes this.
+    env_int("OIUSEWIN", &use_win, 0, 2);
+
+    /* initdraw blanks the current window, so unless we're using it,
+     * ask riox to refresh it.
      */
-    if ((fd = open("/dev/wctl", ORDWR)) >= 0) {
+    if (use_win == 0 && (fd = open("/dev/wctl", ORDWR)) >= 0) {
         char buff[256];
         int n = read(fd, buff, sizeof(buff) - 1);
         if (n > 0) {
@@ -2156,8 +2166,6 @@ static void init_window_system(void)
     default_font = load_font(getdefaultfont());
     if (!default_font)
         ffatalerr("Couldn't load default font");
-
-    env_int("OIUSEWIN", &use_win, 0, 2);
 
     memimageinit();
 

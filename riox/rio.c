@@ -1189,9 +1189,8 @@ whideimpl(Window *w)
 	Image *i;
 	int j;
 
-	for(j=0; j<nhidden; j++)
-		if(hidden[j] == w)	/* already hidden */
-			return -1;
+	if (ishidden(w))/* already hidden */
+                return -1;
 	i = allocimage(display, w->screenr, w->i->chan, 0, DWhite);
 	if(i){
 		hidden[nhidden++] = w;
