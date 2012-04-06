@@ -339,10 +339,8 @@ procedure GrooveRectangle(win, x, y, w, h, bw)
    /w := win.get_width() - (x + win.get_dx())
    /h := win.get_height() - (y + win.get_dy())
 
-   if w < 0 then
-      x -:= (w := -w)
-   if h < 0 then
-      y -:= (h := -h)
+   if (w | h) < 0 then
+      return win
 
    /bw := 2
    if bw >= 0 then
@@ -373,10 +371,8 @@ procedure BevelRectangle(win, x, y, w, h, bw)
    /w := win.get_width() - (x + win.get_dx())
    /h := win.get_height() - (y + win.get_dy())
 
-   if w < 0 then
-      x -:= (w := -w)
-   if h < 0 then
-      y -:= (h := -h)
+   if (w | h) < 0 then
+      return win
 
    /bw := 2
    if bw >= 0 then {
@@ -391,8 +387,8 @@ procedure BevelRectangle(win, x, y, w, h, bw)
 
    xx := x + w
    yy := y + h
-   lower.fill_rectangle(x, yy, w, -bw)
-   lower.fill_rectangle(xx, y, -bw, h)
+   lower.fill_rectangle(x, yy - bw, w, bw)
+   lower.fill_rectangle(xx - bw, y, bw, h)
 
    while (bw -:= 1) >= 0 do {
       upper.draw_line(x, yy -:= 1, x, y, xx -:= 1, y)

@@ -31,7 +31,7 @@ class Size()
    end
 
    public empty()
-      return (w|h) = 0
+      return (w|h) <= 0
    end
 
    public new(w, h)
