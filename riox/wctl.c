@@ -35,6 +35,7 @@ enum
 	Unhide,
         Close,
 	Delete,
+        Refresh2,
 };
 
 static char *cmds[] = {
@@ -55,6 +56,7 @@ static char *cmds[] = {
         [Keepbelow2]    = "keepbelow",
         [Close]         = "close",
 	[Delete]	= "delete",
+	[Refresh2]	= "refresh",
 	nil
 };
 
@@ -420,7 +422,7 @@ writewctl(Xfid *x, char *err)
 	x->data[cnt] = '\0';
 	id = 0;
 
-        rect = w->i->r;
+        rect = rectsubpt(w->i->r, screen->r.min);
         mindx = w->mindx;
         maxdx = w->maxdx;
         mindy = w->mindy;
@@ -456,13 +458,15 @@ writewctl(Xfid *x, char *err)
                 return wctlnew(rect, arg, pid, hideit, scrollit, transientfor, noborder, 
                                keepabove, keepbelow, mindx, maxdx, mindy, maxdy,
                                dir, err);
+	case Refresh2:
+                wrefresh(w, w->i->r);
+		return 1;
 	case Set:
 		if(pid > 0)
 			wsetpid(w, pid, 0);
 		return 1;
 	case Move:
 		rect = Rect(rect.min.x, rect.min.y, rect.min.x+Dx(w->i->r), rect.min.y+Dy(w->i->r));
-		/*rect = rectonscreen(rect);*/
 		/* fall through */
 	case Resize:
                 w->mindx = mindx;

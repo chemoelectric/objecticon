@@ -1469,7 +1469,7 @@ static int open_screen_win(wsp ws)
         }
 
         if (ws->x != -INT_MAX && ws->y != -INT_MAX)
-            fprint(ws->wctl_fd, "move  -minx %d -miny %d", ws->x, ws->y);
+            fprint(ws->wctl_fd, "move -minx %d -miny %d", ws->x, ws->y);
 
         if (ws->state == IconicCanvas)
             fprint(ws->wctl_fd, "hide");
@@ -2092,9 +2092,11 @@ static void close_window_system(void)
        if (ws->win)
            close_screen_win(ws);
     }
+    closedisplay(display);
     if ((fd = open("/dev/wctl", OWRITE)) >= 0) {
         fprint(fd, "top"); 
         fprint(fd, "current"); 
+        fprint(fd, "refresh"); 
         close(fd);
     }
 }
@@ -2133,7 +2135,7 @@ static void init_window_system(void)
 
     /* initdraw seems to mess up the current window (the scrollbar
      * disappears and it is blanked entirely when the program exits).
-     * Hiding and unhiding the current window fixes this.
+     * Refreshing the current window fixes this.
      */
     if ((fd = open("/dev/wctl", ORDWR)) >= 0) {
         char buff[256];
@@ -2141,10 +2143,8 @@ static void init_window_system(void)
         if (n > 0) {
             buff[n] = 0;
             /* Don't do anything if our window is hidden */
-            if (!strstr(buff, "hidden")) {
-                fprint(fd, "hide"); 
-                fprint(fd, "unhide"); 
-            }
+            if (!strstr(buff, "hidden"))
+                fprint(fd, "refresh");
         }
         close(fd);
     }
