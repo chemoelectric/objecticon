@@ -420,7 +420,7 @@ writewctl(Xfid *x, char *err)
 	x->data[cnt] = '\0';
 	id = 0;
 
-	rect = rectsubpt(w->screenr, screen->r.min);
+        rect = w->i->r;
         mindx = w->mindx;
         maxdx = w->maxdx;
         mindy = w->mindy;
@@ -461,7 +461,7 @@ writewctl(Xfid *x, char *err)
 			wsetpid(w, pid, 0);
 		return 1;
 	case Move:
-		rect = Rect(rect.min.x, rect.min.y, rect.min.x+Dx(w->screenr), rect.min.y+Dy(w->screenr));
+		rect = Rect(rect.min.x, rect.min.y, rect.min.x+Dx(w->i->r), rect.min.y+Dy(w->i->r));
 		/*rect = rectonscreen(rect);*/
 		/* fall through */
 	case Resize:
@@ -472,15 +472,25 @@ writewctl(Xfid *x, char *err)
                 fl = wlimitrect(w, &rect);
                 /* If we didn't change the rectangle and we didn't
                  * limit the requested size, don't fire an event */
-		if(!fl && eqrect(rect, w->screenr))
-			return 1;
-		i = allocwindow(wscreen, rect, Refbackup, DWhite);
-		if(i == nil){
-			strcpy(err, Ewalloc);
-			return -1;
-		}
-		if (!w->noborder) border(i, rect, Selborder, red, ZP);
-		wsendctlmesg(w, Reshaped, i->r, i);
+                if(!fl && eqrect(rect, w->i->r))
+                    return 1;
+                if (ishidden(w)) {
+                    i = allocimage(display, rect, w->i->chan, 0, DWhite);
+                    if(i == nil){
+                        strcpy(err, Ewalloc);
+                        return -1;
+                    }
+                    if (!w->noborder) border(i, rect, Selborder, red, ZP);
+                    wsendctlmesg(w, Reshaped, ZR, i);
+                } else {
+                    i = allocwindow(wscreen, rect, Refbackup, DWhite);
+                    if(i == nil){
+                        strcpy(err, Ewalloc);
+                        return -1;
+                    }
+                    if (!w->noborder) border(i, rect, Selborder, red, ZP);
+                    wsendctlmesg(w, Reshaped, i->r, i);
+                }
 		return 1;
 	case Scroll:
 		w->scrolling = 1;

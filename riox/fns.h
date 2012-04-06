@@ -5,6 +5,7 @@ int     wkeepbelow(Window *w);
 int     wkeepabove(Window *w);
 void    wclosereq(Window *w);
 int      dbgalt(Alt *alts, char *lab);
+int     ishidden(Window *w);
 
 void	freescrtemps(void);
 int	parsewctl(char**, Rectangle, Rectangle*, int*, int*, int*, int*, int*, 

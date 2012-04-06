@@ -646,11 +646,21 @@ mousethread(void*)
 		}
 }
 
+int
+ishidden(Window *w)
+{
+    int j;
+    for(j=0; j<nhidden; j++)
+        if(w == hidden[j])
+            return 1;
+    return 0;
+}
+
 void
 resized(void)
 {
 	Image *im;
-	int i, j, ishidden;
+	int i;
 	Rectangle r;
 	Point o, n;
 	Window *w;
@@ -682,13 +692,7 @@ resized(void)
 		r.max.y = (r.max.y*n.y)/o.y;
 		r = rectaddpt(r, screen->clipr.min);
                 wlimitrect(w, &r);
-		ishidden = 0;
-		for(j=0; j<nhidden; j++)
-			if(w == hidden[j]){
-				ishidden = 1;
-				break;
-			}
-		if(ishidden) {
+		if(ishidden(w)) {
 			im = allocimage(display, r, screen->chan, 0, DWhite);
                         r = ZR;
 		} else
