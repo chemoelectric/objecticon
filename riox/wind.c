@@ -1485,7 +1485,7 @@ void
 wclosewin(Window *w)
 {
 	Rectangle r;
-	int i;
+	int i, findinput = 0;
 
 	w->deleted = TRUE;
         if(w == held) held = nil;
@@ -1498,6 +1498,7 @@ wclosewin(Window *w)
 	if(w == input){
 		input = nil;
 		wsetcursor(w, 0);
+                findinput = 1;
 	}
 	if(w == wkeyboard)
 		wkeyboard = nil;
@@ -1517,6 +1518,20 @@ wclosewin(Window *w)
 			MOVEIT originwindow(w->i, r.min, view->r.max);
 			freeimage(w->i);
 			w->i = nil;
+
+                        /* If the closing window had input, try to find another window to give it to. */
+                        if(findinput) {
+                            Window *w2 = 0;
+                            for(i=0; i<nwindow; i++) {
+                                Window *w3 = window[i];
+                                if (w3->i->screen && !w3->noborder) {   /* if not hidden and has border */
+                                    if (!w2 || w3->topped > w2->topped)
+                                        w2 = w3;
+                                }
+                            }
+                            if (w2)
+                                wcurrent(w2);
+                        }
 			return;
 		}
 	error("unknown window in closewin");
