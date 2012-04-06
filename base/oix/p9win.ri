@@ -2084,37 +2084,30 @@ static void fscreate(Req *r)
 
 Srv win_fs;
 
+static void refresh_wctl()
+{
+    int fd;
+    if ((fd = open("/dev/wctl", OWRITE)) >= 0) {
+        fprint(fd, "refresh");
+        close(fd);
+    }
+}
+
 static void close_window_system(void)
 {
     wsp ws;
-    int fd;
     for (ws = wstates; ws; ws = ws->next) {
        if (ws->win)
            close_screen_win(ws);
     }
     closedisplay(display);
-    /* Bring the current window to the top and refresh it, unless it's hidden */
-    if ((fd = open("/dev/wctl", ORDWR)) >= 0) {
-        char buff[256];
-        int n = read(fd, buff, sizeof(buff) - 1);
-        if (n > 0) {
-            buff[n] = 0;
-            /* Don't do anything if our window is hidden */
-            if (!strstr(buff, "hidden")) {
-                fprint(fd, "top"); 
-                fprint(fd, "current"); 
-                fprint(fd, "refresh");
-            }
-        }
-        close(fd);
-    }
+    /* Refresh current window */
+    refresh_wctl();
 }
 
 static void init_window_system(void)
 {
     Dir *fs;
-    int fd;
-    char *s;
 
     load_font_info();
 
@@ -2147,17 +2140,8 @@ static void init_window_system(void)
     /* initdraw blanks the current window, so unless we're using it,
      * ask riox to refresh it.
      */
-    if (use_win == 0 && (fd = open("/dev/wctl", ORDWR)) >= 0) {
-        char buff[256];
-        int n = read(fd, buff, sizeof(buff) - 1);
-        if (n > 0) {
-            buff[n] = 0;
-            /* Don't do anything if our window is hidden */
-            if (!strstr(buff, "hidden"))
-                fprint(fd, "refresh");
-        }
-        close(fd);
-    }
+    if (use_win == 0)
+        refresh_wctl();
 
     black = new_sharedcolor("black", 0x000000ff);
     white = new_sharedcolor("white", 0xffffffff);
