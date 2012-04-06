@@ -45,17 +45,7 @@ void	initcmd(void*);
 char		*fontname;
 int		mainpid;
 
-enum
-{
-	New,
-/*
-	Reshape,
-	Move,
-	Delete,
-	Hide,
-*/
-	Exit,
-};
+static int hasexit;
 
 enum
 {
@@ -67,14 +57,6 @@ enum
 	Scroll,
 };
 
-enum
-{
-    Hide4,
-    Close4,
-    Keepabove4,
-    Keepbelow4,
-    Delete4,
-};
 
 char		*menu2str[] = {
  [Cut]		"cut",
@@ -89,39 +71,6 @@ char		*menu2str[] = {
 Menu menu2 =
 {
 	menu2str
-};
-
-int	Hidden = Exit+1;
-
-char		*menu3str[100] = {
- [New]		"New",
-/**
- [Reshape]	"Resize",
- [Move]		"Move",
- [Delete]	"Delete",
- [Hide]		"Hide",
-**/
- [Exit]		"Exit",
-		nil
-};
-
-Menu menu3 =
-{
-	menu3str
-};
-
-char		*menu4str[] = {
-  [Hide4]       "Hide",
-  [Close4]      "Close",
-  [Keepabove4]  "Keep above",
-  [Keepbelow4]  "Keep below",
-  [Delete4]     "Delete",
-                nil
-};
-
-Menu menu4 =
-{
-	menu4str
 };
 
 
@@ -152,15 +101,13 @@ threadmain(int argc, char *argv[])
 	Image *i;
 	Rectangle r;
 
-        //rfork(RFENVG|RFNAMEG);
-	if(strstr(argv[0], ".out") == nil){
-		menu3str[Exit] = nil;
-		Hidden--;
-	}
 	initstr = nil;
 	kbdin = nil;
 	maxtab = 0;
 	ARGBEGIN{
+	case 'x':
+                hasexit = 1;
+                break;
 	case 'f':
 		fontname = ARGF();
 		if(fontname == nil)
@@ -707,73 +654,61 @@ resized(void)
 void
 button3menu(void)
 {
-	int i;
+        int i = 0, j;
+        int mnew = -2, exit = -2, firsthidden;
+        char *menustr[100];
+        Menu menu = { menustr };
 
-	for(i=0; i<nhidden; i++)
-		menu3str[i+Hidden] = hidden[i]->label;
-	menu3str[i+Hidden] = nil;
+        menustr[mnew = i++] = "New";
+	if(hasexit)
+            menustr[exit = i++] = "Exit";
+
+        firsthidden = i;
+	for(j=0; j<nhidden; j++)
+		menustr[i++] = hidden[j]->label;
+        menustr[i] = 0;
 
 	sweeping = 1;
-	switch(i = menuhit(3, mousectl, &menu3, wscreen)){
-	case -1:
-		break;
-	case New:
-                new(sweep(nil), FALSE, scrolling, -1, 0, 
-                    0, 0, 0, INT_MAX, 0, INT_MAX,
-                    0, nil, "/bin/rc", nil);
-		break;
-/*
-	case Reshape:
-		resize();
-		break;
-	case Move:
-		move();
-		break;
-	case Delete:
-		delete();
-		break;
-	case Hide:
-		hide();
-		break;
-*/
-	case Exit:
-		if(Hidden > Exit){
-			send(exitchan, nil);
-			break;
-		}
-		/* else fall through */
-	default:
-		unhide(i);
-		break;
-	}
+	i = menuhit(3, mousectl, &menu, wscreen);
+        if (i == mnew)
+            new(sweep(nil), FALSE, scrolling, -1, 0, 
+                0, 0, 0, INT_MAX, 0, INT_MAX,
+                0, nil, "/bin/rc", nil);
+        else if (i == exit)
+            send(exitchan, nil);
+        else if (i >= firsthidden)
+            unhide(i - firsthidden);
+
 	sweeping = 0;
 }
 
 void
 button3wmenu(Window *w)
 {
-	int i;
-	menu4str[Keepabove4] = w->keepabove ? "No keep above":"Keep above";
-	menu4str[Keepbelow4] = w->keepbelow ? "No keep below":"Keep below";
-	switch(i = menuhit(3, mousectl, &menu4, wscreen)){
-            case -1:
-		break;
-            case Hide4:
-                whide(w);
-                break;
-            case Close4:
-                wclosereq(w);
-                break;
-            case Keepabove4:
-                wkeepabove(w);
-                break;
-            case Keepbelow4:
-                wkeepbelow(w);
-                break;
-            case Delete4:
-		wsendctlmesg(w, Deleted, ZR, nil);
-                break;
-        }
+	int i = 0;
+        int hide = -2, close = -2, keepabove = -2, keepbelow = -2, delete = -2;
+        char *menustr[6];
+        Menu menu = { menustr };
+
+        if (w->transientfor == -1)
+            menustr[hide = i++] = "Hide";
+
+        menustr[close = i++] = "Close";
+	menustr[keepabove = i++] = w->keepabove ? "No keep above":"Keep above";
+	menustr[keepbelow = i++] = w->keepbelow ? "No keep below":"Keep below";
+        menustr[delete = i++] = "Delete";
+        menustr[i] = 0;
+	i = menuhit(3, mousectl, &menu, wscreen);
+        if (i == hide)
+            whide(w);
+        else if (i == close)
+            wclosereq(w);
+        else if (i == keepabove)
+            wkeepabove(w);
+        else if (i == keepbelow)
+            wkeepbelow(w);
+        else if (i == delete)
+            wsendctlmesg(w, Deleted, ZR, nil);
 }
 
 void
@@ -1341,8 +1276,6 @@ void
 unhide(int h)
 {
 	Window *w;
-
-	h -= Hidden;
 	w = hidden[h];
 	if(w == nil)
 		return;
