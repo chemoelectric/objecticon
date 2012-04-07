@@ -276,20 +276,6 @@ static void draw_error(Display *d, char *s)
     fprintf(stderr, "Draw error on display %p: %s\n", d, s);
 }
 
-static void show_square(Image *dest, Rectangle r)
-{
-    Point p[5];
-    Image *red = allocimage(display, Rect(0, 0, 1, 1), screen->chan, 1, DRed);
-    p[0] = r.min;
-    p[1] = Pt(r.max.x, r.min.y);
-    p[2] = r.max;
-    p[3] = Pt(r.min.x, r.max.y);
-    p[4] = p[0];
-    poly(dest, p, 5, Endsquare, Endsquare, 0, red, ZP);
-    freeimage(red);
-    flushimage(display, 1);
-}
-
 wbp wopen(char *display)
 {
     wbp w;
@@ -444,7 +430,7 @@ static void resize_pix_win(wbp w)
     if (Dx(ws->pix->r) >= ws->width &&
         Dy(ws->pix->r) >= ws->height)
         return;
-    MemProtect(t = allocimage(display, Rect(0, 0, ws->width, ws->height), screen->chan, 1, DNofill));
+    MemProtect(t = allocimage(display, Rect(0, 0, ws->width, ws->height), display->image->chan, 1, DNofill));
     gendraw(t, t->r, w->context->bg->i, ZP, 0, ZP);
     copy_to(t, ws->pix);
     freeimage(ws->pix);
@@ -1427,7 +1413,7 @@ static int open_screen_win(wsp ws)
 
     ws->using_win = use_win;
     if (ws->using_win) {
-        strcpy(ws->mount_dir, "/dev");
+        strcpy(ws->mount_dir, display->windir);
 
         if ((ws->wctl_fd = open_winfile(ws, "wctl", OWRITE)) < 0) {
             whyf("Can't open wctl file: %r");
@@ -1698,8 +1684,11 @@ static void close_screen_win(wsp ws)
         freescreen(ws->screen);
         ws->screen = 0;
     }
-    if (ws->wctl_fd >= 0)
+    if (ws->wctl_fd >= 0) {
+        if (ws->using_win)
+            fprint(ws->wctl_fd, "refresh");
         close(ws->wctl_fd);
+    }
 
     ws->using_win = 0;
     ws->mount_dir[0] = 0;
@@ -1711,7 +1700,7 @@ static void close_screen_win(wsp ws)
 
 static void open_pix_win(wsp ws)
 {
-    MemProtect(ws->pix = allocimage(display, Rect(0, 0, ws->width, ws->height), screen->chan, 1, DNofill));
+    MemProtect(ws->pix = allocimage(display, Rect(0, 0, ws->width, ws->height), display->image->chan, 1, DNofill));
 }
 
 static void close_pix_win(wsp ws)
@@ -2096,15 +2085,6 @@ static void fscreate(Req *r)
 
 Srv win_fs;
 
-static void refresh_wctl(void)
-{
-    int fd;
-    if ((fd = open("/dev/wctl", OWRITE)) >= 0) {
-        fprint(fd, "refresh");
-        close(fd);
-    }
-}
-
 static void close_window_system(void)
 {
     wsp ws;
@@ -2113,13 +2093,13 @@ static void close_window_system(void)
            close_screen_win(ws);
     }
     closedisplay(display);
-    /* Refresh current window */
-    refresh_wctl();
 }
 
 static void init_window_system(void)
 {
     Dir *fs;
+
+    env_int("OIUSEWIN", &use_win, 0, 2);
 
     load_font_info();
 
@@ -2144,16 +2124,8 @@ static void init_window_system(void)
      * entry in the directory */
     mkdir(WINDOW_MOUNT_ROOT "/JUNK", 0777);
 
-    if (initdraw(draw_error, 0, 0) < 0)
-        ffatalerr("Couldn't initialize window system: %r");
-
-    env_int("OIUSEWIN", &use_win, 0, 2);
-
-    /* initdraw blanks the current window, so unless we're using it,
-     * ask riox to refresh it.
-     */
-    if (use_win == 0)
-        refresh_wctl();
+    if ((display = initdisplay(0, 0, draw_error)) == nil)
+        ffatalerr("Couldn't initialize display: %r");
 
     black = new_sharedcolor("black", 0x000000ff);
     white = new_sharedcolor("white", 0xffffffff);
