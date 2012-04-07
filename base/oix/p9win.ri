@@ -1653,10 +1653,6 @@ static void close_screen_win(wsp ws)
         close(ws->cursor_fd);
     if (ws->label_fd >= 0)
         close(ws->label_fd);
-    if (ws->mouse_fd >= 0)
-        close(ws->mouse_fd);
-    if (ws->cons_fd >= 0)
-        close(ws->cons_fd);
     if (ws->screeninfo_fd >= 0)
         close(ws->screeninfo_fd);
     if (ws->mouse_pid >= 0)
@@ -1684,11 +1680,17 @@ static void close_screen_win(wsp ws)
         freescreen(ws->screen);
         ws->screen = 0;
     }
-    if (ws->wctl_fd >= 0) {
-        if (ws->using_win)
-            fprint(ws->wctl_fd, "refresh");
+    /*
+     * If ws->using_win, then closing the mouse fd causes riox to
+     * issue a refresh to the underlying window, restoring the
+     * original contents.
+     */
+    if (ws->mouse_fd >= 0)
+        close(ws->mouse_fd);
+    if (ws->cons_fd >= 0)
+        close(ws->cons_fd);
+    if (ws->wctl_fd >= 0)
         close(ws->wctl_fd);
-    }
 
     ws->using_win = 0;
     ws->mount_dir[0] = 0;
