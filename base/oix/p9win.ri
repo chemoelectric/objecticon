@@ -4,6 +4,7 @@ static Rectangle max_rect;
 static struct Cursor cursor_data[];
 static int use_win;
 static int bintime_fd;
+static char old_label[256];
 
 static int read_screeninfo(wsp ws, int *mx, int *my, int *sx, int *sy, int *sw, int *sh);
 static int open_winfile(wsp ws, char *s, int mode);
@@ -306,8 +307,8 @@ wbp wopen(char *display)
     GRFX_ALLOC(ws, _wstate);
     ws->listp = nulldesc;    /* set to [] after linked into global context list */
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
-        ws->screeninfo_fd = ws->cursor_fd = ws->mouse_pid = ws->cons_pid = ws->wsys_fd = 
-        ws->wctl_fd = ws->winid = ws->transientfor_winid = -1;
+        ws->screeninfo_fd = ws->cursor_fd = ws->label_fd = ws->mouse_pid = ws->cons_pid =
+        ws->wsys_fd = ws->wctl_fd = ws->winid = ws->transientfor_winid = -1;
     ws->cursor = stringint_lookup(cursors, "left ptr");
     ws->x = ws->y = -INT_MAX;
     ws->minwidth = ws->minheight = 1;
@@ -1296,7 +1297,7 @@ void doconfig(wbp w, int status)
                 minw = maxw = ws->width;
                 minh = maxh = ws->height;
             }
-            fprint(ws->wctl_fd, "resize  -dx %d -dy %d -mindx %d -maxdx %d -mindy %d -maxdy %d", 
+            fprint(ws->wctl_fd, "resize -dx %d -dy %d -mindx %d -maxdx %d -mindy %d -maxdy %d", 
                    adjust(ws, ws->width), 
                    adjust(ws, ws->height),
                    adjust(ws, minw),
@@ -1551,13 +1552,17 @@ static int open_screen_win(wsp ws)
     ws->winid = atoi(buff);
     close(fd);
 
-    if ((fd = open_winfile(ws, "label", OWRITE)) < 0) {
+    if ((ws->label_fd = open_winfile(ws, "label", ORDWR)) < 0) {
         whyf("Can't open label file %r");
         close_screen_win(ws);
         return Failed;
     }
-    write(fd, ws->windowlabel, strlen(ws->windowlabel));
-    close(fd);
+    if (ws->using_win) {
+        /* Save label */
+        read(ws->label_fd, old_label, sizeof(old_label) - 1);
+        seek(ws->label_fd, 0, 0);
+    }
+    write(ws->label_fd, ws->windowlabel, strlen(ws->windowlabel));
 
     if (pipe(ws->event_pipe) < 0) {
         whyf("Couldn't init event pipe: %r");
@@ -1639,7 +1644,16 @@ static Image *any_other_win(Image *win)
 
 static void close_screen_win(wsp ws)
 {
-    if (!ws->using_win) {
+    if (ws->using_win) {
+        /* Reset old label */
+        if (ws->label_fd >= 0) {
+            seek(ws->label_fd, 0, 0);
+            write(ws->label_fd, old_label, strlen(old_label));
+        }
+        /* Clear any size limits */
+        if (ws->wctl_fd >= 0)
+            fprint(ws->wctl_fd, "resize -mindx 1 -maxdx %d -mindy 1 -maxdy %d", INT_MAX, INT_MAX);
+    } else {
         unmount(0, ws->mount_dir);
         remove(ws->mount_dir);
     }
@@ -1651,6 +1665,8 @@ static void close_screen_win(wsp ws)
         close(ws->consctl_fd);
     if (ws->cursor_fd >= 0)
         close(ws->cursor_fd);
+    if (ws->label_fd >= 0)
+        close(ws->label_fd);
     if (ws->mouse_fd >= 0)
         close(ws->mouse_fd);
     if (ws->cons_fd >= 0)
@@ -1685,10 +1701,11 @@ static void close_screen_win(wsp ws)
     if (ws->wctl_fd >= 0)
         close(ws->wctl_fd);
 
+    ws->using_win = 0;
     ws->mount_dir[0] = 0;
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
-        ws->screeninfo_fd = ws->cursor_fd = ws->mouse_pid = ws->cons_pid = ws->wsys_fd = 
-        ws->wctl_fd = ws->winid = -1;
+        ws->screeninfo_fd = ws->cursor_fd = ws->label_fd = ws->mouse_pid = ws->cons_pid =
+        ws->wsys_fd = ws->wctl_fd = ws->winid = -1;
     synch_state(ws);
 }
 
@@ -1817,13 +1834,8 @@ int setwindowlabel(wbp w, char *val)
         free(ws->windowlabel);
     ws->windowlabel = salloc(val);
     if (ws->win) {
-        int fd;
-        if ((fd = open_winfile(ws, "label", OWRITE)) < 0) {
-            whyf("Can't open label file %r");
-            return Failed;
-        }
-        write(fd, val, strlen(val));
-        close(fd);
+        seek(ws->label_fd, 0, 0);
+        write(ws->label_fd, val, strlen(val));
     }
     return Succeeded;
 }
@@ -2084,7 +2096,7 @@ static void fscreate(Req *r)
 
 Srv win_fs;
 
-static void refresh_wctl()
+static void refresh_wctl(void)
 {
     int fd;
     if ((fd = open("/dev/wctl", OWRITE)) >= 0) {
