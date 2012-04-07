@@ -1106,6 +1106,8 @@ wselect(Window *w)
 	uint q0, q1;
 	int b, x, y, first;
 
+        if(w != input) return;
+
 	first = 1;
 	selectwin = w;
 	/*
