@@ -25,6 +25,7 @@ enum
 	Noscroll,
         Keepabove2,
         Keepbelow2,
+        Keepnormal,
         Grab,
         Ungrab,
 	Set,
@@ -54,6 +55,7 @@ static char *cmds[] = {
         [Ungrab]        = "ungrab",
         [Keepabove2]    = "keepabove",
         [Keepbelow2]    = "keepbelow",
+        [Keepnormal]    = "keepnormal",
         [Close]         = "close",
 	[Delete]	= "delete",
 	[Refresh2]	= "refresh",
@@ -510,6 +512,9 @@ writewctl(Xfid *x, char *err)
 		return 1;
 	case Keepbelow2:
                 wkeepbelow(w);
+		return 1;
+	case Keepnormal:
+                wkeepnormal(w);
 		return 1;
 	case Close:
                 wclosereq(w);

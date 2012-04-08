@@ -3,6 +3,7 @@ int	whide(Window*);
 int	wunhide(Window*);
 void    wkeepbelow(Window *w);
 void    wkeepabove(Window *w);
+void    wkeepnormal(Window *w);
 void    wclosereq(Window *w);
 int      dbgalt(Alt *alts, char *lab);
 

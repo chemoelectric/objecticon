@@ -705,7 +705,7 @@ void
 button3wmenu(Window *w)
 {
 	int i = 0;
-        int hide = -2, close = -2, keepabove = -2, keepbelow = -2, delete = -2;
+        int hide = -2, close = -2, keepabove = -2, keepbelow = -2, keepnormal = -2, delete = -2;
         char *menustr[6];
         Menu menu = { menustr };
 
@@ -713,8 +713,12 @@ button3wmenu(Window *w)
             menustr[hide = i++] = "Hide";
 
         menustr[close = i++] = "Close";
-	menustr[keepabove = i++] = w->keepabove ? "No keep above":"Keep above";
-	menustr[keepbelow = i++] = w->keepbelow ? "No keep below":"Keep below";
+        if (w->keepabove || w->keepbelow)
+            menustr[keepnormal = i++] = "Keep normal";
+        if (!w->keepabove)
+            menustr[keepabove = i++] = "Keep above";
+        if (!w->keepbelow)
+            menustr[keepbelow = i++] = "Keep below";
         menustr[delete = i++] = "Delete";
         menustr[i] = 0;
 	i = menuhit(3, mousectl, &menu, wscreen);
@@ -726,6 +730,8 @@ button3wmenu(Window *w)
             wkeepabove(w);
         else if (i == keepbelow)
             wkeepbelow(w);
+        else if (i == keepnormal)
+            wkeepnormal(w);
         else if (i == delete)
             wsendctlmesg(w, Deleted, ZR, nil);
 }
@@ -1190,7 +1196,7 @@ wkeepabove(Window *w)
 {
     w->wctlready = 1;
     w->keepbelow = 0;
-    w->keepabove = !w->keepabove;
+    w->keepabove = 1;
     wsendctlmesg(w, Wakeup, ZR, nil);
 }
 
@@ -1199,7 +1205,16 @@ wkeepbelow(Window *w)
 {
     w->wctlready = 1;
     w->keepabove = 0;
-    w->keepbelow = !w->keepbelow;
+    w->keepbelow = 1;
+    wsendctlmesg(w, Wakeup, ZR, nil);
+}
+
+void
+wkeepnormal(Window *w)
+{
+    w->wctlready = 1;
+    w->keepabove = 0;
+    w->keepbelow = 0;
     wsendctlmesg(w, Wakeup, ZR, nil);
 }
 
