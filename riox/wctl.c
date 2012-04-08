@@ -478,7 +478,7 @@ writewctl(Xfid *x, char *err)
                  * limit the requested size, don't fire an event */
                 if(!fl && eqrect(rect, w->i->r))
                     return 1;
-                if (ishidden(w)) {
+                if (w->hidden) {
                     i = allocimage(display, rect, w->i->chan, 0, DWhite);
                     if(i == nil){
                         strcpy(err, Ewalloc);
@@ -515,37 +515,27 @@ writewctl(Xfid *x, char *err)
                 wclosereq(w);
 		return 1;
 	case Top:
-		wtopme(w);
+		wtop(w);
 		return 1;
 	case Bottom:
-		wbottomme(w);
+		wbottom(w);
 		return 1;
 	case Current:
-		wcurrent(w);
+                if (!wcurrent(w)) {
+                    strcpy(err, "cannot make window current");
+                    return -1;
+                }
 		return 1;
 	case Hide:
-		switch(whide(w)){
-		case -1:
-			strcpy(err, "window already hidden");
-			return -1;
-		case 0:
-			strcpy(err, "hide failed");
-			return -1;
-		default:
-			break;
+		if(!whide(w)){
+                    strcpy(err, "cannot hide window");
+                    return -1;
 		}
 		return 1;
 	case Unhide:
-		for(j=0; j<nhidden; j++)
-			if(hidden[j] == w)
-				break;
-		if(j == nhidden){
-			strcpy(err, "window not hidden");
-			return -1;
-		}
-		if(wunhide(j) == 0){
-			strcpy(err, "hide failed");
-			return -1;
+		if(!wunhide(w)){
+                    strcpy(err, "cannot unhide window");
+                    return -1;
 		}
 		return 1;
         case Grab:

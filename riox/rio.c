@@ -20,11 +20,6 @@
  * company at 1‑800‑543‑3002.
  */
 
-void		resize(void);
-void		move(void);
-void		delete(void);
-void		hide(void);
-void		unhide(int);
 void		newtile(int);
 Image	*sweep(Window *);
 Image	*bandsize(Window*);
@@ -489,6 +484,18 @@ static void doreshape(Window *w)
     }
 }
 
+static void
+pressed(Window *w)
+{
+    if(!w->topped == topped && input == w || w->noborder)
+        return;
+    wtop(w);
+    if (input != w)
+        w->focusclickflag = 1;
+    wcurrent(w);
+    flushimage(display, 1);
+}
+
 static void domouse(void)
 {
     static int oldbuttons;
@@ -526,7 +533,7 @@ static void domouse(void)
             sendmouseevent(held, 'm');
         else {
             if ((press & 7) && overw && !grab)
-                wtop(overw);
+                pressed(overw);
             held = over;
             if (held)
                 sendmouseevent(held, 'm');
@@ -593,16 +600,6 @@ mousethread(void*)
 		}
 }
 
-int
-ishidden(Window *w)
-{
-    int j;
-    for(j=0; j<nhidden; j++)
-        if(w == hidden[j])
-            return 1;
-    return 0;
-}
-
 void
 resized(void)
 {
@@ -639,7 +636,7 @@ resized(void)
 		r.max.y = (r.max.y*n.y)/o.y;
 		r = rectaddpt(r, screen->clipr.min);
                 wlimitrect(w, &r);
-		if(ishidden(w)) {
+		if(w->hidden) {
 			im = allocimage(display, r, screen->chan, 0, DWhite);
                         r = ZR;
 		} else
@@ -654,19 +651,31 @@ resized(void)
 void
 button3menu(void)
 {
-        int i = 0, j;
-        int mnew = -2, exit = -2, firsthidden;
+        int i, j, n = 0;
+        int mnew = -2, exit = -2;
         char *menustr[100];
+        Window *menuwin[100];
         Menu menu = { menustr };
 
-        menustr[mnew = i++] = "New";
+        menustr[mnew = n++] = estrdup("New");
 	if(hasexit)
-            menustr[exit = i++] = "Exit";
+            menustr[exit = n++] = estrdup("Exit");
 
-        firsthidden = i;
-	for(j=0; j<nhidden; j++)
-		menustr[i++] = hidden[j]->label;
-        menustr[i] = 0;
+	for(j=0; j<nwindow; j++) {
+            Window *w = window[j];
+            if (!w->noborder && w->transientfor == -1) {
+                menuwin[n] = w;
+                menustr[n] = emalloc(strlen(w->label) + 5);
+                if (w == input)
+                    sprint(menustr[n], "* %s", w->label);
+                else if (w->hidden)
+                    sprint(menustr[n], "H %s", w->label);
+                else
+                    sprint(menustr[n], "  %s", w->label);
+                ++n;
+            }
+        }
+        menustr[n] = 0;
 
 	sweeping = 1;
 	i = menuhit(3, mousectl, &menu, wscreen);
@@ -676,10 +685,20 @@ button3menu(void)
                 0, nil, "/bin/rc", nil);
         else if (i == exit)
             send(exitchan, nil);
-        else if (i >= firsthidden)
-            unhide(i - firsthidden);
-
+        else if (i > 0) {
+            Window *w = menuwin[i];
+            if (w == input)
+                whide(w);
+            else if (w->hidden)
+                wunhide(w);
+            else {
+		wtop(w);
+                wcurrent(w);
+            }
+        }
 	sweeping = 0;
+        for (i = 0; i < n; ++i)
+            free(menustr[i]);
 }
 
 void
@@ -1143,57 +1162,19 @@ pointto(int wait)
 	return w;
 }
 
-void
-delete(void)
-{
-	Window *w;
-
-	w = pointto(TRUE);
-	if(w)
-		wsendctlmesg(w, Deleted, ZR, nil);
-}
-
-void
-resize(void)
-{
-	Window *w;
-	Image *i;
-
-	w = pointto(TRUE);
-	if(w == nil || !resizable(w))
-		return;
-	i = sweep(w);
-	if(i)
-		wsendctlmesg(w, Reshaped, i->r, i);
-}
-
-void
-move(void)
-{
-	Window *w;
-	Image *i;
-	Rectangle r;
-
-	w = pointto(FALSE);
-	if(w == nil || w->noborder)
-		return;
-	i = drag(w, &r);
-	if(i)
-		wsendctlmesg(w, Moved, r, i);
-	cornercursor(input, mouse->xy, 1);
-}
-
 static int
 whideimpl(Window *w)
 {
 	Image *i;
 	int j;
 
-	if (ishidden(w))/* already hidden */
+	if (w->hidden)/* already hidden */
                 return -1;
 	i = allocimage(display, w->screenr, w->i->chan, 0, DWhite);
 	if(i){
-		hidden[nhidden++] = w;
+                w->hidden = 1;
+                if(w == input)
+                    wcurrent(nil);
 		wsendctlmesg(w, Reshaped, ZR, i);
                 for(j=0; j<nwindow; j++){
                     if(window[j]->transientfor == w->id)
@@ -1204,7 +1185,7 @@ whideimpl(Window *w)
 	return 0;
 }
 
-int
+void
 wkeepabove(Window *w)
 {
     w->wctlready = 1;
@@ -1213,7 +1194,7 @@ wkeepabove(Window *w)
     wsendctlmesg(w, Wakeup, ZR, nil);
 }
 
-int
+void
 wkeepbelow(Window *w)
 {
     w->wctlready = 1;
@@ -1225,9 +1206,14 @@ wkeepbelow(Window *w)
 int
 whide(Window *w)
 {
-        if(w->noborder || w->transientfor != -1)
-            return 0;
-        return whideimpl(w);
+    if(w->hidden)
+        return 1;
+    if (w->noborder || w->transientfor != -1)
+        return 0;
+    whideimpl(w);
+    if (input == nil)
+        choosewcurrent();
+    return 1;
 }
 
 static
@@ -1235,50 +1221,28 @@ int
 unhide_transient(Window *w)
 {
     int j;
-    for(j=0; j<nhidden; j++)
-        if(hidden[j]->transientfor == w->id)
-            return wunhide(j);
+    for(j=0; j<nwindow; j++)
+        if(window[j]->hidden && window[j]->transientfor == w->id)
+            return wunhide(window[j]);
     return 0;
 }
 
 int
-wunhide(int h)
+wunhide(Window *w)
 {
 	Image *i;
-	Window *w;
-
-	w = hidden[h];
+        if (!w->hidden)
+            return 1;
 	i = allocwindow(wscreen, w->i->r, Refbackup, DWhite);
 	if(i){
-		--nhidden;
-		memmove(hidden+h, hidden+h+1, (nhidden-h)*sizeof(Window*));
-		wsendctlmesg(w, Reshaped, w->i->r, i);
-                while (unhide_transient(w));
-
-		return 1;
+            w->hidden = 0;
+            if(w != input)
+                wcurrent(w);
+            wsendctlmesg(w, Reshaped, w->i->r, i);
+            while (unhide_transient(w));
+            return 1;
 	}
 	return 0;
-}
-
-void
-hide(void)
-{
-	Window *w;
-
-	w = pointto(TRUE);
-	if(w == nil)
-		return;
-	whide(w);
-}
-
-void
-unhide(int h)
-{
-	Window *w;
-	w = hidden[h];
-	if(w == nil)
-		return;
-	wunhide(h);
 }
 
 int
@@ -1316,13 +1280,12 @@ new(Image *i, int hideit, int scrollit, int transientfor, int noborder,
         mc->type = 'm';
 	mc->c = cm;
         mc->image = i;
-	w = wmk(i, mc, ck, cctl, scrollit, transientfor, noborder,
+	w = wmk(i, mc, ck, cctl, hideit, scrollit, transientfor, noborder,
                 keepabove, keepbelow, mindx, maxdx, mindy, maxdy);
 	free(mc);	/* wmk copies *mc */
 	window = erealloc(window, ++nwindow*sizeof(Window*));
 	window[nwindow-1] = w;
 	if(hideit){
-		hidden[nhidden++] = w;
 		w->screenr = ZR;
 	}
 	threadcreate(winctl, w, 8192);

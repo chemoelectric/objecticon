@@ -1,11 +1,10 @@
 void	keyboardsend(char*, int);
 int	whide(Window*);
-int	wunhide(int);
-int     wkeepbelow(Window *w);
-int     wkeepabove(Window *w);
+int	wunhide(Window*);
+void    wkeepbelow(Window *w);
+void    wkeepabove(Window *w);
 void    wclosereq(Window *w);
 int      dbgalt(Alt *alts, char *lab);
-int     ishidden(Window *w);
 
 void	freescrtemps(void);
 int	parsewctl(char**, Rectangle, Rectangle*, int*, int*, int*, int*, int*, 

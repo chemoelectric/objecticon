@@ -21,7 +21,7 @@ enum
 	MinWater	= 20000,	/* room to leave available when reallocating */
 };
 
-static	int		topped;
+int		topped;
 static	int		id;
 
 static	Image	*cols[NCOL];
@@ -35,7 +35,7 @@ static	Image	*lightholdcol;
 static	Image	*paleholdcol;
 
 Window*
-wmk(Image *i, MousectlEx *mc, Channel *ck, Channel *cctl, int scrolling, int transientfor, int noborder,
+wmk(Image *i, MousectlEx *mc, Channel *ck, Channel *cctl, int hidden, int scrolling, int transientfor, int noborder,
     int keepabove, int keepbelow, int mindx, int maxdx, int mindy, int maxdy)
 {
 	Window *w;
@@ -77,6 +77,7 @@ wmk(Image *i, MousectlEx *mc, Channel *ck, Channel *cctl, int scrolling, int tra
 	w->topped = ++topped;
 	w->id = ++id;
 	w->notefd = -1;
+        w->hidden = hidden;
 	w->scrolling = scrolling;
         w->transientfor = transientfor;
         w->noborder = noborder;
@@ -231,7 +232,7 @@ winctl(void *arg)
 	Consreadmesg cwrm;
 	Stringpair pair;
 	Wctlmesg wcm;
-        char buff[128];
+        char buff[256];
 
 	w = arg;
 	snprint(buff, sizeof buff, "winctl-id%d", w->id);
@@ -432,11 +433,8 @@ winctl(void *arg)
 				pair.ns = sprint(pair.s, "");
 			else{
                                 strcpy(buff, " ");
-				for(i=0; i<nhidden; i++)
-					if(hidden[i] == w){
-                                            strcat(buff, "hidden ");
-                                            break;
-					}
+				if(w->hidden)
+                                    strcat(buff, "hidden ");
 				if(w == input)
                                     strcat(buff, "current ");
                                 if(w->noborder)
@@ -447,6 +445,14 @@ winctl(void *arg)
                                     strcat(buff, "keepbelow ");
                                 if (w->transientfor != -1)
                                     sprint(buff + strlen(buff), "transientfor:%d ", w->transientfor);
+                                if (w->mindx != 1)
+                                    sprint(buff + strlen(buff), "mindx:%d ", w->mindx);
+                                if (w->mindy != 1)
+                                    sprint(buff + strlen(buff), "mindy:%d ", w->mindy);
+                                if (w->maxdx != INT_MAX)
+                                    sprint(buff + strlen(buff), "maxdx:%d ", w->maxdx);
+                                if (w->maxdy != INT_MAX)
+                                    sprint(buff + strlen(buff), "maxdy:%d ", w->maxdy);
 
 				pair.ns = snprint(pair.s, pair.ns, "%11d %11d %11d %11d%s",
                                                   w->i->r.min.x, w->i->r.min.y, w->i->r.max.x, w->i->r.max.y, buff);
@@ -1222,11 +1228,6 @@ wctlmesg(Window *w, int m, Rectangle r, Image *i)
                 ensurestacking();
 		w->wctlready = 1;
 		proccreate(deletetimeoutproc, estrdup(buf), 4096);
-		if(Dx(r) > 0){
-			if(w != input)
-				wcurrent(w);
-		}else if(w == input)
-			wcurrent(nil);
 		flushimage(display, 1);
 		break;
 	case Refresh:
@@ -1336,14 +1337,31 @@ wpointto(Point pt)
 }
 
 void
+choosewcurrent(void)
+{
+    Window *w = 0;
+    int i;
+    for(i=0; i<nwindow; i++) {
+        Window *x = window[i];
+        if (!x->hidden && !x->noborder) {   /* if not hidden and has border */
+            if (!w || x->topped > w->topped)
+                w = x;
+        }
+    }
+    if (w)
+        wcurrent(w);
+}
+
+int
 wcurrent(Window *w)
 {
 	Window *oi;
 
-        if(w && w->noborder) return;
+        if(w && (w->noborder || w->hidden))
+            return 0;
 
 	if(wkeyboard!=nil && w==wkeyboard)
-		return;
+		return 0;
 	oi = input;
 	input = w;
 	if(oi!=w && oi!=nil)
@@ -1362,6 +1380,7 @@ wcurrent(Window *w)
 			wsendctlmesg(w, Wakeup, ZR, nil);
 		}
 	}
+        return 1;
 }
 
 void
@@ -1402,7 +1421,7 @@ ensurestacking(void)
     largest_notka = INT_MIN;
     for(i=0; i<nwindow; i++) {
         Window *w = window[i];
-        if (w->i->screen) {   /* if not hidden */
+        if (!w->hidden) {
             if (!w->keepbelow && w->topped < smallest_notkb)
                 smallest_notkb = w->topped;
             if (!w->keepabove && w->topped > largest_notka)
@@ -1411,7 +1430,7 @@ ensurestacking(void)
     }
     for(i=0; i<nwindow; i++) {
         Window *w = window[i];
-        if (w->i->screen) {   /* if not hidden */
+        if (!w->hidden) {
             if(w->keepabove && w->topped < largest_notka) {
                 topwindow(w->i);
                 w->topped = ++topped;
@@ -1432,26 +1451,8 @@ ensurestacking(void)
     flushimage(display, 1);
 }
 
-Window*
-wtop(Window *w)
-{
-	if(w){
-		if(w->topped == topped && input == w)
-			return nil;
-                if(w->noborder) return nil;
-		topwindow(w->i);
-		w->topped = ++topped;
-                if (input != w)
-                    w->focusclickflag = 1;
-                ensurestacking();
-		wcurrent(w);
-		flushimage(display, 1);
-	}
-	return w;
-}
-
 void
-wtopme(Window *w)
+wtop(Window *w)
 {
 	if(w!=nil && w->i!=nil && !w->deleted && w->topped!=topped){
 		topwindow(w->i);
@@ -1462,7 +1463,7 @@ wtopme(Window *w)
 }
 
 void
-wbottomme(Window *w)
+wbottom(Window *w)
 {
 	if(w!=nil && w->i!=nil && !w->deleted){
 		bottomwindow(w->i);
@@ -1504,12 +1505,6 @@ wclosewin(Window *w)
 	}
 	if(w == wkeyboard)
 		wkeyboard = nil;
-	for(i=0; i<nhidden; i++)
-		if(hidden[i] == w){
-			--nhidden;
-			memmove(hidden+i, hidden+i+1, (nhidden-i)*sizeof(hidden[0]));
-			break;
-		}
 	for(i=0; i<nwindow; i++)
 		if(window[i] == w){
 			--nwindow;
@@ -1522,18 +1517,8 @@ wclosewin(Window *w)
 			w->i = nil;
 
                         /* If the closing window had input, try to find another window to give it to. */
-                        if(findinput) {
-                            Window *w2 = 0;
-                            for(i=0; i<nwindow; i++) {
-                                Window *w3 = window[i];
-                                if (w3->i->screen && !w3->noborder) {   /* if not hidden and has border */
-                                    if (!w2 || w3->topped > w2->topped)
-                                        w2 = w3;
-                                }
-                            }
-                            if (w2)
-                                wcurrent(w2);
-                        }
+                        if(findinput)
+                            choosewcurrent();
 			return;
 		}
 	error("unknown window in closewin");
