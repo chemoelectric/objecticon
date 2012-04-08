@@ -328,15 +328,31 @@ parsewctl(char **argp, Rectangle r, Rectangle *rp, int *pidp, int *idp, int *hid
 			r.max.y = set(sign, r.max.y-xy, r.min.y+xy, r.max.y+xy);
 			break;
 		case Mindx:
+                        if (sign < 0 || xy < 1) {
+                            strcpy(err, "invalid mindx");
+                            return -1;
+                        }
                         *mindxp = xy;
 			break;
 		case Maxdx:
+                        if (sign < 0 || xy < 1) {
+                            strcpy(err, "invalid maxdx");
+                            return -1;
+                        }
                         *maxdxp = xy;
 			break;
 		case Mindy:
+                        if (sign < 0 || xy < 1) {
+                            strcpy(err, "invalid mindy");
+                            return -1;
+                        }
                         *mindyp = xy;
 			break;
 		case Maxdy:
+                        if (sign < 0 || xy < 1) {
+                            strcpy(err, "invalid maxdy");
+                            return -1;
+                        }
                         *maxdyp = xy;
 			break;
 		case Transientfor:

@@ -163,7 +163,7 @@ xfidattach(Xfid *x)
 	newlymade = FALSE;
 	hideit = 0;
         noborder = keepabove = keepbelow = 0;
-        mindx = mindy = 0;
+        mindx = mindy = 1;
         maxdx = maxdy = INT_MAX;
         transientfor = -1;
 
