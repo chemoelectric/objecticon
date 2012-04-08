@@ -56,7 +56,7 @@ enum
 char		*menu2str[] = {
  [Cut]		"cut",
  [Paste]		"paste",
- [Snarf]		"snarf",
+ [Snarf]		"copy",
  [Plumb]		"plumb",
  [Send]		"send",
  [Scroll]		"scroll",
