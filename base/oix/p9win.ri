@@ -1543,12 +1543,10 @@ static int open_screen_win(wsp ws)
         close_screen_win(ws);
         return Failed;
     }
-    if (ws->using_win) {
+    if (ws->using_win)
         /* Save label */
-        read(ws->label_fd, old_label, sizeof(old_label) - 1);
-        seek(ws->label_fd, 0, 0);
-    }
-    write(ws->label_fd, ws->windowlabel, strlen(ws->windowlabel));
+        pread(ws->label_fd, old_label, sizeof(old_label) - 1, 0);
+    pwrite(ws->label_fd, ws->windowlabel, strlen(ws->windowlabel), 0);
 
     if (pipe(ws->event_pipe) < 0) {
         whyf("Couldn't init event pipe: %r");
@@ -1632,10 +1630,8 @@ static void close_screen_win(wsp ws)
 {
     if (ws->using_win) {
         /* Reset old label */
-        if (ws->label_fd >= 0) {
-            seek(ws->label_fd, 0, 0);
-            write(ws->label_fd, old_label, strlen(old_label));
-        }
+        if (ws->label_fd >= 0)
+            pwrite(ws->label_fd, old_label, strlen(old_label), 0);
         /* Clear any size limits */
         if (ws->wctl_fd >= 0)
             fprint(ws->wctl_fd, "resize -mindx 1 -maxdx %d -mindy 1 -maxdy %d", INT_MAX, INT_MAX);
@@ -1824,10 +1820,8 @@ int setwindowlabel(wbp w, char *val)
     if (ws->windowlabel) 
         free(ws->windowlabel);
     ws->windowlabel = salloc(val);
-    if (ws->win) {
-        seek(ws->label_fd, 0, 0);
-        write(ws->label_fd, val, strlen(val));
-    }
+    if (ws->win)
+        pwrite(ws->label_fd, val, strlen(val), 0);
     return Succeeded;
 }
 
