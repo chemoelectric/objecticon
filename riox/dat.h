@@ -45,7 +45,6 @@ typedef	struct	Mousereadmesg Mousereadmesg;
 typedef	struct	Mousestate	Mousestate;
 typedef	struct	Ref Ref;
 typedef	struct	Timer Timer;
-typedef	struct	Wctlmesg Wctlmesg;
 typedef	struct	Window Window;
 typedef	struct	Xfid Xfid;
 typedef struct  MouseEx MouseEx;
@@ -69,23 +68,12 @@ enum
 enum	/* control messages */
 {
 	Wakeup,
-	Reshaped,
-	Moved,
-	Refresh,
-	Movemouse,
 	Rawon,
 	Rawoff,
 	Holdon,
 	Holdoff,
 	Deleted,
 	Exited,
-};
-
-struct Wctlmesg
-{
-	int		type;
-	Rectangle	r;
-	Image	*image;
 };
 
 struct Conswritemesg
@@ -148,7 +136,7 @@ struct Window
 	MousectlEx		mc;
 	Mouseinfo	mouse;
 	Channel		*ck;			/* chan(Rune[10]) */
-	Channel		*cctl;		/* chan(Wctlmesg)[20] */
+	Channel		*cctl;		/* chan(int) */
 	Channel		*conswrite;	/* chan(Conswritemesg) */
 	Channel		*consread;	/* chan(Consreadmesg) */
 	Channel		*mouseread;	/* chan(Mousereadmesg) */
@@ -212,8 +200,7 @@ char*	wcontents(Window*, int*);
 int		wbswidth(Window*, Rune);
 int		wclickmatch(Window*, int, int, int, uint*);
 int		wclose(Window*);
-int		wctlmesg(Window*, int, Rectangle, Image*);
-int		wctlmesg(Window*, int, Rectangle, Image*);
+int		wctlmesg(Window*, int);
 uint		wbacknl(Window*, uint, uint);
 uint		winsert(Window*, Rune*, int, uint);
 void		waddraw(Window*, Rune*, int);
@@ -233,11 +220,12 @@ void		wpaste(Window*);
 void		wplumb(Window*);
 void		wrefresh(Window*, Rectangle);
 void		wrepaint(Window*);
-void		wresize(Window*, Image*, int);
+void		wresize(Window*, Image*);
+void		wreshaped(Window *w, Image *i);
 void		wscrdraw(Window*);
 void		wscroll(Window*, int);
 void		wselect(Window*);
-void		wsendctlmesg(Window*, int, Rectangle, Image*);
+void		wsendctlmesg(Window*, int);
 void		wsetcursor(Window*, int);
 void		wsetname(Window*);
 void		wsetorigin(Window*, uint, int);

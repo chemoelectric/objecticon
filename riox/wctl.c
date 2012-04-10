@@ -496,32 +496,25 @@ writewctl(Xfid *x, char *err)
                  * limit the requested size, don't fire an event */
                 if(!fl && eqrect(rect, w->i->r))
                     return 1;
-                if (w->hidden) {
+                if (w->hidden)
                     i = allocimage(display, rect, w->i->chan, 0, DWhite);
-                    if(i == nil){
-                        strcpy(err, Ewalloc);
-                        return -1;
-                    }
-                    if (!w->noborder) border(i, rect, Selborder, red, ZP);
-                    wsendctlmesg(w, Reshaped, ZR, i);
-                } else {
+                else
                     i = allocwindow(wscreen, rect, Refbackup, DWhite);
-                    if(i == nil){
-                        strcpy(err, Ewalloc);
-                        return -1;
-                    }
-                    if (!w->noborder) border(i, rect, Selborder, red, ZP);
-                    wsendctlmesg(w, Reshaped, i->r, i);
+                if(i == nil){
+                    strcpy(err, Ewalloc);
+                    return -1;
                 }
+                if (!w->noborder) border(i, rect, Selborder, red, ZP);
+                wreshaped(w, i);
 		return 1;
 	case Scroll:
 		w->scrolling = 1;
 		wshow(w, w->nr);
-		wsendctlmesg(w, Wakeup, ZR, nil);
+		wsendctlmesg(w, Wakeup);
 		return 1;
 	case Noscroll:
 		w->scrolling = 0;
-		wsendctlmesg(w, Wakeup, ZR, nil);
+		wsendctlmesg(w, Wakeup);
 		return 1;
 	case Keepabove2:
                 wkeepabove(w);
@@ -566,7 +559,7 @@ writewctl(Xfid *x, char *err)
                 grab = 0;
                 return 1;
 	case Delete:
-		wsendctlmesg(w, Deleted, ZR, nil);
+		wsendctlmesg(w, Deleted);
 		return 1;
 	}
 	strcpy(err, "invalid wctl message");

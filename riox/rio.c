@@ -476,10 +476,7 @@ static void doreshape(Window *w)
     else
         i = drag(w, &r);
     if(i != nil){
-        if(band)
-            wsendctlmesg(w, Reshaped, i->r, i);
-        else
-            wsendctlmesg(w, Moved, r, i);
+        wreshaped(w, i);
         cornercursor(w, mouse->xy, 1);
     }
 }
@@ -636,13 +633,12 @@ resized(void)
 		r.max.y = (r.max.y*n.y)/o.y;
 		r = rectaddpt(r, screen->clipr.min);
                 wlimitrect(w, &r);
-		if(w->hidden) {
+		if(w->hidden)
 			im = allocimage(display, r, screen->chan, 0, DWhite);
-                        r = ZR;
-		} else
+		else
 			im = allocwindow(wscreen, r, Refbackup, DWhite);
 		if(im)
-			wsendctlmesg(w, Reshaped, r, im);
+                    wreshaped(w, im);
 	}
 	viewr = screen->r;
 	flushimage(display, 1);
@@ -733,7 +729,7 @@ button3wmenu(Window *w)
         else if (i == keepnormal)
             wkeepnormal(w);
         else if (i == delete)
-            wsendctlmesg(w, Deleted, ZR, nil);
+            wsendctlmesg(w, Deleted);
 }
 
 void
@@ -791,7 +787,7 @@ button3txtmenu(Window *w)
 		break;
 	}
 	wclose(w);
-	wsendctlmesg(w, Wakeup, ZR, nil);
+	wsendctlmesg(w, Wakeup);
 	flushimage(display, 1);
 }
 
@@ -1181,7 +1177,7 @@ whideimpl(Window *w)
                 w->hidden = 1;
                 if(w == input)
                     wcurrent(nil);
-		wsendctlmesg(w, Reshaped, ZR, i);
+		wreshaped(w, i);
                 for(j=0; j<nwindow; j++){
                     if(window[j]->transientfor == w->id)
                         whideimpl(window[j]);
@@ -1197,7 +1193,7 @@ wkeepabove(Window *w)
     w->wctlready = 1;
     w->keepbelow = 0;
     w->keepabove = 1;
-    wsendctlmesg(w, Wakeup, ZR, nil);
+    ensurestacking();
 }
 
 void
@@ -1206,7 +1202,7 @@ wkeepbelow(Window *w)
     w->wctlready = 1;
     w->keepabove = 0;
     w->keepbelow = 1;
-    wsendctlmesg(w, Wakeup, ZR, nil);
+    ensurestacking();
 }
 
 void
@@ -1215,7 +1211,7 @@ wkeepnormal(Window *w)
     w->wctlready = 1;
     w->keepabove = 0;
     w->keepbelow = 0;
-    wsendctlmesg(w, Wakeup, ZR, nil);
+    ensurestacking();
 }
 
 int
@@ -1253,7 +1249,7 @@ wunhide(Window *w)
             w->hidden = 0;
             if(w != input)
                 wcurrent(w);
-            wsendctlmesg(w, Reshaped, w->i->r, i);
+            wreshaped(w, i);
             while (unhide_transient(w));
             return 1;
 	}
@@ -1286,7 +1282,7 @@ new(Image *i, int hideit, int scrollit, int transientfor, int noborder,
 		return nil;
 	cm = chancreate(sizeof(MouseEx), 0);
 	ck = chancreate(sizeof(Rune*), 0);
-	cctl = chancreate(sizeof(Wctlmesg), 4);
+	cctl = chancreate(sizeof(int), 4);
 	cpid = chancreate(sizeof(int), 0);
 	if(cm==nil || ck==nil || cctl==nil)
 		error("new: channel alloc failed");
@@ -1325,7 +1321,7 @@ new(Image *i, int hideit, int scrollit, int transientfor, int noborder,
 	}
 	if(pid == 0){
 		/* window creation failed */
-		wsendctlmesg(w, Deleted, ZR, nil);
+		wsendctlmesg(w, Deleted);
 		chanfree(cpid);
 		return nil;
 	}

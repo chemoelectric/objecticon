@@ -126,12 +126,12 @@ wsetname(Window *w)
 }
 
 void
-wresize(Window *w, Image *i, int move)
+wresize(Window *w, Image *i)
 {
 	Rectangle r, or;
 
 	or = w->i->r;
-	if(move || (Dx(or)==Dx(i->r) && Dy(or)==Dy(i->r)))
+	if((Dx(or)==Dx(i->r) && Dy(or)==Dy(i->r)))
 	 	draw(i, i->r, w->i, nil, w->i->r.min);
 	freeimage(w->i);
 	w->i = i;
@@ -142,25 +142,17 @@ wresize(Window *w, Image *i, int move)
 	w->scrollr.max.x = r.min.x+Scrollwid;
 	w->lastsr = ZR;
 	r.min.x += Scrollwid+Scrollgap;
-	if(move)
-		frsetrects(w, r, w->i);
-	else{
-		frclear(w, FALSE);
-		frinit(w, r, w->font, w->i, cols);
-		wsetcols(w);
-		w->maxtab = maxtab*stringwidth(w->font, "0");
-		r = insetrect(w->i->r, Selborder);
-		draw(w->i, r, cols[BACK], nil, w->entire.min);
-		wfill(w);
-		wsetselect(w, w->q0, w->q1);
-		wscrdraw(w);
-	}
+        frclear(w, FALSE);
+        frinit(w, r, w->font, w->i, cols);
+        wsetcols(w);
+        w->maxtab = maxtab*stringwidth(w->font, "0");
+        r = insetrect(w->i->r, Selborder);
+        draw(w->i, r, cols[BACK], nil, w->entire.min);
+        wfill(w);
+        wsetselect(w, w->q0, w->q1);
+        wscrdraw(w);
 	wborder(w, Selborder);
 	w->topped = ++topped;
-
-
-	//w->resized = TRUE;
-	//w->mouse.counter++;
 }
 
 void
@@ -202,7 +194,7 @@ wclose(Window *w)
 		error("negative ref count");
 	if(!w->deleted)
 		wclosewin(w);
-	wsendctlmesg(w, Exited, ZR, nil);
+	wsendctlmesg(w, Exited);
 	return 1;
 }
 
@@ -231,7 +223,7 @@ winctl(void *arg)
 	Consreadmesg crm;
 	Consreadmesg cwrm;
 	Stringpair pair;
-	Wctlmesg wcm;
+	int wcm;
         char buff[256];
 
 	w = arg;
@@ -340,7 +332,7 @@ winctl(void *arg)
 			send(mrm.cm, &m.MouseEx);
 			continue;
 		case WCtl:
-			if(wctlmesg(w, wcm.type, wcm.r, wcm.image) == Exited){
+			if(wctlmesg(w, wcm) == Exited){
 				chanfree(crm.c1);
 				chanfree(crm.c2);
 				chanfree(mrm.cm);
@@ -1192,20 +1184,13 @@ wselect(Window *w)
 }
 
 void
-wsendctlmesg(Window *w, int type, Rectangle r, Image *image)
+wsendctlmesg(Window *w, int type)
 {
-	Wctlmesg wcm;
-
-	wcm.type = type;
-	wcm.r = r;
-	wcm.image = image;
-	send(w->cctl, &wcm);
-        if(type == Reshaped || type == Moved)
-            sendmouseevent(w, 'r');
+	send(w->cctl, &type);
 }
 
 int
-wctlmesg(Window *w, int m, Rectangle r, Image *i)
+wctlmesg(Window *w, int m)
 {
 	char buf[64];
 
@@ -1214,33 +1199,7 @@ wctlmesg(Window *w, int m, Rectangle r, Image *i)
 		error("unknown control message");
 		break;
 	case Wakeup:
-                ensurestacking();
 		break;
-	case Moved:
-	case Reshaped:
-		if(w->deleted){
-			freeimage(i);
-			break;
-		}
-		w->screenr = r;
-		strcpy(buf, w->name);
-		wresize(w, i, m==Moved);
-                ensurestacking();
-		w->wctlready = 1;
-		proccreate(deletetimeoutproc, estrdup(buf), 4096);
-		flushimage(display, 1);
-		break;
-	case Refresh:
-		if(w->deleted || Dx(w->screenr)<=0 || !rectclip(&r, w->i->r))
-			break;
-		if(!w->mouseopen)
-			wrefresh(w, r);
-		flushimage(display, 1);
-		break;
-	case Movemouse:
-		if(sweeping || !ptinrect(r.min, w->i->r))
-			break;
-		wmovemouse(w, r.min);
 	case Rawon:
 		break;
 	case Rawoff:
@@ -1284,6 +1243,24 @@ wctlmesg(Window *w, int m, Rectangle r, Image *i)
 		break;
 	}
 	return m;
+}
+
+void
+wreshaped(Window *w, Image *i)
+{
+    char *t;
+    if(w->deleted){
+        freeimage(i);
+        return;
+    }
+    w->screenr = (i->screen) ? i->r : ZR;
+    t = estrdup(w->name);
+    wresize(w, i);
+    ensurestacking();
+    w->wctlready = 1;
+    proccreate(deletetimeoutproc, t, 4096);
+    flushimage(display, 1);
+    sendmouseevent(w, 'r');
 }
 
 /*
@@ -1373,11 +1350,11 @@ wcurrent(Window *w)
 	if(w != oi){
 		if(oi){
 			oi->wctlready = 1;
-			wsendctlmesg(oi, Wakeup, ZR, nil);
+			wsendctlmesg(oi, Wakeup);
 		}
 		if(w){
 			w->wctlready = 1;
-			wsendctlmesg(w, Wakeup, ZR, nil);
+			wsendctlmesg(w, Wakeup);
 		}
 	}
         return 1;

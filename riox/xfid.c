@@ -291,7 +291,7 @@ xfidopen(Xfid *x)
 			}
 			w->wctlopen = TRUE;
 			w->wctlready = 1;
-			wsendctlmesg(w, Wakeup, ZR, nil);
+			wsendctlmesg(w, Wakeup);
 		}
 		break;
 	}
@@ -314,11 +314,11 @@ xfidclose(Xfid *x)
 	case Qconsctl:
 		if(w->rawing){
 			w->rawing = FALSE;
-			wsendctlmesg(w, Rawoff, ZR, nil);
+			wsendctlmesg(w, Rawoff);
 		}
 		if(w->holding){
 			w->holding = FALSE;
-			wsendctlmesg(w, Holdoff, ZR, nil);
+			wsendctlmesg(w, Holdoff);
 		}
 		w->ctlopen = FALSE;
 		break;
@@ -329,8 +329,11 @@ xfidclose(Xfid *x)
 	case Qmouse:
                 //w->resized = FALSE;
 		w->mouseopen = FALSE;
-		if(w->i != nil)
-			wsendctlmesg(w, Refresh, w->i->r, nil);
+		if(w->i != nil && !w->deleted && !w->hidden) {
+			wrefresh(w, w->i->r);
+                        flushimage(display, 1);
+                }
+                wsendctlmesg(w, Wakeup);
 		break;
 	/* odd behavior but really ok: replace snarf buffer when /dev/snarf is closed */
 	case Qsnarf:
@@ -436,26 +439,26 @@ xfidwrite(Xfid *x)
 	case Qconsctl:
 		if(strncmp(x->data, "holdon", 6)==0){
 			if(w->holding++ == 0)
-				wsendctlmesg(w, Holdon, ZR, nil);
+				wsendctlmesg(w, Holdon);
 			break;
 		}
 		if(strncmp(x->data, "holdoff", 7)==0 && w->holding){
 			if(--w->holding == FALSE)
-				wsendctlmesg(w, Holdoff, ZR, nil);
+				wsendctlmesg(w, Holdoff);
 			break;
 		}
 		if(strncmp(x->data, "rawon", 5)==0){
 			if(w->holding){
 				w->holding = FALSE;
-				wsendctlmesg(w, Holdoff, ZR, nil);
+				wsendctlmesg(w, Holdoff);
 			}
 			if(w->rawing++ == 0)
-				wsendctlmesg(w, Rawon, ZR, nil);
+				wsendctlmesg(w, Rawon);
 			break;
 		}
 		if(strncmp(x->data, "rawoff", 6)==0 && w->rawing){
 			if(--w->rawing == 0)
-				wsendctlmesg(w, Rawoff, ZR, nil);
+				wsendctlmesg(w, Rawoff);
 			break;
 		}
 		filsysrespond(x->fs, x, &fc, "unknown control message");
@@ -498,8 +501,8 @@ xfidwrite(Xfid *x)
 			return;
 		}
 		pt.y = strtoul(p, nil, 0);
-		if(w==input && wpointto(mouse->xy)==w)
-			wsendctlmesg(w, Movemouse, Rpt(pt, pt), nil);
+		if(w==input && wpointto(mouse->xy)==w && !sweeping && ptinrect(pt, w->i->r))
+                    wmovemouse(w, pt);
 		break;
 
 	case Qsnarf:
