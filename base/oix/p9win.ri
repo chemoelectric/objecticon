@@ -12,12 +12,13 @@ static struct FontInfo *match_font(char *s);
 static void load_font_info(void);
 static wfp alcfont(wbp w, char **s);
 static void synch_pattern_image(struct SharedPattern *pat, int fg_rgb, int bg_rgb, int style);
-static void mouse_loop(int in_fd, int out_fd);
+static void mouse_loop(wsp ws);
 static Rune *utf8_to_runes(char *str, int nchars);
-static void cons_loop(int in_fd, int out_fd, int screeninfo_fd);
+static void cons_loop(wsp ws);
 static wfp load_font(char *s);
 static void synch_cursor(wsp ws);
 static vlong get_time(void);
+static ulong get_timestamp(void);
 static int open_screen_win(wsp ws);
 static Image *any_other_win(Image *win);
 static void close_screen_win(wsp ws);
@@ -378,34 +379,38 @@ static int adjust(wsp ws, int dim)
         return dim + ws->border_width;
 }
 
-static void mouse_loop(int in_fd, int out_fd)
+static ulong get_timestamp(void)
 {
-    char buf[EMAXMSG + 9];
-    int r;
+    return get_time() / 1000000;
+}
 
-    buf[0] = 'M';
-    while ((r = read(in_fd, buf + 9, EMAXMSG)) > 0) {
-        read(bintime_fd, &buf[1], 8);
-        if (write(out_fd, buf, r + 9) != r + 9)
+static void mouse_loop(wsp ws)
+{
+    char buf[49];
+    while (read(ws->mouse_fd, buf, sizeof(buf)) > 0) {
+        /* Update timestamp */
+        snprintf(&buf[37], 12, "%11lu ", get_timestamp());
+        if (write(ws->event_pipe[1], buf, 49) != 49)
             break;
+        ++ws->mouse_events;
     }
     _exits(0);
 }
 
-static void cons_loop(int in_fd, int out_fd, int screeninfo_fd)
+static void cons_loop(wsp ws)
 {
     Rune r;
-    char buf[35], in[10];
-
-    buf[0] = 'C';
-    while (read(in_fd, in, sizeof in) > 0) {
-        read(bintime_fd, &buf[1], 8);
-        pread(screeninfo_fd, &buf[9], 24, 0);
+    char buf[49], in[10];
+    buf[0] = 'k';
+    while (read(ws->cons_fd, in, sizeof(in)) > 0) {
+        /* Set mouse x,y */
+        pread(ws->screeninfo_fd, &buf[1], 24, 0);
+        /* Set arg and timestamp */
         chartorune(&r, in);
-        buf[33] = r;
-        buf[34] = r>>8;
-        if (write(out_fd, buf, 35) != 35)
+        snprintf(&buf[25], 24, "%11d %11lu ", (int)r, get_timestamp());
+        if (write(ws->event_pipe[1], buf, 49) != 49)
             break;
+        ++ws->cons_events;
     }
     _exits(0);
 }
@@ -473,99 +478,75 @@ static void handle_reshape(wsp ws)
 void pollevent(wbp w)
 {
     wsp ws = w->window;
-    Dir *st;
-    vlong length;
-    int n, mx, my;
+    int n, mx, my, arg;
     uchar ebuf[EMAXMSG + 1];
     tended struct descrip d;
-    vlong now;
     uword time;
 
     /* Check if pipe open */
     if (!ws->win || ws->event_pipe[0] < 0)
         return;
 
-    for (;;) {
-        /* Check if anything to read */
-        st = dirfstat(ws->event_pipe[0]);
-        if (!st)
-            syserr("Couldn't stat event pipe");
-        length = st->length;
-        free(st);
-        if (length == 0)
-            return;
-
+    while (ws->events_read < ws->mouse_events + ws->cons_events) {
         n = read(ws->event_pipe[0], ebuf, sizeof(ebuf));
         if (n <= 0)
             return;
 
+        ++ws->events_read;
+
+        if (n != 49)
+            syserr("bad data in event pipe");
+        mx = atoi((char*)ebuf + 1 + 0*12) - ws->win->r.min.x; 
+        my = atoi((char*)ebuf + 1 + 1*12) - ws->win->r.min.y;
+        arg = atoi((char*)ebuf + 1 + 2*12);
+        time = atoi((char*)ebuf + 1 + 3*12);
         switch (ebuf[0]) {
-            case 'C' : {
-                int i;
-                if (n != 35)
-                    syserr("bad console data in event pipe");
-                be2vlong(&now, &ebuf[1]);
-                time = now / 1000000;
-                mx = atoi((char*)ebuf + 9 + 0*12) - ws->win->r.min.x; 
-                my = atoi((char*)ebuf + 9 + 1*12) - ws->win->r.min.y;
-                i = ebuf[33] + (ebuf[34]<<8);
-                if (i == 10) i = 13;   /* Hack: convert \n to \r */
-                if (i < 256) {
-                    /* Found a char string, so generate string event(s) */
+            case 'k' : {
+                if (arg == 10) arg = 13;   /* Hack: convert \n to \r */
+                if (arg < 256) {
+                    /* Found a char string, so generate string event */
                     StrLen(d) = 1;
-                    StrLoc(d) = &allchars[i & 0xFF];
-                } else if (i < 60000) {
+                    StrLoc(d) = &allchars[arg & 0xFF];
+                } else if (arg < 60000) {
                     d.dword = D_Ucs;
-                    BlkLoc(d) = (union block *)make_one_char_ucs_block(i);
+                    BlkLoc(d) = (union block *)make_one_char_ucs_block(arg);
                 } else 
-                    MakeInt(i, &d);
+                    MakeInt(arg, &d);
                 qevent(ws, &d, 
                        mx,
                        my,
                        time, 0);
                 break;
             }
-            case 'M': {
-                int state;
-                if (n < 10+2*12)
-                    syserr("bad mouse data in event pipe");
-                be2vlong(&now, &ebuf[1]);
-                time = now / 1000000;
-                mx = atoi((char*)ebuf + 10 + 0*12) - ws->win->r.min.x;
-                my = atoi((char*)ebuf + 10 + 1*12) - ws->win->r.min.y;
-                state = atoi((char*)ebuf + 10 + 2*12);
-
-                switch (ebuf[9]) {
-                    case 'r':
-                        handle_reshape(ws);
-                        break;
-                    case 'c': {
-                        qeventcode(ws, WINDOWCLOSED);
-                        break;
-                    }
-                    case 'e': {
-                        struct descrip d;
-                        MakeInt(MOUSEENTERED, &d);
-                        qevent(ws, &d, mx, my, time, 0);
-                        break;
-                    }
-                    case 'x': {
-                        struct descrip d;
-                        MakeInt(MOUSEEXITED, &d);
-                        qevent(ws, &d, mx, my, time, 0);
-                        break;
-                    }
-                    case 'm': {
-                        qmouseevents(ws, 
-                                     state, 
-                                     mx,
-                                     my,
-                                     time, 0);
-                        break;
-                    }
-                }
+            case 'r':
+                handle_reshape(ws);
+                break;
+            case 'c': {
+                qeventcode(ws, WINDOWCLOSED);
                 break;
             }
+            case 'e': {
+                struct descrip d;
+                MakeInt(MOUSEENTERED, &d);
+                qevent(ws, &d, mx, my, time, 0);
+                break;
+            }
+            case 'x': {
+                struct descrip d;
+                MakeInt(MOUSEEXITED, &d);
+                qevent(ws, &d, mx, my, time, 0);
+                break;
+            }
+            case 'm': {
+                qmouseevents(ws, 
+                             arg,
+                             mx,
+                             my,
+                             time, 0);
+                break;
+            }
+            default:
+                syserr("bad event code in event pipe");
         }
     }
 }
@@ -1553,6 +1534,7 @@ static int open_screen_win(wsp ws)
         close_screen_win(ws);
         return Failed;
     }
+    ws->mouse_events = ws->cons_events = ws->events_read = 0;
 
     if ((ws->mouse_fd = open_winfile(ws, "mouse", ORDWR|OCEXEC)) < 0) {
         whyf("Can't open mouse file: %r");
@@ -1589,7 +1571,7 @@ static int open_screen_win(wsp ws)
 
     switch (ws->mouse_pid = rfork(RFPROC|RFMEM)) {
         case 0: {
-            mouse_loop(ws->mouse_fd, ws->event_pipe[1]);
+            mouse_loop(ws);
             break;
         }
         case -1: {
@@ -1601,7 +1583,7 @@ static int open_screen_win(wsp ws)
 
     switch (ws->cons_pid = rfork(RFPROC|RFMEM)) {
         case 0: {
-            cons_loop(ws->cons_fd, ws->event_pipe[1], ws->screeninfo_fd);
+            cons_loop(ws);
             break;
         }
         case -1: {
@@ -1639,6 +1621,10 @@ static void close_screen_win(wsp ws)
         unmount(0, ws->mount_dir);
         remove(ws->mount_dir);
     }
+    if (ws->mouse_pid >= 0)
+        kill_proc(ws->mouse_pid);
+    if (ws->cons_pid >= 0)
+        kill_proc(ws->cons_pid);
     if (ws->event_pipe[0] >= 0)
         close(ws->event_pipe[0]);
     if (ws->event_pipe[1] >= 0)
@@ -1651,10 +1637,6 @@ static void close_screen_win(wsp ws)
         close(ws->label_fd);
     if (ws->screeninfo_fd >= 0)
         close(ws->screeninfo_fd);
-    if (ws->mouse_pid >= 0)
-        kill_proc(ws->mouse_pid);
-    if (ws->cons_pid >= 0)
-        kill_proc(ws->cons_pid);
     if (ws->wsys_fd >= 0)
         close(ws->wsys_fd);
     /* 
@@ -1923,30 +1905,18 @@ static int read_screeninfo(wsp ws, int *mx, int *my, int *sx, int *sy, int *sw, 
     n = pread(ws->screeninfo_fd, buff, 72, 0);
     if (n != 72)
         return Failed;
-    if (mx) {
-        buff[11] = 0;
+    if (mx)
         *mx = atoi(buff);
-    }
-    if (my) {
-        buff[23] = 0;
+    if (my)
         *my = atoi(buff + 12);
-    }
-    if (sx) {
-        buff[35] = 0;
+    if (sx)
         *sx = atoi(buff + 24);
-    }
-    if (sy) {
-        buff[47] = 0;
+    if (sy)
         *sy = atoi(buff + 36);
-    }
-    if (sw) {
-        buff[59] = 0;
+    if (sw)
         *sw = atoi(buff + 48);
-    }
-    if (sh) {
-        buff[71] = 0;
+    if (sh)
         *sh = atoi(buff + 60);
-    }
     return Succeeded;
 }
 
