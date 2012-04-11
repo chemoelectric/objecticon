@@ -42,7 +42,6 @@ static void synch_state(wsp ws);
 static void note_time(char *s);
 static int readimageimpl(char *cmd, int fd, struct imgdata *imd);
 
-#define EMAXMSG 128+8192     /* size of 9p header+data */
 #define WINDOW_MOUNT_ROOT "/tmp/oi_windowmounts"
 
 #define NormalCanvas 1
@@ -211,7 +210,7 @@ static int open_winfile(wsp ws, char *s, int mode)
     char buff[128];
     int fd;
     sprintf(buff, "%s/%s", ws->mount_dir, s);
-    fd = open(buff, mode);
+    fd = open(buff, mode|OCEXEC);
     return fd;
 }
 
@@ -478,7 +477,7 @@ void pollevent(wbp w)
 {
     wsp ws = w->window;
     int n, mx, my, arg;
-    uchar ebuf[EMAXMSG + 1];
+    char buf[49];
     tended struct descrip d;
     uword time;
 
@@ -487,7 +486,7 @@ void pollevent(wbp w)
         return;
 
     while (ws->events_read < ws->mouse_events + ws->cons_events) {
-        n = read(ws->event_pipe[0], ebuf, sizeof(ebuf));
+        n = read(ws->event_pipe[0], buf, sizeof(buf));
         if (n <= 0)
             return;
 
@@ -495,11 +494,11 @@ void pollevent(wbp w)
 
         if (n != 49)
             syserr("bad data in event pipe");
-        mx = atoi((char*)ebuf + 1 + 0*12) - ws->win->r.min.x; 
-        my = atoi((char*)ebuf + 1 + 1*12) - ws->win->r.min.y;
-        arg = atoi((char*)ebuf + 1 + 2*12);
-        time = atoi((char*)ebuf + 1 + 3*12);
-        switch (ebuf[0]) {
+        mx = atoi(buf + 1 + 0*12) - ws->win->r.min.x; 
+        my = atoi(buf + 1 + 1*12) - ws->win->r.min.y;
+        arg = atoi(buf + 1 + 2*12);
+        time = atoi(buf + 1 + 3*12);
+        switch (buf[0]) {
             case 'k' : {
                 if (arg == 10) arg = 13;   /* Hack: convert \n to \r */
                 if (arg < 256) {
@@ -1445,7 +1444,7 @@ static int open_screen_win(wsp ws)
 
         use_win = 0;
     } else {
-        ws->wsys_fd = open(ws->wsys, ORDWR);
+        ws->wsys_fd = open(ws->wsys, ORDWR|OCEXEC);
         if (ws->wsys_fd < 0) {
             whyf("Can't open $wsys(%s): %r", ws->wsys);
             close_screen_win(ws);
@@ -1535,7 +1534,7 @@ static int open_screen_win(wsp ws)
     }
     ws->mouse_events = ws->cons_events = ws->events_read = 0;
 
-    if ((ws->mouse_fd = open_winfile(ws, "mouse", ORDWR|OCEXEC)) < 0) {
+    if ((ws->mouse_fd = open_winfile(ws, "mouse", ORDWR)) < 0) {
         whyf("Can't open mouse file: %r");
         close_screen_win(ws);
         return Failed;
@@ -1554,14 +1553,14 @@ static int open_screen_win(wsp ws)
         return Failed;
     }
 
-    if ((ws->consctl_fd = open_winfile(ws, "consctl", OWRITE|OCEXEC)) < 0) {
+    if ((ws->consctl_fd = open_winfile(ws, "consctl", OWRITE)) < 0) {
         whyf("Can't open consctl file: %r");
         close_screen_win(ws);
         return Failed;
     }
     write(ws->consctl_fd, "rawon", 5);
 
-    if ((ws->cursor_fd = open_winfile(ws, "cursor", OWRITE|OCEXEC)) < 0) {
+    if ((ws->cursor_fd = open_winfile(ws, "cursor", OWRITE)) < 0) {
         whyf("Can't open cursor file: %r");
         close_screen_win(ws);
         return Failed;
