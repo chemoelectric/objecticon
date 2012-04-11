@@ -3,21 +3,8 @@
 static char *xyz = "";
 char **environ = &xyz;
 
-static uvlong order = 0x0001020304050607ULL;
-
 static rd_name(char **f, char *p);
 static rd_long(char **f, long *p);
-
-void be2vlong(vlong *to, uchar *f)
-{
-    uchar *t, *o;
-    int i;
-
-    t = (uchar*)to;
-    o = (uchar*)&order;
-    for(i = 0; i < 8; i++)
-        t[o[i]] = f[i];
-}
 
 int gettimeofday(struct timeval *tv, struct timezone *tz)
 {
@@ -26,13 +13,7 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
     uchar b[8];
     vlong t;
 
-    memset(b, 0, sizeof b);
-    f = open("/dev/bintime", OREAD);
-    if (f >= 0) {
-        pread(f, b, sizeof(b), 0);
-        close(f);
-    }
-    be2vlong(&t, b);
+    t = nsec();
 
     tv->tv_sec = t/1000000000;
     tv->tv_usec = (t/1000)%1000000;

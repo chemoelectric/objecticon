@@ -3,7 +3,6 @@ static wfp fonts, default_font;
 static Rectangle max_rect;
 static struct Cursor cursor_data[];
 static int use_win;
-static int bintime_fd;
 static char old_label[256];
 
 static int read_screeninfo(wsp ws, int *mx, int *my, int *sx, int *sy, int *sw, int *sh);
@@ -381,7 +380,7 @@ static int adjust(wsp ws, int dim)
 
 static ulong get_timestamp(void)
 {
-    return get_time() / 1000000;
+    return nsec() / 1000000;
 }
 
 static void mouse_loop(wsp ws)
@@ -2069,9 +2068,6 @@ static void init_window_system(void)
 
     load_font_info();
 
-    if ((bintime_fd = open("/dev/bintime", OREAD)) < 0)
-        ffatalerr("Can't open /dev/bintime: %r");
-
     /* Keep mounts private */
     rfork(RFNAMEG); 
 
@@ -2106,23 +2102,14 @@ static void init_window_system(void)
     atexit(close_window_system);
 }
 
-static vlong get_time()
-{
-    uchar b[8];
-    vlong t;
-    read(bintime_fd, b, sizeof(b));
-    be2vlong(&t, b);
-    return t;
-}
-
 static void note_time(char *s)
 {
     static vlong prev;
     if (prev) {
-        int t = (get_time() - prev) / 1000000;
+        int t = (nsec() - prev) / 1000000;
         fprint(2, "%d: - %s\n", t, s);
     }
-    prev = get_time();
+    prev = nsec();
 }
 
 static int readimageimpl(char *cmd, int fd, struct imgdata *imd)
