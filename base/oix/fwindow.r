@@ -1692,7 +1692,7 @@ function graphics_Window_set_min_size(self, width, height)
        GetSelfW();
        if (width < 1)
            Irunerr(148, width);
-       if (height < 0)
+       if (height < 1)
            Irunerr(148, height);
        self_w->window->minwidth = width;
        self_w->window->minheight = height;
