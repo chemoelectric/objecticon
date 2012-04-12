@@ -680,7 +680,7 @@ button3menu(void)
 	i = menuhit(3, mousectl, &menu, wscreen);
         if (i == mnew)
             new(sweep(nil), FALSE, scrolling, -1, 0, 
-                0, 0, 0, INT_MAX, 0, INT_MAX,
+                0, 0, 1, INT_MAX, 1, INT_MAX,
                 0, nil, "/bin/rc", nil);
         else if (i == exit)
             send(exitchan, nil);
@@ -1170,27 +1170,36 @@ pointto(int wait)
 void
 wkeepabove(Window *w)
 {
+    if (w->keepabove)
+        return;
     w->wctlready = 1;
     w->keepbelow = 0;
     w->keepabove = 1;
+    wsendctlmesg(w, Wakeup);
     ensurestacking();
 }
 
 void
 wkeepbelow(Window *w)
 {
+    if (w->keepbelow)
+        return;
     w->wctlready = 1;
     w->keepabove = 0;
     w->keepbelow = 1;
+    wsendctlmesg(w, Wakeup);
     ensurestacking();
 }
 
 void
 wkeepnormal(Window *w)
 {
+    if (!w->keepabove && !w->keepbelow)
+        return;
     w->wctlready = 1;
     w->keepabove = 0;
     w->keepbelow = 0;
+    wsendctlmesg(w, Wakeup);
     ensurestacking();
 }
 

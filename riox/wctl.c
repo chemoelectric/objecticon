@@ -328,32 +328,32 @@ parsewctl(char **argp, Rectangle r, Rectangle *rp, int *pidp, int *idp, int *hid
 			r.max.y = set(sign, r.max.y-xy, r.min.y+xy, r.max.y+xy);
 			break;
 		case Mindx:
-                        if (sign < 0 || xy < 1) {
+                        *mindxp = set(sign, *mindxp-xy, xy, *mindxp+xy);
+                        if (*mindxp < 1) {
                             strcpy(err, "invalid mindx");
                             return -1;
                         }
-                        *mindxp = xy;
 			break;
 		case Maxdx:
-                        if (sign < 0 || xy < 1) {
+                        *maxdxp = set(sign, *maxdxp-xy, xy, *maxdxp+xy);
+                        if (*maxdxp < 1) {
                             strcpy(err, "invalid maxdx");
                             return -1;
                         }
-                        *maxdxp = xy;
 			break;
 		case Mindy:
-                        if (sign < 0 || xy < 1) {
+                        *mindyp = set(sign, *mindyp-xy, xy, *mindyp+xy);
+                        if (*mindyp < 1) {
                             strcpy(err, "invalid mindy");
                             return -1;
                         }
-                        *mindyp = xy;
 			break;
 		case Maxdy:
-                        if (sign < 0 || xy < 1) {
+                        *maxdyp = set(sign, *maxdyp-xy, xy, *maxdyp+xy);
+                        if (*maxdyp < 1) {
                             strcpy(err, "invalid maxdy");
                             return -1;
                         }
-                        *maxdyp = xy;
 			break;
 		case Transientfor:
                         *transientforp = xy;
@@ -486,27 +486,43 @@ writewctl(Xfid *x, char *err)
 	case Move:
 		rect = Rect(rect.min.x, rect.min.y, rect.min.x+Dx(w->i->r), rect.min.y+Dy(w->i->r));
 		/* fall through */
-	case Resize:
-                w->mindx = mindx;
-                w->maxdx = maxdx;
-                w->mindy = mindy;
-                w->maxdy = maxdy;
-                fl = wlimitrect(w, &rect);
-                /* If we didn't change the rectangle and we didn't
-                 * limit the requested size, don't fire an event */
-                if(!fl && eqrect(rect, w->i->r))
-                    return 1;
-                if (w->hidden)
-                    i = allocimage(display, rect, w->i->chan, 0, DWhite);
-                else
-                    i = allocwindow(wscreen, rect, Refbackup, DWhite);
-                if(i == nil){
-                    strcpy(err, Ewalloc);
-                    return -1;
+        case Resize: {
+                int limchanged = 0, limited;
+                if (w->mindx != mindx || w->maxdx != maxdx || w->mindy != mindy || w->maxdy != maxdy) {
+                    limchanged = 1;
+                    w->mindx = mindx;
+                    w->maxdx = maxdx;
+                    w->mindy = mindy;
+                    w->maxdy = maxdy;
                 }
-                if (!w->noborder) border(i, rect, Selborder, red, ZP);
-                wreshaped(w, i);
+                limited = wlimitrect(w, &rect);
+                if(eqrect(rect, w->i->r)) {
+                    /* If we didn't change the rectangle, then only
+                     * send a wctl message if the size limits changed,
+                     * and only send a mouse reshape message if the
+                     * rectangle was limited.
+                     */
+                    if (limchanged) {
+                        w->wctlready = 1;
+                        wsendctlmesg(w, Wakeup);
+                    }
+                    if (limited)
+                        sendmouseevent(w, 'r');
+                } else {
+                    if (w->hidden)
+                        i = allocimage(display, rect, w->i->chan, 0, DWhite);
+                    else
+                        i = allocwindow(wscreen, rect, Refbackup, DWhite);
+                    if(i == nil){
+                        strcpy(err, Ewalloc);
+                        return -1;
+                    }
+                    if (!w->noborder) border(i, rect, Selborder, red, ZP);
+                    /* This will send both a wctl and a mouse reshape message */
+                    wreshaped(w, i);
+                }
 		return 1;
+        }
 	case Scroll:
 		w->scrolling = 1;
 		wshow(w, w->nr);

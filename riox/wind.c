@@ -450,7 +450,11 @@ winctl(void *arg)
                                     sprint(buff + strlen(buff), "maxdy:%d ", w->maxdy);
 
 				pair.ns = snprint(pair.s, pair.ns, "%11d %11d %11d %11d%s",
-                                                  w->i->r.min.x, w->i->r.min.y, w->i->r.max.x, w->i->r.max.y, buff);
+                                                  w->i->r.min.x - screen->r.min.x, 
+                                                  w->i->r.min.y - screen->r.min.y, 
+                                                  w->i->r.max.x - screen->r.min.x,
+                                                  w->i->r.max.y - screen->r.min.y,
+                                                  buff);
 			}
 			send(cwrm.c2, &pair);
 			continue;
@@ -1263,6 +1267,8 @@ wreshaped(Window *w, Image *i)
     w->wctlready = 1;
     proccreate(deletetimeoutproc, t, 4096);
     flushimage(display, 1);
+    /* This is also equivalent to a Wakeup, which we need since
+     * wctlready is being set to 1 above. */
     sendmouseevent(w, 'r');
 }
 
