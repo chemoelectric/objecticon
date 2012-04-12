@@ -529,7 +529,10 @@ static void domouse(void)
         if (held)
             sendmouseevent(held, 'm');
         else {
-            if ((press & 7) && overw && !grab)
+            /* Top and give focus if appropriate.  The last &&
+             * indicates not to give focus on the right-click context
+             * menu (button3wmenu) */
+            if ((press & 7) && overw && !grab && !(overb && ((press & 5) == 4)))
                 pressed(overw);
             held = over;
             if (held)
@@ -542,7 +545,7 @@ static void domouse(void)
                     riosetcursor(nil, 0);
                     button3wmenu(overb);
                 }
-            } else if (!held && (press & 4))
+            } else if (!over && (press & 4))
                 button3menu();
             else if((press & 4) && over && !over->mouseopen && !ptinrect(mouse->xy, over->scrollr))
                 button3txtmenu(over);
@@ -1164,29 +1167,6 @@ pointto(int wait)
 	return w;
 }
 
-static int
-whideimpl(Window *w)
-{
-	Image *i;
-	int j;
-
-	if (w->hidden)/* already hidden */
-                return -1;
-	i = allocimage(display, w->screenr, w->i->chan, 0, DWhite);
-	if(i){
-                w->hidden = 1;
-                if(w == input)
-                    wcurrent(nil);
-		wreshaped(w, i);
-                for(j=0; j<nwindow; j++){
-                    if(window[j]->transientfor == w->id)
-                        whideimpl(window[j]);
-                }
-		return 1;
-	}
-	return 0;
-}
-
 void
 wkeepabove(Window *w)
 {
@@ -1214,46 +1194,79 @@ wkeepnormal(Window *w)
     ensurestacking();
 }
 
+static void
+whideimpl(Window *w)
+{
+	Image *i;
+	int j;
+	i = allocimage(display, w->screenr, w->i->chan, 0, DWhite);
+	if(i){
+                if(w == input)
+                    wcurrent(nil);
+                w->hidden = 1;
+		wreshaped(w, i);
+                for(j=0; j<nwindow; j++){
+                    if(!window[j]->hidden && window[j]->transientfor == w->id)
+                        whideimpl(window[j]);
+                }
+	}
+}
+
 int
 whide(Window *w)
 {
+    Window *oi;
     if(w->hidden)
         return 1;
     if (w->noborder || w->transientfor != -1)
         return 0;
+    oi = input;
     whideimpl(w);
+    /* Keep note of id of window to give focus to on an unhide */
+    if (input == nil && oi != nil)
+        w->unhidefocus = oi->id;
+    else
+        w->unhidefocus = w->id;
     if (input == nil)
         choosewcurrent();
     return 1;
 }
 
 static
-int
-unhide_transient(Window *w)
+void
+wunhideimpl(Window *w)
 {
-    int j;
-    for(j=0; j<nwindow; j++)
-        if(window[j]->hidden && window[j]->transientfor == w->id)
-            return wunhide(window[j]);
-    return 0;
+	Image *i;
+        int j;
+	i = allocwindow(wscreen, w->i->r, Refbackup, DWhite);
+	if(i){
+            w->hidden = 0;
+            wreshaped(w, i);
+            for(j=0; j<nwindow; j++) {
+                if(window[j]->hidden && window[j]->transientfor == w->id)
+                    wunhideimpl(window[j]);
+            }
+	}
 }
 
 int
 wunhide(Window *w)
 {
 	Image *i;
+        int j;
         if (!w->hidden)
             return 1;
-	i = allocwindow(wscreen, w->i->r, Refbackup, DWhite);
-	if(i){
-            w->hidden = 0;
-            if(w != input)
-                wcurrent(w);
-            wreshaped(w, i);
-            while (unhide_transient(w));
-            return 1;
-	}
-	return 0;
+        if (w->transientfor != -1)
+            return 0;
+        wunhideimpl(w);
+        /* Restore focus to appropriate window */
+        for(j=0; j<nwindow; j++) {
+            if(!window[j]->hidden && window[j]->id == w->unhidefocus) {
+                wcurrent(window[j]);
+                break;
+            }
+        }
+        return 1;
 }
 
 int

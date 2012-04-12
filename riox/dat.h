@@ -168,6 +168,7 @@ struct Window
         uchar           keepabove;
         uchar           keepbelow;
         int             transientfor;          /* id of transient-for parent */
+        int             unhidefocus;           /* id of window to get focus on unhide */
         int             mindx;
         int             maxdx;
         int             mindy;

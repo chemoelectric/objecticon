@@ -151,7 +151,10 @@ wresize(Window *w, Image *i)
         wfill(w);
         wsetselect(w, w->q0, w->q1);
         wscrdraw(w);
-	wborder(w, Selborder);
+	if(w == input)
+		wborder(w, Selborder);
+	else
+		wborder(w, Unselborder);
 	w->topped = ++topped;
 }
 
@@ -1356,6 +1359,7 @@ wcurrent(Window *w)
 			w->wctlready = 1;
 			wsendctlmesg(w, Wakeup);
 		}
+                flushimage(display, 1);
 	}
         return 1;
 }
