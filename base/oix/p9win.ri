@@ -1248,8 +1248,18 @@ void doconfig(wbp w, int status)
 
     /* Move/resize of window if open */
     if (ws->win) {
-        if (status & C_POS)
-            fprint(ws->wctl_fd, "move  -minx %d -miny %d", ws->x, ws->y);
+        if (status & C_POS) {
+            fprint(ws->wctl_fd, "move -minx %d -miny %d", ws->x, ws->y);
+            /*
+             * Since reading the x, y values should give the pos
+             * within the border (as opposed to writing, which sets
+             * the pos outside the border), we adjust x, y in case
+             * they're read, or we don't get a reshape mouse event
+             * (which we won't if the window is unmoved).
+             */
+            ws->x += ws->border_width / 2;
+            ws->y += ws->border_width / 2;
+        }
         if (status & (C_RESIZE|C_SIZE|C_MAXSIZE|C_MINSIZE)) {
             int minw, maxw, minh, maxh;
             if (ws->resizable) {
