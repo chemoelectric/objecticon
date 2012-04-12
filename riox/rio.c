@@ -933,6 +933,8 @@ drag(Window *w, Rectangle *rp)
 	moveto(mousectl, mouse->xy);	/* force cursor update; ugly */
 	menuing = FALSE;
 	flushimage(display, 1);
+        if(eqrect(w->i->r, r))
+                return nil;
 	if(mouse->buttons!=0 || (ni=allocwindow(wscreen, r, Refbackup, DWhite))==nil){
 		moveto(mousectl, om);
 		while(mouse->buttons)
@@ -1093,7 +1095,7 @@ bandsize(Window *w)
 {
 	Image *i;
 	Rectangle r, or;
-	Point p, startp;
+	Point p;
 	int which, but;
         if (!resizable(w))
             return nil;
@@ -1106,7 +1108,6 @@ bandsize(Window *w)
 	r = whichrect(w->screenr, p, which);
 	drawborder(r, 1);
 	or = r;
-	startp = p;
 	
 	while(mouse->buttons == but){
 		p = onscreen(mouse->xy);
@@ -1128,8 +1129,8 @@ bandsize(Window *w)
 			readmouse(mousectl);
 		return nil;
 	}
-	if(abs(p.x-startp.x)+abs(p.y-startp.y) <= 1)
-		return nil;
+        if(eqrect(w->i->r, or))
+                return nil;
 	i = allocwindow(wscreen, or, Refbackup, DWhite);
 	if(i == nil)
 		return nil;
