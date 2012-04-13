@@ -37,7 +37,7 @@ static void unlink_sharedcolor(struct SharedColor *i);
 static struct SharedPattern *new_sharedpattern(int width, int height, int *rowdata, char *name);
 static struct SharedPattern *link_sharedpattern(struct SharedPattern *x);
 static void unlink_sharedpattern(struct SharedPattern *x);
-static int synch_pos(wsp ws);
+static void synch_pos(wsp ws);
 static void synch_state(wsp ws);
 static void note_time(char *s);
 static int readimageimpl(char *cmd, int fd, struct imgdata *imd);
@@ -293,7 +293,7 @@ wbp wopen(char *display)
     ws->listp = nulldesc;    /* set to [] after linked into global context list */
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
         ws->screeninfo_fd = ws->cursor_fd = ws->label_fd = ws->mouse_pid = ws->cons_pid =
-        ws->wsys_fd = ws->wctl_fd = ws->winid = ws->transientfor_winid = -1;
+        ws->wininfo_fd = ws->wsys_fd = ws->wctl_fd = ws->winid = ws->transientfor_winid = -1;
     ws->cursor = stringint_lookup(cursors, "left ptr");
     ws->x = ws->y = -INT_MAX;
     ws->minwidth = ws->minheight = 1;
@@ -416,14 +416,13 @@ static void cons_loop(wsp ws)
 /*
  * Synch the x, y variables with rio's values.
  */
-static int synch_pos(wsp ws)
+static void synch_pos(wsp ws)
 {
-    int sx, sy;
-    if (read_screeninfo(ws, 0,0, &sx, &sy, 0,0) != Succeeded)
-        return Failed;
-    ws->x = ws->win->r.min.x - sx - ws->border_width / 2;
-    ws->y = ws->win->r.min.y - sy - ws->border_width / 2;
-    return Succeeded;
+    char buf[24];
+    if (pread(ws->wininfo_fd, buf, 24, 0) != 24)
+        return;
+    ws->x = atoi(buf);
+    ws->y = atoi(buf + 12);
 }
 
 static void resize_pix_win(wbp w)
@@ -1512,8 +1511,12 @@ static int open_screen_win(wsp ws)
         close_screen_win(ws);
         return Failed;
     }
-    n = read(fd, buff, 12);
-    buff[11] = 0;
+    if (read(fd, buff, 12) != 12) {
+        whyf("Can't read winid file %r");
+        close(fd);
+        close_screen_win(ws);
+        return Failed;
+    }
     ws->winid = atoi(buff);
     close(fd);
 
@@ -1545,6 +1548,13 @@ static int open_screen_win(wsp ws)
         close_screen_win(ws);
         return Failed;
     }
+
+    if ((ws->wininfo_fd = open_winfile(ws, "wininfo", OREAD)) < 0) {
+        whyf("Can't open wininfo file: %r");
+        close_screen_win(ws);
+        return Failed;
+    }
+
     synch_pos(ws);
 
     if ((ws->cons_fd = open_winfile(ws, "cons", OREAD)) < 0) {
@@ -1635,6 +1645,8 @@ static void close_screen_win(wsp ws)
         close(ws->label_fd);
     if (ws->screeninfo_fd >= 0)
         close(ws->screeninfo_fd);
+    if (ws->wininfo_fd >= 0)
+        close(ws->wininfo_fd);
     if (ws->wsys_fd >= 0)
         close(ws->wsys_fd);
     /* 
@@ -1672,7 +1684,7 @@ static void close_screen_win(wsp ws)
     ws->mount_dir[0] = 0;
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
         ws->screeninfo_fd = ws->cursor_fd = ws->label_fd = ws->mouse_pid = ws->cons_pid =
-        ws->wsys_fd = ws->wctl_fd = ws->winid = -1;
+        ws->wininfo_fd = ws->wsys_fd = ws->wctl_fd = ws->winid = -1;
     synch_state(ws);
 }
 
@@ -1965,8 +1977,8 @@ char *getcanvas(wbp w)
 
 static void synch_state(wsp ws)
 {
-    char buff[256];
-    int fd;
+    char buf[256];
+    int n;
 
     if (!ws->win) {
         ws->state = HiddenCanvas;
@@ -1976,14 +1988,10 @@ static void synch_state(wsp ws)
     if (ws->state == PopupCanvas)
         return;
 
-    buff[0] = 0;
-    if ((fd = open_winfile(ws, "wctl", OREAD)) >= 0) {
-        int n = read(fd, buff, sizeof(buff) - 1);
-        if (n > 0)
-            buff[n] = 0;
-        close(fd);
-    }
-    ws->state = strstr(buff, "hidden") ? IconicCanvas:NormalCanvas;
+    if ((n = pread(ws->wininfo_fd, buf, sizeof(buf) - 1, 0)) <= 0)
+        return;
+    buf[n] = 0;
+    ws->state = strstr(buf, "hidden") ? IconicCanvas:NormalCanvas;
 }
 
 int getdisplaysize(wbp w, int *width, int *height)

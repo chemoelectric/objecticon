@@ -40,6 +40,7 @@ Dirtab dirtab[]=
         { "wdir",               QTFILE, Qwdir,          0600 },
         { "wctl",               QTFILE, Qwctl,          0600 },
         { "window",             QTFILE, Qwindow,        0400 },
+        { "wininfo",            QTFILE, Qwininfo,    0400 },
         { "wsys",               QTDIR,  Qwsys,          0500|DMDIR },
 	{ nil, }
 };

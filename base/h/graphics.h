@@ -294,7 +294,7 @@ typedef struct _wstate {
   int           mouse_events, cons_events, events_read;
   char          *wsys;
   int           wsys_fd, wctl_fd, mouse_fd, cons_fd, consctl_fd, 
-                screeninfo_fd, cursor_fd, label_fd;
+                wininfo_fd, screeninfo_fd, cursor_fd, label_fd;
   int           mouse_pid, cons_pid;
   int           winid;                  /* Id as per winid file */
   int           transientfor_winid;     /* Winid of transient-for window, or -1 */

@@ -426,42 +426,48 @@ winctl(void *arg)
 			recv(cwrm.c1, &pair);
 			if(w->deleted || w->i==nil)
 				pair.ns = sprint(pair.s, "");
-			else{
-                                strcpy(buff, " ");
-				if(w->hidden)
-                                    strcat(buff, "hidden ");
-				if(w == input)
-                                    strcat(buff, "current ");
-                                if(w->noborder)
-                                    strcat(buff, "noborder ");
-                                if(w->keepabove)
-                                    strcat(buff, "keepabove ");
-                                if(w->keepbelow)
-                                    strcat(buff, "keepbelow ");
-                                if (w->transientfor != -1)
-                                    sprint(buff + strlen(buff), "transientfor:%d ", w->transientfor);
-                                if (w->mindx != 1)
-                                    sprint(buff + strlen(buff), "mindx:%d ", w->mindx);
-                                if (w->mindy != 1)
-                                    sprint(buff + strlen(buff), "mindy:%d ", w->mindy);
-                                if (w->maxdx != INT_MAX)
-                                    sprint(buff + strlen(buff), "maxdx:%d ", w->maxdx);
-                                if (w->maxdy != INT_MAX)
-                                    sprint(buff + strlen(buff), "maxdy:%d ", w->maxdy);
+			else
+                            pair.ns = wstatestring(w, pair.s, pair.ns);
 
-				pair.ns = snprint(pair.s, pair.ns, "%11d %11d %11d %11d%s",
-                                                  w->i->r.min.x - screen->r.min.x, 
-                                                  w->i->r.min.y - screen->r.min.y, 
-                                                  w->i->r.max.x - screen->r.min.x,
-                                                  w->i->r.max.y - screen->r.min.y,
-                                                  buff);
-			}
 			send(cwrm.c2, &pair);
 			continue;
 		}
 		if(!w->deleted)
 			flushimage(display, 1);
 	}
+}
+
+int
+wstatestring(Window *w, char *dest, int destsize)
+{
+    char buff[256];
+    strcpy(buff, " ");
+    if(w->hidden)
+        strcat(buff, "hidden ");
+    if(w == input)
+        strcat(buff, "current ");
+    if(w->noborder)
+        strcat(buff, "noborder ");
+    if(w->keepabove)
+        strcat(buff, "keepabove ");
+    if(w->keepbelow)
+        strcat(buff, "keepbelow ");
+    if (w->transientfor != -1)
+        sprint(buff + strlen(buff), "transientfor:%d ", w->transientfor);
+    if (w->mindx != 1)
+        sprint(buff + strlen(buff), "mindx:%d ", w->mindx);
+    if (w->mindy != 1)
+        sprint(buff + strlen(buff), "mindy:%d ", w->mindy);
+    if (w->maxdx != INT_MAX)
+        sprint(buff + strlen(buff), "maxdx:%d ", w->maxdx);
+    if (w->maxdy != INT_MAX)
+        sprint(buff + strlen(buff), "maxdy:%d ", w->maxdy);
+    return snprint(dest, destsize, "%11d %11d %11d %11d%s",
+                   w->i->r.min.x - screen->r.min.x, 
+                   w->i->r.min.y - screen->r.min.y, 
+                   w->i->r.max.x - screen->r.min.x,
+                   w->i->r.max.y - screen->r.min.y,
+                   buff);
 }
 
 void

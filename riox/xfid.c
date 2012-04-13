@@ -588,7 +588,7 @@ xfidread(Xfid *x)
 	Fcall fc;
 	int n, off, cnt, c;
 	uint qid;
-	char buf[128], *t;
+	char buf[256], *t;
 	char cbuf[30];
 	Window *w;
 	MouseEx ms;
@@ -752,6 +752,11 @@ xfidread(Xfid *x)
                            mousectl->xy.x, mousectl->xy.y, 
                            screen->r.min.x, screen->r.min.y,
                            screen->r.max.x, screen->r.max.y);
+		t = estrdup(buf);
+		goto Text;
+
+	case Qwininfo:
+                n = wstatestring(w, buf, sizeof(buf));
 		t = estrdup(buf);
 		goto Text;
 

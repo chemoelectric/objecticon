@@ -17,6 +17,7 @@ enum
 	Qtext,
 	Qwctl,
 	Qwindow,
+	Qwininfo,
 	Qwsys,		/* directory of window directories */
 	Qwsysdir,		/* window directory, child of wsys */
 
@@ -205,6 +206,7 @@ int		wctlmesg(Window*, int);
 uint		wbacknl(Window*, uint, uint);
 uint		winsert(Window*, Rune*, int, uint);
 void		waddraw(Window*, Rune*, int);
+int             wstatestring(Window *w, char *dest, int destsize);
 void		wborder(Window*, int);
 void		wclosewin(Window*);
 int		wcurrent(Window*);
