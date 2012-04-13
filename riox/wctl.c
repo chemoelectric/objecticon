@@ -500,8 +500,11 @@ writewctl(Xfid *x, char *err)
                     /* If we didn't change the rectangle, then only
                      * send a wctl message if the size limits changed,
                      * and only send a mouse reshape message if the
-                     * rectangle was limited.
+                     * rectangle was limited.  For consistency with
+                     * what happens if the rectangle does change, the
+                     * window is topped.
                      */
+                    wtop(w);
                     if (limchanged) {
                         w->wctlready = 1;
                         wsendctlmesg(w, Wakeup);
