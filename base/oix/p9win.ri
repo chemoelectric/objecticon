@@ -1416,25 +1416,38 @@ static int open_screen_win(wsp ws)
                 ws->state = NormalCanvas;
         }
 
-        /* OIUSEWIN=2 -> take over size of enclosing window */
-        if (ws->using_win == 2) {
+        /* OIUSEWIN=1 -> set size and pos of enclosing window 
+         *          2 -> just set pos of enclosing window 
+         *          3 -> set neither size or pos
+         * max/min window sizes are set in any case.
+         */
+        if (ws->using_win == 1) {
+            if (ws->x != -INT_MAX && ws->y != -INT_MAX)
+                fprint(ws->wctl_fd, "resize -minx %d -miny %d -dx %d -dy %d -mindx %d -maxdx %d -mindy %d -maxdy %d", 
+                       ws->x, ws->y,
+                       adjust(ws, ws->width), 
+                       adjust(ws, ws->height),
+                       adjust(ws, minw),
+                       adjust(ws, maxw),
+                       adjust(ws, minh),
+                       adjust(ws, maxh));
+            else
+                fprint(ws->wctl_fd, "resize -dx %d -dy %d -mindx %d -maxdx %d -mindy %d -maxdy %d", 
+                       adjust(ws, ws->width), 
+                       adjust(ws, ws->height),
+                       adjust(ws, minw),
+                       adjust(ws, maxw),
+                       adjust(ws, minh),
+                       adjust(ws, maxh));
+        } else {
             fprint(ws->wctl_fd, "resize -mindx %d -maxdx %d -mindy %d -maxdy %d", 
                    adjust(ws, minw),
                    adjust(ws, maxw),
                    adjust(ws, minh),
                    adjust(ws, maxh));
-        } else {
-            fprint(ws->wctl_fd, "resize -dx %d -dy %d -mindx %d -maxdx %d -mindy %d -maxdy %d", 
-                   adjust(ws, ws->width), 
-                   adjust(ws, ws->height),
-                   adjust(ws, minw),
-                   adjust(ws, maxw),
-                   adjust(ws, minh),
-                   adjust(ws, maxh));
+            if (ws->using_win != 3 && ws->x != -INT_MAX && ws->y != -INT_MAX)
+                fprint(ws->wctl_fd, "move -minx %d -miny %d", ws->x, ws->y);
         }
-
-        if (ws->x != -INT_MAX && ws->y != -INT_MAX)
-            fprint(ws->wctl_fd, "move -minx %d -miny %d", ws->x, ws->y);
 
         if (ws->state == IconicCanvas)
             fprint(ws->wctl_fd, "hide");
@@ -1490,6 +1503,14 @@ static int open_screen_win(wsp ws)
         }
     }
 
+    /* Open mouse before gengetwindow so that we don't miss any
+     * reshape events */
+    if ((ws->mouse_fd = open_winfile(ws, "mouse", ORDWR)) < 0) {
+        whyf("Can't open mouse file: %r");
+        close_screen_win(ws);
+        return Failed;
+    }
+
     sprintf(buff, "%s/winname", ws->mount_dir);
     if (gengetwindow(display, buff, &ws->win, &ws->screen, Refnone) < 0) {
         whyf("gengetwindow failed: %r");
@@ -1536,12 +1557,6 @@ static int open_screen_win(wsp ws)
         return Failed;
     }
     ws->mouse_events = ws->cons_events = ws->events_read = 0;
-
-    if ((ws->mouse_fd = open_winfile(ws, "mouse", ORDWR)) < 0) {
-        whyf("Can't open mouse file: %r");
-        close_screen_win(ws);
-        return Failed;
-    }
 
     if ((ws->screeninfo_fd = open_winfile(ws, "screeninfo", OREAD)) < 0) {
         whyf("Can't open screeninfo file: %r");
@@ -2071,7 +2086,7 @@ static void init_window_system(void)
 {
     Dir *fs;
 
-    env_int("OIUSEWIN", &use_win, 0, 2);
+    env_int("OIUSEWIN", &use_win, 0, 3);
 
     load_font_info();
 
