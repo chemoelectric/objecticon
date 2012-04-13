@@ -547,8 +547,10 @@ static void domouse(void)
                 }
             } else if (!over && (press & 4))
                 button3menu();
-            else if((press & 4) && over && !over->mouseopen && !ptinrect(mouse->xy, over->scrollr))
+            else if((press & 4) && over && !over->mouseopen && !ptinrect(mouse->xy, over->scrollr)) {
                 button3txtmenu(over);
+                held = 0;
+            }
         }
     } else if (mouse->buttons == 0) {
         if (oldbuttons == 0) {
