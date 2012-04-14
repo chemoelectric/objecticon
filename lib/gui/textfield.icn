@@ -315,12 +315,17 @@ class TextField(Component)
       local s, i
       s := get_view()
       i := self.cbwin.text_width(s[1:self.cursor])
+
+      # Constrain loff so that the cursor is on the screen
       if loff > i then
          loff := i
       else if loff + self.tw < i then
          loff := i - self.tw
-      else if self.cbwin.text_width(s) - self.tw < loff then
-         loff := max(0, self.cbwin.text_width(s) - self.tw)
+
+      # Now try to use as much of tw as we can, by minimizing loff
+      i := self.cbwin.text_width(s) 
+      if i - self.tw < loff then
+         loff := max(0, i - self.tw)
    end
 
    public scroll_tick()
