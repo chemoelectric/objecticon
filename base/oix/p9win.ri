@@ -1247,27 +1247,38 @@ void doconfig(wbp w, int status)
 
     /* Move/resize of window if open */
     if (ws->win) {
-        if (status & C_POS)
+        if ((status & (C_POS | C_SIZE)) == C_POS) {
+            /* Only need a 'move' if doing pos without size; if doing
+             * both pos can be done in a 'resize' */
             fprint(ws->wctl_fd, "move -minx %d -miny %d", ws->x, ws->y);
-        if (status & (C_RESIZE|C_SIZE|C_MAXSIZE|C_MINSIZE)) {
-            int minw, maxw, minh, maxh;
-            if (ws->resizable) {
-                minw = ws->minwidth;
-                minh = ws->minheight;
-                maxw = ws->maxwidth;
-                maxh = ws->maxheight;
+            status &= ~C_POS;
+        }
+        if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE)) {
+            char buf[256];
+            strcpy(buf, "resize");
+            if (status & C_POS)
+                sprintf(buf + strlen(buf), " -minx %d -miny %d", ws->x, ws->y);
+            if (status & C_SIZE)
+                sprintf(buf + strlen(buf), " -dx %d -dy %d", adjust(ws, ws->width), adjust(ws, ws->height));
+            if (status & (C_RESIZE | C_MAXSIZE | C_MINSIZE)) {
+                int minw, maxw, minh, maxh;
+                if (ws->resizable) {
+                    minw = ws->minwidth;
+                    minh = ws->minheight;
+                    maxw = ws->maxwidth;
+                    maxh = ws->maxheight;
+                }
+                else {
+                    minw = maxw = ws->width;
+                    minh = maxh = ws->height;
+                }
+                sprintf(buf + strlen(buf), " -mindx %d -maxdx %d -mindy %d -maxdy %d", 
+                        adjust(ws, minw),
+                        adjust(ws, maxw),
+                        adjust(ws, minh),
+                        adjust(ws, maxh));
             }
-            else {
-                minw = maxw = ws->width;
-                minh = maxh = ws->height;
-            }
-            fprint(ws->wctl_fd, "resize -dx %d -dy %d -mindx %d -maxdx %d -mindy %d -maxdy %d", 
-                   adjust(ws, ws->width), 
-                   adjust(ws, ws->height),
-                   adjust(ws, minw),
-                   adjust(ws, maxw),
-                   adjust(ws, minh),
-                   adjust(ws, maxh));
+            write(ws->wctl_fd, buf, strlen(buf));
         }
     }
     if (status & C_SIZE)
