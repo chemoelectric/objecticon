@@ -1260,7 +1260,7 @@ void doconfig(wbp w, int status)
                 sprintf(buf + strlen(buf), " -minx %d -miny %d", ws->x, ws->y);
             if (status & C_SIZE)
                 sprintf(buf + strlen(buf), " -dx %d -dy %d", adjust(ws, ws->width), adjust(ws, ws->height));
-            if (status & (C_RESIZE | C_MAXSIZE | C_MINSIZE)) {
+            if (status != C_POS) {
                 int minw, maxw, minh, maxh;
                 if (ws->resizable) {
                     minw = ws->minwidth;
