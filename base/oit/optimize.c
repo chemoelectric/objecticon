@@ -671,16 +671,17 @@ static int visit_init_assign(struct lnode *n)
     f = lookup_field(vclass, y->fname);
     if (!f)
         return 1;
+    if (f->flag != (M_Public | M_Static | M_Const))
+        return 1;
 
     if (x->child2->op == Uop_Const) {
         struct centry *ce = ((struct lnode_const *)x->child2)->con;
-        if (f->flag == (M_Public | M_Static | M_Const)) {
-            if (f->const_flag == NOT_SEEN) {
-                f->const_val = ce;
-                f->const_flag = SET_CONST;
-            } else
-                f->const_flag = OTHER;
-        }
+        if (f->const_flag == NOT_SEEN) {
+            f->const_val = ce;
+            f->const_flag = SET_CONST;
+        } else
+            f->const_flag = OTHER;
+        /* Return 0 so that we don't traverse the lhs (and call visit_init_field below) */
         return 0;
     } else if (x->child2->op == Uop_Keyword) {
         int k = ((struct lnode_keyword *)x->child2)->num;
@@ -689,10 +690,10 @@ static int visit_init_assign(struct lnode *n)
                 f->const_flag = SET_NULL;
             else
                 f->const_flag = OTHER;
+            return 0;
         }
-        return 0;
-    } else
-        return 1;
+    }
+    return 1;
 }
 
 static int visit_init_field(struct lnode *n)

@@ -50,7 +50,7 @@ static int xlfd_size(char *s, int n);
 static wfp newfont(wdp wd, char *s);
 static wdp alcdisplay (char *s);
 static wfp loadfont(wdp wd, char *s);
-static void resizepixmap(wbp w, int width, int height);
+static void resizepixmap(wbp w);
 static void setclip(wbp w);
 static void unsetclip(wbp w);
 static int make_mod(unsigned int state);
@@ -895,7 +895,7 @@ static void wmap(wbp w)
     XGetWindowAttributes(wd->display, ws->win, &attrs);
     ws->width = attrs.width;
     ws->height = attrs.height;
-    resizepixmap(w, ws->width, ws->height);
+    resizepixmap(w);
 
     synch_cursor(ws);
 
@@ -967,7 +967,6 @@ void doconfig(wbp w, int status)
     wsp ws = w->window;
     wcp wc = w->context;
     wdp wd = ws->display;
-    XTextProperty textprop;
 
     if (status & C_CLIP) {
         if (wc->clipw >= 0)
@@ -976,11 +975,8 @@ void doconfig(wbp w, int status)
             unsetclip(w);
     }
 
-    if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE)) {
-        /*printf("doconfig status=%d size=%d,%d\n",status,ws->width,ws->height);*/
-        resizepixmap(w, ws->width, ws->height);
-
-        if (ws->win) {
+    if (ws->win) {
+        if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE)) {
             if (status != C_POS) {
                 XSizeHints size_hints;
                 size_hints.flags = PMinSize | PMaxSize;
@@ -1011,12 +1007,10 @@ void doconfig(wbp w, int status)
                     break;
                 }
             }
-            /* XSync is not enough because the window manager gets involved here. */
-            XFlush(wd->display);			      /* force out request */
-            XGetWMName(wd->display, ws->win, &textprop);    /* force WM round trip */
-            XSync(wd->display, False);		      /* NOW sync */
         }
     }
+    if (status & C_SIZE)
+        resizepixmap(w);
 
     if (status & C_IMAGE) {
         struct imgdata *imd = &ws->initimage;
@@ -1644,20 +1638,18 @@ static void handle_exposures(wsp ws, XExposeEvent *event)
  * arrive, as well as when programs make explicit resize requests.
  *
  */
-static void resizepixmap(wbp w, int width, int height)
+static void resizepixmap(wbp w)
 {
     Pixmap p;
     wcp wc = w->context;
     wsp ws = w->window;
     wdp wd = ws->display;
 
-    /*printf("resizepixmap from %d,%d to %d,%d\n",ws->pixwidth,ws->pixheight,width,height);*/
-
-    if ((width > ws->pixwidth) || (height > ws->pixheight)) {
+    if ((ws->width > ws->pixwidth) || (ws->height > ws->pixheight)) {
         int x = ws->pixwidth, y = ws->pixheight;
 
-        ws->pixheight = Max(ws->pixheight, height);
-        ws->pixwidth  = Max(ws->pixwidth, width);
+        ws->pixheight = Max(ws->pixheight, ws->height);
+        ws->pixwidth  = Max(ws->pixwidth, ws->width);
         p = XCreatePixmap(wd->display, GetRoot(wd), ws->pixwidth+1,
                           ws->pixheight+1, GetDepth(wd));
         /*
@@ -1673,15 +1665,15 @@ static void resizepixmap(wbp w, int width, int height)
         if (wc->clipw >= 0)
             unsetclip(w);
 	   
-        if (width > x) {
-            XFillRectangle(wd->display, p, wc->gc, x, 0, width-x, ws->pixheight);
+        if (ws->width > x) {
+            XFillRectangle(wd->display, p, wc->gc, x, 0, ws->width-x, ws->pixheight);
             if (ws->win != (Window) NULL)
-                XFillRectangle(wd->display,ws->win,wc->gc, x, 0, width-x, ws->pixheight);
+                XFillRectangle(wd->display,ws->win,wc->gc, x, 0, ws->width-x, ws->pixheight);
         }
-        if (height > y) {
-            XFillRectangle(wd->display, p, wc->gc, 0, y, x, height - y);
+        if (ws->height > y) {
+            XFillRectangle(wd->display, p, wc->gc, 0, y, x, ws->height - y);
             if (ws->win != (Window) NULL)
-                XFillRectangle(wd->display, ws->win, wc->gc, 0, y, x, height - y);
+                XFillRectangle(wd->display, ws->win, wc->gc, 0, y, x, ws->height - y);
         }
         XSetForeground(wd->display, wc->gc, wc->fg->c);
         XCopyArea(wd->display, ws->pix, p, wc->gc, 0, 0, x, y, 0, 0);
@@ -1817,7 +1809,7 @@ static void handle_config(wsp ws, XConfigureEvent *event)
     ws->width = event->width;
     ws->height = event->height;
 
-    resizepixmap(findwbp(ws), event->width, event->height);
+    resizepixmap(findwbp(ws));
 
     qeventcode(ws, WINDOWRESIZED);
 }

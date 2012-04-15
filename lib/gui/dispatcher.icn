@@ -159,8 +159,8 @@ class Dispatcher()
       }
    end
 
-   public static new_task(e)
-      return Task(scheduler, e)
+   public static new_task(e, v)
+      return Task(scheduler, e, v)
    end
 
    public static get_curr_task()
