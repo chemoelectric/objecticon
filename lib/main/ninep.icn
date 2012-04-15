@@ -57,8 +57,13 @@ class File9P()
       user := Files.file_to_string("/env/user") | "none"
    end
 
-   public defer get_length()
-   public defer set_length(len)
+   public get_length()
+      return 0
+   end
+
+   public set_length(len)
+      return self
+   end
 
    public modified(uid)
       self.qversion +:= 1
@@ -99,6 +104,8 @@ class File9P()
    end
 
    public set_name(x)
+      # Must be string since it's used as a table key
+      x := string(x) | runerr(103, x)
       if \parent & (\self.name ~== x) then
          parent.rename_child(self, x)
       self.name := x
@@ -234,14 +241,6 @@ class Dir9PImpl(Dir9P)
       return n
    end
 
-   public get_length()
-      return 0
-   end
-
-   public set_length(len)
-      return self
-   end
-
    public new()
       cast(self,Dir9P).new()
       ent := table()
@@ -252,7 +251,6 @@ end
 class Regular9P(File9P)
    public defer write(s, pos)
    public defer read(pos, count)
-   public defer set_length(len)
 end
 
 class Regular9PImpl(Regular9P)
@@ -281,6 +279,7 @@ class Regular9PImpl(Regular9P)
             data[pos:min(pos + *s, *data + 1)] := s
       } else
          data ||:= s
+      return *s
    end
 
    public read(pos, count)
@@ -765,7 +764,7 @@ class TreeData9P(Data9P)
    end
 
    public write(p, s, pos)
-      p.write(s, pos)
+      return p.write(s, pos)
    end
 
    public read(p, pos, count)
@@ -887,7 +886,7 @@ class Session9P()
    end
 
    private respond_impl(x)
-      local o, qids, e, s, i, p, info
+      local o, qids, e, s, i, p, info, n
       case classof(x) of {
          TVersion:
             return RVersion(65535, 8216, "9P2000")
@@ -997,9 +996,9 @@ class Session9P()
             info := data.get_info(o.path)
             if iand(info.mode, Mode9.DMDIR) ~= 0 then
                throw("attempt to write to directory")
-            data.write(o.path, x.data, x.offset + 1)
+            n := data.write(o.path, x.data, x.offset + 1)
             data.modified(o.path, o.uid)
-            return RWrite(x.tag, *x.data)
+            return RWrite(x.tag, n)
          }
          TRead: {
             o := lookup(x.fid)
