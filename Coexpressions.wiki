@@ -552,4 +552,4 @@ procedure main()
    write("Exiting")
 end
 }}}
-The scheduler class is also used by the `gui` library.  Rather than performing I/O, these tasks typically perform background updates of the user interface.  For example the logic to make the cursor flash in a textfield is encapsulated in a `Task`.  The task sleeps for a while, then updates the cursor, and repeats process indefinitely until the task is stopped when the textfield is disposed of.
+The scheduler class is also used by the `gui` library.  Rather than performing I/O, these tasks typically perform background updates of the user interface.  For example the logic to make the cursor flash in a textfield is encapsulated in a `Task`.  The task sleeps for a while, then updates the cursor, and repeats the process indefinitely until the task is stopped when the textfield is disposed of.
