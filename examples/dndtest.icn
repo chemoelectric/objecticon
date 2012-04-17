@@ -147,7 +147,7 @@ class CustomTree(Tree)
          #
          every n := !self.object_get_gesture_selections() do {
             if /n.is_folder_flag then 
-               n.get_parent().delete_node(n)
+               n.get_parent().remove(n)
          }
 
          #
@@ -199,7 +199,7 @@ class DNDTest(Dialog)
       local n
 
       every n := !(tree.object_get_gesture_selections()) do {
-         n.get_parent().delete_node(n)
+         n.get_parent().remove(n)
       }
       #
       # Notify the tree that the node data structure has altered.

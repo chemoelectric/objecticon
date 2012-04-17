@@ -206,14 +206,6 @@ class TreeNode()
       return self
    end
 
-   #
-   # See {remove()}.
-   #
-   public delete_node(n)
-      remove(n)
-      return self
-   end
-
    public new()
       children := []
       return
