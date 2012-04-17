@@ -169,7 +169,7 @@ end
 
 class Dir9P(File9P)
    public defer add_child(x)
-   public defer delete_child(x)
+   public defer remove_child(x)
    public defer get_child(x)
    package defer rename_child(x, s)
    public defer gen_children()
@@ -188,7 +188,7 @@ class Dir9PImpl(Dir9P)
       return self
    end
 
-   public delete_child(x)
+   public remove_child(x)
       delete(ent, x.name)
       x.set_parent()
       return self
@@ -402,18 +402,16 @@ class Comms9P()
    end
 
    public static encode_stat(qid, info)
-      local s
-      s := "\0\0\0\0\0\0" || 
-         encode_qid(qid) || 
-         int_to_bytes(info.mode, 4) ||
-         int_to_bytes(info.atime, 4) || 
-         int_to_bytes(info.mtime, 4) || 
-         int_to_bytes(info.length, 8) ||
-         int_to_bytes(*info.name, 2) || info.name ||
-         int_to_bytes(*info.uid, 2) || info.uid ||
-         int_to_bytes(*info.gid, 2) || info.gid ||
-         int_to_bytes(*info.muid, 2) || info.muid
-      return int_to_bytes(*s, 2) || s
+      return encode_data_len2("\0\0\0\0\0\0" || 
+                              encode_qid(qid) || 
+                              int_to_bytes(info.mode, 4) ||
+                              int_to_bytes(info.atime, 4) || 
+                              int_to_bytes(info.mtime, 4) || 
+                              int_to_bytes(info.length, 8) ||
+                              encode_data_len2(info.name) ||
+                              encode_data_len2(info.uid) ||
+                              encode_data_len2(info.gid) ||
+                              encode_data_len2(info.muid))
    end
 
    public static decode_wstat(s)
@@ -709,7 +707,7 @@ class Data9P()
    public defer get_parent(p)
    public defer get_child(p, name)
    public defer gen_children(p)
-   public defer delete_child(p1, p2)
+   public defer remove_child(p1, p2)
    public defer create_child(p, name, uid, perm)
    public defer is_empty(p)
    public defer modified(p, uid)
@@ -743,8 +741,8 @@ class TreeData9P(Data9P)
       suspend p.gen_children()
    end
 
-   public delete_child(p1, p2)
-      p1.delete_child(p2)
+   public remove_child(p1, p2)
+      p1.remove_child(p2)
    end
 
    public create_child(p, name, uid, perm)
@@ -805,32 +803,35 @@ class Session9P()
       data, 
       paths,       # table mapping paths to sets of fid numbers representing those paths.  So
                    # for each fid number n, n is an element of paths[fids[n].path].
+      ref_cnt,
+      track_refs,
       verbose
 
    private new_fid(n, path, uid, mode)
-      fids[n] := Fid(path, uid, mode)
+      /fids[n] := Fid(path, uid, mode) | throw("fid already in use:" || n)
       (/paths[path] := set(n)) | insert(paths[path], n)
+      inc_ref(path)
    end
 
    private del_fid(n)
       local x
-      x := fids[n]
+      x := member(fids, n) | throw("no such fid:" || n)
       delete(fids, n)
       delete(paths[x.path], n)
       if *paths[x.path] = 0 then
          delete(paths, x.path)
+      dec_ref(x.path)
    end
 
    private is_path_open(path)
       return \fids[!paths[path]].omode
    end
 
-   private lookup(n)
-      return \fids[n] | throw("no such fid:" || n)
-   end
-
-   private check_referenced(path)
-      member(paths, path) | data.path_unreferenced(path)
+   private lookup(n, t)
+      local o
+      o := member(fids, n) | throw("no such fid:" || n)
+      tmp(o.path, t)
+      return o
    end
 
    private path_string(path)
@@ -861,6 +862,10 @@ class Session9P()
          every writes(!e[2], " ")
          write()
       }
+      write("Ref counts(",*ref_cnt,")")
+      every e := !sort(ref_cnt) do {
+         write(path_string(e[1]), "(",image(e[1]), ") -> ", e[2])
+      }
    end
 
    private has_perm(info, uid, p)
@@ -881,67 +886,106 @@ class Session9P()
       }
    end
 
-   public respond(x)
-      return simple_try{respond_impl(x)} | RError(x.tag, &why)
+   private inc_ref(p)
+      if \track_refs then {
+         ref_cnt[p] +:= 1
+         if \verbose then write("INC:",image(p), " to ", ref_cnt[p])
+      }
    end
 
-   private respond_impl(x)
+   public is_path_referenced(p)
+      return member(ref_cnt, p)
+   end
+
+   public is_path_unreferenced(p)
+      return not member(ref_cnt, p)
+   end
+
+   private dec_ref(p)
+      local i
+      if \track_refs then {
+         i := (ref_cnt[p] -:= 1)
+         if \verbose then write("DEC:",image(p)," to ", i)
+         if i < 0 then
+            syserr("negative reference count in Session9P")
+         if i = 0 then {
+            delete(ref_cnt, p)
+            data.path_unreferenced(p)
+         }
+      }
+   end
+
+   # Add path p to the temporary path list and increment its refcount.
+   private tmp(p, t)
+      if \track_refs then {
+         put(t, p)
+         inc_ref(p)
+      }
+      return p
+   end
+
+   public respond(x)
+      local t, y
+      t := []  # A list of paths temporarily used by respond_impl
+      y := simple_try{respond_impl(x, t)} | RError(x.tag, &why)
+      every dec_ref(!t)
+      return y
+   end
+
+   private respond_impl(x, t)
       local o, qids, e, s, i, p, info, n
       case classof(x) of {
          TVersion:
             return RVersion(65535, 8216, "9P2000")
          TAttach: {
-            p := data.get_root(x.aname)
+            p := tmp(data.get_root(x.aname), t)
             new_fid(x.fid, p, x.uname)
             return RAttach(x.tag, Comms9P.encode_qid(data.get_qid(p)))
          }
          TClunk: {
-            o := lookup(x.fid)
+            o := lookup(x.fid, t)
             del_fid(x.fid)
             if \o.omode then {
                data.close(o.path)
                if iand(o.omode, FileOpt9.ORCLOSE) ~= 0 then {
-                  p := data.get_parent(o.path)
-                  data.delete_child(p, o.path)
+                  p := tmp(data.get_parent(o.path), t)
+                  data.remove_child(p, o.path)
                   data.modified(p, o.uid)
                }
             }
-            check_referenced(o.path)
             return RClunk(x.tag)
          }
          TRemove: {
-            o := lookup(x.fid)
+            o := lookup(x.fid, t)
             del_fid(x.fid)
             info := data.get_info(o.path)
             if iand(info.mode, Mode9.DMDIR) ~= 0 & not data.is_empty(o.path) then
                throw("directory not empty")
-            p := data.get_parent(o.path)
+            p := tmp(data.get_parent(o.path), t)
             has_perm(data.get_info(p), o.uid, Comms9P.AWRITE) | throw("permission denied")
             if \o.omode then
                data.close(o.path)
-            data.delete_child(p, o.path)
+            data.remove_child(p, o.path)
             data.modified(p, o.uid)
-            check_referenced(o.path)
             return RRemove(x.tag)
          }
          TCreate: {
-            o := lookup(x.fid)
+            o := lookup(x.fid, t)
             /o.omode | throw("fid already open")
             info := data.get_info(o.path)
             iand(info.mode, Mode9.DMDIR) ~= 0 | throw("attempt to create in a regular file")
             has_perm(info, o.uid, Comms9P.AWRITE) | throw("permission denied")
-            if data.get_child(o.path, x.name) then
+            if tmp(data.get_child(o.path, x.name), t) then
                throw("create with name which already exists")
-            p := data.create_child(o.path, x.name, o.uid, x.perm)
+            p := tmp(data.create_child(o.path, x.name, o.uid, x.perm), t)
             data.open(p, x.mode)
             data.modified(o.path, o.uid)
             del_fid(x.fid)
-            check_referenced(o.path)
             new_fid(x.fid, p, o.uid, x.mode)
             return RCreate(x.tag, Comms9P.encode_qid(data.get_qid(p)), 0)
          }
          TOpen: {
-            o := lookup(x.fid)
+            o := lookup(x.fid, t)
             /o.omode | throw("fid already open")
             info := data.get_info(o.path)
             if iand(info.mode, Mode9.DMEXCL) ~= 0 & is_path_open(o.path) > 0 then
@@ -960,7 +1004,7 @@ class Session9P()
                i := ior(i, Comms9P.AWRITE)
             has_perm(info, o.uid, i) | throw("permission denied")
             if iand(x.mode, FileOpt9.ORCLOSE) ~= 0 then {
-               p := data.get_parent(o.path)
+               p := tmp(data.get_parent(o.path), t)
                has_perm(data.get_info(p), o.uid, Comms9P.AWRITE) | throw("permission denied")
             }
             data.open(o.path, x.mode)
@@ -968,20 +1012,18 @@ class Session9P()
             return ROpen(x.tag, Comms9P.encode_qid(data.get_qid(o.path)), 0)
          }
          TWalk: {
-            o := lookup(x.fid)
-            if is_path_open(o.path) then
-               throw("cannot clone open fid")
+            o := lookup(x.fid, t)
+            /o.omode | throw("cannot clone open fid")
             p := o.path
             qids := []
             every e := !x.wname do {
                if e == ".." then
-                  p := data.get_parent(p)   # Note parent of root is root
+                  p := tmp(data.get_parent(p), t)   # Note parent of root is root
                else 
-                  p := data.get_child(p, e) | break
+                  p := tmp(data.get_child(p, e), t) | break
                put(qids, Comms9P.encode_qid(data.get_qid(p)))
             }
             if *qids = *x.wname then {
-               #fids[x.newfid] := Fid(p, o.uid)
                new_fid(x.newfid, p, o.uid)
                return RWalk(x.tag, qids)
             } 
@@ -990,7 +1032,7 @@ class Session9P()
             return RWalk(x.tag, qids)
          }
          TWrite: {
-            o := lookup(x.fid)
+            o := lookup(x.fid, t)
             (iand(\o.omode, 3) = (FileOpt9.OWRITE | FileOpt9.ORDWR)) |
                throw("write on file not open for writing")
             info := data.get_info(o.path)
@@ -1001,14 +1043,14 @@ class Session9P()
             return RWrite(x.tag, n)
          }
          TRead: {
-            o := lookup(x.fid)
+            o := lookup(x.fid, t)
             (iand(\o.omode, 3) = (FileOpt9.OREAD | FileOpt9.OEXEC | FileOpt9.ORDWR)) |
                throw("read on file not open for reading")
             info := data.get_info(o.path)
             if iand(info.mode, Mode9.DMDIR) ~= 0 then {
                if x.offset = 0 then {
                   o.dir := []
-                  every e := data.gen_children(o.path) do
+                  every e := tmp(data.gen_children(o.path), t) do
                      put(o.dir, Comms9P.encode_stat(data.get_qid(e), data.get_info(e)))
                }
                s := ""
@@ -1019,17 +1061,17 @@ class Session9P()
             return RRead(x.tag, s)
          }
          TStat: {
-            o := lookup(x.fid)
+            o := lookup(x.fid, t)
             return RStat(x.tag, Comms9P.encode_stat(data.get_qid(o.path), data.get_info(o.path)))
          }
          TWstat: {
-            o := lookup(x.fid)
+            o := lookup(x.fid, t)
             i := Comms9P.decode_wstat(x.stat)  | throw("invalid wstat data")
             info := data.get_info(o.path)
             if \i.name then {
-               p := data.get_parent(o.path)
+               p := tmp(data.get_parent(o.path), t)
                has_perm(data.get_info(p), o.uid, Comms9P.AWRITE) | throw("permission denied")
-               if data.get_child(p, i.name) then
+               if tmp(data.get_child(p, i.name), t) then
                   throw("name already exists")
             }
             if \i.length then {
@@ -1094,13 +1136,19 @@ class Session9P()
    end
 
    public set_verbose(x)
-      self.verbose := x
+      self.verbose := check_flag(x)
+      return self
+   end
+
+   public set_track_refs(x)
+      self.track_refs := check_flag(x)
       return self
    end
 
    public new(d)
       self.fids := table()
       self.paths := table()
+      self.ref_cnt := table(0)
       set_data(d)
       return
    end
