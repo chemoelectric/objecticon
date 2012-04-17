@@ -348,7 +348,12 @@ procedure open_win_with(t)
       }
    }
    w.erase_area()
-   w.set_canvas(\t["canvas"])
+   if v := member(t, "canvas") then {
+      w.set_canvas(v) | {
+         w.close()
+         fail
+      }
+   }
    return w
 end
 
