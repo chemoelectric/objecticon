@@ -1668,10 +1668,9 @@ static void close_screen_win(wsp ws)
         /* Clear any size limits */
         if (ws->wctl_fd >= 0)
             fprint(ws->wctl_fd, "resize -mindx 1 -maxdx %d -mindy 1 -maxdy %d", INT_MAX, INT_MAX);
-    } else {
+    } else
         unmount(0, ws->mount_dir);
-        remove(ws->mount_dir);
-    }
+
     if (ws->mouse_pid >= 0)
         kill_proc(ws->mouse_pid);
     if (ws->cons_pid >= 0)
