@@ -42,8 +42,6 @@ static void synch_state(wsp ws);
 static void note_time(char *s);
 static int readimageimpl(char *cmd, int fd, struct imgdata *imd);
 
-#define WINDOW_MOUNT_ROOT "/tmp/oi_windowmounts"
-
 #define NormalCanvas 1
 #define HiddenCanvas 2
 #define IconicCanvas 3
@@ -1497,12 +1495,7 @@ static int open_screen_win(wsp ws)
             close_screen_win(ws);
             return Failed;
         }
-        sprintf(ws->mount_dir, "%s/%d", WINDOW_MOUNT_ROOT, ++window_count);
-        if (mkdir(ws->mount_dir, 0777) < 0) {
-            whyf("Can't make window mount dir (%s): %r", ws->mount_dir);
-            close_screen_win(ws);
-            return Failed;
-        }
+        sprintf(ws->mount_dir, "/n/oix-win.%d", ++window_count);
         ws->border_width = (ws->state == PopupCanvas ? 0 : 2 * Borderwidth);
         /* If either x or y unset, let rio place the window */
         if (ws->x == -INT_MAX || ws->y == -INT_MAX)
@@ -2091,22 +2084,6 @@ wcp clonecontext(wbp w)
 
 static int black_pattern_data[] =  {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
-static char Ebad[] = "something bad happened";
-
-static void fscreate(Req *r)
-{
-    File *f;
-    if (f = createfile(r->fid->file, r->ifcall.name, r->fid->uid, r->ifcall.perm, nil)){
-        r->fid->file = f;
-        r->ofcall.qid = f->qid;
-        respond(r, nil);
-        return;
-    }
-    respond(r, Ebad);
-}
-
-Srv win_fs;
-
 static void close_window_system(void)
 {
     wsp ws;
@@ -2119,29 +2096,12 @@ static void close_window_system(void)
 
 static void init_window_system(void)
 {
-    Dir *fs;
-
     env_int("OIUSEWIN", &use_win, 0, 4);
 
     load_font_info();
 
     /* Keep mounts private */
     rfork(RFNAMEG); 
-
-    /* Ensure the window mount root exists */
-    mkdir(WINDOW_MOUNT_ROOT, 0777);
-    fs = dirstat(WINDOW_MOUNT_ROOT);
-    if (!fs || !(fs->mode & DMDIR))
-        ffatalerr("Couldn't initialize window mount directory: %r");
-    free(fs);
-
-    win_fs.tree = alloctree(0, 0, DMDIR | 0777, 0);
-    win_fs.create = fscreate;
-    postmountsrv(&win_fs, 0, WINDOW_MOUNT_ROOT, MREPL | MCREATE);
-
-    /* Bug workaround which prevents accessing rio's mounted window dir if it is the only
-     * entry in the directory */
-    mkdir(WINDOW_MOUNT_ROOT "/JUNK", 0777);
 
     if ((display = initdisplay(0, 0, draw_error)) == nil)
         ffatalerr("Couldn't initialize display: %r");
