@@ -1495,7 +1495,7 @@ static int open_screen_win(wsp ws)
             close_screen_win(ws);
             return Failed;
         }
-        sprintf(ws->mount_dir, "/n/oix-win.%d", ++window_count);
+        sprintf(ws->mount_dir, "/n/oix-win.%d.%d", getpid(), ++window_count);
         ws->border_width = (ws->state == PopupCanvas ? 0 : 2 * Borderwidth);
         /* If either x or y unset, let rio place the window */
         if (ws->x == -INT_MAX || ws->y == -INT_MAX)
@@ -2099,9 +2099,6 @@ static void init_window_system(void)
     env_int("OIUSEWIN", &use_win, 0, 4);
 
     load_font_info();
-
-    /* Keep mounts private */
-    rfork(RFNAMEG); 
 
     if ((display = initdisplay(0, 0, draw_error)) == nil)
         ffatalerr("Couldn't initialize display: %r");
