@@ -13,7 +13,7 @@ clean :
 	$(MAKE) -C oidoc clean
 
 etags :
-	etags $(ICNTAGS) $(PROGSRC)
+	$(ETAGS) $(ICNTAGS) $(PROGSRC)
 	$(MAKE) -C ivib etags
 	$(MAKE) -C oidoc etags
 

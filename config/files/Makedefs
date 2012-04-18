@@ -17,6 +17,7 @@ CP=cp
 INSTALL=@INSTALL@
 LN_S=@LN_S@
 @SET_MAKE@
+ETAGS=etags -a -o "$(OIHOME)/TAGS"
 
 ICNTAGS=--lang=none \
 	--regex='/[ \t]*global[ \t]+\([a-zA-Z0-9_, \t]+\)/\1/' \

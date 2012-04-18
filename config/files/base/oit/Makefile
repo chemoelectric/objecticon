@@ -18,7 +18,7 @@ clean:
 		rm -f *.o tgram.g y.tab.c y.tab.h y.output oit mkkwd fixgram mktoktab
 
 etags:
-		etags $(OITC) tgrammar.c *.h
+		$(ETAGS) $(OITC) tgrammar.c *.h
 
 oit:		$(OBJS)
 		$(CC) $(CFLAGS) $(LDFLAGS) -o oit $(OBJS) $(LIBS)

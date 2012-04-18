@@ -21,7 +21,7 @@ clean:
 	rm -f *.o rtt typespec y.output
 
 etags:
-	etags $(RSRC) *.h
+	$(ETAGS) $(RSRC) *.h
 
 rtt:	$(OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o rtt $(OBJS) $(LIBS)

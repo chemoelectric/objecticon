@@ -61,7 +61,7 @@ all: $(COMMONU) ivib
 	$(MAKE) -C plugins
 
 etags:
-	etags $(ICNTAGS) $(COMMONSRC) $(PROGSRC)
+	$(ETAGS) $(ICNTAGS) $(COMMONSRC) $(PROGSRC)
 
 clean:
 	rm -f *.u packages.txt $(PROGS)

@@ -3,6 +3,6 @@ include ../../Makedefs
 all:		
 
 etags:
-	etags $(ICNTAGS) *.icn
+	$(ETAGS) $(ICNTAGS) *.icn
 
 clean:

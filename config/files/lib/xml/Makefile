@@ -18,7 +18,7 @@ PROGU=$(PROGSRC:.icn=.u)
 all: $(LIBU) $(PROGS)
 
 etags:
-	etags $(ICNTAGS) $(LIBSRC)
+	$(ETAGS) $(ICNTAGS) $(LIBSRC)
 
 clean:
 	$(RM) $(PROGS) *.u packages.txt
