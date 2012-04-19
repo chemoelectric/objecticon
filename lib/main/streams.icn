@@ -2193,6 +2193,11 @@ class NetStream(FileStream)
    end
 end
 
+# This stream provides non-blocking i/o by using background processes.
+# The methods {get_in_status} and {get_out_status} indicate what the
+# background processes are doing, and whether the {in} and {out}
+# methods may block.  Instances can be used with {DescStream.poll}.
+#
 class NonBlockStream(Stream, HasUnderlyingStream, NoCopy)
    public static const
       INVALID, 
@@ -2236,19 +2241,11 @@ class NonBlockStream(Stream, HasUnderlyingStream, NoCopy)
       return /f
    end
 
-   public can_in()
-      return get_in_status() ~= READING
-   end
-
-   public can_out()
-      return get_out_status() ~= WRITING
-   end
-
    #
    # Return the status of the input side of the stream.  Possible values are :-
    #
    # INVALID -  the stream is not open for input; a call to in() would fail.
-   # READING -  the stream is reading; a call to in() may block
+   # READING -  the background process is reading; a call to in() may block
    # COMPLETE - the stream has data ready; a call to in() would return  some
    #            data immediately.
    # ERROR -    the stream has received an error; a call to in() would fail
@@ -2264,7 +2261,7 @@ class NonBlockStream(Stream, HasUnderlyingStream, NoCopy)
    # Return the status of the output side of the stream.  Possible values are :-
    #
    # INVALID -  the stream is not open for output; a call to out() would fail.
-   # WRITING -  the stream is outputting; a call to out() may block
+   # WRITING -  the background process is writing; a call to out() may block
    # COMPLETE - the stream is ready for another output; a call to out() would
    #            output some data and not block.
    # ERROR -    the stream has received an error; a call to out() would fail
@@ -2277,6 +2274,14 @@ class NonBlockStream(Stream, HasUnderlyingStream, NoCopy)
    private defer close_impl()
    private static defer new_impl(other, verify_host)
 
+   #
+   # Create a new instance
+   # @param other - the {DescStream} to wrap
+   # @param mode - either {READ} and/or {WRITE}.  Using only one of the two
+   #               possible modes allows the creation of only one subprocess.
+   # @param rbuff_size - the read buffer size; default 1KB
+   # @param wbuff_size - the read buffer size; default 1KB
+   #
    public new(other, mode, rbuff_size, wbuff_size)
       /mode := other.get_mode()
       mode := iand(mode, READ_WRITE)
