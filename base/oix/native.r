@@ -4447,7 +4447,7 @@ function io_NetStream_mkaddr(addr, defnet, defservice)
    }
 end
 
-enum nonblockstatus { READING, WRITING, COMPLETE };
+enum nonblockstatus { INVALID, READING, WRITING, COMPLETE, ERROR, ENDOFFILE };
 
 struct nonblockworker {
     int fd;
@@ -4483,16 +4483,15 @@ static void set_status(struct nonblockworker *w, int status)
     rwakeup(&w->rz);
     qunlock(&w->l);
 }
+static int gum;
 
 static void read_loop(struct nonblockworker *w)
 {
     for(;;) {
         wait_for_status(w, READING);
         w->result = read(w->fd, w->buff, w->buff_size);
-        if (w->result < 0) {
-            w->errstr[0] = 0;
+        if (w->result < 0)
             errstr(w->errstr, sizeof(w->errstr));
-        }
         set_status(w, COMPLETE);
     }
 }
@@ -4502,10 +4501,8 @@ static void write_loop(struct nonblockworker *w)
     for(;;) {
         wait_for_status(w, WRITING);
         w->result = write(w->fd, w->buff, w->write_size);
-        if (w->result < 0) {
-            w->errstr[0] = 0;
+        if (w->result < 0)
             errstr(w->errstr, sizeof(w->errstr));
-        }
         set_status(w, COMPLETE);
     }
 }
@@ -4694,27 +4691,41 @@ function io_NonBlockStream_out(self, s)
    }
 end
 
-function io_NonBlockStream_can_in(self)
+function io_NonBlockStream_get_in_status(self)
    body {
        struct nonblockworker *w;
+       int st;
        GetSelfNonBlock();
        w = self_nonblock->reader;
-       if (!w || w->status == COMPLETE)
-           return nulldesc;
-       else
-           fail;
+       if (w) {
+           st = w->status;
+           if (w->status == COMPLETE) {
+               if (w->result < 0)
+                   st = ERROR;
+               else if (w->result == 0)
+                   st = ENDOFFILE;
+           }
+       } else
+           st = INVALID;
+       return C_integer st;
    }
 end
 
-function io_NonBlockStream_can_out(self)
+function io_NonBlockStream_get_out_status(self)
    body {
        struct nonblockworker *w;
+       int st;
        GetSelfNonBlock();
        w = self_nonblock->writer;
-       if (!w || w->status == COMPLETE)
-           return nulldesc;
-       else
-           fail;
+       if (w) {
+           st = w->status;
+           if (w->status == COMPLETE) {
+               if (w->result < 0 || w->result != w->write_size)
+                   st = ERROR;
+           }
+       } else
+           st = INVALID;
+       return C_integer st;
    }
 end
 

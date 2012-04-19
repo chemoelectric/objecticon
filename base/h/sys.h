@@ -49,6 +49,14 @@
    #define O_RSYNC   0
    #define O_SYNC    0
 
+   /* The poll() constants */
+   #define POLLIN          0x001           /* There is data to read.  */
+   #define POLLPRI         0x002           /* There is urgent data to read.  */
+   #define POLLOUT         0x004           /* Writing now will not block.  */
+   #define POLLERR         0x008           /* Error condition.  */
+   #define POLLHUP         0x010           /* Hung up.  */
+   #define POLLNVAL        0x020           /* Invalid polling request.  */
+
    #define PF_INET 0
    #define AF_INET 0
    #define SOCK_STREAM 0

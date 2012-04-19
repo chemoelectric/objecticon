@@ -2,7 +2,7 @@ package io
 
 import
    util(error, check_flag, save_why),
-   lang(NoCopy),
+   lang(NoCopy,Prog),
    posix(ExitInfo, System),
    ipl.strings(replace)
 
@@ -653,7 +653,55 @@ class DescStream(Stream, NoCopy)
    # {&why} accordingly.  On a timeout, it succeeds and returns
    # {&null}.
    #
+$ifdef _PLAN9
+   public static poll(l, timeout)
+      local loop_until, f, ev, r, in, out, done, i, res, snooze
+      if *l % 2 ~= 0 then
+         runerr(130)
+      r := list(*l / 2)
+      loop_until := Prog.get_runtime_millis() + \timeout
+      snooze := 10
+      repeat {
+         clear(r)
+         every i := 1 to *l by 2 do {
+            f := l[i]
+            ev := l[i + 1]
+            is(f, NonBlockStream) | runerr("expected file of type NonBlockStream", f)
+            if f.poll_valid() then {
+               res := 0  
+               in := f.get_in_status()
+               if iand(ev, Poll.IN) ~= 0 & in ~= NonBlockStream.READING then
+                  res := ior(res, Poll.IN)
+               if in = NonBlockStream.ERROR then
+                  res := ior(res, Poll.ERR)
+               else if in = NonBlockStream.EOF then
+                  res := ior(res, Poll.HUP)
+               
+               out := f.get_out_status()
+               if iand(ev, Poll.OUT) ~= 0 & out ~= NonBlockStream.WRITING then
+                  res := ior(res, Poll.OUT)
+               if out = NonBlockStream.ERROR then
+                  res := ior(res, Poll.ERR)
+            } else
+               res := Poll.NVAL
+
+            put(r, res)
+            if res ~= 0 then
+               done := 1
+         }
+         if \done then
+            return r
+
+         if \loop_until < Prog.get_runtime_millis() then
+            return
+
+         delay(snooze)
+         snooze := min(snooze + 5, 100)
+      }
+   end
+$else
    public static defer poll(l, timeout)
+$endif
 
    #
    # Turn the specified flags on or off, and return the new set of
@@ -2146,17 +2194,38 @@ class NetStream(FileStream)
 end
 
 class NonBlockStream(Stream, HasUnderlyingStream, NoCopy)
+   public static const
+      INVALID, 
+      READING, 
+      WRITING, 
+      COMPLETE, 
+      ERROR,
+      EOF
+
    private
       mode,
       ptr,
       other
+
+   private static init()
+      INVALID := 0
+      READING := 1
+      WRITING := 2
+      COMPLETE := 3
+      ERROR := 4
+      EOF := 5
+   end
+
+   package poll_valid(x)
+      return .\other
+   end
 
    public defer in(n)
 
    public defer out(s)
 
    public get_mode()
-      return mode
+      return .mode
    end
 
    public close()
@@ -2167,8 +2236,43 @@ class NonBlockStream(Stream, HasUnderlyingStream, NoCopy)
       return /f
    end
 
-   public defer can_in()
-   public defer can_out()
+   public can_in()
+      return get_in_status() ~= READING
+   end
+
+   public can_out()
+      return get_out_status() ~= WRITING
+   end
+
+   #
+   # Return the status of the input side of the stream.  Possible values are :-
+   #
+   # INVALID -  the stream is not open for input; a call to in() would fail.
+   # READING -  the stream is reading; a call to in() may block
+   # COMPLETE - the stream has data ready; a call to in() would return  some
+   #            data immediately.
+   # ERROR -    the stream has received an error; a call to in() would fail
+   #            immediately.
+   # EOF -      the stream is at end of file; a call to in() would return &null
+   #            immediately
+   #
+   # Note that only the status READING implies a call to in() would block.
+   #
+   public defer get_in_status()
+
+   #
+   # Return the status of the output side of the stream.  Possible values are :-
+   #
+   # INVALID -  the stream is not open for output; a call to out() would fail.
+   # WRITING -  the stream is outputting; a call to out() may block
+   # COMPLETE - the stream is ready for another output; a call to out() would
+   #            output some data and not block.
+   # ERROR -    the stream has received an error; a call to out() would fail
+   #            immediately.
+   #
+   # Note that only the status WRITING implies a call to out() would block.
+   #
+   public defer get_out_status()
 
    private defer close_impl()
    private static defer new_impl(other, verify_host)

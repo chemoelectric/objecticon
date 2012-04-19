@@ -1116,20 +1116,6 @@ class Session9P()
       }
    end
 
-   public poll(f, i)
-      local x, y
-      while f.length() > 0 do {
-         x := Comms9P.get(f) | fail
-         if \verbose then write("GOT:", to_string(x))
-         if is(x, Tinvalid) then
-            next
-         y := respond(x)
-         if \verbose then write("SEND:",to_string(y))
-         f.writes(Comms9P.encode(y)) | fail
-         delay(\i)
-      }
-   end
-
    public set_data(d)
       data := d
       return self
