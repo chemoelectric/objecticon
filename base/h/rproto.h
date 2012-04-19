@@ -38,6 +38,7 @@ struct b_proc *string_to_proc(dptr s, int arity, struct progstate *prog);
 #if PLAN9
 void            c_exits         (char *s);
 Waitmsg *waitforpid(int pid);
+void kill_proc(int id);
 int system(const char *command);
 #endif
 void            c_exit          (int i);

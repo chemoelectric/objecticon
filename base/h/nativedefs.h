@@ -203,6 +203,12 @@ NativeDef(io.NetStream,accept_impl,io_NetStream_accept_impl)
 NativeDef(io.NetStream,reject_impl,io_NetStream_reject_impl)
 NativeDef(io.NetStream,get_connection_info_impl,io_NetStream_get_connection_info_impl)
 NativeDef(io.NetStream,mkaddr,io_NetStream_mkaddr)
+NativeDef(io.NonBlockStream,new_impl,io_NonBlockStream_new_impl)
+NativeDef(io.NonBlockStream,in,io_NonBlockStream_in)
+NativeDef(io.NonBlockStream,out,io_NonBlockStream_out)
+NativeDef(io.NonBlockStream,can_in,io_NonBlockStream_can_in)
+NativeDef(io.NonBlockStream,can_out,io_NonBlockStream_can_out)
+NativeDef(io.NonBlockStream,close_impl,io_NonBlockStream_close_impl)
 #endif
 #if MSWIN32
 NativeDef(io.WindowsFilePath,getdcwd,io_WindowsFilePath_getdcwd)

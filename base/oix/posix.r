@@ -446,6 +446,12 @@ Waitmsg *waitforpid(int pid)
     return w;
 }
 
+void kill_proc(int id)
+{
+    postnote(PNPROC, id, "kill");
+    free(waitforpid(id));
+}
+
 int system(const char *command)
 {
     int pid, rc;

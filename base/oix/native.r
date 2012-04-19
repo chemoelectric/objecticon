@@ -4447,6 +4447,290 @@ function io_NetStream_mkaddr(addr, defnet, defservice)
    }
 end
 
+enum nonblockstatus { READING, WRITING, COMPLETE };
+
+struct nonblockworker {
+    int fd;
+    int pid;
+    int status;
+    QLock l;
+    Rendez rz;
+    char *buff, *read_ptr;
+    long buff_size, write_size;
+    long result;
+    char errstr[ERRMAX];
+};
+
+struct nonblockstream {
+    struct nonblockworker *reader, *writer;
+    struct nonblockstream *next, *prev;
+};
+
+static struct nonblockstream *nonblockstreams;
+
+static void wait_for_status(struct nonblockworker *w, int status)
+{
+    qlock(&w->l);
+    while (w->status != status)
+        rsleep(&w->rz);
+    qunlock(&w->l);
+}
+
+static void set_status(struct nonblockworker *w, int status)
+{
+    qlock(&w->l);
+    w->status = status;
+    rwakeup(&w->rz);
+    qunlock(&w->l);
+}
+
+static void read_loop(struct nonblockworker *w)
+{
+    for(;;) {
+        wait_for_status(w, READING);
+        w->result = read(w->fd, w->buff, w->buff_size);
+        if (w->result < 0) {
+            w->errstr[0] = 0;
+            errstr(w->errstr, sizeof(w->errstr));
+        }
+        set_status(w, COMPLETE);
+    }
+}
+
+static void write_loop(struct nonblockworker *w)
+{
+    for(;;) {
+        wait_for_status(w, WRITING);
+        w->result = write(w->fd, w->buff, w->write_size);
+        if (w->result < 0) {
+            w->errstr[0] = 0;
+            errstr(w->errstr, sizeof(w->errstr));
+        }
+        set_status(w, COMPLETE);
+    }
+}
+
+static void cleanup_nonblockworker(struct nonblockworker *w)
+{
+    if (w->pid >= 0)
+        kill_proc(w->pid);
+    if (w->buff)
+        free(w->buff);
+    free(w);
+}
+
+static void cleanup_nonblockstream(struct nonblockstream *s)
+{
+    if (s->reader)
+        cleanup_nonblockworker(s->reader);
+    if (s->writer)
+        cleanup_nonblockworker(s->writer);
+    GRFX_GENUNLINK(s, nonblockstreams, next, prev);
+    free(s);
+}
+
+static void cleanup_nonblockstreams(void)
+{
+    while (nonblockstreams)
+        cleanup_nonblockstream(nonblockstreams);
+}
+
+#begdef GetSelfNonBlock()
+struct nonblockstream *self_nonblock;
+dptr self_nonblock_dptr;
+static struct inline_field_cache self_nonblock_ic;
+self_nonblock_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_nonblock_ic);
+if (!self_nonblock_dptr)
+    syserr("Missing ptr field");
+self_nonblock = (struct nonblockstream*)IntVal(*self_nonblock_dptr);
+if (!self_nonblock)
+    runerr(219, self);
+#enddef
+
+function io_NonBlockStream_new_impl(other, mode, rbuff_size, wbuff_size)
+   if !cnv:C_integer(mode) then
+      runerr(101, mode)
+   if !def:C_integer(rbuff_size, 1024) then
+      runerr(101, rbuff_size)
+   if !def:C_integer(wbuff_size, 1024) then
+      runerr(101, wbuff_size)
+   body {
+       struct nonblockstream *p;
+       int pid;
+       struct nonblockworker *w;
+       static int nonblockstreams_inited;
+       FdStaticParam(other, fd);
+
+       if (!nonblockstreams_inited) {
+           atexit(cleanup_nonblockstreams);
+           nonblockstreams_inited = 1;
+       }
+
+       MemProtect(p = calloc(1, sizeof(*p)));
+       GRFX_GENLINK(p, nonblockstreams, next, prev);
+
+       if (mode & 1) {
+           MemProtect(p->reader = w = calloc(1, sizeof(*w)));
+           w->pid = -1;
+           MemProtect(w->buff = calloc(1, rbuff_size));
+           w->buff_size = rbuff_size;
+           w->read_ptr = w->buff;
+           w->rz.l = &w->l;
+           w->status = READING;
+           w->fd = fd;
+           switch (pid = rfork(RFPROC|RFMEM)) {
+               case 0: {
+                   read_loop(w);
+                   /* Not reached */
+                   break;
+               }
+               case -1: {
+                   whyf("rfork failed: %r");
+                   cleanup_nonblockstream(p);
+                   fail;
+               }
+           }
+           w->pid = pid;
+       }
+       if (mode & 2) {
+           MemProtect(p->writer = w = calloc(1, sizeof(*w)));
+           w->pid = -1;
+           MemProtect(w->buff = calloc(1, wbuff_size));
+           w->buff_size = wbuff_size;
+           w->rz.l = &w->l;
+           w->status = COMPLETE;
+           w->fd = fd;
+           switch (pid = rfork(RFPROC|RFMEM)) {
+               case 0: {
+                   write_loop(w);
+                   /* Not reached */
+                   break;
+               }
+               case -1: {
+                   whyf("rfork failed: %r");
+                   cleanup_nonblockstream(p);
+                   fail;
+               }
+           }
+           w->pid = pid;
+       }
+       return C_integer((word)p);
+   }
+end
+
+function io_NonBlockStream_in(self, i)
+   if !cnv:C_integer(i) then
+      runerr(101, i)
+   body {
+       struct nonblockworker *w;
+       tended struct descrip result;
+       long avail;
+       GetSelfNonBlock();
+
+       if (i <= 0)
+           Irunerr(205, i);
+
+       w = self_nonblock->reader;
+       if (!w) {
+           LitWhy("stream not open for reading");
+           fail;
+       }
+
+       if (w->status == READING)
+           wait_for_status(w, COMPLETE);
+
+       if (w->result < 0) {
+           why(w->errstr);
+           fail;
+       }
+       if (w->result == 0)
+           return nulldesc;
+
+       avail = w->result - (w->read_ptr - w->buff);
+       if (avail > i) {
+           MemProtect(StrLoc(result) = alcstr(w->read_ptr, i));
+           StrLen(result) = i;
+           w->read_ptr += i;
+       } else {
+           MemProtect(StrLoc(result) = alcstr(w->read_ptr, avail));
+           StrLen(result) = avail;
+           w->read_ptr = w->buff;
+           set_status(w, READING);
+       }
+       return result;
+   }
+end       
+
+function io_NonBlockStream_out(self, s)
+   if !cnv:string(s) then
+      runerr(103, s)
+   body {
+       struct nonblockworker *w;
+       int n;
+       GetSelfNonBlock();
+
+       w = self_nonblock->writer;
+       if (!w) {
+           LitWhy("stream not open for writing");
+           fail;
+       }
+
+       if (w->status == WRITING)
+           wait_for_status(w, COMPLETE);
+
+       if (w->result < 0) {
+           why(w->errstr);
+           fail;
+       }
+       if (w->result != w->write_size) {
+           LitWhy("write to underlying stream didn't write whole buffer");
+           fail;
+       }
+
+       w->write_size = Min(StrLen(s), w->buff_size);
+       memcpy(w->buff, StrLoc(s), w->write_size);
+       set_status(w, WRITING);
+       return C_integer w->write_size;
+   }
+end
+
+function io_NonBlockStream_can_in(self)
+   body {
+       struct nonblockworker *w;
+       GetSelfNonBlock();
+       w = self_nonblock->reader;
+       if (!w || w->status == COMPLETE)
+           return nulldesc;
+       else
+           fail;
+   }
+end
+
+function io_NonBlockStream_can_out(self)
+   body {
+       struct nonblockworker *w;
+       GetSelfNonBlock();
+       w = self_nonblock->writer;
+       if (!w || w->status == COMPLETE)
+           return nulldesc;
+       else
+           fail;
+   }
+end
+
+function io_NonBlockStream_close_impl(self)
+   body {
+       struct nonblockworker *w;
+       GetSelfNonBlock();
+       w = self_nonblock->writer;
+       if (w && w->status == WRITING)
+           wait_for_status(w, COMPLETE);
+       cleanup_nonblockstream(self_nonblock);
+       *self_nonblock_dptr = zerodesc;
+       return nulldesc;
+   }
+end
+
 #endif
 
 #if HAVE_LIBOPENSSL

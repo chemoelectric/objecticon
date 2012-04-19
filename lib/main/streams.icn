@@ -2144,6 +2144,46 @@ class NetStream(FileStream)
       return
    end
 end
+
+class NonBlockStream(Stream, HasUnderlyingStream, NoCopy)
+   private
+      mode,
+      ptr,
+      other
+
+   public defer in(n)
+
+   public defer out(s)
+
+   public get_mode()
+      return mode
+   end
+
+   public close()
+      local f
+      close_impl() | (f := 1)
+      if \close_underlying_flag then
+         other.close() | (f := 1)
+      return /f
+   end
+
+   public defer can_in()
+   public defer can_out()
+
+   private defer close_impl()
+   private static defer new_impl(other, verify_host)
+
+   public new(other, mode, rbuff_size, wbuff_size)
+      /mode := other.get_mode()
+      mode := iand(mode, READ_WRITE)
+      ptr := new_impl(other, mode, rbuff_size, wbuff_size) | fail
+      self.other := other
+      self.close_underlying_flag := &yes
+      return
+   end
+end
+
+
 $endif
 
 #
