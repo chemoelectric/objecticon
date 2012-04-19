@@ -2095,6 +2095,9 @@ static void init_window_system(void)
 
     load_font_info();
 
+    /* Keep mounts private */
+    rfork(RFNAMEG);
+
     if ((display = initdisplay(0, 0, draw_error)) == nil)
         ffatalerr("Couldn't initialize display: %r");
 
