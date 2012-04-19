@@ -10,7 +10,7 @@ PROGU=$(PROGSRC:.icn=.u)
 all:	$(PROGS)
 
 etags:
-	etags $(ICNTAGS) $(COMMONSRC) $(PROGSRC)
+	$(ETAGS) $(ICNTAGS) $(COMMONSRC) $(PROGSRC)
 
 clean:
 	$(RM) *.u packages.txt $(PROGS)

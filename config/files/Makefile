@@ -15,6 +15,7 @@ clean :
 	$(MAKE) -C examples clean
 
 etags :
+	rm -f TAGS
 	$(MAKE) -C base etags
 	$(MAKE) -C lib etags
 	$(MAKE) -C apps etags

@@ -7,7 +7,7 @@ LIBU=$(LIBSRC:.icn=.u)
 all: $(LIBU)
 
 etags:
-	etags $(ICNTAGS) $(LIBSRC)
+	$(ETAGS) $(ICNTAGS) $(LIBSRC)
 
 clean:
 	$(RM) *.u packages.txt

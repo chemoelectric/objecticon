@@ -11,7 +11,7 @@ clean:
 		rm -f *.o
 
 etags:
-		etags $(CSRC)
+		$(ETAGS) $(CSRC)
 
 $(OBJS): ../h/define.h ../h/config.h ../h/cstructs.h ../h/mproto.h \
 	  ../h/typedefs.h ../h/cpuconf.h

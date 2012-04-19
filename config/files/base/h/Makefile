@@ -1,4 +1,4 @@
 include ../../Makedefs
 
 etags:
-		etags $(RTLTAGS) *.h
+		$(ETAGS) $(RTLTAGS) *.h
