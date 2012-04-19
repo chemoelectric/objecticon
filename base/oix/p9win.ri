@@ -1375,16 +1375,10 @@ int sendselectionresponse(wbp w, word requestor, char *property,
     return Succeeded;
 }
 
-static void kill_proc(int id)
-{
-    postnote(PNPROC, id, "kill");
-    free(waitforpid(id));
-}
-
 static int open_screen_win(wsp ws)
 {
     char buff[256];
-    int fd, n;
+    int fd, n, pid;
     int minw, maxw, minh, maxh;
 
     if (ws->resizable) {
@@ -1620,7 +1614,7 @@ static int open_screen_win(wsp ws)
     }
     synch_cursor(ws);
 
-    switch (ws->mouse_pid = rfork(RFPROC|RFMEM)) {
+    switch (pid = rfork(RFPROC|RFMEM)) {
         case 0: {
             mouse_loop(ws);
             break;
@@ -1631,8 +1625,9 @@ static int open_screen_win(wsp ws)
             return Failed;
         }
     }
+    ws->mouse_pid = pid;
 
-    switch (ws->cons_pid = rfork(RFPROC|RFMEM)) {
+    switch (pid = rfork(RFPROC|RFMEM)) {
         case 0: {
             cons_loop(ws);
             break;
@@ -1643,6 +1638,7 @@ static int open_screen_win(wsp ws)
             return Failed;
         }
     }
+    ws->cons_pid = pid;
 
     /* Copy the pixmap to the window to initialize its contents */
     pix_to_win(ws);
