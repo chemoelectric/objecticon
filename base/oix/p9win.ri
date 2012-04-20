@@ -2091,12 +2091,17 @@ static void close_window_system(void)
 
 static void init_window_system(void)
 {
+    int win_nameg = 1;
+
     env_int("OIUSEWIN", &use_win, 0, 4);
+    env_int("OIWINNAMEG", &win_nameg, 0, 1);
 
     load_font_info();
 
-    /* Keep mounts private */
-    rfork(RFNAMEG);
+    if (win_nameg) {
+        /* Keep mounts private */
+        rfork(RFNAMEG);
+    }
 
     if ((display = initdisplay(0, 0, draw_error)) == nil)
         ffatalerr("Couldn't initialize display: %r");
