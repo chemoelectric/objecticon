@@ -68,6 +68,10 @@ class NetClient(Connectable, HasTask)
       return self
    end
 
+   private do_poll(for)
+      return choose_poll([connection, for], timeout)
+   end
+
 $ifdef _PLAN9
    #
    # Open the connection.
@@ -75,19 +79,18 @@ $ifdef _PLAN9
    protected open()
       local addr
       close()
+      fire(CONNECTING_EVENT)
       if \ssl_flag then
          return error("SSL not supported")
       addr := "tcp!" || server || "!" || port
       connection := NetStream.dial(addr) | return error("Couldn't connect to " || addr || ": " || &why)
+      connection := NonBlockStream(connection).
+         set_flush_on_close(&no) | return error("Couldn't create NonBlockStream: " || &why)
       sbuff := ""
       fire(CONNECTED_EVENT)
       return
    end
 $else
-   private do_poll(for)
-      return choose_poll([connection, for], timeout)
-   end
-
    private do_dns_query()
       local p, v
       if /task then
@@ -207,7 +210,7 @@ $endif
       return self
    end
 
-$ifdef _PLAN9
+$ifdef _PLAN9XXX
    #
    # Low-level write on the connection. 
    #

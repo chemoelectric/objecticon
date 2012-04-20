@@ -666,24 +666,21 @@ $ifdef _PLAN9
          every i := 1 to *l by 2 do {
             f := l[i]
             ev := l[i + 1]
-            is(f, NonBlockStream) | runerr("expected file of type NonBlockStream", f)
-            if f.poll_valid() then {
-               res := 0  
-               in := f.get_in_status()
-               if iand(ev, Poll.IN) ~= 0 & in ~= NonBlockStream.READING then
-                  res := ior(res, Poll.IN)
-               if in = NonBlockStream.ERROR then
-                  res := ior(res, Poll.ERR)
-               else if in = NonBlockStream.EOF then
-                  res := ior(res, Poll.HUP)
-               
-               out := f.get_out_status()
-               if iand(ev, Poll.OUT) ~= 0 & out ~= NonBlockStream.WRITING then
-                  res := ior(res, Poll.OUT)
-               if out = NonBlockStream.ERROR then
-                  res := ior(res, Poll.ERR)
-            } else
-               res := Poll.NVAL
+            is(f, NonBlockStream) | runerr(205, f)
+            res := 0  
+            in := f.get_in_status()
+            if iand(ev, Poll.IN) ~= 0 & in ~= NonBlockStream.READING then
+               res := ior(res, Poll.IN)
+            if in = NonBlockStream.ERROR then
+               res := ior(res, Poll.ERR)
+            else if in = NonBlockStream.EOF then
+               res := ior(res, Poll.HUP)
+            
+            out := f.get_out_status()
+            if iand(ev, Poll.OUT) ~= 0 & out ~= NonBlockStream.WRITING then
+               res := ior(res, Poll.OUT)
+            if out = NonBlockStream.ERROR then
+               res := ior(res, Poll.ERR)
 
             put(r, res)
             if res ~= 0 then
@@ -2210,7 +2207,8 @@ class NonBlockStream(Stream, HasUnderlyingStream, NoCopy)
    private
       mode,
       ptr,
-      other
+      other,
+      flush_on_close_flag
 
    private static init()
       INVALID := 0
@@ -2221,13 +2219,26 @@ class NonBlockStream(Stream, HasUnderlyingStream, NoCopy)
       EOF := 5
    end
 
-   package poll_valid(x)
-      return .\other
-   end
-
    public defer in(n)
 
    public defer out(s)
+
+   # This behaves just like the {out} method, except that it does not
+   # trigger a new write in the writer process.  So after it has been
+   # called, the write status will not be WRITING, and so the next
+   # call to {out} will not block.
+   #
+   public defer flush_out()
+
+   # The default behaviour is to flush the write buffer on a {close}.
+   # This may cause {close} to block.  To change this behaviour, turn
+   # off this flag, in which case any outstanding data in the buffer
+   # is discarded.
+   #
+   public set_flush_on_close(s)
+      self.flush_on_close_flag := check_flag(s)
+      return self
+   end
 
    public get_mode()
       return .mode
@@ -2235,6 +2246,8 @@ class NonBlockStream(Stream, HasUnderlyingStream, NoCopy)
 
    public close()
       local f
+      if can(WRITE) & \flush_on_close_flag then
+         flush_out() | (f := 1)
       close_impl() | (f := 1)
       if \close_underlying_flag then
          other.close() | (f := 1)
@@ -2286,12 +2299,13 @@ class NonBlockStream(Stream, HasUnderlyingStream, NoCopy)
       /mode := other.get_mode()
       mode := iand(mode, READ_WRITE)
       ptr := new_impl(other, mode, rbuff_size, wbuff_size) | fail
+      self.mode := mode
       self.other := other
       self.close_underlying_flag := &yes
+      self.flush_on_close_flag := &yes
       return
    end
 end
-
 
 $endif
 

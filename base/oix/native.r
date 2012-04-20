@@ -4470,10 +4470,12 @@ static struct nonblockstream *nonblockstreams;
 
 static void wait_for_status(struct nonblockworker *w, int status)
 {
-    qlock(&w->l);
-    while (w->status != status)
-        rsleep(&w->rz);
-    qunlock(&w->l);
+    if (w->status != status) {
+        qlock(&w->l);
+        while (w->status != status)
+            rsleep(&w->rz);
+        qunlock(&w->l);
+    }
 }
 
 static void set_status(struct nonblockworker *w, int status)
@@ -4633,8 +4635,7 @@ function io_NonBlockStream_in(self, i)
            fail;
        }
 
-       if (w->status == READING)
-           wait_for_status(w, COMPLETE);
+       wait_for_status(w, COMPLETE);
 
        if (w->result < 0) {
            why(w->errstr);
@@ -4658,32 +4659,44 @@ function io_NonBlockStream_in(self, i)
    }
 end       
 
+#begdef out_impl(self_nonblock, w)
+{
+    if (!w) {
+         LitWhy("stream not open for writing");
+         fail;
+    }
+
+    wait_for_status(w, COMPLETE);
+    
+    if (w->result < 0) {
+        why(w->errstr);
+        fail;
+    }
+    if (w->result != w->write_size) {
+        LitWhy("write to underlying stream didn't write whole buffer");
+        fail;
+    }
+}
+#enddef
+
+function io_NonBlockStream_flush_out(self)
+   body {
+       struct nonblockworker *w;
+       GetSelfNonBlock();
+       w = self_nonblock->writer;
+       out_impl(self_nonblock, w);
+       return nulldesc;
+   }
+end
+
 function io_NonBlockStream_out(self, s)
    if !cnv:string(s) then
       runerr(103, s)
    body {
        struct nonblockworker *w;
-       int n;
        GetSelfNonBlock();
-
        w = self_nonblock->writer;
-       if (!w) {
-           LitWhy("stream not open for writing");
-           fail;
-       }
-
-       if (w->status == WRITING)
-           wait_for_status(w, COMPLETE);
-
-       if (w->result < 0) {
-           why(w->errstr);
-           fail;
-       }
-       if (w->result != w->write_size) {
-           LitWhy("write to underlying stream didn't write whole buffer");
-           fail;
-       }
-
+       out_impl(self_nonblock, w);
        w->write_size = Min(StrLen(s), w->buff_size);
        memcpy(w->buff, StrLoc(s), w->write_size);
        set_status(w, WRITING);
@@ -4731,11 +4744,7 @@ end
 
 function io_NonBlockStream_close_impl(self)
    body {
-       struct nonblockworker *w;
        GetSelfNonBlock();
-       w = self_nonblock->writer;
-       if (w && w->status == WRITING)
-           wait_for_status(w, COMPLETE);
        cleanup_nonblockstream(self_nonblock);
        *self_nonblock_dptr = zerodesc;
        return nulldesc;
