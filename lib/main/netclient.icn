@@ -83,9 +83,11 @@ $ifdef _PLAN9
       if \ssl_flag then
          return error("SSL not supported")
       addr := "tcp!" || server || "!" || port
-      connection := NetStream.dial(addr) | return error("Couldn't connect to " || addr || ": " || &why)
-      connection := NonBlockStream(connection).
-         set_flush_on_close(&no) | return error("Couldn't create NonBlockStream: " || &why)
+      connection := NetStream.dial_first(addr, timeout, task) | return error("Couldn't connect to " || addr || ": " || &why)
+      connection := NonBlockStream(connection).set_flush_on_close(&no) | {
+         close()
+         return error("Couldn't create NonBlockStream: " || &why)
+      }
       sbuff := ""
       fire(CONNECTED_EVENT)
       return
@@ -210,26 +212,6 @@ $endif
       return self
    end
 
-$ifdef _PLAN9XXX
-   #
-   # Low-level write on the connection. 
-   #
-   private send(s)
-      local i
-      while *s > 0 do {
-         i := connection.out(s) | fail
-         s := s[i+1 : 0]
-      }
-      return
-   end
-
-   #
-   # Low-level read on the connection. 
-   #
-   private recv(len)
-      return connection.in(len)
-   end
-$else
    #
    # Low-level write on the connection. 
    #
@@ -262,7 +244,6 @@ $else
       else
          connection.in(len)
    end
-$endif
 
    #
    # Write the given string to the connection.

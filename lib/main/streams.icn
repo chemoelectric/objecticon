@@ -2083,83 +2083,210 @@ class RamStream(Stream, NoCopy)
 end
 
 $ifdef _PLAN9
-class CtrlStream(FileStream)
-   package new(cfd)
-      cast(self,FileStream).new(cfd, READ_WRITE)
-      return
-   end
-end
-
-class ConnectionInfo()
-   public const
-      dir,
-      root,
-      spec,
-      lsys,
-      lserv,
-      rsys,
-      rserv,
-      laddr,
-      raddr
-
-   package new(dir,
-               root,
-               spec,
-               lsys,
-               lserv,
-               rsys,
-               rserv,
-               laddr,
-               raddr)
-      self.dir := dir
-      self.root := root
-      self.spec := spec
-      self.lsys := lsys
-      self.lserv := lserv
-      self.rsys := rsys
-      self.rserv := rserv
-      self.laddr := laddr
-      self.raddr := raddr
-      return
-   end
-end
-
 class NetStream(FileStream)
    private dir, ctrl
 
-   public static dial(addr, loc)
+   private static cs_query1(q, task, f)
+      local l, nb
+      if /task then
+         # May block for a few seconds during dns
+         f.out(q) | fail
+      else {
+         # Use a non-blocking stream and poll so that other work can be
+         # done whilst waiting for dns.
+         use {
+            nb := NonBlockStream(f, Stream.WRITE).
+               set_close_underlying(&no),
+            {
+               nb.out(q)
+               # Poll with no timeout.  The close() of nb will flush
+               # and hence any error from the out() will percolate out
+               # to the use.
+               task.poll([nb, Poll.OUT])
+            }
+         } | fail
+      }
+      # Read the results
+      l := []
+      f.seek(1)
+      while put(l, \f.in(1024))
+      # Hack for 9vx
+      if *l = 1 & find("0.0.0.0", l[1]) then
+         return error("No such dns entry")
+      return l
+   end
+
+   # Query the connection server (/net/cs)
+   # @param the address to query
+   # @param the optional task to use to poll the server, allowing other work to take place
+   # @      during the query.
+   #
+   public static cs_query(addr, task)
+      local f
+      return use {
+         f := FileStream.open("/net/cs", FileOpt.RDWR),
+         cs_query1(addr, task, f)
+      }
+   end
+
+   # Write to the control file.
+   # @param msg the message to write
+   # @param timeout an optional timeout
+   # @param the optional task to use to poll the server, allowing other work to take place
+   # @      whilst waiting for a response (eg on a connect).
+   #
+   public write_ctrl(msg, timeout, task)
+      local nb, r
+      return if /timeout & /task then
+         ctrl.out(msg)
+      else {
+         use {
+            nb := NonBlockStream(ctrl, Stream.WRITE).
+               set_close_underlying(&no).
+               set_flush_on_close(&no),     # Needed since on a timeout the writer will still be writing
+            {                               # and would thus hang on a flush from close()
+               nb.out(msg)
+               r := (if /task then DescStream else task).poll([nb, Poll.OUT], timeout)
+               # Any error here percolates out to the outer use.
+               if /r then
+                  error("Timeout")
+               else
+                  # Test the error status of the writer process - this won't hang since we
+                  # didn't timeout, but it may fail (eg connection refused).
+                  nb.flush_out()
+            }
+         }
+      }
+   end
+
+   # Open a file under the stream's directory with the given mode.
+   #
+   public open_subfile(s, mode)
+      return FileStream.open(dir || "/" || s, mode)
+   end
+
+   # Connect to the given address, which should be in the form returned by cs_query, eg
+   # "/net/tcp/clone 173.194.78.103!80".
+   # @param s the entry from cs_query
+   # @param timeout an optional timeout
+   # @param the optional task to use to poll the server, allowing other work to take place
+   # @      whilst waiting.
+   #
+   public static connect(s, timeout, task)
+      local clone_file, dest, res
+
+      s ? {
+         clone_file := tab(upto(' '))
+         move(1)
+         dest := tab(0)
+      }
+
+      res := clone(clone_file) | fail
+
+      # Try to connect
+      res.write_ctrl("connect " || dest, timeout, task) | {
+         res.close()
+         # &why should be set appropriately by the response to the connect
+         fail
+      }
+      
+      res.fd := res.open_subfile("data", FileOpt.RDWR).get_fd() | {
+         res.close()
+         return error("Couldn't open data stream: " || &why)
+      }
+      return res
+   end
+
+   # Dial the given address.
+   #
+   # @param addr the address, eg "tcp!www.google.com!80"
+   # @param timeout an optional timeout
+   # @param the optional task to use to poll the server, allowing other work to take place
+   # @      whilst waiting.
+   #
+   public static dial(addr, timeout, task)
       local l
-      l := dial_impl(addr, loc) | fail
-      return NetStream!l
+      l := cs_query(addr, task) | fail
+      return connect(!l, timeout, task)
+   end
+
+   # Dial the given address.  As per {dial}, but just use the first
+   # result from cs_query, then give up.
+   #
+   public static dial_first(addr, timeout, task)
+      local l
+      l := cs_query(addr, task) | fail
+      return connect(l[1], timeout, task)
+   end
+
+   private static clone(fn)
+      local cf, name, dir, i
+      cf := FileStream.open(fn, FileOpt.RDWR) | return error("Couldn't open clone file: " || fn)
+      # Get the id number of the connection clone created
+      name := cf.in(1024)
+      every i := upto('/', fn)
+      dir := fn[1:i + 1] || name
+      return NetStream(cf, dir)
    end
 
    public static announce(addr)
-      local l
-      l := announce_impl(addr) | fail
-      return NetStream(-1, l[1], l[2])
+      local l, res, clone_file, arg
+      l := cs_query(addr) | fail
+      # will be in the form "/net/tcp/clone 1234"      
+      l[1] ? {
+         clone_file := tab(upto(' '))
+         move(1)
+         arg := tab(0)
+      }
+      res := clone(clone_file) | fail
+
+      res.write_ctrl("announce " || arg) | {
+         res.close()
+         # &why should be set appropriately by the response to the announce
+         fail
+      }
+      
+      return res
    end
 
-   public get_dir()
-      return .dir
-   end
-
-   public get_ctrl()
-      return .ctrl
-   end
-
-   public listen()
-      local l
-      l := listen_impl(self.dir) | fail
-      return NetStream(-1, l[1], l[2])
+   public listen(timeout, task)
+      local cf, name, new_dir, i
+      cf := open_subfile("listen", FileOpt.RDWR) | fail
+      name := cf.in(1024)
+      every i := upto('/',dir)
+      new_dir := dir[1:i + 1] || name
+      return NetStream(cf, new_dir)
    end
 
    public accept()
-      self.fd := accept_impl(self.ctrl, self.dir) | fail
+      local i
+      every i := upto('/',dir)
+      # Ignore errors
+      write_ctrl("accept " || dir[i + 1:0])
+      # Open data stream
+      self.fd := open_subfile("data", FileOpt.RDWR).get_fd() |
+         return error("Couldn't open data stream: " || &why)
       return
    end
 
    public reject(cause)
-      return reject_impl(self.ctrl, self.dir, cause)
+      local i
+      every i := upto('/',dir)
+      # Ignore errors
+      write_ctrl("reject " || dir[i + 1:0] || " " || cause)
+      return
+   end
+
+   # Return the directory of the stream, eg "/net/tcp/6".
+   #
+   public get_dir()
+      return .dir
+   end
+
+   # Return the control file, which will be a {FileStream}.
+   #
+   public get_ctrl()
+      return .ctrl
    end
 
    public close()
@@ -2169,22 +2296,9 @@ class NetStream(FileStream)
       return
    end
 
-   public get_connection_info()
-      return ConnectionInfo!get_connection_info_impl(self.ctrl, self.dir)
-   end
-
-   public static defer mkaddr(addr, defnet, defservice)
-
-   private static defer get_connection_info_impl(cf, dir)
-   private static defer dial_impl(addr, loc)
-   private static defer announce_impl(addr)
-   private static defer listen_impl(dir)
-   private static defer accept_impl(cf, dir)
-   private static defer reject_impl(cf, dir, cause)
-
-   private new(fd, cfd, dir)
-      cast(self,FileStream).new(fd, READ_WRITE)
-      self.ctrl := CtrlStream(cfd)
+   private new(ctrl, dir)
+      cast(self,FileStream).new(-1, READ_WRITE)
+      self.ctrl := ctrl
       self.dir := dir
       return
    end

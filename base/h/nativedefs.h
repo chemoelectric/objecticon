@@ -196,13 +196,6 @@ NativeDef(io.SocketStream,socket_impl,io_SocketStream_socket_impl)
 NativeDef(io.SocketStream,socketpair_impl,io_SocketStream_socketpair_impl)
 #endif
 #if PLAN9
-NativeDef(io.NetStream,dial_impl,io_NetStream_dial_impl)
-NativeDef(io.NetStream,announce_impl,io_NetStream_announce_impl)
-NativeDef(io.NetStream,listen_impl,io_NetStream_listen_impl)
-NativeDef(io.NetStream,accept_impl,io_NetStream_accept_impl)
-NativeDef(io.NetStream,reject_impl,io_NetStream_reject_impl)
-NativeDef(io.NetStream,get_connection_info_impl,io_NetStream_get_connection_info_impl)
-NativeDef(io.NetStream,mkaddr,io_NetStream_mkaddr)
 NativeDef(io.NonBlockStream,new_impl,io_NonBlockStream_new_impl)
 NativeDef(io.NonBlockStream,in,io_NonBlockStream_in)
 NativeDef(io.NonBlockStream,out,io_NonBlockStream_out)
