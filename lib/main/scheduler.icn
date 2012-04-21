@@ -10,7 +10,8 @@ import lang, util
 #
 class TaskStream(Stream, HasUnderlyingStream)
    private readable
-      timeout,
+      timeout
+   private
       other,
       task
 
