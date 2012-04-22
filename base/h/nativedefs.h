@@ -196,13 +196,14 @@ NativeDef(io.SocketStream,socket_impl,io_SocketStream_socket_impl)
 NativeDef(io.SocketStream,socketpair_impl,io_SocketStream_socketpair_impl)
 #endif
 #if PLAN9
-NativeDef(io.NonBlockStream,new_impl,io_NonBlockStream_new_impl)
-NativeDef(io.NonBlockStream,in,io_NonBlockStream_in)
-NativeDef(io.NonBlockStream,out,io_NonBlockStream_out)
-NativeDef(io.NonBlockStream,flush_out,io_NonBlockStream_flush_out)
-NativeDef(io.NonBlockStream,get_in_status,io_NonBlockStream_get_in_status)
-NativeDef(io.NonBlockStream,get_out_status,io_NonBlockStream_get_out_status)
-NativeDef(io.NonBlockStream,close_impl,io_NonBlockStream_close_impl)
+NativeDef(io.CallWorker,new_impl,io_CallWorker_new_impl)
+NativeDef(io.CallWorker,call,io_CallWorker_call)
+NativeDef(io.CallWorker,is_running,io_CallWorker_is_running)
+NativeDef(io.CallWorker,get_buff_size,io_CallWorker_get_buff_size)
+NativeDef(io.CallWorker,get_buffer,io_CallWorker_get_buffer)
+NativeDef(io.CallWorker,get_result,io_CallWorker_get_result)
+NativeDef(io.CallWorker,await,io_CallWorker_await)
+NativeDef(io.CallWorker,close,io_CallWorker_close)
 #endif
 #if MSWIN32
 NativeDef(io.WindowsFilePath,getdcwd,io_WindowsFilePath_getdcwd)

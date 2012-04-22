@@ -67,6 +67,7 @@ struct errtab errtab[] = {
     {149, "string too long"},
 #endif					/* Graphics */
 
+    {169, "insufficient arguments"},
     {170, "string or integer expected"},
     {171, "flag value expected"},
     {176, "exec requires at least one argument for the program"},

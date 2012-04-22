@@ -4297,28 +4297,28 @@ function io_DescStream_length(self)
    }
 end
 
-enum nonblockstatus { INVALID, READING, WRITING, COMPLETE, ERROR, ENDOFFILE };
 
-struct nonblockworker {
-    int fd;
+enum callworker_status { CW_RUNNING, CW_COMPLETE };
+enum callworker_cmd { CW_READ, CW_WRITE, CW_OPEN, CW_CREATE, CW_CLOSE };
+
+struct callworker {
     int pid;
     int status;
     QLock l;
     Rendez rz;
-    char *buff, *read_ptr;
-    long buff_size, write_size;
+    char *buff;
+    long buff_size, read_size, write_size;
+    int cmd;
+    int fd, mode;
+    ulong perm;
     long result;
     char errstr[ERRMAX];
+    struct callworker *next, *prev;
 };
 
-struct nonblockstream {
-    struct nonblockworker *reader, *writer;
-    struct nonblockstream *next, *prev;
-};
+static struct callworker *callworkers;
 
-static struct nonblockstream *nonblockstreams;
-
-static void wait_for_status(struct nonblockworker *w, int status)
+static void wait_for_callworker_status(struct callworker *w, int status)
 {
     if (w->status != status) {
         qlock(&w->l);
@@ -4328,276 +4328,261 @@ static void wait_for_status(struct nonblockworker *w, int status)
     }
 }
 
-static void set_status(struct nonblockworker *w, int status)
+static void set_callworker_status(struct callworker *w, int status)
 {
     qlock(&w->l);
     w->status = status;
     rwakeup(&w->rz);
     qunlock(&w->l);
 }
-static int gum;
 
-static void read_loop(struct nonblockworker *w)
+static void callworker_loop(struct callworker *w)
 {
     for(;;) {
-        wait_for_status(w, READING);
-        w->result = read(w->fd, w->buff, w->buff_size);
-        if (w->result < 0)
-            errstr(w->errstr, sizeof(w->errstr));
-        set_status(w, COMPLETE);
+        wait_for_callworker_status(w, CW_RUNNING);
+        switch (w->cmd) {
+            case CW_READ: {
+                w->result = read(w->fd, w->buff, w->read_size);
+                if (w->result < 0)
+                    errstr(w->errstr, sizeof(w->errstr));
+                break;
+            }
+            case CW_WRITE: {
+                w->result = write(w->fd, w->buff, w->write_size);
+                if (w->result < 0)
+                    errstr(w->errstr, sizeof(w->errstr));
+                break;
+            }
+            case CW_OPEN: {
+                w->result = open(w->buff, w->mode);
+                if (w->result < 0)
+                    errstr(w->errstr, sizeof(w->errstr));
+                break;
+            }
+            case CW_CREATE: {
+                w->result = create(w->buff, w->mode, w->perm);
+                if (w->result < 0)
+                    errstr(w->errstr, sizeof(w->errstr));
+                break;
+            }
+            case CW_CLOSE: {
+                w->result = close(w->fd);
+                if (w->result < 0)
+                    errstr(w->errstr, sizeof(w->errstr));
+                break;
+            }
+        }
+        set_callworker_status(w, CW_COMPLETE);
     }
 }
 
-static void write_loop(struct nonblockworker *w)
-{
-    for(;;) {
-        wait_for_status(w, WRITING);
-        w->result = write(w->fd, w->buff, w->write_size);
-        if (w->result < 0)
-            errstr(w->errstr, sizeof(w->errstr));
-        set_status(w, COMPLETE);
-    }
-}
-
-static void cleanup_nonblockworker(struct nonblockworker *w)
+static void cleanup_callworker(struct callworker *w)
 {
     if (w->pid >= 0)
         kill_proc(w->pid);
     if (w->buff)
         free(w->buff);
+    GRFX_GENUNLINK(w, callworkers, next, prev);
     free(w);
 }
 
-static void cleanup_nonblockstream(struct nonblockstream *s)
+static void cleanup_callworkers(void)
 {
-    if (s->reader)
-        cleanup_nonblockworker(s->reader);
-    if (s->writer)
-        cleanup_nonblockworker(s->writer);
-    GRFX_GENUNLINK(s, nonblockstreams, next, prev);
-    free(s);
+    while (callworkers)
+        cleanup_callworker(callworkers);
 }
 
-static void cleanup_nonblockstreams(void)
-{
-    while (nonblockstreams)
-        cleanup_nonblockstream(nonblockstreams);
-}
-
-#begdef GetSelfNonBlock()
-struct nonblockstream *self_nonblock;
-dptr self_nonblock_dptr;
-static struct inline_field_cache self_nonblock_ic;
-self_nonblock_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_nonblock_ic);
-if (!self_nonblock_dptr)
+#begdef GetSelfCallWorker()
+struct callworker *self_callworker;
+dptr self_callworker_dptr;
+static struct inline_field_cache self_callworker_ic;
+self_callworker_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_callworker_ic);
+if (!self_callworker_dptr)
     syserr("Missing ptr field");
-self_nonblock = (struct nonblockstream*)IntVal(*self_nonblock_dptr);
-if (!self_nonblock)
+self_callworker = (struct callworker*)IntVal(*self_callworker_dptr);
+if (!self_callworker)
     runerr(219, self);
 #enddef
 
-function io_NonBlockStream_new_impl(other, mode, rbuff_size, wbuff_size)
-   if !cnv:C_integer(mode) then
-      runerr(101, mode)
-   if !def:C_integer(rbuff_size, 1024) then
-      runerr(101, rbuff_size)
-   if !def:C_integer(wbuff_size, 1024) then
-      runerr(101, wbuff_size)
+function io_CallWorker_new_impl(buff_size)
+   if !def:C_integer(buff_size, 1024) then
+      runerr(101, buff_size)
    body {
-       struct nonblockstream *p;
+       struct callworker *p;
        int pid;
-       struct nonblockworker *w;
-       static int nonblockstreams_inited;
-       FdStaticParam(other, fd);
+       static int callworker_inited;
 
-       if (!nonblockstreams_inited) {
-           atexit(cleanup_nonblockstreams);
-           nonblockstreams_inited = 1;
+       if (!callworker_inited) {
+           atexit(cleanup_callworkers);
+           callworker_inited = 1;
        }
 
        MemProtect(p = calloc(1, sizeof(*p)));
-       GRFX_GENLINK(p, nonblockstreams, next, prev);
+       GRFX_GENLINK(p, callworkers, next, prev);
 
-       if (mode & 1) {
-           MemProtect(p->reader = w = calloc(1, sizeof(*w)));
-           w->pid = -1;
-           MemProtect(w->buff = calloc(1, rbuff_size));
-           w->buff_size = rbuff_size;
-           w->read_ptr = w->buff;
-           w->rz.l = &w->l;
-           w->status = READING;
-           w->fd = fd;
-           switch (pid = rfork(RFPROC|RFMEM)) {
-               case 0: {
-                   read_loop(w);
-                   /* Not reached */
-                   break;
-               }
-               case -1: {
-                   whyf("rfork failed: %r");
-                   cleanup_nonblockstream(p);
-                   fail;
-               }
+       p->pid = -1;
+       MemProtect(p->buff = calloc(1, buff_size));
+       p->buff_size = buff_size;
+       p->rz.l = &p->l;
+       p->status = CW_COMPLETE;
+       switch (pid = rfork(RFPROC|RFMEM)) {
+           case 0: {
+               callworker_loop(p);
+               /* Not reached */
+               break;
            }
-           w->pid = pid;
-       }
-       if (mode & 2) {
-           MemProtect(p->writer = w = calloc(1, sizeof(*w)));
-           w->pid = -1;
-           MemProtect(w->buff = calloc(1, wbuff_size));
-           w->buff_size = wbuff_size;
-           w->rz.l = &w->l;
-           w->status = COMPLETE;
-           w->fd = fd;
-           switch (pid = rfork(RFPROC|RFMEM)) {
-               case 0: {
-                   write_loop(w);
-                   /* Not reached */
-                   break;
-               }
-               case -1: {
-                   whyf("rfork failed: %r");
-                   cleanup_nonblockstream(p);
-                   fail;
-               }
+           case -1: {
+               whyf("rfork failed: %r");
+               cleanup_callworker(p);
+               fail;
            }
-           w->pid = pid;
        }
+       p->pid = pid;
        return C_integer((word)p);
    }
 end
 
-function io_NonBlockStream_in(self, i)
-   if !cnv:C_integer(i) then
-      runerr(101, i)
+function io_CallWorker_call(self, cmd, arg[n])
+   if !cnv:C_integer(cmd) then
+      runerr(101, cmd)
    body {
-       struct nonblockworker *w;
-       tended struct descrip result;
-       long avail;
-       GetSelfNonBlock();
-
-       if (i <= 0)
-           Irunerr(205, i);
-
-       w = self_nonblock->reader;
-       if (!w) {
-           LitWhy("stream not open for reading");
-           fail;
-       }
-
-       wait_for_status(w, COMPLETE);
-
-       if (w->result < 0) {
-           why(w->errstr);
-           fail;
-       }
-       if (w->result == 0)
-           return nulldesc;
-
-       avail = w->result - (w->read_ptr - w->buff);
-       if (avail > i) {
-           MemProtect(StrLoc(result) = alcstr(w->read_ptr, i));
-           StrLen(result) = i;
-           w->read_ptr += i;
-       } else {
-           MemProtect(StrLoc(result) = alcstr(w->read_ptr, avail));
-           StrLen(result) = avail;
-           w->read_ptr = w->buff;
-           set_status(w, READING);
-       }
-       return result;
-   }
-end       
-
-#begdef out_impl(self_nonblock, w)
-{
-    if (!w) {
-         LitWhy("stream not open for writing");
-         fail;
-    }
-
-    wait_for_status(w, COMPLETE);
-    
-    if (w->result < 0) {
-        why(w->errstr);
-        fail;
-    }
-    if (w->result != w->write_size) {
-        LitWhy("write to underlying stream didn't write whole buffer");
-        fail;
-    }
-}
-#enddef
-
-function io_NonBlockStream_flush_out(self)
-   body {
-       struct nonblockworker *w;
-       GetSelfNonBlock();
-       w = self_nonblock->writer;
-       out_impl(self_nonblock, w);
-       return nulldesc;
-   }
-end
-
-function io_NonBlockStream_out(self, s)
-   if !cnv:string(s) then
-      runerr(103, s)
-   body {
-       struct nonblockworker *w;
-       GetSelfNonBlock();
-       w = self_nonblock->writer;
-       out_impl(self_nonblock, w);
-       w->write_size = Min(StrLen(s), w->buff_size);
-       memcpy(w->buff, StrLoc(s), w->write_size);
-       set_status(w, WRITING);
-       return C_integer w->write_size;
+      GetSelfCallWorker()
+      wait_for_callworker_status(self_callworker, CW_COMPLETE);
+      switch (cmd) {
+          case CW_READ: {
+              if (n < 1)
+                  runerr(169);
+              if (!cnv:C_integer(arg[0], self_callworker->fd))
+                  runerr(101, arg[0]);
+              if (n > 1) {
+                  int i;
+                  if (!cnv:C_integer(arg[1], i))
+                      runerr(101, arg[1]);
+                  self_callworker->read_size = i;
+                  if (self_callworker->read_size > self_callworker->buff_size) {
+                      LitWhy("Request size too long for buffer");
+                      fail;
+                  }
+              } else
+                  self_callworker->read_size = self_callworker->buff_size;
+              break;
+          }
+          case CW_WRITE: {
+              if (n < 2)
+                  runerr(169);
+              if (!cnv:C_integer(arg[0], self_callworker->fd))
+                  runerr(101, arg[0]);
+              if (!cnv:string(arg[1], arg[1]))
+                  runerr(103, arg[1]);
+              if (StrLen(arg[1]) > self_callworker->buff_size) {
+                  LitWhy("String too long for buffer");
+                  fail;
+              }
+              self_callworker->write_size = StrLen(arg[1]);
+              memcpy(self_callworker->buff, StrLoc(arg[1]), StrLen(arg[1]));
+              break;
+          }
+          case CW_CREATE:
+          case CW_OPEN: {
+              if (n < 2)
+                  runerr(169);
+              if (!cnv:string(arg[0], arg[0]))
+                  runerr(103, arg[0]);
+              if (!cnv:C_integer(arg[1], self_callworker->mode))
+                  runerr(101, arg[1]);
+              if (StrLen(arg[0]) >= self_callworker->buff_size) {
+                  LitWhy("String too long for buffer");
+                  fail;
+              }
+              memcpy(self_callworker->buff, StrLoc(arg[0]), StrLen(arg[0]));
+              self_callworker->buff[StrLen(arg[0])] = 0;
+              if (cmd == CW_CREATE) {
+                  if (n > 2) {
+                      if (!cnv:integer(arg[2], arg[2]))
+                          runerr(101, arg[2]);
+                      if (!convert_to_ulong(&arg[2], &self_callworker->perm))
+                          runerr(0);
+                  } else
+                      self_callworker->perm = 0664;
+              }
+              break;
+          }
+          case CW_CLOSE: {
+              if (n < 1)
+                  runerr(169);
+              if (!cnv:C_integer(arg[0], self_callworker->fd))
+                  runerr(101, arg[0]);
+              break;
+          }
+          default: {
+              Irunerr(205, cmd);
+              break;
+          }
+      }
+      self_callworker->cmd = cmd;
+      self_callworker->result = 0;
+      self_callworker->errstr[0] = 0;
+      set_callworker_status(self_callworker, CW_RUNNING);
+      return nulldesc;
    }
 end
 
-function io_NonBlockStream_get_in_status(self)
+function io_CallWorker_is_running(self)
    body {
-       struct nonblockworker *w;
-       int st;
-       GetSelfNonBlock();
-       w = self_nonblock->reader;
-       if (w) {
-           st = w->status;
-           if (w->status == COMPLETE) {
-               if (w->result < 0)
-                   st = ERROR;
-               else if (w->result == 0)
-                   st = ENDOFFILE;
-           }
-       } else
-           st = INVALID;
-       return C_integer st;
+      GetSelfCallWorker();
+      if (self_callworker->status == CW_RUNNING)
+          return nulldesc;
+      else
+          fail;
    }
 end
 
-function io_NonBlockStream_get_out_status(self)
+function io_CallWorker_get_buff_size(self)
    body {
-       struct nonblockworker *w;
-       int st;
-       GetSelfNonBlock();
-       w = self_nonblock->writer;
-       if (w) {
-           st = w->status;
-           if (w->status == COMPLETE) {
-               if (w->result < 0 || w->result != w->write_size)
-                   st = ERROR;
-           }
-       } else
-           st = INVALID;
-       return C_integer st;
+      GetSelfCallWorker()
+      return C_integer self_callworker->buff_size;
    }
 end
 
-function io_NonBlockStream_close_impl(self)
+function io_CallWorker_get_buffer(self, n)
+   if !cnv:C_integer(n) then
+      runerr(101, n)
    body {
-       GetSelfNonBlock();
-       cleanup_nonblockstream(self_nonblock);
-       *self_nonblock_dptr = zerodesc;
-       return nulldesc;
+      tended struct descrip result;
+      GetSelfCallWorker()
+       if (n < 0 || n > self_callworker->buff_size)
+           Irunerr(205, n);
+      MemProtect(StrLoc(result) = alcstr(self_callworker->buff, n));
+      StrLen(result) = n;
+      return result;
+   }
+end
+
+function io_CallWorker_get_result(self)
+   body {
+      GetSelfCallWorker()
+      return C_integer self_callworker->result;
+   }
+end
+
+function io_CallWorker_await(self)
+   body {
+      GetSelfCallWorker()
+      wait_for_callworker_status(self_callworker, CW_COMPLETE);
+      if (self_callworker->result < 0) {
+          why(self_callworker->errstr);
+          fail;
+      }
+      return C_integer self_callworker->result;
+   }
+end
+
+function io_CallWorker_close(self)
+   body {
+      GetSelfCallWorker()
+      cleanup_callworker(self_callworker);
+      *self_callworker_dptr = zerodesc;
+      return nulldesc;
    }
 end
 

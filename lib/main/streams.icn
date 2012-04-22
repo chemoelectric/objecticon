@@ -655,7 +655,7 @@ class DescStream(Stream, NoCopy)
    #
 $ifdef _PLAN9
    public static poll(l, timeout)
-      local loop_until, f, ev, r, in, out, done, i, res, snooze
+      local loop_until, f, ev, r, done, i, res, snooze
       if *l % 2 ~= 0 then
          runerr(130)
       r := list(*l / 2)
@@ -666,22 +666,8 @@ $ifdef _PLAN9
          every i := 1 to *l by 2 do {
             f := l[i]
             ev := l[i + 1]
-            is(f, NonBlockStream) | runerr(205, f)
-            res := 0  
-            in := f.get_in_status()
-            if iand(ev, Poll.IN) ~= 0 & in ~= NonBlockStream.READING then
-               res := ior(res, Poll.IN)
-            if in = NonBlockStream.ERROR then
-               res := ior(res, Poll.ERR)
-            else if in = NonBlockStream.EOF then
-               res := ior(res, Poll.HUP)
-            
-            out := f.get_out_status()
-            if iand(ev, Poll.OUT) ~= 0 & out ~= NonBlockStream.WRITING then
-               res := ior(res, Poll.OUT)
-            if out = NonBlockStream.ERROR then
-               res := ior(res, Poll.ERR)
-
+            is(f, Pollable) | runerr(205, f)
+            res := f.get_poll(ev)
             put(r, res)
             if res ~= 0 then
                done := 1
@@ -2083,6 +2069,16 @@ class RamStream(Stream, NoCopy)
 end
 
 $ifdef _PLAN9
+class CtrlStream(FileStream)
+   package new(cfd)
+      cast(self,FileStream).new(cfd, READ_WRITE)
+      return
+   end
+end
+
+#
+# A stream for network connections.
+#
 class NetStream(FileStream)
    private dir, ctrl
 
@@ -2229,6 +2225,8 @@ class NetStream(FileStream)
       return NetStream(cf, dir)
    end
 
+   # Return a new {NetStream} which can be used to listen on the given address.
+   #
    public static announce(addr)
       local l, res, clone_file, arg
       l := cs_query(addr) | fail
@@ -2239,41 +2237,63 @@ class NetStream(FileStream)
          arg := tab(0)
       }
       res := clone(clone_file) | fail
-
       res.write_ctrl("announce " || arg) | {
          res.close()
          # &why should be set appropriately by the response to the announce
          fail
       }
-      
       return res
    end
 
+   # After an {announce}, listen for an incoming connection.
+   # @param timeout an optional timeout
+   # @param the optional task to use with poll(), allowing other work to take place
+   # @      whilst waiting.
+   #
    public listen(timeout, task)
-      local cf, name, new_dir, i
-      cf := open_subfile("listen", FileOpt.RDWR) | fail
+      local cf, name, new_dir, i, cw, r, fd
+      if /timeout & /task then
+         cf := open_subfile("listen", FileOpt.RDWR) | return error("Couldn't open listen file: ", &why)
+      else {
+         fd := use {
+            cw := CallWorker(),
+            {
+               cw.call(CallWorker.OPEN, dir || "/listen", FileOpt9.ORDWR)
+               r := (if /task then DescStream else task).poll([cw, Poll.IN], timeout)
+               if /r then
+                  error("Timeout")
+               else
+                  cw.await() | error("Couldn't open listen file: ", &why)
+            }
+         } | fail
+         cf := CtrlStream(fd)
+      }
       name := cf.in(1024)
       every i := upto('/',dir)
       new_dir := dir[1:i + 1] || name
       return NetStream(cf, new_dir)
    end
 
+   # Accept an incoming connection
+   #
    public accept()
       local i
       every i := upto('/',dir)
-      # Ignore errors
-      write_ctrl("accept " || dir[i + 1:0])
+      # May fail, so ignore errors
+      save_why{write_ctrl("accept " || dir[i + 1:0])}
       # Open data stream
       self.fd := open_subfile("data", FileOpt.RDWR).get_fd() |
          return error("Couldn't open data stream: " || &why)
       return
    end
 
+   # Reject an incoming connection
+   #
    public reject(cause)
       local i
       every i := upto('/',dir)
-      # Ignore errors
-      write_ctrl("reject " || dir[i + 1:0] || " " || cause)
+      # May fail, so ignore errors
+      save_why{write_ctrl("reject " || dir[i + 1:0] || " " || cause)}
       return
    end
 
@@ -2304,12 +2324,16 @@ class NetStream(FileStream)
    end
 end
 
+class Pollable()
+   public defer get_poll(ev)
+end
+
 # This stream provides non-blocking i/o by using background processes.
 # The methods {get_in_status} and {get_out_status} indicate what the
 # background processes are doing, and whether the {in} and {out}
 # methods may block.  Instances can be used with {DescStream.poll}.
 #
-class NonBlockStream(Stream, HasUnderlyingStream, NoCopy)
+class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
    public static const
       INVALID, 
       READING, 
@@ -2320,7 +2344,10 @@ class NonBlockStream(Stream, HasUnderlyingStream, NoCopy)
 
    private
       mode,
-      ptr,
+      reader,
+      rbuff,
+      writer,
+      nwrite,
       other,
       flush_on_close_flag
 
@@ -2333,16 +2360,67 @@ class NonBlockStream(Stream, HasUnderlyingStream, NoCopy)
       EOF := 5
    end
 
-   public defer in(n)
+   public get_poll(ev)
+      local res, in, out
+      res := 0  
+      in := get_in_status()
+      if iand(ev, Poll.IN) ~= 0 & in ~= READING then
+         res := ior(res, Poll.IN)
+      if in = ERROR then
+         res := ior(res, Poll.ERR)
+      else if in = EOF then
+         res := ior(res, Poll.HUP)
+      
+      out := get_out_status()
+      if iand(ev, Poll.OUT) ~= 0 & out ~= WRITING then
+         res := ior(res, Poll.OUT)
+      if out = ERROR then
+         res := ior(res, Poll.ERR)
+      return res
+   end
 
-   public defer out(s)
+   public in(n)
+      local t, rc
+      \reader | return error("stream not open for reading")
+      rc := reader.await() | fail
+      if rc = 0 then
+         return      # eof
+
+      # Now rc > 0
+      if *rbuff = 0 then
+         rbuff := reader.get_buffer(rc)
+
+      # Now *rbuff > 0
+      rbuff ? {
+         t := move(n) | tab(0)
+         rbuff := tab(0)
+      }
+
+      if *rbuff = 0 then
+         reader.call(CallWorker.READ, other.get_fd())
+      return t
+   end
+
+   public out(s)
+      flush_out() | fail
+      nwrite := min(*s, writer.get_buff_size())
+      writer.call(CallWorker.WRITE, other.get_fd(), s[1+:nwrite])
+      return nwrite
+   end
 
    # This behaves just like the {out} method, except that it does not
    # trigger a new write in the writer process.  So after it has been
    # called, the write status will not be WRITING, and so the next
    # call to {out} will not block.
    #
-   public defer flush_out()
+   public flush_out()
+      local rc
+      \writer | return error("stream not open for writing")
+      rc := writer.await() | fail
+      if rc ~= nwrite then
+         return error("write to underlying stream didn't write whole buffer")
+      return
+   end
 
    # The default behaviour is to flush the write buffer on a {close}.
    # This may cause {close} to block.  To change this behaviour, turn
@@ -2360,9 +2438,12 @@ class NonBlockStream(Stream, HasUnderlyingStream, NoCopy)
 
    public close()
       local f
-      if can(WRITE) & \flush_on_close_flag then
+      if \writer & \flush_on_close_flag then
          flush_out() | (f := 1)
-      close_impl() | (f := 1)
+      if \reader then
+         reader.close()
+      if \writer then
+         writer.close()
       if \close_underlying_flag then
          other.close() | (f := 1)
       return /f
@@ -2382,7 +2463,19 @@ class NonBlockStream(Stream, HasUnderlyingStream, NoCopy)
    #
    # Note that only the status READING implies a call to in() would block.
    #
-   public defer get_in_status()
+   public get_in_status()
+      local rc
+      if /reader then
+         return INVALID
+      if reader.is_running() then
+         return READING
+      rc := reader.get_result()
+      if rc < 0 then
+         return ERROR
+      if rc = 0 then
+         return EOF
+      return COMPLETE
+   end
 
    #
    # Return the status of the output side of the stream.  Possible values are :-
@@ -2396,10 +2489,17 @@ class NonBlockStream(Stream, HasUnderlyingStream, NoCopy)
    #
    # Note that only the status WRITING implies a call to out() would block.
    #
-   public defer get_out_status()
-
-   private defer close_impl()
-   private static defer new_impl(other, verify_host)
+   public get_out_status()
+      local rc
+      if /writer then
+         return INVALID
+      if writer.is_running() then
+         return WRITING
+      rc := writer.get_result()
+      if rc < 0 | rc ~= nwrite then
+         return ERROR
+      return COMPLETE
+   end
 
    #
    # Create a new instance
@@ -2412,11 +2512,66 @@ class NonBlockStream(Stream, HasUnderlyingStream, NoCopy)
    public new(other, mode, rbuff_size, wbuff_size)
       /mode := other.get_mode()
       mode := iand(mode, READ_WRITE)
-      ptr := new_impl(other, mode, rbuff_size, wbuff_size) | fail
       self.mode := mode
+      if can(READ) then {
+         self.rbuff := ""
+         self.reader := CallWorker(rbuff_size)
+         reader.call(CallWorker.READ, other.get_fd())
+      }
+      if can(WRITE) then {
+         self.nwrite := 0
+         self.writer := CallWorker(wbuff_size)
+      }
       self.other := other
       self.close_underlying_flag := &yes
       self.flush_on_close_flag := &yes
+      return
+   end
+end
+
+# This is a class for performing basic blocking i/o system calls in a
+# background process.
+#
+class CallWorker(Pollable)
+   public static const
+      READ,
+      WRITE,
+      OPEN,
+      CREATE,
+      CLOSE
+
+   private
+      ptr
+
+   private static init()
+      READ := 0
+      WRITE := 1
+      OPEN := 2
+      CREATE := 3
+      CLOSE := 4
+   end
+
+   public get_poll(ev)
+      local res
+      if is_running() then
+         return 0
+      res := iand(ev, ior(Poll.IN, Poll.OUT))
+      if get_result() < 0 then
+         res := ior(res, Poll.ERR)
+      return res
+   end
+
+   private static defer new_impl(buff_size)
+   public defer call(cmd, arg[])
+   public defer is_running()
+   public defer get_buff_size()
+   public defer get_buffer(n)
+   public defer get_result()
+   public defer await()
+   public defer close()
+
+   public new(buff_size)
+      ptr := new_impl(buff_size)
       return
    end
 end
