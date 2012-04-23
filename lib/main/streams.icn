@@ -660,7 +660,7 @@ $ifdef _PLAN9
          runerr(130)
       r := list(*l / 2)
       loop_until := Prog.get_runtime_millis() + \timeout
-      snooze := 10
+      snooze := 1
       repeat {
          clear(r)
          every i := 1 to *l by 2 do {
@@ -1070,11 +1070,29 @@ $ifdef _PLAN9
 
    #
    # Create a pair of {FileStream}s using the pipe system call.
+   # @param m1 additional flags from {FileOpt9}, in addition to ORDWR to apply
+   # @      to the first end of the pipe
+   # @param m2 the same for the other end of the pipe.
    #
-   public static pipe()
-      local t
-      t := pipe_impl() | fail
-      return [FileStream(t[1], READ_WRITE), FileStream(t[2], READ_WRITE)]
+   public static pipe(m1, m2)
+      local t, p1, p2
+      if /m1 & /m2 then {
+         t := pipe_impl() | fail
+         return [FileStream(t[1], READ_WRITE), FileStream(t[2], READ_WRITE)]
+      } else {
+         /m1 := 0
+         /m2 := 0
+         Files.bind("#|", "/mnt/temp", MountOpt.MREPL) | fail
+         p1 := open9("/mnt/temp/data", ior(m1, FileOpt9.ORDWR), READ_WRITE)  | stop(&why)
+         p2 := open9("/mnt/temp/data1", ior(m2, FileOpt9.ORDWR), READ_WRITE)  | stop(&why)
+         Files.unmount(, "/mnt/temp")
+         if /p1 | /p2 then {
+            (\p1).close()
+            (\p2).close()
+            fail
+         }
+         return [p1, p2]
+      }
    end
 
    private static defer open_impl(path, flags)
@@ -1522,6 +1540,110 @@ class ProgOutputStream(FileStream, HasBgProc)
       }
    end
 end
+
+#
+# Base class for FilterOutputStream and FilterInputStream
+#
+class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask, NoCopy)
+   protected
+      cmd,
+      err_sink,
+      cin,
+      cout,
+      cerr
+
+   # Convenient function to check that the command exited
+   # successfully.  If it did, this function returns, otherwise it
+   # fails and sets {&why} appropriately, based on the exit code and
+   # stderr output.  The error sink must be set to a {StringStream} to
+   # use this function.
+   #
+   public succeeded()
+      local x
+      is(err_sink, StringStream) | runerr("Must use a StringStream as error sink with succeeded()", err_sink)
+      x := get_exit_info() | runerr("You can only call succeeded() after close()", self)
+      case x.reason of {
+         "exited normally" : return
+         "exited" : return error("exited with status " || x.param)
+         default : return error("finished for unknown reason " || x.reason || " with status " || x.param)
+      }
+   end
+
+   protected do_poll()
+      local x, l, t
+      l := []
+      t := table()
+      if l |||:= [\cin, Poll.IN] then
+         t[cin] := 1
+      if l |||:= [\cerr, Poll.IN] then
+         t[cerr] := *l/2
+      if l |||:= [\cout, Poll.OUT] then
+         t[cout] := *l/2
+      if *l = 0 then
+         runerr(219, self)
+      x := choose_poll(l) | fail
+      if poll_in_test(x[t[\cin]]) then
+         return cin
+      if poll_in_test(x[t[\cerr]]) then
+         return cerr
+      if poll_out_test(x[t[\cout]]) then
+         return cout
+      return error("child command i/o failed")
+   end
+
+   protected close_cin()
+      if \cin then {
+         cin.close()
+         cin := &null
+      }
+   end
+
+   protected close_cerr()
+      if \cerr then {
+         cerr.close()
+         cerr := &null
+      }
+   end
+
+   protected close_cout()
+      if \cout then {
+         cout.close()
+         cout := &null
+      }
+   end
+
+   protected setup(cmd, args, env, err_sink)
+      local l
+      self.cmd := cmd
+      /err_sink := StringStream()
+      self.err_sink := err_sink
+      l := FileStream.pipe() | fail
+      (l |||:= FileStream.pipe(, FileOpt9.OCEXEC) &
+       l |||:= FileStream.pipe() &
+       pid := System.fork()) | {
+          every (!l).close()
+          fail
+       }
+      if pid > 0 then {
+         # Parent
+         cin := NonBlockStream(l[1], Stream.READ, 1048576)
+         cout := NonBlockStream(l[4], Stream.WRITE,, 1048576)
+         cerr := NonBlockStream(l[5], Stream.READ, 1048576)
+         l[2].close()
+         l[3].close()
+         l[6].close()
+         return
+      } else {
+         # Child
+         l[2].dup2(FileStream.stdout) | stop(&why)
+         l[3].dup2(FileStream.stdin) | stop(&why)
+         l[6].dup2(FileStream.stderr) | stop(&why)
+         every (!l).close()
+         System.exec(cmd, args, env) | stop(&why)
+         syserr("Not reached")
+      }
+   end
+end
 $else
 #
 # This stream represents a pipe to a command running in a forked child
@@ -1639,7 +1761,6 @@ class ProgOutputStream(SocketStream, HasBgProc)
       }
    end
 end
-$endif
 
 #
 # Base class for FilterOutputStream and FilterInputStream
@@ -1767,6 +1888,7 @@ class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask, NoCopy)
       }
    end
 end
+$endif
 
 #
 # This stream filters output written to it through a background

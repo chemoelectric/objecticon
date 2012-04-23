@@ -4412,6 +4412,15 @@ static void cleanup_callworkers(void)
         cleanup_callworker(callworkers);
 }
 
+static void catchpipe(void *a, char *msg)
+{
+    static char *foo = "sys: write on closed pipe";
+    if (strncmp(msg, foo, strlen(foo)) == 0)
+        noted(NCONT);
+    else
+        noted(NDFLT);
+}
+
 #begdef GetSelfCallWorker()
 struct callworker *self_callworker;
 dptr self_callworker_dptr;
@@ -4447,6 +4456,7 @@ function io_CallWorker_new_impl(buff_size)
        p->status = CW_COMPLETE;
        switch (pid = rfork(RFPROC|RFMEM)) {
            case 0: {
+               notify(catchpipe);
                callworker_loop(p);
                /* Not reached */
                break;
