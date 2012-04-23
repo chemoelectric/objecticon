@@ -2347,7 +2347,6 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
       reader,
       rbuff,
       writer,
-      nwrite,
       other,
       flush_on_close_flag
 
@@ -2402,10 +2401,11 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
    end
 
    public out(s)
+      local n
       flush_out() | fail
-      nwrite := min(*s, writer.get_buff_size())
-      writer.call(CallWorker.WRITE, other.get_fd(), s[1+:nwrite])
-      return nwrite
+      n := min(*s, writer.get_buff_size())
+      writer.call(CallWorker.FULLY_WRITE, other.get_fd(), s[1+:n])
+      return n
    end
 
    # This behaves just like the {out} method, except that it does not
@@ -2414,11 +2414,8 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
    # call to {out} will not block.
    #
    public flush_out()
-      local rc
       \writer | return error("stream not open for writing")
-      rc := writer.await() | fail
-      if rc ~= nwrite then
-         return error("write to underlying stream didn't write whole buffer")
+      writer.await() | fail
       return
    end
 
@@ -2496,7 +2493,7 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
       if writer.is_running() then
          return WRITING
       rc := writer.get_result()
-      if rc < 0 | rc ~= nwrite then
+      if rc < 0 then
          return ERROR
       return COMPLETE
    end
@@ -2507,7 +2504,7 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
    # @param mode - either {READ} and/or {WRITE}.  Using only one of the two
    #               possible modes allows the creation of only one subprocess.
    # @param rbuff_size - the read buffer size; default 1KB
-   # @param wbuff_size - the read buffer size; default 1KB
+   # @param wbuff_size - the write buffer size; default 1KB
    #
    public new(other, mode, rbuff_size, wbuff_size)
       /mode := other.get_mode()
@@ -2518,10 +2515,8 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
          self.reader := CallWorker(rbuff_size)
          reader.call(CallWorker.READ, other.get_fd())
       }
-      if can(WRITE) then {
-         self.nwrite := 0
+      if can(WRITE) then
          self.writer := CallWorker(wbuff_size)
-      }
       self.other := other
       self.close_underlying_flag := &yes
       self.flush_on_close_flag := &yes
@@ -2538,7 +2533,8 @@ class CallWorker(Pollable)
       WRITE,
       OPEN,
       CREATE,
-      CLOSE
+      CLOSE,
+      FULLY_WRITE
 
    private
       ptr
@@ -2549,6 +2545,7 @@ class CallWorker(Pollable)
       OPEN := 2
       CREATE := 3
       CLOSE := 4
+      FULLY_WRITE := 5
    end
 
    public get_poll(ev)

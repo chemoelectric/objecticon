@@ -4299,7 +4299,7 @@ end
 
 
 enum callworker_status { CW_RUNNING, CW_COMPLETE };
-enum callworker_cmd { CW_READ, CW_WRITE, CW_OPEN, CW_CREATE, CW_CLOSE };
+enum callworker_cmd { CW_READ, CW_WRITE, CW_OPEN, CW_CREATE, CW_CLOSE, CW_FULLY_WRITE };
 
 struct callworker {
     int pid;
@@ -4336,6 +4336,20 @@ static void set_callworker_status(struct callworker *w, int status)
     qunlock(&w->l);
 }
 
+static long fully_write(int fd, void *buf, long nbytes)
+{
+    long n = nbytes;
+    char *p = buf;
+    while (n > 0) {
+        long r = write(fd, p, n);
+        if (r < 0)
+            return r;
+        n -= r;
+        p += r;
+    }
+    return nbytes;
+}
+
 static void callworker_loop(struct callworker *w)
 {
     for(;;) {
@@ -4367,6 +4381,12 @@ static void callworker_loop(struct callworker *w)
             }
             case CW_CLOSE: {
                 w->result = close(w->fd);
+                if (w->result < 0)
+                    errstr(w->errstr, sizeof(w->errstr));
+                break;
+            }
+            case CW_FULLY_WRITE: {
+                w->result = fully_write(w->fd, w->buff, w->write_size);
                 if (w->result < 0)
                     errstr(w->errstr, sizeof(w->errstr));
                 break;
@@ -4467,6 +4487,7 @@ function io_CallWorker_call(self, cmd, arg[n])
                   self_callworker->read_size = self_callworker->buff_size;
               break;
           }
+          case CW_FULLY_WRITE:
           case CW_WRITE: {
               if (n < 2)
                   runerr(169);
