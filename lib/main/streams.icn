@@ -1610,9 +1610,7 @@ class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask, NoCopy)
 
    private flush_on_close_cout()
       local del, t, f
-      # Sleep only if we read no data
       del := 5
-
       if (\cin).get_in_status() = NonBlockStream.COMPLETE then {
          t := \cin.in(1048576) | syserr("Unexpected failure/eof of cin.in")
          handle_flushed_cin(t) | (f := 1)
@@ -1623,8 +1621,15 @@ class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask, NoCopy)
          err_sink.fully_out(t) | (f := 1)
          del := &null
       }
-
-      delay(\del)
+      if \del then {
+         # To avoid a busy loop whilst waiting for cout to empty,
+         # sleep for a moment if we haven't read anything from cin or
+         # cerr.
+         if /task then
+            delay(del)
+         else
+            task.sleep(del)
+      }
       return /f
    end
 
@@ -1813,7 +1818,7 @@ class FilterInputStream(FilterStreamBase)
    public in(n)
       local x, i, t
       repeat {
-         if *\flushed_cin_acc > 0 then {
+         if *flushed_cin_acc > 0 then {
             flushed_cin_acc ? {
                t := move(n) | tab(0)
                flushed_cin_acc := tab(0)
