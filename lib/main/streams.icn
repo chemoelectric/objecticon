@@ -1613,20 +1613,18 @@ class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask, NoCopy)
       # Sleep only if we read no data
       del := 5
 
-      if (\cin).get_in_status() ~= NonBlockStream.READING then {
-         if t := \cin.in(1048576) then {
-            handle_flushed_cin(t) | (f := 1)
-            del := 0
-         }
+      if (\cin).get_in_status() = NonBlockStream.COMPLETE then {
+         t := \cin.in(1048576) | syserr("Unexpected failure/eof of cin.in")
+         handle_flushed_cin(t) | (f := 1)
+         del := &null
       }
-      if (\cerr).get_in_status() ~= NonBlockStream.READING then {
-         if t := \cerr.in(1048576) then {
-            err_sink.fully_out(t) | (f := 1)
-            del := 0
-         }
+      if (\cerr).get_in_status() = NonBlockStream.COMPLETE then {
+         t := \cerr.in(1048576) | syserr("Unexpected failure/eof of cerr.in")
+         err_sink.fully_out(t) | (f := 1)
+         del := &null
       }
 
-      delay(del)
+      delay(\del)
       return /f
    end
 
