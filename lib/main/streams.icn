@@ -1078,17 +1078,20 @@ $ifdef _PLAN9
    # @param m2 the same for the other end of the pipe.
    #
    public static pipe(m1, m2)
-      local t, p1, p2
+      local t, p1, p2, dir
+      static ser
+      initial ser := 0
       if /m1 & /m2 then {
          t := pipe_impl() | fail
          return [FileStream(t[1], READ_WRITE), FileStream(t[2], READ_WRITE)]
       } else {
          /m1 := 0
          /m2 := 0
-         Files.bind("#|", "/mnt/temp", MountOpt.MREPL) | fail
-         p1 := open9("/mnt/temp/data", ior(m1, FileOpt9.ORDWR), READ_WRITE)  | stop(&why)
-         p2 := open9("/mnt/temp/data1", ior(m2, FileOpt9.ORDWR), READ_WRITE)  | stop(&why)
-         Files.unmount(, "/mnt/temp")
+         dir := "/n/pipe." || System.getpid() || "." || (ser +:= 1)
+         Files.bind("#|", dir, MountOpt.MREPL) | fail
+         p1 := open9(dir || "/data", ior(m1, FileOpt9.ORDWR), READ_WRITE)  | stop(&why)
+         p2 := open9(dir || "/data1", ior(m2, FileOpt9.ORDWR), READ_WRITE)  | stop(&why)
+         Files.unmount(, dir)
          if /p1 | /p2 then {
             (\p1).close()
             (\p2).close()
