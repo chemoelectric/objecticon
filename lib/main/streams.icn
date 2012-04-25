@@ -2588,6 +2588,16 @@ class NetStream(FileStream)
       return FileStream.open(dir || "/" || s, mode)
    end
 
+   # Open the data stream file
+   #
+   public open_data()
+      if self.fd ~= -1 then
+         return error("data stream already open")
+      self.fd := open_subfile("data", FileOpt.RDWR).get_fd() |
+         return error("Couldn't open data stream: " || &why)
+      return
+   end
+
    # Connect to the given address, which should be in the form returned by cs_query, eg
    # "/net/tcp/clone 173.194.78.103!80".
    # @param s the entry from cs_query
@@ -2613,9 +2623,9 @@ class NetStream(FileStream)
          fail
       }
       
-      res.fd := res.open_subfile("data", FileOpt.RDWR).get_fd() | {
+      res.open_data() | {
          res.close()
-         return error("Couldn't open data stream: " || &why)
+         fail
       }
       return res
    end
@@ -2642,7 +2652,7 @@ class NetStream(FileStream)
       return connect(l[1], timeout, task)
    end
 
-   private static clone(fn)
+   public static clone(fn)
       local cf, name, dir, i
       cf := FileStream.open(fn, FileOpt.RDWR) | return error("Couldn't open clone file: " || fn)
       # Get the id number of the connection clone created
@@ -2709,9 +2719,7 @@ class NetStream(FileStream)
       # May fail, so ignore errors
       save_why{write_ctrl("accept " || dir[i + 1:0])}
       # Open data stream
-      self.fd := open_subfile("data", FileOpt.RDWR).get_fd() |
-         return error("Couldn't open data stream: " || &why)
-      return
+      return open_data()
    end
 
    # Reject an incoming connection
