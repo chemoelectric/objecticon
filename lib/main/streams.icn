@@ -2654,7 +2654,7 @@ class NetStream(FileStream)
 
    public static clone(fn)
       local cf, name, dir, i
-      cf := FileStream.open(fn, FileOpt.RDWR) | return error("Couldn't open clone file: " || fn)
+      cf := FileStream.open(fn, FileOpt.RDWR) | return error("Couldn't open clone file: " || &why)
       # Get the id number of the connection clone created
       name := cf.in(1024)
       every i := upto('/', fn)
@@ -2690,7 +2690,7 @@ class NetStream(FileStream)
    public listen(timeout, task)
       local cf, name, new_dir, i, cw, r, fd
       if /timeout & /task then
-         cf := open_subfile("listen", FileOpt.RDWR) | return error("Couldn't open listen file: ", &why)
+         cf := open_subfile("listen", FileOpt.RDWR) | return error("Couldn't open listen file: " || &why)
       else {
          fd := use {
             cw := CallWorker(),
@@ -2700,7 +2700,7 @@ class NetStream(FileStream)
                if /r then
                   error("Timeout")
                else
-                  cw.await() | error("Couldn't open listen file: ", &why)
+                  cw.await() | error("Couldn't open listen file: " || &why)
             }
          } | fail
          cf := CtrlStream(fd)
