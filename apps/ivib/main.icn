@@ -1009,12 +1009,13 @@ class Main(Dialog)
 
    public read_config_file()
       local f, n
+      self.prefs := Prefs()
       n := get_config_file_name()
       Files.access(n) | return
       return use {
          f := io.open(n),
          self.prefs := lang.decode(f.read())
-      } |  alert_error(self, "Problem reading config file " || n || ": " || &why)
+      } | alert_error(self, "Problem reading config file " || n || ": " || &why)
    end
 
    public save_config_file()
@@ -1218,7 +1219,6 @@ class Main(Dialog)
       i.connect(self.op_delete_selections, Event.ACTION)
       selections_menu.add(i)
 
-      self.prefs := Prefs()
       read_config_file()
       synch_named_images()
 
