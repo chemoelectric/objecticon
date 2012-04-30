@@ -1611,46 +1611,11 @@ class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask, NoCopy)
       }
    end
 
-   private flush_on_close_cout()
-      local del, t, f
-      del := 5
-      if (\cin).get_in_status() = NonBlockStream.COMPLETE then {
-         t := \cin.in(1048576) | syserr("Unexpected failure/eof of cin.in")
-         handle_flushed_cin(t) | (f := 1)
-         del := &null
-      }
-      if (\cerr).get_in_status() = NonBlockStream.COMPLETE then {
-         t := \cerr.in(1048576) | syserr("Unexpected failure/eof of cerr.in")
-         err_sink.fully_out(t) | (f := 1)
-         del := &null
-      }
-      if \del then {
-         # To avoid a busy loop whilst waiting for cout to empty,
-         # sleep for a moment if we haven't read anything from cin or
-         # cerr.
-         if /task then
-            delay(del)
-         else
-            task.sleep(del)
-      }
-      return /f
-   end
-
-   protected defer handle_flushed_cin(t)
-
    protected close_cout()
-      local f
       if \cout then {
-         # Wait until the cout buffer is emptied, reading from
-         # cin/cerr to keep things moving through
-         while cout.get_out_status() = NonBlockStream.WRITING do
-            flush_on_close_cout() | (f := 1)
-         # Now this close() won't block, but it may still return any
-         # error on the final write() of its buffer.
-         cout.close() | (f := 1)
+         cout.close()
          cout := &null
       }
-      return /f
    end
 
    protected setup(cmd, args, env, err_sink)
@@ -1668,7 +1633,8 @@ class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask, NoCopy)
       if pid > 0 then {
          # Parent
          cin := NonBlockStream(l[1], Stream.READ, 32768)
-         cout := NonBlockStream(l[4], Stream.WRITE,, 32768)
+         cout := NonBlockStream(l[4], Stream.WRITE,, 1032768).
+            set_write_on_close(NonBlockStream.BACKGROUND_FLUSH)
          cerr := NonBlockStream(l[5], Stream.READ, 32768)
          l[2].close()
          l[3].close()
@@ -1683,269 +1649,6 @@ class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask, NoCopy)
          System.exec(cmd, args, env) | stop(&why)
          syserr("Not reached")
       }
-   end
-end
-
-#
-# This stream filters output written to it through a background
-# process and outputs the results to an arbitrary sink {Stream}.
-#
-# @example
-# @ # Encode s, putting the result in a RamStream
-# @ r := RamStream()
-# @ g := FilterOutputStream(r, "gzip", ["-c"])
-# @ g.write(s)
-#
-class FilterOutputStream(FilterStreamBase)
-   private 
-      sink
-   
-   public out(s)
-      local x, t
-      s := string(s) | runerr(103, s)
-      repeat {
-         x := do_poll() | fail
-         case x of {
-            cin: {
-               t := cin.in(1048576) | fail
-               if /t then
-                  close_cin()
-               else
-                  sink.fully_out(t) | fail
-            }
-            cerr: {
-               t := cerr.in(1048576) | fail
-               if /t then
-                  close_cerr()
-               else
-                  err_sink.fully_out(t) | fail
-            }
-            cout:
-               return cout.out(s)
-         }
-      }
-   end
-
-   private flush_remaining()
-      local x, t
-      while \cin | \cerr do {
-         x := do_poll() | fail
-         case x of {
-            cin: {
-               t := cin.in(1048576) | fail
-               if /t then
-                  close_cin()
-               else
-                  sink.fully_out(t) | fail
-            }
-            cerr: {
-               t := cerr.in(1048576) | fail
-               if /t then
-                  close_cerr()
-               else
-                  err_sink.fully_out(t) | fail
-            }
-         }
-      }
-      return
-   end
-
-   protected handle_flushed_cin(t)
-      return sink.fully_out(t)
-   end
-
-   # Close the stream.  This waits for the child process to terminate,
-   # flushing any remaining output to {sink}.  NB: {sink} and
-   # {err_sink} are not closed unless the {set_close_underlying} has
-   # been set to {&yes}.
-   #
-   public close()
-      local f
-      \pid | runerr(219, self)
-      close_cout() | (f := 1)
-      flush_remaining() | (f := 1)
-      close_cin()
-      close_cerr()
-      if \close_underlying_flag then {
-         sink.close() | (f := 1)
-         (err_sink === sink) | err_sink.close() | (f := 1)
-      }
-      do_wait()
-      return /f
-   end
-
-   public get_mode()
-      return WRITE
-   end
-
-   #
-   # Create a new instance.
-   #
-   # @param sink the {Stream} to which data is output from the command.
-   # @      Defaults to a {NullStream}.
-   # @param cmd the name of the command                                    
-   # @param args the arg list                                              
-   # @param env the env list                                               
-   # @param err_sink optional stream to send standard error to.  If omitted,
-   # @      defaults to a {StringStream}, which can then be used together
-   # @      with {succeeded()} to check the command's exit status.
-   public new(sink, cmd, args, env, err_sink)
-      /sink := NullStream()
-      self.sink := sink
-      setup(cmd, args, env, err_sink) | fail
-      return
-   end
-end
-
-#
-# This stream filters data taken from an arbitrary source {Stream}
-# through a background process.  The output from that process can then
-# be read as this {Stream}'s output.
-#
-# @example
-# @ g := FilterInputStream(StringStream(s), "gzip", ["-c"])
-# @ # Reading from g will give the compressed value of the string s.
-# @ res := g.read_all()
-#
-class FilterInputStream(FilterStreamBase)
-   private 
-      source,
-      buff,
-      flushed_cin_acc
-
-   protected handle_flushed_cin(t)
-      flushed_cin_acc ||:= t
-      return
-   end
-
-   public in(n)
-      local x, i, t
-      repeat {
-         if *flushed_cin_acc > 0 then {
-            flushed_cin_acc ? {
-               t := move(n) | tab(0)
-               flushed_cin_acc := tab(0)
-            }
-            return t
-         }
-
-         x := do_poll() | {
-            if \cout then {
-               # The child has exited, but the data has yet to reach
-               # the input pipes; close cout and go round again to
-               # wait for input or hup on cin/cerr.
-               close_cout() | fail
-               next
-            }
-            fail
-         }
-         case x of {
-            cin: {
-               t := cin.in(n) | fail
-               if /t then
-                  close_cout() | fail
-               return t
-            }
-            cerr: {
-               t := cerr.in(1048576) | fail
-               if /t then {
-                  close_cout() | fail
-                  close_cerr()
-               } else
-                  err_sink.fully_out(t) | fail
-            }
-            cout: {
-               if *buff = 0 then {
-                  buff := source.in(1048576) | fail
-                  if /buff then {
-                     close_cout() | fail
-                     next
-                  }
-               }
-               i := cout.out(buff) | {
-                  # Broken pipe; this is caused by the command exiting
-                  # between the do_poll() and the out() call.
-                  close_cout() | fail
-                  next
-               }
-               buff := buff[i + 1:0]
-            }
-         }
-      }
-   end
-
-   #
-   # Exchange the handling of the command's stdout and stderr, so that
-   # stdout goes to the stderr sink and stderr is read by calling
-   # {in()}
-   #
-   public swap_outputs()
-      cin :=: cerr
-      return self
-   end
-
-   private flush_cerr()
-      local x, t
-      while \cerr do {
-         x := do_poll() | fail
-         case x of {
-            cerr: {
-               t := cerr.in(1048576) | fail
-               if /t then
-                  close_cerr()
-               else
-                  err_sink.fully_out(t) | fail
-            }
-            default:
-               syserr("Unexpected result from do_poll")
-         }
-      }
-      return
-   end
-
-   #
-   # Close the stream.  This waits for the child process to terminate.
-   # NB: {source} and {err_sink} are not closed unless the
-   # {set_close_underlying} has been set to {&yes}.
-   #
-   public close()
-      local f
-      \pid | runerr(219, self)
-      close_cout() | (f := 1)
-      close_cin()
-      flush_cerr() | (f := 1)
-      close_cerr()
-      if \close_underlying_flag then {
-         source.close() | (f := 1)
-         err_sink.close() | (f := 1)
-      }
-      do_wait()
-      self.buff := &null
-      return /f
-   end
-
-   public get_mode()
-      return READ
-   end
-   
-   #
-   # Create a new instance.
-   #
-   # @param source the {Stream} from which data is given to the command.
-   # @      Defaults to a {NullStream}.
-   # @param cmd the name of the command                                    
-   # @param args the arg list                                              
-   # @param env the env list                                               
-   # @param err_sink optional stream to send standard error to.  If omitted,
-   # @      defaults to a {StringStream}, which can then be used together
-   # @      with {succeeded()} to check the command's exit status.
-   public new(source, cmd, args, env, err_sink)
-      /source := NullStream()
-      self.source := source
-      self.buff := ""
-      self.flushed_cin_acc := ""
-      setup(cmd, args, env, err_sink) | fail
-      return
    end
 end
 
@@ -2195,6 +1898,8 @@ class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask, NoCopy)
    end
 end
 
+$endif
+
 #
 # This stream filters output written to it through a background
 # process and outputs the results to an arbitrary sink {Stream}.
@@ -2438,7 +2143,7 @@ class FilterInputStream(FilterStreamBase)
       return
    end
 end
-$endif
+
 #
 # This class provides a {Stream} which stores its data in memory.  It
 # can be used to efficiently concatenate together many strings, or as
@@ -2566,7 +2271,7 @@ class NetStream(FileStream)
          use {
             nb := NonBlockStream(ctrl, Stream.WRITE).
                set_close_underlying(&no).
-               set_flush_on_close(&no),     # Needed since on a timeout the writer will still be writing
+               set_write_on_close(NonBlockStream.DISCARD),     # Needed since on a timeout the writer will still be writing
             {                               # and would thus hang on a flush from close()
                nb.out(msg)
                r := (if /task then DescStream else task).poll([nb, Poll.OUT], timeout)
@@ -2693,14 +2398,14 @@ class NetStream(FileStream)
          cf := open_subfile("listen", FileOpt.RDWR) | return error("Couldn't open listen file: " || &why)
       else {
          fd := use {
-            cw := CallWorker(),
+            cw := FileWorker(),
             {
-               cw.call(CallWorker.OPEN, dir || "/listen", FileOpt9.ORDWR)
+               cw.op_open(dir || "/listen", FileOpt9.ORDWR)
                r := (if /task then DescStream else task).poll([cw, Poll.IN], timeout)
                if /r then
                   error("Timeout")
                else
-                  cw.await() | error("Couldn't open listen file: " || &why)
+                  (cw.await(), cw.dup_fd()) | error("Couldn't open listen file: " || &why)
             }
          } | fail
          cf := CtrlStream(fd)
@@ -2777,13 +2482,18 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
       ERROR,
       EOF
 
+   public static const
+      DISCARD,
+      FOREGROUND_FLUSH,
+      BACKGROUND_FLUSH
+
    private
       mode,
       reader,
       rbuff,
       writer,
       other,
-      flush_on_close_flag
+      write_on_close
 
    private static init()
       INVALID := 0
@@ -2792,6 +2502,10 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
       COMPLETE := 3
       ERROR := 4
       EOF := 5
+
+      DISCARD := 1
+      FOREGROUND_FLUSH := 2
+      BACKGROUND_FLUSH := 3
    end
 
    public get_poll(ev)
@@ -2831,15 +2545,16 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
       }
 
       if *rbuff = 0 then
-         reader.call(CallWorker.READ, other.get_fd())
+         reader.op_read()
       return t
    end
 
    public out(s)
       local n
+      s := string(s) | runerr(103, s)
       flush_out() | fail
       n := min(*s, writer.get_buff_size())
-      writer.call(CallWorker.FULLY_WRITE, other.get_fd(), s[1+:n])
+      writer.op_fully_write(s[1+:n])
       return n
    end
 
@@ -2859,8 +2574,8 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
    # off this flag, in which case any outstanding data in the buffer
    # is discarded.
    #
-   public set_flush_on_close(s)
-      self.flush_on_close_flag := check_flag(s)
+   public set_write_on_close(x)
+      self.write_on_close := x
       return self
    end
 
@@ -2870,12 +2585,20 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
 
    public close()
       local f
-      if \writer & \flush_on_close_flag then
-         flush_out() | (f := 1)
+      if \writer then {
+         case write_on_close of {
+            DISCARD: 
+               writer.close()
+            FOREGROUND_FLUSH : {
+               flush_out() | (f := 1)
+               writer.close()
+            }
+            BACKGROUND_FLUSH:
+               writer.close_when_complete()
+         }
+      }
       if \reader then
          reader.close()
-      if \writer then
-         writer.close()
       if \close_underlying_flag then
          other.close() | (f := 1)
       return /f
@@ -2947,14 +2670,14 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
       self.mode := mode
       if can(READ) then {
          self.rbuff := ""
-         self.reader := CallWorker(rbuff_size)
-         reader.call(CallWorker.READ, other.get_fd())
+         self.reader := FileWorker(rbuff_size, other)
+         reader.op_read()
       }
       if can(WRITE) then
-         self.writer := CallWorker(wbuff_size)
+         self.writer := FileWorker(wbuff_size, other)
       self.other := other
       self.close_underlying_flag := &yes
-      self.flush_on_close_flag := &yes
+      self.write_on_close := FOREGROUND_FLUSH
       return
    end
 end
@@ -2962,26 +2685,9 @@ end
 # This is a class for performing basic blocking i/o system calls in a
 # background process.
 #
-class CallWorker(Pollable)
-   public static const
-      READ,
-      WRITE,
-      OPEN,
-      CREATE,
-      CLOSE,
-      FULLY_WRITE
-
+class FileWorker(Pollable)
    private
       ptr
-
-   private static init()
-      READ := 0
-      WRITE := 1
-      OPEN := 2
-      CREATE := 3
-      CLOSE := 4
-      FULLY_WRITE := 5
-   end
 
    public get_poll(ev)
       local res
@@ -2993,17 +2699,25 @@ class CallWorker(Pollable)
       return res
    end
 
-   private static defer new_impl(buff_size)
-   public defer call(cmd, arg[])
+   private static defer new_impl(buff_size, other)
+
+   public defer op_read(n)
+   public defer op_write(s)
+   public defer op_fully_write(s)
+   public defer op_open(path, mode)
+   public defer op_create(path, mode, perm)
+   public defer op_close()
    public defer is_running()
    public defer get_buff_size()
    public defer get_buffer(n)
    public defer get_result()
    public defer await()
    public defer close()
+   public defer close_when_complete()
+   public defer dup_fd()
 
-   public new(buff_size)
-      ptr := new_impl(buff_size)
+   public new(buff_size, other)
+      ptr := new_impl(buff_size, other)
       return
    end
 end

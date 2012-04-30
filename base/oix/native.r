@@ -4298,10 +4298,10 @@ function io_DescStream_length(self)
 end
 
 
-enum callworker_status { CW_RUNNING, CW_COMPLETE };
-enum callworker_cmd { CW_READ, CW_WRITE, CW_OPEN, CW_CREATE, CW_CLOSE, CW_FULLY_WRITE };
+enum fileworker_status { FW_RUNNING, FW_COMPLETE };
+enum fileworker_cmd { FW_READ, FW_WRITE, FW_OPEN, FW_CREATE, FW_CLOSE, FW_FULLY_WRITE };
 
-struct callworker {
+struct fileworker {
     int pid;
     int status;
     QLock l;
@@ -4313,12 +4313,13 @@ struct callworker {
     ulong perm;
     long result;
     char errstr[ERRMAX];
-    struct callworker *next, *prev;
+    int close_when_complete;
+    struct fileworker *next, *prev;
 };
 
-static struct callworker *callworkers;
+static struct fileworker *fileworkers;
 
-static void wait_for_callworker_status(struct callworker *w, int status)
+static void wait_for_fileworker_status(struct fileworker *w, int status)
 {
     if (w->status != status) {
         qlock(&w->l);
@@ -4328,7 +4329,7 @@ static void wait_for_callworker_status(struct callworker *w, int status)
     }
 }
 
-static void set_callworker_status(struct callworker *w, int status)
+static void set_fileworker_status(struct fileworker *w, int status)
 {
     qlock(&w->l);
     w->status = status;
@@ -4350,66 +4351,82 @@ static long fully_write(int fd, void *buf, long nbytes)
     return nbytes;
 }
 
-static void callworker_loop(struct callworker *w)
+static void fileworker_loop(struct fileworker *w)
 {
     for(;;) {
-        wait_for_callworker_status(w, CW_RUNNING);
+        wait_for_fileworker_status(w, FW_RUNNING);
         switch (w->cmd) {
-            case CW_READ: {
+            case FW_READ: {
                 w->result = read(w->fd, w->buff, w->read_size);
                 if (w->result < 0)
                     errstr(w->errstr, sizeof(w->errstr));
                 break;
             }
-            case CW_WRITE: {
+            case FW_WRITE: {
                 w->result = write(w->fd, w->buff, w->write_size);
                 if (w->result < 0)
                     errstr(w->errstr, sizeof(w->errstr));
                 break;
             }
-            case CW_OPEN: {
+            case FW_OPEN: {
                 w->result = open(w->buff, w->mode);
                 if (w->result < 0)
                     errstr(w->errstr, sizeof(w->errstr));
+                else
+                    w->fd = w->result;
                 break;
             }
-            case CW_CREATE: {
+            case FW_CREATE: {
                 w->result = create(w->buff, w->mode, w->perm);
                 if (w->result < 0)
                     errstr(w->errstr, sizeof(w->errstr));
+                else
+                    w->fd = w->result;
                 break;
             }
-            case CW_CLOSE: {
+            case FW_CLOSE: {
                 w->result = close(w->fd);
                 if (w->result < 0)
                     errstr(w->errstr, sizeof(w->errstr));
+                else
+                    w->fd = -1;
                 break;
             }
-            case CW_FULLY_WRITE: {
+            case FW_FULLY_WRITE: {
                 w->result = fully_write(w->fd, w->buff, w->write_size);
                 if (w->result < 0)
                     errstr(w->errstr, sizeof(w->errstr));
                 break;
             }
         }
-        set_callworker_status(w, CW_COMPLETE);
+        set_fileworker_status(w, FW_COMPLETE);
+        if (w->close_when_complete) {
+            if (w->buff)
+                free(w->buff);
+            if (w->fd >= 0)
+                close(w->fd);
+            free(w);
+            _exits(0);
+        }
     }
 }
 
-static void cleanup_callworker(struct callworker *w)
+static void cleanup_fileworker(struct fileworker *w)
 {
     if (w->pid >= 0)
         kill_proc(w->pid);
     if (w->buff)
         free(w->buff);
-    GRFX_GENUNLINK(w, callworkers, next, prev);
+    if (w->fd >= 0)
+        close(w->fd);
+    GRFX_GENUNLINK(w, fileworkers, next, prev);
     free(w);
 }
 
-static void cleanup_callworkers(void)
+static void cleanup_fileworkers(void)
 {
-    while (callworkers)
-        cleanup_callworker(callworkers);
+    while (fileworkers)
+        cleanup_fileworker(fileworkers);
 }
 
 static void catchpipe(void *a, char *msg)
@@ -4421,49 +4438,58 @@ static void catchpipe(void *a, char *msg)
         noted(NDFLT);
 }
 
-#begdef GetSelfCallWorker()
-struct callworker *self_callworker;
-dptr self_callworker_dptr;
-static struct inline_field_cache self_callworker_ic;
-self_callworker_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_callworker_ic);
-if (!self_callworker_dptr)
+#begdef GetSelfFileWorker()
+struct fileworker *self_fileworker;
+dptr self_fileworker_dptr;
+static struct inline_field_cache self_fileworker_ic;
+self_fileworker_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_fileworker_ic);
+if (!self_fileworker_dptr)
     syserr("Missing ptr field");
-self_callworker = (struct callworker*)IntVal(*self_callworker_dptr);
-if (!self_callworker)
+self_fileworker = (struct fileworker*)IntVal(*self_fileworker_dptr);
+if (!self_fileworker)
     runerr(219, self);
 #enddef
 
-function io_CallWorker_new_impl(buff_size)
+function io_FileWorker_new_impl(buff_size, f)
    if !def:C_integer(buff_size, 1024) then
       runerr(101, buff_size)
    body {
-       struct callworker *p;
-       int pid;
-       static int callworker_inited;
+       struct fileworker *p;
+       int pid, fd;
+       static int fileworker_inited;
+       if (is:null(f))
+           fd = -1;
+       else {
+           FdStaticParam(f, tmp);
+           fd = tmp;
+       }
 
-       if (!callworker_inited) {
-           atexit(cleanup_callworkers);
-           callworker_inited = 1;
+       if (!fileworker_inited) {
+           atexit(cleanup_fileworkers);
+           fileworker_inited = 1;
        }
 
        MemProtect(p = calloc(1, sizeof(*p)));
-       GRFX_GENLINK(p, callworkers, next, prev);
+       GRFX_GENLINK(p, fileworkers, next, prev);
 
        p->pid = -1;
        MemProtect(p->buff = calloc(1, buff_size));
        p->buff_size = buff_size;
+       p->fd = fd;
+       if (p->fd >= 0)
+           p->fd = dup(p->fd, -1);
        p->rz.l = &p->l;
-       p->status = CW_COMPLETE;
+       p->status = FW_COMPLETE;
        switch (pid = rfork(RFPROC|RFMEM)) {
            case 0: {
                notify(catchpipe);
-               callworker_loop(p);
+               fileworker_loop(p);
                /* Not reached */
                break;
            }
            case -1: {
                whyf("rfork failed: %r");
-               cleanup_callworker(p);
+               cleanup_fileworker(p);
                fail;
            }
        }
@@ -4472,148 +4498,208 @@ function io_CallWorker_new_impl(buff_size)
    }
 end
 
-function io_CallWorker_call(self, cmd, arg[n])
-   if !cnv:C_integer(cmd) then
-      runerr(101, cmd)
+#begdef StartFileWorkerCmd(x)
+   self_fileworker->cmd = x;
+   self_fileworker->result = 0;
+   self_fileworker->errstr[0] = 0;
+   set_fileworker_status(self_fileworker, FW_RUNNING);
+   return nulldesc;
+#enddef
+
+function io_FileWorker_op_read(self, n)
    body {
-      GetSelfCallWorker()
-      wait_for_callworker_status(self_callworker, CW_COMPLETE);
-      switch (cmd) {
-          case CW_READ: {
-              if (n < 1)
-                  runerr(169);
-              if (!cnv:C_integer(arg[0], self_callworker->fd))
-                  runerr(101, arg[0]);
-              if (n > 1) {
-                  int i;
-                  if (!cnv:C_integer(arg[1], i))
-                      runerr(101, arg[1]);
-                  self_callworker->read_size = i;
-                  if (self_callworker->read_size > self_callworker->buff_size) {
-                      LitWhy("Request size too long for buffer");
-                      fail;
-                  }
-              } else
-                  self_callworker->read_size = self_callworker->buff_size;
-              break;
-          }
-          case CW_FULLY_WRITE:
-          case CW_WRITE: {
-              if (n < 2)
-                  runerr(169);
-              if (!cnv:C_integer(arg[0], self_callworker->fd))
-                  runerr(101, arg[0]);
-              if (!cnv:string(arg[1], arg[1]))
-                  runerr(103, arg[1]);
-              if (StrLen(arg[1]) > self_callworker->buff_size) {
-                  LitWhy("String too long for buffer");
-                  fail;
-              }
-              self_callworker->write_size = StrLen(arg[1]);
-              memcpy(self_callworker->buff, StrLoc(arg[1]), StrLen(arg[1]));
-              break;
-          }
-          case CW_CREATE:
-          case CW_OPEN: {
-              if (n < 2)
-                  runerr(169);
-              if (!cnv:string(arg[0], arg[0]))
-                  runerr(103, arg[0]);
-              if (!cnv:C_integer(arg[1], self_callworker->mode))
-                  runerr(101, arg[1]);
-              if (StrLen(arg[0]) >= self_callworker->buff_size) {
-                  LitWhy("String too long for buffer");
-                  fail;
-              }
-              memcpy(self_callworker->buff, StrLoc(arg[0]), StrLen(arg[0]));
-              self_callworker->buff[StrLen(arg[0])] = 0;
-              if (cmd == CW_CREATE) {
-                  if (n > 2) {
-                      if (!cnv:integer(arg[2], arg[2]))
-                          runerr(101, arg[2]);
-                      if (!convert_to_ulong(&arg[2], &self_callworker->perm))
-                          runerr(0);
-                  } else
-                      self_callworker->perm = 0664;
-              }
-              break;
-          }
-          case CW_CLOSE: {
-              if (n < 1)
-                  runerr(169);
-              if (!cnv:C_integer(arg[0], self_callworker->fd))
-                  runerr(101, arg[0]);
-              break;
-          }
-          default: {
-              Irunerr(205, cmd);
-              break;
-          }
+      word i;
+      GetSelfFileWorker();
+      if (is:null(n))
+          i = self_fileworker->buff_size;
+      else {
+          if (!cnv:C_integer(n, i))
+              runerr(101, n);
       }
-      self_callworker->cmd = cmd;
-      self_callworker->result = 0;
-      self_callworker->errstr[0] = 0;
-      set_callworker_status(self_callworker, CW_RUNNING);
-      return nulldesc;
+
+      wait_for_fileworker_status(self_fileworker, FW_COMPLETE);
+
+      if (i > self_fileworker->buff_size) {
+          LitWhy("Request size too long for buffer");
+          fail;
+      }
+      self_fileworker->read_size = i;
+      StartFileWorkerCmd(FW_READ);
    }
 end
 
-function io_CallWorker_is_running(self)
+function io_FileWorker_op_write(self, s)
+   if !cnv:string(s) then
+      runerr(103, s)
    body {
-      GetSelfCallWorker();
-      if (self_callworker->status == CW_RUNNING)
+      GetSelfFileWorker();
+      wait_for_fileworker_status(self_fileworker, FW_COMPLETE);
+      if (StrLen(s) > self_fileworker->buff_size) {
+          LitWhy("String too long for buffer");
+          fail;
+      }
+      self_fileworker->write_size = StrLen(s);
+      memcpy(self_fileworker->buff, StrLoc(s), StrLen(s));
+      StartFileWorkerCmd(FW_WRITE);
+   }
+end
+
+function io_FileWorker_op_fully_write(self, s)
+   if !cnv:string(s) then
+      runerr(103, s)
+   body {
+      GetSelfFileWorker();
+      wait_for_fileworker_status(self_fileworker, FW_COMPLETE);
+      if (StrLen(s) > self_fileworker->buff_size) {
+          LitWhy("String too long for buffer");
+          fail;
+      }
+      self_fileworker->write_size = StrLen(s);
+      memcpy(self_fileworker->buff, StrLoc(s), StrLen(s));
+      StartFileWorkerCmd(FW_FULLY_WRITE);
+   }
+end
+
+function io_FileWorker_op_open(self, path, mode)
+   if !cnv:string(path) then
+      runerr(103, path)
+   if !cnv:C_integer(mode) then
+      runerr(101, mode)
+   body {
+      GetSelfFileWorker();
+      wait_for_fileworker_status(self_fileworker, FW_COMPLETE);
+      if (StrLen(path) >= self_fileworker->buff_size) {
+          LitWhy("String too long for buffer");
+          fail;
+      }
+      memcpy(self_fileworker->buff, StrLoc(path), StrLen(path));
+      self_fileworker->buff[StrLen(path)] = 0;
+      self_fileworker->mode = mode;
+      StartFileWorkerCmd(FW_OPEN);
+   }
+end
+
+function io_FileWorker_op_create(self, path, mode, perm)
+   if !cnv:string(path) then
+      runerr(103, path)
+   if !cnv:C_integer(mode) then
+      runerr(101, mode)
+   body {
+      ulong uperm;
+      GetSelfFileWorker();
+      if (is:null(perm))
+          uperm = 0664;
+      else {
+          if (!convert_to_ulong(&perm, &uperm))
+              runerr(0);
+      }
+
+      wait_for_fileworker_status(self_fileworker, FW_COMPLETE);
+      if (StrLen(path) >= self_fileworker->buff_size) {
+          LitWhy("String too long for buffer");
+          fail;
+      }
+      memcpy(self_fileworker->buff, StrLoc(path), StrLen(path));
+      self_fileworker->buff[StrLen(path)] = 0;
+      self_fileworker->mode = mode;
+      self_fileworker->perm = uperm;
+      StartFileWorkerCmd(FW_CREATE);
+   }
+end
+
+function io_FileWorker_op_close(self)
+   body {
+      GetSelfFileWorker();
+      StartFileWorkerCmd(FW_CLOSE);
+   }
+end
+
+function io_FileWorker_is_running(self)
+   body {
+      GetSelfFileWorker();
+      if (self_fileworker->status == FW_RUNNING)
           return nulldesc;
       else
           fail;
    }
 end
 
-function io_CallWorker_get_buff_size(self)
+function io_FileWorker_get_buff_size(self)
    body {
-      GetSelfCallWorker()
-      return C_integer self_callworker->buff_size;
+      GetSelfFileWorker()
+      return C_integer self_fileworker->buff_size;
    }
 end
 
-function io_CallWorker_get_buffer(self, n)
+function io_FileWorker_get_buffer(self, n)
    if !cnv:C_integer(n) then
       runerr(101, n)
    body {
       tended struct descrip result;
-      GetSelfCallWorker()
-       if (n < 0 || n > self_callworker->buff_size)
+      GetSelfFileWorker()
+       if (n < 0 || n > self_fileworker->buff_size)
            Irunerr(205, n);
-      MemProtect(StrLoc(result) = alcstr(self_callworker->buff, n));
+      MemProtect(StrLoc(result) = alcstr(self_fileworker->buff, n));
       StrLen(result) = n;
       return result;
    }
 end
 
-function io_CallWorker_get_result(self)
+function io_FileWorker_get_result(self)
    body {
-      GetSelfCallWorker()
-      return C_integer self_callworker->result;
+      GetSelfFileWorker()
+      return C_integer self_fileworker->result;
    }
 end
 
-function io_CallWorker_await(self)
+function io_FileWorker_await(self)
    body {
-      GetSelfCallWorker()
-      wait_for_callworker_status(self_callworker, CW_COMPLETE);
-      if (self_callworker->result < 0) {
-          why(self_callworker->errstr);
+      GetSelfFileWorker()
+      wait_for_fileworker_status(self_fileworker, FW_COMPLETE);
+      if (self_fileworker->result < 0) {
+          why(self_fileworker->errstr);
           fail;
       }
-      return C_integer self_callworker->result;
+      return C_integer self_fileworker->result;
    }
 end
 
-function io_CallWorker_close(self)
+function io_FileWorker_close(self)
    body {
-      GetSelfCallWorker()
-      cleanup_callworker(self_callworker);
-      *self_callworker_dptr = zerodesc;
+      GetSelfFileWorker()
+      cleanup_fileworker(self_fileworker);
+      *self_fileworker_dptr = zerodesc;
       return nulldesc;
+   }
+end
+
+function io_FileWorker_close_when_complete(self)
+   body {
+      GetSelfFileWorker()
+      qlock(&self_fileworker->l);
+      if (self_fileworker->status != FW_COMPLETE) {
+         GRFX_GENUNLINK(self_fileworker, fileworkers, next, prev);
+         *self_fileworker_dptr = zerodesc;
+         self_fileworker->close_when_complete = 1;
+         qunlock(&self_fileworker->l);
+         return nulldesc;
+      }
+      qunlock(&self_fileworker->l);
+      cleanup_fileworker(self_fileworker);
+      *self_fileworker_dptr = zerodesc;
+      return nulldesc;
+   }
+end
+
+function io_FileWorker_dup_fd(self)
+   body {
+      int i;
+      GetSelfFileWorker();
+      if ((i = dup(self_fileworker->fd, -1)) < 0) {
+          errno2why();
+          fail;
+      }
+      return C_integer i;
    }
 end
 
