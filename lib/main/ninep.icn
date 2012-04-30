@@ -294,6 +294,7 @@ class Regular9PImpl(Regular9P)
    end
 
    public set_data(s)
+      s := string(s) | runerr(103, s)
       data := s
       return self
    end
@@ -722,7 +723,7 @@ class Data9P()
 end
 
 class TreeData9P(Data9P)
-   private
+   private readable
       root
 
    public get_root(aname)
