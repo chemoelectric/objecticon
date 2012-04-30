@@ -2357,6 +2357,9 @@ class NetStream(FileStream)
       return connect(l[1], timeout, task)
    end
 
+   # Create a new {NetStream}, by opening the given clone file, which
+   # becomes the control file of the new instance.
+   #
    public static clone(fn)
       local cf, name, dir, i
       cf := FileStream.open(fn, FileOpt.RDWR) | return error("Couldn't open clone file: " || &why)
@@ -2569,10 +2572,19 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
       return
    end
 
-   # The default behaviour is to flush the write buffer on a {close}.
-   # This may cause {close} to block.  To change this behaviour, turn
-   # off this flag, in which case any outstanding data in the buffer
-   # is discarded.
+   # This setting configures what happens to data remaining in the
+   # write buffer when {close()} is invoked.  There are three possible
+   # settings :-
+   #
+   # DISCARD - the data is discarded, and {close()} does not block.
+   #
+   # FOREGROUND_FLUSH - the data is flushed, and {close()} blocks
+   # whilst this is done.  This is the default setting.
+   #
+   # BACKGROUND_FLUSH - the data is flushed in the background (by
+   # leaving the writer process running until the data is written),
+   # and {close()} does not block.  The writer process will continue,
+   # if necessary, even after the program exits.
    #
    public set_write_on_close(x)
       self.write_on_close := x
@@ -2595,6 +2607,8 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
             }
             BACKGROUND_FLUSH:
                writer.close_when_complete()
+            default:
+               runerr("Invalid write_on_close setting: " || image(write_on_close))
          }
       }
       if \reader then
@@ -2683,7 +2697,7 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
 end
 
 # This is a class for performing basic blocking i/o system calls in a
-# background process.
+# background process, on a particular file.
 #
 class FileWorker(Pollable)
    private
@@ -2716,6 +2730,12 @@ class FileWorker(Pollable)
    public defer close_when_complete()
    public defer dup_fd()
 
+   # Create a new instance.
+   # @param buff_size the i/o buffer size for reads and writes; defaults to 1024
+   # @param other an optional {DescStream}, whose file descriptor is dup'ed, and then
+   #       used for subsequent operations.  If not given, then {op_open} or {op_create} must be
+   #       called to initialize a file.
+   #
    public new(buff_size, other)
       ptr := new_impl(buff_size, other)
       return
