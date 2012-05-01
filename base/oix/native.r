@@ -4413,6 +4413,13 @@ static void fileworker_loop(struct fileworker *w)
 
 static void cleanup_fileworker(struct fileworker *w)
 {
+    /*
+     * Unfortunately there is a race condition in the kill_proc, when
+     * killing an open or create command, since the worker process may
+     * be killed between the point open/create returns and the w->fd
+     * member is updated.  This may leave a redundant file descriptor
+     * in the file table.
+     */
     if (w->pid >= 0)
         kill_proc(w->pid);
     if (w->buff)
@@ -4677,7 +4684,7 @@ function io_FileWorker_close_when_complete(self)
    body {
       GetSelfFileWorker()
       qlock(&self_fileworker->l);
-      if (self_fileworker->status != FW_COMPLETE) {
+      if (self_fileworker->status == FW_RUNNING) {
          GRFX_GENUNLINK(self_fileworker, fileworkers, next, prev);
          *self_fileworker_dptr = zerodesc;
          self_fileworker->close_when_complete = 1;
