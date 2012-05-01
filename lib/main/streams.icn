@@ -1632,10 +1632,10 @@ class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask, NoCopy)
        }
       if pid > 0 then {
          # Parent
-         cin := NonBlockStream(l[1], Stream.READ, 32768)
-         cout := NonBlockStream(l[4], Stream.WRITE,, 1032768).
+         cin := NonBlockStream(l[1], Stream.READ, 65536)
+         cout := NonBlockStream(l[4], Stream.WRITE,, 65536).
             set_write_on_close(NonBlockStream.BACKGROUND_FLUSH)
-         cerr := NonBlockStream(l[5], Stream.READ, 32768)
+         cerr := NonBlockStream(l[5], Stream.READ, 65536)
          l[2].close()
          l[3].close()
          l[6].close()
