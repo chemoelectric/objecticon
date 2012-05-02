@@ -2730,6 +2730,10 @@ class FileWorker(Pollable)
    public defer close_when_complete()
    public defer dup_fd()
 
+   public is_complete()
+      return not is_running()
+   end
+
    # Create a new instance.
    # @param buff_size the i/o buffer size for reads and writes; defaults to 1024
    # @param other an optional {DescStream}, whose file descriptor is dup'ed, and then

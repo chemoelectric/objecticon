@@ -4644,10 +4644,9 @@ function io_FileWorker_get_buffer(self, n)
    body {
       tended struct descrip result;
       GetSelfFileWorker()
-       if (n < 0 || n > self_fileworker->buff_size)
+      if (n < 0 || n > self_fileworker->buff_size)
            Irunerr(205, n);
-      MemProtect(StrLoc(result) = alcstr(self_fileworker->buff, n));
-      StrLen(result) = n;
+      bytes2string(self_fileworker->buff, n, &result);
       return result;
    }
 end

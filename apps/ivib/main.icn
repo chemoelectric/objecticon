@@ -1008,24 +1008,23 @@ class Main(Dialog)
    end
 
    public read_config_file()
-      local f
-      if f := io.open(get_config_file_name()) then {
-         if not(self.prefs := lang.decode(read(f))) then {
-            self.prefs := Prefs()
-            return alert_error(self, "Invalid config file format")
-         }
-      } else
-         self.prefs := Prefs()
+      local f, n
+      self.prefs := Prefs()
+      n := get_config_file_name()
+      Files.access(n) | return
+      return use {
+         f := io.open(n),
+         self.prefs := lang.decode(f.read())
+      } | alert_error(self, "Problem reading config file " || n || ": " || &why)
    end
 
    public save_config_file()
-      local f
-      f := io.open(get_config_file_name(), "w") | return alert_error(self, "Couldn't open config file : " || get_config_file_name())
-
-      write(f, lang.encode(self.prefs))
-
-      close(f)
-      return
+      local f, n
+      n := get_config_file_name()
+      return use {
+         f := io.open(n, "w"),
+         f.write(lang.encode(self.prefs))
+      } | alert_error(self, "Couldn't save to config file " || n || ": " || &why)
    end
 
    public synch_named_images()
