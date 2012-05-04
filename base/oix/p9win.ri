@@ -416,11 +416,11 @@ static void cons_loop(wsp ws)
  */
 static void synch_pos(wsp ws)
 {
-    char buf[24];
-    if (pread(ws->wininfo_fd, buf, 24, 0) != 24)
+    int sx, sy;
+    if (read_screeninfo(ws, 0,0, &sx, &sy, 0,0) != Succeeded)
         return;
-    ws->x = atoi(buf);
-    ws->y = atoi(buf + 12);
+    ws->x = ws->win->r.min.x - sx;
+    ws->y = ws->win->r.min.y - sy;
 }
 
 static void resize_pix_win(wbp w)
@@ -1501,7 +1501,7 @@ static int open_screen_win(wsp ws)
                     ws->x, ws->y,  ws->x + adjust(ws, ws->width), 
                     ws->y + adjust(ws, ws->height));
         if (ws->state == PopupCanvas)
-            strcat(buff, " -noborder");
+            strcat(buff, " -noborder -keepabove");
         else if (ws->state == IconicCanvas)
             strcat(buff, " -hide");
         sprintf(buff + strlen(buff), 
