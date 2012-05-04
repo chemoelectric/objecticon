@@ -498,19 +498,17 @@ writewctl(Xfid *x, char *err)
                 limited = wlimitrect(w, &rect);
                 if(eqrect(rect, w->i->r)) {
                     /* If we didn't change the rectangle, then only
-                     * send a wctl message if the size limits changed,
-                     * and only send a mouse reshape message if the
-                     * rectangle was limited.  For consistency with
-                     * what happens if the rectangle does change, the
-                     * window is topped.
+                     * send a wctl message if the size limits changed;
+                     * send a mouse reshape message in any case.  For
+                     * consistency with what happens if the rectangle
+                     * does change, the window is topped.
                      */
                     wtop(w);
                     if (limchanged) {
                         w->wctlready = 1;
                         wsendctlmesg(w, Wakeup);
                     }
-                    if (limited)
-                        sendmouseevent(w, 'r');
+                    sendmouseevent(w, 'r');
                 } else {
                     if (w->hidden)
                         i = allocimage(display, rect, w->i->chan, 0, DWhite);
