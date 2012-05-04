@@ -487,7 +487,7 @@ writewctl(Xfid *x, char *err)
 		rect = Rect(rect.min.x, rect.min.y, rect.min.x+Dx(w->i->r), rect.min.y+Dy(w->i->r));
 		/* fall through */
         case Resize: {
-                int limchanged = 0, limited;
+                int limchanged = 0;
                 if (w->mindx != mindx || w->maxdx != maxdx || w->mindy != mindy || w->maxdy != maxdy) {
                     limchanged = 1;
                     w->mindx = mindx;
@@ -495,7 +495,7 @@ writewctl(Xfid *x, char *err)
                     w->mindy = mindy;
                     w->maxdy = maxdy;
                 }
-                limited = wlimitrect(w, &rect);
+                wlimitrect(w, &rect);
                 if(eqrect(rect, w->i->r)) {
                     /* If we didn't change the rectangle, then only
                      * send a wctl message if the size limits changed;
