@@ -382,6 +382,28 @@ parsewctl(char **argp, Rectangle r, Rectangle *rp, int *pidp, int *idp, int *hid
 	if(argp)
 		*argp = s;
 
+        if (cmd == New) {
+            if (*noborderp && *hiddenp) {
+		strcpy(err, "noborder window cannot be hidden");
+		return -1;
+            }
+            if (*transientforp != -1) {
+                Window *x = wlookid(*transientforp);
+                if (!x) {
+                    strcpy(err, "invalid transientfor id");
+                    return -1;
+                }
+                if (*noborderp) {
+                    strcpy(err, "transient window cannot be noborder");
+                    return -1;
+                }
+                if (*keepabovep || *keepbelowp) {
+                    strcpy(err, "transient window cannot be keepabove/keepbelow");
+                    return -1;
+                }
+            }
+        }
+
 	return cmd;
 }
 
@@ -534,13 +556,22 @@ writewctl(Xfid *x, char *err)
 		wsendctlmesg(w, Wakeup);
 		return 1;
 	case Keepabove2:
-                wkeepabove(w);
+                if (!wkeepabove(w)) {
+                    strcpy(err, "cannot make window keepabove");
+                    return -1;
+                }
 		return 1;
 	case Keepbelow2:
-                wkeepbelow(w);
+                if (!wkeepbelow(w)) {
+                    strcpy(err, "cannot make window keepbelow");
+                    return -1;
+                }
 		return 1;
 	case Keepnormal:
-                wkeepnormal(w);
+                if (!wkeepnormal(w)) {
+                    strcpy(err, "cannot make window keepnormal");
+                    return -1;
+                }
 		return 1;
 	case Close:
                 wclosereq(w);

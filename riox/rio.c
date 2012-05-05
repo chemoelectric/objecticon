@@ -714,13 +714,15 @@ button3wmenu(Window *w)
             menustr[hide = i++] = "Hide";
 
         menustr[close = i++] = "Close";
-        if (w->keepabove || w->keepbelow)
-            menustr[keepnormal = i++] = "Keep normal";
-        if (!w->keepabove)
-            menustr[keepabove = i++] = "Keep above";
-        if (!w->keepbelow)
-            menustr[keepbelow = i++] = "Keep below";
-        menustr[delete = i++] = "Delete";
+        if (w->transientfor == -1) {
+            if (w->keepabove || w->keepbelow)
+                menustr[keepnormal = i++] = "Keep normal";
+            if (!w->keepabove)
+                menustr[keepabove = i++] = "Keep above";
+            if (!w->keepbelow)
+                menustr[keepbelow = i++] = "Keep below";
+            menustr[delete = i++] = "Delete";
+        }
         menustr[i] = 0;
 	i = menuhit(3, mousectl, &menu, wscreen);
         if (i == hide)
@@ -1170,40 +1172,47 @@ pointto(int wait)
 	return w;
 }
 
-void
+int
 wkeepabove(Window *w)
 {
     if (w->keepabove)
-        return;
+        return 1;
+    if (w->transientfor != -1)
+        return 0;
     w->wctlready = 1;
     w->keepbelow = 0;
     w->keepabove = 1;
     wsendctlmesg(w, Wakeup);
     ensurestacking();
+    return 1;
 }
 
-void
+int
 wkeepbelow(Window *w)
 {
     if (w->keepbelow)
-        return;
+        return 1;
+    if (w->transientfor != -1)
+        return 0;
     w->wctlready = 1;
     w->keepabove = 0;
     w->keepbelow = 1;
     wsendctlmesg(w, Wakeup);
     ensurestacking();
+    return 1;
 }
 
-void
+int
 wkeepnormal(Window *w)
 {
     if (!w->keepabove && !w->keepbelow)
-        return;
+        return 1;
     w->wctlready = 1;
     w->keepabove = 0;
     w->keepbelow = 0;
     wsendctlmesg(w, Wakeup);
     ensurestacking();
+    return 1;
 }
 
 static void

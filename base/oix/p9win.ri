@@ -1593,6 +1593,7 @@ static int open_screen_win(wsp ws)
     }
 
     synch_pos(ws);
+    synch_state(ws);
 
     if ((ws->cons_fd = open_winfile(ws, "cons", OREAD)) < 0) {
         whyf("Can't open cons file: %r");

@@ -1402,41 +1402,98 @@ riosetcursor(Cursor *p, int force)
 	lastcursor = p;
 }
 
+/*
+ * This is used to get the effective keepabove/keepbelow setting for a
+ * window, since transientfor windows don't hold the setting
+ * themselves, but inherit it from their transientfor parent (possibly
+ * over more than one level of indirection).
+ */
+static
+Window *get_transientfor_root(Window *w)
+{
+    Window *x;
+    while (w->transientfor != -1 && (x = wlookid(w->transientfor)))
+        w = x;
+    return w;
+}
+
+static
+Window *get_unhidden_transientfor(Window *w)
+{
+    Window *x;
+    while (w->transientfor != -1 && (x = wlookid(w->transientfor))) {
+        if (!x->hidden)
+            return x;
+        w = x;
+    }
+    return 0;
+}
+
 void
 ensurestacking(void)
 {
-    int i, smallest_notkb, largest_notka;
+    int i, j, smallest_notkb, largest_notka;
 
-    /* Work out topped values so that all windows with topped <
-     * smallest_notkb are keepbelow and > largest_notka are keepabove.
+    /* Stage 1 - ensure all transient windows are above their
+     * transientfor windows.  After this, windows in the normal layer
+     * won't be moved again.
+     */
+    for(i=0; i<nwindow; i++) {
+        Window *x, *w = window[i];
+        if (!w->hidden &&
+            (x = get_unhidden_transientfor(w)) &&
+            x->topped > w->topped) 
+        {
+            topwindow(w->i);
+            w->topped = ++topped;
+        }
+    }
+
+    /* Stage 2 - work out topped values so that all keepbelow windows
+     * should have topped < smallest_notkb and all keepabove windows
+     * should have topped > largest_notka.  If they don't, then they
+     * must be moved.
      */
     smallest_notkb = INT_MAX;
     largest_notka = INT_MIN;
     for(i=0; i<nwindow; i++) {
         Window *w = window[i];
         if (!w->hidden) {
-            if (!w->keepbelow && w->topped < smallest_notkb)
+            Window *x = get_transientfor_root(w);
+            if (!x->keepbelow && w->topped < smallest_notkb)
                 smallest_notkb = w->topped;
-            if (!w->keepabove && w->topped > largest_notka)
+            if (!x->keepabove && w->topped > largest_notka)
                 largest_notka = w->topped;
         }
     }
+
+    /*
+     * Stage 3 - move keepabove or keepbelow windows which are not in
+     * the correct position, according to the limits calculated above.
+     * Rather than move individual windows, whole transientfor trees
+     * of related windows are moved together so that they stay in the
+     * same layer.
+     */
     for(i=0; i<nwindow; i++) {
         Window *w = window[i];
         if (!w->hidden) {
-            if(w->keepabove && w->topped < largest_notka) {
-                topwindow(w->i);
-                w->topped = ++topped;
+            Window *x = get_transientfor_root(w);
+            if(x->keepabove && w->topped < largest_notka) {
+                for(j=0; j<nwindow; j++) {
+                    Window *y = window[j];
+                    if (!y->hidden && x == get_transientfor_root(y)) {
+                        topwindow(y->i);
+                        y->topped = ++topped;
+                    }
+                }
             }
-            if(w->keepbelow && w->topped > smallest_notkb) {
-                bottomwindow(w->i);
-                w->topped = - ++topped;
-            }
-            if(w->transientfor != -1) {
-                Window *x = wlookid(w->transientfor);
-                if (x && x->topped > w->topped) {
-                    topwindow(w->i);
-                    w->topped = ++topped;
+            if(x->keepbelow && w->topped > smallest_notkb) {
+                for(j = nwindow-1; j >= 0; j--) {
+                    Window *y = window[j];
+                    if (!y->hidden && x == get_transientfor_root(y)) {
+                        bottomwindow(y->i);
+                        y->topped = - ++topped;
+                    }
                 }
             }
         }

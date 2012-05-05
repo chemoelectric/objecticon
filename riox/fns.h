@@ -1,9 +1,9 @@
 void	keyboardsend(char*, int);
 int	whide(Window*);
 int	wunhide(Window*);
-void    wkeepbelow(Window *w);
-void    wkeepabove(Window *w);
-void    wkeepnormal(Window *w);
+int    wkeepbelow(Window *w);
+int    wkeepabove(Window *w);
+int    wkeepnormal(Window *w);
 void    wclosereq(Window *w);
 int      dbgalt(Alt *alts, char *lab);
 
