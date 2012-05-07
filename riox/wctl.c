@@ -543,6 +543,8 @@ writewctl(Xfid *x, char *err)
                     if (!w->noborder) border(i, rect, Selborder, red, ZP);
                     /* This will send both a wctl and a mouse reshape message */
                     wreshaped(w, i);
+                    ensure_transient_stacking();
+                    ensure_stacking();
                 }
 		return 1;
         }
@@ -577,10 +579,16 @@ writewctl(Xfid *x, char *err)
                 wclosereq(w);
 		return 1;
 	case Top:
-		wtop(w);
+                if (!wtop(w)) {
+                    strcpy(err, "cannot make window top");
+                    return -1;
+                }
 		return 1;
 	case Bottom:
-		wbottom(w);
+                if (!wbottom(w)) {
+                    strcpy(err, "cannot make window bottom");
+                    return -1;
+                }
 		return 1;
 	case Current:
                 if (!wcurrent(w)) {

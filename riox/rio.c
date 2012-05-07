@@ -478,6 +478,8 @@ static void doreshape(Window *w)
     if(i != nil){
         wreshaped(w, i);
         cornercursor(w, mouse->xy, 1);
+        ensure_transient_stacking();
+        ensure_stacking();
     }
 }
 
@@ -1183,7 +1185,7 @@ wkeepabove(Window *w)
     w->keepbelow = 0;
     w->keepabove = 1;
     wsendctlmesg(w, Wakeup);
-    ensurestacking();
+    ensure_stacking();
     return 1;
 }
 
@@ -1198,7 +1200,7 @@ wkeepbelow(Window *w)
     w->keepabove = 0;
     w->keepbelow = 1;
     wsendctlmesg(w, Wakeup);
-    ensurestacking();
+    ensure_stacking();
     return 1;
 }
 
@@ -1211,83 +1213,65 @@ wkeepnormal(Window *w)
     w->keepabove = 0;
     w->keepbelow = 0;
     wsendctlmesg(w, Wakeup);
-    ensurestacking();
+    ensure_stacking();
     return 1;
-}
-
-static void
-whideimpl(Window *w)
-{
-	Image *i;
-	int j;
-	i = allocimage(display, w->screenr, w->i->chan, 0, DWhite);
-	if(i){
-                if(w == input)
-                    wcurrent(nil);
-                w->hidden = 1;
-		wreshaped(w, i);
-                for(j=0; j<nwindow; j++){
-                    if(!window[j]->hidden && window[j]->transientfor == w->id)
-                        whideimpl(window[j]);
-                }
-	}
 }
 
 int
 whide(Window *w)
 {
-    Window *oi;
+    int j;
     if(w->hidden)
         return 1;
     if (w->noborder || w->transientfor != -1)
         return 0;
-    oi = input;
-    whideimpl(w);
-    /* Keep note of id of window to give focus to on an unhide */
-    if (input == nil && oi != nil)
-        w->unhidefocus = oi->id;
-    else
-        w->unhidefocus = w->id;
+    w->unhidefocus = w->id;
+    for(j=0; j<nwindow; j++) {
+        Window *x = window[j];
+        if (!x->hidden && w == get_transientfor_root(x)) {
+            Image *i = allocimage(display, x->screenr, x->i->chan, 0, DWhite);
+            if(x == input) {
+                /* Keep note of id of window to give focus to on an unhide */
+                w->unhidefocus = x->id;
+                wcurrent(nil);
+            }
+            x->hidden = 1;
+            wreshaped(x, i);
+        }
+    }
+    flushimage(display, 1);
     if (input == nil)
         choosewcurrent();
     return 1;
 }
 
-static
-void
-wunhideimpl(Window *w)
-{
-	Image *i;
-        int j;
-	i = allocwindow(wscreen, w->i->r, Refbackup, DWhite);
-	if(i){
-            w->hidden = 0;
-            wreshaped(w, i);
-            for(j=0; j<nwindow; j++) {
-                if(window[j]->hidden && window[j]->transientfor == w->id)
-                    wunhideimpl(window[j]);
-            }
-	}
-}
-
 int
 wunhide(Window *w)
 {
-	Image *i;
-        int j;
-        if (!w->hidden)
-            return 1;
-        if (w->transientfor != -1)
-            return 0;
-        wunhideimpl(w);
-        /* Restore focus to appropriate window */
-        for(j=0; j<nwindow; j++) {
-            if(!window[j]->hidden && window[j]->id == w->unhidefocus) {
-                wcurrent(window[j]);
-                break;
-            }
-        }
+    int j;
+    Window *f;
+    if (!w->hidden)
         return 1;
+    if (w->transientfor != -1)
+        return 0;
+    for(j=0; j<nwindow; j++) {
+        Window *x = window[j];
+        if (x->hidden && w == get_transientfor_root(x)) {
+            Image *i = allocwindow(wscreen, x->i->r, Refbackup, DWhite);
+            x->hidden = 0;
+            wreshaped(x, i);
+        }
+    }
+    /* Restore focus to appropriate window */
+    if ((f = wlookid(w->unhidefocus))) {
+        topwindow(f->i);
+        f->topped = ++topped;
+        ensure_transient_stacking();
+        wcurrent(f);
+    }
+    ensure_stacking();
+    flushimage(display, 1);
+    return 1;
 }
 
 int
@@ -1336,7 +1320,7 @@ new(Image *i, int hideit, int scrollit, int transientfor, int noborder,
 	threadcreate(winctl, w, 8192);
 	if(!hideit)
 		wcurrent(w);
-        ensurestacking();
+        ensure_stacking();
 	flushimage(display, 1);
 
 	if(pid == 0){

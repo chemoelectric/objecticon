@@ -14,7 +14,14 @@ int	writewctl(Xfid*, char*);
 int     wlimitrect(Window *w, Rectangle *r);
 int     limitrect(int noborder, int mindx, int maxdx, int mindy, int maxdy, Rectangle *r);
 int     resizable(Window *w);
-void    ensurestacking(void);
+void    ensure_stacking(void);
+void ensure_transient_stacking(void);
+void ensure_transient_stacking_rev(void);
+
+Window *get_transientfor_root(Window *w);
+int is_keepabove(Window *w);
+int is_keepbelow(Window *w);
+
 
 Window *new(Image*, int, int, int, int, int, int, int, int, int, int, int, char*, char*, char**);
 void	riosetcursor(Cursor*, int);

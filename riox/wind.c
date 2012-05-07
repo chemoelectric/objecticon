@@ -1269,10 +1269,8 @@ wreshaped(Window *w, Image *i)
     w->screenr = (i->screen) ? i->r : ZR;
     t = estrdup(w->name);
     wresize(w, i);
-    ensurestacking();
     w->wctlready = 1;
     proccreate(deletetimeoutproc, t, 4096);
-    flushimage(display, 1);
     /* This is also equivalent to a Wakeup, which we need since
      * wctlready is being set to 1 above. */
     sendmouseevent(w, 'r');
@@ -1408,7 +1406,6 @@ riosetcursor(Cursor *p, int force)
  * themselves, but inherit it from their transientfor parent (possibly
  * over more than one level of indirection).
  */
-static
 Window *get_transientfor_root(Window *w)
 {
     Window *x;
@@ -1429,15 +1426,27 @@ Window *get_unhidden_transientfor(Window *w)
     return 0;
 }
 
-void
-ensurestacking(void)
+static
+int top_cmp(void *x, void*y)
 {
-    int i, j, smallest_notkb, largest_notka;
+    Window *w1 = *((Window **)x);
+    Window *w2 = *((Window **)y);
+    return w1->topped - w2->topped;
+}
 
-    /* Stage 1 - ensure all transient windows are above their
-     * transientfor windows.  After this, windows in the normal layer
-     * won't be moved again.
-     */
+int is_keepabove(Window *w)
+{
+    return get_transientfor_root(w)->keepabove;
+}
+
+int is_keepbelow(Window *w)
+{
+    return get_transientfor_root(w)->keepbelow;
+}
+
+void ensure_transient_stacking(void)
+{
+    int i;
     for(i=0; i<nwindow; i++) {
         Window *x, *w = window[i];
         if (!w->hidden &&
@@ -1448,79 +1457,148 @@ ensurestacking(void)
             w->topped = ++topped;
         }
     }
-
-    /* Stage 2 - work out topped values so that all keepbelow windows
-     * should have topped < smallest_notkb and all keepabove windows
-     * should have topped > largest_notka.  If they don't, then they
-     * must be moved.
-     */
-    smallest_notkb = INT_MAX;
-    largest_notka = INT_MIN;
-    for(i=0; i<nwindow; i++) {
-        Window *w = window[i];
-        if (!w->hidden) {
-            Window *x = get_transientfor_root(w);
-            if (!x->keepbelow && w->topped < smallest_notkb)
-                smallest_notkb = w->topped;
-            if (!x->keepabove && w->topped > largest_notka)
-                largest_notka = w->topped;
-        }
-    }
-
-    /*
-     * Stage 3 - move keepabove or keepbelow windows which are not in
-     * the correct position, according to the limits calculated above.
-     * Rather than move individual windows, whole transientfor trees
-     * of related windows are moved together so that they stay in the
-     * same layer.
-     */
-    for(i=0; i<nwindow; i++) {
-        Window *w = window[i];
-        if (!w->hidden) {
-            Window *x = get_transientfor_root(w);
-            if(x->keepabove && w->topped < largest_notka) {
-                for(j=0; j<nwindow; j++) {
-                    Window *y = window[j];
-                    if (!y->hidden && x == get_transientfor_root(y)) {
-                        topwindow(y->i);
-                        y->topped = ++topped;
-                    }
-                }
-            }
-            if(x->keepbelow && w->topped > smallest_notkb) {
-                for(j = nwindow-1; j >= 0; j--) {
-                    Window *y = window[j];
-                    if (!y->hidden && x == get_transientfor_root(y)) {
-                        bottomwindow(y->i);
-                        y->topped = - ++topped;
-                    }
-                }
-            }
-        }
-    }
-    flushimage(display, 1);
 }
 
-void
-wtop(Window *w)
+void ensure_transient_stacking_rev(void)
 {
-	if(w!=nil && w->i!=nil && !w->deleted && w->topped!=topped){
-		topwindow(w->i);
-		w->topped = ++ topped;
-                ensurestacking();
-		flushimage(display, 1);
-	}
+    int i;
+    for(i = nwindow-1; i >= 0; i--) {
+        Window *x, *w = window[i];
+        if (!w->hidden &&
+            (x = get_unhidden_transientfor(w)) &&
+            x->topped > w->topped) 
+        {
+            bottomwindow(x->i);
+            x->topped = - ++topped;
+        }
+    }
 }
 
 void
+ensure_stacking(void)
+{
+    Image **above, **below;
+    Window **sortwin;
+    int i, nabove, nbelow;
+
+    above = emalloc(nwindow * sizeof(Image *));
+    below = emalloc(nwindow * sizeof(Image *));
+    nabove = nbelow = 0;
+    sortwin = emalloc(nwindow * sizeof(Window *));
+    memcpy(sortwin, window, nwindow * sizeof(Window *));
+    qsort(sortwin, nwindow, sizeof(Window *), top_cmp);
+
+    for(i=0; i<nwindow; i++) {
+        Window *w = sortwin[i];
+        if (!w->hidden && is_keepabove(w)) {
+            above[nwindow - 1 - nabove++] = w->i;
+            w->topped = ++topped;
+        }
+    }
+
+    for(i = nwindow-1; i >= 0; i--) {
+        Window *w = sortwin[i];
+        if (!w->hidden && is_keepbelow(w)) {
+            below[nwindow - 1 - nbelow++] = w->i;
+            w->topped = - ++topped;
+        }
+    }
+
+    topnwindows(above + nwindow - nabove, nabove);
+    bottomnwindows(below + nwindow - nbelow, nbelow);
+    flushimage(display, 1);
+    free(sortwin);
+    free(above);
+    free(below);
+}
+
+int wtop(Window *w)
+{
+    Image **above;
+    Window **sortwin;
+    int i, nabove;
+
+    if(w->hidden)
+        return 0;
+
+    if(w->topped == topped)
+        return 1;
+
+    topwindow(w->i);
+    w->topped = ++topped;
+
+    ensure_transient_stacking();
+
+    w = get_transientfor_root(w);
+
+    above = emalloc(nwindow * sizeof(Image *));
+    nabove = 0;
+
+    sortwin = emalloc(nwindow * sizeof(Window *));
+    memcpy(sortwin, window, nwindow * sizeof(Window *));
+    qsort(sortwin, nwindow, sizeof(Window *), top_cmp);
+
+    above = emalloc(nwindow * sizeof(Image *));
+
+    for(i=0; i<nwindow; i++) {
+        Window *x = sortwin[i];
+        if (!x->hidden && w == get_transientfor_root(x)) {
+            above[nwindow - 1 - nabove++] = x->i;
+            x->topped = ++topped;
+        } 
+    }
+
+    topnwindows(above + nwindow - nabove, nabove);
+    free(sortwin);
+    free(above);
+    ensure_stacking();
+
+    return 1;
+}
+
+int
 wbottom(Window *w)
 {
-	if(w!=nil && w->i!=nil && !w->deleted){
-		bottomwindow(w->i);
-		w->topped = - ++topped;
-                ensurestacking();
-		flushimage(display, 1);
-	}
+    Image **below;
+    Window **sortwin;
+    int i, nbelow;
+
+    if(w->hidden)
+        return 0;
+
+    if(w->topped == -topped)
+        return 1;
+
+    bottomwindow(w->i);
+    w->topped = - ++topped;
+
+    ensure_transient_stacking_rev();
+
+    w = get_transientfor_root(w);
+
+    below = emalloc(nwindow * sizeof(Image *));
+    nbelow = 0;
+
+    sortwin = emalloc(nwindow * sizeof(Window *));
+    memcpy(sortwin, window, nwindow * sizeof(Window *));
+    qsort(sortwin, nwindow, sizeof(Window *), top_cmp);
+
+    below = emalloc(nwindow * sizeof(Image *));
+
+    for(i = nwindow-1; i >= 0; i--) {
+        Window *x = sortwin[i];
+        if (!x->hidden && w == get_transientfor_root(x)) {
+            below[nwindow - 1 - nbelow++] = x->i;
+            x->topped = - ++topped;
+        }
+    }
+
+    bottomnwindows(below + nwindow - nbelow, nbelow);
+    free(sortwin);
+    free(below);
+    ensure_stacking();
+
+    return 1;
 }
 
 Window*
