@@ -1,6 +1,7 @@
 void	keyboardsend(char*, int);
 int	whide(Window*);
 int	wunhide(Window*);
+int     wselect(Window *w);
 int    wkeepbelow(Window *w);
 int    wkeepabove(Window *w);
 int    wkeepnormal(Window *w);

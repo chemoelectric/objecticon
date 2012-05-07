@@ -169,7 +169,7 @@ struct Window
         uchar           keepabove;
         uchar           keepbelow;
         int             transientfor;          /* id of transient-for parent */
-        int             unhidefocus;           /* id of window to get focus on unhide */
+        int             remembered_focus;           /* id of window to get focus on unhide */
         int             mindx;
         int             maxdx;
         int             mindy;
@@ -227,7 +227,7 @@ void		wresize(Window*, Image*);
 void		wreshaped(Window *w, Image *i);
 void		wscrdraw(Window*);
 void		wscroll(Window*, int);
-void		wselect(Window*);
+void		wselection(Window*);
 void		wsendctlmesg(Window*, int);
 void		wsetcursor(Window*, int);
 void		wsetname(Window*);

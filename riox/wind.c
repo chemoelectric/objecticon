@@ -924,7 +924,7 @@ wmousectl(Window *w)
 		goto Return;
 	}
 	if(but == 1)
-		wselect(w);
+		wselection(w);
 	/* else all is handled by main process */
    Return:
 	wclose(w);
@@ -1112,7 +1112,7 @@ frselectex(Frame *f, MousectlEx *mc)	/* when called, button 1 is down */
 /**************************************************/
 
 void
-wselect(Window *w)
+wselection(Window *w)
 {
 	uint q0, q1;
 	int b, x, y, first;
@@ -1354,6 +1354,8 @@ wcurrent(Window *w)
 		return 0;
 	oi = input;
 	input = w;
+        if(oi)
+            get_transientfor_root(oi)->remembered_focus = oi->id;
 	if(oi!=w && oi!=nil)
 		wrepaint(oi);
 	if(w !=nil){

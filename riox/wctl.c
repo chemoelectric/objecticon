@@ -37,6 +37,7 @@ enum
         Close,
 	Delete,
         Refresh2,
+        Select,
 };
 
 static char *cmds[] = {
@@ -59,6 +60,7 @@ static char *cmds[] = {
         [Close]         = "close",
 	[Delete]	= "delete",
 	[Refresh2]	= "refresh",
+	[Select]	= "select",
 	nil
 };
 
@@ -605,6 +607,12 @@ writewctl(Xfid *x, char *err)
 	case Unhide:
 		if(!wunhide(w)){
                     strcpy(err, "cannot unhide window");
+                    return -1;
+		}
+		return 1;
+	case Select:
+		if(!wselect(w)){
+                    strcpy(err, "cannot select window");
                     return -1;
 		}
 		return 1;

@@ -669,7 +669,7 @@ button3menu(void)
             if (!w->noborder && w->transientfor == -1) {
                 menuwin[n] = w;
                 menustr[n] = emalloc(strlen(w->label) + 5);
-                if (w == input)
+                if (input && get_transientfor_root(input) == w)
                     sprint(menustr[n], "* %s", w->label);
                 else if (w->hidden)
                     sprint(menustr[n], "H %s", w->label);
@@ -688,17 +688,8 @@ button3menu(void)
                 0, nil, "/bin/rc", nil);
         else if (i == exit)
             send(exitchan, nil);
-        else if (i > 0) {
-            Window *w = menuwin[i];
-            if (w == input)
-                whide(w);
-            else if (w->hidden)
-                wunhide(w);
-            else {
-		wtop(w);
-                wcurrent(w);
-            }
-        }
+        else if (i > 0)
+            wselect(menuwin[i]);
 	sweeping = 0;
         for (i = 0; i < n; ++i)
             free(menustr[i]);
@@ -1218,6 +1209,25 @@ wkeepnormal(Window *w)
 }
 
 int
+wselect(Window *w)
+{
+    if (w->noborder || w->transientfor != -1)
+        return 0;
+    if (input && get_transientfor_root(input) == w)
+        whide(w);
+    else if (w->hidden)
+        wunhide(w);
+    else {
+        Window *f = wlookid(w->remembered_focus);
+        if (!f || f->hidden)
+            f = w;
+        wtop(f);
+        wcurrent(f);
+    }
+    return 1;
+}
+
+int
 whide(Window *w)
 {
     int j;
@@ -1225,16 +1235,12 @@ whide(Window *w)
         return 1;
     if (w->noborder || w->transientfor != -1)
         return 0;
-    w->unhidefocus = w->id;
     for(j=0; j<nwindow; j++) {
         Window *x = window[j];
         if (!x->hidden && w == get_transientfor_root(x)) {
             Image *i = allocimage(display, x->screenr, x->i->chan, 0, DWhite);
-            if(x == input) {
-                /* Keep note of id of window to give focus to on an unhide */
-                w->unhidefocus = x->id;
+            if(x == input)
                 wcurrent(nil);
-            }
             x->hidden = 1;
             wreshaped(x, i);
         }
@@ -1263,7 +1269,7 @@ wunhide(Window *w)
         }
     }
     /* Restore focus to appropriate window */
-    if ((f = wlookid(w->unhidefocus))) {
+    if ((f = wlookid(w->remembered_focus))) {
         topwindow(f->i);
         f->topped = ++topped;
         ensure_transient_stacking();
