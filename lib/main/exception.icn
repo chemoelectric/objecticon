@@ -13,7 +13,11 @@ global
 # {&current}, before invoking the {throw_handler} co-expression.
 #
 procedure throw(x)
-   \throw_handler | runerr("throw(): no handler set")
+   if /throw_handler then {
+      # If no handler, convert to runerr.
+      x := string(x) | image(x)
+      runerr("thrown with no handler: " || x)      
+   }
    thrown := x
    thrower := &current
    coact(, throw_handler,, 1)

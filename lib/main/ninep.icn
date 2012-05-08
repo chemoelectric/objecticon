@@ -72,6 +72,7 @@ class File9P()
    end
 
    public open(mode)
+      return self
    end
 
    public close()
@@ -80,6 +81,8 @@ class File9P()
    public path_unreferenced()
    end
 
+   # Return the parent, or fail if this is the root directory.
+   #
    public get_parent()
       return .\self.parent
    end
@@ -98,7 +101,13 @@ class File9P()
       return self
    end
 
-   package set_parent(x)
+   # Note that normally {set_parent} should not be called; rather
+   # {add_child} in the parent directory should be used.  This method
+   # is public in order to allow files to point upwards to a
+   # directory, but for the directory to not link downwards to them,
+   # so that they don't appear in the directory's contents.
+   #
+   public set_parent(x)
       self.parent := x
       return self
    end
@@ -106,8 +115,7 @@ class File9P()
    public set_name(x)
       # Must be string since it's used as a table key
       x := string(x) | runerr(103, x)
-      if \parent & (\self.name ~== x) then
-         parent.rename_child(self, x)
+      (\parent).rename_child(self, x)
       self.name := x
       return self
    end
@@ -117,7 +125,7 @@ class File9P()
    end
 
    public set_perm(x, y)
-      iand(perm, Mode9.DMDIR) = iand(x, Mode9.DMDIR) | runerr("Cannot change directory bit")
+      iand(perm, Mode9.DMDIR) = iand(x, Mode9.DMDIR) | throw("Cannot change directory bit")
       self.perm := x
       self.fixed := y
       return self
@@ -183,14 +191,13 @@ class Dir9PImpl(Dir9P)
 
    public add_child(x)
       \x.name | runerr("Child name not set")
-      (/ent[x.name] := x) | runerr("Can't add child named " || x.name || " - already exists")
+      (/ent[x.name] := x) | throw("Can't add child named " || x.name || " - already exists")
       x.set_parent(self)
       return self
    end
 
    public remove_child(x)
       delete(ent, x.name)
-      x.set_parent()
       return self
    end
 
@@ -207,9 +214,11 @@ class Dir9PImpl(Dir9P)
    end
 
    package rename_child(x, s)
-      /ent[s] | runerr("Can't change name to " || s || " - already exists")
-      delete(ent, x.name)
-      ent[s] := x
+      if ent[x.name] === x & x.name ~== s then {
+         /ent[s] | throw("Can't change name to " || s || " - already exists")
+         delete(ent, x.name)
+         ent[s] := x
+      }
       return self
    end
 
@@ -759,7 +768,7 @@ class TreeData9P(Data9P)
    end
 
    public open(p, mode)
-      p.open(mode)
+      return p.open(mode)
    end
 
    public write(p, s, pos)
@@ -1008,7 +1017,11 @@ class Session9P()
                p := tmp(data.get_parent(o.path), t)
                has_perm(data.get_info(p), o.uid, Comms9P.AWRITE) | throw("permission denied")
             }
-            data.open(o.path, x.mode)
+            if (p := data.open(o.path, x.mode)) ~=== o.path then {
+               del_fid(x.fid)
+               new_fid(x.fid, p, o.uid)
+               o := lookup(x.fid, t)
+            }
             o.omode := x.mode
             return ROpen(x.tag, Comms9P.encode_qid(data.get_qid(o.path)), 0)
          }
