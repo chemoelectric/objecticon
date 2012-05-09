@@ -238,7 +238,7 @@ class Stream()
          s := in(1048576) | fail
          if /s then
             return
-         f.writes(s) | fail
+         f.fully_out(s) | fail
       }
    end
 end
