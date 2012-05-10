@@ -27,11 +27,26 @@ class Process(HasTask, HasBgProc)
       local l
       /pid | runerr("start() called out of sequence", self)
 $ifdef _PLAN9
-      l := FileStream.pipe() | fail
+      l := FileStream.pipe(FileOpt9.OCEXEC, FileOpt9.OCEXEC) | fail
       pid := System.fork() | {
           l[1].close()
           l[2].close()
           fail
+      }
+      if pid > 0 then {
+         # Parent
+         sock := NonBlockStream(l[2],, 65536, 65536).
+            set_write_on_close(NonBlockStream.BACKGROUND_FLUSH)
+         l[1].close()
+      } else {
+         # Child
+         pid := task := &null
+         sock := NonBlockStream(l[1],, 65536, 65536).
+            set_write_on_close(NonBlockStream.BACKGROUND_FLUSH)
+         l[2].close()
+         run()
+         close_sock()
+         exit(0)
       }
 $else
       l := SocketStream.socketpair() | fail
@@ -42,20 +57,20 @@ $else
           l[2].close()
           fail
        }
-$endif
       if pid > 0 then {
          # Parent
          sock := l[2]
          l[1].close()
       } else {
          # Child
-         task := &null
+         pid := task := &null
          sock := l[1]
          l[2].close()
          run()
          close_sock()
          exit(0)
       }
+$endif
    end
 
    #
@@ -141,7 +156,12 @@ $endif
    # Called by the parent to kill the child.  Then the {join} method is invoked.
    #
    public stop()
-      System.kill(\pid, Signal.SIGTERM) | fail
+      \pid | runerr("stop() called out of sequence", self)
+$ifdef _PLAN9
+      runerr("stop() not implemented")
+$else
+      System.kill(pid, Signal.SIGTERM) | fail
+$endif
       join() | fail
       return
    end
