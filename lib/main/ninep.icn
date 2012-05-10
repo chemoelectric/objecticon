@@ -270,6 +270,7 @@ class Regular9PImpl(Regular9P)
       if iand(self.perm, Mode9.DMAPPEND) = 0 &
          iand(mode, FileOpt9.OTRUNC) ~= 0 then
          data := ""
+      return self
    end
 
    public set_length(len)
@@ -988,7 +989,7 @@ class Session9P()
             if tmp(data.get_child(o.path, x.name), t) then
                throw("create with name which already exists")
             p := tmp(data.create_child(o.path, x.name, o.uid, x.perm), t)
-            data.open(p, x.mode)
+            p := tmp(data.open(p, x.mode), t)
             data.modified(o.path, o.uid)
             del_fid(x.fid)
             new_fid(x.fid, p, o.uid, x.mode)
@@ -1017,13 +1018,10 @@ class Session9P()
                p := tmp(data.get_parent(o.path), t)
                has_perm(data.get_info(p), o.uid, Comms9P.AWRITE) | throw("permission denied")
             }
-            if (p := data.open(o.path, x.mode)) ~=== o.path then {
-               del_fid(x.fid)
-               new_fid(x.fid, p, o.uid)
-               o := lookup(x.fid, t)
-            }
-            o.omode := x.mode
-            return ROpen(x.tag, Comms9P.encode_qid(data.get_qid(o.path)), 0)
+            p := tmp(data.open(o.path, x.mode), t)
+            del_fid(x.fid)
+            new_fid(x.fid, p, o.uid, x.mode)
+            return ROpen(x.tag, Comms9P.encode_qid(data.get_qid(p)), 0)
          }
          TWalk: {
             o := lookup(x.fid, t)
@@ -1070,8 +1068,10 @@ class Session9P()
                s := ""
                while *s + *o.dir[1] <= x.count do
                   s ||:= get(o.dir)
-            } else
+            } else {
                s := data.read(o.path, x.offset + 1, x.count)
+               /s := ""
+            }
             return RRead(x.tag, s)
          }
          TStat: {
@@ -1125,9 +1125,62 @@ class Session9P()
          if is(x, Tinvalid) then
             next
          y := respond(x)
-         if \verbose then write("SEND:",to_string(y))
-         f.writes(Comms9P.encode(y)) | fail
+         if \verbose then write("SEND:", to_string(y))
+         f.fully_out(Comms9P.encode(y)) | fail
       }
+   end
+
+   private worker(x, sched, f, valid)
+      local t, y, ts
+      t := Task(sched, create {
+         if member(valid, x) then {
+            y := respond(x)
+            if member(valid, x) then {
+               if \verbose then write("SEND:", to_string(y))
+               use {
+                  ts := TaskStream(f, t).set_close_underlying(&no),
+                  ts.fully_out(Comms9P.encode(y))
+               }
+               delete(valid, x)
+            }
+         }
+         t.revert()
+      }, create throw_handler)
+      t.start()
+   end
+
+   public async_io(sched, f, close_underlying)
+      local x, y, e, valid, nb, t, ts
+      t := Task(sched, create {
+         valid := set()
+         use {
+            nb := NonBlockStream(f).set_close_underlying(close_underlying),
+            use {
+               ts := TaskStream(nb, t).set_close_underlying(&no),
+               repeat {
+                  x := Comms9P.get(ts) | break
+                  if \verbose then write("GOT:", to_string(x))
+                  if is(x, TFlush) then {
+                     y := respond(x)
+                     if \verbose then write("SEND:", to_string(y))
+                     ts.fully_out(Comms9P.encode(y))
+                     every e := !valid do {
+                        if e.tag = x.oldtag then {
+                           if \verbose then write("FLUSHING:", to_string(e))
+                           delete(valid, e)
+                        }
+                     }
+                  } else {
+                     insert(valid, x)
+                     worker(x, sched, nb, valid)
+                  }
+               }
+            }
+         }
+         t.revert()
+      }, create throw_handler)
+      t.start()
+      return t
    end
 
    public set_data(d)

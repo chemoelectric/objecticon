@@ -1,0 +1,50 @@
+package ipl.server9p
+
+import io, posix, ipl.options
+
+procedure server_main_1(a, sess, run)
+   local opts
+   opts := options(a, "-v! -s!")
+   if *a = 0 then
+      stop("usage: ", Files.get_path(&progname).get(-1), " [opts] mountpt/srvpt")
+   server_main(a[1], "", opts, sess, run)
+end
+
+procedure server_main_2(a, sess, run)
+   local opts, attach
+   opts := options(a, "-v! -s!")
+   if (*a = 0) | (/opts["s"] & (*a < 2)) then
+      stop("usage: ", Files.get_path(&progname).get(-1), " [opts] mountpt attach/srvpt")
+   attach := a[2] | ""
+   server_main(a[1], attach, opts, sess, run)
+end
+
+procedure server_main(where, attach, opts, sess, run)
+   local p, pid, pname
+   pname := Files.get_path(&progname).get(-1)
+   /run := sess.io
+   p := FileStream.pipe() | stop(&why)
+   pid := System.fork(ior(ForkOpt.RFPROC, ForkOpt.RFFDG, ForkOpt.RFNAMEG, ForkOpt.RFNOTEG)) | stop(&why)
+   if pid = 0 then {
+      p[1].close()
+      if \opts["v"] then 
+         sess.set_verbose(&yes)
+      run(p[2])
+      if \opts["v"] then 
+         sess.dump()
+      ewrite(pname, ": exit")
+      p[2].close()
+   } else {
+      sess := &null
+      p[2].close()
+      if \opts["s"] then {
+         Files.string_to_file("/srv/" || where, p[1].get_fd()) | stop(&why)
+         ewrite(pname, ": serving on /srv/", where)
+      } else {
+         Files.mount(p[1], &null, where, ior(MountOpt.MREPL, MountOpt.MCREATE), attach) | stop(&why)
+         ewrite(pname, ": mounted on ", where)
+      }
+      p[1].close()
+   }
+   exit()
+end
