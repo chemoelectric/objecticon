@@ -130,7 +130,8 @@ class Process(HasTask, HasBgProc)
    # Called by the parent to kill the child.  Then the {join} method is invoked.
    #
    public stop()
-      System.kill(\pid, Signal.SIGTERM) | fail
+      \pid | runerr("stop() called out of sequence", self)
+      System.kill(pid, Signal.SIGTERM) | fail
       join() | fail
       return
    end
