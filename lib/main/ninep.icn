@@ -294,7 +294,7 @@ class Regular9PImpl(Regular9P)
 
    public read(pos, count)
       if pos > *data then
-         return ""
+         return
       else
          return data[pos:min(pos + count, *data + 1)]
    end
