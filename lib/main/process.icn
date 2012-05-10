@@ -40,7 +40,7 @@ class Process(HasTask, HasBgProc)
          l[1].close()
       } else {
          # Child
-         task := &null
+         pid := task := &null
          sock := l[1]
          l[2].close()
          run()
