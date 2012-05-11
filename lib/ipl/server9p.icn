@@ -49,6 +49,19 @@ procedure server_main(where, attach, opts, sess, run)
    exit()
 end
 
+procedure async_sched_loop(sess, sched, f)
+   local nb
+   use {
+      nb := NonBlockStream(f).set_close_underlying(&no),
+      {
+         sess.async_io(sched, nb)
+         # Main loop
+         until sched.empty() do
+            sched.work() | delay(50)
+      }
+   }
+end
+
 # A file in which writes append to the end of the content, whilst
 # reads consume from the start.  In both read and write, position is
 # ignored.

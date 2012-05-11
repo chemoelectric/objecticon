@@ -1149,36 +1149,46 @@ class Session9P()
       t.start()
    end
 
-   public async_io(sched, f, close_underlying)
-      local x, y, e, valid, nb, t, ts
+   public async_io(sched, f)
+      local x, y, e, valid, t, ts
       t := Task(sched, create {
          valid := set()
          use {
-            nb := NonBlockStream(f).set_close_underlying(close_underlying),
-            use {
-               ts := TaskStream(nb, t).set_close_underlying(&no),
-               repeat {
-                  x := Comms9P.get(ts) | break
-                  if \verbose then write("GOT:", to_string(x))
-                  if is(x, TFlush) then {
-                     y := respond(x)
-                     if \verbose then write("SEND:", to_string(y))
-                     ts.fully_out(Comms9P.encode(y))
-                     every e := !valid do {
-                        if e.tag = x.oldtag then {
-                           if \verbose then write("FLUSHING:", to_string(e))
-                           delete(valid, e)
-                        }
+            ts := TaskStream(f, t).set_close_underlying(&no),
+            repeat {
+               x := Comms9P.get(ts) | break
+               if \verbose then write("GOT:", to_string(x))
+               if is(x, TFlush) then {
+                  y := respond(x)
+                  if \verbose then write("SEND:", to_string(y))
+                  ts.fully_out(Comms9P.encode(y))
+                  every e := !valid do {
+                     if e.tag = x.oldtag then {
+                        if \verbose then write("FLUSHING:", to_string(e))
+                        delete(valid, e)
                      }
-                  } else {
-                     insert(valid, x)
-                     worker(x, sched, nb, valid)
                   }
+               } else {
+                  insert(valid, x)
+                  worker(x, sched, f, valid)
                }
             }
          }
          t.revert()
       }, create throw_handler)
+      t.start()
+      return t
+   end
+
+   public io_task(sched, f)
+      local t, ts
+      t := Task(sched, create {
+         use {
+            ts := TaskStream(f, t).set_close_underlying(&no),
+            io(ts)
+         }
+         t.revert()
+      })
       t.start()
       return t
    end
