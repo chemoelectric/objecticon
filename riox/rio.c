@@ -666,10 +666,10 @@ button3menu(void)
 
 	for(j=0; j<nwindow; j++) {
             Window *w = window[j];
-            if (!w->noborder && w->transientfor == -1) {
+            if (!w->noborder && !w->transientfor) {
                 menuwin[n] = w;
                 menustr[n] = emalloc(strlen(w->label) + 5);
-                if (input && get_transientfor_root(input) == w)
+                if (input && input->transientforroot == w)
                     sprint(menustr[n], "* %s", w->label);
                 else if (w->hidden)
                     sprint(menustr[n], "H %s", w->label);
@@ -703,11 +703,11 @@ button3wmenu(Window *w)
         char *menustr[6];
         Menu menu = { menustr };
 
-        if (w->transientfor == -1)
+        if (!w->transientfor)
             menustr[hide = i++] = "Hide";
 
         menustr[close = i++] = "Close";
-        if (w->transientfor == -1) {
+        if (!w->transientfor) {
             if (w->keepabove || w->keepbelow)
                 menustr[keepnormal = i++] = "Keep normal";
             if (!w->keepabove)
@@ -1170,7 +1170,7 @@ wkeepabove(Window *w)
 {
     if (w->keepabove)
         return 1;
-    if (w->transientfor != -1)
+    if (w->transientfor)
         return 0;
     w->wctlready = 1;
     w->keepbelow = 0;
@@ -1185,7 +1185,7 @@ wkeepbelow(Window *w)
 {
     if (w->keepbelow)
         return 1;
-    if (w->transientfor != -1)
+    if (w->transientfor)
         return 0;
     w->wctlready = 1;
     w->keepabove = 0;
@@ -1211,14 +1211,14 @@ wkeepnormal(Window *w)
 int
 wselect(Window *w)
 {
-    if (w->noborder || w->transientfor != -1)
+    if (w->noborder || w->transientfor)
         return 0;
-    if (input && get_transientfor_root(input) == w)
+    if (input && input->transientforroot == w)
         whide(w);
     else if (w->hidden)
         wunhide(w);
     else {
-        Window *f = wlookid(w->remembered_focus);
+        Window *f = w->rememberedfocus;
         if (!f || f->hidden)
             f = w;
         wtop(f);
@@ -1233,11 +1233,11 @@ whide(Window *w)
     int j;
     if(w->hidden)
         return 1;
-    if (w->noborder || w->transientfor != -1)
+    if (w->noborder || w->transientfor)
         return 0;
     for(j=0; j<nwindow; j++) {
         Window *x = window[j];
-        if (!x->hidden && w == get_transientfor_root(x)) {
+        if (!x->hidden && w == x->transientforroot) {
             Image *i = allocimage(display, x->screenr, x->i->chan, 0, DWhite);
             if(x == input)
                 wcurrent(nil);
@@ -1258,18 +1258,18 @@ wunhide(Window *w)
     Window *f;
     if (!w->hidden)
         return 1;
-    if (w->transientfor != -1)
+    if (w->transientfor)
         return 0;
     for(j=0; j<nwindow; j++) {
         Window *x = window[j];
-        if (x->hidden && w == get_transientfor_root(x)) {
+        if (x->hidden && w == x->transientforroot) {
             Image *i = allocwindow(wscreen, x->i->r, Refbackup, DWhite);
             x->hidden = 0;
             wreshaped(x, i);
         }
     }
     /* Restore focus to appropriate window */
-    if ((f = wlookid(w->remembered_focus))) {
+    if ((f = w->rememberedfocus)) {
         topwindow(f->i);
         f->topped = ++topped;
         ensure_transient_stacking();

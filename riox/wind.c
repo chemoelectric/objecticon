@@ -38,7 +38,7 @@ Window*
 wmk(Image *i, MousectlEx *mc, Channel *ck, Channel *cctl, int hidden, int scrolling, int transientfor, int noborder,
     int keepabove, int keepbelow, int mindx, int maxdx, int mindy, int maxdy)
 {
-	Window *w;
+        Window *w, *x;
 	Rectangle r;
 
 	if(cols[0] == nil){
@@ -79,7 +79,15 @@ wmk(Image *i, MousectlEx *mc, Channel *ck, Channel *cctl, int hidden, int scroll
 	w->notefd = -1;
         w->hidden = hidden;
 	w->scrolling = scrolling;
-        w->transientfor = transientfor;
+        if (transientfor != -1 && (x = wlookid(transientfor))) {
+            w->transientfor = x;
+            incref(x);
+        } else
+            w->transientfor = nil;
+        x = w;
+        while (x->transientfor)
+            x = x->transientfor;
+        w->transientforroot = x;
         w->noborder = noborder;
         w->keepabove = keepabove;
         w->keepbelow = keepbelow;
@@ -452,8 +460,8 @@ wstatestring(Window *w, char *dest, int destsize)
         strcat(buff, "keepabove ");
     if(w->keepbelow)
         strcat(buff, "keepbelow ");
-    if (w->transientfor != -1)
-        sprint(buff + strlen(buff), "transientfor:%d ", w->transientfor);
+    if (w->transientfor != nil)
+        sprint(buff + strlen(buff), "transientfor:%d ", w->transientfor->id);
     if (w->mindx != 1)
         sprint(buff + strlen(buff), "mindx:%d ", w->mindx);
     if (w->mindy != 1)
@@ -1355,7 +1363,7 @@ wcurrent(Window *w)
 	oi = input;
 	input = w;
         if(oi)
-            get_transientfor_root(oi)->remembered_focus = oi->id;
+            oi->transientforroot->rememberedfocus = oi;
 	if(oi!=w && oi!=nil)
 		wrepaint(oi);
 	if(w !=nil){
@@ -1402,25 +1410,11 @@ riosetcursor(Cursor *p, int force)
 	lastcursor = p;
 }
 
-/*
- * This is used to get the effective keepabove/keepbelow setting for a
- * window, since transientfor windows don't hold the setting
- * themselves, but inherit it from their transientfor parent (possibly
- * over more than one level of indirection).
- */
-Window *get_transientfor_root(Window *w)
-{
-    Window *x;
-    while (w->transientfor != -1 && (x = wlookid(w->transientfor)))
-        w = x;
-    return w;
-}
-
 static
 Window *get_unhidden_transientfor(Window *w)
 {
     Window *x;
-    while (w->transientfor != -1 && (x = wlookid(w->transientfor))) {
+    while ((x = w->transientfor)) {
         if (!x->hidden)
             return x;
         w = x;
@@ -1438,12 +1432,12 @@ int top_cmp(void *x, void*y)
 
 int is_keepabove(Window *w)
 {
-    return get_transientfor_root(w)->keepabove;
+    return w->transientforroot->keepabove;
 }
 
 int is_keepbelow(Window *w)
 {
-    return get_transientfor_root(w)->keepbelow;
+    return w->transientforroot->keepbelow;
 }
 
 void ensure_transient_stacking(void)
@@ -1531,7 +1525,7 @@ int wtop(Window *w)
 
     ensure_transient_stacking();
 
-    w = get_transientfor_root(w);
+    w = w->transientforroot;
 
     above = emalloc(nwindow * sizeof(Image *));
     nabove = 0;
@@ -1544,7 +1538,7 @@ int wtop(Window *w)
 
     for(i=0; i<nwindow; i++) {
         Window *x = sortwin[i];
-        if (!x->hidden && w == get_transientfor_root(x)) {
+        if (!x->hidden && w == x->transientforroot) {
             above[nwindow - 1 - nabove++] = x->i;
             x->topped = ++topped;
         } 
@@ -1576,7 +1570,7 @@ wbottom(Window *w)
 
     ensure_transient_stacking_rev();
 
-    w = get_transientfor_root(w);
+    w = w->transientforroot;
 
     below = emalloc(nwindow * sizeof(Image *));
     nbelow = 0;
@@ -1589,7 +1583,7 @@ wbottom(Window *w)
 
     for(i = nwindow-1; i >= 0; i--) {
         Window *x = sortwin[i];
-        if (!x->hidden && w == get_transientfor_root(x)) {
+        if (!x->hidden && w == x->transientforroot) {
             below[nwindow - 1 - nbelow++] = x->i;
             x->topped = - ++topped;
         }
@@ -1627,7 +1621,8 @@ wclosewin(Window *w)
         if(w == over) over = nil;
         if(w == overb) overb = nil;
         if(w == overw) overw = nil;
-
+        if(w->transientforroot->rememberedfocus == w)
+            w->transientforroot->rememberedfocus = nil;
 	if(w == input){
 		input = nil;
 		wsetcursor(w, 0);
@@ -1649,6 +1644,11 @@ wclosewin(Window *w)
                         /* If the closing window had input, try to find another window to give it to. */
                         if(findinput)
                             choosewcurrent();
+                        if(w->transientfor) {
+                            w->transientforroot = w;
+                            wclose(w->transientfor);
+                            w->transientfor = nil;
+                        }
 			return;
 		}
 	error("unknown window in closewin");

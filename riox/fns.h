@@ -19,7 +19,6 @@ void    ensure_stacking(void);
 void ensure_transient_stacking(void);
 void ensure_transient_stacking_rev(void);
 
-Window *get_transientfor_root(Window *w);
 int is_keepabove(Window *w);
 int is_keepbelow(Window *w);
 
