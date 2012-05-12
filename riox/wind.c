@@ -1422,24 +1422,10 @@ Window *get_unhidden_transientfor(Window *w)
     return 0;
 }
 
-static
-int new_topped_cmp(void *x, void*y)
-{
-    Window *w1 = *((Window **)x);
-    Window *w2 = *((Window **)y);
-    return w1->new_topped - w2->new_topped;
-}
-
-int is_keepabove(Window *w)
-{
-    return w->transientforroot->keepabove;
-}
-
-int is_keepbelow(Window *w)
-{
-    return w->transientforroot->keepbelow;
-}
-
+/*
+ * Adjust the new_topped values so that transient stacking order is
+ * maintained correctly.
+ */
 void ensure_transient_stacking(void)
 {
     int i;
@@ -1454,6 +1440,10 @@ void ensure_transient_stacking(void)
     }
 }
 
+/*
+ * Adjust the new_topped values so that transient stacking order is
+ * maintained correctly.
+ */
 void ensure_transient_stacking_rev(void)
 {
     int i;
@@ -1468,7 +1458,19 @@ void ensure_transient_stacking_rev(void)
     }
 }
 
-Window **get_sorted_windows(void)
+static
+int new_topped_cmp(void *x, void*y)
+{
+    Window *w1 = *((Window **)x);
+    Window *w2 = *((Window **)y);
+    return w1->new_topped - w2->new_topped;
+}
+
+/*
+ * Get the windows in an array sorted by new_topped, so that the first
+ * element is the lowest in the order.
+ */
+static Window **get_sorted_windows(void)
 {
     Window **sortwin;
     sortwin = emalloc(nwindow * sizeof(Window *));
@@ -1477,44 +1479,79 @@ Window **get_sorted_windows(void)
     return sortwin;
 }
 
+/*
+ * Check if an array of windows is correctly ordered by the topped field.
+ */
+static int ordered(Window **w, int n)
+{
+    int i;
+    for (i = 0; i < n; ++i) {
+        if (i > 0 && w[i-1]->topped > w[i]->topped)
+            return 0;
+    }
+    return 1;
+}
+
+/*
+ * Make the actual stacking order of the windows (indicated by the
+ * topped field) match with the desired order (indicated by
+ * new_topped).
+ */
 void
 reconcile_stacking(void)
 {
     Window **sortwin;
-    Image **img;
     int i;
+
+    if (nwindow == 0)
+        return;
 
     sortwin = get_sorted_windows();
 
     for(i=0; i<nwindow; i++) {
         Window *w = sortwin[i];
-        if (!w->hidden && is_keepabove(w)) {
+        if (!w->hidden && w->transientforroot->keepabove)
             w->new_topped = ++topped;
-        }
     }
 
     for(i = nwindow-1; i >= 0; i--) {
         Window *w = sortwin[i];
-        if (!w->hidden && is_keepbelow(w)) {
+        if (!w->hidden && w->transientforroot->keepbelow)
             w->new_topped = - ++topped;
-        }
     }
-
-    img = emalloc(nwindow * sizeof(Image *));
 
     /* resort */
     qsort(sortwin, nwindow, sizeof(Window *), new_topped_cmp);
 
+    /*
+     * Now sortwin holds the desired order of the window stack, with
+     * sortwin[0] being the bottom and sortwin[nwindow-1] being the
+     * top.  Check if the current actual stack order is the same; if
+     * so do nothing.  If all but either the first or last element are
+     * already in order, then we can use either topwindow or
+     * bottomwindow; otherwise we have to use bottomnwindows to reset
+     * the order entirely.
+     */
+    if (!ordered(sortwin, nwindow)) {
+        if (ordered(sortwin, nwindow - 1)) 
+            topwindow(sortwin[nwindow - 1]->i);
+        else if (ordered(sortwin + 1, nwindow - 1)) 
+            bottomwindow(sortwin[0]->i);
+        else {
+            Image **img = emalloc(nwindow * sizeof(Image *));
+            for(i=0; i<nwindow; i++)
+                img[i] = sortwin[i]->i;
+            bottomnwindows(img, nwindow);
+            free(img);
+        }
+    }
+
     for(i=0; i<nwindow; i++) {
         Window *w = sortwin[i];
-        img[i] = w->i;
         w->topped = w->new_topped;
     }
-    bottomnwindows(img, nwindow);
-
     flushimage(display, 1);
     free(sortwin);
-    free(img);
 }
 
 int wtop(Window *w)
@@ -1525,12 +1562,16 @@ int wtop(Window *w)
     if(w->hidden)
         return 0;
 
-    if(w->topped == topped)
-        return 1;
-
     w->new_topped = ++topped;
     ensure_transient_stacking();
 
+    /*
+     * Move all the windows in w's transient group to the top.  This
+     * stage avoids any other window coming amongst the group's order.
+     * For example if we have A1 A2 A3 X, and top A2, unless we moved
+     * A1 and A3, we would be left with A1 A3 X A2, rather than X A1
+     * A3 A2.
+     */
     sortwin = get_sorted_windows();
     w = w->transientforroot;
     for(i=0; i<nwindow; i++) {
@@ -1553,9 +1594,6 @@ wbottom(Window *w)
 
     if(w->hidden)
         return 0;
-
-    if(w->topped == -topped)
-        return 1;
 
     w->new_topped = - ++topped;
     ensure_transient_stacking_rev();

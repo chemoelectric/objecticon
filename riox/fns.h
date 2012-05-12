@@ -16,12 +16,8 @@ int     wlimitrect(Window *w, Rectangle *r);
 int     limitrect(int noborder, int mindx, int maxdx, int mindy, int maxdy, Rectangle *r);
 int     resizable(Window *w);
 void    reconcile_stacking(void);
-void ensure_transient_stacking(void);
-void ensure_transient_stacking_rev(void);
-
-int is_keepabove(Window *w);
-int is_keepbelow(Window *w);
-
+void    ensure_transient_stacking(void);
+void    ensure_transient_stacking_rev(void);
 
 Window *new(Image*, int, int, int, int, int, int, int, int, int, int, int, char*, char*, char**);
 void	riosetcursor(Cursor*, int);
