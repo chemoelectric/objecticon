@@ -163,6 +163,7 @@ struct Window
 	int			wctlready;
 	Rectangle		lastsr;
 	int			topped;
+	int			new_topped;
 	int			notefd;
 	uchar		scrolling;
 	uchar		noborder;

@@ -546,7 +546,7 @@ writewctl(Xfid *x, char *err)
                     /* This will send both a wctl and a mouse reshape message */
                     wreshaped(w, i);
                     ensure_transient_stacking();
-                    ensure_stacking();
+                    reconcile_stacking();
                 }
 		return 1;
         }

@@ -74,7 +74,7 @@ wmk(Image *i, MousectlEx *mc, Channel *ck, Channel *cctl, int hidden, int scroll
 	r.min.x += Scrollwid+Scrollgap;
 	frinit(w, r, font, i, cols);
 	w->maxtab = maxtab*stringwidth(font, "0");
-	w->topped = ++topped;
+	w->new_topped = w->topped = ++topped;
 	w->id = ++id;
 	w->notefd = -1;
         w->hidden = hidden;
@@ -163,7 +163,7 @@ wresize(Window *w, Image *i)
 		wborder(w, Selborder);
 	else
 		wborder(w, Unselborder);
-	w->topped = ++topped;
+	w->new_topped = w->topped = ++topped;
 }
 
 void
@@ -1423,11 +1423,11 @@ Window *get_unhidden_transientfor(Window *w)
 }
 
 static
-int top_cmp(void *x, void*y)
+int new_topped_cmp(void *x, void*y)
 {
     Window *w1 = *((Window **)x);
     Window *w2 = *((Window **)y);
-    return w1->topped - w2->topped;
+    return w1->new_topped - w2->new_topped;
 }
 
 int is_keepabove(Window *w)
@@ -1447,10 +1447,9 @@ void ensure_transient_stacking(void)
         Window *x, *w = window[i];
         if (!w->hidden &&
             (x = get_unhidden_transientfor(w)) &&
-            x->topped > w->topped) 
+            x->new_topped > w->new_topped) 
         {
-            topwindow(w->i);
-            w->topped = ++topped;
+            w->new_topped = ++topped;
         }
     }
 }
@@ -1462,57 +1461,66 @@ void ensure_transient_stacking_rev(void)
         Window *x, *w = window[i];
         if (!w->hidden &&
             (x = get_unhidden_transientfor(w)) &&
-            x->topped > w->topped) 
+            x->new_topped > w->new_topped) 
         {
-            bottomwindow(x->i);
-            x->topped = - ++topped;
+            x->new_topped = - ++topped;
         }
     }
 }
 
-void
-ensure_stacking(void)
+Window **get_sorted_windows(void)
 {
-    Image **above, **below;
     Window **sortwin;
-    int i, nabove, nbelow;
-
-    above = emalloc(nwindow * sizeof(Image *));
-    below = emalloc(nwindow * sizeof(Image *));
-    nabove = nbelow = 0;
     sortwin = emalloc(nwindow * sizeof(Window *));
     memcpy(sortwin, window, nwindow * sizeof(Window *));
-    qsort(sortwin, nwindow, sizeof(Window *), top_cmp);
+    qsort(sortwin, nwindow, sizeof(Window *), new_topped_cmp);
+    return sortwin;
+}
+
+void
+reconcile_stacking(void)
+{
+    Window **sortwin;
+    Image **img;
+    int i;
+
+    sortwin = get_sorted_windows();
 
     for(i=0; i<nwindow; i++) {
         Window *w = sortwin[i];
         if (!w->hidden && is_keepabove(w)) {
-            above[nwindow - 1 - nabove++] = w->i;
-            w->topped = ++topped;
+            w->new_topped = ++topped;
         }
     }
 
     for(i = nwindow-1; i >= 0; i--) {
         Window *w = sortwin[i];
         if (!w->hidden && is_keepbelow(w)) {
-            below[nwindow - 1 - nbelow++] = w->i;
-            w->topped = - ++topped;
+            w->new_topped = - ++topped;
         }
     }
 
-    topnwindows(above + nwindow - nabove, nabove);
-    bottomnwindows(below + nwindow - nbelow, nbelow);
+    img = emalloc(nwindow * sizeof(Image *));
+
+    /* resort */
+    qsort(sortwin, nwindow, sizeof(Window *), new_topped_cmp);
+
+    for(i=0; i<nwindow; i++) {
+        Window *w = sortwin[i];
+        img[i] = w->i;
+        w->topped = w->new_topped;
+    }
+    bottomnwindows(img, nwindow);
+
     flushimage(display, 1);
     free(sortwin);
-    free(above);
-    free(below);
+    free(img);
 }
 
 int wtop(Window *w)
 {
-    Image **above;
     Window **sortwin;
-    int i, nabove;
+    int i;
 
     if(w->hidden)
         return 0;
@@ -1520,35 +1528,19 @@ int wtop(Window *w)
     if(w->topped == topped)
         return 1;
 
-    topwindow(w->i);
-    w->topped = ++topped;
-
+    w->new_topped = ++topped;
     ensure_transient_stacking();
 
+    sortwin = get_sorted_windows();
     w = w->transientforroot;
-
-    above = emalloc(nwindow * sizeof(Image *));
-    nabove = 0;
-
-    sortwin = emalloc(nwindow * sizeof(Window *));
-    memcpy(sortwin, window, nwindow * sizeof(Window *));
-    qsort(sortwin, nwindow, sizeof(Window *), top_cmp);
-
-    above = emalloc(nwindow * sizeof(Image *));
-
     for(i=0; i<nwindow; i++) {
         Window *x = sortwin[i];
-        if (!x->hidden && w == x->transientforroot) {
-            above[nwindow - 1 - nabove++] = x->i;
-            x->topped = ++topped;
-        } 
+        if (!x->hidden && w == x->transientforroot)
+            x->new_topped = ++topped;
     }
-
-    topnwindows(above + nwindow - nabove, nabove);
     free(sortwin);
-    free(above);
-    ensure_stacking();
 
+    reconcile_stacking();
     return 1;
 }
 
@@ -1565,35 +1557,19 @@ wbottom(Window *w)
     if(w->topped == -topped)
         return 1;
 
-    bottomwindow(w->i);
-    w->topped = - ++topped;
-
+    w->new_topped = - ++topped;
     ensure_transient_stacking_rev();
 
+    sortwin = get_sorted_windows();
     w = w->transientforroot;
-
-    below = emalloc(nwindow * sizeof(Image *));
-    nbelow = 0;
-
-    sortwin = emalloc(nwindow * sizeof(Window *));
-    memcpy(sortwin, window, nwindow * sizeof(Window *));
-    qsort(sortwin, nwindow, sizeof(Window *), top_cmp);
-
-    below = emalloc(nwindow * sizeof(Image *));
-
     for(i = nwindow-1; i >= 0; i--) {
         Window *x = sortwin[i];
-        if (!x->hidden && w == x->transientforroot) {
-            below[nwindow - 1 - nbelow++] = x->i;
-            x->topped = - ++topped;
-        }
+        if (!x->hidden && w == x->transientforroot)
+            x->new_topped = - ++topped;
     }
-
-    bottomnwindows(below + nwindow - nbelow, nbelow);
     free(sortwin);
-    free(below);
-    ensure_stacking();
 
+    reconcile_stacking();
     return 1;
 }
 

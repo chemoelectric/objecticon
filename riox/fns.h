@@ -15,7 +15,7 @@ int	writewctl(Xfid*, char*);
 int     wlimitrect(Window *w, Rectangle *r);
 int     limitrect(int noborder, int mindx, int maxdx, int mindy, int maxdy, Rectangle *r);
 int     resizable(Window *w);
-void    ensure_stacking(void);
+void    reconcile_stacking(void);
 void ensure_transient_stacking(void);
 void ensure_transient_stacking_rev(void);
 

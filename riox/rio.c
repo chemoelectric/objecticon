@@ -479,7 +479,7 @@ static void doreshape(Window *w)
         wreshaped(w, i);
         cornercursor(w, mouse->xy, 1);
         ensure_transient_stacking();
-        ensure_stacking();
+        reconcile_stacking();
     }
 }
 
@@ -1176,7 +1176,7 @@ wkeepabove(Window *w)
     w->keepbelow = 0;
     w->keepabove = 1;
     wsendctlmesg(w, Wakeup);
-    ensure_stacking();
+    reconcile_stacking();
     return 1;
 }
 
@@ -1191,7 +1191,7 @@ wkeepbelow(Window *w)
     w->keepabove = 0;
     w->keepbelow = 1;
     wsendctlmesg(w, Wakeup);
-    ensure_stacking();
+    reconcile_stacking();
     return 1;
 }
 
@@ -1204,7 +1204,7 @@ wkeepnormal(Window *w)
     w->keepabove = 0;
     w->keepbelow = 0;
     wsendctlmesg(w, Wakeup);
-    ensure_stacking();
+    reconcile_stacking();
     return 1;
 }
 
@@ -1270,13 +1270,12 @@ wunhide(Window *w)
     }
     /* Restore focus to appropriate window */
     if ((f = w->rememberedfocus)) {
-        topwindow(f->i);
-        f->topped = ++topped;
+        f->new_topped = ++topped;
         ensure_transient_stacking();
-        wcurrent(f);
     }
-    ensure_stacking();
-    flushimage(display, 1);
+    reconcile_stacking();
+    if(f)
+        wcurrent(f);
     return 1;
 }
 
@@ -1326,8 +1325,7 @@ new(Image *i, int hideit, int scrollit, int transientfor, int noborder,
 	threadcreate(winctl, w, 8192);
 	if(!hideit)
 		wcurrent(w);
-        ensure_stacking();
-	flushimage(display, 1);
+        reconcile_stacking();
 
 	if(pid == 0){
 		arg = emalloc(5*sizeof(void*));
