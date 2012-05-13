@@ -115,19 +115,19 @@ class Frame(Component)
    end
 
    public to_top()
-      if self === parent.z_children[-1] then
-         return
-      self.set_z(parent.get_top_z())
-      parent.compute_z_order()
-      self.invalidate()
+      if self ~=== parent.z_children[-1] then {
+         self.set_z(parent.get_top_z())
+         parent.compute_z_order()
+         self.invalidate()
+      }
    end
 
    public to_bottom()
-      if self === parent.z_children[1] then
-         return
-      self.set_z(parent.get_bottom_z())
-      parent.compute_z_order()
-      self.invalidate()
+      if self ~=== parent.z_children[1] then {
+         self.set_z(parent.get_bottom_z())
+         parent.compute_z_order()
+         self.invalidate()
+      }
    end
 
    public close()
