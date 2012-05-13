@@ -30,10 +30,12 @@ procedure server_main(where, attach, opts, sess, run)
       if \opts["v"] then 
          sess.set_verbose(&yes)
       run(p[2])
-      if \opts["v"] then 
-         sess.dump()
-      ewrite(pname, ": exit")
       p[2].close()
+      if \opts["v"] then {
+         sess.dump()
+         system("cat /proc/" || System.getpid() || "/fd")
+      }
+      ewrite(pname, ": exit")
    } else {
       sess := &null
       p[2].close()
