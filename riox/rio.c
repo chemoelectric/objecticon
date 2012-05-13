@@ -195,7 +195,7 @@ threadmain(int argc, char *argv[])
 			r.max.y = r.min.y+80;
 			i = allocwindow(wscreen, r, Refbackup, DWhite);
 			wkeyboard = new(i, FALSE, scrolling, -1, 0, 
-                                        0, 0, 0, INT_MAX, 0, INT_MAX,
+                                        0, 1, INT_MAX, 1, INT_MAX,
                                         0, nil, "/bin/rc", kbdargv);
 			if(wkeyboard == nil)
 				error("can't create keyboard window");
@@ -684,7 +684,7 @@ button3menu(void)
 	i = menuhit(3, mousectl, &menu, wscreen);
         if (i == mnew)
             new(sweep(nil), FALSE, scrolling, -1, 0, 
-                0, 0, 1, INT_MAX, 1, INT_MAX,
+                0, 1, INT_MAX, 1, INT_MAX,
                 0, nil, "/bin/rc", nil);
         else if (i == exit)
             send(exitchan, nil);
@@ -708,11 +708,11 @@ button3wmenu(Window *w)
 
         menustr[close = i++] = "Close";
         if (!w->transientfor) {
-            if (w->keepabove || w->keepbelow)
+            if (w->layer != 0)
                 menustr[keepnormal = i++] = "Keep normal";
-            if (!w->keepabove)
+            if (w->layer <= 0)
                 menustr[keepabove = i++] = "Keep above";
-            if (!w->keepbelow)
+            if (w->layer >= 0)
                 menustr[keepbelow = i++] = "Keep below";
             menustr[delete = i++] = "Delete";
         }
@@ -723,11 +723,11 @@ button3wmenu(Window *w)
         else if (i == close)
             wclosereq(w);
         else if (i == keepabove)
-            wkeepabove(w);
+            wsetlayer(w, 1);
         else if (i == keepbelow)
-            wkeepbelow(w);
+            wsetlayer(w, -1);
         else if (i == keepnormal)
-            wkeepnormal(w);
+            wsetlayer(w, 0);
         else if (i == delete)
             wsendctlmesg(w, Deleted);
 }
@@ -1166,47 +1166,19 @@ pointto(int wait)
 }
 
 int
-wkeepabove(Window *w)
+wsetlayer(Window *w, int layer)
 {
-    if (w->keepabove)
-        return 1;
     if (w->transientfor)
         return 0;
-    w->wctlready = 1;
-    w->keepbelow = 0;
-    w->keepabove = 1;
-    wsendctlmesg(w, Wakeup);
-    reconcile_stacking();
-    return 1;
-}
-
-int
-wkeepbelow(Window *w)
-{
-    if (w->keepbelow)
-        return 1;
-    if (w->transientfor)
-        return 0;
-    w->wctlready = 1;
-    w->keepabove = 0;
-    w->keepbelow = 1;
-    wsendctlmesg(w, Wakeup);
-    reconcile_stacking();
-    return 1;
-}
-
-int
-wkeepnormal(Window *w)
-{
-    if (!w->keepabove && !w->keepbelow)
+    if (w->layer == layer)
         return 1;
     w->wctlready = 1;
-    w->keepabove = 0;
-    w->keepbelow = 0;
+    w->layer = layer;
     wsendctlmesg(w, Wakeup);
-    reconcile_stacking();
-    return 1;
+    //reconcile_stacking();
+    return wtop(w);
 }
+
 
 int
 wselect(Window *w)
@@ -1269,10 +1241,9 @@ wunhide(Window *w)
         }
     }
     /* Restore focus to appropriate window */
-    if ((f = w->rememberedfocus)) {
-        f->new_topped = ++topped;
-        ensure_transient_stacking();
-    }
+    if ((f = w->rememberedfocus))
+        f->order = ++order;
+    ensure_transient_stacking();
     reconcile_stacking();
     if(f)
         wcurrent(f);
@@ -1293,7 +1264,7 @@ readmouseex(MousectlEx *mc)
 
 Window*
 new(Image *i, int hideit, int scrollit, int transientfor, int noborder, 
-    int keepabove, int keepbelow, int mindx, int maxdx, int mindy, int maxdy,
+    int layer, int mindx, int maxdx, int mindy, int maxdy,
     int pid, char *dir, char *cmd, char **argv)
 {
 	Window *w;
@@ -1315,7 +1286,7 @@ new(Image *i, int hideit, int scrollit, int transientfor, int noborder,
 	mc->c = cm;
         mc->image = i;
 	w = wmk(i, mc, ck, cctl, hideit, scrollit, transientfor, noborder,
-                keepabove, keepbelow, mindx, maxdx, mindy, maxdy);
+                layer, mindx, maxdx, mindy, maxdy);
 	free(mc);	/* wmk copies *mc */
 	window = erealloc(window, ++nwindow*sizeof(Window*));
 	window[nwindow-1] = w;

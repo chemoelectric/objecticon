@@ -23,9 +23,6 @@ enum
 	Move,
 	Scroll,
 	Noscroll,
-        Keepabove2,
-        Keepbelow2,
-        Keepnormal,
         Grab,
         Ungrab,
 	Set,
@@ -54,9 +51,6 @@ static char *cmds[] = {
 	[Unhide]	= "unhide",
         [Grab]          = "grab",
         [Ungrab]        = "ungrab",
-        [Keepabove2]    = "keepabove",
-        [Keepbelow2]    = "keepbelow",
-        [Keepnormal]    = "keepnormal",
         [Close]         = "close",
 	[Delete]	= "delete",
 	[Refresh2]	= "refresh",
@@ -84,9 +78,8 @@ enum
         Mindy,
         Maxdy,
         Noborder,
-        Keepabove,
-        Keepbelow,
         Transientfor,
+        Layer,
 };
 
 static char *params[] = {
@@ -108,9 +101,8 @@ static char *params[] = {
         [Mindy]                 = "-mindy",
         [Maxdy]                 = "-maxdy",
         [Noborder]              = "-noborder",
-        [Keepabove]             = "-keepabove",
-        [Keepbelow]             = "-keepbelow",
         [Transientfor]          = "-transientfor",
+	[Layer]                 = "-layer",
 	nil
 };
 
@@ -220,199 +212,221 @@ riostrtol(char *s, char **t)
 	return n;
 }
 
+#define Expect(cond)  do { \
+    if(!(cond)) { \
+        strcpy(err, "invalid parameter for this command"); \
+        return -1; \
+    } \
+   } while (0)
+
 
 int
 parsewctl(char **argp, Rectangle r, Rectangle *rp, int *pidp, int *idp, int *hiddenp, int *scrollingp,
-          int *transientforp, int *noborderp, int *keepabovep, int *keepbelowp,
-          int *mindxp, int *maxdxp, int *mindyp, int *maxdyp, 
+          int *transientforp, int *noborderp, int *layerp,
+          int *mindxp, int *maxdxp, int *mindyp, int *maxdyp,
           char **cdp, char *s, char *err)
 {
-	int cmd, param, xy, sign;
-	char *t;
+    int cmd, param, xy, sign, got_layer = 0;
+    char *t;
 
-	*pidp = 0;
-	*hiddenp = 0;
-	*scrollingp = scrolling;
-        *keepabovep = *keepbelowp = *noborderp = 0;
-	*cdp = nil;
-        *transientforp = -1;
-	cmd = word(&s, cmds);
-	if(cmd < 0){
-		strcpy(err, "unrecognized wctl command");
-		return -1;
-	}
-	if(cmd == New)
-		r = newrect();
+    *pidp = 0;
+    *hiddenp = 0;
+    *scrollingp = scrolling;
+    *noborderp = 0;
+    *cdp = nil;
+    *transientforp = -1;
+    *layerp = INVALID_LAYER;
+    cmd = word(&s, cmds);
+    if(cmd < 0){
+        strcpy(err, "unrecognized wctl command");
+        return -1;
+    }
+    if(cmd == New)
+        r = newrect();
 
-	strcpy(err, "missing or bad wctl parameter");
-	while((param = word(&s, params)) >= 0){
-		switch(param){	/* special cases */
-		case Hidden:
-			*hiddenp = 1;
-			continue;
-		case Noborder:
-			*noborderp = 1;
-			continue;
-                case Keepabove:
-                        *keepbelowp = 0;
-                        *keepabovep = 1;
-			continue;
-                case Keepbelow:
-                        *keepabovep = 0;
-                        *keepbelowp = 1;
-			continue;
-		case Scrolling:
-			*scrollingp = 1;
-			continue;
-		case Noscrolling:
-			*scrollingp = 0;
-			continue;
-		case R:
-			r.min.x = riostrtol(s, &t);
-			if(t == s)
-				return -1;
-			s = t;
-			r.min.y = riostrtol(s, &t);
-			if(t == s)
-				return -1;
-			s = t;
-			r.max.x = riostrtol(s, &t);
-			if(t == s)
-				return -1;
-			s = t;
-			r.max.y = riostrtol(s, &t);
-			if(t == s)
-				return -1;
-			s = t;
-			continue;
-		}
-		while(isspace(*s))
-			s++;
-		if(param == Cd){
-			*cdp = s;
-			while(*s && !isspace(*s))
-				s++;
-			if(*s != '\0')
-				*s++ = '\0';
-			continue;
-		}
-		sign = 0;
-		if(*s == '-'){
-			sign = -1;
-			s++;
-		}else if(*s == '+'){
-			sign = +1;
-			s++;
-		}
-		if(!isdigit(*s))
-			return -1;
-		xy = riostrtol(s, &s);
-		switch(param){
-		case -1:
-			strcpy(err, "unrecognized wctl parameter");
-			return -1;
-		case Minx:
-			r.min.x = set(sign, r.min.x-xy, xy, r.min.x+xy);
-			break;
-		case Miny:
-			r.min.y = set(sign, r.min.y-xy, xy, r.min.y+xy);
-			break;
-		case Maxx:
-			r.max.x = set(sign, r.max.x-xy, xy, r.max.x+xy);
-			break;
-		case Maxy:
-			r.max.y = set(sign, r.max.y-xy, xy, r.max.y+xy);
-			break;
-		case Deltax:
-			r.max.x = set(sign, r.max.x-xy, r.min.x+xy, r.max.x+xy);
-			break;
-		case Deltay:
-			r.max.y = set(sign, r.max.y-xy, r.min.y+xy, r.max.y+xy);
-			break;
-		case Mindx:
-                        *mindxp = set(sign, *mindxp-xy, xy, *mindxp+xy);
-                        if (*mindxp < 1) {
-                            strcpy(err, "invalid mindx");
-                            return -1;
-                        }
-			break;
-		case Maxdx:
-                        *maxdxp = set(sign, *maxdxp-xy, xy, *maxdxp+xy);
-                        if (*maxdxp < 1) {
-                            strcpy(err, "invalid maxdx");
-                            return -1;
-                        }
-			break;
-		case Mindy:
-                        *mindyp = set(sign, *mindyp-xy, xy, *mindyp+xy);
-                        if (*mindyp < 1) {
-                            strcpy(err, "invalid mindy");
-                            return -1;
-                        }
-			break;
-		case Maxdy:
-                        *maxdyp = set(sign, *maxdyp-xy, xy, *maxdyp+xy);
-                        if (*maxdyp < 1) {
-                            strcpy(err, "invalid maxdy");
-                            return -1;
-                        }
-			break;
-		case Transientfor:
-                        *transientforp = xy;
-			break;
-		case Id:
-			if(idp != nil)
-				*idp = xy;
-			break;
-		case PID:
-			if(pidp != nil)
-				*pidp = xy;
-			break;
-		}
-	}
-
-	/**rp = rectonscreen(rectaddpt(r, screen->r.min));*/
-	*rp = rectaddpt(r, screen->r.min);
-
-	while(isspace(*s))
-		s++;
-	if(cmd!=New && *s!='\0'){
-		strcpy(err, "extraneous text in wctl message");
-		return -1;
-	}
-
-	if(argp)
-		*argp = s;
-
-        if (cmd == New) {
-            if (*noborderp && *hiddenp) {
-		strcpy(err, "noborder window cannot be hidden");
-		return -1;
-            }
-            if (*transientforp != -1) {
-                Window *x = wlookid(*transientforp);
-                if (!x) {
+    strcpy(err, "missing or bad wctl parameter");
+    while((param = word(&s, params)) >= 0){
+        switch(param){	/* special cases */
+            case Hidden:
+                Expect(cmd == New);
+                *hiddenp = 1;
+                continue;
+            case Noborder:
+                Expect(cmd == New);
+                *noborderp = 1;
+                continue;
+            case Scrolling:
+                Expect(cmd == New);
+                *scrollingp = 1;
+                continue;
+            case Noscrolling:
+                Expect(cmd == New);
+                *scrollingp = 0;
+                continue;
+            case R:
+                Expect(cmd == New || cmd == Move || cmd == Resize);
+                r.min.x = riostrtol(s, &t);
+                if(t == s)
+                    return -1;
+                s = t;
+                r.min.y = riostrtol(s, &t);
+                if(t == s)
+                    return -1;
+                s = t;
+                r.max.x = riostrtol(s, &t);
+                if(t == s)
+                    return -1;
+                s = t;
+                r.max.y = riostrtol(s, &t);
+                if(t == s)
+                    return -1;
+                s = t;
+                continue;
+        }
+        while(isspace(*s))
+            s++;
+        if(param == Cd){
+            Expect(cmd == New);
+            *cdp = s;
+            while(*s && !isspace(*s))
+                s++;
+            if(*s != '\0')
+                *s++ = '\0';
+            continue;
+        }
+        sign = 0;
+        if(*s == '-'){
+            sign = -1;
+            s++;
+        }else if(*s == '+'){
+            sign = +1;
+            s++;
+        }
+        if(!isdigit(*s))
+            return -1;
+        xy = riostrtol(s, &s);
+        switch(param){
+            case -1:
+                strcpy(err, "unrecognized wctl parameter");
+                return -1;
+            case Minx:
+                Expect(cmd == New || cmd == Move || cmd == Resize);
+                r.min.x = set(sign, r.min.x-xy, xy, r.min.x+xy);
+                break;
+            case Miny:
+                Expect(cmd == New || cmd == Move || cmd == Resize);
+                r.min.y = set(sign, r.min.y-xy, xy, r.min.y+xy);
+                break;
+            case Maxx:
+                Expect(cmd == New || cmd == Move || cmd == Resize);
+                r.max.x = set(sign, r.max.x-xy, xy, r.max.x+xy);
+                break;
+            case Maxy:
+                Expect(cmd == New || cmd == Move || cmd == Resize);
+                r.max.y = set(sign, r.max.y-xy, xy, r.max.y+xy);
+                break;
+            case Deltax:
+                Expect(cmd == New || cmd == Move || cmd == Resize);
+                r.max.x = set(sign, r.max.x-xy, r.min.x+xy, r.max.x+xy);
+                break;
+            case Deltay:
+                Expect(cmd == New || cmd == Move || cmd == Resize);
+                r.max.y = set(sign, r.max.y-xy, r.min.y+xy, r.max.y+xy);
+                break;
+            case Mindx:
+                Expect(cmd == New || cmd == Move || cmd == Resize);
+                *mindxp = set(sign, *mindxp-xy, xy, *mindxp+xy);
+                if (*mindxp < 1) {
+                    strcpy(err, "invalid mindx");
+                    return -1;
+                }
+                break;
+            case Maxdx:
+                Expect(cmd == New || cmd == Move || cmd == Resize);
+                *maxdxp = set(sign, *maxdxp-xy, xy, *maxdxp+xy);
+                if (*maxdxp < 1) {
+                    strcpy(err, "invalid maxdx");
+                    return -1;
+                }
+                break;
+            case Mindy:
+                Expect(cmd == New || cmd == Move || cmd == Resize);
+                *mindyp = set(sign, *mindyp-xy, xy, *mindyp+xy);
+                if (*mindyp < 1) {
+                    strcpy(err, "invalid mindy");
+                    return -1;
+                }
+                break;
+            case Maxdy:
+                Expect(cmd == New || cmd == Move || cmd == Resize);
+                *maxdyp = set(sign, *maxdyp-xy, xy, *maxdyp+xy);
+                if (*maxdyp < 1) {
+                    strcpy(err, "invalid maxdy");
+                    return -1;
+                }
+                break;
+            case Layer:
+                Expect(cmd == New || cmd == Set);
+                *layerp = set(sign, -xy, xy, xy);
+                break;
+            case Transientfor:
+                Expect(cmd == New);
+                if (!wlookid(xy)) {
                     strcpy(err, "invalid transientfor id");
                     return -1;
                 }
-                if (*noborderp) {
-                    strcpy(err, "transient window cannot be noborder");
-                    return -1;
-                }
-                if (*keepabovep || *keepbelowp) {
-                    strcpy(err, "transient window cannot be keepabove/keepbelow");
-                    return -1;
-                }
+                *transientforp = xy;
+                break;
+            case Id:
+                Expect(cmd != New);
+                if(idp != nil)
+                    *idp = xy;
+                break;
+            case PID:
+                Expect(cmd == New || cmd == Set);
+                if(pidp != nil)
+                    *pidp = xy;
+                break;
+        }
+    }
+
+    /**rp = rectonscreen(rectaddpt(r, screen->r.min));*/
+    *rp = rectaddpt(r, screen->r.min);
+
+    while(isspace(*s))
+        s++;
+    if(cmd!=New && *s!='\0'){
+        strcpy(err, "extraneous text in wctl message");
+        return -1;
+    }
+
+    if(argp)
+        *argp = s;
+
+    if (cmd == New) {
+        if (*noborderp && *hiddenp) {
+            strcpy(err, "noborder window cannot be hidden");
+            return -1;
+        }
+        if (*transientforp != -1) {
+            if (*noborderp) {
+                strcpy(err, "transient window cannot be noborder");
+                return -1;
+            }
+            if (*layerp != INVALID_LAYER) {
+                strcpy(err, "transient window cannot have layer set");
+                return -1;
             }
         }
+    }
 
-	return cmd;
+    return cmd;
 }
 
 static
 int
 wctlnew(Rectangle rect, char *arg, int pid, int hideit, int scrollit, int transientfor, int noborder, 
-        int keepabove, int keepbelow, int mindx, int maxdx, int mindy, int maxdy,
+        int layer, int mindx, int maxdx, int mindy, int maxdy,
         char *dir, char *err)
 {
 	char **argv;
@@ -442,7 +456,7 @@ wctlnew(Rectangle rect, char *arg, int pid, int hideit, int scrollit, int transi
 	if (!noborder) border(i, rect, Selborder, red, ZP);
 
 	new(i, hideit, scrollit, transientfor, noborder, 
-            keepabove, keepbelow, mindx, maxdx, mindy, maxdy,
+            layer, mindx, maxdx, mindy, maxdy,
             pid, dir, "/bin/rc", argv);
 	free(argv);	/* when new() returns, argv and args have been copied */
 	return 1;
@@ -451,8 +465,8 @@ wctlnew(Rectangle rect, char *arg, int pid, int hideit, int scrollit, int transi
 int
 writewctl(Xfid *x, char *err)
 {
-        int cnt, cmd, j, id, hideit, scrollit, pid, noborder, transientfor,
-            keepabove, keepbelow, mindx, maxdx, mindy, maxdy;
+        int cnt, cmd, id, hideit, scrollit, pid, noborder, transientfor,
+            mindx, maxdx, mindy, maxdy, layer;
 	Image *i;
 	char *arg, *dir;
 	Rectangle rect;
@@ -470,7 +484,7 @@ writewctl(Xfid *x, char *err)
         mindy = w->mindy;
         maxdy = w->maxdy;
 	cmd = parsewctl(&arg, rect, &rect, &pid, &id, &hideit, &scrollit, &transientfor, &noborder, 
-                        &keepabove, &keepbelow, &mindx, &maxdx, &mindy, &maxdy,
+                        &layer, &mindx, &maxdx, &mindy, &maxdy,
                         &dir, x->data, err);
 	if(cmd < 0)
 		return -1;
@@ -481,14 +495,11 @@ writewctl(Xfid *x, char *err)
 	}
 
 	if(id != 0){
-		for(j=0; j<nwindow; j++)
-			if(window[j]->id == id)
-				break;
-		if(j == nwindow){
+                w = wlookid(id);
+		if(!w){
 			strcpy(err, "no such window id");
 			return -1;
 		}
-		w = window[j];
 		if(w->deleted || w->i==nil){
 			strcpy(err, "window deleted");
 			return -1;
@@ -498,15 +509,22 @@ writewctl(Xfid *x, char *err)
 	switch(cmd){
 	case New:
                 return wctlnew(rect, arg, pid, hideit, scrollit, transientfor, noborder, 
-                               keepabove, keepbelow, mindx, maxdx, mindy, maxdy,
+                               layer, mindx, maxdx, mindy, maxdy,
                                dir, err);
 	case Refresh2:
                 wrefresh(w, w->i->r);
 		return 1;
-	case Set:
+        case Set: {
 		if(pid > 0)
 			wsetpid(w, pid, 0);
+                if(layer != INVALID_LAYER) {
+                    if (!wsetlayer(w, layer)) {
+                        strcpy(err, "cannot set window layer");
+                        return -1;
+                    }
+                }
 		return 1;
+        }
 	case Move:
 		rect = Rect(rect.min.x, rect.min.y, rect.min.x+Dx(w->i->r), rect.min.y+Dy(w->i->r));
 		/* fall through */
@@ -558,24 +576,6 @@ writewctl(Xfid *x, char *err)
 	case Noscroll:
 		w->scrolling = 0;
 		wsendctlmesg(w, Wakeup);
-		return 1;
-	case Keepabove2:
-                if (!wkeepabove(w)) {
-                    strcpy(err, "cannot make window keepabove");
-                    return -1;
-                }
-		return 1;
-	case Keepbelow2:
-                if (!wkeepbelow(w)) {
-                    strcpy(err, "cannot make window keepbelow");
-                    return -1;
-                }
-		return 1;
-	case Keepnormal:
-                if (!wkeepnormal(w)) {
-                    strcpy(err, "cannot make window keepnormal");
-                    return -1;
-                }
 		return 1;
 	case Close:
                 wclosereq(w);
@@ -635,7 +635,7 @@ wctlthread(void *v)
 {
 	char *buf, *arg, *dir;
 	int cmd, id, pid, hideit, scrollit, noborder, transientfor,
-            keepabove, keepbelow, mindx, maxdx, mindy, maxdy;
+            mindx, maxdx, mindy, maxdy, layer;
 	Rectangle rect;
 	char err[ERRMAX];
 	Channel *c;
@@ -649,13 +649,13 @@ wctlthread(void *v)
                 mindx = mindy = 1;
                 maxdx = maxdy = INT_MAX;
 		cmd = parsewctl(&arg, ZR, &rect, &pid, &id, &hideit, &scrollit, &transientfor, &noborder, 
-                                &keepabove, &keepbelow, &mindx, &maxdx, &mindy, &maxdy,
+                                &layer, &mindx, &maxdx, &mindy, &maxdy,
                                 &dir, buf, err);
 
 		switch(cmd){
 		case New:
                     wctlnew(rect, arg, pid, hideit, scrollit, transientfor, noborder, 
-                            keepabove, keepbelow, mindx, maxdx, mindy, maxdy,
+                            layer, mindx, maxdx, mindy, maxdy,
                             dir, err);
 		}
 		free(buf);

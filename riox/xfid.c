@@ -149,7 +149,7 @@ xfidattach(Xfid *x)
 {
 	Fcall t;
 	int id, hideit, scrollit, noborder, transientfor,
-            keepabove, keepbelow, mindx, maxdx, mindy, maxdy;
+            layer, mindx, maxdx, mindy, maxdy;
 	Window *w;
 	char *err, *n, *dir, errbuf[ERRMAX];
 	int pid, newlymade;
@@ -161,8 +161,9 @@ xfidattach(Xfid *x)
 	w = nil;
 	err = Eunkid;
 	newlymade = FALSE;
+        pid = 0;
 	hideit = 0;
-        noborder = keepabove = keepbelow = 0;
+        noborder = layer = 0;
         mindx = mindy = 1;
         maxdx = maxdy = INT_MAX;
         transientfor = -1;
@@ -193,18 +194,15 @@ xfidattach(Xfid *x)
 			if(pid == 0)
 				pid = -1;	/* make sure we don't pop a shell! - UGH */
 			w = new(i, hideit, scrolling, transientfor, noborder, 
-                                keepabove, keepbelow, mindx, maxdx, mindy, maxdy,
+                                layer, mindx, maxdx, mindy, maxdy,
                                 pid, nil, nil, nil);
 			flushimage(display, 1);
 			newlymade = TRUE;
 		}else
 			err = Ewindow;
 	}else if(strncmp(x->aname, "new", 3) == 0){	/* new -dx -dy - new syntax, as in wctl */
-		pid = 0;
-                mindx = mindy = 1;
-                maxdx = maxdy = INT_MAX;
 		if(parsewctl(nil, ZR, &r, &pid, nil, &hideit, &scrollit, &transientfor, &noborder, 
-                             &keepabove, &keepbelow, &mindx, &maxdx, &mindy, &maxdy,
+                             &layer, &mindx, &maxdx, &mindy, &maxdy,
                              &dir, x->aname, errbuf) < 0)
 			err = errbuf;
 		else

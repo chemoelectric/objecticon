@@ -2,14 +2,12 @@ void	keyboardsend(char*, int);
 int	whide(Window*);
 int	wunhide(Window*);
 int     wselect(Window *w);
-int    wkeepbelow(Window *w);
-int    wkeepabove(Window *w);
-int    wkeepnormal(Window *w);
+int    wsetlayer(Window *w, int layer);
 void    wclosereq(Window *w);
 int      dbgalt(Alt *alts, char *lab);
 
 void	freescrtemps(void);
-int	parsewctl(char**, Rectangle, Rectangle*, int*, int*, int*, int*, int*, 
+int	parsewctl(char**, Rectangle, Rectangle*, int*, int*, int*, int*,
                   int *, int*, int*, int*, int*, int*, int *, char**, char*, char*);
 int	writewctl(Xfid*, char*);
 int     wlimitrect(Window *w, Rectangle *r);
@@ -19,7 +17,7 @@ void    reconcile_stacking(void);
 void    ensure_transient_stacking(void);
 void    ensure_transient_stacking_rev(void);
 
-Window *new(Image*, int, int, int, int, int, int, int, int, int, int, int, char*, char*, char**);
+Window *new(Image*, int, int, int, int, int, int, int, int, int, int, char*, char*, char**);
 void	riosetcursor(Cursor*, int);
 int	min(int, int);
 int	max(int, int);

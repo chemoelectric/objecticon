@@ -1501,7 +1501,7 @@ static int open_screen_win(wsp ws)
                     ws->x, ws->y,  ws->x + adjust(ws, ws->width), 
                     ws->y + adjust(ws, ws->height));
         if (ws->state == PopupCanvas)
-            strcat(buff, " -noborder -keepabove");
+            strcat(buff, " -noborder -layer 1");
         else if (ws->state == IconicCanvas)
             strcat(buff, " -hide");
         sprintf(buff + strlen(buff), 

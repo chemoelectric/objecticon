@@ -34,7 +34,7 @@ enum
 #define INT_MAX               0x7fffffff
 #define INT_MIN               0x80000000
 #define VISIBLE_PART          50
-
+#define INVALID_LAYER         0xcafebabe
 typedef	struct	Consreadmesg Consreadmesg;
 typedef	struct	Conswritemesg Conswritemesg;
 typedef	struct	Stringpair Stringpair;
@@ -163,12 +163,11 @@ struct Window
 	int			wctlready;
 	Rectangle		lastsr;
 	int			topped;
-	int			new_topped;
+	int			order;
+        int                     layer;
 	int			notefd;
 	uchar		scrolling;
 	uchar		noborder;
-        uchar           keepabove;
-        uchar           keepbelow;
         Window          *transientfor;
         Window          *transientforroot;
         Window          *rememberedfocus;           /* id of window to get focus on unhide */
@@ -196,7 +195,7 @@ int		winborder(Window*, Point);
 void		winctl(void*);
 void		winshell(void*);
 Window*	wlookid(int);
-Window*	wmk(Image*, MousectlEx*, Channel*, Channel*, int, int, int, int, int, int, int, int, int, int);
+Window*	wmk(Image*, MousectlEx*, Channel*, Channel*, int, int, int, int, int, int, int, int, int);
 Window*	wpointto(Point);
 int		wtop(Window*);
 int		wbottom(Window*);
@@ -341,6 +340,7 @@ Window	**window;
 Window	*wkeyboard;	/* window of simulated keyboard */
 int		nwindow;
 int		topped;
+int		order;
 int		snarffd;
 Window	*input;
 Window	*grab, *eein, *held;
