@@ -152,7 +152,7 @@ typedef int gzFile;
 typedef int jmp_buf;
 
 #if PLAN9
-typedef int vlong, ulong, uvlong, uchar, Rune, Dir, Image, Memimage, Point, Rectangle, Display, Req, Srv, Waitmsg, QLock, Rendez;
+typedef int vlong, ulong, uvlong, uchar, Rune, Dir, Image, Memimage, Point, Rectangle, Display, Req, Srv, Waitmsg, QLock, Rendez, Screen;
 #endif
 
 #if MSWIN32

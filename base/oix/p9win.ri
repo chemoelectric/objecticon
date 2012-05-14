@@ -26,9 +26,9 @@ static Image *get_draw_img(wcp wc);
 static void close_pix_win(wsp ws);
 static void resize_pix_win(wbp w);
 static void handle_reshape(wsp ws);
+static void handle_limited(wsp ws);
 static void init_window_system(void);
 static void clear_pix_win(wbp wb);
-static void clear_win(wbp wb);
 static void clip(wcp wc, Image *i);
 static void unclip(wcp wc, Image *i);
 static struct SharedColor *new_sharedcolor(char *name, int rgb);
@@ -346,12 +346,6 @@ static void clear_pix_win(wbp w)
     gendraw(ws->pix, ws->pix->r, w->context->bg->i, ZP, 0, ZP);
 }
 
-static void clear_win(wbp w)
-{
-    wsp ws = w->window;
-    gendraw(ws->win, ws->win->r, w->context->bg->i, ZP, 0, ZP);
-}
-
 static void copy_to(Image *dest, Image *src)
 {
     Rectangle t = Rect(dest->r.min.x, 
@@ -437,10 +431,18 @@ static void resize_pix_win(wbp w)
     ws->pix = t;
 }
 
+static void handle_limited(wsp ws)
+{
+    if (Dx(ws->win->r) != ws->width || Dy(ws->win->r) != ws->height) {
+        ws->width = Dx(ws->win->r);
+        ws->height = Dy(ws->win->r);
+        qeventcode(ws, WINDOWRESIZED);
+    }
+}
+
 static void handle_reshape(wsp ws)
 {
     char buff[128];
-    wbp w;
     sprintf(buff, "%s/winname", ws->mount_dir);
     if (gengetwindow(display, buff, &ws->win, &ws->screen, Refnone) < 0)
         syserr("Failed to reconnect to window on a resize");
@@ -453,6 +455,7 @@ static void handle_reshape(wsp ws)
         synch_pos(ws);
         pix_to_win(ws);
     } else {
+        wbp w;
         /*
          * Here we accept the resize, resize the pix win, copy it to the visible
          * win and fire an event.
@@ -461,9 +464,6 @@ static void handle_reshape(wsp ws)
         ws->height = Dy(ws->win->r);
         synch_pos(ws);
         w = findwbp(ws);
-
-        /* Fill the win with the bg of the first context */
-        clear_win(w);
         resize_pix_win(w);
         pix_to_win(ws);
         qeventcode(ws, WINDOWRESIZED);
@@ -515,6 +515,9 @@ void pollevent(wbp w)
             }
             case 'r':
                 handle_reshape(ws);
+                break;
+            case 'l':
+                handle_limited(ws);
                 break;
             case 'c': {
                 qeventcode(ws, WINDOWCLOSED);

@@ -529,7 +529,7 @@ writewctl(Xfid *x, char *err)
 		rect = Rect(rect.min.x, rect.min.y, rect.min.x+Dx(w->i->r), rect.min.y+Dy(w->i->r));
 		/* fall through */
         case Resize: {
-                int limchanged = 0;
+                int limchanged = 0, limited;
                 if (w->mindx != mindx || w->maxdx != maxdx || w->mindy != mindy || w->maxdy != maxdy) {
                     limchanged = 1;
                     w->mindx = mindx;
@@ -537,20 +537,22 @@ writewctl(Xfid *x, char *err)
                     w->mindy = mindy;
                     w->maxdy = maxdy;
                 }
-                wlimitrect(w, &rect);
+                limited = wlimitrect(w, &rect);
                 if(eqrect(rect, w->i->r)) {
                     /* If we didn't change the rectangle, then only
-                     * send a wctl message if the size limits changed;
-                     * send a mouse reshape message in any case.  For
-                     * consistency with what happens if the rectangle
-                     * does change, the window is topped.
+                     * send a wctl message if the size limits changed,
+                     * and only send a mouse 'l' message if the
+                     * rectangle was limited.  For consistency with
+                     * what happens if the rectangle does change, the
+                     * window is topped.
                      */
                     wtop(w);
                     if (limchanged) {
                         w->wctlready = 1;
                         wsendctlmesg(w, Wakeup);
                     }
-                    sendmouseevent(w, 'r');
+                    if (limited)
+                        sendmouseevent(w, 'l');
                 } else {
                     if (w->hidden)
                         i = allocimage(display, rect, w->i->chan, 0, DWhite);
