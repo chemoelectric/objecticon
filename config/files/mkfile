@@ -8,7 +8,9 @@ all:V:
 	@{ cd apps ; mk }
 	@{ cd examples ; mk }
 	@{ cd riox ; mk }
-        @{ if(test -x fontinfo.txt) 
+        @{ 
+           OIFONT=$font
+           if(test -x fontinfo.txt) 
                 ;
            if not
                 oit -s ./mkfontinfo.icn -x >fontinfo.txt
