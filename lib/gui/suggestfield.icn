@@ -15,7 +15,8 @@ class SuggestField(TextField)
 
    protected
       req, 
-      req_held, 
+      req_held,
+      req_doing,
       last,
       mod,
       synch_ev
@@ -82,7 +83,16 @@ class SuggestField(TextField)
             req_held := &null
          }
          mod := &null
-         if l := do_request() then {
+         req_doing := 1
+         l := do_request() | &null
+         req_doing := &null
+         # If finally() has been called, close any request resources,
+         # and stop the task.
+         if /cbwin then {
+            close_request()
+            req.revert()
+         }
+         if \l then {
             # If contents have changed, skip, and repeat request if
             # mod = 1, or go to sleep if mod = 2
             if \mod then
@@ -92,11 +102,25 @@ class SuggestField(TextField)
       }
    end
 
-   #
    # This method is implemented to provide the list of suggestions, based on
    # the current contents of the textfield.
    #
    protected defer do_request()
+
+   # If the component is disposed of whilst a {do_request} is in
+   # progress, this method is called and the background thread will
+   # continue in order to allow {do_request} to complete cleanly.
+   #
+   protected abort_request()
+      req.interrupt()
+   end
+
+   # This is invoked whilst {do_request} is not in progress to allow
+   # any resources which remain open between {do_request} calls to be
+   # closed.  Note that {do_request} may later be invoked again.
+   #
+   protected close_request()
+   end
 
    public on_change(ev)
       if synch_ev === ev then
@@ -274,7 +298,12 @@ class SuggestField(TextField)
    end
 
    public finally()
-      req.stop()
+      if \req_doing then
+         abort_request()
+      else {
+         close_request()
+         req.stop()
+      }
       #
       # Disposed with text list showing, just get rid of it
       #
