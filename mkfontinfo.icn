@@ -1,0 +1,129 @@
+import io, graphics
+
+procedure get_family(w, s)
+   if find("smiley"|"shinonome/k",s ) then
+      fail
+   if find("lucm/passwd",s) then
+      return "passwd"
+   if find("/lucm/",s) then
+      return "lucm"
+   if find("lucida/latin1CW",s) then
+      return "typewriter"
+   if find("lucida/",s) then
+      return "sans"
+   if find("fixed",s) then
+      return "fixed"
+   if find("pelm",s) then
+      return "mono"
+   if find("courier",s) then
+      return "typewriter"
+   if find("lucidasans",s) then
+      return if w.text_width("M") = w.text_width("I") then "mono" else "sans"
+   if find("times"|"palatino",s) then
+      return "serif"
+   s ? {
+      ="/lib/font/bit/"
+      return tab(upto('/'))
+   }
+end
+
+procedure get_slant(s)
+   if find("fixed/unicode.7x13O"|"fixed/unicode.8x13O"|"fixed/unicode.6x13O",s ) then {
+      return "oblique"
+   }      
+
+   if find("shinonome",s ) then {
+      if find("i.", s) then
+         return "italic"
+      return "roman"
+   }
+
+   if find("I"|"italic"|"latin1i", s) then
+      return "italic"
+   return "roman"
+end
+
+procedure get_weight(s)
+   if find("shinonome",s ) then {
+      if find("bi."|"b.", s) then
+         return "bold"
+      return "medium"
+   }
+
+   if find("B"|"bold"|"latin1b", s) then
+      return "bold"
+   return "medium"
+end
+
+procedure get_width(s)
+   return "normal"
+end
+
+procedure get_serif(s, fam)
+   case fam of {
+      "mono"|"sans": return "sans"
+      "typewriter"|"serif": return "serif"
+   }
+   if find("times",s) then
+      return "serif"
+   return "sans"
+end
+
+procedure get_spacing(w, s, fam)
+   if fam == ("naga10"|"fixed"|"mono"|"typewriter") then
+      return "fixed"
+   if find("times",s) then
+      return "proportional"
+   return if w.text_width("M") = w.text_width("I") then "fixed" else "proportional"
+end
+
+procedure get_size(w, s, fam)
+   local bw, bh, fh, i, j, l, font_size, pix, v
+   if fam == "naga10" then   # Has no "M"
+      bw := 10
+   else {
+      bw := w.text_width("M")
+      # Plan9 can randomly give bw = 0 for fonts without an M
+      if bw = 0 then bw := 10
+   }
+   bh := w.get_font_ascent()
+   fh := w.get_font_height()
+   w.set_size(bw, fh)
+   every w.draw_string(0, bh, !&letters)
+   l := w.get_pixels()
+   font_size := 0
+   every i := 1 to fh do {
+      pix := &null
+      every j := 1 to bw do {
+         v := pop(l) | stop("Expected pixel")
+         if v ~== "65535,65535,65535" then
+            pix := 1
+      }
+      if \pix then
+         font_size +:= 1
+   }
+   return integer(0.5 + (font_size * 72.0 / 96.0))
+end
+
+procedure main(a)
+   local p, x, s, fam, w
+   use {
+      p := open("/bin/du -a /lib/font/bit | /bin/awk '{print $2}' | grep '*.font'", "pr"),
+      while x := p.read() do {
+         use {
+            w := Window.open(),
+            {
+               if w.set_font(x) &
+                  s := (fam := get_family(w, x)) || "," || 
+                  get_serif(x, fam) || "," || 
+                  get_weight(x) || "," || 
+                  get_slant(x) || "," || 
+                  get_spacing(w, x, fam) || "," || 
+                  get_width(x) || "," || 
+                  get_size(w, x, fam) then
+                  write(x, "=", s)
+            }
+         }
+      }
+   }
+end
