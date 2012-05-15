@@ -13,9 +13,13 @@ import
 class GSuggestField(SuggestField)
    protected hc, domain
 
-   public finally()
-      cast(self,SuggestField).finally()
+   protected close_request()
       hc.close()
+   end
+
+   protected abort_request()
+      req.interrupt()
+      hc.abort()
    end
 
    public set_domain(s)
