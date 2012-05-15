@@ -10,7 +10,7 @@ all:V:
 	@{ cd riox ; mk }
         @{ 
            OIFONT=$font
-           if(test -x fontinfo.txt) 
+           if(test -e fontinfo.txt) 
                 ;
            if not
                 oit -s ./mkfontinfo.icn -x >fontinfo.txt
