@@ -33,7 +33,7 @@ class FontTestDialog(Dialog)
       t.get_font() ? (fsys := tab(upto(':')))
       t.close()
       command_field.set_contents(case fsys of {
-         "p9": "f /lib/font/bit *.font"
+         "p9": "/bin/du -a /lib/font/bit | /bin/awk '{print $2}' | grep '*.font' | sort"
          "x11": "xlsfonts"
          "fc": "fc-list"
       })
