@@ -3,7 +3,7 @@ import io, graphics
 procedure get_family(w, s)
    if find("smiley"|"shinonome/k",s ) then
       fail
-   if find("lucm/passwd",s) then
+   if find("passwd",s) then
       return "passwd"
    if find("/lucm/",s) then
       return "lucm"
@@ -108,7 +108,7 @@ end
 procedure main(a)
    local p, x, s, fam, w
    use {
-      p := open("/bin/du -a /lib/font/bit | /bin/awk '{print $2}' | grep '*.font'", "pr"),
+      p := open("/bin/du -a /lib/font/bit | /bin/awk '{print $2}' | grep '*.font' | sort", "pr"),
       while x := p.read() do {
          use {
             w := Window.open(),
