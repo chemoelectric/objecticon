@@ -1,25 +1,32 @@
-import io, graphics
+import io, graphics, ipl.sort
+
+record Font(path, str, pri)
+
+procedure get_priority(w, s, fam)
+   return 0
+end
 
 procedure get_family(w, s)
-   if find("smiley"|"shinonome/k",s ) then
+   if find("smiley"|"shinonome/k", s) then
       fail
-   if find("passwd",s) then
+   if find("passwd", s) then
       return "passwd"
-   if find("/lucm/",s) then
+   if find("/lucm/", s) then
       return "lucm"
-   if find("lucida/latin1CW",s) then
-      return "typewriter"
-   if find("lucida/",s) then
+   if find("lucida/latin1CW", s) then
+      # Some of these fonts look monospaced, but aren't.
+      return if is_mono(w) then "typewriter" else "latin1CW"
+   if find("lucida/", s) then
       return "sans"
-   if find("fixed",s) then
+   if find("fixed", s) then
       return "fixed"
-   if find("pelm",s) then
+   if find("pelm", s) then
       return "mono"
-   if find("courier",s) then
+   if find("courier", s) then
       return "typewriter"
-   if find("lucidasans",s) then
-      return if w.text_width("M") = w.text_width("I") then "mono" else "sans"
-   if find("times"|"palatino",s) then
+   if find("lucidasans", s) then
+      return if is_mono(w) then "mono" else "sans"
+   if find("times"|"palatino", s) then
       return "serif"
    s ? {
       ="/lib/font/bit/"
@@ -28,11 +35,10 @@ procedure get_family(w, s)
 end
 
 procedure get_slant(s)
-   if find("fixed/unicode.7x13O"|"fixed/unicode.8x13O"|"fixed/unicode.6x13O",s ) then {
+   if find("fixed/unicode.7x13O"|"fixed/unicode.8x13O"|"fixed/unicode.6x13O", s) then
       return "oblique"
-   }      
 
-   if find("shinonome",s ) then {
+   if find("shinonome", s) then {
       if find("i.", s) then
          return "italic"
       return "roman"
@@ -44,7 +50,7 @@ procedure get_slant(s)
 end
 
 procedure get_weight(s)
-   if find("shinonome",s ) then {
+   if find("shinonome", s) then {
       if find("bi."|"b.", s) then
          return "bold"
       return "medium"
@@ -64,17 +70,19 @@ procedure get_serif(s, fam)
       "mono"|"sans": return "sans"
       "typewriter"|"serif": return "serif"
    }
-   if find("times",s) then
+   if find("times", s) then
       return "serif"
    return "sans"
 end
 
+procedure is_mono(w)
+   return w.text_width("MWNO") = w.text_width("I1l.") 
+end
+
 procedure get_spacing(w, s, fam)
-   if fam == ("naga10"|"fixed"|"mono"|"typewriter") then
-      return "fixed"
-   if find("times",s) then
-      return "proportional"
-   return if w.text_width("M") = w.text_width("I") then "fixed" else "proportional"
+   if fam == "naga10" then
+      return "mono"
+   return if is_mono(w) then "mono" else "proportional"
 end
 
 procedure get_size(w, s, fam)
@@ -106,7 +114,8 @@ procedure get_size(w, s, fam)
 end
 
 procedure main(a)
-   local p, x, s, fam, w
+   local p, x, s, fam, w, l, e
+   l := []
    use {
       p := open("/bin/du -a /lib/font/bit | /bin/awk '{print $2}' | grep '*.font' | sort", "pr"),
       while x := p.read() do {
@@ -121,9 +130,16 @@ procedure main(a)
                   get_spacing(w, x, fam) || "," || 
                   get_width(x) || "," || 
                   get_size(w, x, fam) then
-                  write(x, "=", s)
+                  put(l, Font(x, s, get_priority(w, x, fam)))
             }
          }
       }
    }
+   isort(l, pri_sort)
+   every e := !l do
+      write(e.path, "=", e.str)
+end
+
+procedure pri_sort(x)
+   return x.pri
 end
