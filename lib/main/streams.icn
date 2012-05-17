@@ -2699,7 +2699,7 @@ end
 # This is a class for performing basic blocking i/o system calls in a
 # background process, on a particular file.
 #
-class FileWorker(Pollable)
+class FileWorker(Pollable, NoCopy)
    private
       ptr
 
