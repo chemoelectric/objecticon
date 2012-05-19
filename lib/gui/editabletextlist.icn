@@ -48,6 +48,7 @@ class EditableTextList(LineBasedScrollArea)
       wrap_mode,
       split_words_flag,
       line_splitter,
+      last_width_wrap_width,
       changed,
       primary_selection_owner,
       clipboard_selection_owner,
@@ -970,7 +971,7 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public layout()
-      if \wrap_mode == "width" then
+      if \wrap_mode == "width" & last_width_wrap_width ~=== line_splitter.get_split_width() then
          clear_view_list()
       cast(self,ScrollArea).layout()
       self.constrain_line()
@@ -1741,16 +1742,18 @@ class DefaultLineSplitter(LineSplitter)
 end
 
 class WidthLineSplitter(LineSplitter)
-   public split(s)
-      local ch, ds, p, width
-
+   public get_split_width()
       # This allows calculation of a default height given an integer width spec.
-      width := if parent.is_live() then
+      return if parent.is_live() then
          parent.predict_view_width(parent.w, parent.vsb) - 2 * Gui.TEXT_INSET
       else
          parent.predict_view_width(integer(parent.w_spec)) - 2 * Gui.TEXT_INSET | 
              runerr("Need integer w_spec with width wrap mode")
+   end
 
+   public split(s)
+      local ch, ds, p, width
+      parent.last_width_wrap_width := width := get_split_width()
       ds := ""
       s ? {
          while ch := move(1) do {

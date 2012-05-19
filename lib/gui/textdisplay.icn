@@ -21,6 +21,7 @@ class TextDisplay(LineBasedScrollArea)
       view_list, 
       long_line,
       line_splitter,
+      last_width_wrap_width,
       tab_width
 
    public calculate_line_count()
@@ -258,7 +259,7 @@ class TextDisplay(LineBasedScrollArea)
    end
 
    public layout()
-      if \wrap_mode == "width" then
+      if \wrap_mode == "width" & last_width_wrap_width ~=== line_splitter.get_split_width() then
          clear_view_list()
       cast(self,ScrollArea).layout()
    end

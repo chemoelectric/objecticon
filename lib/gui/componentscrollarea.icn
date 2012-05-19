@@ -8,6 +8,8 @@
 
 package gui
 
+import util
+
 class ComponentScrollAreaView(Component)
    public
       inner, 
@@ -53,8 +55,23 @@ end
 # method.
 #
 class ComponentScrollArea(ScrollArea)
+   private readable
+      reset_layouts_on_size_inner_flag
+      
    public set_inner(inner)
       view.set_inner(inner)
+      return self
+   end
+
+   # This resets the layouts when the view's {size_inner} is called by
+   # {layout}.  This is useful if some of the inner components alter
+   # their preferred size when the surrounding component's size
+   # changes (eg {TextDisplay} with "width" line splitting).  By
+   # resetting the layout, the preferred widths are recalculated
+   # before {inner} is laid out.
+   #
+   public set_reset_layouts_on_size_inner(s)
+      self.reset_layouts_on_size_inner_flag := check_flag(s)
       return self
    end
 
@@ -63,6 +80,8 @@ class ComponentScrollArea(ScrollArea)
       every i := 0 to 3 do {
          t1 := self.hsb
          t2 := self.vsb
+         if \reset_layouts_on_size_inner_flag then
+            reset_all_layouts()
          view.size_inner()
          cast(self,ScrollArea).layout()
          if i > 0 & ((self.hsb === t1 & self.vsb === t2) | (\self.hsb & \self.vsb)) then
