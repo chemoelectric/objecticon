@@ -267,9 +267,9 @@ class HttpClient(NetClient)
          # It shouldn't be a relative URL, but that seems to be
          # commonplace.
          #
-         request.url.set_relative(l)
+         request.set_url(request.url.get_relative(l))
       
-      s := to_string(request.url)
+      s := request.url.str()
       if member(redir_set, s) then
          return on_http_error("Circular redirection detected: " || s)
       insert(redir_set, s)
