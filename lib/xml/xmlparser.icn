@@ -1491,27 +1491,25 @@ class XmlParser(Connectable)
    # [2] Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
    #
    private parse_char_ref(expand)
-      local s, c, digs, i
-
-      s := ="&#" | throw("'&#' expected")
-
+      local c, digs, i, j
+      j := &pos
+      ="&#" | throw("'&#' expected")
       if any('x') then {
-         s ||:= move(1)
+         move(1)
          c := '0-9a-fA-F'
          any(c) | throw("Hex digit expected")
          digs := tab(many(c)) 
-         i := integer("16r" || digs) | 63
+         i := integer("16r" || digs)
       } else {
          c := &digits
          any(c) | throw("Digit expected")
          digs := tab(many(c)) 
-         i := integer(digs) | 63
+         i := integer(digs)
       }
-      s ||:= digs
-      s ||:= =";" | throw("';' expected")
+      =";" | throw("';' expected")
 
-      if /expand then 
-         return s
+      if /expand then
+         return &subject[j:&pos]
       else {
          if Text.has_ord(XML_CHAR, i) then {
             return if \utf8_flag then
