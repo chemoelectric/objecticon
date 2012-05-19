@@ -37,7 +37,8 @@ class HtmlElement(Element)
    # @param s the case-insensitive name of the sub-elements.
    #
    public search_tree(s)
-      suspend cast(self,Element).search_tree(map(s, &lcase, &ucase))
+      s := map(\s, &lcase, &ucase)
+      suspend cast(self,Element).search_tree(s)
    end
 
    #
@@ -47,7 +48,8 @@ class HtmlElement(Element)
    # @param s the case-insensitive name of the sub-elements.
    #
    public search_children(s)
-      suspend cast(self,Element).search_children(map(s, &lcase, &ucase))
+      s := map(\s, &lcase, &ucase)
+      suspend cast(self,Element).search_children(s)
    end
 end
 
