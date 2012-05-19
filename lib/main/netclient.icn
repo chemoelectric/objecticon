@@ -72,9 +72,11 @@ class NetClient(Connectable, HasTask)
          return SocketStream.dns_query(server)
       p := BgDns(server).
          set_task(task)
-      p.start()
-      v := p.poll()
-      p.join()
+      v := use {
+         p.start(),
+         p.poll(),
+         p.join()
+      } | fail
       return if type(v) == "list" then
          v
       else
