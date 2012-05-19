@@ -277,9 +277,8 @@ class Task()
 end
 
 class Scheduler()
-   public const
-      poll_timeout
    private readable 
+      poll_timeout,
       coex,
       curr_task
    private
@@ -293,6 +292,11 @@ class Scheduler()
       sleeping := set()
       polling := set()
       return
+   end
+
+   public set_poll_timeout(n)
+      poll_timeout := n
+      return self
    end
 
    package start(t)
