@@ -110,8 +110,12 @@ class URL()
    #
    public str()
       local s
-      s := self.protocol || "://" || self.address || ":" || self.port || self.file
-      s ||:= "#" || \self.ref
+      if self.protocol == "file" then
+         s := "file://" || self.file
+      else {
+         s := self.protocol || "://" || self.address || ":" || self.port || self.file
+         s ||:= "#" || \self.ref
+      }
       return s
    end
 
@@ -147,26 +151,30 @@ class URL()
       local protocol, address, file, ref, port
       s ? {
          protocol := 1(tab(many(&lcase ++ &ucase)), ="://") | "http"
-         address := tab(upto(':/') | 0)
-         if *address = 0 then
-            return error("No address")
-         if =":" then {
-            port := integer(tab(many(&digits))) | return error("Bad port")
-         } else if protocol == "http" then
-            port := 80
-         else if protocol == "https" then
-            port := 443
-         else
-            return error("Port required")
-
-         if pos(0) then
-            file := "/"
+         if protocol == "file" then
+            file := tab(0)
          else {
-            any('/') | return error("File part should start with /")
-            file := tab(upto('#') | 0)
-            if any('#') then {
-               move(1)
-               ref := tab(0)
+            address := tab(upto(':/') | 0)
+            if *address = 0 then
+               return error("No address")
+            if =":" then {
+               port := integer(tab(many(&digits))) | return error("Bad port")
+            } else if protocol == "http" then
+               port := 80
+            else if protocol == "https" then
+               port := 443
+            else
+               return error("Port required")
+
+            if pos(0) then
+               file := "/"
+            else {
+               any('/') | return error("File part should start with /")
+               file := tab(upto('#') | 0)
+               if any('#') then {
+                  move(1)
+                  ref := tab(0)
+               }
             }
          }
       }
