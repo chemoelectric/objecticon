@@ -75,7 +75,7 @@ class Grid()
       add_y,
       add_row_h
 
-   private validate_int(t, key, def)
+   private static validate_int(t, key, def)
       local val
       if val := member(t, key) then
          return integer(val) | runerr("Expected integer grid constraint", val)
@@ -83,7 +83,7 @@ class Grid()
          return \def
    end
 
-   private validate_real(t, key, def)
+   private static validate_real(t, key, def)
       local val
       if val := member(t, key) then
          return real(val) | runerr("Expected real-valued grid constraint", val)
@@ -91,7 +91,7 @@ class Grid()
          return \def
    end
 
-   private validate_flag(t, key)
+   private static validate_flag(t, key)
       local val
       if val := member(t, key) then
          return check_flag(val) | runerr("Expected flag-valued grid constraint", val)
@@ -99,7 +99,7 @@ class Grid()
          return &no
    end
 
-   private validate_x_align(t, key)
+   private static validate_x_align(t, key)
       local val
       if val := member(t, key) then {
          (val === (Align.L | Align.R | Align.C)) | runerr("Expected x-alignment grid constraint", val)
@@ -109,7 +109,7 @@ class Grid()
          return Align.C
    end
 
-   private validate_y_align(t, key)
+   private static validate_y_align(t, key)
       local val
       if val := member(t, key) then {
          (val === (Align.T | Align.B | Align.C)) | runerr("Expected y-alignment grid constraint", val)
@@ -181,21 +181,21 @@ class Grid()
       compute_row_heights()
    end
    
-   public slice(start, span, l)
+   public static slice(start, span, l)
       local n
       n := 0
       every n +:= l[start to start + span - 1]
       return n
    end
 
-   public total(l)
+   public static total(l)
       local n
       n := 0
       every n +:= !l
       return n
    end
 
-   public dist_by_weight(start, span, extra, l, weights, tw)
+   public static dist_by_weight(start, span, extra, l, weights, tw)
       local left, i, a, j
 
       left := extra
@@ -209,7 +209,7 @@ class Grid()
       l[j] +:= left
    end
 
-   public dist_equally(start, span, extra, l)
+   public static dist_equally(start, span, extra, l)
       local left, i, a
 
       a := extra / span
@@ -221,7 +221,7 @@ class Grid()
       l[i] +:= left
    end
 
-   public allocate_space(start, span, extra, l, weights)
+   public static allocate_space(start, span, extra, l, weights)
       local tw
       tw := slice(start, span, weights)
       if tw = 0 then
