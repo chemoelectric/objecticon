@@ -77,10 +77,10 @@ class URL()
    end
 
    #
-   # Get the ref field.  This is {&null} if no ref is set.
+   # Get the optional ref field, failing if none is set.
    #
    public get_ref()
-      return .self.ref
+      return .\self.ref
    end
 
    #
@@ -110,12 +110,13 @@ class URL()
    #
    public str()
       local s
-      if self.protocol == "file" then
-         s := "file://" || self.file
-      else {
+      if self.protocol == "file" then {
+         s := "file://"
+         s ||:= "localhost" ~== self.address 
+         s ||:= self.file
+      } else
          s := self.protocol || "://" || self.address || ":" || self.port || self.file
-         s ||:= "#" || \self.ref
-      }
+      s ||:= "#" || \self.ref
       return s
    end
 
@@ -151,9 +152,17 @@ class URL()
       local protocol, address, file, ref, port
       s ? {
          protocol := 1(tab(many(&lcase ++ &ucase)), ="://") | "http"
-         if protocol == "file" then
-            file := tab(0)
-         else {
+         if protocol == "file" then {
+            if any('/') then
+               address := "localhost"
+            else
+               address := tab(upto('/')) | return error("Missing /")
+            file := tab(upto('#') | 0)
+            if any('#') then {
+               move(1)
+               ref := tab(0)
+            }
+         } else {
             address := tab(upto(':/') | 0)
             if *address = 0 then
                return error("No address")
@@ -242,6 +251,20 @@ class URL()
             move(-1)
          return tab(1)
       }
+   end
+
+   #
+   # Return the file, but excluding any query part.
+   #
+   public get_path()
+      return self.file ? tab(upto('?') | 0)
+   end
+
+   #
+   # Return the query part of the file, or fail if there is no query.
+   #
+   public get_query()
+      return self.file ? (tab(upto('?') + 1), tab(0))
    end
 
    #
