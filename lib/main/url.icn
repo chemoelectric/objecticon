@@ -24,6 +24,16 @@ class URL()
       port
 
    #
+   # Return the default port for the given protocol
+   #
+   public static get_default_port(protocol)
+      return case protocol of {
+         "http": 80
+         "https": 443
+      }
+   end
+
+   #
    # Set the protocol field.
    #
    public set_protocol(x)
@@ -114,8 +124,12 @@ class URL()
          s := "file://"
          s ||:= "localhost" ~== self.address 
          s ||:= self.file
-      } else
-         s := self.protocol || "://" || self.address || ":" || self.port || self.file
+      } else {
+         s := self.protocol || "://" || self.address
+         if not(port = get_default_port(protocol)) then
+            s ||:= ":" || self.port
+         s ||:= self.file
+      }
       s ||:= "#" || \self.ref
       return s
    end
@@ -166,14 +180,10 @@ class URL()
             address := tab(upto(':/') | 0)
             if *address = 0 then
                return error("No address")
-            if =":" then {
-               port := integer(tab(many(&digits))) | return error("Bad port")
-            } else if protocol == "http" then
-               port := 80
-            else if protocol == "https" then
-               port := 443
-            else
-               return error("Port required")
+            port := if =":" then
+               integer(tab(many(&digits))) | return error("Bad port")
+            else 
+               get_default_port(protocol) | return error("Port required")
 
             if pos(0) then
                file := "/"
