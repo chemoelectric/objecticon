@@ -202,7 +202,7 @@ class URL()
             s := (self.file ? tab(upto('?') | 0)) || s
          else if s[1] ~== "/" then
             # eg http://a/b/c?d + e -> http://a/b/e
-            s := strip_dot_dirs(get_file_dir() || s)
+            s ?:= strip_dot_dirs(get_file_dir() || tab(upto('?') | 0)) || tab(0)
 
          s ? {
             new_file := tab(upto('#') | 0)
@@ -333,28 +333,25 @@ class URL()
    private static rmdir(s, i)
       while s[i - 1] ~== "/" do
          i -:= 1
-      return i
+      # Never remove the root /
+      return 1 < i
    end
 
    #
    # Remove the dotted dirs from a file path, eg "/a/b/c/../g"->"/a/b/g"
    #
    public static strip_dot_dirs(s)
-      local i, q
-      s ? {
-         s := tab(upto('?') | 0)
-         q := tab(0)
-      }
+      local i
       while i := find("/.", s) do {
          if s[i+:4] == "/../" then
-            s[rmdir(s, i):i + 4] := ""
+            (s[rmdir(s, i):i + 4] := "") | break
          else if s[i:0] == "/.." then
-            s[rmdir(s, i):0] := ""
+            (s[rmdir(s, i):0] := "") | break
          else if s[i+:3] == "/./" then
             s[i+:3] := "/"
          else if s[i:0] == "/." then
             s[i:0] := "/"
       }
-      return s || q
+      return s
    end
 end
