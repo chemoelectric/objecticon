@@ -989,6 +989,11 @@ class EditableTextList(LineBasedScrollArea)
       }
    end
 
+   public shift(dx, dy)
+      cast(self,LineBasedScrollArea).shift(dx, dy)
+      self.tx +:= dx
+   end
+
    public cursor_tick()
       local t
       repeat {

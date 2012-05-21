@@ -132,6 +132,11 @@ class Border(Component)
       content.layout()
    end
 
+   public shift(dx, dy)
+      cast(self,Component).shift(dx, dy)
+      y0 +:= dy
+   end
+
    public new()
       cast(self,Component).new()
       self.internal_align := Align.L

@@ -523,6 +523,19 @@ class ScrollBar(Component)
       reconfigure()
    end
 
+   public shift(dx, dy)
+      cast(self,Component).shift(dx, dy)
+      if /self.is_horizontal_flag then {
+         self.bar_pos +:= dy
+         self.bar_area_pos +:= dy
+      } else {
+         self.bar_pos +:= dx
+         self.bar_area_pos +:= dx
+      }
+      self.bar_area.bar_x +:= dx
+      self.bar_area.bar_y +:= dy
+   end
+
    public finally()
       repeat_ticker.stop()
       cast(self,Component).finally()

@@ -137,6 +137,11 @@ class TableColumn(TextButton)
       self.tw := self.w - border.get_total_width()
    end
 
+   public shift(dx, dy)
+      cast(self,TextButton).shift(dx, dy)
+      self.tx +:= dx
+   end
+
    #
    # Draw an individual cell for this column.  By default, string
    # data is drawn.

@@ -660,6 +660,13 @@ class TabSet(Component)
       }
    end
 
+   public shift(dx, dy)
+      local c
+      cast(self,Component).shift(dx, dy)
+       every c := !self.children do
+          c.tab_x +:= dx
+   end
+
    public new()
       cast(self,Component).new()
       self.accepts_focus_flag := 1

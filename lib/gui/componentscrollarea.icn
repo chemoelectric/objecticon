@@ -25,6 +25,11 @@ class ComponentScrollAreaView(Component)
       inner_h := inner.get_preferred_height()
    end
 
+   public scrolled()
+      inner.shift(self.x - parent.get_area_x() - inner.x,
+                  self.y - parent.get_area_y() - inner.y)
+   end
+
    public layout()
       inner.x := self.x - parent.get_area_x()
       inner.y := self.y - parent.get_area_y()
@@ -105,14 +110,9 @@ class ComponentScrollArea(ScrollArea)
       return 10
    end
 
-   public on_vsb(ev)
-      self.refresh()
-      view.layout()
-   end
-
-   public on_hsb(ev)
-      self.refresh()
-      view.layout()
+   public refresh()
+      view.scrolled()
+      view.invalidate()
    end
 
    public create_view()

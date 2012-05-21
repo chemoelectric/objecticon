@@ -875,6 +875,12 @@ class Component(Rect,Align,Connectable)
       every (!children).layout()
    end
 
+   public shift(dx, dy)
+      self.x +:= dx
+      self.y +:= dy
+      every (!children).shift(dx, dy)
+   end
+
    public reset_all_layouts()
       (\layout_delegate).reset()
       every (!self.children).reset_all_layouts()
