@@ -27,7 +27,7 @@ class URL()
    # Return the default port for the given protocol
    #
    public static get_default_port(protocol)
-      return case protocol of {
+      return case string(protocol) of {
          "http": 80
          "https": 443
       }
@@ -120,16 +120,15 @@ class URL()
    #
    public str()
       local s
-      if self.protocol == "file" then {
-         s := "file://"
+      s := self.protocol || "://"
+      if self.protocol == "file" then
          s ||:= "localhost" ~== self.address 
-         s ||:= self.file
-      } else {
-         s := self.protocol || "://" || self.address
+      else {
+         s ||:= self.address
          if not(port = get_default_port(protocol)) then
             s ||:= ":" || self.port
-         s ||:= self.file
       }
+      s ||:= self.file
       s ||:= "#" || \self.ref
       return s
    end
