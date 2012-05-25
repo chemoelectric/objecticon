@@ -22,7 +22,7 @@ class ComponentScrollAreaView(Component)
       # Set here so we can call set_ideal_size on the parent, in the dialog's 
       # initially method.
       inner_w := inner.get_preferred_width()
-      inner_h := inner.get_preferred_height()
+      inner_h := inner.get_preferred_height(inner_w)
    end
 
    public scrolled()
@@ -40,7 +40,7 @@ class ComponentScrollAreaView(Component)
 
    public size_inner()
       inner_w := max(inner.get_preferred_width(), parent.predict_view_width(parent.w, parent.vsb))
-      inner_h := max(inner.get_preferred_height(), parent.predict_view_height(parent.h, parent.hsb))
+      inner_h := max(inner.get_preferred_height(inner_w), parent.predict_view_height(parent.h, parent.hsb))
       parent.invalidate_subject_width()
       parent.invalidate_subject_height()
    end

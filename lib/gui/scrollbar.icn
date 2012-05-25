@@ -478,9 +478,9 @@ class ScrollBar(Component)
          b1.x := self.x + border.get_l_inset()
          b1.y := self.y + border.get_t_inset()
          b1.w := self.w - border.get_total_width()
-         b1.h := max(DEFAULT_INNER_SIZE, b1.get_preferred_height())
+         b1.h := max(DEFAULT_INNER_SIZE, b1.get_preferred_height(b1.w))
          b2.x := b1.x 
-         b2.h := max(DEFAULT_INNER_SIZE, b2.get_preferred_height())
+         b2.h := max(DEFAULT_INNER_SIZE, b2.get_preferred_height(b1.w))
          b2.y := self.y + self.h - b2.h - border.get_b_inset()
          b2.w := b1.w
 

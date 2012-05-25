@@ -354,7 +354,7 @@ class Canvas(Component,SelectiveObjectCodec)
       component_save(self.selected)
    end
 
-   public reset_layout()
+   public do_reset_all_layouts()
       self.reset_all_layouts()
       self.synch_size()
       self.update_pos_label()
@@ -379,7 +379,7 @@ class Canvas(Component,SelectiveObjectCodec)
       c.initially()
       c.unique_name()
       self.set_modified()
-      self.reset_layout()
+      self.do_reset_all_layouts()
    end
 
    #
@@ -441,7 +441,7 @@ class Canvas(Component,SelectiveObjectCodec)
       c.initially()
       c.unique_name()
       self.set_modified()
-      self.reset_layout()
+      self.do_reset_all_layouts()
    end
 
    #
@@ -461,7 +461,7 @@ class Canvas(Component,SelectiveObjectCodec)
       }
 
       self.set_modified()
-      self.reset_layout()
+      self.do_reset_all_layouts()
    end
 
    #
@@ -481,7 +481,7 @@ class Canvas(Component,SelectiveObjectCodec)
       }
 
       self.set_modified()
-      self.reset_layout()
+      self.do_reset_all_layouts()
    end
 
    #
@@ -501,7 +501,7 @@ class Canvas(Component,SelectiveObjectCodec)
       }
 
       self.set_modified()
-      self.reset_layout()
+      self.do_reset_all_layouts()
    end
 
    #
@@ -521,7 +521,7 @@ class Canvas(Component,SelectiveObjectCodec)
       }
 
       self.set_modified()
-      self.reset_layout()
+      self.do_reset_all_layouts()
    end
 
    #
@@ -540,7 +540,7 @@ class Canvas(Component,SelectiveObjectCodec)
       }
 
       self.set_modified()
-      self.reset_layout()
+      self.do_reset_all_layouts()
    end
 
    #
@@ -559,7 +559,7 @@ class Canvas(Component,SelectiveObjectCodec)
       }
 
       self.set_modified()
-      self.reset_layout()
+      self.do_reset_all_layouts()
    end
 
    #
@@ -581,7 +581,7 @@ class Canvas(Component,SelectiveObjectCodec)
       }
 
       self.set_modified()
-      self.reset_layout()
+      self.do_reset_all_layouts()
    end
 
    #
@@ -603,7 +603,7 @@ class Canvas(Component,SelectiveObjectCodec)
          y1 +:= e.h
       }
       self.set_modified()
-      self.reset_layout()
+      self.do_reset_all_layouts()
    end
 
    #
@@ -621,7 +621,7 @@ class Canvas(Component,SelectiveObjectCodec)
       }
 
       self.set_modified()
-      self.reset_layout()
+      self.do_reset_all_layouts()
    end
 
    public duplicate_component(cc)
@@ -643,7 +643,7 @@ class Canvas(Component,SelectiveObjectCodec)
       c.initially()
       self.set_modified()
       copy_count +:= 1
-      self.reset_layout()
+      self.do_reset_all_layouts()
    end
 
    #
@@ -716,21 +716,21 @@ class Canvas(Component,SelectiveObjectCodec)
       }
 
       self.set_modified()
-      self.reset_layout()
+      self.do_reset_all_layouts()
    end
 
    public op_set_constraint(obj, name, val)
       push_undo()
       obj.set_constraint(name, val)
       self.set_modified()
-      self.reset_layout()
+      self.do_reset_all_layouts()
    end
 
    public op_remove_constraint(obj, name)
       push_undo()
       obj.remove_constraint(name)
       self.set_modified()
-      self.reset_layout()
+      self.do_reset_all_layouts()
    end
 
    #
@@ -752,7 +752,7 @@ class Canvas(Component,SelectiveObjectCodec)
             put(selected.parent.children, e)
       }
       self.set_modified()
-      self.reset_layout()
+      self.do_reset_all_layouts()
    end
 
    #
@@ -770,7 +770,7 @@ class Canvas(Component,SelectiveObjectCodec)
       else
          p.add(selected, i - 1)
       self.set_modified()
-      self.reset_layout()
+      self.do_reset_all_layouts()
    end
 
    #
@@ -788,7 +788,7 @@ class Canvas(Component,SelectiveObjectCodec)
       else
          p.add(selected, i + 1)
       self.set_modified()
-      self.reset_layout()
+      self.do_reset_all_layouts()
    end
 
    #
@@ -1100,7 +1100,7 @@ class Canvas(Component,SelectiveObjectCodec)
       t.close()
 
       # Now resize everything, as fonts etc may now be different.
-      reset_layout()
+      do_reset_all_layouts()
    end
 
    # The children don't draw into a Clone of self.cbwin, but rather a different buffer.  This
@@ -1304,7 +1304,7 @@ class Canvas(Component,SelectiveObjectCodec)
          cc.parent.remove(cc)
          new_parent.add(cc)            
       }
-      self.reset_layout()
+      self.do_reset_all_layouts()
       # Some of the things dragged may have become hidden/unhidden
       self.hidden_change()
       self.set_modified()
@@ -1356,7 +1356,7 @@ class Canvas(Component,SelectiveObjectCodec)
       #
       # Redisplay canvas & label
       #
-      self.reset_layout()
+      self.do_reset_all_layouts()
       self.set_modified()
    end
 
@@ -1742,7 +1742,7 @@ class Canvas(Component,SelectiveObjectCodec)
       #
       # As we may have changed the size of the objects, we must re-display whole.
       #
-      self.reset_layout()
+      self.do_reset_all_layouts()
    end
 
    #
@@ -1815,7 +1815,7 @@ class Canvas(Component,SelectiveObjectCodec)
       #
       # Re-display.
       #
-      self.reset_layout()
+      self.do_reset_all_layouts()
    end
 
    #
@@ -1849,7 +1849,7 @@ class Canvas(Component,SelectiveObjectCodec)
       #
       # Re-display.
       #
-      self.reset_layout()
+      self.do_reset_all_layouts()
    end
 
    public op_dialog()

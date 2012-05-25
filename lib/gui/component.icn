@@ -838,8 +838,12 @@ class Component(Rect,Align,Connectable)
       return integer(self.w_spec) | get_default_width() | (\layout_delegate).get_preferred_width() | runerr("width must be specified")
    end
 
-   public get_preferred_height()
-      return integer(self.h_spec) | get_default_height() | (\layout_delegate).get_preferred_height() | runerr("height must be specified")
+   public get_preferred_height(pw)
+      local i
+      if i := integer(self.h_spec) then
+         return i
+      /pw := get_preferred_width()
+      return get_default_height(pw) | (\layout_delegate).get_preferred_height(pw) | runerr("height must be specified")
    end
 
    #
@@ -882,15 +886,19 @@ class Component(Rect,Align,Connectable)
    end
 
    public reset_all_layouts()
-      (\layout_delegate).reset()
+      reset_layout()
       every (!self.children).reset_all_layouts()
+   end
+
+   public reset_layout()
+      (\layout_delegate).reset()
    end
 
    public reset_layout_chain()
       local c
       c := self
       while \c do {
-         (\c.layout_delegate).reset()
+         c.reset_layout()
          c := c.parent
       }
    end

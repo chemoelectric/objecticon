@@ -486,13 +486,16 @@ class TabSet(Component)
       return mw
    end
 
-   public get_default_height()
+   public get_default_height(dw)
       local c, mh
+
+      # Our border's width
+      dw -:= border.get_total_width()
 
       # Max height of tab contents.
       mh := 0
       every c := !self.children do
-         mh <:= c.get_preferred_height()
+         mh <:= c.get_preferred_height(dw)
 
       # The top and bottom borders.
       mh +:= border.get_total_height()

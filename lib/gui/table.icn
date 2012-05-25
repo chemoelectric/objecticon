@@ -383,23 +383,24 @@ class Table(Component)
    end
 
    public layout()
-      local hh
+      local hw, hh
 
       if /no_more_sizing then
          size_columns()
 
-      hh := self.table_header.get_preferred_height()
+      hw := self.w - border.get_total_width()
+      hh := self.table_header.get_preferred_height(hw)
 
       # The 2 * Gui.BORDER_WIDTH is the decoration between the header and the content.
       self.table_content.x := self.x + border.get_l_inset()
       self.table_content.y := self.y + hh + border.get_t_inset() + 2 * Gui.BORDER_WIDTH
-      self.table_content.w := self.w - border.get_total_width()
+      self.table_content.w := hw
       self.table_content.h := self.h - hh - border.get_total_height() - 2 * Gui.BORDER_WIDTH
       self.table_content.layout()
 
       self.table_header.x := self.x + border.get_l_inset()
       self.table_header.y := self.y + border.get_t_inset()
-      self.table_header.w := self.w - border.get_total_width()
+      self.table_header.w := hw
       self.table_header.h := hh
       self.table_header.layout()
    end

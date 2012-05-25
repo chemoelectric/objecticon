@@ -61,7 +61,7 @@ class Frame(Component)
       bar.x := self.x + border.get_l_inset()
       bar.y := self.y + border.get_t_inset()
       bar.w := self.w - border.get_total_width()
-      bar.h := bar.get_preferred_height()
+      bar.h := bar.get_preferred_height(bar.w)
       content.x := bar.x
       content.y := bar.y + bar.h
       content.w := bar.w
@@ -73,8 +73,9 @@ class Frame(Component)
       return border.get_total_width() + max(bar.get_preferred_width(), content.get_preferred_width())
    end
 
-   public get_default_height()
-      return border.get_total_height() + bar.get_preferred_height() + content.get_preferred_height()
+   public get_default_height(dw)
+      dw -:= border.get_total_width()
+      return border.get_total_height() + bar.get_preferred_height(dw) + content.get_preferred_height(dw)
    end
 
    public get_pointer(e)
