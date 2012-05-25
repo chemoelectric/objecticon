@@ -915,12 +915,11 @@ class Component(Rect,Align,Connectable)
       \self.x_spec | runerr("x position unspecified")
       \self.y_spec | runerr("y position unspecified")
 
-      wspec := \self.w_spec | get_preferred_width()
-      hspec := \self.h_spec | get_preferred_height()
-
       self.x := parent.x + parse_pos(parent.w, self.x_spec) | runerr("invalid x position specification", self.x_spec)
       self.y := parent.y + parse_pos(parent.h, self.y_spec) | runerr("invalid y position specification", self.y_spec)
+      wspec := \self.w_spec | get_preferred_width()
       self.w := parse_pos(parent.w, wspec) | runerr("invalid width specification", wspec)
+      hspec := \self.h_spec | get_preferred_height(self.w)
       self.h := parse_pos(parent.h, hspec) | runerr("invalid height specification", hspec)
 
       #

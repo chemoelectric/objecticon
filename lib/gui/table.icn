@@ -368,9 +368,10 @@ class Table(Component)
       l[-1].w_spec := max(av - dw * (*l - 1), TableColumn.MIN_COLUMN_WIDTH)
    end
 
-   public get_default_height()
-      return self.table_header.get_default_height() + 2 * Gui.BORDER_WIDTH + 
-         self.table_content.get_default_height() + border.get_total_height()
+   public get_default_height(dw)
+      dw -:= border.get_total_width()
+      return self.table_header.get_preferred_height(dw) + 2 * Gui.BORDER_WIDTH + 
+         self.table_content.get_preferred_height(dw) + border.get_total_height()
    end
 
    public get_default_width()
