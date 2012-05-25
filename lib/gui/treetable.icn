@@ -97,8 +97,7 @@ class TreeTableContent(Tree)
 
    # Synch buttons because of the horizontal movement.
    public synch_header()
-      parent.table_header.layout()
-      parent.table_header.invalidate()
+      parent.table_header.synch_with_content()
    end
 
    public get_column(n)

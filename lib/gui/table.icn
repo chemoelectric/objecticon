@@ -49,8 +49,7 @@ class TableContent(SelectableScrollArea)
 
    # Synch buttons because of the horizontal movement.
    public synch_header()
-      parent.table_header.layout()
-      parent.table_header.invalidate()
+      parent.table_header.synch_with_content()
    end
 
    public on_hsb()
@@ -127,9 +126,15 @@ class TableHeader(Component)
       return hh
    end
 
+   public synch_with_content()
+      local dx
+      dx := self.x - parent.table_content.get_area_x() - children[1].x
+      every (!self.children).shift(dx, 0)
+      invalidate()
+   end
+
    public layout()
       local i, b
-
       i := self.x - parent.table_content.get_area_x()
       every b := !self.children do {
          b.x := i
