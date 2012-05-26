@@ -1004,10 +1004,10 @@ class HttpClient(NetClient)
    end
 
    #
-   # Return the number of bytes read so far.
+   # Return the number of bytes read so far, or fail if request has not begun to read
    #
    public get_read()
-      return self.read
+      return \self.read
    end
 
    private add_some(s)
