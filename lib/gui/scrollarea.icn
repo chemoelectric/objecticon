@@ -67,12 +67,20 @@ class ScrollArea(Component)
       self.invalidate()
    end
 
-   public get_default_height()
-      return get_subject_height() + border.get_total_height()
+   public get_default_height(dw)
+      return get_default_subject_height(dw -border.get_total_width()) + border.get_total_height()
    end
 
    public get_default_width()
-      return get_subject_width() + border.get_total_width()
+      return get_default_subject_width() + border.get_total_width()
+   end
+
+   public get_default_subject_height()
+      return get_subject_height() 
+   end
+
+   public get_default_subject_width()
+      return get_subject_width()
    end
 
    public layout()
@@ -204,16 +212,25 @@ class ScrollArea(Component)
    # dimensions.
    #
    public set_ideal_size(min_w, max_w, min_h, max_h)
-      local max_th, max_tw, min_th, min_tw, need_vsb, need_hsb
+      local max_th, max_tw, min_th, min_tw, need_vsb, need_hsb, pw, ph
+
+      # Calculate the preferred view size; don't call
+      # get_subject_width()/get_subject_height() since
+      # get_default_width()/get_default_height() may have been
+      # overridden.
+      pw := get_preferred_width()
+      ph := get_preferred_height(pw)
+      pw := predict_view_width(pw)
+      ph := predict_view_height(ph)
 
       if /max_w then
          need_hsb := 0
       else {
          max_tw := predict_view_width(max_w)
          min_tw := predict_view_width(max_w, 1)
-         if min_tw >= get_subject_width() then
+         if min_tw >= pw then
             need_hsb := 0
-         else if max_tw >= get_subject_width() then
+         else if max_tw >= pw then
             need_hsb := 1
          else
             need_hsb := 2
@@ -224,9 +241,9 @@ class ScrollArea(Component)
       else {
          max_th := predict_view_height(max_h)
          min_th := predict_view_height(max_h, 1)
-         if min_th >= get_subject_height() then
+         if min_th >= ph then
             need_vsb := 0
-         else if max_th >= get_subject_height() then
+         else if max_th >= ph then
             need_vsb := 1
          else
             need_vsb := 2
@@ -240,19 +257,19 @@ class ScrollArea(Component)
       if (need_vsb < 2) & (need_hsb < 2) then {
          # sw <= pvw(max_w,1)
          # w_spec = ptw(sw) <= ptw(pvw(max_w,1)) < ptw(pvw(max_w,1),1) = max_w
-         w_spec := predict_total_width(get_subject_width())
-         h_spec := predict_total_height(get_subject_height())
+         w_spec := predict_total_width(pw)
+         h_spec := predict_total_height(ph)
       } else if (need_hsb + need_vsb > 2) then {
          w_spec := max_w
          h_spec := max_h
       } else if (need_hsb = 0) & (need_vsb = 2) then {
          # sw <= pvw(max_w,1) (since need_hsb=0)
          # w_spec = ptw(sw,1) <= ptw(pvw(max_w,1),1) = max_w
-         w_spec := predict_total_width(get_subject_width(), 1)
+         w_spec := predict_total_width(pw, 1)
          h_spec := max_h
       } else if (need_hsb = 2) & (need_vsb = 0) then {
          w_spec := max_w
-         h_spec := predict_total_height(get_subject_height(), 1)
+         h_spec := predict_total_height(ph, 1)
       }
 
       w_spec <:= \min_w

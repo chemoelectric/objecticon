@@ -18,11 +18,51 @@ class TextDisplay(LineBasedScrollArea)
       contents, 
       wrap_mode,
       split_words_flag,
-      view_list, 
+      view_list,
+      view_list_split_width,
       long_line,
       line_splitter,
-      last_width_wrap_width,
+      last_split,
       tab_width
+
+   public get_split(sw)
+      local s, i, pos, j, p, l, ll, v
+
+      if \last_split &
+         (/wrap_mode | wrap_mode ~== "width" | last_split.width === sw) then
+         return last_split
+
+      l := []
+      every i := 1 to *self.contents do {
+         pos := 1
+         s := self.contents[i]
+         every j := line_splitter.split(s, sw) do {
+            p := s[pos:j]
+            put(l, ViewLine(i, p, pos, j - 1, 
+                            text_width_ex(view.cbwin, p,,, self.tab_width)))
+            pos := j
+         }
+         l[-1].last +:= 1
+      }
+      ll := l[1] | &null
+      every v := !l do {
+         if v.tw > ll.tw then
+            ll := v
+      }
+      return last_split := TextSplit(sw, l, ll)
+  end
+
+   public get_default_subject_height(dw)
+      local spl
+      spl := get_split(dw  - 2 * Gui.TEXT_INSET)
+      return view.cbwin.get_font_height() * *spl.lines
+   end
+
+   public get_default_subject_width()
+      local spl
+      spl := get_split()
+      return 2 * Gui.TEXT_INSET + ((\spl.long_line).tw | 0)
+   end
 
    public calculate_line_count()
       if /view_list then
@@ -60,7 +100,7 @@ class TextDisplay(LineBasedScrollArea)
    public finally()
       cast(self,LineBasedScrollArea).finally()
       # In case the component changes the contents and is then re-inited.
-      clear_view_list()
+      clear_split_list()
    end
 
    #
@@ -68,7 +108,7 @@ class TextDisplay(LineBasedScrollArea)
    # set with {set_contents()}, has changed.
    #
    public contents_changed()
-      clear_view_list()
+      clear_split_list()
       compute_and_invalidate()
    end
 
@@ -76,6 +116,11 @@ class TextDisplay(LineBasedScrollArea)
    # Clear the view list, forcing it to be re-created next
    # time it's needed.
    # 
+   private clear_split_list()
+      last_split := &null
+      clear_view_list()
+   end
+
    private clear_view_list()
       view_list := long_line := &null
       invalidate_subject_width()
@@ -128,7 +173,7 @@ class TextDisplay(LineBasedScrollArea)
       every i := index to index + add - 1 do {
          pos := 1
          s := self.contents[i]
-         every j := line_splitter.split(s) do {
+         every j := line_splitter.split(s, view_list_split_width) do {
             p := s[pos:j]
             v := ViewLine(i, p, pos, j - 1, text_width_ex(view.cbwin, p,,, self.tab_width))
             insert(view_list, vi, v)
@@ -145,6 +190,9 @@ class TextDisplay(LineBasedScrollArea)
       #
       if del ~= add then
          every view_list[vi to *view_list].index +:= (add - del)
+
+      # Clear the cached split
+      last_split := &null
    end
 
    #
@@ -199,21 +247,11 @@ class TextDisplay(LineBasedScrollArea)
    # Create the view_list from the contents.
    # 
    private create_view_list()
-      local s, i, pos, j, p
-
-      view_list := []
-      every i := 1 to *self.contents do {
-         pos := 1
-         s := self.contents[i]
-         every j := line_splitter.split(s) do {
-            p := s[pos:j]
-            put(view_list, ViewLine(i, p, pos, j - 1, 
-                                    text_width_ex(view.cbwin, p,,, self.tab_width)))
-            pos := j
-         }
-         view_list[-1].last +:= 1
-      }
-      find_long_line()
+      local spl
+      spl := get_split(predict_view_width(w, vsb) - 2 * Gui.TEXT_INSET)
+      view_list := spl.lines
+      view_list_split_width := spl.width
+      long_line := spl.long_line
    end
 
    #
@@ -241,7 +279,7 @@ class TextDisplay(LineBasedScrollArea)
       had_vsb := self.vsb
       cast(self,LineBasedScrollArea).set_internal_fields()
       if \wrap_mode == "width" & had_vsb ~=== self.vsb then {
-         clear_view_list()
+         clear_split_list()
          set_internal_fields()
       }
    end
@@ -252,14 +290,14 @@ class TextDisplay(LineBasedScrollArea)
    public set_tab_width(n)
       self.tab_width := n
       if is_live() then {
-         clear_view_list()
+         clear_split_list()
          compute_and_invalidate()
       }
       return self
    end
 
    public layout()
-      if \wrap_mode == "width" & last_width_wrap_width ~=== line_splitter.get_split_width() then
+      if \wrap_mode == "width" then
          clear_view_list()
       cast(self,ScrollArea).layout()
    end
@@ -287,7 +325,7 @@ class TextDisplay(LineBasedScrollArea)
          runerr("Bad wrap mode", s)
 
       if is_live() then {
-         clear_view_list()
+         clear_split_list()
          compute_and_invalidate()
       }
       return self
@@ -299,7 +337,7 @@ class TextDisplay(LineBasedScrollArea)
    public set_split_words(s)
       self.split_words_flag := check_flag(s)
       if is_live() then {
-         clear_view_list()
+         clear_split_list()
          compute_and_invalidate()
       }
       return self

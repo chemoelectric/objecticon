@@ -44,11 +44,12 @@ class EditableTextList(LineBasedScrollArea)
       old_has_region,
       old_region,
       view_list,
+      view_list_split_width,
       tab_width,
       wrap_mode,
       split_words_flag,
       line_splitter,
-      last_width_wrap_width,
+      last_split,
       changed,
       primary_selection_owner,
       clipboard_selection_owner,
@@ -58,6 +59,45 @@ class EditableTextList(LineBasedScrollArea)
       cursor_on,
       tx,
       tw
+
+   public get_split(sw)
+      local s, i, pos, j, p, l, ll, v
+
+      if \last_split &
+         (/wrap_mode | wrap_mode ~== "width" | last_split.width === sw) then
+         return last_split
+
+      l := []
+      every i := 1 to *self.contents do {
+         pos := 1
+         s := self.contents[i]
+         every j := line_splitter.split(s, sw) do {
+            p := s[pos:j]
+            put(l, ViewLine(i, p, pos, j - 1, 
+                            text_width_ex(view.cbwin, p,,, self.tab_width)))
+            pos := j
+         }
+         l[-1].last +:= 1
+      }
+      ll := l[1] | &null
+      every v := !l do {
+         if v.tw > ll.tw then
+            ll := v
+      }
+      return last_split := TextSplit(sw, l, ll)
+  end
+
+   public get_default_subject_height(dw)
+      local spl
+      spl := get_split(dw  - 2 * Gui.TEXT_INSET)
+      return view.cbwin.get_font_height() * *spl.lines
+   end
+
+   public get_default_subject_width()
+      local spl
+      spl := get_split()
+      return 2 * Gui.TEXT_INSET + ((\spl.long_line).tw | 0)
+   end
 
    public calculate_line_count()
       if /view_list then
@@ -79,7 +119,7 @@ class EditableTextList(LineBasedScrollArea)
       cursor_ticker.stop()
       cast(self,LineBasedScrollArea).finally()
       # In case the component changes the contents and is then re-inited.
-      clear_view_list()
+      clear_split_list()
    end
 
    #
@@ -131,7 +171,7 @@ class EditableTextList(LineBasedScrollArea)
          runerr("Contents of EditableTextList must be all string or all ucs")
 
       if is_live() then {
-         clear_view_list()
+         clear_split_list()
          clear_mark()
          ensure_valid_cursor()
          compute_and_invalidate()
@@ -971,7 +1011,7 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public layout()
-      if \wrap_mode == "width" & last_width_wrap_width ~=== line_splitter.get_split_width() then
+      if \wrap_mode == "width" then
          clear_view_list()
       cast(self,ScrollArea).layout()
       self.constrain_line()
@@ -984,7 +1024,7 @@ class EditableTextList(LineBasedScrollArea)
       self.tx := self.view.x + Gui.TEXT_INSET
       self.tw := self.view.w - 2 * Gui.TEXT_INSET
       if \wrap_mode == "width" & had_vsb ~=== self.vsb then {
-         clear_view_list()
+         clear_split_list()
          set_internal_fields()
       }
    end
@@ -1144,28 +1184,22 @@ class EditableTextList(LineBasedScrollArea)
    # Create the view_list from the contents.
    # 
    private create_view_list()
-      local s, i, pos, j, p
-
-      view_list := []
-      every i := 1 to *self.contents do {
-         pos := 1
-         s := self.contents[i]
-         every j := line_splitter.split(s) do {
-            p := s[pos:j]
-            put(view_list, ViewLine(i, p, pos, j - 1, 
-                                    text_width_ex(view.cbwin, p,,, self.tab_width)))
-            pos := j
-         }
-         view_list[-1].last +:= 1
-      }
-
-      find_long_line()
+      local spl
+      spl := get_split(predict_view_width(w, vsb) - 2 * Gui.TEXT_INSET)
+      view_list := spl.lines
+      view_list_split_width := spl.width
+      long_line := spl.long_line
    end
 
    #
    # Clear the view list, forcing it to be re-created next
    # time it's needed.
    # 
+   private clear_split_list()
+      last_split := &null
+      clear_view_list()
+   end
+
    private clear_view_list()
       view_list := long_line := &null
       invalidate_subject_width()
@@ -1218,7 +1252,7 @@ class EditableTextList(LineBasedScrollArea)
       every i := index to index + add - 1 do {
          pos := 1
          s := self.contents[i]
-         every j := line_splitter.split(s) do {
+         every j := line_splitter.split(s, view_list_split_width) do {
             p := s[pos:j]
             v := ViewLine(i, p, pos, j - 1, text_width_ex(view.cbwin, p,,, self.tab_width))
             insert(view_list, vi, v)
@@ -1235,6 +1269,9 @@ class EditableTextList(LineBasedScrollArea)
       #
       if del ~= add then
          every view_list[vi to *view_list].index +:= (add - del)
+ 
+     # Clear the cached split
+      last_split := &null
    end
 
    #
@@ -1260,7 +1297,7 @@ class EditableTextList(LineBasedScrollArea)
          runerr("Bad wrap mode", s)
 
       if is_live() then {
-         clear_view_list()
+         clear_split_list()
          compute_and_invalidate()
          constrain_line()
       }
@@ -1273,7 +1310,7 @@ class EditableTextList(LineBasedScrollArea)
    public set_split_words(s)
       self.split_words_flag := check_flag(s)
       if is_live() then {
-         clear_view_list()
+         clear_split_list()
          compute_and_invalidate()
          constrain_line()
       }
@@ -1286,7 +1323,7 @@ class EditableTextList(LineBasedScrollArea)
    public set_tab_width(n)
       self.tab_width := n
       if is_live() then {
-         clear_view_list()
+         clear_split_list()
          compute_and_invalidate()
          constrain_line()
       }
@@ -1368,6 +1405,20 @@ class ViewLine()
       self.first := first
       self.last := last
       self.tw := tw
+      return
+   end
+end
+
+class TextSplit()
+   public const 
+      width, 
+      lines, 
+      long_line
+
+   public new(width, lines, long_line)
+      self.width := width
+      self.lines := lines
+      self.long_line := long_line
       return
    end
 end
@@ -1747,18 +1798,9 @@ class DefaultLineSplitter(LineSplitter)
 end
 
 class WidthLineSplitter(LineSplitter)
-   public get_split_width()
-      # This allows calculation of a default height given an integer width spec.
-      return if parent.is_live() then
-         parent.predict_view_width(parent.w, parent.vsb) - 2 * Gui.TEXT_INSET
-      else
-         parent.predict_view_width(integer(parent.w_spec)) - 2 * Gui.TEXT_INSET | 
-             runerr("Need integer w_spec with width wrap mode")
-   end
-
-   public split(s)
-      local ch, ds, p, width
-      parent.last_width_wrap_width := width := get_split_width()
+   public split(s, width)
+      local ch, ds, p
+      \width | runerr("Need to specify width with 'width' wrap mode")
       ds := ""
       s ? {
          while ch := move(1) do {

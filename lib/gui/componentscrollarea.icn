@@ -19,10 +19,6 @@ class ComponentScrollAreaView(Component)
    public initially()
       \self.inner | runerr("no inner component specified")
       cast(self,Component).initially()
-      # Set here so we can call set_ideal_size on the parent, in the dialog's 
-      # initially method.
-      inner_w := inner.get_preferred_width()
-      inner_h := inner.get_preferred_height(inner_w)
    end
 
    public scrolled()
@@ -41,8 +37,6 @@ class ComponentScrollAreaView(Component)
    public size_inner()
       inner_w := max(inner.get_preferred_width(), parent.predict_view_width(parent.w, parent.vsb))
       inner_h := max(inner.get_preferred_height(inner_w), parent.predict_view_height(parent.h, parent.hsb))
-      parent.invalidate_subject_width()
-      parent.invalidate_subject_height()
    end
 
    public set_inner(inner)
@@ -88,10 +82,20 @@ class ComponentScrollArea(ScrollArea)
          if \reset_layouts_on_size_inner_flag then
             reset_all_layouts()
          view.size_inner()
+         invalidate_subject_width()
+         invalidate_subject_height()
          cast(self,ScrollArea).layout()
          if i > 0 & ((self.hsb === t1 & self.vsb === t2) | (\self.hsb & \self.vsb)) then
             break
       }
+   end
+
+   public get_default_subject_height(dw)
+      return view.inner.get_preferred_height(dw)
+   end
+
+   public get_default_subject_width()
+      return view.inner.get_preferred_width()
    end
 
    public calculate_subject_width()

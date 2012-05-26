@@ -1,7 +1,7 @@
 package gui
 
 import 
-   util, ipl.graphics
+   util, ipl.graphics, io
 
 class GridLayout(Layout)
    public 
@@ -57,10 +57,14 @@ class GridLayout(Layout)
      local i, adj
      every i := !g.info do {
         if i.pw ~= i.aw then {
+           if \debug then
+              writes("Adjusting cell ", i.s, " from pw,ph=", i.pw, ",", i.ph)
            i.pw := i.aw
            i.dw := i.pw + i.l_inset + i.r_inset
            i.ph := i.obj.get_preferred_height(i.aw)
            i.dh := i.ph + i.t_inset + i.b_inset
+            if \debug then
+              write(" to ", i.pw, ",", i.ph)
            adj := 1
         }
      }
