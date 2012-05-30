@@ -383,6 +383,8 @@ class URL()
             s[i+:3] := "/"
          else if s[i:0] == "/." then
             s[i:0] := "/"
+         else
+            break
       }
       return s
    end
