@@ -113,6 +113,11 @@ class CheckBox(Button)
       self.tw := self.w - self.unchecked_paint.w - Gui.X_INSET - Gui.TEXT_INSET
    end
 
+   public shift(dx, dy)
+      cast(self,Button).shift(dx, dy)
+      tx +:= dx
+   end
+
    public visualize_action(e)
       # For a checkbox, visualizing a keyboard action introduces a
       # slight delay and has no real advantage; so we just call

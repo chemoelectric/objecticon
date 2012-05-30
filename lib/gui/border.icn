@@ -89,12 +89,13 @@ class Border(Component)
       return border.get_total_width() + content.get_preferred_width()
    end
 
-   public get_default_height()
+   public get_default_height(dw)
+      dw -:= border.get_total_width()
       if \title then
-         return title.get_preferred_height() + content.get_preferred_height() +
+         return title.get_preferred_height() + content.get_preferred_height(dw) +
                 border.get_b_inset()
       else
-         return border.get_total_height() + content.get_preferred_height()
+         return border.get_total_height() + content.get_preferred_height(dw)
    end
 
    public layout()
@@ -106,7 +107,7 @@ class Border(Component)
          # with the _spec values) - see ivib/canvas.icn reset_layout() method.
          #
          title.w := title.get_preferred_width()
-         title.h := title.get_preferred_height()
+         title.h := title.get_preferred_height(title.w)
          title.x := self.x + case self.internal_align of {
             Align.C : (self.w - title.w) / 2
             Align.L : TITLE_OFFSET
@@ -130,6 +131,11 @@ class Border(Component)
          h0 := self.h
       }
       content.layout()
+   end
+
+   public shift(dx, dy)
+      cast(self,Component).shift(dx, dy)
+      y0 +:= dy
    end
 
    public new()

@@ -478,9 +478,9 @@ class ScrollBar(Component)
          b1.x := self.x + border.get_l_inset()
          b1.y := self.y + border.get_t_inset()
          b1.w := self.w - border.get_total_width()
-         b1.h := max(DEFAULT_INNER_SIZE, b1.get_preferred_height())
+         b1.h := max(DEFAULT_INNER_SIZE, b1.get_preferred_height(b1.w))
          b2.x := b1.x 
-         b2.h := max(DEFAULT_INNER_SIZE, b2.get_preferred_height())
+         b2.h := max(DEFAULT_INNER_SIZE, b2.get_preferred_height(b1.w))
          b2.y := self.y + self.h - b2.h - border.get_b_inset()
          b2.w := b1.w
 
@@ -521,6 +521,19 @@ class ScrollBar(Component)
       b2.layout()      
 
       reconfigure()
+   end
+
+   public shift(dx, dy)
+      cast(self,Component).shift(dx, dy)
+      if /self.is_horizontal_flag then {
+         self.bar_pos +:= dy
+         self.bar_area_pos +:= dy
+      } else {
+         self.bar_pos +:= dx
+         self.bar_area_pos +:= dx
+      }
+      self.bar_area.bar_x +:= dx
+      self.bar_area.bar_y +:= dy
    end
 
    public finally()

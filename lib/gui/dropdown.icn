@@ -305,8 +305,9 @@ class DropDown(SelectionList,Component)
       cast(self,Component).finally()
    end
 
-   public get_default_height()
-      return border.get_total_height() + view.get_default_height()
+   public get_default_height(dw)
+      dw -:= border.get_total_width() + b.get_preferred_width()
+      return border.get_total_height() + view.get_preferred_height(dw)
    end
 
    public display()

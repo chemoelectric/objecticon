@@ -1,7 +1,7 @@
 package gui
 
 import 
-   util, ipl.graphics
+   util, ipl.graphics, io
 
 class GridLayout(Layout)
    public 
@@ -9,6 +9,7 @@ class GridLayout(Layout)
       dii,          # Default inner padding, ie not at edge of grid
       doi,          # Default outer padding
       extra,        # Flag indicating how to allocate extra space
+      adjust_preferred_sizes_flag,
       debug
 
    # Default insets between components in a GridLayout.
@@ -40,7 +41,7 @@ class GridLayout(Layout)
          if /c.x_spec then {
             ci := g.create_cell(c.constraints)
             ci.pw := c.get_preferred_width()
-            ci.ph := c.get_preferred_height()
+            ci.ph := c.get_preferred_height(ci.pw)
             ci.obj := c
          }
       }
@@ -52,9 +53,39 @@ class GridLayout(Layout)
       return g.get_preferred_width()
    end
 
-   public get_preferred_height()
+   public adjust_preferred_sizes()
+     local i, adj
+     every i := !g.info do {
+        if i.pw ~= i.aw then {
+           if \debug then
+              writes("Adjusting cell ", i.s, " from pw,ph=", i.pw, ",", i.ph)
+           i.pw := i.aw
+           i.dw := i.pw + i.l_inset + i.r_inset
+           i.ph := i.obj.get_preferred_height(i.aw)
+           i.dh := i.ph + i.t_inset + i.b_inset
+            if \debug then
+              write(" to ", i.pw, ",", i.ph)
+           adj := 1
+        }
+     }
+     if \adj then {
+        g.compute_row_heights()
+        return
+     }
+   end
+
+   public get_preferred_height(pw)
       ensure_grid()
+      if \adjust_preferred_sizes_flag then {
+         g.compute_widths(pw)
+         adjust_preferred_sizes()
+      }
       return g.get_preferred_height()
+   end
+
+   public set_adjust_preferred_sizes(s)
+      self.adjust_preferred_sizes_flag := check_flag(s)
+      return self
    end
 
    public display()
@@ -67,8 +98,8 @@ class GridLayout(Layout)
       every i := !g.info do {
          cw.draw_rectangle(g.col_x[i.x],
                            g.row_y[i.y],
-                           g.slice(i.x, i.w, g.a_col_w),
-                           g.slice(i.y, i.h, g.a_row_h))
+                           Grid.slice(i.x, i.w, g.a_col_w),
+                           Grid.slice(i.y, i.h, g.a_row_h))
       }
 
       cw.uncouple()
@@ -85,6 +116,9 @@ class GridLayout(Layout)
       ensure_grid()
 
       g.compute_locations(parent.x, parent.y, parent.w, parent.h)
+
+      if \adjust_preferred_sizes_flag & adjust_preferred_sizes() then
+         g.compute_locations(parent.x, parent.y, parent.w, parent.h)
 
       every i := !g.info do {
          i.obj.x := i.ax

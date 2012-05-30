@@ -544,7 +544,7 @@ class Main(Dialog)
          self.push_onto_undo(t)
          cc.reset()
          canvas.set_modified()
-         canvas.reset_layout()
+         canvas.do_reset_all_layouts()
       } else
          self.undo_to(t)
    end
@@ -637,7 +637,7 @@ class Main(Dialog)
       if \d.get_okay_result() then {
          self.push_onto_undo(t)
          canvas.set_modified()
-         canvas.reset_layout()
+         canvas.do_reset_all_layouts()
       } else
          self.undo_to(t)
    end
@@ -861,7 +861,7 @@ class Main(Dialog)
       self.canvas.add(c)
       c.rename()
       c.initially()
-      self.canvas.reset_layout()
+      self.canvas.do_reset_all_layouts()
       self.canvas.set_modified()
    end
 

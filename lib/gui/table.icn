@@ -49,8 +49,7 @@ class TableContent(SelectableScrollArea)
 
    # Synch buttons because of the horizontal movement.
    public synch_header()
-      parent.table_header.layout()
-      parent.table_header.invalidate()
+      parent.table_header.synch_with_content()
    end
 
    public on_hsb()
@@ -127,9 +126,15 @@ class TableHeader(Component)
       return hh
    end
 
+   public synch_with_content()
+      local dx
+      dx := self.x - parent.table_content.get_area_x() - children[1].x
+      every (!self.children).shift(dx, 0)
+      invalidate()
+   end
+
    public layout()
       local i, b
-
       i := self.x - parent.table_content.get_area_x()
       every b := !self.children do {
          b.x := i
@@ -368,9 +373,10 @@ class Table(Component)
       l[-1].w_spec := max(av - dw * (*l - 1), TableColumn.MIN_COLUMN_WIDTH)
    end
 
-   public get_default_height()
-      return self.table_header.get_default_height() + 2 * Gui.BORDER_WIDTH + 
-         self.table_content.get_default_height() + border.get_total_height()
+   public get_default_height(dw)
+      dw -:= border.get_total_width()
+      return self.table_header.get_preferred_height(dw) + 2 * Gui.BORDER_WIDTH + 
+         self.table_content.get_preferred_height(dw) + border.get_total_height()
    end
 
    public get_default_width()
@@ -383,23 +389,24 @@ class Table(Component)
    end
 
    public layout()
-      local hh
+      local hw, hh
 
       if /no_more_sizing then
          size_columns()
 
-      hh := self.table_header.get_preferred_height()
+      hw := self.w - border.get_total_width()
+      hh := self.table_header.get_preferred_height(hw)
 
       # The 2 * Gui.BORDER_WIDTH is the decoration between the header and the content.
       self.table_content.x := self.x + border.get_l_inset()
       self.table_content.y := self.y + hh + border.get_t_inset() + 2 * Gui.BORDER_WIDTH
-      self.table_content.w := self.w - border.get_total_width()
+      self.table_content.w := hw
       self.table_content.h := self.h - hh - border.get_total_height() - 2 * Gui.BORDER_WIDTH
       self.table_content.layout()
 
       self.table_header.x := self.x + border.get_l_inset()
       self.table_header.y := self.y + border.get_t_inset()
-      self.table_header.w := self.w - border.get_total_width()
+      self.table_header.w := hw
       self.table_header.h := hh
       self.table_header.layout()
    end

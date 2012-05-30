@@ -116,6 +116,11 @@ class TextField(Component)
       constrain_line()
    end
 
+   public shift(dx, dy)
+      cast(self,Component).shift(dx, dy)
+      self.tx +:= dx
+   end
+
    #
    # Set the contents of the field.  If not invoked then
    # the initial content is the empty string.

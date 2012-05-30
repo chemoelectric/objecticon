@@ -421,6 +421,25 @@ class Slider(Component)
       reconfigure()
    end
 
+   public shift(dx, dy)
+      cast(self,Component).shift(dx, dy)
+      if /self.is_horizontal_flag then {
+         (\labels_pos) +:= dx
+         (\ticks_pos) +:= dx
+         slider_area_pos +:= dy
+         slider_pos +:= dy
+      } else {
+         (\labels_pos) +:= dy
+         (\ticks_pos) +:= dy
+         slider_area_pos +:= dx
+         slider_pos +:= dx
+      }
+      slider_area.inner_x +:= dx
+      slider_area.inner_y +:= dy
+      slider_area.slider_x +:= dx
+      slider_area.slider_y +:= dy
+   end
+
    public draw_ticks()
       local i, xp, yp
       if /self.is_horizontal_flag then {

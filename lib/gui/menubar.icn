@@ -401,6 +401,15 @@ class MenuBar(Component)
       }
    end
 
+   public shift(dx, dy)
+      local m
+      cast(self,Component).shift(dx, dy)
+      every m := !self.menus do {
+         m.label_x +:= dx
+         m.label_y +:= dy
+      }
+   end
+
    public new()
       cast(self,Component).new()
       self.set_border(RaisedBorder())

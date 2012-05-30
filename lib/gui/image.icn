@@ -124,11 +124,15 @@ class Image(Component)
    end
 
    public get_default_width()
-      return (\win).get_width() + border.get_total_width()
+      local ww
+      ww := (\win).get_width() | 0
+      return ww + border.get_total_width()
    end
 
    public get_default_height()
-      return (\win).get_height() + border.get_total_height()
+      local wh
+      wh := (\win).get_height() | 0
+      return wh + border.get_total_height()
    end
 
    public display()

@@ -24,6 +24,16 @@ class URL()
       port
 
    #
+   # Return the default port for the given protocol
+   #
+   public static get_default_port(protocol)
+      return case string(protocol) of {
+         "http": 80
+         "https": 443
+      }
+   end
+
+   #
    # Set the protocol field.
    #
    public set_protocol(x)
@@ -77,10 +87,10 @@ class URL()
    end
 
    #
-   # Get the ref field.  This is {&null} if no ref is set.
+   # Get the optional ref field, failing if none is set.
    #
    public get_ref()
-      return .self.ref
+      return .\self.ref
    end
 
    #
@@ -110,7 +120,15 @@ class URL()
    #
    public str()
       local s
-      s := self.protocol || "://" || self.address || ":" || self.port || self.file
+      s := self.protocol || "://"
+      if self.protocol == "file" then
+         s ||:= "localhost" ~== self.address 
+      else {
+         s ||:= self.address
+         if not(port = get_default_port(protocol)) then
+            s ||:= ":" || self.port
+      }
+      s ||:= self.file
       s ||:= "#" || \self.ref
       return s
    end
@@ -147,26 +165,34 @@ class URL()
       local protocol, address, file, ref, port
       s ? {
          protocol := 1(tab(many(&lcase ++ &ucase)), ="://") | "http"
-         address := tab(upto(':/') | 0)
-         if *address = 0 then
-            return error("No address")
-         if =":" then {
-            port := integer(tab(many(&digits))) | return error("Bad port")
-         } else if protocol == "http" then
-            port := 80
-         else if protocol == "https" then
-            port := 443
-         else
-            return error("Port required")
-
-         if pos(0) then
-            file := "/"
-         else {
-            any('/') | return error("File part should start with /")
+         if protocol == "file" then {
+            if any('/') then
+               address := "localhost"
+            else
+               address := tab(upto('/')) | return error("Missing /")
             file := tab(upto('#') | 0)
             if any('#') then {
                move(1)
                ref := tab(0)
+            }
+         } else {
+            address := tab(upto(':/') | 0)
+            if *address = 0 then
+               return error("No address")
+            port := if =":" then
+               integer(tab(many(&digits))) | return error("Bad port")
+            else 
+               get_default_port(protocol) | return error("Port required")
+
+            if pos(0) then
+               file := "/"
+            else {
+               any('/') | return error("File part should start with /")
+               file := tab(upto('#') | 0)
+               if any('#') then {
+                  move(1)
+                  ref := tab(0)
+               }
             }
          }
       }
@@ -174,16 +200,17 @@ class URL()
    end
 
    #
-   # Amend the filename/reference given a relative URL, treating the current instance as a
-   # base URL.
-   # @param s  The relative URL.
+   # Return a new URL relative to this URL, based on the given relative string s.
    #
-   public set_relative(s)
+   public get_relative(s)
+      local new_file, new_ref
+      if s[1:3] == "//" then
+         return parse(protocol || ":" || s)
       if s[1] == "#" then
          #
          # Just reference, filename doesn't change.
          # 
-         set_ref(s[2:0])
+         return URL(protocol, address, port, file, s[2:0])
       else {
          #
          # File name and possibly reference.
@@ -193,18 +220,17 @@ class URL()
             s := (self.file ? tab(upto('?') | 0)) || s
          else if s[1] ~== "/" then
             # eg http://a/b/c?d + e -> http://a/b/e
-            s := get_file_dir() || s
+            s ?:= strip_dot_dirs(get_file_dir() || tab(upto('?') | 0)) || tab(0)
 
          s ? {
-            set_file(tab(upto('#') | 0))
+            new_file := tab(upto('#') | 0)
             if any('#') then {
                move(1)
-               set_ref(tab(0))
-            } else
-               set_ref()
+               new_ref := tab(0)
+            }
          }
+         return URL(protocol, address, port, new_file, new_ref)
       }
-      return self
    end
 
    #
@@ -234,6 +260,20 @@ class URL()
             move(-1)
          return tab(1)
       }
+   end
+
+   #
+   # Return the file, but excluding any query part.
+   #
+   public get_path()
+      return self.file ? tab(upto('?') | 0)
+   end
+
+   #
+   # Return the query part of the file, or fail if there is no query.
+   #
+   public get_query()
+      return self.file ? (tab(upto('?') + 1), tab(0))
    end
 
    #
@@ -320,5 +360,32 @@ class URL()
          res ||:= char("16r" || move(2))
       }
       return res
+   end
+
+   private static rmdir(s, i)
+      while s[i - 1] ~== "/" do
+         i -:= 1
+      # Never remove the root /
+      return 1 < i
+   end
+
+   #
+   # Remove the dotted dirs from a file path, eg "/a/b/c/../g"->"/a/b/g"
+   #
+   public static strip_dot_dirs(s)
+      local i
+      while i := find("/.", s) do {
+         if s[i+:4] == "/../" then
+            (s[rmdir(s, i):i + 4] := "") | break
+         else if s[i:0] == "/.." then
+            (s[rmdir(s, i):0] := "") | break
+         else if s[i+:3] == "/./" then
+            s[i+:3] := "/"
+         else if s[i:0] == "/." then
+            s[i:0] := "/"
+         else
+            break
+      }
+      return s
    end
 end

@@ -61,6 +61,7 @@ $else
          # Parent
          sock := l[2]
          l[1].close()
+         return
       } else {
          # Child
          pid := task := &null

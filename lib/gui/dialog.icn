@@ -246,18 +246,19 @@ class Dialog(Component)
    # absent
    # 
    private ensure_size(t)
+      local tw
       if member(t, "size" | "geometry") | (member(t, "width") & member(t, "height")) then
          return
 
-      if member(t, "width") then 
+      if tw := member(t, "width") then 
          # Got width, need height
-         t["height"] := get_preferred_height()
+         t["height"] := get_preferred_height(tw)
       else if member(t, "height") then
          # Got height, need width
          t["width"] :=  get_preferred_width()
       else
          # Need both
-         t["size"] := [get_preferred_width(), get_preferred_height()]
+         t["size"] := [tw := get_preferred_width(), get_preferred_height(tw)]
    end
 
    public open_visible_win()

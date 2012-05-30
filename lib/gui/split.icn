@@ -79,14 +79,14 @@ class Split(Component)
       }
    end
 
-   public get_default_height()
+   public get_default_height(dw)
       local t
       if /self.sizer.is_horizontal_flag then {
-         return max(first.get_preferred_height(),
-                    second.get_preferred_height())
+         return max(first.get_preferred_height(dw),
+                    second.get_preferred_height(dw))
       } else {
          t := 0
-         every t +:= (!self.children).get_preferred_height()
+         every t +:= (!self.children).get_preferred_height(dw)
          return t
       }
    end
@@ -115,9 +115,9 @@ class Split(Component)
          }
       } else {
          first.y := self.y
-         sizer.h := sizer.get_preferred_height()
-         p1 := first.get_preferred_height()
-         p2 := second.get_preferred_height()
+         sizer.h := sizer.get_preferred_height(self.w)
+         p1 := first.get_preferred_height(self.w)
+         p2 := second.get_preferred_height(self.w)
          ex := self.h - (sizer.h + p1 + p2)
          first.h := p1 + integer(ex * weight)
          first.h <:= min_first

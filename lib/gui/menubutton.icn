@@ -143,6 +143,12 @@ class MenuButton(Component)
       self.menu.label_h := self.h - border.get_total_height()
    end
 
+   public shift(dx, dy)
+      cast(self,Component).shift(dx, dy)
+      self.menu.label_x +:= dx
+      self.menu.label_y +:= dy
+   end
+
    public new()
       cast(self,Component).new()
       self.set_border(RaisedBorder())

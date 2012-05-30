@@ -1,5 +1,3 @@
-typedef Point XPoint;
-
 struct SharedColor {
    Image *i;            /* 1x1 image representing colour rgb */
    char  *name;

@@ -63,11 +63,11 @@ class OverlaySet(Component)
       return mw
    end
 
-   public get_default_height()
+   public get_default_height(dw)
       local c, mh
       mh := 0
       every c := !children do
-         mh <:= c.get_preferred_height()
+         mh <:= c.get_preferred_height(dw)
       return mh
    end
 
