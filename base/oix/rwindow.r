@@ -2354,12 +2354,12 @@ int docircle(wbp w, dptr argv, int fill)
  *  A Recursive Evaluation Algorithm for a class of Catmull-Rom Splines.
  *  Computer Graphics 22(4), 199-204.
  */
-void genCurve(wbp w, XPoint *p, int n, void (*helper)(wbp, XPoint [], int))
+void genCurve(wbp w, struct point *p, int n, void (*helper)(wbp, struct point [], int))
 {
     int    i, j, steps;
     float  ax, ay, bx, by, stepsize, stepsize2, stepsize3;
     float  x, dx, d2x, d3x, y, dy, d2y, d3y;
-    XPoint *thepoints = NULL;
+    struct point *thepoints = NULL;
     long npoints = 0;
 
     for (i = 3; i < n; i++) {
@@ -2385,7 +2385,7 @@ void genCurve(wbp w, XPoint *p, int n, void (*helper)(wbp, XPoint [], int))
 
         if (steps+4 > npoints) {
             if (thepoints != NULL) free(thepoints);
-            MemProtect(thepoints = malloc((steps+4) * sizeof(XPoint)));
+            MemProtect(thepoints = malloc((steps+4) * sizeof(struct point)));
             npoints = steps+4;
         }
 
@@ -2422,7 +2422,7 @@ void genCurve(wbp w, XPoint *p, int n, void (*helper)(wbp, XPoint [], int))
     }
 }
 
-static void curveHelper(wbp w, XPoint *thepoints, int n)
+static void curveHelper(wbp w, struct point *thepoints, int n)
 {
     /*
      * Could use drawpoints(w, thepoints, n)
@@ -2436,7 +2436,7 @@ static void curveHelper(wbp w, XPoint *thepoints, int n)
 /*
  * draw a smooth curve through the array of points
  */
-void drawCurve(wbp w, XPoint *p, int n)
+void drawCurve(wbp w, struct point *p, int n)
 {
     genCurve(w, p, n, curveHelper);
 }

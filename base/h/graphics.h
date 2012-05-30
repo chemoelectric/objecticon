@@ -11,6 +11,11 @@ struct palentry {
    char transpt;                        /* nonzero if char is transparent */
 };
 
+struct point {
+    int x;
+    int y;
+};
+
 #define TCH1 '~'			/* usual transparent character */
 #define TCH2 0377			/* alternate transparent character */
 

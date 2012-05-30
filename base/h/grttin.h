@@ -219,16 +219,6 @@ typedef int time_t, DIR, uid_t, gid_t, stringint;
 /*
  * Convenience macros to make up for RTL's long-windedness.
  */
-#begdef CnvShortInt(desc, s, max, min, type)
-      {
-          word tmp;
-          if (!cnv:C_integer(desc,tmp) || tmp > max || tmp < min)
-              runerr(101,desc);
-          s = (type) tmp;
-      }
-#enddef				/* CnvShortInt */
-#define CnvCShort(desc, s) CnvShortInt(desc, s, 0x7FFF, -0x8000, short)
-#define CnvCUShort(desc, s) CnvShortInt(desc, s, 0xFFFF, 0, unsigned short)
    
 #define CnvCInteger(d,i)                        \
 if (!cnv:C_integer(d,i)) runerr(101,d);

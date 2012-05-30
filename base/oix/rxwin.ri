@@ -1955,9 +1955,16 @@ void drawarc(wbp w, int x, int y, int width, int height, double angle1, double a
     RENDER2(w,XDrawArcs,&arc,1);
 }
 
-void drawlines(wbp w, XPoint *points, int npoints)
+void drawlines(wbp w, struct point *points, int npoints)
 {
-    RENDER3(w,XDrawLines,points,npoints,CoordModeOrigin);
+    XPoint *xpoints;
+    int i;
+    xpoints = alloca(npoints * sizeof(XPoint));
+    for (i = 0; i < npoints; ++i) {
+        xpoints[i].x = points[i].x;
+        xpoints[i].y = points[i].y;
+    }
+    RENDER3(w,XDrawLines,xpoints,npoints,CoordModeOrigin);
 }
 
 void drawpoint(wbp w, int x, int y)
@@ -1986,9 +1993,16 @@ void fillarc(wbp w, int x, int y, int width, int height, double angle1, double a
     RENDER2(w,XFillArcs, &arc, 1);
 }
 
-void fillpolygon(wbp w, XPoint *points, int npoints)
+void fillpolygon(wbp w, struct point *points, int npoints)
 {
-    RENDER4(w,XFillPolygon, points, npoints, Complex, CoordModeOrigin);
+    XPoint *xpoints;
+    int i;
+    xpoints = alloca(npoints * sizeof(XPoint));
+    for (i = 0; i < npoints; ++i) {
+        xpoints[i].x = points[i].x;
+        xpoints[i].y = points[i].y;
+    }
+    RENDER4(w,XFillPolygon, xpoints, npoints, Complex, CoordModeOrigin);
 }
 
 /*

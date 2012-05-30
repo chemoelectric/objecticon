@@ -222,8 +222,8 @@ end
 function graphics_Window_draw_curve(self, argv[argc])
    body {
       int i, n, closed;
-      word dx, dy, x0, y0, xN, yN;
-      XPoint *points;
+      word dx, dy, x0, y0, xN, yN, t;
+      struct point *points;
       GetSelfW();
 
       closed = 0;
@@ -232,32 +232,32 @@ function graphics_Window_draw_curve(self, argv[argc])
       dx = self_w->context->dx;
       dy = self_w->context->dy;
 
-      MemProtect(points = (XPoint *)malloc(sizeof(XPoint) * (n+2)));
+      MemProtect(points = malloc(sizeof(struct point) * (n+2)));
 
       if (n > 1) {
           CnvCInteger(argv[0], x0)
-              CnvCInteger(argv[1], y0)
-              CnvCInteger(argv[argc - 2], xN)
-              CnvCInteger(argv[argc - 1], yN)
-              if ((x0 == xN) && (y0 == yN)) {
-                  closed = 1;               /* duplicate the next to last point */
-                  CnvCShort(argv[argc-4], points[0].x);
-                  CnvCShort(argv[argc-3], points[0].y);
-                  points[0].x += self_w->context->dx;
-                  points[0].y += self_w->context->dy;
-              }
-              else {                       /* duplicate the first point */
-                  CnvCShort(argv[0], points[0].x);
-                  CnvCShort(argv[1], points[0].y);
-                  points[0].x += self_w->context->dx;
-                  points[0].y += self_w->context->dy;
-              }
+          CnvCInteger(argv[1], y0)
+          CnvCInteger(argv[argc - 2], xN)
+          CnvCInteger(argv[argc - 1], yN)
+          if ((x0 == xN) && (y0 == yN)) {
+              closed = 1;               /* duplicate the next to last point */
+              CnvCInteger(argv[argc-4], t);
+              points[0].x = t + self_w->context->dx;
+              CnvCInteger(argv[argc-3], t);
+              points[0].y = t + self_w->context->dy;
+          }
+          else {                       /* duplicate the first point */
+              CnvCInteger(argv[0], t);
+              points[0].x = t + self_w->context->dx;
+              CnvCInteger(argv[1], t);
+              points[0].y = t + self_w->context->dy;
+          }
           for (i = 1; i <= n; i++) {
               int base = (i-1) * 2;
-              CnvCShort(argv[base], points[i].x);
-              CnvCShort(argv[base + 1], points[i].y);
-              points[i].x += dx;
-              points[i].y += dy;
+              CnvCInteger(argv[base], t);
+              points[i].x = t + dx;
+              CnvCInteger(argv[base + 1], t);
+              points[i].y = t + dy;
           }
           if (closed) {                /* duplicate the second point */
               points[i] = points[2];
@@ -300,7 +300,7 @@ end
 function graphics_Window_draw_line(self, argv[argc])
    body {
       int i, j, n;
-      XPoint points[MAXPOINTS];
+      struct point points[MAXPOINTS];
       int dx, dy;
 
       GetSelfW();
@@ -311,15 +311,16 @@ function graphics_Window_draw_line(self, argv[argc])
       dy = self_w->context->dy;
       for(i = 0, j = 0; i < n; i++, j++) {
           int base = i * 2;
+          word t;
           if (j == MAXPOINTS) {
               drawlines(self_w, points, MAXPOINTS);
               points[0] = points[MAXPOINTS-1];
               j = 1;
           }
-          CnvCShort(argv[base], points[j].x);
-          CnvCShort(argv[base + 1], points[j].y);
-          points[j].x += dx;
-          points[j].y += dy;
+          CnvCInteger(argv[base], t);
+          points[j].x = t + dx;
+          CnvCInteger(argv[base + 1], t);
+          points[j].y = t + dy;
       }
       drawlines(self_w, points, j);
 
@@ -345,7 +346,8 @@ end
 function graphics_Window_draw_polygon(self, argv[argc])
    body {
       int i, j, n, base, dx, dy;
-      XPoint points[MAXPOINTS];
+      struct point points[MAXPOINTS];
+      word t;
 
       GetSelfW();
       CheckArgMultipleOf(2);
@@ -356,10 +358,10 @@ function graphics_Window_draw_polygon(self, argv[argc])
       /*
        * To make a closed polygon, start with the *last* point.
        */
-      CnvCShort(argv[argc - 2], points[0].x);
-      CnvCShort(argv[argc - 1], points[0].y);
-      points[0].x += dx;
-      points[0].y += dy;
+      CnvCInteger(argv[argc - 2], t);
+      points[0].x = t + dx;
+      CnvCInteger(argv[argc - 1], t);
+      points[0].x = t + dy;
 
       /*
        * Now add all points from beginning to end, including last point again.
@@ -371,10 +373,10 @@ function graphics_Window_draw_polygon(self, argv[argc])
               points[0] = points[MAXPOINTS-1];
               j = 1;
           }
-          CnvCShort(argv[base], points[j].x);
-          CnvCShort(argv[base + 1], points[j].y);
-          points[j].x += dx;
-          points[j].y += dy;
+          CnvCInteger(argv[base], t);
+          points[j].x = t + dx;
+          CnvCInteger(argv[base + 1], t);
+          points[j].y = t + dy;
       }
       drawlines(self_w, points, j);
 
@@ -524,7 +526,7 @@ end
 function graphics_Window_fill_polygon(self, argv[argc])
    body {
       int i, n;
-      XPoint *points;
+      struct point *points;
       int dx, dy;
       GetSelfW();
 
@@ -535,15 +537,16 @@ function graphics_Window_fill_polygon(self, argv[argc])
        * because a FillPolygon must be performed in a single call.
        */
       n = argc>>1;
-      MemProtect(points = (XPoint *)malloc(sizeof(XPoint) * n));
+      MemProtect(points = malloc(sizeof(struct point) * n));
       dx = self_w->context->dx;
       dy = self_w->context->dy;
       for(i=0; i < n; i++) {
           int base = i * 2;
-          CnvCShort(argv[base], points[i].x);
-          CnvCShort(argv[base + 1], points[i].y);
-          points[i].x += dx;
-          points[i].y += dy;
+          word t;
+          CnvCInteger(argv[base], t);
+          points[i].x = t + dx;
+          CnvCInteger(argv[base + 1], t);
+          points[i].y = t + dy;
       }
       fillpolygon(self_w, points, n);
       free(points);
