@@ -111,6 +111,17 @@ class ImageWindowPaint(Paint)
    end
 end
 
+# A simple {Paint} instance which has zero size and draws nothing.
+#
+class EmptyPaint(Paint)
+   public initially()
+      self.w := self.h := 0
+   end
+
+   public draw(W, x, y)
+   end
+end
+
 # A {Paint} instance which draws its output using a {Grid}.  The input is a format
 # string specifying the grid and its contents.
 #
@@ -412,7 +423,7 @@ class ImagePaint(Paint)
       image_window,
       image_cache,
       win,
-      scale_up_flag,
+      fill_dimensions,
       dont_close,
       max_w,
       max_h
@@ -468,15 +479,23 @@ class ImagePaint(Paint)
       return self
    end
    
+   # This setting controls how the image will be expanded if its size
+   # is less than any specified maximum width and/or height (if none
+   # is specified it has no effect).  If set to 0, then the image will
+   # not be expanded; if 1 then the image will not be distorted, but
+   # will be expanded to fill one of the dimensions depending on its
+   # shape (if only one max dimension was specified, then the image
+   # expands to this dimension).  If 2, and both maximum dimensions
+   # were set, then the image will be distorted and expanded to fill
+   # both dimensions.
+   # 
+   # If the image is bigger than the specified maximum size then it
+   # will always be scaled down, but if this setting is 2, and a
+   # maximum size is set, then again the image is distorted to fill
+   # both those dimensions.
    #
-   # If set, then the image will be scaled up to fit in the space
-   # specified by {set_max_size()}.  The image will not be distorted, 
-   # but will be expanded to fill one of the dimensions depending 
-   # on its shape.  If the image is bigger than the specified size 
-   # then it will always be scaled down.
-   #
-   public set_scale_up(s)
-      self.scale_up_flag := check_flag(s)
+   public set_fill_dimensions(n)
+      self.fill_dimensions := n
       return self
    end
 
@@ -524,21 +543,25 @@ class ImagePaint(Paint)
 
       img_w := win.get_width()
       img_h := win.get_height()
-      if /self.scale_up_flag & 
-         (/max_w | img_w <= max_w)\1 & (/max_h | img_h <= \max_h) then
-         return
+      if (fill_dimensions = 0) &
+         (/max_w | img_w <= max_w)\1 & (/max_h | img_h <= max_h)\1 then
+         fail
 
       asp_r := real(img_w) / real(img_h)
-
       if \max_w then {
          if \max_h then {
-            asp_max := real(max_w) / real(max_h)
-            if asp_r > asp_max then {
+            if fill_dimensions = 2 then { 
                zoom_w := max_w
-               zoom_h := integer(max_w / asp_r)
-            } else {
-               zoom_w := integer(max_h * asp_r)
                zoom_h := max_h
+            } else {
+               asp_max := real(max_w) / real(max_h)
+               if asp_r > asp_max then {
+                  zoom_w := max_w
+                  zoom_h := integer(max_w / asp_r)
+               } else {
+                  zoom_w := integer(max_h * asp_r)
+                  zoom_h := max_h
+               }
             }
          } else {
             # \max_w & /max_h
@@ -564,5 +587,10 @@ class ImagePaint(Paint)
 
    public draw(W, x, y)
       (\win).copy_to(W,,,,, x, y)
+   end
+
+   public new()
+      fill_dimensions := 0
+      return
    end
 end

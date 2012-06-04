@@ -56,7 +56,7 @@ class CanvasImagePaint(CanvasPaint,ImagePaint)
       cast(self,CanvasObject).dup_fields(c)
       c.image_str := self.image_str
       c.image_cache := self.image_cache
-      c.scale_up_flag := self.scale_up_flag
+      c.fill_dimensions := self.fill_dimensions
       c.max_w := self.max_w
       c.max_h := self.max_h
       return c
@@ -66,7 +66,7 @@ class CanvasImagePaint(CanvasPaint,ImagePaint)
       suspend CanvasPaint.get_template() |
          ["Image Str", "image_str"] |
          ["Image Cache", "image_cache"] |
-         ["Scale Up Flag", "scale_up_flag"] |
+         ["Fill Dimensions", "fill_dimensions"] |
          ["Max W", "max_w"] |
          ["Max H", "max_h"]
 
@@ -78,8 +78,7 @@ class CanvasImagePaint(CanvasPaint,ImagePaint)
       c.chain("set_cache(" || image(\self.image_cache) || ")")
       c.chain("set_max_w(" || \self.max_w || ")")
       c.chain("set_max_h(" || \self.max_h || ")")
-      if \self.scale_up_flag then
-         c.chain("set_scale_up(&yes)")
+      c.chain("set_fill_dimensions(" || (0 < self.fill_dimensions) || ")")
       c.add_var(name, class_variable)
       c.add_import(self.import_name, self.class_name)
    end
