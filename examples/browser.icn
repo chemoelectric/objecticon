@@ -10,7 +10,7 @@ import
    ipl.options,
    ipl.caseless
 
-global opts, cache
+global opts
 
 $load EXIT "rpp.EXIT_24.gif"
 $load NEXT "rpp.NEXT_24.gif"
@@ -79,9 +79,12 @@ class Cache()
 end
 
 class Worker()
-   private readable
-      queue, task, httpc, doing
+   private
+      parent, httpc
 
+   private readable
+      doing, task
+   
    public static const NORMAL, NAVIGATE, REFRESH
 
    private static init()
@@ -108,16 +111,16 @@ class Worker()
    public run()
       local r, s, data, hreq, hres
       repeat {
-         while *queue = 0 do
+         while *parent.queue = 0 do
             task.sleep()
          doing := 1
-         r := pop(queue)
+         r := pop(parent.queue)
          if r.url.protocol == "file" then {
             if data := Files.file_to_string(r.url.get_path()) then
                r.callback(Resp(, r.url, data, r.kind))
             else
                r.callback(Resp(&why, r.url,, r.kind))
-         } else if r.kind ~= REFRESH & (data := cache.get(r.url)) then
+         } else if r.kind ~= REFRESH & (data := parent.cache.get(r.url)) then
             r.callback(Resp(, r.url, data, r.kind))
          else use {
             s := RamStream(),
@@ -129,7 +132,7 @@ class Worker()
                if hres := httpc.retrieve(hreq) then {
                   data := s.str()
                   if hreq.method == "GET"  then
-                     cache.add(hres.url, data)
+                     parent.cache.add(hres.url, data)
                   r.callback(Resp(, hres.url, data, r.kind))
                } else {
                   if /httpc.abort_flag then
@@ -141,13 +144,13 @@ class Worker()
       }
    end
 
-   public new(cookies, queue)
-      self.queue := queue
+   public new(parent)
+      self.parent := parent
       task := Dispatcher.new_task{run()}
       httpc := HttpClient().
          set_task(task).
          set_ssl_verify(&no).
-         set_cookies(cookies)
+         set_cookies(parent.cookies)
       return
    end
 end
@@ -331,8 +334,12 @@ class Browser(Dialog)
       home_button,
       paste_url_button,
       refresh_button,
-      start_page,
-      queue
+      start_page
+
+   private readable
+      queue,
+      cookies,
+      cache
 
    public static const 
       COLORS
@@ -1067,12 +1074,13 @@ class Browser(Dialog)
    public new(s, cookies)
       cast(self,Dialog).new()
       self.setup()
-      cache := Cache(10*1024*1024)
+      self.cookies := cookies
+      self.cache := Cache(10*1024*1024)
       start_page := s
       queue := []
       workers := []
       every 1 to 6 do
-         put(workers, Worker(cookies, queue))
+         put(workers, Worker(self))
       status_ticker := Dispatcher.new_task{status()}
       top_panel.
          set_inner(Component().set_size(10,10)).
