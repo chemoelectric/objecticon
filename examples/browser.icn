@@ -1286,10 +1286,8 @@ procedure main(a)
    opts := options(a, "-f! -k:")
    cookies := \opts["k"] | System.getenv("GETURL_COOKIES")
    if \cookies then {
-      t := decode(Files.file_to_string(cookies)) | {
+      t := decode(Files.file_to_string(cookies)) |
          write(FileStream.stderr, "Couldn't read/decode cookie file ", cookies, ": ", &why)
-         t := table()
-      }
    }
    ImageCache.name_image("rpp.EXIT_24", EXIT)
    ImageCache.name_image("rpp.NEXT_24", NEXT)
@@ -1300,6 +1298,7 @@ procedure main(a)
    ImageCache.name_image("rpp.STOP_24", STOP)
    ImageCache.name_image("rpp.BROKEN_LINK", BROKEN_LINK)
    s := a[1]
+   /t := table()
    d := Browser(s, t)
    d.show_modal()
 
