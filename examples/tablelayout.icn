@@ -1,0 +1,596 @@
+import 
+   util, 
+   lang,
+   ipl.sort,
+   io,
+   gui,
+   ipl.graphics
+
+class TableCellInfo(Insets,Align)
+   public 
+      obj,            # An arbitrary object 
+      grid,           # The grid we're in
+      ax,             # Actual computed pixel location and size,
+      ay,             # within insets, ie where to draw the thing
+      aw,             # inside the cell.
+      ah,
+      s,              # Identifying string for print_layout
+      x,              # Location, size in grid units.
+      y, 
+      w, 
+      h, 
+      maxdw,
+      pct_w,
+      dw,             # Desired cell width including insets
+      dh, 
+      maxw,
+      pw,             # Preferred cell width excluding insets
+      ph, 
+      x_fill,         # Constraints: fill, align, weights, insets
+      y_fill
+
+   #
+   # Output object
+   #
+   private object_output(oo)
+      local t
+      t := s || ": "
+      t ||:= " pos=" || self.x || "," || self.y || " dim=" || self.w || "," || self.h ||
+         " component pref size=" || pw || "," || ph || " (maxw=" || maxw || ")"
+      t ||:= "\n\tcell desired size=" || dw || "," || dh || " (maxdw=" || maxdw || ")"
+      t ||:= " located to=" || \ax || "," || \ay || " size set to " || \aw || "," || \ah
+      t ||:= " \n\tfill=" || image(x_fill) || "," || image(y_fill) || 
+         " align=" || image(x_align) || "," || image(y_align) ||
+         " insets=l:" || l_inset || " t:" || t_inset || " r:" || r_inset || " b:" || b_inset
+      t ||:= "pct_w=" || \pct_w
+      oo.object_string(self, t)
+   end
+end
+
+class TableGrid()
+   public 
+      gw,           # Grid width, height in cells
+      gh, 
+      p_col_maxw,   # Max column widths
+      p_col_w,      # Preferred column widths/row heights
+      p_row_h,
+      a_col_w,      # Actual column widths/row heights after extra
+      a_row_h,      # space has been allocated
+      col_x,        # Actual row x and y values
+      row_y,
+      info,         # List of CellInfo for each component being laid out
+      dii,          # Default inner padding, ie not at edge of grid
+      doi,          # Default outer padding
+      pad_w,        # Padding to the left of the grid
+      pad_h,        # Padding above the grid
+      id_str,       # For generating CellInfo string ids for debug
+      add_x,        # For auto-computing cell position and sizes.
+      add_y,
+      add_row_h,
+      fix_col1_flag
+
+   private static validate_int(t, key, def)
+      local val
+      if val := member(t, key) then
+         return integer(val) | runerr("Expected integer grid constraint", val)
+      else
+         return \def
+   end
+
+   private static validate_flag(t, key)
+      local val
+      if val := member(t, key) then
+         return check_flag(val) | runerr("Expected flag-valued grid constraint", val)
+      else
+         return &no
+   end
+
+   private static validate_x_align(t, key)
+      local val
+      if val := member(t, key) then {
+         (val === (Align.L | Align.R | Align.C)) | runerr("Expected x-alignment grid constraint", val)
+         return val
+      }
+      else
+         return Align.C
+   end
+
+   private static validate_y_align(t, key)
+      local val
+      if val := member(t, key) then {
+         (val === (Align.T | Align.B | Align.C)) | runerr("Expected y-alignment grid constraint", val)
+         return val
+      }
+      else
+         return Align.C
+   end
+
+   public create_cell(t)
+      local ci
+      ci := TableCellInfo()
+      ci.grid := self
+      ci.s := id_str[1]
+      id_str[1] := ""
+      self.add_x +:= validate_int(t, "x_tab")
+      if self.add_y +:= validate_int(t, "y_tab") then
+         add_row_h := 0
+      ci.x := validate_int(t, "x", add_x)
+      ci.y := validate_int(t, "y", add_y)
+      ci.w := validate_int(t, "w", 1)
+      ci.h := validate_int(t, "h", 1)
+      add_row_h <:= ci.h
+      if /validate_flag(t, "eol") then {
+         add_x := ci.x + ci.w
+         add_y := ci.y
+      } else {
+         add_x := 1
+         add_y +:= add_row_h
+         add_row_h := 0
+      }
+      ci.l_inset := validate_int(t, "l_inset")
+      ci.t_inset := validate_int(t, "t_inset")
+      ci.r_inset := validate_int(t, "r_inset")
+      ci.b_inset := validate_int(t, "b_inset")
+      ci.x_fill := validate_flag(t, "x_fill")
+      ci.y_fill := validate_flag(t, "y_fill")
+      ci.x_align := validate_x_align(t, "x_align")
+      ci.y_align := validate_y_align(t, "y_align")
+      ci.pct_w := validate_int(t, "pct_w")
+      put(info, ci)
+
+      return ci
+   end
+
+   public dimension()
+      local ci
+
+      # Work out grid width/height
+      gw := gh := 0
+      every ci := !info do {
+         gw <:= ci.x + ci.w - 1
+         gh <:= ci.y + ci.h - 1
+      }
+
+      # Fill in final defaults now we have the grid dimensions.
+      every ci := !info do {
+         /ci.l_inset := if ci.x = 1 then self.doi else self.dii
+         /ci.t_inset := if ci.y = 1 then self.doi else self.dii
+         /ci.r_inset := if ci.x + ci.w = gw + 1 then self.doi else self.dii
+         /ci.b_inset := if ci.y + ci.h = gh + 1 then self.doi else self.dii
+         ci.dw := ci.pw + ci.l_inset + ci.r_inset
+         ci.maxdw := ci.maxw + ci.l_inset + ci.r_inset
+         ci.dh := ci.ph + ci.t_inset + ci.b_inset
+      }
+
+      compute_col_widths()
+      compute_row_heights()
+   end
+   
+   public static slice(start, span, l)
+      local n
+      n := 0
+      every n +:= l[start to start + span - 1]
+      return n
+   end
+
+   public static total(l)
+      local n
+      n := 0
+      every n +:= !l
+      return n
+   end
+
+   public static dist_equally(start, span, extra, l, flag)
+      local left, i, a
+      if span = 0 then
+         fail
+      if \flag & start = 1 & span > 1 then {
+         start := 2
+         span -:= 1
+         #write(start,",",span,",",extra)
+      }
+      a := extra / span
+      left := extra
+      every i := start to start + span - 1 do {
+         l[i] +:= a
+         left -:= a
+      }
+      l[i] +:= left
+   end
+
+   public static dist_by_max(extra, l, maxl)
+      local left, i, a, n, done
+
+      left := extra
+      n := *l
+      done := list(*l)
+      while left > 0 & n > 0 do {
+         a := integer(left / n)
+         if a = 0 then
+            break
+         every i := 1 to *l do {
+            if \done[i] then next
+            if l[i] + a > maxl[i] then {
+               left -:= maxl[i] - l[i]
+               l[i] := maxl[i]
+               done[i] := 1
+               n -:= 1
+            } else {
+               l[i] +:= a
+               left -:= a
+            }
+         }
+      }
+      return left
+   end
+
+   public compute_col_widths()
+      local i, need, l
+      p_col_w := list(gw, 0)
+      p_col_maxw := list(gw, 0)
+      l := isort(info, cell_width_sort)
+
+      # Compute sizes
+      every i := !l do {
+         need := i.dw - slice(i.x, i.w, p_col_w)
+         if need > 0 then
+            dist_equally(i.x, i.w, need, p_col_w, fix_col1_flag)
+
+         need := i.maxdw - slice(i.x, i.w, p_col_maxw)
+         if need > 0 then
+            dist_equally(i.x, i.w, need, p_col_maxw, fix_col1_flag)
+      }
+   end
+
+   public compute_row_heights()
+      local i, need, l
+      p_row_h := list(gh, 0)
+      l := isort(info, cell_height_sort)
+
+      # Compute sizes
+      every i := !l do {
+         need := i.dh - slice(i.y, i.h, p_row_h)
+         if need > 0 then 
+            dist_equally(i.y, i.h, need, p_row_h)
+      }
+   end
+
+   private static cell_width_sort(i)
+      return i.w
+   end
+
+   private static cell_height_sort(i)
+      return i.h
+   end
+
+   public print_layout()
+      local x, y, t, i, s
+
+      write("Grid dimensions:", gw, ",",gh)
+      t := table()
+      every t[(1 to gw)||","||(1 to gh)] := " "
+
+      every i := !info do
+         every t[(i.x to i.x + i.w - 1)||","||(i.y to i.y + i.h - 1)] := i.s
+
+      write(s := repl("+-", gw) || "+")
+      every y := 1 to gh do {
+         every x := 1 to gw do
+            writes("|", t[x||","||y])
+         write("|\n",s)
+      }
+
+      write("----- Items ------")
+      every write(to_string(!info))
+
+      write("----- Data -------")
+      write("p_col_w=", to_string(p_col_w))
+      write("p_col_maxw=", to_string(p_col_maxw))
+      if \self.a_col_w then {
+         write("a_col_w=", to_string(a_col_w))
+         write("\textra width in a_col_w:", total(a_col_w)-total(p_col_w))
+         write("\tleft pad border:", self.pad_w)
+      }
+      write("p_row_h=", to_string(p_row_h))
+      if \self.a_row_h then {
+         write("a_row_h=", to_string(a_row_h))
+         write("\textra height in a_row_h:", total(a_row_h)-total(p_row_h))
+         write("\ttop pad border:", self.pad_h)
+      }
+
+      write("\nPreferred size gives:", get_preferred_width(),",",get_preferred_height())
+   end
+
+   public set_fix_col1(s)
+      self.fix_col1_flag := check_flag(s)
+      return self
+   end
+
+   public get_preferred_width()
+      return total(p_col_w)
+   end
+
+   public get_max_width()
+      return total(p_col_maxw)
+   end
+
+   public get_preferred_height()
+      return total(p_row_h)
+   end
+
+   public compute_locations(x1, y1, w1, h1)
+      local i, x, y, w, h, ew, eh
+
+      /x1 := 0
+      /y1 := 0
+
+      a_col_w := copy(p_col_w)
+      a_row_h := copy(p_row_h)
+
+      # Extra width
+      ew := w1 - total(p_col_w)
+      # Allocate by max width
+      self.pad_w := dist_by_max(ew, a_col_w, p_col_maxw) / 2
+
+      # Same for height.
+      eh := h1 - total(p_row_h)
+      self.pad_h := 0
+      dist_equally(1, *a_row_h, eh, a_row_h)
+
+      col_x := []
+      x := x1 + self.pad_w
+      every w := !a_col_w do {
+         put(col_x, x)
+         x +:= w
+      }
+
+      row_y := []
+      y := y1 + self.pad_h
+      every h := !a_row_h do {
+         put(row_y, y)
+         y +:= h
+      }
+
+      every i := !info do {
+         x := col_x[i.x] + i.l_inset
+         y := row_y[i.y] + i.t_inset
+         w := slice(i.x, i.w, a_col_w) - i.l_inset - i.r_inset
+         h := slice(i.y, i.h, a_row_h) - i.t_inset - i.b_inset
+         i.aw := if \i.x_fill then w else i.pw
+         i.ah := if \i.y_fill then h else i.ph
+
+         i.ax := case i.x_align of {
+            Align.L : x
+            Align.R : x + w - i.aw
+            Align.C : x + (w - i.aw) / 2
+         }
+
+         i.ay := case i.y_align of {
+            Align.T : y
+            Align.B : y + h - i.ah
+            Align.C : y + (h - i.ah) / 2
+         }
+      }
+   end
+
+   public compute_widths(w1)
+      local x1, i, x, w, ew
+
+      x1 := 0
+
+      a_col_w := copy(p_col_w)
+
+      # Extra width
+      ew := w1 - total(p_col_w)
+      # Allocate by max width
+      self.pad_w := dist_by_max(ew, a_col_w, p_col_maxw) / 2
+
+      col_x := []
+      x := x1 + self.pad_w
+      every w := !a_col_w do {
+         put(col_x, x)
+         x +:= w
+      }
+
+      every i := !info do {
+         x := col_x[i.x] + i.l_inset
+         w := slice(i.x, i.w, a_col_w) - i.l_inset - i.r_inset
+         i.aw := if \i.x_fill then w else i.pw
+
+         i.ax := case i.x_align of {
+            Align.L : x
+            Align.R : x + w - i.aw
+            Align.C : x + (w - i.aw) / 2
+         }
+      }
+   end
+
+   #
+   # Set the default inner inset
+   #
+   public set_dii(n)
+      self.dii := n
+      return self
+   end
+
+   #
+   # Set the default outer inset
+   #
+   public set_doi(n)
+      self.doi := n
+      return self
+   end
+
+   public new()
+      self.dii := self.doi := 0
+      self.id_str := string(&ucase)
+      self.add_y := self.add_x := 1
+      self.add_row_h := 0
+      self.info := []
+      return
+   end
+end
+
+class TableLayout(Layout)
+   public 
+      g,
+      dii,          # Default inner padding, ie not at edge of grid
+      doi,          # Default outer padding
+      adjust_preferred_sizes_flag,
+      fix_col1_flag,
+      debug
+
+   # Default insets between components in a GridLayout.
+   public static const
+      DEFAULT_OUTER_INSET,
+      DEFAULT_INNER_INSET
+
+   private static init()
+      DEFAULT_OUTER_INSET := 10
+      DEFAULT_INNER_INSET := 5
+   end
+
+   public reset()
+      g := &null
+   end
+
+   public ensure_grid()
+      local c, ci
+
+      if \g then
+         return
+
+      g := TableGrid()
+      g.set_dii(dii)
+      g.set_doi(doi)
+      g.set_fix_col1(fix_col1_flag)
+
+      every c := !parent.children do {
+         if /c.x_spec then {
+            ci := g.create_cell(c.constraints)
+            ci.pw := c.get_preferred_width()
+            ci.maxw := c.get_max_width()
+            #write("cell ",image(c)," pw=",ci.pw, "  maxw=",ci.maxw)
+            ci.ph := c.get_preferred_height(ci.pw)
+            ci.obj := c
+         }
+      }
+      g.dimension()
+   end
+
+   public get_preferred_width()
+      ensure_grid()
+      return g.get_preferred_width()
+   end
+
+   public get_max_width()
+      ensure_grid()
+      return g.get_max_width()
+   end
+
+   public adjust_preferred_sizes()
+     local i, adj
+     every i := !g.info do {
+        if i.pw ~= i.aw then {
+           if \debug then
+              writes("Adjusting cell ", i.s, " from pw,ph=", i.pw, ",", i.ph)
+           i.pw := i.aw
+           i.dw := i.pw + i.l_inset + i.r_inset
+           i.ph := i.obj.get_preferred_height(i.aw)
+           i.dh := i.ph + i.t_inset + i.b_inset
+            if \debug then
+              write(" to ", i.pw, ",", i.ph)
+           adj := 1
+        }
+     }
+     if \adj then {
+        g.compute_row_heights()
+        return
+     }
+   end
+
+   public get_preferred_height(pw)
+      ensure_grid()
+      if \adjust_preferred_sizes_flag then {
+         g.compute_widths(pw)
+         adjust_preferred_sizes()
+      }
+      return g.get_preferred_height()
+   end
+
+   public set_adjust_preferred_sizes(s)
+      self.adjust_preferred_sizes_flag := check_flag(s)
+      return self
+   end
+
+   public set_fix_col1(s)
+      self.fix_col1_flag := check_flag(s)
+      return self
+   end
+
+   public display()
+      local i, cw
+      ensure_grid()
+      cw := bev_lookup(self.parent.cbwin).shadow.clone().set_fill_style("masked").set_pattern("gray")
+
+      cw.draw_rectangle(parent.x, parent.y, parent.w, parent.h)
+
+      every i := !g.info do {
+         cw.draw_rectangle(g.col_x[i.x],
+                           g.row_y[i.y],
+                           TableGrid.slice(i.x, i.w, g.a_col_w),
+                           TableGrid.slice(i.y, i.h, g.a_row_h))
+      }
+
+      cw.uncouple()
+   end
+
+   public layout()
+      local c, i
+
+      every c := !parent.children do {
+         if \c.x_spec then
+            c.compute_absolutes()
+      }
+
+      ensure_grid()
+
+      g.compute_locations(parent.x, parent.y, parent.w, parent.h)
+
+      if \adjust_preferred_sizes_flag & adjust_preferred_sizes(g) then
+         g.compute_locations(parent.x, parent.y, parent.w, parent.h)
+
+      every i := !g.info do {
+         i.obj.x := i.ax
+         i.obj.y := i.ay
+         i.obj.w := i.aw
+         i.obj.h := i.ah
+      }
+
+      if \debug then
+         g.print_layout()
+   end
+
+   public set_debug(s)
+      self.debug := check_flag(s)
+      return self
+   end
+
+   public set_dii(n)
+      self.dii := n
+      return self
+   end
+
+   public set_doi(n)
+      self.doi := n
+      return self
+   end
+
+   public new()
+      self.dii := DEFAULT_INNER_INSET
+      self.doi := DEFAULT_OUTER_INSET
+      return
+   end
+end
+
+

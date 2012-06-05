@@ -1,0 +1,1315 @@
+import 
+   gui, 
+   lang, 
+   graphics,
+   http,
+   io,
+   net,
+   xml,
+   posix,
+   ipl.options,
+   ipl.caseless
+
+global opts, cache
+
+$load EXIT "rpp.EXIT_24.gif"
+$load NEXT "rpp.NEXT_24.gif"
+$load PREV "rpp.PREV_24.gif"
+$load HOME "rpp.HOME_24.gif"
+$load STOP "rpp.STOP_24.gif"
+$load PASTE "rpp.PASTE_24.gif"
+$load REFRESH0 "rpp.REFRESH_24.gif"
+$load BROKEN_LINK "rpp.BROKEN_LINK_24.gif"
+
+class Req()
+   public const
+      url, callback, kind, form_data
+
+   public new(url, callback, kind, form_data)
+      self.url := url
+      self.callback := callback
+      self.kind := kind
+      self.form_data := form_data
+      return
+   end
+end
+
+class Resp()
+   public const
+      err, url, data, kind
+
+   public new(err, url, data, kind)
+      self.err := err
+      self.url := url
+      self.data := data
+      self.kind := kind
+      return
+   end
+end
+
+class Cache()
+   private t, total, lim
+
+   public get(url)
+      return member(t, string(url.str()))
+   end
+
+   public add(url, data)
+      local k
+      k := string(url.str())
+      if member(t, k) then {
+         total -:= *t[k]
+         delete(t, k)
+      }
+      if total + *data > lim then {
+         fail
+      }
+      insert(t, k, data)
+      total +:= *data
+      #write("cache: added ", url.str(), " ", *data, " bytes, total now ",total)
+      return
+   end
+
+   public new(lim)
+      t := table()
+      self.lim := lim
+      total := 0
+      return
+   end
+end
+
+class Worker()
+   private readable
+      queue, task, httpc, doing
+
+   public static const NORMAL, NAVIGATE, REFRESH
+
+   private static init()
+      NORMAL := 1
+      NAVIGATE := 2
+      REFRESH := 3
+   end
+
+   public cancel()
+      if \doing then {
+         task.interrupt()
+         httpc.abort()
+      }
+   end
+
+   public read()
+      if \doing then return httpc.get_read()
+   end
+
+   public count()
+      return if \doing then 1 else 0
+   end
+
+   public run()
+      local r, s, data, hreq, hres
+      repeat {
+         while *queue = 0 do
+            task.sleep()
+         doing := 1
+         r := pop(queue)
+         if r.url.protocol == "file" then {
+            if data := Files.file_to_string(r.url.get_path()) then
+               r.callback(Resp(, r.url, data, r.kind))
+            else
+               r.callback(Resp(&why, r.url,, r.kind))
+         } else if r.kind ~= REFRESH & (data := cache.get(r.url)) then
+            r.callback(Resp(, r.url, data, r.kind))
+         else use {
+            s := RamStream(),
+            {
+               hreq := HttpRequest().
+                  set_output_stream(s). 
+                  set_url(r.url)
+               hreq.set_html_form_data(\r.form_data)
+               if hres := httpc.retrieve(hreq) then {
+                  data := s.str()
+                  if hreq.method == "GET"  then
+                     cache.add(hres.url, data)
+                  r.callback(Resp(, hres.url, data, r.kind))
+               } else {
+                  if /httpc.abort_flag then
+                     r.callback(Resp(&why, r.url,, r.kind))
+               }
+            }
+         }
+         doing := &null
+      }
+   end
+
+   public new(cookies, queue)
+      self.queue := queue
+      task := Dispatcher.new_task{run()}
+      httpc := HttpClient().
+         set_task(task).
+         set_ssl_verify(&no).
+         set_cookies(cookies)
+      return
+   end
+end
+
+class Tbl(Border)
+   public inner
+
+   public get_max_width()
+      return inner.layout_delegate. get_max_width() + border.get_total_width()
+   end
+
+   public new(url)
+      cast(self,Border).new()
+      inner := Component().
+         set_layout(TableLayout().set_doi(0).set_dii(0).set_adjust_preferred_sizes(&yes))
+      set_content(inner)
+      set_border(EmptyBorder().set_insets(0,0,0,0))
+      return
+   end
+end
+
+class Img(Label)
+   private url, wrote, imgw, imgh
+
+   public got_data(res)
+      if \res.err then
+         set_paint(ImagePaint().set_cache("rpp.BROKEN_LINK"))
+      else {
+         set_paint(ImagePaint().
+                      set_image(res.data).
+                      set_max_size(imgw, imgh).
+                      set_fill_dimensions(2))
+         if /paint.win then
+            set_paint(ImagePaint().set_cache("rpp.BROKEN_LINK"))
+      }
+   end
+
+   private handle_lrelease(e)
+      if in_region(e) then
+         parent_dialog.goto(url, Worker.NORMAL)
+   end
+
+   private handle_enter(e)
+      if /wrote then {
+         parent_dialog.msg(url.str())
+         wrote := 1
+      }
+   end
+
+   private handle_exit(e)
+      if \wrote then {
+         parent_dialog.clear_msg()
+         wrote := &null
+      }
+   end
+
+   public new(url, imgw, imgh)
+      cast(self,Label).new()
+      self.imgw := imgw
+      self.imgh := imgh
+
+      if \url then {
+         self.url := url
+         set_pointer("hand1")
+         connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+         connect(self.handle_enter, Event.MOUSE_ENTER)
+         connect(self.handle_exit, Event.MOUSE_EXIT)
+      }
+      set_paint(EmptyPaint())
+      set_border(EmptyBorder().set_insets(0,0,0,0))
+      return
+   end
+end
+
+class FormToggle(ToggleTextButton)
+   public const
+      value
+
+   public new(value)
+      cast(self,ToggleTextButton).new()
+      self.value := value
+      return
+   end
+end
+
+class FormButton(TextButton)
+   public const
+      value
+
+   public new(value)
+      cast(self,TextButton).new()
+      if /value | (*value = 0) then
+         value := "Submit"
+      self.value := value
+      set_label(value)
+      return
+   end
+end
+
+class Hidden()
+   public const
+      value
+
+   public new(value)
+      self.value := value
+      return
+   end
+end
+
+class Form()
+   private readable
+      url,
+      parent,
+      method,
+      items,
+      cbgs
+
+   public submit(e, src)
+      local t, k, v, c
+      t := table()
+      every k := key(items) do {
+         every c := !items[k] do {
+            v := &null
+            case classof(c) of {
+               TextField: v := c.get_contents()
+               FormButton: if c === src then v := c.value
+               FormToggle: if c.is_checked() then v := c.value
+               Hidden: v := c.value
+               EditableTextList: v := c.get_contents_str()
+               gui.List: v := c.object_get_selection()
+            }
+            insert(t, k, \v)
+         }
+      }
+
+      if map(method) == "post" then
+         parent.goto(url, Worker.NORMAL, t)
+      else
+         parent.goto(clone(url).set_cgi_parameters(t), Worker.NORMAL)
+   end
+
+   public add(name, item)
+      local x
+      (x := member(items, name)) | insert(items, name, x := [])
+      put(x, item)
+   end
+
+   public get_cbg(name)
+      local x
+      (x := member(cbgs, name)) | insert(cbgs, name, x := CheckBoxGroup())
+      return x
+   end
+
+   public new(parent, url, method)
+      self.parent := parent
+      self.url := url
+      self.method := method
+      self.items := table()
+      self.cbgs := table()
+      return
+   end
+
+end
+
+record Context(base, form, url, fg, link_fg, font, align, pre, face, size, bold, italic)
+
+class Browser(Dialog)
+   private
+      prev_button,
+      message_label,
+      close_button,
+      search_field,
+      next_button,
+      workers,
+      top_panel,
+      status_ticker,
+      history,
+      history_pos,
+      running,
+      stop_button,
+      home_button,
+      paste_url_button,
+      refresh_button,
+      start_page,
+      queue
+
+   public static const 
+      COLORS
+
+   private static init()
+      COLORS := table(,
+                      "aqua", "#00FFFF",
+                      "black", "#x000000",
+                      "blue", "#0000CC",
+                      "fuchsia", "#FF00FF",
+                      "gray", "#808080",
+                      "green", "#008000",
+                      "lime", "#00FF00",
+                      "maroon", "#800000",
+                      "navy", "#000080",
+                      "olive", "#808000",
+                      "purple", "#800080",
+                      "red", "#FF0000",
+                      "silver", "#C0C0C0",
+                      "teal", "#008080",
+                      "white", "#FFFFFF",
+                      "yellow", "#FFFF00")
+   end
+
+   public end_dialog()
+   end
+
+   private convert_color(s)
+      return if s[1] == "#" then
+         s
+      else
+         member(COLORS, string(s))
+   end
+
+   private synch_font(context)
+      local s
+      s := context.face
+      if \context.bold then
+         s ||:= ",bold"
+      if \context.italic then
+         s ||:= ",italic"
+      s ||:= "," || (1 + context.size*3)
+      context.font := s
+   end
+
+   private status()
+      local i, r, s
+      repeat {
+         status_ticker.sleep(200)
+         i := *queue
+         every i +:= (!workers).count()
+         if (i > 0) | (i ~=== running) then {
+            if i = 0 then {
+               msg("Done")
+               stop_button.set_is_shaded(&yes)
+            } else {
+               r := 0
+               every r +:= (!workers).read()
+               s := i || " running requests"
+               if r > 0 then
+                  s ||:= ", read " || r || " bytes"
+               msg(s)
+               stop_button.set_is_shaded(&no)
+            }
+            running := i
+            if i = 0 then {
+               top_panel.reset_all_layouts()
+               top_panel.layout()
+               top_panel.invalidate()
+            }
+         }
+      }
+   end
+
+   public init_dialog()
+      local u
+      every (!workers).task.start()
+      status_ticker.start()
+      if \start_page then {
+         if u := URL.parse(start_page) then
+            goto(u, Worker.NORMAL)
+         else
+            msg("Invalid url")
+      } else
+         on_home()
+   end
+
+   private on_close_button(ev)
+      dispose()
+   end
+
+   private on_next(ev)
+      goto(history[history_pos +:= 1], Worker.NAVIGATE)
+      update_grey()
+   end
+
+   private on_prev(ev)
+      goto(history[history_pos -:= 1], Worker.NAVIGATE)
+      update_grey()
+   end
+
+   private cancel()
+      every (!workers).cancel()
+      clear(queue)
+   end
+
+   private on_quit(ev)
+      dispose()
+   end
+   
+   private start_worker(req)
+      local w
+      put(queue, req)
+      running := &null
+      every w := !workers do 
+         if w.task ~=== Dispatcher.scheduler.curr_task then
+            w.task.notify()
+   end
+
+   private update_grey()
+      prev_button.set_is_shaded(if history_pos > 1 then &no else &yes)
+      next_button.set_is_shaded(if history_pos < *history then &no else &yes)
+      refresh_button.set_is_shaded(if history[history_pos] then &no else &yes)
+   end
+
+   private is_html(s)
+      s ? {
+         if tab(upto('<')) then
+            return matchcl("<!doctype" | "<html")
+      }
+   end
+
+   private set_top_data(res)
+      local doc, base, n, s, url, row, c
+      if \res.err then
+         s := u"<html><h1>Error:</h1>Getting " || res.url.str() || "<br><br>" || res.err || "</html>"
+      else {
+         if is_html(res.data) then
+            s := res.data
+         else
+            s := u"<html><h1>Problem:</h1>Displaying " || res.url.str() || "<br><br>This does not seem to be an HTML document</html>"
+      }
+
+      url := res.url
+      Files.string_to_file("/tmp/browser.html",s)
+      if res.kind = Worker.NORMAL then {
+         while *history > history_pos do
+            pull(history)
+         put(history, url)
+         history_pos +:= 1
+         update_grey()
+      }
+      s := Text.liberal_ucs(s)
+      search_field.set_contents(url.str())
+      doc := HtmlParser().parse(s)
+      if \opts["f"] then
+         to_stdout(doc, 3)
+  
+      base := url
+      if n := doc.get_root_element().search_tree(u"BASE") then
+         base := URL.parse(n.get_attribute(u"HREF"))
+
+      row := TextFlow()
+      c := Context()
+      c.base := base
+      c.face := "sans"
+      c.fg := "black"
+      c.link_fg := "blue"
+      c.size := 3
+      synch_font(c)
+
+      if n := doc.get_root_element().search_tree(u"BODY") then {
+         row.set_bg(convert_color(n.get_attribute(u"BGCOLOR")))
+         c.fg := convert_color(n.get_attribute(u"TEXT"))
+         c.link_fg := convert_color(n.get_attribute(u"LINK"))
+      }
+
+      traverse(doc, row, c)
+      #show_structure(row)
+      top_panel.set_area_y(0)
+      top_panel.view.inner.finally()
+      top_panel.set_inner(row)
+      row.initially()
+      top_panel.layout()
+      top_panel.invalidate()
+      change_pointer(DEFAULT_POINTER)
+   end
+
+   private mk_link(base, s)
+      if match("http://" | "https://" | "file://", map(s)) then
+         return URL.parse(s)
+      else if \base then
+         return base.get_relative(s)
+   end
+
+   private traverse_a(e, p, context)
+      local url,c 
+       if url := mk_link(context.base, e.get_attribute(u"HREF") | ("#" || e.get_attribute(u"NAME"))) then {
+          c := copy(context)
+          c.url := url
+          c.fg := c.link_fg
+          return traverse(e, p, c)
+       }
+   end
+
+   private traverse_hN(e, p, context)
+      local c
+      put_para(p)
+      c := copy(context)
+      c.size := 7 - e.name[-1]
+      synch_font(c)
+      traverse(e, p, c)
+      put_para(p)
+   end
+
+   private parse_size(s, curr)
+      local i
+      i := if any('+\-', s[1]) then
+         curr + integer(s)
+      else
+         integer(s)
+      return (0 < \i <= 7, i)
+   end
+
+   private traverse_font(e, p, context)
+      local c
+      c := copy(context)
+      c.fg := convert_color(e.get_attribute(u"COLOR"))
+      c.face := e.get_attribute(u"FACE")
+      c.size := parse_size(e.get_attribute(u"SIZE"), c.size)
+      synch_font(c)
+      traverse(e, p, c)
+   end
+
+   private traverse_b(e, p, context)
+      local c
+      c := copy(context)
+      c.bold := 1
+      synch_font(c)
+      traverse(e, p, c)
+   end
+
+   private traverse_i(e, p, context)
+      local c
+      c := copy(context)
+      c.italic := 1
+      synch_font(c)
+      traverse(e, p, c)
+   end
+
+   private traverse_form(e, p, context)
+      local m, c
+      m := e.get_attribute(u"METHOD") | "get"
+      c := copy(context)
+      c.form := Form(self, mk_link(context.base, e.get_attribute(u"ACTION")), m)
+      traverse(e, p, c)
+   end
+
+   private add_component(p, c, context, align)
+      /align := "absbottom"
+      put(p.input, ComponentCmd(c, context, align))
+      p.add(c)
+   end
+
+   private traverse_img(e, p, context)
+      local q, url, border, iw, ih
+      if url := mk_link(context.base, e.get_attribute(u"SRC")) then {
+         iw := integer(e.get_attribute(u"WIDTH"))
+         ih := integer(e.get_attribute(u"HEIGHT"))
+         q := Img(context.url, iw, ih)
+         border := integer(e.get_attribute(u"BORDER")) | 0
+         if border > 0 then
+            q.set_border(PlainBorder().set_line_width(border))
+         start_worker(Req(url, q.got_data, Worker.NORMAL))
+         add_component(p, q, context, cnv_comp_align(e, u"ALIGN", Align.B))
+      }
+   end
+
+   private traverse_select(e, p, context)
+      local t, sel, f, q
+      \context.form | fail
+      t := []
+      sel := 1
+      every f := node_search(!e.children, [u"OPTION"], [u"SELECT"]) do {
+         put(t, f.get_trimmed_string_content())
+         if f.get_attribute(u"SELECTED") then
+            sel := *t
+      }
+      q := gui.List(). 
+         set_font(context.font).
+         set_fg(context.fg).
+         set_selection_list(t).
+         set_selection(sel)
+      context.form.add(e.get_attribute(u"NAME"), q)
+      add_component(p, q, context)
+   end
+
+   private traverse_textarea(e, p, context)
+      local q, w, h, mW
+      \context.form | fail
+      mW := cbwin.clone().set_font(context.font)
+      w := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", e.get_attribute(u"COLS")))) | 200
+      h := (2 * Gui.BORDER_WIDTH + e.get_attribute(u"ROWS") * mW.get_font_height()) | 100
+      mW.uncouple()
+      q := EditableTextList().
+         set_font(context.font).
+         set_fg(context.fg).
+         set_size(w, h)
+      context.form.add(e.get_attribute(u"NAME"), q)
+      add_component(p, q, context)
+   end
+
+   private traverse_input(e, p, context)
+      local q, s, k, v, cbg, size, mW
+      \context.form | fail
+      s := string(map(e.get_attribute(u"TYPE"))) | "text"
+      case s of {
+         "submit" : {
+            k := e.get_attribute(u"NAME")
+            v := e.get_attribute(u"VALUE")
+            q := FormButton(v).
+                  set_font(context.font).
+                  set_fg(context.fg).
+                  connect(context.form.submit, Event.ACTION)
+            add_component(p, q, context)
+            context.form.add(\k, q)
+         }
+         "reset"|"button" : {
+            v := e.get_attribute(u"VALUE") | u"Reset"
+            q := TextButton().
+               set_font(context.font).
+               set_fg(context.fg).
+               set_label(v)
+            add_component(p, q, context)
+         }
+         "hidden": {
+            k := e.get_attribute(u"NAME")
+            v := e.get_attribute(u"VALUE")
+            context.form.add(k, Hidden(v))
+         }
+         "radio": {
+            k := e.get_attribute(u"NAME")
+            v := e.get_attribute(u"VALUE")
+            cbg := context.form.get_cbg(k)
+            q := FormToggle(v).
+               set_paint(ImagePaint().set_cache("gui.DIAMOND_UP")).
+               set_paint_down(ImagePaint().set_cache("gui.DIAMOND_DOWN")).
+               set_border(EmptyBorder().set_insets(0,0,0,0))
+            if e.get_attribute(u"CHECKED") then
+               q.set_is_checked(&yes)
+            add_component(p, q, context, Align.B)
+            cbg.add(q)
+            context.form.add(k, q)
+         }
+         "checkbox": {
+            k := e.get_attribute(u"NAME")
+            v := e.get_attribute(u"VALUE")
+            q := FormToggle(v).
+               set_paint(ImagePaint().set_cache("gui.BOX_UP")).
+               set_paint_down(ImagePaint().set_cache("gui.BOX_DOWN")).
+               set_border(EmptyBorder().set_insets(0,0,0,0))
+            context.form.add(k, q)
+            add_component(p, q, context, Align.B)
+         }
+         "text" | "password": {
+            k := e.get_attribute(u"NAME")
+            v := e.get_attribute(u"VALUE") | u""
+            mW := cbwin.clone().set_font(context.font)
+            size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", e.get_attribute(u"SIZE")))) | 160
+            mW.uncouple()
+            q := TextField().
+               set_fg(context.fg).
+               set_font(context.font).
+               set_contents(v).
+               set_size(size).
+               connect(context.form.submit, Event.ACTION)
+            if s == "password" then
+               q.set_displaychar("*")
+            context.form.add(k, q)
+            add_component(p, q, context)
+         }
+      }
+      traverse(e, p, context)
+   end
+
+   private show_parents(c)
+      write("chain of ",image(c))
+      while \c do {
+         write("\tc=",image(c))
+         c := c.parent
+      }
+   end
+
+   private show_input(ii, l)
+      local s,a
+      case classof(ii) of {
+         TextCmd: {
+            s := ii.s
+            if *s > 30 then 
+               s[30:0] := "...("||*s||")"
+            a := ""
+            a ||:= "fg="|| \ii.attr.fg
+            a ||:= " font="|| \ii.attr.font
+            write(repl("   ",l), image(s),"  ",a) 
+         }
+         ComponentCmd: show_structure(ii.c, l)
+         default: write(repl("   ",l),image(ii))
+      }
+   end
+
+   private show_output(xo, l)
+      local s,a
+      s := "Text @"||xo.x||","||xo.y
+      s ||:= xo.s
+      if *s > 30 then 
+         s[30:0] := "...("||*s||")"
+      a := ""
+      a ||:= "fg="|| \xo.attr.fg
+      a ||:= " font="|| \xo.attr.font
+      write(repl("   ",l), image(s),"  ",a) 
+   end
+
+   private show_structure(c, l)
+      local s, v, short
+      /l := 0
+      short := s := ""
+      short ||:= "w="||\c.w||" h="||\c.h
+      if is(c, TextFlow) then short ||:= "  " || *c.input || " items"
+      if c.get_constraint("eol") then s ||:= "eol "
+      if \c.get_constraint("x_fill") then s ||:= "x_fill "
+      if v := c.get_constraint("x_weight") then s ||:= "x_weight=" || v
+      if v := c.get_constraint("x_align") then s ||:= "x_align=" || v
+      write(repl("   ",l), image(c),short,"\t\t\t",s)
+      if is(c, TextFlow) then {
+         every show_input((!c.input), l+1)
+        #every show_output((!\c.output), l+1)
+      
+      } else
+         every show_structure((!c.children), l+1)
+   end
+
+   private traverse_div(e, p, context)
+      put_new_row(p)
+      traverse(e, p, context)
+   end
+
+   private traverse_br(e, p, context)
+      local clear
+      clear := case string(map(e.get_attribute(u"CLEAR"))) of {
+         "left": Align.L
+         "right": Align.R
+         "all"|"both": "all"
+      }
+      put(p.input, BreakCmd(clear))
+   end
+
+   private traverse_hr(e, p, context)
+      put_new_row(p)
+      add_component(p, Line().set_width(5), context)
+      put_new_row(p)
+   end
+
+   private traverse_p(e, p, context)
+      local c
+      c := copy(context)
+      put_para(p)
+      c.align := case string(map(e.get_attribute(u"ALIGN"))) of {
+         "left": Align.L
+         "center": Align.C
+         "right": Align.R
+      }
+      traverse(e, p, c)
+      put_para(p)
+   end
+
+   private traverse_pre(e, p, context)
+      local c
+      put_para(p)
+      c := copy(context)
+      c.face := "mono"
+      synch_font(c)
+      c.pre := 1
+      traverse(e, p, c)
+      put_para(p)
+   end
+
+   private put_para(p)
+      put(p.input, ParaCmd())
+   end
+
+   private put_new_row(p)
+      put(p.input, NewRowCmd())
+   end
+
+   private traverse_center(e, p, context)
+      local c
+      c := copy(context)
+      c.align := Align.C
+      traverse(e, p, c)
+   end
+
+   private cnv_valign(tr, td, name, def)
+      return case string(map((td | tr).get_attribute(name))) of {
+         "top": Align.T
+         "middle": Align.C
+         "bottom"|"baseline": Align.B
+         default: def
+      } | def
+   end
+
+   private cnv_halign(tr, td, name, def)
+      return case string(map((td | tr).get_attribute(name))) of {
+         "left": Align.L
+         "center": Align.C
+         "right": Align.R
+         default: def
+      } | def
+   end
+
+   private cnv_comp_align(el, name, def)
+      return case map(string(el.get_attribute(name))) of {
+         "left": Align.L
+         "right": Align.R
+         "baseline"|"bottom": Align.B
+         "texttop"|"top": Align.T
+         "absmiddle"|"middle" | "center" | "centre": Align.C
+         "absbottom":  "absbottom"
+         default: def
+      } | def
+   end
+
+   private traverse_table(e, p, context)
+      local tbl, tr, td, row, colspan, rowspan, width, occ, c,
+         x, y, border, cellpadding, cellspacing, cell_border, align
+
+      tbl := Tbl()
+      if width := integer(e.get_attribute(u"WIDTH")) then
+         tbl.set_width(width)
+      border := integer(e.get_attribute(u"BORDER")) | 0
+      cellpadding := integer(e.get_attribute(u"CELLPADDING")) | 0
+      cellspacing := integer(e.get_attribute(u"CELLSPACING")) | 2
+      tbl.inner.layout_delegate.set_doi(cellspacing).set_dii(cellspacing/2)
+      if border > 0 then
+         tbl.set_border(PlainBorder().set_line_width(border))
+
+      cell_border := if border > 0 then
+         CompoundBorder().
+            set_outer(PlainBorder().set_line_width(1)).
+            set_inner(EmptyBorder().set_insets(cellpadding, cellpadding, cellpadding, cellpadding))
+         else
+            EmptyBorder().set_insets(cellpadding, cellpadding, cellpadding, cellpadding)
+      align := cnv_comp_align(e, u"ALIGN", Align.C)
+      if not(align === (Align.L | Align.R)) then
+         put_new_row(p)
+      y := 1
+      occ := set()
+      add_component(p, tbl, context, align)
+      every tr := node_search(!e.children, [u"TR"], [u"TABLE"]) do {
+         x := 1
+         while member(occ, x || "," || y) do
+            x +:= 1
+         every td := node_search(tr, [u"TD", u"TH"], [u"TABLE"]) do {
+            row := TextFlow().
+               set_constraint("x", x). 
+               set_constraint("y", y).
+               set_border(cell_border).
+               set_v_align(cnv_valign(tr, td, u"VALIGN", Align.C))
+            colspan := integer(td.get_attribute(u"COLSPAN")) | 1
+            row.set_constraint("w", colspan)
+            rowspan := integer(td.get_attribute(u"ROWSPAN")) | 1
+            row.set_constraint("h", rowspan)
+            row.set_bg(convert_color((td | tr).get_attribute(u"BGCOLOR")))
+            every insert(occ, (x to x + colspan -1) || "," || (y to y + rowspan -1))
+            if width := td.get_attribute(u"WIDTH") then {
+               if width := integer(width) then
+                  row.set_width(width)
+               else if width[-1] == "%" & width := integer(width[1:-1]) then
+                  row.set_constraint("pct_w", width)
+            }
+            tbl.inner.add(row)
+
+            c := copy(context)
+            if td.name == u"TH" then {
+               c.bold := 1
+               c.size := min(c.size + 1, 7)
+               synch_font(c)
+               c.align := cnv_halign(tr, td, u"ALIGN", Align.C)
+            } else
+               c.align := cnv_halign(tr, td, u"ALIGN", Align.L)
+
+            traverse(td, row, c)
+            while member(occ, x || "," || y) do
+               x +:= 1
+         }
+         y +:= 1
+      }
+      if not(align === (Align.L | Align.R)) then
+         put_new_row(p)
+   end
+
+   private traverse_ol(e, p, context)
+      local tbl, li, row, i
+      put_new_row(p)
+      tbl := Tbl()
+      add_component(p, tbl, context)
+      i := 0
+      every li := node_search(!e.children, [u"LI"], [u"OL", u"UL"]) do {
+         row := TextFlow()
+         put(row.input, TextCmd((i +:= 1) || u".\ua0\ua0\ua0", context))
+         tbl.inner.add(row)
+         row := TextFlow() .set_constraint("eol", &yes)
+         tbl.inner.add(row)
+         traverse(li, row, context)
+      }
+      put_new_row(p)
+   end
+
+   private traverse_ul(e, p, context)
+      local tbl, li, row
+      put_new_row(p)
+      tbl := Tbl()
+      add_component(p, tbl, context)
+      every li := node_search(!e.children, [u"LI"], [u"OL", u"UL"]) do { 
+         row := TextFlow()
+         put(row.input, TextCmd(u"\u2022\ua0\ua0\ua0", context))
+         tbl.inner.add(row)
+         row := TextFlow() .set_constraint("eol", &yes)
+         tbl.inner.add(row)
+         traverse(li, row, context)
+      }
+      put_new_row(p)
+   end
+
+   private traverse_dl(e, p, context)
+      local tbl, li, row
+      put_new_row(p)
+      tbl := Tbl()
+      tbl.inner.layout_delegate.set_fix_col1(&yes)
+      add_component(p, tbl, context)
+      every li := node_search(!e.children, [u"DT", u"DD"], [u"DL"]) do { 
+         if li.name == u"DT" then {
+            row := TextFlow() .set_constraint("eol", &yes).set_constraint("w", 2)
+            tbl.inner.add(row)
+            traverse(li, row, context)
+         } else {
+            row := TextFlow() .set_constraint("eol", &no)
+            put(row.input, TextCmd(u"\u2022\ua0\ua0\ua0", context))
+            tbl.inner.add(row)
+            row := TextFlow() .set_constraint("eol", &yes)
+            tbl.inner.add(row)
+            traverse(li, row, context)
+
+         }
+      }
+      put_new_row(p)
+   end
+
+   private static node_search(e, for, bar)
+      is(e, Element) | fail
+      if e.name == !bar then
+         fail
+      if e.name == !for then
+         suspend e
+      suspend node_search(!e.children, for, bar)
+   end
+
+   private traverse_text(e, p, context)
+      put(p.input, TextCmd(e, context))
+   end
+
+   private traverse(n, p, context)
+      local e
+      every e := !n.children do {
+         if text(e) then {
+            traverse_text(e, p, context)
+         } else {
+            if is(e, HtmlElement) then {
+               case string(e.name) of {
+                  "TITLE"|"META"|"LINK"|"LI"|"TR"|"TD"|"SCRIPT"|"STYLE": {}
+                  "A": traverse_a(e, p, context)
+                  "FORM": traverse_form(e, p, context)
+                  "FONT": traverse_font(e, p, context)
+                  "IMG": traverse_img(e, p, context)
+                  "SELECT": traverse_select(e, p, context)
+                  "TEXTAREA": traverse_textarea(e, p, context)
+                  "INPUT": traverse_input(e, p, context)
+                  "DIV": traverse_div(e, p, context)
+                  "B": traverse_b(e, p, context)
+                  "I": traverse_i(e, p, context)
+                  "BR": traverse_br(e, p, context)
+                  "HR": traverse_hr(e, p, context)
+                  "CENTER": traverse_center(e, p, context)
+                  "H" || (1 to 6): traverse_hN(e, p, context)
+                  "TABLE": traverse_table(e, p, context)
+                  "OL": traverse_ol(e, p, context)
+                  "UL": traverse_ul(e, p, context)
+                  "DL": traverse_dl(e, p, context)
+                  "P": traverse_p(e, p, context)
+                  "PRE": traverse_pre(e, p, context)
+                  default : traverse(e, p, context)
+               }
+            }
+         }
+      }
+      return p
+   end
+
+   public goto(url, kind, form_data)
+      cancel()
+      start_worker(Req(url, set_top_data, kind, form_data))
+   end
+
+   private on_search_field(ev)
+      local s, u
+      s := search_field.get_contents()
+      if *s = 0 then
+         fail
+      if u := URL.parse(s) then
+         goto(u, Worker.NORMAL)
+      else
+         msg("Invalid url")
+   end
+
+   public msg(s)
+      message_label.set_label(s)
+   end
+
+   public clear_msg()
+      msg("")
+   end
+
+   public new(s, cookies)
+      cast(self,Dialog).new()
+      self.setup()
+      cache := Cache(10*1024*1024)
+      start_page := s
+      queue := []
+      workers := []
+      every 1 to 6 do
+         put(workers, Worker(cookies, queue))
+      status_ticker := Dispatcher.new_task{status()}
+      top_panel.
+         set_inner(Component().set_size(10,10)).
+         use_default_keys()
+      history := []
+      history_pos := 0
+      update_grey()
+      return
+   end
+
+   private on_stop(ev)
+      cancel()
+   end
+
+   private on_home(ev)
+      goto(URL.parse("file://" || Files.get_path(Files.get_home()).child(".oibrowser.html").str()), Worker.NORMAL)
+   end
+
+   private handle_paste_response(target_type, data, e)
+      if /data then
+         fail
+      data ?:= tab(upto('\r\n'))
+      search_field.set_contents(data)
+   end
+
+   private on_paste_url(ev)
+      request_selection(Selection.CLIPBOARD, 
+                        ["text/uri-list", Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
+                        handle_paste_response, 
+                        ev)
+   end
+
+   private on_refresh(ev)
+      goto(history[history_pos], Worker.REFRESH)
+      update_grey()
+   end
+
+   private on_icon_event(ev)
+   end
+
+   private setup()
+      local quit_menu_item, paint_27, paint_32, paint_19, paint_24, paint_37, paint_29, paint_34, layout_1, panel_1, paint_13, paint_26, paint_31, paint_23, paint_20, paint_28, paint_33, paint_12, paint_25, paint_30, border_1, menu_bar_1, menu_1, layout_2
+      self.set_label("Browser")
+      self.set_min_height(250)
+      self.set_resize(&yes)
+      paint_13 := TextPaint("File")
+      paint_12 := TextPaint("Quit")
+      quit_menu_item := TextMenuItem().
+         connect(on_quit, Event.ACTION).
+         set_paint_mid(paint_12)
+      menu_1 := Menu().
+         set_accel("f").
+         set_paint_mid(paint_13).
+         add(quit_menu_item)
+      menu_bar_1 := MenuBar().
+         set_size("100").
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("l_inset", 0).
+         set_constraint("r_inset", 0).
+         set_constraint("t_inset", 0).
+         set_constraint("x_fill", &yes).
+         add(menu_1)
+      self.add(menu_bar_1)
+      paint_20 := ImagePaint().
+         set_cache("rpp.EXIT_24")
+      paint_19 := TextPaint("Close")
+      close_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_19).
+         set_accel("c").
+         connect(self.on_close_button, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(paint_20)
+      paint_24 := ImagePaint().
+         set_cache("rpp.HOME_24")
+      paint_23 := TextPaint("Home")
+      home_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_23).
+         set_accel("n").
+         connect(self.on_home, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(paint_24)
+      paint_26 := ImagePaint().
+         set_cache("rpp.REFRESH_24")
+      paint_25 := TextPaint("Refresh")
+      refresh_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_25).
+         connect(self.on_refresh, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(paint_26)
+      paint_28 := ImagePaint().
+         set_cache("rpp.PREV_24")
+      paint_27 := TextPaint("Prev")
+      prev_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_27).
+         connect(self.on_prev, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(paint_28)
+      paint_30 := ImagePaint().
+         set_cache("rpp.NEXT_24")
+      paint_29 := TextPaint("Next")
+      next_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_29).
+         connect(self.on_next, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(paint_30)
+      paint_32 := ImagePaint().
+         set_cache("rpp.STOP_24")
+      paint_31 := TextPaint("Stop")
+      stop_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_31).
+         connect(self.on_stop, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(paint_32)
+      paint_34 := ImagePaint().
+         set_cache("rpp.PASTE_24")
+      paint_33 := TextPaint("Paste URL")
+      paste_url_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_33).
+         connect(self.on_paste_url, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(paint_34)
+      layout_1 := GridLayout().
+         set_doi(0).
+         set_dii(2).
+         set_extra("cells")
+      panel_1 := Panel().
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_align", Align.L).
+         set_layout(layout_1).
+         add(close_button).
+         add(home_button).
+         add(refresh_button).
+         add(prev_button).
+         add(next_button).
+         add(stop_button).
+         add(paste_url_button)
+      self.add(panel_1)
+      search_field := TextField().
+         set_size("100").
+         set_align(Align.C, Align.T).
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_align", Align.L).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         connect(self.on_search_field, Event.ACTION).
+         set_contents("")
+      self.add(search_field)
+      top_panel := ComponentScrollArea().
+         set_size("651", "337").
+         set_font("sans,9").
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_constraint("y_fill", &yes).
+         set_constraint("y_weight", 1.0)
+      self.add(top_panel)
+      paint_37 := TextPaint("")
+      border_1 := CompoundBorder().
+         set_outer(SunkenBorder()).
+         set_inner(EmptyBorder().
+            set_l_inset(3)).
+         set_x_align(Align.L)
+      message_label := Label().
+         set_size("100").
+         set_align(Align.L, Align.B).
+         set_fg("red").
+         clear_constraints().
+         set_constraint("b_inset", 0).
+         set_constraint("l_inset", 0).
+         set_constraint("r_inset", 0).
+         set_constraint("x_fill", &yes).
+         set_border(border_1).
+         set_paint(paint_37)
+      self.add(message_label)
+      self.connect(self.on_close_button, Event.WINDOW_CLOSE_BUTTON)
+      self.connect(self.on_icon_event, Event.ICON)
+      layout_2 := GridLayout().
+         set_extra("cells")
+      self.set_layout(layout_2)
+      self.set_focus(search_field.find_focus())
+   end
+end
+
+procedure main(a)
+   local d, s, cookies, t, bak
+   opts := options(a, "-f! -k:")
+   cookies := \opts["k"] | System.getenv("GETURL_COOKIES")
+   if \cookies then {
+      t := decode(Files.file_to_string(cookies)) | {
+         write(FileStream.stderr, "Couldn't read/decode cookie file ", cookies, ": ", &why)
+         t := table()
+      }
+   }
+   ImageCache.name_image("rpp.EXIT_24", EXIT)
+   ImageCache.name_image("rpp.NEXT_24", NEXT)
+   ImageCache.name_image("rpp.PREV_24", PREV)
+   ImageCache.name_image("rpp.HOME_24", HOME)
+   ImageCache.name_image("rpp.REFRESH_24", REFRESH0)
+   ImageCache.name_image("rpp.PASTE_24", PASTE)
+   ImageCache.name_image("rpp.STOP_24", STOP)
+   ImageCache.name_image("rpp.BROKEN_LINK", BROKEN_LINK)
+   s := a[1]
+   d := Browser(s, t)
+   d.show_modal()
+
+   if \cookies then {
+      bak := cookies || ".bak"
+      Files.string_to_file(bak, encode(Cookie.expire_cookies(t))) | 
+         stop("Couldn't encode to temp cookie file ", bak, ": ", &why)
+      # Use rename not move to ensure it's atomic
+      Files.rename(bak, cookies) | stop("Couldn't rename cookie file ", bak, ": ", &why)
+   }
+end
+
+### Ivib-v2 layout: $.layout
