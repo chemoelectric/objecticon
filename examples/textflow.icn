@@ -1,0 +1,597 @@
+import gui, ipl.strings, ipl.sort
+
+class TextFlowCmd() end
+
+class ComponentCmd(TextFlowCmd)
+   public const c, align, attr
+
+   public new(c, attr, align)
+      self.c := c
+      self.attr := attr
+      self.align := align
+      return
+   end
+end
+
+class TextCmd(TextFlowCmd)
+  public const s, attr
+
+   public new(s, attr)
+      self.s := s
+      self.attr := attr
+      return
+   end
+end
+
+class NewRowCmd(TextFlowCmd)
+end
+
+class ParaCmd(TextFlowCmd)
+end
+
+class BreakCmd(TextFlowCmd)
+   public const clear
+
+  public new(clear)
+      self.clear := clear
+      return
+   end
+end
+
+class TextOut(Rect)
+   public const s, attr, ascent
+
+   public new(attr, s, ascent, w, h)
+      self.attr := attr
+      self.s := s
+      self.ascent := ascent
+      self.w := w
+      self.h := h
+      return
+   end
+end
+
+class CompOut(Rect)
+   public const c, align, attr, pw, maxw
+
+   public new(attr, c, align, pw, maxw)
+      self.attr := attr
+      self.c := c
+      self.align := align
+      self.pw := pw
+      self.maxw := maxw
+      return
+   end
+end
+
+class TextFlow(Component)
+   public const
+      input
+
+   private
+      left_comps,
+      right_comps,
+      output_comps,
+      output_text,
+      output,
+      row,
+      row_x,
+      row_y,
+      row_width,
+      row_ascent,
+      row_descent,
+      row_abs_height,
+      max_pre_w,
+      max_word_w,
+      max_ll,
+      calculating,
+      need_spc,
+      right_margin,
+      compute_w,
+      deferred,
+      v_align,
+      y_off,
+      at_new_para,
+      def_width,
+      max_width,
+      wrote
+
+   public static const 
+      WHITESPACE
+
+   private static init()
+      WHITESPACE := ' \t\r\n\v\f'
+   end
+
+   private compute(width)
+      /width := 16r7fffffff
+      if width === compute_w then 
+         return
+      compute_w := width
+      calculating := if width = 16r7fffffff then 1 else &null
+      output_text := []
+      output_comps := []
+      left_comps := []
+      right_comps := []
+      row := []
+      deferred := []
+      row_width := 0
+      need_spc := &null
+      at_new_para := 1
+      row_y := 0
+      row_x := 0
+      max_pre_w := 0
+      max_word_w := 0
+      max_ll := 0
+      right_margin := compute_w
+      row_abs_height := row_ascent := row_descent := 0
+      compute1(, input)
+      while *(row | deferred) > 0 do
+         new_row()
+   end
+
+   public set_v_align(v)
+      self.v_align := v
+      return self
+   end
+
+   public reset_layout()
+      max_width := def_width := output_text := output_comps := left_comps :=
+         right_comps := compute_w := &null
+   end
+
+   public get_default_width()
+      local c
+      if /def_width then {
+         compute()
+         def_width := max_pre_w
+         every c := !output_comps do
+            def_width <:= c.pw
+         def_width <:= max_word_w
+#write("default width=",def_width + border.get_total_width())
+         def_width +:= border.get_total_width()
+      }
+      return def_width
+   end
+
+   public get_max_width()
+      local t
+      if /max_width then {
+         if t := integer(self.w_spec) then
+            max_width := t
+         else {
+            compute()
+            max_width := max_ll + border.get_total_width()
+         }
+      }
+      return max_width
+   end
+
+   public get_default_height(dw)
+      local mh, co
+      dw -:= border.get_total_width()
+      compute(dw)
+      mh := row_y
+      every co := !left_comps | !right_comps do
+        mh <:= co.y + co.h
+      return mh + border.get_total_height()
+   end
+
+   private compute1()
+      local cmd, font, W
+      W := cbwin.clone()
+      every cmd := !input do {
+         case classof(cmd) of {
+            ComponentCmd: 
+               compute_component(cmd)
+            NewRowCmd: {
+               # Avoid 1-pixel gap, which would be added if *row=0
+               if *row > 0 then
+                  new_row()
+            }
+            ParaCmd: {
+               if /at_new_para then {
+                  new_row(W.get_font_height() / 2)
+                  at_new_para := 1
+               }
+            }
+            BreakCmd: {
+               if *row > 0 then
+                  new_row()
+               else
+                  new_row(W.get_font_height())
+               case \cmd.clear of {
+                  Align.L: 
+                     until row_x = 0 do new_row()
+                  Align.R:
+                     until right_margin = compute_w do new_row()
+                  "all":
+                     until have_max() do new_row()
+               }
+            }
+            TextCmd: {
+               if font ~=== cmd.attr.font then {
+                  W.uncouple()
+                  W := attr_clone(cmd.attr)
+                  font := cmd.attr.font
+               } 
+               if \cmd.attr.pre then
+                  compute_pre_txt(W, cmd)
+               else
+                  compute_txt(W, cmd)
+            }
+         }
+      }
+      W.uncouple()
+   end
+
+   private attr_clone(attr)
+      local W
+      W := cbwin.clone()
+      W.set_fg(\attr.fg)
+      W.set_font(\attr.font)
+      return W
+   end
+
+   public display()
+      local o, W, font, fg, x1, y1, r
+      border.draw(self.cbwin, x, y, w, h)
+      x1 := x + border.get_l_inset()
+      y1 := y + border.get_t_inset() + y_off
+      W := cbwin.clone()
+      r := get_cbwin_clip()
+      every o := !output do {
+         if y1 + o.y + o.h < r.y then
+            next
+         # Since we sorted row output by y pos'n, we can break here
+         if y1 + o.y > r.y + r.h then
+            break
+
+         if font ~=== o.attr.font | fg ~=== o.attr.fg then {
+            W.uncouple()
+            W := attr_clone(o.attr)
+            font := o.attr.font
+            fg := o.attr.fg
+         } 
+         draw_string_ex(W, x1 + o.x, y1 + o.y, o.s)
+      }
+      W.uncouple()
+      cast(self,Component).display()
+   end
+
+   public layout()
+      local co, c, x1, y1
+      compute(self.w - border.get_total_width())
+      y_off := case v_align of {
+         Align.T: 0
+         Align.C: (h - get_default_height(w)) / 2
+         Align.B: h - get_default_height(w)
+         default: runerr("invalid v_align", v_align)
+      }
+
+      x1 := x + border.get_l_inset()
+      y1 := y + border.get_t_inset() + y_off
+      every co := !output_comps do {
+         c := co.c
+         c.x := co.x + x1
+         c.y := co.y + y1
+         c.w := co.w
+         c.h := co.h
+         c.layout()
+      }
+      output := isort(output_text, y_cmp)
+   end
+
+   private y_cmp(v)
+      return v.y
+   end
+
+   private new_row(gap)
+      local x1, r, g
+      /gap := 0
+      x1 := row_x
+      row_ascent <:= row_abs_height - row_descent
+      while r := get(row) do {
+         if /calculating & x1 = row_x then {
+            case r.attr.align of {
+               Align.C:
+                  x1 +:= (right_margin - row_width - row_x) / 2
+               Align.R:
+                  x1 +:= right_margin - row_width - row_x
+            }
+         }
+         if is(r, CompOut) then {
+            r.x := x1
+            r.y := case r.align of {
+               Align.C: row_y + row_ascent - r.h / 2
+               Align.B: row_y + row_ascent - r.h
+               Align.T: row_y
+               "absbottom": row_y + row_ascent + row_descent - r.h
+               default: runerr("invalid alignment", r.align)
+            }
+            x1 +:= r.w
+         } else {
+            r.x := x1
+            r.y := row_y + row_ascent - r.ascent
+            x1 +:= r.w
+         }
+         if \calculating & \r.attr.pre then
+            # Since a pre section can still have several elements on a
+            # line (eg with an <a> in a line), we need to record the
+            # maximum width of the line.
+            max_pre_w <:= r.x + r.w - row_x
+      }
+
+      if \calculating then
+         max_ll <:= compute_w - (right_margin - row_width - row_x)
+
+      row_width := 0
+      row_y +:= max(1, row_ascent + row_descent + gap)
+      row_abs_height := row_ascent := row_descent := 0
+
+      row_x := 0
+      every g := !left_comps do
+         if g.y <= row_y < g.y + g.h then
+            row_x <:= g.x + g.w
+
+      right_margin := compute_w
+      every g := !right_comps do
+         if g.y <= row_y < g.y + g.h then
+            right_margin >:= g.x
+
+      while do_deferred(deferred[1]) do
+         pop(deferred)
+   end
+
+   private do_deferred(co)
+      case co.align of {
+         Align.L: {
+            if have_max() | (row_x + co.maxw  + row_width <= right_margin) then {
+               co.x := row_x
+               co.y := row_y
+               co.w := min(co.maxw, right_margin - row_x - row_width)
+               co.h := co.c.get_preferred_height(co.w)
+               row_x +:= co.w
+               put(left_comps, co)
+               return
+            }
+         }
+         Align.R: {
+            if have_max() | (row_x + co.maxw + row_width <= right_margin) then {
+               co.w := min(co.maxw, right_margin - row_x - row_width)
+               co.x := right_margin - co.w
+               co.y := row_y
+               co.h := co.c.get_preferred_height(co.w)
+               right_margin -:= co.w
+               put(right_comps, co)
+               return
+            }
+         }
+      }
+   end
+
+   private compute_component(cmd)
+      local co, prefw, maxw
+      prefw := cmd.c.get_preferred_width()
+      maxw := if is(cmd.c, Tbl) then cmd.c.get_max_width() else prefw
+      co := CompOut(cmd.attr, cmd.c, cmd.align, prefw, maxw)
+      put(output_comps, co)
+
+      case cmd.align of {
+         Align.L: {
+            # If already have deferred, then defer this too, otherwise they will be out of order. 
+            if *deferred > 0 | (row_x + co.maxw + row_width > right_margin) then
+               put(deferred, co)
+            else {
+               co.x := row_x
+               co.y := row_y
+               co.w := co.maxw
+               co.h := cmd.c.get_preferred_height(co.w)
+               row_x +:= co.maxw
+               put(left_comps, co)
+            }
+         }
+         Align.R: {
+            if  *deferred > 0 | (row_x + co.maxw + row_width > right_margin) then
+               put(deferred, co)
+            else {
+               co.x := right_margin - co.maxw 
+               co.y := row_y
+               co.w := co.maxw
+               co.h := cmd.c.get_preferred_height(co.w)
+               right_margin -:= co.w
+               put(right_comps, co)
+            }
+         }
+         Align.B | Align.T: {
+            comp_out(co)
+            row_ascent <:= co.h
+         }
+         Align.C: {
+            comp_out(co)
+            row_ascent <:= co.h / 2
+            row_descent <:= co.h / 2 + co.h % 2
+         }
+         "absbottom": {
+            comp_out(co)
+            row_abs_height <:= co.h
+         }
+         default: runerr("invalid alignment", cmd.align)
+      }
+   end
+
+   private comp_out(co)
+      local c
+      c := co.c
+      while (row_x + row_width + co.pw > right_margin) & not have_max() do
+         new_row()
+
+      if is(c,Line) & /calculating then
+         co.w := right_margin - row_x - row_width
+      else
+         co.w := min(co.maxw, right_margin - row_x - row_width)
+      co.h := co.c.get_preferred_height(co.w)
+
+      # A component cancels outstanding ws before the line eg the \n after the <br> is ignored
+      # begin<br>
+      # <img src="/tmp/j3.jpeg">is some stuff
+      if *row = 0 then
+         need_spc := &null
+      at_new_para := &null
+      put(row,  co)
+      row_width +:= co.w
+   end
+
+   private txt_out(W, attr, s)
+      local xo
+      xo := TextOut(attr, s, W.get_font_ascent(), W.text_width(s), W.get_font_height())
+      put(output_text, xo)
+      put(row,  xo)
+      row_width +:= W.text_width(s)
+      row_ascent <:= W.get_font_ascent()
+      row_descent <:= W.get_font_descent()
+      at_new_para := &null
+   end
+
+   private have_max()
+      return *row = 0 & row_x = 0 & right_margin = compute_w
+   end
+
+   private compute_txt(W, cmd)
+      local ds, ds2, tw, attr, wd, l, i
+      attr := cmd.attr
+      ds := ""
+      l := []
+      if any(WHITESPACE, cmd.s) then
+         need_spc := 1
+      every put(l, words(cmd.s, WHITESPACE))
+      while wd := get(l) do {
+         max_word_w <:= W.text_width(wd)
+         if *ds = 0 then {
+            # Never put a space at the start of a row.
+            if *row > 0 & \need_spc then
+               ds2 := u" " || wd
+            else
+               ds2 := wd
+            need_spc := &no
+         } else
+            ds2 := ds || u" " || wd
+         tw := W.text_width(ds2)
+         if row_x + row_width + tw > right_margin then {
+            if *ds = 0 then {
+               if have_max() then {
+                  i := *wd + 1
+                  while i > 2 &
+                     row_x + row_width +  W.text_width(wd[1:i]) > right_margin do
+                     i -:= 1
+                  txt_out(W, attr, wd[1:i])
+                  new_row()
+                  push(l, "" ~== wd[i:0])
+               } else {
+                  new_row()
+                  push(l, wd)
+               }
+            } else {
+               txt_out(W, attr, ds)
+               new_row()
+               ds := ""
+               push(l, wd)
+            }
+         } else
+            ds := ds2
+      }
+      if *ds > 0 then
+         txt_out(W, attr, ds)
+      if any(WHITESPACE, cmd.s[-1]) then
+         need_spc := 1
+   end
+
+   private compute_pre_txt(W, cmd)
+      local s, tw, attr, l, i, s2, nl
+      attr := cmd.attr
+      l := []
+
+      cmd.s ? until pos(0) do
+         put(l, detab( (tab(upto('\n')) || move(1)) | tab(0)))
+
+      while s := get(l) do {
+         s2 := s
+         if s2[-1] == "\n" then {
+            s2[-1] := ""
+            if s2[-1] == "\r" then
+               s2[-1] := ""
+            nl := &yes
+         } else
+            nl := &no
+         tw := W.text_width(s2)
+         if row_x + row_width + tw > right_margin then {
+            if have_max() then {
+               i := *s2 + 1
+               while i > 2 &
+                  row_x + row_width +  W.text_width(s2[1:i]) > right_margin do
+                  i -:= 1
+               txt_out(W, attr, s2[1:i])
+               new_row()
+               push(l, "" ~== s[i:0])
+            } else {
+               new_row()
+               push(l, s)
+            }
+         } else {
+            txt_out(W, attr, s2)
+            if \nl then
+               new_row()
+         }
+      }
+   end
+
+   private which_text_out(e)
+      local o, x1, y1
+      x1 := e.x - x - border.get_l_inset()
+      y1 := e.y - y - border.get_t_inset() - y_off
+      every o := !output do {
+         if o.inside(x1, y1) then
+            return o
+      }
+   end
+
+   private handle_lrelease(e)
+      if \wrote then
+         self.parent_dialog.goto(\wrote, Worker.NORMAL)
+   end
+
+   private handle_move(e)
+      local u
+      if u := \which_text_out(e).attr.url then {
+         set_pointer("hand1")
+         parent_dialog.msg(u.str())
+         wrote := u
+      } else if \wrote then {
+         parent_dialog.clear_msg()
+         wrote := &null
+         set_pointer()
+      }
+
+   end
+
+   private handle_exit(e)
+      if \wrote then {
+         parent_dialog.clear_msg()
+         wrote := &null
+         set_pointer()
+      }
+   end
+
+    public new()
+      cast(self,Component).new()
+      set_border(EmptyBorder().set_insets(0,0,0,0))
+      input := []
+      v_align := Align.T
+      self.set_constraint("x_fill", &yes)
+      self.set_constraint("y_fill", &yes)
+      connect(self.handle_move, Event.MOUSE_MOVEMENT)
+      connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+      connect(self.handle_exit, Event.MOUSE_EXIT)
+      return
+    end
+end

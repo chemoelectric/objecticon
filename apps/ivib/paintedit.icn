@@ -72,7 +72,7 @@ end
 
 class ImagePaintEdit(PaintEdit)
    public 
-      scale_up,
+      fill_dim,
       max_w, 
       max_h, 
       max_w_field, 
@@ -101,7 +101,7 @@ class ImagePaintEdit(PaintEdit)
       else
          &null
 
-      c.scale_up_flag := scale_up.get_status()
+      c.fill_dimensions := fill_dim.get_value()
 
       if cache_cb.is_checked() then {
          c.image_cache := img_field.get_contents()
@@ -177,10 +177,11 @@ class ImagePaintEdit(PaintEdit)
       } else
          max_h_field.set_is_shaded(&yes)
 
-      scale_up := CheckBox().set_label("Scale up").set_constraint("eol", &yes)
-      if \c.scale_up_flag then
-         scale_up.set_is_checked(&yes)
-      p.add(scale_up)
+      p.add(Label().set_label("Fill dimensions :"))
+      fill_dim := RangeSpin().
+         set_range(0, 2).
+         set_value(c.fill_dimensions)
+      p.add(fill_dim)
 
       p := TabItem().set_label("Images")
       p.set_layout(GridLayout())

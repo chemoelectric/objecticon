@@ -14,12 +14,12 @@ import gui, io
 #
 #
 class CanvasImageDialog(CanvasComponentDialog)
-   public img_field, scale_up, cache_cb, img
+   public img_field, fill_dim, cache_cb, img
 
    public set_vals()
       cast(self,CanvasComponentDialog).set_vals()
 
-      c.scale_up_flag := scale_up.get_status()
+      c.fill_dimensions := fill_dim.get_value()
 
       if cache_cb.is_checked() then {
          c.image_cache := img_field.get_contents()
@@ -87,11 +87,13 @@ class CanvasImageDialog(CanvasComponentDialog)
       q.add(cache_cb := CheckBox().set_label("Cache").set_constraint("eol", &yes))
       p.add(q)
 
-      scale_up := CheckBox().set_constraint("eol", &yes)
-      scale_up.set_label("Scale up image")
-      if \c.scale_up_flag then
-         scale_up.set_is_checked(&yes)
-      p.add(scale_up)
+      q := Component().set_layout(GridLayout().set_doi(0)).set_constraint("eol", &yes).set_constraint("x_fill", &yes).set_constraint("x_weight", 1.0)
+      q.add(Label().set_label("Fill dimensions"))
+      fill_dim := RangeSpin().
+         set_range(0, 2).
+         set_value(c.fill_dimensions)
+      q.add(fill_dim)
+      p.add(q)
 
       if \c.image_str then {
          img.set_image(c.image_str)

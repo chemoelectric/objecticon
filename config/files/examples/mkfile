@@ -1,12 +1,19 @@
 < ../mkdefs
 
-PROGSRC=`{ls *.icn}
-PROGS=${PROGSRC:%.icn=%}
+PROGS=browser canvasstate colors cursors directorydialogtest \
+	dndtest dyncomps editor explorer filedialogtest \
+	fonttest geturl grabtest imageview lslinks \
+	memorytracker multi selection sieve sizetest \
+	sliders stock suggest tooltip treetest \
+	ttexplorer
 
 all:V: $PROGS
 
 clean :
 	rm -f *.u packages.txt $PROGS
+
+browser : browser.icn textflow.icn tablelayout.icn
+	oit -s -o browser browser.icn textflow.icn tablelayout.icn
 
 %: %.icn
 	oit -s $stem.icn

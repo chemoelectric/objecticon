@@ -1,6 +1,6 @@
 import
    http(HttpClient, HttpRequest),
-   lang(clone, decode),
+   lang(decode),
    net(URL),
    xml(HtmlParser),
    ipl.scan(past),
@@ -110,8 +110,7 @@ procedure do_search(url, src, doc, tag, attr, pfx)
                   if match("http://" | "https://", s) then
                      write(pfx, s)
                   else {
-                     l_url := clone(base)
-                     l_url.set_relative(s)
+                     l_url := base.get_relative(s)
                      write(pfx, l_url.str())
                   }
                }
@@ -125,8 +124,7 @@ procedure do_search(url, src, doc, tag, attr, pfx)
             if match("http://" | "https://", s) then
                write(pfx, s)
             else {
-               l_url := clone(base)
-               l_url.set_relative(s)
+               l_url := base.get_relative(s)
                write(pfx, l_url.str())
             }
          }
