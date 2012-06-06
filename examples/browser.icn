@@ -10,6 +10,7 @@ import
    posix,
    ipl.sort,
    ipl.options,
+   ipl.strings,
    ipl.caseless
 
 global opts
@@ -384,7 +385,8 @@ class Browser(Dialog)
       cache
 
    public static const 
-      COLORS
+      COLORS,
+      FONTS
 
    private static init()
       COLORS := table(,
@@ -404,6 +406,18 @@ class Browser(Dialog)
                       "teal", "#008080",
                       "white", "#FFFFFF",
                       "yellow", "#FFFF00")
+
+      FONTS := table(,
+                     "serif", "serif",
+                     "sans-serif", "sans",
+                     "monospace", "mono",
+                     "cursive", "serif",
+                     "fantasy", "serif",
+                     "helvetica", "sans",
+                     "arial", "sans",
+                     "times", "serif",
+                     "times new roman", "serif",
+                     "courier", "typewriter")
    end
 
    public end_dialog()
@@ -413,12 +427,16 @@ class Browser(Dialog)
       return if s[1] == "#" then
          s
       else
-         member(COLORS, string(s))
+         member(COLORS, map(trim(string(s))))
+   end
+
+   private convert_face(s)
+      return member(FONTS, map(trim(separate(string(s))))) | "sans"
    end
 
    private synch_font(context)
       local s
-      s := context.face
+      s := convert_face(context.face)
       if \context.bold then
          s ||:= ",bold"
       if \context.italic then
