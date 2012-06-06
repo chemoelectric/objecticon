@@ -39,12 +39,13 @@ class BreakCmd(TextFlowCmd)
 end
 
 class TextOut(Rect)
-   public const s, attr, ascent
+   public const s, attr, ascent, descent
 
-   public new(attr, s, ascent, w, h)
+   public new(attr, s, ascent, descent, w, h)
       self.attr := attr
       self.s := s
       self.ascent := ascent
+      self.descent := descent
       self.w := w
       self.h := h
       return
@@ -234,7 +235,7 @@ class TextFlow(Component)
    end
 
    public display()
-      local o, W, font, fg, x1, y1, r
+      local o, W, font, fg, x1, y1, y2, r
       border.draw(self.cbwin, x, y, w, h)
       x1 := x + border.get_l_inset()
       y1 := y + border.get_t_inset() + y_off
@@ -254,6 +255,14 @@ class TextFlow(Component)
             fg := o.attr.fg
          } 
          draw_string_ex(W, x1 + o.x, y1 + o.y, o.s)
+         if \o.attr.underline then {
+            y2 := y1 + o.y + W.get_font_height() - 1
+            W.draw_line(x1 + o.x, y2, x1 + o.x + o.w, y2)
+         }
+         if \o.attr.strike then {
+            y2 := y1 + o.y + (2 * W.get_font_ascent()) / 3
+            W.draw_line(x1 + o.x, y2, x1 + o.x + o.w, y2)
+         }
       }
       W.uncouple()
       cast(self,Component).display()
@@ -443,13 +452,17 @@ class TextFlow(Component)
    end
 
    private txt_out(W, attr, s)
-      local xo
-      xo := TextOut(attr, s, W.get_font_ascent(), W.text_width(s), W.get_font_height())
+      local xo, bo
+      bo := W.get_font_ascent() * attr.baseline_off / 2
+      xo := TextOut(attr, s, 
+                    W.get_font_ascent() + bo, 
+                    W.get_font_descent() - bo, 
+                    W.text_width(s), W.get_font_height())
       put(output_text, xo)
       put(row,  xo)
-      row_width +:= W.text_width(s)
-      row_ascent <:= W.get_font_ascent()
-      row_descent <:= W.get_font_descent()
+      row_width +:= xo.w
+      row_ascent <:= xo.ascent
+      row_descent <:= xo.descent
       at_new_para := &null
    end
 

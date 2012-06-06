@@ -356,7 +356,7 @@ class Form()
 
 end
 
-record Context(base, form, url, fg, link_fg, font, align, pre, face, size, bold, italic)
+record Context(base, form, url, fg, link_fg, font, align, pre, underline, strike, baseline_off, face, size, bold, italic)
 
 class Browser(Dialog)
    private
@@ -550,6 +550,7 @@ class Browser(Dialog)
       c.fg := "black"
       c.link_fg := "blue"
       c.size := 3
+      c.baseline_off := 0
       synch_font(c)
 
       if n := doc.get_root_element().search_tree(u"BODY") then {
@@ -615,6 +616,56 @@ class Browser(Dialog)
       traverse(e, p, c)
    end
 
+   private traverse_tt(e, p, context)
+      local c
+      c := copy(context)
+      c.face := "mono"
+      synch_font(c)
+      traverse(e, p, c)
+   end
+
+   private traverse_big(e, p, context)
+      local c
+      c := copy(context)
+      if c.size < 7 then {
+         c.size +:= 1
+         synch_font(c)
+      }
+      traverse(e, p, c)
+   end
+
+   private traverse_small(e, p, context)
+      local c
+      c := copy(context)
+      if c.size > 1 then {
+         c.size -:= 1
+         synch_font(c)
+      }
+      traverse(e, p, c)
+   end
+
+   private traverse_sup(e, p, context)
+      local c
+      c := copy(context)
+      if c.size > 1 then {
+         c.size -:= 1
+         synch_font(c)
+      }
+      c.baseline_off +:= 1
+      traverse(e, p, c)
+   end
+
+   private traverse_sub(e, p, context)
+      local c
+      c := copy(context)
+      if c.size > 1 then {
+         c.size -:= 1
+         synch_font(c)
+      }
+      c.baseline_off -:= 1
+      traverse(e, p, c)
+   end
+
    private traverse_b(e, p, context)
       local c
       c := copy(context)
@@ -628,6 +679,20 @@ class Browser(Dialog)
       c := copy(context)
       c.italic := 1
       synch_font(c)
+      traverse(e, p, c)
+   end
+
+   private traverse_u(e, p, context)
+      local c
+      c := copy(context)
+      c.underline := 1
+      traverse(e, p, c)
+   end
+
+   private traverse_s(e, p, context)
+      local c
+      c := copy(context)
+      c.strike := 1
       traverse(e, p, c)
    end
 
@@ -843,6 +908,12 @@ class Browser(Dialog)
       put_new_row(p)
    end
 
+   private traverse_q(e, p, context)
+      put(p.input, TextCmd(u"\u201c", context))
+      traverse(e, p, context)
+      put(p.input, TextCmd(u"\u201d", context))
+   end
+
    private traverse_p(e, p, context)
       local c
       c := copy(context)
@@ -1038,6 +1109,20 @@ class Browser(Dialog)
       put_new_row(p)
    end
 
+   private traverse_blockquote(e, p, context)
+      local tbl, row
+      put_new_row(p)
+      tbl := Tbl()
+      add_component(p, tbl, context)
+      row := TextFlow()
+      put(row.input, TextCmd(u"\ua0\ua0\ua0\ua0", context))
+      tbl.inner.add(row)
+      row := TextFlow() .set_constraint("eol", &yes)
+      tbl.inner.add(row)
+      traverse(e, row, context)
+      put_new_row(p)
+   end
+
    private static node_search(e, for, bar)
       is(e, Element) | fail
       if e.name == !bar then
@@ -1068,6 +1153,9 @@ class Browser(Dialog)
                   "TEXTAREA": traverse_textarea(e, p, context)
                   "INPUT": traverse_input(e, p, context)
                   "DIV": traverse_div(e, p, context)
+                  "BIG": traverse_big(e, p, context)
+                  "SMALL": traverse_small(e, p, context)
+                  "CODE"|"TT": traverse_tt(e, p, context)
                   "B": traverse_b(e, p, context)
                   "I": traverse_i(e, p, context)
                   "BR": traverse_br(e, p, context)
@@ -1078,7 +1166,13 @@ class Browser(Dialog)
                   "OL": traverse_ol(e, p, context)
                   "UL": traverse_ul(e, p, context)
                   "DL": traverse_dl(e, p, context)
+                  "BLOCKQUOTE": traverse_blockquote(e, p, context)
                   "P": traverse_p(e, p, context)
+                  "Q": traverse_q(e, p, context)
+                  "U": traverse_u(e, p, context)
+                  "STRIKE"|"S": traverse_s(e, p, context)
+                  "SUP": traverse_sup(e, p, context)
+                  "SUB": traverse_sub(e, p, context)
                   "PRE": traverse_pre(e, p, context)
                   default : traverse(e, p, context)
                }
