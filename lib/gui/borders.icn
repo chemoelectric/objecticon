@@ -62,9 +62,6 @@ class EmptyBorder(ABorder)
    public initially(c)
    end
 
-   public finally()
-   end
-
    public draw(W, x, y, w, h)
    end
 
@@ -104,14 +101,20 @@ class EmptyBorder(ABorder)
    end
 end
 
+class NullBorder(ABorder)
+   public initially()
+      self.l_inset := self.t_inset := self.r_inset := self.b_inset := 0
+   end
+
+   public draw(W, x, y, w, h)
+   end
+end
+
 class LineBorder(ABorder)
    public line_width
 
    public initially()
       self.l_inset := self.t_inset := self.r_inset := self.b_inset := line_width
-   end
-
-   public finally()
    end
 
    public draw_focus(W, x, y, w, h)
