@@ -235,7 +235,7 @@ class TextFlow(Component)
    end
 
    public display()
-      local o, W, font, fg, x1, y1, y2, r
+      local o, W, font, fg, x1, y1, x2, y2, r
       border.draw(self.cbwin, x, y, w, h)
       x1 := x + border.get_l_inset()
       y1 := y + border.get_t_inset() + y_off
@@ -256,12 +256,14 @@ class TextFlow(Component)
          } 
          draw_string_ex(W, x1 + o.x, y1 + o.y, o.s)
          if \o.attr.underline then {
-            y2 := y1 + o.y + W.get_font_height() - 1
-            W.draw_line(x1 + o.x, y2, x1 + o.x + o.w, y2)
+            x2 := x1 + o.x
+            y2 := y1 + o.y + W.get_font_ascent() + 1
+            W.draw_line(x2, y2, x2 + o.w, y2)
          }
          if \o.attr.strike then {
+            x2 := x1 + o.x
             y2 := y1 + o.y + (2 * W.get_font_ascent()) / 3
-            W.draw_line(x1 + o.x, y2, x1 + o.x + o.w, y2)
+            W.draw_line(x2, y2, x2 + o.w, y2)
          }
       }
       W.uncouple()
