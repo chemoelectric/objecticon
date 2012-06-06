@@ -599,7 +599,7 @@ class TextFlow(Component)
 
     public new()
       cast(self,Component).new()
-      set_border(EmptyBorder().set_insets(0,0,0,0))
+      set_border(NullBorder())
       input := []
       v_align := Align.T
       self.set_constraint("x_fill", &yes)

@@ -182,7 +182,7 @@ class FrameBar(Component)
          set_accepts_focus(&no).
          set_constraint("r_inset", 3).
          set_tooltip("Close")
-      b.set_border(EmptyBorder().set_insets(0, 0, 0, 0))
+      b.set_border(NullBorder())
       b.set_paint(ImagePaint().set_cache("gui.TINY_X"))
       b.connect(self.on_close, Event.ACTION)
       self.add(b)

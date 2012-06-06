@@ -22,6 +22,7 @@ class BorderField(Component)
             4 : CanvasSunkenBorder()
             5 : CanvasBevelledBorder()
             6 : CanvasPlainBorder()
+            7 : CanvasNullBorder()
             default: stop()
          }
          b.change_canvas(parent_dialog.c.parent_Canvas)
@@ -53,6 +54,7 @@ class BorderField(Component)
             CanvasSunkenBorder : 4
             CanvasBevelledBorder : 5
             CanvasPlainBorder : 6
+            CanvasNullBorder : 7
             default : stop("Unknown border type")
          })
          border_tbl[borders.get_selection()] := c
@@ -68,7 +70,8 @@ class BorderField(Component)
                         "RaisedBorder",
                         "SunkenBorder",
                         "BevelledBorder",
-                        "PlainBorder"])
+                        "PlainBorder",
+                        "NullBorder"])
       borders.connect(self.on_border_change, Event.SELECTION_CHANGED)
       self.add(borders)
       edit_border_button := TextButton().set_label("Edit...").set_constraint("x_align", "l").set_constraint("eol", &yes)

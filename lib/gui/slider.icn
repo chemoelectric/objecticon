@@ -509,7 +509,7 @@ class Slider(Component)
       self.slider_area := SliderArea()
       self.increment_size := 1
       self.wheel_factor := 1
-      self.set_border(EmptyBorder().set_insets(0, 0, 0, 0))
+      self.set_border(NullBorder())
       add(self.slider_area)
       self.slider_area.connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       self.slider_area.connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)

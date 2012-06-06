@@ -87,7 +87,7 @@ class Label(Component)
    public new()
       cast(self,Component).new()
       self.set_constraint("x_align", Align.L)
-      self.set_border(EmptyBorder().set_insets(0, 0, 0, 0).set_align(Align.L, Align.C))
+      self.set_border(NullBorder().set_align(Align.L, Align.C))
       return
    end
 end

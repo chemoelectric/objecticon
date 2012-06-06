@@ -17,7 +17,7 @@ class Icon(Label)
    public new()
       # Bypass Label's constructor to save creating a border twice.
       cast(self,Component).new()
-      self.set_border(EmptyBorder().set_insets(0, 0, 0, 0))
+      self.set_border(NullBorder())
       return
    end
 end
