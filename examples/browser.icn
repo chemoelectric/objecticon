@@ -893,7 +893,7 @@ class Browser(Dialog)
          set_selection(sel)
       context.form.add(e.get_attribute(u"NAME"), q)
       context.form.link_label(id, context.form_label, q)
-      add_component(p, q, context)
+      add_component(p, q, context, "absmiddle")
    end
 
    private traverse_textarea(e, p, context)
@@ -923,7 +923,7 @@ class Browser(Dialog)
             q := FormBrowse().
                   set_font(context.font).
                   set_fg(context.fg)
-            add_component(p, q, context)
+            add_component(p, q, context, "absmiddle")
             context.form.add(e.get_attribute(u"NAME"), q)
          }
          "submit" : {
@@ -934,7 +934,7 @@ class Browser(Dialog)
                   set_font(context.font).
                   set_fg(context.fg).
                   connect(context.form.submit, Event.ACTION)
-            add_component(p, q, context)
+            add_component(p, q, context, "absmiddle")
             context.form.add(e.get_attribute(u"NAME"), q)
          }
          "reset"|"button" : {
@@ -945,7 +945,7 @@ class Browser(Dialog)
                set_font(context.font).
                set_fg(context.fg).
                set_label(v)
-            add_component(p, q, context)
+            add_component(p, q, context, "absmiddle")
          }
          "hidden": {
             context.form.add(e.get_attribute(u"NAME"), Hidden(e.get_attribute(u"VALUE")))
@@ -959,7 +959,7 @@ class Browser(Dialog)
                set_border(NullBorder())
             if e.get_attribute(u"CHECKED") then
                q.set_is_checked(&yes)
-            add_component(p, q, context, Align.B)
+            add_component(p, q, context, "absmiddle")
             context.form.link_label(id, context.form_label, q)
             if k := e.get_attribute(u"NAME") then {
                context.form.get_cbg(k).add(q)
@@ -975,7 +975,7 @@ class Browser(Dialog)
                set_border(NullBorder())
             context.form.add(e.get_attribute(u"NAME"), q)
             context.form.link_label(id, context.form_label, q)
-            add_component(p, q, context, Align.B)
+            add_component(p, q, context, "absmiddle")
          }
          "text" | "password": {
             v := e.get_attribute(u"VALUE") | u""
@@ -993,7 +993,7 @@ class Browser(Dialog)
                q.set_displaychar("*")
             context.form.add(e.get_attribute(u"NAME"), q)
             context.form.link_label(id, context.form_label, q)
-            add_component(p, q, context)
+            add_component(p, q, context, "absmiddle")
          }
       }
       traverse(e, p, context)
@@ -1145,8 +1145,9 @@ class Browser(Dialog)
          "right": Align.R
          "baseline"|"bottom": Align.B
          "texttop"|"top": Align.T
-         "absmiddle"|"middle" | "center" | "centre": Align.C
+         "middle" | "center" | "centre": Align.C
          "absbottom":  "absbottom"
+         "absmiddle":  "absmiddle"
          default: def
       } | def
    end
