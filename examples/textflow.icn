@@ -1,4 +1,4 @@
-import gui, ipl.strings, ipl.sort
+import gui, ipl.strings, ipl.sort, util
 
 class TextFlowCmd() end
 
@@ -95,7 +95,8 @@ class TextFlow(Component)
       at_new_para,
       def_width,
       max_width,
-      wrote
+      wrote,
+      default_width_is_max_width_flag
 
    public static const 
       WHITESPACE
@@ -141,8 +142,15 @@ class TextFlow(Component)
          right_comps := compute_w := &null
    end
 
+   public set_default_width_is_max_width(s)
+      self.default_width_is_max_width_flag := check_flag(s)
+      return self
+   end
+
    public get_default_width()
       local c
+      if \default_width_is_max_width_flag then
+         return get_max_width()
       if /def_width then {
          compute()
          def_width := max_pre_w

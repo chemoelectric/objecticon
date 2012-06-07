@@ -205,7 +205,12 @@ class Tbl(Border)
    public inner
 
    public get_max_width()
-      return inner.layout_delegate. get_max_width() + border.get_total_width()
+      local w1
+      w1 := inner.layout_delegate.get_max_width()  + border.get_total_width()
+      return if \title then
+         max(w1, title.get_max_width() + 2 * TITLE_OFFSET)
+      else
+         w1
    end
 
    public new(url)
@@ -835,7 +840,7 @@ class Browser(Dialog)
       c := copy(context)
       c.form := Form(self, mk_link(context.base, e.get_attribute(u"ACTION")), m, t)
       traverse(e, p, c)
-      c.form.resolve_link_labels()
+      (\c.form).resolve_link_labels()
    end
 
    private traverse_label(e, p, context)
@@ -1297,7 +1302,8 @@ class Browser(Dialog)
       tbl.inner.add(row)
       traverse(e, row, context)
       if legend := node_search(!e.children, [u"LEGEND"], [u"FIELDSET"]) then {
-         title := TextFlow()
+         title := TextFlow().
+            set_default_width_is_max_width(1)
          traverse(legend, title, context)
          tbl.set_title(title)
       }
