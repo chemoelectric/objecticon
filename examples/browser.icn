@@ -1,6 +1,7 @@
 import 
    gui, 
    lang, 
+   mail,
    graphics,
    http,
    util,
@@ -170,7 +171,10 @@ class Worker()
                hreq := HttpRequest().
                   set_output_stream(s). 
                   set_url(r.url)
-               hreq.set_html_form_data(\r.form_data)
+               if is(r.form_data, Message) then
+                  hreq.set_multipart_form_data(r.form_data)
+               else
+                  hreq.set_html_form_data(\r.form_data)
                if hres := httpc.retrieve(hreq) then {
                   data := s.str()
                   if hreq.method == "GET"  then
@@ -284,8 +288,6 @@ class FormButton(TextButton)
 
    public new(value)
       cast(self,TextButton).new()
-      if /value | (*value = 0) then
-         value := "Submit"
       self.value := value
       set_label(value)
       return
@@ -302,36 +304,116 @@ class Hidden()
    end
 end
 
+class FormLabel()
+   public const
+      id
+   public
+      comp
+
+   public new(id)
+      self.id := id
+      return
+   end
+end
+
+class FormBrowse(Component)
+   private
+      tf
+
+   public get_value()
+      return Files.file_to_string(tf.get_contents()) | ""
+   end
+
+   public get_filename()
+      return "fred.icn"
+   end
+
+   private on_browse()
+      local f, s
+      f := FileDialog()
+      f.show_modal(parent_dialog)
+      if s := f.get_result() then
+         tf.set_contents(s)
+   end
+
+   public new()
+      cast(self,Component).new()
+      set_layout(GridLayout().set_doi(0).set_dii(0))
+      tf := TextField().set_size(150)
+      add(tf)
+      add(TextButton().set_label("Browse...").connect(on_browse, Event.ACTION))
+      return
+   end
+end
+
 class Form()
    private readable
       url,
       parent,
       method,
+      enctype,
       items,
-      cbgs
+      labels,   # table of FormLabels with ids set (the "for" attribute)
+      cbgs,
+      ids       # table of Components with ids set ("id" attribute) which will be matched to entries in labels.
 
-   public submit(e, src)
-      local t, k, v, c
+   private get_value(c, src)
+      return case classof(c) of {
+         FormBrowse: c.get_value()
+         TextField: c.get_contents()
+         FormButton: if c === src then c.value
+         FormToggle: if c.is_checked() then c.value
+         Hidden: c.value
+         EditableTextList: c.get_contents_str()
+         gui.List: c.object_get_selection()
+      }
+   end
+
+   private make_cgi_table(src)
+      local t, k, c, v, x
       t := table()
       every k := key(items) do {
          every c := !items[k] do {
-            v := &null
-            case classof(c) of {
-               TextField: v := c.get_contents()
-               FormButton: if c === src then v := c.value
-               FormToggle: if c.is_checked() then v := c.value
-               Hidden: v := c.value
-               EditableTextList: v := c.get_contents_str()
-               gui.List: v := c.object_get_selection()
+            if v := get_value(c, src) then {
+               (x := member(t, k)) | insert(t, k, x := [])
+               put(x, v)
             }
-            insert(t, k, \v)
          }
       }
+      return t
+   end
 
-      if map(method) == "post" then
-         parent.goto(url, Worker.NORMAL, t)
-      else
-         parent.goto(clone(url).set_cgi_parameters(t), Worker.NORMAL)
+   private make_cgi_message(src)
+      local k, v, c, m, mp, m2
+      m := Message()
+      mp := Multipart()
+      every k := key(items) do {
+         every c := !items[k] do {
+            if v := get_value(c, src) then {
+               m2 := Message()
+               if is(c, FormBrowse) then {
+                  m2.set_content_disposition(ContentDisposition.parse("form-data; name=\"" || k || "\"; filename=\"" || c.get_filename() || "\""))
+                  m2.set_content_type(ContentType.parse("application/octet-stream"))
+               } else
+                  m2.set_content_disposition(ContentDisposition.parse("form-data; name=\"" || k || "\""))
+               m2.set_decoded_content(v)
+               mp.add_part(m2)
+            }
+         }
+      }
+      m.set_header("Content-Type", "multipart/form-data")
+      m.set_content_object(mp) | stop("Failed to set_content_object:",m.get_reason())
+      return m
+   end
+
+   public submit(e, src)
+      if map(method) == "post" then {
+         if map(enctype) == "multipart/form-data" then
+            parent.goto(url, Worker.NORMAL, make_cgi_message(src))
+         else 
+            parent.goto(url, Worker.NORMAL, make_cgi_table(src))
+      } else
+         parent.goto(clone(url).set_cgi_parameters(make_cgi_table(src)), Worker.NORMAL)
    end
 
    public add(name, item)
@@ -340,24 +422,46 @@ class Form()
       put(x, item)
    end
 
+   public add_label(l)
+      insert(labels, l.id, l)
+   end
+
+   public link_label(id, curr_label, comp)
+      # If we have a label in the context, and the for and id tags
+      # make sense, link the comp to the label; otherwise put the comp
+      # in ids so its id can be resolved at the end of the form.
+      if \curr_label & (/curr_label.id | /id | curr_label.id == id) then
+         /curr_label.comp := comp
+      else
+         insert(ids, \id, comp)
+   end
+
+   public resolve_link_labels()
+      local id
+      every id := key(ids) do
+         /member(labels, id).comp := ids[id]
+   end
+
    public get_cbg(name)
       local x
       (x := member(cbgs, name)) | insert(cbgs, name, x := CheckBoxGroup())
       return x
    end
 
-   public new(parent, url, method)
+   public new(parent, url, method, enctype)
       self.parent := parent
       self.url := url
       self.method := method
+      self.enctype := enctype
       self.items := table()
       self.cbgs := table()
+      self.labels := table()
+      self.ids := table()
       return
    end
-
 end
 
-record Context(base, form, url, fg, link_fg, font, align, pre, underline, strike, baseline_off, face, size, bold, italic)
+record Context(base, form, form_label, url, fg, link_fg, font, align, pre, underline, strike, baseline_off, face, size, bold, italic)
 
 class Browser(Dialog)
    private
@@ -411,6 +515,9 @@ class Browser(Dialog)
                      "serif", "serif",
                      "sans-serif", "sans",
                      "monospace", "mono",
+                     "sans", "sans",
+                     "mono", "mono",
+                     "typewriter", "typewriter",
                      "cursive", "serif",
                      "fantasy", "serif",
                      "helvetica", "sans",
@@ -722,10 +829,24 @@ class Browser(Dialog)
    end
 
    private traverse_form(e, p, context)
-      local m, c
+      local m, c, t
       m := e.get_attribute(u"METHOD") | "get"
+      t := e.get_attribute(u"ENCTYPE") | "application/x-www-form-urlencoded"
       c := copy(context)
-      c.form := Form(self, mk_link(context.base, e.get_attribute(u"ACTION")), m)
+      c.form := Form(self, mk_link(context.base, e.get_attribute(u"ACTION")), m, t)
+      traverse(e, p, c)
+      c.form.resolve_link_labels()
+   end
+
+   private traverse_label(e, p, context)
+      local c, l, id
+      \context.form | fail
+      id := e.get_attribute(u"FOR")
+      l := FormLabel(id)
+      if \id then
+         context.form.add_label(l)
+      c := copy(context)
+      c.form_label := l
       traverse(e, p, c)
    end
 
@@ -750,8 +871,9 @@ class Browser(Dialog)
    end
 
    private traverse_select(e, p, context)
-      local t, sel, f, q
+      local t, sel, f, q, id
       \context.form | fail
+      id := e.get_attribute(u"ID")
       t := []
       sel := 1
       every f := node_search(!e.children, [u"OPTION"], [u"SELECT"]) do {
@@ -765,12 +887,14 @@ class Browser(Dialog)
          set_selection_list(t).
          set_selection(sel)
       context.form.add(e.get_attribute(u"NAME"), q)
+      context.form.link_label(id, context.form_label, q)
       add_component(p, q, context)
    end
 
    private traverse_textarea(e, p, context)
-      local q, w, h, mW
+      local q, w, h, mW, id
       \context.form | fail
+      id := e.get_attribute(u"ID")
       mW := cbwin.clone().set_font(context.font)
       w := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", e.get_attribute(u"COLS")))) | 200
       h := (2 * Gui.BORDER_WIDTH + e.get_attribute(u"ROWS") * mW.get_font_height()) | 100
@@ -778,28 +902,40 @@ class Browser(Dialog)
       q := EditableTextList().
          set_font(context.font).
          set_fg(context.fg).
-         set_size(w, h)
+         set_size(w, h).
+         set_contents_str(e.get_trimmed_string_content())
       context.form.add(e.get_attribute(u"NAME"), q)
+      context.form.link_label(id, context.form_label, q)
       add_component(p, q, context)
    end
 
    private traverse_input(e, p, context)
-      local q, s, k, v, cbg, size, mW
+      local q, s, k, v, size, mW, id
       \context.form | fail
       s := string(map(e.get_attribute(u"TYPE"))) | "text"
       case s of {
+         "file": {
+            q := FormBrowse().
+                  set_font(context.font).
+                  set_fg(context.fg)
+            add_component(p, q, context)
+            context.form.add(e.get_attribute(u"NAME"), q)
+         }
          "submit" : {
-            k := e.get_attribute(u"NAME")
             v := e.get_attribute(u"VALUE")
+            if /v | (*v = 0) then
+               v := u"Submit"
             q := FormButton(v).
                   set_font(context.font).
                   set_fg(context.fg).
                   connect(context.form.submit, Event.ACTION)
             add_component(p, q, context)
-            context.form.add(\k, q)
+            context.form.add(e.get_attribute(u"NAME"), q)
          }
          "reset"|"button" : {
-            v := e.get_attribute(u"VALUE") | u"Reset"
+            v := e.get_attribute(u"VALUE")
+            if /v | (*v = 0) then
+               v := u"Reset"
             q := TextButton().
                set_font(context.font).
                set_fg(context.fg).
@@ -807,14 +943,11 @@ class Browser(Dialog)
             add_component(p, q, context)
          }
          "hidden": {
-            k := e.get_attribute(u"NAME")
-            v := e.get_attribute(u"VALUE")
-            context.form.add(k, Hidden(v))
+            context.form.add(e.get_attribute(u"NAME"), Hidden(e.get_attribute(u"VALUE")))
          }
          "radio": {
-            k := e.get_attribute(u"NAME")
-            v := e.get_attribute(u"VALUE")
-            cbg := context.form.get_cbg(k)
+            v := e.get_attribute(u"VALUE") | u"on"
+            id := e.get_attribute(u"ID")
             q := FormToggle(v).
                set_paint(ImagePaint().set_cache("gui.DIAMOND_UP")).
                set_paint_down(ImagePaint().set_cache("gui.DIAMOND_DOWN")).
@@ -822,22 +955,26 @@ class Browser(Dialog)
             if e.get_attribute(u"CHECKED") then
                q.set_is_checked(&yes)
             add_component(p, q, context, Align.B)
-            cbg.add(q)
-            context.form.add(k, q)
+            context.form.link_label(id, context.form_label, q)
+            if k := e.get_attribute(u"NAME") then {
+               context.form.get_cbg(k).add(q)
+               context.form.add(k, q)
+            }
          }
          "checkbox": {
-            k := e.get_attribute(u"NAME")
-            v := e.get_attribute(u"VALUE")
+            v := e.get_attribute(u"VALUE") | u"on"
+            id := e.get_attribute(u"ID")
             q := FormToggle(v).
                set_paint(ImagePaint().set_cache("gui.BOX_UP")).
                set_paint_down(ImagePaint().set_cache("gui.BOX_DOWN")).
                set_border(NullBorder())
-            context.form.add(k, q)
+            context.form.add(e.get_attribute(u"NAME"), q)
+            context.form.link_label(id, context.form_label, q)
             add_component(p, q, context, Align.B)
          }
          "text" | "password": {
-            k := e.get_attribute(u"NAME")
             v := e.get_attribute(u"VALUE") | u""
+            id := e.get_attribute(u"ID")
             mW := cbwin.clone().set_font(context.font)
             size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", e.get_attribute(u"SIZE")))) | 160
             mW.uncouple()
@@ -849,7 +986,8 @@ class Browser(Dialog)
                connect(context.form.submit, Event.ACTION)
             if s == "password" then
                q.set_displaychar("*")
-            context.form.add(k, q)
+            context.form.add(e.get_attribute(u"NAME"), q)
+            context.form.link_label(id, context.form_label, q)
             add_component(p, q, context)
          }
       }
@@ -1148,6 +1286,24 @@ class Browser(Dialog)
       put_new_row(p)
    end
 
+   private traverse_fieldset(e, p, context)
+      local tbl, row, title, legend
+      put_new_row(p)
+      tbl := Tbl().set_border(CompoundBorder().
+                              set_outer(SunkenBorder().set_line_width(1)).
+                              set_inner(EmptyBorder()))
+      add_component(p, tbl, context)
+      row := TextFlow()
+      tbl.inner.add(row)
+      traverse(e, row, context)
+      if legend := node_search(!e.children, [u"LEGEND"], [u"FIELDSET"]) then {
+         title := TextFlow()
+         traverse(legend, title, context)
+         tbl.set_title(title)
+      }
+      put_new_row(p)
+   end
+
    private static node_search(e, for, bar)
       is(e, Element) | fail
       if e.name == !bar then
@@ -1164,47 +1320,46 @@ class Browser(Dialog)
    private traverse(n, p, context)
       local e
       every e := !n.children do {
-         if text(e) then {
+         if text(e) then
             traverse_text(e, p, context)
-         } else {
-            if is(e, HtmlElement) then {
-               case string(e.name) of {
-                  "TITLE"|"META"|"LINK"|"LI"|"TR"|"TD"|"SCRIPT"|"STYLE": {}
-                  "A": traverse_a(e, p, context)
-                  "FORM": traverse_form(e, p, context)
-                  "FONT": traverse_font(e, p, context)
-                  "IMG": traverse_img(e, p, context)
-                  "SELECT": traverse_select(e, p, context)
-                  "TEXTAREA": traverse_textarea(e, p, context)
-                  "INPUT": traverse_input(e, p, context)
-                  "DIV": traverse_div(e, p, context)
-                  "BIG": traverse_big(e, p, context)
-                  "SMALL": traverse_small(e, p, context)
-                  "KBD"|"CODE"|"TT": traverse_tt(e, p, context)
-                  "B": traverse_b(e, p, context)
-                  "CITE"|"I": traverse_i(e, p, context)
-                  "BR": traverse_br(e, p, context)
-                  "HR": traverse_hr(e, p, context)
-                  "CENTER": traverse_center(e, p, context)
-                  "H" || (1 to 6): traverse_hN(e, p, context)
-                  "TABLE": traverse_table(e, p, context)
-                  "OL": traverse_ol(e, p, context)
-                  "DIR"|"MENU"|"UL": traverse_ul(e, p, context)
-                  "DL": traverse_dl(e, p, context)
-                  "BLOCKQUOTE": traverse_blockquote(e, p, context)
-                  "P": traverse_p(e, p, context)
-                  "Q": traverse_q(e, p, context)
-                  "INS"|"U": traverse_u(e, p, context)
-                  "DEL"|"STRIKE"|"S": traverse_s(e, p, context)
-                  "SUP": traverse_sup(e, p, context)
-                  "SUB": traverse_sub(e, p, context)
-                  "LISTING"|"PRE": traverse_pre(e, p, context)
-                  default : traverse(e, p, context)
-               }
+         else if is(e, HtmlElement) then {
+            case string(e.name) of {
+               "LEGEND"|"TITLE"|"META"|"LINK"|"LI"|"TR"|"TD"|"SCRIPT"|"STYLE": {}
+               "A": traverse_a(e, p, context)
+               "FORM": traverse_form(e, p, context)
+               "LABEL": traverse_label(e, p, context)
+               "FONT": traverse_font(e, p, context)
+               "IMG": traverse_img(e, p, context)
+               "SELECT": traverse_select(e, p, context)
+               "TEXTAREA": traverse_textarea(e, p, context)
+               "INPUT": traverse_input(e, p, context)
+               "DIV": traverse_div(e, p, context)
+               "BIG": traverse_big(e, p, context)
+               "SMALL": traverse_small(e, p, context)
+               "SAMP"|"KBD"|"CODE"|"TT": traverse_tt(e, p, context)
+               "DFN"|"B": traverse_b(e, p, context)
+               "EM"|"CITE"|"I": traverse_i(e, p, context)
+               "BR": traverse_br(e, p, context)
+               "HR": traverse_hr(e, p, context)
+               "CENTER": traverse_center(e, p, context)
+               "H" || (1 to 6): traverse_hN(e, p, context)
+               "TABLE": traverse_table(e, p, context)
+               "OL": traverse_ol(e, p, context)
+               "DIR"|"MENU"|"UL": traverse_ul(e, p, context)
+               "DL": traverse_dl(e, p, context)
+               "BLOCKQUOTE": traverse_blockquote(e, p, context)
+               "P": traverse_p(e, p, context)
+               "Q": traverse_q(e, p, context)
+               "INS"|"U": traverse_u(e, p, context)
+               "DEL"|"STRIKE"|"S": traverse_s(e, p, context)
+               "SUP": traverse_sup(e, p, context)
+               "SUB": traverse_sub(e, p, context)
+               "LISTING"|"PRE": traverse_pre(e, p, context)
+               "FIELDSET": traverse_fieldset(e, p, context)
+               default : traverse(e, p, context)
             }
          }
       }
-      return p
    end
 
    public goto(url, kind, form_data)

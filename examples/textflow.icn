@@ -575,6 +575,17 @@ class TextFlow(Component)
          self.parent_dialog.goto(\wrote, Worker.NORMAL)
    end
 
+   private handle_lpress(e)
+      local c, t
+      if t := which_text_out(e) then {
+         if c := \ ( \ (t.attr.form_label)).comp then {
+            parent_dialog.set_focus(c)
+            if is(c, Toggle) then
+               c.toggle_is_checked()
+         }
+      }
+   end
+
    private handle_move(e)
       local u
       if u := \which_text_out(e).attr.url then {
@@ -605,6 +616,7 @@ class TextFlow(Component)
       self.set_constraint("x_fill", &yes)
       self.set_constraint("y_fill", &yes)
       connect(self.handle_move, Event.MOUSE_MOVEMENT)
+      connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
       connect(self.handle_exit, Event.MOUSE_EXIT)
       return
