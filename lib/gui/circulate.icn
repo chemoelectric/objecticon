@@ -36,7 +36,10 @@ class CirculateLabel(Label)
       connect(self.on_key, Event.KEY_PRESS)
       connect(self.go_up, Event.MOUSE_WHEEL_UP)
       connect(self.go_down, Event.MOUSE_WHEEL_DOWN)
-      self.border.set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, Gui.Y_INSET, Gui.Y_INSET)
+      # Align with the text in the textlist.
+      self.set_border(EmptyBorder().
+                      set_align(Align.L, Align.C).
+                      set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, Gui.Y_INSET, Gui.Y_INSET))
       return
    end
 end

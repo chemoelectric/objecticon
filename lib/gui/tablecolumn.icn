@@ -178,10 +178,10 @@ class TableColumn(TextButton)
    public new()
       cast(self,TextButton).new()
       self.set_accepts_focus(&no)
-      self.set_border(EmptyBorder())
-      border.set_l_inset(Gui.TEXT_INSET)
-      border.set_r_inset(Gui.TEXT_INSET)
-      border.set_x_align(Align.L)
+      self.set_border(EmptyBorder().
+                      set_l_inset(Gui.TEXT_INSET).
+                      set_r_inset(Gui.TEXT_INSET).
+                      set_x_align(Align.L))
       return
    end
 end

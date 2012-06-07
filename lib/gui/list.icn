@@ -28,7 +28,9 @@ class ListLabel(Label)
       self.set_accepts_focus(&yes)
       self.connect(self.on_key, Event.KEY_PRESS)
       # Align with the text in the textlist.
-      self.border.set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, Gui.Y_INSET, Gui.Y_INSET)
+      self.set_border(EmptyBorder().
+                      set_align(Align.L, Align.C).
+                      set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, Gui.Y_INSET, Gui.Y_INSET))
       return
    end
 end
