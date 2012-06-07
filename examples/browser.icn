@@ -321,11 +321,11 @@ class FormBrowse(Component)
       tf
 
    public get_value()
-      return Files.file_to_string(tf.get_contents()) | ""
+      return Files.file_to_string(tf.get_contents())
    end
 
    public get_filename()
-      return "fred.icn"
+      return Files.get_path(tf.get_contents()).get(-1)
    end
 
    private on_browse()
@@ -339,7 +339,7 @@ class FormBrowse(Component)
    public new()
       cast(self,Component).new()
       set_layout(GridLayout().set_doi(0).set_dii(0))
-      tf := TextField().set_size(150)
+      tf := TextField().set_size(150).set_contents(u"")
       add(tf)
       add(TextButton().set_label("Browse...").connect(on_browse, Event.ACTION))
       return
@@ -392,10 +392,10 @@ class Form()
             if v := get_value(c, src) then {
                m2 := Message()
                if is(c, FormBrowse) then {
-                  m2.set_content_disposition(ContentDisposition.parse("form-data; name=\"" || k || "\"; filename=\"" || c.get_filename() || "\""))
-                  m2.set_content_type(ContentType.parse("application/octet-stream"))
+                  m2.set_content_disposition(ContentDisposition.parse("form-data; name=\"" || k || "\"; filename=\"" || c.get_filename() || "\"")) | next
+                  m2.set_content_type(ContentType.parse("application/octet-stream")) | next
                } else
-                  m2.set_content_disposition(ContentDisposition.parse("form-data; name=\"" || k || "\""))
+                  m2.set_content_disposition(ContentDisposition.parse("form-data; name=\"" || k || "\"")) | next
                m2.set_decoded_content(v)
                mp.add_part(m2)
             }
