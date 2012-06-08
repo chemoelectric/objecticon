@@ -104,6 +104,39 @@ class Worker()
       }
    end
 
+   private dwrite(a[])
+      writes("[", serial(self), "] ")
+      write!a
+   end
+
+   private writing_line(ev)
+      dwrite("Sent: ", ev)
+   end
+
+   private read_line(ev)
+      dwrite("Got : ", ev)
+   end
+
+   private read_string(ev)
+      dwrite("Got : data - 0x", Format.int_to_string(*ev, 16), " bytes")
+   end
+
+   private writing_string(ev)
+      dwrite("Sent: data - 0x", Format.int_to_string(*ev, 16), " bytes")
+   end
+
+   private failed(ev)
+      dwrite("Failed ", &why, repl(" ", 20))
+   end
+
+   private retrying(ev)
+      dwrite("Retrying ", &why, repl(" ", 20))
+   end
+
+   private other(ev, src, type)
+      dwrite(type)
+   end
+
    public read()
       if \doing then return httpc.get_read()
    end
@@ -197,6 +230,19 @@ class Worker()
          set_task(task).
          set_ssl_verify(&no).
          set_cookies(parent.cookies)
+
+      if \opts["l"] then {
+         httpc.connect(failed, HttpClient.FAILED_EVENT).
+            connect(retrying, HttpClient.RETRYING_EVENT).
+            connect(read_line, NetClient.READ_LINE_EVENT).
+            connect(read_string, NetClient.READ_STRING_EVENT).
+            connect(writing_line, NetClient.WRITING_LINE_EVENT).
+            connect(writing_string, NetClient.WRITING_STRING_EVENT).
+            connect(other, NetClient.CONNECTING_EVENT).
+            connect(other, NetClient.CONNECTED_EVENT).
+            connect(other, NetClient.CLOSED_EVENT).
+            connect(other, HttpClient.COMPLETE_EVENT)
+      }
       return
    end
 end
@@ -1614,7 +1660,7 @@ end
 
 procedure main(a)
    local d, s, cookies, t, bak
-   opts := options(a, "-f! -k:")
+   opts := options(a, "-f! -k: -l!")
    cookies := \opts["k"] | System.getenv("GETURL_COOKIES")
    if \cookies then {
       t := decode(Files.file_to_string(cookies)) |
