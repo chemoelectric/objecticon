@@ -560,7 +560,7 @@ class HttpClient(NetClient)
 
       every s := response.gen_headers("set-cookie") do {
          if (c := parse_cookie_string(s)) & valid_cookie(c) then {
-            domain := map(\c.domain | request.url.get_address())
+            domain := string(map(\c.domain | request.url.get_address()))
             (paths := member(cookies, domain)) | insert(cookies, domain, paths := table())
             path := c.path
             if /path then {
@@ -574,8 +574,9 @@ class HttpClient(NetClient)
                      path[-1] := ""
                }
             }
+            path := string(path)
             (vals := member(paths, path)) | insert(paths, path, vals := table())
-            insert(vals, map(c.name), c)
+            insert(vals, string(map(c.name)), c)
          }
       }
    end
@@ -601,8 +602,8 @@ class HttpClient(NetClient)
    private create_cookie_header()
       local s, e, f, domain, path, c, now, ver
 
-      domain := map(request.url.get_address())
-      path := request.url.get_file()
+      domain := string(map(request.url.get_address()))
+      path := string(request.url.get_file())
       now := Time()
       s := ""
       every e := \cookies[domain_keys(domain)] do {
