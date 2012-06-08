@@ -135,7 +135,7 @@ class TableGrid()
       ci.y_fill := validate_flag(t, "y_fill")
       ci.x_align := validate_x_align(t, "x_align")
       ci.y_align := validate_y_align(t, "y_align")
-      ci.pct_w := validate_int(t, "pct_w")
+      ci.pct_w := validate_int(t, "pct_w", 0)
       put(info, ci)
 
       return ci
@@ -225,9 +225,10 @@ class TableGrid()
    end
 
    public compute_col_widths()
-      local i, need, l
+      local i, need, l, pct_col_w, tot
       p_col_w := list(gw, 0)
       p_col_maxw := list(gw, 0)
+      pct_col_w := list(gw, 0)
       l := isort(info, cell_width_sort)
 
       # Compute sizes
@@ -239,6 +240,19 @@ class TableGrid()
          need := i.maxdw - slice(i.x, i.w, p_col_maxw)
          if need > 0 then
             dist_equally(i.x, i.w, need, p_col_maxw, fix_col1_flag)
+
+         need := i.pct_w - slice(i.x, i.w, pct_col_w)
+         if need > 0 then
+            dist_equally(i.x, i.w, need, pct_col_w, fix_col1_flag)
+      }
+
+      # Very simple support for % width specs
+      tot := 0
+      every tot +:= !p_col_w
+      every i := 1 to gw do {
+         need := (tot * pct_col_w[i]) / 100
+         if p_col_w[i] <:= need then
+            p_col_maxw[i] <:= need
       }
    end
 

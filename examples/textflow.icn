@@ -159,7 +159,6 @@ class TextFlow(Component)
          every c := !output_comps do
             def_width <:= c.pw
          def_width <:= max_word_w
-#write("default width=",def_width + border.get_total_width())
          def_width +:= border.get_total_width()
       }
       return def_width
