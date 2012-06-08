@@ -1165,6 +1165,7 @@ class Browser(Dialog)
       tbl.inner.layout_delegate.set_doi(cellspacing).set_dii(cellspacing/2)
       if border > 0 then
          tbl.set_border(PlainBorder().set_line_width(border))
+      tbl.set_bg(convert_color(e.get_attribute(u"BGCOLOR")))
 
       cell_border := if border > 0 then
          CompoundBorder().
@@ -1182,7 +1183,7 @@ class Browser(Dialog)
          x := 1
          while member(occ, x || "," || y) do
             x +:= 1
-         every td := node_search(tr, [u"TD", u"TH"], [u"TABLE"]) do {
+         every td := node_search(!tr.children, [u"TD", u"TH"], [u"TABLE", u"TR"]) do {
             row := TextFlow().
                set_constraint("x", x). 
                set_constraint("y", y).

@@ -11,10 +11,11 @@ package xml
 import ipl.scan
 
 class Tag(Node)
-   public
+   public const
+      attributes
+   private readable
       name,
       closed,
-      attributes,
       empty
 
    #
@@ -34,13 +35,6 @@ class Tag(Node)
    end
 
    #
-   # Succeed if the tag is a closing tag.
-   #
-   public is_closed()
-      return \closed
-   end
-
-   #
    # Indicate that the tag is a closing tag, ie has a leading "/"
    #
    public set_closed()
@@ -49,25 +43,11 @@ class Tag(Node)
    end
 
    #
-   # Succeed if the tag is an empty tag, ie of the form <tag/>.
-   #
-   public is_empty()
-      return \empty
-   end
-
-   #
    # Indicate that the tag is an empty tag.
    #
    public set_empty()
       empty := 1
       return self
-   end
-
-   #
-   # Return the attributes map for this tag.
-   #
-   public get_attributes()
-      return attributes
    end
 
    #
@@ -116,7 +96,15 @@ class HtmlParser()
                              "LINK", "NEXTID", "SPACER", "TBODY", "TFOOT", 
                              "THEAD", "WBR")
 
-      HTML_AUTOCLOSE := set("LI", "P", "DD", "DT", "FONT", "TR", "TD", "OPTION")
+      HTML_AUTOCLOSE := table(,
+                              "LI", set("LI"),
+                              "P", set("P"),
+                              "DD", set("DD", "DT"),
+                              "DT", set("DT", "DD"),
+                              "TR", set("TR"),
+                              "TD", set("TD", "TR", "TH"),
+                              "TH", set("TH", "TR", "TD"),
+                              "OPTION", set("OPTION"))
 
       HTML_ENTITIES := table(,
                              "quot", 34, "amp", 38, "lt", 60, "gt", 62, "OElig", 338,
@@ -179,11 +167,7 @@ class HtmlParser()
       local i, node
       doc := HtmlDocument()
 
-      if type(s) == "ucs" then {
-         utf8_flag := 1
-      } else {
-         utf8_flag := &null
-      }
+      utf8_flag := if type(s) == "ucs" then 1 else &null
 
       s ? {
          repeat {
@@ -202,7 +186,7 @@ class HtmlParser()
             if is(node, DocType | Comment) then
                doc.add(node)
             else if is(node, Tag) then {
-               if not(node.is_closed()) & (node.name == "HTML") then {
+               if /node.closed & (node.name == "HTML") then {
                   #
                   # Found the html start point, so parse and return that node.
                   #
@@ -222,11 +206,11 @@ class HtmlParser()
    #
    # Parse the current input into an {Node}
    #
-   private parse_node(parent)
+   private parse_node()
       if match("<!DOCTYPE") then
          return parse_doctype()
       if match("<!") then
-         return parse_comment(parent)
+         return parse_comment()
       if match("<") then
          return parse_tag()
    end
@@ -234,7 +218,7 @@ class HtmlParser()
    #
    # Parse and return an Element, given the starting tag
    #
-   private parse_element(start_tag, parent)
+   private parse_element(start_tag)
       local res, i, node, n
 
       res := HtmlElement()
@@ -244,8 +228,7 @@ class HtmlParser()
 
       if start_tag.name == "PLAINTEXT" then
          res.add("" ~== remove_entities(tab(0)))
-      else if not(start_tag.is_empty() | 
-                  html_is_standalone_tag(start_tag.name)) then {
+      else if not(\start_tag.empty | is_standalone_tag(start_tag.name)) then {
          repeat {
             if res.name == "SCRIPT" then
                res.add(move_to_end_of_script())
@@ -261,29 +244,18 @@ class HtmlParser()
                if start_tag.balances(node) then 
                   break
 
-               if html_is_autoclose_tag(start_tag.name) & start_tag.name == node.name then {
+               if should_close_tag(start_tag, node) then {
                   #
-                  # For example <p> ... <p> is treated as <p> ... </p><p>.  The second
-                  # <p> has to be rescanned by the caller, so tab back.
+                  # Auto-close the tag, for example we have encountered something like :-
+                  # <td> .... <tr>
+                  # The opening <tr> implicitly closes the <td>.  The <tr> needs to be
+                  # rescanned, so tab back.
                   #
                   tab(i)
                   break
                }
-
-               if node.is_closed() then {
-                  #
-                  # Mismatched close.  If processing something like a <p>, then assume
-                  # a </p> and break; otherwise just ignore.  For example :
-                  #   <p> ... </td> -> <p> ... </p></td>
-                  # Again, the </td> needs to be rescanned, so tab back.
-                  #
-                  if html_is_autoclose_tag(start_tag.name) then {
-                     tab(i)
-                     break
-                  }
-               } else {
-                  res.add(n := parse_element(node, res))
-               }
+               else if /node.closed then
+                  res.add(n := parse_element(node))
             } else {
                #
                # It's either a coment, or something else; just add it to the list of children
@@ -353,7 +325,7 @@ class HtmlParser()
    # have a legal comment like <!-- abc -- def -->
    # see http://htmlhelp.com/reference/wilbur/misc/comment.html
    #
-   private parse_comment(parent)
+   private parse_comment()
       local res, s, t
       res := Comment()
       ="<!" | fail
@@ -516,15 +488,17 @@ class HtmlParser()
    # Succeed if and only if the tag name is a standalone tag, ie it has no
    # matching closing tag.
    #
-   public static html_is_standalone_tag(name)
+   public static is_standalone_tag(name)
       return member(HTML_STANDALONE, string(name))
    end
 
    #
-   # Succeed if and only if the tag implicitly closes when a matching opening
-   # tag is encountered at the same level.
+   # Succeed if and only if the tag implicitly closes when the other
+   # tag (which may be a closing tag) is encountered at the same level.
    #
-   public static html_is_autoclose_tag(name)
-      return member(HTML_AUTOCLOSE, string(name))
+   public static should_close_tag(tag, other)
+      local t
+      if t := member(HTML_AUTOCLOSE, string(tag.name)) then
+         return \other.closed | member(t, string(other.name))
    end
 end
