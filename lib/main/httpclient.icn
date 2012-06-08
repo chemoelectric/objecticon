@@ -827,6 +827,7 @@ class HttpClient(NetClient)
             s := request.input_stream.in(1048576) | fail
             if /s then
                break
+            if \abort_flag then fail
             write_str(s) | fail
          }
       } else {
