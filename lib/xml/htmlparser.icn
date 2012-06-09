@@ -207,11 +207,11 @@ class HtmlParser()
    # Parse the current input into an {Node}
    #
    private parse_node()
-      if match("<!DOCTYPE") then
+      if match(u"<!DOCTYPE") then
          return parse_doctype()
-      if match("<!") then
+      if match(u"<!") then
          return parse_comment()
-      if match("<") then
+      if match(u"<") then
          return parse_tag()
    end
 
@@ -226,42 +226,47 @@ class HtmlParser()
       res.name := start_tag.name
       res.attributes := start_tag.attributes
 
-      if start_tag.name == "PLAINTEXT" then
-         res.add("" ~== remove_entities(tab(0)))
-      else if not(\start_tag.empty | is_standalone_tag(start_tag.name)) then {
-         repeat {
-            if res.name == "SCRIPT" then
-               res.add(move_to_end_of_script())
-            else
-               res.add("" ~== remove_entities(move_to_node()))
-            if pos(0) then
-               break
+      case string(start_tag.name) of {
+         "PLAINTEXT":
+            res.add("" ~== remove_entities(tab(0)))
+         "SCRIPT": {
+            if /start_tag.empty then
+               res.add("" ~== move_to_end_of_script())
+         }
+         default: {
+            if not(\start_tag.empty | is_standalone_tag(start_tag.name)) then {
+               repeat {
+                  res.add("" ~== remove_entities(move_to_node()))
+                  if pos(0) then
+                     break
 
-            i := &pos
-            node := parse_node(res) | break
+                  i := &pos
+                  node := parse_node(res) | break
 
-            if is(node, Tag) then {
-               if start_tag.balances(node) then 
-                  break
+                  if is(node, Tag) then {
+                     if start_tag.balances(node) then 
+                        break
 
-               if should_close_tag(start_tag, node) then {
-                  #
-                  # Auto-close the tag, for example we have encountered something like :-
-                  # <td> .... <tr>
-                  # The opening <tr> implicitly closes the <td>.  The <tr> needs to be
-                  # rescanned, so tab back.
-                  #
-                  tab(i)
-                  break
+                     if should_close_tag(start_tag, node) then {
+                        #
+                        # Auto-close the tag, for example we have encountered something like :-
+                        # <td> .... <tr>
+                        # The opening <tr> implicitly closes the <td>.  The <tr> needs to be
+                        # rescanned, so tab back.
+                        #
+                        tab(i)
+                        break
+                     }
+                     else if /node.closed then
+                        res.add(n := parse_element(node))
+                  } else {
+                     #
+                     # It's either a coment, or something else; just add it to the list of children
+                     #
+                     res.add(node)
+                  }            
                }
-               else if /node.closed then
-                  res.add(n := parse_element(node))
-            } else {
-               #
-               # It's either a coment, or something else; just add it to the list of children
-               #
-               res.add(node)
-            }            
+            }
          }
       }
 
@@ -275,17 +280,17 @@ class HtmlParser()
       local res
 
       res := DocType()
-      ="<!DOCTYPE" | fail
+      =u"<!DOCTYPE" | fail
 
       tab(upto(HTML_IDINTRO))
       res.name := tab(many(HTML_IDCHARS))
 
       tab(many(HTML_SPACE))
-      if ="SYSTEM" then {
+      if =u"SYSTEM" then {
          res.external_id := ExternalID()
          tab(many(HTML_SPACE))
          res.external_id.system_id := parse_system_literal()
-      } else if ="PUBLIC" then {
+      } else if =u"PUBLIC" then {
          res.external_id := ExternalID()
          tab(many(HTML_SPACE))
          res.external_id.public_id := parse_pubid_literal()
@@ -328,15 +333,15 @@ class HtmlParser()
    private parse_comment()
       local res, s, t
       res := Comment()
-      ="<!" | fail
+      =u"<!" | fail
       s := move(0)  # Empty string, same type as &subject
       repeat {
          tab(upto('->'))
-         if =">" then
+         if =u">" then
             break
-         ="--" | fail
-         t := tab(find("--")) | fail
-         ="--"
+         =u"--" | fail
+         t := tab(find(u"--")) | fail
+         =u"--"
          s ||:= t
       }
       res.comment := s
@@ -350,25 +355,25 @@ class HtmlParser()
       local res, key, c, s, value
 
       res := Tag()
-      ="<" | fail
-      if ="/" then
+      =u"<" | fail
+      if =u"/" then
          res.set_closed()
       s := (any(HTML_IDINTRO) & tab(many(HTML_IDCHARS))) | fail
       res.set_name(s)
       repeat {
          tab(upto(HTML_KEYCHARS ++ '/>'))
-         if ="/>" then {
+         if =u"/>" then {
             res.set_empty()
             break
          }
-         if =">" then
+         if =u">" then
             break
 
          key := tab(many(HTML_KEYCHARS)) | break
 
          tab(upto(HTML_VALCHARS ++ '>='))
 
-         if ="=" then {
+         if =u"=" then {
             tab(upto(HTML_VALCHARS ++ HTML_DELIM))
             if any(HTML_DELIM) then {
                c := move(1)
@@ -388,7 +393,7 @@ class HtmlParser()
    end
 
    #
-   # Move to the next "</script>"
+   # Move past the next "</script>"
    #
    private move_to_end_of_script()
       local s
@@ -397,7 +402,7 @@ class HtmlParser()
          s ||:= tab(upto('<') | 0)
          if pos(0) then
             break
-         if map(&subject[&pos+:9]) == "</script>" then
+         if string(map(move(9))) == "</script>" then
             break
          s ||:= move(1)
       }
