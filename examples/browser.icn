@@ -270,7 +270,7 @@ class Tbl(Border)
 end
 
 class Img(Label)
-   private url, wrote, imgw, imgh
+   private img_url, link_url, wrote, imgw, imgh
 
    public got_data(res)
       if \res.err then
@@ -285,14 +285,36 @@ class Img(Label)
       }
    end
 
+   private copy_image()
+      parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner([img_url]))
+   end
+
+   private copy_link()
+      parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner([link_url]))
+   end
+
+   private handle_rpress(e)
+      local pm, pm_menu
+      pm_menu := Menu()
+      pm_menu.add(TextMenuItem().
+                  set_label("Copy image").
+                  connect(copy_image, Event.ACTION))
+      if \link_url then
+         pm_menu.add(TextMenuItem().
+                     set_label("Copy link").
+                     connect(copy_link, Event.ACTION))
+      pm := PopupMenu()
+      pm.popup(parent_dialog, pm_menu, e.x, e.y)
+   end
+
    private handle_lrelease(e)
       if in_region(e) then
-         parent_dialog.goto(url, Worker.NORMAL)
+         parent_dialog.goto(link_url, Worker.NORMAL)
    end
 
    private handle_enter(e)
       if /wrote then {
-         parent_dialog.msg(url.str())
+         parent_dialog.msg(link_url.str())
          wrote := 1
       }
    end
@@ -304,18 +326,19 @@ class Img(Label)
       }
    end
 
-   public new(url, imgw, imgh)
+   public new(img_url, link_url, imgw, imgh)
       cast(self,Label).new()
       self.imgw := imgw
       self.imgh := imgh
-
-      if \url then {
-         self.url := url
+      self.img_url := img_url
+      if \link_url then {
+         self.link_url := link_url
          set_pointer("hand1")
          connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
          connect(self.handle_enter, Event.MOUSE_ENTER)
          connect(self.handle_exit, Event.MOUSE_EXIT)
       }
+      connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS)
       set_paint(NullPaint())
       set_border(NullBorder())
       return
@@ -532,7 +555,11 @@ class Browser(Dialog)
       paste_url_button,
       refresh_button,
       start_page,
-      view_img
+      view_img,
+      page_url,
+      page_data,
+      copy_page_url_item,
+      save_page_item
 
    private readable
       queue,
@@ -681,6 +708,8 @@ class Browser(Dialog)
       prev_button.set_is_shaded(if history_pos > 1 then &no else &yes)
       next_button.set_is_shaded(if history_pos < *history then &no else &yes)
       refresh_button.set_is_shaded(if history[history_pos] then &no else &yes)
+      copy_page_url_item.set_is_shaded(if \page_url then &no else &yes)
+      save_page_item.set_is_shaded(if \page_data then &no else &yes)
    end
 
    private is_html(s)
@@ -691,29 +720,33 @@ class Browser(Dialog)
    end
 
    private set_top_data(res)
-      local doc, base, n, s, url, row, c
+      local doc, base, n, s, row, c
       if \view_img then {
          view_img.close()
          view_img := &null
       }
-      if \res.err then
+      if \res.err then {
          s := u"<html><h1>Error:</h1>Getting " || res.url.str() || "<br><br>" || res.err || "</html>"
-      else if is_html(res.data) then
-         s := res.data
-      else if view_img := Window.open_image(res.data, cbwin) then
+         page_data := &null
+      } else if is_html(res.data) then {
+         s := page_data := res.data
+      } else if view_img := Window.open_image(res.data, cbwin) then {
          row := Image().set_border(NullBorder()).set_window(view_img)
-      else
+         page_data := res.data
+      } else {
          s := u"<html><h1>Problem:</h1>Displaying " || res.url.str() || "<br><br>This does not seem to be an HTML document</html>"
+         page_data := &null
+      }
 
-      url := res.url
+      page_url := res.url
       if res.kind = Worker.NORMAL then {
          while *history > history_pos do
             pull(history)
-         put(history, url)
+         put(history, page_url)
          history_pos +:= 1
-         update_grey()
       }
-      search_field.set_contents(url.str())
+      update_grey()
+      search_field.set_contents(page_url.str())
 
       if /view_img then {
          Files.string_to_file("/tmp/browser.html",s)
@@ -721,7 +754,7 @@ class Browser(Dialog)
          doc := HtmlParser().parse(s)
          if \opts["f"] then
             to_stdout(doc, 3)
-         base := url
+         base := page_url
          if n := doc.get_root_element().search_tree(u"BASE") then
             base := URL.parse(n.get_attribute(u"HREF"))
 
@@ -742,7 +775,6 @@ class Browser(Dialog)
          }
 
          traverse(doc, row, c)
-         #show_structure(row)
       }
       top_panel.set_area_y(0)
       top_panel.view.inner.finally()
@@ -912,7 +944,7 @@ class Browser(Dialog)
       if url := mk_link(context.base, e.get_attribute(u"SRC")) then {
          iw := integer(e.get_attribute(u"WIDTH"))
          ih := integer(e.get_attribute(u"HEIGHT"))
-         q := Img(context.url, iw, ih)
+         q := Img(url, context.url, iw, ih)
          border := integer(e.get_attribute(u"BORDER")) | 0
          if border > 0 then
             q.set_border(PlainBorder().set_line_width(border))
@@ -1490,12 +1522,36 @@ class Browser(Dialog)
    private on_icon_event(ev)
    end
 
+   private on_copy_page_url_item(ev)
+      own_selection(Selection.CLIPBOARD, URLSelectionOwner([page_url]))
+   end
+
+   private on_save_page_item(ev)
+      local f, s
+      f := FileDialog()
+      f.show_modal(self)
+      if s := f.get_result() then {
+         if Files.string_to_file(s, page_data) then
+            msg("Saved OK")
+         else
+            msg(&why)
+      }
+   end
+
    private setup()
-      local quit_menu_item, paint_27, paint_32, paint_19, paint_24, paint_37, paint_29, paint_34, layout_1, panel_1, paint_13, paint_26, paint_31, paint_23, paint_20, paint_28, paint_33, paint_12, paint_25, paint_30, border_1, menu_bar_1, menu_1, layout_2
+      local quit_menu_item, paint_27, paint_32, paint_19, paint_24, paint_37, paint_29, paint_34, layout_1, panel_1, paint_13, paint_26, paint_31, paint_39, paint_23, paint_20, paint_28, paint_33, paint_12, paint_25, paint_30, paint_38, border_1, menu_bar_1, menu_1, layout_2
       self.set_label("Browser")
       self.set_min_height(250)
       self.set_resize(&yes)
       paint_13 := TextPaint("File")
+      paint_38 := TextPaint("Copy page")
+      copy_page_url_item := TextMenuItem().
+         connect(on_copy_page_url_item, Event.ACTION).
+         set_paint_mid(paint_38)
+      paint_39 := TextPaint("Save page...")
+      save_page_item := TextMenuItem().
+         connect(on_save_page_item, Event.ACTION).
+         set_paint_mid(paint_39)
       paint_12 := TextPaint("Quit")
       quit_menu_item := TextMenuItem().
          connect(on_quit, Event.ACTION).
@@ -1503,6 +1559,8 @@ class Browser(Dialog)
       menu_1 := Menu().
          set_accel("f").
          set_paint_mid(paint_13).
+         add(copy_page_url_item).
+         add(save_page_item).
          add(quit_menu_item)
       menu_bar_1 := MenuBar().
          set_size("100").
