@@ -25,7 +25,7 @@ class SpinTextField(TextField)
    public new()
       cast(self,TextField).new()
       self.connect(self.on_key, Event.KEY_PRESS)
-      self.set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(0))
+      self.set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(Gui.TEXT_INSET))
       return
    end
 end
