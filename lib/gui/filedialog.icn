@@ -72,6 +72,7 @@ class FileDialog(Dialog)
    end
 
    public init_dialog()
+      set_focus(file.find_focus())
       win.set_min_size(win.get_width(), win.get_height())
       goto_dir(dir.get_contents())
       # If we have a filename in the field, select it in the file list,
@@ -363,8 +364,8 @@ class FileDialog(Dialog)
 
    private setup()
       local paint_2, panel_2, layout_7, paint_7, paint_11, layout_4, paint_4, split_content_1, split_content_2, panel_4, layout_9, paint_1, paint_9, split_1, layout_6, paint_6, paint_10, layout_3, paint_3, panel_3, paint, layout_8, paint_8, paint_5
-      set_label("Select file")
-      set_resize(&yes)
+      self.set_label("Select file")
+      self.set_resize(&yes)
       paint_1 := ImagePaint().
          set_cache("gui.HOME_24")
       paint := TextPaint("Home")
@@ -372,7 +373,7 @@ class FileDialog(Dialog)
          set_align(Align.L, Align.C).
          clear_constraints().
          set_tooltip(paint).
-         connect(on_home_button, Event.ACTION).
+         connect(self.on_home_button, Event.ACTION).
          set_no_click_focus(&yes).
          set_toggles(&no).
          set_paint(paint_1)
@@ -383,7 +384,7 @@ class FileDialog(Dialog)
          set_align(Align.L, Align.C).
          clear_constraints().
          set_tooltip(paint_2).
-         connect(on_up_button, Event.ACTION).
+         connect(self.on_up_button, Event.ACTION).
          set_no_click_focus(&yes).
          set_toggles(&no).
          set_paint(paint_3)
@@ -394,7 +395,7 @@ class FileDialog(Dialog)
          set_align(Align.L, Align.C).
          clear_constraints().
          set_tooltip(paint_4).
-         connect(on_new_button, Event.ACTION).
+         connect(self.on_new_button, Event.ACTION).
          set_no_click_focus(&yes).
          set_toggles(&no).
          set_paint(paint_5)
@@ -405,7 +406,7 @@ class FileDialog(Dialog)
          set_align(Align.L, Align.C).
          clear_constraints().
          set_tooltip(paint_6).
-         connect(on_refresh_button, Event.ACTION).
+         connect(self.on_refresh_button, Event.ACTION).
          set_no_click_focus(&yes).
          set_toggles(&no).
          set_paint(paint_7)
@@ -416,8 +417,8 @@ class FileDialog(Dialog)
          set_constraint("x_align", Align.L).
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
-         connect(on_dir, Event.ACTION).
-         connect(on_dir, Event.SELECTION_CHANGED).
+         connect(self.on_dir, Event.ACTION).
+         connect(self.on_dir, Event.SELECTION_CHANGED).
          set_selection_list([""])
       layout_6 := GridLayout().
          set_doi(0).
@@ -434,7 +435,7 @@ class FileDialog(Dialog)
          add(new_button).
          add(refresh_button).
          add(dir)
-      add(panel_4)
+      self.add(panel_4)
       dlist := TextList().
          set_size(210, 200).
          clear_constraints().
@@ -443,8 +444,8 @@ class FileDialog(Dialog)
          set_constraint("x_weight", 1.0).
          set_constraint("y_fill", &yes).
          set_constraint("y_weight", 1.0).
-         connect(on_dlist, Event.SELECTION_CHANGED).
-         connect(on_dlist_cursor, Event.CURSOR_MOVED).
+         connect(self.on_dlist, Event.SELECTION_CHANGED).
+         connect(self.on_dlist_cursor, Event.CURSOR_MOVED).
          set_select_mode(Select.ONE).
          set_contents([""])
       layout_8 := GridLayout().
@@ -462,7 +463,7 @@ class FileDialog(Dialog)
          set_constraint("x_weight", 1.0).
          set_constraint("y_fill", &yes).
          set_constraint("y_weight", 1.0).
-         connect(on_flist, Event.SELECTION_CHANGED).
+         connect(self.on_flist, Event.SELECTION_CHANGED).
          set_select_mode(Select.ONE).
          set_contents([""])
       layout_9 := GridLayout().
@@ -482,15 +483,15 @@ class FileDialog(Dialog)
          set_left(split_content_1).
          set_right(split_content_2).
          set_min(100, 100)
-      add(split_1)
+      self.add(split_1)
       filter := EditList().
          set_size("150").
          set_align(Align.L, Align.B).
          clear_constraints().
          set_constraint("x_align", Align.L).
          set_constraint("x_fill", &yes).
-         connect(on_filter, Event.ACTION).
-         connect(on_filter, Event.SELECTION_CHANGED).
+         connect(self.on_filter, Event.ACTION).
+         connect(self.on_filter, Event.SELECTION_CHANGED).
          set_selection_list([""])
       file := EditList().
          set_size("150").
@@ -499,8 +500,8 @@ class FileDialog(Dialog)
          set_constraint("x_align", Align.L).
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
-         connect(on_file, Event.ACTION).
-         connect(on_file_sel, Event.SELECTION_CHANGED).
+         connect(self.on_file, Event.ACTION).
+         connect(self.on_file_sel, Event.SELECTION_CHANGED).
          set_selection_list([""])
       layout_3 := GridLayout().
          set_doi(0).
@@ -513,28 +514,28 @@ class FileDialog(Dialog)
          set_layout(layout_3).
          add(filter).
          add(file)
-      add(panel_2)
+      self.add(panel_2)
       paint_8 := TextPaint("Show hidden files and directories")
       show_hidden_cb := CheckBox().
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_align", Align.L).
-         connect(on_show_hidden_cb, Event.ACTION).
+         connect(self.on_show_hidden_cb, Event.ACTION).
          set_toggles(&yes).
          set_paint(paint_8)
-      add(show_hidden_cb)
+      self.add(show_hidden_cb)
       paint_9 := TextPaint("Okay")
       okay_button := TextButton().
          set_align(Align.L, Align.B).
          clear_constraints().
-         connect(on_okay_button, Event.ACTION).
+         connect(self.on_okay_button, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_9)
       paint_10 := TextPaint("Cancel")
       cancel_button := TextButton().
          set_align(Align.L, Align.B).
          clear_constraints().
-         connect(on_cancel_button, Event.ACTION).
+         connect(self.on_cancel_button, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_10)
       paint_11 := TextPaint("")
@@ -558,11 +559,10 @@ class FileDialog(Dialog)
          add(okay_button).
          add(cancel_button).
          add(message_label)
-      add(panel_3)
+      self.add(panel_3)
       layout_7 := GridLayout().
          set_extra("cells")
-      set_layout(layout_7)
-      set_focus(file.find_focus())
+      self.set_layout(layout_7)
    end
 end
 
