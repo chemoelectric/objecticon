@@ -287,7 +287,7 @@ class Tbl(Border)
 end
 
 class Img(Label)
-   private img_url, link_url, wrote, imgw, imgh, img_data, img_name, form
+   private img_url, link_url, wrote, imgw, imgh, img_data, img_name, form, map, held
 
    public got_data(res)
       if \res.err then
@@ -310,8 +310,8 @@ class Img(Label)
       parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner([img_url]))
    end
 
-   private copy_link()
-      parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner([link_url]))
+   private copy_link(u)
+      parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner([u]))
    end
 
    private save_image()
@@ -328,15 +328,15 @@ class Img(Label)
    end
 
    private handle_rpress(e)
-      local pm, pm_menu
+      local pm, pm_menu, u
       pm_menu := Menu()
       pm_menu.add(TextMenuItem().
                   set_label("Copy image").
                   connect(copy_image, Event.ACTION))
-      if \link_url then
+      if u := \wrote then
          pm_menu.add(TextMenuItem().
                      set_label("Copy link").
-                     connect(copy_link, Event.ACTION))
+                     connect(create copy_link(u), Event.ACTION))
       if \img_data then
          pm_menu.add(TextMenuItem().
                      set_label("Save image...").
@@ -346,39 +346,82 @@ class Img(Label)
    end
 
    private handle_lrelease(e, src)
-      if in_region(e) then {
-         if \form then
-            form.submit(e, src)
-         else if \link_url then
-            parent_dialog.goto(link_url, Worker.NORMAL)
-      }
+      if \wrote then
+         parent_dialog.goto(wrote, Worker.NORMAL)
    end
 
-   private handle_enter(e)
-      if /wrote & \link_url then {
-         parent_dialog.msg(link_url.str())
-         wrote := 1
-      }
+   private handle_form_lrelease(e, src)
+      if in_region(e) then
+         form.submit(e, src)
    end
 
    private handle_exit(e)
       if \wrote then {
          parent_dialog.clear_msg()
          wrote := &null
+         set_pointer()
       }
    end
 
-   public new(img_url, link_url, form, imgw, imgh)
+   private which_url(e)
+      local m, u
+      in_region(e) | fail
+      if m := parent_dialog.get_map(\map) &
+         u := m.over_url(e.x - x - border.get_l_inset(), 
+                         e.y - y - border.get_t_inset()) then 
+         return u
+      return \link_url
+   end
+
+   private handle_lpress(e)
+      held := wrote
+      set_pointer()
+   end
+
+   private handle_ldrag(e)
+      local u
+      if u := which_url(e) & u === held then {
+         if wrote ~=== u then {
+            parent_dialog.msg(u.str())
+            wrote := u
+         }
+      } else if \wrote then {
+         parent_dialog.clear_msg()
+         wrote := &null
+      }
+   end
+
+   private handle_move(e)
+      local u
+      if u := which_url(e) then {
+         if wrote ~=== u then {
+            set_pointer("hand1")
+            parent_dialog.msg(u.str())
+            wrote := u
+         }
+      } else if \wrote then {
+         parent_dialog.clear_msg()
+         wrote := &null
+         set_pointer()
+      }
+   end
+
+   public new(img_url, link_url, form, imgw, imgh, map)
       cast(self,Label).new()
       self.imgw := imgw
       self.imgh := imgh
       self.img_url := img_url
       self.form := form
       self.link_url := link_url
-      if \link_url | \form then {
+      self.map := map
+      if \form then {
          set_pointer("hand1")
+         connect(self.handle_form_lrelease, Event.MOUSE_LEFT_RELEASE)
+      } else if \map | \link_url then {
+         connect(self.handle_move, Event.MOUSE_MOVEMENT)
+         connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
+         connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
          connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
-         connect(self.handle_enter, Event.MOUSE_ENTER)
          connect(self.handle_exit, Event.MOUSE_EXIT)
       }
       connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS)
@@ -716,7 +759,51 @@ class Form()
    end
 end
 
-record Context(base, form, form_label, url, fg, link_fg, font, align, pre, underline, strike, baseline_off, face, size, bold, italic, kind)
+record TableContext(tbl, caption, x, y, occ, cell_border, tr)
+record ListContext(tbl, index, root)
+record DefListContext(tbl)
+record FieldSetContext(legend)
+record MapContext(map)
+record SelectContext(options, sel)
+record Context(base, form, form_label, url, fg, link_fg, font, align, pre, underline, strike, 
+               baseline_off, face, size, bold, italic, kind, table, list, def_list, fieldset, select, map)
+
+class MapArea()
+   public const
+      shape, coords, url
+
+   public new(shape, coords, url)
+      self.shape := shape
+      self.coords := coords
+      self.url := url
+      return
+   end
+end
+
+class Map()
+   private const
+      l
+
+   public over_url(x, y)
+      local e, co
+      every e := !l do {
+         co := e.coords
+         case e.shape of {
+            "rect": if (co[1] <= x <= co[3]) & (co[2] <= y <= co[4]) then
+               return e.url
+         }
+      }
+   end
+
+   public add_area(area)
+      put(l, area)
+   end
+
+   public new()
+      l := []
+      return
+   end
+end
 
 class MessageLabel(Label)
    private
@@ -765,7 +852,8 @@ class Browser(Dialog)
       page_data,
       page_name,
       copy_page_url_item,
-      save_page_item
+      save_page_item,
+      maps
 
    private readable
       queue,
@@ -818,20 +906,23 @@ class Browser(Dialog)
    public end_dialog()
    end
 
-   private convert_color(s)
-      return if s[1] == "#" then
-         s
-      else
-         member(COLORS, map(trim(string(s))))
+   public get_map(s)
+      return member(maps, s)
    end
 
-   private convert_face(s)
-      return member(FACES, map(trim(separate(string(s))))) | "sans"
+   private convert_color(el, name)
+      local s
+      if s := el.get_attribute(name) then {
+         return if s[1] == "#" then
+            s
+         else
+            member(COLORS, map(trim(string(s))))
+      }
    end
 
    private synch_font(context)
       local s
-      s := convert_face(context.face)
+      s := member(FACES, map(trim(separate(string(context.face))))) | "sans"
       if \context.bold then
          s ||:= ",bold"
       if \context.italic then
@@ -991,11 +1082,11 @@ class Browser(Dialog)
          c.baseline_off := 0
          c.kind := res.kind   # Tells images whether to refresh or not
          synch_font(c)
-
+         maps := table()
          if n := doc.get_root_element().search_tree(u"BODY") then {
-            row.set_bg(convert_color(n.get_attribute(u"BGCOLOR")))
-            c.fg := convert_color(n.get_attribute(u"TEXT"))
-            c.link_fg := convert_color(n.get_attribute(u"LINK"))
+            row.set_bg(convert_color(n, u"BGCOLOR"))
+            c.fg := convert_color(n, u"TEXT")
+            c.link_fg := convert_color(n, u"LINK")
          }
 
          traverse(doc, row, c)
@@ -1049,7 +1140,7 @@ class Browser(Dialog)
    private traverse_font(e, p, context)
       local c
       c := copy(context)
-      c.fg := convert_color(e.get_attribute(u"COLOR"))
+      c.fg := convert_color(e, u"COLOR")
       c.face := e.get_attribute(u"FACE")
       c.size := parse_size(e.get_attribute(u"SIZE"), c.size)
       synch_font(c)
@@ -1165,31 +1256,33 @@ class Browser(Dialog)
    end
 
    private traverse_img(e, p, context)
-      local q, url, border, iw, ih
+      local q, url, border, iw, ih, align, map, s
       if url := mk_link(context.base, e.get_attribute(u"SRC")) then {
-         iw := integer(e.get_attribute(u"WIDTH"))
-         ih := integer(e.get_attribute(u"HEIGHT"))
-         q := Img(url, context.url,, iw, ih)
-         border := integer(e.get_attribute(u"BORDER")) | 0
+         iw := (0 <= integer(e.get_attribute(u"WIDTH")))
+         ih := (0 <= integer(e.get_attribute(u"HEIGHT")))
+         if (s := e.get_attribute(u"USEMAP")) & (s[1] == u"#") then
+            map := default.map(string(s[2:0]))
+         q := Img(url, context.url,, iw, ih, map)
+         border := (0 < integer(e.get_attribute(u"BORDER"))) | 0
          if border > 0 then
             q.set_border(PlainBorder().set_line_width(border))
          start_worker(Req(url, q.got_data, context.kind))
-         add_component(p, q, context, cnv_comp_align(e, u"ALIGN", Align.B))
+         align := convert_comp_align(e, u"ALIGN") | Align.B
+         add_component(p, q, context, align)
       }
    end
 
    private traverse_select(e, p, context)
-      local t, sel, f, q, id
+      local q, id, c, sc
       \context.form | fail
       id := e.get_attribute(u"ID")
-      t := []
-      sel := 1
-      every f := node_search(!e.children, [u"OPTION"], [u"SELECT"]) do {
-         put(t, f.get_trimmed_string_content())
-         if f.get_attribute(u"SELECTED") then
-            sel := *t
-      }
-      q := FormList(t, sel). 
+      sc := SelectContext()
+      sc.options := []
+      sc.sel := 1
+      c := copy(context)
+      c.select := sc
+      traverse(e, p, c)
+      q := FormList(sc.options, sc.sel). 
          set_font(context.font).
          set_fg(context.fg)
       if e.get_attribute(u"DISABLED") then
@@ -1198,6 +1291,14 @@ class Browser(Dialog)
          context.form.add(e.get_attribute(u"NAME"), q)
       context.form.link_label(id, context.form_label, q)
       add_component(p, q, context, Align.B)
+   end
+
+   private traverse_option(e, p, context)
+      local sc
+      sc := \context.select | fail
+      put(sc.options, e.get_trimmed_string_content())
+      if e.get_attribute(u"SELECTED") then
+         sc.sel := *sc.options
    end
 
    private traverse_textarea(e, p, context)
@@ -1224,7 +1325,7 @@ class Browser(Dialog)
    end
 
    private traverse_input(e, p, context)
-      local q, s, k, v, size, mW, id, url, checked
+      local q, s, k, v, size, mW, id, url, checked, align
       \context.form | fail
       s := string(map(e.get_attribute(u"TYPE"))) | "text"
       case s of {
@@ -1267,7 +1368,8 @@ class Browser(Dialog)
                      context.form.add("y", FormImgY(q))
                   }
                }
-               add_component(p, q, context, cnv_comp_align(e, u"ALIGN", Align.B))
+               align := convert_comp_align(e, u"ALIGN") | Align.B
+               add_component(p, q, context, align)
             }
          }
          "reset" : {
@@ -1463,35 +1565,32 @@ class Browser(Dialog)
       traverse(e, p, c)
    end
 
-   private cnv_valign(tr, td, name, def)
-      return case string(map((td | tr).get_attribute(name))) of {
+   private convert_valign(el, name)
+      return case string(map(el.get_attribute(name))) of {
          "top": Align.T
          "middle": Align.C
          "bottom"|"baseline": Align.B
-         default: def
-      } | def
+      }
    end
 
-   private cnv_halign(tr, td, name, def)
-      return case string(map((td | tr).get_attribute(name))) of {
+   private convert_halign(el, name)
+      return case string(map(el.get_attribute(name))) of {
          "left": Align.L
          "center": Align.C
          "right": Align.R
-         default: def
-      } | def
+      }
    end
 
-   private cnv_cap_align(el, name, def)
+   private convert_cap_align(el, name)
       return case string(map(el.get_attribute(name))) of {
          "left": Align.L
          "right": Align.R
          "top": Align.T
          "bottom": Align.B
-         default: def
-      } | def
+      }
    end
 
-   private cnv_comp_align(el, name, def)
+   private convert_comp_align(el, name)
       return case map(string(el.get_attribute(name))) of {
          "left": Align.L
          "right": Align.R
@@ -1500,16 +1599,14 @@ class Browser(Dialog)
          "middle" | "center" | "centre": Align.C
          "absbottom":  "absbottom"
          "absmiddle":  "absmiddle"
-         default: def
-      } | def
+      }
    end
 
    private traverse_table(e, p, context)
-      local tbl, tr, td, row, colspan, rowspan, width, occ, c, ce, t2, main,
-         x, y, border, cellpadding, cellspacing, cell_border, align, cap
+      local ct, tbl, width, border, cellpadding, cellspacing, cell_border, align, c
 
       tbl := Tbl()
-      if width := integer(e.get_attribute(u"WIDTH")) then
+      if width := (0 <= integer(e.get_attribute(u"WIDTH"))) then
          tbl.set_width(width)
       border := integer(e.get_attribute(u"BORDER")) | 0
       cellpadding := integer(e.get_attribute(u"CELLPADDING")) | 0
@@ -1517,7 +1614,7 @@ class Browser(Dialog)
       tbl.inner.layout_delegate.set_doi(cellspacing).set_dii(cellspacing/2)
       if border > 0 then
          tbl.set_border(PlainBorder().set_line_width(border))
-      tbl.set_bg(convert_color(e.get_attribute(u"BGCOLOR")))
+      tbl.set_bg(convert_color(e, u"BGCOLOR"))
 
       cell_border := if border > 0 then
          CompoundBorder().
@@ -1525,142 +1622,173 @@ class Browser(Dialog)
             set_inner(EmptyBorder().set_insets(cellpadding, cellpadding, cellpadding, cellpadding))
          else
             EmptyBorder().set_insets(cellpadding, cellpadding, cellpadding, cellpadding)
-      align := cnv_comp_align(e, u"ALIGN", Align.C)
+      align := convert_comp_align(e, u"ALIGN") | Align.C
+
+      c := copy(context)
+      c.table := ct := TableContext()
+      ct.tbl := tbl
+      ct.x := ct.y := 1
+      ct.occ := set()
+      ct.cell_border := cell_border
+      traverse(e, p, c)
+
       if not(align === (Align.L | Align.R)) then
          put_new_row(p)
-
-      if ce := node_search(!e.children, [u"CAPTION"], [u"TABLE"]) then {
-         # A Tbl with two TextFlows; the caption and another containing just the table itself.
-         t2 := Tbl()
-         cap := TextFlow().set_dominant_width(TextFlow.DEFAULT_WIDTH)
-         c := copy(context)
-         c.align := Align.C
-         traverse(ce, cap, c)
-         main := TextFlow()
-         add_component(main, tbl, context)
-         case cnv_comp_align(ce, u"ALIGN", Align.T) of {
-            Align.T: {
-               cap.set_constraint("eol", &yes)
-               t2.inner.add(cap)
-               t2.inner.add(main)
-            }
-            Align.B: {
-               main.set_constraint("eol", &yes)
-               t2.inner.add(main)
-               t2.inner.add(cap)
-            }
-            Align.L: {
-               t2.inner.add(cap)
-               t2.inner.add(main)
-            }
-            Align.R: {
-               t2.inner.add(main)
-               t2.inner.add(cap)
-            }
-         }
-         add_component(p, t2, context, align)
-      } else
+      if \c.table.caption then
+         add_component(p, c.table.caption, context, align)
+      else
          add_component(p, tbl, context, align)
-      y := 1
-      occ := set()
-      every tr := node_search(!e.children, [u"TR"], [u"TABLE"]) do {
-         x := 1
-         while member(occ, x || "," || y) do
-            x +:= 1
-         every td := node_search(!tr.children, [u"TD", u"TH"], [u"TABLE", u"TR"]) do {
-            row := TextFlow().
-               set_constraint("x", x). 
-               set_constraint("y", y).
-               set_border(cell_border).
-               set_v_align(cnv_valign(tr, td, u"VALIGN", Align.C))
-            colspan := integer(td.get_attribute(u"COLSPAN")) | 1
-            row.set_constraint("w", colspan)
-            rowspan := integer(td.get_attribute(u"ROWSPAN")) | 1
-            row.set_constraint("h", rowspan)
-            row.set_bg(convert_color((td | tr).get_attribute(u"BGCOLOR")))
-            every insert(occ, (x to x + colspan - 1) || "," || (y to y + rowspan - 1))
-            if width := td.get_attribute(u"WIDTH") then {
-               if width := integer(width) then
-                  row.set_width(width)
-               else if width[-1] == "%" & width := integer(width[1:-1]) then
-                  row.set_constraint("pct_w", width)
-            }
-            tbl.inner.add(row)
 
-            c := copy(context)
-            if td.name == u"TH" then {
-               c.bold := 1
-               c.size := min(c.size + 1, 7)
-               synch_font(c)
-               c.align := cnv_halign(tr, td, u"ALIGN", Align.C)
-            } else
-               c.align := cnv_halign(tr, td, u"ALIGN", Align.L)
-
-            traverse(td, row, c)
-            while member(occ, x || "," || y) do
-               x +:= 1
-         }
-         y +:= 1
-      }
       if not(align === (Align.L | Align.R)) then
          put_new_row(p)
    end
 
-   private traverse_ol(e, p, context)
-      local tbl, li, row, i
-      put_new_row(p)
-      tbl := Tbl()
-      add_component(p, tbl, context)
-      i := 0
-      every li := node_search(!e.children, [u"LI"], [u"OL", u"UL"]) do {
-         row := TextFlow()
-         put(row.input, TextCmd((i +:= 1) || u".\ua0\ua0\ua0", context))
-         tbl.inner.add(row)
-         row := TextFlow() .set_constraint("eol", &yes)
-         tbl.inner.add(row)
-         traverse(li, row, context)
+   private traverse_caption(e, p, context)
+      local ct, cap, main, c, align
+      ct := \context.table | fail
+      /ct.caption | fail
+
+      # A Tbl with two TextFlows; the caption and another containing just the table itself.
+      ct.caption := Tbl()
+      cap := TextFlow().set_dominant_width(TextFlow.DEFAULT_WIDTH)
+      c := copy(context)
+      c.align := Align.C
+      traverse(e, cap, c)
+      main := TextFlow()
+      add_component(main, ct.tbl, context)
+      align := convert_cap_align(e, u"ALIGN") | Align.T
+      case align of {
+         Align.T: {
+            cap.set_constraint("eol", &yes)
+            ct.caption.inner.add(cap).add(main)
+         }
+         Align.B: {
+            main.set_constraint("eol", &yes)
+            ct.caption.inner.add(main).add(cap)
+         }
+         Align.L: {
+            ct.caption.inner.add(cap).add(main)
+         }
+         Align.R: {
+            ct.caption.inner.add(main).add(cap)
+         }
       }
+   end
+
+   private traverse_tr(e, p, context)
+      local ct
+      ct := \context.table | fail
+      ct.tr := e
+      if ct.x > 1 then {
+         ct.x := 1
+         ct.y +:= 1
+      }
+      traverse(e, p, context)
+      if ct.x > 1 then {
+         ct.x := 1
+         ct.y +:= 1
+      }
+      ct.tr := &null
+   end
+
+   private traverse_td(e, p, context)
+      local ct, row, c, colspan, rowspan, width, valign
+      ct := \context.table | fail
+      while member(ct.occ, ct.x || "," || ct.y) do
+         ct.x +:= 1
+      valign := convert_valign(e | \ct.tr, u"VALIGN") |  Align.C
+      row := TextFlow().
+         set_constraint("x", ct.x). 
+         set_constraint("y", ct.y).
+         set_border(ct.cell_border).
+         set_v_align(valign)
+      colspan := (0 < integer(e.get_attribute(u"COLSPAN"))) | 1
+      row.set_constraint("w", colspan)
+      rowspan := (0 < integer(e.get_attribute(u"ROWSPAN"))) | 1
+      row.set_constraint("h", rowspan)
+      row.set_bg(convert_color(e | \ct.tr, u"BGCOLOR"))
+      every insert(ct.occ, (ct.x to ct.x + colspan - 1) || "," || (ct.y to ct.y + rowspan - 1))
+      if width := e.get_attribute(u"WIDTH") then {
+         if width := (0 <= integer(width)) then
+            row.set_width(width)
+         else if width[-1] == "%" & width := (0 <= integer(width[1:-1])) then
+            row.set_constraint("pct_w", width)
+      }
+      ct.tbl.inner.add(row)
+
+      c := copy(context)
+      if e.name == u"TH" then {
+         c.bold := 1
+         c.size := min(c.size + 1, 7)
+         synch_font(c)
+         c.align := convert_halign(e | \ct.tr, u"ALIGN") | Align.C
+      } else
+         c.align := convert_halign(e | \ct.tr, u"ALIGN") | Align.L
+      ct.x +:= colspan
+
+      traverse(e, row, c)
+   end
+
+   private traverse_list(e, p, context)
+      local tbl, lc, c
+      tbl := Tbl()
+      c := copy(context)
+      lc := ListContext()
+      lc.tbl := tbl
+      lc.index := 0
+      lc.root := e
+      c.list := lc
+      traverse(e, p, c)
+      put_new_row(p)
+      add_component(p, tbl, context)
       put_new_row(p)
    end
 
-   private traverse_ul(e, p, context)
-      local tbl, li, row
-      put_new_row(p)
-      tbl := Tbl()
-      add_component(p, tbl, context)
-      every li := node_search(!e.children, [u"LI"], [u"OL", u"UL"]) do { 
-         row := TextFlow()
+   private traverse_li(e, p, context)
+      local lc, row
+      lc := \context.list | fail
+      row := TextFlow()
+      if lc.root.name == u"OL" then
+         put(row.input, TextCmd((lc.index +:= 1) || u".\ua0\ua0\ua0", context))
+      else
          put(row.input, TextCmd(u"\u2022\ua0\ua0\ua0", context))
-         tbl.inner.add(row)
-         row := TextFlow() .set_constraint("eol", &yes)
-         tbl.inner.add(row)
-         traverse(li, row, context)
-      }
-      put_new_row(p)
+      lc.tbl.inner.add(row)
+      row := TextFlow() .set_constraint("eol", &yes)
+      lc.tbl.inner.add(row)
+      traverse(e, row, context)
    end
 
    private traverse_dl(e, p, context)
-      local tbl, li, row
-      put_new_row(p)
+      local tbl, dc, c
       tbl := Tbl()
       tbl.inner.layout_delegate.set_fix_col1(&yes)
-      add_component(p, tbl, context)
-      every li := node_search(!e.children, [u"DT", u"DD"], [u"DL"]) do { 
-         if li.name == u"DT" then {
-            row := TextFlow() .set_constraint("eol", &yes).set_constraint("w", 2)
-            tbl.inner.add(row)
-            traverse(li, row, context)
-         } else {
-            row := TextFlow() .set_constraint("eol", &no)
-            put(row.input, TextCmd(u"\u2022\ua0\ua0\ua0", context))
-            tbl.inner.add(row)
-            row := TextFlow() .set_constraint("eol", &yes)
-            tbl.inner.add(row)
-            traverse(li, row, context)
-
-         }
-      }
+      dc := DefListContext()
+      dc.tbl := tbl
+      c := copy(context)
+      c.def_list := dc
+      traverse(e, p, c)
       put_new_row(p)
+      add_component(p, tbl, context)
+      put_new_row(p)
+   end
+
+   private traverse_dt(e, p, context)
+      local dc, row
+      dc := \context.def_list | fail
+      row := TextFlow() .set_constraint("eol", &yes).set_constraint("w", 2)
+      dc.tbl.inner.add(row)
+      traverse(e, row, context)
+   end
+
+   private traverse_dd(e, p, context)
+      local dc, row
+      dc := \context.def_list | fail
+      row := TextFlow() .set_constraint("eol", &no)
+      put(row.input, TextCmd(u"\u2022\ua0\ua0\ua0", context))
+      dc.tbl.inner.add(row)
+      row := TextFlow() .set_constraint("eol", &yes)
+      dc.tbl.inner.add(row)
+      traverse(e, row, context)
    end
 
    private traverse_blockquote(e, p, context)
@@ -1678,7 +1806,7 @@ class Browser(Dialog)
    end
 
    private traverse_fieldset(e, p, context)
-      local tbl, row, title, legend
+      local tbl, row, c, fc
       put_new_row(p)
       tbl := Tbl().set_border(CompoundBorder().
                               set_outer(SunkenBorder().set_line_width(1)).
@@ -1686,23 +1814,43 @@ class Browser(Dialog)
       add_component(p, tbl, context)
       row := TextFlow()
       tbl.inner.add(row)
-      traverse(e, row, context)
-      if legend := node_search(!e.children, [u"LEGEND"], [u"FIELDSET"]) then {
-         title := TextFlow().
-            set_dominant_width(TextFlow.MAX_WIDTH)
-         traverse(legend, title, context)
-         tbl.set_title(title)
-      }
+      fc := FieldSetContext()
+      c := copy(context)
+      c.fieldset := fc
+      traverse(e, row, c)
+      tbl.set_title(\fc.legend)
       put_new_row(p)
    end
 
-   private static node_search(e, for, bar)
-      is(e, Element) | fail
-      if e.name == !bar then
-         fail
-      if e.name == !for then
-         suspend e
-      suspend node_search(!e.children, for, bar)
+   private traverse_legend(e, p, context)
+      local fc
+      fc := \context.fieldset | fail
+      /fc.legend | fail
+      fc.legend := TextFlow().
+         set_dominant_width(TextFlow.MAX_WIDTH)
+      traverse(e, fc.legend, context)
+   end
+
+   private traverse_map(e, p, context)
+      local c, mc
+      mc := MapContext()
+      mc.map := Map()
+      c := copy(context)
+      c.map := mc
+      traverse(e, p, c)
+      insert(maps, map(string(e.get_attribute(u"NAME"))), mc.map)
+   end
+
+   private traverse_area(e, p, context)
+      local mc, s, coords
+      mc := \context.map | fail
+      if s := e.get_attribute(u"COORDS") then {
+         coords := []
+         every put(coords, integer(separate(s)))
+         mc.map.add_area(MapArea(map(string(e.get_attribute(u"SHAPE"))), 
+                                 coords,
+                                 mk_link(context.base, e.get_attribute(u"HREF"))))
+      }
    end
 
    private traverse_text(e, p, context)
@@ -1716,13 +1864,14 @@ class Browser(Dialog)
             traverse_text(e, p, context)
          else if is(e, HtmlElement) then {
             case string(e.name) of {
-               "LEGEND"|"TITLE"|"META"|"LINK"|"LI"|"TR"|"TD"|"SCRIPT"|"STYLE": {}
+               "TITLE"|"META"|"LINK"|"SCRIPT"|"STYLE": {}
                "A": traverse_a(e, p, context)
                "FORM": traverse_form(e, p, context)
                "LABEL": traverse_label(e, p, context)
                "FONT": traverse_font(e, p, context)
                "IMG": traverse_img(e, p, context)
                "SELECT": traverse_select(e, p, context)
+               "OPTION": traverse_option(e, p, context)
                "TEXTAREA": traverse_textarea(e, p, context)
                "INPUT": traverse_input(e, p, context)
                "DIV": traverse_div(e, p, context)
@@ -1736,9 +1885,14 @@ class Browser(Dialog)
                "CENTER": traverse_center(e, p, context)
                "H" || (1 to 6): traverse_hN(e, p, context)
                "TABLE": traverse_table(e, p, context)
-               "OL": traverse_ol(e, p, context)
-               "DIR"|"MENU"|"UL": traverse_ul(e, p, context)
+               "CAPTION": traverse_caption(e, p, context)
+               "TR": traverse_tr(e, p, context)
+               "TD"|"TH": traverse_td(e, p, context)
+               "DIR"|"MENU"|"OL"|"UL": traverse_list(e, p, context)
+               "LI": traverse_li(e, p, context)
                "DL": traverse_dl(e, p, context)
+               "DT": traverse_dt(e, p, context)
+               "DD": traverse_dd(e, p, context)
                "BLOCKQUOTE": traverse_blockquote(e, p, context)
                "P": traverse_p(e, p, context)
                "Q": traverse_q(e, p, context)
@@ -1748,6 +1902,9 @@ class Browser(Dialog)
                "SUB": traverse_sub(e, p, context)
                "LISTING"|"PRE": traverse_pre(e, p, context)
                "FIELDSET": traverse_fieldset(e, p, context)
+               "LEGEND": traverse_legend(e, p, context)
+               "MAP": traverse_map(e, p, context)
+               "AREA": traverse_area(e, p, context)
                default : traverse(e, p, context)
             }
          }

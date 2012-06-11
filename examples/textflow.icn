@@ -100,6 +100,7 @@ class TextFlow(Component)
       at_new_para,
       def_width,
       max_width,
+      held,
       wrote,
       dominant_width
 
@@ -391,10 +392,14 @@ class TextFlow(Component)
          pop(deferred)
    end
 
+   private fits_in_row(co)
+      return have_max() | (row_x + co.maxw  + row_width <= right_margin)
+   end
+
    private do_deferred(co)
       case co.align of {
          Align.L: {
-            if have_max() | (row_x + co.maxw  + row_width <= right_margin) then {
+            if fits_in_row(co) then {
                co.x := row_x
                co.y := row_y
                co.w := min(co.maxw, right_margin - row_x - row_width)
@@ -405,7 +410,7 @@ class TextFlow(Component)
             }
          }
          Align.R: {
-            if have_max() | (row_x + co.maxw + row_width <= right_margin) then {
+            if fits_in_row(co) then {
                co.w := min(co.maxw, right_margin - row_x - row_width)
                co.x := right_margin - co.w
                co.y := row_y
@@ -429,28 +434,26 @@ class TextFlow(Component)
       case cmd.align of {
          Align.L: {
             # If already have deferred, then defer this too, otherwise they will be out of order. 
-            if *deferred > 0 | (row_x + co.maxw + row_width > right_margin) then
-               put(deferred, co)
-            else {
+            if *deferred = 0 & fits_in_row(co) then {
                co.x := row_x
                co.y := row_y
                co.w := co.maxw
                co.h := cmd.c.get_preferred_height(co.w)
                row_x +:= co.maxw
                put(left_comps, co)
-            }
+            } else
+               put(deferred, co)
          }
          Align.R: {
-            if  *deferred > 0 | (row_x + co.maxw + row_width > right_margin) then
-               put(deferred, co)
-            else {
+            if *deferred = 0 & fits_in_row(co) then {
                co.x := right_margin - co.maxw 
                co.y := row_y
                co.w := co.maxw
                co.h := cmd.c.get_preferred_height(co.w)
                right_margin -:= co.w
                put(right_comps, co)
-            }
+            } else
+               put(deferred, co)
          }
          Align.B: {
             comp_out(co)
@@ -619,7 +622,7 @@ class TextFlow(Component)
 
    private handle_lrelease(e)
       if \wrote then
-         self.parent_dialog.goto(\wrote, Worker.NORMAL)
+         self.parent_dialog.goto(wrote, Worker.NORMAL)
    end
 
    private handle_lpress(e)
@@ -631,6 +634,8 @@ class TextFlow(Component)
                c.toggle_is_checked()
          }
       }
+      held := wrote
+      set_pointer()
    end
 
    private copy_link(u)
@@ -639,7 +644,7 @@ class TextFlow(Component)
 
    private handle_rpress(e)
       local pm, pm_menu, u
-      if u := \which_text_out(e).attr.url then {
+      if u := \wrote then {
          pm_menu := Menu()
          pm_menu.add(TextMenuItem().
                      set_label("Copy link").
@@ -652,13 +657,28 @@ class TextFlow(Component)
    private handle_move(e)
       local u
       if u := \which_text_out(e).attr.url then {
-         set_pointer("hand1")
-         parent_dialog.msg(u.str())
-         wrote := u
+         if wrote ~=== u then {
+            set_pointer("hand1")
+            parent_dialog.msg(u.str())
+            wrote := u
+         }
       } else if \wrote then {
          parent_dialog.clear_msg()
          wrote := &null
          set_pointer()
+      }
+   end
+
+   private handle_ldrag(e)
+      local u
+      if u := \which_text_out(e).attr.url & u === held then {
+         if wrote ~=== u then {
+            parent_dialog.msg(u.str())
+            wrote := u
+         }
+      } else if \wrote then {
+         parent_dialog.clear_msg()
+         wrote := &null
       }
    end
 
@@ -678,6 +698,7 @@ class TextFlow(Component)
       set_constraint("x_fill", &yes)
       set_constraint("y_fill", &yes)
       connect(self.handle_move, Event.MOUSE_MOVEMENT)
+      connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
       connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
       connect(self.handle_exit, Event.MOUSE_EXIT)

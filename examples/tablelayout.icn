@@ -204,7 +204,7 @@ class TableGrid()
       left := extra
       n := *l
       done := list(*l)
-      while left > 0 & n > 0 do {
+      while n > 0 do {
          a := integer(left / n)
          if a = 0 then
             break
