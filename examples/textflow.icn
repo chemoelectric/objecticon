@@ -2,8 +2,7 @@ import
    gui,
    graphics,
    ipl.strings,
-   ipl.sort,
-   util
+   ipl.sort
 
 class TextFlowCmd() end
 
@@ -28,16 +27,14 @@ class TextCmd(TextFlowCmd)
    end
 end
 
-class NewRowCmd(TextFlowCmd)
-end
+class NewRowCmd(TextFlowCmd) end
 
-class ParaCmd(TextFlowCmd)
-end
+class ParaCmd(TextFlowCmd) end
 
 class BreakCmd(TextFlowCmd)
    public const clear
 
-  public new(clear)
+   public new(clear)
       self.clear := clear
       return
    end
@@ -58,14 +55,15 @@ class TextOut(Rect)
 end
 
 class CompOut(Rect)
-   public const c, align, attr, pw, maxw
+   public const c, align, attr, pw, maxw, boff
 
-   public new(attr, c, align, pw, maxw)
+   public new(attr, c, align, pw, maxw, boff)
       self.attr := attr
       self.c := c
       self.align := align
       self.pw := pw
       self.maxw := maxw
+      self.boff := boff
       return
    end
 end
@@ -103,13 +101,17 @@ class TextFlow(Component)
       def_width,
       max_width,
       wrote,
-      default_width_is_max_width_flag
+      dominant_width
 
    public static const 
-      WHITESPACE
+      WHITESPACE,
+      DEFAULT_WIDTH,
+      MAX_WIDTH
 
    private static init()
       WHITESPACE := ' \t\r\n\v\f'
+      DEFAULT_WIDTH := 1
+      MAX_WIDTH := 2
    end
 
    private compute(width)
@@ -137,7 +139,12 @@ class TextFlow(Component)
       compute1(, input)
       while *(row | deferred) > 0 do
          new_row()
-   end
+      if \calculating then {
+         # Ensure that we have cleared any left/right images
+         until have_max() do 
+            new_row()
+      }
+  end
 
    public set_v_align(v)
       self.v_align := v
@@ -149,14 +156,14 @@ class TextFlow(Component)
          right_comps := compute_w := &null
    end
 
-   public set_default_width_is_max_width(s)
-      self.default_width_is_max_width_flag := check_flag(s)
+   public set_dominant_width(x)
+      self.dominant_width := x
       return self
    end
 
    public get_default_width()
       local c
-      if \default_width_is_max_width_flag then
+      if dominant_width === MAX_WIDTH then
          return get_max_width()
       if /def_width then {
          compute()
@@ -171,6 +178,8 @@ class TextFlow(Component)
 
    public get_max_width()
       local t
+      if dominant_width === DEFAULT_WIDTH then
+         return get_default_width()
       if /max_width then {
          if t := integer(self.w_spec) then
             max_width := t
@@ -342,7 +351,7 @@ class TextFlow(Component)
             r.x := x1
             r.y := case r.align of {
                Align.C: row_y + row_ascent - r.h / 2
-               Align.B: row_y + row_ascent - r.h
+               Align.B: row_y + row_ascent - r.h + r.boff
                Align.T: row_y
                "absbottom": row_y + row_ascent + row_descent - r.h
                "absmiddle": row_y + (row_ascent + row_descent - r.h) / 2
@@ -410,10 +419,11 @@ class TextFlow(Component)
    end
 
    private compute_component(cmd)
-      local co, prefw, maxw
+      local co, prefw, maxw, boff
       prefw := cmd.c.get_preferred_width()
       maxw := if is(cmd.c, Tbl) then cmd.c.get_max_width() else prefw
-      co := CompOut(cmd.attr, cmd.c, cmd.align, prefw, maxw)
+      boff := if is(cmd.c, FormEntry) then cmd.c.get_baseline_off() else 0
+      co := CompOut(cmd.attr, cmd.c, cmd.align, prefw, maxw, boff)
       put(output_comps, co)
 
       case cmd.align of {
@@ -444,7 +454,8 @@ class TextFlow(Component)
          }
          Align.B: {
             comp_out(co)
-            row_ascent <:= co.h
+            row_ascent <:= co.h - co.boff
+            row_descent <:= co.boff
          }
          Align.T: {
             comp_out(co)
@@ -614,7 +625,7 @@ class TextFlow(Component)
    private handle_lpress(e)
       local c, t
       if t := which_text_out(e) then {
-         if c := \ ( \ (t.attr.form_label)).comp then {
+         if c := \ ( \ (t.attr.form_label)).comp & not c.is_shaded() then {
             parent_dialog.set_focus(c)
             if is(c, Toggle) then
                c.toggle_is_checked()
@@ -664,8 +675,8 @@ class TextFlow(Component)
       set_border(NullBorder())
       input := []
       v_align := Align.T
-      self.set_constraint("x_fill", &yes)
-      self.set_constraint("y_fill", &yes)
+      set_constraint("x_fill", &yes)
+      set_constraint("y_fill", &yes)
       connect(self.handle_move, Event.MOUSE_MOVEMENT)
       connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
