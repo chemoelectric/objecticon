@@ -114,7 +114,8 @@ class TextFlow(Component)
       wrote,
       dominant_width,
       computed_named_anchors,
-      named_anchors
+      named_anchors,
+      browser
 
    public static const 
       WHITESPACE,
@@ -638,14 +639,17 @@ class TextFlow(Component)
       x1 := e.x - x - border.get_l_inset()
       y1 := e.y - y - border.get_t_inset() - y_off
       every o := !output do {
+         if o.y > y1 then
+            break
          if o.inside(x1, y1) then
             return o
       }
    end
 
    private handle_lrelease(e)
+     set_pointer()
       if \wrote then
-         self.parent_dialog.goto(wrote, Worker.NORMAL)
+         self.browser.goto(wrote, browser.page_url, Worker.NORMAL)
    end
 
    private handle_lpress(e)
@@ -658,7 +662,6 @@ class TextFlow(Component)
          }
       }
       held := wrote
-      set_pointer()
    end
 
    private copy_link(u)
@@ -682,11 +685,11 @@ class TextFlow(Component)
       if u := \which_text_out(e).attr.url then {
          if wrote ~=== u then {
             set_pointer("hand1")
-            parent_dialog.msg(u.str())
+            browser.msg(u.str())
             wrote := u
          }
       } else if \wrote then {
-         parent_dialog.clear_msg()
+         browser.clear_msg()
          wrote := &null
          set_pointer()
       }
@@ -696,25 +699,26 @@ class TextFlow(Component)
       local u
       if u := \which_text_out(e).attr.url & u === held then {
          if wrote ~=== u then {
-            parent_dialog.msg(u.str())
+            browser.msg(u.str())
             wrote := u
          }
       } else if \wrote then {
-         parent_dialog.clear_msg()
+         browser.clear_msg()
          wrote := &null
       }
    end
 
    private handle_exit(e)
       if \wrote then {
-         parent_dialog.clear_msg()
+         browser.clear_msg()
          wrote := &null
          set_pointer()
       }
    end
 
-    public new()
+    public new(browser)
       cast(self,Component).new()
+      self.browser := browser
       set_border(NullBorder())
       input := []
       v_align := Align.T

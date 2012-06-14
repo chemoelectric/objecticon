@@ -28,10 +28,11 @@ $load BROKEN_LINK "rpp.BROKEN_LINK_24.gif"
 
 class Req()
    public const
-      url, callback, kind, form_data
+      url, referer, callback, kind, form_data
 
-   public new(url, callback, kind, form_data)
-      self.url := url
+   public new(url, referer, callback, kind, form_data)
+      self.url := url 
+      self.referer := referer
       self.callback := callback
       self.kind := kind
       self.form_data := form_data
@@ -41,11 +42,12 @@ end
 
 class Resp()
    public const
-      err, url, data, fname, kind, form_data
+      err, url, referer, data, fname, kind, form_data
 
-   public new(err, url, data, fname, kind, form_data)
+   public new(err, url, referer, data, fname, kind, form_data)
       self.err := err
       self.url := url
+      self.referer := referer
       self.data := data
       self.fname := fname
       self.kind := kind
@@ -114,6 +116,19 @@ class Worker()
       NORMAL := 1
       NAVIGATE := 2
       REFRESH := 3
+   end
+
+   public initially()
+      task.start()
+   end
+
+   public finally()
+      if \doing then
+         cancel()
+      else {
+         httpc.close()
+         task.stop()
+      }
    end
 
    public cancel()
@@ -207,23 +222,32 @@ class Worker()
    private run()
       local r, s, data, hreq, hres, fname, ce
       repeat {
+         while /parent.cbwin do {
+            # finally() has been called; close resources and revert
+            httpc.close()
+            task.revert()
+         }
          while *parent.queue = 0 do
             task.sleep()
          doing := 1
          r := pop(parent.queue)
-         if r.url.protocol == "file" then {
+         if r.url.protocol == u"file" then {
             if data := cvt_file(r.url.get_path()) then
-               r.callback(Resp(, r.url, data, r.url.get_file_last(1), r.kind))
+               r.callback(Resp(, r.url, r.referer, data, r.url.get_file_last(1), r.kind))
             else
-               r.callback(Resp(&why, r.url,,, r.kind))
+               r.callback(Resp(&why, r.url, r.referer,,, r.kind))
          } else if r.kind ~= REFRESH & /r.form_data & (ce := parent.cache.get(r.url)) then
-            r.callback(Resp(, r.url, ce.data, ce.fname, r.kind))
+            r.callback(Resp(, r.url, r.referer, ce.data, ce.fname, r.kind))
          else use {
             s := RamStream(),
             {
                hreq := HttpRequest().
                   set_output_stream(s). 
                   set_url(r.url)
+               if (\r.referer).protocol ~== u"file" then
+                  hreq.set_referer(r.referer.str())
+               httpc.set_cookies(parent.cookies)
+               httpc.set_user_agent(\parent.user_agent)
                if \r.form_data then {
                   if is(r.form_data, Message) then
                      hreq.set_multipart_form_data(r.form_data)
@@ -238,11 +262,11 @@ class Worker()
                   if httpc.request.method == "GET"  then
                      parent.cache.add(CacheEntry(hres.url, data, fname))
                   if /cancelled then
-                     r.callback(Resp(, hres.url, data, fname, r.kind, 
+                     r.callback(Resp(, hres.url, r.referer, data, fname, r.kind, 
                                      if hreq.url === hres.url then r.form_data else &null))
                } else {
                   if /cancelled then
-                     r.callback(Resp(&why, r.url,,, r.kind, r.form_data))
+                     r.callback(Resp(&why, r.url, r.referer,,, r.kind, r.form_data))
                }
             }
          }
@@ -255,8 +279,7 @@ class Worker()
       task := Dispatcher.new_task{run()}
       httpc := HttpClient().
          set_task(task).
-         set_ssl_verify(&no).
-         set_cookies(parent.cookies)
+         set_ssl_verify(&no)
 
       if \opts["l"] then {
          httpc.connect(failed, HttpClient.FAILED_EVENT).
@@ -297,7 +320,7 @@ class Tbl(Border)
 end
 
 class Img(Label)
-   private img_url, link_url, wrote, imgw, imgh, img_data, img_name, form, map, held
+   private browser, img_url, link_url, wrote, imgw, imgh, img_data, img_name, form, map, held
 
    public got_data(res)
       if \res.err then
@@ -325,16 +348,7 @@ class Img(Label)
    end
 
    private save_image()
-      local f, s
-      f := parent_dialog.file_dialog
-      f.set_file(\img_name)
-      f.show_modal(parent_dialog)
-      if s := f.get_result() then {
-         if Files.string_to_file(s, img_data) then
-            parent_dialog.msg("Saved OK", 3000)
-         else
-            parent_dialog.msg(&why, 3000)
-      }
+      browser.do_save_image(img_name, img_data)
    end
 
    private handle_rpress(e)
@@ -356,8 +370,9 @@ class Img(Label)
    end
 
    private handle_lrelease(e, src)
+      set_pointer()
       if \wrote then
-         parent_dialog.goto(wrote, Worker.NORMAL)
+         browser.goto(wrote, browser.page_url, Worker.NORMAL)
    end
 
    private handle_form_lrelease(e, src)
@@ -367,7 +382,7 @@ class Img(Label)
 
    private handle_exit(e)
       if \wrote then {
-         parent_dialog.clear_msg()
+         browser.clear_msg()
          wrote := &null
          set_pointer()
       }
@@ -376,7 +391,7 @@ class Img(Label)
    private which_url(e)
       local m, u
       in_region(e) | fail
-      if m := parent_dialog.get_map(\map) &
+      if m := browser.get_map(\map) &
          u := m.over_url(e.x - x - border.get_l_inset(), 
                          e.y - y - border.get_t_inset()) then 
          return u
@@ -385,18 +400,17 @@ class Img(Label)
 
    private handle_lpress(e)
       held := wrote
-      set_pointer()
    end
 
    private handle_ldrag(e)
       local u
       if u := which_url(e) & u === held then {
          if wrote ~=== u then {
-            parent_dialog.msg(u.str())
+            browser.msg(u.str())
             wrote := u
          }
       } else if \wrote then {
-         parent_dialog.clear_msg()
+         browser.clear_msg()
          wrote := &null
       }
    end
@@ -406,18 +420,19 @@ class Img(Label)
       if u := which_url(e) then {
          if wrote ~=== u then {
             set_pointer("hand1")
-            parent_dialog.msg(u.str())
+            browser.msg(u.str())
             wrote := u
          }
       } else if \wrote then {
-         parent_dialog.clear_msg()
+         browser.clear_msg()
          wrote := &null
          set_pointer()
       }
    end
 
-   public new(img_url, link_url, form, imgw, imgh, map)
+   public new(browser, img_url, link_url, form, imgw, imgh, map)
       cast(self,Label).new()
+      self.browser := browser
       self.imgw := imgw
       self.imgh := imgh
       self.img_url := img_url
@@ -539,7 +554,8 @@ end
 
 class FormBrowse(Component, FormEntry)
    private const
-      tf
+      tf,
+      browser
 
    public get_value(ev, src, multipart_flag)
       return if /multipart_flag then
@@ -569,17 +585,14 @@ class FormBrowse(Component, FormEntry)
    end
 
    private on_browse()
-      local f, s
-      f := parent_dialog.file_dialog
-      f.show_modal(parent_dialog)
-      if s := f.get_result() then
-         tf.set_contents(s)
+      tf.set_contents(browser.do_browse_for_file())
    end
 
-   public new()
+   public new(browser, tf_size)
       cast(self,Component).new()
+      self.browser := browser
       set_layout(GridLayout().set_doi(0).set_dii(0))
-      tf := TextField().set_size(150).set_contents(u"")
+      tf := TextField().set_size(tf_size).set_contents(u"")
       add(tf)
       add(TextButton().set_label("Browse...").connect(on_browse, Event.ACTION))
       return
@@ -735,6 +748,18 @@ class Form()
       return t
    end
 
+   private static escape_1521_value(s)
+      local t
+      t := u"\""
+      s ? repeat {
+         t ||:= tab(many(&uset -- '\"\\\r'))
+         if pos(0) then
+            break
+         t ||:= u"\\" || move(1)
+      }
+      return t || u"\""
+   end
+
    private make_cgi_message(ev, src)
       local k, v, c, m, mp, m2
       m := Message()
@@ -744,10 +769,13 @@ class Form()
             if v := c.get_value(ev, src, 1) then {
                m2 := Message()
                if is(c, FormBrowse) then {
-                  m2.set_content_disposition(ContentDisposition.parse("form-data; name=\"" || k || "\"; filename=\"" || c.get_filename() || "\"")) | next
-                  m2.set_content_type(ContentType.parse("application/octet-stream")) | next
-               } else
-                  m2.set_content_disposition(ContentDisposition.parse("form-data; name=\"" || k || "\"")) | next
+                  m2.set_header("Content-Disposition", 
+                                "form-data; name=" || escape_1521_value(k) || 
+                                "; filename=" || escape_1521_value(c.get_filename()))
+                  m2.set_header("Content-Type", "application/octet-stream")
+               } else 
+                  m2.set_header("Content-Disposition", 
+                                "form-data; name=" || escape_1521_value(k))
                m2.set_decoded_content(v)
                mp.add_part(m2)
             }
@@ -763,13 +791,14 @@ class Form()
    end
 
    public submit(ev, src)
+      #write(to_string(items,3,1,3))
       if map(method) == "post" then {
          if map(enctype) == "multipart/form-data" then
-            parent.goto(url, Worker.NORMAL, make_cgi_message(ev, src))
+            parent.goto(url, parent.page_url, Worker.NORMAL, make_cgi_message(ev, src))
          else 
-            parent.goto(url, Worker.NORMAL, make_cgi_table(ev, src))
+            parent.goto(url, parent.page_url, Worker.NORMAL, make_cgi_table(ev, src))
       } else
-         parent.goto(clone(url).set_cgi_parameters(make_cgi_table(ev, src)), Worker.NORMAL)
+         parent.goto(clone(url).set_cgi_parameters(make_cgi_table(ev, src)), parent.page_url, Worker.NORMAL)
    end
 
    public add(name, item)
@@ -888,42 +917,33 @@ class MessageLabel(Label)
 end
 
 record HistoryEntry(url,          # URL displayed (on a redirect may differ from that requested) 
+                    referer,      # referer URL
                     form_values,  # Cached values of form components; updated when we move away from the page 
                     form_data,    # POST data used to get the page; on a redirect will always be null
                     area_y
                     ) 
 
-class Browser(Dialog)
+record GreyState(prev, nxt, refresh, copy_page, save_page, stop)
+
+class Browser(Component)
    private
-      prev_button,
-      message_label,
-      close_button,
-      search_field,
-      next_button,
       workers,
       top_panel,
       status_ticker,
-      history,
-      history_pos,
-      running,
-      stop_button,
-      home_button,
-      paste_url_button,
-      refresh_button,
-      start_page,
-      view_img,
-      page_url,
-      page_data,
-      page_name,
-      copy_page_url_item,
-      save_page_item,
       maps,
       forms,
       curr_history_entry   # History entry currently being viewed.
 
    private readable
+      history,
+      history_pos,
+      page_url,
+      page_data,
+      page_name,
       queue,
+      running,
       cookies,
+      user_agent,
       cache,
       file_dialog
 
@@ -969,9 +989,6 @@ class Browser(Dialog)
       SIZES := [7,9,11,14,17,20,23]
    end
 
-   public end_dialog()
-   end
-
    public get_map(s)
       return member(maps, s)
    end
@@ -1006,7 +1023,7 @@ class Browser(Dialog)
          if (i > 0) | (i ~=== running) then {
             if i = 0 then {
                msg("Done")
-               stop_button.set_is_shaded(&yes)
+               page_fully_loaded()
             } else {
                r := 0
                every r +:= (!workers).read()
@@ -1014,13 +1031,34 @@ class Browser(Dialog)
                if r > 0 then
                   s ||:= ", read " || r || " bytes"
                msg(s)
-               stop_button.set_is_shaded(&no)
             }
-            running := i
-            if i = 0 then
-               page_fully_loaded()
+            if i ~=== running then {
+               running := i
+               do_update_grey()
+            }
          }
       }
+   end
+
+   public msg(s, n)
+   end
+
+   public clear_msg()
+   end
+
+   public set_url_field_contents(val)
+   end
+
+   public update_grey()
+   end
+
+   public do_update_grey()
+      update_grey(GreyState(if history_pos > 1 then &no else &yes,
+                            if history_pos < *history then &no else &yes,
+                            if history[history_pos] then &no else &yes,
+                            if \page_url then &no else &yes,
+                            if \page_data then &no else &yes,
+                            if \running > 0 then &no else &yes))
    end
 
    private page_fully_loaded()
@@ -1033,6 +1071,7 @@ class Browser(Dialog)
          if yp := \curr_history_entry.area_y | (lookup_named_anchor(page_url.get_ref()) - top_panel.view.y) then
             top_panel.set_area_y(yp)
       }
+      resynch_pointer()
    end
 
    private lookup_named_anchor(name)
@@ -1042,35 +1081,73 @@ class Browser(Dialog)
             return yp
    end
 
-   public init_dialog()
-      local u
-      every (!workers).task.start()
+   public initially()
+      cast(self,Component).initially()
+      every (!workers).initially()
       status_ticker.start()
-      if \start_page then {
-         if u := URL.parse(start_page) then
-            goto(u, Worker.NORMAL)
-         else
-            msg("Invalid url")
-      } else
-         on_home()
+      do_update_grey()
    end
 
-   private on_close_button(ev)
-      dispose()
+   public finally()
+      cast(self,Component).finally()
+      every (!workers).finally()
+      clear(queue)
+      running := 0
+      status_ticker.stop()
    end
 
-   private on_next(ev)
+   public do_next()
       local he
       he := history[history_pos +:= 1] 
-      goto(he.url, Worker.NAVIGATE, he.form_data)
-      update_grey()
+      goto(he.url, he.referer, Worker.NAVIGATE, he.form_data)
+      do_update_grey()
    end
 
-   private on_prev(ev)
+   public do_prev()
       local he
       he := history[history_pos -:= 1] 
-      goto(he.url, Worker.NAVIGATE, he.form_data)
-      update_grey()
+      goto(he.url, he.referer, Worker.NAVIGATE, he.form_data)
+      do_update_grey()
+   end
+
+   public do_refresh()
+      local he
+      he := history[history_pos] 
+      goto(he.url, he.referer, Worker.REFRESH, he.form_data)
+      do_update_grey()
+   end
+
+   public do_save_page()
+      local s
+      file_dialog.set_file(\page_name)
+      file_dialog.show_modal(parent_dialog)
+      if s := file_dialog.get_result() then {
+         if Files.string_to_file(s, page_data) then
+            msg("Saved OK", 3000)
+         else
+            msg(&why, 3000)
+      }
+   end
+
+   public do_copy_page()
+      parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner([page_url]))
+   end
+
+   public do_save_image(img_name, img_data)
+      local s
+      file_dialog.set_file(\img_name)
+      file_dialog.show_modal(parent_dialog)
+      if s := file_dialog.get_result() then {
+         if Files.string_to_file(s, img_data) then
+            msg("Saved OK", 3000)
+         else
+            msg(&why, 3000)
+      }
+   end
+
+   public do_browse_for_file()
+      file_dialog.show_modal(parent_dialog)
+      return file_dialog.get_result()
    end
 
    private cancel()
@@ -1078,10 +1155,6 @@ class Browser(Dialog)
       clear(queue)
    end
 
-   private on_quit(ev)
-      dispose()
-   end
-   
    private start_worker(req)
       local w
       put(queue, req)
@@ -1091,18 +1164,10 @@ class Browser(Dialog)
             w.task.notify()
    end
 
-   private update_grey()
-      prev_button.set_is_shaded(if history_pos > 1 then &no else &yes)
-      next_button.set_is_shaded(if history_pos < *history then &no else &yes)
-      refresh_button.set_is_shaded(if history[history_pos] then &no else &yes)
-      copy_page_url_item.set_is_shaded(if \page_url then &no else &yes)
-      save_page_item.set_is_shaded(if \page_data then &no else &yes)
-   end
-
-   private is_html(s)
+   private static is_html(s)
       s ? {
          while tab(upto('<')) do {
-            if matchcl("<!doctype" | "<html") then
+            if matchcl("<!doctype" | "<html" | "<meta") then
                return
             # Expect html comment (see htmlparser.icn)
             ="<!" | fail
@@ -1155,24 +1220,21 @@ class Browser(Dialog)
    end
 
    private set_top_data(res)
-      local doc, base, n, s, row, c
+      local doc, base, n, s, row, c, view_img
       if \curr_history_entry then {
          save_form_values()
          curr_history_entry.area_y := top_panel.get_area_y()
          #write("save y for ", curr_history_entry.url.str(), " to ", curr_history_entry.area_y)
       }
 
-      if \view_img then {
-         view_img.close()
-         view_img := &null
-      }
       if \res.err then {
          s := u"<html><h1>Error:</h1>Getting " || res.url.str() || u"<br><br>" || res.err || u"</html>"
          page_data := &null
       } else if is_html(res.data) then {
          s := page_data := res.data
-      } else if view_img := Window.open_image(res.data, cbwin) then {
-         row := Image().set_border(NullBorder()).set_window(view_img)
+      } else if view_img := Window.open_image(res.data) then {
+         view_img.close()
+         row := Image().set_border(NullBorder()).set_image(res.data)
          page_data := res.data
       } else {
          s := u"<html><h1>Problem:</h1>Displaying " || res.url.str() || u"<br><br>This does not seem to be an HTML document</html>"
@@ -1192,13 +1254,14 @@ class Browser(Dialog)
          put(history, HistoryEntry())
          history_pos +:= 1
       }
-      update_grey()
-      search_field.set_contents(page_url.str())
+      do_update_grey()
+      set_url_field_contents(page_url.str())
       curr_history_entry := history[history_pos]
       # Note that the url/form_data may change even on a
       # navigate/refresh, if the server behaved differently (eg
       # redirect instead of error).
       curr_history_entry.url := page_url
+      curr_history_entry.referer := res.referer
       curr_history_entry.form_data := res.form_data
       maps := table()
       forms := []
@@ -1212,7 +1275,7 @@ class Browser(Dialog)
          if n := doc.get_root_element().search_tree(u"BASE") then
             base := URL.parse(n.get_attribute(u"HREF"))
 
-         row := TextFlow()
+         row := TextFlow(self)
          c := Context()
          c.base := base
          c.face := "sans"
@@ -1237,7 +1300,12 @@ class Browser(Dialog)
       row.initially()
       top_panel.layout()
       top_panel.invalidate()
-      change_pointer(DEFAULT_POINTER)
+      resynch_pointer()
+   end
+
+   private resynch_pointer()
+      parent_dialog.refresh_point_chain()
+      parent_dialog.synch_pointer()
    end
 
    private mk_link(base, s)
@@ -1407,11 +1475,11 @@ class Browser(Dialog)
          ih := (0 <= integer(e.get_attribute(u"HEIGHT")))
          if (s := e.get_attribute(u"USEMAP")) & (s[1] == u"#") then
             map := default.map(string(s[2:0]))
-         q := Img(url, context.url,, iw, ih, map)
+         q := Img(self, url, context.url,, iw, ih, map)
          border := (0 < integer(e.get_attribute(u"BORDER"))) | 0
          if border > 0 then
             q.set_border(PlainBorder().set_line_width(border))
-         start_worker(Req(url, q.got_data, context.kind))
+         start_worker(Req(url, page_url, q.got_data, context.kind))
          align := convert_comp_align(e, u"ALIGN") | Align.B
          add_component(p, q, context, align)
       }
@@ -1476,7 +1544,10 @@ class Browser(Dialog)
       s := string(map(e.get_attribute(u"TYPE"))) | "text"
       case s of {
          "file": {
-            q := FormBrowse().
+            mW := cbwin.clone().set_font(context.font)
+            size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", e.get_attribute(u"SIZE")))) | 160
+            mW.uncouple()
+            q := FormBrowse(self, size).
                   set_font(context.font).
                   set_fg(context.fg)
             if e.get_attribute(u"DISABLED") then
@@ -1501,8 +1572,8 @@ class Browser(Dialog)
          }
          "image" : {
             if url := mk_link(context.base, e.get_attribute(u"SRC")) then {
-               q := Img(url,, context.form)
-               start_worker(Req(url, q.got_data, context.kind))
+               q := Img(self, url,, context.form)
+               start_worker(Req(url, page_url, q.got_data, context.kind))
                if e.get_attribute(u"DISABLED") then
                   q.set_is_shaded(&yes)
                else {
@@ -1796,11 +1867,11 @@ class Browser(Dialog)
 
       # A Tbl with two TextFlows; the caption and another containing just the table itself.
       ct.caption := Tbl()
-      cap := TextFlow().set_dominant_width(TextFlow.DEFAULT_WIDTH)
+      cap := TextFlow(self).set_dominant_width(TextFlow.DEFAULT_WIDTH)
       c := copy(context)
       c.align := Align.C
       traverse(e, cap, c)
-      main := TextFlow()
+      main := TextFlow(self)
       add_component(main, ct.tbl, context)
       align := convert_cap_align(e, u"ALIGN") | Align.T
       case align of {
@@ -1843,7 +1914,7 @@ class Browser(Dialog)
       while member(ct.occ, ct.x || "," || ct.y) do
          ct.x +:= 1
       valign := convert_valign(e | \ct.tr, u"VALIGN") |  Align.C
-      row := TextFlow().
+      row := TextFlow(self).
          set_constraint("x", ct.x). 
          set_constraint("y", ct.y).
          set_border(ct.cell_border).
@@ -1893,13 +1964,13 @@ class Browser(Dialog)
    private traverse_li(e, p, context)
       local lc, row
       lc := \context.list | fail
-      row := TextFlow()
+      row := TextFlow(self)
       if lc.root.name == u"OL" then
          put(row.input, TextCmd((lc.index +:= 1) || u".\ua0\ua0\ua0", context))
       else
          put(row.input, TextCmd(u"\u2022\ua0\ua0\ua0", context))
       lc.tbl.inner.add(row)
-      row := TextFlow() .set_constraint("eol", &yes)
+      row := TextFlow(self) .set_constraint("eol", &yes)
       lc.tbl.inner.add(row)
       traverse(e, row, context)
    end
@@ -1921,7 +1992,7 @@ class Browser(Dialog)
    private traverse_dt(e, p, context)
       local dc, row
       dc := \context.def_list | fail
-      row := TextFlow() .set_constraint("eol", &yes).set_constraint("w", 2)
+      row := TextFlow(self) .set_constraint("eol", &yes).set_constraint("w", 2)
       dc.tbl.inner.add(row)
       traverse(e, row, context)
    end
@@ -1929,10 +2000,10 @@ class Browser(Dialog)
    private traverse_dd(e, p, context)
       local dc, row
       dc := \context.def_list | fail
-      row := TextFlow() .set_constraint("eol", &no)
+      row := TextFlow(self) .set_constraint("eol", &no)
       put(row.input, TextCmd(u"\u2022\ua0\ua0\ua0", context))
       dc.tbl.inner.add(row)
-      row := TextFlow() .set_constraint("eol", &yes)
+      row := TextFlow(self) .set_constraint("eol", &yes)
       dc.tbl.inner.add(row)
       traverse(e, row, context)
    end
@@ -1942,10 +2013,10 @@ class Browser(Dialog)
       put_new_row(p)
       tbl := Tbl()
       add_component(p, tbl, context)
-      row := TextFlow()
+      row := TextFlow(self)
       put(row.input, TextCmd(u"\ua0\ua0\ua0\ua0", context))
       tbl.inner.add(row)
-      row := TextFlow() .set_constraint("eol", &yes)
+      row := TextFlow(self) .set_constraint("eol", &yes)
       tbl.inner.add(row)
       traverse(e, row, context)
       put_new_row(p)
@@ -1958,7 +2029,7 @@ class Browser(Dialog)
                               set_outer(SunkenBorder().set_line_width(1)).
                               set_inner(EmptyBorder()))
       add_component(p, tbl, context)
-      row := TextFlow()
+      row := TextFlow(self)
       tbl.inner.add(row)
       fc := FieldSetContext()
       c := copy(context)
@@ -1972,7 +2043,7 @@ class Browser(Dialog)
       local fc
       fc := \context.fieldset | fail
       /fc.legend | fail
-      fc.legend := TextFlow().
+      fc.legend := TextFlow(self).
          set_dominant_width(TextFlow.MAX_WIDTH)
       traverse(e, fc.legend, context)
    end
@@ -2059,9 +2130,117 @@ class Browser(Dialog)
       }
    end
 
-   public goto(url, kind, form_data)
+   public goto(url, referer, kind, form_data)
       cancel()
-      start_worker(Req(url, set_top_data, kind, form_data))
+      start_worker(Req(url, referer, set_top_data, kind, form_data))
+   end
+
+   public set_cookies(cookies)
+      self.cookies := cookies
+      return self
+   end
+
+   #
+   # Set the user-agent identification
+   #
+   public set_user_agent(s)
+      self.user_agent := s
+      return self
+   end
+
+   public new()
+      cast(self,Component).new()
+      self.cookies := table()
+      self.cache := Cache(8*1024*1024)
+      file_dialog := FileDialog()
+      queue := []
+      workers := []
+      every 1 to 6 do
+         put(workers, Worker(self))
+      status_ticker := Dispatcher.new_task{status()}
+      top_panel := ComponentScrollArea().
+         set_inner(Component().set_size(10,10)).
+         use_default_keys()
+      set_layout(GridLayout().set_doi(0))
+      add(top_panel)
+      history := []
+      history_pos := 0
+      running := 0
+      return
+   end
+end
+
+class BrowserImpl(Browser)
+   public msg(s, n)
+      parent_dialog.msg(s, n)
+   end
+
+   public clear_msg()
+      parent_dialog.clear_msg()
+   end
+
+   public set_url_field_contents(val)
+      parent_dialog.set_url_field_contents(val)
+   end
+
+   public update_grey(gs)
+      parent_dialog.update_grey(gs)
+   end
+end
+
+class BrowserDialog(Dialog)
+   private
+      browser,
+      prev_button,
+      message_label,
+      close_button,
+      search_field,
+      next_button,
+      stop_button,
+      home_button,
+      paste_url_button,
+      refresh_button,
+      start_page,
+      copy_page_url_item,
+      save_page_item
+
+   public end_dialog()
+   end
+
+   public init_dialog()
+      local u
+      if \start_page then {
+         if u := URL.parse(start_page) then
+            browser.goto(u,, Worker.NORMAL)
+         else
+            msg("Invalid url")
+      } else
+         on_home()
+   end
+
+   private on_close_button(ev)
+      dispose()
+   end
+
+   private on_next(ev)
+      browser.do_next()
+   end
+
+   private on_prev(ev)
+      browser.do_prev()
+   end
+
+   private on_quit(ev)
+      dispose()
+   end
+   
+   public update_grey(gs)
+      prev_button.set_is_shaded(gs.prev)
+      next_button.set_is_shaded(gs.nxt)
+      refresh_button.set_is_shaded(gs.refresh)
+      copy_page_url_item.set_is_shaded(gs.copy_page)
+      save_page_item.set_is_shaded(gs.save_page)
+      stop_button.set_is_shaded(gs.stop)
    end
 
    private on_search_field(ev)
@@ -2070,7 +2249,7 @@ class Browser(Dialog)
       if *s = 0 then
          fail
       if u := URL.parse(s) then
-         goto(u, Worker.NORMAL)
+         browser.goto(u,, Worker.NORMAL)
       else
          msg("Invalid url")
    end
@@ -2083,34 +2262,16 @@ class Browser(Dialog)
       message_label.set()
    end
 
-   public new(s, cookies)
-      cast(self,Dialog).new()
-      self.setup()
-      self.cookies := cookies
-      self.cache := Cache(8*1024*1024)
-      file_dialog := FileDialog()
-      start_page := s
-      queue := []
-      workers := []
-      every 1 to 6 do
-         put(workers, Worker(self))
-      status_ticker := Dispatcher.new_task{status()}
-      top_panel.
-         set_inner(Component().set_size(10,10)).
-         use_default_keys()
-      history := []
-      history_pos := 0
-      update_grey()
-      running := 0
-      return
+   public set_url_field_contents(val)
+      search_field.set_contents(val)
    end
 
    private on_stop(ev)
-      cancel()
+      browser.cancel()
    end
 
    private on_home(ev)
-      goto(URL.parse(u"file://" || ucs(Files.get_path(Files.get_home()).child(".oibrowser.html").str())), Worker.NORMAL)
+      browser.goto(URL.parse(u"file://" || ucs(Files.get_path(Files.get_home()).child(".oibrowser.html").str())),, Worker.NORMAL)
    end
 
    private handle_paste_response(target_type, data, e)
@@ -2128,29 +2289,27 @@ class Browser(Dialog)
    end
 
    private on_refresh(ev)
-      local he
-      he := history[history_pos] 
-      goto(he.url, Worker.REFRESH, he.form_data)
-      update_grey()
+      browser.do_refresh()
    end
 
    private on_icon_event(ev)
    end
 
    private on_copy_page_url_item(ev)
-      own_selection(Selection.CLIPBOARD, URLSelectionOwner([page_url]))
+      browser.do_copy_page()
    end
 
    private on_save_page_item(ev)
-      local s
-      file_dialog.set_file(\page_name)
-      file_dialog.show_modal(self)
-      if s := file_dialog.get_result() then {
-         if Files.string_to_file(s, page_data) then
-            msg("Saved OK", 3000)
-         else
-            msg(&why, 3000)
-      }
+      browser.do_save_page()
+   end
+
+   public new(s, cookies)
+      cast(self,Dialog).new()
+      setup()
+      browser.set_cookies(cookies)
+      browser.set_user_agent(\opts["agent"])
+      start_page := s
+      return
    end
 
    private setup()
@@ -2294,7 +2453,7 @@ class Browser(Dialog)
          connect(self.on_search_field, Event.ACTION).
          set_contents("")
       self.add(search_field)
-      top_panel := ComponentScrollArea().
+      browser := BrowserImpl().
          set_size("651", "337").
          set_font("sans,9").
          clear_constraints().
@@ -2303,7 +2462,7 @@ class Browser(Dialog)
          set_constraint("x_weight", 1.0).
          set_constraint("y_fill", &yes).
          set_constraint("y_weight", 1.0)
-      self.add(top_panel)
+      self.add(browser)
       paint_37 := TextPaint("")
       border_1 := CompoundBorder().
          set_outer(SunkenBorder()).
@@ -2333,7 +2492,7 @@ end
 
 procedure main(a)
    local d, s, cookies, t, bak
-   opts := options(a, "-f! -k: -l!")
+   opts := options(a, "-f! -k: -l! -agent:")
    cookies := \opts["k"] | System.getenv("GETURL_COOKIES")
    if \cookies then {
       t := decode(Files.file_to_string(cookies)) |
@@ -2349,8 +2508,12 @@ procedure main(a)
    ImageCache.name_image("rpp.BROKEN_LINK", BROKEN_LINK)
    s := ucs(a[1])
    /t := table()
-   d := Browser(s, t)
+   d := BrowserDialog(s, t)
    d.show_modal()
+
+#   until Dispatcher.scheduler.empty() do
+#      Dispatcher.scheduler.work()
+#   d.show_modal()
 
    if \cookies then {
       bak := cookies || ".bak"
