@@ -27,6 +27,16 @@ class TextCmd(TextFlowCmd)
    end
 end
 
+class NamedAnchorCmd()
+   public const
+      name
+
+   public new(name)
+      self.name := name
+      return
+   end
+end
+
 class NewRowCmd(TextFlowCmd) end
 
 class ParaCmd(TextFlowCmd) end
@@ -102,7 +112,9 @@ class TextFlow(Component)
       max_width,
       held,
       wrote,
-      dominant_width
+      dominant_width,
+      computed_named_anchors,
+      named_anchors
 
    public static const 
       WHITESPACE,
@@ -125,6 +137,7 @@ class TextFlow(Component)
       output_comps := []
       left_comps := []
       right_comps := []
+      named_anchors := table()
       row := []
       deferred := []
       row_width := 0
@@ -154,7 +167,7 @@ class TextFlow(Component)
 
    public reset_layout()
       max_width := def_width := output_text := output_comps := left_comps :=
-         right_comps := compute_w := &null
+         named_anchors := right_comps := compute_w := &null
    end
 
    public set_dominant_width(x)
@@ -234,6 +247,9 @@ class TextFlow(Component)
                      until have_max() do new_row()
                }
             }
+            NamedAnchorCmd: {
+               insert(named_anchors, string(cmd.name), row_y)
+            }
             TextCmd: {
                if font ~=== cmd.attr.font then {
                   W.uncouple()
@@ -248,6 +264,12 @@ class TextFlow(Component)
          }
       }
       W.uncouple()
+   end
+
+   public lookup_named_anchor(name)
+      local yp
+      if yp := member(\computed_named_anchors, string(name)) then
+         return yp + y + border.get_t_inset() + y_off
    end
 
    private attr_clone(attr)
@@ -315,6 +337,7 @@ class TextFlow(Component)
          c.layout()
       }
       output := isort(output_text, y_cmp)
+      computed_named_anchors := named_anchors 
    end
 
    private y_cmp(v)
