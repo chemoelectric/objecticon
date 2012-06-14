@@ -209,7 +209,7 @@ class HttpClient(NetClient)
       # Create our own copy of the request as we may modify it during
       # redirects
       self.request := HttpRequest().
-         set_url(clone(request.url)).
+         set_url(request.url).
          set_method(request.method).
          set_headers(clone(request.headers)).
          set_username(request.username).
@@ -269,7 +269,7 @@ class HttpClient(NetClient)
          #
          request.set_url(request.url.get_relative(l))
       
-      s := request.url.str()
+      s := string(request.url.str())
       if member(redir_set, s) then
          return on_http_error("Circular redirection detected: " || s)
       insert(redir_set, s)
@@ -749,8 +749,8 @@ class HttpClient(NetClient)
          #
          # Create a response
          #
-         response := HttpResponse()
-         response.set_url(request.url)
+         response := HttpResponse().
+            set_url(request.url)
          s := expect_line() | fail
          response.set_status(s)
 
