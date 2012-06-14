@@ -767,9 +767,13 @@ class TextFieldPrimarySelectionOwner(TextSelectionOwner)
    end
 
    public lost_ownership()
-      parent.start_handle()
-      parent.clear_mark()
-      parent.end_handle()
+      # Since we may retain ownership after having been disposed of.
+      if parent.is_live() then {
+         parent.start_handle()
+         parent.clear_mark()
+         parent.end_handle()
+      } else
+         parent.clear_mark()
    end
 
    public new(parent)
