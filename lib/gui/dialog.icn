@@ -415,6 +415,15 @@ class Dialog(Component)
       fire(Event.DIALOG_DISPOSED)
    end
 
+   #
+   # Refresh the point chain, using point_chain_source.  This is
+   # useful, for example, if a component in the point chain has been
+   # removed.
+   #
+   public refresh_point_chain()
+      create_point_chain(\self.point_chain_source)
+   end
+
    public create_point_chain(e)
       local p, flag
 
