@@ -99,6 +99,7 @@ class HtmlParser()
       HTML_AUTOCLOSE := table(,
                               "LI", set("LI"),
                               "P", set("P"),
+                              "A", set("A"),
                               "DD", set("DD", "DT"),
                               "DT", set("DT", "DD"),
                               "TR", set("TR"),
@@ -181,7 +182,9 @@ class HtmlParser()
             }
 
             i := &pos
-            node := parse_node() | break
+            # parse_node() must succeed since move_to_node() didn't
+            # leave us at pos(0)
+            node := parse_node()
 
             if is(node, DocType | Comment) then
                doc.add(node)
