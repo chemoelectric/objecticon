@@ -17,7 +17,7 @@ $load PREV "rpp.PREV_24.gif"
 $load HOME "rpp.HOME_24.gif"
 $load STOP "rpp.STOP_24.gif"
 $load PASTE "rpp.PASTE_24.gif"
-$load REFRESH0 "rpp.REFRESH_24.gif"
+$load REFRESH "rpp.REFRESH_24.gif"
 
 class BrowserDialog(Dialog, BrowserUI)
    private
@@ -336,18 +336,13 @@ procedure main(a)
    ImageCache.name_image("rpp.NEXT_24", NEXT)
    ImageCache.name_image("rpp.PREV_24", PREV)
    ImageCache.name_image("rpp.HOME_24", HOME)
-   ImageCache.name_image("rpp.REFRESH_24", REFRESH0)
+   ImageCache.name_image("rpp.REFRESH_24", REFRESH)
    ImageCache.name_image("rpp.PASTE_24", PASTE)
    ImageCache.name_image("rpp.STOP_24", STOP)
    s := ucs(a[1])
    /t := table()
    d := BrowserDialog(s, t)
    d.show_modal()
-
-#   until Dispatcher.scheduler.empty() do
-#      Dispatcher.scheduler.work()
-#   d.show_modal()
-
    if \cookies then {
       bak := cookies || ".bak"
       Files.string_to_file(bak, encode(Cookie.expire_cookies(t))) | 

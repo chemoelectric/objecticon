@@ -1065,19 +1065,19 @@ class Browser(Component)
    end
 
    public msg(s, n)
-      ui.msg(s, n)
+      (\ui).msg(s, n)
    end
 
    public clear_msg()
-      ui.clear_msg()
+      (\ui).clear_msg()
    end
 
    public set_url_field_contents(val)
-      ui.set_url_field_contents(val)
+      (\ui).set_url_field_contents(val)
    end
 
    public update_grey(gs)
-      ui.update_grey(gs)
+      (\ui).update_grey(gs)
    end
 
    public do_update_grey()
@@ -1099,7 +1099,7 @@ class Browser(Component)
          if yp := \curr_history_entry.area_y | (lookup_named_anchor(page_url.get_ref()) - top_panel.view.y) then
             top_panel.set_area_y(yp)
       }
-      resynch_pointer()
+      parent_dialog.resynch_pointer()
    end
 
    private lookup_named_anchor(name)
@@ -1327,12 +1327,7 @@ class Browser(Component)
       row.initially()
       top_panel.layout()
       top_panel.invalidate()
-      resynch_pointer()
-   end
-
-   private resynch_pointer()
-      parent_dialog.refresh_point_chain()
-      parent_dialog.synch_pointer()
+      parent_dialog.resynch_pointer()
    end
 
    private mk_link(base, s)
