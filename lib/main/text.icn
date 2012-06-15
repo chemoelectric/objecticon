@@ -74,6 +74,17 @@ class Text()
       return ucs(t)
    end
 
+   #
+   # Convert an ISO-8859-1 string to ucs
+   #
+   public static iso_8859_1_to_ucs(s)
+      local t
+      s := string(s) | runerr(103, s)
+      t := ""
+      every t ||:= Text.utf8_seq(ord(s))
+      return ucs(t)
+   end
+
    # Given a cset {c}, produce another cset containing those characters in 
    # positions {i}:{j}.
    #
