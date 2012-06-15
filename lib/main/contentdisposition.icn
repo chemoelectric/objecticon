@@ -34,8 +34,7 @@ class ContentDisposition()
    #
    # @param key the key
    public get_parameter(key)
-      if parameters.member(key) then
-         return parameters.get(key)
+      return parameters.member(key)
    end
 
    #
