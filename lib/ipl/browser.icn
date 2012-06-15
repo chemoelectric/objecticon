@@ -87,7 +87,7 @@ class Cache()
    public add(ent)
       local k, old
       k := string(ent.url.str())
-      write("cached add ",k, " expiry ", (\ent.expiry - Time.get_system_seconds()) | "-")
+      #write("cache add ",k, " expiry ", (\ent.expiry - Time.get_system_seconds()) | "-")
       if old := member(t, k) then
          del(old)
       while *t > 0 &  total + *ent.data > lim do
@@ -562,6 +562,38 @@ class FormButton(TextButton, FormEntry)
    end
 end
 
+class FormTbl(Tbl, FormEntry)
+   private const
+      value, form, type
+
+   public get_value(ev, src)
+      if src === self then
+         return value
+   end
+
+   private handle_form_lrelease(e, src)
+      if in_region(e) then {
+         case type of { 
+            "submit": form.submit(e, src)
+            "reset": form.reset()
+         }
+      }
+   end
+
+   public new(form, value, type)
+      cast(self,Tbl).new()
+      self.value := value
+      self.form := form
+      self.type := type
+      set_border(CompoundBorder().
+                 set_outer(RaisedBorder()).
+                 set_inner(EmptyBorder()))
+      set_pointer("hand1")
+      connect(self.handle_form_lrelease, Event.MOUSE_LEFT_RELEASE)
+      return
+   end
+end
+
 class Hidden(FormEntry)
    private const
       value
@@ -822,7 +854,7 @@ class Form()
       return m
    end
 
-   public reset(ev, src)
+   public reset()
       every (!!items).reset()
    end
 
@@ -1523,6 +1555,22 @@ class Browser(Component)
       p.add(c)
    end
 
+   private traverse_button(e, p, context)
+      local q, row, v, type
+      \context.form | fail
+      v := e.get_attribute(u"VALUE") | u""
+      type := map(string(e.get_attribute(u"TYPE")))
+      q := FormTbl(context.form, v, type)
+      if e.get_attribute(u"DISABLED") then
+         q.set_is_shaded(&yes)
+      else
+         context.form.add(e.get_attribute(u"NAME"), q)
+      row := TextFlow(self)
+      q.content.add(row)
+      add_component(p, q, context)
+      traverse(e, row, context)
+   end
+
    private traverse_img(e, p, context)
       local q, url, border, iw, ih, align, map, s
       if url := mk_link(context.base, e.get_attribute(u"SRC")) then {
@@ -2141,6 +2189,7 @@ class Browser(Component)
                "TITLE"|"META"|"LINK"|"SCRIPT"|"STYLE": {}
                "A": traverse_a(e, p, context)
                "FORM": traverse_form(e, p, context)
+               "BUTTON": traverse_button(e, p, context)
                "LABEL": traverse_label(e, p, context)
                "FONT": traverse_font(e, p, context)
                "IMG": traverse_img(e, p, context)
