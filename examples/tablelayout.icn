@@ -6,7 +6,7 @@ import
    gui,
    ipl.graphics
 
-class TableCellInfo(Insets,Align)
+class TableCellInfo(Insets)
    public 
       obj,            # An arbitrary object 
       grid,           # The grid we're in
@@ -25,9 +25,7 @@ class TableCellInfo(Insets,Align)
       dh, 
       maxw,
       pw,             # Preferred cell width excluding insets
-      ph, 
-      x_fill,         # Constraints: fill, align, weights, insets
-      y_fill
+      ph
 
    #
    # Output object
@@ -39,9 +37,6 @@ class TableCellInfo(Insets,Align)
          " component pref size=" || pw || "," || ph || " (maxw=" || maxw || ")"
       t ||:= "\n\tcell desired size=" || dw || "," || dh || " (maxdw=" || maxdw || ")"
       t ||:= " located to=" || \ax || "," || \ay || " size set to " || \aw || "," || \ah
-      t ||:= " \n\tfill=" || image(x_fill) || "," || image(y_fill) || 
-         " align=" || image(x_align) || "," || image(y_align) ||
-         " insets=l:" || l_inset || " t:" || t_inset || " r:" || r_inset || " b:" || b_inset
       t ||:= "pct_w=" || \pct_w
       oo.object_string(self, t)
    end
@@ -85,26 +80,6 @@ class TableGrid()
          return &no
    end
 
-   private static validate_x_align(t, key)
-      local val
-      if val := member(t, key) then {
-         (val === (Align.L | Align.R | Align.C)) | runerr("Expected x-alignment grid constraint", val)
-         return val
-      }
-      else
-         return Align.C
-   end
-
-   private static validate_y_align(t, key)
-      local val
-      if val := member(t, key) then {
-         (val === (Align.T | Align.B | Align.C)) | runerr("Expected y-alignment grid constraint", val)
-         return val
-      }
-      else
-         return Align.C
-   end
-
    public create_cell(t)
       local ci
       ci := TableCellInfo()
@@ -127,14 +102,7 @@ class TableGrid()
          add_y +:= add_row_h
          add_row_h := 0
       }
-      ci.l_inset := validate_int(t, "l_inset")
-      ci.t_inset := validate_int(t, "t_inset")
-      ci.r_inset := validate_int(t, "r_inset")
-      ci.b_inset := validate_int(t, "b_inset")
-      ci.x_fill := validate_flag(t, "x_fill")
-      ci.y_fill := validate_flag(t, "y_fill")
-      ci.x_align := validate_x_align(t, "x_align")
-      ci.y_align := validate_y_align(t, "y_align")
+
       ci.pct_w := validate_int(t, "pct_w", 0)
       put(info, ci)
 
@@ -153,10 +121,10 @@ class TableGrid()
 
       # Fill in final defaults now we have the grid dimensions.
       every ci := !info do {
-         /ci.l_inset := if ci.x = 1 then self.doi else self.dii
-         /ci.t_inset := if ci.y = 1 then self.doi else self.dii
-         /ci.r_inset := if ci.x + ci.w = gw + 1 then self.doi else self.dii
-         /ci.b_inset := if ci.y + ci.h = gh + 1 then self.doi else self.dii
+         ci.l_inset := if ci.x = 1 then self.doi else self.dii
+         ci.t_inset := if ci.y = 1 then self.doi else self.dii
+         ci.r_inset := if ci.x + ci.w = gw + 1 then self.doi else self.dii
+         ci.b_inset := if ci.y + ci.h = gh + 1 then self.doi else self.dii
          ci.dw := ci.pw + ci.l_inset + ci.r_inset
          ci.maxdw := ci.maxw + ci.l_inset + ci.r_inset
          ci.dh := ci.ph + ci.t_inset + ci.b_inset
@@ -370,20 +338,10 @@ class TableGrid()
          y := row_y[i.y] + i.t_inset
          w := slice(i.x, i.w, a_col_w) - i.l_inset - i.r_inset
          h := slice(i.y, i.h, a_row_h) - i.t_inset - i.b_inset
-         i.aw := if \i.x_fill then w else i.pw
-         i.ah := if \i.y_fill then h else i.ph
-
-         i.ax := case i.x_align of {
-            Align.L : x
-            Align.R : x + w - i.aw
-            Align.C : x + (w - i.aw) / 2
-         }
-
-         i.ay := case i.y_align of {
-            Align.T : y
-            Align.B : y + h - i.ah
-            Align.C : y + (h - i.ah) / 2
-         }
+         i.aw := w
+         i.ah := h
+         i.ax := x
+         i.ay := y
       }
    end
 
@@ -409,13 +367,8 @@ class TableGrid()
       every i := !info do {
          x := col_x[i.x] + i.l_inset
          w := slice(i.x, i.w, a_col_w) - i.l_inset - i.r_inset
-         i.aw := if \i.x_fill then w else i.pw
-
-         i.ax := case i.x_align of {
-            Align.L : x
-            Align.R : x + w - i.aw
-            Align.C : x + (w - i.aw) / 2
-         }
+         i.aw := w
+         i.ax := x
       }
    end
 
@@ -450,19 +403,8 @@ class TableLayout(Layout)
       g,
       dii,          # Default inner padding, ie not at edge of grid
       doi,          # Default outer padding
-      adjust_preferred_sizes_flag,
       fix_col1_flag,
       debug
-
-   # Default insets between components in a GridLayout.
-   public static const
-      DEFAULT_OUTER_INSET,
-      DEFAULT_INNER_INSET
-
-   private static init()
-      DEFAULT_OUTER_INSET := 10
-      DEFAULT_INNER_INSET := 5
-   end
 
    public reset()
       g := &null
@@ -525,16 +467,9 @@ class TableLayout(Layout)
 
    public get_preferred_height(pw)
       ensure_grid()
-      if \adjust_preferred_sizes_flag then {
-         g.compute_widths(pw)
-         adjust_preferred_sizes()
-      }
+      g.compute_widths(pw)
+      adjust_preferred_sizes()
       return g.get_preferred_height()
-   end
-
-   public set_adjust_preferred_sizes(s)
-      self.adjust_preferred_sizes_flag := check_flag(s)
-      return self
    end
 
    public set_fix_col1(s)
@@ -571,7 +506,7 @@ class TableLayout(Layout)
 
       g.compute_locations(parent.x, parent.y, parent.w, parent.h)
 
-      if \adjust_preferred_sizes_flag & adjust_preferred_sizes(g) then
+      if adjust_preferred_sizes(g) then
          g.compute_locations(parent.x, parent.y, parent.w, parent.h)
 
       every i := !g.info do {
@@ -601,8 +536,8 @@ class TableLayout(Layout)
    end
 
    public new()
-      self.dii := DEFAULT_INNER_INSET
-      self.doi := DEFAULT_OUTER_INSET
+      self.dii := 0
+      self.doi := 0
       return
    end
 end
