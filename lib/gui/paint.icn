@@ -113,7 +113,7 @@ end
 
 # A simple {Paint} instance which has zero size and draws nothing.
 #
-class EmptyPaint(Paint)
+class NullPaint(Paint)
    public initially()
       self.w := self.h := 0
    end

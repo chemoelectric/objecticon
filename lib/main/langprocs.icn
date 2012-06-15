@@ -8,12 +8,15 @@ import io, util, ipl.tables, exception
 #
 # @param o       The object to be converted.
 #
-procedure to_string(o, indent, always_structure)
+procedure to_string(o, indent, always_structure, depth, ignore_object_output)
    local sb
    sb := RamStream()
    ObjectOutputStream(sb).
       set_indent(indent).
-      set_always_structure(always_structure).show(o)
+      set_always_structure(always_structure).
+      set_depth(depth).
+      set_ignore_object_output(ignore_object_output).
+      show(o)
    return sb.done()
 end
 
@@ -23,10 +26,12 @@ end
 #
 # @param o       The object to be output.
 #
-procedure to_stdout(o, indent, always_structure)
+procedure to_stdout(o, indent, always_structure, depth, ignore_object_output)
    return ObjectOutputStream(FileStream.stdout).
       set_indent(indent).
       set_always_structure(always_structure).
+      set_depth(depth).
+      set_ignore_object_output(ignore_object_output).
       show(o)
 end
 
@@ -36,10 +41,12 @@ end
 #
 # @param o       The object to be output.
 #
-procedure to_stderr(o, indent, always_structure)
+procedure to_stderr(o, indent, always_structure, depth, ignore_object_output)
    return ObjectOutputStream(FileStream.stderr).
       set_indent(indent).
       set_always_structure(always_structure).
+      set_depth(depth).
+      set_ignore_object_output(ignore_object_output).
       show(o)
 end
 

@@ -737,9 +737,9 @@ class TextField(Component)
       self.set_contents("")
       self.set_border(CompoundBorder().
                           set_outer(SunkenBorder()).
-                          set_inner(EmptyBorder()))
-      self.border.inner.set_l_inset(Gui.TEXT_INSET)
-      self.border.inner.set_r_inset(Gui.TEXT_INSET)
+                          set_inner(EmptyBorder().
+                                    set_l_inset(Gui.TEXT_INSET).
+                                    set_r_inset(Gui.TEXT_INSET)))
       self.is_editable_flag := 1
       self.move_on_rpress_flag := 1
       self.set_constraint("x_fill", &yes)
@@ -767,9 +767,13 @@ class TextFieldPrimarySelectionOwner(TextSelectionOwner)
    end
 
    public lost_ownership()
-      parent.start_handle()
-      parent.clear_mark()
-      parent.end_handle()
+      # Since we may retain ownership after having been disposed of.
+      if parent.is_live() then {
+         parent.start_handle()
+         parent.clear_mark()
+         parent.end_handle()
+      } else
+         parent.clear_mark()
    end
 
    public new(parent)

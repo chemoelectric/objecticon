@@ -115,56 +115,58 @@ class BorderEdit(Dialog)
       } else
          q := p
 
-      set_l_inset_cb := CheckBox().set_label("Left inset : ")
-      set_l_inset_cb.connect(self.on_set_l_inset, Event.ACTION)
-      q.add(set_l_inset_cb)
-      l_inset_field := TextField().set_size(70).set_constraint("eol", &yes).set_filter(&digits)
-      q.add(l_inset_field)
-      if \c.empty_l_inset then {
-         set_l_inset_cb.set_is_checked(&yes)
-         l_inset_field.set_contents(c.empty_l_inset)
-      } else {
-         l_inset_field.set_is_shaded(&yes)
-         l_inset_field.set_contents(Gui.X_INSET)
-      }
+      if not is(c, CanvasNullBorder) then {
+         set_l_inset_cb := CheckBox().set_label("Left inset : ")
+         set_l_inset_cb.connect(self.on_set_l_inset, Event.ACTION)
+         q.add(set_l_inset_cb)
+         l_inset_field := TextField().set_size(70).set_constraint("eol", &yes).set_filter(&digits)
+         q.add(l_inset_field)
+         if \c.empty_l_inset then {
+            set_l_inset_cb.set_is_checked(&yes)
+            l_inset_field.set_contents(c.empty_l_inset)
+         } else {
+            l_inset_field.set_is_shaded(&yes)
+            l_inset_field.set_contents(Gui.X_INSET)
+         }
 
-      set_r_inset_cb := CheckBox().set_label("Right inset : ")
-      set_r_inset_cb.connect(self.on_set_r_inset, Event.ACTION)
-      q.add(set_r_inset_cb)
-      r_inset_field := TextField().set_size(70).set_constraint("eol", &yes).set_filter(&digits)
-      q.add(r_inset_field)
-      if \c.empty_r_inset then {
-         set_r_inset_cb.set_is_checked(&yes)
-         r_inset_field.set_contents(c.empty_r_inset)
-      } else {
-         r_inset_field.set_is_shaded(&yes)
-         r_inset_field.set_contents(Gui.X_INSET)
-      }
+         set_r_inset_cb := CheckBox().set_label("Right inset : ")
+         set_r_inset_cb.connect(self.on_set_r_inset, Event.ACTION)
+         q.add(set_r_inset_cb)
+         r_inset_field := TextField().set_size(70).set_constraint("eol", &yes).set_filter(&digits)
+         q.add(r_inset_field)
+         if \c.empty_r_inset then {
+            set_r_inset_cb.set_is_checked(&yes)
+            r_inset_field.set_contents(c.empty_r_inset)
+         } else {
+            r_inset_field.set_is_shaded(&yes)
+            r_inset_field.set_contents(Gui.X_INSET)
+         }
 
-      set_t_inset_cb := CheckBox().set_label("Top inset : ")
-      set_t_inset_cb.connect(self.on_set_t_inset, Event.ACTION)
-      q.add(set_t_inset_cb)
-      t_inset_field := TextField().set_size(70).set_constraint("eol", &yes).set_filter(&digits)
-      q.add(t_inset_field)
-      if \c.empty_t_inset then {
-         set_t_inset_cb.set_is_checked(&yes)
-         t_inset_field.set_contents(c.empty_t_inset)
-      } else {
-         t_inset_field.set_is_shaded(&yes)
-         t_inset_field.set_contents(Gui.Y_INSET)
-      }
+         set_t_inset_cb := CheckBox().set_label("Top inset : ")
+         set_t_inset_cb.connect(self.on_set_t_inset, Event.ACTION)
+         q.add(set_t_inset_cb)
+         t_inset_field := TextField().set_size(70).set_constraint("eol", &yes).set_filter(&digits)
+         q.add(t_inset_field)
+         if \c.empty_t_inset then {
+            set_t_inset_cb.set_is_checked(&yes)
+            t_inset_field.set_contents(c.empty_t_inset)
+         } else {
+            t_inset_field.set_is_shaded(&yes)
+            t_inset_field.set_contents(Gui.Y_INSET)
+         }
 
-      set_b_inset_cb := CheckBox().set_label("Bottom inset : ")
-      set_b_inset_cb.connect(self.on_set_b_inset, Event.ACTION)
-      q.add(set_b_inset_cb)
-      b_inset_field := TextField().set_size(70).set_constraint("eol", &yes).set_filter(&digits)
-      q.add(b_inset_field)
-      if \c.empty_b_inset then {
-         set_b_inset_cb.set_is_checked(&yes)
-         b_inset_field.set_contents(c.empty_b_inset)
-      } else {
-         b_inset_field.set_is_shaded(&yes)
-         b_inset_field.set_contents(Gui.Y_INSET)
+         set_b_inset_cb := CheckBox().set_label("Bottom inset : ")
+         set_b_inset_cb.connect(self.on_set_b_inset, Event.ACTION)
+         q.add(set_b_inset_cb)
+         b_inset_field := TextField().set_size(70).set_constraint("eol", &yes).set_filter(&digits)
+         q.add(b_inset_field)
+         if \c.empty_b_inset then {
+            set_b_inset_cb.set_is_checked(&yes)
+            b_inset_field.set_contents(c.empty_b_inset)
+         } else {
+            b_inset_field.set_is_shaded(&yes)
+            b_inset_field.set_contents(Gui.Y_INSET)
+         }
       }
 
       set_x_align_cb := CheckBox().set_label("X Alignment : ")
@@ -223,7 +225,7 @@ class BorderEdit(Dialog)
       if \use_empty_cb then
          c.has_empty := if use_empty_cb.is_checked() then 1 else &null
 
-      if /use_empty_cb | use_empty_cb.is_checked() then {
+      if (/use_empty_cb | use_empty_cb.is_checked()) & not is(c, CanvasNullBorder) then {
          c.empty_l_inset := if set_l_inset_cb.is_checked() then 
             integer(l_inset_field.get_contents())
          else 

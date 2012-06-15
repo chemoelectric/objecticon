@@ -1,4 +1,10 @@
-import gui, ipl.strings, ipl.sort
+package ipl.browser
+
+import 
+   gui,
+   graphics,
+   ipl.strings,
+   ipl.sort
 
 class TextFlowCmd() end
 
@@ -23,28 +29,37 @@ class TextCmd(TextFlowCmd)
    end
 end
 
-class NewRowCmd(TextFlowCmd)
+class NamedAnchorCmd()
+   public const
+      name
+
+   public new(name)
+      self.name := name
+      return
+   end
 end
 
-class ParaCmd(TextFlowCmd)
-end
+class NewRowCmd(TextFlowCmd) end
+
+class ParaCmd(TextFlowCmd) end
 
 class BreakCmd(TextFlowCmd)
    public const clear
 
-  public new(clear)
+   public new(clear)
       self.clear := clear
       return
    end
 end
 
 class TextOut(Rect)
-   public const s, attr, ascent
+   public const s, attr, ascent, descent
 
-   public new(attr, s, ascent, w, h)
+   public new(attr, s, ascent, descent, w, h)
       self.attr := attr
       self.s := s
       self.ascent := ascent
+      self.descent := descent
       self.w := w
       self.h := h
       return
@@ -52,14 +67,15 @@ class TextOut(Rect)
 end
 
 class CompOut(Rect)
-   public const c, align, attr, pw, maxw
+   public const c, align, attr, pw, maxw, boff
 
-   public new(attr, c, align, pw, maxw)
+   public new(attr, c, align, pw, maxw, boff)
       self.attr := attr
       self.c := c
       self.align := align
       self.pw := pw
       self.maxw := maxw
+      self.boff := boff
       return
    end
 end
@@ -80,7 +96,9 @@ class TextFlow(Component)
       row_width,
       row_ascent,
       row_descent,
-      row_abs_height,
+      row_abs_middle_height,
+      row_abs_top_height,
+      row_abs_bottom_height,
       max_pre_w,
       max_word_w,
       max_ll,
@@ -94,13 +112,22 @@ class TextFlow(Component)
       at_new_para,
       def_width,
       max_width,
-      wrote
+      held,
+      wrote,
+      dominant_width,
+      computed_named_anchors,
+      named_anchors,
+      browser
 
    public static const 
-      WHITESPACE
+      WHITESPACE,
+      DEFAULT_WIDTH,
+      MAX_WIDTH
 
    private static init()
       WHITESPACE := ' \t\r\n\v\f'
+      DEFAULT_WIDTH := 1
+      MAX_WIDTH := 2
    end
 
    private compute(width)
@@ -113,6 +140,7 @@ class TextFlow(Component)
       output_comps := []
       left_comps := []
       right_comps := []
+      named_anchors := table()
       row := []
       deferred := []
       row_width := 0
@@ -124,11 +152,16 @@ class TextFlow(Component)
       max_word_w := 0
       max_ll := 0
       right_margin := compute_w
-      row_abs_height := row_ascent := row_descent := 0
+      row_abs_middle_height := row_abs_top_height := row_abs_bottom_height := row_ascent := row_descent := 0
       compute1(, input)
       while *(row | deferred) > 0 do
          new_row()
-   end
+      if \calculating then {
+         # Ensure that we have cleared any left/right images
+         until have_max() do 
+            new_row()
+      }
+  end
 
    public set_v_align(v)
       self.v_align := v
@@ -137,18 +170,24 @@ class TextFlow(Component)
 
    public reset_layout()
       max_width := def_width := output_text := output_comps := left_comps :=
-         right_comps := compute_w := &null
+         named_anchors := right_comps := compute_w := &null
+   end
+
+   public set_dominant_width(x)
+      self.dominant_width := x
+      return self
    end
 
    public get_default_width()
       local c
+      if dominant_width === MAX_WIDTH then
+         return get_max_width()
       if /def_width then {
          compute()
          def_width := max_pre_w
          every c := !output_comps do
             def_width <:= c.pw
          def_width <:= max_word_w
-#write("default width=",def_width + border.get_total_width())
          def_width +:= border.get_total_width()
       }
       return def_width
@@ -156,6 +195,8 @@ class TextFlow(Component)
 
    public get_max_width()
       local t
+      if dominant_width === DEFAULT_WIDTH then
+         return get_default_width()
       if /max_width then {
          if t := integer(self.w_spec) then
             max_width := t
@@ -209,6 +250,9 @@ class TextFlow(Component)
                      until have_max() do new_row()
                }
             }
+            NamedAnchorCmd: {
+               insert(named_anchors, string(cmd.name), row_y)
+            }
             TextCmd: {
                if font ~=== cmd.attr.font then {
                   W.uncouple()
@@ -225,6 +269,12 @@ class TextFlow(Component)
       W.uncouple()
    end
 
+   public lookup_named_anchor(name)
+      local yp
+      if yp := member(\computed_named_anchors, string(name)) then
+         return yp + y + border.get_t_inset() + y_off
+   end
+
    private attr_clone(attr)
       local W
       W := cbwin.clone()
@@ -234,7 +284,7 @@ class TextFlow(Component)
    end
 
    public display()
-      local o, W, font, fg, x1, y1, r
+      local o, W, font, fg, x1, y1, x2, y2, r
       border.draw(self.cbwin, x, y, w, h)
       x1 := x + border.get_l_inset()
       y1 := y + border.get_t_inset() + y_off
@@ -254,6 +304,16 @@ class TextFlow(Component)
             fg := o.attr.fg
          } 
          draw_string_ex(W, x1 + o.x, y1 + o.y, o.s)
+         if \o.attr.underline then {
+            x2 := x1 + o.x
+            y2 := y1 + o.y + W.get_font_ascent() + 1
+            W.draw_line(x2, y2, x2 + o.w, y2)
+         }
+         if \o.attr.strike then {
+            x2 := x1 + o.x
+            y2 := y1 + o.y + (2 * W.get_font_ascent()) / 3
+            W.draw_line(x2, y2, x2 + o.w, y2)
+         }
       }
       W.uncouple()
       cast(self,Component).display()
@@ -280,6 +340,7 @@ class TextFlow(Component)
          c.layout()
       }
       output := isort(output_text, y_cmp)
+      computed_named_anchors := named_anchors 
    end
 
    private y_cmp(v)
@@ -287,10 +348,23 @@ class TextFlow(Component)
    end
 
    private new_row(gap)
-      local x1, r, g
+      local x1, r, g, need
       /gap := 0
       x1 := row_x
-      row_ascent <:= row_abs_height - row_descent
+
+      # Expand space for comps relative to absolute top
+      row_descent <:= row_abs_top_height - row_ascent
+
+      # and to absolute bottom
+      row_ascent <:= row_abs_bottom_height - row_descent
+
+      # finally absolute middle
+      need := row_abs_middle_height - (row_ascent + row_descent)
+      if need > 0 then {
+         row_ascent +:= need / 2
+         row_descent +:= need / 2 + need % 2
+      }
+      
       while r := get(row) do {
          if /calculating & x1 = row_x then {
             case r.attr.align of {
@@ -304,9 +378,10 @@ class TextFlow(Component)
             r.x := x1
             r.y := case r.align of {
                Align.C: row_y + row_ascent - r.h / 2
-               Align.B: row_y + row_ascent - r.h
+               Align.B: row_y + row_ascent - r.h + r.boff
                Align.T: row_y
                "absbottom": row_y + row_ascent + row_descent - r.h
+               "absmiddle": row_y + (row_ascent + row_descent - r.h) / 2
                default: runerr("invalid alignment", r.align)
             }
             x1 +:= r.w
@@ -327,7 +402,7 @@ class TextFlow(Component)
 
       row_width := 0
       row_y +:= max(1, row_ascent + row_descent + gap)
-      row_abs_height := row_ascent := row_descent := 0
+      row_abs_middle_height := row_abs_top_height := row_abs_bottom_height := row_ascent := row_descent := 0
 
       row_x := 0
       every g := !left_comps do
@@ -343,10 +418,14 @@ class TextFlow(Component)
          pop(deferred)
    end
 
+   private fits_in_row(co)
+      return have_max() | (row_x + co.maxw  + row_width <= right_margin)
+   end
+
    private do_deferred(co)
       case co.align of {
          Align.L: {
-            if have_max() | (row_x + co.maxw  + row_width <= right_margin) then {
+            if fits_in_row(co) then {
                co.x := row_x
                co.y := row_y
                co.w := min(co.maxw, right_margin - row_x - row_width)
@@ -357,7 +436,7 @@ class TextFlow(Component)
             }
          }
          Align.R: {
-            if have_max() | (row_x + co.maxw + row_width <= right_margin) then {
+            if fits_in_row(co) then {
                co.w := min(co.maxw, right_margin - row_x - row_width)
                co.x := right_margin - co.w
                co.y := row_y
@@ -371,41 +450,45 @@ class TextFlow(Component)
    end
 
    private compute_component(cmd)
-      local co, prefw, maxw
+      local co, prefw, maxw, boff
       prefw := cmd.c.get_preferred_width()
       maxw := if is(cmd.c, Tbl) then cmd.c.get_max_width() else prefw
-      co := CompOut(cmd.attr, cmd.c, cmd.align, prefw, maxw)
+      boff := if is(cmd.c, FormEntry) then cmd.c.get_baseline_off() else 0
+      co := CompOut(cmd.attr, cmd.c, cmd.align, prefw, maxw, boff)
       put(output_comps, co)
 
       case cmd.align of {
          Align.L: {
             # If already have deferred, then defer this too, otherwise they will be out of order. 
-            if *deferred > 0 | (row_x + co.maxw + row_width > right_margin) then
-               put(deferred, co)
-            else {
+            if *deferred = 0 & fits_in_row(co) then {
                co.x := row_x
                co.y := row_y
                co.w := co.maxw
                co.h := cmd.c.get_preferred_height(co.w)
                row_x +:= co.maxw
                put(left_comps, co)
-            }
+            } else
+               put(deferred, co)
          }
          Align.R: {
-            if  *deferred > 0 | (row_x + co.maxw + row_width > right_margin) then
-               put(deferred, co)
-            else {
+            if *deferred = 0 & fits_in_row(co) then {
                co.x := right_margin - co.maxw 
                co.y := row_y
                co.w := co.maxw
                co.h := cmd.c.get_preferred_height(co.w)
                right_margin -:= co.w
                put(right_comps, co)
-            }
+            } else
+               put(deferred, co)
          }
-         Align.B | Align.T: {
+         Align.B: {
             comp_out(co)
-            row_ascent <:= co.h
+            row_ascent <:= co.h - co.boff
+            row_descent <:= co.boff
+         }
+         Align.T: {
+            comp_out(co)
+            row_abs_top_height <:= co.h
          }
          Align.C: {
             comp_out(co)
@@ -414,7 +497,11 @@ class TextFlow(Component)
          }
          "absbottom": {
             comp_out(co)
-            row_abs_height <:= co.h
+            row_abs_bottom_height <:= co.h
+         }
+         "absmiddle": {
+            comp_out(co)
+            row_abs_middle_height <:= co.h
          }
          default: runerr("invalid alignment", cmd.align)
       }
@@ -443,13 +530,17 @@ class TextFlow(Component)
    end
 
    private txt_out(W, attr, s)
-      local xo
-      xo := TextOut(attr, s, W.get_font_ascent(), W.text_width(s), W.get_font_height())
+      local xo, bo
+      bo := W.get_font_ascent() * attr.baseline_off / 2
+      xo := TextOut(attr, s, 
+                    W.get_font_ascent() + bo, 
+                    W.get_font_descent() - bo, 
+                    W.text_width(s), W.get_font_height())
       put(output_text, xo)
       put(row,  xo)
-      row_width +:= W.text_width(s)
-      row_ascent <:= W.get_font_ascent()
-      row_descent <:= W.get_font_descent()
+      row_width +:= xo.w
+      row_ascent <:= xo.ascent
+      row_descent <:= xo.descent
       at_new_para := &null
    end
 
@@ -550,48 +641,97 @@ class TextFlow(Component)
       x1 := e.x - x - border.get_l_inset()
       y1 := e.y - y - border.get_t_inset() - y_off
       every o := !output do {
+         if o.y > y1 then
+            break
          if o.inside(x1, y1) then
             return o
       }
    end
 
    private handle_lrelease(e)
+     set_pointer()
       if \wrote then
-         self.parent_dialog.goto(\wrote, Worker.NORMAL)
+         self.browser.goto(wrote, browser.page_url, Worker.NORMAL)
+   end
+
+   private handle_lpress(e)
+      local c, t
+      if t := which_text_out(e) then {
+         if c := \ ( \ (t.attr.form_label)).comp & not c.is_shaded() then {
+            parent_dialog.set_focus(c)
+            if is(c, Toggle) then
+               c.toggle_is_checked()
+         }
+      }
+      held := wrote
+   end
+
+   private copy_link(u)
+      parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner([u]))
+   end
+
+   private handle_rpress(e)
+      local pm, pm_menu, u
+      if u := \wrote then {
+         pm_menu := Menu()
+         pm_menu.add(TextMenuItem().
+                     set_label("Copy link").
+                     connect(create copy_link(u), Event.ACTION))
+         pm := PopupMenu()
+         pm.popup(parent_dialog, pm_menu, e.x, e.y)
+      }
    end
 
    private handle_move(e)
       local u
       if u := \which_text_out(e).attr.url then {
-         set_pointer("hand1")
-         parent_dialog.msg(u.str())
-         wrote := u
+         if wrote ~=== u then {
+            set_pointer("hand1")
+            browser.msg(u.str())
+            wrote := u
+         }
       } else if \wrote then {
-         parent_dialog.clear_msg()
+         browser.clear_msg()
          wrote := &null
          set_pointer()
       }
+   end
 
+   private handle_ldrag(e)
+      local u
+      if u := \which_text_out(e).attr.url & u === held then {
+         if wrote ~=== u then {
+            browser.msg(u.str())
+            wrote := u
+         }
+      } else if \wrote then {
+         browser.clear_msg()
+         wrote := &null
+      }
    end
 
    private handle_exit(e)
       if \wrote then {
-         parent_dialog.clear_msg()
+         browser.clear_msg()
          wrote := &null
          set_pointer()
       }
    end
 
-    public new()
+    public new(browser)
       cast(self,Component).new()
-      set_border(EmptyBorder().set_insets(0,0,0,0))
+      self.browser := browser
+      set_border(NullBorder())
       input := []
       v_align := Align.T
-      self.set_constraint("x_fill", &yes)
-      self.set_constraint("y_fill", &yes)
+      set_constraint("x_fill", &yes)
+      set_constraint("y_fill", &yes)
       connect(self.handle_move, Event.MOUSE_MOVEMENT)
+      connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
+      connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
       connect(self.handle_exit, Event.MOUSE_EXIT)
+      connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS)
       return
     end
 end

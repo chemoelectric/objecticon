@@ -545,13 +545,13 @@ class ScrollBar(Component)
       cast(self,Component).new()
       repeat_ticker := Dispatcher.new_task{repeat_tick()}
       self.b1 := IconButton().
-         set_border(EmptyBorder().set_insets(0, 0, 0, 0)).
+         set_border(NullBorder()).
          connect(self.handle_button_up, Event.BUTTON_PRESS).
          connect(self.handle_button_up, Event.BUTTON_HELD).
          set_accepts_focus(&no)
       add(self.b1)
       self.b2 := IconButton().
-         set_border(EmptyBorder().set_insets(0, 0, 0, 0)).
+         set_border(NullBorder()).
          connect(self.handle_button_down, Event.BUTTON_PRESS).
          connect(self.handle_button_down, Event.BUTTON_HELD).
          set_accepts_focus(&no)

@@ -176,7 +176,7 @@ class URL()
                ref := tab(0)
             }
          } else {
-            address := tab(upto(':/') | 0)
+            address := tab(upto(':/?') | 0)
             if *address = 0 then
                return error("No address")
             port := if =":" then
@@ -187,8 +187,12 @@ class URL()
             if pos(0) then
                file := "/"
             else {
-               any('/') | return error("File part should start with /")
-               file := tab(upto('#') | 0)
+               if any('?') then
+                  file := "/" || tab(upto('#') | 0)
+               else {
+                  any('/') | return error("File part should start with /")
+                  file := tab(upto('#') | 0)
+               }
                if any('#') then {
                   move(1)
                   ref := tab(0)

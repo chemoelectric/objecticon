@@ -78,8 +78,7 @@ class ItemPaintList(SelectableScrollArea)
 
    public new()
       cast(self,SelectableScrollArea).new()
-      self.set_item_border(EmptyBorder().
-                           set_insets(0, 0, 0, 0).
+      self.set_item_border(NullBorder().
                            set_x_align(Align.L))
       return
    end

@@ -87,6 +87,37 @@ class CanvasEmptyBorder(CanvasABorder)
    end
 end
 
+class CanvasNullBorder(CanvasABorder)
+   public gen_code(c)
+      c.line(name || " := " || self.class_name || "()")
+      c.chain("set_x_align(" || c.align_str(\self.x_align_val) || ")")
+      c.chain("set_y_align(" || c.align_str(\self.y_align_val) || ")")
+      c.add_var(name, class_variable)
+      c.add_import(self.import_name, self.class_name)
+   end
+
+   public create_visual_border()
+      local b
+      b := NullBorder()
+      b.set_x_align(\self.x_align_val)
+      b.set_y_align(\self.y_align_val)
+      return b
+   end
+
+   public dup()
+      local c
+      c := CanvasNullBorder()
+      self.dup_fields(c)
+      return c
+   end
+
+   public new()
+      cast(self,CanvasABorder).new()
+      self.class_name := "NullBorder"
+      return
+   end
+end
+
 class CanvasLineBorder(CanvasABorder)
    public 
       line_width_val,

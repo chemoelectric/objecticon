@@ -80,7 +80,7 @@ class CustomToolBar(Component)
    public add_button(t)
       t.set_pos(x1, y1)
       t.set_accepts_focus(&no)
-      t.set_border(EmptyBorder().set_insets(0, 0, 0, 0))
+      t.set_border(NullBorder())
       bg.add(t)
       self.add(t)
       x1 +:= img_w

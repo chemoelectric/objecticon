@@ -592,6 +592,7 @@ class Selection()
       CLIPBOARD,
       UTF8_STRING_TARGET,
       STRING_TARGET,
+      URI_LIST_TARGET,
       TARGETS_TARGET
 
    private static init()
@@ -604,6 +605,7 @@ class Selection()
       CLIPBOARD := "CLIPBOARD"
       STRING_TARGET := "STRING"
       UTF8_STRING_TARGET := "UTF8_STRING"
+      URI_LIST_TARGET := "text/uri-list"
       TARGETS_TARGET := "TARGETS"
    end
 end

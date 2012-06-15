@@ -49,7 +49,7 @@ class MultipartHandler(TypeHandler)
    end
 
    public convert_from_object(m, obj)
-      local b, s, ct, e
+      local b, s, ct
 
       b := generate_boundary(obj.get_parts())
       
@@ -62,9 +62,7 @@ class MultipartHandler(TypeHandler)
       m.set_content_type(ct)
 
       s := obj.get_preamble()
-      every e := !obj.get_parts() do {
-         s ||:= "\r\n--" || b || "\r\n" || e.to_rfc822()
-      }
+      every s ||:= "\r\n--" || b || "\r\n" || (!obj.get_parts()).to_rfc822()
       s ||:= "\r\n--" || b || "--\r\n" || obj.get_epilogue()
 
       return s

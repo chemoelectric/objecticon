@@ -139,7 +139,7 @@ tar :
 		cp --parents $$f $(T) ;\
 	done
 	@for f in $$( find examples \
-		-regex ".*\.\(icn\|gif\|jpg\|png\)" ) ; do \
+		-regex ".*\.\(icn\|layout\|gif\|jpg\|png\)" ) ; do \
 		cp --parents $$f $(T) ;\
 	done
 	@for f in $$( find misc -type f -not -regex ".*\.svn.*" ) ; do \

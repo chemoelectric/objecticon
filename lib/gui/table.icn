@@ -446,7 +446,7 @@ class Table(Component)
    public new()
       cast(self,Component).new()
       self.preferred_focus := self.table_content := create_table_content()
-      self.table_content.set_border(EmptyBorder().set_insets(0, 0, 0, 0))
+      self.table_content.set_border(NullBorder())
       self.set_border(SunkenBorder())
       every self.table_content.connect(self.on_table_content,
                                        Event.CURSOR_MOVED | Event.SELECTION_CHANGED)

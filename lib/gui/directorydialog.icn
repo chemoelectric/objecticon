@@ -49,6 +49,7 @@ class DirectoryDialog(Dialog)
    end
 
    public init_dialog()
+      set_focus(dir.find_focus())
       win.set_min_size(win.get_width(), win.get_height())
       # Do this here as we need the tree to be setup so that we
       # can scroll to the selected dir.
@@ -255,8 +256,8 @@ $endif
 
    private setup()
       local paint_2, layout_7, paint_7, paint_11, layout_4, paint_4, panel_4, paint_1, paint_9, layout_6, paint_6, paint_10, paint_3, panel_3, paint, paint_8, paint_5
-      set_label("Select directory")
-      set_resize(&yes)
+      self.set_label("Select directory")
+      self.set_resize(&yes)
       paint_1 := ImagePaint().
          set_cache("gui.HOME_24")
       paint := TextPaint("Home")
@@ -264,7 +265,7 @@ $endif
          set_align(Align.L, Align.C).
          clear_constraints().
          set_tooltip(paint).
-         connect(on_home_button, Event.ACTION).
+         connect(self.on_home_button, Event.ACTION).
          set_no_click_focus(&yes).
          set_toggles(&no).
          set_paint(paint_1)
@@ -275,7 +276,7 @@ $endif
          set_align(Align.L, Align.C).
          clear_constraints().
          set_tooltip(paint_2).
-         connect(on_up_button, Event.ACTION).
+         connect(self.on_up_button, Event.ACTION).
          set_no_click_focus(&yes).
          set_toggles(&no).
          set_paint(paint_3)
@@ -286,7 +287,7 @@ $endif
          set_align(Align.L, Align.C).
          clear_constraints().
          set_tooltip(paint_4).
-         connect(on_new_button, Event.ACTION).
+         connect(self.on_new_button, Event.ACTION).
          set_no_click_focus(&yes).
          set_toggles(&no).
          set_paint(paint_5)
@@ -297,7 +298,7 @@ $endif
          set_align(Align.L, Align.C).
          clear_constraints().
          set_tooltip(paint_6).
-         connect(on_refresh_button, Event.ACTION).
+         connect(self.on_refresh_button, Event.ACTION).
          set_no_click_focus(&yes).
          set_toggles(&no).
          set_paint(paint_7)
@@ -314,7 +315,7 @@ $endif
          add(up_button).
          add(new_button).
          add(refresh_button)
-      add(panel_4)
+      self.add(panel_4)
       tree := Tree().
          set_size(390, 272).
          clear_constraints().
@@ -323,11 +324,11 @@ $endif
          set_constraint("x_weight", 1.0).
          set_constraint("y_fill", &yes).
          set_constraint("y_weight", 1.0).
-         connect(on_tree_expansion, Event.TREE_NODE_EXPANSION).
-         connect(on_tree_selection, Event.SELECTION_CHANGED).
+         connect(self.on_tree_expansion, Event.TREE_NODE_EXPANSION).
+         connect(self.on_tree_selection, Event.SELECTION_CHANGED).
          set_select_mode(Select.ONE).
          set_show_root(&no)
-      add(tree)
+      self.add(tree)
       dir := EditList().
          set_size("150").
          set_align(Align.L, Align.B).
@@ -336,31 +337,31 @@ $endif
          set_constraint("x_align", Align.L).
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
-         connect(on_dir, Event.ACTION).
-         connect(on_dir, Event.SELECTION_CHANGED).
+         connect(self.on_dir, Event.ACTION).
+         connect(self.on_dir, Event.SELECTION_CHANGED).
          set_selection_list([""])
-      add(dir)
+      self.add(dir)
       paint_8 := TextPaint("Show hidden directories")
       show_hidden_cb := CheckBox().
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_align", Align.L).
-         connect(on_show_hidden_cb, Event.ACTION).
+         connect(self.on_show_hidden_cb, Event.ACTION).
          set_toggles(&yes).
          set_paint(paint_8)
-      add(show_hidden_cb)
+      self.add(show_hidden_cb)
       paint_9 := TextPaint("Okay")
       okay_button := TextButton().
          set_align(Align.L, Align.B).
          clear_constraints().
-         connect(on_okay_button, Event.ACTION).
+         connect(self.on_okay_button, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_9)
       paint_10 := TextPaint("Cancel")
       cancel_button := TextButton().
          set_align(Align.L, Align.B).
          clear_constraints().
-         connect(on_cancel_button, Event.ACTION).
+         connect(self.on_cancel_button, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_10)
       paint_11 := TextPaint("")
@@ -384,11 +385,10 @@ $endif
          add(okay_button).
          add(cancel_button).
          add(message_label)
-      add(panel_3)
+      self.add(panel_3)
       layout_7 := GridLayout().
          set_extra("cells")
-      set_layout(layout_7)
-      set_focus(dir.find_focus())
+      self.set_layout(layout_7)
    end
 end
 

@@ -86,19 +86,24 @@ class Border(Component)
    end
 
    public get_default_width()
-      return border.get_total_width() + content.get_preferred_width()
+      local w1
+      w1 := border.get_total_width() + content.get_preferred_width()
+      return if \title then
+         max(w1, title.get_preferred_width() + 2 * TITLE_OFFSET)
+      else
+         w1
    end
 
    public get_default_height(dw)
       dw -:= border.get_total_width()
-      if \title then
-         return title.get_preferred_height() + content.get_preferred_height(dw) +
-                border.get_b_inset()
+      return if \title then
+         max(border.get_t_inset(), title.get_preferred_height()) + content.get_preferred_height(dw) + border.get_b_inset()
       else
-         return border.get_total_height() + content.get_preferred_height(dw)
+         border.get_total_height() + content.get_preferred_height(dw)
    end
 
    public layout()
+      local co
       if \title then {
          #
          # Setup title; this gives us its height to work out some other dimensions.
@@ -117,10 +122,12 @@ class Border(Component)
          title.y := self.y
          title.layout()
          content.x := self.x + border.get_l_inset()
-         content.y := self.y + title.h
+         co := max(border.get_t_inset(), title.h)
+         content.y := self.y + co
          content.w := self.w - border.get_total_width()
-         content.h := self.h - title.h - border.get_b_inset()
-         y0 := self.y + title.h / 2 - border.get_t_inset() / 2
+         content.h := self.h - co - border.get_b_inset()
+
+         y0 := max(self.y, self.y + title.h / 2 - border.get_t_inset() / 2)
          h0 := self.y + self.h - self.y0
       } else {
          content.x := self.x + border.get_l_inset()

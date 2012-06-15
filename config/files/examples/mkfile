@@ -12,8 +12,5 @@ all:V: $PROGS
 clean :
 	rm -f *.u packages.txt $PROGS
 
-browser : browser.icn textflow.icn tablelayout.icn
-	oit -s -o browser browser.icn textflow.icn tablelayout.icn
-
 %: %.icn
 	oit -s $stem.icn

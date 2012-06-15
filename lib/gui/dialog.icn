@@ -415,6 +415,17 @@ class Dialog(Component)
       fire(Event.DIALOG_DISPOSED)
    end
 
+   # Refresh the point chain and pointer, using point_chain_source.
+   # This is useful, for example, if a component in the point chain
+   # has been removed.
+   #
+   public resynch_pointer()
+      if \point_chain_source then {
+         create_point_chain(point_chain_source)
+         synch_pointer(point_chain_source)
+      }
+   end
+
    public create_point_chain(e)
       local p, flag
 
@@ -1323,8 +1334,8 @@ class TextSelectionOwner(SelectionOwner)
 
    public get_content(target)
       case target of {
-         Selection.STRING_TARGET: return string(text_convert(get_text(), "string"))
-         Selection.UTF8_STRING_TARGET: return string(text_convert(get_text(), "ucs"))
+         Selection.STRING_TARGET: return text_convert(get_text(), "string")
+         Selection.UTF8_STRING_TARGET: return text_convert(get_text(), "ucs")
       }
    end
 end
@@ -1345,6 +1356,45 @@ class StaticTextSelectionOwner(TextSelectionOwner)
 
    public new(s)
       self.s := s
+      return
+   end
+end
+
+class URLSelectionOwner(SelectionOwner)
+   private urls
+
+   public get_content(target)
+      local s
+      case target of {
+         Selection.URI_LIST_TARGET : {
+            s := ""
+            every s ||:= (!urls).str() || "\r\n"
+            return s
+         }
+         Selection.STRING_TARGET : {
+            s := ""
+            every s ||:= (!urls).str() || "\n"
+            s[-1] := ""
+            return text_convert(s, "string")
+         }
+         Selection.UTF8_STRING_TARGET: {
+            s := ""
+            every s ||:= (!urls).str() || "\n"
+            s[-1] := ""
+            return text_convert(s, "ucs")
+         }
+      }
+   end
+
+   public lost_ownership()
+   end
+
+   public get_targets()
+      suspend Selection.STRING_TARGET | Selection.UTF8_STRING_TARGET | "text/uri-list"
+   end
+
+   public new(urls)
+      self.urls := urls
       return
    end
 end
@@ -1390,7 +1440,7 @@ class WindowControl(Component)
       set_align("r","t")
       add(IconButton().
           set_paint(ImagePaint().set_cache("gui.WINDOW_ICONIFY_BUTTON")).
-          set_border(EmptyBorder().set_insets(0, 0, 0, 0)).
+          set_border(NullBorder()).
           set_accepts_focus(&no).
 $ifdef _PLAN9
           set_tooltip("Hide").
@@ -1400,7 +1450,7 @@ $endif
           connect(iconify_window, Event.ACTION))
       add(IconButton().
           set_paint(ImagePaint().set_cache("gui.WINDOW_CLOSE_BUTTON")).
-          set_border(EmptyBorder().set_insets(0, 0, 0, 0)).
+          set_border(NullBorder()).
           set_accepts_focus(&no).
           set_tooltip("Close").
           connect(close_window, Event.ACTION))

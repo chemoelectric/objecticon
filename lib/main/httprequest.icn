@@ -61,9 +61,13 @@ class HttpRequest(MimeHeaders)
    # and have an appropriate MultiPart set as its content object.
    #
    public set_multipart_form_data(m)
-      set_input_stream(StringStream(m.to_rfc822()))
+      local s
+      s := m.to_rfc822()
+      # Strip off everything up to first boundary.
+      s ?:= (tab(find("--boundary")), tab(0))
+      set_input_stream(StringStream(s))
       set_method("POST")
-      set_content_type(m.get_content_type().to_rfc1521())
+      set_content_type(m.get_first_header("Content-Type"))
       return self
    end
 
