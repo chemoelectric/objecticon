@@ -12,8 +12,5 @@ all :	$(PROGS)
 clean :
 	$(RM) *.u packages.txt $(PROGS)
 
-browser : browser.icn textflow.icn tablelayout.icn
-	oit -s -o browser browser.icn textflow.icn tablelayout.icn
-
 %: 	%.icn
 	oit -s $<
