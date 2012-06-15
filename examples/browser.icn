@@ -329,7 +329,7 @@ procedure main(a)
    opts := options(a, "-k: -l! -agent:")
    cookies := \opts["k"] | System.getenv("GETURL_COOKIES")
    if \cookies then {
-      t := decode(Files.file_to_string(cookies)) |
+      (t := decode(Files.file_to_string(cookies))) |
          write(FileStream.stderr, "Couldn't read/decode cookie file ", cookies, ": ", &why)
    }
    ImageCache.name_image("rpp.EXIT_24", EXIT)

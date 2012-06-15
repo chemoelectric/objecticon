@@ -12,6 +12,7 @@ import
    xml,
    ipl.pdco,
    ipl.sort,
+   ipl.scan,
    ipl.strings,
    ipl.caseless
 
@@ -50,13 +51,14 @@ end
 
 class CacheEntry()
    public const
-      url, data, fname, content_type
+      url, data, fname, content_type, expiry
 
-   public new(url, data, fname, content_type)
+   public new(url, data, fname, content_type, expiry)
       self.url := url
       self.data := data
       self.fname := fname
       self.content_type := content_type
+      self.expiry := expiry
       return
    end
 end
@@ -65,7 +67,14 @@ class Cache()
    private t, total, lim
 
    public get(url)
-      return member(t, string(url.str()))
+      local k, ent
+      k := string(url.str())
+      if ent := member(t, k) then {
+         if \ent.expiry < Time.get_system_seconds() then
+            del(ent)
+         else
+            return ent
+      }
    end
 
    private del(ent)
@@ -78,7 +87,7 @@ class Cache()
    public add(ent)
       local k, old
       k := string(ent.url.str())
-      #write("cached add ",k)
+      write("cached add ",k, " expiry ", (\ent.expiry - Time.get_system_seconds()) | "-")
       if old := member(t, k) then
          del(old)
       while *t > 0 &  total + *ent.data > lim do
@@ -240,14 +249,32 @@ class Worker()
          r.callback(Resp(&why, r.url, r.referer,,,, r.kind))
    end
 
+   private get_expiry(hres)
+      local s, t, now, ma
+      now := Time.get_system_seconds()
+      if s := hres.get_first_header("Cache-Control") then {
+         if find("no-cache", s) then
+            fail
+         s ? if tab(past("max-age=")) & ma := integer(tab(many(&digits))) then
+            return now + (0 < ma)
+      }
+      if s := hres.get_first_header("Expires") then {
+         t := Time.parse(s, "E, d MMM yyyy hh:mm:ss z") | fail
+         return now < t.get_unix_seconds()
+      }
+      return
+   end
+
    private handle_http_req(r)
-      local s, data, hreq, hres, fname, ct
+      local s, data, hreq, hres, fname, ct, x
       use {
          s := RamStream(),
          {
             hreq := HttpRequest().
                set_output_stream(s). 
-               set_url(r.url)
+               set_url(r.url).
+               set_header("Accept-charset", "UTF-8, ISO-8859-1")
+
             if (\r.referer).protocol ~== u"file" then
                hreq.set_referer(r.referer.str())
             if \r.form_data then {
@@ -262,8 +289,8 @@ class Worker()
                ct := ContentType.parse(hres.get_first_header("Content-Type"))
                # Note we have to take into account redirections in deciding whether to cache
                # and whether form data should be in the response.
-               if httpc.request.method == "GET"  then
-                  browser.cache.add(CacheEntry(hres.url, data, fname, ct))
+               if httpc.request.method == "GET" & x := get_expiry(hres) then
+                  browser.cache.add(CacheEntry(hres.url, data, fname, ct, x))
                if /cancelled then
                   r.callback(Resp(, hres.url, r.referer, data, fname, ct, r.kind, 
                                   if hreq.url === hres.url then r.form_data else &null))
@@ -1213,6 +1240,13 @@ class Browser(Component)
       }
    end
 
+   private convert_to_ucs(ct, s)
+      return if (\ct).get_parameter("charset") == "ISO-8859-1" then
+         Text.iso_8859_1_to_ucs(s)
+      else
+         Text.liberal_ucs(s)
+   end
+
    private save_form_values()
       local f, c, name, t1, t2, k
       t1 := table()
@@ -1254,7 +1288,6 @@ class Browser(Component)
       if \curr_history_entry then {
          save_form_values()
          curr_history_entry.area_y := top_panel.get_area_y()
-         #write("save y for ", curr_history_entry.url.str(), " to ", curr_history_entry.area_y)
       }
       if \res.err then {
          s := u"<html><h1>Error:</h1>Getting " || res.url.str() || u"<br><br>" || res.err || u"</html>"
@@ -1295,8 +1328,8 @@ class Browser(Component)
       maps := table()
       forms := []
       if /view_img then {
-         Files.string_to_file("/tmp/browser.html",s)
-         s := Text.liberal_ucs(s)
+         #Files.string_to_file("/tmp/browser.html",s)
+         s := convert_to_ucs(res.content_type, s)
          doc := HtmlParser().parse(s)
          base := page_url
          if n := doc.get_root_element().search_tree(u"BASE") then
