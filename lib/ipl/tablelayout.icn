@@ -27,8 +27,9 @@ class TableCellInfo(Insets)
       dh, 
       maxw,
       pw,             # Preferred cell width excluding insets
-      ph
-
+      ph,
+      ascent,         # Ascent of first row
+      ascent_adj      # Adjustment needed to align baselines
    #
    # Output object
    #
@@ -104,7 +105,7 @@ class TableGrid()
          add_y +:= add_row_h
          add_row_h := 0
       }
-
+      ci.ascent_adj := 0
       ci.pct_w := validate_int(t, "pct_w", 0)
       put(info, ci)
 
@@ -129,7 +130,7 @@ class TableGrid()
          ci.b_inset := if ci.y + ci.h = gh + 1 then self.doi else self.dii
          ci.dw := ci.pw + ci.l_inset + ci.r_inset
          ci.maxdw := ci.maxw + ci.l_inset + ci.r_inset
-         ci.dh := ci.ph + ci.t_inset + ci.b_inset
+         ci.dh := ci.ph + ci.ascent_adj + ci.t_inset + ci.b_inset
       }
 
       compute_col_widths()
@@ -337,7 +338,7 @@ class TableGrid()
 
       every i := !info do {
          x := col_x[i.x] + i.l_inset
-         y := row_y[i.y] + i.t_inset
+         y := row_y[i.y] + i.t_inset + i.ascent_adj
          w := slice(i.x, i.w, a_col_w) - i.l_inset - i.r_inset
          h := slice(i.y, i.h, a_row_h) - i.t_inset - i.b_inset
          i.aw := w
@@ -406,6 +407,7 @@ class TableLayout(Layout)
       dii,          # Default inner padding, ie not at edge of grid
       doi,          # Default outer padding
       fix_col1_flag,
+      align_baselines_flag,
       debug
 
    public reset()
@@ -430,9 +432,12 @@ class TableLayout(Layout)
             ci.maxw := c.get_max_width()
             #write("cell ",image(c)," pw=",ci.pw, "  maxw=",ci.maxw)
             ci.ph := c.get_preferred_height(ci.pw)
+            ci.ascent := c.get_first_row_ascent(ci.pw)
             ci.obj := c
          }
       }
+      if \align_baselines_flag then
+         align_baselines()
       g.dimension()
    end
 
@@ -455,16 +460,41 @@ class TableLayout(Layout)
            i.pw := i.aw
            i.dw := i.pw + i.l_inset + i.r_inset
            i.ph := i.obj.get_preferred_height(i.aw)
-           i.dh := i.ph + i.t_inset + i.b_inset
+           i.ascent := i.obj.get_first_row_ascent(i.aw)
             if \debug then
               write(" to ", i.pw, ",", i.ph)
            adj := 1
         }
      }
      if \adj then {
+        if \align_baselines_flag then
+           align_baselines()
+        every i := !g.info do {
+           i.dh := i.ph + i.ascent_adj + i.t_inset + i.b_inset
+        }
         g.compute_row_heights()
         return
      }
+   end
+
+   private align_baselines()
+     local i, j, ma, row, y
+     row := []
+     every i := !g.info do {
+#write(i.y)
+        if i.y === y then {
+           put(row, i)
+           ma <:= i.ascent
+        } else {
+           every j := !row do
+              j.ascent_adj := ma - j.ascent
+           row := [i]
+           ma := i.ascent
+           y := i.y
+        }
+     }
+     every j := !row do
+        j.ascent_adj := ma - j.ascent
    end
 
    public get_preferred_height(pw)
@@ -474,8 +504,23 @@ class TableLayout(Layout)
       return g.get_preferred_height()
    end
 
+   public get_ascent(pw)
+      local i
+      if /align_baselines_flag then
+         fail
+      ensure_grid()
+      g.compute_widths(pw)
+      adjust_preferred_sizes()
+      return if i := g.info[1] then i.ascent + i.ascent_adj + i.t_inset else 0
+   end
+
    public set_fix_col1(s)
       self.fix_col1_flag := check_flag(s)
+      return self
+   end
+
+   public set_align_baselines(s)
+      self.align_baselines_flag := check_flag(s)
       return self
    end
 

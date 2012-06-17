@@ -67,15 +67,15 @@ class TextOut(Rect)
 end
 
 class CompOut(Rect)
-   public const c, align, attr, pw, maxw, boff
+   public const c, align, attr, pw, maxw
+   public ascent
 
-   public new(attr, c, align, pw, maxw, boff)
+   public new(attr, c, align, pw, maxw)
       self.attr := attr
       self.c := c
       self.align := align
       self.pw := pw
       self.maxw := maxw
-      self.boff := boff
       return
    end
 end
@@ -95,6 +95,7 @@ class TextFlow(Component)
       row_y,
       row_width,
       row_ascent,
+      first_row_ascent,
       row_descent,
       row_abs_middle_height,
       row_abs_top_height,
@@ -153,6 +154,7 @@ class TextFlow(Component)
       max_ll := 0
       right_margin := compute_w
       row_abs_middle_height := row_abs_top_height := row_abs_bottom_height := row_ascent := row_descent := 0
+      first_row_ascent := &null
       compute1(, input)
       while *(row | deferred) > 0 do
          new_row()
@@ -161,7 +163,7 @@ class TextFlow(Component)
          until have_max() do 
             new_row()
       }
-  end
+   end
 
    public set_v_align(v)
       self.v_align := v
@@ -216,6 +218,12 @@ class TextFlow(Component)
       every co := !left_comps | !right_comps do
         mh <:= co.y + co.h
       return mh + border.get_total_height()
+   end
+
+   public get_first_row_ascent(dw)
+      dw -:= border.get_total_width()
+      compute(dw)
+      return \first_row_ascent | 0
    end
 
    private compute1()
@@ -364,7 +372,8 @@ class TextFlow(Component)
          row_ascent +:= need / 2
          row_descent +:= need / 2 + need % 2
       }
-      
+
+      /first_row_ascent := row_ascent      
       while r := get(row) do {
          if /calculating & x1 = row_x then {
             case r.attr.align of {
@@ -378,7 +387,7 @@ class TextFlow(Component)
             r.x := x1
             r.y := case r.align of {
                Align.C: row_y + row_ascent - r.h / 2
-               Align.B: row_y + row_ascent - r.h + r.boff
+               Align.B: row_y + row_ascent - r.ascent
                Align.T: row_y
                "absbottom": row_y + row_ascent + row_descent - r.h
                "absmiddle": row_y + (row_ascent + row_descent - r.h) / 2
@@ -450,11 +459,10 @@ class TextFlow(Component)
    end
 
    private compute_component(cmd)
-      local co, prefw, maxw, boff
+      local co, prefw, maxw
       prefw := cmd.c.get_preferred_width()
       maxw := if is(cmd.c, Tbl) then cmd.c.get_max_width() else prefw
-      boff := if is(cmd.c, FormEntry) then cmd.c.get_baseline_off() else 0
-      co := CompOut(cmd.attr, cmd.c, cmd.align, prefw, maxw, boff)
+      co := CompOut(cmd.attr, cmd.c, cmd.align, prefw, maxw)
       put(output_comps, co)
 
       case cmd.align of {
@@ -483,8 +491,8 @@ class TextFlow(Component)
          }
          Align.B: {
             comp_out(co)
-            row_ascent <:= co.h - co.boff
-            row_descent <:= co.boff
+            row_ascent <:= co.ascent
+            row_descent <:= co.h - co.ascent
          }
          Align.T: {
             comp_out(co)
@@ -513,12 +521,12 @@ class TextFlow(Component)
       while (row_x + row_width + co.pw > right_margin) & not have_max() do
          new_row()
 
-      if is(c,Line) & /calculating then
-         co.w := right_margin - row_x - row_width
+      co.w := if is(c,Line) & /calculating then
+         right_margin - row_x - row_width
       else
-         co.w := min(co.maxw, right_margin - row_x - row_width)
+         min(co.maxw, right_margin - row_x - row_width)
       co.h := co.c.get_preferred_height(co.w)
-
+      co.ascent := if is(co.c, Tbl|FormEntry) then co.c.get_ascent(co.w, co.h) else co.h
       # A component cancels outstanding ws before the line eg the \n after the <br> is ignored
       # begin<br>
       # <img src="/tmp/j3.jpeg">is some stuff

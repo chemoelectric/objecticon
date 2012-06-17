@@ -19,6 +19,30 @@ $load STOP "rpp.STOP_24.gif"
 $load PASTE "rpp.PASTE_24.gif"
 $load REFRESH "rpp.REFRESH_24.gif"
 
+class MessageLabel(Label)
+   private
+      want, keep
+
+   public set(p, n)
+      local t
+      want := p
+      if /keep then {
+         /p := NullPaint()
+         set_paint(p)
+         if \n then {
+            keep := 1
+            t := Dispatcher.new_task{{
+               t.sleep(n)
+               keep := &null
+               set_paint(\want)
+               t.revert()
+            }}
+            t.start()
+         }
+      }
+   end
+end
+
 class BrowserDialog(Dialog, BrowserUI)
    private
       browser,
@@ -93,8 +117,20 @@ class BrowserDialog(Dialog, BrowserUI)
       message_label.set()
    end
 
-   public set_url_field_contents(val)
+   public set_url_field(val)
       search_field.set_contents(val)
+   end
+
+   public set_title(s)
+      /s := "OIBrowser"
+      win.set_label(s)
+   end
+
+   public get_authentication(site)
+      local d
+      d := AuthenticationDialog(site)
+      d.show_modal(self)
+      return \d.result
    end
 
    private on_stop(ev)
@@ -148,7 +184,6 @@ class BrowserDialog(Dialog, BrowserUI)
 
    private setup()
       local quit_menu_item, paint_27, paint_32, paint_19, paint_24, paint_37, paint_29, paint_34, layout_1, panel_1, paint_13, paint_26, paint_31, paint_39, paint_23, paint_20, paint_28, paint_33, paint_12, paint_25, paint_30, paint_38, border_1, menu_bar_1, menu_1, layout_2
-      self.set_label("Browser")
       self.set_min_height(250)
       self.set_resize(&yes)
       paint_13 := TextPaint("File")

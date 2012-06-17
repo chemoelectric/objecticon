@@ -49,6 +49,17 @@ class Resp()
    end
 end
 
+class Authentication()
+   public const
+      username, password
+
+   public new(username, password)
+      self.username := username
+      self.password := password
+      return
+   end
+end
+
 class CacheEntry()
    public const
       url, data, fname, content_type, expiry
@@ -194,7 +205,7 @@ class Worker()
          return use {
             rs := RamStream(),
             {
-               rs.out("<html><pre>")
+               rs.out("<html><head><title>Directory " || f || "</title></head><pre>")
                maxsz := maxl := maxuid := maxgid := 0
                every e := !l do {
                   maxl <:= *e[1]
@@ -265,8 +276,8 @@ class Worker()
       return
    end
 
-   private handle_http_req(r)
-      local s, data, hreq, hres, fname, ct, x
+   private handle_http_req(r, auth)
+      local s, data, hreq, hres, fname, ct, x, t
       use {
          s := RamStream(),
          {
@@ -274,7 +285,9 @@ class Worker()
                set_output_stream(s). 
                set_url(r.url).
                set_header("Accept-charset", "UTF-8, ISO-8859-1")
-
+            if \auth then
+               hreq.set_username(auth.username).
+                  set_password(auth.password)
             if (\r.referer).protocol ~== u"file" then
                hreq.set_referer(r.referer.str())
             if \r.form_data then {
@@ -295,7 +308,12 @@ class Worker()
                   r.callback(Resp(, hres.url, r.referer, data, fname, ct, r.kind, 
                                   if hreq.url === hres.url then r.form_data else &null))
             } else {
-               if /cancelled then
+               if /auth & 
+                  find("401", \httpc.response.status) &
+                  t := HttpClient.parse_generic_header(httpc.response.get_first_header("www-authenticate")) & 
+                  auth := browser.lookup_authentication(httpc.response.url, member(t, "realm")) then
+                  handle_http_req(r, auth)
+               else if /cancelled then
                   r.callback(Resp(&why, r.url, r.referer,,,, r.kind, r.form_data))
             }
          }
@@ -344,6 +362,12 @@ class Tbl(Border)
          max(w1, title.get_max_width() + 2 * TITLE_OFFSET)
       else
          w1
+   end
+
+   public get_ascent(dw, dh)
+      /title | return dh
+      dw -:= border.get_total_width()
+      return content.layout_delegate.get_ascent(dw) + border.get_t_inset() | dh
    end
 
    public new(url)
@@ -495,9 +519,9 @@ end
 class FormEntry()
    public reset() end
 
-   public get_baseline_off() 
-      return 0
-   end
+   public get_ascent(cw, ch) 
+      return ch
+   end 
 
    public get_save_subkey() end
    public get_save_value() end
@@ -550,8 +574,8 @@ class FormButton(TextButton, FormEntry)
          return value
    end
 
-   public get_baseline_off() 
-      return cbwin.get_font_descent() + border.get_b_inset()
+   public get_ascent() 
+      return cbwin.get_font_ascent() + border.get_t_inset()
    end
 
    public new(value)
@@ -580,11 +604,18 @@ class FormTbl(Tbl, FormEntry)
       }
    end
 
+   #
+   # Prevent children from getting in the point chain.
+   #
+   public build_point_chain(l)
+   end
+
    public new(form, value, type)
       cast(self,Tbl).new()
       self.value := value
       self.form := form
       self.type := type
+      content.layout_delegate.set_align_baselines(&yes)
       set_border(CompoundBorder().
                  set_outer(RaisedBorder()).
                  set_inner(EmptyBorder()))
@@ -636,8 +667,8 @@ class FormBrowse(Component, FormEntry)
       return Files.get_path(tf.get_contents()).get(-1)
    end
 
-   public get_baseline_off() 
-      return cbwin.get_font_descent() + Gui.Y_INSET
+   public get_ascent() 
+      return cbwin.get_font_ascent() + Gui.Y_INSET
    end
 
    public reset()
@@ -701,8 +732,8 @@ class FormTextField(TextField, FormEntry)
    private const
       init_val
 
-   public get_baseline_off() 
-      return cbwin.get_font_descent() + border.get_b_inset()
+   public get_ascent() 
+      return cbwin.get_font_ascent() + border.get_t_inset()
    end
 
    public reset()
@@ -762,8 +793,8 @@ class FormList(gui.List, FormEntry)
    private const
       init_val
 
-   public get_baseline_off() 
-      return cbwin.get_font_descent() + view.border.get_b_inset() + border.get_b_inset()
+   public get_ascent() 
+      return cbwin.get_font_ascent() + view.border.get_t_inset() + border.get_t_inset()
    end
 
    public reset()
@@ -859,7 +890,6 @@ class Form()
    end
 
    public submit(ev, src)
-      #write(to_string(items,3,1,3))
       if map(method) == "post" then {
          if map(enctype) == "multipart/form-data" then
             browser.goto(url, browser.page_url, Worker.NORMAL, make_cgi_message(ev, src))
@@ -960,30 +990,6 @@ class Map()
    end
 end
 
-class MessageLabel(Label)
-   private
-      want, keep
-
-   public set(p, n)
-      local t
-      want := p
-      if /keep then {
-         /p := NullPaint()
-         set_paint(p)
-         if \n then {
-            keep := 1
-            t := Dispatcher.new_task{{
-               t.sleep(n)
-               keep := &null
-               set_paint(\want)
-               t.revert()
-            }}
-            t.start()
-         }
-      }
-   end
-end
-
 record HistoryEntry(url,          # URL displayed (on a redirect may differ from that requested) 
                     referer,      # referer URL
                     form_values,  # Cached values of form components; updated when we move away from the page 
@@ -994,8 +1000,10 @@ record HistoryEntry(url,          # URL displayed (on a redirect may differ from
 class BrowserUI()
    public defer msg(s, n)
    public defer clear_msg()
-   public defer set_url_field_contents(val)
+   public defer set_url_field(val)
    public defer update_grey(gs)
+   public defer set_title(s)
+   public defer get_authentication(site)
 end
 
 record GreyState(prev, nxt, refresh, copy_page, save_page, stop)
@@ -1016,13 +1024,15 @@ class Browser(Component)
       page_url,
       page_data,
       page_name,
+      page_title,
       queue,
       running,
       cookies,
       user_agent,
       log_http_flag,
       cache,
-      file_dialog
+      file_dialog,
+      authentications
 
    public static const 
       COLORS,
@@ -1118,6 +1128,17 @@ class Browser(Component)
       }
    end
 
+   public lookup_authentication(url, realm)
+      local k, v
+      k := realm || " at " || string(url.address)
+      if v := member(authentications, k) then
+         return v
+      if v := get_authentication(k) then {
+         insert(authentications, k, v)
+         return v
+      } 
+   end
+
    public set_ui(ui)
       self.ui := ui
       return self
@@ -1131,12 +1152,20 @@ class Browser(Component)
       (\ui).clear_msg()
    end
 
-   public set_url_field_contents(val)
-      (\ui).set_url_field_contents(val)
+   public set_url_field(val)
+      (\ui).set_url_field(val)
    end
 
    public update_grey(gs)
       (\ui).update_grey(gs)
+   end
+
+   public set_title(s)
+      (\ui).set_title(s)
+   end
+
+   public get_authentication(site)
+      return (\ui).get_authentication(site)
    end
 
    public do_update_grey()
@@ -1294,13 +1323,11 @@ class Browser(Component)
          }
       }
       curr_history_entry.form_values := t1
-      #write("saved:\n",to_string(t1,3,1,3))
    end
 
    private restore_form_values()
       local f, c, name, t1, t2, k
       t1 := \curr_history_entry.form_values | fail
-      #write("restore:\n",to_string(t1,3,1,3))
       every f := !forms do {
          if t2 := member(t1, f.url.str()) then {
             every name := key(f.items) do {
@@ -1349,7 +1376,7 @@ class Browser(Component)
          history_pos +:= 1
       }
       do_update_grey()
-      set_url_field_contents(page_url.str())
+      set_url_field(page_url.str())
       curr_history_entry := history[history_pos]
       # Note that the url/form_data may change even on a
       # navigate/refresh, if the server behaved differently (eg
@@ -1368,6 +1395,7 @@ class Browser(Component)
             base := URL.parse(n.get_attribute(u"HREF"))
 
          row := TextFlow(self)
+         page_title := &null
          c := Context()
          c.base := base
          c.face := "sans"
@@ -1385,7 +1413,9 @@ class Browser(Component)
          traverse(doc, row, c)
          if res.kind ~= Worker.REFRESH then
             restore_form_values()
-      }
+      } else
+         page_title := page_name
+      set_title(page_title)
       top_panel.set_area_y(0)
       top_panel.view.inner.finally()
       top_panel.set_inner(row)
@@ -1567,7 +1597,7 @@ class Browser(Component)
          context.form.add(e.get_attribute(u"NAME"), q)
       row := TextFlow(self)
       q.content.add(row)
-      add_component(p, q, context)
+      add_component(p, q, context, Align.B)
       traverse(e, row, context)
    end
 
@@ -2052,6 +2082,7 @@ class Browser(Component)
    private traverse_list(e, p, context)
       local tbl, lc, c
       tbl := Tbl()
+      tbl.content.layout_delegate.set_align_baselines(&yes)
       c := copy(context)
       lc := ListContext()
       lc.tbl := tbl
@@ -2060,7 +2091,7 @@ class Browser(Component)
       c.list := lc
       traverse(e, p, c)
       put_new_row(p)
-      add_component(p, tbl, context)
+      add_component(p, tbl, context, Align.B)
       put_new_row(p)
    end
 
@@ -2081,14 +2112,14 @@ class Browser(Component)
    private traverse_dl(e, p, context)
       local tbl, dc, c
       tbl := Tbl()
-      tbl.content.layout_delegate.set_fix_col1(&yes)
+      tbl.content.layout_delegate.set_fix_col1(&yes).set_align_baselines(&yes)
       dc := DefListContext()
       dc.tbl := tbl
       c := copy(context)
       c.def_list := dc
       traverse(e, p, c)
       put_new_row(p)
-      add_component(p, tbl, context)
+      add_component(p, tbl, context, Align.B)
       put_new_row(p)
    end
 
@@ -2177,6 +2208,10 @@ class Browser(Component)
       put(p.input, TextCmd(e, context))
    end
 
+   private traverse_title(e, p, context)
+      page_title := e.get_trimmed_string_content()
+   end
+
    private traverse(n, p, context)
       local e, id
       every e := !n.children do {
@@ -2186,7 +2221,8 @@ class Browser(Component)
             if id := e.get_attribute(u"ID") then
                put(p.input, NamedAnchorCmd(id))
             case string(e.name) of {
-               "TITLE"|"META"|"LINK"|"SCRIPT"|"STYLE": {}
+               "META"|"LINK"|"SCRIPT"|"STYLE": {}
+               "TITLE": traverse_title(e, p, context)
                "A": traverse_a(e, p, context)
                "FORM": traverse_form(e, p, context)
                "BUTTON": traverse_button(e, p, context)
@@ -2262,6 +2298,7 @@ class Browser(Component)
       self.cookies := table()
       self.cache := Cache(8*1024*1024)
       file_dialog := FileDialog()
+      authentications := table()
       queue := []
       workers := []
       every 1 to 6 do
