@@ -17,11 +17,11 @@ class CanvasTextDisplayDialog(CanvasComponentDialog)
       ucs_cb
 
    public set_vals()
-      cast(self,CanvasComponentDialog).set_vals()
       if *contents.get_contents_str() = 0 then
          c.set_contents([])
       else
          c.set_contents(contents.get_contents())
+      cast(self,CanvasComponentDialog).set_vals()
    end
 
    private on_ucs_cb()

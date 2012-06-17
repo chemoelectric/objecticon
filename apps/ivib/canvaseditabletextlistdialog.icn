@@ -20,10 +20,10 @@ class CanvasEditableTextListDialog(CanvasComponentDialog)
       ucs_cb
 
    public set_vals()
-      cast(self,CanvasComponentDialog).set_vals()
       c.set_contents(contents.get_contents())
       c.is_editable_flag := is_editable_cb.get_status()
       c.move_on_rpress_flag := move_on_rpress_cb.get_status()
+      cast(self,CanvasComponentDialog).set_vals()
    end
 
    private on_ucs_cb()

@@ -20,11 +20,11 @@ class CanvasTreeDialog(CanvasComponentDialog)
       select_group
 
    public set_vals()
-      cast(self,CanvasComponentDialog).set_vals()
       c.set_select_mode(select_group.get_select_mode())
       c.show_root_flag := show_root.get_status()
       c.show_root_handles_flag := show_root_handles.get_status()
       c.tree_structure_changed()
+      cast(self,CanvasComponentDialog).set_vals()
    end
 
    public setup()
