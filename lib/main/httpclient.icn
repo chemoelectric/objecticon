@@ -405,15 +405,7 @@ class HttpClient(NetClient)
       return h
    end
 
-   private unq(s)
-      if s[1] == "\"" then 
-         s[1] := ""
-      if s[-1] == "\"" then 
-         s[-1] := ""
-      return s
-   end
-
-   private parse_generic_header(s)
+   public static parse_generic_header(s)
       local t, k, v
 
       t := table()
@@ -435,7 +427,7 @@ class HttpClient(NetClient)
    #
    # 
    # @param omit - if non-null, omit the quotes from the result
-   private parse_quoted_string(omit)
+   public static parse_quoted_string(omit)
       local res
 
       if /omit then
