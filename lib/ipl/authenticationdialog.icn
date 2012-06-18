@@ -1,13 +1,14 @@
 package ipl.browser
 
 import
-   gui
+   gui, http
 
 class AuthenticationDialog(Dialog)
    private
       user_name_field,
       password_field,
-      site_label
+      domain_label,
+      realm_label
 
    private readable
       result
@@ -21,12 +22,11 @@ class AuthenticationDialog(Dialog)
    public init_dialog()
    end
 
-   public new(site)
+   public new(domain, realm)
       cast(self,Dialog).new()
       self.setup()
-      if *site > 60 then
-         site[58:0] := "..."
-      site_label.set_label(site)
+      domain_label.set_label(domain)
+      realm_label.set_label(realm)
       password_field.set_displaychar("*")
       return
    end
@@ -41,16 +41,28 @@ class AuthenticationDialog(Dialog)
    end
 
    private setup()
-      local paint_2, label_2, okay_button, paint_11, layout_4, layout_1, paint_1, paint_9, panel_1, label_1, paint_10, panel_3, label_3, cancel_button, paint_12, layout_5
+      local paint_2, paint_14, label_2, okay_button, paint_11, layout_4, label_4, layout_1, paint_1, paint_9, panel_1, paint_13, label_1, paint_10, panel_3, label_3, cancel_button, paint_12, layout_5
       self.set_label("Authentication required")
       self.set_resize(&yes)
-      paint_11 := TextPaint("Site")
+      paint_13 := TextPaint("Domain")
+      label_4 := Label().
+         clear_constraints().
+         set_constraint("x_align", Align.L).
+         set_paint(paint_13)
+      paint_14 := TextPaint("")
+      domain_label := Label().
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_align", Align.L).
+         set_constraint("x_fill", &yes).
+         set_paint(paint_14)
+      paint_11 := TextPaint("Realm")
       label_3 := Label().
          clear_constraints().
          set_constraint("x_align", Align.L).
          set_paint(paint_11)
       paint_12 := TextPaint("")
-      site_label := Label().
+      realm_label := Label().
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_align", Align.L).
@@ -93,8 +105,10 @@ class AuthenticationDialog(Dialog)
          set_constraint("x_weight", 1.0).
          set_constraint("y_weight", 0.0).
          set_layout(layout_1).
+         add(label_4).
+         add(domain_label).
          add(label_3).
-         add(site_label).
+         add(realm_label).
          add(label_1).
          add(user_name_field).
          add(label_2).

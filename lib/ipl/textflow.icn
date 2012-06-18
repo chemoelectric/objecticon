@@ -122,12 +122,12 @@ class TextFlow(Component)
 
    public static const 
       WHITESPACE,
-      DEFAULT_WIDTH,
+      PREFERRED_WIDTH,
       MAX_WIDTH
 
    private static init()
       WHITESPACE := ' \t\r\n\v\f'
-      DEFAULT_WIDTH := 1
+      PREFERRED_WIDTH := 1
       MAX_WIDTH := 2
    end
 
@@ -197,8 +197,8 @@ class TextFlow(Component)
 
    public get_max_width()
       local t
-      if dominant_width === DEFAULT_WIDTH then
-         return get_default_width()
+      if dominant_width === PREFERRED_WIDTH then
+         return get_preferred_width()
       if /max_width then {
          if t := integer(self.w_spec) then
             max_width := t
@@ -516,17 +516,21 @@ class TextFlow(Component)
    end
 
    private comp_out(co)
-      local c
+      local c, avail, pct
       c := co.c
       while (row_x + row_width + co.pw > right_margin) & not have_max() do
          new_row()
 
+      avail := right_margin - row_x - row_width
       co.w := if is(c,Line) & /calculating then
-         right_margin - row_x - row_width
+         avail
+      else if pct := integer(c.get_constraint("pct_w")) & /calculating then
+         max(co.pw, (avail * pct) / 100)
       else
-         min(co.maxw, right_margin - row_x - row_width)
+         min(co.maxw, avail)
+
       co.h := co.c.get_preferred_height(co.w)
-      co.ascent := if is(co.c, Tbl|FormEntry) then co.c.get_ascent(co.w, co.h) else co.h
+      co.ascent := if is(co.c, Tbl | FormEntry) then co.c.get_ascent(co.w, co.h) else co.h
       # A component cancels outstanding ws before the line eg the \n after the <br> is ignored
       # begin<br>
       # <img src="/tmp/j3.jpeg">is some stuff
@@ -657,7 +661,7 @@ class TextFlow(Component)
    end
 
    private handle_lrelease(e)
-     set_pointer()
+     #set_pointer()
       if \wrote then
          self.browser.goto(wrote, browser.page_url, Worker.NORMAL)
    end
@@ -703,6 +707,11 @@ class TextFlow(Component)
          wrote := &null
          set_pointer()
       }
+   end
+
+   public get_pointer(e)
+      handle_move(e)
+      return \self.pointer
    end
 
    private handle_ldrag(e)

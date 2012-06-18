@@ -59,8 +59,6 @@ class TableGrid()
       info,         # List of CellInfo for each component being laid out
       dii,          # Default inner padding, ie not at edge of grid
       doi,          # Default outer padding
-      pad_w,        # Padding to the left of the grid
-      pad_h,        # Padding above the grid
       id_str,       # For generating CellInfo string ids for debug
       add_x,        # For auto-computing cell position and sizes.
       add_y,
@@ -192,7 +190,8 @@ class TableGrid()
             }
          }
       }
-      return left
+      #write("extra=",extra," left=",left)
+      dist_equally(1, *l, left, l)
    end
 
    public compute_col_widths()
@@ -274,13 +273,11 @@ class TableGrid()
       if \self.a_col_w then {
          write("a_col_w=", to_string(a_col_w))
          write("\textra width in a_col_w:", total(a_col_w)-total(p_col_w))
-         write("\tleft pad border:", self.pad_w)
       }
       write("p_row_h=", to_string(p_row_h))
       if \self.a_row_h then {
          write("a_row_h=", to_string(a_row_h))
          write("\textra height in a_row_h:", total(a_row_h)-total(p_row_h))
-         write("\ttop pad border:", self.pad_h)
       }
 
       write("\nPreferred size gives:", get_preferred_width(),",",get_preferred_height())
@@ -315,22 +312,21 @@ class TableGrid()
       # Extra width
       ew := w1 - total(p_col_w)
       # Allocate by max width
-      self.pad_w := dist_by_max(ew, a_col_w, p_col_maxw) / 2
+      dist_by_max(ew, a_col_w, p_col_maxw) / 2
 
       # Same for height.
       eh := h1 - total(p_row_h)
-      self.pad_h := 0
       dist_equally(1, *a_row_h, eh, a_row_h)
 
       col_x := []
-      x := x1 + self.pad_w
+      x := x1
       every w := !a_col_w do {
          put(col_x, x)
          x +:= w
       }
 
       row_y := []
-      y := y1 + self.pad_h
+      y := y1
       every h := !a_row_h do {
          put(row_y, y)
          y +:= h
@@ -358,10 +354,10 @@ class TableGrid()
       # Extra width
       ew := w1 - total(p_col_w)
       # Allocate by max width
-      self.pad_w := dist_by_max(ew, a_col_w, p_col_maxw) / 2
+      dist_by_max(ew, a_col_w, p_col_maxw) / 2
 
       col_x := []
-      x := x1 + self.pad_w
+      x := x1
       every w := !a_col_w do {
          put(col_x, x)
          x +:= w

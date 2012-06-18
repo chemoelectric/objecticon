@@ -12,7 +12,6 @@ import
    xml,
    ipl.pdco,
    ipl.sort,
-   ipl.scan,
    ipl.strings,
    ipl.caseless
 
@@ -45,17 +44,6 @@ class Resp()
       self.content_type := content_type
       self.kind := kind
       self.form_data := form_data
-      return
-   end
-end
-
-class Authentication()
-   public const
-      username, password
-
-   public new(username, password)
-      self.username := username
-      self.password := password
       return
    end
 end
@@ -236,7 +224,9 @@ class Worker()
       httpc := HttpClient().
          set_task(task).
          set_ssl_verify(&no).
-         set_cookies(browser.cookies)
+         set_cookies(browser.cookies).
+         set_authentications(browser.authentications).
+         set_authentication_function(browser.get_authentication)
       httpc.set_user_agent(\browser.user_agent)
       if \browser.log_http_flag then {
          httpc.connect(failed, HttpClient.FAILED_EVENT).
@@ -263,10 +253,10 @@ class Worker()
    private get_expiry(hres)
       local s, t, now, ma
       now := Time.get_system_seconds()
-      if s := hres.get_first_header("Cache-Control") then {
-         if find("no-cache", s) then
+      if t := HttpClient.parse_generic_header(hres.get_first_header("Cache-Control")) then {
+         if member(t, "no-cache") then
             fail
-         s ? if tab(past("max-age=")) & ma := integer(tab(many(&digits))) then
+         if ma := integer(member(t, "max-age")) then
             return now + (0 < ma)
       }
       if s := hres.get_first_header("Expires") then {
@@ -276,8 +266,8 @@ class Worker()
       return
    end
 
-   private handle_http_req(r, auth)
-      local s, data, hreq, hres, fname, ct, x, t
+   private handle_http_req(r)
+      local s, data, hreq, hres, fname, ct, x
       use {
          s := RamStream(),
          {
@@ -285,9 +275,6 @@ class Worker()
                set_output_stream(s). 
                set_url(r.url).
                set_header("Accept-charset", "UTF-8, ISO-8859-1")
-            if \auth then
-               hreq.set_username(auth.username).
-                  set_password(auth.password)
             if (\r.referer).protocol ~== u"file" then
                hreq.set_referer(r.referer.str())
             if \r.form_data then {
@@ -308,12 +295,7 @@ class Worker()
                   r.callback(Resp(, hres.url, r.referer, data, fname, ct, r.kind, 
                                   if hreq.url === hres.url then r.form_data else &null))
             } else {
-               if /auth & 
-                  find("401", \httpc.response.status) &
-                  t := HttpClient.parse_generic_header(httpc.response.get_first_header("www-authenticate")) & 
-                  auth := browser.lookup_authentication(httpc.response.url, member(t, "realm")) then
-                  handle_http_req(r, auth)
-               else if /cancelled then
+               if /cancelled then
                   r.callback(Resp(&why, r.url, r.referer,,,, r.kind, r.form_data))
             }
          }
@@ -356,7 +338,9 @@ end
 
 class Tbl(Border)
    public get_max_width()
-      local w1
+      local w1, t
+      if t := integer(self.w_spec) then
+         return t
       w1 := content.layout_delegate.get_max_width()  + border.get_total_width()
       return if \title then
          max(w1, title.get_max_width() + 2 * TITLE_OFFSET)
@@ -370,7 +354,7 @@ class Tbl(Border)
       return content.layout_delegate.get_ascent(dw) + border.get_t_inset() | dh
    end
 
-   public new(url)
+   public new()
       cast(self,Border).new()
       set_content(Component(). 
                     set_layout(TableLayout()))
@@ -430,7 +414,7 @@ class Img(Label)
    end
 
    private handle_lrelease(e, src)
-      set_pointer()
+      #set_pointer()
       if \wrote then
          browser.goto(wrote, browser.page_url, Worker.NORMAL)
    end
@@ -473,6 +457,12 @@ class Img(Label)
          browser.clear_msg()
          wrote := &null
       }
+   end
+
+   public get_pointer(e)
+      if /form then
+         handle_move(e)
+      return \self.pointer
    end
 
    private handle_move(e)
@@ -1003,7 +993,6 @@ class BrowserUI()
    public defer set_url_field(val)
    public defer update_grey(gs)
    public defer set_title(s)
-   public defer get_authentication(site)
 end
 
 record GreyState(prev, nxt, refresh, copy_page, save_page, stop)
@@ -1128,17 +1117,6 @@ class Browser(Component)
       }
    end
 
-   public lookup_authentication(url, realm)
-      local k, v
-      k := realm || " at " || string(url.address)
-      if v := member(authentications, k) then
-         return v
-      if v := get_authentication(k) then {
-         insert(authentications, k, v)
-         return v
-      } 
-   end
-
    public set_ui(ui)
       self.ui := ui
       return self
@@ -1164,8 +1142,11 @@ class Browser(Component)
       (\ui).set_title(s)
    end
 
-   public get_authentication(site)
-      return (\ui).get_authentication(site)
+   public get_authentication(dom, realm)
+      local d
+      d := AuthenticationDialog(dom, realm)
+      d.show_modal(parent_dialog)
+      return \d.result
    end
 
    public do_update_grey()
@@ -1266,7 +1247,7 @@ class Browser(Component)
       return file_dialog.get_result()
    end
 
-   private cancel()
+   public cancel()
       every (!workers).cancel()
       clear(queue)
    end
@@ -1952,12 +1933,21 @@ class Browser(Component)
       }
    end
 
+   private do_width_param(e, c)
+      local width
+      if width := e.get_attribute(u"WIDTH") then {
+         if width := (0 <= integer(width)) then
+            c.set_width(width)
+         else if width[-1] == "%" & width := (0 <= integer(width[1:-1])) then
+            c.set_constraint("pct_w", width)
+      }
+   end
+
    private traverse_table(e, p, context)
-      local ct, tbl, width, border, cellpadding, cellspacing, cell_border, align, c
+      local ct, tbl, border, cellpadding, cellspacing, cell_border, align, c
 
       tbl := Tbl()
-      if width := (0 <= integer(e.get_attribute(u"WIDTH"))) then
-         tbl.set_width(width)
+      do_width_param(e, tbl)
       border := integer(e.get_attribute(u"BORDER")) | 0
       cellpadding := integer(e.get_attribute(u"CELLPADDING")) | 0
       cellspacing := integer(e.get_attribute(u"CELLSPACING")) | 2
@@ -2000,7 +1990,7 @@ class Browser(Component)
 
       # A Tbl with two TextFlows; the caption and another containing just the table itself.
       ct.caption := Tbl()
-      cap := TextFlow(self).set_dominant_width(TextFlow.DEFAULT_WIDTH)
+      cap := TextFlow(self).set_dominant_width(TextFlow.PREFERRED_WIDTH)
       c := copy(context)
       c.align := Align.C
       traverse(e, cap, c)
@@ -2010,17 +2000,17 @@ class Browser(Component)
       case align of {
          Align.T: {
             cap.set_constraint("eol", &yes)
-            ct.caption.inner.add(cap).add(main)
+            ct.caption.content.add(cap).add(main)
          }
          Align.B: {
             main.set_constraint("eol", &yes)
-            ct.caption.inner.add(main).add(cap)
+            ct.caption.content.add(main).add(cap)
          }
          Align.L: {
-            ct.caption.inner.add(cap).add(main)
+            ct.caption.content.add(cap).add(main)
          }
          Align.R: {
-            ct.caption.inner.add(main).add(cap)
+            ct.caption.content.add(main).add(cap)
          }
       }
    end
@@ -2042,7 +2032,7 @@ class Browser(Component)
    end
 
    private traverse_td(e, p, context)
-      local ct, row, c, colspan, rowspan, width, valign
+      local ct, row, c, colspan, rowspan, valign
       ct := \context.table | fail
       while member(ct.occ, ct.x || "," || ct.y) do
          ct.x +:= 1
@@ -2058,12 +2048,7 @@ class Browser(Component)
       row.set_constraint("h", rowspan)
       row.set_bg(convert_color(e | \ct.tr, u"BGCOLOR"))
       every insert(ct.occ, (ct.x to ct.x + colspan - 1) || "," || (ct.y to ct.y + rowspan - 1))
-      if width := e.get_attribute(u"WIDTH") then {
-         if width := (0 <= integer(width)) then
-            row.set_width(width)
-         else if width[-1] == "%" & width := (0 <= integer(width[1:-1])) then
-            row.set_constraint("pct_w", width)
-      }
+      do_width_param(e, row)
       ct.tbl.content.add(row)
 
       c := copy(context)
@@ -2277,6 +2262,16 @@ class Browser(Component)
 
    public set_cookies(cookies)
       self.cookies := cookies
+      return self
+   end
+
+   public set_authentications(m)
+      self.authentications := m
+      return self
+   end
+
+   public set_cache(c)
+      self.cache := c
       return self
    end
 

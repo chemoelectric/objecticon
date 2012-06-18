@@ -126,13 +126,6 @@ class BrowserDialog(Dialog, BrowserUI)
       win.set_label(s)
    end
 
-   public get_authentication(site)
-      local d
-      d := AuthenticationDialog(site)
-      d.show_modal(self)
-      return \d.result
-   end
-
    private on_stop(ev)
       browser.cancel()
    end
