@@ -587,6 +587,7 @@ class Dialog(Component)
          }
       }
 
+      generate_crossing_events(e) 
       generate_events(e)
 
       #
@@ -618,6 +619,7 @@ class Dialog(Component)
       #
       create_point_chain(e)
       process_tooltip_event(e)
+      generate_crossing_events(e)
 
       #
       # Synch the pointer if the left mouse button isn't held.
@@ -653,16 +655,19 @@ class Dialog(Component)
       return *held
    end
 
+   public generate_crossing_events(e) 
+      local t
+      t := crossing
+      crossing := elementset(point_chain)
+      fire_list(t -- crossing, Event.MOUSE_EXIT, e)
+      fire_list(crossing -- t, Event.MOUSE_ENTER, e)
+   end
+
    public generate_events(e)
       local ec, t
-
       ec := e.code
       if integer(ec) < 0 then {
          # Mouse event
-         t := crossing
-         crossing := elementset(point_chain)
-         fire_list(t -- crossing, Event.MOUSE_EXIT, e)
-         fire_list(crossing -- t, Event.MOUSE_ENTER, e)
          if member(Mouse.WHEEL, ec) then {
             fire_list(point_chain, ec, e)
          } else if member(Mouse.PRESS, ec) then {
@@ -948,6 +953,7 @@ class Dialog(Component)
    private exit_dnd(e)
       self.curr_drag_holder := self.curr_drop := self.curr_drag := &null
       self.invoke_drag_reset(e)
+      generate_crossing_events(e)
       if /held[-1] then
          synch_pointer(e)
       else
