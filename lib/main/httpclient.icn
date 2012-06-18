@@ -48,6 +48,17 @@ class Cookie()
    end
 end
 
+class Authentication()
+   public const
+      username, password
+
+   public new(username, password)
+      self.username := username
+      self.password := password
+      return
+   end
+end
+
 #
 # An http client
 #
@@ -87,7 +98,7 @@ class HttpClient(NetClient)
       keep_alive_flag,
       user_agent,
       redir_set, 
-      auth_req_count,
+      auth,
       auth_scheme,
       basic_auth_header,
       nonce,
@@ -98,6 +109,8 @@ class HttpClient(NetClient)
       qop,
       realm,
       cookies,
+      authentications,
+      authentication_function,
       abort_flag,
       gzip_flag,
       inflater_stream
@@ -149,6 +162,26 @@ class HttpClient(NetClient)
    #
    public get_cookies()
       return self.cookies
+   end
+
+   #
+   # Set the authentications table.
+   #
+   public set_authentications(m)
+      self.authentications := m
+      return self
+   end
+
+   #
+   # Get the authentications table.
+   #
+   public get_authentications()
+      return self.authentications
+   end
+
+   public set_authentication_function(f)
+      self.authentication_function := f
+      return self
    end
 
    #
@@ -212,8 +245,6 @@ class HttpClient(NetClient)
          set_url(request.url).
          set_method(request.method).
          set_headers(clone(request.headers)).
-         set_username(request.username).
-         set_password(request.password).
          set_referer(request.referer).
          set_range(request.range_start, request.range_end)
       if /request.output_stream then
@@ -233,9 +264,8 @@ class HttpClient(NetClient)
          self.request.set_input_stream(request.input_stream)
       }
 
-      auth_req_count := 0
       redir_set := set()
-      abort_flag := &null
+      auth := auth_scheme := abort_flag := &null
       repeat {
          http_error := &null
 
@@ -258,6 +288,7 @@ class HttpClient(NetClient)
       #
       # A redirection, so extract the URL if possible.
       #
+      auth := auth_scheme := &null
       l := response.get_first_header("Location") | return on_http_error("No Location in a redirect response")
       if match("http://" | "https://", l) then {
          u := URL.parse(l) | return on_http_error("Invalid Location in a redirect response: " || l)
@@ -284,45 +315,60 @@ class HttpClient(NetClient)
             unset_header("content-length").
             unset_header("content-type")
       }
-      auth_req_count := 0
       return
    end
 
    private handle_authentication()
-      local s, t
-      if /(request.username | request.password) then
-         return on_http_error("Authentication requested - please set username, password")
-
-      if auth_req_count > 0 then
-         return on_http_error("Failed to authenticate - correct username, password")
-      auth_req_count +:= 1
+      local s, t, k, realm, dom
 
       s := response.get_first_header("www-authenticate") | 
          return on_http_error("No WWW-Authenticate in a 401 response")
-
       t := parse_generic_header(s)
+
+      realm := member(t, "realm") | 
+         return on_http_error("No realm in WWW-Authenticate header in a 401 response")
+      dom := string(response.url.address)
+      k := realm || " at " || dom
+      if /auth then {
+         # First 401 response, so see if we have a cached
+         # authentication; if not then ask for one.
+         (auth := member(authentications, k)) | {
+            if auth := (\authentication_function)(dom, realm) then
+               insert(authentications, k, auth)
+            else
+               return on_http_error("Authentication requested - please set username, password")
+         }
+      } else {
+         # 401 response to a request with authentication, so it must
+         # have been wrong.  Delete bad value from cache and ask.
+         delete(authentications, k)
+         if auth := (\authentication_function)(dom, realm) then
+            insert(authentications, k, auth)
+         else
+            return on_http_error("Failed to authenticate - correct username, password")
+      }
+
       if member(t, "Basic") then {
          auth_scheme := "Basic"
          return setup_basic_authentication()
       }
       if member(t, "Digest") then {
          auth_scheme := "Digest"
-         return setup_digest_authentication()
+         return setup_digest_authentication(t)
       }
 
       return on_http_error("WWW-Authenticate header contained unknown authentication method.")
    end
 
-   private setup_basic_authentication(t)
-      basic_auth_header := "Basic " || base64encode(request.username || ":" || request.password)
+   private setup_basic_authentication()
+      basic_auth_header := "Basic " || base64encode(auth.username || ":" || auth.password)
       return
    end
 
    private setup_digest_authentication(t)
       local algorithm, md5, qop_options
 
-      self.realm := \t["realm"] | 
-         return on_http_error("WWW-Authenticate digest header didn't contain a realm")
+      self.realm := t["realm"]
       self.nonce := \t["nonce"] | 
          return on_http_error("WWW-Authenticate digest header didn't contain a nonce")
       self.opaque := t["opaque"] 
@@ -335,7 +381,7 @@ class HttpClient(NetClient)
       # Calculate HA1
       #
       md5 := MD5()
-      md5.update(request.username || ":" || realm || ":" || request.password)
+      md5.update(auth.username || ":" || realm || ":" || auth.password)
       if map(algorithm) == "md5-sess" then {
          md5.update(":" || nonce || ":" || cnonce)
       }
@@ -389,7 +435,7 @@ class HttpClient(NetClient)
 
       md5.update(ha2)
 
-      h := "Digest username=\"" || request.username || "\",\r\n\t" ||
+      h := "Digest username=\"" || auth.username || "\",\r\n\t" ||
          "realm=" || realm || ",\r\n\t" ||
          "nonce=" || nonce || ",\r\n\t" ||
          "uri=\"" || request.url.get_file() || "\",\r\n\t"
@@ -1016,6 +1062,7 @@ class HttpClient(NetClient)
    public new()
       cast(self,NetClient).new()
       cookies := table()
+      authentications := table()
       set_timeout(12000)
       keep_alive_flag := 1
       retries := 2
