@@ -133,6 +133,8 @@ procedure main(args)
    hc.set_timeout(\opts["t"] * 1000)
    hc.set_retries(\opts["r"])
    hc.set_user_agent(\opts["agent"])
+   if \opts["a"] then
+      hc.set_authentication_function(authenticate)
    if \opts["nsslv"] then
       hc.set_ssl_verify(&no)
 
@@ -156,7 +158,7 @@ procedure main(args)
 
    cookies := \opts["k"] | System.getenv("GETURL_COOKIES")
    if \cookies then {
-      t := decode(Files.file_to_string(cookies)) | {
+      (t := decode(Files.file_to_string(cookies))) | {
          write(FileStream.stderr, "Couldn't read/decode cookie file ", cookies, ": ", &why)
          t := table()
       }
@@ -222,10 +224,21 @@ procedure main(args)
       exit(1)
 end
 
+procedure authenticate()
+   local u, p
+   \opts["a"] ? {
+      u := tab(upto(':')) | stop("Bad -a option")
+      move(1)
+      p := tab(0)
+      # Only succeed once, otherwise httpclient will loop forever retrying
+      delete(opts, "a")
+      return Authentication(u, p)
+   }
+end
 
 procedure process_one(a)
-   local hr, url, u, p, start_t, res, end_t, kbps, s, msg, tmp_file, output_stream, 
-      input_stream, content_type, t, k, v
+   local hr, url, start_t, res, end_t, kbps, s, msg, tmp_file, output_stream, 
+      input_stream, content_type, t, k, v, p
 
    total +:= 1
 
@@ -241,15 +254,6 @@ procedure process_one(a)
 
    hr := HttpRequest()
    hr.set_url(url)
-   if \opts["a"] then {
-      opts["a"] ? {
-         u := tab(upto(':')) | stop("Bad -a option")
-         move(1)
-         p := tab(0)
-      }
-      hr.set_username(u)
-      hr.set_password(p)
-   }
    if \opts["head"] then 
       hr.set_method("HEAD")
 
