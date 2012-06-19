@@ -9,7 +9,7 @@ class GridLayout(Layout)
       dii,          # Default inner padding, ie not at edge of grid
       doi,          # Default outer padding
       extra,        # Flag indicating how to allocate extra space
-      adjust_preferred_sizes_flag,
+      adjust_preferred_heights_flag,
       debug
 
    # Default insets between components in a GridLayout.
@@ -41,7 +41,8 @@ class GridLayout(Layout)
          if /c.x_spec then {
             ci := g.create_cell(c.constraints)
             ci.pw := c.get_preferred_width()
-            ci.ph := c.get_preferred_height(ci.pw)
+            ci.ph_calc_w := ci.pw
+            ci.ph := c.get_preferred_height(ci.ph_calc_w)
             ci.obj := c
          }
       }
@@ -53,38 +54,35 @@ class GridLayout(Layout)
       return g.get_preferred_width()
    end
 
-   public adjust_preferred_sizes()
+   public adjust_preferred_heights()
      local i, adj
      every i := !g.info do {
-        if i.pw ~= i.aw then {
+        if i.ph_calc_w ~= i.aw then {
            if \debug then
-              writes("Adjusting cell ", i.s, " from pw,ph=", i.pw, ",", i.ph)
-           i.pw := i.aw
-           i.dw := i.pw + i.l_inset + i.r_inset
-           i.ph := i.obj.get_preferred_height(i.aw)
+              writes("Adjusting cell height ", i.s, " from ", i.ph)
+           i.ph_calc_w := i.aw
+           i.ph := i.obj.get_preferred_height(i.ph_calc_w)
            i.dh := i.ph + i.t_inset + i.b_inset
             if \debug then
-              write(" to ", i.pw, ",", i.ph)
+              write(" to ", i.ph)
            adj := 1
         }
      }
-     if \adj then {
+     if \adj then
         g.compute_row_heights()
-        return
-     }
    end
 
    public get_preferred_height(pw)
       ensure_grid()
-      if \adjust_preferred_sizes_flag then {
-         g.compute_widths(pw)
-         adjust_preferred_sizes()
+      if \adjust_preferred_heights_flag then {
+         g.compute_widths(, pw)
+         adjust_preferred_heights()
       }
       return g.get_preferred_height()
    end
 
-   public set_adjust_preferred_sizes(s)
-      self.adjust_preferred_sizes_flag := check_flag(s)
+   public set_adjust_preferred_heights(s)
+      self.adjust_preferred_heights_flag := check_flag(s)
       return self
    end
 
@@ -115,10 +113,10 @@ class GridLayout(Layout)
 
       ensure_grid()
 
-      g.compute_locations(parent.x, parent.y, parent.w, parent.h)
-
-      if \adjust_preferred_sizes_flag & adjust_preferred_sizes() then
-         g.compute_locations(parent.x, parent.y, parent.w, parent.h)
+      g.compute_widths(parent.x, parent.w)
+      if \adjust_preferred_heights_flag then
+         adjust_preferred_heights()
+      g.compute_heights(parent.y, parent.h)
 
       every i := !g.info do {
          i.obj.x := i.ax

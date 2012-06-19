@@ -21,13 +21,16 @@ class TableCellInfo(Insets)
       y, 
       w, 
       h, 
-      maxdw,
+      max_dw,
       pct_w,
+      fix_w,
+      fix_h,
       dw,             # Desired cell width including insets
       dh, 
-      maxw,
+      max_w,
       pw,             # Preferred cell width excluding insets
       ph,
+      ph_calc_w,      # Width used to calc ph
       ascent,         # Ascent of first row
       ascent_adj      # Adjustment needed to align baselines
    #
@@ -37,10 +40,11 @@ class TableCellInfo(Insets)
       local t
       t := s || ": "
       t ||:= " pos=" || self.x || "," || self.y || " dim=" || self.w || "," || self.h ||
-         " component pref size=" || pw || "," || ph || " (maxw=" || maxw || ")"
-      t ||:= "\n\tcell desired size=" || dw || "," || dh || " (maxdw=" || maxdw || ")"
+         " component pref width=" || pw ||" max width=" || max_w
+      t ||:= "\n\theight=" || ph || " calculated from width " || ph_calc_w
+      t ||:= "\n\tcell desired size=" || dw || "," || dh || " (max_dw=" || max_dw || ")"
       t ||:= " located to=" || \ax || "," || \ay || " size set to " || \aw || "," || \ah
-      t ||:= "pct_w=" || \pct_w
+      t ||:= " pct_w=" || \pct_w
       oo.object_string(self, t)
    end
 end
@@ -49,7 +53,7 @@ class TableGrid()
    public 
       gw,           # Grid width, height in cells
       gh, 
-      p_col_maxw,   # Max column widths
+      p_col_max_w,   # Max column widths
       p_col_w,      # Preferred column widths/row heights
       p_row_h,
       a_col_w,      # Actual column widths/row heights after extra
@@ -105,6 +109,8 @@ class TableGrid()
       }
       ci.ascent_adj := 0
       ci.pct_w := validate_int(t, "pct_w", 0)
+      ci.fix_w := validate_int(t, "fix_w")
+      ci.fix_h := validate_int(t, "fix_h")
       put(info, ci)
 
       return ci
@@ -127,7 +133,7 @@ class TableGrid()
          ci.r_inset := if ci.x + ci.w = gw + 1 then self.doi else self.dii
          ci.b_inset := if ci.y + ci.h = gh + 1 then self.doi else self.dii
          ci.dw := ci.pw + ci.l_inset + ci.r_inset
-         ci.maxdw := ci.maxw + ci.l_inset + ci.r_inset
+         ci.max_dw := ci.max_w + ci.l_inset + ci.r_inset
          ci.dh := ci.ph + ci.ascent_adj + ci.t_inset + ci.b_inset
       }
 
@@ -197,7 +203,7 @@ class TableGrid()
    public compute_col_widths()
       local i, need, l, pct_col_w, tot
       p_col_w := list(gw, 0)
-      p_col_maxw := list(gw, 0)
+      p_col_max_w := list(gw, 0)
       pct_col_w := list(gw, 0)
       l := isort(info, cell_width_sort)
 
@@ -207,9 +213,9 @@ class TableGrid()
          if need > 0 then
             dist_equally(i.x, i.w, need, p_col_w, fix_col1_flag)
 
-         need := i.maxdw - slice(i.x, i.w, p_col_maxw)
+         need := i.max_dw - slice(i.x, i.w, p_col_max_w)
          if need > 0 then
-            dist_equally(i.x, i.w, need, p_col_maxw, fix_col1_flag)
+            dist_equally(i.x, i.w, need, p_col_max_w, fix_col1_flag)
 
          need := i.pct_w - slice(i.x, i.w, pct_col_w)
          if need > 0 then
@@ -222,7 +228,7 @@ class TableGrid()
       every i := 1 to gw do {
          need := (tot * pct_col_w[i]) / 100
          if p_col_w[i] <:= need then
-            p_col_maxw[i] <:= need
+            p_col_max_w[i] <:= need
       }
    end
 
@@ -269,7 +275,7 @@ class TableGrid()
 
       write("----- Data -------")
       write("p_col_w=", to_string(p_col_w))
-      write("p_col_maxw=", to_string(p_col_maxw))
+      write("p_col_max_w=", to_string(p_col_max_w))
       if \self.a_col_w then {
          write("a_col_w=", to_string(a_col_w))
          write("\textra width in a_col_w:", total(a_col_w)-total(p_col_w))
@@ -293,30 +299,24 @@ class TableGrid()
    end
 
    public get_max_width()
-      return total(p_col_maxw)
+      return total(p_col_max_w)
    end
 
    public get_preferred_height()
       return total(p_row_h)
    end
 
-   public compute_locations(x1, y1, w1, h1)
-      local i, x, y, w, h, ew, eh
+   public compute_widths(x1, w1)
+      local i, x, w, ew
 
       /x1 := 0
-      /y1 := 0
 
       a_col_w := copy(p_col_w)
-      a_row_h := copy(p_row_h)
 
       # Extra width
       ew := w1 - total(p_col_w)
       # Allocate by max width
-      dist_by_max(ew, a_col_w, p_col_maxw) / 2
-
-      # Same for height.
-      eh := h1 - total(p_row_h)
-      dist_equally(1, *a_row_h, eh, a_row_h)
+      dist_by_max(ew, a_col_w, p_col_max_w) / 2
 
       col_x := []
       x := x1
@@ -324,6 +324,25 @@ class TableGrid()
          put(col_x, x)
          x +:= w
       }
+
+      every i := !info do {
+         x := col_x[i.x] + i.l_inset
+         w := slice(i.x, i.w, a_col_w) - i.l_inset - i.r_inset
+         i.aw := w
+         i.ax := x
+      }
+   end
+
+   public compute_heights(y1, h1)
+      local i, y, h, eh
+
+      /y1 := 0
+
+      a_row_h := copy(p_row_h)
+
+      # Extra height.
+      eh := h1 - total(p_row_h)
+      dist_equally(1, *a_row_h, eh, a_row_h)
 
       row_y := []
       y := y1
@@ -333,41 +352,10 @@ class TableGrid()
       }
 
       every i := !info do {
-         x := col_x[i.x] + i.l_inset
          y := row_y[i.y] + i.t_inset + i.ascent_adj
-         w := slice(i.x, i.w, a_col_w) - i.l_inset - i.r_inset
          h := slice(i.y, i.h, a_row_h) - i.t_inset - i.b_inset
-         i.aw := w
          i.ah := h
-         i.ax := x
          i.ay := y
-      }
-   end
-
-   public compute_widths(w1)
-      local x1, i, x, w, ew
-
-      x1 := 0
-
-      a_col_w := copy(p_col_w)
-
-      # Extra width
-      ew := w1 - total(p_col_w)
-      # Allocate by max width
-      dist_by_max(ew, a_col_w, p_col_maxw) / 2
-
-      col_x := []
-      x := x1
-      every w := !a_col_w do {
-         put(col_x, x)
-         x +:= w
-      }
-
-      every i := !info do {
-         x := col_x[i.x] + i.l_inset
-         w := slice(i.x, i.w, a_col_w) - i.l_inset - i.r_inset
-         i.aw := w
-         i.ax := x
       }
    end
 
@@ -425,10 +413,14 @@ class TableLayout(Layout)
          if /c.x_spec then {
             ci := g.create_cell(c.constraints)
             ci.pw := c.get_preferred_width()
-            ci.maxw := c.get_max_width()
-            #write("cell ",image(c)," pw=",ci.pw, "  maxw=",ci.maxw)
-            ci.ph := c.get_preferred_height(ci.pw)
-            ci.ascent := c.get_first_row_ascent(ci.pw)
+            ci.max_w := c.get_max_width()
+            if \ci.fix_w then
+               ci.pw := ci.max_w := max(ci.fix_w, ci.pw)
+            #write("cell ",image(c),"  fixw=",ci.fix_w," pw=",ci.pw, "  max_w=",ci.max_w)
+            ci.ph_calc_w := ci.pw
+            ci.ph := c.get_preferred_height(ci.ph_calc_w)
+            ci.ph <:= \ci.fix_h
+            ci.ascent := c.get_first_row_ascent(ci.ph_calc_w)
             ci.obj := c
          }
       }
@@ -447,29 +439,27 @@ class TableLayout(Layout)
       return g.get_max_width()
    end
 
-   public adjust_preferred_sizes()
+   public adjust_preferred_heights()
      local i, adj
      every i := !g.info do {
-        if i.pw ~= i.aw then {
+        if i.ph_calc_w ~= i.aw then {
            if \debug then
-              writes("Adjusting cell ", i.s, " from pw,ph=", i.pw, ",", i.ph)
-           i.pw := i.aw
-           i.dw := i.pw + i.l_inset + i.r_inset
-           i.ph := i.obj.get_preferred_height(i.aw)
-           i.ascent := i.obj.get_first_row_ascent(i.aw)
-            if \debug then
-              write(" to ", i.pw, ",", i.ph)
+              writes("Adjusting cell height ", i.s, " from ", i.ph)
+           i.ph_calc_w := i.aw
+           i.ph := i.obj.get_preferred_height(i.ph_calc_w)
+           i.ph <:= \i.fix_h
+           i.ascent := i.obj.get_first_row_ascent(i.ph_calc_w)
+           if \debug then
+              write(" to ", i.ph)
            adj := 1
         }
      }
      if \adj then {
         if \align_baselines_flag then
            align_baselines()
-        every i := !g.info do {
+        every i := !g.info do
            i.dh := i.ph + i.ascent_adj + i.t_inset + i.b_inset
-        }
         g.compute_row_heights()
-        return
      }
    end
 
@@ -477,7 +467,6 @@ class TableLayout(Layout)
      local i, j, ma, row, y
      row := []
      every i := !g.info do {
-#write(i.y)
         if i.y === y then {
            put(row, i)
            ma <:= i.ascent
@@ -495,8 +484,8 @@ class TableLayout(Layout)
 
    public get_preferred_height(pw)
       ensure_grid()
-      g.compute_widths(pw)
-      adjust_preferred_sizes()
+      g.compute_widths(, pw)
+      adjust_preferred_heights()
       return g.get_preferred_height()
    end
 
@@ -505,8 +494,8 @@ class TableLayout(Layout)
       if /align_baselines_flag then
          fail
       ensure_grid()
-      g.compute_widths(pw)
-      adjust_preferred_sizes()
+      g.compute_widths(, pw)
+      adjust_preferred_heights()
       return if i := g.info[1] then i.ascent + i.ascent_adj + i.t_inset else 0
    end
 
@@ -547,10 +536,9 @@ class TableLayout(Layout)
 
       ensure_grid()
 
-      g.compute_locations(parent.x, parent.y, parent.w, parent.h)
-
-      if adjust_preferred_sizes(g) then
-         g.compute_locations(parent.x, parent.y, parent.w, parent.h)
+      g.compute_widths(parent.x, parent.w)
+      adjust_preferred_heights()
+      g.compute_heights(parent.y, parent.h)
 
       every i := !g.info do {
          i.obj.x := i.ax

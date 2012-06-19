@@ -23,6 +23,7 @@ class CellInfo(Insets,Align)
       dh, 
       pw,             # Preferred cell width excluding insets
       ph, 
+      ph_calc_w,      # Width used to calc ph
       x_fill,         # Constraints: fill, align, weights, insets
       y_fill,
       x_weight,
@@ -35,7 +36,8 @@ class CellInfo(Insets,Align)
       local t
       t := s || ": "
       t ||:= " pos=" || self.x || "," || self.y || " dim=" || self.w || "," || self.h ||
-         " component pref size=" || pw || "," || ph
+         " component pref width=" || pw
+      t ||:= "\n\theight=" || ph || " calculated from width " || ph_calc_w
       t ||:= "\n\tcell desired size=" || dw || "," || dh
       t ||:= " located to=" || \ax || "," || \ay || " size set to " || \aw || "," || \ah
 
@@ -327,14 +329,12 @@ class Grid()
       return total(p_row_h)
    end
 
-   public compute_locations(x1, y1, w1, h1)
-      local i, x, y, w, h, ew, eh, tw
+   public compute_widths(x1, w1)
+      local i, x, w, ew, tw
 
       /x1 := 0
-      /y1 := 0
 
       a_col_w := copy(p_col_w)
-      a_row_h := copy(p_row_h)
 
       case self.extra of {
          EXTRA_CELLS : {
@@ -349,8 +349,43 @@ class Grid()
                self.pad_w := 0
                dist_by_weight(1, *a_col_w, ew, a_col_w, col_weights, tw)
             }
+         }
+         EXTRA_BORDERS : 
+            self.pad_w := (w1 - total(p_col_w)) / 2
+         EXTRA_IGNORE : 
+            self.pad_w := 0
+         default : runerr("Bad value for extra", self.extra)
+      }
 
-            # Same for height.
+      col_x := []
+      x := x1 + self.pad_w
+      every w := !a_col_w do {
+         put(col_x, x)
+         x +:= w
+      }
+
+      every i := !info do {
+         x := col_x[i.x] + i.l_inset
+         w := slice(i.x, i.w, a_col_w) - i.l_inset - i.r_inset
+         i.aw := if \i.x_fill then w else i.pw
+         i.ax := case i.x_align of {
+            Align.L : x
+            Align.R : x + w - i.aw
+            Align.C : x + (w - i.aw) / 2
+         }
+      }
+   end
+
+   public compute_heights(y1, h1)
+      local i, y, h, eh, tw
+
+      /y1 := 0
+
+      a_row_h := copy(p_row_h)
+
+      case self.extra of {
+         EXTRA_CELLS : {
+            # Extra height.
             eh := h1 - total(p_row_h)
             tw := total(row_weights)
             if tw = 0 then
@@ -360,21 +395,11 @@ class Grid()
                dist_by_weight(1, *a_row_h, eh, a_row_h, row_weights, tw)
             }
          }
-         EXTRA_BORDERS : {
-            self.pad_w := (w1 - total(p_col_w)) / 2
+         EXTRA_BORDERS : 
             self.pad_h := (h1 - total(p_row_h)) / 2
-         }
-         EXTRA_IGNORE : {
-            self.pad_w := self.pad_h := 0
-         }
+         EXTRA_IGNORE : 
+            self.pad_h := 0
          default : runerr("Bad value for extra", self.extra)
-      }
-
-      col_x := []
-      x := x1 + self.pad_w
-      every w := !a_col_w do {
-         put(col_x, x)
-         x +:= w
       }
 
       row_y := []
@@ -385,73 +410,13 @@ class Grid()
       }
 
       every i := !info do {
-         x := col_x[i.x] + i.l_inset
          y := row_y[i.y] + i.t_inset
-         w := slice(i.x, i.w, a_col_w) - i.l_inset - i.r_inset
          h := slice(i.y, i.h, a_row_h) - i.t_inset - i.b_inset
-         i.aw := if \i.x_fill then w else i.pw
          i.ah := if \i.y_fill then h else i.ph
-
-         i.ax := case i.x_align of {
-            Align.L : x
-            Align.R : x + w - i.aw
-            Align.C : x + (w - i.aw) / 2
-         }
-
          i.ay := case i.y_align of {
             Align.T : y
             Align.B : y + h - i.ah
             Align.C : y + (h - i.ah) / 2
-         }
-      }
-   end
-
-   public compute_widths(w1)
-      local x1, i, x, w, ew, tw
-
-      x1 := 0
-
-      a_col_w := copy(p_col_w)
-
-      case self.extra of {
-         EXTRA_CELLS : {
-            # Extra width
-            ew := w1 - total(p_col_w)
-            tw := total(col_weights)
-            if tw = 0 then
-               # All weights zero - it goes on the border
-               self.pad_w := ew / 2
-            else {
-               # Some weights, so no border and allocate by weight.
-               self.pad_w := 0
-               dist_by_weight(1, *a_col_w, ew, a_col_w, col_weights, tw)
-            }
-         }
-         EXTRA_BORDERS : {
-            self.pad_w := (w1 - total(p_col_w)) / 2
-         }
-         EXTRA_IGNORE : {
-            self.pad_w := 0
-         }
-         default : runerr("Bad value for extra", self.extra)
-      }
-
-      col_x := []
-      x := x1 + self.pad_w
-      every w := !a_col_w do {
-         put(col_x, x)
-         x +:= w
-      }
-
-      every i := !info do {
-         x := col_x[i.x] + i.l_inset
-         w := slice(i.x, i.w, a_col_w) - i.l_inset - i.r_inset
-         i.aw := if \i.x_fill then w else i.pw
-
-         i.ax := case i.x_align of {
-            Align.L : x
-            Align.R : x + w - i.aw
-            Align.C : x + (w - i.aw) / 2
          }
       }
    end
