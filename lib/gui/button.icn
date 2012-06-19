@@ -56,7 +56,7 @@ class Button(Toggle,Component)
    end
 
    public finally()
-      repeat_ticker.stop()
+      stop_held()
       cast(self,Component).finally()
    end
 
@@ -68,13 +68,11 @@ class Button(Toggle,Component)
       }
    end
 
-   public go_down()
-      self.is_down := 1
+   public start_held()
       repeat_ticker.start()
    end
 
-   public go_up()
-      self.is_down := &null
+   public stop_held()
       repeat_ticker.stop()
    end
 
@@ -82,7 +80,8 @@ class Button(Toggle,Component)
       local b
 
       if /self.is_down then {
-         go_down()
+         self.is_down := 1
+         start_held()
          self.repeat_delay := Prog.get_runtime_millis() + Gui.REPEAT_DELAY
          every b := !(\self.parent_button_group).buttons do {
             if b.is_unhidden() & b.is_unshaded() then {
@@ -101,12 +100,14 @@ class Button(Toggle,Component)
       #
       if self.in_region(e) then {
          if /self.is_down then {
-            go_down()
+            self.is_down := 1
+            start_held()
             invalidate()
          }
       } else {
          if \self.is_down then {
-            go_up()
+            self.is_down := &null
+            stop_held()
             invalidate()
          }
       }
@@ -114,7 +115,8 @@ class Button(Toggle,Component)
 
    public handle_lrelease(e)
       if \self.is_down then {
-         go_up()
+         self.is_down := &null
+         stop_held()
          fire(Event.BUTTON_RELEASE, e)
          on_action(e)
       }
@@ -160,7 +162,7 @@ class Button(Toggle,Component)
    end
 
    public handle_key(e)
-      if e.code == ("\r"|"\l"|" ") then
+      if e.code == ("\r"|"\l"|" ") & /self.is_down then
          visualize_action(e)
    end
 
