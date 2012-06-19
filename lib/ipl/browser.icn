@@ -338,9 +338,7 @@ end
 
 class Tbl(Border, HasMaxWidth, HasAscent)
    public get_max_width()
-      local w1, t
-      if t := integer(self.w_spec) then
-         return t
+      local w1
       w1 := content.layout_delegate.get_max_width()  + border.get_total_width()
       return if \title then
          max(w1, title.get_max_width() + 2 * TITLE_OFFSET)
@@ -1971,9 +1969,17 @@ class Browser(Component)
       local width
       return if width := e.get_attribute(u"WIDTH") then {
          if width := (0 <= integer(width)) then
-            c.set_width(width)
+            c.set_constraint("fix_w", width)
          else if width[-1] == "%" & width := (0 <= integer(width[1:-1])) then
             c.set_constraint("pct_w", width)
+      }
+   end
+
+   private do_height_param(e, c)
+      local height
+      return if height := e.get_attribute(u"HEIGHT") then {
+         if height := (0 <= integer(height)) then
+            c.set_constraint("fix_h", height)
       }
    end
 
@@ -1982,6 +1988,7 @@ class Browser(Component)
 
       tbl := Tbl()
       do_width_param(e, tbl)
+      do_height_param(e, tbl)
       border := integer(e.get_attribute(u"BORDER")) | 0
       cellpadding := integer(e.get_attribute(u"CELLPADDING")) | 0
       cellspacing := integer(e.get_attribute(u"CELLSPACING")) | 2
@@ -2083,6 +2090,7 @@ class Browser(Component)
       row.set_bg(convert_color(e | \ct.tr, u"BGCOLOR"))
       every insert(ct.occ, (ct.x to ct.x + colspan - 1) || "," || (ct.y to ct.y + rowspan - 1))
       do_width_param(e, row)
+      do_height_param(e, row)
       ct.tbl.content.add(row)
 
       c := copy(context)
