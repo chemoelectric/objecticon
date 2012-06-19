@@ -336,7 +336,7 @@ class Worker()
    end
 end
 
-class Tbl(Border)
+class Tbl(Border, HasMaxWidth, HasAscent)
    public get_max_width()
       local w1, t
       if t := integer(self.w_spec) then
@@ -509,10 +509,6 @@ end
 class FormEntry()
    public reset() end
 
-   public get_ascent(cw, ch) 
-      return ch
-   end 
-
    public get_save_subkey() end
    public get_save_value() end
    public restore_value(val) end
@@ -555,7 +551,7 @@ class FormToggle(ToggleTextButton, FormEntry)
    end
 end
 
-class FormButton(TextButton, FormEntry)
+class FormButton(TextButton, FormEntry, HasAscent)
    private const
       value
 
@@ -576,22 +572,30 @@ class FormButton(TextButton, FormEntry)
    end
 end
 
-class FormTbl(Tbl, FormEntry)
-   private const
-      value, form, type
+class FormTblButton(Button, FormEntry, HasMaxWidth, HasAscent)
+   public const
+      tbl, value, form, type
 
    public get_value(ev, src)
       if src === self then
          return value
    end
 
-   private handle_form_lrelease(e, src)
-      if in_region(e) then {
-         case type of { 
-            "submit": form.submit(e, src)
-            "reset": form.reset()
-         }
+   private handle_action(e, src)
+      case type of { 
+         "submit": form.submit(e, src)
+         "reset": form.reset()
       }
+   end
+
+   public display()
+      display_children()
+      if \self.is_down then {
+         Gui.style.down_rectangle(self.cbwin, self.x, self.y, self.w, self.h)
+         tbl.border.draw_rev_rect(self.cbwin, self)
+      }
+      if self.has_focus() & self.is_unshaded() then
+         tbl.border.draw_focus_rect(self.cbwin, self)
    end
 
    #
@@ -600,17 +604,45 @@ class FormTbl(Tbl, FormEntry)
    public build_point_chain(l)
    end
 
+   public get_default_width()
+      return tbl.get_preferred_width()
+   end
+
+   public get_max_width()
+      return tbl.get_max_width()
+   end
+
+   public get_default_height(dw)
+      return tbl.get_preferred_height(dw)
+   end
+
+   public layout()
+      tbl.x := x
+      tbl.y := y
+      tbl.w := w
+      tbl.h := h
+      tbl.layout()
+   end
+
+   public get_ascent(dw, dh)
+      return tbl.get_ascent(dw, dh)
+   end
+
    public new(form, value, type)
-      cast(self,Tbl).new()
+      cast(self,Button).new()
+      tbl := Tbl().
+         set_border(CompoundBorder().
+                    set_outer(RaisedBorder()).
+                    set_inner(EmptyBorder()))
+      add(tbl)
       self.value := value
       self.form := form
       self.type := type
-      content.layout_delegate.set_align_baselines(&yes)
-      set_border(CompoundBorder().
-                 set_outer(RaisedBorder()).
-                 set_inner(EmptyBorder()))
-      set_pointer("hand1")
-      connect(self.handle_form_lrelease, Event.MOUSE_LEFT_RELEASE)
+      # Although there is only one element in this Tbl, this flag
+      # makes the ascent for the Tbl the ascent of the single
+      # element.
+      tbl.content.layout_delegate.set_align_baselines(&yes)
+      connect(self.handle_action, Event.ACTION)
       return
    end
 end
@@ -641,7 +673,7 @@ class FormLabel()
    end
 end
 
-class FormBrowse(Component, FormEntry)
+class FormBrowse(Component, FormEntry, HasAscent)
    private const
       tf,
       browser
@@ -718,7 +750,7 @@ class FormImgY(FormEntry)
    end
 end
 
-class FormTextField(TextField, FormEntry)
+class FormTextField(TextField, FormEntry, HasAscent)
    private const
       init_val
 
@@ -779,7 +811,7 @@ class FormEditableTextList(EditableTextList, FormEntry)
    end
 end
 
-class FormList(gui.List, FormEntry)
+class FormList(gui.List, FormEntry, HasAscent)
    private const
       init_val
 
@@ -941,7 +973,7 @@ record FieldSetContext(legend)
 record MapContext(map)
 record SelectContext(options, sel)
 record Context(base, form, form_label, url, fg, link_fg, font, align, pre, underline, strike, 
-               baseline_off, face, size, bold, italic, kind, table, list, def_list, fieldset, select, map)
+               face, size, bold, italic, kind, table, list, def_list, fieldset, select, map)
 
 class MapArea()
    public const
@@ -1320,7 +1352,6 @@ class Browser(Component)
             }
          }
       }
-      
    end
 
    private set_top_data(res)
@@ -1383,7 +1414,6 @@ class Browser(Component)
          c.fg := "black"
          c.link_fg := "blue"
          c.size := 3
-         c.baseline_off := 0
          c.kind := res.kind   # Tells images whether to refresh or not
          synch_font(c)
          if n := doc.get_root_element().search_tree(u"BODY") then {
@@ -1416,7 +1446,7 @@ class Browser(Component)
    private traverse_a(e, p, context)
       local url, c, na
       if na := e.get_attribute(u"NAME") then {
-         put(p.input, NamedAnchorCmd(na))
+         put(p.input, NamedAnchorCmd(na, context))
          traverse(e, p, context)
       }
       else if url := mk_link(context.base, e.get_attribute(u"HREF")) then {
@@ -1429,13 +1459,13 @@ class Browser(Component)
 
    private traverse_hN(e, p, context)
       local c
-      put_para(p)
+      put_para(p, context)
       c := copy(context)
       c.size := 7 - e.name[-1]
       c.bold := 1
       synch_font(c)
       traverse(e, p, c)
-      put_para(p)
+      put_para(p, c)
    end
 
    private parse_size(s, curr)
@@ -1492,8 +1522,9 @@ class Browser(Component)
          c.size -:= 1
          synch_font(c)
       }
-      c.baseline_off +:= 1
+      put(p.input, SupStartCmd(c))
       traverse(e, p, c)
+      put(p.input, SupEndCmd(c))
    end
 
    private traverse_sub(e, p, context)
@@ -1503,8 +1534,9 @@ class Browser(Component)
          c.size -:= 1
          synch_font(c)
       }
-      c.baseline_off -:= 1
+      put(p.input, SubStartCmd(c))
       traverse(e, p, c)
+      put(p.input, SubEndCmd(c))
    end
 
    private traverse_b(e, p, context)
@@ -1571,13 +1603,13 @@ class Browser(Component)
       \context.form | fail
       v := e.get_attribute(u"VALUE") | u""
       type := map(string(e.get_attribute(u"TYPE")))
-      q := FormTbl(context.form, v, type)
+      q := FormTblButton(context.form, v, type)
       if e.get_attribute(u"DISABLED") then
          q.set_is_shaded(&yes)
       else
          context.form.add(e.get_attribute(u"NAME"), q)
       row := TextFlow(self)
-      q.content.add(row)
+      q.tbl.content.add(row)
       add_component(p, q, context, Align.B)
       traverse(e, row, context)
    end
@@ -1831,7 +1863,7 @@ class Browser(Component)
    end
 
    private traverse_div(e, p, context)
-      put_new_row(p)
+      put_new_row(p, context)
       traverse(e, p, context)
    end
 
@@ -1842,13 +1874,19 @@ class Browser(Component)
          "right": Align.R
          "all"|"both": "all"
       }
-      put(p.input, BreakCmd(clear))
+      put(p.input, BreakCmd(clear, context))
    end
 
    private traverse_hr(e, p, context)
-      put_new_row(p)
-      add_component(p, Line().set_width(5), context)
-      put_new_row(p)
+      local l, c
+      l := Line().
+         set_width(5)
+      do_width_param(e, l) | l.set_constraint("pct_w", 100)
+      c := copy(context)
+      put_new_row(p, c)
+      c.align := convert_halign(e, u"ALIGN")
+      add_component(p, l, c)
+      put_new_row(p, c)
    end
 
    private traverse_q(e, p, context)
@@ -1860,33 +1898,29 @@ class Browser(Component)
    private traverse_p(e, p, context)
       local c
       c := copy(context)
-      put_para(p)
-      c.align := case string(map(e.get_attribute(u"ALIGN"))) of {
-         "left": Align.L
-         "center": Align.C
-         "right": Align.R
-      }
+      put_para(p, c)
+      c.align := convert_halign(e, u"ALIGN")
       traverse(e, p, c)
-      put_para(p)
+      put_para(p, c)
    end
 
    private traverse_pre(e, p, context)
       local c
-      put_para(p)
+      put_para(p, context)
       c := copy(context)
       c.face := "mono"
       synch_font(c)
       c.pre := 1
       traverse(e, p, c)
-      put_para(p)
+      put_para(p, c)
    end
 
-   private put_para(p)
-      put(p.input, ParaCmd())
+   private put_para(p, context)
+      put(p.input, ParaCmd(context))
    end
 
-   private put_new_row(p)
-      put(p.input, NewRowCmd())
+   private put_new_row(p, context)
+      put(p.input, NewRowCmd(context))
    end
 
    private traverse_center(e, p, context)
@@ -1935,7 +1969,7 @@ class Browser(Component)
 
    private do_width_param(e, c)
       local width
-      if width := e.get_attribute(u"WIDTH") then {
+      return if width := e.get_attribute(u"WIDTH") then {
          if width := (0 <= integer(width)) then
             c.set_width(width)
          else if width[-1] == "%" & width := (0 <= integer(width[1:-1])) then
@@ -1973,14 +2007,14 @@ class Browser(Component)
       traverse(e, p, c)
 
       if not(align === (Align.L | Align.R)) then
-         put_new_row(p)
+         put_new_row(p, c)
       if \c.table.caption then
          add_component(p, c.table.caption, context, align)
       else
          add_component(p, tbl, context, align)
 
       if not(align === (Align.L | Align.R)) then
-         put_new_row(p)
+         put_new_row(p, c)
    end
 
    private traverse_caption(e, p, context)
@@ -2075,9 +2109,9 @@ class Browser(Component)
       lc.root := e
       c.list := lc
       traverse(e, p, c)
-      put_new_row(p)
+      put_new_row(p, c)
       add_component(p, tbl, context, Align.B)
-      put_new_row(p)
+      put_new_row(p, c)
    end
 
    private traverse_li(e, p, context)
@@ -2103,9 +2137,9 @@ class Browser(Component)
       c := copy(context)
       c.def_list := dc
       traverse(e, p, c)
-      put_new_row(p)
+      put_new_row(p, c)
       add_component(p, tbl, context, Align.B)
-      put_new_row(p)
+      put_new_row(p, c)
    end
 
    private traverse_dt(e, p, context)
@@ -2129,7 +2163,7 @@ class Browser(Component)
 
    private traverse_blockquote(e, p, context)
       local tbl, row
-      put_new_row(p)
+      put_new_row(p, context)
       tbl := Tbl()
       add_component(p, tbl, context)
       row := TextFlow(self)
@@ -2138,12 +2172,12 @@ class Browser(Component)
       row := TextFlow(self) .set_constraint("eol", &yes)
       tbl.content.add(row)
       traverse(e, row, context)
-      put_new_row(p)
+      put_new_row(p, context)
    end
 
    private traverse_fieldset(e, p, context)
       local tbl, row, c, fc
-      put_new_row(p)
+      put_new_row(p, context)
       tbl := Tbl().set_border(CompoundBorder().
                               set_outer(SunkenBorder().set_line_width(1)).
                               set_inner(EmptyBorder()))
@@ -2155,7 +2189,7 @@ class Browser(Component)
       c.fieldset := fc
       traverse(e, row, c)
       tbl.set_title(\fc.legend)
-      put_new_row(p)
+      put_new_row(p, context)
    end
 
    private traverse_legend(e, p, context)
@@ -2204,7 +2238,7 @@ class Browser(Component)
             traverse_text(e, p, context)
          else if is(e, HtmlElement) then {
             if id := e.get_attribute(u"ID") then
-               put(p.input, NamedAnchorCmd(id))
+               put(p.input, NamedAnchorCmd(id, context))
             case string(e.name) of {
                "META"|"LINK"|"SCRIPT"|"STYLE": {}
                "TITLE": traverse_title(e, p, context)
