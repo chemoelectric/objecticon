@@ -223,9 +223,9 @@ class CanvasComponent(CanvasObject)
    public set_border_opts(o)
       self.border_opts := o
       if /o then
-         self.border := self.default_border
+         self.set_border(self.default_border)
       else
-         self.border := o.create_visual_border()
+         self.set_border(o.create_visual_border())
    end
 
    #

@@ -66,6 +66,14 @@ class CanvasImage(CanvasComponent,Image)
       return CanvasImageDialog(self)
    end
 
+   public allows_null_height()
+      return 1
+   end
+
+   public allows_null_width()
+      return 1
+   end
+
    public new()
       cast(self,Image).new()
       cast(self,CanvasComponent).new()
