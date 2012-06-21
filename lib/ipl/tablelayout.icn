@@ -116,20 +116,6 @@ class TableGrid()
          ci.b_inset := if ci.y + ci.h = gh + 1 then self.doi else self.dii
       }
    end
-   
-   public static slice(start, span, l)
-      local n
-      n := 0
-      every n +:= l[start to start + span - 1]
-      return n
-   end
-
-   public static total(l)
-      local n
-      n := 0
-      every n +:= !l
-      return n
-   end
 
    public static dist_equally(start, span, extra, l, flag)
       local left, i, a
@@ -149,33 +135,6 @@ class TableGrid()
       l[i] +:= left
    end
 
-   public static dist_by_max(extra, l, maxl)
-      local left, i, a, n, done
-
-      left := extra
-      n := *l
-      done := list(*l)
-      while n > 0 do {
-         a := integer(left / n)
-         if a = 0 then
-            break
-         every i := 1 to *l do {
-            if \done[i] then next
-            if l[i] + a > maxl[i] then {
-               left -:= maxl[i] - l[i]
-               l[i] := maxl[i]
-               done[i] := 1
-               n -:= 1
-            } else {
-               l[i] +:= a
-               left -:= a
-            }
-         }
-      }
-      #write("extra=",extra," left=",left)
-      dist_equally(1, *l, left, l)
-   end
-
    public compute_preferred_col_widths()
       local i, need, l, pct_col_w, tot
       p_col_w := list(gw, 0)
@@ -185,15 +144,15 @@ class TableGrid()
 
       # Compute sizes
       every i := !l do {
-         need := i.pw + i.l_inset + i.r_inset - slice(i.x, i.w, p_col_w)
+         need := i.pw + i.l_inset + i.r_inset - Grid.slice(i.x, i.w, p_col_w)
          if need > 0 then
             dist_equally(i.x, i.w, need, p_col_w, fix_col1_flag)
 
-         need := i.max_w + i.l_inset + i.r_inset - slice(i.x, i.w, p_col_max_w)
+         need := i.max_w + i.l_inset + i.r_inset - Grid.slice(i.x, i.w, p_col_max_w)
          if need > 0 then
             dist_equally(i.x, i.w, need, p_col_max_w, fix_col1_flag)
 
-         need := i.pct_w - slice(i.x, i.w, pct_col_w)
+         need := i.pct_w - Grid.slice(i.x, i.w, pct_col_w)
          if need > 0 then
             dist_equally(i.x, i.w, need, pct_col_w, fix_col1_flag)
       }
@@ -215,7 +174,7 @@ class TableGrid()
 
       # Compute sizes
       every i := !l do {
-         need := i.ph + i.ascent_adj + i.t_inset + i.b_inset - slice(i.y, i.h, p_row_h)
+         need := i.ph + i.ascent_adj + i.t_inset + i.b_inset - Grid.slice(i.y, i.h, p_row_h)
          if need > 0 then 
             dist_equally(i.y, i.h, need, p_row_h)
       }
@@ -254,12 +213,12 @@ class TableGrid()
       write("p_col_max_w=", to_string(p_col_max_w))
       if \self.a_col_w then {
          write("a_col_w=", to_string(a_col_w))
-         write("\textra width in a_col_w:", total(a_col_w)-total(p_col_w))
+         write("\textra width in a_col_w:", Grid.total(a_col_w)-Grid.total(p_col_w))
       }
       write("p_row_h=", to_string(p_row_h))
       if \self.a_row_h then {
          write("a_row_h=", to_string(a_row_h))
-         write("\textra height in a_row_h:", total(a_row_h)-total(p_row_h))
+         write("\textra height in a_row_h:", Grid.total(a_row_h)-Grid.total(p_row_h))
       }
 
       write("\nPreferred size gives:", get_preferred_width(),",",get_preferred_height())
@@ -271,29 +230,49 @@ class TableGrid()
    end
 
    public get_preferred_width()
-      return total(p_col_w)
+      return Grid.total(p_col_w)
    end
 
    public get_max_width()
-      return total(p_col_max_w)
+      return Grid.total(p_col_max_w)
    end
 
    public get_preferred_height()
-      return total(p_row_h)
+      return Grid.total(p_row_h)
    end
 
    public compute_actual_col_widths(w1)
-      local i, ew
+      local left, i, a, n, done
 
       a_col_w := copy(p_col_w)
 
       # Extra width
-      ew := w1 - total(p_col_w)
-      # Allocate by max width
-      dist_by_max(ew, a_col_w, p_col_max_w)
+      left := w1 - Grid.total(p_col_w)
 
+      n := *a_col_w
+      done := list(*a_col_w)
+      while n > 0 do {
+         a := integer(left / n)
+         if a = 0 then
+            break
+         every i := 1 to *a_col_w do {
+            if \done[i] then next
+            if a_col_w[i] + a > p_col_max_w[i] then {
+               left -:= p_col_max_w[i] - a_col_w[i]
+               a_col_w[i] := p_col_max_w[i]
+               done[i] := 1
+               n -:= 1
+            } else {
+               a_col_w[i] +:= a
+               left -:= a
+            }
+         }
+      }
+      dist_equally(1, *a_col_w, left, a_col_w)
+
+      # Set cell width values
       every i := !info do
-         i.aw := slice(i.x, i.w, a_col_w) - i.l_inset - i.r_inset
+         i.aw := Grid.slice(i.x, i.w, a_col_w) - i.l_inset - i.r_inset
    end
 
    public compute_actual_col_positions(x1)
@@ -316,11 +295,11 @@ class TableGrid()
       a_row_h := copy(p_row_h)
 
       # Extra height.
-      eh := h1 - total(p_row_h)
+      eh := h1 - Grid.total(p_row_h)
       dist_equally(1, *a_row_h, eh, a_row_h)
 
       every i := !info do
-         i.ah := slice(i.y, i.h, a_row_h) - i.t_inset - i.b_inset
+         i.ah := Grid.slice(i.y, i.h, a_row_h) - i.t_inset - i.b_inset
    end
 
    public compute_actual_row_positions(y1)
@@ -485,8 +464,8 @@ class TableLayout(Layout)
       every i := !g.info do {
          cw.draw_rectangle(g.col_x[i.x],
                            g.row_y[i.y],
-                           TableGrid.slice(i.x, i.w, g.a_col_w),
-                           TableGrid.slice(i.y, i.h, g.a_row_h))
+                           Grid.slice(i.x, i.w, g.a_col_w),
+                           Grid.slice(i.y, i.h, g.a_row_h))
       }
 
       cw.uncouple()
