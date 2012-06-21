@@ -505,6 +505,9 @@ class Img(Label)
 end
 
 class FormEntry()
+   public 
+      form_name, form_id, form_tabindex
+
    public reset() end
 
    public get_save_subkey() end
@@ -851,13 +854,13 @@ class Form()
       items,
       labels,   # table of FormLabels with ids set (the "for" attribute)
       cbgs,
-      ids       # table of Components with ids set ("id" attribute) which will be matched to entries in labels.
+      link_later   # Components with ids set ("id" attribute) which will be matched to entries in labels.
 
    private make_cgi_table(ev, src)
       local t, k, c, v, x
       t := table()
-      every k := key(items) do {
-         every c := !items[k] do {
+      every c := !items do {
+         if k := \c.form_name then {
             if v := c.get_value(ev, src) then {
                (x := member(t, k)) | insert(t, k, x := [])
                put(x, v)
@@ -883,8 +886,8 @@ class Form()
       local k, v, c, m, mp, m2
       m := Message()
       mp := Multipart()
-      every k := key(items) do {
-         every c := !items[k] do {
+      every c := !items do {
+         if k := \c.form_name then {
             if v := c.get_value(ev, src, 1) then {
                m2 := Message()
                if is(c, FormBrowse) then {
@@ -906,7 +909,7 @@ class Form()
    end
 
    public reset()
-      every (!!items).reset()
+      every (!items).reset()
    end
 
    public submit(ev, src)
@@ -920,29 +923,37 @@ class Form()
    end
 
    public add(name, item)
-      local x
-      (x := member(items, name)) | insert(items, name, x := [])
-      put(x, item)
+      put(items, item)
+      item.form_name := name
+   end
+
+   public add_std(el, item)
+      put(items, item)
+      item.form_name := el.get_attribute(u"NAME")
+      item.form_id := el.get_attribute(u"ID")
+      item.form_tabindex := integer(el.get_attribute(u"TABINDEX"))
    end
 
    public add_label(l)
       insert(labels, l.id, l)
    end
 
-   public link_label(id, curr_label, comp)
+   public link_label(context, comp)
+      local l
+      l := context.form_label
       # If we have a label in the context, and the for and id tags
       # make sense, link the comp to the label; otherwise put the comp
       # in ids so its id can be resolved at the end of the form.
-      if \curr_label & (/curr_label.id | /id | curr_label.id == id) then
-         /curr_label.comp := comp
-      else
-         insert(ids, \id, comp)
+      if \l & (/l.id | /comp.form_id | l.id == comp.form_id) then
+         /l.comp := comp
+      else if \comp.form_id then
+         put(link_later, comp)
    end
 
    public resolve_link_labels()
-      local id
-      every id := key(ids) do
-         /member(labels, id).comp := ids[id]
+      local c
+      every c := !link_later do
+         /member(labels, c.form_id).comp := c
    end
 
    public get_cbg(name)
@@ -951,15 +962,31 @@ class Form()
       return x
    end
 
+   public get_tab_children()
+      local l, c
+      l := []
+      every c := !items do {
+         if is(c, Component) then {
+            if /c.form_tabindex | (c.form_tabindex >= 0) then
+               put(l, c)
+         }
+      }
+      return isort(l, tabindex_sort)
+   end
+
+   private tabindex_sort(c)
+      return \c.form_tabindex | keyof(items, c)
+   end
+   
    public new(browser, url, method, enctype)
       self.browser := browser
       self.url := url
       self.method := method
       self.enctype := enctype
-      self.items := table()
+      self.items := []
       self.cbgs := table()
       self.labels := table()
-      self.ids := table()
+      self.link_later := []
       return
    end
 end
@@ -1035,6 +1062,7 @@ class Browser(Component)
       status_ticker,
       maps,
       forms,
+      form_tab_children,
       curr_history_entry   # History entry currently being viewed.
 
    private readable
@@ -1108,6 +1136,11 @@ class Browser(Component)
          else
             member(COLORS, map(trim(string(s))))
       }
+   end
+
+   public traverse_tab_order()
+      coact(top_panel)
+      every (!self.form_tab_children).traverse_tab_order()
    end
 
    private synch_font(context)
@@ -1325,8 +1358,8 @@ class Browser(Component)
       every f := !forms do {
          t2 := table()
          insert(t1, f.url.str(), t2)
-         every name := key(f.items) do {
-            every c := !f.items[name] do {
+         every c := !f.items do {
+            if name := \c.form_name then {
                k := Class.get_name(c) || u":" || name
                k ||:= u":" || c.get_save_subkey()
                insert(t2, k, c.get_save_value())
@@ -1341,8 +1374,8 @@ class Browser(Component)
       t1 := \curr_history_entry.form_values | fail
       every f := !forms do {
          if t2 := member(t1, f.url.str()) then {
-            every name := key(f.items) do {
-               every c := !f.items[name] do {
+            every c := !f.items do {
+               if name := \c.form_name then {
                   k := Class.get_name(c) || u":" || name
                   k ||:= u":" || c.get_save_subkey()
                   c.restore_value(member(t2, k))
@@ -1396,6 +1429,7 @@ class Browser(Component)
       curr_history_entry.form_data := res.form_data
       maps := table()
       forms := []
+      form_tab_children := []
       if /view_img then {
          #Files.string_to_file("/tmp/browser.html",s)
          s := convert_to_ucs(res.content_type, s)
@@ -1422,6 +1456,7 @@ class Browser(Component)
          traverse(doc, row, c)
          if res.kind ~= Worker.REFRESH then
             restore_form_values()
+         every form_tab_children |||:= (!forms).get_tab_children()
       } else
          page_title := page_name
       set_title(page_title)
@@ -1600,12 +1635,12 @@ class Browser(Component)
       local q, row, v, type
       \context.form | fail
       v := e.get_attribute(u"VALUE") | u""
-      type := map(string(e.get_attribute(u"TYPE")))
+      type := map(string(e.get_attribute(u"TYPE"))) | "submit"
       q := FormTblButton(context.form, v, type)
       if e.get_attribute(u"DISABLED") then
          q.set_is_shaded(&yes)
       else
-         context.form.add(e.get_attribute(u"NAME"), q)
+         context.form.add_std(e, q)
       row := TextFlow(self)
       q.tbl.content.add(row)
       add_component(p, q, context, Align.B)
@@ -1630,9 +1665,8 @@ class Browser(Component)
    end
 
    private traverse_select(e, p, context)
-      local q, id, c, sc
+      local q, c, sc
       \context.form | fail
-      id := e.get_attribute(u"ID")
       sc := SelectContext()
       sc.options := []
       sc.sel := 1
@@ -1644,9 +1678,10 @@ class Browser(Component)
          set_fg(context.fg)
       if e.get_attribute(u"DISABLED") then
          q.set_is_shaded(&yes)
-      else
-         context.form.add(e.get_attribute(u"NAME"), q)
-      context.form.link_label(id, context.form_label, q)
+      else {
+         context.form.add_std(e, q)
+         context.form.link_label(context, q)
+      }
       add_component(p, q, context, Align.B)
    end
 
@@ -1659,9 +1694,8 @@ class Browser(Component)
    end
 
    private traverse_textarea(e, p, context)
-      local q, w, h, mW, id
+      local q, w, h, mW
       \context.form | fail
-      id := e.get_attribute(u"ID")
       mW := cbwin.clone().set_font(context.font)
       w := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", e.get_attribute(u"COLS")))) | 200
       h := (2 * Gui.BORDER_WIDTH + e.get_attribute(u"ROWS") * mW.get_font_height()) | 100
@@ -1676,14 +1710,14 @@ class Browser(Component)
       else {
          if e.get_attribute(u"READONLY") then
             q.set_is_editable(&no)
-         context.form.add(e.get_attribute(u"NAME"), q)
+         context.form.add_std(e, q)
+         context.form.link_label(context, q)
       }
-      context.form.link_label(id, context.form_label, q)
       add_component(p, q, context)
    end
 
    private traverse_input(e, p, context)
-      local q, s, k, v, size, mW, id, url, checked, align
+      local q, s, k, v, size, mW, url, checked, align
       \context.form | fail
       s := string(map(e.get_attribute(u"TYPE"))) | "text"
       case s of {
@@ -1697,7 +1731,7 @@ class Browser(Component)
             if e.get_attribute(u"DISABLED") then
                q.set_is_shaded(&yes)
             else
-               context.form.add(e.get_attribute(u"NAME"), q)
+               context.form.add_std(e, q)
             add_component(p, q, context, Align.B)
          }
          "submit" : {
@@ -1711,7 +1745,18 @@ class Browser(Component)
             if e.get_attribute(u"DISABLED") then
                q.set_is_shaded(&yes)
             else
-               context.form.add(e.get_attribute(u"NAME"), q)
+               context.form.add_std(e, q)
+            add_component(p, q, context, Align.B)
+         }
+         "button" : {
+            v := e.get_attribute(u"VALUE") | u""
+            q := FormButton(v).
+                  set_font(context.font).
+                  set_fg(context.fg)
+            if e.get_attribute(u"DISABLED") then
+               q.set_is_shaded(&yes)
+            else
+               context.form.add_std(e, q)
             add_component(p, q, context, Align.B)
          }
          "image" : {
@@ -1743,6 +1788,8 @@ class Browser(Component)
                connect(context.form.reset, Event.ACTION)
             if e.get_attribute(u"DISABLED") then
                q.set_is_shaded(&yes)
+            else
+               context.form.add_std(e, q)
             add_component(p, q, context, Align.B)
          }
          "hidden": {
@@ -1750,7 +1797,6 @@ class Browser(Component)
          }
          "radio": {
             v := e.get_attribute(u"VALUE") | u"on"
-            id := e.get_attribute(u"ID")
             checked := if e.get_attribute(u"CHECKED") then &yes else &no
             q := FormToggle(v, checked).
                set_paint(ImagePaint().set_cache("gui.DIAMOND_UP")).
@@ -1758,15 +1804,15 @@ class Browser(Component)
                set_border(NullBorder())
             if e.get_attribute(u"DISABLED") then
                q.set_is_shaded(&yes)
-            else
-               context.form.add(e.get_attribute(u"NAME"), q)
+            else {
+               context.form.add_std(e, q)
+               context.form.link_label(context, q)
+            }
             add_component(p, q, context, Align.B)
-            context.form.link_label(id, context.form_label, q)
             context.form.get_cbg(e.get_attribute(u"NAME")).add(q)
          }
          "checkbox": {
             v := e.get_attribute(u"VALUE") | u"on"
-            id := e.get_attribute(u"ID")
             checked := if e.get_attribute(u"CHECKED") then &yes else &no
             q := FormToggle(v, checked).
                set_paint(ImagePaint().set_cache("gui.BOX_UP")).
@@ -1774,14 +1820,14 @@ class Browser(Component)
                set_border(NullBorder())
             if e.get_attribute(u"DISABLED") then
                q.set_is_shaded(&yes)
-            else
-               context.form.add(e.get_attribute(u"NAME"), q)
+            else {
+               context.form.add_std(e, q)
+               context.form.link_label(context, q)
+            }
             add_component(p, q, context, Align.B)
-            context.form.link_label(id, context.form_label, q)
          }
          "text" | "password": {
             v := e.get_attribute(u"VALUE") | u""
-            id := e.get_attribute(u"ID")
             mW := cbwin.clone().set_font(context.font)
             size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", e.get_attribute(u"SIZE")))) | 160
             mW.uncouple()
@@ -1797,9 +1843,9 @@ class Browser(Component)
             else {
                if e.get_attribute(u"READONLY") then
                   q.set_is_editable(&no)
-               context.form.add(e.get_attribute(u"NAME"), q)
+               context.form.add_std(e, q)
+               context.form.link_label(context, q)
             }
-            context.form.link_label(id, context.form_label, q)
             add_component(p, q, context, Align.B)
          }
       }
