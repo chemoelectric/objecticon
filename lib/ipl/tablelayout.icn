@@ -54,6 +54,7 @@ class TableGrid()
       p_col_max_w,   # Max column widths
       p_col_w,      # Preferred column widths/row heights
       p_row_h,
+      pct_col_w,
       a_col_w,      # Actual column widths/row heights after extra
       a_row_h,      # space has been allocated
       col_x,        # Actual row x and y values
@@ -136,7 +137,7 @@ class TableGrid()
    end
 
    public compute_preferred_col_widths()
-      local i, need, l, pct_col_w, tot
+      local i, need, l
       p_col_w := list(gw, 0)
       p_col_max_w := list(gw, 0)
       pct_col_w := list(gw, 0)
@@ -157,14 +158,39 @@ class TableGrid()
             dist_equally(i.x, i.w, need, pct_col_w, fix_col1_flag)
       }
 
-      # Very simple support for % width specs
-      tot := 0
-      every tot +:= !p_col_w
-      every i := 1 to gw do {
-         need := (tot * pct_col_w[i]) / 100
-         if p_col_w[i] <:= need then
-            p_col_max_w[i] <:= need
+      compute_pct_widths()
+   end
+
+   # Adjust the p_col_max_w based on any column % widths; preferred
+   # widths are not affected.
+   private compute_pct_widths()
+      local pe, n, i, ppp, tot
+      tot := Grid.total(pct_col_w)
+      if tot = 0 then
+         fail
+
+      if tot < 100 then {
+         # Total <100%, so allocate residue to any columns without a %
+         # specified (pct_col_w = 0%).
+         n := 0
+         every i := !pct_col_w do
+            if i = 0 then n +:= 1
+         if n > 0 then {
+            pe := (100 - tot) / n
+            every i := 1 to *pct_col_w do
+               if pct_col_w[i] = 0 then
+                  pct_col_w[i] := pe
+         }
       }
+
+      # Now calculate the maximum pixels-per-percentage value
+      ppp := 0
+      every i := 1 to gw do
+         ppp <:= real(p_col_max_w[i]) / (0 < pct_col_w[i])
+
+      # Expand column max widths, based on the % and the pixels-per-percentage
+      every i := 1 to gw do
+         p_col_max_w[i] <:= integer(ppp * pct_col_w[i])
    end
 
    public compute_preferred_row_heights()

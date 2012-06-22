@@ -412,7 +412,6 @@ class Img(Label)
    end
 
    private handle_lrelease(e, src)
-      #set_pointer()
       if \wrote then
          browser.goto(wrote, browser.page_url, Worker.NORMAL)
    end
@@ -509,6 +508,10 @@ class FormEntry()
       form_name, form_id, form_tabindex
 
    public reset() end
+                  
+   public get_save_key()
+      return \form_name | \form_id
+   end
 
    public get_save_subkey() end
    public get_save_value() end
@@ -941,7 +944,7 @@ class FormList(gui.List, FormEntry, HasAscent)
    end
 
    public extract_selection()
-      return text(self.selection_list[\self.selection].label)
+      return self.selection_list[\self.selection].label
    end
 
    public get_default_width()
@@ -962,6 +965,7 @@ end
 
 class Form()
    private readable
+      key,
       url,
       browser,
       method,
@@ -1028,6 +1032,7 @@ class Form()
    end
 
    public submit(ev, src)
+      \url | fail
       if map(method) == "post" then {
          if map(enctype) == "multipart/form-data" then
             browser.goto(url, browser.page_url, Worker.NORMAL, make_cgi_message(ev, src))
@@ -1092,9 +1097,14 @@ class Form()
    private tabindex_sort(c)
       return \c.form_tabindex | keyof(items, c)
    end
-   
-   public new(browser, url, method, enctype)
+
+   public get_save_key()
+      return \key
+   end
+
+   public new(browser, key, url, method, enctype)
       self.browser := browser
+      self.key := key
       self.url := url
       self.method := method
       self.enctype := enctype
@@ -1468,16 +1478,18 @@ class Browser(Component)
    end
 
    private save_form_values()
-      local f, c, name, t1, t2, k
+      local f, c, name, t1, t2, fk, k
       t1 := table()
       every f := !forms do {
-         t2 := table()
-         insert(t1, f.url.str(), t2)
-         every c := !f.items do {
-            if name := \c.form_name then {
-               k := Class.get_name(c) || u":" || name
-               k ||:= u":" || c.get_save_subkey()
-               insert(t2, k, c.get_save_value())
+         if fk := f.get_save_key() then {
+            t2 := table()
+            insert(t1, fk, t2)
+            every c := !f.items do {
+               if name := c.get_save_key() then {
+                  k := Class.get_name(c) || u":" || name
+                  k ||:= u":" || c.get_save_subkey()
+                  insert(t2, k, c.get_save_value())
+               }
             }
          }
       }
@@ -1488,9 +1500,9 @@ class Browser(Component)
       local f, c, name, t1, t2, k
       t1 := \curr_history_entry.form_values | fail
       every f := !forms do {
-         if t2 := member(t1, f.url.str()) then {
+         if t2 := member(t1, f.get_save_key()) then {
             every c := !f.items do {
-               if name := \c.form_name then {
+               if name := c.get_save_key() then {
                   k := Class.get_name(c) || u":" || name
                   k ||:= u":" || c.get_save_subkey()
                   c.restore_value(member(t2, k))
@@ -1561,6 +1573,7 @@ class Browser(Component)
          c.fg := "black"
          c.link_fg := "blue"
          c.size := 3
+         c.align := Align.L
          c.kind := res.kind   # Tells images whether to refresh or not
          synch_font(c)
          if n := doc.get_root_element().search_tree(u"BODY") then {
@@ -1729,12 +1742,14 @@ class Browser(Component)
    end
 
    private traverse_form(e, p, context)
-      local m, c, t
+      local m, c, t, url, key
       m := e.get_attribute(u"METHOD") | "get"
       t := e.get_attribute(u"ENCTYPE") | "application/x-www-form-urlencoded"
+      url := mk_link(context.base, e.get_attribute(u"ACTION"))
+      key := e.get_attribute(u"ID" | u"NAME") | (\url).str()
       c := copy(context)
-      if c.form := Form(self, mk_link(context.base, e.get_attribute(u"ACTION")), m, t) then
-         put(forms, c.form)
+      c.form := Form(self, key, url, m, t)
+      put(forms, c.form)
       traverse(e, p, c)
       (\c.form).resolve_link_labels()
    end
