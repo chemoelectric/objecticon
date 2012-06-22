@@ -1467,6 +1467,22 @@ class Browser(Component)
       top_panel.layout()
       top_panel.invalidate()
       parent_dialog.resynch_pointer()
+      setup_tabbing()
+   end
+
+   private focus_scroll(e, c)
+      local y0
+      y0 := c.y - top_panel.view.inner.y
+      if y0 + c.h > top_panel.get_area_y() + top_panel.view.h then
+         top_panel.set_area_y(y0 + c.h - top_panel.view.h)
+      else if y0 < top_panel.get_area_y() then
+         top_panel.set_area_y(y0)
+   end
+
+   private setup_tabbing()
+      local c
+      every c := Seq{(!self.form_tab_children).traverse_tab_order()} do
+         c.connect(focus_scroll, Event.GOT_FOCUS)
    end
 
    private mk_link(base, s)
