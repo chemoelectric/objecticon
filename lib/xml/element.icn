@@ -44,7 +44,7 @@ class Element(Node)
    # Set an attribute for this tag.
    #
    public set_attribute(key, value)
-      attributes[key] := value
+      insert(attributes, key, value)
       return self
    end
 
@@ -52,7 +52,7 @@ class Element(Node)
    # Return the attribute for this element, or fail if non is present
    #
    public get_attribute(key)
-      return \attributes[key]
+      return member(attributes, key)
    end
 
    #
