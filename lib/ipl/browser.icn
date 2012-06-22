@@ -812,6 +812,80 @@ class FormEditableTextList(EditableTextList, FormEntry)
    end
 end
 
+class FormOption()
+   public const
+      txt, label, value, selected, disabled, optgroup
+
+   public new(txt, label, value, selected, disabled, optgroup)
+      self.txt := txt
+      self.label := label
+      self.value := value
+      self.selected := selected
+      self.disabled := disabled
+      self.optgroup := optgroup
+      return
+   end
+end
+
+class FormOptionList(SelectableScrollArea, FormEntry)
+   private const
+      init_val
+
+   public end_handle(e)
+      local i
+      every i := !selections do {
+         if /contents[i].value then
+            delete(selections, i)
+      }
+      cast(self,SelectableScrollArea).end_handle(e)
+   end
+
+   public get_value(ev, src)
+      suspend \contents[!selections].value
+   end
+
+   public reset()
+      set_selections(init_val)
+   end
+
+   public get_save_value()
+      return get_selections()
+   end
+
+   public restore_value(val)
+      set_selections(val)
+   end
+
+   public calculate_line_height()
+      return view.cbwin.get_font_height()
+   end
+
+   public calculate_subject_width()
+      local mw, o
+      mw := 0
+      every o := !contents do
+         mw <:= view.cbwin.text_width(o.txt)
+      return mw + 2 * Gui.TEXT_INSET
+   end
+
+   public draw_line_data(xp, yp, lh, i)
+      local o, W
+      o := contents[i]
+      if \o.disabled then {
+         W := view.cbwin.clone().set_fg("gray")
+         draw_string_ex(W, xp + Gui.TEXT_INSET, yp, o.txt)
+         W.uncouple()
+      } else 
+         draw_string_ex(view.cbwin, xp + Gui.TEXT_INSET, yp, o.txt)
+   end
+
+   public new(init_val)
+      cast(self,SelectableScrollArea).new()
+      self.init_val := init_val
+      return
+   end
+end
+
 class FormList(gui.List, FormEntry, HasAscent)
    private const
       init_val
@@ -820,12 +894,38 @@ class FormList(gui.List, FormEntry, HasAscent)
       return cbwin.get_font_ascent() + view.border.get_t_inset() + border.get_t_inset()
    end
 
+   private find_value(seq, e)
+      local i
+      while i := @seq do {
+         if \selection_list[i].value then {
+            start_change(e)
+            set_selection(i, e)
+            end_change(e)
+            break
+         }
+      }
+   end
+
+   public go_up(e)
+      if /selection then
+         find_value(create *selection_list to 1 by -1, e)
+      else
+         find_value(create (selection - 1 to 1 by -1) | (*selection_list to selection + 1 by -1), e)
+   end
+
+   public go_down(e)
+      if /selection then
+         find_value(create 1 to *selection_list, e)
+      else
+         find_value(create (1 + selection to *selection_list) | (1 to selection - 1), e)
+   end
+
    public reset()
       set_selection(init_val)
    end
 
    public get_value(ev, src)
-      return object_get_selection()
+      return \object_get_selection().value
    end
 
    public get_save_value()
@@ -836,11 +936,26 @@ class FormList(gui.List, FormEntry, HasAscent)
       set_selection(val)
    end
 
-   public new(list, init_val)
+   public create_popup()
+      return FormOptionList()
+   end
+
+   public extract_selection()
+      return text(self.selection_list[\self.selection].label)
+   end
+
+   public get_default_width()
+      local mw, o
+      mw := 0
+      every o := !selection_list do
+         if \o.value then
+            mw <:= view.cbwin.text_width(o.label)
+      return border.get_total_width() + b.get_preferred_width() + mw + view.border.get_total_width()
+   end
+
+   public new(init_val)
       cast(self,gui.List).new()
       self.init_val := init_val
-      set_selection_list(list)
-      set_selection(init_val)
       return
    end
 end
@@ -861,7 +976,7 @@ class Form()
       t := table()
       every c := !items do {
          if k := \c.form_name then {
-            if v := c.get_value(ev, src) then {
+            every v := c.get_value(ev, src) do {
                (x := member(t, k)) | insert(t, k, x := [])
                put(x, v)
             }
@@ -888,7 +1003,7 @@ class Form()
       mp := Multipart()
       every c := !items do {
          if k := \c.form_name then {
-            if v := c.get_value(ev, src, 1) then {
+            every v := c.get_value(ev, src, 1) do {
                m2 := Message()
                if is(c, FormBrowse) then {
                   m2.set_header("Content-Disposition", 
@@ -996,7 +1111,7 @@ record ListContext(tbl, index, root)
 record DefListContext(tbl)
 record FieldSetContext(legend)
 record MapContext(map)
-record SelectContext(options, sel)
+record SelectContext(options, optgroup)
 record Context(base, form, form_label, url, fg, link_fg, font, align, pre, underline, strike, 
                face, size, bold, italic, kind, table, list, def_list, fieldset, select, map)
 
@@ -1471,12 +1586,7 @@ class Browser(Component)
    end
 
    private focus_scroll(e, c)
-      local y0
-      y0 := c.y - top_panel.view.inner.y
-      if y0 + c.h > top_panel.get_area_y() + top_panel.view.h then
-         top_panel.set_area_y(y0 + c.h - top_panel.view.h)
-      else if y0 < top_panel.get_area_y() then
-         top_panel.set_area_y(y0)
+      top_panel.ensure_visible(c)
    end
 
    private setup_tabbing()
@@ -1681,17 +1791,53 @@ class Browser(Component)
    end
 
    private traverse_select(e, p, context)
-      local q, c, sc
+      local q, c, sc, size, mW, h, w, o, sel, sels, i, mode
       \context.form | fail
       sc := SelectContext()
       sc.options := []
-      sc.sel := 1
       c := copy(context)
       c.select := sc
       traverse(e, p, c)
-      q := FormList(sc.options, sc.sel). 
-         set_font(context.font).
-         set_fg(context.fg)
+      sels := []
+      every i := 1 to *sc.options do
+         if \sc.options[i].selected then
+            put(sels, i)
+      if size := (1 < integer(e.get_attribute(u"SIZE"))) then {
+         mW := cbwin.clone().set_font(context.font)
+         w := 0
+         every o := !sc.options do
+            w <:= mW.text_width(o.txt)
+         w +:= 2 * Gui.TEXT_INSET + 2 * Gui.BORDER_WIDTH
+         h := (2 * Gui.BORDER_WIDTH + size * mW.get_font_height())
+         if size < *sc.options then
+            w +:= ScrollArea.predict_scrollbar_size()
+         mW.uncouple()
+         if e.get_attribute(u"MULTIPLE") then
+            mode := Select.MANY
+         else {
+            mode := Select.ONE
+            while *sels > 1 do
+               pull(sels)
+         }
+         q := FormOptionList(sels).
+            set_contents(sc.options).
+            set_size(w, h).
+            set_select_mode(mode).
+            set_selections(sels)
+      } else {
+         if *sels = 0 then {
+            every i := 1 to *sc.options do
+               if \sc.options[i].value then {
+                  sel := i
+                  break
+               }
+         } else
+            sel := sels[1]
+         q := FormList(sel).
+            set_selection_list(sc.options).
+            set_selection(sel)
+      }
+      q.set_font(context.font).set_fg(context.fg)
       if e.get_attribute(u"DISABLED") then
          q.set_is_shaded(&yes)
       else {
@@ -1702,11 +1848,31 @@ class Browser(Component)
    end
 
    private traverse_option(e, p, context)
-      local sc
+      local sc, v, txt, label, disabled, selected
       sc := \context.select | fail
-      put(sc.options, e.get_trimmed_string_content())
-      if e.get_attribute(u"SELECTED") then
-         sc.sel := *sc.options
+      label := e.get_trimmed_string_content()
+      if e.get_attribute(u"DISABLED") then
+         disabled := 1
+      else {
+         v := e.get_attribute(u"VALUE") | label
+         if e.get_attribute(u"SELECTED") then
+            selected := 1
+      }
+      txt := if \sc.optgroup then
+         u"    " || label
+      else
+         label
+      put(sc.options, FormOption(txt, label, v, selected, disabled))
+   end
+
+   private traverse_optgroup(e, p, context)
+      local sc, label
+      sc := \context.select | fail
+      /sc.optgroup := 1 | fail
+      label := e.get_attribute(u"LABEL") | u""
+      put(sc.options, FormOption(u"--- " || label || u" ---", label,,,, 1))
+      traverse(e, p, context)
+      sc.optgroup := &null
    end
 
    private traverse_textarea(e, p, context)
@@ -2320,6 +2486,7 @@ class Browser(Component)
                "IMG": traverse_img(e, p, context)
                "SELECT": traverse_select(e, p, context)
                "OPTION": traverse_option(e, p, context)
+               "OPTGROUP": traverse_optgroup(e, p, context)
                "TEXTAREA": traverse_textarea(e, p, context)
                "INPUT": traverse_input(e, p, context)
                "DIV": traverse_div(e, p, context)
