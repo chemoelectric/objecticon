@@ -48,6 +48,18 @@ class Resp()
    end
 end
 
+class Handled()
+   public const
+      data, fname, content_type
+
+   public new(data, fname, content_type)
+      self.data := data
+      self.fname := fname
+      self.content_type := content_type
+      return
+   end
+end
+
 class CacheEntry()
    public const
       url, data, fname, content_type, expiry
@@ -245,7 +257,7 @@ class Worker()
    private handle_file_req(r)
       local data
       if data := cvt_file(r.url.get_path()) then
-         r.callback(Resp(, r.url, r.referer, data, r.url.get_file_last(1),, r.kind))
+         r.callback(Resp(, r.url, r.referer, data, r.url.get_path_last(),, r.kind))
       else
          r.callback(Resp(&why, r.url, r.referer,,,, r.kind))
    end
@@ -267,15 +279,17 @@ class Worker()
    end
 
    private handle_http_req(r)
-      local s, data, hreq, hres, fname, ct, x
-      use {
+      local s, data, hreq, hres, fname, ct, x, ce
+      if r.kind ~= REFRESH & /r.form_data & (ce := browser.cache.get(r.url)) then
+         r.callback(Resp(, r.url, r.referer, ce.data, ce.fname, ce.content_type, r.kind))
+      else use {
          s := RamStream(),
          {
             hreq := HttpRequest().
                set_output_stream(s). 
                set_url(r.url).
                set_header("Accept-charset", "UTF-8, ISO-8859-1")
-            if (\r.referer).protocol ~== u"file" then
+            if (\r.referer).scheme ~== u"file" then
                hreq.set_referer(r.referer.str())
             if \r.form_data then {
                if is(r.form_data, Message) then
@@ -302,14 +316,32 @@ class Worker()
       }
    end
 
+   private handle_func(r, f)
+      local x, s
+      if x := f(r) then {
+         if is(x, Handled) then
+            r.callback(Resp(, r.url, r.referer, x.data, x.fname, x.content_type, r.kind))
+         else if s := string(x) then
+            r.callback(Resp(, r.url, r.referer, s, r.url.get_path_last(),, r.kind))
+         else
+            runerr(103, x)
+      } else
+         r.callback(Resp(&why, r.url, r.referer,,,, r.kind))
+   end
+
    private handle_req(r)
-      local ce
-      if r.url.protocol == u"file" then
-         handle_file_req(r)
-      else if r.kind ~= REFRESH & /r.form_data & (ce := browser.cache.get(r.url)) then
-         r.callback(Resp(, r.url, r.referer, ce.data, ce.fname, ce.content_type, r.kind))
-      else 
-         handle_http_req(r)
+      local f, t
+      t := string(r.url.scheme)
+      case t of {
+         "file": handle_file_req(r)
+         "http"|"https": handle_http_req(r)
+         default: {
+            if f := member(browser.scheme_handlers, t) then
+               handle_func(r, f)
+            else
+               r.callback(Resp("Unknown url scheme", r.url, r.referer,,,, r.kind))
+         }
+      }
    end
 
    private run()
@@ -1039,7 +1071,7 @@ class Form()
          else 
             browser.goto(url, browser.page_url, Worker.NORMAL, make_cgi_table(ev, src))
       } else
-         browser.goto(clone(url).set_cgi_parameters(make_cgi_table(ev, src)), browser.page_url, Worker.NORMAL)
+         browser.goto(url.with_cgi_parameters(make_cgi_table(ev, src)), browser.page_url, Worker.NORMAL)
    end
 
    public add(name, item)
@@ -1204,7 +1236,8 @@ class Browser(Component)
       log_http_flag,
       cache,
       file_dialog,
-      authentications
+      authentications,
+      scheme_handlers
 
    public static const 
       COLORS,
@@ -1353,7 +1386,7 @@ class Browser(Component)
       top_panel.invalidate()
       # Goto named anchor unless user has started to scroll page
       if top_panel.get_area_y() = 0 then {
-         if yp := \curr_history_entry.area_y | (lookup_named_anchor(page_url.get_ref()) - top_panel.view.y) then
+         if yp := \curr_history_entry.area_y | (lookup_named_anchor(page_url.get_fragment()) - top_panel.view.y) then
             top_panel.set_area_y(yp)
       }
       parent_dialog.resynch_pointer()
@@ -1558,7 +1591,6 @@ class Browser(Component)
       forms := []
       form_tab_children := []
       if /view_img then {
-         #Files.string_to_file("/tmp/browser.html",s)
          s := convert_to_ucs(res.content_type, s)
          doc := HtmlParser().parse(s)
          base := page_url
@@ -1608,11 +1640,8 @@ class Browser(Component)
          c.connect(focus_scroll, Event.GOT_FOCUS)
    end
 
-   private mk_link(base, s)
-      if match(u"http://" | u"https://" | u"file://", map(s)) then
-         return URL.parse(s)
-      else if \base then
-         return base.get_relative(s)
+   private mk_link(context, s)
+      return URL.parse(s) | (\context.base).get_relative(s)
    end
 
    private traverse_a(e, p, context)
@@ -1621,7 +1650,7 @@ class Browser(Component)
          put(p.input, NamedAnchorCmd(na, context))
          traverse(e, p, context)
       }
-      else if url := mk_link(context.base, e.get_attribute(u"HREF")) then {
+      else if url := mk_link(context, e.get_attribute(u"HREF")) then {
          c := copy(context)
          c.url := url
          c.fg := c.link_fg
@@ -1745,7 +1774,7 @@ class Browser(Component)
       local m, c, t, url, key
       m := e.get_attribute(u"METHOD") | "get"
       t := e.get_attribute(u"ENCTYPE") | "application/x-www-form-urlencoded"
-      url := mk_link(context.base, e.get_attribute(u"ACTION"))
+      url := mk_link(context, e.get_attribute(u"ACTION"))
       key := e.get_attribute(u"ID" | u"NAME") | (\url).str()
       c := copy(context)
       c.form := Form(self, key, url, m, t)
@@ -1790,7 +1819,7 @@ class Browser(Component)
 
    private traverse_img(e, p, context)
       local q, url, border, iw, ih, align, map, s
-      if url := mk_link(context.base, e.get_attribute(u"SRC")) then {
+      if url := mk_link(context, e.get_attribute(u"SRC")) then {
          iw := (0 <= integer(e.get_attribute(u"WIDTH")))
          ih := (0 <= integer(e.get_attribute(u"HEIGHT")))
          if (s := e.get_attribute(u"USEMAP")) & (s[1] == u"#") then
@@ -1957,7 +1986,7 @@ class Browser(Component)
             add_component(p, q, context, Align.B)
          }
          "image" : {
-            if url := mk_link(context.base, e.get_attribute(u"SRC")) then {
+            if url := mk_link(context, e.get_attribute(u"SRC")) then {
                q := Img(self, url,, context.form)
                start_worker(Req(url, page_url, q.got_data, context.kind))
                if e.get_attribute(u"DISABLED") then
@@ -2470,7 +2499,7 @@ class Browser(Component)
          every put(coords, integer(separate(s)))
          mc.map.add_area(MapArea(map(string(e.get_attribute(u"SHAPE"))), 
                                  coords,
-                                 mk_link(context.base, e.get_attribute(u"HREF"))))
+                                 mk_link(context, e.get_attribute(u"HREF"))))
       }
    end
 
@@ -2542,6 +2571,7 @@ class Browser(Component)
    end
 
    public goto(url, referer, kind, form_data)
+      /kind := Worker.NORMAL
       cancel()
       start_worker(Req(url, referer, set_top_data, kind, form_data))
    end
@@ -2558,6 +2588,16 @@ class Browser(Component)
 
    public set_cache(c)
       self.cache := c
+      return self
+   end
+
+   public set_scheme_handlers(m)
+      self.scheme_handlers := m
+      return self
+   end
+
+   public add_scheme_handler(scheme, func)
+      insert(scheme_handlers, scheme, func)
       return self
    end
 
@@ -2580,6 +2620,7 @@ class Browser(Component)
       self.cache := Cache(8*1024*1024)
       file_dialog := FileDialog()
       authentications := table()
+      scheme_handlers := table()
       queue := []
       workers := []
       every 1 to 6 do

@@ -245,7 +245,7 @@ procedure process_one(a)
    url := URL.parse(a) | stop("Invalid url: " || a)
 
    if /opts["head"] & /opts["c"] then {
-      get_out(url.get_file_last(1))
+      get_out(url.get_path_last())
       if check_skip() then
          fail
       if /opts["q"] then

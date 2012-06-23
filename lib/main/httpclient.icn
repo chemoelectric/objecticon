@@ -327,7 +327,7 @@ class HttpClient(NetClient)
 
       realm := member(t, "realm") | 
          return on_http_error("No realm in WWW-Authenticate header in a 401 response")
-      dom := string(response.url.address)
+      dom := string(response.url.host)
       k := realm || " at " || dom
       if /auth then {
          # First 401 response, so see if we have a cached
@@ -568,7 +568,7 @@ class HttpClient(NetClient)
 
       if \c.domain then {
          d := map(c.domain)
-         e := map(request.url.get_address())
+         e := map(request.url.get_host())
 
          # The domain must have an embedded dot
          #
@@ -598,7 +598,7 @@ class HttpClient(NetClient)
 
       every s := response.gen_headers("set-cookie") do {
          if (c := parse_cookie_string(s)) & valid_cookie(c) then {
-            domain := string(map(\c.domain | request.url.get_address()))
+            domain := string(map(\c.domain | request.url.get_host()))
             (paths := member(cookies, domain)) | insert(cookies, domain, paths := table())
             path := c.path
             if /path then {
@@ -607,7 +607,7 @@ class HttpClient(NetClient)
                if /c.version then
                   path := request.url.get_file()
                else {
-                  path := request.url.get_file_dir()
+                  path := request.url.get_path_dir()
                   if path[-1] == "/" then
                      path[-1] := ""
                }
@@ -640,7 +640,7 @@ class HttpClient(NetClient)
    private create_cookie_header()
       local s, e, f, domain, path, c, now, ver
 
-      domain := string(map(request.url.get_address()))
+      domain := string(map(request.url.get_host()))
       path := string(request.url.get_file())
       now := Time()
       s := ""
@@ -705,13 +705,13 @@ class HttpClient(NetClient)
    #
    # 
    private maybe_open()
-      if not(is_open()) | /open_url | open_url.get_address() ~== request.url.get_address() |
+      if not(is_open()) | /open_url | open_url.get_host() ~== request.url.get_host() |
          open_url.get_port() ~= request.url.get_port() then 
       {
          close()
-         set_server(request.url.get_address())
+         set_server(request.url.get_host())
          set_port(request.url.get_port())
-         if request.url.get_protocol() == "https" then
+         if request.url.get_scheme() == "https" then
             set_ssl(&yes)
          else
             set_ssl(&no)
@@ -829,7 +829,7 @@ class HttpClient(NetClient)
    private write_request()
       local rs, sz, s, f
       request.set_header("user-agent", user_agent)
-      request.set_header("host", request.url.get_address())
+      request.set_header("host", request.url.get_host())
       request.set_header("referer", \request.referer)
       if \gzip_flag then
          request.set_header("accept-encoding", "gzip")

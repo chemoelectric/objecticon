@@ -1,6 +1,7 @@
 import 
    gui, 
    io,
+   util,
    graphics,
    posix,
    lang,
@@ -27,7 +28,7 @@ class MessageLabel(Label)
       local t
       want := p
       if /keep then {
-         /p := NullPaint()
+         /p := TextPaint("")
          set_paint(p)
          if \n then {
             keep := 1
@@ -66,7 +67,7 @@ class BrowserDialog(Dialog, BrowserUI)
       local u
       if \start_page then {
          if u := URL.parse(start_page) then
-            browser.goto(u,, Worker.NORMAL)
+            browser.goto(u)
          else
             msg("Invalid url")
       } else
@@ -104,7 +105,7 @@ class BrowserDialog(Dialog, BrowserUI)
       if *s = 0 then
          fail
       if u := URL.parse(s) then
-         browser.goto(u,, Worker.NORMAL)
+         browser.goto(u)
       else
          msg("Invalid url")
    end
@@ -131,7 +132,7 @@ class BrowserDialog(Dialog, BrowserUI)
    end
 
    private on_home(ev)
-      browser.goto(URL.parse(u"file://" || ucs(Files.get_path(Files.get_home()).child(".oibrowser.html").str())),, Worker.NORMAL)
+      browser.goto(URL.parse(u"file://" || ucs(Files.get_path(Files.get_home()).child(".oibrowser.html").str())))
    end
 
    private handle_paste_response(target_type, data, e)
@@ -163,6 +164,22 @@ class BrowserDialog(Dialog, BrowserUI)
       browser.do_save_page()
    end
 
+   private hello_handler(req)
+      local s
+      return case string(req.url.path) of {
+         "": "<html>Hello world<img src=home.gif /><p><form method=get action=submit >_
+              <input type=text name=q size=40 /><br>_
+              <input type=submit />_
+              </form></html>"
+         "home.gif": HOME
+         "submit": {
+            s := req.url.extract_cgi_parameters()["q"][1] | "?"
+            "<html>Hello " || s || "</html>"
+         }
+         default: error("No data for that path")
+      } 
+   end
+
    public new(s, cookies)
       cast(self,Dialog).new()
       setup()
@@ -171,6 +188,7 @@ class BrowserDialog(Dialog, BrowserUI)
       browser.set_user_agent(\opts["agent"])
       if \opts["l"] then
          browser.set_log_http(&yes)
+      browser.add_scheme_handler("hello", hello_handler)
       start_page := s
       return
    end
