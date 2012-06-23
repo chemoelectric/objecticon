@@ -138,7 +138,9 @@ class Image(Component)
       ww := (\win).get_width() | 0
       wh := (\win).get_height() | 0
       dw -:= border.get_total_width()
-      t := if ww > 0 then (dw * wh) / ww else 0
+      t := if fill_dimensions < 2 & ww <= dw then
+         wh
+      else if ww > 0 then (dw * wh) / ww else 0
       return t + border.get_total_height()
    end
 
