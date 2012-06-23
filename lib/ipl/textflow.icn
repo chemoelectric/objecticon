@@ -590,7 +590,7 @@ class TextFlow(Component)
    private compute_txt(W, cmd)
       local ds, ds2, tw, attr, wd, l, i
       attr := cmd.attr
-      ds := ""
+      ds := u""
       l := []
       if any(WHITESPACE, cmd.s) then
          need_spc := 1
@@ -616,7 +616,7 @@ class TextFlow(Component)
                      i -:= 1
                   txt_out(W, attr, wd[1:i])
                   new_row()
-                  push(l, "" ~== wd[i:0])
+                  push(l, u"" ~== wd[i:0])
                } else {
                   new_row()
                   push(l, wd)
@@ -624,7 +624,7 @@ class TextFlow(Component)
             } else {
                txt_out(W, attr, ds)
                new_row()
-               ds := ""
+               ds := u""
                push(l, wd)
             }
          } else
@@ -646,10 +646,10 @@ class TextFlow(Component)
 
       while s := get(l) do {
          s2 := s
-         if s2[-1] == "\n" then {
-            s2[-1] := ""
-            if s2[-1] == "\r" then
-               s2[-1] := ""
+         if s2[-1] == u"\n" then {
+            s2[-1] := u""
+            if s2[-1] == u"\r" then
+               s2[-1] := u""
             nl := &yes
          } else
             nl := &no
@@ -662,7 +662,7 @@ class TextFlow(Component)
                   i -:= 1
                txt_out(W, attr, s2[1:i])
                new_row()
-               push(l, "" ~== s[i:0])
+               push(l, u"" ~== s[i:0])
             } else {
                new_row()
                push(l, s)
