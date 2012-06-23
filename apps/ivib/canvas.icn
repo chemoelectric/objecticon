@@ -252,7 +252,7 @@ class Canvas(Component,SelectiveObjectCodec)
 
    public synch_size()
       self.dialog_w := \self.dialog_iw | layout_delegate.get_preferred_width()
-      self.dialog_h := \self.dialog_ih | layout_delegate.get_preferred_height()
+      self.dialog_h := \self.dialog_ih | layout_delegate.get_preferred_height(self.dialog_w)
       set_size(self.dialog_w, self.dialog_h)
       parent.set_size(self.dialog_w + 2 * EDGE, self.dialog_h + 2 * EDGE)
       if self.parent.is_live() then {
