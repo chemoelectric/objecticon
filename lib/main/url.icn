@@ -343,7 +343,7 @@ class URL()
    end
 
    #
-   # Convert a CGI parameter string by extracting any encoded characters.
+   # Create a CGI parameter string by adding any encoding necessary.
    #
    public static convert_hex(s)
       local res
@@ -363,12 +363,13 @@ class URL()
    end
 
    #
-   # Make a cgi param table from the given string
+   # Make a cgi param table from the given string.  Note that the keys and entries are
+   # always strings (never ucs).
    # @return   A table, representing the keys and values of the fields.
    #
    public static make_cgi_table(s)
-      local cgi, key, val
-
+      local cgi, key, val, l
+      s := string(s) | runerr(103, s)
       cgi := table()
       s ? {
          until pos(0) do {
@@ -378,18 +379,20 @@ class URL()
             else
                val := ""
             ="&"
-            /cgi[key] := []
-            put(cgi[key], val)
+            (l := member(cgi, key)) | insert(cgi, key, l := [])
+            put(l, val)
          }
       }
       return cgi
    end
 
    #
-   # Create a CGI parameter string by adding any encoding necessary.
+   # Convert a CGI parameter string by extracting any encoded
+   # characters.  The result is always a string, never ucs.
    #
    public static extract_hex(s)
       local res
+      s := string(s) | runerr(103, s)
       res := ""
       s := map(s, "+", " ") 
       s ? repeat {
