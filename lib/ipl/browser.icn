@@ -1204,7 +1204,7 @@ record HistoryEntry(url,          # URL displayed (on a redirect may differ from
 class BrowserUI()
    public defer msg(s, n)
    public defer clear_msg()
-   public defer set_url_field(val)
+   public defer set_url_field(url)
    public defer update_grey(gs)
    public defer set_title(s)
 end
@@ -1351,8 +1351,8 @@ class Browser(Component)
       (\ui).clear_msg()
    end
 
-   public set_url_field(val)
-      (\ui).set_url_field(val)
+   public set_url_field(url)
+      (\ui).set_url_field(url)
    end
 
    public update_grey(gs)
@@ -1579,7 +1579,7 @@ class Browser(Component)
          history_pos +:= 1
       }
       do_update_grey()
-      set_url_field(page_url.str())
+      set_url_field(page_url)
       curr_history_entry := history[history_pos]
       # Note that the url/form_data may change even on a
       # navigate/refresh, if the server behaved differently (eg
@@ -2574,6 +2574,7 @@ class Browser(Component)
       /kind := Worker.NORMAL
       cancel()
       start_worker(Req(url, referer, set_top_data, kind, form_data))
+      return self
    end
 
    public set_cookies(cookies)
