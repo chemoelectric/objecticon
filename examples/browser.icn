@@ -29,7 +29,7 @@ class Settings()
       visited_size
 
    public new()
-      home_url := URL.parse(u"file://" || ucs(Files.get_path(Files.get_home()).child(".oibrowser.html").str()))
+      home_url := URL.parse(u"config:")
       cache_size_mb := 8
       visited := []
       visited_size := 100
@@ -279,6 +279,7 @@ class BrowserDialog(Dialog, BrowserUI)
 
    private config_main()
       return "<html><head><title>Config</title></head><a href=config:cookies >Edit cookies</a><p>_
+              <a href=config:visited >Visited pages</a><p>_
               <fieldset><form method=get action=submit >_
                  <legend>Edit settings</legend>_
                  <table>_
