@@ -156,14 +156,9 @@ procedure main(args)
    if \opts["while"] then
       hc.set_retry_while_data(&yes)
 
-   cookies := \opts["k"] | System.getenv("GETURL_COOKIES")
-   if \cookies then {
-      (t := decode(Files.file_to_string(cookies))) | {
-         write(FileStream.stderr, "Couldn't read/decode cookie file ", cookies, ": ", &why)
-         t := table()
-      }
-      hc.set_cookies(t)
-   }
+   cookies := \opts["k"] | System.getenv("OICOOKIES") | Files.get_path(Files.get_home()).child(".oicookies").str()
+   t := decode(Files.file_to_string(cookies)) | table()
+   hc.set_cookies(t)
 
    l := Monitor()
    if /opts["q"] then {
@@ -210,13 +205,12 @@ procedure main(args)
       }
    }
 
-   if \cookies then {
-      t := cookies || ".bak"
-      Files.string_to_file(t, encode(Cookie.expire_cookies(hc.get_cookies()))) | 
-         stop("Couldn't encode to temp cookie file ", t, ": ", &why)
-      # Use rename not move to ensure it's atomic
-      Files.rename(t, cookies) | stop("Couldn't rename cookie file ", t, ": ", &why)
-   }
+   # Save cookies
+   t := cookies || ".bak"
+   Files.string_to_file(t, encode(Cookie.expire_cookies(hc.get_cookies()))) | 
+      stop("Couldn't encode to temp cookie file ", t, ": ", &why)
+   # Use rename not move to ensure it's atomic
+   Files.rename(t, cookies) | stop("Couldn't rename cookie file ", t, ": ", &why)
 
    if *err = *failed = 0 then
       exit(0)

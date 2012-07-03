@@ -511,14 +511,12 @@ class BrowserDialog(Dialog, BrowserUI)
 end
 
 procedure main(a)
-   local d, s, cookies, t, bak, settings, sf
+   local d, s, cookies, t, bak, settings, sf, home
    opts := options(a, "-k: -l! -agent:")
-   sf := Files.get_path(Files.get_home()).child(".oibrowser").str()
-   cookies := \opts["k"] | System.getenv("GETURL_COOKIES")
-   if \cookies then {
-      (t := decode(Files.file_to_string(cookies))) |
-         write(FileStream.stderr, "Couldn't read/decode cookie file ", cookies, ": ", &why)
-   }
+   home := Files.get_path(Files.get_home())
+   sf := home.child(".oibrowser").str()
+   cookies := \opts["k"] | System.getenv("OICOOKIES") | home.child(".oicookies").str()
+   t := decode(Files.file_to_string(cookies)) | table()
    settings := decode(Files.file_to_string(sf)) | Settings()
    ImageCache.name_image("rpp.EXIT_24", EXIT)
    ImageCache.name_image("rpp.NEXT_24", NEXT)
@@ -528,16 +526,15 @@ procedure main(a)
    ImageCache.name_image("rpp.PASTE_24", PASTE)
    ImageCache.name_image("rpp.STOP_24", STOP)
    s := ucs(a[1])
-   /t := table()
    d := BrowserDialog(s, t, settings)
    d.show_modal()
-   if \cookies then {
-      bak := cookies || ".bak"
-      Files.string_to_file(bak, encode(Cookie.expire_cookies(t))) | 
-         stop("Couldn't encode to temp cookie file ", bak, ": ", &why)
-      # Use rename not move to ensure it's atomic
-      Files.rename(bak, cookies) | stop("Couldn't rename cookie file ", bak, ": ", &why)
-   }
+   # Save cookies
+   bak := cookies || ".bak"
+   Files.string_to_file(bak, encode(Cookie.expire_cookies(t))) | 
+      stop("Couldn't encode to temp cookie file ", bak, ": ", &why)
+   # Use rename not move to ensure it's atomic
+   Files.rename(bak, cookies) | stop("Couldn't rename cookie file ", bak, ": ", &why)
+   # Save settings
    Files.string_to_file(sf, encode(settings))
 end
 
