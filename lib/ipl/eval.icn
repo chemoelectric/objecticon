@@ -39,12 +39,8 @@ import
    io(ewrite),
    ipl.ivalue(ivalue)
 
-invocable all
-
 procedure eval(expr)
    local p, args, tok
-
-#   &error := -1				# to prevent error termination ...
 
    expr ? {
       p := trim(tab(upto('(')), '\t ') | {

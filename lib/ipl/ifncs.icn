@@ -27,6 +27,16 @@ package ipl.ifncs
 
 import lang(Prog)
 
+invocable 
+   abs, any, back, bal, cast, center, char, classof, clear, coact,
+   cocopy, collect, copy, cset, delay, delete, detab, display, entab, errorclear,
+   exit, fatalerr, find, get, iand, icom, image, insert, integer, ior,
+   is, ishift, ixor, key, keyof, keyval, left, list, many, map,
+   match, max, member, min, move, numeric, ord, pop, pos, proc,
+   pull, push, put, real, repl, reverse, right, runerr, seq, serial,
+   set, sort, sortf, string, syserr, system, tab, table, text, trim,
+   type, uchar, ucs, upto, weakref, weakrefval
+
 procedure abs(a1)
    static __fnc_abs
    initial __fnc_abs := Prog.get_function("abs")
@@ -469,4 +479,16 @@ procedure upto(a1, a2, a3, a4)
    static __fnc_upto
    initial __fnc_upto := Prog.get_function("upto")
    suspend __fnc_upto(a1, a2, a3, a4)
+end
+
+procedure weakref(a1)
+   static __fnc_weakref
+   initial __fnc_weakref := Prog.get_function("weakref")
+   suspend __fnc_weakref(a1)
+end
+
+procedure weakrefval(a1)
+   static __fnc_weakrefval
+   initial __fnc_weakrefval := Prog.get_function("weakrefval")
+   suspend __fnc_weakrefval(a1)
 end
