@@ -88,6 +88,48 @@ There are some functions available to help search for files on paths.  In partic
 
 This function can be used to define several deferred methods at once in a class, using a shared library.  It should be called from the class's static `init` method, with the shared library as a parameter.  It goes through each deferred method in the class, looking for a matching function defined in the shared library.  Any not found are just ignored.  This means a class with numerous native methods can resolve them all at once with a single convenient call.
 
+For example, if we replace `testlib.r` with the following :-
+{{{
+function Test_one()
+    body {
+       printf("test one\n");
+       fail;
+    }
+end
+
+function Test_two()
+    body {
+       printf("test two\n");
+       fail;
+    }
+end
+}}}
+
+and `prog.icn` with :-
+{{{
+import lang
+
+class Test()
+   public defer one()
+   public defer two()
+
+   private static init()
+      Class.load_library("./testlib.so")
+   end
+end
+
+procedure main()
+   local o
+   o := Test()
+   o.one()
+   o.two()
+end
+}}}
+and recompile using the Makefile already given above, then the output from `prog` will be :-
+{{{
+test one
+test two
+}}}
 == External headers and symbols ==
 It is possible that the RTL code in a dynamic library will need to refer to another existing library and its associated C header files.  For example, the mysql library needs to reference `"mysql.h"` and link to the mysqlclient library.  These external header files are normally _not_ processed by RTT - rather they are passed through RTT to be processed by the C compiler.  For example
 
