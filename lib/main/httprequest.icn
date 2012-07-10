@@ -15,8 +15,6 @@ class HttpRequest(MimeHeaders)
       input_stream,
       method,
       output_stream,
-      username,
-      password,
       referer,
       range_start,
       range_end,
@@ -93,22 +91,6 @@ class HttpRequest(MimeHeaders)
    #
    public set_referer(s)
       self.referer := s
-      return self
-   end
-
-   #
-   # Set the username to use for authentication
-   #
-   public set_username(s)
-      self.username := s
-      return self
-   end
-
-   #
-   # Set the password to use for authentication
-   #
-   public set_password(s)
-      self.password := s
       return self
    end
 

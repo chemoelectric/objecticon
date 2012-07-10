@@ -41,14 +41,9 @@ import
    lang(Proc, Prog),
    ipl.ifncs
 
-invocable all
-
 # trace built-in functions
 procedure iftrace(args[])		
-
-
    every set_trace(!args)
-
    return
 end
 

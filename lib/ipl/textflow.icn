@@ -6,10 +6,25 @@ import
    ipl.strings,
    ipl.sort
 
-class TextFlowCmd() end
+class HasAscent()
+   public defer get_ascent(dw, dh)
+end
+
+class HasMaxWidth()
+   public defer get_max_width()
+end
+
+class TextFlowCmd()
+  public const attr
+
+   public new(attr)
+      self.attr := attr
+      return
+   end
+end
 
 class ComponentCmd(TextFlowCmd)
-   public const c, align, attr
+   public const c, align
 
    public new(c, attr, align)
       self.c := c
@@ -20,7 +35,7 @@ class ComponentCmd(TextFlowCmd)
 end
 
 class TextCmd(TextFlowCmd)
-  public const s, attr
+  public const s
 
    public new(s, attr)
       self.s := s
@@ -29,25 +44,30 @@ class TextCmd(TextFlowCmd)
    end
 end
 
-class NamedAnchorCmd()
+class NamedAnchorCmd(TextFlowCmd)
    public const
       name
 
-   public new(name)
+   public new(name, attr)
       self.name := name
+      self.attr := attr
       return
    end
 end
 
 class NewRowCmd(TextFlowCmd) end
-
 class ParaCmd(TextFlowCmd) end
+class SupStartCmd(TextFlowCmd) end
+class SupEndCmd(TextFlowCmd) end
+class SubStartCmd(TextFlowCmd) end
+class SubEndCmd(TextFlowCmd) end
 
 class BreakCmd(TextFlowCmd)
    public const clear
 
-   public new(clear)
+   public new(clear, attr)
       self.clear := clear
+      self.attr := attr
       return
    end
 end
@@ -67,15 +87,21 @@ class TextOut(Rect)
 end
 
 class CompOut(Rect)
-   public const c, align, attr, pw, maxw, boff
+   public const c, align, attr, pw, maxw
+   public ascent, descent
 
-   public new(attr, c, align, pw, maxw, boff)
+   public set_height_from_width()
+      h := c.get_preferred_height(w)
+      h <:= integer(c.get_constraint("fix_h"))
+      return self
+   end
+
+   public new(attr, c, align, pw, maxw)
       self.attr := attr
       self.c := c
       self.align := align
       self.pw := pw
       self.maxw := maxw
-      self.boff := boff
       return
    end
 end
@@ -95,7 +121,9 @@ class TextFlow(Component)
       row_y,
       row_width,
       row_ascent,
+      first_row_ascent,
       row_descent,
+      baseline_off,
       row_abs_middle_height,
       row_abs_top_height,
       row_abs_bottom_height,
@@ -121,12 +149,12 @@ class TextFlow(Component)
 
    public static const 
       WHITESPACE,
-      DEFAULT_WIDTH,
+      PREFERRED_WIDTH,
       MAX_WIDTH
 
    private static init()
       WHITESPACE := ' \t\r\n\v\f'
-      DEFAULT_WIDTH := 1
+      PREFERRED_WIDTH := 1
       MAX_WIDTH := 2
    end
 
@@ -151,8 +179,10 @@ class TextFlow(Component)
       max_pre_w := 0
       max_word_w := 0
       max_ll := 0
+      baseline_off := 0
       right_margin := compute_w
       row_abs_middle_height := row_abs_top_height := row_abs_bottom_height := row_ascent := row_descent := 0
+      first_row_ascent := &null
       compute1(, input)
       while *(row | deferred) > 0 do
          new_row()
@@ -161,7 +191,7 @@ class TextFlow(Component)
          until have_max() do 
             new_row()
       }
-  end
+   end
 
    public set_v_align(v)
       self.v_align := v
@@ -194,16 +224,11 @@ class TextFlow(Component)
    end
 
    public get_max_width()
-      local t
-      if dominant_width === DEFAULT_WIDTH then
-         return get_default_width()
+      if dominant_width === PREFERRED_WIDTH then
+         return get_preferred_width()
       if /max_width then {
-         if t := integer(self.w_spec) then
-            max_width := t
-         else {
-            compute()
-            max_width := max_ll + border.get_total_width()
-         }
+         compute()
+         max_width := max_ll + border.get_total_width()
       }
       return max_width
    end
@@ -218,10 +243,21 @@ class TextFlow(Component)
       return mh + border.get_total_height()
    end
 
+   public get_first_row_ascent(dw)
+      dw -:= border.get_total_width()
+      compute(dw)
+      return \first_row_ascent | 0
+   end
+
    private compute1()
       local cmd, font, W
       W := cbwin.clone()
       every cmd := !input do {
+         if font ~=== cmd.attr.font then {
+            W.uncouple()
+            W := attr_clone(cmd.attr)
+            font := cmd.attr.font
+         } 
          case classof(cmd) of {
             ComponentCmd: 
                compute_component(cmd)
@@ -236,6 +272,12 @@ class TextFlow(Component)
                   at_new_para := 1
                }
             }
+
+            SupStartCmd: baseline_off +:= W.get_font_ascent() / 2
+            SupEndCmd: baseline_off -:= W.get_font_ascent() / 2
+            SubStartCmd: baseline_off -:= W.get_font_ascent() / 3
+            SubEndCmd: baseline_off +:= W.get_font_ascent() / 3
+
             BreakCmd: {
                if *row > 0 then
                   new_row()
@@ -254,11 +296,6 @@ class TextFlow(Component)
                insert(named_anchors, string(cmd.name), row_y)
             }
             TextCmd: {
-               if font ~=== cmd.attr.font then {
-                  W.uncouple()
-                  W := attr_clone(cmd.attr)
-                  font := cmd.attr.font
-               } 
                if \cmd.attr.pre then
                   compute_pre_txt(W, cmd)
                else
@@ -278,8 +315,8 @@ class TextFlow(Component)
    private attr_clone(attr)
       local W
       W := cbwin.clone()
-      W.set_fg(\attr.fg)
-      W.set_font(\attr.font)
+      W.set_fg(attr.fg)
+      W.set_font(attr.font)
       return W
    end
 
@@ -364,7 +401,8 @@ class TextFlow(Component)
          row_ascent +:= need / 2
          row_descent +:= need / 2 + need % 2
       }
-      
+
+      /first_row_ascent := row_ascent      
       while r := get(row) do {
          if /calculating & x1 = row_x then {
             case r.attr.align of {
@@ -378,7 +416,7 @@ class TextFlow(Component)
             r.x := x1
             r.y := case r.align of {
                Align.C: row_y + row_ascent - r.h / 2
-               Align.B: row_y + row_ascent - r.h + r.boff
+               Align.B: row_y + row_ascent - r.ascent
                Align.T: row_y
                "absbottom": row_y + row_ascent + row_descent - r.h
                "absmiddle": row_y + (row_ascent + row_descent - r.h) / 2
@@ -429,7 +467,7 @@ class TextFlow(Component)
                co.x := row_x
                co.y := row_y
                co.w := min(co.maxw, right_margin - row_x - row_width)
-               co.h := co.c.get_preferred_height(co.w)
+               co.set_height_from_width()
                row_x +:= co.w
                put(left_comps, co)
                return
@@ -440,7 +478,7 @@ class TextFlow(Component)
                co.w := min(co.maxw, right_margin - row_x - row_width)
                co.x := right_margin - co.w
                co.y := row_y
-               co.h := co.c.get_preferred_height(co.w)
+               co.set_height_from_width()
                right_margin -:= co.w
                put(right_comps, co)
                return
@@ -450,13 +488,13 @@ class TextFlow(Component)
    end
 
    private compute_component(cmd)
-      local co, prefw, maxw, boff
+      local co, prefw, maxw, i
       prefw := cmd.c.get_preferred_width()
-      maxw := if is(cmd.c, Tbl) then cmd.c.get_max_width() else prefw
-      boff := if is(cmd.c, FormEntry) then cmd.c.get_baseline_off() else 0
-      co := CompOut(cmd.attr, cmd.c, cmd.align, prefw, maxw, boff)
+      maxw := if is(cmd.c, HasMaxWidth) then cmd.c.get_max_width() else prefw
+      if i := cmd.c.get_constraint("fix_w") then
+         prefw := maxw := max(i, prefw)
+      co := CompOut(cmd.attr, cmd.c, cmd.align, prefw, maxw)
       put(output_comps, co)
-
       case cmd.align of {
          Align.L: {
             # If already have deferred, then defer this too, otherwise they will be out of order. 
@@ -464,7 +502,7 @@ class TextFlow(Component)
                co.x := row_x
                co.y := row_y
                co.w := co.maxw
-               co.h := cmd.c.get_preferred_height(co.w)
+               co.set_height_from_width()
                row_x +:= co.maxw
                put(left_comps, co)
             } else
@@ -475,7 +513,7 @@ class TextFlow(Component)
                co.x := right_margin - co.maxw 
                co.y := row_y
                co.w := co.maxw
-               co.h := cmd.c.get_preferred_height(co.w)
+               co.set_height_from_width()
                right_margin -:= co.w
                put(right_comps, co)
             } else
@@ -483,8 +521,8 @@ class TextFlow(Component)
          }
          Align.B: {
             comp_out(co)
-            row_ascent <:= co.h - co.boff
-            row_descent <:= co.boff
+            row_ascent <:= co.ascent
+            row_descent <:= co.descent
          }
          Align.T: {
             comp_out(co)
@@ -508,17 +546,19 @@ class TextFlow(Component)
    end
 
    private comp_out(co)
-      local c
+      local c, avail, pct
       c := co.c
       while (row_x + row_width + co.pw > right_margin) & not have_max() do
          new_row()
 
-      if is(c,Line) & /calculating then
-         co.w := right_margin - row_x - row_width
+      avail := right_margin - row_x - row_width
+      co.w := if pct := integer(c.get_constraint("pct_w")) & /calculating then
+         max(co.pw, (avail * pct) / 100)
       else
-         co.w := min(co.maxw, right_margin - row_x - row_width)
-      co.h := co.c.get_preferred_height(co.w)
-
+         min(co.maxw, avail)
+      co.set_height_from_width()
+      co.ascent := (if is(co.c, HasAscent) then co.c.get_ascent(co.w, co.h) else co.h) + baseline_off
+      co.descent := co.h - co.ascent
       # A component cancels outstanding ws before the line eg the \n after the <br> is ignored
       # begin<br>
       # <img src="/tmp/j3.jpeg">is some stuff
@@ -530,11 +570,10 @@ class TextFlow(Component)
    end
 
    private txt_out(W, attr, s)
-      local xo, bo
-      bo := W.get_font_ascent() * attr.baseline_off / 2
+      local xo
       xo := TextOut(attr, s, 
-                    W.get_font_ascent() + bo, 
-                    W.get_font_descent() - bo, 
+                    W.get_font_ascent() + baseline_off, 
+                    W.get_font_descent() - baseline_off, 
                     W.text_width(s), W.get_font_height())
       put(output_text, xo)
       put(row,  xo)
@@ -551,7 +590,7 @@ class TextFlow(Component)
    private compute_txt(W, cmd)
       local ds, ds2, tw, attr, wd, l, i
       attr := cmd.attr
-      ds := ""
+      ds := u""
       l := []
       if any(WHITESPACE, cmd.s) then
          need_spc := 1
@@ -577,7 +616,7 @@ class TextFlow(Component)
                      i -:= 1
                   txt_out(W, attr, wd[1:i])
                   new_row()
-                  push(l, "" ~== wd[i:0])
+                  push(l, u"" ~== wd[i:0])
                } else {
                   new_row()
                   push(l, wd)
@@ -585,7 +624,7 @@ class TextFlow(Component)
             } else {
                txt_out(W, attr, ds)
                new_row()
-               ds := ""
+               ds := u""
                push(l, wd)
             }
          } else
@@ -607,10 +646,10 @@ class TextFlow(Component)
 
       while s := get(l) do {
          s2 := s
-         if s2[-1] == "\n" then {
-            s2[-1] := ""
-            if s2[-1] == "\r" then
-               s2[-1] := ""
+         if s2[-1] == u"\n" then {
+            s2[-1] := u""
+            if s2[-1] == u"\r" then
+               s2[-1] := u""
             nl := &yes
          } else
             nl := &no
@@ -623,7 +662,7 @@ class TextFlow(Component)
                   i -:= 1
                txt_out(W, attr, s2[1:i])
                new_row()
-               push(l, "" ~== s[i:0])
+               push(l, u"" ~== s[i:0])
             } else {
                new_row()
                push(l, s)
@@ -649,7 +688,6 @@ class TextFlow(Component)
    end
 
    private handle_lrelease(e)
-     set_pointer()
       if \wrote then
          self.browser.goto(wrote, browser.page_url, Worker.NORMAL)
    end
@@ -695,6 +733,11 @@ class TextFlow(Component)
          wrote := &null
          set_pointer()
       }
+   end
+
+   public get_pointer(e)
+      handle_move(e)
+      return \self.pointer
    end
 
    private handle_ldrag(e)

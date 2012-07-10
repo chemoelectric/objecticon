@@ -133,10 +133,15 @@ class Image(Component)
       return ww + border.get_total_width()
    end
 
-   public get_default_height()
-      local wh
+   public get_default_height(dw)
+      local t, wh, ww
+      ww := (\win).get_width() | 0
       wh := (\win).get_height() | 0
-      return wh + border.get_total_height()
+      dw -:= border.get_total_width()
+      t := if fill_dimensions < 2 & ww <= dw then
+         wh
+      else if ww > 0 then (dw * wh) / ww else 0
+      return t + border.get_total_height()
    end
 
    public display()

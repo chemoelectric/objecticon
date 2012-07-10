@@ -34,7 +34,7 @@ class MimeHeaders()
    # @fail if no headers for the key have been defined
    #
    public get_headers(key)
-      return \headers.get(key)
+      return headers.member(key)
    end
 
    #
@@ -72,10 +72,7 @@ class MimeHeaders()
    # Add a header with the given key, after any existing ones with the same key
    #
    public add_header(key, val)
-      if headers.member(key) then
-         put(headers.get(key), val)
-      else
-         headers.insert(key, [val])
+      put(headers.member(key), val) | headers.insert(key, [val])
       return self
    end
 

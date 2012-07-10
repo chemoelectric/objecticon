@@ -232,9 +232,9 @@ class HtmlParser()
       case string(start_tag.name) of {
          "PLAINTEXT":
             res.add("" ~== remove_entities(tab(0)))
-         "SCRIPT": {
+         "SCRIPT" | "STYLE" | "TITLE": {
             if /start_tag.empty then
-               res.add("" ~== move_to_end_of_script())
+               res.add("" ~== move_past_end_tag(start_tag))
          }
          default: {
             if not(\start_tag.empty | is_standalone_tag(start_tag.name)) then {
@@ -395,18 +395,20 @@ class HtmlParser()
       return res
    end
 
+   # Move past the next end tag to match the given start tag,
+   # regardless of intervening content
    #
-   # Move past the next "</script>"
-   #
-   private move_to_end_of_script()
-      local s
+   private move_past_end_tag(start_tag)
+      local s, i, t
       s := ""
       repeat {
          s ||:= tab(upto('<') | 0)
          if pos(0) then
             break
-         if string(map(move(9))) == "</script>" then
+         i := &pos
+         if t := parse_tag() & start_tag.balances(t) then
             break
+         tab(i)
          s ||:= move(1)
       }
       return s

@@ -68,9 +68,8 @@ package ipl.ansi
 
 import
    io(stop, writes),
-   ipl.iolib(getname, getval, igoto, iputs)
-
-invocable all
+   ipl.iolib(getname, getval, igoto, iputs),
+   ipl.iscreen(clear, emphasize, normal, boldface, underline, blink)
 
 procedure _isANSI()
     static isANSI
@@ -78,18 +77,9 @@ procedure _isANSI()
 	if find("MS-DOS",&features) then {
 	    isANSI := 1
 	} else {
-	    if proc(getname) then {
-		if find("ansi",map(getname())) | getname() == "li"
-		then isANSI := 1
-		else isANSI := &null
-	    } else {
-		# We'll take a chance on the user knowing what he/she
-		# is doing.
-		isANSI := 1
-		# If you're not so confident, comment out the following
-		# line:
-		# stop("_isANSI:  you need to link itlib or iolib")
-	    }
+           if find("ansi",map(getname())) | getname() == "li"
+           then isANSI := 1
+           else isANSI := &null
 	}
     }
     return \isANSI
@@ -151,8 +141,6 @@ procedure CUU(i)
 end
 
 procedure ED(i)
-    local emphasize, clear
-
     /i := 2
     if _isANSI() then {
 	writes("\^[[",i,"J")
@@ -160,10 +148,7 @@ procedure ED(i)
 	case i of {
 	    0:  iputs(getval("cd")) | stop("ED:  no cd capability")
 	    1:  stop("ED:  termcap doesn't specify capability")
-	    2:  {
-		if proc(emphasize) then clear()
-		else iputs(getval("cl")) | stop("ED:  no cl capability")
-	    }
+	    2:  clear()
 	    default:  stop("ED:  unknown clear code, ",i)
 	}
     }
@@ -188,36 +173,16 @@ procedure EL(i)
 end
 
 procedure SGR(i)
-
-    local emphasize, normal, boldface, underline, blink
-
-    static isISCR
-
-    initial {
-	if proc(emphasize)
-	then isISCR := 1
-    }
-
     /i := 0
     if _isANSI() then {
 	writes("\^[[",i,"m")
     } else {
 	case i of {
-	    0: (\isISCR, normal()) | {
-		every iputs(getval("me"|"se"|"ue"))
-	    }
-	    1: (\isISCR, boldface()) | {
-		iputs(getval("md"|"so"|"us"))
-	    }
-	    4: (\isISCR, underline()) | {
-		iputs(getval("us"|"md"|"so"))
-	    }
-	    5: (\isISCR, blink()) | {
-		iputs(getval("mb"|"us"|"md"|"so"))
-	    }
-	    7: (\isISCR, emphasize()) | {
-		iputs(getval("so"|"md"|"us"))
-	    }
+	    0: normal()
+	    1: boldface()
+	    4: underline()
+	    5: blink()
+	    7: emphasize()
 	    default:  stop("SGR:  unknown mode, ",i)
 	}
     }

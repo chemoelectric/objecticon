@@ -48,15 +48,28 @@ class Resp()
    end
 end
 
+class Handled()
+   public const
+      data, fname, content_type
+
+   public new(data, fname, content_type)
+      self.data := data
+      self.fname := fname
+      self.content_type := content_type
+      return
+   end
+end
+
 class CacheEntry()
    public const
-      url, data, fname, content_type
+      url, data, fname, content_type, expiry
 
-   public new(url, data, fname, content_type)
+   public new(url, data, fname, content_type, expiry)
       self.url := url
       self.data := data
       self.fname := fname
       self.content_type := content_type
+      self.expiry := expiry
       return
    end
 end
@@ -65,7 +78,14 @@ class Cache()
    private t, total, lim
 
    public get(url)
-      return member(t, string(url.str()))
+      local k, ent
+      k := string(url.str())
+      if ent := member(t, k) then {
+         if \ent.expiry < Time.get_system_seconds() then
+            del(ent)
+         else
+            return ent
+      }
    end
 
    private del(ent)
@@ -78,7 +98,7 @@ class Cache()
    public add(ent)
       local k, old
       k := string(ent.url.str())
-      #write("cached add ",k)
+      #write("cache add ",k, " expiry ", (\ent.expiry - Time.get_system_seconds()) | "-")
       if old := member(t, k) then
          del(old)
       while *t > 0 &  total + *ent.data > lim do
@@ -185,7 +205,7 @@ class Worker()
          return use {
             rs := RamStream(),
             {
-               rs.out("<html><pre>")
+               rs.out("<html><head><title>Directory " || f || "</title></head><pre>")
                maxsz := maxl := maxuid := maxgid := 0
                every e := !l do {
                   maxl <:= *e[1]
@@ -216,7 +236,9 @@ class Worker()
       httpc := HttpClient().
          set_task(task).
          set_ssl_verify(&no).
-         set_cookies(browser.cookies)
+         set_cookies(browser.cookies).
+         set_authentications(browser.authentications).
+         set_authentication_function(browser.get_authentication)
       httpc.set_user_agent(\browser.user_agent)
       if \browser.log_http_flag then {
          httpc.connect(failed, HttpClient.FAILED_EVENT).
@@ -235,20 +257,39 @@ class Worker()
    private handle_file_req(r)
       local data
       if data := cvt_file(r.url.get_path()) then
-         r.callback(Resp(, r.url, r.referer, data, r.url.get_file_last(1),, r.kind))
+         r.callback(Resp(, r.url, r.referer, data, r.url.get_path_last(),, r.kind))
       else
          r.callback(Resp(&why, r.url, r.referer,,,, r.kind))
    end
 
+   private get_expiry(hres)
+      local s, t, now, ma
+      now := Time.get_system_seconds()
+      if t := HttpClient.parse_generic_header(hres.get_first_header("Cache-Control")) then {
+         if member(t, "no-cache") then
+            fail
+         if ma := integer(member(t, "max-age")) then
+            return now + (0 < ma)
+      }
+      if s := hres.get_first_header("Expires") then {
+         t := Time.parse(s, "E, d MMM yyyy hh:mm:ss z") | fail
+         return now < t.get_unix_seconds()
+      }
+      return
+   end
+
    private handle_http_req(r)
-      local s, data, hreq, hres, fname, ct
-      use {
+      local s, data, hreq, hres, fname, ct, x, ce
+      if r.kind ~= REFRESH & /r.form_data & (ce := browser.cache.get(r.url)) then
+         r.callback(Resp(, r.url, r.referer, ce.data, ce.fname, ce.content_type, r.kind))
+      else use {
          s := RamStream(),
          {
             hreq := HttpRequest().
                set_output_stream(s). 
-               set_url(r.url)
-            if (\r.referer).protocol ~== u"file" then
+               set_url(r.url).
+               set_header("Accept-charset", "UTF-8, ISO-8859-1")
+            if (\r.referer).scheme ~== u"file" then
                hreq.set_referer(r.referer.str())
             if \r.form_data then {
                if is(r.form_data, Message) then
@@ -262,8 +303,8 @@ class Worker()
                ct := ContentType.parse(hres.get_first_header("Content-Type"))
                # Note we have to take into account redirections in deciding whether to cache
                # and whether form data should be in the response.
-               if httpc.request.method == "GET"  then
-                  browser.cache.add(CacheEntry(hres.url, data, fname, ct))
+               if httpc.request.method == "GET" & x := get_expiry(hres) then
+                  browser.cache.add(CacheEntry(hres.url, data, fname, ct, x))
                if /cancelled then
                   r.callback(Resp(, hres.url, r.referer, data, fname, ct, r.kind, 
                                   if hreq.url === hres.url then r.form_data else &null))
@@ -275,14 +316,32 @@ class Worker()
       }
    end
 
+   private handle_func(r, f)
+      local x, s
+      if x := f(r) then {
+         if is(x, Handled) then
+            r.callback(Resp(, r.url, r.referer, x.data, x.fname, x.content_type, r.kind))
+         else if s := string(x) then
+            r.callback(Resp(, r.url, r.referer, s, r.url.get_path_last(),, r.kind))
+         else
+            runerr(103, x)
+      } else
+         r.callback(Resp(&why, r.url, r.referer,,,, r.kind))
+   end
+
    private handle_req(r)
-      local ce
-      if r.url.protocol == u"file" then
-         handle_file_req(r)
-      else if r.kind ~= REFRESH & /r.form_data & (ce := browser.cache.get(r.url)) then
-         r.callback(Resp(, r.url, r.referer, ce.data, ce.fname, ce.content_type, r.kind))
-      else 
-         handle_http_req(r)
+      local f, t
+      t := string(r.url.scheme)
+      case t of {
+         "file": handle_file_req(r)
+         "http"|"https": handle_http_req(r)
+         default: {
+            if f := member(browser.scheme_handlers, t) then
+               handle_func(r, f)
+            else
+               r.callback(Resp("Unknown url scheme", r.url, r.referer,,,, r.kind))
+         }
+      }
    end
 
    private run()
@@ -309,7 +368,7 @@ class Worker()
    end
 end
 
-class Tbl(Border)
+class Tbl(Border, HasMaxWidth, HasAscent)
    public get_max_width()
       local w1
       w1 := content.layout_delegate.get_max_width()  + border.get_total_width()
@@ -319,7 +378,13 @@ class Tbl(Border)
          w1
    end
 
-   public new(url)
+   public get_ascent(dw, dh)
+      /title | return dh
+      dw -:= border.get_total_width()
+      return content.layout_delegate.get_ascent(dw) + border.get_t_inset() | dh
+   end
+
+   public new()
       cast(self,Border).new()
       set_content(Component(). 
                     set_layout(TableLayout()))
@@ -379,7 +444,6 @@ class Img(Label)
    end
 
    private handle_lrelease(e, src)
-      set_pointer()
       if \wrote then
          browser.goto(wrote, browser.page_url, Worker.NORMAL)
    end
@@ -424,6 +488,12 @@ class Img(Label)
       }
    end
 
+   public get_pointer(e)
+      if /form then
+         handle_move(e)
+      return \self.pointer
+   end
+
    private handle_move(e)
       local u
       if u := which_url(e) then {
@@ -466,10 +536,13 @@ class Img(Label)
 end
 
 class FormEntry()
-   public reset() end
+   public 
+      form_name, form_id, form_tabindex
 
-   public get_baseline_off() 
-      return 0
+   public reset() end
+                  
+   public get_save_key()
+      return \form_name | \form_id
    end
 
    public get_save_subkey() end
@@ -514,7 +587,7 @@ class FormToggle(ToggleTextButton, FormEntry)
    end
 end
 
-class FormButton(TextButton, FormEntry)
+class FormButton(TextButton, FormEntry, HasAscent)
    private const
       value
 
@@ -523,14 +596,89 @@ class FormButton(TextButton, FormEntry)
          return value
    end
 
-   public get_baseline_off() 
-      return cbwin.get_font_descent() + border.get_b_inset()
+   public get_ascent() 
+      return cbwin.get_font_ascent() + border.get_t_inset()
    end
 
    public new(value)
       cast(self,TextButton).new()
       self.value := value
       set_label(value)
+      return
+   end
+end
+
+class FormTblButton(Button, FormEntry, HasMaxWidth, HasAscent)
+   public const
+      tbl, value, form, type
+
+   public get_value(ev, src)
+      if src === self then
+         return value
+   end
+
+   private handle_action(e, src)
+      case type of { 
+         "submit": form.submit(e, src)
+         "reset": form.reset()
+      }
+   end
+
+   public display()
+      display_children()
+      if \self.is_down then {
+         Gui.style.down_rectangle(self.cbwin, self.x, self.y, self.w, self.h)
+         tbl.border.draw_rev_rect(self.cbwin, self)
+      }
+      if self.has_focus() & self.is_unshaded() then
+         tbl.border.draw_focus_rect(self.cbwin, self)
+   end
+
+   #
+   # Prevent children from getting in the point chain.
+   #
+   public build_point_chain(l)
+   end
+
+   public get_default_width()
+      return tbl.get_preferred_width()
+   end
+
+   public get_max_width()
+      return tbl.get_max_width()
+   end
+
+   public get_default_height(dw)
+      return tbl.get_preferred_height(dw)
+   end
+
+   public layout()
+      tbl.x := x
+      tbl.y := y
+      tbl.w := w
+      tbl.h := h
+      tbl.layout()
+   end
+
+   public get_ascent(dw, dh)
+      return tbl.get_ascent(dw, dh)
+   end
+
+   public new(form, value, type)
+      cast(self,Button).new()
+      tbl := Tbl().
+         set_border(CompoundBorder().
+                    set_outer(RaisedBorder()).
+                    set_inner(EmptyBorder()))
+      add(tbl)
+      self.value := value
+      self.form := form
+      self.type := type
+      # Although there is only one element in this Tbl, this flag
+      # makes the ascent for the Tbl the ascent of the single
+      # element.
+      tbl.content.layout_delegate.set_align_baselines(&yes)
+      connect(self.handle_action, Event.ACTION)
       return
    end
 end
@@ -561,7 +709,7 @@ class FormLabel()
    end
 end
 
-class FormBrowse(Component, FormEntry)
+class FormBrowse(Component, FormEntry, HasAscent)
    private const
       tf,
       browser
@@ -577,8 +725,8 @@ class FormBrowse(Component, FormEntry)
       return Files.get_path(tf.get_contents()).get(-1)
    end
 
-   public get_baseline_off() 
-      return cbwin.get_font_descent() + Gui.Y_INSET
+   public get_ascent() 
+      return cbwin.get_font_ascent() + Gui.Y_INSET
    end
 
    public reset()
@@ -638,12 +786,12 @@ class FormImgY(FormEntry)
    end
 end
 
-class FormTextField(TextField, FormEntry)
+class FormTextField(TextField, FormEntry, HasAscent)
    private const
       init_val
 
-   public get_baseline_off() 
-      return cbwin.get_font_descent() + border.get_b_inset()
+   public get_ascent() 
+      return cbwin.get_font_ascent() + border.get_t_inset()
    end
 
    public reset()
@@ -699,12 +847,112 @@ class FormEditableTextList(EditableTextList, FormEntry)
    end
 end
 
-class FormList(gui.List, FormEntry)
+class FormOption()
+   public const
+      txt, label, value, selected, disabled, optgroup
+
+   public new(txt, label, value, selected, disabled, optgroup)
+      self.txt := txt
+      self.label := label
+      self.value := value
+      self.selected := selected
+      self.disabled := disabled
+      self.optgroup := optgroup
+      return
+   end
+end
+
+class FormOptionList(SelectableScrollArea, FormEntry)
    private const
       init_val
 
-   public get_baseline_off() 
-      return cbwin.get_font_descent() + view.border.get_b_inset() + border.get_b_inset()
+   public end_handle(e)
+      local i
+      every i := !selections do {
+         if /contents[i].value then
+            delete(selections, i)
+      }
+      cast(self,SelectableScrollArea).end_handle(e)
+   end
+
+   public get_value(ev, src)
+      suspend \contents[!selections].value
+   end
+
+   public reset()
+      set_selections(init_val)
+   end
+
+   public get_save_value()
+      return get_selections()
+   end
+
+   public restore_value(val)
+      set_selections(val)
+   end
+
+   public calculate_line_height()
+      return view.cbwin.get_font_height()
+   end
+
+   public calculate_subject_width()
+      local mw, o
+      mw := 0
+      every o := !contents do
+         mw <:= view.cbwin.text_width(o.txt)
+      return mw + 2 * Gui.TEXT_INSET
+   end
+
+   public draw_line_data(xp, yp, lh, i)
+      local o, W
+      o := contents[i]
+      if \o.disabled then {
+         W := view.cbwin.clone().set_fg("gray")
+         draw_string_ex(W, xp + Gui.TEXT_INSET, yp, o.txt)
+         W.uncouple()
+      } else 
+         draw_string_ex(view.cbwin, xp + Gui.TEXT_INSET, yp, o.txt)
+   end
+
+   public new(init_val)
+      cast(self,SelectableScrollArea).new()
+      self.init_val := init_val
+      return
+   end
+end
+
+class FormList(gui.List, FormEntry, HasAscent)
+   private const
+      init_val
+
+   public get_ascent() 
+      return cbwin.get_font_ascent() + view.border.get_t_inset() + border.get_t_inset()
+   end
+
+   private find_value(seq, e)
+      local i
+      while i := @seq do {
+         if \selection_list[i].value then {
+            start_change(e)
+            set_selection(i, e)
+            end_change(e)
+            break
+         }
+      }
+   end
+
+   public go_up(e)
+      if /selection then
+         find_value(create *selection_list to 1 by -1, e)
+      else
+         find_value(create (selection - 1 to 1 by -1) | (*selection_list to selection + 1 by -1), e)
+   end
+
+   public go_down(e)
+      if /selection then
+         find_value(create 1 to *selection_list, e)
+      else
+         find_value(create (1 + selection to *selection_list) | (1 to selection - 1), e)
    end
 
    public reset()
@@ -712,7 +960,7 @@ class FormList(gui.List, FormEntry)
    end
 
    public get_value(ev, src)
-      return object_get_selection()
+      return \object_get_selection().value
    end
 
    public get_save_value()
@@ -723,17 +971,33 @@ class FormList(gui.List, FormEntry)
       set_selection(val)
    end
 
-   public new(list, init_val)
+   public create_popup()
+      return FormOptionList()
+   end
+
+   public extract_selection()
+      return self.selection_list[\self.selection].label
+   end
+
+   public get_default_width()
+      local mw, o
+      mw := 0
+      every o := !selection_list do
+         if \o.value then
+            mw <:= view.cbwin.text_width(o.label)
+      return border.get_total_width() + b.get_preferred_width() + mw + view.border.get_total_width()
+   end
+
+   public new(init_val)
       cast(self,gui.List).new()
       self.init_val := init_val
-      set_selection_list(list)
-      set_selection(init_val)
       return
    end
 end
 
 class Form()
    private readable
+      key,
       url,
       browser,
       method,
@@ -741,14 +1005,14 @@ class Form()
       items,
       labels,   # table of FormLabels with ids set (the "for" attribute)
       cbgs,
-      ids       # table of Components with ids set ("id" attribute) which will be matched to entries in labels.
+      link_later   # Components with ids set ("id" attribute) which will be matched to entries in labels.
 
    private make_cgi_table(ev, src)
       local t, k, c, v, x
       t := table()
-      every k := key(items) do {
-         every c := !items[k] do {
-            if v := c.get_value(ev, src) then {
+      every c := !items do {
+         if k := \c.form_name then {
+            every v := c.get_value(ev, src) do {
                (x := member(t, k)) | insert(t, k, x := [])
                put(x, v)
             }
@@ -773,9 +1037,9 @@ class Form()
       local k, v, c, m, mp, m2
       m := Message()
       mp := Multipart()
-      every k := key(items) do {
-         every c := !items[k] do {
-            if v := c.get_value(ev, src, 1) then {
+      every c := !items do {
+         if k := \c.form_name then {
+            every v := c.get_value(ev, src, 1) do {
                m2 := Message()
                if is(c, FormBrowse) then {
                   m2.set_header("Content-Disposition", 
@@ -795,45 +1059,53 @@ class Form()
       return m
    end
 
-   public reset(ev, src)
-      every (!!items).reset()
+   public reset()
+      every (!items).reset()
    end
 
    public submit(ev, src)
-      #write(to_string(items,3,1,3))
+      \url | fail
       if map(method) == "post" then {
          if map(enctype) == "multipart/form-data" then
             browser.goto(url, browser.page_url, Worker.NORMAL, make_cgi_message(ev, src))
          else 
             browser.goto(url, browser.page_url, Worker.NORMAL, make_cgi_table(ev, src))
       } else
-         browser.goto(clone(url).set_cgi_parameters(make_cgi_table(ev, src)), browser.page_url, Worker.NORMAL)
+         browser.goto(url.with_cgi_parameters(make_cgi_table(ev, src)), browser.page_url, Worker.NORMAL)
    end
 
    public add(name, item)
-      local x
-      (x := member(items, name)) | insert(items, name, x := [])
-      put(x, item)
+      put(items, item)
+      item.form_name := name
+   end
+
+   public add_std(el, item)
+      put(items, item)
+      item.form_name := el.get_attribute(u"NAME")
+      item.form_id := el.get_attribute(u"ID")
+      item.form_tabindex := integer(el.get_attribute(u"TABINDEX"))
    end
 
    public add_label(l)
       insert(labels, l.id, l)
    end
 
-   public link_label(id, curr_label, comp)
+   public link_label(context, comp)
+      local l
+      l := context.form_label
       # If we have a label in the context, and the for and id tags
       # make sense, link the comp to the label; otherwise put the comp
       # in ids so its id can be resolved at the end of the form.
-      if \curr_label & (/curr_label.id | /id | curr_label.id == id) then
-         /curr_label.comp := comp
-      else
-         insert(ids, \id, comp)
+      if \l & (/l.id | /comp.form_id | l.id == comp.form_id) then
+         /l.comp := comp
+      else if \comp.form_id then
+         put(link_later, comp)
    end
 
    public resolve_link_labels()
-      local id
-      every id := key(ids) do
-         /member(labels, id).comp := ids[id]
+      local c
+      every c := !link_later do
+         /member(labels, c.form_id).comp := c
    end
 
    public get_cbg(name)
@@ -842,15 +1114,36 @@ class Form()
       return x
    end
 
-   public new(browser, url, method, enctype)
+   public get_tab_children()
+      local l, c
+      l := []
+      every c := !items do {
+         if is(c, Component) then {
+            if /c.form_tabindex | (c.form_tabindex >= 0) then
+               put(l, c)
+         }
+      }
+      return isort(l, tabindex_sort)
+   end
+
+   private tabindex_sort(c)
+      return \c.form_tabindex | keyof(items, c)
+   end
+
+   public get_save_key()
+      return \key
+   end
+
+   public new(browser, key, url, method, enctype)
       self.browser := browser
+      self.key := key
       self.url := url
       self.method := method
       self.enctype := enctype
-      self.items := table()
+      self.items := []
       self.cbgs := table()
       self.labels := table()
-      self.ids := table()
+      self.link_later := []
       return
    end
 end
@@ -860,9 +1153,9 @@ record ListContext(tbl, index, root)
 record DefListContext(tbl)
 record FieldSetContext(legend)
 record MapContext(map)
-record SelectContext(options, sel)
+record SelectContext(options, optgroup)
 record Context(base, form, form_label, url, fg, link_fg, font, align, pre, underline, strike, 
-               baseline_off, face, size, bold, italic, kind, table, list, def_list, fieldset, select, map)
+               face, size, bold, italic, kind, table, list, def_list, fieldset, select, map)
 
 class MapArea()
    public const
@@ -901,30 +1194,6 @@ class Map()
    end
 end
 
-class MessageLabel(Label)
-   private
-      want, keep
-
-   public set(p, n)
-      local t
-      want := p
-      if /keep then {
-         /p := NullPaint()
-         set_paint(p)
-         if \n then {
-            keep := 1
-            t := Dispatcher.new_task{{
-               t.sleep(n)
-               keep := &null
-               set_paint(\want)
-               t.revert()
-            }}
-            t.start()
-         }
-      }
-   end
-end
-
 record HistoryEntry(url,          # URL displayed (on a redirect may differ from that requested) 
                     referer,      # referer URL
                     form_values,  # Cached values of form components; updated when we move away from the page 
@@ -935,8 +1204,9 @@ record HistoryEntry(url,          # URL displayed (on a redirect may differ from
 class BrowserUI()
    public defer msg(s, n)
    public defer clear_msg()
-   public defer set_url_field_contents(val)
+   public defer set_url_field(url)
    public defer update_grey(gs)
+   public defer set_title(s)
 end
 
 record GreyState(prev, nxt, refresh, copy_page, save_page, stop)
@@ -949,6 +1219,7 @@ class Browser(Component)
       status_ticker,
       maps,
       forms,
+      form_tab_children,
       curr_history_entry   # History entry currently being viewed.
 
    private readable
@@ -957,13 +1228,16 @@ class Browser(Component)
       page_url,
       page_data,
       page_name,
+      page_title,
       queue,
       running,
       cookies,
       user_agent,
       log_http_flag,
       cache,
-      file_dialog
+      file_dialog,
+      authentications,
+      scheme_handlers
 
    public static const 
       COLORS,
@@ -1022,6 +1296,11 @@ class Browser(Component)
       }
    end
 
+   public traverse_tab_order()
+      coact(top_panel)
+      every (!self.form_tab_children).traverse_tab_order()
+   end
+
    private synch_font(context)
       local s
       s := member(FACES, map(trim(separate(string(context.face))))) | "sans"
@@ -1072,12 +1351,23 @@ class Browser(Component)
       (\ui).clear_msg()
    end
 
-   public set_url_field_contents(val)
-      (\ui).set_url_field_contents(val)
+   public set_url_field(url)
+      (\ui).set_url_field(url)
    end
 
    public update_grey(gs)
       (\ui).update_grey(gs)
+   end
+
+   public set_title(s)
+      (\ui).set_title(s)
+   end
+
+   public get_authentication(dom, realm)
+      local d
+      d := AuthenticationDialog(dom, realm)
+      d.show_modal(parent_dialog)
+      return \d.result
    end
 
    public do_update_grey()
@@ -1096,7 +1386,7 @@ class Browser(Component)
       top_panel.invalidate()
       # Goto named anchor unless user has started to scroll page
       if top_panel.get_area_y() = 0 then {
-         if yp := \curr_history_entry.area_y | (lookup_named_anchor(page_url.get_ref()) - top_panel.view.y) then
+         if yp := \curr_history_entry.area_y | (lookup_named_anchor(page_url.get_fragment()) - top_panel.view.y) then
             top_panel.set_area_y(yp)
       }
       parent_dialog.resynch_pointer()
@@ -1178,7 +1468,7 @@ class Browser(Component)
       return file_dialog.get_result()
    end
 
-   private cancel()
+   public cancel()
       every (!workers).cancel()
       clear(queue)
    end
@@ -1213,32 +1503,39 @@ class Browser(Component)
       }
    end
 
+   private convert_to_ucs(ct, s)
+      return if (\ct).get_parameter("charset") == "ISO-8859-1" then
+         Text.iso_8859_1_to_ucs(s)
+      else
+         Text.liberal_ucs(s)
+   end
+
    private save_form_values()
-      local f, c, name, t1, t2, k
+      local f, c, name, t1, t2, fk, k
       t1 := table()
       every f := !forms do {
-         t2 := table()
-         insert(t1, f.url.str(), t2)
-         every name := key(f.items) do {
-            every c := !f.items[name] do {
-               k := Class.get_name(c) || u":" || name
-               k ||:= u":" || c.get_save_subkey()
-               insert(t2, k, c.get_save_value())
+         if fk := f.get_save_key() then {
+            t2 := table()
+            insert(t1, fk, t2)
+            every c := !f.items do {
+               if name := c.get_save_key() then {
+                  k := Class.get_name(c) || u":" || name
+                  k ||:= u":" || c.get_save_subkey()
+                  insert(t2, k, c.get_save_value())
+               }
             }
          }
       }
       curr_history_entry.form_values := t1
-      #write("saved:\n",to_string(t1,3,1,3))
    end
 
    private restore_form_values()
       local f, c, name, t1, t2, k
       t1 := \curr_history_entry.form_values | fail
-      #write("restore:\n",to_string(t1,3,1,3))
       every f := !forms do {
-         if t2 := member(t1, f.url.str()) then {
-            every name := key(f.items) do {
-               every c := !f.items[name] do {
+         if t2 := member(t1, f.get_save_key()) then {
+            every c := !f.items do {
+               if name := c.get_save_key() then {
                   k := Class.get_name(c) || u":" || name
                   k ||:= u":" || c.get_save_subkey()
                   c.restore_value(member(t2, k))
@@ -1246,7 +1543,6 @@ class Browser(Component)
             }
          }
       }
-      
    end
 
    private set_top_data(res)
@@ -1254,7 +1550,6 @@ class Browser(Component)
       if \curr_history_entry then {
          save_form_values()
          curr_history_entry.area_y := top_panel.get_area_y()
-         #write("save y for ", curr_history_entry.url.str(), " to ", curr_history_entry.area_y)
       }
       if \res.err then {
          s := u"<html><h1>Error:</h1>Getting " || res.url.str() || u"<br><br>" || res.err || u"</html>"
@@ -1284,7 +1579,7 @@ class Browser(Component)
          history_pos +:= 1
       }
       do_update_grey()
-      set_url_field_contents(page_url.str())
+      set_url_field(page_url)
       curr_history_entry := history[history_pos]
       # Note that the url/form_data may change even on a
       # navigate/refresh, if the server behaved differently (eg
@@ -1294,22 +1589,23 @@ class Browser(Component)
       curr_history_entry.form_data := res.form_data
       maps := table()
       forms := []
+      form_tab_children := []
       if /view_img then {
-         Files.string_to_file("/tmp/browser.html",s)
-         s := Text.liberal_ucs(s)
+         s := convert_to_ucs(res.content_type, s)
          doc := HtmlParser().parse(s)
          base := page_url
          if n := doc.get_root_element().search_tree(u"BASE") then
             base := URL.parse(n.get_attribute(u"HREF"))
 
          row := TextFlow(self)
+         page_title := &null
          c := Context()
          c.base := base
          c.face := "sans"
          c.fg := "black"
          c.link_fg := "blue"
          c.size := 3
-         c.baseline_off := 0
+         c.align := Align.L
          c.kind := res.kind   # Tells images whether to refresh or not
          synch_font(c)
          if n := doc.get_root_element().search_tree(u"BODY") then {
@@ -1320,7 +1616,10 @@ class Browser(Component)
          traverse(doc, row, c)
          if res.kind ~= Worker.REFRESH then
             restore_form_values()
-      }
+         every form_tab_children |||:= (!forms).get_tab_children()
+      } else
+         page_title := page_name
+      set_title(page_title)
       top_panel.set_area_y(0)
       top_panel.view.inner.finally()
       top_panel.set_inner(row)
@@ -1328,22 +1627,30 @@ class Browser(Component)
       top_panel.layout()
       top_panel.invalidate()
       parent_dialog.resynch_pointer()
+      setup_tabbing()
    end
 
-   private mk_link(base, s)
-      if match(u"http://" | u"https://" | u"file://", map(s)) then
-         return URL.parse(s)
-      else if \base then
-         return base.get_relative(s)
+   private focus_scroll(e, c)
+      top_panel.ensure_visible(c)
+   end
+
+   private setup_tabbing()
+      local c
+      every c := Seq{(!self.form_tab_children).traverse_tab_order()} do
+         c.connect(focus_scroll, Event.GOT_FOCUS)
+   end
+
+   private mk_link(context, s)
+      return URL.parse(s) | (\context.base).get_relative(s)
    end
 
    private traverse_a(e, p, context)
       local url, c, na
       if na := e.get_attribute(u"NAME") then {
-         put(p.input, NamedAnchorCmd(na))
+         put(p.input, NamedAnchorCmd(na, context))
          traverse(e, p, context)
       }
-      else if url := mk_link(context.base, e.get_attribute(u"HREF")) then {
+      else if url := mk_link(context, e.get_attribute(u"HREF")) then {
          c := copy(context)
          c.url := url
          c.fg := c.link_fg
@@ -1353,13 +1660,13 @@ class Browser(Component)
 
    private traverse_hN(e, p, context)
       local c
-      put_para(p)
+      put_para(p, context)
       c := copy(context)
       c.size := 7 - e.name[-1]
       c.bold := 1
       synch_font(c)
       traverse(e, p, c)
-      put_para(p)
+      put_para(p, c)
    end
 
    private parse_size(s, curr)
@@ -1416,8 +1723,9 @@ class Browser(Component)
          c.size -:= 1
          synch_font(c)
       }
-      c.baseline_off +:= 1
+      put(p.input, SupStartCmd(c))
       traverse(e, p, c)
+      put(p.input, SupEndCmd(c))
    end
 
    private traverse_sub(e, p, context)
@@ -1427,8 +1735,9 @@ class Browser(Component)
          c.size -:= 1
          synch_font(c)
       }
-      c.baseline_off -:= 1
+      put(p.input, SubStartCmd(c))
       traverse(e, p, c)
+      put(p.input, SubEndCmd(c))
    end
 
    private traverse_b(e, p, context)
@@ -1462,12 +1771,14 @@ class Browser(Component)
    end
 
    private traverse_form(e, p, context)
-      local m, c, t
+      local m, c, t, url, key
       m := e.get_attribute(u"METHOD") | "get"
       t := e.get_attribute(u"ENCTYPE") | "application/x-www-form-urlencoded"
+      url := mk_link(context, e.get_attribute(u"ACTION"))
+      key := e.get_attribute(u"ID" | u"NAME") | (\url).str()
       c := copy(context)
-      if c.form := Form(self, mk_link(context.base, e.get_attribute(u"ACTION")), m, t) then
-         put(forms, c.form)
+      c.form := Form(self, key, url, m, t)
+      put(forms, c.form)
       traverse(e, p, c)
       (\c.form).resolve_link_labels()
    end
@@ -1490,9 +1801,25 @@ class Browser(Component)
       p.add(c)
    end
 
+   private traverse_button(e, p, context)
+      local q, row, v, type
+      \context.form | fail
+      v := e.get_attribute(u"VALUE") | u""
+      type := map(string(e.get_attribute(u"TYPE"))) | "submit"
+      q := FormTblButton(context.form, v, type)
+      if e.get_attribute(u"DISABLED") then
+         q.set_is_shaded(&yes)
+      else
+         context.form.add_std(e, q)
+      row := TextFlow(self)
+      q.tbl.content.add(row)
+      add_component(p, q, context, Align.B)
+      traverse(e, row, context)
+   end
+
    private traverse_img(e, p, context)
       local q, url, border, iw, ih, align, map, s
-      if url := mk_link(context.base, e.get_attribute(u"SRC")) then {
+      if url := mk_link(context, e.get_attribute(u"SRC")) then {
          iw := (0 <= integer(e.get_attribute(u"WIDTH")))
          ih := (0 <= integer(e.get_attribute(u"HEIGHT")))
          if (s := e.get_attribute(u"USEMAP")) & (s[1] == u"#") then
@@ -1508,38 +1835,93 @@ class Browser(Component)
    end
 
    private traverse_select(e, p, context)
-      local q, id, c, sc
+      local q, c, sc, size, mW, h, w, o, sel, sels, i, mode
       \context.form | fail
-      id := e.get_attribute(u"ID")
       sc := SelectContext()
       sc.options := []
-      sc.sel := 1
       c := copy(context)
       c.select := sc
       traverse(e, p, c)
-      q := FormList(sc.options, sc.sel). 
-         set_font(context.font).
-         set_fg(context.fg)
+      sels := []
+      every i := 1 to *sc.options do
+         if \sc.options[i].selected then
+            put(sels, i)
+      if size := (1 < integer(e.get_attribute(u"SIZE"))) then {
+         mW := cbwin.clone().set_font(context.font)
+         w := 0
+         every o := !sc.options do
+            w <:= mW.text_width(o.txt)
+         w +:= 2 * Gui.TEXT_INSET + 2 * Gui.BORDER_WIDTH
+         h := (2 * Gui.BORDER_WIDTH + size * mW.get_font_height())
+         if size < *sc.options then
+            w +:= ScrollArea.predict_scrollbar_size()
+         mW.uncouple()
+         if e.get_attribute(u"MULTIPLE") then
+            mode := Select.MANY
+         else {
+            mode := Select.ONE
+            while *sels > 1 do
+               pull(sels)
+         }
+         q := FormOptionList(sels).
+            set_contents(sc.options).
+            set_size(w, h).
+            set_select_mode(mode).
+            set_selections(sels)
+      } else {
+         if *sels = 0 then {
+            every i := 1 to *sc.options do
+               if \sc.options[i].value then {
+                  sel := i
+                  break
+               }
+         } else
+            sel := sels[1]
+         q := FormList(sel).
+            set_selection_list(sc.options).
+            set_selection(sel)
+      }
+      q.set_font(context.font).set_fg(context.fg)
       if e.get_attribute(u"DISABLED") then
          q.set_is_shaded(&yes)
-      else
-         context.form.add(e.get_attribute(u"NAME"), q)
-      context.form.link_label(id, context.form_label, q)
+      else {
+         context.form.add_std(e, q)
+         context.form.link_label(context, q)
+      }
       add_component(p, q, context, Align.B)
    end
 
    private traverse_option(e, p, context)
-      local sc
+      local sc, v, txt, label, disabled, selected
       sc := \context.select | fail
-      put(sc.options, e.get_trimmed_string_content())
-      if e.get_attribute(u"SELECTED") then
-         sc.sel := *sc.options
+      label := e.get_trimmed_string_content()
+      if e.get_attribute(u"DISABLED") then
+         disabled := 1
+      else {
+         v := e.get_attribute(u"VALUE") | label
+         if e.get_attribute(u"SELECTED") then
+            selected := 1
+      }
+      txt := if \sc.optgroup then
+         u"    " || label
+      else
+         label
+      put(sc.options, FormOption(txt, label, v, selected, disabled))
+   end
+
+   private traverse_optgroup(e, p, context)
+      local sc, label
+      sc := \context.select | fail
+      /sc.optgroup := 1 | fail
+      label := e.get_attribute(u"LABEL") | u""
+      put(sc.options, FormOption(u"--- " || label || u" ---", label,,,, 1))
+      traverse(e, p, context)
+      sc.optgroup := &null
    end
 
    private traverse_textarea(e, p, context)
-      local q, w, h, mW, id
+      local q, w, h, mW
       \context.form | fail
-      id := e.get_attribute(u"ID")
       mW := cbwin.clone().set_font(context.font)
       w := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", e.get_attribute(u"COLS")))) | 200
       h := (2 * Gui.BORDER_WIDTH + e.get_attribute(u"ROWS") * mW.get_font_height()) | 100
@@ -1554,14 +1936,14 @@ class Browser(Component)
       else {
          if e.get_attribute(u"READONLY") then
             q.set_is_editable(&no)
-         context.form.add(e.get_attribute(u"NAME"), q)
+         context.form.add_std(e, q)
+         context.form.link_label(context, q)
       }
-      context.form.link_label(id, context.form_label, q)
       add_component(p, q, context)
    end
 
    private traverse_input(e, p, context)
-      local q, s, k, v, size, mW, id, url, checked, align
+      local q, s, k, v, size, mW, url, checked, align
       \context.form | fail
       s := string(map(e.get_attribute(u"TYPE"))) | "text"
       case s of {
@@ -1575,7 +1957,7 @@ class Browser(Component)
             if e.get_attribute(u"DISABLED") then
                q.set_is_shaded(&yes)
             else
-               context.form.add(e.get_attribute(u"NAME"), q)
+               context.form.add_std(e, q)
             add_component(p, q, context, Align.B)
          }
          "submit" : {
@@ -1589,11 +1971,22 @@ class Browser(Component)
             if e.get_attribute(u"DISABLED") then
                q.set_is_shaded(&yes)
             else
-               context.form.add(e.get_attribute(u"NAME"), q)
+               context.form.add_std(e, q)
+            add_component(p, q, context, Align.B)
+         }
+         "button" : {
+            v := e.get_attribute(u"VALUE") | u""
+            q := FormButton(v).
+                  set_font(context.font).
+                  set_fg(context.fg)
+            if e.get_attribute(u"DISABLED") then
+               q.set_is_shaded(&yes)
+            else
+               context.form.add_std(e, q)
             add_component(p, q, context, Align.B)
          }
          "image" : {
-            if url := mk_link(context.base, e.get_attribute(u"SRC")) then {
+            if url := mk_link(context, e.get_attribute(u"SRC")) then {
                q := Img(self, url,, context.form)
                start_worker(Req(url, page_url, q.got_data, context.kind))
                if e.get_attribute(u"DISABLED") then
@@ -1621,6 +2014,8 @@ class Browser(Component)
                connect(context.form.reset, Event.ACTION)
             if e.get_attribute(u"DISABLED") then
                q.set_is_shaded(&yes)
+            else
+               context.form.add_std(e, q)
             add_component(p, q, context, Align.B)
          }
          "hidden": {
@@ -1628,7 +2023,6 @@ class Browser(Component)
          }
          "radio": {
             v := e.get_attribute(u"VALUE") | u"on"
-            id := e.get_attribute(u"ID")
             checked := if e.get_attribute(u"CHECKED") then &yes else &no
             q := FormToggle(v, checked).
                set_paint(ImagePaint().set_cache("gui.DIAMOND_UP")).
@@ -1636,15 +2030,15 @@ class Browser(Component)
                set_border(NullBorder())
             if e.get_attribute(u"DISABLED") then
                q.set_is_shaded(&yes)
-            else
-               context.form.add(e.get_attribute(u"NAME"), q)
+            else {
+               context.form.add_std(e, q)
+               context.form.link_label(context, q)
+            }
             add_component(p, q, context, Align.B)
-            context.form.link_label(id, context.form_label, q)
             context.form.get_cbg(e.get_attribute(u"NAME")).add(q)
          }
          "checkbox": {
             v := e.get_attribute(u"VALUE") | u"on"
-            id := e.get_attribute(u"ID")
             checked := if e.get_attribute(u"CHECKED") then &yes else &no
             q := FormToggle(v, checked).
                set_paint(ImagePaint().set_cache("gui.BOX_UP")).
@@ -1652,14 +2046,14 @@ class Browser(Component)
                set_border(NullBorder())
             if e.get_attribute(u"DISABLED") then
                q.set_is_shaded(&yes)
-            else
-               context.form.add(e.get_attribute(u"NAME"), q)
+            else {
+               context.form.add_std(e, q)
+               context.form.link_label(context, q)
+            }
             add_component(p, q, context, Align.B)
-            context.form.link_label(id, context.form_label, q)
          }
          "text" | "password": {
             v := e.get_attribute(u"VALUE") | u""
-            id := e.get_attribute(u"ID")
             mW := cbwin.clone().set_font(context.font)
             size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", e.get_attribute(u"SIZE")))) | 160
             mW.uncouple()
@@ -1675,9 +2069,9 @@ class Browser(Component)
             else {
                if e.get_attribute(u"READONLY") then
                   q.set_is_editable(&no)
-               context.form.add(e.get_attribute(u"NAME"), q)
+               context.form.add_std(e, q)
+               context.form.link_label(context, q)
             }
-            context.form.link_label(id, context.form_label, q)
             add_component(p, q, context, Align.B)
          }
       }
@@ -1739,7 +2133,7 @@ class Browser(Component)
    end
 
    private traverse_div(e, p, context)
-      put_new_row(p)
+      put_new_row(p, context)
       traverse(e, p, context)
    end
 
@@ -1750,13 +2144,19 @@ class Browser(Component)
          "right": Align.R
          "all"|"both": "all"
       }
-      put(p.input, BreakCmd(clear))
+      put(p.input, BreakCmd(clear, context))
    end
 
    private traverse_hr(e, p, context)
-      put_new_row(p)
-      add_component(p, Line().set_width(5), context)
-      put_new_row(p)
+      local l, c
+      l := Line().
+         set_width(5)
+      do_width_param(e, l) | l.set_constraint("pct_w", 100)
+      c := copy(context)
+      put_new_row(p, c)
+      c.align := convert_halign(e, u"ALIGN")
+      add_component(p, l, c)
+      put_new_row(p, c)
    end
 
    private traverse_q(e, p, context)
@@ -1768,33 +2168,29 @@ class Browser(Component)
    private traverse_p(e, p, context)
       local c
       c := copy(context)
-      put_para(p)
-      c.align := case string(map(e.get_attribute(u"ALIGN"))) of {
-         "left": Align.L
-         "center": Align.C
-         "right": Align.R
-      }
+      put_para(p, c)
+      c.align := convert_halign(e, u"ALIGN")
       traverse(e, p, c)
-      put_para(p)
+      put_para(p, c)
    end
 
    private traverse_pre(e, p, context)
       local c
-      put_para(p)
+      put_para(p, context)
       c := copy(context)
       c.face := "mono"
       synch_font(c)
       c.pre := 1
       traverse(e, p, c)
-      put_para(p)
+      put_para(p, c)
    end
 
-   private put_para(p)
-      put(p.input, ParaCmd())
+   private put_para(p, context)
+      put(p.input, ParaCmd(context))
    end
 
-   private put_new_row(p)
-      put(p.input, NewRowCmd())
+   private put_new_row(p, context)
+      put(p.input, NewRowCmd(context))
    end
 
    private traverse_center(e, p, context)
@@ -1841,12 +2237,30 @@ class Browser(Component)
       }
    end
 
+   private do_width_param(e, c)
+      local width
+      return if width := e.get_attribute(u"WIDTH") then {
+         if width := (0 <= integer(width)) then
+            c.set_constraint("fix_w", width)
+         else if width[-1] == "%" & width := (0 <= integer(width[1:-1])) then
+            c.set_constraint("pct_w", width)
+      }
+   end
+
+   private do_height_param(e, c)
+      local height
+      return if height := e.get_attribute(u"HEIGHT") then {
+         if height := (0 <= integer(height)) then
+            c.set_constraint("fix_h", height)
+      }
+   end
+
    private traverse_table(e, p, context)
-      local ct, tbl, width, border, cellpadding, cellspacing, cell_border, align, c
+      local ct, tbl, border, cellpadding, cellspacing, cell_border, align, c
 
       tbl := Tbl()
-      if width := (0 <= integer(e.get_attribute(u"WIDTH"))) then
-         tbl.set_width(width)
+      do_width_param(e, tbl)
+      do_height_param(e, tbl)
       border := integer(e.get_attribute(u"BORDER")) | 0
       cellpadding := integer(e.get_attribute(u"CELLPADDING")) | 0
       cellspacing := integer(e.get_attribute(u"CELLSPACING")) | 2
@@ -1872,14 +2286,14 @@ class Browser(Component)
       traverse(e, p, c)
 
       if not(align === (Align.L | Align.R)) then
-         put_new_row(p)
+         put_new_row(p, c)
       if \c.table.caption then
          add_component(p, c.table.caption, context, align)
       else
          add_component(p, tbl, context, align)
 
       if not(align === (Align.L | Align.R)) then
-         put_new_row(p)
+         put_new_row(p, c)
    end
 
    private traverse_caption(e, p, context)
@@ -1889,7 +2303,7 @@ class Browser(Component)
 
       # A Tbl with two TextFlows; the caption and another containing just the table itself.
       ct.caption := Tbl()
-      cap := TextFlow(self).set_dominant_width(TextFlow.DEFAULT_WIDTH)
+      cap := TextFlow(self).set_dominant_width(TextFlow.PREFERRED_WIDTH)
       c := copy(context)
       c.align := Align.C
       traverse(e, cap, c)
@@ -1899,17 +2313,17 @@ class Browser(Component)
       case align of {
          Align.T: {
             cap.set_constraint("eol", &yes)
-            ct.caption.inner.add(cap).add(main)
+            ct.caption.content.add(cap).add(main)
          }
          Align.B: {
             main.set_constraint("eol", &yes)
-            ct.caption.inner.add(main).add(cap)
+            ct.caption.content.add(main).add(cap)
          }
          Align.L: {
-            ct.caption.inner.add(cap).add(main)
+            ct.caption.content.add(cap).add(main)
          }
          Align.R: {
-            ct.caption.inner.add(main).add(cap)
+            ct.caption.content.add(main).add(cap)
          }
       }
    end
@@ -1931,7 +2345,7 @@ class Browser(Component)
    end
 
    private traverse_td(e, p, context)
-      local ct, row, c, colspan, rowspan, width, valign
+      local ct, row, c, colspan, rowspan, valign
       ct := \context.table | fail
       while member(ct.occ, ct.x || "," || ct.y) do
          ct.x +:= 1
@@ -1947,12 +2361,8 @@ class Browser(Component)
       row.set_constraint("h", rowspan)
       row.set_bg(convert_color(e | \ct.tr, u"BGCOLOR"))
       every insert(ct.occ, (ct.x to ct.x + colspan - 1) || "," || (ct.y to ct.y + rowspan - 1))
-      if width := e.get_attribute(u"WIDTH") then {
-         if width := (0 <= integer(width)) then
-            row.set_width(width)
-         else if width[-1] == "%" & width := (0 <= integer(width[1:-1])) then
-            row.set_constraint("pct_w", width)
-      }
+      do_width_param(e, row)
+      do_height_param(e, row)
       ct.tbl.content.add(row)
 
       c := copy(context)
@@ -1971,6 +2381,7 @@ class Browser(Component)
    private traverse_list(e, p, context)
       local tbl, lc, c
       tbl := Tbl()
+      tbl.content.layout_delegate.set_align_baselines(&yes)
       c := copy(context)
       lc := ListContext()
       lc.tbl := tbl
@@ -1978,9 +2389,9 @@ class Browser(Component)
       lc.root := e
       c.list := lc
       traverse(e, p, c)
-      put_new_row(p)
-      add_component(p, tbl, context)
-      put_new_row(p)
+      put_new_row(p, c)
+      add_component(p, tbl, context, Align.B)
+      put_new_row(p, c)
    end
 
    private traverse_li(e, p, context)
@@ -2000,15 +2411,15 @@ class Browser(Component)
    private traverse_dl(e, p, context)
       local tbl, dc, c
       tbl := Tbl()
-      tbl.content.layout_delegate.set_fix_col1(&yes)
+      tbl.content.layout_delegate.set_fix_col1(&yes).set_align_baselines(&yes)
       dc := DefListContext()
       dc.tbl := tbl
       c := copy(context)
       c.def_list := dc
       traverse(e, p, c)
-      put_new_row(p)
-      add_component(p, tbl, context)
-      put_new_row(p)
+      put_new_row(p, c)
+      add_component(p, tbl, context, Align.B)
+      put_new_row(p, c)
    end
 
    private traverse_dt(e, p, context)
@@ -2032,7 +2443,7 @@ class Browser(Component)
 
    private traverse_blockquote(e, p, context)
       local tbl, row
-      put_new_row(p)
+      put_new_row(p, context)
       tbl := Tbl()
       add_component(p, tbl, context)
       row := TextFlow(self)
@@ -2041,12 +2452,12 @@ class Browser(Component)
       row := TextFlow(self) .set_constraint("eol", &yes)
       tbl.content.add(row)
       traverse(e, row, context)
-      put_new_row(p)
+      put_new_row(p, context)
    end
 
    private traverse_fieldset(e, p, context)
       local tbl, row, c, fc
-      put_new_row(p)
+      put_new_row(p, context)
       tbl := Tbl().set_border(CompoundBorder().
                               set_outer(SunkenBorder().set_line_width(1)).
                               set_inner(EmptyBorder()))
@@ -2058,7 +2469,7 @@ class Browser(Component)
       c.fieldset := fc
       traverse(e, row, c)
       tbl.set_title(\fc.legend)
-      put_new_row(p)
+      put_new_row(p, context)
    end
 
    private traverse_legend(e, p, context)
@@ -2088,12 +2499,16 @@ class Browser(Component)
          every put(coords, integer(separate(s)))
          mc.map.add_area(MapArea(map(string(e.get_attribute(u"SHAPE"))), 
                                  coords,
-                                 mk_link(context.base, e.get_attribute(u"HREF"))))
+                                 mk_link(context, e.get_attribute(u"HREF"))))
       }
    end
 
    private traverse_text(e, p, context)
       put(p.input, TextCmd(e, context))
+   end
+
+   private traverse_title(e, p, context)
+      page_title := e.get_trimmed_string_content()
    end
 
    private traverse(n, p, context)
@@ -2103,16 +2518,19 @@ class Browser(Component)
             traverse_text(e, p, context)
          else if is(e, HtmlElement) then {
             if id := e.get_attribute(u"ID") then
-               put(p.input, NamedAnchorCmd(id))
+               put(p.input, NamedAnchorCmd(id, context))
             case string(e.name) of {
-               "TITLE"|"META"|"LINK"|"SCRIPT"|"STYLE": {}
+               "META"|"LINK"|"SCRIPT"|"STYLE": {}
+               "TITLE": traverse_title(e, p, context)
                "A": traverse_a(e, p, context)
                "FORM": traverse_form(e, p, context)
+               "BUTTON": traverse_button(e, p, context)
                "LABEL": traverse_label(e, p, context)
                "FONT": traverse_font(e, p, context)
                "IMG": traverse_img(e, p, context)
                "SELECT": traverse_select(e, p, context)
                "OPTION": traverse_option(e, p, context)
+               "OPTGROUP": traverse_optgroup(e, p, context)
                "TEXTAREA": traverse_textarea(e, p, context)
                "INPUT": traverse_input(e, p, context)
                "DIV": traverse_div(e, p, context)
@@ -2153,12 +2571,34 @@ class Browser(Component)
    end
 
    public goto(url, referer, kind, form_data)
+      /kind := Worker.NORMAL
       cancel()
       start_worker(Req(url, referer, set_top_data, kind, form_data))
+      return self
    end
 
    public set_cookies(cookies)
       self.cookies := cookies
+      return self
+   end
+
+   public set_authentications(m)
+      self.authentications := m
+      return self
+   end
+
+   public set_cache(c)
+      self.cache := c
+      return self
+   end
+
+   public set_scheme_handlers(m)
+      self.scheme_handlers := m
+      return self
+   end
+
+   public add_scheme_handler(scheme, func)
+      insert(scheme_handlers, scheme, func)
       return self
    end
 
@@ -2180,6 +2620,8 @@ class Browser(Component)
       self.cookies := table()
       self.cache := Cache(8*1024*1024)
       file_dialog := FileDialog()
+      authentications := table()
+      scheme_handlers := table()
       queue := []
       workers := []
       every 1 to 6 do

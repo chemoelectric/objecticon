@@ -119,6 +119,22 @@ class ComponentScrollArea(ScrollArea)
       view.invalidate()
    end
 
+   public ensure_visible(c)
+      local x0, y0
+      y0 := c.y - view.inner.y
+      x0 := c.x - view.inner.x
+
+      if y0 + c.h > get_area_y() + view.h then
+         set_area_y(min(y0, y0 + c.h - view.h))
+      else if y0 < get_area_y() then
+         set_area_y(y0)
+
+      if x0 + c.w > get_area_x() + view.w then
+         set_area_x(min(x0, x0 + c.w - view.w))
+      else if x0 < get_area_x() then
+         set_area_x(x0)
+   end
+
    public create_view()
       return ComponentScrollAreaView()
    end

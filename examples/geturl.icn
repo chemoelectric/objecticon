@@ -133,6 +133,8 @@ procedure main(args)
    hc.set_timeout(\opts["t"] * 1000)
    hc.set_retries(\opts["r"])
    hc.set_user_agent(\opts["agent"])
+   if \opts["a"] then
+      hc.set_authentication_function(authenticate)
    if \opts["nsslv"] then
       hc.set_ssl_verify(&no)
 
@@ -154,14 +156,9 @@ procedure main(args)
    if \opts["while"] then
       hc.set_retry_while_data(&yes)
 
-   cookies := \opts["k"] | System.getenv("GETURL_COOKIES")
-   if \cookies then {
-      t := decode(Files.file_to_string(cookies)) | {
-         write(FileStream.stderr, "Couldn't read/decode cookie file ", cookies, ": ", &why)
-         t := table()
-      }
-      hc.set_cookies(t)
-   }
+   cookies := \opts["k"] | System.getenv("OICOOKIES") | Files.get_path(Files.get_home()).child(".oicookies").str()
+   t := decode(Files.file_to_string(cookies)) | table()
+   hc.set_cookies(t)
 
    l := Monitor()
    if /opts["q"] then {
@@ -208,13 +205,12 @@ procedure main(args)
       }
    }
 
-   if \cookies then {
-      t := cookies || ".bak"
-      Files.string_to_file(t, encode(Cookie.expire_cookies(hc.get_cookies()))) | 
-         stop("Couldn't encode to temp cookie file ", t, ": ", &why)
-      # Use rename not move to ensure it's atomic
-      Files.rename(t, cookies) | stop("Couldn't rename cookie file ", t, ": ", &why)
-   }
+   # Save cookies
+   t := cookies || ".bak"
+   Files.string_to_file(t, encode(Cookie.expire_cookies(hc.get_cookies()))) | 
+      stop("Couldn't encode to temp cookie file ", t, ": ", &why)
+   # Use rename not move to ensure it's atomic
+   Files.rename(t, cookies) | stop("Couldn't rename cookie file ", t, ": ", &why)
 
    if *err = *failed = 0 then
       exit(0)
@@ -222,17 +218,28 @@ procedure main(args)
       exit(1)
 end
 
+procedure authenticate()
+   local u, p
+   \opts["a"] ? {
+      u := tab(upto(':')) | stop("Bad -a option")
+      move(1)
+      p := tab(0)
+      # Only succeed once, otherwise httpclient will loop forever retrying
+      delete(opts, "a")
+      return Authentication(u, p)
+   }
+end
 
 procedure process_one(a)
-   local hr, url, u, p, start_t, res, end_t, kbps, s, msg, tmp_file, output_stream, 
-      input_stream, content_type, t, k, v
+   local hr, url, start_t, res, end_t, kbps, s, msg, tmp_file, output_stream, 
+      input_stream, content_type, t, k, v, p
 
    total +:= 1
 
    url := URL.parse(a) | stop("Invalid url: " || a)
 
    if /opts["head"] & /opts["c"] then {
-      get_out(url.get_file_last(1))
+      get_out(url.get_path_last())
       if check_skip() then
          fail
       if /opts["q"] then
@@ -241,15 +248,6 @@ procedure process_one(a)
 
    hr := HttpRequest()
    hr.set_url(url)
-   if \opts["a"] then {
-      opts["a"] ? {
-         u := tab(upto(':')) | stop("Bad -a option")
-         move(1)
-         p := tab(0)
-      }
-      hr.set_username(u)
-      hr.set_password(p)
-   }
    if \opts["head"] then 
       hr.set_method("HEAD")
 

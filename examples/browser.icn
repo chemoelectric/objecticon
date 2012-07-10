@@ -1,6 +1,8 @@
 import 
    gui, 
    io,
+   util,
+   xml,
    graphics,
    posix,
    lang,
@@ -19,6 +21,61 @@ $load STOP "rpp.STOP_24.gif"
 $load PASTE "rpp.PASTE_24.gif"
 $load REFRESH "rpp.REFRESH_24.gif"
 
+class Settings()
+   public
+      home_url,
+      cache_size_mb,
+      visited,
+      visited_size
+
+   public new()
+      home_url := URL.parse(u"config:")
+      cache_size_mb := 8
+      visited := []
+      visited_size := 100
+      return
+   end
+end
+
+class VisitedEntry()
+   public const
+      url
+   public
+      last_time,
+      times
+
+   public new(url)
+      self.url := url
+      self.last_time := Time()
+      self.times := 1
+      return
+   end
+end
+
+class MessageLabel(Label)
+   private
+      want, keep
+
+   public set(p, n)
+      local t
+      want := p
+      if /keep then {
+         /p := TextPaint("")
+         set_paint(p)
+         if \n then {
+            keep := 1
+            t := Dispatcher.new_task{{
+               t.sleep(n)
+               keep := &null
+               set_paint(\want)
+               t.revert()
+            }}
+            t.start()
+         }
+      }
+   end
+end
+
 class BrowserDialog(Dialog, BrowserUI)
    private
       browser,
@@ -31,22 +88,14 @@ class BrowserDialog(Dialog, BrowserUI)
       home_button,
       paste_url_button,
       refresh_button,
-      start_page,
       copy_page_url_item,
-      save_page_item
+      save_page_item,
+      settings
 
    public end_dialog()
    end
 
    public init_dialog()
-      local u
-      if \start_page then {
-         if u := URL.parse(start_page) then
-            browser.goto(u,, Worker.NORMAL)
-         else
-            msg("Invalid url")
-      } else
-         on_home()
    end
 
    private on_close_button(ev)
@@ -80,7 +129,7 @@ class BrowserDialog(Dialog, BrowserUI)
       if *s = 0 then
          fail
       if u := URL.parse(s) then
-         browser.goto(u,, Worker.NORMAL)
+         browser.goto(u)
       else
          msg("Invalid url")
    end
@@ -93,8 +142,31 @@ class BrowserDialog(Dialog, BrowserUI)
       message_label.set()
    end
 
-   public set_url_field_contents(val)
-      search_field.set_contents(val)
+   private update_visited(url)
+      local e, i 
+      every i := 1 to *settings.visited do {
+         e := settings.visited[i]
+         if equals(url, e.url) then {
+            e.last_time := Time()
+            e.times +:= 1
+            delete(settings.visited, i)
+            push(settings.visited, e)
+            return
+         }
+      }
+      push(settings.visited, VisitedEntry(url))
+      if *settings.visited > settings.visited_size then
+         pull(settings.visited)
+   end
+
+   public set_url_field(url)
+      update_visited(url)
+      search_field.set_contents(url.str())
+   end
+
+   public set_title(s)
+      /s := "OIBrowser"
+      win.set_label(s)
    end
 
    private on_stop(ev)
@@ -102,7 +174,7 @@ class BrowserDialog(Dialog, BrowserUI)
    end
 
    private on_home(ev)
-      browser.goto(URL.parse(u"file://" || ucs(Files.get_path(Files.get_home()).child(".oibrowser.html").str())),, Worker.NORMAL)
+      browser.goto(settings.home_url)
    end
 
    private handle_paste_response(target_type, data, e)
@@ -134,21 +206,135 @@ class BrowserDialog(Dialog, BrowserUI)
       browser.do_save_page()
    end
 
-   public new(s, cookies)
+   private list_visited()
+      local s, e, t
+      s := "<html><head><title>Visited</title></head><table>"
+      s ||:= "<tr><th align=left>URL<th align=right>Times visited<th align=right>Last visit</tr>"
+      every e := !settings.visited do {
+         t := e.url.str()
+         if *t > 50 then
+            t[48:0] := "..."
+         s ||:= "<tr><td><a href=" || e.url.str() || ">" || t || 
+            "</a><td align=right >" || e.times || "<td align=right width=130 >" || e.last_time.format("MMM dd HH:mm") || "</tr>"
+      }
+      s ||:= "</table></html>"
+      return s
+   end
+
+   private list_all_cookies()
+      local s, e
+      s := "<html><head><title>Cookies</title></head>"
+      every e := (!sort(browser.cookies))[1] do
+         s ||:= "<a href=config:cookie?q=" || URL.convert_hex(e) || ">" || e || "</a><br>"
+      s ||:= "</html>"
+      return s
+   end
+
+   private del_cookie(k, path, name)
+      local t1, t2
+      if t1 := member(browser.cookies, k) &
+         t2 := member(t1, path) then
+      {
+         delete(t2, map(name))
+         if *t2 = 0 then {
+            delete(t1, path)
+            if *t1 = 0 then
+               delete(browser.cookies, k)            
+         }
+      }
+      return list_cookie(k)
+   end
+
+   private del_cookies(k)
+      delete(browser.cookies, k)            
+      return list_all_cookies()
+   end
+
+   private list_cookie(k)
+      local s, t, path, ck
+      s := "<html><head><title>Cookies</title></head>"
+      if t := member(browser.cookies, k) then {
+         s ||:= "<a href=config:del_cookies?q=" || URL.convert_hex(k) || ">Delete all</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href=config:cookies>Back to list</a>"
+         every path := key(t) do {
+            every ck := !t[path] do {
+               s ||:= "<hr><pre>" || to_string(ck, 3, 1) || 
+                  "</pre><a href=config:del_cookie?" || URL.make_cgi_string(table(, 
+                                                                                  "q", k,
+                                                                                  "path", ck.path,
+                                                                                  "name", ck.name)) || 
+                  ">Delete</a>"
+            }
+         }
+      }
+      s ||:= "</html>"
+      return s
+   end
+
+   private edit_settings(home, cn, vn)
+      settings.home_url := URL.parse(ucs(home))
+      settings.cache_size_mb := integer(cn)
+      settings.visited_size := integer(vn)
+      return config_main()
+   end
+
+   private config_main()
+      return "<html><head><title>Config</title></head><a href=config:cookies >Edit cookies</a><p>_
+              <a href=config:visited >Visited pages</a><p>_
+              <fieldset><form method=get action=submit >_
+                 <legend>Edit settings</legend>_
+                 <table>_
+                   <tr><td>Home page:<td><input type=text name=home value=" || xml_escape(settings.home_url.str(), ~(&letters++&digits)) || " size=50 /></tr>_
+                   <tr><td>Cache size (MB):<td><input type=text name=cache value=" || settings.cache_size_mb || " size=50 /></tr>_
+                   <tr><td>Visited list size:<td><input type=text name=vsize value=" || settings.visited_size || " size=50 /></tr>_
+                 </table>_
+                 <input type=submit />_
+              </form></fieldset></html>"
+   end
+
+   private config_handler(req)
+      local t
+      return case string(req.url.path) of {
+         "": config_main()
+         "visited": list_visited()
+         "cookies": list_all_cookies()
+         "cookie": list_cookie(member(req.url.extract_cgi_parameters(), "q")[1])
+         "del_cookies": del_cookies(member(req.url.extract_cgi_parameters(), "q")[1])
+         "del_cookie": {
+            if t := req.url.extract_cgi_parameters() then
+               del_cookie(member(t, "q")[1], member(t, "path")[1], member(t, "name")[1])
+         }
+         "submit": {
+            if t := req.url.extract_cgi_parameters() then
+               edit_settings(member(t, "home")[1], member(t, "cache")[1], member(t, "vsize")[1])
+         }
+      } | error("Bad config request")
+   end
+
+   public new(s, cookies, settings)
+      local u
       cast(self,Dialog).new()
+      self.settings := settings
       setup()
       browser.set_ui(self)
       browser.set_cookies(cookies)
       browser.set_user_agent(\opts["agent"])
+      browser.set_cache(Cache(settings.cache_size_mb*1024*1024))
       if \opts["l"] then
          browser.set_log_http(&yes)
-      start_page := s
+      browser.add_scheme_handler("config", config_handler)
+      if \s then {
+         if u := URL.parse(s) then
+            browser.goto(u)
+         else
+            msg("Invalid url")
+      } else
+         on_home()
+
       return
    end
 
    private setup()
       local quit_menu_item, paint_27, paint_32, paint_19, paint_24, paint_37, paint_29, paint_34, layout_1, panel_1, paint_13, paint_26, paint_31, paint_39, paint_23, paint_20, paint_28, paint_33, paint_12, paint_25, paint_30, paint_38, border_1, menu_bar_1, menu_1, layout_2
-      self.set_label("Browser")
       self.set_min_height(250)
       self.set_resize(&yes)
       paint_13 := TextPaint("File")
@@ -325,13 +511,13 @@ class BrowserDialog(Dialog, BrowserUI)
 end
 
 procedure main(a)
-   local d, s, cookies, t, bak
+   local d, s, cookies, t, bak, settings, sf, home
    opts := options(a, "-k: -l! -agent:")
-   cookies := \opts["k"] | System.getenv("GETURL_COOKIES")
-   if \cookies then {
-      t := decode(Files.file_to_string(cookies)) |
-         write(FileStream.stderr, "Couldn't read/decode cookie file ", cookies, ": ", &why)
-   }
+   home := Files.get_path(Files.get_home())
+   sf := home.child(".oibrowser").str()
+   cookies := \opts["k"] | System.getenv("OICOOKIES") | home.child(".oicookies").str()
+   t := decode(Files.file_to_string(cookies)) | table()
+   settings := decode(Files.file_to_string(sf)) | Settings()
    ImageCache.name_image("rpp.EXIT_24", EXIT)
    ImageCache.name_image("rpp.NEXT_24", NEXT)
    ImageCache.name_image("rpp.PREV_24", PREV)
@@ -340,16 +526,16 @@ procedure main(a)
    ImageCache.name_image("rpp.PASTE_24", PASTE)
    ImageCache.name_image("rpp.STOP_24", STOP)
    s := ucs(a[1])
-   /t := table()
-   d := BrowserDialog(s, t)
+   d := BrowserDialog(s, t, settings)
    d.show_modal()
-   if \cookies then {
-      bak := cookies || ".bak"
-      Files.string_to_file(bak, encode(Cookie.expire_cookies(t))) | 
-         stop("Couldn't encode to temp cookie file ", bak, ": ", &why)
-      # Use rename not move to ensure it's atomic
-      Files.rename(bak, cookies) | stop("Couldn't rename cookie file ", bak, ": ", &why)
-   }
+   # Save cookies
+   bak := cookies || ".bak"
+   Files.string_to_file(bak, encode(Cookie.expire_cookies(t))) | 
+      stop("Couldn't encode to temp cookie file ", bak, ": ", &why)
+   # Use rename not move to ensure it's atomic
+   Files.rename(bak, cookies) | stop("Couldn't rename cookie file ", bak, ": ", &why)
+   # Save settings
+   Files.string_to_file(sf, encode(settings))
 end
 
 ### Ivib-v2 layout: $.layout
