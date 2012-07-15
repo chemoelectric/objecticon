@@ -10,7 +10,8 @@ end
 
 class DefaultEvaluatorEnv(EvaluatorEnv)
    private 
-      table,
+      table
+   private readable
       write_globals_flag
 
    public get(k, ev)

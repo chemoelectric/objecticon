@@ -198,6 +198,11 @@ class Ieval()
       }
    end
 
+   private wglob()
+      ee.set_write_globals(toggle_flag(ee.write_globals_flag))
+      return ee.write_globals_flag
+   end
+
    private static exit_repl(n)
       runerr("exit(" || n || ") invoked")
    end
@@ -284,7 +289,7 @@ class Ieval()
       par := Parser()
       env := table()
       ee := DefaultEvaluatorEnv(env)
-      if \opts["w"] then
+      if \opts["wglob"] then
          ee.set_write_globals(&yes)
       ev := Evaluator().
          set_env(ee).
@@ -294,6 +299,7 @@ class Ieval()
       env["trace"] := create trace_flag := toggle_flag(trace_flag)
       env["parse"] := create parse_flag := toggle_flag(parse_flag)
       env["quiet"] := create quiet_flag := toggle_flag(quiet_flag)
+      env["wglob"] := create wglob()
       env["dir"] := dir
       env["hist"] := create hist()
       env["elim"] := set_elim
