@@ -28,7 +28,7 @@ Input of an expression over several lines can be achieved by ending a line with 
 
  * *-i* Import the given package(s).  Several packages may be comma-separated, or several `-i` options may be given.
  * *-l* Link the given source file.  Several `-l` options may be given.
- * *-w* If given, then assignments to global variables (eg procedures) are allowed.
+ * *-wglob* If given, then assignments to global variables (eg procedures) are allowed.
  * *-g* Use a gui interface rather than the console.
  * *-s* Read commands from standard input rather than using a line editor.
  * *-hlim* Set the history limit for the line editor (default is 500).
@@ -41,6 +41,7 @@ Remaining arguments specify files which are processed before command line input 
  * *!env* Show the values stored in the environment
  * *!parse* Toggle parse mode, in which just the syntax structure of the command is printed
  * *!trace* Toggle tracing
+ * *!wglob* Toggle the write-globals flag
  * *!traceback* Show the traceback of the last command that gave a runtime error
  * *!quiet* Don't force evaluation of all of the values in the expression, and don't output any expression value
  * *dir(x)* With no parameter, show all global variables.  With a parameter, show information about it.
@@ -48,3 +49,4 @@ Remaining arguments specify files which are processed before command line input 
  * *cmd(n)* Run command number `n` again.
  * *hlim(n)* Set the history limit to `n`.
  * *elim(n)* Set the expression limit to `n`.
+ * *llim(n)* Set the gui log area line limit to `n`.
