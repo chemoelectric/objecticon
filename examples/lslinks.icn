@@ -34,14 +34,9 @@ procedure main(args)
    hc.set_timeout(\opts["t"] * 1000)
    hc.set_retries(\opts["r"])
    hc.set_user_agent(\opts["agent"])
-   cookies := \opts["k"] | System.getenv("GETURL_COOKIES")
-   if \cookies then {
-      t := decode(Files.file_to_string(cookies)) | {
-         write(FileStream.stderr, "Couldn't read/decode cookie file ", cookies, ": ", &why)
-         t := table()
-      }
-      hc.set_cookies(t)
-   }
+   cookies := \opts["k"] | System.getenv("OICOOKIES") | Files.get_path(Files.get_home()).child(".oicookies").str()
+   t := decode(Files.file_to_string(cookies)) | table()
+   hc.set_cookies(t)
 
    every do_one(!args)
 
