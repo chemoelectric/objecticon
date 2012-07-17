@@ -387,10 +387,10 @@ class TableLayout(Layout)
       if \g then
          return
 
-      g := TableGrid()
-      g.set_dii(dii)
-      g.set_doi(doi)
-      g.set_fix_col1(fix_col1_flag)
+      g := TableGrid().
+         set_dii(dii).
+         set_doi(doi).
+         set_fix_col1(fix_col1_flag)
 
       every c := !parent.children do {
          if /c.x_spec then {
