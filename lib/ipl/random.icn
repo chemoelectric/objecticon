@@ -165,7 +165,7 @@ end
 procedure shuffle(x)			
    local i
 
-   x := string(x)		# may fail
+   x := text(x)		# may fail
    every i := *x to 2 by -1 do
       x[?i] :=: x[i]
    return x
