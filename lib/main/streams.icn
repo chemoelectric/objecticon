@@ -1,7 +1,7 @@
 package io
 
 import
-   util(error, check_flag, save_why),
+   util(error, check_flag, check_positive_int, save_why),
    lang(NoCopy),
    posix(ExitInfo, System),
    ipl.strings(replace)
@@ -146,6 +146,7 @@ class Stream()
    #
    public read_exactly(n)
       local s, t
+      n := check_positive_int(n)
       s := ""
       while n > 0 do {
          t := in(n) | fail
@@ -272,6 +273,7 @@ class StringStream(Stream)
 
    public in(n)
       local t, e
+      n := check_positive_int(n)
       if pos > *subj then
          return
       e := min(pos + n, *subj + 1)
@@ -383,7 +385,7 @@ end
 #
 class ZeroStream(Stream)
    public in(n)
-      return repl("\0", n)
+      return repl("\0", check_positive_int(n))
    end
 
    public out(s)
@@ -491,6 +493,7 @@ class BufferStream(Stream, HasUnderlyingStream)
 
    public in(n)
       local t
+      n := check_positive_int(n)
       flush() | fail
       if *rbuff > 0 then {
          rbuff ? {
@@ -1083,6 +1086,7 @@ class LineBasedInputStream(Stream)
 
    public in(n)
       local t
+      n := check_positive_int(n)
       if *line = 0 then {
          t := read_line_impl() | fail
          if /t then

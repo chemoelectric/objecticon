@@ -122,3 +122,11 @@ procedure protect_why(e)
    t := &why
    return 1(@e, &why := t)
 end
+
+#
+# Utility to check for a positive integer
+#
+procedure check_positive_int(n)
+   return (0 < integer(n)) | runerr("Positive integer expected", n)
+end
+
