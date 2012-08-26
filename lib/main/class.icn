@@ -206,7 +206,7 @@ class Class()
    # @return the field value
    # @fail if the field is unknown or access is not permitted
    #
-   public static defer getf(x, field, quiet)
+   public static defer getf(x, field)
 
    # This behaves in exactly the same way as {getf} above, but
    # doesn't set {&why} on failure.
