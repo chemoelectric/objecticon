@@ -477,26 +477,6 @@ static int tidy_lists(struct lnode *n)
     return 1;
 }
 
-static int compute_global_pure(struct lnode *n)
-{
-    switch (n->op) {
-        case Uop_Global: {
-            struct lnode_global *x = (struct lnode_global *)n;
-            /*printf("changes ? %s (%s:%d)\n",x->global->name,               n->loc.file, n->loc.line);*/
-            if (changes(n)) {
-                if (verbose > 3) {
-                    fprintf(stderr,
-                            "Pure cleared for %s at %s:%d\n",x->global->name, 
-                            n->loc.file, n->loc.line);
-                }
-                x->global->pure = 0;
-            }
-            break;
-        }
-    }
-    return 1;
-}
-
 static int changes(struct lnode *n)
 {
     while (n->parent) {
@@ -733,7 +713,7 @@ static void compute_class_consts(void)
         }
         if (verbose > 3) {
             struct lclass_field *cf;
-            fprintf(stderr, "Class %s pure=%d\n", vclass->global->name, vclass->global->pure);
+            fprintf(stderr, "Class %s\n", vclass->global->name);
             for (cf = vclass->fields; cf; cf = cf->next) {
                 if (cf->flag == (M_Public | M_Static | M_Const)) {
                     fprintf(stderr, "\tPublic static constant %s: ", cf->name);
@@ -777,7 +757,6 @@ static void init_rangesets(void)
 void optimize()
 {
     init_rangesets();
-    visit_post(compute_global_pure);
     compute_class_consts();
     visit_post(fold_consts);
     visit_post(tidy_lists);
@@ -1315,7 +1294,7 @@ static int is_repeatable(struct lnode *n)
             return 1;
         case Uop_Global: {
             struct lnode_global *x = (struct lnode_global *)n;
-            return x->global->pure;
+            return (x->global->g_flag & (F_Builtin|F_Proc|F_Record|F_Class)) != 0;
         }
 
         case Uop_Mutual:
@@ -2938,7 +2917,7 @@ static void fold_field(struct lnode *n)
         return;
 
     y = (struct lnode_global *)x->child;
-    if (!y->global->class || !y->global->pure)
+    if (!y->global->class)
         return;
 
     f = lookup_field(y->global->class, x->fname);

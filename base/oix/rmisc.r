@@ -62,6 +62,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
 {
     dptr dp;
     struct p_frame *pf;
+    int i;
 
     if (StrLen(*s) == 0)
         return Failed;
@@ -149,7 +150,6 @@ int getvar(dptr s, dptr vp, struct progstate *p)
     if (pf) {
         struct p_proc *bp;
         dptr *np;
-        int i;
 
         bp = pf->proc;
         np = bp->lnames;		/* Check the formal parameter names. */
@@ -188,9 +188,9 @@ int getvar(dptr s, dptr vp, struct progstate *p)
     }
 
     /* Check the global variable names. */
-    if ((dp = lookup_global(s, p))) {
+    if ((i = lookup_global_index(s, p)) >= 0 && !p->is_named_global[i]) {
         vp->dword    =  D_NamedVar;
-        VarLoc(*vp) =  dp;
+        VarLoc(*vp) =  p->Globals + i;
         return GlobalName;
     }
     return Failed;
@@ -1785,51 +1785,48 @@ static int pdptr_cmp(dptr p1, dptr *p2)
     return lexcmp(p1, *p2);
 }
 
-
-dptr lookup_global(dptr name, struct progstate *prog)
+int lookup_global_index(dptr name, struct progstate *prog)
 {
     dptr *p = (dptr *)bsearch(name, prog->Gnames, prog->NGlobals, 
                               sizeof(dptr), 
                               (BSearchFncCast)pdptr_cmp);
     if (!p)
-        return 0;
+        return -1;
 
-    /* Convert from pointer into names array to pointer into descriptor array */
-    return prog->Globals + (p - prog->Gnames);
+    /* Convert from pointer into names array to index */
+    return (p - prog->Gnames);
+}
+
+dptr lookup_global(dptr name, struct progstate *prog)
+{
+    int i = lookup_global_index(name, prog);
+    if (i < 0)
+        return 0;
+    return prog->Globals + i;
 }
 
 
 struct loc *lookup_global_loc(dptr name, struct progstate *prog)
 {
-    dptr *p;
+    int i;
 
     /* Check if the table was compiled into the icode */
     if (prog->Glocs == prog->Eglocs)
         return 0;
 
-    p = (dptr *)bsearch(name, prog->Gnames, prog->NGlobals, 
-                        sizeof(dptr), 
-                        (BSearchFncCast)pdptr_cmp);
-    if (!p)
+    i = lookup_global_index(name, prog);
+    if (i < 0)
         return 0;
 
-    /* Convert from pointer into names array to pointer into location array */
-    return prog->Glocs + (p - prog->Gnames);
+    return prog->Glocs + i;
 }
 
 dptr lookup_named_global(dptr name, struct progstate *prog)
 {
-    dptr r, *p = (dptr *)bsearch(name, prog->Gnames, prog->NGlobals, 
-                                 sizeof(dptr), 
-                                 (BSearchFncCast)pdptr_cmp);
-    if (!p)
+    int i = lookup_global_index(name, prog);
+    if (i < 0 || !prog->is_named_global[i])
         return 0;
-
-    /* Convert from pointer into names array to pointer into cpglobals array */
-    r = prog->CpGlobals + (p - prog->Gnames);
-    if (is:null(*r))
-        return 0;
-    return r;
+    return prog->Globals + i;
 }
 
 

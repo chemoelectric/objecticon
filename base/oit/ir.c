@@ -727,6 +727,17 @@ static struct ir_var *make_global(struct lnode *n)
     return v;
 }
 
+static int is_assignable_var(struct lnode *n)
+{
+    switch (n->op) {
+        case Uop_Local: 
+            return 1;
+        case Uop_Global:
+            return (((struct lnode_global *)n)->global->g_flag & (F_Builtin|F_Proc|F_Record|F_Class)) == 0;
+    }
+    return 0;
+}
+
 static struct ir_var *get_var(struct lnode *n, struct ir_stack *st)
 {
     switch (n->op) {
@@ -984,7 +995,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                    ir_scanrestore(n, res->scan->old_subject, res->scan->old_pos),
                    ir_goto(n, expr->resume));
             /* Use deref, move instead of assign if possible */
-            if (x->child1->op == Uop_Local || x->child1->op == Uop_Global)
+            if (is_assignable_var(x->child1))
                 chunk4(body->success,
                        ir_deref(n, lv, rv),
                        ir_move(n, target, lv),
@@ -1113,7 +1124,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
              * of v op expr straight into v.
              */
             if (aaop &&
-                (x->child1->op == Uop_Local || x->child1->op == Uop_Global)) {
+                is_assignable_var(x->child1)) {
                 right = ir_traverse(x->child2, st, rv, bounded && !aaop, is_rval(n->op, 2, rval));
                 chunk1(res->start, ir_goto(n, right->start));
                 if (!bounded)
@@ -1201,7 +1212,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
              * just put the result of op straight into v.
              */
             if (n->op == Uop_Asgn &&
-                (x->child1->op == Uop_Local || x->child1->op == Uop_Global) &&
+                is_assignable_var(x->child1) &&
                 (
                     x->child2->op == Uop_Const ||
                     x->child2->op == Uop_Cat ||
@@ -1257,7 +1268,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
              * Just use deref to put the result of expr into v.
              */
             if (n->op == Uop_Asgn &&
-                (x->child1->op == Uop_Local || x->child1->op == Uop_Global))
+                is_assignable_var(x->child1))
             {
                 right = ir_traverse(x->child2, st, rv, 0, is_rval(n->op, 2, rval));
                 chunk1(res->start, ir_goto(n, right->start));
@@ -1281,7 +1292,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
              */
             if (aaop &&
                 n->op != Uop_Augactivate &&
-                (x->child1->op == Uop_Local || x->child1->op == Uop_Global)) {
+                is_assignable_var(x->child1)) {
                 right = ir_traverse(x->child2, st, rv, 0, is_rval(n->op, 2, rval));
                 chunk1(res->start, ir_goto(n, right->start));
                 if (!bounded)

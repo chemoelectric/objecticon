@@ -212,7 +212,10 @@ static void emit_ir_var(struct ir_var *v, char *desc)
         }
         case GLOBAL: {
             struct gentry *ge = v->global;
-            outwordx(Op_Global, "   %s=global (%s)", desc, ge->name);
+            if ((ge->g_flag & (F_Builtin|F_Proc|F_Record|F_Class)) == 0)
+                outwordx(Op_Global, "   %s=global (%s)", desc, ge->name);
+            else
+                outwordx(Op_NamedGlobal, "   %s=namedglobal (%s)", desc, ge->name);
             outwordx(ge->g_index, "      %d", ge->g_index);
             break;
         }

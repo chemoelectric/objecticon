@@ -12,7 +12,7 @@ procedure f(x,y,z)
 end
 
 procedure main()
-   local e,foo,x,input
+   local e,foo,x,input,abs,trim,main2
    if not(&features == "co-expressions") then
       stop("co-expressions not supported")
    write(imagex(&main))
@@ -47,12 +47,12 @@ procedure main()
    write(imagex(*e) | "failed")
    write(imagex(imagex(e)) | "failed")
    write(imagex(abs := create {write("entering abs"); 1 | 2 | 3}) | "failed")
-   write(imagex(trim := create {write("entering trim"); @abs | (main @:= abs)}) | "failed")
+   write(imagex(trim := create {write("entering trim"); @abs | (main2 @:= abs)}) | "failed")
    write(imagex(@trim) | "failed")
    write(imagex(@trim) | "failed")
    write(imagex(trim) | "failed")
    write(imagex(abs) | "failed")
-   write(imagex(main) | "failed")
+   write(imagex(main2) | "failed")
    init_serial()
    &trace := -1
    dummy{1,2,3,4}

@@ -62,7 +62,7 @@ procedure main(args)
    if n <= 0 then stop("-n needs a positive numeric parameter")
 
    solution := list(n)		# ... and a list of column solutions
-   write(n,"-Queens:")
+   Write__(n,"-Queens:")
    every q(1)			# start by placing queen in first column
 
    Term__()
@@ -96,11 +96,11 @@ procedure show()
       line := repl("|   ",n) || "|"
       border := repl("----",n) || "-"
       }
-   write("solution: ", count+:=1)
-   write("  ", border)
+   Write__("solution: ", count+:=1)
+   Write__("  ", border)
    every line[4*(!solution - 1) + 3] <- "Q" do {
-      write("  ", line)
-      write("  ", border)
+      Write__("  ", line)
+      Write__("  ", border)
       }
-   write()
+   Write__()
 end

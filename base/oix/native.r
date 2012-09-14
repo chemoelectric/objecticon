@@ -475,13 +475,16 @@ function lang_Prog_get_global(s, c)
       runerr(103, s)
    body {
        struct progstate *prog;
-       dptr p;
+       int i;
        if (!(prog = get_program_for(&c)))
           runerr(0);
-       p = lookup_global(&s, prog);
-       if (p)
-           return named_var(p);
-       else
+       i = lookup_global_index(&s, prog);
+       if (i >= 0) {
+           if (prog->is_named_global[i])
+               return prog->Globals[i];
+           else
+               return named_var(&prog->Globals[i]);
+       } else
            fail;
    }
 end
@@ -489,11 +492,15 @@ end
 function lang_Prog_get_globals(c)
    body {
        struct progstate *prog;
-       dptr dp;
+       word i;
        if (!(prog = get_program_for(&c)))
           runerr(0);
-       for (dp = prog->Globals; dp != prog->Eglobals; dp++)
-           suspend named_var(dp);
+       for (i = 0; i < prog->NGlobals; i++) {
+           if (prog->is_named_global[i])
+               suspend prog->Globals[i];
+           else
+               suspend named_var(&prog->Globals[i]);
+       }
        fail;
    }
 end
@@ -513,12 +520,12 @@ end
 function lang_Prog_get_named_globals(c)
    body {
        struct progstate *prog;
-       dptr dp;
+       word i;
        if (!(prog = get_program_for(&c)))
           runerr(0);
-       for (dp = prog->CpGlobals; dp != prog->ECpGlobals; dp++) {
-           if (!is:null(*dp))
-               suspend *dp;
+       for (i = 0; i < prog->NGlobals; i++) {
+           if (prog->is_named_global[i])
+               suspend prog->Globals[i];
        }
        fail;
    }

@@ -36,7 +36,6 @@ struct gentry *putglobal(char *name, int flag, struct lfile *lf, struct loc *pos
     p->name = name;
     p->pos = *pos;
     p->defined = lf;
-    p->pure = 1;
     p->g_flag = flag | F_Global;
     return p;
 }

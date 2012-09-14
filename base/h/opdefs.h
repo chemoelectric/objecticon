@@ -107,3 +107,4 @@
 #define Op_TCaseInsert   95
 #define Op_TCaseChoose   96
 #define Op_TCaseChoosex  97
+#define Op_NamedGlobal   98

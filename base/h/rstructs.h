@@ -431,7 +431,7 @@ struct progstate {
     struct ipc_fname * Current_fname_ptr;
     dptr MainProc;
 
-    dptr CpGlobals, ECpGlobals;         /* a copy of Globals in its original state */
+    int  *is_named_global;              /* Array matching Globals, indicating which are named globals (ie pre-set and constant) */
 
     word Coexp_ser;			/* this program's serial numbers */
     word List_ser;

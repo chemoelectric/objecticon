@@ -39,7 +39,7 @@ record complex(r,i)
 procedure main2(a)
    local T, L, L1
    static s
-   every write(imagex(Prog.get_variable_name(main | T | L | s | a)))
+   every write(imagex(Prog.get_variable_name(T | L | s | a)))
    T := table()
    L := list(200)
    L1 := []

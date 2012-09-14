@@ -189,7 +189,7 @@ procedure main(args)
    prompt := ""
    while in := pop(ifile) do {		# process all files
       repeat {
-         if *prompt ~= 0 then writes(prompt)
+         if *prompt ~= 0 then Writes__(prompt)
          line := Read__(in) | break
          while line[-1] == "\\" do line := line[1:-1] || read(in) | break
          (!plist)(line)
@@ -238,7 +238,7 @@ end
 #  note erroneous input line
 #
 procedure error(line)
-   write("*** erroneous line:  ",line)
+   Write__("*** erroneous line:  ",line)
    return
 end
 
@@ -249,24 +249,24 @@ procedure gener(goal)
    pending := [nonterm(goal,1)]
    while symbol := get(pending) do {
       if \tswitch then
-         write(symimage(symbol),listimage(pending))
+         Write__(symimage(symbol),listimage(pending))
       if type(symbol) == "string" then
-         writes(symbol)
+         Writes__(symbol)
       else case symbol.type of {
          1:  {
             pending := ?\defs[symbol.name] ||| pending | {
-               write("*** undefined nonterminal:  <",symbol.name,">")
+               Write__("*** undefined nonterminal:  <",symbol.name,">")
                break 
                }
             if *pending > \limit then {
-               write("*** excessive symbols remaining")
+               Write__("*** excessive symbols remaining")
                break 
                }
             }
-         2:  writes(?symbol.chars)
+         2:  Writes__(?symbol.chars)
          }
       }
-   write()
+   Write__()
 end
 
 #  look for generation specification
@@ -310,7 +310,7 @@ $else
       out := if *file = 0 then &output else {
 $endif
          open(file,"w") | {
-            write("*** cannot open ",file)
+            Write__("*** cannot open ",file)
             fail
             }
          }
@@ -356,11 +356,11 @@ procedure pwrite(name,ofile)
             get(a)
             next
             }
-         write(ofile,"<",nt,">::=",getrhs(get(a)))
+         Write__(ofile,"<",nt,">::=",getrhs(get(a)))
          }
       }
-   else write(ofile,name,"::=",getrhs(\defs[name[2:-1]])) |
-      write("*** undefined nonterminal:  ",name)
+   else Write__(ofile,name,"::=",getrhs(\defs[name[2:-1]])) |
+      Write__("*** undefined nonterminal:  ",name)
 end
 
 #  look for file with input
@@ -371,7 +371,7 @@ procedure source(line)
    return line ? {
       if ="@" then {
          new := open(file := tab(0)) | {
-            write("*** cannot open ",file)
+            Write__("*** cannot open ",file)
             fail
             }
          push(ifile,in) &

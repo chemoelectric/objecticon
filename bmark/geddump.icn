@@ -35,8 +35,8 @@ procedure main(args)
    every (!plist).n := (n +:= 1)
 
    every p := !plist do {
-      write()
-      write("[", p.n, "] ", gedlnf(p.r))
+      Write__()
+      Write__("[", p.n, "] ", gedlnf(p.r))
 
       if fam := gedref(p.r, "FAMC") then {
 	 refto("father", gedref(fam, "HUSB"))
@@ -52,7 +52,7 @@ procedure main(args)
          r := refto("  wife", p.r ~=== gedref(fam, "WIFE"))
 	 # if had earlier kids and did not indicate remarriage, do so now
 	 if \r then
-	    write("   m.")
+	    Write__("   m.")
 	 # print children under husband, or under wife if no husband
 	 if (p.r === gedref(fam, "HUSB")) | (not gedref(fam, "HUSB")) then {
             every r := gedref(fam, "CHIL") do {
@@ -78,14 +78,14 @@ procedure event(label, r)
    date  := ("" ~== geddate(r))
    place := ("" ~== gedval(r, "PLAC"))
    if /place then
-      write("   ", label, " ", \date)
+      Write__("   ", label, " ", \date)
    else
-      write("   ", label, " ", \date | "            ", "  ", place)
+      Write__("   ", label, " ", \date | "            ", "  ", place)
    return
 end
 
 procedure refto(label, r)
-   write("   ", label, " [", ptab[r].n, "] ", gedfnf(r))
+   Write__("   ", label, " [", ptab[r].n, "] ", gedfnf(r))
    return
 end
 

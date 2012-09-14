@@ -63,7 +63,7 @@ record procrec(pname,begline,lastline)
 
 procedure main(args)
 
-   local word, w2, p, prec, L, ln, switches
+   local word, w2, p, prec, L, ln, switches, proc
 
    switches := options(args,"qxw+l+c+")
 
@@ -144,12 +144,12 @@ procedure main(args)
             put(buffer,w2)			# put back w2
          addword(word,proc,ln)
          }
-   every write(!format(var))
-   write("\n\nprocedures:\tlines:\n")
+   every Write__(!format(var))
+   Write__("\n\nprocedures:\tlines:\n")
    L := []
    every p := !prec do
       put(L,left(p.pname,16," ") || p.begline || "-" || p.lastline)
-   every write(!sort(L))
+   every Write__(!sort(L))
 
    Term__()
 
