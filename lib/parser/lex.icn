@@ -21,7 +21,7 @@ $define Newline 4
 
 global yyin, yytoken, errors, debuglex, O, D, L, H, R, FS, IS, W, idchars,
        yylineno, yycolno, yyfilename, yyencoding, lastid, buffer, lastchar,
-       yyerror, yylexdebug, yytokval, yylinestart
+       yyerror, yylexdebug, yytokval, yylinestart, reswords
 
 procedure init_csets()
    O  := '01234567'
@@ -33,53 +33,45 @@ procedure init_csets()
    IS := 'uUlL'
    W  := ' \t\v'
    idchars := L ++ D
-end
-
-procedure reswords()
-   static t
-   initial {
-      t := table([Beginner+Ender, IDENT])
-
-      t["break"] := [Beginner+Ender, BREAK]
-      t["by"] := [0, BY]
-      t["case"] := [Beginner, CASE]
-      t["class"] := [0, CLASS]
-      t["const"] := [0, CONST]
-      t["create"] := [Beginner, CREATE]
-      t["default"] := [Beginner, DEFAULT]
-      t["defer"] := [0, DEFER]
-      t["do"] := [0, DO]
-      t["else"] := [0, ELSE]
-      t["end"] := [0, END]
-      t["every"] := [Beginner, EVERY]
-      t["fail"] := [Beginner+Ender, FAIL]
-      t["final"] := [0, FINAL]
-      t["global"] := [0, GLOBAL]
-      t["if"] := [Beginner, IF]
-      t["import"] := [0, IMPORT]
-      t["initial"] := [0, INITIAL]
-      t["invocable"] := [0, INVOCABLE]
-      t["local"] := [0, LOCAL]
-      t["next"] := [Beginner+Ender, NEXT]
-      t["not"] := [Beginner, NOT]
-      t["of"] := [0, OF]
-      t["package"] := [0, PACKAGE]
-      t["private"] := [0, PRIVATE]
-      t["procedure"] := [0, PROCEDURE]
-      t["protected"] := [0, PROTECTED]
-      t["public"] := [0, PUBLIC]
-      t["readable"] := [0, READABLE]
-      t["record"] := [0, RECORD]
-      t["repeat"] := [Beginner, REPEAT]
-      t["return"] := [Beginner+Ender, RETURN]
-      t["static"] := [0, STATIC]
-      t["suspend"] := [Beginner+Ender, SUSPEND]
-      t["then"] := [0, THEN]
-      t["to"] := [0, TO]
-      t["until"] := [Beginner, UNTIL]
-      t["while"] := [Beginner, WHILE]
-   }
-   return t
+   reswords := table([Beginner+Ender, IDENT])
+   reswords["break"] := [Beginner+Ender, BREAK]
+   reswords["by"] := [0, BY]
+   reswords["case"] := [Beginner, CASE]
+   reswords["class"] := [0, CLASS]
+   reswords["const"] := [0, CONST]
+   reswords["create"] := [Beginner, CREATE]
+   reswords["default"] := [Beginner, DEFAULT]
+   reswords["defer"] := [0, DEFER]
+   reswords["do"] := [0, DO]
+   reswords["else"] := [0, ELSE]
+   reswords["end"] := [0, END]
+   reswords["every"] := [Beginner, EVERY]
+   reswords["fail"] := [Beginner+Ender, FAIL]
+   reswords["final"] := [0, FINAL]
+   reswords["global"] := [0, GLOBAL]
+   reswords["if"] := [Beginner, IF]
+   reswords["import"] := [0, IMPORT]
+   reswords["initial"] := [0, INITIAL]
+   reswords["invocable"] := [0, INVOCABLE]
+   reswords["local"] := [0, LOCAL]
+   reswords["next"] := [Beginner+Ender, NEXT]
+   reswords["not"] := [Beginner, NOT]
+   reswords["of"] := [0, OF]
+   reswords["package"] := [0, PACKAGE]
+   reswords["private"] := [0, PRIVATE]
+   reswords["procedure"] := [0, PROCEDURE]
+   reswords["protected"] := [0, PROTECTED]
+   reswords["public"] := [0, PUBLIC]
+   reswords["readable"] := [0, READABLE]
+   reswords["record"] := [0, RECORD]
+   reswords["repeat"] := [Beginner, REPEAT]
+   reswords["return"] := [Beginner+Ender, RETURN]
+   reswords["static"] := [0, STATIC]
+   reswords["suspend"] := [Beginner+Ender, SUSPEND]
+   reswords["then"] := [0, THEN]
+   reswords["to"] := [0, TO]
+   reswords["until"] := [Beginner, UNTIL]
+   reswords["while"] := [Beginner, WHILE]
 end
 
 procedure lex_error(msg)
@@ -97,7 +89,6 @@ end
 procedure yylex2()
    initial {
       init_csets()
-      reswords := reswords()
    }
 
    repeat {

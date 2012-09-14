@@ -1902,7 +1902,7 @@ int getdefaultfontsize(int deflt)
 {
     static int t;
     if (!t) {
-        env_int(OIFONTSIZE, &deflt, 1, MaxWord);
+        env_int(OIFONTSIZE, &deflt, 1, INT_MAX);
         t = deflt;
     }
     return t;

@@ -10,7 +10,7 @@ static void merge(struct lclass *cl, struct lclass *super);
 /*
  * Names of builtin functions.
  */
-char *builtin_table[] = {
+static char *builtin_table[] = {
 #define FncDef(p) #p,
 #include "../h/fdefs.h"
 #undef FncDef

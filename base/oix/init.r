@@ -878,6 +878,7 @@ void resolve(struct progstate *p)
      * note the main procedure if found, and create the table of named globals.
      */
     p->MainProc = 0;
+    MemProtect(p->is_named_global = malloc(p->NGlobals * sizeof(int)));
     for (j = 0; j < p->NGlobals; j++) {
         switch (p->Globals[j].dword) {
             case D_Class: {
@@ -993,11 +994,8 @@ void resolve(struct progstate *p)
                 break;
             }
         }
+        p->is_named_global[j] = !is:null(p->Globals[j]);
     }
-
-    MemProtect(p->CpGlobals = malloc(p->NGlobals * sizeof(struct descrip)));
-    memcpy(p->CpGlobals, p->Globals, p->NGlobals * sizeof(struct descrip));
-    p->ECpGlobals = p->CpGlobals + p->NGlobals;
 
     /*
      * Relocate the names of the files in the ipc->filename table.
@@ -1363,6 +1361,7 @@ static void conv_var()
             ++pc;
             break;
         }
+        case Op_NamedGlobal:
         case Op_Global: {
             *pc = (word)&prog->Globals[*pc];
             ++pc;

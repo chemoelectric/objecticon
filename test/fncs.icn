@@ -22,7 +22,7 @@ procedure p2()
    local x,v,c,i
    write("w(image(w)) ----> ",image(w(image(w))) | "none")
    write("copy(array()) ----> ",imagex(copy(array())) | "none")
-   write("copy := copy(copy) ----> ",image(copy := copy(copy)) | "none")
+   #write("copy := copy(copy) ----> ",image(copy := copy(copy)) | "none")
    write("x := copy(array) ----> ",imagex(x := copy(array)) | "none")
    write("x := x(1,2,3,4,5,6,7) ----> ",imagex(x := x(1,2,3,4,5,6,7)) | "none")
    write("x[-4] ----> ",image(x[-4]) | "none")

@@ -1,6 +1,6 @@
 #SRC: V9GEN
 
-import io, lang, util(Format)
+import io, util(Format)
 
 record array(a,b,c,d,e,f,g)
 
@@ -35,8 +35,8 @@ procedure p3()
    write("integer(\"1r1\") ----> ",image(integer("1r1")) | "none")
    write("integer(\"2r0\") ----> ",image(integer("2r0")) | "none")
    write("integer(integer) ----> ",image(integer(integer)) | "none")
-   write("integer := abs ----> ",image(integer := abs) | "none")
-   integer := Prog.get_function("integer")
+#   write("integer := abs ----> ",image(integer := abs) | "none")
+#   integer := Prog.get_function("integer")
 end
 
 procedure p4()

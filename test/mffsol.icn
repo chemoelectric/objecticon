@@ -12,7 +12,7 @@ global range				# vertical coordinate range
 global red, green, blue			# current color
 
 procedure main (args)
-   local aset,pset,plist,rounds,nmatches,f,line,c,angle,dtheta,theta,n,r,x,y
+   local aset,pset,plist,rounds,nmatches,f,line,c,angle,dtheta,theta,n,r,x,y,match
     range := 1000
     aset := cset(&ascii ? (tab(upto(' ')) & move(1) & move(94)))
     pset := ''				# set of chars in use as players

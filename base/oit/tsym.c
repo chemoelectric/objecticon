@@ -35,6 +35,19 @@ static struct keyent keytab[] = {
 #include "../h/kdefs.h"
 };
 
+/*
+ * Names of builtin functions.
+ */
+static char *builtin_table[] = {
+#define FncDef(p) #p,
+#include "../h/fdefs.h"
+#undef FncDef
+};
+
+static int builtin_table_cmp(char *key, char **item)
+{
+    return strcmp(key, *item);
+}
 
 static void binop(int op);
 
@@ -79,6 +92,12 @@ struct tgentry *next_global(char *name, int flag, struct node *n)
         x = x->g_blink;
     if (x)
         tfatal_at(n, "global redeclaration: %s previously declared at line %d", name, Line(x->pos));
+
+    if (!package_name &&
+        bsearch(name, builtin_table, ElemCount(builtin_table), 
+                sizeof(char *), (BSearchFncCast)builtin_table_cmp)) 
+        tfatal_at(n, "global symbol uses name of builtin function");
+
     x = FAlloc(struct tgentry);
     x->g_blink = ghash[i];
     ghash[i] = x;

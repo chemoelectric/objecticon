@@ -239,6 +239,7 @@ void get_deref(dptr dest)
         }
         case Op_Const:
         case Op_Static:
+        case Op_NamedGlobal:
         case Op_Global: {
             *dest = *(dptr)GetAddr;
             break;
@@ -280,6 +281,7 @@ void get_variable(dptr dest)
             *dest = nulldesc;
             break;
         }
+        case Op_NamedGlobal:
         case Op_Const: {
             *dest = *(dptr)GetAddr;
             break;
@@ -313,6 +315,7 @@ void skip_descrip()
     switch (op) {
         case Op_Const:
         case Op_Static:
+        case Op_NamedGlobal:
         case Op_Global:
         case Op_Int:
 #if RealInDesc

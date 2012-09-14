@@ -27,13 +27,25 @@ class DefaultEvaluatorEnv(EvaluatorEnv)
       return table[k]
    end
 
+   private static exit_repl(n)
+      /n := ""
+      runerr("exit(" || n || ") invoked")
+   end
+
+   private get_global(s)
+      return if s == "exit" then
+         exit_repl
+      else
+         lang.Prog.get_global(s)
+   end
+
    private glookup(k, ev)
       local t, f, s
       if upto('.', k) then {
          return k ? if ="default." then
-            lang.Prog.get_global(tab(0))
+            get_global(tab(0))
          else
-            lang.Prog.get_global(k)
+            get_global(k)
       }
       t := []
       if lang.Prog.get_global(k) then
@@ -44,7 +56,7 @@ class DefaultEvaluatorEnv(EvaluatorEnv)
             put(t, f)
       }
       if *t = 1 then
-         return lang.Prog.get_global(t[1])
+         return get_global(t[1])
       if *t > 1 then
          runerr("ambiguous name: " || k || "(" || list2str(t) || ")")
    end

@@ -26,7 +26,7 @@ $ifdef _OBJECT_ICON
 import lang, io, posix
 $endif
 
-global Save__, Saves__, Name__
+global Name__, Write__, Writes__
 
 procedure Getenv__(s)
 $ifdef _OBJECT_ICON
@@ -47,11 +47,11 @@ procedure Init__(prog)
    Time__()
    if Getenv__("BM_OUTPUT") then {	# if BM_OUTPUT is set, allow output
       write("*** Benchmarking with output ***")
-      return
-      }
-   Save__ := write			# turn off output
-   Saves__ := writes
-   write := writes := 1
+      Write__ := write
+      Writes__ := writes
+   } else
+      Write__ := Writes__ := 1
+
    return
 end
 
@@ -59,10 +59,6 @@ end
 
 procedure Term__()
    local v
-   if not Getenv__("BM_OUTPUT") then {	# if BM_OUTPUT is not set, restore output
-      write := Save__
-      writes := Saves__
-      }
    v := (&version ? (tab(find("Version ")) || move(8) || tab(upto(' '))))
    if any('.,', v[-1]) then v[-1] := ""
 

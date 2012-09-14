@@ -138,8 +138,8 @@ $endif
 
    loadfile()				# load table keys
 
-   write(hdr1)
-   write(hdr2)
+   Write__(hdr1)
+   Write__(hdr2)
    every dumpcode(kgen(chtab))		# dump chains in code order
 
    Term__()
@@ -279,13 +279,13 @@ procedure putchain(code, k, o)
 
    # output the resulting chain
 
-   writes(code, right(d, 4), right(x1, 7), right(y1, 7))
+   Writes__(code, right(d, 4), right(x1, 7), right(y1, 7))
    while x := get(xoff) & y := get(yoff) do
       if x ~= 0 | y ~= 0 then
-         w := writes(right(5000 + x, 4), right(5000 + y, 4))
+         w := Writes__(right(5000 + x, 4), right(5000 + y, 4))
    if /w then
-      writes("50005000")		# line had degenerated to a point
-   write()
+      Writes__("50005000")		# line had degenerated to a point
+   Write__()
    return
 end
 

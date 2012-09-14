@@ -5,7 +5,7 @@ import io, lang
 record message(who,gap,what)
 
 procedure main()
-   local i, x
+   local i, x, args2
 
    x := 1
    x +:= |1		# tickled optimizer bug.
@@ -50,8 +50,8 @@ procedure main()
    write("   ", image(proc("args")))
    write("   ", image(Proc.get_n_arguments))
    write("  >", args(main))
-   args := Proc.get_n_arguments
-   write("  >", args(main))
+   args2 := Proc.get_n_arguments
+   write("  >", args2(main))
    write("   ", image(proc("args")))
    write("   ", image(Proc.get_n_arguments))
 
