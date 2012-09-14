@@ -2,15 +2,16 @@
 
 = Differences between Object Icon and Icon =
 
-Although Object Icon is quite compatible with Icon source code, there are a few minor differences.
+Although Object Icon is quite compatible with Icon source code, there are several differences.  Here are some of the more significant ones.
 
  * New reserved words : `class`, `const`, `defer`, `final`, `import`, `package`, `private`, `protected`, `public`, `readable`.
- * A few new builtin functions : `cast()`, `is()`, `classof()`, `keyof()`, `ucs()`, `uchar()`, `text()`
- * Some new keywords - `&why` is a string, giving the reason for a failure (rather like C's `errno` variable).  `&yes` and `&no` are values for an on/off flag to take, and equal `1` and `&null` respectively.
+ * A few new builtin functions, most notably : `cast()`, `is()`, `classof()`, `keyof()`, `ucs()`, `uchar()`, `text()`.  In total though, Object Icon has far fewer builtin functions, since much functionality now exists in classes.  See [BuiltinFunctions].
+ * Some new keywords, amongst them `&why` is a string, giving the reason for a failure (rather like C's `errno` variable).  `&yes` and `&no` are values for an on/off flag to take, and equal `1` and `&null` respectively.  Again, several of Icon's keywords have their equivalent in classes.  See [Keywords].
  * I/O has been completely rewritten in Object Icon; there are no builtin I/O functions (`write`, `read` etc), nor is there a builtin `file` type.  Rather, I/O is implemented using a new set of classes in the `io` package.
  * Icon's various graphical builtin facilities have been moved into a package `graphics`.  Most notably, the class `Window` represents an window, rather than Icon's builtin `file` type.  Most of the graphics functions are now instance methods of `Window`.  The various Icon graphics keywords don't exist in Object Icon.
  * The maths functions are static methods in the class `util.Math`, rather than builtins.  Object Icon doesn't have Icon's keyword constants `&pi`, `&e` and `&phi`, but equivalents can be found in `util.Math`.
  * The `set()` function creates a set and adds each parameter provided to the function to the new set.  In Icon the `set()` function takes a list and adds its members to the new set.
+ * Icon's runtime error conversion control using the `&error` keyword is absent from Object Icon.  Rather, runtime errors can be handled with co-expressions, using the `&handler` keyword.
  * For a record, `type()` returns the record type name in Icon, whereas in Object Icon it returns "record"; the static method `Constructor.get_name()` can instead be used to get the record constructor's name for a given record instance.
  * The invocation of PDCO procedures passes the co-expressions as individual parameters, rather than collected as a list in one parameter.  So the syntax 
 {{{
@@ -24,8 +25,9 @@ proc(create expr1, create expr2, ...)
 {{{
 proc([create expr1, create expr2, ...])
 }}}
- * Co-expressions have slightly different semantics - see [Coexpressions].
+ * Co-expressions have slightly different semantics.  Further, in Icon, co-expressions are quite expensive to create and use, whereas in Object Icon they are very cheap.   See [Coexpressions] for full details.
  * In Icon, an undeclared identifier produces a compiler warning; in Object Icon it is an error.
+ * In Icon, global variables representing functions, procedures and records can be assigned to at runtime.  In Object Icon, they are constants and cannot be changed.
  * Given a list `x`, the builtin function `insert(x, i, o)` will accept the parameter `i` if it is zero, or `*x+1`, and this is equivalent to `put(x, o)`.  In Icon, this would simply fail.
  * A different ucode format - you can't link Icon and Object Icon ucode files.
  * Different executable names.  Icon has `icont` and `iconx`; Object Icon has `oit` and `oix`.
