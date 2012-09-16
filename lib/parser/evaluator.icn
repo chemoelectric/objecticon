@@ -142,11 +142,7 @@ class Evaluator()
       local res
       brk[n] := &current
       while res := !ex do {
-         case res of {
-            "break": break
-            "next": next
-            default: return res
-         }
+         (res === "next") | return res
       }
    end
 
@@ -487,9 +483,9 @@ class Evaluator()
    private do_create(n) return create_E(n.child(2)) end
    private do_brace(n) suspend E(n.child(2)) end
    private do_compound(n) suspend { E(n.child(1)) ; E(n.child(3)) } end
-   private do_break(n) restore(n) ; return coact("break", brk[n]) end
-   private do_next(n) restore(n) ; return coact("next", brk[n]) end
-   private do_breakexpr(n) restore(n) ; return coact(n.child(2), brk[n]) end
+   private do_break(n) restore(n) ; return coact(Factory.new_keyword(, "null"), brk[loops[n]]) end
+   private do_next(n) restore(n) ; return coact("next", brk[loops[n]]) end
+   private do_breakexpr(n) restore(n) ; return coact(n.child(2), brk[loops[n]]) end
    private do_Empty(n) return end
    private do_default(n) fatalerr("not implemented: " || n.label) end
 

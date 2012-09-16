@@ -794,6 +794,13 @@ class Factory()
       every t.put(new_id(" ", !ids))
       return t
    end
+
+   public static new_keyword(pad, id)
+      /pad := ""
+      return Node("keyword",
+                  Token(AND, "&", pad || "&"),
+                  Token(IDENT, id, id))
+   end
 end
 
 class Class(LList)
