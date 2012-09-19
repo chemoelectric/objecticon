@@ -52,22 +52,19 @@ procedure lambda(e)
 end
 
 #
-# Implementation class for {lpartial} and {rpartial}
+# Implementation class for {lpartial}
 #
-class Partial()
+class LPartial()
    private
-      f, left, right
+      f, l
 
    package call(a[])
-      every push(a, back(\left))
-      every put(a, !\right)
-      suspend f!a
+      suspend f!(l ||| a)
    end
 
-   package new(f, left, right)
+   package new(f, l)
       self.f := f
-      self.left := left
-      self.right := right
+      self.l := l
       return
    end
 end
@@ -76,14 +73,32 @@ end
 # Partial application to function f, prepending l to the arguments.
 #
 procedure lpartial(f, l[])
-   return Partial(f, l).call
+   return LPartial(f, l).call
 end
 
 #
-# Partial application to function f, appending r to the arguments.
+# Implementation class for {rpartial}
 #
-procedure rpartial(f, r[])
-   return Partial(f,, r).call
+class RPartial()
+   private
+      f, l
+
+   package call(a[])
+      suspend f!(a ||| l)
+   end
+
+   package new(f, l)
+      self.f := f
+      self.l := l
+      return
+   end
+end
+
+#
+# Partial application to function f, appending l to the arguments.
+#
+procedure rpartial(f, l[])
+   return RPartial(f, l).call
 end
 
 #
