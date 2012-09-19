@@ -6,25 +6,12 @@ import
 global _a, _l
 
 #
-# This is a class for making lambda-style functions.  For example:
-#   f := Lambda.make{ _a[1] + 100 }
-# sets f to be a function returning its first argument plus 100.  Note
-# that args are passed to the function via a global variable _a, since
-# icon syntax allows no other way.  Further, although the function can
-# use any variables in scope, it cannot declare any itself.  To simulate
-# local variables, another global, _l, can be used.  It can be set
-# to any value.
-# 
-# Other examples:-
-#   # Return the sum of the arguments, eg f(1,2,3) -> 6
-#   # - note that _l must be dereferenced, otherwise the caller sees the
-#   #   value before the function is called.
-#   f := Lambda.make{{ _l := 0; every _l +:= !_a ; ._l }}
+# Implementation class for {lambda}
 #
 class Lambda()
    private e
 
-   private f(a[])
+   package call(a[])
       local ta, tl
       ta := _a
       _a := a
@@ -38,42 +25,90 @@ class Lambda()
       _l := tl
    end
 
-   public static make(e)
-      return Lambda(e).f
-   end
-
-   private new(e)
+   package new(e)
       self.e := e
       return
    end
 end
 
 #
-# Shorthand for {Lambda.make}
+# This is a procedure for making lambda-style functions.  For example:
+#   f := lambda{ _a[1] + 100 }
+# sets f to be a function returning its first argument plus 100.  Note
+# that args are passed to the function via a global variable _a, since
+# icon syntax allows no other way.  Further, although the function can
+# use any variables in scope, it cannot declare any itself.  To simulate
+# local variables, another global, _l, can be used.  It can be set
+# to any value.
+# 
+# Other examples:-
+#   # Return the sum of the arguments, eg f(1,2,3) -> 6
+#   # - note that _l must be dereferenced, otherwise the caller sees the
+#   #   value before the function is called.
+#   f := lambda{{ _l := 0; every _l +:= !_a ; ._l }}
 #
 procedure lambda(e)
-   return Lambda.make(e)
+   return Lambda(e).call
+end
+
+#
+# Implementation class for {lpartial} and {rpartial}
+#
+class Partial()
+   private
+      f, left, right
+
+   package call(a[])
+      every push(a, back(\left))
+      every put(a, !\right)
+      suspend f!a
+   end
+
+   package new(f, left, right)
+      self.f := f
+      self.left := left
+      self.right := right
+      return
+   end
 end
 
 #
 # Partial application to function f, prepending l to the arguments.
 #
 procedure lpartial(f, l[])
-   return lambda{f!(l ||| _a)}
+   return Partial(f, l).call
 end
 
 #
-# Partial application to function f, appending l to the arguments.
+# Partial application to function f, appending r to the arguments.
 #
-procedure rpartial(f, l[])
-   return lambda{f!(_a ||| l)}
+procedure rpartial(f, r[])
+   return Partial(f,, r).call
+end
+
+#
+# Implementation class for {compose}
+#
+class Compose()
+   private
+      f, g
+
+   package call(a[])
+      suspend f(g!a)
+   end
+
+   package new(f, g)
+      self.f := f
+      self.g := g
+      return
+   end
 end
 
 #
 # Compose functions f and g
 #
 procedure compose(f, g)
-   return lambda{f(g!_a)}
+   return Compose(f, g).call
 end
 
 # Convenient function to get the named binary operator, partially
@@ -90,6 +125,30 @@ end
 #
 procedure rpb(s, x)
    return rpartial(callable(s, 2), x)
+end
+
+#
+# Implementation class for {coexf}
+#
+class Coexf()
+   private e
+
+   package call()
+      return @e
+   end
+
+   package new(e)
+      self.e := e
+      return
+   end
+end
+
+#
+# Given a co-expression {e}, this returns a function which produces @e
+# on each evaluation.  Arguments to the function are discarded.
+#
+procedure coexf(e)
+   return Coexf(e).call
 end
 
 # Evaluates coexpression {e}, saving the value of {_a} and {_l}.  This
