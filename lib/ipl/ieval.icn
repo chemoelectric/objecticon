@@ -337,7 +337,17 @@ class Ieval()
          s := Files.file_to_string(f) | stop("Couldn't load ", f, ": ", &why)
          n := par.parse_expression(s) | stop("Couldn't parse ", f,  ": ", &why)
          ev.set_node(n) | stop("Couldn't parse ", f,  ": ", &why) 
-         ev.eval()
+         Safe{ev.eval()}
+         if &errortext then {
+            if &errornumber then
+               ewrite("Runtime error ", &errornumber, ": ", &errortext)
+            else
+               ewrite("Runtime error: ", &errortext)
+            ewrite("offending value: ", image(&errorvalue))
+            last_runerr := &errorcoexpr
+            errorclear()
+            break
+         }
       }
    end
 
