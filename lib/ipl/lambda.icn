@@ -126,12 +126,68 @@ procedure compose(f, g)
    return Compose(f, g).call
 end
 
-# Convenient function to get the named binary operator, partially
-# applied with x, using lpartial.  For example lpb("*", 2) returns a
-# function which doubles its argument.
 #
-procedure lpb(s, x)
-   return lpartial(callable(s, 2), x)
+# Implementation class for {lpartial2}
+#
+class LPartial2()
+   private
+      f, x
+
+   package call(a)
+      suspend f(x, a)
+   end
+
+   package new(f, x)
+      self.f := f
+      self.x := x
+      return
+   end
+end
+
+# Partial application of the first parameter to the two-parameter
+# function f.  The result is the same as using the more general
+# function {lpartial}, but avoids the creation of temporary lists on
+# each invocation of the resulting function.
+#
+procedure lpartial2(f, x)
+   return LPartial2(f, x).call
+end
+
+# Convenient function to get the named binary operator, partially
+# applied with x as the left argument.  For example lpb(2, "*")
+# returns a function which doubles its argument, whilst lpb(0, "<")
+# returns a function which succeeds and returns its argument if it is
+# greater than 0.
+#
+procedure lpb(x, s)
+   return lpartial2(callable(s, 2), x)
+end
+
+#
+# Implementation class for {rpartial2}
+#
+class RPartial2()
+   private
+      f, x
+
+   package call(a)
+      suspend f(a, x)
+   end
+
+   package new(f, x)
+      self.f := f
+      self.x := x
+      return
+   end
+end
+
+# Partial application of the second parameter to the two-parameter
+# function f.  The result is the same as using the more general
+# function {rpartial}, but avoids the creation of temporary lists on
+# each invocation of the resulting function.
+#
+procedure rpartial2(f, x)
+   return RPartial2(f, x).call
 end
 
 # Convenient function to get the named binary operator, partially
@@ -139,7 +195,7 @@ end
 # function which halves its argument.
 #
 procedure rpb(s, x)
-   return rpartial(callable(s, 2), x)
+   return rpartial2(callable(s, 2), x)
 end
 
 #
