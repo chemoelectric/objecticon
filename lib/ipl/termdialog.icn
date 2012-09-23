@@ -23,9 +23,7 @@ class TermDialog(Dialog, LineBasedOutputStream)
       line
 
    protected write_line_impl(s)
-      # Allow output even if dialog not live; just send to black hole.
-      if is_live() then
-         text.log([ucs(s)], log_limit)
+      text.log([ucs(s)], log_limit)
       return
    end
 
@@ -76,7 +74,6 @@ class TermDialog(Dialog, LineBasedOutputStream)
    end
 
    public component_setup()
-      self.setup()
       reset()
    end
 
@@ -96,6 +93,7 @@ class TermDialog(Dialog, LineBasedOutputStream)
       history := []
       history_start_no := 1
       log_limit := 600
+      self.setup()
       return
    end
 
