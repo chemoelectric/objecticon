@@ -23,7 +23,9 @@ class TermDialog(Dialog, LineBasedOutputStream)
       line
 
    protected write_line_impl(s)
-      text.log([ucs(s)], log_limit)
+      # Allow output even if dialog not live; just send to black hole.
+      if is_live() then
+         text.log([ucs(s)], log_limit)
       return
    end
 
