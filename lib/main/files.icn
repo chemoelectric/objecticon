@@ -261,6 +261,14 @@ $endif
    public static defer readlink(s)
 
    #
+   # Return the canonicalized absolute pathname as produced by the
+   # POSIX realpath function.
+   #
+   # @param s a filename
+   #
+   public static defer realpath(s)
+
+   #
    # Changes the current directory to that specified in s.
    #
    # @param s the directory
