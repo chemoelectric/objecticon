@@ -1156,7 +1156,7 @@ void output_debug(void)
 		putc('\n', output_file);
 		j = 2;
 	    }
-	    fprintf(output_file, "0,");
+	    fprintf(output_file, ",");
 	    }
 	}
     }

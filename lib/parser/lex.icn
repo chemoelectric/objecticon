@@ -555,7 +555,7 @@ class Lex()
             yytokval := saved_yytokval
             yylval := Token(rv, yytext, saved_chunk, yytokval, yylineno, yycolno, yyfilename)
             if \debuglex then
-               write("yylex() : ",tokenstr(rv))
+               write("yylex() : ",YY.token_str(rv))
             suspend yylval
          }
          ender := iand(tokflags, Ender)
@@ -595,7 +595,7 @@ class Lex()
          }
          yylval := Token(rv, yytext, chunk, yytokval, yylineno, yycolno, yyfilename)
          if \debuglex then
-            write("yylex() : ", tokenstr(rv))
+            write("yylex() : ", YY.token_str(rv))
          suspend yylval
       }
    end

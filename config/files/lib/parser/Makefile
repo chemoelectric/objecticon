@@ -1,6 +1,6 @@
 include ../../Makedefs
 
-LIBSRC=ucode.icn lex.icn parser.icn tokens.icn tree.icn symboltable.icn oigram.icn preprocessor.icn evaluator.icn
+LIBSRC=ucode.icn lex.icn parser.icn tree.icn symboltable.icn oigram.icn preprocessor.icn evaluator.icn
 
 LIBU=$(LIBSRC:.icn=.u)
 
