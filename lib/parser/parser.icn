@@ -39,67 +39,40 @@ class ErrorDetail()
 end
 
 class Parser(Connectable)
-   public
-      preproc_sym_table,preproc_if_stack,preproc_file_stack,preproc_if_state,
-      preproc_file,preproc_filename,preproc_line,
-      preproc_word_chars,preproc_nest_level,preproc_include_name,
-      preproc_include_set,preproc_print_filename,preproc_encoding_chars,
-      preproc_err_count,preproc_encoding,preproc_print_encoding
-
    private
-      first_err
+      first_err, pp, lex, yy
 
    public static const 
-      DEFAULT_SYMBOLS, 
       PREPROCESSOR_ERROR_EVENT, 
+      LEXER_ERROR_EVENT,
       PARSER_ERROR_EVENT
 
    private static init()
-      local s
       PREPROCESSOR_ERROR_EVENT := "preprocessor error"
+      LEXER_ERROR_EVENT := "lexer error"
       PARSER_ERROR_EVENT := "parser error"
-      DEFAULT_SYMBOLS := table()
-      # reverse engineer the predefined symbols list from our predefined symbols
-      every s := &features do {
-         DEFAULT_SYMBOLS[case s of {
-            "Object Icon": "_OBJECT_ICON"
-            "V2": "_V2"
-            "keyboard functions": "_KEYBOARD_FUNCTIONS"
-            "JPEG images": "_JPEG"
-            "PNG images": "_PNG"
-            "SSL networking": "_SSL"
-            "MS Win32":"_MS_WIN32"
-            "UNIX":"_UNIX"
-            "POSIX":"_POSIX"
-            "ASCII":"_ASCII"
-            "co-expressions":"_CO_EXPRESSIONS"
-            "dynamic loading":"_DYNAMIC_LOADING"
-            "event montoring":"_EVENT_MONITOR"
-            "large integers":"_LARGE_INTEGERS"
-            "multiple programs":"_MULTITASKING"
-            "pipes":"_PIPES"
-            "system function":"_SYSTEM_FUNCTION"
-            "graphics":"_GRAPHICS"
-            "X Windows":"_X_WINDOW_SYSTEM"
-         }] := "1"
-      }
+   end
+
+   public new()
+      cast(self,Connectable).new()
+      pp := Preprocessor().
+         set_error(pperror)
+      lex := Lex().
+         set_error(lxerror)
+      yy := YY().
+         set_error(yyerror)
+      return
    end
 
    public parse(s, encoding)
-      /encoding := "ASCII"
+      local yyval
       first_err := &null
-      yyin := string(s) | runerr(103, s)
-      parser.yyerror := yyerror
-      yylex_reinit()
       # Because we don't have the pp-generated # at the top of the file we start
       # at line 1 not line 0, and also in the given encoding.
-      yylineno := 1
-      yyencoding := encoding
-      yyparse()
-      if yynerrs = 0 then
-         return Prog(yyval)
-      else
+      yyval := yy.yyparse(create lex.yylex(s,, encoding, 1))
+      if \first_err then
          return error(first_err)
+      return Prog(yyval)
    end
 
    #
@@ -111,581 +84,38 @@ class Parser(Connectable)
    end
 
    public parse_file(fname, predefined_syms)
-      yyin := preprocess(fname, predefined_syms) | fail
-      parser.yyerror := yyerror
-      yylex_reinit()
-      yyparse()
-      if yynerrs = 0 then
-         return Prog(yyval)
-      else
+      local s, yyval
+      first_err := &null
+      s := pp.preprocess(fname, predefined_syms)
+      if \first_err then
          return error(first_err)
+      yyval := yy.yyparse(create lex.yylex(s))
+      if \first_err then
+         return error(first_err)
+      return Prog(yyval)
    end
 
-   public yyerror(s)
+   private yyerror(s, token)
       local ed
-      ed := ErrorDetail(yyfilename, yylineno, image(yytext) || ": " || s)
+      ed := ErrorDetail(token.filename, token.line, image(token.s) || ": " || s)
       fire(PARSER_ERROR_EVENT, ed)
       /first_err := ed.str()
       return
    end
 
-   #
-   # Handles an error.
-   #
-   private preproc_error(msg)
+   private lxerror(msg, filename, line)
       local ed
-      /msg := "Invalid preprocessor line"
-      ed := ErrorDetail(preproc_filename, preproc_line, msg)
+      ed := ErrorDetail(filename, line, msg)
+      fire(LEXER_ERROR_EVENT, ed)
+      /first_err := ed.str()
+      return
+   end
+
+   private pperror(msg, filename, line)
+      local ed
+      ed := ErrorDetail(filename, line, msg)
       fire(PREPROCESSOR_ERROR_EVENT, ed)
       /first_err := ed.str()
-      preproc_err_count +:= 1
       return
-   end
-
-   #
-   # Preprocess a file to a string.  Fails on any errors, or returns
-   # the string.
-   #
-   public preprocess(fname, predefined_syms)
-      local sb
-      first_err := &null
-      return use { 
-         sb := RamStream(),
-         {
-            every sb.out(preprocess_gen(fname, predefined_syms) || "\n")
-            if preproc_err_count = 0 then
-               sb.str()
-            else 
-               error(first_err)
-         }
-      }
-   end
-
-   #
-   # Preprocesses a file, generating output lines.
-   #
-   private preprocess_gen(fname, predefined_syms)
-      local line
-      preproc_new(fname, predefined_syms)
-      suspend preproc_sync_lines()      
-      while line := preproc_read() do {
-         # line will be &null if we have just come back from an include.  If so,
-         # produce a #line directive.
-         if /line then
-            suspend preproc_sync_lines()      
-         else line ? {
-            if match("#line") then {
-               move(1)
-               suspend preproc_scan_directive()
-            } else {
-               preproc_space()
-               if ="$" & any(&letters ++ &digits ++ ' \t\f\r') then {
-                  suspend preproc_scan_directive()
-               } else {
-                  move(1)
-                  suspend preproc_scan_text()
-               }
-            }
-         }
-      }
-      close(\preproc_file)
-      preproc_done()
-   end
-
-   #
-   # a_Initializes the preprocessor "object".
-   #
-   private preproc_new(fname,predefined_syms)
-      if not(preproc_file := open(fname)) then {
-         runerr("cannot open " || image(fname))
-      }
-      preproc_sym_table := \predefined_syms | copy(DEFAULT_SYMBOLS)
-      preproc_if_stack := []
-      preproc_file_stack := []
-      preproc_include_set := set(fname)
-      preproc_if_state := &null
-      preproc_word_chars := &letters ++ &digits ++ '_'
-      preproc_encoding_chars := &letters ++ &digits ++ '-'
-      preproc_filename := preproc_include_name := fname
-      preproc_line := 0
-      preproc_print_filename := &null
-      preproc_print_encoding := &null
-      preproc_nest_level := 0
-      preproc_err_count := 0
-      preproc_encoding := "ASCII"
-      return
-   end
-
-   #
-   # Clears the values of certain space-consuming variables.
-   #
-   private preproc_done()
-      preproc_sym_table := preproc_if_stack := preproc_file_stack :=
-         preproc_filename := preproc_print_filename := preproc_print_encoding :=
-         preproc_encoding := preproc_file := preproc_include_set := &null
-      return
-   end
-
-   #
-   # a_Scans an encoding identifier.
-   #
-   private preproc_get_encoding()
-      suspend any(&letters) & tab(many(preproc_encoding_chars))
-   end
-
-   #
-   # a_Scans a preprocessor directive.  This method fails or returns
-   # either a blank line or a #line directive.
-   #
-   private preproc_scan_directive()
-      local sym,value,new_file,new_filename,new_line,new_encoding,old,preproc_command,old_if_state,fname
-      preproc_space()
-      preproc_command := preproc_word()
-      if \preproc_if_state then {
-         if match("if",preproc_command) then {
-            preproc_command := "$if"
-         }
-      }
-      preproc_space()
-      case preproc_command of {
-         "define": {
-            if /preproc_if_state then {
-               if sym := preproc_word() &
-                  value := preproc_scan_define_value() then 
-               {
-                  if \ (old := preproc_sym_table[sym]) ~=== value then {
-                     preproc_error("redefinition of " || sym || " = " ||
-                                   old)
-                  } else {
-                     preproc_sym_table[sym] := value
-                  }
-               } else {
-                  preproc_error()
-               }
-               return ""
-            }
-         }
-         "undef": {
-            if /preproc_if_state then {
-               if sym := preproc_word() & preproc_at_end() then {
-                  delete(preproc_sym_table,sym)
-               } else {
-                  preproc_error()
-               }
-               return ""
-            }
-         }
-         "load": {
-            if /preproc_if_state then {
-               if sym := preproc_word() &
-                  preproc_opt_space() &
-                  fname := preproc_qword() & *fname > 0 & preproc_at_end() then 
-               {
-                  if value := image(Files.file_to_string(Files.path_find(fname, 
-                                                         "OIINCL",
-                                                          Files.get_path(preproc_filename).parent().str()))) then 
-                  {
-                     if \ (old := preproc_sym_table[sym]) ~=== value then {
-                        preproc_error("redefinition of " || sym || " = " ||
-                                      old)
-                     } else {
-                        preproc_sym_table[sym] := value
-                     }
-                  } else {
-                     preproc_error("cannot open " || image(fname))
-                  }
-               } else {
-                  preproc_error()
-               }
-               return ""
-            }
-         }
-         "uload": {
-            if /preproc_if_state then {
-               if sym := preproc_word() &
-                  preproc_opt_space() &
-                  fname := preproc_qword() & *fname > 0 & preproc_at_end() then 
-               {
-                  if value := "u" || image(Files.file_to_string(Files.path_find(fname, 
-                                                                "OIINCL",
-                                                                Files.get_path(preproc_filename).parent().str()))) then 
-                  {
-                     if \ (old := preproc_sym_table[sym]) ~=== value then {
-                        preproc_error("redefinition of " || sym || " = " ||
-                                      old)
-                     } else {
-                        preproc_sym_table[sym] := value
-                     }
-                  } else {
-                     preproc_error("cannot open " || image(fname))
-                  }
-               } else {
-                  preproc_error()
-               }
-               return ""
-            }
-         }
-         "ifdef" | "ifndef": {
-            push(preproc_if_stack,preproc_if_state)
-            if sym := preproc_word() & preproc_at_end() then {
-               if /preproc_if_state then {
-                  value := (\preproc_sym_table[sym] & &null) | "false"
-                  if match("n",preproc_command,3) then {
-                     value := (\value & &null) | "false"
-                  }
-                  preproc_if_state := value
-               } else {
-                  preproc_if_state := "off"
-               }
-            } else {
-               preproc_if_state := "off"
-               preproc_error()
-            }
-
-            if /preproc_if_state then
-               return ""
-            else
-               fail
-         }
-         "$if": {    # handles if... command in "if'd-out" code
-            push(preproc_if_stack,preproc_if_state)
-            preproc_if_state := "off"
-            fail
-         }
-         "elsifdef" | "elsifndef" : {
-            if sym := preproc_word() & preproc_at_end() then {
-               if *preproc_if_stack <= preproc_nest_level then {
-                  preproc_error("no corresponding $if...")
-               } else {
-                  if \preproc_if_state == "false" then {
-                     value := (\preproc_sym_table[sym] & &null) | "false"
-                     if match("n",preproc_command,6) then {
-                        value := (\value & &null) | "false"
-                     }
-                     preproc_if_state := value
-                  } else {
-                     preproc_if_state := "off"
-                  }
-               }
-            } else {
-               preproc_error()
-            }
-            if /preproc_if_state then
-               return preproc_sync_lines()
-            else
-               fail
-         }
-         "else": {
-            if preproc_at_end() then {
-               if *preproc_if_stack <= preproc_nest_level then {
-                  preproc_error("no corresponding $if...")
-               } else {
-                  preproc_if_state := {
-                     case preproc_if_state of {
-                        "false": &null
-                        "off": "off"
-                        default: "false"
-                     }
-                  }
-               }
-            } else {
-               preproc_error()
-            }
-            if /preproc_if_state then
-               return preproc_sync_lines()
-            else
-               fail
-         }
-         "endif": {
-            old_if_state := preproc_if_state
-            if preproc_at_end() then {
-               (*preproc_if_stack >= preproc_nest_level &
-                preproc_if_state := pop(preproc_if_stack)) |
-                  preproc_error("no corresponding $if...")
-            } else {
-               *preproc_if_stack >= preproc_nest_level &
-                  preproc_if_state := pop(preproc_if_stack)
-               preproc_error()
-            }
-            if /preproc_if_state then {
-               if /old_if_state then
-                  return ""
-               else
-                  return preproc_sync_lines()
-            } else
-               fail
-         }
-         "include": {
-            if /preproc_if_state then {
-               if sym := preproc_qword() & *sym > 0 & preproc_at_end() then {
-                  if member(preproc_include_set,sym) then {
-                     preproc_error("circular reference to " || image(sym))
-                  } else {
-                     if new_file := open(new_filename := 
-                                         Files.path_find(sym, 
-                                                         "OIINCL",
-                                                         Files.get_path(preproc_filename).parent().str()))
-                     then {
-                        every push(preproc_file_stack,
-                                   preproc_encoding|preproc_file|preproc_filename|
-                                   preproc_include_name|preproc_line|
-                                   preproc_nest_level)
-                        preproc_filename := new_filename
-                        preproc_include_name := sym
-                        preproc_file := new_file
-                        preproc_line := 0
-                        preproc_encoding := "ASCII"
-                        preproc_nest_level := *preproc_if_stack
-                        insert(preproc_include_set,sym)
-                     } else {
-                        preproc_error("cannot open " || image(sym))
-                     }
-                  }
-               } else {
-                  preproc_error()
-               }
-               return preproc_sync_lines()
-            }
-         }
-         "line": {
-            if new_line := integer(tab(many(&digits))) &
-               preproc_opt_space() &
-               (new_filename := preproc_qword() | &null) \ 1 &
-               (/new_filename | *new_filename > 0) \ 1 &
-               preproc_opt_space() &
-               (new_encoding := preproc_get_encoding() | &null) \ 1 &
-               preproc_at_end() then 
-            {
-               preproc_filename := Files.path_find(\new_filename, 
-                                                   &null,
-                                                   Files.get_path(preproc_filename).parent().str()) | \new_filename
-               preproc_encoding := \new_encoding
-               preproc_line := new_line - 1
-            } else {
-               preproc_error()
-            }
-            if /preproc_if_state then
-               return preproc_sync_lines()
-         }
-         "error": {
-            if /preproc_if_state then {
-               preproc_space()
-               preproc_error(trim(tab(find("#") | 0),' \t\f\r'))
-               return ""
-            }
-         }
-         "encoding": {
-            if /preproc_if_state then {
-               if sym := preproc_get_encoding() &
-                  preproc_at_end() then
-                  preproc_encoding := sym
-               else
-                  preproc_error()
-               return preproc_sync_lines()
-            }
-         }
-         "ITRACE": {
-            if /preproc_if_state then {
-               if value := integer(tab(many(&digits ++ '-'))) &
-                  preproc_at_end() then 
-               {
-                  &trace := value
-               } else {
-                  preproc_error()
-               }
-               return ""
-            }
-         }
-         default: {
-            if /preproc_if_state then {
-               preproc_error("unknown preprocessor directive:" || preproc_command)
-               return ""
-            }
-         }
-      }
-   end
-
-   #
-   # a_Scans and make substitutions in a text line.
-   #
-   private preproc_scan_text(done_set)
-      local q,result,p,interesting_in_quotes,ident,value,t
-      if /preproc_if_state then {
-         if *preproc_sym_table > 0 then {
-            &pos := q := 1
-            result := ""
-            while tab(upto('#"\'_' ++ &letters)) do {
-               case move(1) of {
-                  "#": {
-                     move(-1)
-                     tab(0)
-                  }
-                  "\"" | "'": {
-                     interesting_in_quotes := '\\' ++ &subject[&pos - 1]
-                     repeat {
-                        while tab(upto(interesting_in_quotes)) do {
-                           case move(1) of {
-                              "\\": move(1)
-                              default: {
-                                 break break
-                              }
-                           }
-                        }
-                        suspend if q = 1 then .&subject else result || &subject[q:0]
-                        if not match("_",,-1) then {
-                           break
-                        }
-                        t := preproc_read() | fail
-                        # If we've just come back from a $include, t will be &null, so set it to
-                        # "#line ..." (this is bound to be a nonsense result anyway, since we're in
-                        # the middle of a multi-line string).
-                        /t := preproc_sync_lines()
-                        &subject := t
-                        result := ""
-                     }
-                  }
-                  default: {
-                     move(-1)
-                     p := &pos
-                     ident := tab(many(preproc_word_chars))
-                     if value := \preproc_sym_table[ident] then {
-                        if /done_set |
-                        {type(done_set) == "string" &
-                            done_set := set(done_set)
-                         not member(done_set,ident)} then {
-                            value ? value :=
-                               preproc_scan_text(insert(copy(\done_set),
-                                                        ident) | ident)
-                            result ||:= &subject[q:p] || value
-                            q := &pos
-                         }
-                     }
-                  }
-               }
-            }
-            suspend if q = 1 then .&subject else result || &subject[q:0]
-         }
-         else {
-            suspend .&subject
-         }
-      }
-   end
-
-   #
-   # Reads an input line.  Manages end-of-file and reverting to including
-   # file if appropriate, failing at end-of-input.
-   #
-   private preproc_read()
-      local result
-      until result := read(preproc_file) do {
-         if *preproc_if_stack ~= preproc_nest_level then {
-            preproc_error("$if(s) without $endif(s): " ||
-                          *preproc_if_stack - preproc_nest_level)
-            until *preproc_if_stack <= preproc_nest_level do
-               preproc_if_state := pop(preproc_if_stack)
-         }
-         close(preproc_file)
-         preproc_file := &null
-         delete(preproc_include_set,preproc_include_name)
-         (preproc_nest_level := pop(preproc_file_stack) &
-          preproc_line := pop(preproc_file_stack) &
-          preproc_include_name := pop(preproc_file_stack) &
-          preproc_filename := pop(preproc_file_stack) &
-          preproc_file := pop(preproc_file_stack) &
-          preproc_encoding := pop(preproc_file_stack)) | fail
-         return &null
-      }
-      preproc_line +:= 1
-      return result
-   end
-
-   #
-   # a_Scans an identifier.
-   #
-   private preproc_word()
-      suspend any(&letters ++ '_') & tab(many(preproc_word_chars))
-   end
-
-   #
-   # a_Scans a possibly-quoted word (e.g. a file name).
-   #
-   private preproc_qword()
-      suspend 2(="\"",
-                tab(find("\"")),
-                move(1)) |
-         preproc_word()
-   end
-
-   #
-   # a_Scans the value of a $define.
-   #
-   private preproc_scan_define_value()
-      local q,interesting_in_quotes
-
-      if ="(" then {
-         fail      # "$define name(" is specifically prohibited; needs whitespace
-      }
-      preproc_space()
-      q := &pos
-      (while tab(upto('#"\'')) do {
-         case move(1) of {
-            "#": {
-               move(-1)
-               break
-            }
-            default: {
-               interesting_in_quotes := '\\' ++ &subject[&pos - 1]
-               repeat {
-                  while tab(upto(interesting_in_quotes)) do {
-                     case move(1) of {
-                        "\\": move(1)
-                        default: {
-                           break break
-                        }
-                     }
-                  }
-                  fail # end of line inside quotes!!
-               }
-            }
-         }
-      }) | tab(0)
-      return trim(&subject[q:&pos],' \t\f\r')
-   end
-
-   #
-   # a_Scans white space.
-   #
-   private preproc_space()
-      suspend tab(many(' \t\f\r'))
-   end
-
-   #
-   # a_Scans optional white space.
-   #
-   private preproc_opt_space()
-      local i
-      suspend if i := many(' \t\f\r') then tab(i) else ""
-   end
-
-   #
-   # Tests for &pos at the logical end of a preprocessor directive.
-   #
-   private preproc_at_end()
-      preproc_space()
-      return pos(0) | match("#")
-   end
-
-   #
-   # Determines if a "#lines" is called for and generates one if so.
-   #
-   private preproc_sync_lines()
-      if (preproc_encoding ~=== preproc_print_encoding) |
-         (preproc_filename ~=== preproc_print_filename) then 
-      {
-         preproc_print_encoding := preproc_encoding
-         preproc_print_filename := preproc_filename
-         return "#line " || (preproc_line + 1) || " \"" || preproc_filename || "\" " || preproc_encoding
-      }
-      return "#line " || (preproc_line + 1)
    end
 end

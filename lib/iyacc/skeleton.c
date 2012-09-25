@@ -47,6 +47,12 @@ char *ibanner[] =
     0
 };
 
+char *iclass[] =
+{
+    "@ICON_CLASS@class %s()\n",
+    0
+};
+
 
 char *tables[] =
 {
@@ -71,24 +77,6 @@ char *jtables[] =
     "extern short yylhs[];",
     0
 };
-
-
-char *itables[] =
-{
-    "global yylhs",
-    "global yylen",
-    "global yydefred",
-    "global yydgoto",
-    "global yysindex",
-    "global yyrindex",
-    "global yygindex",
-    "global yytable",
-    "global yycheck",
-    "global yyname",
-    "global yyrule",
-    0
-};
-
 
 
 char *header[] =
@@ -204,31 +192,27 @@ char *iheader[] =
 {
   "#####################################################################",
   "#####################################################################",
-/*  "invocable all    # need to look up semantic actions by name", */
   "",
-  "global yytext    # user variable to return contextual strings",
-  "global yyval     # used to return semantic vals from action routines",
-  "global yylval    # the 'lval' (result) I got from yylex()",
-  "global yydebug   # (boolean) do I want debug output?",
-  "global yynerrs   # (integer) number of errors so far",
-  "global yyerrflag # (integer) was there an error?",
-  "global yychar    # (integer) the current working character",
-  "global action    # maps an integer to a semantic action procedure",
+  "private yyval     # used to return semantic vals from action routines",
+  "private yylval    # the 'lval' (result) I got from yylex()",
+  "private yydebug   # (boolean) do I want debug output?",
+  "private yyerrflag # (integer) was there an error?",
+  "private yyerror   # error callback function",
   "",
-  "global yylhs",
-  "global yylen",
-  "global yydefred",
-  "global yydgoto",
-  "global yysindex",
-  "global yyrindex",
-  "global yygindex",
-  "global yytable",
-  "global yycheck",
-  "global yyname",
-  "global yyrule",
+  "public static const yylhs",
+  "public static const yylen",
+  "public static const yydefred",
+  "public static const yydgoto",
+  "public static const yysindex",
+  "public static const yyrindex",
+  "public static const yygindex",
+  "public static const yytable",
+  "public static const yycheck",
+  "public static const yyname",
+  "public static const yyrule",
   "",
-  "global statestk         # state stack",
-  "global valstk           # value stack",
+  "private statestk         # state stack",
+  "private valstk           # value stack",
 /*
   "################################################################",
   "# procedure: debug",
@@ -239,17 +223,27 @@ char *iheader[] =
   "end",
   "",
 */
+  "public set_error(f)",
+  "  self.yyerror := f",
+  "  return self",
+  "end",
+  "",
+  "private err(msg)",
+  "  if \\yyerror then",
+  "     yyerror(msg, yylval)",
+  "  else",
+  "     io.ewrite(msg)",
+  "  return",
+  "end",
+  "",
   "################################################################",
   "# procedure: init_stacks : allocate and prepare stacks",
   "################################################################",
-  "procedure init_stacks()",
-  "  local i",
+  "private init_stacks()",
   "  statestk := []",
   "  valstk := []",
   "  yyval  := 0 ",
   "  yylval := 0 ",
-  "  action := list(1000, action_null)  # remove hard coded 1000 later",
-  "@ICON_ACTIONS@  every i := 1 to 1000 do action[i] := proc(\"%s\" || i)\n",
   "end",
   "",
 /*
@@ -582,16 +576,15 @@ char *ibody[] =
     "################################################################",
     "# procedure: yyparse : parse input and execute indicated items",
     "################################################################",
-    "procedure yyparse()",
+    "public yyparse(yylex)",
+    "  local yychar    # (integer) the current working character",
     "  local yyn        # next next thing to do",
     "  local yym        #",
     "  local yystate    # current parsing state from state table",
     "  local yys        # current token string",
     "  local doaction   # set to 1 if there need to execute action",
     "",
-    "  if /yytable then init() ",
     "  init_stacks() ",
-    "  yynerrs   := 0 ",
     "  yyerrflag := 0 ",
     "  yychar    := -1           # impossible char forces a read",
     "  yystate   := 0            # initial state",
@@ -599,22 +592,14 @@ char *ibody[] =
     "",
     "  repeat { # until parsing is done, either correctly, or w/error",
     "    doaction := 1 ",
-/*    "    debug(&line, \"loop\")  ", */
     "",
     "    ##### NEXT ACTION (from reduction table)",
     "	yyn := yydefred[yystate+1]",
-/*    "	debug(&line, \"yyn: \", yyn)", */
     "",
     "    while yyn = 0 do {",
-/*    "      debug(&line, \"yyn:\", yyn, \"  state:\", yystate, \"  char:\", yychar) ", */
     "",
     "      if yychar < 0 then {   # we want a char?",
-    "        yychar := yylex()    # get next token",
-    "        ##### ERROR CHECK ####",
-    "        if yychar < 0 then { # it it didn't work/error",
-    "          yychar := 0        # change it to default string (no -1!)",
-    "          if \\yydebug then yylexdebug(yystate, yychar) ",
-    "          }",
+    "        yychar := (yylval := @yylex).tok | 0    # get next token",
     "        } # yychar < 0",
     "	  ",
     "      yyn := yysindex[yystate+1]  # get amount to shift by (shift index)",
@@ -622,7 +607,6 @@ char *ibody[] =
     "      if (yyn ~= 0)           & ((yyn +:= yychar) >= 0) & ",
     "         (yyn <= YYTABLESIZE) & (yycheck[yyn+1] = yychar) then {",
     "		",
-/*    "        debug(&line, \"state \", yystate, \", shifting to state \", yytable[yyn+1], \"\") ", */
     "        ##### NEXT STATE ####",
     "        yystate := yytable[yyn+1] # we are in a new state",
     "        push(statestk, yystate)   # save it",
@@ -636,37 +620,27 @@ char *ibody[] =
     "",
     "    yyn := yyrindex[yystate+1]    # reduce",
     "",
-/*  
-    "    debug(&line, \"yyn: \", yyn)",
-    "	 debug(&line, \"yychar: \", yychar)",
-    "	 debug(&line, \"yycheck[yyn+yychar+1]:\", yycheck[yyn+yychar+1])",
-    "",
-*/
     "    if (yyn ~= 0)           & ((yyn +:= yychar) >= 0) &",
     "       (yyn <= YYTABLESIZE) & (yycheck[yyn+1] = yychar) then {",
     "      # e reduced!",
-/*    "      debug(&line, \"reduce\") ", */
     "      yyn      := yytable[yyn+1] ",
     "      doaction := 1  # get ready to execute",
     "      break          # drop down to actions",
     "      }",
     "    else { #ERROR RECOVERY",
     "      if yyerrflag == 0 then {",
-    "        (\\yyerror | io.write)(\"syntax error\") ",
-    "        yynerrs +:= 1 ",
+    "        err(\"syntax error\") ",
     "      }",
     "      if yyerrflag < 3 then {     # low error count?",
     "        yyerrflag := 3 ",
     "        repeat { #do until break",
     "          if *statestk < 1 then {  # check for under & overflow here",
-    "            (\\yyerror | io.write)(\"stack underflow. aborting...\")   # note lower case 's'",
-    "            return 1 ",
+    "            err(\"stack underflow. aborting...\")   # note lower case 's'",
+    "            fail",
     "          }",
     "          yyn := yysindex[statestk[1]] ",
     "          if ((yyn ~= 0) & (yyn +:= YYERRCODE) >= 0 &",
     "                    yyn <= YYTABLESIZE & yycheck[yyn+1] == YYERRCODE) then {",
-/*    "            debug(&line, \"state \", statestk[1], ", */
-/*    "                  \", error recovery shifting to state \", yytable[yyn], " ") ", */
     "            yystate := yytable[yyn+1] ",
     "            push(statestk, yystate) ",
     "            push(valstk, yylval) ",
@@ -674,10 +648,9 @@ char *ibody[] =
     "            break ",
     "          }",
     "          else {",
-/*    "            debug(&line, \"error recovery discarding state \", statestk[1], \" \") ", */
     "            if *statestk = 0 then { # check for under & overflow here",
-    "              io.write(\"Stack underflow. aborting...\") # capital 'S'",
-    "              return 1 ",
+    "              err(\"Stack underflow. aborting...\") # capital 'S'",
+    "              fail",
     "            }",
     "            pop(statestk) ",
     "            pop(valstk) ",
@@ -700,24 +673,13 @@ char *ibody[] =
     "      yyn := yydefred[yystate+1] ",
     "    }# yyn = 0 loop",
     "",
-/*
-    "    debug(&line, \"at the end of yyn = 0 loop\")", 
-    "",
-*/
     "    if doaction = 0 then   # any reason not to proceed?",
     "      next                 # skip action",
     "",
     "    yym := yylen[yyn+1]    # get count of terminals on rhs",
-/*
-    "    debug(&line, \"state \", yystate, \", reducing \", yym, \" by rule \",",
-    "           yyn, \" (\", yyrule[yyn+1], \")\") ",
-*/
     "    yyval := valstk[yym]   # get current semantic value",
-	"    action[yyn]()          # execute the semantic action",
-	"",
-/*    "    case yyn of {",
-    "########### USER-SUPPLIED ACTIONS ##########", 
-*/
+    "    action(yyn)            # execute the semantic action",
+    "",
     0
 };
 
@@ -851,45 +813,25 @@ char *jtrailer[] =
 
 char *itrailer[] =
 {
-/*    "########### END OF USER-SUPPLIED ACTIONS ##########",
-    "}#case",
-    "",
-*/
     "    ##### Now let's reduce... ####",
-/*    "    debug(&line, \"reduce\")  ", */
     "    every 1 to yym do pop(statestk)# we just reduced yylen states",
     "    yystate := statestk[1]        # get new state",
     "",
     "    every 1 to yym do pop(valstk) # corresponding value drop",
-/*    "	 debug(&line, \"yyn: \", yyn)",
-    "",
-*/
     "    yym := yylhs[yyn+1]           # select next TERMINAL(on lhs)",
-/*    "	 debug(&line, \"yym: \", yym)",
-    "",
-*/
     "    if yystate = 0 & yym = 0 then {",
     "                                  # done? 'rest' state and at first TERMINAL",
-/*    "      debug(&line, \"After reduction, shifting from state 0 to state \", YYFINAL, \"\") ", */
     "      yystate := YYFINAL          # explicitly say we're done",
     "      push(statestk, YYFINAL)     # and save it",
     "      push(valstk, yyval)         # also save the semantic value of parsing",
     "      if yychar < 0 then {        # we want another character?",
-    "        yychar := yylex()         # get next character",
-    "        if yychar < 0 then yychar := 0   #clean, if necessary",
-/*    "        yylexdebug(yystate, yychar) ", */
+    "        yychar := (yylval := @yylex).tok | 0    # get next token",
     "      }",
     "      if yychar = 0 then break    # Good exit (if lex returns 0  -)",
     "                                  # quit the loop--all DONE",
     "    } # if yystate",
     "    else {                        #else not done yet",
     "      # get next state and push, for next yydefred[]",
-/*
-    "	   debug(&line, \"yyn: \", yyn)",
-    "	   debug(&line, \"yym: \", yym)",
-    "	   debug(&line, \"yygindex[yym]: \", yygindex[yym+1])",
-    "",
-*/
     "      yyn := yygindex[yym+1]        # find out where to go",
     "      if (yyn ~= 0)           & ((yyn +:= yystate) >= 0) &",
     "         (yyn <= YYTABLESIZE) & (yycheck[yyn+1] = yystate) then {",
@@ -898,25 +840,19 @@ char *itrailer[] =
     "      else {",
     "        yystate := yydgoto[yym+1]   # else go to new defred",
     "	     }",
-/*
-    "      debug(&line, \"after reduction, shifting from state \", ",
-    "            state[1], \" to state \", yystate, \"\") ",
-*/
     "      push(statestk, yystate)       # going again, so push state & val...",
     "      push(valstk, yyval)           # for next action",
     "      }",
     "    } # main loop",
     "",
-    "  return 0 # yyaccept!!",
+    "  return yyval # yyaccept!!",
     "end",
     "",
     "### end of procedure parse() ######################################",
 	"",
 	"### start semantic actions ########################################",
 	"",
-        "invocable action_null",
-        "",
-    	"procedure action_null()",
+    	"private action_null()",
     "  #io.write(\"null action\")",
     "end",
     "", 
@@ -999,14 +935,8 @@ char *t;
 	   } else
 		fprintf(fp,&(section[i][14]), "");
     } 
-    else if (strncmp(section[i],"@ICON_ACTIONS@",14)==0) {
-	   if (package_name) {
-		t = malloc(strlen(package_name)+16);
-	        sprintf(t, "%s.action_", package_name);
-		fprintf(fp,&(section[i][14]), t);
-		free(t);
-	   } else
-		fprintf(fp,&(section[i][14]), "action_");
+    else if (strncmp(section[i],"@ICON_CLASS@",12)==0) {
+        fprintf(fp,&(section[i][12]), java_class_name);
     } 
     else
 	   fprintf(fp, "%s\n", section[i]);

@@ -1189,8 +1189,8 @@ void copy_action(void)
 	insert_empty_rule();
     last_was_action = 1;
     if (iflag) {
-	  fprintf(f, "invocable action_%d\n", nrules - 2);
-	  fprintf(f, "procedure action_%d()\n", nrules - 2);
+	  fprintf(f, "private action_%d()\n", nrules - 2);
+          actions[nactions++] = nrules - 2;
     } else 
 	  fprintf(f, "case %d:\n", nrules - 2);
 

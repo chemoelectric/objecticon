@@ -1,7 +1,5 @@
 import parser, ipl.options, io
 
-$include "oigram_tab.icn"
-
 global symbol_table, scanned_file, need, opts
 
 procedure note(s)
@@ -46,7 +44,7 @@ end
 
 procedure gen_idents(n)
    if is(n, Token) then {
-      if n.tok = IDENT then
+      if n.tok = YY.IDENT then
          return n.s
    } else case n.label of {
       "dottedident" : return scanned_file.convert_dottedidentexpr(n)
