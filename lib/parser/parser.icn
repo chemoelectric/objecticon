@@ -55,12 +55,9 @@ class Parser(Connectable)
 
    public new()
       cast(self,Connectable).new()
-      pp := Preprocessor().
-         set_error(pperror)
-      lex := Lex().
-         set_error(lxerror)
-      yy := YY().
-         set_error(yyerror)
+      pp := Preprocessor().connect(pperror)
+      lex := Lex().connect(lxerror)
+      yy := YY().connect(yyerror)
       return
    end
 
@@ -95,25 +92,23 @@ class Parser(Connectable)
       return Prog(yyval)
    end
 
-   private yyerror(s, token)
-      local ed
+   private yyerror(s)
+      local ed, token
+      # The last token sent by the lexer.
+      token := yy.yylval
       ed := ErrorDetail(token.filename, token.line, image(token.s) || ": " || s)
       fire(PARSER_ERROR_EVENT, ed)
       /first_err := ed.str()
       return
    end
 
-   private lxerror(msg, filename, line)
-      local ed
-      ed := ErrorDetail(filename, line, msg)
+   private lxerror(ed)
       fire(LEXER_ERROR_EVENT, ed)
       /first_err := ed.str()
       return
    end
 
-   private pperror(msg, filename, line)
-      local ed
-      ed := ErrorDetail(filename, line, msg)
+   private pperror(ed)
       fire(PREPROCESSOR_ERROR_EVENT, ed)
       /first_err := ed.str()
       return

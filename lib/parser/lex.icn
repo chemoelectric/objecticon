@@ -3,13 +3,13 @@ package parser
 #
 # A hand-written lex compatible icon lexer.
 #
-import io, lang, util(Format)
+import io, lang, util
 
 $define Beginner 1
 $define Ender 2
 $define Newline 4
 
-class Lex()
+class Lex(Connectable)
    #
    # the tokflags will tell you whether the token can start an expression or
    # end an expression, as well as whether a newline was seen since the last
@@ -18,7 +18,7 @@ class Lex()
    private
       tokflags, debuglex, 
       yylineno, yycolno, yyfilename, yyencoding, 
-      lxerror, yytokval, yylinestart, yytext
+      yytokval, yylinestart, yytext
 
    public static const
       O, D, L, H, R, FS, IS, W, idchars, reswords
@@ -75,16 +75,13 @@ class Lex()
    end
 
    private err(msg)
-      if \lxerror then
-         lxerror(image(yytext) || ": " || msg, yyfilename, yylineno)
-      else
-         ewrite(image(yytext) || ": " || msg, " at ", yyfilename, ":", yylineno)
+      fire("error", ErrorDetail(yyfilename, yylineno, image(yytext) || ": " || msg))
    end
 
    private do_encoding()
       if any(&letters) then {
          yyencoding := tab(many(&letters ++ &digits ++ '-'))
-         (yyencoding == ("ASCII" | "UTF-8" |"ISO-8859-1")) | lxerror("invalid encoding: " || yyencoding, yyfilename, yylineno)
+         (yyencoding == ("ASCII" | "UTF-8" |"ISO-8859-1")) | fire("error", ErrorDetail(yyfilename, yylineno, "invalid encoding: " || yyencoding))
       }
    end
 
@@ -524,11 +521,6 @@ class Lex()
    private do_bang()
       tokflags +:= Beginner
       return YY.BANG
-   end
-
-   public set_error(f)
-      self.lxerror := f
-      return self
    end
 
    public yylex(str, filename, encoding, line)

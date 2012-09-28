@@ -43,13 +43,13 @@ char *ibanner[] =
     "### This file created by IYACC 1.0",
     "### Please send bug reports to raypereda@hotmail.com",
     "@ICON_PACKAGE@%s\n",
-    "import io()\n",
+    "import io(), util()\n",
     0
 };
 
 char *iclass[] =
 {
-    "@ICON_CLASS@class %s()\n",
+    "@ICON_CLASS@class %s(util.Connectable)\n",
     0
 };
 
@@ -194,10 +194,9 @@ char *iheader[] =
   "#####################################################################",
   "",
   "private yyval     # used to return semantic vals from action routines",
-  "private yylval    # the 'lval' (result) I got from yylex()",
+  "private readable yylval    # the 'lval' (result) I got from yylex()",
   "private yydebug   # (boolean) do I want debug output?",
   "private yyerrflag # (integer) was there an error?",
-  "private yyerror   # error callback function",
   "",
   "private static const yylhs",
   "private static const yylen",
@@ -223,20 +222,13 @@ char *iheader[] =
   "end",
   "",
 */
-  "public set_error(f)",
-  "  self.yyerror := f",
-  "  return self",
-  "end",
   "",
   "public static token_str(n)",
   "  return .\\yyname[n + 1]",
   "end",
   "",
   "private err(msg)",
-  "  if \\yyerror then",
-  "     yyerror(msg, yylval)",
-  "  else",
-  "     io.ewrite(msg)",
+  "  fire(\"error\", msg)",
   "end",
   "",
   "################################################################",
@@ -246,7 +238,7 @@ char *iheader[] =
   "  statestk := []",
   "  valstk := []",
   "  yyval  := 0 ",
-  "  yylval := 0 ",
+  "  yylval := &null ",
   "end",
   "",
 /*
@@ -638,8 +630,7 @@ char *ibody[] =
     "        yyerrflag := 3 ",
     "        repeat { #do until break",
     "          if *statestk < 1 then {  # check for under & overflow here",
-    "            err(\"stack underflow. aborting...\")   # note lower case 's'",
-    "            fail",
+    "            return util.error(\"stack underflow. aborting...\")   # note lower case 's'",
     "          }",
     "          yyn := yysindex[statestk[1]] ",
     "          if ((yyn ~= 0) & (yyn +:= YYERRCODE) >= 0 &",
@@ -652,8 +643,7 @@ char *ibody[] =
     "          }",
     "          else {",
     "            if *statestk = 0 then { # check for under & overflow here",
-    "              err(\"Stack underflow. aborting...\") # capital 'S'",
-    "              fail",
+    "              return util.error(\"Stack underflow. aborting...\") # capital 'S'",
     "            }",
     "            pop(statestk) ",
     "            pop(valstk) ",
