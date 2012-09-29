@@ -533,8 +533,15 @@ end
 # Like many, but succeeds with empty result if zero matching char. Many needs
 # one or more.
 #
-procedure opt(c)
+procedure many0(c)
    return many(c) | .&pos
+end
+
+#
+# Like any, but succeeds with empty result if zero matching char.
+#
+procedure any0(c)
+   return any(c) | .&pos
 end
 
 #
@@ -636,4 +643,106 @@ class Scan()
       self.kpos := 1
       return
    end
+end
+
+#
+# Matching functions.
+#
+
+# Match zero or more of expression e, suspending in longest first
+# order (the empty string will be the last result generated).
+#
+procedure star(e)
+   suspend (!e || star(e)) | move(0)
+end
+
+# Match one or more of expression e, in longest first order.
+#
+procedure plus(e)
+   suspend !e || star(e)
+end
+
+# Match one or zero instances of e.
+#
+procedure query(e)
+   suspend !e | move(0)
+end
+
+# Match zero or more of expression e, suspending in shortest first
+# order (the empty string will be the first result generated).
+#
+procedure s_star(e)
+   suspend move(0) | (!e || s_star(e))
+end
+
+# Match one or more of expression e, in shortest first order.
+#
+procedure s_plus(e)
+   suspend !e || s_star(e)
+end
+
+# Match zero or one instances of e.
+#
+procedure s_query(e)
+   suspend move(0) | !e
+end
+
+# Match any char in c
+#
+procedure m_any(c)
+   suspend tab(any(c))
+end
+
+# Match upto char in c
+#
+procedure m_upto(c)
+   suspend tab(upto(c))
+end
+
+# Match many chars in c
+#
+procedure m_many(c)
+   suspend tab(many(c))
+end
+
+# Match upto string s
+#
+procedure m_find(s)
+   suspend tab(find(s))
+end
+
+# Match upto and past string s
+#
+procedure m_past(s)
+   suspend tab(past(s))
+end
+
+# Match zero or many chars in c
+#
+procedure m_many0(c)
+   suspend tab(many0(c))
+end
+
+# Match zero or one chars in c
+#
+procedure m_any0(c)
+   suspend tab(any0(c))
+end
+
+# Match arbitrary chars to end of string, longest first.
+#
+procedure arb()
+   suspend tab(*&subject + 1 to &pos by -1)
+end
+
+# Match arbitrary chars to end of string, shortest first (first result is empty string).
+#
+procedure s_arb()
+   suspend tab(&pos to *&subject + 1)
+end
+
+# Match position i and produce empty string.
+#
+procedure at_pos(i)			
+   suspend pos(i) & move(0)
 end
