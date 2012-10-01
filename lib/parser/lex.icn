@@ -16,7 +16,7 @@ class Lex(Connectable)
    # token
    #
    private
-      tokflags, debuglex, 
+      tokflags,
       yylineno, yycolno, yyfilename, yyencoding, 
       yytokval, yylinestart, yytext
 
@@ -524,8 +524,7 @@ class Lex(Connectable)
    end
 
    public yylex(str, filename, encoding, line)
-      local rv, ender, chunk, yylval, buffer,
-         saved_tok, saved_yytext, saved_chunk, saved_yytokval
+      local rv, ender, chunk, buffer
 
       str := string(str) | runerr(103, str)
       /encoding := "ASCII"
@@ -540,55 +539,22 @@ class Lex(Connectable)
       tokflags := 0
 
       repeat {
-         if \saved_tok then {
-            rv := saved_tok
-            saved_tok := &null
-            yytext := saved_yytext
-            yytokval := saved_yytokval
-            yylval := Token(rv, yytext, saved_chunk, yytokval, yylineno, yycolno, yyfilename)
-            if \debuglex then
-               write("yylex() : ",YY.token_str(rv))
-            suspend yylval
-         }
          ender := iand(tokflags, Ender)
          tokflags := 0
          yytokval := &null
-         if *buffer=0 then {
-            chunk := buffer
-            if \debuglex then
-               write("yylex() : EOFX")
-            yylval := Token(YY.EOFX, yytext, chunk, yytokval, yylineno, yycolno, yyfilename)
-            return yylval
-         }
          buffer ? {
             if rv := yylex2() then {
                chunk := buffer[1:&pos]
                yylinestart -:= &pos - 1
                buffer := tab(0)
             }
-            else {
-               chunk := buffer
-               yytext := ""
-               if \debuglex then
-                  write("yylex() : EOFX")
-               yylval := Token(YY.EOFX, yytext, chunk, yytokval, yylineno, yycolno, yyfilename)
-               return yylval
-            }
+            else
+               return Token(YY.EOFX, "", buffer, yytokval, yylineno, yycolno, yyfilename)
          }
-         if ender~=0 & iand(tokflags, Beginner)~=0 & iand(tokflags, Newline)~=0 then {
-            saved_tok := rv
-            saved_yytext := yytext
-            saved_yytokval := yytokval
-            saved_chunk := chunk
-            chunk := ""
-            yytext := ";"
-            yytokval := &null
-            rv := YY.SEMICOL
-         }
-         yylval := Token(rv, yytext, chunk, yytokval, yylineno, yycolno, yyfilename)
-         if \debuglex then
-            write("yylex() : ", YY.token_str(rv))
-         suspend yylval
+         if ender ~= 0 & iand(tokflags, Beginner) ~= 0 & iand(tokflags, Newline) ~= 0 then
+            suspend Token(YY.SEMICOL, ";", "", &null, yylineno, yycolno, yyfilename)
+
+         suspend Token(rv, yytext, chunk, yytokval, yylineno, yycolno, yyfilename)
       }
    end
 end
