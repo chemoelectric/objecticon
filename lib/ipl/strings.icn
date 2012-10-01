@@ -287,7 +287,7 @@ end
 procedure csort(s)			
    local c, s1
 
-   s1 := ""
+   s1 := s[1:1]
 
    every c := !cset(s) do
       every find(c, s) do
@@ -331,7 +331,7 @@ procedure deletec(s, c)
    s ? {
       while result ||:= tab(upto(c)) do
          tab(many(c))
-      return result ||:= tab(0)
+      return result || tab(0)
       }
 
 end
@@ -356,7 +356,7 @@ procedure deletes(s1, s2)
    s1 ? {
       while result ||:= tab(find(s2)) do
          move(i)
-      return result ||:= tab(0)
+      return result || tab(0)
       }
          
 end
@@ -393,7 +393,7 @@ procedure fchars(s)
    while bins[pull(clist)] ++:= pull(clist)
    blist := sort(bins, 3)
 
-   result := ""
+   result := s[1:1]
    while result ||:= pull(blist) do
       pull(blist)
 
@@ -474,7 +474,7 @@ end
 procedure ochars(w)			
    local out, c
 
-   out := ""
+   out := w[1:1]
 
    every c := !w do
 	if not find(c, out) then
@@ -537,7 +537,7 @@ end
 procedure permutes(s)			
    local i
 
-   if *s = 0 then return ""
+   if *s = 0 then return s
    suspend s[i := 1 to *s] || permutes(s[1:i] || s[i+1:0])
 
 end
@@ -601,7 +601,7 @@ end
 procedure replc(s, L)			
    local result
 
-   result := ""
+   result := s[1:1]
 
    every result ||:= repl(!s, get(L))
 
@@ -646,7 +646,7 @@ end
 procedure selectp(s, L)			
    local result
 
-   result := ""
+   result := s[1:1]
 
    every result ||:= s[!L]
 
@@ -686,7 +686,7 @@ procedure starseq(s)
 
    /s := ""
 
-   suspend "" | (starseq(s) || !s)
+   suspend s[1:1] | (starseq(s) || !s)
 
 end
 
@@ -731,7 +731,7 @@ procedure transpose(s1, s2, s3)
 
    s1 ? {
       while result ||:= map(s3, s2, move(n))
-      return result ||:= tab(0)
+      return result || tab(0)
       }
 
 end
