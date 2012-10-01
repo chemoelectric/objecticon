@@ -530,18 +530,25 @@ procedure coming_up(i, j)
 end
 
 #
-# Like many, but succeeds with empty result if zero matching char. Many needs
-# one or more.
+# Like many, but succeeds with &pos if zero matching chars. Many needs
+# one or more to succeed.
 #
 procedure many0(c)
    return many(c) | .&pos
 end
 
 #
-# Like any, but succeeds with empty result if zero matching char.
+# Like any, but succeeds with &pos if there is no matching char.
 #
 procedure any0(c)
    return any(c) | .&pos
+end
+
+#
+# Like match, but succeeds with &pos if there is no matching string.
+#
+procedure match0(s)
+   return match(s) | .&pos
 end
 
 #
@@ -653,38 +660,108 @@ end
 # order (the empty string will be the last result generated).
 #
 procedure star(e)
-   suspend (!e || star(e)) | move(0)
+   suspend (|@e || star(^e)) | move(0)
 end
 
 # Match one or more of expression e, in longest first order.
 #
 procedure plus(e)
-   suspend !e || star(e)
+   suspend |@e || star(^e)
 end
 
 # Match one or zero instances of e.
 #
 procedure query(e)
-   suspend !e | move(0)
+   suspend |@e | move(0)
+end
+
+# Match e between min and max times, in longest first order.  min
+# defaults to zero, max to infinity.
+#
+procedure range(e, min, max)
+   min := @\min
+   max := @\max
+   /min := 0
+   min := integer(min) | runerr(101, min)
+   if \max then
+      max := integer(max) | runerr(101, max)
+   suspend range_impl(e, 0, min, max)
+end
+
+procedure range_impl(e, i, min, max)
+   if /max | (i <= max) then
+      suspend (|@e || range_impl(^e, i + 1, min, max)) | (if i >= min then move(0))
+end
+
+# Match zero or more chars in cset c, in longest first order.
+# Equivalent to star{m_any(c)}.
+#
+procedure star_ch(c)
+   suspend tab(many0(c) to &pos by -1)
+end
+
+# Match one or more chars in cset c, in longest first order.
+# Equivalent to plus{m_any(c)}.
+#
+procedure plus_ch(c)
+   suspend tab(many(c) to &pos + 1 by -1)
 end
 
 # Match zero or more of expression e, suspending in shortest first
 # order (the empty string will be the first result generated).
 #
 procedure s_star(e)
-   suspend move(0) | (!e || s_star(e))
+   suspend move(0) | (|@e || s_star(^e))
 end
 
 # Match one or more of expression e, in shortest first order.
 #
 procedure s_plus(e)
-   suspend !e || s_star(e)
+   suspend |@e || s_star(^e)
 end
 
 # Match zero or one instances of e.
 #
 procedure s_query(e)
-   suspend move(0) | !e
+   suspend move(0) | |@e
+end
+
+# Match e between min and max times, in shortest first order.  min
+# defaults to zero, max to infinity.
+#
+procedure s_range(e, min, max)
+   min := @\min
+   max := @\max
+   /min := 0
+   min := integer(min) | runerr(101, min)
+   if \max then
+      max := integer(max) | runerr(101, max)
+   suspend s_range_impl(e, 0, min, max)
+end
+
+procedure s_range_impl(e, i, min, max)
+   if /max | (i <= max) then
+      suspend (if i >= min then move(0)) | (|@e || s_range_impl(^e, i + 1, min, max))
+end
+
+# Match zero or more chars in cset c, in shortest first order.
+# Equivalent to s_star{m_any(c)}.
+#
+procedure s_star_ch(c)
+   suspend tab(&pos to many0(c))
+end
+
+# Match one or more chars in cset c, in shortest first order.
+# Equivalent to s_plus{m_any(c)}.
+#
+procedure s_plus_ch(c)
+   suspend tab(&pos + 1 to many(c))
+end
+
+# Match the given string s
+#
+procedure m_match(s)
+   suspend tab(match(s))
 end
 
 # Match any char in c
@@ -727,6 +804,12 @@ end
 #
 procedure m_any0(c)
    suspend tab(any0(c))
+end
+
+# Match the given string s zero or one times.
+#
+procedure m_match0(s)
+   suspend tab(match0(s))
 end
 
 # Match arbitrary chars to end of string, longest first.
