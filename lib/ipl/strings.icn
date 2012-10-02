@@ -737,20 +737,18 @@ procedure transpose(s1, s2, s3)
 end
 
 # generate words from string
-procedure words(s, c)		
-
-   /c := ' \t\r\n\v\f'
-
-   s ? {
-      tab(many(c))
-      while not pos(0) do {
-         suspend tab(upto(c) | 0) \ 1
-         tab(many(c))
-         }
-      }
-
-   fail
-
+procedure words(s, sep)
+   local t
+   /sep := ' \t\r\n\v\f'
+   s ? repeat {
+      tab(many(sep))
+      if pos(0) then
+         fail
+      if t := tab(upto(sep)) then
+         suspend t
+      else
+         return tab(0)
+   }
 end
 
 # Succeed if s1 ends with the string s2
