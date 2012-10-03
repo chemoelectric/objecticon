@@ -566,6 +566,18 @@ procedure max_many(c, max)
    return min(many(c), &pos + max)
 end
 
+# Like {save_var}, but saves the value of {&subject} and {&pos}
+# instead.
+#
+procedure save_scan(e)
+   local t
+   t := &pos
+   &subject ? {
+      &pos := t
+      suspend |@e
+   }
+end
+
 #
 # String scanning encapsulated in a class
 #

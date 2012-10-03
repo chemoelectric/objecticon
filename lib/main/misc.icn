@@ -96,23 +96,6 @@ procedure with_var(e, var, init)
    }
 end
 
-# Like {save_var}, but saves the value of {&subject} and {&pos}
-# instead.
-#
-procedure save_scan(e)
-   local ss, sp, tp
-   ss := &subject
-   sp := &pos
-   suspend 1(|@e, tp := &pos, &subject :=: ss, &pos := sp, sp := tp) do {
-      tp := &pos
-      &subject :=: ss
-      &pos := sp
-      sp := tp
-   }
-   &subject := ss
-   &pos := sp
-end
-
 # This function saves {&why} before evaluating {e}.  If {e} succeeds,
 # {&why} is restored, and the result returned; otherwise {&why} is not
 # restored and the procedure fails.
