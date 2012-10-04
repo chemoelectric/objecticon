@@ -8,7 +8,7 @@ end
 
 class DefaultEvaluatorEnv(EvaluatorEnv)
    private 
-      table
+      vars, consts
    private readable
       write_globals_flag
 
@@ -17,50 +17,37 @@ class DefaultEvaluatorEnv(EvaluatorEnv)
    end
 
    private tlookup(k)
-      if upto('.', k) then {
-         k ? if ="default." then
-            return table[tab(0)]
-         runerr("no such id: " || k)
-      }
-      return table[k]
-   end
-
-   private static exit_repl(n)
-      /n := ""
-      runerr("exit(" || n || ") invoked")
-   end
-
-   private get_global(s)
-      return if s == "exit" then
-         exit_repl
-      else
-         lang.Prog.get_global(s)
+      if upto('.', k) then
+         (k ?:= (="default.", tab(0))) | runerr("no such id: " || k)
+      return .member(\consts, k) | vars[k]
    end
 
    private glookup(k, ev)
-      local t, f, s
+      local t, f
       if upto('.', k) then {
-         return k ? if ="default." then
-            get_global(tab(0))
-         else
-            get_global(k)
+         k ?:= (="default.", tab(0))
+         return lang.Prog.get_global(k)
       }
       t := []
       if lang.Prog.get_global(k) then
          put(t, k)
-      every s := !\ev.get_imports() do {
-         f := s || "." || k
+      every f := ev.get_imports() || "." || k do {
          if lang.Prog.get_global(f) then
             put(t, f)
       }
       if *t = 1 then
-         return get_global(t[1])
+         return lang.Prog.get_global(t[1])
       if *t > 1 then
          runerr("ambiguous name: " || k || "(" || list2str(t) || ")")
    end
 
-   public set_table(t)
-      self.table := t
+   public set_vars(t)
+      self.vars := t
+      return self
+   end
+
+   public set_consts(t)
+      self.consts := t
       return self
    end
 
@@ -69,9 +56,10 @@ class DefaultEvaluatorEnv(EvaluatorEnv)
       return self
    end
 
-   public new(t)
-      /t := table()
-      self.table := t
+   public new(v, c)
+      /v := table()
+      self.vars := v
+      self.consts := c
       return
    end
 end
@@ -527,7 +515,7 @@ class Evaluator()
    end
 
    public get_imports()
-      return .imports
+      suspend .!\imports
    end
 
    public new(env, node)
