@@ -2562,7 +2562,7 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
       s := string(s) | runerr(103, s)
       flush_out() | fail
       n := min(*s, writer.get_buff_size())
-      writer.op_fully_write(s[1+:n])
+      writer.op_write_all(s[1+:n])
       return n
    end
 
@@ -2722,7 +2722,7 @@ class FileWorker(Pollable, NoCopy)
 
    public defer op_read(n)
    public defer op_write(s)
-   public defer op_fully_write(s)
+   public defer op_write_all(s)
    public defer op_open(path, mode)
    public defer op_create(path, mode, perm)
    public defer op_close()

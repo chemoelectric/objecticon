@@ -4327,7 +4327,7 @@ end
 
 
 enum fileworker_status { FW_RUNNING, FW_COMPLETE };
-enum fileworker_cmd { FW_READ, FW_WRITE, FW_OPEN, FW_CREATE, FW_CLOSE, FW_FULLY_WRITE };
+enum fileworker_cmd { FW_READ, FW_WRITE, FW_OPEN, FW_CREATE, FW_CLOSE, FW_WRITE_ALL };
 
 struct fileworker {
     int pid;
@@ -4365,7 +4365,7 @@ static void set_fileworker_status(struct fileworker *w, int status)
     qunlock(&w->l);
 }
 
-static long fully_write(int fd, void *buf, long nbytes)
+static long write_all(int fd, void *buf, long nbytes)
 {
     long n = nbytes;
     char *p = buf;
@@ -4420,8 +4420,8 @@ static void fileworker_loop(struct fileworker *w)
                     w->fd = -1;
                 break;
             }
-            case FW_FULLY_WRITE: {
-                w->result = fully_write(w->fd, w->buff, w->write_size);
+            case FW_WRITE_ALL: {
+                w->result = write_all(w->fd, w->buff, w->write_size);
                 if (w->result < 0)
                     errstr(w->errstr, sizeof(w->errstr));
                 break;
@@ -4579,7 +4579,7 @@ function io_FileWorker_op_write(self, s)
    }
 end
 
-function io_FileWorker_op_fully_write(self, s)
+function io_FileWorker_op_write_all(self, s)
    if !cnv:string(s) then
       runerr(103, s)
    body {
@@ -4591,7 +4591,7 @@ function io_FileWorker_op_fully_write(self, s)
       }
       self_fileworker->write_size = StrLen(s);
       memcpy(self_fileworker->buff, StrLoc(s), StrLen(s));
-      StartFileWorkerCmd(FW_FULLY_WRITE);
+      StartFileWorkerCmd(FW_WRITE_ALL);
    }
 end
 
