@@ -530,11 +530,25 @@ procedure coming_up(i, j)
 end
 
 #
-# Like many, but succeeds with empty result if zero matching char. Many needs
-# one or more.
+# Like many, but succeeds with &pos if zero matching chars. Many needs
+# one or more to succeed.
 #
-procedure opt(c)
+procedure many0(c)
    return many(c) | .&pos
+end
+
+#
+# Like any, but succeeds with &pos if there is no matching char.
+#
+procedure any0(c)
+   return any(c) | .&pos
+end
+
+#
+# Like match, but succeeds with &pos if there is no matching string.
+#
+procedure match0(s)
+   return match(s) | .&pos
 end
 
 #
@@ -550,6 +564,18 @@ end
 #
 procedure max_many(c, max)
    return min(many(c), &pos + max)
+end
+
+# Like {save_var}, but saves the value of {&subject} and {&pos}
+# instead.
+#
+procedure save_scan(e)
+   local t
+   t := &pos
+   &subject ? {
+      &pos := t
+      suspend |@e
+   }
 end
 
 #
@@ -599,11 +625,11 @@ class Scan()
    end
 
    public many(c)
-      suspend default.many(c, ksubject, kpos)
+      return default.many(c, ksubject, kpos)
    end
 
    public match(s)
-      suspend default.match(s, ksubject, kpos)
+      return default.match(s, ksubject, kpos)
    end
 
    public upto(c)
@@ -611,7 +637,7 @@ class Scan()
    end
 
    public any(c)
-      suspend default.any(c, ksubject, kpos)
+      return default.any(c, ksubject, kpos)
    end
 
    public bal(c1, c2, c3)
@@ -622,7 +648,7 @@ class Scan()
       suspend default.find(s, ksubject, kpos)
    end
 
-   public f(e)
+   public q(e)
       ksubject ? {
          &pos := kpos
          suspend 1(|@e, ksubject := &subject, kpos := &pos)
@@ -636,4 +662,112 @@ class Scan()
       self.kpos := 1
       return
    end
+end
+
+#
+# Matching functions.
+#
+
+# Match zero or more of expression e, suspending in longest first
+# order (the empty string will be the last result generated).
+#
+procedure star(e)
+   suspend (|@e || star(^e)) | move(0)
+end
+
+# Match one or more of expression e, in longest first order.
+#
+procedure plus(e)
+   suspend |@e || star(^e)
+end
+
+# Match one or zero instances of e.
+#
+procedure query(e)
+   suspend |@e | move(0)
+end
+
+# Match e between min and max times, in longest first order.  min
+# defaults to zero, max to infinity.
+#
+procedure range(e, min, max)
+   min := @\min
+   max := @\max
+   /min := 0
+   min := integer(min) | runerr(101, min)
+   if \max then
+      max := integer(max) | runerr(101, max)
+   suspend range_impl(e, 0, min, max)
+end
+
+procedure range_impl(e, i, min, max)
+   if /max | (i <= max) then
+      suspend (|@e || range_impl(^e, i + 1, min, max)) | (if i >= min then move(0))
+end
+
+# Match zero or more chars in cset c, in longest first order.
+# Equivalent to star{ch(c)}.
+#
+procedure star_ch(c)
+   suspend tab(many0(c) to &pos by -1)
+end
+
+# Match one or more chars in cset c, in longest first order.
+# Equivalent to plus{ch(c)}.
+#
+procedure plus_ch(c)
+   suspend tab(many(c) to &pos + 1 by -1)
+end
+
+# Match one or zero chars in cset c, in longest first order.
+# Equivalent to query{ch(c)}.
+#
+procedure query_ch(c)
+   suspend tab(any0(c) to &pos by -1)
+end
+
+# Match exactly one char in cset c; if c omitted then match any one char.
+#
+procedure ch(c)
+   suspend if /c then move(1) else tab(any(c))
+end
+
+# Match the string {s} exactly once.  Note this is equivalent to {=s},
+# but is preferable since it returns a substring of the string being
+# scanned, rather than {s}.  This will make any string catenation of
+# the result with adjacent matching expressions more efficient.
+#
+procedure str(s)
+   suspend tab(match(s))
+end
+
+# Match arbitrary chars to end of string, longest first.
+#
+procedure rarb()
+   suspend tab(*&subject + 1 to &pos by -1)
+end
+
+# Match arbitrary chars to end of string, shortest first (first result
+# is empty string).
+#
+procedure arb()
+   suspend tab(&pos to *&subject + 1)
+end
+
+# If at position i produce empty string.
+#
+procedure at(i)			
+   if pos(i) then
+      suspend move(0)
+end
+
+# Reverse the sequence of matches produced by {e}.  NB - if {e} is an
+# infinite sequence this will consume memory indefinitely.
+#
+procedure rev(e)
+   local r
+   r := []
+   while @e do
+      push(r, &pos)
+   suspend tab(!r)
 end

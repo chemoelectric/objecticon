@@ -2849,6 +2849,27 @@ function io_Files_readlink(s)
       }
 end
 
+function io_Files_realpath(s)
+   if !cnv:C_string(s) then
+      runerr(103, s)
+   body {
+#if UNIX
+       tended struct descrip result;
+       char *r;
+       r = realpath(s, NULL);
+       if (!r) {
+           errno2why();
+           fail;
+       }
+       cstr2string(r, &result);
+       free(r);
+       return result;
+#else
+     Unsupported;
+#endif
+      }
+end
+
 #if UNIX
 function io_Files_mkdir(s, mode)
    if !cnv:C_string(s) then

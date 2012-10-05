@@ -10,13 +10,20 @@ $load IEVAL_LOGO "rpp.IEVAL_LOGO.png"
 
 record Activation(coex, info)
 
+class IevalTermDialog(TermDialog)
+   # Avoid printing the internals.
+   private object_output(oo)
+      oo.object_string(self)
+   end
+end
+
 class Ieval()
    private 
-      input, output, error, env, ev, quiet_flag, par, 
-      trace_flag, parse_flag, last_runerr, ee, hist_line, hlim,
+      input, output, error, vars, ev, quiet_flag, par, consts,
+      oos, trace_flag, parse_flag, last_runerr, ee, hist_line, hlim,
       elim, llim, imports, files, opts, history
 
-   # Avoid !env printing the internals of Ieval.
+   # Avoid printing the internals of Ieval.
    private object_output(oo)
       oo.object_string(self)
    end
@@ -26,11 +33,30 @@ class Ieval()
    end
 
    private show_env()
-      local t, k
-      t := []
-      every k := key(env) do
-         put(t, [k, to_string(env[k], 3)])
-      print_table(isort(t, map1))
+      local k
+      every k := key(vars) do {
+         output.writes(k, " = ")
+         oos.show(vars[k])
+         output.write()
+      }
+   end
+
+   private show_help()
+      output.write("!env        Show the values stored in the environment, excluding these predefined values.")
+      output.write("!help       Show help.")
+      output.write("!parse      Toggle parse mode, in which just the syntax structure of the command is printed.")
+      output.write("!trace      Toggle tracing.")
+      output.write("!wglob      Toggle the write-globals flag.")
+      output.write("!traceback  Show the traceback of the last command that gave a runtime error.")
+      output.write("!quiet      Don't force evaluation of all of the values in the expression, and don't output any expression value.")
+      output.write("dir(x)      With no parameter, show all global variables.  With a parameter, show information about it.")
+      output.write("!hist       Show the command line history.")
+      output.write("cmd(n)      Run command number n again.")
+      output.write("hlim(n)     Set the history limit to n.")
+      output.write("elim(n)     Set the expression limit to n.")
+      output.write("llim(n)     Set the gui log area line limit to n.")
+      output.write("oos         The ObjectOutputStream used to output results.")
+      output.write("out         The OutputStream of the terminal.")
    end
 
    private list_syms()
@@ -182,7 +208,7 @@ class Ieval()
          }
 
          default: {
-            to_stdout(c, 3)
+            oos.show(c)
             output.write()
          }
       }
@@ -281,39 +307,23 @@ class Ieval()
       self.imports := imports
       self.files := files
       self.opts := opts
-
       par := Parser()
-      env := table()
-      ee := DefaultEvaluatorEnv(env)
+      vars := table()
+      consts := table()
+      ee := DefaultEvaluatorEnv(vars, consts)
       if \opts["wglob"] then
          ee.set_write_globals(&yes)
       ev := Evaluator().
          set_env(ee).
          set_imports(imports)
-
-      env["env"] := create show_env()
-      env["trace"] := create trace_flag := toggle_flag(trace_flag)
-      env["parse"] := create parse_flag := toggle_flag(parse_flag)
-      env["quiet"] := create quiet_flag := toggle_flag(quiet_flag)
-      env["wglob"] := create wglob()
-      env["dir"] := dir
-      env["hist"] := create hist()
-      env["elim"] := set_elim
-      env["hlim"] := set_hlim
-      env["llim"] := set_llim
-      env["traceback"] := create traceback()
-      env["cmd"] := cmd
-
       hlim := (10 < \opts["hlim"]) | 500
       llim := (10 < \opts["llim"]) | 600
       elim := (10 < \opts["elim"]) | 35
-
       return
    end
 
    public run()
       local hfile
-      prelim()
       if \opts["s"] then
          do_stdin()
       else {
@@ -330,6 +340,22 @@ class Ieval()
 
    private prelim()
       local f, s, n
+      consts["env"] := create show_env()
+      consts["help"] := create show_help()
+      consts["trace"] := create trace_flag := toggle_flag(trace_flag)
+      consts["parse"] := create parse_flag := toggle_flag(parse_flag)
+      consts["quiet"] := create quiet_flag := toggle_flag(quiet_flag)
+      consts["wglob"] := create wglob()
+      consts["dir"] := dir
+      consts["hist"] := create hist()
+      consts["elim"] := set_elim
+      consts["hlim"] := set_hlim
+      consts["llim"] := set_llim
+      consts["traceback"] := create traceback()
+      consts["cmd"] := cmd
+      consts["oos"] := oos := ObjectOutputStream(output).set_indent(3)
+      consts["out"] := output
+
       f := Files.get_path(Files.get_home()).child(".ieval").str()
       if Files.access(f) then
          push(files, f)
@@ -337,7 +363,17 @@ class Ieval()
          s := Files.file_to_string(f) | stop("Couldn't load ", f, ": ", &why)
          n := par.parse_expression(s) | stop("Couldn't parse ", f,  ": ", &why)
          ev.set_node(n) | stop("Couldn't parse ", f,  ": ", &why) 
-         ev.eval()
+         Safe{ev.eval()}
+         if &errortext then {
+            if &errornumber then
+               ewrite("Runtime error ", &errornumber, ": ", &errortext)
+            else
+               ewrite("Runtime error: ", &errortext)
+            ewrite("offending value: ", image(&errorvalue))
+            last_runerr := &errorcoexpr
+            errorclear()
+            break
+         }
       }
    end
 
@@ -363,7 +399,7 @@ class Ieval()
                         output.write(".... (result sequence truncated)")
                         break
                      }
-                     ObjectOutputStream(output).set_indent(3).show(v)
+                     oos.show(v)
                      output.write()
                   }
                }
@@ -386,13 +422,14 @@ class Ieval()
    private do_gui()
       local s, t, prompt
 
-      input := TermDialog().
+      input := IevalTermDialog().
          set_label("ieval").
          set_icon(IEVAL_LOGO).
          set_history_limit(hlim).
          set_log_limit(llim).
          set_history(history)
       error := output := input
+      prelim()
       s := ""
       prompt := "> "
       input.connect(create {
@@ -421,6 +458,7 @@ class Ieval()
       output := FileStream.stdout
       error := FileStream.stderr
       input := FileStream.stdin
+      prelim()
       s := ""
       prompt := "> "
       repeat {
@@ -453,6 +491,7 @@ class Ieval()
       input := LineEditorStream().
          set_history_limit(hlim).
          set_history(history) | stop("Failed to create LineEditorStream: ", &why)
+      prelim()
       s := ""
       prompt := "> "
       repeat {

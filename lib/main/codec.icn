@@ -380,7 +380,7 @@ class Decode()
                return Prog.get_operator(s, i) | throw("No such function " || s || " arity " || i)
             }
             "P": {
-               if g := Prog.get_global(s) &
+               if g := Prog.get_named_global(s) &
                   match("procedure ", image(g)) then
                   return g
                throw("No such procedure " || s)

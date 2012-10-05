@@ -1,7 +1,5 @@
 package parser
 
-$include "oigram_tab.icn"
-
 import util, io
 
 final class Token()
@@ -255,7 +253,7 @@ class Id(Tree)
 
    package new(pos, comma)
       cast(self,Tree).new(pos)
-      /comma := Token(COMMA, ",", ",")
+      /comma := Token(YY.COMMA, ",", ",")
       self.comma := comma
       return
    end
@@ -529,7 +527,7 @@ class InvocableOp(Tree)
 
    package new(pos, comma)
       cast(self,Tree).new(pos)
-      /comma := Token(COMMA, ",", ",")
+      /comma := Token(YY.COMMA, ",", ",")
       self.comma := comma
       return
    end
@@ -544,7 +542,7 @@ class ImportSpec(IdList)
 
    package new(pos, comma)
       cast(self,IdList).new(pos,3)
-      /comma := Token(COMMA, ",", ",")
+      /comma := Token(YY.COMMA, ",", ",")
       self.comma := comma
       return
    end
@@ -595,27 +593,27 @@ end
 class Factory()
    public static new_id(pad, s)
       /pad := ""
-      return Id(Token(IDENT, s, pad || s),
-                Token(COMMA, ",", ","))
+      return Id(Token(YY.IDENT, s, pad || s),
+                Token(YY.COMMA, ",", ","))
    end
 
    public static new_prog()
       return Prog(Node("prog", 
                        Node("decls", Node.EMPTY, Node.EMPTY, Node.EMPTY), 
-                       Token(EOFX, "", "")))
+                       Token(YY.EOFX, "", "")))
    end
 
    public static new_access(pad, s)
       local t
       t := case s of {
-         "private": PRIVATE
-         "public": PUBLIC
-         "protected": PROTECTED
-         "package": PACKAGE
-         "static": STATIC
-         "const": CONST
-         "readable": READABLE
-         "final": FINAL
+         "private": YY.PRIVATE
+         "public": YY.PUBLIC
+         "protected": YY.PROTECTED
+         "package": YY.PACKAGE
+         "static": YY.STATIC
+         "const": YY.CONST
+         "readable": YY.READABLE
+         "final": YY.FINAL
          default: runerr("Bad access value", s)
       }
       return Leaf(Token(t, s, pad || s))
@@ -624,8 +622,8 @@ class Factory()
    public static new_retention(pad, s)
       local t
       t := case s of {
-         "local": LOCAL
-         "static": STATIC
+         "local": YY.LOCAL
+         "static": YY.STATIC
          default: runerr("Bad retention value", s)
       }
       /pad := " "
@@ -636,16 +634,16 @@ class Factory()
       local t
       /epad := "\n"
       t := Procedure(Node("proc",
-                          Token(PROCEDURE, "procedure", pad || "procedure"),
-                          Token(IDENT, name, " " || name),
-                          Token(LPAREN, "(", "("),
+                          Token(YY.PROCEDURE, "procedure", pad || "procedure"),
+                          Token(YY.IDENT, name, " " || name),
+                          Token(YY.LPAREN, "(", "("),
                           Node.EMPTY,
-                          Token(RPAREN, ")", ")"),
-                          Node.EMPTY,
-                          Node.EMPTY,
+                          Token(YY.RPAREN, ")", ")"),
                           Node.EMPTY,
                           Node.EMPTY,
-                          Token(END, "end", epad || "end")))
+                          Node.EMPTY,
+                          Node.EMPTY,
+                          Token(YY.END, "end", epad || "end")))
       t.get_args().put(new_id("", pop(args)))
       every t.get_args().put(new_id(" ", !args))
       return t
@@ -656,14 +654,14 @@ class Factory()
       /epad := "\n"
       t := Class(Node("class",
                        Node.EMPTY,
-                       Token(CLASS, "class", pad || "class"),
-                       Token(IDENT, name, " " || name),
-                       Token(LPAREN, "(", "("),
+                       Token(YY.CLASS, "class", pad || "class"),
+                       Token(YY.IDENT, name, " " || name),
+                       Token(YY.LPAREN, "(", "("),
                        Node.EMPTY,
-                       Token(RPAREN, ")", ")"),
+                       Token(YY.RPAREN, ")", ")"),
                        Node.EMPTY,
                        Node.EMPTY,
-                       Token(END, "end", epad || "end")))
+                       Token(YY.END, "end", epad || "end")))
       t.get_supers().put(new_id("", pop(supers)))
       every t.get_supers().put(new_id(" ", !supers))
       return t
@@ -675,11 +673,11 @@ class Factory()
                                Node.EMPTY,
                                Node.EMPTY,
                                Node("deferredmethod",
-                                    Token(DEFER, "defer", " defer"),
-                                    Token(IDENT, name, " " || name),
-                                    Token(LPAREN, "(", "("),
+                                    Token(YY.DEFER, "defer", " defer"),
+                                    Token(YY.IDENT, name, " " || name),
+                                    Token(YY.LPAREN, "(", "("),
                                     Node.EMPTY,
-                                    Token(RPAREN, ")", ")"))))
+                                    Token(YY.RPAREN, ")", ")"))))
       t.get_access().put(new_access(pad, pop(access)))
       every t.get_access().put(new_access(" ", !access))
 
@@ -696,15 +694,15 @@ class Factory()
                        Node.EMPTY,
                        Node.EMPTY,
                        Node("method",
-                            Token(IDENT, name, " " || name),
-                            Token(LPAREN, "(", "("),
+                            Token(YY.IDENT, name, " " || name),
+                            Token(YY.LPAREN, "(", "("),
                             Node.EMPTY,
-                            Token(RPAREN, ")", ")"),
-                            Node.EMPTY,
-                            Node.EMPTY,
+                            Token(YY.RPAREN, ")", ")"),
                             Node.EMPTY,
                             Node.EMPTY,
-                            Token(END, "end", epad || "end"))))
+                            Node.EMPTY,
+                            Node.EMPTY,
+                            Token(YY.END, "end", epad || "end"))))
       t.get_access().put(new_access(pad, pop(access)))
       every t.get_access().put(new_access(" ", !access))
 
@@ -740,11 +738,11 @@ class Factory()
    public static new_record(pad, name, fields)
       local t
       t := Record(Node("record",
-                       Token(RECORD, "record", pad || "record"),
-                       Token(IDENT, name, " " || name),
-                       Token(LPAREN, "(", "("),
+                       Token(YY.RECORD, "record", pad || "record"),
+                       Token(YY.IDENT, name, " " || name),
+                       Token(YY.LPAREN, "(", "("),
                        Node.EMPTY,
-                       Token(RPAREN, ")", ")")))
+                       Token(YY.RPAREN, ")", ")")))
       t.put(new_id("", pop(fields)))
       every t.put(new_id(" ", !fields))
       return t
@@ -753,7 +751,7 @@ class Factory()
    public static new_global(pad, ids)
       local t
       t := Global(Node("global",
-                       Token(GLOBAL, "global", pad || "global"),
+                       Token(YY.GLOBAL, "global", pad || "global"),
                        Node.EMPTY))
       every t.put(new_id(" ", !ids))
       return t
@@ -761,17 +759,17 @@ class Factory()
 
    public static new_package(pad, id)
       return Package(Node("package",
-                          Token(PACKAGE, "package", pad || "package"),
-                          Token(IDENT, id, " " || id)))
+                          Token(YY.PACKAGE, "package", pad || "package"),
+                          Token(YY.IDENT, id, " " || id)))
    end
 
    public static new_import_spec(pad, pack, syms)
       local t
       t := ImportSpec(Node("importspec",
-                           Token(IDENT, pack, pad || pack),
-                           Token(LPAREN, "(", "("),
+                           Token(YY.IDENT, pack, pad || pack),
+                           Token(YY.LPAREN, "(", "("),
                            Node.EMPTY,
-                           Token(RPAREN, ")", ")")))
+                           Token(YY.RPAREN, ")", ")")))
       t.put(new_id("", pop(syms)))
       every t.put(new_id(" ", !syms))
       return t
@@ -780,7 +778,7 @@ class Factory()
    public static new_import(pad, packs)
       local t
       t :=  Import(Node("import",
-                        Token(IMPORT, "import", pad || "import"),
+                        Token(YY.IMPORT, "import", pad || "import"),
                         Node.EMPTY))
       every t.put(new_id(" ", !packs))
       return t
@@ -789,10 +787,17 @@ class Factory()
    public static new_invocable(pad, ids)
       local t
       t := Invocable(Node("invocable",
-                          Token(INVOCABLE, "invocable", pad || "invocable"),
+                          Token(YY.INVOCABLE, "invocable", pad || "invocable"),
                           Node.EMPTY))
       every t.put(new_id(" ", !ids))
       return t
+   end
+
+   public static new_keyword(pad, id)
+      /pad := ""
+      return Node("keyword",
+                  Token(YY.AND, "&", pad || "&"),
+                  Token(YY.IDENT, id, id))
    end
 end
 
@@ -843,21 +848,21 @@ class Class(LList)
    public is_final()
       local c
       c := pos.child(1)
-      return is(c, Token) & (c.tok = FINAL)
+      return is(c, Token) & (c.tok = YY.FINAL)
    end
 
    public set_final(pad, f)
       check_flag(f)
       if \f then {
          if not is_final() then {
-            pos.set(1, Token(FINAL, "final", pad || "final"))
-            pos.set(2, Token(CLASS, "class", " class"))
+            pos.set(1, Token(YY.FINAL, "final", pad || "final"))
+            pos.set(2, Token(YY.CLASS, "class", " class"))
          }
       }
       else {
          if is_final() then {
             pos.set(1, Node.EMPTY)
-            pos.set(2, Token(CLASS, "class", pad || "class"))
+            pos.set(2, Token(YY.CLASS, "class", pad || "class"))
          }
       }
       return self
@@ -897,8 +902,8 @@ class Function()
          if not has_varargs() then
             fpos.set(arglist_index, Node("arglist",
                                          fpos.child(arglist_index),
-                                         Token(LBRACK, "[", "["),
-                                         Token(RBRACK, "]", "]")))
+                                         Token(YY.LBRACK, "[", "["),
+                                         Token(YY.RBRACK, "]", "]")))
       } else {
          if has_varargs() then
             fpos.set(arglist_index, fpos.child(arglist_index).child(1))
@@ -928,12 +933,12 @@ class Function()
    end
 
    public set_initial(s)
-      fpos.set(\locals_index + 1, Token(STRINGLIT, s, s))
+      fpos.set(\locals_index + 1, Token(YY.STRINGLIT, s, s))
       return self
    end
 
    public set_body(s)
-      fpos.set(\locals_index + 3, Token(STRINGLIT, s, s))
+      fpos.set(\locals_index + 3, Token(YY.STRINGLIT, s, s))
       return self
    end
 
@@ -1096,7 +1101,7 @@ class ExprListElement(Tree)
 
    public new(pos, comma)
       cast(self,Tree).new(pos)
-      /comma := Token(COMMA, ",", ",")
+      /comma := Token(YY.COMMA, ",", ",")
       self.comma := comma
       return
    end
@@ -1152,7 +1157,7 @@ class CompoundElement(Tree)
 
    public new(pos, semi)
       cast(self,Tree).new(pos)
-      /semi := Token(SEMICOL, ";", ";")
+      /semi := Token(YY.SEMICOL, ";", ";")
       self.semi := semi
       return
    end
@@ -1209,7 +1214,7 @@ class CaseListElement(Tree)
 
    public new(pos, semi)
       cast(self,Tree).new(pos)
-      /semi := Token(SEMICOL, ";", ";")
+      /semi := Token(YY.SEMICOL, ";", ";")
       self.semi := semi
       return
    end
@@ -1264,7 +1269,7 @@ class DottedIdentListElement(Tree)
 
    public new(pos, dot)
       cast(self,Tree).new(pos)
-      /dot := Token(DOT, ".", ".")
+      /dot := Token(YY.DOT, ".", ".")
       self.dot := dot
       return
    end

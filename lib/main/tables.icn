@@ -13,8 +13,7 @@ class Table()
    public const def
 
    #
-   # Insert a new entry.  The value of the new entry is returned (as a
-   # variable).
+   # Insert a new entry.  Always succeeds and returns {self}.
    #
    public defer insert(key, val)
 
@@ -25,7 +24,7 @@ class Table()
    public defer member(key)
 
    #
-   # Delete the entry with the given key
+   # Delete the entry with the given key.  Always succeeds and returns {self}.
    #
    public defer delete(key)
 
@@ -38,11 +37,18 @@ class Table()
    end
 
    #
-   # Like {get}, but if the key is not present a new entry is added (with
-   # the default value).  In any case a variable is returned.
+   # Like {member}, but if the key is not present a new entry is added
+   # (with the default value).  In any case a variable for the new
+   # entry is returned.
+   #
+   # @example
+   # @  # Word counting
+   # @  t := SortTable(0)
+   # @  every w := words() do
+   # @     t.add(w) +:= 1
    #
    public add(key)
-      return member(key) | insert(key, def)
+      return member(key) | (insert(key, def) & member(key))
    end
 
    #
@@ -85,7 +91,7 @@ class Table()
    public defer size()
 
    #
-   # Clear the table of all elements.
+   # Clear the table of all elements. Always succeeds and returns {self}.
    #
    public defer clear()
 
@@ -218,9 +224,15 @@ class ClTable(Table)
       t
 
    public insert(key, val)
-      local n
-      default.insert(t, map(key), n := [key, val])
-      return n[2]
+      default.insert(t, map(key), [key, val])
+      return self
+   end
+
+   public add(key)
+      local mkey, e
+      mkey := map(key)
+      (e := default.member(t, mkey)) | default.insert(t, mkey, e := [key, def])
+      return e[2]
    end
 
    public member(key)
@@ -302,15 +314,35 @@ class SortTableNode()
       }
    end
 
-   public find(k, tbl)
+   public add(k, tbl)
+      local i
+      i := tbl.cmp(k, key)
+      if i = 0 then
+         return self
+      else if i < 0 then {
+         if /l := SortTableNode(k, tbl.def) then {
+            tbl.sz +:= 1
+            return l
+         } else
+            return l.add(k, tbl)
+      } else {
+         if /r := SortTableNode(k, tbl.def) then {
+            tbl.sz +:= 1
+            return r
+         } else 
+            return r.add(k, tbl)
+      }
+   end
+
+   public member(k, tbl)
       local i
       i := tbl.cmp(k, key)
       return if i = 0 then
          self
       else if i < 0 then
-         (\l).find(k, tbl)
+         (\l).member(k, tbl)
       else
-         (\r).find(k, tbl)
+         (\r).member(k, tbl)
    end
 
    public delete(k, tbl)
@@ -363,15 +395,23 @@ class SortTable(Table)
    package readable sz
 
    public insert(key, val)
-      if /root := SortTableNode(key, val) then {
+      if /root := SortTableNode(key, val) then
+         sz := 1
+      else
+         root.insert(key, val, self)
+      return self
+   end
+
+   public add(key)
+      if /root := SortTableNode(key, def) then {
          sz := 1
          return root.val
-      }
-      return root.insert(key, val, self).val
+      } else
+         return root.add(key, self).val
    end
 
    public member(key)
-      return (\root).find(key, self).val
+      return (\root).member(key, self).val
    end
 
    public delete(key)
@@ -452,10 +492,29 @@ class EqTable(Table)
       h := hash(key)
       l := t[h]
       every e := !\l do {
-         if equals(e[1], key) then
-            return e[2] := val
+         if equals(e[1], key) then {
+            e[2] := val
+            return self
+         }
       }
       n := [key, val]
+      if \l then
+         put(l, n)
+      else
+         default.insert(t, h, [n])
+      sz +:= 1
+      return self
+   end
+
+   public add(key)
+      local h, l, e, n
+      h := hash(key)
+      l := t[h]
+      every e := !\l do {
+         if equals(e[1], key) then
+            return e[2]
+      }
+      n := [key, def]
       if \l then
          put(l, n)
       else
@@ -544,7 +603,7 @@ class BuiltinTable(Table)
 
    public insert(key, val)
       default.insert(t, key, val)
-      return t[key]
+      return self
    end
 
    public member(key)
@@ -610,10 +669,30 @@ class WeakrefTable(Table)
       h := Internal.hash(key)
       l := t[h]
       every e := !\l do {
-         if weakrefval(e[1]) === key then
-            return e[2] := val
+         if weakrefval(e[1]) === key then {
+            e[2] := val
+            return self
+         }
       }
       n := [weakref(key), val] | runerr("Type of key cannot be used with weakref")
+      if \l then
+         put(l, n)
+      else
+         default.insert(t, h, [n])
+      sz +:= 1
+      return self
+   end
+
+   public add(key)
+      local h, l, e, n
+      maybe_purge()
+      h := Internal.hash(key)
+      l := t[h]
+      every e := !\l do {
+         if weakrefval(e[1]) === key then
+            return e[2]
+      }
+      n := [weakref(key), def] | runerr("Type of key cannot be used with weakref")
       if \l then
          put(l, n)
       else

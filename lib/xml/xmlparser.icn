@@ -287,7 +287,7 @@ class XmlParser(Connectable)
    #
    private parse_name(quiet)
       any(XML_NAME_START) | throw("Valid name start character expected")
-      return move(1) || tab(opt(XML_NAME_CHAR))
+      return move(1) || tab(many0(XML_NAME_CHAR))
    end
 
    #
@@ -295,7 +295,7 @@ class XmlParser(Connectable)
    #
    private dtd_parse_name()
       dtd_any(XML_NAME_START) | throw("Valid name start character expected")
-      return move(1) ||  tab(dtd_opt(XML_NAME_CHAR))
+      return move(1) ||  tab(dtd_many0(XML_NAME_CHAR))
    end
 
    #
@@ -1138,7 +1138,7 @@ class XmlParser(Connectable)
       else if dtd_match(u"(") then {
          # Awkward lookahead.
          i := &pos
-         if tab(dtd_match(u"(")) & tab(dtd_opt(XML_SPACE)) & dtd_match(u"#PCDATA") then {
+         if tab(dtd_match(u"(")) & tab(dtd_many0(XML_SPACE)) & dtd_match(u"#PCDATA") then {
             &pos := i
             return parse_mixed()
          } else {
@@ -2111,9 +2111,9 @@ class XmlParser(Connectable)
    end
 
    #
-   # Equivalent to opt(), but checks for pe expansions
+   # Equivalent to many0(), but checks for pe expansions
    #
-   private dtd_opt(c)
+   private dtd_many0(c)
       return dtd_many(c) | .&pos
    end
 

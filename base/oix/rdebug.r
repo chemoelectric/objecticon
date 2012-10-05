@@ -1093,9 +1093,8 @@ void c_return_trace(struct c_frame *cf)
 void xdisp(struct b_coexpr *ce, int count, FILE *f)
 {
     dptr *np;
-    int n;
+    word n;
     struct p_proc *bp;
-    word nglobals;
     dptr dp;
     struct p_frame *pf, *upf;
     struct progstate *p;
@@ -1173,11 +1172,8 @@ void xdisp(struct b_coexpr *ce, int count, FILE *f)
     /*
      * Print globals.
      */
-
-    nglobals = p->Eglobals - p->Globals;
-
     fprintf(f, "\nglobal identifiers:\n");
-    for (n = 0; n < nglobals; n++) {
+    for (n = 0; n < p->NGlobals; n++) {
         fprintf(f, "   ");
         putstr(f, p->Gnames[n]);
         fprintf(f, " = ");

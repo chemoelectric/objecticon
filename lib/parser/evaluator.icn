@@ -1,5 +1,3 @@
-$include "oigram_tab.icn"
-
 package eval
 
 import ipl.pdco, ipl.lists, lang, util, exception, parser
@@ -10,7 +8,7 @@ end
 
 class DefaultEvaluatorEnv(EvaluatorEnv)
    private 
-      table
+      vars, consts
    private readable
       write_globals_flag
 
@@ -19,50 +17,37 @@ class DefaultEvaluatorEnv(EvaluatorEnv)
    end
 
    private tlookup(k)
-      if upto('.', k) then {
-         k ? if ="default." then
-            return table[tab(0)]
-         runerr("no such id: " || k)
-      }
-      return table[k]
-   end
-
-   private static exit_repl(n)
-      /n := ""
-      runerr("exit(" || n || ") invoked")
-   end
-
-   private get_global(s)
-      return if s == "exit" then
-         exit_repl
-      else
-         lang.Prog.get_global(s)
+      if upto('.', k) then
+         (k ?:= (="default.", tab(0))) | runerr("no such id: " || k)
+      return .member(\consts, k) | vars[k]
    end
 
    private glookup(k, ev)
-      local t, f, s
+      local t, f
       if upto('.', k) then {
-         return k ? if ="default." then
-            get_global(tab(0))
-         else
-            get_global(k)
+         k ?:= (="default.", tab(0))
+         return lang.Prog.get_global(k)
       }
       t := []
       if lang.Prog.get_global(k) then
          put(t, k)
-      every s := !\ev.get_imports() do {
-         f := s || "." || k
+      every f := ev.get_imports() || "." || k do {
          if lang.Prog.get_global(f) then
             put(t, f)
       }
       if *t = 1 then
-         return get_global(t[1])
+         return lang.Prog.get_global(t[1])
       if *t > 1 then
          runerr("ambiguous name: " || k || "(" || list2str(t) || ")")
    end
 
-   public set_table(t)
-      self.table := t
+   public set_vars(t)
+      self.vars := t
+      return self
+   end
+
+   public set_consts(t)
+      self.consts := t
       return self
    end
 
@@ -71,9 +56,10 @@ class DefaultEvaluatorEnv(EvaluatorEnv)
       return self
    end
 
-   public new(t)
-      /t := table()
-      self.table := t
+   public new(v, c)
+      /v := table()
+      self.vars := v
+      self.consts := c
       return
    end
 end
@@ -142,11 +128,7 @@ class Evaluator()
       local res
       brk[n] := &current
       while res := !ex do {
-         case res of {
-            "break": break
-            "next": next
-            default: return res
-         }
+         (res === "next") | return res
       }
    end
 
@@ -366,9 +348,9 @@ class Evaluator()
 
    private do_section(n) 
       suspend case n.child(4).tok of {
-         COLON : E(n.child(1))[E(n.child(3)):E(n.child(5))]
-         PCOLON : E(n.child(1))[E(n.child(3))+:E(n.child(5))]
-         MCOLON : E(n.child(1))[E(n.child(3))-:E(n.child(5))]
+         YY.COLON : E(n.child(1))[E(n.child(3)):E(n.child(5))]
+         YY.PCOLON : E(n.child(1))[E(n.child(3))+:E(n.child(5))]
+         YY.MCOLON : E(n.child(1))[E(n.child(3))-:E(n.child(5))]
       }
    end
 
@@ -487,17 +469,17 @@ class Evaluator()
    private do_create(n) return create_E(n.child(2)) end
    private do_brace(n) suspend E(n.child(2)) end
    private do_compound(n) suspend { E(n.child(1)) ; E(n.child(3)) } end
-   private do_break(n) restore(n) ; return coact("break", brk[n]) end
-   private do_next(n) restore(n) ; return coact("next", brk[n]) end
-   private do_breakexpr(n) restore(n) ; return coact(n.child(2), brk[n]) end
+   private do_break(n) restore(n) ; return coact(Factory.new_keyword(, "null"), brk[loops[n]]) end
+   private do_next(n) restore(n) ; return coact("next", brk[loops[n]]) end
+   private do_breakexpr(n) restore(n) ; return coact(n.child(2), brk[loops[n]]) end
    private do_Empty(n) return end
    private do_default(n) fatalerr("not implemented: " || n.label) end
 
    private E(n)
       if is(n, Token) then
          return case n.tok of {
-            IDENT: env.get(n.s, self)
-            INTLIT|REALLIT|STRINGLIT|CSETLIT|UCSLIT: n.val
+            YY.IDENT: env.get(n.s, self)
+            YY.INTLIT|YY.REALLIT|YY.STRINGLIT|YY.CSETLIT|YY.UCSLIT: n.val
             default : fatalerr("not implemented: token " || to_string(n))
          }
       suspend dispatch[n.label](n)
@@ -533,7 +515,7 @@ class Evaluator()
    end
 
    public get_imports()
-      return .imports
+      suspend .!\imports
    end
 
    public new(env, node)

@@ -29,6 +29,9 @@ void output(void)
       write_section(jheader);
       output_stype();
       }
+    if (iflag)
+      write_section(iclass);
+
     output_defines();
     output_rule_data();
     output_yydefred();
@@ -55,7 +58,7 @@ void output(void)
       write_section(itrailer);
     else
       write_section(trailer);
-	if (iflag) output_semantic_actions();
+    if (iflag) output_semantic_actions();
 }
 
 
@@ -115,7 +118,7 @@ void output_prefix(void)
 	fprintf(code_file, "#define yyrule %srule\n", symbol_prefix);
     }
     ++outline;
-    if (!jflag)
+    if (!jflag && !iflag)
       fprintf(code_file, "#define YYPREFIX \"%s\"\n", symbol_prefix);
 }
 
@@ -856,7 +859,7 @@ void output_defines(void)
 	    if (jflag)    /*rwj*/
 	      fprintf(code_file, "public final static short ");
 	    else if (iflag)  
-	      fprintf(code_file, "$define ");
+	      fprintf(code_file, "public static const ");
 	    else
 	      fprintf(code_file, "#define ");
 
@@ -883,7 +886,9 @@ void output_defines(void)
 
             if (jflag) /*rwj*/          
 	      fprintf(code_file, "=%d;\n", symbol_value[i]);
-	    else
+	    else if (iflag)
+	      fprintf(code_file, "\n");
+            else
 	      fprintf(code_file, " %d\n", symbol_value[i]);
 	    if (dflag) fprintf(defines_file, " %d\n", symbol_value[i]);
 	}
@@ -893,8 +898,36 @@ void output_defines(void)
     if (jflag) /*rwj*/
       fprintf(code_file, "public final static short YYERRCODE=%d;\n", symbol_value[1]);
     else if (iflag) {
-      fprintf(code_file, "$define YYERRCODE %d\n", symbol_value[1]);
-      fprintf(code_file, "procedure init() \n");
+      fprintf(code_file, "public static const YYERRCODE\n");
+      fprintf(code_file, "private static init() \n");
+
+      for (i = 2; i < ntokens; ++i)
+      {
+          s = symbol_name[i];
+          if (is_C_identifier(s))
+          {
+              fprintf(code_file, "  ");
+              c = *s;
+              if (c == '"')
+              {
+                  while ((c = *++s) != '"')
+                  {
+                      putc(c, code_file);
+                  }
+              }
+              else
+              {
+                  do
+                  {
+                      putc(c, code_file);
+                  }
+                  while ((c = *++s));
+              }
+              ++outline;
+              fprintf(code_file, " := %d\n", symbol_value[i]);
+          }
+      }
+      fprintf(code_file, "  YYERRCODE := %d\n", symbol_value[1]);
     }
     else
       fprintf(code_file, "#define YYERRCODE %d\n", symbol_value[1]);
@@ -1123,7 +1156,7 @@ void output_debug(void)
 		putc('\n', output_file);
 		j = 2;
 	    }
-	    fprintf(output_file, "0,");
+	    fprintf(output_file, ",");
 	    }
 	}
     }
@@ -1478,6 +1511,18 @@ void output_semantic_actions(void)
 	else
 	  fprintf(out, line_format, ++outline + 1, code_file_name);
     }
+
+    if (iflag)
+    {
+        int i;
+        fprintf(out, "private action(yyn)\n");
+        fprintf(out, "   case yyn of {\n");
+        for (i = 0; i < nactions; ++i)
+            fprintf(out, "   %d: action_%d()\n",actions[i],actions[i]);
+        fprintf(out, "   default: action_null()\n");
+        fprintf(out, "   }\nend\nend\n");
+    }
+
 }
 
 void free_itemsets(void)

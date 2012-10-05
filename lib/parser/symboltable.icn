@@ -268,6 +268,7 @@ end
 
 class SymbolTable(Connectable)
    private
+      pparser,
       package_db,
       symbol_table, 
       scanned_files,
@@ -295,9 +296,8 @@ class SymbolTable(Connectable)
    end
 
    private parse(f)
-      local p, prog
-      p := Parser()
-      prog := p.parse_file(f) | fail
+      local prog
+      prog := pparser.parse_file(f) | fail
       return prog
    end
 
@@ -676,6 +676,7 @@ class SymbolTable(Connectable)
       scanned_files := table()
       scanned_packages := set()
       file_mode := PREFER_SRC
+      pparser := Parser()
       return
    end
 end

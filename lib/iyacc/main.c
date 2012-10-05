@@ -49,6 +49,9 @@ int nsyms;
 int ntokens;
 int nvars;
 
+int actions[1024];
+int nactions;
+
 int   start_symbol;
 char  **symbol_name;
 short *symbol_value;
@@ -104,7 +107,7 @@ void usage(void)
      "      [-s java_semantic_type] [-f class_name] filename\n", myname);
 */
     fprintf(stderr,
-     "usage:\n %s [-dlrtv] [-b file_prefix]  [-p symbol_prefix]  [-k unicon package name] filename\n", myname);
+     "usage:\n %s [-dlrtv] [-b file_prefix]  [-p symbol_prefix]  [-k unicon package name]  [-f class_name] filename\n", myname);
     
     exit(1);
 }

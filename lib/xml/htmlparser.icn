@@ -323,7 +323,7 @@ class HtmlParser()
       else
          fail
       c := move(1)
-      res := tab(opt(t))  # opt() so that res may be an empty string
+      res := tab(many0(t))  # many0() so that res may be an empty string
       =c | fail
       return res
    end

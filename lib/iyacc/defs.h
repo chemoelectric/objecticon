@@ -205,8 +205,8 @@ extern char *jbody[];
 extern char *jtrailer[];
 
 extern char *ibanner[];  /*rwj -- for java*/
-extern char *itables[];
 extern char *iheader[];
+extern char *iclass[];
 extern char *ibody[];
 extern char *itrailer[];
 
@@ -287,6 +287,8 @@ extern short *rules_used;
 extern short nunused;
 extern short final_state;
 
+extern int actions[1024];
+extern int nactions;
 
 /* system variables */
 
