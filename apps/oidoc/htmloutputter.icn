@@ -388,9 +388,14 @@ class HtmlOutputter(Outputter)
       r := ""
       s ? {
          w := tab(many(WHITESPACE))
-         while r ||:= xml_escape(tab(upto('{')), '<>&') do {
-            move(1)
-            t := tab(upto('}') | 0)
+         while r ||:= xml_escape(tab(upto('`{')), '<>&') do {
+            if any('`') then {
+               move(1)
+               t := tab(upto('`') | 0)
+            } else {
+               move(1)
+               t := tab(upto('}') | 0)
+            }
             move(1)
             r ||:= create_link(t, c)
          }
@@ -406,7 +411,7 @@ class HtmlOutputter(Outputter)
 
    private resolve_link(sym, name)
       local i, j, d
-      name := (name ? tab(upto('(') | 0))
+      name := (name ? tab(upto('({') | 0))
       if is(sym, ClassField) &
          i := sym.defining_class.get_implemented_field(name) then
             return i
