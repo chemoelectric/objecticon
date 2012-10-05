@@ -100,7 +100,7 @@ class Stream()
    # Output the string {s}, by calling {out} several times until it is
    # fully output.
    #
-   public fully_out(s)
+   public out_all(s)
       local n
       s := string(s) | runerr(103, s)
       while *s > 0 do {
@@ -199,7 +199,7 @@ class Stream()
    public writes(a[])
       local e
       every e := !a do
-         fully_out(e) | fail
+         out_all(e) | fail
       return
    end
 
@@ -210,7 +210,7 @@ class Stream()
    public write(a[])
       local e
       every e := !a | Files.EOL do
-         fully_out(e) | fail
+         out_all(e) | fail
       return
    end
 
@@ -239,7 +239,7 @@ class Stream()
          s := in(1048576) | fail
          if /s then
             return
-         f.fully_out(s) | fail
+         f.out_all(s) | fail
       }
    end
 end
@@ -542,7 +542,7 @@ class BufferStream(Stream, HasUnderlyingStream)
       every s ||:= !wbuff
       wbuff := []
       wbuff_len := 0
-      return other.fully_out(s)
+      return other.out_all(s)
    end
 
    #
@@ -787,10 +787,10 @@ procedure write(a[])
       f := FileStream.stdout
    every e := \!a | Files.EOL do {
       if is(e, Stream) then {
-         f.fully_out(Files.EOL) | fail
+         f.out_all(Files.EOL) | fail
          f := e
       } else
-         f.fully_out(e) | fail
+         f.out_all(e) | fail
    }
    return r
 end
@@ -809,7 +809,7 @@ procedure writes(a[])
       if is(e, Stream) then
          f := e
       else
-         f.fully_out(e) | fail
+         f.out_all(e) | fail
    }
    return r
 end
@@ -1506,14 +1506,14 @@ class FilterOutputStream(FilterStreamBase)
                if /t then
                   close_cin()
                else
-                  sink.fully_out(t) | fail
+                  sink.out_all(t) | fail
             }
             cerr: {
                t := cerr.in(1048576) | fail
                if /t then
                   close_cerr()
                else
-                  err_sink.fully_out(t) | fail
+                  err_sink.out_all(t) | fail
             }
             cout:
                return cout.out(s)
@@ -1531,14 +1531,14 @@ class FilterOutputStream(FilterStreamBase)
                if /t then
                   close_cin()
                else
-                  sink.fully_out(t) | fail
+                  sink.out_all(t) | fail
             }
             cerr: {
                t := cerr.in(1048576) | fail
                if /t then
                   close_cerr()
                else
-                  err_sink.fully_out(t) | fail
+                  err_sink.out_all(t) | fail
             }
          }
       }
@@ -1629,7 +1629,7 @@ class FilterInputStream(FilterStreamBase)
                   close_cout()
                   close_cerr()
                } else
-                  err_sink.fully_out(t) | fail
+                  err_sink.out_all(t) | fail
             }
             cout: {
                if *buff = 0 then {
@@ -1671,7 +1671,7 @@ class FilterInputStream(FilterStreamBase)
                if /t then
                   close_cerr()
                else
-                  err_sink.fully_out(t) | fail
+                  err_sink.out_all(t) | fail
             }
             default:
                syserr("Unexpected result from do_poll")
