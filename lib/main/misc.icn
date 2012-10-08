@@ -43,11 +43,16 @@ end
 # Helper function for {save_vars}.
 #
 procedure swap_vars(e, l)
-   # Done in two stages (as opposed to swapping with existing elements
-   # of l), so that it works okay with &subject and &pos (swapping to
-   # &subject would change &pos).
-   every put(l, !e)
-   every !e := pop(l)
+   if *l = 1 then
+      # Simple case
+      !e :=: l[1]
+   else {
+      # Complex case.  Done in two stages (as opposed to swapping with
+      # existing elements of l), so that it works okay with &subject
+      # and &pos (swapping to &subject would change &pos).
+      every put(l, !e)
+      every !e := pop(l)
+   }
    return
 end
 
