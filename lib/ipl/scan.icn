@@ -566,8 +566,7 @@ procedure max_many(c, max)
    return min(many(c), &pos + max)
 end
 
-# Like {save_var}, but saves the value of {&subject} and {&pos}
-# instead.
+# Like `util.save_vars{..., &subject|&pos}`.
 #
 procedure save_scan(e)
    local t

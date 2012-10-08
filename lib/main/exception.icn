@@ -50,15 +50,11 @@ end
 #
 procedure try(e)
    local t
-   repeat {
-      clear()
-      t := throw_handler
-      throw_handler := &current
-      suspend 1(@e, throw_handler := t) do
-         break next
-      throw_handler := t
-      fail
-   }
+   t := throw_handler
+   throw_handler := &current
+   suspend 1(|@e, throw_handler :=: t) do
+      throw_handler :=: t
+   throw_handler := t
 end
 
 # A useful wrapper around {try}.  {try} is called with {e} to get its

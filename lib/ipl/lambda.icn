@@ -224,7 +224,8 @@ end
 
 # Evaluates coexpression {e}, saving the value of {_a} and {_l}.  This
 # can be necessary if a lambda calls another lambda which exits via an
-# exception or a runtime error.
+# exception or a runtime error.  Note this just does the same as
+#      `util.save_vars{..., _a|_l}`
 #
 # @example
 # @   f := lambda{
