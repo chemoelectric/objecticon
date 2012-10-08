@@ -847,6 +847,8 @@ procedure close(f)
    return f
 end
 
+# Stores a list of cleanup expressions to be run.  See {use} and {clean}.
+#
 global cleanup
 
 #
@@ -873,18 +875,32 @@ procedure use(e1, e2, e3)
 end
 
 # This procedure can be used in conjunction with {use} to ensure that
-# all cleanup expressions are performed.  See also
-# {exception.clean_try}.
+# all cleanup expressions are performed.  {e} is evaluated for its
+# first result only.  Then any outstanding cleanup expressions are
+# performed.  If {e} failed, or any of the cleanup expressions failed,
+# then the procedure fails; otherwise the first result of {e} is
+# returned.
+#
+# See also {exception.clean_try}.
 #
 procedure clean(e)
-   local t, v, f, x
+   local t, v, f
    t := cleanup
    cleanup := []
    (v := @e) | (f := 1)
-   while x := pop(cleanup) do
-      @x | (f := 1)
+   do_cleanups() | (f := 1)
    cleanup := t
    return /f & v
+end
+
+# Perform any outstanding cleanups in the {cleanup} list.  Fails if any of the
+# expressions fail, succeeds otherwise.
+#
+procedure do_cleanups()
+   local f, x
+   while x := pop(cleanup) do
+      @x | (f := 1)
+   return /f
 end
 
 #
