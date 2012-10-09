@@ -1293,3 +1293,18 @@ procedure Generate(e[])
       }                 
    }
 end
+
+# Evaluate each element of e, suspending all the results of the nth element.
+#
+procedure Each(n, e[])
+   local f
+   n := integer(@n) | runerr(101, n)
+   if n < 1 then
+      n +:= *e + 1
+   every f := !e do {
+      if (n -:= 1) = 0 then
+         suspend |@f
+      else
+         @f
+   }
+end
