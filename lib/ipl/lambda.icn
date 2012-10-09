@@ -1,6 +1,7 @@
 package ipl.lambda
 
 import
+   lang(Class),
    ipl.callable(callable)
 
 global _a, _l
@@ -49,6 +50,54 @@ end
 #
 procedure lambda(e)
    return Lambda(e).call
+end
+
+#
+# Implementation class for {partial}
+#
+class Partial()
+   private
+      f, spec, v
+
+   package call(a[])
+      local e, c, r
+      e := create !v
+      r := []
+      every c := !spec do {
+         case c of {
+            "v": put(r, @e)
+            "V": while put(r, @e)
+            "a": put(r, get(a))
+            "A": while put(r, get(a))
+            "-": get(a)
+            default: runerr("invalid spec char to partial", c)
+         }
+      }
+      suspend f!r
+   end
+
+   package new(f, spec, v)
+      self.f := f
+      self.spec := spec
+      self.v := v
+      return
+   end
+end
+
+# Returns a function which modifies its arguments according to `spec`,  before applying them
+# to f.  The modification is specified by the following characters in spec:-
+#    "v": add the next value (which follow the spec parameter).
+#    "V": add the remaining values.
+#    "a": add the next argument.
+#    "A": add the remaining arguments.
+#    "-": skip the next argument.
+#
+# @example
+# @   f := partial(write, "vvvAV", "a", "b", "c", "p", "q", "r")
+# @   f("x","y","z")   # writes abcxyzpqr
+#
+procedure partial(f, spec, l[])
+   return Partial(f, spec, l).call
 end
 
 #
@@ -196,6 +245,34 @@ end
 #
 procedure rpb(s, x)
    return rpartial2(callable(s, 2), x)
+end
+
+#
+# Implementation class for {methodf}
+#
+class Methodf()
+   private field
+
+   package call(obj, a[])
+      suspend Class.get(obj, field)!a
+   end
+
+   package new(field)
+      self.field := field
+      return
+   end
+end
+
+# Returns a function that takes its first argument, obtains the given
+# field from it, and then applies the remaining arguments to the
+# resulting method.
+#
+# @example
+# @ f := methodf("abc")
+# @ f(obj, 1, 2, 3)   # invokes obj.abc(1, 2, 3)
+#
+procedure methodf(field)
+   return Methodf(field).call
 end
 
 #
