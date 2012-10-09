@@ -56,6 +56,15 @@ procedure swap_vars(e, l)
    return
 end
 
+# Helper function for {save_vars}.
+#
+procedure get_vars(e)
+   local l
+   l := []
+   every put(l, !e)
+   return l
+end
+
 # Invoke co-expression {e}, generating its results, in such a way that
 # changes to {vars} made by {e} will not be seen by the caller, and
 # vice versa.
@@ -68,8 +77,7 @@ end
 #
 procedure save_vars(e, vars)
    local t
-   t := []
-   every put(t, !vars)
+   t := get_vars(vars)
    suspend 1(|@e, swap_vars(vars, t)) do
       swap_vars(vars, t)
    every !vars := pop(t)

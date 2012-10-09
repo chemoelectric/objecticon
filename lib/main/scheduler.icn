@@ -66,12 +66,13 @@ class Task()
    public const
       scheduler
    private readable
-      xstate_vars,
       sleep_until,
       last_sleep,
       poll_until,
       poll_req
-   package
+   private const
+      xstate_vars
+   private
       saved_xstate
    package readable
       coex,
@@ -237,26 +238,20 @@ class Task()
       scheduler.stop(self)
    end
 
-   # Get the external state of the task (normally values of global
-   # variables affected by the {Task}).  The returned state will
-   # subsequently be passed to {restore_xstate}.  By default, this
-   # method returns the values of the global variables defined in
-   # {xstate_vars}.
+   # This is called once just before the {Task} is activated for the
+   # first time.  It saves a copy of the external state modified by
+   # the task (normally values of global variables affected by the
+   # {Task}), as defined by the {xstate_vars} variable.
    #
-   package get_xstate()
-      local l
-      if \xstate_vars then {
-         l := []
-         every put(l, !xstate_vars)
-      }
-      return l
+   package init_xstate()
+      saved_xstate := get_vars(\xstate_vars)
    end
 
-   # Restore a state previously returned by {get_xstate}.
+   # This method swaps the values of external state previously saved,
+   # with the values held internally in the {Task}.
    #
-   package restore_xstate(l)
-      if \l then
-         every !xstate_vars := pop(l)
+   package swap_xstate()
+      swap_vars(\xstate_vars, saved_xstate)
    end
 
    #
@@ -373,7 +368,7 @@ class Scheduler()
    end
 
    private run(t)
-      local sc, st, te, ov
+      local sc, st, te
       delete(t.state, t)
       t.state := &null
       sc := coex
@@ -384,14 +379,14 @@ class Scheduler()
       t.coex := &null
       # Don't specify an activator unless we have to (ie if this is a
       # new co-expression).
-      ov := t.get_xstate()
       if Coexpression.get_activator(te) then {
-         t.restore_xstate(t.saved_xstate)
+         t.swap_xstate()
          coact(, te)
-      } else
+      } else {
+         t.init_xstate()
          @te
-      t.saved_xstate := t.get_xstate()
-      t.restore_xstate(ov)
+      }
+      t.swap_xstate()
       \t.coex | runerr("incorrect reversion to scheduler, task co-expression not set", t)
       coex === &current | syserr("scheduler co-expression not &current")
       coex := sc
