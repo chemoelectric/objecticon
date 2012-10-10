@@ -740,8 +740,10 @@ class HttpClient(NetClient)
                fire(FAILED_EVENT)
                fail
             }
-            fire(COMPLETE_EVENT)
-            return response
+            if /abort_flag then {
+               fire(COMPLETE_EVENT)
+               return response
+            }
          }
 
          close()
@@ -1006,13 +1008,12 @@ class HttpClient(NetClient)
       # No content length.  Read until eof, then close.
       #
       repeat {
+         if \abort_flag then fail
          s := read_str(1048576) | fail
          if /s then {
             close()
             return
          }
-         if \abort_flag then
-            fail
          add_some(s) | fail
       }
    end
