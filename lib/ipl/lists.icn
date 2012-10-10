@@ -342,6 +342,12 @@ procedure ldel(l, x)
    return l
 end
 
+# delete just the first occurence of x from list l.
+# returns l if x was found in l, fails otherwise.
+procedure ldel1(l, x)
+   return delete(l, keyof(l, x))
+end
+
 # delete specified list elements; returns a new list
 procedure ldelelements(L, spec)		
    local i, tmp
