@@ -1041,13 +1041,13 @@ static void lemitproc()
      * Pointers to the tables that follow.
      */
     ap = pc + 2 * WordSize;
-    outwordz(ap, "Pointer to local names array");
+    outwordz(ap, "   Pointer to local names array");
     ap += (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics) * WordSize;
     if (loclevel > 1) {
-        outwordz(ap, "Pointer to llocs array");
+        outwordz(ap, "   Pointer to llocs array");
         ap += (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics) * 2 * WordSize;
     } else
-        outwordz(0, "Pointer to llocs array");
+        outwordz(0, "   Pointer to llocs array");
 
     /*
      * Names array.  Loop through the list of locals three times to get the output
