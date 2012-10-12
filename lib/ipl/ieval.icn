@@ -381,7 +381,7 @@ class Ieval()
       local n, i, v, tv, run
 
       run := create
-         save_vars{ { &trace := tv ; Safe{ev.eval()} }, &trace }
+         save_var{ { &trace := tv ; Safe{ev.eval()} }, &trace }
 
       if n := par.parse_expression(s, "UTF-8") then {
          if \parse_flag & s ~== "!parse" then

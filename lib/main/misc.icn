@@ -72,8 +72,8 @@ end
 # @param vars a coexpression generating one or more variables.
 #
 # @example
-# @ # Cleanup some io stuff, without affecting {&why}
-# @ save_vars{ io_cleanup(), &why }
+# @ # Cleanup some io stuff, without affecting global vars g1 and g2.
+# @ save_vars{ io_cleanup(), g1 | g2 }
 #
 procedure save_vars(e, vars)
    local t
@@ -83,8 +83,20 @@ procedure save_vars(e, vars)
    every !vars := pop(t)
 end
 
+# A single-variable case of {save_vars}.
 #
-# A common case, having the same effect as `save_vars{..., &why}`.
+# @param vars a coexpression generating exactly one variable.
+#
+procedure save_var(e, var)
+   local t
+   t := !var
+   suspend 1(|@e, !var :=: t) do
+      !var :=: t
+   !var := t
+end
+
+#
+# A common case, having the same effect as `save_var{..., &why}`.
 #
 procedure save_why(e)
    local t
