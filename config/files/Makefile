@@ -61,6 +61,7 @@ install :
 	$(INSTALL) -m 755 bin/oit "$(OIBIN)"
 	$(INSTALL) -m 755 bin/oix "$(OIBIN)"
 	$(INSTALL) -m 755 bin/rtt "$(OIBIN)"
+	$(INSTALL) -m 755 bin/oiscript "$(OIBIN)"
 	(cd "$(OIBIN)" && $(RM) udis && $(LN_S) oit udis)
 	$(INSTALL) -m 644 lib/gui/*.u lib/gui/packages.txt "$(OILIB)/gui"
 	$(INSTALL) -m 644 lib/incl/*.icn "$(OILIB)/incl"
