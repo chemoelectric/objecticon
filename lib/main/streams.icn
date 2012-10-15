@@ -28,12 +28,12 @@ class Stream()
       ALL
 
    private static init()
-      READ := 8r01
-      WRITE := 8r02
-      SEEK := 8r04
-      TRUNCATE := 8r010
-      READ_WRITE := READ + WRITE
-      ALL := READ + WRITE + SEEK + TRUNCATE
+      READ := 1
+      WRITE := 2
+      SEEK := 4
+      TRUNCATE := 8
+      READ_WRITE := 3     # READ, WRITE
+      ALL := 15           # READ, WRITE, SEEK, TRUNCATE
    end
 
    #
