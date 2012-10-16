@@ -68,7 +68,7 @@ procedure simple_try(e)
    v := try(e)
    if /thrower then
       return v
-   &why := text(thrown) | image(thrown)
+   &why := text(thrown) | ("thrown: " || image(thrown))
    clear()
 end
 
@@ -88,6 +88,6 @@ procedure clean_try(e)
    v := clean{try(e)}
    if /thrower then
       return v
-   &why := text(thrown) | image(thrown)
+   &why := text(thrown) | ("thrown: " || image(thrown))
    clear()
 end
