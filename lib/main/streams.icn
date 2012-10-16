@@ -98,20 +98,6 @@ class Stream()
    end
 
    #
-   # Output the string {s}, by calling {out} several times until it is
-   # fully output.
-   #
-   public out_all(s)
-      local n
-      s := string(s) | runerr(103, s)
-      while *s > 0 do {
-         n := out(s) | fail
-         s := s[n + 1:0]
-      }
-      return
-   end
-
-   #
    # Read a complete line from the stream, reading up to the next "\n"
    # or end-of-file.  In the former case, the "\n" and also any "\r"
    # immediately before it is stripped from the result.
@@ -193,6 +179,20 @@ class Stream()
    end
 
    #
+   # Output the string {s}, by calling {out} several times until it is
+   # fully output.
+   #
+   public writes1(s)
+      local n
+      s := string(s) | runerr(103, s)
+      while *s > 0 do {
+         n := out(s) | fail
+         s := s[n + 1:0]
+      }
+      return
+   end
+
+   #
    # This writes each parameter to the stream.  Each parameter is
    # guaranteed to be completely output, except on error, in which
    # case the method fails and sets &why.
@@ -200,7 +200,7 @@ class Stream()
    public writes(a[])
       local e
       every e := !a do
-         out_all(e) | fail
+         writes1(e) | fail
       return
    end
 
@@ -211,7 +211,7 @@ class Stream()
    public write(a[])
       local e
       every e := !a | Files.EOL do
-         out_all(e) | fail
+         writes1(e) | fail
       return
    end
 
@@ -240,7 +240,7 @@ class Stream()
          s := in(1048576) | fail
          if /s then
             return
-         f.out_all(s) | fail
+         f.writes1(s) | fail
       }
    end
 end
@@ -543,7 +543,7 @@ class BufferStream(Stream, HasUnderlyingStream)
       every s ||:= !wbuff
       wbuff := []
       wbuff_len := 0
-      return other.out_all(s)
+      return other.writes1(s)
    end
 
    #
@@ -788,10 +788,10 @@ procedure write(a[])
       f := FileStream.stdout
    every e := \!a | Files.EOL do {
       if is(e, Stream) then {
-         f.out_all(Files.EOL) | fail
+         f.writes1(Files.EOL) | fail
          f := e
       } else
-         f.out_all(e) | fail
+         f.writes1(e) | fail
    }
    return r
 end
@@ -810,7 +810,7 @@ procedure writes(a[])
       if is(e, Stream) then
          f := e
       else
-         f.out_all(e) | fail
+         f.writes1(e) | fail
    }
    return r
 end
@@ -1539,14 +1539,14 @@ class FilterOutputStream(FilterStreamBase)
                if /t then
                   close_cin()
                else
-                  sink.out_all(t) | fail
+                  sink.writes1(t) | fail
             }
             cerr: {
                t := cerr.in(1048576) | fail
                if /t then
                   close_cerr()
                else
-                  err_sink.out_all(t) | fail
+                  err_sink.writes1(t) | fail
             }
             cout:
                return cout.out(s)
@@ -1564,14 +1564,14 @@ class FilterOutputStream(FilterStreamBase)
                if /t then
                   close_cin()
                else
-                  sink.out_all(t) | fail
+                  sink.writes1(t) | fail
             }
             cerr: {
                t := cerr.in(1048576) | fail
                if /t then
                   close_cerr()
                else
-                  err_sink.out_all(t) | fail
+                  err_sink.writes1(t) | fail
             }
          }
       }
@@ -1662,7 +1662,7 @@ class FilterInputStream(FilterStreamBase)
                   close_cout()
                   close_cerr()
                } else
-                  err_sink.out_all(t) | fail
+                  err_sink.writes1(t) | fail
             }
             cout: {
                if *buff = 0 then {
@@ -1704,7 +1704,7 @@ class FilterInputStream(FilterStreamBase)
                if /t then
                   close_cerr()
                else
-                  err_sink.out_all(t) | fail
+                  err_sink.writes1(t) | fail
             }
             default:
                syserr("Unexpected result from do_poll")
