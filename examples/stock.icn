@@ -1,5 +1,5 @@
 import
-   gui, io, http, net, json, ipl.options,
+   gui, io, http, net, json, ipl.options, ipl.lists,
    ipl.gsuggest(TickerSuggestField)
 
 $load STOCK_LOGO "rpp.STOCK_LOGO.png"
@@ -95,7 +95,7 @@ class StockDialog(Dialog)
    end
 
    public delete_sym(s)
-      delete(slist, keyof(slist, s))
+      ldel1(slist, s)
       every stockp.remove(s.gen())
       every s.gen().finally()
       do_change()

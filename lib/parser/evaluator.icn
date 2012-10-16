@@ -323,7 +323,7 @@ class Evaluator()
          default: {
             l := []
             every put(l, create_E(!x))
-            copy(Generate!l)
+            copy(Lifo!l)
          }
       }
    end

@@ -40,33 +40,63 @@ class SimpleConstructor()
    end
 end
 
+# Helper function for {save_vars}.
+#
+procedure swap_vars(e, l)
+   if *l = 1 then
+      # Simple case
+      !e :=: l[1]
+   else {
+      # Complex case.  Done in two stages (as opposed to swapping with
+      # existing elements of l), so that it works okay with &subject
+      # and &pos (swapping to &subject would change &pos).
+      every put(l, !e)
+      every !e := pop(l)
+   }
+   return
+end
+
+# Helper function for {save_vars}.
+#
+procedure get_vars(e)
+   local l
+   l := []
+   every put(l, !e)
+   return l
+end
+
 # Invoke co-expression {e}, generating its results, in such a way that
-# changes to {var} made by {e} will not be seen by the caller, and
+# changes to {vars} made by {e} will not be seen by the caller, and
 # vice versa.
 #
-# @example
-# @ # Sleep in a {io.Task}, within a try block.
-# @ save_var{ task.sleep(1000), exception.throw_handler }
+# @param vars a coexpression generating one or more variables.
 #
 # @example
-# @ # Cleanup some io stuff, without affecting {&why}
-# @ save_var{ io_cleanup(), &why }
+# @ # Cleanup some io stuff, without affecting global vars g1 and g2.
+# @ save_vars{ io_cleanup(), g1 | g2 }
+#
+procedure save_vars(e, vars)
+   local t
+   t := get_vars(vars)
+   suspend 1(|@e, swap_vars(vars, t)) do
+      swap_vars(vars, t)
+   every !vars := pop(t)
+end
+
+# A single-variable case of {save_vars}.
+#
+# @param vars a coexpression generating exactly one variable.
 #
 procedure save_var(e, var)
    local t
    t := !var
-   repeat {
-      suspend 1(@e, !var :=: t) do {
-         !var :=: t
-         break next
-      }
-      !var := t
-      fail
-   }
+   suspend 1(|@e, !var :=: t) do
+      !var :=: t
+   !var := t
 end
 
 #
-# A common case, having the same effect as save_var{e, &why}.
+# A common case, having the same effect as `save_var{..., &why}`.
 #
 procedure save_why(e)
    local t
@@ -74,26 +104,6 @@ procedure save_why(e)
    suspend 1(|@e, &why :=: t) do
       &why :=: t
    &why := t
-end
-
-# Invoke co-expression e, generating its results, setting {var} to
-# {init} before each invocation.  Further, the value of {var} before
-# being set to {init} is saved and restored before each suspension or
-# failure.
-#
-# Safe() and try() follow this general pattern, but are implemented
-# separately for the sake of efficiency.
-#
-procedure with_var(e, var, init)
-   local t
-   repeat {
-      t := !var
-      !var := !init
-      suspend 1(@e, !var := t) do
-         break next
-      !var := t
-      fail
-   }
 end
 
 # This function saves {&why} before evaluating {e}.  If {e} succeeds,

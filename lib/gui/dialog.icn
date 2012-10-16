@@ -132,7 +132,7 @@ class Dialog(Component)
    # Returns the number of mouse clicks that have occurred
    # consecutively, with each click in the sequence being less
    # than {DOUBLE_CLICK_DELAY} milliseconds apart.  That variable is by default 500
-   # milliseconds, but it may be changing {DOUBLE_CLICK_DELAY}.
+   # milliseconds, but it may be altered by changing {DOUBLE_CLICK_DELAY}.
    #
    public get_click_count()
       return self.click_count

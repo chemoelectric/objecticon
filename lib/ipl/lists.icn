@@ -331,11 +331,21 @@ end
 
 # delete all instances of x from the list l.
 procedure ldel(l, x)
-   local t
-   t := []
-   while put(t, pop(l))
-   every put(l, x ~=== !t)
+   local i
+   i := 1
+   while i <= *l do {
+      if l[i] === x then
+         delete(l, i)
+      else
+         i +:= 1
+   }
    return l
+end
+
+# delete just the first occurence of x from list l.
+# returns l if x was found in l, fails otherwise.
+procedure ldel1(l, x)
+   return delete(l, keyof(l, x))
 end
 
 # delete specified list elements; returns a new list

@@ -35,12 +35,13 @@ class Comment()
                      if /fields[key] := [] then
                         put(keys, key)
                      put(fields[key], val)
-                  } else {
+                  } else if \key then {
                      #
                      # Continuation - add to end of last field.
                      #
-                     put(fields[\key][-1], tab(0))
-                  }
+                     put(fields[key][-1], tab(0))
+                  } else
+                     put(comment, l)
                } else
                   put(comment, l)
             }

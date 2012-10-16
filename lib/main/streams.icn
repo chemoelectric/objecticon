@@ -7,7 +7,8 @@ $ifdef _PLAN9
    posix(System)
 $else
    posix(ExitInfo, System),
-   ipl.strings(replace)
+   ipl.strings(replace),
+   ipl.lists(ldel1)
 $endif
 #
 # This is the top-level stream class.  It is not instantiated
@@ -30,12 +31,12 @@ class Stream()
       ALL
 
    private static init()
-      READ := 8r01
-      WRITE := 8r02
-      SEEK := 8r04
-      TRUNCATE := 8r010
-      READ_WRITE := READ + WRITE
-      ALL := READ + WRITE + SEEK + TRUNCATE
+      READ := 1
+      WRITE := 2
+      SEEK := 4
+      TRUNCATE := 8
+      READ_WRITE := 3     # READ, WRITE
+      ALL := 15           # READ, WRITE, SEEK, TRUNCATE
    end
 
    #
@@ -97,20 +98,6 @@ class Stream()
    #
    public can(c)
       return iand(get_mode(), c) = c
-   end
-
-   #
-   # Output the string {s}, by calling {out} several times until it is
-   # fully output.
-   #
-   public out_all(s)
-      local n
-      s := string(s) | runerr(103, s)
-      while *s > 0 do {
-         n := out(s) | fail
-         s := s[n + 1:0]
-      }
-      return
    end
 
    #
@@ -195,6 +182,20 @@ class Stream()
    end
 
    #
+   # Output the string {s}, by calling {out} several times until it is
+   # fully output.
+   #
+   public writes1(s)
+      local n
+      s := string(s) | runerr(103, s)
+      while *s > 0 do {
+         n := out(s) | fail
+         s := s[n + 1:0]
+      }
+      return
+   end
+
+   #
    # This writes each parameter to the stream.  Each parameter is
    # guaranteed to be completely output, except on error, in which
    # case the method fails and sets &why.
@@ -202,7 +203,7 @@ class Stream()
    public writes(a[])
       local e
       every e := !a do
-         out_all(e) | fail
+         writes1(e) | fail
       return
    end
 
@@ -213,7 +214,7 @@ class Stream()
    public write(a[])
       local e
       every e := !a | Files.EOL do
-         out_all(e) | fail
+         writes1(e) | fail
       return
    end
 
@@ -242,7 +243,7 @@ class Stream()
          s := in(1048576) | fail
          if /s then
             return
-         f.out_all(s) | fail
+         f.writes1(s) | fail
       }
    end
 end
@@ -545,7 +546,7 @@ class BufferStream(Stream, HasUnderlyingStream)
       every s ||:= !wbuff
       wbuff := []
       wbuff_len := 0
-      return other.out_all(s)
+      return other.writes1(s)
    end
 
    #
@@ -845,10 +846,10 @@ procedure write(a[])
       f := FileStream.stdout
    every e := \!a | Files.EOL do {
       if is(e, Stream) then {
-         f.out_all(Files.EOL) | fail
+         f.writes1(Files.EOL) | fail
          f := e
       } else
-         f.out_all(e) | fail
+         f.writes1(e) | fail
    }
    return r
 end
@@ -867,7 +868,7 @@ procedure writes(a[])
       if is(e, Stream) then
          f := e
       else
-         f.out_all(e) | fail
+         f.writes1(e) | fail
    }
    return r
 end
@@ -905,6 +906,10 @@ procedure close(f)
    return f
 end
 
+# Stores a list of cleanup expressions to be run.  See {use} and {clean}.
+#
+global cleanup
+
 #
 # This procedure is used to automatically close a {Stream} or other
 # resource.  The first expression {e1} produces the resource, the
@@ -918,15 +923,43 @@ end
 # @   s := use { f := open("some.txt"),
 # @              do_something_with(f) }
 procedure use(e1, e2, e3)
-   local f, r
-   f := @e1 | fail
-   /e3 := create f.close()
-   /e2 | (r := @e2) | {
-      @e3
-      fail
-   }
-   @e3 | fail
-   return r
+   local x, v, f
+   x := @e1 | fail
+   /e3 := create x.close()
+   push(\cleanup, e3)
+   /e2 | (v := @e2) | (f := 1)
+   ldel1(\cleanup, e3)
+   @e3 | (f := 1)
+   return /f & v
+end
+
+# This procedure can be used in conjunction with {use} to ensure that
+# all cleanup expressions are performed.  {e} is evaluated for its
+# first result only.  Then any outstanding cleanup expressions are
+# performed.  If {e} failed, or any of the cleanup expressions failed,
+# then the procedure fails; otherwise the first result of {e} is
+# returned.
+#
+# See also {exception.clean_try}.
+#
+procedure clean(e)
+   local t, v, f
+   t := cleanup
+   cleanup := []
+   (v := @e) | (f := 1)
+   do_cleanups() | (f := 1)
+   cleanup := t
+   return /f & v
+end
+
+# Perform any outstanding cleanups in the {cleanup} list.  Fails if any of the
+# expressions fail, succeeds otherwise.
+#
+procedure do_cleanups()
+   local f, x
+   while x := pop(cleanup) do
+      @x | (f := 1)
+   return /f
 end
 
 #
@@ -1929,14 +1962,14 @@ class FilterOutputStream(FilterStreamBase)
                if /t then
                   close_cin()
                else
-                  sink.out_all(t) | fail
+                  sink.writes1(t) | fail
             }
             cerr: {
                t := cerr.in(1048576) | fail
                if /t then
                   close_cerr()
                else
-                  err_sink.out_all(t) | fail
+                  err_sink.writes1(t) | fail
             }
             cout:
                return cout.out(s)
@@ -1954,14 +1987,14 @@ class FilterOutputStream(FilterStreamBase)
                if /t then
                   close_cin()
                else
-                  sink.out_all(t) | fail
+                  sink.writes1(t) | fail
             }
             cerr: {
                t := cerr.in(1048576) | fail
                if /t then
                   close_cerr()
                else
-                  err_sink.out_all(t) | fail
+                  err_sink.writes1(t) | fail
             }
          }
       }
@@ -2052,7 +2085,7 @@ class FilterInputStream(FilterStreamBase)
                   close_cout()
                   close_cerr()
                } else
-                  err_sink.out_all(t) | fail
+                  err_sink.writes1(t) | fail
             }
             cout: {
                if *buff = 0 then {
@@ -2094,7 +2127,7 @@ class FilterInputStream(FilterStreamBase)
                if /t then
                   close_cerr()
                else
-                  err_sink.out_all(t) | fail
+                  err_sink.writes1(t) | fail
             }
             default:
                syserr("Unexpected result from do_poll")

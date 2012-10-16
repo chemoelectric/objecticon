@@ -566,8 +566,7 @@ procedure max_many(c, max)
    return min(many(c), &pos + max)
 end
 
-# Like {save_var}, but saves the value of {&subject} and {&pos}
-# instead.
+# Like `util.save_vars{..., &subject|&pos}`.
 #
 procedure save_scan(e)
    local t
@@ -706,21 +705,21 @@ procedure range_impl(e, i, min, max)
 end
 
 # Match zero or more chars in cset c, in longest first order.
-# Equivalent to star{ch(c)}.
+# Equivalent to `star{ch(c)}`.
 #
 procedure star_ch(c)
    suspend tab(many0(c) to &pos by -1)
 end
 
 # Match one or more chars in cset c, in longest first order.
-# Equivalent to plus{ch(c)}.
+# Equivalent to `plus{ch(c)}`.
 #
 procedure plus_ch(c)
    suspend tab(many(c) to &pos + 1 by -1)
 end
 
 # Match one or zero chars in cset c, in longest first order.
-# Equivalent to query{ch(c)}.
+# Equivalent to `query{ch(c)}`.
 #
 procedure query_ch(c)
    suspend tab(any0(c) to &pos by -1)

@@ -1,5 +1,7 @@
 package exception
 
+import io(clean)
+
 global 
    # The co-expression currently ready to handle an exception
    throw_handler, 
@@ -48,15 +50,11 @@ end
 #
 procedure try(e)
    local t
-   repeat {
-      clear()
-      t := throw_handler
-      throw_handler := &current
-      suspend 1(@e, throw_handler := t) do
-         break next
-      throw_handler := t
-      fail
-   }
+   t := throw_handler
+   throw_handler := &current
+   suspend 1(|@e, throw_handler :=: t) do
+      throw_handler :=: t
+   throw_handler := t
 end
 
 # A useful wrapper around {try}.  {try} is called with {e} to get its
@@ -68,6 +66,26 @@ end
 procedure simple_try(e)
    local v
    v := try(e)
+   if /thrown then
+      return v
+   &why := text(thrown) | image(thrown)
+   clear()
+end
+
+# This is a variation of {simple_try} which wraps the call to {try} in
+# {clean}, thus ensuring that any cleanup expressions in {use}
+# expressions are always evaluated.
+#
+# @example
+# @ # f will still be closed notwithstanding the throw.
+# @ clean_try{
+# @     use {  f := open("something"),
+# @            throw("something else")
+# @     }
+# @ }
+procedure clean_try(e)
+   local v
+   v := clean{try(e)}
    if /thrown then
       return v
    &why := text(thrown) | image(thrown)

@@ -192,13 +192,8 @@
 #
 #   Wobble{e}	produces e(1), e(2), e(1), e(2), e(3), e(2), ...
 #  
-#   Comments:
-#
-#   Because of the handling of the scope of local identifiers in
-#   co-expressions, expressions in programmer-defined control
-#   operations cannot communicate through local identifiers.  Some
-#   constructions, such as break and return, cannot be used in argu-
-#   ments to programmer-defined control operations.
+#   Comments: Some constructions, such as break and return, cannot be
+#   used in arguments to programmer-defined control operations.
 #  
 ############################################################################
 #
@@ -227,7 +222,7 @@ procedure AddTabby(e, i)
 
 end
 
-# PDAE for parallel evuation with repeats
+# Parallel evaluation with repeats
 procedure Allpar(L[])	
    local i, L1, done
 
@@ -238,7 +233,7 @@ procedure Allpar(L[])
    every i := 1 to *L do L1[i] := @L[i] | fail
 
    repeat {
-      suspend L1[1] ! L1[2:0]
+      suspend L1
       every i := 1 to *L do
          if done[i] = 1 then ((L1[i] := @L[i]) | (done[i] := 0))
       if not(!done = 1) then fail
@@ -340,7 +335,7 @@ procedure Cumsum(e)
 
 end
 
-# PDAE for parallel evaluation with cycling
+# parallel evaluation with cycling
 procedure Cyclepar(L[])	
    local i, L1, done
 
@@ -351,7 +346,7 @@ procedure Cyclepar(L[])
    every i := 1 to *L do L1[i] := @L[i] | fail
 
    repeat {
-      suspend L1[1]!L1[2:0]
+      suspend L1
       every i := 1 to *L do {
          if not(L1[i] := @L[i]) then {
             done[i] := 0
@@ -471,7 +466,7 @@ procedure ExtendSeq(e1, e2)
 
 end
 
-# PDAE to extract values
+# Extract values
 procedure Extract(L[])	
    local i, n, L1
 
@@ -486,12 +481,12 @@ procedure Extract(L[])
          L[i + 1] := ^L[i + 1]
          i +:= 2
          }
-      suspend L1[1] ! L1[2:0]
+      suspend L1
       } 
 
 end
 
-# PDAE for reversal of lifo evaluation
+# Reversal of {Lifo} evaluation
 procedure Fifo(L[])	
    local L1, j
 
@@ -500,18 +495,17 @@ procedure Fifo(L[])
    j := *L
 
    repeat {
-      repeat {
-         if L1[j] := @L[j]
-         then {
+      if L1[j] := @L[j] then {
+         if j = 1 then
+            suspend L1
+         else
             j -:= 1
-            (L[j] := ^L[j]) | break
-            }
-         else if (j +:= 1) > *L then fail
-         }
-      suspend L1[1] ! L1[2:0]
-      j := 1
+      } else {
+         if j = *L then fail
+         L[j] := ^L[j]
+         j +:= 1
       }
-
+   }
 end
 
 # PDCO for friendly sequences
@@ -644,7 +638,15 @@ procedure Length(e)
 
 end
 
-# PDAE for standard lifo evaluation
+# Generate the results from the several expressions in the same
+# left-to-right order as in normal icon evaluation.
+# 
+# For example Lifo{1 to 3, !"ab"} generates [1,"a"], [1,"b"], [2,
+# "a"] etc.
+#
+# Note that the same list instance is suspended each time, and should
+# not be altered.
+#
 procedure Lifo(L[])	
    local L1, j
 
@@ -653,18 +655,17 @@ procedure Lifo(L[])
    j := 1
 
    repeat {
-      repeat
-         if L1[j] := @L[j]
-         then {
+      if L1[j] := @L[j] then {
+         if j = *L then
+            suspend L1
+         else
             j +:= 1
-            (L[j] := ^L[j]) | break
-            }
-         else if (j -:=  1) = 0
-            then fail
-      suspend L1[1] ! L1[2:0]
-      j := *L
+      } else {
+         if j = 1 then fail
+         L[j] := ^L[j]
+         j -:= 1
       }
-
+   }
 end
 
 # PDCO to model limtation
@@ -778,7 +779,7 @@ procedure Palin(e)
 end
 
 
-# PDAE for parallel evaluation
+# Parallel evaluation
 procedure Parallel(L[])	
    local i, L1
 
@@ -787,7 +788,7 @@ procedure Parallel(L[])
    repeat {
       every i := 1 to *L do
          L1[i] := @L[i] | fail
-      suspend L1[1] ! L1[2:0]
+      suspend L1
       }
 
 end
@@ -1045,7 +1046,7 @@ procedure Selfrepl(e1, e2)
 
 end
 
-# PDAE for simple evaluation
+# simple evaluation
 procedure Simple(L[])	
    local i, L1
 
@@ -1054,7 +1055,7 @@ procedure Simple(L[])
    every i := 1 to *L do
       L1[i] := @L[i] | fail
 
-   return L1[1] ! L1[2:0]
+   return L1
 
 end
 
@@ -1197,15 +1198,11 @@ end
 #
 procedure Safe(e)
    local t
-   repeat {
-      errorclear()
-      t := &handler
-      &handler := &current
-      suspend 1(@e, &handler := t) do
-         break next
-      &handler := t                                         
-      fail                                                  
-   }
+   t := &handler
+   &handler := &current
+   suspend 1(|@e, &handler :=: t) do
+      &handler :=: t                                         
+   &handler := t
 end
 
 # A useful wrapper around {Safe}.  {Safe} is called with {e} to get
@@ -1267,33 +1264,17 @@ procedure Seq(e)
 end
 
 
-# Generate the results from the several expressions in the same
-# left-to-right order as in normal icon evaluation.
-# 
-# For example Generate{1 to 3, !"ab"} generates [1,"a"], [1,"b"], [2,
-# "a"] etc.
+# Evaluate each element of e, suspending all the results of the nth element.
 #
-# Note that the same list instance is suspended each time, and should
-# not be altered.
-#
-procedure Generate(e[])
-   local vals, n
-   n := *e
-   vals := []
-   repeat {
-      # Invariant: vals contains valid values not suspended yet
-      if *vals < n then {
-         if put(vals, @e[*vals + 1]) then
-            next
-      } else # *vals=n
-         suspend vals
-      # Tab back to a good val:-
-      repeat {
-         if *vals = 0 then fail
-         if vals[-1] := @e[*vals] then
-            break
-         e[*vals] := ^e[*vals]
-         pull(vals)
-      }                 
+procedure Each(n, e[])
+   local f
+   n := integer(@n) | runerr(101, n)
+   if n < 1 then
+      n +:= *e + 1
+   every f := !e do {
+      if (n -:= 1) = 0 then
+         suspend |@f
+      else
+         @f
    }
 end
