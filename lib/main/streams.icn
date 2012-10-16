@@ -4,12 +4,13 @@ import
    util(error, check_flag, check_positive_int, save_why),
    lang(NoCopy,Prog),
 $ifdef _PLAN9
-   posix(System)
+   posix(System),
 $else
    posix(ExitInfo, System),
    ipl.strings(replace),
-   ipl.lists(ldel1)
 $endif
+   ipl.lists(ldel1)
+
 #
 # This is the top-level stream class.  It is not instantiated
 # directly.
