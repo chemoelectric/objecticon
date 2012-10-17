@@ -32,6 +32,7 @@ end
 #
 procedure rethrow()
    \throw_handler | runerr("rethrow(): no handler set")
+   \thrower | runerr("rethrow(): no exception current")
    coact(, throw_handler,, 1)
    runerr("rethrow(): code co-expression reactivated unexpectedly")
 end
