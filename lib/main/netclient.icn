@@ -95,11 +95,19 @@ $ifdef _PLAN9
       return
    end
 $else
+   private dns_bg_query(p)
+      local r
+      if r := SocketStream.dns_query(server) then
+         p.send(r)
+      else
+         p.send(&why)
+   end
+
    private do_dns_query()
       local p, v
       if /task then
          return SocketStream.dns_query(server)
-      p := BgDns(server).
+      p := Process{dns_bg_query(p)}.
          set_task(task)
       v := use {
          p.start(),
@@ -365,23 +373,6 @@ $endif
       cast(self,Connectable).new()
       sbuff := ""
       ssl_verify_flag := &yes
-      return
-   end
-end
-
-class BgDns(Process)
-   private host
-
-   public run()
-      local r
-      if r := SocketStream.dns_query(host) then
-         send(r)
-      else
-         send(&why)
-   end
-
-   public new(host)
-      self.host := host
       return
    end
 end

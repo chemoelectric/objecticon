@@ -32,6 +32,7 @@ end
 #
 procedure rethrow()
    \throw_handler | runerr("rethrow(): no handler set")
+   \thrower | runerr("rethrow(): no exception current")
    coact(, throw_handler,, 1)
    runerr("rethrow(): code co-expression reactivated unexpectedly")
 end
@@ -66,9 +67,9 @@ end
 procedure simple_try(e)
    local v
    v := try(e)
-   if /thrown then
+   if /thrower then
       return v
-   &why := text(thrown) | image(thrown)
+   &why := text(thrown) | ("thrown: " || image(thrown))
    clear()
 end
 
@@ -86,8 +87,8 @@ end
 procedure clean_try(e)
    local v
    v := clean{try(e)}
-   if /thrown then
+   if /thrower then
       return v
-   &why := text(thrown) | image(thrown)
+   &why := text(thrown) | ("thrown: " || image(thrown))
    clear()
 end

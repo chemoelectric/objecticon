@@ -2,7 +2,7 @@ package io
 
 import undo, util, lang, ipl.strings, ipl.streams(get_null)
 
-class LineEditorStream(LineBasedInputStream)
+class LineEditorStream(LineBasedInputStream, HasTask)
    package
       subj,
       pos
@@ -209,6 +209,7 @@ class LineEditorStream(LineBasedInputStream)
          buff := buff[2:0]
          return ch
       }
+      choose_poll([tty, Poll.IN]) | fail
       ch := tty.in(1) | fail
       return \ch | error("Unexpected eof on tty")
    end
