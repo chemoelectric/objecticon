@@ -17,7 +17,7 @@ import lang, posix, io
 #
 class Process(HasTask, HasBgProc)
    private readable
-      p,
+      e,
       sock
 
    #
@@ -44,7 +44,7 @@ class Process(HasTask, HasBgProc)
          pid := task := &null
          sock := l[1]
          l[2].close()
-         run()
+         @e
          close_sock()
          exit(0)
       }
@@ -58,9 +58,8 @@ class Process(HasTask, HasBgProc)
       # The message format is <len><nl><encoded-data>; knowing the
       # length in advance lets us potentially get all the encoded data
       # in one low-level socket read, which is much faster.
-      s := encode(obj, 1)
-      sock.write(*s) | fail
-      return sock.writes(s)
+      s := encode(obj, 1) | fail
+      return sock.writes(*s, "\n", s)
    end
 
    #
@@ -99,7 +98,7 @@ class Process(HasTask, HasBgProc)
    #
    # Do a {poll} on the socket.
    #
-   protected do_poll(for, timeout)
+   public do_poll(for, timeout)
       return choose_poll([sock, for], timeout)
    end
 
@@ -137,24 +136,11 @@ class Process(HasTask, HasBgProc)
       return
    end
 
+   # Create a new instance, with the given co-expression as the body
+   # of the child process.
    #
-   # Invoke the code of the process.
-   #
-   protected run()
-      return p()
-   end
-
-   #
-   # Set the procedure to run as the body of the process; alternatively
-   # subclass and override the {run()} method.
-   #
-   public set_proc(p)
-      self.p := p
-      return self
-   end
-
-   public new(p)
-      self.p := p
+   public new(e)
+      self.e := e
       return
    end
 end
