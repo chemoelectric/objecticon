@@ -39,6 +39,7 @@ Remaining arguments specify files which are processed before command line input 
 = Useful built-in expressions =
 
  * *!env* Show the values stored in the environment
+ * *!help* Show help
  * *!parse* Toggle parse mode, in which just the syntax structure of the command is printed
  * *!trace* Toggle tracing
  * *!wglob* Toggle the write-globals flag
@@ -50,3 +51,4 @@ Remaining arguments specify files which are processed before command line input 
  * *hlim(n)* Set the history limit to `n`.
  * *elim(n)* Set the expression limit to `n`.
  * *llim(n)* Set the gui log area line limit to `n`.
+ * *oos* The `ObjectOutputStream` used to output results.
