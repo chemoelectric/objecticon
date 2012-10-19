@@ -1216,9 +1216,6 @@ int main(int argc, char **argv)
     signal(SIGFPE, fpetrap);
 #endif					/* UNIX */
 
-    if (!name)
-        ffatalerr("No interpreter file supplied");
-
     t = findexe(name);
     if (!t)
         ffatalerr("Not found on PATH: %s", name);
