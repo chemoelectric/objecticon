@@ -429,10 +429,25 @@ void c_exit(int i)
 }
 
 /*
+ * Check for fatal error recursion; this could happen if memory ran
+ * out during printing of the traceback.
+ */
+static void checkfatalrecurse(void)
+{
+    static int in_fatal = 0;
+    if (in_fatal) {
+        fprintf(stderr, "recursive fatal errors - exiting.\n");
+        c_exit(EXIT_FAILURE);
+    }
+    in_fatal = 1;
+}
+
+/*
  * fatalerr - disable error conversion and call run-time error routine.
  */
 void fatalerr(int n, dptr v)
 {
+    checkfatalrecurse();
     kywd_handler = nulldesc;
     err_msg(n, v);
 }
@@ -445,6 +460,7 @@ void ffatalerr(char *fmt, ...)
 {
     static char buff[128];
     va_list ap;
+    checkfatalrecurse();
     va_start(ap, fmt);
     vsnprintf(buff, sizeof(buff), fmt, ap);
     CMakeStr(buff, &t_errortext);
