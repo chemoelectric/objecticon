@@ -100,6 +100,7 @@ void            err_msg         (int n, dptr v);
 void            activate_handler(void);
 void            fatalerr        (int n,dptr v);
 void            ffatalerr       (char *fmt, ...);
+void            checkfatalrecurse(void);
 struct ipc_fname *find_ipc_fname(word *ipc, struct progstate *p);
 void abbr_fname(dptr s, dptr d);
 struct ipc_line *find_ipc_line(word *ipc, struct progstate *p);
