@@ -378,16 +378,15 @@ class Ieval()
    end
 
    private body(s)
-      local n, i, v, tv, run
+      local n, i, v, run
 
       run := create
-         save_var{ { &trace := tv ; Safe{ev.eval()} }, &trace }
+         save_var{ { if \trace_flag then &trace := -1 ; Safe{ev.eval()} }, &trace }
 
       if n := par.parse_expression(s, "UTF-8") then {
          if \parse_flag & s ~== "!parse" then
             show_parse(n)
          else {
-            tv := if \trace_flag then -1 else 0
             if ev.set_node(n) then {
                if \quiet_flag then
                   !run

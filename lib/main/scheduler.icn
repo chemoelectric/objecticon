@@ -244,7 +244,7 @@ class Task()
    # {Task}), as defined by the {xstate_vars} variable.
    #
    package init_xstate()
-      saved_xstate := get_vars(\xstate_vars)
+      saved_xstate := init_vars(\xstate_vars)
    end
 
    # This method swaps the values of external state previously saved,
