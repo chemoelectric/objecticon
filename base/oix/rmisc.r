@@ -926,7 +926,8 @@ void outimage(FILE *f, dptr dp, int noimage)
          outimage(f, &tdp, noimage);
       }
      named_var: {
-         fprintf(f, "(variable = ");
+         get_name(dp, &tdp);
+         fprintf(f, "(variable %.*s = ", (int)StrLen(tdp), StrLoc(tdp));
          tdp = *VarLoc(*dp);
          outimage(f, &tdp, noimage);
          putc(')', f);
