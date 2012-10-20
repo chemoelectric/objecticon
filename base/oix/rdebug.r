@@ -275,8 +275,6 @@ int get_name(dptr dp1, dptr dp0)
 {
     dptr dp, varptr;
     tended union block *blkptr;
-    dptr arg1;                           /* 1st parameter */
-    dptr loc1;                           /* 1st local */
     struct p_proc *proc0;                 /* address of procedure block */
     char sbuf[100];			/* buffer; might be too small */
     char *s, *s2;
@@ -285,10 +283,7 @@ int get_name(dptr dp1, dptr dp0)
     struct p_frame *uf;
 
     uf = get_current_user_frame();
-    arg1 = uf->fvars->desc;
     proc0 = uf->proc;
-    /* The locals follow the args in the locals block */
-    loc1 = uf->fvars->desc + proc0->nparam;
 
     type_case *dp1 of {
       tvsubs: {
@@ -341,17 +336,10 @@ int get_name(dptr dp1, dptr dp0)
             syserr("name: unknown integer keyword variable");
         }            
       kywdany:
-            syserr("name: unknown keyword variable");
+        syserr("name: unknown keyword variable");
 
       kywdhandler: {
-          for (prog = progs; prog; prog = prog->next) {
-              if (VarLoc(*dp1) == &prog->Kywd_handler) {
-                  LitStr("&handler", dp0);
-                  break;
-              }
-          }
-          if (!prog)
-            syserr("name: unknown handler keyword variable");
+        LitStr("&handler", dp0);
         }            
       kywdstr: {
           for (prog = progs; prog; prog = prog->next) {
@@ -367,25 +355,11 @@ int get_name(dptr dp1, dptr dp0)
               syserr("name: unknown string keyword variable");
         }
       kywdpos: {
-          for (prog = progs; prog; prog = prog->next) {
-              if (VarLoc(*dp1) == &prog->Kywd_pos) {
-                  LitStr("&pos", dp0);
-                  break;
-              }
-          }
-          if (!prog)
-              syserr("name: unknown pos keyword variable");
+        LitStr("&pos", dp0);
       }
 
       kywdsubj: {
-          for (prog = progs; prog; prog = prog->next) {
-              if (VarLoc(*dp1) == &prog->Kywd_subject) {
-                  LitStr("&subject", dp0);
-                  break;
-              }
-          }
-          if (!prog)
-              syserr("name: unknown subject keyword variable");
+        LitStr("&subject", dp0);
         }
 
       named_var: {
@@ -397,7 +371,6 @@ int get_name(dptr dp1, dptr dp0)
             dp = VarLoc(*dp1);		 /* get address of variable */
             if ((prog = find_global(dp))) {
                 *dp0 = *prog->Gnames[dp - prog->Globals]; 		/* global */
-                return GlobalName;
             }
             else if ((prog = find_class_static(dp))) {
                 /*
@@ -413,7 +386,6 @@ int get_name(dptr dp1, dptr dp0)
                 alcstr(StrLoc(*c->name), StrLen(*c->name));
                 alcstr(".", 1);
                 alcstr(StrLoc(*fname), StrLen(*fname));
-                return FieldName;
             }
             else if (InRange(proc0->program->Statics, dp, proc0->program->Estatics)) {
                 i = dp - proc0->fstatic;	/* static */
@@ -421,15 +393,9 @@ int get_name(dptr dp1, dptr dp0)
                     syserr("name: unreferencable static variable");
                 i += proc0->nparam + proc0->ndynam;
                 *dp0 = *proc0->lnames[i];
-                return StaticName;
             }
-            else if (InRange(arg1, dp, &arg1[proc0->nparam])) {
-                *dp0 = *proc0->lnames[dp - arg1];          /* argument */
-                return ParamName;
-            }
-            else if (InRange(loc1, dp, &loc1[proc0->ndynam])) {
-                *dp0 = *proc0->lnames[dp - loc1 + proc0->nparam];
-                return LocalName;
+            else if (InRange(uf->fvars->desc, dp, uf->fvars->desc_end)) {
+                *dp0 = *proc0->lnames[dp - uf->fvars->desc];          /* argument/local */
             }
             else {
                 LitStr("(temp)", dp0);
