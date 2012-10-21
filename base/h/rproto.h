@@ -338,7 +338,7 @@ void    deref_0         (dptr dp1, dptr dp2);
 void    deref_1         (dptr dp1, dptr dp2);
 void    envset          (void);
 int     eq              (dptr dp1,dptr dp2);
-int     get_name        (dptr dp1, dptr dp2);
+int     getname        (dptr dp1, dptr dp2);
 void    getimage        (dptr dp1, dptr dp2);
 
 void    hgrow           (union block *bp);

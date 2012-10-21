@@ -308,7 +308,7 @@ function lang_Prog_get_variable_name(underef v)
 
    body {
       tended struct descrip result;
-      get_name(&v, &result);
+      getname(&v, &result);
       return result;
    }
 end
