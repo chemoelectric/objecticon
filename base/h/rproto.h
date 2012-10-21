@@ -134,6 +134,9 @@ void    resolve                 (struct progstate *pstate);
 void showcurrstack(void);
 void showstack(FILE *f, struct b_coexpr *c);
 void showbig(FILE *f, struct b_bignum *x);
+struct progstate *find_global(dptr s);
+struct progstate *find_class_static(dptr s);
+struct class_field *find_class_field_for_dptr(dptr d, struct progstate *prog);
 
 void print_desc(FILE *f, dptr d);
 void print_vword(FILE *f, dptr d);
