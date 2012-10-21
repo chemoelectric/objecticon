@@ -282,12 +282,9 @@ int get_name(dptr dp1, dptr dp0)
       tvsubs: {
             tended struct descrip tdp1, tdp2;
             if (TvsubsBlk(*dp1).sslen == 1)
-                sprintf(sbuf, "[%ld]", 
-                        (long)TvsubsBlk(*dp1).sspos);
+                sprintf(sbuf, "[%ld]", (long)TvsubsBlk(*dp1).sspos);
             else
-                sprintf(sbuf, "[%ld:%ld]", 
-                        (long)TvsubsBlk(*dp1).sspos,
-                        (long)TvsubsBlk(*dp1).sspos + TvsubsBlk(*dp1).sslen);
+                sprintf(sbuf, "[%ld+:%ld]", (long)TvsubsBlk(*dp1).sspos, (long)TvsubsBlk(*dp1).sslen);
             tdp1 = TvsubsBlk(*dp1).ssvar;
             get_name(&tdp1, &tdp2);
             len = StrLen(tdp2) + strlen(sbuf);
