@@ -257,7 +257,7 @@ class HtmlParser()
                         # The opening <tr> implicitly closes the <td>.  The <tr> needs to be
                         # rescanned, so tab back.
                         #
-                        tab(i)
+                        &pos := i
                         break
                      }
                      else if /node.closed then
@@ -408,7 +408,7 @@ class HtmlParser()
          i := &pos
          if t := parse_tag() & start_tag.balances(t) then
             break
-         tab(i)
+         &pos := i
          s ||:= move(1)
       }
       return s
@@ -429,13 +429,13 @@ class HtmlParser()
             #
             # Found a valid node, so tab back and break
             #
-            tab(i)
+            &pos := i
             break
          }
          #
          # Not a valid node, so tab back and continue
          #
-         tab(i)
+         &pos := i
          s ||:= move(1)
       }
 
@@ -479,7 +479,7 @@ class HtmlParser()
                else
                   char(j | 63)
             } else {
-               tab(i)
+               &pos := i
                move(1)
             }
          }
