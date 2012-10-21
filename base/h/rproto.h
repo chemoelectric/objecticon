@@ -106,6 +106,7 @@ void            err_msg         (int n, dptr v);
 void            activate_handler(void);
 void            fatalerr        (int n,dptr v);
 void            ffatalerr       (char *fmt, ...);
+void            checkfatalrecurse(void);
 struct ipc_fname *find_ipc_fname(word *ipc, struct progstate *p);
 void abbr_fname(dptr s, dptr d);
 struct ipc_line *find_ipc_line(word *ipc, struct progstate *p);
@@ -139,6 +140,9 @@ void    resolve                 (struct progstate *pstate);
 void showcurrstack(void);
 void showstack(FILE *f, struct b_coexpr *c);
 void showbig(FILE *f, struct b_bignum *x);
+struct progstate *find_global(dptr s);
+struct progstate *find_class_static(dptr s);
+struct class_field *find_class_field_for_dptr(dptr d, struct progstate *prog);
 
 void print_desc(FILE *f, dptr d);
 void print_vword(FILE *f, dptr d);
@@ -340,7 +344,7 @@ void    deref_0         (dptr dp1, dptr dp2);
 void    deref_1         (dptr dp1, dptr dp2);
 void    envset          (void);
 int     eq              (dptr dp1,dptr dp2);
-int     get_name        (dptr dp1, dptr dp2);
+int     getname        (dptr dp1, dptr dp2);
 void    getimage        (dptr dp1, dptr dp2);
 
 void    hgrow           (union block *bp);

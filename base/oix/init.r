@@ -442,6 +442,20 @@ void c_exits(char *s)
 #endif
 
 /*
+ * Check for fatal error recursion; this could happen if memory ran
+ * out during printing of the traceback.
+ */
+void checkfatalrecurse(void)
+{
+    static int in_fatal = 0;
+    if (in_fatal) {
+        fprintf(stderr, "recursive fatal errors - exiting.\n");
+        c_exit(EXIT_FAILURE);
+    }
+    in_fatal = 1;
+}
+
+/*
  * fatalerr - disable error conversion and call run-time error routine.
  */
 void fatalerr(int n, dptr v)
@@ -1233,9 +1247,6 @@ int main(int argc, char **argv)
 #if UNIX
     signal(SIGFPE, fpetrap);
 #endif					/* UNIX */
-
-    if (!name)
-        ffatalerr("No interpreter file supplied");
 
     t = findexe(name);
     if (!t)

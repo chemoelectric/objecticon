@@ -245,6 +245,8 @@ void err_msg(int n, dptr v)
         fputc('\n', stderr);
     }
 
+    checkfatalrecurse();
+
     if (have_errval) {
         fprintf(stderr, "offending value: ");
         outimage(stderr, &k_errorvalue, 0);

@@ -277,6 +277,7 @@ end
         fputc(*s++, stderr);
     fputc('\n', stderr);
 
+    checkfatalrecurse();
     if (have_errval) {
         fprintf(stderr, "offending value: ");
         outimage(stderr, &k_errorvalue, 0);
@@ -335,6 +336,7 @@ function syserr(msg)
       } else
           fprintf(stderr, "File ?; Line ?\n");
 
+      checkfatalrecurse();
       traceback(k_current, 1, 1);
 
       if (dodump > 1)

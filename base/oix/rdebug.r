@@ -3,13 +3,11 @@
  *   atrace, cotrace
  */
 
-#include "../h/modflags.h"
 #include "../h/opdefs.h"
 
 /*
  * Prototypes.
  */
-static void keyref    (union block *bp, dptr dp);
 static void showline(struct p_frame *pf);
 static void showlevel (int n);
 static void outfield(void);
@@ -203,339 +201,6 @@ static void trace_frame(struct p_frame *pf)
     putc('\n', stderr);
 }
 
-
-/*
- * Given a descriptor pointer d from the classstatics area, hunt for
- * the corresponding class_field in the classfields area, ie a
- * class_field cf so that cf->field_descriptor == d.
- * 
- * We can use binary search since the pointers into the classstatics
- * area increase, but the search is complicated by the fact that some
- * of the class_fields aren't static variables; they can be methods or
- * instance fields.
- */
-
-/* Find the nearest index in classfields to m, with a non-null
- * field_descriptor */
-static int nearest_with_dptr(int m, int n, struct progstate *prog)
-{
-    int off;
-    for (off = 0; off < n; ++off) {
-        if (m + off < n && (prog->ClassFields[m + off].flags & (M_Method | M_Static)) == M_Static)
-            return m + off;
-        if (m - off >= 0 && (prog->ClassFields[m - off].flags & (M_Method | M_Static)) == M_Static)
-            return m - off;
-    }    
-    syserr("name: no field_descriptors in classfields area");
-    return 0; /* Unreachable */
-}
-
-static struct class_field *find_class_field_for_dptr(dptr d, struct progstate *prog)
-{
-    int l = 0, m, n = prog->EClassFields - prog->ClassFields, r = n - 1;
-    while (l <= r) {
-        m = nearest_with_dptr((l + r) / 2, n, prog);
-        if (d < prog->ClassFields[m].field_descriptor)
-            r = m - 1;
-        else if (d > prog->ClassFields[m].field_descriptor)
-            l = m + 1;
-        else
-            return &prog->ClassFields[m];
-    }
-    syserr("name: no corresponding field_descriptor in classfields area");
-    return 0; /* Unreachable */
-}
-
-static struct progstate *find_global(dptr s)
-{
-    struct progstate *p;
-    for (p = progs; p; p = p->next) {
-        if (InRange(p->Globals, s, p->Eglobals)) {
-            return p;
-        }
-    }
-    return 0;
-}
-
-static struct progstate *find_class_static(dptr s)
-{
-    struct progstate *p;
-    for (p = progs; p; p = p->next) {
-        if (InRange(p->ClassStatics, s, p->EClassStatics)) {
-            return p;
-        }
-    }
-    return 0;
-}
-
-/*
- * get_name -- function to get print name of variable.
- */
-int get_name(dptr dp1, dptr dp0)
-{
-    dptr dp, varptr;
-    tended union block *blkptr;
-    dptr arg1;                           /* 1st parameter */
-    dptr loc1;                           /* 1st local */
-    struct p_proc *proc0;                 /* address of procedure block */
-    char sbuf[100];			/* buffer; might be too small */
-    char *s, *s2;
-    word i, j, k;
-    struct progstate *prog;
-    struct p_frame *uf;
-
-    uf = get_current_user_frame();
-    arg1 = uf->fvars->desc;
-    proc0 = uf->proc;
-    /* The locals follow the args in the locals block */
-    loc1 = uf->fvars->desc + proc0->nparam;
-
-    type_case *dp1 of {
-      tvsubs: {
-            blkptr = BlkLoc(*dp1);
-            get_name(&(blkptr->tvsubs.ssvar),dp0);
-            sprintf(sbuf,"[%ld:%ld]",(long)blkptr->tvsubs.sspos,
-                    (long)blkptr->tvsubs.sspos+blkptr->tvsubs.sslen);
-            k = StrLen(*dp0);
-            j = strlen(sbuf);
-
-            /*
-             * allocate space for both the name and the subscript image,
-             *  and then copy both parts into the allocated space
-             */
-            MemProtect(s = alcstr(NULL, k + j));
-            s2 = StrLoc(*dp0);
-            StrLoc(*dp0) = s;
-            StrLen(*dp0) = j + k;
-            for (i = 0; i < k; i++)
-                *s++ = *s2++;
-            s2 = sbuf;
-            for (i = 0; i < j; i++)
-                *s++ = *s2++;
-        }
-
-      tvtbl: {
-            keyref(BlkLoc(*dp1) ,dp0);
-        }
-
-      kywdint: {
-          for (prog = progs; prog; prog = prog->next) {
-              if (VarLoc(*dp1) == &prog->Kywd_ran) {
-                  LitStr("&random", dp0);
-                  break;
-              }
-              else if (VarLoc(*dp1) == &prog->Kywd_trace) {
-                  LitStr("&trace", dp0);
-                  break;
-              }
-              else if (VarLoc(*dp1) == &prog->Kywd_dump) {
-                  LitStr("&dump", dp0);
-                  break;
-              }
-              else if (VarLoc(*dp1) == &prog->Kywd_maxlevel) {
-                  LitStr("&maxlevel", dp0);
-                  break;
-              }
-          }
-          if (!prog)
-            syserr("name: unknown integer keyword variable");
-        }            
-      kywdany:
-            syserr("name: unknown keyword variable");
-
-      kywdhandler: {
-          for (prog = progs; prog; prog = prog->next) {
-              if (VarLoc(*dp1) == &prog->Kywd_handler) {
-                  LitStr("&handler", dp0);
-                  break;
-              }
-          }
-          if (!prog)
-            syserr("name: unknown handler keyword variable");
-        }            
-      kywdstr: {
-          for (prog = progs; prog; prog = prog->next) {
-              if (VarLoc(*dp1) == &prog->Kywd_prog) {
-                  LitStr("&progname", dp0);
-                  break;
-              } else if (VarLoc(*dp1) == &prog->Kywd_why) {
-                  LitStr("&why", dp0);
-                  break;
-              }
-          }
-          if (!prog)
-              syserr("name: unknown string keyword variable");
-        }
-      kywdpos: {
-          for (prog = progs; prog; prog = prog->next) {
-              if (VarLoc(*dp1) == &prog->Kywd_pos) {
-                  LitStr("&pos", dp0);
-                  break;
-              }
-          }
-          if (!prog)
-              syserr("name: unknown pos keyword variable");
-      }
-
-      kywdsubj: {
-          for (prog = progs; prog; prog = prog->next) {
-              if (VarLoc(*dp1) == &prog->Kywd_subject) {
-                  LitStr("&subject", dp0);
-                  break;
-              }
-          }
-          if (!prog)
-              syserr("name: unknown subject keyword variable");
-        }
-
-      named_var: {
-            /*
-             * Must(?) be a named variable.
-             * (When used internally, could be reference to nameless
-             * temporary stack variables as occurs for string scanning).
-             */
-            dp = VarLoc(*dp1);		 /* get address of variable */
-            if ((prog = find_global(dp))) {
-                *dp0 = *prog->Gnames[dp - prog->Globals]; 		/* global */
-                return GlobalName;
-            }
-            else if ((prog = find_class_static(dp))) {
-                /*
-                 * Class static field
-                 */
-                struct class_field *cf = find_class_field_for_dptr(dp, prog);
-                struct b_class *c = cf->defining_class;
-                dptr fname = c->program->Fnames[cf->fnum];
-                int len = 6 + StrLen(*c->name) + 1 + StrLen(*fname);
-                MemProtect(StrLoc(*dp0) = reserve(Strings, len));
-                StrLen(*dp0) = len;
-                alcstr("class ", 6);
-                alcstr(StrLoc(*c->name), StrLen(*c->name));
-                alcstr(".", 1);
-                alcstr(StrLoc(*fname), StrLen(*fname));
-                return FieldName;
-            }
-            else if (InRange(proc0->program->Statics, dp, proc0->program->Estatics)) {
-                i = dp - proc0->fstatic;	/* static */
-                if (i < 0 || i >= proc0->nstatic)
-                    syserr("name: unreferencable static variable");
-                i += proc0->nparam + proc0->ndynam;
-                *dp0 = *proc0->lnames[i];
-                return StaticName;
-            }
-            else if (InRange(arg1, dp, &arg1[proc0->nparam])) {
-                *dp0 = *proc0->lnames[dp - arg1];          /* argument */
-                return ParamName;
-            }
-            else if (InRange(loc1, dp, &loc1[proc0->ndynam])) {
-                *dp0 = *proc0->lnames[dp - loc1 + proc0->nparam];
-                return LocalName;
-            }
-            else {
-                LitStr("(temp)", dp0);
-                return Failed;
-            }
-        }
-
-      struct_var: {
-            /*
-             * Must be an element of a structure.
-             */
-            blkptr = BlkLoc(*dp1);
-            varptr = OffsetVarLoc(*dp1);
-            switch (BlkType(blkptr)) {
-                case T_Lelem: 		/* list */
-                    i = varptr - &blkptr->lelem.lslots[blkptr->lelem.first] + 1;
-                    if (i < 1)
-                        i += blkptr->lelem.nslots;
-                    while (BlkType(blkptr->lelem.listprev) == T_Lelem) {
-                        blkptr = blkptr->lelem.listprev;
-                        i += blkptr->lelem.nused;
-                    }
-                    sprintf(sbuf,"list#%ld[%ld]",
-                            (long)blkptr->lelem.listprev->list.id, (long)i);
-                    i = strlen(sbuf);
-                    MemProtect(StrLoc(*dp0) = alcstr(sbuf,i));
-                    StrLen(*dp0) = i;
-                    break;
-                case T_Record: { 		/* record */
-                    struct b_constructor *c = blkptr->record.constructor;
-                    dptr fname;
-                    int len;
-                    i = varptr - blkptr->record.fields;
-                    fname = c->program->Fnames[c->fnums[i]];
-                    sprintf(sbuf,"#%ld", (long)blkptr->record.id);
-                    len = 7 + StrLen(*c->name) + strlen(sbuf) + 1 + StrLen(*fname);
-                    MemProtect(StrLoc(*dp0) = reserve(Strings, len));
-                    StrLen(*dp0) = len;
-                    alcstr("record ", 7);
-                    alcstr(StrLoc(*c->name), StrLen(*c->name));
-                    alcstr(sbuf, strlen(sbuf));
-                    alcstr(".", 1);
-                    alcstr(StrLoc(*fname), StrLen(*fname));
-                    break;
-                }
-                case T_Object: { 		/* object */
-                    struct b_class *c = blkptr->object.class;
-                    dptr fname;
-                    int len;
-                    i = varptr - blkptr->object.fields;
-                    fname =  c->program->Fnames[c->fields[i]->fnum];
-                    sprintf(sbuf,"#%ld", (long)blkptr->object.id);
-                    len = 7 + StrLen(*c->name) + strlen(sbuf) + 1 + StrLen(*fname);
-                    MemProtect(StrLoc(*dp0) = reserve(Strings, len));
-                    StrLen(*dp0) = len;
-                    alcstr("object ", 7);
-                    alcstr(StrLoc(*c->name), StrLen(*c->name));
-                    alcstr(sbuf, strlen(sbuf));
-                    alcstr(".", 1);
-                    alcstr(StrLoc(*fname), StrLen(*fname));
-                    break;
-                }
-                case T_Telem: 		/* table */
-                    keyref(blkptr,dp0);
-                    break;
-                default:		/* none of the above */
-                    LitStr("(struct)", dp0);
-                    return Failed;
-            }
-        }
-
-        default: {
-            LitStr("(non-variable)", dp0);
-            return Failed;
-        }
-    }
-    return Succeeded;
-}
-
-
-/*
- * keyref(bp,dp) -- print name of subscripted table
- */
-static void keyref(union block *bp, dptr dp)
-{
-    tended struct descrip tr, td;
-    char sbuf[64];
-    int len;
-
-    tr = bp->telem.tref;
-    getimage(&tr, &td);
-
-    if (BlkType(bp) == T_Tvtbl)
-        bp = bp->tvtbl.clink;
-    else
-        while(BlkType(bp) == T_Telem)
-            bp = bp->telem.clink;
-    sprintf(sbuf, "table#%ld[", (long)bp->table.id);
-    len = strlen(sbuf) + StrLen(td) + 1;
-    MemProtect (StrLoc(*dp) = reserve(Strings, len));
-    StrLen(*dp) = len;
-    alcstr(sbuf, strlen(sbuf));
-    alcstr(StrLoc(td), StrLen(td));
-    alcstr("]", 1);
-}
-
 static void cotrace_line(struct b_coexpr *from)
 {
     struct p_frame *pf = get_current_user_frame_of(from);
@@ -546,19 +211,21 @@ static void cotrace_line(struct b_coexpr *from)
 
 void trace_coact(struct b_coexpr *from, struct b_coexpr *to, dptr val)
 {
+    word to_id = to->id;  /* Save since outimage may collect */
     cotrace_line(from);
     fprintf(stderr,"; co-expression#%ld : ", (long)from->id);
     outimage(stderr, val, 0);
-    fprintf(stderr, " @ co-expression#%ld\n", (long)to->id);
+    fprintf(stderr, " @ co-expression#%ld\n", (long)to_id);
     fflush(stderr);
 }
 
 void trace_coret(struct b_coexpr *from, struct b_coexpr *to, dptr val)
 {
+    word to_id = to->id;  /* Save since outimage may collect */
     cotrace_line(from);
     fprintf(stderr,"; co-expression#%ld returned ", (long)from->id);
     outimage(stderr, val, 0);
-    fprintf(stderr, " to co-expression#%ld\n", (long)to->id);
+    fprintf(stderr, " to co-expression#%ld\n", (long)to_id);
     fflush(stderr);
 }
 

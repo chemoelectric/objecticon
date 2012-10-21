@@ -2,14 +2,14 @@
  * File: rmisc.r
  */
 
+#include "../h/modflags.h"
 #include "../h/opdefs.h"
 
 /*
  * Prototypes.
  */
 
-static void	listimage
-   (FILE *f,struct b_list *lp, int noimage);
+static void	listimage(FILE *f, dptr dp, int noimage);
 static char *	csname		(dptr dp);
 
 static char *proc_kinds[] = { "procedure",
@@ -482,6 +482,17 @@ static int cset_do_range(int from, int to)
 #define StringLimit	16		/* limit on length of imaged string */
 #define ListLimit	 6		/* limit on list items in image */
 
+static void kywdout(FILE *f, dptr dp, int noimage)
+{
+   tended struct descrip tdp;
+   getname(dp, &tdp);
+   putstr(f, &tdp);
+   if (!noimage) {
+       fprintf(f, " = ");
+       outimage(f, VarLoc(*dp), noimage);
+   }
+}
+
 /*
  * outimage - print image of *dp on file f.  If noimage is nonzero,
  *  fields of records will not be imaged.
@@ -627,7 +638,7 @@ void outimage(FILE *f, dptr dp, int noimage)
          /*
           * listimage does the work for lists.
           */
-         listimage(f, &ListBlk(*dp), noimage);
+          listimage(f, dp, noimage);
          }
 
       table: {
@@ -746,70 +757,56 @@ void outimage(FILE *f, dptr dp, int noimage)
          }
 
       tvsubs: {
+         tended struct descrip sv;
          /*
           * Produce "v[i+:j] = value" where v is the image of the variable
           *  containing the substring, i is starting position of the substring
           *  j is the length, and value is the string v[i+:j].	If the length
           *  (j) is one, just produce "v[i] = value".
           */
-         if (is:kywdsubj(TvsubsBlk(*dp).ssvar)) {
-            tdp = *VarLoc(TvsubsBlk(*dp).ssvar);
-            fprintf(f, "&subject");
-            }
-         else if (is:struct_var(TvsubsBlk(*dp).ssvar)) {
-            tdp = *OffsetVarLoc(TvsubsBlk(*dp).ssvar);
-            outimage(f, &tdp, noimage);
-            }
-         else if (is:named_var(TvsubsBlk(*dp).ssvar)) {
-            tdp = *VarLoc(TvsubsBlk(*dp).ssvar);
-            outimage(f, &tdp, noimage);
-            }
-         else if (is:kywdstr(TvsubsBlk(*dp).ssvar)) {
-            tdp = *VarLoc(TvsubsBlk(*dp).ssvar);
-            outimage(f, &tdp, noimage);
-            }
-         else {
-            tdp = TvsubsBlk(*dp).ssvar;
-            outimage(f, &tdp, noimage);
-         }
+         sv = TvsubsBlk(*dp).ssvar;
+         outimage(f, &sv, noimage+1);
 
          if (TvsubsBlk(*dp).sslen == 1)
             fprintf(f, "[%ld]", (long)TvsubsBlk(*dp).sspos);
          else
             fprintf(f, "[%ld+:%ld]", (long)TvsubsBlk(*dp).sspos, (long)TvsubsBlk(*dp).sslen);
 
-         if (is:ucs(tdp)) {
-             struct descrip utf8_subs;
-             if (TvsubsBlk(*dp).sspos + TvsubsBlk(*dp).sslen - 1 > UcsBlk(tdp).length)
-                 return;
-             utf8_substr(&UcsBlk(tdp),
-                         TvsubsBlk(*dp).sspos,
-                         TvsubsBlk(*dp).sslen,
-                         &utf8_subs);
-             i = TvsubsBlk(*dp).sslen;
-             s = StrLoc(utf8_subs);
-             j = Min(i, StringLimit);
-             fprintf(f, " = u\"");
-             while (j-- > 0) {
-                 int n;
-                 k = utf8_iter(&s);
-                 n = ucs_charstr(k, cbuf);
-                 putn(f, cbuf, n);
-             }
-             if (i > StringLimit)
-                 fprintf(f, "...");
-             fprintf(f, "\"");
+         if (!noimage) {
+             deref(&sv, &tdp);
+             if (is:ucs(tdp)) {
+                 struct descrip utf8_subs;
+                 if (TvsubsBlk(*dp).sspos + TvsubsBlk(*dp).sslen - 1 > UcsBlk(tdp).length)
+                     return;
+                 utf8_substr(&UcsBlk(tdp),
+                             TvsubsBlk(*dp).sspos,
+                             TvsubsBlk(*dp).sslen,
+                             &utf8_subs);
+                 i = TvsubsBlk(*dp).sslen;
+                 s = StrLoc(utf8_subs);
+                 j = Min(i, StringLimit);
+                 fprintf(f, " = u\"");
+                 while (j-- > 0) {
+                     int n;
+                     k = utf8_iter(&s);
+                     n = ucs_charstr(k, cbuf);
+                     putn(f, cbuf, n);
+                 }
+                 if (i > StringLimit)
+                     fprintf(f, "...");
+                 fprintf(f, "\"");
                                          
-         }
-         else if (Qual(tdp)) {
-             tended struct descrip q;
-             if (TvsubsBlk(*dp).sspos + TvsubsBlk(*dp).sslen - 1 > StrLen(tdp))
-                 return;
-             StrLen(q) = TvsubsBlk(*dp).sslen;
-             StrLoc(q) = StrLoc(tdp) + TvsubsBlk(*dp).sspos - 1;
-             fprintf(f, " = ");
-             outimage(f, &q, noimage);
-         }
+             }
+             else if (Qual(tdp)) {
+                 tended struct descrip q;
+                 if (TvsubsBlk(*dp).sspos + TvsubsBlk(*dp).sslen - 1 > StrLen(tdp))
+                     return;
+                 StrLen(q) = TvsubsBlk(*dp).sslen;
+                 StrLoc(q) = StrLoc(tdp) + TvsubsBlk(*dp).sspos - 1;
+                 fprintf(f, " = ");
+                 outimage(f, &q, noimage);
+             }
+           }
 
         }
 
@@ -828,39 +825,24 @@ void outimage(FILE *f, dptr dp, int noimage)
          }
 
       kywdint: {
-         if (VarLoc(*dp) == &kywd_ran)
-            fprintf(f, "&random = ");
-         else if (VarLoc(*dp) == &kywd_trace)
-            fprintf(f, "&trace = ");
-         else if (VarLoc(*dp) == &kywd_dump)
-            fprintf(f, "&dump = ");
-         else if (VarLoc(*dp) == &kywd_maxlevel)
-            fprintf(f, "&maxlevel = ");
-         outimage(f, VarLoc(*dp), noimage);
-         }
+         kywdout(f, dp, noimage);
+      }
 
       kywdhandler: {
-         fprintf(f, "&handler = ");
-         outimage(f, VarLoc(*dp), noimage);
-         }
+         kywdout(f, dp, noimage);
+      }
 
       kywdstr: {
-         if (VarLoc(*dp) == &kywd_prog)
-            fprintf(f, "&progname = ");
-         if (VarLoc(*dp) == &kywd_why)
-            fprintf(f, "&why = ");
-         outimage(f, VarLoc(*dp), noimage);
-         }
+         kywdout(f, dp, noimage);
+      }
 
       kywdpos: {
-         fprintf(f, "&pos = ");
-         outimage(f, VarLoc(*dp), noimage);
-         }
+         kywdout(f, dp, noimage);
+      }
 
       kywdsubj: {
-         fprintf(f, "&subject = ");
-         outimage(f, VarLoc(*dp), noimage);
-         }
+         kywdout(f, dp, noimage);
+      }
 
      struct_var: {
          union block *bp = BlkLoc(*dp);
@@ -882,7 +864,7 @@ void outimage(FILE *f, dptr dp, int noimage)
              }
              case T_Lelem: { 		/* list */
                  /* Find and print the list block and the index */
-                 word i = varptr - &bp->lelem.lslots[bp->lelem.first] + 1;
+                 i = varptr - &bp->lelem.lslots[bp->lelem.first] + 1;
                  if (i < 1)
                      i += bp->lelem.nslots;
                  while (BlkType(bp->lelem.listprev) == T_Lelem) {
@@ -896,23 +878,23 @@ void outimage(FILE *f, dptr dp, int noimage)
                  break;
              }
              case T_Object: { 		/* object */
-                 struct b_class *c = bp->object.class;
+                 struct b_class *c = ObjectBlk(*dp).class;
                  dptr fname;
-                 i = varptr - bp->object.fields;
+                 i = varptr - ObjectBlk(*dp).fields;
                  fname =  c->program->Fnames[c->fields[i]->fnum];
                  tdp.dword = D_Object;
-                 BlkLoc(tdp) = bp;
+                 BlkLoc(tdp) = BlkLoc(*dp);
                  outimage(f, &tdp, noimage + 1);
                  fprintf(f," . %.*s", (int)StrLen(*fname), StrLoc(*fname));
                  break;
              }
              case T_Record: { 		/* record */
-                 struct b_constructor *c = bp->record.constructor;
+                 struct b_constructor *c = RecordBlk(*dp).constructor;
                  dptr fname;
-                 i = varptr - bp->record.fields;
+                 i = varptr - RecordBlk(*dp).fields;
                  fname = c->program->Fnames[c->fnums[i]];
                  tdp.dword = D_Record;
-                 BlkLoc(tdp) = bp;
+                 BlkLoc(tdp) = BlkLoc(*dp);
                  outimage(f, &tdp, noimage + 1);
                  fprintf(f," . %.*s", (int)StrLen(*fname), StrLoc(*fname));
                  break;
@@ -921,16 +903,57 @@ void outimage(FILE *f, dptr dp, int noimage)
                  fprintf(f, "struct_var");
              }
          }
-         fprintf(f, " = ");
-         tdp = *OffsetVarLoc(*dp);
-         outimage(f, &tdp, noimage);
-      }
-     named_var: {
-         fprintf(f, "(variable = ");
-         tdp = *VarLoc(*dp);
-         outimage(f, &tdp, noimage);
-         putc(')', f);
+         if (!noimage) {
+             fprintf(f, " = ");
+             tdp = *OffsetVarLoc(*dp);
+             outimage(f, &tdp, noimage);
          }
+      }
+
+     named_var: {
+         struct progstate *prog;
+         struct p_frame *uf;
+         struct p_proc *proc0;                 /* address of procedure block */
+         dptr vp;
+         if (!noimage)
+             fprintf(f, "(variable ");
+         vp = VarLoc(*dp);
+         uf = get_current_user_frame();
+         proc0 = uf->proc;
+         if ((prog = find_global(vp))) {
+             putstr(f, prog->Gnames[vp - prog->Globals]); 		/* global */
+         }
+         else if ((prog = find_class_static(vp))) {
+             /*
+              * Class static field
+              */
+             struct class_field *cf = find_class_field_for_dptr(vp, prog);
+             struct b_class *c = cf->defining_class;
+             dptr fname = c->program->Fnames[cf->fnum];
+             fprintf(f, "class %.*s . %.*s", 
+                     (int)StrLen(*c->name), StrLoc(*c->name),
+                     (int)StrLen(*fname), StrLoc(*fname));
+         }
+         else if (InRange(proc0->program->Statics, vp, proc0->program->Estatics)) {
+             i = vp - proc0->fstatic;	/* static */
+             if (i < 0 || i >= proc0->nstatic)
+                 syserr("unreferencable static variable");
+             i += proc0->nparam + proc0->ndynam;
+             putstr(f, proc0->lnames[i]);
+         }
+         else if (InRange(uf->fvars->desc, vp, uf->fvars->desc_end)) {
+             putstr(f, proc0->lnames[vp - uf->fvars->desc]);          /* argument/local */
+         }
+         else
+             fprintf(f, "(temp)");
+
+         if (!noimage) {
+             fprintf(f, " = ");
+             tdp = *VarLoc(*dp);
+             outimage(f, &tdp, noimage);
+             putc(')', f);
+         }
+     }
 
       default: { 
          if (Type(*dp) <= MaxType)
@@ -946,11 +969,15 @@ void outimage(FILE *f, dptr dp, int noimage)
  * listimage - print an image of a list.
  */
 
-static void listimage(FILE *f, struct b_list *lp, int noimage)
+static void listimage(FILE *f, dptr dp, int noimage)
    {
    word i, j;
-   struct b_lelem *bp;
+   tended struct b_lelem *bp;
+   tended struct b_list *lp;
+   tended struct descrip tdp;
    word size, count;
+
+   lp = &ListBlk(*dp);
 
    bp = (struct b_lelem *) lp->listhead;
    size = lp->size;
@@ -983,7 +1010,8 @@ static void listimage(FILE *f, struct b_list *lp, int noimage)
             j = bp->first + i - 1;
             if (j >= bp->nslots)
                j -= bp->nslots;
-            outimage(f, &bp->lslots[j], noimage+1);
+            tdp = bp->lslots[j];
+            outimage(f, &tdp, noimage+1);
             if (count >= size)
                break;
             putc(',', f);
@@ -1309,8 +1337,7 @@ void getimage(dptr dp1, dptr dp2)
           *  "record name#m(n)"
           * where n is the number of fields.
           */
-         struct b_constructor *rec_const;
-         rec_const = RecordBlk(*dp1).constructor;
+         struct b_constructor *rec_const = RecordBlk(*dp1).constructor;
          sprintf(sbuf, "#%ld(%ld)", (long)RecordBlk(*dp1).id, (long)rec_const->n_fields);
          len = 7 + strlen(sbuf) + StrLen(*rec_const->name);
 	 MemProtect (StrLoc(*dp2) = reserve(Strings, len));
@@ -1395,8 +1422,7 @@ void getimage(dptr dp1, dptr dp2)
             *  "object name#m(n)"     
             * where n is the number of fields.
             */
-           struct b_class *obj_class;
-           obj_class = ObjectBlk(*dp1).class;   
+           struct b_class *obj_class = ObjectBlk(*dp1).class;   
            sprintf(sbuf, "#%ld(%ld)", (long)ObjectBlk(*dp1).id, (long)obj_class->n_instance_fields);
            len = 7 + strlen(sbuf) + StrLen(*obj_class->name);
            MemProtect (StrLoc(*dp2) = reserve(Strings, len));
@@ -1466,6 +1492,295 @@ static char *csname(dptr dp)
     }
     return NULL;
 
+}
+
+
+/*
+ * Given a descriptor pointer d from the classstatics area, hunt for
+ * the corresponding class_field in the classfields area, ie a
+ * class_field cf so that cf->field_descriptor == d.
+ * 
+ * We can use binary search since the pointers into the classstatics
+ * area increase, but the search is complicated by the fact that some
+ * of the class_fields aren't static variables; they can be methods or
+ * instance fields.
+ */
+
+/* Find the nearest index in classfields to m, with a non-null
+ * field_descriptor */
+static int nearest_with_dptr(int m, int n, struct progstate *prog)
+{
+    int off;
+    for (off = 0; off < n; ++off) {
+        if (m + off < n && (prog->ClassFields[m + off].flags & (M_Method | M_Static)) == M_Static)
+            return m + off;
+        if (m - off >= 0 && (prog->ClassFields[m - off].flags & (M_Method | M_Static)) == M_Static)
+            return m - off;
+    }    
+    syserr("name: no field_descriptors in classfields area");
+    return 0; /* Unreachable */
+}
+
+struct class_field *find_class_field_for_dptr(dptr d, struct progstate *prog)
+{
+    int l = 0, m, n = prog->EClassFields - prog->ClassFields, r = n - 1;
+    while (l <= r) {
+        m = nearest_with_dptr((l + r) / 2, n, prog);
+        if (d < prog->ClassFields[m].field_descriptor)
+            r = m - 1;
+        else if (d > prog->ClassFields[m].field_descriptor)
+            l = m + 1;
+        else
+            return &prog->ClassFields[m];
+    }
+    syserr("name: no corresponding field_descriptor in classfields area");
+    return 0; /* Unreachable */
+}
+
+struct progstate *find_global(dptr s)
+{
+    struct progstate *p;
+    for (p = progs; p; p = p->next) {
+        if (InRange(p->Globals, s, p->Eglobals)) {
+            return p;
+        }
+    }
+    return 0;
+}
+
+struct progstate *find_class_static(dptr s)
+{
+    struct progstate *p;
+    for (p = progs; p; p = p->next) {
+        if (InRange(p->ClassStatics, s, p->EClassStatics)) {
+            return p;
+        }
+    }
+    return 0;
+}
+
+/*
+ * keyref(bp,dp) -- print name of subscripted table
+ */
+static void keyref(dptr dp1, dptr dp2)
+{
+    tended struct descrip tr, td;
+    union block *bp;  /* doesn't need to be tended */
+    char sbuf[64];
+    int len;
+
+    bp = BlkLoc(*dp1);
+    if (BlkType(bp) == T_Tvtbl)
+        bp = bp->tvtbl.clink;
+    else
+        while(BlkType(bp) == T_Telem)
+            bp = bp->telem.clink;
+    sprintf(sbuf, "table#%ld[", (long)bp->table.id);
+
+    tr = TelemBlk(*dp1).tref;
+    getimage(&tr, &td);
+
+    len = strlen(sbuf) + StrLen(td) + 1;
+    MemProtect (StrLoc(*dp2) = reserve(Strings, len));
+    StrLen(*dp2) = len;
+    alcstr(sbuf, strlen(sbuf));
+    alcstr(StrLoc(td), StrLen(td));
+    alcstr("]", 1);
+}
+
+/*
+ * getname -- function to get print name of variable.
+ */
+int getname(dptr dp1, dptr dp2)
+{
+    char sbuf[100];			/* buffer; might be too small */
+    int len;
+    word i;
+    struct progstate *prog;
+
+    type_case *dp1 of {
+      tvsubs: {
+            tended struct descrip tdp1, tdp2;
+            if (TvsubsBlk(*dp1).sslen == 1)
+                sprintf(sbuf, "[%ld]", (long)TvsubsBlk(*dp1).sspos);
+            else
+                sprintf(sbuf, "[%ld+:%ld]", (long)TvsubsBlk(*dp1).sspos, (long)TvsubsBlk(*dp1).sslen);
+            tdp1 = TvsubsBlk(*dp1).ssvar;
+            getname(&tdp1, &tdp2);
+            len = StrLen(tdp2) + strlen(sbuf);
+            MemProtect(StrLoc(*dp2) = reserve(Strings, len));
+            StrLen(*dp2) = len;
+            alcstr(StrLoc(tdp2), StrLen(tdp2));
+            alcstr(sbuf, strlen(sbuf));
+        }
+
+      tvtbl: {
+            keyref(dp1, dp2);
+        }
+
+      kywdint: {
+          for (prog = progs; prog; prog = prog->next) {
+              if (VarLoc(*dp1) == &prog->Kywd_ran) {
+                  LitStr("&random", dp2);
+                  break;
+              }
+              else if (VarLoc(*dp1) == &prog->Kywd_trace) {
+                  LitStr("&trace", dp2);
+                  break;
+              }
+              else if (VarLoc(*dp1) == &prog->Kywd_dump) {
+                  LitStr("&dump", dp2);
+                  break;
+              }
+              else if (VarLoc(*dp1) == &prog->Kywd_maxlevel) {
+                  LitStr("&maxlevel", dp2);
+                  break;
+              }
+          }
+          if (!prog)
+            syserr("name: unknown integer keyword variable");
+        }            
+      kywdany:
+        syserr("name: unknown keyword variable");
+
+      kywdhandler: {
+        LitStr("&handler", dp2);
+        }            
+      kywdstr: {
+          for (prog = progs; prog; prog = prog->next) {
+              if (VarLoc(*dp1) == &prog->Kywd_prog) {
+                  LitStr("&progname", dp2);
+                  break;
+              } else if (VarLoc(*dp1) == &prog->Kywd_why) {
+                  LitStr("&why", dp2);
+                  break;
+              }
+          }
+          if (!prog)
+              syserr("name: unknown string keyword variable");
+        }
+      kywdpos: {
+        LitStr("&pos", dp2);
+      }
+
+      kywdsubj: {
+        LitStr("&subject", dp2);
+        }
+
+      named_var: {
+            /*
+             * Must(?) be a named variable.
+             * (When used internally, could be reference to nameless
+             * temporary stack variables as occurs for string scanning).
+             */
+            struct p_frame *uf;
+            struct p_proc *proc0;                 /* address of procedure block */
+            dptr vp;
+            uf = get_current_user_frame();
+            proc0 = uf->proc;
+            vp = VarLoc(*dp1);		 /* get address of variable */
+            if ((prog = find_global(vp))) {
+                *dp2 = *prog->Gnames[vp - prog->Globals]; 		/* global */
+            }
+            else if ((prog = find_class_static(vp))) {
+                /*
+                 * Class static field
+                 */
+                struct class_field *cf = find_class_field_for_dptr(vp, prog);
+                struct b_class *c = cf->defining_class;
+                dptr fname = c->program->Fnames[cf->fnum];
+                len = 6 + StrLen(*c->name) + 1 + StrLen(*fname);
+                MemProtect(StrLoc(*dp2) = reserve(Strings, len));
+                StrLen(*dp2) = len;
+                alcstr("class ", 6);
+                alcstr(StrLoc(*c->name), StrLen(*c->name));
+                alcstr(".", 1);
+                alcstr(StrLoc(*fname), StrLen(*fname));
+            }
+            else if (InRange(proc0->program->Statics, vp, proc0->program->Estatics)) {
+                i = vp - proc0->fstatic;	/* static */
+                if (i < 0 || i >= proc0->nstatic)
+                    syserr("name: unreferencable static variable");
+                i += proc0->nparam + proc0->ndynam;
+                *dp2 = *proc0->lnames[i];
+            }
+            else if (InRange(uf->fvars->desc, vp, uf->fvars->desc_end)) {
+                *dp2 = *proc0->lnames[vp - uf->fvars->desc];          /* argument/local */
+            }
+            else {
+                LitStr("(temp)", dp2);
+                return Failed;
+            }
+        }
+
+      struct_var: {
+            /*
+             * Must be an element of a structure.
+             */
+            union block *bp = BlkLoc(*dp1);
+            dptr varptr = OffsetVarLoc(*dp1);
+            switch (BlkType(bp)) {
+                case T_Lelem: 		/* list */
+                    i = varptr - &bp->lelem.lslots[bp->lelem.first] + 1;
+                    if (i < 1)
+                        i += bp->lelem.nslots;
+                    while (BlkType(bp->lelem.listprev) == T_Lelem) {
+                        bp = bp->lelem.listprev;
+                        i += bp->lelem.nused;
+                    }
+                    sprintf(sbuf,"list#%ld[%ld]",
+                            (long)bp->lelem.listprev->list.id, (long)i);
+                    i = strlen(sbuf);
+                    MemProtect(StrLoc(*dp2) = alcstr(sbuf,i));
+                    StrLen(*dp2) = i;
+                    break;
+                case T_Record: { 		/* record */
+                    struct b_constructor *c = RecordBlk(*dp1).constructor;
+                    dptr fname;
+                    i = varptr - RecordBlk(*dp1).fields;
+                    fname = c->program->Fnames[c->fnums[i]];
+                    sprintf(sbuf,"#%ld", (long)RecordBlk(*dp1).id);
+                    len = 7 + StrLen(*c->name) + strlen(sbuf) + 1 + StrLen(*fname);
+                    MemProtect(StrLoc(*dp2) = reserve(Strings, len));
+                    StrLen(*dp2) = len;
+                    alcstr("record ", 7);
+                    alcstr(StrLoc(*c->name), StrLen(*c->name));
+                    alcstr(sbuf, strlen(sbuf));
+                    alcstr(".", 1);
+                    alcstr(StrLoc(*fname), StrLen(*fname));
+                    break;
+                }
+                case T_Object: { 		/* object */
+                    struct b_class *c = ObjectBlk(*dp1).class;
+                    dptr fname;
+                    i = varptr - ObjectBlk(*dp1).fields;
+                    fname =  c->program->Fnames[c->fields[i]->fnum];
+                    sprintf(sbuf,"#%ld", (long)ObjectBlk(*dp1).id);
+                    len = 7 + StrLen(*c->name) + strlen(sbuf) + 1 + StrLen(*fname);
+                    MemProtect(StrLoc(*dp2) = reserve(Strings, len));
+                    StrLen(*dp2) = len;
+                    alcstr("object ", 7);
+                    alcstr(StrLoc(*c->name), StrLen(*c->name));
+                    alcstr(sbuf, strlen(sbuf));
+                    alcstr(".", 1);
+                    alcstr(StrLoc(*fname), StrLen(*fname));
+                    break;
+                }
+                case T_Telem: 		/* table */
+                    keyref(dp1, dp2);
+                    break;
+                default:		/* none of the above */
+                    LitStr("(struct)", dp2);
+                    return Failed;
+            }
+        }
+
+        default: {
+            LitStr("(non-variable)", dp2);
+            return Failed;
+        }
+    }
+    return Succeeded;
 }
 
 

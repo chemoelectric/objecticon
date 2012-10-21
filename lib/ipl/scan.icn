@@ -569,12 +569,7 @@ end
 # Like `util.save_vars{..., &subject|&pos}`.
 #
 procedure save_scan(e)
-   local t
-   t := &pos
-   &subject ? {
-      &pos := t
-      suspend |@e
-   }
+   "" ? suspend |@e
 end
 
 #

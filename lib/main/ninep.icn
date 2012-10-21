@@ -1126,7 +1126,7 @@ class Session9P()
             next
          y := respond(x)
          if \verbose then write("SEND:", to_string(y))
-         f.fully_out(Comms9P.encode(y)) | fail
+         f.writes1(Comms9P.encode(y)) | fail
       }
    end
 
@@ -1139,13 +1139,13 @@ class Session9P()
                if \verbose then write("SEND:", to_string(y))
                use {
                   ts := TaskStream(f, t).set_close_underlying(&no),
-                  ts.fully_out(Comms9P.encode(y))
+                  ts.writes1(Comms9P.encode(y))
                }
                delete(valid, x)
             }
          }
          t.revert()
-      }, create throw_handler)
+      }, create throw_handler | cleanup)
       t.start()
    end
 
@@ -1161,7 +1161,7 @@ class Session9P()
                if is(x, TFlush) then {
                   y := respond(x)
                   if \verbose then write("SEND:", to_string(y))
-                  ts.fully_out(Comms9P.encode(y))
+                  ts.writes1(Comms9P.encode(y))
                   every e := !valid do {
                      if e.tag = x.oldtag then {
                         if \verbose then write("FLUSHING:", to_string(e))
@@ -1175,7 +1175,7 @@ class Session9P()
             }
          }
          t.revert()
-      }, create throw_handler)
+      }, create throw_handler | cleanup)
       t.start()
       return t
    end
@@ -1188,7 +1188,7 @@ class Session9P()
             io(ts)
          }
          t.revert()
-      })
+      }, create cleanup)
       t.start()
       return t
    end
