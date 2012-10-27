@@ -623,7 +623,7 @@ class Factory()
          "const": YY.CONST
          "readable": YY.READABLE
          "final": YY.FINAL
-         "uninst": YY.UNINST
+         "abstract": YY.ABSTRACT
          default: runerr("Bad access value", s)
       }
       return Leaf(Token(t, s, pad || s))

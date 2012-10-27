@@ -11,6 +11,7 @@
 
 /* reserved words */
 
+%token  ABSTRACT    /* abstract    */
 %token  BREAK       /* break     */
 %token  BY          /* by        */
 %token  CASE        /* case      */
@@ -48,7 +49,6 @@
 %token  TCASE       /* tcase     */
 %token  THEN        /* then      */
 %token  TO          /* to        */
-%token  UNINST      /* uninst    */
 %token  UNTIL       /* until     */
 %token  WHILE       /* while     */
 
@@ -214,7 +214,7 @@ classaccess : classaccess1 ;
 
 classaccess1 : { $$ := Node.EMPTY } ;
         | FINAL
-        | UNINST
+        | ABSTRACT
 
 fieldaccess : fieldaccess1 ;
         | fieldaccess fieldaccess1 { $$ := Node("fieldaccess", $1,$2) } ;
@@ -227,6 +227,7 @@ fieldaccess1 : PRIVATE
         | CONST
         | READABLE
         | FINAL
+        | ABSTRACT
 
 global  : GLOBAL idlist { $$ := Node("global", $1,$2) } ;
 

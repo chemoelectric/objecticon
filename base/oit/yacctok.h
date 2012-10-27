@@ -16,6 +16,7 @@
 
 /* reserved words */
 
+%token	ABSTRACT    /* abstract  */
 %token	BREAK       /* break     */
 %token	BY          /* by        */
 %token	CASE        /* case      */
@@ -52,7 +53,6 @@
 %token	SUSPEND     /* suspend   */
 %token	THEN        /* then      */
 %token	TO          /* to        */
-%token	UNINST      /* uninst    */
 %token	UNTIL       /* until     */
 %token	WHILE       /* while     */
 

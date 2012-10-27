@@ -28,8 +28,8 @@ class Class()
       Final,
       # Integer flag for a special method, ie init or new.
       Special,
-      # Integer flag for an uninstantiable class.
-      Uninst
+      # Integer flag for an abstract class/method.
+      Abstract
 
    private static init()
       Method := 8r01
@@ -43,7 +43,7 @@ class Class()
       Defer := 8r0400
       Final := 8r01000
       Special := 8r02000
-      Uninst := 8r04000
+      Abstract := 8r04000
    end
 
    private static defer create_raw(c)
@@ -100,7 +100,7 @@ class Class()
    public static defer get_n_fields(c)
 
    # Return the flags for the class {c}, which can include
-   # {Uninst} or {Final}.
+   # {Abstract} or {Final}.
    #
    public static defer get_class_flags(c)
 

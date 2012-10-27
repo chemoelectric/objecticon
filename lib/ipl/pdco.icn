@@ -1278,3 +1278,17 @@ procedure Each(n, e[])
          @f
    }
 end
+
+#
+# Parallel assignment to each result of e from each corresponding result of f.
+#
+procedure Assign(e, f)
+   while @e := @f
+end
+
+#
+# Parallel swap between corresponding results of e and f.
+#
+procedure Swap(e, f)
+   while @e :=: @f
+end

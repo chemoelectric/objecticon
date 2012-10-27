@@ -124,8 +124,20 @@ void check_flags(int flag, struct node *n)
             tfatal_at(n, "A static method cannot be final: method %s in class %s", 
                     curr_class->curr_field->name, curr_class->global->g_name);
 
+        if ((flag & (M_Static | M_Abstract)) == (M_Static | M_Abstract))
+            tfatal_at(n, "A static method cannot be abstract: method %s in class %s", 
+                    curr_class->curr_field->name, curr_class->global->g_name);
+
         if ((flag & M_Final) && (curr_class->flag & M_Final))
             tfatal_at(n, "A method cannot be final in a class marked final: method %s in class %s", 
+                    curr_class->curr_field->name, curr_class->global->g_name);
+
+        if ((flag & M_Abstract) && (curr_class->flag & M_Final))
+            tfatal_at(n, "A method cannot be abstract in a class marked final: method %s in class %s", 
+                    curr_class->curr_field->name, curr_class->global->g_name);
+
+        if ((flag & (M_Abstract | M_Final)) == (M_Abstract | M_Final))
+            tfatal_at(n, "An abstract method cannot be final: method %s in class %s", 
                     curr_class->curr_field->name, curr_class->global->g_name);
 
         if (flag & M_Const)
@@ -136,6 +148,10 @@ void check_flags(int flag, struct node *n)
             tfatal_at(n, "A method cannot be readable: method %s in class %s", 
                     curr_class->curr_field->name, curr_class->global->g_name);
     } else {
+        if (flag & M_Abstract)
+            tfatal_at(n, "A class variable cannot be abstract: field %s in class %s", 
+                    curr_class->curr_field->name, curr_class->global->g_name);
+
         if (flag & M_Final)
             tfatal_at(n, "A class variable cannot be final: field %s in class %s", 
                     curr_class->curr_field->name, curr_class->global->g_name);

@@ -125,7 +125,7 @@ int modflag;
 #define Modifier7()             modflag |= M_Readable
 #define Modifier8()             modflag |= M_Final
 #define Modifier9()             modflag |= M_Defer
-#define Modifier10()            modflag |= M_Uninst
+#define Modifier10()            modflag |= M_Abstract
 
 #define Classbody0()            modflag = 0; idflag = F_Class
 #define Fielddecl1(x)           check_flags(modflag, x)

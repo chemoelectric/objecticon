@@ -416,7 +416,7 @@ void construct_object(word clo, dptr lhs, dptr expr, int argc, dptr args, word r
     struct b_class *class0 = &ClassBlk(*expr);
     struct p_frame *pf;
 
-    if (class0->flags & M_Uninst) {
+    if (class0->flags & M_Abstract) {
         xexpr = expr;
         xargp = 0;
         skip_args(argc, args);

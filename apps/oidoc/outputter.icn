@@ -74,11 +74,11 @@ class Outputter()
          return iand(obj.flags, Class.Final) ~= 0
    end
 
-   protected is_uninst(obj)
+   protected is_abstract(obj)
       if is(obj, Tree) then
-         return obj.get_access().gen().str() == "uninst"
+         return obj.get_access().gen().str() == "abstract"
       else
-         return iand(obj.flags, Class.Uninst) ~= 0
+         return iand(obj.flags, Class.Abstract) ~= 0
    end
 
    protected get_param_string(obj)

@@ -1312,14 +1312,14 @@ class SelectionRequest()
    end
 end
 
-class SelectionOwner()
-   public defer get_content(target)
-   public defer lost_ownership()
-   public defer get_targets()
+abstract class SelectionOwner()
+   public abstract defer get_content(target)
+   public abstract defer lost_ownership()
+   public abstract defer get_targets()
 end
 
-class TextSelectionOwner(SelectionOwner)
-   protected defer get_text()
+abstract class TextSelectionOwner(SelectionOwner)
+   protected abstract defer get_text()
 
    public get_targets()
       suspend Selection.STRING_TARGET | Selection.UTF8_STRING_TARGET
