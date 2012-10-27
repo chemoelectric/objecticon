@@ -144,6 +144,8 @@ class HtmlOutputter(Outputter)
          write(f, "<h1>Class ", c.name, "</h1>")
          if is_final(c.obj) then
             write(f, "final<p>")
+         if is_uninst(c.obj) then
+            write(f, "uninst<p>")
          write(f, "<dl>")
 
          # Superclass list

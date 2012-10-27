@@ -295,6 +295,7 @@ static char *m_flag2str(int flag)
     if (flag & M_Final) strcat(buff, "M_Final ");
     if (flag & M_Defer) strcat(buff, "M_Defer ");
     if (flag & M_Special) strcat(buff, "M_Special ");
+    if (flag & M_Uninst) strcat(buff, "M_Uninst ");
     if (*buff)
         buff[strlen(buff) - 1] = 0;
     return buff;

@@ -248,7 +248,7 @@ end
 #
 # This class simply adds the close_underlying_flag to a {Stream}.
 #
-class HasUnderlyingStream()
+uninst class HasUnderlyingStream()
    protected
       close_underlying_flag
 
@@ -1216,7 +1216,7 @@ end
 
 # Convenient superclass of classes which use a background process.
 #
-class HasBgProc()
+uninst class HasBgProc()
    protected
       pid,
       exit_info
@@ -1249,7 +1249,7 @@ end
 # Convenient superclass of classes which have an optional {Task} to
 # use for polling.
 #
-class HasTask()
+uninst class HasTask()
    protected
       task
 

@@ -48,6 +48,7 @@
 %token  TCASE       /* tcase     */
 %token  THEN        /* then      */
 %token  TO          /* to        */
+%token  UNINST      /* uninst    */
 %token  UNTIL       /* until     */
 %token  WHILE       /* while     */
 
@@ -208,8 +209,12 @@ method : IDENT LPAREN arglist RPAREN locals initial optsemi compound END
 deferredmethod : DEFER IDENT LPAREN arglist RPAREN
                    { $$ := Node("deferredmethod", $1,$2,$3,$4,$5) };
 
-classaccess : { $$ := Node.EMPTY } ;
-        | FINAL ;
+classaccess : classaccess1 ;
+        | classaccess classaccess1 { $$ := Node("classaccess", $1,$2) } ;
+
+classaccess1 : { $$ := Node.EMPTY } ;
+        | FINAL
+        | UNINST
 
 fieldaccess : fieldaccess1 ;
         | fieldaccess fieldaccess1 { $$ := Node("fieldaccess", $1,$2) } ;

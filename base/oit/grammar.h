@@ -69,8 +69,12 @@ method :  IDENT { Method1($1);} LPAREN arglist RPAREN locals initial optsemi com
 
 deferredmethod : DEFER { Modifier9(); } IDENT { Method1($3);} LPAREN arglist RPAREN ;
 
-classaccess : ;
+classaccess : classaccess1 ;
+        | classaccess classaccess1 ;
+
+classaccess1 : ;
         | FINAL {Modifier8();};
+        | UNINST {Modifier10();};
 
 fieldaccess : fieldaccess1 ;
         | fieldaccess fieldaccess1 ;

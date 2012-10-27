@@ -16,7 +16,7 @@ import graphics, io
 # the appropriate dialog.  It also controls any active Tasks,
 # activating them between events as and when appropriate.
 #
-class Dispatcher()
+final uninst class Dispatcher()
    public static const 
       dialogs,
       scheduler
@@ -167,8 +167,5 @@ class Dispatcher()
 
    public static get_curr_task()
       return \scheduler.curr_task
-   end
-
-   final private new()
    end
 end

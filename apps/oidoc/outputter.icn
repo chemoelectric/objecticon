@@ -69,9 +69,16 @@ class Outputter()
 
    protected is_final(obj)
       if is(obj, Tree) then
-         return obj.is_final()
+         return obj.get_access().gen().str() == "final"
       else
          return iand(obj.flags, Class.Final) ~= 0
+   end
+
+   protected is_uninst(obj)
+      if is(obj, Tree) then
+         return obj.get_access().gen().str() == "uninst"
+      else
+         return iand(obj.flags, Class.Uninst) ~= 0
    end
 
    protected get_param_string(obj)

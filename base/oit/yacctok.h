@@ -52,6 +52,7 @@
 %token	SUSPEND     /* suspend   */
 %token	THEN        /* then      */
 %token	TO          /* to        */
+%token	UNINST      /* uninst    */
 %token	UNTIL       /* until     */
 %token	WHILE       /* while     */
 
