@@ -126,11 +126,11 @@ regardless of where in the line point is when the TAB command is used.")
    (cons
     (concat 
      "\\_<" 
-     (regexp-opt '("break" "by" "case" "class" "const" "create" "default" "defer" "do"
+     (regexp-opt '("abstract" "break" "by" "case" "class" "const" "create" "default" "defer" "do"
                    "else" "end" "every" "fail" "final" "global" "if" "import" "initial"
                    "invocable" "local" "next" "not" "of" "package" "private" "procedure" "protected"
                    "public" "readable" "record" "repeat" "return" "static" "suspend" "then" "to"
-                   "uninst" "until" "while"))
+                   "until" "while"))
      "\\_>")
     'font-lock-keyword-face)
 
@@ -357,7 +357,7 @@ Return the amount the indentation changed by."
 
 (defconst objecticon-field-starters "\\(public\\|private\\|package\\|protected\\|readable\\|const\\|final\\s-public\\|final\\s-private\\|final\\s-package\\|final\\s-protected\\|final\\s-readable\\|final\\s-static\\|final\\s-const\\|static\\s-public\\|static\\s-private\\|static\\s-package\\|static\\s-protected\\|static\\s-readable\\|static\\s-const\\)")
 
-(defconst objecticon-class-starters "\\(class\\|final\\s-class\\|uninst\\s-class\\|final\\s-uninst\\s-class\\|uninst\\s-final\\s-class\\)")
+(defconst objecticon-class-starters "\\(class\\|final\\s-class\\|abstract\\s-class\\|final\\s-abstract\\s-class\\|abstract\\s-final\\s-class\\)")
 
 (defun calculate-objecticon-indent (&optional parse-start)
   "Return appropriate indentation for current line as Object Icon code.
@@ -558,7 +558,7 @@ Returns nil if line starts inside a string, t if in a comment."
                                    "^" objecticon-class-starters "\\s-\\|^\\s-*end\\s-*$") (point-min) 'move)
        (skip-chars-forward " \t")
        (cond
-         ((looking-at (concat objecticon-field-starters ".*\\s-defer\\s-"))
+         ((looking-at (concat objecticon-field-starters ".*\\s-\\(defer\\|abstract\\)\\s-"))
           (setq objecticon-extra-indent (current-column))
           (setq objecticon-end-indent-level 0)
           (setq objecticon-toplevel t))

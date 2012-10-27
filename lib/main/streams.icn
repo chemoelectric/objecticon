@@ -1141,7 +1141,7 @@ abstract class LineBasedInputStream(Stream)
    # Implemented to read a single line.  The EOL should not be
    # included.  Fails on error and returns {&null} on end-of-file
    #
-   protected defer read_line_impl()
+   protected abstract read_line_impl()
 
    protected new()
       self.line := ""
@@ -1174,7 +1174,7 @@ abstract class LineBasedOutputStream(Stream)
    # Implemented to output a single line.  The EOL is not included in
    # {s}.
    #
-   protected defer write_line_impl(s)
+   protected abstract write_line_impl(s)
    
    public get_mode()
       return WRITE
@@ -1901,7 +1901,7 @@ end
 # sequence of that method represent the output of the stream, with
 # each result being one line.
 #
-class GeneratorStream(LineBasedInputStream, NoCopy)
+abstract class GeneratorStream(LineBasedInputStream, NoCopy)
    private
       coex
 
@@ -1926,7 +1926,7 @@ class GeneratorStream(LineBasedInputStream, NoCopy)
    # returning {&null} and errors are signalled by failing and setting
    # {&why}.
    #
-   protected defer gen()
+   protected abstract gen()
 
    public new()
       cast(self,LineBasedInputStream).new()
@@ -1968,7 +1968,7 @@ end
 # Useful parent class for filtering the lines from a particular
 # {Stream}.
 #
-class LineFilterStream(GeneratorStream, HasUnderlyingStream)
+abstract class LineFilterStream(GeneratorStream, HasUnderlyingStream)
    protected
       other
 

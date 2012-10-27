@@ -35,7 +35,7 @@ end
 #
 # {Stream} for reading the entries in an archive, one per line of the stream.
 #
-class ArchiveListerStream(LineFilterStream)
+abstract class ArchiveListerStream(LineFilterStream)
    private
       f
 
