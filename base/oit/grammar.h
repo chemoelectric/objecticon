@@ -67,10 +67,17 @@ fielddecl : idlist { Fielddecl1($1); } ;
 method :  IDENT { Method1($1);} LPAREN arglist RPAREN locals initial optsemi compound END
                    { Method2($1,$7,$9,$10); } ;
 
-deferredmethod : DEFER { Modifier9(); } IDENT { Method1($3);} LPAREN arglist RPAREN ;
+deferredmethod : deferredtype IDENT { Method1($2);} LPAREN arglist RPAREN ;
 
-classaccess : ;
+deferredtype : DEFER { Modifier9(); };
+        | ABSTRACT { Modifier9();Modifier10();};
+
+classaccess : classaccess1 ;
+        | classaccess classaccess1 ;
+
+classaccess1 : ;
         | FINAL {Modifier8();};
+        | ABSTRACT {Modifier10();};
 
 fieldaccess : fieldaccess1 ;
         | fieldaccess fieldaccess1 ;

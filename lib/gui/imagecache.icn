@@ -7,7 +7,7 @@ $load NEW_FOLDER "images/gui.NEW_FOLDER_24.gif"
 $load REFRESH "images/gui.REFRESH_24.gif"
 $load UP "images/gui.UP_24.gif"
 
-class ImageCache()
+final abstract class ImageCache()
    public static 
       imap,
       names
@@ -297,9 +297,6 @@ class ImageCache()
       if s[1] == "(" then
          s := get_extended_image(win, s) | fail
       return Window.open_image(s, win)
-   end
-   
-   final private new()
    end
 end
 

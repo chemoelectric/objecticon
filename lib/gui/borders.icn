@@ -1,8 +1,8 @@
 package gui
 
-class ABorder(Insets,Align)
-   public defer initially(c)
-   public defer draw(W, x, y, w, h)
+abstract class ABorder(Insets,Align)
+   public abstract initially(c)
+   public abstract draw(W, x, y, w, h)
 
    public finally()
    end
@@ -110,7 +110,7 @@ class NullBorder(ABorder)
    end
 end
 
-class LineBorder(ABorder)
+abstract class LineBorder(ABorder)
    public line_width
 
    public initially()

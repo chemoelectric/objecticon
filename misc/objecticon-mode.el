@@ -130,7 +130,7 @@ regardless of where in the line point is when the TAB command is used.")
                    "else" "end" "every" "fail" "final" "global" "if" "import" "initial"
                    "invocable" "local" "next" "not" "of" "package" "private" "procedure" "protected"
                    "public" "readable" "record" "repeat" "return" "static" "suspend" "then" "to"
-                   "until" "while"))
+                   "uninst" "until" "while"))
      "\\_>")
     'font-lock-keyword-face)
 
@@ -357,6 +357,8 @@ Return the amount the indentation changed by."
 
 (defconst objecticon-field-starters "\\(public\\|private\\|package\\|protected\\|readable\\|const\\|final\\s-public\\|final\\s-private\\|final\\s-package\\|final\\s-protected\\|final\\s-readable\\|final\\s-static\\|final\\s-const\\|static\\s-public\\|static\\s-private\\|static\\s-package\\|static\\s-protected\\|static\\s-readable\\|static\\s-const\\)")
 
+(defconst objecticon-class-starters "\\(class\\|final\\s-class\\|uninst\\s-class\\|final\\s-uninst\\s-class\\|uninst\\s-final\\s-class\\)")
+
 (defun calculate-objecticon-indent (&optional parse-start)
   "Return appropriate indentation for current line as Object Icon code.
 In usual case returns an integer: the column to indent to.
@@ -553,7 +555,7 @@ Returns nil if line starts inside a string, t if in a comment."
   (cond
       ((re-search-backward (concat "^\\s-*procedure\\s-\\|"
                                    "^\\s-+" objecticon-field-starters "\\s-\\|"
-                                   "^\\(class\\|final\\s-class\\)\\s-\\|^\\s-*end\\s-*$") (point-min) 'move)
+                                   "^" objecticon-class-starters "\\s-\\|^\\s-*end\\s-*$") (point-min) 'move)
        (skip-chars-forward " \t")
        (cond
          ((looking-at (concat objecticon-field-starters ".*\\s-defer\\s-"))
@@ -571,7 +573,7 @@ Returns nil if line starts inside a string, t if in a comment."
           (setq objecticon-end-indent-level 0)
           (setq objecticon-toplevel t))
 
-         ((looking-at "\\(class\\|final\\s-class\\)")
+         ((looking-at objecticon-class-starters)
           (setq objecticon-extra-indent objecticon-class-indent-level)
           (setq objecticon-end-indent-level 0)
           (setq objecticon-toplevel t))

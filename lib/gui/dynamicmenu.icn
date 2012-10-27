@@ -1,6 +1,6 @@
 package gui
 
-class DynamicMenu(Menu)
+abstract class DynamicMenu(Menu)
    public show(x, y, xa, ya)
       /self.temp_win | fail
 
@@ -16,6 +16,6 @@ class DynamicMenu(Menu)
       cast(self,Menu).show(x, y, xa, ya)
    end
 
-   public defer populate()
+   public abstract populate()
 end
 

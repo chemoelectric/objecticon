@@ -11,6 +11,7 @@
 
 /* reserved words */
 
+%token  ABSTRACT    /* abstract    */
 %token  BREAK       /* break     */
 %token  BY          /* by        */
 %token  CASE        /* case      */
@@ -205,11 +206,18 @@ fielddecl : idlist
 method : IDENT LPAREN arglist RPAREN locals initial optsemi compound END
                    { $$ := Node("method", $1,$2,$3,$4,$5,$6,$7,$8,$9) } ;
 
-deferredmethod : DEFER IDENT LPAREN arglist RPAREN
+deferredmethod : deferredtype IDENT LPAREN arglist RPAREN
                    { $$ := Node("deferredmethod", $1,$2,$3,$4,$5) };
 
-classaccess : { $$ := Node.EMPTY } ;
-        | FINAL ;
+deferredtype : DEFER
+        | ABSTRACT
+
+classaccess : classaccess1 ;
+        | classaccess classaccess1 { $$ := Node("classaccess", $1,$2) } ;
+
+classaccess1 : { $$ := Node.EMPTY } ;
+        | FINAL
+        | ABSTRACT
 
 fieldaccess : fieldaccess1 ;
         | fieldaccess fieldaccess1 { $$ := Node("fieldaccess", $1,$2) } ;

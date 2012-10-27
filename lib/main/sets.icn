@@ -9,7 +9,7 @@ import lang
 #
 # This is a common superclass for a set-like data structure.
 #
-class Set()
+abstract class Set()
    #
    # Insert a new member.
    #
@@ -18,7 +18,7 @@ class Set()
    #
    # Succeed iff {x} is a member of the set.
    #
-   public defer member(x)
+   public abstract member(x)
 
    #
    # Delete {x} from the set.
@@ -28,12 +28,12 @@ class Set()
    #
    # Return a sorted list of members.
    #
-   public defer sort()
+   public abstract sort()
 
    #
    # Generate the members.
    #
-   public defer gen()
+   public abstract gen()
 
    #
    # Generate the members in reverse order.  Only implemented for sets which store their
@@ -44,7 +44,7 @@ class Set()
    #
    # Return the size of the set.
    #
-   public defer size()
+   public abstract size()
 
    #
    # Clear the set of all elements.

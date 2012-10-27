@@ -12,7 +12,7 @@ package gui
 # This class is the base class for all spin components.  It just provides the up/down
 # buttons and two abstract methods which are invoked to implement those actions.
 #
-class Spin(Component)
+abstract class Spin(Component)
    public 
       up, 
       down,
@@ -22,18 +22,18 @@ class Spin(Component)
    # This method must be overridden to do something to the component when the
    # up button is pressed.
    #
-   public defer do_increment(ev)
+   public abstract do_increment(ev)
 
    #
    # This method must be overridden to do something to the component when the
    # down button is pressed.
    #
-   public defer do_decrement(ev)
+   public abstract do_decrement(ev)
 
    #
    # Create the view component
    #
-   public defer create_view()
+   public abstract create_view()
 
    #
    # This may be overridden to monitor for changes to trigger events.  It is

@@ -34,6 +34,7 @@ class Lex(Connectable)
       W  := ' \t\v'
       idchars := L ++ D
       reswords := table([Beginner+Ender, YY.IDENT])
+      reswords["abstract"] := [0, YY.ABSTRACT]
       reswords["break"] := [Beginner+Ender, YY.BREAK]
       reswords["by"] := [0, YY.BY]
       reswords["case"] := [Beginner, YY.CASE]

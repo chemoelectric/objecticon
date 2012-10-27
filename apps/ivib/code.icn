@@ -177,7 +177,7 @@ class Code()
       every e := !sort(imports) do
          add_nice_import(im, e[1], e[2])
 
-      cl := Factory.new_class("\n\n", self.parent_Canvas.name, [self.parent_Canvas.superclass_name], "\n")
+      cl := Factory.new_class("\n\n", [], self.parent_Canvas.name, [self.parent_Canvas.superclass_name], "\n")
       prog.get_body().put(cl)
       if *class_vars > 0 then {
          fl := Factory.new_fields(indent1, ["private"], [])

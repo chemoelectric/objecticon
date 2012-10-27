@@ -22,6 +22,8 @@ class TermDialog(Dialog, LineBasedOutputStream)
    private readable
       line
 
+   public close() end
+
    protected write_line_impl(s)
       text.log([ucs(s)], log_limit)
       return

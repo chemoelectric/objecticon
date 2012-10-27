@@ -175,14 +175,14 @@ class File9P()
    end
 end
 
-class Dir9P(File9P)
-   public defer add_child(x)
-   public defer remove_child(x)
-   public defer get_child(x)
-   package defer rename_child(x, s)
-   public defer gen_children()
-   public defer create_child(name, uid, perm)
-   public defer is_empty()
+abstract class Dir9P(File9P)
+   public abstract add_child(x)
+   public abstract remove_child(x)
+   public abstract get_child(x)
+   package abstract rename_child(x, s)
+   public abstract gen_children()
+   public abstract create_child(name, uid, perm)
+   public abstract is_empty()
 end
 
 class Dir9PImpl(Dir9P)
@@ -257,9 +257,9 @@ class Dir9PImpl(Dir9P)
    end
 end
 
-class Regular9P(File9P)
-   public defer write(s, pos)
-   public defer read(pos, count)
+abstract class Regular9P(File9P)
+   public abstract write(s, pos)
+   public abstract read(pos, count)
 end
 
 class Regular9PImpl(Regular9P)
@@ -713,23 +713,23 @@ class Comms9P()
    end
 end
 
-class Data9P()
-   public defer get_root(aname)
-   public defer get_parent(p)
-   public defer get_child(p, name)
-   public defer gen_children(p)
-   public defer remove_child(p1, p2)
-   public defer create_child(p, name, uid, perm)
-   public defer is_empty(p)
-   public defer modified(p, uid)
-   public defer open(p, mode)
-   public defer write(p, s, pos)
-   public defer read(p, pos, count)
-   public defer close(p)
-   public defer get_info(p)
-   public defer set_info(p, x)
-   public defer get_qid(p)
-   public defer path_unreferenced(p)
+abstract class Data9P()
+   public abstract get_root(aname)
+   public abstract get_parent(p)
+   public abstract get_child(p, name)
+   public abstract gen_children(p)
+   public abstract remove_child(p1, p2)
+   public abstract create_child(p, name, uid, perm)
+   public abstract is_empty(p)
+   public abstract modified(p, uid)
+   public abstract open(p, mode)
+   public abstract write(p, s, pos)
+   public abstract read(p, pos, count)
+   public abstract close(p)
+   public abstract get_info(p)
+   public abstract set_info(p, x)
+   public abstract get_qid(p)
+   public abstract path_unreferenced(p)
 end
 
 class TreeData9P(Data9P)

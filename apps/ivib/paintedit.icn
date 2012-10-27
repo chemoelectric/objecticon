@@ -345,11 +345,11 @@ end
 class ShowGridPaint(DrawScrollArea)
    public d
 
-   public get_subject_width()
+   public calculate_subject_width()
       return (\d).w | 0
    end
 
-   public get_subject_height()
+   public calculate_subject_height()
       return (\d).h | 0
    end
 
@@ -377,6 +377,8 @@ class ShowGridPaint(DrawScrollArea)
       d := GridPaint(s)
       d.initially(self)
       d.draw_grid()
+      invalidate_subject_width()
+      invalidate_subject_height()
       compute_and_invalidate()
       return self
    end

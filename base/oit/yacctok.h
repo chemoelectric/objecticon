@@ -16,6 +16,7 @@
 
 /* reserved words */
 
+%token	ABSTRACT    /* abstract  */
 %token	BREAK       /* break     */
 %token	BY          /* by        */
 %token	CASE        /* case      */

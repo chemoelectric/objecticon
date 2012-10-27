@@ -395,6 +395,13 @@ static void merge(struct lclass *cl, struct lclass *super)
             fr->b_next = cl->implemented_field_hash[i];
             cl->implemented_field_hash[i] = fr;
             if (f->flag & (M_Method | M_Static)) {
+
+                if (!(cl->flag & M_Abstract) && (f->flag & M_Abstract))
+                    lfatal(cl->global->defined, &cl->global->pos,
+                           "Resolved class %s contains an abstract method %s (see %s: Line %d), but is not itself declared abstract",
+                           cl->global->name, f->name,
+                           abbreviate(f->pos.file), f->pos.line);
+
                 if (cl->last_implemented_class_field) {
                     cl->last_implemented_class_field->next = fr;
                     cl->last_implemented_class_field = fr;

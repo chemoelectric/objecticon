@@ -110,7 +110,7 @@ class Node()
    end
 end
 
-class Tree()
+abstract class Tree()
    public const pos
 
    public defer get_first_token()
@@ -125,13 +125,13 @@ class Tree()
    end
 end
 
-class List(Tree)
+abstract class List(Tree)
    package index
 
-   package defer flatten()
-   package defer unflatten()
-   public defer put(o)
-   public defer push(o)
+   package abstract flatten()
+   package abstract unflatten()
+   public abstract put(o)
+   public abstract push(o)
 
    public clear()
       pos.set(index, Node.EMPTY)
@@ -184,7 +184,7 @@ end
 #
 # Left-assoc list; define put and flatten
 #
-class LList(List)
+abstract class LList(List)
    package unflatten(l)
       clear()
       every put(!l)
@@ -203,7 +203,7 @@ end
 #
 # Right-assoc list; define push and flatten
 #
-class RList(List)
+abstract class RList(List)
    package unflatten(l)
       clear()
       every push(back(l))
@@ -299,6 +299,8 @@ class IdList(LList)
 end
 
 class AccessList(LList)
+   private const lab
+
    package flatten()
       local l, n
       l := []
@@ -319,10 +321,17 @@ class AccessList(LList)
       if pos.child(index) === Node.EMPTY then
          pos.set(index, x.pos)
       else
-         pos.set(index, Node("fieldaccess",
+         pos.set(index, Node(lab,
                              pos.child(index),
                              x.pos))
       return self
+   end
+
+   package new(pos, index, lab)
+      cast(self,LList).new(pos, index)
+      /lab := "fieldaccess"
+      self.lab := lab
+      return
    end
 end
 
@@ -614,6 +623,8 @@ class Factory()
          "const": YY.CONST
          "readable": YY.READABLE
          "final": YY.FINAL
+         "abstract": YY.ABSTRACT
+         "defer": YY.DEFER
          default: runerr("Bad access value", s)
       }
       return Leaf(Token(t, s, pad || s))
@@ -649,12 +660,12 @@ class Factory()
       return t
    end
 
-   public static new_class(pad, name, supers, epad)
+   public static new_class(pad, access, name, supers, epad)
       local t
       /epad := "\n"
       t := Class(Node("class",
                        Node.EMPTY,
-                       Token(YY.CLASS, "class", pad || "class"),
+                       Token(YY.CLASS, "class", if *access > 0 then " class" else pad || "class"),
                        Token(YY.IDENT, name, " " || name),
                        Token(YY.LPAREN, "(", "("),
                        Node.EMPTY,
@@ -662,18 +673,20 @@ class Factory()
                        Node.EMPTY,
                        Node.EMPTY,
                        Token(YY.END, "end", epad || "end")))
+      t.get_access().put(new_access(pad, pop(access)))
+      every t.get_access().put(new_access(" ", !access))
       t.get_supers().put(new_id("", pop(supers)))
       every t.get_supers().put(new_id(" ", !supers))
       return t
    end
 
-   public static new_deferred_method(pad, access, name, args)
+   public static new_deferred_method(pad, access, defer_type, name, args)
       local t
       t := DeferredMethod(Node("classbody",
                                Node.EMPTY,
                                Node.EMPTY,
                                Node("deferredmethod",
-                                    Token(YY.DEFER, "defer", " defer"),
+                                    Node.EMPTY,
                                     Token(YY.IDENT, name, " " || name),
                                     Token(YY.LPAREN, "(", "("),
                                     Node.EMPTY,
@@ -683,6 +696,8 @@ class Factory()
 
       t.get_args().put(new_id("", pop(args)))
       every t.get_args().put(new_id(" ", !args))
+
+      t.set_defer_type(new_access(" ", defer_type))
 
       return t
    end
@@ -845,27 +860,8 @@ class Class(LList)
       return IdList(pos, 5, "super")
    end
 
-   public is_final()
-      local c
-      c := pos.child(1)
-      return is(c, Token) & (c.tok = YY.FINAL)
-   end
-
-   public set_final(pad, f)
-      check_flag(f)
-      if \f then {
-         if not is_final() then {
-            pos.set(1, Token(YY.FINAL, "final", pad || "final"))
-            pos.set(2, Token(YY.CLASS, "class", " class"))
-         }
-      }
-      else {
-         if is_final() then {
-            pos.set(1, Node.EMPTY)
-            pos.set(2, Token(YY.CLASS, "class", pad || "class"))
-         }
-      }
-      return self
+   public get_access()
+      return AccessList(pos, 1, "classaccess")
    end
 
    package new(pos)
@@ -1021,6 +1017,15 @@ class DeferredMethod(Tree, Function)
 
    public get_access()
       return AccessList(pos, 2)
+   end
+
+   public get_defer_type()
+      return Leaf(fpos.child(1))
+   end
+
+   public set_defer_type(s)
+      fpos.set(1, s.pos)
+      return self
    end
 
    package new(pos)

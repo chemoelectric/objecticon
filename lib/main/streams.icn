@@ -15,7 +15,7 @@ $endif
 # This is the top-level stream class.  It is not instantiated
 # directly.
 #
-class Stream()
+abstract class Stream()
    public static const
       # Constant indicating read capability
       READ,
@@ -86,13 +86,13 @@ class Stream()
    # it is seekable (and supports {tell} too), and {TRUNCATE} that it
    # is truncatable.
    #
-   public defer get_mode()
+   public abstract get_mode()
 
    #
    # Close the stream.  After being closed, any further calls on the
    # stream may stop with a runtime error.
    #
-   public defer close()
+   public abstract close()
 
    #
    # Succeed iff the stream's mode has all the flags in {c}
@@ -252,7 +252,7 @@ end
 #
 # This class simply adds the close_underlying_flag to a {Stream}.
 #
-class HasUnderlyingStream()
+abstract class HasUnderlyingStream()
    protected
       close_underlying_flag
 
@@ -618,7 +618,7 @@ end
 # This is the parent class of streams based on a posix-style
 # integer-based file descriptor.
 #
-class DescStream(Stream, NoCopy)
+abstract class DescStream(Stream, NoCopy)
    protected 
       fd,
       mode
@@ -1306,7 +1306,7 @@ end
 # Parent class for classes which wish to define in() in terms of
 # reading one line at time, rather than the other way round.
 #
-class LineBasedInputStream(Stream)
+abstract class LineBasedInputStream(Stream)
    private
       line
 
@@ -1356,7 +1356,7 @@ end
 # Parent class for classes which wish to define out() in terms of
 # writing one line at time, rather than the other way round.
 #
-class LineBasedOutputStream(Stream)
+abstract class LineBasedOutputStream(Stream)
    private
       buff
 
@@ -1419,7 +1419,7 @@ end
 
 # Convenient superclass of classes which use a background process.
 #
-class HasBgProc()
+abstract class HasBgProc()
    protected
       pid,
       exit_info
@@ -1452,7 +1452,7 @@ end
 # Convenient superclass of classes which have an optional {Task} to
 # use for polling.
 #
-class HasTask()
+abstract class HasTask()
    protected
       task
 
@@ -1588,7 +1588,7 @@ end
 #
 # Base class for FilterOutputStream and FilterInputStream
 #
-class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask, NoCopy)
+abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask, NoCopy)
    protected
       cmd,
       err_sink,
@@ -1812,7 +1812,7 @@ end
 #
 # Base class for FilterOutputStream and FilterInputStream
 #
-class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask, NoCopy)
+abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask, NoCopy)
    protected
       cmd,
       err_sink,
@@ -2505,8 +2505,8 @@ class NetStream(FileStream)
    end
 end
 
-class Pollable()
-   public defer get_poll(ev)
+abstract class Pollable()
+   public abstract get_poll(ev)
 end
 
 # This stream provides non-blocking i/o by using background processes.

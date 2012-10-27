@@ -24,7 +24,7 @@ end
 # This is a scroll area where the objects to be displayed are lines of
 # a fixed height.
 #
-class LineBasedScrollArea(DrawScrollArea)
+abstract class LineBasedScrollArea(DrawScrollArea)
    public 
       # Cached line height and count.
       line_height,
@@ -301,7 +301,7 @@ class LineBasedScrollArea(DrawScrollArea)
    # @param lh  The line height allowed for this line
    # @param i   The line number to draw
    #
-   public defer draw_line(xp, yp, lh, i)
+   public abstract draw_line(xp, yp, lh, i)
 
    #
    # Clear the cached value of line height (and subject height).
@@ -315,14 +315,14 @@ class LineBasedScrollArea(DrawScrollArea)
    # line height.  Because this operation is potentially expensive, it
    # is called as late as possible and its value cached.
    #
-   public defer calculate_line_height()
+   public abstract calculate_line_height()
 
    #
    # This method is overridden by the subclass to work out the
    # line count. Because this operation is potentially expensive, it
    # is called as late as possible and its value cached.
    #
-   public defer calculate_line_count()
+   public abstract calculate_line_count()
 
    #
    # Return the line height

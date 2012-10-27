@@ -7,7 +7,7 @@ package mail
 #
 # Handles the conversion from decoded content to an object
 #
-class TypeHandler()
+abstract class TypeHandler()
    public static const 
       TYPE_HANDLERS
 
@@ -20,7 +20,7 @@ class TypeHandler()
    #
    # @param ct the {ContentType}
    #
-   public defer can_handle(ct)
+   public abstract can_handle(ct)
 
    #
    # Convert the given data to an object
@@ -28,7 +28,7 @@ class TypeHandler()
    # @param m the {Message}
    # @param data the string sourcedata
    #
-   public defer convert_to_object(m, data)
+   public abstract convert_to_object(m, data)
 
    #
    # Create string data from the given object
@@ -36,6 +36,6 @@ class TypeHandler()
    # @param m the {Message}
    # @param obj the object to convert
    #
-   public defer convert_from_object(m, obj)
+   public abstract convert_from_object(m, obj)
 end
 

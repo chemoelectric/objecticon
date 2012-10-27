@@ -71,5 +71,10 @@ class HtmlFormatter(Formatter)
       if not(HtmlParser.is_standalone_tag(n.name)) then
          writes("</" || n.name || ">")
    end
+
+   protected format_pi(n) end
+   protected format_cdata(n) end
+   protected format_xmldecl(n) end
+
 end
 
