@@ -1,7 +1,7 @@
 package gui
 
 
-class SelectionList()
+abstract class SelectionList()
    public 
       selection,
       selection_list
@@ -71,7 +71,7 @@ class SelectionList()
       }
    end
 
-   public defer apply_selection()
+   public abstract apply_selection()
 end
 
 

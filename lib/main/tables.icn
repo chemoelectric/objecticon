@@ -9,7 +9,7 @@ import ipl.pdco(Seq), lang
 #
 # This is a common superclass for several table-like data structures.
 #
-class Table()
+abstract class Table()
    public const def
 
    #
@@ -21,7 +21,7 @@ class Table()
    # Return the value for the given key (as a variable) if it is in
    # the table, or fail if it is not present.
    #
-   public defer member(key)
+   public abstract member(key)
 
    #
    # Delete the entry with the given key.  Always succeeds and returns {self}.
@@ -54,17 +54,17 @@ class Table()
    #
    # Return a sorted list of key-value pairs.
    #
-   public defer sort()
+   public abstract sort()
 
    #
    # Generate the keys (cf the builtin key() function.)
    #
-   public defer key()
+   public abstract key()
 
    #
    # Generate alternating key/values (cf the builtin keyval() function.)
    #
-   public defer keyval()
+   public abstract keyval()
 
    #
    # Generate the keys (cf the builtin key() function.) in reverse
@@ -83,12 +83,12 @@ class Table()
    #
    # Generate the values (cf !t for a table).
    #
-   public defer gen()
+   public abstract gen()
 
    #
    # Return the size of the table.
    #
-   public defer size()
+   public abstract size()
 
    #
    # Clear the table of all elements. Always succeeds and returns {self}.

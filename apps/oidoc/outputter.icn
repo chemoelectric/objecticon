@@ -115,7 +115,7 @@ class Outputter()
       if is(obj, Tree) then {
          every s ||:= obj.get_access().gen().str() || " "
          if is(obj, DeferredMethod) then
-            s ||:= "defer "
+            s ||:= obj.get_defer_type().str() || " "
          s[-1] := ""
       } else {
          if iand(obj.flags, Class.Private) ~= 0 then
@@ -132,7 +132,9 @@ class Outputter()
             s ||:= "const "
          if iand(obj.flags, Class.Readable) ~= 0 then
             s ||:= "readable "
-         if iand(obj.flags, Class.Defer) ~= 0 then
+         if iand(obj.flags, Class.Abstract) ~= 0 then
+            s ||:= "abstract "
+         else if iand(obj.flags, Class.Defer) ~= 0 then
             s ||:= "defer "
          if iand(obj.flags, Class.Final) ~= 0 then
             s ||:= "final "

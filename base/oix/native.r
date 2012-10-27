@@ -1324,6 +1324,10 @@ function lang_Class_set_method(field, pr)
         if (new_proc->field)
             runerr(618, pr);
 
+        /* For a non-static method, must have at least one param for self. */
+        if (!(cf->flags & M_Static) && new_proc->nparam == 0)
+            runerr(626, pr);
+
         if (BlkLoc(*cf->field_descriptor) != (union block *)&Bdeferred_method_stub)
             runerr(623, field);
 

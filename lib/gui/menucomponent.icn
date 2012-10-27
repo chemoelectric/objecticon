@@ -21,7 +21,7 @@ import util
 # conventional submenu, which does contain children, is in the
 # {Menu} class.
 #
-class MenuComponent(Rect,Connectable)
+abstract class MenuComponent(Rect,Connectable)
    public 
       label_x,                                
       label_y,                                
@@ -263,17 +263,17 @@ class MenuComponent(Rect,Connectable)
    #
    # Abstract methods for the label sizes.
    #
-   public defer get_label_left_width()
-   public defer get_label_left_height()
-   public defer get_label_mid_width()
-   public defer get_label_mid_height()
-   public defer get_label_right_width()
-   public defer get_label_right_height()
+   public abstract get_label_left_width()
+   public abstract get_label_left_height()
+   public abstract get_label_mid_width()
+   public abstract get_label_mid_height()
+   public abstract get_label_right_width()
+   public abstract get_label_right_height()
 
    #
    # Abstract method for the display of the labels.
    #
-   public defer draw_label(W, lw, mw, rw)
+   public abstract draw_label(W, lw, mw, rw)
 
    #
    # The following methods are only called for a MenuComponent which pops up

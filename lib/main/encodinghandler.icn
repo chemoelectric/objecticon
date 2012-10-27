@@ -7,7 +7,7 @@ package mail
 #
 # Handles the conversion from decoded content to an object
 #
-class EncodingHandler()
+abstract class EncodingHandler()
    public static const 
       ENCODING_HANDLERS
 
@@ -20,7 +20,7 @@ class EncodingHandler()
    #
    # @param enc the encoding (a string, eg "7bit")
    #
-   public defer can_handle(enc)
+   public abstract can_handle(enc)
 
    #
    # Decode the given data
@@ -28,7 +28,7 @@ class EncodingHandler()
    # @param m the {Message}
    # @param data the source data (a string)
    #
-   public defer decode_data(m, data)
+   public abstract decode_data(m, data)
 
    #
    # Create string data from the given object
@@ -36,6 +36,6 @@ class EncodingHandler()
    # @param m the {Message}
    # @param data the raw data (a string)
    #
-   public defer encode_data(m, data)
+   public abstract encode_data(m, data)
 end
 

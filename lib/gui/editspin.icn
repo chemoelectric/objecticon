@@ -35,7 +35,7 @@ end
 # This class is the base class for editable spin components which use a
 # TextField to display/edit the current value.
 #
-class EditSpin(Spin)
+abstract class EditSpin(Spin)
    public on_textfield(ev, src, type)
       # Fire the event with self as source.
       fire(type, ev)

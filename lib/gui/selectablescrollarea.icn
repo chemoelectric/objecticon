@@ -18,7 +18,7 @@ import
 # This class extends LineBasedScrollArea to provide selection on lines,
 # event handling and selection handling.
 #
-class SelectableScrollArea(LineBasedScrollArea)
+abstract class SelectableScrollArea(LineBasedScrollArea)
    public 
       contents,
       select_mode,

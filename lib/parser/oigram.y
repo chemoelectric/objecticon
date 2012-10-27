@@ -206,8 +206,11 @@ fielddecl : idlist
 method : IDENT LPAREN arglist RPAREN locals initial optsemi compound END
                    { $$ := Node("method", $1,$2,$3,$4,$5,$6,$7,$8,$9) } ;
 
-deferredmethod : DEFER IDENT LPAREN arglist RPAREN
+deferredmethod : deferredtype IDENT LPAREN arglist RPAREN
                    { $$ := Node("deferredmethod", $1,$2,$3,$4,$5) };
+
+deferredtype : DEFER
+        | ABSTRACT
 
 classaccess : classaccess1 ;
         | classaccess classaccess1 { $$ := Node("classaccess", $1,$2) } ;
@@ -227,7 +230,6 @@ fieldaccess1 : PRIVATE
         | CONST
         | READABLE
         | FINAL
-        | ABSTRACT
 
 global  : GLOBAL idlist { $$ := Node("global", $1,$2) } ;
 

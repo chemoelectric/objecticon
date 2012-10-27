@@ -13,7 +13,7 @@ import graphics
 #
 # This class is just a superclass of {List} and {EditList}.
 #
-class DropDown(SelectionList,Component)
+abstract class DropDown(SelectionList,Component)
    public 
       b,                           
       view,
@@ -67,7 +67,7 @@ class DropDown(SelectionList,Component)
    #
    # Create the view component
    #
-   public defer create_view()
+   public abstract create_view()
 
    public create_popup()
       return TextList()

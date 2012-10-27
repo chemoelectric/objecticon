@@ -15,7 +15,7 @@ import graphics
 # using a pair of scroll bars.  This specification of the object is
 # provided by implementing methods in a subclass.
 #
-class ScrollArea(Component)
+abstract class ScrollArea(Component)
    public 
       hsb,              
       vsb,
@@ -487,7 +487,7 @@ class ScrollArea(Component)
    # this is potentially expensive, the value is calculated as late as
    # possible and the result cached.
    #
-   public defer calculate_subject_width()
+   public abstract calculate_subject_width()
 
    #
    # Clear the cached value of subject width.
@@ -509,7 +509,7 @@ class ScrollArea(Component)
    # this is potentially expensive, the value is calculated as late as
    # possible and the result cached.
    #
-   public defer calculate_subject_height()
+   public abstract calculate_subject_height()
 
    #
    # Clear the cached value of subject height.
@@ -521,17 +521,17 @@ class ScrollArea(Component)
    #
    # Return the default increment on a line-up/line-down
    #
-   public defer get_default_vertical_increment()
+   public abstract get_default_vertical_increment()
 
    #
    # Return the default increment on a line-left/line-right
    #
-   public defer get_default_horizontal_increment()
+   public abstract get_default_horizontal_increment()
 
    #
    # Create the view component
    #
-   public defer create_view()
+   public abstract create_view()
 
    public new()
       cast(self,Component).new()

@@ -3,14 +3,13 @@ package io
 import 
    util,
    posix,
-   lang,
    ipl.random
 
 #
 # This class has several static methods which provide
 # system-independent access to the file system.
 #
-class Files(NoCopy)
+final abstract class Files()
    private static const 
       FS
 
@@ -500,31 +499,28 @@ $endif
       }
       &why := f || " not found on OINATIVE path"
    end
-
-   final private new()
-   end
 end
 
 #
 # This class provides implementations of some of the methods in
 # {Files}.  It is not used directly by clients.
 #
-class FileSystem()
-   public defer get_path(s)
+abstract class FileSystem()
+   public abstract get_path(s)
 
-   public defer get_path_from_list(l)
+   public abstract get_path_from_list(l)
 
-   public defer get_home()
+   public abstract get_home()
 
-   public defer get_temp()
+   public abstract get_temp()
 
-   public defer is_hidden(s)
+   public abstract is_hidden(s)
 
-   public defer is_relative_dir(s)
+   public abstract is_relative_dir(s)
 
-   public defer get_roots()
+   public abstract get_roots()
 
-   public defer split_paths(s)
+   public abstract split_paths(s)
 end
 
 #
@@ -535,7 +531,7 @@ end
 #
 # Instances of this class are immutable.
 #
-class FilePath()
+abstract class FilePath()
    protected l
 
    #
@@ -602,24 +598,24 @@ class FilePath()
    # Return a path which represents the absolute path of this
    # path.
    #
-   public defer absolute()
+   public abstract absolute()
 
    #
    # Convert the path back into a string.
    #
-   public defer str()
+   public abstract str()
 
    #
    # Succeed iff this path represents an absolute path.
    #
-   public defer is_absolute()
+   public abstract is_absolute()
 
    #
    # Canonicalize a path, which means trying to turn it into a
    # standard form.  This involves (at least) getting the absolute
    # path and removing any redundant path elements.
    #
-   public defer canonical()
+   public abstract canonical()
 
    package new(l)
       self.l := l

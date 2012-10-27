@@ -4,10 +4,10 @@
 
 package mail
 
-class Address()
-   public defer to_rfc822()
+abstract class Address()
+   public abstract to_rfc822()
 
-   public defer generate_mailboxes()
+   public abstract generate_mailboxes()
 
    #
    # Output object

@@ -1427,7 +1427,7 @@ class TextSplit()
    end
 end
 
-class EditableTextListEdit(UndoableEdit)
+abstract class EditableTextListEdit(UndoableEdit)
    public
       parent,
       cursor_x, 
@@ -1453,8 +1453,8 @@ class EditableTextListEdit(UndoableEdit)
       parent.changed := 1
    end
 
-   public defer redo_impl()
-   public defer undo_impl()
+   public abstract redo_impl()
+   public abstract undo_impl()
 
    public save()
       self.cursor_x := parent.cursor_x
@@ -1745,10 +1745,10 @@ class EditableTextListPasteEdit(EditableTextListEdit)
    end
 end
 
-class LineSplitter()
+abstract class LineSplitter()
    public parent
 
-   public defer split(s)
+   public abstract split(s)
 
    public new(parent)
       self.parent := parent

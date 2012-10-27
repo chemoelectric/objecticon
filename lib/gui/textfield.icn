@@ -798,7 +798,7 @@ class TextFieldClipboardSelectionOwner(TextSelectionOwner)
    end
 end
 
-class TextFieldEdit(UndoableEdit)
+abstract class TextFieldEdit(UndoableEdit)
    public 
       parent,
       cursor, 
@@ -822,8 +822,8 @@ class TextFieldEdit(UndoableEdit)
       parent.changed := 1
    end
 
-   public defer redo_impl()
-   public defer undo_impl()
+   public abstract redo_impl()
+   public abstract undo_impl()
 
    public save()
       self.cursor := parent.cursor

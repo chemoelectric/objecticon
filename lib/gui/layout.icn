@@ -1,6 +1,6 @@
 package gui
 
-class Layout()
+abstract class Layout()
    public parent
 
    public set_parent(c)
@@ -14,8 +14,8 @@ class Layout()
    public reset()
    end
 
-   public defer layout()
-   public defer get_preferred_width()
-   public defer get_preferred_height()
+   public abstract layout()
+   public abstract get_preferred_width()
+   public abstract get_preferred_height()
 end
 

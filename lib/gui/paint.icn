@@ -9,18 +9,18 @@ import
 # A {Paint} represents an arbitrary object which has a size and can be
 # drawn.
 #
-class Paint(Size)
+abstract class Paint(Size)
    #
    # Initialize the instance.  This should set the size of the instance.
    # @param c The owning {Component}
    # @param accel The keyboard accelerator to be drawn
-   public defer initially(c, accel)
+   public abstract initially(c, accel)
 
    # Draw the instance
    # @param W The window to draw into
    # @param x The x position
    # @param y The y position
-   public defer draw(W, x, y)
+   public abstract draw(W, x, y)
 
    # Cleanup any resources used by this instance.
    public finally()

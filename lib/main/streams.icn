@@ -82,13 +82,13 @@ abstract class Stream()
    # it is seekable (and supports {tell} too), and {TRUNCATE} that it
    # is truncatable.
    #
-   public abstract defer get_mode()
+   public abstract get_mode()
 
    #
    # Close the stream.  After being closed, any further calls on the
    # stream may stop with a runtime error.
    #
-   public abstract defer close()
+   public abstract close()
 
    #
    # Succeed iff the stream's mode has all the flags in {c}

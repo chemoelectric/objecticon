@@ -20,13 +20,13 @@ end
 # This is a scroll area where the object is displayed by overriding
 # an abstract method defined below.
 #
-class DrawScrollArea(ScrollArea)
+abstract class DrawScrollArea(ScrollArea)
    #
    # Draw the object at the offset given by {get_area_x()}, {get_area_y()}
    # into view.cbwin at view.x, view.y, with size view.w, view.h.  View is
    # already clipped to the correct rectangle.
    #
-   public defer draw()
+   public abstract draw()
 
    public create_view()
       return DrawScrollAreaView()

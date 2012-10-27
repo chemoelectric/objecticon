@@ -40,7 +40,7 @@ end
 # This class is the base class for non-editable spin components which use
 # a Label to display the current value.
 #
-class StaticSpin(Spin)
+abstract class StaticSpin(Spin)
    public get_contents()
       return view.get_label()
    end

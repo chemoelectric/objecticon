@@ -122,6 +122,7 @@ struct errtab errtab[] = {
     {623, "can only set a method on an unresolved field"},
     {624, "record, class, cast or object expected"},
     {625, "record or constructor expected"},
+    {626, "setting an instance method requires at least one parameter"},
     {628, "attempt to access non-method via a cast"},
     {630, "weakref expected"},
     {631, "procedure or methp expected"},

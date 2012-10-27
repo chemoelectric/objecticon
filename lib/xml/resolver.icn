@@ -11,11 +11,11 @@ package xml
 #
 # Base class for the resolver called by the parser to resolve external IDs.
 #
-class Resolver()
+abstract class Resolver()
    #
    # Resolve the given external ID into a string, or fail if that is
    # not possible.
    #
-   public defer resolve(external_id)
+   public abstract resolve(external_id)
 end
 

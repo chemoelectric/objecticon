@@ -9,20 +9,24 @@ import lang
 # instance of {ItemPaint} is used to give size information about each
 # piece data, and to draw it.
 #
-class ItemPaint()
+abstract class ItemPaint()
    #
    # Initialize the instance
    # @param c The owning {Component}
    public initially(c)
    end
 
-   # Return the width of the given data.
+   # Return the width of the given data.  Implementing this method is
+   # not necessary if {get_constant_width} is overridden instead.
+   #
    # @param W The window to use for text metrics
    # @param data The data item
    #
    public defer get_width(W, data)
 
-   # Return the height of the given data.
+   # Return the height of the given data.  Implementing this method is
+   # not necessary if {get_constant_height} is overridden instead.
+   #
    # @param W The window to use for text metrics
    # @param data The data item
    #
@@ -32,14 +36,14 @@ class ItemPaint()
    # @param W The window to use for text metrics
    # @param data The data item
    #
-   public defer get_size(W, data)
+   public abstract get_size(W, data)
 
    # Draw the given data item
    # @param W The window to draw into
    # @param data The data item
    # @param x The x position
    # @param y The y position
-   public defer draw(W, data, x, y)
+   public abstract draw(W, data, x, y)
 
    # This method should be implemented if it is known that all data
    # items will have the same width.
@@ -112,12 +116,12 @@ end
 # A parent class for {ItemPaint}s which wish to calculate sizes and
 # draw with a cloned window.
 #
-class WithCloneItemPaint(ItemPaint)
+abstract class WithCloneItemPaint(ItemPaint)
    private cw, wt, ct
 
    # This method must be implemented to create the cloned window
    # @param W the base window to clone from
-   protected defer make_clone(W)
+   protected abstract make_clone(W)
 
    protected get_clone(W, ignore_clip)
       (W === wt & (\ignore_clip | equals(ct, W.get_clip()))) | {
@@ -138,7 +142,7 @@ end
 # An {ItemPaint} which draws text using a cloned window.  It must be
 # subclassed in order to provide the {make_clone} method.
 #
-class AttributedTextItemPaint(WithCloneItemPaint)
+abstract class AttributedTextItemPaint(WithCloneItemPaint)
    public get_width(W, data)
       return get_clone(W, 1).text_width(detab(data))
    end

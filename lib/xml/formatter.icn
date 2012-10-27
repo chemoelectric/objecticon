@@ -15,7 +15,7 @@ import io, exception
 # object (or a Node within a Document), and output that document to a
 # stream.
 #
-class Formatter(Stream, HasUnderlyingStream)
+abstract class Formatter(Stream, HasUnderlyingStream)
    private
       file
    protected 
@@ -75,21 +75,21 @@ class Formatter(Stream, HasUnderlyingStream)
       }
    end
 
-   protected defer format_document(n)
+   protected abstract format_document(n)
 
-   protected defer format_content(s)
+   protected abstract format_content(s)
 
-   protected defer format_doctype(n)
+   protected abstract format_doctype(n)
 
-   protected defer format_comment(n)
+   protected abstract format_comment(n)
 
-   protected defer format_pi(n)
+   protected abstract format_pi(n)
 
-   protected defer format_element(n)
+   protected abstract format_element(n)
 
-   protected defer format_cdata(n)
+   protected abstract format_cdata(n)
 
-   protected defer format_xmldecl(n)
+   protected abstract format_xmldecl(n)
 end
 
 
