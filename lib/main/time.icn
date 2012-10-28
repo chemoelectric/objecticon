@@ -819,17 +819,17 @@ class Time()
    #
    # Return the number of seconds since the Unix base epoch (1 Jan 1970).
    #
-   public static defer get_system_seconds()
+   public static native get_system_seconds()
 
    #
    # Return the number of milliseconds since the Unix base epoch (1 Jan 1970).
    #
-   public static defer get_system_millis()
+   public static native get_system_millis()
 
    #
    # Return the number of microseconds since the Unix base epoch (1 Jan 1970).
    #
-   public static defer get_system_micros()
+   public static native get_system_micros()
 
    #
    # The constructor to {Time()} does different things depending on

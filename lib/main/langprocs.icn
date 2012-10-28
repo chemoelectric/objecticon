@@ -759,14 +759,14 @@ class Internal()
    # depending on whether {x} is less than, equal to, or greater than
    # {y}, respectively.
    #
-   public static defer compare(x, y)
+   public static native compare(x, y)
 
    #
    # This method gives access to the internal hash method used
    # by the interpreter, for example in implementing tables and sets.
    # It is distinct from the {lang.hash()} procedure.
    #
-   public static defer hash(x)
+   public static native hash(x)
 end
 
 class NoCopy()

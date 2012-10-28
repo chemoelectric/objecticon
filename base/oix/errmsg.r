@@ -113,7 +113,7 @@ struct errtab errtab[] = {
     {614, "cast expected"},
     {615, "procedure expected"},
     {616, "can only set a method from within the defining class"},
-    {617, "the given field is not a method"},
+    {617, "the given field is not a native method"},
     {618, "the given procedure is a method"},
     {619, "class or object expected"},
     {620, "class, cast or object expected"},

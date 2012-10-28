@@ -578,8 +578,8 @@ void resolve_native_methods()
             struct lclass_field *cf = cl->field_hash[i];
             while (cf && cf->name != method_name)
                 cf = cf->b_next;
-            /* Check it's a method and not a variable */
-            if (cf && cf->func)
+            /* Check it's a native method and not a variable */
+            if (cf && (cf->flag & M_Native))
                 cf->func->native_method_id = n;
         }
     }

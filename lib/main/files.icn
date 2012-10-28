@@ -234,7 +234,7 @@ $endif
    # @param s1 the source filename
    # @param s2 the target filename
    #
-   public static defer rename(s1, s2)
+   public static native rename(s1, s2)
 
    #
    # Create a (hard) link to a file.
@@ -242,7 +242,7 @@ $endif
    # @param s1 the source filename
    # @param s2 the target filename
    #
-   public static defer hardlink(s1, s2)
+   public static native hardlink(s1, s2)
 
    #
    # Create a symlink to a file.
@@ -250,14 +250,14 @@ $endif
    # @param s1 the source filename
    # @param s2 the target filename
    #
-   public static defer symlink(s1, s2)
+   public static native symlink(s1, s2)
 
    #
    # Read a symbolic link
    #
    # @param s the source filename
    #
-   public static defer readlink(s)
+   public static native readlink(s)
 
    #
    # Return the canonicalized absolute pathname as produced by the
@@ -265,33 +265,33 @@ $endif
    #
    # @param s a filename
    #
-   public static defer realpath(s)
+   public static native realpath(s)
 
    #
    # Changes the current directory to that specified in s.
    #
    # @param s the directory
    #
-   public static defer chdir(s)
+   public static native chdir(s)
 
    #
    # Get current working directory
    #
-   public static defer getcwd()
+   public static native getcwd()
 
    #
    # Remove a regular file
    #
    # @param s the file
    #
-   public static defer remove(s)
+   public static native remove(s)
 
    #
    # Remove an empty directory
    #
    # @param s the empty directory
    #
-   public static defer rmdir(s)
+   public static native rmdir(s)
 
    #
    # Make a new directory
@@ -299,7 +299,7 @@ $endif
    # @param s the directory path
    # @param perm the permission bits, defaults to rwxr-xr-x
    #
-   public static defer mkdir(s, perm)
+   public static native mkdir(s, perm)
 
    #
    # Truncate the given file to {len} bytes.
@@ -307,7 +307,7 @@ $endif
    # @param s1 the source filename
    # @param len the desired length
    #
-   public static defer truncate(s, len)
+   public static native truncate(s, len)
 
    #
    # Obtain information about the given file
@@ -319,7 +319,7 @@ $endif
       return Stat!stat_impl(s)
    end
 
-   private static defer stat_impl(s)
+   private static native stat_impl(s)
 
    #
    # Obtain information about the given file without following
@@ -332,7 +332,7 @@ $endif
       return Stat!lstat_impl(s)
    end
 
-   private static defer lstat_impl(s)
+   private static native lstat_impl(s)
 
    #
    # Write selected attributes about a file.  If any of the parameters
@@ -345,12 +345,12 @@ $endif
    # @param atime the access time (an integer)
    # @param mtime the modification time (an integer)
    #
-   public static defer wstat(s, mode, uid, gid, atime, mtime)
+   public static native wstat(s, mode, uid, gid, atime, mtime)
 
    #
    # Check whether the given file can be accessed in the given mode.
    #
-   public static defer access(s, mode)
+   public static native access(s, mode)
 
    #
    # Copy a file.
@@ -795,7 +795,7 @@ class WindowsFilePath(FilePath)
       return Files.get_path(Files.getcwd()).append(self)
    end
 
-   private static defer getdcwd(d)
+   private static native getdcwd(d)
 
    public canonical()
       local e, r
@@ -857,7 +857,7 @@ class WindowsFileSystem(FileSystem)
       return s == ("." | "..")
    end
 
-   public defer get_roots()
+   public native get_roots()
 
    public split_paths(s)
       local t

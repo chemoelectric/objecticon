@@ -792,7 +792,7 @@ void resolve(struct progstate *p)
         if (cf->field_descriptor) {
             cf->field_descriptor = (dptr)(p->Code + (uword)cf->field_descriptor);
             /* Follow the same logic as lcode.c */
-            if (cf->flags & M_Defer) {
+            if (cf->flags & (M_Defer | M_Abstract | M_Native)) {
                 int n = IntVal(*cf->field_descriptor);
                 if (n == -1) {
                     /* Unresolved, point to stub */

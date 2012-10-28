@@ -29,7 +29,9 @@ class Class()
       # Integer flag for a special method, ie init or new.
       Special,
       # Integer flag for an abstract class/method.
-      Abstract
+      Abstract,
+      # Integer flag for a native method.
+      Native
 
    private static init()
       Method := 8r01
@@ -44,28 +46,29 @@ class Class()
       Final := 8r01000
       Special := 8r02000
       Abstract := 8r04000
+      Native := 8r010000
    end
 
-   private static defer create_raw(c)
-   private static defer complete_raw(o)
+   private static native create_raw(c)
+   private static native complete_raw(o)
 
    # Return the name of the class
    #
-   public static defer get_name(c)
+   public static native get_name(c)
 
    # Return the class of the object or cast
    #
-   public static defer get_class(c)
+   public static native get_class(c)
 
    # Return the program this class resides in.  The program's &main
    # co-expression is returned.
    #
-   public static defer get_program(c)
+   public static native get_program(c)
 
    # Return the name of the package in which this class resides; fails
    # if the class is not in a package.
    #
-   public static defer get_package(c)
+   public static native get_package(c)
 
    # Return the source location of the class
    # @return a {Location} instance
@@ -74,51 +77,51 @@ class Class()
       return Location!get_location_impl(c)
    end
 
-   private static defer get_location_impl(c)
+   private static native get_location_impl(c)
 
    # Generate the superclasses of the class {c}
    #
-   public static defer get_supers(c)
+   public static native get_supers(c)
 
    # Generate the implemented classes of the class {c}
    #
-   public static defer get_implemented_classes(c)
+   public static native get_implemented_classes(c)
 
    # Succeed iff the class {c} implements the class {target}.  This is
    # similar to the builtin is() function, but takes a class as its
    # first argument, whereas is() takes an object (or fails).
    #
-   public static defer implements(c, target)
+   public static native implements(c, target)
 
    # Generate the field names of the class {c}.  The instance fields
    # come first, followed by the class fields.
    #
-   public static defer get_field_names(c)
+   public static native get_field_names(c)
 
    # Return the number of fields in the class {c}.
    #
-   public static defer get_n_fields(c)
+   public static native get_n_fields(c)
 
    # Return the flags for the class {c}, which can include
    # {Abstract} or {Final}.
    #
-   public static defer get_class_flags(c)
+   public static native get_class_flags(c)
 
    # Generate the field names of the class fields of class {c}.
    #
-   public static defer get_class_field_names(c)
+   public static native get_class_field_names(c)
 
    # Return the number of class fields of class {c}.
    #
-   public static defer get_n_class_fields(c)
+   public static native get_n_class_fields(c)
 
    # Generate the field names of the instance fields of class {c}.
    #
-   public static defer get_instance_field_names(c)
+   public static native get_instance_field_names(c)
 
    # Return the number of instance fields of class {c}.
    #
-   public static defer get_n_instance_fields(c)
+   public static native get_n_instance_fields(c)
 
    # Return the flags of the given field in class{c}.
    # @param c the class
@@ -126,7 +129,7 @@ class Class()
    # @return an integer, being the OR of all the flags
    # @fail if the field is unknown
    #
-   public static defer get_field_flags(c, field)
+   public static native get_field_flags(c, field)
 
    # Return the field index number of the given field in class{c}.
    # @param c the class
@@ -134,7 +137,7 @@ class Class()
    # @return an integer, being the index
    # @fail if the field is unknown
    #
-   public static defer get_field_index(c, field)
+   public static native get_field_index(c, field)
 
    # Return the field name of the given field in class{c}.
    # @param c the class
@@ -142,7 +145,7 @@ class Class()
    # @return the field name
    # @fail if the field is unknown
    #
-   public static defer get_field_name(c, field)
+   public static native get_field_name(c, field)
 
 
    # Return the source location of the given field in class{c}.
@@ -155,7 +158,7 @@ class Class()
       return Location!get_field_location_impl(c, field)
    end
 
-   private static defer get_field_location_impl(c, field)
+   private static native get_field_location_impl(c, field)
 
    # Return the class in which the given field is defined.
    # @param c the class
@@ -163,31 +166,31 @@ class Class()
    # @return the defining class of the field
    # @fail if the field is unknown
    #
-   public static defer get_field_defining_class(c, field)
+   public static native get_field_defining_class(c, field)
 
    # Return the object part of a method pointer.
    # @param mp a methp structure
    # @return an object
    #
-   private static defer get_methp_object(mp)
+   private static native get_methp_object(mp)
 
    # Return the procedure part of a method pointer.
    # @param mp a methp structure
    # @return a procedure object (which will be an instance method)
    #
-   private static defer get_methp_proc(mp)
+   private static native get_methp_proc(mp)
 
    # Return the object part of a cast.
    # @param mp a cast structure created with the {cast()} function
    # @return an object
    #
-   private static defer get_cast_object(c)
+   private static native get_cast_object(c)
    
    # Return the class part of a cast.
    # @param mp a cast structure created with the {cast()} function
    # @return a class
    #
-   private static defer get_cast_class(c)
+   private static native get_cast_class(c)
 
    # Get the value of the field in {x}, behaving in exactly the same way
    # as though the "." operation had been invoked with equivalent values.
@@ -197,7 +200,7 @@ class Class()
    # @return the field value
    # @runerr if the field is unknown or access is not permitted
    #
-   public static defer get(x, field)
+   public static native get(x, field)
 
    # This behaves in exactly the same way as {get} above, but fails
    # rather than stops with a runtime error, if the field is unknown
@@ -209,7 +212,7 @@ class Class()
    # @return the field value
    # @fail if the field is unknown or access is not permitted
    #
-   public static defer getf(x, field)
+   public static native getf(x, field)
 
    # This behaves in exactly the same way as {getf} above, but
    # doesn't set {&why} on failure.
@@ -219,7 +222,7 @@ class Class()
    # @return the field value
    # @fail if the field is unknown or access is not permitted
    #
-   public static defer getq(x, field)
+   public static native getq(x, field)
 
    # Set the given field, which must be a method, in the class from
    # which this method was invoked, to be the given procedure.
@@ -231,7 +234,7 @@ class Class()
    # @ field is not defined in the class from which this method was
    # @ invoked.
    #
-   public static defer set_method(field, proc)   
+   public static native set_method(field, proc)   
 
    # This method tries to resolve all the unresolved deferred methods
    # declared in the class from which is called, from the dll {lib}.
@@ -245,7 +248,7 @@ class Class()
    # @param lib the name of the dll
    # @fail if the library cannot be found.
    #
-   public static defer load_library(lib)   
+   public static native load_library(lib)   
 
    # Lookup a class by name
    # 
@@ -264,5 +267,5 @@ class Class()
    # Initialize a class, by calling its static init method.  Has no
    # effect if the class has already been initialized.
    #
-   public static defer ensure_initialized(c)
+   public static native ensure_initialized(c)
 end

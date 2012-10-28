@@ -937,7 +937,7 @@ void visit_pre(visitf v)
         else if (gl->class) {
             struct lclass_field *me;
             for (me = gl->class->fields; me; me = me->next) {
-                if (me->func && !(me->flag & M_Defer)) 
+                if (me->func && !(me->flag & (M_Defer | M_Abstract | M_Native))) 
                     visitfunc_pre(me->func, v);
             }
         }
@@ -953,7 +953,7 @@ void visit_post(visitf v)
         else if (gl->class) {
             struct lclass_field *me;
             for (me = gl->class->fields; me; me = me->next) {
-                if (me->func && !(me->flag & M_Defer)) 
+                if (me->func && !(me->flag & (M_Defer | M_Abstract | M_Native))) 
                     visitfunc_post(me->func, v);
             }
         }

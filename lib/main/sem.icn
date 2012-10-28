@@ -26,12 +26,12 @@ class Sem(NoCopy)
    #
    # Set the value of the semaphore to x
    #
-   public defer set_value(x)
+   public native set_value(x)
 
    #
    # Get the current semaphore value.
    #
-   public defer get_value()
+   public native get_value()
 
    #
    # Perform the wait operation, defined as {semop(-1)}
@@ -60,13 +60,13 @@ class Sem(NoCopy)
    # the value is >= abs(n), then abs(n) is subtracted.  If n is zero,
    # then the process suspends until the semaphore value is zero.
    #
-   public defer semop(n)
+   public native semop(n)
 
    # 
    # Peform a semop with the IPC_NOWAIT flag set.  This is the same as
    # {semop()}, but instead of suspending the call will fail.
    #
-   public defer semop_nowait(n)
+   public native semop_nowait(n)
 
    # 
    # Repeatedly peform {semop_nowait()}, sleeping for a short period between each try
@@ -91,7 +91,7 @@ class Sem(NoCopy)
    # Clean up the resources used by the semaphore.  This should be called by
    # the parent process after the semaphore is no longer needed.
    #
-   public defer remove()
+   public native remove()
 
    #
    # Return the underlying id of the semaphore.
@@ -100,9 +100,9 @@ class Sem(NoCopy)
       return id
    end
 
-   private static defer open_public_impl()
-   private static defer create_public_impl()
-   private static defer create_private_impl()
+   private static native open_public_impl()
+   private static native create_public_impl()
+   private static native create_private_impl()
 
    private static init() 
       Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)

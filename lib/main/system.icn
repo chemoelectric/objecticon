@@ -34,13 +34,13 @@ class System()
    # @        System.execve("/bin/ls", ["/bin/ls", "-l", "/home"],
    # @                                 ["ABC=DEF", "NUM=123"])
    #
-   public static defer execve(f, args, env)
+   public static native execve(f, args, env)
 
    # spawn a new identical process.
-   public static defer fork()
+   public static native fork()
 
    # send a signal to a process.
-   public static defer kill(pid, signal)
+   public static native kill(pid, signal)
 
    # wait for process to terminate or stop.
    public static wait(pid, options)
@@ -48,24 +48,24 @@ class System()
    end
 
    # returns the process ID of the calling process.
-   public static defer getpid()
+   public static native getpid()
 
    # returns the process ID of the parent of the calling process.
-   public static defer getppid()
+   public static native getppid()
 
-   private static defer wait_impl()
+   private static native wait_impl()
 
    # generate the environment values as key=pair strings
-   public static defer environ()
+   public static native environ()
 
    # return contents of environment variable s.
-   public static defer getenv(s)
+   public static native getenv(s)
    
    # set an environment variable.
-   public static defer setenv(name, value)
+   public static native setenv(name, value)
 
    # unset an environment variable.
-   public static defer unsetenv(name)
+   public static native unsetenv(name)
 
    # Get name and information about current kernel.  A UtsName object is returned, with
    # fields corresponding to the posix utsname structure.
@@ -73,7 +73,7 @@ class System()
       return UtsName!uname_impl()
    end
 
-   private static defer uname_impl()
+   private static native uname_impl()
 end
 
 # A structure returned by the {System.uname} method.
