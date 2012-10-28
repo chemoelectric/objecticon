@@ -398,7 +398,7 @@ static void gencode()
         else if (gl->class) {
             struct lclass_field *me;
             for (me = gl->class->fields; me; me = me->next) {
-                if (me->func && !(me->flag & M_Defer)) 
+                if (me->func && !(me->flag & (M_Defer | M_Abstract | M_Native))) 
                     gencode_func(me->func);
             }
         }
@@ -1335,7 +1335,7 @@ static void genclasses(void)
         fprintf(dbgfile, "\n# class method descriptors\n");
     for (cl = lclasses; cl; cl = cl->next) {
         for (cf = cl->fields; cf; cf = cf->next) {
-            if (cf->flag & M_Defer) {
+            if (cf->flag & (M_Defer | M_Abstract | M_Native)) {
                 /* Deferred method, perhaps resolved to native method */
                 cf->dpc = pc;
                 outwordx(D_Proc, "D_Proc, Deferred method %s.%s", cl->global->name, cf->name);

@@ -1327,7 +1327,7 @@ function lang_Class_set_method(field, pr)
         if (cf->defining_class != class0)
             runerr(616);
 
-        if (!(cf->flags & M_Method))
+        if (!(cf->flags & M_Native))
             runerr(617, field);
 
         new_proc = &ProcBlk(pr);
@@ -1423,7 +1423,7 @@ function lang_Class_load_library(lib)
         for (i = 0; i < class0->n_instance_fields + class0->n_class_fields; ++i) {
             struct class_field *cf = class0->fields[i];
             if ((cf->defining_class == class0) &&
-                (cf->flags & M_Method) &&
+                (cf->flags & M_Native) &&
                 BlkLoc(*cf->field_descriptor) == (union block *)&Bdeferred_method_stub) {
                 struct b_proc *bp = try_load(handle, class0, cf);
                 if (bp) {
@@ -4105,7 +4105,7 @@ function lang_Proc_get_location_impl(c, flag)
          * method's name in the global name table.
          */
         if (proc0->field && (is:null(flag) ||
-                            !(proc0->field->flags & M_Defer))) {
+                            !(proc0->field->flags & (M_Defer | M_Abstract | M_Native)))) {
             struct progstate *prog = proc0->field->defining_class->program;
             if (prog->ClassFieldLocs == prog->EClassFieldLocs) {
                 LitWhy("No field location data in icode");

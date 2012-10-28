@@ -335,6 +335,33 @@ static void compute_impl(struct lclass *cl)
     }
 }
 
+static void check_override(struct lclass_field *fr, struct lclass_field *f)
+{
+    if (fr->flag & (M_Public | M_Special))
+        return;
+
+    if ((fr->flag & M_Protected) && (f->flag & (M_Private | M_Protected)))
+        return;
+
+    if ((fr->flag & M_Package) && ((f->flag & M_Private) ||
+                                   ((f->flag & M_Package) && 
+                                     (f->class->global->defined->package_id == fr->class->global->defined->package_id))))
+        return;
+
+    if ((fr->flag & M_Private) && (f->flag & M_Private))
+        return;
+
+    lfatal(fr->class->global->defined,
+           &fr->pos,
+           "Method %s encountered in class %s overrides a method with less restrictive access in class %s (File %s; Line %d)",
+           f->name,
+           fr->class->global->name,
+           f->class->global->name,
+           abbreviate(f->pos.file),
+           f->pos.line
+        );
+}
+
 static void merge(struct lclass *cl, struct lclass *super)
 {
     struct lclass_ref *cr;
@@ -388,6 +415,11 @@ static void merge(struct lclass *cl, struct lclass *super)
                        abbreviate(f->pos.file),
                        f->pos.line
                     );
+
+            if (((fr->field->flag & (M_Method | M_Static)) == M_Method) 
+                       && ((f->flag & (M_Method | M_Static)) == M_Method))
+                check_override(fr->field, f);
+
         } else {
             /* Not found, so add it */
             fr = Alloc(struct lclass_field_ref);

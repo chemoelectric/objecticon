@@ -649,7 +649,7 @@ abstract class DescStream(Stream, NoCopy)
    # @param timeout the timeout; if omitted waits indefinitely
    # @return the number of items in the three lists, always >= 0.
    #
-   public static defer select(rl, wl, el, timeout)
+   public static native select(rl, wl, el, timeout)
 
    #
    # Performs a poll on one or more streams, each of which must be a
@@ -691,7 +691,7 @@ $ifdef _PLAN9
       }
    end
 $else
-   public static defer poll(l, timeout)
+   public static native poll(l, timeout)
 $endif
 
    #
@@ -702,7 +702,7 @@ $endif
    # @param off the flags to turn off
    # @return the new flags
    #
-   public defer flag(on, off)
+   public native flag(on, off)
 
    #
    # Turn the specified descriptor flags on or off, and return the new
@@ -712,7 +712,7 @@ $endif
    # @param off the flags to turn off
    # @return the new flags
    #
-   public defer dflag(on, off)
+   public native dflag(on, off)
 
    #
    # Invokes the system function dup2(oldfd, newfd), with oldfd set to
@@ -736,7 +736,7 @@ $endif
       return
    end
 
-   private defer dup2_impl()
+   private native dup2_impl()
 
    #
    # Return a {Stat} object with info about this file.
@@ -745,7 +745,7 @@ $endif
       return Stat!stat_impl()
    end
 
-   private defer stat_impl()
+   private native stat_impl()
 
 $ifdef _PLAN9
    #
@@ -760,12 +760,12 @@ $ifdef _PLAN9
    # @param length the file length
    # @param name the file name
    #
-   public defer wstat(mode, uid, gid, atime, mtime, length, name)
+   public native wstat(mode, uid, gid, atime, mtime, length, name)
 
    #
    # Return the length of the file
    #
-   public defer length()
+   public native length()
 $else
    #
    # Write selected attributes about a file.  If any of the parameters
@@ -775,7 +775,7 @@ $else
    # @param uid the owner name
    # @param gid the group name
    #
-   public defer wstat(mode, uid, gid)
+   public native wstat(mode, uid, gid)
 $endif
 
    protected new(fd, mode)
@@ -1138,8 +1138,8 @@ $ifdef _PLAN9
       }
    end
 
-   private static defer open_impl(path, flags)
-   private static defer create_impl(path, flags, perm)
+   private static native open_impl(path, flags)
+   private static native create_impl(path, flags, perm)
 
 $else
    #
@@ -1198,7 +1198,7 @@ $else
       return [FileStream(t[1], READ), FileStream(t[2], WRITE)]
    end
 
-   private static defer open_impl(path, flags, perm)
+   private static native open_impl(path, flags, perm)
 $endif
 
    private static init()
@@ -1207,21 +1207,21 @@ $endif
       stderr := create_and_set_mode(2, WRITE)
    end
 
-   private static defer pipe_impl()
+   private static native pipe_impl()
 
-   public defer in(n)
+   public native in(n)
 
-   public defer out(s)
+   public native out(s)
 
-   public defer seek(offset)
+   public native seek(offset)
 
-   public defer tell()
+   public native tell()
 
-   public defer truncate(len)
+   public native truncate(len)
 
-   public defer chdir()
+   public native chdir()
 
-   public defer close()
+   public native close()
 end
 
 #
@@ -1252,7 +1252,7 @@ class SocketStream(DescStream)
       return [SocketStream(t[1], READ_WRITE), SocketStream(t[2], READ_WRITE)]
    end
 
-   public defer in(n)
+   public native in(n)
 
    #
    # Connect a socket previously created with {Socket} to the given
@@ -1260,18 +1260,18 @@ class SocketStream(DescStream)
    # for an {AF_UNIX} address, or "inet:<host>:<port>" for an
    # {AF_INET} address.  The host can be "INADDR_ANY" if desired.
    #
-   public defer connect(addr)
+   public native connect(addr)
 
    #
    # Bind a socket to the given address, which is in the same form as
    # for {connect}.
    #
-   public defer bind(addr)
+   public native bind(addr)
 
    #
    # Listen for connections with the given backlog.
    #
-   public defer listen(backlog)
+   public native listen(backlog)
 
    #
    # Accept a new connection, returning a new {SocketStream}.
@@ -1284,22 +1284,22 @@ class SocketStream(DescStream)
    # Perform a shutdown on the socket.
    # @param how one of the constants in {Shut}
    #
-   public defer shutdown(how)
+   public native shutdown(how)
 
    #
    # Return a list of numerical addresses for the given host.
    #
-   public static defer dns_query(host)
+   public static native dns_query(host)
 
-   private defer accept_impl()
+   private native accept_impl()
 
-   public defer out(s)
+   public native out(s)
 
-   public defer close()
+   public native close()
 
-   private static defer socketpair_impl(typ)
+   private static native socketpair_impl(typ)
 
-   private static defer socket_impl(domain, typ)
+   private static native socket_impl(domain, typ)
 end
 
 #
@@ -1344,7 +1344,7 @@ abstract class LineBasedInputStream(Stream)
    # Implemented to read a single line.  The EOL should not be
    # included.  Fails on error and returns {&null} on end-of-file
    #
-   protected defer read_line_impl()
+   protected abstract read_line_impl()
 
    protected new()
       self.line := ""
@@ -1377,7 +1377,7 @@ abstract class LineBasedOutputStream(Stream)
    # Implemented to output a single line.  The EOL is not included in
    # {s}.
    #
-   protected defer write_line_impl(s)
+   protected abstract write_line_impl(s)
    
    public get_mode()
       return WRITE
@@ -1396,11 +1396,11 @@ class DirStream(LineBasedInputStream, NoCopy)
    private 
       dd
 
-   protected defer read_line_impl()
+   protected native read_line_impl()
 
-   public defer close()
+   public native close()
 
-   private static defer new_impl(path)
+   private static native new_impl(path)
 
    public new(path)
       cast(self,LineBasedInputStream).new()
@@ -2191,22 +2191,22 @@ class RamStream(Stream, NoCopy)
    private
       ptr
 
-   public defer in(n)
+   public native in(n)
 
-   public defer out(s)
+   public native out(s)
 
-   public defer seek(offset)
+   public native seek(offset)
 
-   public defer tell()
+   public native tell()
 
-   public defer truncate(len)
+   public native truncate(len)
 
    #
    # Return the current content of the {RamStream} as a string.
    #
-   public defer str()
+   public native str()
 
-   public defer close()
+   public native close()
 
    #
    # Close the stream and return the finished content as a string.
@@ -2218,7 +2218,7 @@ class RamStream(Stream, NoCopy)
       return s
    end
 
-   private static defer new_impl(s, wiggle)
+   private static native new_impl(s, wiggle)
 
    public get_mode()
       return ALL
@@ -2752,22 +2752,22 @@ class FileWorker(Pollable, NoCopy)
       return res
    end
 
-   private static defer new_impl(buff_size, other)
+   private static native new_impl(buff_size, other)
 
-   public defer op_read(n)
-   public defer op_write(s)
-   public defer op_write_all(s)
-   public defer op_open(path, mode)
-   public defer op_create(path, mode, perm)
-   public defer op_close()
-   public defer is_running()
-   public defer get_buff_size()
-   public defer get_buffer(n)
-   public defer get_result()
-   public defer await()
-   public defer close()
-   public defer close_when_complete()
-   public defer dup_fd()
+   public native op_read(n)
+   public native op_write(s)
+   public native op_write_all(s)
+   public native op_open(path, mode)
+   public native op_create(path, mode, perm)
+   public native op_close()
+   public native is_running()
+   public native get_buff_size()
+   public native get_buffer(n)
+   public native get_result()
+   public native await()
+   public native close()
+   public native close_when_complete()
+   public native dup_fd()
 
    public is_complete()
       return not is_running()
@@ -2795,9 +2795,9 @@ class SslStream(Stream, HasUnderlyingStream, NoCopy)
       ptr,
       other
 
-   public defer in(n)
+   public native in(n)
 
-   public defer out(s)
+   public native out(s)
 
    public close()
       local f
@@ -2807,13 +2807,13 @@ class SslStream(Stream, HasUnderlyingStream, NoCopy)
       return /f
    end
 
-   private defer close_impl()
+   private native close_impl()
 
    public get_mode()
       return other.get_mode()
    end
 
-   private static defer new_impl(other, verify_host)
+   private static native new_impl(other, verify_host)
 
    #
    # Create a new SslStream.
@@ -2874,7 +2874,7 @@ end
 # sequence of that method represent the output of the stream, with
 # each result being one line.
 #
-class GeneratorStream(LineBasedInputStream, NoCopy)
+abstract class GeneratorStream(LineBasedInputStream, NoCopy)
    private
       coex
 
@@ -2899,11 +2899,11 @@ class GeneratorStream(LineBasedInputStream, NoCopy)
    # returning {&null} and errors are signalled by failing and setting
    # {&why}.
    #
-   protected defer gen()
+   protected abstract line_gen()
 
    public new()
       cast(self,LineBasedInputStream).new()
-      self.coex := create gen()
+      self.coex := create line_gen()
       return
    end
 end
@@ -2941,7 +2941,7 @@ end
 # Useful parent class for filtering the lines from a particular
 # {Stream}.
 #
-class LineFilterStream(GeneratorStream, HasUnderlyingStream)
+abstract class LineFilterStream(GeneratorStream, HasUnderlyingStream)
    protected
       other
 

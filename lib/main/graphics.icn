@@ -43,95 +43,95 @@ class Window(NoCopy)
       return Window(couple_impl(other))
    end
 
-   private static defer open_impl(display)
-   private defer clone_impl(a[])
-   private defer couple_impl(other)
+   private static native open_impl(display)
+   private native clone_impl(a[])
+   private native couple_impl(other)
 
    #
    # Grab the pointer so that all mouse events are directed to this window.
    #
-   public defer grab_pointer()
+   public native grab_pointer()
 
    #
    # Undoes the effect of {grab_pointer}.
    #
-   public defer ungrab_pointer()
+   public native ungrab_pointer()
 
-   public defer get_font_ascent()
-   public defer get_bg()
-   public defer get_canvas()
-   public defer get_clip()
-   public defer get_depth()
-   public defer get_font_descent()
-   public defer get_display()
-   public defer get_draw_op()
-   public defer get_dx()
-   public defer get_dy()
-   public defer get_fg()
-   public defer get_font_height()
-   public defer get_fill_style()
-   public defer get_font()
-   public defer get_font_width()
-   public defer get_geometry()
-   public defer get_height()
-   public defer get_image()
-   public defer get_input_mask()
-   public defer get_label()
-   public defer get_line_style()
-   public defer get_line_width()
-   public defer get_max_height()
-   public defer get_max_size()
-   public defer get_max_width()
-   public defer get_min_height()
-   public defer get_min_size()
-   public defer get_min_width()
-   public defer get_pattern()
-   public defer get_pointer()
-   public defer get_pos()
-   public defer get_x()
-   public defer get_y()
-   public defer can_resize()
-   public defer get_size()
-   public defer get_width()
+   public native get_font_ascent()
+   public native get_bg()
+   public native get_canvas()
+   public native get_clip()
+   public native get_depth()
+   public native get_font_descent()
+   public native get_display()
+   public native get_draw_op()
+   public native get_dx()
+   public native get_dy()
+   public native get_fg()
+   public native get_font_height()
+   public native get_fill_style()
+   public native get_font()
+   public native get_font_width()
+   public native get_geometry()
+   public native get_height()
+   public native get_image()
+   public native get_input_mask()
+   public native get_label()
+   public native get_line_style()
+   public native get_line_width()
+   public native get_max_height()
+   public native get_max_size()
+   public native get_max_width()
+   public native get_min_height()
+   public native get_min_size()
+   public native get_min_width()
+   public native get_pattern()
+   public native get_pointer()
+   public native get_pos()
+   public native get_x()
+   public native get_y()
+   public native can_resize()
+   public native get_size()
+   public native get_width()
 
    #
    # The graphics context attribute bg specifies current background
    # color.
    #
-   public defer set_bg(v)
+   public native set_bg(v)
 
    #
    # The canvas attribute canvas specifies the window visibility.
    # Possible values include "hidden", "iconic", "normal", "popup"
    #
-   public defer set_canvas(v)
+   public native set_canvas(v)
 
    #
    # The graphics context attribute draw_op specifies the way in which
    # newly drawn pixels are combined with the pixels that are already
    # in a window.
    #
-   public defer set_draw_op(v)
+   public native set_draw_op(v)
 
    #
    # The graphics context attribute dx specifies a horizontal offset
    # that is added to the x value of every coordinate pair before
    # interpretation.
    #
-   public defer set_dx(v)
+   public native set_dx(v)
 
    #
    # The graphics context attribute dy specifies a vertical offset
    # that is added to the y value of every coordinate pair before
    # interpretation.
    #
-   public defer set_dy(v)
+   public native set_dy(v)
 
    #
    # The graphics context attribute fg specifies the current
    # foreground color.
    #
-   public defer set_fg(v)
+   public native set_fg(v)
 
    #
    # The graphics context attribute fill_style specifies whether a
@@ -140,22 +140,22 @@ class Window(NoCopy)
    # the pattern attribute.
    # Possible values: "solid", "textured", "masked"
    #
-   public defer set_fill_style(v)
+   public native set_fill_style(v)
 
    #
    # The graphics context attribute font specifies the current text font.
    #
-   public defer set_font(v)
+   public native set_font(v)
 
    #
    # Specifies the position and size of the window.
    #
-   public defer set_geometry(x, y, width, height)
+   public native set_geometry(x, y, width, height)
 
    #
    # Set the height of the window in pixels.
    #
-   public defer set_height(height)
+   public native set_height(height)
 
    #
    # Specifies an image to load into the window.  On success, the
@@ -163,69 +163,69 @@ class Window(NoCopy)
    # {v} may be an Icon image string, raw binary image data (eg a gif
    # file), or the name of a file containing an image.
    #
-   public defer set_image(v)
+   public native set_image(v)
 
    #
    # Set the input mask for the window.  If the string {v} contains
    # "k" then key release events are reported; if it contains "m" then
    # mouse motion events are reported.
    #
-   public defer set_input_mask(v)
+   public native set_input_mask(v)
 
    #
    # The canvas attribute icon specifies an image used to identify the
    # window.  The parameter takes the same format as {set_image}.
    #
-   public defer set_icon(v)
+   public native set_icon(v)
 
    #
    # The canvas attribute label specifies a title used to identify the
    # window.
    #
-   public defer set_label(v)
+   public native set_label(v)
 
    #
    # The graphics context attribute line_style specifies the form of
    # drawn lines.  Possible values may include: "solid", "dashed",
    # "striped", although this is system dependent.
    #
-   public defer set_line_style(v)
+   public native set_line_style(v)
 
    #
    # The graphics context attribute linewidth specifies the width of
    # drawn lines.
    #
-   public defer set_line_width(v)
+   public native set_line_width(v)
 
    #
    # Set the maximum height of the window in pixels.
    #
-   public defer set_max_height(height)
+   public native set_max_height(height)
 
    #
    # Set the maximum size of the window in pixels.
    #
-   public defer set_max_size(width, height)
+   public native set_max_size(width, height)
 
    #
    # Set the maximum width of the window in pixels.
    #
-   public defer set_max_width(width)
+   public native set_max_width(width)
 
    #
    # Set the minimum height of the window in pixels.
    #
-   public defer set_min_height(height)
+   public native set_min_height(height)
 
    #
    # Set the minimum size of the window in pixels.
    #
-   public defer set_min_size(width, height)
+   public native set_min_size(width, height)
 
    #
    # Set the minimum width of the window in pixels.
    #
-   public defer set_min_width(width)
+   public native set_min_width(width)
 
    #
    # The graphics context attribute pattern specifies the particular
@@ -235,44 +235,44 @@ class Window(NoCopy)
    # "white", "vertical", "diagonal", "horizontal", "grid", "trellis",
    # "checkers", "grains", "scales", "waves", "width,#hexdigits"
    #
-   public defer set_pattern(v)
+   public native set_pattern(v)
 
    #
    # The canvas attribute pointer specifies the shape of the figure
    # that represents the mouse position.
    #
-   public defer set_pointer(v)
+   public native set_pointer(v)
 
    #
    # Set the position of the window on the screen.
    #
-   public defer set_pos(x, y)
+   public native set_pos(x, y)
 
    #
    # Set the x position of the window on the screen.
    #
-   public defer set_x(v)
+   public native set_x(v)
 
    #
    # Set the y position of the window on the screen.
    #
-   public defer set_y(v)
+   public native set_y(v)
 
    #
    # Configure whether the window can or cannot be resized by the
    # user.  The parameter should be a flag value.
    #
-   public defer set_resize(v)
+   public native set_resize(v)
 
    #
    # Set the size of the window in pixels.
    #
-   public defer set_size(width, height)
+   public native set_size(width, height)
 
    #
    # Set the width of the window in pixels.
    #
-   public defer set_width(width)
+   public native set_width(width)
 
    #
    # Configure this window so that it is transient in respect of the
@@ -291,7 +291,7 @@ class Window(NoCopy)
       }
    end
 
-   private defer set_transient_for_impl(v)
+   private native set_transient_for_impl(v)
 
    #
    # Get the transient-for window, or fail if none is set.
@@ -303,7 +303,7 @@ class Window(NoCopy)
    #
    # Produces a beep or other signal to attract attention.
    #
-   public defer alert(volume)
+   public native alert(volume)
 
    #
    # Sets the clipping region to the specified rectangle; subsequent
@@ -311,144 +311,144 @@ class Window(NoCopy)
    # called with no arguments, clipping is disabled and the entire
    # canvas is writable.
    #
-   public defer clip(x, y, w, h)
+   public native clip(x, y, w, h)
 
    #
    # Clear the clip settings
    #
-   public defer unclip()
+   public native unclip()
 
    #
    # Return the r,g,b values of the given color, as a color string
    #
-   public static defer color_value(k)
+   public static native color_value(k)
 
    #
    # Return the r,g,b values of the given color, as a list of 3 integers.
    #
-   public static defer parse_color(k)
+   public static native parse_color(k)
 
    #
    # draw_arc(x, y, width, height, angle1, angle2)
    #
-   public defer draw_arc(x, y, width, height, angle1, angle2)
+   public native draw_arc(x, y, width, height, angle1, angle2)
 
    #
    # event() - return an event from this window, failing if none is available.
    #
-   public defer event()
+   public native event()
 
    #
    # draw_circle(x, y, r, theta, alpha)
    #
-   public defer draw_circle(x, y, r, theta, alpha)
+   public native draw_circle(x, y, r, theta, alpha)
 
    #
    # draw_curve(x1,y1,...xN,yN)
    # Draw a smooth curve through the given points.
    #
-   public defer draw_curve(a[])
+   public native draw_curve(a[])
 
    #
    # Draw an image.  The image can be in icon image string format, raw image data, or
    # a filename.
    #
-   public defer draw_image(x, y, d)
+   public native draw_image(x, y, d)
 
    #
    # Copy an area from this window to another window.
    #
-   public defer copy_to(dest, x1, y1, w, h, x2, y2)
+   public native copy_to(dest, x1, y1, w, h, x2, y2)
 
    #
    # draw_line(x1,y1,...xN,yN)
    #
-   public defer draw_line(a[])
+   public native draw_line(a[])
 
    #
    # draw_point(x, y)
    #
-   public defer draw_point(x, y)
+   public native draw_point(x, y)
 
    #
    # draw_polygon(x1,y1,...xN,yN)
    #
-   public defer draw_polygon(a[])
+   public native draw_polygon(a[])
 
    #
    # draw_rectangle(x, y, width, height)
    #
-   public defer draw_rectangle(x, y, width, height)
+   public native draw_rectangle(x, y, width, height)
 
    #
    # draw_string(x, y, s)
    #
-   public defer draw_string(x, y, s)
+   public native draw_string(x, y, s)
 
    #
    # erase_area(x,y,width,height) - clear an area of the window
    #
-   public defer erase_area(x, y, width, height)
+   public native erase_area(x, y, width, height)
 
    #
    # pending(x[]) - add to and then produce a list of events pending on window
    #
-   public defer pending(a[])
+   public native pending(a[])
 
    #
    # fill_arc(x, y, width, height, angle1, angle2)
    #
-   public defer fill_arc(x, y, width, height, angle1, angle2)
+   public native fill_arc(x, y, width, height, angle1, angle2)
 
    #
    # fill_circle(x, y, r, theta, alpha)
    #
-   public defer fill_circle(x, y, r, theta, alpha)
+   public native fill_circle(x, y, r, theta, alpha)
 
    #
    # fill_polygon(x1, y1, ...xN, yN)
    #
-   public defer fill_polygon(a[])
+   public native fill_polygon(a[])
 
    #
    # fill_rectangle(x, y, width, height)
    #
-   public defer fill_rectangle(x, y, width, height)
+   public native fill_rectangle(x, y, width, height)
 
    #
    # Lower this window to the bottom of the window stack
    #
-   public defer lower()
+   public native lower()
 
    #
    # Return the characters forming keys to palette p
    #
-   public static defer palette_chars(p)
+   public static native palette_chars(p)
 
    #
    # Return color of key s1 in palette s2
    #
-   public static defer palette_color(s1, s2)
+   public static native palette_color(s1, s2)
 
    #
    # Return key of closest color to s in palette p
    #
-   public static defer palette_key(s1, s2)
+   public static native palette_key(s1, s2)
 
    #
    # Get the contents of some pixels as a list of colours
    #
-   public defer get_pixels(x, y, width, height)
+   public native get_pixels(x, y, width, height)
 
    #
    # Set the contents of some pixels from a list of colours
    #
-   public defer set_pixels(data, x, y, width, height)
+   public native set_pixels(data, x, y, width, height)
 
    #
    # Filter the given pixels according to the given filter spec.
    #
-   public defer filter(filter, x, y, width, height)
+   public native filter(filter, x, y, width, height)
 
    #
    # Return a rectangle (as a list of four integers), representing
@@ -457,45 +457,45 @@ class Window(NoCopy)
    # clip area if set.  If the result would be an empty area, the
    # method fails.
    #
-   public defer drawable(x, y, width, height)
+   public native drawable(x, y, width, height)
 
    #
    # Return the current root x, y position as a two-element list.
    #
-   public defer query_root_pointer()
+   public native query_root_pointer()
 
    #
    # Return the current display size. as a two-element list.
    #
-   public defer get_display_size()
+   public native get_display_size()
 
    #
    # Return the current x, y position as a two-element list, relative to
    # this window.
    #
-   public defer query_pointer()
+   public native query_pointer()
 
    #
    # Warp the pointer to the given location, relative to this window.
    #
-   public defer warp_pointer(x, y)
+   public native warp_pointer(x, y)
 
    #
    # Raise window to the top of the window stack
    #
-   public defer raise()
+   public native raise()
 
    #
    # Returns the width of string s, in pixels, as drawn using the
    # current font.
    #
-   public defer text_width(s)
+   public native text_width(s)
 
    #
    # Frees the window. If no other bindings to the same canvas exist,
    # the window is closed.
    #
-   public defer uncouple()
+   public native uncouple()
 
    #
    # Writes an image of the rectangular area (x,y,w,h) to the file
@@ -505,27 +505,27 @@ class Window(NoCopy)
    # of file names may select different formats on some graphics
    # systems.
    #
-   public defer write_image(s, x, y, w, h)
+   public native write_image(s, x, y, w, h)
 
    #
    # Set the window system's selection
    #
-   public defer own_selection(selection)
+   public native own_selection(selection)
 
    #
    # Send a response to a selection request event.
    #
-   public defer send_selection_response(requestor, property, target, selection, data)
+   public native send_selection_response(requestor, property, target, selection, data)
 
    #
    # Get the window system's selection
    #
-   public defer request_selection(selection, target_type)
+   public native request_selection(selection, target_type)
 
    #
    # Close this window.
    #
-   public defer close()
+   public native close()
 
 $ifdef _PLAN9
    public defer get_dir()

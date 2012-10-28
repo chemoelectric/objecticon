@@ -32,6 +32,7 @@
 %token  INITIAL     /* initial   */
 %token  INVOCABLE   /* invocable */
 %token  LOCAL       /* local     */
+%token  NATIVE      /* native    */
 %token  NEXT        /* next      */
 %token  NOT         /* not       */
 %token  OF          /* of        */
@@ -211,6 +212,7 @@ deferredmethod : deferredtype IDENT LPAREN arglist RPAREN
 
 deferredtype : DEFER
         | ABSTRACT
+        | NATIVE
 
 classaccess : classaccess1 ;
         | classaccess classaccess1 { $$ := Node("classaccess", $1,$2) } ;

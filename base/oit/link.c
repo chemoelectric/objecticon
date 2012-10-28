@@ -285,7 +285,7 @@ char *f_flag2str(int flag)
     return buff;
 }
 
-static char *m_flag2str(int flag)
+char *m_flag2str(int flag)
 {
     static char buff[256];
     *buff = 0;
@@ -301,6 +301,7 @@ static char *m_flag2str(int flag)
     if (flag & M_Defer) strcat(buff, "M_Defer ");
     if (flag & M_Special) strcat(buff, "M_Special ");
     if (flag & M_Abstract) strcat(buff, "M_Abstract ");
+    if (flag & M_Native) strcat(buff, "M_Native ");
     if (*buff)
         buff[strlen(buff) - 1] = 0;
     return buff;

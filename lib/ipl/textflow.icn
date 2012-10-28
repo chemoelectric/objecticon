@@ -6,12 +6,12 @@ import
    ipl.strings,
    ipl.sort
 
-class HasAscent()
-   public defer get_ascent(dw, dh)
+abstract class HasAscent()
+   public abstract get_ascent(dw, dh)
 end
 
-class HasMaxWidth()
-   public defer get_max_width()
+abstract class HasMaxWidth()
+   public abstract get_max_width()
 end
 
 class TextFlowCmd()

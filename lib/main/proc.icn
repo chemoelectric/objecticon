@@ -26,17 +26,17 @@ class Proc()
       
    # Return the name of the proc
    #
-   public static defer get_name(p, flag)
+   public static native get_name(p, flag)
 
    # Return the program this proc resides in.  The program's &main
    # co-expression is returned.
    #
-   public static defer get_program(p)
+   public static native get_program(p)
 
    # Return the name of the package in which this proc resides; fails
    # if the proc is not in a package.
    #
-   public static defer get_package(p)
+   public static native get_package(p)
 
    # Return the source location of the proc
    # @return a {Location} instance
@@ -45,10 +45,10 @@ class Proc()
       return Location!get_location_impl(p, flag)
    end
 
-   private static defer get_location_impl(p, flag)
+   private static native get_location_impl(p, flag)
 
-   public static defer get_defining_class(p)
-   public static defer get_field_name(p)
+   public static native get_defining_class(p)
+   public static native get_field_name(p)
 
    #
    # Return the kind of this procedure, which is one of the constants :-
@@ -58,35 +58,35 @@ class Proc()
    #  {Operator} an operator function, obtained via {Prog.get_operator()}
    #  {Internal} an internally used block of VM instructions.
    #
-   public static defer get_kind(p)
+   public static native get_kind(p)
 
-   public static defer get_n_locals(p)
-   public static defer get_n_arguments(p)
-   public static defer has_varargs(p)
-   public static defer get_n_dynamics(p)
-   public static defer get_n_statics(p)
-   public static defer get_local_names(p)
-   public static defer get_local_index(p, id)
+   public static native get_n_locals(p)
+   public static native get_n_arguments(p)
+   public static native has_varargs(p)
+   public static native get_n_dynamics(p)
+   public static native get_n_statics(p)
+   public static native get_local_names(p)
+   public static native get_local_index(p, id)
 
    public static get_local_location(p, id)
       return Location!get_local_location_impl(p, id)
    end
 
-   private static defer get_local_location_impl(p, id)
-   public static defer get_local_name(p, id)
+   private static native get_local_location_impl(p, id)
+   public static native get_local_name(p, id)
 
    #
    # Return the type of the given local, which is one of the constants
    # {Argument}, {Dynamic} or {Static}.
    #
-   public static defer get_local_kind(p, id)
+   public static native get_local_kind(p, id)
 
    # load C function dynamically.
-   public static defer load(filename, funcname)
+   public static native load(filename, funcname)
 
    # Succeed if and only if the given procedure has a definition, ie
-   # is not an unresolved deferred method.
-   public static defer is_defined(p)
+   # is not an unresolved nativered method.
+   public static native is_defined(p)
 
    # Lookup a procedure (or function) by name.  First the globals are
    # searched for a matching procedure or function.  Failing that, the

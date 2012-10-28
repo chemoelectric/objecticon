@@ -80,102 +80,102 @@ class MySql(NoCopy)
    #
    # Invoke mysql_affected_rows() for the current connection.
    #
-   public defer get_affected_rows()
+   public native get_affected_rows()
 
    #
    # Invoke mysql_change_user() for the current connection.
    #
-   public defer change_user(user, password, db)
+   public native change_user(user, password, db)
 
    #
    # Invoke mysql_get_character_set_name() for the current connection.
    #
-   public defer get_character_set_name()
+   public native get_character_set_name()
 
    #
    # Invoke mysql_close() for the current connection.
    #
-   public defer close()
+   public native close()
 
    #
    # Invoke mysql_set_server_option() for the current connection.
    #
-   public defer set_server_option(option)
+   public native set_server_option(option)
 
    #
    # Invoke mysql_sqlstate() for the current connection.
    #
-   public defer get_sqlstate()
+   public native get_sqlstate()
 
    #
    # Invoke mysql_ssl_set() for the current connection.
    #
-   public defer ssl_set(key, cert, ca, capath, cipher)
+   public native ssl_set(key, cert, ca, capath, cipher)
 
    #
    # Invoke mysql_dump_debug_info() for the current connection.
    #
-   public defer dump_debug_info()
+   public native dump_debug_info()
 
    #
    # Invoke mysql_errno() for the current connection.
    #
-   public defer get_errno()
+   public native get_errno()
 
    #
    # Invoke mysql_error() for the current connection.
    #
-   public defer get_error()
+   public native get_error()
 
    #
    # Invoke mysql_field_count() for the current connection.
    #
-   public defer get_field_count()
+   public native get_field_count()
 
    #
    # Invoke mysql_get_client_info() for the current connection.
    #
-   public static defer get_client_info()
+   public static native get_client_info()
 
    #
    # Invoke mysql_get_client_version() for the current connection.
    #
-   public static defer get_client_version()
+   public static native get_client_version()
 
    #
    # Invoke mysql_get_host_info() for the current connection.
    #
-   public defer get_host_info()
+   public native get_host_info()
 
    #
    # Invoke mysql_get_proto_info() for the current connection.
    #
-   public defer get_proto_info()
+   public native get_proto_info()
 
    #
    # Invoke mysql_get_server_info() for the current connection.
    #
-   public defer get_server_info()
+   public native get_server_info()
 
    #
    # Invoke mysql_get_server_version() for the current connection.
    #
-   public defer get_server_version()
+   public native get_server_version()
 
    #
    # Invoke mysql_info() for the current connection.
    #
-   public defer get_info()
+   public native get_info()
 
    #
    # Invoke mysql_insert_id() for the current connection.
    #
-   public defer get_insert_id()
+   public native get_insert_id()
 
    #
    # Invoke mysql_kill() for the current connection.
    #
-   public defer kill(pid)
+   public native kill(pid)
 
    #
    # Invoke mysql_list_dbs() for the current connection.
@@ -186,7 +186,7 @@ class MySql(NoCopy)
       return MySqlRes(list_dbs_impl(wild))
    end
 
-   private defer list_dbs_impl(wild)
+   private native list_dbs_impl(wild)
 
    #
    # Invoke mysql_list_fields() for the current connection.
@@ -197,7 +197,7 @@ class MySql(NoCopy)
       return MySqlRes(list_fields_impl(table, wild))
    end
 
-   private defer list_fields_impl(table, wild)
+   private native list_fields_impl(table, wild)
 
    #
    # Invoke mysql_list_processes() for the current connection.
@@ -208,7 +208,7 @@ class MySql(NoCopy)
       return MySqlRes(list_processes_impl())
    end
 
-   private defer list_processes_impl()
+   private native list_processes_impl()
 
    #
    # Invoke mysql_list_tables() for the current connection.
@@ -219,33 +219,33 @@ class MySql(NoCopy)
       return MySqlRes(list_tables_impl(wild))
    end
 
-   private defer list_tables_impl(wild)
+   private native list_tables_impl(wild)
 
    #
    # Invoke mysql_options() for the current connection.
    #
-   public defer options(option, arg)
+   public native options(option, arg)
 
    #
    # Invoke mysql_ping() for the current connection.
    #
-   public defer ping()
+   public native ping()
 
    #
    # Invoke mysql_query() for the current connection.
    #
-   public defer query(q)
+   public native query(q)
 
    #
    # Invoke mysql_connect() for the current connection.
    #
-   public defer connect(host, user, passwd, db, port, unix_socket, client_flag)
+   public native connect(host, user, passwd, db, port, unix_socket, client_flag)
 
    #
    # Invoke mysql_real_escape_string() for the current connection.  This
    # should be used to escape any strings used to create SQL.
    #
-   public defer esc(s)
+   public native esc(s)
 
    #
    # Convenience method to escape a string and place single quotes 
@@ -294,7 +294,7 @@ class MySql(NoCopy)
    #
    # Invoke mysql_stat() for the current connection.
    #
-   public defer get_stat()
+   public native get_stat()
 
    #
    # Invoke mysql_store_result() for the current connection.
@@ -305,12 +305,12 @@ class MySql(NoCopy)
       return MySqlRes(store_result_impl())
    end
 
-   private defer store_result_impl()
+   private native store_result_impl()
 
    #
    # Invoke mysql_thread_id() for the current connection.
    #
-   public defer get_thread_id()
+   public native get_thread_id()
 
    #
    # Invoke mysql_use_result() for the current connection.
@@ -321,50 +321,50 @@ class MySql(NoCopy)
       return MySqlRes(use_result_impl())
    end
 
-   private defer use_result_impl()
+   private native use_result_impl()
 
    #
    # Invoke mysql_warning_count() for the current connection.
    #
-   public defer get_warning_count()
+   public native get_warning_count()
 
    #
    # Invoke mysql_commit() for the current connection.
    #
-   public defer commit()
+   public native commit()
 
    #
    # Invoke mysql_rollback() for the current connection.
    #
-   public defer rollback()
+   public native rollback()
 
    #
    # Turn autocommit on or off
    # @param f a flag, either &yes (for on) or &no (for off)
    # 
-   public defer set_autocommit(f)
+   public native set_autocommit(f)
 
    #
    # Invoke mysql_more_results() for the current connection.
    #
-   public defer more_results()
+   public native more_results()
 
    #
    # Invoke mysql_next_result() for the current connection.
    #
-   public defer next_result()
+   public native next_result()
 
    #
    # Invoke mysql_select_db() for the current connection.
    #
-   public defer select_db(db)
+   public native select_db(db)
 
    #
    # Invoke mysql_shutdown() for the current connection.
    #
-   public defer shutdown()
+   public native shutdown()
 
-   private static defer new_impl()
+   private static native new_impl()
 
    private static init()
       FIELD_TYPE_DECIMAL := 0

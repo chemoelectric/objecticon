@@ -23,7 +23,7 @@ class MySqlRes(NoCopy)
    #
    # Invoke mysql_num_fields() for the current connection.
    #
-   public defer get_num_fields()
+   public native get_num_fields()
 
    #
    # Invoke mysql_fetch_field() for the current connection.
@@ -34,7 +34,7 @@ class MySqlRes(NoCopy)
       return MySqlField!fetch_field_impl()
    end
 
-   private defer fetch_field_impl()
+   private native fetch_field_impl()
 
    #
    # Invoke mysql_fetch_field_direct() for the current connection.
@@ -45,7 +45,7 @@ class MySqlRes(NoCopy)
       return MySqlField!fetch_field_direct_impl(fieldnr)
    end
 
-   private defer fetch_field_direct_impl(fieldnr)
+   private native fetch_field_direct_impl(fieldnr)
 
    #
    # Invoke mysql_fetch_fields() for the current connection.
@@ -60,52 +60,52 @@ class MySqlRes(NoCopy)
       return res
    end
 
-   private defer fetch_fields_impl()
+   private native fetch_fields_impl()
 
    #
    # Invoke mysql_field_seek() for the current connection.
    #
-   public defer field_seek(offset)
+   public native field_seek(offset)
 
    #
    # Invoke mysql_field_tell() for the current connection.
    #
-   public defer field_tell(offset)
+   public native field_tell(offset)
 
    #
    # Invoke mysql_fetch_lengths() for the current connection.
    #
-   public defer fetch_lengths()
+   public native fetch_lengths()
 
    #
    # Invoke mysql_fetch_row() for the current connection.
    #
-   public defer fetch_row()
+   public native fetch_row()
 
    #
    # Invoke mysql_row_seek() for the current connection.
    #
-   public defer row_seek(offset)
+   public native row_seek(offset)
 
    #
    # Invoke mysql_row_tell() for the current connection.
    #
-   public defer row_tell(offset)
+   public native row_tell(offset)
 
    #
    # Invoke mysql_data_seek() for the current connection.
    #
-   public defer data_seek(offset)
+   public native data_seek(offset)
 
    #
    # Invoke mysql_free_result() for the current connection.
    #
-   public defer free()
+   public native free()
 
    #
    # Invoke mysql_num_rows() for the current connection.
    #
-   public defer get_num_rows()
+   public native get_num_rows()
 
    #
    # Just calls {free()}

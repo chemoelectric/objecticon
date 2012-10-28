@@ -12,7 +12,7 @@ class IntersperseStream(GeneratorStream, HasUnderlyingStream)
    private
       a
 
-   protected gen()
+   protected line_gen()
       local e, s, t, u
       u := a
       while *u > 0 do {

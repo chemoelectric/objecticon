@@ -7,21 +7,21 @@ package lang
 class Constructor()
    # Return the name of the constructor
    #
-   public static defer get_name(c)
+   public static native get_name(c)
 
    # Return the constructor of the given record
    #
-   public static defer get_constructor(c)
+   public static native get_constructor(c)
 
    # Return the program this constructor resides in.  The program's &main
    # co-expression is returned.
    #
-   public static defer get_program(c)
+   public static native get_program(c)
 
    # Return the name of the package in which this constructor resides; fails
    # if the constructor is not in a package.
    #
-   public static defer get_package(c)
+   public static native get_package(c)
 
    # Return the source location of the constructor
    # @return a {Location} instance
@@ -30,15 +30,15 @@ class Constructor()
       return Location!get_location_impl(c)
    end
 
-   private static defer get_location_impl(c)
+   private static native get_location_impl(c)
 
    # Generate the field names of the constructor {c}.
    #
-   public static defer get_field_names(c)
+   public static native get_field_names(c)
 
    # Return the number of fields in the constructor {c}.
    #
-   public static defer get_n_fields(c)
+   public static native get_n_fields(c)
 
    # Return the field index number of the given field in constructor{c}.
    # @param c the constructor
@@ -46,7 +46,7 @@ class Constructor()
    # @return an integer, being the index
    # @fail if the field is unknown
    #
-   public static defer get_field_index(c, field)
+   public static native get_field_index(c, field)
 
    # Return the field name of the given field in constructor{c}.
    # @param c the constructor
@@ -54,7 +54,7 @@ class Constructor()
    # @return the field name
    # @fail if the field is unknown
    #
-   public static defer get_field_name(c, field)
+   public static native get_field_name(c, field)
 
 
    # Return the source location of the given field in constructor{c}.
@@ -67,7 +67,7 @@ class Constructor()
       return Location!get_field_location_impl(c, field)
    end
 
-   private static defer get_field_location_impl(c, field)
+   private static native get_field_location_impl(c, field)
 
    # Lookup a constructor by name
    # 

@@ -563,11 +563,11 @@ end
 class Thirteen()
    private var
 
-   public defer tryit1()
+   public native tryit1()
 
-   public defer tryit2()
+   public native tryit2()
 
-   public defer tryit3()
+   public native tryit3()
 
    public static setup1()
       Class.set_method("tryit1", default.tryit1)

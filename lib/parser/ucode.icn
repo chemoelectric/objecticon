@@ -411,5 +411,5 @@ class UReader()
       return move(raw_convert(move(4))) | error("Unexpected EOF")
    end
 
-   private static defer raw_convert(s)
+   private static native raw_convert(s)
 end

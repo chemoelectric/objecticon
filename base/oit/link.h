@@ -17,6 +17,7 @@ void lfatal(struct lfile *lf, struct loc *pos, char *fmt, ...);
 void lwarn(struct lfile *lf, struct loc *pos, char *fmt, ...);
 void setexe(char *fname);
 char *f_flag2str(int flag);
+char *m_flag2str(int flag);
 void dumpstate(void);
 
 #endif
