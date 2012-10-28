@@ -1926,11 +1926,11 @@ abstract class GeneratorStream(LineBasedInputStream, NoCopy)
    # returning {&null} and errors are signalled by failing and setting
    # {&why}.
    #
-   protected abstract gen()
+   protected abstract line_gen()
 
    public new()
       cast(self,LineBasedInputStream).new()
-      self.coex := create gen()
+      self.coex := create line_gen()
       return
    end
 end

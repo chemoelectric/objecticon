@@ -52,7 +52,7 @@ end
 # {Stream} for reading the entries in a zip archive, one per line of the stream.
 #
 class ZipDirStream(ArchiveListerStream)
-   protected gen()
+   protected line_gen()
       local s, marker
       every 1 to 3 do
          expect_line() | fail
@@ -82,7 +82,7 @@ end
 # {Stream} for reading the entries in a rar archive, one per line of the stream.
 #
 class RarDirStream(ArchiveListerStream)
-   protected gen()
+   protected line_gen()
       local s, marker
       every 1 to 8 do
          expect_line() | fail
@@ -122,7 +122,7 @@ end
 # {Stream} for reading the entries in a tar archive, one per line of the stream.
 #
 class TarDirStream(ArchiveListerStream)
-   protected gen()
+   protected line_gen()
       suspend |next_line()
    end
 

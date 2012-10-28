@@ -280,7 +280,7 @@ char *f_flag2str(int flag)
     return buff;
 }
 
-static char *m_flag2str(int flag)
+char *m_flag2str(int flag)
 {
     static char buff[256];
     *buff = 0;

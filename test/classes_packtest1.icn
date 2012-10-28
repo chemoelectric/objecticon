@@ -5,7 +5,7 @@ import lang
 class FirstOne()
    package static var
 
-   public static defer f()
+   public static native f()
 
    public static inject(p)
       Class.set_method("f", p)

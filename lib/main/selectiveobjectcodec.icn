@@ -47,28 +47,28 @@ class SelectiveObjectCodec()
    # This empty method may be overridden; it is invoked just before
    # the object is encoded.
    #
-   protected pre_encode()
+   private pre_encode()
    end
 
    #
    # This empty method may be overridden; it is invoked just after
    # the object has been encoded.
    #
-   protected post_encode()
+   private post_encode()
    end
 
    #
    # This empty method may be overridden; it is invoked just before
    # the object is decoded.
    #
-   protected pre_decode()
+   private pre_decode()
    end
 
    #
    # This empty method may be overridden; it is invoked just after
    # the object has been decoded.
    #
-   protected post_decode()
+   private post_decode()
    end
 
    private object_encode(e)
@@ -164,7 +164,7 @@ class SelectiveObjectCodec()
    #
    # @param cl the class being encoded/decoded.
    #
-   protected static get_template(cl)
+   private static get_template(cl)
       suspend Class.get_instance_field_names(cl)
    end
 end
