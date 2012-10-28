@@ -128,7 +128,7 @@ regardless of where in the line point is when the TAB command is used.")
      "\\_<" 
      (regexp-opt '("abstract" "break" "by" "case" "class" "const" "create" "default" "defer" "do"
                    "else" "end" "every" "fail" "final" "global" "if" "import" "initial"
-                   "invocable" "local" "next" "not" "of" "package" "private" "procedure" "protected"
+                   "invocable" "local" "native" "next" "not" "of" "package" "private" "procedure" "protected"
                    "public" "readable" "record" "repeat" "return" "static" "suspend" "then" "to"
                    "until" "while"))
      "\\_>")
@@ -558,7 +558,7 @@ Returns nil if line starts inside a string, t if in a comment."
                                    "^" objecticon-class-starters "\\s-\\|^\\s-*end\\s-*$") (point-min) 'move)
        (skip-chars-forward " \t")
        (cond
-         ((looking-at (concat objecticon-field-starters ".*\\s-\\(defer\\|abstract\\)\\s-"))
+         ((looking-at (concat objecticon-field-starters ".*\\s-\\(defer\\|native\\|abstract\\)\\s-"))
           (setq objecticon-extra-indent (current-column))
           (setq objecticon-end-indent-level 0)
           (setq objecticon-toplevel t))

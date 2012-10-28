@@ -351,8 +351,6 @@ static void check_override(struct lclass_field *fr, struct lclass_field *f)
     if ((fr->flag & M_Private) && (f->flag & M_Private))
         return;
 
-
-
     lfatal(fr->class->global->defined,
            &fr->pos,
            "Method %s encountered in class %s overrides a method with less restrictive access in class %s (File %s; Line %d)",
@@ -362,12 +360,6 @@ static void check_override(struct lclass_field *fr, struct lclass_field *f)
            abbreviate(f->pos.file),
            f->pos.line
         );
-
-/*
-    fprintf(stderr,"%s overrides ", m_flag2str(fr->flag));
-    fprintf(stderr,"%s\n", m_flag2str(f->flag));
-    fprintf(stderr,"\tSee %s:%d  overrides %s:%d\n",abbreviate(fr->pos.file), fr->pos.line,abbreviate(f->pos.file), f->pos.line);
-*/
 }
 
 static void merge(struct lclass *cl, struct lclass *super)
