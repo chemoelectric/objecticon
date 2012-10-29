@@ -15,7 +15,7 @@ abstract class Table()
    #
    # Insert a new entry.  Always succeeds and returns {self}.
    #
-   public defer insert(key, val)
+   public abstract insert(key, val)
 
    #
    # Return the value for the given key (as a variable) if it is in
@@ -26,7 +26,7 @@ abstract class Table()
    #
    # Delete the entry with the given key.  Always succeeds and returns {self}.
    #
-   public defer delete(key)
+   public abstract delete(key)
 
    #
    # Return the value with the given key, or the default value if
@@ -93,7 +93,7 @@ abstract class Table()
    #
    # Clear the table of all elements. Always succeeds and returns {self}.
    #
-   public defer clear()
+   public abstract clear()
 
    #
    # Generate key-value pairs as a sequence of 2-element lists.  NB - for each

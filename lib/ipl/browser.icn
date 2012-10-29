@@ -539,7 +539,7 @@ class FormEntry()
    public 
       form_name, form_id, form_tabindex
 
-   public reset() end
+   public reset_form() end
                   
    public get_save_key()
       return \form_name | \form_id
@@ -557,7 +557,7 @@ class FormToggle(ToggleTextButton, FormEntry)
       value,
       init_checked
 
-   public reset()
+   public reset_form()
       set_is_checked(init_checked)
    end
 
@@ -620,7 +620,7 @@ class FormTblButton(Button, FormEntry, HasMaxWidth, HasAscent)
    private handle_action(e, src)
       case type of { 
          "submit": form.submit(e, src)
-         "reset": form.reset()
+         "reset": form.reset_form()
       }
    end
 
@@ -729,7 +729,7 @@ class FormBrowse(Component, FormEntry, HasAscent)
       return cbwin.get_font_ascent() + Gui.Y_INSET
    end
 
-   public reset()
+   public reset_form()
       tf.set_contents(u"")
    end
 
@@ -794,7 +794,7 @@ class FormTextField(TextField, FormEntry, HasAscent)
       return cbwin.get_font_ascent() + border.get_t_inset()
    end
 
-   public reset()
+   public reset_form()
       set_contents(init_val)
    end
 
@@ -822,7 +822,7 @@ class FormEditableTextList(EditableTextList, FormEntry)
    private const
       init_val
 
-   public reset()
+   public reset_form()
       set_contents_str(init_val)
       set_cursor(1, 1)
    end
@@ -879,7 +879,7 @@ class FormOptionList(SelectableScrollArea, FormEntry)
       suspend \contents[!selections].value
    end
 
-   public reset()
+   public reset_form()
       set_selections(init_val)
    end
 
@@ -955,7 +955,7 @@ class FormList(gui.List, FormEntry, HasAscent)
          find_value(create (1 + selection to *selection_list) | (1 to selection - 1), e)
    end
 
-   public reset()
+   public reset_form()
       set_selection(init_val)
    end
 
@@ -1059,8 +1059,8 @@ class Form()
       return m
    end
 
-   public reset()
-      every (!items).reset()
+   public reset_form()
+      every (!items).reset_form()
    end
 
    public submit(ev, src)
@@ -2011,7 +2011,7 @@ class Browser(Component)
             q := FormButton(v).
                set_font(context.font).
                set_fg(context.fg).
-               connect(context.form.reset, Event.ACTION)
+               connect(context.form.reset_form, Event.ACTION)
             if e.get_attribute(u"DISABLED") then
                q.set_is_shaded(&yes)
             else

@@ -13,7 +13,7 @@ abstract class Set()
    #
    # Insert a new member.
    #
-   public defer insert(x)
+   public abstract insert(x)
 
    #
    # Succeed iff {x} is a member of the set.
@@ -23,7 +23,7 @@ abstract class Set()
    #
    # Delete {x} from the set.
    #
-   public defer delete(x)
+   public abstract delete(x)
 
    #
    # Return a sorted list of members.
@@ -49,7 +49,7 @@ abstract class Set()
    #
    # Clear the set of all elements.
    #
-   public defer clear()
+   public abstract clear()
 
    #
    # Return a list of the members, in the order produced by {gen()}.
