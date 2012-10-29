@@ -86,7 +86,7 @@ There are some functions available to help search for files on paths.  In partic
 
 == Class.load_library() ==
 
-This function can be used to define several deferred methods at once in a class, using a shared library.  It should be called from the class's static `init` method, with the shared library as a parameter.  It goes through each deferred method in the class, looking for a matching function defined in the shared library.  Any not found are just ignored.  This means a class with numerous native methods can resolve them all at once with a single convenient call.
+This function can be used to define several native methods at once in a class, using a shared library.  It should be called from the class's static `init` method, with the shared library as a parameter.  It goes through each native method in the class, looking for a matching function defined in the shared library.  Any not found are just ignored.  This means a class with numerous native methods can resolve them all at once with a single convenient call.
 
 For example, if we replace `testlib.r` with the following :-
 {{{
@@ -110,8 +110,8 @@ and `prog.icn` with :-
 import lang
 
 class Test()
-   public defer one()
-   public defer two()
+   public native one()
+   public native two()
 
    private static init()
       Class.load_library("./testlib.so")

@@ -1,0 +1,110 @@
+#summary Native methods
+<wiki:toc max_depth="3" />
+= Native methods =
+A native method is one in which there is no body, and the actual functionality of the method is defined elsewhere, typically in a function written in C.  For example :-
+
+{{{
+class X()
+   public native f()
+end
+}}}
+
+Parameters can be declared if desired, but they are ignored by the linker.
+
+There are two possible ways to provide the functionality of a native method.
+
+ * [NativeMethods#Native_methods_in_the_runtime_system Native methods in the runtime system] 
+ * [NativeMethods#Native_methods_resolved_at_runtime Native methods resolved at runtime]
+
+== Native methods in the runtime system ==
+This necessitates editing and re-building the C/RTL source code of the runtime system and the translator.
+
+The first step is to add a line to the file `base/h/nativedefs.h` defining the class, method and name of the implementing RTL function.  By convention, the name of the RTL function is the class followed by an underscore, followed by the method name, with dots in the class name being replaced by underscores.  So, for example, say we were implementing method `my_method` in class `MyClass` in package `my.package`, then we would write a runtime function named `my_package_MyClass_my_method` and add a line to `nativedefs.h`
+{{{
+NativeDef(my.package.MyClass,my_method,my_package_MyClass_my_method)
+}}}
+
+Next, the function must be implemented somewhere in the runtime, as an RTL function, which might look like this :-
+
+{{{
+function my_package_MyClass_my_method(x, y)
+   ... RTL code
+end
+}}}
+
+Note that for an instance method, the first parameter will be the instance on which the method was invoked.  In this case, add a `self` parameter to the parameter list :-
+
+{{{
+function my_package_MyClass_my_method(self, x, y)
+   ... RTL code
+end
+}}}
+
+Finally, both the translator and the runtime must be re-compiled.  The easiest way to do this is to go into the `base` directory and run
+
+{{{
+make clean all
+}}}
+
+If you have previously installed the distribution, you then need to go to the top-level directory and run
+
+{{{
+make install
+}}}
+
+again.
+
+== Native methods resolved at runtime ==
+This involves setting an arbitrary procedure value to be the implementation of the method, as the following example shows :-
+
+{{{
+import lang(Class), io(write)
+
+procedure myproc(self, x)
+   write("in myproc self=", image(self), " x=", image(x))
+end
+
+class X()
+   public native f()
+
+   private static init()
+      Class.set_method("f", myproc)
+   end
+end
+
+procedure main()
+   local i
+   i := X()
+   i.f(33)
+end
+}}}
+
+This prints `"in myproc self=object X_1(0) x=33"`.
+
+This example uses the static method `Class.set_method` in the `lang` package to set the native method `f` to point to the procedure `mproc`.  The result is that when `f` is invoked, `mproc` is called, with the instance `i` as the first parameter, and the value `33` as the second.  Note that unlike a normal method, the `self` parameter has to be placed in the parameter list.
+
+There are some restrictions which `set_method()` imposes :-
+
+ * The method must be defined in the class from which `set_method()` is called.
+ * The method must be a native method.
+ * The method must be unresolved, i.e. currently point to the deferred method stub function; this means you can't set the method more than once.
+ * The procedure supplied may not be a method, so for example you cannot use a static method in one class to implement a method in another.
+
+Setting a normal procedure to be a native method's definition isn't particularly useful, because you could always implement the method and just call the procedure.  However, `set_method` does still have one important use, and that is to set method implementations to procedures loaded via the `Proc.load` function, which loads code from a dynamic native library (a .so file).  This enables you to implement methods in C and RTL without editing or re-compiling the runtime system itself.  In this case, the init method might look like this :-
+
+{{{
+   import lang(Proc)
+
+   ...
+
+   private static init()
+      Class.set_method("f", Proc.load("mylib.so", "my_method"))
+   end
+}}}
+
+For a page explaining how to create a dynamic library of RTL/C code, see [DynamicLoadC here].
+
+== Resolving several methods at once ==
+The above technique of using `Class.set_method` to resolve a method loaded from a dynamic library can be pretty tedious if you have several methods to resolve.  For this reason, another method is provided, `Class.load_library`, which resolves many methods at once.  It does this by going through the native methods in the class from which it was called and trying to match them to methods in the given library.  It uses the same method naming convention used for native methods in the runtime, described above.  Any methods which don't have a match are simply skipped.
+
+For working examples, see the source files `lib/main/mysql.icn` and its corresponding RTL source files in `lib/native`.

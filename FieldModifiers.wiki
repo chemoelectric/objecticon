@@ -160,6 +160,41 @@ end
 
 A static method cannot be `final` because `static` methods cannot be overridden, and a method cannot be marked `final` in a `final` class, because such a declaration would obviously be superfluous.
 
+== native ==
+If a method is declared `native` then it has no body, and its implementation should be provided via a C function, either compiled into the interpreter, or loaded from an external library file.  See [NativeMethods Native methods] for more details on how to do this.
+
+Note that, due to the limitations of the Yacc parser, the `native` modifier must be the last modifier specified.  For example `public static native` is fine, but `native public static` would give a syntax error.
+
+== defer ==
+If a method is declared `defer` then it has no body.  If it is invoked without having been overridden then a runtime error results.
+
+It is useful for specifying a method which a subclass may optionally choose to implement.
+
+Static methods cannot be `defer`, since they cannot be overridden, and for a similar reason, a `defer` method cannot appear in a `final` class.  Due to the limitations of the Yacc parser, the `defer` modifier must be the last modifier specified.
+
+== abstract ==
+If a class is declared `abstract`, then it means that it cannot be instantiated.
+
+If a method is declared `abstract` then it has no body, and must be overridden and implemented by a subclass.  Any class that contains or inherits an `abstract` method must itself be declared `abstract`.
+
+Static methods cannot be `abstract`, since they cannot be overridden, and for a similar reason, an `abstract` method cannot appear in a `final` class.  Due to the limitations of the Yacc parser, the `abstract` method modifier must be the last modifier specified.
+
+The visibility modifier of an `abstract` method does not have any real significance, other than to indicate how an overriding method should be declared.  An `abstract` method can in fact be invoked (via a cast), and in this case the visibility modifier will be checked by the interpreter in the usual way.  However, such an invocation will simply cause a runtime error.
+
+Abstract classes and methods allow an "interface" of methods to be defined which a subclass must implement.  For example :-
+{{{
+abstract class Set()
+   # Mandatory methods
+   public abstract generate()
+   public abstract member(x)
+   public abstract size()
+
+   # Optional methods for mutable sets.
+   public defer insert(x)
+   public defer delete(x)
+end
+}}}
+
 = Accessor methods =
 Consider the following class :-
 {{{
