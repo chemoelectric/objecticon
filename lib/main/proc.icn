@@ -38,7 +38,9 @@ class Proc()
    #
    public static native get_package(p)
 
-   # Return the source location of the proc
+   # Return the source location of the proc.  For a native method, {flag}
+   # indicates whether to return the location of the native method
+   # declaration or the proc defined as its body.
    # @return a {Location} instance
    #
    public static get_location(p, flag)

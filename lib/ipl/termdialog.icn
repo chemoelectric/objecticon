@@ -76,7 +76,7 @@ class TermDialog(Dialog, LineBasedOutputStream)
    end
 
    public component_setup()
-      reset()
+      reset_term()
    end
 
    public end_dialog()
@@ -99,7 +99,7 @@ class TermDialog(Dialog, LineBasedOutputStream)
       return
    end
 
-   private reset()
+   private reset_term()
       hpos := *history + 1
       hmod := table()
       input.set_contents(u"")
@@ -111,7 +111,7 @@ class TermDialog(Dialog, LineBasedOutputStream)
          put(history, line)
          limit_history()
       }
-      reset()
+      reset_term()
       fire(Event.ACTION, ev)
    end
    

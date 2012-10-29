@@ -4101,21 +4101,22 @@ function lang_Proc_get_location_impl(c, flag)
             runerr(0);
         if (!isflag(&flag))
            runerr(171, flag);
-        /* The check for M_Defer here is to avoid (if flag is 1), looking up a non-deferred
+        /* The check for M_Native here is to avoid (if flag is 1), looking up a non-deferred
          * method's name in the global name table.
          */
         if (proc0->field && (is:null(flag) ||
-                            !(proc0->field->flags & (M_Defer | M_Abstract | M_Native)))) {
+                            !(proc0->field->flags & M_Native))) {
             struct progstate *prog = proc0->field->defining_class->program;
             if (prog->ClassFieldLocs == prog->EClassFieldLocs) {
                 LitWhy("No field location data in icode");
                 fail;
             }
             p = &prog->ClassFieldLocs[proc0->field - prog->ClassFields];
-        } else if (!(pp = get_procedure(proc0))) {
-            LitWhy("Proc not a procedure, has no location");
-            fail;
         } else {
+            if (!(pp = get_procedure(proc0))) {
+                LitWhy("Proc not a procedure, has no location");
+                fail;
+            }
             if (pp->program->Glocs == pp->program->Eglocs) {
                 LitWhy("No global location data in icode");
                 fail;
