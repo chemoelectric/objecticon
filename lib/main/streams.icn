@@ -7,8 +7,8 @@ $ifdef _PLAN9
    posix(System),
 $else
    posix(ExitInfo, System),
-   ipl.strings(replace),
 $endif
+   ipl.strings(replace),
    ipl.lists(ldel1)
 
 #
@@ -1608,7 +1608,7 @@ abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask,
       x := get_exit_info() | runerr("You can only call succeeded() after close()", self)
       case x.reason of {
          "exited normally" : return
-         "exited" : return error("exited with status " || x.param)
+         "exited" : return error("exited with status " || x.param || ": " || trim(replace(err_sink.str(), "\n", " ")))
          default : return error("finished for unknown reason " || x.reason || " with status " || x.param)
       }
    end
