@@ -149,7 +149,7 @@ void check_flags(int flag, struct node *n)
                     curr_class->curr_field->name, curr_class->global->g_name);
 
         if ((flag & (M_Defer | M_Final)) == (M_Defer | M_Final))
-            tfatal_at(n, "An deferred method cannot be final: method %s in class %s", 
+            tfatal_at(n, "A deferred method cannot be final: method %s in class %s", 
                     curr_class->curr_field->name, curr_class->global->g_name);
 
         if (flag & M_Const)
