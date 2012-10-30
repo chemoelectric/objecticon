@@ -33,10 +33,10 @@ class Ieval()
    end
 
    private show_env()
-      local k
-      every k := key(vars) do {
-         output.writes(k, " = ")
-         oos.show(vars[k])
+      local p
+      every p := !sort(vars) do {
+         output.writes(p[1], " = ")
+         oos.show(p[2])
          output.write()
       }
    end
