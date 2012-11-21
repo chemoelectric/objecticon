@@ -270,8 +270,11 @@ AC_DEFUN([CHECK_PNG],
            if test -n "$PNG_VERSION"; then
                AX_COMPARE_VERSION([$PNG_VERSION],[ge],[1.2.37], [ver_ok=yes], [ver_ok=no])
                if test "$ver_ok" = "yes"; then
+                  AX_COMPARE_VERSION([$PNG_VERSION],[lt],[1.3], [ver_ok=yes], [ver_ok=no])
+               fi
+               if test "$ver_ok" = "yes"; then
                     AC_MSG_RESULT([yes])
-                    OI_ADD_LIB(png12)
+                    OI_ADD_LIB(png)
                     PNG_LIB_DIR=`$PNG_CONFIG --libdir`
                     OI_ADD_LIB_DIR($PNG_LIB_DIR)
                     PNG_INCLUDE_DIR=`$PNG_CONFIG --I_opts`
@@ -281,7 +284,7 @@ AC_DEFUN([CHECK_PNG],
                     AC_DEFINE(HAVE_LIBPNG)
                else
                     AC_MSG_RESULT([no])
-                    echo "*** At least version 1.2.37 of libpng is required for png support (currently have $PNG_VERSION)"
+                    echo "*** libpng version must be 1.2.x and greater than 1.2.37 for png support (currently have $PNG_VERSION)"
                     PNG_VERSION=""
                fi
            else
