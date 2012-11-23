@@ -1717,6 +1717,7 @@ static int readpngfile(char *filename, struct imgdata *imd)
     int format;
     FILE *fp;
     double image_gamma;
+    int pixel_depth, color_type;
 
     /* open file and test for it being a png */
     fp = fopen(filename, "rb");
@@ -1758,30 +1759,34 @@ static int readpngfile(char *filename, struct imgdata *imd)
      */
     if (png_get_gAMA(png_ptr, info_ptr, &image_gamma))
         png_set_gamma(png_ptr, 2.2, image_gamma);
-    if (info_ptr->color_type == PNG_COLOR_TYPE_PALETTE)
+    if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_PALETTE)
         png_set_palette_to_rgb(png_ptr);
-    if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY && info_ptr->bit_depth < 8) 
-        png_set_gray_1_2_4_to_8(png_ptr);
+    if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_GRAY && png_get_bit_depth(png_ptr, info_ptr) < 8) 
+        png_set_expand_gray_1_2_4_to_8(png_ptr);
     if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS))
         png_set_tRNS_to_alpha(png_ptr);
+    if (png_get_interlace_type(png_ptr, info_ptr) == PNG_INTERLACE_ADAM7)
+        png_set_interlace_handling(png_ptr);
 
     png_read_update_info(png_ptr, info_ptr);
+    pixel_depth = png_get_bit_depth(png_ptr, info_ptr) * png_get_channels(png_ptr, info_ptr);
+    color_type = png_get_color_type(png_ptr, info_ptr);
 
-    if (info_ptr->color_type == PNG_COLOR_TYPE_RGB && info_ptr->pixel_depth == 24)
+    if (color_type == PNG_COLOR_TYPE_RGB && pixel_depth == 24)
         format = IMGDATA_RGB24;
-    else if (info_ptr->color_type == PNG_COLOR_TYPE_RGB && info_ptr->pixel_depth == 48)
+    else if (color_type == PNG_COLOR_TYPE_RGB && pixel_depth == 48)
         format = IMGDATA_RGB48;
-    else if (info_ptr->color_type == PNG_COLOR_TYPE_RGB_ALPHA && info_ptr->pixel_depth == 32)
+    else if (color_type == PNG_COLOR_TYPE_RGB_ALPHA && pixel_depth == 32)
         format = IMGDATA_RGBA32;
-    else if (info_ptr->color_type == PNG_COLOR_TYPE_RGB_ALPHA && info_ptr->pixel_depth == 64)
+    else if (color_type == PNG_COLOR_TYPE_RGB_ALPHA && pixel_depth == 64)
         format = IMGDATA_RGBA64;
-    else if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY && info_ptr->pixel_depth == 8)
+    else if (color_type == PNG_COLOR_TYPE_GRAY && pixel_depth == 8)
         format = IMGDATA_G8;
-    else if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY_ALPHA && info_ptr->pixel_depth == 16)
+    else if (color_type == PNG_COLOR_TYPE_GRAY_ALPHA && pixel_depth == 16)
         format = IMGDATA_GA16;
-    else if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY && info_ptr->pixel_depth == 16)
+    else if (color_type == PNG_COLOR_TYPE_GRAY && pixel_depth == 16)
         format = IMGDATA_G16;
-    else if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY_ALPHA && info_ptr->pixel_depth == 32)
+    else if (color_type == PNG_COLOR_TYPE_GRAY_ALPHA && pixel_depth == 32)
         format = IMGDATA_GA32;
     else {
         fclose(fp);
@@ -1790,15 +1795,15 @@ static int readpngfile(char *filename, struct imgdata *imd)
         return Failed;
     }
 
-    width = info_ptr->width;
-    height = info_ptr->height;
+    width = png_get_image_width(png_ptr, info_ptr);
+    height = png_get_image_height(png_ptr, info_ptr);
 
     MemProtect(row_pointers = malloc(sizeof(png_bytep) * height));
-    MemProtect(data = malloc(info_ptr->rowbytes * height));
+    MemProtect(data = malloc(png_get_rowbytes(png_ptr, info_ptr) * height));
     p = (png_bytep)data;
     for (i = 0; i < height; ++i) {
         row_pointers[i] = p;
-        p += info_ptr->rowbytes;
+        p += png_get_rowbytes(png_ptr, info_ptr);
     }
     png_read_image(png_ptr, row_pointers);
     png_read_end(png_ptr, 0);
