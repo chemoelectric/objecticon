@@ -179,3 +179,5 @@ if test -z "$found_openssl"; then
 else
         echo yes
 fi
+echo
+echo "When reconfiguring, please remember to run 'make clean' first."
