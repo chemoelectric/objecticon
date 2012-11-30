@@ -180,4 +180,4 @@ else
         echo yes
 fi
 echo
-echo "When reconfiguring, please remember to run 'make clean' first."
+echo "When reconfiguring, please remember to run 'make clean' before 'make'."
