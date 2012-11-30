@@ -58,6 +58,7 @@ The meaning of these various options is as follows.
  * *dynamic loading* -Allows shared library (.so) files containing native functions to be loaded at runtime.
  * *mysql lib* -Allows a dynamic library to be built which provides an interface to mysql.  Has no effect either way on the runtime system proper.
 
+If you later wish to run `configure` again, please remember to run `make clean` afterwards in order to remove any object files built under the previous configuration.
 == Compilation ==
 After running `configure` successfully, just run the command
 {{{
