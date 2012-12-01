@@ -57,6 +57,69 @@ fi
 ])
 
 
+AC_DEFUN([CHECK_FONTCONFIG],
+#
+# Handle user hints
+#
+[AC_MSG_CHECKING(if fontconfig is wanted)
+AC_ARG_WITH(fontconfig,
+[  --with-fontconfig=DIR root directory path of fontconfig installation [defaults to
+                    /usr/local or /usr if not found in /usr/local]
+  --without-fontconfig to disable fontconfig usage completely],
+[if test "$withval" != no ; then
+  AC_MSG_RESULT(yes)
+  FONTCONFIG_HOME="$withval"
+else
+  AC_MSG_RESULT(no)
+fi], [
+AC_MSG_RESULT(yes)
+FONTCONFIG_HOME=/usr/local
+if test ! -f "${FONTCONFIG_HOME}/include/fontconfig/fontconfig.h"
+then
+        FONTCONFIG_HOME=/usr
+fi
+])
+
+#
+# Locate FONTCONFIG, if wanted
+#
+if test -n "${FONTCONFIG_HOME}"
+then
+        FONTCONFIG_OLD_LDFLAGS=$LDFLAGS
+        FONTCONFIG_OLD_CPPFLAGS=$LDFLAGS
+        OI_ADD_LIB_DIR(${FONTCONFIG_HOME}/lib)
+        OI_ADD_INCLUDE_DIR(${FONTCONFIG_HOME}/include)
+        AC_LANG_SAVE
+        AC_LANG_C
+        AC_CHECK_LIB(fontconfig, FcPatternCreate, [fontconfig_cv_libfontconfig=yes], [fontconfig_cv_libfontconfig=no])
+        AC_CHECK_HEADER(fontconfig/fontconfig.h, [fontconfig_cv_fontconfiglib_h=yes], [fontconfig_cv_fontconfiglib_h=no])
+        AC_LANG_RESTORE
+        if test "$fontconfig_cv_libfontconfig" = "yes" -a "$fontconfig_cv_fontconfiglib_h" = "yes"
+        then
+                #
+                # If both library and headers were found, use them
+                #
+                OI_ADD_LIB(fontconfig)
+                AC_MSG_CHECKING(fontconfig in ${FONTCONFIG_HOME})
+                AC_MSG_RESULT(ok)
+        else
+                #
+                # If either header or library was not found, revert and bomb
+                #
+                AC_MSG_CHECKING(fontconfig in ${FONTCONFIG_HOME})
+                LDFLAGS="$FONTCONFIG_OLD_LDFLAGS"
+                CPPFLAGS="$FONTCONFIG_OLD_CPPFLAGS"
+                AC_MSG_RESULT(failed)
+        fi
+fi
+
+])
+
+
+
+
+
+
 AC_DEFUN([CHECK_FREETYPE],
 #
 # Handle user hints
@@ -399,6 +462,9 @@ fi
 #
 if test -n "${XFT_HOME}"
 then
+        # Xft needs both freetype and fontconfig.
+        CHECK_FREETYPE()
+        CHECK_FONTCONFIG()
 	XFT_OLD_LDFLAGS=$LDFLAGS
 	XFT_OLD_CPPFLAGS=$CPPFLAGS
         OI_ADD_LIB_DIR(${XFT_HOME}/lib64)
@@ -839,6 +905,7 @@ else
 fi], 
        [
 AC_MSG_RESULT(yes)
+           unset withval
             # if pkg-config is installed and openssl has installed a .pc file,
             # then use that information and don't search ssldirs
             AC_PATH_PROG(PKG_CONFIG, pkg-config)
