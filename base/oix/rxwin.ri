@@ -2641,8 +2641,8 @@ static char *convertspec(wdp wd, char *s)
 {
     static char res[256];
     int flags, size;
-    char family[MAXFONTWORD];
-    XftPattern *p;
+    char *t, family[MAXFONTWORD];
+    FcPattern *p;
 
     if (!strncmp(s, "fc:", 3))
         return s + 3;
@@ -2650,70 +2650,72 @@ static char *convertspec(wdp wd, char *s)
     if (!parsefont(s, family, &flags, &size))
         return s;
 
-    p = XftPatternCreate();
+    p = FcPatternCreate();
 
     /*
      * Check first for special "standard" family names.
      */
     if (!strcmp(family, "fixed")) {
-        XftPatternAddString(p, XFT_FAMILY, "Object Icon fixed");
-        XftPatternAddString(p, XFT_FAMILY, "mono");
+        FcPatternAddString(p, XFT_FAMILY, (FcChar8 *)"Object Icon fixed");
+        FcPatternAddString(p, XFT_FAMILY, (FcChar8 *)"mono");
         flags |= FONTFLAG_MONO;
     }
     else if (!strcmp(family, "mono")) {
-        XftPatternAddString(p, XFT_FAMILY, "Object Icon mono");
-        XftPatternAddString(p, XFT_FAMILY, "mono");
+        FcPatternAddString(p, XFT_FAMILY, (FcChar8 *)"Object Icon mono");
+        FcPatternAddString(p, XFT_FAMILY, (FcChar8 *)"mono");
         flags |= FONTFLAG_MONO;
     }
     else if (!strcmp(family, "typewriter")) {
-        XftPatternAddString(p, XFT_FAMILY, "Object Icon typewriter");
-        XftPatternAddString(p, XFT_FAMILY, "courier");
+        FcPatternAddString(p, XFT_FAMILY, (FcChar8 *)"Object Icon typewriter");
+        FcPatternAddString(p, XFT_FAMILY, (FcChar8 *)"courier");
         flags |= FONTFLAG_MONO;
     }
     else if (!strcmp(family, "sans")) {
-        XftPatternAddString(p, XFT_FAMILY, "Object Icon sans");
-        XftPatternAddString(p, XFT_FAMILY, "helvetica");
+        FcPatternAddString(p, XFT_FAMILY, (FcChar8 *)"Object Icon sans");
+        FcPatternAddString(p, XFT_FAMILY, (FcChar8 *)"helvetica");
         flags |= FONTFLAG_PROPORTIONAL;
     }
     else if (!strcmp(family, "serif")) {
-        XftPatternAddString(p, XFT_FAMILY, "Object Icon serif");
-        XftPatternAddString(p, XFT_FAMILY, "times");
+        FcPatternAddString(p, XFT_FAMILY, (FcChar8 *)"Object Icon serif");
+        FcPatternAddString(p, XFT_FAMILY, (FcChar8 *)"times");
         flags |= FONTFLAG_PROPORTIONAL;
     }
     else
-        XftPatternAddString(p, XFT_FAMILY, family);
+        FcPatternAddString(p, XFT_FAMILY, (FcChar8 *)family);
 
     if (size > 0)
-        XftPatternAddDouble(p, XFT_SIZE, (double)size);
+        FcPatternAddDouble(p, XFT_SIZE, (double)size);
     else {
         /* Only use a default font size if explicitly set via OIFONTSIZE */
         int t = getdefaultfontsize(-1);
         if (t > 0)
-            XftPatternAddDouble(p, XFT_SIZE, (double)t);
+            FcPatternAddDouble(p, XFT_SIZE, (double)t);
     }
     if (flags & FONTFLAG_MEDIUM)
-        XftPatternAddInteger(p, XFT_WEIGHT, XFT_WEIGHT_MEDIUM);
+        FcPatternAddInteger(p, XFT_WEIGHT, XFT_WEIGHT_MEDIUM);
     else if ((flags & FONTFLAG_DEMI) && (flags & FONTFLAG_BOLD))
-        XftPatternAddInteger(p, XFT_WEIGHT, XFT_WEIGHT_DEMIBOLD);
+        FcPatternAddInteger(p, XFT_WEIGHT, XFT_WEIGHT_DEMIBOLD);
     else if (flags & FONTFLAG_BOLD)
-        XftPatternAddInteger(p, XFT_WEIGHT, XFT_WEIGHT_BOLD);
+        FcPatternAddInteger(p, XFT_WEIGHT, XFT_WEIGHT_BOLD);
     else if (flags & FONTFLAG_LIGHT)
-        XftPatternAddInteger(p, XFT_WEIGHT, XFT_WEIGHT_LIGHT);
+        FcPatternAddInteger(p, XFT_WEIGHT, XFT_WEIGHT_LIGHT);
 
     if (flags & FONTFLAG_ITALIC)
-        XftPatternAddInteger(p, XFT_SLANT, XFT_SLANT_ITALIC);
+        FcPatternAddInteger(p, XFT_SLANT, XFT_SLANT_ITALIC);
     else if (flags & FONTFLAG_OBLIQUE)
-        XftPatternAddInteger(p, XFT_SLANT, XFT_SLANT_OBLIQUE);
+        FcPatternAddInteger(p, XFT_SLANT, XFT_SLANT_OBLIQUE);
     else if (flags & FONTFLAG_ROMAN)
-        XftPatternAddInteger(p, XFT_SLANT, XFT_SLANT_ROMAN);
+        FcPatternAddInteger(p, XFT_SLANT, XFT_SLANT_ROMAN);
 
     if (flags & FONTFLAG_PROPORTIONAL)
-        XftPatternAddInteger(p, XFT_SPACING, XFT_PROPORTIONAL);
+        FcPatternAddInteger(p, XFT_SPACING, XFT_PROPORTIONAL);
     if (flags & FONTFLAG_MONO)
-        XftPatternAddInteger(p, XFT_SPACING, XFT_MONO);
+        FcPatternAddInteger(p, XFT_SPACING, XFT_MONO);
 
-    XftNameUnparse(p, res, sizeof(res) - 1);
-    XftPatternDestroy(p);
+    t = (char *)FcNameUnparse(p);
+    strncpy(res, t, sizeof(res) - 1);
+    free(t);
+    FcPatternDestroy(p);
 
     return res;
 }

@@ -111,6 +111,7 @@
    #include <X11/keysym.h>
    #if HAVE_LIBXFT
    #include <X11/Xft/Xft.h>
+   #include <fontconfig/fontconfig.h>
    #endif
 #endif					/* XWindows */
 
