@@ -67,7 +67,9 @@ install :
 	$(INSTALL) -m 644 lib/incl/*.icn "$(OILIB)/incl"
 	$(INSTALL) -m 644 lib/ipl/*.u lib/ipl/packages.txt "$(OILIB)/ipl"
 	$(INSTALL) -m 644 lib/main/*.u lib/main/packages.txt "$(OILIB)/main"
-	$(INSTALL) -m 755 lib/native/*.so "$(OILIB)/native"
+	if test -n "$$(find lib/native -name '*.so')" ; then \
+		$(INSTALL) -m 755 lib/native/*.so "$(OILIB)/native" ; \
+	fi
 	$(INSTALL) -m 644 lib/parser/*.u lib/parser/packages.txt "$(OILIB)/parser"
 	$(INSTALL) -m 644 lib/xml/*.u lib/xml/packages.txt "$(OILIB)/xml"
 	$(INSTALL) -m 755 apps/ivib/plugins/okcancelplugin "$(OILIB)/ivib_plugins"
