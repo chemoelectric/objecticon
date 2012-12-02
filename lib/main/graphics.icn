@@ -3,6 +3,37 @@ package graphics
 import 
    lang(NoCopy)
 
+# This object contains a block of pixels returned by the
+# {Window.get_pixels()} method.  The contents can be changed, and then
+# written back to the window (or another window) with
+# {Window.draw_pixels{}}.
+#
+class Pixels(NoCopy)
+   private
+      imp
+
+   # Get the width of the block
+   public native get_width()
+
+   # Get the height of the block
+   public native get_height()
+
+   # Get the pixel at the given position; indices run from 0 to
+   # width-1 and 0 to height-1 respectively.
+   public native get(x, y)
+
+   # Set the pixel to the given colour value.
+   public native set(x, y, v)
+
+   # Dispose of the object, freeing the memory used by the block
+   public native close()
+   
+   package new(imp)
+      self.imp := imp
+      return
+   end
+end
+
 class Window(NoCopy)
    private
       wbp,
@@ -436,14 +467,18 @@ class Window(NoCopy)
    public static native palette_key(s1, s2)
 
    #
-   # Get the contents of some pixels as a list of colours
+   # Get the contents of some pixels as a {Pixels} object.
    #
-   public native get_pixels(x, y, width, height)
+   public get_pixels(x, y, width, height)
+      return Pixels(get_pixels_impl(x, y, width, height))
+   end
+
+   private native get_pixels_impl(x, y, width, height)
 
    #
-   # Set the contents of some pixels from a list of colours
+   # Set the contents of some pixels from a {Pixels} object.
    #
-   public native set_pixels(data, x, y, width, height)
+   public native draw_pixels(x, y, data)
 
    #
    # Filter the given pixels according to the given filter spec.
