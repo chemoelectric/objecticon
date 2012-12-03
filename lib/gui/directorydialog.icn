@@ -155,7 +155,7 @@ class DirectoryDialog(Dialog)
    end
 
    public get_dir_path()
-      return Files.get_path(dir.get_contents())
+      return Files.get_path(dir.get_contents()).canonical()
    end
 
    public goto_dir(d)

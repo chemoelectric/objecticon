@@ -44,6 +44,37 @@ if (!self_w)
     runerr(142, self);
 #enddef
 
+static struct sdescrip pixclassname = {15, "graphics.Pixels"};
+
+static struct sdescrip impf = {3, "imp"};
+
+#begdef PixelsStaticParam(p, x)
+struct imgmem *x;
+dptr x##_dptr;
+static struct inline_field_cache x##_ic;
+static struct inline_global_cache x##_igc;
+if (!c_is(&p, (dptr)&pixclassname, &x##_igc))
+    runerr(205, p);
+x##_dptr = c_get_instance_data(&p, (dptr)&impf, &x##_ic);
+if (!x##_dptr)
+    syserr("Missing imp field");
+(x) = (struct imgmem *)IntVal(*x##_dptr);
+if (!(x))
+    runerr(152, p);
+#enddef
+
+#begdef GetSelfPixels()
+struct imgmem *self_im;
+dptr self_im_dptr;
+static struct inline_field_cache self_im_ic;
+self_im_dptr = c_get_instance_data(&self, (dptr)&impf, &self_im_ic);
+if (!self_im_dptr)
+    syserr("Missing imp field");
+self_im = (struct imgmem *)IntVal(*self_im_dptr);
+if (!self_im)
+    runerr(152, self);
+#enddef
+
 function graphics_Window_open_impl(display)
    body {
       wbp w;
@@ -577,84 +608,108 @@ function graphics_Window_lower(self)
    }
 end
 
-function graphics_Window_get_pixels(self, x0, y0, w0, h0)
+function graphics_Window_get_pixels_impl(self, x0, y0, w0, h0)
    body {
-      struct imgmem imem;
+      struct imgmem *imem;
       word x, y, width, height;
-      tended struct descrip lastval, result;
-      int i, j, r, g, b;
       GetSelfW();
 
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
 
-      create_list(width * height, &result);
-
-      if (initimgmem(self_w, &imem, 1, 0, x, y, width, height)) {
-          lastval = emptystr;
-          r = g = b = -1;
-          for (j = y; j < y + height; j++) {
-              for (i = x; i < x + width; i++) {
-                  if (gotopixel(&imem, i, j)) {
-                      int r0, g0, b0;
-                      getpixel(&imem, &r0, &g0, &b0);
-                      if (r != r0 || g != g0 || b != b0) {
-                          char buff[64];
-                          r = r0; g = g0; b = b0;
-                          sprintf(buff, "%d,%d,%d", r, g, b);
-                          cstr2string(buff, &lastval);
-                      }
-                      list_put(&result, &lastval);
-                  } else
-                      list_put(&result, &nulldesc);
-              }
-          }
-          freeimgmem(&imem);
+      MemProtect(imem = malloc(sizeof(struct imgmem)));
+      if (initimgmem(self_w, imem, 1, 0, x, y, width, height)) {
+         imem->x = imem->y = 0;
+         return C_integer((word)imem);
       } else {
-          /* Region completely off-screen */
-          for (i = 0; i < width * height; i++)
-              list_put(&result, &nulldesc);
+         free(imem);
+         fail;
       }
+   }
+end
+
+function graphics_Window_draw_pixels(self, x0, y0, data)
+   body {
+      word x, y;
+      GetSelfW();
+      if (pointargs(self_w, &x0, &x, &y) == Error)
+          runerr(0);
+      {
+      PixelsStaticParam(data, im);
+      im->x = x;
+      im->y = y;
+      saveimgmem(self_w, im);
+      im->x = im->y = 0;
+      }
+      return self;
+   }
+end
+
+function graphics_Pixels_get_width(self)
+   body {
+      struct descrip result;
+      GetSelfPixels();
+      MakeInt(self_im->width, &result);
       return result;
    }
 end
 
-function graphics_Window_set_pixels(self, data, x0, y0, w0, h0)
-   if !is:list(data) then
-      runerr(108, data)
+function graphics_Pixels_get_height(self)
    body {
-      struct imgmem imem;
-      word x, y, width, height;
-      struct lgstate state;
-      tended struct b_lelem *le;
-      tended struct descrip elem;
-      int i, j;
-      GetSelfW();
+      struct descrip result;
+      GetSelfPixels();
+      MakeInt(self_im->height, &result);
+      return result;
+   }
+end
 
-      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
-          runerr(0);
-
-      if (!initimgmem(self_w, &imem, 1, 1, x, y, width, height))
-          return self;
-
-      le = lgfirst(&ListBlk(data), &state);
-      for (j = y; le && j < y + height; j++) {
-          for (i = x; le && i < x + width; i++) {
-              elem = le->lslots[state.result];
-              le = lgnext(&ListBlk(data), &state, le);
-              if (!is:null(elem) && gotopixel(&imem, i, j)) {
-                  int r, g, b;
-                  if (!cnv:string(elem, elem))
-                      runerr(103, elem);
-                  if (parsecolor(buffstr(&elem), &r, &g, &b))
-                      setpixel(&imem, r, g, b);
-              }
-          }
-      }
-
-      saveimgmem(self_w, &imem);
-      freeimgmem(&imem);
+function graphics_Pixels_close(self)
+   body {
+      GetSelfPixels();
+      freeimgmem(self_im);
+      free(self_im);
+       *self_im_dptr = zerodesc;
       return self;
+   }
+end
+
+function graphics_Pixels_get(self, x, y)
+   if !cnv:C_integer(x) then
+      runerr(101, x)
+   if !cnv:C_integer(y) then
+      runerr(101, y)
+   body {
+      tended struct descrip result;
+      GetSelfPixels();
+      if (gotopixel(self_im, x, y)) {
+         int r, g, b;
+         char buff[64];
+         getpixel(self_im, &r, &g, &b);
+         sprintf(buff, "%d,%d,%d", r, g, b);
+         cstr2string(buff, &result);
+         return result;
+      }
+      fail;
+   }
+end
+
+function graphics_Pixels_set(self, x, y, v)
+   if !cnv:C_integer(x) then
+      runerr(101, x)
+   if !cnv:C_integer(y) then
+      runerr(101, y)
+   if !cnv:string(v) then
+       runerr(103, v)
+   body {
+      GetSelfPixels();
+      if (gotopixel(self_im, x, y)) {
+         int r, g, b;
+         if (parsecolor(buffstr(&v), &r, &g, &b)) {
+             setpixel(self_im, r, g, b);
+             return self;
+         }
+      }
+      fail;
    }
 end
 

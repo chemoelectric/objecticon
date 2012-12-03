@@ -35,12 +35,14 @@ esac
 
 CHECK_XLIB()
 if test "$ac_cv_lib_X11_main" = yes; then
-   CHECK_FREETYPE()
    CHECK_JPEG()
    CHECK_PNG()
    CHECK_XFT()
    if test "$ac_cv_lib_Xft_main" = yes -a "$ac_cv_lib_freetype_main" != yes ; then
         AC_MSG_ERROR([*** Xft needs freetype to work])
+   fi
+   if test "$ac_cv_lib_Xft_main" = yes -a "$ac_cv_lib_fontconfig_main" != yes ; then
+        AC_MSG_ERROR([*** Xft needs fontconfig to work])
    fi
 fi
 
@@ -179,3 +181,5 @@ if test -z "$found_openssl"; then
 else
         echo yes
 fi
+echo
+echo "When reconfiguring, please remember to run 'make clean' before 'make'."

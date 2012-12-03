@@ -16,4 +16,4 @@ $(LIBU): %.u: %.icn oigram.icn
 	oit -ncs $(LIBSRC)
 
 oigram.icn : oigram.y
-	iyacc -v -k parser -f YY -i oigram.y
+	iyacc -k parser oigram.y

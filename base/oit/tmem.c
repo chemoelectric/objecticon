@@ -90,7 +90,9 @@ void next_super(char *name, struct node *n)
     while (cs && cs->name != name)
         cs = cs->b_next;
     if (cs)
-        tfatal_at(n, "duplicate superclass: %s", name);
+        twarn_at(n, "duplicate superclass: %s", name);
+    if (curr_class->global->g_name == name)
+        twarn_at(n, "class has self as super: %s", name);
     cs = FAlloc(struct tclass_super);
     cs->b_next = curr_class->super_hash[i];
     curr_class->super_hash[i] = cs;
@@ -149,7 +151,7 @@ void check_flags(int flag, struct node *n)
                     curr_class->curr_field->name, curr_class->global->g_name);
 
         if ((flag & (M_Defer | M_Final)) == (M_Defer | M_Final))
-            tfatal_at(n, "An deferred method cannot be final: method %s in class %s", 
+            tfatal_at(n, "A deferred method cannot be final: method %s in class %s", 
                     curr_class->curr_field->name, curr_class->global->g_name);
 
         if (flag & M_Const)

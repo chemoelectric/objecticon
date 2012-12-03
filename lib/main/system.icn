@@ -4,7 +4,7 @@ import
    io(Files),
    util(error)
 
-class System()
+final abstract class System()
    # This provides a slightly easier to use interface to {execve}.
    # The first argument is searched on the PATH and if found pushed
    # onto the arg list (making the arg0 of the target program).  Then

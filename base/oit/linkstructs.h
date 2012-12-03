@@ -82,7 +82,7 @@ struct fentry {                 /* field table header entry */
 struct lclass_super {
     char *name;
     struct loc pos;
-    struct lclass_super *b_next, *next;
+    struct lclass_super *next;
 };
 
 enum const_val_flag { NOT_SEEN = 0, SET_NULL, SET_CONST, OTHER };
@@ -103,7 +103,7 @@ struct lclass_field {
 
 struct lclass {
     word flag;
-    struct lclass_super *super_hash[32], *supers, *last_super;
+    struct lclass_super *supers, *last_super;
     struct lclass_field *field_hash[32], *fields, *last_field;
     struct gentry *global;      /* Pointer back to global table entry */
     struct lclass *next;        /* Link in the list of all lclass objects */

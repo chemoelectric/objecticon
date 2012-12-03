@@ -4,7 +4,7 @@ package lang
 # This class contains various helpful methods to get information about
 # a record constructor at runtime.
 #
-class Constructor()
+final abstract class Constructor()
    # Return the name of the constructor
    #
    public static native get_name(c)

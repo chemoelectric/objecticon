@@ -6,14 +6,14 @@ char rflag;
 char tflag;
 char vflag;
 char jflag;/*rwj -- for Java!*/
-char iflag;
+char iflag=1;
 char threadflag;/*rwj -- for Java!*/
 char *java_semantic_type;/*rwj -- for Java!*/
 char *package_name = NULL;
 
 char *symbol_prefix;
 char *file_prefix = "y";
-char *java_class_name = "parser";/*rwj*/
+char *java_class_name = "YY";/*rwj*/
 char *java_extend_name = "Thread";/*rwj*/
 char *myname = "yacc";
 char *temp_form = "yacc.XXXXXXX";
@@ -101,13 +101,8 @@ void set_signals(void)
 
 void usage(void)
 {
-/*
     fprintf(stderr,
-     "usage:\n %s [-dlrtvjxf] [-b file_prefix]  [-p symbol_prefix] \n"
-     "      [-s java_semantic_type] [-f class_name] filename\n", myname);
-*/
-    fprintf(stderr,
-     "usage:\n %s [-dlrtv] [-b file_prefix]  [-p symbol_prefix]  [-k unicon package name]  [-f class_name] filename\n", myname);
+     "usage:\n %s [-dlrtvic] [-b file_prefix]  [-p symbol_prefix]  [-k object icon package name]  [-f class_name] filename\n", myname);
     
     exit(1);
 }
@@ -183,12 +178,17 @@ void getargs(int argc,char **argv)
 
 	case 'j':     /* rwj -- for Java!  */
 	    jflag = 1;
+            iflag = 0;
 	    break;
 
 	case 'i':
 	    iflag = 1;
-            outline = -1;
-            lineno  = -1;
+            jflag = 0;
+	    break;
+
+	case 'c':
+	    iflag = 0;
+            jflag = 0;
 	    break;
 
 	case 's':     /* rwj -- for Java!  */
@@ -462,6 +462,10 @@ int main(int argc,char **argv)
 {
     set_signals();
     getargs(argc, argv);
+    if (iflag) {
+        outline = -1;
+        lineno  = -1;
+    }
     open_files();
     reader();
     lr0();

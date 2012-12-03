@@ -283,10 +283,11 @@ static void compute_impl(struct lclass *cl)
 {
     struct lclass_ref *queue = 0, *queue_last = 0, *t, *u;
     struct lclass *x;
+    static int seen_no = 0;
 
-    /* Reset all seen flags of all classes */
-    for (x = lclasses; x; x = x->next)
-        x->seen = 0;
+    /* Flag value for checking if a class has been seen.  Doing it this way saves
+     * setting all flags to zero each time.  */
+    ++seen_no;
 
     /* Init the queue with the class to resolve */
     queue_last = queue = Alloc(struct lclass_ref);
@@ -304,7 +305,7 @@ static void compute_impl(struct lclass *cl)
         free(t);
         
         /* If we've seen it, just go round again */
-        if (x->seen)
+        if (x->seen == seen_no)
             continue;
 
         /* Check that the superclass isn't final */
@@ -317,12 +318,12 @@ static void compute_impl(struct lclass *cl)
         /* We have an implemented superclass, so merge methods etc into our
          * class.
          */
-        x->seen = 1;
+        x->seen = seen_no;
         merge(cl, x);
 
         /* And add all its unseen supers to the queue */
         for (t = x->resolved_supers; t; t = t->next) {
-            if (t->class->seen)
+            if (t->class->seen == seen_no)
                 continue;
             u = Alloc(struct lclass_ref);
             u->class = t->class;

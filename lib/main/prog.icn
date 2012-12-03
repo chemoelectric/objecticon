@@ -5,7 +5,7 @@ package lang
 # {Prog.load} below.   The parameters named {P} are always programs
 # and default to the currently executing program if omitted.
 #
-class Prog()
+final abstract class Prog()
    # Load and return a program from file {s}.
    #
    public static native load(s, arglist, blocksize, stringsize)

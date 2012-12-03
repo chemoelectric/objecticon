@@ -573,6 +573,17 @@ procedure save_scan(e)
 end
 
 #
+# Evaluate e, restoring &pos with each suspended result.
+#
+procedure excursion(e)
+   local t
+   t := &pos
+   suspend 1(|@e, &pos :=: t) do
+      &pos :=: t
+   &pos := t
+end
+
+#
 # String scanning encapsulated in a class
 #
 class Scan()

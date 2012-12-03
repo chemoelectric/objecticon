@@ -751,7 +751,7 @@ end
 # This class has some static methods that give access to some useful internal
 # interpreter functions.
 #
-class Internal()
+final abstract class Internal()
    #
    # This method gives access to the internal ordering method used by
    # the interpreter, for example in the builtin {sort} function.  The

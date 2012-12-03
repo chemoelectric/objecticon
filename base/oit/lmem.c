@@ -228,15 +228,8 @@ void lmfree()
 
 void add_super(struct lclass *x, char *name, struct loc *pos)
 {
-    int i = hasher(name, x->super_hash);
-    struct lclass_super *cs = x->super_hash[i];
-    while (cs && cs->name != name)
-        cs = cs->b_next;
-    if (cs) 
-        quit("duplicate superclass: %s", name);
+    struct lclass_super *cs;
     cs = Alloc(struct lclass_super);
-    cs->b_next = x->super_hash[i];
-    x->super_hash[i] = cs;
     cs->name = name;
     cs->pos = *pos;
     if (x->last_super) {

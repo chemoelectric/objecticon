@@ -106,7 +106,7 @@ abstract class Table()
          put(l, e)
          if *l = 2 then {
             suspend l
-            while pop(l)
+            default.clear(l)
          }
       }
    end

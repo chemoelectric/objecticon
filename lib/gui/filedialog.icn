@@ -172,10 +172,7 @@ class FileDialog(Dialog)
       return self
    end
 
-   #
-   # Set the result
-   #
-   public set_result()
+   public on_okay_button()
       local s
       s := file.get_contents()
       if *s = 0 then {
@@ -184,17 +181,13 @@ class FileDialog(Dialog)
       }
       self.res := Files.get_path(s)
       if not self.res.is_absolute() then
-         self.res := get_dir_path().append(self.res)
-      return
+         self.res := Files.get_path(dir.get_contents()).append(self.res)
+      self.res := self.res.canonical()
+      self.dispose()
    end
 
    public get_dir_path()
       return Files.get_path(dir.get_contents()).canonical()
-   end
-
-   public on_okay_button()
-      self.set_result() | fail
-      self.dispose()
    end
 
    public on_cancel_button()
@@ -205,8 +198,7 @@ class FileDialog(Dialog)
       #
       # If return pressed in file TextField, same as okay
       #
-      self.set_result() | fail
-      self.dispose()
+      on_okay_button()
    end
 
    public on_dlist()
@@ -217,6 +209,7 @@ class FileDialog(Dialog)
       #
       # Clicked in file list; set TextField
       #
+      clear_msg()
       file.set_contents(flist.object_get_selections()[1])
    end
 
