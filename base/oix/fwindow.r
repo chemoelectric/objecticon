@@ -64,14 +64,14 @@ if (!(x))
 #enddef
 
 #begdef GetSelfPixels()
-struct imgmem *self_px;
-dptr self_px_dptr;
-static struct inline_field_cache self_px_ic;
-self_px_dptr = c_get_instance_data(&self, (dptr)&impf, &self_px_ic);
-if (!self_px_dptr)
+struct imgmem *self_im;
+dptr self_im_dptr;
+static struct inline_field_cache self_im_ic;
+self_im_dptr = c_get_instance_data(&self, (dptr)&impf, &self_im_ic);
+if (!self_im_dptr)
     syserr("Missing imp field");
-self_px = (struct imgmem *)IntVal(*self_px_dptr);
-if (!self_px)
+self_im = (struct imgmem *)IntVal(*self_im_dptr);
+if (!self_im)
     runerr(152, self);
 #enddef
 
@@ -621,8 +621,10 @@ function graphics_Window_get_pixels_impl(self, x0, y0, w0, h0)
       if (initimgmem(self_w, imem, 1, 0, x, y, width, height)) {
          imem->x = imem->y = 0;
          return C_integer((word)imem);
-      } else
+      } else {
+         free(imem);
          fail;
+      }
    }
 end
 
@@ -633,11 +635,11 @@ function graphics_Window_draw_pixels(self, x0, y0, data)
       if (pointargs(self_w, &x0, &x, &y) == Error)
           runerr(0);
       {
-      PixelsStaticParam(data, px);
-      px->x = x;
-      px->y = y;
-      saveimgmem(self_w, px);
-      px->x = px->y = 0;
+      PixelsStaticParam(data, im);
+      im->x = x;
+      im->y = y;
+      saveimgmem(self_w, im);
+      im->x = im->y = 0;
       }
       return self;
    }
@@ -647,7 +649,7 @@ function graphics_Pixels_get_width(self)
    body {
       struct descrip result;
       GetSelfPixels();
-      MakeInt(self_px->width, &result);
+      MakeInt(self_im->width, &result);
       return result;
    }
 end
@@ -656,7 +658,7 @@ function graphics_Pixels_get_height(self)
    body {
       struct descrip result;
       GetSelfPixels();
-      MakeInt(self_px->height, &result);
+      MakeInt(self_im->height, &result);
       return result;
    }
 end
@@ -664,9 +666,9 @@ end
 function graphics_Pixels_close(self)
    body {
       GetSelfPixels();
-      freeimgmem(self_px);
-      free(self_px);
-       *self_px_dptr = zerodesc;
+      freeimgmem(self_im);
+      free(self_im);
+       *self_im_dptr = zerodesc;
       return self;
    }
 end
@@ -679,10 +681,10 @@ function graphics_Pixels_get(self, x, y)
    body {
       tended struct descrip result;
       GetSelfPixels();
-      if (gotopixel(self_px, x, y)) {
+      if (gotopixel(self_im, x, y)) {
          int r, g, b;
          char buff[64];
-         getpixel(self_px, &r, &g, &b);
+         getpixel(self_im, &r, &g, &b);
          sprintf(buff, "%d,%d,%d", r, g, b);
          cstr2string(buff, &result);
          return result;
@@ -700,10 +702,10 @@ function graphics_Pixels_set(self, x, y, v)
        runerr(103, v)
    body {
       GetSelfPixels();
-      if (gotopixel(self_px, x, y)) {
+      if (gotopixel(self_im, x, y)) {
          int r, g, b;
          if (parsecolor(buffstr(&v), &r, &g, &b)) {
-             setpixel(self_px, r, g, b);
+             setpixel(self_im, r, g, b);
              return self;
          }
       }
