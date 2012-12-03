@@ -15,4 +15,4 @@ $LIBU: oigram.icn
        test $stem.u -nt $stem.icn || oit -snc $LIBSRC
 
 oigram.icn : oigram.y
-	iyacc -v -k parser -f YY -i oigram.y
+	iyacc -k parser oigram.y
