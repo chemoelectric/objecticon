@@ -27,7 +27,25 @@ class Pixels(NoCopy)
 
    # Dispose of the object, freeing the memory used by the block
    public native close()
-   
+
+   # Convenient method to generate 0 to get_width() - 1
+   public x_range()
+      suspend 0 to get_width() - 1
+   end
+
+   # Convenient method to generate 0 to get_height() - 1
+   public y_range()
+      suspend 0 to get_height() - 1
+   end
+
+   # Generate all the pixels, from left-to-right, and top-to-bottom.
+   # The first pixel is (0,0), then (1,0), (2,0) and so on.
+   public gen()
+      local y
+      every y := y_range() do
+         suspend get(x_range(), y)
+   end
+
    package new(imp)
       self.imp := imp
       return
