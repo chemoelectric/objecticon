@@ -127,6 +127,8 @@ NativeDef(graphics.Pixels,get_height,graphics_Pixels_get_height)
 NativeDef(graphics.Pixels,close,graphics_Pixels_close)
 NativeDef(graphics.Pixels,get,graphics_Pixels_get)
 NativeDef(graphics.Pixels,set,graphics_Pixels_set)
+NativeDef(graphics.Pixels,get_rgb,graphics_Pixels_get_rgb)
+NativeDef(graphics.Pixels,set_rgb,graphics_Pixels_set_rgb)
 #endif
 NativeDef(io.DescStream,flag,io_DescStream_flag)
 NativeDef(io.DescStream,dflag,io_DescStream_dflag)

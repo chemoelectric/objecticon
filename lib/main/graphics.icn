@@ -18,12 +18,18 @@ class Pixels(NoCopy)
    # Get the height of the block
    public native get_height()
 
-   # Get the pixel at the given position; indices run from 0 to
-   # width-1 and 0 to height-1 respectively.
+   # Get the pixel at the given position as an Icon colour string;
+   # indices run from 0 to width-1 and 0 to height-1 respectively.
    public native get(x, y)
 
-   # Set the pixel to the given colour value.
+   # Set the pixel to the given Icon colour string value.
    public native set(x, y, v)
+
+   # Get the given pixel as an 3 element list giving the rgb values.
+   public native get_rgb(x, y)
+
+   # Set the given pixel to the given rgb integer values.
+   public native set_rgb(x, y, r, g, b)
 
    # Dispose of the object, freeing the memory used by the block
    public native close()

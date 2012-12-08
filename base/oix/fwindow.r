@@ -679,14 +679,39 @@ function graphics_Pixels_get(self, x, y)
    if !cnv:C_integer(y) then
       runerr(101, y)
    body {
-      tended struct descrip result;
       GetSelfPixels();
       if (gotopixel(self_im, x, y)) {
          int r, g, b;
+         tended struct descrip result;
          char buff[64];
          getpixel(self_im, &r, &g, &b);
          sprintf(buff, "%d,%d,%d", r, g, b);
          cstr2string(buff, &result);
+         return result;
+      }
+      fail;
+   }
+end
+
+function graphics_Pixels_get_rgb(self, x, y)
+   if !cnv:C_integer(x) then
+      runerr(101, x)
+   if !cnv:C_integer(y) then
+      runerr(101, y)
+   body {
+      GetSelfPixels();
+      if (gotopixel(self_im, x, y)) {
+         int r, g, b;
+         tended struct descrip result;
+         struct descrip t;
+         create_list(3, &result);
+         getpixel(self_im, &r, &g, &b);
+         MakeInt(r, &t);
+         list_put(&result, &t);
+         MakeInt(g, &t);
+         list_put(&result, &t);
+         MakeInt(b, &t);
+         list_put(&result, &t);
          return result;
       }
       fail;
@@ -708,6 +733,27 @@ function graphics_Pixels_set(self, x, y, v)
              setpixel(self_im, r, g, b);
              return self;
          }
+      }
+      fail;
+   }
+end
+
+function graphics_Pixels_set_rgb(self, x, y, r, g, b)
+   if !cnv:C_integer(x) then
+      runerr(101, x)
+   if !cnv:C_integer(y) then
+      runerr(101, y)
+   if !cnv:C_integer(r) then
+      runerr(101, r)
+   if !cnv:C_integer(g) then
+      runerr(101, g)
+   if !cnv:C_integer(b) then
+      runerr(101, b)
+   body {
+      GetSelfPixels();
+      if (gotopixel(self_im, x, y)) {
+         setpixel(self_im, r, g, b);
+         return self;
       }
       fail;
    }
