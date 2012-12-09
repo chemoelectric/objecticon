@@ -46,34 +46,35 @@ if (!self_w)
 
 static struct sdescrip pixclassname = {15, "graphics.Pixels"};
 
-static struct sdescrip impf = {3, "imp"};
+static struct sdescrip idpf = {3, "idp"};
 
-#begdef PixelsStaticParam(p, x)
-struct imgmem *x;
+#begdef ImageDataStaticParam(p, x)
+struct imgdata *x;
 dptr x##_dptr;
 static struct inline_field_cache x##_ic;
 static struct inline_global_cache x##_igc;
 if (!c_is(&p, (dptr)&pixclassname, &x##_igc))
     runerr(205, p);
-x##_dptr = c_get_instance_data(&p, (dptr)&impf, &x##_ic);
+x##_dptr = c_get_instance_data(&p, (dptr)&idpf, &x##_ic);
 if (!x##_dptr)
-    syserr("Missing imp field");
-(x) = (struct imgmem *)IntVal(*x##_dptr);
+    syserr("Missing idp field");
+(x) = (struct imgdata *)IntVal(*x##_dptr);
 if (!(x))
     runerr(152, p);
 #enddef
 
-#begdef GetSelfPixels()
-struct imgmem *self_im;
-dptr self_im_dptr;
-static struct inline_field_cache self_im_ic;
-self_im_dptr = c_get_instance_data(&self, (dptr)&impf, &self_im_ic);
-if (!self_im_dptr)
-    syserr("Missing imp field");
-self_im = (struct imgmem *)IntVal(*self_im_dptr);
-if (!self_im)
+#begdef GetSelfImageData()
+struct imgdata *self_id;
+dptr self_id_dptr;
+static struct inline_field_cache self_id_ic;
+self_id_dptr = c_get_instance_data(&self, (dptr)&idpf, &self_id_ic);
+if (!self_id_dptr)
+    syserr("Missing idp field");
+self_id = (struct imgdata *)IntVal(*self_id_dptr);
+if (!self_id)
     runerr(152, self);
 #enddef
+
 
 function graphics_Window_open_impl(display)
    body {
@@ -309,21 +310,16 @@ function graphics_Window_draw_curve(self, argv[argc])
    }
 end
 
-function graphics_Window_draw_image(self, x0, y0, d)
+function graphics_Window_draw_image_impl(self, x0, y0, d)
    body {
       word x, y;
-      struct imgdata imd;
       GetSelfW();
-
       if (pointargs(self_w, &x0, &x, &y) == Error)
           runerr(0);
-      if (!cnv:string(d, d))
-          runerr(103, d);
-
-      if (interpimage(self_w, &d, &imd) != Succeeded)
-          fail;
-      drawimgdata(self_w, x, y, &imd);
-      freeimgdata(&imd);
+      {
+      ImageDataStaticParam(d, id);
+      drawimgdata(self_w, x, y, id);
+      }
       return self;
    }
 end
@@ -610,46 +606,67 @@ end
 
 function graphics_Window_get_pixels_impl(self, x0, y0, w0, h0)
    body {
-      struct imgmem *imem;
+      struct imgdata *imd;
+      struct imgmem imem;
       word x, y, width, height;
+      int i, j, r, g, b;
+      unsigned char *s;
       GetSelfW();
 
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
 
-      MemProtect(imem = malloc(sizeof(struct imgmem)));
-      if (initimgmem(self_w, imem, 1, 0, x, y, width, height)) {
-         imem->x = imem->y = 0;
-         return C_integer((word)imem);
+      if (initimgmem(self_w, &imem, 1, 0, x, y, width, height)) {
+          MemProtect(imd = malloc(sizeof(struct imgdata)));
+          imd->width = imem.width;
+          imd->height = imem.height;
+          imd->format = IMGDATA_RGBA64;
+          imd->paltbl = 0;
+          MemProtect(imd->data = malloc(8 * imem.width * imem.height));
+          s = imd->data;
+          for (j = imem.y; j < imem.y + imem.height; j++) {
+              for (i = imem.x; i < imem.x + imem.width; i++) {
+                  gotopixel(&imem, i, j);
+                  getpixel(&imem, &r, &g, &b);
+                  *s++ = r / 256;
+                  *s++ = r % 256;
+                  *s++ = g / 256;
+                  *s++ = g % 256;
+                  *s++ = b / 256;
+                  *s++ = b % 256;
+                  *s++ = 255;
+                  *s++ = 255;
+              }
+          }
+          freeimgmem(&imem);
+          return C_integer((word)imd);
       } else {
-         free(imem);
-         fail;
+          /* Region completely off-screen */
+          fail;
       }
    }
 end
 
-function graphics_Window_draw_pixels(self, x0, y0, data)
+function graphics_Pixels_open_impl(val)
+   if !cnv:string(val) then
+      runerr(103, val)
    body {
-      word x, y;
-      GetSelfW();
-      if (pointargs(self_w, &x0, &x, &y) == Error)
-          runerr(0);
-      {
-      PixelsStaticParam(data, im);
-      im->x = x;
-      im->y = y;
-      saveimgmem(self_w, im);
-      im->x = im->y = 0;
+      struct imgdata *imd;
+      MemProtect(imd = malloc(sizeof(struct imgdata)));
+      if (interpimage(0, &val, imd) == Succeeded)
+          return C_integer((word)imd);
+      else {
+          free(imd);
+          fail;
       }
-      return self;
    }
 end
 
 function graphics_Pixels_get_width(self)
    body {
       struct descrip result;
-      GetSelfPixels();
-      MakeInt(self_im->width, &result);
+      GetSelfImageData();
+      MakeInt(self_id->width, &result);
       return result;
    }
 end
@@ -657,19 +674,47 @@ end
 function graphics_Pixels_get_height(self)
    body {
       struct descrip result;
-      GetSelfPixels();
-      MakeInt(self_im->height, &result);
+      GetSelfImageData();
+      MakeInt(self_id->height, &result);
       return result;
    }
 end
 
 function graphics_Pixels_close(self)
    body {
-      GetSelfPixels();
-      freeimgmem(self_im);
-      free(self_im);
-       *self_im_dptr = zerodesc;
+      GetSelfImageData();
+      freeimgdata(self_id);
+      free(self_id);
+       *self_id_dptr = zerodesc;
       return self;
+   }
+end
+
+function graphics_Pixels_get_rgba(self, x, y)
+   if !cnv:C_integer(x) then
+      runerr(101, x)
+   if !cnv:C_integer(y) then
+      runerr(101, y)
+   body {
+      GetSelfImageData();
+      if (x >= 0 && x < self_id->width &&
+          y >= 0 && y < self_id->height) {
+         int r, g, b, a;
+         tended struct descrip result;
+         struct descrip t;
+         getimgdatapixel(self_id, x, y, &r, &g, &b, &a);
+         create_list(4, &result);
+         MakeInt(r, &t);
+         list_put(&result, &t);
+         MakeInt(g, &t);
+         list_put(&result, &t);
+         MakeInt(b, &t);
+         list_put(&result, &t);
+         MakeInt(a, &t);
+         list_put(&result, &t);
+         return result;
+      }
+      fail;
    }
 end
 
@@ -679,12 +724,13 @@ function graphics_Pixels_get(self, x, y)
    if !cnv:C_integer(y) then
       runerr(101, y)
    body {
-      GetSelfPixels();
-      if (gotopixel(self_im, x, y)) {
-         int r, g, b;
+      GetSelfImageData();
+      if (x >= 0 && x < self_id->width &&
+          y >= 0 && y < self_id->height) {
+         int r, g, b, a;
          tended struct descrip result;
          char buff[64];
-         getpixel(self_im, &r, &g, &b);
+         getimgdatapixel(self_id, x, y, &r, &g, &b, &a);
          sprintf(buff, "%d,%d,%d", r, g, b);
          cstr2string(buff, &result);
          return result;
@@ -693,26 +739,25 @@ function graphics_Pixels_get(self, x, y)
    }
 end
 
-function graphics_Pixels_get_rgb(self, x, y)
+function graphics_Pixels_set_rgba(self, x, y, r, g, b, a)
    if !cnv:C_integer(x) then
       runerr(101, x)
    if !cnv:C_integer(y) then
       runerr(101, y)
+   if !cnv:C_integer(r) then
+      runerr(101, r)
+   if !cnv:C_integer(g) then
+      runerr(101, g)
+   if !cnv:C_integer(b) then
+      runerr(101, b)
+   if !cnv:C_integer(a) then
+      runerr(101, a)
    body {
-      GetSelfPixels();
-      if (gotopixel(self_im, x, y)) {
-         int r, g, b;
-         tended struct descrip result;
-         struct descrip t;
-         create_list(3, &result);
-         getpixel(self_im, &r, &g, &b);
-         MakeInt(r, &t);
-         list_put(&result, &t);
-         MakeInt(g, &t);
-         list_put(&result, &t);
-         MakeInt(b, &t);
-         list_put(&result, &t);
-         return result;
+      GetSelfImageData();
+      if (x >= 0 && x < self_id->width &&
+          y >= 0 && y < self_id->height) {
+          if (setimgdatapixel(self_id, x, y, r, g, b, a) == Succeeded)
+              return self;
       }
       fail;
    }
@@ -726,34 +771,14 @@ function graphics_Pixels_set(self, x, y, v)
    if !cnv:string(v) then
        runerr(103, v)
    body {
-      GetSelfPixels();
-      if (gotopixel(self_im, x, y)) {
-         int r, g, b;
-         if (parsecolor(buffstr(&v), &r, &g, &b)) {
-             setpixel(self_im, r, g, b);
-             return self;
-         }
-      }
-      fail;
-   }
-end
-
-function graphics_Pixels_set_rgb(self, x, y, r, g, b)
-   if !cnv:C_integer(x) then
-      runerr(101, x)
-   if !cnv:C_integer(y) then
-      runerr(101, y)
-   if !cnv:C_integer(r) then
-      runerr(101, r)
-   if !cnv:C_integer(g) then
-      runerr(101, g)
-   if !cnv:C_integer(b) then
-      runerr(101, b)
-   body {
-      GetSelfPixels();
-      if (gotopixel(self_im, x, y)) {
-         setpixel(self_im, r, g, b);
-         return self;
+      GetSelfImageData();
+      if (x >= 0 && x < self_id->width &&
+          y >= 0 && y < self_id->height) {
+          int r, g, b;
+          if (parsecolor(buffstr(&v), &r, &g, &b)) {
+              if (setimgdatapixel(self_id, x, y, r, g, b, 65535) == Succeeded)
+                  return self;
+          }
       }
       fail;
    }
@@ -1629,39 +1654,14 @@ function graphics_Window_set_height(self, height)
    }
 end
 
-function graphics_Window_set_image(self, d)
-   if !cnv:string(d) then
-      runerr(103, d)
+function graphics_Window_set_icon_impl(self, val)
    body {
-       wsp ws;
-       GetSelfW();
-       ws = self_w->window;
-       if (interpimage(self_w, &d, &ws->initimage) != Succeeded)
-           fail;
-       self_w->window->width = ws->initimage.width;
-       self_w->window->height = ws->initimage.height;
-       SimpleAttr(C_SIZE | C_IMAGE);
-       return self;
-   }
-end
-
-static int setwindowicon1(wbp w, struct imgdata *imd)
-{
-    int r = setwindowicon(w, imd);
-    freeimgdata(imd);
-    return r;
-}
-
-function graphics_Window_set_icon(self, val)
-   if !cnv:string(val) then
-      runerr(103, val)
-   body {
-       struct imgdata imd;
-       GetSelfW();
-       if (interpimage(self_w, &val, &imd) != Succeeded)
-           fail;
-       AttemptAttr(setwindowicon1(self_w, &imd), "Failed to set window icon");
-       return self;
+      GetSelfW();
+      {
+      ImageDataStaticParam(val, id);
+      AttemptAttr(setwindowicon(self_w, id), "Failed to set window icon");
+      return self;
+      }
    }
 end
 

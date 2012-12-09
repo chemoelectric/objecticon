@@ -10,7 +10,7 @@ import
 #
 class Pixels(NoCopy)
    private
-      imp
+      idp
 
    # Get the width of the block
    public native get_width()
@@ -25,11 +25,11 @@ class Pixels(NoCopy)
    # Set the pixel to the given Icon colour string value.
    public native set(x, y, v)
 
-   # Get the given pixel as an 3 element list giving the rgb values.
-   public native get_rgb(x, y)
+   # Get the given pixel as an 4 element list giving the rgba values.
+   public native get_rgba(x, y)
 
-   # Set the given pixel to the given rgb integer values.
-   public native set_rgb(x, y, r, g, b)
+   # Set the given pixel to the given rgba integer values.
+   public native set_rgba(x, y, r, g, b, a)
 
    # Dispose of the object, freeing the memory used by the block
    public native close()
@@ -52,8 +52,14 @@ class Pixels(NoCopy)
          suspend get(x_range(), y)
    end
 
-   package new(imp)
-      self.imp := imp
+   public static open(s)
+      return Pixels(open_impl(s))
+   end
+
+   private static native open_impl(s)
+
+   package new(idp)
+      self.idp := idp
       return
    end
 end
@@ -129,7 +135,6 @@ class Window(NoCopy)
    public native get_font_width()
    public native get_geometry()
    public native get_height()
-   public native get_image()
    public native get_input_mask()
    public native get_label()
    public native get_line_style()
@@ -218,7 +223,18 @@ class Window(NoCopy)
    # {v} may be an Icon image string, raw binary image data (eg a gif
    # file), or the name of a file containing an image.
    #
-   public native set_image(v)
+   public set_image(v)
+      if is(v, Pixels) then {
+         set_size(v.get_width(), v.get_height())
+         draw_image(0, 0, v)
+      } else {
+         v := Pixels.open(v) | fail
+         set_size(v.get_width(), v.get_height())
+         draw_image(0, 0, v)
+         v.close()
+      }
+      return self
+   end
 
    #
    # Set the input mask for the window.  If the string {v} contains
@@ -231,7 +247,19 @@ class Window(NoCopy)
    # The canvas attribute icon specifies an image used to identify the
    # window.  The parameter takes the same format as {set_image}.
    #
-   public native set_icon(v)
+   public set_icon(v)
+      local r
+      if is(v, Pixels) then
+         r := set_icon_impl(v)
+      else {
+         v := Pixels.open(v) | fail
+         r := set_icon_impl(v)
+         v.close()
+      }
+      return \r
+   end
+
+   private native set_icon_impl(id)
 
    #
    # The canvas attribute label specifies a title used to identify the
@@ -408,7 +436,18 @@ class Window(NoCopy)
    # Draw an image.  The image can be in icon image string format, raw image data, or
    # a filename.
    #
-   public native draw_image(x, y, d)
+   public draw_image(x, y, v)
+      if is(v, Pixels) then
+         draw_image_impl(x, y, v)
+      else {
+         v := Pixels.open(v) | fail
+         draw_image_impl(x, y, v)
+         v.close()
+      }
+      return self
+   end
+
+   private native draw_image_impl(x, y, d)
 
    #
    # Copy an area from this window to another window.
@@ -498,11 +537,6 @@ class Window(NoCopy)
    end
 
    private native get_pixels_impl(x, y, width, height)
-
-   #
-   # Set the contents of some pixels from a {Pixels} object.
-   #
-   public native draw_pixels(x, y, data)
 
    #
    # Filter the given pixels according to the given filter spec.

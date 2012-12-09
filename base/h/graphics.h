@@ -248,7 +248,6 @@ typedef struct _wstate {
   int		refcount;		/* reference count */
   struct _wstate *previous, *next;
   int		inputmask;		/* user input mask */
-  struct imgdata initimage;		/* initial image data */
   int		y, x;		        /* desired upper lefthand corner */
   int           height;                 /* window height, in pixels */
   int           width;                  /* window width, in pixels */
@@ -330,7 +329,6 @@ struct filter {
 #define C_MAXSIZE       8
 #define C_RESIZE	16
 #define C_CLIP	        32
-#define C_IMAGE	        64
 
 /*
  * Input masks

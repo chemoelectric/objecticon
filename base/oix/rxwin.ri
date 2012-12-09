@@ -690,7 +690,6 @@ wbp wopen(char *display)
 int setwindowicon(wbp w, struct imgdata *imd)
 {
     wsp ws = w->window;
-    unsigned char *s;
     int i, j, k;
     if (ws->icondata)
         free(ws->icondata);
@@ -699,11 +698,10 @@ int setwindowicon(wbp w, struct imgdata *imd)
     k = 0;
     ws->icondata[k++] = imd->width;
     ws->icondata[k++] = imd->height;
-    s = imd->data;
     for (j = 0; j < imd->height; ++j) {
         for (i = 0; i < imd->width; ++i) {
             int r, g, b, a;
-            nextimgdata(imd, &s, &r, &g, &b, &a);
+            getimgdatapixel(imd, i, j, &r, &g, &b, &a);
             ws->icondata[k++] = ((a/256)<<24) | ((r/256)<<16) | ((g/256)<<8) | (b/256);
         }
     }
@@ -1011,14 +1009,6 @@ void doconfig(wbp w, int status)
     }
     if (status & C_SIZE)
         resizepixmap(w);
-
-    if (status & C_IMAGE) {
-        struct imgdata *imd = &ws->initimage;
-        if (imd->width) {
-            drawimgdata(w, 0, 0, imd);
-            freeimgdata(imd);
-        }
-    }
 }
 
 /*
@@ -3146,7 +3136,6 @@ void freewindow(wsp ws)
 {
     ws->refcount--;
     if(ws->refcount == 0) {
-        struct imgdata *imd;
         if (ws->win)
             close_screen_win(ws);
 #if HAVE_LIBXFT
@@ -3158,13 +3147,6 @@ void freewindow(wsp ws)
         if (ws->pix) {
             XFreePixmap(ws->display->display, ws->pix);
             ws->pix = (Pixmap) NULL;
-        }
-
-        imd = &ws->initimage;
-        if (imd->width) {
-            free(imd->paltbl);
-            free(imd->data);
-            imd->width = 0;
         }
 
         if (ws->icondata) {
