@@ -35,9 +35,6 @@ static int readgiffile         (char *fname, struct imgdata *d);
 
 static  void wgetq(wbp w, dptr res);
 
-static void drawpalette(wbp w, int x, int y, int width, int height, 
-                        struct palentry *e, unsigned char *s, int copy);
-
 static int tryimagestring(wbp w, dptr d,  struct imgdata *imd);
 static int tryimagedata(dptr data, struct imgdata *imd);
 static int tryimagefile(char *filename, struct imgdata *imd);
@@ -692,54 +689,25 @@ void freeimgdata(struct imgdata *imd)
     imd->format = imd->height = imd->width = 0;
 }
 
-#begdef DrawOpaqueStart(func, size)
-static void func(wbp w, int x, int y, int width, int height, unsigned char *s);
-
-static void func(wbp w, int x, int y, int width, int height, unsigned char *s)
+void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
+    int opaque;
     struct imgmem imem;
-    int i, j;
+    int width, height, i, j;
 
-    if (!initimgmem(w, &imem, 0, 1, x, y, width, height))
+    getimgdataformatinfo(imd->format, 0, 0, &opaque);
+
+    width = imd->width;
+    height = imd->height;
+
+    if (!initimgmem(w, &imem, opaque ? 0:1, 1, x, y, width, height))
         return;
 
-    for (j = y; j < y + height; j++) {
-        for (i = x; i < x + width; i++) {
-            if (!gotopixel(&imem, i, j)) 
-                s += size;
-            else {
-                int r, g, b;
-#enddef
-#begdef DrawOpaqueEnd()
-                setpixel(&imem, r, g, b);
-            }
-        }
-    }
-    saveimgmem(w, &imem);
-    freeimgmem(&imem);
-}
-#enddef
-
-#begdef DrawAlphaStart(func, size)
-static void func(wbp w, int x, int y, int width, int height, unsigned char *s);
-
-static void func(wbp w, int x, int y, int width, int height, unsigned char *s)
-{
-    struct imgmem imem;
-    int i, j;
-
-    if (!initimgmem(w, &imem, 1, 1, x, y, width, height))
-        return;
-
-    for (j = y; j < y + height; j++) {
-        for (i = x; i < x + width; i++) {
-            if (!gotopixel(&imem, i, j)) 
-                s += size;
-            else {
+    for (j = 0; j < height; j++) {
+        for (i = 0; i < width; i++) {
+            if (gotopixel(&imem, x + i, y + j)) {
                 int r, g, b, a;
-#enddef
-
-#begdef DrawAlphaEnd()
+                getimgdatapixel(imd, i, j, &r, &g, &b, &a);
                 if (a) {
                     if (a != 65535) {
                         int r1, g1, b1;
@@ -751,150 +719,6 @@ static void func(wbp w, int x, int y, int width, int height, unsigned char *s)
                     setpixel(&imem, r, g, b);
                 }
             }
-        }
-    }
-    saveimgmem(w, &imem);
-    freeimgmem(&imem);
-}
-#enddef
-
-DrawAlphaStart(drawga16,2)
-   r = g = b = 257 * (*s++);
-   a = 257 * (*s++);
-DrawAlphaEnd()
-
-DrawAlphaStart(drawag16,2)
-   a = 257 * (*s++);
-   r = g = b = 257 * (*s++);
-DrawAlphaEnd()
-
-DrawAlphaStart(drawga32,4)
-    r = *s++;
-    r = r<<8|*s++;
-    g = b = r;
-    a = *s++;
-    a = a<<8|*s++;
-DrawAlphaEnd()
-
-DrawAlphaStart(drawrgba32,4)
-    r = 257 * (*s++);
-    g = 257 * (*s++);
-    b = 257 * (*s++);
-    a = 257 * (*s++);
-DrawAlphaEnd()
-
-DrawAlphaStart(drawabgr32,4)
-    a = 257 * (*s++);
-    b = 257 * (*s++);
-    g = 257 * (*s++);
-    r = 257 * (*s++);
-DrawAlphaEnd()
-
-DrawAlphaStart(drawrgba64,8)
-    r = *s++;
-    r = r<<8|*s++;
-    g = *s++;
-    g = g<<8|*s++;
-    b = *s++;
-    b = b<<8|*s++;
-    a = *s++;
-    a = a<<8|*s++;
-DrawAlphaEnd()
-
-DrawOpaqueStart(drawrgb48,6)
-    r = *s++;
-    r = r<<8|*s++;
-    g = *s++;
-    g = g<<8|*s++;
-    b = *s++;
-    b = b<<8|*s++;
-DrawOpaqueEnd()
-
-DrawOpaqueStart(drawrgb24,3)
-    r = 257 * (*s++);
-    g = 257 * (*s++);
-    b = 257 * (*s++);
-DrawOpaqueEnd()
-
-DrawOpaqueStart(drawbgr24,3)
-    b = 257 * (*s++);
-    g = 257 * (*s++);
-    r = 257 * (*s++);
-DrawOpaqueEnd()
-
-DrawOpaqueStart(drawg8,1)
-    r = g = b = 257 * (*s++);
-DrawOpaqueEnd()
-
-DrawOpaqueStart(drawg16,2)
-    r = *s++;
-    r = r<<8|*s++;
-    g = b = r;
-DrawOpaqueEnd()
-
-void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
-{
-    switch (imd->format) {
-        case IMGDATA_PALETTE_OPAQUE:
-            drawpalette(w, x, y, imd->width, imd->height, imd->paltbl, imd->data, 0);
-            break;
-        case IMGDATA_PALETTE_TRANS:
-            drawpalette(w, x, y, imd->width, imd->height, imd->paltbl, imd->data, 1);
-            break; 
-       case IMGDATA_RGB24:
-            drawrgb24(w, x, y, imd->width, imd->height, imd->data);
-            break;
-        case IMGDATA_BGR24:
-            drawbgr24(w, x, y, imd->width, imd->height, imd->data);
-            break;
-        case IMGDATA_RGBA32:
-            drawrgba32(w, x, y, imd->width, imd->height, imd->data);
-            break;
-        case IMGDATA_ABGR32:
-            drawabgr32(w, x, y, imd->width, imd->height, imd->data);
-            break;
-        case IMGDATA_RGB48:
-            drawrgb48(w, x, y, imd->width, imd->height, imd->data);
-            break;
-        case IMGDATA_RGBA64:
-            drawrgba64(w, x, y, imd->width, imd->height, imd->data);
-            break;
-        case IMGDATA_G8:
-            drawg8(w, x, y, imd->width, imd->height, imd->data);
-            break;
-        case IMGDATA_GA16:
-            drawga16(w, x, y, imd->width, imd->height, imd->data);
-            break;
-        case IMGDATA_AG16:
-            drawag16(w, x, y, imd->width, imd->height, imd->data);
-            break;
-        case IMGDATA_G16:
-            drawg16(w, x, y, imd->width, imd->height, imd->data);
-            break;
-        case IMGDATA_GA32:
-            drawga32(w, x, y, imd->width, imd->height, imd->data);
-            break;
-        default:
-            syserr("Unknown image format");
-            break;
-    }
-}
-
-static void drawpalette(wbp w, int x, int y, int width, int height, 
-                        struct palentry *e, unsigned char *s, int copy)
-{
-    struct imgmem imem;
-    int i, j;
-
-    if (!initimgmem(w, &imem, copy, 1, x, y, width, height))
-        return;
-
-    for (j = y; j < y + height; j++) {
-        for (i = x; i < x + width; i++) {
-            struct palentry *pe = &e[*s];
-            if (!pe->transpt && gotopixel(&imem, i, j))
-                setpixel(&imem, pe->r, pe->g, pe->b);
-            ++s;
         }
     }
     saveimgmem(w, &imem);
@@ -1012,7 +836,7 @@ int setimgdatapixel(struct imgdata *imd, int x, int y, int r, int g, int b, int 
     switch (imd->format) {
         case IMGDATA_PALETTE_OPAQUE:
         case IMGDATA_PALETTE_TRANS:
-            return Failed;
+            return 0;
 
         case IMGDATA_RGB24:
             s = imd->data + 3 * (imd->width * y + x);
@@ -1092,8 +916,65 @@ int setimgdatapixel(struct imgdata *imd, int x, int y, int r, int g, int b, int 
             syserr("Unknown image format");
             break;
     }
-    return Succeeded;
+    return 1;
 }
+
+int getimgdataformatinfo(int format, int *bpp, int *palette, int *opaque)
+{
+    int bpp1, palette1, opaque1;
+    palette1 = 0;
+    switch (format) {
+        case IMGDATA_PALETTE_OPAQUE:
+            bpp1 = 1;
+            palette1 = 1;
+            opaque1 = 1;
+            break;
+        case IMGDATA_PALETTE_TRANS:
+            bpp1 = 1;
+            palette1 = 1;
+            opaque1 = 0;
+            break;
+        case IMGDATA_G8:
+            bpp1 = 1;
+            opaque1 = 1;
+            break;
+        case IMGDATA_GA16:
+        case IMGDATA_AG16:
+            bpp1 = 2;
+            opaque1 = 0;
+            break;
+        case IMGDATA_G16:
+            bpp1 = 2;
+            opaque1 = 1;
+            break;
+        case IMGDATA_RGB24:
+        case IMGDATA_BGR24:
+            bpp1 = 3;
+            opaque1 = 1;
+            break;
+        case IMGDATA_RGBA32:
+        case IMGDATA_ABGR32:
+        case IMGDATA_GA32:
+            bpp1 = 4;
+            opaque1 = 0;
+            break;
+        case IMGDATA_RGB48:
+            bpp1 = 6;
+            opaque1 = 1;
+            break;
+        case IMGDATA_RGBA64:
+            bpp1 = 8;
+            opaque1 = 0;
+            break;
+        default:
+            return 0;
+    }
+    if (bpp) *bpp = bpp1;
+    if (palette) *palette = palette1;
+    if (opaque) *opaque = opaque1;
+    return 1;
+}
+
 
 /*
  *  Functions and data for reading and writing GIF and JPEG images

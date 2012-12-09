@@ -3,60 +3,137 @@ package graphics
 import 
    lang(NoCopy)
 
-# This object contains a block of pixels returned by the
-# {Window.get_pixels()} method.  The contents can be changed, and then
-# written back to the window (or another window) with
-# {Window.draw_pixels{}}.
+# This object contains pixel data either read from a file, created
+# from an Icon image string, or extracted from a Window.  The data is
+# stored in various underlying formats depending on the source.  The
+# two palette formats are read-only and can only be created via the
+# `open` method.  The other formats are writable, but only RGBA64
+# preserves the full information written.
 #
 class Pixels(NoCopy)
    private
       idp
 
+   public static const
+      RGB24,
+      BGR24,
+      RGBA32,
+      ABGR32,
+      RGB48,
+      RGBA64,
+      G8,
+      GA16,
+      AG16,
+      G16,
+      GA32,
+      PALETTE_OPAQUE,
+      PALETTE_TRANS
+
+   private static init()
+      RGB24     :=  1
+      BGR24     :=  2
+      RGBA32    :=  3
+      ABGR32    :=  4
+      RGB48     :=  5
+      RGBA64    :=  6
+      G8        :=  7
+      GA16      :=  8
+      AG16      :=  9
+      G16       :=  10
+      GA32      :=  11
+      PALETTE_OPAQUE     :=  20
+      PALETTE_TRANS      :=  21
+   end
+
    # Get the width of the block
+   #
    public native get_width()
 
    # Get the height of the block
+   #
    public native get_height()
 
    # Get the pixel at the given position as an Icon colour string;
    # indices run from 0 to width-1 and 0 to height-1 respectively.
+   #
    public native get(x, y)
 
-   # Set the pixel to the given Icon colour string value.
-   public native set(x, y, v)
+   # Set the pixel to the given Icon colour string value, and with the
+   # given optional alpha value.
+   #
+   public native set(x, y, v, a)
 
    # Get the given pixel as an 4 element list giving the rgba values.
+   #
    public native get_rgba(x, y)
 
    # Set the given pixel to the given rgba integer values.
+   #
    public native set_rgba(x, y, r, g, b, a)
 
    # Dispose of the object, freeing the memory used by the block
+   #
    public native close()
 
+   # Get the format of the underlying data, which will be one of the constant values listed above.
+   #
+   public native get_format()
+
+   # Get the raw underlying data as a string.
+   #
+   public native get_data()
+
+   # Set the raw underlying data from a string, which must be the
+   # correct length for the size and format.
+   #
+   public native set_data(s)
+
+   # Convert this instance to another separate instance in the given new format.
+   #
+   public convert(format)
+      return Pixels(convert_impl(format))
+   end
+
+   private native convert_impl(format)
+
    # Convenient method to generate 0 to get_width() - 1
+   #
    public x_range()
       suspend 0 to get_width() - 1
    end
 
    # Convenient method to generate 0 to get_height() - 1
+   #
    public y_range()
       suspend 0 to get_height() - 1
    end
 
    # Generate all the pixels, from left-to-right, and top-to-bottom.
    # The first pixel is (0,0), then (1,0), (2,0) and so on.
+   #
    public gen()
       local y
       every y := y_range() do
          suspend get(x_range(), y)
    end
 
+   # Return a new instance based on the given image string, which can
+   # be in icon image string format, raw image data, or a filename.
+   #
    public static open(s)
       return Pixels(open_impl(s))
    end
 
    private static native open_impl(s)
+
+   # Create a blank instance with the given format and dimensions.
+   # The underlying data is allocated and set to zero.
+   #
+   public static blank(format, width, height)
+      return Pixels(blank_impl(format, width, height))
+   end
+
+   private static native blank_impl(format, width, height)
 
    package new(idp)
       self.idp := idp
@@ -433,8 +510,8 @@ class Window(NoCopy)
    public native draw_curve(a[])
 
    #
-   # Draw an image.  The image can be in icon image string format, raw image data, or
-   # a filename.
+   # Draw an image.  The image can be in icon image string format, raw image data, 
+   # a filename, or a {Pixels} instance.
    #
    public draw_image(x, y, v)
       if is(v, Pixels) then
@@ -532,11 +609,11 @@ class Window(NoCopy)
    #
    # Get the contents of some pixels as a {Pixels} object.
    #
-   public get_pixels(x, y, width, height)
-      return Pixels(get_pixels_impl(x, y, width, height))
+   public get_pixels(format, x, y, width, height)
+      return Pixels(get_pixels_impl(format, x, y, width, height))
    end
 
-   private native get_pixels_impl(x, y, width, height)
+   private native get_pixels_impl(format, x, y, width, height)
 
    #
    # Filter the given pixels according to the given filter spec.

@@ -206,6 +206,7 @@ char *rgbkey         (int p, int r, int g, int b);
    void freeimgdata     (struct imgdata *img);
    void getimgdatapixel(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a);
    int setimgdatapixel(struct imgdata *imd, int x, int y, int r, int g, int b, int a);
+   int getimgdataformatinfo(int format, int *bpp, int *palette, int *opaque);
    int  getdefaultfontsize(int);
    char *getdefaultfont(void);
    int interpimage(wbp w, dptr d,  struct imgdata *imd);
