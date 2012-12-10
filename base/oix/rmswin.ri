@@ -236,7 +236,6 @@ wbp wopen(char *display)
    wbp w;
    wsp ws;
    wcp wc;
-   struct imgdata *imd;
    char answer[256];
    int i, r;
    RECT rec;
@@ -388,12 +387,6 @@ wbp wopen(char *display)
    SelectObject(hdc2, oldpix);
    ReleaseDC(ws->iconwin, hdc);
    DeleteDC(hdc2);
-
-   imd = &ws->initimage;
-   if (imd->width) {
-      drawimgdata(w, 0, 0, imd);
-      freeimgdata(imd);
-   }
 
    return w;
    }
@@ -2290,13 +2283,6 @@ void doconfig(w, status)
 				0, 0, SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
 		}
 	    }
-        }
-    }
-    if (status & C_IMAGE) {
-        struct imgdata *imd = &ws->initimage;
-        if (imd->width) {
-            drawimgdata(w, 0, 0, imd);
-            freeimgdata(imd);
         }
     }
 }
