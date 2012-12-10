@@ -294,7 +294,7 @@ final abstract class ImageCache()
    #
    public static load(s, win)
       s := \names[s]
-      if s[1] == "(" then
+      if text(s)[1] == "(" then
          s := get_extended_image(win, s) | fail
       return Window.open_image(s, win)
    end

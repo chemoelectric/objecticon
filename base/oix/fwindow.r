@@ -611,13 +611,13 @@ function graphics_Window_get_pixels_impl(self, format, x0, y0, w0, h0)
       struct imgdata *imd;
       struct imgmem imem;
       word x, y, width, height;
-      int bpp, hp, i, j, r, g, b;
+      int bpp, i, j, r, g, b;
       GetSelfW();
 
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
 
-      if (!getimgdataformatinfo(format, &bpp, &hp, 0) || hp) {
+      if (format == IMGDATA_PALETTE || !getimgdataformatinfo(format, &bpp, 0)) {
           LitWhy("Invalid format");
           fail;
       }
@@ -652,7 +652,7 @@ function graphics_Pixels_open_impl(val)
    body {
       struct imgdata *imd;
       MemProtect(imd = malloc(sizeof(struct imgdata)));
-      if (interpimage(0, &val, imd) == Succeeded)
+      if (interpimage(&val, imd) == Succeeded)
           return C_integer((word)imd);
       else {
           free(imd);
@@ -797,7 +797,7 @@ function graphics_Pixels_get_data(self)
       tended struct descrip result;
       int bpp;
       GetSelfImageData();
-      getimgdataformatinfo(self_id->format, &bpp, 0, 0);
+      getimgdataformatinfo(self_id->format, &bpp, 0);
       bytes2string((char *)self_id->data, bpp * self_id->width * self_id->height, &result);
       return result;
    }
@@ -808,13 +808,9 @@ function graphics_Pixels_set_data(self, s)
        runerr(103, s)
    body {
       tended struct descrip result;
-      int bpp, palette;
+      int bpp;
       GetSelfImageData();
-      getimgdataformatinfo(self_id->format, &bpp, &palette, 0);
-      if (palette) {
-          LitWhy("Palette data cannot be changed");
-          fail;
-      }
+      getimgdataformatinfo(self_id->format, &bpp, 0);
       if (StrLen(s) != bpp * self_id->width * self_id->height) {
           LitWhy("Data is the wrong length for this format");
           fail;
@@ -829,9 +825,9 @@ function graphics_Pixels_convert_impl(self, format)
       runerr(101, format)
    body {
       struct imgdata *imd;
-      int bpp, hp, x, y, r, g, b, a, width, height;
+      int bpp, x, y, r, g, b, a, width, height;
       GetSelfImageData();
-      if (!getimgdataformatinfo(format, &bpp, &hp, 0) || hp) {
+      if (format == IMGDATA_PALETTE || !getimgdataformatinfo(format, &bpp, 0)) {
           LitWhy("Invalid format");
           fail;
       }
@@ -862,8 +858,8 @@ function graphics_Pixels_blank_impl(format, width, height)
       runerr(101, height)
    body {
       struct imgdata *imd;
-      int bpp, hp;
-      if (!getimgdataformatinfo(format, &bpp, &hp, 0) || hp) {
+      int bpp;
+      if (!getimgdataformatinfo(format, &bpp, 0)) {
           LitWhy("Invalid format");
           fail;
       }
@@ -871,9 +867,154 @@ function graphics_Pixels_blank_impl(format, width, height)
       imd->width = width;
       imd->height = height;
       imd->format = format;
-      imd->paltbl = 0;
+      if (format == IMGDATA_PALETTE)
+          MemProtect(imd->paltbl = calloc(256, sizeof(struct palentry)));
+      else
+          imd->paltbl = 0;
       MemProtect(imd->data = calloc(bpp * width * height, 1));
       return C_integer((word)imd);
+   }
+end
+
+function graphics_Pixels_clone_impl(self)
+   body {
+      struct imgdata *imd;
+      int bpp, n;
+      GetSelfImageData();
+      getimgdataformatinfo(self_id->format, &bpp, 0);
+      MemProtect(imd = malloc(sizeof(struct imgdata)));
+      imd->width = self_id->width;
+      imd->height = self_id->height;
+      imd->format = self_id->format;
+      if (self_id->paltbl) {
+          MemProtect(imd->paltbl = malloc(256 * sizeof(struct palentry)));
+          memcpy(imd->paltbl, self_id->paltbl, 256 * sizeof(struct palentry));
+      } else
+          imd->paltbl = 0;
+      n = bpp * self_id->width * self_id->height;
+      MemProtect(imd->data = malloc(n));
+      memcpy(imd->data, self_id->data, n);
+      return C_integer((word)imd);
+   }
+end
+
+function graphics_Pixels_get_palette_rgba(self, i)
+   if !cnv:C_integer(i) then
+      runerr(101, i)
+   body {
+      struct palentry *e;
+      tended struct descrip result;
+      struct descrip t;
+      GetSelfImageData();
+      if (self_id->format == IMGDATA_PALETTE &&
+          i >= 0 && i <= 255) {
+          e = &self_id->paltbl[i];
+          create_list(4, &result);
+          MakeInt(e->r, &t);
+          list_put(&result, &t);
+          MakeInt(e->g, &t);
+          list_put(&result, &t);
+          MakeInt(e->b, &t);
+          list_put(&result, &t);
+          MakeInt(e->a, &t);
+          list_put(&result, &t);
+          return result;
+      }
+      fail;
+   }
+end
+
+function graphics_Pixels_set_palette_rgba(self, i, r, g, b, a)
+   if !cnv:C_integer(i) then
+      runerr(101, i)
+   if !cnv:C_integer(r) then
+      runerr(101, r)
+   if !cnv:C_integer(g) then
+      runerr(101, g)
+   if !cnv:C_integer(b) then
+      runerr(101, b)
+   if !def:C_integer(a, 65535) then
+      runerr(101, a)
+   body {
+      struct palentry *e;
+      GetSelfImageData();
+      if (self_id->format == IMGDATA_PALETTE &&
+          i >= 0 && i <= 255) {
+          e = &self_id->paltbl[i];
+          e->r = r & 0xffff;
+          e->g = g & 0xffff;
+          e->b = b & 0xffff;
+          e->a = a & 0xffff;
+          return self;
+      }
+      fail;
+   }
+end
+
+function graphics_Pixels_set_palette(self, i, v, a)
+   if !cnv:C_integer(i) then
+      runerr(101, i)
+   if !cnv:string(v) then
+       runerr(103, v)
+   if !def:C_integer(a, 65535) then
+      runerr(101, a)
+   body {
+      struct palentry *e;
+      GetSelfImageData();
+      if (self_id->format == IMGDATA_PALETTE &&
+          i >= 0 && i <= 255) {
+          int r, g, b;
+          if (parsecolor(buffstr(&v), &r, &g, &b)) {
+              e = &self_id->paltbl[i];
+              e->r = r;
+              e->g = g;
+              e->b = b;
+              e->a = a;
+              return self;
+          }
+      }
+      fail;
+   }
+end
+
+function graphics_Pixels_get_palette_index(self, x, y)
+   if !cnv:C_integer(x) then
+      runerr(101, x)
+   if !cnv:C_integer(y) then
+      runerr(101, y)
+   body {
+      GetSelfImageData();
+      if (self_id->format == IMGDATA_PALETTE &&
+          x >= 0 && x < self_id->width &&
+          y >= 0 && y < self_id->height) {
+          struct descrip result;
+          unsigned char *s;
+          s = self_id->data + (self_id->width * y + x);
+          MakeInt(*s, &result);
+          return result;
+      }
+      fail;
+   }
+end
+
+function graphics_Pixels_set_palette_index(self, x, y, i)
+   if !cnv:C_integer(x) then
+      runerr(101, x)
+   if !cnv:C_integer(y) then
+      runerr(101, y)
+   if !cnv:C_integer(i) then
+      runerr(101, i)
+   body {
+      GetSelfImageData();
+      if (self_id->format == IMGDATA_PALETTE &&
+          x >= 0 && x < self_id->width &&
+          y >= 0 && y < self_id->height) {
+          unsigned char *s;
+          s = self_id->data + (self_id->width * y + x);
+          *s = (unsigned char)i;
+          return self;
+      }
+      fail;
    }
 end
 
@@ -2128,7 +2269,7 @@ function graphics_Window_palette_color(s1, s2)
           runerr(205, s2);
       e = palsetup(p); 
       e += *StrLoc(s2) & 0xFF;
-      if (!e->valid) {
+      if (!e->a) {
           LitWhy("Invalid character");
           fail;
       }

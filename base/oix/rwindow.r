@@ -35,7 +35,7 @@ static int readgiffile         (char *fname, struct imgdata *d);
 
 static  void wgetq(wbp w, dptr res);
 
-static int tryimagestring(wbp w, dptr d,  struct imgdata *imd);
+static int tryimagestring(dptr d,  struct imgdata *imd);
 static int tryimagedata(dptr data, struct imgdata *imd);
 static int tryimagefile(char *filename, struct imgdata *imd);
 
@@ -435,9 +435,9 @@ int gotopixel(struct imgmem *imem, int x, int y)
         return 0;
 }
 
-static int tryimagestring(wbp w, dptr d,  struct imgdata *imd)
+static int tryimagestring(dptr d,  struct imgdata *imd)
 {
-    int c, width, height, row, p, format, nchars;
+    int c, width, height, p, format, nchars;
     unsigned char *s, *t, *z;
     struct palentry *e;
 
@@ -461,127 +461,48 @@ static int tryimagestring(wbp w, dptr d,  struct imgdata *imd)
         return NoCvt;
 
     /*
-     * Check for a bilevel format.
+     * Extract the palette name and skip its comma.
      */
-    if ((c = *s) == '#' || c == '~') {
-        unsigned int m, msk1;
-        int k, d, ix, iy;
-          
+    c = *s++;					/* save initial character */
+    p = 0;
+    while (s < z && isdigit((unsigned char)*s))		/* scan digits */
+        p = 10 * p + *s++ - '0';
+    while (s < z && *s == ' ')		/* skip blanks */
         s++;
-        nchars = z - s;
-        for (t = s; t < z; t++)
-            if (!isxdigit((unsigned char)*t)) {
-                LitWhy("Invalid bi-level format");
-                return Failed;				/* illegal punctuation */
-            }
-        row = (width + 3) / 4;			/* digits per row */
-        if (nchars == 0 || nchars % row != 0) {
-            LitWhy("Invalid bi-level format, wrong number of characters");
+    if (s >= z || p == 0 || *s++ != ',')	/* skip comma */
+        return NoCvt;
+    if (c == 'g' && p >= 2 && p <= 256)	/* validate grayscale number */
+        p = -p;
+    else if (c != 'c' || p < 1 || p > 6)	/* validate color number */
+        return NoCvt;
+
+    /*
+     * Scan the image to see which colors are needed, and if transparency is used.
+     */
+    format = IMGDATA_PALETTE;
+    e = palsetup(p); 
+    nchars = z - s;
+    for (t = s; t < z; t++) {
+        c = *t; 
+        if (c != TCH1 && c != TCH2 && !e[c].a) {
+            LitWhy("Invalid image string, character not in palette");
             return Failed;
         }
-        height = nchars / row;
-
-        MemProtect(imd->data = malloc(width * height));
-        MemProtect(imd->paltbl = malloc(2 * sizeof(struct palentry)));
-        imd->width = width;
-        imd->height = height;
-        parsecolor(getfg(w), &imd->paltbl[0].r, &imd->paltbl[0].g, &imd->paltbl[0].b);
-        imd->paltbl[0].valid = 1;
-        imd->paltbl[0].transpt = 0;
-        if (c == TCH1) {
-            imd->paltbl[1].valid = 0;
-            imd->paltbl[1].transpt = 1;
-            imd->format = IMGDATA_PALETTE_TRANS;
-        } else {
-            parsecolor(getbg(w), &imd->paltbl[1].r, &imd->paltbl[1].g, &imd->paltbl[1].b);
-            imd->paltbl[1].valid = 1;
-            imd->paltbl[1].transpt = 0;
-            imd->format = IMGDATA_PALETTE_OPAQUE;
-        }
-
-        m = width % 4;
-        if (m == 0)
-            msk1 = 8;
-        else
-            msk1 = 1 << (m - 1);              /* mask for first byte of row */
-
-        ix = width;
-        iy = 0;
-        m = msk1;
-        k = nchars;
-        while (k--) {
-            if (isxdigit((unsigned char)(d = *s++))) {         /* if hexadecimal character */
-                if (!isdigit((unsigned char)d))               /* fix bottom 4 bits if necessary */
-                    d += 9;
-                while (m > 0) {                /* set (usually) 4 pixel values */
-                    --ix;
-                    if (d & m)
-                        imd->data[iy * width + ix] = 0;
-                    else
-                        imd->data[iy * width + ix] = 1;
-                    m >>= 1;
-                }
-                if (ix == 0) {                 /* if end of row */
-                    ix = width;
-                    iy++;
-                    m = msk1;
-                }
-                else
-                    m = 8;
-            }
-        }
-        if (ix > 0) {                         /* pad final row if incomplete */
-            while (ix < width) {
-                imd->data[iy * width + ix] = 1;
-                ix++;
-            }
-        }
-    } else {
-        /*
-         * Extract the palette name and skip its comma.
-         */
-        c = *s++;					/* save initial character */
-        p = 0;
-        while (s < z && isdigit((unsigned char)*s))		/* scan digits */
-            p = 10 * p + *s++ - '0';
-        while (s < z && *s == ' ')		/* skip blanks */
-            s++;
-        if (s >= z || p == 0 || *s++ != ',')	/* skip comma */
-            return NoCvt;
-        if (c == 'g' && p >= 2 && p <= 256)	/* validate grayscale number */
-            p = -p;
-        else if (c != 'c' || p < 1 || p > 6)	/* validate color number */
-            return NoCvt;
-
-        /*
-         * Scan the image to see which colors are needed, and if transparency is used.
-         */
-        format = IMGDATA_PALETTE_OPAQUE;
-        e = palsetup(p); 
-        nchars = z - s;
-        for (t = s; t < z; t++) {
-            c = *t; 
-            if (e[c].transpt)
-                format = IMGDATA_PALETTE_TRANS;
-            else if (!e[c].valid) {
-                LitWhy("Invalid image string, character not in palette");
-                return Failed;
-            }
-        }
-        if (nchars == 0 || nchars % width != 0) {
-            LitWhy("Invalid image string, wrong number of characters");
-            return Failed;					/* empty image or not rectangular */
-        }
-
-        height = nchars / width;
-
-        imd->width = width;
-        imd->height = height;
-        imd->paltbl = e;
-        MemProtect(imd->data = malloc(nchars));
-        memcpy(imd->data, s, nchars);
-        imd->format = format;
     }
+    if (nchars == 0 || nchars % width != 0) {
+        LitWhy("Invalid image string, wrong number of characters");
+        return Failed;					/* empty image or not rectangular */
+    }
+
+    height = nchars / width;
+
+    imd->width = width;
+    imd->height = height;
+    MemProtect(imd->paltbl = malloc(256 * sizeof(struct palentry)));
+    memcpy(imd->paltbl, e, 256 * sizeof(struct palentry));
+    MemProtect(imd->data = malloc(nchars));
+    memcpy(imd->data, s, nchars);
+    imd->format = format;
 
     return Succeeded;
 }
@@ -663,11 +584,11 @@ static int tryimagefile(char *filename, struct imgdata *imd)
     return NoCvt;
 }
 
-int interpimage(wbp w, dptr d,  struct imgdata *imd)
+int interpimage(dptr d,  struct imgdata *imd)
 {
     int r;
 
-    if ((r = tryimagestring(w, d, imd)) != NoCvt)
+    if ((r = tryimagestring(d, imd)) != NoCvt)
         return r;
     if ((r = tryimagedata(d, imd)) != NoCvt)
         return r;
@@ -681,8 +602,7 @@ int interpimage(wbp w, dptr d,  struct imgdata *imd)
 
 void freeimgdata(struct imgdata *imd)
 {
-    if (imd->paltbl != palsetup_palette)
-        free(imd->paltbl);
+    free(imd->paltbl);
     imd->paltbl = 0;
     free(imd->data);
     imd->data = 0;
@@ -695,7 +615,7 @@ void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
     struct imgmem imem;
     int width, height, i, j;
 
-    getimgdataformatinfo(imd->format, 0, 0, &opaque);
+    getimgdataformatinfo(imd->format, 0, &opaque);
 
     width = imd->width;
     height = imd->height;
@@ -729,19 +649,14 @@ void getimgdatapixel(struct imgdata *imd, int x, int y, int *r, int *g, int *b, 
 {
     unsigned char *s;
     switch (imd->format) {
-        case IMGDATA_PALETTE_OPAQUE:
-        case IMGDATA_PALETTE_TRANS: {
+        case IMGDATA_PALETTE: {
             struct palentry *pe;
             s = imd->data + 1 * (imd->width * y + x);
-            pe = &imd->paltbl[*s++];
-            if (pe->transpt)
-                *r = *g = *b = *a = 0;
-            else {
-                *r = pe->r;
-                *g = pe->g;
-                *b = pe->b;
-                *a = 65535;
-            }
+            pe = &imd->paltbl[*s];
+            *r = pe->r;
+            *g = pe->g;
+            *b = pe->b;
+            *a = pe->a;
             break;
         }
         case IMGDATA_RGB24:
@@ -834,8 +749,7 @@ int setimgdatapixel(struct imgdata *imd, int x, int y, int r, int g, int b, int 
     unsigned char *s;
     int gr;
     switch (imd->format) {
-        case IMGDATA_PALETTE_OPAQUE:
-        case IMGDATA_PALETTE_TRANS:
+        case IMGDATA_PALETTE:
             return 0;
 
         case IMGDATA_RGB24:
@@ -919,19 +833,12 @@ int setimgdatapixel(struct imgdata *imd, int x, int y, int r, int g, int b, int 
     return 1;
 }
 
-int getimgdataformatinfo(int format, int *bpp, int *palette, int *opaque)
+int getimgdataformatinfo(int format, int *bpp, int *opaque)
 {
-    int bpp1, palette1, opaque1;
-    palette1 = 0;
+    int bpp1, opaque1;
     switch (format) {
-        case IMGDATA_PALETTE_OPAQUE:
+        case IMGDATA_PALETTE:
             bpp1 = 1;
-            palette1 = 1;
-            opaque1 = 1;
-            break;
-        case IMGDATA_PALETTE_TRANS:
-            bpp1 = 1;
-            palette1 = 1;
             opaque1 = 0;
             break;
         case IMGDATA_G8:
@@ -970,7 +877,6 @@ int getimgdataformatinfo(int format, int *bpp, int *palette, int *opaque)
             return 0;
     }
     if (bpp) *bpp = bpp1;
-    if (palette) *palette = palette1;
     if (opaque) *opaque = opaque1;
     return 1;
 }
@@ -1030,7 +936,6 @@ static int gf_width, gf_height;		/* image size */
 
 static short *gf_prefix, *gf_suffix;	/* prefix and suffix tables */
 static int gf_free;			/* next free position */
-static int gf_format;			/* imgdata format */
 
 static struct palentry *gf_paltbl;	/* palette table */
 static unsigned char *gf_string;	/* image string */
@@ -1087,7 +992,7 @@ static int readgiffile(char *filename, struct imgdata *imd)
     imd->height = gf_height;
     imd->paltbl = gf_paltbl;
     imd->data = gf_string;
-    imd->format = gf_format;
+    imd->format = IMGDATA_PALETTE;
 
     return Succeeded;				/* return success */
 }
@@ -1129,7 +1034,7 @@ static int readgifdata(dptr data, struct imgdata *imd)
     imd->height = gf_height;
     imd->paltbl = gf_paltbl;
     imd->data = gf_string;
-    imd->format = gf_format;
+    imd->format = IMGDATA_PALETTE;
 
     return Succeeded;				/* return success */
 }
@@ -1139,17 +1044,11 @@ static int readgifdata(dptr data, struct imgdata *imd)
  */
 static int gfread()
 {
-    int i;
-
     gf_prefix = NULL;
     gf_suffix = NULL;
     gf_string = NULL;
-    gf_format = IMGDATA_PALETTE_OPAQUE;
 
-    MemProtect(gf_paltbl = malloc(256 * sizeof(struct palentry)));
-
-    for (i = 0; i < 256; i++)		/* init palette table */
-        gf_paltbl[i].valid = gf_paltbl[i].transpt = 0;
+    MemProtect(gf_paltbl = calloc(256, sizeof(struct palentry)));
 
     if (!gfheader())			/* read file header */
         return 0;
@@ -1257,9 +1156,7 @@ static void gfcontrol()
         if (i == 0)
             t = c & 1;				/* transparency flag */
         else if (i == 3 && t != 0) {
-            gf_paltbl[c].transpt = 1;		/* set flag for transpt color */
-            gf_paltbl[c].valid = 0;		/* color is no longer "valid" */
-            gf_format = IMGDATA_PALETTE_TRANS;  /* change the format to indicate transparency */
+            gf_paltbl[c].a = 0;		/* set flag for transpt color */
         }
     }
 }
@@ -1299,11 +1196,11 @@ static int gfmap()
         b = gfgetc();
         if (r == EOF || g == EOF || b == EOF)
             return 0;
-        gf_paltbl[i].r   = 257 * r;	/* 257 * 255 -> 65535 */
-        gf_paltbl[i].g = 257 * g;
+        gf_paltbl[i].r  = 257 * r;	/* 257 * 255 -> 65535 */
+        gf_paltbl[i].g  = 257 * g;
         gf_paltbl[i].b  = 257 * b;
-        if (!gf_paltbl[i].transpt)		/* if not transparent color */
-            gf_paltbl[i].valid = 1;		/* mark as valid/opaque */
+        if (!gf_paltbl[i].a)		/* if not transparent color */
+            gf_paltbl[i].a  = 65535;
     }
 
     return 1;
@@ -2811,12 +2708,8 @@ struct palentry *palsetup(int p)
     if (palsetup_palette == NULL)
         MemProtect(palsetup_palette = malloc(256 * sizeof(struct palentry)));
 
+    memset(palsetup_palette, 0, 256 * sizeof(struct palentry));
     palnumber = p;
-
-    for (i = 0; i < 256; i++)
-        palsetup_palette[i].valid = palsetup_palette[i].transpt = 0;
-    palsetup_palette[TCH1].transpt = 1;
-    palsetup_palette[TCH2].transpt = 1;
 
     if (p < 0) {				/* grayscale palette */
         n = -p;
@@ -2830,8 +2723,7 @@ struct palentry *palsetup(int p)
             e = &palsetup_palette[*s++];
             gg = 65535 * m * i;
             e->r = e->g = e->b = gg;
-            e->valid = 1;
-            e->transpt = 0;
+            e->a = 65535;
         }
         return palsetup_palette;
     }
@@ -2844,8 +2736,7 @@ struct palentry *palsetup(int p)
             e->r   = 65535 * (((int)*t++) / 48.0);
             e->g = 65535 * (((int)*t++) / 48.0);
             e->b  = 65535 * (((int)*t++) / 48.0);
-            e->valid = 1;
-            e->transpt = 0;
+            e->a = 65535;
         }
         return palsetup_palette;
     }
@@ -2868,8 +2759,7 @@ struct palentry *palsetup(int p)
                 e->r = rr;
                 e->g = gg;
                 e->b = bb;
-                e->valid = 1;
-                e->transpt = 0;
+                e->a = 65535;
             }
         }
     }
@@ -2879,8 +2769,7 @@ struct palentry *palsetup(int p)
             gg = 65535 * m * g;
             e = &palsetup_palette[*s++];
             e->r = e->g = e->b = gg;
-            e->valid = 1;
-            e->transpt = 0;
+            e->a = 65535;
         }
     return palsetup_palette;
 }

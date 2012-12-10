@@ -26,8 +26,7 @@ class Pixels(NoCopy)
       AG16,
       G16,
       GA32,
-      PALETTE_OPAQUE,
-      PALETTE_TRANS
+      PALETTE
 
    private static init()
       RGB24     :=  1
@@ -41,8 +40,7 @@ class Pixels(NoCopy)
       AG16      :=  9
       G16       :=  10
       GA32      :=  11
-      PALETTE_OPAQUE     :=  20
-      PALETTE_TRANS      :=  21
+      PALETTE   :=  20
    end
 
    # Get the width of the block
@@ -134,6 +132,19 @@ class Pixels(NoCopy)
    end
 
    private static native blank_impl(format, width, height)
+
+   public native get_palette_rgba(i)
+   public native set_palette_rgba(i, r, g, b, a)
+   public native set_palette(i, v, a)
+
+   public native get_palette_index(x, y)
+   public native set_palette_index(x, y, i)
+
+   public clone()
+      return Pixels(clone_impl())
+   end
+
+   public native clone_impl()
 
    package new(idp)
       self.idp := idp
@@ -715,8 +726,7 @@ class Window(NoCopy)
    # its contents.
    # @param img the image
    # @param win an optional window from which to get the background and
-   #            foreground colours (only relevant with bi-level icon
-   #            strings and transparent images).
+   #            foreground colours (only relevant with transparent images).
    #
    public static open_image(img, win)
       local w
