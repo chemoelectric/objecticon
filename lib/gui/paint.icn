@@ -66,24 +66,24 @@ class TextPaint(Paint)
    end
 end
 
-# A simple {Paint} instance which draws an icon image string.
+# A simple {Paint} instance which draws a {Pixels} instance.
 #
-class ImageStringPaint(Paint)
-   public str
+class PixelsPaint(Paint)
+   public pix
 
    public initially()
-      self.w := image_width(str)
-      self.h := image_height(str)
+      self.w := pix.get_width()
+      self.h := pix.get_height()
    end
 
    public draw(W, x, y)
-      draw_image_ex(W, x, y, str)
+      W.draw_image(x, y, pix)
    end
 
    # Create a new instance.
-   # @param s The icon image string to draw
-   public new(s)
-      self.str := s
+   # @param pix The `Pixels` to draw
+   public new(pix)
+      self.pix := pix
       return
    end
 end

@@ -331,12 +331,6 @@ wbp wopen(char *display)
     /* Fill pixmap with bg color */
     clear_pix_win(w);
 
-    imd = &ws->initimage;
-    if (imd->width) {
-        drawimgdata(w, 0, 0, imd);
-        freeimgdata(imd);
-    }
-
     return w;
 }
 
@@ -1285,14 +1279,6 @@ void doconfig(wbp w, int status)
     }
     if (status & C_SIZE)
         resize_pix_win(w);
-
-    if (status & C_IMAGE) {
-        struct imgdata *imd = &ws->initimage;
-        if (imd->width) {
-            drawimgdata(w, 0, 0, imd);
-            freeimgdata(imd);
-        }
-    }
 }
 
 int ownselection(wbp w, char *selection)
@@ -1758,7 +1744,6 @@ void freewindow(wsp ws)
 {
    ws->refcount--;
    if (ws->refcount == 0) {
-       struct imgdata *imd;
        if (ws->win)
            close_screen_win(ws);
        if (ws->pix)
@@ -1766,12 +1751,6 @@ void freewindow(wsp ws)
        if (ws->windowlabel) { 
            free(ws->windowlabel); 
            ws->windowlabel = 0;
-       }
-       imd = &ws->initimage;
-       if (imd->width) {
-           free(imd->paltbl);
-           free(imd->data);
-           imd->width = 0;
        }
        if (ws->wsys) {
            free(ws->wsys);

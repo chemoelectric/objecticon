@@ -3,33 +3,188 @@ package graphics
 import 
    lang(NoCopy)
 
-# This object contains a block of pixels returned by the
-# {Window.get_pixels()} method.  The contents can be changed, and then
-# written back to the window (or another window) with
-# {Window.draw_pixels{}}.
+# This object contains pixel data either read from a file, extracted
+# from a Window, or created from scratch.  The data is stored in
+# various underlying formats depending on the source.
 #
-class Pixels(NoCopy)
+class Pixels()
    private
-      imp
+      idp
+
+   public static const
+      RGB24,
+      BGR24,
+      RGBA32,
+      ABGR32,
+      RGB48,
+      RGBA64,
+      G8,
+      GA16,
+      AG16,
+      G16,
+      GA32,
+      PALETTE
+
+   private static init()
+      RGB24     :=  1
+      BGR24     :=  2
+      RGBA32    :=  3
+      ABGR32    :=  4
+      RGB48     :=  5
+      RGBA64    :=  6
+      G8        :=  7
+      GA16      :=  8
+      AG16      :=  9
+      G16       :=  10
+      GA32      :=  11
+      PALETTE   :=  20
+   end
 
    # Get the width of the block
+   #
    public native get_width()
 
    # Get the height of the block
+   #
    public native get_height()
 
-   # Get the pixel at the given position; indices run from 0 to
-   # width-1 and 0 to height-1 respectively.
+   # Get the pixel at the given position as an Icon colour string;
+   # indices run from 0 to width-1 and 0 to height-1 respectively.
+   #
    public native get(x, y)
 
-   # Set the pixel to the given colour value.
-   public native set(x, y, v)
+   # Set the pixel to the given Icon colour string value, and with the
+   # given optional alpha value.
+   #
+   public native set(x, y, v, a)
+
+   # Get the given pixel as an 4 element list giving the rgba values.
+   #
+   public native get_rgba(x, y)
+
+   # Set the given pixel to the given rgba integer values.
+   #
+   public native set_rgba(x, y, r, g, b, a)
 
    # Dispose of the object, freeing the memory used by the block
+   #
    public native close()
-   
-   package new(imp)
-      self.imp := imp
+
+   # Get the format of the underlying data, which will be one of the constant values listed above.
+   #
+   public native get_format()
+
+   # Get the raw underlying data as a string.
+   #
+   public native get_data()
+
+   # Set the raw underlying data from a string, padding with zeroes if
+   # the string is too short.
+   #
+   public native set_data(s)
+
+   # Change the dimensions.  The underlying data is expanded if
+   # necessary and padded with zeroes.
+   #
+   public native set_size(width, height)
+
+   # Convert this instance to another separate instance in the given
+   # new format, which cannot be PALETTE.
+   #
+   public convert(format)
+      return Pixels(convert_impl(format))
+   end
+
+   private native convert_impl(format)
+
+   # Convenient method to generate 0 to get_width() - 1
+   #
+   public x_range()
+      suspend 0 to get_width() - 1
+   end
+
+   # Convenient method to generate 0 to get_height() - 1
+   #
+   public y_range()
+      suspend 0 to get_height() - 1
+   end
+
+   # Generate all the pixels, from left-to-right, and top-to-bottom.
+   # The first pixel is (0,0), then (1,0), (2,0) and so on.
+   #
+   public gen()
+      local y
+      every y := y_range() do
+         suspend get(x_range(), y)
+   end
+
+   # Generate all the pixels, as rgba lists.
+   #
+   public gen_rgba()
+      local y
+      every y := y_range() do
+         suspend get_rgba(x_range(), y)
+   end
+
+   # Return a new instance based on the given image string, which can
+   # be raw image data, or a filename.
+   #
+   public static open(s)
+      return Pixels(open_impl(s))
+   end
+
+   private static native open_impl(s)
+
+   # Create a blank instance with the given format and dimensions.
+   # The underlying data is allocated and set to zero.
+   #
+   public static blank(format, width, height)
+      return Pixels(blank_impl(format, width, height))
+   end
+
+   private static native blank_impl(format, width, height)
+
+   # Get the palette entry at index i (0 to 255), as a 4-element list.
+   # This and similar methods fails unless the format is PALETTE.
+   #
+   public native get_palette_rgba(i)
+
+   # Set the palette entry at index i to the given rgba values.
+   #
+   public native set_palette_rgba(i, r, g, b, a)
+
+   # Set the palette entry at index i to the given icon colour value,
+   # with optional alpha specified as an integer.
+   #
+   public native set_palette(i, v, a)
+
+   # Get the palette index contained at the given pixel location.
+   #
+   public native get_palette_index(x, y)
+
+   # Set the palette index contained at the given pixel location.
+   #
+   public native set_palette_index(x, y, i)
+
+   # Return a new instance which is an exact copy of this instance.
+   # No data is shared.
+   #
+   public clone()
+      return Pixels(clone_impl())
+   end
+
+   private final object_clone()
+      return clone()
+   end
+
+   private native clone_impl()
+
+   # Set entries in the palette according to one of the standard palettes (c1,c2 etc).
+   #
+   public native load_palette(pal)
+
+   package new(idp)
+      self.idp := idp
       return
    end
 end
@@ -105,7 +260,6 @@ class Window(NoCopy)
    public native get_font_width()
    public native get_geometry()
    public native get_height()
-   public native get_image()
    public native get_input_mask()
    public native get_label()
    public native get_line_style()
@@ -191,10 +345,21 @@ class Window(NoCopy)
    #
    # Specifies an image to load into the window.  On success, the
    # window is resized to the size of the image.  The given parameter
-   # {v} may be an Icon image string, raw binary image data (eg a gif
-   # file), or the name of a file containing an image.
+   # {v} may be raw binary image data (eg a gif file), or the name of
+   # a file containing an image.
    #
-   public native set_image(v)
+   public set_image(v)
+      if is(v, Pixels) then {
+         set_size(v.get_width(), v.get_height())
+         draw_image(0, 0, v)
+      } else {
+         v := Pixels.open(v) | fail
+         set_size(v.get_width(), v.get_height())
+         draw_image(0, 0, v)
+         v.close()
+      }
+      return self
+   end
 
    #
    # Set the input mask for the window.  If the string {v} contains
@@ -207,7 +372,19 @@ class Window(NoCopy)
    # The canvas attribute icon specifies an image used to identify the
    # window.  The parameter takes the same format as {set_image}.
    #
-   public native set_icon(v)
+   public set_icon(v)
+      local r
+      if is(v, Pixels) then
+         r := set_icon_impl(v)
+      else {
+         v := Pixels.open(v) | fail
+         r := set_icon_impl(v)
+         v.close()
+      }
+      return \r
+   end
+
+   private native set_icon_impl(id)
 
    #
    # The canvas attribute label specifies a title used to identify the
@@ -381,10 +558,21 @@ class Window(NoCopy)
    public native draw_curve(a[])
 
    #
-   # Draw an image.  The image can be in icon image string format, raw image data, or
-   # a filename.
+   # Draw an image.  The image can be raw image data, a filename, or a
+   # {Pixels} instance.
    #
-   public native draw_image(x, y, d)
+   public draw_image(x, y, v)
+      if is(v, Pixels) then
+         draw_image_impl(x, y, v)
+      else {
+         v := Pixels.open(v) | fail
+         draw_image_impl(x, y, v)
+         v.close()
+      }
+      return self
+   end
+
+   private native draw_image_impl(x, y, d)
 
    #
    # Copy an area from this window to another window.
@@ -469,16 +657,11 @@ class Window(NoCopy)
    #
    # Get the contents of some pixels as a {Pixels} object.
    #
-   public get_pixels(x, y, width, height)
-      return Pixels(get_pixels_impl(x, y, width, height))
+   public get_pixels(format, x, y, width, height)
+      return Pixels(get_pixels_impl(format, x, y, width, height))
    end
 
-   private native get_pixels_impl(x, y, width, height)
-
-   #
-   # Set the contents of some pixels from a {Pixels} object.
-   #
-   public native draw_pixels(x, y, data)
+   private native get_pixels_impl(format, x, y, width, height)
 
    #
    # Filter the given pixels according to the given filter spec.
@@ -584,8 +767,7 @@ $endif
    # its contents.
    # @param img the image
    # @param win an optional window from which to get the background and
-   #            foreground colours (only relevant with bi-level icon
-   #            strings and transparent images).
+   #            foreground colours (only relevant with transparent images).
    #
    public static open_image(img, win)
       local w

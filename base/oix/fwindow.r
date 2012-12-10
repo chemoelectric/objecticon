@@ -46,34 +46,35 @@ if (!self_w)
 
 static struct sdescrip pixclassname = {15, "graphics.Pixels"};
 
-static struct sdescrip impf = {3, "imp"};
+static struct sdescrip idpf = {3, "idp"};
 
-#begdef PixelsStaticParam(p, x)
-struct imgmem *x;
+#begdef ImageDataStaticParam(p, x)
+struct imgdata *x;
 dptr x##_dptr;
 static struct inline_field_cache x##_ic;
 static struct inline_global_cache x##_igc;
 if (!c_is(&p, (dptr)&pixclassname, &x##_igc))
     runerr(205, p);
-x##_dptr = c_get_instance_data(&p, (dptr)&impf, &x##_ic);
+x##_dptr = c_get_instance_data(&p, (dptr)&idpf, &x##_ic);
 if (!x##_dptr)
-    syserr("Missing imp field");
-(x) = (struct imgmem *)IntVal(*x##_dptr);
+    syserr("Missing idp field");
+(x) = (struct imgdata *)IntVal(*x##_dptr);
 if (!(x))
     runerr(152, p);
 #enddef
 
-#begdef GetSelfPixels()
-struct imgmem *self_im;
-dptr self_im_dptr;
-static struct inline_field_cache self_im_ic;
-self_im_dptr = c_get_instance_data(&self, (dptr)&impf, &self_im_ic);
-if (!self_im_dptr)
-    syserr("Missing imp field");
-self_im = (struct imgmem *)IntVal(*self_im_dptr);
-if (!self_im)
+#begdef GetSelfImageData()
+struct imgdata *self_id;
+dptr self_id_dptr;
+static struct inline_field_cache self_id_ic;
+self_id_dptr = c_get_instance_data(&self, (dptr)&idpf, &self_id_ic);
+if (!self_id_dptr)
+    syserr("Missing idp field");
+self_id = (struct imgdata *)IntVal(*self_id_dptr);
+if (!self_id)
     runerr(152, self);
 #enddef
+
 
 function graphics_Window_open_impl(display)
    body {
@@ -309,21 +310,16 @@ function graphics_Window_draw_curve(self, argv[argc])
    }
 end
 
-function graphics_Window_draw_image(self, x0, y0, d)
+function graphics_Window_draw_image_impl(self, x0, y0, d)
    body {
       word x, y;
-      struct imgdata imd;
       GetSelfW();
-
       if (pointargs(self_w, &x0, &x, &y) == Error)
           runerr(0);
-      if (!cnv:string(d, d))
-          runerr(103, d);
-
-      if (interpimage(self_w, &d, &imd) != Succeeded)
-          fail;
-      drawimgdata(self_w, x, y, &imd);
-      freeimgdata(&imd);
+      {
+      ImageDataStaticParam(d, id);
+      drawimgdata(self_w, x, y, id);
+      }
       return self;
    }
 end
@@ -608,48 +604,70 @@ function graphics_Window_lower(self)
    }
 end
 
-function graphics_Window_get_pixels_impl(self, x0, y0, w0, h0)
+function graphics_Window_get_pixels_impl(self, format, x0, y0, w0, h0)
+   if !def:C_integer(format, IMGDATA_RGBA64) then
+      runerr(101, format)
    body {
-      struct imgmem *imem;
+      struct imgdata *imd;
+      struct imgmem imem;
       word x, y, width, height;
+      int i, j, r, g, b;
       GetSelfW();
 
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
 
-      MemProtect(imem = malloc(sizeof(struct imgmem)));
-      if (initimgmem(self_w, imem, 1, 0, x, y, width, height)) {
-         imem->x = imem->y = 0;
-         return C_integer((word)imem);
+      if (!validimgdataformat(format))
+          Irunerr(153, format);
+      if (format == IMGDATA_PALETTE) {
+          LitWhy("Cannot use PALETTE format as destination");
+          fail;
+      }
+
+      if (initimgmem(self_w, &imem, 1, 0, x, y, width, height)) {
+          MemProtect(imd = malloc(sizeof(struct imgdata)));
+          imd->width = imem.width;
+          imd->height = imem.height;
+          imd->format = format;
+          imd->paltbl = 0;
+          MemProtect(imd->data = malloc(getimgdatalength(imd)));
+          for (j = imem.y; j < imem.y + imem.height; j++) {
+              for (i = imem.x; i < imem.x + imem.width; i++) {
+                  gotopixel(&imem, i, j);
+                  getpixel(&imem, &r, &g, &b);
+                  setimgdatapixel(imd, i, j, r, g, b, 65535);
+              }
+          }
+          freeimgmem(&imem);
+          return C_integer((word)imd);
       } else {
-         free(imem);
-         fail;
+          /* Region completely off-screen */
+          LitWhy("Region empty");
+          fail;
       }
    }
 end
 
-function graphics_Window_draw_pixels(self, x0, y0, data)
+function graphics_Pixels_open_impl(val)
+   if !cnv:string(val) then
+      runerr(103, val)
    body {
-      word x, y;
-      GetSelfW();
-      if (pointargs(self_w, &x0, &x, &y) == Error)
-          runerr(0);
-      {
-      PixelsStaticParam(data, im);
-      im->x = x;
-      im->y = y;
-      saveimgmem(self_w, im);
-      im->x = im->y = 0;
+      struct imgdata *imd;
+      MemProtect(imd = malloc(sizeof(struct imgdata)));
+      if (interpimage(&val, imd) == Succeeded)
+          return C_integer((word)imd);
+      else {
+          free(imd);
+          fail;
       }
-      return self;
    }
 end
 
 function graphics_Pixels_get_width(self)
    body {
       struct descrip result;
-      GetSelfPixels();
-      MakeInt(self_im->width, &result);
+      GetSelfImageData();
+      MakeInt(self_id->width, &result);
       return result;
    }
 end
@@ -657,19 +675,47 @@ end
 function graphics_Pixels_get_height(self)
    body {
       struct descrip result;
-      GetSelfPixels();
-      MakeInt(self_im->height, &result);
+      GetSelfImageData();
+      MakeInt(self_id->height, &result);
       return result;
    }
 end
 
 function graphics_Pixels_close(self)
    body {
-      GetSelfPixels();
-      freeimgmem(self_im);
-      free(self_im);
-       *self_im_dptr = zerodesc;
+      GetSelfImageData();
+      freeimgdata(self_id);
+      free(self_id);
+       *self_id_dptr = zerodesc;
       return self;
+   }
+end
+
+function graphics_Pixels_get_rgba(self, x, y)
+   if !cnv:C_integer(x) then
+      runerr(101, x)
+   if !cnv:C_integer(y) then
+      runerr(101, y)
+   body {
+      int r, g, b, a;
+      tended struct descrip result;
+      struct descrip t;
+      GetSelfImageData();
+      if (x < 0 || x >= self_id->width || y < 0 || y >= self_id->height) {
+          LitWhy("Out of range");
+          fail;
+      }
+      getimgdatapixel(self_id, x, y, &r, &g, &b, &a);
+      create_list(4, &result);
+      MakeInt(r, &t);
+      list_put(&result, &t);
+      MakeInt(g, &t);
+      list_put(&result, &t);
+      MakeInt(b, &t);
+      list_put(&result, &t);
+      MakeInt(a, &t);
+      list_put(&result, &t);
+      return result;
    }
 end
 
@@ -679,37 +725,373 @@ function graphics_Pixels_get(self, x, y)
    if !cnv:C_integer(y) then
       runerr(101, y)
    body {
+      int r, g, b, a;
       tended struct descrip result;
-      GetSelfPixels();
-      if (gotopixel(self_im, x, y)) {
-         int r, g, b;
-         char buff[64];
-         getpixel(self_im, &r, &g, &b);
-         sprintf(buff, "%d,%d,%d", r, g, b);
-         cstr2string(buff, &result);
-         return result;
+      char buff[64];
+      GetSelfImageData();
+      if (x < 0 || x >= self_id->width || y < 0 || y >= self_id->height) {
+          LitWhy("Out of range");
+          fail;
       }
-      fail;
+      getimgdatapixel(self_id, x, y, &r, &g, &b, &a);
+      sprintf(buff, "%d,%d,%d", r, g, b);
+      cstr2string(buff, &result);
+      return result;
    }
 end
 
-function graphics_Pixels_set(self, x, y, v)
+function graphics_Pixels_set_rgba(self, x, y, r, g, b, a)
+   if !cnv:C_integer(x) then
+      runerr(101, x)
+   if !cnv:C_integer(y) then
+      runerr(101, y)
+   if !cnv:C_integer(r) then
+      runerr(101, r)
+   if !cnv:C_integer(g) then
+      runerr(101, g)
+   if !cnv:C_integer(b) then
+      runerr(101, b)
+   if !def:C_integer(a, 65535) then
+      runerr(101, a)
+   body {
+      GetSelfImageData();
+      if (x < 0 || x >= self_id->width || y < 0 || y >= self_id->height) {
+          LitWhy("Out of range");
+          fail;
+      }
+      if (self_id->format == IMGDATA_PALETTE) {
+          LitWhy("Can't set a pixel with PALETTE format");
+          fail;
+      }
+      setimgdatapixel(self_id, x, y, r & 0xffff, g & 0xffff, b & 0xffff, a & 0xffff);
+      return self;
+   }
+end
+
+function graphics_Pixels_set(self, x, y, v, a)
    if !cnv:C_integer(x) then
       runerr(101, x)
    if !cnv:C_integer(y) then
       runerr(101, y)
    if !cnv:string(v) then
        runerr(103, v)
+   if !def:C_integer(a, 65535) then
+      runerr(101, a)
    body {
-      GetSelfPixels();
-      if (gotopixel(self_im, x, y)) {
-         int r, g, b;
-         if (parsecolor(buffstr(&v), &r, &g, &b)) {
-             setpixel(self_im, r, g, b);
-             return self;
-         }
+      int r, g, b;
+      GetSelfImageData();
+      if (x < 0 || x >= self_id->width || y < 0 || y >= self_id->height) {
+          LitWhy("Out of range");
+          fail;
       }
+      if (self_id->format == IMGDATA_PALETTE) {
+          LitWhy("Can't set a pixel with PALETTE format");
+          fail;
+      }
+      if (!parsecolor(buffstr(&v), &r, &g, &b)) {
+          LitWhy("Invalid color");
+          fail;
+      }
+      setimgdatapixel(self_id, x, y, r, g, b, a);
+      return self;
+   }
+end
+
+function graphics_Pixels_get_format(self)
+   body {
+      GetSelfImageData();
+      return C_integer self_id->format;
+   }
+end
+
+function graphics_Pixels_get_data(self)
+   body {
+      tended struct descrip result;
+      GetSelfImageData();
+      bytes2string((char *)self_id->data, getimgdatalength(self_id), &result);
+      return result;
+   }
+end
+
+function graphics_Pixels_set_data(self, s)
+   if !cnv:string(s) then
+       runerr(103, s)
+   body {
+      tended struct descrip result;
+      int n;
+      GetSelfImageData();
+      n = getimgdatalength(self_id);
+      if (StrLen(s) < n) {
+          memcpy(self_id->data, StrLoc(s), StrLen(s));
+          memset(self_id->data + StrLen(s), 0, n - StrLen(s));
+      } else
+          memcpy(self_id->data, StrLoc(s), n);
+      return self;
+   }
+end
+
+function graphics_Pixels_set_size(self, width, height)
+   if !cnv:C_integer(width) then
+      runerr(101, width)
+   if !cnv:C_integer(height) then
+      runerr(101, height)
+   body {
+      int old_n, new_n;
+      GetSelfImageData();
+       if (width < 1)
+           Irunerr(148, width);
+       if (height < 1)
+           Irunerr(148, height);
+      old_n = getimgdatalength(self_id);
+      self_id->width = width;
+      self_id->height = height;
+      new_n = getimgdatalength(self_id);
+      MemProtect(self_id->data = realloc(self_id->data, new_n));
+      if (new_n > old_n)
+          memset(self_id->data + old_n, 0, new_n - old_n);
+      return self;
+   }
+end
+
+function graphics_Pixels_convert_impl(self, format)
+   if !def:C_integer(format, IMGDATA_RGBA64) then
+      runerr(101, format)
+   body {
+      struct imgdata *imd;
+      int x, y, r, g, b, a, width, height;
+      GetSelfImageData();
+      if (!validimgdataformat(format))
+          Irunerr(153, format);
+      if (format == IMGDATA_PALETTE) {
+          LitWhy("Cannot use PALETTE format as destination");
+          fail;
+      }
+      width = self_id->width;
+      height = self_id->height;
+      MemProtect(imd = malloc(sizeof(struct imgdata)));
+      imd->width = width;
+      imd->height = height;
+      imd->format = format;
+      imd->paltbl = 0;
+      MemProtect(imd->data = malloc(getimgdatalength(imd)));
+      for (y = 0; y < height; ++y) {
+          for (x = 0; x < width; ++x) {
+              getimgdatapixel(self_id, x, y, &r, &g, &b, &a);
+              setimgdatapixel(imd, x, y, r, g, b, a);
+          }
+      }
+      return C_integer((word)imd);
+   }
+end
+
+function graphics_Pixels_blank_impl(format, width, height)
+   if !def:C_integer(format, IMGDATA_RGBA64) then
+      runerr(101, format)
+   if !cnv:C_integer(width) then
+      runerr(101, width)
+   if !cnv:C_integer(height) then
+      runerr(101, height)
+   body {
+       struct imgdata *imd;
+       if (width < 1)
+           Irunerr(148, width);
+       if (height < 1)
+           Irunerr(148, height);
+       if (!validimgdataformat(format))
+           Irunerr(153, format);
+       MemProtect(imd = malloc(sizeof(struct imgdata)));
+       imd->width = width;
+       imd->height = height;
+       imd->format = format;
+       if (format == IMGDATA_PALETTE)
+           MemProtect(imd->paltbl = calloc(256, sizeof(struct palentry)));
+       else
+           imd->paltbl = 0;
+       MemProtect(imd->data = calloc(getimgdatalength(imd), 1));
+       return C_integer((word)imd);
+   }
+end
+
+function graphics_Pixels_clone_impl(self)
+   body {
+      struct imgdata *imd;
+      int n;
+      GetSelfImageData();
+      MemProtect(imd = malloc(sizeof(struct imgdata)));
+      imd->width = self_id->width;
+      imd->height = self_id->height;
+      imd->format = self_id->format;
+      if (self_id->paltbl) {
+          MemProtect(imd->paltbl = malloc(256 * sizeof(struct palentry)));
+          memcpy(imd->paltbl, self_id->paltbl, 256 * sizeof(struct palentry));
+      } else
+          imd->paltbl = 0;
+      n = getimgdatalength(self_id);
+      MemProtect(imd->data = malloc(n));
+      memcpy(imd->data, self_id->data, n);
+      return C_integer((word)imd);
+   }
+end
+
+function graphics_Pixels_get_palette_rgba(self, i)
+   if !cnv:C_integer(i) then
+      runerr(101, i)
+   body {
+      struct palentry *e;
+      tended struct descrip result;
+      struct descrip t;
+      GetSelfImageData();
+      if (self_id->format != IMGDATA_PALETTE) {
+          LitWhy("Can only get a palette entry with PALETTE format");
+          fail;
+      }
+      if (i < 0 || i > 255) {
+          LitWhy("Out of range");
+          fail;
+      }
+      e = &self_id->paltbl[i];
+      create_list(4, &result);
+      MakeInt(e->r, &t);
+      list_put(&result, &t);
+      MakeInt(e->g, &t);
+      list_put(&result, &t);
+      MakeInt(e->b, &t);
+      list_put(&result, &t);
+      MakeInt(e->a, &t);
+      list_put(&result, &t);
+      return result;
+   }
+end
+
+function graphics_Pixels_set_palette_rgba(self, i, r, g, b, a)
+   if !cnv:C_integer(i) then
+      runerr(101, i)
+   if !cnv:C_integer(r) then
+      runerr(101, r)
+   if !cnv:C_integer(g) then
+      runerr(101, g)
+   if !cnv:C_integer(b) then
+      runerr(101, b)
+   if !def:C_integer(a, 65535) then
+      runerr(101, a)
+   body {
+      struct palentry *e;
+      GetSelfImageData();
+      if (self_id->format != IMGDATA_PALETTE) {
+          LitWhy("Can only set a palette entry with PALETTE format");
+          fail;
+      }
+      if (i < 0 || i > 255) {
+          LitWhy("Out of range");
+          fail;
+      }
+      e = &self_id->paltbl[i];
+      e->r = r & 0xffff;
+      e->g = g & 0xffff;
+      e->b = b & 0xffff;
+      e->a = a & 0xffff;
+      return self;
+   }
+end
+
+function graphics_Pixels_set_palette(self, i, v, a)
+   if !cnv:C_integer(i) then
+      runerr(101, i)
+   if !cnv:string(v) then
+       runerr(103, v)
+   if !def:C_integer(a, 65535) then
+      runerr(101, a)
+   body {
+      struct palentry *e;
+      int r, g, b;
+      GetSelfImageData();
+      if (self_id->format != IMGDATA_PALETTE) {
+          LitWhy("Can only set a palette entry with PALETTE format");
+          fail;
+      }
+      if (i < 0 || i > 255) {
+          LitWhy("Out of range");
+          fail;
+      }
+      if (!parsecolor(buffstr(&v), &r, &g, &b)) {
+          LitWhy("Invalid color");
+          fail;
+      }
+      e = &self_id->paltbl[i];
+      e->r = r;
+      e->g = g;
+      e->b = b;
+      e->a = a & 0xffff;
+      return self;
       fail;
+   }
+end
+
+function graphics_Pixels_get_palette_index(self, x, y)
+   if !cnv:C_integer(x) then
+      runerr(101, x)
+   if !cnv:C_integer(y) then
+      runerr(101, y)
+   body {
+      struct descrip result;
+      unsigned char *s;
+      GetSelfImageData();
+      if (self_id->format != IMGDATA_PALETTE) {
+          LitWhy("Can only get a palette index with PALETTE format");
+          fail;
+      }
+      if (x < 0 || x >= self_id->width || y < 0 || y >= self_id->height) {
+          LitWhy("Out of range");
+          fail;
+      }
+      s = self_id->data + (self_id->width * y + x);
+      MakeInt(*s, &result);
+      return result;
+   }
+end
+
+function graphics_Pixels_set_palette_index(self, x, y, i)
+   if !cnv:C_integer(x) then
+      runerr(101, x)
+   if !cnv:C_integer(y) then
+      runerr(101, y)
+   if !cnv:C_integer(i) then
+      runerr(101, i)
+   body {
+      unsigned char *s;
+      GetSelfImageData();
+      if (self_id->format != IMGDATA_PALETTE) {
+          LitWhy("Can only set a palette index with PALETTE format");
+          fail;
+      }
+      if (x < 0 || x >= self_id->width || y < 0 || y >= self_id->height) {
+          LitWhy("Out of range");
+          fail;
+      }
+      s = self_id->data + (self_id->width * y + x);
+      *s = (unsigned char)i;
+      return self;
+   }
+end
+
+function graphics_Pixels_load_palette(self, pal)
+   if !cnv:string(pal) then
+       runerr(103, pal)
+   body {
+      int p;
+      struct palentry *e;
+      GetSelfImageData();
+      if (self_id->format != IMGDATA_PALETTE) {
+          LitWhy("Can only set a palette with PALETTE format");
+          fail;
+      }
+      if (!parsepalette(buffstr(&pal), &p)) {
+          LitWhy("Invalid palette");
+          fail;
+      }
+      e = palsetup(p); 
+      memcpy(self_id->paltbl, e, 256 * sizeof(struct palentry));
+      return self;
    }
 end
 
@@ -1583,39 +1965,14 @@ function graphics_Window_set_height(self, height)
    }
 end
 
-function graphics_Window_set_image(self, d)
-   if !cnv:string(d) then
-      runerr(103, d)
+function graphics_Window_set_icon_impl(self, val)
    body {
-       wsp ws;
-       GetSelfW();
-       ws = self_w->window;
-       if (interpimage(self_w, &d, &ws->initimage) != Succeeded)
-           fail;
-       self_w->window->width = ws->initimage.width;
-       self_w->window->height = ws->initimage.height;
-       SimpleAttr(C_SIZE | C_IMAGE);
-       return self;
-   }
-end
-
-static int setwindowicon1(wbp w, struct imgdata *imd)
-{
-    int r = setwindowicon(w, imd);
-    freeimgdata(imd);
-    return r;
-}
-
-function graphics_Window_set_icon(self, val)
-   if !cnv:string(val) then
-      runerr(103, val)
-   body {
-       struct imgdata imd;
-       GetSelfW();
-       if (interpimage(self_w, &val, &imd) != Succeeded)
-           fail;
-       AttemptAttr(setwindowicon1(self_w, &imd), "Failed to set window icon");
-       return self;
+      GetSelfW();
+      {
+      ImageDataStaticParam(val, id);
+      AttemptAttr(setwindowicon(self_w, id), "Failed to set window icon");
+      return self;
+      }
    }
 end
 
@@ -2002,7 +2359,7 @@ function graphics_Window_palette_color(s1, s2)
           runerr(205, s2);
       e = palsetup(p); 
       e += *StrLoc(s2) & 0xFF;
-      if (!e->valid) {
+      if (!e->a) {
           LitWhy("Invalid character");
           fail;
       }

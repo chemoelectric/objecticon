@@ -167,46 +167,84 @@ class Gui()
    end
 end
 
-procedure draw_image_ex(W, x, y, i)
-   return W.draw_image(x, y, get_extended_image(W, i))
+procedure tab_ws()
+   return tab(many(' \t\n\r'))
 end
 
-procedure palette_key_ex(W, palette, spec)
-   local color
-   color := case spec of {
-      "hilite" : Gui.style.get_hilite_color(W)
-      "shadow" : Gui.style.get_shadow_color(W)
-      "fg" : W.get_fg()
-      "bg" : W.get_bg()
-      "trans" : return "\377"
-      default : spec
+procedure is_image_string(v)
+   v := text(v) | fail
+   v ? {
+      tab_ws()
+      tab(many(&digits)) | fail
+      tab_ws()
+      ="," | fail
+      return
    }
-   return Window.palette_key(palette, color)
 end
 
-procedure get_extended_image(W, img)
-   local s1, s2, head, spec, palette
-
-   img ? {
-      ="(" | return img
-      spec := tab(upto(')')) | return error("Invalid extended image (no closing bracket)")
-      =")"
-      tab(many(' '))
-      head := tab(upto(',')) || move(1) ||
-         (palette := tab(upto(','))) || move(1) | 
-            return error("Invalid extended image (no header)")
-
-      s1 := s2 := ""
-      spec ? repeat {
-         tab(many('; '))
-         s1 ||:= move(1) | break
-         ="=" | return error("Invalid extended image (expected '=' in spec)")
-         spec := tab(upto(';') | 0)
-         s2 ||:= palette_key_ex(W, palette, spec) | 
-            return error("Invalid extended image (bad palette or color in spec)")
+procedure parse_image_string(s, W)
+   local q, width, height, pal, data, extra, k, v, a
+   s := string(s) | runerr(103, s)
+   s ? {
+      tab_ws()
+      width := (0 < integer(tab(many(&digits)))) | return error("Width expected")
+      tab_ws()
+      ="," | return error("Comma expected")
+      tab_ws()
+      if any('cg') then {
+         pal := (move(1) || tab(many(&digits))) | return error("Palette expected")
+         tab_ws()
       }
-      return head || map(tab(0), s1, s2)
+      if any('(') then {
+         move(1)
+         extra := tab(upto(')')) | return error("Missing )")
+         move(1)
+         tab_ws()
+      }
+      ="," | return error("Comma expected")
+      data := tab(0)
+      if *data = 0 | *data % width ~= 0 then
+         return error("Wrong number of image characters")
+      height := *data / width
+      q := Pixels.blank(Pixels.PALETTE, width, height).
+         set_data(data)
+      # Add chars from palette, if specified.
+      if \pal then {
+         q.load_palette(pal) | {
+            q.close()
+            fail
+         }
+      }
+      # Add extra chars
+      if \extra then {
+         extra ? repeat {
+            tab_ws()
+            k := move(1) | break
+            ="=" | {
+               q.close()
+               return error("= expected")
+            }
+            v := tab(upto(';') | 0)
+            a := 65535
+            case v of {
+               "hilite" : v := Gui.style.get_hilite_color(W)
+               "shadow" : v := Gui.style.get_shadow_color(W)
+               "fg" : v := W.get_fg()
+               "bg" : v := W.get_bg()
+               "trans" : {
+                  v := "black"
+                  a := 0
+               }
+            }
+            move(1)
+            q.set_palette(ord(k), v, a) | {
+               q.close()
+               return error("invalid colour in image spec: " || v)
+            }
+         }
+      }
    }
+   return q
 end
 
 #

@@ -210,10 +210,14 @@ char *rgbkey         (int p, int r, int g, int b);
    int  gotopixel       (struct imgmem *i, int x, int y);
    void drawimgdata     (wbp w, int x, int y, struct imgdata *img);
    void freeimgdata     (struct imgdata *img);
-   void nextimgdata     (struct imgdata *imd, unsigned char **s, int *r, int *g, int *b, int *a);
+   void getimgdatapixel(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a);
+   int setimgdatapixel(struct imgdata *imd, int x, int y, int r, int g, int b, int a);
+   int validimgdataformat(int format);
+   int getimgdatalength(struct imgdata *imd);
+   int isimgdataopaque(struct imgdata *imd);
    int  getdefaultfontsize(int);
    char *getdefaultfont(void);
-   int interpimage(wbp w, dptr d,  struct imgdata *imd);
+   int interpimage(dptr d,  struct imgdata *imd);
 
    int is_png(dptr data);
    int is_jpeg(dptr data);

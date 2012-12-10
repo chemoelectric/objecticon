@@ -6,9 +6,7 @@
  * Entry in palette table.
  */
 struct palentry {
-   int r, g, b;                         /* RGB value of color */
-   char valid;                          /* nonzero if entry is valid & opaque */
-   char transpt;                        /* nonzero if char is transparent */
+   int r, g, b, a;                         /* RGBA value of color */
 };
 
 struct point {
@@ -156,8 +154,7 @@ typedef struct _wfont {
 #define IMGDATA_AG16       9
 #define IMGDATA_G16        10
 #define IMGDATA_GA32       11
-#define IMGDATA_PALETTE_OPAQUE      20
-#define IMGDATA_PALETTE_TRANS       21
+#define IMGDATA_PALETTE    20
 
 struct imgdata {			/* image loaded from a file */
    int width, height;			/* image dimensions */
@@ -261,7 +258,6 @@ typedef struct _wstate {
   int		refcount;		/* reference count */
   struct _wstate *previous, *next;
   int		inputmask;		/* user input mask */
-  struct imgdata initimage;		/* initial image data */
   int		y, x;		        /* desired upper lefthand corner */
   int           height;                 /* window height, in pixels */
   int           width;                  /* window width, in pixels */
@@ -362,7 +358,6 @@ struct filter {
 #define C_MAXSIZE       8
 #define C_RESIZE	16
 #define C_CLIP	        32
-#define C_IMAGE	        64
 
 /*
  * Input masks
