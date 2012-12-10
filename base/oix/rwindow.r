@@ -35,7 +35,6 @@ static int readgiffile         (char *fname, struct imgdata *d);
 
 static  void wgetq(wbp w, dptr res);
 
-static int tryimagestring(dptr d,  struct imgdata *imd);
 static int tryimagedata(dptr data, struct imgdata *imd);
 static int tryimagefile(char *filename, struct imgdata *imd);
 
@@ -435,78 +434,6 @@ int gotopixel(struct imgmem *imem, int x, int y)
         return 0;
 }
 
-static int tryimagestring(dptr d,  struct imgdata *imd)
-{
-    int c, width, height, p, format, nchars;
-    unsigned char *s, *t, *z;
-    struct palentry *e;
-
-    /*
-     * Extract the Width and skip the following comma.
-     */
-    s = (unsigned char *)StrLoc(*d);
-    z = s + StrLen(*d);		/* end+1 of string */
-    width = 0;
-    while (s < z && *s == ' ')	/* skip blanks */
-        s++;
-    while (s < z && isdigit((unsigned char)*s))	/* scan number */
-        width = 10 * width + *s++ - '0';
-    while (s < z && *s == ' ')	/* skip blanks */
-        s++;
-    if (width == 0 || *s++ != ',')	/* skip comma */
-        return NoCvt;
-    while (s < z && *s == ' ')	/* skip blanks */
-        s++;
-    if (s >= z)			/* if end of string */
-        return NoCvt;
-
-    /*
-     * Extract the palette name and skip its comma.
-     */
-    c = *s++;					/* save initial character */
-    p = 0;
-    while (s < z && isdigit((unsigned char)*s))		/* scan digits */
-        p = 10 * p + *s++ - '0';
-    while (s < z && *s == ' ')		/* skip blanks */
-        s++;
-    if (s >= z || p == 0 || *s++ != ',')	/* skip comma */
-        return NoCvt;
-    if (c == 'g' && p >= 2 && p <= 256)	/* validate grayscale number */
-        p = -p;
-    else if (c != 'c' || p < 1 || p > 6)	/* validate color number */
-        return NoCvt;
-
-    /*
-     * Scan the image to see which colors are needed, and if transparency is used.
-     */
-    format = IMGDATA_PALETTE;
-    e = palsetup(p); 
-    nchars = z - s;
-    for (t = s; t < z; t++) {
-        c = *t; 
-        if (c != TCH1 && c != TCH2 && !e[c].a) {
-            LitWhy("Invalid image string, character not in palette");
-            return Failed;
-        }
-    }
-    if (nchars == 0 || nchars % width != 0) {
-        LitWhy("Invalid image string, wrong number of characters");
-        return Failed;					/* empty image or not rectangular */
-    }
-
-    height = nchars / width;
-
-    imd->width = width;
-    imd->height = height;
-    MemProtect(imd->paltbl = malloc(256 * sizeof(struct palentry)));
-    memcpy(imd->paltbl, e, 256 * sizeof(struct palentry));
-    MemProtect(imd->data = malloc(nchars));
-    memcpy(imd->data, s, nchars);
-    imd->format = format;
-
-    return Succeeded;
-}
-
 #if HAVE_LIBJPEG || HAVE_LIBPNG
 /*
  * Write string data to a temporary file.
@@ -588,8 +515,6 @@ int interpimage(dptr d,  struct imgdata *imd)
 {
     int r;
 
-    if ((r = tryimagestring(d, imd)) != NoCvt)
-        return r;
     if ((r = tryimagedata(d, imd)) != NoCvt)
         return r;
     if (StrLen(*d) < MaxPath) {
@@ -615,7 +540,7 @@ void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
     struct imgmem imem;
     int width, height, i, j;
 
-    getimgdataformatinfo(imd->format, 0, &opaque);
+    opaque = isimgdataopaque(imd);
 
     width = imd->width;
     height = imd->height;
@@ -833,52 +758,76 @@ int setimgdatapixel(struct imgdata *imd, int x, int y, int r, int g, int b, int 
     return 1;
 }
 
-int getimgdataformatinfo(int format, int *bpp, int *opaque)
+int validimgdataformat(int format)
 {
-    int bpp1, opaque1;
     switch (format) {
-        case IMGDATA_PALETTE:
-            bpp1 = 1;
-            opaque1 = 0;
-            break;
         case IMGDATA_G8:
-            bpp1 = 1;
-            opaque1 = 1;
-            break;
+        case IMGDATA_PALETTE:
         case IMGDATA_GA16:
         case IMGDATA_AG16:
-            bpp1 = 2;
-            opaque1 = 0;
-            break;
         case IMGDATA_G16:
-            bpp1 = 2;
-            opaque1 = 1;
-            break;
-        case IMGDATA_RGB24:
         case IMGDATA_BGR24:
-            bpp1 = 3;
-            opaque1 = 1;
-            break;
-        case IMGDATA_RGBA32:
+        case IMGDATA_RGB24:
         case IMGDATA_ABGR32:
+        case IMGDATA_RGBA32:
         case IMGDATA_GA32:
-            bpp1 = 4;
-            opaque1 = 0;
-            break;
         case IMGDATA_RGB48:
-            bpp1 = 6;
-            opaque1 = 1;
-            break;
         case IMGDATA_RGBA64:
-            bpp1 = 8;
-            opaque1 = 0;
-            break;
+            return 1;
         default:
             return 0;
     }
-    if (bpp) *bpp = bpp1;
-    if (opaque) *opaque = opaque1;
-    return 1;
+}
+
+int getimgdatalength(struct imgdata *imd)
+{
+    int n = imd->width * imd->height;
+    switch (imd->format) {
+        case IMGDATA_G8:
+        case IMGDATA_PALETTE:
+            return n;
+        case IMGDATA_GA16:
+        case IMGDATA_AG16:
+        case IMGDATA_G16:
+            return 2 * n;
+        case IMGDATA_BGR24:
+        case IMGDATA_RGB24:
+            return 3 * n;
+        case IMGDATA_ABGR32:
+        case IMGDATA_RGBA32:
+        case IMGDATA_GA32:
+            return 4 * n;
+        case IMGDATA_RGB48:
+            return 6 * n;
+        case IMGDATA_RGBA64:
+            return 8 * n;
+        default:
+            syserr("Unknown image format");
+            return 0;
+    }
+}
+
+int isimgdataopaque(struct imgdata *imd)
+{
+    switch (imd->format) {
+        case IMGDATA_PALETTE:
+        case IMGDATA_GA16:
+        case IMGDATA_AG16:
+        case IMGDATA_RGBA32:
+        case IMGDATA_ABGR32:
+        case IMGDATA_GA32:
+        case IMGDATA_RGBA64:
+            return 0;
+        case IMGDATA_G8:
+        case IMGDATA_G16:
+        case IMGDATA_RGB24:
+        case IMGDATA_BGR24:
+        case IMGDATA_RGB48:
+            return 1;
+        default:
+            syserr("Unknown image format");
+            return 0;
+    }
 }
 
 

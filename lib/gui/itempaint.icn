@@ -161,23 +161,23 @@ abstract class AttributedTextItemPaint(WithCloneItemPaint)
    end
 end
 
-# An {ItemPaint} in which each piece of data is an icon image string.
+# An {ItemPaint} in which each piece of data is a Pixels instance.
 #
-class ImageStringItemPaint(ItemPaint)
+class PixelsItemPaint(ItemPaint)
    public get_width(W, data)
-      return image_width(data)
+      return data.get_width()
    end
 
    public get_height(W, data)
-      return image_height(data)
+      return data.get_height()
    end
 
    public get_size(W, data)
-      return Size(image_width(data), image_height(data))
+      return Size(data.get_width(), data.get_height())
    end
 
    public draw(W, data, x, y)
-      draw_image_ex(W, x, y, data)
+      W.draw_image(x, y, data)
    end
 end
 

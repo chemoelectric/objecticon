@@ -3,12 +3,11 @@ package graphics
 import 
    lang(NoCopy)
 
-# This object contains pixel data either read from a file, created
-# from an Icon image string, extracted from a Window, or created from
-# scratch.  The data is stored in various underlying formats depending
-# on the source.
+# This object contains pixel data either read from a file, extracted
+# from a Window, or created from scratch.  The data is stored in
+# various underlying formats depending on the source.
 #
-class Pixels(NoCopy)
+class Pixels()
    private
       idp
 
@@ -79,12 +78,18 @@ class Pixels(NoCopy)
    #
    public native get_data()
 
-   # Set the raw underlying data from a string, which must be the
-   # correct length for the size and format.
+   # Set the raw underlying data from a string, padding with zeroes if
+   # the string is too short.
    #
    public native set_data(s)
 
-   # Convert this instance to another separate instance in the given new format.
+   # Change the dimensions.  The underlying data is expanded if
+   # necessary and padded with zeroes.
+   #
+   public native set_size(width, height)
+
+   # Convert this instance to another separate instance in the given
+   # new format, which cannot be PALETTE.
    #
    public convert(format)
       return Pixels(convert_impl(format))
@@ -113,8 +118,16 @@ class Pixels(NoCopy)
          suspend get(x_range(), y)
    end
 
+   # Generate all the pixels, as rgba lists.
+   #
+   public gen_rgba()
+      local y
+      every y := y_range() do
+         suspend get_rgba(x_range(), y)
+   end
+
    # Return a new instance based on the given image string, which can
-   # be in icon image string format, raw image data, or a filename.
+   # be raw image data, or a filename.
    #
    public static open(s)
       return Pixels(open_impl(s))
@@ -160,7 +173,15 @@ class Pixels(NoCopy)
       return Pixels(clone_impl())
    end
 
-   public native clone_impl()
+   private final object_clone()
+      return clone()
+   end
+
+   private native clone_impl()
+
+   # Set entries in the palette according to one of the standard palettes (c1,c2 etc).
+   #
+   public native load_palette(pal)
 
    package new(idp)
       self.idp := idp
@@ -324,8 +345,8 @@ class Window(NoCopy)
    #
    # Specifies an image to load into the window.  On success, the
    # window is resized to the size of the image.  The given parameter
-   # {v} may be an Icon image string, raw binary image data (eg a gif
-   # file), or the name of a file containing an image.
+   # {v} may be raw binary image data (eg a gif file), or the name of
+   # a file containing an image.
    #
    public set_image(v)
       if is(v, Pixels) then {
@@ -537,8 +558,8 @@ class Window(NoCopy)
    public native draw_curve(a[])
 
    #
-   # Draw an image.  The image can be in icon image string format, raw image data, 
-   # a filename, or a {Pixels} instance.
+   # Draw an image.  The image can be raw image data, a filename, or a
+   # {Pixels} instance.
    #
    public draw_image(x, y, v)
       if is(v, Pixels) then
