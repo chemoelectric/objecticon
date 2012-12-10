@@ -74,6 +74,25 @@ class Pixels()
    #
    public native get_format()
 
+   # Get the format, as a string.
+   #
+   public get_format_str()
+      return case get_format() of {
+         RGB24: "RGB24"
+         BGR24: "BGR24"
+         RGBA32: "RGBA32"
+         ABGR32: "ABGR32"
+         RGB48: "RGB48"
+         RGBA64: "RGBA64"
+         G8: "G8"
+         GA16: "GA16"
+         AG16: "AG16"
+         G16: "G16"
+         GA32: "GA32"
+         PALETTE: "PALETTE"
+      }
+   end
+
    # Get the raw underlying data as a string.
    #
    public native get_data()
