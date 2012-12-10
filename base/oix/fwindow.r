@@ -617,8 +617,12 @@ function graphics_Window_get_pixels_impl(self, format, x0, y0, w0, h0)
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
 
-      if (format == IMGDATA_PALETTE || !getimgdataformatinfo(format, &bpp, 0)) {
+      if (!getimgdataformatinfo(format, &bpp, 0)) {
           LitWhy("Invalid format");
+          fail;
+      }
+      if (format == IMGDATA_PALETTE) {
+          LitWhy("Cannot use PALETTE format as destination");
           fail;
       }
 
@@ -695,25 +699,25 @@ function graphics_Pixels_get_rgba(self, x, y)
    if !cnv:C_integer(y) then
       runerr(101, y)
    body {
+      int r, g, b, a;
+      tended struct descrip result;
+      struct descrip t;
       GetSelfImageData();
-      if (x >= 0 && x < self_id->width &&
-          y >= 0 && y < self_id->height) {
-         int r, g, b, a;
-         tended struct descrip result;
-         struct descrip t;
-         getimgdatapixel(self_id, x, y, &r, &g, &b, &a);
-         create_list(4, &result);
-         MakeInt(r, &t);
-         list_put(&result, &t);
-         MakeInt(g, &t);
-         list_put(&result, &t);
-         MakeInt(b, &t);
-         list_put(&result, &t);
-         MakeInt(a, &t);
-         list_put(&result, &t);
-         return result;
+      if (x < 0 || x >= self_id->width || y < 0 || y >= self_id->height) {
+          LitWhy("Out of range");
+          fail;
       }
-      fail;
+      getimgdatapixel(self_id, x, y, &r, &g, &b, &a);
+      create_list(4, &result);
+      MakeInt(r, &t);
+      list_put(&result, &t);
+      MakeInt(g, &t);
+      list_put(&result, &t);
+      MakeInt(b, &t);
+      list_put(&result, &t);
+      MakeInt(a, &t);
+      list_put(&result, &t);
+      return result;
    }
 end
 
@@ -723,18 +727,18 @@ function graphics_Pixels_get(self, x, y)
    if !cnv:C_integer(y) then
       runerr(101, y)
    body {
+      int r, g, b, a;
+      tended struct descrip result;
+      char buff[64];
       GetSelfImageData();
-      if (x >= 0 && x < self_id->width &&
-          y >= 0 && y < self_id->height) {
-         int r, g, b, a;
-         tended struct descrip result;
-         char buff[64];
-         getimgdatapixel(self_id, x, y, &r, &g, &b, &a);
-         sprintf(buff, "%d,%d,%d", r, g, b);
-         cstr2string(buff, &result);
-         return result;
+      if (x < 0 || x >= self_id->width || y < 0 || y >= self_id->height) {
+          LitWhy("Out of range");
+          fail;
       }
-      fail;
+      getimgdatapixel(self_id, x, y, &r, &g, &b, &a);
+      sprintf(buff, "%d,%d,%d", r, g, b);
+      cstr2string(buff, &result);
+      return result;
    }
 end
 
@@ -753,12 +757,16 @@ function graphics_Pixels_set_rgba(self, x, y, r, g, b, a)
       runerr(101, a)
    body {
       GetSelfImageData();
-      if (x >= 0 && x < self_id->width &&
-          y >= 0 && y < self_id->height) {
-          if (setimgdatapixel(self_id, x, y, r, g, b, a))
-              return self;
+      if (x < 0 || x >= self_id->width || y < 0 || y >= self_id->height) {
+          LitWhy("Out of range");
+          fail;
       }
-      fail;
+      if (self_id->format == IMGDATA_PALETTE) {
+          LitWhy("Can't set a pixel with PALETTE format");
+          fail;
+      }
+      setimgdatapixel(self_id, x, y, r, g, b, a);
+      return self;
    }
 end
 
@@ -772,16 +780,22 @@ function graphics_Pixels_set(self, x, y, v, a)
    if !def:C_integer(a, 65535) then
       runerr(101, a)
    body {
+      int r, g, b;
       GetSelfImageData();
-      if (x >= 0 && x < self_id->width &&
-          y >= 0 && y < self_id->height) {
-          int r, g, b;
-          if (parsecolor(buffstr(&v), &r, &g, &b)) {
-              if (setimgdatapixel(self_id, x, y, r, g, b, a))
-                  return self;
-          }
+      if (x < 0 || x >= self_id->width || y < 0 || y >= self_id->height) {
+          LitWhy("Out of range");
+          fail;
       }
-      fail;
+      if (self_id->format == IMGDATA_PALETTE) {
+          LitWhy("Can't set a pixel with PALETTE format");
+          fail;
+      }
+      if (!parsecolor(buffstr(&v), &r, &g, &b)) {
+          LitWhy("Invalid color");
+          fail;
+      }
+      setimgdatapixel(self_id, x, y, r, g, b, a);
+      return self;
    }
 end
 
@@ -827,8 +841,12 @@ function graphics_Pixels_convert_impl(self, format)
       struct imgdata *imd;
       int bpp, x, y, r, g, b, a, width, height;
       GetSelfImageData();
-      if (format == IMGDATA_PALETTE || !getimgdataformatinfo(format, &bpp, 0)) {
+      if (!getimgdataformatinfo(format, &bpp, 0)) {
           LitWhy("Invalid format");
+          fail;
+      }
+      if (format == IMGDATA_PALETTE) {
+          LitWhy("Cannot use PALETTE format as destination");
           fail;
       }
       width = self_id->width;
@@ -906,21 +924,25 @@ function graphics_Pixels_get_palette_rgba(self, i)
       tended struct descrip result;
       struct descrip t;
       GetSelfImageData();
-      if (self_id->format == IMGDATA_PALETTE &&
-          i >= 0 && i <= 255) {
-          e = &self_id->paltbl[i];
-          create_list(4, &result);
-          MakeInt(e->r, &t);
-          list_put(&result, &t);
-          MakeInt(e->g, &t);
-          list_put(&result, &t);
-          MakeInt(e->b, &t);
-          list_put(&result, &t);
-          MakeInt(e->a, &t);
-          list_put(&result, &t);
-          return result;
+      if (self_id->format != IMGDATA_PALETTE) {
+          LitWhy("Can only get a palette entry with PALETTE format");
+          fail;
       }
-      fail;
+      if (i < 0 || i > 255) {
+          LitWhy("Out of range");
+          fail;
+      }
+      e = &self_id->paltbl[i];
+      create_list(4, &result);
+      MakeInt(e->r, &t);
+      list_put(&result, &t);
+      MakeInt(e->g, &t);
+      list_put(&result, &t);
+      MakeInt(e->b, &t);
+      list_put(&result, &t);
+      MakeInt(e->a, &t);
+      list_put(&result, &t);
+      return result;
    }
 end
 
@@ -938,16 +960,20 @@ function graphics_Pixels_set_palette_rgba(self, i, r, g, b, a)
    body {
       struct palentry *e;
       GetSelfImageData();
-      if (self_id->format == IMGDATA_PALETTE &&
-          i >= 0 && i <= 255) {
-          e = &self_id->paltbl[i];
-          e->r = r & 0xffff;
-          e->g = g & 0xffff;
-          e->b = b & 0xffff;
-          e->a = a & 0xffff;
-          return self;
+      if (self_id->format != IMGDATA_PALETTE) {
+          LitWhy("Can only set a palette entry with PALETTE format");
+          fail;
       }
-      fail;
+      if (i < 0 || i > 255) {
+          LitWhy("Out of range");
+          fail;
+      }
+      e = &self_id->paltbl[i];
+      e->r = r & 0xffff;
+      e->g = g & 0xffff;
+      e->b = b & 0xffff;
+      e->a = a & 0xffff;
+      return self;
    }
 end
 
@@ -960,19 +986,26 @@ function graphics_Pixels_set_palette(self, i, v, a)
       runerr(101, a)
    body {
       struct palentry *e;
+      int r, g, b;
       GetSelfImageData();
-      if (self_id->format == IMGDATA_PALETTE &&
-          i >= 0 && i <= 255) {
-          int r, g, b;
-          if (parsecolor(buffstr(&v), &r, &g, &b)) {
-              e = &self_id->paltbl[i];
-              e->r = r;
-              e->g = g;
-              e->b = b;
-              e->a = a;
-              return self;
-          }
+      if (self_id->format != IMGDATA_PALETTE) {
+          LitWhy("Can only get a palette entry with PALETTE format");
+          fail;
       }
+      if (i < 0 || i > 255) {
+          LitWhy("Out of range");
+          fail;
+      }
+      if (!parsecolor(buffstr(&v), &r, &g, &b)) {
+          LitWhy("Invalid color");
+          fail;
+      }
+      e = &self_id->paltbl[i];
+      e->r = r;
+      e->g = g;
+      e->b = b;
+      e->a = a;
+      return self;
       fail;
    }
 end
@@ -983,17 +1016,20 @@ function graphics_Pixels_get_palette_index(self, x, y)
    if !cnv:C_integer(y) then
       runerr(101, y)
    body {
+      struct descrip result;
+      unsigned char *s;
       GetSelfImageData();
-      if (self_id->format == IMGDATA_PALETTE &&
-          x >= 0 && x < self_id->width &&
-          y >= 0 && y < self_id->height) {
-          struct descrip result;
-          unsigned char *s;
-          s = self_id->data + (self_id->width * y + x);
-          MakeInt(*s, &result);
-          return result;
+      if (self_id->format != IMGDATA_PALETTE) {
+          LitWhy("Can only get a palette index with PALETTE format");
+          fail;
       }
-      fail;
+      if (x < 0 || x >= self_id->width || y < 0 || y >= self_id->height) {
+          LitWhy("Out of range");
+          fail;
+      }
+      s = self_id->data + (self_id->width * y + x);
+      MakeInt(*s, &result);
+      return result;
    }
 end
 
@@ -1005,16 +1041,19 @@ function graphics_Pixels_set_palette_index(self, x, y, i)
    if !cnv:C_integer(i) then
       runerr(101, i)
    body {
+      unsigned char *s;
       GetSelfImageData();
-      if (self_id->format == IMGDATA_PALETTE &&
-          x >= 0 && x < self_id->width &&
-          y >= 0 && y < self_id->height) {
-          unsigned char *s;
-          s = self_id->data + (self_id->width * y + x);
-          *s = (unsigned char)i;
-          return self;
+      if (self_id->format != IMGDATA_PALETTE) {
+          LitWhy("Can only set a palette index with PALETTE format");
+          fail;
       }
-      fail;
+      if (x < 0 || x >= self_id->width || y < 0 || y >= self_id->height) {
+          LitWhy("Out of range");
+          fail;
+      }
+      s = self_id->data + (self_id->width * y + x);
+      *s = (unsigned char)i;
+      return self;
    }
 end
 

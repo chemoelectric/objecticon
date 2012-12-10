@@ -4,11 +4,9 @@ import
    lang(NoCopy)
 
 # This object contains pixel data either read from a file, created
-# from an Icon image string, or extracted from a Window.  The data is
-# stored in various underlying formats depending on the source.  The
-# two palette formats are read-only and can only be created via the
-# `open` method.  The other formats are writable, but only RGBA64
-# preserves the full information written.
+# from an Icon image string, extracted from a Window, or created from
+# scratch.  The data is stored in various underlying formats depending
+# on the source.
 #
 class Pixels(NoCopy)
    private
@@ -133,13 +131,31 @@ class Pixels(NoCopy)
 
    private static native blank_impl(format, width, height)
 
+   # Get the palette entry at index i (0 to 255), as a 4-element list.
+   # This and similar methods fails unless the format is PALETTE.
+   #
    public native get_palette_rgba(i)
+
+   # Set the palette entry at index i to the given rgba values.
+   #
    public native set_palette_rgba(i, r, g, b, a)
+
+   # Set the palette entry at index i to the given icon colour value,
+   # with optional alpha specified as an integer.
+   #
    public native set_palette(i, v, a)
 
+   # Get the palette index contained at the given pixel location.
+   #
    public native get_palette_index(x, y)
+
+   # Set the palette index contained at the given pixel location.
+   #
    public native set_palette_index(x, y, i)
 
+   # Return a new instance which is an exact copy of this instance.
+   # No data is shared.
+   #
    public clone()
       return Pixels(clone_impl())
    end
