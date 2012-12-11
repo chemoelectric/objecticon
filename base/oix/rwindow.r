@@ -19,13 +19,13 @@ wbp wbndngs = NULL;
 
 #if HAVE_LIBJPEG
 static int  readjpegdata       (dptr data, struct imgdata *d);
-static int  writejpegfile       (wbp w, char *filename, int x, int y, int width, int height);
+static int  writejpegfile       (char *filename, struct imgdata *imd);
 static int  readjpegfile        (char *fname, struct imgdata *d);
 #endif                                  /* HAVE_LIBJPEG */
 #if HAVE_LIBPNG
 static int readpngdata         (dptr data, struct imgdata *imd);
 static int readpngfile          (char *filename, struct imgdata *imd);
-static int writepngfile         (wbp w, char *filename, int x, int y, int width, int height);
+static int writepngfile         (char *filename, struct imgdata *imd);
 #endif
 #if HAVE_LIBJPEG || HAVE_LIBPNG
 static char *datatofile(dptr data);
@@ -243,20 +243,19 @@ static void linearfilter_impl(int *val, float m, int c)
     if (*val < 0) *val = 0;
     else if (*val > 65535) *val = 65535;
 }
- 
+
 static void linearfilter(struct filter *f)
 {
     int i, j;
     struct imgmem *imem = f->imem;
-    for (j = imem->y; j < imem->y + imem->height; j++) {
-        for (i = imem->x; i < imem->x + imem->width; i++) {
+    for (j = 0; j < imem->height; j++) {
+        for (i = 0; i < imem->width; i++) {
             int r, g, b;
-            gotopixel(imem, i, j);
-            getpixel(imem, &r, &g, &b);
+            getimgmempixel(imem, i, j, &r, &g, &b);
             linearfilter_impl(&r, f->p.linear.mr, f->p.linear.cr);
             linearfilter_impl(&g, f->p.linear.mg, f->p.linear.cg);
             linearfilter_impl(&b, f->p.linear.mb, f->p.linear.cb);
-            setpixel(imem, r, g, b);
+            setimgmempixel(imem, i, j, r, g, b);
         }
     }
 }
@@ -274,15 +273,14 @@ static void shadefilter(struct filter *f)
     parsecolor(getbg(f->w), &bg_r, &bg_g, &bg_b);
 
     bk = grey_band(f->p.shade.nband, bg_r, bg_g, bg_b);
-    for (j = imem->y; j < imem->y + imem->height; j++) {
-        for (i = imem->x; i < imem->x + imem->width; i++) {
+    for (j = 0; j < imem->height; j++) {
+        for (i = 0; i < imem->width; i++) {
             int r, g, b, k, v;
-            gotopixel(imem, i, j);
-            getpixel(imem, &r, &g, &b);
+            getimgmempixel(imem, i, j, &r, &g, &b);
             k = grey_band(f->p.shade.nband, r, g, b);
             if (k != bk) {
                 v = f->p.shade.c + f->p.shade.m * k;
-                setpixel(imem, v, v, v);
+                setimgmempixel(imem, i, j, v, v, v);
             }
         }
     }
@@ -293,16 +291,15 @@ static void coercefilter(struct filter *f)
     int i, j;
     struct imgmem *imem = f->imem;
     struct palentry *pal = palsetup(f->p.coerce.p);
-    for (j = imem->y; j < imem->y + imem->height; j++) {
-        for (i = imem->x; i < imem->x + imem->width; i++) {
+    for (j = 0; j < imem->height; j++) {
+        for (i = 0; i < imem->width; i++) {
             int r, g, b;
             char *s;
             struct palentry *e;
-            gotopixel(imem, i, j);
-            getpixel(imem, &r, &g, &b);
+            getimgmempixel(imem, i, j, &r, &g, &b);
             s = rgbkey(f->p.coerce.p, r, g, b);
             e = pal + (*s & 0xff);
-            setpixel(imem, e->r, e->g, e->b);
+            setimgmempixel(imem, i, j, e->r, e->g, e->b);
         }
     }
 }
@@ -311,12 +308,11 @@ static void invertfilter(struct filter *f)
 {
     int i, j;
     struct imgmem *imem = f->imem;
-    for (j = imem->y; j < imem->y + imem->height; j++) {
-        for (i = imem->x; i < imem->x + imem->width; i++) {
+    for (j = 0; j < imem->height; j++) {
+        for (i = 0; i < imem->width; i++) {
             int r, g, b;
-            gotopixel(imem, i, j);
-            getpixel(imem, &r, &g, &b);
-            setpixel(imem, 65535 - r, 65535 - g, 65535 - b);
+            getimgmempixel(imem, i, j, &r, &g, &b);
+            setimgmempixel(imem, i, j, 65535 - r, 65535 - g, 65535 - b);
         }
     }
 }
@@ -423,17 +419,6 @@ int initimgmem(wbp w, struct imgmem *i, int copy, int clip, int x, int y, int wi
     return 1;
 }
 
-int gotopixel(struct imgmem *imem, int x, int y)
-{
-    if (x >= imem->x && x < imem->x + imem->width &&
-        y >= imem->y && y < imem->y + imem->height) {
-        imem->xoff = x - imem->x;
-        imem->yoff = y - imem->y;
-        return 1;
-    } else
-        return 0;
-}
-
 #if HAVE_LIBJPEG || HAVE_LIBPNG
 /*
  * Write string data to a temporary file.
@@ -536,33 +521,25 @@ void freeimgdata(struct imgdata *imd)
 
 void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
-    int opaque;
     struct imgmem imem;
-    int width, height, i, j;
+    int i, j;
 
-    opaque = isimgdataopaque(imd);
-
-    width = imd->width;
-    height = imd->height;
-
-    if (!initimgmem(w, &imem, opaque ? 0:1, 1, x, y, width, height))
+    if (!initimgmem(w, &imem, !isimgdataopaque(imd), 1, x, y, imd->width, imd->height))
         return;
 
-    for (j = 0; j < height; j++) {
-        for (i = 0; i < width; i++) {
-            if (gotopixel(&imem, x + i, y + j)) {
-                int r, g, b, a;
-                getimgdatapixel(imd, i, j, &r, &g, &b, &a);
-                if (a) {
-                    if (a != 65535) {
-                        int r1, g1, b1;
-                        getpixel(&imem, &r1, &g1, &b1);
-                        r = CombineAlpha(r, r1, a);
-                        g = CombineAlpha(g, g1, a);
-                        b = CombineAlpha(b, b1, a);
-                    }
-                    setpixel(&imem, r, g, b);
+    for (j = 0; j < imem.height; j++) {
+        for (i = 0; i < imem.width; i++) {
+            int r, g, b, a;
+            getimgdatapixel(imd, imem.x - x + i, imem.y - y + j, &r, &g, &b, &a);
+            if (a) {
+                if (a != 65535) {
+                    int r1, g1, b1;
+                    getimgmempixel(&imem, i, j, &r1, &g1, &b1);
+                    r = CombineAlpha(r, r1, a);
+                    g = CombineAlpha(g, g1, a);
+                    b = CombineAlpha(b, b1, a);
                 }
+                setimgmempixel(&imem, i, j, r, g, b);
             }
         }
     }
@@ -1446,16 +1423,15 @@ void my_error_exit (j_common_ptr cinfo)
 }
 
 
-int writejpegfile(wbp w, char *filename, int x, int y, int width,int height)
+int writejpegfile(char *filename, struct imgdata *imd)
 {
-    struct imgmem imem;
     int i, j;
     struct jpeg_compress_struct cinfo;
     struct jpeg_error_mgr jerr;
     int row_stride;		/* physical row width in image buffer */
     int quality;
     FILE *fp;
-    unsigned char *data;
+    unsigned char *data, *p;
 
     fp = fopen(filename, "wb");
     if (!fp) {
@@ -1463,38 +1439,27 @@ int writejpegfile(wbp w, char *filename, int x, int y, int width,int height)
         return Failed;
     }
 
-    MemProtect(data = malloc(width * height * 3));
-
     quality = 95;
     
-    if (initimgmem(w, &imem, 1, 0, x, y, width, height)) {
-        unsigned char *p = data;
-        for (j = y; j < y + height; j++) {
-            for (i = x; i < x + width; i++) {
-                if (gotopixel(&imem, i, j)) {
-                    int r, g, b;
-                    getpixel(&imem, &r, &g, &b);
-                    *p++ = r / 256;
-                    *p++ = g / 256;
-                    *p++ = b / 256;
-                } else {
-                    *p++ = 0;
-                    *p++ = 0;
-                    *p++ = 0;
-                }
-            }
+    MemProtect(data = malloc(imd->width * imd->height * 3));
+    p = data;
+    for (j = 0; j < imd->height; j++) {
+        for (i = 0; i < imd->width; i++) {
+            int r, g, b, a;
+            getimgdatapixel(imd, i, j, &r, &g, &b, &a);
+            *p++ = r / 256;
+            *p++ = g / 256;
+            *p++ = b / 256;
         }
-        freeimgmem(&imem);
-    } else
-        memset(data, 0, width * height * 3);
+    }
 
     cinfo.err = jpeg_std_error(&jerr);
     jpeg_create_compress(&cinfo);
 
     jpeg_stdio_dest(&cinfo, fp);
 
-    cinfo.image_width = width; 	/* image width and height, in pixels */
-    cinfo.image_height = height;
+    cinfo.image_width = imd->width; 	/* image width and height, in pixels */
+    cinfo.image_height = imd->height;
 
     cinfo.input_components = 3;	/* # of color components per pixel */
     cinfo.in_color_space = JCS_RGB; /* colorspace of input image */
@@ -1652,7 +1617,7 @@ static int readpngfile(char *filename, struct imgdata *imd)
 }
 
 
-static int writepngfile(wbp w, char *filename, int x, int y, int width, int height)
+static int writepngfile(char *filename, struct imgdata *imd)
 {
     FILE *fp;
     png_structp png_ptr;
@@ -1660,7 +1625,6 @@ static int writepngfile(wbp w, char *filename, int x, int y, int width, int heig
     png_bytep *row_pointers = 0, p;
     unsigned char *data = 0;
     int i, j;
-    struct imgmem imem;
 
     fp = fopen(filename, "wb");
     if (!fp) {
@@ -1681,46 +1645,34 @@ static int writepngfile(wbp w, char *filename, int x, int y, int width, int heig
     }
 
     png_init_io(png_ptr, fp);
-    png_set_IHDR(png_ptr, info_ptr, width, height,
-                 16, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
+    png_set_IHDR(png_ptr, info_ptr, imd->width, imd->height,
+                 16, PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE,
                  PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
     png_write_info(png_ptr, info_ptr);
 
-    MemProtect(row_pointers = malloc(sizeof(png_bytep) * height));
-    MemProtect(data = malloc(width * height * 6));
+    MemProtect(row_pointers = malloc(sizeof(png_bytep) * imd->height));
+    MemProtect(data = malloc(imd->width * imd->height * 8));
     p = (png_bytep)data;
-    for (i = 0; i < height; ++i) {
+    for (i = 0; i < imd->height; ++i) {
         row_pointers[i] = p;
-        p += 6 * width;
+        p += 8 * imd->width;
     }
 
-    if (initimgmem(w, &imem, 1, 0, x, y, width, height)) {
-        p = (png_bytep)data;
-        for (j = y; j < y + height; j++) {
-            for (i = x; i < x + width; i++) {
-                if (gotopixel(&imem, i, j)) {
-                    int r, g, b;
-                    getpixel(&imem, &r, &g, &b);
-                    *p++ = (r>>8) & 0xff;
-                    *p++ = r & 0xff;
-                    *p++ = (g>>8) & 0xff;
-                    *p++ = g & 0xff;
-                    *p++ = (b>>8) & 0xff;
-                    *p++ = b & 0xff;
-                } else {
-                    *p++ = 0;
-                    *p++ = 0;
-                    *p++ = 0;
-                    *p++ = 0;
-                    *p++ = 0;
-                    *p++ = 0;
-                }
-            }
+    p = (png_bytep)data;
+    for (j = 0; j < imd->height; j++) {
+        for (i = 0; i < imd->width; i++) {
+            int r, g, b, a;
+            getimgdatapixel(imd, i, j, &r, &g, &b, &a);
+            *p++ = (r>>8) & 0xff;
+            *p++ = r & 0xff;
+            *p++ = (g>>8) & 0xff;
+            *p++ = g & 0xff;
+            *p++ = (b>>8) & 0xff;
+            *p++ = b & 0xff;
+            *p++ = (a>>8) & 0xff;
+            *p++ = a & 0xff;
         }
-        freeimgmem(&imem);
-    } else
-        memset(data, 0, width * height * 6);
-
+    }
     png_write_image(png_ptr, row_pointers);
     png_write_end(png_ptr, 0);
     png_destroy_write_struct(&png_ptr, &info_ptr);
@@ -2016,24 +1968,24 @@ int is_gif(dptr data)
             StrLoc(*data)[5] == 'a');
 }
 
-int writeimagefile(wbp w, char *filename, int x, int y, int width, int height)
+int writeimagefile(char *filename, struct imgdata *imd)
 {
     int r;
     struct fileparts *fp;
 
-    if ((r = writeimagefileimpl(w, filename, x, y, width, height)) != NoCvt)
+    if ((r = writeimagefileimpl(filename, imd)) != NoCvt)
         return r;
 
     fp = fparse(filename);
 
 #if HAVE_LIBPNG
     if (strcasecmp(fp->ext, ".png") == 0)
-        return writepngfile(w, filename, x, y, width, height);
+        return writepngfile(filename, imd);
 #endif		
 
 #if HAVE_LIBJPEG
     if (strcasecmp(fp->ext, ".jpg") == 0 || strcasecmp(fp->ext, ".jpeg") == 0)
-        return writejpegfile(w, filename, x, y, width, height);
+        return writejpegfile(filename, imd);
 #endif
 
     LitWhy("Unsupported file type");

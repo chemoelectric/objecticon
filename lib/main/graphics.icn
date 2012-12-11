@@ -163,6 +163,12 @@ class Pixels()
 
    private static native blank_impl(format, width, height)
 
+   #
+   # Encode the image to a file.
+   #
+   public native to_file(fname)
+
+
    # Get the palette entry at index i (0 to 255), as a 4-element list.
    # This and similar methods fails unless the format is PALETTE.
    #
@@ -733,16 +739,6 @@ class Window(NoCopy)
    # the window is closed.
    #
    public native uncouple()
-
-   #
-   # Writes an image of the rectangular area (x,y,w,h) to the file
-   # s. It fails if s cannot be written or if the specified area,
-   # after clipping by the window's edges, has a width or height of
-   # zero. The file is normally written in GIF format, but some forms
-   # of file names may select different formats on some graphics
-   # systems.
-   #
-   public native write_image(s, x, y, w, h)
 
    #
    # Set the window system's selection

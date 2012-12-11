@@ -196,12 +196,11 @@ char *rgbkey         (int p, int r, int g, int b);
    void qmouseevents    (wsp ws, int state, int x, int y, uword t, int mod);
    void wgetevent       (wbp w, dptr res);
    int  readimagefile   (char *filename, struct imgdata *imd);
-   int  writeimagefile  (wbp w, char *filename, int x, int y, int width, int height);
+   int  writeimagefile  (char *filename, struct imgdata *imd);
    int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph);
    int pointargs(wbp w, dptr argv, word *px, word *py);
 
    int  initimgmem      (wbp w, struct imgmem *i, int copy, int clip, int x, int y, int width, int height);
-   int  gotopixel       (struct imgmem *i, int x, int y);
    void drawimgdata     (wbp w, int x, int y, struct imgdata *img);
    void freeimgdata     (struct imgdata *img);
    void getimgdatapixel(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a);
@@ -224,8 +223,8 @@ char *rgbkey         (int p, int r, int g, int b);
     * (excluding those defined as macros for X-windows)
     */
    void loadimgmem       (wbp w, struct imgmem *imem, int copy);
-   void getpixel        (struct imgmem *imem, int *r, int *g, int *b);
-   void setpixel        (struct imgmem *imem, int r, int g, int b);
+   void getimgmempixel        (struct imgmem *imem, int x, int y, int *r, int *g, int *b);
+   void setimgmempixel        (struct imgmem *imem, int x, int y, int r, int g, int b);
    void saveimgmem       (wbp w, struct imgmem *imem);
    void freeimgmem       (struct imgmem *imem);
    int  setpattern      (wbp w, char *name);
@@ -289,7 +288,7 @@ char *rgbkey         (int p, int r, int g, int b);
    int  textwidth       (wbp w, char *s, int n);
    int  utf8width       (wbp w, char *s, int n, int nchars);
    int  readimagefileimpl(char *filename, struct imgdata *imd);
-   int  writeimagefileimpl(wbp w, char *filename, int x, int y, int width, int height);
+   int  writeimagefileimpl(char *filename, struct imgdata *imd);
    int  readimagedataimpl(dptr data, struct imgdata *imd);
    int  settransientfor(wbp w, wbp other);
 

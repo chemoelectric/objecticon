@@ -1528,18 +1528,18 @@ void loadimgmem(wbp w, struct imgmem *imem, int copy)
    FREE_STDLOCALS(w);
 }
 
-void getpixel(struct imgmem *imem, int *r, int *g, int *b)
+void getimgmempixel(struct imgmem *imem, int x, int y, int *r, int *g, int *b)
 {
 
-   COLORREF cr = imem->crp[imem->yoff * imem->width + imem->xoff];
+   COLORREF cr = imem->crp[y * imem->width + x];
    *r = RED(cr)*257;
    *g = GREEN(cr)*257;
    *b = BLUE(cr)*257;
 }
 
-void setpixel(struct imgmem *imem, int r, int g, int b)
+void setimgmempixel(struct imgmem *imem, int x, int y, int r, int g, int b)
 {
-   imem->crp[imem->yoff * imem->width + imem->xoff] = RGB(r/256, g/256, b/256);
+   imem->crp[y * imem->width + x] = RGB(r/256, g/256, b/256);
 }
 
 void saveimgmem(wbp w, struct imgmem *imem)
@@ -2532,7 +2532,7 @@ int  readimagefileimpl(char *filename, struct imgdata *imd)
     return NoCvt;
 }
 
-int  writeimagefileimpl(wbp w, char *filename, int x, int y, int width, int height)
+int  writeimagefileimpl(char *filename, struct imgdata *imd)
 {
     return NoCvt;
 }

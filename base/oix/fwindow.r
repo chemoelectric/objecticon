@@ -631,10 +631,9 @@ function graphics_Window_get_pixels_impl(self, format, x0, y0, w0, h0)
           imd->format = format;
           imd->paltbl = 0;
           MemProtect(imd->data = malloc(getimgdatalength(imd)));
-          for (j = imem.y; j < imem.y + imem.height; j++) {
-              for (i = imem.x; i < imem.x + imem.width; i++) {
-                  gotopixel(&imem, i, j);
-                  getpixel(&imem, &r, &g, &b);
+          for (j = 0; j < imem.height; j++) {
+              for (i = 0; i < imem.width; i++) {
+                  getimgmempixel(&imem, i, j, &r, &g, &b);
                   setimgdatapixel(imd, i, j, r, g, b, 65535);
               }
           }
@@ -1074,6 +1073,19 @@ function graphics_Pixels_set_palette_index(self, x, y, i)
    }
 end
 
+function graphics_Pixels_to_file(self, fname)
+   if !cnv:string(fname) then
+       runerr(103, fname)
+   body {
+      char *s;
+      GetSelfImageData();
+      s = buffstr(&fname);
+      if (writeimagefile(s, self_id) != Succeeded)
+          fail;
+      return self;
+   }
+end
+
 function graphics_Pixels_load_palette(self, pal)
    if !cnv:string(pal) then
        runerr(103, pal)
@@ -1252,26 +1264,6 @@ function graphics_Window_uncouple(self)
       GetSelfW();
       *self_w_dptr = zerodesc;
       freewbinding(self_w);
-      return self;
-   }
-end
-
-function graphics_Window_write_image(self, fname, x0, y0, w0, h0)
-   if !cnv:string(fname) then
-       runerr(103, fname)
-   body {
-      word x, y, width, height;
-      char *s;
-      GetSelfW();
-
-      s = buffstr(&fname);
-
-      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
-          runerr(0);
-
-      if (writeimagefile(self_w, s, x, y, width, height) != Succeeded)
-          fail;
-
       return self;
    }
 end

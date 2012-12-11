@@ -161,7 +161,6 @@ struct imgdata {			/* image loaded from a file */
 
 struct imgmem {
    int x, y, width, height;             /* Pos/dimensions of rectangle being got/set */
-   int xoff, yoff;                      /* Increasing x,y offset within rectangle during looping */
 #if XWindows
    XImage *im;
    struct _wdisplay *wd;
