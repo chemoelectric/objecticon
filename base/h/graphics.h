@@ -150,7 +150,10 @@ typedef struct _wfont {
 #define IMGDATA_AG16       9
 #define IMGDATA_G16        10
 #define IMGDATA_GA32       11
-#define IMGDATA_PALETTE    20
+#define IMGDATA_PALETTE1   21
+#define IMGDATA_PALETTE2   22
+#define IMGDATA_PALETTE4   24
+#define IMGDATA_PALETTE8   28
 
 struct imgdata {			/* image loaded from a file */
    int width, height;			/* image dimensions */

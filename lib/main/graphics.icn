@@ -23,7 +23,10 @@ class Pixels()
       AG16,
       G16,
       GA32,
-      PALETTE
+      PALETTE1,
+      PALETTE2,
+      PALETTE4,
+      PALETTE8
 
    private static init()
       RGB24     :=  1
@@ -37,7 +40,10 @@ class Pixels()
       AG16      :=  9
       G16       :=  10
       GA32      :=  11
-      PALETTE   :=  20
+      PALETTE1  :=  21
+      PALETTE2  :=  22
+      PALETTE4  :=  24
+      PALETTE8  :=  28
    end
 
    # Get the width of the block
@@ -89,7 +95,10 @@ class Pixels()
          AG16: "AG16"
          G16: "G16"
          GA32: "GA32"
-         PALETTE: "PALETTE"
+         PALETTE1: "PALETTE1"
+         PALETTE2: "PALETTE2"
+         PALETTE4: "PALETTE4"
+         PALETTE8: "PALETTE8"
       }
    end
 
@@ -169,8 +178,10 @@ class Pixels()
    public native to_file(fname)
 
 
-   # Get the palette entry at index i (0 to 255), as a 4-element list.
-   # This and similar methods fails unless the format is PALETTE.
+   # Get the palette entry at index i, as a 4-element list.  This and
+   # similar methods fails unless the format is PALETTEx.  The number
+   # of palette entries depends on the format; eg PALETTE4 has 2^4=16
+   # possible entries, indexed 0..15.
    #
    public native get_palette_rgba(i)
 
@@ -204,7 +215,8 @@ class Pixels()
 
    private native clone_impl()
 
-   # Set entries in the palette according to one of the standard palettes (c1,c2 etc).
+   # Set entries in the palette according to one of the standard
+   # palettes (c1,c2 etc).  Only allowed for PALETTE8 format.
    #
    public native load_palette(pal)
 
