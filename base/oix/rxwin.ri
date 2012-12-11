@@ -2191,14 +2191,14 @@ static unsigned long to_pixel(wdp wd, int r, int g, int b)
     }
 }
 
-void getpixel(struct imgmem *imem, int *r, int *g, int *b)
+void getimgmempixel(struct imgmem *imem, int x, int y, int *r, int *g, int *b)
 {
-    from_pixel(imem->wd, XGetPixel(imem->im, imem->xoff, imem->yoff), r, g, b);
+    from_pixel(imem->wd, XGetPixel(imem->im, x, y), r, g, b);
 }
 
-void setpixel(struct imgmem *imem, int r, int g, int b)
+void setimgmempixel(struct imgmem *imem, int x, int y, int r, int g, int b)
 {
-    XPutPixel(imem->im, imem->xoff, imem->yoff, to_pixel(imem->wd, r, g, b));
+    XPutPixel(imem->im, x, y, to_pixel(imem->wd, r, g, b));
 }
 
 void saveimgmem(wbp w, struct imgmem *imem)
@@ -3189,7 +3189,7 @@ int  readimagefileimpl(char *filename, struct imgdata *imd)
     return NoCvt;
 }
 
-int  writeimagefileimpl(wbp w, char *filename, int x, int y, int width, int height)
+int  writeimagefileimpl(char *filename, struct imgdata *imd)
 {
     return NoCvt;
 }

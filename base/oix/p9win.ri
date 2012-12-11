@@ -1148,18 +1148,18 @@ void loadimgmem(wbp w, struct imgmem *imem, int copy)
     }
 }
 
-void getpixel(struct imgmem *imem, int *r, int *g, int *b)
+void getimgmempixel(struct imgmem *imem, int x, int y, int *r, int *g, int *b)
 {
     uchar *p;
-    p = &imem->data[3 * (imem->yoff*imem->width + imem->xoff)];
+    p = &imem->data[3 * (y*imem->width + x)];
     *b = 257 * *p++;
     *g = 257 * *p++;
     *r = 257 * *p++;
 }
 
-void setpixel(struct imgmem *imem, int r, int g, int b)
+void setimgmempixel(struct imgmem *imem, int x, int y, int r, int g, int b)
 {
-    uchar *p = &imem->data[3 * (imem->yoff*imem->width + imem->xoff)];
+    uchar *p = &imem->data[3 * (y*imem->width + x)];
     *p++ = b / 256;
     *p++ = g / 256;
     *p++ = r / 256;
@@ -2244,13 +2244,12 @@ int readimagedataimpl(dptr data, struct imgdata *imd)
     return r;
 }
 
-int writeimagefileimpl(wbp w, char *filename, int x, int y, int width, int height)
+int writeimagefileimpl(char *filename, struct imgdata *imd)
 {
     Memimage *m;
-    int pip[2], pid, fd, ndata;
+    int pip[2], pid, fd, ndata, i, j;
     char *cmd;
-    uchar *data;
-    struct imgmem imem;
+    uchar *data, *p;
     struct fileparts *fp = fparse(filename);
 
     if (strcasecmp(fp->ext, ".png") == 0)
@@ -2270,30 +2269,37 @@ int writeimagefileimpl(wbp w, char *filename, int x, int y, int width, int heigh
         return Failed;
     }
 
-    ndata = 3 * width * height;
-    MemProtect(data = malloc(ndata));
-    if (initimgmem(w, &imem, 1, 0, x, y, width, height)) {
-        int i, j;
-        uchar *p = data;
-        for (j = y; j < y + height; j++) {
-            for (i = x; i < x + width; i++) {
-                if (gotopixel(&imem, i, j)) {
-                    int r, g, b;
-                    getpixel(&imem, &r, &g, &b);
-                    *p++ = b / 256;
-                    *p++ = g / 256;
-                    *p++ = r / 256;
-                } else {
-                    *p++ = 0;
-                    *p++ = 0;
-                    *p++ = 0;
-                }
+    if (1 || isimgdataopaque(imd->format)) {
+        ndata = 3 * imd->width * imd->height;
+        MemProtect(data = malloc(ndata));
+        p = data;
+        for (j = 0; j < imd->height; j++) {
+            for (i = 0; i < imd->width; i++) {
+                int r, g, b, a;
+                getimgdatapixel(imd, i, j, &r, &g, &b, &a);
+                *p++ = b / 256;
+                *p++ = g / 256;
+                *p++ = r / 256;
             }
         }
-    } else
-        memset(data, 0, ndata);
-
-    MemProtect(m = allocmemimage(Rect(0, 0, width, height), RGB24));
+        MemProtect(m = allocmemimage(Rect(0, 0, imd->width, imd->height), RGB24));
+    } else {
+        /* This doesn't work properly for some reason, muddling colour and transparency up. */
+        ndata = 4 * imd->width * imd->height;
+        MemProtect(data = malloc(ndata));
+        p = data;
+        for (j = 0; j < imd->height; j++) {
+            for (i = 0; i < imd->width; i++) {
+                int r, g, b, a;
+                getimgdatapixel(imd, i, j, &r, &g, &b, &a);
+                *p++ = b / 256;
+                *p++ = g / 256;
+                *p++ = r / 256;
+                *p++ = a / 256;
+            }
+        }
+        MemProtect(m = allocmemimage(Rect(0, 0, imd->width, imd->height), ARGB32));
+    }
     loadmemimage(m, m->r, data, ndata);
     free(data);
 

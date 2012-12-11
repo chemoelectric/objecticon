@@ -206,7 +206,7 @@ procedure parse_image_string(s, W)
       if *data = 0 | *data % width ~= 0 then
          return error("Wrong number of image characters")
       height := *data / width
-      q := Pixels.blank(Pixels.PALETTE, width, height).
+      q := Pixels.blank(Pixels.PALETTE8, width, height).
          set_data(data)
       # Add chars from palette, if specified.
       if \pal then {

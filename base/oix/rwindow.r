@@ -19,13 +19,13 @@ wbp wbndngs = NULL;
 
 #if HAVE_LIBJPEG
 static int  readjpegdata       (dptr data, struct imgdata *d);
-static int  writejpegfile       (wbp w, char *filename, int x, int y, int width, int height);
+static int  writejpegfile       (char *filename, struct imgdata *imd);
 static int  readjpegfile        (char *fname, struct imgdata *d);
 #endif                                  /* HAVE_LIBJPEG */
 #if HAVE_LIBPNG
 static int readpngdata         (dptr data, struct imgdata *imd);
 static int readpngfile          (char *filename, struct imgdata *imd);
-static int writepngfile         (wbp w, char *filename, int x, int y, int width, int height);
+static int writepngfile         (char *filename, struct imgdata *imd);
 #endif
 #if HAVE_LIBJPEG || HAVE_LIBPNG
 static char *datatofile(dptr data);
@@ -243,20 +243,19 @@ static void linearfilter_impl(int *val, float m, int c)
     if (*val < 0) *val = 0;
     else if (*val > 65535) *val = 65535;
 }
- 
+
 static void linearfilter(struct filter *f)
 {
     int i, j;
     struct imgmem *imem = f->imem;
-    for (j = imem->y; j < imem->y + imem->height; j++) {
-        for (i = imem->x; i < imem->x + imem->width; i++) {
+    for (j = 0; j < imem->height; j++) {
+        for (i = 0; i < imem->width; i++) {
             int r, g, b;
-            gotopixel(imem, i, j);
-            getpixel(imem, &r, &g, &b);
+            getimgmempixel(imem, i, j, &r, &g, &b);
             linearfilter_impl(&r, f->p.linear.mr, f->p.linear.cr);
             linearfilter_impl(&g, f->p.linear.mg, f->p.linear.cg);
             linearfilter_impl(&b, f->p.linear.mb, f->p.linear.cb);
-            setpixel(imem, r, g, b);
+            setimgmempixel(imem, i, j, r, g, b);
         }
     }
 }
@@ -274,15 +273,14 @@ static void shadefilter(struct filter *f)
     parsecolor(getbg(f->w), &bg_r, &bg_g, &bg_b);
 
     bk = grey_band(f->p.shade.nband, bg_r, bg_g, bg_b);
-    for (j = imem->y; j < imem->y + imem->height; j++) {
-        for (i = imem->x; i < imem->x + imem->width; i++) {
+    for (j = 0; j < imem->height; j++) {
+        for (i = 0; i < imem->width; i++) {
             int r, g, b, k, v;
-            gotopixel(imem, i, j);
-            getpixel(imem, &r, &g, &b);
+            getimgmempixel(imem, i, j, &r, &g, &b);
             k = grey_band(f->p.shade.nband, r, g, b);
             if (k != bk) {
                 v = f->p.shade.c + f->p.shade.m * k;
-                setpixel(imem, v, v, v);
+                setimgmempixel(imem, i, j, v, v, v);
             }
         }
     }
@@ -293,16 +291,15 @@ static void coercefilter(struct filter *f)
     int i, j;
     struct imgmem *imem = f->imem;
     struct palentry *pal = palsetup(f->p.coerce.p);
-    for (j = imem->y; j < imem->y + imem->height; j++) {
-        for (i = imem->x; i < imem->x + imem->width; i++) {
+    for (j = 0; j < imem->height; j++) {
+        for (i = 0; i < imem->width; i++) {
             int r, g, b;
             char *s;
             struct palentry *e;
-            gotopixel(imem, i, j);
-            getpixel(imem, &r, &g, &b);
+            getimgmempixel(imem, i, j, &r, &g, &b);
             s = rgbkey(f->p.coerce.p, r, g, b);
             e = pal + (*s & 0xff);
-            setpixel(imem, e->r, e->g, e->b);
+            setimgmempixel(imem, i, j, e->r, e->g, e->b);
         }
     }
 }
@@ -311,12 +308,11 @@ static void invertfilter(struct filter *f)
 {
     int i, j;
     struct imgmem *imem = f->imem;
-    for (j = imem->y; j < imem->y + imem->height; j++) {
-        for (i = imem->x; i < imem->x + imem->width; i++) {
+    for (j = 0; j < imem->height; j++) {
+        for (i = 0; i < imem->width; i++) {
             int r, g, b;
-            gotopixel(imem, i, j);
-            getpixel(imem, &r, &g, &b);
-            setpixel(imem, 65535 - r, 65535 - g, 65535 - b);
+            getimgmempixel(imem, i, j, &r, &g, &b);
+            setimgmempixel(imem, i, j, 65535 - r, 65535 - g, 65535 - b);
         }
     }
 }
@@ -423,17 +419,6 @@ int initimgmem(wbp w, struct imgmem *i, int copy, int clip, int x, int y, int wi
     return 1;
 }
 
-int gotopixel(struct imgmem *imem, int x, int y)
-{
-    if (x >= imem->x && x < imem->x + imem->width &&
-        y >= imem->y && y < imem->y + imem->height) {
-        imem->xoff = x - imem->x;
-        imem->yoff = y - imem->y;
-        return 1;
-    } else
-        return 0;
-}
-
 #if HAVE_LIBJPEG || HAVE_LIBPNG
 /*
  * Write string data to a temporary file.
@@ -536,33 +521,25 @@ void freeimgdata(struct imgdata *imd)
 
 void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
-    int opaque;
     struct imgmem imem;
-    int width, height, i, j;
+    int i, j;
 
-    opaque = isimgdataopaque(imd);
-
-    width = imd->width;
-    height = imd->height;
-
-    if (!initimgmem(w, &imem, opaque ? 0:1, 1, x, y, width, height))
+    if (!initimgmem(w, &imem, !isimgdataopaque(imd->format), 1, x, y, imd->width, imd->height))
         return;
 
-    for (j = 0; j < height; j++) {
-        for (i = 0; i < width; i++) {
-            if (gotopixel(&imem, x + i, y + j)) {
-                int r, g, b, a;
-                getimgdatapixel(imd, i, j, &r, &g, &b, &a);
-                if (a) {
-                    if (a != 65535) {
-                        int r1, g1, b1;
-                        getpixel(&imem, &r1, &g1, &b1);
-                        r = CombineAlpha(r, r1, a);
-                        g = CombineAlpha(g, g1, a);
-                        b = CombineAlpha(b, b1, a);
-                    }
-                    setpixel(&imem, r, g, b);
+    for (j = 0; j < imem.height; j++) {
+        for (i = 0; i < imem.width; i++) {
+            int r, g, b, a;
+            getimgdatapixel(imd, imem.x - x + i, imem.y - y + j, &r, &g, &b, &a);
+            if (a) {
+                if (a != 65535) {
+                    int r1, g1, b1;
+                    getimgmempixel(&imem, i, j, &r1, &g1, &b1);
+                    r = CombineAlpha(r, r1, a);
+                    g = CombineAlpha(g, g1, a);
+                    b = CombineAlpha(b, b1, a);
                 }
+                setimgmempixel(&imem, i, j, r, g, b);
             }
         }
     }
@@ -574,94 +551,202 @@ void getimgdatapixel(struct imgdata *imd, int x, int y, int *r, int *g, int *b, 
 {
     unsigned char *s;
     switch (imd->format) {
-        case IMGDATA_PALETTE: {
-            struct palentry *pe;
-            s = imd->data + 1 * (imd->width * y + x);
-            pe = &imd->paltbl[*s];
+        case IMGDATA_PALETTE1:
+        case IMGDATA_PALETTE2:
+        case IMGDATA_PALETTE4:
+        case IMGDATA_PALETTE8: {
+            struct palentry *pe = &imd->paltbl[getimgdatapaletteindex(imd, x, y)];
             *r = pe->r;
             *g = pe->g;
             *b = pe->b;
             *a = pe->a;
             break;
         }
-        case IMGDATA_RGB24:
-            s = imd->data + 3 * (imd->width * y + x);
+        case IMGDATA_RGB24: {
+            int n = imd->width * y + x;
+            s = imd->data + 3 * n;
             *r = 257 * (*s++);
             *g = 257 * (*s++);
             *b = 257 * (*s++);
             *a = 65535;
+            break;
+        }
+        case IMGDATA_BGR24: {
+            int n = imd->width * y + x;
+            s = imd->data + 3 * n;
+            *b = 257 * (*s++);
+            *g = 257 * (*s++);
+            *r = 257 * (*s++);
+            *a = 65535;
+            break;
+        }
+        case IMGDATA_RGBA32: {
+            int n = imd->width * y + x;
+            s = imd->data + 4 * n;
+            *r = 257 * (*s++);
+            *g = 257 * (*s++);
+            *b = 257 * (*s++);
+            *a = 257 * (*s++);
+            break;
+        }
+        case IMGDATA_ABGR32: {
+            int n = imd->width * y + x;
+            s = imd->data + 4 * n;
+            *a = 257 * (*s++);
+            *b = 257 * (*s++);
+            *g = 257 * (*s++);
+            *r = 257 * (*s++);
+            break;
+        }
+        case IMGDATA_RGB48: {
+            int n = imd->width * y + x;
+            s = imd->data + 6 * n;
+            *r = *s++;
+            *r = *r<<8|*s++;
+            *g = *s++;
+            *g = *g<<8|*s++;
+            *b = *s++;
+            *b = *b<<8|*s++;
+            *a = 65535;
+            break;
+        }
+        case IMGDATA_RGBA64: {
+            int n = imd->width * y + x;
+            s = imd->data + 8 * n;
+            *r = *s++;
+            *r = *r<<8|*s++;
+            *g = *s++;
+            *g = *g<<8|*s++;
+            *b = *s++;
+            *b = *b<<8|*s++;
+            *a = *s++;
+            *a = *a<<8|*s++;
+            break;
+        }
+        case IMGDATA_G8: {
+            int n = imd->width * y + x;
+            s = imd->data + n;
+            *r = *g = *b = 257 * (*s++);
+            *a = 65535;
+            break;
+        }
+        case IMGDATA_GA16: {
+            int n = imd->width * y + x;
+            s = imd->data + 2 * n;
+            *r = *g = *b = 257 * (*s++);
+            *a = 257 * (*s++);
+            break;
+        }
+        case IMGDATA_AG16: {
+            int n = imd->width * y + x;
+            s = imd->data + 2 * n;
+            *a = 257 * (*s++);
+            *r = *g = *b = 257 * (*s++);
+            break;
+        }
+        case IMGDATA_G16: {
+            int n = imd->width * y + x;
+            s = imd->data + 2 * n;
+            *r = *s++;
+            *r = *r<<8|*s++;
+            *g = *b = *r;
+            *a = 65535;
+            break;
+        }
+        case IMGDATA_GA32: {
+            int n = imd->width * y + x;
+            s = imd->data + 4 * n;
+            *r = *s++;
+            *r = *r<<8|*s++;
+            *g = *b = *r;
+            *a = *s++;
+            *a = *a<<8|*s++;
+            break;
+        }
+        default:
+            syserr("Unknown image format");
+            break;
+    }
+}
+
+void setimgdatapixel(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
+{
+    unsigned char *s;
+    int gr, n = imd->width * y + x;
+    switch (imd->format) {
+        case IMGDATA_RGB24:
+            s = imd->data + 3 * n;
+            *s++ = r / 256;
+            *s++ = g / 256;
+            *s++ = b / 256;
             break;
         case IMGDATA_BGR24:
-            s = imd->data + 3 * (imd->width * y + x);
-            *b = 257 * (*s++);
-            *g = 257 * (*s++);
-            *r = 257 * (*s++);
-            *a = 65535;
+            s = imd->data + 3 * n;
+            *s++ = b / 256;
+            *s++ = g / 256;
+            *s++ = r / 256;
             break;
         case IMGDATA_RGBA32:
-            s = imd->data + 4 * (imd->width * y + x);
-            *r = 257 * (*s++);
-            *g = 257 * (*s++);
-            *b = 257 * (*s++);
-            *a = 257 * (*s++);
+            s = imd->data + 4 * n;
+            *s++ = r / 256;
+            *s++ = g / 256;
+            *s++ = b / 256;
+            *s++ = a / 256;
             break;
         case IMGDATA_ABGR32:
-            s = imd->data + 4 * (imd->width * y + x);
-            *a = 257 * (*s++);
-            *b = 257 * (*s++);
-            *g = 257 * (*s++);
-            *r = 257 * (*s++);
+            s = imd->data + 4 * n;
+            *s++ = a / 256;
+            *s++ = b / 256;
+            *s++ = g / 256;
+            *s++ = r / 256;
             break;
         case IMGDATA_RGB48:
-            s = imd->data + 6 * (imd->width * y + x);
-            *r = *s++;
-            *r = *r<<8|*s++;
-            *g = *s++;
-            *g = *g<<8|*s++;
-            *b = *s++;
-            *b = *b<<8|*s++;
-            *a = 65535;
+            s = imd->data + 6 * n;
+            *s++ = r / 256;
+            *s++ = r % 256;
+            *s++ = g / 256;
+            *s++ = g % 256;
+            *s++ = b / 256;
+            *s++ = b % 256;
             break;
         case IMGDATA_RGBA64:
-            s = imd->data + 8 * (imd->width * y + x);
-            *r = *s++;
-            *r = *r<<8|*s++;
-            *g = *s++;
-            *g = *g<<8|*s++;
-            *b = *s++;
-            *b = *b<<8|*s++;
-            *a = *s++;
-            *a = *a<<8|*s++;
+            s = imd->data + 8 * n;
+            *s++ = r / 256;
+            *s++ = r % 256;
+            *s++ = g / 256;
+            *s++ = g % 256;
+            *s++ = b / 256;
+            *s++ = b % 256;
+            *s++ = a / 256;
+            *s++ = a % 256;
             break;
         case IMGDATA_G8:
-            s = imd->data + 1 * (imd->width * y + x);
-            *r = *g = *b = 257 * (*s++);
-            *a = 65535;
+            s = imd->data + n;
+            *s++ = (0.299 * r + 0.587 * g + 0.114 * b) / 256;
             break;
         case IMGDATA_GA16:
-            s = imd->data + 2 * (imd->width * y + x);
-            *r = *g = *b = 257 * (*s++);
-            *a = 257 * (*s++);
+            s = imd->data + 2 * n;
+            *s++ = (0.299 * r + 0.587 * g + 0.114 * b) / 256;
+            *s++ = a / 256;
             break;
         case IMGDATA_AG16:
-            s = imd->data + 2 * (imd->width * y + x);
-            *a = 257 * (*s++);
-            *r = *g = *b = 257 * (*s++);
+            s = imd->data + 2 * n;
+            *s++ = a / 256;
+            *s++ = (0.299 * r + 0.587 * g + 0.114 * b) / 256;
             break;
         case IMGDATA_G16:
-            s = imd->data + 2 * (imd->width * y + x);
-            *r = *s++;
-            *r = *r<<8|*s++;
-            *g = *b = *r;
-            *a = 65535;
+            s = imd->data + 2 * n;
+            gr = (int)(0.299 * r + 0.587 * g + 0.114 * b);
+            *s++ =  gr / 256;
+            *s++ =  gr % 256;
             break;
         case IMGDATA_GA32:
-            s = imd->data + 4 * (imd->width * y + x);
-            *r = *s++;
-            *r = *r<<8|*s++;
-            *g = *b = *r;
-            *a = *s++;
-            *a = *a<<8|*s++;
+            s = imd->data + 4 * n;
+            gr = (int)(0.299 * r + 0.587 * g + 0.114 * b);
+            *s++ =  gr / 256;
+            *s++ =  gr % 256;
+            *s++ = a / 256;
+            *s++ = a % 256;
             break;
         default:
             syserr("Unknown image format");
@@ -669,100 +754,65 @@ void getimgdatapixel(struct imgdata *imd, int x, int y, int *r, int *g, int *b, 
     }
 }
 
-int setimgdatapixel(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
+int getimgdatapaletteindex(struct imgdata *imd, int x, int y)
 {
     unsigned char *s;
-    int gr;
+    int n = imd->width * y + x;
     switch (imd->format) {
-        case IMGDATA_PALETTE:
+        case IMGDATA_PALETTE1:
+            s = imd->data + n / 8;
+            return (*s >> (n % 8)) & 1;
+        case IMGDATA_PALETTE2:
+            s = imd->data + n / 4;
+            return (*s >> 2 * (n % 4)) & 3;
+        case IMGDATA_PALETTE4:
+            s = imd->data + n / 2;
+            return (*s >> 4 * (n % 2)) & 15;
             return 0;
+        case IMGDATA_PALETTE8:
+            s = imd->data + n;
+            return *s;
+        default:
+            syserr("Unknown image format");
+            return 0;
+    }
+}
 
-        case IMGDATA_RGB24:
-            s = imd->data + 3 * (imd->width * y + x);
-            *s++ = r / 256;
-            *s++ = g / 256;
-            *s++ = b / 256;
+void setimgdatapaletteindex(struct imgdata *imd, int x, int y, int i)
+{
+    unsigned char *s;
+    int n = imd->width * y + x;
+    switch (imd->format) {
+        case IMGDATA_PALETTE1:
+            s = imd->data + n / 8;
+            *s = (*s & ~(1 << (n % 8))) | (i << (n % 8));
             break;
-        case IMGDATA_BGR24:
-            s = imd->data + 3 * (imd->width * y + x);
-            *s++ = b / 256;
-            *s++ = g / 256;
-            *s++ = r / 256;
+        case IMGDATA_PALETTE2:
+            s = imd->data + n / 4;
+            *s = (*s & ~(3 << 2 * (n % 4))) | (i << 2 * (n % 4));
             break;
-        case IMGDATA_RGBA32:
-            s = imd->data + 4 * (imd->width * y + x);
-            *s++ = r / 256;
-            *s++ = g / 256;
-            *s++ = b / 256;
-            *s++ = a / 256;
+        case IMGDATA_PALETTE4:
+            s = imd->data + n / 2;
+            *s = (*s & ~(15 << 4 * (n % 2))) | (i << 4 * (n % 2));
             break;
-        case IMGDATA_ABGR32:
-            s = imd->data + 4 * (imd->width * y + x);
-            *s++ = a / 256;
-            *s++ = b / 256;
-            *s++ = g / 256;
-            *s++ = r / 256;
-            break;
-        case IMGDATA_RGB48:
-            s = imd->data + 6 * (imd->width * y + x);
-            *s++ = r / 256;
-            *s++ = r % 256;
-            *s++ = g / 256;
-            *s++ = g % 256;
-            *s++ = b / 256;
-            *s++ = b % 256;
-            break;
-        case IMGDATA_RGBA64:
-            s = imd->data + 8 * (imd->width * y + x);
-            *s++ = r / 256;
-            *s++ = r % 256;
-            *s++ = g / 256;
-            *s++ = g % 256;
-            *s++ = b / 256;
-            *s++ = b % 256;
-            *s++ = a / 256;
-            *s++ = a % 256;
-            break;
-        case IMGDATA_G8:
-            s = imd->data + 1 * (imd->width * y + x);
-            *s++ = (0.299 * r + 0.587 * g + 0.114 * b) / 256;
-            break;
-        case IMGDATA_GA16:
-            s = imd->data + 2 * (imd->width * y + x);
-            *s++ = (0.299 * r + 0.587 * g + 0.114 * b) / 256;
-            *s++ = a / 256;
-            break;
-        case IMGDATA_AG16:
-            s = imd->data + 2 * (imd->width * y + x);
-            *s++ = a / 256;
-            *s++ = (0.299 * r + 0.587 * g + 0.114 * b) / 256;
-            break;
-        case IMGDATA_G16:
-            s = imd->data + 2 * (imd->width * y + x);
-            gr = (int)(0.299 * r + 0.587 * g + 0.114 * b);
-            *s++ =  gr / 256;
-            *s++ =  gr % 256;
-            break;
-        case IMGDATA_GA32:
-            s = imd->data + 4 * (imd->width * y + x);
-            gr = (int)(0.299 * r + 0.587 * g + 0.114 * b);
-            *s++ =  gr / 256;
-            *s++ =  gr % 256;
-            *s++ = a / 256;
-            *s++ = a % 256;
+        case IMGDATA_PALETTE8:
+            s = imd->data + n;
+            *s = (unsigned char)i;
             break;
         default:
             syserr("Unknown image format");
             break;
     }
-    return 1;
 }
 
 int validimgdataformat(int format)
 {
     switch (format) {
+        case IMGDATA_PALETTE1:
+        case IMGDATA_PALETTE2:
+        case IMGDATA_PALETTE4:
+        case IMGDATA_PALETTE8:
         case IMGDATA_G8:
-        case IMGDATA_PALETTE:
         case IMGDATA_GA16:
         case IMGDATA_AG16:
         case IMGDATA_G16:
@@ -783,8 +833,14 @@ int getimgdatalength(struct imgdata *imd)
 {
     int n = imd->width * imd->height;
     switch (imd->format) {
+        case IMGDATA_PALETTE1:
+            return 1 + n/8;
+        case IMGDATA_PALETTE2:
+            return 1 + n/4;
+        case IMGDATA_PALETTE4:
+            return 1 + n/2;
         case IMGDATA_G8:
-        case IMGDATA_PALETTE:
+        case IMGDATA_PALETTE8:
             return n;
         case IMGDATA_GA16:
         case IMGDATA_AG16:
@@ -807,10 +863,13 @@ int getimgdatalength(struct imgdata *imd)
     }
 }
 
-int isimgdataopaque(struct imgdata *imd)
+int isimgdataopaque(int format)
 {
-    switch (imd->format) {
-        case IMGDATA_PALETTE:
+    switch (format) {
+        case IMGDATA_PALETTE1:
+        case IMGDATA_PALETTE2:
+        case IMGDATA_PALETTE4:
+        case IMGDATA_PALETTE8:
         case IMGDATA_GA16:
         case IMGDATA_AG16:
         case IMGDATA_RGBA32:
@@ -830,6 +889,34 @@ int isimgdataopaque(struct imgdata *imd)
     }
 }
 
+int imgdatapalettesize(int format)
+{
+    switch (format) {
+        case IMGDATA_PALETTE1:
+            return 2;
+        case IMGDATA_PALETTE2:
+            return 4;
+        case IMGDATA_PALETTE4:
+            return 16;
+        case IMGDATA_PALETTE8:
+            return 256;
+        case IMGDATA_GA16:
+        case IMGDATA_AG16:
+        case IMGDATA_RGBA32:
+        case IMGDATA_ABGR32:
+        case IMGDATA_GA32:
+        case IMGDATA_RGBA64:
+        case IMGDATA_G8:
+        case IMGDATA_G16:
+        case IMGDATA_RGB24:
+        case IMGDATA_BGR24:
+        case IMGDATA_RGB48:
+            return 0;
+        default:
+            syserr("Unknown image format");
+            return 0;
+    }
+}
 
 /*
  *  Functions and data for reading and writing GIF and JPEG images
@@ -941,7 +1028,7 @@ static int readgiffile(char *filename, struct imgdata *imd)
     imd->height = gf_height;
     imd->paltbl = gf_paltbl;
     imd->data = gf_string;
-    imd->format = IMGDATA_PALETTE;
+    imd->format = IMGDATA_PALETTE8;
 
     return Succeeded;				/* return success */
 }
@@ -983,7 +1070,7 @@ static int readgifdata(dptr data, struct imgdata *imd)
     imd->height = gf_height;
     imd->paltbl = gf_paltbl;
     imd->data = gf_string;
-    imd->format = IMGDATA_PALETTE;
+    imd->format = IMGDATA_PALETTE8;
 
     return Succeeded;				/* return success */
 }
@@ -1446,16 +1533,15 @@ void my_error_exit (j_common_ptr cinfo)
 }
 
 
-int writejpegfile(wbp w, char *filename, int x, int y, int width,int height)
+int writejpegfile(char *filename, struct imgdata *imd)
 {
-    struct imgmem imem;
     int i, j;
     struct jpeg_compress_struct cinfo;
     struct jpeg_error_mgr jerr;
     int row_stride;		/* physical row width in image buffer */
     int quality;
     FILE *fp;
-    unsigned char *data;
+    unsigned char *data, *p;
 
     fp = fopen(filename, "wb");
     if (!fp) {
@@ -1463,38 +1549,27 @@ int writejpegfile(wbp w, char *filename, int x, int y, int width,int height)
         return Failed;
     }
 
-    MemProtect(data = malloc(width * height * 3));
-
     quality = 95;
     
-    if (initimgmem(w, &imem, 1, 0, x, y, width, height)) {
-        unsigned char *p = data;
-        for (j = y; j < y + height; j++) {
-            for (i = x; i < x + width; i++) {
-                if (gotopixel(&imem, i, j)) {
-                    int r, g, b;
-                    getpixel(&imem, &r, &g, &b);
-                    *p++ = r / 256;
-                    *p++ = g / 256;
-                    *p++ = b / 256;
-                } else {
-                    *p++ = 0;
-                    *p++ = 0;
-                    *p++ = 0;
-                }
-            }
+    MemProtect(data = malloc(imd->width * imd->height * 3));
+    p = data;
+    for (j = 0; j < imd->height; j++) {
+        for (i = 0; i < imd->width; i++) {
+            int r, g, b, a;
+            getimgdatapixel(imd, i, j, &r, &g, &b, &a);
+            *p++ = r / 256;
+            *p++ = g / 256;
+            *p++ = b / 256;
         }
-        freeimgmem(&imem);
-    } else
-        memset(data, 0, width * height * 3);
+    }
 
     cinfo.err = jpeg_std_error(&jerr);
     jpeg_create_compress(&cinfo);
 
     jpeg_stdio_dest(&cinfo, fp);
 
-    cinfo.image_width = width; 	/* image width and height, in pixels */
-    cinfo.image_height = height;
+    cinfo.image_width = imd->width; 	/* image width and height, in pixels */
+    cinfo.image_height = imd->height;
 
     cinfo.input_components = 3;	/* # of color components per pixel */
     cinfo.in_color_space = JCS_RGB; /* colorspace of input image */
@@ -1652,7 +1727,7 @@ static int readpngfile(char *filename, struct imgdata *imd)
 }
 
 
-static int writepngfile(wbp w, char *filename, int x, int y, int width, int height)
+static int writepngfile(char *filename, struct imgdata *imd)
 {
     FILE *fp;
     png_structp png_ptr;
@@ -1660,7 +1735,6 @@ static int writepngfile(wbp w, char *filename, int x, int y, int width, int heig
     png_bytep *row_pointers = 0, p;
     unsigned char *data = 0;
     int i, j;
-    struct imgmem imem;
 
     fp = fopen(filename, "wb");
     if (!fp) {
@@ -1681,46 +1755,62 @@ static int writepngfile(wbp w, char *filename, int x, int y, int width, int heig
     }
 
     png_init_io(png_ptr, fp);
-    png_set_IHDR(png_ptr, info_ptr, width, height,
-                 16, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
-                 PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
-    png_write_info(png_ptr, info_ptr);
 
-    MemProtect(row_pointers = malloc(sizeof(png_bytep) * height));
-    MemProtect(data = malloc(width * height * 6));
-    p = (png_bytep)data;
-    for (i = 0; i < height; ++i) {
-        row_pointers[i] = p;
-        p += 6 * width;
-    }
+    if (isimgdataopaque(imd->format)) {
+        png_set_IHDR(png_ptr, info_ptr, imd->width, imd->height,
+                     16, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
+                     PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+        png_write_info(png_ptr, info_ptr);
 
-    if (initimgmem(w, &imem, 1, 0, x, y, width, height)) {
+        MemProtect(row_pointers = malloc(sizeof(png_bytep) * imd->height));
+        MemProtect(data = malloc(imd->width * imd->height * 6));
         p = (png_bytep)data;
-        for (j = y; j < y + height; j++) {
-            for (i = x; i < x + width; i++) {
-                if (gotopixel(&imem, i, j)) {
-                    int r, g, b;
-                    getpixel(&imem, &r, &g, &b);
-                    *p++ = (r>>8) & 0xff;
-                    *p++ = r & 0xff;
-                    *p++ = (g>>8) & 0xff;
-                    *p++ = g & 0xff;
-                    *p++ = (b>>8) & 0xff;
-                    *p++ = b & 0xff;
-                } else {
-                    *p++ = 0;
-                    *p++ = 0;
-                    *p++ = 0;
-                    *p++ = 0;
-                    *p++ = 0;
-                    *p++ = 0;
-                }
+        for (i = 0; i < imd->height; ++i) {
+            row_pointers[i] = p;
+            p += 6 * imd->width;
+        }
+        p = (png_bytep)data;
+        for (j = 0; j < imd->height; j++) {
+            for (i = 0; i < imd->width; i++) {
+                int r, g, b, a;
+                getimgdatapixel(imd, i, j, &r, &g, &b, &a);
+                *p++ = (r>>8) & 0xff;
+                *p++ = r & 0xff;
+                *p++ = (g>>8) & 0xff;
+                *p++ = g & 0xff;
+                *p++ = (b>>8) & 0xff;
+                *p++ = b & 0xff;
             }
         }
-        freeimgmem(&imem);
-    } else
-        memset(data, 0, width * height * 6);
+    } else {
+        png_set_IHDR(png_ptr, info_ptr, imd->width, imd->height,
+                     16, PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE,
+                     PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+        png_write_info(png_ptr, info_ptr);
 
+        MemProtect(row_pointers = malloc(sizeof(png_bytep) * imd->height));
+        MemProtect(data = malloc(imd->width * imd->height * 8));
+        p = (png_bytep)data;
+        for (i = 0; i < imd->height; ++i) {
+            row_pointers[i] = p;
+            p += 8 * imd->width;
+        }
+        p = (png_bytep)data;
+        for (j = 0; j < imd->height; j++) {
+            for (i = 0; i < imd->width; i++) {
+                int r, g, b, a;
+                getimgdatapixel(imd, i, j, &r, &g, &b, &a);
+                *p++ = (r>>8) & 0xff;
+                *p++ = r & 0xff;
+                *p++ = (g>>8) & 0xff;
+                *p++ = g & 0xff;
+                *p++ = (b>>8) & 0xff;
+                *p++ = b & 0xff;
+                *p++ = (a>>8) & 0xff;
+                *p++ = a & 0xff;
+            }
+        }
+    }
     png_write_image(png_ptr, row_pointers);
     png_write_end(png_ptr, 0);
     png_destroy_write_struct(&png_ptr, &info_ptr);
@@ -2016,24 +2106,24 @@ int is_gif(dptr data)
             StrLoc(*data)[5] == 'a');
 }
 
-int writeimagefile(wbp w, char *filename, int x, int y, int width, int height)
+int writeimagefile(char *filename, struct imgdata *imd)
 {
     int r;
     struct fileparts *fp;
 
-    if ((r = writeimagefileimpl(w, filename, x, y, width, height)) != NoCvt)
+    if ((r = writeimagefileimpl(filename, imd)) != NoCvt)
         return r;
 
     fp = fparse(filename);
 
 #if HAVE_LIBPNG
     if (strcasecmp(fp->ext, ".png") == 0)
-        return writepngfile(w, filename, x, y, width, height);
+        return writepngfile(filename, imd);
 #endif		
 
 #if HAVE_LIBJPEG
     if (strcasecmp(fp->ext, ".jpg") == 0 || strcasecmp(fp->ext, ".jpeg") == 0)
-        return writejpegfile(w, filename, x, y, width, height);
+        return writejpegfile(filename, imd);
 #endif
 
     LitWhy("Unsupported file type");

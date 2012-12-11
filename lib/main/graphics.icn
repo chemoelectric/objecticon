@@ -23,7 +23,10 @@ class Pixels()
       AG16,
       G16,
       GA32,
-      PALETTE
+      PALETTE1,
+      PALETTE2,
+      PALETTE4,
+      PALETTE8
 
    private static init()
       RGB24     :=  1
@@ -37,7 +40,10 @@ class Pixels()
       AG16      :=  9
       G16       :=  10
       GA32      :=  11
-      PALETTE   :=  20
+      PALETTE1  :=  21
+      PALETTE2  :=  22
+      PALETTE4  :=  24
+      PALETTE8  :=  28
    end
 
    # Get the width of the block
@@ -73,6 +79,28 @@ class Pixels()
    # Get the format of the underlying data, which will be one of the constant values listed above.
    #
    public native get_format()
+
+   # Get the format, as a string.
+   #
+   public get_format_str()
+      return case get_format() of {
+         RGB24: "RGB24"
+         BGR24: "BGR24"
+         RGBA32: "RGBA32"
+         ABGR32: "ABGR32"
+         RGB48: "RGB48"
+         RGBA64: "RGBA64"
+         G8: "G8"
+         GA16: "GA16"
+         AG16: "AG16"
+         G16: "G16"
+         GA32: "GA32"
+         PALETTE1: "PALETTE1"
+         PALETTE2: "PALETTE2"
+         PALETTE4: "PALETTE4"
+         PALETTE8: "PALETTE8"
+      }
+   end
 
    # Get the raw underlying data as a string.
    #
@@ -144,8 +172,16 @@ class Pixels()
 
    private static native blank_impl(format, width, height)
 
-   # Get the palette entry at index i (0 to 255), as a 4-element list.
-   # This and similar methods fails unless the format is PALETTE.
+   #
+   # Encode the image to a file.
+   #
+   public native to_file(fname)
+
+
+   # Get the palette entry at index i, as a 4-element list.  This and
+   # similar methods fails unless the format is PALETTEx.  The number
+   # of palette entries depends on the format; eg PALETTE4 has 2^4=16
+   # possible entries, indexed 0..15.
    #
    public native get_palette_rgba(i)
 
@@ -179,7 +215,8 @@ class Pixels()
 
    private native clone_impl()
 
-   # Set entries in the palette according to one of the standard palettes (c1,c2 etc).
+   # Set entries in the palette according to one of the standard
+   # palettes (c1,c2 etc).  Only allowed for PALETTE8 format.
    #
    public native load_palette(pal)
 
@@ -714,16 +751,6 @@ class Window(NoCopy)
    # the window is closed.
    #
    public native uncouple()
-
-   #
-   # Writes an image of the rectangular area (x,y,w,h) to the file
-   # s. It fails if s cannot be written or if the specified area,
-   # after clipping by the window's edges, has a width or height of
-   # zero. The file is normally written in GIF format, but some forms
-   # of file names may select different formats on some graphics
-   # systems.
-   #
-   public native write_image(s, x, y, w, h)
 
    #
    # Set the window system's selection

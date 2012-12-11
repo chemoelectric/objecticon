@@ -119,7 +119,6 @@ NativeDef(graphics.Window,text_width,graphics_Window_text_width)
 NativeDef(graphics.Window,unclip,graphics_Window_unclip)
 NativeDef(graphics.Window,uncouple,graphics_Window_uncouple)
 NativeDef(graphics.Window,warp_pointer,graphics_Window_warp_pointer)
-NativeDef(graphics.Window,write_image,graphics_Window_write_image)
 #if PLAN9
 NativeDef(graphics.Window,get_dir,graphics_Window_get_dir)
 #endif
@@ -143,6 +142,7 @@ NativeDef(graphics.Pixels,set_palette,graphics_Pixels_set_palette)
 NativeDef(graphics.Pixels,get_palette_index,graphics_Pixels_get_palette_index)
 NativeDef(graphics.Pixels,set_palette_index,graphics_Pixels_set_palette_index)
 NativeDef(graphics.Pixels,load_palette,graphics_Pixels_load_palette)
+NativeDef(graphics.Pixels,to_file,graphics_Pixels_to_file)
 NativeDef(graphics.Pixels,clone_impl,graphics_Pixels_clone_impl)
 #endif
 NativeDef(io.DescStream,flag,io_DescStream_flag)
