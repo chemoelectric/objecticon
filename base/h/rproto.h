@@ -202,15 +202,6 @@ char *rgbkey         (int p, int r, int g, int b);
 
    int  initimgmem      (wbp w, struct imgmem *i, int copy, int clip, int x, int y, int width, int height);
    void drawimgdata     (wbp w, int x, int y, struct imgdata *img);
-   void freeimgdata     (struct imgdata *img);
-   void getimgdatapixel(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a);
-   void setimgdatapixel(struct imgdata *imd, int x, int y, int r, int g, int b, int a);
-   int validimgdataformat(int format);
-   int getimgdatalength(struct imgdata *imd);
-   int isimgdataopaque(int format);
-   int imgdatapalettesize(int format);
-   int getimgdatapaletteindex(struct imgdata *imd, int x, int y);
-   void setimgdatapaletteindex(struct imgdata *imd, int x, int y, int i);
    int  getdefaultfontsize(int);
    char *getdefaultfont(void);
    int interpimage(dptr d,  struct imgdata *imd);
@@ -296,6 +287,16 @@ char *rgbkey         (int p, int r, int g, int b);
    int  settransientfor(wbp w, wbp other);
 
 #endif                                  /* Graphics */
+
+   void freeimgdata     (struct imgdata *img);
+   void getimgdatapixel(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a);
+   void setimgdatapixel(struct imgdata *imd, int x, int y, int r, int g, int b, int a);
+   int validimgdataformat(int format);
+   int getimgdatalength(struct imgdata *imd);
+   int isimgdataopaque(int format);
+   int imgdatapalettesize(int format);
+   int getimgdatapaletteindex(struct imgdata *imd, int x, int y);
+   void setimgdatapaletteindex(struct imgdata *imd, int x, int y, int i);
 
 #ifdef MSWIN32
 LRESULT_CALLBACK WndProc  (HWND, UINT, WPARAM, LPARAM);

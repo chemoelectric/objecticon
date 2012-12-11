@@ -794,13 +794,13 @@ class Window(NoCopy)
    #
    public static open_image(img, win)
       local w
-      w := if /win then
+      w := (if /win then
          Window.open()
       else
          Window.open().
            set_fg(win.get_fg()).
            set_bg(win.get_bg()).
-           erase_area()
+           erase_area()) | fail
       w.set_image(img) | {
          w.close()
          fail
