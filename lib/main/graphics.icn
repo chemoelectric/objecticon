@@ -166,8 +166,8 @@ final class Pixels()
    # Create a blank instance with the given format and dimensions.
    # The underlying data is allocated and set to zero.
    #
-   public static blank(format, width, height)
-      return Pixels(blank_impl(format, width, height))
+   public static blank(width, height, format)
+      return Pixels(blank_impl(width, height, format))
    end
 
    private static native blank_impl(format, width, height)
@@ -176,7 +176,6 @@ final class Pixels()
    # Encode the image to a file.
    #
    public native to_file(fname)
-
 
    # Get the palette entry at index i, as a 4-element list.  This and
    # similar methods fails unless the format is PALETTEx.  The number
@@ -600,16 +599,31 @@ final class Window(NoCopy)
    #
    public draw_image(x, y, v)
       if is(v, Pixels) then
-         draw_image_impl(x, y, v)
+         draw_image_impl(x, y, v.get_width(), v.get_height(), v)
       else {
          v := Pixels.open(v) | fail
-         draw_image_impl(x, y, v)
+         draw_image_impl(x, y, v.get_width(), v.get_height(), v)
          v.close()
       }
       return self
    end
 
-   private native draw_image_impl(x, y, d)
+   #
+   # Tile an image.  The image can be raw image data, a filename, or a
+   # {Pixels} instance.
+   #
+   public tile_image(x, y, width, height, v)
+      if is(v, Pixels) then
+         draw_image_impl(x, y, width, height, v)
+      else {
+         v := Pixels.open(v) | fail
+         draw_image_impl(x, y, width, height, v)
+         v.close()
+      }
+      return self
+   end
+
+   private native draw_image_impl(x, y, width, height, pix)
 
    #
    # Copy an area from this window to another window.
@@ -694,16 +708,16 @@ final class Window(NoCopy)
    #
    # Get the contents of some pixels as a {Pixels} object.
    #
-   public get_pixels(format, x, y, width, height)
-      return Pixels(get_pixels_impl(format, x, y, width, height))
+   public get_pixels(x, y, width, height, format)
+      return Pixels(get_pixels_impl(x, y, width, height, format))
    end
 
-   private native get_pixels_impl(format, x, y, width, height)
+   private native get_pixels_impl(x, y, width, height, format)
 
    #
    # Filter the given pixels according to the given filter spec.
    #
-   public native filter(filter, x, y, width, height)
+   public native filter(x, y, width, height, filter)
 
    #
    # Return a rectangle (as a list of four integers), representing

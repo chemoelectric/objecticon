@@ -510,18 +510,18 @@ int interpimage(dptr d,  struct imgdata *imd)
     return Failed;
 }
 
-void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
+void drawimgdata(wbp w, int x, int y, int width, int height, struct imgdata *imd)
 {
     struct imgmem imem;
     int i, j;
 
-    if (!initimgmem(w, &imem, !isimgdataopaque(imd->format), 1, x, y, imd->width, imd->height))
+    if (!initimgmem(w, &imem, !isimgdataopaque(imd->format), 1, x, y, width, height))
         return;
 
     for (j = 0; j < imem.height; j++) {
         for (i = 0; i < imem.width; i++) {
             int r, g, b, a;
-            getimgdatapixel(imd, imem.x - x + i, imem.y - y + j, &r, &g, &b, &a);
+            getimgdatapixel(imd, (imem.x - x + i) % imd->width, (imem.y - y + j) % imd->height, &r, &g, &b, &a);
             if (a) {
                 if (a != 65535) {
                     int r1, g1, b1;

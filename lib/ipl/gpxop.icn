@@ -231,7 +231,7 @@ end
 
 # capture image as string
 procedure Capture(win, pal, x, y, w, h)		
-   local c, k, s, cmap
+   local c, k, s, cmap, px
 
    /pal := "c1"
 
@@ -253,9 +253,11 @@ procedure Capture(win, pal, x, y, w, h)
    # (much faster than concatenating single chars on a very long string)
    s := RamStream()
    s.out(w || "," || pal || ",")
-   every k := !win.get_pixels(x, y, w, h) do {
+   px := win.get_pixels(x, y, w, h)
+   every k := px.gen() do {
       c := \cmap[k] | (cmap[k] := Window.palette_key(pal, k))
       s.out(c)
       }
+   px.close()
    return s.done()
 end

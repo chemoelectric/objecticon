@@ -201,7 +201,7 @@ char *rgbkey         (int p, int r, int g, int b);
    int pointargs(wbp w, dptr argv, word *px, word *py);
 
    int  initimgmem      (wbp w, struct imgmem *i, int copy, int clip, int x, int y, int width, int height);
-   void drawimgdata     (wbp w, int x, int y, struct imgdata *img);
+   void drawimgdata(wbp w, int x, int y, int width, int height, struct imgdata *imd);
    int  getdefaultfontsize(int);
    char *getdefaultfont(void);
    int interpimage(dptr d,  struct imgdata *imd);

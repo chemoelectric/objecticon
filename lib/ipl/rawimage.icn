@@ -46,7 +46,7 @@ import
 $define LineLen 64
 
 procedure WriteRaw(win, s, x, y, w, h)
-   local nextid, palette, line, c, temp, tempname, f
+   local nextid, palette, line, c, temp, tempname, f, pix
 
 
    /w := win.get_width()
@@ -63,15 +63,15 @@ procedure WriteRaw(win, s, x, y, w, h)
    palette := table()
 
    nextid := create !"0123456789abcdef" || !"0123456789abcdef"
-
-   every c := !win.get_pixels(x, y, w, h) do {
+   pix := win.get_pixels(x, y, w, h)
+   every c := pix.gen() do {
       /palette[c] := @nextid | runerr("WriteRaw: image has too many (>256) colours")
       line ||:= palette[c]
       line ?:= {
          write(temp, move(LineLen)) & tab(0)
          }
       }
-
+   pix.close()
    write(temp, "" ~== line)
 
    write(f, w, ",", h)

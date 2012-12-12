@@ -310,15 +310,15 @@ function graphics_Window_draw_curve(self, argv[argc])
    }
 end
 
-function graphics_Window_draw_image_impl(self, x0, y0, d)
+function graphics_Window_draw_image_impl(self, x0, y0, w0, h0, d)
    body {
-      word x, y;
+      word x, y, width, height;
       GetSelfW();
-      if (pointargs(self_w, &x0, &x, &y) == Error)
+      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
       {
       ImageDataStaticParam(d, id);
-      drawimgdata(self_w, x, y, id);
+      drawimgdata(self_w, x, y, width, height, id);
       }
       return self;
    }
@@ -604,7 +604,7 @@ function graphics_Window_lower(self)
    }
 end
 
-function graphics_Window_get_pixels_impl(self, format, x0, y0, w0, h0)
+function graphics_Window_get_pixels_impl(self, x0, y0, w0, h0, format)
    if !def:C_integer(format, IMGDATA_RGBA64) then
       runerr(101, format)
    body {
@@ -675,7 +675,7 @@ function graphics_Pixels_to_file(self, fname)
    }
 end
 
-function graphics_Window_filter(self, spec, x0, y0, w0, h0)
+function graphics_Window_filter(self, x0, y0, w0, h0, spec)
    body {
       struct imgmem imem;
       word x, y, width, height;
@@ -1937,13 +1937,13 @@ function graphics_Window_palette_key(s1, s2)
    }
 end
 
-function graphics_Pixels_blank_impl(format, width, height)
-   if !def:C_integer(format, IMGDATA_RGBA64) then
-      runerr(101, format)
+function graphics_Pixels_blank_impl(width, height, format)
    if !cnv:C_integer(width) then
       runerr(101, width)
    if !cnv:C_integer(height) then
       runerr(101, height)
+   if !def:C_integer(format, IMGDATA_RGBA64) then
+      runerr(101, format)
    body {
        struct imgdata *imd;
        int n;
