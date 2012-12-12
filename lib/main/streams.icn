@@ -1199,7 +1199,7 @@ class DirStream(LineBasedInputStream, NoCopy)
 
    private static native new_impl(path)
 
-   public new(path)
+   public final new(path)
       cast(self,LineBasedInputStream).new()
 $ifdef _MS_WIN32
       if *path = 0 then
@@ -1808,7 +1808,7 @@ class RamStream(Stream, NoCopy)
    # @param wiggle the extra space to reserve for growth of the buffer,
    # @      default is 512 bytes.
    #
-   public new(s, wiggle)
+   public final new(s, wiggle)
       ptr := new_impl(s, wiggle)
       return
    end
@@ -1849,7 +1849,7 @@ class SslStream(Stream, HasUnderlyingStream, NoCopy)
    #              will operate
    # @param verify_host if set, the remote host's certificate will be verified
    #              and its hostname checked against this value.
-   public new(other, verify_host)
+   public final new(other, verify_host)
       ptr := new_impl(other, verify_host) | fail
       self.other := other
       return

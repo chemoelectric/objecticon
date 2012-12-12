@@ -7,7 +7,7 @@ import
 # from a Window, or created from scratch.  The data is stored in
 # various underlying formats depending on the source.
 #
-class Pixels()
+final class Pixels()
    private
       idp
 
@@ -209,7 +209,7 @@ class Pixels()
       return Pixels(clone_impl())
    end
 
-   private final object_clone()
+   private object_clone()
       return clone()
    end
 
@@ -226,7 +226,7 @@ class Pixels()
    end
 end
 
-class Window(NoCopy)
+final class Window(NoCopy)
    private
       wbp,
       transient_for
