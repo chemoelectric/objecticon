@@ -1,7 +1,8 @@
 package graphics
 
 import 
-   lang(NoCopy)
+   lang(NoCopy),
+   util(use)
 
 # This object contains pixel data either read from a file, extracted
 # from a Window, or created from scratch.  The data is stored in
@@ -117,7 +118,7 @@ final class Pixels()
    public native set_size(width, height)
 
    # Convert this instance to another separate instance in the given
-   # new format, which cannot be PALETTE.
+   # new format, which cannot be a PALETTE format.
    #
    public convert(format)
       return Pixels(convert_impl(format))
@@ -385,16 +386,16 @@ final class Window(NoCopy)
    # a file containing an image.
    #
    public set_image(v)
-      if is(v, Pixels) then {
+      return if is(v, Pixels) then {
          set_size(v.get_width(), v.get_height())
-         draw_image(0, 0, v)
-      } else {
-         v := Pixels.open(v) | fail
-         set_size(v.get_width(), v.get_height())
-         draw_image(0, 0, v)
-         v.close()
+         draw_image(,, v)
+      } else use {
+         v := Pixels.open(v),
+         {
+            set_size(v.get_width(), v.get_height())
+            draw_image(,, v)
+         }
       }
-      return self
    end
 
    #
@@ -409,15 +410,12 @@ final class Window(NoCopy)
    # window.  The parameter takes the same format as {set_image}.
    #
    public set_icon(v)
-      local r
-      if is(v, Pixels) then
-         r := set_icon_impl(v)
-      else {
-         v := Pixels.open(v) | fail
-         r := set_icon_impl(v)
-         v.close()
+      return if is(v, Pixels) then
+         set_icon_impl(v)
+      else use {
+         v := Pixels.open(v),
+         set_icon_impl(v)
       }
-      return \r
    end
 
    private native set_icon_impl(id)
@@ -598,14 +596,12 @@ final class Window(NoCopy)
    # {Pixels} instance.
    #
    public draw_image(x, y, v)
-      if is(v, Pixels) then
+      return if is(v, Pixels) then
          draw_image_impl(x, y, v.get_width(), v.get_height(), v)
-      else {
-         v := Pixels.open(v) | fail
+      else use {
+         v := Pixels.open(v),
          draw_image_impl(x, y, v.get_width(), v.get_height(), v)
-         v.close()
       }
-      return self
    end
 
    #
@@ -613,14 +609,12 @@ final class Window(NoCopy)
    # {Pixels} instance.
    #
    public tile_image(x, y, width, height, v)
-      if is(v, Pixels) then
+      return if is(v, Pixels) then
          draw_image_impl(x, y, width, height, v)
-      else {
-         v := Pixels.open(v) | fail
+      else use {
+         v := Pixels.open(v),
          draw_image_impl(x, y, width, height, v)
-         v.close()
       }
-      return self
    end
 
    private native draw_image_impl(x, y, width, height, pix)
@@ -808,13 +802,11 @@ final class Window(NoCopy)
    #
    public static open_image(img, win)
       local w
-      w := (if /win then
-         Window.open()
-      else
-         Window.open().
-           set_fg(win.get_fg()).
+      w := Window.open() | fail
+      if \win then
+         w.set_fg(win.get_fg()).
            set_bg(win.get_bg()).
-           erase_area()) | fail
+           erase_area()
       w.set_image(img) | {
          w.close()
          fail

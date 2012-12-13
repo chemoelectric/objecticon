@@ -4,8 +4,7 @@ import
    util(error, check_flag, check_positive_int, save_why),
    lang(NoCopy),
    posix(ExitInfo, System),
-   ipl.strings(replace),
-   ipl.lists(ldel1)
+   ipl.strings(replace)
 
 #
 # This is the top-level stream class.  It is not instantiated
@@ -846,62 +845,6 @@ end
 procedure close(f)
    f.close() | fail
    return f
-end
-
-# Stores a list of cleanup expressions to be run.  See {use} and {clean}.
-#
-global cleanup
-
-#
-# This procedure is used to automatically close a {Stream} or other
-# resource.  The first expression {e1} produces the resource, the
-# second {e2} uses it, and the third expression {e3} then closes it.
-# The result of {e2} is returned, if all three expressions succeed,
-# otherwise the procedure fails.
-#
-# {e3} is optional and defaults to calling {close} on the resource.
-#
-# @example
-# @   s := use { f := open("some.txt"),
-# @              do_something_with(f) }
-procedure use(e1, e2, e3)
-   local x, v, f
-   x := @e1 | fail
-   /e3 := create x.close()
-   push(\cleanup, e3)
-   /e2 | (v := @e2) | (f := 1)
-   ldel1(\cleanup, e3)
-   @e3 | (f := 1)
-   return /f & v
-end
-
-# This procedure can be used in conjunction with {use} to ensure that
-# all cleanup expressions are performed.  {e} is evaluated for its
-# first result only.  Then any outstanding cleanup expressions are
-# performed.  If {e} failed, or any of the cleanup expressions failed,
-# then the procedure fails; otherwise the first result of {e} is
-# returned.
-#
-# See also {exception.clean_try}.
-#
-procedure clean(e)
-   local t, v, f
-   t := cleanup
-   cleanup := []
-   (v := @e) | (f := 1)
-   do_cleanups() | (f := 1)
-   cleanup := t
-   return /f & v
-end
-
-# Perform any outstanding cleanups in the {cleanup} list.  Fails if any of the
-# expressions fail, succeeds otherwise.
-#
-procedure do_cleanups()
-   local f, x
-   while x := pop(cleanup) do
-      @x | (f := 1)
-   return /f
 end
 
 #
