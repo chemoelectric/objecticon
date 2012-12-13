@@ -173,14 +173,16 @@ procedure wcatenate(win1, win2, dir)
       "h":  {
          win3 := Window.open().set_size(width1 + width2, max(height1, height2)) |
                stop("*** cannot open window for concatenation")
-         win1.copy_to(win3)
-         win2.copy_to(win3, 0, 0, width2, height2, width1, 0)
+         win1.copy_to(,,,, win3)
+         win2.copy_to(0, 0, width2, height2, 
+                      win3, width1, 0)
          }
       "v":  {
          win3 := Window.open().set_size(max(width1, width2), height1 + height2) |
                stop("*** cannot open window for concatenation")
-         win1.copy_to(win3)
-         win2.copy_to(win3, 0, 0, width2, height2, 0, height1)
+         win1.copy_to(,,,, win3)
+         win2.copy_to(0, 0, width2, height2, 
+                      win3, 0, height1)
          }
       default:  runerr("*** invalid specification for catenate()", dir)
       }

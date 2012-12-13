@@ -1133,9 +1133,9 @@ class Canvas(Component,SelectiveObjectCodec)
       if \moving then
          show_moving()
 
-      item_buff_win.copy_to(self.cbwin, 
-                            self.x, self.y, 
+      item_buff_win.copy_to(self.x, self.y, 
                             self.w, self.h, 
+                            self.cbwin, 
                             self.x, self.y)
 
       (\layout_delegate).display()

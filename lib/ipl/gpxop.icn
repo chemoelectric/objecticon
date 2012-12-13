@@ -218,9 +218,9 @@ procedure Zoom(args[])
 
    scr := ScratchCanvas(win2, w2, h1, "__Zoom__") | fail
    every x := 0 to w2 - 1 do
-      win1.copy_to(scr, x1 + w1 * ((x + 0.5) / w2), y1, 1, h1, x, 0)
+      win1.copy_to(x1 + w1 * ((x + 0.5) / w2), y1, 1, h1, scr, x, 0)
    every y := 0 to h2 - 1 do
-      scr.copy_to(win2, 0, h1 * ((y + 0.5) / h2), w2, 1, x2, y2 + y)
+      scr.copy_to(0, h1 * ((y + 0.5) / h2), w2, 1, win2, x2, y2 + y)
 
    scr.erase_area()		# release colors
    return win1

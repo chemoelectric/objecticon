@@ -84,7 +84,7 @@ class Dialog(Component)
 
       self.invoke_display(r.x, r.y, r.w, r.h)
 
-      cbwin.copy_to(win, r.x, r.y, r.w, r.h, r.x, r.y)
+      cbwin.copy_to(r.x, r.y, r.w, r.h, win, r.x, r.y)
    end
 
    public invalidate_rect(r)

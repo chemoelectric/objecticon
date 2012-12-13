@@ -117,8 +117,9 @@ final class Pixels()
    #
    public native set_size(width, height)
 
-   # Convert this instance to another separate instance in the given
-   # new format, which cannot be a PALETTE format.
+   # Convert the given rectangle of pixels in this instance to another
+   # separate instance in the given new format, which cannot be a
+   # PALETTE format.
    #
    public convert(format)
       return Pixels(convert_impl(format))
@@ -171,7 +172,7 @@ final class Pixels()
       return Pixels(blank_impl(width, height, format))
    end
 
-   private static native blank_impl(format, width, height)
+   private static native blank_impl(width, height, format)
 
    #
    # Encode the image to a file.
@@ -622,7 +623,7 @@ final class Window(NoCopy)
    #
    # Copy an area from this window to another window.
    #
-   public native copy_to(dest, x1, y1, w, h, x2, y2)
+   public native copy_to(x1, y1, w, h, dest, x2, y2)
 
    #
    # draw_line(x1,y1,...xN,yN)

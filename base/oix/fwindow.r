@@ -134,7 +134,7 @@ function graphics_Window_clone_impl(self)
    }
 end
 
-function graphics_Window_copy_to(self, dest, x0, y0, w0, h0, x1, y1)
+function graphics_Window_copy_to(self, x0, y0, w0, h0, dest, x1, y1)
    body {
       word x, y, width, height, x2, y2;
       wbp w2;

@@ -199,7 +199,7 @@ class ImageWindowItemPaint(ItemPaint)
    end
 
    public draw(W, data, x, y)
-      data.copy_to(W,,,,, x, y)
+      data.copy_to(,,,, W, x, y)
    end
 end
 
@@ -225,6 +225,6 @@ class ImageCacheItemPaint(ItemPaint)
    end
 
    public draw(W, data, x, y)
-      ImageCache.get(data, W).copy_to(W,,,,, x, y)
+      ImageCache.get(data, W).copy_to(,,,, W, x, y)
    end
 end

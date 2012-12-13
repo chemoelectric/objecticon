@@ -158,7 +158,8 @@ class Image(Component)
       img_h := win.get_height()
 
       if img_w = ir.w & img_h = ir.h then {
-         win.copy_to(self.cbwin,,,,, 
+         win.copy_to(,,,, 
+                     self.cbwin,
                      self.x + border.get_l_inset(),
                      self.y + border.get_l_inset())
       } else {
@@ -192,12 +193,12 @@ class Image(Component)
          if \zoom_win &
             zoom_win.get_width() = zoom_w & 
             zoom_win.get_height() = zoom_h then
-               zoom_win.copy_to(self.cbwin, , , , , pt.x, pt.y)
+               zoom_win.copy_to(,,,, self.cbwin, pt.x, pt.y)
          else {
             (\zoom_win).close()
             zoom_win := Window.open().set_size(zoom_w, zoom_h) | syserr("Couldn't open temp window")
             Zoom(win, zoom_win, 0, 0, img_w, img_h, 0, 0, zoom_w, zoom_h)
-            zoom_win.copy_to(self.cbwin, , , , , pt.x, pt.y)
+            zoom_win.copy_to(,,,, self.cbwin, pt.x, pt.y)
          }
       }
    end

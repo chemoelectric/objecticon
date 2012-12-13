@@ -521,7 +521,7 @@ void drawimgdata(wbp w, int x, int y, int width, int height, struct imgdata *imd
     for (j = 0; j < imem.height; j++) {
         for (i = 0; i < imem.width; i++) {
             int r, g, b, a;
-            getimgdatapixel(imd, (imem.x - x + i) % imd->width, (imem.y - y + j) % imd->height, &r, &g, &b, &a);
+            getimgdatapixel(imd, i % imd->width, j % imd->height, &r, &g, &b, &a);
             if (a) {
                 if (a != 65535) {
                     int r1, g1, b1;
@@ -1764,7 +1764,6 @@ int writeimagefile(char *filename, struct imgdata *imd)
  */
 int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph)
 {
-    int defw, defh;
     wcp wc = w->context;
     wsp ws = w->window;
 
@@ -1783,13 +1782,10 @@ int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph)
     /*
      * Get w and h, defaulting to extend to the edge
      */
-    defw = ws->width - *px;
-    defh = ws->height - *py;
-
-    if (!def:C_integer(argv[2], defw, *pw))
+    if (!def:C_integer(argv[2], ws->width - *px, *pw))
         ReturnErrVal(101, argv[2], Error);
 
-    if (!def:C_integer(argv[3], defh, *ph))
+    if (!def:C_integer(argv[3], ws->height - *py, *ph))
         ReturnErrVal(101, argv[3], Error);
 
     /*

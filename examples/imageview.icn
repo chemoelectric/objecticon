@@ -59,8 +59,10 @@ end
 
 class ImageView(DrawScrollArea)
    public img
+
    public draw(r)
-      img.copy_to(view.cbwin, get_area_x(), get_area_y(), view.w, view.h, view.x, view.y)
+      img.copy_to(get_area_x(), get_area_y(), view.w, view.h, 
+                  view.cbwin, view.x, view.y)
    end
 
    public calculate_subject_width()
