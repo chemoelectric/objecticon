@@ -112,21 +112,6 @@ final class Pixels()
    #
    public native set_data(s)
 
-   # Change the dimensions.  The underlying data is expanded if
-   # necessary and padded with zeroes.
-   #
-   public native set_size(width, height)
-
-   # Convert the given rectangle of pixels in this instance to another
-   # separate instance in the given new format, which cannot be a
-   # PALETTE format.
-   #
-   public convert(format)
-      return Pixels(convert_impl(format))
-   end
-
-   private native convert_impl(format)
-
    # Convenient method to generate 0 to get_width() - 1
    #
    public x_range()
