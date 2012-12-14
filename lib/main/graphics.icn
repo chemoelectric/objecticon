@@ -159,6 +159,11 @@ final class Pixels()
 
    private static native blank_impl(width, height, format)
 
+   # Copy a single pixel from this instance to another.  The
+   # destination may not have a PALETTE format.
+   #
+   public native copy_pixel(x1, y1, other, x2, y2)
+
    #
    # Encode the image to a file.
    #

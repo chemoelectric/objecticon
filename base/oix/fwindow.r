@@ -2024,6 +2024,39 @@ function graphics_Pixels_get_rgba(self, x, y)
    }
 end
 
+function graphics_Pixels_copy_pixel(self, x1, y1, other, x2, y2)
+   if !cnv:C_integer(x1) then
+      runerr(101, x1)
+   if !cnv:C_integer(y1) then
+      runerr(101, y1)
+   if !cnv:C_integer(x2) then
+      runerr(101, x2)
+   if !cnv:C_integer(y2) then
+      runerr(101, y2)
+   body {
+      int r, g, b, a;
+      GetSelfImageData();
+      if (x1 < 0 || x1 >= self_id->width || y1 < 0 || y1 >= self_id->height) {
+          LitWhy("Out of range");
+          fail;
+      }
+      {
+      ImageDataStaticParam(other, id2);
+      if (imgdatapalettesize(id2->format) > 0) {
+          LitWhy("Can't set a pixel with a PALETTE format");
+          fail;
+      }
+      if (x2 < 0 || x2 >= id2->width || y2 < 0 || y2 >= id2->height) {
+          LitWhy("Out of range");
+          fail;
+      }
+      getimgdatapixel(self_id, x1, y1, &r, &g, &b, &a);
+      setimgdatapixel(id2, x2, y2, r, g, b, a);
+      }
+      return self;
+   }
+end
+
 function graphics_Pixels_get(self, x, y)
    if !cnv:C_integer(x) then
       runerr(101, x)
