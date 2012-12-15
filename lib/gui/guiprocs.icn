@@ -230,7 +230,6 @@ procedure parse_image_string(s, W)
                "shadow" : v := Gui.style.get_shadow_color(W)
                "fg" : v := W.get_fg()
                "bg" : v := W.get_bg()
-               "trans" : v := "#0000"
             }
             move(1)
             q.set_palette(ord(k), v) | {

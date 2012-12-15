@@ -2528,7 +2528,9 @@ static colorname *lookup_color(char *s, int ish)
  *          [[very] medium ]   [ vivid    ]   [color[ish]]   color
  *                  dark
  *                  deep
- *
+ * OR
+ *          transparent
+ * 
  *  where "color" is any of:
  *
  *          black gray grey white pink violet brown
@@ -2575,6 +2577,17 @@ static int colorphrase(char *buf, int *r, int *g, int *b, int *a)
 
     buf = cbuffer;
     ebuf = buf + len;
+
+    /* check for "transparent" */
+    if (strcmp(buf, "transparent") == 0) {
+        buf += strlen(buf) + 1;
+        /* Check for extraneous input */
+        if (buf <= ebuf)
+            return 0;
+        *r = *g = *b = *a = 0;
+        return 1;
+    }
+
     /* check for "very" */
     if (strcmp(buf, "very") == 0) {
         very = 1;
@@ -2637,6 +2650,7 @@ static int colorphrase(char *buf, int *r, int *g, int *b, int *a)
     l2 = color2->lgt / 100.0;
     s2 = color2->sat / 100.0;
 
+    /* Check for alpha % spec */
     if (buf <= ebuf) {
         n = sscanf(buf, "%d%%%c", &pct, &eof);
         if (n != 1 || pct < 0 || pct > 100)
@@ -2646,7 +2660,8 @@ static int colorphrase(char *buf, int *r, int *g, int *b, int *a)
         if (buf <= ebuf)
             return 0;
         *a  = (65535 * pct) / 100;
-    }
+    } else
+        *a = 65535;
 
     /* at this point we know we have a valid spec */
 
