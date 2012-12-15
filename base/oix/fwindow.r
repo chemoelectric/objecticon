@@ -1897,7 +1897,6 @@ function graphics_Window_palette_color(s1, s2)
        runerr(103, s2)
    body {
       int p;
-      char tmp[32];
       struct palentry *e;
       tended struct descrip result;
       if (!parsepalette(buffstr(&s1), &p)) {
@@ -1912,8 +1911,7 @@ function graphics_Window_palette_color(s1, s2)
           LitWhy("Invalid character");
           fail;
       }
-      sprintf(tmp, "%d,%d,%d", e->r, e->g, e->b);
-      cstr2string(tmp, &result);
+      cstr2string(tocolorstring(e->r, e->g, e->b, e->a), &result);
       return result;
    }
 end

@@ -1165,7 +1165,7 @@ int setfg(wbp w, char *val)
 {
     int r, g, b;
     wcp wc = w->context;
-    if (!parsecolor(val, &r, &g, &b, 0))
+    if (!parseopaquecolor(val, &r, &g, &b))
         return Failed;
 
     wc->fg = mscolor(w, r, g, b);
@@ -1190,7 +1190,7 @@ int setbg(wbp w, char *val)
 {
     int r, g, b;
     wcp wc = w->context;
-    if (!parsecolor(val, &r, &g, &b, 0))
+    if (!parseopaquecolor(val, &r, &g, &b))
         return Failed;
 
     wc->bg = mscolor(w, r, g, b);

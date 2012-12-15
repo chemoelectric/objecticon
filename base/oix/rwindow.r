@@ -2061,11 +2061,13 @@ static stringint sattable[] = {			/* saturation levels */
 
 /*
  *  parsecolor(s, &r, &g, &b, &a) - parse a color specification
+ *  parseopaquecolor(s, &r, &g, &b) - parse a color specification, requiring
+ *                                    an opaque color.
  *
  *  parsecolor interprets a color specification and produces r/g/b values
  *  scaled linearly from 0 to 65535.  parsecolor returns 1 on success, 0
  *  on an invalid specification.
- *
+ * 
  *  An Icon color specification can be any of the forms
  *
  *     #rgb			(hexadecimal digits)
@@ -2079,6 +2081,11 @@ static stringint sattable[] = {			/* saturation levels */
  *     nnnnn,nnnnn,nnnnn,nnnnn	(integers 0 - 65535)
  *     <Icon color phrase>
  */
+int parseopaquecolor(char *buf, int *r, int *g, int *b)
+{
+    int a;
+    return parsecolor(buf, r, g, b, &a) && a == 65535;
+}
 
 int parsecolor(char *buf, int *r, int *g, int *b, int *a)
 {
@@ -2525,7 +2532,7 @@ static colorname *lookup_color(char *s, int ish)
  *                               weak
  *                  pale         moderate
  *                  light        strong
- *          [[very] medium ]   [ vivid    ]   [color[ish]]   color
+ *          [[very] medium ]   [ vivid    ]   [color[ish]]   color [transparency%]
  *                  dark
  *                  deep
  * OR
@@ -2559,9 +2566,6 @@ static int colorphrase(char *buf, int *r, int *g, int *b, int *a)
     lgt = -1.0;				/* default no lightness mod */
     sat =  1.0;				/* default vivid saturation */
     len = strlen(buf);
-    while (isspace((unsigned char)buf[len-1]))
-        len--;				/* trim trailing spaces */
-
     if (len >= sizeof(cbuffer))
         return 0;				/* if too long for valid Icon spec */
 

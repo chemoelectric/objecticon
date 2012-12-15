@@ -501,14 +501,18 @@ procedure hls_rgb_val(n1, n2, hue)
 end
 
 #
-# Given a color {col}, return the color in "r,g,b" string format, with
+# Given a color {col}, return the color in "r,g,b,a" string format, with
 # those values optionally edited by the given parameters.
 #
-procedure EditRGB(col, r, g, b)
+procedure EditRGBA(col, r, g, b, a)
    local l
    l := Window.parse_color(col) | fail
    l[1] := \r
    l[2] := \g
    l[3] := \b
-   return l[1] || "," || l[2] || "," || l[3]
+   l[4] := \a
+   if l[4] = 65535 then
+      return l[1] || "," || l[2] || "," || l[3]
+   else
+      return l[1] || "," || l[2] || "," || l[3] || "," || l[4]
 end

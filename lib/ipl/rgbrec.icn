@@ -14,7 +14,7 @@
 #
 ############################################################################
 #
-#  This procedure produces a three-field RGB record from an Icon color
+#  This procedure produces a four-field RGBA record from an Icon color
 #  specification.  It fails id its argument is not a valid color specifi-
 #  cation.
 #
@@ -29,13 +29,16 @@ package ipl.rgbrec
 import
    graphics(Window)
 
-record rgb(r, g, b)
+record rgb(r, g, b, a)
 
 procedure rgbrec(s)
    return rgb!Window.parse_color(s)
 end
 
 procedure rgbtocolor(rgb)
-   return rgb.r || "," || rgb.g || "," || rgb.b
+   return if \rgb.a ~= 65535 then
+      rgb.r || "," || rgb.g || "," || rgb.b || "," || rgb.a
+   else
+      rgb.r || "," || rgb.g || "," || rgb.b
 end
 
