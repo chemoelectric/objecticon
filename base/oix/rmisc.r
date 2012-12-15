@@ -1999,39 +1999,36 @@ void cstrs2string(char **s, char *delim, dptr d)
 /*
  * string-integer comparison, for bsearch()
  */
-static int sicmp(stringint *sip1, stringint *sip2)
+static int sicmp(char *s, stringint *sip)
 {
-    return strcmp(sip1->s, sip2->s);
+    return strcmp(s, sip->s);
 }
 
 /*
  * string-integer lookup function: given a string, return its integer
  */
-int stringint_str2int(stringint * sip, char *s)
+int stringint_str2int(stringint *sip, char *s)
 {
-    stringint key;
-    stringint * p;
-    key.s = s;
-    p = (stringint *)bsearch((char *)&key,(char *)(sip+1),sip[0].i,sizeof(key),(BSearchFncCast)sicmp);
-    if (p) return p->i;
-    return -1;
+    stringint *p;
+    p = stringint_lookup(sip, s);
+    return p ? p->i : -1;
 }
 
 /*
  * string-integer inverse function: given an integer, return its string
  */
-char *stringint_int2str(stringint * sip, int i)
+char *stringint_int2str(stringint *sip, int i)
 {
-    stringint * sip2 = sip+1;
-    for(;sip2<=sip+sip[0].i;sip2++) if (sip2->i == i) return sip2->s;
+    stringint *sip2 = sip + 1;
+    for(; sip2 <= sip + sip[0].i; sip2++) 
+        if (sip2->i == i) 
+            return sip2->s;
     return NULL;
 }
 
 stringint *stringint_lookup(stringint *sip, char *s)
 {
-    stringint key;
-    key.s = s;
-    return (stringint *)bsearch((char *)&key,(char *)(sip+1),sip[0].i,sizeof(key),(BSearchFncCast)sicmp);
+    return (stringint *)bsearch(s, sip + 1, sip[0].i, sizeof(stringint), (BSearchFncCast)sicmp);
 }
 
 /*

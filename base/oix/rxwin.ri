@@ -1443,7 +1443,7 @@ int setfg(wbp w, char *s)
 {
     int r, g, b;
     wcp wc = w->context;
-    if (!parsecolor(s, &r, &g, &b))
+    if (!parsecolor(s, &r, &g, &b, 0))
         return Failed;
     if (wc->fg)
         unlink_sharedcolor(wc->fg);
@@ -1461,7 +1461,7 @@ int setbg(wbp w, char *s)
 {
     int r, g, b;
     wcp wc = w->context;
-    if (!parsecolor(s, &r, &g, &b))
+    if (!parsecolor(s, &r, &g, &b, 0))
         return Failed;
     if (wc->bg)
         unlink_sharedcolor(wc->bg);

@@ -3,7 +3,7 @@
  *  non window-system-specific window support routines
  */
 
-static int colorphrase(char *buf, int *r, int *g, int *b);
+static int colorphrase(char *buf, int *r, int *g, int *b, int *a);
 static double rgbval(double n1, double n2, double hue);
 static struct palentry *palsetup_palette;	/* current palette */
 
@@ -270,7 +270,7 @@ static void shadefilter(struct filter *f)
     int i, j;
     struct imgmem *imem = f->imem;
     int bk, bg_r, bg_g, bg_b;
-    parsecolor(getbg(f->w), &bg_r, &bg_g, &bg_b);
+    parsecolor(getbg(f->w), &bg_r, &bg_g, &bg_b, 0);
 
     bk = grey_band(f->p.shade.nband, bg_r, bg_g, bg_b);
     for (j = 0; j < imem->height; j++) {
@@ -2015,20 +2015,15 @@ void freewbinding(wbp w)
  *  Tables must be kept lexically sorted.
  */
 
-typedef struct {	/* color name entry */
-    char name[8];	/* basic color name */
-    char ish[12];	/* -ish form */
-    short hue;		/* hue, in degrees */
-    char lgt;		/* lightness, as percentage */
-    char sat;		/* saturation, as percentage */
-} colrname;
+typedef struct {        /* color name entry */
+    char *name;         /* basic color name */
+    char *ish;          /* -ish form */
+    short hue;          /* hue, in degrees */
+    char lgt;           /* lightness, as percentage */
+    char sat;           /* saturation, as percentage */
+} colorname;
 
-typedef struct {	/* arbitrary lookup entry */
-    char word[15];	/* word */
-    char val;		/* value, as percentage */
-} colrmod;
-
-static colrname colortable[] = {		/* known colors */
+static colorname colortable[] = {		/* known colors */
     /* color       ish-form     hue  lgt  sat */
     { "black",    "blackish",     0,   0,   0 },
     { "blue",     "bluish",     240,  50, 100 },
@@ -2047,7 +2042,8 @@ static colrname colortable[] = {		/* known colors */
     { "yellow",   "yellowish",   60,  50, 100 },
 };
 
-static colrmod lighttable[] = {			/* lightness modifiers */
+static stringint lighttable[] = {			/* lightness modifiers */
+    { 0, 5},
     { "dark",       0 },
     { "deep",       0 },		/* = very dark (see code) */
     { "light",    100 },
@@ -2055,7 +2051,8 @@ static colrmod lighttable[] = {			/* lightness modifiers */
     { "pale",     100 },		/* = very light (see code) */
 };
 
-static colrmod sattable[] = {			/* saturation levels */
+static stringint sattable[] = {			/* saturation levels */
+    { 0, 4},
     { "moderate",  50 },
     { "strong",    75 },
     { "vivid",    100 },
@@ -2063,7 +2060,7 @@ static colrmod sattable[] = {			/* saturation levels */
 };
 
 /*
- *  parsecolor(s, &r, &g, &b) - parse a color specification
+ *  parsecolor(s, &r, &g, &b, &a) - parse a color specification
  *
  *  parsecolor interprets a color specification and produces r/g/b values
  *  scaled linearly from 0 to 65535.  parsecolor returns 1 on success, 0
@@ -2072,19 +2069,26 @@ static colrmod sattable[] = {			/* saturation levels */
  *  An Icon color specification can be any of the forms
  *
  *     #rgb			(hexadecimal digits)
+ *     #rgba			(hexadecimal digits)
  *     #rrggbb
+ *     #rrggbbaa
  *     #rrrgggbbb		(note: no 3 digit rrrgggbbbaaa)
  *     #rrrrggggbbbb
+ *     #rrrrggggbbbbaaaa
  *     nnnnn,nnnnn,nnnnn	(integers 0 - 65535)
+ *     nnnnn,nnnnn,nnnnn,nnnnn	(integers 0 - 65535)
  *     <Icon color phrase>
  */
 
-int parsecolor(char *buf, int *r, int *g, int *b)
+int parsecolor(char *buf, int *r, int *g, int *b, int *a)
 {
-    int len, mul;
+    int len, mul, ignore;
     char *fmt, c;
 
+    if (!a)
+        a = &ignore;
     *r = *g = *b = 0L;
+    *a = 65535;
 
     /* trim leading spaces */
     while (isspace((unsigned char)*buf))
@@ -2098,18 +2102,34 @@ int parsecolor(char *buf, int *r, int *g, int *b)
             return 0;
     }
 
+    /* try interpreting as four comma-separated numbers */
+    if (sscanf(buf, "%d,%d,%d,%d%c", r, g, b, a, &c) == 4) {
+        if (*r>=0 && *r<=65535 && *g>=0 && *g<=65535 && *b>=0 && *b<=65535 && *a>=0 && *a<=65535)
+            return 1;
+        else
+            return 0;
+    }
+
     /* try interpreting as a hexadecimal value */
     if (*buf == '#') {
         buf++;
         for (len = 0; isalnum((unsigned char)buf[len]); len++);
         switch (len) {
             case  3:  fmt = "%1x%1x%1x%c";  mul = 0x1111;  break;
+            case  4:  fmt = "%1x%1x%1x%1x%c";  mul = 0x1111;  break;
             case  6:  fmt = "%2x%2x%2x%c";  mul = 0x0101;  break;
+            case  8:  fmt = "%2x%2x%2x%2x%c";  mul = 0x0101;  break;
             case  9:  fmt = "%3x%3x%3x%c";  mul = 0x0010;  break;
             case 12:  fmt = "%4x%4x%4x%c";  mul = 0x0001;  break;
+            case 16:  fmt = "%4x%4x%4x%4x%c";  mul = 0x0001;  break;
             default:  return 0;
         }
-        if (sscanf(buf, fmt, r, g, b, &c) != 3)
+        if ((len == 4) || (len == 8) || (len == 16)) {
+            if (sscanf(buf, fmt, r, g, b, a, &c) != 4)
+                return 0;
+            *a *= mul;
+        }
+        else if (sscanf(buf, fmt, r, g, b, &c) != 3)
             return 0;
         *r *= mul;
         *g *= mul;
@@ -2118,10 +2138,7 @@ int parsecolor(char *buf, int *r, int *g, int *b)
     }
 
     /* try interpreting as a color phrase */
-    if (colorphrase(buf, r, g, b))
-        return 1;
-    else
-        return 0;
+    return colorphrase(buf, r, g, b, a);
 }
 
 /*
@@ -2484,18 +2501,33 @@ char *rgbkey(int p, int r0, int g0, int b0)
     return 0;  /* avoid gcc warning */
 }
 
+static int colrcmp1(char *s, colorname *c)
+{
+    return strcmp(s, c->ish);
+}
+
+static int colrcmp2(char *s, colorname *c)
+{
+    return strcmp(s, c->name);
+}
+
+static colorname *lookup_color(char *s, int ish)
+{
+    return (colorname *)bsearch(s, colortable, ElemCount(colortable), 
+                                ElemSize(colortable), (BSearchFncCast)(ish ? colrcmp1:colrcmp2));
+}
+
 /*
- *  colorphrase(s, &r, &g, &b) -- parse Icon color phrase.
+ *  colorphrase(s, &r, &g, &b, &a) -- parse Icon color phrase.
  *
- *  A Unicon color phrase matches the pattern
+ *  A color phrase matches the pattern
  *
- *   transparent
- *   subtransparent                           weak
- *   translucent                 pale         moderate
- *   subtranslucent              light        strong
- * [ opaque     ]        [[very] medium ]   [ vivid    ]   [color[ish]]   color
- *                               dark 
- *                               deep
+ *                               weak
+ *                  pale         moderate
+ *                  light        strong
+ *          [[very] medium ]   [ vivid    ]   [color[ish]]   color
+ *                  dark
+ *                  deep
  *
  *  where "color" is any of:
  *
@@ -2504,7 +2536,6 @@ char *rgbkey(int p, int r0, int g0, int b0)
  *
  *  A single space or hyphen separates each word from its neighbor.  The
  *  default lightness is "medium", and the default saturation is "vivid".
- *  The default diaphaneity is "opaque".
  *
  *  "pale" means "very light"; "deep" means "very dark".
  *
@@ -2514,12 +2545,14 @@ char *rgbkey(int p, int r0, int g0, int b0)
  *	IEEE Computer Graphics & Applications, May 1982
  */
 
-static int colorphrase(char *buf, int *r, int *g, int *b)
+static int colorphrase(char *buf, int *r, int *g, int *b, int *a)
 {
-    int len, very;
-    char c, *p, *ebuf, cbuffer[MAXCOLORNAME];
+    int len, very, n, pct;
+    char eof, c, *p, *ebuf, cbuffer[MAXCOLORNAME];
     float lgt, sat, blend, bl2, m1, m2;
     float h1, l1, s1, h2, l2, s2, r2, g2, b2;
+    stringint *e;
+    colorname *color1, *color2;
 
     lgt = -1.0;				/* default no lightness mod */
     sat =  1.0;				/* default vivid saturation */
@@ -2553,9 +2586,8 @@ static int colorphrase(char *buf, int *r, int *g, int *b)
         very = 0;
 
     /* check for lightness adjective */
-    p = bsearch(buf, (char *)lighttable,
-                ElemCount(lighttable), ElemSize(lighttable), (BSearchFncCast)strcmp);
-    if (p) {
+    e = stringint_lookup(lighttable, buf);
+    if (e) {
         /* set the "very" flag for "pale" or "deep" */
         if (strcmp(buf, "pale") == 0)
             very = 1;			/* pale = very light */
@@ -2566,57 +2598,64 @@ static int colorphrase(char *buf, int *r, int *g, int *b)
         if (buf >= ebuf)
             return 0;
         /* save lightness value, but ignore "medium" */
-        if ((((colrmod *)p) -> val) != 50)
-            lgt = ((colrmod *)p) -> val / 100.0;
+        if (e->i != 50)
+            lgt = e->i / 100.0;
     }
     else if (very)
         return 0;
 
     /* check for saturation adjective */
-    p = bsearch(buf, (char *)sattable,
-                ElemCount(sattable), ElemSize(sattable), (BSearchFncCast)strcmp);
-    if (p) {
-        sat = ((colrmod *)p) -> val / 100.0;
+    e = stringint_lookup(sattable, buf);
+    if (e) {
+        sat = e->i / 100.0;
         buf += strlen(buf) + 1;
         if (buf >= ebuf)
             return 0;
     }
 
-    if (buf + strlen(buf) >= ebuf)
-        blend = h1 = l1 = s1 = 0.0;		/* only one word left */
-    else {
-        /* we have two (or more) name words; get the first */
-        if ((p = bsearch(buf, colortable[0].name,
-                         ElemCount(colortable), ElemSize(colortable), (BSearchFncCast)strcmp)) != NULL) {
-            blend = 0.5;
-        }
-        else if ((p = bsearch(buf, colortable[0].ish,
-                              ElemCount(colortable), ElemSize(colortable), (BSearchFncCast)strcmp)) != NULL) {
-            p -= sizeof(colortable[0].name);
-            blend = 0.25;
-        }
-        else
-            return 0;
-
-        h1 = ((colrname *)p) -> hue;
-        l1 = ((colrname *)p) -> lgt / 100.0;
-        s1 = ((colrname *)p) -> sat / 100.0;
+    if ((color1 = lookup_color(buf, 0))) {
         buf += strlen(buf) + 1;
+        if ((color2 = lookup_color(buf, 0))) {
+            blend = 0.5;
+            buf += strlen(buf) + 1;
+        } else {
+            blend = 0.0;
+            color2 = color1;
+            color1 = 0;
+        }
+    } else {
+        if (!(color1 = lookup_color(buf, 1)))
+            return 0;
+        buf += strlen(buf) + 1;
+        if (!(color2 = lookup_color(buf, 0)))
+            return 0;
+        buf += strlen(buf) + 1;
+        blend = 0.25;
     }
 
-    /* process second (or only) name word */
-    p = bsearch(buf, colortable[0].name,
-                ElemCount(colortable), ElemSize(colortable), (BSearchFncCast)strcmp);
-    if (!p || buf + strlen(buf) < ebuf)
-        return 0;
-    h2 = ((colrname *)p) -> hue;
-    l2 = ((colrname *)p) -> lgt / 100.0;
-    s2 = ((colrname *)p) -> sat / 100.0;
+    h2 = color2->hue;
+    l2 = color2->lgt / 100.0;
+    s2 = color2->sat / 100.0;
+
+    if (buf <= ebuf) {
+        n = sscanf(buf, "%d%%%c", &pct, &eof);
+        if (n != 1 || pct < 0 || pct > 100)
+            return 0;
+        /* Check for extraneous input */
+        buf += strlen(buf) + 1;
+        if (buf <= ebuf)
+            return 0;
+        *a  = (65535 * pct) / 100;
+    }
 
     /* at this point we know we have a valid spec */
 
     /* interpolate hls specs */
     if (blend > 0) {
+        h1 = color1->hue;
+        l1 = color1->lgt / 100.0;
+        s1 = color1->sat / 100.0;
+
         bl2 = 1.0 - blend;
    
         if (s1 == 0.0)
@@ -2689,6 +2728,15 @@ static double rgbval(double n1, double n2, double hue)
         return n1;
 }
 
+char *tocolorstring(int r, int g, int b, int a)
+{
+    static char buf[64];
+    if (a == 65535)
+        sprintf(buf,"%d,%d,%d", r, g, b);
+    else
+        sprintf(buf,"%d,%d,%d,%d", r, g, b, a);
+    return buf;
+}
 
 /*
  * Image data manipulation functions.

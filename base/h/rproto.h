@@ -172,10 +172,11 @@ char *buffstr(dptr d);
 void buffnstr(dptr d, char **s, ...);
 
 
-int  parsecolor      (char *s, int *r, int *g, int *b);
+int  parsecolor      (char *s, int *r, int *g, int *b, int *a);
 int  parsepalette    (char *s, int *p);
 struct palentry *palsetup(int p);
 char *rgbkey         (int p, int r, int g, int b);
+char *tocolorstring(int r, int g, int b, int a);
 
 #if Graphics
    /*

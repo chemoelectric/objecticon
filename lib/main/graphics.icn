@@ -60,10 +60,9 @@ final class Pixels()
    #
    public native get(x, y)
 
-   # Set the pixel to the given Icon colour string value, and with the
-   # given optional alpha value.
+   # Set the pixel to the given Icon colour string value.
    #
-   public native set(x, y, v, a)
+   public native set(x, y, v)
 
    # Get the given pixel as an 4 element list giving the rgba values.
    #
@@ -180,10 +179,13 @@ final class Pixels()
    #
    public native set_palette_rgba(i, r, g, b, a)
 
-   # Set the palette entry at index i to the given icon colour value,
-   # with optional alpha specified as an integer.
+   # Get the palette entry at index i as an icon colour value.
    #
-   public native set_palette(i, v, a)
+   public native get_palette(i)
+
+   # Set the palette entry at index i to the given icon colour value.
+   #
+   public native set_palette(i, v)
 
    # Get the palette index contained at the given pixel location.
    #
@@ -552,12 +554,13 @@ final class Window(NoCopy)
    public native unclip()
 
    #
-   # Return the r,g,b values of the given color, as a color string
+   # Return the r,g,b values (plus possibly a if not opaque) of the
+   # given color, as a color string
    #
    public static native color_value(k)
 
    #
-   # Return the r,g,b values of the given color, as a list of 3 integers.
+   # Return the r,g,b,a values of the given color, as a list of 4 integers.
    #
    public static native parse_color(k)
 

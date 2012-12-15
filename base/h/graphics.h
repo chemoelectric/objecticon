@@ -17,7 +17,7 @@ struct point {
 #define TCH1 '~'			/* usual transparent character */
 #define TCH2 0377			/* alternate transparent character */
 
-#define MAXCOLORNAME 40
+#define MAXCOLORNAME 50
 
 #define IMGDATA_RGB24      1
 #define IMGDATA_BGR24      2
