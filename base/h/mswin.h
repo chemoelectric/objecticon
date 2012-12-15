@@ -60,7 +60,7 @@
 
 #define SHARED          0
 #define MUTABLE         1
-#define MAXCOLORNAME	40
+
 /*
  * color structure, inspired by X code (xwin.h)
  */

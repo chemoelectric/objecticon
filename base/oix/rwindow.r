@@ -3,7 +3,7 @@
  *  non window-system-specific window support routines
  */
 
-static int colorphrase(char *buf, int *r, int *g, int *b);
+static int colorphrase(char *buf, int *r, int *g, int *b, int *a);
 static double rgbval(double n1, double n2, double hue);
 static struct palentry *palsetup_palette;	/* current palette */
 
@@ -270,7 +270,7 @@ static void shadefilter(struct filter *f)
     int i, j;
     struct imgmem *imem = f->imem;
     int bk, bg_r, bg_g, bg_b;
-    parsecolor(getbg(f->w), &bg_r, &bg_g, &bg_b);
+    parsecolor(getbg(f->w), &bg_r, &bg_g, &bg_b, 0);
 
     bk = grey_band(f->p.shade.nband, bg_r, bg_g, bg_b);
     for (j = 0; j < imem->height; j++) {
@@ -510,27 +510,18 @@ int interpimage(dptr d,  struct imgdata *imd)
     return Failed;
 }
 
-void freeimgdata(struct imgdata *imd)
-{
-    free(imd->paltbl);
-    imd->paltbl = 0;
-    free(imd->data);
-    imd->data = 0;
-    imd->format = imd->height = imd->width = 0;
-}
-
-void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
+void drawimgdata(wbp w, int x, int y, int width, int height, struct imgdata *imd)
 {
     struct imgmem imem;
     int i, j;
 
-    if (!initimgmem(w, &imem, !isimgdataopaque(imd->format), 1, x, y, imd->width, imd->height))
+    if (!initimgmem(w, &imem, !isimgdataopaque(imd->format), 1, x, y, width, height))
         return;
 
     for (j = 0; j < imem.height; j++) {
         for (i = 0; i < imem.width; i++) {
             int r, g, b, a;
-            getimgdatapixel(imd, imem.x - x + i, imem.y - y + j, &r, &g, &b, &a);
+            getimgdatapixel(imd, i % imd->width, j % imd->height, &r, &g, &b, &a);
             if (a) {
                 if (a != 65535) {
                     int r1, g1, b1;
@@ -547,376 +538,6 @@ void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
     freeimgmem(&imem);
 }
 
-void getimgdatapixel(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
-{
-    unsigned char *s;
-    switch (imd->format) {
-        case IMGDATA_PALETTE1:
-        case IMGDATA_PALETTE2:
-        case IMGDATA_PALETTE4:
-        case IMGDATA_PALETTE8: {
-            struct palentry *pe = &imd->paltbl[getimgdatapaletteindex(imd, x, y)];
-            *r = pe->r;
-            *g = pe->g;
-            *b = pe->b;
-            *a = pe->a;
-            break;
-        }
-        case IMGDATA_RGB24: {
-            int n = imd->width * y + x;
-            s = imd->data + 3 * n;
-            *r = 257 * (*s++);
-            *g = 257 * (*s++);
-            *b = 257 * (*s++);
-            *a = 65535;
-            break;
-        }
-        case IMGDATA_BGR24: {
-            int n = imd->width * y + x;
-            s = imd->data + 3 * n;
-            *b = 257 * (*s++);
-            *g = 257 * (*s++);
-            *r = 257 * (*s++);
-            *a = 65535;
-            break;
-        }
-        case IMGDATA_RGBA32: {
-            int n = imd->width * y + x;
-            s = imd->data + 4 * n;
-            *r = 257 * (*s++);
-            *g = 257 * (*s++);
-            *b = 257 * (*s++);
-            *a = 257 * (*s++);
-            break;
-        }
-        case IMGDATA_ABGR32: {
-            int n = imd->width * y + x;
-            s = imd->data + 4 * n;
-            *a = 257 * (*s++);
-            *b = 257 * (*s++);
-            *g = 257 * (*s++);
-            *r = 257 * (*s++);
-            break;
-        }
-        case IMGDATA_RGB48: {
-            int n = imd->width * y + x;
-            s = imd->data + 6 * n;
-            *r = *s++;
-            *r = *r<<8|*s++;
-            *g = *s++;
-            *g = *g<<8|*s++;
-            *b = *s++;
-            *b = *b<<8|*s++;
-            *a = 65535;
-            break;
-        }
-        case IMGDATA_RGBA64: {
-            int n = imd->width * y + x;
-            s = imd->data + 8 * n;
-            *r = *s++;
-            *r = *r<<8|*s++;
-            *g = *s++;
-            *g = *g<<8|*s++;
-            *b = *s++;
-            *b = *b<<8|*s++;
-            *a = *s++;
-            *a = *a<<8|*s++;
-            break;
-        }
-        case IMGDATA_G8: {
-            int n = imd->width * y + x;
-            s = imd->data + n;
-            *r = *g = *b = 257 * (*s++);
-            *a = 65535;
-            break;
-        }
-        case IMGDATA_GA16: {
-            int n = imd->width * y + x;
-            s = imd->data + 2 * n;
-            *r = *g = *b = 257 * (*s++);
-            *a = 257 * (*s++);
-            break;
-        }
-        case IMGDATA_AG16: {
-            int n = imd->width * y + x;
-            s = imd->data + 2 * n;
-            *a = 257 * (*s++);
-            *r = *g = *b = 257 * (*s++);
-            break;
-        }
-        case IMGDATA_G16: {
-            int n = imd->width * y + x;
-            s = imd->data + 2 * n;
-            *r = *s++;
-            *r = *r<<8|*s++;
-            *g = *b = *r;
-            *a = 65535;
-            break;
-        }
-        case IMGDATA_GA32: {
-            int n = imd->width * y + x;
-            s = imd->data + 4 * n;
-            *r = *s++;
-            *r = *r<<8|*s++;
-            *g = *b = *r;
-            *a = *s++;
-            *a = *a<<8|*s++;
-            break;
-        }
-        default:
-            syserr("Unknown image format");
-            break;
-    }
-}
-
-void setimgdatapixel(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
-{
-    unsigned char *s;
-    int gr, n = imd->width * y + x;
-    switch (imd->format) {
-        case IMGDATA_RGB24:
-            s = imd->data + 3 * n;
-            *s++ = r / 256;
-            *s++ = g / 256;
-            *s++ = b / 256;
-            break;
-        case IMGDATA_BGR24:
-            s = imd->data + 3 * n;
-            *s++ = b / 256;
-            *s++ = g / 256;
-            *s++ = r / 256;
-            break;
-        case IMGDATA_RGBA32:
-            s = imd->data + 4 * n;
-            *s++ = r / 256;
-            *s++ = g / 256;
-            *s++ = b / 256;
-            *s++ = a / 256;
-            break;
-        case IMGDATA_ABGR32:
-            s = imd->data + 4 * n;
-            *s++ = a / 256;
-            *s++ = b / 256;
-            *s++ = g / 256;
-            *s++ = r / 256;
-            break;
-        case IMGDATA_RGB48:
-            s = imd->data + 6 * n;
-            *s++ = r / 256;
-            *s++ = r % 256;
-            *s++ = g / 256;
-            *s++ = g % 256;
-            *s++ = b / 256;
-            *s++ = b % 256;
-            break;
-        case IMGDATA_RGBA64:
-            s = imd->data + 8 * n;
-            *s++ = r / 256;
-            *s++ = r % 256;
-            *s++ = g / 256;
-            *s++ = g % 256;
-            *s++ = b / 256;
-            *s++ = b % 256;
-            *s++ = a / 256;
-            *s++ = a % 256;
-            break;
-        case IMGDATA_G8:
-            s = imd->data + n;
-            *s++ = (0.299 * r + 0.587 * g + 0.114 * b) / 256;
-            break;
-        case IMGDATA_GA16:
-            s = imd->data + 2 * n;
-            *s++ = (0.299 * r + 0.587 * g + 0.114 * b) / 256;
-            *s++ = a / 256;
-            break;
-        case IMGDATA_AG16:
-            s = imd->data + 2 * n;
-            *s++ = a / 256;
-            *s++ = (0.299 * r + 0.587 * g + 0.114 * b) / 256;
-            break;
-        case IMGDATA_G16:
-            s = imd->data + 2 * n;
-            gr = (int)(0.299 * r + 0.587 * g + 0.114 * b);
-            *s++ =  gr / 256;
-            *s++ =  gr % 256;
-            break;
-        case IMGDATA_GA32:
-            s = imd->data + 4 * n;
-            gr = (int)(0.299 * r + 0.587 * g + 0.114 * b);
-            *s++ =  gr / 256;
-            *s++ =  gr % 256;
-            *s++ = a / 256;
-            *s++ = a % 256;
-            break;
-        default:
-            syserr("Unknown image format");
-            break;
-    }
-}
-
-int getimgdatapaletteindex(struct imgdata *imd, int x, int y)
-{
-    unsigned char *s;
-    int n = imd->width * y + x;
-    switch (imd->format) {
-        case IMGDATA_PALETTE1:
-            s = imd->data + n / 8;
-            return (*s >> (n % 8)) & 1;
-        case IMGDATA_PALETTE2:
-            s = imd->data + n / 4;
-            return (*s >> 2 * (n % 4)) & 3;
-        case IMGDATA_PALETTE4:
-            s = imd->data + n / 2;
-            return (*s >> 4 * (n % 2)) & 15;
-            return 0;
-        case IMGDATA_PALETTE8:
-            s = imd->data + n;
-            return *s;
-        default:
-            syserr("Unknown image format");
-            return 0;
-    }
-}
-
-void setimgdatapaletteindex(struct imgdata *imd, int x, int y, int i)
-{
-    unsigned char *s;
-    int n = imd->width * y + x;
-    switch (imd->format) {
-        case IMGDATA_PALETTE1:
-            s = imd->data + n / 8;
-            *s = (*s & ~(1 << (n % 8))) | (i << (n % 8));
-            break;
-        case IMGDATA_PALETTE2:
-            s = imd->data + n / 4;
-            *s = (*s & ~(3 << 2 * (n % 4))) | (i << 2 * (n % 4));
-            break;
-        case IMGDATA_PALETTE4:
-            s = imd->data + n / 2;
-            *s = (*s & ~(15 << 4 * (n % 2))) | (i << 4 * (n % 2));
-            break;
-        case IMGDATA_PALETTE8:
-            s = imd->data + n;
-            *s = (unsigned char)i;
-            break;
-        default:
-            syserr("Unknown image format");
-            break;
-    }
-}
-
-int validimgdataformat(int format)
-{
-    switch (format) {
-        case IMGDATA_PALETTE1:
-        case IMGDATA_PALETTE2:
-        case IMGDATA_PALETTE4:
-        case IMGDATA_PALETTE8:
-        case IMGDATA_G8:
-        case IMGDATA_GA16:
-        case IMGDATA_AG16:
-        case IMGDATA_G16:
-        case IMGDATA_BGR24:
-        case IMGDATA_RGB24:
-        case IMGDATA_ABGR32:
-        case IMGDATA_RGBA32:
-        case IMGDATA_GA32:
-        case IMGDATA_RGB48:
-        case IMGDATA_RGBA64:
-            return 1;
-        default:
-            return 0;
-    }
-}
-
-int getimgdatalength(struct imgdata *imd)
-{
-    int n = imd->width * imd->height;
-    switch (imd->format) {
-        case IMGDATA_PALETTE1:
-            return 1 + n/8;
-        case IMGDATA_PALETTE2:
-            return 1 + n/4;
-        case IMGDATA_PALETTE4:
-            return 1 + n/2;
-        case IMGDATA_G8:
-        case IMGDATA_PALETTE8:
-            return n;
-        case IMGDATA_GA16:
-        case IMGDATA_AG16:
-        case IMGDATA_G16:
-            return 2 * n;
-        case IMGDATA_BGR24:
-        case IMGDATA_RGB24:
-            return 3 * n;
-        case IMGDATA_ABGR32:
-        case IMGDATA_RGBA32:
-        case IMGDATA_GA32:
-            return 4 * n;
-        case IMGDATA_RGB48:
-            return 6 * n;
-        case IMGDATA_RGBA64:
-            return 8 * n;
-        default:
-            syserr("Unknown image format");
-            return 0;
-    }
-}
-
-int isimgdataopaque(int format)
-{
-    switch (format) {
-        case IMGDATA_PALETTE1:
-        case IMGDATA_PALETTE2:
-        case IMGDATA_PALETTE4:
-        case IMGDATA_PALETTE8:
-        case IMGDATA_GA16:
-        case IMGDATA_AG16:
-        case IMGDATA_RGBA32:
-        case IMGDATA_ABGR32:
-        case IMGDATA_GA32:
-        case IMGDATA_RGBA64:
-            return 0;
-        case IMGDATA_G8:
-        case IMGDATA_G16:
-        case IMGDATA_RGB24:
-        case IMGDATA_BGR24:
-        case IMGDATA_RGB48:
-            return 1;
-        default:
-            syserr("Unknown image format");
-            return 0;
-    }
-}
-
-int imgdatapalettesize(int format)
-{
-    switch (format) {
-        case IMGDATA_PALETTE1:
-            return 2;
-        case IMGDATA_PALETTE2:
-            return 4;
-        case IMGDATA_PALETTE4:
-            return 16;
-        case IMGDATA_PALETTE8:
-            return 256;
-        case IMGDATA_GA16:
-        case IMGDATA_AG16:
-        case IMGDATA_RGBA32:
-        case IMGDATA_ABGR32:
-        case IMGDATA_GA32:
-        case IMGDATA_RGBA64:
-        case IMGDATA_G8:
-        case IMGDATA_G16:
-        case IMGDATA_RGB24:
-        case IMGDATA_BGR24:
-        case IMGDATA_RGB48:
-            return 0;
-        default:
-            syserr("Unknown image format");
-            return 0;
-    }
-}
 
 /*
  *  Functions and data for reading and writing GIF and JPEG images
@@ -2143,7 +1764,6 @@ int writeimagefile(char *filename, struct imgdata *imd)
  */
 int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph)
 {
-    int defw, defh;
     wcp wc = w->context;
     wsp ws = w->window;
 
@@ -2162,13 +1782,10 @@ int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph)
     /*
      * Get w and h, defaulting to extend to the edge
      */
-    defw = ws->width - *px;
-    defh = ws->height - *py;
-
-    if (!def:C_integer(argv[2], defw, *pw))
+    if (!def:C_integer(argv[2], ws->width - *px, *pw))
         ReturnErrVal(101, argv[2], Error);
 
-    if (!def:C_integer(argv[3], defh, *ph))
+    if (!def:C_integer(argv[3], ws->height - *py, *ph))
         ReturnErrVal(101, argv[3], Error);
 
     /*
@@ -2398,20 +2015,15 @@ void freewbinding(wbp w)
  *  Tables must be kept lexically sorted.
  */
 
-typedef struct {	/* color name entry */
-    char name[8];	/* basic color name */
-    char ish[12];	/* -ish form */
-    short hue;		/* hue, in degrees */
-    char lgt;		/* lightness, as percentage */
-    char sat;		/* saturation, as percentage */
-} colrname;
+typedef struct {        /* color name entry */
+    char *name;         /* basic color name */
+    char *ish;          /* -ish form */
+    short hue;          /* hue, in degrees */
+    char lgt;           /* lightness, as percentage */
+    char sat;           /* saturation, as percentage */
+} colorname;
 
-typedef struct {	/* arbitrary lookup entry */
-    char word[15];	/* word */
-    char val;		/* value, as percentage */
-} colrmod;
-
-static colrname colortable[] = {		/* known colors */
+static colorname colortable[] = {		/* known colors */
     /* color       ish-form     hue  lgt  sat */
     { "black",    "blackish",     0,   0,   0 },
     { "blue",     "bluish",     240,  50, 100 },
@@ -2430,7 +2042,8 @@ static colrname colortable[] = {		/* known colors */
     { "yellow",   "yellowish",   60,  50, 100 },
 };
 
-static colrmod lighttable[] = {			/* lightness modifiers */
+static stringint lighttable[] = {			/* lightness modifiers */
+    { 0, 5},
     { "dark",       0 },
     { "deep",       0 },		/* = very dark (see code) */
     { "light",    100 },
@@ -2438,7 +2051,8 @@ static colrmod lighttable[] = {			/* lightness modifiers */
     { "pale",     100 },		/* = very light (see code) */
 };
 
-static colrmod sattable[] = {			/* saturation levels */
+static stringint sattable[] = {			/* saturation levels */
+    { 0, 4},
     { "moderate",  50 },
     { "strong",    75 },
     { "vivid",    100 },
@@ -2446,28 +2060,42 @@ static colrmod sattable[] = {			/* saturation levels */
 };
 
 /*
- *  parsecolor(s, &r, &g, &b) - parse a color specification
+ *  parsecolor(s, &r, &g, &b, &a) - parse a color specification
+ *  parseopaquecolor(s, &r, &g, &b) - parse a color specification, requiring
+ *                                    an opaque color.
  *
  *  parsecolor interprets a color specification and produces r/g/b values
  *  scaled linearly from 0 to 65535.  parsecolor returns 1 on success, 0
  *  on an invalid specification.
- *
+ * 
  *  An Icon color specification can be any of the forms
  *
  *     #rgb			(hexadecimal digits)
+ *     #rgba			(hexadecimal digits)
  *     #rrggbb
+ *     #rrggbbaa
  *     #rrrgggbbb		(note: no 3 digit rrrgggbbbaaa)
  *     #rrrrggggbbbb
+ *     #rrrrggggbbbbaaaa
  *     nnnnn,nnnnn,nnnnn	(integers 0 - 65535)
+ *     nnnnn,nnnnn,nnnnn,nnnnn	(integers 0 - 65535)
  *     <Icon color phrase>
  */
-
-int parsecolor(char *buf, int *r, int *g, int *b)
+int parseopaquecolor(char *buf, int *r, int *g, int *b)
 {
-    int len, mul;
+    int a;
+    return parsecolor(buf, r, g, b, &a) && a == 65535;
+}
+
+int parsecolor(char *buf, int *r, int *g, int *b, int *a)
+{
+    int len, mul, ignore;
     char *fmt, c;
 
+    if (!a)
+        a = &ignore;
     *r = *g = *b = 0L;
+    *a = 65535;
 
     /* trim leading spaces */
     while (isspace((unsigned char)*buf))
@@ -2481,18 +2109,34 @@ int parsecolor(char *buf, int *r, int *g, int *b)
             return 0;
     }
 
+    /* try interpreting as four comma-separated numbers */
+    if (sscanf(buf, "%d,%d,%d,%d%c", r, g, b, a, &c) == 4) {
+        if (*r>=0 && *r<=65535 && *g>=0 && *g<=65535 && *b>=0 && *b<=65535 && *a>=0 && *a<=65535)
+            return 1;
+        else
+            return 0;
+    }
+
     /* try interpreting as a hexadecimal value */
     if (*buf == '#') {
         buf++;
         for (len = 0; isalnum((unsigned char)buf[len]); len++);
         switch (len) {
             case  3:  fmt = "%1x%1x%1x%c";  mul = 0x1111;  break;
+            case  4:  fmt = "%1x%1x%1x%1x%c";  mul = 0x1111;  break;
             case  6:  fmt = "%2x%2x%2x%c";  mul = 0x0101;  break;
+            case  8:  fmt = "%2x%2x%2x%2x%c";  mul = 0x0101;  break;
             case  9:  fmt = "%3x%3x%3x%c";  mul = 0x0010;  break;
             case 12:  fmt = "%4x%4x%4x%c";  mul = 0x0001;  break;
+            case 16:  fmt = "%4x%4x%4x%4x%c";  mul = 0x0001;  break;
             default:  return 0;
         }
-        if (sscanf(buf, fmt, r, g, b, &c) != 3)
+        if ((len == 4) || (len == 8) || (len == 16)) {
+            if (sscanf(buf, fmt, r, g, b, a, &c) != 4)
+                return 0;
+            *a *= mul;
+        }
+        else if (sscanf(buf, fmt, r, g, b, &c) != 3)
             return 0;
         *r *= mul;
         *g *= mul;
@@ -2501,10 +2145,7 @@ int parsecolor(char *buf, int *r, int *g, int *b)
     }
 
     /* try interpreting as a color phrase */
-    if (colorphrase(buf, r, g, b))
-        return 1;
-    else
-        return 0;
+    return colorphrase(buf, r, g, b, a);
 }
 
 /*
@@ -2867,19 +2508,36 @@ char *rgbkey(int p, int r0, int g0, int b0)
     return 0;  /* avoid gcc warning */
 }
 
+static int colrcmp1(char *s, colorname *c)
+{
+    return strcmp(s, c->ish);
+}
+
+static int colrcmp2(char *s, colorname *c)
+{
+    return strcmp(s, c->name);
+}
+
+static colorname *lookup_color(char *s, int ish)
+{
+    return (colorname *)bsearch(s, colortable, ElemCount(colortable), 
+                                ElemSize(colortable), (BSearchFncCast)(ish ? colrcmp1:colrcmp2));
+}
+
 /*
- *  colorphrase(s, &r, &g, &b) -- parse Icon color phrase.
+ *  colorphrase(s, &r, &g, &b, &a) -- parse Icon color phrase.
  *
- *  A Unicon color phrase matches the pattern
+ *  A color phrase matches the pattern
  *
- *   transparent
- *   subtransparent                           weak
- *   translucent                 pale         moderate
- *   subtranslucent              light        strong
- * [ opaque     ]        [[very] medium ]   [ vivid    ]   [color[ish]]   color
- *                               dark 
- *                               deep
- *
+ *                               weak
+ *                  pale         moderate
+ *                  light        strong
+ *          [[very] medium ]   [ vivid    ]   [color[ish]]   color [transparency%]
+ *                  dark
+ *                  deep
+ * OR
+ *          transparent
+ * 
  *  where "color" is any of:
  *
  *          black gray grey white pink violet brown
@@ -2887,7 +2545,6 @@ char *rgbkey(int p, int r0, int g0, int b0)
  *
  *  A single space or hyphen separates each word from its neighbor.  The
  *  default lightness is "medium", and the default saturation is "vivid".
- *  The default diaphaneity is "opaque".
  *
  *  "pale" means "very light"; "deep" means "very dark".
  *
@@ -2897,19 +2554,18 @@ char *rgbkey(int p, int r0, int g0, int b0)
  *	IEEE Computer Graphics & Applications, May 1982
  */
 
-static int colorphrase(char *buf, int *r, int *g, int *b)
+static int colorphrase(char *buf, int *r, int *g, int *b, int *a)
 {
-    int len, very;
-    char c, *p, *ebuf, cbuffer[MAXCOLORNAME];
+    int len, very, n, pct;
+    char eof, c, *p, *ebuf, cbuffer[MAXCOLORNAME];
     float lgt, sat, blend, bl2, m1, m2;
     float h1, l1, s1, h2, l2, s2, r2, g2, b2;
+    stringint *e;
+    colorname *color1, *color2;
 
     lgt = -1.0;				/* default no lightness mod */
     sat =  1.0;				/* default vivid saturation */
     len = strlen(buf);
-    while (isspace((unsigned char)buf[len-1]))
-        len--;				/* trim trailing spaces */
-
     if (len >= sizeof(cbuffer))
         return 0;				/* if too long for valid Icon spec */
 
@@ -2925,6 +2581,17 @@ static int colorphrase(char *buf, int *r, int *g, int *b)
 
     buf = cbuffer;
     ebuf = buf + len;
+
+    /* check for "transparent" */
+    if (strcmp(buf, "transparent") == 0) {
+        buf += strlen(buf) + 1;
+        /* Check for extraneous input */
+        if (buf <= ebuf)
+            return 0;
+        *r = *g = *b = *a = 0;
+        return 1;
+    }
+
     /* check for "very" */
     if (strcmp(buf, "very") == 0) {
         very = 1;
@@ -2936,9 +2603,8 @@ static int colorphrase(char *buf, int *r, int *g, int *b)
         very = 0;
 
     /* check for lightness adjective */
-    p = bsearch(buf, (char *)lighttable,
-                ElemCount(lighttable), ElemSize(lighttable), (BSearchFncCast)strcmp);
-    if (p) {
+    e = stringint_lookup(lighttable, buf);
+    if (e) {
         /* set the "very" flag for "pale" or "deep" */
         if (strcmp(buf, "pale") == 0)
             very = 1;			/* pale = very light */
@@ -2949,57 +2615,66 @@ static int colorphrase(char *buf, int *r, int *g, int *b)
         if (buf >= ebuf)
             return 0;
         /* save lightness value, but ignore "medium" */
-        if ((((colrmod *)p) -> val) != 50)
-            lgt = ((colrmod *)p) -> val / 100.0;
+        if (e->i != 50)
+            lgt = e->i / 100.0;
     }
     else if (very)
         return 0;
 
     /* check for saturation adjective */
-    p = bsearch(buf, (char *)sattable,
-                ElemCount(sattable), ElemSize(sattable), (BSearchFncCast)strcmp);
-    if (p) {
-        sat = ((colrmod *)p) -> val / 100.0;
+    e = stringint_lookup(sattable, buf);
+    if (e) {
+        sat = e->i / 100.0;
         buf += strlen(buf) + 1;
         if (buf >= ebuf)
             return 0;
     }
 
-    if (buf + strlen(buf) >= ebuf)
-        blend = h1 = l1 = s1 = 0.0;		/* only one word left */
-    else {
-        /* we have two (or more) name words; get the first */
-        if ((p = bsearch(buf, colortable[0].name,
-                         ElemCount(colortable), ElemSize(colortable), (BSearchFncCast)strcmp)) != NULL) {
-            blend = 0.5;
-        }
-        else if ((p = bsearch(buf, colortable[0].ish,
-                              ElemCount(colortable), ElemSize(colortable), (BSearchFncCast)strcmp)) != NULL) {
-            p -= sizeof(colortable[0].name);
-            blend = 0.25;
-        }
-        else
-            return 0;
-
-        h1 = ((colrname *)p) -> hue;
-        l1 = ((colrname *)p) -> lgt / 100.0;
-        s1 = ((colrname *)p) -> sat / 100.0;
+    if ((color1 = lookup_color(buf, 0))) {
         buf += strlen(buf) + 1;
+        if ((color2 = lookup_color(buf, 0))) {
+            blend = 0.5;
+            buf += strlen(buf) + 1;
+        } else {
+            blend = 0.0;
+            color2 = color1;
+            color1 = 0;
+        }
+    } else {
+        if (!(color1 = lookup_color(buf, 1)))
+            return 0;
+        buf += strlen(buf) + 1;
+        if (!(color2 = lookup_color(buf, 0)))
+            return 0;
+        buf += strlen(buf) + 1;
+        blend = 0.25;
     }
 
-    /* process second (or only) name word */
-    p = bsearch(buf, colortable[0].name,
-                ElemCount(colortable), ElemSize(colortable), (BSearchFncCast)strcmp);
-    if (!p || buf + strlen(buf) < ebuf)
-        return 0;
-    h2 = ((colrname *)p) -> hue;
-    l2 = ((colrname *)p) -> lgt / 100.0;
-    s2 = ((colrname *)p) -> sat / 100.0;
+    h2 = color2->hue;
+    l2 = color2->lgt / 100.0;
+    s2 = color2->sat / 100.0;
+
+    /* Check for alpha % spec */
+    if (buf <= ebuf) {
+        n = sscanf(buf, "%d%%%c", &pct, &eof);
+        if (n != 1 || pct < 0 || pct > 100)
+            return 0;
+        /* Check for extraneous input */
+        buf += strlen(buf) + 1;
+        if (buf <= ebuf)
+            return 0;
+        *a  = (65535 * pct) / 100;
+    } else
+        *a = 65535;
 
     /* at this point we know we have a valid spec */
 
     /* interpolate hls specs */
     if (blend > 0) {
+        h1 = color1->hue;
+        l1 = color1->lgt / 100.0;
+        s1 = color1->sat / 100.0;
+
         bl2 = 1.0 - blend;
    
         if (s1 == 0.0)
@@ -3070,4 +2745,398 @@ static double rgbval(double n1, double n2, double hue)
         return n1 + (n2 - n1) * (240 - hue) / 60.0;
     else
         return n1;
+}
+
+char *tocolorstring(int r, int g, int b, int a)
+{
+    static char buf[64];
+    if (a == 65535)
+        sprintf(buf,"%d,%d,%d", r, g, b);
+    else
+        sprintf(buf,"%d,%d,%d,%d", r, g, b, a);
+    return buf;
+}
+
+/*
+ * Image data manipulation functions.
+ */
+
+void getimgdatapixel(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
+{
+    unsigned char *s;
+    switch (imd->format) {
+        case IMGDATA_PALETTE1:
+        case IMGDATA_PALETTE2:
+        case IMGDATA_PALETTE4:
+        case IMGDATA_PALETTE8: {
+            struct palentry *pe = &imd->paltbl[getimgdatapaletteindex(imd, x, y)];
+            *r = pe->r;
+            *g = pe->g;
+            *b = pe->b;
+            *a = pe->a;
+            break;
+        }
+        case IMGDATA_RGB24: {
+            int n = imd->width * y + x;
+            s = imd->data + 3 * n;
+            *r = 257 * (*s++);
+            *g = 257 * (*s++);
+            *b = 257 * (*s++);
+            *a = 65535;
+            break;
+        }
+        case IMGDATA_BGR24: {
+            int n = imd->width * y + x;
+            s = imd->data + 3 * n;
+            *b = 257 * (*s++);
+            *g = 257 * (*s++);
+            *r = 257 * (*s++);
+            *a = 65535;
+            break;
+        }
+        case IMGDATA_RGBA32: {
+            int n = imd->width * y + x;
+            s = imd->data + 4 * n;
+            *r = 257 * (*s++);
+            *g = 257 * (*s++);
+            *b = 257 * (*s++);
+            *a = 257 * (*s++);
+            break;
+        }
+        case IMGDATA_ABGR32: {
+            int n = imd->width * y + x;
+            s = imd->data + 4 * n;
+            *a = 257 * (*s++);
+            *b = 257 * (*s++);
+            *g = 257 * (*s++);
+            *r = 257 * (*s++);
+            break;
+        }
+        case IMGDATA_RGB48: {
+            int n = imd->width * y + x;
+            s = imd->data + 6 * n;
+            *r = *s++;
+            *r = *r<<8|*s++;
+            *g = *s++;
+            *g = *g<<8|*s++;
+            *b = *s++;
+            *b = *b<<8|*s++;
+            *a = 65535;
+            break;
+        }
+        case IMGDATA_RGBA64: {
+            int n = imd->width * y + x;
+            s = imd->data + 8 * n;
+            *r = *s++;
+            *r = *r<<8|*s++;
+            *g = *s++;
+            *g = *g<<8|*s++;
+            *b = *s++;
+            *b = *b<<8|*s++;
+            *a = *s++;
+            *a = *a<<8|*s++;
+            break;
+        }
+        case IMGDATA_G8: {
+            int n = imd->width * y + x;
+            s = imd->data + n;
+            *r = *g = *b = 257 * (*s++);
+            *a = 65535;
+            break;
+        }
+        case IMGDATA_GA16: {
+            int n = imd->width * y + x;
+            s = imd->data + 2 * n;
+            *r = *g = *b = 257 * (*s++);
+            *a = 257 * (*s++);
+            break;
+        }
+        case IMGDATA_AG16: {
+            int n = imd->width * y + x;
+            s = imd->data + 2 * n;
+            *a = 257 * (*s++);
+            *r = *g = *b = 257 * (*s++);
+            break;
+        }
+        case IMGDATA_G16: {
+            int n = imd->width * y + x;
+            s = imd->data + 2 * n;
+            *r = *s++;
+            *r = *r<<8|*s++;
+            *g = *b = *r;
+            *a = 65535;
+            break;
+        }
+        case IMGDATA_GA32: {
+            int n = imd->width * y + x;
+            s = imd->data + 4 * n;
+            *r = *s++;
+            *r = *r<<8|*s++;
+            *g = *b = *r;
+            *a = *s++;
+            *a = *a<<8|*s++;
+            break;
+        }
+        default:
+            syserr("Unknown image format");
+            break;
+    }
+}
+
+void setimgdatapixel(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
+{
+    unsigned char *s;
+    int gr, n = imd->width * y + x;
+    switch (imd->format) {
+        case IMGDATA_RGB24:
+            s = imd->data + 3 * n;
+            *s++ = r / 256;
+            *s++ = g / 256;
+            *s++ = b / 256;
+            break;
+        case IMGDATA_BGR24:
+            s = imd->data + 3 * n;
+            *s++ = b / 256;
+            *s++ = g / 256;
+            *s++ = r / 256;
+            break;
+        case IMGDATA_RGBA32:
+            s = imd->data + 4 * n;
+            *s++ = r / 256;
+            *s++ = g / 256;
+            *s++ = b / 256;
+            *s++ = a / 256;
+            break;
+        case IMGDATA_ABGR32:
+            s = imd->data + 4 * n;
+            *s++ = a / 256;
+            *s++ = b / 256;
+            *s++ = g / 256;
+            *s++ = r / 256;
+            break;
+        case IMGDATA_RGB48:
+            s = imd->data + 6 * n;
+            *s++ = r / 256;
+            *s++ = r % 256;
+            *s++ = g / 256;
+            *s++ = g % 256;
+            *s++ = b / 256;
+            *s++ = b % 256;
+            break;
+        case IMGDATA_RGBA64:
+            s = imd->data + 8 * n;
+            *s++ = r / 256;
+            *s++ = r % 256;
+            *s++ = g / 256;
+            *s++ = g % 256;
+            *s++ = b / 256;
+            *s++ = b % 256;
+            *s++ = a / 256;
+            *s++ = a % 256;
+            break;
+        case IMGDATA_G8:
+            s = imd->data + n;
+            *s++ = (0.299 * r + 0.587 * g + 0.114 * b) / 256;
+            break;
+        case IMGDATA_GA16:
+            s = imd->data + 2 * n;
+            *s++ = (0.299 * r + 0.587 * g + 0.114 * b) / 256;
+            *s++ = a / 256;
+            break;
+        case IMGDATA_AG16:
+            s = imd->data + 2 * n;
+            *s++ = a / 256;
+            *s++ = (0.299 * r + 0.587 * g + 0.114 * b) / 256;
+            break;
+        case IMGDATA_G16:
+            s = imd->data + 2 * n;
+            gr = (int)(0.299 * r + 0.587 * g + 0.114 * b);
+            *s++ =  gr / 256;
+            *s++ =  gr % 256;
+            break;
+        case IMGDATA_GA32:
+            s = imd->data + 4 * n;
+            gr = (int)(0.299 * r + 0.587 * g + 0.114 * b);
+            *s++ =  gr / 256;
+            *s++ =  gr % 256;
+            *s++ = a / 256;
+            *s++ = a % 256;
+            break;
+        default:
+            syserr("Unknown image format");
+            break;
+    }
+}
+
+int getimgdatapaletteindex(struct imgdata *imd, int x, int y)
+{
+    unsigned char *s;
+    int n = imd->width * y + x;
+    switch (imd->format) {
+        case IMGDATA_PALETTE1:
+            s = imd->data + n / 8;
+            return (*s >> (n % 8)) & 1;
+        case IMGDATA_PALETTE2:
+            s = imd->data + n / 4;
+            return (*s >> 2 * (n % 4)) & 3;
+        case IMGDATA_PALETTE4:
+            s = imd->data + n / 2;
+            return (*s >> 4 * (n % 2)) & 15;
+            return 0;
+        case IMGDATA_PALETTE8:
+            s = imd->data + n;
+            return *s;
+        default:
+            syserr("Unknown image format");
+            return 0;
+    }
+}
+
+void setimgdatapaletteindex(struct imgdata *imd, int x, int y, int i)
+{
+    unsigned char *s;
+    int n = imd->width * y + x;
+    switch (imd->format) {
+        case IMGDATA_PALETTE1:
+            s = imd->data + n / 8;
+            *s = (*s & ~(1 << (n % 8))) | (i << (n % 8));
+            break;
+        case IMGDATA_PALETTE2:
+            s = imd->data + n / 4;
+            *s = (*s & ~(3 << 2 * (n % 4))) | (i << 2 * (n % 4));
+            break;
+        case IMGDATA_PALETTE4:
+            s = imd->data + n / 2;
+            *s = (*s & ~(15 << 4 * (n % 2))) | (i << 4 * (n % 2));
+            break;
+        case IMGDATA_PALETTE8:
+            s = imd->data + n;
+            *s = (unsigned char)i;
+            break;
+        default:
+            syserr("Unknown image format");
+            break;
+    }
+}
+
+int validimgdataformat(int format)
+{
+    switch (format) {
+        case IMGDATA_PALETTE1:
+        case IMGDATA_PALETTE2:
+        case IMGDATA_PALETTE4:
+        case IMGDATA_PALETTE8:
+        case IMGDATA_G8:
+        case IMGDATA_GA16:
+        case IMGDATA_AG16:
+        case IMGDATA_G16:
+        case IMGDATA_BGR24:
+        case IMGDATA_RGB24:
+        case IMGDATA_ABGR32:
+        case IMGDATA_RGBA32:
+        case IMGDATA_GA32:
+        case IMGDATA_RGB48:
+        case IMGDATA_RGBA64:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+int getimgdatalength(struct imgdata *imd)
+{
+    int n = imd->width * imd->height;
+    switch (imd->format) {
+        case IMGDATA_PALETTE1:
+            return 1 + n/8;
+        case IMGDATA_PALETTE2:
+            return 1 + n/4;
+        case IMGDATA_PALETTE4:
+            return 1 + n/2;
+        case IMGDATA_G8:
+        case IMGDATA_PALETTE8:
+            return n;
+        case IMGDATA_GA16:
+        case IMGDATA_AG16:
+        case IMGDATA_G16:
+            return 2 * n;
+        case IMGDATA_BGR24:
+        case IMGDATA_RGB24:
+            return 3 * n;
+        case IMGDATA_ABGR32:
+        case IMGDATA_RGBA32:
+        case IMGDATA_GA32:
+            return 4 * n;
+        case IMGDATA_RGB48:
+            return 6 * n;
+        case IMGDATA_RGBA64:
+            return 8 * n;
+        default:
+            syserr("Unknown image format");
+            return 0;
+    }
+}
+
+int isimgdataopaque(int format)
+{
+    switch (format) {
+        case IMGDATA_PALETTE1:
+        case IMGDATA_PALETTE2:
+        case IMGDATA_PALETTE4:
+        case IMGDATA_PALETTE8:
+        case IMGDATA_GA16:
+        case IMGDATA_AG16:
+        case IMGDATA_RGBA32:
+        case IMGDATA_ABGR32:
+        case IMGDATA_GA32:
+        case IMGDATA_RGBA64:
+            return 0;
+        case IMGDATA_G8:
+        case IMGDATA_G16:
+        case IMGDATA_RGB24:
+        case IMGDATA_BGR24:
+        case IMGDATA_RGB48:
+            return 1;
+        default:
+            syserr("Unknown image format");
+            return 0;
+    }
+}
+
+int imgdatapalettesize(int format)
+{
+    switch (format) {
+        case IMGDATA_PALETTE1:
+            return 2;
+        case IMGDATA_PALETTE2:
+            return 4;
+        case IMGDATA_PALETTE4:
+            return 16;
+        case IMGDATA_PALETTE8:
+            return 256;
+        case IMGDATA_GA16:
+        case IMGDATA_AG16:
+        case IMGDATA_RGBA32:
+        case IMGDATA_ABGR32:
+        case IMGDATA_GA32:
+        case IMGDATA_RGBA64:
+        case IMGDATA_G8:
+        case IMGDATA_G16:
+        case IMGDATA_RGB24:
+        case IMGDATA_BGR24:
+        case IMGDATA_RGB48:
+            return 0;
+        default:
+            syserr("Unknown image format");
+            return 0;
+    }
+}
+
+void freeimgdata(struct imgdata *imd)
+{
+    free(imd->paltbl);
+    imd->paltbl = 0;
+    free(imd->data);
+    imd->data = 0;
+    imd->format = imd->height = imd->width = 0;
 }

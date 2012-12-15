@@ -183,7 +183,7 @@ procedure is_image_string(v)
 end
 
 procedure parse_image_string(s, W)
-   local q, width, height, pal, data, extra, k, v, a
+   local q, width, height, pal, data, extra, k, v
    s := string(s) | runerr(103, s)
    s ? {
       tab_ws()
@@ -206,7 +206,7 @@ procedure parse_image_string(s, W)
       if *data = 0 | *data % width ~= 0 then
          return error("Wrong number of image characters")
       height := *data / width
-      q := Pixels.blank(Pixels.PALETTE8, width, height).
+      q := Pixels.blank(width, height, Pixels.PALETTE8).
          set_data(data)
       # Add chars from palette, if specified.
       if \pal then {
@@ -225,19 +225,14 @@ procedure parse_image_string(s, W)
                return error("= expected")
             }
             v := tab(upto(';') | 0)
-            a := 65535
             case v of {
                "hilite" : v := Gui.style.get_hilite_color(W)
                "shadow" : v := Gui.style.get_shadow_color(W)
                "fg" : v := W.get_fg()
                "bg" : v := W.get_bg()
-               "trans" : {
-                  v := "black"
-                  a := 0
-               }
             }
             move(1)
-            q.set_palette(ord(k), v, a) | {
+            q.set_palette(ord(k), v) | {
                q.close()
                return error("invalid colour in image spec: " || v)
             }

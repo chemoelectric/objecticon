@@ -27,11 +27,12 @@
 package ipl.imgcolor
 
 procedure imgcolor(win, x, y, w, h)
-   local colors
+   local colors, px
 
    colors := table(0)
-
-   every colors[!win.get_pixels(x, y, w, h)] +:= 1
+   px := win.get_pixels(x, y, w, h)
+   every colors[px.gen()] +:= 1
+   px.close()
 
    return colors
 

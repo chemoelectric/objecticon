@@ -87,7 +87,7 @@ procedure sadvance(sc, n)
       if sc.x < (sc.x0 + sc.w - 1) then
          sc.x +:= 1
       else
-         sc.win.copy_to(sc.win, sc.x0 + 1, sc.y, sc.w - 1, sc.h, sc.x0, sc.y)
+         sc.win.copy_to(sc.x0 + 1, sc.y, sc.w - 1, sc.h, sc.win, sc.x0, sc.y)
       sc.win.erase_area(sc.x, sc.y, 1, sc.h)
       sc.n +:= 1
       }

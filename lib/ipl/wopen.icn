@@ -96,7 +96,7 @@ procedure ZDone(win)
    w := win.get_width()
    h := win.get_height()
    org := Window.open().set_size(w, h) | WDone()
-   win.copy_to(org, x0, y0)
+   win.copy_to(x0, y0,,, org)
    win.set_resize(&yes)
    while e := WEvent(win)[1] do case e of {
       QuitEvents():

@@ -1,13 +1,14 @@
 package graphics
 
 import 
-   lang(NoCopy)
+   lang(NoCopy),
+   util(use)
 
 # This object contains pixel data either read from a file, extracted
 # from a Window, or created from scratch.  The data is stored in
 # various underlying formats depending on the source.
 #
-class Pixels()
+final class Pixels()
    private
       idp
 
@@ -59,10 +60,9 @@ class Pixels()
    #
    public native get(x, y)
 
-   # Set the pixel to the given Icon colour string value, and with the
-   # given optional alpha value.
+   # Set the pixel to the given Icon colour string value.
    #
-   public native set(x, y, v, a)
+   public native set(x, y, v)
 
    # Get the given pixel as an 4 element list giving the rgba values.
    #
@@ -111,20 +111,6 @@ class Pixels()
    #
    public native set_data(s)
 
-   # Change the dimensions.  The underlying data is expanded if
-   # necessary and padded with zeroes.
-   #
-   public native set_size(width, height)
-
-   # Convert this instance to another separate instance in the given
-   # new format, which cannot be PALETTE.
-   #
-   public convert(format)
-      return Pixels(convert_impl(format))
-   end
-
-   private native convert_impl(format)
-
    # Convenient method to generate 0 to get_width() - 1
    #
    public x_range()
@@ -166,17 +152,21 @@ class Pixels()
    # Create a blank instance with the given format and dimensions.
    # The underlying data is allocated and set to zero.
    #
-   public static blank(format, width, height)
-      return Pixels(blank_impl(format, width, height))
+   public static blank(width, height, format)
+      return Pixels(blank_impl(width, height, format))
    end
 
-   private static native blank_impl(format, width, height)
+   private static native blank_impl(width, height, format)
+
+   # Copy a single pixel from this instance to another.  The
+   # destination may not have a PALETTE format.
+   #
+   public native copy_pixel(x1, y1, other, x2, y2)
 
    #
    # Encode the image to a file.
    #
    public native to_file(fname)
-
 
    # Get the palette entry at index i, as a 4-element list.  This and
    # similar methods fails unless the format is PALETTEx.  The number
@@ -189,10 +179,13 @@ class Pixels()
    #
    public native set_palette_rgba(i, r, g, b, a)
 
-   # Set the palette entry at index i to the given icon colour value,
-   # with optional alpha specified as an integer.
+   # Get the palette entry at index i as an icon colour value.
    #
-   public native set_palette(i, v, a)
+   public native get_palette(i)
+
+   # Set the palette entry at index i to the given icon colour value.
+   #
+   public native set_palette(i, v)
 
    # Get the palette index contained at the given pixel location.
    #
@@ -209,7 +202,7 @@ class Pixels()
       return Pixels(clone_impl())
    end
 
-   private final object_clone()
+   private object_clone()
       return clone()
    end
 
@@ -226,7 +219,7 @@ class Pixels()
    end
 end
 
-class Window(NoCopy)
+final class Window(NoCopy)
    private
       wbp,
       transient_for
@@ -386,16 +379,16 @@ class Window(NoCopy)
    # a file containing an image.
    #
    public set_image(v)
-      if is(v, Pixels) then {
+      return if is(v, Pixels) then {
          set_size(v.get_width(), v.get_height())
-         draw_image(0, 0, v)
-      } else {
-         v := Pixels.open(v) | fail
-         set_size(v.get_width(), v.get_height())
-         draw_image(0, 0, v)
-         v.close()
+         draw_image(,, v)
+      } else use {
+         v := Pixels.open(v),
+         {
+            set_size(v.get_width(), v.get_height())
+            draw_image(,, v)
+         }
       }
-      return self
    end
 
    #
@@ -410,15 +403,12 @@ class Window(NoCopy)
    # window.  The parameter takes the same format as {set_image}.
    #
    public set_icon(v)
-      local r
-      if is(v, Pixels) then
-         r := set_icon_impl(v)
-      else {
-         v := Pixels.open(v) | fail
-         r := set_icon_impl(v)
-         v.close()
+      return if is(v, Pixels) then
+         set_icon_impl(v)
+      else use {
+         v := Pixels.open(v),
+         set_icon_impl(v)
       }
-      return \r
    end
 
    private native set_icon_impl(id)
@@ -564,12 +554,13 @@ class Window(NoCopy)
    public native unclip()
 
    #
-   # Return the r,g,b values of the given color, as a color string
+   # Return the r,g,b values (plus possibly a if not opaque) of the
+   # given color, as a color string
    #
    public static native color_value(k)
 
    #
-   # Return the r,g,b values of the given color, as a list of 3 integers.
+   # Return the r,g,b,a values of the given color, as a list of 4 integers.
    #
    public static native parse_color(k)
 
@@ -599,22 +590,33 @@ class Window(NoCopy)
    # {Pixels} instance.
    #
    public draw_image(x, y, v)
-      if is(v, Pixels) then
-         draw_image_impl(x, y, v)
-      else {
-         v := Pixels.open(v) | fail
-         draw_image_impl(x, y, v)
-         v.close()
+      return if is(v, Pixels) then
+         draw_image_impl(x, y, v.get_width(), v.get_height(), v)
+      else use {
+         v := Pixels.open(v),
+         draw_image_impl(x, y, v.get_width(), v.get_height(), v)
       }
-      return self
    end
 
-   private native draw_image_impl(x, y, d)
+   #
+   # Tile an image.  The image can be raw image data, a filename, or a
+   # {Pixels} instance.
+   #
+   public tile_image(x, y, width, height, v)
+      return if is(v, Pixels) then
+         draw_image_impl(x, y, width, height, v)
+      else use {
+         v := Pixels.open(v),
+         draw_image_impl(x, y, width, height, v)
+      }
+   end
+
+   private native draw_image_impl(x, y, width, height, pix)
 
    #
    # Copy an area from this window to another window.
    #
-   public native copy_to(dest, x1, y1, w, h, x2, y2)
+   public native copy_to(x1, y1, w, h, dest, x2, y2)
 
    #
    # draw_line(x1,y1,...xN,yN)
@@ -694,16 +696,16 @@ class Window(NoCopy)
    #
    # Get the contents of some pixels as a {Pixels} object.
    #
-   public get_pixels(format, x, y, width, height)
-      return Pixels(get_pixels_impl(format, x, y, width, height))
+   public get_pixels(x, y, width, height, format)
+      return Pixels(get_pixels_impl(x, y, width, height, format))
    end
 
-   private native get_pixels_impl(format, x, y, width, height)
+   private native get_pixels_impl(x, y, width, height, format)
 
    #
    # Filter the given pixels according to the given filter spec.
    #
-   public native filter(filter, x, y, width, height)
+   public native filter(x, y, width, height, filter)
 
    #
    # Return a rectangle (as a list of four integers), representing
@@ -773,7 +775,7 @@ class Window(NoCopy)
    public native close()
 
 $ifdef _PLAN9
-   public defer get_dir()
+   public native get_dir()
 $endif
 
    #
@@ -798,11 +800,9 @@ $endif
    #
    public static open_image(img, win)
       local w
-      w := if /win then
-         Window.open()
-      else
-         Window.open().
-           set_fg(win.get_fg()).
+      w := Window.open() | fail
+      if \win then
+         w.set_fg(win.get_fg()).
            set_bg(win.get_bg()).
            erase_area()
       w.set_image(img) | {

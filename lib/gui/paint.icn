@@ -100,7 +100,7 @@ class ImageWindowPaint(Paint)
    end
 
    public draw(W, x, y)
-      (\win).copy_to(W,,,,, x, y)
+      (\win).copy_to(,,,, W, x, y)
    end
 
    # Create a new instance.
@@ -143,7 +143,7 @@ class GridPaint(Paint)
       accel
 
    public draw(W, x, y)
-      (\win).copy_to(W,,,,, x, y)
+      (\win).copy_to(,,,, W, x, y)
    end
 
    public initially(c, accel)
@@ -344,7 +344,7 @@ class GridPaint(Paint)
             Align.C : y + (curr_cell.obj[lno].h - W.get_height()) / 2
             Align.B : y + curr_cell.obj[lno].h - W.get_height()
          }
-         W.copy_to(win,,,,, x, y1)
+         W.copy_to(,,,, win, x, y1)
          x +:= W.get_width()
       }
    end
@@ -362,7 +362,7 @@ class GridPaint(Paint)
             Align.C : y + (curr_cell.obj[lno].h - W.get_height()) / 2
             Align.B : y + curr_cell.obj[lno].h - W.get_height()
          }
-         W.copy_to(win,,,,, x, y1)
+         W.copy_to(,,,, win, x, y1)
          x +:= W.get_width()
       }
       W.close()
@@ -591,7 +591,7 @@ class ImagePaint(Paint)
    end
 
    public draw(W, x, y)
-      (\win).copy_to(W,,,,, x, y)
+      (\win).copy_to(,,,, W, x, y)
    end
 
    public new()

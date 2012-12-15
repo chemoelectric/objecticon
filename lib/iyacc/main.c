@@ -69,9 +69,14 @@ char *nullable;
 
 void done(int k)
 {
-    if (action_file) { fclose(action_file); unlink(action_file_name); }
-    if (text_file) { fclose(text_file); unlink(text_file_name); }
-    if (union_file) { fclose(union_file); unlink(union_file_name); }
+    if (action_file) fclose(action_file);
+    if (text_file) fclose(text_file);
+    if (union_file) fclose(union_file);
+
+    if (action_file_name) unlink(action_file_name);
+    if (text_file_name) unlink(text_file_name);
+    if (union_file_name)  unlink(union_file_name);
+
     exit(k);
 }
 

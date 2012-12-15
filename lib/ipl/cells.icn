@@ -187,13 +187,16 @@ procedure tiercells(panel, tier)
 end
 
 procedure cell(panel, x, y)
-   local n, m
+   local n, m, px, c
 
    n := x / panel.size + 1
    m := y / panel.size + 1
 
    if (n > panel.n) | (m > panel.m) then fail
 
-   return Cell(n, m, panel.window.get_pixels(x, y, 1, 1)[1])
+   px := panel.window.get_pixels(x, y, 1, 1)
+   c := px.get(0, 0)
+   px.close()
+   return Cell(n, m, c)
 
 end

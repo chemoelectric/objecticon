@@ -868,9 +868,9 @@ void erasearea(wbp w, int x, int y, int width, int height)
 
 int setfg(wbp w, char *val)
 {
-    int r, g, b, n;
+    int r, g, b, a, n;
     wcp wc = w->context;
-    if (!parsecolor(val, &r, &g, &b))
+    if (!parsecolor(val, &r, &g, &b, &a))
         return Failed;
     if (wc->fg)
         unlink_sharedcolor(wc->fg);
@@ -894,9 +894,9 @@ char *getfg(wbp w)
 
 int setbg(wbp w, char *val)
 {
-    int r, g, b, n;
+    int r, g, b, a, n;
     wcp wc = w->context;
-    if (!parsecolor(val, &r, &g, &b))
+    if (!parsecolor(val, &r, &g, &b, &a))
         return Failed;
     if (wc->bg)
         unlink_sharedcolor(wc->bg);

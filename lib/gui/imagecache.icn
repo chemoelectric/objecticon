@@ -1,6 +1,6 @@
 package gui
 
-import graphics, io
+import graphics, util
 
 $load HOME "images/gui.HOME_24.gif"
 $load NEW_FOLDER "images/gui.NEW_FOLDER_24.gif"
@@ -19,7 +19,7 @@ final abstract class ImageCache()
       name_image("gui.NEW_FOLDER_24", NEW_FOLDER)
       name_image("gui.REFRESH_24", REFRESH)
       name_image("gui.UP_24", UP)
-      name_image("gui.BOX_UP", "13,(0=shadow;1=hilite;~=trans),_
+      name_image("gui.BOX_UP", "13,(0=shadow;1=hilite;~=transparent),_
 ~~~~~~~~~~~~~_
 ~11111111111~_
 ~11111111110~_
@@ -34,7 +34,7 @@ final abstract class ImageCache()
 ~10000000000~_
 ~~~~~~~~~~~~~_
 ")
-      name_image("gui.BOX_DOWN", "13,(b=black;0=shadow;1=hilite;~=trans),_
+      name_image("gui.BOX_DOWN", "13,(b=black;0=shadow;1=hilite;~=transparent),_
 ~~~~~~~~~~~~~_
 ~00000000001~_
 ~00000000001~_
@@ -49,7 +49,7 @@ final abstract class ImageCache()
 ~11111111111~_
 ~~~~~~~~~~~~~_
 ")
-      name_image("gui.DIAMOND_UP", "13,(0=shadow;1=hilite;~=trans),_
+      name_image("gui.DIAMOND_UP", "13,(0=shadow;1=hilite;~=transparent),_
 ~~~~~~1~~~~~~_
 ~~~~~111~~~~~_
 ~~~~11~11~~~~_
@@ -64,7 +64,7 @@ final abstract class ImageCache()
 ~~~~~000~~~~~_
 ~~~~~~0~~~~~~_
 ")
-      name_image("gui.DIAMOND_DOWN", "13,(b=black;0=shadow;1=hilite;~=trans),_
+      name_image("gui.DIAMOND_DOWN", "13,(b=black;0=shadow;1=hilite;~=transparent),_
 ~~~~~~0~~~~~~_
 ~~~~~000~~~~~_
 ~~~~00~00~~~~_
@@ -79,7 +79,7 @@ final abstract class ImageCache()
 ~~~~~111~~~~~_
 ~~~~~~1~~~~~~_
 ")
-      name_image("gui.ARROW_UP", "11,(b=black;~=trans),_
+      name_image("gui.ARROW_UP", "11,(b=black;~=transparent),_
 ~~~~~b~~~~~_
 ~~~~bbb~~~~_
 ~~~bbbbb~~~_
@@ -87,7 +87,7 @@ final abstract class ImageCache()
 ~bbbbbbbbb~_
 bbbbbbbbbbb_
 ")
-      name_image("gui.ARROW_DOWN", "11,(b=black;~=trans),_
+      name_image("gui.ARROW_DOWN", "11,(b=black;~=transparent),_
 bbbbbbbbbbb_
 ~bbbbbbbbb~_
 ~~bbbbbbb~~_
@@ -95,7 +95,7 @@ bbbbbbbbbbb_
 ~~~~bbb~~~~_
 ~~~~~b~~~~~_
 ")
-      name_image("gui.ARROW_LEFT", "9,(b=black;~=trans),_
+      name_image("gui.ARROW_LEFT", "9,(b=black;~=transparent),_
 ~~~~~~~~b_
 ~~~~~~bbb_
 ~~~~bbbbb_
@@ -106,7 +106,7 @@ bbbbbbbbb_
 ~~~~~~bbb_
 ~~~~~~~~b_
 ")
-      name_image("gui.ARROW_RIGHT", "9,(b=black;~=trans),_
+      name_image("gui.ARROW_RIGHT", "9,(b=black;~=transparent),_
 b~~~~~~~~_
 bbb~~~~~~_
 bbbbb~~~~_
@@ -117,19 +117,19 @@ bbbbb~~~~_
 bbb~~~~~~_
 b~~~~~~~~_
 ")
-      name_image("gui.TINY_ARROW_UP", "7,(b=black;~=trans),_
+      name_image("gui.TINY_ARROW_UP", "7,(b=black;~=transparent),_
 ~~~b~~~_
 ~~bbb~~_
 ~bbbbb~_
 bbbbbbb_
 ")
-      name_image("gui.TINY_ARROW_DOWN", "7,(b=black;~=trans),_
+      name_image("gui.TINY_ARROW_DOWN", "7,(b=black;~=transparent),_
 bbbbbbb_
 ~bbbbb~_
 ~~bbb~~_
 ~~~b~~~_
 ")
-      name_image("gui.PLUS", "9,(b=black;~=trans),_
+      name_image("gui.PLUS", "9,(b=black;~=transparent),_
 bbbbbbbbb_
 b~~~~~~~b_
 b~~~b~~~b_
@@ -140,7 +140,7 @@ b~~~b~~~b_
 b~~~~~~~b_
 bbbbbbbbb_
 ")
-      name_image("gui.MINUS", "9,(b=black;~=trans),_
+      name_image("gui.MINUS", "9,(b=black;~=transparent),_
 bbbbbbbbb_
 b~~~~~~~b_
 b~~~~~~~b_
@@ -151,14 +151,14 @@ b~~~~~~~b_
 b~~~~~~~b_
 bbbbbbbbb_
 ")
-      name_image("gui.TINY_X", "8,(b=black;~=trans),_
+      name_image("gui.TINY_X", "8,(b=black;~=transparent),_
 bb~~~~bb_
 ~bb~~bb~_
 ~~~bb~~~_
 ~bb~~bb~_
 bb~~~~bb_
 ")
-      name_image("gui.GRID", "4,(0=shadow;1=hilite;~=trans),_
+      name_image("gui.GRID", "4,(0=shadow;1=hilite;~=transparent),_
 ~00~_
 0011_
 0111_

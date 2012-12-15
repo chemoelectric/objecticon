@@ -56,13 +56,13 @@ procedure mirror(win, x, y, w, h)
 
    sym := Window.open().set_size(width, height) | fail
 
-   win.copy_to(sym, x, y, w, h)
+   win.copy_to(x, y, w, h, sym)
 
    every x := 0 to w - 1 do 
-      sym.copy_to(sym, x, 0, 1, h, width - x - 1, 0)
+      sym.copy_to(x, 0, 1, h, sym, width - x - 1, 0)
 
    every y := 0 to h - 1 do
-      sym.copy_to(sym, 0, y, width, 1, 0, height - y - 1)
+      sym.copy_to(0, y, width, 1, sym, 0, height - y - 1)
 
    return sym
 

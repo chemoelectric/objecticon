@@ -425,7 +425,7 @@ class MySql(NoCopy)
       Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
    end
 
-   public new()
+   public final new()
       ptr := new_impl() | fail
       return
    end

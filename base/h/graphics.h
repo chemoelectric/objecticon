@@ -17,7 +17,31 @@ struct point {
 #define TCH1 '~'			/* usual transparent character */
 #define TCH2 0377			/* alternate transparent character */
 
-#define MAXCOLORNAME 40
+#define MAXCOLORNAME 50
+
+#define IMGDATA_RGB24      1
+#define IMGDATA_BGR24      2
+#define IMGDATA_RGBA32     3
+#define IMGDATA_ABGR32     4
+#define IMGDATA_RGB48      5
+#define IMGDATA_RGBA64     6
+#define IMGDATA_G8         7
+#define IMGDATA_GA16       8
+#define IMGDATA_AG16       9
+#define IMGDATA_G16        10
+#define IMGDATA_GA32       11
+#define IMGDATA_PALETTE1   21
+#define IMGDATA_PALETTE2   22
+#define IMGDATA_PALETTE4   24
+#define IMGDATA_PALETTE8   28
+
+struct imgdata {			/* image loaded from a file */
+   int width, height;			/* image dimensions */
+   struct palentry *paltbl;		/* pointer to palette table */
+   int format;                          /* format of data, if palette is nil */
+   unsigned char *data;			/* pointer to image data */
+   };
+
 
 #if Graphics
 
@@ -142,29 +166,6 @@ typedef struct _wfont {
 #define DESCENT(w) ((w)->context->font->descent)
 #define FHEIGHT(w) ((w)->context->font->height)
 #define FWIDTH(w) ((w)->context->font->maxwidth)
-
-#define IMGDATA_RGB24      1
-#define IMGDATA_BGR24      2
-#define IMGDATA_RGBA32     3
-#define IMGDATA_ABGR32     4
-#define IMGDATA_RGB48      5
-#define IMGDATA_RGBA64     6
-#define IMGDATA_G8         7
-#define IMGDATA_GA16       8
-#define IMGDATA_AG16       9
-#define IMGDATA_G16        10
-#define IMGDATA_GA32       11
-#define IMGDATA_PALETTE1   21
-#define IMGDATA_PALETTE2   22
-#define IMGDATA_PALETTE4   24
-#define IMGDATA_PALETTE8   28
-
-struct imgdata {			/* image loaded from a file */
-   int width, height;			/* image dimensions */
-   struct palentry *paltbl;		/* pointer to palette table */
-   int format;                          /* format of data, if palette is nil */
-   unsigned char *data;			/* pointer to image data */
-   };
 
 struct imgmem {
    int x, y, width, height;             /* Pos/dimensions of rectangle being got/set */
