@@ -1,7 +1,7 @@
 struct SharedColor {
    Image *i;            /* 1x1 image representing colour rgb */
    char  *name;
-   int   rgb;          /* rgb of i */
+   int   rgba;          /* rgba of i */
    int   refcount;
 };
 
@@ -11,6 +11,6 @@ struct SharedPattern {
    Image *i;             /* Cached image of the pattern computed according to fg & bg rgb and style.  It is */
                          /* recomputed as and when fg/bg rgb and/or style change. */
    char *name;
-   int   fg_rgb, bg_rgb, style;
+   int   fg_rgba, bg_rgba, style;
    int   refcount;
 };

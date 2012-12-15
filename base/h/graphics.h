@@ -234,6 +234,7 @@ typedef struct _wcontext {
   struct SharedPattern  *pattern;
   int           thick;
   stringint     *fillstyle;
+  stringint     *drawop;
 #elif MSWIN32
   LOGPEN	pen;
   LOGPEN	bgpen;
