@@ -1241,7 +1241,7 @@ int setdrawop(wbp w, char *val)
     if (!e)
         return Failed;
     wc->drawop = e;
-    if (wc->gc) XSetFunction(wd->display, wc->gc, wc->drawop->i);
+    XSetFunction(wd->display, wc->gc, wc->drawop->i);
     return Succeeded;
 }
 
@@ -2062,7 +2062,7 @@ void copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2
             return;		/*#%#%# BOGUS, NEEDS FIXING */
         xim = XGetImage(d1, ws1->pix, x, y, width, height,
                         (1<<GetDepth(wd1))-1,XYPixmap);
-        XSetFunction(wd2->display, wc2->gc, GXcopy);
+        if (wc2->drawop->i != GXcopy) XSetFunction(wd2->display, wc2->gc, GXcopy);
         for (i=0; i < width; i++) {
             for (j=0; j < height; j++) {
                 XSetForeground(wd2->display, wc2->gc, XGetPixel(xim, i, j));
@@ -2070,7 +2070,7 @@ void copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2
 	    }
         }
         XSetForeground(wd2->display, wc2->gc, wc2->fg->c);
-        XSetFunction(wd2->display, wc2->gc, wc2->drawop->i);
+        if (wc2->drawop->i != GXcopy) XSetFunction(wd2->display, wc2->gc, wc2->drawop->i);
         XSync(wd2->display,False);
         XDestroyImage(xim);
     }
@@ -2080,7 +2080,7 @@ void copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2
          */
         src = ws1->pix;
         XSetForeground(wd2->display, wc2->gc, wc2->bg->c);
-        XSetFunction(wd2->display, wc2->gc, GXcopy);
+        if (wc2->drawop->i != GXcopy) XSetFunction(wd2->display, wc2->gc, GXcopy);
 
         if (x+width<0 || y+height<0 || x>=ws1->pixwidth || y>=ws1->pixheight) {
             /* source is entirely offscreen */
@@ -2132,7 +2132,7 @@ void copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2
         }
 
         XSetForeground(wd2->display,wc2->gc, wc2->fg->c);
-        XSetFunction(wd2->display, wc2->gc, wc2->drawop->i);
+        if (wc2->drawop->i != GXcopy) XSetFunction(wd2->display, wc2->gc, wc2->drawop->i);
     }
 }
 

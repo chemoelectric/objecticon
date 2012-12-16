@@ -173,6 +173,7 @@ void buffnstr(dptr d, char **s, ...);
 
 
 int  parsecolor      (char *s, int *r, int *g, int *b, int *a);
+int  parseopaquecolor(char *s, int *r, int *g, int *b);
 int  parsepalette    (char *s, int *p);
 struct palentry *palsetup(int p);
 char *rgbkey         (int p, int r, int g, int b);
