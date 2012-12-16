@@ -2374,8 +2374,11 @@ int writeimagefileimpl(char *filename, struct imgdata *imd)
         free(w);
         return Succeeded;
     } else {
-        whyf("Image writer failed: %s", w->msg);
-        free(w);
+        if (w) {
+            whyf("Image writer failed: %s", w->msg);
+            free(w);
+        } else
+            LitWhy("child process not found");
         remove(filename);
         return Failed;
     }
