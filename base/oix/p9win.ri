@@ -72,7 +72,7 @@ static stringint fillstyles[] = {
 };
 
 static stringint drawops[] = {
-   { 0, 14},
+   { 0, 16},
    {"Clear",            Clear},
    {"D",                D},
    {"DatopS",           DatopS},
@@ -86,7 +86,9 @@ static stringint drawops[] = {
    {"SoutD",            SoutD},
    {"SoverD",           SoverD},
    {"SxorD",            SxorD},
+   {"clear",            Clear},
    {"copy",             SoverD},
+   {"noop",             D},
 };
 
 static stringint canvastypes[] = {
@@ -355,7 +357,7 @@ wbp wopen(char *display)
 static void clear_pix_win(wbp w)
 {
     wsp ws = w->window;
-    gendraw(ws->pix, ws->pix->r, w->context->bg->i, ZP, 0, ZP);
+    gendrawop(ws->pix, ws->pix->r, w->context->bg->i, ZP, 0, ZP, S);
 }
 
 static void copy_to(Image *dest, Image *src)
@@ -437,7 +439,7 @@ static void resize_pix_win(wbp w)
         Dy(ws->pix->r) >= ws->height)
         return;
     MemProtect(t = allocimage(display, Rect(0, 0, ws->width, ws->height), display->image->chan, 1, DNofill));
-    gendraw(t, t->r, w->context->bg->i, ZP, 0, ZP);
+    gendrawop(t, t->r, w->context->bg->i, ZP, 0, ZP, S);
     copy_to(t, ws->pix);
     freeimage(ws->pix);
     ws->pix = t;
@@ -590,12 +592,12 @@ static void impl_copyarea(wcp wc, Image *dest, Image *src,int x,int y,int w,int 
 
     if (x + w < 0 || y + h < 0 || x >= Dx(src->r) || y >= Dy(src->r)) {
         /* source is entirely offscreen, fill dest with bg */
-        gendraw(dest, 
+        gendrawop(dest, 
                 Rect(dest->r.min.x + x2, 
                      dest->r.min.y + y2,
                      dest->r.min.x + x2 + w,
                      dest->r.min.y + y2 + h), 
-                wc->bg->i, ZP, 0, ZP);
+                  wc->bg->i, ZP, 0, ZP, S);
     } else {
         int lpad, rpad, tpad, bpad;
         lpad = rpad = tpad = bpad = 0;
@@ -630,36 +632,36 @@ static void impl_copyarea(wcp wc, Image *dest, Image *src,int x,int y,int w,int 
                    src->r.min.y + y), 
                 0, ZP);
         if (lpad > 0)
-            gendraw(dest,
+            gendrawop(dest,
                     Rect(dest->r.min.x + x2 - lpad, 
                          dest->r.min.y + y2 - tpad,
                          dest->r.min.x + x2,
                          dest->r.min.y + y2 + h + bpad),
-                    wc->bg->i, ZP, 0, ZP);
+                      wc->bg->i, ZP, 0, ZP, S);
 
         if (rpad > 0)
-            gendraw(dest,
+            gendrawop(dest,
                     Rect(dest->r.min.x + x2 + w, 
                          dest->r.min.y + y2 - tpad,
                          dest->r.min.x + x2 + w + rpad,
                          dest->r.min.y + y2 + h + bpad),
-                    wc->bg->i, ZP, 0, ZP);
+                      wc->bg->i, ZP, 0, ZP, S);
 
         if (tpad > 0)
-            gendraw(dest,
+            gendrawop(dest,
                     Rect(dest->r.min.x + x2, 
                          dest->r.min.y + y2 - tpad,
                          dest->r.min.x + x2 + w,
                          dest->r.min.y + y2),
-                    wc->bg->i, ZP, 0, ZP);
+                      wc->bg->i, ZP, 0, ZP, S);
 
         if (bpad > 0)
-            gendraw(dest,
+            gendrawop(dest,
                     Rect(dest->r.min.x + x2, 
                          dest->r.min.y + y2 + h,
                          dest->r.min.x + x2 + w,
                          dest->r.min.y + y2 + h + bpad),
-                    wc->bg->i, ZP, 0, ZP);
+                      wc->bg->i, ZP, 0, ZP, S);
     }
     unclip(wc, dest);
 }
@@ -871,7 +873,7 @@ static void impl_erasearea(wcp wc, Image *dest, int x, int y, int width, int hei
                        dest->r.min.x + x + width,
                        dest->r.min.y + y + height);
     clip(wc, dest);
-    gendraw(dest, t, wc->bg->i, ZP, 0, ZP);
+    gendrawop(dest, t, wc->bg->i, ZP, 0, ZP, S);
     unclip(wc, dest);
 }
 
@@ -885,13 +887,11 @@ void erasearea(wbp w, int x, int y, int width, int height)
     flushimage(display, 1);
 }
 
-#define Premul(v, a) ( (((unsigned int)(v)) * ((unsigned int)(a))) / 65535 )
-
 static int to_color_value(int r, int g, int b, int a)
 {
-    r = Premul(r, a) / 256;
-    g = Premul(g, a) / 256;
-    b = Premul(b, a) / 256;
+    r = CombineAlpha(r, 0, a) / 256;
+    g = CombineAlpha(g, 0, a) / 256;
+    b = CombineAlpha(b, 0, a) / 256;
     a /= 256;
     return (r << 24) | (g << 16) | (b << 8) | a;
 }
@@ -917,6 +917,12 @@ char *getfg(wbp w)
 {
     return w->context->fg->name;
 }
+
+/* Alpha is allowed with bg, but only used with patterns (fillstyle
+ * textured).  Otherwise, the S op is supposed to draw the bg image
+ * over the dest, eg when erasing an area.  This is supposed to ignore
+ * the alpha, but it doesn't work properly because it draws the wrong
+ * shade - something to do with premultiplied alpha */
 
 int setbg(wbp w, char *val)
 {
@@ -2227,6 +2233,8 @@ int readimagefileimpl(char *filename, struct imgdata *imd)
         cmd = "png -9 -3";
     else if (strcasecmp(fp->ext, ".jpg") == 0 || strcasecmp(fp->ext, ".jpeg") == 0)
         cmd = "jpg -9 -3";
+    else if (strcasecmp(fp->ext, ".ppm") == 0)
+        cmd = "ppm -9 -3";
     else
         return NoCvt;
     if ((fd = open(filename, OREAD)) < 0) {
@@ -2276,6 +2284,7 @@ int readimagedataimpl(dptr data, struct imgdata *imd)
 int writeimagefileimpl(char *filename, struct imgdata *imd)
 {
     Memimage *m;
+    Waitmsg *w;
     int pip[2], pid, fd, ndata, i, j;
     char *cmd;
     uchar *data, *p;
@@ -2285,6 +2294,10 @@ int writeimagefileimpl(char *filename, struct imgdata *imd)
         cmd = "topng";
     else if (strcasecmp(fp->ext, ".gif") == 0)
         cmd = "togif";
+    else if (strcasecmp(fp->ext, ".ppm") == 0)
+        cmd = "toppm";
+    else if (strcasecmp(fp->ext, ".ico") == 0)
+        cmd = "toico";
     else
         return NoCvt;
 
@@ -2298,7 +2311,8 @@ int writeimagefileimpl(char *filename, struct imgdata *imd)
         return Failed;
     }
 
-    if (isimgdataopaque(imd->format)) {
+    /* Transparency only works for png (not gifs it seems) */
+    if (isimgdataopaque(imd->format) || strcmp(cmd, "topng") != 0) {
         ndata = 3 * imd->width * imd->height;
         MemProtect(data = malloc(ndata));
         p = data;
@@ -2313,7 +2327,6 @@ int writeimagefileimpl(char *filename, struct imgdata *imd)
         }
         MemProtect(m = allocmemimage(Rect(0, 0, imd->width, imd->height), RGB24));
     } else {
-        /* This doesn't work properly for some reason, muddling colour and transparency up. */
         ndata = 4 * imd->width * imd->height;
         MemProtect(data = malloc(ndata));
         p = data;
@@ -2354,10 +2367,18 @@ int writeimagefileimpl(char *filename, struct imgdata *imd)
     close(pip[0]);
     close(fd);
     writememimage(pip[1], m);
-    free(waitforpid(pid));
-    freememimage(m);
+    w = waitforpid(pid);
     close(pip[1]);
-    return Succeeded;
+    freememimage(m);
+    if (w && w->msg[0] == 0) {
+        free(w);
+        return Succeeded;
+    } else {
+        whyf("Image writer failed: %s", w->msg);
+        free(w);
+        remove(filename);
+        return Failed;
+    }
 }
 
 static int acceptable_font(struct FontInfo *fi, char *family, int flags, int size)
