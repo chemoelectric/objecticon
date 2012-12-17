@@ -360,7 +360,7 @@ wbp wopen(char *display)
 static void clear_pix_win(wbp w)
 {
     wsp ws = w->window;
-    gendrawop(ws->pix, ws->pix->r, w->context->bg->i, ZP, 0, ZP, S);
+    gendraw(ws->pix, ws->pix->r, w->context->bg->i, ZP, 0, ZP);
 }
 
 static void copy_to(Image *dest, Image *src)
@@ -442,7 +442,7 @@ static void resize_pix_win(wbp w)
         Dy(ws->pix->r) >= ws->height)
         return;
     MemProtect(t = allocimage(display, Rect(0, 0, ws->width, ws->height), display->image->chan, 1, DNofill));
-    gendrawop(t, t->r, w->context->bg->i, ZP, 0, ZP, S);
+    gendraw(t, t->r, w->context->bg->i, ZP, 0, ZP);
     copy_to(t, ws->pix);
     freeimage(ws->pix);
     ws->pix = t;
@@ -595,12 +595,12 @@ static void impl_copyarea(wcp wc, Image *dest, Image *src,int x,int y,int w,int 
 
     if (x + w < 0 || y + h < 0 || x >= Dx(src->r) || y >= Dy(src->r)) {
         /* source is entirely offscreen, fill dest with bg */
-        gendrawop(dest, 
+        gendraw(dest, 
                 Rect(dest->r.min.x + x2, 
                      dest->r.min.y + y2,
                      dest->r.min.x + x2 + w,
                      dest->r.min.y + y2 + h), 
-                  wc->bg->i, ZP, 0, ZP, S);
+                wc->bg->i, ZP, 0, ZP);
     } else {
         int lpad, rpad, tpad, bpad;
         lpad = rpad = tpad = bpad = 0;
@@ -635,36 +635,36 @@ static void impl_copyarea(wcp wc, Image *dest, Image *src,int x,int y,int w,int 
                    src->r.min.y + y), 
                 0, ZP);
         if (lpad > 0)
-            gendrawop(dest,
+            gendraw(dest,
                     Rect(dest->r.min.x + x2 - lpad, 
                          dest->r.min.y + y2 - tpad,
                          dest->r.min.x + x2,
                          dest->r.min.y + y2 + h + bpad),
-                      wc->bg->i, ZP, 0, ZP, S);
+                    wc->bg->i, ZP, 0, ZP);
 
         if (rpad > 0)
-            gendrawop(dest,
+            gendraw(dest,
                     Rect(dest->r.min.x + x2 + w, 
                          dest->r.min.y + y2 - tpad,
                          dest->r.min.x + x2 + w + rpad,
                          dest->r.min.y + y2 + h + bpad),
-                      wc->bg->i, ZP, 0, ZP, S);
+                    wc->bg->i, ZP, 0, ZP);
 
         if (tpad > 0)
-            gendrawop(dest,
+            gendraw(dest,
                     Rect(dest->r.min.x + x2, 
                          dest->r.min.y + y2 - tpad,
                          dest->r.min.x + x2 + w,
                          dest->r.min.y + y2),
-                      wc->bg->i, ZP, 0, ZP, S);
+                    wc->bg->i, ZP, 0, ZP);
 
         if (bpad > 0)
-            gendrawop(dest,
+            gendraw(dest,
                     Rect(dest->r.min.x + x2, 
                          dest->r.min.y + y2 + h,
                          dest->r.min.x + x2 + w,
                          dest->r.min.y + y2 + h + bpad),
-                      wc->bg->i, ZP, 0, ZP, S);
+                    wc->bg->i, ZP, 0, ZP);
     }
     unclip(wc, dest);
 }
@@ -876,7 +876,7 @@ static void impl_erasearea(wcp wc, Image *dest, int x, int y, int width, int hei
                        dest->r.min.x + x + width,
                        dest->r.min.y + y + height);
     clip(wc, dest);
-    gendrawop(dest, t, wc->bg->i, ZP, 0, ZP, S);
+    gendraw(dest, t, wc->bg->i, ZP, 0, ZP);
     unclip(wc, dest);
 }
 
@@ -921,21 +921,15 @@ char *getfg(wbp w)
     return w->context->fg->name;
 }
 
-/* Alpha is allowed with bg, but only used with patterns (fillstyle
- * textured).  Otherwise, the S op is supposed to draw the bg image
- * over the dest, eg when erasing an area.  This is supposed to ignore
- * the alpha, but it doesn't work properly because it draws the wrong
- * shade - something to do with premultiplied alpha */
-
 int setbg(wbp w, char *val)
 {
-    int r, g, b, a;
+    int r, g, b;
     wcp wc = w->context;
-    if (!parsecolor(val, &r, &g, &b, &a))
+    if (!parseopaquecolor(val, &r, &g, &b))
         return Failed;
     if (wc->bg)
         unlink_sharedcolor(wc->bg);
-    wc->bg = new_sharedcolor(val, to_color_value(r, g, b, a));
+    wc->bg = new_sharedcolor(val, to_color_value(r, g, b, 65535));
     return Succeeded;
 }
 
