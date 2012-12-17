@@ -185,6 +185,9 @@ static struct SharedColor *black, *white;
 static int window_count;
 static struct SharedPattern *black_pattern;
 
+#define Premul16(v, a) (((unsigned)(v)*a)/65535)
+#define Unpremul8(v, a) (((unsigned)(v)*255)/a)
+
 #if 0
 static void dump_all(void)
 {
@@ -889,9 +892,9 @@ void erasearea(wbp w, int x, int y, int width, int height)
 
 static int to_color_value(int r, int g, int b, int a)
 {
-    r = CombineAlpha(r, 0, a) / 256;
-    g = CombineAlpha(g, 0, a) / 256;
-    b = CombineAlpha(b, 0, a) / 256;
+    r = Premul16(r, a) / 256;
+    g = Premul16(g, a) / 256;
+    b = Premul16(b, a) / 256;
     a /= 256;
     return (r << 24) | (g << 16) | (b << 8) | a;
 }
@@ -1181,8 +1184,7 @@ void loadimgmem(wbp w, struct imgmem *imem, int copy)
 
 void getimgmempixel(struct imgmem *imem, int x, int y, int *r, int *g, int *b)
 {
-    uchar *p;
-    p = &imem->data[3 * (y*imem->width + x)];
+    uchar *p = &imem->data[3 * (y*imem->width + x)];
     *b = 257 * *p++;
     *g = 257 * *p++;
     *r = 257 * *p++;
@@ -2221,6 +2223,37 @@ static int readimageimpl(char *cmd, int fd, struct imgdata *imd)
     MemProtect(imd->data = malloc(ndata));
     unloadmemimage(m, m->r, imd->data, ndata);
     freememimage(m);
+    /*
+     * Un-premultiply data if we have alpha channel.
+     */
+    switch (format) {
+        case IMGDATA_ABGR32: {
+            int i;
+            uchar *p = imd->data;
+            for (i = 0; i < imd->width * imd->height; ++i) {
+                int a = (*p++);
+                if (a != 0 && a != 255) {
+                    *p = Unpremul8(*p, a);
+                    ++p;
+                    *p = Unpremul8(*p, a);
+                    ++p;
+                    *p = Unpremul8(*p, a);
+                    ++p;
+                } else
+                    p += 3;
+            }
+        }
+        case IMGDATA_AG16: {
+            int i;
+            uchar *p = imd->data;
+            for (i = 0; i < imd->width * imd->height; ++i) {
+                int a = (*p++);
+                if (a != 0 && a != 255)
+                    *p = Unpremul8(*p, a);
+                ++p;
+            }
+        }
+    }
     return Succeeded;
 }
 
@@ -2334,9 +2367,9 @@ int writeimagefileimpl(char *filename, struct imgdata *imd)
             for (i = 0; i < imd->width; i++) {
                 int r, g, b, a;
                 getimgdatapixel(imd, i, j, &r, &g, &b, &a);
-                *p++ = r / 256;
-                *p++ = g / 256;
-                *p++ = b / 256;
+                *p++ = Premul16(r, a) / 256;
+                *p++ = Premul16(g, a) / 256;
+                *p++ = Premul16(b, a) / 256;
                 *p++ = a / 256;
             }
         }
