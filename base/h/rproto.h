@@ -208,12 +208,19 @@ char *tocolorstring(int r, int g, int b, int a);
    int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph);
    int pointargs(wbp w, dptr argv, word *px, word *py);
 
-   int  initimgmem      (wbp w, struct imgmem *i, int copy, int clip, int x, int y, int width, int height);
-   int toimgdata(struct imgmem *imem, struct imgdata *imd); 
-   void drawimgdata(wbp w, int x, int y, int width, int height, struct imgdata *imd);
    int  getdefaultfontsize(int);
    char *getdefaultfont(void);
    int interpimage(dptr d,  struct imgdata *imd);
+
+
+int drawable(wbp w, int clip, word *x, word *y, word *width, word *height);
+void captureimgdata(wbp w, int x, int y, struct imgdata *imd);
+void outputimgdata(wbp w, int x, int y, struct imgdata *imd);
+int getimgdataformat(wbp w);
+void drawimgdata(wbp w, word x, word y, word width, word height, struct imgdata *imd);
+
+
+
 
    int is_png(dptr data);
    int is_jpeg(dptr data);
@@ -225,11 +232,6 @@ char *tocolorstring(int r, int g, int b, int a);
     * graphics implementation routines supplied for each platform
     * (excluding those defined as macros for X-windows)
     */
-   void loadimgmem       (wbp w, struct imgmem *imem, int copy);
-   void getimgmempixel        (struct imgmem *imem, int x, int y, int *r, int *g, int *b);
-   void setimgmempixel        (struct imgmem *imem, int x, int y, int r, int g, int b);
-   void saveimgmem       (wbp w, struct imgmem *imem);
-   void freeimgmem       (struct imgmem *imem);
    int  setpattern      (wbp w, char *name);
    wcp  clonecontext   (wbp w);
    void copyarea        (wbp w,wbp w2,int x,int y,int wd,int h,int x2,int y2);

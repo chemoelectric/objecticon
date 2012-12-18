@@ -1162,74 +1162,62 @@ int setpattern(wbp w, char *name)
     return Succeeded;
 }
 
-void loadimgmem(wbp w, struct imgmem *imem, int copy)
+void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
+    Image *im;
+    int len;
+    uchar *data;
     wsp ws = w->window;
-    MemProtect(imem->im = allocimage(display, Rect(0, 0, imem->width, imem->height), RGB24, 1, DNofill));
-    imem->len = imem->width * imem->height * 3;
-    MemProtect(imem->data = malloc(imem->len));
-    if (copy) {
-        /* Copy from pix to the tmp win */
-        gendraw(imem->im, imem->im->r, ws->pix, Pt(imem->x, imem->y), 0, ZP);
-        /* Get the pixels */
-        unloadimage(imem->im, imem->im->r, imem->data, imem->len);
-    }
-}
-
-void getimgmempixel(struct imgmem *imem, int x, int y, int *r, int *g, int *b)
-{
-    uchar *p = &imem->data[3 * (y*imem->width + x)];
-    *b = 257 * *p++;
-    *g = 257 * *p++;
-    *r = 257 * *p++;
-}
-
-void setimgmempixel(struct imgmem *imem, int x, int y, int r, int g, int b)
-{
-    uchar *p = &imem->data[3 * (y*imem->width + x)];
-    *p++ = b / 256;
-    *p++ = g / 256;
-    *p++ = r / 256;
-}
-
-int toimgdata(struct imgmem *imem, struct imgdata *imd)
-{
-    imd->data = imem->data;
-    imem->data = 0;
+    /* Allocate a temp win to hold the rectangle we want */
+    MemProtect(im = allocimage(display, Rect(0, 0, imd->width, imd->height), RGB24, 1, DNofill));
+    len = imd->width * imd->height * 3;
+    MemProtect(data = malloc(len));
+    /* Copy from pix to the tmp win */
+    gendraw(im, im->r, ws->pix, Pt(x, y), 0, ZP);
+    /* Get the pixels from the temp win, and then free it */
+    unloadimage(im, im->r, data, len);
+    freeimage(im);
     imd->format = IMGDATA_BGR24;
-    return Succeeded;
+    imd->data = data;
 }
 
-static void impl_saveimgmem(wcp wc, Image *dest, struct imgmem *imem)
+static void impl_outputimgdata(wcp wc, Image *dest, int x, int y, Image *src)
 {
     clip(wc, dest);
     gendraw(dest,
-            Rect(dest->r.min.x + imem->x, 
-                 dest->r.min.y + imem->y,
-                 dest->r.min.x + imem->x + imem->width,
-                 dest->r.min.y + imem->y + imem->height),
-            imem->im, ZP,
-            0, ZP);
+            Rect(dest->r.min.x + x, 
+                 dest->r.min.y + y,
+                 dest->r.min.x + x + Dx(src->r),
+                 dest->r.min.y + y + Dy(src->r)),
+            src, ZP, 0, ZP);
     unclip(wc, dest);
 }
 
-void saveimgmem(wbp w, struct imgmem *imem)
+void outputimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
+    Image *im;
+    int len;
     wcp wc = w->context;
     wsp ws = w->window;
-    /* Put the altered pixels back in the image */
-    loadimage(imem->im, imem->im->r, imem->data, imem->len);
+    if (imd->format != IMGDATA_BGR24)
+        syserr("wrong imgdata format");
+
+    /* Allocate a temp win to represent the imgdata */
+    MemProtect(im = allocimage(display, Rect(0, 0, imd->width, imd->height), RGB24, 1, DNofill));
+    len = imd->width * imd->height * 3;
+    /* Put the imgdata pixels into the image */
+    loadimage(im, im->r, imd->data, len);
     /* Copy tmp image back to screen */
     if (ws->win)
-        impl_saveimgmem(wc, ws->win, imem);
-    impl_saveimgmem(wc, ws->pix, imem);
+        impl_outputimgdata(wc, ws->win, x, y, im);
+    impl_outputimgdata(wc, ws->pix, x, y, im);
+    freeimage(im);
     flushimage(display, 1);
 }
 
-void freeimgmem(struct imgmem *imem)
+int getimgdataformat(wbp w)
 {
-    free(imem->data);
-    freeimage(imem->im);
+    return IMGDATA_BGR24;
 }
 
 int queryrootpointer(wbp w, int *x, int *y)

@@ -607,35 +607,18 @@ end
 function graphics_Window_get_pixels_impl(self, x0, y0, w0, h0)
    body {
       struct imgdata *imd;
-      struct imgmem imem;
       word x, y, width, height;
-      int i, j, r, g, b, depth, format;
       GetSelfW();
 
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
 
-      if (initimgmem(self_w, &imem, 1, 0, x, y, width, height)) {
+      if (drawable(self_w, 0, &x, &y, &width, &height)) {
           MemProtect(imd = malloc(sizeof(struct imgdata)));
-          imd->width = imem.width;
-          imd->height = imem.height;
+          imd->width = width;
+          imd->height = height;
           imd->paltbl = 0;
-          if (toimgdata(&imem, imd) == NoCvt) {
-              format = IMGDATA_RGB48;
-              if (getdepth(self_w, &depth) == Succeeded) {
-                  if (depth <= 24)
-                      format = IMGDATA_RGB24;
-              }
-              imd->format = format;
-              MemProtect(imd->data = malloc(getimgdatalength(imd)));
-              for (j = 0; j < imem.height; j++) {
-                  for (i = 0; i < imem.width; i++) {
-                      getimgmempixel(&imem, i, j, &r, &g, &b);
-                      setimgdatapixel(imd, i, j, r, g, b, 65535);
-                  }
-              }
-          }
-          freeimgmem(&imem);
+          captureimgdata(self_w, x, y, imd);
           return C_integer((word)imd);
       } else {
           /* Region completely off-screen */
@@ -675,9 +658,9 @@ end
 
 function graphics_Window_filter(self, x0, y0, w0, h0, spec)
    body {
-      struct imgmem imem;
       word x, y, width, height;
       struct filter *filter;
+      struct imgdata imd;
       int i, nfilter;
       GetSelfW();
 
@@ -716,17 +699,23 @@ function graphics_Window_filter(self, x0, y0, w0, h0, spec)
           }
       }
 
-      if (!initimgmem(self_w, &imem, 1, 1, x, y, width, height)) {
+      if (!drawable(self_w, 1, &x, &y, &width, &height)) {
           free(filter);
           return self;
       }
 
+      imd.width = width;
+      imd.height = height;
+      imd.paltbl = 0;
+      captureimgdata(self_w, x, y, &imd);
+
       for (i = 0; i < nfilter; ++i) {
-          filter[i].imem = &imem;
+          filter[i].imd = &imd;
           filter[i].f(&filter[i]);
       }
-      saveimgmem(self_w, &imem);
-      freeimgmem(&imem);
+
+      outputimgdata(self_w, x, y, &imd);
+      freeimgdata(&imd);
       free(filter);
 
       return self;
@@ -939,49 +928,15 @@ function graphics_Window_drawable(self, x0, y0, w0, h0)
       tended struct descrip result;
       struct descrip t;
       wcp wc;
-      wsp ws;
       word x, y, width, height;
       GetSelfW();
       wc = self_w->context;
-      ws = self_w->window;
 
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
 
-      if (x < 0)  { 
-          width += x; 
-          x = 0; 
-      }
-      if (y < 0)  { 
-          height += y; 
-          y = 0; 
-      }
-      if (x + width > ws->width)
-          width = ws->width - x; 
-      if (y + height > ws->height)
-          height = ws->height - y; 
-
-      if (width <= 0 || height <= 0)
+      if (!drawable(self_w, 1, &x, &y, &width, &height))
           fail;
-
-      if (wc->clipw >= 0) {
-          /* Further reduce the rectangle to the clipping region */
-          if (x < wc->clipx) {
-              width += x - wc->clipx;
-              x = wc->clipx;
-          }
-          if (y < wc->clipy) {
-              height += y - wc->clipy; 
-              y = wc->clipy;
-          }
-          if (x + width > wc->clipx + wc->clipw)
-              width = wc->clipx + wc->clipw - x;
-          if (y + height > wc->clipy + wc->cliph)
-              height = wc->clipy + wc->cliph - y;
-
-          if (width <= 0 || height <= 0)
-              fail;
-      }
 
       create_list(4, &result);
       MakeInt(x - wc->dx, &t);

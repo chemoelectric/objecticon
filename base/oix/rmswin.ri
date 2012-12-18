@@ -1502,52 +1502,30 @@ int x, y, width, height, x2, y2;
    }
 
 
-/*
- * Initialize client for producing pixels from a window, or in this case,
- * only create a device context once, not once per getpixel.
- */
-void loadimgmem(wbp w, struct imgmem *imem, int copy)
+void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
    wsp ws = w->window;
    int i, j;
+   COLORREF *p, *crp;
    HDC stddc = GetDC(ws->iconwin), pixdc = CreateCompatibleDC(stddc);
    HBITMAP oldpix;
 
    if (palette) SelectPalette(pixdc, palette, FALSE);
    oldpix = SelectObject(pixdc, ws->pix);
 
-   MemProtect(imem->crp = malloc( imem->width * imem->height * sizeof(COLORREF)));
-   if (copy) {
-       COLORREF *p = imem->crp;
-       for(i = imem->y; i < imem->y + imem->height; i++)
-           for(j = imem->x; j < imem->x + imem->width; j++)
-               *p++ = GetPixel(pixdc, j, i);
-   }
+   MemProtect(crp = malloc( imem->width * imem->height * sizeof(COLORREF)));
+   p = crp;
+   for(i = imem->y; i < imem->y + imem->height; i++)
+       for(j = imem->x; j < imem->x + imem->width; j++)
+           *p++ = GetPixel(pixdc, j, i);
 
+   imd->format = IMGDATA_XRGB32;
+   imd->data = (unsigned char *)crp;
    SelectObject(pixdc, oldpix);
    FREE_STDLOCALS(w);
 }
 
-void getimgmempixel(struct imgmem *imem, int x, int y, int *r, int *g, int *b)
-{
-
-   COLORREF cr = imem->crp[y * imem->width + x];
-   *r = RED(cr)*257;
-   *g = GREEN(cr)*257;
-   *b = BLUE(cr)*257;
-}
-
-int toimgdata(struct imgmem *imem, struct imgdata *imd)
-{
-    return NoCvt;
-}
-
-void setimgmempixel(struct imgmem *imem, int x, int y, int r, int g, int b)
-{
-   imem->crp[y * imem->width + x] = RGB(r/256, g/256, b/256);
-}
-
-void saveimgmem(wbp w, struct imgmem *imem)
+void outputimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
    COLORREF *p;
    wsp ws = w->window;
@@ -1558,17 +1536,17 @@ void saveimgmem(wbp w, struct imgmem *imem)
    if (palette) SelectPalette(pixdc, palette, FALSE);
    oldpix = SelectObject(pixdc, ws->pix);
 
-   p = imem->crp;
-   for(i = imem->y; i < imem->y + imem->height; i++)
-      for(j = imem->x; j < imem->x + imem->width; j++)
+   p = (COLORREF *)imd->data;
+   for(i = y; i < y + imd->height; i++)
+      for(j = x; j < x + imd->width; j++)
          SetPixel(pixdc, j, i, *p++);
 
    /*
     * Copy it from the pixmap onto the screen.
     */
    if (ws->win){
-      BitBlt(stddc, imem->x, imem->y, imem->width, imem->height, 
-	     pixdc, imem->x, imem->y, SRCCOPY);
+      BitBlt(stddc, x, y, imd->width, imd->height, 
+	     pixdc, x, y, SRCCOPY);
    }
 
    SelectObject(pixdc, oldpix);
@@ -1576,11 +1554,10 @@ void saveimgmem(wbp w, struct imgmem *imem)
    FREE_STDLOCALS(w);
 }
 
-void freeimgmem(struct imgmem *imem)
+int getimgdataformat(wbp w)
 {
-   free(imem->crp);
+    return IMGDATA_XRGB32;
 }
-
 
 int  getdisplaysize  (wbp w, int *width, int *height)
 {

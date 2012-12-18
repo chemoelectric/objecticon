@@ -62,7 +62,6 @@ static void synch_net_wm_state(wsp ws, int desired_state);
 static void close_screen_win(wsp ws);
 static int get_shift(unsigned long mask);
 static struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int b);
-static void from_pixel(wdp wd, unsigned long c, int *r, int *g, int *b);
 static unsigned long to_pixel(wdp wd, int r, int g, int b);
 static void setpattern_in_gc(wbp w, int width, int height, int *rowdata);
 
@@ -238,6 +237,23 @@ static void dump_all(void)
 #endif
 
 #define ATOM(d, x) ((d)->atoms[ATOM_##x])
+
+static unsigned long to_pixel(wdp wd, int r, int g, int b)
+{
+    switch (wd->vtype) {
+        case RGB24:
+            return ((r/256)<<wd->red_shift) | ((g/256)<<wd->green_shift) | ((b/256)<<wd->blue_shift);
+        case RGB48:
+            return (r<<wd->red_shift) | (g<<wd->green_shift) | (b<<wd->blue_shift);
+        case GRAY8:
+            return (0.299 * r + 0.587 * g + 0.114 * b) / 256;
+        default: {
+            syserr("Invalid type");
+            /* not reached */
+            return 0;
+        }
+    }
+}
 
 static struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int b)
 {
@@ -2136,105 +2152,50 @@ void copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2
     }
 }
 
-
-/*
- * Client for producing pixels from a window
- */
-void loadimgmem(wbp w, struct imgmem *imem, int copy)
+void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
     wsp ws = w->window;
     wdp wd = ws->display;
-    MemProtect(imem->im = XGetImage(wd->display, ws->pix,
-                                    imem->x, imem->y, imem->width, imem->height,
-                                    AllPlanes, ZPixmap));
-    imem->wd = wd;
+    XImage *xi;
+    MemProtect(xi = XGetImage(wd->display, ws->pix,
+                              x, y, imd->width, imd->height,
+                              AllPlanes, ZPixmap));
+    imd->format = wd->format;
+    imd->data = (unsigned char *)xi->data;
+    xi->data = 0;
+    XDestroyImage(xi);
 }
 
-int toimgdata(struct imgmem *imem, struct imgdata *imd)
-{
-    XImage *xi=imem->im;
-    if (xi->bits_per_pixel == 32 &&
-        xi->depth == 24 &&
-        imem->wd->vtype == RGB24 &&
-        imem->wd->red_shift == 16 &&
-        imem->wd->green_shift == 8 &&
-        imem->wd->blue_shift == 0) 
-    {
-        imd->data = (unsigned char *)imem->im->data;
-        imem->im->data = 0;
-        imd->format = xi->byte_order == LSBFirst ? IMGDATA_BGRX32 : IMGDATA_XRGB32;
-        return Succeeded;
-    } else
-        return NoCvt;
-}
-
-static void from_pixel(wdp wd, unsigned long c, int *r, int *g, int *b)
-{
-    switch (wd->vtype) {
-        case RGB24: {
-            *b = ((c>>wd->blue_shift)&0xff)*257;
-            *g = ((c>>wd->green_shift)&0xff)*257;
-            *r = ((c>>wd->red_shift)&0xff)*257;
-            break;
-        }
-        case RGB48: {
-            *b = (c>>wd->blue_shift)&0xffff;
-            *g = (c>>wd->green_shift)&0xffff;
-            *r = (c>>wd->red_shift)&0xffff;
-            break;
-        }
-        case GRAY8: {
-            *b = *g = *r = (c & 0xff) * 257;
-            break;
-        }
-        default:
-            syserr("Invalid type");
-    }
-}
-
-static unsigned long to_pixel(wdp wd, int r, int g, int b)
-{
-    switch (wd->vtype) {
-        case RGB24:
-            return ((r/256)<<wd->red_shift) | ((g/256)<<wd->green_shift) | ((b/256)<<wd->blue_shift);
-        case RGB48:
-            return (r<<wd->red_shift) | (g<<wd->green_shift) | (b<<wd->blue_shift);
-        case GRAY8:
-            return (0.299 * r + 0.587 * g + 0.114 * b) / 256;
-        default: {
-            syserr("Invalid type");
-            /* not reached */
-            return 0;
-        }
-    }
-}
-
-void getimgmempixel(struct imgmem *imem, int x, int y, int *r, int *g, int *b)
-{
-    from_pixel(imem->wd, XGetPixel(imem->im, x, y), r, g, b);
-}
-
-void setimgmempixel(struct imgmem *imem, int x, int y, int r, int g, int b)
-{
-    XPutPixel(imem->im, x, y, to_pixel(imem->wd, r, g, b));
-}
-
-void saveimgmem(wbp w, struct imgmem *imem)
+void outputimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
     wcp wc = w->context;
     wsp ws = w->window;
     wdp wd = ws->display;
+    XImage *xi;
+    if (imd->format != wd->format)
+        syserr("wrong imgdata format");
+
+    MemProtect(xi = XCreateImage(wd->display, 
+                                 GetVisual(wd), 
+                                 GetDepth(wd), 
+                                 ZPixmap, 
+                                 0, 
+                                 (char *)imd->data, 
+                                 imd->width, imd->height, 
+                                 BitmapPad(wd->display),
+                                 0));
+
     if (wc->drawop->i != GXcopy) XSetFunction(wd->display, wc->gc, GXcopy);
-    RENDER7(w, XPutImage, imem->im, 0, 0, imem->x, imem->y, imem->width, imem->height);
+    RENDER7(w, XPutImage, xi, 0, 0, x, y, imd->width, imd->height);
     if (wc->drawop->i != GXcopy) XSetFunction(wd->display, wc->gc, wc->drawop->i);
+    xi->data = 0;
+    XDestroyImage(xi);
 }
 
-void freeimgmem(struct imgmem *imem)
+int getimgdataformat(wbp w)
 {
-    XDestroyImage(imem->im);
-    imem->im = 0;
+    return w->window->display->format;
 }
-
 
 int querypointer(wbp w, int *x, int *y)
 {
@@ -2588,7 +2549,7 @@ static wdp alcdisplay(char *s)
     vis = GetVisual(wd);
 
     /*
-     * Get info about the default visual, check it's suitbale and
+     * Get info about the default visual, check it's suitable and
      * extract the rgb shift masks.
      */
     xvi.visualid = XVisualIDFromVisual(vis);
@@ -2598,10 +2559,12 @@ static wdp alcdisplay(char *s)
         free(wd);
         return NULL;
     }
-    if (xvi_ret->class == StaticGray && xvi_ret->depth == 8 && xvi_ret->bits_per_rgb == 8)
+    if (xvi_ret->class == StaticGray && xvi_ret->depth == 8 && xvi_ret->bits_per_rgb == 8) {
         wd->vtype = GRAY8;
-    else if (xvi_ret->class == TrueColor && xvi_ret->depth == 24 && xvi_ret->bits_per_rgb == 8) {
+        wd->format = IMGDATA_G8;
+    } else if (xvi_ret->class == TrueColor && xvi_ret->depth == 24 && xvi_ret->bits_per_rgb == 8) {
         wd->vtype = RGB24;
+        wd->format = ImageByteOrder(wd->display) == LSBFirst ? IMGDATA_BGRX32 : IMGDATA_XRGB32;
         wd->red_shift = get_shift(xvi_ret->red_mask);
         wd->green_shift = get_shift(xvi_ret->green_mask);
         wd->blue_shift = get_shift(xvi_ret->blue_mask);
