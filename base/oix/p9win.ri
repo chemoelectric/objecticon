@@ -1192,6 +1192,14 @@ void setimgmempixel(struct imgmem *imem, int x, int y, int r, int g, int b)
     *p++ = r / 256;
 }
 
+int toimgdata(struct imgmem *imem, struct imgdata *imd)
+{
+    imd->data = imem->data;
+    imem->data = 0;
+    imd->format = IMGDATA_BGR24;
+    return Succeeded;
+}
+
 static void impl_saveimgmem(wcp wc, Image *dest, struct imgmem *imem)
 {
     clip(wc, dest);

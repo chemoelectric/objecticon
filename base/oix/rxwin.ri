@@ -2150,6 +2150,24 @@ void loadimgmem(wbp w, struct imgmem *imem, int copy)
     imem->wd = wd;
 }
 
+int toimgdata(struct imgmem *imem, struct imgdata *imd)
+{
+    XImage *xi=imem->im;
+    if (xi->bits_per_pixel == 32 &&
+        xi->depth == 24 &&
+        imem->wd->vtype == RGB24 &&
+        imem->wd->red_shift == 16 &&
+        imem->wd->green_shift == 8 &&
+        imem->wd->blue_shift == 0) 
+    {
+        imd->data = (unsigned char *)imem->im->data;
+        imem->im->data = 0;
+        imd->format = xi->byte_order == LSBFirst ? IMGDATA_BGRX32 : IMGDATA_XRGB32;
+        return Succeeded;
+    } else
+        return NoCvt;
+}
+
 static void from_pixel(wdp wd, unsigned long c, int *r, int *g, int *b)
 {
     switch (wd->vtype) {

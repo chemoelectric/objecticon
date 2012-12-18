@@ -604,37 +604,35 @@ function graphics_Window_lower(self)
    }
 end
 
-function graphics_Window_get_pixels_impl(self, x0, y0, w0, h0, format)
-   if !def:C_integer(format, IMGDATA_RGBA64) then
-      runerr(101, format)
+function graphics_Window_get_pixels_impl(self, x0, y0, w0, h0)
    body {
       struct imgdata *imd;
       struct imgmem imem;
       word x, y, width, height;
-      int i, j, r, g, b;
+      int i, j, r, g, b, depth, format;
       GetSelfW();
 
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
 
-      if (!validimgdataformat(format))
-          Irunerr(153, format);
-      if (imgdatapalettesize(format) > 0) {
-          LitWhy("Cannot use a PALETTE format as destination");
-          fail;
-      }
-
       if (initimgmem(self_w, &imem, 1, 0, x, y, width, height)) {
           MemProtect(imd = malloc(sizeof(struct imgdata)));
           imd->width = imem.width;
           imd->height = imem.height;
-          imd->format = format;
           imd->paltbl = 0;
-          MemProtect(imd->data = malloc(getimgdatalength(imd)));
-          for (j = 0; j < imem.height; j++) {
-              for (i = 0; i < imem.width; i++) {
-                  getimgmempixel(&imem, i, j, &r, &g, &b);
-                  setimgdatapixel(imd, i, j, r, g, b, 65535);
+          if (toimgdata(&imem, imd) == NoCvt) {
+              format = IMGDATA_RGB48;
+              if (getdepth(self_w, &depth) == Succeeded) {
+                  if (depth <= 24)
+                      format = IMGDATA_RGB24;
+              }
+              imd->format = format;
+              MemProtect(imd->data = malloc(getimgdatalength(imd)));
+              for (j = 0; j < imem.height; j++) {
+                  for (i = 0; i < imem.width; i++) {
+                      getimgmempixel(&imem, i, j, &r, &g, &b);
+                      setimgdatapixel(imd, i, j, r, g, b, 65535);
+                  }
               }
           }
           freeimgmem(&imem);

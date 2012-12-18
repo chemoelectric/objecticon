@@ -209,6 +209,7 @@ char *tocolorstring(int r, int g, int b, int a);
    int pointargs(wbp w, dptr argv, word *px, word *py);
 
    int  initimgmem      (wbp w, struct imgmem *i, int copy, int clip, int x, int y, int width, int height);
+   int toimgdata(struct imgmem *imem, struct imgdata *imd); 
    void drawimgdata(wbp w, int x, int y, int width, int height, struct imgdata *imd);
    int  getdefaultfontsize(int);
    char *getdefaultfont(void);

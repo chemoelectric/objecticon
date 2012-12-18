@@ -24,6 +24,8 @@ final class Pixels()
       AG16,
       G16,
       GA32,
+      XRGB32,
+      BGRX32,
       PALETTE1,
       PALETTE2,
       PALETTE4,
@@ -41,6 +43,8 @@ final class Pixels()
       AG16      :=  9
       G16       :=  10
       GA32      :=  11
+      XRGB32    :=  12
+      BGRX32    :=  13
       PALETTE1  :=  21
       PALETTE2  :=  22
       PALETTE4  :=  24
@@ -95,6 +99,8 @@ final class Pixels()
          AG16: "AG16"
          G16: "G16"
          GA32: "GA32"
+         XRGB32: "XRGB32"
+         BGRX32: "BGRX32"
          PALETTE1: "PALETTE1"
          PALETTE2: "PALETTE2"
          PALETTE4: "PALETTE4"
@@ -696,11 +702,11 @@ final class Window(NoCopy)
    #
    # Get the contents of some pixels as a {Pixels} object.
    #
-   public get_pixels(x, y, width, height, format)
-      return Pixels(get_pixels_impl(x, y, width, height, format))
+   public get_pixels(x, y, width, height)
+      return Pixels(get_pixels_impl(x, y, width, height))
    end
 
-   private native get_pixels_impl(x, y, width, height, format)
+   private native get_pixels_impl(x, y, width, height)
 
    #
    # Filter the given pixels according to the given filter spec.
