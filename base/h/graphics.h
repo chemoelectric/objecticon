@@ -30,6 +30,8 @@ struct point {
 #define IMGDATA_AG16       9
 #define IMGDATA_G16        10
 #define IMGDATA_GA32       11
+#define IMGDATA_XRGB32     12
+#define IMGDATA_BGRX32     13
 #define IMGDATA_PALETTE1   21
 #define IMGDATA_PALETTE2   22
 #define IMGDATA_PALETTE4   24

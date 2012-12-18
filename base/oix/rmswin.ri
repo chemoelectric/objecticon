@@ -1537,6 +1537,11 @@ void getimgmempixel(struct imgmem *imem, int x, int y, int *r, int *g, int *b)
    *b = BLUE(cr)*257;
 }
 
+int toimgdata(struct imgmem *imem, struct imgdata *imd)
+{
+    return NoCvt;
+}
+
 void setimgmempixel(struct imgmem *imem, int x, int y, int r, int g, int b)
 {
    imem->crp[y * imem->width + x] = RGB(r/256, g/256, b/256);

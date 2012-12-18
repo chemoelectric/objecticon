@@ -2785,6 +2785,25 @@ void getimgdatapixel(struct imgdata *imd, int x, int y, int *r, int *g, int *b, 
             *a = 65535;
             break;
         }
+        case IMGDATA_XRGB32: {
+            int n = imd->width * y + x;
+            s = imd->data + 4 * n;
+            ++s;
+            *r = 257 * (*s++);
+            *g = 257 * (*s++);
+            *b = 257 * (*s++);
+            *a = 65535;
+            break;
+        }
+        case IMGDATA_BGRX32: {
+            int n = imd->width * y + x;
+            s = imd->data + 4 * n;
+            *b = 257 * (*s++);
+            *g = 257 * (*s++);
+            *r = 257 * (*s++);
+            *a = 65535;
+            break;
+        }
         case IMGDATA_BGR24: {
             int n = imd->width * y + x;
             s = imd->data + 3 * n;
@@ -2893,6 +2912,19 @@ void setimgdatapixel(struct imgdata *imd, int x, int y, int r, int g, int b, int
             *s++ = r / 256;
             *s++ = g / 256;
             *s++ = b / 256;
+            break;
+        case IMGDATA_XRGB32:
+            s = imd->data + 4 * n;
+            ++s;
+            *s++ = r / 256;
+            *s++ = g / 256;
+            *s++ = b / 256;
+            break;
+        case IMGDATA_BGRX32:
+            s = imd->data + 4 * n;
+            *s++ = b / 256;
+            *s++ = g / 256;
+            *s++ = r / 256;
             break;
         case IMGDATA_BGR24:
             s = imd->data + 3 * n;
@@ -3037,6 +3069,8 @@ int validimgdataformat(int format)
         case IMGDATA_GA32:
         case IMGDATA_RGB48:
         case IMGDATA_RGBA64:
+        case IMGDATA_XRGB32:
+        case IMGDATA_BGRX32:
             return 1;
         default:
             return 0;
@@ -3063,6 +3097,8 @@ int getimgdatalength(struct imgdata *imd)
         case IMGDATA_BGR24:
         case IMGDATA_RGB24:
             return 3 * n;
+        case IMGDATA_XRGB32:
+        case IMGDATA_BGRX32:
         case IMGDATA_ABGR32:
         case IMGDATA_RGBA32:
         case IMGDATA_GA32:
@@ -3096,6 +3132,8 @@ int isimgdataopaque(int format)
         case IMGDATA_RGB24:
         case IMGDATA_BGR24:
         case IMGDATA_RGB48:
+        case IMGDATA_XRGB32:
+        case IMGDATA_BGRX32:
             return 1;
         default:
             syserr("Unknown image format");
@@ -3125,6 +3163,8 @@ int imgdatapalettesize(int format)
         case IMGDATA_RGB24:
         case IMGDATA_BGR24:
         case IMGDATA_RGB48:
+        case IMGDATA_XRGB32:
+        case IMGDATA_BGRX32:
             return 0;
         default:
             syserr("Unknown image format");
