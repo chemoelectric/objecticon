@@ -247,15 +247,15 @@ static void linearfilter_impl(int *val, float m, int c)
 static void linearfilter(struct filter *f)
 {
     int i, j;
-    struct imgmem *imem = f->imem;
-    for (j = 0; j < imem->height; j++) {
-        for (i = 0; i < imem->width; i++) {
-            int r, g, b;
-            getimgmempixel(imem, i, j, &r, &g, &b);
+    struct imgdata *imd = f->imd;
+    for (j = 0; j < imd->height; j++) {
+        for (i = 0; i < imd->width; i++) {
+            int r, g, b, a;
+            getimgdatapixel(imd, i, j, &r, &g, &b, &a);
             linearfilter_impl(&r, f->p.linear.mr, f->p.linear.cr);
             linearfilter_impl(&g, f->p.linear.mg, f->p.linear.cg);
             linearfilter_impl(&b, f->p.linear.mb, f->p.linear.cb);
-            setimgmempixel(imem, i, j, r, g, b);
+            setimgdatapixel(imd, i, j, r, g, b, a);
         }
     }
 }
@@ -268,19 +268,19 @@ static int grey_band(int nb, int r, int g, int b)
 static void shadefilter(struct filter *f)
 {
     int i, j;
-    struct imgmem *imem = f->imem;
+    struct imgdata *imd = f->imd;
     int bk, bg_r, bg_g, bg_b;
     parsecolor(getbg(f->w), &bg_r, &bg_g, &bg_b, 0);
 
     bk = grey_band(f->p.shade.nband, bg_r, bg_g, bg_b);
-    for (j = 0; j < imem->height; j++) {
-        for (i = 0; i < imem->width; i++) {
-            int r, g, b, k, v;
-            getimgmempixel(imem, i, j, &r, &g, &b);
+    for (j = 0; j < imd->height; j++) {
+        for (i = 0; i < imd->width; i++) {
+            int r, g, b, a, k, v;
+            getimgdatapixel(imd, i, j, &r, &g, &b, &a);
             k = grey_band(f->p.shade.nband, r, g, b);
             if (k != bk) {
                 v = f->p.shade.c + f->p.shade.m * k;
-                setimgmempixel(imem, i, j, v, v, v);
+                setimgdatapixel(imd, i, j, v, v, v, a);
             }
         }
     }
@@ -289,17 +289,17 @@ static void shadefilter(struct filter *f)
 static void coercefilter(struct filter *f)
 {
     int i, j;
-    struct imgmem *imem = f->imem;
+    struct imgdata *imd = f->imd;
     struct palentry *pal = palsetup(f->p.coerce.p);
-    for (j = 0; j < imem->height; j++) {
-        for (i = 0; i < imem->width; i++) {
-            int r, g, b;
+    for (j = 0; j < imd->height; j++) {
+        for (i = 0; i < imd->width; i++) {
+            int r, g, b, a;
             char *s;
             struct palentry *e;
-            getimgmempixel(imem, i, j, &r, &g, &b);
+            getimgdatapixel(imd, i, j, &r, &g, &b, &a);
             s = rgbkey(f->p.coerce.p, r, g, b);
             e = pal + (*s & 0xff);
-            setimgmempixel(imem, i, j, e->r, e->g, e->b);
+            setimgdatapixel(imd, i, j, e->r, e->g, e->b, a);
         }
     }
 }
@@ -307,12 +307,12 @@ static void coercefilter(struct filter *f)
 static void invertfilter(struct filter *f)
 {
     int i, j;
-    struct imgmem *imem = f->imem;
-    for (j = 0; j < imem->height; j++) {
-        for (i = 0; i < imem->width; i++) {
-            int r, g, b;
-            getimgmempixel(imem, i, j, &r, &g, &b);
-            setimgmempixel(imem, i, j, 65535 - r, 65535 - g, 65535 - b);
+    struct imgdata *imd = f->imd;
+    for (j = 0; j < imd->height; j++) {
+        for (i = 0; i < imd->width; i++) {
+            int r, g, b, a;
+            getimgdatapixel(imd, i, j, &r, &g, &b, &a);
+            setimgdatapixel(imd, i, j, 65535 - r, 65535 - g, 65535 - b, a);
         }
     }
 }
@@ -372,50 +372,44 @@ int parsefilter(wbp w, char *s, struct filter *res)
     return 0;
 }
 
-int initimgmem(wbp w, struct imgmem *i, int copy, int clip, int x, int y, int width, int height)
+int drawable(wbp w, int clip, word *x, word *y, word *width, word *height)
 {
     wcp wc = w->context;
     wsp ws = w->window;
-    if (x < 0)  { 
-        width += x; 
-        x = 0; 
+    if (*x < 0)  { 
+        *width += *x; 
+        *x = 0; 
     }
-    if (y < 0)  { 
-        height += y; 
-        y = 0; 
+    if (*y < 0)  { 
+        *height += *y; 
+        *y = 0; 
     }
-    if (x + width > ws->width)
-        width = ws->width - x; 
-    if (y + height > ws->height)
-        height = ws->height - y; 
+    if (*x + *width > ws->width)
+        *width = ws->width - *x; 
+    if (*y + *height > ws->height)
+        *height = ws->height - *y; 
 
-    if (width <= 0 || height <= 0)
+    if (*width <= 0 || *height <= 0)
         return 0;
 
     if (clip && wc->clipw >= 0) {
         /* Further reduce the rectangle to the clipping region */
-        if (x < wc->clipx) {
-            width += x - wc->clipx;
-            x = wc->clipx;
+        if (*x < wc->clipx) {
+            *width += *x - wc->clipx;
+            *x = wc->clipx;
         }
-        if (y < wc->clipy) {
-            height += y - wc->clipy; 
-            y = wc->clipy;
+        if (*y < wc->clipy) {
+            *height += *y - wc->clipy; 
+            *y = wc->clipy;
         }
-        if (x + width > wc->clipx + wc->clipw)
-            width = wc->clipx + wc->clipw - x;
-        if (y + height > wc->clipy + wc->cliph)
-            height = wc->clipy + wc->cliph - y;
+        if (*x + *width > wc->clipx + wc->clipw)
+            *width = wc->clipx + wc->clipw - *x;
+        if (*y + *height > wc->clipy + wc->cliph)
+            *height = wc->clipy + wc->cliph - *y;
 
-        if (width <= 0 || height <= 0)
+        if (*width <= 0 || *height <= 0)
             return 0;
     }
-
-    i->x = x;
-    i->y = y;
-    i->width = width;
-    i->height = height;
-    loadimgmem(w, i, copy);
     return 1;
 }
 
@@ -510,32 +504,54 @@ int interpimage(dptr d,  struct imgdata *imd)
     return Failed;
 }
 
-void drawimgdata(wbp w, int x, int y, int width, int height, struct imgdata *imd)
+void drawimgdata(wbp w, word x, word y, word width, word height, struct imgdata *imd)
 {
-    struct imgmem imem;
+    struct imgdata imd1;
     int i, j;
 
-    if (!initimgmem(w, &imem, !isimgdataopaque(imd->format), 1, x, y, width, height))
+    if (!drawable(w, 1, &x, &y, &width, &height))
         return;
 
-    for (j = 0; j < imem.height; j++) {
-        for (i = 0; i < imem.width; i++) {
+    if (isimgdataopaque(imd->format)) {
+        int format = getimgdataformat(w);
+        /* If the size and format of the source data are suitable for output, just do that */
+        if (width == imd->width && height == imd->height && format == imd->format) {
+            outputimgdata(w, x, y, imd);
+            return;
+        }
+        /* Allocate a blank imgdata in the Window's target format. */
+        imd1.width = width;
+        imd1.height = height;
+        imd1.paltbl = 0;
+        imd1.format = format;
+        MemProtect(imd1.data = malloc(getimgdatalength(&imd1)));
+    } else {
+        /* Capture the current imgdata in the Window. */
+        imd1.width = width;
+        imd1.height = height;
+        imd1.paltbl = 0;
+        captureimgdata(w, x, y, &imd1);
+    }
+
+    for (j = 0; j < height; j++) {
+        for (i = 0; i < width; i++) {
             int r, g, b, a;
             getimgdatapixel(imd, i % imd->width, j % imd->height, &r, &g, &b, &a);
             if (a) {
                 if (a != 65535) {
-                    int r1, g1, b1;
-                    getimgmempixel(&imem, i, j, &r1, &g1, &b1);
+                    int r1, g1, b1, a1;
+                    getimgdatapixel(&imd1, i, j, &r1, &g1, &b1, &a1);
                     r = CombineAlpha(r, r1, a);
                     g = CombineAlpha(g, g1, a);
                     b = CombineAlpha(b, b1, a);
                 }
-                setimgmempixel(&imem, i, j, r, g, b);
+                setimgdatapixel(&imd1, i, j, r, g, b, 65535);
             }
         }
     }
-    saveimgmem(w, &imem);
-    freeimgmem(&imem);
+
+    outputimgdata(w, x, y, &imd1);
+    freeimgdata(&imd1);
 }
 
 

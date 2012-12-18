@@ -165,16 +165,6 @@ typedef struct _wfont {
 #define FHEIGHT(w) ((w)->context->font->height)
 #define FWIDTH(w) ((w)->context->font->maxwidth)
 
-struct imgmem {
-   int x, y, width, height;             /* Pos/dimensions of rectangle being got/set */
-#if XWindows
-   XImage *im;
-   struct _wdisplay *wd;
-#elif MSWIN32
-   COLORREF *crp;
-#endif
-   };
-
 #if XWindows
 
 /*
@@ -184,6 +174,7 @@ typedef struct _wdisplay {
   char		name[MAXDISPLAYNAME];
   Display *	display;
   int           vtype;
+  int           format;                /* imgdata format */
   int           red_shift, blue_shift, green_shift;
   struct progstate *program;           /* owning program */
   struct SharedColor *black, *white;
@@ -305,7 +296,7 @@ struct wbind_list {
 
 struct filter {
    wbp w;
-   struct imgmem *imem;
+   struct imgdata *imd;
    void (*f)(struct filter *);
    union {
       struct {
