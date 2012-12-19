@@ -37,11 +37,41 @@ struct point {
 #define IMGDATA_PALETTE4   24
 #define IMGDATA_PALETTE8   28
 
-struct imgdata {			/* image loaded from a file */
-   int width, height;			/* image dimensions */
-   struct palentry *paltbl;		/* pointer to palette table */
-   int format;                          /* format of data, if palette is nil */
-   unsigned char *data;			/* pointer to image data */
+struct imgdata;
+
+struct imgdataformat {
+    void (*setpixel)(struct imgdata *imd, int x, int y, int r, int g, int b, int a);
+    void (*getpixel)(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a);
+    void (*setpaletteindex)(struct imgdata *imd, int x, int y, int i);
+    int (*getpaletteindex)(struct imgdata *imd, int x, int y);
+    int (*getlength)(struct imgdata *imd);
+    int has_alpha, palette_size;
+    char *name;
+};
+
+extern struct imgdataformat imgdataformat_RGB24;
+extern struct imgdataformat imgdataformat_BGR24;
+extern struct imgdataformat imgdataformat_RGBA32;
+extern struct imgdataformat imgdataformat_ABGR32;
+extern struct imgdataformat imgdataformat_RGB48;
+extern struct imgdataformat imgdataformat_RGBA64;
+extern struct imgdataformat imgdataformat_G8;
+extern struct imgdataformat imgdataformat_GA16;
+extern struct imgdataformat imgdataformat_AG16;
+extern struct imgdataformat imgdataformat_G16;
+extern struct imgdataformat imgdataformat_GA32;
+extern struct imgdataformat imgdataformat_XRGB32;
+extern struct imgdataformat imgdataformat_BGRX32;
+extern struct imgdataformat imgdataformat_PALETTE1;
+extern struct imgdataformat imgdataformat_PALETTE2;
+extern struct imgdataformat imgdataformat_PALETTE4;
+extern struct imgdataformat imgdataformat_PALETTE8;
+
+struct imgdata {			/* image data */
+    int width, height;			/* image dimensions */
+    struct palentry *paltbl;		/* pointer to palette table, or null */
+    struct imgdataformat *format;       /* format of data */
+    unsigned char *data;	        /* pointer to image data */
    };
 
 
@@ -174,7 +204,7 @@ typedef struct _wdisplay {
   char		name[MAXDISPLAYNAME];
   Display *	display;
   int           vtype;
-  int           format;                /* imgdata format */
+  struct imgdataformat *format;                /* imgdata format */
   int           red_shift, blue_shift, green_shift;
   struct progstate *program;           /* owning program */
   struct SharedColor *black, *white;

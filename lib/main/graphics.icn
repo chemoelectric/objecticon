@@ -32,23 +32,23 @@ final class Pixels()
       PALETTE8
 
    private static init()
-      RGB24     :=  1
-      BGR24     :=  2
-      RGBA32    :=  3
-      ABGR32    :=  4
-      RGB48     :=  5
-      RGBA64    :=  6
-      G8        :=  7
-      GA16      :=  8
-      AG16      :=  9
-      G16       :=  10
-      GA32      :=  11
-      XRGB32    :=  12
-      BGRX32    :=  13
-      PALETTE1  :=  21
-      PALETTE2  :=  22
-      PALETTE4  :=  24
-      PALETTE8  :=  28
+      RGB24     :=  "RGB24"
+      BGR24     :=  "BGR24"
+      RGBA32    :=  "RGBA32"
+      ABGR32    :=  "ABGR32"
+      RGB48     :=  "RGB48"
+      RGBA64    :=  "RGBA64"
+      G8        :=  "G8"
+      GA16      :=  "GA16"
+      AG16      :=  "AG16"
+      G16       :=  "G16"
+      GA32      :=  "GA32"
+      XRGB32    :=  "XRGB32"
+      BGRX32    :=  "BGRX32"
+      PALETTE1  :=  "PALETTE1"
+      PALETTE2  :=  "PALETTE2"
+      PALETTE4  :=  "PALETTE4"
+      PALETTE8  :=  "PALETTE8"
    end
 
    # Get the width of the block
@@ -83,30 +83,6 @@ final class Pixels()
    # Get the format of the underlying data, which will be one of the constant values listed above.
    #
    public native get_format()
-
-   # Get the format, as a string.
-   #
-   public get_format_str()
-      return case get_format() of {
-         RGB24: "RGB24"
-         BGR24: "BGR24"
-         RGBA32: "RGBA32"
-         ABGR32: "ABGR32"
-         RGB48: "RGB48"
-         RGBA64: "RGBA64"
-         G8: "G8"
-         GA16: "GA16"
-         AG16: "AG16"
-         G16: "G16"
-         GA32: "GA32"
-         XRGB32: "XRGB32"
-         BGRX32: "BGRX32"
-         PALETTE1: "PALETTE1"
-         PALETTE2: "PALETTE2"
-         PALETTE4: "PALETTE4"
-         PALETTE8: "PALETTE8"
-      }
-   end
 
    # Get the raw underlying data as a string.
    #
@@ -173,6 +149,14 @@ final class Pixels()
    # Encode the image to a file.
    #
    public native to_file(fname)
+
+   # Succeed if the format supports storage of an alpha channel.
+   #
+   public native has_alpha()
+
+   # Get the palette size, or fail if this is not a PALETTE format.
+   #
+   public native get_palette_size()
 
    # Get the palette entry at index i, as a 4-element list.  This and
    # similar methods fails unless the format is PALETTEx.  The number
