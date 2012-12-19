@@ -207,7 +207,7 @@ char *tocolorstring(int r, int g, int b, int a);
    int interpimage(dptr d,  struct imgdata *imd);
 
 
-int drawable(wbp w, int clip, word *x, word *y, word *width, word *height);
+int reducerect(wbp w, int clip, word *x, word *y, word *width, word *height);
 void captureimgdata(wbp w, int x, int y, struct imgdata *imd);
 void outputimgdata(wbp w, int x, int y, struct imgdata *imd);
 int getimgdataformat(wbp w);

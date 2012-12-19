@@ -372,7 +372,7 @@ int parsefilter(wbp w, char *s, struct filter *res)
     return 0;
 }
 
-int drawable(wbp w, int clip, word *x, word *y, word *width, word *height)
+int reducerect(wbp w, int clip, word *x, word *y, word *width, word *height)
 {
     wcp wc = w->context;
     wsp ws = w->window;
@@ -509,7 +509,7 @@ void drawimgdata(wbp w, word x, word y, word width, word height, struct imgdata 
     struct imgdata imd1;
     int i, j;
 
-    if (!drawable(w, 1, &x, &y, &width, &height))
+    if (!reducerect(w, 1, &x, &y, &width, &height))
         return;
 
     if (isimgdataopaque(imd->format)) {

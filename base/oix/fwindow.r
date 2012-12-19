@@ -613,7 +613,7 @@ function graphics_Window_get_pixels_impl(self, x0, y0, w0, h0)
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
 
-      if (drawable(self_w, 0, &x, &y, &width, &height)) {
+      if (reducerect(self_w, 0, &x, &y, &width, &height)) {
           MemProtect(imd = malloc(sizeof(struct imgdata)));
           imd->width = width;
           imd->height = height;
@@ -699,7 +699,7 @@ function graphics_Window_filter(self, x0, y0, w0, h0, spec)
           }
       }
 
-      if (!drawable(self_w, 1, &x, &y, &width, &height)) {
+      if (!reducerect(self_w, 1, &x, &y, &width, &height)) {
           free(filter);
           return self;
       }
@@ -935,7 +935,7 @@ function graphics_Window_drawable(self, x0, y0, w0, h0)
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
 
-      if (!drawable(self_w, 1, &x, &y, &width, &height))
+      if (!reducerect(self_w, 1, &x, &y, &width, &height))
           fail;
 
       create_list(4, &result);
@@ -952,6 +952,34 @@ function graphics_Window_drawable(self, x0, y0, w0, h0)
    }
 end
 
+function graphics_Window_viewable(self, x0, y0, w0, h0)
+   body {
+      tended struct descrip result;
+      struct descrip t;
+      wcp wc;
+      word x, y, width, height;
+      GetSelfW();
+      wc = self_w->context;
+
+      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
+
+      if (!reducerect(self_w, 0, &x, &y, &width, &height))
+          fail;
+
+      create_list(4, &result);
+      MakeInt(x - wc->dx, &t);
+      list_put(&result, &t);
+      MakeInt(y - wc->dy, &t);
+      list_put(&result, &t);
+      MakeInt(width, &t);
+      list_put(&result, &t);
+      MakeInt(height, &t);
+      list_put(&result, &t);
+
+      return result;
+   }
+end
 
 function graphics_Window_get_clip(self)
    body {
@@ -983,6 +1011,15 @@ function graphics_Window_get_depth(self)
        if (getdepth(self_w, &i) == Failed)
            fail;
        MakeInt(i, &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_format(self)
+   body {
+       struct descrip result;
+       GetSelfW();
+       MakeInt(getimgdataformat(self_w), &result);
        return result;
    }
 end

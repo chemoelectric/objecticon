@@ -5,7 +5,6 @@
 #define CONVERT_ANGLE(ang) (-(ang) * 180 / Pi * 64)
 
 #define RGB24 1
-#define RGB48 2
 #define GRAY8 3
 
 #define GetDepth(wd) DefaultDepth((wd)->display,DefaultScreen((wd)->display))
@@ -243,8 +242,6 @@ static unsigned long to_pixel(wdp wd, int r, int g, int b)
     switch (wd->vtype) {
         case RGB24:
             return ((r/256)<<wd->red_shift) | ((g/256)<<wd->green_shift) | ((b/256)<<wd->blue_shift);
-        case RGB48:
-            return (r<<wd->red_shift) | (g<<wd->green_shift) | (b<<wd->blue_shift);
         case GRAY8:
             return (0.299 * r + 0.587 * g + 0.114 * b) / 256;
         default: {
@@ -2565,11 +2562,6 @@ static wdp alcdisplay(char *s)
     } else if (xvi_ret->class == TrueColor && xvi_ret->depth == 24 && xvi_ret->bits_per_rgb == 8) {
         wd->vtype = RGB24;
         wd->format = ImageByteOrder(wd->display) == LSBFirst ? IMGDATA_BGRX32 : IMGDATA_XRGB32;
-        wd->red_shift = get_shift(xvi_ret->red_mask);
-        wd->green_shift = get_shift(xvi_ret->green_mask);
-        wd->blue_shift = get_shift(xvi_ret->blue_mask);
-    } else if (xvi_ret->class == TrueColor && xvi_ret->depth == 48 && xvi_ret->bits_per_rgb == 16) {
-        wd->vtype = RGB48;
         wd->red_shift = get_shift(xvi_ret->red_mask);
         wd->green_shift = get_shift(xvi_ret->green_mask);
         wd->blue_shift = get_shift(xvi_ret->blue_mask);
