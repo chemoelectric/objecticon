@@ -1177,7 +1177,7 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
     /* Get the pixels from the temp win, and then free it */
     unloadimage(im, im->r, data, len);
     freeimage(im);
-    imd->format = IMGDATA_BGR24;
+    imd->format = &imgdataformat_BGR24;
     imd->data = data;
 }
 
@@ -1199,7 +1199,7 @@ void outputimgdata(wbp w, int x, int y, struct imgdata *imd)
     int len;
     wcp wc = w->context;
     wsp ws = w->window;
-    if (imd->format != IMGDATA_BGR24)
+    if (imd->format != &imgdataformat_BGR24)
         syserr("wrong imgdata format");
 
     /* Allocate a temp win to represent the imgdata */
@@ -1215,9 +1215,9 @@ void outputimgdata(wbp w, int x, int y, struct imgdata *imd)
     flushimage(display, 1);
 }
 
-int getimgdataformat(wbp w)
+struct imgdataformat *getimgdataformat(wbp w)
 {
-    return IMGDATA_BGR24;
+    return &imgdataformat_BGR24;
 }
 
 int queryrootpointer(wbp w, int *x, int *y)
@@ -2143,7 +2143,8 @@ static void note_time(char *s)
 static int readimageimpl(char *cmd, int fd, struct imgdata *imd)
 {
     Memimage *m;
-    int pid, pip[2], ndata, format;
+    int pid, pip[2], ndata;
+    struct imgdataformat  *format;
     if (pipe(pip) < 0) {
         whyf("Couldn't make pipe: %r");
         return Failed;
@@ -2182,19 +2183,19 @@ static int readimageimpl(char *cmd, int fd, struct imgdata *imd)
     }
     switch (m->chan) {
         case RGB24: {
-            format = IMGDATA_BGR24;
+            format = &imgdataformat_BGR24;
             break;
         }
         case RGBA32: {
-            format = IMGDATA_ABGR32;
+            format = &imgdataformat_ABGR32;
             break;
         }
         case GREY8: {
-            format = IMGDATA_G8;
+            format = &imgdataformat_G8;
             break;
         }
         case CHAN2(CGrey, 8, CAlpha, 8): {
-            format = IMGDATA_AG16;
+            format = &imgdataformat_AG16;
             break;
         }
         default: {
@@ -2212,12 +2213,11 @@ static int readimageimpl(char *cmd, int fd, struct imgdata *imd)
     ndata = imd->width * imd->height * m->nchan;
     MemProtect(imd->data = malloc(ndata));
     unloadmemimage(m, m->r, imd->data, ndata);
-    freememimage(m);
     /*
      * Un-premultiply data if we have alpha channel.
      */
-    switch (format) {
-        case IMGDATA_ABGR32: {
+    switch (m->chan) {
+        case RGBA32: {
             int i;
             uchar *p = imd->data;
             for (i = 0; i < imd->width * imd->height; ++i) {
@@ -2232,8 +2232,9 @@ static int readimageimpl(char *cmd, int fd, struct imgdata *imd)
                 } else
                     p += 3;
             }
+            break;
         }
-        case IMGDATA_AG16: {
+        case CHAN2(CGrey, 8, CAlpha, 8): {
             int i;
             uchar *p = imd->data;
             for (i = 0; i < imd->width * imd->height; ++i) {
@@ -2242,8 +2243,10 @@ static int readimageimpl(char *cmd, int fd, struct imgdata *imd)
                     *p = Unpremul8(*p, a);
                 ++p;
             }
+            break;
         }
     }
+    freememimage(m);
     return Succeeded;
 }
 
@@ -2335,14 +2338,14 @@ int writeimagefileimpl(char *filename, struct imgdata *imd)
     }
 
     /* Transparency only works for png (not gifs it seems) */
-    if (isimgdataopaque(imd->format) || strcmp(cmd, "topng") != 0) {
+    if (!imd->format->has_alpha || strcmp(cmd, "topng") != 0) {
         ndata = 3 * imd->width * imd->height;
         MemProtect(data = malloc(ndata));
         p = data;
         for (j = 0; j < imd->height; j++) {
             for (i = 0; i < imd->width; i++) {
                 int r, g, b, a;
-                getimgdatapixel(imd, i, j, &r, &g, &b, &a);
+                imd->format->getpixel(imd, i, j, &r, &g, &b, &a);
                 *p++ = b / 256;
                 *p++ = g / 256;
                 *p++ = r / 256;
@@ -2356,7 +2359,7 @@ int writeimagefileimpl(char *filename, struct imgdata *imd)
         for (j = 0; j < imd->height; j++) {
             for (i = 0; i < imd->width; i++) {
                 int r, g, b, a;
-                getimgdatapixel(imd, i, j, &r, &g, &b, &a);
+                imd->format->getpixel(imd, i, j, &r, &g, &b, &a);
                 *p++ = Premul16(r, a) / 256;
                 *p++ = Premul16(g, a) / 256;
                 *p++ = Premul16(b, a) / 256;
@@ -2405,6 +2408,11 @@ int writeimagefileimpl(char *filename, struct imgdata *imd)
         remove(filename);
         return Failed;
     }
+}
+
+struct imgdataformat *platform_parseimgdataformat(char *s)
+{
+    return 0;
 }
 
 static int acceptable_font(struct FontInfo *fi, char *family, int flags, int size)

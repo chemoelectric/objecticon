@@ -5,7 +5,6 @@
 #define CONVERT_ANGLE(ang) (-(ang) * 180 / Pi * 64)
 
 #define RGB24 1
-#define RGB48 2
 #define GRAY8 3
 
 #define GetDepth(wd) DefaultDepth((wd)->display,DefaultScreen((wd)->display))
@@ -64,6 +63,11 @@ static int get_shift(unsigned long mask);
 static struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int b);
 static unsigned long to_pixel(wdp wd, int r, int g, int b);
 static void setpattern_in_gc(wbp w, int width, int height, int *rowdata);
+
+static void set_X11GRAY8(struct imgdata *imd, int x, int y, int r, int g, int b, int a);
+static void get_X11GRAY8(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a);
+static int getlength_X11GRAY8(struct imgdata *imd);
+static struct imgdataformat imgdataformat_X11GRAY8 = { set_X11GRAY8,get_X11GRAY8,0,0,getlength_X11GRAY8,0,0,"X11GRAY8" };
 
 static stringint fillstyles[] = {
     {0, 3},
@@ -235,6 +239,49 @@ static void dump_all(void)
     printf("Total %d bindings %d canvases (%d non-hidden)\n",i,j,k);
 }
 #endif
+#if 0
+static void dump_ximage(XImage *xi)
+{
+    int i,j;
+    printf("XImage=%p\n",xi);
+    printf("\twidth, height=%d %d\n", xi->width, xi->height);            /* size of image */
+    printf("\txoffset=%d\n", xi->xoffset);                  /* number of pixels offset in X direction */
+    printf("\tformat=%d\n", xi->format);                  /* XYBitmap, XYPixmap, ZPixmap */
+    printf("\tbyte_order=%d\n", xi->byte_order);               /* data byte order, LSBFirst, MSBFirst */
+    printf("\tbitmap_unit =%d\n", xi->bitmap_unit);             /* quant. of scanline 8, 16, 32 */
+    printf("\tbitmap_bit_order =%d\n", xi->bitmap_bit_order);        /* LSBFirst, MSBFirst */
+    printf("\tbitmap_pad   =%d\n", xi->bitmap_pad);            /* 8, 16, 32 either XY or ZPixmap */
+    printf("\tdepth  =%d\n", xi->depth);              /* depth of image */
+    printf("\tbytes_per_line=%d\n", xi->bytes_per_line);          /* accelerator to next scanline */
+    printf("\tbits_per_pixel=%d\n", xi->bits_per_pixel);        /* bits per pixel (ZPixmap) */
+    printf("\tred_mask=%lx\n", xi->red_mask);       /* bits in z arrangement */
+    printf("\tgreen_mask=%lx\n", xi->green_mask);
+    printf("\tblue_mask=%lx\n", xi->blue_mask);
+
+    for (i=0;i<32;++i)
+        printf("%d ", (int)imd->data[i]);
+    printf("\n");
+    printf("\nPixel dump of region %d,%d size %d,%d\n",x,y,xi->width,xi->height);
+    
+    for (j=0; j < xi->height; ++j) {
+        unsigned long c0=-1;
+        printf("\nrow %d:",j);
+        for (i = 0; i < xi->width; ++i) {
+            unsigned long c;            
+            c=XGetPixel(xi,i,j);
+            if (c!=c0) {
+                printf("%lx ",c);
+                c0=c;
+            } else
+                printf("-");
+        }
+    }
+    printf("\n");
+}
+
+
+
+#endif
 
 #define ATOM(d, x) ((d)->atoms[ATOM_##x])
 
@@ -243,8 +290,6 @@ static unsigned long to_pixel(wdp wd, int r, int g, int b)
     switch (wd->vtype) {
         case RGB24:
             return ((r/256)<<wd->red_shift) | ((g/256)<<wd->green_shift) | ((b/256)<<wd->blue_shift);
-        case RGB48:
-            return (r<<wd->red_shift) | (g<<wd->green_shift) | (b<<wd->blue_shift);
         case GRAY8:
             return (0.299 * r + 0.587 * g + 0.114 * b) / 256;
         default: {
@@ -717,7 +762,7 @@ int setwindowicon(wbp w, struct imgdata *imd)
     for (j = 0; j < imd->height; ++j) {
         for (i = 0; i < imd->width; ++i) {
             int r, g, b, a;
-            getimgdatapixel(imd, i, j, &r, &g, &b, &a);
+            imd->format->getpixel(imd, i, j, &r, &g, &b, &a);
             ws->icondata[k++] = ((a/256)<<24) | ((r/256)<<16) | ((g/256)<<8) | (b/256);
         }
     }
@@ -2192,7 +2237,7 @@ void outputimgdata(wbp w, int x, int y, struct imgdata *imd)
     XDestroyImage(xi);
 }
 
-int getimgdataformat(wbp w)
+struct imgdataformat *getimgdataformat(wbp w)
 {
     return w->window->display->format;
 }
@@ -2561,15 +2606,10 @@ static wdp alcdisplay(char *s)
     }
     if (xvi_ret->class == StaticGray && xvi_ret->depth == 8 && xvi_ret->bits_per_rgb == 8) {
         wd->vtype = GRAY8;
-        wd->format = IMGDATA_G8;
+        wd->format = &imgdataformat_X11GRAY8;
     } else if (xvi_ret->class == TrueColor && xvi_ret->depth == 24 && xvi_ret->bits_per_rgb == 8) {
         wd->vtype = RGB24;
-        wd->format = ImageByteOrder(wd->display) == LSBFirst ? IMGDATA_BGRX32 : IMGDATA_XRGB32;
-        wd->red_shift = get_shift(xvi_ret->red_mask);
-        wd->green_shift = get_shift(xvi_ret->green_mask);
-        wd->blue_shift = get_shift(xvi_ret->blue_mask);
-    } else if (xvi_ret->class == TrueColor && xvi_ret->depth == 48 && xvi_ret->bits_per_rgb == 16) {
-        wd->vtype = RGB48;
+        wd->format = ImageByteOrder(wd->display) == LSBFirst ? &imgdataformat_BGRX32 : &imgdataformat_XRGB32;
         wd->red_shift = get_shift(xvi_ret->red_mask);
         wd->green_shift = get_shift(xvi_ret->green_mask);
         wd->blue_shift = get_shift(xvi_ret->blue_mask);
@@ -3192,4 +3232,41 @@ int settransientfor(wbp w, wbp other)
     } else
         ws->transientfor = (Window) NULL;
     return Succeeded;
+}
+
+static int getbpr_X11GRAY8(struct imgdata *imd)
+{
+    if (imd->width % 4 == 0)
+        return imd->width;
+    else
+        return imd->width + (4 - imd->width % 4);
+}
+
+static void set_X11GRAY8(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
+{
+    unsigned char *s;
+    int n = getbpr_X11GRAY8(imd) * y + x;
+    s = imd->data + n;
+    *s++ = (0.299 * r + 0.587 * g + 0.114 * b) / 256;
+}
+
+static void get_X11GRAY8(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
+{
+    unsigned char *s;
+    int n = getbpr_X11GRAY8(imd) * y + x;
+    s = imd->data + n;
+    *r = *g = *b = 257 * (*s++);
+    *a = 65535;
+}
+
+static int getlength_X11GRAY8(struct imgdata *imd)
+{
+    return getbpr_X11GRAY8(imd) * imd->height;
+}
+
+struct imgdataformat *platform_parseimgdataformat(char *s)
+{
+    if (strcmp(s, "X11GRAY8") == 0)
+        return &imgdataformat_X11GRAY8;
+    return 0;
 }
