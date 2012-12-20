@@ -3204,17 +3204,17 @@ void freecontext(wcp wc)
     }
 }
 
-int  readimagefileimpl(char *filename, struct imgdata *imd) 
+int readimagefileimpl(char *filename, struct imgdata *imd) 
 {
     return NoCvt;
 }
 
-int  writeimagefileimpl(char *filename, struct imgdata *imd)
+int writeimagefileimpl(char *filename, struct imgdata *imd)
 {
     return NoCvt;
 }
 
-int  readimagedataimpl(dptr data, struct imgdata *imd)
+int readimagedataimpl(dptr data, struct imgdata *imd)
 {
     return NoCvt;
 }
@@ -3299,11 +3299,6 @@ static void get_X11BGRX32(struct imgdata *imd, int x, int y, int *r, int *g, int
     *g = 257 * (*s++);
     *r = 257 * (*s++);
     *a = 65535;
-}
-
-static int getlength_32(struct imgdata *imd)
-{
-    return 4 * (imd->width * imd->height);
 }
 
 static struct imgdataformat imgdataformat_X11GRAY8 = { set_X11GRAY8,get_X11GRAY8,0,0,getlength_X11GRAY8,0,0,"X11GRAY8" };

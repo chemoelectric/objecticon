@@ -18,6 +18,7 @@ static void resizePixmap(wbp w, int width, int height);
 static int devicecaps(wbp w, int i);
 static void setclip(wbp w);
 static void unsetclip(wbp w);
+static struct imgdataformat imgdataformat_MSXBGR32;
 
 void SetDCPixelFormat(HDC h);
 int alc_rgb(wbp w, SysColor rgb);
@@ -1519,7 +1520,7 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
        for(j = imem->x; j < imem->x + imem->width; j++)
            *p++ = GetPixel(pixdc, j, i);
 
-   imd->format = IMGDATA_XRGB32;
+   imd->format = &imgdataformat_MSXBGR32;
    imd->data = (unsigned char *)crp;
    SelectObject(pixdc, oldpix);
    FREE_STDLOCALS(w);
@@ -1554,9 +1555,9 @@ void outputimgdata(wbp w, int x, int y, struct imgdata *imd)
    FREE_STDLOCALS(w);
 }
 
-int getimgdataformat(wbp w)
+struct imgdataformat *getimgdataformat(wbp w)
 {
-    return IMGDATA_XRGB32;
+    return &imgdataformat_MSXBGR32;
 }
 
 int  getdisplaysize  (wbp w, int *width, int *height)
@@ -2509,17 +2510,17 @@ void wfreersc()
    mciSendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, 0, (DWORD)NULL);
 }
 
-int  readimagefileimpl(char *filename, struct imgdata *imd) 
+int readimagefileimpl(char *filename, struct imgdata *imd) 
 {
     return NoCvt;
 }
 
-int  writeimagefileimpl(char *filename, struct imgdata *imd)
+int writeimagefileimpl(char *filename, struct imgdata *imd)
 {
     return NoCvt;
 }
 
-int  readimagedataimpl(dptr data, struct imgdata *imd)
+int readimagedataimpl(dptr data, struct imgdata *imd)
 {
     return NoCvt;
 }
@@ -2532,4 +2533,34 @@ int settransientfor(wbp w, wbp other)
 int setwindowicon(wbp w, struct imgdata *imd)
 {
     return Failed;
+}
+
+static void set_MSXBGR32(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
+{
+    int n = imd->width * y + x;
+    unsigned char *s = imd->data + 4 * n;
+    ++s;
+    *s++ = b / 256;
+    *s++ = g / 256;
+    *s++ = r / 256;
+}
+
+static void get_MSXBGR32(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
+{
+    int n = imd->width * y + x;
+    unsigned char *s = imd->data + 4 * n;
+    ++s;
+    *b = 257 * (*s++);
+    *g = 257 * (*s++);
+    *r = 257 * (*s++);
+    *a = 65535;
+}
+
+static struct imgdataformat imgdataformat_MSXBGR32 =   {set_MSXBGR32,get_MSXBGR32,0,0,getlength_32,0,0,"MSXBGR32"};
+
+struct imgdataformat *platform_parseimgdataformat(char *s)
+{
+    if (strcmp(s, imgdataformat_MSXBGR32.name) == 0)
+        return &imgdataformat_MSXBGR32;
+    return 0;
 }

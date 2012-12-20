@@ -208,6 +208,16 @@ char *tocolorstring(int r, int g, int b, int a);
 
 struct imgdataformat *parseimgdataformat(char *s);
 struct imgdataformat *platform_parseimgdataformat(char *s);
+int getlength_1(struct imgdata *imd);
+int getlength_2(struct imgdata *imd);
+int getlength_4(struct imgdata *imd);
+int getlength_8(struct imgdata *imd);
+int getlength_16(struct imgdata *imd);
+int getlength_24(struct imgdata *imd);
+int getlength_32(struct imgdata *imd);
+int getlength_48(struct imgdata *imd);
+int getlength_64(struct imgdata *imd);
+int imgdataformatscmp(char *s, struct imgdataformat **p);
 
 int reducerect(wbp w, int clip, word *x, word *y, word *width, word *height);
 void captureimgdata(wbp w, int x, int y, struct imgdata *imd);

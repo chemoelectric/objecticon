@@ -2788,7 +2788,7 @@ static struct imgdataformat *imgdataformats[] = {
     &imgdataformat_RGBA64,
 };
 
-static int imgdataformatscmp(char *s, struct imgdataformat **p)
+int imgdataformatscmp(char *s, struct imgdataformat **p)
 {
     return strcmp(s, (*p)->name);
 }
@@ -2833,39 +2833,39 @@ static void get_RGB24(struct imgdata *imd, int x, int y, int *r, int *g, int *b,
     *a = 65535;
 }
 
-static int getlength_1(struct imgdata *imd)
+int getlength_1(struct imgdata *imd)
 {
     return 1 + (imd->width * imd->height)/8;
 }
-static int getlength_2(struct imgdata *imd)
+int getlength_2(struct imgdata *imd)
 {
     return 1 + (imd->width * imd->height)/4;
 }
-static int getlength_4(struct imgdata *imd)
+int getlength_4(struct imgdata *imd)
 {
     return 1 + (imd->width * imd->height)/2;
 }
-static int getlength_8(struct imgdata *imd)
+int getlength_8(struct imgdata *imd)
 {
     return imd->width * imd->height;
 }
-static int getlength_16(struct imgdata *imd)
+int getlength_16(struct imgdata *imd)
 {
     return 2 * (imd->width * imd->height);
 }
-static int getlength_24(struct imgdata *imd)
+int getlength_24(struct imgdata *imd)
 {
     return 3 * (imd->width * imd->height);
 }
-static int getlength_32(struct imgdata *imd)
+int getlength_32(struct imgdata *imd)
 {
     return 4 * (imd->width * imd->height);
 }
-static int getlength_48(struct imgdata *imd)
+int getlength_48(struct imgdata *imd)
 {
     return 6 * (imd->width * imd->height);
 }
-static int getlength_64(struct imgdata *imd)
+int getlength_64(struct imgdata *imd)
 {
     return 8 * (imd->width * imd->height);
 }
