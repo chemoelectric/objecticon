@@ -39,12 +39,6 @@ static int tryimagedata(dptr data, struct imgdata *imd);
 static int tryimagefile(char *filename, struct imgdata *imd);
 
 
-#if MSWIN32
-extern wclrp scp;
-extern HPALETTE palette;
-extern int numColors;
-#endif					/* MSWIN32 */
-
 static void wgetq(wbp w, dptr res)
 {
     if (!list_get(&w->window->listp, res))
@@ -2780,7 +2774,6 @@ static struct imgdataformat *imgdataformats[] = {
     &imgdataformat_ABGR32,
     &imgdataformat_AG16,
     &imgdataformat_BGR24,
-    &imgdataformat_BGRX32,
     &imgdataformat_G16,
     &imgdataformat_G8,
     &imgdataformat_GA16,
@@ -2793,7 +2786,6 @@ static struct imgdataformat *imgdataformats[] = {
     &imgdataformat_RGB48,
     &imgdataformat_RGBA32,
     &imgdataformat_RGBA64,
-    &imgdataformat_XRGB32,
 };
 
 static int imgdataformatscmp(char *s, struct imgdataformat **p)
@@ -3070,44 +3062,6 @@ static void get_GA32(struct imgdata *imd, int x, int y, int *r, int *g, int *b, 
     *a = *a<<8|*s++;
 }
 
-static void set_XRGB32(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
-{
-    int n = imd->width * y + x;
-    unsigned char *s = imd->data + 4 * n;
-    ++s;
-    *s++ = r / 256;
-    *s++ = g / 256;
-    *s++ = b / 256;
-}
-static void get_XRGB32(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
-{
-    int n = imd->width * y + x;
-    unsigned char *s = imd->data + 4 * n;
-    ++s;
-    *r = 257 * (*s++);
-    *g = 257 * (*s++);
-    *b = 257 * (*s++);
-    *a = 65535;
-}
-
-static void set_BGRX32(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
-{
-    int n = imd->width * y + x;
-    unsigned char *s = imd->data + 4 * n;
-    *s++ = b / 256;
-    *s++ = g / 256;
-    *s++ = r / 256;
-}
-static void get_BGRX32(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
-{
-    int n = imd->width * y + x;
-    unsigned char *s = imd->data + 4 * n;
-    *b = 257 * (*s++);
-    *g = 257 * (*s++);
-    *r = 257 * (*s++);
-    *a = 65535;
-}
-
 static void get_PALETTE(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
 {
     struct palentry *pe = &imd->paltbl[imd->format->getpaletteindex(imd, x, y)];
@@ -3115,6 +3069,34 @@ static void get_PALETTE(struct imgdata *imd, int x, int y, int *r, int *g, int *
     *g = pe->g;
     *b = pe->b;
     *a = pe->a;
+}
+
+static unsigned int square(int x) {    return x/2 * x/2; }
+
+static unsigned int distance_rgb(struct palentry *pe, int r, int g, int b)
+{
+    return square(r - pe->r) + square(g - pe->g) + square(b - pe->b);
+}
+
+static void set_PALETTE(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
+{
+    unsigned int best_rgb;
+    struct palentry *best;
+    int i;
+    best = imd->paltbl;
+    best_rgb = distance_rgb(imd->paltbl, r, g, b);
+    for (i = 1; i < imd->format->palette_size; ++i) {
+        struct palentry *pe = &imd->paltbl[i];
+        unsigned int d1 = distance_rgb(pe, r, g, b);
+        if (d1 < best_rgb) {
+            best_rgb = d1;
+            best = pe;
+        } else if (d1 == best_rgb) {
+            if (Abs(best->a - a) > Abs(pe->a - a))
+                best = pe;
+        }
+    }
+    imd->format->setpaletteindex(imd, x, y, best - imd->paltbl);
 }
 
 static int getpi_PALETTE1(struct imgdata *imd, int x, int y)
@@ -3180,9 +3162,7 @@ struct imgdataformat imgdataformat_GA16 =   {set_GA16,get_GA16,0,0,getlength_16,
 struct imgdataformat imgdataformat_AG16 =   {set_AG16,get_AG16,0,0,getlength_16,1,0,"AG16"};
 struct imgdataformat imgdataformat_G16 =   {set_G16,get_G16,0,0,getlength_16,0,0,"G16"};
 struct imgdataformat imgdataformat_GA32 =   {set_GA32,get_GA32,0,0,getlength_32,1,0,"GA32"};
-struct imgdataformat imgdataformat_XRGB32 =   {set_XRGB32,get_XRGB32,0,0,getlength_32,0,0,"XRGB32"};
-struct imgdataformat imgdataformat_BGRX32 =   {set_BGRX32,get_BGRX32,0,0,getlength_32,0,0,"BGRX32"};
-struct imgdataformat imgdataformat_PALETTE1 =   {0,get_PALETTE,setpi_PALETTE1,getpi_PALETTE1,getlength_1,1,2,"PALETTE1"};
-struct imgdataformat imgdataformat_PALETTE2 =   {0,get_PALETTE,setpi_PALETTE2,getpi_PALETTE2,getlength_2,1,4,"PALETTE2"};
-struct imgdataformat imgdataformat_PALETTE4 =   {0,get_PALETTE,setpi_PALETTE4,getpi_PALETTE4,getlength_4,1,16,"PALETTE4"};
-struct imgdataformat imgdataformat_PALETTE8 =   {0,get_PALETTE,setpi_PALETTE8,getpi_PALETTE8,getlength_8,1,256,"PALETTE8"};
+struct imgdataformat imgdataformat_PALETTE1 =   {set_PALETTE,get_PALETTE,setpi_PALETTE1,getpi_PALETTE1,getlength_1,1,2,"PALETTE1"};
+struct imgdataformat imgdataformat_PALETTE2 =   {set_PALETTE,get_PALETTE,setpi_PALETTE2,getpi_PALETTE2,getlength_2,1,4,"PALETTE2"};
+struct imgdataformat imgdataformat_PALETTE4 =   {set_PALETTE,get_PALETTE,setpi_PALETTE4,getpi_PALETTE4,getlength_4,1,16,"PALETTE4"};
+struct imgdataformat imgdataformat_PALETTE8 =   {set_PALETTE,get_PALETTE,setpi_PALETTE8,getpi_PALETTE8,getlength_8,1,256,"PALETTE8"};
