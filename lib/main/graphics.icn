@@ -24,8 +24,6 @@ final class Pixels()
       AG16,
       G16,
       GA32,
-      XRGB32,
-      BGRX32,
       PALETTE1,
       PALETTE2,
       PALETTE4,
@@ -43,8 +41,6 @@ final class Pixels()
       AG16      :=  "AG16"
       G16       :=  "G16"
       GA32      :=  "GA32"
-      XRGB32    :=  "XRGB32"
-      BGRX32    :=  "BGRX32"
       PALETTE1  :=  "PALETTE1"
       PALETTE2  :=  "PALETTE2"
       PALETTE4  :=  "PALETTE4"
@@ -64,7 +60,9 @@ final class Pixels()
    #
    public native get(x, y)
 
-   # Set the pixel to the given Icon colour string value.
+   # Set the pixel to the given Icon colour string value.  Note that
+   # the value actually stored may only be an approximation of the
+   # value given, depending on the underlying data format.
    #
    public native set(x, y, v)
 
@@ -140,8 +138,7 @@ final class Pixels()
 
    private static native blank_impl(width, height, format)
 
-   # Copy a single pixel from this instance to another.  The
-   # destination may not have a PALETTE format.
+   # Copy a single pixel from this instance to another.
    #
    public native copy_pixel(x1, y1, other, x2, y2)
 

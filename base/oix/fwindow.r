@@ -1019,7 +1019,7 @@ function graphics_Window_get_format(self)
    body {
        struct descrip result;
        GetSelfW();
-       MakeInt(getimgdataformat(self_w), &result);
+       CMakeStr(getimgdataformat(self_w)->name, &result);
        return result;
    }
 end
@@ -2044,7 +2044,6 @@ function graphics_Pixels_copy_pixel(self, x1, y1, other, x2, y2)
       runerr(101, y2)
    body {
       int r, g, b, a;
-      void (*setf)(struct imgdata *, int, int, int, int, int, int);
       GetSelfImageData();
       if (x1 < 0 || x1 >= self_id->width || y1 < 0 || y1 >= self_id->height) {
           LitWhy("Out of range");
@@ -2052,17 +2051,12 @@ function graphics_Pixels_copy_pixel(self, x1, y1, other, x2, y2)
       }
       {
       ImageDataStaticParam(other, id2);
-      setf = id2->format->setpixel;
-      if (!setf) {
-          LitWhy("Can't set a pixel with a PALETTE format");
-          fail;
-      }
       if (x2 < 0 || x2 >= id2->width || y2 < 0 || y2 >= id2->height) {
           LitWhy("Out of range");
           fail;
       }
       self_id->format->getpixel(self_id, x1, y1, &r, &g, &b, &a);
-      setf(id2, x2, y2, r, g, b, a);
+      id2->format->setpixel(id2, x2, y2, r, g, b, a);
       }
       return self;
    }
@@ -2101,18 +2095,12 @@ function graphics_Pixels_set_rgba(self, x, y, r, g, b, a)
    if !def:C_integer(a, 65535) then
       runerr(101, a)
    body {
-      void (*setf)(struct imgdata *, int, int, int, int, int, int);
       GetSelfImageData();
       if (x < 0 || x >= self_id->width || y < 0 || y >= self_id->height) {
           LitWhy("Out of range");
           fail;
       }
-      setf = self_id->format->setpixel;
-      if (!setf) {
-          LitWhy("Can't set a pixel with a PALETTE format");
-          fail;
-      }
-      setf(self_id, x, y, r & 0xffff, g & 0xffff, b & 0xffff, a & 0xffff);
+      self_id->format->setpixel(self_id, x, y, r & 0xffff, g & 0xffff, b & 0xffff, a & 0xffff);
       return self;
    }
 end
@@ -2126,22 +2114,16 @@ function graphics_Pixels_set(self, x, y, v)
        runerr(103, v)
    body {
       int r, g, b, a;
-      void (*setf)(struct imgdata *, int, int, int, int, int, int);
       GetSelfImageData();
       if (x < 0 || x >= self_id->width || y < 0 || y >= self_id->height) {
           LitWhy("Out of range");
-          fail;
-      }
-      setf = self_id->format->setpixel;
-      if (!setf) {
-          LitWhy("Can't set a pixel with a PALETTE format");
           fail;
       }
       if (!parsecolor(buffstr(&v), &r, &g, &b, &a)) {
           LitWhy("Invalid color");
           fail;
       }
-      setf(self_id, x, y, r, g, b, a);
+      self_id->format->setpixel(self_id, x, y, r, g, b, a);
       return self;
    }
 end

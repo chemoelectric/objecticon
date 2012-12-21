@@ -64,10 +64,9 @@ static struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int
 static unsigned long to_pixel(wdp wd, int r, int g, int b);
 static void setpattern_in_gc(wbp w, int width, int height, int *rowdata);
 
-static void set_X11GRAY8(struct imgdata *imd, int x, int y, int r, int g, int b, int a);
-static void get_X11GRAY8(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a);
-static int getlength_X11GRAY8(struct imgdata *imd);
-static struct imgdataformat imgdataformat_X11GRAY8 = { set_X11GRAY8,get_X11GRAY8,0,0,getlength_X11GRAY8,0,0,"X11GRAY8" };
+static struct imgdataformat imgdataformat_X11GRAY8;
+static struct imgdataformat imgdataformat_X11XRGB32;
+static struct imgdataformat imgdataformat_X11BGRX32;
 
 static stringint fillstyles[] = {
     {0, 3},
@@ -2609,7 +2608,7 @@ static wdp alcdisplay(char *s)
         wd->format = &imgdataformat_X11GRAY8;
     } else if (xvi_ret->class == TrueColor && xvi_ret->depth == 24 && xvi_ret->bits_per_rgb == 8) {
         wd->vtype = RGB24;
-        wd->format = ImageByteOrder(wd->display) == LSBFirst ? &imgdataformat_BGRX32 : &imgdataformat_XRGB32;
+        wd->format = ImageByteOrder(wd->display) == LSBFirst ? &imgdataformat_X11BGRX32 : &imgdataformat_X11XRGB32;
         wd->red_shift = get_shift(xvi_ret->red_mask);
         wd->green_shift = get_shift(xvi_ret->green_mask);
         wd->blue_shift = get_shift(xvi_ret->blue_mask);
@@ -3205,17 +3204,17 @@ void freecontext(wcp wc)
     }
 }
 
-int  readimagefileimpl(char *filename, struct imgdata *imd) 
+int readimagefileimpl(char *filename, struct imgdata *imd) 
 {
     return NoCvt;
 }
 
-int  writeimagefileimpl(char *filename, struct imgdata *imd)
+int writeimagefileimpl(char *filename, struct imgdata *imd)
 {
     return NoCvt;
 }
 
-int  readimagedataimpl(dptr data, struct imgdata *imd)
+int readimagedataimpl(dptr data, struct imgdata *imd)
 {
     return NoCvt;
 }
@@ -3264,9 +3263,55 @@ static int getlength_X11GRAY8(struct imgdata *imd)
     return getbpr_X11GRAY8(imd) * imd->height;
 }
 
+static void set_X11XRGB32(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
+{
+    int n = imd->width * y + x;
+    unsigned char *s = imd->data + 4 * n;
+    ++s;
+    *s++ = r / 256;
+    *s++ = g / 256;
+    *s++ = b / 256;
+}
+static void get_X11XRGB32(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
+{
+    int n = imd->width * y + x;
+    unsigned char *s = imd->data + 4 * n;
+    ++s;
+    *r = 257 * (*s++);
+    *g = 257 * (*s++);
+    *b = 257 * (*s++);
+    *a = 65535;
+}
+
+static void set_X11BGRX32(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
+{
+    int n = imd->width * y + x;
+    unsigned char *s = imd->data + 4 * n;
+    *s++ = b / 256;
+    *s++ = g / 256;
+    *s++ = r / 256;
+}
+static void get_X11BGRX32(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
+{
+    int n = imd->width * y + x;
+    unsigned char *s = imd->data + 4 * n;
+    *b = 257 * (*s++);
+    *g = 257 * (*s++);
+    *r = 257 * (*s++);
+    *a = 65535;
+}
+
+static struct imgdataformat imgdataformat_X11GRAY8 = { set_X11GRAY8,get_X11GRAY8,0,0,getlength_X11GRAY8,0,0,"X11GRAY8" };
+static struct imgdataformat imgdataformat_X11XRGB32 =   {set_X11XRGB32,get_X11XRGB32,0,0,getlength_32,0,0,"X11XRGB32"};
+static struct imgdataformat imgdataformat_X11BGRX32 =   {set_X11BGRX32,get_X11BGRX32,0,0,getlength_32,0,0,"X11BGRX32"};
+
 struct imgdataformat *platform_parseimgdataformat(char *s)
 {
-    if (strcmp(s, "X11GRAY8") == 0)
+    if (strcmp(s, imgdataformat_X11XRGB32.name) == 0)
+        return &imgdataformat_X11XRGB32;
+    if (strcmp(s, imgdataformat_X11BGRX32.name) == 0)
+        return &imgdataformat_X11BGRX32;
+    if (strcmp(s, imgdataformat_X11GRAY8.name) == 0)
         return &imgdataformat_X11GRAY8;
     return 0;
 }

@@ -1,4 +1,4 @@
-import io, graphics, ipl.sort
+import io, graphics, ipl.sort, util
 
 record Font(path, str, pri)
 
@@ -100,10 +100,10 @@ procedure get_size(w, s, fam)
    every w.draw_string(0, bh, !&letters)
    l := w.get_pixels()
    font_size := 0
-   every i := 1 to fh do {
+   every j := 0 to fh - 1 do {
       pix := &null
-      every j := 1 to bw do {
-         v := pop(l) | stop("Expected pixel")
+      every i := 0 to bw - 1 do {
+         v := l.get(i, j) | stop("Expected pixel")
          if v ~== "65535,65535,65535" then
             pix := 1
       }

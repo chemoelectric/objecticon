@@ -60,8 +60,6 @@ extern struct imgdataformat imgdataformat_GA16;
 extern struct imgdataformat imgdataformat_AG16;
 extern struct imgdataformat imgdataformat_G16;
 extern struct imgdataformat imgdataformat_GA32;
-extern struct imgdataformat imgdataformat_XRGB32;
-extern struct imgdataformat imgdataformat_BGRX32;
 extern struct imgdataformat imgdataformat_PALETTE1;
 extern struct imgdataformat imgdataformat_PALETTE2;
 extern struct imgdataformat imgdataformat_PALETTE4;
