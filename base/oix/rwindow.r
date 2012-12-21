@@ -501,6 +501,7 @@ void drawimgdata(wbp w, word x, word y, word width, word height, struct imgdata 
 {
     struct imgdata imd1;
     int i, j;
+    word px = x, py = y;
 
     if (!reducerect(w, 1, &x, &y, &width, &height))
         return;
@@ -514,7 +515,7 @@ void drawimgdata(wbp w, word x, word y, word width, word height, struct imgdata 
     } else {
         struct imgdataformat *format = getimgdataformat(w);
         /* If the size and format of the source data are suitable for output, just do that */
-        if (width == imd->width && height == imd->height && format == imd->format) {
+        if (x == px && y == py && width == imd->width && height == imd->height && format == imd->format) {
             outputimgdata(w, x, y, imd);
             return;
         }
@@ -529,7 +530,7 @@ void drawimgdata(wbp w, word x, word y, word width, word height, struct imgdata 
     for (j = 0; j < height; j++) {
         for (i = 0; i < width; i++) {
             int r, g, b, a;
-            imd->format->getpixel(imd, i % imd->width, j % imd->height, &r, &g, &b, &a);
+            imd->format->getpixel(imd, (x - px + i) % imd->width, (y - py + j) % imd->height, &r, &g, &b, &a);
             if (a) {
                 if (a != 65535) {
                     int r1, g1, b1, a1;
