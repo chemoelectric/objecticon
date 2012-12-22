@@ -497,57 +497,56 @@ int interpimage(dptr d,  struct imgdata *imd)
     return Failed;
 }
 
-void drawimgdata(wbp w, word x, word y, word width, word height, struct imgdata *imd)
+void drawimgdata(wbp w, word x, word y, word width, word height, struct imgdata *src)
 {
-    struct imgdata imd1;
+    struct imgdata dest;
     int i, j;
     word px = x, py = y;
 
     if (!reducerect(w, 1, &x, &y, &width, &height))
         return;
 
-    if (imd->format->has_alpha) {
+    if (src->format->has_alpha) {
         /* Capture the current imgdata in the Window. */
-        imd1.width = width;
-        imd1.height = height;
-        imd1.paltbl = 0;
-        captureimgdata(w, x, y, &imd1);
+        dest.width = width;
+        dest.height = height;
+        dest.paltbl = 0;
+        captureimgdata(w, x, y, &dest);
     } else {
         struct imgdataformat *format = getimgdataformat(w);
         /* If the size and format of the source data are suitable for output, just do that */
-        if (x == px && y == py && width == imd->width && height == imd->height && format == imd->format) {
-            outputimgdata(w, x, y, imd);
+        if (x == px && y == py && width == src->width && height == src->height && format == src->format) {
+            outputimgdata(w, x, y, src);
             return;
         }
         /* Allocate a blank imgdata in the Window's target format. */
-        imd1.width = width;
-        imd1.height = height;
-        imd1.paltbl = 0;
-        imd1.format = format;
-        MemProtect(imd1.data = malloc(imd1.format->getlength(&imd1)));
+        dest.width = width;
+        dest.height = height;
+        dest.paltbl = 0;
+        dest.format = format;
+        MemProtect(dest.data = malloc(dest.format->getlength(&dest)));
     }
 
     for (j = 0; j < height; j++) {
         for (i = 0; i < width; i++) {
-            int r, g, b, a;
-            imd->format->getpixel(imd, (x - px + i) % imd->width, (y - py + j) % imd->height, &r, &g, &b, &a);
-            if (a) {
-                if (a != 65535) {
-                    int r1, g1, b1, a1;
-                    imd1.format->getpixel(&imd1, i, j, &r1, &g1, &b1, &a1);
-                    r = CombineAlpha(r, r1, a);
-                    g = CombineAlpha(g, g1, a);
-                    b = CombineAlpha(b, b1, a);
+            int sr, sg, sb, sa;
+            src->format->getpixel(src, (x - px + i) % src->width, (y - py + j) % src->height, &sr, &sg, &sb, &sa);
+            if (sa) {
+                if (sa != 65535) {
+                    int dr, dg, db, da;
+                    dest.format->getpixel(&dest, i, j, &dr, &dg, &db, &da);
+                    sr = CombineAlpha(sr, dr, sa);
+                    sg = CombineAlpha(sg, dg, sa);
+                    sb = CombineAlpha(sb, db, sa);
                 }
-                imd1.format->setpixel(&imd1, i, j, r, g, b, 65535);
+                dest.format->setpixel(&dest, i, j, sr, sg, sb, 65535);
             }
         }
     }
 
-    outputimgdata(w, x, y, &imd1);
-    freeimgdata(&imd1);
+    outputimgdata(w, x, y, &dest);
+    freeimgdata(&dest);
 }
-
 
 /*
  *  Functions and data for reading and writing GIF and JPEG images
@@ -2772,6 +2771,8 @@ char *tocolorstring(int r, int g, int b, int a)
  */
 
 static struct imgdataformat *imgdataformats[] = {
+    &imgdataformat_A16,
+    &imgdataformat_A8,
     &imgdataformat_ABGR32,
     &imgdataformat_AG16,
     &imgdataformat_BGR24,
@@ -2869,6 +2870,37 @@ int getlength_48(struct imgdata *imd)
 int getlength_64(struct imgdata *imd)
 {
     return 8 * (imd->width * imd->height);
+}
+
+static void set_A8(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
+{
+    int n = imd->width * y + x;
+    unsigned char *s = imd->data + n;
+    *s = a / 256;
+}
+
+static void get_A8(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
+{
+    int n = imd->width * y + x;
+    unsigned char *s = imd->data + n;
+    *a = 257 * (*s);
+    *r = *g = *b = 0;
+}
+
+static void set_A16(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
+{
+    int n = imd->width * y + x;
+    unsigned char *s = imd->data + 2 * n;
+    *s++ =  a / 256;
+    *s =  a % 256;
+}
+static void get_A16(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
+{
+    int n = imd->width * y + x;
+    unsigned char *s = imd->data + 2 * n;
+    *a = *s++;
+    *a = *a<<8|*s;
+    *r = *g = *b = 0;
 }
 
 static void set_BGR24(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
@@ -3152,6 +3184,8 @@ static void setpi_PALETTE8(struct imgdata *imd, int x, int y, int i)
     *s = (unsigned char)i;
 }
 
+struct imgdataformat imgdataformat_A8 =   {set_A8,get_A8,0,0,getlength_8,1,0,"A8"};
+struct imgdataformat imgdataformat_A16 =   {set_A16,get_A16,0,0,getlength_16,1,0,"A16"};
 struct imgdataformat imgdataformat_RGB24 =   {set_RGB24,get_RGB24,0,0,getlength_24,0,0,"RGB24"};
 struct imgdataformat imgdataformat_BGR24 =   {set_BGR24,get_BGR24,0,0,getlength_24,0,0,"BGR24"};
 struct imgdataformat imgdataformat_RGBA32 =   {set_RGBA32,get_RGBA32,0,0,getlength_32,1,0,"RGBA32"};

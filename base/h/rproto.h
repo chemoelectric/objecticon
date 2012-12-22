@@ -225,9 +225,6 @@ void outputimgdata(wbp w, int x, int y, struct imgdata *imd);
 struct imgdataformat *getimgdataformat(wbp w);
 void drawimgdata(wbp w, word x, word y, word width, word height, struct imgdata *imd);
 
-
-
-
    int is_png(dptr data);
    int is_jpeg(dptr data);
    int is_gif(dptr data);

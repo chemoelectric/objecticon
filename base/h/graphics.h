@@ -49,6 +49,8 @@ struct imgdataformat {
     char *name;
 };
 
+extern struct imgdataformat imgdataformat_A8;
+extern struct imgdataformat imgdataformat_A16;
 extern struct imgdataformat imgdataformat_RGB24;
 extern struct imgdataformat imgdataformat_BGR24;
 extern struct imgdataformat imgdataformat_RGBA32;
@@ -153,8 +155,8 @@ struct imgdata {			/* image data */
 
 #define DEFAULT_WINDOW_LABEL "Object Icon"
 
-#define CombineAlpha(v1, v2, a) \
-            (((unsigned)v1*a)/65535 + ((unsigned)v2*(65535-a))/65535)
+#define Mul16(v, a) (((unsigned)(v)*(a))/65535)
+#define CombineAlpha(v1, v2, a) (Mul16(v1,a) + Mul16(v2,65535-a))
 
 /*
  * Window Resources

@@ -13,6 +13,8 @@ final class Pixels()
       idp
 
    public static const
+      A8,
+      A16,
       RGB24,
       BGR24,
       RGBA32,
@@ -30,6 +32,8 @@ final class Pixels()
       PALETTE8
 
    private static init()
+      A8        :=  "A8"
+      A16       :=  "A16"
       RGB24     :=  "RGB24"
       BGR24     :=  "BGR24"
       RGBA32    :=  "RGBA32"
