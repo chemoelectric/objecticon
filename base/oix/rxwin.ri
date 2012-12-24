@@ -643,7 +643,7 @@ static void close_screen_win(wsp ws)
         ws->winDraw = NULL;
     }
 #endif
-    ws->win = (Window) NULL;
+    ws->win = 0;
     GRFX_GENUNLINK(ws, vwstates, vnext, vprevious);
     synch_state(ws);
 }
@@ -957,7 +957,6 @@ static void wmap(wbp w)
 
     synch_cursor(ws);
 
-    XSetFunction(wd->display, wc->gc, wc->drawop->i);
     XSync(wd->display, False);
 }
 
@@ -1323,20 +1322,17 @@ static void setclip(wbp w)
 {
     wcp wc = w->context;
     XRectangle rec;
-    if (wc->gc) {
-        rec.x = wc->clipx;
-        rec.y = wc->clipy;
-        rec.width = wc->clipw;
-        rec.height = wc->cliph;
-        XSetClipRectangles(wc->display->display, wc->gc, 0, 0, &rec, 1,Unsorted);
-    }
+    rec.x = wc->clipx;
+    rec.y = wc->clipy;
+    rec.width = wc->clipw;
+    rec.height = wc->cliph;
+    XSetClipRectangles(wc->display->display, wc->gc, 0, 0, &rec, 1,Unsorted);
 }
 
 static void unsetclip(wbp w)
 {
     wcp wc = w->context;
-    if (wc->gc) 
-        XSetClipMask(wc->display->display, wc->gc, None);
+    XSetClipMask(wc->display->display, wc->gc, None);
 }
 
 char *getcanvas(wbp w)
@@ -1361,7 +1357,7 @@ int setcanvas(wbp w, char *s)
     if (e->i == ws->state)
         return Succeeded;
 
-    if (ws->win == (Window) NULL) {
+    if (!ws->win) {
         if (e->i != HiddenState) {
             ws->state = e->i;
             wmap(w);
@@ -1435,8 +1431,7 @@ int setfillstyle(wbp w, char *val)
     if (!e)
         return Failed;
     wc->fillstyle = e;
-    if (ws->pix)
-        XSetFillStyle(wd->display, wc->gc, wc->fillstyle->i);
+    XSetFillStyle(wd->display, wc->gc, wc->fillstyle->i);
     return Succeeded;
 }
 
@@ -1459,9 +1454,8 @@ int setlinestyle(wbp w, char *val)
     if (!e)
         return Failed;
     wc->linestyle = e;
-    if (ws->pix) 
-        XSetLineAttributes(wd->display, wc->gc,
-                           wc->linewidth, wc->linestyle->i, CapProjecting, JoinMiter);
+    XSetLineAttributes(wd->display, wc->gc,
+                       wc->linewidth, wc->linestyle->i, CapProjecting, JoinMiter);
     return Succeeded;
 }
 
@@ -1478,16 +1472,14 @@ int setlinewidth(wbp w, int linewid)
 
     if (linewid < 0) return Error;
     wc->linewidth = linewid;
-    if (ws->pix) {
-        gcv.line_width = linewid;
-        gcv.line_style = wc->linestyle->i;
-        if (linewid > 1)
-            gcv.dashes = 3 * wc->linewidth;
-        else
-            gcv.dashes = 4;
-        gcmask = GCLineWidth | GCLineStyle | GCDashList;
-        XChangeGC(wd->display, wc->gc, gcmask, &gcv);
-    }
+    gcv.line_width = linewid;
+    gcv.line_style = wc->linestyle->i;
+    if (linewid > 1)
+        gcv.dashes = 3 * wc->linewidth;
+    else
+        gcv.dashes = 4;
+    gcmask = GCLineWidth | GCLineStyle | GCDashList;
+    XChangeGC(wd->display, wc->gc, gcmask, &gcv);
     return Succeeded;
 }
 
@@ -1508,8 +1500,7 @@ int setfg(wbp w, char *s)
     if (wc->fg)
         unlink_sharedcolor(wc->fg);
     wc->fg = new_sharedcolor(wc->display, s, r, g, b);
-    if (wc->gc)
-        XSetForeground(wc->display->display, wc->gc, wc->fg->c);
+    XSetForeground(wc->display->display, wc->gc, wc->fg->c);
     return Succeeded;
 }
 
@@ -1526,8 +1517,7 @@ int setbg(wbp w, char *s)
     if (wc->bg)
         unlink_sharedcolor(wc->bg);
     wc->bg = new_sharedcolor(wc->display, s, r, g, b);
-    if (wc->gc)
-        XSetBackground(wc->display->display, wc->gc, wc->bg->c);
+    XSetBackground(wc->display->display, wc->gc, wc->bg->c);
     return Succeeded;
 }
 
@@ -1659,8 +1649,7 @@ int setfont(wbp w, char *s)
     wc->font = tmp;
 
 #if !HAVE_LIBXFT
-    if (wc->gc != NULL)
-        XSetFont(wd->display, wc->gc, wc->font->fsp->fid);
+    XSetFont(wd->display, wc->gc, wc->font->fsp->fid);
 #endif
 
     return Succeeded;
@@ -1717,18 +1706,18 @@ static void resizepixmap(wbp w)
 	   
         if (ws->width > x) {
             XFillRectangle(wd->display, p, wc->gc, x, 0, ws->width-x, ws->pixheight);
-            if (ws->win != (Window) NULL)
-                XFillRectangle(wd->display,ws->win,wc->gc, x, 0, ws->width-x, ws->pixheight);
+            if (ws->win)
+                XFillRectangle(wd->display, ws->win, wc->gc, x, 0, ws->width-x, ws->pixheight);
         }
         if (ws->height > y) {
             XFillRectangle(wd->display, p, wc->gc, 0, y, x, ws->height - y);
-            if (ws->win != (Window) NULL)
+            if (ws->win)
                 XFillRectangle(wd->display, ws->win, wc->gc, 0, y, x, ws->height - y);
         }
         XSetForeground(wd->display, wc->gc, wc->fg->c);
         XCopyArea(wd->display, ws->pix, p, wc->gc, 0, 0, x, y, 0, 0);
         if (wc->drawop->i != GXcopy)
-            XSetFunction(wd->display,wc->gc,wc->drawop->i);
+            XSetFunction(wd->display, wc->gc, wc->drawop->i);
         if (wc->fillstyle->i != FillSolid)
             XSetFillStyle(wd->display, wc->gc, wc->fillstyle->i);
         if (wc->clipw >= 0)
@@ -1754,7 +1743,7 @@ static void synch_state(wsp ws)
     unsigned long state;
     wdp wd = ws->display;
 
-    if (ws->win == (Window) NULL) {
+    if (!ws->win) {
         ws->state = HiddenState;
         return;
     }
@@ -2118,13 +2107,13 @@ void copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2
         /*
          * Copying is between windows on two different displays.
          */
-        if (x<0 || y<0 || x+width > ws1->pixwidth || y+height > ws1->pixheight)
+        if (x < 0 || y < 0 || x + width > ws1->pixwidth || y + height > ws1->pixheight)
             return;		/*#%#%# BOGUS, NEEDS FIXING */
         xim = XGetImage(d1, ws1->pix, x, y, width, height,
                         (1<<GetDepth(wd1))-1,XYPixmap);
         if (wc2->drawop->i != GXcopy) XSetFunction(wd2->display, wc2->gc, GXcopy);
-        for (i=0; i < width; i++) {
-            for (j=0; j < height; j++) {
+        for (i = 0; i < width; i++) {
+            for (j = 0; j < height; j++) {
                 XSetForeground(wd2->display, wc2->gc, XGetPixel(xim, i, j));
                 RENDER2(w2, XDrawPoint, i + x2, j + y2);
 	    }
@@ -2142,7 +2131,7 @@ void copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2
         XSetForeground(wd2->display, wc2->gc, wc2->bg->c);
         if (wc2->drawop->i != GXcopy) XSetFunction(wd2->display, wc2->gc, GXcopy);
 
-        if (x+width<0 || y+height<0 || x>=ws1->pixwidth || y>=ws1->pixheight) {
+        if (x + width < 0 || y + height < 0 || x >= ws1->pixwidth || y >= ws1->pixheight) {
             /* source is entirely offscreen */
             RENDER4(w2, XFillRectangle, x2, y2, width, height);
         }
@@ -2298,8 +2287,7 @@ int setpattern(wbp w, char *name)
     wcp wc = w->context;
     if (!parsepattern(name, &width, &height, &rowdata))
         return Failed;
-    if (wc->gc)
-        setpattern_in_gc(w, width, height, rowdata);
+    setpattern_in_gc(w, width, height, rowdata);
     if (wc->patternname)
         free(wc->patternname);
     wc->patternname = salloc(name);
@@ -3166,7 +3154,7 @@ void freewindow(wsp ws)
 #endif
         if (ws->pix) {
             XFreePixmap(ws->display->display, ws->pix);
-            ws->pix = (Pixmap) NULL;
+            ws->pix = 0;
         }
 
         if (ws->icondata) {
@@ -3191,7 +3179,7 @@ void freecontext(wcp wc)
 {
     wc->refcount--;
     if(wc->refcount == 0) {
-        if (wc->gc != NULL)
+        if (wc->gc)
             XFreeGC(wc->display->display, wc->gc);
         if (wc->patternname)
             free(wc->patternname);
@@ -3229,7 +3217,7 @@ int settransientfor(wbp w, wbp other)
             return Failed;
         ws->transientfor = other->window->win;
     } else
-        ws->transientfor = (Window) NULL;
+        ws->transientfor = 0;
     return Succeeded;
 }
 
