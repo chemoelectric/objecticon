@@ -254,7 +254,7 @@ procedure drawpalette(win, p, x, y, w, h, f, n)
       win.set_fg("black").set_textured_pattern("diagonal")
       win.fill_rectangle(x1, y1, x2 - x1, y2 - y1)
       if upto('o', f) then {
-         win.set_fill_style("solid")
+         win.set_pattern()
          win.draw_rectangle(x1, y1, x2 - x1, y2 - y1)
          }
       }

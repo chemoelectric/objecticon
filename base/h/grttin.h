@@ -201,6 +201,7 @@ typedef int time_t, DIR, uid_t, gid_t, stringint;
       typedef int Cardinal,String,XtResource,XtPointer,XArc,CARD32;
       typedef int XRenderColor, XRenderPictureAttributes, XRenderPictFormat;
       typedef int XPointFixed, XLineFixed, XTriangle, XTrapezoid, XTransform;
+      typedef int XPointDouble;
    #endif				/* XWindows */
       
    #if MSWIN32

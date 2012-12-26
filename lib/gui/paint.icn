@@ -397,7 +397,7 @@ class GridPaint(Paint)
       if /win then
          return
 
-      cw := bev_lookup(win).shadow.clone().set_fill_style("masked").set_pattern("gray")
+      cw := bev_lookup(win).shadow.clone().set_masked_pattern("gray")
 
       cw.draw_rectangle(0, 0, w, h)
 

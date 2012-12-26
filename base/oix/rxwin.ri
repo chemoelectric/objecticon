@@ -1981,7 +1981,68 @@ void drawarc(wbp w, int x, int y, int width, int height, double angle1, double a
 {
 }
 
+static void drawline2(wbp w, int x1, int y1, int x2, int y2)
+{
+    wsp ws = w->window;
+    wdp wd = ws->display;
+    wcp wc = w->context;
+    if (!wc->pattern && wc->linewidth == 1 && (x1 == x2 || y1 == y2)) {
+        if (x2 < x1) {
+            int t = x1 ; x1 = x2; x2 = t;
+        }
+        if (y2 < y1) {
+            int t = y1 ; y1 = y2; y2 = t;
+        }
+        XRenderFillRectangle(wd->display, wc->drawop->i, ws->ppic, &wc->fg->color, x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+        if (ws->win)
+            XRenderFillRectangle(wd->display, wc->drawop->i, ws->wpic, &wc->fg->color, x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+    } else {
+        double half_width = wc->linewidth/2.0;
+        XPointDouble fpoly[4];
+
+        /* XRender does not have a function to draw lines. 
+           So we have to draw a poligon that covers the line area. */ 
+
+        double dx = x2 - x1;
+        double dy = y2 - y1;
+        double d = half_width/hypot(dx, dy);
+        double dnx = d*dx;
+        double dny = d*dy;
+        fpoly[0].x = x1 + dny;
+        fpoly[0].y = y1 - dnx;
+        fpoly[1].x = x1 - dny;
+        fpoly[1].y = y1 + dnx;
+        fpoly[2].x = fpoly[1].x + dx;
+        fpoly[2].y = fpoly[1].y + dy;
+        fpoly[3].x = fpoly[0].x + dx;
+        fpoly[3].y = fpoly[0].y + dy;
+        XRenderCompositeDoublePoly(wd->display, 
+                                   wc->drawop->i, 
+                                   get_draw_picture(wc),
+                                   ws->ppic, 
+                                   None, 0, 0, 0, 0,
+                                   fpoly, 4, 0);
+        if (ws->win)
+            XRenderCompositeDoublePoly(wd->display, 
+                                       wc->drawop->i, 
+                                       get_draw_picture(wc),
+                                       ws->wpic, 
+                                       None, 0, 0, 0, 0,
+                                       fpoly, 4, 0);
+    }
+}
+
 void drawlines(wbp w, struct point *points, int npoints)
+{
+    int i;
+    clip(w);
+    for (i = 1; i < npoints; ++i) {
+        drawline2(w, points[i - 1].x, points[i - 1].y, points[i].x,  points[i].y);
+    }
+    unclip(w);
+}
+
+void drawlines0(wbp w, struct point *points, int npoints)
 {
     int i;
     wcp wc = w->context;
