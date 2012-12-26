@@ -193,12 +193,14 @@ typedef int time_t, DIR, uid_t, gid_t, stringint;
       typedef int Atom, Time, XSelectionEvent, XErrorEvent, XErrorHandler;
       typedef int XGCValues, XColor, XFontStruct, XWindowAttributes, XEvent;
       typedef int XExposeEvent, XKeyEvent, XButtonEvent, XConfigureEvent;
-      typedef int XSizeHints, XWMHints, XClassHint, XTextProperty;
+      typedef int XSizeHints, XWMHints, XClassHint, XTextProperty, Drawable;
       typedef int Colormap, XVisualInfo, XCrossingEvent, XPropertyEvent;
-      typedef int *Display, Cursor, GC, Window, Pixmap, Visual, KeySym;
+      typedef int *Display, Cursor, GC, Window, Pixmap, Picture, Visual, KeySym;
       typedef int WidgetClass, XImage, XpmAttributes, XSetWindowAttributes;
       typedef int XGlyphInfo, XftColor, Region, XftDraw, FcChar8;
       typedef int Cardinal,String,XtResource,XtPointer,XArc,CARD32;
+      typedef int XRenderColor, XRenderPictureAttributes, XRenderPictFormat;
+      typedef int XPointFixed, XLineFixed, XTriangle, XTrapezoid, XTransform;
    #endif				/* XWindows */
       
    #if MSWIN32

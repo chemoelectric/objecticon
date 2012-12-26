@@ -55,21 +55,21 @@ class Style()
 
    public draw_dashed_rectangle(W, x, y, w, h)
       local cw
-      cw := bev_lookup(W).shadow.clone().set_fill_style("masked").set_pattern("gray")
+      cw := bev_lookup(W).shadow.clone().set_masked_pattern("gray")
       cw.draw_rectangle(x, y, w, h)
       cw.uncouple()
    end
 
    public draw_focus_rectangle(W, x, y, w, h)
       local cw
-      cw := W.clone().set_fg("red").set_fill_style("masked").set_pattern("gray")
+      cw := W.clone().set_fg("red").set_masked_pattern("gray")
       cw.draw_rectangle(x, y, w, h)
       cw.uncouple()
    end
 
    public draw_highlight_rectangle(W, x, y, w, h)
       local cw
-      cw := W.clone().set_fg("blue").set_fill_style("masked").set_pattern("gray")
+      cw := W.clone().set_fg("blue").set_masked_pattern("gray")
       cw.draw_rectangle(x, y, w, h)
       cw.uncouple()
    end

@@ -77,9 +77,6 @@ struct imgdata {			/* image data */
 
 #if Graphics
 
-#define MAX_PATTERN_WIDTH  32
-#define MAX_PATTERN_HEIGHT 32
-
 #if XWindows
    #include "../h/xwin.h"
 #elif MSWIN32
@@ -209,6 +206,7 @@ typedef struct _wdisplay {
   struct progstate *program;           /* owning program */
   struct SharedColor *black, *white;
   wfp		fonts, defaultfont;
+  XRenderPictFormat *argb32fmt, *rgb24fmt;
 #if HAVE_LIBXFT
   XFontStruct   *xfont;
 #endif
@@ -237,12 +235,10 @@ typedef struct _wcontext {
   int		dx, dy;
 #if XWindows
   wdp		display;
-  GC		gc;			/* X graphics context */
   struct SharedColor *fg, *bg;
+  struct SharedPattern  *pattern;
   stringint     *linestyle;
   int		linewidth;
-  char		*patternname;
-  stringint     *fillstyle;
   stringint     *drawop;
 #elif MSWIN32
   LOGPEN	pen;
@@ -286,7 +282,9 @@ typedef struct _wstate {
   wdp		display;
   struct _wstate *vprevious, *vnext;    /* List of states with win non-null */
   Window	win;			/* X window */
+  Picture       wpic;                   /* Render extension Picture view of win */
   Pixmap	pix;			/* current screen state */
+  Picture       ppic;                   /* Render extension Picture view of pix */
   int		pixheight;		/* backing pixmap height, in pixels */
   int		pixwidth;		/* pixmap width, in pixels */
   stringint     *cursor;

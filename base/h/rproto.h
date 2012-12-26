@@ -191,7 +191,6 @@ char *tocolorstring(int r, int g, int b, int a);
    void genCurve        (wbp w, struct point *p, int n, void (*h)(wbp, struct point [], int));
    int  parsefilter     (wbp w, char *s, struct filter *res);
    int  parsefont       (char *s, char *fam, int *sty, int *sz);
-   int  parsepattern    (char *s, int *w, int *height, int **data);
    int  parseinputmask  (char *s, int *res);
    void qevent          (wsp ws, dptr e, int x, int y, uword t, int mod);
    void qeventcode      (wsp, int);
@@ -235,7 +234,6 @@ void drawimgdata(wbp w, word x, word y, word width, word height, struct imgdata 
     * graphics implementation routines supplied for each platform
     * (excluding those defined as macros for X-windows)
     */
-   int  setpattern      (wbp w, char *name);
    wcp  clonecontext   (wbp w);
    void copyarea        (wbp w,wbp w2,int x,int y,int wd,int h,int x2,int y2);
    void doconfig        (wbp w, int status);
@@ -248,9 +246,7 @@ void drawimgdata(wbp w, word x, word y, word width, word height, struct imgdata 
    char *getcanvas      (wbp w);
    char *getdisplay     (wbp w);
    char *getdrawop      (wbp w);
-   char *getfillstyle   (wbp w);
    char *getfg          (wbp w);
-   char *getpattern     (wbp w);
    int  getlinewidth    (wbp w);
    int  getdepth        (wbp w, int *res);
    char *getwindowlabel (wbp w);
@@ -268,7 +264,6 @@ void drawimgdata(wbp w, word x, word y, word width, word height, struct imgdata 
    int  setcanvas       (wbp w, char *s);
    int  setdrawop       (wbp w, char *val);
    int  setfg           (wbp w, char *s);
-   int  setfillstyle    (wbp w, char *s);
    int  setfont         (wbp w, char *s);
    int  setlinestyle    (wbp w, char *s);
    int  setlinewidth    (wbp w, int linewid);
@@ -277,6 +272,7 @@ void drawimgdata(wbp w, word x, word y, word width, word height, struct imgdata 
    int  requestselection(wbp w, char *selection, char *targetname);
    int  sendselectionresponse(wbp w, word requestor, char *property, char *selection, char *target, word time, dptr data);
    int  setwindowicon   (wbp w, struct imgdata *imd);
+   int  setpattern  (wbp w, struct imgdata *imd);
    int  setwindowlabel  (wbp w, char *val);
    int  walert          (wbp w, int volume);
    int  warppointer     (wbp w, int x, int y);

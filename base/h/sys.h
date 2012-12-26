@@ -113,6 +113,7 @@
    #include <X11/Xft/Xft.h>
    #include <fontconfig/fontconfig.h>
    #endif
+   #include <X11/extensions/Xrender.h>
 #endif					/* XWindows */
 
 /*

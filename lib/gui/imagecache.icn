@@ -298,10 +298,10 @@ bb~~~~bb_
       return if is_image_string(s) then {
          use {
             p := parse_image_string(s, win),
-            Window.open_image(p, win)
+            Window.open_image(p)
          }
       } else
-         Window.open_image(s, win)
+         Window.open_image(s)
    end
 end
 

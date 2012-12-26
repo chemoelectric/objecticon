@@ -483,7 +483,7 @@ class TableLayout(Layout)
    public display()
       local i, cw
       ensure_grid()
-      cw := bev_lookup(self.parent.cbwin).shadow.clone().set_fill_style("masked").set_pattern("gray")
+      cw := bev_lookup(self.parent.cbwin).shadow.clone().set_masked_pattern("gray")
 
       cw.draw_rectangle(parent.x, parent.y, parent.w, parent.h)
 

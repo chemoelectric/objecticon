@@ -61,8 +61,7 @@ procedure tileims(win, ims)
    if ims ? {
       tab(many(&digits)) & =",#"
       } then {
-         win.set_pattern(ims)
-         win.set_fill_style("textured")
+         win.set_textured_pattern(ims)
          win.fill_rectangle()
          }
    
