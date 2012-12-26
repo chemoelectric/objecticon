@@ -2,7 +2,7 @@ package graphics
 
 import 
    lang(NoCopy),
-   util(use)
+   util(use, error)
 
 # This object contains pixel data either read from a file, extracted
 # from a Window, or created from scratch.  The data is stored in
@@ -13,6 +13,8 @@ final class Pixels()
       idp
 
    public static const
+      A8,
+      A16,
       RGB24,
       BGR24,
       RGBA32,
@@ -30,6 +32,8 @@ final class Pixels()
       PALETTE8
 
    private static init()
+      A8        :=  "A8"
+      A16       :=  "A16"
       RGB24     :=  "RGB24"
       BGR24     :=  "BGR24"
       RGBA32    :=  "RGBA32"
@@ -272,7 +276,6 @@ final class Window(NoCopy)
    public native get_dy()
    public native get_fg()
    public native get_font_height()
-   public native get_fill_style()
    public native get_font()
    public native get_font_width()
    public native get_geometry()
@@ -287,7 +290,6 @@ final class Window(NoCopy)
    public native get_min_height()
    public native get_min_size()
    public native get_min_width()
-   public native get_pattern()
    public native get_pointer()
    public native get_pos()
    public native get_x()
@@ -334,15 +336,6 @@ final class Window(NoCopy)
    # foreground color.
    #
    public native set_fg(v)
-
-   #
-   # The graphics context attribute fill_style specifies whether a
-   # pattern is to be used when drawing. The fill style affects lines
-   # and text as well as solid figures. The pattern itself is set by
-   # the pattern attribute.
-   # Possible values: "solid", "textured", "masked"
-   #
-   public native set_fill_style(v)
 
    #
    # The graphics context attribute font specifies the current text font.
@@ -449,15 +442,65 @@ final class Window(NoCopy)
    #
    public native set_min_width(width)
 
-   #
-   # The graphics context attribute pattern specifies the particular
-   # pattern to be used for drawing when the fill_style attribute is
-   # set to "textured" or "masked".  Possible values: "black",
-   # "verydark", "darkgray", "gray", "lightgray", "verylight",
-   # "white", "vertical", "diagonal", "horizontal", "grid", "trellis",
-   # "checkers", "grains", "scales", "waves", "width,#hexdigits"
-   #
-   public native set_pattern(v)
+   public set_textured_pattern(s)
+      local p
+      return use {
+         p := get_fill_pattern(s, get_fg(), get_bg()),
+         set_pattern(p)
+      }
+   end
+
+   public set_masked_pattern(s)
+      local p
+      return use {
+         p := get_fill_pattern(s, get_fg(), "transparent"),
+         set_pattern(p)
+      }
+   end
+
+   public static get_fill_pattern(s, fg, bg)
+      local data, d, j, row, i, p
+      data := table(,
+                    "black", [16rff, 16rff, 16rff, 16rff, 16rff, 16rff, 16rff, 16rff],
+                    "verydark", [16rfe, 16rff, 16ref, 16rff, 16rfe, 16rff, 16ref, 16rff],
+                    "darkgray", [16r77, 16rdd, 16r77, 16rdd, 16r77, 16rdd, 16r77, 16rdd],
+                    "gray", [16r55, 16raa, 16r55, 16raa, 16r55, 16raa, 16r55, 16raa],
+                    "lightgray", [16r11, 16r44, 16r11, 16r44, 16r11, 16r44, 16r11, 16r44],
+                    "verylight", [16r01, 16r00, 16r10, 16r00, 16r01, 16r00, 16r10, 16r00],
+                    "white", [16r00, 16r00, 16r00, 16r00, 16r00, 16r00, 16r00, 16r00],
+                    "vertical", [16r10, 16r10, 16r10, 16r10, 16r10, 16r10, 16r10, 16r10],
+                    "diagonal", [16r80, 16r40, 16r20, 16r10, 16r08, 16r04, 16r02, 16r01],
+                    "horizontal", [16r00, 16r00, 16r00, 16rff, 16r00, 16r00, 16r00, 16r00],
+                    "grid", [16r10, 16r10, 16r10, 16rff, 16r10, 16r10, 16r10, 16r10],
+                    "trellis", [16r82, 16r44, 16r28, 16r10, 16r28, 16r44, 16r82, 16r01],
+                    "checkers", [16r0f, 16r0f, 16r0f, 16r0f, 16rf0, 16rf0, 16rf0, 16rf0],
+                    "grains", [16r1b, 16r18, 16r81, 16rb1, 16r36, 16r06, 16r60, 16r63],
+                    "scales", [16r02, 16r02, 16r05, 16rf8, 16r20, 16r20, 16r50, 16r8f],
+                    "waves", [16r03, 16r84, 16r48, 16r30, 16r03, 16r84, 16r48, 16r30])
+      d := member(data, s) | return error("Unknown pattern name")
+      p := Pixels.blank(8, 8, Pixels.PALETTE1).
+         set_palette(0, fg).
+         set_palette(1, bg)
+      every j := 0 to 7 do {
+         row := d[j + 1]
+         every i := 0 to 7 do {
+            p.set_palette_index(i, j, row % 2)
+            row /:= 2
+         }
+      }
+      return p
+   end
+
+   public set_pattern(v)
+      return if /v | is(v, Pixels) then
+         set_pattern_impl(v)
+      else use {
+         v := Pixels.open(v),
+         set_pattern_impl(v)
+      }
+   end
+
+   private native set_pattern_impl(v)
 
    #
    # The canvas attribute pointer specifies the shape of the figure
@@ -792,16 +835,11 @@ $endif
    # Convenient method to open an image and return a hidden window with
    # its contents.
    # @param img the image
-   # @param win an optional window from which to get the background and
-   #            foreground colours (only relevant with transparent images).
    #
-   public static open_image(img, win)
+   public static open_image(img)
       local w
       w := Window.open() | fail
-      if \win then
-         w.set_fg(win.get_fg()).
-           set_bg(win.get_bg()).
-           erase_area()
+      w.set_draw_op("Src")
       w.set_image(img) | {
          w.close()
          fail

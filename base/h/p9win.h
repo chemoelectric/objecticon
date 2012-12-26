@@ -6,11 +6,6 @@ struct SharedColor {
 };
 
 struct SharedPattern {
-   int width, height;    /* Data representing the pattern */
-   int rowdata[MAX_PATTERN_HEIGHT];
-   Image *i;             /* Cached image of the pattern computed according to fg & bg rgb and style.  It is */
-                         /* recomputed as and when fg/bg rgb and/or style change. */
-   char *name;
-   int   fg_rgba, bg_rgba, style;
+   Image *i;
    int   refcount;
 };

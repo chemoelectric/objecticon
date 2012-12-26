@@ -10,7 +10,6 @@ static int open_winfile(wsp ws, char *s, int mode);
 static struct FontInfo *match_font(char *s);
 static void load_font_info(void);
 static wfp alcfont(wbp w, char **s);
-static void synch_pattern_image(struct SharedPattern *pat, int fg_rgba, int bg_rgba, int style);
 static void mouse_loop(wsp ws);
 static Rune *utf8_to_runes(char *str, int nchars);
 static void cons_loop(wsp ws);
@@ -34,22 +33,21 @@ static void unclip(wcp wc, Image *i);
 static struct SharedColor *new_sharedcolor(char *name, int rgba);
 static struct SharedColor *link_sharedcolor(struct SharedColor *i);
 static void unlink_sharedcolor(struct SharedColor *i);
-static struct SharedPattern *new_sharedpattern(int width, int height, int *rowdata, char *name);
+static struct SharedPattern *new_sharedpattern(struct imgdata *imd);
 static struct SharedPattern *link_sharedpattern(struct SharedPattern *x);
 static void unlink_sharedpattern(struct SharedPattern *x);
 static void synch_pos(wsp ws);
 static void synch_state(wsp ws);
 static void note_time(char *s);
 static int readimageimpl(char *cmd, int fd, struct imgdata *imd);
+static Image *imgdata_to_Image(struct imgdata *imd);
+static struct imgdataformat imgdataformat_P9ABGR32;
+static struct imgdataformat imgdataformat_P9AG16;
 
 #define NormalCanvas 1
 #define HiddenCanvas 2
 #define IconicCanvas 3
 #define PopupCanvas  4
-
-#define FillSolid     1
-#define FillMasked    2
-#define FillTextured  3
 
 /* Provides info about a font available on the system. */
 struct FontInfo {
@@ -63,13 +61,6 @@ static struct FontInfo *font_info;
 
 /* List of windows with win non-null */
 static wsp vwstates;
-
-static stringint fillstyles[] = {
-    {0, 3},
-    {"masked", FillMasked },
-    {"solid", FillSolid },
-    {"textured", FillTextured },
-};
 
 static stringint drawops[] = {
    { 0, 16},
@@ -183,10 +174,6 @@ static stringint cursors[] = {
 
 static struct SharedColor *black, *white;
 static int window_count;
-static struct SharedPattern *black_pattern;
-
-#define Premul16(v, a) (((unsigned)(v)*a)/65535)
-#define Unpremul8(v, a) (((unsigned)(v)*255)/a)
 
 #if 0
 static void dump_all(void)
@@ -261,16 +248,11 @@ static void unlink_sharedcolor(struct SharedColor *x)
     }
 }
 
-static struct SharedPattern *new_sharedpattern(int width, int height, int *rowdata, char *name)
+static struct SharedPattern *new_sharedpattern(struct imgdata *imd)
 {
     struct SharedPattern *res;
     GRFX_ALLOC(res, SharedPattern);
-    res->i = 0;
-    res->name = salloc(name);
-    res->width = width;
-    res->height = height;
-    memcpy(res->rowdata, rowdata, height * sizeof(int));
-    res->fg_rgba = res->bg_rgba = 0;
+    res->i = imgdata_to_Image(imd);
     return res;
 }
 
@@ -284,7 +266,6 @@ static void unlink_sharedpattern(struct SharedPattern *x)
 {
     --x->refcount;
     if (x->refcount == 0) {
-        free(x->name);
         if (x->i)
             freeimage(x->i);
         free(x);
@@ -341,9 +322,7 @@ wbp wopen(char *display)
     wc->clipw = wc->cliph = -1;
     wc->fg = link_sharedcolor(black);
     wc->bg = link_sharedcolor(white);
-    wc->pattern = link_sharedpattern(black_pattern);
     wc->font = default_font;
-    wc->fillstyle = stringint_lookup(fillstyles, "solid");
     wc->drawop = stringint_lookup(drawops, "copy");
     GRFX_LINK(wc, wcntxts);
 
@@ -441,7 +420,7 @@ static void resize_pix_win(wbp w)
     if (Dx(ws->pix->r) >= ws->width &&
         Dy(ws->pix->r) >= ws->height)
         return;
-    MemProtect(t = allocimage(display, Rect(0, 0, ws->width, ws->height), display->image->chan, 1, DNofill));
+    MemProtect(t = allocimage(display, Rect(0, 0, ws->width, ws->height), RGBA32, 1, DNofill));
     gendraw(t, t->r, w->context->bg->i, ZP, 0, ZP);
     copy_to(t, ws->pix);
     freeimage(ws->pix);
@@ -625,15 +604,15 @@ static void impl_copyarea(wcp wc, Image *dest, Image *src,int x,int y,int w,int 
             h -= bpad;
         }
 
-        gendraw(dest,
-                Rect(dest->r.min.x + x2, 
-                     dest->r.min.y + y2,
-                     dest->r.min.x + x2 + w,
-                     dest->r.min.y + y2 + h),
-                src,
-                Pt(src->r.min.x + x, 
-                   src->r.min.y + y), 
-                0, ZP);
+        gendrawop(dest,
+                  Rect(dest->r.min.x + x2, 
+                       dest->r.min.y + y2,
+                       dest->r.min.x + x2 + w,
+                       dest->r.min.y + y2 + h),
+                  src,
+                  Pt(src->r.min.x + x, 
+                     src->r.min.y + y), 
+                  0, ZP, wc->drawop->i);
         if (lpad > 0)
             gendraw(dest,
                     Rect(dest->r.min.x + x2 - lpad, 
@@ -892,9 +871,9 @@ void erasearea(wbp w, int x, int y, int width, int height)
 
 static int to_color_value(int r, int g, int b, int a)
 {
-    r = Premul16(r, a) / 256;
-    g = Premul16(g, a) / 256;
-    b = Premul16(b, a) / 256;
+    r = Mul16(r, a) / 256;
+    g = Mul16(g, a) / 256;
+    b = Mul16(b, a) / 256;
     a /= 256;
     return (r << 24) | (g << 16) | (b << 8) | a;
 }
@@ -909,11 +888,6 @@ int setfg(wbp w, char *val)
         unlink_sharedcolor(wc->fg);
     wc->fg = new_sharedcolor(val, to_color_value(r, g, b, a));
     return Succeeded;
-}
-
-char *getpattern(wbp w)
-{
-    return w->context->pattern->name;
 }
 
 char *getfg(wbp w)
@@ -979,12 +953,10 @@ void fillarc(wbp w, int x, int y, int width, int height, double angle1, double a
 
 static Image *get_draw_img(wcp wc)
 {
-    if (wc->fillstyle->i == FillSolid) {
-        return wc->fg->i;
-    } else {
-        synch_pattern_image(wc->pattern, wc->fg->rgba, wc->bg->rgba, wc->fillstyle->i);
+    if (wc->pattern)
         return wc->pattern->i;
-    }
+    else
+        return wc->fg->i;
 }
 
 static void impl_fillrectangle(wcp wc, Image *dest, int x, int y, int width, int height)
@@ -1077,88 +1049,15 @@ int lowerwindow (wbp w)
     return Succeeded;
 }
 
-static void synch_pattern_image(struct SharedPattern *pat, int fg_rgba, int bg_rgba, int style)
+int setpattern(wbp w, struct imgdata *imd)
 {
-    int i, j, k, v;
-    unsigned char data[MAX_PATTERN_WIDTH * MAX_PATTERN_HEIGHT * 4];
-
-    if (pat->i && pat->fg_rgba == fg_rgba && pat->bg_rgba == bg_rgba && pat->style == style)
-        return;
-
-    if (style == FillTextured) {
-        /*
-         * Textured style means on bits are fg rgba, off bits are bg
-         * rgba.
-         */
-        k = 0;
-        for(i = 0; i < pat->height; i++) {
-            v = pat->rowdata[i];
-            for(j = 0; j < pat->width; j++) {
-                int bit = (v & 1);
-                if (bit) {
-                    data[k++] = fg_rgba & 0xff;
-                    data[k++] = (fg_rgba>>8) & 0xff;
-                    data[k++] = (fg_rgba>>16) & 0xff;
-                    data[k++] = (fg_rgba>>24) & 0xff;
-                } else {
-                    data[k++] = bg_rgba & 0xff;
-                    data[k++] = (bg_rgba>>8) & 0xff;
-                    data[k++] = (bg_rgba>>16) & 0xff;
-                    data[k++] = (bg_rgba>>24) & 0xff;
-                }
-                v /= 2;
-            }
-        }
-
-        if (pat->i)
-            freeimage(pat->i);
-        MemProtect(pat->i = allocimage(display, Rect(0, 0, pat->width, pat->height), RGBA32, 1, DNofill));
-    } else {
-        /*
-         * Masked style means off bits are transparent and on bits have the rgba of the
-         * foreground.
-         */
-        k = 0;
-        for(i = 0; i < pat->height; i++) {
-            v = pat->rowdata[i];
-            for(j = 0; j < pat->width; j++) {
-                int bit = (v & 1);
-                if (bit) {
-                    data[k++] = fg_rgba & 0xff;
-                    data[k++] = (fg_rgba>>8) & 0xff;
-                    data[k++] = (fg_rgba>>16) & 0xff;
-                    data[k++] = (fg_rgba>>24) & 0xff;
-                } else {
-                    data[k++] = 0x00;
-                    data[k++] = 0x00;
-                    data[k++] = 0x00;
-                    data[k++] = 0x00;
-                }
-                v /= 2;
-            }
-        }
-
-        if (pat->i)
-            freeimage(pat->i);
-        MemProtect(pat->i = allocimage(display, Rect(0, 0, pat->width, pat->height), RGBA32, 1, DNofill));
-    }
-
-    loadimage(pat->i, pat->i->r, data, k);
-    pat->fg_rgba = fg_rgba;
-    pat->bg_rgba = bg_rgba;
-    pat->style = style;
-}
-
-int setpattern(wbp w, char *name)
-{
-    int width, height, *rowdata;
     wcp wc = w->context;
-
-    if (!parsepattern(name, &width, &height, &rowdata))
-        return Failed;
     if (wc->pattern)
         unlink_sharedpattern(wc->pattern);
-    wc->pattern = new_sharedpattern(width, height, rowdata, name);
+    if (imd)
+        wc->pattern = new_sharedpattern(imd);
+    else
+        wc->pattern = 0;
     return Succeeded;
 }
 
@@ -1169,44 +1068,49 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
     uchar *data;
     wsp ws = w->window;
     /* Allocate a temp win to hold the rectangle we want */
-    MemProtect(im = allocimage(display, Rect(0, 0, imd->width, imd->height), RGB24, 1, DNofill));
-    len = imd->width * imd->height * 3;
+    MemProtect(im = allocimage(display, Rect(0, 0, imd->width, imd->height), RGBA32, 1, DNofill));
+    len = imd->width * imd->height * 4;
     MemProtect(data = malloc(len));
     /* Copy from pix to the tmp win */
     gendraw(im, im->r, ws->pix, Pt(x, y), 0, ZP);
     /* Get the pixels from the temp win, and then free it */
     unloadimage(im, im->r, data, len);
     freeimage(im);
-    imd->format = &imgdataformat_BGR24;
+    imd->format = &imgdataformat_P9ABGR32;
     imd->data = data;
+}
+
+static Image *imgdata_to_Image(struct imgdata *imd)
+{
+    Image *im;
+    int len;
+    if (imd->format != &imgdataformat_P9ABGR32)
+        syserr("wrong imgdata format");
+    MemProtect(im = allocimage(display, Rect(0, 0, imd->width, imd->height), RGBA32, 1, DNofill));
+    len = imd->width * imd->height * 4;
+    loadimage(im, im->r, imd->data, len);
+    return im;
 }
 
 static void impl_outputimgdata(wcp wc, Image *dest, int x, int y, Image *src)
 {
     clip(wc, dest);
-    gendraw(dest,
-            Rect(dest->r.min.x + x, 
-                 dest->r.min.y + y,
-                 dest->r.min.x + x + Dx(src->r),
-                 dest->r.min.y + y + Dy(src->r)),
-            src, ZP, 0, ZP);
+    gendrawop(dest,
+              Rect(dest->r.min.x + x, 
+                   dest->r.min.y + y,
+                   dest->r.min.x + x + Dx(src->r),
+                   dest->r.min.y + y + Dy(src->r)),
+              src, ZP, 0, ZP, wc->drawop->i);
     unclip(wc, dest);
 }
 
 void outputimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
-    Image *im;
-    int len;
     wcp wc = w->context;
     wsp ws = w->window;
-    if (imd->format != &imgdataformat_BGR24)
-        syserr("wrong imgdata format");
-
+    Image *im;
     /* Allocate a temp win to represent the imgdata */
-    MemProtect(im = allocimage(display, Rect(0, 0, imd->width, imd->height), RGB24, 1, DNofill));
-    len = imd->width * imd->height * 3;
-    /* Put the imgdata pixels into the image */
-    loadimage(im, im->r, imd->data, len);
+    im = imgdata_to_Image(imd);
     /* Copy tmp image back to screen */
     if (ws->win)
         impl_outputimgdata(wc, ws->win, x, y, im);
@@ -1217,7 +1121,7 @@ void outputimgdata(wbp w, int x, int y, struct imgdata *imd)
 
 struct imgdataformat *getimgdataformat(wbp w)
 {
-    return &imgdataformat_BGR24;
+    return &imgdataformat_P9ABGR32;
 }
 
 int queryrootpointer(wbp w, int *x, int *y)
@@ -1742,7 +1646,7 @@ static void close_screen_win(wsp ws)
 
 static void open_pix_win(wsp ws)
 {
-    MemProtect(ws->pix = allocimage(display, Rect(0, 0, ws->width, ws->height), display->image->chan, 1, DNofill));
+    MemProtect(ws->pix = allocimage(display, Rect(0, 0, ws->width, ws->height), RGBA32, 1, DNofill));
 }
 
 static void close_pix_win(wsp ws)
@@ -1860,21 +1764,6 @@ int setwindowlabel(wbp w, char *val)
     if (ws->win)
         pwrite(ws->label_fd, val, strlen(val), 0);
     return Succeeded;
-}
-
-int setfillstyle(wbp w, char *val)
-{
-    wcp wc = w->context;
-    stringint *e = stringint_lookup(fillstyles, val);
-    if (!e)
-        return Failed;
-    wc->fillstyle = e;
-    return Succeeded;
-}
-
-char *getfillstyle(wbp w)
-{
-    return w->context->fillstyle->s;
 }
 
 int setlinestyle(wbp w, char *val)
@@ -2079,10 +1968,10 @@ wcp clonecontext(wbp w)
     wc->cliph = src->cliph;
     wc->fg = link_sharedcolor(src->fg);
     wc->bg = link_sharedcolor(src->bg);
-    wc->pattern = link_sharedpattern(src->pattern);
+    if (src->pattern)
+        wc->pattern = link_sharedpattern(src->pattern);
     wc->font = src->font;
     wc->thick = src->thick;
-    wc->fillstyle = src->fillstyle;
     wc->drawop = src->drawop;
     GRFX_LINK(wc, wcntxts);
     return wc;
@@ -2119,7 +2008,6 @@ static void init_window_system(void)
 
     black = new_sharedcolor("black", 0x000000ff);
     white = new_sharedcolor("white", 0xffffffff);
-    black_pattern = new_sharedpattern(8, 8, black_pattern_data, "black");
     max_rect = Rect(-1073741823, -1073741823, 1073741823, 1073741823);
     default_font = load_font(getdefaultfont());
     if (!default_font)
@@ -2187,7 +2075,7 @@ static int readimageimpl(char *cmd, int fd, struct imgdata *imd)
             break;
         }
         case RGBA32: {
-            format = &imgdataformat_ABGR32;
+            format = &imgdataformat_P9ABGR32;
             break;
         }
         case GREY8: {
@@ -2195,7 +2083,7 @@ static int readimageimpl(char *cmd, int fd, struct imgdata *imd)
             break;
         }
         case CHAN2(CGrey, 8, CAlpha, 8): {
-            format = &imgdataformat_AG16;
+            format = &imgdataformat_P9AG16;
             break;
         }
         default: {
@@ -2213,39 +2101,6 @@ static int readimageimpl(char *cmd, int fd, struct imgdata *imd)
     ndata = imd->width * imd->height * m->nchan;
     MemProtect(imd->data = malloc(ndata));
     unloadmemimage(m, m->r, imd->data, ndata);
-    /*
-     * Un-premultiply data if we have alpha channel.
-     */
-    switch (m->chan) {
-        case RGBA32: {
-            int i;
-            uchar *p = imd->data;
-            for (i = 0; i < imd->width * imd->height; ++i) {
-                int a = (*p++);
-                if (a != 0 && a != 255) {
-                    *p = Unpremul8(*p, a);
-                    ++p;
-                    *p = Unpremul8(*p, a);
-                    ++p;
-                    *p = Unpremul8(*p, a);
-                    ++p;
-                } else
-                    p += 3;
-            }
-            break;
-        }
-        case CHAN2(CGrey, 8, CAlpha, 8): {
-            int i;
-            uchar *p = imd->data;
-            for (i = 0; i < imd->width * imd->height; ++i) {
-                int a = (*p++);
-                if (a != 0 && a != 255)
-                    *p = Unpremul8(*p, a);
-                ++p;
-            }
-            break;
-        }
-    }
     freememimage(m);
     return Succeeded;
 }
@@ -2360,9 +2215,9 @@ int writeimagefileimpl(char *filename, struct imgdata *imd)
             for (i = 0; i < imd->width; i++) {
                 int r, g, b, a;
                 imd->format->getpixel(imd, i, j, &r, &g, &b, &a);
-                *p++ = Premul16(r, a) / 256;
-                *p++ = Premul16(g, a) / 256;
-                *p++ = Premul16(b, a) / 256;
+                *p++ = Mul16(r, a) / 256;
+                *p++ = Mul16(g, a) / 256;
+                *p++ = Mul16(b, a) / 256;
                 *p++ = a / 256;
             }
         }
@@ -2412,6 +2267,10 @@ int writeimagefileimpl(char *filename, struct imgdata *imd)
 
 struct imgdataformat *platform_parseimgdataformat(char *s)
 {
+    if (strcmp(s, imgdataformat_P9ABGR32.name) == 0)
+        return &imgdataformat_P9ABGR32;
+    if (strcmp(s, imgdataformat_P9AG16.name) == 0)
+        return &imgdataformat_P9AG16;
     return 0;
 }
 
@@ -2536,6 +2395,59 @@ static void load_font_info(void)
     }
     close(fd);
 }
+
+static void set_P9ABGR32(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
+{
+    int n = imd->width * y + x;
+    unsigned char *s = imd->data + 4 * n;
+    b = (((unsigned)b) * a) / 65535;
+    g = (((unsigned)g) * a) / 65535;
+    r = (((unsigned)r) * a) / 65535;
+    *s++ = a / 256;
+    *s++ = b / 256;
+    *s++ = g / 256;
+    *s++ = r / 256;
+}
+
+static void get_P9ABGR32(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
+{
+    int n = imd->width * y + x;
+    unsigned char *s = imd->data + 4 * n;
+    *a = 257 * (*s++);
+    *b = 257 * (*s++);
+    *g = 257 * (*s++);
+    *r = 257 * (*s++);
+    if (*a > 0) {
+        *b = (((unsigned)*b) * 65535) / *a;
+        *g = (((unsigned)*g) * 65535) / *a;
+        *r = (((unsigned)*r) * 65535) / *a;
+    }
+}
+
+static void set_P9AG16(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
+{
+    int gr, n = imd->width * y + x;
+    unsigned char *s = imd->data + 2 * n;
+    gr = 0.299 * r + 0.587 * g + 0.114 * b;
+    gr = (((unsigned)gr) * a) / 65535;
+    *s++ = a / 256;
+    *s++ = gr / 256;
+}
+
+static void get_P9AG16(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
+{
+    int gr, n = imd->width * y + x;
+    unsigned char *s = imd->data + 2 * n;
+    *a = 257 * (*s++);
+    gr = 257 * (*s);
+    if (*a > 0)
+        *r = *g = *b = (((unsigned)gr) * 65535) / *a;
+    else
+        *r = *g = *b = gr;
+}
+
+static struct imgdataformat imgdataformat_P9ABGR32 =   {set_P9ABGR32,get_P9ABGR32,0,0,getlength_32,1,0,"P9ABGR32"};
+static struct imgdataformat imgdataformat_P9AG16 =   {set_P9AG16,get_P9AG16,0,0,getlength_16,1,0,"P9AG16"};
 
 static struct Cursor cursor_data[] = {
     #include "p9cursors/bullseye"          /*  0 */

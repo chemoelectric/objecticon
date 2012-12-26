@@ -87,12 +87,16 @@
    func(W->window->display->display, W->window->pix, W->context->gc, v1, v2, v3, v4, v5, v6, v7);}
 
 struct SharedColor {
-   int r, g, b;         /* rgb of c */
-   unsigned long c;     /* X pixel value */
+   XRenderColor color;
+   Picture brush;
    char  *name;
    int   refcount;
 };
 
+struct SharedPattern {
+   Picture i;
+   int refcount;
+};
 
 
 #endif                                  /* XWindows */

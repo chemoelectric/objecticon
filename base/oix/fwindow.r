@@ -1087,15 +1087,6 @@ function graphics_Window_get_font_height(self)
    }
 end
 
-function graphics_Window_get_fill_style(self)
-   body {
-       tended struct descrip result;
-       GetSelfW();
-       cstr2string(getfillstyle(self_w), &result);
-       return result;
-   }
-end
-
 function graphics_Window_get_font(self)
    body {
        tended struct descrip result;
@@ -1250,15 +1241,6 @@ function graphics_Window_get_min_width(self)
        struct descrip result;
        GetSelfW();
        MakeInt(self_w->window->minwidth, &result);
-       return result;
-   }
-end
-
-function graphics_Window_get_pattern(self)
-   body {
-       tended struct descrip result;
-       GetSelfW();
-       cstr2string(getpattern(self_w), &result);
        return result;
    }
 end
@@ -1467,13 +1449,44 @@ function graphics_Window_set_fg(self, val)
    }
 end
 
-function graphics_Window_set_fill_style(self, val)
-   if !cnv:string(val) then
-      runerr(103, val)
+int setpattern1(wbp w, struct imgdata *imd)
+{
+    struct imgdata dest;
+    struct imgdataformat *format;
+    int i, j, res;
+    format = getimgdataformat(w);
+    if (format == imd->format)
+        return setpattern(w, imd);
+    /* Allocate a blank imgdata in the Window's target format. */
+    dest.width = imd->width;
+    dest.height = imd->height;
+    dest.paltbl = 0;
+    dest.format = format;
+    MemProtect(dest.data = malloc(dest.format->getlength(&dest)));
+    for (j = 0; j < dest.height; j++) {
+        for (i = 0; i < dest.width; i++) {
+            int r, g, b, a;
+            imd->format->getpixel(imd, i, j, &r, &g, &b, &a);
+            dest.format->setpixel(&dest, i, j, r, g, b, a);
+        }
+    }
+    res = setpattern(w, &dest);
+    freeimgdata(&dest);
+    return res;
+}
+
+function graphics_Window_set_pattern_impl(self, val)
    body {
-       GetSelfW();
-       AttemptAttr(setfillstyle(self_w, buffstr(&val)), "Invalid fill_style");
-       return self;
+      GetSelfW();
+      {
+      if (is:null(val))
+          AttemptAttr(setpattern(self_w, 0), "Failed to clear pattern");
+      else {
+          ImageDataStaticParam(val, id);
+          AttemptAttr(setpattern1(self_w, id), "Failed to set pattern");
+      }
+      return self;
+      }
    }
 end
 
@@ -1675,16 +1688,6 @@ function graphics_Window_set_min_width(self, width)
            Irunerr(148, width);
        self_w->window->minwidth = width;
        SimpleAttr(C_MINSIZE);
-       return self;
-   }
-end
-
-function graphics_Window_set_pattern(self, val)
-   if !cnv:string(val) then
-      runerr(103, val)
-   body {
-       GetSelfW();
-       AttemptAttr(setpattern(self_w, buffstr(&val)), "Invalid pattern");
        return self;
    }
 end

@@ -1756,6 +1756,16 @@ class Browser(Component)
       traverse(e, p, c)
    end
 
+   private traverse_address(e, p, context)
+      local c
+      c := copy(context)
+      c.italic := 1
+      synch_font(c)
+      put_new_row(p, c)
+      traverse(e, p, c)
+      put_new_row(p, c)
+   end
+
    private traverse_u(e, p, context)
       local c
       c := copy(context)
@@ -2539,6 +2549,7 @@ class Browser(Component)
                "SAMP"|"KBD"|"CODE"|"TT": traverse_tt(e, p, context)
                "DFN"|"B": traverse_b(e, p, context)
                "EM"|"CITE"|"I": traverse_i(e, p, context)
+               "ADDRESS": traverse_address(e, p, context)
                "BR": traverse_br(e, p, context)
                "HR": traverse_hr(e, p, context)
                "CENTER": traverse_center(e, p, context)

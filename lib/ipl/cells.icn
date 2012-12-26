@@ -92,9 +92,8 @@ procedure clearpanel(panel)
    local width, height, x, y
    
    if \panel.pg then {			# default is textured
-      panel.window.set_fill_style("textured")
-      panel.window.set_pattern("checkers")
       panel.window.set_bg("very dark gray")
+      panel.window.set_textured_pattern("checkers")
       }
    else panel.window.set_fg(panel.fg)
 

@@ -251,7 +251,7 @@ procedure drawpalette(win, p, x, y, w, h, f, n)
       y1 := y + i * h / nh
       x2 := x + w
       y2 := y + h
-      win.set_fg("black").set_pattern("diagonal").set_fill_style("textured")
+      win.set_fg("black").set_textured_pattern("diagonal")
       win.fill_rectangle(x1, y1, x2 - x1, y2 - y1)
       if upto('o', f) then {
          win.set_fill_style("solid")

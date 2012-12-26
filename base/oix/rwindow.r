@@ -497,56 +497,40 @@ int interpimage(dptr d,  struct imgdata *imd)
     return Failed;
 }
 
-void drawimgdata(wbp w, word x, word y, word width, word height, struct imgdata *imd)
+void drawimgdata(wbp w, word x, word y, word width, word height, struct imgdata *src)
 {
-    struct imgdata imd1;
+    struct imgdata dest;
+    struct imgdataformat *format;
     int i, j;
+    word px = x, py = y;
 
     if (!reducerect(w, 1, &x, &y, &width, &height))
         return;
 
-    if (imd->format->has_alpha) {
-        /* Capture the current imgdata in the Window. */
-        imd1.width = width;
-        imd1.height = height;
-        imd1.paltbl = 0;
-        captureimgdata(w, x, y, &imd1);
-    } else {
-        struct imgdataformat *format = getimgdataformat(w);
-        /* If the size and format of the source data are suitable for output, just do that */
-        if (width == imd->width && height == imd->height && format == imd->format) {
-            outputimgdata(w, x, y, imd);
-            return;
-        }
-        /* Allocate a blank imgdata in the Window's target format. */
-        imd1.width = width;
-        imd1.height = height;
-        imd1.paltbl = 0;
-        imd1.format = format;
-        MemProtect(imd1.data = malloc(imd1.format->getlength(&imd1)));
+    /* If the size and format of the source data are suitable for output, just do that */
+    format = getimgdataformat(w);
+    if (x == px && y == py && width == src->width && height == src->height && format == src->format) {
+        outputimgdata(w, x, y, src);
+        return;
     }
+    /* Allocate a blank imgdata in the Window's target format. */
+    dest.width = width;
+    dest.height = height;
+    dest.paltbl = 0;
+    dest.format = format;
+    MemProtect(dest.data = malloc(dest.format->getlength(&dest)));
 
     for (j = 0; j < height; j++) {
         for (i = 0; i < width; i++) {
-            int r, g, b, a;
-            imd->format->getpixel(imd, i % imd->width, j % imd->height, &r, &g, &b, &a);
-            if (a) {
-                if (a != 65535) {
-                    int r1, g1, b1, a1;
-                    imd1.format->getpixel(&imd1, i, j, &r1, &g1, &b1, &a1);
-                    r = CombineAlpha(r, r1, a);
-                    g = CombineAlpha(g, g1, a);
-                    b = CombineAlpha(b, b1, a);
-                }
-                imd1.format->setpixel(&imd1, i, j, r, g, b, 65535);
-            }
+            int sr, sg, sb, sa;
+            src->format->getpixel(src, (x - px + i) % src->width, (y - py + j) % src->height, &sr, &sg, &sb, &sa);
+            dest.format->setpixel(&dest, i, j, sr, sg, sb, sa);
         }
     }
 
-    outputimgdata(w, x, y, &imd1);
-    freeimgdata(&imd1);
+    outputimgdata(w, x, y, &dest);
+    freeimgdata(&dest);
 }
-
 
 /*
  *  Functions and data for reading and writing GIF and JPEG images
@@ -1574,145 +1558,6 @@ int parsefont(char *s, char family[MAXFONTWORD], int *style, int *size)
 
     /* got to end of string; it's OK if it had at least a font family */
     return (*family != '\0');
-}
-
-static int pattern_bits[16][8] = {
-    {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
-    {0xfe, 0xff, 0xef, 0xff, 0xfe, 0xff, 0xef, 0xff},
-    {0x77, 0xdd, 0x77, 0xdd, 0x77, 0xdd, 0x77, 0xdd},
-    {0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa},
-    {0x11, 0x44, 0x11, 0x44, 0x11, 0x44, 0x11, 0x44},
-    {0x01, 0x00, 0x10, 0x00, 0x01, 0x00, 0x10, 0x00},
-    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-    {0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10},
-    {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01},
-    {0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0x00},
-    {0x10, 0x10, 0x10, 0xff, 0x10, 0x10, 0x10, 0x10},
-    {0x82, 0x44, 0x28, 0x10, 0x28, 0x44, 0x82, 0x01},
-    {0x0f, 0x0f, 0x0f, 0x0f, 0xf0, 0xf0, 0xf0, 0xf0},
-    {0x1b, 0x18, 0x81, 0xb1, 0x36, 0x06, 0x60, 0x63},
-    {0x02, 0x02, 0x05, 0xf8, 0x20, 0x20, 0x50, 0x8f},
-    {0x03, 0x84, 0x48, 0x30, 0x03, 0x84, 0x48, 0x30}
-};
-
-/*
- * pattern symbols
- */
-static stringint patternsyms[] = {
-    {0, 16},
-    { "black",      0},
-    { "checkers",  12},
-    { "darkgray",   2},
-    { "diagonal",   8},
-    { "grains",    13},
-    { "gray",       3},
-    { "grid",      10},
-    { "horizontal", 9},
-    { "lightgray",  4},
-    { "scales",    14},
-    { "trellis",   11},
-    { "vertical",   7},
-    { "verydark",   1},
-    { "verylight" , 5},
-    { "waves",     15},
-    { "white",      6},
-};
-
-static int ppattern[MAX_PATTERN_HEIGHT];
-
-/*
- * parsepattern() - parse an encoded numeric stipple pattern, return 1 on success,
- * 0 on invalid pattern.
- */
-int parsepattern(char *s, int *width, int *height, int **data)
-{
-    int i, j, v, len, hexdigits_per_row;
-
-    if (!isdigit((unsigned char)s[0])) {
-        if ((i = stringint_str2int(patternsyms, s)) < 0)
-            return 0;
-        *width = *height = 8;
-        *data = pattern_bits[i];
-        return 1;
-    }
-
-    len = strlen(s);
-
-    /*
-     * Get the width
-     */
-    if (sscanf(s, "%d,", width) != 1) 
-        return 0;
-    if (*width < 1 || *width > MAX_PATTERN_WIDTH)
-        return 0;
-
-    /*
-     * skip over width
-     */
-    while ((len > 0) && isdigit((unsigned char)*s)) {
-        len--; s++;
-    }
-    if ((len <= 1) || (*s != ',')) 
-        return 0;
-    len--; s++;					/* skip over ',' */
-
-    if (*s == '#') {
-        /*
-         * get remaining bits as hex constant
-         */
-        s++; len--;
-        if (len == 0) 
-            return 0;
-        hexdigits_per_row = *width / 4;
-        if (*width % 4) hexdigits_per_row++;
-        *height = len / hexdigits_per_row;
-        if (len % hexdigits_per_row) (*height)++;
-        if (*height > MAX_PATTERN_HEIGHT)
-            return 0;
-        for (i = 0; i < *height; i++) {
-            v = 0;
-            for (j = 0; j < hexdigits_per_row; j++, len--, s++) {
-                if (len == 0) break;
-                v <<= 4;
-                if (isdigit((unsigned char)*s)) v += *s - '0';
-                else switch (*s) {
-                    case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
-                        v += *s - 'a' + 10; break;
-                    case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
-                        v += *s - 'A' + 10; break;
-                    default: return 0;
-                }
-	    }
-            ppattern[i] = v;
-        }
-    }
-    else {
-        /*
-         * get remaining bits as comma-separated decimals
-         */
-        v = 0;
-        *height = 0;
-        while (len > 0) {
-            while ((len > 0) && isdigit((unsigned char)*s)) {
-                v = v * 10 + *s - '0';
-                len--; s++;
-	    }
-            if (*height >= MAX_PATTERN_HEIGHT) 
-                return 0; 
-            ppattern[*height] = v;
-            (*height)++;
-            v = 0;
-
-            if (len > 0) {
-                if (*s == ',') { 
-                    len--; s++; 
-                } else
-                    return 0;
-            }
-        }
-    }
-    *data = ppattern;
-    return 1;
 }
 
 int is_png(dptr data)
@@ -2771,6 +2616,8 @@ char *tocolorstring(int r, int g, int b, int a)
  */
 
 static struct imgdataformat *imgdataformats[] = {
+    &imgdataformat_A16,
+    &imgdataformat_A8,
     &imgdataformat_ABGR32,
     &imgdataformat_AG16,
     &imgdataformat_BGR24,
@@ -2868,6 +2715,37 @@ int getlength_48(struct imgdata *imd)
 int getlength_64(struct imgdata *imd)
 {
     return 8 * (imd->width * imd->height);
+}
+
+static void set_A8(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
+{
+    int n = imd->width * y + x;
+    unsigned char *s = imd->data + n;
+    *s = a / 256;
+}
+
+static void get_A8(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
+{
+    int n = imd->width * y + x;
+    unsigned char *s = imd->data + n;
+    *a = 257 * (*s);
+    *r = *g = *b = 0;
+}
+
+static void set_A16(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
+{
+    int n = imd->width * y + x;
+    unsigned char *s = imd->data + 2 * n;
+    *s++ =  a / 256;
+    *s =  a % 256;
+}
+static void get_A16(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
+{
+    int n = imd->width * y + x;
+    unsigned char *s = imd->data + 2 * n;
+    *a = *s++;
+    *a = *a<<8|*s;
+    *r = *g = *b = 0;
 }
 
 static void set_BGR24(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
@@ -3151,6 +3029,8 @@ static void setpi_PALETTE8(struct imgdata *imd, int x, int y, int i)
     *s = (unsigned char)i;
 }
 
+struct imgdataformat imgdataformat_A8 =   {set_A8,get_A8,0,0,getlength_8,1,0,"A8"};
+struct imgdataformat imgdataformat_A16 =   {set_A16,get_A16,0,0,getlength_16,1,0,"A16"};
 struct imgdataformat imgdataformat_RGB24 =   {set_RGB24,get_RGB24,0,0,getlength_24,0,0,"RGB24"};
 struct imgdataformat imgdataformat_BGR24 =   {set_BGR24,get_BGR24,0,0,getlength_24,0,0,"BGR24"};
 struct imgdataformat imgdataformat_RGBA32 =   {set_RGBA32,get_RGBA32,0,0,getlength_32,1,0,"RGBA32"};
