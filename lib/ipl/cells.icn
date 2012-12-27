@@ -106,7 +106,7 @@ procedure clearpanel(panel)
    every y := 0 to height by panel.size do
       panel.window.draw_line(0, y, width, y)
 
-   panel.window.set_fill_style("solid")
+   panel.window.set_pattern()
 
    return panel
 

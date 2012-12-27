@@ -28,8 +28,10 @@ static void handle_reshape(wsp ws);
 static void handle_limited(wsp ws);
 static void init_window_system(void);
 static void clear_pix_win(wbp wb);
-static void clip(wcp wc, Image *i);
-static void unclip(wcp wc, Image *i);
+static void clip(wbp w);
+static void unclip(wbp w);
+static Rectangle InnerRect(Image *i, int x, int y, int w, int h);
+static Point InnerPt(Image *i, int x, int y);
 static struct SharedColor *new_sharedcolor(char *name, int rgba);
 static struct SharedColor *link_sharedcolor(struct SharedColor *i);
 static void unlink_sharedcolor(struct SharedColor *i);
@@ -63,23 +65,19 @@ static struct FontInfo *font_info;
 static wsp vwstates;
 
 static stringint drawops[] = {
-   { 0, 16},
-   {"Clear",            Clear},
-   {"D",                D},
-   {"DatopS",           DatopS},
-   {"DinS",             DinS},
-   {"DoutS",            DoutS},
-   {"DoverS",           DoverS},
-   {"DxorS",            DxorS},
-   {"S",                S},
-   {"SatopD",           SatopD},
-   {"SinD",             SinD},
-   {"SoutD",            SoutD},
-   {"SoverD",           SoverD},
-   {"SxorD",            SxorD},
-   {"clear",            Clear},
-   {"copy",             SoverD},
-   {"noop",             D},
+   { 0, 12},
+   {"atop",           SatopD},
+   {"clear",          Clear},
+   {"dest",           D},
+   {"dest atop",      DatopS},
+   {"dest in",        DinS},
+   {"dest out",       DoutS},
+   {"dest over",      DoverS},
+   {"in",             SinD},
+   {"out",            SoutD},
+   {"over",           SoverD},
+   {"source",         S},
+   {"xor",            SxorD},
 };
 
 static stringint canvastypes[] = {
@@ -323,7 +321,7 @@ wbp wopen(char *display)
     wc->fg = link_sharedcolor(black);
     wc->bg = link_sharedcolor(white);
     wc->font = default_font;
-    wc->drawop = stringint_lookup(drawops, "copy");
+    wc->drawop = stringint_lookup(drawops, "over");
     GRFX_LINK(wc, wcntxts);
 
     w->context = wc;
@@ -339,16 +337,16 @@ wbp wopen(char *display)
 static void clear_pix_win(wbp w)
 {
     wsp ws = w->window;
-    gendraw(ws->pix, ws->pix->r, w->context->bg->i, ZP, 0, ZP);
+    gendrawop(ws->pix, ws->pix->r, w->context->bg->i, ZP, 0, ZP, S);
 }
 
 static void copy_to(Image *dest, Image *src)
 {
-    Rectangle t = Rect(dest->r.min.x, 
-                       dest->r.min.y,
-                       dest->r.min.x + Dx(src->r),
-                       dest->r.min.y + Dy(src->r));
-    gendraw(dest, t, src, src->r.min, 0, ZP);
+    gendrawop(dest, 
+              InnerRect(dest, 0, 0, Dx(src->r), Dy(src->r)), 
+              src, 
+              src->r.min,
+              0, ZP, S);
 }
 
 static void pix_to_win(wsp ws)
@@ -421,7 +419,7 @@ static void resize_pix_win(wbp w)
         Dy(ws->pix->r) >= ws->height)
         return;
     MemProtect(t = allocimage(display, Rect(0, 0, ws->width, ws->height), RGBA32, 1, DNofill));
-    gendraw(t, t->r, w->context->bg->i, ZP, 0, ZP);
+    gendrawop(t, t->r, w->context->bg->i, ZP, 0, ZP, S);
     copy_to(t, ws->pix);
     freeimage(ws->pix);
     ws->pix = t;
@@ -568,18 +566,13 @@ int walert(wbp w, int volume)
     return Succeeded;
 }
 
-static void impl_copyarea(wcp wc, Image *dest, Image *src,int x,int y,int w,int h,int x2,int y2)
+static void impl_copyarea(wcp wc, Image *dest, Image *src, int x, int y, int w, int h, int x2, int y2)
 {
-    clip(wc, dest);
-
     if (x + w < 0 || y + h < 0 || x >= Dx(src->r) || y >= Dy(src->r)) {
         /* source is entirely offscreen, fill dest with bg */
-        gendraw(dest, 
-                Rect(dest->r.min.x + x2, 
-                     dest->r.min.y + y2,
-                     dest->r.min.x + x2 + w,
-                     dest->r.min.y + y2 + h), 
-                wc->bg->i, ZP, 0, ZP);
+        gendrawop(dest, 
+                  InnerRect(dest, x2, y2, w, h),
+                  wc->bg->i, ZP, 0, ZP, S);
     } else {
         int lpad, rpad, tpad, bpad;
         lpad = rpad = tpad = bpad = 0;
@@ -605,58 +598,44 @@ static void impl_copyarea(wcp wc, Image *dest, Image *src,int x,int y,int w,int 
         }
 
         gendrawop(dest,
-                  Rect(dest->r.min.x + x2, 
-                       dest->r.min.y + y2,
-                       dest->r.min.x + x2 + w,
-                       dest->r.min.y + y2 + h),
+                  InnerRect(dest, x2, y2, w, h), 
                   src,
-                  Pt(src->r.min.x + x, 
-                     src->r.min.y + y), 
+                  InnerPt(src, x, y),
                   0, ZP, wc->drawop->i);
         if (lpad > 0)
-            gendraw(dest,
-                    Rect(dest->r.min.x + x2 - lpad, 
-                         dest->r.min.y + y2 - tpad,
-                         dest->r.min.x + x2,
-                         dest->r.min.y + y2 + h + bpad),
-                    wc->bg->i, ZP, 0, ZP);
+            gendrawop(dest,
+                      InnerRect(dest, x2 - lpad, y2 - tpad, lpad, tpad + h + bpad),
+                      wc->bg->i, ZP, 0, ZP, S);
 
         if (rpad > 0)
-            gendraw(dest,
-                    Rect(dest->r.min.x + x2 + w, 
-                         dest->r.min.y + y2 - tpad,
-                         dest->r.min.x + x2 + w + rpad,
-                         dest->r.min.y + y2 + h + bpad),
-                    wc->bg->i, ZP, 0, ZP);
+            gendrawop(dest,
+                      InnerRect(dest, x2 + w, y2 - tpad, rpad, tpad + h + bpad),
+                      wc->bg->i, ZP, 0, ZP, S);
 
         if (tpad > 0)
-            gendraw(dest,
-                    Rect(dest->r.min.x + x2, 
-                         dest->r.min.y + y2 - tpad,
-                         dest->r.min.x + x2 + w,
-                         dest->r.min.y + y2),
-                    wc->bg->i, ZP, 0, ZP);
+            gendrawop(dest,
+                      InnerRect(dest, x2, y2 - tpad, w, tpad),
+                      wc->bg->i, ZP, 0, ZP, S);
 
         if (bpad > 0)
-            gendraw(dest,
-                    Rect(dest->r.min.x + x2, 
-                         dest->r.min.y + y2 + h,
-                         dest->r.min.x + x2 + w,
-                         dest->r.min.y + y2 + h + bpad),
-                    wc->bg->i, ZP, 0, ZP);
+            gendrawop(dest,
+                      InnerRect(dest, x2, y2 + h, w, bpad),
+                      wc->bg->i, ZP, 0, ZP, S);
     }
-    unclip(wc, dest);
 }
 
-void copyarea(wbp w1,wbp w2,int x,int y,int w,int h,int x2,int y2)
+int copyarea(wbp w1, wbp w2, int x, int y, int w, int h, int x2, int y2)
 {
     wsp ws1 = w1->window;
     wsp ws2 = w2->window;
     wcp wc = w2->context;
+    clip(w2);
     if (ws2->win)
         impl_copyarea(wc, ws2->win, ws1->pix, x, y, w, h, x2, y2);
     impl_copyarea(wc, ws2->pix, ws1->pix, x, y, w, h, x2, y2);
+    unclip(w2);
     flushimage(display, 1);
+    return Succeeded;
 }
 
 int rebind(wbp w, wbp w2)
@@ -668,7 +647,6 @@ int rebind(wbp w, wbp w2)
 static void impl_drawarc(wcp wc, Image *dest, int x, int y, int width, int height, double angle1, double angle2)
 {
     int alpha, phi;
-    clip(wc, dest);
     x += width/2;
     y += height/2;
     width /= 2;
@@ -676,24 +654,24 @@ static void impl_drawarc(wcp wc, Image *dest, int x, int y, int width, int heigh
     alpha = -angle1 * 180 / Pi;
     phi = -angle2 * 180 / Pi;
     arcop(dest, 
-          Pt(dest->r.min.x + x, dest->r.min.y + y),
+          InnerPt(dest, x, y),
           width, height,
           wc->thick,
           get_draw_img(wc), 
           ZP,
           alpha, phi,
           wc->drawop->i);
-        
-    unclip(wc, dest);
 }
 
 void drawarc(wbp w, int x, int y, int width, int height, double angle1, double angle2)
 {
     wsp ws = w->window;
     wcp wc = w->context;
+    clip(w);
     if (ws->win)
         impl_drawarc(wc, ws->win, x, y, width, height, angle1, angle2);
     impl_drawarc(wc, ws->pix, x, y, width, height, angle1, angle2);
+    unclip(w);
     flushimage(display, 1);
 }
 
@@ -708,22 +686,19 @@ void drawlines(wbp w, struct point *points0, int npoints)
      */
     term = wc->thick == 1 ? Enddisc:Endsquare;
 
-    clip(wc, ws->pix);
+    clip(w);
     polyop(ws->pix, points, npoints, term, term, wc->thick, 
            get_draw_img(wc), ZP, wc->drawop->i);
-    unclip(wc, ws->pix);
 
     if (ws->win) {
         for (i = 0; i < npoints; ++i) {
             points[i].x += ws->win->r.min.x;
             points[i].y += ws->win->r.min.y;
         }
-        clip(wc, ws->win);
         polyop(ws->win, points, npoints, term, term, wc->thick, 
                get_draw_img(wc), ZP, wc->drawop->i);
-        unclip(wc, ws->win);
     }
-
+    unclip(w);
     flushimage(display, 1);
 }
 
@@ -740,18 +715,18 @@ static void impl_drawrectangle(wcp wc, Image *dest, int x, int y, int width, int
     p[2] = Pt(p[0].x + width - 1, p[0].y + height - 1);
     p[3] = Pt(p[0].x, p[0].y + height - 1);
     p[4] = p[0];
-    clip(wc, dest);
     polyop(dest, p, 5, Endsquare, Endsquare, wc->thick, get_draw_img(wc), ZP, wc->drawop->i);
-    unclip(wc, dest);
 }
 
 void drawrectangle(wbp w, int x, int y, int width, int height)
 {
     wsp ws = w->window;
     wcp wc = w->context;
+    clip(w);
     if (ws->win)
         impl_drawrectangle(wc, ws->win, x, y, width, height);
     impl_drawrectangle(wc, ws->pix, x, y, width, height);
+    unclip(w);
     flushimage(display, 1);
 }
 
@@ -762,55 +737,72 @@ void fillpolygon(wbp w, struct point *points0, int npoints)
     wcp wc = w->context;
     Point *points = (Point *)points0;
 
-    clip(wc, ws->pix);
+    clip(w);
     fillpolyop(ws->pix, points, npoints, 0, get_draw_img(wc), ZP, wc->drawop->i);
-    unclip(wc, ws->pix);
-
     if (ws->win) {
         for (i = 0; i < npoints; ++i) {
             points[i].x += ws->win->r.min.x;
             points[i].y += ws->win->r.min.y;
         }
-        clip(wc, ws->win);
         fillpolyop(ws->win, points, npoints, 0, get_draw_img(wc), ZP, wc->drawop->i);
-        unclip(wc, ws->win);
     }
+    unclip(w);
 
     flushimage(display, 1);
 }
 
-static void clip(wcp wc, Image *i)
+static Rectangle InnerRect(Image *i, int x, int y, int w, int h)
 {
-    if (wc->clipw >= 0)
-        replclipr(i, 0, Rect(i->r.min.x + wc->clipx, 
-                             i->r.min.y + wc->clipy, 
-                             i->r.min.x + wc->clipx + wc->clipw, 
-                             i->r.min.y + wc->clipy + wc->cliph));
+    return Rect(i->r.min.x + x, 
+                i->r.min.y + y, 
+                i->r.min.x + x + w, 
+                i->r.min.y + y + h);
 }
 
-static void unclip(wcp wc, Image *i)
+static Point InnerPt(Image *i, int x, int y)
 {
-    if (wc->clipw >= 0)
-        replclipr(i, 0, max_rect);
+    return Pt(i->r.min.x + x, 
+              i->r.min.y + y);
+}
+
+static void clip(wbp w)
+{
+    wsp ws = w->window;
+    wcp wc = w->context;
+    if (wc->clipw >= 0) {
+        replclipr(ws->pix, 0, InnerRect(ws->pix, wc->clipx, wc->clipy, wc->clipw, wc->cliph));
+        if (ws->win)
+            replclipr(ws->win, 0, InnerRect(ws->win, wc->clipx, wc->clipy, wc->clipw, wc->cliph));
+    }
+}
+
+static void unclip(wbp w)
+{
+    wsp ws = w->window;
+    wcp wc = w->context;
+    if (wc->clipw >= 0) {
+        replclipr(ws->pix, 0, max_rect);
+        if (ws->win)
+            replclipr(ws->win, 0, max_rect);
+    }
 }
 
 static void impl_drawstring(wcp wc, Image *dest, int x, int y, char *str, int slen)
 {
-    clip(wc, dest);
     stringn(dest, 
-            Pt(dest->r.min.x + x,
-               dest->r.min.y + y - wc->font->font->ascent),
+            InnerPt(dest, x, y - wc->font->font->ascent),
             get_draw_img(wc), ZP, wc->font->font, str, slen);
-    unclip(wc, dest);
 }
 
 void drawstring(wbp w, int x, int y, char *str, int slen)
 {
     wsp ws = w->window;
     wcp wc = w->context;
+    clip(w);
     if (ws->win)
         impl_drawstring(wc, ws->win, x, y, str, slen);
     impl_drawstring(wc, ws->pix, x, y, str, slen);
+    unclip(w);
     flushimage(display, 1);
 }
 
@@ -828,12 +820,9 @@ static Rune *utf8_to_runes(char *str, int nchars)
 
 static void impl_drawutf8(wcp wc, Image *dest, int x, int y, Rune *str, int len)
 {
-    clip(wc, dest);
     runestringn(dest, 
-                Pt(dest->r.min.x + x,
-                   dest->r.min.y + y - wc->font->font->ascent),
+                InnerPt(dest, x, y - wc->font->font->ascent),
                 get_draw_img(wc), ZP, wc->font->font, str, len);
-    unclip(wc, dest);
 }
 
 void drawutf8(wbp w, int x, int y, char *str, int slen, int nchars)
@@ -841,31 +830,31 @@ void drawutf8(wbp w, int x, int y, char *str, int slen, int nchars)
     wsp ws = w->window;
     wcp wc = w->context;
     Rune *r = utf8_to_runes(str, nchars);
+    clip(w);
     if (ws->win)
         impl_drawutf8(wc, ws->win, x, y, r, nchars);
     impl_drawutf8(wc, ws->pix, x, y, r, nchars);
+    unclip(w);
     flushimage(display, 1);
     free(r);
 }
 
 static void impl_erasearea(wcp wc, Image *dest, int x, int y, int width, int height)
 {
-    Rectangle t = Rect(dest->r.min.x + x, 
-                       dest->r.min.y + y,
-                       dest->r.min.x + x + width,
-                       dest->r.min.y + y + height);
-    clip(wc, dest);
-    gendraw(dest, t, wc->bg->i, ZP, 0, ZP);
-    unclip(wc, dest);
+    gendrawop(dest, 
+              InnerRect(dest, x, y, width, height),
+              wc->bg->i, ZP, 0, ZP, S);
 }
 
 void erasearea(wbp w, int x, int y, int width, int height)
 {
     wsp ws = w->window;
     wcp wc = w->context;
+    clip(w);
     if (ws->win)
         impl_erasearea(wc, ws->win, x, y, width, height);
     impl_erasearea(wc, ws->pix, x, y, width, height);
+    unclip(w);
     flushimage(display, 1);
 }
 
@@ -922,7 +911,6 @@ int setwindowicon(wbp w, struct imgdata *imd)
 static void impl_fillarc(wcp wc, Image *dest, int x, int y, int width, int height, double angle1, double angle2)
 {
     int alpha, phi;
-    clip(wc, dest);
     x += width/2;
     y += height/2;
     width /= 2;
@@ -930,13 +918,12 @@ static void impl_fillarc(wcp wc, Image *dest, int x, int y, int width, int heigh
     alpha = -angle1 * 180 / Pi;
     phi = -angle2 * 180 / Pi;
     fillarcop(dest, 
-              Pt(dest->r.min.x + x, dest->r.min.y + y),
+              InnerPt(dest, x, y),
               width, height,
               get_draw_img(wc),
               ZP,
               alpha, phi,
               wc->drawop->i);
-    unclip(wc, dest);
 }
 
 #passthru #define fillarc oi_fillarc        
@@ -945,9 +932,11 @@ void fillarc(wbp w, int x, int y, int width, int height, double angle1, double a
 {
     wsp ws = w->window;
     wcp wc = w->context;
+    clip(w);
     if (ws->win)
         impl_fillarc(wc, ws->win, x, y, width, height, angle1, angle2);
     impl_fillarc(wc, ws->pix, x, y, width, height, angle1, angle2);
+    unclip(w);
     flushimage(display, 1);
 }
 
@@ -961,22 +950,21 @@ static Image *get_draw_img(wcp wc)
 
 static void impl_fillrectangle(wcp wc, Image *dest, int x, int y, int width, int height)
 {
-    Rectangle t = Rect(dest->r.min.x + x, 
-                       dest->r.min.y + y,
-                       dest->r.min.x + x + width,
-                       dest->r.min.y + y + height);
-    clip(wc, dest);
-    gendrawop(dest, t, get_draw_img(wc), ZP, 0, ZP, wc->drawop->i);
-    unclip(wc, dest);
+    gendrawop(dest, 
+              InnerRect(dest, x, y, width, height),
+              get_draw_img(wc), 
+              ZP, 0, ZP, wc->drawop->i);
 }
 
 void fillrectangle(wbp w, int x, int y, int width, int height)
 {
     wsp ws = w->window;
     wcp wc = w->context;
+    clip(w);
     if (ws->win)
         impl_fillrectangle(wc, ws->win, x, y, width, height);
     impl_fillrectangle(wc, ws->pix, x, y, width, height);
+    unclip(w);
     flushimage(display, 1);
 }
 
@@ -1072,7 +1060,7 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
     len = imd->width * imd->height * 4;
     MemProtect(data = malloc(len));
     /* Copy from pix to the tmp win */
-    gendraw(im, im->r, ws->pix, Pt(x, y), 0, ZP);
+    gendrawop(im, im->r, ws->pix, Pt(x, y), 0, ZP, S);
     /* Get the pixels from the temp win, and then free it */
     unloadimage(im, im->r, data, len);
     freeimage(im);
@@ -1094,14 +1082,9 @@ static Image *imgdata_to_Image(struct imgdata *imd)
 
 static void impl_outputimgdata(wcp wc, Image *dest, int x, int y, Image *src)
 {
-    clip(wc, dest);
     gendrawop(dest,
-              Rect(dest->r.min.x + x, 
-                   dest->r.min.y + y,
-                   dest->r.min.x + x + Dx(src->r),
-                   dest->r.min.y + y + Dy(src->r)),
+              InnerRect(dest, x, y, Dx(src->r), Dy(src->r)),
               src, ZP, 0, ZP, wc->drawop->i);
-    unclip(wc, dest);
 }
 
 void outputimgdata(wbp w, int x, int y, struct imgdata *imd)
@@ -1112,9 +1095,11 @@ void outputimgdata(wbp w, int x, int y, struct imgdata *imd)
     /* Allocate a temp win to represent the imgdata */
     im = imgdata_to_Image(imd);
     /* Copy tmp image back to screen */
+    clip(w);
     if (ws->win)
         impl_outputimgdata(wc, ws->win, x, y, im);
     impl_outputimgdata(wc, ws->pix, x, y, im);
+    unclip(w);
     freeimage(im);
     flushimage(display, 1);
 }

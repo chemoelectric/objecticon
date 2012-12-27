@@ -1273,11 +1273,6 @@ class Component(Rect,Align,Connectable)
       return self
    end
 
-   public set_fill_style(v)
-      set_wattrib("fill_style", v)
-      return self
-   end
-
    public set_pattern(v)
       set_wattrib("pattern", v)
       return self

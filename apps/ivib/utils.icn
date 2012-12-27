@@ -147,7 +147,7 @@ procedure normalize_wattrib(key, val)
          return integer(val)
 
       "image"|"pointer"|"fg"|"bg"|"draw_op"|"icon"|"font"|"label"|
-         "line_style"|"fill_style"|"pattern"|"input_mask": 
+         "line_style"|"input_mask": 
          return best_text(val)
    }
 end

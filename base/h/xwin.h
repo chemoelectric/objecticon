@@ -67,25 +67,6 @@
 #define _NET_WM_STATE_ADD            1
 #define _NET_WM_STATE_REMOVE         0
 
-/*
- * Macros to ease coding in which every X call must be done twice.
- */
-#define RENDER2(W,func,v1,v2) {                    \
-   if (W->window->win) func(W->window->display->display, W->window->win, W->context->gc, v1, v2); \
-   func(W->window->display->display, W->window->pix, W->context->gc, v1, v2);}
-#define RENDER3(W,func,v1,v2,v3) {                     \
-   if (W->window->win) func(W->window->display->display, W->window->win, W->context->gc, v1, v2, v3); \
-   func(W->window->display->display, W->window->pix, W->context->gc, v1, v2, v3);}
-#define RENDER4(W,func,v1,v2,v3,v4) {                      \
-   if (W->window->win) func(W->window->display->display, W->window->win, W->context->gc, v1, v2, v3, v4); \
-   func(W->window->display->display, W->window->pix, W->context->gc, v1, v2, v3, v4);}
-#define RENDER6(W,func,v1,v2,v3,v4,v5,v6) {                        \
-   if (W->window->win) func(W->window->display->display, W->window->win, W->context->gc, v1, v2, v3, v4, v5, v6); \
-   func(W->window->display->display, W->window->pix, W->context->gc, v1, v2, v3, v4, v5, v6);}
-#define RENDER7(W,func,v1,v2,v3,v4,v5,v6,v7) {                         \
-   if (W->window->win) func(W->window->display->display, W->window->win, W->context->gc, v1, v2, v3, v4, v5, v6, v7); \
-   func(W->window->display->display, W->window->pix, W->context->gc, v1, v2, v3, v4, v5, v6, v7);}
-
 struct SharedColor {
    XRenderColor color;
    Picture brush;
