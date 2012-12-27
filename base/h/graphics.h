@@ -177,11 +177,7 @@ typedef struct _wfont {
   int		height;			
   int           maxwidth;               /* max width of one char */
 #if XWindows
-  #if HAVE_LIBXFT
-    XftFont     * fsp;
-  #else
-    XFontStruct *	fsp;			/* X font pointer */
-  #endif /* HAVE_LIBXFT */
+  XftFont     * fsp;
 #elif MSWIN32
   HFONT		font;
 #endif
@@ -207,9 +203,7 @@ typedef struct _wdisplay {
   struct SharedColor *black, *white;
   wfp		fonts, defaultfont;
   XRenderPictFormat *argb32fmt, *rgb24fmt;
-#if HAVE_LIBXFT
   XFontStruct   *xfont;
-#endif
   Cursor	cursors[NUMCURSORSYMS];
   Atom          atoms[NUMATOMS];      /* interned atoms */
   struct _wdisplay *previous, *next;
@@ -290,9 +284,7 @@ typedef struct _wstate {
   stringint     *cursor;
   unsigned long *icondata;              /* window icon data and length */
   int           iconlen;
-#if HAVE_LIBXFT
-  XftDraw       *winDraw,*pixDraw;
-#endif
+  XftDraw       *winDraw, *pixDraw;
   int		state;			/* window state; icon, window or root*/
   Window        transientfor;           /* transient-for hint */
 #elif MSWIN32

@@ -36,16 +36,7 @@ static void wmap(wbp w);
 static void synch_cursor(wsp ws);
 static int convert_KeySym_to_code_point(KeySym k);
 static char *convertspec(wdp wd, char *s);
-#if HAVE_LIBXFT
 int xft_stringwidth(wbp w, char *s, int n);
-#else
-static char *findfont(wdp wd, char *fam, int size, int flags);
-static int okfont(char *spec, int flags);
-static int fontcmp(char *font1, char *font2, int size, int flags);
-static int fieldcmp(char *font1, char *font2, char *value, int field);
-static char *xlfd_field(char *s, int i);
-static int xlfd_size(char *s, int n);
-#endif
 static wfp newfont(wdp wd, char *s);
 static wdp alcdisplay (char *s);
 static wfp loadfont(wdp wd, char *s);
@@ -75,24 +66,19 @@ static struct imgdataformat imgdataformat_X11ARGB32;
 static struct imgdataformat imgdataformat_X11BGRA32;
 
 static stringint drawops[] = {
-   { 0, 17},
-   {"Add",  PictOpAdd},
-   {"Atop",  PictOpAtop},
-   {"AtopReverse",  PictOpAtopReverse},
-   {"Clear",  PictOpClear},
-   {"Dst",  PictOpDst},
-   {"In",  PictOpIn},
-   {"InReverse",  PictOpInReverse},
-   {"Out",  PictOpOut},
-   {"OutReverse",  PictOpOutReverse},
-   {"Over",  PictOpOver},
-   {"OverReverse",  PictOpOverReverse},
-   {"Saturate",  PictOpSaturate},
-   {"Src",  PictOpSrc},
-   {"Xor",  PictOpXor},
+   { 0, 12},
+   {"atop",  PictOpAtop},
    {"clear",  PictOpClear},
-   {"copy",  PictOpOver},
-   {"noop",  PictOpDst},
+   {"dest",  PictOpDst},
+   {"dest atop",  PictOpAtopReverse},
+   {"dest in",  PictOpInReverse},
+   {"dest out",  PictOpOutReverse},
+   {"dest over",  PictOpOverReverse},
+   {"in",  PictOpIn},
+   {"out",  PictOpOut},
+   {"over",  PictOpOver},
+   {"source",  PictOpSrc},
+   {"xor",  PictOpXor},
 };
 
 static stringint linestyles[] = {
@@ -650,12 +636,10 @@ static void close_screen_win(wsp ws)
     XRenderFreePicture(wd->display, ws->wpic);
     XDestroyWindow(wd->display, ws->win);
     XFlush(wd->display);
-#if HAVE_LIBXFT
     if (ws->winDraw) {
         XftDrawDestroy(ws->winDraw);
         ws->winDraw = NULL;
     }
-#endif
     ws->win = 0;
     GRFX_GENUNLINK(ws, vwstates, vnext, vprevious);
     synch_state(ws);
@@ -699,9 +683,7 @@ wbp wopen(char *display)
     ws->minwidth = ws->minheight = 1;
     ws->maxwidth = ws->maxheight = INT_MAX;
     ws->width = ws->height = ws->pixwidth = ws->pixheight = 1;
-#if HAVE_LIBXFT
     ws->pixDraw = ws->winDraw = NULL;
-#endif
     ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
     ws->display = wd;
     GRFX_LINK(ws, wstates);
@@ -714,7 +696,7 @@ wbp wopen(char *display)
     wc->bg = link_sharedcolor(wd->white);
     wc->fg = link_sharedcolor(wd->black);
     wc->font = wd->defaultfont;
-    wc->drawop = stringint_lookup(drawops, "copy");
+    wc->drawop = stringint_lookup(drawops, "over");
     wc->clipx = wc->clipy = 0;
     wc->clipw = wc->cliph = -1;
     wc->linewidth = 1;
@@ -1625,11 +1607,6 @@ int setfont(wbp w, char *s)
     if (!tmp)
         return Failed;
     wc->font = tmp;
-
-#if !HAVE_LIBXFT
-    XSetFont(wd->display, wc->gc, wc->font->fsp->fid);
-#endif
-
     return Succeeded;
 }
 
@@ -1691,12 +1668,10 @@ static void resizepixmap(wbp w)
             fillrectangle2(w, PictOpSrc, &wc->bg->color, x, 0, ws->width-x, ws->pixheight);
         if (ws->height > y)
             fillrectangle2(w, PictOpSrc, &wc->bg->color, 0, y, x, ws->height - y);
-#if HAVE_LIBXFT
         if (ws->pixDraw) {
             XftDrawDestroy(ws->pixDraw);
             ws->pixDraw = NULL;
         }
-#endif
     }
 }
 
@@ -1947,36 +1922,6 @@ static void handle_mouse(wsp ws, XButtonEvent *event)
                  make_mod(event->state));
 }
 
-static void make_line(int x1, int y1, int x2, int y2, int width, XTrapezoid *trap)
-{
-    int t;
-    if (y1 > y2) {
-        t = y1 ; y1 = y2; y2 = t;
-        t = x1 ; x1 = x2; x2 = t;
-    }
-    if (y1 == y2) {
-        trap->top = trap->left.p1.y = trap->right.p1.y = y1<<16;
-        trap->bottom = trap->left.p2.y = trap->right.p2.y = (y1 + width)<<16;
-        trap->left.p1.x = trap->left.p2.x = x1<<16;
-        trap->right.p1.x = trap->right.p2.x = x2<<16;
-    } else {
-        trap->top = trap->left.p1.y = trap->right.p1.y = y1<<16;
-        trap->bottom = trap->left.p2.y = trap->right.p2.y = y2<<16;
-        trap->left.p1.x = x1<<16;
-        trap->left.p2.x = x2<<16;
-        trap->right.p1.x = (x1 + width)<<16;
-        trap->right.p2.x = (x2 + width)<<16;
-    }
-}
-
-static void make_rectangle(int x1, int y1, int x2, int y2, int width, XTrapezoid *trap)
-{
-    make_line(x1,y1, x2,y1, width, trap);
-    make_line(x2,y1, x2,y2, width, trap + 1);
-    make_line(x1,y1, x1,y2, width, trap + 2);
-    make_line(x1,y2, x2,y2, width, trap + 3);
-}
-
 void drawarc(wbp w, int x, int y, int width, int height, double angle1, double angle2)
 {
 }
@@ -2042,31 +1987,20 @@ void drawlines(wbp w, struct point *points, int npoints)
     unclip(w);
 }
 
-void drawlines0(wbp w, struct point *points, int npoints)
-{
-    int i;
-    wcp wc = w->context;
-    clip(w);
-    for (i = 1; i < npoints; ++i) {
-        XTrapezoid trap;
-        make_line(points[i - 1].x, points[i - 1].y, points[i].x,  points[i].y, wc->linewidth, &trap);
-        trapezoids2(w, wc->drawop->i, get_draw_picture(wc), 0, 0, &trap, 1);
-    }
-    unclip(w);
-}
-
 void drawpoint(wbp w, int x, int y)
 {
 }
 
 void drawrectangle(wbp w, int x, int y, int width, int height)
 {
-    wcp wc = w->context;
     if (width > 0 && height > 0) {
-        XTrapezoid trap[4];
-        make_rectangle(x, y, width, height, wc->linewidth, trap);
+        int x2 = x + width - 1;
+        int y2 = y + height - 1;
         clip(w);
-        trapezoids2(w, wc->drawop->i, wc->fg->brush, 0, 0, trap, 4);
+        drawline2(w, x, y, x2, y);
+        drawline2(w, x2, y, x2, y2);
+        drawline2(w, x, y, x, y2);
+        drawline2(w, x, y2, x2, y2);
         unclip(w);
     }
 }
@@ -2125,14 +2059,22 @@ static void composite2(wbp w1, int x1, int y1, int width, int height, int op, wb
     XRenderComposite(wd->display,
                      op,
                      ws1->ppic,    /* src */
-                     None, /*ws1->ppic,*/    /* mask */
+                     None,         /* mask */
                      ws2->ppic,    /* dest */
                      x1, y1,       /* src_x,y */
-                     x1, y1,       /* mask x,y */
+                     0, 0,         /* mask x,y */
                      x2, y2,       /* dst x,y */
                      width, height);
     if (ws2->win)
-        pix_to_win(ws2, x2, y2, width, height);
+        XRenderComposite(wd->display,
+                         op,
+                         ws1->ppic,    /* src */
+                         None,         /* mask */
+                         ws2->wpic,    /* dest */
+                         x1, y1,       /* src_x,y */
+                         0, 0,         /* mask x,y */
+                         x2, y2,       /* dst x,y */
+                         width, height);
 }
 
 static Picture imgdata_to_Picture(wdp wd, struct imgdata *imd, unsigned long valuemask, XRenderPictureAttributes *attributes)
@@ -2222,15 +2164,17 @@ void erasearea(wbp w, int x, int y, int width, int height)
 /*
  * copy an area
  */
-void copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2)
+int copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2)
 {
     int lpad, rpad, tpad, bpad;
     Pixmap src;
     wsp ws1 = w->window;
     wcp wc2 = w2->context;
 
-    if (w->window->display->display != w2->window->display->display)
-        return;
+    if (w->window->display->display != w2->window->display->display) {
+        LitWhy("Can't couple between different displays");
+        return Failed;
+    }
 
     /*
      * Copying is between windows on one display, perhaps the same window.
@@ -2283,15 +2227,16 @@ void copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2
          * Fill any edges not provided by source.
          */
         if (lpad > 0)
-            fillrectangle2(w2, PictOpSrc, &wc2->bg->color, x2-lpad, y2-tpad, lpad, tpad+height+bpad);
+            fillrectangle2(w2, PictOpSrc, &wc2->bg->color, x2 - lpad, y2 - tpad, lpad, tpad + height + bpad);
         if (rpad > 0)
-            fillrectangle2(w2, PictOpSrc, &wc2->bg->color, x2+width, y2-tpad, rpad, tpad+height+bpad);
+            fillrectangle2(w2, PictOpSrc, &wc2->bg->color, x2 + width, y2 - tpad, rpad, tpad + height + bpad);
         if (tpad > 0)
-            fillrectangle2(w2, PictOpSrc, &wc2->bg->color, x2, y2-tpad, width, tpad);
+            fillrectangle2(w2, PictOpSrc, &wc2->bg->color, x2, y2 - tpad, width, tpad);
         if (bpad > 0)
-            fillrectangle2(w2, PictOpSrc, &wc2->bg->color, x2, y2+height, width, bpad);
+            fillrectangle2(w2, PictOpSrc, &wc2->bg->color, x2, y2 + height, width, bpad);
     }
     unclip(w2);
+    return Succeeded;
 }
 
 void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
@@ -2325,7 +2270,15 @@ void outputimgdata(wbp w, int x, int y, struct imgdata *imd)
                      x, y,         /* dst x,y */
                      imd->width, imd->height);
     if (ws->win)
-        pix_to_win(ws, x, y, imd->width, imd->height);
+        XRenderComposite(wd->display,
+                         wc->drawop->i,
+                         pic,          /* src */
+                         None,         /* mask */
+                         ws->wpic,     /* dest */
+                         0,0,          /* src x,y */
+                         0,0,          /* mask x,y */
+                         x, y,         /* dst x,y */
+                         imd->width, imd->height);
     unclip(w);
     XRenderFreePicture(wd->display, pic);
 }
@@ -2405,7 +2358,6 @@ int walert(wbp w, int volume)
     return Succeeded;
 }
 
-#if HAVE_LIBXFT
 int textwidth(wbp w, char *s, int n)
 {
     XGlyphInfo	extents; 
@@ -2455,7 +2407,7 @@ void drawstring(wbp w, int x, int y, char *str, int slen)
     color.pixel = 0xffffffff; /* todo */
     color.color = wc->fg->color;
 
-    if (wc->clipw >= 0 && wc->cliph >=0) {
+    if (wc->clipw >= 0) {
         r = XCreateRegion();
         rec.x = wc->clipx;
         rec.y = wc->clipy;
@@ -2516,7 +2468,7 @@ void drawutf8(wbp w, int x, int y, char *str, int slen, int nchars)
     color.pixel = 0xffffffff; /* todo */
     color.color = wc->fg->color;
 
-    if (wc->clipw >= 0 && wc->cliph >=0) {
+    if (wc->clipw >= 0) {
         r = XCreateRegion();
         rec.x = wc->clipx;
         rec.y = wc->clipy;
@@ -2553,26 +2505,6 @@ void drawutf8(wbp w, int x, int y, char *str, int slen, int nchars)
                            (FcChar8 *)str,
                            slen);
 }
-#else
-int textwidth(wbp w, char *s, int n)
-{
-    return XTextWidth(w->context->font->fsp, s, n);
-}
-
-int utf8width(wbp w, char *s, int n, int nchars)
-{
-    return textwidth(w, s, n);
-}
-
-void drawstring(wbp w, int x, int y, char *s, int slen)
-{ 
-    RENDER4(w, XDrawString, x, y, s, slen); 
-}
-void drawutf8(wbp w, int x, int y, char *s, int slen, int nchars)
-{
-    RENDER4(w, XDrawString, x, y, s, slen);
-}
-#endif            /* HAVE_LIBXFT */
 
 /* This array must correspond with the NUMATOMS and ATOM_xxx constants defined in xwin.h. */
 char *atom_names[NUMATOMS] = {
@@ -2681,16 +2613,11 @@ static wdp alcdisplay(char *s)
         LitWhy("Couldn't load default font");
         return NULL;
     }
-#if HAVE_LIBXFT
     wd->xfont = XLoadQueryFont(wd->display, "fixed");
-#endif
-
     XInternAtoms(wd->display, atom_names, NUMATOMS, False, wd->atoms);
     GRFX_LINK(wd, wdsplys);
     return wd;
 }
-
-#if HAVE_LIBXFT
 
 /*
  * Convert a given font spec, which may or may not be in icon font spec format,
@@ -2782,281 +2709,6 @@ static char *convertspec(wdp wd, char *s)
     return res;
 }
 
-#else /* HAVE_LIBXFT */
-
-static char *convertspec(wdp wd, char *s)
-{
-    int flags, size;
-    char *rv = 0;
-    char family[MAXFONTWORD];
-    char *stdfam;
-
-    /* Explicit X11 font name */
-    if (!strncmp(s, "x11:", 4))
-        return s + 4;
-
-    if (!parsefont(s, family, &flags, &size))
-        return s;
-
-    /*
-     * This is a legal Icon font spec.  Check first for special
-     * "standard" family names.
-     */
-    if (!strcmp(family, "fixed")) {
-        stdfam = "fixed";
-        flags |= FONTFLAG_MONO + FONTFLAG_SANS;
-    } 
-    else if (!strcmp(family, "mono")) {
-        stdfam = "lucidatypewriter";
-        flags |= FONTFLAG_MONO + FONTFLAG_SANS;
-    }
-    else if (!strcmp(family, "typewriter")) {
-        stdfam = "courier";
-        flags |= FONTFLAG_MONO + FONTFLAG_SERIF;
-    }
-    else if (!strcmp(family, "sans")) {
-        stdfam = "helvetica";
-        flags |= FONTFLAG_PROPORTIONAL + FONTFLAG_SANS;
-    }
-    else if (!strcmp(family, "serif")) {
-        stdfam = "times";
-        flags |= FONTFLAG_PROPORTIONAL + FONTFLAG_SERIF;
-    }
-    else stdfam = NULL;
-
-    if (stdfam) {
-        /*
-         * Standard name: first try preferred family, then generalize.
-         */
-        rv = findfont(wd, stdfam, size, flags);
-        if (!rv)
-            rv = findfont(wd, "*", size, flags);
-    }
-    else {
-        /*
-         * Any other name: must match as specified.
-         */
-        rv = findfont(wd, family, size, flags);
-    }
-    if (rv)
-        return rv;
-
-    /*
-     * Not found as an Icon name; may be an X font name.
-     */
-    return s;
-}
-
-/*
- * return pointer to field i inside XLFD (X Logical Font Description) s.
- */
-static char *xlfd_field(char *s, int i)
-{
-    int j = 0;
-    while (j < i) {
-        if (*s == '\0') return "";	/* if no such field */
-        if (*s++ == '-') j++;
-    }
-    return s;
-}
-
-/*
- * return size of font, treating a scalable font as having size n
- */
-static int xlfd_size(char *s, int n)
-{
-    char *f;
-    int z;
-
-    f = xlfd_field(s, XLFD_Size);
-    if (!*f)
-        return 0;
-    z = atoi(f);
-    if (z != 0)
-        return z;
-    else
-        return n;
-}
-
-/*
- * Find the best font matching a set of specifications.
- */
-static char *findfont(wdp wd, char *family, int size, int flags)
-{
-    static char fontspec[MAXFONTWORD+100];
-    char *p, *weight, *slant, *width, *spacing, **fontlist;
-    int n, champ, challenger, bestsize;
-
-    /*
-     * Construct a font specification that enforces any stated requirements
-     * of size, weight, slant, set width, or proportionality.
-     */
-    if (size > 0)
-        bestsize = size;
-    else
-        bestsize = getdefaultfontsize(14);
-
-    if (flags & FONTFLAG_MEDIUM)
-        weight = "medium";
-    else if ((flags & FONTFLAG_DEMI) && (flags & FONTFLAG_BOLD))
-        weight = "demibold";
-    else if (flags & FONTFLAG_BOLD)
-        weight = "bold";
-    else if (flags & FONTFLAG_DEMI)
-        weight = "demi";
-    else if (flags & FONTFLAG_LIGHT)
-        weight = "light";
-    else
-        weight = "*";
-
-    if (flags & FONTFLAG_ITALIC)
-        slant = "i";
-    else if (flags & FONTFLAG_OBLIQUE)
-        slant = "o";
-    else if (flags & FONTFLAG_ROMAN)
-        slant = "r";
-    else
-        slant = "*";
-
-    if (flags & FONTFLAG_NARROW)
-        width = "narrow";
-    else if (flags & FONTFLAG_CONDENSED)
-        width = "condensed";
-    else if (flags & FONTFLAG_NORMAL)
-        width = "normal";
-    else if (flags & FONTFLAG_WIDE)
-        width = "wide";
-    else if (flags & FONTFLAG_EXTENDED)
-        width = "extended";
-    else
-        width = "*";
-
-    if (flags & FONTFLAG_PROPORTIONAL)
-        spacing = "p";
-    else
-        spacing = "*";			/* can't specify {m or c} to X */
-
-    if (size > 0)
-        sprintf(fontspec, "-*-%s-%s-%s-%s-*-%d-*-*-*-%s-*-*-*",
-                family, weight, slant, width, size, spacing);
-    else
-        sprintf(fontspec, "-*-%s-%s-%s-%s-*-*-*-*-*-%s-*-*-*",
-                family, weight, slant, width, spacing);
-
-    /*
-     * Get a list of matching fonts from the X server and find the best one.
-     */
-    fontlist = XListFonts(wd->display, fontspec, 2500, &n);
-    champ = 0;
-    while (champ < n && !okfont(fontlist[champ], flags))
-        champ++;
-    if (champ >= n) {
-        XFreeFontNames(fontlist);
-        return NULL;			/* nothing acceptable */
-    }
-    for (challenger = champ + 1; challenger < n; challenger++) 
-        if (okfont(fontlist[challenger], flags)
-            && fontcmp(fontlist[challenger], fontlist[champ], bestsize, flags) < 0)
-            champ = challenger;
-
-    /*
-     * Set the scaling field, if needed, and load the font.
-     */
-    p = xlfd_field(fontlist[champ], XLFD_Size);
-    if (p[0] == '0' && p[1] == '-')
-        sprintf(fontspec, "%.*s%d%s", (int)(p - fontlist[champ]),
-                fontlist[champ], bestsize, p + 1);
-    else
-        strcpy(fontspec, fontlist[champ]);
-    XFreeFontNames(fontlist);
-    return fontspec;
-}
-
-/*
- * check for minimum acceptability of a font
- * (things that couldn't be filtered by the XLFD pattern):
- * -- not monospaced (can't set pattern to match m or c but not p)
- */
-static int okfont(char *spec, int flags)
-{
-    if ((flags & FONTFLAG_MONO) && xlfd_field(spec, XLFD_Spacing)[0] == 'p')
-        return 0;			/* requested mono, but this isn't */
-    return 1;
-}
-
-/*
- * rank two fonts based on whether XLFD field n matches a preferred value.
- * returns <0 if font1 is better, >0 if font2 is better, else 0.
- */
-static int fieldcmp(char *font1, char *font2, char *value, int field)
-{
-    int len, r1, r2;
-
-    len = strlen(value);
-    r1 = (strncmp(xlfd_field(font1, field), value, len) == 0);
-    r2 = (strncmp(xlfd_field(font2, field), value, len) == 0);
-    return r2 - r1;			/* -1, 0, or 1 */
-}
-
-/*
- * rank two fonts.
- * returns <0 if font1 is better, >0 if font2 is better, else 0.
- *
- * Note that explicit requests for size, slant, weight, and width caused
- * earlier filtering in findfont(), so all those flags aren't checked
- * again here; normal values are just favored in case nothing was specified.
- */
-static int fontcmp(char *font1, char *font2, int size, int flags)
-{
-    int n;
-
-/* return if exactly one of the fonts matches value s in field n */
-#define PREFER(s,n)                                                     \
-    do { int r = fieldcmp(font1, font2, s, n); if (r != 0) return r; } while (0)
-
-/* return if exactly one of the fonts does NOT match value s in field n */
-#define SPURN(s,n)                                                      \
-    do { int r = fieldcmp(font1, font2, s, n); if (r != 0) return -r; } while (0)
-
-    /*
-     * Prefer the font that is closest to the desired size.
-     */
-    n = abs(size - xlfd_size(font1, size)) - abs(size - xlfd_size(font2, size));
-    if (n != 0)
-        return n;
-
-    /*
-     * try to check serifs (though not always indicated in X font description)
-     */
-    if (flags & FONTFLAG_SANS) {
-        PREFER("sans", XLFD_AddStyle);
-        SPURN("serif", XLFD_AddStyle);
-    }
-    else if (flags & FONTFLAG_SERIF) {
-        PREFER("serif", XLFD_AddStyle);
-        SPURN("sans", XLFD_AddStyle);
-    }
-
-    /*
-     * prefer normal values for other fields.  These only have an effect
-     * for fields that were wildcarded when requesting the font list.
-     */
-    PREFER("r", XLFD_Slant);		/* prefer roman slant */
-    PREFER("medium", XLFD_Weight);	/* prefer medium weight */
-    SPURN("demi", XLFD_Weight);		/* prefer non-demi if no medium */
-    PREFER("normal", XLFD_SetWidth);	/* prefer normal width */
-    PREFER("iso8859", XLFD_CharSet);	/* prefer font of ASCII chars */
-    SPURN("0", XLFD_AverageWidth);	/* prefer tuned font to scaled */
-    PREFER("adobe", XLFD_Foundry);	/* these look better than others */
-
-    /* no significant difference */
-    return 0;
-}
-
-
-#endif /* HAVE_LIBXFT */
-
-
 /*
  * load a font and return a font structure.
  */
@@ -3074,11 +2726,8 @@ static wfp loadfont(wdp wd, char *s)
      * see if the font is already loaded on this display
      */
     for(rv = wd->fonts; rv; rv = rv->next) {
-#if HAVE_LIBXFT
-        if (!strcmp(s, rv->name + 3)) return rv;
-#else
-        if (!strcmp(s, rv->name + 4)) return rv;
-#endif
+        if (!strcmp(s, rv->name + 3))
+            return rv;
     }
 
     /*
@@ -3099,17 +2748,12 @@ static wfp newfont(wdp wd, char *s)
 {
     wfp rv;
     GRFX_ALLOC(rv, _wfont);
-#if HAVE_LIBXFT
     rv->fsp = XftFontOpenName(wd->display, DefaultScreen(wd->display), s);
-#else
-    rv->fsp = XLoadQueryFont(wd->display, s);
-#endif
     if (rv->fsp == NULL){
         free(rv);
         return NULL;
     }
 
-#if HAVE_LIBXFT
     MemProtect(rv->name = malloc(strlen(s) + 3 + 1));
     sprintf(rv->name, "fc:%s", s);
     {
@@ -3129,13 +2773,6 @@ static wfp newfont(wdp wd, char *s)
         rv->descent = Max(rv->fsp->descent, extents.height - extents.y);
         rv->maxwidth = rv->fsp->max_advance_width;
     }
-#else
-    MemProtect(rv->name = malloc(strlen(s) + 4 + 1));
-    sprintf(rv->name, "x11:%s", s);
-    rv->ascent = rv->fsp->ascent;
-    rv->descent = rv->fsp->descent;
-    rv->maxwidth = rv->fsp->max_bounds.width;
-#endif
     rv->height = rv->ascent + rv->descent;
     return rv;
 }
@@ -3180,12 +2817,12 @@ void freewindow(wsp ws)
     if(ws->refcount == 0) {
         if (ws->win)
             close_screen_win(ws);
-#if HAVE_LIBXFT
+
         if (ws->pixDraw) {
             XftDrawDestroy(ws->pixDraw);
             ws->pixDraw = NULL;
         }
-#endif
+
         if (ws->pix) {
             XFreePixmap(ws->display->display, ws->pix);
             ws->pix = 0;

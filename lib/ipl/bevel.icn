@@ -162,7 +162,7 @@ procedure BevelReset(win)
          set_line_width(1).
          set_line_style("solid").
          set_pattern().
-         set_draw_op("copy")
+         set_draw_op("over")
       hilite := shadow.clone().
          set_fg(HLSValue(h || ":" || lhilite || ":" || s))
    } else {
@@ -170,7 +170,7 @@ procedure BevelReset(win)
          set_line_width(1).
          set_line_style("solid").
          set_pattern().
-         set_draw_op("copy")
+         set_draw_op("over")
       hilite := shadow.clone().
          set_textured_pattern("gray")
    }

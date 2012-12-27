@@ -157,7 +157,8 @@ function graphics_Window_copy_to(self, x0, y0, w0, h0, dest, x1, y1)
       if (pointargs(w2, &x1, &x2, &y2) == Error)
           runerr(0);
 
-      copyarea(self_w, w2, x, y, width, height, x2, y2);
+      if (copyarea(self_w, w2, x, y, width, height, x2, y2) == Failed)
+          fail;
 
       return self;
    }
