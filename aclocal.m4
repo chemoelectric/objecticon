@@ -222,17 +222,47 @@ then
         AC_CHECK_HEADER(X11/Xutil.h, [xlib_cv_xutil_h=yes], [xlib_cv_xutil_h=no])
         AC_CHECK_HEADER(X11/Xatom.h, [xlib_cv_xatom_h=yes], [xlib_cv_xatom_h=no])
         AC_LANG_RESTORE
-        if test "$xlib_cv_libx" = "yes" -a "$xlib_cv_xlib_h" = "yes" -a "$xlib_cv_xos_h" = "yes" -a "$xlib_cv_xutil_h" = "yes" -a "$xlib_cv_xatom_h" = "yes"
+        CHECK_XRENDER()
+        CHECK_XFT()
+
+        # Output some helpful messages if any requisite X11 bits are absent.
+        if test "$xlib_cv_libx" = "yes" -a "$xlib_cv_xlib_h" = "yes" -a \
+                "$xlib_cv_xos_h" = "yes" -a "$xlib_cv_xutil_h" = "yes" -a "$xlib_cv_xatom_h" = "yes"
+        then
+                if test "$xft_cv_xft_h" != "yes" -o "$xft_cv_libxft" != "yes"
+                then
+                        echo "*** X11 requires Xft"
+                fi
+                if test "$xrender_cv_xrender_h" != "yes" -o "$xrender_cv_libxrender" != "yes"
+                then
+                        echo "*** X11 requires Xrender"
+                fi
+                if test "$freetype_cv_ftheader_h" != "yes" -o "$freetype_cv_libfreetype" != "yes" 
+                then
+                        echo "*** X11 requires freetype"
+                fi
+                if test "$fontconfig_cv_fontconfiglib_h" != "yes" -o "$fontconfig_cv_libfontconfig" != "yes" 
+                then
+                        echo "*** X11 requires fontconfig"
+                fi
+        fi
+
+        if test "$xlib_cv_libx" = "yes" -a "$xlib_cv_xlib_h" = "yes" -a \
+                "$xlib_cv_xos_h" = "yes" -a "$xlib_cv_xutil_h" = "yes" -a "$xlib_cv_xatom_h" = "yes" -a \
+                "$xft_cv_xft_h" = "yes" -a "$xft_cv_libxft" = "yes" -a \
+                "$xrender_cv_xrender_h" = "yes" -a "$xrender_cv_libxrender" = "yes" -a \
+                "$freetype_cv_ftheader_h" = "yes" -a "$freetype_cv_libfreetype" = "yes" -a \
+                "$fontconfig_cv_fontconfiglib_h" = "yes" -a "$fontconfig_cv_libfontconfig" = "yes"
         then
                 #
-                # If both library and header were found, use them
+                # If all library and header files were found, use X11
                 #
                 OI_ADD_LIB(X11)
                 AC_MSG_CHECKING(xlib in ${XLIB_HOME})
                 AC_MSG_RESULT(ok)
         else
                 #
-                # If either header or library was not found, revert and bomb
+                # If something needed was not found, revert and bomb
                 #
                 AC_MSG_CHECKING(xlib in ${XLIB_HOME})
                 LDFLAGS="$XLIB_OLD_LDFLAGS"
@@ -435,6 +465,69 @@ dnl   ]
   fi
 done
 ])
+
+
+
+
+AC_DEFUN([CHECK_XRENDER],
+#
+# Handle user hints
+#
+[AC_MSG_CHECKING(if xrender is wanted)
+AC_ARG_WITH(xrender,
+[  --with-xrender=DIR root directory path of Xrender installation
+  --without-xrender to disable xrender usage completely],
+[if test "$withval" != no ; then
+  AC_MSG_RESULT(yes)
+  XRENDER_HOME="$withval"
+else
+  AC_MSG_RESULT(no)
+fi], [
+AC_MSG_RESULT(yes)
+XRENDER_HOME=/usr/local
+if test ! -f "${XRENDER_HOME}/include/X11/extensions/Xrender.h"
+then
+        XRENDER_HOME=/usr
+fi
+])
+#
+# Locate XRENDER, if wanted
+#
+if test -n "${XRENDER_HOME}"
+then
+	XRENDER_OLD_LDFLAGS=$LDFLAGS
+	XRENDER_OLD_CPPFLAGS=$CPPFLAGS
+        OI_ADD_LIB_DIR(${XRENDER_HOME}/lib64)
+        OI_ADD_LIB_DIR(${XRENDER_HOME}/lib)
+        OI_ADD_INCLUDE_DIR(${XRENDER_HOME}/include)
+        AC_LANG_SAVE
+        AC_LANG_C
+        AC_CHECK_LIB(Xrender, XRenderQueryExtension, [xrender_cv_libxrender=yes], [xrender_cv_libxrender=no])
+        AC_CHECK_HEADER(X11/extensions/Xrender.h, [xrender_cv_xrender_h=yes], [xrender_cv_xrender_h=no])
+        AC_LANG_RESTORE
+        if test "$xrender_cv_libxrender" = "yes" -a "$xrender_cv_xrender_h" = "yes"
+        then
+                #
+                # If both library and header were found, use them
+                #
+                OI_ADD_LIB(Xrender)
+                AC_MSG_CHECKING(XRENDER in ${XRENDER_HOME})
+                AC_MSG_RESULT(ok)
+        else
+                #
+                # If either header or library was not found, revert and bomb
+                #
+                AC_MSG_CHECKING(XRENDER in ${XRENDER_HOME})
+		LDFLAGS="$XRENDER_OLD_LDFLAGS"
+		CPPFLAGS="$XRENDER_OLD_CPPFLAGS"
+                AC_MSG_RESULT(failed)
+        fi
+fi
+
+])
+
+
+
 
 AC_DEFUN([CHECK_XFT],
 #

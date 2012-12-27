@@ -196,13 +196,11 @@ typedef struct _wfont {
 typedef struct _wdisplay {
   char		name[MAXDISPLAYNAME];
   Display *	display;
-  int           vtype;
   struct imgdataformat *format;                /* imgdata format */
-  int           red_shift, blue_shift, green_shift;
   struct progstate *program;           /* owning program */
   struct SharedColor *black, *white;
   wfp		fonts, defaultfont;
-  XRenderPictFormat *argb32fmt, *rgb24fmt;
+  XRenderPictFormat *pixfmt, *winfmt;
   XFontStruct   *xfont;
   Cursor	cursors[NUMCURSORSYMS];
   Atom          atoms[NUMATOMS];      /* interned atoms */

@@ -1845,7 +1845,7 @@ function graphics_Window_parse_color(s)
       struct descrip t;
       if (!parsecolor(buffstr(&s), &r, &g, &b, &a))
           fail;
-      create_list(3, &result);
+      create_list(4, &result);
       MakeInt(r, &t);
       list_put(&result, &t);
       MakeInt(g, &t);

@@ -4,9 +4,6 @@
 
 #define CONVERT_ANGLE(ang) (-(ang) * 180 / Pi * 64)
 
-#define RGB24 1
-#define GRAY8 3
-
 #define GetDepth(wd) DefaultDepth((wd)->display,DefaultScreen((wd)->display))
 #define GetVisual(wd) DefaultVisual((wd)->display,DefaultScreen((wd)->display))
 #define GetColormap(wd) DefaultColormap((wd)->display,DefaultScreen((wd)->display))
@@ -50,10 +47,9 @@ static void get_atom_descriptor(wsp ws, Atom a, dptr dest);
 static void synch_state(wsp ws);
 static void synch_net_wm_state(wsp ws, int desired_state);
 static void close_screen_win(wsp ws);
-static int get_shift(unsigned long mask);
 static struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int b, int a);
 static void fillrectangle2(wbp w, int op, XRenderColor  *color, int x, int y, int width, int height);
-static void trapezoids2(wbp w, int op, Picture color, int x, int y, XTrapezoid	*traps, int ntraps);
+static void poly2(wbp w, XPointDouble *points, int npoints);
 static void composite2(wbp w1, int x1, int y1, int width, int height, int op, wbp w2, int x2, int y2);
 static struct SharedPattern *new_sharedpattern(wdp wd, struct imgdata *imd);
 static struct SharedPattern *link_sharedpattern(struct SharedPattern *x);
@@ -712,7 +708,7 @@ wbp wopen(char *display)
                             ws->pixwidth, ws->pixheight,
                             32);
 
-    ws->ppic = XRenderCreatePicture(wd->display, ws->pix, wd->argb32fmt, 0, NULL);
+    ws->ppic = XRenderCreatePicture(wd->display, ws->pix, wd->pixfmt, 0, NULL);
 
     /* Fill pixmap with background colour */
     XRenderFillRectangle(wd->display,
@@ -818,7 +814,7 @@ static void wmap(wbp w)
         }
     }
 
-    ws->wpic = XRenderCreatePicture(wd->display, ws->win, wd->rgb24fmt, 0, NULL);
+    ws->wpic = XRenderCreatePicture(wd->display, ws->win, wd->winfmt, 0, NULL);
 
     /* If the window has a parent, set the WM_TRANSIENT_FOR hint. */
     if (ws->transientfor)
@@ -1468,7 +1464,6 @@ int setfg(wbp w, char *s)
     return Succeeded;
 }
 
-
 /*
  * Set the window context's background color by name.
  */
@@ -1648,7 +1643,7 @@ static void resizepixmap(wbp w)
         ws->pixwidth  = Max(ws->pixwidth, ws->width);
         p = XCreatePixmap(wd->display, GetRoot(wd), ws->pixwidth + 1,
                           ws->pixheight + 1, 32);
-        pp = XRenderCreatePicture(wd->display, p, wd->argb32fmt, 0, NULL);
+        pp = XRenderCreatePicture(wd->display, p, wd->pixfmt, 0, NULL);
 
         XRenderComposite(wd->display, PictOpSrc, ws->ppic, 0, pp,
                          0,0,0,0,0,0, x,y);
@@ -1961,19 +1956,7 @@ static void drawline2(wbp w, int x1, int y1, int x2, int y2)
         fpoly[2].y = fpoly[1].y + dy;
         fpoly[3].x = fpoly[0].x + dx;
         fpoly[3].y = fpoly[0].y + dy;
-        XRenderCompositeDoublePoly(wd->display, 
-                                   wc->drawop->i, 
-                                   get_draw_picture(wc),
-                                   ws->ppic, 
-                                   None, 0, 0, 0, 0,
-                                   fpoly, 4, 0);
-        if (ws->win)
-            XRenderCompositeDoublePoly(wd->display, 
-                                       wc->drawop->i, 
-                                       get_draw_picture(wc),
-                                       ws->wpic, 
-                                       None, 0, 0, 0, 0,
-                                       fpoly, 4, 0);
+        poly2(w, fpoly, 4);
     }
 }
 
@@ -1981,14 +1964,14 @@ void drawlines(wbp w, struct point *points, int npoints)
 {
     int i;
     clip(w);
-    for (i = 1; i < npoints; ++i) {
+    for (i = 1; i < npoints; ++i)
         drawline2(w, points[i - 1].x, points[i - 1].y, points[i].x,  points[i].y);
-    }
     unclip(w);
 }
 
 void drawpoint(wbp w, int x, int y)
 {
+    fillrectangle(w, x, y, 1, 1);
 }
 
 void drawrectangle(wbp w, int x, int y, int width, int height)
@@ -2011,6 +1994,16 @@ void fillarc(wbp w, int x, int y, int width, int height, double angle1, double a
 
 void fillpolygon(wbp w, struct point *points, int npoints)
 {
+    XPointDouble *xpoints;
+    int i;
+    xpoints = alloca(npoints * sizeof(XPointDouble));
+    for (i = 0; i < npoints; ++i) {
+        xpoints[i].x = points[i].x;
+        xpoints[i].y = points[i].y;
+    }
+    clip(w);
+    poly2(w, xpoints, npoints);
+    unclip(w);
 }
 
 static void fillrectangle2(wbp w, int op, XRenderColor  *color, int x, int y, int width, int height)
@@ -2030,25 +2023,24 @@ static void fillrectangle2(wbp w, int op, XRenderColor  *color, int x, int y, in
                              x, y, width, height);
 }
 
-static void trapezoids2(wbp w, int op, Picture color, int x, int y, XTrapezoid	*traps, int ntraps)
+static void poly2(wbp w, XPointDouble *points, int npoints)
 {
     wsp ws = w->window;
+    wcp wc = w->context;
     wdp wd = ws->display;
-    XRenderCompositeTrapezoids(wd->display,
-                               op,
-                               color,
-                               ws->ppic,
-                               None,
-                               x, y,
-                               traps, ntraps);
+    XRenderCompositeDoublePoly(wd->display, 
+                               wc->drawop->i,
+                               get_draw_picture(wc),
+                               ws->ppic, 
+                               None, 0, 0, 0, 0,
+                               points, npoints, 0);
     if (ws->win)
-        XRenderCompositeTrapezoids(wd->display,
-                                   op,
-                                   color,
-                                   ws->wpic,
-                                   None,
-                                   x, y,
-                                   traps, ntraps);
+        XRenderCompositeDoublePoly(wd->display, 
+                                   wc->drawop->i,
+                                   get_draw_picture(wc),
+                                   ws->wpic, 
+                                   None, 0, 0, 0, 0,
+                                   points, npoints, 0);
 }
 
 static void composite2(wbp w1, int x1, int y1, int width, int height, int op, wbp w2, int x2, int y2)
@@ -2102,7 +2094,7 @@ static Picture imgdata_to_Picture(wdp wd, struct imgdata *imd, unsigned long val
     gc = XCreateGC(wd->display, pix, 0, NULL);
     XPutImage(wd->display, pix, gc, xi,
               0,0, 0,0, imd->width, imd->height);
-    pic = XRenderCreatePicture(wd->display, pix, wd->argb32fmt, valuemask, attributes);
+    pic = XRenderCreatePicture(wd->display, pix, wd->pixfmt, valuemask, attributes);
     XFreePixmap(wd->display, pix);
     xi->data = 0;
     XDestroyImage(xi);
@@ -2126,12 +2118,16 @@ void fillrectangle(wbp w, int x, int y, int width, int height)
     wcp wc = w->context;
     clip(w);
     if (wc->pattern) {
-        XTrapezoid trap;
-        trap.top = trap.left.p1.y = trap.right.p1.y = y << 16;
-        trap.bottom = trap.left.p2.y = trap.right.p2.y = (y + height) << 16;
-        trap.left.p1.x = trap.left.p2.x = x << 16;
-        trap.right.p1.x = trap.right.p2.x = (x + width) << 16;
-        trapezoids2(w, wc->drawop->i, get_draw_picture(wc), 0, 0, &trap, 1);
+        XPointDouble fpoly[4];
+        fpoly[0].x = x;
+        fpoly[0].y = y;
+        fpoly[1].x = x + width;
+        fpoly[1].y = y;
+        fpoly[2].x = x + width;
+        fpoly[2].y = y + height;
+        fpoly[3].x = x;
+        fpoly[3].y = y + height;
+        poly2(w, fpoly, 4);
     } else {
         /*
          * fill the rectangle with the foreground color
@@ -2404,7 +2400,7 @@ void drawstring(wbp w, int x, int y, char *str, int slen)
                                          32);
 
 
-    color.pixel = 0xffffffff; /* todo */
+    color.pixel = 0;
     color.color = wc->fg->color;
 
     if (wc->clipw >= 0) {
@@ -2465,7 +2461,7 @@ void drawutf8(wbp w, int x, int y, char *str, int slen, int nchars)
                                          ws->pix,
                                          32);
 
-    color.pixel = 0xffffffff; /* todo */
+    color.pixel = 0;
     color.color = wc->fg->color;
 
     if (wc->clipw >= 0) {
@@ -2532,18 +2528,6 @@ char *atom_names[NUMATOMS] = {
     "WM_STATE",
 };
 
-static int get_shift(unsigned long mask)
-{
-    int i = 0;
-    if (mask == 0)
-        syserr("Zero mask passed to get_shift()");
-     while ((mask & 1) == 0) {
-        mask >>= 1;
-        ++i;
-    }
-    return i;
-}
-
 /*
  * allocate a display on machine s
  */
@@ -2553,6 +2537,7 @@ static wdp alcdisplay(char *s)
     Visual *vis;
     XVisualInfo xvi, *xvi_ret;
     int nitems_return;
+    int major_version, minor_version;
 
     if (s == NULL) s = getenv("DISPLAY");
     if (s == NULL) s = "";
@@ -2572,8 +2557,14 @@ static wdp alcdisplay(char *s)
         return NULL;
     }
 
-    vis = GetVisual(wd);
+    if (!XRenderQueryVersion(wd->display, &major_version, &minor_version)) {
+        LitWhy("XRender extension not available on server");
+        XCloseDisplay(wd->display);
+        free(wd);
+        return NULL;
+    }
 
+    vis = GetVisual(wd);
     /*
      * Get info about the default visual, check it's suitable and
      * extract the rgb shift masks.
@@ -2582,33 +2573,29 @@ static wdp alcdisplay(char *s)
     xvi_ret = XGetVisualInfo(wd->display, VisualIDMask, &xvi, &nitems_return);
     if (nitems_return != 1) {
         LitWhy("Couldn't get default visual's info");
+        XCloseDisplay(wd->display);
         free(wd);
         return NULL;
     }
-    if (xvi_ret->class == StaticGray && xvi_ret->depth == 8 && xvi_ret->bits_per_rgb == 8) {
-        wd->vtype = GRAY8;
-        wd->format = &imgdataformat_X11GRAY8;
-    } else if (xvi_ret->class == TrueColor && xvi_ret->depth == 24 && xvi_ret->bits_per_rgb == 8) {
-        wd->vtype = RGB24;
-        wd->format = ImageByteOrder(wd->display) == LSBFirst ? &imgdataformat_X11BGRA32 : &imgdataformat_X11ARGB32;
-        wd->red_shift = get_shift(xvi_ret->red_mask);
-        wd->green_shift = get_shift(xvi_ret->green_mask);
-        wd->blue_shift = get_shift(xvi_ret->blue_mask);
+    wd->format = ImageByteOrder(wd->display) == LSBFirst ? &imgdataformat_X11BGRA32 : &imgdataformat_X11ARGB32;
+    if (xvi_ret->class == TrueColor && xvi_ret->depth == 24 && xvi_ret->bits_per_rgb == 8) {
+        wd->winfmt = XRenderFindStandardFormat(wd->display, PictStandardRGB24);
     } else {
         LitWhy("Unsupported display type");
+        XCloseDisplay(wd->display);
         free(wd);
         return NULL;
     }
     XFree(xvi_ret);
 
-    wd->argb32fmt=XRenderFindStandardFormat(wd->display, PictStandardARGB32);
-    wd->rgb24fmt=XRenderFindStandardFormat(wd->display, PictStandardRGB24);
+    wd->pixfmt = XRenderFindStandardFormat(wd->display, PictStandardARGB32);
     wd->black = new_sharedcolor(wd, "black", 0, 0, 0, 65535);
     wd->white = new_sharedcolor(wd, "white", 65535, 65535, 65535, 65535);
     wd->defaultfont = loadfont(wd, getdefaultfont());
     if (wd->defaultfont == NULL) {
         unlink_sharedcolor(wd, wd->white);
         unlink_sharedcolor(wd, wd->black);
+        XCloseDisplay(wd->display);
         free(wd);
         LitWhy("Couldn't load default font");
         return NULL;
@@ -2645,61 +2632,61 @@ static char *convertspec(wdp wd, char *s)
      * Check first for special "standard" family names.
      */
     if (!strcmp(family, "fixed")) {
-        FcPatternAddString(p, XFT_FAMILY, (FcChar8 *)"Object Icon fixed");
-        FcPatternAddString(p, XFT_FAMILY, (FcChar8 *)"mono");
+        FcPatternAddString(p, FC_FAMILY, (FcChar8 *)"Object Icon fixed");
+        FcPatternAddString(p, FC_FAMILY, (FcChar8 *)"mono");
         flags |= FONTFLAG_MONO;
     }
     else if (!strcmp(family, "mono")) {
-        FcPatternAddString(p, XFT_FAMILY, (FcChar8 *)"Object Icon mono");
-        FcPatternAddString(p, XFT_FAMILY, (FcChar8 *)"mono");
+        FcPatternAddString(p, FC_FAMILY, (FcChar8 *)"Object Icon mono");
+        FcPatternAddString(p, FC_FAMILY, (FcChar8 *)"mono");
         flags |= FONTFLAG_MONO;
     }
     else if (!strcmp(family, "typewriter")) {
-        FcPatternAddString(p, XFT_FAMILY, (FcChar8 *)"Object Icon typewriter");
-        FcPatternAddString(p, XFT_FAMILY, (FcChar8 *)"courier");
+        FcPatternAddString(p, FC_FAMILY, (FcChar8 *)"Object Icon typewriter");
+        FcPatternAddString(p, FC_FAMILY, (FcChar8 *)"courier");
         flags |= FONTFLAG_MONO;
     }
     else if (!strcmp(family, "sans")) {
-        FcPatternAddString(p, XFT_FAMILY, (FcChar8 *)"Object Icon sans");
-        FcPatternAddString(p, XFT_FAMILY, (FcChar8 *)"helvetica");
+        FcPatternAddString(p, FC_FAMILY, (FcChar8 *)"Object Icon sans");
+        FcPatternAddString(p, FC_FAMILY, (FcChar8 *)"helvetica");
         flags |= FONTFLAG_PROPORTIONAL;
     }
     else if (!strcmp(family, "serif")) {
-        FcPatternAddString(p, XFT_FAMILY, (FcChar8 *)"Object Icon serif");
-        FcPatternAddString(p, XFT_FAMILY, (FcChar8 *)"times");
+        FcPatternAddString(p, FC_FAMILY, (FcChar8 *)"Object Icon serif");
+        FcPatternAddString(p, FC_FAMILY, (FcChar8 *)"times");
         flags |= FONTFLAG_PROPORTIONAL;
     }
     else
-        FcPatternAddString(p, XFT_FAMILY, (FcChar8 *)family);
+        FcPatternAddString(p, FC_FAMILY, (FcChar8 *)family);
 
     if (size > 0)
-        FcPatternAddDouble(p, XFT_SIZE, (double)size);
+        FcPatternAddDouble(p, FC_SIZE, (double)size);
     else {
         /* Only use a default font size if explicitly set via OIFONTSIZE */
         int t = getdefaultfontsize(-1);
         if (t > 0)
-            FcPatternAddDouble(p, XFT_SIZE, (double)t);
+            FcPatternAddDouble(p, FC_SIZE, (double)t);
     }
     if (flags & FONTFLAG_MEDIUM)
-        FcPatternAddInteger(p, XFT_WEIGHT, XFT_WEIGHT_MEDIUM);
+        FcPatternAddInteger(p, FC_WEIGHT, FC_WEIGHT_MEDIUM);
     else if ((flags & FONTFLAG_DEMI) && (flags & FONTFLAG_BOLD))
-        FcPatternAddInteger(p, XFT_WEIGHT, XFT_WEIGHT_DEMIBOLD);
+        FcPatternAddInteger(p, FC_WEIGHT, FC_WEIGHT_DEMIBOLD);
     else if (flags & FONTFLAG_BOLD)
-        FcPatternAddInteger(p, XFT_WEIGHT, XFT_WEIGHT_BOLD);
+        FcPatternAddInteger(p, FC_WEIGHT, FC_WEIGHT_BOLD);
     else if (flags & FONTFLAG_LIGHT)
-        FcPatternAddInteger(p, XFT_WEIGHT, XFT_WEIGHT_LIGHT);
+        FcPatternAddInteger(p, FC_WEIGHT, FC_WEIGHT_LIGHT);
 
     if (flags & FONTFLAG_ITALIC)
-        FcPatternAddInteger(p, XFT_SLANT, XFT_SLANT_ITALIC);
+        FcPatternAddInteger(p, FC_SLANT, FC_SLANT_ITALIC);
     else if (flags & FONTFLAG_OBLIQUE)
-        FcPatternAddInteger(p, XFT_SLANT, XFT_SLANT_OBLIQUE);
+        FcPatternAddInteger(p, FC_SLANT, FC_SLANT_OBLIQUE);
     else if (flags & FONTFLAG_ROMAN)
-        FcPatternAddInteger(p, XFT_SLANT, XFT_SLANT_ROMAN);
+        FcPatternAddInteger(p, FC_SLANT, FC_SLANT_ROMAN);
 
     if (flags & FONTFLAG_PROPORTIONAL)
-        FcPatternAddInteger(p, XFT_SPACING, XFT_PROPORTIONAL);
+        FcPatternAddInteger(p, FC_SPACING, FC_PROPORTIONAL);
     if (flags & FONTFLAG_MONO)
-        FcPatternAddInteger(p, XFT_SPACING, XFT_MONO);
+        FcPatternAddInteger(p, FC_SPACING, FC_MONO);
 
     t = (char *)FcNameUnparse(p);
     strncpy(res, t, sizeof(res) - 1);
