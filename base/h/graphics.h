@@ -200,13 +200,11 @@ typedef struct _wfont {
 typedef struct _wdisplay {
   char		name[MAXDISPLAYNAME];
   Display *	display;
-  int           vtype;
   struct imgdataformat *format;                /* imgdata format */
-  int           red_shift, blue_shift, green_shift;
   struct progstate *program;           /* owning program */
   struct SharedColor *black, *white;
   wfp		fonts, defaultfont;
-  XRenderPictFormat *argb32fmt, *rgb24fmt;
+  XRenderPictFormat *pixfmt, *winfmt;
   XFontStruct   *xfont;
   Cursor	cursors[NUMCURSORSYMS];
   Atom          atoms[NUMATOMS];      /* interned atoms */
@@ -293,7 +291,7 @@ typedef struct _wstate {
   stringint     *cursor;
   unsigned long *icondata;              /* window icon data and length */
   int           iconlen;
-  XftDraw       *winDraw, *pixDraw;
+  XftDraw       *pxft;
   int		state;			/* window state; icon, window or root*/
   Window        transientfor;           /* transient-for hint */
 #elif PLAN9

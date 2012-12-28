@@ -202,10 +202,8 @@
    #include <X11/Xatom.h>
    #include <X11/cursorfont.h>
    #include <X11/keysym.h>
-   #if HAVE_LIBXFT
    #include <X11/Xft/Xft.h>
    #include <fontconfig/fontconfig.h>
-   #endif
    #include <X11/extensions/Xrender.h>
 #endif					/* XWindows */
 

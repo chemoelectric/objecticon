@@ -216,13 +216,13 @@ procedure Zoom(args[])
    if w1 = 0 | w2 = 0 | h1 = 0 | h2 = 0 then
       return
 
-   scr := ScratchCanvas(win2, w2, h1, "__Zoom__") | fail
+   scr := ScratchCanvas(win2, w2, h1, "__Zoom__").set_draw_op("source") | fail
+   win2 := win2.clone().set_draw_op("source")
    every x := 0 to w2 - 1 do
       win1.copy_to(x1 + w1 * ((x + 0.5) / w2), y1, 1, h1, scr, x, 0)
    every y := 0 to h2 - 1 do
       scr.copy_to(0, h1 * ((y + 0.5) / h2), w2, 1, win2, x2, y2 + y)
-
-   scr.erase_area()		# release colors
+   win2.uncouple()
    return win1
 end
 

@@ -1,11 +1,5 @@
 /* define's for zlib, jpeg, opengl, etc. */
 
-/* define as 1 if we have Freetype */
-#undef HAVE_LIBFREETYPE
-
-/* define as 1 if we have Xft */
-#undef HAVE_LIBXFT
-
 /* define as 1 if we have Zlib/libz/whatever */
 #undef HAVE_LIBZ
 
