@@ -48,14 +48,14 @@ static void synch_state(wsp ws);
 static void synch_net_wm_state(wsp ws, int desired_state);
 static void close_screen_win(wsp ws);
 static struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int b, int a);
-static void fillrectangle2(wbp w, int op, XRenderColor  *color, int x, int y, int width, int height);
+static void fill2(wbp w, int op, XRenderColor  *color, int x, int y, int width, int height);
 static void poly2(wbp w, XPointDouble *points, int npoints);
-static void composite2(wbp w1, int x1, int y1, int width, int height, int op, wbp w2, int x2, int y2);
 static struct SharedPattern *new_sharedpattern(wdp wd, struct imgdata *imd);
 static struct SharedPattern *link_sharedpattern(struct SharedPattern *x);
 static void unlink_sharedpattern(wdp wd, struct SharedPattern *x);
 static Picture imgdata_to_Picture(wdp wd, struct imgdata *imd, unsigned long valuemask, XRenderPictureAttributes *attributes);
 static Picture get_draw_picture(wcp wc);
+static void pix_to_win(wsp ws, int x, int y, int w, int h);
 
 static struct imgdataformat imgdataformat_X11GRAY8;
 static struct imgdataformat imgdataformat_X11ARGB32;
@@ -632,10 +632,6 @@ static void close_screen_win(wsp ws)
     XRenderFreePicture(wd->display, ws->wpic);
     XDestroyWindow(wd->display, ws->win);
     XFlush(wd->display);
-    if (ws->winDraw) {
-        XftDrawDestroy(ws->winDraw);
-        ws->winDraw = NULL;
-    }
     ws->win = 0;
     GRFX_GENUNLINK(ws, vwstates, vnext, vprevious);
     synch_state(ws);
@@ -679,7 +675,7 @@ wbp wopen(char *display)
     ws->minwidth = ws->minheight = 1;
     ws->maxwidth = ws->maxheight = INT_MAX;
     ws->width = ws->height = ws->pixwidth = ws->pixheight = 1;
-    ws->pixDraw = ws->winDraw = NULL;
+    ws->pxft = NULL;
     ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
     ws->display = wd;
     GRFX_LINK(ws, wstates);
@@ -1469,13 +1465,13 @@ int setfg(wbp w, char *s)
  */
 int setbg(wbp w, char *s)
 {
-    int r, g, b;
+    int r, g, b, a;
     wcp wc = w->context;
-    if (!parseopaquecolor(s, &r, &g, &b))
+    if (!parsecolor(s, &r, &g, &b, &a))
         return Failed;
     if (wc->bg)
         unlink_sharedcolor(wc->display, wc->bg);
-    wc->bg = new_sharedcolor(wc->display, s, r, g, b, 0xffff);
+    wc->bg = new_sharedcolor(wc->display, s, r, g, b, a);
     return Succeeded;
 }
 
@@ -1608,8 +1604,9 @@ int setfont(wbp w, char *s)
 static void pix_to_win(wsp ws, int x, int y, int w, int h)
 {
     wdp wd = ws->display;
-    XRenderComposite(wd->display, PictOpSrc, ws->ppic, 0, ws->wpic,
-                     x,y,0,0,x,y,w,h);
+    if (ws->win)
+        XRenderComposite(wd->display, PictOpSrc, ws->ppic, 0, ws->wpic,
+                         x,y,0,0,x,y,w,h);
 }
 
 /*
@@ -1618,7 +1615,7 @@ static void pix_to_win(wsp ws, int x, int y, int w, int h)
 
 static void handle_exposures(wsp ws, XExposeEvent *event)
 {
-    pix_to_win(ws, event->x,event->y, event->width,event->height);
+    pix_to_win(ws, event->x, event->y, event->width, event->height);
 }
 
 /*
@@ -1660,12 +1657,12 @@ static void resizepixmap(wbp w)
          */
 
         if (ws->width > x)
-            fillrectangle2(w, PictOpSrc, &wc->bg->color, x, 0, ws->width-x, ws->pixheight);
+            fill2(w, PictOpSrc, &wc->bg->color, x, 0, ws->width-x, ws->pixheight);
         if (ws->height > y)
-            fillrectangle2(w, PictOpSrc, &wc->bg->color, 0, y, x, ws->height - y);
-        if (ws->pixDraw) {
-            XftDrawDestroy(ws->pixDraw);
-            ws->pixDraw = NULL;
+            fill2(w, PictOpSrc, &wc->bg->color, 0, y, x, ws->height - y);
+        if (ws->pxft) {
+            XftDrawDestroy(ws->pxft);
+            ws->pxft = NULL;
         }
     }
 }
@@ -1923,8 +1920,6 @@ void drawarc(wbp w, int x, int y, int width, int height, double angle1, double a
 
 static void drawline2(wbp w, int x1, int y1, int x2, int y2)
 {
-    wsp ws = w->window;
-    wdp wd = ws->display;
     wcp wc = w->context;
     if (!wc->pattern && wc->linewidth == 1 && (x1 == x2 || y1 == y2)) {
         if (x2 < x1) {
@@ -1933,11 +1928,9 @@ static void drawline2(wbp w, int x1, int y1, int x2, int y2)
         if (y2 < y1) {
             int t = y1 ; y1 = y2; y2 = t;
         }
-        XRenderFillRectangle(wd->display, wc->drawop->i, ws->ppic, &wc->fg->color, x1, y1, x2 - x1 + 1, y2 - y1 + 1);
-        if (ws->win)
-            XRenderFillRectangle(wd->display, wc->drawop->i, ws->wpic, &wc->fg->color, x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+        fill2(w, wc->drawop->i, &wc->fg->color, x1, y1, x2 - x1 + 1, y2 - y1 + 1);
     } else {
-        double half_width = wc->linewidth/2.0;
+        double half_width = wc->linewidth / 2.0;
         XPointDouble fpoly[4];
 
         /* XRender does not have a function to draw lines. 
@@ -1945,9 +1938,9 @@ static void drawline2(wbp w, int x1, int y1, int x2, int y2)
 
         double dx = x2 - x1;
         double dy = y2 - y1;
-        double d = half_width/hypot(dx, dy);
-        double dnx = d*dx;
-        double dny = d*dy;
+        double d = half_width / hypot(dx, dy);
+        double dnx = d * dx;
+        double dny = d * dy;
         fpoly[0].x = x1 + dny;
         fpoly[0].y = y1 - dnx;
         fpoly[1].x = x1 - dny;
@@ -2006,7 +1999,7 @@ void fillpolygon(wbp w, struct point *points, int npoints)
     unclip(w);
 }
 
-static void fillrectangle2(wbp w, int op, XRenderColor  *color, int x, int y, int width, int height)
+static void fill2(wbp w, int op, XRenderColor *color, int x, int y, int width, int height)
 {
     wsp ws = w->window;
     wdp wd = ws->display;
@@ -2015,12 +2008,7 @@ static void fillrectangle2(wbp w, int op, XRenderColor  *color, int x, int y, in
                          ws->ppic,
                          color,
                          x, y, width, height);
-    if (ws->win)
-        XRenderFillRectangle(wd->display,
-                             op,
-                             ws->wpic,
-                             color,
-                             x, y, width, height);
+    pix_to_win(ws, x, y, width, height);
 }
 
 static void poly2(wbp w, XPointDouble *points, int npoints)
@@ -2028,45 +2016,29 @@ static void poly2(wbp w, XPointDouble *points, int npoints)
     wsp ws = w->window;
     wcp wc = w->context;
     wdp wd = ws->display;
+    int x1, y1, x2, y2, i;
+    if (npoints == 0)
+        return;
+
     XRenderCompositeDoublePoly(wd->display, 
                                wc->drawop->i,
                                get_draw_picture(wc),
                                ws->ppic, 
                                None, 0, 0, 0, 0,
                                points, npoints, 0);
-    if (ws->win)
-        XRenderCompositeDoublePoly(wd->display, 
-                                   wc->drawop->i,
-                                   get_draw_picture(wc),
-                                   ws->wpic, 
-                                   None, 0, 0, 0, 0,
-                                   points, npoints, 0);
-}
-
-static void composite2(wbp w1, int x1, int y1, int width, int height, int op, wbp w2, int x2, int y2)
-{
-    wsp ws1 = w1->window;
-    wsp ws2 = w2->window;
-    wdp wd = ws1->display;
-    XRenderComposite(wd->display,
-                     op,
-                     ws1->ppic,    /* src */
-                     None,         /* mask */
-                     ws2->ppic,    /* dest */
-                     x1, y1,       /* src_x,y */
-                     0, 0,         /* mask x,y */
-                     x2, y2,       /* dst x,y */
-                     width, height);
-    if (ws2->win)
-        XRenderComposite(wd->display,
-                         op,
-                         ws1->ppic,    /* src */
-                         None,         /* mask */
-                         ws2->wpic,    /* dest */
-                         x1, y1,       /* src_x,y */
-                         0, 0,         /* mask x,y */
-                         x2, y2,       /* dst x,y */
-                         width, height);
+    x1 = x2 = points[0].x;
+    y1 = y2 = points[0].y;
+    for (i = 1; i < npoints; ++i) {
+        if (points[i].x < x1)
+            x1 = points[i].x;
+        if (points[i].y < y1)
+            y1 = points[i].y;
+        if (points[i].x > x2)
+            x2 = points[i].x;
+        if (points[i].y > y2)
+            y2 = points[i].y;
+    }
+    pix_to_win(ws, x1, y1, x2 - x1, y2 - y1);
 }
 
 static Picture imgdata_to_Picture(wdp wd, struct imgdata *imd, unsigned long valuemask, XRenderPictureAttributes *attributes)
@@ -2132,7 +2104,7 @@ void fillrectangle(wbp w, int x, int y, int width, int height)
         /*
          * fill the rectangle with the foreground color
          */
-        fillrectangle2(w,
+        fill2(w,
                        wc->drawop->i,
                        &wc->fg->color,
                        x, y, width, height);
@@ -2150,25 +2122,28 @@ void erasearea(wbp w, int x, int y, int width, int height)
     /*
      * fill the rectangle with the background color
      */
-    fillrectangle2(w,
-                   PictOpSrc,
-                   &wc->bg->color,
-                   x, y, width, height);
+    fill2(w,
+          PictOpSrc,
+          &wc->bg->color,
+          x, y, width, height);
     unclip(w);
 }
 
 /*
  * copy an area
  */
-int copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2)
+int copyarea(wbp w, int x, int y, int width, int height, wbp w2, int x2, int y2)
 {
     int lpad, rpad, tpad, bpad;
     Pixmap src;
     wsp ws1 = w->window;
+    wsp ws2 = w2->window;
     wcp wc2 = w2->context;
+    wdp wd1 = ws1->display;
+    wdp wd2 = ws2->display;
 
-    if (w->window->display->display != w2->window->display->display) {
-        LitWhy("Can't couple between different displays");
+    if (wd1->display != wd2->display) {
+        LitWhy("Can't copy between different displays");
         return Failed;
     }
 
@@ -2180,10 +2155,10 @@ int copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2)
 
     if (x + width < 0 || y + height < 0 || x >= ws1->pixwidth || y >= ws1->pixheight) {
         /* source is entirely offscreen */
-        fillrectangle2(w2,
-                       PictOpSrc,
-                       &wc2->bg->color,
-                       x2, y2, width, height);
+        fill2(w2,
+              PictOpSrc,
+              &wc2->bg->color,
+              x2, y2, width, height);
     }
     else {
         /*
@@ -2211,25 +2186,32 @@ int copyarea(wbp w, wbp w2, int x, int y, int width, int height, int x2, int y2)
             bpad = y + height - ws1->pixheight;
             height -= bpad;
         }
+
         /*
          * Copy the area.
          */
-        composite2(w,  
-                   x, y, width, height,
-                   wc2->drawop->i,
-                   w2,
-                   x2, y2);
+        XRenderComposite(wd1->display,
+                         wc2->drawop->i,
+                         ws1->ppic,    /* src */
+                         None,         /* mask */
+                         ws2->ppic,    /* dest */
+                         x, y,         /* src_x,y */
+                         0, 0,         /* mask x,y */
+                         x2, y2,       /* dst x,y */
+                         width, height);
+        pix_to_win(ws2, x2, y2, width, height);
+
         /*
          * Fill any edges not provided by source.
          */
         if (lpad > 0)
-            fillrectangle2(w2, PictOpSrc, &wc2->bg->color, x2 - lpad, y2 - tpad, lpad, tpad + height + bpad);
+            fill2(w2, PictOpSrc, &wc2->bg->color, x2 - lpad, y2 - tpad, lpad, tpad + height + bpad);
         if (rpad > 0)
-            fillrectangle2(w2, PictOpSrc, &wc2->bg->color, x2 + width, y2 - tpad, rpad, tpad + height + bpad);
+            fill2(w2, PictOpSrc, &wc2->bg->color, x2 + width, y2 - tpad, rpad, tpad + height + bpad);
         if (tpad > 0)
-            fillrectangle2(w2, PictOpSrc, &wc2->bg->color, x2, y2 - tpad, width, tpad);
+            fill2(w2, PictOpSrc, &wc2->bg->color, x2, y2 - tpad, width, tpad);
         if (bpad > 0)
-            fillrectangle2(w2, PictOpSrc, &wc2->bg->color, x2, y2 + height, width, bpad);
+            fill2(w2, PictOpSrc, &wc2->bg->color, x2, y2 + height, width, bpad);
     }
     unclip(w2);
     return Succeeded;
@@ -2265,16 +2247,7 @@ void outputimgdata(wbp w, int x, int y, struct imgdata *imd)
                      0,0,          /* mask x,y */
                      x, y,         /* dst x,y */
                      imd->width, imd->height);
-    if (ws->win)
-        XRenderComposite(wd->display,
-                         wc->drawop->i,
-                         pic,          /* src */
-                         None,         /* mask */
-                         ws->wpic,     /* dest */
-                         0,0,          /* src x,y */
-                         0,0,          /* mask x,y */
-                         x, y,         /* dst x,y */
-                         imd->width, imd->height);
+    pix_to_win(ws, x, y, imd->width, imd->height);
     unclip(w);
     XRenderFreePicture(wd->display, pic);
 }
@@ -2357,7 +2330,6 @@ int walert(wbp w, int volume)
 int textwidth(wbp w, char *s, int n)
 {
     XGlyphInfo	extents; 
-
     XftTextExtents8 (w->window->display->display,
                      w->context->font->fsp,
                      (FcChar8 *)s,
@@ -2369,7 +2341,6 @@ int textwidth(wbp w, char *s, int n)
 int utf8width(wbp w, char *s, int n, int nchars)
 {
     XGlyphInfo	extents; 
-
     XftTextExtentsUtf8 (w->window->display->display,
                         w->context->font->fsp,
                         (FcChar8 *)s,
@@ -2378,128 +2349,64 @@ int utf8width(wbp w, char *s, int n, int nchars)
     return extents.xOff;
 }
 
-
-void drawstring(wbp w, int x, int y, char *str, int slen)
+static void prepare_xft(wbp w)
 {
-    XftColor color;
-    Region r;
     XRectangle rec;
     wcp wc = w->context;
     wsp ws = w->window;
     wdp wd = ws->display;
 
-    if (ws->win && !ws->winDraw)
-        ws->winDraw = XftDrawCreate(wd->display,
-                                    ws->win,
-                                    GetVisual(wd),
-                                    GetColormap(wd));
-
-    if (!ws->pixDraw)
-        ws->pixDraw = XftDrawCreateAlpha(wd->display,
-                                         ws->pix,
-                                         32);
-
-
-    color.pixel = 0;
-    color.color = wc->fg->color;
+    if (!ws->pxft)
+        MemProtect(ws->pxft = XftDrawCreateAlpha(wd->display, ws->pix, 32));
 
     if (wc->clipw >= 0) {
-        r = XCreateRegion();
         rec.x = wc->clipx;
         rec.y = wc->clipy;
         rec.width = wc->clipw;
         rec.height = wc->cliph;
-        XUnionRectWithRegion(&rec, r, r);
-        if (ws->winDraw) 
-            XftDrawSetClip(w->window->winDraw, r);
-        if (ws->pixDraw) 
-            XftDrawSetClip(w->window->pixDraw, r);
-        XDestroyRegion(r);
-    } else {
-        if (ws->winDraw) 
-            XftDrawSetClip(w->window->winDraw, 0);
-        if (ws->pixDraw) 
-            XftDrawSetClip(w->window->pixDraw, 0);
-    }
+        XftDrawSetClipRectangles(w->window->pxft, 0, 0, &rec, 1);
+    } else
+        XftDrawSetClip(w->window->pxft, 0);
+}
 
-    if (ws->winDraw)
-        XftDrawString8 (ws->winDraw,
-                        &color,
-                        wc->font->fsp,
-                        x,
-                        y,
-                        (FcChar8 *)str,
-                        slen);
-
-    if (ws->pixDraw)
-        XftDrawString8 (ws->pixDraw,
-                        &color,
-                        wc->font->fsp,
-                        x,
-                        y,
-                        (FcChar8 *)str,
-                        slen);
+void drawstring(wbp w, int x, int y, char *str, int slen)
+{
+    XftColor color;
+    wcp wc = w->context;
+    wsp ws = w->window;
+    prepare_xft(w);
+    color.pixel = 0;
+    color.color = wc->fg->color;
+    XftDrawString8 (ws->pxft,
+                    &color,
+                    wc->font->fsp,
+                    x,
+                    y,
+                    (FcChar8 *)str,
+                    slen);
+    clip(w);
+    pix_to_win(ws, x, y - wc->font->ascent, textwidth(w, str, slen) + wc->font->maxwidth, wc->font->height);
+    unclip(w);
 }
 
 void drawutf8(wbp w, int x, int y, char *str, int slen, int nchars)
 {
     XftColor color;
-    Region r;
-    XRectangle rec;
     wcp wc = w->context;
     wsp ws = w->window;
-    wdp wd = ws->display;
-
-    if (ws->win && !ws->winDraw)
-        ws->winDraw = XftDrawCreate(wd->display,
-                                    ws->win,
-                                    GetVisual(wd),
-                                    GetColormap(wd));
-
-    if (!ws->pixDraw)
-        ws->pixDraw = XftDrawCreateAlpha(wd->display,
-                                         ws->pix,
-                                         32);
-
+    prepare_xft(w);
     color.pixel = 0;
     color.color = wc->fg->color;
-
-    if (wc->clipw >= 0) {
-        r = XCreateRegion();
-        rec.x = wc->clipx;
-        rec.y = wc->clipy;
-        rec.width = wc->clipw;
-        rec.height = wc->cliph;
-        XUnionRectWithRegion(&rec, r, r);
-        if (ws->winDraw) 
-            XftDrawSetClip(w->window->winDraw, r);
-        if (ws->pixDraw) 
-            XftDrawSetClip(w->window->pixDraw, r);
-        XDestroyRegion(r);
-    } else {
-        if (ws->winDraw) 
-            XftDrawSetClip(w->window->winDraw, 0);
-        if (ws->pixDraw) 
-            XftDrawSetClip(w->window->pixDraw, 0);
-    }
-
-    if (ws->winDraw)
-        XftDrawStringUtf8 (ws->winDraw,
-                           &color,
-                           wc->font->fsp,
-                           x,
-                           y,
-                           (FcChar8 *)str,
-                           slen);
-
-    if (ws->pixDraw)
-        XftDrawStringUtf8 (ws->pixDraw,
-                           &color,
-                           wc->font->fsp,
-                           x,
-                           y,
-                           (FcChar8 *)str,
-                           slen);
+    XftDrawStringUtf8 (ws->pxft,
+                       &color,
+                       wc->font->fsp,
+                       x,
+                       y,
+                       (FcChar8 *)str,
+                       slen);
+    clip(w);
+    pix_to_win(ws, x, y - wc->font->ascent, utf8width(w, str, slen, nchars) + wc->font->maxwidth, wc->font->height);
+    unclip(w);
 }
 
 /* This array must correspond with the NUMATOMS and ATOM_xxx constants defined in xwin.h. */
@@ -2805,9 +2712,9 @@ void freewindow(wsp ws)
         if (ws->win)
             close_screen_win(ws);
 
-        if (ws->pixDraw) {
-            XftDrawDestroy(ws->pixDraw);
-            ws->pixDraw = NULL;
+        if (ws->pxft) {
+            XftDrawDestroy(ws->pxft);
+            ws->pxft = NULL;
         }
 
         if (ws->pix) {

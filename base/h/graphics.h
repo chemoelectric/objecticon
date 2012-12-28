@@ -282,7 +282,7 @@ typedef struct _wstate {
   stringint     *cursor;
   unsigned long *icondata;              /* window icon data and length */
   int           iconlen;
-  XftDraw       *winDraw, *pixDraw;
+  XftDraw       *pxft;
   int		state;			/* window state; icon, window or root*/
   Window        transientfor;           /* transient-for hint */
 #elif MSWIN32

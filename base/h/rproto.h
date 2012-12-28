@@ -235,7 +235,7 @@ void drawimgdata(wbp w, word x, word y, word width, word height, struct imgdata 
     * (excluding those defined as macros for X-windows)
     */
    wcp  clonecontext   (wbp w);
-   int  copyarea        (wbp w,wbp w2,int x,int y,int wd,int h,int x2,int y2);
+   int  copyarea        (wbp w, int x, int y, int wd, int h, wbp w2, int x2, int y2);
    void doconfig        (wbp w, int status);
    void erasearea       (wbp w, int x, int y, int width, int height);
    void fillrectangle   (wbp w, int x, int y, int width, int height);
