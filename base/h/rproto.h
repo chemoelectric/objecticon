@@ -282,7 +282,6 @@ void drawimgdata(wbp w, word x, word y, word width, word height, struct imgdata 
    int  setwindowlabel  (wbp w, char *val);
    int  walert          (wbp w, int volume);
    int  warppointer     (wbp w, int x, int y);
-   void wclose          (wbp w);
    wbp  wopen           (char *display);
    int  grabpointer      (wbp w);
    int  ungrabpointer    (wbp w);

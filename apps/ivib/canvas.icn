@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import lang, gui, io, graphics, ipl.pdco
+import lang, gui, io, graphics, ipl.pdco, util
 
 #
 # Constant definitions.
@@ -136,21 +136,22 @@ class BorderOfCanvas(Component)
       #
       # Draw the border.
       #
-      cw := self.cbwin.clone().set_fg("black")
-      every i := 0 to EDGE - 1 do
-         cw.draw_rectangle(self.x + i , self.y + i, self.w - 2 * i, self.h - 2 *i)
+      use {
+         cw := self.cbwin.clone().set_fg("black"),
+         {
+            every i := 0 to EDGE - 1 do
+               cw.draw_rectangle(self.x + i , self.y + i, self.w - 2 * i, self.h - 2 *i)
 
-      #
-      # Draw the resizing corner in the bottom right hand corner.
-      #
-      cw.set_fg("red")
-      every i := 0 to EDGE - 1 do
-         cw.draw_line(self.x + self.w - EDGE - 1 - RSW, self.y + self.h - EDGE + i, 
-                      self.x + self.w - EDGE + i, self.y + self.h - EDGE + i, 
-                      self.x + self.w - EDGE + i, self.y + self.h - EDGE - 1 - RSW)
-
-      cw.uncouple()
-
+            #
+            # Draw the resizing corner in the bottom right hand corner.
+            #
+            cw.set_fg("red")
+            every i := 0 to EDGE - 1 do
+               cw.draw_line(self.x + self.w - EDGE - 1 - RSW, self.y + self.h - EDGE + i, 
+                            self.x + self.w - EDGE + i, self.y + self.h - EDGE + i, 
+                            self.x + self.w - EDGE + i, self.y + self.h - EDGE - 1 - RSW)
+         }
+      }
       display_children()
    end
 
@@ -1111,10 +1112,13 @@ class Canvas(Component,SelectiveObjectCodec)
 
    public show_moving()
       local cw
-      cw := item_buff_win.clone().set_fg("red")
-      cw.set_line_style("dashed")
-      cw.draw_rectangle(moving.mx, moving.my, moving.mw, moving.mh)
-      cw.uncouple()
+      use {
+         cw := item_buff_win.clone().set_fg("red"),
+         {
+            cw.set_line_style("dashed")
+            cw.draw_rectangle(moving.mx, moving.my, moving.mw, moving.mh)
+         }
+      }
    end
 
    #

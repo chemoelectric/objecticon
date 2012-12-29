@@ -136,7 +136,7 @@ end
 
 function graphics_Window_copy_to(self, x0, y0, w0, h0, dest, x1, y1)
    body {
-      word x, y, width, height, x2, y2;
+      word ox, oy, x, y, width, height, x2, y2;
       wbp w2;
 
       GetSelfW();
@@ -157,7 +157,12 @@ function graphics_Window_copy_to(self, x0, y0, w0, h0, dest, x1, y1)
       if (pointargs(w2, &x1, &x2, &y2) == Error)
           runerr(0);
 
-      if (copyarea(self_w, x, y, width, height, w2, x2, y2) == Failed)
+      ox = x;
+      oy = y;
+      if (!reducerect(self_w, 0, &x, &y, &width, &height))
+          return self;
+
+      if (copyarea(self_w, x, y, width, height, w2, x2 + (x - ox), y2 + (y - oy)) == Failed)
           fail;
 
       return self;
@@ -457,7 +462,8 @@ function graphics_Window_erase_area(self, x0, y0, w0, h0)
       GetSelfW();
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
-      erasearea(self_w, x, y, width, height);
+      if (reducerect(self_w, 1, &x, &y, &width, &height))
+          erasearea(self_w, x, y, width, height);
       return self;
    }
 end
@@ -586,13 +592,11 @@ end
 function graphics_Window_fill_rectangle(self, x0, y0, w0, h0)
    body {
       word x, y, width, height;
-
       GetSelfW();
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
-
-      fillrectangle(self_w, x, y, width, height);
-
+      if (reducerect(self_w, 1, &x, &y, &width, &height))
+          fillrectangle(self_w, x, y, width, height);
       return self;
    }
 end
@@ -813,9 +817,7 @@ function graphics_Window_text_width(self, s)
    }
 end
 
-"Uncouple(w) - uncouple window"
-
-function graphics_Window_uncouple(self)
+function graphics_Window_close(self)
    body {
       GetSelfW();
       *self_w_dptr = zerodesc;
@@ -882,18 +884,6 @@ function graphics_Window_request_selection(self, selection, target_type)
        if (requestselection(self_w, t1, t2) == Failed)
            fail;
        return self;
-   }
-end
-
-function graphics_Window_close(self)
-   body {
-     GetSelfW();
-
-     *self_w_dptr = zerodesc;
-     wclose(self_w);
-     freewbinding(self_w);
-
-     return self;
    }
 end
 
@@ -1312,6 +1302,20 @@ function graphics_Window_get_size(self)
        MakeInt(self_w->window->width, &t);
        list_put(&result, &t);
        MakeInt(self_w->window->height, &t);
+       list_put(&result, &t);
+       return result;
+   }
+end
+
+function graphics_Window_get_references(self)
+   body {
+       tended struct descrip result;
+       struct descrip t;
+       GetSelfW();
+       create_list(2, &result);
+       MakeInt(self_w->window->refcount, &t);
+       list_put(&result, &t);
+       MakeInt(self_w->context->refcount, &t);
        list_put(&result, &t);
        return result;
    }

@@ -264,36 +264,38 @@ class CanvasComponent(CanvasObject)
    public do_highlight(W)
       local cw, i, r
       r := self.get_clip_rect() | fail
-      cw := W.clone()
-      cw.set_line_style("dashed")
-      cw.clip(r.x, r.y, r.w, r.h)
-      cw.set_line_style("solid")
-      if self === self.parent_Canvas.selected then
-         cw.set_fg("red")
+      use {
+         cw := W.clone(),
+         {
+            cw.set_line_style("dashed")
+            cw.clip(r.x, r.y, r.w, r.h)
+            cw.set_line_style("solid")
+            if self === self.parent_Canvas.selected then
+               cw.set_fg("red")
 
-      every i := 0 to RST - 1 do {
-         cw.draw_line(self.x + i, self.y + RSW, self.x + i, self.y + i, self.x + RSW, self.y + i)
+            every i := 0 to RST - 1 do {
+               cw.draw_line(self.x + i, self.y + RSW, self.x + i, self.y + i, self.x + RSW, self.y + i)
 
-         cw.draw_line(self.x + self.w - 1 - RSW, self.y + i, self.x + self.w - 1 - i, self.y + i, self.x + self.w - 1 - i, self.y + RSW)
+               cw.draw_line(self.x + self.w - 1 - RSW, self.y + i, self.x + self.w - 1 - i, self.y + i, self.x + self.w - 1 - i, self.y + RSW)
 
-         cw.draw_line(self.x + i, self.y + self.h - 1  - RSW, self.x + i, self.y + self.h - 1 - i, self.x + RSW, self.y + self.h - 1 - i)
+               cw.draw_line(self.x + i, self.y + self.h - 1  - RSW, self.x + i, self.y + self.h - 1 - i, self.x + RSW, self.y + self.h - 1 - i)
 
 
-         cw.draw_line(self.x + self.w - 1 - RSW, self.y + self.h - 1 - i, self.x + self.w - 1 - i, self.y + self.h - 1 - i, self.x + self.w - 1 - i, self.y + self.h - 1 - RSW)
+               cw.draw_line(self.x + self.w - 1 - RSW, self.y + self.h - 1 - i, self.x + self.w - 1 - i, self.y + self.h - 1 - i, self.x + self.w - 1 - i, self.y + self.h - 1 - RSW)
 
+            }
+
+            if *self.parent_Canvas.selections > 1 then {
+               cw.set_fg("blue")
+               cw.unclip()
+               cw.fill_circle(self.x + self.w, self.y, 8)
+               cw.set_fg("white")
+               cw.set_font("serif,10")
+               center_string(cw, self.x + self.w, self.y, 
+                             keyof(self.parent_Canvas.selections, self))
+            }
+         }
       }
-
-      if *self.parent_Canvas.selections > 1 then {
-         cw.set_fg("blue")
-         cw.unclip()
-         cw.fill_circle(self.x + self.w, self.y, 8)
-         cw.set_fg("white")
-         cw.set_font("serif,10")
-         center_string(cw, self.x + self.w, self.y, 
-                       keyof(self.parent_Canvas.selections, self))
-      }
-
-      cw.uncouple()
    end
 
    #

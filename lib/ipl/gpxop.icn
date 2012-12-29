@@ -179,7 +179,7 @@ procedure Sweep(win)
    if w < 0 then x -:= (w := -w)                # ensure nonnegative sizes
    if h < 0 then y -:= (h := -h)
 
-   win.uncouple()
+   win.close()
    return [x, y, w + 1, h + 1]                  # return FillRectangle bounds
 end
 
@@ -222,7 +222,7 @@ procedure Zoom(args[])
       win1.copy_to(x1 + w1 * ((x + 0.5) / w2), y1, 1, h1, scr, x, 0)
    every y := 0 to h2 - 1 do
       scr.copy_to(0, h1 * ((y + 0.5) / h2), w2, 1, win2, x2, y2 + y)
-   win2.uncouple()
+   win2.close()
    return win1
 end
 

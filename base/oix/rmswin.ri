@@ -707,32 +707,6 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
    return DefWindowProc(hwnd, msg, wp, lp);
 }
 
-/*
- * wclose - make sure the window goes away - no questions asked
- */
-void wclose(wbp w)
-   {
-   wsp ws = w->window;
-   wbp tmp_wb;
-   struct wbind_list *wbl, *t, *b;
-   
-   pollevent(w);
-
-   if (ws->win && ws->refcount > 1) {
-      /*
-       * Decrement refcount and negate it to tell the window procedure
-       * that we closed the window, not the user, so don't terminate.
-       */
-       /*RPP
-      ws->refcount--;
-      ws->refcount = -ws->refcount;
-       */
-      DestroyWindow(ws->win);
-      while (ws->win)
-	 pollevent(w);
-      }
-   }
-
 void pollevent(wbp w)
    {
    MSG m;

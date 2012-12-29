@@ -318,6 +318,11 @@ final class Window(NoCopy)
    public native get_size()
    public native get_width()
 
+   # Return the number of references to this window's canvas and
+   # context, as a two-element list.
+   #
+   public native get_references()
+
    #
    # The graphics context attribute bg specifies current background
    # color.
@@ -784,12 +789,6 @@ final class Window(NoCopy)
    public native text_width(s)
 
    #
-   # Frees the window. If no other bindings to the same canvas exist,
-   # the window is closed.
-   #
-   public native uncouple()
-
-   #
    # Set the window system's selection
    #
    public native own_selection(selection)
@@ -805,7 +804,8 @@ final class Window(NoCopy)
    public native request_selection(selection, target_type)
 
    #
-   # Close this window.
+   # Close this binding to the window.  If no other bindings to the
+   # same canvas exist, the underlying window is closed.
    #
    public native close()
 

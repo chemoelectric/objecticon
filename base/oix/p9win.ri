@@ -570,61 +570,17 @@ int walert(wbp w, int volume)
 
 int copyarea(wbp w1, int x, int y, int w, int h, wbp w2, int x2, int y2)
 {
-    int lpad, rpad, tpad, bpad;
-    Image *src;
     wsp ws1 = w1->window;
     wsp ws2 = w2->window;
     wcp wc2 = w2->context;
-
-    src = ws1->pix;
     clip(w2);
-
-    if (x + w < 0 || y + h < 0 || x >= Dx(src->r) || y >= Dy(src->r)) {
-        /* source is entirely offscreen, fill dest with bg */
-        fill2(w2, S, wc2->bg->i, x2, y2, w, h);
-    } else {
-        int lpad, rpad, tpad, bpad;
-        lpad = rpad = tpad = bpad = 0;
-        if (x < 0) {			/* source extends past left edge */
-            lpad = -x;
-            w -= lpad;
-            x2 += lpad;
-            x = 0;
-        }
-        if (x + w > Dx(src->r)) {  /* source extends past right edge */
-            rpad = x + w - Dx(src->r);
-            w -= rpad;
-        }
-        if (y < 0) {			/* source extends above top edge */
-            tpad = -y;
-            h -= tpad;
-            y2 += tpad;
-            y = 0;
-        }
-        if (y + h > Dy(src->r)) {  /* source extends below bottom */
-            bpad = y + h - Dy(src->r);
-            h -= bpad;
-        }
-
-        /*
-         * Copy the area.  Both are pix windows
-         */
-        gendrawop(ws2->pix,
-                  MkRect(x2, y2, w, h), 
-                  src,
-                  Pt(x, y),
-                  0, ZP, wc2->drawop->i);
-        pix_to_win(ws2, x2, y2, w, h);
-
-        if (lpad > 0)
-            fill2(w2, S, wc2->bg->i, x2 - lpad, y2 - tpad, lpad, tpad + h + bpad);
-        if (rpad > 0)
-            fill2(w2, S, wc2->bg->i, x2 + w, y2 - tpad, rpad, tpad + h + bpad);
-        if (tpad > 0)
-            fill2(w2, S, wc2->bg->i, x2, y2 - tpad, w, tpad);
-        if (bpad > 0)
-            fill2(w2, S, wc2->bg->i, x2, y2 + h, w, bpad);
-    }
+    gendrawop(ws2->pix,
+              MkRect(x2, y2, w, h), 
+              ws1->pix,
+              Pt(x, y),
+              0, ZP,
+              wc2->drawop->i);
+    pix_to_win(ws2, x2, y2, w, h);
     unclip(w2);
     flushimage(display, 1);
     return Succeeded;
@@ -1617,16 +1573,6 @@ static void close_pix_win(wsp ws)
     if (ws->pix) {
         freeimage(ws->pix);
         ws->pix = 0;
-    }
-}
-
-void wclose(wbp w)
-{
-    wsp ws = w->window;
-    pollevent(w);
-    if (ws->win && ws->refcount > 1) {
-        /* Turn into hidden window */
-        close_screen_win(ws);
     }
 }
 

@@ -638,19 +638,6 @@ static void close_screen_win(wsp ws)
 }
 
 /*
- * wclose - close a window.
- */
-void wclose(wbp w)
-{
-    wsp ws = w->window;
-    pollevent(w);
-    if (ws->win && ws->refcount > 1) {
-        /* Turn into hidden window */
-        close_screen_win(ws);
-    }
-}
-
-/*
  * open a window
  */
 wbp wopen(char *display)
@@ -1633,37 +1620,34 @@ static void resizepixmap(wbp w)
     wcp wc = w->context;
     wsp ws = w->window;
     wdp wd = ws->display;
-    if ((ws->width > ws->pixwidth) || (ws->height > ws->pixheight)) {
-        int x = ws->pixwidth, y = ws->pixheight;
+    int old_w, old_h;
 
-        ws->pixheight = Max(ws->pixheight, ws->height);
-        ws->pixwidth  = Max(ws->pixwidth, ws->width);
-        p = XCreatePixmap(wd->display, GetRoot(wd), ws->pixwidth + 1,
-                          ws->pixheight + 1, 32);
-        pp = XRenderCreatePicture(wd->display, p, wd->pixfmt, 0, NULL);
+    if ((ws->width <= ws->pixwidth) && (ws->height <= ws->pixheight))
+        return;
 
-        XRenderComposite(wd->display, PictOpSrc, ws->ppic, 0, pp,
-                         0,0,0,0,0,0, x,y);
+    old_w = ws->pixwidth;
+    old_h = ws->pixheight;
+    ws->pixheight = Max(ws->pixheight, ws->height);
+    ws->pixwidth  = Max(ws->pixwidth, ws->width);
+    p = XCreatePixmap(wd->display, GetRoot(wd), ws->pixwidth, ws->pixheight, 32);
+    pp = XRenderCreatePicture(wd->display, p, wd->pixfmt, 0, NULL);
+    /* Fill with bg colour */
+    XRenderFillRectangle(wd->display,
+                         PictOpSrc,
+                         pp,
+                         &wc->bg->color,
+                         0, 0, ws->pixwidth, ws->pixheight);
 
-        XFreePixmap(wd->display, ws->pix);	/* free old pixmap */
-        XRenderFreePicture(wd->display, ws->ppic);
-        ws->pix = p;
-        ws->ppic = pp;
+    XRenderComposite(wd->display, PictOpSrc, ws->ppic, 0, pp,
+                     0,0,0,0,0,0, old_w, old_h);
 
-        /*
-         * This staggering amount of redudancy manages to make sure the new
-         * pixmap gets initialized including areas not in the old pixmap.
-         * The window is redrawn.
-         */
-
-        if (ws->width > x)
-            fill2(w, PictOpSrc, &wc->bg->color, x, 0, ws->width-x, ws->pixheight);
-        if (ws->height > y)
-            fill2(w, PictOpSrc, &wc->bg->color, 0, y, x, ws->height - y);
-        if (ws->pxft) {
-            XftDrawDestroy(ws->pxft);
-            ws->pxft = NULL;
-        }
+    XFreePixmap(wd->display, ws->pix);	/* free old pixmap */
+    XRenderFreePicture(wd->display, ws->ppic);
+    ws->pix = p;
+    ws->ppic = pp;
+    if (ws->pxft) {
+        XftDrawDestroy(ws->pxft);
+        ws->pxft = NULL;
     }
 }
 
@@ -2105,9 +2089,9 @@ void fillrectangle(wbp w, int x, int y, int width, int height)
          * fill the rectangle with the foreground color
          */
         fill2(w,
-                       wc->drawop->i,
-                       &wc->fg->color,
-                       x, y, width, height);
+              wc->drawop->i,
+              &wc->fg->color,
+              x, y, width, height);
     }
     unclip(w);
 }
@@ -2134,8 +2118,6 @@ void erasearea(wbp w, int x, int y, int width, int height)
  */
 int copyarea(wbp w, int x, int y, int width, int height, wbp w2, int x2, int y2)
 {
-    int lpad, rpad, tpad, bpad;
-    Pixmap src;
     wsp ws1 = w->window;
     wsp ws2 = w2->window;
     wcp wc2 = w2->context;
@@ -2150,69 +2132,21 @@ int copyarea(wbp w, int x, int y, int width, int height, wbp w2, int x2, int y2)
     /*
      * Copying is between windows on one display, perhaps the same window.
      */
-    src = ws1->pix;
     clip(w2);
 
-    if (x + width < 0 || y + height < 0 || x >= ws1->pixwidth || y >= ws1->pixheight) {
-        /* source is entirely offscreen */
-        fill2(w2,
-              PictOpSrc,
-              &wc2->bg->color,
-              x2, y2, width, height);
-    }
-    else {
-        /*
-         * Check for source partially offscreen, but copy first and
-         * fill later in case the source and destination overlap.
-         */
-        lpad = rpad = tpad = bpad = 0;
-        if (x < 0) {			/* source extends past left edge */
-            lpad = -x;
-            width -= lpad;
-            x2 += lpad;
-            x = 0;
-        }
-        if (x + width > ws1->pixwidth) {  /* source extends past right edge */
-            rpad = x + width - ws1->pixwidth;
-            width -= rpad;
-        }
-        if (y < 0) {			/* source extends above top edge */
-            tpad = -y;
-            height -= tpad;
-            y2 += tpad;
-            y = 0;
-        }
-        if (y + height > ws1->pixheight) {  /* source extends below bottom */
-            bpad = y + height - ws1->pixheight;
-            height -= bpad;
-        }
-
-        /*
-         * Copy the area.
-         */
-        XRenderComposite(wd1->display,
-                         wc2->drawop->i,
-                         ws1->ppic,    /* src */
-                         None,         /* mask */
-                         ws2->ppic,    /* dest */
-                         x, y,         /* src_x,y */
-                         0, 0,         /* mask x,y */
-                         x2, y2,       /* dst x,y */
-                         width, height);
-        pix_to_win(ws2, x2, y2, width, height);
-
-        /*
-         * Fill any edges not provided by source.
-         */
-        if (lpad > 0)
-            fill2(w2, PictOpSrc, &wc2->bg->color, x2 - lpad, y2 - tpad, lpad, tpad + height + bpad);
-        if (rpad > 0)
-            fill2(w2, PictOpSrc, &wc2->bg->color, x2 + width, y2 - tpad, rpad, tpad + height + bpad);
-        if (tpad > 0)
-            fill2(w2, PictOpSrc, &wc2->bg->color, x2, y2 - tpad, width, tpad);
-        if (bpad > 0)
-            fill2(w2, PictOpSrc, &wc2->bg->color, x2, y2 + height, width, bpad);
-    }
+    /*
+     * Copy the area.
+     */
+    XRenderComposite(wd1->display,
+                     wc2->drawop->i,
+                     ws1->ppic,    /* src */
+                     None,         /* mask */
+                     ws2->ppic,    /* dest */
+                     x, y,         /* src_x,y */
+                     0, 0,         /* mask x,y */
+                     x2, y2,       /* dst x,y */
+                     width, height);
+    pix_to_win(ws2, x2, y2, width, height);
     unclip(w2);
     return Succeeded;
 }

@@ -127,14 +127,14 @@ abstract class WithCloneItemPaint(ItemPaint)
       (W === wt & (\ignore_clip | equals(ct, W.get_clip()))) | {
          wt := W
          ct := W.get_clip()
-         (\cw).uncouple()
+         (\cw).close()
          cw := make_clone(W)
       }
       return cw
    end
 
    public finally()
-      (\cw).uncouple()
+      (\cw).close()
       wt := ct := cw := &null
    end
 end

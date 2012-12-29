@@ -108,8 +108,8 @@ record bev_record(shadow, hilite)
 procedure BevelDispose(win)
    local b
    if b := \ (\bev_table)[win] then {
-      b.hilite.uncouple()
-      b.shadow.uncouple()
+      b.hilite.close()
+      b.shadow.close()
       delete(bev_table, win)
    }
 end
@@ -117,8 +117,8 @@ end
 procedure BevelDisposeAll()
 local b
     every b := !\bev_table do {
-       b.hilite.uncouple()
-       b.shadow.uncouple()
+       b.hilite.close()
+       b.shadow.close()
     }
     bev_table := &null
 end

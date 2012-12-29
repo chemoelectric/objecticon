@@ -189,8 +189,9 @@ end
 class SliderDragComponent(Component)
    public display()
       local cw
-      cw := cbwin.clone().set_masked_pattern("gray")
-      cw.fill_rectangle(self.x, self.y, self.w, self.h)
-      cw.uncouple()
+      use {
+         cw := cbwin.clone().set_masked_pattern("gray"),
+         cw.fill_rectangle(self.x, self.y, self.w, self.h)
+      }
    end
 end
