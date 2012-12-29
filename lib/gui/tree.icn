@@ -304,7 +304,7 @@ class Tree(SelectableScrollArea)
       (\img).draw(view.cbwin, lp + col_w / 2 - img.w / 2, y0 - img.h / 2)
       draw_node_data(N, lp + col_w, yp, lh)
       draw_line_sel_cur(lp + col_w, yp, get_node_data_width(N), lh, sel, cur, hi)
-      dashed.uncouple()
+      dashed.close()
    end
 
    public new()

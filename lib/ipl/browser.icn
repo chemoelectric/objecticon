@@ -907,9 +907,10 @@ class FormOptionList(SelectableScrollArea, FormEntry)
       local o, W
       o := contents[i]
       if \o.disabled then {
-         W := view.cbwin.clone().set_fg("gray")
-         draw_string_ex(W, xp + Gui.TEXT_INSET, yp, o.txt)
-         W.uncouple()
+         use {
+            W := view.cbwin.clone().set_fg("gray"),
+            draw_string_ex(W, xp + Gui.TEXT_INSET, yp, o.txt)
+         }
       } else 
          draw_string_ex(view.cbwin, xp + Gui.TEXT_INSET, yp, o.txt)
    end
@@ -1857,15 +1858,18 @@ class Browser(Component)
          if \sc.options[i].selected then
             put(sels, i)
       if size := (1 < integer(e.get_attribute(u"SIZE"))) then {
-         mW := cbwin.clone().set_font(context.font)
-         w := 0
-         every o := !sc.options do
-            w <:= mW.text_width(o.txt)
-         w +:= 2 * Gui.TEXT_INSET + 2 * Gui.BORDER_WIDTH
-         h := (2 * Gui.BORDER_WIDTH + size * mW.get_font_height())
-         if size < *sc.options then
-            w +:= ScrollArea.predict_scrollbar_size()
-         mW.uncouple()
+         use {
+            mW := cbwin.clone().set_font(context.font),
+            {
+               w := 0
+               every o := !sc.options do
+                  w <:= mW.text_width(o.txt)
+               w +:= 2 * Gui.TEXT_INSET + 2 * Gui.BORDER_WIDTH
+               h := (2 * Gui.BORDER_WIDTH + size * mW.get_font_height())
+               if size < *sc.options then
+                  w +:= ScrollArea.predict_scrollbar_size()
+            }
+         }
          if e.get_attribute(u"MULTIPLE") then
             mode := Select.MANY
          else {
@@ -1932,10 +1936,13 @@ class Browser(Component)
    private traverse_textarea(e, p, context)
       local q, w, h, mW
       \context.form | fail
-      mW := cbwin.clone().set_font(context.font)
-      w := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", e.get_attribute(u"COLS")))) | 200
-      h := (2 * Gui.BORDER_WIDTH + e.get_attribute(u"ROWS") * mW.get_font_height()) | 100
-      mW.uncouple()
+      use {
+         mW := cbwin.clone().set_font(context.font),
+         {
+            w := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", e.get_attribute(u"COLS")))) | 200
+            h := (2 * Gui.BORDER_WIDTH + e.get_attribute(u"ROWS") * mW.get_font_height()) | 100
+         }
+      }
       # The ucs conversion is used here since an empty node will return "" (not u"").
       q := FormEditableTextList(ucs(e.get_trimmed_string_content())).
          set_font(context.font).
@@ -1958,9 +1965,10 @@ class Browser(Component)
       s := string(map(e.get_attribute(u"TYPE"))) | "text"
       case s of {
          "file": {
-            mW := cbwin.clone().set_font(context.font)
-            size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", e.get_attribute(u"SIZE")))) | 160
-            mW.uncouple()
+            use {
+               mW := cbwin.clone().set_font(context.font),
+               size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", e.get_attribute(u"SIZE")))) | 160
+            }
             q := FormBrowse(self, size).
                   set_font(context.font).
                   set_fg(context.fg)
@@ -2064,9 +2072,10 @@ class Browser(Component)
          }
          "text" | "password": {
             v := e.get_attribute(u"VALUE") | u""
-            mW := cbwin.clone().set_font(context.font)
-            size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", e.get_attribute(u"SIZE")))) | 160
-            mW.uncouple()
+            use {
+               mW := cbwin.clone().set_font(context.font),
+               size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", e.get_attribute(u"SIZE")))) | 160
+            }
             q := FormTextField(v).
                set_fg(context.fg).
                set_font(context.font).

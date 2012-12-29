@@ -87,7 +87,7 @@ class FontTestDialog(Dialog)
          size_label.set_label("Height=" || cw.get_font_height() || ", " ||
                               "Ascent=" || cw.get_font_ascent() || ", " ||
                               "Descent=" || cw.get_font_descent())
-         cw.uncouple()
+         cw.close()
       } else {
          font_label.set_label("-")
          size_label.set_label("-")
@@ -440,14 +440,14 @@ class Viewer(DrawScrollArea)
       t := view.cbwin.clone()
       if t.set_font(font) then
          return t
-      t.uncouple()
+      t.close()
    end
 
    public calculate_subject_width()
       local cw,sw
       cw := get_clone() | return 50
       sw := cw.text_width(self.text)
-      cw.uncouple()
+      cw.close()
       return sw + 20
    end
 
@@ -455,7 +455,7 @@ class Viewer(DrawScrollArea)
       local cw,fh
       cw := get_clone() | return 50
       fh := cw.get_font_height()
-      cw.uncouple()
+      cw.close()
       return fh + 20
    end
 
@@ -485,7 +485,7 @@ class Viewer(DrawScrollArea)
       cw.set_fg("black")
       draw_string_ex(cw, px, py, self.text)
 
-      cw.uncouple()
+      cw.close()
    end
 
    public new()

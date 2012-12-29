@@ -74,19 +74,19 @@ class GridLayout(Layout)
 
    public display()
       local i, cw
+      use {
+         cw := bev_lookup(self.parent.cbwin).shadow.clone().set_masked_pattern("gray"),
+         {
+            cw.draw_rectangle(parent.x, parent.y, parent.w, parent.h)
 
-      cw := bev_lookup(self.parent.cbwin).shadow.clone().set_masked_pattern("gray")
-
-      cw.draw_rectangle(parent.x, parent.y, parent.w, parent.h)
-
-      every i := !g.info do {
-         cw.draw_rectangle(g.col_x[i.x],
-                           g.row_y[i.y],
-                           Grid.slice(i.x, i.w, g.a_col_w),
-                           Grid.slice(i.y, i.h, g.a_row_h))
+            every i := !g.info do {
+               cw.draw_rectangle(g.col_x[i.x],
+                                 g.row_y[i.y],
+                                 Grid.slice(i.x, i.w, g.a_col_w),
+                                 Grid.slice(i.y, i.h, g.a_row_h))
+            }
+         }
       }
-
-      cw.uncouple()
    end
 
    public layout()

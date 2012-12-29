@@ -1,6 +1,6 @@
 package gui
 
-import ipl.graphics
+import ipl.graphics, util
 
 class Style()
    public dispose(W)
@@ -55,39 +55,48 @@ class Style()
 
    public draw_dashed_rectangle(W, x, y, w, h)
       local cw
-      cw := bev_lookup(W).shadow.clone().set_masked_pattern("gray")
-      cw.draw_rectangle(x, y, w, h)
-      cw.uncouple()
+      use {
+         cw := bev_lookup(W).shadow.clone().set_masked_pattern("gray"),
+         cw.draw_rectangle(x, y, w, h)
+      }
    end
 
    public draw_focus_rectangle(W, x, y, w, h)
       local cw
-      cw := W.clone().set_fg("red").set_masked_pattern("gray")
-      cw.draw_rectangle(x, y, w, h)
-      cw.uncouple()
+      use {
+         cw := W.clone().set_fg("red").set_masked_pattern("gray"),
+         cw.draw_rectangle(x, y, w, h)
+      }
    end
 
    public draw_highlight_rectangle(W, x, y, w, h)
       local cw
-      cw := W.clone().set_fg("blue").set_masked_pattern("gray")
-      cw.draw_rectangle(x, y, w, h)
-      cw.uncouple()
+      use {
+         cw := W.clone().set_fg("blue").set_masked_pattern("gray"),
+         cw.draw_rectangle(x, y, w, h)
+      }
    end
 
    public draw_shadow_text_cursor(W, x, y, h)
       local cw
-      cw := bev_lookup(W).shadow.clone()
-      cw.draw_line(x, y, x, y + h - 1)
-      cw.draw_line(x - 1, y, x - 1, y + h - 1)
-      cw.uncouple()
+      use {
+         cw := bev_lookup(W).shadow.clone(),
+         {
+            cw.draw_line(x, y, x, y + h - 1)
+            cw.draw_line(x - 1, y, x - 1, y + h - 1)
+         }
+      }
    end
 
    public draw_text_cursor(W, x, y, h)
       local cw
-      cw := W.clone().set_fg("red")
-      cw.draw_line(x, y, x, y + h - 1)
-      cw.draw_line(x - 1, y, x - 1, y + h - 1)
-      cw.uncouple()
+      use {
+         cw := W.clone().set_fg("red"),
+         { 
+            cw.draw_line(x, y, x, y + h - 1)
+            cw.draw_line(x - 1, y, x - 1, y + h - 1)
+         }
+      }
    end
 
    public create_tooltip_label()

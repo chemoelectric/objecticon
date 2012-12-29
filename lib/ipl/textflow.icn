@@ -254,7 +254,7 @@ class TextFlow(Component)
       W := cbwin.clone()
       every cmd := !input do {
          if font ~=== cmd.attr.font then {
-            W.uncouple()
+            W.close()
             W := attr_clone(cmd.attr)
             font := cmd.attr.font
          } 
@@ -303,7 +303,7 @@ class TextFlow(Component)
             }
          }
       }
-      W.uncouple()
+      W.close()
    end
 
    public lookup_named_anchor(name)
@@ -335,7 +335,7 @@ class TextFlow(Component)
             break
 
          if font ~=== o.attr.font | fg ~=== o.attr.fg then {
-            W.uncouple()
+            W.close()
             W := attr_clone(o.attr)
             font := o.attr.font
             fg := o.attr.fg
@@ -352,7 +352,7 @@ class TextFlow(Component)
             W.draw_line(x2, y2, x2 + o.w, y2)
          }
       }
-      W.uncouple()
+      W.close()
       cast(self,Component).display()
    end
 

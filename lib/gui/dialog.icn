@@ -275,6 +275,12 @@ class Dialog(Component)
    end
 
    public close_win()
+      local t
+      t := buffer_win.get_references()
+      if t[1] ~= 1 then
+         runerr("Dialog close_win(): canvas reference count not 1")
+      if t[2] ~= 1 then
+         runerr("Dialog close_win(): context reference count not 1")
       self.buffer_win.close()
       self.win.close()
       self.buffer_win := self.win := &null

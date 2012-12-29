@@ -39,7 +39,7 @@ class MenuTree(SelectableScrollArea)
          draw_string_ex(view.cbwin, lp, yp, s.owner.get_string_label())
       }
 
-      dashed.uncouple()
+      dashed.close()
    end
 
    public get_rec(n)

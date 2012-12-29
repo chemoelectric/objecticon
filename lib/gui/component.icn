@@ -804,7 +804,7 @@ class Component(Rect,Align,Connectable)
    public finally()
       (\self.border).finally()
       Gui.style.dispose(self.cbwin)
-      self.cbwin.uncouple()
+      self.cbwin.close()
       self.cbwin := &null
       every (!self.children).finally()
       self.parent_dialog := &null
