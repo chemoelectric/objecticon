@@ -226,8 +226,6 @@ function graphics_Window_draw_arc(self, x0, y0, w0, h0, ang1, ang2)
        */
       if (!def:C_double(ang2, 2 * Pi, a2))
           runerr(102, ang2);
-      if (fabs(a2) > 3 * Pi)
-          runerr(101, ang2);
       if (fabs(a2) >= 2 * Pi)
           a2 = 2 * Pi;
       else {
@@ -241,7 +239,8 @@ function graphics_Window_draw_arc(self, x0, y0, w0, h0, ang1, ang2)
       else
           a1 = fmod(a1, 2 * Pi);
 
-      drawarc(self_w, x, y, width, height, a1, a2);
+      if (width > 0 && height > 0 && a1 < a2)
+          drawarc(self_w, x, y, width, height, a1, a2);
 
       return self;
    }
@@ -526,8 +525,6 @@ function graphics_Window_fill_arc(self, x0, y0, w0, h0, ang1, ang2)
 
       if (!def:C_double(ang2, 2 * Pi, a2))
           runerr(102, ang2);
-      if (fabs(a2) > 3 * Pi)
-          runerr(101, ang2);
       if (fabs(a2) >= 2 * Pi)
           a2 = 2 * Pi;
       else {
@@ -541,7 +538,8 @@ function graphics_Window_fill_arc(self, x0, y0, w0, h0, ang1, ang2)
       else
           a1 = fmod(a1, 2 * Pi);
       
-      fillarc(self_w, x, y, width, height, a1, a2);
+      if (width > 0 && height > 0 && a1 < a2)
+          fillarc(self_w, x, y, width, height, a1, a2);
       
       return self;
    }

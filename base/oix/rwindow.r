@@ -1710,6 +1710,9 @@ int docircle(wbp w, dptr argv, int fill)
         r = -r;
         theta += Pi;
     }
+    if (r == 0)
+        return Succeeded;
+
     if (alpha < 0) {			/* ensure positive extent */
         theta += alpha;
         alpha = -alpha;
@@ -1736,10 +1739,12 @@ int docircle(wbp w, dptr argv, int fill)
     /*
      * Draw or fill the arc.
      */
-    if (fill)
-        fillarc(w, arc_x, arc_y, arc_width, arc_height, arc_angle1, arc_angle2);
-    else
-        drawarc(w,arc_x, arc_y, arc_width, arc_height, arc_angle1, arc_angle2);
+    if (arc_angle1 < arc_angle2) {
+        if (fill)
+            fillarc(w, arc_x, arc_y, arc_width, arc_height, arc_angle1, arc_angle2);
+        else
+            drawarc(w,arc_x, arc_y, arc_width, arc_height, arc_angle1, arc_angle2);
+    }
 
     return Succeeded;
 }

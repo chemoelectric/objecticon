@@ -50,6 +50,8 @@ static void close_screen_win(wsp ws);
 static struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int b, int a);
 static void fill2(wbp w, int op, XRenderColor  *color, int x, int y, int width, int height);
 static void poly2(wbp w, XPointDouble *points, int npoints);
+static void line2(wbp w, int x1, int y1, int x2, int y2);
+static void pic2(wbp w, Picture src, int x, int y, int width, int height);
 static struct SharedPattern *new_sharedpattern(wdp wd, struct imgdata *imd);
 static struct SharedPattern *link_sharedpattern(struct SharedPattern *x);
 static void unlink_sharedpattern(wdp wd, struct SharedPattern *x);
@@ -646,6 +648,7 @@ wbp wopen(char *display)
     wsp ws;
     wcp wc;
     wdp wd;
+    XRenderPictureAttributes attr;
 
     if ((wd = alcdisplay(display)) == NULL) {
         /* alcdisplay will have set &why */
@@ -690,8 +693,9 @@ wbp wopen(char *display)
     ws->pix = XCreatePixmap(wd->display, GetRoot(wd),
                             ws->pixwidth, ws->pixheight,
                             32);
-
-    ws->ppic = XRenderCreatePicture(wd->display, ws->pix, wd->pixfmt, 0, NULL);
+    attr.poly_edge = PolyEdgeSmooth;
+    attr.poly_mode = PolyModeImprecise;
+    ws->ppic = XRenderCreatePicture(wd->display, ws->pix, wd->pixfmt, CPPolyEdge|CPPolyMode, &attr);
 
     /* Fill pixmap with background colour */
     XRenderFillRectangle(wd->display,
@@ -1621,16 +1625,19 @@ static void resizepixmap(wbp w)
     wsp ws = w->window;
     wdp wd = ws->display;
     int old_w, old_h;
+    XRenderPictureAttributes attr;
 
-    if ((ws->width <= ws->pixwidth) && (ws->height <= ws->pixheight))
+    if ((ws->width == ws->pixwidth) && (ws->height == ws->pixheight))
         return;
 
     old_w = ws->pixwidth;
     old_h = ws->pixheight;
-    ws->pixheight = Max(ws->pixheight, ws->height);
-    ws->pixwidth  = Max(ws->pixwidth, ws->width);
+    ws->pixheight = Max(1, ws->height);
+    ws->pixwidth  = Max(1, ws->width);
     p = XCreatePixmap(wd->display, GetRoot(wd), ws->pixwidth, ws->pixheight, 32);
-    pp = XRenderCreatePicture(wd->display, p, wd->pixfmt, 0, NULL);
+    attr.poly_edge = PolyEdgeSmooth;
+    attr.poly_mode = PolyModeImprecise;
+    pp = XRenderCreatePicture(wd->display, p, wd->pixfmt, CPPolyEdge|CPPolyMode, &attr);
     /* Fill with bg colour */
     XRenderFillRectangle(wd->display,
                          PictOpSrc,
@@ -1902,29 +1909,89 @@ void drawarc(wbp w, int x, int y, int width, int height, double angle1, double a
 {
 }
 
-static void drawline2(wbp w, int x1, int y1, int x2, int y2)
+void fillarc(wbp w, int x, int y, int width, int height, double angle1, double angle2)
+{ 
+    XPointDouble *pol;
+    double th, r1, r2, cx, cy, x1, y1;
+    int d, i, segs, pc;
+    r1 = width / 2.0;
+    r2 = height / 2.0;
+    cx = x + r1;
+    cy = y + r2;
+    d = Max(width, height);
+    if (d < 5)
+        segs = 4;
+    else if (d < 10)
+        segs = 8;
+    else if (d < 20)
+        segs = 10;
+    else if (d < 30)
+        segs = 15;
+    else if (d < 100)
+        segs = 20;
+    else
+        segs = 25;
+    segs *= (angle2 - angle1) / (2 * Pi);
+    segs = Max(segs, 2);
+    pol = alloca((segs + 2) * sizeof(XPointDouble));
+    if (angle1 == 0.0 && angle2 == 2 * Pi) {
+        pc = 0;
+    } else {
+        pol[0].x = cx;
+        pol[0].y = cy;
+        pc = 1;
+    }
+    for (i = 0; i < segs; ++i) {
+        th = angle1 + (angle2 - angle1) * i / segs;
+        x1 = cx + r1 * cos(th);
+        y1 = cy + r2 * sin(th);
+        pol[pc].x = x1;
+        pol[pc].y = y1;
+        ++pc;
+    }
+    pol[pc].x = cx + r1 * cos(angle2);
+    pol[pc].y = cy + r2 * sin(angle2);
+    ++pc;
+    clip(w);
+    poly2(w, pol, pc);
+    unclip(w);
+}
+
+static void line2(wbp w, int x1, int y1, int x2, int y2)
 {
     wcp wc = w->context;
-    if (!wc->pattern && wc->linewidth == 1 && (x1 == x2 || y1 == y2)) {
-        if (x2 < x1) {
-            int t = x1 ; x1 = x2; x2 = t;
+    XPointDouble fpoly[4];
+    if (x1 == x2 || y1 == y2) {
+        int width, height;
+        if (x1 == x2) {
+            if (y2 < y1) {
+                int t = y1 ; y1 = y2; y2 = t;
+            }
+            width = wc->linewidth;
+            height = y2 - y1 + 1;
+            x1 -= wc->linewidth / 2;
+        } else {   /* y1 == y2 */
+            if (x2 < x1) {
+                int t = x1 ; x1 = x2; x2 = t;
+            }
+            width = x2 - x1 + 1;
+            height = wc->linewidth;
+            y1 -= wc->linewidth / 2;
         }
-        if (y2 < y1) {
-            int t = y1 ; y1 = y2; y2 = t;
-        }
-        fill2(w, wc->drawop->i, &wc->fg->color, x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+        if (wc->pattern)
+            pic2(w,
+                 wc->pattern->i,
+                 x1, y1, width, height);
+        else 
+            fill2(w, wc->drawop->i, &wc->fg->color, x1, y1, width, height);
     } else {
-        double half_width = wc->linewidth / 2.0;
-        XPointDouble fpoly[4];
-
-        /* XRender does not have a function to draw lines. 
-           So we have to draw a poligon that covers the line area. */ 
-
         double dx = x2 - x1;
         double dy = y2 - y1;
-        double d = half_width / hypot(dx, dy);
-        double dnx = d * dx;
-        double dny = d * dy;
+        double half_width, dnx, dny, d;
+        half_width = wc->linewidth / 2.0;
+        d = half_width / hypot(dx, dy);
+        dnx = d * dx;
+        dny = d * dy;
         fpoly[0].x = x1 + dny;
         fpoly[0].y = y1 - dnx;
         fpoly[1].x = x1 - dny;
@@ -1942,7 +2009,7 @@ void drawlines(wbp w, struct point *points, int npoints)
     int i;
     clip(w);
     for (i = 1; i < npoints; ++i)
-        drawline2(w, points[i - 1].x, points[i - 1].y, points[i].x,  points[i].y);
+        line2(w, points[i - 1].x, points[i - 1].y, points[i].x,  points[i].y);
     unclip(w);
 }
 
@@ -1953,20 +2020,29 @@ void drawpoint(wbp w, int x, int y)
 
 void drawrectangle(wbp w, int x, int y, int width, int height)
 {
-    if (width > 0 && height > 0) {
+    wcp wc = w->context;
+    int d = wc->linewidth / 2;
+
+    /* If too small to give a gap in the middle, then simply fill a
+     * rectangle, otherwise draw as four lines. */
+    if (width <= wc->linewidth + 1 || height <= wc->linewidth + 1)
+        /* The width is the same as the horizontal line below, since
+         * (x2 - d + wc->linewidth - 1) - (x - d) + 1 = width + wc->linewidth - 1
+         */
+        fillrectangle(w, x - d, y - d, width + wc->linewidth - 1, height + wc->linewidth - 1);
+    else {
         int x2 = x + width - 1;
         int y2 = y + height - 1;
         clip(w);
-        drawline2(w, x, y, x2, y);
-        drawline2(w, x2, y, x2, y2);
-        drawline2(w, x, y, x, y2);
-        drawline2(w, x, y2, x2, y2);
+        /* Note that we know the two vertical lines will be at least one pixel high, since
+         * height > wc->linewidth + 1 <=> y2 - d - 1 >= y - d + wc->linewidth.
+         */
+        line2(w, x - d, y, x2 - d + wc->linewidth - 1, y);
+        line2(w, x2,    y - d +  wc->linewidth , x2, y2 - d - 1);
+        line2(w, x,     y - d +  wc->linewidth, x, y2 - d - 1);
+        line2(w, x - d, y2, x2 - d + wc->linewidth - 1, y2);
         unclip(w);
     }
-}
-
-void fillarc(wbp w, int x, int y, int width, int height, double angle1, double angle2)
-{ 
 }
 
 void fillpolygon(wbp w, struct point *points, int npoints)
@@ -1981,6 +2057,23 @@ void fillpolygon(wbp w, struct point *points, int npoints)
     clip(w);
     poly2(w, xpoints, npoints);
     unclip(w);
+}
+
+static void pic2(wbp w, Picture src, int x, int y, int width, int height)
+{
+    wsp ws = w->window;
+    wcp wc = w->context;
+    wdp wd = ws->display;
+    XRenderComposite(wd->display,
+                     wc->drawop->i,
+                     src,          /* src */
+                     None,         /* mask */
+                     ws->ppic,     /* dest */
+                     0,0,          /* src x,y */
+                     0,0,          /* mask x,y */
+                     x, y,         /* dst x,y */
+                     width, height);
+    pix_to_win(ws, x, y, width, height);
 }
 
 static void fill2(wbp w, int op, XRenderColor *color, int x, int y, int width, int height)
@@ -2022,7 +2115,7 @@ static void poly2(wbp w, XPointDouble *points, int npoints)
         if (points[i].y > y2)
             y2 = points[i].y;
     }
-    pix_to_win(ws, x1, y1, x2 - x1, y2 - y1);
+    pix_to_win(ws, x1, y1, x2 - x1 + 1, y2 - y1 + 1);
 }
 
 static Picture imgdata_to_Picture(wdp wd, struct imgdata *imd, unsigned long valuemask, XRenderPictureAttributes *attributes)
@@ -2073,26 +2166,18 @@ void fillrectangle(wbp w, int x, int y, int width, int height)
 {
     wcp wc = w->context;
     clip(w);
-    if (wc->pattern) {
-        XPointDouble fpoly[4];
-        fpoly[0].x = x;
-        fpoly[0].y = y;
-        fpoly[1].x = x + width;
-        fpoly[1].y = y;
-        fpoly[2].x = x + width;
-        fpoly[2].y = y + height;
-        fpoly[3].x = x;
-        fpoly[3].y = y + height;
-        poly2(w, fpoly, 4);
-    } else {
-        /*
-         * fill the rectangle with the foreground color
-         */
+    /*
+     * fill the rectangle with the pattern or foreground color
+     */
+    if (wc->pattern)
+        pic2(w, 
+             wc->pattern->i, 
+             x, y, width, height);
+    else
         fill2(w,
               wc->drawop->i,
               &wc->fg->color,
               x, y, width, height);
-    }
     unclip(w);
 }
 
@@ -2167,21 +2252,13 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
 
 void outputimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
-    wcp wc = w->context;
     wsp ws = w->window;
     wdp wd = ws->display;
     Picture pic = imgdata_to_Picture(wd, imd, 0, 0);
     clip(w);
-    XRenderComposite(wd->display,
-                     wc->drawop->i,
-                     pic,          /* src */
-                     None,         /* mask */
-                     ws->ppic,     /* dest */
-                     0,0,          /* src x,y */
-                     0,0,          /* mask x,y */
-                     x, y,         /* dst x,y */
-                     imd->width, imd->height);
-    pix_to_win(ws, x, y, imd->width, imd->height);
+    pic2(w,
+         pic,
+         x, y, imd->width, imd->height);
     unclip(w);
     XRenderFreePicture(wd->display, pic);
 }

@@ -45,6 +45,7 @@ static int readimageimpl(char *cmd, int fd, struct imgdata *imd);
 static Image *imgdata_to_Image(struct imgdata *imd);
 static void poly2(wbp w, Point *points, int npoints, int end0, int end1);
 static void fill2(wbp w, int op, Image *color, int x, int y, int width, int height);
+static void line2(wbp w, int x1, int y1, int x2, int y2);
 
 static struct imgdataformat imgdataformat_P9ABGR32;
 static struct imgdataformat imgdataformat_P9AG16;
@@ -416,8 +417,7 @@ static void resize_pix_win(wbp w)
 {
     wsp ws = w->window;
     Image *t;
-    if (Dx(ws->pix->r) >= ws->width &&
-        Dy(ws->pix->r) >= ws->height)
+    if (Dx(ws->pix->r) == ws->width && Dy(ws->pix->r) == ws->height)
         return;
     MemProtect(t = allocimage(display, Rect(0, 0, ws->width, ws->height), RGBA32, 1, DNofill));
     gendrawop(t, t->r, w->context->bg->i, ZP, 0, ZP, S);
@@ -639,7 +639,6 @@ static void fill2(wbp w, int op, Image *color, int x, int y, int width, int heig
 {
     wsp ws = w->window;
     wcp wc = w->context;
-
     gendrawop(ws->pix, 
               MkRect(x, y, width, height),
               color,
@@ -671,20 +670,40 @@ static void poly2(wbp w, Point *points, int npoints, int end0, int end1)
     pix_to_win(ws, x1 - wc->thick, y1 - wc->thick, 1 + x2 - x1 + 2 * wc->thick, 1 + y2 - y1 + 2 * wc->thick);
 }
 
+static void line2(wbp w, int x1, int y1, int x2, int y2)
+{
+    wsp ws = w->window;
+    wcp wc = w->context;
+    if (x2 < x1) {
+        int t = x1 ; x1 = x2; x2 = t;
+    }
+    if (y2 < y1) {
+        int t = y1 ; y1 = y2; y2 = t;
+    }
+    if (x1 == x2)
+        lineop(ws->pix, Pt(x1, y1), Pt(x2, y2 + 1), Endsquare, Endsquare, wc->thick, get_draw_img(wc), ZP, wc->drawop->i);
+    else
+        lineop(ws->pix, Pt(x1, y1), Pt(x2 + 1, y2), Endsquare, Endsquare, wc->thick, get_draw_img(wc), ZP, wc->drawop->i);
+    pix_to_win(ws, x1 - wc->thick, y1 - wc->thick, 1 + x2 - x1 + 2 * wc->thick, 1 + y2 - y1 + 2 * wc->thick);
+}
+
 void drawrectangle(wbp w, int x, int y, int width, int height)
 {
     wsp ws = w->window;
     wcp wc = w->context;
-    Point p[5];
-    clip(w);
-    p[0] = Pt(x, y);
-    p[1] = Pt(x + width - 1, y);
-    p[2] = Pt(x + width - 1, y + height - 1);
-    p[3] = Pt(x, y + height - 1);
-    p[4] = p[0];
-    poly2(w, p, 5, Endsquare, Endsquare);
-    unclip(w);
-    flushimage(display, 1);
+    if (width <= 2 * (wc->thick + 1) || height <= 2 * (wc->thick + 1))
+        fillrectangle(w, x - wc->thick, y - wc->thick, width + 2 * wc->thick, height + 2 * wc->thick);
+    else {
+        int x2 = x + width - 1;
+        int y2 = y + height - 1;
+        clip(w);
+        line2(w, x - wc->thick, y, x2 + wc->thick, y);
+        line2(w, x2, y + wc->thick + 1, x2, y2 - wc->thick - 1);
+        line2(w, x, y + wc->thick + 1, x, y2 - wc->thick - 1);
+        line2(w, x - wc->thick, y2, x2 + wc->thick, y2);
+        unclip(w);
+        flushimage(display, 1);
+    }
 }
 
 void fillpolygon(wbp w, struct point *points0, int npoints)
