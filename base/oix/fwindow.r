@@ -424,8 +424,7 @@ function graphics_Window_draw_rectangle(self, x0, y0, w0, h0)
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
 
-      if (width > 0 && height > 0)
-          drawrectangle(self_w, x, y, width, height);
+      drawrectangle(self_w, x, y, width, height);
 
       return self;
    }
