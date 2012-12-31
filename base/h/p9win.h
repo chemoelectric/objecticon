@@ -5,7 +5,7 @@ struct SharedColor {
    int   refcount;
 };
 
-struct SharedPattern {
+struct SharedImage {
    Image *i;
    int   refcount;
 };

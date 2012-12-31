@@ -151,9 +151,14 @@ final class Pixels()
    #
    public native to_file(fname)
 
-   # Succeed if the format supports storage of an alpha channel.
+   # Return the number of bits of alpha depth (zero if the format
+   # doesn't support storage of an alpha channel).
    #
-   public native has_alpha()
+   public native get_alpha_depth()
+
+   # Return the number of bits of color depth.
+   #
+   public native get_color_depth()
 
    # Get the palette size, or fail if this is not a PALETTE format.
    #
@@ -501,6 +506,12 @@ final class Window(NoCopy)
    end
 
    private native set_pattern_impl(v)
+
+   public get_pattern()
+      return Pixels(get_pattern_impl())
+   end
+
+   private native get_pattern_impl()
 
    #
    # The canvas attribute pointer specifies the shape of the figure

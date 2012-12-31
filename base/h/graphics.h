@@ -45,7 +45,7 @@ struct imgdataformat {
     void (*setpaletteindex)(struct imgdata *imd, int x, int y, int i);
     int (*getpaletteindex)(struct imgdata *imd, int x, int y);
     int (*getlength)(struct imgdata *imd);
-    int has_alpha, palette_size;
+    int alpha_depth, color_depth, palette_size;
     char *name;
 };
 
@@ -232,13 +232,13 @@ typedef struct _wcontext {
 #if XWindows
   wdp		display;
   struct SharedColor *fg, *bg;
-  struct SharedPattern  *pattern;
+  struct SharedPicture  *pattern;
   stringint     *linestyle;
   int		linewidth;
   stringint     *drawop;
 #elif PLAN9
   struct SharedColor *fg, *bg;
-  struct SharedPattern  *pattern;
+  struct SharedImage  *pattern;
   int           thick;
   stringint     *drawop;
 #elif MSWIN32

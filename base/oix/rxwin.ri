@@ -13,6 +13,12 @@
 #define GetRoot(wd) DefaultRootWindow((wd)->display)
 
 /*
+ * Polyedge to use with pixwin; set to PolyEdgeSharp or PolyEdgeSmooth
+ */
+
+#define PolyEdge PolyEdgeSmooth
+
+/*
  * Global variables specific to X
  */
 wdp wdsplys;
@@ -52,12 +58,12 @@ static void fill2(wbp w, int op, XRenderColor  *color, int x, int y, int width, 
 static void poly2(wbp w, XPointDouble *points, int npoints);
 static void line2(wbp w, int x1, int y1, int x2, int y2);
 static void pic2(wbp w, Picture src, int x, int y, int width, int height);
-static struct SharedPattern *new_sharedpattern(wdp wd, struct imgdata *imd);
-static struct SharedPattern *link_sharedpattern(struct SharedPattern *x);
-static void unlink_sharedpattern(wdp wd, struct SharedPattern *x);
-static Picture imgdata_to_Picture(wdp wd, struct imgdata *imd, unsigned long valuemask, XRenderPictureAttributes *attributes);
+static struct SharedPicture *new_sharedpicture(wdp wd, struct imgdata *imd);
+static struct SharedPicture *link_sharedpicture(struct SharedPicture *x);
+static void unlink_sharedpicture(wdp wd, struct SharedPicture *x);
 static Picture get_draw_picture(wcp wc);
 static void pix_to_win(wsp ws, int x, int y, int w, int h);
+static Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd);
 
 static struct imgdataformat imgdataformat_X11GRAY8;
 static struct imgdataformat imgdataformat_X11ARGB32;
@@ -268,28 +274,33 @@ static void dump_ximage(XImage *xi)
 
 #define ATOM(d, x) ((d)->atoms[ATOM_##x])
 
-static struct SharedPattern *new_sharedpattern(wdp wd, struct imgdata *imd)
+static struct SharedPicture *new_sharedpicture(wdp wd, struct imgdata *imd)
 {
-    struct SharedPattern *res;
+    struct SharedPicture *res;
     XRenderPictureAttributes pa;
-    GRFX_ALLOC(res, SharedPattern);
+    GRFX_ALLOC(res, SharedPicture);
+    res->pix = imgdata_to_Pixmap(wd, imd);
     pa.repeat = 1;
-    res->i = imgdata_to_Picture(wd, imd, CPRepeat, &pa);
+    res->i = XRenderCreatePicture(wd->display, res->pix, wd->pixfmt, CPRepeat, &pa);
+    res->width = imd->width;
+    res->height = imd->height;
     return res;
 }
 
-static struct SharedPattern *link_sharedpattern(struct SharedPattern *x)
+static struct SharedPicture *link_sharedpicture(struct SharedPicture *x)
 {
     ++x->refcount;
     return x;
 }
 
-static void unlink_sharedpattern(wdp wd, struct SharedPattern *x)
+static void unlink_sharedpicture(wdp wd, struct SharedPicture *x)
 {
     --x->refcount;
     if (x->refcount == 0) {
         if (x->i)
             XRenderFreePicture(wd->display, x->i);
+        if (x->pix)
+            XFreePixmap(wd->display, x->pix);
         free(x);
     }
 }
@@ -693,9 +704,8 @@ wbp wopen(char *display)
     ws->pix = XCreatePixmap(wd->display, GetRoot(wd),
                             ws->pixwidth, ws->pixheight,
                             32);
-    attr.poly_edge = PolyEdgeSmooth;
-    attr.poly_mode = PolyModeImprecise;
-    ws->ppic = XRenderCreatePicture(wd->display, ws->pix, wd->pixfmt, CPPolyEdge|CPPolyMode, &attr);
+    attr.poly_edge = PolyEdge;
+    ws->ppic = XRenderCreatePicture(wd->display, ws->pix, wd->pixfmt, CPPolyEdge, &attr);
 
     /* Fill pixmap with background colour */
     XRenderFillRectangle(wd->display,
@@ -741,11 +751,35 @@ int setpattern(wbp w, struct imgdata *imd)
     wcp wc = w->context;
     wdp wd = w->window->display;
     if (wc->pattern)
-        unlink_sharedpattern(wd, wc->pattern);
+        unlink_sharedpicture(wd, wc->pattern);
     if (imd)
-        wc->pattern = new_sharedpattern(wd, imd);
+        wc->pattern = new_sharedpicture(wd, imd);
     else
         wc->pattern = 0;
+    return Succeeded;
+}
+
+int getpattern(wbp w, struct imgdata *imd)
+{
+    wcp wc = w->context;
+    wdp wd = w->window->display;
+    XImage *xi;
+    if (!wc->pattern)
+        return Failed;
+    MemProtect(xi = XGetImage(wd->display, wc->pattern->pix,
+                              0, 0, 
+                              wc->pattern->width, 
+                              wc->pattern->height,
+                              AllPlanes,
+                              ZPixmap));
+
+    imd->format = wd->format;
+    imd->data = (unsigned char *)xi->data;
+    imd->paltbl = 0;
+    imd->width = wc->pattern->width;
+    imd->height = wc->pattern->height;
+    xi->data = 0;
+    XDestroyImage(xi);
     return Succeeded;
 }
 
@@ -1523,11 +1557,6 @@ int getpos(wbp w)
     return Succeeded;
 }
 
-char *getpattern(wbp w)
-{
-    return "solid";
-}
-
 char *getfg(wbp w)
 {
     return w->context->fg->name;
@@ -1635,9 +1664,8 @@ static void resizepixmap(wbp w)
     ws->pixheight = Max(1, ws->height);
     ws->pixwidth  = Max(1, ws->width);
     p = XCreatePixmap(wd->display, GetRoot(wd), ws->pixwidth, ws->pixheight, 32);
-    attr.poly_edge = PolyEdgeSmooth;
-    attr.poly_mode = PolyModeImprecise;
-    pp = XRenderCreatePicture(wd->display, p, wd->pixfmt, CPPolyEdge|CPPolyMode, &attr);
+    attr.poly_edge = PolyEdge;
+    pp = XRenderCreatePicture(wd->display, p, wd->pixfmt, CPPolyEdge, &attr);
     /* Fill with bg colour */
     XRenderFillRectangle(wd->display,
                          PictOpSrc,
@@ -1985,9 +2013,11 @@ static void line2(wbp w, int x1, int y1, int x2, int y2)
         else 
             fill2(w, wc->drawop->i, &wc->fg->color, x1, y1, width, height);
     } else {
-        double dx = x2 - x1;
-        double dy = y2 - y1;
-        double half_width, dnx, dny, d;
+        double dx, dy, half_width, dnx, dny, d;
+        dx = x2 - x1;
+        dy = y2 - y1;
+        if (dx < 0) dx--; else dx++;
+        if (dy < 0) dy--; else dy++;
         half_width = wc->linewidth / 2.0;
         d = half_width / hypot(dx, dy);
         dnx = d * dx;
@@ -2118,11 +2148,10 @@ static void poly2(wbp w, XPointDouble *points, int npoints)
     pix_to_win(ws, x1, y1, x2 - x1 + 1, y2 - y1 + 1);
 }
 
-static Picture imgdata_to_Picture(wdp wd, struct imgdata *imd, unsigned long valuemask, XRenderPictureAttributes *attributes)
+static Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd)
 {
     XImage *xi;
     Pixmap pix;
-    Picture pic;
     GC gc;
     if (imd->format != wd->format)
         syserr("wrong imgdata format");
@@ -2143,12 +2172,10 @@ static Picture imgdata_to_Picture(wdp wd, struct imgdata *imd, unsigned long val
     gc = XCreateGC(wd->display, pix, 0, NULL);
     XPutImage(wd->display, pix, gc, xi,
               0,0, 0,0, imd->width, imd->height);
-    pic = XRenderCreatePicture(wd->display, pix, wd->pixfmt, valuemask, attributes);
-    XFreePixmap(wd->display, pix);
     xi->data = 0;
     XDestroyImage(xi);
     XFreeGC(wd->display, gc);
-    return pic;
+    return pix;
 }
 
 static Picture get_draw_picture(wcp wc)
@@ -2254,12 +2281,16 @@ void outputimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
     wsp ws = w->window;
     wdp wd = ws->display;
-    Picture pic = imgdata_to_Picture(wd, imd, 0, 0);
+    Pixmap pix;
+    Picture pic;
+    pix = imgdata_to_Pixmap(wd, imd);
+    pic = XRenderCreatePicture(wd->display, pix, wd->pixfmt, 0, 0);
     clip(w);
     pic2(w,
          pic,
          x, y, imd->width, imd->height);
     unclip(w);
+    XFreePixmap(wd->display, pix);
     XRenderFreePicture(wd->display, pic);
 }
 
@@ -2704,7 +2735,7 @@ wcp clonecontext(wbp w)
     rv->fg = link_sharedcolor(wc->fg);
     rv->bg = link_sharedcolor(wc->bg);
     if (wc->pattern)
-        rv->pattern = link_sharedpattern(wc->pattern);
+        rv->pattern = link_sharedpicture(wc->pattern);
     rv->font = wc->font;
     rv->linestyle = wc->linestyle;
     rv->linewidth = wc->linewidth;
@@ -2765,7 +2796,7 @@ void freecontext(wcp wc)
         if (wc->bg)
             unlink_sharedcolor(wc->display, wc->bg);
         if (wc->pattern)
-            unlink_sharedpattern(wc->display, wc->pattern);
+            unlink_sharedpicture(wc->display, wc->pattern);
         GRFX_UNLINK(wc, wcntxts);
         free(wc);
     }
@@ -2878,9 +2909,9 @@ static void get_X11BGRA32(struct imgdata *imd, int x, int y, int *r, int *g, int
     }
 }
 
-static struct imgdataformat imgdataformat_X11GRAY8 = { set_X11GRAY8,get_X11GRAY8,0,0,getlength_X11GRAY8,0,0,"X11GRAY8" };
-static struct imgdataformat imgdataformat_X11ARGB32 =   {set_X11ARGB32,get_X11ARGB32,0,0,getlength_32,1,0,"X11ARGB32"};
-static struct imgdataformat imgdataformat_X11BGRA32 =   {set_X11BGRA32,get_X11BGRA32,0,0,getlength_32,1,0,"X11BGRA32"};
+static struct imgdataformat imgdataformat_X11GRAY8 = { set_X11GRAY8,get_X11GRAY8,0,0,getlength_X11GRAY8,0,8,0,"X11GRAY8" };
+static struct imgdataformat imgdataformat_X11ARGB32 =   {set_X11ARGB32,get_X11ARGB32,0,0,getlength_32,8,24,0,"X11ARGB32"};
+static struct imgdataformat imgdataformat_X11BGRA32 =   {set_X11BGRA32,get_X11BGRA32,0,0,getlength_32,8,24,0,"X11BGRA32"};
 
 struct imgdataformat *platform_parseimgdataformat(char *s)
 {

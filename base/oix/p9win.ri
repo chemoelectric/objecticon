@@ -35,9 +35,9 @@ static Point InnerPt(Image *i, int x, int y);
 static struct SharedColor *new_sharedcolor(char *name, int rgba);
 static struct SharedColor *link_sharedcolor(struct SharedColor *i);
 static void unlink_sharedcolor(struct SharedColor *i);
-static struct SharedPattern *new_sharedpattern(struct imgdata *imd);
-static struct SharedPattern *link_sharedpattern(struct SharedPattern *x);
-static void unlink_sharedpattern(struct SharedPattern *x);
+static struct SharedImage *new_sharedimage(struct imgdata *imd);
+static struct SharedImage *link_sharedimage(struct SharedImage *x);
+static void unlink_sharedimage(struct SharedImage *x);
 static void synch_pos(wsp ws);
 static void synch_state(wsp ws);
 static void note_time(char *s);
@@ -250,21 +250,21 @@ static void unlink_sharedcolor(struct SharedColor *x)
     }
 }
 
-static struct SharedPattern *new_sharedpattern(struct imgdata *imd)
+static struct SharedImage *new_sharedimage(struct imgdata *imd)
 {
-    struct SharedPattern *res;
-    GRFX_ALLOC(res, SharedPattern);
+    struct SharedImage *res;
+    GRFX_ALLOC(res, SharedImage);
     res->i = imgdata_to_Image(imd);
     return res;
 }
 
-static struct SharedPattern *link_sharedpattern(struct SharedPattern *x)
+static struct SharedImage *link_sharedimage(struct SharedImage *x)
 {
     ++x->refcount;
     return x;
 }
 
-static void unlink_sharedpattern(struct SharedPattern *x)
+static void unlink_sharedimage(struct SharedImage *x)
 {
     --x->refcount;
     if (x->refcount == 0) {
@@ -997,11 +997,31 @@ int setpattern(wbp w, struct imgdata *imd)
 {
     wcp wc = w->context;
     if (wc->pattern)
-        unlink_sharedpattern(wc->pattern);
+        unlink_sharedimage(wc->pattern);
     if (imd)
-        wc->pattern = new_sharedpattern(imd);
+        wc->pattern = new_sharedimage(imd);
     else
         wc->pattern = 0;
+    return Succeeded;
+}
+
+int getpattern(wbp w, struct imgdata *imd)
+{
+    int len;
+    Image *im;
+    uchar *data;
+    wcp wc = w->context;
+    if (!wc->pattern)
+        return Failed;
+    im = wc->pattern->i;
+    imd->width = Dx(im->r);
+    imd->height = Dy(im->r);
+    len = imd->width * imd->height * 4;
+    MemProtect(data = malloc(len));
+    unloadimage(im, im->r, data, len);
+    imd->format = &imgdataformat_P9ABGR32;
+    imd->data = data;
+    imd->paltbl = 0;
     return Succeeded;
 }
 
@@ -1625,7 +1645,7 @@ void freecontext(wcp wc)
         if (wc->bg)
             unlink_sharedcolor(wc->bg);
         if (wc->pattern)
-            unlink_sharedpattern(wc->pattern);
+            unlink_sharedimage(wc->pattern);
         GRFX_UNLINK(wc, wcntxts);
         free(wc);
     }
@@ -1897,7 +1917,7 @@ wcp clonecontext(wbp w)
     wc->fg = link_sharedcolor(src->fg);
     wc->bg = link_sharedcolor(src->bg);
     if (src->pattern)
-        wc->pattern = link_sharedpattern(src->pattern);
+        wc->pattern = link_sharedimage(src->pattern);
     wc->font = src->font;
     wc->thick = src->thick;
     wc->drawop = src->drawop;
@@ -2121,7 +2141,7 @@ int writeimagefileimpl(char *filename, struct imgdata *imd)
     }
 
     /* Transparency only works for png (not gifs it seems) */
-    if (!imd->format->has_alpha || strcmp(cmd, "topng") != 0) {
+    if (!imd->format->alpha_depth || strcmp(cmd, "topng") != 0) {
         ndata = 3 * imd->width * imd->height;
         MemProtect(data = malloc(ndata));
         p = data;
@@ -2374,8 +2394,8 @@ static void get_P9AG16(struct imgdata *imd, int x, int y, int *r, int *g, int *b
         *r = *g = *b = gr;
 }
 
-static struct imgdataformat imgdataformat_P9ABGR32 =   {set_P9ABGR32,get_P9ABGR32,0,0,getlength_32,1,0,"P9ABGR32"};
-static struct imgdataformat imgdataformat_P9AG16 =   {set_P9AG16,get_P9AG16,0,0,getlength_16,1,0,"P9AG16"};
+static struct imgdataformat imgdataformat_P9ABGR32 =   {set_P9ABGR32,get_P9ABGR32,0,0,getlength_32,8,24,0,"P9ABGR32"};
+static struct imgdataformat imgdataformat_P9AG16 =   {set_P9AG16,get_P9AG16,0,0,getlength_16,8,8,0,"P9AG16"};
 
 static struct Cursor cursor_data[] = {
     #include "p9cursors/bullseye"          /*  0 */
