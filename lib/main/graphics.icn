@@ -496,6 +496,10 @@ final class Window(NoCopy)
          set_palette(1, bg)
    end
 
+   # Set the fill pattern (texture) to fill shapes (instead of the
+   # foreground colour).  If no parameter is given, the setting is
+   # cleared and the foreground colour is used again.
+   #
    public set_pattern(v)
       return if /v | is(v, Pixels) then
          set_pattern_impl(v)
@@ -506,12 +510,6 @@ final class Window(NoCopy)
    end
 
    private native set_pattern_impl(v)
-
-   public get_pattern()
-      return Pixels(get_pattern_impl())
-   end
-
-   private native get_pattern_impl()
 
    #
    # The canvas attribute pointer specifies the shape of the figure

@@ -607,19 +607,6 @@ function graphics_Window_lower(self)
    }
 end
 
-function graphics_Window_get_pattern_impl(self)
-   body {
-      struct imgdata *imd;
-      GetSelfW();
-      MemProtect(imd = malloc(sizeof(struct imgdata)));
-      if (getpattern(self_w, imd) == Failed) {
-          free(imd);
-          fail;
-      }
-      return C_integer((word)imd);
-   }
-end
-
 function graphics_Window_get_pixels_impl(self, x0, y0, w0, h0)
    body {
       struct imgdata *imd;
