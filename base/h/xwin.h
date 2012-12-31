@@ -74,8 +74,10 @@ struct SharedColor {
    int   refcount;
 };
 
-struct SharedPattern {
+struct SharedPicture {
    Picture i;
+   Pixmap pix;
+   int width, height;
    int refcount;
 };
 

@@ -1370,7 +1370,7 @@ static int writepngfile(char *filename, struct imgdata *imd)
 
     png_init_io(png_ptr, fp);
 
-    if (imd->format->has_alpha) {
+    if (imd->format->alpha_depth) {
         png_set_IHDR(png_ptr, info_ptr, imd->width, imd->height,
                      16, PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE,
                      PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
@@ -3034,20 +3034,20 @@ static void setpi_PALETTE8(struct imgdata *imd, int x, int y, int i)
     *s = (unsigned char)i;
 }
 
-struct imgdataformat imgdataformat_A8 =   {set_A8,get_A8,0,0,getlength_8,1,0,"A8"};
-struct imgdataformat imgdataformat_A16 =   {set_A16,get_A16,0,0,getlength_16,1,0,"A16"};
-struct imgdataformat imgdataformat_RGB24 =   {set_RGB24,get_RGB24,0,0,getlength_24,0,0,"RGB24"};
-struct imgdataformat imgdataformat_BGR24 =   {set_BGR24,get_BGR24,0,0,getlength_24,0,0,"BGR24"};
-struct imgdataformat imgdataformat_RGBA32 =   {set_RGBA32,get_RGBA32,0,0,getlength_32,1,0,"RGBA32"};
-struct imgdataformat imgdataformat_ABGR32 =   {set_ABGR32,get_ABGR32,0,0,getlength_32,1,0,"ABGR32"};
-struct imgdataformat imgdataformat_RGB48 =   {set_RGB48,get_RGB48,0,0,getlength_48,0,0,"RGB48"};
-struct imgdataformat imgdataformat_RGBA64 =   {set_RGBA64,get_RGBA64,0,0,getlength_64,1,0,"RGBA64"};
-struct imgdataformat imgdataformat_G8 =   {set_G8,get_G8,0,0,getlength_8,0,0,"G8"};
-struct imgdataformat imgdataformat_GA16 =   {set_GA16,get_GA16,0,0,getlength_16,1,0,"GA16"};
-struct imgdataformat imgdataformat_AG16 =   {set_AG16,get_AG16,0,0,getlength_16,1,0,"AG16"};
-struct imgdataformat imgdataformat_G16 =   {set_G16,get_G16,0,0,getlength_16,0,0,"G16"};
-struct imgdataformat imgdataformat_GA32 =   {set_GA32,get_GA32,0,0,getlength_32,1,0,"GA32"};
-struct imgdataformat imgdataformat_PALETTE1 =   {set_PALETTE,get_PALETTE,setpi_PALETTE1,getpi_PALETTE1,getlength_1,1,2,"PALETTE1"};
-struct imgdataformat imgdataformat_PALETTE2 =   {set_PALETTE,get_PALETTE,setpi_PALETTE2,getpi_PALETTE2,getlength_2,1,4,"PALETTE2"};
-struct imgdataformat imgdataformat_PALETTE4 =   {set_PALETTE,get_PALETTE,setpi_PALETTE4,getpi_PALETTE4,getlength_4,1,16,"PALETTE4"};
-struct imgdataformat imgdataformat_PALETTE8 =   {set_PALETTE,get_PALETTE,setpi_PALETTE8,getpi_PALETTE8,getlength_8,1,256,"PALETTE8"};
+struct imgdataformat imgdataformat_A8 =   {set_A8,get_A8,0,0,getlength_8,8,0,0,"A8"};
+struct imgdataformat imgdataformat_A16 =   {set_A16,get_A16,0,0,getlength_16,16,0,0,"A16"};
+struct imgdataformat imgdataformat_RGB24 =   {set_RGB24,get_RGB24,0,0,getlength_24,0,24,0,"RGB24"};
+struct imgdataformat imgdataformat_BGR24 =   {set_BGR24,get_BGR24,0,0,getlength_24,0,24,0,"BGR24"};
+struct imgdataformat imgdataformat_RGBA32 =   {set_RGBA32,get_RGBA32,0,0,getlength_32,8,24,0,"RGBA32"};
+struct imgdataformat imgdataformat_ABGR32 =   {set_ABGR32,get_ABGR32,0,0,getlength_32,8,24,0,"ABGR32"};
+struct imgdataformat imgdataformat_RGB48 =   {set_RGB48,get_RGB48,0,0,getlength_48,0,48,0,"RGB48"};
+struct imgdataformat imgdataformat_RGBA64 =   {set_RGBA64,get_RGBA64,0,0,getlength_64,16,48,0,"RGBA64"};
+struct imgdataformat imgdataformat_G8 =   {set_G8,get_G8,0,0,getlength_8,0,8,0,"G8"};
+struct imgdataformat imgdataformat_GA16 =   {set_GA16,get_GA16,0,0,getlength_16,8,8,0,"GA16"};
+struct imgdataformat imgdataformat_AG16 =   {set_AG16,get_AG16,0,0,getlength_16,8,8,0,"AG16"};
+struct imgdataformat imgdataformat_G16 =   {set_G16,get_G16,0,0,getlength_16,0,16,0,"G16"};
+struct imgdataformat imgdataformat_GA32 =   {set_GA32,get_GA32,0,0,getlength_32,16,16,0,"GA32"};
+struct imgdataformat imgdataformat_PALETTE1 =   {set_PALETTE,get_PALETTE,setpi_PALETTE1,getpi_PALETTE1,getlength_1,16,48,2,"PALETTE1"};
+struct imgdataformat imgdataformat_PALETTE2 =   {set_PALETTE,get_PALETTE,setpi_PALETTE2,getpi_PALETTE2,getlength_2,16,48,4,"PALETTE2"};
+struct imgdataformat imgdataformat_PALETTE4 =   {set_PALETTE,get_PALETTE,setpi_PALETTE4,getpi_PALETTE4,getlength_4,16,48,16,"PALETTE4"};
+struct imgdataformat imgdataformat_PALETTE8 =   {set_PALETTE,get_PALETTE,setpi_PALETTE8,getpi_PALETTE8,getlength_8,16,48,256,"PALETTE8"};

@@ -298,7 +298,7 @@ class Tree(SelectableScrollArea)
             little := plus
          }
          # Erase first as the little +/- are not opaque images, and we may have drawn a line here.
-         #view.cbwin.erase_area(lp - col_w / 2 - plus.w / 2, y0 - plus.h / 2, plus.w, plus.h)
+         view.cbwin.erase_area(lp - col_w / 2 - plus.w / 2, y0 - plus.h / 2, plus.w, plus.h)
          little.draw(view.cbwin, lp - col_w / 2 - plus.w / 2, y0 - plus.h / 2)
       }
       (\img).draw(view.cbwin, lp + col_w / 2 - img.w / 2, y0 - img.h / 2)
