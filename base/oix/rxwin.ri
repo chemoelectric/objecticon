@@ -65,7 +65,6 @@ static Picture get_draw_picture(wcp wc);
 static void pix_to_win(wsp ws, int x, int y, int w, int h);
 static Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd);
 
-static struct imgdataformat imgdataformat_X11GRAY8;
 static struct imgdataformat imgdataformat_X11ARGB32;
 static struct imgdataformat imgdataformat_X11BGRA32;
 
@@ -756,30 +755,6 @@ int setpattern(wbp w, struct imgdata *imd)
         wc->pattern = new_sharedpicture(wd, imd);
     else
         wc->pattern = 0;
-    return Succeeded;
-}
-
-int getpattern(wbp w, struct imgdata *imd)
-{
-    wcp wc = w->context;
-    wdp wd = w->window->display;
-    XImage *xi;
-    if (!wc->pattern)
-        return Failed;
-    MemProtect(xi = XGetImage(wd->display, wc->pattern->pix,
-                              0, 0, 
-                              wc->pattern->width, 
-                              wc->pattern->height,
-                              AllPlanes,
-                              ZPixmap));
-
-    imd->format = wd->format;
-    imd->data = (unsigned char *)xi->data;
-    imd->paltbl = 0;
-    imd->width = wc->pattern->width;
-    imd->height = wc->pattern->height;
-    xi->data = 0;
-    XDestroyImage(xi);
     return Succeeded;
 }
 
@@ -2831,36 +2806,6 @@ int settransientfor(wbp w, wbp other)
     return Succeeded;
 }
 
-static int getbpr_X11GRAY8(struct imgdata *imd)
-{
-    if (imd->width % 4 == 0)
-        return imd->width;
-    else
-        return imd->width + (4 - imd->width % 4);
-}
-
-static void set_X11GRAY8(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
-{
-    unsigned char *s;
-    int n = getbpr_X11GRAY8(imd) * y + x;
-    s = imd->data + n;
-    *s++ = (0.299 * r + 0.587 * g + 0.114 * b) / 256;
-}
-
-static void get_X11GRAY8(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
-{
-    unsigned char *s;
-    int n = getbpr_X11GRAY8(imd) * y + x;
-    s = imd->data + n;
-    *r = *g = *b = 257 * (*s++);
-    *a = 65535;
-}
-
-static int getlength_X11GRAY8(struct imgdata *imd)
-{
-    return getbpr_X11GRAY8(imd) * imd->height;
-}
-
 static void set_X11ARGB32(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
 {
     int n = imd->width * y + x;
@@ -2909,7 +2854,6 @@ static void get_X11BGRA32(struct imgdata *imd, int x, int y, int *r, int *g, int
     }
 }
 
-static struct imgdataformat imgdataformat_X11GRAY8 = { set_X11GRAY8,get_X11GRAY8,0,0,getlength_X11GRAY8,0,8,0,"X11GRAY8" };
 static struct imgdataformat imgdataformat_X11ARGB32 =   {set_X11ARGB32,get_X11ARGB32,0,0,getlength_32,8,24,0,"X11ARGB32"};
 static struct imgdataformat imgdataformat_X11BGRA32 =   {set_X11BGRA32,get_X11BGRA32,0,0,getlength_32,8,24,0,"X11BGRA32"};
 
@@ -2919,7 +2863,5 @@ struct imgdataformat *platform_parseimgdataformat(char *s)
         return &imgdataformat_X11ARGB32;
     if (strcmp(s, imgdataformat_X11BGRA32.name) == 0)
         return &imgdataformat_X11BGRA32;
-    if (strcmp(s, imgdataformat_X11GRAY8.name) == 0)
-        return &imgdataformat_X11GRAY8;
     return 0;
 }
