@@ -446,14 +446,14 @@ class Slider(Component)
          i := self.lo
          while i <= self.hi do {
             yp := self.slider_area_pos + integer(((i - self.lo) * (self.slider_area_size) / (self.hi - self.lo)))
-            self.cbwin.draw_line(ticks_pos, yp, ticks_pos + SLIDER_TICK_H - 1, yp)
+            self.cbwin.draw_line(ticks_pos, yp, ticks_pos + SLIDER_TICK_H, yp)
             i +:= ticks
          }
       } else {
          i := self.lo
          while i <= self.hi do {
             xp := self.slider_area_pos + integer(((i - self.lo) * (self.slider_area_size) / (self.hi - self.lo)))
-            self.cbwin.draw_line(xp, ticks_pos, xp, ticks_pos + SLIDER_TICK_H - 1)
+            self.cbwin.draw_line(xp, ticks_pos, xp, ticks_pos + SLIDER_TICK_H)
             i +:= ticks
          }
       }

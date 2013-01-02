@@ -93,8 +93,8 @@ class TableColumn(TextButton)
    public display()
       cast(self,TextButton).display()
       Gui.style.draw_shadow_line(self.cbwin,
-                             self.x + self.w - 1, self.y,
-                             self.x + self.w - 1, self.y + self.h - 1)
+                                 self.x + self.w - 1, self.y,
+                                 self.x + self.w - 1, self.y + self.h)
    end
 
    #

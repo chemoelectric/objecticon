@@ -217,16 +217,16 @@ class TabSet(Component)
          case loc of {
             "e": Gui.style.draw_shadow_line(self.cbwin, 
                                         x - i, y + i,
-                                        x - i, y + len - 1 - i)
+                                        x - i, y + len - i)
             "w": Gui.style.draw_shadow_line(self.cbwin, 
                                         x + i, y + i,
-                                        x + i, y + len - 1 - i)
+                                        x + i, y + len - i)
             "n": Gui.style.draw_shadow_line(self.cbwin, 
                                         x + i, y + i,
-                                        x + len - 1 - i, y + i)
+                                        x + len - i, y + i)
             "s": Gui.style.draw_shadow_line(self.cbwin, 
                                         x + i, y - i,
-                                        x + len - 1 - i, y - i)
+                                        x + len - i, y - i)
          }
       }
    end
@@ -239,16 +239,16 @@ class TabSet(Component)
          case loc of {
             "e": Gui.style.draw_hilite_line(self.cbwin, 
                                         x - i, y + i,
-                                        x - i, y + len - 1 - i)
+                                        x - i, y + len - i)
             "w": Gui.style.draw_hilite_line(self.cbwin, 
                                         x + i, y + i,
-                                        x + i, y + len - 1 - i)
+                                        x + i, y + len - i)
             "n": Gui.style.draw_hilite_line(self.cbwin, 
                                         x + i, y + i,
-                                        x + len - 1 - i, y + i)
+                                        x + len - i, y + i)
             "s": Gui.style.draw_hilite_line(self.cbwin, 
                                         x + i, y - i,
-                                        x + len - 1 - i, y - i)
+                                        x + len - i, y - i)
          }
       }
    end

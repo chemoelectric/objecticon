@@ -93,8 +93,8 @@ class Style()
       use {
          cw := W.clone().set_fg("red"),
          { 
-            cw.draw_line(x, y, x, y + h - 1)
-            cw.draw_line(x - 1, y, x - 1, y + h - 1)
+            cw.draw_line(x, y, x, y + h)
+            cw.draw_line(x - 1, y, x - 1, y + h)
          }
       }
    end
