@@ -390,7 +390,10 @@ procedure BevelRectangle(win, x, y, w, h, bw)
    lower.fill_rectangle(xx - bw, y, bw, h)
 
    while (bw -:= 1) >= 0 do {
-      upper.draw_line(x, yy -:= 1, x, y, xx -:= 1, y)
+      upper.fill_rectangle(x, y, 1, h)
+      upper.fill_rectangle(x + 1, y, w - 1, 1)
+      h -:= 2
+      w -:= 2
       x +:= 1
       y +:= 1
    }

@@ -2138,10 +2138,46 @@ static void traps(wbp w,
     XRenderCompositeTrapezoids(wd->display, op, src,  dest, 0, 0, 0, &trap, 1);
 }
 
+static int make_circle(double cx, double cy, double radius, int max_ntraps, XTrapezoid traps[])
+{
+    int n=0, k=0, y1, y2, w1, w2;
+    while(k<max_ntraps) {
+        y1 = (int)(-radius*cos(M_PI*k/max_ntraps));
+        w1 = sqrt(radius*radius-y1*y1);
+        do {
+            k++;
+            y2=(int)(-radius*cos(M_PI*k/max_ntraps));
+        } while(y1==y2);
+        w2 = sqrt(radius*radius-y2*y2);
+        traps[n] = trapezoid(cy+y1, cx-w1, cx+w1,
+                             cy+y2, cx-w2, cx+w2);
+        n++;
+    }
+    return n;
+}
+
+static Picture getjoinpicture(wbp w)
+{
+    wsp ws = w->window;
+    wdp wd = ws->display;
+    wcp wc = w->context;
+    XTrapezoid traps[8];
+    Picture pic;
+    int ntraps;
+    pic = getmask(wd, wc->linewidth, wc->linewidth);
+    ntraps = make_circle(wc->linewidth / 2.0,
+                         wc->linewidth / 2.0,
+                         wc->linewidth / 2.0,
+                         8, traps);
+    XRenderCompositeTrapezoids(wd->display, PictOpOver, wd->white->brush,  pic, 0, 0, 0, traps, ntraps);
+    return pic;
+}
+
 static void drawlineinfo(wbp w,
                          int op,
                          Picture src,
                          Picture dest,
+                         Picture join,
                          struct lineinfo *prev,
                          struct lineinfo *curr)
 {
@@ -2227,8 +2263,6 @@ static void drawlineinfo(wbp w,
     }
 
     if (prev) {
-        XTriangle tri;
-
         if (wc->linewidth == 1) {
             /*
              * This is a cosmetic corner-case where the adjustments to
@@ -2247,32 +2281,43 @@ static void drawlineinfo(wbp w,
                                  1, 1);
 
         } else {
-            /*
-             * Fill in the gap between the current and previous line with a triangle.
-             */
-            if (curr->dx * prev->dy > curr->dy * prev->dx)
-                tri = triangle(prev->q1.x, prev->q1.y, curr->p0->x, curr->p0->y, curr->p1.x, curr->p1.y);
-            else
-                tri = triangle(prev->q2.x, prev->q2.y, curr->p0->x, curr->p0->y, curr->p2.x,curr-> p2.y);
-            XRenderCompositeTriangles(wd->display, op, src, dest, 0,0,0, &tri, 1);
+                XRenderComposite(wd->display,
+                                 op,
+                                 src,          /* src */
+                                 join,         /* mask */
+                                 dest,         /* dest */
+                                 0,0,          /* src x,y */
+                                 0,0,          /* mask x,y */
+                                 curr->p0->x - wc->linewidth / 2, curr->p0->y - wc->linewidth / 2,         /* dst x,y */
+                                 wc->linewidth, wc->linewidth);
         }
     }
 }
 
 static void drawlines_impl(wbp w, int op, Picture src, Picture dest, struct lineinfo *lis, int nlis)
 {
+    wsp ws = w->window;
+    wdp wd = ws->display;
+    wcp wc = w->context;
     int i;
+    Picture join;
+    if (wc->linewidth > 1)
+        join = getjoinpicture(w);
+    else
+        join = None;
     for (i = 0; i < nlis; ++i) {
         if (i == 0) {
             if (nlis > 2 && 
                 lis[nlis - 1].q0->x == lis[0].p0->x &&
                 lis[nlis - 1].q0->y == lis[0].p0->y)
-                drawlineinfo(w, op, src, dest, &lis[nlis - 1], &lis[i]);
+                drawlineinfo(w, op, src, dest, join, &lis[nlis - 1], &lis[i]);
             else
-                drawlineinfo(w, op, src, dest, 0, &lis[i]);
+                drawlineinfo(w, op, src, dest, join, 0, &lis[i]);
         } else
-            drawlineinfo(w, op, src, dest, &lis[i - 1], &lis[i]);
+            drawlineinfo(w, op, src, dest, join, &lis[i - 1], &lis[i]);
     }
+    if (wc->linewidth > 1)
+        XRenderFreePicture(wd->display, join);
 }
 
 void drawlines(wbp w, struct point *points, int npoints)
