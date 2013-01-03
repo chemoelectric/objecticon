@@ -68,6 +68,7 @@ static Picture getmask(wdp wd, int width, int height);
 static XPointDouble doublept(double x, double y);
 static XTriangle triangle(double x1, double y1, double x2, double y2, double x3, double y3);
 static XTrapezoid trapezoid(double top, double x1, double x2, double bottom, double x3, double x4);
+static int needmask(wcp wc, int overlap);
 
 static struct imgdataformat imgdataformat_X11ARGB32;
 static struct imgdataformat imgdataformat_X11BGRA32;
@@ -2227,14 +2228,34 @@ static void drawlineinfo(wbp w,
 
     if (prev) {
         XTriangle tri;
-        /*
-         * Fill in the gap between the current and previous line with a triangle.
-         */
-        if (curr->dx * prev->dy > curr->dy * prev->dx)
-            tri = triangle(prev->q1.x, prev->q1.y, curr->p0->x, curr->p0->y, curr->p1.x, curr->p1.y);
-        else
-            tri = triangle(prev->q2.x, prev->q2.y, curr->p0->x, curr->p0->y, curr->p2.x,curr-> p2.y);
-        XRenderCompositeTriangles(wd->display, op, src, dest, 0,0,0, &tri, 1);
+
+        if (wc->linewidth == 1) {
+            /*
+             * This is a cosmetic corner-case where the adjustments to
+             * a vertical/horizontal 1-pixel wide line to avoid
+             * antialiasing cause a 1 pixel gap in the join corner.
+             */
+            if ((curr->dy == 0 && prev->dx == 0) || (curr->dx == 0 && prev->dy == 0))
+                XRenderComposite(wd->display,
+                                 op,
+                                 src,          /* src */
+                                 None,         /* mask */
+                                 dest,         /* dest */
+                                 0,0,          /* src x,y */
+                                 0,0,          /* mask x,y */
+                                 curr->p0->x, curr->p0->y,         /* dst x,y */
+                                 1, 1);
+
+        } else {
+            /*
+             * Fill in the gap between the current and previous line with a triangle.
+             */
+            if (curr->dx * prev->dy > curr->dy * prev->dx)
+                tri = triangle(prev->q1.x, prev->q1.y, curr->p0->x, curr->p0->y, curr->p1.x, curr->p1.y);
+            else
+                tri = triangle(prev->q2.x, prev->q2.y, curr->p0->x, curr->p0->y, curr->p2.x,curr-> p2.y);
+            XRenderCompositeTriangles(wd->display, op, src, dest, 0,0,0, &tri, 1);
+        }
     }
 }
 
@@ -2272,7 +2293,7 @@ void drawlines(wbp w, struct point *points, int npoints)
     /*printf("Extent : %d %d %d %d\n",x,y,width,height);*/
 
     clip(w);
-    if (wc->pattern || wc->fg->color.alpha != 0xffff || wc->drawop->i != PictOpOver) {
+    if (needmask(wc, 1)) {
         Picture mask = getmask(wd, width, height);
         for (i = 0; i < npoints; ++i) {
             points[i].x -= x;
@@ -2297,6 +2318,19 @@ void drawlines(wbp w, struct point *points, int npoints)
 void drawpoint(wbp w, int x, int y)
 {
     fillrectangle(w, x, y, 1, 1);
+}
+
+static int needmask(wcp wc, int overlap)
+{
+    if (wc->pattern)
+        return 1;
+    if (!overlap)
+        return 0;
+    if (wc->drawop->i != PictOpOver)
+        return 1;
+    if (wc->fg->color.alpha != 0xffff)
+        return 1;
+    return 0;
 }
 
 static Picture getmask(wdp wd, int width, int height)
@@ -2330,7 +2364,7 @@ void drawrectangle(wbp w, int x, int y, int width, int height)
         /* Note that we know the two vertical lines will be at least one pixel high, since
          * height > wc->linewidth + 1.
          */
-        if (wc->pattern) {
+        if (needmask(wc, 0)) {
             Picture mask = getmask(wd, width + wc->linewidth - 1, height + wc->linewidth - 1);
             XRenderFillRectangle(wd->display, PictOpOver, mask, &wd->white->color, 0, 0 , width + wc->linewidth - 1, wc->linewidth);
             XRenderFillRectangle(wd->display, PictOpOver, mask, &wd->white->color, width - 1, wc->linewidth , wc->linewidth, height - wc->linewidth - 1);
