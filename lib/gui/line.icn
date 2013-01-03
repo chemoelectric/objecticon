@@ -47,23 +47,15 @@ class Line(Component)
       if \self.is_horizontal_flag then {
          y1 := self.y + (self.h - line_width) / 2 
          every i := 0 to line_width / 2 - 1 do
-            Gui.style.draw_shadow_line(self.cbwin, 
-                                       self.x, y1 + i,
-                                       self.x + self.w, y1 + i)
+            Gui.style.fill_shadow_rectangle(self.cbwin,  self.x, y1 + i, self.w, 1)
          every i := line_width / 2 to line_width - 1 do
-            Gui.style.draw_hilite_line(self.cbwin, 
-                                   self.x, y1 + i,
-                                   self.x + self.w, y1 + i)
+            Gui.style.fill_hilite_rectangle(self.cbwin,  self.x, y1 + i, self.w, 1)
       } else {
          x1 := self.x + (self.w - line_width) / 2
          every i := 0 to line_width / 2 - 1 do
-            Gui.style.draw_shadow_line(self.cbwin, 
-                                       x1 + i, self.y,
-                                       x1 + i, self.y + self.h)
+            Gui.style.fill_shadow_rectangle(self.cbwin, x1 + i, self.y, 1, self.h)
          every i := line_width / 2 to line_width - 1 do
-            Gui.style.draw_hilite_line(self.cbwin, 
-                                       x1 + i, self.y,
-                                       x1 + i, self.y + self.h)
+            Gui.style.fill_hilite_rectangle(self.cbwin, x1 + i, self.y, 1, self.h)
       }
    end
 

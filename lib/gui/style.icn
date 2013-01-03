@@ -25,12 +25,12 @@ class Style()
       BevelRectangle(W, x, y, w, h, -width)
    end
 
-   public draw_hilite_line(W, x1, y1, x2, y2)
-      bev_lookup(W).hilite.draw_line(x1, y1, x2, y2)
+   public fill_hilite_rectangle(W, x, y, w, h)
+      bev_lookup(W).hilite.fill_rectangle(x, y, w, h)
    end
 
-   public draw_shadow_line(W, x1, y1, x2, y2)
-      bev_lookup(W).shadow.draw_line(x1, y1, x2, y2)
+   public fill_shadow_rectangle(W, x, y, w, h)
+      bev_lookup(W).shadow.fill_rectangle(x, y, w, h)
    end
 
    public get_hilite_color(W)
@@ -81,10 +81,7 @@ class Style()
       local cw
       use {
          cw := bev_lookup(W).shadow.clone(),
-         {
-            cw.draw_line(x, y, x, y + h - 1)
-            cw.draw_line(x - 1, y, x - 1, y + h - 1)
-         }
+         cw.fill_rectangle(x - 1, y, 2, h)
       }
    end
 
@@ -92,10 +89,7 @@ class Style()
       local cw
       use {
          cw := W.clone().set_fg("red"),
-         { 
-            cw.draw_line(x, y, x, y + h)
-            cw.draw_line(x - 1, y, x - 1, y + h)
-         }
+         cw.fill_rectangle(x - 1, y, 2, h)
       }
    end
 

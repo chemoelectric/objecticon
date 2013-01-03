@@ -262,13 +262,13 @@ procedure text_width_ex(win, s, i, j, tw)
 end
 
 procedure draw_string_ex(win, x, y, s, k)
-   local i, x1, y1
+   local i
    y +:= win.get_font_ascent()
    win.draw_string(x, y, s)
    if i := upto(\k, map(s)) then {
-      x1 := x + win.text_width(s[1:i])
-      y1 := y + win.get_font_descent() - 1
-      win.draw_line(x1, y1, x1 + win.text_width(s[i]), y1)
+      win.fill_rectangle(x + win.text_width(s[1:i]),
+                         y + win.get_font_descent() - 1,
+                         win.text_width(s[i]), 1)
    }
 end
 

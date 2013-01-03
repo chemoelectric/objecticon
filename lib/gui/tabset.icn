@@ -215,18 +215,10 @@ class TabSet(Component)
          fail
       every i := 0 to Gui.BORDER_WIDTH - 1 do {
          case loc of {
-            "e": Gui.style.draw_shadow_line(self.cbwin, 
-                                        x - i, y + i,
-                                        x - i, y + len - i)
-            "w": Gui.style.draw_shadow_line(self.cbwin, 
-                                        x + i, y + i,
-                                        x + i, y + len - i)
-            "n": Gui.style.draw_shadow_line(self.cbwin, 
-                                        x + i, y + i,
-                                        x + len - i, y + i)
-            "s": Gui.style.draw_shadow_line(self.cbwin, 
-                                        x + i, y - i,
-                                        x + len - i, y - i)
+            "e": Gui.style.fill_shadow_rectangle(self.cbwin, x - i, y + i, 1, len - 2 * i)
+            "w": Gui.style.fill_shadow_rectangle(self.cbwin, x + i, y + i, 1, len - 2 * i)
+            "n": Gui.style.fill_shadow_rectangle(self.cbwin, x + i, y + i, len - 2 * i, 1)
+            "s": Gui.style.fill_shadow_rectangle(self.cbwin, x + i, y - i, len - 2 * i, 1)
          }
       }
    end
@@ -237,18 +229,10 @@ class TabSet(Component)
          fail
       every i := 0 to Gui.BORDER_WIDTH - 1 do {
          case loc of {
-            "e": Gui.style.draw_hilite_line(self.cbwin, 
-                                        x - i, y + i,
-                                        x - i, y + len - i)
-            "w": Gui.style.draw_hilite_line(self.cbwin, 
-                                        x + i, y + i,
-                                        x + i, y + len - i)
-            "n": Gui.style.draw_hilite_line(self.cbwin, 
-                                        x + i, y + i,
-                                        x + len - i, y + i)
-            "s": Gui.style.draw_hilite_line(self.cbwin, 
-                                        x + i, y - i,
-                                        x + len - i, y - i)
+            "e": Gui.style.fill_hilite_rectangle(self.cbwin, x - i, y + i, 1, len - 2 * i)
+            "w": Gui.style.fill_hilite_rectangle(self.cbwin, x + i, y + i, 1, len - 2 * i)
+            "n": Gui.style.fill_hilite_rectangle(self.cbwin, x + i, y + i, len - 2 * i, 1)
+            "s": Gui.style.fill_hilite_rectangle(self.cbwin, x + i, y - i, len - 2 * i, 1)
          }
       }
    end
