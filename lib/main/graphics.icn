@@ -670,7 +670,11 @@ final class Window(NoCopy)
    #
    # draw_polygon(x1,y1,...xN,yN)
    #
-   public native draw_polygon(a[])
+   public draw_polygon(a[])
+      put(a, a[1])
+      put(a, a[2])
+      return draw_line!a
+   end
 
    #
    # draw_rectangle(x, y, width, height)

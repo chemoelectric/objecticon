@@ -73,6 +73,9 @@ static int needmask(wcp wc, int overlap);
 static struct imgdataformat imgdataformat_X11ARGB32;
 static struct imgdataformat imgdataformat_X11BGRA32;
 
+#define   EndDisc 1
+#define   EndSquare 2
+
 static stringint drawops[] = {
    { 0, 12},
    {"atop",  PictOpAtop},
@@ -90,12 +93,10 @@ static stringint drawops[] = {
 };
 
 static stringint linestyles[] = {
-    {0, 5},
-    {"dashed",      LineOnOffDash},
-    {"doubledash",  LineDoubleDash},
-    {"onoff",       LineOnOffDash},
-    {"solid",       LineSolid},
-    {"striped",     LineDoubleDash},
+    {0, 3},
+    {"enddisc",      EndDisc},
+    {"endsquare",    EndSquare},
+    {"solid",        EndSquare},
 };
 
 static stringint canvastypes[] = {
@@ -697,7 +698,7 @@ wbp wopen(char *display)
     wc->clipx = wc->clipy = 0;
     wc->clipw = wc->cliph = -1;
     wc->linewidth = 1;
-    wc->linestyle = stringint_lookup(linestyles, "solid");
+    wc->linestyle = stringint_lookup(linestyles, "endsquare");
     GRFX_LINK(wc, wcntxts);
 
     w->context = wc;
@@ -1976,80 +1977,29 @@ void fillarc(wbp w, int x, int y, int width, int height, double angle1, double a
  *   p1 ---------------------q1      v
  *
  *   <-------- len ---------->
- * 
- * p1,p2,q1,q2 have double elements, but for horizontal or vertical
- * lines, the values will be whole numbers, so that these lines can be
- * drawn as simple rectangles without antialiasing having an effect.
  */
 
 struct lineinfo {
-    struct point *p0, *q0;
-    int dx, dy;
+    double dx, dy;
     double len;
     XPointDouble p1, p2, q1, q2;
 };
 
-static void getlineinfo(wcp wc, struct point *p0, struct point *q0, struct lineinfo *res)
+static void getlineinfo(wcp wc, XPointDouble *p0, XPointDouble *q0, struct lineinfo *res)
 {
-    res->p0 = p0;
-    res->q0 = q0;
+    double ex, ey;
     res->dx = q0->x - p0->x;
     res->dy = q0->y - p0->y;
-    if (res->dx == 0) {
-        if (res->dy > 0) {
-            res->len = res->dy;
-            res->p1 = doublept(p0->x - wc->linewidth / 2, p0->y);
-            res->p2 = doublept(res->p1.x + wc->linewidth, p0->y);
-            res->q1 = doublept(res->p1.x, q0->y);
-            res->q2 = doublept(res->p2.x, q0->y);
-        } else {
-            res->len = -res->dy;
-            res->p2 = doublept(p0->x - wc->linewidth / 2, p0->y);
-            res->p1 = doublept(res->p2.x + wc->linewidth, p0->y);
-            res->q2 = doublept(res->p2.x, q0->y);
-            res->q1 = doublept(res->p1.x, q0->y);
-        }
-    } else if (res->dy == 0) {
-        if (res->dx > 0) {
-            res->len = res->dx;
-            res->p2 = doublept(p0->x, p0->y - wc->linewidth / 2);
-            res->p1 = doublept(p0->x, res->p2.y + wc->linewidth);
-            res->q2 = doublept(q0->x, res->p2.y);
-            res->q1 = doublept(q0->x, res->p1.y);
-        } else {
-            res->len = -res->dx;
-            res->p1 = doublept(p0->x, p0->y - wc->linewidth / 2);
-            res->p2 = doublept(p0->x, res->p1.y + wc->linewidth);
-            res->q1 = doublept(q0->x, res->p1.y);
-            res->q2 = doublept(q0->x, res->p2.y);
-        }
-    } else {
-        double ex, ey;
-        res->len = hypot(res->dx, res->dy);
-        ex = (wc->linewidth * res->dy) / (2 * res->len);
-        ey = -(wc->linewidth * res->dx) / (2 * res->len);
-        res->p1 = doublept(p0->x - ex ,p0->y - ey);
-        res->p2 = doublept(p0->x + ex, p0->y + ey);
-        res->q1 = doublept(q0->x - ex ,q0->y - ey);
-        res->q2 = doublept(q0->x + ex, q0->y + ey);
-    }
+    res->len = hypot(res->dx, res->dy);
+    ex = (wc->linewidth * res->dy) / (2 * res->len);
+    ey = -(wc->linewidth * res->dx) / (2 * res->len);
+    res->p1 = doublept(p0->x - ex ,p0->y - ey);
+    res->p2 = doublept(p0->x + ex, p0->y + ey);
+    res->q1 = doublept(q0->x - ex ,q0->y - ey);
+    res->q2 = doublept(q0->x + ex, q0->y + ey);
 }
 
-#if 0
-static void printlineinfo(struct lineinfo *li)
-{
-    printf("from p0(%d,%d) to q0(%d,%d) : len=%f dx=%d dy=%d p1(%f,%f) p2(%f,%f) q1(%f,%f) q2(%f,%f)\n",
-           li->p0->x, li->p0->y,
-           li->q0->x, li->q0->y,
-           li->len, li->dx, li->dy,
-           li->p1.x, li->p1.y,
-           li->p2.x, li->p2.y,
-           li->q1.x, li->q1.y,
-           li->q2.x, li->q2.y);
-}
-#endif
-
-static void calc_extent(struct lineinfo *lis, int n, int *x, int *y, int *width, int *height)
+static void calc_extent(wcp wc, struct lineinfo *lis, int n, int closed, int *x, int *y, int *width, int *height)
 {
     int i;
     int x1, x2, y1, y2;
@@ -2077,10 +2027,10 @@ static void calc_extent(struct lineinfo *lis, int n, int *x, int *y, int *width,
         if (li->q2.y < y1) y1 = li->q2.y;
         if (li->q2.y > y2) y2 = li->q2.y;
     }
-    *x = x1 - 1;
-    *y = y1 - 1;
-    *width = x2 - x1 + 2;
-    *height = y2 - y1 + 2;
+    *x = x1 - wc->linewidth / 2 - 2;
+    *y = y1 - wc->linewidth / 2 - 2;
+    *width = x2 - x1 + wc->linewidth + 4;
+    *height = y2 - y1 + wc->linewidth + 4;
 }
 
 static XPointDouble doublept(double x, double y)
@@ -2088,6 +2038,14 @@ static XPointDouble doublept(double x, double y)
     XPointDouble t;
     t.x = x;
     t.y = y;
+    return t;
+}
+
+static XPointDouble midpt(XPointDouble p1, XPointDouble p2)
+{
+    XPointDouble t;
+    t.x = (p1.x + p2.x) / 2.0;
+    t.y = (p1.y + p2.y) / 2.0;
     return t;
 }
 
@@ -2149,8 +2107,8 @@ static int make_circle(double cx, double cy, double radius, int max_ntraps, XTra
             y2=(int)(-radius*cos(M_PI*k/max_ntraps));
         } while(y1==y2);
         w2 = sqrt(radius*radius-y2*y2);
-        traps[n] = trapezoid(cy+y1, cx-w1, cx+w1,
-                             cy+y2, cx-w2, cx+w2);
+        traps[n] = trapezoid(round(cy+y1), cx-w1, cx+w1,
+                             round(cy+y2), cx-w2, cx+w2);
         n++;
     }
     return n;
@@ -2179,37 +2137,27 @@ static void drawlineinfo(wbp w,
                          Picture dest,
                          Picture join,
                          struct lineinfo *prev,
-                         struct lineinfo *curr)
+                         struct lineinfo *curr,
+                         struct lineinfo *next)
 {
     wsp ws = w->window;
     wdp wd = ws->display;
     wcp wc = w->context;
 
     if (curr->dx == 0 || curr->dy == 0) {
-        int x, y, width, height;
-        /*
-         * This is equivalent to rendering using a trapezoid based on the 4 corner points.
-         */
+        XTrapezoid trap;
         if (curr->dx == 0) {
-            width = wc->linewidth;
-            height = curr->len;
-            x = curr->p0->x - wc->linewidth / 2;
-            y = Min(curr->p0->y, curr->q0->y);
-        } else {   /* curr->dy == 0 */
-            width = curr->len;
-            height = wc->linewidth;
-            x = Min(curr->p0->x, curr->q0->x);
-            y = curr->p0->y - wc->linewidth / 2;
+            if (curr->dy > 0)
+                trap = trapezoid(curr->p1.y, curr->p1.x, curr->p2.x, curr->q1.y, curr->q1.x, curr->q2.x);
+            else
+                trap = trapezoid(curr->q2.y, curr->q2.x, curr->q1.x, curr->p2.y, curr->p2.x, curr->p1.x);
+        } else { /* curr->dy == 0 */
+            if (curr->dx > 0)
+                trap = trapezoid(curr->p2.y, curr->p2.x, curr->q2.x, curr->p1.y, curr->p1.x, curr->q1.x);
+            else
+                trap = trapezoid(curr->q1.y, curr->q1.x, curr->p1.x, curr->q2.y, curr->q2.x, curr->p2.x);
         }
-        XRenderComposite(wd->display,
-                         op,
-                         src,          /* src */
-                         None,         /* mask */
-                         dest,         /* dest */
-                         0,0,          /* src x,y */
-                         0,0,          /* mask x,y */
-                         x, y,         /* dst x,y */
-                         width, height);
+        XRenderCompositeTrapezoids(wd->display, op, src,  dest, 0, 0, 0, &trap, 1);
     } else {
         if (curr->q1.y > curr->p1.y && curr->p1.y > curr->q2.y) {
             traps(w, op, src, dest, 
@@ -2263,11 +2211,13 @@ static void drawlineinfo(wbp w,
     }
 
     if (prev) {
+        XPointDouble r = midpt(curr->p1, curr->p2);
         if (wc->linewidth == 1) {
             /*
-             * This is a cosmetic corner-case where the adjustments to
-             * a vertical/horizontal 1-pixel wide line to avoid
-             * antialiasing cause a 1 pixel gap in the join corner.
+             * This provides a solid pixel in the corner between
+             * perpendicular horizontal/vertical single pixel width
+             * lines; without it the corner would be transluscent due
+             * to the 0.5 pixel shift at each end.
              */
             if ((curr->dy == 0 && prev->dx == 0) || (curr->dx == 0 && prev->dy == 0))
                 XRenderComposite(wd->display,
@@ -2277,24 +2227,51 @@ static void drawlineinfo(wbp w,
                                  dest,         /* dest */
                                  0,0,          /* src x,y */
                                  0,0,          /* mask x,y */
-                                 curr->p0->x, curr->p0->y,         /* dst x,y */
+                                 r.x, r.y,     /* dst x,y */
                                  1, 1);
-
         } else {
-                XRenderComposite(wd->display,
-                                 op,
-                                 src,          /* src */
-                                 join,         /* mask */
-                                 dest,         /* dest */
-                                 0,0,          /* src x,y */
-                                 0,0,          /* mask x,y */
-                                 curr->p0->x - wc->linewidth / 2, curr->p0->y - wc->linewidth / 2,         /* dst x,y */
-                                 wc->linewidth, wc->linewidth);
+            XRenderComposite(wd->display,
+                             op,
+                             src,          /* src */
+                             join,         /* mask */
+                             dest,         /* dest */
+                             0,0,          /* src x,y */
+                             0,0,          /* mask x,y */
+                             r.x - wc->linewidth / 2, r.y - wc->linewidth / 2,         /* dst x,y */
+                             wc->linewidth, wc->linewidth);
+        }
+    } else {
+        if (wc->linewidth > 1 && wc->linestyle->i == EndDisc) {
+            XPointDouble r = midpt(curr->p1, curr->p2);
+            XRenderComposite(wd->display,
+                             op,
+                             src,          /* src */
+                             join,         /* mask */
+                             dest,         /* dest */
+                             0,0,          /* src x,y */
+                             0,0,          /* mask x,y */
+                             r.x - wc->linewidth / 2, r.y - wc->linewidth / 2,         /* dst x,y */
+                             wc->linewidth, wc->linewidth);
+        }
+    }
+
+    if (!next) {
+        if (wc->linewidth > 1 && wc->linestyle->i == EndDisc) {
+            XPointDouble r = midpt(curr->q1, curr->q2);
+            XRenderComposite(wd->display,
+                             op,
+                             src,          /* src */
+                             join,         /* mask */
+                             dest,         /* dest */
+                             0,0,          /* src x,y */
+                             0,0,          /* mask x,y */
+                             r.x - wc->linewidth / 2, r.y - wc->linewidth / 2,         /* dst x,y */
+                             wc->linewidth, wc->linewidth);
         }
     }
 }
 
-static void drawlines_impl(wbp w, int op, Picture src, Picture dest, struct lineinfo *lis, int nlis)
+static void drawlines_impl(wbp w, int op, Picture src, Picture dest, struct lineinfo *lis, int nlis, int closed)
 {
     wsp ws = w->window;
     wdp wd = ws->display;
@@ -2306,17 +2283,18 @@ static void drawlines_impl(wbp w, int op, Picture src, Picture dest, struct line
     else
         join = None;
     for (i = 0; i < nlis; ++i) {
-        if (i == 0) {
-            if (nlis > 2 && 
-                lis[nlis - 1].q0->x == lis[0].p0->x &&
-                lis[nlis - 1].q0->y == lis[0].p0->y)
-                drawlineinfo(w, op, src, dest, join, &lis[nlis - 1], &lis[i]);
-            else
-                drawlineinfo(w, op, src, dest, join, 0, &lis[i]);
-        } else
-            drawlineinfo(w, op, src, dest, join, &lis[i - 1], &lis[i]);
+        struct lineinfo *prev, *next;
+        if (i > 0)
+            prev = &lis[i - 1];
+        else
+            prev = closed ? &lis[nlis - 1] : 0;
+        if (i < nlis - 1)
+            next = &lis[i + 1];
+        else
+            next = closed ? &lis[0] : 0;
+        drawlineinfo(w, op, src, dest, join, prev, &lis[i], next);
     }
-    if (wc->linewidth > 1)
+    if (join)
         XRenderFreePicture(wd->display, join);
 }
 
@@ -2326,35 +2304,66 @@ void drawlines(wbp w, struct point *points, int npoints)
     wdp wd = ws->display;
     wcp wc = w->context;
     struct lineinfo *lis;
-    int nlis, i, x, y, width, height;
+    int nlis, i, x, y, width, height, closed;
+    XPointDouble *pd;
+
+    closed = (npoints > 3) && points[npoints - 1].x == points[0].x && 
+        points[npoints - 1].y == points[0].y;
+
+    pd = alloca(npoints * sizeof(XPointDouble));
+    for (i = 0; i <  npoints; ++i) {
+        if (i > 0 && points[i].x == points[i-1].x  && points[i].y == points[i-1].y)
+            syserr("identical pts to drawlines");
+        pd[i].x = points[i].x;
+        pd[i].y = points[i].y;
+    }
+
+    /*
+     * If the linewidth is odd, shift horizontal and vertical segments
+     * by 0.5 pixel so that they are not output with antialiased
+     * edges.
+     */
+    if (wc->linewidth % 2 == 1) {
+        for (i = 0; i <  npoints; ++i) {
+            struct point *next, *prev;
+            if (i > 0)
+                prev = &points[i - 1];
+            else
+                prev = closed ? &points[npoints - 1] : 0;
+            if (i < npoints - 1)
+                next = &points[i + 1];
+            else
+                next = closed ? &points[0] : 0;
+            if ((prev && prev->x == points[i].x) || (next && next->x == points[i].x))
+                pd[i].x += 0.5;
+            if ((prev && prev->y == points[i].y) || (next && next->y == points[i].y))
+                pd[i].y += 0.5;
+        }
+    }
 
     nlis = npoints - 1;
     lis = alloca(nlis * sizeof(struct lineinfo));
 
-    for (i = 1; i < npoints; ++i)
-        getlineinfo(wc, &points[i - 1], &points[i], &lis[i - 1]);
+    for (i = 1; i < npoints; ++i) {
+        getlineinfo(wc, &pd[i - 1], &pd[i], &lis[i - 1]);
+    }
 
-    calc_extent(lis, nlis, &x, &y, &width, &height);
-    /*printf("Extent : %d %d %d %d\n",x,y,width,height);*/
+    calc_extent(wc, lis, nlis, closed, &x, &y, &width, &height);
 
     clip(w);
     if (needmask(wc, 1)) {
         Picture mask = getmask(wd, width, height);
-        for (i = 0; i < npoints; ++i) {
-            points[i].x -= x;
-            points[i].y -= y;
-        }
         for (i = 0; i < nlis; ++i) {
             lis[i].p1.x -= x; lis[i].p1.y -= y;
             lis[i].p2.x -= x; lis[i].p2.y -= y;
             lis[i].q1.x -= x; lis[i].q1.y -= y;
             lis[i].q2.x -= x; lis[i].q2.y -= y;
         }
-        drawlines_impl(w, PictOpOver, wd->white->brush, mask, lis, nlis);
+        drawlines_impl(w, PictOpOver, wd->white->brush, mask, lis, nlis, closed);
         maskpic2(w, get_draw_picture(wc), mask, x, y, width, height);
         XRenderFreePicture(wd->display, mask);
     } else {
-        drawlines_impl(w, wc->drawop->i, get_draw_picture(wc), ws->ppic, lis, nlis);
+        drawlines_impl(w, wc->drawop->i, get_draw_picture(wc), ws->ppic, lis, nlis, closed);
         pix_to_win(ws, x, y, width, height);
     }
     unclip(w);

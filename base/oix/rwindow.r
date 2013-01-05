@@ -32,12 +32,9 @@ static char *datatofile(dptr data);
 #endif
 static int readgifdata        (dptr data, struct imgdata *imd);
 static int readgiffile         (char *fname, struct imgdata *d);
-
 static  void wgetq(wbp w, dptr res);
-
 static int tryimagedata(dptr data, struct imgdata *imd);
 static int tryimagefile(char *filename, struct imgdata *imd);
-
 
 static void wgetq(wbp w, dptr res)
 {
@@ -1749,20 +1746,21 @@ int docircle(wbp w, dptr argv, int fill)
     return Succeeded;
 }
 
-
 /*
- * genCurve - draw a smooth curve through a set of points.  Algorithm from
+ * draw a smooth curve through the array of points
+
+ *  - draw a smooth curve through a set of points.  Algorithm from
  *  Barry, Phillip J., and Goldman, Ronald N. (1988).
  *  A Recursive Evaluation Algorithm for a class of Catmull-Rom Splines.
  *  Computer Graphics 22(4), 199-204.
  */
-void genCurve(wbp w, struct point *p, int n, void (*helper)(wbp, struct point [], int))
+void drawcurve(wbp w, struct point *p, int n)
 {
     int    i, j, steps;
     float  ax, ay, bx, by, stepsize, stepsize2, stepsize3;
     float  x, dx, d2x, d3x, y, dy, d2y, d3y;
     struct point *thepoints = NULL;
-    long npoints = 0;
+    int n2, npoints = 0;
 
     for (i = 3; i < n; i++) {
         /*
@@ -1785,10 +1783,9 @@ void genCurve(wbp w, struct point *p, int n, void (*helper)(wbp, struct point []
          */
         steps = Max(Abs(p[i-1].x - p[i-2].x), Abs(p[i-1].y - p[i-2].y)) + 10;
 
-        if (steps+4 > npoints) {
-            if (thepoints != NULL) free(thepoints);
-            MemProtect(thepoints = malloc((steps+4) * sizeof(struct point)));
-            npoints = steps+4;
+        if (steps + 5 > npoints) {
+            npoints = steps + 5;
+            MemProtect(thepoints = realloc(thepoints, npoints * sizeof(struct point)));
         }
 
         stepsize = 1.0/steps;
@@ -1806,43 +1803,36 @@ void genCurve(wbp w, struct point *p, int n, void (*helper)(wbp, struct point []
 
         /* calculate the points for drawing the curve */
 
+        n2 = 1;
         for (j = 0; j < steps; j++) {
+            int ix, iy;
             x = x + dx;
             y = y + dy;
             dx = dx + d2x;
             dy = dy + d2y;
             d2x = d2x + d3x;
             d2y = d2y + d3y;
-            thepoints[j + 1].x = (int)x;
-            thepoints[j + 1].y = (int)y;
+            ix = (int)x;
+            iy = (int)y;
+            if (thepoints[n2 - 1].x != ix || thepoints[n2 - 1].y != iy) {
+                thepoints[n2].x = ix;
+                thepoints[n2].y = iy;
+                ++n2;
+            }
         }
-        helper(w, thepoints, steps + 1);
+        if (thepoints[n2 - 1].x != p[i - 1].x || thepoints[n2 - 1].y != p[i - 1].y) {
+            thepoints[n2].x = p[i - 1].x;
+            thepoints[n2].y = p[i - 1].y;
+            ++n2;
+        }
+
+        drawlines(w, thepoints, n2);
     }
     if (thepoints != NULL) {
         free(thepoints);
         thepoints = NULL;
     }
 }
-
-static void curveHelper(wbp w, struct point *thepoints, int n)
-{
-    /*
-     * Could use drawpoints(w, thepoints, n)
-     *  but that ignores the line_width and line_style attributes...
-     * Might make line_style work a little better by "compressing" straight
-     *  sections produced by genCurve into single drawline points.
-     */
-    drawlines(w, thepoints, n);
-}
-
-/*
- * draw a smooth curve through the array of points
- */
-void drawCurve(wbp w, struct point *p, int n)
-{
-    genCurve(w, p, n, curveHelper);
-}
-
 
 /*
  * allocate a window binding structure
