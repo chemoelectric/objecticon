@@ -342,14 +342,11 @@ function graphics_Window_draw_line(self, argv[argc])
           word x, y;
           CnvCInteger(argv[i], x);
           CnvCInteger(argv[i + 1], y);
-          if (n == 0 || x != points[n - 1].x || y != points[n - 1].y) {
-              points[n].x = x + dx;
-              points[n].y = y + dy;
-              ++n;
-          }
+          points[n].x = x + dx;
+          points[n].y = y + dy;
+          ++n;
       }
-      if (n > 1)
-          drawlines(self_w, points, n);
+      drawlines(self_w, points, n);
       free(points);
 
       return self;
@@ -494,7 +491,7 @@ function graphics_Window_fill_arc(self, x0, y0, w0, h0, ang1, ang2)
       else
           a1 = fmod(a1, 2 * Pi);
       
-      if (width > 0 && height > 0 && a1 < a2)
+      if (width > 0 && height > 0) /* && a1 < a2)*/
           fillarc(self_w, x, y, width, height, a1, a2);
       
       return self;
@@ -526,14 +523,11 @@ function graphics_Window_fill_polygon(self, argv[argc])
           word x, y;
           CnvCInteger(argv[i], x);
           CnvCInteger(argv[i + 1], y);
-          if (i == 0 || x != points[n - 1].x || y != points[n - 1].y) {
-              points[n].x = x + dx;
-              points[n].y = y + dy;
-              ++n;
-          }
+          points[n].x = x + dx;
+          points[n].y = y + dy;
+          ++n;
       }
-      if (n > 1)
-          fillpolygon(self_w, points, n);
+      fillpolygon(self_w, points, n);
       free(points);
 
       return self;

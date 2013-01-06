@@ -1805,26 +1805,19 @@ void drawcurve(wbp w, struct point *p, int n)
 
         n2 = 1;
         for (j = 0; j < steps; j++) {
-            int ix, iy;
             x = x + dx;
             y = y + dy;
             dx = dx + d2x;
             dy = dy + d2y;
             d2x = d2x + d3x;
             d2y = d2y + d3y;
-            ix = (int)x;
-            iy = (int)y;
-            if (thepoints[n2 - 1].x != ix || thepoints[n2 - 1].y != iy) {
-                thepoints[n2].x = ix;
-                thepoints[n2].y = iy;
-                ++n2;
-            }
-        }
-        if (thepoints[n2 - 1].x != p[i - 1].x || thepoints[n2 - 1].y != p[i - 1].y) {
-            thepoints[n2].x = p[i - 1].x;
-            thepoints[n2].y = p[i - 1].y;
+            thepoints[n2].x = (int)x;
+            thepoints[n2].y = (int)y;
             ++n2;
         }
+        thepoints[n2].x = p[i - 1].x;
+        thepoints[n2].y = p[i - 1].y;
+        ++n2;
 
         drawlines(w, thepoints, n2);
     }

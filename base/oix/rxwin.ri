@@ -69,6 +69,7 @@ static XPointDouble doublept(double x, double y);
 static XTriangle triangle(double x1, double y1, double x2, double y2, double x3, double y3);
 static XTrapezoid trapezoid(double top, double x1, double x2, double bottom, double x3, double x4);
 static int needmask(wcp wc, int overlap);
+static int make_circle(double cx, double cy, double radius, int max_ntraps, XTrapezoid traps[]);
 
 static struct imgdataformat imgdataformat_X11ARGB32;
 static struct imgdataformat imgdataformat_X11BGRA32;
@@ -1918,52 +1919,107 @@ void drawarc(wbp w, int x, int y, int width, int height, double angle1, double a
 {
 }
 
-void fillarc(wbp w, int x, int y, int width, int height, double angle1, double angle2)
+void fillarc(wbp w, int x, int y, int width, int height, double a1, double a2)
 { 
-    XPointDouble *pol;
-    double th, r1, r2, cx, cy, x1, y1;
-    int d, i, segs, pc;
-    r1 = width / 2.0;
-    r2 = height / 2.0;
-    cx = x + r1;
-    cy = y + r2;
-    d = Max(width, height);
-    if (d < 5)
-        segs = 4;
-    else if (d < 10)
-        segs = 8;
-    else if (d < 20)
-        segs = 10;
-    else if (d < 30)
-        segs = 15;
-    else if (d < 100)
-        segs = 20;
-    else
-        segs = 25;
-    segs *= (angle2 - angle1) / (2 * Pi);
-    segs = Max(segs, 2);
-    pol = alloca((segs + 2) * sizeof(XPointDouble));
-    if (angle1 == 0.0 && angle2 == 2 * Pi) {
-        pc = 0;
+    wsp ws = w->window;
+    wdp wd = ws->display;
+    wcp wc = w->context;
+    XTrapezoid traps[32];
+    XTrapezoid trap;
+
+    Picture mask;
+    int ntraps, has_wedge;
+    double x1, x2, h2, w2;
+
+    h2 = height / 2.0;
+    w2 = width / 2.0;
+
+    has_wedge = (a1 != 0 || a2 != 2 * Pi);
+
+    if (has_wedge || needmask(wc, 0)) {
+        ntraps = make_circle(w2,
+                             h2,
+                             w2,
+                             32, traps);
+        mask = getmask(wd, width, height);
+        XRenderCompositeTrapezoids(wd->display, PictOpOver, wd->white->brush,  mask, 0, 0, 0, traps, ntraps);
+        if (has_wedge) {
+            Picture wedge, wedge2;
+            wedge = getmask(wd, width, height);
+            wedge2 = getmask(wd, width, height);
+            a2 += a1;
+            printf("a1=%f a2=%f\n",a1, a2);
+
+            if (fabs(a1 - 2*Pi) < 0.01) {
+            } else if (fabs(a1) < 0.01) {
+                printf("a0\n");
+                XRenderFillRectangle(wd->display, PictOpOver, wedge, &wd->white->color, 0, 0, width ,height); 
+            } else if (fabs(a1 - Pi) < 0.01) {
+                printf("a1\n");
+                XRenderFillRectangle(wd->display, PictOpOver, wedge, &wd->white->color, 0, 0, width ,h2);
+            } else if (a1 > Pi) {
+                x1 = w2 - h2 / tan(a1 - Pi);
+                printf("a2:x1=%f\n",x1);
+                trap = trapezoid(0,x1,width,  h2, w2, width);
+                XRenderCompositeTrapezoids(wd->display, PictOpOver, wd->white->brush,  wedge, 0, 0, 0, &trap, 1);
+            } else {
+                x1 = w2 - h2 * tan(a1 - Pi/2);
+                printf("a3:x1=%f\n",x1);
+                trap = trapezoid(0,0,width-x1, height,0,x1);
+                XRenderCompositeTrapezoids(wd->display, PictOpOver, wd->white->brush,  wedge, 0, 0, 0, &trap, 1);
+                XRenderFillRectangle(wd->display, PictOpOver, wedge, &wd->white->color, 0, 0, width ,h2);
+            }
+
+
+
+            if (fabs(a2) < 0.01) {
+            } else if (fabs(a2 - 2*Pi) < 0.01) {
+                printf("b0\n");
+                XRenderFillRectangle(wd->display, PictOpOver, wedge2, &wd->white->color, 0, 0, width ,height); 
+            } else if (fabs(a2 - Pi) < 0.01) {
+                printf("b1\n");
+                XRenderFillRectangle(wd->display, PictOpOver, wedge2, &wd->white->color, 0, h2, width ,h2); 
+            } else if (a2 > Pi) {
+                x2 = w2 - h2 / tan(a2 - Pi);
+                printf("b2:x2=%f  height=%d\n",x2,height%2);
+                trap = trapezoid(0,0,x2,  height, 0, width-x2);
+                XRenderCompositeTrapezoids(wd->display, PictOpOver, wd->white->brush,  wedge2, 0, 0, 0, &trap, 1);
+                XRenderFillRectangle(wd->display, PictOpOver, wedge2, &wd->white->color, 0, h2 + (height % 2), width, h2); 
+            } else {
+                x2 = w2 - h2 * tan(a2 - Pi/2);
+                printf("b3:x2=%f\n",x2);
+                trap = trapezoid(h2, w2, width,  height, x2, width);
+                XRenderCompositeTrapezoids(wd->display, PictOpOver, wd->white->brush,  wedge2, 0, 0, 0, &trap, 1);
+
+            }
+
+            XRenderComposite(wd->display,
+                             PictOpInReverse,
+                             wedge,          /* src */
+                             wedge2,         /* mask */
+                             mask,           /* dest */
+                             0,0,            /* src x,y */
+                             0,0,            /* mask x,y */
+                             0, 0,           /* dst x,y */
+                             width, height);
+
+            XRenderFreePicture(wd->display, wedge);
+            XRenderFreePicture(wd->display, wedge2);
+        }
+        clip(w);
+        maskpic2(w, get_draw_picture(wc), mask, x, y, width, height);
+        unclip(w);
+        XRenderFreePicture(wd->display, mask);
     } else {
-        pol[0].x = cx;
-        pol[0].y = cy;
-        pc = 1;
+        clip(w);
+        ntraps = make_circle(x + w2,
+                             y + h2,
+                             w2,
+                             32, traps);
+        XRenderCompositeTrapezoids(wd->display, wc->drawop->i, get_draw_picture(wc), ws->ppic, 0, 0, 0, traps, ntraps);
+        pix_to_win(ws, x, y, width, height);
+        unclip(w);
     }
-    for (i = 0; i < segs; ++i) {
-        th = angle1 + (angle2 - angle1) * i / segs;
-        x1 = cx + r1 * cos(th);
-        y1 = cy + r2 * sin(th);
-        pol[pc].x = x1;
-        pol[pc].y = y1;
-        ++pc;
-    }
-    pol[pc].x = cx + r1 * cos(angle2);
-    pol[pc].y = cy + r2 * sin(angle2);
-    ++pc;
-    clip(w);
-    poly2(w, pol, pc);
-    unclip(w);
 }
 
 /*
@@ -2100,11 +2156,11 @@ static int make_circle(double cx, double cy, double radius, int max_ntraps, XTra
 {
     int n=0, k=0, y1, y2, w1, w2;
     while(k<max_ntraps) {
-        y1 = (int)(-radius*cos(M_PI*k/max_ntraps));
+        y1 = (int)(-radius*cos(Pi*k/max_ntraps));
         w1 = sqrt(radius*radius-y1*y1);
         do {
             k++;
-            y2=(int)(-radius*cos(M_PI*k/max_ntraps));
+            y2=(int)(-radius*cos(Pi*k/max_ntraps));
         } while(y1==y2);
         w2 = sqrt(radius*radius-y2*y2);
         traps[n] = trapezoid(round(cy+y1), cx-w1, cx+w1,
@@ -2298,6 +2354,34 @@ static void drawlines_impl(wbp w, int op, Picture src, Picture dest, struct line
         XRenderFreePicture(wd->display, join);
 }
 
+static XPointDouble adjustpoint(wcp wc, struct point *points, int npoints, int i, int closed)
+{
+    XPointDouble pd;
+    pd.x = points[i].x;
+    pd.y = points[i].y;
+    /*
+     * If the linewidth is odd, shift horizontal and vertical segments
+     * by 0.5 pixel so that they are not output with antialiased
+     * edges.
+     */
+    if (wc->linewidth % 2 == 1) {
+        struct point *next, *prev;
+        if (i > 0)
+            prev = &points[i - 1];
+        else
+            prev = closed ? &points[npoints - 1] : 0;
+        if (i < npoints - 1)
+            next = &points[i + 1];
+        else
+            next = closed ? &points[0] : 0;
+        if ((prev && prev->x == points[i].x) || (next && next->x == points[i].x))
+            pd.x += 0.5;
+        if ((prev && prev->y == points[i].y) || (next && next->y == points[i].y))
+            pd.y += 0.5;
+    }
+    return pd;
+}
+ 
 void drawlines(wbp w, struct point *points, int npoints)
 {
     wsp ws = w->window;
@@ -2305,68 +2389,44 @@ void drawlines(wbp w, struct point *points, int npoints)
     wcp wc = w->context;
     struct lineinfo *lis;
     int nlis, i, x, y, width, height, closed;
-    XPointDouble *pd;
+    XPointDouble pd1, pd2;
 
-    closed = (npoints > 3) && points[npoints - 1].x == points[0].x && 
-        points[npoints - 1].y == points[0].y;
+    if (npoints < 2)
+        return;
+    closed = points[npoints - 1].x == points[0].x && points[npoints - 1].y == points[0].y;
 
-    pd = alloca(npoints * sizeof(XPointDouble));
-    for (i = 0; i <  npoints; ++i) {
-        if (i > 0 && points[i].x == points[i-1].x  && points[i].y == points[i-1].y)
-            syserr("identical pts to drawlines");
-        pd[i].x = points[i].x;
-        pd[i].y = points[i].y;
-    }
-
-    /*
-     * If the linewidth is odd, shift horizontal and vertical segments
-     * by 0.5 pixel so that they are not output with antialiased
-     * edges.
-     */
-    if (wc->linewidth % 2 == 1) {
-        for (i = 0; i <  npoints; ++i) {
-            struct point *next, *prev;
-            if (i > 0)
-                prev = &points[i - 1];
-            else
-                prev = closed ? &points[npoints - 1] : 0;
-            if (i < npoints - 1)
-                next = &points[i + 1];
-            else
-                next = closed ? &points[0] : 0;
-            if ((prev && prev->x == points[i].x) || (next && next->x == points[i].x))
-                pd[i].x += 0.5;
-            if ((prev && prev->y == points[i].y) || (next && next->y == points[i].y))
-                pd[i].y += 0.5;
-        }
-    }
-
-    nlis = npoints - 1;
-    lis = alloca(nlis * sizeof(struct lineinfo));
-
+    MemProtect(lis = malloc((npoints - 1) * sizeof(struct lineinfo)));
+    pd1 = adjustpoint(wc, points, npoints, 0, closed);
+    nlis = 0;
     for (i = 1; i < npoints; ++i) {
-        getlineinfo(wc, &pd[i - 1], &pd[i], &lis[i - 1]);
-    }
-
-    calc_extent(wc, lis, nlis, closed, &x, &y, &width, &height);
-
-    clip(w);
-    if (needmask(wc, 1)) {
-        Picture mask = getmask(wd, width, height);
-        for (i = 0; i < nlis; ++i) {
-            lis[i].p1.x -= x; lis[i].p1.y -= y;
-            lis[i].p2.x -= x; lis[i].p2.y -= y;
-            lis[i].q1.x -= x; lis[i].q1.y -= y;
-            lis[i].q2.x -= x; lis[i].q2.y -= y;
+        if (points[i - 1].x != points[i].x || points[i - 1].y != points[i].y) {
+            pd2 = adjustpoint(wc, points, npoints, i, closed);
+            getlineinfo(wc, &pd1, &pd2, &lis[nlis]);
+            nlis++;
+            pd1 = pd2;
         }
-        drawlines_impl(w, PictOpOver, wd->white->brush, mask, lis, nlis, closed);
-        maskpic2(w, get_draw_picture(wc), mask, x, y, width, height);
-        XRenderFreePicture(wd->display, mask);
-    } else {
-        drawlines_impl(w, wc->drawop->i, get_draw_picture(wc), ws->ppic, lis, nlis, closed);
-        pix_to_win(ws, x, y, width, height);
     }
-    unclip(w);
+    if (nlis > 0) {
+        calc_extent(wc, lis, nlis, closed, &x, &y, &width, &height);
+        clip(w);
+        if (needmask(wc, 1)) {
+            Picture mask = getmask(wd, width, height);
+            for (i = 0; i < nlis; ++i) {
+                lis[i].p1.x -= x; lis[i].p1.y -= y;
+                lis[i].p2.x -= x; lis[i].p2.y -= y;
+                lis[i].q1.x -= x; lis[i].q1.y -= y;
+                lis[i].q2.x -= x; lis[i].q2.y -= y;
+            }
+            drawlines_impl(w, PictOpOver, wd->white->brush, mask, lis, nlis, closed);
+            maskpic2(w, get_draw_picture(wc), mask, x, y, width, height);
+            XRenderFreePicture(wd->display, mask);
+        } else {
+            drawlines_impl(w, wc->drawop->i, get_draw_picture(wc), ws->ppic, lis, nlis, closed);
+            pix_to_win(ws, x, y, width, height);
+        }
+        unclip(w);
+    }
+    free(lis);
 }
 
 void drawpoint(wbp w, int x, int y)
