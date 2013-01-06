@@ -244,16 +244,6 @@ function graphics_Window_draw_arc(self, x0, y0, w0, h0, ang1, ang2)
    }
 end
 
-function graphics_Window_draw_circle(self, x, y, r, theta, alpha)
-   body {
-      GetSelfW();
-
-      if (docircle(self_w, &x, 0) == Error)
-          runerr(0);
-      return self;
-   }
-end
-
 function graphics_Window_draw_curve(self, argv[argc])
    body {
       int i, n, closed;
@@ -491,19 +481,9 @@ function graphics_Window_fill_arc(self, x0, y0, w0, h0, ang1, ang2)
       else
           a1 = fmod(a1, 2 * Pi);
       
-      if (width > 0 && height > 0) /* && a1 < a2)*/
+      if (width > 0 && height > 0)
           fillarc(self_w, x, y, width, height, a1, a2);
       
-      return self;
-   }
-end
-
-function graphics_Window_fill_circle(self, x, y, r, theta, alpha)
-   body {
-      GetSelfW();
-
-      if (docircle(self_w, &x, 1) == Error)
-          runerr(0);
       return self;
    }
 end

@@ -212,11 +212,11 @@ class CanvasComponent(CanvasObject)
               ["Parent Component", "parent"]
    end
 
-   private pre_decode()
+   protected pre_decode()
       new()
    end
 
-   private post_decode()
+   protected post_decode()
       set_border_opts(self.border_opts)
    end
 

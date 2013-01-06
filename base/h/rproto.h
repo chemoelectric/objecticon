@@ -186,7 +186,6 @@ char *tocolorstring(int r, int g, int b, int a);
 
    wbp  alcwbinding    (void);
    wbp  findwbp        (wsp ws);
-   int  docircle        (wbp w, dptr argv, int fill);
    void drawcurve       (wbp w, struct point *p, int n);
    int  parsefilter     (wbp w, char *s, struct filter *res);
    int  parsefont       (char *s, char *fam, int *sty, int *sz);

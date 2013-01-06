@@ -57,6 +57,7 @@ static struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int
 static void fill2(wbp w, int op, XRenderColor  *color, int x, int y, int width, int height);
 static void poly2(wbp w, XPointDouble *points, int npoints);
 static void pic2(wbp w, Picture src, int x, int y, int width, int height);
+static void traps2(wbp w, XTrapezoid *traps, int ntraps);
 static void maskpic2(wbp w, Picture src, Picture mask, int x, int y, int width, int height);
 static struct SharedPicture *new_sharedpicture(wdp wd, struct imgdata *imd);
 static struct SharedPicture *link_sharedpicture(struct SharedPicture *x);
@@ -70,6 +71,7 @@ static XTriangle triangle(double x1, double y1, double x2, double y2, double x3,
 static XTrapezoid trapezoid(double top, double x1, double x2, double bottom, double x3, double x4);
 static int needmask(wcp wc, int overlap);
 static int make_circle(double cx, double cy, double radius, int max_ntraps, XTrapezoid traps[]);
+static int make_ellipse(double cx, double cy, double rx, double ry, int max_ntraps, XTrapezoid traps[]);
 
 static struct imgdataformat imgdataformat_X11ARGB32;
 static struct imgdataformat imgdataformat_X11BGRA32;
@@ -1919,83 +1921,86 @@ void drawarc(wbp w, int x, int y, int width, int height, double angle1, double a
 {
 }
 
-void fillarc(wbp w, int x, int y, int width, int height, double a1, double a2)
+void fillarc(wbp w, int x, int y, int width, int height, double angle1, double angle2)
 { 
     wsp ws = w->window;
     wdp wd = ws->display;
     wcp wc = w->context;
     XTrapezoid traps[32];
-    XTrapezoid trap;
-
-    Picture mask;
     int ntraps, has_wedge;
-    double x1, x2, h2, w2;
+    double h2, w2;
 
     h2 = height / 2.0;
     w2 = width / 2.0;
 
-    has_wedge = (a1 != 0 || a2 != 2 * Pi);
+    printf("input: width=%d  height=%d  angle1=%f angle2=%f\n",width, height, angle1, angle2);
+
+    has_wedge = (angle1 != 0 || angle2 != 2 * Pi);
 
     if (has_wedge || needmask(wc, 0)) {
-        ntraps = make_circle(w2,
-                             h2,
-                             w2,
-                             32, traps);
+        Picture mask;
+        ntraps = make_ellipse(w2, h2,    /* centre */
+                              w2, h2,    /* x/y radius */
+                              32, traps);
         mask = getmask(wd, width, height);
         XRenderCompositeTrapezoids(wd->display, PictOpOver, wd->white->brush,  mask, 0, 0, 0, traps, ntraps);
         if (has_wedge) {
-            Picture wedge, wedge2;
-            wedge = getmask(wd, width, height);
-            wedge2 = getmask(wd, width, height);
-            a2 += a1;
-            printf("a1=%f a2=%f\n",a1, a2);
+            XTrapezoid trap;
+            Picture wedge1, wedge2;
+            double x1, x2, a1, a2, op;
+            if (angle1 + angle2 < 2 * Pi) {
+                /* Calculate a wedge to include */
+                a1 = angle1;
+                a2 = angle1 + angle2;
+                op = PictOpInReverse;
+            } else {
+                /* Calculate a wedge to exclude */
+                a1 = angle1 + angle2 - 2 * Pi;
+                a2 = angle1;
+                op = PictOpOutReverse;
+            }
 
-            if (fabs(a1 - 2*Pi) < 0.01) {
-            } else if (fabs(a1) < 0.01) {
-                printf("a0\n");
-                XRenderFillRectangle(wd->display, PictOpOver, wedge, &wd->white->color, 0, 0, width ,height); 
-            } else if (fabs(a1 - Pi) < 0.01) {
-                printf("a1\n");
-                XRenderFillRectangle(wd->display, PictOpOver, wedge, &wd->white->color, 0, 0, width ,h2);
-            } else if (a1 > Pi) {
+            /* wedge1 is everything swept forward clockwise from a2 to
+             * 3pm.  wedge2 is the area from a1 swept back
+             * anticlockwise to 3pm; The intersection of the two gives
+             * the wedge to either include or exclude.
+             */
+            wedge1 = getmask(wd, width, height);
+            wedge2 = getmask(wd, width, height);
+            if (fabs(a1 - 2*Pi) < 0.01) ;
+            else if (fabs(a1) < 0.01)
+                XRenderFillRectangle(wd->display, PictOpOver, wedge1, &wd->white->color, 0, 0, width ,height); 
+            else if (fabs(a1 - Pi) < 0.01)
+                XRenderFillRectangle(wd->display, PictOpOver, wedge1, &wd->white->color, 0, 0, width ,h2);
+            else if (a1 > Pi) {
                 x1 = w2 - h2 / tan(a1 - Pi);
-                printf("a2:x1=%f\n",x1);
                 trap = trapezoid(0,x1,width,  h2, w2, width);
-                XRenderCompositeTrapezoids(wd->display, PictOpOver, wd->white->brush,  wedge, 0, 0, 0, &trap, 1);
+                XRenderCompositeTrapezoids(wd->display, PictOpOver, wd->white->brush,  wedge1, 0, 0, 0, &trap, 1);
             } else {
                 x1 = w2 - h2 * tan(a1 - Pi/2);
-                printf("a3:x1=%f\n",x1);
                 trap = trapezoid(0,0,width-x1, height,0,x1);
-                XRenderCompositeTrapezoids(wd->display, PictOpOver, wd->white->brush,  wedge, 0, 0, 0, &trap, 1);
-                XRenderFillRectangle(wd->display, PictOpOver, wedge, &wd->white->color, 0, 0, width ,h2);
+                XRenderCompositeTrapezoids(wd->display, PictOpOver, wd->white->brush,  wedge1, 0, 0, 0, &trap, 1);
+                XRenderFillRectangle(wd->display, PictOpOver, wedge1, &wd->white->color, 0, 0, width ,h2);
             }
 
-
-
-            if (fabs(a2) < 0.01) {
-            } else if (fabs(a2 - 2*Pi) < 0.01) {
-                printf("b0\n");
+            if (fabs(a2) < 0.01) ;
+            else if (fabs(a2 - 2*Pi) < 0.01)
                 XRenderFillRectangle(wd->display, PictOpOver, wedge2, &wd->white->color, 0, 0, width ,height); 
-            } else if (fabs(a2 - Pi) < 0.01) {
-                printf("b1\n");
+            else if (fabs(a2 - Pi) < 0.01)
                 XRenderFillRectangle(wd->display, PictOpOver, wedge2, &wd->white->color, 0, h2, width ,h2); 
-            } else if (a2 > Pi) {
+            else if (a2 > Pi) {
                 x2 = w2 - h2 / tan(a2 - Pi);
-                printf("b2:x2=%f  height=%d\n",x2,height%2);
                 trap = trapezoid(0,0,x2,  height, 0, width-x2);
                 XRenderCompositeTrapezoids(wd->display, PictOpOver, wd->white->brush,  wedge2, 0, 0, 0, &trap, 1);
-                XRenderFillRectangle(wd->display, PictOpOver, wedge2, &wd->white->color, 0, h2 + (height % 2), width, h2); 
+                XRenderFillRectangle(wd->display, PictOpOver, wedge2, &wd->white->color, 0, h2 + (height % 2), width, h2);
             } else {
                 x2 = w2 - h2 * tan(a2 - Pi/2);
-                printf("b3:x2=%f\n",x2);
                 trap = trapezoid(h2, w2, width,  height, x2, width);
                 XRenderCompositeTrapezoids(wd->display, PictOpOver, wd->white->brush,  wedge2, 0, 0, 0, &trap, 1);
-
             }
-
             XRenderComposite(wd->display,
-                             PictOpInReverse,
-                             wedge,          /* src */
+                             op,
+                             wedge1,          /* src */
                              wedge2,         /* mask */
                              mask,           /* dest */
                              0,0,            /* src x,y */
@@ -2003,7 +2008,7 @@ void fillarc(wbp w, int x, int y, int width, int height, double a1, double a2)
                              0, 0,           /* dst x,y */
                              width, height);
 
-            XRenderFreePicture(wd->display, wedge);
+            XRenderFreePicture(wd->display, wedge1);
             XRenderFreePicture(wd->display, wedge2);
         }
         clip(w);
@@ -2012,12 +2017,10 @@ void fillarc(wbp w, int x, int y, int width, int height, double a1, double a2)
         XRenderFreePicture(wd->display, mask);
     } else {
         clip(w);
-        ntraps = make_circle(x + w2,
-                             y + h2,
-                             w2,
-                             32, traps);
-        XRenderCompositeTrapezoids(wd->display, wc->drawop->i, get_draw_picture(wc), ws->ppic, 0, 0, 0, traps, ntraps);
-        pix_to_win(ws, x, y, width, height);
+        ntraps = make_ellipse(x + w2, y + h2,
+                              w2, h2,
+                              32, traps);
+        traps2(w, traps, ntraps);
         unclip(w);
     }
 }
@@ -2156,15 +2159,42 @@ static int make_circle(double cx, double cy, double radius, int max_ntraps, XTra
 {
     int n=0, k=0, y1, y2, w1, w2;
     while(k<max_ntraps) {
-        y1 = (int)(-radius*cos(Pi*k/max_ntraps));
+        y1 = (int)(radius*cos(Pi*k/max_ntraps));
         w1 = sqrt(radius*radius-y1*y1);
         do {
             k++;
-            y2=(int)(-radius*cos(Pi*k/max_ntraps));
+            y2=(int)(radius*cos(Pi*k/max_ntraps));
         } while(y1==y2);
         w2 = sqrt(radius*radius-y2*y2);
-        traps[n] = trapezoid(round(cy+y1), cx-w1, cx+w1,
-                             round(cy+y2), cx-w2, cx+w2);
+        traps[n] = trapezoid(round(cy-y1), cx-w1, cx+w1,
+                             round(cy-y2), cx-w2, cx+w2);
+        n++;
+    }
+    return n;
+}
+
+static int make_ellipse(double cx, double cy, double rx, double ry, int max_ntraps, XTrapezoid traps[])
+{
+    int n=0, k=0, y1, y2, w1, w2;
+    double L;
+    while(k<max_ntraps) {
+        double th;
+
+
+        th = Pi*k/max_ntraps;
+        L = 1.0/hypot(cos(th)/ry, sin(th)/rx);
+
+        y1 = (int)(L*cos(th));
+        w1 = sqrt(L*L - y1*y1);
+        do {
+            k++;
+            th = Pi*k/max_ntraps;
+            L = 1.0/hypot(cos(th)/ry, sin(th)/rx);
+            y2=(int)(L*cos(th));
+        } while(y1==y2);
+        w2 = sqrt(L*L - y2*y2);
+        traps[n] = trapezoid(round(cy-y1), cx-w1, cx+w1,
+                             round(cy-y2), cx-w2, cx+w2);
         n++;
     }
     return n;
@@ -2467,30 +2497,29 @@ void drawrectangle(wbp w, int x, int y, int width, int height)
     wsp ws = w->window;
     wdp wd = ws->display;
     wcp wc = w->context;
-    int d = wc->linewidth / 2;
 
     /* If too small to give a gap in the middle, then simply fill a
      * rectangle, otherwise draw as four lines. */
-    if (width <= wc->linewidth + 1 || height <= wc->linewidth + 1)
-        fillrectangle(w, x - d, y - d, width + wc->linewidth - 1, height + wc->linewidth - 1);
+    if (width <= 2 * wc->linewidth || height <= 2 * wc->linewidth)
+        fillrectangle(w, x, y, width, height);
     else {
         clip(w);
         /* Note that we know the two vertical lines will be at least one pixel high, since
-         * height > wc->linewidth + 1.
+         * height > 2 * wc->linewidth
          */
         if (needmask(wc, 0)) {
             Picture mask = getmask(wd, width + wc->linewidth - 1, height + wc->linewidth - 1);
-            XRenderFillRectangle(wd->display, PictOpOver, mask, &wd->white->color, 0, 0 , width + wc->linewidth - 1, wc->linewidth);
-            XRenderFillRectangle(wd->display, PictOpOver, mask, &wd->white->color, width - 1, wc->linewidth , wc->linewidth, height - wc->linewidth - 1);
-            XRenderFillRectangle(wd->display, PictOpOver, mask, &wd->white->color, 0, wc->linewidth,  wc->linewidth, height - wc->linewidth - 1);
-            XRenderFillRectangle(wd->display, PictOpOver, mask, &wd->white->color, 0, height - 1 , width + wc->linewidth - 1,  wc->linewidth);
-            maskpic2(w, wc->pattern->i, mask, x - d, y - d, width + wc->linewidth - 1, height + wc->linewidth - 1);
+            XRenderFillRectangle(wd->display, PictOpOver, mask, &wd->white->color, 0, 0 , width, wc->linewidth);
+            XRenderFillRectangle(wd->display, PictOpOver, mask, &wd->white->color, 0, wc->linewidth , wc->linewidth, height - 2 * wc->linewidth);
+            XRenderFillRectangle(wd->display, PictOpOver, mask, &wd->white->color, width - wc->linewidth, wc->linewidth,  wc->linewidth, height - 2 * wc->linewidth);
+            XRenderFillRectangle(wd->display, PictOpOver, mask, &wd->white->color, 0, height - wc->linewidth, width,  wc->linewidth);
+            maskpic2(w, wc->pattern->i, mask, x, y, width, height);
             XRenderFreePicture(wd->display, mask);
         } else {
-            fill2(w, wc->drawop->i, &wc->fg->color, x - d, y - d , width + wc->linewidth - 1, wc->linewidth);
-            fill2(w, wc->drawop->i, &wc->fg->color, x - d + width - 1,    y - d +  wc->linewidth , wc->linewidth, height - wc->linewidth - 1);
-            fill2(w, wc->drawop->i, &wc->fg->color, x - d,     y - d +  wc->linewidth,  wc->linewidth, height - wc->linewidth - 1);
-            fill2(w, wc->drawop->i, &wc->fg->color, x - d, y - d + height - 1, width + wc->linewidth - 1,  wc->linewidth);
+            fill2(w, wc->drawop->i, &wc->fg->color, x, y, width, wc->linewidth);
+            fill2(w, wc->drawop->i, &wc->fg->color, x, y +  wc->linewidth , wc->linewidth, height - 2 * wc->linewidth);
+            fill2(w, wc->drawop->i, &wc->fg->color, x + width - wc->linewidth, y +  wc->linewidth,  wc->linewidth, height - 2 * wc->linewidth);
+            fill2(w, wc->drawop->i, &wc->fg->color, x, y + height - wc->linewidth, width,  wc->linewidth);
         }
         unclip(w);
     }
@@ -2584,6 +2613,41 @@ static void poly2(wbp w, XPointDouble *points, int npoints)
             y2 = points[i].y;
     }
     pix_to_win(ws, x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+}
+
+static void traps2(wbp w, XTrapezoid *traps, int ntraps)
+{
+    wsp ws = w->window;
+    wcp wc = w->context;
+    wdp wd = ws->display;
+    int x1, y1, x2, y2;
+    int i;
+    if (ntraps == 0)
+        return;
+
+    XRenderCompositeTrapezoids(wd->display, 
+                               wc->drawop->i,
+                               get_draw_picture(wc),
+                               ws->ppic, 
+                               0, 0, 0,
+                               traps, ntraps);
+    y1 = traps[0].top;
+    y2 = traps[0].bottom;
+    x1 = Min(traps[0].left.p1.x,traps[0].left.p2.x);
+    x2 = Max(traps[0].right.p1.x, traps[0].right.p2.x);
+    for (i = 1; i < ntraps; ++i) {
+        if (traps[i].top < y1) y1 = traps[i].top;
+        if (traps[i].bottom > y2) y2 = traps[i].bottom;
+        if (traps[i].left.p1.x < x1) x1 = traps[i].left.p1.x;
+        if (traps[i].left.p2.x < x1) x1 = traps[i].left.p2.x;
+        if (traps[i].right.p1.x > x2) x2 = traps[i].right.p1.x;
+        if (traps[i].right.p2.x > x2) x2 = traps[i].right.p2.x;
+    }
+    x1 >>= 16;
+    x2 >>= 16;
+    y1 >>= 16;
+    y2 >>= 16;
+    pix_to_win(ws, x1 - 1, y1 - 1, x2 - x1 + 2, y2 - y1 + 2);
 }
 
 static Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd)

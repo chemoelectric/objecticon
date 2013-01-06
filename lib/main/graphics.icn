@@ -614,9 +614,11 @@ final class Window(NoCopy)
    public native event()
 
    #
-   # draw_circle(x, y, r, theta, alpha)
+   # draw_circle(x, y, r, angle1, angle2)
    #
-   public native draw_circle(x, y, r, theta, alpha)
+   public draw_circle(x, y, r, angle1, angle2)
+      return draw_arc(x - r, y - r, 2 * r, 2 * r, angle1, angle2)
+   end
 
    #
    # draw_curve(x1,y1,...xN,yN)
@@ -702,9 +704,11 @@ final class Window(NoCopy)
    public native fill_arc(x, y, width, height, angle1, angle2)
 
    #
-   # fill_circle(x, y, r, theta, alpha)
+   # fill_circle(x, y, r, angle1, angle2)
    #
-   public native fill_circle(x, y, r, theta, alpha)
+   public fill_circle(x, y, r, angle1, angle2)
+      return fill_arc(x - r, y - r, 2 * r, 2 * r, angle1, angle2)
+   end
 
    #
    # fill_polygon(x1, y1, ...xN, yN)
