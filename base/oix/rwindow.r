@@ -32,12 +32,9 @@ static char *datatofile(dptr data);
 #endif
 static int readgifdata        (dptr data, struct imgdata *imd);
 static int readgiffile         (char *fname, struct imgdata *d);
-
 static  void wgetq(wbp w, dptr res);
-
 static int tryimagedata(dptr data, struct imgdata *imd);
 static int tryimagefile(char *filename, struct imgdata *imd);
-
 
 static void wgetq(wbp w, dptr res)
 {
@@ -1673,96 +1670,20 @@ int pointargs(wbp w, dptr argv, word *px, word *py)
 }
 
 /*
- * docircles -- draw or file circles.
- *
- *  Helper for DrawCircle and FillCircle.
- *  Returns index of bad argument, or -1 for success.
- */
-int docircle(wbp w, dptr argv, int fill)
-{
-    word x, y, r;
-    int arc_x, arc_y, arc_width, arc_height;
-    double arc_angle1, arc_angle2;
-    int dx, dy;
-    double theta, alpha;
+ * draw a smooth curve through the array of points
 
-    dx = w->context->dx;
-    dy = w->context->dy;
-
-    /*
-     * Collect arguments.
-     */
-    if (!cnv:C_integer(argv[0], x))
-        ReturnErrVal(101, argv[0], Error);
-    if (!cnv:C_integer(argv[1], y))
-        ReturnErrVal(101, argv[1], Error);
-    if (!cnv:C_integer(argv[2], r))
-        ReturnErrVal(101, argv[2], Error);
-    if (!def:C_double(argv[3], 0.0, theta))
-        ReturnErrVal(102, argv[3], Error);
-    if (!def:C_double(argv[4], 2 * Pi, alpha))
-        ReturnErrVal(102, argv[4], Error);
-
-    /*
-     * Put in canonical form: r >= 0, -2*pi <= theta < 0, alpha >= 0.
-     */
-    if (r < 0) {			/* ensure positive radius */
-        r = -r;
-        theta += Pi;
-    }
-    if (r == 0)
-        return Succeeded;
-
-    if (alpha < 0) {			/* ensure positive extent */
-        theta += alpha;
-        alpha = -alpha;
-    }
-
-    theta = fmod(theta, 2 * Pi);
-    if (theta > 0)			/* normalize initial angle */
-        theta -= 2 * Pi;
-
-    /*
-     * Build the Arc descriptor.
-     */
-    arc_x = x + dx - r;
-    arc_y = y + dy - r;
-    arc_width = 2 * r;
-    arc_height = 2 * r;
-
-    arc_angle1 = theta;
-    if (alpha >= 2 * Pi)
-        arc_angle2 = 2 * Pi;
-    else
-        arc_angle2 = alpha;
-
-    /*
-     * Draw or fill the arc.
-     */
-    if (arc_angle1 < arc_angle2) {
-        if (fill)
-            fillarc(w, arc_x, arc_y, arc_width, arc_height, arc_angle1, arc_angle2);
-        else
-            drawarc(w,arc_x, arc_y, arc_width, arc_height, arc_angle1, arc_angle2);
-    }
-
-    return Succeeded;
-}
-
-
-/*
- * genCurve - draw a smooth curve through a set of points.  Algorithm from
+ *  - draw a smooth curve through a set of points.  Algorithm from
  *  Barry, Phillip J., and Goldman, Ronald N. (1988).
  *  A Recursive Evaluation Algorithm for a class of Catmull-Rom Splines.
  *  Computer Graphics 22(4), 199-204.
  */
-void genCurve(wbp w, struct point *p, int n, void (*helper)(wbp, struct point [], int))
+void drawcurve(wbp w, struct point *p, int n)
 {
     int    i, j, steps;
     float  ax, ay, bx, by, stepsize, stepsize2, stepsize3;
     float  x, dx, d2x, d3x, y, dy, d2y, d3y;
     struct point *thepoints = NULL;
-    long npoints = 0;
+    int n2, npoints = 0;
 
     for (i = 3; i < n; i++) {
         /*
@@ -1785,10 +1706,9 @@ void genCurve(wbp w, struct point *p, int n, void (*helper)(wbp, struct point []
          */
         steps = Max(Abs(p[i-1].x - p[i-2].x), Abs(p[i-1].y - p[i-2].y)) + 10;
 
-        if (steps+4 > npoints) {
-            if (thepoints != NULL) free(thepoints);
-            MemProtect(thepoints = malloc((steps+4) * sizeof(struct point)));
-            npoints = steps+4;
+        if (steps + 5 > npoints) {
+            npoints = steps + 5;
+            MemProtect(thepoints = realloc(thepoints, npoints * sizeof(struct point)));
         }
 
         stepsize = 1.0/steps;
@@ -1806,6 +1726,7 @@ void genCurve(wbp w, struct point *p, int n, void (*helper)(wbp, struct point []
 
         /* calculate the points for drawing the curve */
 
+        n2 = 1;
         for (j = 0; j < steps; j++) {
             x = x + dx;
             y = y + dy;
@@ -1813,36 +1734,21 @@ void genCurve(wbp w, struct point *p, int n, void (*helper)(wbp, struct point []
             dy = dy + d2y;
             d2x = d2x + d3x;
             d2y = d2y + d3y;
-            thepoints[j + 1].x = (int)x;
-            thepoints[j + 1].y = (int)y;
+            thepoints[n2].x = (int)x;
+            thepoints[n2].y = (int)y;
+            ++n2;
         }
-        helper(w, thepoints, steps + 1);
+        thepoints[n2].x = p[i - 1].x;
+        thepoints[n2].y = p[i - 1].y;
+        ++n2;
+
+        drawlines(w, thepoints, n2);
     }
     if (thepoints != NULL) {
         free(thepoints);
         thepoints = NULL;
     }
 }
-
-static void curveHelper(wbp w, struct point *thepoints, int n)
-{
-    /*
-     * Could use drawpoints(w, thepoints, n)
-     *  but that ignores the line_width and line_style attributes...
-     * Might make line_style work a little better by "compressing" straight
-     *  sections produced by genCurve into single drawline points.
-     */
-    drawlines(w, thepoints, n);
-}
-
-/*
- * draw a smooth curve through the array of points
- */
-void drawCurve(wbp w, struct point *p, int n)
-{
-    genCurve(w, p, n, curveHelper);
-}
-
 
 /*
  * allocate a window binding structure

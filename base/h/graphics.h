@@ -202,9 +202,9 @@ typedef struct _wdisplay {
   Display *	display;
   struct imgdataformat *format;                /* imgdata format */
   struct progstate *program;           /* owning program */
-  struct SharedColor *black, *white;
+  struct SharedColor *black, *white, *transparent;
   wfp		fonts, defaultfont;
-  XRenderPictFormat *pixfmt, *winfmt;
+  XRenderPictFormat *pixfmt, *winfmt, *maskfmt;
   XFontStruct   *xfont;
   Cursor	cursors[NUMCURSORSYMS];
   Atom          atoms[NUMATOMS];      /* interned atoms */
@@ -239,6 +239,7 @@ typedef struct _wcontext {
 #elif PLAN9
   struct SharedColor *fg, *bg;
   struct SharedImage  *pattern;
+  stringint     *linestyle;
   int           thick;
   stringint     *drawop;
 #elif MSWIN32

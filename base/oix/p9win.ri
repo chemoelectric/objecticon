@@ -84,6 +84,13 @@ static stringint drawops[] = {
    {"xor",            SxorD},
 };
 
+static stringint linestyles[] = {
+    {0, 3},
+    {"enddisc",      Enddisc},
+    {"endsquare",    Endsquare},
+    {"solid",        Endsquare},
+};
+
 static stringint canvastypes[] = {
     {0, 4},
     {"hidden",      HiddenCanvas},
@@ -326,6 +333,7 @@ wbp wopen(char *display)
     wc->bg = link_sharedcolor(white);
     wc->font = default_font;
     wc->drawop = stringint_lookup(drawops, "over");
+    wc->linestyle = stringint_lookup(linestyles, "endsquare");
     GRFX_LINK(wc, wcntxts);
 
     w->context = wc;
@@ -619,11 +627,12 @@ void drawlines(wbp w, struct point *points0, int npoints)
     wsp ws = w->window;
     wcp wc = w->context;
     Point *points = (Point *)points0;
-    /* Hack - if line thickness is 1, and we are drawing a horizontal or vertical line, then
-     * Endsquare omits the last pixel (eg 0,0->0,1 just draws a single dot at 0,0).
-     */
-    term = wc->thick == 1 ? Enddisc:Endsquare;
-
+    if (npoints < 2)
+        return;
+    if (points[npoints - 1].x == points[0].x && points[npoints - 1].y == points[0].y)
+        term = Enddisc;
+    else
+        term = wc->linestyle->i;
     clip(w);
     poly2(w, points, npoints, term, term);
     unclip(w);
@@ -691,16 +700,15 @@ void drawrectangle(wbp w, int x, int y, int width, int height)
 {
     wsp ws = w->window;
     wcp wc = w->context;
-    if (width <= 2 * (wc->thick + 1) || height <= 2 * (wc->thick + 1))
-        fillrectangle(w, x - wc->thick, y - wc->thick, width + 2 * wc->thick, height + 2 * wc->thick);
+    int lw = 1 + 2 * wc->thick;
+    if (width <= 2 * lw || height <= 2 * lw)
+        fillrectangle(w, x, y, width, height);
     else {
-        int x2 = x + width - 1;
-        int y2 = y + height - 1;
         clip(w);
-        line2(w, x - wc->thick, y, x2 + wc->thick, y);
-        line2(w, x2, y + wc->thick + 1, x2, y2 - wc->thick - 1);
-        line2(w, x, y + wc->thick + 1, x, y2 - wc->thick - 1);
-        line2(w, x - wc->thick, y2, x2 + wc->thick, y2);
+        fill2(w, wc->drawop->i, get_draw_img(wc), x, y, width, lw);
+        fill2(w, wc->drawop->i, get_draw_img(wc), x, y +  lw , lw, height - 2 * lw);
+        fill2(w, wc->drawop->i, get_draw_img(wc), x + width - lw, y +  lw,  lw, height - 2 * lw);
+        fill2(w, wc->drawop->i, get_draw_img(wc), x, y + height - lw, width,  lw);
         unclip(w);
         flushimage(display, 1);
     }
@@ -1696,8 +1704,12 @@ int setwindowlabel(wbp w, char *val)
 
 int setlinestyle(wbp w, char *val)
 {
-    if (strcmp(val, "solid") != 0)
+    stringint *e;
+    wcp wc = w->context;
+    e = stringint_lookup(linestyles, val);
+    if (!e)
         return Failed;
+    wc->linestyle = e;
     return Succeeded;
 }
 
@@ -1770,7 +1782,7 @@ int getpos(wbp w)
 
 char *getlinestyle(wbp w)
 {
-    return "solid";
+    return w->context->linestyle->s;
 }
 
 static int read_screeninfo(wsp ws, int *mx, int *my, int *sx, int *sy, int *sw, int *sh)
@@ -1901,6 +1913,7 @@ wcp clonecontext(wbp w)
     wc->font = src->font;
     wc->thick = src->thick;
     wc->drawop = src->drawop;
+    wc->linestyle = src->linestyle;
     GRFX_LINK(wc, wcntxts);
     return wc;
 }

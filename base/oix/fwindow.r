@@ -43,8 +43,6 @@ if (!self_id)
  *  &col, &row, &x, &y, &interval, timestamp, and modifier keys.
  */
 
-#define MAXPOINTS 256
-
 static struct sdescrip wclassname = {15, "graphics.Window"};
 
 static struct sdescrip wbpf = {3, "wbp"};
@@ -246,16 +244,6 @@ function graphics_Window_draw_arc(self, x0, y0, w0, h0, ang1, ang2)
    }
 end
 
-function graphics_Window_draw_circle(self, x, y, r, theta, alpha)
-   body {
-      GetSelfW();
-
-      if (docircle(self_w, &x, 0) == Error)
-          runerr(0);
-      return self;
-   }
-end
-
 function graphics_Window_draw_curve(self, argv[argc])
    body {
       int i, n, closed;
@@ -269,7 +257,7 @@ function graphics_Window_draw_curve(self, argv[argc])
       dx = self_w->context->dx;
       dy = self_w->context->dy;
 
-      MemProtect(points = malloc(sizeof(struct point) * (n+2)));
+      MemProtect(points = malloc(sizeof(struct point) * (n + 2)));
 
       if (n > 1) {
           CnvCInteger(argv[0], x0)
@@ -306,7 +294,7 @@ function graphics_Window_draw_curve(self, argv[argc])
               drawlines(self_w, points+1, n);
           }
           else {
-              drawCurve(self_w, points, n+2);
+              drawcurve(self_w, points, n+2);
           }
       }
       free(points);
@@ -331,30 +319,25 @@ end
 
 function graphics_Window_draw_line(self, argv[argc])
    body {
-      int i, j, n;
-      struct point points[MAXPOINTS];
+      int i, n;
+      struct point *points;
       int dx, dy;
-
       GetSelfW();
-
       CheckArgMultipleOf(2);
-
+      MemProtect(points = malloc(sizeof(struct point) * (argc / 2)));
       dx = self_w->context->dx;
       dy = self_w->context->dy;
-      for(i = 0, j = 0; i < n; i++, j++) {
-          int base = i * 2;
-          word t;
-          if (j == MAXPOINTS) {
-              drawlines(self_w, points, MAXPOINTS);
-              points[0] = points[MAXPOINTS-1];
-              j = 1;
-          }
-          CnvCInteger(argv[base], t);
-          points[j].x = t + dx;
-          CnvCInteger(argv[base + 1], t);
-          points[j].y = t + dy;
+      n = 0;
+      for(i = 0; i < argc; i += 2) {
+          word x, y;
+          CnvCInteger(argv[i], x);
+          CnvCInteger(argv[i + 1], y);
+          points[n].x = x + dx;
+          points[n].y = y + dy;
+          ++n;
       }
-      drawlines(self_w, points, j);
+      drawlines(self_w, points, n);
+      free(points);
 
       return self;
    }
@@ -375,47 +358,6 @@ function graphics_Window_draw_point(self, x, y)
    }
 end
 
-function graphics_Window_draw_polygon(self, argv[argc])
-   body {
-      int i, j, n, base, dx, dy;
-      struct point points[MAXPOINTS];
-      word t;
-
-      GetSelfW();
-      CheckArgMultipleOf(2);
-
-      dx = self_w->context->dx;
-      dy = self_w->context->dy;
-
-      /*
-       * To make a closed polygon, start with the *last* point.
-       */
-      CnvCInteger(argv[argc - 2], t);
-      points[0].x = t + dx;
-      CnvCInteger(argv[argc - 1], t);
-      points[0].x = t + dy;
-
-      /*
-       * Now add all points from beginning to end, including last point again.
-       */
-      for(i = 0, j = 1; i < n; i++, j++) {
-          base = i * 2;
-          if (j == MAXPOINTS) {
-              drawlines(self_w, points, MAXPOINTS);
-              points[0] = points[MAXPOINTS-1];
-              j = 1;
-          }
-          CnvCInteger(argv[base], t);
-          points[j].x = t + dx;
-          CnvCInteger(argv[base + 1], t);
-          points[j].y = t + dy;
-      }
-      drawlines(self_w, points, j);
-
-      return self;
-   }
-end
-
 function graphics_Window_draw_rectangle(self, x0, y0, w0, h0)
    body {
       word x, y, width, height;
@@ -424,7 +366,8 @@ function graphics_Window_draw_rectangle(self, x0, y0, w0, h0)
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
 
-      drawrectangle(self_w, x, y, width, height);
+      if (width > 0 && height > 0)
+          drawrectangle(self_w, x, y, width, height);
 
       return self;
    }
@@ -538,19 +481,9 @@ function graphics_Window_fill_arc(self, x0, y0, w0, h0, ang1, ang2)
       else
           a1 = fmod(a1, 2 * Pi);
       
-      if (width > 0 && height > 0 && a1 < a2)
+      if (width > 0 && height > 0)
           fillarc(self_w, x, y, width, height, a1, a2);
       
-      return self;
-   }
-end
-
-function graphics_Window_fill_circle(self, x, y, r, theta, alpha)
-   body {
-      GetSelfW();
-
-      if (docircle(self_w, &x, 1) == Error)
-          runerr(0);
       return self;
    }
 end
@@ -561,24 +494,18 @@ function graphics_Window_fill_polygon(self, argv[argc])
       struct point *points;
       int dx, dy;
       GetSelfW();
-
       CheckArgMultipleOf(2);
-
-      /*
-       * Allocate space for all the points in a contiguous array,
-       * because a FillPolygon must be performed in a single call.
-       */
-      n = argc>>1;
-      MemProtect(points = malloc(sizeof(struct point) * n));
+      MemProtect(points = malloc(sizeof(struct point) * (argc / 2)));
       dx = self_w->context->dx;
       dy = self_w->context->dy;
-      for(i=0; i < n; i++) {
-          int base = i * 2;
-          word t;
-          CnvCInteger(argv[base], t);
-          points[i].x = t + dx;
-          CnvCInteger(argv[base + 1], t);
-          points[i].y = t + dy;
+      n = 0;
+      for(i = 0; i < argc; i += 2) {
+          word x, y;
+          CnvCInteger(argv[i], x);
+          CnvCInteger(argv[i + 1], y);
+          points[n].x = x + dx;
+          points[n].y = y + dy;
+          ++n;
       }
       fillpolygon(self_w, points, n);
       free(points);
