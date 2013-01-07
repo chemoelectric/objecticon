@@ -1680,8 +1680,8 @@ int pointargs(wbp w, dptr argv, word *px, word *py)
 void drawcurve(wbp w, struct point *p, int n)
 {
     int    i, j, steps;
-    float  ax, ay, bx, by, stepsize, stepsize2, stepsize3;
-    float  x, dx, d2x, d3x, y, dy, d2y, d3y;
+    double  ax, ay, bx, by, stepsize, stepsize2, stepsize3;
+    double  x, dx, d2x, d3x, y, dy, d2y, d3y;
     struct point *thepoints = NULL;
     int n2, npoints = 0;
 
@@ -1734,8 +1734,8 @@ void drawcurve(wbp w, struct point *p, int n)
             dy = dy + d2y;
             d2x = d2x + d3x;
             d2y = d2y + d3y;
-            thepoints[n2].x = (int)x;
-            thepoints[n2].y = (int)y;
+            thepoints[n2].x = x;
+            thepoints[n2].y = y;
             ++n2;
         }
         thepoints[n2].x = p[i - 1].x;
@@ -1744,10 +1744,8 @@ void drawcurve(wbp w, struct point *p, int n)
 
         drawlines(w, thepoints, n2);
     }
-    if (thepoints != NULL) {
+    if (thepoints)
         free(thepoints);
-        thepoints = NULL;
-    }
 }
 
 /*

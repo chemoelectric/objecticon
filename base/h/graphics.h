@@ -10,8 +10,8 @@ struct palentry {
 };
 
 struct point {
-    int x;
-    int y;
+    double x;
+    double y;
 };
 
 #define TCH1 '~'			/* usual transparent character */

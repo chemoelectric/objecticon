@@ -225,9 +225,12 @@ typedef int time_t, DIR, uid_t, gid_t, stringint;
    
 #define CnvCInteger(d,i)                        \
 if (!cnv:C_integer(d,i)) runerr(101,d);
-   
+
 #define DefCInteger(d,default,i)                \
 if (!def:C_integer(d,default,i)) runerr(101,d);
+
+#define CnvCDouble(d,i)                        \
+if (!cnv:C_double(d,i)) runerr(102,d);
    
 #define CnvString(din,dout)                     \
 if (!cnv:string(din,dout)) runerr(103,din);
