@@ -1925,16 +1925,12 @@ static void handle_mouse(wsp ws, XButtonEvent *event)
                  make_mod(event->state));
 }
 
-void drawarc(wbp w, int x, int y, int width, int height, double angle1, double angle2)
+void drawarc(wbp w, double cx, double cy, double rx, double ry, double angle1, double angle2)
 {
     struct point *pts;
-    double L, th, rx, ry, cx, cy;
+    double L, th;
     int d, i, segs, pc;
-    rx = width / 2.0;
-    ry = height / 2.0;
-    cx = x + rx;
-    cy = y + ry;
-    d = Max(width, height);
+    d = 2 * Max(rx, ry);
     if (d < 5)
         segs = 4;
     else if (d < 10)
@@ -1972,26 +1968,37 @@ void drawarc(wbp w, int x, int y, int width, int height, double angle1, double a
     free(pts);
 }
 
-void fillarc(wbp w, int x, int y, int width, int height, double angle1, double angle2)
+void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, double angle2)
 { 
     wsp ws = w->window;
     wdp wd = ws->display;
     wcp wc = w->context;
     XTrapezoid traps[32];
     int ntraps, has_wedge;
-    double h2, w2;
-
-    h2 = height / 2.0;
-    w2 = width / 2.0;
-
-    /* printf("input: width=%d  height=%d  angle1=%f angle2=%f\n",width, height, angle1, angle2); */
 
     has_wedge = (angle1 != 0 || angle2 != 2 * Pi);
 
     if (has_wedge || needmask(wc, 0)) {
         Picture mask;
-        ntraps = make_ellipse(w2, h2,    /* centre */
-                              w2, h2,    /* x/y radius */
+        int x, y, width, height;
+        double h2, w2;
+
+        /*
+         * calculate width and height for the masks, and their x, y
+         * position to draw onto the screen.  Note that width and
+         * height are even; this avoids any antialiasing relics when
+         * joining trapezoids and rectangles in the wedge mask.
+         */
+        x = floor(cx - rx);
+        y = floor(cy - ry);
+        width = 2 * ceil(cx - x);
+        height = 2 * ceil(cy - y);
+        h2 = height / 2.0;
+        w2 = width / 2.0;
+        /* printf("cx,cy=%f,%f rx,ry=%f,%f  ->   x,y=%d,%d   width.height=%d,%d   w2,h2=%f,%f\n",cx,cy,rx,ry,x,y,width,height,w2,h2); */
+
+        ntraps = make_ellipse(cx - x, cy - y,    /* centre */
+                              rx, ry,            /* x/y radius */
                               ElemCount(traps), traps);
         mask = getmask(wd, width, height);
         XRenderCompositeTrapezoids(wd->display, PictOpOver, wd->white->brush,  mask, 0, 0, 0, traps, ntraps);
@@ -2043,7 +2050,7 @@ void fillarc(wbp w, int x, int y, int width, int height, double angle1, double a
                 x2 = w2 - h2 / tan(a2 - Pi);
                 trap = trapezoid(0,0,x2,  height, 0, width-x2);
                 XRenderCompositeTrapezoids(wd->display, PictOpOver, wd->white->brush,  wedge2, 0, 0, 0, &trap, 1);
-                XRenderFillRectangle(wd->display, PictOpOver, wedge2, &wd->white->color, 0, h2 + (height % 2), width, h2);
+                XRenderFillRectangle(wd->display, PictOpOver, wedge2, &wd->white->color, 0, h2, width, h2);
             } else {
                 x2 = w2 - h2 * tan(a2 - Pi/2);
                 trap = trapezoid(h2, w2, width,  height, x2, width);
@@ -2068,8 +2075,8 @@ void fillarc(wbp w, int x, int y, int width, int height, double angle1, double a
         XRenderFreePicture(wd->display, mask);
     } else {
         clip(w);
-        ntraps = make_ellipse(x + w2, y + h2,
-                              w2, h2,
+        ntraps = make_ellipse(cx, cy,
+                              rx, ry,
                               ElemCount(traps), traps);
         traps2(w, traps, ntraps);
         unclip(w);
@@ -2572,7 +2579,7 @@ void fillpolygon(wbp w, struct point *points, int npoints)
 {
     XPointDouble *xpoints;
     int i;
-    xpoints = alloca(npoints * sizeof(XPointDouble));
+    MemProtect(xpoints = malloc(npoints * sizeof(XPointDouble)));
     for (i = 0; i < npoints; ++i) {
         xpoints[i].x = points[i].x;
         xpoints[i].y = points[i].y;
@@ -2580,6 +2587,7 @@ void fillpolygon(wbp w, struct point *points, int npoints)
     clip(w);
     poly2(w, xpoints, npoints);
     unclip(w);
+    free(xpoints);
 }
 
 static void maskpic2(wbp w, Picture src, Picture mask, int x, int y, int width, int height)

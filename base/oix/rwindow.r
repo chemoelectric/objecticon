@@ -1669,6 +1669,25 @@ int pointargs(wbp w, dptr argv, word *px, word *py)
     return Succeeded;
 }
 
+int dpointargs(wbp w, dptr argv, double *px, double *py)
+{
+    wcp wc = w->context;
+
+    /*
+     * Get x and y, defaulting to -dx and -dy.
+     */
+    if (!def:C_double(argv[0], -wc->dx, *px))
+        ReturnErrVal(102, argv[0], Error);
+
+    if (!def:C_double(argv[1], -wc->dy, *py))
+        ReturnErrVal(102, argv[1], Error);
+
+    *px += wc->dx;
+    *py += wc->dy;
+
+    return Succeeded;
+}
+
 /*
  * draw a smooth curve through the array of points
 

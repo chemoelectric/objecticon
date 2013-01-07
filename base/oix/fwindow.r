@@ -198,15 +198,19 @@ function graphics_Window_couple_impl(self, other)
 end
 
 
-function graphics_Window_draw_arc(self, x0, y0, w0, h0, ang1, ang2)
+function graphics_Window_draw_arc(self, x0, y0, rx0, ry0, ang1, ang2)
    body {
-      word x, y, width, height;
-      double a1, a2;
+      double x, y, rx, ry, a1, a2;
 
       GetSelfW();
 
-      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
+      if (dpointargs(self_w, &x0, &x, &y) == Error)
           runerr(0);
+
+      if (!cnv:C_double(rx0, rx))
+          runerr(102, rx0);
+      if (!cnv:C_double(ry0, ry))
+          runerr(102, ry0);
 
       /*
        * Angle 1 processing.  Computes in radians and 64'ths of a degree,
@@ -237,8 +241,8 @@ function graphics_Window_draw_arc(self, x0, y0, w0, h0, ang1, ang2)
       else
           a1 = fmod(a1, 2 * Pi);
 
-      if (width > 0 && height > 0)
-          drawarc(self_w, x, y, width, height, a1, a2);
+      if (rx > 0 && ry > 0)
+          drawarc(self_w, x, y, rx, ry, a1, a2);
 
       return self;
    }
@@ -449,15 +453,19 @@ function graphics_Window_pending(self, argv[argc])
    }
 end
 
-function graphics_Window_fill_arc(self, x0, y0, w0, h0, ang1, ang2)
+function graphics_Window_fill_arc(self, x0, y0, rx0, ry0, ang1, ang2)
    body {
-      word x, y, width, height;
-      double a1, a2;
+      double x, y, rx, ry, a1, a2;
 
       GetSelfW();
 
-      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
+      if (dpointargs(self_w, &x0, &x, &y) == Error)
           runerr(0);
+
+      if (!cnv:C_double(rx0, rx))
+          runerr(102, rx0);
+      if (!cnv:C_double(ry0, ry))
+          runerr(102, ry0);
 
       if (!def:C_double(ang1, 0.0, a1))
           runerr(102, ang1);
@@ -481,8 +489,8 @@ function graphics_Window_fill_arc(self, x0, y0, w0, h0, ang1, ang2)
       else
           a1 = fmod(a1, 2 * Pi);
       
-      if (width > 0 && height > 0)
-          fillarc(self_w, x, y, width, height, a1, a2);
+      if (rx > 0 && ry > 0)
+          fillarc(self_w, x, y, rx, ry, a1, a2);
       
       return self;
    }
