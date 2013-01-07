@@ -1925,46 +1925,48 @@ static void handle_mouse(wsp ws, XButtonEvent *event)
                  make_mod(event->state));
 }
 
+static void semi(struct point *pts, int *npts, int maxpts,
+                 double cx, double cy, double rx, double ry, double a1, double a2,
+                 int xfrom, int xto, int xby, double x0ang, double xnegang, double xposang)
+{
+    int x1;
+    double y1, th;
+    if (a1 > x0ang + Pi/2) return;
+    if (a1 + a2 < x0ang - Pi/2) return;
+    x1 = xfrom;
+    for(;;) {
+        if ((xby > 0 && x1 > xto) || (xby < 0 && x1 < xto)) break;
+        y1 = -sqrt(1 - pow(x1/rx, 2)) * ry * xby;
+        if (x1 == 0)
+            th = x0ang;
+        else if (x1 < 0)
+            th = atan(y1/x1) + xnegang;
+        else
+            th = atan(y1/x1) + xposang;
+        if (th > a1+a2) return;
+        if (a1 <= th && *npts < maxpts) {
+            pts[*npts].x = cx + x1;
+            pts[*npts].y = cy + y1;
+            ++*npts;
+        }
+        x1 += xby;
+   }
+}
+
 void drawarc(wbp w, double cx, double cy, double rx, double ry, double angle1, double angle2)
 {
     struct point *pts;
-    double L, th;
-    int d, i, segs, pc;
-    d = 2 * Max(rx, ry);
-    if (d < 5)
-        segs = 4;
-    else if (d < 10)
-        segs = 16;
-    else if (d < 20)
-        segs = 20;
-    else if (d < 30)
-        segs = 30;
-    else if (d < 100)
-        segs = 40;
-    else
-        segs = 50;
-    angle2 += angle1;
-    segs *= (angle2 - angle1) / (2 * Pi);
-    segs = Max(segs, 2);
-    MemProtect(pts = malloc((segs + 2) * sizeof(struct point)));
-    pc = 0;
-    for (i = 0; i < segs; ++i) {
-        th = angle1 + (angle2 - angle1) * i / segs;
-        L = 1.0 / hypot(sin(th)/ry, cos(th)/rx);
-        pts[pc].x = cx + L * cos(th);
-        pts[pc].y = cy + L * sin(th);
-        ++pc;
-    }
-    if (angle1 == 0.0 && angle2 == 2 * Pi)
-        pts[pc] = pts[0];  /* Ensure drawlines recognizes a closed arc */
-    else {
-        th = angle2;
-        L = 1.0 / hypot(sin(th)/ry, cos(th)/rx);
-        pts[pc].x = cx + L * cos(th);
-        pts[pc].y = cy + L * sin(th);
-    }
-    ++pc;
-    drawlines(w, pts, pc);
+    int maxpts, npts;
+    maxpts = 4 * (rx + 1) + 4;
+    MemProtect(pts = malloc(maxpts * sizeof(struct point)));
+    npts = 0;
+    semi(pts, &npts, maxpts, cx, cy, rx, ry, angle1, angle2,  rx,  -rx, -1, 0.5*Pi, Pi,   0);
+    semi(pts, &npts, maxpts, cx, cy, rx, ry, angle1, angle2, -rx,   rx,  1, 1.5*Pi, Pi,   2*Pi);
+    semi(pts, &npts, maxpts, cx, cy, rx, ry, angle1, angle2,  rx,  -rx, -1, 2.5*Pi, 3*Pi, 2*Pi);
+    semi(pts, &npts, maxpts, cx, cy, rx, ry, angle1, angle2, -rx,   rx,  1, 3.5*Pi, 3*Pi, 4*Pi);
+    if (angle2 == 2 * Pi && npts < maxpts)
+        pts[npts++] = pts[0];  /* Ensure drawlines recognizes a closed arc */
+    drawlines(w, pts, npts);
     free(pts);
 }
 
@@ -2260,6 +2262,8 @@ static Picture getjoinpicture(wbp w)
     return pic;
 }
 
+#define NearZero(x) (abs(x) < 0.00001)
+
 static void drawlineinfo(wbp w,
                          int op,
                          Picture src,
@@ -2273,14 +2277,14 @@ static void drawlineinfo(wbp w,
     wdp wd = ws->display;
     wcp wc = w->context;
 
-    if (curr->dx == 0 || curr->dy == 0) {
+    if (NearZero(curr->dx) || NearZero(curr->dy)) {
         XTrapezoid trap;
-        if (curr->dx == 0) {
+        if (NearZero(curr->dx)) {
             if (curr->dy > 0)
                 trap = trapezoid(curr->p1.y, curr->p1.x, curr->p2.x, curr->q1.y, curr->q1.x, curr->q2.x);
             else
                 trap = trapezoid(curr->q2.y, curr->q2.x, curr->q1.x, curr->p2.y, curr->p2.x, curr->p1.x);
-        } else { /* curr->dy == 0 */
+        } else { /* curr->dy ~== 0 */
             if (curr->dx > 0)
                 trap = trapezoid(curr->p2.y, curr->p2.x, curr->q2.x, curr->p1.y, curr->p1.x, curr->q1.x);
             else
