@@ -46,6 +46,8 @@ static Image *imgdata_to_Image(struct imgdata *imd);
 static void poly2(wbp w, Point *points, int npoints, int end0, int end1);
 static void fill2(wbp w, int op, Image *color, int x, int y, int width, int height);
 static void line2(wbp w, int x1, int y1, int x2, int y2);
+static int get_thick(wcp wc);
+static Point *convert_points(struct point *points0, int npoints);
 
 static struct imgdataformat imgdataformat_P9ABGR32;
 static struct imgdataformat imgdataformat_P9AG16;
@@ -334,6 +336,7 @@ wbp wopen(char *display)
     wc->font = default_font;
     wc->drawop = stringint_lookup(drawops, "over");
     wc->linestyle = stringint_lookup(linestyles, "endsquare");
+    wc->linewidth = 1;
     GRFX_LINK(wc, wcntxts);
 
     w->context = wc;
@@ -600,7 +603,7 @@ int rebind(wbp w, wbp w2)
     return Succeeded;
 }
 
-void drawarc(wbp w, int x, int y, int width, int height, double angle1, double angle2)
+void drawarc(wbp w, double cx, double cy, double rx, double ry, double angle1, double angle2)
 {
     int alpha, phi;
     wsp ws = w->window;
@@ -609,16 +612,28 @@ void drawarc(wbp w, int x, int y, int width, int height, double angle1, double a
     alpha = -angle1 * 180 / Pi;
     phi = -angle2 * 180 / Pi;
     arcop(ws->pix, 
-          Pt(x + width / 2, y + height / 2),
-          width / 2, height / 2,
-          wc->thick,
+          Pt(cx, cy),
+          rx, ry,
+          get_thick(wc),
           get_draw_img(wc), 
           ZP,
           alpha, phi,
           wc->drawop->i);
-    pix_to_win(ws, x, y,  width + 1, height + 1);
+    pix_to_win(ws, cx - rx - 1, cy -ry - 1, 2 * rx + 2, 2 * ry + 2);
     unclip(w);
     flushimage(display, 1);
+}
+
+static Point *convert_points(struct point *points0, int npoints)
+{
+    Point *points;
+    int i;
+    MemProtect(points = malloc(npoints * sizeof(Point)));
+    for (i = 0; i < npoints; ++i) {
+        points[i].x = points0[i].x;
+        points[i].y = points0[i].y;
+    }
+    return points;
 }
 
 void drawlines(wbp w, struct point *points0, int npoints)
@@ -626,9 +641,10 @@ void drawlines(wbp w, struct point *points0, int npoints)
     int i, term;
     wsp ws = w->window;
     wcp wc = w->context;
-    Point *points = (Point *)points0;
+    Point *points;
     if (npoints < 2)
         return;
+    points = convert_points(points0, npoints);
     if (points[npoints - 1].x == points[0].x && points[npoints - 1].y == points[0].y)
         term = Enddisc;
     else
@@ -636,6 +652,7 @@ void drawlines(wbp w, struct point *points0, int npoints)
     clip(w);
     poly2(w, points, npoints, term, term);
     unclip(w);
+    free(points);
     flushimage(display, 1);
 }
 
@@ -659,7 +676,7 @@ static void poly2(wbp w, Point *points, int npoints, int end0, int end1)
 {
     wsp ws = w->window;
     wcp wc = w->context;
-    int x1, y1, x2, y2, i;
+    int x1, y1, x2, y2, i, thick;
     if (npoints == 0)
         return;
 
@@ -675,40 +692,42 @@ static void poly2(wbp w, Point *points, int npoints, int end0, int end1)
         if (points[i].y > y2)
             y2 = points[i].y;
     }
-    polyop(ws->pix, points, npoints, end0, end1, wc->thick, get_draw_img(wc), ZP, wc->drawop->i);
-    pix_to_win(ws, x1 - wc->thick, y1 - wc->thick, 1 + x2 - x1 + 2 * wc->thick, 1 + y2 - y1 + 2 * wc->thick);
+    thick = get_thick(wc);
+    polyop(ws->pix, points, npoints, end0, end1, thick, get_draw_img(wc), ZP, wc->drawop->i);
+    pix_to_win(ws, x1 - thick, y1 - thick, 1 + x2 - x1 + 2 * thick, 1 + y2 - y1 + 2 * thick);
 }
 
 static void line2(wbp w, int x1, int y1, int x2, int y2)
 {
     wsp ws = w->window;
     wcp wc = w->context;
+    int thick;
     if (x2 < x1) {
         int t = x1 ; x1 = x2; x2 = t;
     }
     if (y2 < y1) {
         int t = y1 ; y1 = y2; y2 = t;
     }
+    thick = get_thick(wc);
     if (x1 == x2)
-        lineop(ws->pix, Pt(x1, y1), Pt(x2, y2 + 1), Endsquare, Endsquare, wc->thick, get_draw_img(wc), ZP, wc->drawop->i);
+        lineop(ws->pix, Pt(x1, y1), Pt(x2, y2 + 1), Endsquare, Endsquare, thick, get_draw_img(wc), ZP, wc->drawop->i);
     else
-        lineop(ws->pix, Pt(x1, y1), Pt(x2 + 1, y2), Endsquare, Endsquare, wc->thick, get_draw_img(wc), ZP, wc->drawop->i);
-    pix_to_win(ws, x1 - wc->thick, y1 - wc->thick, 1 + x2 - x1 + 2 * wc->thick, 1 + y2 - y1 + 2 * wc->thick);
+        lineop(ws->pix, Pt(x1, y1), Pt(x2 + 1, y2), Endsquare, Endsquare, thick, get_draw_img(wc), ZP, wc->drawop->i);
+    pix_to_win(ws, x1 - thick, y1 - thick, 1 + x2 - x1 + 2 * thick, 1 + y2 - y1 + 2 * thick);
 }
 
 void drawrectangle(wbp w, int x, int y, int width, int height)
 {
     wsp ws = w->window;
     wcp wc = w->context;
-    int lw = 1 + 2 * wc->thick;
-    if (width <= 2 * lw || height <= 2 * lw)
+    if (width <= 2 * wc->linewidth || height <= 2 * wc->linewidth)
         fillrectangle(w, x, y, width, height);
     else {
         clip(w);
-        fill2(w, wc->drawop->i, get_draw_img(wc), x, y, width, lw);
-        fill2(w, wc->drawop->i, get_draw_img(wc), x, y +  lw , lw, height - 2 * lw);
-        fill2(w, wc->drawop->i, get_draw_img(wc), x + width - lw, y +  lw,  lw, height - 2 * lw);
-        fill2(w, wc->drawop->i, get_draw_img(wc), x, y + height - lw, width,  lw);
+        fill2(w, wc->drawop->i, get_draw_img(wc), x, y, width, wc->linewidth);
+        fill2(w, wc->drawop->i, get_draw_img(wc), x, y +  wc->linewidth , wc->linewidth, height - 2 * wc->linewidth);
+        fill2(w, wc->drawop->i, get_draw_img(wc), x + width - wc->linewidth, y +  wc->linewidth,  wc->linewidth, height - 2 * wc->linewidth);
+        fill2(w, wc->drawop->i, get_draw_img(wc), x, y + height - wc->linewidth, width,  wc->linewidth);
         unclip(w);
         flushimage(display, 1);
     }
@@ -719,10 +738,10 @@ void fillpolygon(wbp w, struct point *points0, int npoints)
     wsp ws = w->window;
     wcp wc = w->context;
     int x1, y1, x2, y2, i;
-    Point *points = (Point *)points0;
+    Point *points;
     if (npoints == 0)
         return;
-
+    points = convert_points(points0, npoints);
     x1 = x2 = points[0].x;
     y1 = y2 = points[0].y;
     for (i = 1; i < npoints; ++i) {
@@ -740,7 +759,7 @@ void fillpolygon(wbp w, struct point *points0, int npoints)
     fillpolyop(ws->pix, points, npoints, 0, get_draw_img(wc), ZP, wc->drawop->i);
     pix_to_win(ws, x1, y1, x2 - x1, y2 - y1);
     unclip(w);
-
+    free(points);
     flushimage(display, 1);
 }
 
@@ -894,7 +913,7 @@ int setwindowicon(wbp w, struct imgdata *imd)
 #passthru #undef fillarc
 #passthru #define fillarc oi_fillarc        
 
-void fillarc(wbp w, int x, int y, int width, int height, double angle1, double angle2)
+void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, double angle2)
 {
     int alpha, phi;
     wsp ws = w->window;
@@ -903,13 +922,13 @@ void fillarc(wbp w, int x, int y, int width, int height, double angle1, double a
     alpha = -angle1 * 180 / Pi;
     phi = -angle2 * 180 / Pi;
     fillarcop(ws->pix,
-              Pt(x + width / 2, y + height / 2),
-              width / 2, height / 2,
+              Pt(cx, cy),
+              rx, ry,
               get_draw_img(wc),
               ZP,
               alpha, phi,
               wc->drawop->i);
-    pix_to_win(ws, x, y,  width + 1, height + 1);
+    pix_to_win(ws, cx - rx - 1, cy -ry - 1, 2 * rx + 2, 2 * ry + 2);
     unclip(w);
     flushimage(display, 1);
 }
@@ -1713,16 +1732,21 @@ int setlinestyle(wbp w, char *val)
     return Succeeded;
 }
 
+static int get_thick(wcp wc)
+{
+    return wc->linewidth / 2;
+}
+
 int setlinewidth(wbp w, int linewid)
 {
     wcp wc = w->context;
-    wc->thick = linewid / 2;
+    wc->linewidth = linewid;
     return Succeeded;
 }
 
 int getlinewidth(wbp w)
 {
-    return 1 + w->context->thick * 2;
+    return w->context->linewidth;
 }
 
 static void synch_cursor(wsp ws)
@@ -1911,7 +1935,7 @@ wcp clonecontext(wbp w)
     if (src->pattern)
         wc->pattern = link_sharedimage(src->pattern);
     wc->font = src->font;
-    wc->thick = src->thick;
+    wc->linewidth = src->linewidth;
     wc->drawop = src->drawop;
     wc->linestyle = src->linestyle;
     GRFX_LINK(wc, wcntxts);

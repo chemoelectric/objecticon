@@ -198,15 +198,19 @@ function graphics_Window_couple_impl(self, other)
 end
 
 
-function graphics_Window_draw_arc(self, x0, y0, w0, h0, ang1, ang2)
+function graphics_Window_draw_arc(self, x0, y0, rx0, ry0, ang1, ang2)
    body {
-      word x, y, width, height;
-      double a1, a2;
+      double x, y, rx, ry, a1, a2;
 
       GetSelfW();
 
-      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
+      if (dpointargs(self_w, &x0, &x, &y) == Error)
           runerr(0);
+
+      if (!cnv:C_double(rx0, rx))
+          runerr(102, rx0);
+      if (!cnv:C_double(ry0, ry))
+          runerr(102, ry0);
 
       /*
        * Angle 1 processing.  Computes in radians and 64'ths of a degree,
@@ -237,8 +241,8 @@ function graphics_Window_draw_arc(self, x0, y0, w0, h0, ang1, ang2)
       else
           a1 = fmod(a1, 2 * Pi);
 
-      if (width > 0 && height > 0 && a1 < a2)
-          drawarc(self_w, x, y, width, height, a1, a2);
+      if (rx > 0 && ry > 0)
+          drawarc(self_w, x, y, rx, ry, a1, a2);
 
       return self;
    }
@@ -247,7 +251,7 @@ end
 function graphics_Window_draw_curve(self, argv[argc])
    body {
       int i, n, closed;
-      word dx, dy, x0, y0, xN, yN, t;
+      double dx, dy, x0, y0, xN, yN, t;
       struct point *points;
       GetSelfW();
 
@@ -260,28 +264,28 @@ function graphics_Window_draw_curve(self, argv[argc])
       MemProtect(points = malloc(sizeof(struct point) * (n + 2)));
 
       if (n > 1) {
-          CnvCInteger(argv[0], x0)
-          CnvCInteger(argv[1], y0)
-          CnvCInteger(argv[argc - 2], xN)
-          CnvCInteger(argv[argc - 1], yN)
+          CnvCDouble(argv[0], x0)
+          CnvCDouble(argv[1], y0)
+          CnvCDouble(argv[argc - 2], xN)
+          CnvCDouble(argv[argc - 1], yN)
           if ((x0 == xN) && (y0 == yN)) {
               closed = 1;               /* duplicate the next to last point */
-              CnvCInteger(argv[argc-4], t);
+              CnvCDouble(argv[argc-4], t);
               points[0].x = t + self_w->context->dx;
-              CnvCInteger(argv[argc-3], t);
+              CnvCDouble(argv[argc-3], t);
               points[0].y = t + self_w->context->dy;
           }
           else {                       /* duplicate the first point */
-              CnvCInteger(argv[0], t);
+              CnvCDouble(argv[0], t);
               points[0].x = t + self_w->context->dx;
-              CnvCInteger(argv[1], t);
+              CnvCDouble(argv[1], t);
               points[0].y = t + self_w->context->dy;
           }
           for (i = 1; i <= n; i++) {
               int base = (i-1) * 2;
-              CnvCInteger(argv[base], t);
+              CnvCDouble(argv[base], t);
               points[i].x = t + dx;
-              CnvCInteger(argv[base + 1], t);
+              CnvCDouble(argv[base + 1], t);
               points[i].y = t + dy;
           }
           if (closed) {                /* duplicate the second point */
@@ -329,9 +333,9 @@ function graphics_Window_draw_line(self, argv[argc])
       dy = self_w->context->dy;
       n = 0;
       for(i = 0; i < argc; i += 2) {
-          word x, y;
-          CnvCInteger(argv[i], x);
-          CnvCInteger(argv[i + 1], y);
+          double x, y;
+          CnvCDouble(argv[i], x);
+          CnvCDouble(argv[i + 1], y);
           points[n].x = x + dx;
           points[n].y = y + dy;
           ++n;
@@ -449,15 +453,19 @@ function graphics_Window_pending(self, argv[argc])
    }
 end
 
-function graphics_Window_fill_arc(self, x0, y0, w0, h0, ang1, ang2)
+function graphics_Window_fill_arc(self, x0, y0, rx0, ry0, ang1, ang2)
    body {
-      word x, y, width, height;
-      double a1, a2;
+      double x, y, rx, ry, a1, a2;
 
       GetSelfW();
 
-      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
+      if (dpointargs(self_w, &x0, &x, &y) == Error)
           runerr(0);
+
+      if (!cnv:C_double(rx0, rx))
+          runerr(102, rx0);
+      if (!cnv:C_double(ry0, ry))
+          runerr(102, ry0);
 
       if (!def:C_double(ang1, 0.0, a1))
           runerr(102, ang1);
@@ -481,8 +489,8 @@ function graphics_Window_fill_arc(self, x0, y0, w0, h0, ang1, ang2)
       else
           a1 = fmod(a1, 2 * Pi);
       
-      if (width > 0 && height > 0)
-          fillarc(self_w, x, y, width, height, a1, a2);
+      if (rx > 0 && ry > 0)
+          fillarc(self_w, x, y, rx, ry, a1, a2);
       
       return self;
    }
@@ -500,9 +508,9 @@ function graphics_Window_fill_polygon(self, argv[argc])
       dy = self_w->context->dy;
       n = 0;
       for(i = 0; i < argc; i += 2) {
-          word x, y;
-          CnvCInteger(argv[i], x);
-          CnvCInteger(argv[i + 1], y);
+          double x, y;
+          CnvCDouble(argv[i], x);
+          CnvCDouble(argv[i + 1], y);
           points[n].x = x + dx;
           points[n].y = y + dy;
           ++n;
@@ -1510,6 +1518,8 @@ function graphics_Window_set_line_width(self, val)
        GetSelfW();
        if (!cnv:C_integer(val, i))
            runerr(101, val);
+       if (i < 1)
+           Irunerr(148, i);
        AttemptAttr(setlinewidth(self_w, i), "Invalid line_width");
        return self;
    }

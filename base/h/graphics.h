@@ -10,8 +10,8 @@ struct palentry {
 };
 
 struct point {
-    int x;
-    int y;
+    double x;
+    double y;
 };
 
 #define TCH1 '~'			/* usual transparent character */
@@ -240,7 +240,7 @@ typedef struct _wcontext {
   struct SharedColor *fg, *bg;
   struct SharedImage  *pattern;
   stringint     *linestyle;
-  int           thick;
+  int           linewidth;
   stringint     *drawop;
 #elif MSWIN32
   LOGPEN	pen;

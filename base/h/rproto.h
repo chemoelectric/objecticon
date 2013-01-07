@@ -204,7 +204,8 @@ char *tocolorstring(int r, int g, int b, int a);
    int  writeimagefile  (char *filename, struct imgdata *imd);
    int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph);
    int pointargs(wbp w, dptr argv, word *px, word *py);
-
+int dpointargs(wbp w, dptr argv, double *px, double *py);
+ 
    int  getdefaultfontsize(int);
    char *getdefaultfont(void);
    int interpimage(dptr d,  struct imgdata *imd);
@@ -284,8 +285,8 @@ void drawimgdata(wbp w, word x, word y, word width, word height, struct imgdata 
    int  grabpointer      (wbp w);
    int  ungrabpointer    (wbp w);
    void xdis            (wbp w, char *s, int n);
-   void fillarc         (wbp w, int x, int y, int width, int height, double angle1, double angle2);
-   void drawarc         (wbp w, int x, int y, int width, int height, double angle1, double angle2);
+   void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, double angle2);
+   void drawarc(wbp w, double cx, double cy, double rx, double ry, double angle1, double angle2);
    void drawlines       (wbp w, struct point *points, int npoints);
    void drawpoint       (wbp w, int x, int y);
    void drawrectangle   (wbp w, int x, int y, int width, int height);
