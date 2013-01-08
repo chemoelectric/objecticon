@@ -522,6 +522,74 @@ function graphics_Window_fill_polygon(self, argv[argc])
    }
 end
 
+function graphics_Window_fill_trapezoids(self, argv[argc])
+   body {
+      int i, n;
+      struct trapezoid *traps;
+      int dx, dy;
+      GetSelfW();
+      CheckArgMultipleOf(6);
+      MemProtect(traps = malloc(sizeof(struct trapezoid) * (argc / 6)));
+      dx = self_w->context->dx;
+      dy = self_w->context->dy;
+      n = 0;
+      for(i = 0; i < argc; i += 6) {
+          double top, x1, x2, bottom, x3, x4;
+          CnvCDouble(argv[i], top);
+          CnvCDouble(argv[i + 1], x1);
+          CnvCDouble(argv[i + 2], x2);
+          CnvCDouble(argv[i + 3], bottom);
+          CnvCDouble(argv[i + 4], x3);
+          CnvCDouble(argv[i + 5], x4);
+          traps[n].top = top + dy;
+          traps[n].x1 = x1 + dx;
+          traps[n].x2 = x2 + dx;
+          traps[n].bottom = bottom + dy;
+          traps[n].x3 = x3 + dx;
+          traps[n].x4 = x4 + dx;
+          ++n;
+      }
+      filltrapezoids(self_w, traps, n);
+      free(traps);
+
+      return self;
+   }
+end
+
+function graphics_Window_fill_triangles(self, argv[argc])
+   body {
+      int i, n;
+      struct triangle *tris;
+      int dx, dy;
+      GetSelfW();
+      CheckArgMultipleOf(6);
+      MemProtect(tris = malloc(sizeof(struct triangle) * (argc / 6)));
+      dx = self_w->context->dx;
+      dy = self_w->context->dy;
+      n = 0;
+      for(i = 0; i < argc; i += 6) {
+          double x1, y1, x2, y2, x3, y3;
+          CnvCDouble(argv[i], x1);
+          CnvCDouble(argv[i + 1], y1);
+          CnvCDouble(argv[i + 2], x2);
+          CnvCDouble(argv[i + 3], y2);
+          CnvCDouble(argv[i + 4], x3);
+          CnvCDouble(argv[i + 5], y3);
+          tris[n].p1.x = x1 + dx;
+          tris[n].p1.y = y1 + dy;
+          tris[n].p2.x = x2 + dx;
+          tris[n].p2.y = y2 + dy;
+          tris[n].p3.x = x3 + dx;
+          tris[n].p3.y = y3 + dy;
+          ++n;
+      }
+      filltriangles(self_w, tris, n);
+      free(tris);
+
+      return self;
+   }
+end
+
 function graphics_Window_fill_rectangle(self, x0, y0, w0, h0)
    body {
       word x, y, width, height;
