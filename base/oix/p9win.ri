@@ -48,6 +48,9 @@ static void fill2(wbp w, int op, Image *color, int x, int y, int width, int heig
 static void line2(wbp w, int x1, int y1, int x2, int y2);
 static int get_thick(wcp wc);
 static Point *convert_points(struct point *points0, int npoints);
+static Image *getmask(int width, int height);
+static void maskimage2(wbp w, Image *mask, int x, int y, int width, int height);
+static int needmask(wcp wc, int overlap);
 
 static struct imgdataformat imgdataformat_P9ABGR32;
 static struct imgdataformat imgdataformat_P9AG16;
@@ -724,10 +727,20 @@ void drawrectangle(wbp w, int x, int y, int width, int height)
         fillrectangle(w, x, y, width, height);
     else {
         clip(w);
-        fill2(w, wc->drawop->i, get_draw_img(wc), x, y, width, wc->linewidth);
-        fill2(w, wc->drawop->i, get_draw_img(wc), x, y +  wc->linewidth , wc->linewidth, height - 2 * wc->linewidth);
-        fill2(w, wc->drawop->i, get_draw_img(wc), x + width - wc->linewidth, y +  wc->linewidth,  wc->linewidth, height - 2 * wc->linewidth);
-        fill2(w, wc->drawop->i, get_draw_img(wc), x, y + height - wc->linewidth, width,  wc->linewidth);
+        if (needmask(wc, 0)) {
+            Image *mask = getmask(width, height);
+            gendrawop(mask, MkRect(0, 0 , width, wc->linewidth), white->i, ZP, 0, ZP, SoverD);
+            gendrawop(mask, MkRect(0, wc->linewidth , wc->linewidth, height - 2 * wc->linewidth), white->i, ZP, 0, ZP, SoverD);
+            gendrawop(mask, MkRect(width - wc->linewidth, wc->linewidth,  wc->linewidth, height - 2 * wc->linewidth), white->i, ZP, 0, ZP, SoverD);
+            gendrawop(mask, MkRect(0, height - wc->linewidth, width,  wc->linewidth), white->i, ZP, 0, ZP, SoverD);
+            maskimage2(w, mask, x, y, width, height);
+            freeimage(mask);
+        } else {
+            fill2(w, wc->drawop->i, get_draw_img(wc), x, y, width, wc->linewidth);
+            fill2(w, wc->drawop->i, get_draw_img(wc), x, y +  wc->linewidth , wc->linewidth, height - 2 * wc->linewidth);
+            fill2(w, wc->drawop->i, get_draw_img(wc), x + width - wc->linewidth, y +  wc->linewidth,  wc->linewidth, height - 2 * wc->linewidth);
+            fill2(w, wc->drawop->i, get_draw_img(wc), x, y + height - wc->linewidth, width,  wc->linewidth);
+        }
         unclip(w);
         flushimage(display, 1);
     }
@@ -737,29 +750,115 @@ void fillpolygon(wbp w, struct point *points0, int npoints)
 {
     wsp ws = w->window;
     wcp wc = w->context;
-    int x1, y1, x2, y2, i;
+    int x, y, width, height, i;
     Point *points;
-    if (npoints == 0)
-        return;
+    points_extent(points0, npoints, &x, &y, &width, &height);
     points = convert_points(points0, npoints);
-    x1 = x2 = points[0].x;
-    y1 = y2 = points[0].y;
-    for (i = 1; i < npoints; ++i) {
-        if (points[i].x < x1)
-            x1 = points[i].x;
-        if (points[i].y < y1)
-            y1 = points[i].y;
-        if (points[i].x > x2)
-            x2 = points[i].x;
-        if (points[i].y > y2)
-            y2 = points[i].y;
-    }
-
     clip(w);
     fillpolyop(ws->pix, points, npoints, 0, get_draw_img(wc), ZP, wc->drawop->i);
-    pix_to_win(ws, x1, y1, x2 - x1, y2 - y1);
+    pix_to_win(ws, x, y, width, height);
     unclip(w);
     free(points);
+    flushimage(display, 1);
+}
+
+static int needmask(wcp wc, int overlap)
+{
+    if (wc->pattern)
+        return 1;
+    if (!overlap)
+        return 0;
+    if (wc->drawop->i != SoverD)
+        return 1;
+    if ((wc->fg->rgba & 0xff) != 0xff)
+        return 1;
+    return 0;
+}
+
+static Image *getmask(int width, int height)
+{
+    Image *i;
+    MemProtect(i = allocimage(display, Rect(0, 0, width, height), RGBA32, 1, DTransparent));
+    return i;
+}
+
+static void maskimage2(wbp w, Image *mask, int x, int y, int width, int height)
+{
+    wsp ws = w->window;
+    wcp wc = w->context;
+    gendrawop(ws->pix, 
+              MkRect(x, y, width, height),
+              get_draw_img(wc),
+              ZP,
+              mask,
+              ZP, 
+              wc->drawop->i);
+    pix_to_win(ws, x, y, width, height);
+}
+
+void filltrapezoids(wbp w, struct trapezoid *traps, int ntraps)
+{
+    wsp ws = w->window;
+    wcp wc = w->context;
+    int x, y, width, height, i;
+    trapezoids_extent(traps, ntraps, &x, &y, &width, &height);
+    clip(w);
+    if (needmask(wc, 1)) {
+        Image *mask = getmask(width, height);
+        for (i = 0; i < ntraps; ++i) {
+            Point p[4];
+            p[0] = Pt(traps[i].x1 - x, traps[i].top - y);
+            p[1] = Pt(traps[i].x2 - x, traps[i].top - y);
+            p[2] = Pt(traps[i].x4 - x, traps[i].bottom - y);
+            p[3] = Pt(traps[i].x3 - x, traps[i].bottom - y);
+            fillpolyop(mask, p, 4, 0, white->i, ZP, SoverD);
+        }
+        maskimage2(w, mask, x, y, width, height);
+        freeimage(mask);
+    } else {
+        for (i = 0; i < ntraps; ++i) {
+            Point p[4];
+            p[0] = Pt(traps[i].x1, traps[i].top);
+            p[1] = Pt(traps[i].x2, traps[i].top);
+            p[2] = Pt(traps[i].x4, traps[i].bottom);
+            p[3] = Pt(traps[i].x3, traps[i].bottom);
+            fillpolyop(ws->pix, p, 4, 0, get_draw_img(wc), ZP, wc->drawop->i);
+        }
+        pix_to_win(ws, x, y, width, height);
+    }
+    unclip(w);
+    flushimage(display, 1);
+}
+
+void filltriangles(wbp w, struct triangle *tris, int ntris)
+{
+    wsp ws = w->window;
+    wcp wc = w->context;
+    int x, y, width, height, i;
+    triangles_extent(tris, ntris, &x, &y, &width, &height);
+    clip(w);
+    if (needmask(wc, 1)) {
+        Image *mask = getmask(width, height);
+        for (i = 0; i < ntris; ++i) {
+            Point p[3];
+            p[0] = Pt(tris[i].p1.x - x, tris[i].p1.y - y);
+            p[1] = Pt(tris[i].p2.x - x, tris[i].p2.y - y);
+            p[2] = Pt(tris[i].p3.x - x, tris[i].p3.y - y);
+            fillpolyop(mask, p, 3, 0, white->i, ZP, SoverD);
+        }
+        maskimage2(w, mask, x, y, width, height);
+        freeimage(mask);
+    } else {
+        for (i = 0; i < ntris; ++i) {
+            Point p[3];
+            p[0] = Pt(tris[i].p1.x, tris[i].p1.y);
+            p[1] = Pt(tris[i].p2.x, tris[i].p2.y);
+            p[2] = Pt(tris[i].p3.x, tris[i].p3.y);
+            fillpolyop(ws->pix, p, 3, 0, get_draw_img(wc), ZP, wc->drawop->i);
+        }
+        pix_to_win(ws, x, y, width, height);
+    }
+    unclip(w);
     flushimage(display, 1);
 }
 

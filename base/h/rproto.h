@@ -185,6 +185,24 @@ struct palentry *palsetup(int p);
 char *rgbkey         (int p, int r, int g, int b);
 char *tocolorstring(int r, int g, int b, int a);
 
+void points_extent(struct point *points, int npoints, int *x, int *y, int *width, int *height);
+void trapezoids_extent(struct trapezoid *traps, int ntraps, int *x, int *y, int *width, int *height);
+void triangles_extent(struct triangle *tris, int ntris, int *x, int *y, int *width, int *height);
+void range_extent(double x1, double y1, double x2, double y2, int *x, int *y, int *width, int *height);
+
+struct imgdataformat *parseimgdataformat(char *s);
+struct imgdataformat *platform_parseimgdataformat(char *s);
+int getlength_1(struct imgdata *imd);
+int getlength_2(struct imgdata *imd);
+int getlength_4(struct imgdata *imd);
+int getlength_8(struct imgdata *imd);
+int getlength_16(struct imgdata *imd);
+int getlength_24(struct imgdata *imd);
+int getlength_32(struct imgdata *imd);
+int getlength_48(struct imgdata *imd);
+int getlength_64(struct imgdata *imd);
+int imgdataformatscmp(char *s, struct imgdataformat **p);
+
 #if Graphics
    /*
     * portable graphics routines in rwindow.r and rwinrsc.r
@@ -210,18 +228,6 @@ int dpointargs(wbp w, dptr argv, double *px, double *py);
    char *getdefaultfont(void);
    int interpimage(dptr d,  struct imgdata *imd);
 
-struct imgdataformat *parseimgdataformat(char *s);
-struct imgdataformat *platform_parseimgdataformat(char *s);
-int getlength_1(struct imgdata *imd);
-int getlength_2(struct imgdata *imd);
-int getlength_4(struct imgdata *imd);
-int getlength_8(struct imgdata *imd);
-int getlength_16(struct imgdata *imd);
-int getlength_24(struct imgdata *imd);
-int getlength_32(struct imgdata *imd);
-int getlength_48(struct imgdata *imd);
-int getlength_64(struct imgdata *imd);
-int imgdataformatscmp(char *s, struct imgdataformat **p);
 
 int reducerect(wbp w, int clip, word *x, word *y, word *width, word *height);
 void captureimgdata(wbp w, int x, int y, struct imgdata *imd);
@@ -291,6 +297,8 @@ void drawimgdata(wbp w, word x, word y, word width, word height, struct imgdata 
    void drawpoint       (wbp w, int x, int y);
    void drawrectangle   (wbp w, int x, int y, int width, int height);
    void fillpolygon     (wbp w, struct point *pts, int npts);
+   void filltrapezoids  (wbp w, struct trapezoid *traps, int ntraps);
+   void filltriangles   (wbp w, struct triangle *tris, int ntris);
    void drawstring      (wbp w, int x, int y, char *str, int slen);
    void drawutf8        (wbp w, int x, int y, char *str, int slen, int nchars);
    int  textwidth       (wbp w, char *s, int n);

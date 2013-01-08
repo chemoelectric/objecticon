@@ -716,6 +716,16 @@ final class Window(NoCopy)
    public native fill_polygon(a[])
 
    #
+   # fill_trapezoids(top1, topleft1, topright1, bottom1, bottomleft1, bottomright1, ...)
+   #
+   public native fill_trapezoids(a[])
+
+   #
+   # fill_triangles(topx1, topy1, leftx1, lefty1, rightx1, righty1, ...)
+   #
+   public native fill_triangles(a[])
+
+   #
    # fill_rectangle(x, y, width, height)
    #
    public native fill_rectangle(x, y, width, height)
