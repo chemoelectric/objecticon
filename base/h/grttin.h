@@ -164,7 +164,7 @@ typedef int j_common_ptr, JSAMPARRAY, JSAMPROW;
 #endif					/* HAVE_LIBJPEG */
 
 #if HAVE_LIBPNG
-typedef int png_structp, png_infop, png_bytep, png_byte;
+typedef int png_structp, png_infop, png_bytep, png_byte, png_colorp, png_color, png_color_16, png_color_16p;
 #endif
 
 #if HAVE_LIBOPENSSL

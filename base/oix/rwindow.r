@@ -1233,7 +1233,6 @@ static int readpngfile(char *filename, struct imgdata *imd)
     unsigned char *data = 0;
     struct imgdataformat *format;
     FILE *fp;
-    double image_gamma;
     int pixel_depth, color_type;
 
     /* open file and test for it being a png */
@@ -1271,17 +1270,22 @@ static int readpngfile(char *filename, struct imgdata *imd)
     png_set_sig_bytes(png_ptr, 8);
     png_read_info(png_ptr, info_ptr);
 
-    /* 
-     * Gamma correction using a screen gamma of 2.2.
+    /*
+     * Ensure grayscale images have at least 8bit depth (png's row
+     * padding is too painful to handle for smaller depths).
      */
-    if (png_get_gAMA(png_ptr, info_ptr, &image_gamma))
-        png_set_gamma(png_ptr, 2.2, image_gamma);
-    if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_PALETTE)
-        png_set_palette_to_rgb(png_ptr);
-    if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_GRAY && png_get_bit_depth(png_ptr, info_ptr) < 8) 
+    if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_GRAY)
         png_set_expand_gray_1_2_4_to_8(png_ptr);
-    if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS))
-        png_set_tRNS_to_alpha(png_ptr);
+
+    if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_PALETTE)
+        /* Ensures an 8bit depth, for same reason as for grayscale. */
+        png_set_packing(png_ptr);
+    else {
+        if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS))
+            png_set_tRNS_to_alpha(png_ptr);
+    }
+
+
     if (png_get_interlace_type(png_ptr, info_ptr) == PNG_INTERLACE_ADAM7)
         png_set_interlace_handling(png_ptr);
 
@@ -1289,27 +1293,50 @@ static int readpngfile(char *filename, struct imgdata *imd)
     pixel_depth = png_get_bit_depth(png_ptr, info_ptr) * png_get_channels(png_ptr, info_ptr);
     color_type = png_get_color_type(png_ptr, info_ptr);
 
-    if (color_type == PNG_COLOR_TYPE_RGB && pixel_depth == 24)
-        format = &imgdataformat_RGB24;
-    else if (color_type == PNG_COLOR_TYPE_RGB && pixel_depth == 48)
-        format = &imgdataformat_RGB48;
-    else if (color_type == PNG_COLOR_TYPE_RGB_ALPHA && pixel_depth == 32)
-        format = &imgdataformat_RGBA32;
-    else if (color_type == PNG_COLOR_TYPE_RGB_ALPHA && pixel_depth == 64)
-        format = &imgdataformat_RGBA64;
-    else if (color_type == PNG_COLOR_TYPE_GRAY && pixel_depth == 8)
-        format = &imgdataformat_G8;
-    else if (color_type == PNG_COLOR_TYPE_GRAY_ALPHA && pixel_depth == 16)
-        format = &imgdataformat_GA16;
-    else if (color_type == PNG_COLOR_TYPE_GRAY && pixel_depth == 16)
-        format = &imgdataformat_G16;
-    else if (color_type == PNG_COLOR_TYPE_GRAY_ALPHA && pixel_depth == 32)
-        format = &imgdataformat_GA32;
-    else {
-        fclose(fp);
-        png_destroy_read_struct(&png_ptr, &info_ptr, 0);
-        whyf("readpngfile: File %s, unsupported format/depth", filename);
-        return Failed;
+    if (color_type == PNG_COLOR_TYPE_PALETTE && pixel_depth == 8) {
+        png_colorp palette;
+        png_bytep trans;
+        int i, num_palette, num_trans;
+        format = &imgdataformat_PALETTE8;
+        MemProtect(imd->paltbl = calloc(format->palette_size, sizeof(struct palentry)));
+        if (png_get_PLTE(png_ptr, info_ptr, &palette, &num_palette)) {
+            num_palette = Min(num_palette, format->palette_size);
+            for (i = 0; i < num_palette; ++i) {
+                imd->paltbl[i].r = 257 * palette[i].red;
+                imd->paltbl[i].g = 257 * palette[i].green;
+                imd->paltbl[i].b = 257 * palette[i].blue;
+                imd->paltbl[i].a = 0xffff;
+            }
+        }
+        if (png_get_tRNS(png_ptr, info_ptr, &trans, &num_trans, 0)) {
+            num_trans = Min(num_trans, format->palette_size);
+            for (i = 0; i < num_trans; ++i)
+                imd->paltbl[i].a = 257 * trans[i];
+        }
+    } else {
+        if (color_type == PNG_COLOR_TYPE_RGB && pixel_depth == 24)
+            format = &imgdataformat_RGB24;
+        else if (color_type == PNG_COLOR_TYPE_RGB && pixel_depth == 48)
+            format = &imgdataformat_RGB48;
+        else if (color_type == PNG_COLOR_TYPE_RGB_ALPHA && pixel_depth == 32)
+            format = &imgdataformat_RGBA32;
+        else if (color_type == PNG_COLOR_TYPE_RGB_ALPHA && pixel_depth == 64)
+            format = &imgdataformat_RGBA64;
+        else if (color_type == PNG_COLOR_TYPE_GRAY && pixel_depth == 8)
+            format = &imgdataformat_G8;
+        else if (color_type == PNG_COLOR_TYPE_GRAY_ALPHA && pixel_depth == 16)
+            format = &imgdataformat_GA16;
+        else if (color_type == PNG_COLOR_TYPE_GRAY && pixel_depth == 16)
+            format = &imgdataformat_G16;
+        else if (color_type == PNG_COLOR_TYPE_GRAY_ALPHA && pixel_depth == 32)
+            format = &imgdataformat_GA32;
+        else {
+            fclose(fp);
+            png_destroy_read_struct(&png_ptr, &info_ptr, 0);
+            whyf("readpngfile: File %s, unsupported format/depth", filename);
+            return Failed;
+        }
+        imd->paltbl = 0;
     }
 
     width = png_get_image_width(png_ptr, info_ptr);
@@ -1330,7 +1357,6 @@ static int readpngfile(char *filename, struct imgdata *imd)
 
     imd->width = width;
     imd->height = height;
-    imd->paltbl = 0;
     imd->data = data;
     imd->format = format;
 
@@ -1367,7 +1393,34 @@ static int writepngfile(char *filename, struct imgdata *imd)
 
     png_init_io(png_ptr, fp);
 
-    if (imd->format->alpha_depth) {
+    if (imd->format->palette_size) {
+        png_color color[256];
+        png_byte trans[256];
+        png_set_IHDR(png_ptr, info_ptr, imd->width, imd->height,
+                     8, PNG_COLOR_TYPE_PALETTE, PNG_INTERLACE_NONE,
+                     PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+        for (i = 0; i < imd->format->palette_size; ++i) {
+            color[i].red = imd->paltbl[i].r / 256;
+            color[i].green = imd->paltbl[i].g / 256;
+            color[i].blue = imd->paltbl[i].b / 256;
+            trans[i] = imd->paltbl[i].a / 256;
+        }
+        png_set_PLTE(png_ptr, info_ptr, color, imd->format->palette_size);
+        png_set_tRNS(png_ptr, info_ptr, trans, imd->format->palette_size, 0);
+        png_write_info(png_ptr, info_ptr);
+        MemProtect(row_pointers = malloc(sizeof(png_bytep) * imd->height));
+        MemProtect(data = malloc(imd->width * imd->height));
+        p = (png_bytep)data;
+        for (i = 0; i < imd->height; ++i) {
+            row_pointers[i] = p;
+            p += imd->width;
+        }
+        p = (png_bytep)data;
+        for (j = 0; j < imd->height; j++) {
+            for (i = 0; i < imd->width; i++)
+                *p++ = imd->format->getpaletteindex(imd, i, j);
+        }
+    } else if (imd->format->alpha_depth) {
         png_set_IHDR(png_ptr, info_ptr, imd->width, imd->height,
                      16, PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE,
                      PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
