@@ -1751,11 +1751,16 @@ int dpointargs(wbp w, dptr argv, double *px, double *py)
  */
 void drawcurve(wbp w, struct point *p, int n)
 {
-    int    i, j, steps;
+    int    i, j, steps, n2, nalc;
     double  ax, ay, bx, by, stepsize, stepsize2, stepsize3;
     double  x, dx, d2x, d3x, y, dy, d2y, d3y;
-    struct point *thepoints = NULL;
-    int n2, npoints = 0;
+    struct point *thepoints = 0;
+    if (n < 5)
+        return;
+    nalc = 64;
+    MemProtect(thepoints = malloc(nalc * sizeof(struct point)));
+    thepoints[0] = p[1];
+    n2 = 1;
 
     for (i = 3; i < n; i++) {
         /*
@@ -1777,18 +1782,12 @@ void drawcurve(wbp w, struct point *p, int n)
          * intervals of size 0.1
          */
         steps = Max(Abs(p[i-1].x - p[i-2].x), Abs(p[i-1].y - p[i-2].y)) + 10;
-
-        if (steps + 5 > npoints) {
-            npoints = steps + 5;
-            MemProtect(thepoints = realloc(thepoints, npoints * sizeof(struct point)));
-        }
-
         stepsize = 1.0/steps;
         stepsize2 = stepsize * stepsize;
         stepsize3 = stepsize * stepsize2;
 
-        x = thepoints[0].x = p[i-2].x;
-        y = thepoints[0].y = p[i-2].y;
+        x = p[i-2].x;
+        y = p[i-2].y;
         dx = (stepsize3*0.5)*ax + (stepsize2*0.5)*bx + (stepsize*0.5)*(p[i-1].x-p[i-3].x);
         dy = (stepsize3*0.5)*ay + (stepsize2*0.5)*by + (stepsize*0.5)*(p[i-1].y-p[i-3].y);
         d2x = (stepsize3*3) * ax + stepsize2 * bx;
@@ -1797,8 +1796,6 @@ void drawcurve(wbp w, struct point *p, int n)
         d3y = (stepsize3*3) * ay;
 
         /* calculate the points for drawing the curve */
-
-        n2 = 1;
         for (j = 0; j < steps; j++) {
             x = x + dx;
             y = y + dy;
@@ -1806,18 +1803,23 @@ void drawcurve(wbp w, struct point *p, int n)
             dy = dy + d2y;
             d2x = d2x + d3x;
             d2y = d2y + d3y;
+            if (n2 >= nalc) {
+                nalc += 256;
+                MemProtect(thepoints = realloc(thepoints, nalc * sizeof(struct point)));
+            }
             thepoints[n2].x = x;
             thepoints[n2].y = y;
             ++n2;
         }
-        thepoints[n2].x = p[i - 1].x;
-        thepoints[n2].y = p[i - 1].y;
-        ++n2;
-
-        drawlines(w, thepoints, n2);
     }
-    if (thepoints)
-        free(thepoints);
+
+    /* Ensure the last output point is precisely the last input point;
+     * this also ensures drawlines identifies a closed curve
+     * correctly. */
+    thepoints[n2 - 1] = p[n - 2];
+
+    drawlines(w, thepoints, n2);
+    free(thepoints);
 }
 
 /*

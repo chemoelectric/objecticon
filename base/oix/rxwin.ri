@@ -2491,12 +2491,13 @@ void drawpoint(wbp w, int x, int y)
 
 static int needmask(wcp wc, int overlap)
 {
+    /* ops where influence of source color is 0 (clear, dest, dest in, dest out) */
+    if (wc->drawop->i == PictOpClear || wc->drawop->i == PictOpDst || wc->drawop->i == PictOpInReverse || wc->drawop->i == PictOpOutReverse)
+        return 0;
     if (wc->pattern)
         return 1;
     if (!overlap)
         return 0;
-    if (wc->drawop->i != PictOpOver)
-        return 1;
     if (wc->fg->color.alpha != 0xffff)
         return 1;
     return 0;
@@ -2532,20 +2533,47 @@ void drawrectangle(wbp w, int x, int y, int width, int height)
         /* Note that we know the two vertical lines will be at least one pixel high, since
          * height > 2 * wc->linewidth
          */
-        if (needmask(wc, 0)) {
-            Picture mask = getmask(wd, width + wc->linewidth - 1, height + wc->linewidth - 1);
-            XRenderFillRectangle(wd->display, PictOpOver, mask, &wd->white->color, 0, 0 , width, wc->linewidth);
-            XRenderFillRectangle(wd->display, PictOpOver, mask, &wd->white->color, 0, wc->linewidth , wc->linewidth, height - 2 * wc->linewidth);
-            XRenderFillRectangle(wd->display, PictOpOver, mask, &wd->white->color, width - wc->linewidth, wc->linewidth,  wc->linewidth, height - 2 * wc->linewidth);
-            XRenderFillRectangle(wd->display, PictOpOver, mask, &wd->white->color, 0, height - wc->linewidth, width,  wc->linewidth);
-            maskpic2(w, get_draw_picture(wc), mask, x, y, width, height);
-            XRenderFreePicture(wd->display, mask);
-        } else {
-            fill2(w, wc->drawop->i, &wc->fg->color, x, y, width, wc->linewidth);
-            fill2(w, wc->drawop->i, &wc->fg->color, x, y +  wc->linewidth , wc->linewidth, height - 2 * wc->linewidth);
-            fill2(w, wc->drawop->i, &wc->fg->color, x + width - wc->linewidth, y +  wc->linewidth,  wc->linewidth, height - 2 * wc->linewidth);
-            fill2(w, wc->drawop->i, &wc->fg->color, x, y + height - wc->linewidth, width,  wc->linewidth);
-        }
+        XRenderComposite(wd->display,
+                         wc->drawop->i,
+                         get_draw_picture(wc),     /* src */
+                         None,                     /* mask */
+                         ws->ppic,                 /* dest */
+                         0,0,                      /* src x,y */
+                         0,0,                      /* mask x,y */
+                         x, y,                     /* dst x,y,w,h */
+                         width, wc->linewidth);
+
+        XRenderComposite(wd->display,
+                         wc->drawop->i,
+                         get_draw_picture(wc),     /* src */
+                         None,                     /* mask */
+                         ws->ppic,                 /* dest */
+                         0,wc->linewidth,          /* src x,y */
+                         0,0,                      /* mask x,y */
+                         x, y +  wc->linewidth,    /* dst x,y,w,h */
+                         wc->linewidth, height - 2 * wc->linewidth);
+
+        XRenderComposite(wd->display,
+                         wc->drawop->i,
+                         get_draw_picture(wc),     /* src */
+                         None,                     /* mask */
+                         ws->ppic,                 /* dest */
+                         width - wc->linewidth,wc->linewidth,    /* src x,y */
+                         0,0,                      /* mask x,y */
+                         x + width - wc->linewidth, y + wc->linewidth,     /* dst x,y,w,h */
+                         wc->linewidth, height - 2 * wc->linewidth);
+
+        XRenderComposite(wd->display,
+                         wc->drawop->i,
+                         get_draw_picture(wc),     /* src */
+                         None,                     /* mask */
+                         ws->ppic,                 /* dest */
+                         0,height - wc->linewidth, /* src x,y */
+                         0,0,                      /* mask x,y */
+                         x, y + height - wc->linewidth,   /* dst x,y,w,h */
+                         width, wc->linewidth);
+
+        pix_to_win(ws, x, y, width, height);
         unclip(w);
     }
 }
