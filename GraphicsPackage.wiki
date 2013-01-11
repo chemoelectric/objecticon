@@ -1,9 +1,9 @@
 #summary Low-level graphics interface.
 <wiki:toc max_depth="3" />
 = Introduction =
-Object Icon's graphic facilities are based on Icon's, but with quite a large number of features omitted, and a few added.  Also, the programming interface is re-cast into an object-oriented form, consistent with the rest of the library.
+Object Icon's graphic facilities are based on Icon's, but with quite a large number of features omitted, and a few added, most notably support for transluscent colours, alpha channels and compositing.  Also, the programming interface is re-cast into an object-oriented form, consistent with the rest of the library.
 
-The following features in Icon's graphic facilities are omitted from Object Icon's :-
+The following notable features in Icon's graphic facilities are omitted from Object Icon's :-
 
  * The notion of a window as a file; in Object Icon a window is merely an object.
  * Mutable colors.
@@ -37,16 +37,15 @@ The various setter methods for setting window attributes are summarised in the f
 ||set_canvas||string||Window visibility||
 ||clip||4xinteger||Clipping region||
 ||unclip||-||Unset clipping region||
-||set_draw_op||string||Pixel combination||
+||set_draw_op||string||Compositing operator||
 ||set_dx||integer||Window horizontal offset||
 ||set_dy||integer||Window vertical offset||
 ||set_fg||string||Foreground color||
-||set_fill_style||string||Fill style to use in drawing||
 ||set_font||string||Current text font||
 ||set_geometry||4xinteger||Window position and size||
 ||set_height||integer||Window height||
 ||set_icon||string||Window icon||
-||set_image||string||Load an image and set size||
+||set_image||string||Draw an image and set window size to image size||
 ||set_input_mask||string||Mask of mouse/keyboard events||
 ||set_label||string||Window label (title)||
 ||set_line_style||string||Line style to use in drawing||
@@ -57,7 +56,7 @@ The various setter methods for setting window attributes are summarised in the f
 ||set_min_height||integer||Minimum window height||
 ||set_min_size||2xinteger||Minimum window size||
 ||set_min_width||integer||Minimum window width||
-||set_pattern||string||Pattern to use with fill_style||
+||set_pattern||string||Image to use to fill instead of foreground colour||
 ||set_pointer||string||Mouse pointer||
 ||set_pos||2xinteger||Window position on screen||
 ||set_transient_for||Window||Transient-for window||
@@ -70,7 +69,7 @@ The various setter methods for setting window attributes are summarised in the f
 Most of the attributes have corresponding `get` methods.
 
 == Fonts ==
-Fonts follow the same format as in Icon, with some minor enhancements.  The environment variable `OIFONT` specifies the default font to use in a window, and `OIFONTSIZE` specifies the default fontsize.  If Xft anti-aliased fonts are available, then further customization can be achieved by editing the `~/.fonts.conf` file and defining patterns for the following family names :-
+Fonts follow the same format as in Icon, with some minor enhancements.  The environment variable `OIFONT` specifies the default font to use in a window, and `OIFONTSIZE` specifies the default fontsize.  On X11, Xft, Fontconfig and Freetype are used for fonts.  With fontconfig, further customization can be achieved by editing the `~/.fonts.conf` file and defining patterns for the following family names :-
 
 || *Icon font family* || *Xft family name* || *Default value* ||
 || fixed || Object Icon fixed || mono ||
@@ -94,15 +93,121 @@ An example entry, which makes the Icon mono family use the "Deja Vu Sans Mono" f
  </match>
 }}}
  
-A font specifier may specify a string to be interpreted directly by the platform's font system.  When using xft, this is done by prepending the string "fc:" to the specifier (for example, "fc:Bitstream Vera Sans-11").  When using plain X11 fonts, use "x11:".  The result of the `get_font()` method will in fact always be in this platform specific format.
+A font specifier may specify a string to be interpreted directly by the platform's font system.  When using fontconfig, this is done by prepending the string "fc:" to the specifier (for example, "fc:Bitstream Vera Sans-11").  The result of the `get_font()` method will in fact always be in this platform specific format.
 
 == Colours and Palettes ==
-Colour specifications and palettes follow the same format as in Icon.
+Colour specifications and palettes follow the same format as in Icon, with an enhancement to allow specification of transluscent colours.  For a colour specified numerically, a fourth optional value can be added to specify the alpha value.  For a colour specified with a string name, a percentage may be appended to given the tranluscency.  For example :-
+{{
+"45874,0,0,52428"   # 70% red, 80% alpha
+"dark blue 50%"
+}}
 
-== Pixel data ==
-Raw pixel data can be extracted from a window using the `get_pixels` method.  A rectangular area is specified by the parameters, and the method returns a list with one element for each pixel in the area.  Any pixel which lies outside the window has the value `&null` in the list; otherwise the value is the colour specification for the pixel (as a string).
+== Images and the Pixels class ==
+Image data is represented using the `Pixels` class.  This is just a two-dimensional array of pixel data, stored in various formats.  Pixel data can come from a number of sources :-
 
-To write raw pixel data back to a window, use `set_pixels`.  This takes a list and a rectangular area as parameters, and copies the colours in the list to the area.  Null entries in the list are simply skipped.
+ * An image file.  Possible formats are gif, png and jpeg; the latter two depend on the right libraries being available.
+ * Raw image data stored as a string, also in gif, png or jpeg format.
+ * An image grabbed from part of a `Window`
+ * A blank image
+
+To create an instance from an image file use the `Pixels.open` static method, passing the filename.  `Pixels.open` is also used to create an instance from raw data.  This can easily be done using the preprocessor `$load` directive to compile image data into the executable.  An example of this would be
+{{{
+$load FLINTSTONES "/tmp/flintstones.jpg"
+
+...
+   i := Pixels.open(FLINTSTONES)
+...
+}}}
+The `$load` directive defines the preprocessor symbol `FLINTSTONES` with the value being a string containing the contents of the specified file.   An advantage of using this technique is that the image file does not of course have to be present at runtime (only at compile time).
+
+To get pixels from a `Window`, use its `get_pixels` method, and to create a new blank image,  use the `Pixels.blank` static method, passing width, height and optionally the desired underlying format.  For example :-
+{{{
+   i := Pixels.blank(3, 3, Pixels.RGBA32)
+}}}
+creates a 3x3 image using 32 bits per pixel.  Some formats do not store an alpha channel; in this case reading back from the image always gives an opaque pixel.
+
+Paletted images are supported.  Rather than storing pixel data directly, indices into a palette of colours are stored instead.  Additional methods in `Pixels` are provided for editing the palette for such formats.
+
+A `Pixels` image can be used with a `Window` in several ways :-
+
+ * The image can be written to the window with `draw_image`
+ * The image can be used as a fill pattern with `set_pattern`; it is then used instead of the foreground colour.
+ * The window icon can be set with `set_icon`
+ * The window's contents and size can be set according to an image with `set_image`.
+
+After use, a `Pixels` instance should be closed in order to free the memory it uses.
+== Compositing and draw_op ==
+The compositing operator used by the drawing functions can be set using `set_draw_op`.  The possible values are :-
+
+"atop", "clear", "dest", "dest atop", "dest in", "dest out", "dest over", "in", "out", "over", "source", "xor"
+
+The default is "over".
+
+Here is an example to illustrate how different draw operators can be used.  This example creates a circular mask, then combines it with an image using the "in" operator, and finally adds a blue background using the "dest over" operator.
+
+{{{
+import io, graphics, ipl.graphics
+
+$load CAT "/tmp/cheetah_cubs.jpg"
+
+procedure circle_mask(d)
+   local p, i, j, r2, r, s, a
+   p := Pixels.blank(d, d, Pixels.A8)
+   r := d / 2
+   r2 := r * r
+   every j := 0 to d - 1 do
+      every i := 0 to d - 1 do
+         if (s := (i - r)^2 + (j - r)^2) < r2 then {
+            a := ((r2 - s) * 65535) / r2
+            p.set_rgba(i, j, 0,0,0, a)
+         }
+   return p
+end
+
+procedure main()
+   local cat, cm, w
+
+   # Create a image of the cheetahs
+   cat := Pixels.open(CAT) | stop(&why)
+
+   # Create a circular mask image.  The parameter gives the diameter.
+   # The further away from the centre of the circle, the more
+   # transparent is the mask, with the centre being opaque.
+   cm := circle_mask(cat.get_width())
+
+   w := Window.open().
+      # Copy the circle mask to w; "source" must be used here so that
+      # the mask is copied to w (rather than combined with the w's
+      # underlying background).
+      set_draw_op("source").
+      set_image(cm).
+      # Now draw the cat using the "in" operator.  Where the alpha
+      # value of the mask (and hence w) is more opaque, more of the
+      # cat image is written to w.  Conversely, where it is more
+      # transparent, less of the cat image is written.  The alpha
+      # values in w are unchanged.
+      set_draw_op("in").
+      draw_image(,, cat).
+      # Finally set a background colour.  Where w is opaque, less blue
+      # is written; where transparent, more.  Afterwards, the alpha
+      # values of w will be 100% opaque.
+      set_fg("very light blue").
+      set_draw_op("dest over").
+      fill_rectangle().
+      set_canvas("normal")
+
+   until WQuit(w) do delay(10)
+
+   every (w | cat | cm).close()
+end
+}}}
+The cheetah image looks like this in its raw form :-
+
+http://objecticon.googlecode.com/svn/wiki/cheetah_cubs.jpg
+
+The resulting window is as follows :-
+
+http://objecticon.googlecode.com/svn/wiki/maskresult.png
 
 == Filters ==
 The `filter` method is used to efficiently transform a rectangular area of pixels, according to one of several pre-defined filters.  The available filters are as follows :-
@@ -164,22 +269,3 @@ The keyboard and mouse events all produce a list of 5 items (including the initi
    * Key.MOD_META4
    * Key.MOD_META5
    * Key.MOD_RELEASE - the key event was a release (rather than a press).
-
-== Images ==
-The `set_image` method (or the `image` attribute) can be used to load an image.  The parameter can be one of three things :-
- * An icon image string, in the same format as the Icon graphics implementation
- * Raw image data
- * The name of a filename containing an image
-The supported raw image formats depend on the underlying platform and its available libraries; only gif images have built-in support.  The second option indicated above can be used with the preprocessor to compile image data into the executable.  An example of this would be
-{{{
-$load FLINTSTONES "/tmp/flintstones.jpg"
-
-...
-   w := Window.open().set_image(FLINTSTONES) | stop(&why)
-...
-}}}
-The `$load` directive defines the preprocessor symbol `FLINTSTONES` with the value being a string containing the contents of the specified file.  This raw data is then supplied with the `image` attribute to define the image to be loaded into the window.  We could also have simply used
-{{{
-   w := Window.open().set_image("/tmp/flintstones.jpg") | stop(&why)
-}}}
-but this would rely on the file being present at runtime (as opposed to compile-time).
