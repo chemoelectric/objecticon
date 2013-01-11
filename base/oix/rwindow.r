@@ -494,41 +494,6 @@ int interpimage(dptr d,  struct imgdata *imd)
     return Failed;
 }
 
-void drawimgdata(wbp w, word x, word y, word width, word height, struct imgdata *src)
-{
-    struct imgdata dest;
-    struct imgdataformat *format;
-    int i, j;
-    word px = x, py = y;
-
-    if (!reducerect(w, 1, &x, &y, &width, &height))
-        return;
-
-    /* If the size and format of the source data are suitable for output, just do that */
-    format = getimgdataformat(w);
-    if (x == px && y == py && width == src->width && height == src->height && format == src->format) {
-        outputimgdata(w, x, y, src);
-        return;
-    }
-    /* Allocate a blank imgdata in the Window's target format. */
-    dest.width = width;
-    dest.height = height;
-    dest.paltbl = 0;
-    dest.format = format;
-    MemProtect(dest.data = malloc(dest.format->getlength(&dest)));
-
-    for (j = 0; j < height; j++) {
-        for (i = 0; i < width; i++) {
-            int sr, sg, sb, sa;
-            src->format->getpixel(src, (x - px + i) % src->width, (y - py + j) % src->height, &sr, &sg, &sb, &sa);
-            dest.format->setpixel(&dest, i, j, sr, sg, sb, sa);
-        }
-    }
-
-    outputimgdata(w, x, y, &dest);
-    freeimgdata(&dest);
-}
-
 /*
  *  Functions and data for reading and writing GIF and JPEG images
  */
@@ -1233,7 +1198,6 @@ static int readpngfile(char *filename, struct imgdata *imd)
     unsigned char *data = 0;
     struct imgdataformat *format;
     FILE *fp;
-    double image_gamma;
     int pixel_depth, color_type;
 
     /* open file and test for it being a png */
@@ -1271,17 +1235,22 @@ static int readpngfile(char *filename, struct imgdata *imd)
     png_set_sig_bytes(png_ptr, 8);
     png_read_info(png_ptr, info_ptr);
 
-    /* 
-     * Gamma correction using a screen gamma of 2.2.
+    /*
+     * Ensure grayscale images have at least 8bit depth (png's row
+     * padding is too painful to handle for smaller depths).
      */
-    if (png_get_gAMA(png_ptr, info_ptr, &image_gamma))
-        png_set_gamma(png_ptr, 2.2, image_gamma);
-    if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_PALETTE)
-        png_set_palette_to_rgb(png_ptr);
-    if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_GRAY && png_get_bit_depth(png_ptr, info_ptr) < 8) 
+    if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_GRAY)
         png_set_expand_gray_1_2_4_to_8(png_ptr);
-    if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS))
-        png_set_tRNS_to_alpha(png_ptr);
+
+    if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_PALETTE)
+        /* Ensures an 8bit depth, for same reason as for grayscale. */
+        png_set_packing(png_ptr);
+    else {
+        if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS))
+            png_set_tRNS_to_alpha(png_ptr);
+    }
+
+
     if (png_get_interlace_type(png_ptr, info_ptr) == PNG_INTERLACE_ADAM7)
         png_set_interlace_handling(png_ptr);
 
@@ -1289,27 +1258,50 @@ static int readpngfile(char *filename, struct imgdata *imd)
     pixel_depth = png_get_bit_depth(png_ptr, info_ptr) * png_get_channels(png_ptr, info_ptr);
     color_type = png_get_color_type(png_ptr, info_ptr);
 
-    if (color_type == PNG_COLOR_TYPE_RGB && pixel_depth == 24)
-        format = &imgdataformat_RGB24;
-    else if (color_type == PNG_COLOR_TYPE_RGB && pixel_depth == 48)
-        format = &imgdataformat_RGB48;
-    else if (color_type == PNG_COLOR_TYPE_RGB_ALPHA && pixel_depth == 32)
-        format = &imgdataformat_RGBA32;
-    else if (color_type == PNG_COLOR_TYPE_RGB_ALPHA && pixel_depth == 64)
-        format = &imgdataformat_RGBA64;
-    else if (color_type == PNG_COLOR_TYPE_GRAY && pixel_depth == 8)
-        format = &imgdataformat_G8;
-    else if (color_type == PNG_COLOR_TYPE_GRAY_ALPHA && pixel_depth == 16)
-        format = &imgdataformat_GA16;
-    else if (color_type == PNG_COLOR_TYPE_GRAY && pixel_depth == 16)
-        format = &imgdataformat_G16;
-    else if (color_type == PNG_COLOR_TYPE_GRAY_ALPHA && pixel_depth == 32)
-        format = &imgdataformat_GA32;
-    else {
-        fclose(fp);
-        png_destroy_read_struct(&png_ptr, &info_ptr, 0);
-        whyf("readpngfile: File %s, unsupported format/depth", filename);
-        return Failed;
+    if (color_type == PNG_COLOR_TYPE_PALETTE && pixel_depth == 8) {
+        png_colorp palette;
+        png_bytep trans;
+        int i, num_palette, num_trans;
+        format = &imgdataformat_PALETTE8;
+        MemProtect(imd->paltbl = calloc(format->palette_size, sizeof(struct palentry)));
+        if (png_get_PLTE(png_ptr, info_ptr, &palette, &num_palette)) {
+            num_palette = Min(num_palette, format->palette_size);
+            for (i = 0; i < num_palette; ++i) {
+                imd->paltbl[i].r = 257 * palette[i].red;
+                imd->paltbl[i].g = 257 * palette[i].green;
+                imd->paltbl[i].b = 257 * palette[i].blue;
+                imd->paltbl[i].a = 0xffff;
+            }
+        }
+        if (png_get_tRNS(png_ptr, info_ptr, &trans, &num_trans, 0)) {
+            num_trans = Min(num_trans, format->palette_size);
+            for (i = 0; i < num_trans; ++i)
+                imd->paltbl[i].a = 257 * trans[i];
+        }
+    } else {
+        if (color_type == PNG_COLOR_TYPE_RGB && pixel_depth == 24)
+            format = &imgdataformat_RGB24;
+        else if (color_type == PNG_COLOR_TYPE_RGB && pixel_depth == 48)
+            format = &imgdataformat_RGB48;
+        else if (color_type == PNG_COLOR_TYPE_RGB_ALPHA && pixel_depth == 32)
+            format = &imgdataformat_RGBA32;
+        else if (color_type == PNG_COLOR_TYPE_RGB_ALPHA && pixel_depth == 64)
+            format = &imgdataformat_RGBA64;
+        else if (color_type == PNG_COLOR_TYPE_GRAY && pixel_depth == 8)
+            format = &imgdataformat_G8;
+        else if (color_type == PNG_COLOR_TYPE_GRAY_ALPHA && pixel_depth == 16)
+            format = &imgdataformat_GA16;
+        else if (color_type == PNG_COLOR_TYPE_GRAY && pixel_depth == 16)
+            format = &imgdataformat_G16;
+        else if (color_type == PNG_COLOR_TYPE_GRAY_ALPHA && pixel_depth == 32)
+            format = &imgdataformat_GA32;
+        else {
+            fclose(fp);
+            png_destroy_read_struct(&png_ptr, &info_ptr, 0);
+            whyf("readpngfile: File %s, unsupported format/depth", filename);
+            return Failed;
+        }
+        imd->paltbl = 0;
     }
 
     width = png_get_image_width(png_ptr, info_ptr);
@@ -1330,7 +1322,6 @@ static int readpngfile(char *filename, struct imgdata *imd)
 
     imd->width = width;
     imd->height = height;
-    imd->paltbl = 0;
     imd->data = data;
     imd->format = format;
 
@@ -1367,7 +1358,34 @@ static int writepngfile(char *filename, struct imgdata *imd)
 
     png_init_io(png_ptr, fp);
 
-    if (imd->format->alpha_depth) {
+    if (imd->format->palette_size) {
+        png_color color[256];
+        png_byte trans[256];
+        png_set_IHDR(png_ptr, info_ptr, imd->width, imd->height,
+                     8, PNG_COLOR_TYPE_PALETTE, PNG_INTERLACE_NONE,
+                     PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+        for (i = 0; i < imd->format->palette_size; ++i) {
+            color[i].red = imd->paltbl[i].r / 256;
+            color[i].green = imd->paltbl[i].g / 256;
+            color[i].blue = imd->paltbl[i].b / 256;
+            trans[i] = imd->paltbl[i].a / 256;
+        }
+        png_set_PLTE(png_ptr, info_ptr, color, imd->format->palette_size);
+        png_set_tRNS(png_ptr, info_ptr, trans, imd->format->palette_size, 0);
+        png_write_info(png_ptr, info_ptr);
+        MemProtect(row_pointers = malloc(sizeof(png_bytep) * imd->height));
+        MemProtect(data = malloc(imd->width * imd->height));
+        p = (png_bytep)data;
+        for (i = 0; i < imd->height; ++i) {
+            row_pointers[i] = p;
+            p += imd->width;
+        }
+        p = (png_bytep)data;
+        for (j = 0; j < imd->height; j++) {
+            for (i = 0; i < imd->width; i++)
+                *p++ = imd->format->getpaletteindex(imd, i, j);
+        }
+    } else if (imd->format->alpha_depth) {
         png_set_IHDR(png_ptr, info_ptr, imd->width, imd->height,
                      16, PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE,
                      PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
@@ -1698,11 +1716,16 @@ int dpointargs(wbp w, dptr argv, double *px, double *py)
  */
 void drawcurve(wbp w, struct point *p, int n)
 {
-    int    i, j, steps;
+    int    i, j, steps, n2, nalc;
     double  ax, ay, bx, by, stepsize, stepsize2, stepsize3;
     double  x, dx, d2x, d3x, y, dy, d2y, d3y;
-    struct point *thepoints = NULL;
-    int n2, npoints = 0;
+    struct point *thepoints = 0;
+    if (n < 5)
+        return;
+    nalc = 64;
+    MemProtect(thepoints = malloc(nalc * sizeof(struct point)));
+    thepoints[0] = p[1];
+    n2 = 1;
 
     for (i = 3; i < n; i++) {
         /*
@@ -1724,18 +1747,12 @@ void drawcurve(wbp w, struct point *p, int n)
          * intervals of size 0.1
          */
         steps = Max(Abs(p[i-1].x - p[i-2].x), Abs(p[i-1].y - p[i-2].y)) + 10;
-
-        if (steps + 5 > npoints) {
-            npoints = steps + 5;
-            MemProtect(thepoints = realloc(thepoints, npoints * sizeof(struct point)));
-        }
-
         stepsize = 1.0/steps;
         stepsize2 = stepsize * stepsize;
         stepsize3 = stepsize * stepsize2;
 
-        x = thepoints[0].x = p[i-2].x;
-        y = thepoints[0].y = p[i-2].y;
+        x = p[i-2].x;
+        y = p[i-2].y;
         dx = (stepsize3*0.5)*ax + (stepsize2*0.5)*bx + (stepsize*0.5)*(p[i-1].x-p[i-3].x);
         dy = (stepsize3*0.5)*ay + (stepsize2*0.5)*by + (stepsize*0.5)*(p[i-1].y-p[i-3].y);
         d2x = (stepsize3*3) * ax + stepsize2 * bx;
@@ -1744,8 +1761,6 @@ void drawcurve(wbp w, struct point *p, int n)
         d3y = (stepsize3*3) * ay;
 
         /* calculate the points for drawing the curve */
-
-        n2 = 1;
         for (j = 0; j < steps; j++) {
             x = x + dx;
             y = y + dy;
@@ -1753,18 +1768,23 @@ void drawcurve(wbp w, struct point *p, int n)
             dy = dy + d2y;
             d2x = d2x + d3x;
             d2y = d2y + d3y;
+            if (n2 >= nalc) {
+                nalc += 256;
+                MemProtect(thepoints = realloc(thepoints, nalc * sizeof(struct point)));
+            }
             thepoints[n2].x = x;
             thepoints[n2].y = y;
             ++n2;
         }
-        thepoints[n2].x = p[i - 1].x;
-        thepoints[n2].y = p[i - 1].y;
-        ++n2;
-
-        drawlines(w, thepoints, n2);
     }
-    if (thepoints)
-        free(thepoints);
+
+    /* Ensure the last output point is precisely the last input point;
+     * this also ensures drawlines identifies a closed curve
+     * correctly. */
+    thepoints[n2 - 1] = p[n - 2];
+
+    drawlines(w, thepoints, n2);
+    free(thepoints);
 }
 
 /*
@@ -2580,6 +2600,34 @@ struct imgdataformat *parseimgdataformat(char *s)
 #else
         return 0;
 #endif
+}
+
+void initimgdata(struct imgdata *imd, int width, int height, struct imgdataformat *fmt)
+{
+    int n;
+    imd->width = width;
+    imd->height = height;
+    imd->format = fmt;
+    n = fmt->palette_size;
+    if (n > 0)
+        MemProtect(imd->paltbl = malloc(n * sizeof(struct palentry)));
+    else
+        imd->paltbl = 0;
+    MemProtect(imd->data = malloc(fmt->getlength(imd)));
+}
+
+void copyimgdata(struct imgdata *dest, struct imgdata *src)
+{
+    int i, j, width, height;
+    width = Min(src->width, dest->width);
+    height = Min(src->height, dest->height);
+    for (j = 0; j < height; j++) {
+        for (i = 0; i < width; i++) {
+            int sr, sg, sb, sa;
+            src->format->getpixel(src, i, j, &sr, &sg, &sb, &sa);
+            dest->format->setpixel(dest, i, j, sr, sg, sb, sa);
+        }
+    }
 }
 
 void freeimgdata(struct imgdata *imd)

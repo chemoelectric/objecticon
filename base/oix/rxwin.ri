@@ -66,7 +66,7 @@ static void close_screen_win(wsp ws);
 static struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int b, int a);
 static void fill2(wbp w, int op, XRenderColor  *color, int x, int y, int width, int height);
 static void pic2(wbp w, Picture src, int x, int y, int width, int height);
-static void maskpic2(wbp w, Picture src, Picture mask, int x, int y, int width, int height);
+static void maskpic2(wbp w, Picture mask, int x, int y, int width, int height);
 static struct SharedPicture *new_sharedpicture(wdp wd, struct imgdata *imd);
 static struct SharedPicture *link_sharedpicture(struct SharedPicture *x);
 static void unlink_sharedpicture(wdp wd, struct SharedPicture *x);
@@ -2072,7 +2072,7 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
             XRenderFreePicture(wd->display, wedge2);
         }
         clip(w);
-        maskpic2(w, get_draw_picture(wc), mask, x, y, width, height);
+        maskpic2(w, mask, x, y, width, height);
         unclip(w);
         XRenderFreePicture(wd->display, mask);
     } else {
@@ -2449,7 +2449,7 @@ static void drawlineinfos(wbp w, struct lineinfo *lis, int nlis, int closed)
             lis[i].q2.x -= x; lis[i].q2.y -= y;
         }
         drawlineinfos_impl(w, PictOpOver, wd->white->brush, mask, lis, nlis, closed);
-        maskpic2(w, get_draw_picture(wc), mask, x, y, width, height);
+        maskpic2(w, mask, x, y, width, height);
         XRenderFreePicture(wd->display, mask);
     } else {
         drawlineinfos_impl(w, wc->drawop->i, get_draw_picture(wc), ws->ppic, lis, nlis, closed);
@@ -2491,12 +2491,13 @@ void drawpoint(wbp w, int x, int y)
 
 static int needmask(wcp wc, int overlap)
 {
+    /* ops where influence of source color is 0 (clear, dest, dest in, dest out) */
+    if (wc->drawop->i == PictOpClear || wc->drawop->i == PictOpDst || wc->drawop->i == PictOpInReverse || wc->drawop->i == PictOpOutReverse)
+        return 0;
     if (wc->pattern)
         return 1;
     if (!overlap)
         return 0;
-    if (wc->drawop->i != PictOpOver)
-        return 1;
     if (wc->fg->color.alpha != 0xffff)
         return 1;
     return 0;
@@ -2532,20 +2533,47 @@ void drawrectangle(wbp w, int x, int y, int width, int height)
         /* Note that we know the two vertical lines will be at least one pixel high, since
          * height > 2 * wc->linewidth
          */
-        if (needmask(wc, 0)) {
-            Picture mask = getmask(wd, width + wc->linewidth - 1, height + wc->linewidth - 1);
-            XRenderFillRectangle(wd->display, PictOpOver, mask, &wd->white->color, 0, 0 , width, wc->linewidth);
-            XRenderFillRectangle(wd->display, PictOpOver, mask, &wd->white->color, 0, wc->linewidth , wc->linewidth, height - 2 * wc->linewidth);
-            XRenderFillRectangle(wd->display, PictOpOver, mask, &wd->white->color, width - wc->linewidth, wc->linewidth,  wc->linewidth, height - 2 * wc->linewidth);
-            XRenderFillRectangle(wd->display, PictOpOver, mask, &wd->white->color, 0, height - wc->linewidth, width,  wc->linewidth);
-            maskpic2(w, get_draw_picture(wc), mask, x, y, width, height);
-            XRenderFreePicture(wd->display, mask);
-        } else {
-            fill2(w, wc->drawop->i, &wc->fg->color, x, y, width, wc->linewidth);
-            fill2(w, wc->drawop->i, &wc->fg->color, x, y +  wc->linewidth , wc->linewidth, height - 2 * wc->linewidth);
-            fill2(w, wc->drawop->i, &wc->fg->color, x + width - wc->linewidth, y +  wc->linewidth,  wc->linewidth, height - 2 * wc->linewidth);
-            fill2(w, wc->drawop->i, &wc->fg->color, x, y + height - wc->linewidth, width,  wc->linewidth);
-        }
+        XRenderComposite(wd->display,
+                         wc->drawop->i,
+                         get_draw_picture(wc),     /* src */
+                         None,                     /* mask */
+                         ws->ppic,                 /* dest */
+                         0,0,                      /* src x,y */
+                         0,0,                      /* mask x,y */
+                         x, y,                     /* dst x,y,w,h */
+                         width, wc->linewidth);
+
+        XRenderComposite(wd->display,
+                         wc->drawop->i,
+                         get_draw_picture(wc),     /* src */
+                         None,                     /* mask */
+                         ws->ppic,                 /* dest */
+                         0,wc->linewidth,          /* src x,y */
+                         0,0,                      /* mask x,y */
+                         x, y +  wc->linewidth,    /* dst x,y,w,h */
+                         wc->linewidth, height - 2 * wc->linewidth);
+
+        XRenderComposite(wd->display,
+                         wc->drawop->i,
+                         get_draw_picture(wc),     /* src */
+                         None,                     /* mask */
+                         ws->ppic,                 /* dest */
+                         width - wc->linewidth,wc->linewidth,    /* src x,y */
+                         0,0,                      /* mask x,y */
+                         x + width - wc->linewidth, y + wc->linewidth,     /* dst x,y,w,h */
+                         wc->linewidth, height - 2 * wc->linewidth);
+
+        XRenderComposite(wd->display,
+                         wc->drawop->i,
+                         get_draw_picture(wc),     /* src */
+                         None,                     /* mask */
+                         ws->ppic,                 /* dest */
+                         0,height - wc->linewidth, /* src x,y */
+                         0,0,                      /* mask x,y */
+                         x, y + height - wc->linewidth,   /* dst x,y,w,h */
+                         width, wc->linewidth);
+
+        pix_to_win(ws, x, y, width, height);
         unclip(w);
     }
 }
@@ -2576,7 +2604,7 @@ void fillpolygon(wbp w, struct point *points, int npoints)
                                    None, 0, 0, 0, 0,
                                    xpoints, npoints, 0);
 
-        maskpic2(w, get_draw_picture(wc), mask, x, y, width, height);
+        maskpic2(w, mask, x, y, width, height);
         XRenderFreePicture(wd->display, mask);
     } else {
         for (i = 0; i < npoints; ++i) {
@@ -2618,7 +2646,7 @@ void filltrapezoids(wbp w, struct trapezoid *traps, int ntraps)
                                    mask,
                                    0, 0, 0,
                                    xtraps, ntraps);
-        maskpic2(w, get_draw_picture(wc), mask, x, y, width, height);
+        maskpic2(w, mask, x, y, width, height);
         XRenderFreePicture(wd->display, mask);
     } else {
         for (i = 0; i < ntraps; ++i)
@@ -2660,7 +2688,7 @@ void filltriangles(wbp w, struct triangle *tris, int ntris)
                                   mask,
                                   0, 0, 0,
                                   xtris, ntris);
-        maskpic2(w, get_draw_picture(wc), mask, x, y, width, height);
+        maskpic2(w, mask, x, y, width, height);
         XRenderFreePicture(wd->display, mask);
     } else {
         for (i = 0; i < ntris; ++i)
@@ -2679,14 +2707,14 @@ void filltriangles(wbp w, struct triangle *tris, int ntris)
     free(xtris);
 }
 
-static void maskpic2(wbp w, Picture src, Picture mask, int x, int y, int width, int height)
+static void maskpic2(wbp w, Picture mask, int x, int y, int width, int height)
 {
     wsp ws = w->window;
     wcp wc = w->context;
     wdp wd = ws->display;
     XRenderComposite(wd->display,
                      wc->drawop->i,
-                     src,          /* src */
+                     get_draw_picture(wc),          /* src */
                      mask,         /* mask */
                      ws->ppic,     /* dest */
                      0,0,          /* src x,y */
@@ -2725,14 +2753,11 @@ static void fill2(wbp w, int op, XRenderColor *color, int x, int y, int width, i
     pix_to_win(ws, x, y, width, height);
 }
 
-static Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd)
+static Pixmap imgdata_to_Pixmap1(wdp wd, struct imgdata *imd)
 {
     XImage *xi;
     Pixmap pix;
     GC gc;
-    if (imd->format != wd->format)
-        syserr("wrong imgdata format");
-
     MemProtect(xi = XCreateImage(wd->display, 
                                  GetVisual(wd), 
                                  32,            /* depth */
@@ -2752,6 +2777,19 @@ static Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd)
     xi->data = 0;
     XDestroyImage(xi);
     XFreeGC(wd->display, gc);
+    return pix;
+}
+
+static Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd)
+{
+    struct imgdata tmp;
+    Pixmap pix;
+    if (imd->format == wd->format)
+        return imgdata_to_Pixmap1(wd, imd);
+    initimgdata(&tmp, imd->width, imd->height, wd->format);
+    copyimgdata(&tmp, imd);
+    pix = imgdata_to_Pixmap1(wd, &tmp);
+    freeimgdata(&tmp);
     return pix;
 }
 
@@ -2854,7 +2892,7 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
     XDestroyImage(xi);
 }
 
-void outputimgdata(wbp w, int x, int y, struct imgdata *imd)
+void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
     wsp ws = w->window;
     wdp wd = ws->display;

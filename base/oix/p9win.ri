@@ -727,20 +727,15 @@ void drawrectangle(wbp w, int x, int y, int width, int height)
         fillrectangle(w, x, y, width, height);
     else {
         clip(w);
-        if (needmask(wc, 0)) {
-            Image *mask = getmask(width, height);
-            gendrawop(mask, MkRect(0, 0 , width, wc->linewidth), white->i, ZP, 0, ZP, SoverD);
-            gendrawop(mask, MkRect(0, wc->linewidth , wc->linewidth, height - 2 * wc->linewidth), white->i, ZP, 0, ZP, SoverD);
-            gendrawop(mask, MkRect(width - wc->linewidth, wc->linewidth,  wc->linewidth, height - 2 * wc->linewidth), white->i, ZP, 0, ZP, SoverD);
-            gendrawop(mask, MkRect(0, height - wc->linewidth, width,  wc->linewidth), white->i, ZP, 0, ZP, SoverD);
-            maskimage2(w, mask, x, y, width, height);
-            freeimage(mask);
-        } else {
-            fill2(w, wc->drawop->i, get_draw_img(wc), x, y, width, wc->linewidth);
-            fill2(w, wc->drawop->i, get_draw_img(wc), x, y +  wc->linewidth , wc->linewidth, height - 2 * wc->linewidth);
-            fill2(w, wc->drawop->i, get_draw_img(wc), x + width - wc->linewidth, y +  wc->linewidth,  wc->linewidth, height - 2 * wc->linewidth);
-            fill2(w, wc->drawop->i, get_draw_img(wc), x, y + height - wc->linewidth, width,  wc->linewidth);
-        }
+        gendrawop(ws->pix, MkRect(x, y , width, wc->linewidth), 
+                  get_draw_img(wc), ZP, 0, ZP, wc->drawop->i);
+        gendrawop(ws->pix, MkRect(x, y + wc->linewidth , wc->linewidth, height - 2 * wc->linewidth), 
+                  get_draw_img(wc), Pt(0, wc->linewidth), 0, ZP, wc->drawop->i);
+        gendrawop(ws->pix, MkRect(x + width - wc->linewidth, y + wc->linewidth,  wc->linewidth, height - 2 * wc->linewidth), 
+                  get_draw_img(wc), Pt(width - wc->linewidth, wc->linewidth), 0, ZP, wc->drawop->i);
+        gendrawop(ws->pix, MkRect(x, y + height - wc->linewidth, width,  wc->linewidth),
+                  get_draw_img(wc), Pt(0, height - wc->linewidth) , 0, ZP, wc->drawop->i);
+        pix_to_win(ws, x, y, width, height);
         unclip(w);
         flushimage(display, 1);
     }
@@ -764,12 +759,13 @@ void fillpolygon(wbp w, struct point *points0, int npoints)
 
 static int needmask(wcp wc, int overlap)
 {
+    /* ops where influence of source color is 0 (clear, dest, dest in, dest out) */
+    if (wc->drawop->i == Clear || wc->drawop->i == D || wc->drawop->i == DinS || wc->drawop->i == DoutS)
+        return 0;
     if (wc->pattern)
         return 1;
     if (!overlap)
         return 0;
-    if (wc->drawop->i != SoverD)
-        return 1;
     if ((wc->fg->rgba & 0xff) != 0xff)
         return 1;
     return 0;
@@ -1150,19 +1146,30 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
     imd->data = data;
 }
 
-static Image *imgdata_to_Image(struct imgdata *imd)
+static Image *imgdata_to_Image1(struct imgdata *imd)
 {
     Image *im;
     int len;
-    if (imd->format != &imgdataformat_P9ABGR32)
-        syserr("wrong imgdata format");
     MemProtect(im = allocimage(display, Rect(0, 0, imd->width, imd->height), RGBA32, 1, DNofill));
     len = imd->width * imd->height * 4;
     loadimage(im, im->r, imd->data, len);
     return im;
 }
 
-void outputimgdata(wbp w, int x, int y, struct imgdata *imd)
+static Image *imgdata_to_Image(struct imgdata *imd)
+{
+    struct imgdata tmp;
+    Image *im;
+    if (imd->format == &imgdataformat_P9ABGR32)
+        return imgdata_to_Image1(imd);
+    initimgdata(&tmp, imd->width, imd->height, &imgdataformat_P9ABGR32);
+    copyimgdata(&tmp, imd);
+    im = imgdata_to_Image1(&tmp);
+    freeimgdata(&tmp);
+    return im;
+}
+
+void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
     wcp wc = w->context;
     wsp ws = w->window;

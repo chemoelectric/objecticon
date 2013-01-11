@@ -431,8 +431,8 @@ final class Window(NoCopy)
 
    #
    # The graphics context attribute line_style specifies the form of
-   # drawn lines.  Possible values may include: "solid", "dashed",
-   # "striped", although this is system dependent.
+   # drawn lines.  Possible values may include: "enddisc", "endsquare",
+   # although this is system dependent.
    #
    public native set_line_style(v)
 
@@ -472,6 +472,10 @@ final class Window(NoCopy)
    #
    public native set_min_width(width)
 
+   # A helpful method to set the pattern to something equivalent to
+   # the old Icon pattern of the same name using a textured fill
+   # style.
+   #
    public set_textured_pattern(s)
       local p
       return use {
@@ -480,6 +484,10 @@ final class Window(NoCopy)
       }
    end
 
+   # A helpful method to set the pattern to something equivalent to
+   # the old Icon pattern of the same name using a masked fill
+   # style.
+   #
    public set_masked_pattern(s)
       local p
       return use {
@@ -488,6 +496,10 @@ final class Window(NoCopy)
       }
    end
 
+   # Return a new {Pixels} instance with a paletted image which
+   # represents the classic Icon pattern of the given name, with the
+   # given foreground and background colours.
+   #
    public static get_fill_pattern(s, fg, bg)
       local p
       p := member(PATTERNS, s) | return error("Unknown pattern name")
@@ -498,7 +510,9 @@ final class Window(NoCopy)
 
    # Set the fill pattern (texture) to fill shapes (instead of the
    # foreground colour).  If no parameter is given, the setting is
-   # cleared and the foreground colour is used again.
+   # cleared and the foreground colour is used again.  Otherwise, the
+   # parameter should be a {Pixels} instance or raw image data, or an
+   # image filename.
    #
    public set_pattern(v)
       return if /v | is(v, Pixels) then
@@ -632,27 +646,14 @@ final class Window(NoCopy)
    #
    public draw_image(x, y, v)
       return if is(v, Pixels) then
-         draw_image_impl(x, y, v.get_width(), v.get_height(), v)
+         draw_image_impl(x, y, v)
       else use {
          v := Pixels.open(v),
-         draw_image_impl(x, y, v.get_width(), v.get_height(), v)
+         draw_image_impl(x, y, v)
       }
    end
 
-   #
-   # Tile an image.  The image can be raw image data, a filename, or a
-   # {Pixels} instance.
-   #
-   public tile_image(x, y, width, height, v)
-      return if is(v, Pixels) then
-         draw_image_impl(x, y, width, height, v)
-      else use {
-         v := Pixels.open(v),
-         draw_image_impl(x, y, width, height, v)
-      }
-   end
-
-   private native draw_image_impl(x, y, width, height, pix)
+   private native draw_image_impl(x, y, pix)
 
    #
    # Copy an area from this window to another window.
@@ -678,8 +679,10 @@ final class Window(NoCopy)
       return draw_line!a
    end
 
-   #
-   # draw_rectangle(x, y, width, height)
+   # draw_rectangle(x, y, width, height).  A rectangle is drawn
+   # according to the current line width, inside the given rectangle,
+   # so that the area drawn is always exactly that rectangle.  If the
+   # line is too wide to leave a gap, then the area is simply filled.
    #
    public native draw_rectangle(x, y, width, height)
 
