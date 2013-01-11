@@ -679,12 +679,13 @@ final class Window(NoCopy)
       return draw_line!a
    end
 
-   # draw_rectangle(x, y, width, height).  A rectangle is drawn
-   # according to the current line width, inside the given rectangle,
-   # so that the area drawn is always exactly that rectangle.  If the
-   # line is too wide to leave a gap, then the area is simply filled.
+   # A boundary of the given thickness (default 1 pixel) is filled
+   # inside the given rectangle, so that the area drawn is always
+   # bounded by exactly that rectangle.  If the thickness is too wide
+   # to leave a gap inside the rectangle, then the rectangle is simply
+   # filled.
    #
-   public native draw_rectangle(x, y, width, height)
+   public native draw_rectangle(x, y, width, height, thickness)
 
    #
    # draw_string(x, y, s)

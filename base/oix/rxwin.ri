@@ -1450,14 +1450,14 @@ int setlinestyle(wbp w, char *val)
 /*
  * Set the context's line width
  */
-int setlinewidth(wbp w, int linewid)
+int setlinewidth(wbp w, double linewid)
 {
     wcp wc = w->context;
     wc->linewidth = linewid;
     return Succeeded;
 }
 
-int getlinewidth(wbp w)
+double getlinewidth(wbp w)
 {
     return w->context->linewidth;
 }
@@ -2408,11 +2408,11 @@ static XPointDouble adjustpoint(wcp wc, struct point *points, int npoints, int i
     pd.x = points[i].x;
     pd.y = points[i].y;
     /*
-     * If the linewidth is odd, shift horizontal and vertical segments
-     * by 0.5 pixel so that they are not output with antialiased
-     * edges.
+     * If the linewidth is odd, shift exactly horizontal and vertical
+     * segments lying exact pixel lines by 0.5 pixel so that they are
+     * not output with antialiased edges.
      */
-    if (wc->linewidth % 2 == 1) {
+    if (fmod(wc->linewidth, 2) == 1) {
         struct point *next, *prev;
         if (i > 0)
             prev = &points[i - 1];
@@ -2422,9 +2422,9 @@ static XPointDouble adjustpoint(wcp wc, struct point *points, int npoints, int i
             next = &points[i + 1];
         else
             next = closed ? &points[0] : 0;
-        if ((prev && prev->x == points[i].x) || (next && next->x == points[i].x))
+        if ((prev && prev->x == points[i].x && fmod(prev->x, 1.0) == 0) || (next && next->x == points[i].x && fmod(next->x, 1.0) == 0))
             pd.x += 0.5;
-        if ((prev && prev->y == points[i].y) || (next && next->y == points[i].y))
+        if ((prev && prev->y == points[i].y && fmod(prev->y, 1.0) == 0) || (next && next->y == points[i].y && fmod(next->y, 1.0) == 0))
             pd.y += 0.5;
     }
     return pd;
@@ -2518,20 +2518,19 @@ static Picture getmask(wdp wd, int width, int height)
     return pic;
 }
 
-void drawrectangle(wbp w, int x, int y, int width, int height)
+void drawrectangle(wbp w, int x, int y, int width, int height, int thick)
 {
     wsp ws = w->window;
     wdp wd = ws->display;
     wcp wc = w->context;
-
     /* If too small to give a gap in the middle, then simply fill a
      * rectangle, otherwise draw as four lines. */
-    if (width <= 2 * wc->linewidth || height <= 2 * wc->linewidth)
+    if (width <= 2 * thick || height <= 2 * thick)
         fillrectangle(w, x, y, width, height);
     else {
         clip(w);
         /* Note that we know the two vertical lines will be at least one pixel high, since
-         * height > 2 * wc->linewidth
+         * height > 2 * thick
          */
         XRenderComposite(wd->display,
                          wc->drawop->i,
@@ -2541,37 +2540,37 @@ void drawrectangle(wbp w, int x, int y, int width, int height)
                          0,0,                      /* src x,y */
                          0,0,                      /* mask x,y */
                          x, y,                     /* dst x,y,w,h */
-                         width, wc->linewidth);
+                         width, thick);
 
         XRenderComposite(wd->display,
                          wc->drawop->i,
                          get_draw_picture(wc),     /* src */
                          None,                     /* mask */
                          ws->ppic,                 /* dest */
-                         0,wc->linewidth,          /* src x,y */
+                         0,thick,                  /* src x,y */
                          0,0,                      /* mask x,y */
-                         x, y +  wc->linewidth,    /* dst x,y,w,h */
-                         wc->linewidth, height - 2 * wc->linewidth);
+                         x, y +  thick,            /* dst x,y,w,h */
+                         thick, height - 2 * thick);
 
         XRenderComposite(wd->display,
                          wc->drawop->i,
                          get_draw_picture(wc),     /* src */
                          None,                     /* mask */
                          ws->ppic,                 /* dest */
-                         width - wc->linewidth,wc->linewidth,    /* src x,y */
+                         width - thick,thick,      /* src x,y */
                          0,0,                      /* mask x,y */
-                         x + width - wc->linewidth, y + wc->linewidth,     /* dst x,y,w,h */
-                         wc->linewidth, height - 2 * wc->linewidth);
+                         x + width - thick, y + thick,   /* dst x,y,w,h */
+                         thick, height - 2 * thick);
 
         XRenderComposite(wd->display,
                          wc->drawop->i,
                          get_draw_picture(wc),     /* src */
                          None,                     /* mask */
                          ws->ppic,                 /* dest */
-                         0,height - wc->linewidth, /* src x,y */
+                         0,height - thick,         /* src x,y */
                          0,0,                      /* mask x,y */
-                         x, y + height - wc->linewidth,   /* dst x,y,w,h */
-                         width, wc->linewidth);
+                         x, y + height - thick,    /* dst x,y,w,h */
+                         width, thick);
 
         pix_to_win(ws, x, y, width, height);
         unclip(w);
