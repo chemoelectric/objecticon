@@ -44,8 +44,8 @@ The various setter methods for setting window attributes are summarised in the f
 ||set_font||string||Current text font||
 ||set_geometry||4xinteger||Window position and size||
 ||set_height||integer||Window height||
-||set_icon||string||Window icon||
-||set_image||string||Draw an image and set window size to image size||
+||set_icon||string or Pixels||Window icon||
+||set_image||string or Pixels||Draw an image and set window size to image size||
 ||set_input_mask||string||Mask of mouse/keyboard events||
 ||set_label||string||Window label (title)||
 ||set_line_style||string||Line style to use in drawing||
@@ -56,7 +56,7 @@ The various setter methods for setting window attributes are summarised in the f
 ||set_min_height||integer||Minimum window height||
 ||set_min_size||2xinteger||Minimum window size||
 ||set_min_width||integer||Minimum window width||
-||set_pattern||string||Image to use to fill instead of foreground colour||
+||set_pattern||string or Pixels||Image to use to fill instead of foreground colour||
 ||set_pointer||string||Mouse pointer||
 ||set_pos||2xinteger||Window position on screen||
 ||set_transient_for||Window||Transient-for window||
