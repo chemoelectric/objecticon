@@ -362,16 +362,19 @@ function graphics_Window_draw_point(self, x, y)
    }
 end
 
-function graphics_Window_draw_rectangle(self, x0, y0, w0, h0)
+function graphics_Window_draw_rectangle(self, x0, y0, w0, h0, thick0)
    body {
-      word x, y, width, height;
+      word x, y, width, height, thick;
 
       GetSelfW();
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
 
-      if (width > 0 && height > 0)
-          drawrectangle(self_w, x, y, width, height);
+      if (!def:C_integer(thick0, 1, thick))
+          runerr(101, thick0);
+
+      if (width > 0 && height > 0 && thick > 0)
+          drawrectangle(self_w, x, y, width, height, thick);
 
       return self;
    }
@@ -1165,9 +1168,9 @@ end
 
 function graphics_Window_get_line_width(self)
    body {
-       struct descrip result;
+       tended struct descrip result;
        GetSelfW();
-       MakeInt(getlinewidth(self_w), &result);
+       MakeReal(getlinewidth(self_w), &result);
        return result;
    }
 end
@@ -1555,13 +1558,13 @@ end
 
 function graphics_Window_set_line_width(self, val)
    body {
-       word i;
+       double d;
        GetSelfW();
-       if (!cnv:C_integer(val, i))
-           runerr(101, val);
-       if (i < 1)
-           Irunerr(148, i);
-       AttemptAttr(setlinewidth(self_w, i), "Invalid line_width");
+       if (!cnv:C_double(val, d))
+           runerr(102, val);
+       if (d <= 0)
+           Drunerr(148, d);
+       AttemptAttr(setlinewidth(self_w, d), "Invalid line_width");
        return self;
    }
 end

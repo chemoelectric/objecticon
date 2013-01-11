@@ -243,7 +243,7 @@ typedef struct _wcontext {
   struct SharedColor *fg, *bg;
   struct SharedPicture  *pattern;
   stringint     *linestyle;
-  int		linewidth;
+  double	linewidth;
   stringint     *drawop;
 #elif PLAN9
   struct SharedColor *fg, *bg;
