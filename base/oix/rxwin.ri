@@ -2753,14 +2753,11 @@ static void fill2(wbp w, int op, XRenderColor *color, int x, int y, int width, i
     pix_to_win(ws, x, y, width, height);
 }
 
-static Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd)
+static Pixmap imgdata_to_Pixmap1(wdp wd, struct imgdata *imd)
 {
     XImage *xi;
     Pixmap pix;
     GC gc;
-    if (imd->format != wd->format)
-        syserr("wrong imgdata format");
-
     MemProtect(xi = XCreateImage(wd->display, 
                                  GetVisual(wd), 
                                  32,            /* depth */
@@ -2780,6 +2777,19 @@ static Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd)
     xi->data = 0;
     XDestroyImage(xi);
     XFreeGC(wd->display, gc);
+    return pix;
+}
+
+static Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd)
+{
+    struct imgdata tmp;
+    Pixmap pix;
+    if (imd->format == wd->format)
+        return imgdata_to_Pixmap1(wd, imd);
+    initimgdata(&tmp, imd->width, imd->height, wd->format);
+    copyimgdata(&tmp, imd);
+    pix = imgdata_to_Pixmap1(wd, &tmp);
+    freeimgdata(&tmp);
     return pix;
 }
 
@@ -2882,7 +2892,7 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
     XDestroyImage(xi);
 }
 
-void outputimgdata(wbp w, int x, int y, struct imgdata *imd)
+void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
     wsp ws = w->window;
     wdp wd = ws->display;

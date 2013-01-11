@@ -196,6 +196,9 @@ int getlength_32(struct imgdata *imd);
 int getlength_48(struct imgdata *imd);
 int getlength_64(struct imgdata *imd);
 int imgdataformatscmp(char *s, struct imgdataformat **p);
+void initimgdata(struct imgdata *imd, int width, int height, struct imgdataformat *fmt);
+void copyimgdata(struct imgdata *dest, struct imgdata *src);
+void freeimgdata     (struct imgdata *img);
 
 #if Graphics
    /*
@@ -216,29 +219,17 @@ int imgdataformatscmp(char *s, struct imgdataformat **p);
    int  writeimagefile  (char *filename, struct imgdata *imd);
    int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph);
    int pointargs(wbp w, dptr argv, word *px, word *py);
-int dpointargs(wbp w, dptr argv, double *px, double *py);
- 
+   int dpointargs(wbp w, dptr argv, double *px, double *py);
    int  getdefaultfontsize(int);
    char *getdefaultfont(void);
    int interpimage(dptr d,  struct imgdata *imd);
-
-
-int reducerect(wbp w, int clip, word *x, word *y, word *width, word *height);
-void captureimgdata(wbp w, int x, int y, struct imgdata *imd);
-void outputimgdata(wbp w, int x, int y, struct imgdata *imd);
-struct imgdataformat *getimgdataformat(wbp w);
-void drawimgdata(wbp w, word x, word y, word width, word height, struct imgdata *imd);
-
+   int reducerect(wbp w, int clip, word *x, word *y, word *width, word *height);
+   void captureimgdata(wbp w, int x, int y, struct imgdata *imd);
+   void drawimgdata(wbp w, int x, int y, struct imgdata *imd);
+   struct imgdataformat *getimgdataformat(wbp w);
    int is_png(dptr data);
    int is_jpeg(dptr data);
    int is_gif(dptr data);
-
-   
-
-   /*
-    * graphics implementation routines supplied for each platform
-    * (excluding those defined as macros for X-windows)
-    */
    wcp  clonecontext   (wbp w);
    int  copyarea        (wbp w, int x, int y, int wd, int h, wbp w2, int x2, int y2);
    void doconfig        (wbp w, int status);
@@ -304,7 +295,6 @@ void drawimgdata(wbp w, word x, word y, word width, word height, struct imgdata 
 
 #endif                                  /* Graphics */
 
-   void freeimgdata     (struct imgdata *img);
 
 #ifdef MSWIN32
 LRESULT_CALLBACK WndProc  (HWND, UINT, WPARAM, LPARAM);

@@ -494,41 +494,6 @@ int interpimage(dptr d,  struct imgdata *imd)
     return Failed;
 }
 
-void drawimgdata(wbp w, word x, word y, word width, word height, struct imgdata *src)
-{
-    struct imgdata dest;
-    struct imgdataformat *format;
-    int i, j;
-    word px = x, py = y;
-
-    if (!reducerect(w, 1, &x, &y, &width, &height))
-        return;
-
-    /* If the size and format of the source data are suitable for output, just do that */
-    format = getimgdataformat(w);
-    if (x == px && y == py && width == src->width && height == src->height && format == src->format) {
-        outputimgdata(w, x, y, src);
-        return;
-    }
-    /* Allocate a blank imgdata in the Window's target format. */
-    dest.width = width;
-    dest.height = height;
-    dest.paltbl = 0;
-    dest.format = format;
-    MemProtect(dest.data = malloc(dest.format->getlength(&dest)));
-
-    for (j = 0; j < height; j++) {
-        for (i = 0; i < width; i++) {
-            int sr, sg, sb, sa;
-            src->format->getpixel(src, (x - px + i) % src->width, (y - py + j) % src->height, &sr, &sg, &sb, &sa);
-            dest.format->setpixel(&dest, i, j, sr, sg, sb, sa);
-        }
-    }
-
-    outputimgdata(w, x, y, &dest);
-    freeimgdata(&dest);
-}
-
 /*
  *  Functions and data for reading and writing GIF and JPEG images
  */
@@ -2635,6 +2600,34 @@ struct imgdataformat *parseimgdataformat(char *s)
 #else
         return 0;
 #endif
+}
+
+void initimgdata(struct imgdata *imd, int width, int height, struct imgdataformat *fmt)
+{
+    int n;
+    imd->width = width;
+    imd->height = height;
+    imd->format = fmt;
+    n = fmt->palette_size;
+    if (n > 0)
+        MemProtect(imd->paltbl = malloc(n * sizeof(struct palentry)));
+    else
+        imd->paltbl = 0;
+    MemProtect(imd->data = malloc(fmt->getlength(imd)));
+}
+
+void copyimgdata(struct imgdata *dest, struct imgdata *src)
+{
+    int i, j, width, height;
+    width = Min(src->width, dest->width);
+    height = Min(src->height, dest->height);
+    for (j = 0; j < height; j++) {
+        for (i = 0; i < width; i++) {
+            int sr, sg, sb, sa;
+            src->format->getpixel(src, i, j, &sr, &sg, &sb, &sa);
+            dest->format->setpixel(dest, i, j, sr, sg, sb, sa);
+        }
+    }
 }
 
 void freeimgdata(struct imgdata *imd)

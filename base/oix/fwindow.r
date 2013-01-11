@@ -307,15 +307,15 @@ function graphics_Window_draw_curve(self, argv[argc])
    }
 end
 
-function graphics_Window_draw_image_impl(self, x0, y0, w0, h0, d)
+function graphics_Window_draw_image_impl(self, x0, y0, d)
    body {
-      word x, y, width, height;
+      word x, y;
       GetSelfW();
-      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
+      if (pointargs(self_w, &x0, &x, &y) == Error)
           runerr(0);
       {
       ImageDataStaticParam(d, id);
-      drawimgdata(self_w, x, y, width, height, id);
+      drawimgdata(self_w, x, y, id);
       }
       return self;
    }
@@ -596,8 +596,7 @@ function graphics_Window_fill_rectangle(self, x0, y0, w0, h0)
       GetSelfW();
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
-      if (reducerect(self_w, 1, &x, &y, &width, &height))
-          fillrectangle(self_w, x, y, width, height);
+      fillrectangle(self_w, x, y, width, height);
       return self;
    }
 end
@@ -720,7 +719,7 @@ function graphics_Window_filter(self, x0, y0, w0, h0, spec)
           filter[i].f(&filter[i]);
       }
 
-      outputimgdata(self_w, x, y, &imd);
+      drawimgdata(self_w, x, y, &imd);
       freeimgdata(&imd);
       free(filter);
 
@@ -1455,32 +1454,6 @@ function graphics_Window_set_fg(self, val)
    }
 end
 
-int setpattern1(wbp w, struct imgdata *imd)
-{
-    struct imgdata dest;
-    struct imgdataformat *format;
-    int i, j, res;
-    format = getimgdataformat(w);
-    if (format == imd->format)
-        return setpattern(w, imd);
-    /* Allocate a blank imgdata in the Window's target format. */
-    dest.width = imd->width;
-    dest.height = imd->height;
-    dest.paltbl = 0;
-    dest.format = format;
-    MemProtect(dest.data = malloc(dest.format->getlength(&dest)));
-    for (j = 0; j < dest.height; j++) {
-        for (i = 0; i < dest.width; i++) {
-            int r, g, b, a;
-            imd->format->getpixel(imd, i, j, &r, &g, &b, &a);
-            dest.format->setpixel(&dest, i, j, r, g, b, a);
-        }
-    }
-    res = setpattern(w, &dest);
-    freeimgdata(&dest);
-    return res;
-}
-
 function graphics_Window_set_pattern_impl(self, val)
    body {
       GetSelfW();
@@ -1489,7 +1462,7 @@ function graphics_Window_set_pattern_impl(self, val)
           AttemptAttr(setpattern(self_w, 0), "Failed to clear pattern");
       else {
           ImageDataStaticParam(val, id);
-          AttemptAttr(setpattern1(self_w, id), "Failed to set pattern");
+          AttemptAttr(setpattern(self_w, id), "Failed to set pattern");
       }
       return self;
       }
@@ -1944,7 +1917,6 @@ function graphics_Pixels_blank_impl(width, height, format)
    body {
        struct imgdata *imd;
        struct imgdataformat *fmt;
-       int n;
        if (width < 1)
            Irunerr(148, width);
        if (height < 1)
@@ -1961,15 +1933,11 @@ function graphics_Pixels_blank_impl(width, height, format)
            }
        }
        MemProtect(imd = malloc(sizeof(struct imgdata)));
-       imd->width = width;
-       imd->height = height;
-       imd->format = fmt;
-       n = fmt->palette_size;
-       if (n > 0)
-           MemProtect(imd->paltbl = calloc(n, sizeof(struct palentry)));
-       else
-           imd->paltbl = 0;
-       MemProtect(imd->data = calloc(fmt->getlength(imd), 1));
+       initimgdata(imd, width, height, fmt);
+       /* Clear the data */
+       memset(imd->data, 0, fmt->getlength(imd));
+       if (imd->paltbl)
+           memset(imd->paltbl, 0, fmt->palette_size * sizeof(struct palentry));
        return C_integer((word)imd);
    }
 end
