@@ -351,6 +351,8 @@ void    hshrink         (union block *bp);
 word iipow         (word n1, word n2);
 void    init            (char *name, int *argcp, char *argv[], int trc_init);
 int     order           (dptr dp);
+void add_gc_global(dptr d);
+void del_gc_global(dptr d);
 
 
 struct progstate *alcprog(long icodesize);

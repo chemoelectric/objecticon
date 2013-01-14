@@ -302,6 +302,40 @@ uword segsize[] = {
    else if (Pointer(d))\
       stk_add(&BlkLoc(d));
 
+
+struct other_global {
+    dptr dp;
+    struct other_global *next;
+};
+
+static struct other_global *others;
+
+void add_gc_global(dptr d)
+{
+    struct other_global *t;
+    MemProtect(t = malloc(sizeof(struct other_global)));
+    t->dp = d;
+    t->next = others;
+    others = t;
+}
+
+void del_gc_global(dptr d)
+{
+    struct other_global *t, *prev = 0;
+    t = others;
+    while (t && t->dp != d) {
+        prev = t;
+        t = t->next;
+    }
+    if (!t)
+        syserr("del_gc_global: dptr not found in list");
+    if (prev)
+        prev->next = t->next;
+    else
+        others = t->next;
+    free(t);
+}
+
 /*
  * collect - do a garbage collection of currently active regions.
  */
@@ -310,6 +344,7 @@ void collect(int region)
 {
    struct progstate *prog;
    struct region *br;
+   struct other_global *og;
 
 #if HAVE_GETRLIMIT && HAVE_SETRLIMIT
    {
@@ -382,18 +417,9 @@ void collect(int region)
    PostDescrip(maps2u);
    PostDescrip(maps3u);
 
-#if Graphics
-   /*
-    * Mark file and list values for windows
-    */
-   {
-     wsp ws;
-
-     for (ws = wstates; ws ; ws = ws->next) {
-         PostDescrip(ws->listp);
-     }
-   }
-#endif					/* Graphics */
+   /* Mark any other global descriptors which have been noted. */
+   for (og = others; og; og = og->next)
+       PostDescrip(*og->dp);
 
    /* Process all block ptrs */
    stk_markptrs();

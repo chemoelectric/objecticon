@@ -699,6 +699,7 @@ wbp wopen(char *display)
     GRFX_LINK(ws, wstates);
 
     w->window = ws;
+    add_gc_global(&ws->listp);
     create_list(64, &ws->listp);
 
     GRFX_ALLOC(wc, _wcontext);
@@ -3420,6 +3421,7 @@ void freewindow(wsp ws)
            ws->windowlabel = 0;
         }
 
+        del_gc_global(&ws->listp);
         GRFX_UNLINK(ws, wstates);
         free(ws);
     }
