@@ -546,6 +546,21 @@ function map(s1,s2,s3)
       runerr(129,s1)
 
    body {
+      /* Cached 2nd and 3rd arguments */
+      static struct descrip maps2,  maps3, maps2u, maps3u;
+      static int inited;
+      if (!inited) {
+          maps2 = nulldesc;
+          maps3 = nulldesc;
+          maps2u = nulldesc;
+          maps3u = nulldesc;
+          add_gc_global(&maps2);
+          add_gc_global(&maps3);
+          add_gc_global(&maps2u);
+          add_gc_global(&maps3u);
+          inited = 1;
+      }
+
       if (is:null(s2))
          s2 = ucase;
       if (is:null(s3))
@@ -664,6 +679,7 @@ function map(s1,s2,s3)
            *  mapping information must be recomputed.
            */
           if (!EqlDesc(maps2,s2) || !EqlDesc(maps3,s3)) {
+              /* Note we save the arguments before converting to string */
               maps2 = s2;
               maps3 = s3;
 

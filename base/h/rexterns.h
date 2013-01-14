@@ -39,10 +39,6 @@ extern struct descrip emptystr;	/* empty string */
 
 extern struct descrip nullptr;	/* descriptor with null block pointer */
 extern struct descrip lcase;	/* lowercase string */
-extern struct descrip maps2;	/* second argument to map() */
-extern struct descrip maps3;	/* third argument to map() */
-extern struct descrip maps2u;	/* second argument to map(), ucs case */
-extern struct descrip maps3u;	/* third argument to map(), ucs case */
 extern struct descrip nulldesc;	/* null value */
 extern struct descrip onedesc;	/* one */
 extern struct descrip ucase;	/* uppercase string */
