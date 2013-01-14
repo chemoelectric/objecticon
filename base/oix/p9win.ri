@@ -305,7 +305,7 @@ wbp wopen(char *display)
     w = alcwbinding();
 
     GRFX_ALLOC(ws, _wstate);
-    ws->listp = nulldesc;    /* set to [] after linked into global context list */
+    ws->listp = nulldesc;
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
         ws->screeninfo_fd = ws->cursor_fd = ws->label_fd = ws->mouse_pid = ws->cons_pid =
         ws->wininfo_fd = ws->wsys_fd = ws->wctl_fd = ws->winid = ws->transientfor_winid = -1;
@@ -319,6 +319,7 @@ wbp wopen(char *display)
     GRFX_LINK(ws, wstates);
 
     w->window = ws;
+    add_gc_global(&ws->listp);
 
     if (display)
         ws->wsys = salloc(display);
@@ -799,7 +800,7 @@ void filltrapezoids(wbp w, struct trapezoid *traps, int ntraps)
     int x, y, width, height, i;
     trapezoids_extent(traps, ntraps, &x, &y, &width, &height);
     clip(w);
-    if (needmask(wc, 1)) {
+    if (ntraps > 1 && needmask(wc, 1)) {
         Image *mask = getmask(width, height);
         for (i = 0; i < ntraps; ++i) {
             Point p[4];
@@ -833,7 +834,7 @@ void filltriangles(wbp w, struct triangle *tris, int ntris)
     int x, y, width, height, i;
     triangles_extent(tris, ntris, &x, &y, &width, &height);
     clip(w);
-    if (needmask(wc, 1)) {
+    if (ntris > 1 && needmask(wc, 1)) {
         Image *mask = getmask(width, height);
         for (i = 0; i < ntris; ++i) {
             Point p[3];
@@ -1744,6 +1745,7 @@ void freewindow(wsp ws)
            free(ws->wsys);
            ws->wsys = 0;
        }
+       del_gc_global(&ws->listp);
        GRFX_UNLINK(ws, wstates);
        free(ws);
    }

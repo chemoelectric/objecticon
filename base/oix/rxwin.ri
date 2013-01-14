@@ -699,6 +699,7 @@ wbp wopen(char *display)
     GRFX_LINK(ws, wstates);
 
     w->window = ws;
+    add_gc_global(&ws->listp);
     create_list(64, &ws->listp);
 
     GRFX_ALLOC(wc, _wcontext);
@@ -2532,45 +2533,70 @@ void drawrectangle(wbp w, int x, int y, int width, int height, int thick)
         /* Note that we know the two vertical lines will be at least one pixel high, since
          * height > 2 * thick
          */
-        XRenderComposite(wd->display,
-                         wc->drawop->i,
-                         get_draw_picture(wc),     /* src */
-                         None,                     /* mask */
-                         ws->ppic,                 /* dest */
-                         0,0,                      /* src x,y */
-                         0,0,                      /* mask x,y */
-                         x, y,                     /* dst x,y,w,h */
-                         width, thick);
+        if (wc->pattern) {
+            XRenderComposite(wd->display,
+                             wc->drawop->i,
+                             get_draw_picture(wc),     /* src */
+                             None,                     /* mask */
+                             ws->ppic,                 /* dest */
+                             0,0,                      /* src x,y */
+                             0,0,                      /* mask x,y */
+                             x, y,                     /* dst x,y,w,h */
+                             width, thick);
 
-        XRenderComposite(wd->display,
-                         wc->drawop->i,
-                         get_draw_picture(wc),     /* src */
-                         None,                     /* mask */
-                         ws->ppic,                 /* dest */
-                         0,thick,                  /* src x,y */
-                         0,0,                      /* mask x,y */
-                         x, y +  thick,            /* dst x,y,w,h */
-                         thick, height - 2 * thick);
+            XRenderComposite(wd->display,
+                             wc->drawop->i,
+                             get_draw_picture(wc),     /* src */
+                             None,                     /* mask */
+                             ws->ppic,                 /* dest */
+                             0,thick,                  /* src x,y */
+                             0,0,                      /* mask x,y */
+                             x, y +  thick,            /* dst x,y,w,h */
+                             thick, height - 2 * thick);
 
-        XRenderComposite(wd->display,
-                         wc->drawop->i,
-                         get_draw_picture(wc),     /* src */
-                         None,                     /* mask */
-                         ws->ppic,                 /* dest */
-                         width - thick,thick,      /* src x,y */
-                         0,0,                      /* mask x,y */
-                         x + width - thick, y + thick,   /* dst x,y,w,h */
-                         thick, height - 2 * thick);
+            XRenderComposite(wd->display,
+                             wc->drawop->i,
+                             get_draw_picture(wc),     /* src */
+                             None,                     /* mask */
+                             ws->ppic,                 /* dest */
+                             width - thick,thick,      /* src x,y */
+                             0,0,                      /* mask x,y */
+                             x + width - thick, y + thick,   /* dst x,y,w,h */
+                             thick, height - 2 * thick);
 
-        XRenderComposite(wd->display,
-                         wc->drawop->i,
-                         get_draw_picture(wc),     /* src */
-                         None,                     /* mask */
-                         ws->ppic,                 /* dest */
-                         0,height - thick,         /* src x,y */
-                         0,0,                      /* mask x,y */
-                         x, y + height - thick,    /* dst x,y,w,h */
-                         width, thick);
+            XRenderComposite(wd->display,
+                             wc->drawop->i,
+                             get_draw_picture(wc),     /* src */
+                             None,                     /* mask */
+                             ws->ppic,                 /* dest */
+                             0,height - thick,         /* src x,y */
+                             0,0,                      /* mask x,y */
+                             x, y + height - thick,    /* dst x,y,w,h */
+                             width, thick);
+        } else {
+            XRectangle r[4];
+            r[0].x = x;
+            r[0].y = y;
+            r[0].width = width;
+            r[0].height = thick;
+            r[1].x = x;
+            r[1].y = y +  thick;
+            r[1].width = thick;
+            r[1].height = height - 2 * thick;
+            r[2].x = x + width - thick;
+            r[2].y = y + thick;
+            r[2].width = thick;
+            r[2].height = height - 2 * thick;
+            r[3].x = x;
+            r[3].y = y + height - thick;
+            r[3].width = width;
+            r[3].height = thick;
+            XRenderFillRectangles(wd->display,
+                                  wc->drawop->i,
+                                  ws->ppic,
+                                  &wc->fg->color,
+                                  r, 4);
+        }
 
         pix_to_win(ws, x, y, width, height);
         unclip(w);
@@ -2633,7 +2659,7 @@ void filltrapezoids(wbp w, struct trapezoid *traps, int ntraps)
     trapezoids_extent(traps, ntraps, &x, &y, &width, &height);
     MemProtect(xtraps = malloc(ntraps * sizeof(XTrapezoid)));
     clip(w);
-    if (needmask(wc, 1)) {
+    if (ntraps > 1 && needmask(wc, 1)) {
         Picture mask;
         for (i = 0; i < ntraps; ++i)
             xtraps[i] = trapezoid(traps[i].top - y, traps[i].x1 - x, traps[i].x2 - x,
@@ -2674,7 +2700,7 @@ void filltriangles(wbp w, struct triangle *tris, int ntris)
     triangles_extent(tris, ntris, &x, &y, &width, &height);
     MemProtect(xtris = malloc(ntris * sizeof(XTrapezoid)));
     clip(w);
-    if (needmask(wc, 1)) {
+    if (ntris > 1 && needmask(wc, 1)) {
         Picture mask;
         for (i = 0; i < ntris; ++i)
             xtris[i] = triangle(tris[i].p1.x - x, tris[i].p1.y - y,
@@ -3395,6 +3421,7 @@ void freewindow(wsp ws)
            ws->windowlabel = 0;
         }
 
+        del_gc_global(&ws->listp);
         GRFX_UNLINK(ws, wstates);
         free(ws);
     }

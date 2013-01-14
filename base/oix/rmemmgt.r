@@ -302,6 +302,58 @@ uword segsize[] = {
    else if (Pointer(d))\
       stk_add(&BlkLoc(d));
 
+
+#define OGHASH_SIZE 32
+
+struct other_global {
+    dptr dp;
+    struct other_global *next;
+};
+
+#define hasher(x,obj)   ((((word)x)/4)%ElemCount(obj))
+
+static struct other_global *og_hash[OGHASH_SIZE];
+
+#if 0
+static void dump_gc_global()
+{
+    int i;
+    struct other_global *og;
+    for (i = 0; i < ElemCount(og_hash); ++i) {
+        printf("Bucket %d\n", i);
+        for (og = og_hash[i]; og; og = og->next) {
+            printf("\tEntry %p = ", og->dp);
+            print_desc(stdout, og->dp);
+            printf("\n");
+        }
+    }
+    printf("=============\n");
+}
+#endif
+
+void add_gc_global(dptr d)
+{
+    int i = hasher(d, og_hash);
+    struct other_global *og;
+    MemProtect(og = malloc(sizeof(struct other_global)));
+    og->dp = d;
+    og->next = og_hash[i];
+    og_hash[i] = og;
+}
+
+void del_gc_global(dptr d)
+{
+    int i = hasher(d, og_hash);
+    struct other_global **ogp, *og;
+    ogp = &og_hash[i];
+    while ((og = *ogp) && og->dp != d)
+        ogp = &og->next;
+    if (!og)
+        syserr("del_gc_global: dptr not found in list");
+    *ogp = og->next;
+    free(og);
+}
+
 /*
  * collect - do a garbage collection of currently active regions.
  */
@@ -310,6 +362,8 @@ void collect(int region)
 {
    struct progstate *prog;
    struct region *br;
+   struct other_global *og;
+   int i;
 
 #if HAVE_GETRLIMIT && HAVE_SETRLIMIT
    {
@@ -373,27 +427,11 @@ void collect(int region)
     */
    sweep_tended();
 
-   /*
-    * Mark the cached s2 and s3 strings for map.
-    */
-   PostDescrip(maps2);                  /*  caution: the cached arguments of */
-                                        /*  map may not be strings. */
-   PostDescrip(maps3);
-   PostDescrip(maps2u);
-   PostDescrip(maps3u);
 
-#if Graphics
-   /*
-    * Mark file and list values for windows
-    */
-   {
-     wsp ws;
-
-     for (ws = wstates; ws ; ws = ws->next) {
-         PostDescrip(ws->listp);
-     }
-   }
-#endif					/* Graphics */
+   /* Mark any other global descriptors which have been noted. */
+   for (i = 0; i < ElemCount(og_hash); ++i)
+       for (og = og_hash[i]; og; og = og->next)
+           PostDescrip(*og->dp);
 
    /* Process all block ptrs */
    stk_markptrs();

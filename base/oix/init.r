@@ -179,11 +179,6 @@ word dodump = 1;			/* if zero never core dump;
                                          * if 2 core dump on all errors
                                          */
 
-struct descrip maps2;			/* second cached argument of map */
-struct descrip maps3;			/* third cached argument of map */
-struct descrip maps2u;			/* second cached argument of map */
-struct descrip maps3u;			/* third cached argument of map */
-
 
 struct progstate *progs;        /* list of progstates */
 
@@ -1192,11 +1187,6 @@ int main(int argc, char **argv)
     d = 0.0;
     DSetReal(d, rzerodesc);
     rzerodesc.dword = D_Real;
-
-    maps2 = nulldesc;
-    maps3 = nulldesc;
-    maps2u = nulldesc;
-    maps3u = nulldesc;
 
     k_cset = make_static_cset_block(1, 0, 255);
     k_uset = make_static_cset_block(1, 0, MAX_CODE_POINT);
