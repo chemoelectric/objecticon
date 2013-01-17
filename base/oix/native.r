@@ -4457,7 +4457,7 @@ static void cleanup_fileworker(struct fileworker *w)
         free(w->buff);
     if (w->fd >= 0)
         close(w->fd);
-    GRFX_GENUNLINK(w, fileworkers, next, prev);
+    GUnlink4(w, fileworkers, next, prev);
     free(w);
 }
 
@@ -4508,7 +4508,7 @@ function io_FileWorker_new_impl(buff_size, f)
        }
 
        MemProtect(p = calloc(1, sizeof(*p)));
-       GRFX_GENLINK(p, fileworkers, next, prev);
+       GLink4(p, fileworkers, next, prev);
 
        p->pid = -1;
        MemProtect(p->buff = calloc(1, buff_size));
@@ -4715,7 +4715,7 @@ function io_FileWorker_close_when_complete(self)
       GetSelfFileWorker()
       qlock(&self_fileworker->l);
       if (self_fileworker->status == FW_RUNNING) {
-         GRFX_GENUNLINK(self_fileworker, fileworkers, next, prev);
+         GUnlink4(self_fileworker, fileworkers, next, prev);
          *self_fileworker_dptr = zerodesc;
          self_fileworker->close_when_complete = 1;
          qunlock(&self_fileworker->l);

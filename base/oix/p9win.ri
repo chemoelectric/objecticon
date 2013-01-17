@@ -239,7 +239,7 @@ static int open_winfile(wsp ws, char *s, int mode)
 static struct SharedColor *new_sharedcolor(char *name, int rgba)
 {
     struct SharedColor *res;
-    GRFX_ALLOC(res, SharedColor);
+    GAlloc(res, SharedColor);
     res->name = salloc(name);
     res->rgba = rgba;
     MemProtect(res->i = allocimage(display, Rect(0, 0, 1, 1), RGBA32, 1, rgba));
@@ -265,7 +265,7 @@ static void unlink_sharedcolor(struct SharedColor *x)
 static struct SharedImage *new_sharedimage(struct imgdata *imd)
 {
     struct SharedImage *res;
-    GRFX_ALLOC(res, SharedImage);
+    GAlloc(res, SharedImage);
     res->i = imgdata_to_Image(imd);
     return res;
 }
@@ -304,7 +304,7 @@ wbp wopen(char *display)
 
     w = alcwbinding();
 
-    GRFX_ALLOC(ws, _wstate);
+    GAlloc(ws, _wstate);
     ws->listp = nulldesc;
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
         ws->screeninfo_fd = ws->cursor_fd = ws->label_fd = ws->mouse_pid = ws->cons_pid =
@@ -316,7 +316,7 @@ wbp wopen(char *display)
     ws->width = ws->height = 1;
     ws->state = HiddenCanvas;
     ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
-    GRFX_LINK(ws, wstates);
+    GLink(ws, wstates);
 
     w->window = ws;
     add_gc_global(&ws->listp);
@@ -332,7 +332,7 @@ wbp wopen(char *display)
         }
     }
 
-    GRFX_ALLOC(wc, _wcontext);
+    GAlloc(wc, _wcontext);
     wc->clipx = wc->clipy = 0;
     wc->clipw = wc->cliph = -1;
     wc->fg = link_sharedcolor(black);
@@ -341,7 +341,7 @@ wbp wopen(char *display)
     wc->drawop = stringint_lookup(drawops, "over");
     wc->linestyle = stringint_lookup(linestyles, "endsquare");
     wc->linewidth = 1;
-    GRFX_LINK(wc, wcntxts);
+    GLink(wc, wcntxts);
 
     w->context = wc;
     create_list(64, &ws->listp);
@@ -1086,7 +1086,7 @@ static wfp load_font(char *s)
     if (!f)
         return 0;
 
-    GRFX_ALLOC(rv, _wfont);
+    GAlloc(rv, _wfont);
     MemProtect(rv->name = malloc(strlen(s) + 3 + 1));
     sprint(rv->name, "p9:%s", s);
     rv->ascent = f->ascent;               /* font dimensions */
@@ -1094,7 +1094,7 @@ static wfp load_font(char *s)
     rv->height = f->height;
     rv->maxwidth = f->width;               /* max width of one char */
     rv->font = f;
-    GRFX_LINK(rv, fonts);
+    GLink(rv, fonts);
     return rv;
 }
 
@@ -1527,7 +1527,7 @@ static int open_screen_win(wsp ws)
         close_screen_win(ws);
         return Failed;
     }
-    GRFX_GENLINK(ws, vwstates, vnext, vprevious);
+    GLink4(ws, vwstates, vnext, vprevious);
 
     /* Ensure size matches the opened window; if not resize pix win and queue event */
     if (Dx(ws->win->r) != ws->width || Dy(ws->win->r) != ws->height) {
@@ -1689,7 +1689,7 @@ static void close_screen_win(wsp ws)
             display->screenimage = any_other_win(ws->win);
         freeimage(ws->win);
         ws->win = 0;
-        GRFX_GENUNLINK(ws, vwstates, vnext, vprevious);
+        GUnlink4(ws, vwstates, vnext, vprevious);
     }
     if (ws->screen) {
         freeimage(ws->screen->image);
@@ -1746,7 +1746,7 @@ void freewindow(wsp ws)
            ws->wsys = 0;
        }
        del_gc_global(&ws->listp);
-       GRFX_UNLINK(ws, wstates);
+       GUnlink(ws, wstates);
        free(ws);
    }
 }
@@ -1761,7 +1761,7 @@ void freecontext(wcp wc)
             unlink_sharedcolor(wc->bg);
         if (wc->pattern)
             unlink_sharedimage(wc->pattern);
-        GRFX_UNLINK(wc, wcntxts);
+        GUnlink(wc, wcntxts);
         free(wc);
     }
 }
@@ -2027,11 +2027,10 @@ char *getwindowlabel(wbp w)
     return w->window->windowlabel;
 }
 
-wcp clonecontext(wbp w)
+wcp clonecontext(wcp src)
 {
-    wcp src, wc;
-    src = w->context;
-    GRFX_ALLOC(wc, _wcontext);
+    wcp wc;
+    GAlloc(wc, _wcontext);
     wc->dx = src->dx;
     wc->dy = src->dy;
     wc->clipx = src->clipx;
@@ -2046,7 +2045,7 @@ wcp clonecontext(wbp w)
     wc->linewidth = src->linewidth;
     wc->drawop = src->drawop;
     wc->linestyle = src->linestyle;
-    GRFX_LINK(wc, wcntxts);
+    GLink(wc, wcntxts);
     return wc;
 }
 

@@ -236,7 +236,7 @@ void freeimgdata     (struct imgdata *img);
    int is_png(dptr data);
    int is_jpeg(dptr data);
    int is_gif(dptr data);
-   wcp  clonecontext   (wbp w);
+   wcp  clonecontext   (wcp wc);
    int  copyarea        (wbp w, int x, int y, int wd, int h, wbp w2, int x2, int y2);
    void doconfig        (wbp w, int status);
    void erasearea       (wbp w, int x, int y, int width, int height);

@@ -7,7 +7,7 @@ static struct sdescrip pixclassname = {15, "graphics.Pixels"};
 
 static struct sdescrip idpf = {3, "idp"};
 
-#begdef ImageDataStaticParam(p, x)
+#begdef PixelsStaticParam(p, x)
 struct imgdata *x;
 dptr x##_dptr;
 static struct inline_field_cache x##_ic;
@@ -22,7 +22,7 @@ if (!(x))
     runerr(152, p);
 #enddef
 
-#begdef GetSelfImageData()
+#begdef GetSelfPixels()
 struct imgdata *self_id;
 dptr self_id_dptr;
 static struct inline_field_cache self_id_ic;
@@ -127,7 +127,7 @@ function graphics_Window_clone_impl(self)
        w2 = alcwbinding();
        w2->window = self_w->window;
        w2->window->refcount++;
-       w2->context = clonecontext(self_w);
+       w2->context = clonecontext(self_w->context);
        return C_integer((word)w2);
    }
 end
@@ -314,7 +314,7 @@ function graphics_Window_draw_image_impl(self, x0, y0, d)
       if (pointargs(self_w, &x0, &x, &y) == Error)
           runerr(0);
       {
-      ImageDataStaticParam(d, id);
+      PixelsStaticParam(d, id);
       drawimgdata(self_w, x, y, id);
       }
       return self;
@@ -656,7 +656,7 @@ function graphics_Pixels_to_file(self, fname)
        runerr(103, fname)
    body {
       char *s;
-      GetSelfImageData();
+      GetSelfPixels();
       s = buffstr(&fname);
       if (writeimagefile(s, self_id) != Succeeded)
           fail;
@@ -1464,7 +1464,7 @@ function graphics_Window_set_pattern_impl(self, val)
       if (is:null(val))
           AttemptAttr(setpattern(self_w, 0), "Failed to clear pattern");
       else {
-          ImageDataStaticParam(val, id);
+          PixelsStaticParam(val, id);
           AttemptAttr(setpattern(self_w, id), "Failed to set pattern");
       }
       return self;
@@ -1514,7 +1514,7 @@ function graphics_Window_set_icon_impl(self, val)
    body {
       GetSelfW();
       {
-      ImageDataStaticParam(val, id);
+      PixelsStaticParam(val, id);
       AttemptAttr(setwindowicon(self_w, id), "Failed to set window icon");
       return self;
       }
@@ -1962,7 +1962,7 @@ end
 function graphics_Pixels_get_width(self)
    body {
       struct descrip result;
-      GetSelfImageData();
+      GetSelfPixels();
       MakeInt(self_id->width, &result);
       return result;
    }
@@ -1971,7 +1971,7 @@ end
 function graphics_Pixels_get_height(self)
    body {
       struct descrip result;
-      GetSelfImageData();
+      GetSelfPixels();
       MakeInt(self_id->height, &result);
       return result;
    }
@@ -1979,7 +1979,7 @@ end
 
 function graphics_Pixels_close(self)
    body {
-      GetSelfImageData();
+      GetSelfPixels();
       freeimgdata(self_id);
       free(self_id);
        *self_id_dptr = zerodesc;
@@ -1996,7 +1996,7 @@ function graphics_Pixels_get_rgba(self, x, y)
       int r, g, b, a;
       tended struct descrip result;
       struct descrip t;
-      GetSelfImageData();
+      GetSelfPixels();
       if (x < 0 || x >= self_id->width || y < 0 || y >= self_id->height) {
           LitWhy("Out of range");
           fail;
@@ -2026,13 +2026,13 @@ function graphics_Pixels_copy_pixel(self, x1, y1, other, x2, y2)
       runerr(101, y2)
    body {
       int r, g, b, a;
-      GetSelfImageData();
+      GetSelfPixels();
       if (x1 < 0 || x1 >= self_id->width || y1 < 0 || y1 >= self_id->height) {
           LitWhy("Out of range");
           fail;
       }
       {
-      ImageDataStaticParam(other, id2);
+      PixelsStaticParam(other, id2);
       if (x2 < 0 || x2 >= id2->width || y2 < 0 || y2 >= id2->height) {
           LitWhy("Out of range");
           fail;
@@ -2052,7 +2052,7 @@ function graphics_Pixels_get(self, x, y)
    body {
       int r, g, b, a;
       tended struct descrip result;
-      GetSelfImageData();
+      GetSelfPixels();
       if (x < 0 || x >= self_id->width || y < 0 || y >= self_id->height) {
           LitWhy("Out of range");
           fail;
@@ -2077,7 +2077,7 @@ function graphics_Pixels_set_rgba(self, x, y, r, g, b, a)
    if !def:C_integer(a, 65535) then
       runerr(101, a)
    body {
-      GetSelfImageData();
+      GetSelfPixels();
       if (x < 0 || x >= self_id->width || y < 0 || y >= self_id->height) {
           LitWhy("Out of range");
           fail;
@@ -2096,7 +2096,7 @@ function graphics_Pixels_set(self, x, y, v)
        runerr(103, v)
    body {
       int r, g, b, a;
-      GetSelfImageData();
+      GetSelfPixels();
       if (x < 0 || x >= self_id->width || y < 0 || y >= self_id->height) {
           LitWhy("Out of range");
           fail;
@@ -2113,7 +2113,7 @@ end
 function graphics_Pixels_get_format(self)
    body {
       struct descrip result;
-      GetSelfImageData();
+      GetSelfPixels();
       CMakeStr(self_id->format->name, &result);
       return result;
    }
@@ -2122,7 +2122,7 @@ end
 function graphics_Pixels_get_data(self)
    body {
       tended struct descrip result;
-      GetSelfImageData();
+      GetSelfPixels();
       bytes2string((char *)self_id->data, self_id->format->getlength(self_id), &result);
       return result;
    }
@@ -2134,7 +2134,7 @@ function graphics_Pixels_set_data(self, s)
    body {
       tended struct descrip result;
       int n;
-      GetSelfImageData();
+      GetSelfPixels();
       n = self_id->format->getlength(self_id);
       if (StrLen(s) < n) {
           memcpy(self_id->data, StrLoc(s), StrLen(s));
@@ -2149,7 +2149,7 @@ function graphics_Pixels_clone_impl(self)
    body {
       struct imgdata *imd;
       int n;
-      GetSelfImageData();
+      GetSelfPixels();
       MemProtect(imd = malloc(sizeof(struct imgdata)));
       imd->width = self_id->width;
       imd->height = self_id->height;
@@ -2169,14 +2169,14 @@ end
 
 function graphics_Pixels_get_alpha_depth(self)
    body {
-      GetSelfImageData();
+      GetSelfPixels();
       return C_integer self_id->format->alpha_depth;
    }
 end
 
 function graphics_Pixels_get_color_depth(self)
    body {
-      GetSelfImageData();
+      GetSelfPixels();
       return C_integer self_id->format->color_depth;
    }
 end
@@ -2184,7 +2184,7 @@ end
 function graphics_Pixels_get_palette_size(self)
    body {
       int n;
-      GetSelfImageData();
+      GetSelfPixels();
       n = self_id->format->palette_size;
       if (n == 0)
           fail;
@@ -2200,7 +2200,7 @@ function graphics_Pixels_get_palette(self, i)
       struct palentry *e;
       tended struct descrip result;
       int n;
-      GetSelfImageData();
+      GetSelfPixels();
       n = self_id->format->palette_size;
       if (n == 0) {
           LitWhy("Can only get a palette entry with a PALETTE format");
@@ -2224,7 +2224,7 @@ function graphics_Pixels_get_palette_rgba(self, i)
       tended struct descrip result;
       struct descrip t;
       int n;
-      GetSelfImageData();
+      GetSelfPixels();
       n = self_id->format->palette_size;
       if (n == 0) {
           LitWhy("Can only get a palette entry with a PALETTE format");
@@ -2262,7 +2262,7 @@ function graphics_Pixels_set_palette_rgba(self, i, r, g, b, a)
    body {
       struct palentry *e;
       int n;
-      GetSelfImageData();
+      GetSelfPixels();
       n = self_id->format->palette_size;
       if (n == 0) {
           LitWhy("Can only set a palette entry with a PALETTE format");
@@ -2289,7 +2289,7 @@ function graphics_Pixels_set_palette(self, i, v)
    body {
       struct palentry *e;
       int n, r, g, b, a;
-      GetSelfImageData();
+      GetSelfPixels();
       n = self_id->format->palette_size;
       if (n == 0) {
           LitWhy("Can only set a palette entry with a PALETTE format");
@@ -2320,7 +2320,7 @@ function graphics_Pixels_get_palette_index(self, x, y)
       runerr(101, y)
    body {
       struct descrip result;
-      GetSelfImageData();
+      GetSelfPixels();
       if (self_id->format->palette_size == 0) {
           LitWhy("Can only get a palette index with a PALETTE format");
           fail;
@@ -2343,7 +2343,7 @@ function graphics_Pixels_set_palette_index(self, x, y, i)
       runerr(101, i)
    body {
       int n;
-      GetSelfImageData();
+      GetSelfPixels();
       n = self_id->format->palette_size;
       if (n == 0) {
           LitWhy("Can only set a palette index with a PALETTE format");
@@ -2368,7 +2368,7 @@ function graphics_Pixels_load_palette(self, pal)
    body {
       int p;
       struct palentry *e;
-      GetSelfImageData();
+      GetSelfPixels();
       if (self_id->format != &imgdataformat_PALETTE8) {
           LitWhy("Can only load a palette with PALETTE8 format");
           fail;

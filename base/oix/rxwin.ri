@@ -295,7 +295,7 @@ static struct SharedPicture *new_sharedpicture(wdp wd, struct imgdata *imd)
 {
     struct SharedPicture *res;
     XRenderPictureAttributes pa;
-    GRFX_ALLOC(res, SharedPicture);
+    GAlloc(res, SharedPicture);
     res->pix = imgdata_to_Pixmap(wd, imd);
     pa.repeat = 1;
     res->i = XRenderCreatePicture(wd->display, res->pix, wd->pixfmt, CPRepeat, &pa);
@@ -325,7 +325,7 @@ static void unlink_sharedpicture(wdp wd, struct SharedPicture *x)
 static struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int b, int a)
 {
     struct SharedColor *res;
-    GRFX_ALLOC(res, SharedColor);
+    GAlloc(res, SharedColor);
     res->color.red = Mul16(r, a);
     res->color.green = Mul16(g, a);
     res->color.blue = Mul16(b, a);
@@ -663,7 +663,7 @@ static void close_screen_win(wsp ws)
     XDestroyWindow(wd->display, ws->win);
     XFlush(wd->display);
     ws->win = 0;
-    GRFX_GENUNLINK(ws, vwstates, vnext, vprevious);
+    GUnlink4(ws, vwstates, vnext, vprevious);
     synch_state(ws);
 }
 
@@ -685,7 +685,7 @@ wbp wopen(char *display)
 
     w = alcwbinding();
 
-    GRFX_ALLOC(ws, _wstate);
+    GAlloc(ws, _wstate);
     ws->listp = nulldesc;
     ws->cursor = stringint_lookup(cursors, "left ptr");
     ws->state = HiddenState;
@@ -696,13 +696,13 @@ wbp wopen(char *display)
     ws->pxft = NULL;
     ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
     ws->display = wd;
-    GRFX_LINK(ws, wstates);
+    GLink(ws, wstates);
 
     w->window = ws;
     add_gc_global(&ws->listp);
     create_list(64, &ws->listp);
 
-    GRFX_ALLOC(wc, _wcontext);
+    GAlloc(wc, _wcontext);
     wc->display = wd;
     wc->bg = link_sharedcolor(wd->white);
     wc->fg = link_sharedcolor(wd->black);
@@ -712,7 +712,7 @@ wbp wopen(char *display)
     wc->clipw = wc->cliph = -1;
     wc->linewidth = 1;
     wc->linestyle = stringint_lookup(linestyles, "endsquare");
-    GRFX_LINK(wc, wcntxts);
+    GLink(wc, wcntxts);
 
     w->context = wc;
 
@@ -843,7 +843,7 @@ static void wmap(wbp w)
 
     XClearWindow(wd->display, ws->win);
 
-    GRFX_GENLINK(ws, vwstates, vnext, vprevious);
+    GLink4(ws, vwstates, vnext, vprevious);
 
     /* For RootState, need to fill since XClearWindow above fills with a pixmap */
     if (ws->state == RootState) {
@@ -3193,7 +3193,7 @@ static wdp alcdisplay(char *s)
     }
     wd->xfont = XLoadQueryFont(wd->display, "fixed");
     XInternAtoms(wd->display, atom_names, NUMATOMS, False, wd->atoms);
-    GRFX_LINK(wd, wdsplys);
+    GLink(wd, wdsplys);
     return wd;
 }
 
@@ -3318,14 +3318,14 @@ static wfp loadfont(wdp wd, char *s)
     /*
      * link the font into this display's fontlist
      */
-    GRFX_LINK(rv, wd->fonts);
+    GLink(rv, wd->fonts);
     return rv;
 }
 
 static wfp newfont(wdp wd, char *s)
 {
     wfp rv;
-    GRFX_ALLOC(rv, _wfont);
+    GAlloc(rv, _wfont);
     rv->fsp = XftFontOpenName(wd->display, DefaultScreen(wd->display), s);
     if (rv->fsp == NULL){
         free(rv);
@@ -3358,16 +3358,11 @@ static wfp newfont(wdp wd, char *s)
 /*
  * allocate a context, cloning attributes from an existing context
  */
-wcp clonecontext(wbp w)
+wcp clonecontext(wcp wc)
 {
-    wcp wc, rv;
-    wdp wd;
-
-    wc = w->context;
-    wd = w->context->display;
-
-    GRFX_ALLOC(rv, _wcontext);
-    rv->display = wd;
+    wcp rv;
+    GAlloc(rv, _wcontext);
+    rv->display = wc->display;
     rv->dx = wc->dx;
     rv->dy = wc->dy;
     rv->clipx = wc->clipx;
@@ -3382,7 +3377,7 @@ wcp clonecontext(wbp w)
     rv->linestyle = wc->linestyle;
     rv->linewidth = wc->linewidth;
     rv->drawop = wc->drawop;
-    GRFX_LINK(rv, wcntxts);
+    GLink(rv, wcntxts);
     return rv;
 }
 
@@ -3422,7 +3417,7 @@ void freewindow(wsp ws)
         }
 
         del_gc_global(&ws->listp);
-        GRFX_UNLINK(ws, wstates);
+        GUnlink(ws, wstates);
         free(ws);
     }
 }
@@ -3440,7 +3435,7 @@ void freecontext(wcp wc)
             unlink_sharedcolor(wc->display, wc->bg);
         if (wc->pattern)
             unlink_sharedpicture(wc->display, wc->pattern);
-        GRFX_UNLINK(wc, wcntxts);
+        GUnlink(wc, wcntxts);
         free(wc);
     }
 }
@@ -3478,6 +3473,9 @@ static void set_X11ARGB32(struct imgdata *imd, int x, int y, int r, int g, int b
 {
     int n = imd->width * y + x;
     unsigned char *s = imd->data + 4 * n;
+    b = (((unsigned)b) * a) / 65535;
+    g = (((unsigned)g) * a) / 65535;
+    r = (((unsigned)r) * a) / 65535;
     *s++ = a / 256;
     *s++ = r / 256;
     *s++ = g / 256;
@@ -3491,17 +3489,20 @@ static void get_X11ARGB32(struct imgdata *imd, int x, int y, int *r, int *g, int
     *r = 257 * (*s++);
     *g = 257 * (*s++);
     *b = 257 * (*s++);
+    if (*a > 0) {
+        *b = (((unsigned)*b) * 65535) / *a;
+        *g = (((unsigned)*g) * 65535) / *a;
+        *r = (((unsigned)*r) * 65535) / *a;
+    }
 }
 
 static void set_X11BGRA32(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
 {
     int n = imd->width * y + x;
     unsigned char *s = imd->data + 4 * n;
-
     b = (((unsigned)b) * a) / 65535;
     g = (((unsigned)g) * a) / 65535;
     r = (((unsigned)r) * a) / 65535;
-
     *s++ = b / 256;
     *s++ = g / 256;
     *s++ = r / 256;
