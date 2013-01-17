@@ -256,36 +256,34 @@ if (!cnv:tmp_string(din,dout)) runerr(103,din);
    
 
 /*
- * GRFX_ALLOC* family of macros used for static allocations.
- * Not really specific to Graphics any more, also used by databases.
+ * Macros used for graphics structures.
  *
- * calloc to make sure uninit'd entries are zeroed.
  */
-#begdef GRFX_ALLOC(var,type)
+#begdef GAlloc(var,type)
    do {
       MemProtect(var = calloc(1, sizeof(struct type)));
       var->refcount = 1;
    } while(0)
-#enddef				/* GRFX_ALLOC */
+#enddef				/* GAlloc */
    
-#begdef GRFX_LINK(var, chain)
+#begdef GLink(var, chain)
    do {
       var->next = chain;
       var->previous = NULL;
       if (chain) chain->previous = var;
       chain = var;
    } while(0)
-#enddef				/* GRFX_LINK */
+#enddef				/* GLink */
    
-#begdef GRFX_UNLINK(var, chain)
+#begdef GUnlink(var, chain)
    do {
       if (var->previous) var->previous->next = var->next;
       else chain = var->next;
       if (var->next) var->next->previous = var->previous;
    } while(0)
-#enddef				/* GRFX_UNLINK */
+#enddef				/* GUnlink */
 
-#begdef GRFX_GENLINK(var, chain, next, previous)
+#begdef GLink4(var, chain, next, previous)
    do {
       var->next = chain;
       var->previous = NULL;
@@ -294,10 +292,13 @@ if (!cnv:tmp_string(din,dout)) runerr(103,din);
    } while(0)
 #enddef
    
-#begdef GRFX_GENUNLINK(var, chain, next, previous)
+#begdef GUnlink4(var, chain, next, previous)
    do {
       if (var->previous) var->previous->next = var->next;
       else chain = var->next;
       if (var->next) var->next->previous = var->previous;
    } while(0)
 #enddef
+
+#define GReference(obj) ((obj)->refcount++)
+#define GUnreference(obj) ((obj)->refcount--)

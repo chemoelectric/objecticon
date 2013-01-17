@@ -263,14 +263,14 @@ wbp wopen(char *display)
     */
    w = alcwbinding();
 
-   GRFX_ALLOC(ws, _wstate);
+   GAlloc(ws, _wstate);
    ws->listp = nulldesc;
    ws->cursorname = salloc("arrow");
    ws->curcursor = LoadCursor(NULL, IDC_ARROW);
    ws->minwidth = ws->minheight = 1;
    ws->maxwidth = ws->maxheight = INT_MAX;
    /*SETTITLEBAR(ws);*/
-   GRFX_LINK(ws, wstates);
+   GLink(ws, wstates);
 
    w->window = ws;
    w->context = alc_context(w);
@@ -1881,7 +1881,7 @@ wbp w;
    wcp wc;
    wbinding tmp;
 
-   GRFX_ALLOC(wc, _wcontext);
+   GAlloc(wc, _wcontext);
    wc->bkmode = OPAQUE;        /* at present, only used in line drawing */
    wc->fg = RGB(0,0,0);
    wc->bg = RGB(255,255,255);
@@ -1913,7 +1913,7 @@ wbp w;
    wc->clipx = wc->clipy = 0;
    wc->clipw = wc->cliph = -1;
 
-   GRFX_LINK(wc, wcntxts);
+   GLink(wc, wcntxts);
    return wc;
    }
 
@@ -1928,7 +1928,7 @@ wbp w;
    wbinding tmp;
    int i;
 
-   GRFX_ALLOC(wc, _wcontext);
+   GAlloc(wc, _wcontext);
 
    /*
     * copy over some stuff
@@ -1978,7 +1978,7 @@ wbp w;
    setfont(&tmp, wc2->font->name);  /*rpp:check*/
 
 
-   GRFX_LINK(wc, wcntxts);
+   GLink(wc, wcntxts);
    return wc;
    }
 
@@ -2009,7 +2009,7 @@ wsp ws;
 	 DeleteObject(ws->iconpix);
       ws->iconpix = 0;
       free(ws->cursorname);
-      GRFX_UNLINK(ws, wstates);
+      GUnlink(ws, wstates);
       free(ws);
       }
    }
@@ -2045,7 +2045,7 @@ wcp wc;
 	 free(wc->font);
 	 }
       wc->font = 0;
-      GRFX_UNLINK(wc, wcntxts);
+      GUnlink(wc, wcntxts);
       free(wc);
       }
    }

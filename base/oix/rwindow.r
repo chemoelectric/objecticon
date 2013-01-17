@@ -1794,7 +1794,7 @@ wbp alcwbinding()
 {
     wbp w;
     MemProtect(w = calloc(1, sizeof(struct _wbinding)));
-    GRFX_LINK(w, wbndngs);
+    GLink(w, wbndngs);
     return w;
 }
 
@@ -1805,7 +1805,7 @@ void freewbinding(wbp w)
 {
     if (w->window) freewindow(w->window);
     if (w->context) freecontext(w->context);
-    GRFX_UNLINK(w, wbndngs);
+    GUnlink(w, wbndngs);
     free(w);
 }
 
