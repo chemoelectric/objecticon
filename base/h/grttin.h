@@ -302,3 +302,34 @@ if (!cnv:tmp_string(din,dout)) runerr(103,din);
 
 #define GReference(obj) ((obj)->refcount++)
 #define GUnreference(obj) ((obj)->refcount--)
+
+#begdef PixelsStaticParam(p, x)
+struct imgdata *x;
+dptr x##_dptr;
+static struct inline_field_cache x##_ic;
+static struct inline_global_cache x##_igc;
+if (!c_is(&p, (dptr)&pixclassname, &x##_igc))
+    runerr(205, p);
+x##_dptr = c_get_instance_data(&p, (dptr)&idpfieldname, &x##_ic);
+if (!x##_dptr)
+    syserr("Missing idp field");
+(x) = (struct imgdata *)IntVal(*x##_dptr);
+if (!(x))
+    runerr(152, p);
+#enddef
+
+#begdef WindowStaticParam(p, w)
+wbp w;
+dptr w##_dptr;
+static struct inline_field_cache w##_ic;
+static struct inline_global_cache w##_igc;
+if (!c_is(&p, (dptr)&wclassname, &w##_igc))
+    runerr(205, p);
+w##_dptr = c_get_instance_data(&p, (dptr)&wbpfieldname, &w##_ic);
+if (!w##_dptr)
+    syserr("Missing wbp field");
+(w) = (wbp)IntVal(*w##_dptr);
+if (!(w))
+    runerr(142, p);
+#enddef
+
