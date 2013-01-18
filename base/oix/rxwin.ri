@@ -86,9 +86,6 @@ static void getlineinfo(wcp wc, XPointDouble *p0, XPointDouble *q0, struct linei
 static struct imgdataformat imgdataformat_X11ARGB32;
 static struct imgdataformat imgdataformat_X11BGRA32;
 
-#define   EndDisc 1
-#define   EndSquare 2
-
 static stringint drawops[] = {
    { 0, 12},
    {"atop",  PictOpAtop},
@@ -1288,9 +1285,6 @@ int setdrawop(wbp w, char *val)
 {
     stringint *e;
     wcp wc = w->context;
-    wsp ws = w->window;
-    wdp wd = ws->display;
-    XSync(wd->display, False);
     e = stringint_lookup(drawops, val);
     if (!e)
         return Failed;
