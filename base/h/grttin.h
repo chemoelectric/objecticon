@@ -333,3 +333,31 @@ if (!(w))
     runerr(142, p);
 #enddef
 
+#begdef AttemptAttr(operation, reason)
+do {
+   tended struct descrip saved_why;
+   saved_why = kywd_why;
+   kywd_why = emptystr;
+   switch (operation) { 
+       case Error: {
+           kywd_why = saved_why;
+           runerr(145, val); 
+           break;
+       }
+       case Succeeded: {
+           kywd_why = saved_why;
+           break;
+       }
+       case Failed: {
+           if (StrLen(kywd_why) == 0)
+               LitWhy(reason);
+           fail;
+       }
+       default: {
+           syserr("Invalid return code from graphics op"); 
+           fail;
+       }
+   }
+} while(0)
+#enddef
+
