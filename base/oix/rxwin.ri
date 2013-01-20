@@ -3498,6 +3498,7 @@ static void set_X11BGRA32(struct imgdata *imd, int x, int y, int r, int g, int b
     *s++ = r / 256;
     *s++ = a / 256;
 }
+
 static void get_X11BGRA32(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
 {
     int n = imd->width * y + x;
