@@ -2,8 +2,6 @@
  * File: rxwin.ri - X11 system-specific graphics interface code.
  */
 
-#define CONVERT_ANGLE(ang) (-(ang) * 180 / Pi * 64)
-
 #define GetDepth(wd) DefaultDepth((wd)->display,DefaultScreen((wd)->display))
 #define GetVisual(wd) DefaultVisual((wd)->display,DefaultScreen((wd)->display))
 #define GetColormap(wd) DefaultColormap((wd)->display,DefaultScreen((wd)->display))
@@ -11,8 +9,6 @@
 #define GetWidth(wd) DisplayWidth((wd)->display,DefaultScreen((wd)->display))
 #define GetHeight(wd) DisplayHeight((wd)->display,DefaultScreen((wd)->display))
 #define GetRoot(wd) DefaultRootWindow((wd)->display)
-
-#define NearZero(x, zs) (fabs(x) < pow(10.0, -(zs + 1)))
 
 /*
  * Polyedge to use with pixwin; set to PolyEdgeSharp or PolyEdgeSmooth
@@ -85,9 +81,6 @@ static void getlineinfo(wcp wc, XPointDouble *p0, XPointDouble *q0, struct linei
 
 static struct imgdataformat imgdataformat_X11ARGB32;
 static struct imgdataformat imgdataformat_X11BGRA32;
-
-#define   EndDisc 1
-#define   EndSquare 2
 
 static stringint drawops[] = {
    { 0, 12},
@@ -1288,9 +1281,6 @@ int setdrawop(wbp w, char *val)
 {
     stringint *e;
     wcp wc = w->context;
-    wsp ws = w->window;
-    wdp wd = ws->display;
-    XSync(wd->display, False);
     e = stringint_lookup(drawops, val);
     if (!e)
         return Failed;
@@ -3508,6 +3498,7 @@ static void set_X11BGRA32(struct imgdata *imd, int x, int y, int r, int g, int b
     *s++ = r / 256;
     *s++ = a / 256;
 }
+
 static void get_X11BGRA32(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
 {
     int n = imd->width * y + x;

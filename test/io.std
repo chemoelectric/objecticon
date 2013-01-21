@@ -13,11 +13,11 @@ ffffffff
 ggggggggg
 hhhhhhhhhh
 
-flush io.icn: &null
-close io.icn: &null
+flush io.icn: object io.BufferStream#*(8)
+close io.icn: object io.BufferStream#*(8)
 
-flush /dev/null: &null
-close /dev/null: &null
+flush /dev/null: object io.BufferStream#*(8)
+close /dev/null: object io.BufferStream#*(8)
 
 read  /dev/null:	
    !f:		 

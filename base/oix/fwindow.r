@@ -3,30 +3,14 @@
  *
  */
 
-static struct sdescrip pixclassname = {15, "graphics.Pixels"};
-
-static struct sdescrip idpf = {3, "idp"};
-
-#begdef PixelsStaticParam(p, x)
-struct imgdata *x;
-dptr x##_dptr;
-static struct inline_field_cache x##_ic;
-static struct inline_global_cache x##_igc;
-if (!c_is(&p, (dptr)&pixclassname, &x##_igc))
-    runerr(205, p);
-x##_dptr = c_get_instance_data(&p, (dptr)&idpf, &x##_ic);
-if (!x##_dptr)
-    syserr("Missing idp field");
-(x) = (struct imgdata *)IntVal(*x##_dptr);
-if (!(x))
-    runerr(152, p);
-#enddef
+struct sdescrip pixclassname = {15, "graphics.Pixels"};
+struct sdescrip idpfieldname = {3, "idp"};
 
 #begdef GetSelfPixels()
 struct imgdata *self_id;
 dptr self_id_dptr;
 static struct inline_field_cache self_id_ic;
-self_id_dptr = c_get_instance_data(&self, (dptr)&idpf, &self_id_ic);
+self_id_dptr = c_get_instance_data(&self, (dptr)&idpfieldname, &self_id_ic);
 if (!self_id_dptr)
     syserr("Missing idp field");
 self_id = (struct imgdata *)IntVal(*self_id_dptr);
@@ -39,34 +23,15 @@ if (!self_id)
 
 /*
  * Global variables.
- *  the binding for the console window - FILE * for simplicity,
- *  &col, &row, &x, &y, &interval, timestamp, and modifier keys.
  */
-
-static struct sdescrip wclassname = {15, "graphics.Window"};
-
-static struct sdescrip wbpf = {3, "wbp"};
-
-#begdef WindowStaticParam(p, w)
-wbp w;
-dptr w##_dptr;
-static struct inline_field_cache w##_ic;
-static struct inline_global_cache w##_igc;
-if (!c_is(&p, (dptr)&wclassname, &w##_igc))
-    runerr(205, p);
-w##_dptr = c_get_instance_data(&p, (dptr)&wbpf, &w##_ic);
-if (!w##_dptr)
-    syserr("Missing wbp field");
-(w) = (wbp)IntVal(*w##_dptr);
-if (!(w))
-    runerr(142, p);
-#enddef
+struct sdescrip wclassname = {15, "graphics.Window"};
+struct sdescrip wbpfieldname = {3, "wbp"};
 
 #begdef GetSelfW()
 wbp self_w;
 dptr self_w_dptr;
 static struct inline_field_cache self_w_ic;
-self_w_dptr = c_get_instance_data(&self, (dptr)&wbpf, &self_w_ic);
+self_w_dptr = c_get_instance_data(&self, (dptr)&wbpfieldname, &self_w_ic);
 if (!self_w_dptr)
     syserr("Missing wbp field");
 self_w = (wbp)IntVal(*self_w_dptr);
@@ -1332,34 +1297,6 @@ function graphics_Window_get_width(self)
        return result;
    }
 end
-
-#begdef AttemptAttr(operation, reason)
-do {
-   tended struct descrip saved_why;
-   saved_why = kywd_why;
-   kywd_why = emptystr;
-   switch (operation) { 
-       case Error: {
-           kywd_why = saved_why;
-           runerr(145, val); 
-           break;
-       }
-       case Succeeded: {
-           kywd_why = saved_why;
-           break;
-       }
-       case Failed: {
-           if (StrLen(kywd_why) == 0)
-               LitWhy(reason);
-           fail;
-       }
-       default: {
-           syserr("Invalid return code from graphics op"); 
-           fail;
-       }
-   }
-} while(0)
-#enddef
 
 #begdef SimpleAttr(wconfig)
 do {

@@ -155,6 +155,11 @@
 #define Min(x,y)        ((x)<(y)?(x):(y))
 
 /*
+ * Compare double to zero with given tolerance factor.
+ */
+#define NearZero(x, zs) (fabs(x) < pow(10.0, -(zs + 1)))
+
+/*
  * Construct an real descriptor
  */
 #if RealInDesc

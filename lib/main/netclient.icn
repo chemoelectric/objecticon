@@ -179,7 +179,7 @@ $else
 
       sbuff := ""
       fire(CONNECTED_EVENT)
-      return
+      return self
    end
 $endif
 
@@ -197,7 +197,7 @@ $endif
          connection := &null
          fire(CLOSED_EVENT)
       }
-      return
+      return self
    end
 
    #
@@ -240,7 +240,7 @@ $endif
             connection.out(s) | fail
          s := s[i+1 : 0]
       }
-      return
+      return self
    end
 
    #

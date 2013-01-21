@@ -192,7 +192,7 @@ abstract class Stream()
          n := out(s) | fail
          s := s[n + 1:0]
       }
-      return
+      return self
    end
 
    #
@@ -204,7 +204,7 @@ abstract class Stream()
       local e
       every e := !a do
          writes1(e) | fail
-      return
+      return self
    end
 
    #
@@ -215,7 +215,7 @@ abstract class Stream()
       local e
       every e := !a | Files.EOL do
          writes1(e) | fail
-      return
+      return self
    end
 
    #
@@ -242,7 +242,7 @@ abstract class Stream()
       repeat {
          s := in(1048576) | fail
          if /s then
-            return
+            return self
          f.writes1(s) | fail
       }
    end
@@ -314,7 +314,7 @@ class StringStream(Stream)
    end
 
    public close()
-      return
+      return self
    end
 
    public get_mode()
@@ -327,7 +327,7 @@ class StringStream(Stream)
       else
          subj := subj[1:len + 1]
       pos := *subj + 1
-      return
+      return self
    end
 
    public str()
@@ -371,7 +371,7 @@ class NullStream(Stream)
    end
 
    public close()
-      return
+      return self
    end
 
    public get_mode()
@@ -379,7 +379,7 @@ class NullStream(Stream)
    end
 
    public truncate(len)
-      return
+      return self
    end
 end
 
@@ -406,7 +406,7 @@ class ZeroStream(Stream)
    end
 
    public close()
-      return
+      return self
    end
 
    public get_mode()
@@ -414,7 +414,7 @@ class ZeroStream(Stream)
    end
 
    public truncate(len)
-      return
+      return self
    end
 end
 
@@ -456,7 +456,7 @@ class BufferStream(Stream, HasUnderlyingStream)
       s := string(s) | runerr(103, s)
       unbuff() | fail
       rbuff := s || rbuff
-      return
+      return self
    end
 
    #
@@ -541,7 +541,7 @@ class BufferStream(Stream, HasUnderlyingStream)
       local s
       \wbuff | runerr(219, self)
       if *wbuff = 0 then
-         return
+         return self
       s := ""
       every s ||:= !wbuff
       wbuff := []
@@ -562,7 +562,7 @@ class BufferStream(Stream, HasUnderlyingStream)
          rbuff := ""
          rpos := &null
       }
-      return
+      return self
    end
 
    #
@@ -571,7 +571,7 @@ class BufferStream(Stream, HasUnderlyingStream)
    public synch()
       unbuff() | fail
       flush() | fail
-      return
+      return self
    end
 
    public close()
@@ -580,7 +580,7 @@ class BufferStream(Stream, HasUnderlyingStream)
       if \close_underlying_flag then
          other.close() | (f := 1)
       rbuff := wbuff := &null
-      return /f
+      return /f & self
    end
 
    public seek(offset)
@@ -732,7 +732,7 @@ $endif
    public dup2(other)
       dup2_impl(other) | fail
       other.mode := self.mode
-      return
+      return self
    end
 
    private native dup2_impl()
@@ -1647,7 +1647,7 @@ class ProgInputStream(SocketStream, HasBgProc)
       shutdown(Shut.RD)
       cast(self,SocketStream).close()
       do_wait()
-      return
+      return self
    end
 
    # Open a new readable {Stream} based on the given command.  The
@@ -1707,7 +1707,7 @@ class ProgOutputStream(SocketStream, HasBgProc)
       shutdown(Shut.WR)
       cast(self,SocketStream).close()
       do_wait()
-      return
+      return self
    end
 
    # Open a new writeable {Stream} based on the given command. The
@@ -1962,7 +1962,7 @@ class FilterOutputStream(FilterStreamBase)
          (err_sink === sink) | err_sink.close() | (f := 1)
       }
       do_wait()
-      return /f
+      return /f & self
    end
 
    public get_mode()
@@ -2098,7 +2098,7 @@ class FilterInputStream(FilterStreamBase)
       }
       do_wait()
       self.buff := &null
-      return /f
+      return /f & self
    end
 
    public get_mode()
@@ -2437,7 +2437,7 @@ class NetStream(FileStream)
       if self.fd ~= -1 then
          cast(self,FileStream).close()
       ctrl.close()
-      return
+      return self
    end
 
    private new(ctrl, dir)
@@ -2551,7 +2551,7 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
    public flush_out()
       \writer | return error("stream not open for writing")
       writer.await() | fail
-      return
+      return self
    end
 
    # This setting configures what happens to data remaining in the
@@ -2597,7 +2597,7 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
          reader.close()
       if \close_underlying_flag then
          other.close() | (f := 1)
-      return /f
+      return /f & self
    end
 
    #
@@ -2747,7 +2747,7 @@ class SslStream(Stream, HasUnderlyingStream, NoCopy)
       close_impl() | (f := 1)
       if \close_underlying_flag then
          other.close() | (f := 1)
-      return /f
+      return /f & self
    end
 
    private native close_impl()
@@ -2802,7 +2802,7 @@ class SequenceStream(Stream, HasUnderlyingStream)
          every e := !ac do
             e.close() | (f := 1)
       }
-      return /f
+      return /f & self
    end
 
    public new(a[])
@@ -2834,7 +2834,7 @@ abstract class GeneratorStream(LineBasedInputStream, NoCopy)
    end
 
    public close()
-      return
+      return self
    end
 
    #
@@ -2871,7 +2871,7 @@ class ExprStream(LineBasedInputStream)
    end
 
    public close()
-      return
+      return self
    end
 
    public new(coex)
@@ -2891,7 +2891,7 @@ abstract class LineFilterStream(GeneratorStream, HasUnderlyingStream)
    public close()
       if \close_underlying_flag then
          other.close() | fail
-      return
+      return self
    end
 
    protected next_line()

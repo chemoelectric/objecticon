@@ -61,7 +61,7 @@ class LineEditorStream(LineBasedInputStream, HasTask)
    end
 
    public close()
-      return
+      return self
    end
 
    public get_mode()

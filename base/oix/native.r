@@ -1717,7 +1717,7 @@ function io_FileStream_close(self)
            fail;
        }
        *self_fd_dptr = minusonedesc;
-       return nulldesc;
+       return self;
    }
 end
 
@@ -1758,7 +1758,7 @@ function io_FileStream_truncate(self, len)
            errno2why();
            fail;
        }
-       return nulldesc;
+       return self;
 #endif
    }
 end
@@ -1942,7 +1942,7 @@ function io_SocketStream_close(self)
            fail;
        }
        *self_fd_dptr = minusonedesc;
-       return nulldesc;
+       return self;
    }
 end
 
@@ -2688,7 +2688,7 @@ function io_DirStream_close(self)
            fail;
        }
        *self_dir_dptr = zerodesc;
-       return nulldesc;
+       return self;
    }
 end
 
@@ -2758,7 +2758,7 @@ function io_DirStream_close(self)
        FindClose(self_dir->handle);
        free(self_dir);
        *self_dir_dptr = zerodesc;
-       return nulldesc;
+       return self;
    }
 end
 
@@ -3563,7 +3563,7 @@ function io_RamStream_close(self)
        free(self_rs->data);
        free(self_rs);
        *self_rs_dptr = zerodesc;
-       return nulldesc;
+       return self;
    }
 end
 
@@ -3666,7 +3666,7 @@ function io_RamStream_truncate(self, len)
        if (self_rs->size < len)
            memset(&self_rs->data[self_rs->size], 0, len - self_rs->size);
        self_rs->size = len;
-       return nulldesc;
+       return self;
    }
 end
 
@@ -4541,7 +4541,7 @@ end
    self_fileworker->result = 0;
    self_fileworker->errstr[0] = 0;
    set_fileworker_status(self_fileworker, FW_RUNNING);
-   return nulldesc;
+   return self;
 #enddef
 
 function io_FileWorker_op_read(self, n)
@@ -4706,7 +4706,7 @@ function io_FileWorker_close(self)
       GetSelfFileWorker()
       cleanup_fileworker(self_fileworker);
       *self_fileworker_dptr = zerodesc;
-      return nulldesc;
+      return self;
    }
 end
 
@@ -4719,12 +4719,12 @@ function io_FileWorker_close_when_complete(self)
          *self_fileworker_dptr = zerodesc;
          self_fileworker->close_when_complete = 1;
          qunlock(&self_fileworker->l);
-         return nulldesc;
+         return self;
       }
       qunlock(&self_fileworker->l);
       cleanup_fileworker(self_fileworker);
       *self_fileworker_dptr = zerodesc;
-      return nulldesc;
+      return self;
    }
 end
 

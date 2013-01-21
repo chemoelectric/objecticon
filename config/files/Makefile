@@ -101,7 +101,7 @@ install :
 	@echo "export OINATIVE=\"$(OILIB)/native\"" >>"$(PATHS)"
 	@echo "export TRACE OIMAXLEVEL" >>"$(PATHS)" ; \
 
-	@echo rm -f \"$(OIBIN)/ivib\" \"$(OIBIN)/ieval\" \"$(OIBIN)/fiximports\" \"$(OIBIN)/oidoc\" \"$(OIBIN)/iyacc\" \"$(OIBIN)/oit\" \"$(OIBIN)/oix\" \"$(OIBIN)/udis\" \"$(OIBIN)/rtt\" >"$(UNINST)"
+	@echo rm -f \"$(OIBIN)/ivib\" \"$(OIBIN)/ieval\" \"$(OIBIN)/fiximports\" \"$(OIBIN)/oidoc\" \"$(OIBIN)/iyacc\" \"$(OIBIN)/oit\" \"$(OIBIN)/oix\" \"$(OIBIN)/udis\" \"$(OIBIN)/rtt\" \"$(OIBIN)/oiscript\" >"$(UNINST)"
 	@echo rm -rf \"$(OILIB)\" >>"$(UNINST)"
 	@echo rm -rf \"$(LIBREF)\" >>"$(UNINST)"
 

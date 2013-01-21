@@ -76,6 +76,9 @@ extern struct imgdataformat imgdataformat_PALETTE2;
 extern struct imgdataformat imgdataformat_PALETTE4;
 extern struct imgdataformat imgdataformat_PALETTE8;
 
+extern struct sdescrip pixclassname;
+extern struct sdescrip idpfieldname;
+
 struct imgdata {			/* image data */
     int width, height;			/* image dimensions */
     struct palentry *paltbl;		/* pointer to palette table, or null */
@@ -85,6 +88,9 @@ struct imgdata {			/* image data */
 
 
 #if Graphics
+
+extern struct sdescrip wclassname;
+extern struct sdescrip wbpfieldname;
 
 #if XWindows
    #include "../h/xwin.h"
