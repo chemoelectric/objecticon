@@ -1668,7 +1668,7 @@ function io_FileStream_close(self)
            fail;
        }
        *self_fd_dptr = minusonedesc;
-       return nulldesc;
+       return self;
    }
 end
 
@@ -1691,7 +1691,7 @@ function io_FileStream_truncate(self, len)
            errno2why();
            fail;
        }
-       return nulldesc;
+       return self;
    }
 end
 
@@ -1870,7 +1870,7 @@ function io_SocketStream_close(self)
            fail;
        }
        *self_fd_dptr = minusonedesc;
-       return nulldesc;
+       return self;
    }
 end
 
@@ -2450,7 +2450,7 @@ function io_DirStream_close(self)
            fail;
        }
        *self_dir_dptr = zerodesc;
-       return nulldesc;
+       return self;
    }
 end
 
@@ -2522,7 +2522,7 @@ function io_DirStream_close(self)
        FindClose(self_dir->handle);
        free(self_dir);
        *self_dir_dptr = zerodesc;
-       return nulldesc;
+       return self;
    }
 end
 
@@ -3108,7 +3108,7 @@ function io_RamStream_close(self)
        free(self_rs->data);
        free(self_rs);
        *self_rs_dptr = zerodesc;
-       return nulldesc;
+       return self;
    }
 end
 
@@ -3211,7 +3211,7 @@ function io_RamStream_truncate(self, len)
        if (self_rs->size < len)
            memset(&self_rs->data[self_rs->size], 0, len - self_rs->size);
        self_rs->size = len;
-       return nulldesc;
+       return self;
    }
 end
 

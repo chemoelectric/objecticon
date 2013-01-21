@@ -170,6 +170,7 @@ class Dialog(Component)
       every (!l).block()
       Dispatcher.message_loop(self)
       every (!l).unblock()
+      return self
    end
 
    #
@@ -188,6 +189,7 @@ class Dialog(Component)
       show(d)
       while \win do
          task.revert()
+      return self
    end
 
    #
@@ -395,6 +397,7 @@ class Dialog(Component)
       self.tooltip_init()
       self.init_dialog()
       Dispatcher.add_dialog(self)
+      return self
    end
 
    public dispose()
@@ -419,6 +422,7 @@ class Dialog(Component)
          self.prev_event := self.copy_rect := self.crossing := 
          self.selections := self.selection_requests := &null
       fire(Event.DIALOG_DISPOSED)
+      return self
    end
 
    # Refresh the point chain and pointer, using point_chain_source.

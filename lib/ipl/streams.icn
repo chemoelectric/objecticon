@@ -35,7 +35,7 @@ class IntersperseStream(GeneratorStream, HasUnderlyingStream)
          every e := !a do
             e.close() | (f := 1)
       }
-      return /f
+      return /f & self
    end
 
    public new(a[])

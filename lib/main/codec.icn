@@ -116,7 +116,7 @@ class Encode(Stream, HasUnderlyingStream)
    public close()
       if \close_underlying_flag then
          file.close() | fail
-      return
+      return self
    end
 
    private encode_string(s)

@@ -506,6 +506,7 @@ class Component(Rect,Align,Connectable)
       self.initially()
       self.layout()
       self.invalidate()
+      return self
    end
 
    #
@@ -853,6 +854,7 @@ class Component(Rect,Align,Connectable)
    public resize()
       compute_absolutes()
       layout()
+      return self
    end
 
    public get_default_width()
@@ -888,10 +890,12 @@ class Component(Rect,Align,Connectable)
    public reset_all_layouts()
       reset_layout()
       every (!self.children).reset_all_layouts()
+      return self
    end
 
    public reset_layout()
       (\layout_delegate).reset()
+      return self
    end
 
    public reset_layout_chain()
@@ -901,6 +905,7 @@ class Component(Rect,Align,Connectable)
          c.reset_layout()
          c := c.parent
       }
+      return self
    end
 
    #
@@ -1021,6 +1026,7 @@ class Component(Rect,Align,Connectable)
       if self.is_live() & self.is_unhidden() then
          parent_dialog.invalidate_rect(if /r then get_clip_rect()
                                        else r.intersect(get_clip_rect()))
+      return self
    end
 
    #

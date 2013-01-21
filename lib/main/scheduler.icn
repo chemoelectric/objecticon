@@ -34,7 +34,7 @@ class TaskStream(Stream, HasUnderlyingStream)
    public close()
       if \close_underlying_flag then
          return other.close()
-      return
+      return self
    end
 
    public get_mode()

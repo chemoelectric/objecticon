@@ -60,7 +60,7 @@ function mysql_MySql_close(self)
       GetSelfMySql();
       mysql_close(self_mysql);
       *self_mysql_dptr = zerodesc;
-      return nulldesc;
+      return self;
    } 
 end
 
@@ -75,7 +75,7 @@ function mysql_MySql_set_server_option(self, opt)
           on_mysql_error(self_mysql);
           fail;
       }
-      return nulldesc;
+      return self;
    }
 end
 
@@ -143,7 +143,7 @@ function mysql_MySql_options(self, option, arg)
           on_mysql_error(self_mysql);
           fail;
       }
-      return nulldesc;
+      return self;
    }
 end
 
@@ -154,7 +154,7 @@ function mysql_MySql_ping(self)
           on_mysql_error(self_mysql);
           fail;
       }
-      return nulldesc;
+      return self;
    }
 end
 
@@ -183,7 +183,7 @@ function mysql_MySql_select_db(self, db)
           on_mysql_error(self_mysql);
           fail;
       }
-      return nulldesc;
+      return self;
    }
 end
 
@@ -202,7 +202,7 @@ function mysql_MySql_shutdown(self)
           on_mysql_error(self_mysql);
           fail;
       }
-      return nulldesc;
+      return self;
    }
 end
 
@@ -232,7 +232,7 @@ function mysql_MySql_change_user(self, user, passwd, db)
           on_mysql_error(self_mysql);
           fail;
       }
-      return nulldesc;
+      return self;
    }
 end
 
@@ -252,7 +252,7 @@ function mysql_MySql_dump_debug_info(self)
           on_mysql_error(self_mysql);
           fail;
       }
-      return nulldesc;
+      return self;
    }
 end
 
@@ -342,7 +342,7 @@ function mysql_MySql_commit(self)
           on_mysql_error(self_mysql);
           fail;
       }
-      return nulldesc;
+      return self;
    }
 end
 
@@ -353,7 +353,7 @@ function mysql_MySql_rollback(self)
           on_mysql_error(self_mysql);
           fail;
       }
-      return nulldesc;
+      return self;
    }
 end
 
@@ -371,7 +371,7 @@ function mysql_MySql_set_autocommit(self, flag)
           on_mysql_error(self_mysql);
           fail;
       }
-      return nulldesc;
+      return self;
     }
 end
 
@@ -379,7 +379,7 @@ function mysql_MySql_more_results(self)
    body {
       GetSelfMySql();
       if (mysql_more_results(self_mysql))
-          return nulldesc;
+          return self;
       else {
           on_mysql_error(self_mysql);
           fail;
@@ -394,7 +394,7 @@ function mysql_MySql_next_result(self)
           on_mysql_error(self_mysql);
           fail;
       }
-      return nulldesc;
+      return self;
     }
 end
 
@@ -466,7 +466,7 @@ function mysql_MySql_connect(self, host, user, passwd, db,
           fail;
       }
 
-      return nulldesc;
+      return self;
    }
 end
 
@@ -505,7 +505,7 @@ function mysql_MySql_ssl_set(self, key, cert, ca, capath, cipher)
           runerr(103, cipher);
 
       mysql_ssl_set(self_mysql, c_key, c_cert, c_ca, c_capath, c_cipher);
-      return nulldesc;
+      return self;
    }
 end
 
@@ -548,7 +548,7 @@ function mysql_MySql_query(self, q)
           on_mysql_error(self_mysql);
           fail;
       }
-      return nulldesc;
+      return self;
    }
 end
 
@@ -575,7 +575,7 @@ function mysql_MySql_kill(self, pid)
           on_mysql_error(self_mysql);
           fail;
       }
-      return nulldesc;
+      return self;
    }
 end
 
@@ -868,7 +868,7 @@ function mysql_MySqlRes_data_seek(self, offset)
    body {
        GetSelfMySqlRes();
        mysql_data_seek(self_mysql_res, (my_ulonglong)offset);
-       return nulldesc;
+       return self;
    }
 end
 
@@ -884,6 +884,6 @@ function mysql_MySqlRes_free(self)
        GetSelfMySqlRes();
        mysql_free_result(self_mysql_res);
        *self_mysql_res_dptr = zerodesc;
-       return nulldesc;
+       return self;
    }
 end
