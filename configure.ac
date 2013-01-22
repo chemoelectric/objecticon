@@ -1,4 +1,4 @@
-AC_INIT([Object Icon],[2.10svn],[r.parlett@gmail.com],[objecticon])
+AC_INIT([Object Icon],[2.11svn],[r.parlett@gmail.com],[objecticon])
 
 AC_DEFUN([OI_ADD_LIB],[
  AC_CHECK_LIB($1,main)
