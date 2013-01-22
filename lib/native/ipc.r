@@ -212,7 +212,7 @@ function ipc_Shm_remove(self)
 
        *self_id_dptr = minusonedesc;
 
-       return nulldesc;
+       return self;
    }
 end
 
@@ -396,7 +396,7 @@ function ipc_Sem_set_value(self, val)
        arg.val = val;
        if (semctl(self_id, 0, SETVAL, arg) == -1)
            aborted("Couldn't do semctl");
-       return nulldesc;
+       return self;
    }
 end
 
@@ -424,7 +424,7 @@ function ipc_Sem_semop(self, n)
        p_buf.sem_flg = SEM_UNDO;
        if (semop_ex(self_id, &p_buf, 1) == -1)
            aborted("semop failed");
-       return nulldesc;
+       return self;
    }
 end
 
@@ -446,7 +446,7 @@ function ipc_Sem_semop_nowait(self, n)
            /* A runtime error. */
            aborted("semop failed");
        }
-       return nulldesc;
+       return self;
    }
 end
 
@@ -456,7 +456,7 @@ function ipc_Sem_remove(self)
        semctl(self_id, -1, IPC_RMID, 0);
        remove_resource(self_id, 1);
        *self_id_dptr = minusonedesc;
-       return nulldesc;
+       return self;
    }
 end
 
@@ -587,7 +587,7 @@ function ipc_Msg_remove(self)
         remove_resource(self_id, 2);
         *self_id_dptr = minusonedesc;
 
-        return nulldesc;
+        return self;
    }
 end
 
@@ -644,7 +644,7 @@ function ipc_Msg_send_impl(self, str)
 
        shmdt(tp);
 
-       return nulldesc;
+       return self;
    }
 end
 
