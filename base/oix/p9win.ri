@@ -43,7 +43,7 @@ static void synch_state(wsp ws);
 static void note_time(char *s);
 static int readimageimpl(char *cmd, int fd, struct imgdata *imd);
 static Image *imgdata_to_Image(struct imgdata *imd);
-static void poly2(wbp w, Point *points, int npoints, int end0, int end1);
+static void fill1(wbp w, int x, int y, int width, int height);
 static void fill2(wbp w, int op, Image *color, int x, int y, int width, int height);
 static void line2(wbp w, int x1, int y1, int x2, int y2);
 static int get_thick(wcp wc);
@@ -609,21 +609,26 @@ int rebind(wbp w, wbp w2)
 
 void drawarc(wbp w, double cx, double cy, double rx, double ry, double angle1, double angle2)
 {
-    int alpha, phi;
+    int alpha, phi, x, y, width, height, thick;
     wsp ws = w->window;
     wcp wc = w->context;
+    thick = get_thick(wc);
     clip(w);
     alpha = -angle1 * 180 / Pi;
     phi = -angle2 * 180 / Pi;
+    x = cx - rx - 1 - thick;
+    y = cy -ry - 1 - thick;
+    width = 2 * rx + 2 * thick + 2;
+    height = 2 * ry + 2 * thick + 2;
     arcop(ws->pix, 
           Pt(cx, cy),
           rx, ry,
-          get_thick(wc),
+          thick,
           get_draw_img(wc), 
-          ZP,
+          Pt(cx, cy),
           alpha, phi,
           wc->drawop->i);
-    pix_to_win(ws, cx - rx - 1, cy -ry - 1, 2 * rx + 2, 2 * ry + 2);
+    pix_to_win(ws, x, y, width, height);
     unclip(w);
     flushimage(display, 1);
 }
@@ -642,19 +647,41 @@ static Point *convert_points(struct point *points0, int npoints)
 
 void drawlines(wbp w, struct point *points0, int npoints)
 {
-    int i, term;
+    int i, term, x, y, width, height, thick, closed;
     wsp ws = w->window;
     wcp wc = w->context;
     Point *points;
     if (npoints < 2)
         return;
+    closed = points0[npoints - 1].x == points0[0].x && points0[npoints - 1].y == points0[0].y;
+    thick = get_thick(wc);
+    points_extent(points0, npoints, &x, &y, &width, &height);
+    x -= thick;
+    y -= thick;
+    width += 2 * thick;
+    height += 2 * thick;
+
     points = convert_points(points0, npoints);
-    if (points[npoints - 1].x == points[0].x && points[npoints - 1].y == points[0].y)
+    if (closed)
         term = Enddisc;
     else
         term = wc->linestyle->i;
     clip(w);
-    poly2(w, points, npoints, term, term);
+    /* mask with overlap flag set since polyop draws the line joins
+     * overlapping the line segments. */
+    if (needmask(wc, 1)) {
+        Image *mask = getmask(width, height);
+        for (i = 0; i < npoints; ++i) {
+            points[i].x -= x;
+            points[i].y -= y;
+        }
+        polyop(mask, points, npoints, term, term, thick, white->i, ZP, SoverD);
+        maskimage2(w, mask, x, y, width, height);
+        freeimage(mask);
+    } else {
+        polyop(ws->pix, points, npoints, term, term, thick, get_draw_img(wc), ZP, wc->drawop->i);
+        pix_to_win(ws, x, y, width, height);
+    }
     unclip(w);
     free(points);
     flushimage(display, 1);
@@ -665,40 +692,25 @@ void drawpoint(wbp w, int x, int y)
     fillrectangle(w, x, y, 1, 1);
 }
 
+static void fill1(wbp w, int x, int y, int width, int height)
+{
+    wsp ws = w->window;
+    wcp wc = w->context;
+    gendrawop(ws->pix, 
+              MkRect(x, y, width, height),
+              get_draw_img(wc), Pt(x, y), 
+              0, ZP, wc->drawop->i);
+}
+
 static void fill2(wbp w, int op, Image *color, int x, int y, int width, int height)
 {
     wsp ws = w->window;
     wcp wc = w->context;
     gendrawop(ws->pix, 
               MkRect(x, y, width, height),
-              color,
-              ZP, 0, ZP, op);
+              color, Pt(x, y), 
+              0, ZP, op);
     pix_to_win(ws, x, y, width, height);
-}
-
-static void poly2(wbp w, Point *points, int npoints, int end0, int end1)
-{
-    wsp ws = w->window;
-    wcp wc = w->context;
-    int x1, y1, x2, y2, i, thick;
-    if (npoints == 0)
-        return;
-
-    x1 = x2 = points[0].x;
-    y1 = y2 = points[0].y;
-    for (i = 1; i < npoints; ++i) {
-        if (points[i].x < x1)
-            x1 = points[i].x;
-        if (points[i].y < y1)
-            y1 = points[i].y;
-        if (points[i].x > x2)
-            x2 = points[i].x;
-        if (points[i].y > y2)
-            y2 = points[i].y;
-    }
-    thick = get_thick(wc);
-    polyop(ws->pix, points, npoints, end0, end1, thick, get_draw_img(wc), ZP, wc->drawop->i);
-    pix_to_win(ws, x1 - thick, y1 - thick, 1 + x2 - x1 + 2 * thick, 1 + y2 - y1 + 2 * thick);
 }
 
 static void line2(wbp w, int x1, int y1, int x2, int y2)
@@ -728,14 +740,18 @@ void drawrectangle(wbp w, int x, int y, int width, int height, int thick)
         fillrectangle(w, x, y, width, height);
     else {
         clip(w);
-        gendrawop(ws->pix, MkRect(x, y , width, thick), 
-                  get_draw_img(wc), ZP, 0, ZP, wc->drawop->i);
-        gendrawop(ws->pix, MkRect(x, y + thick , thick, height - 2 * thick), 
-                  get_draw_img(wc), Pt(0, thick), 0, ZP, wc->drawop->i);
-        gendrawop(ws->pix, MkRect(x + width - thick, y + thick,  thick, height - 2 * thick), 
-                  get_draw_img(wc), Pt(width - thick, thick), 0, ZP, wc->drawop->i);
-        gendrawop(ws->pix, MkRect(x, y + height - thick, width,  thick),
-                  get_draw_img(wc), Pt(0, height - thick) , 0, ZP, wc->drawop->i);
+        fill1(w,
+              x, y,
+              width, thick);
+        fill1(w,
+              x, y +  thick,
+              thick, height - 2 * thick);
+        fill1(w,
+              x + width - thick, y + thick,
+              thick, height - 2 * thick);
+        fill1(w,
+              x, y + height - thick,
+              width, thick);
         pix_to_win(ws, x, y, width, height);
         unclip(w);
         flushimage(display, 1);
@@ -748,10 +764,12 @@ void fillpolygon(wbp w, struct point *points0, int npoints)
     wcp wc = w->context;
     int x, y, width, height, i;
     Point *points;
+    if (npoints < 3)
+        return;
     points_extent(points0, npoints, &x, &y, &width, &height);
     points = convert_points(points0, npoints);
     clip(w);
-    fillpolyop(ws->pix, points, npoints, 0, get_draw_img(wc), ZP, wc->drawop->i);
+    fillpolyop(ws->pix, points, npoints, 0, get_draw_img(wc), points[0], wc->drawop->i);
     pix_to_win(ws, x, y, width, height);
     unclip(w);
     free(points);
@@ -786,7 +804,7 @@ static void maskimage2(wbp w, Image *mask, int x, int y, int width, int height)
     gendrawop(ws->pix, 
               MkRect(x, y, width, height),
               get_draw_img(wc),
-              ZP,
+              Pt(x, y),
               mask,
               ZP, 
               wc->drawop->i);
@@ -800,7 +818,7 @@ void filltrapezoids(wbp w, struct trapezoid *traps, int ntraps)
     int x, y, width, height, i;
     trapezoids_extent(traps, ntraps, &x, &y, &width, &height);
     clip(w);
-    if (ntraps > 1 && needmask(wc, 1)) {
+    if (needmask(wc, 1)) {
         Image *mask = getmask(width, height);
         for (i = 0; i < ntraps; ++i) {
             Point p[4];
@@ -834,7 +852,7 @@ void filltriangles(wbp w, struct triangle *tris, int ntris)
     int x, y, width, height, i;
     triangles_extent(tris, ntris, &x, &y, &width, &height);
     clip(w);
-    if (ntris > 1 && needmask(wc, 1)) {
+    if (needmask(wc, 1)) {
         Image *mask = getmask(width, height);
         for (i = 0; i < ntris; ++i) {
             Point p[3];
@@ -904,13 +922,14 @@ void drawstring(wbp w, int x, int y, char *str, int slen)
 {
     wsp ws = w->window;
     wcp wc = w->context;
+    Point p = Pt(x, y - wc->font->ascent);
     clip(w);
-    stringnop(ws->pix, 
-              Pt(x, y - wc->font->ascent),
-              get_draw_img(wc), ZP, wc->font->font, str, slen, wc->drawop->i);
+    stringnop(ws->pix, p,
+              get_draw_img(wc), p,
+              wc->font->font, str, slen, wc->drawop->i);
     pix_to_win(ws, 
-               x, 
-               y - wc->font->ascent, 
+               p.x, 
+               p.y, 
                stringnwidth(wc->font->font, str, slen) + wc->font->font->width,   /* Add 1xwidth for italics */
                wc->font->height);
     unclip(w);
@@ -934,13 +953,14 @@ void drawutf8(wbp w, int x, int y, char *str, int slen, int nchars)
     wsp ws = w->window;
     wcp wc = w->context;
     Rune *r = utf8_to_runes(str, nchars);
+    Point p = Pt(x, y - wc->font->ascent);
     clip(w);
-    runestringnop(ws->pix, 
-                  Pt(x, y - wc->font->ascent),
-                  get_draw_img(wc), ZP, wc->font->font, r, nchars, wc->drawop->i);
+    runestringnop(ws->pix, p,
+                  get_draw_img(wc), p,
+                  wc->font->font, r, nchars, wc->drawop->i);
     pix_to_win(ws, 
-               x, 
-               y - wc->font->ascent, 
+               p.x, 
+               p.y, 
                runestringnwidth(wc->font->font, r, nchars) + wc->font->font->width,   /* Add 1xwidth for italics */
                wc->font->height);
     unclip(w);
@@ -1011,20 +1031,24 @@ int setwindowicon(wbp w, struct imgdata *imd)
 
 void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, double angle2)
 {
-    int alpha, phi;
+    int alpha, phi, x, y, width, height;
     wsp ws = w->window;
     wcp wc = w->context;
     clip(w);
     alpha = -angle1 * 180 / Pi;
     phi = -angle2 * 180 / Pi;
+    x = cx - rx - 1;
+    y = cy -ry - 1;
+    width = 2 * rx + 2;
+    height = 2 * ry + 2;
     fillarcop(ws->pix,
               Pt(cx, cy),
               rx, ry,
               get_draw_img(wc),
-              ZP,
+              Pt(cx, cy),
               alpha, phi,
               wc->drawop->i);
-    pix_to_win(ws, cx - rx - 1, cy -ry - 1, 2 * rx + 2, 2 * ry + 2);
+    pix_to_win(ws, x, y, width, height);
     unclip(w);
     flushimage(display, 1);
 }
