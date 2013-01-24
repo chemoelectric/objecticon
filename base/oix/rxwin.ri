@@ -1291,15 +1291,14 @@ int setdrawop(wbp w, char *val)
 }
 
 /*
- * rebind() - bind w's context to that of w2.
+ * cancouple() - can we bind w's context to that of w2.
  */
-int rebind(wbp w, wbp w2)
+int cancouple(wbp w, wbp w2)
 {
     if (w->window->display != w2->context->display) {
         LitWhy("Can't couple between different displays");
         return Failed;
     }
-    w->context = w2->context;
     return Succeeded;
 }
 
