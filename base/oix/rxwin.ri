@@ -62,6 +62,8 @@ static void close_screen_win(wsp ws);
 static struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int b, int a);
 static void fill2(wbp w, int op, XRenderColor  *color, int x, int y, int width, int height);
 static void pic2(wbp w, Picture src, int x, int y, int width, int height);
+static void pat1(wbp w, int x, int y, int width, int height);
+static void pat2(wbp w, int x, int y, int width, int height);
 static void maskpic2(wbp w, Picture mask, int x, int y, int width, int height);
 static struct SharedPicture *new_sharedpicture(wdp wd, struct imgdata *imd);
 static struct SharedPicture *link_sharedpicture(struct SharedPicture *x);
@@ -1289,15 +1291,14 @@ int setdrawop(wbp w, char *val)
 }
 
 /*
- * rebind() - bind w's context to that of w2.
+ * cancouple() - can we bind w's context to that of w2.
  */
-int rebind(wbp w, wbp w2)
+int cancouple(wbp w, wbp w2)
 {
     if (w->window->display != w2->context->display) {
         LitWhy("Can't couple between different displays");
         return Failed;
     }
-    w->context = w2->context;
     return Succeeded;
 }
 
@@ -2524,45 +2525,18 @@ void drawrectangle(wbp w, int x, int y, int width, int height, int thick)
          * height > 2 * thick
          */
         if (wc->pattern) {
-            XRenderComposite(wd->display,
-                             wc->drawop->i,
-                             get_draw_picture(wc),     /* src */
-                             None,                     /* mask */
-                             ws->ppic,                 /* dest */
-                             0,0,                      /* src x,y */
-                             0,0,                      /* mask x,y */
-                             x, y,                     /* dst x,y,w,h */
-                             width, thick);
-
-            XRenderComposite(wd->display,
-                             wc->drawop->i,
-                             get_draw_picture(wc),     /* src */
-                             None,                     /* mask */
-                             ws->ppic,                 /* dest */
-                             0,thick,                  /* src x,y */
-                             0,0,                      /* mask x,y */
-                             x, y +  thick,            /* dst x,y,w,h */
-                             thick, height - 2 * thick);
-
-            XRenderComposite(wd->display,
-                             wc->drawop->i,
-                             get_draw_picture(wc),     /* src */
-                             None,                     /* mask */
-                             ws->ppic,                 /* dest */
-                             width - thick,thick,      /* src x,y */
-                             0,0,                      /* mask x,y */
-                             x + width - thick, y + thick,   /* dst x,y,w,h */
-                             thick, height - 2 * thick);
-
-            XRenderComposite(wd->display,
-                             wc->drawop->i,
-                             get_draw_picture(wc),     /* src */
-                             None,                     /* mask */
-                             ws->ppic,                 /* dest */
-                             0,height - thick,         /* src x,y */
-                             0,0,                      /* mask x,y */
-                             x, y + height - thick,    /* dst x,y,w,h */
-                             width, thick);
+            pat1(w,
+                 x, y,
+                 width, thick);
+            pat1(w,
+                 x, y +  thick,
+                 thick, height - 2 * thick);
+            pat1(w,
+                 x + width - thick, y + thick,
+                 thick, height - 2 * thick);
+            pat1(w,
+                 x, y + height - thick,
+                 width, thick);
         } else {
             XRectangle r[4];
             r[0].x = x;
@@ -2600,7 +2574,8 @@ void fillpolygon(wbp w, struct point *points, int npoints)
     wcp wc = w->context;
     wdp wd = ws->display;
     int x, y, width, height, i;
-
+    if (npoints < 3)
+        return;
     points_extent(points, npoints, &x, &y, &width, &height);
     MemProtect(xpoints = malloc(npoints * sizeof(XPointDouble)));
     clip(w);
@@ -2649,7 +2624,7 @@ void filltrapezoids(wbp w, struct trapezoid *traps, int ntraps)
     trapezoids_extent(traps, ntraps, &x, &y, &width, &height);
     MemProtect(xtraps = malloc(ntraps * sizeof(XTrapezoid)));
     clip(w);
-    if (ntraps > 1 && needmask(wc, 1)) {
+    if (needmask(wc, 1)) {
         Picture mask;
         for (i = 0; i < ntraps; ++i)
             xtraps[i] = trapezoid(traps[i].top - y, traps[i].x1 - x, traps[i].x2 - x,
@@ -2690,7 +2665,7 @@ void filltriangles(wbp w, struct triangle *tris, int ntris)
     triangles_extent(tris, ntris, &x, &y, &width, &height);
     MemProtect(xtris = malloc(ntris * sizeof(XTrapezoid)));
     clip(w);
-    if (ntris > 1 && needmask(wc, 1)) {
+    if (needmask(wc, 1)) {
         Picture mask;
         for (i = 0; i < ntris; ++i)
             xtris[i] = triangle(tris[i].p1.x - x, tris[i].p1.y - y,
@@ -2732,7 +2707,7 @@ static void maskpic2(wbp w, Picture mask, int x, int y, int width, int height)
                      get_draw_picture(wc),          /* src */
                      mask,         /* mask */
                      ws->ppic,     /* dest */
-                     0,0,          /* src x,y */
+                     x,y,          /* src x,y */
                      0,0,          /* mask x,y */
                      x, y,         /* dst x,y */
                      width, height);
@@ -2754,6 +2729,28 @@ static void pic2(wbp w, Picture src, int x, int y, int width, int height)
                      x, y,         /* dst x,y */
                      width, height);
     pix_to_win(ws, x, y, width, height);
+}
+
+static void pat1(wbp w, int x, int y, int width, int height)
+{
+    wsp ws = w->window;
+    wcp wc = w->context;
+    wdp wd = ws->display;
+    XRenderComposite(wd->display,
+                     wc->drawop->i,
+                     wc->pattern->i,  /* src */
+                     None,         /* mask */
+                     ws->ppic,     /* dest */
+                     x,y,          /* src x,y */
+                     0,0,          /* mask x,y */
+                     x, y,         /* dst x,y */
+                     width, height);
+}
+
+static void pat2(wbp w, int x, int y, int width, int height)
+{
+    pat1(w, x, y, width, height);
+    pix_to_win(w->window, x, y, width, height);
 }
 
 static void fill2(wbp w, int op, XRenderColor *color, int x, int y, int width, int height)
@@ -2827,8 +2824,7 @@ void fillrectangle(wbp w, int x, int y, int width, int height)
      * fill the rectangle with the pattern or foreground color
      */
     if (wc->pattern)
-        pic2(w, 
-             wc->pattern->i, 
+        pat2(w, 
              x, y, width, height);
     else
         fill2(w,

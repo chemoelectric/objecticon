@@ -261,7 +261,7 @@ void freeimgdata     (struct imgdata *img);
    int  queryrootpointer(wbp w, int *x, int *y);
    int  getdisplaysize  (wbp w, int *width, int *height);
    int  raisewindow     (wbp w);
-   int  rebind          (wbp w, wbp w2);
+   int  cancouple       (wbp w, wbp w2);
    int  setbg           (wbp w, char *s);
    int  setcanvas       (wbp w, char *s);
    int  setdrawop       (wbp w, char *val);

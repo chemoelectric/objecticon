@@ -134,12 +134,13 @@ end
 
 function graphics_Window_couple_impl(self, other)
    body {
-      wbp wb2, wb_new;
+      wbp wb_new;
       GetSelfW();
       {
-          WindowStaticParam(other, tmp);
-          wb2 = tmp;
-      }
+      WindowStaticParam(other, w2);
+
+      if (cancouple(self_w, w2) == Failed) 
+          fail;
 
       /*
        * make the new binding
@@ -147,17 +148,11 @@ function graphics_Window_couple_impl(self, other)
       wb_new = alcwbinding();
 
       wb_new->window = self_w->window;
-      /*
-       * Bind an existing window to an existing context,
-       * and up the context's reference count.
-       */
-      if (rebind(wb_new, wb2) == Failed) 
-          fail;
+      wb_new->window->refcount++;
+
+      wb_new->context = w2->context;
       wb_new->context->refcount++;
-
-      /* bump up refcount to self_w->window */
-      self_w->window->refcount++;
-
+      }
       return C_integer((word)wb_new);
    }
 end

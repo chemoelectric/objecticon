@@ -601,9 +601,8 @@ int copyarea(wbp w1, int x, int y, int w, int h, wbp w2, int x2, int y2)
     return Succeeded;
 }
 
-int rebind(wbp w, wbp w2)
+int cancouple(wbp w, wbp w2)
 {
-    w->context = w2->context;
     return Succeeded;
 }
 
