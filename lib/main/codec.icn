@@ -455,7 +455,7 @@ class Decode()
             # Create an instance
             #
             cl := Class.for_name(cname) | throw("No such class " || cname)
-            res := Class.create_raw(cl)
+            res := Class.create_raw_instance_of(cl)
             note_seen(res)
             if p := Class.getq(res, "object_decode") then
                p(self)
@@ -475,7 +475,7 @@ class Decode()
                   }
                }
             }
-            return Class.complete_raw(res)
+            return Class.complete_raw_instance(res)
          }
 
          Codec.STRING_CODE :

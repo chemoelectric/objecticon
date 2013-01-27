@@ -39,7 +39,7 @@ if (!self_w)
     runerr(142, self);
 #enddef
 
-function graphics_Window_open_impl(display)
+function graphics_Window_new_impl(display)
    body {
       wbp w;
       char *s2;

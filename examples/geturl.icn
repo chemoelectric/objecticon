@@ -275,7 +275,7 @@ procedure process_one(a)
 
    if \opts["i"] then {
       /opts["head"] | stop("Can't have -head and -i options together")
-      input_stream := FileStream.open(opts["i"], FileOpt.RDONLY) | stop("Couldn't open ", opts["i"], ": ", &why)
+      input_stream := FileStream(opts["i"], FileOpt.RDONLY) | stop("Couldn't open ", opts["i"], ": ", &why)
       hr.set_input_stream(input_stream)
       if \opts["put"] then
          hr.set_method("PUT")
@@ -302,7 +302,7 @@ procedure process_one(a)
 
    if /opts["head"] then {
       tmp_file := Files.make_temp_filename("http_geturl.", ".bin") | stop("Couldn't create temp file: ", &why)
-      output_stream := BufferStream(FileStream.open(tmp_file, 
+      output_stream := BufferStream(FileStream(tmp_file, 
                                                   ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT))).
                       set_buff_size(8192) | stop("Couldn't open ", tmp_file, ": ", &why)
       hr.set_output_stream(output_stream)

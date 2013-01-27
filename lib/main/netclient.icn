@@ -110,7 +110,7 @@ class NetClient(Connectable, HasTask)
       } else
          runerr("Neither server/port nor path set")
 
-      connection := SocketStream.socket(domain)
+      connection := SocketStream(domain)
       connection.flag(FileOpt.NONBLOCK) | {
          close()
          return error("Couldn't put socket in non-blocking mode: " || &why)

@@ -38,7 +38,7 @@ import
 procedure tileimg(win, img)		
    local hidden
 
-   hidden := Window.open().set_image(img) | {
+   hidden := Window().set_image(img) | {
       ewrite("*** cannot open image ", img)
       fail
       }

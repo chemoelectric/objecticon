@@ -2,7 +2,7 @@ package io
 
 import
    util(error, check_flag, check_positive_int, save_why),
-   lang(NoCopy),
+   lang(Class, NoCopy),
    posix(ExitInfo, System),
    ipl.strings(replace)
 
@@ -688,7 +688,7 @@ abstract class DescStream(Stream, NoCopy)
    #
    # @param other - a {DescStream}
    # @example
-   # @ f := FileStream.open("/tmp/xyz", 
+   # @ f := FileStream("/tmp/xyz", 
    # @     ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
    # @ f.dup2(FileStream.stdout) | stop(&why)
    # @ f.close()
@@ -721,10 +721,12 @@ abstract class DescStream(Stream, NoCopy)
    #
    public native wstat(mode, uid, gid)
 
-   protected new(fd, mode)
+   # Helper function for initialization methods.
+   #
+   protected setup(fd, mode)
       self.fd := fd
       self.mode := mode
-      return
+      return self
    end
 end
 
@@ -734,23 +736,23 @@ end
 # 
 # @param name The file name
 # @param mode The mode; possible values are :-
-# @    "r" - {FileStream.open} with {FileOpt.RDONLY}
-# @    "w" - {FileStream.open} with {FileOpt.WRONLY}, {FileOpt.TRUNC}, {FileOpt.CREAT}
-# @    "b"|"rw"|"r+" - {FileStream.open} with {FileOpt.RDWR}
-# @    "crw"|"w+" - {FileStream.open} with {FileOpt.RDWR}, {FileOpt.TRUNC}, {FileOpt.CREAT}
-# @    "a" - {FileStream.open} with {FileOpt.WRONLY}, {FileOpt.APPEND}, {FileOpt.CREAT}
-# @    "a+" - {FileStream.open} with {FileOpt.RDWR}, {FileOpt.APPEND}, {FileOpt.CREAT}
+# @    "r" - {FileStream} with {FileOpt.RDONLY}
+# @    "w" - {FileStream} with {FileOpt.WRONLY}, {FileOpt.TRUNC}, {FileOpt.CREAT}
+# @    "b"|"rw"|"r+" - {FileStream} with {FileOpt.RDWR}
+# @    "crw"|"w+" - {FileStream} with {FileOpt.RDWR}, {FileOpt.TRUNC}, {FileOpt.CREAT}
+# @    "a" - {FileStream} with {FileOpt.WRONLY}, {FileOpt.APPEND}, {FileOpt.CREAT}
+# @    "a+" - {FileStream} with {FileOpt.RDWR}, {FileOpt.APPEND}, {FileOpt.CREAT}
 # @    "p"|"pr" - {ProgInputStream}, using shell interpreter
 # @    "pw" - {ProgOutputStream}, using shell interpreter
 #
 procedure open(name, mode)
    return BufferStream(case mode of {
-      &null | "r" : FileStream.open(name, FileOpt.RDONLY)
-      "w" : FileStream.open(name, ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT))
-      "b"|"rw"|"r+" : FileStream.open(name, FileOpt.RDWR)
-      "crw"|"w+" : FileStream.open(name, ior(FileOpt.RDWR, FileOpt.TRUNC, FileOpt.CREAT))
-      "a" : FileStream.open(name, ior(FileOpt.WRONLY, FileOpt.APPEND, FileOpt.CREAT))
-      "a+" : FileStream.open(name, ior(FileOpt.RDWR, FileOpt.APPEND, FileOpt.CREAT))
+      &null | "r" : FileStream(name, FileOpt.RDONLY)
+      "w" : FileStream(name, ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT))
+      "b"|"rw"|"r+" : FileStream(name, FileOpt.RDWR)
+      "crw"|"w+" : FileStream(name, ior(FileOpt.RDWR, FileOpt.TRUNC, FileOpt.CREAT))
+      "a" : FileStream(name, ior(FileOpt.WRONLY, FileOpt.APPEND, FileOpt.CREAT))
+      "a+" : FileStream(name, ior(FileOpt.RDWR, FileOpt.APPEND, FileOpt.CREAT))
 $ifdef _UNIX
       "p"|"pr" : ProgInputStream("/bin/sh", ["-c", name])
       "pw" : ProgOutputStream("/bin/sh", ["-c", name])
@@ -883,6 +885,10 @@ class FileStream(DescStream)
       # A {FileStream} representing standard error
       stderr
 
+   private static create_for_fd(fd, mode)
+      return Class.create_instance().setup(fd, mode)
+   end
+
    #
    # Open a new {FileStream} using the underlying system open
    # function.
@@ -894,31 +900,27 @@ class FileStream(DescStream)
    # @      this is deduced from {flags} parameter and the
    # @      type of file being opened.
    #
-   public static open(name, flags, perm, mode)
+   public new(name, flags, perm, mode)
       if \mode then
-         return FileStream(open_impl(name, flags, perm), mode)
-
+         return setup(new_impl(name, flags, perm), mode)
       #
       # Set the READ/WRITE mode flags based on the FileOpt flags.
       #
-      if iand(flags, FileOpt.WRONLY) ~= 0 then
-         mode := WRITE
+      mode := if iand(flags, FileOpt.WRONLY) ~= 0 then
+         WRITE
       else if iand(flags, FileOpt.RDWR) ~= 0 then
-         mode := READ_WRITE
+         READ_WRITE
       else
-         mode := READ
+         READ
 
-      return create_and_set_mode(open_impl(name, flags, perm), mode)
+      return adjust_mode(setup(new_impl(name, flags, perm), mode))
    end
 
+   # Adjust this FileStream's mode based on the file type returned by
+   # stat().  If it is a regular file, add SEEK capability, and
+   # TRUNCATE too for a writable file.
    #
-   # Create a new FileStream instance, and then adjust its mode based
-   # on the file type returned by stat().  If it is a regular file,
-   # add SEEK capability, and TRUNCATE too for a writable file.
-   #
-   private static create_and_set_mode(fd, mode)
-      local f
-      f := FileStream(fd, mode)
+   private static adjust_mode(f)
       if f.stat().mode_str[1] == "-" then {
          if f.can(WRITE) then
             f.mode := ior(f.mode, TRUNCATE)
@@ -930,12 +932,12 @@ class FileStream(DescStream)
       return f
    end
 
-   private static native open_impl(path, flags, perm)
+   private static native new_impl(path, flags, perm)
 
    private static init()
-      stdin := create_and_set_mode(0, READ)
-      stdout := create_and_set_mode(1, WRITE)
-      stderr := create_and_set_mode(2, WRITE)
+      stdin := adjust_mode(create_for_fd(0, READ))
+      stdout := adjust_mode(create_for_fd(1, WRITE))
+      stderr := adjust_mode(create_for_fd(2, WRITE))
    end
 
    #
@@ -944,7 +946,7 @@ class FileStream(DescStream)
    public static pipe()
       local t
       t := pipe_impl() | fail
-      return [FileStream(t[1], READ), FileStream(t[2], WRITE)]
+      return [create_for_fd(t[1], READ), create_for_fd(t[2], WRITE)]
    end
 
    private static native pipe_impl()
@@ -968,6 +970,10 @@ end
 # This class represents a stream based on a socket.
 #
 class SocketStream(DescStream)
+   private static create_for_fd(fd, mode)
+      return Class.create_instance().setup(fd, mode)
+   end
+
    #
    # Create a socket with the given domain and type.
    #
@@ -976,8 +982,8 @@ class SocketStream(DescStream)
    # @param typ the type from {SocketType}.  The default is
    # @    {SocketType.STREAM}.
    #
-   public static socket(domain, typ)
-      return SocketStream(socket_impl(domain, typ), READ_WRITE)
+   public new(domain, typ)
+      return setup(new_impl(domain, typ), READ_WRITE)
    end
 
    #
@@ -989,7 +995,7 @@ class SocketStream(DescStream)
    public static socketpair(typ)
       local t
       t := socketpair_impl(typ) | fail
-      return [SocketStream(t[1], READ_WRITE), SocketStream(t[2], READ_WRITE)]
+      return [create_for_fd(t[1], READ_WRITE), create_for_fd(t[2], READ_WRITE)]
    end
 
    public native in(n)
@@ -1017,7 +1023,7 @@ class SocketStream(DescStream)
    # Accept a new connection, returning a new {SocketStream}.
    #
    public accept()
-      return SocketStream(accept_impl(), READ_WRITE)
+      return create_for_fd(accept_impl(), READ_WRITE)
    end
 
    #
@@ -1039,7 +1045,7 @@ class SocketStream(DescStream)
 
    private static native socketpair_impl(typ)
 
-   private static native socket_impl(domain, typ)
+   private static native new_impl(domain, typ)
 end
 
 #
@@ -1235,7 +1241,7 @@ class ProgInputStream(SocketStream, HasBgProc)
    # inherits these from the parent.  If the stderr param is the string
    # "pipe", then stderr is sent to the pipe along with stdout.
    # @example
-   # @   g := FileStream.open("/tmp/data",FileOpt.RDONLY) | stop(&why)
+   # @   g := FileStream("/tmp/data",FileOpt.RDONLY) | stop(&why)
    # @   f := ProgInputStream("wc", ["-l"],,g) | stop(&why)
    # @   g.close()
    # @   while write(f.read())   # writes the number of lines in /tmp/data
@@ -1253,7 +1259,7 @@ class ProgInputStream(SocketStream, HasBgProc)
       if pid > 0 then {
          # Parent
          l[2].close()
-         return cast(self,SocketStream).new(l[1].get_fd(), READ)
+         return setup(l[1].get_fd(), READ)
       } else {
          # Child
          if \stdin then
@@ -1294,7 +1300,7 @@ class ProgOutputStream(SocketStream, HasBgProc)
    # output and standard error of the command; by default the command
    # inherits these from the parent.
    # @example
-   # @    g := FileStream.open("/tmp/result",ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
+   # @    g := FileStream("/tmp/result",ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
    # @    f := ProgOutputStream("wc", ["-l"],,g) | stop(&why)
    # @    g.close()
    # @    f.write("data")
@@ -1314,7 +1320,7 @@ class ProgOutputStream(SocketStream, HasBgProc)
       if pid > 0 then {
          # Parent
          l[1].close()
-         return cast(self,SocketStream).new(l[2].get_fd(), WRITE)
+         return setup(l[2].get_fd(), WRITE)
       } else {
          # Child
          if \stdout then

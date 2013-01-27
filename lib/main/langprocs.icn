@@ -524,12 +524,12 @@ procedure clone(o, seen)
             #
             # Create an instance
             #
-            res := Class.create_raw(classof(o))
+            res := Class.create_raw_instance_of(classof(o))
             # The members of res may reference it...
             seen[o] := res
             every i := 1 to Class.get_n_instance_fields(res) do
                Class.get(res, i) := clone(Class.get(o, i), seen)
-            Class.complete_raw(res)
+            Class.complete_raw_instance(res)
          }
          return res
       }

@@ -49,8 +49,30 @@ final abstract class Class()
       Native := 8r010000
    end
 
-   private static native create_raw(c)
-   private static native complete_raw(o)
+   # This method creates a new instance of the class from which the
+   # method is called.  The `new()` method is not invoked.  The new
+   # object has all its instance fields set to &null, and is in an
+   # initializing state, meaning that `new()` may be invoked upon it,
+   # and `const` fields are assignable.  After the instance is
+   # initialized by the caller, `complete_raw_instance` must be called
+   # to place it into the initialized state.
+   #
+   public static native create_raw_instance()
+
+   # This method creates a new instance of the class from which the
+   # method is called.  The `new()` method is not invoked.  The new
+   # object has all its instance fields set to &null, and is in an
+   # initialized state, meaning that `new()` cannot be invoked upon
+   # it, and `const` fields are not assignable.
+   #
+   public static native create_instance()
+
+   private static native create_raw_instance_of(c)
+
+   # This completes the initialization of a raw instance by setting
+   # its state to initialized.
+   #
+   public static native complete_raw_instance(o)
 
    # Return the name of the class
    #
@@ -249,29 +271,6 @@ final abstract class Class()
    # @fail if the library cannot be found.
    #
    public static native load_library(lib)   
-
-   # This method constructs a new instance of a class using the given
-   # method `m` to initialize the object.  The object is an instance
-   # of the defining class of `m`, which must be a private static
-   # method.  The new uninitialized object is passed to the method
-   # along with the parameters given in `a`.  If `m` succeeds, then
-   # the new initialized object is returned.  If `m` fails, then this
-   # call fails and the new object is discarded.
-   #
-   # @param m the private static method to use to initialize the
-   # @        instance.
-   # @param a[] the args to pass
-   #
-   public static construct_with(m, a[])
-      local i, c
-      (iand(get_field_flags(c := Proc.get_defining_class(m), 
-                            Proc.get_field_index(m)), Static + Private) = Static + Private) | 
-         runerr("private static method expected", m)
-      i := create_raw(c)
-      push(a, i)
-      m!a | fail
-      return complete_raw(i)
-   end
 
    # Lookup a class by name
    # 

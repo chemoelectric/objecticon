@@ -1577,7 +1577,7 @@ if (self_fd < 0)
     runerr(219, self);
 #enddef
 
-function io_FileStream_open_impl(path, flags, mode)
+function io_FileStream_new_impl(path, flags, mode)
    if !cnv:C_string(path) then
       runerr(103, path)
    if !cnv:C_integer(flags) then
@@ -1820,7 +1820,7 @@ function io_SocketStream_in(self, i)
    }
 end
 
-function io_SocketStream_socket_impl(domain, typ)
+function io_SocketStream_new_impl(domain, typ)
    if !def:C_integer(domain, PF_INET) then
       runerr(101, domain)
 

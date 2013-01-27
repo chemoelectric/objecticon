@@ -9,7 +9,7 @@ static struct frame *push_frame_for_proc(struct b_proc *bp, int argc, dptr args,
 static void ensure_class_initialized(void);
 
 static void simple_access(void);
-static void create_raw_object(void);
+static void create_raw_instance(void);
 static void handle_access_failure(void);
 static void skip_args(int argc, dptr args);
 static void set_class_state(void);
@@ -1190,7 +1190,7 @@ function lang_Class_getq(obj, field)
   }
 end
 
-static void create_raw_object()
+static void create_raw_instance()
 {
     dptr lhs, c;
     tended struct b_object *obj;
@@ -1203,12 +1203,12 @@ static void create_raw_object()
     BlkLoc(*lhs) = (union block *)obj;
 }
 
-function lang_Class_create_raw(c)
+function lang_Class_create_raw_instance_of(c)
    if !is:class(c) then
        runerr(603, c)
     body {
       struct p_frame *pf;
-      MemProtect(pf = alc_p_frame(&Blang_Class_create_raw_impl, 0));
+      MemProtect(pf = alc_p_frame(&Blang_Class_create_raw_instance_of_impl, 0));
       push_frame((struct frame *)pf);
       pf->tmp[0] = c;
       tail_invoke_frame((struct frame *)pf);
@@ -1216,12 +1216,40 @@ function lang_Class_create_raw(c)
     }
 end
 
-function lang_Class_complete_raw(o)
+function lang_Class_create_raw_instance()
+    body {
+       struct p_proc *caller_proc; 
+       tended struct descrip result;
+       caller_proc = get_current_user_proc();
+       if (!caller_proc->field)
+           runerr(627);
+       MemProtect(BlkLoc(result) = (union block*)alcobject(caller_proc->field->defining_class));
+       result.dword = D_Object;
+       ObjectBlk(result).init_state = Initializing;
+       return result;
+    }
+end
+
+function lang_Class_complete_raw_instance(o)
    if !is:object(o) then
        runerr(602, o)
     body {
        ObjectBlk(o).init_state = Initialized;
        return o;
+    }
+end
+
+function lang_Class_create_instance()
+    body {
+       struct p_proc *caller_proc; 
+       tended struct descrip result;
+       caller_proc = get_current_user_proc();
+       if (!caller_proc->field)
+           runerr(627);
+       MemProtect(BlkLoc(result) = (union block*)alcobject(caller_proc->field->defining_class));
+       result.dword = D_Object;
+       ObjectBlk(result).init_state = Initialized;
+       return result;
     }
 end
 
