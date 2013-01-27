@@ -250,6 +250,29 @@ final abstract class Class()
    #
    public static native load_library(lib)   
 
+   # This method constructs a new instance of a class using the given
+   # method `m` to initialize the object.  The object is an instance
+   # of the defining class of `m`, which must be a private static
+   # method.  The new uninitialized object is passed to the method
+   # along with the parameters given in `a`.  If `m` succeeds, then
+   # the new initialized object is returned.  If `m` fails, then this
+   # call fails and the new object is discarded.
+   #
+   # @param m the private static method to use to initialize the
+   # @        instance.
+   # @param a[] the args to pass
+   #
+   public static construct_with(m, a[])
+      local i, c
+      (iand(get_field_flags(c := Proc.get_defining_class(m), 
+                            Proc.get_field_index(m)), Static + Private) = Static + Private) | 
+         runerr("private static method expected", m)
+      i := create_raw(c)
+      push(a, i)
+      m!a | fail
+      return complete_raw(i)
+   end
+
    # Lookup a class by name
    # 
    # @param s a class name

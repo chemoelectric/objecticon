@@ -49,8 +49,17 @@ final abstract class Proc()
 
    private static native get_location_impl(p, flag)
 
+   # Return the class in which this method is defined; fails if this is not a method.
+   #
    public static native get_defining_class(p)
+
+   # Return the field name of the method; fails if this is not a method.
+   #
    public static native get_field_name(p)
+
+   # Return the field index of the method; fails if this is not a method.
+   #
+   public static native get_field_index(p)
 
    #
    # Return the kind of this procedure, which is one of the constants :-
