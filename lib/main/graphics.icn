@@ -124,15 +124,6 @@ final class Pixels()
          suspend get_rgba(x_range(), y)
    end
 
-   # Return a new instance based on the given image string, which can
-   # be raw image data, or a filename.
-   #
-   public static open(s)
-      return create_for_idp(open_impl(s))
-   end
-
-   private static native open_impl(s)
-
    # Copy a single pixel from this instance to another.
    #
    public native copy_pixel(x1, y1, other, x2, y2)
@@ -207,15 +198,24 @@ final class Pixels()
       return i
    end
 
-   # Create a blank instance with the given format and dimensions.
-   # The underlying data is allocated and set to zero.
+   private static native open_impl(s)
+   private static native blank_impl(width, height, format)
+
+   # The constructor for Pixels takes two formats.  With one parameter
+   # a new instance ir created based on the given image string, which
+   # can be raw image data, or a filename.
    #
-   public new(width, height, format)
-      idp := new_impl(width, height, format)
+   # With two parameters, a blank instance is created of the given
+   # width and height; an optional third parameter provides the
+   # format.  The underlying data is allocated and set to zero.
+   #
+   public new(a[])
+      (idp := if *a = 1 then
+         open_impl(a[1])
+      else
+         blank_impl!a) | fail
       return
    end
-
-   private static native new_impl(width, height, format)
 end
 
 final class Window(NoCopy)
@@ -404,7 +404,7 @@ final class Window(NoCopy)
          set_size(v.get_width(), v.get_height())
          draw_image(,, v)
       } else use {
-         v := Pixels.open(v),
+         v := Pixels(v),
          {
             set_size(v.get_width(), v.get_height())
             draw_image(,, v)
@@ -427,7 +427,7 @@ final class Window(NoCopy)
       return if is(v, Pixels) then
          set_icon_impl(v)
       else use {
-         v := Pixels.open(v),
+         v := Pixels(v),
          set_icon_impl(v)
       }
    end
@@ -529,7 +529,7 @@ final class Window(NoCopy)
       return if /v | is(v, Pixels) then
          set_pattern_impl(v)
       else use {
-         v := Pixels.open(v),
+         v := Pixels(v),
          set_pattern_impl(v)
       }
    end
@@ -659,7 +659,7 @@ final class Window(NoCopy)
       return if is(v, Pixels) then
          draw_image_impl(x, y, v)
       else use {
-         v := Pixels.open(v),
+         v := Pixels(v),
          draw_image_impl(x, y, v)
       }
    end
