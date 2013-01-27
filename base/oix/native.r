@@ -3720,6 +3720,18 @@ function lang_Proc_get_field_name(c)
      }
 end
 
+function lang_Proc_get_field_index(c)
+   body {
+        struct b_proc *proc0;
+        if (!(proc0 = get_proc_for(&c)))
+            runerr(0);
+        if (proc0->field)
+            return C_integer 1 + proc0->field - *proc0->field->defining_class->fields;
+        else
+            fail;
+     }
+end
+
 function lang_Internal_compare(x, y)
    body {
       return C_integer anycmp(&x, &y);
