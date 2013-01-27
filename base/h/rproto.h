@@ -205,8 +205,10 @@ void freeimgdata     (struct imgdata *img);
     * portable graphics routines in rwindow.r and rwinrsc.r
     */
 
-   wbp  alcwbinding    (void);
-   wbp  findwbp        (wsp ws);
+   wbp  alcwbinding     (void);
+   wbp  findwbp         (wsp ws);
+   wsp  linkwindow      (wsp ws);
+   wcp  linkcontext     (wcp wc);
    void drawcurve       (wbp w, struct point *p, int n);
    int  parsefilter     (wbp w, char *s, struct filter *res);
    int  parsefont       (char *s, char *fam, int *sty, int *sz);
@@ -292,6 +294,17 @@ void freeimgdata     (struct imgdata *img);
    int  writeimagefileimpl(char *filename, struct imgdata *imd);
    int  readimagedataimpl(dptr data, struct imgdata *imd);
    int  settransientfor(wbp w, wbp other);
+
+#if XWindows
+   struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int b, int a);
+   struct SharedColor *link_sharedcolor(struct SharedColor *x);
+   void unlink_sharedcolor(wdp wd, struct SharedColor *x);
+   struct SharedPicture *new_sharedpicture(wdp wd, struct imgdata *imd);
+   struct SharedPicture *link_sharedpicture(struct SharedPicture *x);
+   void unlink_sharedpicture(wdp wd, struct SharedPicture *x);
+   wfp loadfont(wdp wd, char *s);
+   Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd);
+#endif
 
 #endif                                  /* Graphics */
 

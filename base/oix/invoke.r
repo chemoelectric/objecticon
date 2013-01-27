@@ -1221,7 +1221,7 @@ function lang_Class_complete_raw(o)
        runerr(602, o)
     body {
        ObjectBlk(o).init_state = Initialized;
-       fail;
+       return o;
     }
 end
 

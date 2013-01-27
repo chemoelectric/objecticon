@@ -90,8 +90,7 @@ function graphics_Window_clone_impl(self)
        wbp w2;
        GetSelfW();
        w2 = alcwbinding();
-       w2->window = self_w->window;
-       w2->window->refcount++;
+       w2->window = linkwindow(self_w->window);
        w2->context = clonecontext(self_w->context);
        return C_integer((word)w2);
    }
@@ -146,12 +145,8 @@ function graphics_Window_couple_impl(self, other)
        * make the new binding
        */
       wb_new = alcwbinding();
-
-      wb_new->window = self_w->window;
-      wb_new->window->refcount++;
-
-      wb_new->context = w2->context;
-      wb_new->context->refcount++;
+      wb_new->window = linkwindow(self_w->window);
+      wb_new->context = linkcontext(w2->context);
       }
       return C_integer((word)wb_new);
    }
