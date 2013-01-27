@@ -1839,7 +1839,7 @@ function graphics_Window_palette_key(s1, s2)
    }
 end
 
-function graphics_Pixels_blank_impl(width, height, format)
+function graphics_Pixels_new_impl(width, height, format)
    if !cnv:C_integer(width) then
       runerr(101, width)
    if !cnv:C_integer(height) then
