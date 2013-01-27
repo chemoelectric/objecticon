@@ -77,7 +77,7 @@ procedure makepanel(n, m, cellsize, fg, bg, pg)
    width := (n * cellsize + 1)
    height := (m * cellsize + 1)
 
-   window := Window.open().set_size(width, height).
+   window := Window().set_size(width, height).
       set_fg(fg).set_bg(bg)  | fail
 
    panel := Panel(window, n, m, cellsize, fg, bg, pg)

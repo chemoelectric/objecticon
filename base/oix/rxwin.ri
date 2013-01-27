@@ -48,7 +48,6 @@ static char *convertspec(wdp wd, char *s);
 int xft_stringwidth(wbp w, char *s, int n);
 static wfp newfont(wdp wd, char *s);
 static wdp alcdisplay (char *s);
-static wfp loadfont(wdp wd, char *s);
 static void resizepixmap(wbp w);
 static void clip(wbp w);
 static void unclip(wbp w);
@@ -59,18 +58,13 @@ static void get_atom_descriptor(wsp ws, Atom a, dptr dest);
 static void synch_state(wsp ws);
 static void synch_net_wm_state(wsp ws, int desired_state);
 static void close_screen_win(wsp ws);
-static struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int b, int a);
 static void fill2(wbp w, int op, XRenderColor  *color, int x, int y, int width, int height);
 static void pic2(wbp w, Picture src, int x, int y, int width, int height);
 static void pat1(wbp w, int x, int y, int width, int height);
 static void pat2(wbp w, int x, int y, int width, int height);
 static void maskpic2(wbp w, Picture mask, int x, int y, int width, int height);
-static struct SharedPicture *new_sharedpicture(wdp wd, struct imgdata *imd);
-static struct SharedPicture *link_sharedpicture(struct SharedPicture *x);
-static void unlink_sharedpicture(wdp wd, struct SharedPicture *x);
 static Picture get_draw_picture(wcp wc);
 static void pix_to_win(wsp ws, int x, int y, int w, int h);
-static Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd);
 static Picture getmask(wdp wd, int width, int height);
 static XPointDouble doublept(double x, double y);
 static XTriangle triangle(double x1, double y1, double x2, double y2, double x3, double y3);
@@ -286,7 +280,7 @@ static void dump_ximage(XImage *xi)
 
 #define ATOM(d, x) ((d)->atoms[ATOM_##x])
 
-static struct SharedPicture *new_sharedpicture(wdp wd, struct imgdata *imd)
+struct SharedPicture *new_sharedpicture(wdp wd, struct imgdata *imd)
 {
     struct SharedPicture *res;
     XRenderPictureAttributes pa;
@@ -299,13 +293,13 @@ static struct SharedPicture *new_sharedpicture(wdp wd, struct imgdata *imd)
     return res;
 }
 
-static struct SharedPicture *link_sharedpicture(struct SharedPicture *x)
+struct SharedPicture *link_sharedpicture(struct SharedPicture *x)
 {
     ++x->refcount;
     return x;
 }
 
-static void unlink_sharedpicture(wdp wd, struct SharedPicture *x)
+void unlink_sharedpicture(wdp wd, struct SharedPicture *x)
 {
     --x->refcount;
     if (x->refcount == 0) {
@@ -317,7 +311,7 @@ static void unlink_sharedpicture(wdp wd, struct SharedPicture *x)
     }
 }
 
-static struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int b, int a)
+struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int b, int a)
 {
     struct SharedColor *res;
     GAlloc(res, SharedColor);
@@ -330,13 +324,13 @@ static struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int
     return res;
 }
 
-static struct SharedColor *link_sharedcolor(struct SharedColor *x)
+struct SharedColor *link_sharedcolor(struct SharedColor *x)
 {
     ++x->refcount;
     return x;
 }
 
-static void unlink_sharedcolor(wdp wd, struct SharedColor *x)
+void unlink_sharedcolor(wdp wd, struct SharedColor *x)
 {
     --x->refcount;
     if (x->refcount == 0) {
@@ -2792,7 +2786,7 @@ static Pixmap imgdata_to_Pixmap1(wdp wd, struct imgdata *imd)
     return pix;
 }
 
-static Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd)
+Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd)
 {
     struct imgdata tmp;
     Pixmap pix;
@@ -3277,7 +3271,7 @@ static char *convertspec(wdp wd, char *s)
  * load a font and return a font structure.
  */
 
-static wfp loadfont(wdp wd, char *s)
+wfp loadfont(wdp wd, char *s)
 {
     wfp rv;
 

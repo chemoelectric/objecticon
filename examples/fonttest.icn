@@ -29,7 +29,7 @@ class FontTestDialog(Dialog)
       local t
       self.setup()
       # Work out what the underlying font system is.
-      t := Window.open()
+      t := Window()
       t.get_font() ? (fsys := tab(upto(':')))
       t.close()
       command_field.set_contents(case fsys of {

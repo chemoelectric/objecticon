@@ -54,5 +54,4 @@ struct SharedPicture {
    int refcount;
 };
 
-
 #endif                                  /* XWindows */

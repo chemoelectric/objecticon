@@ -583,7 +583,7 @@ class ImagePaint(Paint)
       zoom_w <:= 1
       zoom_h <:= 1
 
-      zoom_win := Window.open().set_size(zoom_w, zoom_h) | runerr("Couldn't open temp window")
+      zoom_win := Window().set_size(zoom_w, zoom_h) | runerr("Couldn't open temp window")
       Zoom(win, zoom_win, 0, 0, img_w, img_h, 0, 0, zoom_w, zoom_h)
 
       # Now swap the zoomed window into win.

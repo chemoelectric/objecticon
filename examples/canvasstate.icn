@@ -24,7 +24,7 @@ class Untitled(Dialog)
       t := Dispatcher.new_task{tick()}
       t.start()
       set_pos(200,200)
-      other := Window.open().
+      other := Window().
          set_pos(500,200).
          set_resize(&yes).
          set_image(FLINTSTONES).

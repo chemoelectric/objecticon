@@ -1625,7 +1625,7 @@ function io_FileStream_create_impl(path, flags, mode)
    }
 end
 #else
-function io_FileStream_open_impl(path, flags, mode)
+function io_FileStream_new_impl(path, flags, mode)
    if !cnv:C_string(path) then
       runerr(103, path)
    if !cnv:C_integer(flags) then
@@ -1892,7 +1892,7 @@ function io_SocketStream_in(self, i)
    }
 end
 
-function io_SocketStream_socket_impl(domain, typ)
+function io_SocketStream_new_impl(domain, typ)
    if !def:C_integer(domain, PF_INET) then
       runerr(101, domain)
 
@@ -4170,6 +4170,18 @@ function lang_Proc_get_field_name(c)
             runerr(0);
         if (proc0->field)
             return *proc0->field->defining_class->program->Fnames[proc0->field->fnum];
+        else
+            fail;
+     }
+end
+
+function lang_Proc_get_field_index(c)
+   body {
+        struct b_proc *proc0;
+        if (!(proc0 = get_proc_for(&c)))
+            runerr(0);
+        if (proc0->field)
+            return C_integer 1 + proc0->field - *proc0->field->defining_class->fields;
         else
             fail;
      }

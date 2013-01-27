@@ -45,7 +45,7 @@ procedure test3()
    Files.string_to_file("testfile", repl(&ucase,20)) | stop(&why)
    st1 := Files.stat("testfile")
    yes_no{"1.Stat size", st1.size = 520}
-   f := FileStream.open("testfile", FileOpt.RDWR)
+   f := FileStream("testfile", FileOpt.RDWR)
    st1 := f.stat()
 $ifdef _PLAN9
    f.writes(left(repl(&ucase,20), 1000, "\0"))

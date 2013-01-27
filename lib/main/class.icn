@@ -49,8 +49,30 @@ final abstract class Class()
       Native := 8r010000
    end
 
-   private static native create_raw(c)
-   private static native complete_raw(o)
+   # This method creates a new instance of the class from which the
+   # method is called.  The `new()` method is not invoked.  The new
+   # object has all its instance fields set to &null, and is in an
+   # initializing state, meaning that `new()` may be invoked upon it,
+   # and `const` fields are assignable.  After the instance is
+   # initialized by the caller, `complete_raw_instance` must be called
+   # to place it into the initialized state.
+   #
+   public static native create_raw_instance()
+
+   # This method creates a new instance of the class from which the
+   # method is called.  The `new()` method is not invoked.  The new
+   # object has all its instance fields set to &null, and is in an
+   # initialized state, meaning that `new()` cannot be invoked upon
+   # it, and `const` fields are not assignable.
+   #
+   public static native create_instance()
+
+   private static native create_raw_instance_of(c)
+
+   # This completes the initialization of a raw instance by setting
+   # its state to initialized.
+   #
+   public static native complete_raw_instance(o)
 
    # Return the name of the class
    #

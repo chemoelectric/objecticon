@@ -163,13 +163,13 @@ static word lang_Class_ensure_initialized_impl_code[] = {
    0,
 };
 #passthru CustomProc(lang_Class_ensure_initialized_impl,lang_Class_ensure_initialized_impl_code,0,0,0,0,1,0,0,"lang_Class_ensure_initialized_impl")
-static word lang_Class_create_raw_impl_code[] = {
+static word lang_Class_create_raw_instance_of_impl_code[] = {
    Op_Custom,
    (word)ensure_class_initialized,
    Op_Tmp,
    0,
    Op_Custom,
-   (word)create_raw_object,
+   (word)create_raw_instance,
    Op_Tmp,
    1,
    Op_Tmp,
@@ -178,4 +178,4 @@ static word lang_Class_create_raw_impl_code[] = {
    Op_Tmp,
    1,
 };
-#passthru CustomProc(lang_Class_create_raw_impl,lang_Class_create_raw_impl_code,0,0,0,0,2,0,0,"lang_Class_create_raw_impl")
+#passthru CustomProc(lang_Class_create_raw_instance_of_impl,lang_Class_create_raw_instance_of_impl_code,0,0,0,0,2,0,0,"lang_Class_create_raw_instance_of_impl")

@@ -12,7 +12,7 @@ class ImageViewTest(Dialog)
    end
 
    public set_file(f)
-      self.img := Window.open().set_image(f) | stop("Couldn't load image:", &why)
+      self.img := Window().set_image(f) | stop("Couldn't load image:", &why)
       (\iv).set_image(img)
    end
 

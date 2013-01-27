@@ -60,17 +60,17 @@ procedure test_modes()
    local f
 
    write("Writable")
-   f := FileStream.open("test", ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
+   f := FileStream("test", ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
    do_mode(f)
    f.close()
 
    write("Read/write")
-   f := FileStream.open("test", FileOpt.RDWR) | stop(&why)
+   f := FileStream("test", FileOpt.RDWR) | stop(&why)
    do_mode(f)
    f.close()
 
    write("Read only")
-   f := FileStream.open("test", FileOpt.RDONLY) | stop(&why)
+   f := FileStream("test", FileOpt.RDONLY) | stop(&why)
    do_mode(f)
    f.close()
 
@@ -122,7 +122,7 @@ $endif
 
 $ifndef _PLAN9
    write("Socket")
-   f := SocketStream.socket() | stop(&why)
+   f := SocketStream() | stop(&why)
    do_mode(f)
    f.close()
 $endif
@@ -221,18 +221,18 @@ end
 
 procedure main()
    test_modes()
-   check_file(FileStream.open("test", ior(FileOpt.RDWR, FileOpt.TRUNC, FileOpt.CREAT)),
+   check_file(FileStream("test", ior(FileOpt.RDWR, FileOpt.TRUNC, FileOpt.CREAT)),
               repl(&ucase, 100))
-   check_file(BufferStream(FileStream.open("test", ior(FileOpt.RDWR, 
+   check_file(BufferStream(FileStream("test", ior(FileOpt.RDWR, 
                                                        FileOpt.TRUNC, 
                                                        FileOpt.CREAT))),
               repl(&ucase, 100))
-   check_file(BufferStream(FileStream.open("test", ior(FileOpt.RDWR, 
+   check_file(BufferStream(FileStream("test", ior(FileOpt.RDWR, 
                                                        FileOpt.TRUNC, 
                                                        FileOpt.CREAT)),
                                                        "buff_size=5"),
               repl(&ucase, 100))
-   check_file(BufferStream(BufferStream(FileStream.open("test", ior(FileOpt.RDWR, 
+   check_file(BufferStream(BufferStream(FileStream("test", ior(FileOpt.RDWR, 
                                                                     FileOpt.TRUNC, 
                                                                     FileOpt.CREAT))
                                         ),

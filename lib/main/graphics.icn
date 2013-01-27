@@ -1,7 +1,7 @@
 package graphics
 
 import 
-   lang(NoCopy),
+   lang(Class, NoCopy),
    util(use, error)
 
 # This object contains pixel data either read from a file, extracted
@@ -251,11 +251,19 @@ final class Window(NoCopy)
                         "waves", Pixels.blank(8, 8, Pixels.PALETTE1).set_data("\x03\x84H0\x03\x84H0\x00"))
    end
 
+   private static create_for_wbp(wbp)
+      local i
+      i := Class.create_instance()
+      i.wbp := wbp
+      return i
+   end
+
    #
    # Open a new window.
    #
-   public static open(display)
-      return Window(open_impl(display))
+   public new(display)
+      self.wbp := new_impl(display)
+      return
    end
 
    #
@@ -264,7 +272,7 @@ final class Window(NoCopy)
    # are copied from {self}.
    #
    public clone()
-      return Window(clone_impl())
+      return create_for_wbp(clone_impl())
    end
 
    #
@@ -272,10 +280,10 @@ final class Window(NoCopy)
    # the graphics context of {other}.
    #
    public couple(other)
-      return Window(couple_impl(other))
+      return create_for_wbp(couple_impl(other))
    end
 
-   private static native open_impl(display)
+   private static native new_impl(display)
    private native clone_impl(a[])
    private native couple_impl(other)
 
@@ -864,18 +872,13 @@ $endif
    #
    public static open_image(img)
       local w
-      w := Window.open() | fail
+      w := Window() | fail
       w.set_draw_op("source")
       w.set_image(img) | {
          w.close()
          fail
       }
       return w
-   end
-
-   private new(wbp)
-      self.wbp := wbp
-      return
    end
 end
 

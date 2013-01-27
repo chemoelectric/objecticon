@@ -109,7 +109,7 @@ procedure ReadRaw(s)
       height := integer(tab(0)) | return error("invalid raw image header")
       }
 
-   temp := Window.open().set_size(width, height)
+   temp := Window().set_size(width, height)
 
    palette := table()
 

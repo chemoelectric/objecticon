@@ -1809,6 +1809,18 @@ void freewbinding(wbp w)
     free(w);
 }
 
+wsp linkwindow(wsp ws)
+{
+    ws->refcount++;
+    return ws;
+}
+
+wcp linkcontext(wcp wc)
+{
+    wc->refcount++;
+    return wc;
+}
+
 #endif					/* Graphics */
 
 

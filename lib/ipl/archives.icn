@@ -26,7 +26,7 @@ import
 #
 procedure iszip(fname)		
    local f, s
-   f := FileStream.open(fname, FileOpt.RDONLY) | fail
+   f := FileStream(fname, FileOpt.RDONLY) | fail
    s := f.reads(4)
    f.close()
    return s === "PK\03\04"
