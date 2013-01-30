@@ -44,7 +44,6 @@ static void handle_crossing(wsp ws, XCrossingEvent *event);
 static void wmap(wbp w);
 static void synch_cursor(wsp ws);
 static int convert_KeySym_to_code_point(KeySym k);
-static char *convertspec(wdp wd, char *s);
 int xft_stringwidth(wbp w, char *s, int n);
 static wfp newfont(wdp wd, char *s);
 static wdp alcdisplay (char *s);
@@ -74,9 +73,6 @@ static int make_circle(double cx, double cy, double radius, int max_ntraps, XTra
 static int make_ellipse(double cx, double cy, double rx, double ry, int max_ntraps, XTrapezoid traps[]);
 static void drawlineinfos(wbp w, struct lineinfo *lis, int nlis, int closed);
 static void getlineinfo(wcp wc, XPointDouble *p0, XPointDouble *q0, struct lineinfo *res);
-
-static struct imgdataformat imgdataformat_X11ARGB32;
-static struct imgdataformat imgdataformat_X11BGRA32;
 
 static stringint drawops[] = {
    { 0, 12},
@@ -285,6 +281,7 @@ struct SharedPicture *new_sharedpicture(wdp wd, struct imgdata *imd)
     struct SharedPicture *res;
     XRenderPictureAttributes pa;
     GAlloc(res, SharedPicture);
+    res->wd = wd;
     res->pix = imgdata_to_Pixmap(wd, imd);
     pa.repeat = 1;
     res->i = XRenderCreatePicture(wd->display, res->pix, wd->pixfmt, CPRepeat, &pa);
@@ -299,14 +296,14 @@ struct SharedPicture *link_sharedpicture(struct SharedPicture *x)
     return x;
 }
 
-void unlink_sharedpicture(wdp wd, struct SharedPicture *x)
+void unlink_sharedpicture(struct SharedPicture *x)
 {
     --x->refcount;
     if (x->refcount == 0) {
         if (x->i)
-            XRenderFreePicture(wd->display, x->i);
+            XRenderFreePicture(x->wd->display, x->i);
         if (x->pix)
-            XFreePixmap(wd->display, x->pix);
+            XFreePixmap(x->wd->display, x->pix);
         free(x);
     }
 }
@@ -315,6 +312,7 @@ struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int b, int
 {
     struct SharedColor *res;
     GAlloc(res, SharedColor);
+    res->wd = wd;
     res->color.red = Mul16(r, a);
     res->color.green = Mul16(g, a);
     res->color.blue = Mul16(b, a);
@@ -330,11 +328,11 @@ struct SharedColor *link_sharedcolor(struct SharedColor *x)
     return x;
 }
 
-void unlink_sharedcolor(wdp wd, struct SharedColor *x)
+void unlink_sharedcolor(struct SharedColor *x)
 {
     --x->refcount;
     if (x->refcount == 0) {
-        XRenderFreePicture(wd->display, x->brush);
+        XRenderFreePicture(x->wd->display, x->brush);
         free(x->name);
         free(x);
     }
@@ -758,7 +756,7 @@ int setpattern(wbp w, struct imgdata *imd)
     wcp wc = w->context;
     wdp wd = w->window->display;
     if (wc->pattern)
-        unlink_sharedpicture(wd, wc->pattern);
+        unlink_sharedpicture(wc->pattern);
     if (imd)
         wc->pattern = new_sharedpicture(wd, imd);
     else
@@ -1458,7 +1456,7 @@ int setfg(wbp w, char *s)
     if (!parsecolor(s, &r, &g, &b, &a))
         return Failed;
     if (wc->fg)
-        unlink_sharedcolor(wc->display, wc->fg);
+        unlink_sharedcolor(wc->fg);
     wc->fg = new_sharedcolor(wc->display, s, r, g, b, a);
     return Succeeded;
 }
@@ -1473,7 +1471,7 @@ int setbg(wbp w, char *s)
     if (!parsecolor(s, &r, &g, &b, &a))
         return Failed;
     if (wc->bg)
-        unlink_sharedcolor(wc->display, wc->bg);
+        unlink_sharedcolor(wc->bg);
     wc->bg = new_sharedcolor(wc->display, s, r, g, b, a);
     return Succeeded;
 }
@@ -3164,8 +3162,8 @@ static wdp alcdisplay(char *s)
     wd->transparent = new_sharedcolor(wd, "transparent", 0, 0, 0, 0);
     wd->defaultfont = loadfont(wd, getdefaultfont());
     if (wd->defaultfont == NULL) {
-        unlink_sharedcolor(wd, wd->white);
-        unlink_sharedcolor(wd, wd->black);
+        unlink_sharedcolor(wd->white);
+        unlink_sharedcolor(wd->black);
         XCloseDisplay(wd->display);
         free(wd);
         LitWhy("Couldn't load default font");
@@ -3184,7 +3182,7 @@ static wdp alcdisplay(char *s)
  * To avoid ambiguity, a spec can start with "fc:" to indicate it's in fontconfig
  * format; otherwise parsefont is called to decide the format.
  */
-static char *convertspec(wdp wd, char *s)
+char *tofcpatternstr(char *s)
 {
     static char res[256];
     int flags, size;
@@ -3278,7 +3276,7 @@ wfp loadfont(wdp wd, char *s)
     /*
      * Convert to a system font name (without the fc: or x11: prefix)
      */
-    s = convertspec(wd, s);
+    s = tofcpatternstr(s);
 
     /*
      * see if the font is already loaded on this display
@@ -3410,11 +3408,11 @@ void freecontext(wcp wc)
     wc->refcount--;
     if(wc->refcount == 0) {
         if (wc->fg)
-            unlink_sharedcolor(wc->display, wc->fg);
+            unlink_sharedcolor(wc->fg);
         if (wc->bg)
-            unlink_sharedcolor(wc->display, wc->bg);
+            unlink_sharedcolor(wc->bg);
         if (wc->pattern)
-            unlink_sharedpicture(wc->display, wc->pattern);
+            unlink_sharedpicture(wc->pattern);
         GUnlink(wc, wcntxts);
         free(wc);
     }
@@ -3504,8 +3502,8 @@ static void get_X11BGRA32(struct imgdata *imd, int x, int y, int *r, int *g, int
     }
 }
 
-static struct imgdataformat imgdataformat_X11ARGB32 =   {set_X11ARGB32,get_X11ARGB32,0,0,getlength_32,8,24,0,"X11ARGB32"};
-static struct imgdataformat imgdataformat_X11BGRA32 =   {set_X11BGRA32,get_X11BGRA32,0,0,getlength_32,8,24,0,"X11BGRA32"};
+struct imgdataformat imgdataformat_X11ARGB32 =   {set_X11ARGB32,get_X11ARGB32,0,0,getlength_32,8,24,0,"X11ARGB32"};
+struct imgdataformat imgdataformat_X11BGRA32 =   {set_X11BGRA32,get_X11BGRA32,0,0,getlength_32,8,24,0,"X11BGRA32"};
 
 struct imgdataformat *platform_parseimgdataformat(char *s)
 {
