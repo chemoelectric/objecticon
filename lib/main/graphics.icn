@@ -124,24 +124,6 @@ final class Pixels()
          suspend get_rgba(x_range(), y)
    end
 
-   # Return a new instance based on the given image string, which can
-   # be raw image data, or a filename.
-   #
-   public static open(s)
-      return Pixels(open_impl(s))
-   end
-
-   private static native open_impl(s)
-
-   # Create a blank instance with the given format and dimensions.
-   # The underlying data is allocated and set to zero.
-   #
-   public static blank(width, height, format)
-      return Pixels(blank_impl(width, height, format))
-   end
-
-   private static native blank_impl(width, height, format)
-
    # Copy a single pixel from this instance to another.
    #
    public native copy_pixel(x1, y1, other, x2, y2)
@@ -195,7 +177,7 @@ final class Pixels()
    # No data is shared.
    #
    public clone()
-      return Pixels(clone_impl())
+      return create_for_idp(clone_impl())
    end
 
    private object_clone()
@@ -209,8 +191,29 @@ final class Pixels()
    #
    public native load_palette(pal)
 
-   package new(idp)
-      self.idp := idp
+   package static create_for_idp(idp)
+      local i
+      i := Class.create_instance()
+      i.idp := idp
+      return i
+   end
+
+   private static native open_impl(s)
+   private static native blank_impl(width, height, format)
+
+   # The constructor for Pixels takes two formats.  With one parameter
+   # a new instance ir created based on the given image string, which
+   # can be raw image data, or a filename.
+   #
+   # With two parameters, a blank instance is created of the given
+   # width and height; an optional third parameter provides the
+   # format.  The underlying data is allocated and set to zero.
+   #
+   public new(a[])
+      (idp := if *a = 1 then
+         open_impl(a[1])
+      else
+         blank_impl!a) | fail
       return
    end
 end
@@ -233,22 +236,22 @@ final class Window(NoCopy)
       CLOSE_BUTTON := -11
       INVOKE_LATER := -40
       PATTERNS := table(,
-                        "black", Pixels.blank(8, 8, Pixels.PALETTE1).set_data("\xff\xff\xff\xff\xff\xff\xff\xff\x00"),
-                        "verydark", Pixels.blank(8, 8, Pixels.PALETTE1).set_data("\xfe\xff\xef\xff\xfe\xff\xef\xff\x00"),
-                        "darkgray", Pixels.blank(8, 8, Pixels.PALETTE1).set_data("w\xddw\xddw\xddw\xdd\x00"),
-                        "gray", Pixels.blank(8, 8, Pixels.PALETTE1).set_data("U\xaaU\xaaU\xaaU\xaa\x00"),
-                        "lightgray", Pixels.blank(8, 8, Pixels.PALETTE1).set_data("\x11D\x11D\x11D\x11D\x00"),
-                        "verylight", Pixels.blank(8, 8, Pixels.PALETTE1).set_data("\x01\x00\x10\x00\x01\x00\x10\x00\x00"),
-                        "white", Pixels.blank(8, 8, Pixels.PALETTE1).set_data("\x00\x00\x00\x00\x00\x00\x00\x00\x00"),
-                        "vertical", Pixels.blank(8, 8, Pixels.PALETTE1).set_data("\x10\x10\x10\x10\x10\x10\x10\x10\x00"),
-                        "diagonal", Pixels.blank(8, 8, Pixels.PALETTE1).set_data("\x80@ \x10\b\x04\x02\x01\x00"),
-                        "horizontal", Pixels.blank(8, 8, Pixels.PALETTE1).set_data("\x00\x00\x00\xff\x00\x00\x00\x00\x00"),
-                        "grid", Pixels.blank(8, 8, Pixels.PALETTE1).set_data("\x10\x10\x10\xff\x10\x10\x10\x10\x00"),
-                        "trellis", Pixels.blank(8, 8, Pixels.PALETTE1).set_data("\x82D(\x10(D\x82\x01\x00"),
-                        "checkers", Pixels.blank(8, 8, Pixels.PALETTE1).set_data("\x0f\x0f\x0f\x0f\xf0\xf0\xf0\xf0\x00"),
-                        "grains", Pixels.blank(8, 8, Pixels.PALETTE1).set_data("\e\x18\x81\xb16\x06`c\x00"),
-                        "scales", Pixels.blank(8, 8, Pixels.PALETTE1).set_data("\x02\x02\x05\xf8  P\x8f\x00"),
-                        "waves", Pixels.blank(8, 8, Pixels.PALETTE1).set_data("\x03\x84H0\x03\x84H0\x00"))
+                        "black", Pixels(8, 8, Pixels.PALETTE1).set_data("\xff\xff\xff\xff\xff\xff\xff\xff\x00"),
+                        "verydark", Pixels(8, 8, Pixels.PALETTE1).set_data("\xfe\xff\xef\xff\xfe\xff\xef\xff\x00"),
+                        "darkgray", Pixels(8, 8, Pixels.PALETTE1).set_data("w\xddw\xddw\xddw\xdd\x00"),
+                        "gray", Pixels(8, 8, Pixels.PALETTE1).set_data("U\xaaU\xaaU\xaaU\xaa\x00"),
+                        "lightgray", Pixels(8, 8, Pixels.PALETTE1).set_data("\x11D\x11D\x11D\x11D\x00"),
+                        "verylight", Pixels(8, 8, Pixels.PALETTE1).set_data("\x01\x00\x10\x00\x01\x00\x10\x00\x00"),
+                        "white", Pixels(8, 8, Pixels.PALETTE1).set_data("\x00\x00\x00\x00\x00\x00\x00\x00\x00"),
+                        "vertical", Pixels(8, 8, Pixels.PALETTE1).set_data("\x10\x10\x10\x10\x10\x10\x10\x10\x00"),
+                        "diagonal", Pixels(8, 8, Pixels.PALETTE1).set_data("\x80@ \x10\b\x04\x02\x01\x00"),
+                        "horizontal", Pixels(8, 8, Pixels.PALETTE1).set_data("\x00\x00\x00\xff\x00\x00\x00\x00\x00"),
+                        "grid", Pixels(8, 8, Pixels.PALETTE1).set_data("\x10\x10\x10\xff\x10\x10\x10\x10\x00"),
+                        "trellis", Pixels(8, 8, Pixels.PALETTE1).set_data("\x82D(\x10(D\x82\x01\x00"),
+                        "checkers", Pixels(8, 8, Pixels.PALETTE1).set_data("\x0f\x0f\x0f\x0f\xf0\xf0\xf0\xf0\x00"),
+                        "grains", Pixels(8, 8, Pixels.PALETTE1).set_data("\e\x18\x81\xb16\x06`c\x00"),
+                        "scales", Pixels(8, 8, Pixels.PALETTE1).set_data("\x02\x02\x05\xf8  P\x8f\x00"),
+                        "waves", Pixels(8, 8, Pixels.PALETTE1).set_data("\x03\x84H0\x03\x84H0\x00"))
    end
 
    private static create_for_wbp(wbp)
@@ -401,7 +404,7 @@ final class Window(NoCopy)
          set_size(v.get_width(), v.get_height())
          draw_image(,, v)
       } else use {
-         v := Pixels.open(v),
+         v := Pixels(v),
          {
             set_size(v.get_width(), v.get_height())
             draw_image(,, v)
@@ -424,7 +427,7 @@ final class Window(NoCopy)
       return if is(v, Pixels) then
          set_icon_impl(v)
       else use {
-         v := Pixels.open(v),
+         v := Pixels(v),
          set_icon_impl(v)
       }
    end
@@ -526,7 +529,7 @@ final class Window(NoCopy)
       return if /v | is(v, Pixels) then
          set_pattern_impl(v)
       else use {
-         v := Pixels.open(v),
+         v := Pixels(v),
          set_pattern_impl(v)
       }
    end
@@ -656,7 +659,7 @@ final class Window(NoCopy)
       return if is(v, Pixels) then
          draw_image_impl(x, y, v)
       else use {
-         v := Pixels.open(v),
+         v := Pixels(v),
          draw_image_impl(x, y, v)
       }
    end
@@ -771,7 +774,7 @@ final class Window(NoCopy)
    # Get the contents of some pixels as a {Pixels} object.
    #
    public get_pixels(x, y, width, height)
-      return Pixels(get_pixels_impl(x, y, width, height))
+      return Pixels.create_for_idp(get_pixels_impl(x, y, width, height))
    end
 
    private native get_pixels_impl(x, y, width, height)

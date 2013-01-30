@@ -51,7 +51,7 @@ procedure wreflect(win1, dir)
          x2 := 0
          y2 := height - 1
          px1 := win1.get_pixels()
-         px2 := Pixels.blank(width, height)
+         px2 := Pixels(width, height)
          every p := px1.gen_rgba() do {
             px2.set_rgba(x2, y2, p[1], p[2], p[3])
             if x2 = width - 1 then {
@@ -68,7 +68,7 @@ procedure wreflect(win1, dir)
          x2 := width - 1
          y2 := 0
          px1 := win1.get_pixels()
-         px2 := Pixels.blank(width, height)
+         px2 := Pixels(width, height)
          every p := px1.gen_rgba() do {
             px2.set_rgba(x2, y2, p[1], p[2], p[3])
             if x2 = 0 then {
@@ -103,7 +103,7 @@ procedure wrotate(win1, dir)
          y2 := 0
          win2 := Window().set_size(height, width) | stop("*** cannot open target window")
          px1 := win1.get_pixels()
-         px2 := Pixels.blank(height, width)
+         px2 := Pixels(height, width)
          every p := px1.gen_rgba() do {
             px2.set_rgba(x2, y2, p[1], p[2], p[3])
             if y2 = width - 1 then {
@@ -121,7 +121,7 @@ procedure wrotate(win1, dir)
          x2 := 0
          y2 := width - 1
          px1 := win1.get_pixels()
-         px2 := Pixels.blank(height, width)
+         px2 := Pixels(height, width)
          every p := px1.gen_rgba() do {
             px2.set_rgba(x2, y2, p[1], p[2], p[3])
             if y2 = 0 then {
@@ -139,7 +139,7 @@ procedure wrotate(win1, dir)
          x2 := width - 1
          y2 := height - 1
          px1 := win1.get_pixels()
-         px2 := Pixels.blank(width, height)
+         px2 := Pixels(width, height)
          every p := px1.gen_rgba() do {
             px2.set_rgba(x2, y2, p[1], p[2], p[3])
             if x2 = 0 then {
