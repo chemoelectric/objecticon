@@ -56,6 +56,7 @@ struct imgdataformat {
     int (*getlength)(struct imgdata *imd);
     int alpha_depth, color_depth, palette_size;
     char *name;
+    struct imgdataformat *next;      /* Used for hashing */
 };
 
 extern struct imgdataformat imgdataformat_A8;
