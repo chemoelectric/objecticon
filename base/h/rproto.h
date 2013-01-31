@@ -271,6 +271,7 @@ void freeimgdata     (struct imgdata *img);
    int  sendselectionresponse(wbp w, word requestor, char *property, char *selection, char *target, word time, dptr data);
    int  setwindowicon   (wbp w, struct imgdata *imd);
    int  setpattern  (wbp w, struct imgdata *imd);
+   int  getpattern  (wbp w, struct imgdata *imd);
    int  setwindowlabel  (wbp w, char *val);
    int  walert          (wbp w, int volume);
    int  warppointer     (wbp w, int x, int y);
