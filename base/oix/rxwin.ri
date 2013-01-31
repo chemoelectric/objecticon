@@ -764,6 +764,29 @@ int setpattern(wbp w, struct imgdata *imd)
     return Succeeded;
 }
 
+int getpattern(wbp w, struct imgdata *imd)
+{
+    wcp wc = w->context;
+    wdp wd = w->window->display;
+    XImage *xi;
+    if (!wc->pattern)
+        return Failed;
+    MemProtect(xi = XGetImage(wd->display, wc->pattern->pix,
+                              0, 0,
+                              wc->pattern->width,
+                              wc->pattern->height,
+                              AllPlanes,
+                              ZPixmap));
+
+    imd->format = wd->format;
+    imd->data = (unsigned char *)xi->data;
+    imd->width = wc->pattern->width;
+    imd->height = wc->pattern->height;
+    xi->data = 0;
+    XDestroyImage(xi);
+    return Succeeded;
+}
+
 /*
  *  Open the X window for a non-hidden icon window.
  */

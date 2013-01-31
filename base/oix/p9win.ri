@@ -1151,6 +1151,25 @@ int setpattern(wbp w, struct imgdata *imd)
     return Succeeded;
 }
 
+int getpattern(wbp w, struct imgdata *imd)
+{
+    int len;
+    Image *im;
+    uchar *data;
+    wcp wc = w->context;
+    if (!wc->pattern)
+        return Failed;
+    im = wc->pattern->i;
+    imd->width = Dx(im->r);
+    imd->height = Dy(im->r);
+    len = imd->width * imd->height * 4;
+    MemProtect(data = malloc(len));
+    unloadimage(im, im->r, data, len);
+    imd->format = &imgdataformat_P9ABGR32;
+    imd->data = data;
+    return Succeeded;
+}
+
 void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
     Image *im;

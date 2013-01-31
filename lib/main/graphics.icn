@@ -536,6 +536,16 @@ final class Window(NoCopy)
 
    private native set_pattern_impl(v)
 
+   # Return a new {Pixels} instance which contains the current fill
+   # pattern.  Fails if no pattern set.  Note a new distinct instance
+   # is always returned, which must be closed by the caller.
+   #
+   public get_pattern()
+      return Pixels.create_for_idp(get_pattern_impl())
+   end
+
+   private native get_pattern_impl()
+
    #
    # The canvas attribute pointer specifies the shape of the figure
    # that represents the mouse position.
