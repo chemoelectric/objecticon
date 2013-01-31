@@ -2379,13 +2379,10 @@ int writeimagefileimpl(char *filename, struct imgdata *imd)
     }
 }
 
-struct imgdataformat *platform_parseimgdataformat(char *s)
+void registerplatformimgdataformats()
 {
-    if (strcmp(s, imgdataformat_P9ABGR32.name) == 0)
-        return &imgdataformat_P9ABGR32;
-    if (strcmp(s, imgdataformat_P9AG16.name) == 0)
-        return &imgdataformat_P9AG16;
-    return 0;
+    registerimgdataformat(&imgdataformat_P9ABGR32);
+    registerimgdataformat(&imgdataformat_P9AG16);
 }
 
 static int acceptable_font(struct FontInfo *fi, char *family, int flags, int size)

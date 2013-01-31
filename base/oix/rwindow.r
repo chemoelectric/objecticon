@@ -2575,45 +2575,6 @@ char *tocolorstring(int r, int g, int b, int a)
  * Image data manipulation functions.
  */
 
-static struct imgdataformat *imgdataformats[] = {
-    &imgdataformat_A16,
-    &imgdataformat_A8,
-    &imgdataformat_ABGR32,
-    &imgdataformat_AG16,
-    &imgdataformat_BGR24,
-    &imgdataformat_G16,
-    &imgdataformat_G8,
-    &imgdataformat_GA16,
-    &imgdataformat_GA32,
-    &imgdataformat_PALETTE1,
-    &imgdataformat_PALETTE2,
-    &imgdataformat_PALETTE4,
-    &imgdataformat_PALETTE8,
-    &imgdataformat_RGB24,
-    &imgdataformat_RGB48,
-    &imgdataformat_RGBA32,
-    &imgdataformat_RGBA64,
-};
-
-int imgdataformatscmp(char *s, struct imgdataformat **p)
-{
-    return strcmp(s, (*p)->name);
-}
-
-struct imgdataformat *parseimgdataformat(char *s)
-{
-    struct imgdataformat **p = bsearch(s, imgdataformats, ElemCount(imgdataformats), 
-                                       ElemSize(imgdataformats), (BSearchFncCast)(imgdataformatscmp));
-    if (p)
-        return *p;
-    else
-#if Graphics
-        return platform_parseimgdataformat(s);
-#else
-        return 0;
-#endif
-}
-
 void initimgdata(struct imgdata *imd, int width, int height, struct imgdataformat *fmt)
 {
     int n;
@@ -3021,6 +2982,18 @@ static void setpi_PALETTE8(struct imgdata *imd, int x, int y, int i)
     *s = (unsigned char)i;
 }
 
+#define IMDHASH_SIZE 32
+
+static struct imgdataformat *imdfmt_hash[IMDHASH_SIZE];
+
+static int imdfmt_hash_func(char *s)
+{
+    int h = 0;
+    while (*s)
+        h = 13 * h + (*s++ & 0377);
+    return h % ElemCount(imdfmt_hash);
+}
+
 struct imgdataformat imgdataformat_A8 =   {set_A8,get_A8,0,0,getlength_8,8,0,0,"A8"};
 struct imgdataformat imgdataformat_A16 =   {set_A16,get_A16,0,0,getlength_16,16,0,0,"A16"};
 struct imgdataformat imgdataformat_RGB24 =   {set_RGB24,get_RGB24,0,0,getlength_24,0,24,0,"RGB24"};
@@ -3038,6 +3011,50 @@ struct imgdataformat imgdataformat_PALETTE1 =   {set_PALETTE,get_PALETTE,setpi_P
 struct imgdataformat imgdataformat_PALETTE2 =   {set_PALETTE,get_PALETTE,setpi_PALETTE2,getpi_PALETTE2,getlength_2,16,48,4,"PALETTE2"};
 struct imgdataformat imgdataformat_PALETTE4 =   {set_PALETTE,get_PALETTE,setpi_PALETTE4,getpi_PALETTE4,getlength_4,16,48,16,"PALETTE4"};
 struct imgdataformat imgdataformat_PALETTE8 =   {set_PALETTE,get_PALETTE,setpi_PALETTE8,getpi_PALETTE8,getlength_8,16,48,256,"PALETTE8"};
+
+void registerimgdataformat(struct imgdataformat *fmt)
+{
+    int i = imdfmt_hash_func(fmt->name);
+    fmt->next = imdfmt_hash[i];
+    imdfmt_hash[i] = fmt;
+}
+
+struct imgdataformat *parseimgdataformat(char *s)
+{
+    static int inited;
+    struct imgdataformat *p;
+    int i;
+    if (!inited) {
+        registerimgdataformat(&imgdataformat_A16);
+        registerimgdataformat(&imgdataformat_A8);
+        registerimgdataformat(&imgdataformat_ABGR32);
+        registerimgdataformat(&imgdataformat_AG16);
+        registerimgdataformat(&imgdataformat_BGR24);
+        registerimgdataformat(&imgdataformat_G16);
+        registerimgdataformat(&imgdataformat_G8);
+        registerimgdataformat(&imgdataformat_GA16);
+        registerimgdataformat(&imgdataformat_GA32);
+        registerimgdataformat(&imgdataformat_PALETTE1);
+        registerimgdataformat(&imgdataformat_PALETTE2);
+        registerimgdataformat(&imgdataformat_PALETTE4);
+        registerimgdataformat(&imgdataformat_PALETTE8);
+        registerimgdataformat(&imgdataformat_RGB24);
+        registerimgdataformat(&imgdataformat_RGB48);
+        registerimgdataformat(&imgdataformat_RGBA32);
+        registerimgdataformat(&imgdataformat_RGBA64);
+        inited = 1;
+#if Graphics
+        registerplatformimgdataformats();
+#endif
+    }
+
+    i = imdfmt_hash_func(s);
+    for (p = imdfmt_hash[i]; p; p = p->next) {
+        if (strcmp(s, p->name) == 0)
+            return p;
+    }
+    return 0;
+}
 
 void range_extent(double x1, double y1, double x2, double y2, int *x, int *y, int *width, int *height)
 {

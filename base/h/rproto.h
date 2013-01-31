@@ -191,7 +191,7 @@ void triangles_extent(struct triangle *tris, int ntris, int *x, int *y, int *wid
 void range_extent(double x1, double y1, double x2, double y2, int *x, int *y, int *width, int *height);
 
 struct imgdataformat *parseimgdataformat(char *s);
-struct imgdataformat *platform_parseimgdataformat(char *s);
+void registerimgdataformat(struct imgdataformat *fmt);
 int getlength_1(struct imgdata *imd);
 int getlength_2(struct imgdata *imd);
 int getlength_4(struct imgdata *imd);
@@ -201,7 +201,6 @@ int getlength_24(struct imgdata *imd);
 int getlength_32(struct imgdata *imd);
 int getlength_48(struct imgdata *imd);
 int getlength_64(struct imgdata *imd);
-int imgdataformatscmp(char *s, struct imgdataformat **p);
 void initimgdata(struct imgdata *imd, int width, int height, struct imgdataformat *fmt);
 void copyimgdata(struct imgdata *dest, struct imgdata *src);
 void freeimgdata     (struct imgdata *img);
@@ -301,6 +300,7 @@ void freeimgdata     (struct imgdata *img);
    int  writeimagefileimpl(char *filename, struct imgdata *imd);
    int  readimagedataimpl(dptr data, struct imgdata *imd);
    int  settransientfor(wbp w, wbp other);
+   void registerplatformimgdataformats(void);
 
 #if XWindows
    struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int b, int a);

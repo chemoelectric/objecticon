@@ -56,6 +56,7 @@ struct imgdataformat {
     int (*getlength)(struct imgdata *imd);
     int alpha_depth, color_depth, palette_size;
     char *name;
+    struct imgdataformat *next;      /* Used for hashing */
 };
 
 extern struct imgdataformat imgdataformat_A8;
@@ -239,11 +240,6 @@ typedef struct _wfont {
 #endif
 } wfont, *wfp;
 
-#define ASCENT(w) ((w)->context->font->ascent)
-#define DESCENT(w) ((w)->context->font->descent)
-#define FHEIGHT(w) ((w)->context->font->height)
-#define FWIDTH(w) ((w)->context->font->maxwidth)
-
 #if XWindows
 
 /*
@@ -257,7 +253,6 @@ typedef struct _wdisplay {
   struct SharedColor *black, *white, *transparent;
   wfp		fonts, defaultfont;
   XRenderPictFormat *pixfmt, *winfmt, *maskfmt;
-  XFontStruct   *xfont;
   Cursor	cursors[NUMCURSORSYMS];
   Atom          atoms[NUMATOMS];      /* interned atoms */
   struct _wdisplay *previous, *next;
