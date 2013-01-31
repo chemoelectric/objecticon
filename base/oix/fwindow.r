@@ -605,7 +605,7 @@ function graphics_Window_get_pixels_impl(self, x0, y0, w0, h0)
    }
 end
 
-function graphics_Pixels_open_impl(val)
+function graphics_Pixels_new_open_impl(val)
    if !cnv:string(val) then
       runerr(103, val)
    body {
@@ -861,10 +861,8 @@ end
 
 function graphics_Window_get_font_ascent(self)
    body {
-       struct descrip result;
        GetSelfW();
-       MakeInt(ASCENT(self_w), &result);
-       return result;
+       return C_integer self_w->context->font->ascent;
    }
 end
 
@@ -968,13 +966,11 @@ end
 
 function graphics_Window_get_depth(self)
    body {
-       struct descrip result;
        int i;
        GetSelfW();
        if (getdepth(self_w, &i) == Failed)
            fail;
-       MakeInt(i, &result);
-       return result;
+       return C_integer i;
    }
 end
 
@@ -989,10 +985,8 @@ end
 
 function graphics_Window_get_font_descent(self)
    body {
-       struct descrip result;
        GetSelfW();
-       MakeInt(DESCENT(self_w), &result);
-       return result;
+       return C_integer self_w->context->font->descent;
    }
 end
 
@@ -1016,19 +1010,15 @@ end
 
 function graphics_Window_get_dx(self)
    body {
-       struct descrip result;
        GetSelfW();
-       MakeInt(self_w->context->dx, &result);
-       return result;
+       return C_integer self_w->context->dx;
    }
 end
 
 function graphics_Window_get_dy(self)
    body {
-       struct descrip result;
        GetSelfW();
-       MakeInt(self_w->context->dy, &result);
-       return result;
+       return C_integer self_w->context->dy;
    }
 end
 
@@ -1043,10 +1033,8 @@ end
 
 function graphics_Window_get_font_height(self)
    body {
-       struct descrip result;
        GetSelfW();
-       MakeInt(FHEIGHT(self_w), &result);
-       return result;
+       return C_integer self_w->context->font->height;
    }
 end
 
@@ -1061,10 +1049,8 @@ end
 
 function graphics_Window_get_font_width(self)
    body {
-       struct descrip result;
        GetSelfW();
-       MakeInt(FWIDTH(self_w), &result);
-       return result;
+       return C_integer self_w->context->font->maxwidth;
    }
 end
 
@@ -1092,10 +1078,8 @@ end
 
 function graphics_Window_get_height(self)
    body {
-       struct descrip result;
        GetSelfW();
-       MakeInt(self_w->window->height, &result);
-       return result;
+       return C_integer self_w->window->height;
    }
 end
 
@@ -1146,10 +1130,8 @@ end
 
 function graphics_Window_get_max_height(self)
    body {
-       struct descrip result;
        GetSelfW();
-       MakeInt(self_w->window->maxheight, &result);
-       return result;
+       return C_integer self_w->window->maxheight;
    }
 end
 
@@ -1169,19 +1151,15 @@ end
 
 function graphics_Window_get_max_width(self)
    body {
-       struct descrip result;
        GetSelfW();
-       MakeInt(self_w->window->maxwidth, &result);
-       return result;
+       return C_integer self_w->window->maxwidth;
    }
 end
 
 function graphics_Window_get_min_height(self)
    body {
-       struct descrip result;
        GetSelfW();
-       MakeInt(self_w->window->minheight, &result);
-       return result;
+       return C_integer self_w->window->minheight;
    }
 end
 
@@ -1201,10 +1179,8 @@ end
 
 function graphics_Window_get_min_width(self)
    body {
-       struct descrip result;
        GetSelfW();
-       MakeInt(self_w->window->minwidth, &result);
-       return result;
+       return C_integer self_w->window->minwidth;
    }
 end
 
@@ -1235,23 +1211,19 @@ end
 
 function graphics_Window_get_x(self)
    body {
-       struct descrip result;
        GetSelfW();
        if (getpos(self_w) != Succeeded)
            fail;
-       MakeInt(self_w->window->x, &result);
-       return result;
+       return C_integer self_w->window->x;
    }
 end
 
 function graphics_Window_get_y(self)
    body {
-       struct descrip result;
        GetSelfW();
        if (getpos(self_w) != Succeeded)
            fail;
-       MakeInt(self_w->window->y, &result);
-       return result;
+       return C_integer self_w->window->y;
    }
 end
 
@@ -1295,10 +1267,8 @@ end
 
 function graphics_Window_get_width(self)
    body {
-       struct descrip result;
        GetSelfW();
-       MakeInt(self_w->window->width, &result);
-       return result;
+       return C_integer self_w->window->width;
    }
 end
 
@@ -1853,7 +1823,7 @@ function graphics_Window_palette_key(s1, s2)
    }
 end
 
-function graphics_Pixels_blank_impl(width, height, format)
+function graphics_Pixels_new_blank_impl(width, height, format)
    if !cnv:C_integer(width) then
       runerr(101, width)
    if !cnv:C_integer(height) then
@@ -1889,19 +1859,15 @@ end
 
 function graphics_Pixels_get_width(self)
    body {
-      struct descrip result;
       GetSelfPixels();
-      MakeInt(self_id->width, &result);
-      return result;
+      return C_integer self_id->width;
    }
 end
 
 function graphics_Pixels_get_height(self)
    body {
-      struct descrip result;
       GetSelfPixels();
-      MakeInt(self_id->height, &result);
-      return result;
+      return C_integer self_id->height;
    }
 end
 
@@ -2247,7 +2213,6 @@ function graphics_Pixels_get_palette_index(self, x, y)
    if !cnv:C_integer(y) then
       runerr(101, y)
    body {
-      struct descrip result;
       GetSelfPixels();
       if (self_id->format->palette_size == 0) {
           LitWhy("Can only get a palette index with a PALETTE format");
@@ -2257,8 +2222,7 @@ function graphics_Pixels_get_palette_index(self, x, y)
           LitWhy("Out of range");
           fail;
       }
-      MakeInt(self_id->format->getpaletteindex(self_id, x, y), &result);
-      return result;
+      return C_integer self_id->format->getpaletteindex(self_id, x, y);
    }
 end
 

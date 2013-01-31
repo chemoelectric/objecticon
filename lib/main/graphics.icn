@@ -198,8 +198,8 @@ final class Pixels()
       return i
    end
 
-   private static native open_impl(s)
-   private static native blank_impl(width, height, format)
+   private static native new_open_impl(s)
+   private static native new_blank_impl(width, height, format)
 
    # The constructor for Pixels takes two formats.  With one parameter
    # a new instance ir created based on the given image string, which
@@ -211,9 +211,9 @@ final class Pixels()
    #
    public new(a[])
       (idp := if *a = 1 then
-         open_impl(a[1])
+         new_open_impl(a[1])
       else
-         blank_impl!a) | fail
+         new_blank_impl!a) | fail
       return
    end
 end

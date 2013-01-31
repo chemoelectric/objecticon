@@ -3192,7 +3192,6 @@ static wdp alcdisplay(char *s)
         LitWhy("Couldn't load default font");
         return NULL;
     }
-    wd->xfont = XLoadQueryFont(wd->display, "fixed");
     XInternAtoms(wd->display, atom_names, NUMATOMS, False, wd->atoms);
     GLink(wd, wdsplys);
     return wd;

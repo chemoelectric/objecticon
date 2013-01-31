@@ -795,9 +795,7 @@ end
 
 function lang_Prog_get_global_collection_count()
    body {
-       struct descrip result;
-       MakeInt(collection_count, &result);
-       return result;
+       return C_integer collection_count;
    }
 end
 
