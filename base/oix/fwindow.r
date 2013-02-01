@@ -2045,18 +2045,30 @@ function graphics_Pixels_clone_impl(self)
       int n;
       GetSelfPixels();
       MemProtect(imd = malloc(sizeof(struct imgdata)));
-      imd->width = self_id->width;
-      imd->height = self_id->height;
-      imd->format = self_id->format;
+      initimgdata(imd, self_id->width, self_id->height, self_id->format);
       n = self_id->format->palette_size;
-      if (n) {
-          MemProtect(imd->paltbl = malloc(n * sizeof(struct palentry)));
+      if (n)
           memcpy(imd->paltbl, self_id->paltbl, n * sizeof(struct palentry));
-      } else
-          imd->paltbl = 0;
-      n = imd->format->getlength(self_id);
-      MemProtect(imd->data = malloc(n));
-      memcpy(imd->data, self_id->data, n);
+      memcpy(imd->data, self_id->data, imd->format->getlength(self_id));
+      return C_integer((word)imd);
+   }
+end
+
+function graphics_Pixels_convert_impl(self, format)
+   if !cnv:string(format) then
+       runerr(103, format)
+   body {
+      struct imgdata *imd;
+      struct imgdataformat *fmt;
+      GetSelfPixels();
+      fmt = parseimgdataformat(buffstr(&format));
+      if (!fmt) {
+          LitWhy("Invalid format");
+          fail;
+      }
+      MemProtect(imd = malloc(sizeof(struct imgdata)));
+      initimgdata(imd, self_id->width, self_id->height, fmt);
+      copyimgdata(imd, self_id);
       return C_integer((word)imd);
    }
 end

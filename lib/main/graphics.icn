@@ -180,10 +180,18 @@ final class Pixels()
       return create_for_idp(clone_impl())
    end
 
+   # Convert this instance to one of the same dimensions in the given
+   # format.
+   #
+   public convert(format)
+      return create_for_idp(convert_impl(format))
+   end
+
    private object_clone()
       return clone()
    end
 
+   private native convert_impl(format)
    private native clone_impl()
 
    # Set entries in the palette according to one of the standard
