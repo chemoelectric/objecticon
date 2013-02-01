@@ -2576,7 +2576,7 @@ char *tocolorstring(int r, int g, int b, int a)
 struct imgdata *newimgdata()
 {
     struct imgdata *imd;
-    GAlloc(imd, SharedPicture);
+    GAlloc(imd, imgdata);
     return imd;
 }
 
