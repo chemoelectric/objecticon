@@ -1691,7 +1691,7 @@ function graphics_Window_set_width(self, width)
    }
 end
 
-function graphics_Window_set_transient_for_impl(self, val)
+function graphics_Window_set_transient_for(self, val)
    body {
        wbp w2;
        GetSelfW();
@@ -2284,5 +2284,12 @@ function graphics_Pixels_load_palette(self, pal)
       e = palsetup(p); 
       memcpy(self_id->paltbl, e, 256 * sizeof(struct palentry));
       return self;
+   }
+end
+
+function graphics_Pixels_get_references(self)
+   body {
+       GetSelfPixels();
+       return C_integer self_id->refcount;
    }
 end
