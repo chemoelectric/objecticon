@@ -1093,7 +1093,6 @@ static int readjpegfile(char *filename, struct imgdata *imd)
 
     imd->width = cinfo.output_width;
     imd->height = cinfo.output_height;
-    imd->paltbl = 0;
     imd->data = data;
 
     return Succeeded;
@@ -1301,7 +1300,6 @@ static int readpngfile(char *filename, struct imgdata *imd)
             whyf("readpngfile: File %s, unsupported format/depth", filename);
             return Failed;
         }
-        imd->paltbl = 0;
     }
 
     width = png_get_image_width(png_ptr, info_ptr);
@@ -2575,18 +2573,26 @@ char *tocolorstring(int r, int g, int b, int a)
  * Image data manipulation functions.
  */
 
-void initimgdata(struct imgdata *imd, int width, int height, struct imgdataformat *fmt)
+struct imgdata *newimgdata()
 {
+    struct imgdata *imd;
+    GAlloc(imd, imgdata);
+    return imd;
+}
+
+struct imgdata *initimgdata(int width, int height, struct imgdataformat *fmt)
+{
+    struct imgdata *imd;
     int n;
+    imd = newimgdata();
     imd->width = width;
     imd->height = height;
     imd->format = fmt;
     n = fmt->palette_size;
     if (n > 0)
         MemProtect(imd->paltbl = malloc(n * sizeof(struct palentry)));
-    else
-        imd->paltbl = 0;
     MemProtect(imd->data = malloc(fmt->getlength(imd)));
+    return imd;
 }
 
 void copyimgdata(struct imgdata *dest, struct imgdata *src)
@@ -2603,14 +2609,20 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src)
     }
 }
 
-void freeimgdata(struct imgdata *imd)
+struct imgdata *linkimgdata(struct imgdata *imd)
 {
-    free(imd->paltbl);
-    imd->paltbl = 0;
-    free(imd->data);
-    imd->data = 0;
-    imd->height = imd->width = 0;
-    imd->format = 0;
+    ++imd->refcount;
+    return imd;
+}
+
+void unlinkimgdata(struct imgdata *imd)
+{
+    --imd->refcount;
+    if (imd->refcount == 0) {
+        free(imd->paltbl);
+        free(imd->data);
+        free(imd);
+    }
 }
 
 static void set_RGB24(struct imgdata *imd, int x, int y, int r, int g, int b, int a)

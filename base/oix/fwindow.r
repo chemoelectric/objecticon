@@ -571,10 +571,9 @@ function graphics_Window_get_pattern_impl(self)
    body {
       struct imgdata *imd;
       GetSelfW();
-      MemProtect(imd = malloc(sizeof(struct imgdata)));
-      imd->paltbl = 0;
+      imd = newimgdata();
       if (getpattern(self_w, imd) == Failed) {
-          free(imd);
+          unlinkimgdata(imd);
           fail;
       }
       return C_integer((word)imd);
@@ -591,10 +590,9 @@ function graphics_Window_get_pixels_impl(self, x0, y0, w0, h0)
           runerr(0);
 
       if (reducerect(self_w, 0, &x, &y, &width, &height)) {
-          MemProtect(imd = malloc(sizeof(struct imgdata)));
+          imd = newimgdata();
           imd->width = width;
           imd->height = height;
-          imd->paltbl = 0;
           captureimgdata(self_w, x, y, imd);
           return C_integer((word)imd);
       } else {
@@ -609,12 +607,11 @@ function graphics_Pixels_new_open_impl(val)
    if !cnv:string(val) then
       runerr(103, val)
    body {
-      struct imgdata *imd;
-      MemProtect(imd = malloc(sizeof(struct imgdata)));
+      struct imgdata *imd = newimgdata();
       if (interpimage(&val, imd) == Succeeded)
           return C_integer((word)imd);
       else {
-          free(imd);
+          unlinkimgdata(imd);
           fail;
       }
    }
@@ -637,7 +634,7 @@ function graphics_Window_filter(self, x0, y0, w0, h0, spec)
    body {
       word x, y, width, height;
       struct filter *filter;
-      struct imgdata imd;
+      struct imgdata *imd;
       int i, nfilter;
       GetSelfW();
 
@@ -681,18 +678,18 @@ function graphics_Window_filter(self, x0, y0, w0, h0, spec)
           return self;
       }
 
-      imd.width = width;
-      imd.height = height;
-      imd.paltbl = 0;
-      captureimgdata(self_w, x, y, &imd);
+      imd = newimgdata();
+      imd->width = width;
+      imd->height = height;
+      captureimgdata(self_w, x, y, imd);
 
       for (i = 0; i < nfilter; ++i) {
-          filter[i].imd = &imd;
+          filter[i].imd = imd;
           filter[i].f(&filter[i]);
       }
 
-      drawimgdata(self_w, x, y, &imd);
-      freeimgdata(&imd);
+      drawimgdata(self_w, x, y, imd);
+      unlinkimgdata(imd);
       free(filter);
 
       return self;
@@ -1859,8 +1856,7 @@ function graphics_Pixels_new_blank_impl(width, height, format)
                fail;
            }
        }
-       MemProtect(imd = malloc(sizeof(struct imgdata)));
-       initimgdata(imd, width, height, fmt);
+       imd = initimgdata(width, height, fmt);
        /* Clear the data */
        memset(imd->data, 0, fmt->getlength(imd));
        if (imd->paltbl)
@@ -1887,8 +1883,7 @@ end
 function graphics_Pixels_close(self)
    body {
       GetSelfPixels();
-      freeimgdata(self_id);
-      free(self_id);
+      unlinkimgdata(self_id);
        *self_id_dptr = zerodesc;
       return self;
    }
@@ -2057,19 +2052,36 @@ function graphics_Pixels_clone_impl(self)
       struct imgdata *imd;
       int n;
       GetSelfPixels();
-      MemProtect(imd = malloc(sizeof(struct imgdata)));
-      imd->width = self_id->width;
-      imd->height = self_id->height;
-      imd->format = self_id->format;
+      imd = initimgdata(self_id->width, self_id->height, self_id->format);
       n = self_id->format->palette_size;
-      if (n) {
-          MemProtect(imd->paltbl = malloc(n * sizeof(struct palentry)));
+      if (n)
           memcpy(imd->paltbl, self_id->paltbl, n * sizeof(struct palentry));
-      } else
-          imd->paltbl = 0;
-      n = imd->format->getlength(self_id);
-      MemProtect(imd->data = malloc(n));
-      memcpy(imd->data, self_id->data, n);
+      memcpy(imd->data, self_id->data, imd->format->getlength(self_id));
+      return C_integer((word)imd);
+   }
+end
+
+function graphics_Pixels_shared_copy_impl(self)
+   body {
+      GetSelfPixels();
+      return C_integer((word)linkimgdata(self_id));
+   }
+end
+
+function graphics_Pixels_convert_impl(self, format)
+   if !cnv:string(format) then
+       runerr(103, format)
+   body {
+      struct imgdata *imd;
+      struct imgdataformat *fmt;
+      GetSelfPixels();
+      fmt = parseimgdataformat(buffstr(&format));
+      if (!fmt) {
+          LitWhy("Invalid format");
+          fail;
+      }
+      imd = initimgdata(self_id->width, self_id->height, fmt);
+      copyimgdata(imd, self_id);
       return C_integer((word)imd);
    }
 end

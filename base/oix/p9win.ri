@@ -1201,14 +1201,14 @@ static Image *imgdata_to_Image1(struct imgdata *imd)
 
 static Image *imgdata_to_Image(struct imgdata *imd)
 {
-    struct imgdata tmp;
+    struct imgdata *tmp;
     Image *im;
     if (imd->format == &imgdataformat_P9ABGR32)
         return imgdata_to_Image1(imd);
-    initimgdata(&tmp, imd->width, imd->height, &imgdataformat_P9ABGR32);
-    copyimgdata(&tmp, imd);
-    im = imgdata_to_Image1(&tmp);
-    freeimgdata(&tmp);
+    tmp = initimgdata(imd->width, imd->height, &imgdataformat_P9ABGR32);
+    copyimgdata(tmp, imd);
+    im = imgdata_to_Image1(tmp);
+    unlinkimgdata(tmp);
     return im;
 }
 
@@ -2210,7 +2210,6 @@ static int readimageimpl(char *cmd, int fd, struct imgdata *imd)
     }
     imd->width = Dx(m->r);
     imd->height = Dy(m->r);
-    imd->paltbl = 0;
     imd->format = format;
     ndata = imd->width * imd->height * m->nchan;
     MemProtect(imd->data = malloc(ndata));

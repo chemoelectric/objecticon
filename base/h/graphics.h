@@ -81,6 +81,7 @@ extern struct sdescrip pixclassname;
 extern struct sdescrip idpfieldname;
 
 struct imgdata {			/* image data */
+    int refcount;
     int width, height;			/* image dimensions */
     struct palentry *paltbl;		/* pointer to palette table, or null */
     struct imgdataformat *format;       /* format of data */

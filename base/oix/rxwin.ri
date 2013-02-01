@@ -2809,14 +2809,14 @@ static Pixmap imgdata_to_Pixmap1(wdp wd, struct imgdata *imd)
 
 Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd)
 {
-    struct imgdata tmp;
+    struct imgdata *tmp;
     Pixmap pix;
     if (imd->format == wd->format)
         return imgdata_to_Pixmap1(wd, imd);
-    initimgdata(&tmp, imd->width, imd->height, wd->format);
-    copyimgdata(&tmp, imd);
-    pix = imgdata_to_Pixmap1(wd, &tmp);
-    freeimgdata(&tmp);
+    tmp = initimgdata(imd->width, imd->height, wd->format);
+    copyimgdata(tmp, imd);
+    pix = imgdata_to_Pixmap1(wd, tmp);
+    unlinkimgdata(tmp);
     return pix;
 }
 
