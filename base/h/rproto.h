@@ -195,9 +195,12 @@ int getlength_24(struct imgdata *imd);
 int getlength_32(struct imgdata *imd);
 int getlength_48(struct imgdata *imd);
 int getlength_64(struct imgdata *imd);
-void initimgdata(struct imgdata *imd, int width, int height, struct imgdataformat *fmt);
+
+struct imgdata *newimgdata(void);
+struct imgdata *initimgdata(int width, int height, struct imgdataformat *fmt);
+struct imgdata *linkimgdata(struct imgdata *imd);
+void unlinkimgdata(struct imgdata *imd);
 void copyimgdata(struct imgdata *dest, struct imgdata *src);
-void freeimgdata     (struct imgdata *img);
 
 #if Graphics
    /*
