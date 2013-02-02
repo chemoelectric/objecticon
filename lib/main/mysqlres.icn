@@ -100,19 +100,12 @@ final class MySqlRes(NoCopy)
    #
    # Invoke mysql_free_result() for the current connection.
    #
-   public native free()
+   public native close()
 
    #
    # Invoke mysql_num_rows() for the current connection.
    #
    public native get_num_rows()
-
-   #
-   # Just calls {free()}
-   #
-   public close()
-      return free()
-   end
 
    #
    # This uses {fetch_row()} and {fetch_fields()} together to provide a rather more

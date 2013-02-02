@@ -73,7 +73,7 @@ final class Msg(NoCopy)
    # Clean up the resources used by the queue.  This should be called by
    # the parent process after the queue is no longer needed.
    #
-   public native remove()
+   public native close()
 
    #
    # Return the underlying id of the queue.

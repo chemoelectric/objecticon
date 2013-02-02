@@ -91,7 +91,7 @@ final class Sem(NoCopy)
    # Clean up the resources used by the semaphore.  This should be called by
    # the parent process after the semaphore is no longer needed.
    #
-   public native remove()
+   public native close()
 
    #
    # Return the underlying id of the semaphore.

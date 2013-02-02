@@ -78,12 +78,9 @@ class NetClient(Connectable, HasTask)
       local p, v
       if /task then
          return SocketStream.dns_query(server)
-      p := Process{dns_bg_query(p)}.
-         set_task(task)
       v := use {
-         p.start(),
-         p.poll(),
-         p.join()
+         p := Process{dns_bg_query(p)}.set_task(task),
+         p.start().poll()
       } | fail
       return if type(v) == "list" then
          v
