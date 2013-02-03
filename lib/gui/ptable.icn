@@ -133,10 +133,12 @@ class ItemPaintPTableColumn(PTableColumn)
    end
 
    public set_item_paint(r)
-      (\self.item_paint).finally()
-      self.item_paint := r
-      if (\ptable).is_initialized() then
+      if (\ptable).is_initialized() then {
+         (\self.item_paint).finally()
+         self.item_paint := r
          self.item_paint.initially(ptable)
+      } else
+         self.item_paint := r
       return self
    end
 
@@ -144,10 +146,12 @@ class ItemPaintPTableColumn(PTableColumn)
    # Set a border to draw along with each Paint instance.
    #
    public set_item_border(b)
-      (\self.item_border).finally()
-      self.item_border := b
-      if (\ptable).is_initialized() then
+      if (\ptable).is_initialized() then {
+         (\self.item_border).finally()
+         self.item_border := b
          self.item_border.initially(ptable)
+      } else
+         self.item_border := b
       return self
    end
 

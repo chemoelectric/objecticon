@@ -98,10 +98,12 @@ class Tree(SelectableScrollArea)
    # three distinct {Paint} objects.
    #
    public set_default_icon_paint(i1, i2, i3)
-      every (!\default_icon_paint).finally()
-      self.default_icon_paint := [i1, i2, i3]
-      if is_initialized() then
+      if is_initialized() then {
+         every (!\default_icon_paint).finally()
+         self.default_icon_paint := [i1, i2, i3]
          every (!default_icon_paint).initially(self)
+      } else
+         self.default_icon_paint := [i1, i2, i3]
       return self
    end
    

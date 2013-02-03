@@ -149,7 +149,7 @@ class GridPaint(Paint)
    public initially(c, accel)
       local attribs
 
-      /win | syserr("init called out of sequence")
+      /win | syserr("initially called out of sequence")
       attribs := copy(c.get_effective_wattribs())
       attribs["size"] := [1, 1]
       attribs["canvas"] := "hidden"
@@ -506,7 +506,7 @@ class ImagePaint(Paint)
    end
 
    public initially(c)
-      /win | syserr("init called out of sequence")
+      /win | syserr("initially called out of sequence")
       load_image(c)
       zoom_image()
       if \win then {

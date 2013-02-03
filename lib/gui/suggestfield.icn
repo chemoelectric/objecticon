@@ -184,7 +184,6 @@ class SuggestField(TextField)
          set_selection_on_key_moves(&yes).
          set_z(self.parent_dialog.get_top_z())
       self.parent_dialog.add(tl)
-      self.tl.initially()
       self.tl.set_ideal_size(self.w, 
                              max_w,
                              0, max_h)
@@ -221,7 +220,6 @@ class SuggestField(TextField)
 
       if Gui.style.allow_popup(self) & \use_popup_win then {
          # Remove tl from dialog and use add to popup window.
-         self.tl.finally()
          self.parent_dialog.remove(tl)
 
          d := if use_direction == Direction.DOWN then 
@@ -263,7 +261,6 @@ class SuggestField(TextField)
    public close_textlist()
       if /tl.parent_dialog.popup_manager then {
          self.tl.invalidate()
-         self.tl.finally()
          self.parent_dialog.remove(tl)
       } else {
          self.parent_dialog.remove_popup(self.tl.parent_dialog)

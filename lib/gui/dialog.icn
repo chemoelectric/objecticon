@@ -750,7 +750,6 @@ class Dialog(Component)
                                         e.y + win.get_dy() + TOOLTIP_Y_OFFSET)
       self.tooltip_component.set_z(get_top_z())
       self.add(self.tooltip_component)
-      self.tooltip_component.initially()
       self.tooltip_component.resize()
 
       dim := win.get_display_size()
@@ -795,7 +794,6 @@ class Dialog(Component)
       }
 
       if \use_popup_win then {
-         self.tooltip_component.finally()
          self.remove(self.tooltip_component)
          d := PureDialog().
             set_canvas("popup").
@@ -818,7 +816,6 @@ class Dialog(Component)
    private hide_tooltip()
       if self.tooltip_component.parent_dialog === self then {
          self.tooltip_component.invalidate()
-         self.tooltip_component.finally()
          self.remove(self.tooltip_component)
       } else {
          self.tooltip_component.parent_dialog.dispose()

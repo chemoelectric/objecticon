@@ -165,7 +165,6 @@ abstract class DropDown(SelectionList,Component)
          set_selection_on_key_moves(&no).
          set_z(self.parent_dialog.get_top_z())
       self.parent_dialog.add(tl)
-      self.tl.initially()
       self.tl.set_ideal_size(self.w, 
                              max_w,
                              0, max_h)
@@ -202,9 +201,7 @@ abstract class DropDown(SelectionList,Component)
 
       if Gui.style.allow_popup(self) & \use_popup_win then {
          # Remove tl from dialog and use add to popup window.
-         self.tl.finally()
          self.parent_dialog.remove(tl)
-
          d := if use_direction == Direction.DOWN then 
             PureDialog().
                set_canvas("popup").
@@ -262,7 +259,6 @@ abstract class DropDown(SelectionList,Component)
          if self.parent_dialog.focus === tl then
             self.parent_dialog.set_focus(view)
          self.tl.invalidate()
-         self.tl.finally()
          self.parent_dialog.remove(tl)
       } else {
          if /self.parent_dialog.focus then

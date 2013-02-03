@@ -97,7 +97,6 @@ class StockDialog(Dialog)
    public delete_sym(s)
       ldel1(slist, s)
       every stockp.remove(s.gen())
-      every s.gen().finally()
       do_change()
    end
 
@@ -107,7 +106,6 @@ class StockDialog(Dialog)
       put(slist, s := Stock(self, name))
       every stockp.add(s.gen())
       if is_live() then {
-         every s.gen().initially()
          do_change()
       }
    end

@@ -24,16 +24,12 @@ class DynComps(Dialog)
       else
          bn.set_pos(20, b.y + b.h + 10)
       p.add(bn)
-      bn.initially()
       bn.resize()
       change_size()
    end
 
    public on_del(ev)
-      local b
-      b := p.get_children()[-1] | fail
-      p.remove(b)
-      b.finally()
+      p.remove_index(-1)
       change_size()
    end
 

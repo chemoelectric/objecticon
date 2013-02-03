@@ -62,6 +62,8 @@ abstract class MenuComponent(Rect,Connectable)
       /i := 0
       insert(self.children, i, c)
       c.set_parent(self)
+      if is_initialized() then
+         c.initially()
       return self
    end
 
@@ -86,8 +88,12 @@ abstract class MenuComponent(Rect,Connectable)
    # @param i    The index
    #
    public remove_index(i)
-      self.children[i].set_parent(&null)
+      local c
+      c := self.children[i] | fail
+      c.set_parent(&null)
       delete(self.children, i)
+      if is_initialized() then
+         c.finally()
       return self
    end
 
@@ -326,11 +332,12 @@ abstract class MenuComponent(Rect,Connectable)
    # not the label.
    #
    public set_border(b)
-      (\self.border).finally()
-      self.border := b
       if is_initialized() then {
+         (\self.border).finally()
+         self.border := b
          self.border.initially(self.parent_component)
-      }
+      } else
+         self.border := b
       return self
    end
 
@@ -407,7 +414,6 @@ abstract class MenuComponent(Rect,Connectable)
          # Copy attribs of the parent component
          self.temp_win.set_all_wattribs(self.parent_component.get_effective_wattribs())
          pd.add(self.temp_win)
-         self.temp_win.initially()
          self.temp_win.resize()
          self.temp_win.invalidate()
       } else {
@@ -439,7 +445,6 @@ abstract class MenuComponent(Rect,Connectable)
       if /self.temp_win.parent_dialog.popup_manager then {
          self.temp_win.invalidate()
          self.parent_component.parent_dialog.remove(self.temp_win)
-         self.temp_win.finally()
       } else {
          parent_component.parent_dialog.remove_popup(self.temp_win.parent_dialog)
          self.temp_win.parent_dialog.dispose()

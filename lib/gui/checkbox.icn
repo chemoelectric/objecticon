@@ -62,12 +62,13 @@ class CheckBox(Button)
    end
 
    public set_paint(p)
-      (\self.paint).finally()
-      self.paint := p
       if is_initialized() then {
+         (\self.paint).finally()
+         self.paint := p
          self.paint.initially(self, self.accel)
          self.invalidate()
-      }
+      } else
+         self.paint := p
       return self
    end
 

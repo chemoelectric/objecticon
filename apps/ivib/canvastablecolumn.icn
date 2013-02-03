@@ -85,11 +85,13 @@ class CanvasTableColumn(CanvasComponent,TableColumn)
    end
 
    public op_delete()
+      local t
       parent_Canvas.parent_dialog.push_undo()
+      t := self.parent.parent
       self.parent.remove(self)
-      self.parent.parent.resize()
-      self.finally()
-
+      t.get_table_content().invalidate_subject_width()
+      t.layout()
+      t.invalidate()
       parent_Canvas.clear_selections()
       parent_Canvas.set_modified()
       parent_Canvas.invalidate()
