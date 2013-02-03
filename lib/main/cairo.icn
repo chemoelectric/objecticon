@@ -107,6 +107,10 @@ end
 abstract class Pattern()
    protected ptr
 
+   private static init()
+      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+   end
+
    private native set_matrix_impl(xx, yx, xy, yy, x0, y0)
    public set_matrix(m)
       return set_matrix_impl(m.xx, m.yx, m.xy, m.yy, m.x0, m.y0)
@@ -144,13 +148,13 @@ abstract class Pattern()
             to_pattern(t)
          }
    end
-
-   private static init()
-      Class.load_library("./testlib.so")
-   end
 end
 
 abstract class Gradient(Pattern)
+   private static init()
+      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+   end
+
    public native add_color_stop_rgba(offset, r, g, b, a)
 
    public add_color_stop(offset, col)
@@ -161,10 +165,6 @@ abstract class Gradient(Pattern)
                                  c[2] / 65535.0,
                                  c[3] / 65535.0,
                                  c[4] / 65535.0)
-   end
-
-   private static init()
-      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
    end
 end
 
@@ -228,11 +228,11 @@ end
 abstract class Surface()
    protected ptr
 
-   public native close()
-
    private static init()
       Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
    end
+
+   public native close()
 end
 
 class WindowSurface(Surface)
@@ -343,6 +343,10 @@ end
 
 class Context()
    private ptr
+
+   private static init()
+      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+   end
 
    public native move_to(x, y)
    public native rel_move_to(x, y)
@@ -482,10 +486,6 @@ class Context()
    private native get_matrix_impl()
    public get_matrix()
       return Matrix!get_matrix_impl()
-   end
-
-   private static init()
-      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
    end
 
    private static native new_impl(sur)
