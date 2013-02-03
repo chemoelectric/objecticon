@@ -49,6 +49,8 @@ OI_ADD_LIB(dl)
 AX_LIB_MYSQL()
 AX_CHECK_OPENSSL()
 
+AX_CHECK_CAIRO()
+
 AC_FLAG_MSG_NOSIGNAL()
 
 AC_PROG_INSTALL()
@@ -158,6 +160,12 @@ else
 fi
 echo -n "mysql lib              : "
 if test -z "$MYSQL_VERSION"; then
+        echo no
+else
+        echo yes
+fi
+echo -n "cairo lib              : "
+if test -z "$CAIRO_VERSION"; then
         echo no
 else
         echo yes

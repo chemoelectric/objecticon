@@ -1,15 +1,19 @@
 include ../../Makedefs
 
 CFLAGS:=-fPIC $(CFLAGS)
-
 ifeq (@CYGWIN@, yes)
-all :
+  TARGET=
 else
-ifeq (@MYSQL_VERSION@,)
-all : objecticonipclib.so
+  TARGET=objecticonipclib.so
+  ifneq (@MYSQL_VERSION@,)
+    TARGET:=$(TARGET) objecticonmysqllib.so
+  endif
+  ifneq (@CAIRO_VERSION@,)
+    TARGET:=$(TARGET) objecticoncairolib.so
+  endif
+endif
 
-else
-all : objecticonipclib.so objecticonmysqllib.so
+all : $(TARGET)
 
 objecticonmysqllib.so : mysql.o
 	$(CC) $(CFLAGS) $(LDFLAGS) -shared -o objecticonmysqllib.so mysql.o @MYSQL_LDFLAGS@
@@ -18,8 +22,6 @@ mysql.o : mysql.r
 	$(RTT) -h gmysql.h mysql.r
 	$(CC) $(CPPFLAGS) @MYSQL_CFLAGS@ $(CFLAGS) -c mysql.c -o mysql.o
 	$(RM) mysql.c
-endif
-endif
 
 objecticonipclib.so : ipc.o
 	$(CC) $(CFLAGS) $(LDFLAGS) -shared -o objecticonipclib.so ipc.o
@@ -29,8 +31,16 @@ ipc.o : ipc.r
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c ipc.c -o ipc.o
 	$(RM) ipc.c
 
+objecticoncairolib.so : cairo.o
+	$(CC) -shared -fPIC -o objecticoncairolib.so cairo.o @CAIRO_LIBS@
+
+cairo.o : cairo.r
+	$(RTT) -h gcairo.h cairo.r
+	$(CC) @CAIRO_CFLAGS@ $(CPPFLAGS) $(CFLAGS) -fPIC -c cairo.c -o cairo.o
+	$(RM) cairo.c
+
 clean :
-	rm -f *.u *.o *.so *.a mysql.c ipc.c
+	rm -f *.u *.o *.so *.a mysql.c ipc.c cairo.c
 
 etags:
 	$(ETAGS) $(RTLTAGS) *.r *.h

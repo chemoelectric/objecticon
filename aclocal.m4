@@ -1071,3 +1071,43 @@ if test "$withval" != no ; then
 
 fi
 ])
+
+
+AC_DEFUN([AX_CHECK_CAIRO],
+[
+    AC_MSG_CHECKING(if cairo is wanted)
+    AC_ARG_WITH(cairo,
+[  --with-cairo=full paths to cairo.pc and pangocairo.pc
+  --without-cairo to disable cairo usage completely],
+   [
+      if test "$withval" != "no"; then
+         AC_MSG_RESULT(yes)
+         CAIRO_CONFIG="$withval"
+      else
+         AC_MSG_RESULT(no)
+      fi], 
+   [
+       CAIRO_CONFIG="cairo pangocairo"
+       AC_MSG_RESULT(yes)
+   ]
+)
+    unset CAIRO_VERSION CAIRO_CFLAGS CAIRO_LIBS
+    if test -n "$CAIRO_CONFIG"; then
+           AC_MSG_CHECKING([for libcairo library])
+           if pkg-config $CAIRO_CONFIG; then
+              CAIRO_CFLAGS=`pkg-config --cflags $CAIRO_CONFIG`
+              CAIRO_LIBS=`pkg-config --libs $CAIRO_CONFIG`
+              CAIRO_VERSION=`pkg-config --version $CAIRO_CONFIG`
+              AC_DEFINE(HAVE_LIBCAIRO)
+              AC_MSG_RESULT(yes)
+           else
+              AC_MSG_RESULT([no])
+           fi
+    fi
+
+    AC_SUBST(CAIRO_VERSION)
+    AC_SUBST(CAIRO_CFLAGS)
+    AC_SUBST(CAIRO_LIBS)
+
+])
+
