@@ -47,11 +47,11 @@ class Matrix()
    public static const I
 
    private static init()
-      I := Matrix(1, 0, 0, 1, 0, 0)
+      I := Matrix(1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
    end
 
    public static from_translation(tx, ty)
-      return Matrix(1, 0, 0, 1, tx, ty)
+      return Matrix(1.0, 0.0, 0.0, 1.0, tx, ty)
    end
 
    public static from_rotation(r)
@@ -62,7 +62,7 @@ class Matrix()
    end
 
    public static from_scale(sx, sy)
-      return Matrix(sx, 0, 0, sy, 0, 0)
+      return Matrix(sx, 0.0, 0.0, sy, 0.0, 0.0)
    end
 
    public multiply_point(x, y)

@@ -33,10 +33,10 @@ case $CCVER in
     clang*) CFLAGS="$CFLAGS -Wall -Wno-parentheses-equality -Wno-tautological-compare" ;;
 esac
 
-CHECK_XLIB()
-if test "$ac_cv_lib_X11_main" = yes; then
-   CHECK_JPEG()
-   CHECK_PNG()
+AX_CHECK_X11()
+if test "$found_x11" = yes; then
+   AX_CHECK_JPEG()
+   AX_CHECK_PNG()
 fi
 
 CHECK_ZLIB()
@@ -60,10 +60,10 @@ AC_PROG_MAKE_SET()
 AC_SYS_LARGEFILE()
 if test "$enable_largefile" != no; then
         if test "$ac_cv_sys_file_offset_bits" = "64"; then
-                CFLAGS="$CFLAGS -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE=1"
+                CPPFLAGS="$CPPFLAGS -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE=1"
         fi
         if test "$ac_cv_sys_large_files" = "1"; then
-                CFLAGS="$CFLAGS -D_LARGE_FILES=1"
+                CPPFLAGS="$CPPFLAGS -D_LARGE_FILES=1"
         fi
 fi
 
@@ -129,7 +129,7 @@ AC_OUTPUT
 echo "Summary:-"
 echo    "Installation prefix    :" $prefix
 echo -n "X11 graphics           : "
-if test "$ac_cv_lib_X11_main" = yes; then
+if test "$found_x11" = yes; then
         echo yes
         echo -n "jpeg library           : "
         if test "$ac_cv_lib_jpeg_main" = yes; then
@@ -138,7 +138,7 @@ if test "$ac_cv_lib_X11_main" = yes; then
                 echo no
         fi
         echo -n "png library            : "
-        if test -z "$PNG_VERSION"; then
+        if test -z "$found_png"; then
                 echo no
         else
                 echo yes

@@ -32,11 +32,11 @@ ipc.o : ipc.r
 	$(RM) ipc.c
 
 objecticoncairolib.so : cairo.o
-	$(CC) -shared -fPIC -o objecticoncairolib.so cairo.o @CAIRO_LIBS@
+	$(CC) @CAIRO_LDFLAGS@ -shared -fPIC -o objecticoncairolib.so cairo.o @CAIRO_LIBS@
 
 cairo.o : cairo.r
 	$(RTT) -h gcairo.h cairo.r
-	$(CC) @CAIRO_CFLAGS@ $(CPPFLAGS) $(CFLAGS) -fPIC -c cairo.c -o cairo.o
+	$(CC) @CAIRO_CPPFLAGS@ $(CPPFLAGS) $(CFLAGS) -fPIC -c cairo.c -o cairo.o
 	$(RM) cairo.c
 
 clean :

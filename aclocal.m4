@@ -57,224 +57,7 @@ fi
 ])
 
 
-AC_DEFUN([CHECK_FONTCONFIG],
-#
-# Handle user hints
-#
-[AC_MSG_CHECKING(if fontconfig is wanted)
-AC_ARG_WITH(fontconfig,
-[  --with-fontconfig=DIR root directory path of fontconfig installation [defaults to
-                    /usr/local or /usr if not found in /usr/local]
-  --without-fontconfig to disable fontconfig usage completely],
-[if test "$withval" != no ; then
-  AC_MSG_RESULT(yes)
-  FONTCONFIG_HOME="$withval"
-else
-  AC_MSG_RESULT(no)
-fi], [
-AC_MSG_RESULT(yes)
-FONTCONFIG_HOME=/usr/local
-if test ! -f "${FONTCONFIG_HOME}/include/fontconfig/fontconfig.h"
-then
-        FONTCONFIG_HOME=/usr
-fi
-])
-
-#
-# Locate FONTCONFIG, if wanted
-#
-if test -n "${FONTCONFIG_HOME}"
-then
-        FONTCONFIG_OLD_LDFLAGS=$LDFLAGS
-        FONTCONFIG_OLD_CPPFLAGS=$LDFLAGS
-        OI_ADD_LIB_DIR(${FONTCONFIG_HOME}/lib)
-        OI_ADD_INCLUDE_DIR(${FONTCONFIG_HOME}/include)
-        AC_LANG_SAVE
-        AC_LANG_C
-        AC_CHECK_LIB(fontconfig, FcPatternCreate, [fontconfig_cv_libfontconfig=yes], [fontconfig_cv_libfontconfig=no])
-        AC_CHECK_HEADER(fontconfig/fontconfig.h, [fontconfig_cv_fontconfiglib_h=yes], [fontconfig_cv_fontconfiglib_h=no])
-        AC_LANG_RESTORE
-        if test "$fontconfig_cv_libfontconfig" = "yes" -a "$fontconfig_cv_fontconfiglib_h" = "yes"
-        then
-                #
-                # If both library and headers were found, use them
-                #
-                OI_ADD_LIB(fontconfig)
-                AC_MSG_CHECKING(fontconfig in ${FONTCONFIG_HOME})
-                AC_MSG_RESULT(ok)
-        else
-                #
-                # If either header or library was not found, revert and bomb
-                #
-                AC_MSG_CHECKING(fontconfig in ${FONTCONFIG_HOME})
-                LDFLAGS="$FONTCONFIG_OLD_LDFLAGS"
-                CPPFLAGS="$FONTCONFIG_OLD_CPPFLAGS"
-                AC_MSG_RESULT(failed)
-        fi
-fi
-
-])
-
-
-
-
-
-
-AC_DEFUN([CHECK_FREETYPE],
-#
-# Handle user hints
-#
-[AC_MSG_CHECKING(if freetype is wanted)
-AC_ARG_WITH(freetype,
-[  --with-freetype=DIR root directory path of freetype installation
-  --without-freetype to disable freetype usage completely],
-[if test "$withval" != no ; then
-  AC_MSG_RESULT(yes)
-  FREETYPE_HOME="$withval"
-else
-  AC_MSG_RESULT(no)
-fi], 
-[
-AC_MSG_RESULT(yes)
-for i in /usr /usr/local ; do
-    if test -f "$i/include/freetype2/freetype/freetype.h"; then
-          FREETYPE_HOME="$i"
-    fi
-done
-])
-#
-# Locate freetype, if wanted
-#
-if test -n "${FREETYPE_HOME}"
-then
-	FREETYPE_OLD_LDFLAGS=$LDFLAGS
-	FREETYPE_OLD_CPPFLAGS=$CPPFLAGS
-        OI_ADD_LIB_DIR(${FREETYPE_HOME}/lib64)
-        OI_ADD_LIB_DIR(${FREETYPE_HOME}/lib)
-        OI_ADD_INCLUDE_DIR(${FREETYPE_HOME}/include/freetype2)
-        AC_LANG_SAVE
-        AC_LANG_C
-        AC_CHECK_LIB(freetype, FT_Open_Face, [freetype_cv_libfreetype=yes], [freetype_cv_libfreetype=no])
-        AC_CHECK_HEADER(freetype/config/ftheader.h, [freetype_cv_ftheader_h=yes], [freetype_cv_ftheader_h=no])
-        AC_LANG_RESTORE
-        if test "$freetype_cv_libfreetype" = "yes" -a "$freetype_cv_ftheader_h" = "yes"
-        then
-                #
-                # If both library and header were found, use them
-                #
-                OI_ADD_LIB(freetype)
-                AC_MSG_CHECKING(freetype in ${FREETYPE_HOME})
-                AC_MSG_RESULT(ok)
-        else
-                #
-                # If either header or library was not found, revert and bomb
-                #
-                AC_MSG_CHECKING(freetype in ${FREETYPE_HOME})
-		LDFLAGS="$FREETYPE_OLD_LDFLAGS"
-		CPPFLAGS="$FREETYPE_OLD_CPPFLAGS"
-                AC_MSG_RESULT(failed)
-        fi
-fi
-
-])
-
-AC_DEFUN([CHECK_XLIB],
-#
-# Handle user hints
-#
-[AC_MSG_CHECKING(if xlib is wanted)
-AC_ARG_WITH(xlib,
-[  --with-xlib=DIR root directory path of xlib installation [defaults to
-          /usr/X11 or /usr/X11R6 or /usr/openwin if not found in /usr/X11]
-  --without-xlib to disable xlib usage completely],
-[if test "$withval" != no ; then
-  AC_MSG_RESULT(yes)
-  XLIB_HOME="$withval"
-else
-  AC_MSG_RESULT(no)
-fi], [
-AC_MSG_RESULT(yes)
-XLIB_HOME=/usr/X11
-if test ! -f "${XLIB_HOME}/include/X11/Xlib.h"
-then
-        XLIB_HOME=/usr/X11R6
-	if test ! -f "${XLIB_HOME}/include/X11/Xlib.h"
-	then
-	        XLIB_HOME=/usr/openwin
-	fi
-fi
-])
-
-#
-# Locate Xlib, if wanted
-#
-if test -n "${XLIB_HOME}"
-then
-        XLIB_OLD_LDFLAGS=$LDFLAGS
-        XLIB_OLD_CPPFLAGS=$LDFLAGS
-        OI_ADD_LIB_DIR(${XLIB_HOME}/lib)
-        OI_ADD_INCLUDE_DIR(${XLIB_HOME}/include)
-        AC_LANG_SAVE
-        AC_LANG_C
-        AC_CHECK_LIB(X11, XAllocColorCells, [xlib_cv_libx=yes], [xlib_cv_libx=no])
-        AC_CHECK_HEADER(X11/Xlib.h, [xlib_cv_xlib_h=yes], [xlib_cv_xlib_h=no])
-        AC_CHECK_HEADER(X11/Xos.h, [xlib_cv_xos_h=yes], [xlib_cv_xos_h=no])
-        AC_CHECK_HEADER(X11/Xutil.h, [xlib_cv_xutil_h=yes], [xlib_cv_xutil_h=no])
-        AC_CHECK_HEADER(X11/Xatom.h, [xlib_cv_xatom_h=yes], [xlib_cv_xatom_h=no])
-        AC_LANG_RESTORE
-        CHECK_XRENDER()
-        CHECK_XFT()
-
-        # Output some helpful messages if any requisite X11 bits are absent.
-        if test "$xlib_cv_libx" = "yes" -a "$xlib_cv_xlib_h" = "yes" -a \
-                "$xlib_cv_xos_h" = "yes" -a "$xlib_cv_xutil_h" = "yes" -a "$xlib_cv_xatom_h" = "yes"
-        then
-                if test "$xft_cv_xft_h" != "yes" -o "$xft_cv_libxft" != "yes"
-                then
-                        echo "*** X11 requires Xft"
-                fi
-                if test "$xrender_cv_xrender_h" != "yes" -o "$xrender_cv_libxrender" != "yes"
-                then
-                        echo "*** X11 requires Xrender"
-                fi
-                if test "$freetype_cv_ftheader_h" != "yes" -o "$freetype_cv_libfreetype" != "yes" 
-                then
-                        echo "*** X11 requires freetype"
-                fi
-                if test "$fontconfig_cv_fontconfiglib_h" != "yes" -o "$fontconfig_cv_libfontconfig" != "yes" 
-                then
-                        echo "*** X11 requires fontconfig"
-                fi
-        fi
-
-        if test "$xlib_cv_libx" = "yes" -a "$xlib_cv_xlib_h" = "yes" -a \
-                "$xlib_cv_xos_h" = "yes" -a "$xlib_cv_xutil_h" = "yes" -a "$xlib_cv_xatom_h" = "yes" -a \
-                "$xft_cv_xft_h" = "yes" -a "$xft_cv_libxft" = "yes" -a \
-                "$xrender_cv_xrender_h" = "yes" -a "$xrender_cv_libxrender" = "yes" -a \
-                "$freetype_cv_ftheader_h" = "yes" -a "$freetype_cv_libfreetype" = "yes" -a \
-                "$fontconfig_cv_fontconfiglib_h" = "yes" -a "$fontconfig_cv_libfontconfig" = "yes"
-        then
-                #
-                # If all library and header files were found, use X11
-                #
-                OI_ADD_LIB(X11)
-                AC_MSG_CHECKING(xlib in ${XLIB_HOME})
-                AC_MSG_RESULT(ok)
-        else
-                #
-                # If something needed was not found, revert and bomb
-                #
-                AC_MSG_CHECKING(xlib in ${XLIB_HOME})
-                LDFLAGS="$XLIB_OLD_LDFLAGS"
-                CPPFLAGS="$XLIB_OLD_CPPFLAGS"
-                AC_MSG_RESULT(failed)
-        fi
-fi
-
-])
-
-
-AC_DEFUN([CHECK_JPEG],
+AC_DEFUN([AX_CHECK_JPEG],
 #
 # Handle user hints
 #
@@ -303,7 +86,7 @@ fi
 if test -n "${JPEG_HOME}"
 then
         JPEG_OLD_LDFLAGS=$LDFLAGS
-        JPEG_OLD_CPPFLAGS=$LDFLAGS
+        JPEG_OLD_CPPFLAGS=$CPPFLAGS
         OI_ADD_LIB_DIR(${JPEG_HOME}/lib)
         OI_ADD_INCLUDE_DIR(${JPEG_HOME}/include)
         AC_LANG_SAVE
@@ -333,55 +116,6 @@ fi
 
 ])
 
-
-
-
-AC_DEFUN([CHECK_PNG],
-[
-    AC_MSG_CHECKING(if png is wanted)
-    AC_ARG_WITH(png,
-[  --with-png=path of libpng-config program
-  --without-png to disable png usage completely],
-   [
-      if test "$withval" != "no"; then
-         AC_MSG_RESULT(yes)
-         PNG_CONFIG="$withval"
-      else
-         AC_MSG_RESULT(no)
-      fi], 
-   [
-       AC_MSG_RESULT(yes)
-       AC_PATH_PROG([PNG_CONFIG], [libpng-config], [])
-   ]
-)
-
-    if test -n "$PNG_CONFIG"; then
-           AC_MSG_CHECKING([for libpng library])
-
-           PNG_VERSION=""
-           PNG_VERSION=`$PNG_CONFIG --version`
-           if test -n "$PNG_VERSION"; then
-               AX_COMPARE_VERSION([$PNG_VERSION],[ge],[1.2.37], [ver_ok=yes], [ver_ok=no])
-               if test "$ver_ok" = "yes"; then
-                    AC_MSG_RESULT([yes])
-                    OI_ADD_LIB(png)
-                    PNG_LIB_DIR=`$PNG_CONFIG --libdir`
-                    OI_ADD_LIB_DIR($PNG_LIB_DIR)
-                    PNG_INCLUDE_DIR=`$PNG_CONFIG --I_opts`
-                    if test "$PNG_INCLUDE_DIR" != "-I/usr/include"; then
-                       CPPFLAGS="$CPPFLAGS $PNG_INCLUDE_DIR"
-                    fi
-                    AC_DEFINE(HAVE_LIBPNG)
-               else
-                    AC_MSG_RESULT([no])
-                    echo "*** At least version 1.2.37 of libpng is required for png support (currently have $PNG_VERSION)"
-                    PNG_VERSION=""
-               fi
-           else
-               AC_MSG_RESULT([no])
-           fi
-    fi
-])
 
 
 AC_DEFUN([AC_STRUCT_TIMEZONE_GMTOFF],
@@ -468,194 +202,6 @@ done
 
 
 
-
-AC_DEFUN([CHECK_XRENDER],
-#
-# Handle user hints
-#
-[AC_MSG_CHECKING(if xrender is wanted)
-AC_ARG_WITH(xrender,
-[  --with-xrender=DIR root directory path of Xrender installation
-  --without-xrender to disable xrender usage completely],
-[if test "$withval" != no ; then
-  AC_MSG_RESULT(yes)
-  XRENDER_HOME="$withval"
-else
-  AC_MSG_RESULT(no)
-fi], [
-AC_MSG_RESULT(yes)
-XRENDER_HOME=/usr/local
-if test ! -f "${XRENDER_HOME}/include/X11/extensions/Xrender.h"
-then
-        XRENDER_HOME=/usr
-fi
-])
-#
-# Locate XRENDER, if wanted
-#
-if test -n "${XRENDER_HOME}"
-then
-	XRENDER_OLD_LDFLAGS=$LDFLAGS
-	XRENDER_OLD_CPPFLAGS=$CPPFLAGS
-        OI_ADD_LIB_DIR(${XRENDER_HOME}/lib64)
-        OI_ADD_LIB_DIR(${XRENDER_HOME}/lib)
-        OI_ADD_INCLUDE_DIR(${XRENDER_HOME}/include)
-        AC_LANG_SAVE
-        AC_LANG_C
-        AC_CHECK_LIB(Xrender, XRenderQueryExtension, [xrender_cv_libxrender=yes], [xrender_cv_libxrender=no])
-        AC_CHECK_HEADER(X11/extensions/Xrender.h, [xrender_cv_xrender_h=yes], [xrender_cv_xrender_h=no])
-        AC_LANG_RESTORE
-        if test "$xrender_cv_libxrender" = "yes" -a "$xrender_cv_xrender_h" = "yes"
-        then
-                #
-                # If both library and header were found, use them
-                #
-                OI_ADD_LIB(Xrender)
-                AC_MSG_CHECKING(XRENDER in ${XRENDER_HOME})
-                AC_MSG_RESULT(ok)
-        else
-                #
-                # If either header or library was not found, revert and bomb
-                #
-                AC_MSG_CHECKING(XRENDER in ${XRENDER_HOME})
-		LDFLAGS="$XRENDER_OLD_LDFLAGS"
-		CPPFLAGS="$XRENDER_OLD_CPPFLAGS"
-                AC_MSG_RESULT(failed)
-        fi
-fi
-
-])
-
-
-
-
-AC_DEFUN([CHECK_XFT],
-#
-# Handle user hints
-#
-[AC_MSG_CHECKING(if xft is wanted)
-AC_ARG_WITH(xft,
-[  --with-xft=DIR root directory path of Xft installation
-  --without-xft to disable xft usage completely],
-[if test "$withval" != no ; then
-  AC_MSG_RESULT(yes)
-  XFT_HOME="$withval"
-else
-  AC_MSG_RESULT(no)
-fi], [
-AC_MSG_RESULT(yes)
-XFT_HOME=/usr/local
-if test ! -f "${XFT_HOME}/include/X11/Xft/Xft.h"
-then
-        XFT_HOME=/usr
-fi
-])
-#
-# Locate XFT, if wanted
-#
-if test -n "${XFT_HOME}"
-then
-        # Xft needs both freetype and fontconfig.
-        CHECK_FREETYPE()
-        CHECK_FONTCONFIG()
-	XFT_OLD_LDFLAGS=$LDFLAGS
-	XFT_OLD_CPPFLAGS=$CPPFLAGS
-        OI_ADD_LIB_DIR(${XFT_HOME}/lib64)
-        OI_ADD_LIB_DIR(${XFT_HOME}/lib)
-        OI_ADD_INCLUDE_DIR(${XFT_HOME}/include)
-        AC_LANG_SAVE
-        AC_LANG_C
-        AC_CHECK_LIB(Xft, XftFontOpen, [xft_cv_libxft=yes], [xft_cv_libxft=no])
-        AC_CHECK_HEADER(X11/Xft/Xft.h, [xft_cv_xft_h=yes], [xft_cv_xft_h=no])
-        AC_LANG_RESTORE
-        if test "$xft_cv_libxft" = "yes" -a "$xft_cv_xft_h" = "yes"
-        then
-                #
-                # If both library and header were found, use them
-                #
-                OI_ADD_LIB(Xft)
-                AC_MSG_CHECKING(XFT in ${XFT_HOME})
-                AC_MSG_RESULT(ok)
-        else
-                #
-                # If either header or library was not found, revert and bomb
-                #
-                AC_MSG_CHECKING(XFT in ${XFT_HOME})
-		LDFLAGS="$XFT_OLD_LDFLAGS"
-		CPPFLAGS="$XFT_OLD_CPPFLAGS"
-                AC_MSG_RESULT(failed)
-        fi
-fi
-
-])
-
-
-
-
-
-
-
-AC_DEFUN([CHECK_XPM],
-#
-# Handle user hints
-#
-[AC_MSG_CHECKING(if xpm is wanted)
-AC_ARG_WITH(xpm,
-[  --with-xpm=DIR root directory path of Xpm installation
-  --without-xpm to disable xpm usage completely],
-[if test "$withval" != no ; then
-  AC_MSG_RESULT(yes)
-  XPM_HOME="$withval"
-else
-  AC_MSG_RESULT(no)
-fi], [
-AC_MSG_RESULT(yes)
-XPM_HOME=/usr/local
-if test ! -f "${XPM_HOME}/include/X11/xpm.h"
-then
-        XPM_HOME=/usr
-fi
-])
-#
-# Locate XPM, if wanted
-#
-if test -n "${XPM_HOME}"
-then
-	XPM_OLD_LDFLAGS=$LDFLAGS
-	XPM_OLD_CPPFLAGS=$CPPFLAGS
-        OI_ADD_LIB_DIR(${XPM_HOME}/lib64)
-        OI_ADD_LIB_DIR(${XPM_HOME}/lib)
-        OI_ADD_INCLUDE_DIR(${XPM_HOME}/include)
-        AC_LANG_SAVE
-        AC_LANG_C
-        AC_CHECK_LIB(Xpm, XpmReadFileToPixmap, [xpm_rf_libxpm=yes], [xpm_rf_libxpm=no])
-        AC_CHECK_HEADER(X11/xpm.h, [xpm_rf_xpm_h=yes], [xpm_rf_xpm_h=no])
-        AC_LANG_RESTORE
-        if test "$xpm_rf_libxpm" = "yes" -a "$xpm_rf_xpm_h" = "yes"
-        then
-                #
-                # If both library and header were found, use them
-                #
-                OI_ADD_LIB(Xpm)
-                AC_MSG_CHECKING(XPM in ${XPM_HOME})
-                AC_MSG_RESULT(ok)
-        else
-                #
-                # If either header or library was not found, revert and bomb
-                #
-                AC_MSG_CHECKING(XPM in ${XPM_HOME})
-		LDFLAGS="$XPM_OLD_LDFLAGS"
-		CPPFLAGS="$XPM_OLD_CPPFLAGS"
-                AC_MSG_RESULT(failed)
-        fi
-fi
-
-])
-
-
-
-
-
 AC_DEFUN([AX_LIB_MYSQL],
 [
     AC_MSG_CHECKING(if mysql is wanted)
@@ -675,9 +221,7 @@ AC_DEFUN([AX_LIB_MYSQL],
    ]
 )
 
-    MYSQL_CFLAGS=""
-    MYSQL_LDFLAGS=""
-    MYSQL_VERSION=""
+    unset MYSQL_CFLAGS MYSQL_LDFLAGS MYSQL_VERSION
     if test -n "$MYSQL_CONFIG"; then
             AC_MSG_CHECKING([for MySQL libraries])
 
@@ -780,299 +324,6 @@ AC_DEFUN([CHECK_COMPUTED_GOTO],
 
 
 
-dnl @synopsis AX_COMPARE_VERSION(VERSION_A, OP, VERSION_B, [ACTION-IF-TRUE], [ACTION-IF-FALSE])
-dnl
-dnl This macro compares two version strings. It is used heavily in the
-dnl macro _AX_PATH_BDB for library checking. Due to the various number
-dnl of minor-version numbers that can exist, and the fact that string
-dnl comparisons are not compatible with numeric comparisons, this is
-dnl not necessarily trivial to do in a autoconf script. This macro
-dnl makes doing these comparisons easy.
-dnl
-dnl The six basic comparisons are available, as well as checking
-dnl equality limited to a certain number of minor-version levels.
-dnl
-dnl The operator OP determines what type of comparison to do, and can
-dnl be one of:
-dnl
-dnl  eq  - equal (test A == B)
-dnl  ne  - not equal (test A != B)
-dnl  le  - less than or equal (test A <= B)
-dnl  ge  - greater than or equal (test A >= B)
-dnl  lt  - less than (test A < B)
-dnl  gt  - greater than (test A > B)
-dnl
-dnl Additionally, the eq and ne operator can have a number after it to
-dnl limit the test to that number of minor versions.
-dnl
-dnl  eq0 - equal up to the length of the shorter version
-dnl  ne0 - not equal up to the length of the shorter version
-dnl  eqN - equal up to N sub-version levels
-dnl  neN - not equal up to N sub-version levels
-dnl
-dnl When the condition is true, shell commands ACTION-IF-TRUE are run,
-dnl otherwise shell commands ACTION-IF-FALSE are run. The environment
-dnl variable 'ax_compare_version' is always set to either 'true' or
-dnl 'false' as well.
-dnl
-dnl Examples:
-dnl
-dnl   AX_COMPARE_VERSION([3.15.7],[lt],[3.15.8])
-dnl   AX_COMPARE_VERSION([3.15],[lt],[3.15.8])
-dnl
-dnl would both be true.
-dnl
-dnl   AX_COMPARE_VERSION([3.15.7],[eq],[3.15.8])
-dnl   AX_COMPARE_VERSION([3.15],[gt],[3.15.8])
-dnl
-dnl would both be false.
-dnl
-dnl   AX_COMPARE_VERSION([3.15.7],[eq2],[3.15.8])
-dnl
-dnl would be true because it is only comparing two minor versions.
-dnl
-dnl   AX_COMPARE_VERSION([3.15.7],[eq0],[3.15])
-dnl
-dnl would be true because it is only comparing the lesser number of
-dnl minor versions of the two values.
-dnl
-dnl Note: The characters that separate the version numbers do not
-dnl matter. An empty string is the same as version 0. OP is evaluated
-dnl by autoconf, not configure, so must be a string, not a variable.
-dnl
-dnl The author would like to acknowledge Guido Draheim whose advice
-dnl about the m4_case and m4_ifvaln functions make this macro only
-dnl include the portions necessary to perform the specific comparison
-dnl specified by the OP argument in the final configure script.
-dnl
-dnl @category Misc
-dnl @author Tim Toolan <toolan@ele.uri.edu>
-dnl @version 2004-03-01
-dnl @license GPLWithACException
-
-dnl #########################################################################
-AC_DEFUN([AX_COMPARE_VERSION], [
-  # Used to indicate true or false condition
-  ax_compare_version=false
-
-  # Convert the two version strings to be compared into a format that
-  # allows a simple string comparison.  The end result is that a version
-  # string of the form 1.12.5-r617 will be converted to the form
-  # 0001001200050617.  In other words, each number is zero padded to four
-  # digits, and non digits are removed.
-  AS_VAR_PUSHDEF([A],[ax_compare_version_A])
-  A=`echo "$1" | sed -e 's/\([[0-9]]*\)/Z\1Z/g' \
-                     -e 's/Z\([[0-9]]\)Z/Z0\1Z/g' \
-                     -e 's/Z\([[0-9]][[0-9]]\)Z/Z0\1Z/g' \
-                     -e 's/Z\([[0-9]][[0-9]][[0-9]]\)Z/Z0\1Z/g' \
-                     -e 's/[[^0-9]]//g'`
-
-  AS_VAR_PUSHDEF([B],[ax_compare_version_B])
-  B=`echo "$3" | sed -e 's/\([[0-9]]*\)/Z\1Z/g' \
-                     -e 's/Z\([[0-9]]\)Z/Z0\1Z/g' \
-                     -e 's/Z\([[0-9]][[0-9]]\)Z/Z0\1Z/g' \
-                     -e 's/Z\([[0-9]][[0-9]][[0-9]]\)Z/Z0\1Z/g' \
-                     -e 's/[[^0-9]]//g'`
-
-  dnl # In the case of le, ge, lt, and gt, the strings are sorted as necessary
-  dnl # then the first line is used to determine if the condition is true.
-  dnl # The sed right after the echo is to remove any indented white space.
-  m4_case(m4_tolower($2),
-  [lt],[
-    ax_compare_version=`echo "x$A
-x$B" | sed 's/^ *//' | sort -r | sed "s/x${A}/false/;s/x${B}/true/;1q"`
-  ],
-  [gt],[
-    ax_compare_version=`echo "x$A
-x$B" | sed 's/^ *//' | sort | sed "s/x${A}/false/;s/x${B}/true/;1q"`
-  ],
-  [le],[
-    ax_compare_version=`echo "x$A
-x$B" | sed 's/^ *//' | sort | sed "s/x${A}/true/;s/x${B}/false/;1q"`
-  ],
-  [ge],[
-    ax_compare_version=`echo "x$A
-x$B" | sed 's/^ *//' | sort -r | sed "s/x${A}/true/;s/x${B}/false/;1q"`
-  ],[
-    dnl Split the operator from the subversion count if present.
-    m4_bmatch(m4_substr($2,2),
-    [0],[
-      # A count of zero means use the length of the shorter version.
-      # Determine the number of characters in A and B.
-      ax_compare_version_len_A=`echo "$A" | awk '{print(length)}'`
-      ax_compare_version_len_B=`echo "$B" | awk '{print(length)}'`
-
-      # Set A to no more than B's length and B to no more than A's length.
-      A=`echo "$A" | sed "s/\(.\{$ax_compare_version_len_B\}\).*/\1/"`
-      B=`echo "$B" | sed "s/\(.\{$ax_compare_version_len_A\}\).*/\1/"`
-    ],
-    [[0-9]+],[
-      # A count greater than zero means use only that many subversions
-      A=`echo "$A" | sed "s/\(\([[0-9]]\{4\}\)\{m4_substr($2,2)\}\).*/\1/"`
-      B=`echo "$B" | sed "s/\(\([[0-9]]\{4\}\)\{m4_substr($2,2)\}\).*/\1/"`
-    ],
-    [.+],[
-      AC_WARNING(
-        [illegal OP numeric parameter: $2])
-    ],[])
-
-    # Pad zeros at end of numbers to make same length.
-    ax_compare_version_tmp_A="$A`echo $B | sed 's/./0/g'`"
-    B="$B`echo $A | sed 's/./0/g'`"
-    A="$ax_compare_version_tmp_A"
-
-    # Check for equality or inequality as necessary.
-    m4_case(m4_tolower(m4_substr($2,0,2)),
-    [eq],[
-      test "x$A" = "x$B" && ax_compare_version=true
-    ],
-    [ne],[
-      test "x$A" != "x$B" && ax_compare_version=true
-    ],[
-      AC_WARNING([illegal OP parameter: $2])
-    ])
-  ])
-
-  AS_VAR_POPDEF([A])dnl
-  AS_VAR_POPDEF([B])dnl
-
-  dnl # Execute ACTION-IF-TRUE / ACTION-IF-FALSE.
-  if test "$ax_compare_version" = "true" ; then
-    m4_ifvaln([$4],[$4],[:])dnl
-    m4_ifvaln([$5],[else $5])dnl
-  fi
-]) dnl AX_COMPARE_VERSION
-
-
-
-
-
-# ===========================================================================
-#     http://www.gnu.org/software/autoconf-archive/ax_check_openssl.html
-# ===========================================================================
-#
-# SYNOPSIS
-#
-#   AX_CHECK_OPENSSL([action-if-found[, action-if-not-found]])
-#
-# DESCRIPTION
-#
-#   Look for OpenSSL in a number of default spots, or in a user-selected
-#   spot (via --with-openssl).  Sets
-#
-#     OPENSSL_INCLUDES to the include directives required
-#     OPENSSL_LIBS to the -l directives required
-#     OPENSSL_LDFLAGS to the -L or -R flags required
-#
-#   and calls ACTION-IF-FOUND or ACTION-IF-NOT-FOUND appropriately
-#
-#   This macro sets OPENSSL_INCLUDES such that source files should use the
-#   openssl/ directory in include directives:
-#
-#     #include <openssl/hmac.h>
-#
-# LICENSE
-#
-#   Copyright (c) 2009,2010 Zmanda Inc. <http://www.zmanda.com/>
-#   Copyright (c) 2009,2010 Dustin J. Mitchell <dustin@zmanda.com>
-#
-#   Copying and distribution of this file, with or without modification, are
-#   permitted in any medium without royalty provided the copyright notice
-#   and this notice are preserved. This file is offered as-is, without any
-#   warranty.
-
-#serial 7
-
-AC_DEFUN([AX_CHECK_OPENSSL], [
-    found=false
-    AC_MSG_CHECKING(if OpenSSL is wanted)
-    AC_ARG_WITH(openssl,
-        [  --with-openssl=DIR root of the OpenSSL directory
-  --without-openssl to disable OpenSSL usage completely],
-
-[if test "$withval" != no ; then
-  AC_MSG_RESULT(yes)
-  ssldirs="$withval"
-else
-  AC_MSG_RESULT(no)
-fi], 
-       [
-AC_MSG_RESULT(yes)
-           unset withval
-            # if pkg-config is installed and openssl has installed a .pc file,
-            # then use that information and don't search ssldirs
-            AC_PATH_PROG(PKG_CONFIG, pkg-config)
-            if test x"$PKG_CONFIG" != x""; then
-                OPENSSL_LDFLAGS=`$PKG_CONFIG openssl --libs-only-L 2>/dev/null`
-                if test $? = 0; then
-                    OPENSSL_LIBS=`$PKG_CONFIG openssl --libs-only-l 2>/dev/null`
-                    OPENSSL_INCLUDES=`$PKG_CONFIG openssl --cflags-only-I 2>/dev/null`
-                    found=true
-                fi
-            fi
-
-            # no such luck; use some default ssldirs
-            if ! $found; then
-                ssldirs="/usr/local/ssl /usr/lib/ssl /usr/ssl /usr/pkg /usr/local /usr"
-            fi
-        ]
-        )
-
-
-    # note that we #include <openssl/foo.h>, so the OpenSSL headers have to be in
-    # an 'openssl' subdirectory
-if test "$withval" != no ; then
-
-    if ! $found; then
-        OPENSSL_INCLUDES=
-        for ssldir in $ssldirs; do
-            AC_MSG_CHECKING([for openssl/ssl.h in $ssldir])
-            if test -f "$ssldir/include/openssl/ssl.h"; then
-                OPENSSL_INCLUDES="-I$ssldir/include"
-                OPENSSL_LDFLAGS="-L$ssldir/lib"
-                OPENSSL_LIBS="-lssl -lcrypto"
-                found=true
-                AC_MSG_RESULT([yes])
-                break
-            else
-                AC_MSG_RESULT([no])
-            fi
-        done
-
-        # if the file wasn't found, well, go ahead and try the link anyway -- maybe
-        # it will just work!
-    fi
-
-    # try the preprocessor and linker with our new flags,
-    # being careful not to pollute the global LIBS, LDFLAGS, and CPPFLAGS
-
-    AC_MSG_CHECKING([whether compiling and linking against OpenSSL works])
-    echo "Trying link with OPENSSL_LDFLAGS=$OPENSSL_LDFLAGS;" \
-        "OPENSSL_LIBS=$OPENSSL_LIBS; OPENSSL_INCLUDES=$OPENSSL_INCLUDES" >&AS_MESSAGE_LOG_FD
-
-    save_LIBS="$LIBS"
-    save_LDFLAGS="$LDFLAGS"
-    save_CPPFLAGS="$CPPFLAGS"
-    LDFLAGS="$LDFLAGS $OPENSSL_LDFLAGS"
-    LIBS="$OPENSSL_LIBS $LIBS"
-    CPPFLAGS="$OPENSSL_INCLUDES $CPPFLAGS"
-    AC_LINK_IFELSE(
-        [AC_LANG_PROGRAM([#include <openssl/ssl.h>], [SSL_new(NULL)])],
-        [
-            AC_DEFINE(HAVE_LIBOPENSSL)
-            AC_MSG_RESULT([yes])
-            found_openssl=yes
-        ], [
-            AC_MSG_RESULT([no])
-            CPPFLAGS="$save_CPPFLAGS"
-            LDFLAGS="$save_LDFLAGS"
-            LIBS="$save_LIBS"
-        ])
-
-fi
-])
-
-
 AC_DEFUN([AX_CHECK_CAIRO],
 [
     AC_MSG_CHECKING(if cairo is wanted)
@@ -1095,8 +346,9 @@ AC_DEFUN([AX_CHECK_CAIRO],
     if test -n "$CAIRO_CONFIG"; then
            AC_MSG_CHECKING([for libcairo library])
            if pkg-config $CAIRO_CONFIG; then
-              CAIRO_CFLAGS=`pkg-config --cflags $CAIRO_CONFIG`
-              CAIRO_LIBS=`pkg-config --libs $CAIRO_CONFIG`
+              CAIRO_CPPFLAGS=`pkg-config --cflags $CAIRO_CONFIG`
+              CAIRO_LDFLAGS=`pkg-config --libs-only-L $CAIRO_CONFIG`
+              CAIRO_LIBS=`pkg-config --libs-only-l $CAIRO_CONFIG`
               CAIRO_VERSION=`pkg-config --version $CAIRO_CONFIG`
               AC_DEFINE(HAVE_LIBCAIRO)
               AC_MSG_RESULT(yes)
@@ -1106,8 +358,114 @@ AC_DEFUN([AX_CHECK_CAIRO],
     fi
 
     AC_SUBST(CAIRO_VERSION)
-    AC_SUBST(CAIRO_CFLAGS)
+    AC_SUBST(CAIRO_LDFLAGS)
+    AC_SUBST(CAIRO_CPPFLAGS)
     AC_SUBST(CAIRO_LIBS)
 
 ])
 
+AC_DEFUN([AX_CHECK_OPENSSL],
+[
+    AC_MSG_CHECKING(if OpenSSL is wanted)
+    AC_ARG_WITH(openssl,
+        [  --with-openssl=path to open ssl .pc file
+  --without-openssl to disable OpenSSL usage completely],
+   [
+      if test "$withval" != "no"; then
+         AC_MSG_RESULT(yes)
+         OPENSSL_CONFIG="$withval"
+      else
+         AC_MSG_RESULT(no)
+      fi], 
+   [
+       OPENSSL_CONFIG="openssl"
+       AC_MSG_RESULT(yes)
+   ]
+)
+    if test -n "$OPENSSL_CONFIG"; then
+           AC_MSG_CHECKING([for libOpenSSL library])
+           if pkg-config $OPENSSL_CONFIG; then
+              CPPFLAGS="$CPPFLAGS `pkg-config --cflags $OPENSSL_CONFIG`"
+              LDFLAGS="$LDFLAGS `pkg-config --libs-only-L $OPENSSL_CONFIG`"
+              LIBS="$LIBS `pkg-config --libs-only-l $OPENSSL_CONFIG`"
+              AC_DEFINE(HAVE_LIBOPENSSL)
+              AC_MSG_RESULT(yes)
+              found_openssl=yes
+           else
+              AC_MSG_RESULT([no])
+           fi
+    fi
+])
+
+
+
+AC_DEFUN([AX_CHECK_PNG],
+[
+    AC_MSG_CHECKING(if png is wanted)
+    AC_ARG_WITH(png,
+[  --with-png=path to libpng .pc file
+  --without-png to disable png usage completely],
+   [
+      if test "$withval" != "no"; then
+         AC_MSG_RESULT(yes)
+         PNG_CONFIG="$withval"
+      else
+         AC_MSG_RESULT(no)
+      fi], 
+   [
+       PNG_CONFIG="libpng"
+       AC_MSG_RESULT(yes)
+   ]
+)
+
+    if test -n "$PNG_CONFIG"; then
+           AC_MSG_CHECKING([for libpng library >= 1.2.37])
+           if pkg-config --atleast-version=1.2.37 $PNG_CONFIG; then
+              CPPFLAGS="$CPPFLAGS `pkg-config --cflags $PNG_CONFIG`"
+              LDFLAGS="$LDFLAGS `pkg-config --libs-only-L $PNG_CONFIG`"
+              LIBS="$LIBS `pkg-config --libs-only-l $PNG_CONFIG`"
+              AC_DEFINE(HAVE_LIBPNG)
+              AC_MSG_RESULT(yes)
+              found_png=yes
+           else
+              AC_MSG_RESULT([no])
+           fi
+    fi
+])
+
+
+
+
+AC_DEFUN([AX_CHECK_X11],
+[
+    AC_MSG_CHECKING(if X11 graphics are wanted)
+    AC_ARG_WITH(png,
+[  --with-X11=paths to x11 xrender xft fontconfig freetype2 .pc files
+  --without-X11 to disable X11 usage completely],
+   [
+      if test "$withval" != "no"; then
+         AC_MSG_RESULT(yes)
+         X11_CONFIG="$withval"
+      else
+         AC_MSG_RESULT(no)
+      fi], 
+   [
+       X11_CONFIG="x11 xrender xft fontconfig freetype2"
+       AC_MSG_RESULT(yes)
+   ]
+)
+
+    if test -n "$X11_CONFIG"; then
+           AC_MSG_CHECKING([for x11, xrender, xft, fontconfig, freetype2 ])
+           if pkg-config $X11_CONFIG; then
+              CPPFLAGS="$CPPFLAGS `pkg-config --cflags $X11_CONFIG`"
+              LDFLAGS="$LDFLAGS `pkg-config --libs-only-L $X11_CONFIG`"
+              LIBS="$LIBS `pkg-config --libs-only-l $X11_CONFIG`"
+              AC_DEFINE(HAVE_LIBX11)
+              AC_MSG_RESULT(yes)
+              found_x11=yes
+           else
+              AC_MSG_RESULT([no])
+           fi
+    fi
+])
