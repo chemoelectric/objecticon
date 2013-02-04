@@ -10,6 +10,7 @@ import
    io,
    net,
    xml,
+   posix,
    ipl.pdco,
    ipl.sort,
    ipl.strings,
@@ -197,8 +198,22 @@ class Worker()
       return map(x[1])
    end
 
+   private static grname(gid, cache)
+      local s
+      (s := member(cache, gid)) | insert(cache, gid, s := (System.getgr(gid).name | gid))
+      return s
+   end
+
+   private static uname(uid, cache)
+      local s
+      (s := member(cache, uid)) | insert(cache, uid, s := (System.getpw(uid).name | uid))
+      return s
+   end
+
    private cvt_file(f)
-      local e, l, maxl, maxsz, maxuid, maxgid, t, path, rs, now, tf
+      local e, l, maxl, maxsz, maxuid, maxgid, t, path, rs, now, tf, gcache, ucache
+      ucache := table()
+      gcache := table()
       if Files.is_directory(f) then {
          l := isort(Files.list(f), ls_sort) | fail
          now := Time.get_system_seconds()
@@ -210,8 +225,8 @@ class Worker()
                every e := !l do {
                   maxl <:= *e[1]
                   maxsz <:= *e[2].size
-                  maxuid <:= *e[2].uid
-                  maxgid <:= *e[2].gid
+                  maxuid <:= *uname(e[2].uid, ucache)
+                  maxgid <:= *grname(e[2].gid, gcache)
                }
                path := Files.get_path(f)
                every e := !l do {
@@ -220,7 +235,7 @@ class Worker()
                      Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("MMM dd  yyyy")
                   else
                      Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("MMM dd HH:mm")
-                  rs.out(t.mode_str || "  " || left(t.uid, maxuid + 1) || left(t.gid, maxgid + 1) ||
+                  rs.out(t.mode_str || "  " || left(uname(t.uid, ucache), maxuid + 1) || left(grname(t.gid, gcache), maxgid + 1) ||
                          right(t.size, maxsz) || " " || tf || " " ||
                          "<a href=\"file://" || path.child(e[1]).canonical().str() || "\">" || e[1] || "</a>" || "\n")
                }

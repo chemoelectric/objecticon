@@ -716,8 +716,8 @@ abstract class DescStream(Stream, NoCopy)
    # are {&null}, they are left unchanged.
    #
    # @param mode the mode (an integer)
-   # @param uid the owner name
-   # @param gid the group name
+   # @param uid the owner id
+   # @param gid the group id
    #
    public native wstat(mode, uid, gid)
 

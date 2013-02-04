@@ -74,6 +74,36 @@ final abstract class System()
    end
 
    private static native uname_impl()
+
+   # Returns the real user ID of the calling process.
+   public static native getuid()
+
+   # Returns the effective user ID of the calling process.
+   public static native geteuid()
+
+   # Returns the real group ID of the calling process.
+   public static native getgid()
+
+   # Returns the effective group ID of the calling process.
+   public static native getegid()
+
+   # Returns the supplementary group IDs of the calling process
+   public static native getgroups()
+
+   private static native getpw_impl(v)
+   private static native getgr_impl(v)
+
+   # Return a {Passwd} structure given either a user id (as an
+   # integer), or a string user name.
+   public static getpw(v)
+      return Passwd!getpw_impl(v)
+   end
+
+   # Return a {Group} structure given either a group id (as an
+   # integer), or a string group name.
+   public static getgr(v)
+      return Group!getgr_impl(v)
+   end
 end
 
 # A structure returned by the {System.uname} method.
@@ -119,6 +149,44 @@ class ExitInfo()
       self.pid := pid
       self.reason := reason
       self.param := param
+      return
+   end
+end
+
+# A structure representing a user group
+class Group()
+   public const
+      name,
+      passwd,
+      gid,
+      members
+
+   package new(name, passwd, gid, members)
+      self.name := name
+      self.passwd := passwd
+      self.gid := gid
+      self.members := members
+      return
+   end
+end
+
+# A structure representing a user in the passwd database
+class Passwd()
+   public const
+      name,
+      passwd,
+      uid,
+      gid,
+      dir,
+      shell
+
+   package new(name, passwd, uid, gid, dir, shell)
+      self.name := name
+      self.passwd := passwd
+      self.uid := uid
+      self.gid := gid
+      self.dir := dir
+      self.shell := shell
       return
    end
 end

@@ -343,3 +343,156 @@ function posix_System_getppid()
 #endif
     }
 end
+
+function posix_System_getuid()
+   body {
+#if UNIX
+     return C_integer getuid();
+#else
+     Unsupported;
+#endif
+    }
+end
+
+function posix_System_geteuid()
+   body {
+#if UNIX
+     return C_integer geteuid();
+#else
+     Unsupported;
+#endif
+    }
+end
+
+function posix_System_getgid()
+   body {
+#if UNIX
+     return C_integer getgid();
+#else
+     Unsupported;
+#endif
+    }
+end
+
+function posix_System_getegid()
+   body {
+#if UNIX
+     return C_integer getegid();
+#else
+     Unsupported;
+#endif
+    }
+end
+
+static void passwd2list(struct passwd *pw, dptr result)
+{
+   tended struct descrip tmp;
+   create_list(6, result);
+   cstr2string(pw->pw_name, &tmp);
+   list_put(result, &tmp);
+   cstr2string(pw->pw_passwd, &tmp);
+   list_put(result, &tmp);
+   MakeInt(pw->pw_uid, &tmp);
+   list_put(result, &tmp);
+   MakeInt(pw->pw_gid, &tmp);
+   list_put(result, &tmp);
+   cstr2string(pw->pw_dir, &tmp);
+   list_put(result, &tmp);
+   cstr2string(pw->pw_shell, &tmp);
+   list_put(result, &tmp);
+}
+
+static void group2list(struct group *gr, dptr result)
+{
+   tended struct descrip tmp, mem;
+   int i, n;
+   create_list(4, result);
+   cstr2string(gr->gr_name, &tmp);
+   list_put(result, &tmp);
+   cstr2string(gr->gr_passwd, &tmp);
+   list_put(result, &tmp);
+   MakeInt(gr->gr_gid, &tmp);
+   list_put(result, &tmp);
+   n = 0;
+   while (gr->gr_mem[n])
+       ++n;
+   create_list(n, &mem);
+   list_put(result, &mem);
+   for (i = 0; i < n; ++i) {
+       cstr2string(gr->gr_mem[i], &tmp);
+       list_put(&mem, &tmp);
+   }
+}
+
+function posix_System_getpw_impl(v)
+   body {
+#if UNIX
+    tended struct descrip result;
+    struct passwd *pw;
+    if (is:integer(v)) {
+        word i;
+        if (!cnv:C_integer(v, i))
+            runerr(101, v);
+        pw = getpwuid((uid_t)i);
+    } else {
+        if (!cnv:string(v, v)) 
+            runerr(103, v);
+        pw = getpwnam(buffstr(&v));
+    }
+    if (!pw)
+        fail;
+    passwd2list(pw, &result);
+    return result;
+#else
+     Unsupported;
+#endif
+    }
+end
+
+function posix_System_getgr_impl(v)
+   body {
+#if UNIX
+    tended struct descrip result;
+    struct group *gr;
+    if (is:integer(v)) {
+        word i;
+        if (!cnv:C_integer(v, i))
+            runerr(101, v);
+        gr = getgrgid((gid_t)i);
+    } else {
+        if (!cnv:string(v, v)) 
+            runerr(103, v);
+        gr = getgrnam(buffstr(&v));
+    }
+    if (!gr)
+        fail;
+    group2list(gr, &result);
+    return result;
+#else
+     Unsupported;
+#endif
+    }
+end
+
+function posix_System_getgroups(v)
+   body {
+#if UNIX
+    tended struct descrip tmp, result;
+    gid_t buf[128];
+    int i, n;
+    n = getgroups(ElemCount(buf), buf);
+    if (n < 0) {
+        errno2why();
+        fail;
+    }
+    create_list(n, &result);
+    for (i = 0; i < n; ++i) {
+        MakeInt(buf[i], &tmp);
+        list_put(&result, &tmp);
+    }
+    return result;
+#else
+    Unsupported;
+#endif
+    }
+end
