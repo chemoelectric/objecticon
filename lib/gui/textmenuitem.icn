@@ -51,12 +51,13 @@ class TextMenuItem(MenuComponent)
    # Set the middle {Paint} instance.
    #
    public set_paint_mid(p)
-      (\self.paint_mid).finally()
-      self.paint_mid := p
       if is_initialized() then {
+         (\self.paint_mid).finally()
+         self.paint_mid := p
          (\self.paint_mid).initially(parent_component, self.accel)
          possibly_invalidate()
-      }
+      } else
+         self.paint_mid := p
       return self
    end
 
@@ -68,12 +69,13 @@ class TextMenuItem(MenuComponent)
    end
 
    public set_paint_left(p)
-      (\self.paint_left).finally()
-      self.paint_left := p
       if is_initialized() then {
+         (\self.paint_left).finally()
+         self.paint_left := p
          (\self.paint_left).initially(parent_component)
          possibly_invalidate()
-      }
+      } else
+         self.paint_left := p
       return self
    end
 
@@ -85,12 +87,13 @@ class TextMenuItem(MenuComponent)
    end
 
    public set_paint_right(p)
-      (\self.paint_right).finally()
-      self.paint_right := p
       if is_initialized() then {
+         (\self.paint_right).finally()
+         self.paint_right := p
          (\self.paint_right).initially(parent_component)
          possibly_invalidate()
-      }
+      } else
+         self.paint_right := p
       return self
    end
 
@@ -103,32 +106,35 @@ class TextMenuItem(MenuComponent)
    end
 
    public set_border_left(x)
-      self.border_left.finally()
-      self.border_left := x
       if is_initialized() then {
+         self.border_left.finally()
+         self.border_left := x
          self.border_left.initially(parent_component)
          possibly_invalidate()
-      }
+      } else
+         self.border_left := x
       return self
    end
 
    public set_border_right(x)
-      self.border_right.finally()
-      self.border_right := x
       if is_initialized() then {
+         self.border_right.finally()
+         self.border_right := x
          self.border_right.initially(parent_component)
          possibly_invalidate()
-      }
+      } else
+         self.border_right := x
       return self
    end
 
    public set_border_mid(x)
-      self.border_mid.finally()
-      self.border_mid := x
       if is_initialized() then {
+         self.border_mid.finally()
+         self.border_mid := x
          self.border_mid.initially(parent_component)
          possibly_invalidate()
-      }
+      } else
+         self.border_mid := x
       return self
    end
 

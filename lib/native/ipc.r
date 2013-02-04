@@ -195,7 +195,7 @@ function ipc_Shm_create_private_impl(str)
    }
 end
 
-function ipc_Shm_remove(self)
+function ipc_Shm_close(self)
     body {
        shm_top *tp;
        GetSelfId();
@@ -450,7 +450,7 @@ function ipc_Sem_semop_nowait(self, n)
    }
 end
 
-function ipc_Sem_remove(self)
+function ipc_Sem_close(self)
    body {
        GetSelfId();
        semctl(self_id, -1, IPC_RMID, 0);
@@ -570,7 +570,7 @@ function ipc_Msg_create_private_impl()
    }
 end
 
-function ipc_Msg_remove(self)
+function ipc_Msg_close(self)
     body {
         msg_top *tp;
         GetSelfId();

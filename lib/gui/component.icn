@@ -222,12 +222,13 @@ class Component(Rect,Align,Connectable)
    # Set the border to use.
    #
    public set_border(b)
-      (\self.border).finally()
-      self.border := b
       if is_initialized() then {
+         (\self.border).finally()
+         self.border := b
          (\self.border).initially(self)
          self.invalidate()
-      }
+      } else
+         self.border := b
       return self
    end
 
@@ -762,6 +763,7 @@ class Component(Rect,Align,Connectable)
    #
    public initially()
       local t
+      /cbwin | syserr("initially called out of sequence")
       \self.parent | runerr("incorrect ancestry (parent null)")
       parent_dialog := parent.get_parent_dialog()
       self.effective_is_hidden_flag := if parent.is_hidden() | \self.is_hidden_flag then 1 else &null
@@ -803,6 +805,7 @@ class Component(Rect,Align,Connectable)
    # window is closed.
    #
    public finally()
+      \cbwin | syserr("finally called out of sequence")
       (\self.border).finally()
       Gui.style.dispose(self.cbwin)
       self.cbwin.close()
@@ -1029,6 +1032,13 @@ class Component(Rect,Align,Connectable)
       return self
    end
 
+   # Invoke layout() and return self.
+   #
+   public do_layout()
+      layout()
+      return self
+   end
+
    #
    # Get the clipping rectangle of this component, ie the rectangle actually
    # visible (ignoring other overlapping components).  Fails if the component is
@@ -1081,6 +1091,7 @@ class Component(Rect,Align,Connectable)
       if is_initialized() then {
          compute_z_order()
          compute_tab_order()
+         c.initially()
       }
       return self
    end
@@ -1106,11 +1117,14 @@ class Component(Rect,Align,Connectable)
    # @param i    The index
    #
    public remove_index(i)
-      self.children[i].set_parent(&null)
+      local c
+      c := self.children[i] | fail
+      c.set_parent(&null)
       delete(self.children, i)
       if is_initialized() then {
          compute_z_order()
          compute_tab_order()
+         c.finally()
       }
       return self
    end

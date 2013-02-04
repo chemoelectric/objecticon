@@ -37,22 +37,24 @@ class TabItem(Component)
    end
 
    public set_label_border(b)
-      (\self.label_border).finally()
-      self.label_border := b
       if is_initialized() then {
+         (\self.label_border).finally()
+         self.label_border := b
          self.label_border.initially(parent)
          self.parent.invalidate()
-      }
+      } else
+         self.label_border := b
       return self
    end
 
    public set_paint(p)
-      (\self.paint).finally()
-      self.paint := p
       if is_initialized() then {
+         (\self.paint).finally()
+         self.paint := p
          self.paint.initially(parent, self.accel)
          self.parent.invalidate()
-      }
+      } else
+         self.paint := p
       return self
    end
 

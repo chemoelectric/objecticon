@@ -2336,28 +2336,18 @@ function io_DescStream_wstat(self, mode, uid, gid)
            if (is:null(uid))
                owner = (uid_t)-1;
            else {
-               tended char *c_uid;
-               struct passwd *pwd;
-               if (!cnv:C_string(uid, c_uid))
-                   runerr(103, uid);
-               if (!(pwd = getpwnam(c_uid))) {
-                   LitWhy("No such user");
-                   fail;
-               }
-               owner = pwd->pw_uid;
+               word i;
+               if (!cnv:C_integer(uid, i))
+                   runerr(101, uid);
+               owner = (uid_t)i;
            }
            if (is:null(gid))
                group = (gid_t)-1;
            else {
-               tended char *c_gid;
-               struct group *grp;
-               if (!cnv:C_string(gid, c_gid))
-                   runerr(103, gid);
-               if (!(grp = getgrnam(c_gid))) {
-                   LitWhy("No such group");
-                   fail;
-               }
-               group = grp->gr_gid;
+               word i;
+               if (!cnv:C_integer(gid, i))
+                   runerr(101, gid);
+               group = (uid_t)i;
            }
            if (fchown(self_fd, owner, group) < 0) {
                errno2why();
@@ -3065,9 +3055,7 @@ static void stat2list(struct Dir *st, dptr result)
 static void stat2list(struct stat *st, dptr result)
 {
    tended struct descrip tmp;
-   char mode[12], *user, *group;
-   struct passwd *pw;
-   struct group *gr;
+   char mode[12];
 
    create_list(13, result);
    MakeInt(st->st_dev, &tmp);
@@ -3120,22 +3108,9 @@ static void stat2list(struct stat *st, dptr result)
    list_put(result, &tmp);
 
 #if UNIX
-   pw = getpwuid(st->st_uid);
-   if (!pw) {
-      sprintf(mode, "%d", (int)st->st_uid);
-      user = mode;
-   } else
-      user = pw->pw_name;
-   cstr2string(user, &tmp);
+   MakeInt(st->st_uid, &tmp);
    list_put(result, &tmp);
-   
-   gr = getgrgid(st->st_gid);
-   if (!gr) {
-      sprintf(mode, "%d", (int)st->st_gid);
-      group = mode;
-   } else
-      group = gr->gr_name;
-   cstr2string(group, &tmp);
+   MakeInt(st->st_gid, &tmp);
    list_put(result, &tmp);
 #else
    list_put(result, &emptystr);
@@ -3283,28 +3258,18 @@ function io_Files_wstat(s, mode, uid, gid, atime, mtime)
            if (is:null(uid))
                owner = (uid_t)-1;
            else {
-               tended char *c_uid;
-               struct passwd *pwd;
-               if (!cnv:C_string(uid, c_uid))
-                   runerr(103, uid);
-               if (!(pwd = getpwnam(c_uid))) {
-                   LitWhy("No such user");
-                   fail;
-               }
-               owner = pwd->pw_uid;
+               word i;
+               if (!cnv:C_integer(uid, i))
+                   runerr(101, uid);
+               owner = (uid_t)i;
            }
            if (is:null(gid))
                group = (gid_t)-1;
            else {
-               tended char *c_gid;
-               struct group *grp;
-               if (!cnv:C_string(gid, c_gid))
-                   runerr(103, gid);
-               if (!(grp = getgrnam(c_gid))) {
-                   LitWhy("No such group");
-                   fail;
-               }
-               group = grp->gr_gid;
+               word i;
+               if (!cnv:C_integer(gid, i))
+                   runerr(101, gid);
+               group = (uid_t)i;
            }
            if (chown(s, owner, group) < 0) {
                errno2why();

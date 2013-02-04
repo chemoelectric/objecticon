@@ -324,8 +324,6 @@ abstract class ScrollArea(Component)
          #
          view.w := max_tw
          view.h := max_th
-         (\self.vsb).finally()
-         (\self.hsb).finally()
          self.remove(\self.vsb)
          self.remove(\self.hsb)
          self.vsb := self.hsb := &null
@@ -358,7 +356,6 @@ abstract class ScrollArea(Component)
          #
          if /self.vsb := ScrollBar() then
             new_vsb := 1
-         (\self.hsb).finally()
          self.remove(\self.hsb)
          self.hsb := &null
 
@@ -377,7 +374,6 @@ abstract class ScrollArea(Component)
             self.hsb.set_is_horizontal(&yes)
             new_hsb := 1
          }
-         (\self.vsb).finally()
          self.remove(\self.vsb)
          self.vsb := &null
 
@@ -407,7 +403,6 @@ abstract class ScrollArea(Component)
             self.vsb.connect(self.on_vsb, Event.VALUE_CHANGED)
             self.vsb.set_value(0)
             self.add(self.vsb)
-            self.vsb.initially()
          }
          self.vsb.layout()
       } 
@@ -425,7 +420,6 @@ abstract class ScrollArea(Component)
             self.hsb.connect(self.on_hsb, Event.VALUE_CHANGED)
             self.hsb.set_value(0)
             self.add(self.hsb)
-            self.hsb.initially()
          }
          self.hsb.layout()
       }

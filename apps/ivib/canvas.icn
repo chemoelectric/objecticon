@@ -377,7 +377,6 @@ class Canvas(Component,SelectiveObjectCodec)
       else
          c.layout_safe()
       cc.add(c)
-      c.initially()
       c.unique_name()
       self.set_modified()
       self.do_reset_all_layouts()
@@ -439,7 +438,6 @@ class Canvas(Component,SelectiveObjectCodec)
       else
          c.layout_safe()
       cc.add(c)
-      c.initially()
       c.unique_name()
       self.set_modified()
       self.do_reset_all_layouts()
@@ -641,7 +639,6 @@ class Canvas(Component,SelectiveObjectCodec)
       }
       cc.parent.add(c)
       c.rename()
-      c.initially()
       self.set_modified()
       copy_count +:= 1
       self.do_reset_all_layouts()
@@ -691,7 +688,9 @@ class Canvas(Component,SelectiveObjectCodec)
          obj.w_spec := obj.h_spec := &null
 
       # Clear the children, they will be re-added in a new order.
-      clear(obj.children)
+      #clear(obj.children)
+      while *obj.children > 0 do
+         obj.remove_index(1)
 
       every r := !rows.lines do {
          tab := 0
@@ -981,7 +980,6 @@ class Canvas(Component,SelectiveObjectCodec)
    public dup()
       local c, t, e1, e2, o
       c := Canvas()
-      c.parent_dialog := self.parent_dialog
       c.gen_indent := self.gen_indent
       c.gen_main := self.gen_main
       c.gen_component_setup := self.gen_component_setup
@@ -1015,6 +1013,8 @@ class Canvas(Component,SelectiveObjectCodec)
       #
       c.children := []
       every c.add((!self.children).dup_to(c))
+
+      c.parent_dialog := self.parent_dialog
 
       # Create a table mapping current objects to duplicated ones.
       t := table()
@@ -1643,7 +1643,7 @@ class Canvas(Component,SelectiveObjectCodec)
       #
       # Reset c.
       #
-      c.reset()
+      #c.reset()
    end
 
    #
@@ -1798,11 +1798,6 @@ class Canvas(Component,SelectiveObjectCodec)
             # Take it out of its container, effectively disconnecting it.
             #
             e.parent.remove(e)
-
-            #
-            # Dispose of its assets.
-            #
-            e.finally()
          }
 
          if initial_focus === e then
@@ -1833,11 +1828,6 @@ class Canvas(Component,SelectiveObjectCodec)
          # Take it out of its container, effectively disconnecting it.
          #
          cc.parent.remove(cc)
-
-         #
-         # Dispose of its assets.
-         #
-         cc.finally()
       }
 
       if initial_focus === cc then

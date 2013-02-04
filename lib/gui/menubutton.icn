@@ -26,8 +26,15 @@ class MenuButton(Component)
    # @param c   The {Menu}.
    #
    public set_menu(c)
-      self.menu := c
-      c.set_component_link(self)         
+      if is_initialized() then {
+         (\self.menu).finally()
+         self.menu := c
+         c.set_component_link(self)         
+         self.menu.initially()
+      } else {
+         self.menu := c
+         c.set_component_link(self)         
+      }
       return self
    end
 

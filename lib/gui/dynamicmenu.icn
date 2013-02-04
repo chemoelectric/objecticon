@@ -3,16 +3,10 @@ package gui
 abstract class DynamicMenu(Menu)
    public show(x, y, xa, ya)
       /self.temp_win | fail
-
       # Clear current menu contents.
-      every (!self.children).finally()
-
-      self.children := []
+      while *children > 0 do
+         remove_index(1)
       populate()
-
-      # Init new ones
-      every (!self.children).initially()
-
       cast(self,Menu).show(x, y, xa, ya)
    end
 

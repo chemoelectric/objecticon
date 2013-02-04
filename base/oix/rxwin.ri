@@ -1694,7 +1694,7 @@ static void synch_state(wsp ws)
     unsigned long state;
     wdp wd = ws->display;
 
-    if (ws->win == (Window) NULL) {
+    if (ws->win == 0) {
         ws->state = HiddenState;
         return;
     }
@@ -3465,7 +3465,7 @@ int settransientfor(wbp w, wbp other)
             return Failed;
         ws->transientfor = other->window->win;
     } else
-        ws->transientfor = (Window) NULL;
+        ws->transientfor = 0;
     return Succeeded;
 }
 

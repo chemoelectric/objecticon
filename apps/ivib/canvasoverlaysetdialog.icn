@@ -62,7 +62,6 @@ class CanvasOverlaySetDialog(CanvasComponentDialog)
       l := struct.get_selections()
       nl := l[1] | (*c.children + 1)
       c.add(new, nl)
-      new.initially()
       struct.set_contents(c.string_rep())      
       struct.ensure_line_visible(nl)
       struct.set_selections([nl])
@@ -85,11 +84,9 @@ class CanvasOverlaySetDialog(CanvasComponentDialog)
          struct.set_contents(c.string_rep())
          update_grey()
       } else {
-         obj.finally()
          c.remove_index(i)
          cp.change_canvas(c.parent_Canvas)
          c.add(cp, i)
-         cp.initially()
          if c.which_one === obj then
             c.which_one := cp
       }
@@ -100,7 +97,6 @@ class CanvasOverlaySetDialog(CanvasComponentDialog)
       i := struct.get_selections()[1]
       if c.which_one === c.children[i] then
          c.which_one := c.children[i + 1 | i - 1]
-      c.children[i].finally()
       c.remove_index(i)
       struct.set_contents(c.string_rep())
       struct.clear_selections()

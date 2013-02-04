@@ -195,6 +195,10 @@ final class Pixels()
       return create_for_idp(shared_copy_impl())
    end
 
+   # Return the number of references to the underlying data.
+   #
+   public native get_references()
+
    private object_clone()
       return clone()
    end
@@ -237,8 +241,7 @@ end
 
 final class Window(NoCopy)
    private
-      wbp,
-      transient_for
+      wbp
 
    public static const
       RESIZE,
@@ -610,21 +613,7 @@ final class Window(NoCopy)
    # the other window must be visible; if that is not the case this
    # method fails.
    #
-   public set_transient_for(w)
-      if set_transient_for_impl(w) then {
-         self.transient_for := w
-         return self
-      }
-   end
-
-   private native set_transient_for_impl(v)
-
-   #
-   # Get the transient-for window, or fail if none is set.
-   #
-   public get_transient_for()
-      return \self.transient_for
-   end
+   public native set_transient_for(w)
 
    #
    # Produces a beep or other signal to attract attention.

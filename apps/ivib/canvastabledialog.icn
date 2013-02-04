@@ -55,7 +55,6 @@ class CanvasTableDialog(CanvasComponentDialog)
       l := struct.get_selections()
       nl := l[1] | (*c.table_header.children + 1)
       c.table_header.add(new, nl)
-      new.initially()
       c.layout()
       struct.set_contents(c.string_rep())      
       struct.ensure_line_visible(nl)
@@ -75,7 +74,6 @@ class CanvasTableDialog(CanvasComponentDialog)
    public on_delete()
       local i
       i := struct.get_selections()[1]
-      c.table_header.children[i].finally()
       c.table_header.remove_index(i)
       struct.set_contents(c.string_rep())
       struct.clear_selections()
@@ -85,6 +83,7 @@ class CanvasTableDialog(CanvasComponentDialog)
    public set_vals()
       cast(self,CanvasComponentDialog).set_vals()
       c.select_mode := select_group.get_select_mode()
+      c.get_table_content().invalidate_subject_width()
    end
 
    public on_up()

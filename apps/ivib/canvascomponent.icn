@@ -212,6 +212,9 @@ class CanvasComponent(CanvasObject)
               ["Parent Component", "parent"]
    end
 
+   protected pre_encode()
+   end
+
    protected pre_decode()
       new()
    end
@@ -375,7 +378,7 @@ class CanvasComponent(CanvasObject)
       #
       # Reset c.
       #
-      c.reset()
+      #c.reset()
    end
 
    #

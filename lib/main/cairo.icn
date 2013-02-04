@@ -1,0 +1,509 @@
+package cairo
+
+$define LIB "objecticoncairolib.so"
+
+import lang, graphics, util, io
+
+abstract class PathElement() end
+
+class MoveTo(PathElement)
+   public const x, y
+
+   public new(x, y)
+      self.x := real(x) | runerr(102, x)
+      self.y := real(y) | runerr(102, y)
+      return
+   end
+end
+
+class LineTo(PathElement)
+   public const x, y
+
+   public new(x, y)
+      self.x := real(x) | runerr(102, x)
+      self.y := real(y) | runerr(102, y)
+      return
+   end
+end
+
+class CurveTo(PathElement)
+   public const x1, y1, x2, y2, x3, y3
+
+   public new(x1, y1, x2, y2, x3, y3)
+      self.x1 := real(x1) | runerr(102, x1)
+      self.y1 := real(y1) | runerr(102, y1)
+      self.x2 := real(x2) | runerr(102, x2)
+      self.y2 := real(y2) | runerr(102, y2)
+      self.x3 := real(x3) | runerr(102, x3)
+      self.y3 := real(y3) | runerr(102, y3)
+      return
+   end
+end
+
+class ClosePath(PathElement) end
+
+class Matrix()
+   public const xx, yx, xy, yy, x0, y0
+   public static const I
+
+   private static init()
+      I := Matrix(1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
+   end
+
+   public static from_translation(tx, ty)
+      return Matrix(1.0, 0.0, 0.0, 1.0, tx, ty)
+   end
+
+   public static from_rotation(r)
+      local c, s
+      c := Math.cos(r)
+      s := Math.sin(r)
+      return Matrix(c, s, -s, c)
+   end
+
+   public static from_scale(sx, sy)
+      return Matrix(sx, 0.0, 0.0, sy, 0.0, 0.0)
+   end
+
+   public multiply_point(x, y)
+      return [xx * x + xy * y + x0, yx * x + yy * y + y0]
+   end
+
+   public rotate(r)
+      return multiply(from_rotation(r), self)
+   end
+
+   public translate(tx, ty)  
+      return multiply(from_translation(tx, ty), self)
+   end
+
+   public scale(sx, sy)
+      return multiply(from_scale(sx, sy), self)
+   end
+
+   # Return a * b
+   public static multiply(a, b)
+      return Matrix(a.xx * b.xx + a.yx * b.xy,
+                    a.xx * b.yx + a.yx * b.yy,
+                    a.xy * b.xx + a.yy * b.xy,
+                    a.xy * b.yx + a.yy * b.yy,
+                    a.x0 * b.xx + a.y0 * b.xy + b.x0,
+                    a.x0 * b.yx + a.y0 * b.yy + b.y0)
+   end
+
+   public new(xx, yx, xy, yy, x0, y0)
+      /x0 := 0.0
+      /y0 := 0.0
+      self.xx := real(xx) | runerr(102, xx)
+      self.yx := real(yx) | runerr(102, yx)
+      self.xy := real(xy) | runerr(102, xy)
+      self.yy := real(yy) | runerr(102, yy)
+      self.x0 := real(x0) | runerr(102, x0)
+      self.y0 := real(y0) | runerr(102, y0)
+      return
+   end
+end
+
+abstract class Pattern()
+   protected ptr
+
+   private static init()
+      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+   end
+
+   private native set_matrix_impl(xx, yx, xy, yy, x0, y0)
+   public set_matrix(m)
+      return set_matrix_impl(m.xx, m.yx, m.xy, m.yy, m.x0, m.y0)
+   end
+
+   private native get_matrix_impl()
+   public get_matrix()
+      return Matrix!get_matrix_impl()
+   end
+
+   public native set_extend(v)
+
+   public native close()
+
+   public static to_pattern(v)
+      local t
+      return if is(v, Surface) then
+         SurfacePattern(v)
+      else if is(v, Window) then
+         use {
+            t := WindowSurface(v),
+            SurfacePattern(t)
+         }
+      else if is(v, Pixels) then
+         use {
+            t := v.convert(ImageSurface.FORMAT),
+            use {
+               t := ImageSurface(t),
+               SurfacePattern(t)
+            }
+         }
+      else
+         use {
+            t := Pixels(v),
+            to_pattern(t)
+         }
+   end
+end
+
+abstract class Gradient(Pattern)
+   private static init()
+      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+   end
+
+   public native add_color_stop_rgba(offset, r, g, b, a)
+
+   public add_color_stop(offset, col)
+      local c
+      c := Window.parse_color(col) | fail
+      return add_color_stop_rgba(offset, 
+                                 c[1] / 65535.0,
+                                 c[2] / 65535.0,
+                                 c[3] / 65535.0,
+                                 c[4] / 65535.0)
+   end
+end
+
+class LinearGradient(Gradient)
+   private static init()
+      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+   end
+
+   private static native new_impl()
+
+   public new(x0, y0, x1, y1)
+      ptr := new_impl(x0, y0, x1, y1)
+      return
+   end
+end
+
+class RadialGradient(Gradient)
+   private static init()
+      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+   end
+
+   private static native new_impl()
+
+   public new(cx0, cy0, r0, cx1, cy1, r1)
+      ptr := new_impl(cx0, cy0, r0, cx1, cy1, r1)
+      return
+   end
+end
+
+class SurfacePattern(Pattern)
+   private static init()
+      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+   end
+
+   private static native new_impl(sur)
+
+   public new(sur)
+      ptr := new_impl(sur)
+      return
+   end
+end
+
+class SolidPattern(Pattern)
+   private static init()
+      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+   end
+
+   private static native new_impl(r, g, b, a)
+
+   public new(col)
+      local c
+      c := Window.parse_color(col) | fail
+      ptr := new_impl(c[1] / 65535.0,
+                      c[2] / 65535.0,
+                      c[3] / 65535.0,
+                      c[4] / 65535.0)
+      return
+   end
+end
+
+abstract class Surface()
+   protected ptr
+
+   private static init()
+      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+   end
+
+   public native close()
+end
+
+class WindowSurface(Surface)
+   private static init()
+      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+   end
+
+   private static native new_impl()
+
+   public new(win)
+      ptr := new_impl(win)
+      return
+   end
+end
+
+class ImageSurface(Surface)
+   public static const FORMAT
+
+   private static init()
+      local t
+      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+      use {
+         t := Window(),
+         FORMAT := t.get_format()
+      }
+   end
+
+   # Get the width of the block
+   #
+   public native get_width()
+
+   # Get the height of the block
+   #
+   public native get_height()
+
+   private static native new_impl(pix)
+
+   public new(pix)
+      pix.get_format() == FORMAT | runerr("Invalid format", pix)
+      ptr := new_impl(pix)
+      return
+   end
+end
+
+abstract class PagedSurface(Surface)
+   private static init()
+      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+   end
+
+   public native copy_page()
+   public native show_page()
+end
+
+class SVGSurface(PagedSurface)
+   private static init()
+      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+   end
+
+   private static native new_impl()
+
+   public new(filename, width, height)
+      ptr := new_impl(filename, width, height)
+      return
+   end
+end
+
+class PostScriptSurface(PagedSurface)
+   private static init()
+      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+   end
+
+   private static native new_impl()
+
+   public new(filename, width, height)
+      ptr := new_impl(filename, width, height)
+      return
+   end
+end
+
+class PDFSurface(PagedSurface)
+   private static init()
+      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+   end
+
+   private static native new_impl()
+
+   public new(filename, width, height)
+      ptr := new_impl(filename, width, height)
+      return
+   end
+end
+
+class RecordingSurface(Surface)
+   private static init()
+      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+   end
+
+   public native get_extents()
+   public native ink_extents()
+
+   private static native new_impl()
+
+   public new(x, y, width, height)
+      ptr := new_impl(x, y, width, height)
+      return
+   end
+end
+
+class Context()
+   private ptr
+
+   private static init()
+      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+   end
+
+   public native move_to(x, y)
+   public native rel_move_to(x, y)
+   public native line_to(x, y)
+   public native rel_line_to(x, y)
+   public native curve_to(x1, y1, x2, y2, x3, y3)
+   public native rel_curve_to(x1, y1, x2, y2, x3, y3)
+   public native stroke()
+   public native stroke_preserve()
+   public native set_line_width(w)
+   public native set_line_join(v)
+   public native set_line_cap(v)
+   public native set_fill_rule(v)
+   public native set_dash(l[])
+   public native set_font(v)
+   public native arc(xc, yc, r, a1, a2)
+   public native rectangle(x, y, width, height)
+   public native fill()
+   public native fill_preserve()
+   public native paint()
+   public native mask(pat)
+   public native mask_surface(sur, x, y)
+   public native text_path(s)
+   public native close_path()
+   public native new_path()
+   public native close()
+   public native set_operator(op)
+
+   private native get_path_impl(flat)
+
+   private static to_path_elements(t)
+      local l
+      l := []
+      while put(l, case get(t) of {
+         0 : MoveTo(get(t), get(t))
+         1 : LineTo(get(t), get(t))
+         2 : CurveTo(get(t), get(t), get(t), get(t), get(t), get(t))
+         3 : ClosePath()
+      })
+      return l
+   end
+
+   private static from_path_elements(l)
+      local t, e
+      t := []
+      every e := !l do
+         case classof(e) of {
+            MoveTo: every put(t, 0 | e.x | e.y)
+            LineTo: every put(t, 1 | e.x | e.y)
+            CurveTo: every put(t, 2 | e.x1 | e.y1 | e.x2 | e.y2 | e.x3 | e.y3)
+            ClosePath: put(t, 3)
+         }
+      return t
+   end
+
+   public get_path()
+      return to_path_elements(get_path_impl())
+   end
+
+   public get_flat_path()
+      return to_path_elements(get_path_impl(1))
+   end
+
+   private native append_path_impl(l)
+
+   public append_path(l)
+      return append_path_impl(from_path_elements(l))
+   end
+
+   public native get_current_point()
+
+   public native save()
+   public native restore()
+
+   public native get_stroke_extents()
+   public native get_fill_extents()
+   public native get_clip_extents()
+   public native get_path_extents()
+   public native user_to_device(x, y)
+   public native device_to_user(x, y)
+
+   public native translate(tx, ty)
+   public native scale(sx, sy)
+   public native rotate(r)
+
+   public native clip()
+   public native reset_clip()
+
+   private native set_source_rgba(r, g, b, a)
+   private native set_source_pattern(pat)
+
+   public native in_stroke(x, y)
+   public native in_fill(x, y)
+   public native in_clip(x, y)
+
+   public native set_source_extend(v)
+   private native set_source_matrix_impl(xx, yx, xy, yy, x0, y0)
+   private native get_source_matrix_impl()
+
+   public set_source_matrix(m)
+      return set_source_matrix_impl(m.xx, m.yx, m.xy, m.yy, m.x0, m.y0)
+   end
+
+   public get_source_matrix()
+      return Matrix!get_source_matrix_impl()
+   end
+
+   public set_source(v)
+      local t
+      return if is(v, Pattern) then
+         set_source_pattern(v)
+      else 
+         use {
+            t := Pattern.to_pattern(v),
+            set_source_pattern(t)
+         }
+   end
+
+   public set_fg(col)
+      local c
+      c := Window.parse_color(col) | fail
+      return set_source_rgba(c[1] / 65535.0,
+                             c[2] / 65535.0,
+                             c[3] / 65535.0,
+                             c[4] / 65535.0)
+   end
+
+   public identity_matrix()
+      return set_matrix(Matrix.I)
+   end
+
+   private native set_matrix_impl(xx, yx, xy, yy, x0, y0)
+   public set_matrix(m)
+      return set_matrix_impl(m.xx, m.yx, m.xy, m.yy, m.x0, m.y0)
+   end
+
+   private native get_matrix_impl()
+   public get_matrix()
+      return Matrix!get_matrix_impl()
+   end
+
+   private static native new_impl(sur)
+
+   public new(v)
+      local t
+      if is(v, Window) then
+         use {
+            t := WindowSurface(v),
+            ptr := new_impl(t)
+         }
+      else if is(v, Pixels) then
+         use {
+            t := ImageSurface(v),
+            ptr := new_impl(t)
+         }
+      else
+         ptr := new_impl(v)
+      return
+   end
+end

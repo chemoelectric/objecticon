@@ -879,7 +879,7 @@ function mysql_MySqlRes_get_num_rows(self)
    }
 end
 
-function mysql_MySqlRes_free(self)
+function mysql_MySqlRes_close(self)
    body {
        GetSelfMySqlRes();
        mysql_free_result(self_mysql_res);

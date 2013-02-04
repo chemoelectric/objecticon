@@ -370,8 +370,6 @@ class Main(Dialog)
       #
       # Dispose of current canvas
       #
-      self.canvas.finally()
-
       if self.parent_dialog.focus === self.canvas then
          self.parent_dialog.focus := &null
 
@@ -383,7 +381,6 @@ class Main(Dialog)
       #
       # Setup rest of fields in new canvas.
       #
-      self.canvas.initially()
       self.canvas.synch_size()
       self.canvas.update_pos_label()
       update_grey()
@@ -860,7 +857,6 @@ class Main(Dialog)
       c.set_align("l", "t")
       self.canvas.add(c)
       c.rename()
-      c.initially()
       self.canvas.do_reset_all_layouts()
       self.canvas.set_modified()
    end

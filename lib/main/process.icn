@@ -61,7 +61,7 @@ $else
          # Parent
          sock := l[2]
          l[1].close()
-         return
+         return self
       } else {
          # Child
          pid := task := &null
@@ -146,14 +146,14 @@ $endif
    # child process will no longer exist after this call, so it resets pid to
    # &null and closes the socket.
    #
-   public join()
+   public close()
       do_wait() | fail
       close_sock()
-      return
+      return self
    end
 
    #
-   # Called by the parent to kill the child.  Then the {join} method is invoked.
+   # Called by the parent to kill the child.  Then the {close} method is invoked.
    #
    public stop()
       \pid | runerr("stop() called out of sequence", self)
@@ -161,9 +161,9 @@ $ifdef _PLAN9
       runerr("stop() not implemented")
 $else
       System.kill(pid, Signal.SIGTERM) | fail
+      close() | fail
+      return self
 $endif
-      join() | fail
-      return
    end
 
    # Create a new instance, with the given co-expression as the body

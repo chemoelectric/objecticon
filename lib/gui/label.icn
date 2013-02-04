@@ -37,13 +37,14 @@ class Label(Component)
 
    public set_paint(p)
       local key
-      (\self.paint).finally()
-      self.paint := p
       if is_initialized() then {
+         (\self.paint).finally()
+         self.paint := p
          key := (\linked_accel).accel
          self.paint.initially(self, key)
          self.invalidate()
-      }
+      } else
+         self.paint := p
       return self
    end
 

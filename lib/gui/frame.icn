@@ -47,8 +47,9 @@ class Frame(Component)
    end
 
    public set_content(c)
+      remove(\self.content)
       self.content := c
-      self.add(c)
+      add(c)
       return self
    end
 
@@ -135,7 +136,6 @@ class Frame(Component)
    public close()
       self.invalidate()
       self.parent.remove(self)
-      self.finally()
    end
 
    public handle_lrelease(e)

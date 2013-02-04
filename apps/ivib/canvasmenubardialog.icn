@@ -35,7 +35,6 @@ class CanvasMenuBarDialog(CanvasComponentDialog)
       new.change_canvas(c.parent_Canvas)
       new.rename()
       select_rec.parent.add(new, select_rec.index)
-      new.initially()
       c.set_string_rep()
       #
       # Compute line in which new insertion goes.

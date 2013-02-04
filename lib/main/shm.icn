@@ -48,7 +48,7 @@ final class Shm(NoCopy)
    # Clean up the resources used by the variable.  This should be called by
    # the parent process after the shared variable is no longer needed.
    #
-   public native remove()
+   public native close()
 
    #
    # Return the underlying id of the shared variable.
