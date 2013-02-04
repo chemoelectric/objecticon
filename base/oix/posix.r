@@ -384,6 +384,7 @@ function posix_System_getegid()
     }
 end
 
+#if UNIX
 static void passwd2list(struct passwd *pw, dptr result)
 {
    tended struct descrip tmp;
@@ -423,6 +424,7 @@ static void group2list(struct group *gr, dptr result)
        list_put(&mem, &tmp);
    }
 }
+#endif
 
 function posix_System_getpw_impl(v)
    body {
