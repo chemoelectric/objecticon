@@ -276,9 +276,6 @@ function posix_System_setenv(name, value)
    }
 end
 
-
-
-
 "getenv(s) - return contents of environment variable s."
 
 function posix_System_getenv(s)
@@ -476,15 +473,22 @@ function posix_System_getgr_impl(v)
     }
 end
 
-function posix_System_getgroups(v)
+function posix_System_getgroups()
    body {
 #if UNIX
     tended struct descrip tmp, result;
-    gid_t buf[128];
+    gid_t *buf;
     int i, n;
-    n = getgroups(ElemCount(buf), buf);
+    n = getgroups(0, 0);
     if (n < 0) {
         errno2why();
+        fail;
+    }
+    MemProtect(buf = malloc(n * sizeof(gid_t)));
+    n = getgroups(n, buf);
+    if (n < 0) {
+        errno2why();
+        free(buf);
         fail;
     }
     create_list(n, &result);
@@ -492,9 +496,42 @@ function posix_System_getgroups(v)
         MakeInt(buf[i], &tmp);
         list_put(&result, &tmp);
     }
+    free(buf);
     return result;
 #else
     Unsupported;
+#endif
+    }
+end
+
+function posix_System_setuid(id)
+   if !cnv:C_integer(id) then
+      runerr(101, id)
+   body {
+#if UNIX
+       if (setuid((uid_t)id) < 0) {
+           errno2why();
+           fail;
+       }
+       return nulldesc;
+#else
+       Unsupported;
+#endif
+    }
+end
+
+function posix_System_setgid(id)
+   if !cnv:C_integer(id) then
+      runerr(101, id)
+   body {
+#if UNIX
+       if (setgid((gid_t)id) < 0) {
+           errno2why();
+           fail;
+       }
+       return nulldesc;
+#else
+       Unsupported;
 #endif
     }
 end

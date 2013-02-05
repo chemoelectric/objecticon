@@ -104,6 +104,12 @@ final abstract class System()
    public static getgr(v)
       return Group!getgr_impl(v)
    end
+
+   # Sets the effective user ID of the calling process.
+   public static native setuid(id)
+
+   # Sets the effective group ID of the calling process.
+   public static native setgid(id)
 end
 
 # A structure returned by the {System.uname} method.
