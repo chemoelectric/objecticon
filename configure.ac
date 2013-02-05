@@ -37,6 +37,7 @@ AX_CHECK_X11()
 if test "$found_x11" = yes; then
    AX_CHECK_JPEG()
    AX_CHECK_PNG()
+   AX_CHECK_CAIRO()
 fi
 
 CHECK_ZLIB()
@@ -48,8 +49,6 @@ OI_ADD_LIB(dl)
 
 AX_LIB_MYSQL()
 AX_CHECK_OPENSSL()
-
-AX_CHECK_CAIRO()
 
 AC_FLAG_MSG_NOSIGNAL()
 
