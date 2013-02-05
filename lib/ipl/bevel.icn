@@ -183,6 +183,9 @@ procedure BevelCircle(win, x, y, r, bw)
       bw := -bw
    }
 
+   upper.set_line_width(2)
+   lower.set_line_width(2)
+
    a := -Math.PI / 8
    while (bw -:= 1) >= 0 do {
       lower.draw_circle(x, y, r, a, Math.PI)
@@ -213,6 +216,9 @@ procedure BevelDiamond(win, x, y, r, bw)
       bw := -bw
    }
 
+   upper.set_line_width(1)
+   lower.set_line_width(1)
+
    while (bw -:= 1) >= 0 do {
       lower.draw_line(x - r, y, x, y + r, x + r, y)
       upper.draw_line(x - r, y, x, y - r, x + r, y)
@@ -240,6 +246,9 @@ procedure BevelTriangle(win, x, y, r, o, bw)
       lower := GetHiliteClone(win)
       bw := -bw
    }
+
+   upper.set_line_width(1)
+   lower.set_line_width(1)
 
    while (bw -:= 1) >= 0 do {
       case o of {
@@ -376,7 +385,7 @@ end
 
 # draw grooved line
 procedure DrawGroove(win, x1, y1, x2, y2, w)	
-   local a, n, upper, lower, fg
+   local a, n, upper, lower
 
    /w := 2
    x1 := integer(x1)
@@ -389,10 +398,12 @@ procedure DrawGroove(win, x1, y1, x2, y2, w)
       lower := GetHiliteClone(win)
       }
    else {
-      fg := win.get_fg()			# if erasing, draw in bg color
-      win.set_fg(win.get_bg())
-      upper := lower := win
+      upper := win.clone().set_fg(win.get_bg())
+      lower := win.clone().set_fg(win.get_bg())
       }
+
+   upper.set_line_width(1)
+   lower.set_line_width(1)
 
    a := Math.atan(y2 - y1, x2 - x1)
    if a < 0 then
@@ -413,11 +424,9 @@ procedure DrawGroove(win, x1, y1, x2, y2, w)
       lower.draw_line(x1, y1, x2, y2)
       }
 
-   if w ~= 0 then {			# if really drawing
-      upper.close()
-      lower.close()
-   } else
-      win.set_fg(\fg)				# restore foreground if changed
+   upper.close()
+   lower.close()
+
    return win
 end
 
