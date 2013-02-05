@@ -30,7 +30,7 @@ class TextButton(Button)
       p.draw_point(self.cbwin, border.float(self, p))
 
       if \self.is_down then {
-         Gui.style.down_rectangle(self.cbwin, self.x, self.y, self.w, self.h)
+         border.draw_down_rect(self.cbwin, self)
          border.draw_rev_rect(self.cbwin, self)
       } else if /self.is_checked_flag then
          border.draw_rect(self.cbwin, self)

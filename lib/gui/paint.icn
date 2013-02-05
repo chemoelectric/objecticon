@@ -3,7 +3,7 @@ package gui
 import 
    util,
    graphics,
-   ipl.graphics(Zoom,bev_lookup),
+   ipl.graphics(Zoom,GetShadowClone),
    ipl.strings(separate_lines)
 
 # A {Paint} represents an arbitrary object which has a size and can be
@@ -384,10 +384,8 @@ class GridPaint(Paint)
    end
 
    public close_win()
-      if \win then {
-         Gui.style.dispose(win)
+      if \win then
          win.close()
-      }
       win := &null
    end
 
@@ -398,7 +396,7 @@ class GridPaint(Paint)
          return
 
       use {
-         cw := bev_lookup(win).shadow.clone().set_masked_pattern("gray"),
+         cw := GetShadowClone(win).set_masked_pattern("gray"),
          {
             cw.draw_rectangle(0, 0, w, h)
 
@@ -521,10 +519,8 @@ class ImagePaint(Paint)
    end
 
    public close_image()
-      if \win & /dont_close then {
-         Gui.style.dispose(win)
+      if \win & /dont_close then
          win.close()
-      }
       dont_close := win := &null
    end
 

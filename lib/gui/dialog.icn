@@ -410,7 +410,6 @@ class Dialog(Component)
       self.dispose_selections()
       self.tooltip_dispose()
       self.finally()
-      Gui.style.dispose_all()
       self.close_win()
       Dispatcher.remove_dialog(self)
       if \self.owning_dialog then {

@@ -16,8 +16,6 @@
 #
 #	These procedures draw objects having a raised or sunken appearance.
 #
-#	BevelReset(win)				sets/resets shading colors.
-#
 #	BevelCircle(win, x, y, r, bw)		draws a beveled circle.
 #
 #	BevelDiamond(win, x, y, r, bw)		draws a beveled diamond.
@@ -50,9 +48,6 @@
 #  However, this abstraction fails if the background color changes
 #  or if clipping is set, due to the use of cached graphics contexts.
 #
-#  BevelReset(win) -- set/reset colors for beveling
-#	This procedure is called automatically by the others.
-#	It can be called explicitly if the background color is changed.
 #
 #  BevelCircle(win, x, y, r, bw) -- draw beveled circle
 #  BevelDiamond(win, x, y, r, bw) -- draw beveled diamond
@@ -101,107 +96,72 @@ package ipl.graphics
 
 import util(Math)
 
-global bev_table
-record bev_record(shadow, hilite)
+global hilite_table, shadow_table
 
+procedure GetHiliteColor(win)
+   local c, h, l, s, lhilite, r
 
-procedure BevelDispose(win)
-   local b
-   if b := \ (\bev_table)[win] then {
-      b.hilite.close()
-      b.shadow.close()
-      delete(bev_table, win)
-   }
-end
+   /hilite_table := table()
+   c := win.get_bg()
+   if r := member(hilite_table, c) then
+      return r
 
-procedure BevelDisposeAll()
-local b
-    every b := !\bev_table do {
-       b.hilite.close()
-       b.shadow.close()
-    }
-    bev_table := &null
-end
-
-#  BevelReset(win) -- set/reset colors for beveling
-#
-#  Called automatically the first time a beveling procedure is called;
-#  must also be called explicitly if the background color is changed.
-#  (Pale, weak background colors work best with beveling.)
-
-# set colors for beveled drawing
-procedure BevelReset(win)	
-   local h, l, s, hilite, shadow, lhilite, lshadow
-
-   /bev_table := table()
-
-   BevelDispose(win)
-
-   if win.get_depth() >= 4 then {
-
-      HLS(win.get_bg()) ? {
-         h := integer(tab(many(&digits)))
-         move(1)
-         l := integer(tab(many(&digits)))
-         move(1)
-         s := integer(tab(0))
-         }
-
-      case l of {
-          0 <= l < 10 & l:	  { lshadow := 25;	lhilite := 50 }
-         10 <= l < 25 & l:	  { lshadow := 0;	lhilite := l + 25 }
-         25 <= l < 50 & l:	  { lshadow := l - 25;	lhilite := l + 25 }
-         50 <= l < 75 & l:	  { lshadow := 25;	lhilite := l + 25 }
-         75 <= l < 90 & l:	  { lshadow := l - 50;	lhilite := 100 }
-         default:		  { lshadow := 40;	lhilite := 75 }
-         }
-      s /:= 2
-
-      shadow := win.clone().
-         set_fg(HLSValue(h || ":" || lshadow || ":" || s)).
-         set_line_width(1).
-         set_line_style("solid").
-         set_pattern().
-         set_draw_op("over")
-      hilite := shadow.clone().
-         set_fg(HLSValue(h || ":" || lhilite || ":" || s))
-   } else {
-      shadow := win.clone().
-         set_line_width(1).
-         set_line_style("solid").
-         set_pattern().
-         set_draw_op("over")
-      hilite := shadow.clone().
-         set_textured_pattern("gray")
+   HLS(c) ? {
+      h := integer(tab(many(&digits)))
+      move(1)
+      l := integer(tab(many(&digits)))
+      move(1)
+      s := integer(tab(0))
    }
 
-   bev_table[win] := bev_record(shadow, hilite)
-   return win
+   case l of {
+      0 <= l < 10 & l:	  { lhilite := 50 }
+      10 <= l < 25 & l:	  { lhilite := l + 25 }
+      25 <= l < 50 & l:	  { lhilite := l + 25 }
+      50 <= l < 75 & l:	  { lhilite := l + 25 }
+      75 <= l < 90 & l:	  { lhilite := 100 }
+      default:		  { lhilite := 75 }
+   }
+   s /:= 2
+   insert(hilite_table, c, r := HLSValue(h || ":" || lhilite || ":" || s))
+   return r
 end
 
+procedure GetShadowColor(win)
+   local c, h, l, s, lshadow, r
 
-#  bev_lookup(win) -- look up and return bev_record for a window.
-#
-#  (Internal procedure)
+   /shadow_table := table()
+   c := win.get_bg()
+   if r := member(shadow_table, c) then
+      return r
 
-procedure bev_lookup(win)
-   local b, t
-   b := \ (\bev_table)[win] | bev_table[BevelReset(win)]
-   
-   # Ensure the shadow and hilite windows have the same values for
-   # some selected attributes.
-   t := win.get_dx()
-   every (b.shadow | b.hilite).set_dx(t)
+   HLS(c) ? {
+      h := integer(tab(many(&digits)))
+      move(1)
+      l := integer(tab(many(&digits)))
+      move(1)
+      s := integer(tab(0))
+   }
 
-   t := win.get_dy()
-   every (b.shadow | b.hilite).set_dy(t)
+   case l of {
+      0 <= l < 10 & l:	  { lshadow := 25 }
+      10 <= l < 25 & l:	  { lshadow := 0 }
+      25 <= l < 50 & l:	  { lshadow := l - 25 }
+      50 <= l < 75 & l:	  { lshadow := 25 }
+      75 <= l < 90 & l:	  { lshadow := l - 50 }
+      default:		  { lshadow := 40 }
+   }
+   s /:= 2
+   insert(shadow_table, c, r := HLSValue(h || ":" || lshadow || ":" || s))
+   return r
+end
 
-   if t := win.get_clip() then
-      every (b.shadow | b.hilite).clip!t
-   else
-      every (b.shadow | b.hilite).unclip()
+procedure GetHiliteClone(win)
+   return win.clone().set_fg(GetHiliteColor(win))
+end
 
-   return b
+procedure GetShadowClone(win)
+   return win.clone().set_fg(GetShadowColor(win))
 end
 
 
@@ -209,19 +169,17 @@ end
 
 # draw beveled circle
 procedure BevelCircle(win, x, y, r, bw)		
-   local b, upper, lower, a
-
-   b := bev_lookup(win)
+   local upper, lower, a
 
    /r := 6
    /bw := 2
    if bw >= 0 then {
-      upper := b.hilite
-      lower := b.shadow
+      upper := GetHiliteClone(win)
+      lower := GetShadowClone(win)
    }
    else {
-      upper := b.shadow
-      lower := b.hilite
+      upper := GetShadowClone(win)
+      lower := GetHiliteClone(win)
       bw := -bw
    }
 
@@ -231,6 +189,8 @@ procedure BevelCircle(win, x, y, r, bw)
       upper.draw_circle(x, y, r, a + Math.PI, Math.PI)
       r -:= 1
    }
+   upper.close()
+   lower.close()
    return win
 end
 
@@ -239,19 +199,17 @@ end
 
 # draw beveled diamond
 procedure BevelDiamond(win, x, y, r, bw)	
-   local b, upper, lower
-
-   b := bev_lookup(win)
+   local upper, lower
 
    /r := 6
    /bw := 3
    if bw >= 0 then {
-      upper := b.hilite
-      lower := b.shadow
+      upper := GetHiliteClone(win)
+      lower := GetShadowClone(win)
    }
    else {
-      upper := b.shadow
-      lower := b.hilite
+      upper := GetShadowClone(win)
+      lower := GetHiliteClone(win)
       bw := -bw
    }
 
@@ -260,6 +218,8 @@ procedure BevelDiamond(win, x, y, r, bw)
       upper.draw_line(x - r, y, x, y - r, x + r, y)
       r -:= 1
    }
+   upper.close()
+   lower.close()
    return win
 end
 
@@ -267,19 +227,17 @@ end
 #  BevelTriangle(win, x, y, r, o, bw) -- draw beveled triangle
 
 procedure BevelTriangle(win, x, y, r, o, bw)
-   local b, upper, lower
-
-   b := bev_lookup(win)
+   local upper, lower
 
    /r := 6
    /bw := 2
    if bw >= 0 then {
-      upper := b.hilite
-      lower := b.shadow
+      upper := GetHiliteClone(win)
+      lower := GetShadowClone(win)
    }
    else {
-      upper := b.shadow
-      lower := b.hilite
+      upper := GetShadowClone(win)
+      lower := GetHiliteClone(win)
       bw := -bw
    }
 
@@ -305,6 +263,8 @@ procedure BevelTriangle(win, x, y, r, o, bw)
       }
       r -:= 1
    }
+   upper.close()
+   lower.close()
    return win
 end
 
@@ -333,11 +293,6 @@ end
 procedure GrooveRectangle(win, x, y, w, h, bw)	
    local abw
 
-   /x := -win.get_dx()
-   /y := -win.get_dy()
-   /w := win.get_width() - (x + win.get_dx())
-   /h := win.get_height() - (y + win.get_dy())
-
    if (w | h) < 0 then
       return win
 
@@ -361,26 +316,19 @@ end
 
 # draw beveled rectangle
 procedure BevelRectangle(win, x, y, w, h, bw)	
-   local b, upper, lower, xx, yy
-
-   b := bev_lookup(win)
-
-   /x := -win.get_dx()
-   /y := -win.get_dy()
-   /w := win.get_width() - (x + win.get_dx())
-   /h := win.get_height() - (y + win.get_dy())
+   local upper, lower, xx, yy
 
    if (w | h) < 0 then
       return win
 
    /bw := 2
    if bw >= 0 then {
-      upper := b.hilite
-      lower := b.shadow
+      upper := GetHiliteClone(win)
+      lower := GetShadowClone(win)
    }
    else {
-      upper := b.shadow
-      lower := b.hilite
+      upper := GetShadowClone(win)
+      lower := GetHiliteClone(win)
       bw := -bw
    }
 
@@ -398,6 +346,8 @@ procedure BevelRectangle(win, x, y, w, h, bw)
       y +:= 1
    }
 
+   upper.close()
+   lower.close()
    return win
 end
 
@@ -426,7 +376,7 @@ end
 
 # draw grooved line
 procedure DrawGroove(win, x1, y1, x2, y2, w)	
-   local a, n, b, upper, lower, fg
+   local a, n, upper, lower, fg
 
    /w := 2
    x1 := integer(x1)
@@ -435,9 +385,8 @@ procedure DrawGroove(win, x1, y1, x2, y2, w)
    y2 := integer(y2)
 
    if w ~= 0 then {			# if really drawing
-      b := bev_lookup(win)
-      upper := b.shadow
-      lower := b.hilite
+      upper := GetShadowClone(win)
+      lower := GetHiliteClone(win)
       }
    else {
       fg := win.get_fg()			# if erasing, draw in bg color
@@ -464,7 +413,11 @@ procedure DrawGroove(win, x1, y1, x2, y2, w)
       lower.draw_line(x1, y1, x2, y2)
       }
 
-   win.set_fg(\fg)				# restore foreground if changed
+   if w ~= 0 then {			# if really drawing
+      upper.close()
+      lower.close()
+   } else
+      win.set_fg(\fg)				# restore foreground if changed
    return win
 end
 

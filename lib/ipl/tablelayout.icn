@@ -484,7 +484,7 @@ class TableLayout(Layout)
       local i, cw
       ensure_grid()
       use {
-         cw := bev_lookup(self.parent.cbwin).shadow.clone().set_masked_pattern("gray"),
+         cw := GetShadowClone(self.parent.cbwin).set_masked_pattern("gray"),
          {
             cw.draw_rectangle(parent.x, parent.y, parent.w, parent.h)
             every i := !g.info do {
