@@ -1902,6 +1902,7 @@ int parseopaquecolor(char *buf, int *r, int *g, int *b)
 int parsecolor(char *buf, int *r, int *g, int *b, int *a)
 {
     int len, mul, ignore;
+    float rf, gf, bf, af;
     char *fmt, c;
 
     if (!a)
@@ -1913,19 +1914,42 @@ int parsecolor(char *buf, int *r, int *g, int *b, int *a)
     while (isspace((unsigned char)*buf))
         buf++;
 
-    /* try interpreting as three comma-separated numbers */
+    /* try interpreting as three comma-separated decimal ints in the range 0..65535 */
     if (sscanf(buf, "%d,%d,%d%c", r, g, b, &c) == 3) {
-        if (*r>=0 && *r<=65535 && *g>=0 && *g<=65535 && *b>=0 && *b<=65535)
+        if (*r >= 0 && *r <= 65535 && *g >= 0 && *g <= 65535 && *b >= 0 && *b <= 65535)
             return 1;
         else
             return 0;
     }
 
-    /* try interpreting as four comma-separated numbers */
+    /* try interpreting as three comma-separated floats in the range 0..1 */
+    if (sscanf(buf, "%f,%f,%f%c", &rf, &gf, &bf, &c) == 3) {
+        if (rf >= 0.0 && rf <= 1.0 && gf >= 0.0 && gf <= 1.0 && bf >= 0.0 && bf <= 1.0) {
+            *r = 65535 * rf;
+            *g = 65535 * gf;
+            *b = 65535 * bf;
+            return 1;
+        } else
+            return 0;
+    }
+
+    /* try interpreting as four comma-separated decimal ints in the range 0..65535 */
     if (sscanf(buf, "%d,%d,%d,%d%c", r, g, b, a, &c) == 4) {
-        if (*r>=0 && *r<=65535 && *g>=0 && *g<=65535 && *b>=0 && *b<=65535 && *a>=0 && *a<=65535)
+        if (*r >= 0 && *r <= 65535 && *g >= 0 && *g <= 65535 && *b >= 0 && *b <= 65535 && *a >= 0 && *a <= 65535)
             return 1;
         else
+            return 0;
+    }
+
+    /* try interpreting as four comma-separated floats in the range 0..1 */
+    if (sscanf(buf, "%f,%f,%f,%f%c", &rf, &gf, &bf, &af, &c) == 4) {
+        if (rf >= 0.0 && rf <= 1.0 && gf >= 0.0 && gf <= 1.0 && bf >= 0.0 && bf <= 1.0 && af >= 0.0 && af <= 1.0) {
+            *r = 65535 * rf;
+            *g = 65535 * gf;
+            *b = 65535 * bf;
+            *a = 65535 * af;
+            return 1;
+        } else
             return 0;
     }
 
