@@ -101,6 +101,10 @@ class Ieval(ObjectOutput)
          s ||:= "Readable "
       if iand(f, lang.Class.Defer) ~= 0 then
          s ||:= "Defer "
+      if iand(f, lang.Class.Abstract) ~= 0 then
+         s ||:= "Abstract "
+      if iand(f, lang.Class.Native) ~= 0 then
+         s ||:= "Native "
       if iand(f, lang.Class.Final) ~= 0 then
          s ||:= "Final "
       if iand(f, lang.Class.Special) ~= 0 then
