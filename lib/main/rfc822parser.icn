@@ -318,10 +318,7 @@ class RFC822Parser()
       # first, and if that fails try the more complex alternative.
       #
       x := &pos
-      if try { parse_addr_spec(mb) } then {
-         mb.set_phrase("")
-         mb.set_route([])
-      } else {
+      try { parse_addr_spec(mb) } | {
          exception.clear()
          tab(x)
          t := parse_phrase()
