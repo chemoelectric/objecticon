@@ -155,7 +155,7 @@ abstract class Gradient(Pattern)
       Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
    end
 
-   public native add_color_stop_rgba(offset, r, g, b, a)
+   private native add_color_stop_rgba(offset, r, g, b, a)
 
    public add_color_stop(offset, col)
       local c

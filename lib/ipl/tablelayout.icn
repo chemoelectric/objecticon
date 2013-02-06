@@ -8,7 +8,7 @@ import
    gui,
    ipl.graphics
 
-class TableCellInfo(Insets)
+class TableCellInfo(Insets, ObjectOutput)
    public 
       obj,            # An arbitrary object 
       grid,           # The grid we're in

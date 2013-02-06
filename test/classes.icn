@@ -11,7 +11,7 @@ class One()
    end
 end
 
-class Two()
+class Two(ObjectOutput,ObjectClone,ObjectHash,ObjectEquals)
    public id, junk
    public object_equals(other)
       return id=other.id
@@ -36,7 +36,7 @@ class Two()
    end
 end
 
-class Three()
+class Three(ObjectClone)
    public x, y
 
    public object_clone()
@@ -54,7 +54,7 @@ class Four()
    public x,y,z
 end
 
-class Five()
+class Five(ObjectOutput)
    public object_output(oo)
       return oo.writes("Nothing here")
    end
@@ -70,7 +70,7 @@ class Six()
    end
 end
 
-class Seven()
+class Seven(ObjectOutput)
    public a,b,c,d
 
    private object_output(oo)
@@ -632,7 +632,7 @@ procedure test_set_method()
       write(e.file[-21:0],",",e.line)
 end
 
-class E1()
+class E1(ObjectEquals)
    private x
 
    private object_equals(other)

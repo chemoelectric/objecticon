@@ -9,6 +9,7 @@
 package util
 
 import 
+   lang,
    io(write), 
    ipl.scan(Scan), 
    exception
@@ -32,7 +33,7 @@ import
 # {Time.simple_parse} can be used to create new instances from
 # formatted strings.
 #
-class Time()
+class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    private readable 
       # Seconds since the base epoch date
       seconds,

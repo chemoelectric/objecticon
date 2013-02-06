@@ -16,7 +16,7 @@ import lang, io
 # the regular expression used to validate content elements.  Each node
 # contains an op and two args.
 #
-class ContentSpec()
+class ContentSpec(ObjectOutput)
    public
       op, 
       arg1,

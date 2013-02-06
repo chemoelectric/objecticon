@@ -4,6 +4,13 @@ import io, util, exception
 
 $define PUBLIC_STATIC_METHOD ior(Class.Public, Class.Static, Class.Method)
 
+# A class implements this interface to provide custom encoding/decoding.
+#
+abstract class ObjectCodec()
+   protected abstract object_encode(es)
+   protected abstract object_decode(ds)
+end
+
 class Codec()
    public static const 
       OBJECT_CODE,
@@ -168,7 +175,7 @@ class Encode(Stream, HasUnderlyingStream)
    end
 
    public encode(o)
-      local ty, i, cname, p, n, e, l
+      local ty, i, cname, n, e, l
 
       if i := \seen[o] then {
          writes(Codec.REF_CODE)
@@ -183,8 +190,8 @@ class Encode(Stream, HasUnderlyingStream)
             cname := Class.get_name(o)
             line_out(cname)
             note_seen(o)
-            if p := Class.getq(o, "object_encode") then
-               p(self)
+            if is(o, ObjectCodec) then
+               o.object_encode(self)
             else {
                n := Class.get_n_instance_fields(o)
                if \fast_flag then {
@@ -421,7 +428,7 @@ class Decode()
    end
 
    public decode()
-      local i, n, rname, t, res, def, con, cl, p, cname, l, v
+      local i, n, rname, t, res, def, con, cl, cname, l, v
 
       t := char_in()
 
@@ -457,8 +464,8 @@ class Decode()
             cl := Class.for_name(cname) | throw("No such class " || cname)
             res := Class.create_raw_instance_of(cl)
             note_seen(res)
-            if p := Class.getq(res, "object_decode") then
-               p(self)
+            if is(res, ObjectCodec) then
+               res.object_decode(self)
             else {
                if \fast_flag then {
                   n := int_in()

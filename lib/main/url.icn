@@ -9,13 +9,14 @@
 package net
 
 import 
+   lang,
    util,
    ipl.lastc
 
 #
 # This class encapsulates a URL
 #
-class URL()
+class URL(ObjectOutput)
    private readable 
       scheme,
       userinfo,
