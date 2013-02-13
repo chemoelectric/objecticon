@@ -75,7 +75,7 @@ class GridLayout(Layout)
    public display()
       local i, cw
       use {
-         cw := bev_lookup(self.parent.cbwin).shadow.clone().set_masked_pattern("gray"),
+         cw := GetShadowClone(self.parent.cbwin).set_masked_pattern("gray"),
          {
             cw.draw_rectangle(parent.x, parent.y, parent.w, parent.h)
 

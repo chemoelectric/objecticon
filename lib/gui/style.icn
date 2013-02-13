@@ -3,92 +3,116 @@ package gui
 import ipl.graphics, util
 
 class Style()
-   public dispose(W)
-      BevelDispose(W)
-   end
-
-   public dispose_all()
-      BevelDisposeAll()
-   end
-
    #
    # Draw a raised rectangle.
    #
    public draw_raised_rectangle(W, x, y, w, h, width)
-      BevelRectangle(W, x, y, w, h, width)
+      return BevelRectangle(W, x, y, w, h, width)
    end
 
    #
    # Draw a sunken rectangle.
    #
    public draw_sunken_rectangle(W, x, y, w, h, width)
-      BevelRectangle(W, x, y, w, h, -width)
+      return BevelRectangle(W, x, y, w, h, -width)
    end
 
-   public fill_hilite_rectangle(W, x, y, w, h)
-      bev_lookup(W).hilite.fill_rectangle(x, y, w, h)
+   public get_hilite_clone(W)
+      return W.clone().set_fg(get_hilite_color(W))
    end
 
-   public fill_shadow_rectangle(W, x, y, w, h)
-      bev_lookup(W).shadow.fill_rectangle(x, y, w, h)
+   public get_shadow_clone(W)
+      return W.clone().set_fg(get_shadow_color(W))
+   end
+
+   public get_focus_clone(W)
+      return W.clone().set_fg("red").set_masked_pattern("gray")
+   end
+
+   public get_dashed_clone(W)
+      return get_shadow_clone(W).set_masked_pattern("gray")
+   end
+
+   public get_highlight_clone(W)
+      return W.clone().set_fg("blue").set_masked_pattern("gray")
+   end
+
+   public get_cursor_clone(W)
+      return W.clone().set_fg("red")
    end
 
    public get_hilite_color(W)
-      return bev_lookup(W).hilite.get_fg()
+      return GetHiliteColor(W)
    end
 
    public get_shadow_color(W)
-      return bev_lookup(W).shadow.get_fg()
+      return GetShadowColor(W)
    end
 
    public shade_rectangle(W, x, y, w, h)
-      W.filter(x, y, w, h, "shade,4,5000,40000")
+      return W.filter(x, y, w, h, "shade,4,5000,40000")
    end
 
    public down_rectangle(W, x, y, w, h)
-      W.filter(x, y, w, h, "linear,0.85,0.85,0.85")
+      return W.filter(x, y, w, h, "linear,0.85,0.85,0.85")
    end
 
    public selection_rectangle(W, x, y, w, h)
-      W.filter(x, y, w, h, "linear,0.6,0.75,1.0")
+      return W.filter(x, y, w, h, "linear,0.6,0.75,1.0")
+   end
+
+   public fill_hilite_rectangle(W, x, y, w, h)
+      local cw
+      return use {
+         cw := get_hilite_clone(W),
+         cw.fill_rectangle(x, y, w, h)
+      }
+   end
+
+   public fill_shadow_rectangle(W, x, y, w, h)
+      local cw
+      return use {
+         cw := get_shadow_clone(W),
+         cw.fill_rectangle(x, y, w, h)
+      }
    end
 
    public draw_dashed_rectangle(W, x, y, w, h)
       local cw
-      use {
-         cw := bev_lookup(W).shadow.clone().set_masked_pattern("gray"),
+      return use {
+         cw := get_dashed_clone(W),
          cw.draw_rectangle(x, y, w, h)
       }
    end
 
    public draw_focus_rectangle(W, x, y, w, h)
       local cw
-      use {
-         cw := W.clone().set_fg("red").set_masked_pattern("gray"),
+      return use {
+         cw := get_focus_clone(W),
          cw.draw_rectangle(x, y, w, h)
       }
    end
 
    public draw_highlight_rectangle(W, x, y, w, h)
       local cw
-      use {
-         cw := W.clone().set_fg("blue").set_masked_pattern("gray"),
+      return use {
+         cw := get_highlight_clone(W),
          cw.draw_rectangle(x, y, w, h)
       }
    end
 
    public draw_shadow_text_cursor(W, x, y, h)
       local cw
-      use {
-         cw := bev_lookup(W).shadow.clone(),
+      return use {
+         cw := get_shadow_clone(W),
          cw.fill_rectangle(x - 1, y, 2, h)
       }
    end
 
    public draw_text_cursor(W, x, y, h)
       local cw
-      use {
-         cw := W.clone().set_fg("red"),
+      return use {
+         cw := get_cursor_clone(W),
          cw.fill_rectangle(x - 1, y, 2, h)
       }
    end

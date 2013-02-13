@@ -439,7 +439,7 @@ AC_DEFUN([AX_CHECK_PNG],
 AC_DEFUN([AX_CHECK_X11],
 [
     AC_MSG_CHECKING(if X11 graphics are wanted)
-    AC_ARG_WITH(png,
+    AC_ARG_WITH(X11,
 [  --with-X11=paths to x11 xrender xft fontconfig freetype2 .pc files
   --without-X11 to disable X11 usage completely],
    [

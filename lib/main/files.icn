@@ -1,6 +1,7 @@
 package io
 
 import 
+   lang,
    util,
    posix,
    ipl.random
@@ -593,7 +594,7 @@ end
 #
 # Instances of this class are immutable.
 #
-abstract class FilePath()
+abstract class FilePath(ObjectOutput)
    protected l
 
    #

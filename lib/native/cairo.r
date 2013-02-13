@@ -246,12 +246,15 @@ function cairo_Context_set_dash(self, offset, args[n])
        double *d;
        int i;
        GetSelfCr();
-       d = alloca(n * sizeof(double));
+       MemProtect(d = malloc(n * sizeof(double)));
        for (i = 0; i < n; ++i) {
-           if (!cnv:C_double(args[i], d[i]))
+           if (!cnv:C_double(args[i], d[i])) {
+               free(d);
                runerr(102, args[i]);
+           }
        }
        cairo_set_dash(self_cr, d, n, offset);
+       free(d);
        return self;
     }
 end

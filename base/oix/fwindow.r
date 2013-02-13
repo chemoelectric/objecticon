@@ -1721,8 +1721,8 @@ end
 
 #else    /* Graphics */
 
-UnsupportedFunc(graphics_Window_open_impl)
-UnsupportedFunc(graphics_Pixels_open_impl)
+UnsupportedFunc(graphics_Window_new_impl)
+UnsupportedFunc(graphics_Pixels_new_open_impl)
 UnsupportedFunc(graphics_Pixels_to_file)
 
 #endif   

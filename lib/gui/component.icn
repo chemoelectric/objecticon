@@ -807,7 +807,6 @@ class Component(Rect,Align,Connectable)
    public finally()
       \cbwin | syserr("finally called out of sequence")
       (\self.border).finally()
-      Gui.style.dispose(self.cbwin)
       self.cbwin.close()
       self.cbwin := &null
       every (!self.children).finally()

@@ -550,7 +550,7 @@ class Img(Label)
    end
 end
 
-class FormEntry()
+abstract class FormEntry()
    public 
       form_name, form_id, form_tabindex
 
@@ -564,7 +564,7 @@ class FormEntry()
    public get_save_value() end
    public restore_value(val) end
 
-   public defer get_value(ev, src, multipart_flag)
+   public abstract get_value(ev, src, multipart_flag)
 end
 
 class FormToggle(ToggleTextButton, FormEntry)
@@ -1217,12 +1217,12 @@ record HistoryEntry(url,          # URL displayed (on a redirect may differ from
                     area_y
                     ) 
 
-class BrowserUI()
-   public defer msg(s, n)
-   public defer clear_msg()
-   public defer set_url_field(url)
-   public defer update_grey(gs)
-   public defer set_title(s)
+abstract class BrowserUI()
+   public abstract msg(s, n)
+   public abstract clear_msg()
+   public abstract set_url_field(url)
+   public abstract update_grey(gs)
+   public abstract set_title(s)
 end
 
 record GreyState(prev, nxt, refresh, copy_page, save_page, stop)

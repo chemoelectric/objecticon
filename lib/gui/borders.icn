@@ -27,6 +27,14 @@ abstract class ABorder(Insets,Align)
       Gui.style.draw_focus_rectangle(W, x, y, w, h)
    end
 
+   public draw_down_rect(W, r)
+      self.draw_down(W, r.x, r.y, r.w, r.h)
+   end
+
+   public draw_down(W, x, y, w, h)
+      Gui.style.down_rectangle(W, x, y, w, h)
+   end
+
    #
    # Take a {Rect}, giving the bordered size, and a {Size}, giving
    # an object within it, and "float" it within the area in accordance
@@ -215,6 +223,10 @@ class CompoundBorder(ABorder)
 
    public draw_focus(W, x, y, w, h)
       outer.draw_focus(W, x, y, w, h)
+   end
+
+   public draw_down(W, x, y, w, h)
+      outer.draw_down(W, x, y, w, h)
    end
 
    public set_inner(inner)

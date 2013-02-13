@@ -9,7 +9,7 @@ import ipl.pdco(Seq), lang
 #
 # This is a common superclass for several table-like data structures.
 #
-abstract class Table()
+abstract class Table(ObjectOutput, ObjectHash, ObjectEquals)
    public const def
 
    #

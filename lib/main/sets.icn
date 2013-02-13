@@ -9,7 +9,7 @@ import lang
 #
 # This is a common superclass for a set-like data structure.
 #
-abstract class Set()
+abstract class Set(ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Insert a new member.
    #

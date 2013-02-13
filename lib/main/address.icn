@@ -4,7 +4,9 @@
 
 package mail
 
-abstract class Address()
+import lang
+
+abstract class Address(ObjectOutput)
    public abstract to_rfc822()
 
    public abstract generate_mailboxes()

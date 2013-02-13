@@ -10,14 +10,14 @@ $load IEVAL_LOGO "rpp.IEVAL_LOGO.png"
 
 record Activation(coex, info)
 
-class IevalTermDialog(TermDialog)
+class IevalTermDialog(TermDialog, ObjectOutput)
    # Avoid printing the internals.
    private object_output(oo)
       oo.object_string(self)
    end
 end
 
-class Ieval()
+class Ieval(ObjectOutput)
    private 
       input, output, error, vars, ev, quiet_flag, par, consts,
       oos, trace_flag, parse_flag, last_runerr, ee, hist_line, hlim,
@@ -101,6 +101,10 @@ class Ieval()
          s ||:= "Readable "
       if iand(f, lang.Class.Defer) ~= 0 then
          s ||:= "Defer "
+      if iand(f, lang.Class.Abstract) ~= 0 then
+         s ||:= "Abstract "
+      if iand(f, lang.Class.Native) ~= 0 then
+         s ||:= "Native "
       if iand(f, lang.Class.Final) ~= 0 then
          s ||:= "Final "
       if iand(f, lang.Class.Special) ~= 0 then

@@ -50,6 +50,34 @@ procedure to_stderr(o, indent, always_structure, depth, ignore_object_output)
       show(o)
 end
 
+# A class implements this interface in order to provide custom output
+# for an ObjectOutputStream
+#
+abstract class ObjectOutput()
+   protected abstract object_output(oos)
+end
+
+# A class implements this interface to provide a custom implementation
+# for the `clone` procedure.
+#
+abstract class ObjectClone()
+   protected abstract object_clone(seen)
+end
+
+# A class implements this interface to provide a custom implementation
+# for the `hash` procedure.
+#
+abstract class ObjectHash()
+   protected abstract object_hash(depth)
+end
+
+# A class implements this interface to provide a custom implementation
+# for the `equals` procedure.
+#
+abstract class ObjectEquals()
+   protected abstract object_equals(other, seen)
+end
+
 #
 # This class can be used to output a human-readable image of an
 # arbitrary icon object.
@@ -121,7 +149,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
    end
 
    public traverse(o)
-      local ty, s, i, e, mp, sep, desc, def
+      local ty, s, i, e, sep, desc, def
 
       if s := \seen[o] then
          return writes("ref ", s)
@@ -172,8 +200,8 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
             seen[o] := s
             if /desc then
                writes(s)
-            else if /ignore_object_output_flag & (mp := Class.getq(o, "object_output")) then
-               mp(self)
+            else if /ignore_object_output_flag & is(o, ObjectOutput) then
+               o.object_output(self)
             else if simple{Class.getf(o, 1 to Class.get_n_instance_fields(o))} then {
                writes(s, "(")
                every i := 1 to Class.get_n_instance_fields(o) do {
@@ -506,7 +534,7 @@ end
 # Clone the given object
 #
 procedure clone(o, seen)
-   local e, ty, res, i, mp
+   local e, ty, res, i
 
    /seen := table()
 
@@ -517,8 +545,8 @@ procedure clone(o, seen)
 
    case ty of {
       "object" : {
-         if mp := Class.getq(o, "object_clone") then {
-            res := mp(seen)
+         if is(o, ObjectClone) then {
+            res := o.object_clone(seen)
             seen[o] := res
          } else {
             #
@@ -587,8 +615,8 @@ procedure hash(x, depth)
    
    case type(x) of {
       "object" : {
-         if mp := Class.getq(x, "object_hash") then
-            n := mp(depth)
+         if is(x, ObjectHash) then
+            n := x.object_hash(depth)
          else {
             l := n := Class.get_n_instance_fields(x)
             if depth > 1 then {
@@ -658,9 +686,10 @@ procedure equals_impl(x, y, seen)
    local i, mp
    case type(x) of {
       "object" : {
-         if mp := Class.getq(x, "object_equals") then {
+         if is(x, ObjectEquals) then {
             # x has an object_equals method, so y must inherit the
             # same object_equals method as x.
+            mp := x.object_equals
             return (Proc.get_defining_class(mp) === Class.get_field_defining_class(y, "object_equals")) &
                mp(y, seen)
          }
@@ -769,7 +798,7 @@ final abstract class Internal()
    public static native hash(x)
 end
 
-class NoCopy()
+class NoCopy(ObjectClone)
    private final object_clone()
       return self
    end
