@@ -10,7 +10,7 @@ $define LIB "objecticonmysqllib.so"
 
 package mysql
 
-import lang, io
+import lang, io, util
 
 #
 # This class provides a wrapper around the MySql C API.  Nearly all the
@@ -72,7 +72,8 @@ class MySql(NoCopy)
       CLIENT_SECURE_CONNECTION,
       CLIENT_MULTI_STATEMENTS,
       CLIENT_MULTI_RESULTS,
-      CLIENT_REMEMBER_OPTIONS
+      CLIENT_REMEMBER_OPTIONS,
+      SUPPORTED
 
    private 
       ptr
@@ -422,10 +423,12 @@ class MySql(NoCopy)
       CLIENT_MULTI_RESULTS :=    131072  
       CLIENT_REMEMBER_OPTIONS := 2147483648  # ((ulong) (1L << 31))
 
-      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+      if Class.load_library(Files.find_native_lib(LIB)) then
+         SUPPORTED := &yes
    end
 
    public final new()
+      \SUPPORTED | return error("MySQL not supported")
       ptr := new_impl() | fail
       return
    end

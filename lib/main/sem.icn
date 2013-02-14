@@ -10,7 +10,7 @@ $define LIB "objecticonipclib.so"
 
 package ipc
 
-import lang, io
+import lang, io, util
 
 #
 # This class provides a semaphore facility.  The implementation requires
@@ -22,6 +22,9 @@ import lang, io
 final class Sem(NoCopy)
    private 
       id
+
+   public static const
+      SUPPORTED
 
    #
    # Set the value of the semaphore to x
@@ -105,10 +108,12 @@ final class Sem(NoCopy)
    private static native create_private_impl()
 
    private static init() 
-      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+      if Class.load_library(Files.find_native_lib(LIB)) then
+         SUPPORTED := &yes
    end
 
    private new(id)
+      \SUPPORTED | return error("Sem ipc not supported")
       self.id := id
       return
    end

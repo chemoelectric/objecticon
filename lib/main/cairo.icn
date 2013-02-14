@@ -108,7 +108,7 @@ abstract class Pattern()
    protected ptr
 
    private static init()
-      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+      Class.load_library(Files.find_native_lib(LIB))
    end
 
    private native set_matrix_impl(xx, yx, xy, yy, x0, y0)
@@ -152,7 +152,7 @@ end
 
 abstract class Gradient(Pattern)
    private static init()
-      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+      Class.load_library(Files.find_native_lib(LIB))
    end
 
    private native add_color_stop_rgba(offset, r, g, b, a)
@@ -169,53 +169,69 @@ abstract class Gradient(Pattern)
 end
 
 class LinearGradient(Gradient)
+   public static const SUPPORTED
+
    private static init()
-      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+      if Class.load_library(Files.find_native_lib(LIB)) then
+         SUPPORTED := &yes
    end
 
    private static native new_impl()
 
    public new(x0, y0, x1, y1)
+      \SUPPORTED | return error("Cairo not supported")
       ptr := new_impl(x0, y0, x1, y1)
       return
    end
 end
 
 class RadialGradient(Gradient)
+   public static const SUPPORTED
+
    private static init()
-      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+      if Class.load_library(Files.find_native_lib(LIB)) then
+         SUPPORTED := &yes
    end
 
    private static native new_impl()
 
    public new(cx0, cy0, r0, cx1, cy1, r1)
+      \SUPPORTED | return error("Cairo not supported")
       ptr := new_impl(cx0, cy0, r0, cx1, cy1, r1)
       return
    end
 end
 
 class SurfacePattern(Pattern)
+   public static const SUPPORTED
+
    private static init()
-      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+      if Class.load_library(Files.find_native_lib(LIB)) then
+         SUPPORTED := &yes
    end
 
    private static native new_impl(sur)
 
    public new(sur)
+      \SUPPORTED | return error("Cairo not supported")
       ptr := new_impl(sur)
       return
    end
 end
 
 class SolidPattern(Pattern)
+   public static const SUPPORTED
+
    private static init()
-      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+      if Class.load_library(Files.find_native_lib(LIB)) then
+         SUPPORTED := &yes
    end
 
    private static native new_impl(r, g, b, a)
 
    public new(col)
       local c
+      \SUPPORTED | return error("Cairo not supported")
       c := Window.parse_color(col) | fail
       ptr := new_impl(c[1] / 65535.0,
                       c[2] / 65535.0,
@@ -229,31 +245,36 @@ abstract class Surface()
    protected ptr
 
    private static init()
-      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+      Class.load_library(Files.find_native_lib(LIB))
    end
 
    public native close()
 end
 
 class WindowSurface(Surface)
+   public static const SUPPORTED
+
    private static init()
-      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+      if Class.load_library(Files.find_native_lib(LIB)) then
+         SUPPORTED := &yes
    end
 
    private static native new_impl()
 
    public new(win)
+      \SUPPORTED | return error("Cairo not supported")
       ptr := new_impl(win)
       return
    end
 end
 
 class ImageSurface(Surface)
-   public static const FORMAT
+   public static const FORMAT, SUPPORTED
 
    private static init()
       local t
-      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+      if Class.load_library(Files.find_native_lib(LIB)) then
+         SUPPORTED := &yes
       use {
          t := Window(),
          FORMAT := t.get_format()
@@ -271,6 +292,7 @@ class ImageSurface(Surface)
    private static native new_impl(pix)
 
    public new(pix)
+      \SUPPORTED | return error("Cairo not supported")
       pix.get_format() == FORMAT | runerr("Invalid format", pix)
       ptr := new_impl(pix)
       return
@@ -279,7 +301,7 @@ end
 
 abstract class PagedSurface(Surface)
    private static init()
-      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+      Class.load_library(Files.find_native_lib(LIB))
    end
 
    public native copy_page()
@@ -287,47 +309,62 @@ abstract class PagedSurface(Surface)
 end
 
 class SVGSurface(PagedSurface)
+   public static const SUPPORTED
+
    private static init()
-      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+      if Class.load_library(Files.find_native_lib(LIB)) then
+         SUPPORTED := &yes
    end
 
    private static native new_impl()
 
    public new(filename, width, height)
+      \SUPPORTED | return error("Cairo not supported")
       ptr := new_impl(filename, width, height)
       return
    end
 end
 
 class PostScriptSurface(PagedSurface)
+   public static const SUPPORTED
+
    private static init()
-      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+      if Class.load_library(Files.find_native_lib(LIB)) then
+         SUPPORTED := &yes
    end
 
    private static native new_impl()
 
    public new(filename, width, height)
+      \SUPPORTED | return error("Cairo not supported")
       ptr := new_impl(filename, width, height)
       return
    end
 end
 
 class PDFSurface(PagedSurface)
+   public static const SUPPORTED
+
    private static init()
-      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+      if Class.load_library(Files.find_native_lib(LIB)) then
+         SUPPORTED := &yes
    end
 
    private static native new_impl()
 
    public new(filename, width, height)
+      \SUPPORTED | return error("Cairo not supported")
       ptr := new_impl(filename, width, height)
       return
    end
 end
 
 class RecordingSurface(Surface)
+   public static const SUPPORTED
+
    private static init()
-      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+      if Class.load_library(Files.find_native_lib(LIB)) then
+         SUPPORTED := &yes
    end
 
    public native get_extents()
@@ -336,6 +373,7 @@ class RecordingSurface(Surface)
    private static native new_impl()
 
    public new(x, y, width, height)
+      \SUPPORTED | return error("Cairo not supported")
       ptr := new_impl(x, y, width, height)
       return
    end
@@ -344,8 +382,11 @@ end
 class Context()
    private ptr
 
+   public static const SUPPORTED
+
    private static init()
-      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+      if Class.load_library(Files.find_native_lib(LIB)) then
+         SUPPORTED := &yes
    end
 
    public native move_to(x, y)
@@ -492,6 +533,7 @@ class Context()
 
    public new(v)
       local t
+      \SUPPORTED | return error("Cairo not supported")
       if is(v, Window) then
          use {
             t := WindowSurface(v),

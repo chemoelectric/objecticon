@@ -179,7 +179,7 @@ final class MySqlRes(NoCopy)
    end
 
    private static init()
-      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+      Class.load_library(Files.find_native_lib(LIB))
    end
 
    package new(ptr)
