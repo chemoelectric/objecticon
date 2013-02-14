@@ -10,7 +10,7 @@ import
 #
 final class Pixels(ObjectClone)
    private
-      idp
+      ptr
 
    public static const
       A8,
@@ -177,14 +177,14 @@ final class Pixels(ObjectClone)
    # No data is shared.
    #
    public clone()
-      return create_for_idp(clone_impl())
+      return create_for_ptr(clone_impl())
    end
 
    # Convert this instance to one of the same dimensions in the given
    # format.
    #
    public convert(format)
-      return create_for_idp(convert_impl(format))
+      return create_for_ptr(convert_impl(format))
    end
 
    # Return a new {Pixels} instance which shares the data of this
@@ -192,7 +192,7 @@ final class Pixels(ObjectClone)
    # {Pixels} is closed.
    #
    public shared_copy()
-      return create_for_idp(shared_copy_impl())
+      return create_for_ptr(shared_copy_impl())
    end
 
    # Return the number of references to the underlying data.
@@ -212,10 +212,10 @@ final class Pixels(ObjectClone)
    #
    public native load_palette(pal)
 
-   package static create_for_idp(idp)
+   package static create_for_ptr(ptr)
       local i
       i := Class.create_instance()
-      i.idp := idp
+      i.ptr := ptr
       return i
    end
 
@@ -231,7 +231,7 @@ final class Pixels(ObjectClone)
    # format.  The underlying data is allocated and set to zero.
    #
    public new(a[])
-      (idp := if *a = 1 then
+      (ptr := if *a = 1 then
          new_open_impl(a[1])
       else
          new_blank_impl!a) | fail
@@ -241,7 +241,7 @@ end
 
 final class Window(NoCopy)
    private
-      wbp
+      ptr
 
    public static const
       RESIZE,
@@ -274,10 +274,10 @@ final class Window(NoCopy)
                         "waves", Pixels(8, 8, Pixels.PALETTE1).set_data("\x03\x84H0\x03\x84H0\x00"))
    end
 
-   private static create_for_wbp(wbp)
+   private static create_for_ptr(ptr)
       local i
       i := Class.create_instance()
-      i.wbp := wbp
+      i.ptr := ptr
       return i
    end
 
@@ -285,7 +285,7 @@ final class Window(NoCopy)
    # Open a new window.
    #
    public new(display)
-      self.wbp := new_impl(display)
+      self.ptr := new_impl(display) | fail
       return
    end
 
@@ -295,7 +295,7 @@ final class Window(NoCopy)
    # are copied from {self}.
    #
    public clone()
-      return create_for_wbp(clone_impl())
+      return create_for_ptr(clone_impl())
    end
 
    #
@@ -303,7 +303,7 @@ final class Window(NoCopy)
    # the graphics context of {other}.
    #
    public couple(other)
-      return create_for_wbp(couple_impl(other))
+      return create_for_ptr(couple_impl(other))
    end
 
    private static native new_impl(display)
@@ -561,7 +561,7 @@ final class Window(NoCopy)
    # is always returned, which must be closed by the caller.
    #
    public get_pattern()
-      return Pixels.create_for_idp(get_pattern_impl())
+      return Pixels.create_for_ptr(get_pattern_impl())
    end
 
    private native get_pattern_impl()
@@ -790,7 +790,7 @@ final class Window(NoCopy)
    # Get the contents of some pixels as a {Pixels} object.
    #
    public get_pixels(x, y, width, height)
-      return Pixels.create_for_idp(get_pixels_impl(x, y, width, height))
+      return Pixels.create_for_ptr(get_pixels_impl(x, y, width, height))
    end
 
    private native get_pixels_impl(x, y, width, height)

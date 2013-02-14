@@ -1323,9 +1323,9 @@ end
 #
 # This class is used to read directory contents.
 #
-class DirStream(LineBasedInputStream, NoCopy)
+final class DirStream(LineBasedInputStream, NoCopy)
    private 
-      dd
+      ptr
 
    protected native read_line_impl()
 
@@ -1333,7 +1333,7 @@ class DirStream(LineBasedInputStream, NoCopy)
 
    private static native new_impl(path)
 
-   public final new(path)
+   public new(path)
       cast(self,LineBasedInputStream).new()
 $ifdef _MS_WIN32
       if *path = 0 then
@@ -1343,7 +1343,7 @@ $ifdef _MS_WIN32
       else if not upto('*?', path) then
          path ||:= "\\*"
 $endif
-      self.dd := new_impl(path) | fail
+      self.ptr := new_impl(path) | fail
       return
    end
 end
@@ -2118,7 +2118,7 @@ end
 # can be used to efficiently concatenate together many strings, or as
 # a convenient temporary stream.
 #
-class RamStream(Stream, NoCopy)
+final class RamStream(Stream, NoCopy)
    private
       ptr
 
@@ -2163,7 +2163,7 @@ class RamStream(Stream, NoCopy)
    # @param wiggle the extra space to reserve for growth of the buffer,
    # @      default is 512 bytes.
    #
-   public final new(s, wiggle)
+   public new(s, wiggle)
       ptr := new_impl(s, wiggle)
       return
    end

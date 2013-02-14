@@ -2517,8 +2517,6 @@ function io_DescStream_dflag(self, on, off)
     }
 end
 
-static struct sdescrip ddf = {2, "dd"};
-
 #if PLAN9
 
 struct DirData {
@@ -2530,7 +2528,7 @@ struct DirData {
 struct DirData *self_dir;
 dptr self_dir_dptr;
 static struct inline_field_cache self_dir_ic;
-self_dir_dptr = c_get_instance_data(&self, (dptr)&ddf, &self_dir_ic);
+self_dir_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_dir_ic);
 if (!self_dir_dptr)
     syserr("Missing dd field");
 self_dir = (struct DirData*)IntVal(*self_dir_dptr);
@@ -2612,7 +2610,7 @@ end
 DIR *self_dir;
 dptr self_dir_dptr;
 static struct inline_field_cache self_dir_ic;
-self_dir_dptr = c_get_instance_data(&self, (dptr)&ddf, &self_dir_ic);
+self_dir_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_dir_ic);
 if (!self_dir_dptr)
     syserr("Missing dd field");
 self_dir = (DIR*)IntVal(*self_dir_dptr);
@@ -2678,7 +2676,7 @@ struct DirData {
 struct DirData *self_dir;
 dptr self_dir_dptr;
 static struct inline_field_cache self_dir_ic;
-self_dir_dptr = c_get_instance_data(&self, (dptr)&ddf, &self_dir_ic);
+self_dir_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_dir_ic);
 if (!self_dir_dptr)
     syserr("Missing dd field");
 self_dir = (struct DirData*)IntVal(*self_dir_dptr);
