@@ -285,7 +285,7 @@ final class Window(NoCopy)
    # Open a new window.
    #
    public new(display)
-      self.wbp := new_impl(display)
+      self.wbp := new_impl(display) | fail
       return
    end
 
