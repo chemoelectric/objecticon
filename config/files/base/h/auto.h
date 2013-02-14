@@ -12,9 +12,6 @@
 /* define as 1 if we have dl */
 #undef HAVE_LIBDL
 
-/* define as 1 if we have openssl */
-#undef HAVE_LIBOPENSSL
-
 /* define as 1 if we have getrlimit */
 #undef HAVE_GETRLIMIT
 

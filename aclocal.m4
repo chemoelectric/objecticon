@@ -382,19 +382,25 @@ AC_DEFUN([AX_CHECK_OPENSSL],
        AC_MSG_RESULT(yes)
    ]
 )
+    unset OPENSSL_VERSION OPENSSL_CFLAGS OPENSSL_LIBS
     if test -n "$OPENSSL_CONFIG"; then
            AC_MSG_CHECKING([for libOpenSSL library])
            if pkg-config $OPENSSL_CONFIG; then
-              CPPFLAGS="$CPPFLAGS `pkg-config --cflags $OPENSSL_CONFIG`"
-              LDFLAGS="$LDFLAGS `pkg-config --libs-only-L $OPENSSL_CONFIG`"
-              LIBS="$LIBS `pkg-config --libs-only-l $OPENSSL_CONFIG`"
+              OPENSSL_CPPFLAGS=`pkg-config --cflags $OPENSSL_CONFIG`
+              OPENSSL_LDFLAGS=`pkg-config --libs-only-L $OPENSSL_CONFIG`
+              OPENSSL_LIBS=`pkg-config --libs-only-l $OPENSSL_CONFIG`
+              OPENSSL_VERSION=`pkg-config --version $OPENSSL_CONFIG`
               AC_DEFINE(HAVE_LIBOPENSSL)
               AC_MSG_RESULT(yes)
-              found_openssl=yes
            else
               AC_MSG_RESULT([no])
            fi
     fi
+
+    AC_SUBST(OPENSSL_VERSION)
+    AC_SUBST(OPENSSL_LDFLAGS)
+    AC_SUBST(OPENSSL_CPPFLAGS)
+    AC_SUBST(OPENSSL_LIBS)
 ])
 
 

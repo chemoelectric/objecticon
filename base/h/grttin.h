@@ -74,6 +74,16 @@
    } while (0)
 #enddef
 
+#begdef Blkrunerr(n, bp, type)
+   do {
+       BlkLoc(t_errorvalue) = (union block*)(bp);
+      t_errorvalue.dword = type;
+      t_errornumber = n;
+      t_have_val = 1;
+      runerr(0);
+   } while (0)
+#enddef
+
 /*
  * Protection macro.
  */
@@ -165,10 +175,6 @@ typedef int j_common_ptr, JSAMPARRAY, JSAMPROW;
 
 #if HAVE_LIBPNG
 typedef int png_structp, png_infop, png_bytep, png_byte, png_colorp, png_color, png_color_16, png_color_16p;
-#endif
-
-#if HAVE_LIBOPENSSL
-typedef int SSL_CTX, SSL, SSL_METHOD, BIO, X509, X509_NAME, X509_NAME_ENTRY, ASN1_STRING, GENERAL_NAMES, GENERAL_NAME;
 #endif
 
 typedef int SOCKET;
@@ -359,5 +365,20 @@ do {
        }
    }
 } while(0)
+#enddef
+
+#begdef FdStaticParam(p, m)
+int m;
+dptr m##_dptr;
+static struct inline_field_cache m##_ic;
+static struct inline_global_cache m##_igc;
+if (!c_is(&p, (dptr)&dsclassname, &m##_igc))
+    runerr(205, p);
+m##_dptr = c_get_instance_data(&p, (dptr)&fdf, &m##_ic);
+if (!m##_dptr)
+    syserr("Missing fd field");
+(m) = (int)IntVal(*m##_dptr);
+if (m < 0)
+    runerr(219, p);
 #enddef
 

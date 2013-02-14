@@ -21,8 +21,6 @@ static cairo_user_data_key_t winkey;
 static cairo_user_data_key_t pickey;
 static cairo_user_data_key_t imdkey;
 
-static struct sdescrip ptrf = {3, "ptr"};
-
 #begdef GetSelfCr()
 cairo_t *self_cr;
 dptr self_cr_dptr;
