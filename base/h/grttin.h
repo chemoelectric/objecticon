@@ -172,7 +172,7 @@ typedef int png_structp, png_infop, png_bytep, png_byte, png_colorp, png_color, 
 #endif
 
 #if HAVE_LIBOPENSSL
-typedef int SSL_CTX, SSL, SSL_METHOD, BIO, X509;
+typedef int SSL_CTX, SSL, SSL_METHOD, BIO, X509, X509_NAME, X509_NAME_ENTRY, ASN1_STRING, GENERAL_NAMES, GENERAL_NAME;
 #endif
 
 typedef int SOCKET;

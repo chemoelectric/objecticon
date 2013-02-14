@@ -4736,8 +4736,7 @@ if (!self_ssl)
     runerr(219, self);
 #enddef
 
-static int
-pattern_match (char *pattern, char *string)
+static int pattern_match (char *pattern, char *string)
 {
     char *p = pattern, *n = string;
     char c;
@@ -4761,21 +4760,14 @@ pattern_match (char *pattern, char *string)
     return *n == '\0';
 }
 
-function io_SslStream_new_impl(other, verify_host)
+function io_SslStream_new_impl(other)
    body {
        struct sslstream *p;
        SSL_METHOD *meth;
        SSL_CTX *ctx;
        SSL *ssl;
        BIO *sbio;
-       int rc;
-       tended char *c_verify_host;
        FdStaticParam(other, fd);
-
-       if (is:null(verify_host))
-           c_verify_host = 0;
-       else if (!cnv:C_string(verify_host, c_verify_host))
-           runerr(103, verify_host);
 
        SSL_library_init();
        SSL_load_error_strings();
@@ -4794,44 +4786,91 @@ function io_SslStream_new_impl(other, verify_host)
        sbio = BIO_new_socket(fd, BIO_NOCLOSE);
        SSL_set_bio(ssl, sbio, sbio);
 
-       if ((rc = SSL_connect(ssl)) <= 0) {
-           whyf("SSL_connect: %s", ERR_error_string(SSL_get_error(ssl, rc), 0));
-           SSL_free(ssl);
-           SSL_CTX_free(ctx);
-           free(p);
-           fail;
-       }
-
-       if (c_verify_host) {
-           X509 *peer;
-           char peer_CN[256];
-           long l;
-           if ((l = SSL_get_verify_result(ssl)) != X509_V_OK) {
-               whyf("Certificate doesn't verify: %s", X509_verify_cert_error_string(l));
-               SSL_free(ssl);
-               SSL_CTX_free(ctx);
-               free(p);
-               fail;
-           }
-           /*Check the cert chain. The chain length is automatically
-             checked by OpenSSL when we set the verify depth in the
-             ctx */
-           /*Check the common name*/
-           peer = SSL_get_peer_certificate(ssl);
-           X509_NAME_get_text_by_NID(X509_get_subject_name(peer),
-                                     NID_commonName, peer_CN, 256);
-           if (!pattern_match(peer_CN, c_verify_host)) {
-               LitWhy("Common name doesn't match host name");
-               SSL_free(ssl);
-               SSL_CTX_free(ctx);
-               free(p);
-               fail;
-           }
-       }
-
        p->ssl = ssl;
 
        return C_integer((word)p);
+   }
+end
+
+function io_SslStream_connect(self)
+   body {
+       int rc;
+       GetSelfSsl();
+       if ((rc = SSL_connect(self_ssl->ssl)) <= 0) {
+           whyf("SSL_connect: %s", ERR_error_string(SSL_get_error(self_ssl->ssl, rc), 0));
+           fail;
+       }
+       return self;
+   }
+end
+
+/* See:- http://therning.org/magnus/archives/812 */
+
+static int match_common_name(X509 *cert, char *host)
+{
+    X509_NAME *subj_name;
+    int index, res;
+    X509_NAME_ENTRY *entry;
+    ASN1_STRING *entry_data;
+    unsigned char *utf8;
+ 
+    subj_name = X509_get_subject_name(cert);
+    if (!subj_name)
+        return 0;
+ 
+    index = X509_NAME_get_index_by_NID(subj_name, NID_commonName, -1);
+    entry = X509_NAME_get_entry(subj_name, index);
+    entry_data = X509_NAME_ENTRY_get_data(entry);
+    ASN1_STRING_to_UTF8(&utf8, entry_data);
+    res = pattern_match((char *)utf8, host);
+    OPENSSL_free(utf8);
+    return res;
+}
+ 
+static int match_alt_names(X509 *cert, char *host)
+{
+    GENERAL_NAMES *names;
+    int i, n;
+ 
+    names = X509_get_ext_d2i(cert, NID_subject_alt_name, 0, 0);
+    if (!names)
+        return 0;
+ 
+    n = sk_GENERAL_NAME_num(names);
+    for(i = 0; i < n; ++i) {
+        GENERAL_NAME *name = sk_GENERAL_NAME_value(names, i);
+        if (name->type == GEN_DNS) {
+            unsigned char *utf8;
+            int res;
+            ASN1_STRING_to_UTF8(&utf8, name->d.dNSName);
+            res = pattern_match((char *)utf8, host);
+            OPENSSL_free(utf8);
+            if (res)
+                return 1;
+        }
+    }
+    return 0;
+}
+
+function io_SslStream_verify(self, host)
+   if !cnv:C_string(host) then
+      runerr(103, host)
+   body {
+       long l;   
+       X509 *peer;
+       GetSelfSsl();
+
+       if ((l = SSL_get_verify_result(self_ssl->ssl)) != X509_V_OK) {
+           whyf("Certificate doesn't verify: %s", X509_verify_cert_error_string(l));
+           fail;
+       }
+
+       peer = SSL_get_peer_certificate(self_ssl->ssl);
+       if (!match_common_name(peer, host) && !match_alt_names(peer, host)) {
+           LitWhy("Couldn't match host name with certificate's common name or alternate names");
+           fail;
+       }
+       return self;
    }
 end
 
@@ -4889,21 +4928,29 @@ function io_SslStream_out(self, s)
    }
 end
 
-function io_SslStream_close_impl(self)
+function io_SslStream_shutdown(self)
    body {
        int rc;
        GetSelfSsl();
        rc = SSL_shutdown(self_ssl->ssl);
-       if (rc < 0)
+       if (rc < 0) {
            whyf("SSL_shutdown: %s", ERR_error_string(SSL_get_error(self_ssl->ssl, rc), 0));
+           fail;
+       }
+       return self;
+   }
+end
+
+function io_SslStream_close_impl(self)
+   body {
+       GetSelfSsl();
+       SSL_set_quiet_shutdown(self_ssl->ssl, 1);
+       SSL_shutdown(self_ssl->ssl);
        SSL_free(self_ssl->ssl);
        SSL_CTX_free(self_ssl->ctx);
        free(self_ssl);
        *self_ssl_dptr = zerodesc;
-       if (rc < 0)
-           fail;
-       else
-           return nulldesc;
+       return self;
    }
 end
 #else

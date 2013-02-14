@@ -2726,6 +2726,12 @@ class SslStream(Stream, HasUnderlyingStream, NoCopy)
       ptr,
       other
 
+   public native connect()
+
+   public native verify(host)
+
+   public native shutdown()
+
    public native in(n)
 
    public native out(s)
@@ -2744,17 +2750,15 @@ class SslStream(Stream, HasUnderlyingStream, NoCopy)
       return other.get_mode()
    end
 
-   private static native new_impl(other, verify_host)
+   private static native new_impl(other)
 
    #
    # Create a new SslStream.
    #
    # @param other an already connected {SocketStream} over which the connection
    #              will operate
-   # @param verify_host if set, the remote host's certificate will be verified
-   #              and its hostname checked against this value.
-   public final new(other, verify_host)
-      ptr := new_impl(other, verify_host) | fail
+   public final new(other)
+      ptr := new_impl(other) | fail
       self.other := other
       return
    end

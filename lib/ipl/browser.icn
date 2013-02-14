@@ -250,7 +250,6 @@ class Worker()
    private setup_httpc()
       httpc := HttpClient().
          set_task(task).
-         set_ssl_verify(&no).
          set_cookies(browser.cookies).
          set_authentications(browser.authentications).
          set_authentication_function(browser.get_authentication)
