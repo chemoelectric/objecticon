@@ -4,13 +4,12 @@
  */
 
 struct sdescrip pixclassname = {15, "graphics.Pixels"};
-struct sdescrip idpfieldname = {3, "idp"};
 
 #begdef GetSelfPixels()
 struct imgdata *self_id;
 dptr self_id_dptr;
 static struct inline_field_cache self_id_ic;
-self_id_dptr = c_get_instance_data(&self, (dptr)&idpfieldname, &self_id_ic);
+self_id_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_id_ic);
 if (!self_id_dptr)
     syserr("Missing idp field");
 self_id = (struct imgdata *)IntVal(*self_id_dptr);
@@ -25,13 +24,12 @@ if (!self_id)
  * Global variables.
  */
 struct sdescrip wclassname = {15, "graphics.Window"};
-struct sdescrip wbpfieldname = {3, "wbp"};
 
 #begdef GetSelfW()
 wbp self_w;
 dptr self_w_dptr;
 static struct inline_field_cache self_w_ic;
-self_w_dptr = c_get_instance_data(&self, (dptr)&wbpfieldname, &self_w_ic);
+self_w_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_w_ic);
 if (!self_w_dptr)
     syserr("Missing wbp field");
 self_w = (wbp)IntVal(*self_w_dptr);
