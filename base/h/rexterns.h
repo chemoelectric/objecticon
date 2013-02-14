@@ -58,6 +58,9 @@ extern struct descrip csetdesc;		/* cset descriptor */
 extern struct descrip eventdesc;	/* event descriptor */
 extern struct descrip rzerodesc;	/* real 0.0 descriptor */
 
+extern struct sdescrip fdf;             /* string "fd" */
+extern struct sdescrip ptrf;            /* string "ptr" */
+extern struct sdescrip dsclassname;     /* string "io.DescStream" */
 
 
 /*

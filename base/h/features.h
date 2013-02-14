@@ -58,8 +58,3 @@
 #if PLAN9 || HAVE_LIBPNG
    Feature("_PNG", "PNG images")
 #endif
-
-#if HAVE_LIBOPENSSL
-   Feature("_SSL", "SSL networking")
-#endif
-

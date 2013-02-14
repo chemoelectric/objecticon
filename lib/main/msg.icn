@@ -10,7 +10,7 @@ $define LIB "objecticonipclib.so"
 
 package ipc
 
-import lang, io
+import lang, io, util
 
 #
 # This class provides an inter process messaging facility.  The implementation requires
@@ -22,6 +22,9 @@ import lang, io
 final class Msg(NoCopy)
    private 
       id
+
+   public static const
+      SUPPORTED
 
    #
    # Send the given object.  The object may be an arbitrary Icon structure, and will be
@@ -87,10 +90,12 @@ final class Msg(NoCopy)
    private static native create_private_impl()
 
    private static init()
-      Class.load_library(Files.find_native_lib(LIB)) | runerr("Couldn't load dynamic library " || &why)
+      if Class.load_library(Files.find_native_lib(LIB)) then
+         SUPPORTED := &yes
    end
 
    private new(id)
+      \SUPPORTED | return error("Msg ipc not supported")
       self.id := id
       return
    end

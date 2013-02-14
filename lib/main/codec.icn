@@ -461,7 +461,8 @@ class Decode()
             #
             # Create an instance
             #
-            cl := Class.for_name(cname) | throw("No such class " || cname)
+            cl := Class.for_name(cname) | throw("No such class: " || cname)
+            (iand(Class.get_class_flags(cl), Class.Abstract) = 0) | throw("Class is abstract: " || cname)
             res := Class.create_raw_instance_of(cl)
             note_seen(res)
             if is(res, ObjectCodec) then

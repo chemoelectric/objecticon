@@ -11,6 +11,9 @@ else
   ifneq (@CAIRO_VERSION@,)
     TARGET:=$(TARGET) objecticoncairolib.so
   endif
+  ifneq (@OPENSSL_VERSION@,)
+    TARGET:=$(TARGET) objecticonssllib.so
+  endif
 endif
 
 all : $(TARGET)
@@ -39,8 +42,16 @@ cairo.o : cairo.r
 	$(CC) @CAIRO_CPPFLAGS@ $(CPPFLAGS) $(CFLAGS) -fPIC -c cairo.c -o cairo.o
 	$(RM) cairo.c
 
+objecticonssllib.so : ssl.o
+	$(CC) @OPENSSL_LDFLAGS@ -shared -fPIC -o objecticonssllib.so ssl.o @OPENSSL_LIBS@
+
+ssl.o : ssl.r
+	$(RTT) -h gssl.h ssl.r
+	$(CC) @OPENSSL_CPPFLAGS@ $(CPPFLAGS) $(CFLAGS) -fPIC -c ssl.c -o ssl.o
+	$(RM) ssl.c
+
 clean :
-	rm -f *.u *.o *.so *.a mysql.c ipc.c cairo.c
+	rm -f *.u *.o *.so *.a mysql.c ipc.c cairo.c ssl.c
 
 etags:
 	$(ETAGS) $(RTLTAGS) *.r *.h

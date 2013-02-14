@@ -2719,52 +2719,6 @@ end
 $endif
 
 #
-# A very simple SSL stream, using the openssl library.
-#
-class SslStream(Stream, HasUnderlyingStream, NoCopy)
-   private
-      ptr,
-      other
-
-   public native connect()
-
-   public native verify(host)
-
-   public native shutdown()
-
-   public native in(n)
-
-   public native out(s)
-
-   public close()
-      local f
-      close_impl() | (f := 1)
-      if \close_underlying_flag then
-         other.close() | (f := 1)
-      return /f & self
-   end
-
-   private native close_impl()
-
-   public get_mode()
-      return other.get_mode()
-   end
-
-   private static native new_impl(other)
-
-   #
-   # Create a new SslStream.
-   #
-   # @param other an already connected {SocketStream} over which the connection
-   #              will operate
-   public final new(other)
-      ptr := new_impl(other) | fail
-      self.other := other
-      return
-   end
-end
-
-#
 # This stream takes a list of other streams.  Its output is the concatenation of
 # the output of those streams.
 #

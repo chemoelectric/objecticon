@@ -246,9 +246,3 @@
 #include <zlib.h>
 
 #endif					/* HAVE_LIBZ */
-
-#if HAVE_LIBOPENSSL
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <openssl/x509v3.h>
-#endif

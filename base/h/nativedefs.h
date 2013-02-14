@@ -243,15 +243,6 @@ NativeDef(io.FileWorker,dup_fd,io_FileWorker_dup_fd)
 NativeDef(io.WindowsFilePath,getdcwd,io_WindowsFilePath_getdcwd)
 NativeDef(io.WindowsFileSystem,get_roots,io_WindowsFileSystem_get_roots)
 #endif
-NativeDef(io.SslStream,new_impl,io_SslStream_new_impl)
-#if HAVE_LIBOPENSSL
-NativeDef(io.SslStream,connect,io_SslStream_connect)
-NativeDef(io.SslStream,verify,io_SslStream_verify)
-NativeDef(io.SslStream,shutdown,io_SslStream_shutdown)
-NativeDef(io.SslStream,in,io_SslStream_in)
-NativeDef(io.SslStream,out,io_SslStream_out)
-NativeDef(io.SslStream,close_impl,io_SslStream_close_impl)
-#endif
 NativeDef(lang.Class,complete_raw_instance,lang_Class_complete_raw_instance)
 NativeDef(lang.Class,create_raw_instance_of,lang_Class_create_raw_instance_of)
 NativeDef(lang.Class,create_raw_instance,lang_Class_create_raw_instance)

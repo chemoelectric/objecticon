@@ -3,8 +3,6 @@
 
 static void field_to_list(MYSQL_FIELD *field, dptr res);
 
-static struct sdescrip ptrf = {3, "ptr"};
-
 #begdef GetSelfMySql()
 MYSQL *self_mysql;
 dptr self_mysql_dptr;

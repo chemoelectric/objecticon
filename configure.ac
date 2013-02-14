@@ -170,7 +170,7 @@ else
         echo yes
 fi
 echo -n "ssl lib                : "
-if test -z "$found_openssl"; then
+if test -z "$OPENSSL_VERSION"; then
         echo no
 else
         echo yes
