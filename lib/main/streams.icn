@@ -1803,12 +1803,12 @@ class SequenceStream(Stream, HasUnderlyingStream)
    end
 end
 
+# A {Stream} which takes its data from a co-expression.  Each result
+# provides one line of output.  End-of-file is signalled by the
+# co-expression generating {&null} and errors are signalled by it
+# failing and setting {&why}.
 #
-# Subclasses of this stream implement the {gen} method.  The results
-# sequence of that method represent the output of the stream, with
-# each result being one line.
-#
-abstract class GeneratorStream(LineBasedInputStream, NoCopy)
+class GeneratorStream(LineBasedInputStream, NoCopy)
    private
       coex
 
@@ -1828,29 +1828,23 @@ abstract class GeneratorStream(LineBasedInputStream, NoCopy)
       return self
    end
 
-   #
-   # Generates the lines of the stream.  End-of-file is signalled by
-   # returning {&null} and errors are signalled by failing and setting
-   # {&why}.
-   #
-   protected abstract line_gen()
-
-   public new()
+   public new(coex)
+      self.coex := coex
       cast(self,LineBasedInputStream).new()
-      self.coex := create line_gen()
       return
    end
 end
 
-#
-# A {Stream} which takes its data from a co-expression.  Each result provides
-# one line of output.
+# A {Stream} which takes its data from a co-expression.  Each result
+# provides one line of output.  Unlike {GeneratorStream}, no provision
+# is made for signalling errors (failure of the co-expression
+# indicates end-of-file).
 #
 # @example
 # @   # A stream with 10 lines
 # @   e := ExprStream{1 to 10}
 #
-class ExprStream(LineBasedInputStream)
+class ExprStream(LineBasedInputStream, NoCopy)
    private
       coex
 
@@ -1868,36 +1862,5 @@ class ExprStream(LineBasedInputStream)
    public new(coex)
       self.coex := coex
       return cast(self,LineBasedInputStream).new()
-   end
-end
-
-#
-# Useful parent class for filtering the lines from a particular
-# {Stream}.
-#
-abstract class LineFilterStream(GeneratorStream, HasUnderlyingStream)
-   protected
-      other
-
-   public close()
-      if \close_underlying_flag then
-         other.close() | fail
-      return self
-   end
-
-   protected next_line()
-      return other.read_line()
-   end
-
-   protected expect_line()
-      local s
-      s := other.read_line() | fail
-      return \s | error("Unexpected eof")
-   end
-
-   public new(other)
-      self.other := other
-      self.close_underlying_flag := &yes
-      return cast(self,GeneratorStream).new()
    end
 end

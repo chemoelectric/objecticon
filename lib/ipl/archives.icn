@@ -18,8 +18,9 @@ package ipl.archives
 
 import
    io(BufferStream, FileOpt, FileStream, FilterInputStream,
-      LineFilterStream, StringStream, use),
-   ipl.strings(endswith)
+      GeneratorStream, HasUnderlyingStream, StringStream),
+   ipl.strings(endswith),
+   util(error, use)
 
 # iszip(zname) succeeds if the named file appears to be a ZIP format
 # archive file.
@@ -35,16 +36,42 @@ end
 #
 # {Stream} for reading the entries in an archive, one per line of the stream.
 #
-abstract class ArchiveListerStream(LineFilterStream)
+abstract class ArchiveListerStream(GeneratorStream, HasUnderlyingStream)
    private
       f
+   protected
+      other
 
    public succeeded()
       return f.succeeded()
    end
 
+   public close()
+      if \close_underlying_flag then
+         other.close() | fail
+      return self
+   end
+
+   protected next_line()
+      return other.read_line()
+   end
+
+   protected expect_line()
+      local s
+      s := other.read_line() | fail
+      return \s | error("Unexpected eof")
+   end
+
+   # Generates the lines of the stream.  End-of-file is signalled by
+   # returning {&null} and errors are signalled by failing and setting
+   # {&why}.
+   #
+   protected abstract line_gen()
+
    protected new(prog, args)
-      return cast(self,LineFilterStream).new(BufferStream(f := FilterInputStream(, prog, args)))
+      self.other := BufferStream(f := FilterInputStream(, prog, args))
+      self.close_underlying_flag := &yes
+      return cast(self,GeneratorStream).new{line_gen()}
    end
 end
 
