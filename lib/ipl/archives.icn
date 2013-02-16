@@ -26,11 +26,11 @@ import
 # archive file.
 #
 procedure iszip(fname)		
-   local f, s
-   f := FileStream(fname, FileOpt.RDONLY) | fail
-   s := f.reads(4)
-   f.close()
-   return s === "PK\03\04"
+   local f
+   return use {
+      f := FileStream(fname),
+      f.reads(4) == "PK\03\04"
+   }
 end
 
 #

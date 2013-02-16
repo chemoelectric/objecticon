@@ -133,7 +133,7 @@ $endif
    public static file_to_string(fn)
       local f
       return use {
-         f := FileStream(fn, FileOpt.RDONLY),
+         f := FileStream(fn),
          f.read_all()
       }
    end
@@ -186,9 +186,9 @@ $endif
       local f1, f2
       stat(s1).size = stat(s2).size | fail
       return use {
-         f1 := FileStream(s1, FileOpt.RDONLY),
+         f1 := FileStream(s1),
          use {
-            f2 := FileStream(s2, FileOpt.RDONLY),
+            f2 := FileStream(s2),
             equal_files1(f1, f2)
          }
       }
@@ -361,7 +361,7 @@ $endif
    public static copy(s1, s2)
       local f1, f2
       return use {
-         f1 := FileStream(s1, FileOpt.RDONLY),
+         f1 := FileStream(s1),
          use {
             f2 := FileStream(s2, ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)),
             f1.copy_to(f2)
@@ -377,7 +377,7 @@ $endif
    public static append(s1, s2)
       local f1, f2
       return use {
-         f1 := FileStream(s1, FileOpt.RDONLY),
+         f1 := FileStream(s1),
          use {
             f2 := FileStream(s2, ior(FileOpt.WRONLY, FileOpt.APPEND, FileOpt.CREAT)),
             f1.copy_to(f2)

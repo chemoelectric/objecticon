@@ -893,7 +893,8 @@ class FileStream(DescStream)
    # Open a new {FileStream} using the underlying system open
    # function.
    # @param name the file name
-   # @param flags the flags, selected from {FileOpt}
+   # @param flags the flags, selected from {FileOpt}, if perm
+   # @      and mode are omitted, defaults to {FileOpt.RDONLY}
    # @param perm the create permissions to use if a file is
    # @      created, selected from {Mode}.
    # @param mode the resulting {Stream}'s mode; if omitted
@@ -903,6 +904,8 @@ class FileStream(DescStream)
    public new(name, flags, perm, mode)
       if \mode then
          return setup(new_impl(name, flags, perm), mode)
+      if /perm then
+        /flags := FileOpt.RDONLY
       #
       # Set the READ/WRITE mode flags based on the FileOpt flags.
       #
