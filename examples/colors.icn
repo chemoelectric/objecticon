@@ -86,22 +86,16 @@ class Untitled(Dialog)
    end
 
    private update_hls()
-      local hls, rgb, t
+      local hls, rgb, t, l
       hls := hue.get_value()||":"||light.get_value()||":"||saturation.get_value()
       hls_label.set_label(hls)
       rgb := HLSValue(hls)
-      rgb_label.set_label(rgb)
       colr.set_color(rgb)
-      rgb ? {
-         t := integer(tab(many(&digits)))
-         red.set_value(t)
-         move(1)
-         t := integer(tab(many(&digits)))
-         green.set_value(t)
-         move(1)
-         t := integer(tab(many(&digits)))
-         blue.set_value(t)
-      }
+      l := Window.parse_color(rgb)
+      rgb_label.set_label(l[1]||","||l[2]||","||l[3])
+      red.set_value(l[1])
+      green.set_value(l[2])
+      blue.set_value(l[3])
    end
 
    private on_blue(ev)

@@ -22,8 +22,6 @@
 #
 #       Contrast(k)             returns "white" or "black" contrasting with k.
 #
-#       Shade(win, k)           sets Fg(), with dithering on a bilevel screen.
-#
 #       RandomColor(p)          returns a randomly chosen color from a palette.
 #
 #       PaletteGrays(p)         returns the gray entries of a palette.
@@ -103,8 +101,7 @@
 package ipl.graphics
 
 import
-   graphics(Window),
-   posix(System)
+   graphics(Window)
 
 # scale with gamma correction
 procedure ScaleGamma(v, g)              
@@ -125,14 +122,12 @@ procedure Blend(args[])
       if integer(a) >= 0 then
          n := integer(a)
       else {
-         s := Window.color_value(a) | fail
-         s ? {
-            r2 := tab(many(&digits));  move(1)
-            g2 := tab(many(&digits));  move(1)
-            b2 := tab(many(&digits))
-            }
+         s := Window.parse_color(a) | fail
+         r2 := s[1]
+         g2 := s[2]
+         b2 := s[3]
          if /r1 then
-            suspend s
+            suspend r2 || "," || g2 || "," || b2
          else
             every i := 1 to n do {
                f2 := real(i) / real(n)
@@ -161,57 +156,6 @@ procedure Contrast(color)
       return l[1 + Window.palette_key("g2", color)]
 end
 
-
-#  Shade(win, color) -- approximate a shade with a pattern if bilevel screen
-
-# dither shade using pattern
-procedure Shade(win, color)             
-   local r, g, b
-   static dmat, env
-
-   initial {
-      env := ("" ~== map(System.getenv("XSHADE")))
-      }
-
-   if win.get_depth() ~= 1 & /env then {
-      win.set_fg( color) | fail
-      return win
-      }
-   (Window.color_value( color) | fail) ? {
-      r := tab(many(&digits));  move(1)
-      g := tab(many(&digits));  move(1)
-      b := tab(many(&digits))
-      }
-   g := integer(0.30 * r + 0.59 * g + 0.11 * b)
-
-   if \env == ("gray" | "grey") then {
-      win.set_fg( g || "," || g || "," || g)
-      return win
-      }
-
-   /dmat := [
-      "4,15,15,15,15",
-      "4,15,15,13,15",
-      "4,11,15,13,15",
-      "4,10,15,13,15",
-      "4,10,15,5,15",
-      "4,10,7,5,15",
-      "4,10,7,5,14",
-      "4,10,7,5,10",
-      "4,10,5,5,10",
-      "4,10,5,5,2",
-      "4,10,4,5,2",
-      "4,10,0,5,2",
-      "4,10,0,5,0",
-      "4,8,0,5,0",
-      "4,8,0,1,0",
-      "4,8,0,0,0",
-      "4,0,0,0,0",
-      ]
-   g := g / 3856 + 1
-   win.set_textured_pattern(dmat[g])
-   return win
-end
 
 
 #   RandomColor(palette) -- choose random color
@@ -310,12 +254,13 @@ end
 
 # HSV interpretation of color
 procedure HSV(k)                        
-   local r, g, b, h, s, v, min, max, d, t
+   local r, g, b, a, h, s, v, min, max, d, t
 
    t := Window.parse_color(k) | fail
    r := t[1] / 65535.0
    g := t[2] / 65535.0
    b := t[3] / 65535.0
+   a := t[4] / 65535.0
 
    min := default.min(r, g, b)  # minimum
    max := default.max(r, g, b)  # maximum
@@ -338,79 +283,94 @@ procedure HSV(k)
    else
       h := (g - b) / d                          # red through yellow
 
-   return integer(60 * h + 0.5) || "/" ||
+   t := integer(60 * h + 0.5) || "/" ||
       integer(100 * s + 0.5) || "/" || integer(100 * v + 0.5)
+   if a < 1 then
+      t ||:= "/" || (100 * a)
+   return t
 end
 
+# Helper function
+procedure get_prop(n)
+   /n := 100.0
+   return real(tab(many(&digits ++ '.')) / n)
+end
 
-#  HSVValue(hsv) -- return ColorValue of h/s/v string
+#  HSVValue(hsv) -- return ColorValue of h/s/v[/a] string
 #
 #  h is hue (0 <= h <= 360)
 #  s is saturation (0 <= s <= 100)
 #  v is value (0 <= v <= 100)
+#  a is optional alpha (0 <= a <= 100)
 #
 #  based on Foley et al, 2/e, p.593
 
 # color value of HSV specification
 procedure HSVValue(hsv)                 
-   local h, s, v, r, g, b, i, f, p, q, t
+   local h, s, v, r, g, b, a, i, f, p, q, t
 
    hsv ? {
-      h := tab(many(&digits)) / 360.0 | fail
+      h := get_prop(360.0) | fail
       ="/" | fail
-      s := tab(many(&digits)) / 100.0 | fail
+      s := get_prop() | fail
       ="/" | fail
-      v := tab(many(&digits)) / 100.0 | fail
+      v := get_prop() | fail
+      if ="/" then
+         a := get_prop() | fail
       pos(0) | fail
       }
-   if (h | s | v) > 1 then fail
+   if (h | s | v | \a) > 1 then fail
 
-   if s = 0.0 then {                    # achromatic case
-      v := integer(65535 * v + 0.499999)
-      return v || "," || v || "," || v
+   if s = 0.0 then                    # achromatic case
+      r := g := b := v 
+   else {
+
+      h *:= 6.0                            # hue [0.0 - 6.0)
+      if h >= 6.0 then
+         h := 0.0
+
+      i := integer(h)
+      f := h - i
+      p := v * (1.0 - s)
+      q := v * (1.0 - f * s)
+      t := v * (1.0 - (1.0 - f) * s)
+
+      case i of {
+         0: { r := v;  g := t;  b := p }   # red - yellow
+         1: { r := q;  g := v;  b := p }   # yellow - green
+         2: { r := p;  g := v;  b := t }   # green - cyan
+         3: { r := p;  g := q;  b := v }   # cyan - blue
+         4: { r := t;  g := p;  b := v }   # blue - magenta
+         5: { r := v;  g := p;  b := q }   # magenta - red
       }
+   }
+   t := r || "," || g || "," || b
+   if \a < 1 then
+      t ||:= "," || a
 
-   h *:= 6.0                            # hue [0.0 - 6.0)
-   if h >= 6.0 then
-      h := 0.0
-
-   i := integer(h)
-   f := h - i
-   p := v * (1.0 - s)
-   q := v * (1.0 - f * s)
-   t := v * (1.0 - (1.0 - f) * s)
-
-   case i of {
-      0: { r := v;  g := t;  b := p }   # red - yellow
-      1: { r := q;  g := v;  b := p }   # yellow - green
-      2: { r := p;  g := v;  b := t }   # green - cyan
-      3: { r := p;  g := q;  b := v }   # cyan - blue
-      4: { r := t;  g := p;  b := v }   # blue - magenta
-      5: { r := v;  g := p;  b := q }   # magenta - red
-      }
-
-   return integer(65535 * r + 0.499999) || "," ||
-      integer(65535 * g + 0.499999) || "," || integer(65535 * b + 0.499999)
+   return t
 end
 
 
-#  HLS(k) -- return h:l:s interpretation of color spec.
+#  HLS(k) -- return h:l:s[:a] interpretation of color spec.
 #
 #  h is hue (0 <= h < 360)
 #  l is lightness (0 <= l <= 100)
 #  s is saturation (0 <= s <= 100)
+#  a is optional alpha (0 <= a <= 100)
 #
 #  based on Foley et al, 2/e, p.595
 
 # HLS interpretation of color
 procedure HLS(k)                        
-   local r, g, b, h, l, s, min, max, delta, t
+   local r, g, b, a, h, l, s, min, max, delta, t
 
    t := Window.parse_color(k) | fail
    r := t[1] / 65535.0
    g := t[2] / 65535.0
    b := t[3] / 65535.0
-
+   a := t[4] / 65535.0
+   
    min := default.min(r, g, b)  # minimum
    max := default.max(r, g, b)  # maximum
    delta := max - min                   # difference
@@ -437,32 +397,38 @@ procedure HLS(k)
          h +:= 6                        # ensure positive value
       }
 
-   return integer(60 * h + 0.5) || ":" ||
+   t := integer(60 * h + 0.5) || ":" ||
       integer(100 * l + 0.5) || ":" || integer(100 * s + 0.5)
+   if a < 1 then
+      t ||:= ":" || (100 * a)
+   return t
 end
 
 
-#  HLSValue(hls) -- return ColorValue of h:l:s string
+#  HLSValue(hls) -- return ColorValue of h:l:s[:a] string
 #
 #  h is hue (0 <= h <= 360)
 #  l is lightness (0 <= l <= 100)
 #  s is saturation (0 <= s <= 100)
+#  a is optional alpha (0 <= a <= 100)
 #
 #  based on Foley & Van Dam, 1/e, p.619
 
 # color value of HLS specification
 procedure HLSValue(hls)                 
-   local h, l, s, r, g, b, m1, m2
+   local h, l, s, r, g, b, a, m1, m2, t
 
    hls ? {
-      h := tab(many(&digits)) / 360.0 | fail
+      h := get_prop(360.0) | fail
       =":" | fail
-      l := tab(many(&digits)) / 100.0 | fail
+      l := get_prop() | fail
       =":" | fail
-      s := tab(many(&digits)) / 100.0 | fail
+      s := get_prop() | fail
+      if =":" then
+         a := get_prop() | fail
       pos(0) | fail
       }
-   if (h | l | s) > 1 then fail
+   if (h | l | s | \a) > 1 then fail
 
    if l <= 0.5 then
       m2 := l * (1 + s)
@@ -478,8 +444,11 @@ procedure HLSValue(hls)
       b := hls_rgb_val(m1, m2, h - 0.3333333)
       }
 
-   return integer(65535 * r + 0.499999) || "," ||
-      integer(65535 * g + 0.499999) || "," || integer(65535 * b + 0.499999)
+   t := r || "," || g || "," || b
+   if \a < 1 then
+      t ||:= "," || a
+
+   return t
 end
 
 # helper function for HLSValue
