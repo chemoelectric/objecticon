@@ -18,7 +18,7 @@ package ipl.archives
 
 import
    io(BufferStream, FileOpt, FileStream, FilterInputStream,
-      GeneratorStream, HasUnderlyingStream, StringStream),
+      GeneratorStream, StringStream),
    ipl.strings(endswith),
    util(error, use)
 
@@ -36,29 +36,26 @@ end
 #
 # {Stream} for reading the entries in an archive, one per line of the stream.
 #
-abstract class ArchiveListerStream(GeneratorStream, HasUnderlyingStream)
+abstract class ArchiveListerStream(GeneratorStream)
    private
-      f
-   protected
-      other
+      f, bf
 
    public succeeded()
       return f.succeeded()
    end
 
    public close()
-      if \close_underlying_flag then
-         other.close() | fail
+      bf.close() | fail
       return self
    end
 
    protected next_line()
-      return other.read_line()
+      return bf.read_line()
    end
 
    protected expect_line()
       local s
-      s := other.read_line() | fail
+      s := bf.read_line() | fail
       return \s | error("Unexpected eof")
    end
 
@@ -69,8 +66,7 @@ abstract class ArchiveListerStream(GeneratorStream, HasUnderlyingStream)
    protected abstract line_gen()
 
    protected new(prog, args)
-      self.other := BufferStream(f := FilterInputStream(, prog, args))
-      self.close_underlying_flag := &yes
+      self.bf := BufferStream(f := FilterInputStream(, prog, args))
       return cast(self,GeneratorStream).new{line_gen()}
    end
 end
