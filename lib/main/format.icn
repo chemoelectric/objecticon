@@ -11,6 +11,14 @@ package util
 import lang, ipl.scan(max_many)
 
 final abstract class Format()
+   public static const
+      SIG_DIGITS
+
+   private static init()
+      # Max number of significant digits output by numeric_to_string
+      SIG_DIGITS := 14
+   end
+      
    #
    # Convert an integer to a string.
    #
@@ -55,11 +63,10 @@ final abstract class Format()
    # @           
    #
    public static numeric_to_string(subject, p, f)
-      local n1, s, t, lim, d, zs, dig, i, n, sig_digs
+      local n1, s, t, lim, d, zs, dig, i, n
 
       /f := ''
       n := numeric(subject) | runerr(102, subject)
-      sig_digs := 16 - 2
       /p := 4
       n1 := abs(n)
       if not any(f, "e") & type(n1) == "integer" then 
@@ -70,9 +77,9 @@ final abstract class Format()
          if lim >= -1 then {
             s := ""
             d := t[1]
-            if lim > sig_digs then {
-               zs := repl("0", lim - sig_digs)
-               lim := sig_digs
+            if lim > SIG_DIGITS then {
+               zs := repl("0", lim - SIG_DIGITS)
+               lim := SIG_DIGITS
             }
             every 0 to lim do {
                s ||:= dig := integer(d)
