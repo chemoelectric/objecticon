@@ -108,8 +108,6 @@
 #
 #	sign(r)		returns sign of r.
 #
-#	spell(i)	spells out i in English.
-#
 #	sum ! L		sum of numbers in list L
 #
 #	trunc(r)	returns nearest integer to r toward 0
@@ -574,47 +572,6 @@ procedure sign(r)
    if r = 0 then return 0
    else if r < 0 then return -1
    else return 1
-
-end
-
-# spell out integer
-procedure spell(n)		
-   local m
-
-   n := integer(n) | runerr(101, n)
-   if n <= 12 then return {
-      "0zero,1one,2two,3three,4four,5five,6six,7seven,8eight,_
-         9nine,10ten,11eleven,12twelve," ? {
-            tab(find(n))
-            move(*n)
-            tab(find(","))
-            }
-      }
-   else if n <= 19 then return {
-      spell(n[2] || "0") ?
-         (if ="for" then "four" else tab(find("ty"))) || "teen"
-      }
-   else if n <= 99 then return {
-      "2twen,3thir,4for,5fif,6six,7seven,8eigh,9nine," ? {
-         tab(find(n[1]))
-         move(1)
-         tab(find(",")) || "ty" ||
-            (if n[2] ~= 0 then "-" || spell(n[2]) else "")
-         }
-      }
-   else if n <= 999 then return {
-      spell(n[1]) || " hundred" ||
-         (if (m := n[2:0]) ~= 0 then " and " || spell(m) else "")
-      }
-   else if n <= 999999 then return {
-      spell(n[1:-3]) || " thousand" ||
-         (if (m := n[2:0]) ~= 0 then " and " || spell(m) else "")
-      }
-   else if n <= 999999999 then return {
-      spell(n[1:-6]) || " million" ||
-         (if (m := n[2:0]) ~= 0 then " and " || spell(m) else "")
-      }
-   else fail
 
 end
 
