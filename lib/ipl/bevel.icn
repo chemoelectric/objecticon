@@ -99,60 +99,42 @@ import util(Math)
 global hilite_table, shadow_table
 
 procedure GetHiliteColor(win)
-   local c, h, l, s, lhilite, r
+   local c, hls, r
 
    /hilite_table := table()
    c := win.get_bg()
    if r := member(hilite_table, c) then
       return r
 
-   HLS(c) ? {
-      h := integer(tab(many(&digits)))
-      move(1)
-      l := integer(tab(many(&digits)))
-      move(1)
-      s := integer(tab(0))
-   }
-
-   case l of {
-      0 <= l < 10 & l:	  { lhilite := 50 }
-      10 <= l < 25 & l:	  { lhilite := l + 25 }
-      25 <= l < 50 & l:	  { lhilite := l + 25 }
-      50 <= l < 75 & l:	  { lhilite := l + 25 }
-      75 <= l < 90 & l:	  { lhilite := 100 }
-      default:		  { lhilite := 75 }
-   }
-   s /:= 2
-   insert(hilite_table, c, r := HLSValue(h || ":" || lhilite || ":" || s))
+   hls := rgb2hls(color2rgb(c))
+   if hls.l < 0.1 then        hls.l := 0.5
+   else if hls.l < 0.25 then  hls.l +:= 0.25
+   else if hls.l < 0.5 then   hls.l +:= 0.25
+   else if hls.l < 0.75 then  hls.l +:= 0.25
+   else if hls.l < 0.9 then   hls.l := 1.0 
+   else                       hls.l := 0.75
+   hls.s /:= 2
+   insert(hilite_table, c, r := rgb2color(hls2rgb(hls)))
    return r
 end
 
 procedure GetShadowColor(win)
-   local c, h, l, s, lshadow, r
+   local c, hls, r
 
    /shadow_table := table()
    c := win.get_bg()
    if r := member(shadow_table, c) then
       return r
 
-   HLS(c) ? {
-      h := integer(tab(many(&digits)))
-      move(1)
-      l := integer(tab(many(&digits)))
-      move(1)
-      s := integer(tab(0))
-   }
-
-   case l of {
-      0 <= l < 10 & l:	  { lshadow := 25 }
-      10 <= l < 25 & l:	  { lshadow := 0 }
-      25 <= l < 50 & l:	  { lshadow := l - 25 }
-      50 <= l < 75 & l:	  { lshadow := 25 }
-      75 <= l < 90 & l:	  { lshadow := l - 50 }
-      default:		  { lshadow := 40 }
-   }
-   s /:= 2
-   insert(shadow_table, c, r := HLSValue(h || ":" || lshadow || ":" || s))
+   hls := rgb2hls(color2rgb(c))
+   if hls.l < 0.1 then        hls.l := 0.25
+   else if hls.l < 0.25 then  hls.l := 0.0
+   else if hls.l < 0.5 then   hls.l -:= 0.25
+   else if hls.l < 0.75 then  hls.l := 0.25
+   else if hls.l < 0.9 then   hls.l -:= 0.50 
+   else                       hls.l := 0.40
+   hls.s /:= 2
+   insert(shadow_table, c, r := rgb2color(hls2rgb(hls)))
    return r
 end
 
