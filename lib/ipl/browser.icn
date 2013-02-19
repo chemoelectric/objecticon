@@ -211,7 +211,7 @@ class Worker()
    end
 
    private cvt_file(f)
-      local e, l, maxl, maxsz, maxuid, maxgid, t, path, rs, now, tf, gcache, ucache
+      local e, l, t, path, rs, now, tf, gcache, ucache
       ucache := table()
       gcache := table()
       if Files.is_directory(f) then {
@@ -220,26 +220,19 @@ class Worker()
          return use {
             rs := RamStream(),
             {
-               rs.out("<html><head><title>Directory " || f || "</title></head><pre>")
-               maxsz := maxl := maxuid := maxgid := 0
-               every e := !l do {
-                  maxl <:= *e[1]
-                  maxsz <:= *e[2].size
-                  maxuid <:= *uname(e[2].uid, ucache)
-                  maxgid <:= *grname(e[2].gid, gcache)
-               }
+               rs.out("<html><head><title>Directory " || f || "</title></head><table>")
                path := Files.get_path(f)
                every e := !l do {
                   t := e[2]
                   tf := if now - t.mtime > 180 * 86400 then
-                     Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("MMM dd  yyyy")
+                     Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("MMM'&nbsp;'dd'&nbsp;&nbsp;'yyyy")
                   else
-                     Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("MMM dd HH:mm")
-                  rs.out(t.mode_str || "  " || left(uname(t.uid, ucache), maxuid + 1) || left(grname(t.gid, gcache), maxgid + 1) ||
-                         right(t.size, maxsz) || " " || tf || " " ||
-                         "<a href=\"file://" || path.child(e[1]).canonical().str() || "\">" || e[1] || "</a>" || "\n")
+                     Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("MMM'&nbsp;'dd'&nbsp;'HH:mm")
+                  rs.out("<tr><td>" || t.mode_str || "&nbsp;<td>" || uname(t.uid, ucache) || "&nbsp;<td>" || grname(t.gid, gcache) ||
+                         "&nbsp;<td align=right>" || t.size || "<td>&nbsp;" || tf || "&nbsp;<td>" ||
+                         "<a href=\"file://" || path.child(e[1]).canonical().str() || "\">" || e[1] || "</a></tr>" || "\n")
                }
-               rs.out("</pre></html>")
+               rs.out("</table></html>")
                rs.str()
             }
          }

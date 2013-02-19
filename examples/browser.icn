@@ -209,13 +209,13 @@ class BrowserDialog(Dialog, BrowserUI)
    private list_visited()
       local s, e, t
       s := "<html><head><title>Visited</title></head><table>"
-      s ||:= "<tr><th align=left>URL<th align=right>Times visited<th align=right>Last visit</tr>"
+      s ||:= "<tr><th align=left>URL<th align=right>Times<th>&nbsp;Last visit</tr>"
       every e := !settings.visited do {
          t := e.url.str()
          if *t > 50 then
             t[48:0] := "..."
-         s ||:= "<tr><td><a href=" || e.url.str() || ">" || t || 
-            "</a><td align=right >" || e.times || "<td align=right width=130 >" || e.last_time.format("MMM dd HH:mm") || "</tr>"
+         s ||:= "<tr><td><a href=\"" || e.url.str() || "\">" || t || 
+            "</a><td align=right>" || e.times || "<td>&nbsp;" || e.last_time.format("MMM'&nbsp;'dd'&nbsp;'HH:mm") || "</tr>"
       }
       s ||:= "</table></html>"
       return s
