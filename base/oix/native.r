@@ -163,117 +163,20 @@ static void extract_package(dptr s, dptr d)
     syserr("In a package, but no dots");  
 }
 
-/*
- * These macros are used to convert to/from various integer types
- * which may be bigger than a word and may or may not be signed.
- */
-
-#begdef convert_to_macro(TYPE)
-static int convert_to_##TYPE(dptr src, TYPE *dest)
-{
-    struct descrip bits, int65535;
-    tended struct descrip i, t, u, pwr;
-    TYPE res = 0;
-    int pos = 0, k;
-
-    /*
-     * If we have a normal integer, try a conversion to the target type.
-     */
-    if (Type(*src) == T_Integer &&
-        sizeof(TYPE) >= sizeof(word) &&
-        (((TYPE)-1 < 0) || IntVal(*src) >= 0))   /* TYPE signed, or src +ve */
-    {
-        *dest = IntVal(*src);
-        return 1;
-    }
-
-    MakeInt(65535, &int65535);
-    /* pwr = 2 ^ "n bits in TYPE" */
-    bigshift(&onedesc, sizeof(TYPE) * 8, &pwr);
-    i = *src;
-    if (bigsign(&i) < 0) {
-        /* Check TYPE is signed */
-        if ((TYPE)-1 > 0)
-            ReturnErrVal(101, *src, 0);
-        bigshift(&pwr, -1, &t);
-        /* src must be >= -ve pwr/2 */
-        bigneg(&t, &u);
-        if (bigcmp(&i, &u) < 0)
-            ReturnErrVal(101, *src, 0);
-        /* Convert to the two's complement representation of i (i := pwr + i) */
-        bigadd(&i, &pwr, &i);
-    } else if ((TYPE)-1 > 0) {
-        /* TYPE unsigned, i must be < pwr */
-        if (bigcmp(&i, &pwr) >= 0)
-            ReturnErrVal(101, *src, 0);
-    } else {
-        /* TYPE signed - src must be < pwr/2 */
-        bigshift(&pwr, -1, &t);
-        if (bigcmp(&i, &t) >= 0)
-            ReturnErrVal(101, *src, 0);
-    }
-
-    /*
-     * Copy the bits in the converted source (it is now in two's
-     * complement form) into the target.
-     */
-    for (k = 0; k < sizeof(TYPE) / 2; ++k) {
-        bigand(&i, &int65535, &bits);
-        bigshift(&i, -16, &i);
-        res |= ((ulonglong)IntVal(bits) << pos);
-        pos += 16;
-    }
-    *dest = res;
-    return 1;
-}
-#enddef
-
-#begdef convert_from_macro(TYPE)
-static void convert_from_##TYPE(TYPE src, dptr dest)
-{
-    TYPE j = src;
-    int k;
-    word pos = 0;
-    tended struct descrip res, chunk, pwr;
-
-    /* See if it fits in a word.  For an unsigned type, just compare
-     * against MaxWord; for a signed compare against MinWord too. */
-    if (src <= MaxWord && ((TYPE)-1 > 0 || src >= MinWord)) {
-        MakeInt(src, dest);
-        return;
-    }
-
-    /* Copy the raw bits of src, to dest in 16 bit chunks.  For a -ve
-     * src, the two's complement representation is copied, and then
-     * converted below
-     */
-    res = zerodesc;
-    for (k = 0; k < sizeof(TYPE) / 2; ++k) {
-        int bits = j & 0xffff;
-        j = j >> 16;
-        MakeInt(bits, &chunk);
-        bigshift(&chunk, pos, &chunk);
-        bigadd(&res, &chunk, &res);
-        pos += 16;
-    }
-    if (src < 0) {
-        /* pwr = 2 ^ "n bits in TYPE" */
-        bigshift(&onedesc, sizeof(TYPE) * 8, &pwr);
-        /* Convert from two's complement to true value - res := res - pwr */
-        bigsub(&res, &pwr, &res);
-    }
-    *dest = res;
-}
-#enddef
 convert_to_macro(off_t)
 convert_from_macro(off_t)
 convert_to_macro(time_t)
 convert_from_macro(time_t)
 convert_to_macro(mode_t)
 convert_from_macro(mode_t)
+convert_from_macro(dev_t)
 #if UNIX
 convert_from_macro(ino_t)
 convert_from_macro(blkcnt_t)
+convert_to_macro(uid_t)
+convert_from_macro(uid_t)
+convert_to_macro(gid_t)
+convert_from_macro(gid_t)
 #endif
 convert_from_macro(ulonglong)
 convert_from_macro(uword)
@@ -2176,18 +2079,18 @@ function io_DescStream_wstat(self, mode, uid, gid)
            if (is:null(uid))
                owner = (uid_t)-1;
            else {
-               word i;
-               if (!cnv:C_integer(uid, i))
+               if (!cnv:integer(uid, uid))
                    runerr(101, uid);
-               owner = (uid_t)i;
+               if (!convert_to_uid_t(&uid, &owner))
+                   runerr(0);
            }
            if (is:null(gid))
                group = (gid_t)-1;
            else {
-               word i;
-               if (!cnv:C_integer(gid, i))
+               if (!cnv:integer(gid, gid))
                    runerr(101, gid);
-               group = (uid_t)i;
+               if (!convert_to_gid_t(&gid, &group))
+                   runerr(0);
            }
            if (fchown(self_fd, owner, group) < 0) {
                errno2why();
@@ -2702,7 +2605,7 @@ static void stat2list(struct stat *st, dptr result)
    char mode[12];
 
    create_list(13, result);
-   MakeInt(st->st_dev, &tmp);
+   convert_from_dev_t(st->st_dev, &tmp);
    list_put(result, &tmp);
 #if UNIX
    convert_from_ino_t(st->st_ino, &tmp);
@@ -2752,16 +2655,16 @@ static void stat2list(struct stat *st, dptr result)
    list_put(result, &tmp);
 
 #if UNIX
-   MakeInt(st->st_uid, &tmp);
+   convert_from_uid_t(st->st_uid, &tmp);
    list_put(result, &tmp);
-   MakeInt(st->st_gid, &tmp);
+   convert_from_gid_t(st->st_gid, &tmp);
    list_put(result, &tmp);
 #else
    list_put(result, &emptystr);
    list_put(result, &emptystr);
 #endif
 
-   MakeInt(st->st_rdev, &tmp);
+   convert_from_dev_t(st->st_rdev, &tmp);
    list_put(result, &tmp);
    convert_from_off_t(st->st_size, &tmp);
    list_put(result, &tmp);
@@ -2834,18 +2737,18 @@ function io_Files_wstat(s, mode, uid, gid, atime, mtime)
            if (is:null(uid))
                owner = (uid_t)-1;
            else {
-               word i;
-               if (!cnv:C_integer(uid, i))
+               if (!cnv:integer(uid, uid))
                    runerr(101, uid);
-               owner = (uid_t)i;
+               if (!convert_to_uid_t(&uid, &owner))
+                   runerr(0);
            }
            if (is:null(gid))
                group = (gid_t)-1;
            else {
-               word i;
-               if (!cnv:C_integer(gid, i))
+               if (!cnv:integer(gid, gid))
                    runerr(101, gid);
-               group = (uid_t)i;
+               if (!convert_to_gid_t(&gid, &group))
+                   runerr(0);
            }
            if (chown(s, owner, group) < 0) {
                errno2why();

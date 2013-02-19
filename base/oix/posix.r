@@ -344,7 +344,9 @@ end
 function posix_System_getuid()
    body {
 #if UNIX
-     return C_integer getuid();
+     tended struct descrip result;
+     convert_from_uid_t(getuid(), &result);      
+     return result;
 #else
      Unsupported;
 #endif
@@ -354,7 +356,9 @@ end
 function posix_System_geteuid()
    body {
 #if UNIX
-     return C_integer geteuid();
+     tended struct descrip result;
+     convert_from_uid_t(geteuid(), &result);      
+     return result;
 #else
      Unsupported;
 #endif
@@ -364,7 +368,9 @@ end
 function posix_System_getgid()
    body {
 #if UNIX
-     return C_integer getgid();
+     tended struct descrip result;
+     convert_from_gid_t(getgid(), &result);      
+     return result;
 #else
      Unsupported;
 #endif
@@ -374,7 +380,9 @@ end
 function posix_System_getegid()
    body {
 #if UNIX
-     return C_integer getegid();
+     tended struct descrip result;
+     convert_from_gid_t(getegid(), &result);      
+     return result;
 #else
      Unsupported;
 #endif
@@ -390,9 +398,9 @@ static void passwd2list(struct passwd *pw, dptr result)
    list_put(result, &tmp);
    cstr2string(pw->pw_passwd, &tmp);
    list_put(result, &tmp);
-   MakeInt(pw->pw_uid, &tmp);
+   convert_from_uid_t(pw->pw_uid, &tmp);
    list_put(result, &tmp);
-   MakeInt(pw->pw_gid, &tmp);
+   convert_from_gid_t(pw->pw_gid, &tmp);
    list_put(result, &tmp);
    cstr2string(pw->pw_dir, &tmp);
    list_put(result, &tmp);
@@ -409,7 +417,7 @@ static void group2list(struct group *gr, dptr result)
    list_put(result, &tmp);
    cstr2string(gr->gr_passwd, &tmp);
    list_put(result, &tmp);
-   MakeInt(gr->gr_gid, &tmp);
+   convert_from_gid_t(gr->gr_gid, &tmp);
    list_put(result, &tmp);
    n = 0;
    while (gr->gr_mem[n])
@@ -429,13 +437,13 @@ function posix_System_getpw_impl(v)
     tended struct descrip result;
     struct passwd *pw;
     if (is:integer(v)) {
-        word i;
-        if (!cnv:C_integer(v, i))
-            runerr(101, v);
-        pw = getpwuid((uid_t)i);
+        uid_t u;
+        if (!convert_to_uid_t(&v, &u))
+           runerr(0);
+        pw = getpwuid(u);
     } else {
         if (!cnv:string(v, v)) 
-            runerr(103, v);
+           runerr(103, v);
         pw = getpwnam(buffstr(&v));
     }
     if (!pw)
@@ -454,13 +462,13 @@ function posix_System_getgr_impl(v)
     tended struct descrip result;
     struct group *gr;
     if (is:integer(v)) {
-        word i;
-        if (!cnv:C_integer(v, i))
-            runerr(101, v);
-        gr = getgrgid((gid_t)i);
+        gid_t g;
+        if (!convert_to_gid_t(&v, &g))
+           runerr(0);
+        gr = getgrgid(g);
     } else {
         if (!cnv:string(v, v)) 
-            runerr(103, v);
+           runerr(103, v);
         gr = getgrnam(buffstr(&v));
     }
     if (!gr)
@@ -493,7 +501,7 @@ function posix_System_getgroups()
     }
     create_list(n, &result);
     for (i = 0; i < n; ++i) {
-        MakeInt(buf[i], &tmp);
+        convert_from_gid_t(buf[i], &tmp);
         list_put(&result, &tmp);
     }
     free(buf);
@@ -505,11 +513,14 @@ function posix_System_getgroups()
 end
 
 function posix_System_setuid(id)
-   if !cnv:C_integer(id) then
+   if !cnv:integer(id) then
       runerr(101, id)
    body {
 #if UNIX
-       if (setuid((uid_t)id) < 0) {
+       uid_t u;
+       if (!convert_to_uid_t(&id, &u))
+           runerr(0);
+       if (setuid(u) < 0) {
            errno2why();
            fail;
        }
@@ -521,11 +532,14 @@ function posix_System_setuid(id)
 end
 
 function posix_System_setgid(id)
-   if !cnv:C_integer(id) then
+   if !cnv:integer(id) then
       runerr(101, id)
    body {
 #if UNIX
-       if (setgid((gid_t)id) < 0) {
+       gid_t g;
+       if (!convert_to_gid_t(&id, &g))
+           runerr(0);
+       if (setgid(g) < 0) {
            errno2why();
            fail;
        }

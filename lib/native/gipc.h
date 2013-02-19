@@ -1,1 +1,1 @@
-typedef int ssize_t;
+typedef int ssize_t, key_t;
