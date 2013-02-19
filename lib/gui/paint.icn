@@ -428,7 +428,6 @@ class ImagePaint(Paint)
       image_cache,
       win,
       fill_dimensions,
-      dont_close,
       max_w,
       max_h
 
@@ -519,21 +518,17 @@ class ImagePaint(Paint)
    end
 
    public close_image()
-      if \win & /dont_close then
-         win.close()
-      dont_close := win := &null
+      (\win).close()
+      win := &null
    end
 
    public load_image(c)
-      if \self.image_str then
-         win := ImageCache.load(self.image_str, c.cbwin)
-      else if \self.image_cache then {
-         if win := ImageCache.get(self.image_cache, c.cbwin) then
-            dont_close := 1
-      } else if \self.image_window then {
-         win := self.image_window
-         dont_close := 1
-      }
+      win := if \self.image_str then
+         ImageCache.load(self.image_str, c.cbwin)
+      else if \self.image_cache then
+         ImageCache.get(self.image_cache, c.cbwin).clone()
+      else if \self.image_window then
+         self.image_window.clone()
    end
 
    public zoom_image()
