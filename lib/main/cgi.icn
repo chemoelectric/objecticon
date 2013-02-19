@@ -27,9 +27,9 @@ class CgiParams()
             if ct.type == "application" & ct.subtype == "x-www-form-urlencoded" then {
                params := URL.make_cgi_table(stdin)
             } else if ct.type == "multipart" & ct.subtype == "form-data" then {
-               msg := Message()
-               msg.set_header("Content-Type", s)
-               msg.set_content(stdin)
+               msg := Message().
+                  set_header("Content-Type", s).
+                  set_content(stdin)
                multi := msg.get_content_object() | return error("Couldn't decode multipart: " || &why)
                params := table()
                every p := !multi.parts do {

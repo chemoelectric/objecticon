@@ -155,7 +155,7 @@ $else
                close()
                return error("Couldn't connect to " || msg_addr || ": timeout")
             }
-            poll_out_test(r[1]) | {
+            DescStream.poll_out_test(r[1]) | {
                close()
                return error("Couldn't connect to " || msg_addr || ": socket error")
             }
@@ -204,13 +204,13 @@ $endif
          2 : {  # SSL_ERROR_WANT_READ
             r := do_poll(Poll.IN) | return error("Receive poll failed: " || &why)
             if /r then return error("Receive failed (timeout)")
-            poll_in_test(r[1]) | return error("Receive failed (socket error)")
+            DescStream.poll_in_test(r[1]) | return error("Receive failed (socket error)")
             return
          }
          3 : {  # SSL_ERROR_WANT_WRITE 
             r := do_poll(Poll.OUT) | return error("Send poll failed: " || &why)
             if /r then return error("Send failed (timeout)")
-            poll_out_test(r[1]) | return error("Send failed (socket error)")
+            DescStream.poll_out_test(r[1]) | return error("Send failed (socket error)")
             return
          }
       }
@@ -274,7 +274,7 @@ $endif
          while *s > 0 do {
             r := do_poll(Poll.OUT) | return error("Send poll failed: " || &why)
             if /r then return error("Send failed (timeout)")
-            poll_out_test(r[1]) | return error("Send failed (socket error)")
+            DescStream.poll_out_test(r[1]) | return error("Send failed (socket error)")
             i := connection.out(s) | fail
             s := s[i+1 : 0]
          }
@@ -296,7 +296,7 @@ $endif
       } else {
          r := do_poll(Poll.IN) | return error("Receive poll failed: " || &why)
          if /r then return error("Receive failed (timeout)")
-         poll_in_test(r[1]) | return error("Receive failed (socket error)")
+         DescStream.poll_in_test(r[1]) | return error("Receive failed (socket error)")
          return connection.in(len)
       }
    end

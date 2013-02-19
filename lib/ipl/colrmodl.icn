@@ -37,11 +37,11 @@
 #
 ############################################################################
 
-package ipl.colrmodl
+package ipl.graphics
 
 import
-   ipl.matrix(create_matrix, mult_matrix),
-   ipl.numbers(floor)
+   graphics(Window),
+   ipl.matrix(create_matrix, mult_matrix)
 
 record rgb(r, g, b)
 record cmy(c, m, y)
@@ -151,22 +151,19 @@ procedure rgb2hsv(color)
 
    v := maximum
 
-   if maximum ~= 0 then s := delta / maximum
-   else s := 0
+   if maximum ~= 0.0 then s := delta / maximum
+   else s := 0.0
 
-   if s = 0 then h := -1.0		# undefined
+   if s = 0.0 then h := 0.0		# use hue 0 if unsaturated
    else {
-      if color.r = maximum then {
+      if color.r = maximum then
          h := (color.g - color.b) / delta
-         }
-      else if color.g = maximum then {
+      else if color.g = maximum then 
          h := 2 + (color.b - color.r) / delta
-         }
-      else if color.b = maximum then {
+      else  # color.b = maximum
          h := 4 + (color.r - color.g) / delta
-         }
-      h := h * 60
-      if h < 0 then h +:= 360.0		# make sure hue is nonnegative
+      h *:= 60                          # convert to degrees
+      if h < 0.0 then h +:= 360.0	# make sure hue is nonnegative
       }
 
    return hsv(h, s, v)
@@ -174,22 +171,21 @@ procedure rgb2hsv(color)
 end
 
 procedure hsv2rgb(color)
-
    local h, i, f, p, q, t, s, v
 
-   if color.s = 0 then {
-      if color.h = -1 then {
-         return rgb(color.v, color.v, color.v)
-         }
-      else runerr("*** error in HSV to RGB conversion")
+   h := color.h
+   v := color.v
+   s := color.s
+
+   if s = 0.0 then {
+      return rgb(v, v, v)    # achromatic case
       }
    else {
-      h := color.h
-      v := color.v
-      s := color.s
-      if h = 360.0 then h := 0.0
-      h /:= 60
-      i := floor(h)
+      h /:= 60.0             # hue [0.0 - 6.0)
+      if h >= 6.0 then
+         h := 0.0
+
+      i := integer(h)
       f := h - i
       p := v * (1.0 - s)
       q := v * (1.0 - s * f)
@@ -201,7 +197,7 @@ procedure hsv2rgb(color)
          3:  rgb(p, q, v)
          4:  rgb(t, p, v)
          5:  rgb(v, p, q)
-         default:  runerr("*** error in HSV to RGB conversion")
+         default:  fail
          }
       }
 
@@ -218,8 +214,7 @@ procedure rgb2hls(color)
    l := sum / 2				# lightness
 
    if maximum = minimum then {		# achromatic case
-      s := 0.0
-      h := -1.0
+      h := s := 0.0
       }
    else {
       if l <= 0.5 then
@@ -227,17 +222,16 @@ procedure rgb2hls(color)
       else s := delta / (2 - sum)
 
       if color.r = maximum then
-         h := (color.g - color.r) / delta
+         h := (color.g - color.b) / delta
       else if color.g = maximum then
          h := 2 + (color.b - color.r) / delta
-      else if color.b = maximum then
+      else # color.b = maximum
          h := 4 + (color.r - color.g) / delta
       h *:= 60				# convert to degrees
       if h < 0.0 then h +:= 360.0	# make positive
-
-      return hls(h, l, s)
       }
 
+   return hls(h, l, s)
 end
 
 procedure hls2rgb(color)
@@ -250,9 +244,8 @@ procedure hls2rgb(color)
    if l <= 0.5 then m2 := l * (1 + s)
    else m2 := l + s - l * s
    m1 := 2 * l - m2
-   if s = 0 then {			# achromatic case
-      if h = -1.0 then return rgb(l, l, l)
-      else runerr("*** error in HLS specification")
+   if s = 0.0 then {			# achromatic case
+      return rgb(l, l, l)
       }
    else {
       return rgb(
@@ -273,4 +266,16 @@ procedure color_value(m1, m2, h)
    else if h < 240.0 then return m1 + (m2 - m1) * (240.0 - h) / 60.0
    else return m1
 
+end
+
+procedure color2rgb(color)
+   local t
+   t := Window.parse_color(color) | fail
+   return rgb(t[1] / 65535.0,
+              t[2] / 65535.0,
+              t[3] / 65535.0)
+end
+
+procedure rgb2color(rgb)
+   return rgb.r || "," || rgb.g || "," || rgb.b
 end

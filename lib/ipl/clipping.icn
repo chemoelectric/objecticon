@@ -38,11 +38,12 @@ package ipl.clipping
 
 # draw line with clipping
 procedure DrawClipped(a[])		
-   local win
+   local win, l
 
    win := pop(a)
+   if l := ClipLine(win, a) then
+      while win.draw_line(pop(l), pop(l), pop(l), pop(l))
 
-   win.draw_segment ! ClipLine(win, a)
    return win
 end
 
@@ -54,12 +55,13 @@ end
 
 # clip line for DrawSegment
 procedure ClipLine(win, L, x, y, w, h)	
-   local i, ret, tin, tout, delx, dely, x0, x1, xmax, y0, y1, ymax
+   local i, ret, tin, tout, delx, dely, x0, x1, xmax, y0, y1, ymax, cr
 
-   /x := win.get_clipx() - win.get_dx()
-   /y := win.get_clipy() - win.get_dy()
-   /w := win.get_clipw()
-   /h := win.get_cliph()
+   cr := win.get_clip() | [ -win.get_dx(), -win.get_dy(), 65535, 65535]
+   /x := cr[1]
+   /y := cr[2]
+   /w := cr[3]
+   /h := cr[4]
    if w < 0 then
       x -:= (w := -w)
    if h < 0 then

@@ -17,7 +17,7 @@ import
    ipl.tables,
    io,
    lang,
-   util(Math)
+   util(Math,Format)
 
 $define LSIZE 16
 $define GENLIMIT 25
@@ -157,7 +157,7 @@ procedure main()
    gen(roman, 1989)
    gen(round, Math.E)
    gen(sign, -47)
-   gen(spell, 47193)				# result is not strictly correct
+   gen(Format.int_to_words, 47193)				# result is not strictly correct
    gen(sum, 1, 1, 2, 3, 5, 8, 13, 21, 42)
    gen(trunc, Math.PHI)
    gen(unroman, "MCMLXXIV")

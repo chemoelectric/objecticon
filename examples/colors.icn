@@ -1,5 +1,5 @@
 import
-   gui,ipl.graphics,graphics
+   gui, graphics, ipl.graphics
 
 class ColorRectangle(Component)
    private c
@@ -67,41 +67,27 @@ class Untitled(Dialog)
    end
 
    private update_rgb()
-      local c, hls, t
+      local c, hls
       c := red.get_value()||","||green.get_value()||","||blue.get_value()
       colr.set_color(c)
       rgb_label.set_label(c)
-      hls := HLS(c)
-      hls_label.set_label(hls)
-      hls ? {
-         t := integer(tab(many(&digits)))
-         hue.set_value(t)
-         move(1)
-         t := integer(tab(many(&digits)))
-         light.set_value(t)
-         move(1)
-         t := integer(tab(many(&digits)))
-         saturation.set_value(t)
-      }
+      hls := rgb2hls(color2rgb(c))
+      hue.set_value(integer(hls.h))
+      light.set_value(integer(hls.l * 100))
+      saturation.set_value(integer(hls.s * 100))
+      hls_label.set_label(hue.get_value()||":"||light.get_value()||":"||saturation.get_value())
    end
 
    private update_hls()
-      local hls, rgb, t
-      hls := hue.get_value()||":"||light.get_value()||":"||saturation.get_value()
-      hls_label.set_label(hls)
-      rgb := HLSValue(hls)
-      rgb_label.set_label(rgb)
+      local rgb, l
+      hls_label.set_label(hue.get_value()||":"||light.get_value()||":"||saturation.get_value())
+      rgb := rgb2color(hls2rgb(hls(hue.get_value(), light.get_value()/100.0, saturation.get_value()/100.0)))
       colr.set_color(rgb)
-      rgb ? {
-         t := integer(tab(many(&digits)))
-         red.set_value(t)
-         move(1)
-         t := integer(tab(many(&digits)))
-         green.set_value(t)
-         move(1)
-         t := integer(tab(many(&digits)))
-         blue.set_value(t)
-      }
+      l := Window.parse_color(rgb)
+      rgb_label.set_label(l[1]||","||l[2]||","||l[3])
+      red.set_value(l[1])
+      green.set_value(l[2])
+      blue.set_value(l[3])
    end
 
    private on_blue(ev)

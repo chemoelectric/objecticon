@@ -17,34 +17,57 @@
 package ipl.archives
 
 import
-   io(BufferStream, FileOpt, FileStream, FilterInputStream,
-      LineFilterStream, StringStream, use),
-   ipl.strings(endswith)
+   io(BufferStream, FileStream, FilterInputStream,
+      GeneratorStream, StringStream),
+   ipl.strings(endswith),
+   util(error, use)
 
 # iszip(zname) succeeds if the named file appears to be a ZIP format
 # archive file.
 #
 procedure iszip(fname)		
-   local f, s
-   f := FileStream(fname, FileOpt.RDONLY) | fail
-   s := f.reads(4)
-   f.close()
-   return s === "PK\03\04"
+   local f
+   return use {
+      f := FileStream(fname),
+      f.reads(4) == "PK\03\04"
+   }
 end
 
 #
 # {Stream} for reading the entries in an archive, one per line of the stream.
 #
-abstract class ArchiveListerStream(LineFilterStream)
+abstract class ArchiveListerStream(GeneratorStream)
    private
-      f
+      f, bf
 
    public succeeded()
       return f.succeeded()
    end
 
+   public close()
+      bf.close() | fail
+      return self
+   end
+
+   protected next_line()
+      return bf.read_line()
+   end
+
+   protected expect_line()
+      local s
+      s := bf.read_line() | fail
+      return \s | error("Unexpected eof")
+   end
+
+   # Generates the lines of the stream.  End-of-file is signalled by
+   # returning {&null} and errors are signalled by failing and setting
+   # {&why}.
+   #
+   protected abstract line_gen()
+
    protected new(prog, args)
-      return cast(self,LineFilterStream).new(BufferStream(f := FilterInputStream(, prog, args)))
+      self.bf := BufferStream(f := FilterInputStream(, prog, args))
+      return cast(self,GeneratorStream).new{line_gen()}
    end
 end
 
